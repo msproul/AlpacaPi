@@ -1,0 +1,809 @@
+<html>
+<head>
+<title>Moon rise - set</title>
+<meta name=keywords content=astronomy,moon,rise,set,javascript>
+<link rel="SHORTCUT ICON" HREF="/~srschmitt/favicon.ico">
+<link rel="stylesheet" type="text/css" href="standard.css">
+<script language=JavaScript SRC=feedback.js></script>
+
+<script language=JavaScript>
+<!-- hide
+
+var PI = Math.PI;
+var DR = PI/180;
+var K1 = 15*DR*1.0027379
+
+var Moonrise = false;
+var Moonset  = false;
+
+var Rise_time = [0, 0];
+var Set_time  = [0, 0];
+var Rise_az = 0.0;
+var Set_az  = 0.0;
+
+var Sky = [0.0, 0.0, 0.0];
+var RAn = [0.0, 0.0, 0.0];
+var Dec = [0.0, 0.0, 0.0];
+var VHz = [0.0, 0.0, 0.0];
+
+var Now;
+var Cookie_name = "script_moon_rise_set";
+
+// initialize date
+function initdate()
+{
+    Now = new Date();
+    showdate(Now);
+    load_latlon();
+}
+
+// display the date
+function showdate(d)
+{
+    var winter = new Date(2001, 11, 30);       // for northern hemisphere
+    var summer = new Date(2001,  5, 30);
+
+    var summer_tz = summer.getTimezoneOffset();
+    var winter_tz = winter.getTimezoneOffset();
+    var Local_dst = (summer_tz == winter_tz) ? false : true;
+
+    if (summer_tz > winter_tz)                 // in southern hemisphere
+    {
+        var tz = summer_tz;                    // swap
+        summer_tz = winter_tz;
+        winter_tz = tz;
+    }
+
+    calc.month.value = d.getMonth() + 1;
+    calc.day.value   = d.getDate();
+    calc.year.value  = d.getFullYear();
+}
+
+function load_latlon()
+{
+    var latlon = getCookie(Cookie_name);
+
+    if (!latlon) return;                       // no cookie
+
+    s = latlon.substr( 0, 8);
+    lat_deg = parseInt(s);
+
+    s = latlon.substr( 8, 8);
+    lat_min = parseInt(s);
+
+    s = latlon.substr(16, 8);
+    lon_deg = parseInt(s);
+
+    s = latlon.substr(24, 8);
+    lon_min = parseInt(s);
+
+    if (lat_deg < 0)                           // south
+    {
+        calc.south.checked = true;
+        calc.north.checked = false;
+        lat_deg = -lat_deg;
+    }
+    else
+    {
+        calc.south.checked = false;
+        calc.north.checked = true;
+    }
+ 
+    if (lon_deg < 0)                           // west
+    {
+        calc.west.checked = true;
+        calc.east.checked = false;
+        lon_deg = -lon_deg;
+    }
+    else
+    {
+        calc.west.checked = false;
+        calc.east.checked = true;
+    }
+ 
+    calc.lat_degrees.value = lat_deg;
+    calc.lat_minutes.value = lat_min;
+    calc.lon_degrees.value = lon_deg;
+    calc.lon_minutes.value = lon_min;
+}
+
+// save to cookie after checking for valid data
+function save_latlon()
+{
+    var lat_deg = parseInt(calc.lat_degrees.value, 10);
+    var lat_min = parseInt(calc.lat_minutes.value, 10);
+    var lon_deg = parseInt(calc.lon_degrees.value, 10);
+    var lon_min = parseInt(calc.lon_minutes.value, 10);
+
+    if (isNaN(lat_deg)||(lat_deg < 0)||(lat_deg >=  90)||
+        isNaN(lat_min)||(lat_min < 0)||(lat_min >=  60)||
+        isNaN(lon_deg)||(lon_deg < 0)||(lon_deg >= 180)||
+        isNaN(lon_min)||(lon_min < 0)||(lon_min >=  60))
+    {
+        return;
+    }
+
+    if (calc.south.checked == true) lat_deg = -lat_deg;
+    if (calc.west.checked  == true) lon_deg = -lon_deg;  
+    var latlon = cintstr(lat_deg, 8) + cintstr(lat_min, 8) 
+               + cintstr(lon_deg, 8) + cintstr(lon_min, 8);
+
+    setCookie(Cookie_name, latlon, 365);
+}
+
+// test case
+function test()
+{
+    // Boston, MA US  42°21' N, 71°04' W
+
+    // Latitude        
+    calc.lat_degrees.value = "42";
+    calc.lat_minutes.value = "21";
+
+    // Longitude       
+    calc.lon_degrees.value = "71";
+    calc.lon_minutes.value = "04";
+}
+
+// compute ...
+function compute()
+{
+    var lat_degrees = parseInt(calc.lat_degrees.value, 10);
+    var lat_minutes = parseInt(calc.lat_minutes.value, 10);
+    var lon_degrees = parseInt(calc.lon_degrees.value, 10);
+    var lon_minutes = parseInt(calc.lon_minutes.value, 10);
+
+    var year  = parseInt(calc.year.value, 10);
+    var month = parseInt(calc.month.value, 10) - 1;
+    var day   = parseInt(calc.day.value, 10);
+
+    if (isNaN(lat_degrees)||(lat_degrees < 0)||(lat_degrees >=  90)||
+        isNaN(lat_minutes)||(lat_minutes < 0)||(lat_minutes >=  60)||
+        isNaN(lon_degrees)||(lon_degrees < 0)||(lon_degrees >= 180)||
+        isNaN(lon_minutes)||(lon_minutes < 0)||(lon_minutes >=  60))
+    {
+        window.alert("Invalid input!");
+        return;
+    }
+
+    var lat = lat_degrees + lat_minutes/60.0;
+    var lon = lon_degrees + lon_minutes/60.0;
+    if (calc.south.checked == true) lat = -lat;
+    if (calc.west.checked  == true) lon = -lon;
+
+    var year  = parseInt(calc.year.value, 10);
+    var month = parseInt(calc.month.value, 10) - 1;
+    var day   = parseInt(calc.day.value, 10);
+
+    Now = new Date(year, month, day, 0, 0, 0);
+
+    calc.moonrise.value = "";
+    calc.moonset.value  = "";
+    riseset(lat, lon);
+    save_latlon();
+}
+
+// change N/S flags
+function north_lat()
+{
+    if (calc.south.checked == true) 
+        calc.south.checked = false;
+}
+
+// change N/S flags
+function south_lat()
+{
+    if (calc.north.checked == true) 
+        calc.north.checked = false;
+}
+
+// change E/W flags
+function east_lon()
+{
+    if (calc.west.checked == true) 
+        calc.west.checked = false;
+}
+
+// change E/W flags
+function west_lon()
+{
+    if (calc.east.checked == true) 
+        calc.east.checked = false;
+}
+
+// calculate moonrise and moonset times
+function riseset( lat, lon )
+{
+    var i, j, k;
+    var zone = Math.round(Now.getTimezoneOffset()/60);
+    var jd = julian_day() - 2451545;           // Julian day relative to Jan 1.5, 2000
+    
+    if ((sgn(zone) == sgn(lon))&&(zone != 0))
+        window.alert("WARNING: time zone and longitude are incompatible!");
+
+    var mp = new Array(3);                     // create a 3x3 array
+    for (i = 0; i < 3; i++)
+    {
+        mp[i] = new Array(3);
+        for (j = 0; j < 3; j++)
+            mp[i][j] = 0.0;
+    }
+
+    lon = lon/360;
+    var tz = zone/24;
+    var t0 = lst(lon, jd, tz);                 // local sidereal time
+
+    jd = jd + tz;                              // get moon position at start of day
+
+    for (k = 0; k < 3; k++)
+    {
+        moon(jd);
+        mp[k][0] = Sky[0];
+        mp[k][1] = Sky[1];
+        mp[k][2] = Sky[2];
+        jd = jd + 0.5;      
+    }   
+
+    if (mp[1][0] <= mp[0][0])
+        mp[1][0] = mp[1][0] + 2*PI;
+
+    if (mp[2][0] <= mp[1][0])
+        mp[2][0] = mp[2][0] + 2*PI;
+
+    RAn[0] = mp[0][0];
+    Dec[0] = mp[0][1];
+
+    Moonrise = false;                          // initialize
+    Moonset  = false;
+    
+    for (k = 0; k < 24; k++)                   // check each hour of this day
+    {
+        ph = (k + 1)/24;
+        
+        RAn[2] = interpolate(mp[0][0], mp[1][0], mp[2][0], ph);
+        Dec[2] = interpolate(mp[0][1], mp[1][1], mp[2][1], ph);
+        
+        VHz[2] = test_moon(k, zone, t0, lat, mp[1][2]);
+
+        RAn[0] = RAn[2];                       // advance to next hour
+        Dec[0] = Dec[2];
+        VHz[0] = VHz[2];
+    }
+
+    // display results
+    calc.moonrise.value = zintstr(Rise_time[0], 2) + ":" + zintstr(Rise_time[1], 2) 
+                       + ", az = " + frealstr(Rise_az, 5, 1) + "°";
+    calc.moonset.value  = zintstr( Set_time[0], 2) + ":" + zintstr( Set_time[1], 2)
+                       + ", az = " + frealstr(Set_az, 5, 1) + "°";
+    special_message();
+}
+
+// Local Sidereal Time for zone
+function lst( lon, jd, z )
+{
+    var s = 24110.5 + 8640184.812999999*jd/36525 + 86636.6*z + 86400*lon;
+    s = s/86400;
+    s = s - Math.floor(s);
+    return s*360*DR;
+}
+
+// 3-point interpolation
+function interpolate( f0, f1, f2, p )
+{
+    var a = f1 - f0;
+    var b = f2 - f1 - a;
+    var f = f0 + p*(2*a + b*(2*p - 1));
+
+    return f;
+}
+
+// test an hour for an event
+function test_moon( k, zone, t0, lat, plx )
+{
+    var ha = [0.0, 0.0, 0.0];
+    var a, b, c, d, e, s, z;
+    var hr, min, time;
+    var az, hz, nz, dz;
+
+    if (RAn[2] < RAn[0])
+        RAn[2] = RAn[2] + 2*PI;
+    
+    ha[0] = t0 - RAn[0] + k*K1;
+    ha[2] = t0 - RAn[2] + k*K1 + K1;
+    
+    ha[1]  = (ha[2] + ha[0])/2;                // hour angle at half hour
+    Dec[1] = (Dec[2] + Dec[0])/2;              // declination at half hour
+
+    s = Math.sin(DR*lat);
+    c = Math.cos(DR*lat);
+
+    // refraction + sun semidiameter at horizon + parallax correction
+    z = Math.cos(DR*(90.567 - 41.685/plx));
+
+    if (k <= 0)                                // first call of function
+        VHz[0] = s*Math.sin(Dec[0]) + c*Math.cos(Dec[0])*Math.cos(ha[0]) - z;
+
+    VHz[2] = s*Math.sin(Dec[2]) + c*Math.cos(Dec[2])*Math.cos(ha[2]) - z;
+    
+    if (sgn(VHz[0]) == sgn(VHz[2]))
+        return VHz[2];                         // no event this hour
+    
+    VHz[1] = s*Math.sin(Dec[1]) + c*Math.cos(Dec[1])*Math.cos(ha[1]) - z;
+
+    a = 2*VHz[2] - 4*VHz[1] + 2*VHz[0];
+    b = 4*VHz[1] - 3*VHz[0] - VHz[2];
+    d = b*b - 4*a*VHz[0];
+
+    if (d < 0)
+        return VHz[2];                         // no event this hour
+    
+    d = Math.sqrt(d);
+    e = (-b + d)/(2*a);
+
+    if (( e > 1 )||( e < 0 ))
+        e = (-b - d)/(2*a);
+
+    time = k + e + 1/120;                      // time of an event + round up
+    hr   = Math.floor(time);
+    min  = Math.floor((time - hr)*60);
+
+    hz = ha[0] + e*(ha[2] - ha[0]);            // azimuth of the moon at the event
+    nz = -Math.cos(Dec[1])*Math.sin(hz);
+    dz = c*Math.sin(Dec[1]) - s*Math.cos(Dec[1])*Math.cos(hz);
+    az = Math.atan2(nz, dz)/DR;
+    if (az < 0) az = az + 360;
+    
+    if ((VHz[0] < 0)&&(VHz[2] > 0))
+    {
+        Rise_time[0] = hr;
+        Rise_time[1] = min;
+        Rise_az = az;
+        Moonrise = true;
+    }
+    
+    if ((VHz[0] > 0)&&(VHz[2] < 0))
+    {
+        Set_time[0] = hr;
+        Set_time[1] = min;
+        Set_az = az;
+        Moonset = true;
+    }
+
+    return VHz[2];
+}
+
+// test an hour for an event
+function test_sun( k, zone, t0, lat )
+{
+    var ha = new Array(3);
+    var a, b, c, d, e, s, z;
+    var hr, min, time;
+    var az, dz, hz, nz;
+    
+    ha[0] = t0 - RAn[0] + k*K1; 
+    ha[2] = t0 - RAn[2] + k*K1 + K1; 
+
+    ha[1]  = (ha[2]  + ha[0])/2;               // hour angle at half hour
+    Dec[1] = (Dec[2] + Dec[0])/2 ;             // declination at half hour
+    
+    s = Math.sin(lat*DR);
+    c = Math.cos(lat*DR);
+    z = Math.cos(90.833*DR);                   // refraction + sun semidiameter at horizon
+
+    if (k <= 0)
+        VHz[0] = s*Math.sin(Dec[0]) + c*Math.cos(Dec[0])*Math.cos(ha[0]) - z;
+
+    VHz[2] = s*Math.sin(Dec[2]) + c*Math.cos(Dec[2])*Math.cos(ha[2]) - z;
+    
+    if (sgn(VHz[0]) == sgn(VHz[2])) 
+        return VHz[2];                         // no event this hour
+    
+    VHz[1] = s*Math.sin(Dec[1]) + c*Math.cos(Dec[1])*Math.cos(ha[1]) - z;
+    
+    a =  2* VHz[0] - 4*VHz[1] + 2*VHz[2]; 
+    b = -3* VHz[0] + 4*VHz[1] - VHz[2];   
+    d = b*b - 4*a*VHz[0];
+
+    if (d < 0) 
+        return VHz[2];                         // no event this hour
+    
+    d = Math.sqrt(d);    
+    e = (-b + d)/(2 * a);
+    
+    if ((e > 1)||(e < 0))
+        e = (-b - d)/(2*a);
+
+    time = k + e + 1/120;                      // time of an event
+    
+    hr = Math.floor(time);
+    min = Math.floor((time - hr)*60);
+
+    hz = ha[0] + e*(ha[2] - ha[0]);            // azimuth of the sun at the event
+    nz = -Math.cos(Dec[1])*Math.sin(hz);
+    dz = c*Math.sin(Dec[1]) - s*Math.cos(Dec[1])*Math.cos(hz);
+    az = Math.atan2(nz, dz)/DR;
+    if (az < 0) az = az + 360;
+    
+    if ((VHz[0] < 0)&&(VHz[2] > 0))
+    {
+        Rise_time[0] = hr;
+        Rise_time[1] = min;
+        Rise_az = az;
+        Moonrise = true;
+    }
+    
+    if ((VHz[0] > 0)&&(VHz[2] < 0))
+    {
+        Set_time[0] = hr;
+        Set_time[1] = min;
+        Set_az = az;
+        Moonset = true;
+    }
+
+    return VHz[2];
+}
+
+// check for no moonrise and/or no moonset
+function special_message()
+{
+    if ((!Moonrise)&&(!Moonset))               // neither moonrise nor moonset
+    {
+        if (VHz[2] < 0)
+            calc.moonrise.value = "Moon down all day";
+        else
+            calc.moonrise.value = "Moon up all day";
+
+        calc.moonset.value = "";
+    }
+    else                                       // moonrise or moonset
+    {
+        if (!Moonrise)
+            calc.moonrise.value = "No moonrise this date";
+        else if (!Moonset)
+            calc.moonset.value  = "No moonset this date";
+    }
+}
+
+// moon's position using fundamental arguments 
+// (Van Flandern & Pulkkinen, 1979)
+function moon( jd )
+{
+    var d, f, g, h, m, n, s, u, v, w;
+
+    h = 0.606434 + 0.03660110129*jd;
+    m = 0.374897 + 0.03629164709*jd;
+    f = 0.259091 + 0.0367481952 *jd;
+    d = 0.827362 + 0.03386319198*jd;
+    n = 0.347343 - 0.00014709391*jd;
+    g = 0.993126 + 0.0027377785 *jd;
+
+    h = h - Math.floor(h);
+    m = m - Math.floor(m);
+    f = f - Math.floor(f);
+    d = d - Math.floor(d);
+    n = n - Math.floor(n);
+    g = g - Math.floor(g);
+
+    h = h*2*PI;
+    m = m*2*PI;
+    f = f*2*PI;
+    d = d*2*PI;
+    n = n*2*PI;
+    g = g*2*PI;
+
+    v = 0.39558*Math.sin(f + n);
+    v = v + 0.082  *Math.sin(f);
+    v = v + 0.03257*Math.sin(m - f - n);
+    v = v + 0.01092*Math.sin(m + f + n);
+    v = v + 0.00666*Math.sin(m - f);
+    v = v - 0.00644*Math.sin(m + f - 2*d + n);
+    v = v - 0.00331*Math.sin(f - 2*d + n);
+    v = v - 0.00304*Math.sin(f - 2*d);
+    v = v - 0.0024 *Math.sin(m - f - 2*d - n);
+    v = v + 0.00226*Math.sin(m + f);
+    v = v - 0.00108*Math.sin(m + f - 2*d);
+    v = v - 0.00079*Math.sin(f - n);
+    v = v + 0.00078*Math.sin(f + 2*d + n);
+    
+    u = 1 - 0.10828*Math.cos(m);
+    u = u - 0.0188 *Math.cos(m - 2*d);
+    u = u - 0.01479*Math.cos(2*d);
+    u = u + 0.00181*Math.cos(2*m - 2*d);
+    u = u - 0.00147*Math.cos(2*m);
+    u = u - 0.00105*Math.cos(2*d - g);
+    u = u - 0.00075*Math.cos(m - 2*d + g);
+    
+    w = 0.10478*Math.sin(m);
+    w = w - 0.04105*Math.sin(2*f + 2*n);
+    w = w - 0.0213 *Math.sin(m - 2*d);
+    w = w - 0.01779*Math.sin(2*f + n);
+    w = w + 0.01774*Math.sin(n);
+    w = w + 0.00987*Math.sin(2*d);
+    w = w - 0.00338*Math.sin(m - 2*f - 2*n);
+    w = w - 0.00309*Math.sin(g);
+    w = w - 0.0019 *Math.sin(2*f);
+    w = w - 0.00144*Math.sin(m + n);
+    w = w - 0.00144*Math.sin(m - 2*f - n);
+    w = w - 0.00113*Math.sin(m + 2*f + 2*n);
+    w = w - 0.00094*Math.sin(m - 2*d + g);
+    w = w - 0.00092*Math.sin(2*m - 2*d);
+
+    s = w/Math.sqrt(u - v*v);                  // compute moon's right ascension ...  
+    Sky[0] = h + Math.atan(s/Math.sqrt(1 - s*s));
+
+    s = v/Math.sqrt(u);                        // declination ...
+    Sky[1] = Math.atan(s/Math.sqrt(1 - s*s));
+
+    Sky[2] = 60.40974*Math.sqrt( u );          // and parallax
+}
+
+// determine Julian day from calendar date
+// (Jean Meeus, "Astronomical Algorithms", Willmann-Bell, 1991)
+function julian_day()
+{
+    var a, b, jd;
+    var gregorian;
+
+    var month = Now.getMonth() + 1;
+    var day   = Now.getDate();
+    var year  = Now.getFullYear();
+
+    gregorian = (year < 1583) ? false : true;
+    
+    if ((month == 1)||(month == 2))
+    {
+        year  = year  - 1;
+        month = month + 12;
+    }
+
+    a = Math.floor(year/100);
+    if (gregorian) b = 2 - a + Math.floor(a/4);
+    else           b = 0.0;
+
+    jd = Math.floor(365.25*(year + 4716)) 
+       + Math.floor(30.6001*(month + 1)) 
+       + day + b - 1524.5;
+    
+    return jd;
+}
+
+// returns value for sign of argument
+function sgn( x )
+{
+    var rv;
+    if (x > 0.0)      rv =  1;
+    else if (x < 0.0) rv = -1;
+    else              rv =  0;
+    return rv;
+}
+
+// format a positive integer with leading zeroes
+function zintstr( num, width )
+{
+    var str = num.toString(10);
+    var len = str.length;
+    var intgr = "";
+    var i;
+
+    for (i = 0; i < width - len; i++)          // append leading zeroes
+        intgr += '0';
+
+    for (i = 0; i < len; i++)                  // append digits
+        intgr += str.charAt(i);
+
+    return intgr;
+}
+
+// format an integer
+function cintstr( num, width )
+{
+    var str = num.toString(10);
+    var len = str.length;
+    var intgr = "";
+    var i;
+
+    for (i = 0; i < width - len; i++)          // append leading spaces
+        intgr += ' ';
+
+    for (i = 0; i < len; i++)                  // append digits
+        intgr += str.charAt(i);
+
+    return intgr;
+}
+
+// format a real number
+function frealstr( num, width, fract )
+{
+    var str = num.toFixed(fract);
+    var len = str.length;
+    var real = "";
+    var i;
+
+    for (i = 0; i < width - len; i++)          // append leading spaces
+        real += ' ';
+
+    for (i = 0; i < len; i++)                  // append digits
+        real += str.charAt(i);
+
+    return real;
+}
+
+// read data from cookie
+function getCookie( name )
+{
+    if (document.cookie.length > 0) 
+    { 
+        begin = document.cookie.indexOf(name+"="); 
+        if (begin != -1) // Note: != means "is not equal to"
+        { 
+            begin += name.length + 1; 
+            end = document.cookie.indexOf(";", begin);
+            if (end == -1) end = document.cookie.length;
+
+            return unescape(document.cookie.substring(begin, end)); 
+        } 
+    }
+    return null; 
+}
+
+// write data to cookie
+function setCookie( name, value, expiredays ) 
+{
+    var ExpireDate = new Date();
+    ExpireDate.setTime(ExpireDate.getTime() + (expiredays*24*3600*1000));
+
+    document.cookie = name 
+                    + "=" + escape(value) 
+                    + ((expiredays == null) ? "" : "; expires=" + ExpireDate.toGMTString());
+}
+
+// unhide -->
+</script>
+</head>
+<body bgcolor="white" text="black" onLoad="initdate();">
+
+<!--[TOP]-->
+<center>
+<!-- google -->
+<script type="text/javascript"><!--
+google_ad_client = "pub-8195248024094868";
+google_ad_width = 728;
+google_ad_height = 90;
+google_ad_format = "728x90_as";
+google_ad_channel ="";
+//--></script>
+<script type="text/javascript" src="http://pagead2.googlesyndication.com/pagead/show_ads.js">
+</script>
+<!-- google -->
+</center>
+<!--[END]-->
+
+<hr>
+|<A href="index.html"> home </A>
+|<A href="scriptindex.html"> contents </A>
+|<A onclick=feedback() href="#top"> send comment </A>
+|<A onclick=send_to() href="#top"> send link </A>
+|<A onclick=bookmark() href="#top"> add bookmark </A>| 
+<hr>
+
+<h2>Moonrise, Moonset solver</h2>
+
+<h3>version 2</h3>
+
+<h4><I>by Stephen R. Schmitt</I></h4>
+
+<center>
+<form name=calc>
+<table border=1 cellspacing=0 bordercolor=darkblue frame=border rules=rows>
+<caption>Enter your location:</caption>
+<tr><td>latitude
+ <td><INPUT size=10 maxLength=20 name=lat_degrees>
+ <td align=left><b>&deg; </b></td>
+ <td><INPUT size=10 maxLength=20 name=lat_minutes>
+ <td align=left><b>' </b></td>
+ <td><input type="radio" name ="north" onClick="north_lat();" checked>North
+ <td><input type="radio" name ="south" onClick="south_lat();">South
+<tr><td>longitude
+ <td><INPUT size=10 maxLength=20 name=lon_degrees>
+ <td align=left><b>&deg; </b></td>
+ <td><INPUT size=10 maxLength=20 name=lon_minutes>
+ <td align=left><b>' </b></td>
+ <td><input type="radio" name ="east" onClick="east_lon();">East
+ <td><input type="radio" name ="west" onClick="west_lon();" checked>West
+</table>
+<table border=1 cellspacing=0 bordercolor=darkblue frame=border rules=rows>
+<caption>Enter the date:<br> <tt>mm/dd/yyyy</caption>
+<tr><td><INPUT size=2 maxLength=10 name=month><td><b> / </b></td>
+ <td><INPUT size=2 maxLength=10 name=day><td><b> / </b></td>
+ <td><INPUT size=5 maxLength=10 name=year><td><b>&nbsp;&nbsp;&nbsp;&nbsp;</b></td>
+</table>
+<p>
+<INPUT onclick=compute(); type=button STYLE="font-family:Courier" value="Compute">
+<INPUT onclick=test(); type=button STYLE="font-family:Courier" value=" Test  ">
+<p>
+<table border=1 cellspacing=0 bordercolor=darkblue frame=border rules=rows>
+<caption>Solution:</caption>
+<tr><td>Moonrise
+ <td><INPUT readOnly size=20 maxLength=20 name=moonrise>
+<tr><td>Moonset
+ <td><INPUT readOnly size=20 maxLength=20 name=moonset>
+</table>
+</form>
+</center>
+
+<hr>
+
+<h3><A name=contents>Contents</A></h3>
+<ol>
+<li><A href="#about">About</A>
+<li><A href="#the source code">The source code</A>
+<li><A href="#discussion">Discussion</A>
+</ol>
+
+<hr>
+
+<h4>1. <A name=about>About</A></h4>
+
+<p>This Java Script calculator determines the time of moonrise and moonset for your location and a given date. To operate the calculator, enter your latitude and longitude and a date. Press the <B>Compute</B> button to obtain the solution. The <B>Test</B> button loads the geographic coordinates of Boston, Massachusetts, USA to demonstrate how the calculator works. On invalid entries, a popup window will display an error message. 
+
+<p>Return to <A href="#contents">Contents</A> 
+
+<hr>
+
+<h4>2. <A name="the source code">The source code</A></h4>
+
+<p>The Java Script source code for this program can be viewed by using the <b>View|Source</b> command of your web browser. 
+
+<p>You may use or modify this source code in any way you find useful, provided that you agree that the author has no warranty, obligations or liability. You must determine the suitability of this source code for your use. 
+
+<p>Return to <A href="#contents">Contents</A> 
+
+<hr>
+
+<h4>3. <A name=discussion>Discussion</A></h4>
+
+<p>This page calculates the times of moonrise and moonset on any date, accurate to the minute within several centuries of the present. It correctly describes what happens in the Arctic and Antarctic regions, where the Moon may not rise or set on a given date. The program was adapted from a BASIC program in Sky & Telescope magazine, July, 1989, page 78.
+
+<p>Moonrise occurs when the rotation of the Earth causes the upper limb of the Moon to move above the visible horizon as seen by an observer on the Earth's surface. Moonset is similar, occurring when the upper limb of the Moon moves below the visible horizon. The mathematical model of the Moon's apparent motion in the sky gives the position of the center of the Moon as it would be seen from the center of the Earth. Because the Moon is relatively close to the Earth, it is necessary to correct for parallax, the angular offset due observation from the Earth's surface. Also, it is necessary to account for the visual radius of the Moon since the position of the upper limb determines moonset and moonrise. Additionally, the Earth's atmosphere refracts light noticeably for light source near the horizon. This calculator includes corrections that account for all of these under average conditions. Actual observations of moonset and moonrise may differ from the predicted times due to variations in atmospheric conditions and due to local topography.
+
+<p>The predicted times are given in local time, standard or daylight saving, obtained from your computer's operating system. The azimuth of moonrise and moonset is given, measured in degrees from true North. You must determine your correct latitude and longitude to obtain valid predictions for your location. 
+
+<h3>References</h3>
+<ol>
+<li><A HREF="http://www.amazon.com/gp/associates/link-types/marketplace.html?t=topicsincompu-20&asin=0943396611">Astronomical Algorithms, Meeus</A>
+<li><A HREF="http://www.amazon.com/gp/associates/link-types/marketplace.html?t=topicsincompu-20&asin=0521356997">Practical Astronomy with your Calculator</A>
+</ol>
+
+<p>Return to <A href="#contents">Contents</A> 
+
+<hr>
+|<a HREF="index.html"> home </a>
+|<a href="scriptindex.html"> contents </a>
+|<a HREF="#top" onClick=feedback()> send comment </a>
+|<a HREF="#top" onClick=send_to()> send link </a>
+|<a HREF="#top" onClick=bookmark()> add bookmark </a>|
+<hr>
+
+<!--[BOTTOM]-->
+<center>
+<!-- google -->
+<script type="text/javascript"><!--
+google_ad_client = "pub-8195248024094868";
+google_ad_width = 728;
+google_ad_height = 90;
+google_ad_format = "728x90_as";
+google_ad_channel ="";
+//--></script>
+<script type="text/javascript" src="http://pagead2.googlesyndication.com/pagead/show_ads.js">
+</script>
+<!-- google -->
+</center>
+<p><center>
+<iframe src="http://rcm.amazon.com/e/cm?t=topicsincompu-20&o=1&p=13&l=ez&f=ifr&f=ifr" width="468" height="60" scrolling="no" marginwidth="0" marginheight="0" border="0" frameborder="0" style="border:none;"></iframe>
+</center>
+<!--[END]-->
+
+<hr>
+Copyright &copy; 2007, Stephen R. Schmitt
+</body>
+</html>

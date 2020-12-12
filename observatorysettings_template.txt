@@ -1,0 +1,44 @@
+###############################################################################
+#	Modify this file with your information
+#	Rename this file to observatorysettings.txt
+#	configuration is meant to be DOME/Roll off roof/Portable/etc
+#	
+#	Up to 15 telescope configurations (1 -> 15)
+#	Up to 5 comments for each telescope configuration
+#	This information is used primarily in the generation of FITS files
+#	All of these fields are optional
+#	Elevation is in feet above sea level
+#	The telescopenum value can be '+' to bump to the next index
+#	
+#	Note: this template file gets regenerated every time you run this program
+###############################################################################
+name                          	=	
+owner                         	=	
+email                         	=	
+observer                      	=	
+configuration                 	=	
+location                      	=	
+latitude                      	=	
+longitude                     	=	
+elevation                     	=	
+website                       	=	
+timezone                      	=	
+utcoffset                     	=	
+aavso_observerid              	=	
+###############################################################################
+#telescope specific
+#up to N entries, numbered 1-N
+###############################################################################
+telescopenum                  	=	
+refid                         	=	
+focallength                   	=	
+aperture                      	=	
+secondary                     	=	
+filter                        	=	
+filterwheel                   	=	
+focuser                       	=	
+instrument                    	=	
+manufacturer                  	=	
+model                         	=	
+#up to N comments per telescope entry
+comment                       	=	
