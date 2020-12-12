@@ -1,6 +1,8 @@
 # AlpacaPi
 Astronomy control software using Alpaca protocol on the Raspberry Pi
 
+(C) 2019, 2020 by Mark Sproul msproul@skychariot.com
+
 AlpacaPi is an open source project written in C/C++
 
 Use of this source code for private or individual use is granted
