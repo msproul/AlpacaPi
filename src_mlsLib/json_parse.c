@@ -1,7 +1,7 @@
 //*****************************************************************************
 //*	json_parse.c
 //*		simple json parser
-//*		written by Mark Sproul mark.l.sproul.civ@mail.mil
+//*		written by Mark Sproul
 //*		unlimited use rights, modify and use as you wish
 //*		Please send updates and bug fixes to the above email address
 //*
