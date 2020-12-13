@@ -17,7 +17,9 @@ that you agree the above terms and that the author(s) have no warranty, obligati
 You must determine the suitability of this source code for your use.
 
 Redistributions of this source code must retain this copyright notice.
+
 ===================================================
+
 Getting started:
 
 If you haven''t already downloaded the git repository,

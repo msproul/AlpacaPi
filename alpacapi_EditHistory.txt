@@ -890,15 +890,15 @@ multicam.cpp:22          	//*	Mar 29,	2120	<TODO> Change multicam commands to ma
 cameradriver_ASI.cpp:1023	//*	Jun 29,	2120	<TODO> Change video timestamp to an option
 History Comments found   = 888 in 173 files
 Total lines              = 87644
-Total comment Lines      = 10448
-Total comments           = 12300
+Total comment Lines      = 10452
+Total comments           = 12304
 Total history comments   = 888
 Total C files            = 20
 Total C++ files          = 68
 Total H files            = 84
 Preprocssor cnt          = 2610
-Total SLOC               = 60611
-Total SLOC-Logical       = 48050
+Total SLOC               = 60607
+Total SLOC-Logical       = 48046
 Programmer comment summary
 MLS             =  881
 TODO            =    7

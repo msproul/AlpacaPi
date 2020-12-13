@@ -2750,10 +2750,10 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 TYPE_ASCOM_STATUS	TelescopeDriver::Put_SlewToAltAzAsync(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
-bool				rightAscensionFound;
-char				rightAscensionStr[64];
-bool				declinationFound;
-char				declinationStr[64];
+//bool				rightAscensionFound;
+//char				rightAscensionStr[64];
+//bool				declinationFound;
+//char				declinationStr[64];
 
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG(reqData->contentData);
