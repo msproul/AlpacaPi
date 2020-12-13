@@ -889,16 +889,16 @@ cameradriver_TOUP.cpp:37 	//*	Feb 16,	2120	<TODO> Add gain setting to Toupcam
 multicam.cpp:22          	//*	Mar 29,	2120	<TODO> Change multicam commands to match updated camera commands
 cameradriver_ASI.cpp:1023	//*	Jun 29,	2120	<TODO> Change video timestamp to an option
 History Comments found   = 888 in 173 files
-Total lines              = 87644
+Total lines              = 87645
 Total comment Lines      = 10452
 Total comments           = 12304
 Total history comments   = 888
 Total C files            = 20
 Total C++ files          = 68
 Total H files            = 84
-Preprocssor cnt          = 2610
-Total SLOC               = 60607
-Total SLOC-Logical       = 48046
+Preprocssor cnt          = 2612
+Total SLOC               = 60608
+Total SLOC-Logical       = 48047
 Programmer comment summary
 MLS             =  881
 TODO            =    7

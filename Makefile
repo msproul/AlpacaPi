@@ -250,6 +250,7 @@ ROR_OBJECTS=												\
 
 ######################################################################################
 #pragma mark C++ linux-x86
+cpp		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
 cpp		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
 cpp		:		DEFINEFLAGS		+=	-D_ENABLE_ATIK_
 cpp		:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
@@ -470,12 +471,12 @@ pi		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_
 pi		:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
 pi		:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
 pi		:		DEFINEFLAGS		+=	-D_ENABLE_DISCOVERY_QUERRY_
-pi		:		DEFINEFLAGS		+=	-D_ENABLE_MULTICAM_
+#pi		:		DEFINEFLAGS		+=	-D_ENABLE_MULTICAM_
 #pi		:		DEFINEFLAGS		+=	-D_ENABLE_DOME_
 pi		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
 pi		:		DEFINEFLAGS		+=	-D_ENABLE_ATIK_
 pi		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
-pi		:		DEFINEFLAGS		+=	-D_ENABLE_TOUP_
+#pi		:		DEFINEFLAGS		+=	-D_ENABLE_TOUP_
 pi		:		PLATFORM		=	armv7
 pi		:		ATIK_LIB_DIR	=	$(ATIK_LIB_MASTER_DIR)/ARM/x86/NoFlyCapture
 pi		:			$(CPP_OBJECTS)				\
