@@ -20,7 +20,7 @@ Redistributions of this source code must retain this copyright notice.
 
 ===================================================
 
-#Getting started:
+Getting started:
 
 If you haven''t already downloaded the git repository,
 
@@ -46,7 +46,7 @@ run that script
 
 ===================================================
 
-#Development:
+Development:
 
 AlpacaPi is written in C and C++ to run on Linux operating systems.
 It is build using a conventional Makefile.
@@ -68,9 +68,21 @@ more done on that particular part.
 There are many different driver modules included in this project, almost every one supported by
 Alpaca/ASCOM plus a couple extras I created for my own use.
 
+AlpacaPi has been tested on the following platforms
+
+	Ubuntu 16.04 LTS x86_64
+
+	Raspberry Pi 3 (32 bit)
+
+	Raspberry Pi 4 (32 bit)
+
+	Raspberry Pi 4 (64 bit)
+
+	NVIDIA Jetson Nano (64 bit)
+
 ===================================================
 
-#Status:
+Status:
 
 For those familiar with ASCOM and ASCOM development, I use the CONFORM tool to
 verify the workings of my drivers.  Here my current results
@@ -91,7 +103,7 @@ verify the workings of my drivers.  Here my current results
 
 ===================================================
 
-#Documentation:
+Documentation:
 
 Refer to the documentation folder.
 If you are looking at this online via github, then look at the PDF file.
@@ -100,7 +112,7 @@ If you have downloaded AlpacaPi already, you can look at the HTML file or the PD
 ===================================================
 
 
-#Contact:
+Contact:
 
 msproul@skychariot.com
 
