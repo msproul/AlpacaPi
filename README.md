@@ -73,11 +73,17 @@ Status:
 For those familiar with ASCOM and ASCOM development, I use the CONFORM tool to
 verify the workings of my drivers.  Here my current results
 (as of Dec 13, 2020)
+
 	Apr  1,	2020	<MLS> CONFORM-filterwheel -> PASSED!!!!!!!!!!!!!!!!!!!!!
+
 	Apr  2,	2020	<MLS> CONFORM-focuser -> PASSED!!!!!!!!!!!!!!!!!!!!!
+
 	Apr  2,	2020	<MLS> CONFORM-rotator -> PASSED!!!!!!!!!!!!!!!!!!!!!
+
 	Apr  2,	2020	<MLS> CONFORM-switch -> PASSED!!!!!!!!!!!!!!!!!!!!!
+
 	Dec  7,	2020	<MLS> CONFORM-dome -> 4 errors, 0 warnings and 0 issues
+
 	Dec  7,	2020	<MLS> CONFORM-telescope -> 0 errors, 0 warnings and 6 issues
 
 
