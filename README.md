@@ -20,7 +20,7 @@ Redistributions of this source code must retain this copyright notice.
 
 ===================================================
 
-Getting started:
+#Getting started:
 
 If you haven''t already downloaded the git repository,
 
@@ -46,6 +46,8 @@ run that script
 
 ===================================================
 
+#Development:
+
 AlpacaPi is written in C and C++ to run on Linux operating systems.
 It is build using a conventional Makefile.
 The make file has many defines in to enable various features.
@@ -68,7 +70,7 @@ Alpaca/ASCOM plus a couple extras I created for my own use.
 
 ===================================================
 
-Status:
+#Status:
 
 For those familiar with ASCOM and ASCOM development, I use the CONFORM tool to
 verify the workings of my drivers.  Here my current results
@@ -88,7 +90,17 @@ verify the workings of my drivers.  Here my current results
 
 
 ===================================================
-Contact:
+
+#Documentation:
+
+Refer to the documentation folder.
+If you are looking at this online via github, then look at the PDF file.
+If you have downloaded AlpacaPi already, you can look at the HTML file or the PDF file.
+
+===================================================
+
+
+#Contact:
 
 msproul@skychariot.com
 
