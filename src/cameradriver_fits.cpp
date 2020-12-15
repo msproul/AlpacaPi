@@ -73,6 +73,7 @@
 //*	Feb 22,	2020	<MLS> Added gain to FITS camera info
 //*	Nov 29,	2020	<MLS> Added WriteFITS_MoonInfo()
 //*	Nov 30,	2020	<MLS> Added moon rise and moon set to FITS data
+//*	Dec 14,	2020	<MLS> Just discovered a new version of cfitsio (3.49)
 //*****************************************************************************
 
 #if defined(_ENABLE_CAMERA_) && defined(_ENABLE_FITS_)

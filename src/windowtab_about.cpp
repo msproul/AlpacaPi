@@ -19,6 +19,7 @@
 //*	Edit History
 //*****************************************************************************
 //*	Apr 21,	2020	<MLS> Created windowtab_about.cpp
+//*	Dec 14,	2020	<MLS> Updated web link in about box
 //*****************************************************************************
 
 
@@ -59,22 +60,24 @@ WindowTabAbout::~WindowTabAbout(void)
 static char	gAlpacaPiTxt1[]	=
 {
 	"AlpacaPi Project\r"
-	"(C) Mark Sproul\r"
+	"(C) Mark Sproul 2019-2020\r"
 	"msproul@skychariot.com\r"
 	"www.skychariot.com/dome\r"
 //	"www.skychariot.com/dome/alpacapi\r"
 
-	"This will eventually be open source.\r"
-	"Contact me for source code.\r"
+	"AlpacaPi is open source for non-commercial use\r"
+	"https://github.com/msproul/AlpacaPi\r"
 
 };
 
+//**************************************************************************************
 static char	gAlpacaPiTxt2[]	=
 {
 	"AlpacaPi is a series of drivers and applications utilizing the Alpaca Protocol "
 	"designed to run on Raspberry Pi and other Linux systems."
 };
 
+//**************************************************************************************
 static char	gAlpacaPiTxt3[]	=
 {
 	"Quick help\r"
