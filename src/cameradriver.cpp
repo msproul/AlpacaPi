@@ -39,7 +39,7 @@
 //*	Sep 26,	2019	<MLS> Working on orginizing camera C++ class
 //*	Oct  2,	2019	<MLS> Added AllcateImageBuffer()
 //*	Oct 26,	2019	<MLS> Added IsCameraIDvalid()
-//*	Nov  2,	2019	<MLS> Downloaded and installed cfitsio library
+//*	Nov  2,	2019	<MLS> Downloaded and installed cfitsio-3.47 library
 //*	Nov  3,	2019	<MLS> Added cameraSerialNum
 //*	Nov  3,	2019	<MLS> Added Get_ImageReady()
 //*	Nov  6,	2019	<MLS> Added GenerateFileNameRoot()

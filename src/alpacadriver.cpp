@@ -2663,12 +2663,10 @@ int				threadErr;
 uint32_t		delayTime_microSecs;
 uint32_t		delayTimeForThisTask;
 int				ii;
+int				cameraCnt;
 #if defined(_ENABLE_FITS_) || defined(_ENABLE_JPEGLIB_)
 	char			lineBuffer[64];
 #endif
-//#ifdef _ENABLE_MULTICAM_
-	int				cameraCnt;
-//#endif
 //struct rlimit	myRlimit;
 //int				errorCode;
 
@@ -2847,10 +2845,11 @@ int				ii;
 	//*********************************************************
 	StartDiscoveryListenThread(kAlpacaListenPort);
 
+	cameraCnt	=	CountDevicesByType(kDeviceType_Camera);
+	CONSOLE_DEBUG_W_NUM("cameraCnt=", cameraCnt);
 
 #if defined(_ENABLE_CAMERA_) && defined(_ENABLE_FITS_) && defined(_ENABLE_DISCOVERY_QUERRY_)
 	//*	for now, we dont need this on all devices
-	cameraCnt	=	CountDevicesByType(kDeviceType_Camera);
 	if (cameraCnt > 0)
 	{
 		StartDiscoveryQuerryThread();

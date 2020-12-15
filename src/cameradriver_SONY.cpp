@@ -215,7 +215,7 @@ ICrCameraObjectInfo				*camera_info	=	NULL;
 			//>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 			sonyRetCode	=	SCRSDK::Release();
 			LogFunctionCall(__FUNCTION__, __LINE__,	"SCRSDK::Release", 	0, (sonyRetCode ? "OK" : "Failed"));
-			exit(0);
+		//	exit(0);
 		}
 	}
 	else
@@ -258,7 +258,7 @@ char		savePrefix[]	=	"SONY-";
 	versionMaj			=	(versionNumber >> 24) & 0x00ff;
 	versionMin			=	(versionNumber >> 16) & 0x00ff;
 	versionPatch		=	(versionNumber >> 8) & 0x00ff;
-	sprintf(cDeviceDrvrVersStr, "%d.%d.%d", versionMaj, versionMin, versionPatch);
+	sprintf(cDriverversionStr, "%d.%d.%d", versionMaj, versionMin, versionPatch);
 
 	ReadSONYcameraInfo();
 
@@ -297,8 +297,7 @@ char		savePrefix[]	=	"SONY-";
 	}
 	else
 	{
-		CONSOLE_DEBUG("Failed to create call back object");
-		exit(0);
+		CONSOLE_ABORT("Failed to create call back object");
 	}
 
 	strcpy(cDeviceDescription, cDeviceManufacturer);
@@ -2712,7 +2711,7 @@ void segfault_sigaction(int signal, siginfo_t *si, void *arg)
 	printf("Caught segfault at address %p\n", si->si_addr);
 	LogFunctionCall(__FUNCTION__, __LINE__,	"Segfault", 	0, "Seg fault occurred");
 
-	exit(0);
+	CONSOLE_ABORT(__FUNCTION__);
 }
 
 

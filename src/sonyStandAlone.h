@@ -52,7 +52,7 @@ class CameraDriver
 //				int			cBitDepth;
 //				bool		cIsTriggerCam;
 				char		cFileNameRoot[256];
-				char		cDeviceDrvrVersStr[64];
+				char		cDriverversionStr[64];
 				char		cLastCameraErrMsg[256];
 };
 

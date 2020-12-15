@@ -162,7 +162,7 @@ domedriver.cpp:47        	//*	Oct 25,	2019	<MLS> Bump move now uses slow movemen
 domedriver.cpp:48        	//*	Oct 25,	2019	<MLS> Added Get_NormalMove()
 domedriver_rpi.cpp:27    	//*	Oct 25,	2019	<MLS> Dome Raspberry Pi C++ version fully working
 cameradriver.cpp:41      	//*	Oct 26,	2019	<MLS> Added IsCameraIDvalid()
-cameradriver.cpp:42      	//*	Nov  2,	2019	<MLS> Downloaded and installed cfitsio library
+cameradriver.cpp:42      	//*	Nov  2,	2019	<MLS> Downloaded and installed cfitsio-3.47 library
 cameradriver.h:13        	//*	Nov  2,	2019	<MLS> Added _ENABLE_FITS_ compile flag
 cameradriver_fits.cpp:34 	//*	Nov  2,	2019	<MLS> Added SaveImageAsFITS()
 cameradriver.cpp:43      	//*	Nov  3,	2019	<MLS> Added cameraSerialNum
@@ -891,16 +891,16 @@ cameradriver_TOUP.cpp:37 	//*	Feb 16,	2120	<TODO> Add gain setting to Toupcam
 multicam.cpp:22          	//*	Mar 29,	2120	<TODO> Change multicam commands to match updated camera commands
 cameradriver_ASI.cpp:1023	//*	Jun 29,	2120	<TODO> Change video timestamp to an option
 History Comments found   = 890 in 173 files
-Total lines              = 87649
-Total comment Lines      = 10456
-Total comments           = 12309
+Total lines              = 87647
+Total comment Lines      = 10455
+Total comments           = 12308
 Total history comments   = 890
 Total C files            = 20
 Total C++ files          = 68
 Total H files            = 84
 Preprocssor cnt          = 2612
-Total SLOC               = 60608
-Total SLOC-Logical       = 48047
+Total SLOC               = 60607
+Total SLOC-Logical       = 48046
 Programmer comment summary
 MLS             =  883
 TODO            =    7

@@ -15,6 +15,11 @@ function checkFile
 {
 MYPATH=$1
 FILENAME=$2
+ERRSTRING=$3
+
+#echo $1
+#echo $2
+#echo $3
 
 FULLPATH="$MYPATH/$FILENAME"
 
@@ -23,17 +28,19 @@ FULLPATH="$MYPATH/$FILENAME"
 	if [ -d $FULLPATH ]
 	then
 		STATUS="Present"
+		ERRSTRING=""
 	else
 		if [ -f $FULLPATH ]
 		then
 			STATUS="Present"
+			ERRSTRING=""
 		else
 			STATUS="Missing"
 			let	MISSING_COUNT=$MISSING_COUNT+1
 		fi
 	fi
 #	echo -e "\t$FILENAME\t\t$STATUS"
-	printf "\t%-24s\t%s\r\n" $FILENAME $STATUS
+	printf "\t%-24s\t%s\t%s\r\n" $FILENAME $STATUS "$ERRSTRING"
 }
 
 
@@ -42,23 +49,27 @@ function Checksystem
 {
 MISSING_COUNT=0
 	clear
-	echo "*********************************************"
-	echo "             AlpacaPi system check"
-	echo ""
-	echo "It is OK to run this script multiple times"
-	echo "*********************************************"
+	echo "**********************************************"
+	echo "*        AlpacaPi system check               *"
+	echo "*                                            *"
+	echo "* It is OK to run this script multiple times *"
+	echo "*                                            *"
+	echo "* Not all of these libraries are required    *"
+	echo "* For example, if you don't use QHY cameras  *"
+	echo "* then the QHY library is not needed         *"
+	echo "**********************************************"
 	echo "Local files"
-	checkFile	"./"			"Makefile"
-	checkFile	"./"			"src"
-	checkFile	"./"			"src_discovery"
-	checkFile	"./"			"src_mlsLib"
-	checkFile	"./"			"src_MoonRise"
+	checkFile	"./"			"Makefile"			"please re-check download"
+	checkFile	"./"			"src"				"please re-check download"
+	checkFile	"./"			"src_discovery"		"please re-check download"
+	checkFile	"./"			"src_mlsLib"		"please re-check download"
+	checkFile	"./"			"src_MoonRise"		"please re-check download"
 	checkFile	"./"			"Objectfiles"
 	checkFile	"./"			"ASI_lib"
 	checkFile	"./"			"AtikCamerasSDK"
 	checkFile	"./"			"EFW_linux_mac_SDK"
-	checkFile	"./"			"QHY"
-	checkFile	"./"			"toupcamsdk"
+	checkFile	"./"			"QHY"				"Not required"
+	checkFile	"./"			"toupcamsdk"		"Not required"
 
 	echo
 	echo "System libraries"
@@ -72,23 +83,34 @@ MISSING_COUNT=0
 function CheckFITSversion
 {
 	CFITSIO_PRESENT=false
+	#	Version 3.47 - May 2019
 	if [ -d cfitsio-3.47 ]
 	then
 		CFITSIO_PRESENT=true
 		FITS_FOLDER="cfitsio-3.47"
 	fi
 
+	#	Version 3.48 - Mar 2020
 	if [ -d cfitsio-3.48 ]
 	then
 		CFITSIO_PRESENT=true
 		FITS_FOLDER="cfitsio-3.48"
 	fi
 
+	#	Version 3.49 - Aug 2020
 	if [ -d cfitsio-3.49 ]
 	then
 		CFITSIO_PRESENT=true
 		FITS_FOLDER="cfitsio-3.49"
 	fi
+
+	#	not released yet, but just being prepared
+	if [ -d cfitsio-3.50 ]
+	then
+		CFITSIO_PRESENT=true
+		FITS_FOLDER="cfitsio-3.50"
+	fi
+
 }
 
 ###########################################################
@@ -219,5 +241,5 @@ echo "MISSING_COUNT = $MISSING_COUNT"
 echo "*********************************************"
 echo "NOTE: This install script is not finished"
 echo "Please be patient"
-echo "Last updated 12/14/2020"
+echo "Last updated 12/15/2020"
 echo "*********************************************"

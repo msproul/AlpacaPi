@@ -82,7 +82,7 @@ spinError		spinErr;
 		LogEvent(	"camera",
 					"Problem with FLIR rules",
 					NULL,
-					0,
+					kASCOM_Err_Success,
 					rulesFileName);
 	}
 
@@ -168,7 +168,7 @@ spinError			spinErr;
 	strcpy(cDeviceManufAbrev,	"FLIR");
 	strcpy(cDeviceManufacturer,	"FLIR");
 	strcpy(cDeviceDescription,	"FLIR Camera");
-	strcpy(cDeviceDrvrVersStr,	gSpinakerVerString);
+	strcpy(cDriverversionStr,	gSpinakerVerString);
 	strcpy(cDeviceName,			"FLIR");
 
 
