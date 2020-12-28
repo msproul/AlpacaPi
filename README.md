@@ -49,7 +49,7 @@ run that script
 ## Development:
 
 AlpacaPi is written in C and C++ to run on Linux operating systems.
-It is build using a conventional Makefile.
+It is built using a conventional Makefile.
 The make file has many defines in to enable various features.
 
 Dependencies:
