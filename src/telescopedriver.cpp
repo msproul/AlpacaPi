@@ -800,11 +800,7 @@ int					mySocket;
 			CONSOLE_DEBUG(reqData->contentData);
 			CONSOLE_ABORT("aborting");
 		}
-		alpacaErrCode	=	ProcessCommand_Common(reqData, cmdEnumValue);
-		if (alpacaErrCode != 0)
-		{
-			strcpy(alpacaErrMsg, reqData->alpacaErrMsg);
-		}
+		alpacaErrCode	=	ProcessCommand_Common(reqData, cmdEnumValue, alpacaErrMsg);
 		break;
 	}
 //	CONSOLE_DEBUG_W_NUM("Calling RecordCmdStats(), cmdEnumValue=", cmdEnumValue);

@@ -66,9 +66,6 @@ class ControllerPreview: public ControllerCamera
 				WindowTabPreview		*cPreviewTabObjPtr;
 				WindowTabAbout			*cAboutBoxTabObjPtr;
 
-				double					cPrevProgessValue;
-				int						cProgressUpdates;
-				int						cProgressReDraws;
 };
 
 

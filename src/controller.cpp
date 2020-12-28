@@ -1470,7 +1470,8 @@ double		percentComplete;
 				testString,
 				textLoc,
 				&gTextFont[curFontNum],
-				CV_RGB(255,	0,	255)
+			//	CV_RGB(255,	0,		255)
+				CV_RGB(255,	255,	255)
 				);
 }
 

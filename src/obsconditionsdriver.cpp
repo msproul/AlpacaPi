@@ -359,6 +359,7 @@ int					mySocket;
 			{
 //+				alpacaErrCode	=	Put_averageperiod(reqData, alpacaErrMsg);
 				alpacaErrCode	=	kASCOM_Err_NotImplemented;
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not Implemented");
 			}
 			break;
 
@@ -409,7 +410,7 @@ int					mySocket;
 		case kCmd_ObservCond_windspeed:				//*	Returns the wind speed at the observatory.
 		case kCmd_ObservCond_refresh:				//*	Refreshes sensor values from hardware.
 		case kCmd_ObservCond_sensordescription:		//*	Return a sensor description
-			strcpy(alpacaErrMsg, "Command not implemented");
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Command not implemented");
 			alpacaErrCode	=	kASCOM_Err_NotImplemented;
 			break;
 
@@ -425,11 +426,7 @@ int					mySocket;
 		//*	let anything undefined go to the common command processor
 		//----------------------------------------------------------------------------------------
 		default:
-			alpacaErrCode	=	ProcessCommand_Common(reqData, cmdEnumValue);
-			if (alpacaErrCode != 0)
-			{
-				strcpy(alpacaErrMsg, reqData->alpacaErrMsg);
-			}
+			alpacaErrCode	=	ProcessCommand_Common(reqData, cmdEnumValue, alpacaErrMsg);
 			break;
 	}
 	RecordCmdStats(cmdEnumValue, reqData->get_putIndicator, alpacaErrCode);
@@ -513,6 +510,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 	if (reqData != NULL)
 	{
 		alpacaErrCode	=	kASCOM_Err_NotImplemented;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not Implemented");
 	}
 	else
 	{
@@ -530,6 +528,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 	if (reqData != NULL)
 	{
 		alpacaErrCode	=	kASCOM_Err_NotImplemented;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not Implemented");
 	}
 	else
 	{
@@ -611,6 +610,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 	if (reqData != NULL)
 	{
 		alpacaErrCode	=	kASCOM_Err_NotImplemented;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not Implemented");
 	}
 	else
 	{
@@ -628,6 +628,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 	if (reqData != NULL)
 	{
 		alpacaErrCode	=	kASCOM_Err_NotImplemented;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not Implemented");
 	}
 	else
 	{
@@ -645,6 +646,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 	if (reqData != NULL)
 	{
 		alpacaErrCode	=	kASCOM_Err_NotImplemented;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not Implemented");
 	}
 	else
 	{
@@ -662,6 +664,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 	if (reqData != NULL)
 	{
 		alpacaErrCode	=	kASCOM_Err_NotImplemented;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not Implemented");
 	}
 	else
 	{
@@ -679,6 +682,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 	if (reqData != NULL)
 	{
 		alpacaErrCode	=	kASCOM_Err_NotImplemented;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not Implemented");
 	}
 	else
 	{
@@ -724,7 +728,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 		else
 		{
 			alpacaErrCode	=	kASCOM_Err_NotImplemented;
-			strcpy(alpacaErrMsg, "Temperature sensor not available");
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Temperature sensor not available");
 		}
 	}
 	else

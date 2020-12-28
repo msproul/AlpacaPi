@@ -475,7 +475,7 @@ int					mySocket;
 			break;
 
 		case kCmd_Dome_slewtoaltitude:		//*	Slew the dome to the given altitude position.
-			strcpy(alpacaErrMsg, "AlpacaPi: Command not implemented");
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Command not implemented");
 			alpacaErrCode	=	kASCOM_Err_NotImplemented;
 			break;
 
@@ -484,7 +484,7 @@ int					mySocket;
 			break;
 
 		case kCmd_Dome_synctoazimuth:		//*	Synchronize the current position of the dome to the given azimuth.
-			strcpy(alpacaErrMsg, "AlpacaPi: Command not implemented");
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Command not implemented");
 			alpacaErrCode	=	kASCOM_Err_NotImplemented;
 			break;
 
@@ -524,11 +524,7 @@ int					mySocket;
 		//*	let anything undefined go to the common command processor
 		//----------------------------------------------------------------------------------------
 		default:
-			alpacaErrCode	=	ProcessCommand_Common(reqData, cmdEnumValue);
-			if (alpacaErrCode != 0)
-			{
-				strcpy(alpacaErrMsg, reqData->alpacaErrMsg);
-			}
+			alpacaErrCode	=	ProcessCommand_Common(reqData, cmdEnumValue, alpacaErrMsg);
 			break;
 	}
 	RecordCmdStats(cmdEnumValue, reqData->get_putIndicator, alpacaErrCode);
@@ -1132,14 +1128,14 @@ bool				newSlavedValue;
 						else
 						{
 							alpacaErrCode	=	kASCOM_Err_InvalidOperation;
-							strcpy(alpacaErrMsg, "AlpacaPi: Shutter must be open");
+							GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Shutter must be open");
 							CONSOLE_DEBUG(alpacaErrMsg);
 						}
 					}
 					else
 					{
 						alpacaErrCode	=	kASCOM_Err_InvalidOperation;
-						strcpy(alpacaErrMsg, "AlpacaPi: Slave mode not permitted");
+						GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Slave mode not permitted");
 						CONSOLE_DEBUG(alpacaErrMsg);
 					}
 				}
@@ -1152,13 +1148,13 @@ bool				newSlavedValue;
 			else
 			{
 				alpacaErrCode	=	kASCOM_Err_InvalidValue;
-				strcpy(alpacaErrMsg, "AlpacaPi: Invalid Value");
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Invalid Value");
 			}
 		}
 		else
 		{
 			alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
-			strcpy(alpacaErrMsg, "AlpacaPi: Not supported");
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not supported");
 		}
 	}
 	else
@@ -1295,7 +1291,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 	else
 	{
 		alpacaErrCode	=	kASCOM_Err_ActionNotImplemented;
-		strcpy(alpacaErrMsg, "AlpacaPi: FindHome Not supported");
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "FindHome Not supported");
 	}
 	return(alpacaErrCode);
 }
@@ -1304,7 +1300,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 TYPE_ASCOM_STATUS	DomeDriver::Put_SetPark(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
 {
 
-	strcpy(alpacaErrMsg, "AlpacaPi: Set park not supported");
+	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Set park not supported");
 	return(kASCOM_Err_NotImplemented);
 }
 
@@ -1339,14 +1335,13 @@ bool				foundKeyWord;
 			else
 			{
 				alpacaErrCode	=	kASCOM_Err_InvalidValue;
-				strcpy(alpacaErrMsg, "AlpacaPi: Invalid Value");
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Invalid Value");
 			}
 		}
 		else
 		{
 			alpacaErrCode	=	kASCOM_Err_InvalidValue;
-			strcpy(alpacaErrMsg, "AlpacaPi: Invalid Value");
-			CONSOLE_DEBUG("'Azimuth=' was not found");
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Invalid Value 'Azimuth=' was not found");
 			CONSOLE_DEBUG_W_STR("contentData\t=", reqData->contentData);
 		}
 	}
@@ -1368,7 +1363,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 		{
 			if (cSlewing)
 			{
-				strcpy(alpacaErrMsg, "AlpacaPi: Dome already in motion, command ignored");
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Dome already in motion, command ignored");
 			}
 			else
 			{
@@ -1387,7 +1382,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 	else
 	{
 		alpacaErrCode	=	kASCOM_Err_ActionNotImplemented;
-		strcpy(alpacaErrMsg, "AlpacaPi: ROR doesnt support dome rotation");
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "ROR doesnt support dome rotation");
 	}
 	return(alpacaErrCode);
 }
@@ -1403,7 +1398,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 		{
 			if (cSlewing)
 			{
-				strcpy(alpacaErrMsg, "AlpacaPi: Dome already in motion, command ignored");
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Dome already in motion, command ignored");
 			}
 			else
 			{
@@ -1418,7 +1413,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 	else
 	{
 		alpacaErrCode	=	kASCOM_Err_ActionNotImplemented;
-		strcpy(alpacaErrMsg, "AlpacaPi: ROR doesnt support dome rotation");
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "ROR doesnt support dome rotation");
 	}
 	return(alpacaErrCode);
 }
@@ -1434,7 +1429,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 		{
 			if (cSlewing)
 			{
-				strcpy(alpacaErrMsg, "AlpacaPi: Dome already in motion, command ignored");
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Dome already in motion, command ignored");
 			}
 			else
 			{
@@ -1452,7 +1447,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 	else
 	{
 		alpacaErrCode	=	kASCOM_Err_ActionNotImplemented;
-		strcpy(alpacaErrMsg, "AlpacaPi: ROR doesnt support dome rotation");
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "ROR doesnt support dome rotation");
 	}
 	return(alpacaErrCode);
 }
@@ -1556,12 +1551,12 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 	else
 	{
 		alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
-		strcpy(alpacaErrMsg, "AlpacaPi: Remote shutter not detected");
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Remote shutter not detected");
 	}
 #else
 
 	alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
-	strcpy(alpacaErrMsg, "AlpacaPi: Open shutter not implemented");
+	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Open shutter not implemented");
 
 #endif // _ENABLE_REMOTE_SHUTTER_
 	return(alpacaErrCode);
@@ -1580,11 +1575,11 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 	else
 	{
 		alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
-		strcpy(alpacaErrMsg, "AlpacaPi: Remote shutter not detected");
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Remote shutter not detected");
 	}
 #else
 	alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
-	strcpy(alpacaErrMsg, "AlpacaPi: Close shutter not implemented");
+	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Close shutter not implemented");
 #endif // _ENABLE_REMOTE_SHUTTER_
 	return(alpacaErrCode);
 }

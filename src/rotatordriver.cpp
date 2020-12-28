@@ -220,11 +220,7 @@ int					mySocket;
 		//*	let anything undefined go to the common command processor
 		//----------------------------------------------------------------------------------------
 		default:
-			alpacaErrCode	=	ProcessCommand_Common(reqData, cmdEnumValue);
-			if (alpacaErrCode != 0)
-			{
-				strcpy(alpacaErrMsg, reqData->alpacaErrMsg);
-			}
+			alpacaErrCode	=	ProcessCommand_Common(reqData, cmdEnumValue, alpacaErrMsg);
 			break;
 	}
 	RecordCmdStats(cmdEnumValue, reqData->get_putIndicator, alpacaErrCode);

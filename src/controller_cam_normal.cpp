@@ -21,6 +21,7 @@
 //*	Jun 24,	2020	<MLS> Made decision to switch camera to have sub classes
 //*	Jun 24,	2020	<MLS> Created controller_cam_normal.cpp
 //*	Jun 25,	2020	<MLS> Cam_normal subclass now back to same functionality as before
+//*	Dec 27,	2020	<MLS> Added UpdateDownloadProgress()
 //*****************************************************************************
 //*	todo
 //*		control key for different step size.
@@ -518,7 +519,12 @@ void	ControllerCamNormal::UpdateFileNameOptions(void)
 void	ControllerCamNormal::UpdateReceivedFileName(const char *newFileName)
 {
 	SetWidgetText(kTab_Camera, kCameraBox_Filename, newFileName);
+	if (cCameraTabObjPtr != NULL)
+	{
+		cCameraTabObjPtr->SetReceivedFileName(newFileName);
+	}
 }
+
 //*****************************************************************************
 void	ControllerCamNormal::UpdateRemoteFileList(void)
 {
@@ -568,6 +574,42 @@ void	ControllerCamNormal::UpdateBackgroundColor(const int redValue, const int gr
 		SetWidgetTextColor(kTab_Camera, kCameraBox_Title, CV_RGB(0,	0,	0));
 	}
 }
+
+
+//*****************************************************************************
+void	ControllerCamNormal::UpdateDownloadProgress(const int unitsRead, const int totalUnits)
+{
+double	newProgressValue;
+
+	newProgressValue	=	1.0 * unitsRead / totalUnits;
+
+	if (newProgressValue < cPrevProgessValue)
+	{
+		CONSOLE_DEBUG("Reset progress bar");
+		cPrevProgessValue	=	0.0;
+		cProgressUpdates	=	0;
+		cProgressReDraws	=	0;
+	}
+	cProgressUpdates++;
+	if (((newProgressValue - cPrevProgessValue) > 0.002) || (newProgressValue > 0.9985))
+	{
+		SetWidgetProgress(kTab_Camera, kCameraBox_ErrorMsg, unitsRead, totalUnits);
+		cUpdateWindow	=	true;
+		cvWaitKey(1);
+
+		cProgressReDraws++;
+
+		cPrevProgessValue	=	newProgressValue;
+	}
+
+	if (newProgressValue > 0.9999)
+	{
+		CONSOLE_DEBUG_W_DBL("newProgressValue\t=", newProgressValue);
+		CONSOLE_DEBUG_W_NUM("cProgressUpdates\t=", cProgressUpdates);
+		CONSOLE_DEBUG_W_NUM("cProgressReDraws\t=", cProgressReDraws);
+	}
+}
+
 
 #endif // _ENABLE_CTRL_CAMERA_
 

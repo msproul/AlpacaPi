@@ -489,6 +489,8 @@ int	ii;
 
 #ifdef _ENABLE_FILTERWHEEL_
 	cConnectedFilterWheel			=	NULL;
+	cFilterWheelCurrPos				=	-1;
+	cFilterWheelCurrName[0]			=	0;
 #endif // _ENABLE_FILTERWHEEL_
 
 #ifdef _ENABLE_FOCUSER_
@@ -630,7 +632,7 @@ char				httpHeader[500];
 	{
 		//*	protect the bounds so we dont have to later
 		myDeviceNum	=	0;
-		strcpy(alpacaErrMsg, "Device number out of bounds, using device #0");
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Device number out of bounds, using device #0");
 	}
 
 	httpHeaderSent	=	false;
@@ -660,6 +662,10 @@ char				httpHeader[500];
 
 	//*	look up the command
 	cmdEnumValue	=	FindCmdFromTable(reqData->deviceCommand, gCameraCmdTable, &cmdType);
+	if (cmdEnumValue < 0)
+	{
+		CONSOLE_DEBUG_W_STR("Command not found\t=",	reqData->deviceCommand);
+	}
 	switch(cmdEnumValue)
 	{
 		//----------------------------------------------------------------------------------------
@@ -1322,8 +1328,10 @@ char				httpHeader[500];
 			}
 			else if (reqData->get_putIndicator == 'P')
 			{
-				CONSOLE_DEBUG("invalid request");
+
 				alpacaErrCode	=	kASCOM_Err_InvalidOperation;
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Invalid PUT");
+				CONSOLE_DEBUG(alpacaErrMsg);
 			}
 			break;
 
@@ -1335,11 +1343,7 @@ char				httpHeader[500];
 		//*	let anything undefined go to the common command processor
 		//----------------------------------------------------------------------------------------
 		default:
-			alpacaErrCode	=	ProcessCommand_Common(reqData, cmdEnumValue);
-			if (alpacaErrCode != 0)
-			{
-				strcpy(alpacaErrMsg, reqData->alpacaErrMsg);
-			}
+			alpacaErrCode	=	ProcessCommand_Common(reqData, cmdEnumValue, alpacaErrMsg);
 			break;
 
 	}
@@ -2155,7 +2159,7 @@ bool				foundKeyWord;
 
 				if (alpacaErrCode != kASCOM_Err_Success)
 				{
-					strcpy(alpacaErrMsg, cLastCameraErrMsg);
+					GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, cLastCameraErrMsg);
 				}
 			}
 			else
@@ -3133,6 +3137,7 @@ uint32_t			pixelValue;
 char				lineBuff[256];
 char				imageTimeString[256];
 double				exposureTimeSecs;
+TYPE_ASCOM_STATUS	tempSensorErr;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 //*	Jun 25,	2020	<MLS> Changed JSON xmit buffer limit to 1475, significant speed improvement
@@ -3164,15 +3169,18 @@ double				exposureTimeSecs;
 
 	//========================================================================================
 	//*	record the sensor temp
-	alpacaErrCode	=	Read_SensorTemp();
-	JsonResponse_Add_Double(mySocket,
-							reqData->jsonTextBuffer,
-							kBuffSize_MaxSpeed,
-							"ccdtemperature",
-							cCameraTemp_Dbl,
-							INCLUDE_COMMA);
+	tempSensorErr	=	Read_SensorTemp();
+	if (tempSensorErr == kASCOM_Err_Success)
+	{
+		JsonResponse_Add_Double(mySocket,
+								reqData->jsonTextBuffer,
+								kBuffSize_MaxSpeed,
+								"ccdtemperature",
+								cCameraTemp_Dbl,
+								INCLUDE_COMMA);
 
 
+	}
 	//*	get the ROI information which has the current image type
 	GetImage_ROI_info();
 	pixelCount	=	cROIinfo.currentROIwidth * cROIinfo.currentROIheight;
@@ -3251,7 +3259,7 @@ double				exposureTimeSecs;
 												lineBuff);
 					iii++;
 
-					if ((iii % 10000) == 0)
+					if ((iii % 500000) == 0)
 					{
 					double	cpuTemp_DegC;
 					double	cpuTemp_DegF;
@@ -3376,6 +3384,7 @@ double				exposureTimeSecs;
 	{
 		//*	as per Rick B 6/22/2020
 		alpacaErrCode	=	kASCOM_Err_InvalidOperation;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "No image available");
 	}
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, "--exit");
 	return(alpacaErrCode);

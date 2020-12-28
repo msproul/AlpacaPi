@@ -25,6 +25,8 @@
 //*	Mar  9,	2020	<MLS> Added "R" indicator in IP field if "readall" is available
 //*	Mar 16,	2020	<MLS> Added error message box to camera display
 //*	Apr  5,	2020	<MLS> Added ToggleDisplayImage()
+//*	Dec 26,	2020	<MLS> Started on image download for camera controller
+//*	Dec 27,	2020	<MLS> AddedDownloadImage()
 //*****************************************************************************
 
 #ifdef _ENABLE_CTRL_CAMERA_
@@ -52,8 +54,15 @@ WindowTabCamera::WindowTabCamera(	const int	xSize,
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
 
+	strcpy(cAlpacaDeviceName, "");
+ //	memset(&cAlpacaDevInfo, 0, sizeof(TYPE_REMOTE_DEV));
+
+
 	cHasFilterWheel	=	hasFilterWheel;
 	strcpy(cAlpacaDeviceName, deviceName);
+
+	cOpenCVdownLoadedImage	=	NULL;
+	strcpy(cDownLoadedFileNameRoot, "unknown");
 
 	SetupWindowControls();
 }
@@ -63,7 +72,14 @@ WindowTabCamera::WindowTabCamera(	const int	xSize,
 //**************************************************************************************
 WindowTabCamera::~WindowTabCamera(void)
 {
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
+	if (cOpenCVdownLoadedImage != NULL)
+	{
+		CONSOLE_DEBUG("destroy old image");
+//+		SetWidgetImage(kPreviewBox_ImageDisplay, NULL);
+		cvReleaseImage(&cOpenCVdownLoadedImage);
+		cOpenCVdownLoadedImage	=	NULL;
+	}
 }
 
 //**************************************************************************************
@@ -141,8 +157,9 @@ IplImage	*logoImage;
 	SetWidget(				kCameraBox_Exposure_Down,	cClm6_offset+5,	yLoc + cSmIconSize,	cSmIconSize,cSmIconSize);
 	SetWidgetBGColor(		kCameraBox_Exposure_Up,		CV_RGB(255,	255,	255));
 	SetWidgetBGColor(		kCameraBox_Exposure_Down,	CV_RGB(255,	255,	255));
-	SetWidgetBoarderColor(	kCameraBox_Exposure_Up,		CV_RGB(0,	0,	0));
-	SetWidgetBoarderColor(	kCameraBox_Exposure_Down,	CV_RGB(0,	0,	0));
+
+	SetWidgetBorderColor(	kCameraBox_Exposure_Up,		CV_RGB(0,	0,	0));
+	SetWidgetBorderColor(	kCameraBox_Exposure_Down,	CV_RGB(0,	0,	0));
 	SetWidgetIcon(			kCameraBox_Exposure_Up,		kIcon_UpArrow);
 	SetWidgetIcon(			kCameraBox_Exposure_Down,	kIcon_DownArrow);
 	SetWidgetTextColor(		kCameraBox_Exposure_Up,		CV_RGB(255,	0,	0));
@@ -172,8 +189,8 @@ IplImage	*logoImage;
 	SetWidgetBGColor(kCameraBox_Gain_Up,	CV_RGB(255,	255,	255));
 	SetWidgetBGColor(kCameraBox_Gain_Down,	CV_RGB(255,	255,	255));
 
-	SetWidgetBoarderColor(kCameraBox_Gain_Up,	CV_RGB(0,	0,	0));
-	SetWidgetBoarderColor(kCameraBox_Gain_Down,	CV_RGB(0,	0,	0));
+	SetWidgetBorderColor(kCameraBox_Gain_Up,	CV_RGB(0,	0,	0));
+	SetWidgetBorderColor(kCameraBox_Gain_Down,	CV_RGB(0,	0,	0));
 
 	SetWidgetIcon(		kCameraBox_Gain_Up,		kIcon_UpArrow);
 	SetWidgetIcon(		kCameraBox_Gain_Down,	kIcon_DownArrow);
@@ -285,12 +302,20 @@ IplImage	*logoImage;
 	SetWidgetBGColor(	kCameraBox_Reset,			CV_RGB(255,	255,	255));
 	SetWidgetTextColor(	kCameraBox_Reset,			CV_RGB(255,	0,	0));
 
-	SetWidget(			kCameraBox_StartExposure,	cClm3_offset,	yLoc,	(cClmWidth * 2),cLrgBtnHeight);
+	SetWidget(			kCameraBox_StartExposure,	cClm3_offset,	yLoc,	((cClmWidth * 2) -4),	cLrgBtnHeight);
 	SetWidgetType(		kCameraBox_StartExposure,	kWidgetType_Button);
-	SetWidgetText(		kCameraBox_StartExposure,	"Take Picture");
+	SetWidgetText(		kCameraBox_StartExposure,	"Start Exposure");
 	SetWidgetFont(		kCameraBox_StartExposure,	kFont_Medium);
 	SetWidgetBGColor(	kCameraBox_StartExposure,	CV_RGB(255,	255,	255));
 	SetWidgetTextColor(	kCameraBox_StartExposure,	CV_RGB(255,	0,	0));
+
+	SetWidget(			kCameraBox_DownloadImage,	cClm5_offset,	yLoc,	((cClmWidth * 2) -4),	cLrgBtnHeight);
+	SetWidgetType(		kCameraBox_DownloadImage,	kWidgetType_Button);
+	SetWidgetText(		kCameraBox_DownloadImage,	"Download Image");
+	SetWidgetFont(		kCameraBox_DownloadImage,	kFont_Medium);
+	SetWidgetBGColor(	kCameraBox_DownloadImage,	CV_RGB(255,	255,	255));
+	SetWidgetTextColor(	kCameraBox_DownloadImage,	CV_RGB(255,	0,	0));
+
 	yLoc			+=	cLrgBtnHeight;
 	yLoc			+=	4;
 
@@ -501,6 +526,10 @@ int			fwPosition;
 			StartExposure();
 			break;
 
+		case kCameraBox_DownloadImage:
+			DownloadImage();
+			break;
+
 		case kCameraBox_FilterWheel1:
 		case kCameraBox_FilterWheel2:
 		case kCameraBox_FilterWheel3:
@@ -705,5 +734,113 @@ ControllerCamera	*myCameraController;
 	}
 }
 
+//*****************************************************************************
+void	WindowTabCamera::DownloadImage(void)
+{
+ControllerCamera	*myCameraController;
+IplImage			*originalImage;
+int					liveDispalyWidth;
+int					liveDisplayHeight;
+int					reduceFactor;
+char				textBuf[128];
+double				download_MBytes;
+double				download_MB_per_sec;
+double				download_seconds;
+char				fileName[256];
+int					quality[3] = {16, 200, 0};
+int					openCVerr;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+
+	if (cOpenCVdownLoadedImage != NULL)
+	{
+		CONSOLE_DEBUG("destroy old image");
+//		SetWidgetImage(kPreviewBox_ImageDisplay, NULL);
+		cvReleaseImage(&cOpenCVdownLoadedImage);
+		cOpenCVdownLoadedImage	=	NULL;
+	}
+
+	originalImage		=	NULL;
+	myCameraController	=	(ControllerCamera *)cParentObjPtr;
+	if (myCameraController != NULL)
+	{
+//		CONSOLE_DEBUG("Starting download");
+
+		originalImage	=	myCameraController->DownloadImage();
+		if (originalImage != NULL)
+		{
+			CONSOLE_DEBUG("Download complete");
+//			CONSOLE_DEBUG("Creating small image");
+			reduceFactor		=	1;
+			liveDispalyWidth	=	originalImage->width;
+			liveDisplayHeight	=	originalImage->height;
+			while (liveDispalyWidth > 700)
+			{
+				reduceFactor++;
+				liveDispalyWidth	=	originalImage->width / reduceFactor;
+				liveDisplayHeight	=	originalImage->height / reduceFactor;
+			}
+			CONSOLE_DEBUG_W_NUM("reduceFactor\t=", reduceFactor);
+			CONSOLE_DEBUG_W_NUM("liveDispalyWidth\t=", liveDispalyWidth);
+			CONSOLE_DEBUG_W_NUM("liveDisplayHeight\t=", liveDisplayHeight);
+			cOpenCVdownLoadedImage	=	cvCreateImage(cvSize(	liveDispalyWidth,
+														liveDisplayHeight),
+														IPL_DEPTH_8U,
+														3);
+			if (cOpenCVdownLoadedImage != NULL)
+			{
+//				CONSOLE_DEBUG("Resizing image");
+				cvResize(originalImage, cOpenCVdownLoadedImage, CV_INTER_LINEAR);
+			//	SetWidgetImage(kPreviewBox_ImageDisplay, cOpenCVdownLoadedImage);
+			}
+			//======================================
+			//*	save the image
+			strcpy(fileName, cDownLoadedFileNameRoot);
+			strcat(fileName, ".jpg");
+
+			CONSOLE_DEBUG_W_STR("Saving image as", fileName);
+			openCVerr	=	cvSaveImage(fileName, originalImage, quality);
+			if (openCVerr == 0)
+			{
+			int		openCVerrorCode;
+			char	*errorMsgPtr;
+
+				CONSOLE_DEBUG_W_NUM("Error saving file\t=", openCVerr);
+				openCVerrorCode	=	cvGetErrStatus();
+				CONSOLE_DEBUG_W_NUM("openCVerrorCode\t=", openCVerrorCode);
+				errorMsgPtr	=	(char *)cvErrorStr(openCVerrorCode);
+				CONSOLE_DEBUG_W_STR("errorMsgPtr\t=", errorMsgPtr);
+			}
+			cvReleaseImage(&originalImage);
+
+
+			download_MBytes		=	1.0 * myCameraController->cLastDownload_Bytes / (1024.0 * 1024.0);
+			download_seconds	=	1.0 * myCameraController->cLastDownload_Millisecs / 1000.0;
+			download_MB_per_sec	=	download_MBytes / download_seconds;
+
+			sprintf(textBuf,	"%2.2f mbytes in %2.2f sec =%2.2f mbytes/sec",
+								download_MBytes,
+								download_seconds,
+								download_MB_per_sec
+								);
+
+
+			SetWidgetType(kCameraBox_ErrorMsg, kWidgetType_Text);
+			SetWidgetText(kCameraBox_ErrorMsg, textBuf);
+		}
+		else
+		{
+			SetWidgetType(kCameraBox_ErrorMsg, kWidgetType_Text);
+			SetWidgetText(kCameraBox_ErrorMsg, "Failed to download image, no image exists");
+			CONSOLE_DEBUG("Failed to download image");
+		}
+	}
+}
+
+//*****************************************************************************
+void	WindowTabCamera::SetReceivedFileName(const char *newFileName)
+{
+	strcpy(cDownLoadedFileNameRoot, newFileName);
+}
 
 #endif // _ENABLE_CTRL_CAMERA_

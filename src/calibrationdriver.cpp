@@ -215,11 +215,11 @@ int					mySocket;
 
 		case kCmd_Calibration_haltcover:		//*	Stops any cover movement that may be in progress
 			alpacaErrCode	=	Put_HaltCover(reqData, alpacaErrMsg);
+			break;
 
 		case kCmd_Calibration_opencover:		//*	Initiates cover opening
 			alpacaErrCode	=	Put_OpenCover(reqData, alpacaErrMsg);
 			break;
-
 
 		case kCmd_Calibration_readall:
 			alpacaErrCode	=	Get_Readall(reqData, alpacaErrMsg);
@@ -229,11 +229,7 @@ int					mySocket;
 		//*	let anything undefined go to the common command processor
 		//----------------------------------------------------------------------------------------
 		default:
-			alpacaErrCode	=	ProcessCommand_Common(reqData, cmdEnumValue);
-			if (alpacaErrCode != 0)
-			{
-				strcpy(alpacaErrMsg, reqData->alpacaErrMsg);
-			}
+			alpacaErrCode	=	ProcessCommand_Common(reqData, cmdEnumValue, alpacaErrMsg);
 			break;
 	}
 	CONSOLE_DEBUG_W_NUM("Calling RecordCmdStats(), cmdEnumValue=", cmdEnumValue);
@@ -399,7 +395,7 @@ int					brightnessValue;
 	if (cCalibratorStatus == kCalibrator_NotPresent)
 	{
 		alpacaErrCode	=	kASCOM_Err_NotImplemented;
-		strcpy(alpacaErrMsg, "Calibrator not present");
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Calibrator not present");
 	}
 	else
 	{
@@ -419,7 +415,7 @@ int					brightnessValue;
 		else
 		{
 			alpacaErrCode	=	kASCOM_Err_ValueNotSet;
-			strcpy(alpacaErrMsg, "Brightness not specified");
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Brightness not specified");
 		}
 	}
 	return(alpacaErrCode);
@@ -434,7 +430,8 @@ TYPE_ASCOM_STATUS		alpacaErrCode;
 	if (cCalibratorStatus == kCalibrator_NotPresent)
 	{
 		alpacaErrCode	=	kASCOM_Err_NotImplemented;
-		strcpy(alpacaErrMsg, "Calibrator not present");
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Calibrator not present");
+		CONSOLE_DEBUG(alpacaErrMsg);
 	}
 	else
 	{
@@ -454,7 +451,8 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 	if (cCoverStatus == kCover_NotPresent)
 	{
 		alpacaErrCode	=	kASCOM_Err_NotImplemented;
-		strcpy(alpacaErrMsg, "Cover not present");
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Cover not present");
+		CONSOLE_DEBUG(alpacaErrMsg);
 	}
 	else
 	{
@@ -473,7 +471,8 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 	if (cCoverStatus == kCover_NotPresent)
 	{
 		alpacaErrCode	=	kASCOM_Err_NotImplemented;
-		strcpy(alpacaErrMsg, "Cover not present");
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Cover not present");
+		CONSOLE_DEBUG(alpacaErrMsg);
 	}
 	else
 	{
@@ -493,7 +492,8 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 	if (cCoverStatus == kCover_NotPresent)
 	{
 		alpacaErrCode	=	kASCOM_Err_NotImplemented;
-		strcpy(alpacaErrMsg, "Cover not present");
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Cover not present");
+		CONSOLE_DEBUG(alpacaErrMsg);
 	}
 	else
 	{
@@ -545,9 +545,6 @@ int		mySocket;
 								INCLUDE_COMMA);
 
 
-
-
-
 		alpacaErrCode	=	kASCOM_Err_Success;
 		strcpy(alpacaErrMsg, "");
 	}
@@ -591,7 +588,8 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, "This function should be over-ridden");
 
-	strcpy(alpacaErrMsg, "Not implemented");
+	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
+	CONSOLE_DEBUG(alpacaErrMsg);
 	return(alpacaErrCode);
 
 }
@@ -602,7 +600,8 @@ TYPE_ASCOM_STATUS	CalibrationDriver::Calibrator_TurnOff(char *alpacaErrMsg)
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, "This function should be over-ridden");
-	strcpy(alpacaErrMsg, "Not implemented");
+	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
+	CONSOLE_DEBUG(alpacaErrMsg);
 	return(alpacaErrCode);
 }
 
@@ -613,7 +612,9 @@ TYPE_ASCOM_STATUS	CalibrationDriver::Cover_Open(char *alpacaErrMsg)
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, "This function should be over-ridden");
-	strcpy(alpacaErrMsg, "Not implemented");
+	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
+	CONSOLE_DEBUG(alpacaErrMsg);
+
 	return(alpacaErrCode);
 }
 
@@ -623,7 +624,8 @@ TYPE_ASCOM_STATUS	CalibrationDriver::Cover_Close(char *alpacaErrMsg)
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, "This function should be over-ridden");
-	strcpy(alpacaErrMsg, "Not implemented");
+	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
+	CONSOLE_DEBUG(alpacaErrMsg);
 	return(alpacaErrCode);
 }
 
@@ -633,7 +635,8 @@ TYPE_ASCOM_STATUS	CalibrationDriver::Cover_Halt(char *alpacaErrMsg)
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, "This function should be over-ridden");
-	strcpy(alpacaErrMsg, "Not implemented");
+	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
+	CONSOLE_DEBUG(alpacaErrMsg);
 	return(alpacaErrCode);
 }
 

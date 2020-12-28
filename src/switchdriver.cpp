@@ -239,11 +239,7 @@ int					mySocket;
 		//*	let anything undefined go to the common command processor
 		//----------------------------------------------------------------------------------------
 		default:
-			alpacaErrCode	=	ProcessCommand_Common(reqData, cmdEnumValue);
-			if (alpacaErrCode != 0)
-			{
-				strcpy(alpacaErrMsg, reqData->alpacaErrMsg);
-			}
+			alpacaErrCode	=	ProcessCommand_Common(reqData, cmdEnumValue, alpacaErrMsg);
 			break;
 	}
 	RecordCmdStats(cmdEnumValue, reqData->get_putIndicator, alpacaErrCode);
@@ -452,7 +448,7 @@ int					switchNum;
 			else
 			{
 				alpacaErrCode	=	kASCOM_Err_InvalidValue;
-				strcpy(alpacaErrMsg, "Switch number out of range");
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Switch number out of range");
 			}
 		}
 		else
@@ -507,7 +503,7 @@ int					switchNum;
 			else
 			{
 				alpacaErrCode	=	kASCOM_Err_InvalidValue;
-				strcpy(alpacaErrMsg, "Switch number out of range");
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Switch number out of range");
 			}
 		}
 		else
@@ -597,7 +593,7 @@ int					switchNum;
 		else
 		{
 			alpacaErrCode	=	kASCOM_Err_InvalidValue;
-			strcpy(alpacaErrMsg, "Switch number out of range");
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Switch number out of range");
 		}
 	}
 	else
@@ -639,7 +635,7 @@ int					switchNum;
 		else
 		{
 			alpacaErrCode	=	kASCOM_Err_InvalidValue;
-			strcpy(alpacaErrMsg, "Switch number out of range");
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Switch number out of range");
 		}
 	}
 	else
@@ -699,7 +695,7 @@ int					switchNum;
 			else
 			{
 				alpacaErrCode	=	kASCOM_Err_InvalidValue;
-				strcpy(alpacaErrMsg, "State not specified");
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "State not specified");
 				CONSOLE_DEBUG(alpacaErrMsg);
 			}
 		}
@@ -758,7 +754,7 @@ int					switchNum;
 			else
 			{
 				alpacaErrCode	=	kASCOM_Err_InvalidValue;
-				strcpy(alpacaErrMsg, "Name not specified");
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Name not specified");
 			}
 		}
 		else

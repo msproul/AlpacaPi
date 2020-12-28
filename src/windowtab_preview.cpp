@@ -51,9 +51,9 @@ WindowTabPreview::WindowTabPreview(	const int	xSize,
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-	cOpenCVimage	=	NULL;
+	cOpenCVdownLoadedImage	=	NULL;
 	strcpy(cAlpacaDeviceName, "");
-    memset(&cAlpacaDevInfo, 0, sizeof(TYPE_REMOTE_DEV));
+	memset(&cAlpacaDevInfo, 0, sizeof(TYPE_REMOTE_DEV));
 
 	SetupWindowControls();
 
@@ -65,12 +65,12 @@ WindowTabPreview::WindowTabPreview(	const int	xSize,
 WindowTabPreview::~WindowTabPreview(void)
 {
 	CONSOLE_DEBUG(__FUNCTION__);
-	if (cOpenCVimage != NULL)
+	if (cOpenCVdownLoadedImage != NULL)
 	{
 		CONSOLE_DEBUG("destroy old image");
 		SetWidgetImage(kPreviewBox_ImageDisplay, NULL);
-		cvReleaseImage(&cOpenCVimage);
-		cOpenCVimage	=	NULL;
+		cvReleaseImage(&cOpenCVdownLoadedImage);
+		cOpenCVdownLoadedImage	=	NULL;
 	}
 }
 
@@ -453,7 +453,7 @@ IplImage	*logoImage;
 //*****************************************************************************
 void	WindowTabPreview::SetReceivedFileName(const char *newFileName)
 {
-	strcpy(cFileNameRoot, newFileName);
+	strcpy(cDownLoadedFileNameRoot, newFileName);
 }
 
 //*****************************************************************************
@@ -565,12 +565,12 @@ int					openCVerr;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
-	if (cOpenCVimage != NULL)
+	if (cOpenCVdownLoadedImage != NULL)
 	{
 		CONSOLE_DEBUG("destroy old image");
 		SetWidgetImage(kPreviewBox_ImageDisplay, NULL);
-		cvReleaseImage(&cOpenCVimage);
-		cOpenCVimage	=	NULL;
+		cvReleaseImage(&cOpenCVdownLoadedImage);
+		cOpenCVdownLoadedImage	=	NULL;
 	}
 
 	originalImage		=	NULL;
@@ -596,19 +596,19 @@ int					openCVerr;
 			CONSOLE_DEBUG_W_NUM("reduceFactor\t=", reduceFactor);
 			CONSOLE_DEBUG_W_NUM("liveDispalyWidth\t=", liveDispalyWidth);
 			CONSOLE_DEBUG_W_NUM("liveDisplayHeight\t=", liveDisplayHeight);
-			cOpenCVimage		=	cvCreateImage(cvSize(	liveDispalyWidth,
-															liveDisplayHeight),
-															IPL_DEPTH_8U,
-															3);
-			if (cOpenCVimage != NULL)
+			cOpenCVdownLoadedImage	=	cvCreateImage(cvSize(	liveDispalyWidth,
+																liveDisplayHeight),
+																IPL_DEPTH_8U,
+																3);
+			if (cOpenCVdownLoadedImage != NULL)
 			{
 //				CONSOLE_DEBUG("Resizing image");
-				cvResize(originalImage, cOpenCVimage, CV_INTER_LINEAR);
-				SetWidgetImage(kPreviewBox_ImageDisplay, cOpenCVimage);
+				cvResize(originalImage, cOpenCVdownLoadedImage, CV_INTER_LINEAR);
+				SetWidgetImage(kPreviewBox_ImageDisplay, cOpenCVdownLoadedImage);
 			}
 			//======================================
 			//*	save the image
-			strcpy(fileName, cFileNameRoot);
+			strcpy(fileName, cDownLoadedFileNameRoot);
 			strcat(fileName, ".jpg");
 
 			CONSOLE_DEBUG_W_STR("Saving image as", fileName);

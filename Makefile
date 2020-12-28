@@ -71,6 +71,7 @@ SRC_DIR				=	./src/
 SRC_IMGPROC			=	./src_imageproc/
 SRC_DISCOVERY		=	./src_discovery/
 SRC_MOONRISE		=	./src_MoonRise/
+SRC_SPECIAL			=	./src_special/
 #MLS_LIB_DIR		=	../MLS_Library/
 MLS_LIB_DIR			=	./src_mlsLib/
 OBJECT_DIR			=	./Objectfiles/
@@ -314,7 +315,7 @@ Release		:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_
 #Release		:		DEFINEFLAGS		+=	-D_ENABLE_SLIT_TRACKER_
 #Release		:		DEFINEFLAGS		+=	-D_ENABLE_TOUP_
 Release		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
-Release		:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
+#Release		:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
 Release		:		$(CPP_OBJECTS)				\
 					$(ALPACA_OBJECTS)			\
 					$(SOCKET_OBJECTS)			\
@@ -707,7 +708,7 @@ newt16		:		DEFINEFLAGS		+=	-D_ENABLE_MULTICAM_
 #newt16		:		DEFINEFLAGS		+=	-D_ENABLE_DOME_
 newt16		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
 #newt16		:		DEFINEFLAGS		+=	-D_ENABLE_ATIK_
-#newt16		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
+newt16		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
 newt16		:		DEFINEFLAGS		+=	-D_ENABLE_JPEGLIB_
 #newt16		:		DEFINEFLAGS		+=	-D_ENABLE_TOUP_
 newt16		:		DEFINEFLAGS		+=	-D_ENABLE_SLIT_TRACKER_
@@ -816,6 +817,41 @@ piswitch		:	$(CPP_OBJECTS)				\
 					-lpthread					\
 					-o alpacapi
 
+
+######################################################################################
+#pragma mark Switch - C++ Raspberry pi64
+piswitch64		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
+#piswitch64		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_
+piswitch64		:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_
+piswitch64		:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
+piswitch64		:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
+piswitch64		:		DEFINEFLAGS		+=	-D_ENABLE_MULTICAM_
+piswitch64		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
+#piswitch64		:		DEFINEFLAGS		+=	-D_ENABLE_ATIK_
+piswitch64		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
+piswitch64		:		DEFINEFLAGS		+=	-D_INCLUDE_WIRINGPI_
+#piswitch64		:		DEFINEFLAGS		+=	-D_ENABLE_PWM_SWITCH_
+piswitch64		:		DEFINEFLAGS		+=	-D_ENABLE_4REALY_BOARD
+piswitch64		:		CPLUSFLAGS		+=	-std=gnu++17
+piswitch64		:		PLATFORM		=	armv8
+
+piswitch64		:	$(CPP_OBJECTS)				\
+					$(ALPACA_OBJECTS)			\
+					$(SOCKET_OBJECTS)			\
+
+
+		$(LINK)  								\
+					$(SOCKET_OBJECTS)			\
+					$(CPP_OBJECTS)				\
+					$(ALPACA_OBJECTS)			\
+					$(OPENCV_LINK)				\
+					$(ASI_CAMERA_OBJECTS)		\
+					-lcfitsio					\
+					-lusb-1.0					\
+					-ludev						\
+					-lwiringPi					\
+					-lpthread					\
+					-o alpacapi
 
 
 ######################################################################################
@@ -981,7 +1017,6 @@ jetson		:				$(ALPACA_OBJECTS)			\
 #wx			:	DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_
 wx			:	DEFINEFLAGS		+=	-D_ENABLE_OBSERVINGCONDITIONS_
 wx			:	DEFINEFLAGS		+=	-D_ENABLE_PI_HAT_SESNSOR_BOARD_
-wx			:	DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
 wx			:	PLATFORM		=	armv7
 wx			:				$(ALPACA_OBJECTS)			\
 							$(SOCKET_OBJECTS)			\
@@ -1713,11 +1748,11 @@ $(OBJECT_DIR)controller_usb.o : 		$(SRC_DIR)controller_usb.cpp		\
 
 
 #-------------------------------------------------------------------------------------
-$(OBJECT_DIR)controller_video.o : 		$(SRC_DIR)controller_video.cpp		\
-										$(SRC_DIR)controller_video.h		\
+$(OBJECT_DIR)controller_video.o : 		$(SRC_SPECIAL)controller_video.cpp	\
+										$(SRC_SPECIAL)controller_video.h	\
 										$(SRC_DIR)windowtab_about.h			\
 										$(SRC_DIR)controller.h
-	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)controller_video.cpp -o$(OBJECT_DIR)controller_video.o
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_SPECIAL)controller_video.cpp -o$(OBJECT_DIR)controller_video.o
 
 
 #-------------------------------------------------------------------------------------
@@ -1849,11 +1884,11 @@ $(OBJECT_DIR)windowtab_usb.o : 			$(SRC_DIR)windowtab_usb.cpp			\
 
 
 #-------------------------------------------------------------------------------------
-$(OBJECT_DIR)windowtab_video.o : 		$(SRC_DIR)windowtab_video.cpp		\
-										$(SRC_DIR)windowtab_video.h			\
+$(OBJECT_DIR)windowtab_video.o : 		$(SRC_SPECIAL)windowtab_video.cpp	\
+										$(SRC_SPECIAL)windowtab_video.h		\
 										$(SRC_DIR)windowtab.h				\
 										$(SRC_DIR)controller.h
-	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)windowtab_video.cpp -o$(OBJECT_DIR)windowtab_video.o
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_SPECIAL)windowtab_video.cpp -o$(OBJECT_DIR)windowtab_video.o
 
 
 

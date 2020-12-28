@@ -110,7 +110,7 @@ int		scrollBarYLoc;
 		SetWidgetFont(			iii,	kFont_Medium);
 		SetWidgetJustification(	iii,	kJustification_Left);
 		SetWidgetNumber(		iii,	iii);
-		SetWidgetBoarder(		iii,	false);
+		SetWidgetBorder(		iii,	false);
 		yLoc			+=	lineHeight;
 		yLoc			+=	1;
 	}

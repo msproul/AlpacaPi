@@ -102,8 +102,8 @@ class WindowTabPreview: public WindowTab
 				char			cAlpacaDeviceName[64];
 				TYPE_REMOTE_DEV	cAlpacaDevInfo;
 
-				IplImage		*cOpenCVimage;
-				char			cFileNameRoot[256];
+				IplImage		*cOpenCVdownLoadedImage;
+				char			cDownLoadedFileNameRoot[256];
 
 				int				cAlpacaCameraState;
 

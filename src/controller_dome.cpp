@@ -76,7 +76,7 @@ TYPE_SLITCLOCK	gSlitDistance[kSensorValueCnt];		//*	current reading
 TYPE_SLIT_LOG	gSlitLog[kSlitLogCount];			//*	log of readings
 int				gSlitLogIdx;
 
-#define	_SLIT_TRACKER_DIRECT_
+//#define	_SLIT_TRACKER_DIRECT_
 
 #ifdef _SLIT_TRACKER_DIRECT_
 	#include	<termios.h>

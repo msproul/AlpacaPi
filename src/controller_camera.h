@@ -182,6 +182,11 @@ class ControllerCamera: public Controller
 
 				TYPE_REMOTE_FILE	cRemoteFiles[kMaxRemoteFileCnt];
 
+				//==========================================================
+				//*	download status stuff
+				double					cPrevProgessValue;
+				int						cProgressUpdates;
+				int						cProgressReDraws;
 };
 
 #endif // _CONTROLLER_CAMERA_H_

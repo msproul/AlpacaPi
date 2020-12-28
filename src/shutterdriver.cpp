@@ -295,7 +295,7 @@ int				mySocket;
 			break;
 
 		case kCmd_Shutter_slewtoaltitude:		//*	Slew the dome to the given altitude position.
-			strcpy(alpacaErrMsg, "Command not implemented");
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Command not implemented");
 			alpacaErrCode	=	kASCOM_Err_NotImplemented;
 			break;
 
@@ -311,11 +311,7 @@ int				mySocket;
 		//*	let anything undefined go to the common command processor
 		//----------------------------------------------------------------------------------------
 		default:
-			alpacaErrCode	=	ProcessCommand_Common(reqData, cmdEnumValue);
-			if (alpacaErrCode != 0)
-			{
-				strcpy(alpacaErrMsg, reqData->alpacaErrMsg);
-			}
+			alpacaErrCode	=	ProcessCommand_Common(reqData, cmdEnumValue, alpacaErrMsg);
 			break;
 	}
 	RecordCmdStats(cmdEnumValue, reqData->get_putIndicator, alpacaErrCode);

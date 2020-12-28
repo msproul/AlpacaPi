@@ -6,12 +6,13 @@
 #############################################################
 #	Dec 13, 2020	<MLS> Starting on setup for github downloads
 #	Dec 14, 2020	<MLS> Working on FITS install
+#	Dec 16, 2020	<MLS> FITS install working
 #############################################################
 
 
 
 ###########################################################
-function checkFile
+function CheckFile
 {
 MYPATH=$1
 FILENAME=$2
@@ -43,6 +44,29 @@ FULLPATH="$MYPATH/$FILENAME"
 	printf "\t%-24s\t%s\t%s\r\n" $FILENAME $STATUS "$ERRSTRING"
 }
 
+###########################################################
+function CheckOpenCV
+{
+OPENCV_INSTALLED=false
+OPENCV_STRING="Missing"
+
+
+	if [ -f "/usr/include/opencv2/highgui/highgui_c.h" ]
+	then
+		OPENCV_INSTALLED=true
+		OPENCV_STRING="Installed in /usr/include"
+	fi
+
+	if [ -f "/usr/local/include/opencv2/highgui/highgui_c.h" ]
+	then
+		OPENCV_INSTALLED=true
+		OPENCV_STRING="Installed in /usr/local/include"
+	fi
+
+	printf "\t%-24s\t%s\r\n" "OpenCV" "$OPENCV_STRING"
+
+}
+
 
 ###########################################################
 function Checksystem
@@ -58,23 +82,34 @@ MISSING_COUNT=0
 	echo "* For example, if you don't use QHY cameras  *"
 	echo "* then the QHY library is not needed         *"
 	echo "**********************************************"
+	echo "Build tools"
+	CheckFile	"/usr/bin"				"gcc"			"compiler not installed"
+	CheckFile	"/usr/bin"				"g++"			"compiler not installed"
+	CheckFile	"/usr/bin"				"make"			"make not installed"
+	CheckFile	"/usr/bin"				"cmake"			"cmake not installed"
+
+
+	echo
 	echo "Local files"
-	checkFile	"./"			"Makefile"			"please re-check download"
-	checkFile	"./"			"src"				"please re-check download"
-	checkFile	"./"			"src_discovery"		"please re-check download"
-	checkFile	"./"			"src_mlsLib"		"please re-check download"
-	checkFile	"./"			"src_MoonRise"		"please re-check download"
-	checkFile	"./"			"Objectfiles"
-	checkFile	"./"			"ASI_lib"
-	checkFile	"./"			"AtikCamerasSDK"
-	checkFile	"./"			"EFW_linux_mac_SDK"
-	checkFile	"./"			"QHY"				"Not required"
-	checkFile	"./"			"toupcamsdk"		"Not required"
+	CheckFile	"./"				"Makefile"			"please re-check download"
+	CheckFile	"./"				"src"				"please re-check download"
+	CheckFile	"./"				"src_discovery"		"please re-check download"
+	CheckFile	"./"				"src_mlsLib"		"please re-check download"
+	CheckFile	"./"				"src_MoonRise"		"please re-check download"
+	CheckFile	"./"				"Objectfiles"
+	CheckFile	"./"				"ASI_lib"
+	CheckFile	"./"				"AtikCamerasSDK"
+	CheckFile	"./"				"EFW_linux_mac_SDK"	"Not required"
+	CheckFile	"./"				"QHY"				"Not required"
+	CheckFile	"./"				"toupcamsdk"		"Not required"
 
 	echo
 	echo "System libraries"
-	checkFile	"/usr/local/include"			"fitsio.h"
-	checkFile	"/usr/include/opencv2/highgui"	"highgui_c.h"
+	CheckFile	"/usr/local/include"				"fitsio.h"
+
+	echo
+	echo "Checking for openCV (Required for images and clients)"
+	CheckOpenCV
 
 	echo "*********************************************"
 }
@@ -233,7 +268,7 @@ fi
 
 InstallFits
 
-#Checksystem
+Checksystem
 
 echo "MISSING_COUNT = $MISSING_COUNT"
 

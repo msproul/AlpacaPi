@@ -713,7 +713,6 @@ SJP_Parser_t		jsonParser;
 struct sockaddr_in	from;
 
 	CONSOLE_DEBUG(__FUNCTION__);
-	CONSOLE_ABORT(__FUNCTION__);
 
 	//*	see if there is a file listing extra IP address
 	filePointer	=	fopen(fileName, "r");

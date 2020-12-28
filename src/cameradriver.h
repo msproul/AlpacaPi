@@ -518,9 +518,10 @@ public:
 	//*****************************************************************************
 protected:
 	//*	ASCOM variables (properties)
-	short					cBayerOffsetX;
-	short					cBayerOffsetY;
-	TYPE_ALPACA_CAMERASTATE	cCameraState;
+	//*	the ones commented out with //+ need to be implemented.....
+//+	short					cBayerOffsetX;
+//+	short					cBayerOffsetY;
+//+	TYPE_ALPACA_CAMERASTATE	cCameraState;
 	int						cCameraXsize;			//*	max width of camera image
 	int						cCameraYsize;			//*	max width of camera image
 	bool					cCanAbortExposure;
@@ -530,10 +531,10 @@ protected:
 	bool					cCanPulseGuide;
 	bool					cCansetccdtemperature;
 	bool					cCanStopExposure;
-	double					cCCDTemperature;
-	bool					cConnected;
-	bool					cCoolerOn;
-	double					cCoolerPower;
+//+	double					cCCDTemperature;
+//+	bool					cConnected;
+//+	bool					cCoolerOn;
+//+	double					cCoolerPower;
 	double					cElectronsPerADU;
 
 	double					cExposureMax_seconds;
@@ -542,13 +543,13 @@ protected:
 	long					cExposureMin_us;		//*	micro-seconds
 
 	double					cExposureResolution;	//*	exposure resolution in seconds
-	bool					cFastReadout;
-	double					cFullWellCapacity;
+//+	bool					cFastReadout;
+//+	double					cFullWellCapacity;
 	int						cGain;					//*	see gain min/max
 	int						cGainMax;
 	int						cGainMin;
 	bool					cHasShutter;
-	double					cHeatSinkTemperature;
+//+	double					cHeatSinkTemperature;
 	//						imageReady is implemented in real time
 	bool					cIsPulseGuiding;
 	uint32_t				cLastexposureduration_us;	//*	stored in microseconds, ASCOM wants seconds, convert on the fly
@@ -567,18 +568,18 @@ protected:
 	int						cStartY;
 
 
-	int						cOffset;					//*!!!!!!!!!!!!!!	not implemented yet
-	int						cOffsetMax;
-	int						cOffsetMin;
-	int						Offsets;
-	int						cPercentCompleted;
+//+	int						cOffset;					//*!!!!!!!!!!!!!!	not implemented yet
+//+	int						cOffsetMax;
+//+	int						cOffsetMin;
+//+	int						Offsets;
+//+	int						cPercentCompleted;
 	double					cPixelSizeX;				//*	the pixel size of the camera, unit is um. (microns) such as 5.6um
 	double					cPixelSizeY;				//*	the pixel size of the camera, unit is um. (microns) such as 5.6um
 
 	//	ReadoutMode is implemented at execution time
 	//	ReadoutModes is implemented at execution time
 
-	TYPE_SensorType			cSensorType;
+//+	TYPE_SensorType			cSensorType;
 
 
 	//=========================================================================================

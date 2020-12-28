@@ -194,7 +194,7 @@ class AlpacaDriver
 		virtual	~AlpacaDriver(void);
 
 		virtual	TYPE_ASCOM_STATUS		ProcessCommand(			TYPE_GetPutRequestData *reqData);
-				TYPE_ASCOM_STATUS		ProcessCommand_Common(	TYPE_GetPutRequestData *reqData, const int cmdEnum);
+				TYPE_ASCOM_STATUS		ProcessCommand_Common(	TYPE_GetPutRequestData *reqData, const int cmdEnum, char *alpacaErrMsg);
 
 				TYPE_ASCOM_STATUS		Get_Connected(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
 				TYPE_ASCOM_STATUS		Put_Connected(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);

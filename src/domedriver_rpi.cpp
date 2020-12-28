@@ -324,7 +324,7 @@ char		command[64];
 			strcpy(command, "Button-CW");
 			if (cSlewing)
 			{
-				strcpy(alpacaErrMsg, "Dome already in motion, command ignored");
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Dome already in motion, command ignored");
 			}
 			else
 			{
@@ -337,7 +337,7 @@ char		command[64];
 			strcpy(command, "Button-CCW");
 			if (cSlewing)
 			{
-				strcpy(alpacaErrMsg, "Dome already in motion, command ignored");
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Dome already in motion, command ignored");
 			}
 			else
 			{
@@ -353,7 +353,7 @@ char		command[64];
 				//*	if we are already slowing down and the button is pressed a 2nd time
 				//*	stop right now
 				StopDomeMoving(kStopRightNow);
-				strcpy(alpacaErrMsg, "Panic stop");
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Panic stop");
 			}
 			else
 			{

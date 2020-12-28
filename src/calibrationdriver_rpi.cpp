@@ -108,11 +108,11 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
 	else
 	{
 		alpacaErrCode	=	kASCOM_Err_InvalidValue;
-		strcpy(alpacaErrMsg, "Brightness level out of range (0 <-> 1023)");
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Brightness level out of range (0 <-> 1023)");
 	}
 #else
 
-	strcpy(alpacaErrMsg, "Not implemented");
+	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
 
 #endif // _ENABLE_WIRING_PI_
 
@@ -135,7 +135,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
 
 #else
 
-	strcpy(alpacaErrMsg, "Not implemented");
+	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
 #endif // _ENABLE_WIRING_PI_
 
 //	CONSOLE_DEBUG_W_NUM("alpacaErrCode\t=", alpacaErrCode);

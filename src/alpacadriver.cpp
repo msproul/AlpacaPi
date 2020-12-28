@@ -109,7 +109,9 @@
 //*	Jul 20,	2020	<MLS> Added "exit" command for clean shutdown of sony camera
 //*	Sep  1,	2020	<MLS> Re-organized the case statements in all of the ProcessCommand() functions
 //*	Nov 30,	2020	<MLS> All (TYPE_ASCOM_STATUS) type casts have been removed
-//*	Dec  3,	2020	<MLS> First release of source code to outside (mike.fulbright@pobox.com)
+//*	Dec  3,	2020	<MLS> First release of source code to outside
+//*	Dec 12,	2020	<MLS> Created github repository https://github.com/msproul/AlpacaPi
+//*	Dec 28,	2020	<MLS> Finished making all Alpaca error messages uniform
 //*****************************************************************************
 
 #include	<stdio.h>
@@ -422,10 +424,11 @@ TYPE_ASCOM_STATUS		alpacaErrCode;
 }
 
 //**************************************************************************************
-TYPE_ASCOM_STATUS		AlpacaDriver::ProcessCommand_Common(TYPE_GetPutRequestData *reqData, const int cmdEnum)
+TYPE_ASCOM_STATUS		AlpacaDriver::ProcessCommand_Common(	TYPE_GetPutRequestData	*reqData,
+																const int				cmdEnum,
+																char					*alpacaErrMsg)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode;
-char				alpacaErrMsg[256];
 int					mySocket;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
@@ -497,8 +500,9 @@ int					mySocket;
 
 		default:
 			alpacaErrCode	=	kASCOM_Err_InvalidOperation;
-			strcpy(reqData->alpacaErrMsg, "AlpacaPi: Unrecognized command");
-			CONSOLE_DEBUG(reqData->alpacaErrMsg);
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Unrecognized command");
+			CONSOLE_DEBUG(alpacaErrMsg);
+			strcpy(reqData->alpacaErrMsg, alpacaErrMsg);
 			break;
 	}
 	return(alpacaErrCode);
@@ -2826,7 +2830,7 @@ int				cameraCnt;
 //*	Telescope
 #ifdef _ENABLE_TELESCOPE_
 	CreateTelescopeObjects();
-#endif // _ENABLE_SLIT_TRACKER_
+#endif // _ENABLE_TELESCOPE_
 
 
 //*********************************************************
@@ -2949,6 +2953,8 @@ struct timeval	currentTime;
 #endif	//	!defined(__arm__) || defined(_INCLUDE_MILLIS_)
 
 
+//*****************************************************************************
+//*	returns -1 if not found
 //*****************************************************************************
 int	FindCmdFromTable(const char *theCmd, const TYPE_CmdEntry *theCmdTable, int *cmdType)
 {

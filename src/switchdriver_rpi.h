@@ -46,16 +46,34 @@ class SwitchDriverRPi: public SwitchDriver
 
 };
 
+#ifdef _ENABLE_4REALY_BOARD
+//	https://smile.amazon.com/gp/product/B077LV4F1B/ref=ppx_yo_dt_b_asin_title_o01_s00?ie=UTF8&psc=1
+//	https://shop.sb-components.co.uk/products/pirelay-relay-board-shield-for-raspberry-pi
 
-//*	using BCM pin numbers
-#define	kHWpin_Channel1	5
-#define	kHWpin_Channel2	6
-#define	kHWpin_Channel3	13
-#define	kHWpin_Channel4	16
-#define	kHWpin_Channel5	19
-#define	kHWpin_Channel6	20
-#define	kHWpin_Channel7	21
-#define	kHWpin_Channel8	26
+//	https://github.com/sbcshop/PiRelay-V2
 
+
+	#define	kHWpin_Channel1	7
+	#define	kHWpin_Channel2	11
+	#define	kHWpin_Channel3	13
+	#define	kHWpin_Channel4	15
+
+	#define	kHWpin_Channel5	19
+	#define	kHWpin_Channel6	20
+	#define	kHWpin_Channel7	21
+	#define	kHWpin_Channel8	26
+
+#else
+
+	//*	using BCM pin numbers
+	#define	kHWpin_Channel1	5
+	#define	kHWpin_Channel2	6
+	#define	kHWpin_Channel3	13
+	#define	kHWpin_Channel4	16
+	#define	kHWpin_Channel5	19
+	#define	kHWpin_Channel6	20
+	#define	kHWpin_Channel7	21
+	#define	kHWpin_Channel8	26
+#endif // _ENABLE_4REALY_BOARD
 
 

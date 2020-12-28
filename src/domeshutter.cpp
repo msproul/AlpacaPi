@@ -115,13 +115,13 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 	else
 	{
 		alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
-		strcpy(alpacaErrMsg, "AlpacaPi: Remote shutter not detected");
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Remote shutter not detected");
 	}
 #else
 
 	{
 		alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
-		strcpy(alpacaErrMsg, "AlpacaPi: Remote shutter enabled");
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Remote shutter enabled");
 	}
 #endif	// _ENABLE_REMOTE_SHUTTER_
 
@@ -181,13 +181,13 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 	else
 	{
 		alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
-		strcpy(alpacaErrMsg, "AlpacaPi: Remote shutter not detected");
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Remote shutter not detected");
 	}
 #else
 
 	{
 		alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
-		strcpy(alpacaErrMsg, "AlpacaPi: Remote shutter enabled");
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Remote shutter enabled");
 	}
 #endif	// _ENABLE_REMOTE_SHUTTER_
 

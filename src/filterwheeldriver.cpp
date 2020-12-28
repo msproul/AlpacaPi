@@ -254,11 +254,7 @@ int					mySocket;
 		//*	let anything undefined go to the common command processor
 		//----------------------------------------------------------------------------------------
 		default:
-			alpacaErrCode	=	ProcessCommand_Common(reqData, cmdEnumValue);
-			if (alpacaErrCode != 0)
-			{
-				strcpy(alpacaErrMsg, reqData->alpacaErrMsg);
-			}
+			alpacaErrCode	=	ProcessCommand_Common(reqData, cmdEnumValue, alpacaErrMsg);
 			break;
 	}
 	RecordCmdStats(cmdEnumValue, reqData->get_putIndicator, alpacaErrCode);
@@ -446,7 +442,7 @@ int					myFilterPosition;
 		//*	states that it is mandatory to return -1 if the wheel is moving
 
 		myFilterPosition	=	-1;
-		strcpy(alpacaErrMsg, "AlpacaPi: Filter wheel is moving");
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Filter wheel is moving");
 	}
 	else
 	{
@@ -540,7 +536,7 @@ char				commentString[128];
 		else
 		{
 			CONSOLE_DEBUG_W_NUM("New position is out of range\t=", newPosition);
-			strcpy(alpacaErrMsg, "AlpacaPi: New position is out of range");
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "New position is out of range");
 			alpacaErrCode	=	kASCOM_Err_InvalidValue;
 		}
 	}
@@ -548,7 +544,7 @@ char				commentString[128];
 	{
 		//*	improperly formated request
 		CONSOLE_DEBUG_W_STR("improperly formated request\t=", reqData->contentData);
-		strcpy(alpacaErrMsg, "AlpacaPi: Improperly formated request");
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Improperly formated request");
 		alpacaErrCode	=	kASCOM_Err_RequestFormatErr;
 		alpacaErrCode	=	kASCOM_Err_InvalidOperation;
 	}

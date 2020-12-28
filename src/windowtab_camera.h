@@ -54,6 +54,7 @@ enum
 
 	kCameraBox_Reset,
 	kCameraBox_StartExposure,
+	kCameraBox_DownloadImage,
 
 	kCameraBox_FilterWheelName,
 	kCameraBox_FilterWheel1,
@@ -123,10 +124,15 @@ class WindowTabCamera: public WindowTab
 				void	ToggleCooler(void);
 				void	StartExposure(void);
 				void	SetTempartueDisplayEnable(bool enabled);
+				void	SetReceivedFileName(const char *newFileName);
+				void	DownloadImage(void);
 
 //				void	DrawGraph(IplImage *openCV_Image, TYPE_WIDGET *graphWidget, double *arrayData, int arrayCount);
-				char	cAlpacaDeviceName[64];
-				bool	cHasFilterWheel;
+
+				char		cAlpacaDeviceName[64];
+				bool		cHasFilterWheel;
+				IplImage	*cOpenCVdownLoadedImage;
+				char		cDownLoadedFileNameRoot[256];
 };
 
 

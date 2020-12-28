@@ -91,6 +91,10 @@ TYPE_USB_PATH	usbPathList[]	=
 			new SlitTrackerDriver(0, usbPathList[iii].usbPath);
 			keepGoing	=	false;
 		}
+		else
+		{
+			CONSOLE_DEBUG(__FUNCTION__);
+		}
 
 		iii++;
 	}
@@ -114,6 +118,11 @@ int	iii;
 	{
 		strcpy(cUSBpath, "/dev/ttyACM0");
 	}
+	LogEvent(	"slittracker",
+				__FUNCTION__,
+				NULL,
+				kASCOM_Err_Success,
+				cUSBpath);
 
 	cSlitTrackerfileDesc	=	-1;				//*	port file descriptor
 	cSlitTrackerByteCnt		=	0;
@@ -210,11 +219,7 @@ int					mySocket;
 		//*	let anything undefined go to the common command processor
 		//----------------------------------------------------------------------------------------
 		default:
-			alpacaErrCode	=	ProcessCommand_Common(reqData, cmdEnumValue);
-			if (alpacaErrCode != 0)
-			{
-				strcpy(alpacaErrMsg, reqData->alpacaErrMsg);
-			}
+			alpacaErrCode	=	ProcessCommand_Common(reqData, cmdEnumValue, alpacaErrMsg);
 			break;
 	}
 	RecordCmdStats(cmdEnumValue, reqData->get_putIndicator, alpacaErrCode);
@@ -283,6 +288,7 @@ char		lineBuffer[128];
 	{
 		mySocketFD		=	reqData->socket;
 		SocketWriteData(mySocketFD,	"<CENTER>\r\n");
+		SocketWriteData(mySocketFD,	"<H2>Slit Tracker</H2>\r\n");
 
 		SocketWriteData(mySocketFD,	"<TABLE BORDER=1>\r\n");
 		SocketWriteData(mySocketFD,	"\t<TR>\r\n");

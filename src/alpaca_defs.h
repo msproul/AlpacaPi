@@ -56,7 +56,7 @@ enum TYPE_ASCOM_STATUS
 	kASCOM_Err_Success					=	0,
 	kASCOM_Err_NotImplemented			=	0x400,
 	kASCOM_Err_PropertyNotImplemented	=	0x400,		//*	use this one
-	kASCOM_Err_MethodNotImplemented		=	0x400,		//*	use this one
+	kASCOM_Err_MethodNotImplemented		=	0x400,		//*	or this one
 	kASCOM_Err_InvalidValue				=	0x401,
 	kASCOM_Err_ValueNotSet				=	0x402,
 	kASCOM_Err_NotConnected				=	0x407,
