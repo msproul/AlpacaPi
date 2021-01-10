@@ -18,7 +18,7 @@
 //*****************************************************************************
 //*	Edit History
 //*****************************************************************************
-//*	Feb 23,	2020	<MLS> Started on controller_windowtabs.cpp
+//*	Feb 23,	2020	<MLS> Created controller_windowtabs.cpp
 //*	Feb 23,	2020	<MLS> Window tabs starting to work
 //*	Mar  1,	2020	<MLS> Added SetWidgetJustification()
 //*	Mar  2,	2020	<MLS> Added SetWidgetChecked() & SetWidgetSliderLimits()

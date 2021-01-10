@@ -86,15 +86,22 @@ class Controller
 				void	DrawWidgetPressBar(TYPE_WIDGET *theWidget);
 
 
+				void	DisplayButtonHelpText(const int buttonIdx);
+
+
 		virtual	void	DrawWidgetCustom(TYPE_WIDGET *theWidget);
 
 				int		FindClickedWidget(const int xxx, const int yyy);
+				bool	IsWidgetButton(const int widgetIdx);
+				bool	IsWidgetTextInput(const int widgetIdx);
 
 				//************************************************************
 				//*	these routines handle multiple tabs
 				void	SetTabWindow(			const int tabNum, WindowTab *theTabObjectPtr);
 
 				void	SetWidgetText(			const int tabNum, const int widgetIdx, const char *newText);
+				void	GetWidgetText(			const int tabNum, const int widgetIdx, char *getText);
+
 				void	SetWidgetNumber(		const int tabNum, const int widgetIdx, const int number);
 				void	SetWidgetNumber(		const int tabNum, const int widgetIdx, const double number);
 
@@ -103,7 +110,7 @@ class Controller
 				void	SetWidgetTextColor(		const int tabNum, const int widgetIdx, CvScalar newtextColor);
 				void	SetWidgetBGColor(		const int tabNum, const int widgetIdx, CvScalar newBGcolor);
 				void	SetWidgetBorderColor(	const int tabNum, const int widgetIdx, CvScalar newBoarderColor);
-//				void	SetWidgetImage(			const int tabNum, const int widgetIdx, IplImage *argImagePtr);
+				void	SetWidgetImage(			const int tabNum, const int widgetIdx, IplImage *argImagePtr);
 
 				void	SetWidgetValid(			const int tabNum, const int widgetIdx, bool valid);
 				void	SetWidgetChecked(		const int tabNum, const int widgetIdx, bool checked);
@@ -123,20 +130,37 @@ class Controller
 				void	DrawWindowTabs(void);
 		virtual	void	DrawWindowWidgets(void);
 				void	DrawWindow(void);
+				void	UpdateWindowAsNeeded(void);
+
 		virtual void	HandleKeyDown(const int keyPressed);
+				void	HandleKeyDownInTextWidget(const int tabNum, const int widgetIdx,const int keyPressed);
+
 		virtual	void	ProcessButtonClick(const int buttonIdx);
 		virtual	void	ProcessDoubleClick(const int buttonIdx);
 		virtual	void	RefreshWindow(void);
 
+				bool	AlpacaGetSupportedActions(	sockaddr_in	*deviceAddress,
+													int			devicePort,
+													const char	*deviceType,
+													const int	deviceNum);
 				bool	AlpacaGetSupportedActions(const char *deviceType, const int deviceNum);
-		virtual	void	AlpacaProcessSupportedAction(const char *valueString);
+		virtual	void	AlpacaProcessSupportedAction(	const char	*deviceType,
+														const int	deviveNum,
+														const char	*valueString);
 				int		AlpacaCheckForErrors(	SJP_Parser_t	*jsonParser,
 												char			*errorMsg,
 												bool			reportError=false);
 
+				bool	AlpacaGetStatus_ReadAll(	sockaddr_in	*deviceAddress,
+													int			port,
+													const char	*deviceType,
+													const int	deviceNum);
 
 				bool	AlpacaGetStatus_ReadAll(const char *deviceType, const int deviceNum);
-		virtual	void	AlpacaProcessReadAll(const char *keywordString, const char *valueString);
+		virtual	void	AlpacaProcessReadAll(	const char	*deviceType,
+												const int deviceNum,
+												const char	*keywordString,
+												const char	*valueString);
 
 
 
@@ -145,6 +169,13 @@ class Controller
 				bool	AlpacaSendPutCmd(		const char	*alpacaDevice,
 												const char	*alpacaCmd,
 												const char	*dataString);
+				bool	AlpacaSendPutCmdwResponse(	sockaddr_in		*deviceAddress,
+													int				devicePort,
+													const char		*alpacaDevice,
+													const int		alpacaDevNum,
+													const char		*alpacaCmd,
+													const char		*dataString,
+													SJP_Parser_t	*jsonParser);
 				bool	AlpacaSendPutCmdwResponse(	const char		*alpacaDevice,
 													const char		*alpacaCmd,
 													const char		*dataString,
@@ -176,18 +207,21 @@ class Controller
 												int			*uint32array,
 												int			arrayLength,
 												int			*actualValueCnt);
+		int			cDebugCounter;
 		bool		cKeepRunning;
+		bool		cUpdateProtect;
+
 		//*	Window tabs
+		int			cCurrentTabNum;
 		WindowTab	*cCurrentTabObjPtr;
 		WindowTab	*cWindowTabs[kMaxTabs];
 
 		CvScalar	cBackGrndColor;
 		TYPE_WIDGET	cTabList[kMaxTabs];
 		int			cTabCount;
-		int			cCurrentTabNum;
 
 		bool		cUpdateWindow;
-		char		cWindowName[48];
+		char		cWindowName[256];
 		int			cWidth;
 		int			cHeight;
 		IplImage	*cOpenCV_Image;
@@ -200,6 +234,8 @@ class Controller
 		int			cHighlightedBtn;
 		int			cLastLClickX;
 		int			cLastLClickY;
+
+		int			cCurTextInput_Widget;
 
 		int			cCurrentMouseX;
 		int			cCurrentMouseY;

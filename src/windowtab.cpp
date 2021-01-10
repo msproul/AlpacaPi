@@ -30,6 +30,17 @@
 //*	Jun 25,	2020	<MLS> Added DumpWidgetList()
 //*	Jul  9,	2020	<MLS> Added color scheme options, SetWindowTabColorScheme()
 //*	Jul  9,	2020	<MLS> Added BumpColorScheme(), UpdateColors()
+//*	Dec 30,	2020	<MLS> Added HandleKeyDown()
+//*	Dec 31,	2020	<MLS> Added help text string to widget definition
+//*	Dec 31,	2020	<MLS> Added DisplayButtonHelpText() & SetHelpTextBoxNumber()
+//*	Dec 31,	2020	<MLS> Added ProcessMouseEvent()
+//*	Jan  1,	2021	<MLS> Added flag needsUpdated for selective updating
+//*	Jan  1,	2021	<MLS> Added FrameEllipse()
+//*	Jan  4,	2021	<MLS> Added ForceUpdate()
+//*	Jan  4,	2021	<MLS> Added ProcessMouseLeftButtonDown() & ProcessMouseLeftButtonDragged()
+//*	Jan  5,	2021	<MLS> Added RunBackgroundTasks()
+//*	Jan  5,	2021	<MLS> Added CPenSize()
+//*	Jan  6,	2021	<MLS> Added GetWidgetText()
 //*****************************************************************************
 
 
@@ -52,6 +63,7 @@
 
 
 #include	"commoncolor.h"
+#include	"widget.h"
 #include	"windowtab.h"
 #include	"controller.h"
 
@@ -92,8 +104,17 @@ int		iii;
 	cLrgBtnHeight	=	cClmWidth / 2;
 	cFullWidthBtn	=	cWidth - cClm1_offset - 1;
 
-	cIpAddrTextBox	=	-1;
-	cLastCmdTextBox	=	-1;
+	cIpAddrTextBox		=	-1;
+	cLastCmdTextBox		=	-1;
+	cHelpTextBoxNuber	=	-1;
+	cPervDisplayedHelpBox	=	-1;
+
+	cOpenCV_Image		=	NULL;
+	cCurrentXloc		=	0;
+	cCurrentYloc		=	0;
+
+	cCurrentColor		=	CV_RGB(255,	255,	255);
+	cCurrentLineWidth	=	1;
 
 	if (windowName != NULL)
 	{
@@ -126,6 +147,13 @@ WindowTab::~WindowTab(void)
 //	CONSOLE_DEBUG(__FUNCTION__);
 }
 
+//**************************************************************************************
+void WindowTab::RunBackgroundTasks(void)
+{
+//	CONSOLE_DEBUG(__FUNCTION__);
+}
+
+
 
 //**************************************************************************************
 void	WindowTab::SetWidget(const int widgetIdx, int left, int top, int width, int height)
@@ -146,6 +174,7 @@ void	WindowTab::SetWidget(const int widgetIdx, int left, int top, int width, int
 		cWidgetList[widgetIdx].top			=	top;
 		cWidgetList[widgetIdx].width		=	width;
 		cWidgetList[widgetIdx].height		=	height;
+		cWidgetList[widgetIdx].needsUpdated	=	true;
 	}
 }
 
@@ -155,6 +184,7 @@ void	WindowTab::SetWidgetType(const int widgetIdx, const int widetType)
 	if ((widgetIdx >= 0) && (widgetIdx < kMaxWidgets))
 	{
 		cWidgetList[widgetIdx].widgetType	=	widetType;
+		cWidgetList[widgetIdx].needsUpdated	=	true;
 		if ((widetType == kWidgetType_RadioButton) || (widetType == kWidgetType_CheckBox))
 		{
 			cWidgetList[widgetIdx].includeBorder	=	false;
@@ -170,6 +200,7 @@ void	WindowTab::SetWidgetIcon(const int widgetIdx, const int iconNumber)
 	{
 		cWidgetList[widgetIdx].widgetType	=	kWidgetType_Icon;
 		cWidgetList[widgetIdx].iconNum		=	iconNumber;
+		cWidgetList[widgetIdx].needsUpdated	=	true;
 	}
 }
 
@@ -179,7 +210,8 @@ void	WindowTab::SetWidgetFont(const int widgetIdx, const int fontNum)
 {
 	if ((widgetIdx >= 0) && (widgetIdx < kMaxWidgets))
 	{
-		cWidgetList[widgetIdx].fontNum	=	fontNum;
+		cWidgetList[widgetIdx].fontNum		=	fontNum;
+		cWidgetList[widgetIdx].needsUpdated	=	true;
 	}
 }
 
@@ -189,27 +221,58 @@ void	WindowTab::SetWidgetJustification(	const int widgetIdx, int justification)
 	if ((widgetIdx >= 0) && (widgetIdx < kMaxWidgets))
 	{
 		cWidgetList[widgetIdx].justification	=	justification;
+		cWidgetList[widgetIdx].needsUpdated		=	true;
 	}
 }
 
 //**************************************************************************************
 void	WindowTab::SetWidgetText(const int widgetIdx, const char *newText)
 {
-//*	this is for very specific debugging
-//	if (widgetIdx == 41)
-//	{
-//		CONSOLE_DEBUG_W_STR(__FUNCTION__, newText);
-//	}
-
+	if (widgetIdx == 42)
+	{
+		CONSOLE_DEBUG_W_NUM("widgetIdx\t=", widgetIdx);
+		CONSOLE_DEBUG_W_STR("newText\t=", newText);
+	}
 	if ((widgetIdx >= 0) && (widgetIdx < kMaxWidgets))
 	{
 		strcpy(cWidgetList[widgetIdx].textString, newText);
+		cWidgetList[widgetIdx].needsUpdated	=	true;
 	}
 	else
 	{
 		CONSOLE_DEBUG_W_NUM("widgetIdx out of range\t=", widgetIdx);
 	}
 }
+
+//**************************************************************************************
+void	WindowTab::GetWidgetText(const int widgetIdx, char *getText)
+{
+	if ((widgetIdx >= 0) && (widgetIdx < kMaxWidgets))
+	{
+		strcpy(getText, cWidgetList[widgetIdx].textString);
+	}
+	else
+	{
+		CONSOLE_DEBUG_W_NUM("widgetIdx out of range\t=", widgetIdx);
+	}
+}
+
+
+//**************************************************************************************
+void	WindowTab::SetWidgetHelpText(const int widgetIdx, const char *newText)
+{
+//	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(newText);
+	if ((widgetIdx >= 0) && (widgetIdx < kMaxWidgets))
+	{
+		strcpy(cWidgetList[widgetIdx].helpText, newText);
+	}
+	else
+	{
+		CONSOLE_DEBUG_W_NUM("widgetIdx out of range\t=", widgetIdx);
+	}
+}
+
 
 //**************************************************************************************
 void	WindowTab::SetWidgetNumber(const int widgetIdx, const int number)
@@ -244,6 +307,7 @@ void	WindowTab::SetWidgetTextColor(const int widgetIdx, CvScalar newtextColor)
 	if ((widgetIdx >= 0) && (widgetIdx < kMaxWidgets))
 	{
 		cWidgetList[widgetIdx].textColor	=	newtextColor;
+		cWidgetList[widgetIdx].needsUpdated	=	true;
 	}
 }
 
@@ -253,6 +317,7 @@ void	WindowTab::SetWidgetBGColor(const int widgetIdx, CvScalar newtextColor)
 	if ((widgetIdx >= 0) && (widgetIdx < kMaxWidgets))
 	{
 		cWidgetList[widgetIdx].bgColor	=	newtextColor;
+		cWidgetList[widgetIdx].needsUpdated	=	true;
 	}
 }
 
@@ -262,16 +327,19 @@ void	WindowTab::SetWidgetBorderColor(const int widgetIdx, CvScalar newtextColor)
 	if ((widgetIdx >= 0) && (widgetIdx < kMaxWidgets))
 	{
 		cWidgetList[widgetIdx].borderColor	=	newtextColor;
+		cWidgetList[widgetIdx].needsUpdated	=	true;
 	}
 }
 
 //**************************************************************************************
 void	WindowTab::SetWidgetImage(			const int widgetIdx, IplImage *argImagePtr)
 {
+//	CONSOLE_DEBUG(__FUNCTION__);
 	if ((widgetIdx >= 0) && (widgetIdx < kMaxWidgets))
 	{
 		cWidgetList[widgetIdx].openCVimagePtr	=	argImagePtr;
 		cWidgetList[widgetIdx].widgetType		=	kWidgetType_Image;
+		cWidgetList[widgetIdx].needsUpdated		=	true;
 	}
 }
 
@@ -395,31 +463,34 @@ int		connBtnWidth;
 		SetWidgetTextColor(	versionBox,	CV_RGB(255,	0,	0));
 	}
 
-	//=======================================================
-	//*	IP address
 	yLoc	=	cHeight - cBtnHeight;
 	yLoc	-=	1;
-	//*	check for connect button
-	if (connectBtnBox > 0)
+	//=======================================================
+	//*	IP address
+	if (ipaddrBox >= 0)
 	{
-		//*	a connect button was specified, adjust the IP box to be smaller
-		SetWidget(		ipaddrBox,	0,			yLoc,		(cClmWidth * 4),	cBtnHeight);
-		SetWidgetFont(	ipaddrBox,	kFont_Medium);
+		//*	check for connect button
+		if (connectBtnBox > 0)
+		{
+			//*	a connect button was specified, adjust the IP box to be smaller
+			SetWidget(		ipaddrBox,	0,			yLoc,		(cClmWidth * 4),	cBtnHeight);
+			SetWidgetFont(	ipaddrBox,	kFont_Medium);
 
-		//*	now setup the "Connect" button
-		connBtnWidth	=	cWidth - cClm5_offset - 2;
-		SetWidget(				connectBtnBox,	cClm5_offset + 1,	yLoc,	connBtnWidth,		cBtnHeight);
-		SetWidgetFont(			connectBtnBox,	kFont_Medium);
-		SetWidgetText(			connectBtnBox,	"Connect");
+			//*	now setup the "Connect" button
+			connBtnWidth	=	cWidth - cClm5_offset - 2;
+			SetWidget(				connectBtnBox,	cClm5_offset + 1,	yLoc,	connBtnWidth,		cBtnHeight);
+			SetWidgetFont(			connectBtnBox,	kFont_Medium);
+			SetWidgetText(			connectBtnBox,	"Connect");
 
-		SetWidgetBGColor(		connectBtnBox,		CV_RGB(255, 255, 255));
-		SetWidgetBorderColor(	connectBtnBox,		CV_RGB(0, 0, 0));
-		SetWidgetTextColor(		connectBtnBox,		CV_RGB(0, 0, 0));
-	}
-	else
-	{
-		SetWidget(		ipaddrBox,	0,	yLoc,		cWidth,	cBtnHeight);
-		SetWidgetFont(	ipaddrBox, kFont_Medium);
+			SetWidgetBGColor(		connectBtnBox,		CV_RGB(255, 255, 255));
+			SetWidgetBorderColor(	connectBtnBox,		CV_RGB(0, 0, 0));
+			SetWidgetTextColor(		connectBtnBox,		CV_RGB(0, 0, 0));
+		}
+		else
+		{
+			SetWidget(		ipaddrBox,	0,	yLoc,		cWidth,	cBtnHeight);
+			SetWidgetFont(	ipaddrBox, kFont_Medium);
+		}
 	}
 
 	//=======================================================
@@ -479,6 +550,7 @@ int	yLoc;
 	}
 }
 
+
 //**************************************************************************************
 void	WindowTab::DisplayLastAlpacaCommand(void)
 {
@@ -512,6 +584,7 @@ void	WindowTab::SetWidgetValid(const int widgetIdx, bool valid)
 	if ((widgetIdx >= 0) && (widgetIdx < kMaxWidgets))
 	{
 		cWidgetList[widgetIdx].valid	=	valid;
+		cWidgetList[widgetIdx].needsUpdated	=	true;
 	}
 }
 
@@ -521,6 +594,7 @@ void	WindowTab::SetWidgetBorder(const int widgetIdx, bool onOff)
 	if ((widgetIdx >= 0) && (widgetIdx < kMaxWidgets))
 	{
 		cWidgetList[widgetIdx].includeBorder	=	onOff;
+		cWidgetList[widgetIdx].needsUpdated		=	true;
 	}
 }
 
@@ -531,6 +605,7 @@ void	WindowTab::SetWidgetChecked(	const int widgetIdx, bool checked)
 	if ((widgetIdx >= 0) && (widgetIdx < kMaxWidgets))
 	{
 		cWidgetList[widgetIdx].selected	=	checked;
+		cWidgetList[widgetIdx].needsUpdated	=	true;
 	}
 }
 
@@ -540,16 +615,17 @@ void	WindowTab::SetWidgetCrossedout(const int widgetIdx, bool crossedout)
 	if ((widgetIdx >= 0) && (widgetIdx < kMaxWidgets))
 	{
 		cWidgetList[widgetIdx].crossedOut	=	crossedout;
+		cWidgetList[widgetIdx].needsUpdated	=	true;
 	}
 }
 
 //**************************************************************************************
-
 void	WindowTab::SetWidgetHighlighted(	const int widgetIdx, bool highLighted)
 {
 	if ((widgetIdx >= 0) && (widgetIdx < kMaxWidgets))
 	{
 		cWidgetList[widgetIdx].highLighted	=	highLighted;
+		cWidgetList[widgetIdx].needsUpdated	=	true;
 	}
 }
 
@@ -562,6 +638,7 @@ void	WindowTab::SetWidgetSliderLimits(const int widgetIdx, double sliderMin, dou
 	{
 		cWidgetList[widgetIdx].sliderMin	=	sliderMin;
 		cWidgetList[widgetIdx].sliderMax	=	sliderMax;
+		cWidgetList[widgetIdx].needsUpdated	=	true;
 	}
 }
 
@@ -572,6 +649,7 @@ void	WindowTab::SetWidgetSliderValue(const int widgetIdx, double sliderValue)
 	if ((widgetIdx >= 0) && (widgetIdx < kMaxWidgets))
 	{
 		cWidgetList[widgetIdx].sliderValue	=	sliderValue;
+		cWidgetList[widgetIdx].needsUpdated	=	true;
 	}
 }
 
@@ -584,6 +662,7 @@ void	WindowTab::SetWidgetProgress(const int widgetIdx, const int currPosition, c
 		cWidgetList[widgetIdx].widgetType	=	kWidgetType_ProessBar;
 		cWidgetList[widgetIdx].sliderValue	=	currPosition;
 		cWidgetList[widgetIdx].sliderMax	=	totalValue;
+		cWidgetList[widgetIdx].needsUpdated	=	true;
 	}
 }
 
@@ -601,6 +680,37 @@ void	WindowTab::DrawGraphWidget(IplImage *openCV_Image, const int widgitIdx)
 }
 
 
+//**************************************************************************************
+void	WindowTab::ForceUpdate(void)
+{
+Controller	*myControllerObj;
+
+	myControllerObj	=	(Controller *)cParentObjPtr;
+	if (myControllerObj != NULL)
+	{
+		myControllerObj->cUpdateWindow	=	true;
+	}
+	else
+	{
+		CONSOLE_DEBUG("cParentObjPtr is NULL");
+	}
+}
+
+//**************************************************************************************
+void	WindowTab::UpdateWindowAsNeeded(void)
+{
+Controller	*myControllerObj;
+
+	myControllerObj	=	(Controller *)cParentObjPtr;
+	if (myControllerObj != NULL)
+	{
+		myControllerObj->UpdateWindowAsNeeded();
+	}
+	else
+	{
+		CONSOLE_DEBUG("cParentObjPtr is NULL");
+	}
+}
 
 //*****************************************************************************
 int	WindowTab::FindClickedWidget(const int xxx, const int yyy)
@@ -627,18 +737,165 @@ int		widgetIdx;
 }
 
 //*****************************************************************************
+bool	WindowTab::IsWidgetButton(const int widgetIdx)
+{
+bool	widgitIsButton;
+
+	widgitIsButton	=	false;
+	if ((widgetIdx >= 0) && (widgetIdx < kMaxWidgets))
+	{
+		switch (cWidgetList[widgetIdx].widgetType)
+		{
+			case kWidgetType_Button:
+			case kWidgetType_CheckBox:
+			case kWidgetType_Icon:
+			case kWidgetType_RadioButton:
+				widgitIsButton	=	true;
+				break;
+
+			case kWidgetType_Custom:
+			case kWidgetType_Graph:
+			case kWidgetType_Graphic:
+			case kWidgetType_Image:
+			case kWidgetType_MultiLineText:
+			case kWidgetType_OutlineBox:
+			case kWidgetType_ProessBar:
+			case kWidgetType_ScrollBar:
+			case kWidgetType_Slider:
+			case kWidgetType_Text:
+			case kWidgetType_TextInput:
+			default:
+				widgitIsButton	=	false;
+				break;
+
+		}
+	}
+	return(widgitIsButton);
+}
+
+
+//*****************************************************************************
+bool	WindowTab::IsWidgetTextInput(const int widgetIdx)
+{
+bool	widgitIsTextInput;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	widgitIsTextInput	=	false;
+	if ((widgetIdx >= 0) && (widgetIdx < kMaxWidgets))
+	{
+		if (cWidgetList[widgetIdx].widgetType == kWidgetType_TextInput)
+		{
+			widgitIsTextInput	=	true;
+		}
+	}
+	else
+	{
+		CONSOLE_DEBUG_W_NUM("Widget index out of bounds=", widgetIdx);
+	}
+	return(widgitIsTextInput);
+}
+
+//*****************************************************************************
+void	WindowTab::HandleKeyDown(const int keyPressed)
+{
+	//*	this routine should be overloaded
+//	CONSOLE_DEBUG_W_HEX("this routine should be overloaded: keyPressed=", keyPressed);
+}
+
+
+//*****************************************************************************
 void	WindowTab::ProcessButtonClick(const int buttonIdx)
 {
-	CONSOLE_DEBUG_W_NUM("this routine should be overloaded: buttonIdx=", buttonIdx);
+//	CONSOLE_DEBUG_W_NUM("this routine should be overloaded: buttonIdx=", buttonIdx);
 	//*	this routine should be overloaded
 }
 
 //*****************************************************************************
 void	WindowTab::ProcessDoubleClick(const int buttonIdx)
 {
-	CONSOLE_DEBUG("this routine should be overloaded");
+//	CONSOLE_DEBUG("this routine should be overloaded");
 	//*	this routine should be overloaded
 }
+
+//*****************************************************************************
+void	WindowTab::ProcessMouseEvent(	const int	widgitIdx,
+										const int	event,
+										const int	xxx,
+										const int	yyy,
+										const int	flags)
+{
+//	CONSOLE_DEBUG(__FUNCTION__);
+	//*	this routine can be overloaded
+}
+
+//*****************************************************************************
+void	WindowTab::ProcessMouseLeftButtonDown(const int	widgitIdx,
+												const int	event,
+												const int	xxx,
+												const int	yyy,
+												const int	flags)
+{
+//	CONSOLE_DEBUG_W_NUM(__FUNCTION__, xxx);
+	//*	this routine can be overloaded
+}
+
+//*****************************************************************************
+void	WindowTab::ProcessMouseLeftButtonUp(const int	widgitIdx,
+												const int	event,
+												const int	xxx,
+												const int	yyy,
+												const int	flags)
+{
+//	CONSOLE_DEBUG_W_NUM(__FUNCTION__, xxx);
+	//*	this routine can be overloaded
+}
+
+//*****************************************************************************
+void	WindowTab::ProcessMouseLeftButtonDragged(const int	widgitIdx,
+												const int	event,
+												const int	xxx,
+												const int	yyy,
+												const int	flags)
+{
+	CONSOLE_DEBUG_W_NUM(__FUNCTION__, xxx);
+	//*	this routine can be overloaded
+}
+
+//*****************************************************************************
+void	WindowTab::SetHelpTextBoxNumber(const int buttonIdx)
+{
+//	CONSOLE_DEBUG(__FUNCTION__);
+	cHelpTextBoxNuber	=	buttonIdx;
+}
+
+
+//*****************************************************************************
+//*	returns true if update occurred
+bool	WindowTab::DisplayButtonHelpText(const int buttonIdx)
+{
+bool	updateOccured;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG_W_NUM("cHelpTextBoxNuber\t=", cHelpTextBoxNuber);
+	updateOccured	=	false;
+	if (cHelpTextBoxNuber >= 0)
+	{
+		if (strlen(cWidgetList[buttonIdx].helpText) > 0)
+		{
+			//*	dont update the text if it has already been updated
+			if (buttonIdx != cPervDisplayedHelpBox)
+			{
+				SetWidgetText(cHelpTextBoxNuber, cWidgetList[buttonIdx].helpText);
+				updateOccured			=	true;
+				//*	keep track of which button we did
+				cPervDisplayedHelpBox	=	buttonIdx;
+			}
+		}
+	}
+	return(updateOccured);
+}
+
 
 //*****************************************************************************
 void	WindowTab::SetParentObjectPtr(void *argParentObjPtr)
@@ -671,7 +928,7 @@ void	WindowTab::SetWindowIPaddrInfo(	const char	*textString,
 	}
 	else
 	{
-		CONSOLE_DEBUG("cIpAddrTextBox not set!!!!!");
+	//	CONSOLE_DEBUG("cIpAddrTextBox not set!!!!!");
 	}
 }
 
@@ -754,23 +1011,6 @@ int		iii;
 	}
 }
 
-//*****************************************************************************
-enum
-{
-	kColorScheme_BlackRed	=	0,
-	kColorScheme_BlackWht,
-	kColorScheme_WhiteBlk,
-	kColorScheme_GrayBlk,
-	kColorScheme_Red,
-	kColorScheme_Grn,
-	kColorScheme_Blu,
-	kColorScheme_Cyan,
-	kColorScheme_Magenta,
-	kColorScheme_Yellow,
-
-	kMaxColorSchemes
-
-};
 
 //*****************************************************************************
 void	WindowTab::SetWindowTabColorScheme(const int colorScheme)
@@ -942,4 +1182,274 @@ void	WindowTab::BumpColorScheme(void)
 		gCurrWindowTabColorScheme	=	0;
 	}
 	SetWindowTabColorScheme(gCurrWindowTabColorScheme);
+}
+
+
+//*****************************************************************************
+void	WindowTab::CMoveTo(const int xx, const int yy)
+{
+	cCurrentXloc	=	xx;
+	cCurrentYloc	=	yy;
+}
+
+//*****************************************************************************
+void	WindowTab::CLineTo(const int xx, const int yy)
+{
+CvPoint		pt1;
+CvPoint		pt2;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+	if (cOpenCV_Image != NULL)
+	{
+		pt1.x	=	cCurrentXloc;
+		pt1.y	=	cCurrentYloc;
+
+		pt2.x	=	xx;
+		pt2.y	=	yy;
+		cvLine(	cOpenCV_Image,
+				pt1,
+				pt2,
+				cCurrentColor,		//	CvScalar color,
+				cCurrentLineWidth,	//	int thickness CV_DEFAULT(1),
+				8,					//	int line_type CV_DEFAULT(8),
+				0);					//	int shift CV_DEFAULT(0));
+
+		cCurrentXloc	=	xx;
+		cCurrentYloc	=	yy;
+	}
+	else
+	{
+		CONSOLE_ABORT("cOpenCV_Image is NULL");
+	}
+}
+
+//*****************************************************************************
+void	WindowTab::DrawCString(const int xx, const int yy, const char *theString)
+{
+CvPoint		textLoc;
+
+//	CONSOLE_DEBUG(theString);
+
+	if (cOpenCV_Image != NULL)
+	{
+		textLoc.x	=	xx;
+		textLoc.y	=	yy;
+		cvPutText(	cOpenCV_Image,
+					theString,
+					textLoc,
+					&gTextFont[1],
+					cCurrentColor
+				);
+
+	}
+	else
+	{
+		CONSOLE_ABORT("cOpenCV_Image is NULL");
+	}
+}
+
+
+//*****************************************************************************
+CvScalar	gColorTable[]	=
+{
+	//	https://www.htmlcolor-picker.com/
+	//*	these MUST be in the same order as the enums
+	CV_RGB(255,	255,	255),	//*	WHITE
+	CV_RGB(000,	000,	000),	//*	BLACK
+
+	CV_RGB(255,	000,	000),	//*	RED
+	CV_RGB(000,	255,	000),	//*	GREEN
+	CV_RGB(000,	000,	255),	//*	BLUE
+
+	CV_RGB(000,	255,	255),	//*	CYAN
+	CV_RGB(255,	000,	255),	//*	MAGENTA
+	CV_RGB(255,	255,	000),	//*	YELLOW
+
+	CV_RGB(96,	000,	000),	//*	DARKRED
+	CV_RGB(000,	 64,	000),	//*	DARKGREEN
+	CV_RGB(000,	000,	150),	//*	DARKBLUE
+
+
+
+	CV_RGB(192,	192,	192),	//*	LIGHTGRAY
+	CV_RGB(64,	 64,	 64),	//*	DARKGRAY
+
+	CV_RGB(255,	128,	255),	//*	LIGHTMAGENTA
+
+	CV_RGB(0x66, 0x3d,	0x14),	//*	BROWN
+	CV_RGB(231,	  5,	254),	//*	PINK
+
+};
+
+//*****************************************************************************
+void	WindowTab::SetColor(const int theColor)
+{
+	if ((theColor >= 0) && (theColor < COLOR_LAST))
+	{
+		cCurrentColor	=	gColorTable[theColor];
+	}
+	else
+	{
+		cCurrentColor	=	CV_RGB(255,	255,	255);
+	}
+}
+//*****************************************************************************
+void	WindowTab::CPenSize(const int newLineWidth)
+{
+	if ((newLineWidth >= 0) && (newLineWidth < 10))
+	{
+		cCurrentLineWidth	=	newLineWidth;
+	}
+	else
+	{
+		cCurrentLineWidth	=	1;
+	}
+}
+
+
+//*****************************************************************************
+void	WindowTab::Putpixel(const int xx, const int yy, const int theColor)
+{
+CvPoint		pt1;
+CvPoint		pt2;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+	if (cOpenCV_Image != NULL)
+	{
+		pt1.x	=	xx;
+		pt1.y	=	yy;
+
+		pt2.x	=	xx;
+		pt2.y	=	yy;
+		if ((theColor >= 0) && (theColor < COLOR_LAST))
+		{
+			cvLine(	cOpenCV_Image,
+					pt1,
+					pt2,
+					gColorTable[theColor],	//	CvScalar color,
+					1,						//	int thickness CV_DEFAULT(1),
+					8,						//	int line_type CV_DEFAULT(8),
+					0);						//	int shift CV_DEFAULT(0));
+		}
+		else
+		{
+			cvLine(	cOpenCV_Image,
+					pt1,
+					pt2,
+					cCurrentColor,		//	CvScalar color,
+					1,					//	int thickness CV_DEFAULT(1),
+					8,					//	int line_type CV_DEFAULT(8),
+					0);					//	int shift CV_DEFAULT(0));
+		}
+
+		cCurrentXloc	=	xx;
+		cCurrentYloc	=	yy;
+	}
+	else
+	{
+		CONSOLE_ABORT("cOpenCV_Image is NULL");
+	}
+}
+
+//*********************************************************************
+void	WindowTab::FillEllipse(int xCenter, int yCenter, int xRadius, int yRadius)
+{
+CvPoint	center;
+CvSize	axes;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG_W_NUM("xCenter\t=", xCenter);
+//	CONSOLE_DEBUG_W_NUM("yCenter\t=", yCenter);
+//	CONSOLE_DEBUG_W_NUM("xRadius\t=", xRadius);
+//	CONSOLE_DEBUG_W_NUM("yRadius\t=", yRadius);
+	if (cOpenCV_Image != NULL)
+	{
+		if ((xRadius > 0) && (yRadius > 0))
+		{
+			center.x	=	xCenter;
+			center.y	=	yCenter;
+			axes.width	=	2 * xRadius;
+			axes.height	=	2 * yRadius;
+
+			cvEllipse(	cOpenCV_Image,
+						center,
+						axes,
+						0.0,			//*	angle
+						0.0,			//*	start_angle
+						360.0,			//*	end_angle
+						cCurrentColor,	//	CvScalar color,
+						CV_FILLED,		//	int thickness CV_DEFAULT(1),
+						8,				//	int line_type CV_DEFAULT(8),
+						0);				//	int shift CV_DEFAULT(0));
+		}
+		else
+		{
+			CONSOLE_ABORT("Invalid arguments");
+		}
+	}
+	else
+	{
+		CONSOLE_ABORT("cOpenCV_Image is NULL");
+	}
+}
+
+//*********************************************************************
+void	WindowTab::FrameEllipse(int xCenter, int yCenter, int xRadius, int yRadius)
+{
+CvPoint	center;
+CvSize	axes;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG_W_NUM("xCenter\t=", xCenter);
+//	CONSOLE_DEBUG_W_NUM("yCenter\t=", yCenter);
+//	CONSOLE_DEBUG_W_NUM("xRadius\t=", xRadius);
+//	CONSOLE_DEBUG_W_NUM("yRadius\t=", yRadius);
+	if (cOpenCV_Image != NULL)
+	{
+		if ((xRadius > 0) && (yRadius > 0))
+		{
+			center.x	=	xCenter;
+			center.y	=	yCenter;
+			axes.width	=	2 * xRadius;
+			axes.height	=	2 * yRadius;
+
+			cvEllipse(	cOpenCV_Image,
+						center,
+						axes,
+						0.0,			//*	angle
+						0.0,			//*	start_angle
+						360.0,			//*	end_angle
+						cCurrentColor,	//	CvScalar color,
+						1,				//	int thickness CV_DEFAULT(1),
+						8,				//	int line_type CV_DEFAULT(8),
+						0);				//	int shift CV_DEFAULT(0));
+		}
+		else
+		{
+			CONSOLE_ABORT("Invalid arguments");
+		}
+	}
+	else
+	{
+		CONSOLE_ABORT("cOpenCV_Image is NULL");
+	}
+}
+
+//*********************************************************************
+void	SetRect(CvRect *theRect, const int top, const int left, const int bottom, const int right)
+{
+	theRect->x		=	left;
+	theRect->y		=	top;
+	theRect->width	=	right - left;
+	theRect->height	=	bottom - top;
+}
+
+
+//*********************************************************************
+void	InsetRect(CvRect *theRect, const int xInset, const int yInset)
+{
+	theRect->x		+=	xInset;
+	theRect->y		+=	yInset;
+	theRect->width	-=	xInset * 2;
+	theRect->height	-=	yInset * 2;
 }

@@ -113,12 +113,14 @@ class ControllerFocus: public Controller
 
 		virtual	bool	AlpacaGetStartupData(void);
 		virtual	bool	AlpacaGetStatus(void);
-		virtual	void	AlpacaProcessReadAll(const char *keywordString, const char *valueString);
+		virtual	void	AlpacaProcessReadAll(const char *deviceType, const char *keywordString, const char *valueString);
 
 				void	SendMoveFocuserCommand(int newDesiredPosition);
 				void	SendMoveRotatorCommand(int newDesiredPosition);
 				void	SendMoveAuxMotorCommand(int newDesiredPosition);
 				void	SendStopMotorsCommand(void);
+				void	ZeroMotorValues(void);
+
 				void	ReadNiteCrawlerColors(void);
 
 				void	OpenUSBport(void);
@@ -152,11 +154,4 @@ class ControllerFocus: public Controller
 				bool				cIsMoving;
 
 
-				//*	tab information
-	//			WindowTabNitecrawler	*cNiteCrawlerTabObjPtr;
-	//			WindowTabFocuser		*cFocuserTabObjPtr;
-	//			WindowTabAuxMotor		*cAuxTabObjPtr;
-	//			WindowTab				*cConfigTabObjPtr;
-	//			WindowTabGraph			*cGraphTabObjPtr;
-	//			WindowTabAbout			*cAboutBoxTabObjPtr;
 };

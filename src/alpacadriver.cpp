@@ -32,7 +32,7 @@
 //*	<MLS>	=	Mark L Sproul msproul@skychariot.com
 //*****************************************************************************
 //*	Apr  5,	2019	<MLS> Attended lecture by Bob Denny introducing Alpaca protocol
-//*	Apr  9,	2019	<MLS> Started on alpaca_driver.c
+//*	Apr  9,	2019	<MLS> Created alpaca_driver.c
 //*	Apr 12,	2019	<MLS> Parsing of the get/put command working
 //*	Apr 12,	2019	<MLS> Added _ENABLE_CAMERA_
 //*	Apr 12,	2019	<MLS> Added _ENABLE_DOME_
@@ -76,7 +76,7 @@
 //*	Dec  6,	2019	<MLS> Spent the day at Naval Academy working with Jeff Larsen
 //*	Dec 20,	2019	<MLS> Added version info to web output
 //*	Dec 29,	2019	<MLS> Added -t cmd line option to specify the default telescope config
-//*	Jan  1,	2020	<MLS> Added settable title for web page,
+//*	Jan  1,	2020	<MLS> Added ability to set title for web page,
 //*	Jan  1,	2020	<MLS> Moved OutputHTMLrowData() to base class
 //*	Jan  3,	2020	<MLS> Added InitObsConditionGloblas()
 //*	Jan 14,	2020	<MLS> Added Check_udev_rulesFile()
@@ -110,8 +110,9 @@
 //*	Sep  1,	2020	<MLS> Re-organized the case statements in all of the ProcessCommand() functions
 //*	Nov 30,	2020	<MLS> All (TYPE_ASCOM_STATUS) type casts have been removed
 //*	Dec  3,	2020	<MLS> First release of source code to outside
-//*	Dec 12,	2020	<MLS> Created github repository https://github.com/msproul/AlpacaPi
+//*	Dec 12,	2020	<MLS> Started github repository https://github.com/msproul/AlpacaPi
 //*	Dec 28,	2020	<MLS> Finished making all Alpaca error messages uniform
+//*	Jan 10,	2020	<MLS> Changed SendSupportedActions() to Get_SupportedActions()
 //*****************************************************************************
 
 #include	<stdio.h>
@@ -487,7 +488,7 @@ int					mySocket;
 			break;
 
 		case kCmd_Common_supportedactions:	//*	Returns the list of action names supported by this driver.
-			SendSupportedActions(reqData, NULL);
+			alpacaErrCode	=	Get_SupportedActions(reqData, NULL);
 			break;
 
 #ifdef _INCLUDE_EXIT_COMMAND_
@@ -784,7 +785,7 @@ double		freeDiskSpace_Gigs;
 
 
 //*****************************************************************************
-void	AlpacaDriver::SendSupportedActions(TYPE_GetPutRequestData *reqData, const TYPE_CmdEntry *theCmdTable)
+TYPE_ASCOM_STATUS	AlpacaDriver::Get_SupportedActions(TYPE_GetPutRequestData *reqData, const TYPE_CmdEntry *theCmdTable)
 {
 int		iii;
 char	lineBuffer[256];
@@ -845,6 +846,7 @@ int		mySocketFD;
 							reqData->jsonTextBuffer,
 							kMaxJsonBuffLen,
 							"\t],\r\n");
+	return(kASCOM_Err_Success);
 }
 
 

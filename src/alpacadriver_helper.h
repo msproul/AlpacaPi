@@ -38,6 +38,7 @@ extern	char		gWebTitle[];
 #endif	//	!defined(__arm__) || defined(_INCLUDE_MILLIS_)
 
 
+#define	DEGREES_F(x)	((x * (9.0/5.0) ) + 32.0)
 
 
 #ifdef __cplusplus

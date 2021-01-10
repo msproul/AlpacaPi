@@ -12,8 +12,9 @@
 	#include	"json_parse.h"
 #endif // _JSON_PARSE_H_
 
-#include	"widget.h"
-
+#ifndef	_WIDGET_H_
+	#include	"widget.h"
+#endif // _WIDGET_H_
 
 //*****************************************************************************
 typedef struct
@@ -33,6 +34,55 @@ extern	TYPE_WINDOWTAB_COLORSCHEME	gWT_ColorScheme;
 extern	int							gCurrWindowTabColorScheme;
 
 //*****************************************************************************
+enum
+{
+	kColorScheme_BlackRed	=	0,
+	kColorScheme_BlackWht,
+	kColorScheme_WhiteBlk,
+	kColorScheme_GrayBlk,
+	kColorScheme_Red,
+	kColorScheme_Grn,
+	kColorScheme_Blu,
+	kColorScheme_Cyan,
+	kColorScheme_Magenta,
+	kColorScheme_Yellow,
+
+	kMaxColorSchemes
+
+};
+
+
+//*****************************************************************************
+//*	simple colors
+enum
+{
+		WHITE	=	0,
+		BLACK,
+
+		RED,
+		GREEN,
+		BLUE,
+
+		CYAN,
+		MAGENTA,
+		YELLOW,
+
+		DARKRED,
+		DARKGREEN,
+		DARKBLUE,
+
+		LIGHTGRAY,
+		DARKGRAY,
+
+		LIGHTMAGENTA,
+
+		BROWN,
+		PINK,
+		COLOR_LAST
+
+};
+
+//*****************************************************************************
 class WindowTab
 {
 	public:
@@ -47,6 +97,7 @@ class WindowTab
 		virtual	~WindowTab(void);
 
 				//*	set up functions
+		virtual	void	RunBackgroundTasks(void);
 				void	SetWidget(				const int widgetIdx, int left, int top, int width, int height);
 				void	SetWidgetType(			const int widgetIdx, const int widetType);
 				void	SetWidgetFont(			const int widgetIdx, int fontNum);
@@ -77,13 +128,20 @@ class WindowTab
 				void	SetWidgetSliderLimits(	const int widgetIdx, double sliderMin, double sliderMax);
 				void	SetWidgetSliderValue(	const int widgetIdx, double sliderValue);
 				void	SetWidgetText(			const int widgetIdx, const char *newText);
+				void	GetWidgetText(			const int widgetIdx, char *getText);
 				void	SetWidgetNumber(		const int widgetIdx, const int number);
 				void	SetWidgetNumber(		const int widgetIdx, const double number);
 				void	SetWidgetIcon(			const int widgetIdx, const int iconNumber);
 
+				void	SetWidgetHelpText(		const int widgetIdx, const char *newText);
+
 				void	SetWidgetHighlighted(	const int widgetIdx, bool highLighted);
 
+
 				int		FindClickedWidget(const int xxx, const int yyy);
+				bool	IsWidgetButton(const int widgetIdx);
+				bool	IsWidgetTextInput(const int widgetIdx);
+
 				void	SetParentObjectPtr(void *argParentObjPtr);
 				bool	AlpacaSendPutCmd(	const char		*alpacaDevice,
 											const char		*alpacaCmd,
@@ -97,6 +155,9 @@ class WindowTab
 
 				void	SetWindowTabColorScheme(const int colorScheme);
 				void	BumpColorScheme(void);
+
+				void	ForceUpdate(void);
+				void	UpdateWindowAsNeeded(void);
 		virtual	void	UpdateColors(void);
 
 
@@ -106,14 +167,41 @@ class WindowTab
 											const bool	onLine = true);
 
 
-//		virtual	void	DrawGraphWidget(const int widgitIdx);
 		virtual	void	SetupWindowControls(void);
 //		virtual	void	DrawWindow(void);
-//		virtual void	HandleKeyDown(const int keyPressed);
+		virtual void	HandleKeyDown(const int keyPressed);
 		virtual	void	ProcessButtonClick(const int buttonIdx);
 		virtual	void	ProcessDoubleClick(const int buttonIdx);
+		virtual void	ProcessMouseEvent(const int widgitIdx, const int event, const int xxx, const int yyy, const int flags);
+		virtual void	ProcessMouseLeftButtonDown(const int widgitIdx, const int event, const int xxx, const int yyy, const int flags);
+		virtual void	ProcessMouseLeftButtonUp(const int widgitIdx, const int event, const int xxx, const int yyy, const int flags);
+		virtual void	ProcessMouseLeftButtonDragged(const int widgitIdx, const int event, const int xxx, const int yyy, const int flags);
+
+				void	SetHelpTextBoxNumber(const int buttonIdx);
+				bool	DisplayButtonHelpText(const int buttonIdx);
 
 
+		//=============================================================
+		//*	Drawing commands
+		//*	these are the beginning of an abstraction layer to make it easier to
+		//*	switch graphic environments later. Also they make it easier to
+		//*	incorporate some older code
+		//=============================================================
+		void		CPenSize(const int newLineWidth);
+		void		CMoveTo(const int xx, const int yy);
+		void		CLineTo(const int xx, const int yy);
+		void		DrawCString(const int xx, const int yy, const char *theString);
+		void		SetColor(const int theColor);
+
+		void		Putpixel(const int xx, const int yy, const int theColor);
+		void		FillEllipse(int xCenter, int yCenter, int xRadius, int yRadius);
+		void		FrameEllipse(int xCenter, int yCenter, int xRadius, int yRadius);
+
+		IplImage	*cOpenCV_Image;
+		int			cCurrentXloc;
+		int			cCurrentYloc;
+		CvScalar	cCurrentColor;
+		int			cCurrentLineWidth;
 
 		TYPE_WIDGET	cWidgetList[kMaxWidgets];
 		int			cWidgetCnt;
@@ -151,7 +239,12 @@ class WindowTab
 
 		int					cLastCmdTextBox;	//*	index of the box for the last alpaca command, < 0 means not set
 //-		char				cLastAlpacaCmdString[256];
+
+		int					cHelpTextBoxNuber;	//*	index of the box for help text (-1 is not set)
+		int					cPervDisplayedHelpBox;
 };
 
+void	SetRect(CvRect *theRect, const int top, const int left, const int bottom, const int right);
+void	InsetRect(CvRect *theRect, const int xInset, const int yInset);
 
 #endif // _WINDOW_TAB_H_

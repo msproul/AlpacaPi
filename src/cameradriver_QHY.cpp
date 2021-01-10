@@ -26,8 +26,8 @@
 //*****************************************************************************
 //*	<MLS>	=	Mark L Sproul
 //*****************************************************************************
+//*	Mar 27,	2020	<MLS> Created cameradriver_QHY.cpp
 //*	Mar 27,	2020	<MLS> Received QHY camera from HighpointScientific
-//*	Mar 27,	2020	<MLS> Started on cameradriver_QHY.cpp
 //*****************************************************************************
 
 #if defined(_ENABLE_CAMERA_) && defined(_ENABLE_QHY_)

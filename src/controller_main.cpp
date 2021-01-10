@@ -1,5 +1,5 @@
 //*****************************************************************************
-//*		focuser_main.cpp		(c) 2020 by Mark Sproul
+//*		controller_main.cpp		(c) 2020-21 by Mark Sproul
 //*
 //*		This is the main routine for creating controller windows
 //*
@@ -19,7 +19,7 @@
 //*****************************************************************************
 //*	Edit History
 //*****************************************************************************
-//*	Feb 27,	2020	<MLS> Created focuser_main.cpp
+//*	Feb 27,	2020	<MLS> Created controller_main.cpp
 //*	Mar  9,	2020	<MLS> Added ability to quit
 //*	Mar 24,	2020	<MLS> Added command line options, ProcessCmdLineArgs()
 //*	Apr 18,	2020	<MLS> Added CheckForDome()
@@ -43,20 +43,21 @@
 
 #include	"discovery_lib.h"
 
-#define _ENABLE_CONSOLE_DEBUG_
+//#define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
 
 
 #include	"alpaca_defs.h"
 
 #include	"controller.h"
+#include	"controller_camera.h"
+#include	"controller_cam_normal.h"
+#include	"controller_dome.h"
 #include	"controller_focus.h"
 #include	"controller_ml_nc.h"
 #include	"controller_ml_single.h"
 #include	"controller_switch.h"
-#include	"controller_camera.h"
-#include	"controller_cam_normal.h"
-#include	"controller_dome.h"
+#include	"controller_image.h"
 
 #ifdef _ENABLE_NET_TEST_
 	#include	"controller_nettest.h"
@@ -526,6 +527,10 @@ int					keyPressed;
 	objectsCreated++;
 #endif // _ENABLE_NET_TEST_
 
+#ifdef _ENABLE_SKYTRAVEL_
+	new ControllerImage("SkyTravel", NULL);
+	objectsCreated++;
+#endif // _ENABLE_SKYTRAVEL_
 
 	if (objectsCreated > 0)
 	{

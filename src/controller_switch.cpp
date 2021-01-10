@@ -483,7 +483,7 @@ bool			validData;
 }
 
 //*****************************************************************************
-void	ControllerSwitch::AlpacaProcessReadAll(const char *keywordString, const char *valueString)
+void	ControllerSwitch::AlpacaProcessReadAll(const char *deviceType, const char *keywordString, const char *valueString)
 {
 int			switchNum;
 int			boxNumber;

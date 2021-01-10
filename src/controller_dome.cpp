@@ -89,17 +89,7 @@ int				gSlitLogIdx;
 #endif // _SLIT_TRACKER_DIRECT_
 	bool	gUpdateSLitWindow	=	true;
 
-//**************************************************************************************
-enum
-{
-	kTab_Dome	=	0,
-	kTab_SlitTracker,
-	kTab_SlitGraph,
-	kTab_About,
 
-	kTab_Count
-
-};
 
 #define	kDefaultUpdateDelta	10
 
@@ -342,40 +332,12 @@ bool		needToUpdate;
 }
 
 
+
+#if 0
 //*****************************************************************************
-bool	ControllerDome::AlpacaGetStartupData(void)
-{
-//SJP_Parser_t	jsonParser;
-bool			validData;
-//char			alpacaString[128];
-//char			dataString[128];
-
-	CONSOLE_DEBUG(__FUNCTION__);
-	//===============================================================
-	//*	get supportedactions
-	validData	=	AlpacaGetSupportedActions("dome", cAlpacaDevNum);
-	if (validData)
-	{
-		SetWidgetValid(kTab_Dome,			kDomeBox_Readall,		cHasReadAll);
-		SetWidgetValid(kTab_SlitTracker,	kSlitTracker_Readall,	cHasReadAll);
-		SetWidgetValid(kTab_SlitGraph,		kSlitGraph_Readall,		cHasReadAll);
-		SetWidgetValid(kTab_About,			kAboutBox_Readall,		cHasReadAll);
-	}
-	else
-	{
-		CONSOLE_DEBUG("Read failure - supportedactions");
-		cReadFailureCnt++;
-	}
-
-
-
-	cLastUpdate_milliSecs	=	millis();
-
-	return(validData);
-}
-
-//*****************************************************************************
-void	ControllerDome::AlpacaProcessReadAll(const char *keywordString, const char *valueString)
+void	ControllerDome::AlpacaProcessReadAll(	const char	*deviceType,
+												const char	*keywordString,
+												const char	*valueString)
 {
 double	argDouble;
 
@@ -480,6 +442,7 @@ double	argDouble;
 		}
 	}
 }
+#endif // 0
 
 
 
@@ -950,59 +913,6 @@ void	ControllerDome::CloseSlitTrackerDataFile(void)
 	cLogSlitData	=	false;
 }
 
-
-
-//*****************************************************************************
-void	ControllerDome::UpdateDomeAzimuth(const double newAzimuth)
-{
-char	textString[32];
-
-	cAzimuth_Dbl	=	newAzimuth;
-	sprintf(textString, "%1.1f", cAzimuth_Dbl);
-	SetWidgetText(kTab_Dome, kDomeBox_Azimuth, textString);
-}
-
-
-//*****************************************************************************
-void	ControllerDome::UpdateShutterAltitude(const double newAltitude)
-{
-char	textString[32];
-
-	cAltitude_Dbl	=	newAltitude;
-	sprintf(textString, "%1.1f %%", cAltitude_Dbl);
-	SetWidgetText(kTab_Dome, kDomeBox_Altitude, textString);
-}
-
-//*****************************************************************************
-void	ControllerDome::UpdateShutterStatus(const int newShutterStatus)
-{
-char	statusString[16];
-
-//	CONSOLE_DEBUG(__FUNCTION__);
-//	CONSOLE_DEBUG_W_NUM("newShutterStatus\t=", newShutterStatus);
-
-	if (newShutterStatus != cShutterStatus)
-	{
-		cShutterStatus	=	newShutterStatus;
-		switch(cShutterStatus)
-		{
-			case kShutterStatus_Open:		strcpy(statusString,	"Open");	break;
-			case kShutterStatus_Closed:		strcpy(statusString,	"Closed");	break;
-			case kShutterStatus_Opening:	strcpy(statusString,	"Opening");	break;
-			case kShutterStatus_Closing:	strcpy(statusString,	"Closing");	break;
-			case kShutterStatus_Error:		strcpy(statusString,	"Error");	break;
-
-			case kShutterStatus_Unknown:
-			default:						strcpy(statusString,	"unknown");	break;
-		}
-
-		SetWidgetText(kTab_Dome, kDomeBox_ShutterStatus, statusString);
-	}
-//	else
-//	{
-//		CONSOLE_DEBUG("Did not update");
-//	}
-}
 
 int	gClientID				=	1368;
 int	gClientTransactionID	=	0;

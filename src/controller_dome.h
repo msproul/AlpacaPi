@@ -34,6 +34,18 @@
 extern	bool	gUpdateSLitWindow;
 
 //**************************************************************************************
+enum
+{
+	kTab_Dome	=	0,
+	kTab_SlitTracker,
+	kTab_SlitGraph,
+	kTab_About,
+
+	kTab_Count
+
+};
+
+//**************************************************************************************
 class ControllerDome: public Controller
 {
 	public:
@@ -52,7 +64,21 @@ class ControllerDome: public Controller
 	//	virtual	void	DrawGraphWidget(const int widgitIdx);
 				bool	AlpacaGetStartupData(void);
 				bool	AlpacaGetStatus(void);
-		virtual	void	AlpacaProcessReadAll(const char *keywordString, const char *valueString);
+
+		virtual	void	AlpacaProcessReadAll(			const char	*deviceType,
+														const int	deviveNum,
+														const char	*keywordString,
+														const char	*valueString);
+		virtual	void	AlpacaProcessSupportedAction(	const char	*deviceType,
+														const int	deviveNum,
+														const char	*valueString);
+
+				void	AlpacaProcessSupportedActionDome(const int deviveNum, const char *valueString);
+				void	AlpacaProcessReadAllDome(		const int	deviceNum,
+														const char	*keywordString,
+														const char	*valueString);
+
+
 				bool	AlpacaGetStatus_OneAAT(void);	//*	One At A Time
 				void	ToggleSwitchState(const int switchNum);
 				void	UpdateDomeAzimuth(const double newAzimuth);

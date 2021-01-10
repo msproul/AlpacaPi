@@ -87,7 +87,7 @@ int					setOptRetCode;
 												sizeof(timeoutLength));
 		if (setOptRetCode < 0)
 		{
-			perror("setsockopt(SO_BROADCAST) failed");
+			perror("setsockopt(SO_RCVTIMEO) failed");
 		}
 		remoteDev.sin_addr.s_addr	=	deviceAddress->sin_addr.s_addr;
 		remoteDev.sin_family		=	AF_INET;

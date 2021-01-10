@@ -22,7 +22,7 @@ enum
 	kUSBselect_BtnSingle,
 //	kUSBselect_BtnCrawler,
 
-	kUSBselect_IAlpacaDrvrVersion,
+	kUSBselect_AlpacaDrvrVersion,
 	kUSBselect_IPaddr,
 
 

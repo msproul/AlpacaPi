@@ -60,7 +60,7 @@ TYPE_ALPACA_UNIT	gAlpacaUnitList[kMaxDeviceListCnt];
 int					gAlpacaUnitCnt	=	0;
 
 TYPE_REMOTE_DEV		gRemoteList[kMaxDeviceListCnt];
-int					gRemoteCnt	=	0;;
+int					gRemoteCnt		=	0;
 
 static	int			gBroadcastSock;
 static	uint32_t	gMyIPaddress	=	0;
@@ -466,11 +466,25 @@ bool			validData;
 bool			domeInfo;
 double			pressure_kPa;
 double			humidity;
+char			outputString[128];
+char			ipAddressStr[32];
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_NUM("gRemoteCnt\t", gRemoteCnt);
 
+	CONSOLE_DEBUG_W_NUM("gRemoteCnt\t=", gRemoteCnt);
 	for (ii=0; ii<gRemoteCnt; ii++)
 	{
+	#ifdef _ENABLE_SKYTRAVEL_
+	//	CONSOLE_DEBUG_W_STR("device type\t=", gRemoteList[ii].deviceType);
+
+		inet_ntop(AF_INET, &gRemoteList[ii].deviceAddress.sin_addr, ipAddressStr, INET_ADDRSTRLEN);
+
+		printf("%-17s\t%-17s\t%-17s\t%-17s\t\r\n",	ipAddressStr,
+													gRemoteList[ii].deviceType,
+													gRemoteList[ii].deviceName,
+													gRemoteList[ii].versionString);
+	#endif
 	#ifdef _ENABLE_CAMERA_
 		if ((gRemoteList[ii].notSeenCounter == 0) &&
 			(strcmp(gRemoteList[ii].deviceType, "observingconditions") == 0))
@@ -575,6 +589,7 @@ double			humidity;
 		}
 	#endif
 	}
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, "Exit");
 }
 
 //*****************************************************************************
@@ -610,7 +625,7 @@ struct timeval		timeoutLength;
 int					timeOutCntr;
 int					sockOptValue;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 	gBroadcastSock	=	socket(AF_INET, SOCK_DGRAM, 0);
 	if (gBroadcastSock  < 0)
 	{
@@ -656,6 +671,9 @@ int					sockOptValue;
 	sendtoRetCode	=	0;
 	while (sendtoRetCode >= 0)
 	{
+	#ifdef _ENABLE_SKYTRAVEL_
+		CONSOLE_DEBUG(__FUNCTION__);
+	#endif
 //		printf("*******************************************************************************\r\n");
 		BumpNotSeenCounter();
 //		CONSOLE_DEBUG("Calling sendto");
@@ -685,6 +703,9 @@ int					sockOptValue;
 				SJP_ParseData(&jsonParser, buf);
 //				SJP_DumpJsonData(&jsonParser);
 
+			#ifdef _ENABLE_SKYTRAVEL_
+				CONSOLE_DEBUG_W_STR("buf=", buf);
+			#endif
 
 				AddDeviceToList(&from, &jsonParser);
 
@@ -715,8 +736,13 @@ int					sockOptValue;
 		GetInformationFromOtherDevices();
 
 		//*	we dont need to do this very often
-		sleep(3000);
+	//	sleep(3000);
+		sleep(60);
+		CONSOLE_DEBUG("Done sleeping");
 	}
+
+	CONSOLE_DEBUG("Thread exit!!!!!!!!");
+
 	return(NULL);
 }
 

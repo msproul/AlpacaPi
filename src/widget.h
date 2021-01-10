@@ -41,6 +41,7 @@ enum
 	kWidgetType_ScrollBar,
 	kWidgetType_Slider,
 	kWidgetType_Text,
+	kWidgetType_TextInput,
 
 	kWidgetType_Last
 };
@@ -77,13 +78,14 @@ enum
 };
 
 #define	kMaxWidgetStrLen	512
-
+#define	kMaxHelpTextStrLen	48
 //*****************************************************************************
 typedef struct
 {
 	bool		valid;
 	bool		crossedOut;
 	bool		highLighted;		//*	only valid for buttons
+	bool		needsUpdated;		//*	this is for selective updating
 	int			widgetType;
 	int			left;
 	int			top;
@@ -92,14 +94,16 @@ typedef struct
 	int			justification;
 	int			iconNum;
 	char		textString[kMaxWidgetStrLen];
+	char		helpText[kMaxHelpTextStrLen];
 	CvScalar	bgColor;
 	CvScalar	textColor;
 	CvScalar	borderColor;
 	bool		includeBorder;
 	int			fontNum;
 	IplImage	*openCVimagePtr;
-	bool		selected;		//*	radio buttons and check boxes
-	double		sliderValue;	//*	uses for sliders, scroll bars, and progress bars
+	bool		selected;			//*	radio buttons and check boxes
+	bool		highLiteEnabled;	//*	true if widget supports highlighting
+	double		sliderValue;		//*	uses for sliders, scroll bars, and progress bars
 	double		sliderMin;
 	double		sliderMax;
 

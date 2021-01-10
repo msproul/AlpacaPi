@@ -20,7 +20,7 @@
 //*****************************************************************************
 //*	Edit History
 //*****************************************************************************
-//*	Feb 20,	2020	<MLS> Started on controller.cpp
+//*	Feb 20,	2020	<MLS> Created controller.cpp
 //*	Feb 23,	2020	<MLS> Now using host name from /etc/hosts for window name
 //*	Feb 25,	2020	<MLS> Added DrawWidgetMultiLineText()
 //*	Mar  2,	2020	<MLS> Added background color to controller class
@@ -44,6 +44,13 @@
 //*	May 25,	2020	<MLS> Doubleclick in tab bar now resets window back to correct size
 //*	Jun 30,	2020	<MLS> Added RefreshWindow()
 //*	Jul  9,	2020	<MLS> Added UpdateWindowTabColors()
+//*	Dec 29,	2020	<MLS> Added SetWidgetImage()
+//*	Dec 31,	2020	<MLS> Added DisplayButtonHelpText()
+//*	Jan  1,	2021	<MLS> Added UpdateWindowAsNeeded()
+//*	Jan  1,	2021	<MLS> Added IsWidgetButton()
+//*	Jan  6,	2021	<MLS> Started on text input field
+//*	Jan  6,	2021	<MLS> Added HandleKeyDownInTextWidget()
+//*	Jan  6,	2021	<MLS> Added GetWidgetText()
 //*****************************************************************************
 
 
@@ -114,11 +121,48 @@ Controller	*myController;
 //*****************************************************************************
 void	Controller_HandleKeyDown(const int keyPressed)
 {
-//	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG_W_HEX(__FUNCTION__, keyPressed);
 
 	if (gCurrentActiveWindow != NULL)
 	{
-		gCurrentActiveWindow->HandleKeyDown(keyPressed);
+	#if 0
+	//*	this should cycle through the windows, but it does not work.
+		nextCtrlIdx	=	-1;
+		if ((keyPressed & 0x0ff) == 0x09)
+		{
+		int		iii;
+		int		nextCtrlIdx;
+
+			CONSOLE_DEBUG("TAB");
+			for (iii=0; iii<gControllerCnt; iii++)
+			{
+				if (gCurrentActiveWindow == gControllerList[iii])
+				{
+					nextCtrlIdx	=	iii+1;
+				}
+			}
+			if ((nextCtrlIdx < 0) || (nextCtrlIdx >= gControllerCnt))
+			{
+				nextCtrlIdx	=	0;
+			}
+			gCurrentActiveWindow	=	gControllerList[nextCtrlIdx];
+
+			if (gCurrentActiveWindow != NULL)
+			{
+				CONSOLE_DEBUG(gCurrentActiveWindow->cWindowName);
+
+				gCurrentActiveWindow->HandleWindowUpdate();
+			}
+			else
+			{
+				CONSOLE_DEBUG("gCurrentActiveWindow is NULL");
+			}
+		}
+		else
+	#endif
+		{
+			gCurrentActiveWindow->HandleKeyDown(keyPressed);
+		}
 	}
 	else
 	{
@@ -137,11 +181,16 @@ int			objCntr;
 	CONSOLE_DEBUG(__FUNCTION__);
 
 	cKeepRunning			=	true;
+	cDebugCounter			=	0;
+	cUpdateProtect			=	false;
 	cHasReadAll				=	false;
 	cReadStartup			=	true;
+	cLeftButtonDown			=	false;
+	cRightButtonDown		=	false;
 	cLastClicked_Btn		=	-1;
 	cLastClicked_Tab		=	-1;
 	cHighlightedBtn			=	-1;
+	cCurTextInput_Widget	=	-1;
 
 	cOnLine					=	true;		//*	assume its online, if it wasnt, we wouldnt be here
 	cAlpacaVersionString[0]	=	0;
@@ -333,6 +382,68 @@ void	Controller::HandleWindowUpdate(void)
 }
 
 //*****************************************************************************
+//*	this routine only redraws the widgets marked as needing updating
+//*****************************************************************************
+void	Controller::UpdateWindowAsNeeded(void)
+{
+int				iii;
+int				updatedCnt;
+TYPE_WIDGET		*myWidgetPtr;
+
+	if (cUpdateProtect)
+	{
+		return;
+	}
+	cUpdateProtect	=	true;
+//	CONSOLE_DEBUG_W_NUM(__FUNCTION__, cDebugCounter++);
+	if (cOpenCV_Image != NULL)
+	{
+		if (cCurrentTabObjPtr != NULL)
+		{
+			myWidgetPtr	=	cCurrentTabObjPtr->cWidgetList;
+		}
+		else
+		{
+			CONSOLE_DEBUG("cCurrentTabObjPtr is NULL");
+			myWidgetPtr	=	NULL;
+		}
+
+		if (myWidgetPtr != NULL)
+		{
+			updatedCnt	=	0;
+			//*	draw the widgets
+			for (iii=0; iii<kMaxWidgets; iii++)
+			{
+				if (myWidgetPtr[iii].needsUpdated)
+				{
+					//*	first erase that rectangle with background color
+
+
+					//*	draw the widget that needs updating
+					DrawOneWidget(&myWidgetPtr[iii], iii);
+					myWidgetPtr[iii].needsUpdated	=	false;
+					updatedCnt++;
+				}
+			}
+			cvShowImage(cWindowName, cOpenCV_Image);
+			cvWaitKey(15);
+//			CONSOLE_DEBUG_W_NUM("updatedCnt\t=", updatedCnt);
+		}
+		else
+		{
+			CONSOLE_DEBUG("widget ptr is NULL");
+		}
+
+	}
+	else
+	{
+		CONSOLE_DEBUG("cOpenCV_Image is NULL");
+	}
+	cUpdateProtect	=	false;
+}
+
+
+//*****************************************************************************
 int	Controller::FindClickedTab(const int xxx, const int yyy)
 {
 int		iii;
@@ -457,6 +568,39 @@ int		widgetIdx;
 	return(widgetIdx);
 }
 
+//*****************************************************************************
+bool	Controller::IsWidgetButton(const int widgetIdx)
+{
+bool		widgetIsButton;
+
+	if (cCurrentTabObjPtr != NULL)
+	{
+		widgetIsButton	=	cCurrentTabObjPtr->IsWidgetButton(widgetIdx);
+	}
+	else
+	{
+		widgetIsButton	=	false;
+		CONSOLE_DEBUG("cCurrentTabObjPtr is NULL");
+	}
+	return(widgetIsButton);
+}
+
+//*****************************************************************************
+bool	Controller::IsWidgetTextInput(const int widgetIdx)
+{
+bool		widgetIsButton;
+
+	if (cCurrentTabObjPtr != NULL)
+	{
+		widgetIsButton	=	cCurrentTabObjPtr->IsWidgetTextInput(widgetIdx);
+	}
+	else
+	{
+		widgetIsButton	=	false;
+		CONSOLE_DEBUG("cCurrentTabObjPtr is NULL");
+	}
+	return(widgetIsButton);
+}
 
 //*****************************************************************************
 void	Controller::ProcessButtonClick(const int buttonIdx)
@@ -465,7 +609,7 @@ void	Controller::ProcessButtonClick(const int buttonIdx)
 	if (cCurrentTabObjPtr != NULL)
 	{
 		cCurrentTabObjPtr->ProcessButtonClick(buttonIdx);
-		cUpdateWindow	=	true;
+	//	cUpdateWindow	=	true;
 	}
 	else
 	{
@@ -489,14 +633,33 @@ void	Controller::ProcessDoubleClick(const int buttonIdx)
 	}
 }
 
+//*****************************************************************************
+void	Controller::DisplayButtonHelpText(const int buttonIdx)
+{
+bool	updateOccurred;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+	if (cCurrentTabObjPtr != NULL)
+	{
+		updateOccurred	=	cCurrentTabObjPtr->DisplayButtonHelpText(buttonIdx);
+		if (updateOccurred)
+		{
+		//	cUpdateWindow	=	true;
+			UpdateWindowAsNeeded();
+		}
+	}
+}
 
 
 //*****************************************************************************
 void	Controller::ProcessMouseEvent(int event, int xxx, int yyy, int flags)
 {
 int		clickedBtn;
+int		myWidgitIdx;
+bool	widgitIsButton;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
+	myWidgitIdx	=	FindClickedWidget(xxx,  yyy);
 	switch(event)
 	{
 		case CV_EVENT_MOUSEMOVE:
@@ -505,20 +668,17 @@ int		clickedBtn;
 			cCurrentMouseY	=	yyy;
 			if (cLeftButtonDown)
 			{
-			int	myButton;
-
-				myButton	=	FindClickedWidget(xxx,  yyy);
 				if (cHighlightedBtn >= 0)
 				{
 					//*	if we are no longer in the button, turn off highlighting
-					if (myButton != cHighlightedBtn)
+					if (myWidgitIdx != cHighlightedBtn)
 					{
 						SetWidgetHighlighted(cCurrentTabNum, cHighlightedBtn, false);
 						DrawOneWidget(cHighlightedBtn);
 						cHighlightedBtn	=	-1;
 					}
 				}
-				else if ((cLastClicked_Btn >= 0) && (myButton == cLastClicked_Btn))
+				else if ((cLastClicked_Btn >= 0) && (myWidgitIdx == cLastClicked_Btn))
 				{
 					//*	we are back in the clicked button, highlight it again
 					cHighlightedBtn	=	cLastClicked_Btn;
@@ -526,25 +686,58 @@ int		clickedBtn;
 					SetWidgetHighlighted(cCurrentTabNum, cHighlightedBtn, true);
 					DrawOneWidget(cHighlightedBtn);
 				}
+				else if (cCurrentTabObjPtr != NULL)
+				{
+					cCurrentTabObjPtr->ProcessMouseLeftButtonDragged(myWidgitIdx, event,  xxx,  yyy,  flags);
+				}
+			}
+			else
+			{
+				//*	this will allow the display of help text
+				myWidgitIdx	=	FindClickedWidget(xxx,  yyy);
+				if (myWidgitIdx >= 0)
+				{
+					DisplayButtonHelpText(myWidgitIdx);
+				}
 			}
 			break;
 
 		case CV_EVENT_LBUTTONDOWN:
 //			CONSOLE_DEBUG("CV_EVENT_LBUTTONDOWN");
-			cLeftButtonDown		=	true;
-			cLastLClickX		=	xxx;
-			cLastLClickY		=	yyy;
+			cCurTextInput_Widget	=	-1;
+			cLeftButtonDown			=	true;
+			cLastLClickX			=	xxx;
+			cLastLClickY			=	yyy;
 			//*	keep track of the what button/tab was clicked on
-			cLastClicked_Tab	=	FindClickedTab(xxx,  yyy);
-			cLastClicked_Btn	=	FindClickedWidget(xxx,  yyy);
+			cLastClicked_Tab		=	FindClickedTab(xxx,  yyy);
+			cLastClicked_Btn		=	FindClickedWidget(xxx,  yyy);
 			if (cLastClicked_Btn >= 0)
 			{
-//				CONSOLE_DEBUG("Highlighting button");
-				cHighlightedBtn	=	cLastClicked_Btn;
-				//*	highlight the button
-				SetWidgetHighlighted(cCurrentTabNum, cHighlightedBtn, true);
-				DrawOneWidget(cHighlightedBtn);
+				widgitIsButton	=	IsWidgetButton(cLastClicked_Btn);
+				if (widgitIsButton)
+				{
+	//				CONSOLE_DEBUG("Highlighting button");
+					cHighlightedBtn	=	cLastClicked_Btn;
+					//*	highlight the button
+					SetWidgetHighlighted(cCurrentTabNum, cHighlightedBtn, true);
+					DrawOneWidget(cHighlightedBtn);
+				}
+				else if (IsWidgetTextInput(cLastClicked_Btn))
+				{
+					cCurTextInput_Widget	=	cLastClicked_Btn;
+					cLastClicked_Btn		=	-1;
+//					CONSOLE_DEBUG("Text input!!!!!");
+				}
+				else
+				{
+					cLastClicked_Btn	=	-1;
+//					CONSOLE_DEBUG("Not a button or text input");
+				}
 
+				if (cCurrentTabObjPtr != NULL)
+				{
+					cCurrentTabObjPtr->ProcessMouseLeftButtonDown(myWidgitIdx, event,  xxx,  yyy,  flags);
+				}
 			}
 			break;
 
@@ -586,6 +779,12 @@ int		clickedBtn;
 				}
 			}
 			cLastClicked_Btn	=	-1;
+
+
+			if (cCurrentTabObjPtr != NULL)
+			{
+				cCurrentTabObjPtr->ProcessMouseLeftButtonUp(myWidgitIdx, event,  xxx,  yyy,  flags);
+			}
 			break;
 
 		case CV_EVENT_RBUTTONUP:
@@ -598,7 +797,7 @@ int		clickedBtn;
 			break;
 
 		case CV_EVENT_LBUTTONDBLCLK:
-			CONSOLE_DEBUG("CV_EVENT_LBUTTONDBLCLK");
+		//	CONSOLE_DEBUG("CV_EVENT_LBUTTONDBLCLK");
 			clickedBtn		=	FindClickedTab(xxx,  yyy);
 			if (clickedBtn >= 0)
 			{
@@ -622,6 +821,12 @@ int		clickedBtn;
 		case CV_EVENT_MBUTTONDBLCLK:
 			CONSOLE_DEBUG("CV_EVENT_MBUTTONDBLCLK");
 			break;
+	}
+
+	//*	the window tab may also want to deal with a mouse event
+	if (cCurrentTabObjPtr != NULL)
+	{
+		cCurrentTabObjPtr->ProcessMouseEvent(myWidgitIdx, event,  xxx,  yyy,  flags);
 	}
 }
 
@@ -653,8 +858,6 @@ CvScalar	myGBcolor;
 		myGBcolor.val[1]	*=	0.75;
 		myGBcolor.val[2]	*=	0.75;
 		myGBcolor.val[3]	*=	0.75;
-
-//		myGBcolor	=	CV_RGB(100, 100, 100);
 	}
 	cvRectangleR(	cOpenCV_Image,
 					myCVrect,
@@ -671,6 +874,21 @@ CvScalar	myGBcolor;
 						1,							//	int thickness CV_DEFAULT(1),
 						8,							//	int line_type CV_DEFAULT(8),
 						0);							//	int shift CV_DEFAULT(0));
+
+
+	}
+	if (theWidget->selected)
+	{
+		myCVrect.x		+=	3;
+		myCVrect.y		+=	3;
+		myCVrect.width	-=	6;
+		myCVrect.height	-=	6;
+		cvRectangleR(	cOpenCV_Image,
+						myCVrect,
+						theWidget->borderColor,	//	CvScalar color,
+						CV_FILLED,						//	int thickness CV_DEFAULT(1),
+						8,							//	int line_type CV_DEFAULT(8),
+						0);							//	int shift CV_DEFAULT(0));
 	}
 	if (strlen(theWidget->textString) > 0)
 	{
@@ -679,6 +897,7 @@ CvScalar	myGBcolor;
 						&gTextFont[curFontNum],
 						&textSize,
 						&baseLine);
+
 		switch (theWidget->justification)
 		{
 			case kJustification_Left:
@@ -1060,7 +1279,7 @@ int			curFontNum;
 				8,							//	int line_type CV_DEFAULT(8),
 				0);							//	int shift CV_DEFAULT(0));
 	}
-	//*	draw the boarder AFTER the X mark
+	//*	draw the border AFTER the X mark
 	cvRectangleR(	cOpenCV_Image,
 					checkBoxRect,
 					theWidget->borderColor,		//	CvScalar color,
@@ -1529,6 +1748,9 @@ TYPE_WIDGET		*myWidgetPtr;
 //**************************************************************************************
 void	Controller::DrawOneWidget(TYPE_WIDGET *widgetPtr, const int widgetIdx)
 {
+CvRect		widgetRect;
+
+	widgetPtr->needsUpdated	=	false;	//*	record the fact that this widget has been updated
 	switch(widgetPtr->widgetType)
 	{
 		case kWidgetType_Button:
@@ -1537,6 +1759,19 @@ void	Controller::DrawOneWidget(TYPE_WIDGET *widgetPtr, const int widgetIdx)
 
 		case kWidgetType_Graph:
 			DrawWidgetGraph(widgetPtr);
+			if (widgetPtr->includeBorder)
+			{
+				widgetRect.x		=	widgetPtr->left;
+				widgetRect.y		=	widgetPtr->top;
+				widgetRect.width	=	widgetPtr->width;
+				widgetRect.height	=	widgetPtr->height;
+				cvRectangleR(	cOpenCV_Image,
+								widgetRect,
+								widgetPtr->borderColor,		//	CvScalar color,
+								1,							//	int thickness CV_DEFAULT(1),
+								8,							//	int line_type CV_DEFAULT(8),
+								0);							//	int shift CV_DEFAULT(0));
+			}
 			break;
 
 		case kWidgetType_Graphic:
@@ -1553,7 +1788,6 @@ void	Controller::DrawOneWidget(TYPE_WIDGET *widgetPtr, const int widgetIdx)
 		case kWidgetType_Image:
 			if (widgetPtr->openCVimagePtr != NULL)
 			{
-			CvRect		widgetRect;
 			CvRect		roiRect;
 			int			delta;
 			IplImage	*myImage;
@@ -1583,13 +1817,39 @@ void	Controller::DrawOneWidget(TYPE_WIDGET *widgetPtr, const int widgetIdx)
 
 				cvSetImageROI(cOpenCV_Image,  roiRect);
 				cvCopy(widgetPtr->openCVimagePtr, cOpenCV_Image);
-
 				cvResetImageROI(cOpenCV_Image);
+
+				//*	draw the border if enabled
+				if (widgetPtr->includeBorder)
+				{
+
+					cvRectangleR(	cOpenCV_Image,
+									roiRect,
+									widgetPtr->borderColor,		//	CvScalar color,
+									1,							//	int thickness CV_DEFAULT(1),
+									8,							//	int line_type CV_DEFAULT(8),
+									0);							//	int shift CV_DEFAULT(0));
+				}
+
 			}
-		//	else
-		//	{
-		//		CONSOLE_DEBUG("Image ptr is null");
-		//	}
+			else
+			{
+			//	CONSOLE_DEBUG("Image ptr is null");
+				if (widgetPtr->includeBorder)
+				{
+					widgetRect.x		=	widgetPtr->left;
+					widgetRect.y		=	widgetPtr->top;
+					widgetRect.width	=	widgetPtr->width;
+					widgetRect.height	=	widgetPtr->height;
+
+					cvRectangleR(	cOpenCV_Image,
+									widgetRect,
+									widgetPtr->borderColor,		//	CvScalar color,
+									1,							//	int thickness CV_DEFAULT(1),
+									8,							//	int line_type CV_DEFAULT(8),
+									0);							//	int shift CV_DEFAULT(0));
+				}
+			}
 			break;
 
 		case kWidgetType_MultiLineText:
@@ -1704,13 +1964,18 @@ void	Controller::HandleKeyDown(const int keyPressed)
 int			openCVerr;
 char		imageFileName[64];
 int			quality[3] = {16, 200, 0};
+bool		stillNeedsHandled;
 
 //	CONSOLE_DEBUG_W_HEX("keyPressed\t=", keyPressed);
 
+	stillNeedsHandled	=	true;
+
+	//*	check for control key
 	if (keyPressed & 0x040000)
 	{
 		//*	we have a control key
 //		CONSOLE_DEBUG("Control is down");
+		stillNeedsHandled	=	false;
 
 		switch(tolower(keyPressed & 0x007f))
 		{
@@ -1726,17 +1991,102 @@ int			quality[3] = {16, 200, 0};
 				break;
 
 			case 'q':
-				CONSOLE_DEBUG_W_STR("Quit from  window \t=", cWindowName);
+//				CONSOLE_DEBUG_W_STR("Quit from  window \t=", cWindowName);
 				gKeepRunning	=	false;
 				break;
 
 			case 'w':
-				CONSOLE_DEBUG_W_STR("Close  window \t=", cWindowName);
+//				CONSOLE_DEBUG_W_STR("Close  window \t=", cWindowName);
 				cKeepRunning	=	false;
+				break;
+
+			default:
+				stillNeedsHandled	=	true;
 				break;
 		}
 	}
+	if (stillNeedsHandled)
+	{
+		CONSOLE_DEBUG(__FUNCTION__);
+		if (cCurTextInput_Widget >= 0)
+		{
+
+			HandleKeyDownInTextWidget(cCurrentTabNum, cCurTextInput_Widget, keyPressed);
+
+		}
+		else if (cCurrentTabObjPtr != NULL)
+		{
+			cCurrentTabObjPtr->HandleKeyDown(keyPressed);
+		}
+	}
 }
+
+//**************************************************************************************
+void	Controller::HandleKeyDownInTextWidget(const int tabNum, const int widgetIdx,const int keyPressed)
+{
+char	myTextString[512];
+int		textLen;
+int		myChar;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG_W_HEX("keyPressed\t=", keyPressed);
+//	CONSOLE_DEBUG_W_HEX("0x00ffe0  \t=", (keyPressed & 0x00ffe0));
+
+	GetWidgetText(tabNum, widgetIdx, myTextString);
+	textLen	=	strlen(myTextString);
+
+	myChar	=	0;
+	//*	check for control key down
+	if (keyPressed & 0x040000)
+	{
+		myChar	=	keyPressed & 0x1f;
+	}
+	else if ((keyPressed & 0x00ffe0) == 0x00ffe0)
+	{
+		//	0x10FFE1
+		//	0x00FFE0
+		//*	ignore these
+		myChar	=	0;
+//		CONSOLE_DEBUG_W_HEX("myChar\t=", myChar);
+	}
+	else if ((keyPressed & 0x00ff80) == 0x0ff00)
+	{
+		myChar	=	keyPressed & 0x7f;
+		if (myChar >= 0x20)
+		{
+			myChar	=	0;
+		}
+	}
+	else
+	{
+		myChar	=	keyPressed & 0x7f;
+	}
+
+//	CONSOLE_DEBUG_W_HEX("myChar\t=", myChar);
+	switch(myChar)
+	{
+		case 0x08:	//*	back space
+			textLen--;
+			if (textLen < 0)
+			{
+				textLen	=	0;
+			}
+			myTextString[textLen]	=	0;
+			break;
+
+		default:
+			if (myChar >= 0x20)
+			{
+				myTextString[textLen]	=	myChar;
+				myTextString[textLen+1]	=	0;
+			}
+	}
+
+//	CONSOLE_DEBUG_W_STR("myTextString\t=", myTextString);
+
+	SetWidgetText(tabNum, widgetIdx, myTextString);
+}
+
 
 //**************************************************************************************
 void	Controller::RefreshWindow(void)
@@ -1760,6 +2110,7 @@ void	Controller::SetTabWindow(const int tabNum, WindowTab *theTabObjectPtr)
 		if ((tabNum == 0) && (cCurrentTabObjPtr == NULL))
 		{
 			cCurrentTabObjPtr	=	theTabObjectPtr;
+			cCurrentTabNum		=	tabNum;
 		}
 	}
 }
@@ -1788,6 +2139,10 @@ void	Controller::SetWidgetValid(	const int tabNum, const int widgetIdx, bool val
 //**************************************************************************************
 void	Controller::SetWidgetText(const int tabNum, const int widgetIdx, const char *newText)
 {
+//	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG_W_NUM("tabNum\t=",	tabNum);
+//	CONSOLE_DEBUG_W_NUM("widgetIdx\t=",	widgetIdx);
+//	CONSOLE_DEBUG_W_STR("newText\t=",	newText);
 	if ((tabNum >= 0)  && (tabNum < kMaxTabs))
 	{
 		if (cWindowTabs[tabNum] != NULL)
@@ -1803,7 +2158,32 @@ void	Controller::SetWidgetText(const int tabNum, const int widgetIdx, const char
 			CONSOLE_DEBUG("cWindowTabs[tabNum] is NULL")
 		}
 	}
+	else
+	{
+		CONSOLE_DEBUG("tabNum is out of bounds")
+	}
 }
+
+//**************************************************************************************
+void	Controller::GetWidgetText(const int tabNum, const int widgetIdx, char *getText)
+{
+	if ((tabNum >= 0)  && (tabNum < kMaxTabs))
+	{
+		if (cWindowTabs[tabNum] != NULL)
+		{
+			cWindowTabs[tabNum]->GetWidgetText(widgetIdx, getText);
+		}
+		else
+		{
+			CONSOLE_DEBUG("cWindowTabs[tabNum] is NULL")
+		}
+	}
+	else
+	{
+		CONSOLE_DEBUG("tabNum is out of bounds")
+	}
+}
+
 
 //**************************************************************************************
 void	Controller::SetWidgetNumber(const int tabNum, const int widgetIdx, const int number)
@@ -1902,7 +2282,7 @@ void	Controller::SetWidgetTextColor(		const int tabNum, const int widgetIdx, CvS
 }
 
 //**************************************************************************************
-void	Controller::SetWidgetBGColor(		const int tabNum, const int widgetIdx, CvScalar newBGcolor)
+void	Controller::SetWidgetBGColor(const int tabNum, const int widgetIdx, CvScalar newBGcolor)
 {
 	if ((tabNum >= 0)  && (tabNum < kMaxTabs))
 	{
@@ -1929,6 +2309,26 @@ void	Controller::SetWidgetBorderColor(	const int tabNum, const int widgetIdx, Cv
 		if (cWindowTabs[tabNum] != NULL)
 		{
 			cWindowTabs[tabNum]->SetWidgetBorderColor(widgetIdx, newBorderColor);
+			if (tabNum == cCurrentTabNum)
+			{
+				cUpdateWindow	=	true;
+			}
+		}
+		else
+		{
+		}
+	}
+}
+
+
+//**************************************************************************************
+void	Controller::SetWidgetImage(			const int tabNum, const int widgetIdx, IplImage *argImagePtr)
+{
+	if ((tabNum >= 0)  && (tabNum < kMaxTabs))
+	{
+		if (cWindowTabs[tabNum] != NULL)
+		{
+			cWindowTabs[tabNum]->SetWidgetImage(widgetIdx, argImagePtr);
 			if (tabNum == cCurrentTabNum)
 			{
 				cUpdateWindow	=	true;
@@ -2033,7 +2433,6 @@ void	Controller::SetWidgetHighlighted(	const int	tabNum,
 		if (cWindowTabs[tabNum] != NULL)
 		{
 			cWindowTabs[tabNum]->SetWidgetHighlighted(widgetIdx, highlighted);
-
 		}
 		else
 		{

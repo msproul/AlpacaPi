@@ -34,7 +34,7 @@
 //*	Apr 15,	2019	<MLS> Added command table for camera
 //*	Apr 17,	2019	<MLS> Added Camera_OutputHTML()
 //*	Apr 17,	2019	<MLS> Read temperature working on ASI1600
-//*	Apr 27,	2019	<MLS> Added erorr messages for ASI failures
+//*	Apr 27,	2019	<MLS> Added error messages for ASI failures
 //*	Apr 29,	2019	<MLS> Reading images from ASI camera
 //*	Apr 29,	2019	<MLS> Started using openCV for the image
 //*	Apr 29,	2019	<MLS> OpenCV image saving working

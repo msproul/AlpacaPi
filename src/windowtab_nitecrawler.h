@@ -36,7 +36,8 @@ enum
 	kNiteCrawlerTab_FocusJog,
 
 	//*	these MUST be in this order
-	kNiteCrawlerTab_home,
+	kNiteCrawlerTab_Home,
+	kNiteCrawlerTab_Zero,
 	kNiteCrawlerTab_Rot_m1,
 	kNiteCrawlerTab_Rot_p1,
 	kNiteCrawlerTab_Foc_m1,

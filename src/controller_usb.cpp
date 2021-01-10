@@ -70,8 +70,8 @@ ControllerUSB::ControllerUSB(	const char			*argWindowName,
 
 	SetupWindowControls();
 
-	SetWidgetText(kTab_USB,		kUSBselect_IAlpacaDrvrVersion,		gFullVersionString);
-	SetWidgetText(kTab_About,		kAboutBox_AlpacaDrvrVersion,		gFullVersionString);
+	SetWidgetText(kTab_USB,		kUSBselect_AlpacaDrvrVersion,		gFullVersionString);
+	SetWidgetText(kTab_About,	kAboutBox_AlpacaDrvrVersion,		gFullVersionString);
 }
 
 

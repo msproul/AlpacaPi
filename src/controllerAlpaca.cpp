@@ -24,6 +24,9 @@
 //*	Apr 15,	2020	<MLS> Fixed dataString bug in AlpacaGet... routines
 //*	Jun 22,	2020	<MLS> Added AlpacaGetIntegerArray()
 //*	Jun 24,	2020	<MLS> Added UpdateDownloadProgress()
+//*	Jun  9,	2021	<MLS> Added new version of AlpacaGetStatus_ReadAll()
+//*	Jun  9,	2021	<MLS> Added new version of AlpacaGetSupportedActions()
+//*	Jun 10,	2021	<MLS> Added new version of AlpacaSendPutCmdwResponse()
 //*****************************************************************************
 
 
@@ -52,7 +55,10 @@ static int	gClientID				=	1;
 static int	gClientTransactionID	=	1;
 
 //*****************************************************************************
-bool	Controller::AlpacaGetSupportedActions(const char *deviceType, const int deviceNum)
+bool	Controller::AlpacaGetSupportedActions(	sockaddr_in	*deviceAddress,
+												int			devicePort,
+												const char	*deviceType,
+												const int	deviceNum)
 {
 SJP_Parser_t	jsonParser;
 bool			validData;
@@ -65,8 +71,8 @@ int				jjj;
 	//*	get supportedactions
 	SJP_Init(&jsonParser);
 	sprintf(alpacaString,	"/api/v1/%s/%d/supportedactions", deviceType, deviceNum);
-	validData	=	GetJsonResponse(	&cDeviceAddress,
-										cPort,
+	validData	=	GetJsonResponse(	deviceAddress,
+										devicePort,
 										alpacaString,
 										NULL,
 										&jsonParser);
@@ -82,7 +88,7 @@ int				jjj;
 				while ((jjj<jsonParser.tokenCount_Data) &&
 						(jsonParser.dataList[jjj].keyword[0] != ']'))
 				{
-					AlpacaProcessSupportedAction(jsonParser.dataList[jjj].valueString);
+					AlpacaProcessSupportedAction(deviceType, deviceNum, jsonParser.dataList[jjj].valueString);
 					jjj++;
 				}
 			}
@@ -97,10 +103,20 @@ int				jjj;
 	return(validData);
 }
 
+
+//*****************************************************************************
+bool	Controller::AlpacaGetSupportedActions(const char *deviceType, const int deviceNum)
+{
+bool			validData;
+
+	validData	=	AlpacaGetSupportedActions(&cDeviceAddress, cPort, deviceType, deviceNum);
+	return(validData);
+}
+
 //*****************************************************************************
 //*	if this routine gets overloaded, the first part, checking for "readall" must be preserved
 //*****************************************************************************
-void	Controller::AlpacaProcessSupportedAction(const char *valueString)
+void	Controller::AlpacaProcessSupportedAction(const char *deviceType, const int deviveNum, const char *valueString)
 {
 
 	if (strcasecmp(valueString, "readall") == 0)
@@ -113,22 +129,26 @@ void	Controller::AlpacaProcessSupportedAction(const char *valueString)
 	}
 }
 
-
 //*****************************************************************************
-bool	Controller::AlpacaGetStatus_ReadAll(const char *deviceType, const int deviceNum)
+//*	added new version of this 1/9/2021 to allow multiple devices
+//*****************************************************************************
+bool	Controller::AlpacaGetStatus_ReadAll(	sockaddr_in	*deviceAddress,
+												int			devicePort,
+												const char	*deviceType,
+												const int	deviceNum)
 {
 SJP_Parser_t	jsonParser;
 bool			validData;
 char			alpacaString[128];
 int				jjj;
 
-//	CONSOLE_DEBUG(cWindowName);
+	CONSOLE_DEBUG(cWindowName);
 
 	SJP_Init(&jsonParser);
 	sprintf(alpacaString,	"/api/v1/%s/%d/%s", deviceType, deviceNum, "readall");
 
-	validData	=	GetJsonResponse(	&cDeviceAddress,
-										cPort,
+	validData	=	GetJsonResponse(	deviceAddress,
+										devicePort,
 										alpacaString,
 										NULL,
 										&jsonParser);
@@ -137,20 +157,79 @@ int				jjj;
 		cLastAlpacaErrNum	=	0;
 		for (jjj=0; jjj<jsonParser.tokenCount_Data; jjj++)
 		{
-			AlpacaProcessReadAll(	jsonParser.dataList[jjj].keyword,
+			AlpacaProcessReadAll(	deviceType,
+									deviceNum,
+									jsonParser.dataList[jjj].keyword,
 									jsonParser.dataList[jjj].valueString);
 		}
 	}
 	return(validData);
 }
 
+
 //*****************************************************************************
-void	Controller::AlpacaProcessReadAll(const char *keywordString, const char *valueString)
+bool	Controller::AlpacaGetStatus_ReadAll(const char *deviceType, const int deviceNum)
+{
+bool			validData;
+
+//	CONSOLE_DEBUG(cWindowName);
+
+	validData	=	AlpacaGetStatus_ReadAll(&cDeviceAddress,
+											cPort,
+											deviceType,
+											deviceNum);
+	return(validData);
+}
+
+//*****************************************************************************
+void	Controller::AlpacaProcessReadAll(	const char	*deviceType,
+											const int	deviceNum,
+											const char	*keywordString,
+											const char	*valueString)
 {
 	//*	this function should be overloaded
+	CONSOLE_DEBUG(cWindowName);
 	CONSOLE_DEBUG_W_2STR("json=",	keywordString, valueString);
 }
 
+//*****************************************************************************
+bool	Controller::AlpacaSendPutCmdwResponse(	sockaddr_in		*deviceAddress,
+												int				devicePort,
+												const char		*alpacaDevice,
+												const int		alpacaDevNum,
+												const char		*alpacaCmd,
+												const char		*dataString,
+												SJP_Parser_t	*jsonParser)
+{
+char			alpacaString[128];
+bool			sucessFlag;
+char			myDataString[512];
+
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, alpacaCmd);
+
+	SJP_Init(jsonParser);
+
+	sprintf(alpacaString, "/api/v1/%s/%d/%s", alpacaDevice, alpacaDevNum, alpacaCmd);
+	sprintf(myDataString, "%s&ClientID=%d&ClientTransactionID=%d",
+											dataString,
+											gClientID,
+											gClientTransactionID);
+	sucessFlag	=	SendPutCommand(	deviceAddress,
+									devicePort,
+									alpacaString,
+									myDataString,
+									jsonParser);
+
+	cLastAlpacaErrNum	=	AlpacaCheckForErrors(jsonParser, cLastAlpacaErrStr, true);
+
+
+	cForceAlpacaUpdate	=	true;
+	gClientTransactionID++;
+
+	strcpy(cLastAlpacaCmdString, alpacaString);
+
+	return(sucessFlag);
+}
 
 //*****************************************************************************
 //*
@@ -164,8 +243,18 @@ bool	Controller::AlpacaSendPutCmdwResponse(	const char		*alpacaDevice,
 												const char		*dataString,
 												SJP_Parser_t	*jsonParser)
 {
-char			alpacaString[128];
 bool			sucessFlag;
+
+#if 1
+	sucessFlag	=	AlpacaSendPutCmdwResponse(	&cDeviceAddress,
+												cPort,
+												alpacaDevice,
+												cAlpacaDevNum,
+												alpacaCmd,
+												dataString,
+												jsonParser);
+#else
+char			alpacaString[128];
 char			myDataString[512];
 
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, alpacaCmd);
@@ -190,7 +279,7 @@ char			myDataString[512];
 	gClientTransactionID++;
 
 	strcpy(cLastAlpacaCmdString, alpacaString);
-
+#endif
 	return(sucessFlag);
 }
 

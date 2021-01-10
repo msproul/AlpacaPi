@@ -1091,7 +1091,19 @@ client	:			$(CLIENT_OBJECTS)
 MANDELBROT_OBJECTS=												\
 				$(OBJECT_DIR)mandelbrot.o						\
 
+######################################################################################
+CONTROLLER_BASE_OBJECTS=										\
+				$(OBJECT_DIR)commoncolor.o						\
+				$(OBJECT_DIR)controller.o						\
+				$(OBJECT_DIR)controllerAlpaca.o					\
+				$(OBJECT_DIR)json_parse.o						\
+				$(OBJECT_DIR)sendrequest_lib.o					\
+				$(OBJECT_DIR)windowtab.o						\
+				$(OBJECT_DIR)windowtab_about.o					\
+				$(OBJECT_DIR)windowtab_image.o					\
+				$(OBJECT_DIR)discoverythread.o					\
 
+#				$(OBJECT_DIR)controller_image.o					\
 
 ######################################################################################
 CONTROLLER_OBJECTS=												\
@@ -1103,6 +1115,8 @@ CONTROLLER_OBJECTS=												\
 				$(OBJECT_DIR)controller_camera.o				\
 				$(OBJECT_DIR)controller_cam_normal.o			\
 				$(OBJECT_DIR)controller_dome.o					\
+				$(OBJECT_DIR)controller_dome_common.o			\
+				$(OBJECT_DIR)controller_image.o					\
 				$(OBJECT_DIR)controller_ml_nc.o					\
 				$(OBJECT_DIR)controller_ml_single.o				\
 				$(OBJECT_DIR)controller_usb.o					\
@@ -1113,6 +1127,7 @@ CONTROLLER_OBJECTS=												\
 				$(OBJECT_DIR)windowtab_camsettings.o			\
 				$(OBJECT_DIR)windowtab_config.o					\
 				$(OBJECT_DIR)windowtab_dome.o					\
+				$(OBJECT_DIR)windowtab_image.o					\
 				$(OBJECT_DIR)windowtab_ml_single.o				\
 				$(OBJECT_DIR)windowtab_nitecrawler.o			\
 				$(OBJECT_DIR)windowtab_filelist.o				\
@@ -1157,6 +1172,30 @@ PREVIEW_OBJECTS=												\
 				$(OBJECT_DIR)commoncolor.o						\
 				$(OBJECT_DIR)sendrequest_lib.o					\
 
+
+
+######################################################################################
+# SkyTravel objects
+
+SRC_SKYTRAVEL=./src_skytravel/
+SKYTRAVEL_OBJECTS=											\
+				$(OBJECT_DIR)controller_skytravel.o			\
+				$(OBJECT_DIR)controller_dome_common.o		\
+				$(OBJECT_DIR)eph.o							\
+				$(OBJECT_DIR)skytravel_main.o				\
+				$(OBJECT_DIR)windowtab_skytravel.o			\
+				$(OBJECT_DIR)StarData.o						\
+				$(OBJECT_DIR)SkyTravelTimeRoutines.o		\
+				$(OBJECT_DIR)NGCcatalog.o					\
+				$(OBJECT_DIR)StarCatalogHelper.o			\
+				$(OBJECT_DIR)YaleStarCatalog.o				\
+				$(OBJECT_DIR)HipparcosCatalog.o				\
+				$(OBJECT_DIR)ConstellationData.o			\
+				$(OBJECT_DIR)lx200_com.o					\
+				$(OBJECT_DIR)windowtab_dome.o				\
+
+
+
 ######################################################################################
 #pragma mark mandelbrot
 mandelbrot	:	DEFINEFLAGS		+=	-D_INCLUDE_MAIN_
@@ -1183,6 +1222,7 @@ focuser		:			$(CONTROLLER_OBJECTS)
 							-o focuser
 
 ######################################################################################
+#make switch
 #pragma mark focuser-controller
 switch		:	DEFINEFLAGS		+=	-D_INCLUDE_CTRL_MAIN_
 #switch		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_FOCUSERS_
@@ -1198,16 +1238,38 @@ switch		:			$(CONTROLLER_OBJECTS)
 
 
 ######################################################################################
+#make camera
 #pragma mark camera-controller
 camera		:	DEFINEFLAGS		+=	-D_INCLUDE_CTRL_MAIN_
 camera		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_CAMERA_
-
-camera		:			$(CONTROLLER_OBJECTS)
+camera		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
+camera		:			$(CONTROLLER_OBJECTS)					\
 
 				$(LINK)  										\
 							$(CONTROLLER_OBJECTS)				\
 							$(OPENCV_LINK)						\
 							-o camera
+
+######################################################################################
+#make skytravel
+#pragma mark camera-controller
+sky		:	DEFINEFLAGS		+=	-D_INCLUDE_CTRL_MAIN_
+sky		:	DEFINEFLAGS		+=	-D_ENABLE_SKYTRAVEL_
+sky		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_DOME_
+sky		:	INCLUDES		+=	-I$(SRC_SKYTRAVEL)
+
+sky		:				$(SKYTRAVEL_OBJECTS)					\
+						$(CONTROLLER_BASE_OBJECTS)				\
+
+
+				$(LINK)  										\
+							$(SKYTRAVEL_OBJECTS)				\
+							$(CONTROLLER_BASE_OBJECTS)			\
+							$(OPENCV_LINK)						\
+							-lpthread							\
+							-o skytravel
+
+#							$(CONTROLLER_OBJECTS)				\
 
 ######################################################################################
 #pragma mark camera-controller
@@ -1718,6 +1780,33 @@ $(OBJECT_DIR)controller_dome.o : 		$(SRC_DIR)controller_dome.cpp		\
 										$(SRC_DIR)controller.h
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)controller_dome.cpp -o$(OBJECT_DIR)controller_dome.o
 
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)controller_dome_common.o : $(SRC_DIR)controller_dome_common.cpp	\
+										$(SRC_DIR)controller_dome.h				\
+										$(SRC_DIR)windowtab_dome.h				\
+										$(SRC_DIR)windowtab_about.h				\
+										$(SRC_DIR)controller.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)controller_dome_common.cpp -o$(OBJECT_DIR)controller_dome_common.o
+
+
+#										$(SRC_SKYTRAVEL)controller_skytravel.h		\
+
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)controller_image.o : 		$(SRC_DIR)controller_image.cpp		\
+										$(SRC_DIR)controller_image.h		\
+										$(SRC_DIR)windowtab_image.h			\
+										$(SRC_DIR)windowtab_about.h			\
+										$(SRC_DIR)controller.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)controller_image.cpp -o$(OBJECT_DIR)controller_image.o
+
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)windowtab_image.o : 		$(SRC_DIR)windowtab_image.cpp		\
+										$(SRC_DIR)windowtab_image.h			\
+										$(SRC_DIR)controller_image.h		\
+										$(SRC_DIR)controller.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)windowtab_image.cpp -o$(OBJECT_DIR)windowtab_image.o
 
 
 
@@ -1946,5 +2035,75 @@ $(OBJECT_DIR)julianTime.o :				$(SRC_DIR)julianTime.c	\
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)julianTime.c -o$(OBJECT_DIR)julianTime.o
 
 
+
+
+######################################################################################
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)skytravel_main.o :			$(SRC_SKYTRAVEL)skytravel_main.cpp	\
+										$(SRC_SKYTRAVEL)windowtab_skytravel.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYTRAVEL)skytravel_main.cpp -o$(OBJECT_DIR)skytravel_main.o
+
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)controller_skytravel.o :	$(SRC_SKYTRAVEL)controller_skytravel.cpp	\
+										$(SRC_SKYTRAVEL)controller_skytravel.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYTRAVEL)controller_skytravel.cpp -o$(OBJECT_DIR)controller_skytravel.o
+
+
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)StarData.o :				$(SRC_SKYTRAVEL)StarData.c	\
+										$(SRC_SKYTRAVEL)StarData.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYTRAVEL)StarData.c -o$(OBJECT_DIR)StarData.o
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)windowtab_skytravel.o :	$(SRC_SKYTRAVEL)windowtab_skytravel.cpp	\
+										$(SRC_SKYTRAVEL)windowtab_skytravel.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYTRAVEL)windowtab_skytravel.cpp -o$(OBJECT_DIR)windowtab_skytravel.o
+
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)eph.o :					$(SRC_SKYTRAVEL)eph.c	\
+										$(SRC_SKYTRAVEL)eph.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYTRAVEL)eph.c -o$(OBJECT_DIR)eph.o
+
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)SkyTravelTimeRoutines.o :	$(SRC_SKYTRAVEL)SkyTravelTimeRoutines.c	\
+										$(SRC_SKYTRAVEL)SkyTravelTimeRoutines.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYTRAVEL)SkyTravelTimeRoutines.c -o$(OBJECT_DIR)SkyTravelTimeRoutines.o
+
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)NGCcatalog.o :				$(SRC_SKYTRAVEL)NGCcatalog.c	\
+										$(SRC_SKYTRAVEL)NGCcatalog.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYTRAVEL)NGCcatalog.c -o$(OBJECT_DIR)NGCcatalog.o
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)StarCatalogHelper.o :		$(SRC_SKYTRAVEL)StarCatalogHelper.c	\
+										$(SRC_SKYTRAVEL)StarCatalogHelper.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYTRAVEL)StarCatalogHelper.c -o$(OBJECT_DIR)StarCatalogHelper.o
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)YaleStarCatalog.o :		$(SRC_SKYTRAVEL)YaleStarCatalog.c	\
+										$(SRC_SKYTRAVEL)YaleStarCatalog.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYTRAVEL)YaleStarCatalog.c -o$(OBJECT_DIR)YaleStarCatalog.o
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)HipparcosCatalog.o :		$(SRC_SKYTRAVEL)HipparcosCatalog.c	\
+										$(SRC_SKYTRAVEL)HipparcosCatalog.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYTRAVEL)HipparcosCatalog.c -o$(OBJECT_DIR)HipparcosCatalog.o
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)ConstellationData.o :		$(SRC_SKYTRAVEL)ConstellationData.c	\
+										$(SRC_SKYTRAVEL)ConstellationData.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYTRAVEL)ConstellationData.c -o$(OBJECT_DIR)ConstellationData.o
+
+
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)lx200_com.o :				$(SRC_SKYTRAVEL)lx200_com.c	\
+										$(SRC_SKYTRAVEL)lx200_com.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYTRAVEL)lx200_com.c -o$(OBJECT_DIR)lx200_com.o
 
 

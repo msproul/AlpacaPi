@@ -343,7 +343,7 @@ int					mySocket;
 		//*	Common commands that we want to over ride
 		//----------------------------------------------------------------------------------------
 		case kCmd_Common_supportedactions:	//*	Returns the list of action names supported by this driver.
-			SendSupportedActions(reqData, gObsCondCmdTable);
+			alpacaErrCode	=	Get_SupportedActions(reqData, gObsCondCmdTable);
 			break;
 
 		//----------------------------------------------------------------------------------------

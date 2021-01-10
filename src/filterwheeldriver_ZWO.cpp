@@ -27,6 +27,7 @@
 //*****************************************************************************
 //*	<MLS>	=	Mark L Sproul
 //*****************************************************************************
+//*	Nov 10,	2019	<MLS> Created filterwheeldriver_ZWO.cpp
 //*	Nov 10,	2019	<MLS> Started on C++ version of ZWO filter wheel
 //*	Nov 10,	2019	<MLS> C++ version of ZWQ EFW filterwheel working
 //*	Dec 15,	2019	<MLS> Added CheckZWOrulesFile()

@@ -31,6 +31,7 @@
 //*****************************************************************************
 //*	<MLS>	=	Mark L Sproul
 //*****************************************************************************
+//*	Nov 24,	2019	<MLS> Created cameradriverAnalysis.cpp
 //*	Nov 24,	2019	<MLS> Started on camera analysis code
 //*	Nov 24,	2019	<MLS> Added CalculateMaxPixValue()
 //*	Dec  5,	2019	<MLS> Added CalculateMinPixValue()

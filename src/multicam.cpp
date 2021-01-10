@@ -14,7 +14,7 @@
 //*****************************************************************************
 //*	<MLS>	=	Mark L Sproul
 //*****************************************************************************
-//*	Nov  7,	2019	<MLS> Started on multicam
+//*	Nov  7,	2019	<MLS> Created multicam.cpp
 //*	Nov  8,	2019	<MLS> Multicam working with 2 cameras, a ZWO and ATIK
 //*	Nov 13,	2019	<MLS> Added setexposuretime, and setlivemode
 //*	Nov 13,	2019	<MLS> Added SetExposureTime() & ExtractDurationList()

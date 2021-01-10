@@ -201,7 +201,7 @@ int					mySocket;
 		//*	Common commands that we want to over ride
 		//----------------------------------------------------------------------------------------
 		case kCmd_Common_supportedactions:	//*	Returns the list of action names supported by this driver.
-			SendSupportedActions(reqData, gSlitTrackerCmdTable);
+			alpacaErrCode	=	Get_SupportedActions(reqData, gSlitTrackerCmdTable);
 			break;
 
 		//----------------------------------------------------------------------------------------

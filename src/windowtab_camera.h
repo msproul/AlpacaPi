@@ -131,7 +131,6 @@ class WindowTabCamera: public WindowTab
 
 				char		cAlpacaDeviceName[64];
 				bool		cHasFilterWheel;
-				IplImage	*cOpenCVdownLoadedImage;
 				char		cDownLoadedFileNameRoot[256];
 };
 

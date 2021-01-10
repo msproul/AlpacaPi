@@ -67,10 +67,10 @@
 #endif // _ENABLE_ROTATOR_
 
 
+
 //*****************************************************************************
 const TYPE_CmdEntry	gFocuserCmdTable[]	=
 {
-
 
 	{	"absolute",				kCmd_Focuser_absolute,			kCmdType_GET	},
 	{	"ismoving",				kCmd_Focuser_ismoving,			kCmdType_GET	},
@@ -94,15 +94,6 @@ const TYPE_CmdEntry	gFocuserCmdTable[]	=
 };
 
 
-
-//*****************************************************************************
-void	CreateFocuserObjects(void)
-{
-	CONSOLE_DEBUG(__FUNCTION__);
-
-	new FocuserDriver(0);
-
-}
 
 //**************************************************************************************
 FocuserDriver::FocuserDriver(const int argDevNum)
@@ -219,7 +210,7 @@ int					mySocket;
 		//*	Common commands that we want to over ride
 		//----------------------------------------------------------------------------------------
 		case kCmd_Common_supportedactions:	//*	Returns the list of action names supported by this driver.
-			SendSupportedActions(reqData, gFocuserCmdTable);
+			alpacaErrCode	=	Get_SupportedActions(reqData, gFocuserCmdTable);
 			break;
 
 		//----------------------------------------------------------------------------------------
@@ -547,6 +538,14 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 								cFocuserTemp,
 								INCLUDE_COMMA);
 
+	JsonResponse_Add_Double(	reqData->socket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								"Degrees-F",
+								DEGREES_F(cFocuserTemp),
+								INCLUDE_COMMA);
+
+
 	alpacaErrCode	=	kASCOM_Err_Success;
 	return(alpacaErrCode);
 }
@@ -821,7 +820,7 @@ char		lineBuffer[128];
 		OutputHTMLrowData(mySocketFD,	"Aux position",	lineBuffer);
 
 		//*	Temperature
-		sprintf(lineBuffer, "%3.1f&deg;C / %3.1f&deg;F", cFocuserTemp,  ((cFocuserTemp * (9.0/5.0) ) + 32.0));
+		sprintf(lineBuffer, "%3.1f&deg;C / %3.1f&deg;F", cFocuserTemp,  DEGREES_F(cFocuserTemp));
 		OutputHTMLrowData(mySocketFD,	"Temperature",	lineBuffer);
 
 

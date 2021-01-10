@@ -107,7 +107,7 @@ int		iii;
 	//=======================================================
 	//*	IP address
 	CONSOLE_DEBUG(__FUNCTION__);
-	SetIPaddressBoxes(kUSBselect_IPaddr, -1, kUSBselect_IAlpacaDrvrVersion, -1);
+	SetIPaddressBoxes(kUSBselect_IPaddr, -1, kUSBselect_AlpacaDrvrVersion, -1);
 
 }
 

@@ -270,9 +270,9 @@ char		savePrefix[]	=	"SONY-";
 
 		CONSOLE_DEBUG("Calling Connect()");
 		//>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-		sonyErrCode	=	SCRSDK::Connect(	camera_info,			//*	/*in*/ ICrCameraObjectInfo* pCameraObjectInfo,
-											cCallbackObjPtr,		//*	/*in*/  IDeviceCallback* callback,
-											&cSonyDeviceHandle);	//*	/*out*/ CrDeviceHandle* deviceHandle);
+		sonyErrCode	=	SCRSDK::Connect(	camera_info,			//*	-in- ICrCameraObjectInfo* pCameraObjectInfo,
+											cCallbackObjPtr,		//*	-in-  IDeviceCallback* callback,
+											&cSonyDeviceHandle);	//*	-out- CrDeviceHandle* deviceHandle);
 
 		LogFunctionCall(__FUNCTION__, __LINE__,	"SCRSDK::Connect", 	sonyErrCode);
 		if (sonyErrCode == CrError_None)
@@ -2110,10 +2110,9 @@ static const TYPE_SONY_STRINGS gSonyErrMsgs[]	=
 	{	CrError_Genric_Notimpl,				"CrError_Genric_Notimpl"		},
 	{	CrError_Genric_Abort,				"CrError_Genric_Abort"			},
 	{	CrError_Genric_NotSupported,		"CrError_Genric_NotSupported"	},
-	{	CrError_Genric_SeriousErrorNotSupported,
-											"CrError_Genric_SeriousErrorNotSupported"	},
-	{	CrError_Genric_InvalidHandle,		"CrError_Genric_InvalidHandle"	},
-	{	CrError_Genric_InvalidParameter,	"CrError_Genric_InvalidParameter"	},
+	{	CrError_Genric_SeriousErrorNotSupported,	"CrError_Genric_SeriousErrorNotSupported"	},
+	{	CrError_Genric_InvalidHandle,				"CrError_Genric_InvalidHandle"	},
+	{	CrError_Genric_InvalidParameter,			"CrError_Genric_InvalidParameter"	},
 
 	// File related
 	{	CrError_File_Unknown,				"CrError_File_Unknown"			},
@@ -2135,8 +2134,7 @@ static const TYPE_SONY_STRINGS gSonyErrMsgs[]	=
 	{	CrError_File_CantRead,				"CrError_File_CantRead"	},
 	{	CrError_File_CantWrite,				"CrError_File_CantWrite"	},
 	{	CrError_File_CantCreateDir,			"CrError_File_CantCreateDir"	},
-	{	CrError_File_OperationAbortedByUser,
-											"CrError_File_OperationAbortedByUser"	},
+	{	CrError_File_OperationAbortedByUser,	"CrError_File_OperationAbortedByUser"	},
 	{	CrError_File_UnsupportedOperation,	"CrError_File_UnsupportedOperation"	},
 	{	CrError_File_NotYetCompleted,		"CrError_File_NotYetCompleted"	},
 	{	CrError_File_Invalid,				"CrError_File_Invalid"	},
@@ -2172,8 +2170,7 @@ static const TYPE_SONY_STRINGS gSonyErrMsgs[]	=
 	{	CrError_Api_InvalidCalled,			"CrError_Api_InvalidCalled"	},
 
 	{	CrError_Polling_Unknown,			"CrError_Polling_Unknown"	},
-	{	CrError_Polling_InvalidVal_Intervals,
-											"CrError_Polling_InvalidVal_Intervals"	},
+	{	CrError_Polling_InvalidVal_Intervals,	"CrError_Polling_InvalidVal_Intervals"	},
 
 	//Adaptor related
 	{	CrError_Adaptor_Unknown,			"CrError_Adaptor_Unknown"			},
@@ -2205,21 +2202,11 @@ static const TYPE_SONY_STRINGS gSonyErrMsgs[]	=
 	{	CrWarning_Format_Invalid,			"CrWarning_Format_Invalid"			},
 	{	CrWarning_Format_Complete,			"CrWarning_Format_Complete"			},
 	{	CrWarning_Exposure_Started,			"CrWarning_Exposure_Started"		},
-	{	CrWarning_DateTime_Setting_Result_Invalid,
-											"CrWarning_DateTime_Setting_Result_Invalid"
-																									},
-	{	CrWarning_DateTime_Setting_Result_OK,
-											"CrWarning_DateTime_Setting_Result_OK"
-																									},
-	{	CrWarning_DateTime_Setting_Result_Parameter_Error,
-											"CrWarning_DateTime_Setting_Result_Parameter_Error"
-																									},
-	{	CrWarning_DateTime_Setting_Result_Exclusion_Error,
-											"CrWarning_DateTime_Setting_Result_Exclusion_Error"
-																									},
-	{	CrWarning_DateTime_Setting_Result_System_Error,
-											"CrWarning_DateTime_Setting_Result_System_Error"
-																									},
+	{	CrWarning_DateTime_Setting_Result_Invalid,			"CrWarning_DateTime_Setting_Result_Invalid"	},
+	{	CrWarning_DateTime_Setting_Result_OK,				"CrWarning_DateTime_Setting_Result_OK"	},
+	{	CrWarning_DateTime_Setting_Result_Parameter_Error,	"CrWarning_DateTime_Setting_Result_Parameter_Error"	},
+	{	CrWarning_DateTime_Setting_Result_Exclusion_Error,	"CrWarning_DateTime_Setting_Result_Exclusion_Error"	},
+	{	CrWarning_DateTime_Setting_Result_System_Error,		"CrWarning_DateTime_Setting_Result_System_Error"	},
 	{	CrWarning_Frame_NotUpdated,			"CrWarning_Frame_NotUpdated"		},
 
 	{	CrNotify_All_Download_Complete,		"CrNotify_All_Download_Complete"	},

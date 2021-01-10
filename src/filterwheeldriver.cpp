@@ -22,8 +22,8 @@
 //*****************************************************************************
 //*	<MLS>	=	Mark L Sproul
 //*****************************************************************************
+//*	Apr 18,	2019	<MLS> Created filterwheeldriver.c
 //*	Apr 18,	2019	<MLS> Started on Filterwheel
-//*	Apr 18,	2019	<MLS> Created filterwheeldriver.cpp
 //*	Apr 18,	2019	<MLS> Filterwheel driver working
 //*	Apr 21,	2019	<MLS> Added support for filter description file "filters.txt"
 //*	Nov 10,	2019	<MLS> Switching filter wheel to C++
@@ -223,7 +223,7 @@ int					mySocket;
 		//*	Common commands that we want to over ride
 		//----------------------------------------------------------------------------------------
 		case kCmd_Common_supportedactions:	//*	Returns the list of action names supported by this driver.
-			SendSupportedActions(reqData, gFilterwheelCmdTable);
+			alpacaErrCode	=	Get_SupportedActions(reqData, gFilterwheelCmdTable);
 			break;
 
 		//----------------------------------------------------------------------------------------

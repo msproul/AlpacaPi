@@ -368,7 +368,7 @@ bool	validData;
 void	WindowTabDome::SendShutterCommand(const char *shutterCmd)
 {
 ControllerDome	*myDomeController;
-
+#ifndef _ENABLE_SKYTRAVEL_
 	CONSOLE_DEBUG(__FUNCTION__);
 	myDomeController	=	(ControllerDome *)cParentObjPtr;
 
@@ -380,6 +380,7 @@ ControllerDome	*myDomeController;
 	{
 		CONSOLE_DEBUG("myDomeController is NULL");
 	}
+#endif
 }
 
 

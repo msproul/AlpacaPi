@@ -114,7 +114,10 @@ class ControllerCamera: public Controller
 				void	SetErrorTextString(const char	*errorString);
 				void	GetConfiguredDevices(void);
 				bool	AlpacaGetStartupData(void);
-		virtual	void	AlpacaProcessReadAll(const char *keywordString, const char *valueString);
+		virtual	void	AlpacaProcessReadAll(	const char	*deviceType,
+												const int	deviceNum,
+												const char	*keywordString,
+												const char	*valueString);
 				bool	AlpacaGetStatus_OneAAT(void);	//*	One At A Time
 				bool	AlpacaGetStatus(void);
 				bool	AlpacaGetFileList(void);

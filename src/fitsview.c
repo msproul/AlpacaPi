@@ -3,7 +3,7 @@
 //*****************************************************************************
 //*	Edit History
 //*****************************************************************************
-//*	Jan 25,	2020	<MLS> Started on fitsview.c
+//*	Jan 25,	2020	<MLS> Created fitsview.c
 //*	Jan 26,	2020	<MLS> fitsview displaying B/W images
 //*	Jan 28,	2020	<MLS> fitsview displaying RGB images
 //*	Jan 31,	2020	<MLS> (CV_WINDOW_NORMAL | CV_WINDOW_KEEPRATIO | CV_GUI_EXPANDED)

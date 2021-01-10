@@ -26,7 +26,7 @@
 //*****************************************************************************
 //*	<MLS>	=	Mark L Sproul
 //*****************************************************************************
-//*	Jan 29,	2020	<MLS> Started on cameradriver_jpeg.cpp
+//*	Jan 29,	2020	<MLS> Created cameradriver_jpeg.cpp
 //*	Jan 29,	2020	<MLS> Can save jpegs using libjpeg instead of opencv
 //*	Jan 29,	2020	<MLS> Successfully saving jpegs on NVidia/jetson
 //*****************************************************************************

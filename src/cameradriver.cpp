@@ -31,12 +31,12 @@
 //*****************************************************************************
 //*	<MLS>	=	Mark L Sproul
 //*****************************************************************************
-//*	Apr 14,	2019	<MLS> Started on camera code
+//*	Apr 14,	2019	<MLS> Created cameradriver.c
 //*	Apr 15,	2019	<MLS> Added command table for camera
 //*	Apr 17,	2019	<MLS> Added Camera_OutputHTML()
 //*	Aug 26,	2019	<MLS> Started on C++ version of alpaca camera driver
 //*	Sep  3,	2019	<MLS> Added initialization to class constructor
-//*	Sep 26,	2019	<MLS> Working on orginizing camera C++ class
+//*	Sep 26,	2019	<MLS> Working on organizing camera C++ class
 //*	Oct  2,	2019	<MLS> Added AllcateImageBuffer()
 //*	Oct 26,	2019	<MLS> Added IsCameraIDvalid()
 //*	Nov  2,	2019	<MLS> Downloaded and installed cfitsio-3.47 library
@@ -672,8 +672,7 @@ char				httpHeader[500];
 		//*	Common commands that we want to over ride
 		//----------------------------------------------------------------------------------------
 		case kCmd_Common_supportedactions:	//*	Returns the list of action names supported by this driver.
-			SendSupportedActions(reqData, gCameraCmdTable);
-			alpacaErrCode	=	kASCOM_Err_Success;
+			alpacaErrCode	=	Get_SupportedActions(reqData, gCameraCmdTable);
 			break;
 
 		//========================================================================================
@@ -3307,6 +3306,7 @@ TYPE_ASCOM_STATUS	tempSensorErr;
 											reqData->jsonTextBuffer,
 											kBuffSize_MaxSpeed,
 											lineBuff);
+				CONSOLE_DEBUG("Done");
 				break;
 
 			//====================================================================

@@ -710,7 +710,10 @@ int	iii;
 }
 
 //*****************************************************************************
-void	ControllerCamera::AlpacaProcessReadAll(const char *keywordString, const char *valueString)
+void	ControllerCamera::AlpacaProcessReadAll(	const char	*deviceType,
+												const int	deviceNum,
+												const char	*keywordString,
+												const char	*valueString)
 {
 
 //	CONSOLE_DEBUG_W_2STR("json=",	keywordString, valueString);

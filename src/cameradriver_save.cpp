@@ -26,7 +26,7 @@
 //*****************************************************************************
 //*	<MLS>	=	Mark L Sproul
 //*****************************************************************************
-//*	Jan 30,	2020	<MLS> Started on cameradriver_save.cpp
+//*	Jan 30,	2020	<MLS> Created cameradriver_save.cpp
 //*	Jan 30,	2020	<MLS> Added SaveImageData(), AddToDataProductsList()
 //*	Jan 30,	2020	<MLS> Added SaveOpenCVImage()
 //*	Jan 30,	2020	<MLS> Separated saving of opencv image from the creation part

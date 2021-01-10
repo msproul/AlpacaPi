@@ -24,7 +24,7 @@
 //*****************************************************************************
 //*	<MLS>	=	Mark L Sproul
 //*****************************************************************************
-//*	Nov 20,	2019	<MLS> Started on managementdriver
+//*	Nov 20,	2019	<MLS> Created managementdriver.cpp
 //*	Nov 21,	2019	<MLS> management driver working
 //*	Nov 25,	2019	<MLS> Added error msgs to unfinished commands
 //*	Feb  1,	2020	<MLS> Added version string to configured devices response
@@ -52,12 +52,16 @@
 #include	"eventlogging.h"
 #include	"managementdriver.h"
 
+#define	kMaxLen_DeviceType	24
+#define	kMaxLen_Manuf		48
+#define	kMaxLen_Version		32
+
 //**************************************************************************************
 typedef struct
 {
-	char	device[32];
-	char	manuf[32];
-	char	versionString[32];
+	char	device[kMaxLen_DeviceType];
+	char	manuf[kMaxLen_Manuf];
+	char	versionString[kMaxLen_Version];
 
 } TYPE_LIBRARY_VERSION;
 
@@ -84,7 +88,6 @@ int		iii;
 		strcpy(gLibraryVersions[gLibraryIndex].manuf,			manuf);
 		strcpy(gLibraryVersions[gLibraryIndex].versionString,	versionString);
 		gLibraryIndex++;
-
 	}
 }
 
@@ -375,7 +378,7 @@ int					mySocket;
 		//*	Common commands that we want to over ride
 		//----------------------------------------------------------------------------------------
 		case kCmd_Common_supportedactions:	//*	Returns the list of action names supported by this driver.
-			SendSupportedActions(reqData, gManagementCmdTable);
+			alpacaErrCode	=	Get_SupportedActions(reqData, gManagementCmdTable);
 			break;
 
 		//----------------------------------------------------------------------------------------

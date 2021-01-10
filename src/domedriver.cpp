@@ -22,6 +22,7 @@
 //*****************************************************************************
 //*	<MLS>	=	Mark L Sproul
 //*****************************************************************************
+//*	Apr 12,	2019	<MLS> Created domedriver.c
 //*	Apr 12,	2019	<MLS> Started on Dome control
 //*	Apr 14,	2019	<MLS> Moved dome specific code to separate file
 //*	May  6,	2019	<MLS> Working on uniform implementation7
@@ -374,7 +375,7 @@ int					mySocket;
 		//*	Common commands that we want to over ride
 		//----------------------------------------------------------------------------------------
 		case kCmd_Common_supportedactions:	//*	Returns the list of action names supported by this driver.
-			SendSupportedActions(reqData, gDomeCmdTable);
+			alpacaErrCode	=	Get_SupportedActions(reqData, gDomeCmdTable);
 			break;
 
 		//----------------------------------------------------------------------------------------

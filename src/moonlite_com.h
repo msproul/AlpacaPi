@@ -55,7 +55,11 @@ bool	MoonLite_FlushReadBuffer(			TYPE_MOONLITECOM *moonliteCom);
 bool	MoonLite_GetPosition(	TYPE_MOONLITECOM	*moonliteCom,
 								const int			axisNumber,
 								int32_t				*valueToUpdate);
-bool	MoonLite_SetSPostion(	TYPE_MOONLITECOM	*moonliteCom,
+bool	MoonLite_SetPostion(	TYPE_MOONLITECOM	*moonliteCom,
+								const int			axisNumber,
+								int32_t				newPosition);
+
+bool	MoonLite_SetCurrentPostion(	TYPE_MOONLITECOM	*moonliteCom,
 								const int			axisNumber,
 								int32_t				newPosition);
 

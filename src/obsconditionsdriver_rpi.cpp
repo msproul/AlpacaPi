@@ -224,11 +224,8 @@ static void Delay_ms(int t)
 //*****************************************************************************
 static void	PrintValues(const char *sourceString, double temp_degC, double pressure, double humidity)
 {
-double	degreesF;
 
-	degreesF	=	(temp_degC * 1.8) + 32.0;
-
-	printf("Temp (%s)\t= %.2f deg-C\t%.2f deg-F\t",	sourceString, temp_degC, degreesF);
+	printf("Temp (%s)\t= %.2f deg-C\t%.2f deg-F\t",	sourceString, temp_degC, DEGREES_F(temp_degC));
 	printf("Pressure = %.1f hPa\t",					pressure);
 	printf("Humidity = %.1f%% rH\t",				humidity);
 	printf("\r\n");

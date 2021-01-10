@@ -28,6 +28,7 @@
 //*	Apr 26,	2020	<MLS> Added UpdateWindowTabs_SwitchState()
 //*	May  8,	2020	<MLS> Added UpdateWindowTabs_DesiredAuxPos()
 //*	Jun 19,	2020	<MLS> USB port now get closed by destructor
+//*	Dec 28,	2020	<MLS> Added ZeroMotorValues()
 //*****************************************************************************
 //*	From the Nitecrawler web site
 //*	Rotating drawtube .001 degree resolution
@@ -436,7 +437,7 @@ void	ControllerFocus::UpdateWindowTabs_ReadAll(bool hasReadAll)
 
 
 //*****************************************************************************
-void	ControllerFocus::AlpacaProcessReadAll(const char *keywordString, const char *valueString)
+void	ControllerFocus::AlpacaProcessReadAll(const char *deviceType, const char *keywordString, const char *valueString)
 {
 int			argValue;
 double		argDouble;
@@ -753,7 +754,7 @@ bool		validData;
 	else if (cUSBportOpen)
 	{
 		CONSOLE_DEBUG("Sending move command to USB port");
-		MoonLite_SetSPostion(	&cMoonliteCom,
+		MoonLite_SetPostion(	&cMoonliteCom,
 								1,
 								cFocuserDesiredPos);
 	}
@@ -811,7 +812,7 @@ double			newDegreesValue;
 	}
 	else if (cUSBportOpen)
 	{
-		MoonLite_SetSPostion(	&cMoonliteCom,
+		MoonLite_SetPostion(	&cMoonliteCom,
 								2,
 								cRotatorDesiredPos);
 	}
@@ -846,7 +847,7 @@ bool			validData;
 	}
 	else if (cUSBportOpen)
 	{
-		MoonLite_SetSPostion(	&cMoonliteCom,
+		MoonLite_SetPostion(	&cMoonliteCom,
 								3,
 								cAuxMotorDesiredPos);
 	}
@@ -879,6 +880,65 @@ bool		validData;
 	else if (cUSBportOpen)
 	{
 		MoonLite_StopMotors(&cMoonliteCom);
+	}
+	else
+	{
+		CONSOLE_DEBUG("We do not have a valid IP/usb port address to query");
+	}
+	UpdateFromFirstRead();
+}
+
+//*****************************************************************************
+void	ControllerFocus::ZeroMotorValues(void)
+{
+bool			validUSBdata;
+unsigned char	switchBits;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+	if (cValidIPaddr)
+	{
+		CONSOLE_DEBUG("Not implemented via Alpaca")
+	}
+	else if (cUSBportOpen)
+	{
+		CONSOLE_DEBUG("USB port is open");
+		//*	this is going to set the current rotation position to zero
+		//*	IF it is at the rotational HOME position
+		validUSBdata		=	MoonLite_GetSwiches(&cMoonliteCom, &switchBits);
+		if (validUSBdata && (switchBits & 0x01))
+		{
+			CONSOLE_DEBUG("Rotator is in the HOME position");
+			CONSOLE_DEBUG(__FUNCTION__);
+			validUSBdata	=	MoonLite_SetCurrentPostion(	&cMoonliteCom,
+															2,
+															0);
+			if (validUSBdata)
+			{
+				CONSOLE_DEBUG("Rotator appears to have been reset to zero");
+			}
+			else
+			{
+				CONSOLE_DEBUG("Command Failure");
+			}
+		}
+		else
+		{
+			CONSOLE_DEBUG("Rotator NOT at Home");
+		}
+
+		//===========================================================
+		//*	set the AUX to zero regardless of switches
+		validUSBdata	=	MoonLite_SetCurrentPostion(	&cMoonliteCom,
+														3,
+														0);
+		if (validUSBdata)
+		{
+			CONSOLE_DEBUG("Aux appears to have been reset to zero");
+		}
+		else
+		{
+			CONSOLE_DEBUG("Command Failure");
+		}
 	}
 	else
 	{

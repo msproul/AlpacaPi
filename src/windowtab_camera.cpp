@@ -26,7 +26,7 @@
 //*	Mar 16,	2020	<MLS> Added error message box to camera display
 //*	Apr  5,	2020	<MLS> Added ToggleDisplayImage()
 //*	Dec 26,	2020	<MLS> Started on image download for camera controller
-//*	Dec 27,	2020	<MLS> AddedDownloadImage()
+//*	Dec 27,	2020	<MLS> Added DownloadImage()
 //*****************************************************************************
 
 #ifdef _ENABLE_CTRL_CAMERA_
@@ -39,6 +39,7 @@
 #include	"controller_camera.h"
 #include	"windowtab.h"
 #include	"windowtab_camera.h"
+#include	"controller_image.h"
 
 
 #define	kAboutBoxHeight	100
@@ -61,7 +62,6 @@ WindowTabCamera::WindowTabCamera(	const int	xSize,
 	cHasFilterWheel	=	hasFilterWheel;
 	strcpy(cAlpacaDeviceName, deviceName);
 
-	cOpenCVdownLoadedImage	=	NULL;
 	strcpy(cDownLoadedFileNameRoot, "unknown");
 
 	SetupWindowControls();
@@ -73,13 +73,6 @@ WindowTabCamera::WindowTabCamera(	const int	xSize,
 WindowTabCamera::~WindowTabCamera(void)
 {
 	CONSOLE_DEBUG(__FUNCTION__);
-	if (cOpenCVdownLoadedImage != NULL)
-	{
-		CONSOLE_DEBUG("destroy old image");
-//+		SetWidgetImage(kPreviewBox_ImageDisplay, NULL);
-		cvReleaseImage(&cOpenCVdownLoadedImage);
-		cOpenCVdownLoadedImage	=	NULL;
-	}
 }
 
 //**************************************************************************************
@@ -738,7 +731,7 @@ ControllerCamera	*myCameraController;
 void	WindowTabCamera::DownloadImage(void)
 {
 ControllerCamera	*myCameraController;
-IplImage			*originalImage;
+IplImage			*myDownLoadedImage;
 int					liveDispalyWidth;
 int					liveDisplayHeight;
 int					reduceFactor;
@@ -752,54 +745,27 @@ int					openCVerr;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
-	if (cOpenCVdownLoadedImage != NULL)
-	{
-		CONSOLE_DEBUG("destroy old image");
-//		SetWidgetImage(kPreviewBox_ImageDisplay, NULL);
-		cvReleaseImage(&cOpenCVdownLoadedImage);
-		cOpenCVdownLoadedImage	=	NULL;
-	}
 
-	originalImage		=	NULL;
+	myDownLoadedImage	=	NULL;
 	myCameraController	=	(ControllerCamera *)cParentObjPtr;
 	if (myCameraController != NULL)
 	{
 //		CONSOLE_DEBUG("Starting download");
 
-		originalImage	=	myCameraController->DownloadImage();
-		if (originalImage != NULL)
+		myDownLoadedImage	=	myCameraController->DownloadImage();
+		if (myDownLoadedImage != NULL)
 		{
 			CONSOLE_DEBUG("Download complete");
-//			CONSOLE_DEBUG("Creating small image");
-			reduceFactor		=	1;
-			liveDispalyWidth	=	originalImage->width;
-			liveDisplayHeight	=	originalImage->height;
-			while (liveDispalyWidth > 700)
-			{
-				reduceFactor++;
-				liveDispalyWidth	=	originalImage->width / reduceFactor;
-				liveDisplayHeight	=	originalImage->height / reduceFactor;
-			}
-			CONSOLE_DEBUG_W_NUM("reduceFactor\t=", reduceFactor);
-			CONSOLE_DEBUG_W_NUM("liveDispalyWidth\t=", liveDispalyWidth);
-			CONSOLE_DEBUG_W_NUM("liveDisplayHeight\t=", liveDisplayHeight);
-			cOpenCVdownLoadedImage	=	cvCreateImage(cvSize(	liveDispalyWidth,
-														liveDisplayHeight),
-														IPL_DEPTH_8U,
-														3);
-			if (cOpenCVdownLoadedImage != NULL)
-			{
-//				CONSOLE_DEBUG("Resizing image");
-				cvResize(originalImage, cOpenCVdownLoadedImage, CV_INTER_LINEAR);
-			//	SetWidgetImage(kPreviewBox_ImageDisplay, cOpenCVdownLoadedImage);
-			}
+			CONSOLE_DEBUG_W_NUM("myDownLoadedImage->width\t=",	myDownLoadedImage->width);
+			CONSOLE_DEBUG_W_NUM("myDownLoadedImage->height\t=",	myDownLoadedImage->height);
+
 			//======================================
 			//*	save the image
 			strcpy(fileName, cDownLoadedFileNameRoot);
 			strcat(fileName, ".jpg");
 
 			CONSOLE_DEBUG_W_STR("Saving image as", fileName);
-			openCVerr	=	cvSaveImage(fileName, originalImage, quality);
+			openCVerr	=	cvSaveImage(fileName, myDownLoadedImage, quality);
 			if (openCVerr == 0)
 			{
 			int		openCVerrorCode;
@@ -811,7 +777,12 @@ int					openCVerr;
 				errorMsgPtr	=	(char *)cvErrorStr(openCVerrorCode);
 				CONSOLE_DEBUG_W_STR("errorMsgPtr\t=", errorMsgPtr);
 			}
-			cvReleaseImage(&originalImage);
+#ifdef _ENABLE_CTRL_IMAGE_
+			//*	this will open a new window with the image displayed
+			new ControllerImage(cDownLoadedFileNameRoot, myDownLoadedImage);
+#else
+			cvReleaseImage(&myDownLoadedImage);
+#endif // _ENABLE_CTRL_IMAGE_
 
 
 			download_MBytes		=	1.0 * myCameraController->cLastDownload_Bytes / (1024.0 * 1024.0);

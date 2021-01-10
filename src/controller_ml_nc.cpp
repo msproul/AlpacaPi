@@ -432,6 +432,10 @@ void	ControllerNiteCrawler::UpdateWindowTabs_SwitchBits(unsigned char switchBits
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
 
+//	bit 0 for Rotation home switch
+//	bit 1 for Out limit switch
+//	bit 2 for In limit switch
+
 	//========================================
 	if (switchBits & 0x01)
 	{

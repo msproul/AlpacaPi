@@ -152,7 +152,5 @@ class FocuserDriver: public AlpacaDriver
 
 };
 
-void	CreateFocuserObjects(void);
-
 
 #endif	//	_FOCUSER_DRIVER_H_

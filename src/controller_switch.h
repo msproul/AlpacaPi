@@ -47,7 +47,7 @@ class ControllerSwitch: public Controller
 				bool	AlpacaGetStartupData(void);
 				bool	AlpacaGetStartupData_OneAAT(void);
 				bool	AlpacaGetStatus(void);
-		virtual	void	AlpacaProcessReadAll(const char *keywordString, const char *valueString);
+		virtual	void	AlpacaProcessReadAll(const char *deviceType, const char *keywordString, const char *valueString);
 				bool	AlpacaGetStatus_OneAAT(void);	//*	One At A Time
 				void	ToggleSwitchState(const int switchNum);
 

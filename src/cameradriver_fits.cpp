@@ -1,5 +1,5 @@
 //**************************************************************************
-//*	Name:			cameradriver.cpp
+//*	Name:			cameradriver_fits.cpp
 //*
 //*	Author:			Mark Sproul (C) 2019-2020
 //*
@@ -44,6 +44,7 @@
 //*	Dec  5,	2019	<MLS> Added megapixels to FITS comment data
 //*	Dec  9,	2019	<MLS> Added OBSTDIA and APTAREA to FITS output
 //*	Dec 13,	2019	<MLS> Added focuser info to FITS output
+//*	Dec 13,	2019	<MLS> Created cameradriver_fits.cpp
 //*	Dec 13,	2019	<MLS> Moved FITS code to separate file
 //*	Dec 13,	2019	<MLS> Added WriteFITS_FocuserInfo()
 //*	Dec 13,	2019	<MLS> Added WriteFITS_FilterwheelInfo()
@@ -112,9 +113,6 @@
 #include	"moonphase.h"
 #include	"MoonRise.h"
 #include	"julianTime.h"
-
-
-#define	DegreesF(x) ((x * 9.0/5.0) + 32.0)
 
 
 
@@ -863,7 +861,7 @@ int		ccdTempErrCode;
 												&fitsStatus);
 	}
 
-	sprintf(stringBuf, "Camera gain [%ld:%ld]", cGainMin, cGainMax);
+	sprintf(stringBuf, "Camera gain [%d:%d]", cGainMin, cGainMax);
 	fitsStatus	=	0;
 	fits_write_key(fitsFilePtr,		TINT,		"GAIN",
 												&cGain,
@@ -1278,7 +1276,7 @@ int		fitsStatus;
 			if (dblValue != 0.0)
 			{
 
-				sprintf(lineBuff, "Focuser Temperature: %1.1f deg C, %1.1f deg F", dblValue, DegreesF(dblValue));
+				sprintf(lineBuff, "Focuser Temperature: %1.1f deg C, %1.1f deg F", dblValue, DEGREES_F(dblValue));
 				fitsStatus	=	0;
 				fits_write_key(fitsFilePtr, TSTRING,	"COMMENT",
 														lineBuff,

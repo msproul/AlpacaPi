@@ -204,8 +204,11 @@ class AlpacaDriver
 				TYPE_ASCOM_STATUS		Get_Interfaceversion(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
 				TYPE_ASCOM_STATUS		Get_Name(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
 
+				TYPE_ASCOM_STATUS		Get_SupportedActions(TYPE_GetPutRequestData *reqData, const TYPE_CmdEntry *theCmdTable);
+
 				TYPE_ASCOM_STATUS		Get_Readall_Common(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 				TYPE_ASCOM_STATUS		Get_Readall_CPUstats(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
+
 
 						//*	Connect and Disconnect conflicted with other libraries
 		virtual	void	AlpacaConnect(void);
@@ -218,7 +221,7 @@ class AlpacaDriver
 				void	OutputHTMLrowData(int socketFD, const char *string1, const char *string2);
 				void	OutputHTML_CmdStats(	TYPE_GetPutRequestData *reqData);
 
-				void	SendSupportedActions(TYPE_GetPutRequestData *reqData, const TYPE_CmdEntry *theCmdTable);
+				TYPE_ASCOM_STATUS		SendSupportedActions(TYPE_GetPutRequestData *reqData, const TYPE_CmdEntry *theCmdTable);
 
 				//*	class variables start with "c"
 

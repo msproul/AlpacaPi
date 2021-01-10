@@ -190,10 +190,42 @@ bool	openOK;
 	openOK	=	MoonLite_OpenFocuserConnection(&cMoonliteCom, true);
 	if (openOK)
 	{
+		LogEvent(	"focuser",
+					__FUNCTION__,
+					NULL,
+					kASCOM_Err_Success,
+					usbPortPath);
+
+
 		strcat(cDeviceModel,		cMoonliteCom.deviceModelString);
 		strcat(cDeviceVersion,		cMoonliteCom.deviceVersion);
 		strcpy(cDeviceSerialNum,	cMoonliteCom.deviceSerialNum);
 		cRotatorStepsPerRev		=	cMoonliteCom.stepsPerRev;
+
+		if (strlen(cDeviceVersion) > 0)
+		{
+		char	modelVersionStr[64];
+			if (cMoonliteCom.model == kMoonLite_NiteCrawler)
+			{
+				strcpy(modelVersionStr, "NiteCrawler-");
+			}
+			else if (cMoonliteCom.model == kMoonLite_HighRes)
+			{
+				strcpy(modelVersionStr, "HiRes-");
+			}
+			else
+			{
+				strcpy(modelVersionStr, "unknown?-");
+			}
+			strcat(modelVersionStr, cDeviceVersion);
+			AddLibraryVersion("focuser", "MoonLite", modelVersionStr);
+
+			LogEvent(	"focuser",
+						"Firmware version",
+						NULL,
+						kASCOM_Err_Success,
+						modelVersionStr);
+		}
 
 
 		CONSOLE_DEBUG_W_STR("cDeviceModel",		cDeviceModel);
@@ -456,7 +488,7 @@ bool				validFlag;
 	CONSOLE_DEBUG(__FUNCTION__);
 	if ((axisNumber >= 1) && (axisNumber <= 3))
 	{
-		validFlag	=	MoonLite_SetSPostion(&cMoonliteCom,	axisNumber, newPosition);
+		validFlag	=	MoonLite_SetPostion(&cMoonliteCom,	axisNumber, newPosition);
 		if (validFlag)
 		{
 			alpacaErrCode	=	kASCOM_Err_Success;

@@ -15,6 +15,7 @@
 //*****************************************************************************
 //*	<MLS>	=	Mark L Sproul
 //*****************************************************************************
+//*	Feb 21,	2020	<MLS> Created moonlite_com.c
 //*	Feb 21,	2020	<MLS> Moving moonlite serial code to separate file
 //*	Feb 27,	2020	<MLS> Added MoonLite_SendCommand()
 //*	Feb 27,	2020	<MLS> Added MoonLite_GetSwiches() & MoonLite_GetAuxSwiches()
@@ -28,6 +29,7 @@
 //*	Apr 26,	2020	<MLS> Added MoonLite_GetNC_Color()
 //*	Apr 26,	2020	<MLS> Added MoonLite_FlushReadBuffer()
 //*	Jun 30,	2020	<MLS> Added _DEBUG_NITECRAWLER_DETECTION_
+//*	Dec 28,	2020	<MLS> Added MoonLite_SetCurrentPostion()
 //*****************************************************************************
 
 #include	<stdlib.h>
@@ -97,6 +99,7 @@ struct dirent	*dir;
 bool			keepGoing;
 int				errorCode;
 
+	CONSOLE_DEBUG(__FUNCTION__);
 	moonliteCnt	=	0;
 
 	directory	=	opendir("/dev/");
@@ -108,20 +111,18 @@ int				errorCode;
 			dir	=	readdir(directory);
 			if (dir != NULL)
 			{
-			//	printf("%s\r\n", dir->d_name);
-			//	if ((strncmp(dir->d_name, "ttyUSB", 6) == 0) ||	(strncmp(dir->d_name, "ttyACM", 6) == 0))
 				if (strncmp(dir->d_name, "ttyUSB", 6) == 0)
 				{
 					moonliteCnt++;
 
-					CONSOLE_DEBUG_W_STR("dir->d_name", dir->d_name);
+					CONSOLE_DEBUG_W_STR("Focuser found->", dir->d_name);
 
 			#ifdef _ENABLE_FOCUSER_
-					LogEvent(	"Focuser",
-								"Moonlite focuser found",
-								NULL,
-								kASCOM_Err_Success,
-								dir->d_name);
+				//	LogEvent(	"focuser",
+				//				"Moonlite focuser found",
+				//				NULL,
+				//				kASCOM_Err_Success,
+				//				dir->d_name);
 			#endif
 					if (gValidPortCnt < kMaxMoonliteFocusers)
 					{
@@ -239,11 +240,11 @@ int		readCnt;
 	if (tryCounter > 1)
 	{
 #ifdef _ENABLE_FOCUSER_
-		LogEvent(	"focuser",
-					"Trouble getting version from NiteCrawler",
-					NULL,
-					kASCOM_Err_Success,
-					NULL);
+	//	LogEvent(	"focuser",
+	//				"Trouble getting version from NiteCrawler",
+	//				NULL,
+	//				kASCOM_Err_Success,
+	//				NULL);
 #endif
 	}
 	//*	get the version
@@ -594,7 +595,7 @@ int		cc;
 
 //*****************************************************************************
 //*	returns true if success
-bool	MoonLite_SetSPostion(	TYPE_MOONLITECOM	*moonliteCom,
+bool	MoonLite_SetPostion(	TYPE_MOONLITECOM	*moonliteCom,
 								const int			axisNumber,
 								int32_t				newPosition)
 {
@@ -647,6 +648,52 @@ bool	successFlag;
 
 				readCnt	=	ReadUntilChar(moonliteCom->fileDesc, readBuffer, 40, '#');
 
+			}
+		}
+	}
+	return(successFlag);
+}
+
+//*****************************************************************************
+//*	returns true if success
+bool	MoonLite_SetCurrentPostion(	TYPE_MOONLITECOM	*moonliteCom,
+									const int			axisNumber,
+									int32_t				newPosition)
+{
+char	cmdBuffer[32];
+char	readBuffer[48];
+int		readCnt;
+bool	successFlag;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+//	<1GN# >00058200 <1SN 63200# <1SM#
+	successFlag	=	false;
+	if (moonliteCom != NULL)
+	{
+		if (moonliteCom->fileDesc >= 0)
+		{
+			if (moonliteCom->model == kMoonLite_NiteCrawler)
+			{
+				//*	NiteCrawler
+				if ((axisNumber >= 1) && (axisNumber <= 3))
+				{
+					sprintf(cmdBuffer, "%dSP %d", axisNumber, newPosition);
+					USB_SendCommand(moonliteCom, cmdBuffer);
+					readCnt	=	ReadUntilChar(moonliteCom->fileDesc, readBuffer, 40, '#');
+
+					if (readCnt > 0)
+					{
+						successFlag	=	true;
+					}
+					else
+					{
+					}
+				}
+			}
+			else if ((moonliteCom->model == kMoonLite_HighRes) && (axisNumber == 1))
+			{
+				CONSOLE_DEBUG("Not implemented in HighRes");
 			}
 		}
 	}

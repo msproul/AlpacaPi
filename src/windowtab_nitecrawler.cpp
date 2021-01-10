@@ -24,6 +24,7 @@
 //*	Mar 23,	2020	<MLS> Added "Rotator Jog" & "Focuser Jog" labels
 //*	Apr  4,	2020	<MLS> Added compass indicator to where we WANT to be
 //*	Apr 17,	2020	<MLS> Added Alpaca Logo to NiteCrawler screen
+//*	Dec 28,	2020	<MLS> Added ZERO button to zero Rotator and Aux values
 //*****************************************************************************
 
 #ifdef _ENABLE_CTRL_FOCUSERS_
@@ -94,6 +95,7 @@ int		yloc2;
 int		buttonNumValues[5]	=	{1, 10, 100, 1000, 5000};
 int		btnIdx;
 char	textBuff[32];
+int		homeBtnWidth;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -235,11 +237,20 @@ char	textBuff[32];
 	SetWidgetBorderColor(	kNiteCrawlerTab_RotationJog,	CV_RGB(0, 0, 0));
 	SetWidgetBorderColor(	kNiteCrawlerTab_FocusJog, 		CV_RGB(0, 0, 0));
 
-	yLoc		+=	cBoxHeight;
+	yLoc			+=	cBoxHeight;
 
-	SetWidget(		kNiteCrawlerTab_home,	(cBtnWidth * 2),	yLoc,			(cBtnWidth * 2),	cBtnHeight);
-	SetWidgetFont(	kNiteCrawlerTab_home, kFont_Small);
-	SetWidgetText(	kNiteCrawlerTab_home, "HOME");
+	homeBtnWidth	=	(cBtnWidth * 2) - 10;
+	SetWidget(		kNiteCrawlerTab_Home,	(cBtnWidth * 2),	yLoc,			homeBtnWidth,	cBtnHeight);
+	SetWidgetFont(	kNiteCrawlerTab_Home, kFont_Small);
+	SetWidgetText(	kNiteCrawlerTab_Home, "HOME");
+
+	if (cComMode == kNCcomMode_USB)
+	{
+		SetWidget(		kNiteCrawlerTab_Zero,	(cBtnWidth * 2),	(yLoc + cBoxHeight), homeBtnWidth,	cBtnHeight);
+		SetWidgetFont(	kNiteCrawlerTab_Zero, kFont_Small);
+		SetWidgetText(	kNiteCrawlerTab_Zero, "Zero");
+	}
+
 
 	//*	this will use the buttons in the order they are defined to set up the widgets
 	//*	the above order MUST match
@@ -275,7 +286,7 @@ char	textBuff[32];
 	}
 
 	//*	set the colors for the buttons
-	for (iii=kNiteCrawlerTab_home; iii<=kNiteCrawlerTab_Foc_p5000; iii++)
+	for (iii=kNiteCrawlerTab_Home; iii<=kNiteCrawlerTab_Foc_p5000; iii++)
 	{
 		SetWidgetType(			iii,		kWidgetType_Button);
 		SetWidgetBGColor(		iii,		CV_RGB(255, 255, 255));
@@ -538,6 +549,14 @@ int				myRotatorDesiredPotion;
 			case kNiteCrawlerTab_StopMotors:
 				CONSOLE_DEBUG("kNiteCrawlerTab_Connect");
 				focusController->SendStopMotorsCommand();
+				break;
+
+			case kNiteCrawlerTab_Home:
+				CONSOLE_DEBUG("HOME not finished");
+				break;
+
+			case kNiteCrawlerTab_Zero:
+				focusController->ZeroMotorValues();
 				break;
 
 			case kNiteCrawlerTab_Connect:
