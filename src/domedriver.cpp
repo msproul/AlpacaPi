@@ -59,6 +59,13 @@
 //*	Dec  7,	2020	<MLS> Added _ENABLE_SLIT_TRACKER_REMOTE_
 //*	Dec  7,	2020	<MLS> Added _ENABLE_REMOTE_SHUTTER_
 //*	Dec  7,	2020	<MLS> CONFORM-dome -> 4 errors, 0 warnings and 0 issues
+//*	Jan 10,	2021	<MLS> Added UpdateDomePosition()
+//*	Jan 10,	2021	<MLS> Added Put_SyncToAzimuth()
+//*	Jan 10,	2021	<MLS> Put_Park() can now can figure out which way to the parking lot ;)
+//*	Jan 10,	2021	<MLS> Put_SlewToAzimuth() now working
+//*	Jan 10,	2021	<MLS> Added Put_SlewToAltitude() (not finished)
+//*	Jan 10,	2021	<MLS> Put_FindHome() can now can figure out which way to go home ;)
+//*	Jan 12,	2021	<MLS> Added RunStateMachine_Dome() & RunStateMachine_ROR()
 //*****************************************************************************
 //*	cd /home/pi/dev-mark/alpaca
 //*	LOGFILE=logfile.txt
@@ -83,6 +90,7 @@
 #include	<stdbool.h>
 #include	<ctype.h>
 #include	<stdint.h>
+#include	<math.h>
 
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
@@ -216,6 +224,8 @@ static TYPE_CmdEntry	gDomeCmdTable[]	=
 	//==============================================================
 	//*	extra commands added by MLS
 	{	"--extras",			kCmd_Dome_Extras,			kCmdType_GET	},
+
+#ifndef _ENABLE_ROR_
 	{	"goleft",			kCmd_Dome_goleft,			kCmdType_PUT	},
 	{	"goright",			kCmd_Dome_goright,			kCmdType_PUT	},
 
@@ -224,12 +234,12 @@ static TYPE_CmdEntry	gDomeCmdTable[]	=
 
 	{	"slowleft",			kCmd_Dome_slowleft,			kCmdType_PUT	},
 	{	"slowright",		kCmd_Dome_slowright,		kCmdType_PUT	},
+#endif
 
 
 
 	{	"currentstate",		kCmd_Dome_currentstate,		kCmdType_GET	},
 	{	"readall",			kCmd_Dome_readall,			kCmdType_GET	},
-
 
 
 	{	"",					-1,		0	}
@@ -243,8 +253,11 @@ DomeDriver::DomeDriver(const int argDevNum)
 	CONSOLE_DEBUG(__FUNCTION__);
 
 	cShutterstatus			=	kShutterStatus_Closed;
-	cAltitude_Dbl			=	0.0;
-	cAzimuth_Dbl			=	0.0;
+	cAltitude_Degrees		=	0.0;
+	cAzimuth_Degrees		=	0.0;
+	cAzimuth_Destination	=	-1.0;		//*	must be >= to 0 to be valid
+	cParkAzimuth			=	0.0;
+	cHomeAzimuth			=	0.0;
 	cCurrentPWM				=	0;
 	cCurrentDirection		=	kRotateDome_CW;
 	cBumpSpeedAmount		=	1;
@@ -332,7 +345,13 @@ char				alpacaErrMsg[256];
 //int				myDeviceNum;
 int					mySocket;
 
-	CONSOLE_DEBUG_W_STR("deviceCommand\t=",	reqData->deviceCommand);
+
+//	CONSOLE_DEBUG_W_STR("htmlData\t=",	reqData->htmlData);
+
+	if (strcmp(reqData->deviceCommand, "readall") != 0)
+	{
+		CONSOLE_DEBUG_W_STR("deviceCommand\t=",	reqData->deviceCommand);
+	}
 
 	CheckSensors();
 
@@ -452,6 +471,7 @@ int					mySocket;
 			break;
 
 		case kCmd_Dome_abortslew:			//*	Immediately cancel current dome operation.
+			//*	I want this one to go even if it is a GET command
 			alpacaErrCode	=	Put_AbortSlew(reqData, alpacaErrMsg);
 			break;
 
@@ -460,58 +480,161 @@ int					mySocket;
 			break;
 
 		case kCmd_Dome_findhome:			//*	Start operation to search for the dome home position.
-			alpacaErrCode	=	Put_FindHome(reqData, alpacaErrMsg);
+			if (reqData->get_putIndicator == 'P')
+			{
+				alpacaErrCode	=	Put_FindHome(reqData, alpacaErrMsg);
+			}
+			else
+			{
+				alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Get not supported");
+			}
 			break;
 
 		case kCmd_Dome_openshutter:			//*	Open shutter or otherwise expose telescope to the sky.
-			alpacaErrCode	=	Put_OpenShutter(reqData, alpacaErrMsg);
+			if (reqData->get_putIndicator == 'P')
+			{
+				alpacaErrCode	=	Put_OpenShutter(reqData, alpacaErrMsg);
+			}
+			else
+			{
+				alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Get not supported");
+			}
 			break;
 
 		case kCmd_Dome_park:				//*	Rotate dome in azimuth to park position.
-			alpacaErrCode	=	Put_Park(reqData, alpacaErrMsg);
+			if (reqData->get_putIndicator == 'P')
+			{
+				alpacaErrCode	=	Put_Park(reqData, alpacaErrMsg);
+			}
+			else
+			{
+				alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Get not supported");
+			}
 			break;
 
 		case kCmd_Dome_setpark:				//*	Set the current azimuth, altitude position of dome to be the park position
-			alpacaErrCode	=	Put_SetPark(reqData, alpacaErrMsg);
+			if (reqData->get_putIndicator == 'P')
+			{
+				alpacaErrCode	=	Put_SetPark(reqData, alpacaErrMsg);
+			}
+			else
+			{
+				alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Get not supported");
+			}
 			break;
 
 		case kCmd_Dome_slewtoaltitude:		//*	Slew the dome to the given altitude position.
-			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Command not implemented");
-			alpacaErrCode	=	kASCOM_Err_NotImplemented;
+			if (reqData->get_putIndicator == 'P')
+			{
+				alpacaErrCode	=	Put_SlewToAltitude(reqData, alpacaErrMsg);
+			}
+			else
+			{
+				alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Get not supported");
+			}
 			break;
 
 		case kCmd_Dome_slewtoazimuth:		//*	Slew the dome to the given azimuth position.
-			alpacaErrCode	=	Put_SlewToAzimuth(reqData, alpacaErrMsg);
+			if (reqData->get_putIndicator == 'P')
+			{
+				alpacaErrCode	=	Put_SlewToAzimuth(reqData, alpacaErrMsg);
+			}
+			else
+			{
+				alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Get not supported");
+			}
 			break;
 
 		case kCmd_Dome_synctoazimuth:		//*	Synchronize the current position of the dome to the given azimuth.
-			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Command not implemented");
-			alpacaErrCode	=	kASCOM_Err_NotImplemented;
+			if (reqData->get_putIndicator == 'P')
+			{
+				alpacaErrCode	=	Put_SyncToAzimuth(reqData, alpacaErrMsg);
+			}
+			else
+			{
+				alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Get not supported");
+			}
 			break;
 
 		case kCmd_Dome_goleft:
-			alpacaErrCode	=	Put_NormalMove(reqData, alpacaErrMsg, kRotateDome_CCW);
+			if (reqData->get_putIndicator == 'P')
+			{
+				alpacaErrCode	=	Put_NormalMove(reqData, alpacaErrMsg, kRotateDome_CCW);
+			}
+			else
+			{
+				alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Get not supported");
+			}
 			break;
 
 		case kCmd_Dome_goright:
-			alpacaErrCode	=	Put_NormalMove(reqData, alpacaErrMsg, kRotateDome_CW);
+			if (reqData->get_putIndicator == 'P')
+			{
+				alpacaErrCode	=	Put_NormalMove(reqData, alpacaErrMsg, kRotateDome_CW);
+			}
+			else
+			{
+				alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Get not supported");
+			}
 			break;
 
 		case kCmd_Dome_bumpleft:
-			alpacaErrCode	=	Put_BumpMove(reqData, alpacaErrMsg, kRotateDome_CCW);
+			if (reqData->get_putIndicator == 'P')
+			{
+				alpacaErrCode	=	Put_BumpMove(reqData, alpacaErrMsg, kRotateDome_CCW);
+			}
+			else
+			{
+				alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Get not supported");
+			}
 			break;
 
 		case kCmd_Dome_bumpright:
-			alpacaErrCode	=	Put_BumpMove(reqData, alpacaErrMsg, kRotateDome_CW);
+			if (reqData->get_putIndicator == 'P')
+			{
+				alpacaErrCode	=	Put_BumpMove(reqData, alpacaErrMsg, kRotateDome_CW);
+			}
+			else
+			{
+				alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Get not supported");
+			}
 			break;
 
 		case kCmd_Dome_slowleft:
-			alpacaErrCode	=	Put_SlowMove(reqData, alpacaErrMsg, kRotateDome_CCW);
+			if (reqData->get_putIndicator == 'P')
+			{
+				alpacaErrCode	=	Put_SlowMove(reqData, alpacaErrMsg, kRotateDome_CCW);
+			}
+			else
+			{
+				alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Get not supported");
+			}
 			break;
 
 		case kCmd_Dome_slowright:
-			alpacaErrCode	=	Put_SlowMove(reqData, alpacaErrMsg, kRotateDome_CW);
+			if (reqData->get_putIndicator == 'P')
+			{
+				alpacaErrCode	=	Put_SlowMove(reqData, alpacaErrMsg, kRotateDome_CW);
+			}
+			else
+			{
+				alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Get not supported");
+			}
 			break;
+
 
 		case kCmd_Dome_currentstate:
 			alpacaErrCode	=	Get_Currentstate(reqData, alpacaErrMsg);
@@ -576,23 +699,15 @@ int					mySocket;
 	return(alpacaErrCode);
 }
 
-
-
 //*****************************************************************************
-//*	return number of microseconds allowed for delay
-//*****************************************************************************
-int32_t	DomeDriver::RunStateMachine(void)
+int32_t	DomeDriver::RunStateMachine_Dome(void)
 {
 int32_t		minDealy_microSecs;
 uint32_t	currentMilliSecs;
 uint32_t	timeSinceLastWhatever;
 int			isAtMax;
-char		stateString[48];
 
-//	CONSOLE_DEBUG(__FUNCTION__);
-
-	CheckDomeButtons();
-
+	UpdateDomePosition();
 
 	minDealy_microSecs		=	1000;		//*	default to 1 millisecond
 	currentMilliSecs		=	millis();
@@ -672,6 +787,43 @@ char		stateString[48];
 		case kDomeState_last:
 		default:
 			break;
+	}
+	return(minDealy_microSecs);
+}
+
+//*****************************************************************************
+//*	this needs to be over ridden by the sub class
+//*****************************************************************************
+int32_t	DomeDriver::RunStateMachine_ROR(void)
+{
+int32_t		minDealy_microSecs;
+
+	CONSOLE_ABORT(__FUNCTION__);
+	minDealy_microSecs		=	1000;		//*	default to 1 millisecond
+
+	return(minDealy_microSecs);
+
+}
+
+//*****************************************************************************
+//*	return number of microseconds allowed for delay
+//*****************************************************************************
+int32_t	DomeDriver::RunStateMachine(void)
+{
+int32_t		minDealy_microSecs;
+char		stateString[48];
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	CheckDomeButtons();
+
+	if (cDomeConfig == kIsDome)
+	{
+		minDealy_microSecs	=	RunStateMachine_Dome();
+	}
+	else
+	{
+		minDealy_microSecs	=	RunStateMachine_ROR();
 	}
 
 #ifdef _ENABLE_REMOTE_SHUTTER_
@@ -768,7 +920,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 									reqData->jsonTextBuffer,
 									kMaxJsonBuffLen,
 									responseString,
-									cAltitude_Dbl,
+									cAltitude_Degrees,
 									INCLUDE_COMMA);
 	}
 	else
@@ -831,7 +983,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 								reqData->jsonTextBuffer,
 								kMaxJsonBuffLen,
 								responseString,
-								cAzimuth_Dbl,
+								cAzimuth_Degrees,
 								INCLUDE_COMMA);
 	}
 	else
@@ -1172,7 +1324,7 @@ TYPE_ASCOM_STATUS	DomeDriver::Put_AbortSlew(	TYPE_GetPutRequestData *reqData, ch
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 	StopDomeMoving(kStopRightNow);
 
 	if (reqData != NULL)
@@ -1190,6 +1342,8 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 TYPE_ASCOM_STATUS	DomeDriver::Put_Park(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
+double				deltaDegrees;
+int 				direction;
 
 	if (reqData != NULL)
 	{
@@ -1210,20 +1364,31 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 			}
 			else
 			{
-				cGoingPark	=	true;
+				//*	lets try and figure out which way to go.
+				direction		=	kRotateDome_CW;	//*	set a default
+				deltaDegrees	=	cAzimuth_Degrees - cParkAzimuth;
+				CONSOLE_DEBUG_W_DBL("Distance from park\t=", deltaDegrees);
+
+				if ((deltaDegrees > 0.0) && (deltaDegrees < 180.0))
+				{
+					direction		=	kRotateDome_CCW;	//*	set a default
+				}
+				cGoingPark		=	true;
+
 				if (cAtHome)
 				{
 					StartDomeMoving(kRotateDome_CCW);
 				}
 				else
 				{
-					StartDomeMoving(kRotateDome_CW);
+					StartDomeMoving(direction);
 				}
 			}
 		}
 		else
 		{
-			alpacaErrCode	=	kASCOM_Err_ActionNotImplemented;
+			alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Park Not supported");
 		}
 	}
 	else
@@ -1262,36 +1427,49 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 TYPE_ASCOM_STATUS	DomeDriver::Put_FindHome(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
+int					direction;
+double				deltaDegrees;
 
 	if (cCanFindHome)
 	{
-		if (reqData != NULL)
-		{
-			cGoingBump	=	false;
-			cGoingPark	=	false;
+		cGoingBump	=	false;
+		cGoingPark	=	false;
 
-			if (cAtHome)
-			{
-				CONSOLE_DEBUG("Already at home, command ignored");
-			}
-			else if (cSlewing)
-			{
-				cGoingHome	=	true;
-			}
-			else
-			{
-				cGoingHome	=	true;
-				StartDomeMoving(kRotateDome_CW);
-			}
+		if (cAtHome)
+		{
+			CONSOLE_DEBUG("Already at home, command ignored");
+		}
+		else if (cSlewing)
+		{
+			cGoingHome	=	true;
 		}
 		else
 		{
-			alpacaErrCode	=	kASCOM_Err_InternalError;
+			cGoingHome	=	true;
+			//*	lets try and figure out which way to go.
+			direction		=	kRotateDome_CW;	//*	set a default
+			deltaDegrees	=	cAzimuth_Degrees - cHomeAzimuth;
+			CONSOLE_DEBUG_W_DBL("Distance from home\t=", deltaDegrees);
+
+			if ((deltaDegrees > 0.0) && (deltaDegrees < 180.0))
+			{
+				direction		=	kRotateDome_CCW;	//*	set a default
+			}
+
+			if (cAtPark)
+			{
+				//*	because my HOME is CW from my PARK
+				StartDomeMoving(kRotateDome_CW);
+			}
+			else
+			{
+				StartDomeMoving(direction);
+			}
 		}
 	}
 	else
 	{
-		alpacaErrCode	=	kASCOM_Err_ActionNotImplemented;
+		alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "FindHome Not supported");
 	}
 	return(alpacaErrCode);
@@ -1307,6 +1485,18 @@ TYPE_ASCOM_STATUS	DomeDriver::Put_SetPark(	TYPE_GetPutRequestData *reqData, char
 
 
 //*****************************************************************************
+TYPE_ASCOM_STATUS	DomeDriver::Put_SlewToAltitude(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
+
+	alpacaErrCode	=	kASCOM_Err_NotImplemented;
+	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "SlewToAltitude not finished");
+
+	return(alpacaErrCode);
+}
+
+
+//*****************************************************************************
 //*	http://127.0.0.1:6800/api/v1.0.0-oas3/dome/0/slewtoazimuth" -H  "accept: application/json" -H  "Content-Type: application/x-www-form-urlencoded" -d "Azimuth=27&ClientID=1&ClientTransactionID=223"
 //*	curl -X PUT "https://virtserver.swaggerhub.com/ASCOMInitiative/ASCOMAlpacaAPI/1.0.0-oas3/dome/0/slewtoazimuth" -H  "accept: application/json" -H  "Content-Type: application/x-www-form-urlencoded" -d "Azimuth=27&ClientID=1&ClientTransactionID=223"
 //*	curl -X PUT "http://127.0.0.1:6800/api/v1.0.0-oas3/dome/0/slewtoazimuth" -H  "accept: application/json" -H  "Content-Type: application/x-www-form-urlencoded" -d "Azimuth=27&ClientID=1&ClientTransactionID=223"
@@ -1315,40 +1505,129 @@ TYPE_ASCOM_STATUS	DomeDriver::Put_SlewToAzimuth(	TYPE_GetPutRequestData *reqData
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
 double				newAzimuthValue;
+double				deltaDegrees;
 char				argumentString[64];
 bool				foundKeyWord;
 
 	CONSOLE_DEBUG(__FUNCTION__);
-
-	if (reqData != NULL)
+	if (cCanSetAzimuth)
 	{
-		//*	look for Azimuth
-		foundKeyWord	=	GetKeyWordArgument(reqData->contentData, "Azimuth", argumentString, 31);
-		if (foundKeyWord)
+		if (reqData != NULL)
 		{
-			newAzimuthValue	=	atof(argumentString);
-			CONSOLE_DEBUG_W_DBL("newAzimuthValue\t=", newAzimuthValue);
-			if ((newAzimuthValue >= 0.0) && (newAzimuthValue <= 360.0))
+			//*	look for Azimuth
+			foundKeyWord	=	GetKeyWordArgument(reqData->contentData, "Azimuth", argumentString, 31);
+			if (foundKeyWord)
 			{
-				cAzimuth_Dbl	=	newAzimuthValue;
-				alpacaErrCode	=	kASCOM_Err_Success;
+				newAzimuthValue	=	atof(argumentString);
+				CONSOLE_DEBUG_W_DBL("newAzimuthValue\t=", newAzimuthValue);
+				if ((newAzimuthValue >= 0.0) && (newAzimuthValue <= 360.0))
+				{
+					cAzimuth_Destination	=	newAzimuthValue;
+					deltaDegrees			=	cAzimuth_Destination - cAzimuth_Degrees;
+					CONSOLE_DEBUG_W_DBL("deltaDegrees\t=", deltaDegrees);
+					if ((deltaDegrees >= 1.0) && (deltaDegrees < 180.0))
+					{
+						CONSOLE_DEBUG("kRotateDome_CW");
+						StartDomeMoving(kRotateDome_CW);
+					}
+					else if (deltaDegrees <= -1.0)
+					{
+						CONSOLE_DEBUG("kRotateDome_CCW");
+						StartDomeMoving(kRotateDome_CCW);
+					}
+					else
+					{
+						CONSOLE_DEBUG("dont bother moving");
+						//*	dont bother moving
+					}
+					alpacaErrCode			=	kASCOM_Err_Success;
+				}
+				else
+				{
+					alpacaErrCode	=	kASCOM_Err_InvalidValue;
+					GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Invalid Value");
+				}
 			}
 			else
 			{
 				alpacaErrCode	=	kASCOM_Err_InvalidValue;
-				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Invalid Value");
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Invalid Value 'Azimuth=' was not found");
+				CONSOLE_DEBUG_W_STR("contentData\t=", reqData->contentData);
 			}
 		}
 		else
 		{
-			alpacaErrCode	=	kASCOM_Err_InvalidValue;
-			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Invalid Value 'Azimuth=' was not found");
-			CONSOLE_DEBUG_W_STR("contentData\t=", reqData->contentData);
+			alpacaErrCode	=	kASCOM_Err_InternalError;
 		}
 	}
 	else
 	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
+		alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
+		if (cDomeConfig == kIsRollOffRoof)
+		{
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "ROR does not use slewtoazimuth");
+		}
+		else
+		{
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "slewtoazimuth Not implemented");
+		}
+	}
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	DomeDriver::Put_SyncToAzimuth(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
+double				newAzimuthValue;
+char				argumentString[64];
+bool				foundKeyWord;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+	if (cCanSyncAzimuth)
+	{
+		if (reqData != NULL)
+		{
+			//*	look for Azimuth
+			foundKeyWord	=	GetKeyWordArgument(reqData->contentData, "Azimuth", argumentString, 31);
+			if (foundKeyWord)
+			{
+				newAzimuthValue	=	atof(argumentString);
+				CONSOLE_DEBUG_W_DBL("newAzimuthValue\t=", newAzimuthValue);
+				if ((newAzimuthValue >= 0.0) && (newAzimuthValue <= 360.0))
+				{
+					cAzimuth_Degrees	=	newAzimuthValue;
+					alpacaErrCode		=	kASCOM_Err_Success;
+				}
+				else
+				{
+					alpacaErrCode	=	kASCOM_Err_InvalidValue;
+					GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Invalid Value");
+				}
+			}
+			else
+			{
+				alpacaErrCode	=	kASCOM_Err_InvalidValue;
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Invalid Value 'Azimuth=' was not found");
+				CONSOLE_DEBUG_W_STR("contentData\t=", reqData->contentData);
+			}
+		}
+		else
+		{
+			alpacaErrCode	=	kASCOM_Err_InternalError;
+		}
+	}
+	else
+	{
+		alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
+		if (cDomeConfig == kIsRollOffRoof)
+		{
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "ROR does not use synctoazimuth");
+		}
+		else
+		{
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "synctoazimuth Not implemented");
+		}
 	}
 	return(alpacaErrCode);
 }
@@ -1540,10 +1819,15 @@ char				stateString[48];
 
 
 //*****************************************************************************
-//*	this should be over ridden
+//*	this can be over ridden
+//*	for anything other than the remote shutter it must be over ridden
+//*****************************************************************************
 TYPE_ASCOM_STATUS	DomeDriver::OpenShutter(char *alpacaErrMsg)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+
 #ifdef _ENABLE_REMOTE_SHUTTER_
 	if (cShutterInfoValid)
 	{
@@ -1555,7 +1839,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Remote shutter not detected");
 	}
 #else
-
+	CONSOLE_ABORT(__FUNCTION__);
 	alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
 	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Open shutter not implemented");
 
@@ -1633,11 +1917,11 @@ char		domeConfigStr[32];
 	SocketWriteData(mySocketFD,	lineBuffer);
 
 	//*-----------------------------------------------------------
-	sprintf(lineBuffer,	"\t<TR><TD>Altitude</TD><TD>%1.2f</TD></TR>\r\n",	cAltitude_Dbl);
+	sprintf(lineBuffer,	"\t<TR><TD>Altitude</TD><TD>%1.2f</TD></TR>\r\n",	cAltitude_Degrees);
 	SocketWriteData(mySocketFD,	lineBuffer);
 
 	//*-----------------------------------------------------------
-	sprintf(lineBuffer,	"\t<TR><TD>Azimuth</TD><TD>%1.2f</TD></TR>\r\n",	cAzimuth_Dbl);
+	sprintf(lineBuffer,	"\t<TR><TD>Azimuth</TD><TD>%1.2f</TD></TR>\r\n",	cAzimuth_Degrees);
 	SocketWriteData(mySocketFD,	lineBuffer);
 
 
@@ -1715,6 +1999,8 @@ bool		returnState;
 
 
 //*****************************************************************************
+//*	this should be over ridden
+//*****************************************************************************
 void	DomeDriver::StartDomeMoving(const int direction)
 {
 	CONSOLE_DEBUG(__FUNCTION__);
@@ -1725,8 +2011,10 @@ void	DomeDriver::StartDomeMoving(const int direction)
 
 //*****************************************************************************
 //*	this should be over ridden
+//*****************************************************************************
 void	DomeDriver::StopDomeMoving(bool rightNow)
 {
+	cAzimuth_Destination	=	-1;
 	CONSOLE_DEBUG(__FUNCTION__);
 }
 
@@ -1749,6 +2037,14 @@ void	DomeDriver::CheckDomeButtons(void)
 void	DomeDriver::ProcessButtonPressed(const int pressedButton)
 {
 	CONSOLE_DEBUG(__FUNCTION__);
+}
+
+//*****************************************************************************
+//*	this should be over ridden
+void	DomeDriver::UpdateDomePosition(void)
+{
+//	CONSOLE_DEBUG(__FUNCTION__);
+
 }
 
 
@@ -1801,11 +2097,65 @@ uint32_t	movingTime_seconds;
 	}
 
 	//****************************************************
-	if (cGoingBump && (movingTime_millisecs >= 2200))
+	if (cGoingBump && (movingTime_millisecs >= 2500))
 	{
 		CONSOLE_DEBUG("Stop Bumping");
 		StopDomeMoving(kStopNormal);
 		cGoingBump	=	false;
+	}
+
+	//*	check if we are slewing to a destination
+	if (cAzimuth_Destination >= 0.0)
+	{
+    double	deltaDegrees;
+
+		deltaDegrees	=	fabs(cAzimuth_Destination - cAzimuth_Degrees);
+
+
+		if (deltaDegrees < 0.10)
+		{
+			CONSOLE_DEBUG("kStopRightNow");
+			StopDomeMoving(kStopRightNow);
+		}
+		else if (deltaDegrees < 0.25)
+		{
+			StopDomeMoving(kStopNormal);
+		}
+		else if (deltaDegrees < 5.0)
+		{
+			CONSOLE_DEBUG_W_DBL("Slewing, left to go\t=", deltaDegrees);
+			CONSOLE_DEBUG_W_NUM("Slowing down", cCurrentPWM);
+			if (cCurrentPWM > 500)
+			{
+				BumpDomeSpeed(-10);
+				usleep(500);
+			}
+		}
+		//*	we might have already stopped
+		if (cSlewing)
+		{
+			//*	now check to see if we have gone too far
+			if (cCurrentDirection == kRotateDome_CW)
+			{
+				if (cAzimuth_Degrees > cAzimuth_Destination)
+				{
+					CONSOLE_DEBUG("Went too far");
+					StopDomeMoving(kStopRightNow);
+				}
+			}
+			else if (cCurrentDirection == kRotateDome_CCW)
+			{
+				if (cAzimuth_Degrees < cAzimuth_Destination)
+				{
+					CONSOLE_DEBUG("Went too far");
+					StopDomeMoving(kStopRightNow);
+				}
+			}
+			else
+			{
+				CONSOLE_DEBUG("We dont know which way we are going!!!!!!!!!!");
+			}
+		}
 	}
 
 	//*	if we are in manual move and we have been moving for at least 2 seconds,

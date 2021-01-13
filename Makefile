@@ -247,6 +247,7 @@ ROR_OBJECTS=												\
 				$(OBJECT_DIR)JsonResponse.o					\
 				$(OBJECT_DIR)managementdriver.o				\
 				$(OBJECT_DIR)observatory_settings.o			\
+				$(OBJECT_DIR)raspberrypi_relaylib.o			\
 
 
 ######################################################################################
@@ -424,10 +425,10 @@ nousb		:		$(CPP_OBJECTS)				\
 #dome		:	DEFINEFLAGS		+=	-D_ENABLE_OBSERVINGCONDITIONS_
 dome		:	DEFINEFLAGS		+=	-D_ENABLE_DOME_
 dome		:	DEFINEFLAGS		+=	-D_ENABLE_SLIT_TRACKER_REMOTE_
+dome		:	DEFINEFLAGS		+=	-D_ENABLE_REMOTE_SHUTTER_
 dome		:	DEFINEFLAGS		+=	-D_INCLUDE_WIRINGPI_
 #dome		:	DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
 #dome		:	DEFINEFLAGS		+=	-D_ENABLE_ASI_
-dome		:	DEFINEFLAGS		+=	-D_ENABLE_REMOTE_SHUTTER_
 dome		:	PLATFORM		=	armv7
 dome		:				$(CPP_OBJECTS)				\
 							$(SOCKET_OBJECTS)			\
@@ -457,6 +458,20 @@ ror		:					$(ROR_OBJECTS)				\
 							-lpthread					\
 							-o ror
 
+######################################################################################
+#pragma mark rorpi
+#rorpi		:	DEFINEFLAGS		+=	-D_ENABLE_DOME_
+rorpi		:	DEFINEFLAGS		+=	-D_ENABLE_ROR_
+rorpi		:	DEFINEFLAGS		+=	-D_ENABLE_4REALY_BOARD
+rorpi		:				$(ROR_OBJECTS)				\
+							$(SOCKET_OBJECTS)			\
+
+				$(LINK)  								\
+							$(SOCKET_OBJECTS)			\
+							$(ROR_OBJECTS)				\
+							-lpthread					\
+							-lwiringPi					\
+							-o ror
 
 
 ######################################################################################
@@ -506,24 +521,25 @@ pi		:			$(CPP_OBJECTS)				\
 
 ######################################################################################
 #pragma mark Raspberry pi - calibration
+#make calib
 calib		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
 calib		:		DEFINEFLAGS		+=	-D_ENABLE_CALIBRATION_
 #calib		:		DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_
 #calib		:		DEFINEFLAGS		+=	-D_ENABLE_ROTATOR_
 #calib		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_
 #calib		:		DEFINEFLAGS		+=	-D_ENABLE_SAFETYMONITOR_
-#calib		:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_
+calib		:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_
 #calib		:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
-calib		:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
-calib		:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
+#calib		:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
+#calib		:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
 #calib		:		DEFINEFLAGS		+=	-D_ENABLE_DISCOVERY_QUERRY_
-calib		:		DEFINEFLAGS		+=	-D_ENABLE_MULTICAM_
+#calib		:		DEFINEFLAGS		+=	-D_ENABLE_MULTICAM_
 #calib		:		DEFINEFLAGS		+=	-D_ENABLE_DOME_
-calib		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
+#calib		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
 #calib		:		DEFINEFLAGS		+=	-D_ENABLE_ATIK_
-calib		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
+#calib		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
 #calib		:		DEFINEFLAGS		+=	-D_ENABLE_TOUP_
-calib		:		DEFINEFLAGS		+=	-D_ENABLE_WIRING_PI_
+#calib		:		DEFINEFLAGS		+=	-D_ENABLE_WIRING_PI_
 calib		:		PLATFORM		=	armv7
 calib		:		ATIK_LIB_DIR	=	$(ATIK_LIB_MASTER_DIR)/ARM/x86/NoFlyCapture
 calib		:		$(CPP_OBJECTS)				\
@@ -535,11 +551,50 @@ calib		:		$(CPP_OBJECTS)				\
 					$(SOCKET_OBJECTS)			\
 					$(CPP_OBJECTS)				\
 					$(ALPACA_OBJECTS)			\
-					$(OPENCV_LINK)				\
-					$(ASI_CAMERA_OBJECTS)		\
-					-lcfitsio					\
-					-lusb-1.0					\
-					-ludev						\
+					-lwiringPi					\
+					-lpthread					\
+					-o alpacapi
+
+#					$(OPENCV_LINK)				\
+#					$(ASI_CAMERA_OBJECTS)		\
+#					-lcfitsio					\
+#					-lusb-1.0					\
+#					-ludev						\
+
+
+######################################################################################
+#pragma mark Raspberry pi - switch
+#make piswitch4
+piswitch4	:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
+piswitch4	:		DEFINEFLAGS		+=	-D_ENABLE_CALIBRATION_
+#piswitch4	:		DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_
+#piswitch4	:		DEFINEFLAGS		+=	-D_ENABLE_ROTATOR_
+#piswitch4	:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_
+#piswitch4	:		DEFINEFLAGS		+=	-D_ENABLE_SAFETYMONITOR_
+piswitch4	:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_
+piswitch4	:		DEFINEFLAGS		+=	-D_ENABLE_4REALY_BOARD
+#piswitch4	:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
+#piswitch4	:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
+#piswitch4	:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
+#piswitch4	:		DEFINEFLAGS		+=	-D_ENABLE_DISCOVERY_QUERRY_
+#piswitch4	:		DEFINEFLAGS		+=	-D_ENABLE_MULTICAM_
+#piswitch4	:		DEFINEFLAGS		+=	-D_ENABLE_DOME_
+#piswitch4	:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
+#piswitch4	:		DEFINEFLAGS		+=	-D_ENABLE_ATIK_
+#piswitch4	:		DEFINEFLAGS		+=	-D_USE_OPENCV_
+#piswitch4	:		DEFINEFLAGS		+=	-D_ENABLE_TOUP_
+piswitch4	:		DEFINEFLAGS		+=	-D_ENABLE_WIRING_PI_
+piswitch4	:		PLATFORM		=	armv7
+piswitch4	:		ATIK_LIB_DIR	=	$(ATIK_LIB_MASTER_DIR)/ARM/x86/NoFlyCapture
+piswitch4	:		$(CPP_OBJECTS)				\
+					$(ALPACA_OBJECTS)			\
+					$(SOCKET_OBJECTS)			\
+
+
+		$(LINK)  								\
+					$(SOCKET_OBJECTS)			\
+					$(CPP_OBJECTS)				\
+					$(ALPACA_OBJECTS)			\
 					-lwiringPi					\
 					-lpthread					\
 					-o alpacapi
@@ -2035,6 +2090,10 @@ $(OBJECT_DIR)julianTime.o :				$(SRC_DIR)julianTime.c	\
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)julianTime.c -o$(OBJECT_DIR)julianTime.o
 
 
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)raspberrypi_relaylib.o :	$(SRC_DIR)raspberrypi_relaylib.c	\
+										$(SRC_DIR)raspberrypi_relaylib.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)raspberrypi_relaylib.c -o$(OBJECT_DIR)raspberrypi_relaylib.o
 
 
 ######################################################################################

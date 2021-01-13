@@ -41,6 +41,7 @@
 //*	Jan  5,	2021	<MLS> Added RunBackgroundTasks()
 //*	Jan  5,	2021	<MLS> Added CPenSize()
 //*	Jan  6,	2021	<MLS> Added GetWidgetText()
+//*	Jan 10,	2021	<MLS> Added new version of AlpacaSendPutCmd()
 //*****************************************************************************
 
 
@@ -907,7 +908,7 @@ void	WindowTab::SetParentObjectPtr(void *argParentObjPtr)
 void	WindowTab::SetWindowIPaddrInfo(	const char	*textString,
 										const bool	onLine)
 {
-//	CONSOLE_DEBUG_W_STR(__FUNCTION__, (onLine ? "online" : "Offline"));
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, (onLine ? "online" : "Offline"));
 	//*	this can be be overloaded,
 	if (cIpAddrTextBox > 0)
 	{
@@ -933,6 +934,62 @@ void	WindowTab::SetWindowIPaddrInfo(	const char	*textString,
 }
 
 //*****************************************************************************
+bool	WindowTab::AlpacaSendPutCmd(	sockaddr_in		*deviceAddress,
+										int				devicePort,
+										const char		*alpacaDevice,
+										const int		alpacaDevNum,
+										const char		*alpacaCmd,
+										const char		*dataString,
+										SJP_Parser_t	*jsonParser)
+{
+bool		validData	=	false;
+Controller	*myControllerObj;
+
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, alpacaCmd);
+
+	myControllerObj	=	(Controller *)cParentObjPtr;
+	if (myControllerObj != NULL)
+	{
+		CONSOLE_DEBUG_W_STR(alpacaDevice, alpacaCmd);
+		if (jsonParser != NULL)
+		{
+			validData	=	myControllerObj->AlpacaSendPutCmdwResponse(	deviceAddress,
+																		devicePort,
+																		alpacaDevice,
+																		alpacaDevNum,
+																		alpacaCmd,
+																		dataString,
+																		jsonParser);
+		}
+		else
+		{
+		SJP_Parser_t	localJsonStruct;
+
+			CONSOLE_DEBUG("jsonParser is NULL");
+	//+		validData	=	myControllerObj->AlpacaSendPutCmd(	alpacaDevice,
+	//															alpacaCmd,
+	//															dataString);
+			validData	=	myControllerObj->AlpacaSendPutCmdwResponse(	deviceAddress,
+																		devicePort,
+																		alpacaDevice,
+																		alpacaDevNum,
+																		alpacaCmd,
+																		dataString,
+																		&localJsonStruct);
+		}
+//-		strcpy(cLastAlpacaCmdString, myControllerObj->cLastAlpacaCmdString);
+	}
+	else
+	{
+		validData	=	false;
+	}
+
+
+	return(validData);
+}
+
+
+//*****************************************************************************
 bool	WindowTab::AlpacaSendPutCmd(const char		*alpacaDevice,
 									const char		*alpacaCmd,
 									const char		*dataString,
@@ -941,7 +998,8 @@ bool	WindowTab::AlpacaSendPutCmd(const char		*alpacaDevice,
 bool		validData;
 Controller	*myControllerObj;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, alpacaCmd);
+
 	myControllerObj	=	(Controller *)cParentObjPtr;
 	if (myControllerObj != NULL)
 	{
@@ -952,13 +1010,22 @@ Controller	*myControllerObj;
 																		alpacaCmd,
 																		dataString,
 																		jsonParser);
+			CONSOLE_DEBUG("Calling AlpacaCheckForErrors()");
+			cLastAlpacaErrNum	=	AlpacaCheckForErrors(jsonParser, cLastAlpacaErrStr, true);
+
+
+			CONSOLE_DEBUG_W_NUM("cLastAlpacaErrNum\t=", cLastAlpacaErrNum);
+			CONSOLE_DEBUG_W_STR("cLastAlpacaErrStr\t=", cLastAlpacaErrStr);
 		}
 		else
 		{
+			CONSOLE_DEBUG("jsonParser is NULL");
 			validData	=	myControllerObj->AlpacaSendPutCmd(	alpacaDevice,
 																alpacaCmd,
 																dataString);
 		}
+
+
 //-		strcpy(cLastAlpacaCmdString, myControllerObj->cLastAlpacaCmdString);
 	}
 	else
@@ -993,6 +1060,55 @@ Controller	*myControllerObj;
 	return(validData);
 }
 
+//*****************************************************************************
+//*	this is the same function as in the controller class, but it easier to have it two places
+//*****************************************************************************
+int	WindowTab::AlpacaCheckForErrors(	SJP_Parser_t	*jsonParser,
+										char			*errorMsg,
+										bool 			reportError)
+{
+int		jjj;
+int		alpacaErrorCode;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	alpacaErrorCode	=	0;
+	strcpy(errorMsg, "");
+	if (jsonParser != NULL)
+	{
+		for (jjj=0; jjj<jsonParser->tokenCount_Data; jjj++)
+		{
+			if (strcasecmp(jsonParser->dataList[jjj].keyword, "ErrorNumber") == 0)
+			{
+				alpacaErrorCode	=	atoi(jsonParser->dataList[jjj].valueString);
+			}
+			else if (strcasecmp(jsonParser->dataList[jjj].keyword, "ErrorMessage") == 0)
+			{
+				if (strlen(jsonParser->dataList[jjj].valueString) > 0)
+				{
+					strcpy(errorMsg, jsonParser->dataList[jjj].valueString);
+					if (reportError)
+					{
+						AlpacaDisplayErrorMessage(errorMsg);
+					}
+				}
+			}
+		}
+	}
+	else
+	{
+		CONSOLE_DEBUG("jsonParser is NULL");
+	}
+	return(alpacaErrorCode);
+}
+
+
+//*****************************************************************************
+void	WindowTab::AlpacaDisplayErrorMessage(const char *errorMsgString)
+{
+	//*	this should be overloaded
+	CONSOLE_DEBUG_W_STR("Json err:", errorMsgString);
+}
 
 //*****************************************************************************
 void	WindowTab::DumpWidgetList(const int startIdx, const int stopIdx)

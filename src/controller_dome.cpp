@@ -40,6 +40,7 @@
 #ifdef _ENABLE_CTRL_DOME_
 
 
+
 #include	<math.h>
 #include	<stdio.h>
 #include	<stdlib.h>
@@ -117,7 +118,9 @@ int		iii;
 	cAzimuth_Dbl			=	0.0;
 	cAltitude_Dbl			=	0.0;
 	cShutterStatus			=	-1;
+#ifdef _ENABLE_EXTERNAL_SHUTTER_
 	cShutterInfoValid		=	false;
+#endif // _ENABLE_EXTERNAL_SHUTTER_
 	cSlitTrackerInfoValid	=	false;
 	cLogSlitData			=	false;
 	cSlitDataLogFilePtr		=	NULL;
@@ -187,6 +190,7 @@ void	ControllerDome::SetAlpacaShutterInfo(TYPE_REMOTE_DEV *alpacaDevice)
 
 	if (alpacaDevice != NULL)
 	{
+#ifdef _ENABLE_EXTERNAL_SHUTTER_
 		cShutterInfoValid		=	true;
 
 		cShutterDeviceAddress	=	alpacaDevice->deviceAddress;
@@ -197,6 +201,7 @@ void	ControllerDome::SetAlpacaShutterInfo(TYPE_REMOTE_DEV *alpacaDevice)
 		SetWidgetText(kTab_SlitTracker,	kSlitTracker_Readall,	"RS");
 		SetWidgetText(kTab_SlitGraph,	kSlitGraph_Readall,		"RS");
 		SetWidgetText(kTab_About,		kAboutBox_Readall,		"RS");
+#endif // _ENABLE_EXTERNAL_SHUTTER_
 	}
 }
 
@@ -333,184 +338,8 @@ bool		needToUpdate;
 
 
 
-#if 0
-//*****************************************************************************
-void	ControllerDome::AlpacaProcessReadAll(	const char	*deviceType,
-												const char	*keywordString,
-												const char	*valueString)
-{
-double	argDouble;
-
-//	CONSOLE_DEBUG(__FUNCTION__);
-//	CONSOLE_DEBUG_W_STR(keywordString, valueString);
-	if (strcasecmp(keywordString, "version") == 0)
-	{
-		//*	"version": "AlpacaPi - V0.2.2-beta build #32",
-		strcpy(cAlpacaVersionString, valueString);
-		SetWidgetText(kTab_Dome,		kDomeBox_AlpacaDrvrVersion,		cAlpacaVersionString);
-		SetWidgetText(kTab_SlitTracker,	kSlitTracker_AlpacaDrvrVersion,	cAlpacaVersionString);
-		SetWidgetText(kTab_SlitGraph,	kSlitGraph_AlpacaDrvrVersion,	cAlpacaVersionString);
-		SetWidgetText(kTab_About,		kAboutBox_AlpacaDrvrVersion,	cAlpacaVersionString);
-	}
-	else if (strcasecmp(keywordString, "canfindhome") == 0)
-	{
-		cCanFindHome	=	IsTrueFalse(valueString);
-	}
-	else if (strcasecmp(keywordString, "canpark") == 0)
-	{
-		cCanPark		=	IsTrueFalse(valueString);
-	}
-	else if (strcasecmp(keywordString, "cansetaltitude") == 0)
-	{
-		cCanSetAltitude	=	IsTrueFalse(valueString);
-	}
-	else if (strcasecmp(keywordString, "cansetazimuth") == 0)
-	{
-		cCanSetAzimuth	=	IsTrueFalse(valueString);
-	}
-	else if (strcasecmp(keywordString, "cansetpark") == 0)
-	{
-		cCanSetPark		=	IsTrueFalse(valueString);
-	}
-	else if (strcasecmp(keywordString, "cansetshutter") == 0)
-	{
-		cCanSetShutter	=	IsTrueFalse(valueString);
-	}
-	else if (strcasecmp(keywordString, "canslave") == 0)
-	{
-		cCanSlave		=	IsTrueFalse(valueString);
-		if (cCanSlave)
-		{
-			SetWidgetBGColor(kTab_Dome, kDomeBox_ToggleSlaveMode,	CV_RGB(255,	255,	255));
-		}
-		else
-		{
-			SetWidgetText(kTab_Dome,	kDomeBox_SlavedStatus,	"N/A");
-			SetWidgetBGColor(kTab_Dome, kDomeBox_ToggleSlaveMode,	CV_RGB(128,	128,	128));
-		}
-	}
-	else if (strcasecmp(keywordString, "cansyncazimuth") == 0)
-	{
-		cCanSyncAzimuth	=	IsTrueFalse(valueString);
-	}
-	else if (strcasecmp(keywordString, "slaved") == 0)
-	{
-		cSlaved			=	IsTrueFalse(valueString);
-		if (cCanSlave)
-		{
-			SetWidgetText(kTab_Dome,	kDomeBox_SlavedStatus,		(cSlaved ? "Yes" : "No"));
-			SetWidgetText(kTab_Dome,	kDomeBox_ToggleSlaveMode, 	(cSlaved ? "Disable Slave mode" : "Enable Slave mode"));
-		}
-	}
-	else if (strcasecmp(keywordString, "athome") == 0)
-	{
-		cAtHome			=	IsTrueFalse(valueString);
-	}
-	else if (strcasecmp(keywordString, "atpark") == 0)
-	{
-		cAtPark			=	IsTrueFalse(valueString);
-	}
-	else if (strcasecmp(keywordString, "azimuth") == 0)
-	{
-		argDouble	=	atof(valueString);
-		UpdateDomeAzimuth(argDouble);
-	}
-	else if (strcasecmp(keywordString, "altitude") == 0)
-	{
-		//*	if we are talking to the shutter directly dont update from here
-		if (cShutterInfoValid == false)
-		{
-		double	myNewAltitude;
-
-			myNewAltitude	=	atof(valueString);
-			UpdateShutterAltitude(myNewAltitude);
-		}
-	}
-	else if (strcasecmp(keywordString, "slewing") == 0)
-	{
-		cSlewing		=	IsTrueFalse(valueString);
-	}
-	else if (strcasecmp(keywordString, "shutterstatus") == 0)
-	{
-		//*	if we are talking to the shutter directly dont update from here
-		if (cShutterInfoValid == false)
-		{
-		int		newShutterStatus;
-
-			newShutterStatus	=	atoi(valueString);
-			UpdateShutterStatus(newShutterStatus);
-		}
-	}
-}
-#endif // 0
 
 
-
-//*****************************************************************************
-//*	Get Status, One At A Time
-//*****************************************************************************
-bool	ControllerDome::AlpacaGetStatus_OneAAT(void)
-{
-bool		validData;
-int			myFailureCount;
-double		argDouble;
-
-	myFailureCount	=	0;
-	//========================================================
-	validData	=	AlpacaGetBooleanValue(	"dome", "athome",	NULL,	&cAtHome);
-	if (validData)
-	{
-	}
-	else
-	{
-		cReadFailureCnt++;
-		myFailureCount++;
-	}
-	//========================================================
-	validData	=	AlpacaGetBooleanValue(	"dome", "atpark",	NULL,	&cAtPark);
-	if (validData)
-	{
-	}
-	else
-	{
-		cReadFailureCnt++;
-		myFailureCount++;
-	}
-	//========================================================
-	validData	=	AlpacaGetBooleanValue(	"dome", "slewing",	NULL,	&cSlewing);
-	if (validData)
-	{
-	}
-	else
-	{
-		cReadFailureCnt++;
-		myFailureCount++;
-	}
-
-	//========================================================
-	validData	=	AlpacaGetDoubleValue(	"dome", "azimuth",	NULL,	&argDouble);
-	if (validData)
-	{
-		UpdateDomeAzimuth(argDouble);
-	}
-	else
-	{
-		cReadFailureCnt++;
-		myFailureCount++;
-	}
-
-
-
-	if (myFailureCount < 2)
-	{
-		validData	=	true;
-	}
-	else
-	{
-		validData	=	false;
-	}
-	return(validData);
-}
 
 //*****************************************************************************
 bool	ControllerDome::AlpacaGetStatus(void)
@@ -529,12 +358,13 @@ bool	previousOnLineState;
 	{
 		validData	=	AlpacaGetStatus_OneAAT();
 	}
+#ifdef _ENABLE_EXTERNAL_SHUTTER_
 	//=================================================
 	if (cShutterInfoValid)
 	{
 		AlpacaGetShutterReadAll();
 	}
-
+#endif // _ENABLE_EXTERNAL_SHUTTER_
 	//=================================================
 	if (cSlitTrackerInfoValid)
 	{
@@ -591,6 +421,7 @@ bool	previousOnLineState;
 	return(validData);
 }
 
+#ifdef  _ENABLE_EXTERNAL_SHUTTER_
 //*****************************************************************************
 void	ControllerDome::AlpacaGetShutterReadAll(void)
 {
@@ -652,6 +483,7 @@ int				newShutterStatus;
 		SetWidgetTextColor(kTab_Dome,	kDomeBox_ShutterStatus,	CV_RGB(255,	0,	0));
 	}
 }
+#endif // _ENABLE_EXTERNAL_SHUTTER_
 
 //*****************************************************************************
 void	ControllerDome::AlpacaGetSlitTrackerReadAll(void)
@@ -742,18 +574,18 @@ char			gravityVectorChar;
 							cUpAngle_Rad	=	atan2(cGravity_Z, cGravity_X);
 						//	cUpAngle_Rad	=	atan2(cGravity_X, cGravity_Z);
 							cUpAngle_Deg	=	cUpAngle_Rad * 180.0 / M_PI;
-							CONSOLE_DEBUG_W_DBL("cUpAngle_Deg\t=", cUpAngle_Deg);
+//							CONSOLE_DEBUG_W_DBL("cUpAngle_Deg\t=", cUpAngle_Deg);
 
 							cUpAngle_Deg	+=	102.858;
 
-							CONSOLE_DEBUG_W_DBL("cUpAngle_Deg\t=", cUpAngle_Deg);
+//							CONSOLE_DEBUG_W_DBL("cUpAngle_Deg\t=", cUpAngle_Deg);
 
 						//	telescopeElev		=	atan2(cGravity_Z, cGravity_Y);
 							telescopeElev		=	atan2(cGravity_Y, cGravity_Z);
 							telescopeElev_deg	=	telescopeElev * 180.0 / M_PI;
 							telescopeElev_deg	+=	180.0;
 							telescopeElev_deg	=	360.0 - telescopeElev_deg;
-							CONSOLE_DEBUG_W_DBL("telescopeElev_deg\t=", telescopeElev_deg);
+//							CONSOLE_DEBUG_W_DBL("telescopeElev_deg\t=", telescopeElev_deg);
 
 						}
 						break;
@@ -913,6 +745,7 @@ void	ControllerDome::CloseSlitTrackerDataFile(void)
 	cLogSlitData	=	false;
 }
 
+#ifdef _ENABLE_EXTERNAL_SHUTTER_
 
 int	gClientID				=	1368;
 int	gClientTransactionID	=	0;
@@ -948,6 +781,7 @@ char			myDataString[512];
 	cForceAlpacaUpdate	=	true;
 	return(sucessFlag);
 }
+#endif // _ENABLE_EXTERNAL_SHUTTER_
 
 //*****************************************************************************
 void	ControllerDome::SendShutterCommand(const char *shutterCmd)
@@ -955,6 +789,8 @@ void	ControllerDome::SendShutterCommand(const char *shutterCmd)
 bool		sucessFlag;
 
 	CONSOLE_DEBUG(__FUNCTION__);
+#ifdef _ENABLE_EXTERNAL_SHUTTER_
+	//*	this is for a separate alpaca device called "shutter"
 	if (cShutterInfoValid)
 	{
 		sucessFlag	=	ShutterSendPutCmd("shutter", shutterCmd, "");
@@ -971,6 +807,11 @@ bool		sucessFlag;
 		CONSOLE_DEBUG("No shutter info");
 		SetWidgetText(kTab_Dome, kDomeBox_ErrorMsg, "Shutter controller not found");
 	}
+#else
+	//*	normal, send command to the dome controller.
+
+
+#endif
 }
 
 

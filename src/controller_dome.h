@@ -1,8 +1,16 @@
 //*****************************************************************************
+//*	Jan 12,	2021	<MLS> Added _ENABLE_EXTERNAL_SHUTTER_
+//*	Jan 12,	2021	<MLS> Added _ENABLE_SLIT_TRACKER_
+//*****************************************************************************
 //#include	"controller_dome.h"
 
 #ifndef _CONTROLLER_DOME_H_
 #define	_CONTROLLER_DOME_H_
+
+
+//#define	_ENABLE_EXTERNAL_SHUTTER_
+#define	_ENABLE_SLIT_TRACKER_
+
 
 #ifndef _DISCOVERY_LIB_H_
 	#include	"discovery_lib.h"
@@ -64,6 +72,7 @@ class ControllerDome: public Controller
 	//	virtual	void	DrawGraphWidget(const int widgitIdx);
 				bool	AlpacaGetStartupData(void);
 				bool	AlpacaGetStatus(void);
+		virtual	void	AlpacaDisplayErrorMessage(const char *errorMsgString);
 
 		virtual	void	AlpacaProcessReadAll(			const char	*deviceType,
 														const int	deviveNum,
@@ -86,24 +95,29 @@ class ControllerDome: public Controller
 				void	UpdateShutterStatus(const int newShutterStatus);
 				void	UpdateShutterAltitude(const double newAltitude);
 
-				void	SendShutterCommand(const char *shutterCmd);
-
+			//===================================================================
 				void	SetAlpacaShutterInfo(TYPE_REMOTE_DEV *alpacaDevice);
+				void	SendShutterCommand(const char *shutterCmd);
+			#ifdef _ENABLE_EXTERNAL_SHUTTER_
 				void	AlpacaGetShutterReadAll(void);
 				bool	ShutterSendPutCmd(	const char	*alpacaDevice,
 											const char	*alpacaCmd,
 											const char	*dataString);
-
+			#endif
+			//===================================================================
+			#ifdef _ENABLE_SLIT_TRACKER_
 				void	SetAlpacaSlitTrackerInfo(TYPE_REMOTE_DEV *alpacaDevice);
 				void	AlpacaGetSlitTrackerReadAll(void);
 				void	UpdateSlitLog(void);
 
 				void	CloseSlitTrackerDataFile(void);
 
-				//*	tab information
-				WindowTabDome			*cDomeTabObjPtr;
 				WindowTabSlitTracker	*cSlitTrackerTabObjPtr;
 				WindowTabSlitGraph		*cSlitGraphTabObjPtr;
+			#endif // _ENABLE_SLIT_TRACKER_
+
+				//*	tab information
+				WindowTabDome			*cDomeTabObjPtr;
 				WindowTabAbout			*cAboutBoxTabObjPtr;
 
 				bool			cCanFindHome;
@@ -125,6 +139,7 @@ class ControllerDome: public Controller
 
 				uint32_t		cUpdateDelta;
 
+			#ifdef _ENABLE_EXTERNAL_SHUTTER_
 				//*	shutter device info
 				bool				cShutterInfoValid;
 				struct sockaddr_in	cShutterDeviceAddress;
@@ -132,7 +147,9 @@ class ControllerDome: public Controller
 				int					cShutterAlpacaDevNum;
 				bool				cShutterCommFailed;			//*	failed to communicate with shutter
 				int					cShutterCommFailCnt;
+			#endif // _ENABLE_EXTERNAL_SHUTTER_
 
+			#ifdef _ENABLE_SLIT_TRACKER_
 				//*	Slit tracker device info
 				bool				cSlitTrackerInfoValid;
 				struct sockaddr_in	cSlitTrackerDeviceAddress;
@@ -150,6 +167,7 @@ class ControllerDome: public Controller
 				bool				cValidGravity;
 				double				cUpAngle_Rad;
 				double				cUpAngle_Deg;
+			#endif
 };
 
 

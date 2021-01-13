@@ -43,7 +43,7 @@
 
 #include	"discovery_lib.h"
 
-//#define _ENABLE_CONSOLE_DEBUG_
+#define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
 
 
@@ -415,13 +415,19 @@ int			objectsCreated;
 static int	CheckForDome(TYPE_REMOTE_DEV *remoteDevice)
 {
 ControllerDome	*myDomeController;
-char			windowName[128]	=	"Dome";
+char			windowName[64];
+char			ipAddressStr[32];
 int				objectsCreated;
 int				iii;
 
+	CONSOLE_DEBUG(__FUNCTION__);
 	objectsCreated	=	0;
 	if (strcasecmp(remoteDevice->deviceType, "dome") == 0)
 	{
+		inet_ntop(AF_INET, &remoteDevice->deviceAddress.sin_addr, ipAddressStr, INET_ADDRSTRLEN);
+
+		strcpy(windowName, "Dome-");
+		strcat(windowName, ipAddressStr);
 		CONSOLE_DEBUG_W_STR("windowName=", windowName);
 
 		myDomeController	=	new ControllerDome(windowName, remoteDevice);
@@ -446,6 +452,10 @@ int				iii;
 			}
 		}
 		objectsCreated++;
+	}
+	if (objectsCreated > 0)
+	{
+		CONSOLE_DEBUG_W_NUM("Number of dome objects created\t=", objectsCreated);
 	}
 	return(objectsCreated);
 }
@@ -475,6 +485,7 @@ int					keyPressed;
 	objectsCreated	+=	OpenUSBFocusers();
 #endif // _ENABLE_USB_FOCUSERS_
 
+
 	SetupBroadcast();
 	SendAlpacaQueryBroadcast();
 
@@ -483,20 +494,20 @@ int					keyPressed;
 	//*	step through the alpaca devices and see if there are any focusers
 	for (iii=0; iii<gAlpacaDeviceCnt; iii++)
 	{
-	#ifdef _ENABLE_CTRL_FOCUSERS_
-		objectsCreated	+=	CheckForFocuser(&gAlpacaIPaddrList[iii]);
-	#endif // _ENABLE_CTRL_FOCUSERS_
+		#ifdef _ENABLE_CTRL_FOCUSERS_
+			objectsCreated	+=	CheckForFocuser(&gAlpacaIPaddrList[iii]);
+		#endif // _ENABLE_CTRL_FOCUSERS_
 
-	#ifdef _ENABLE_CTRL_SWITCHES_
-		objectsCreated	+=	CheckForSwitch(&gAlpacaIPaddrList[iii]);
-	#endif // _ENABLE_CTRL_SWITCHES_
-	#ifdef _ENABLE_CTRL_CAMERA_
-		objectsCreated	+=	CheckForCamera(&gAlpacaIPaddrList[iii]);
-	#endif // _ENABLE_CTRL_CAMERA_
+		#ifdef _ENABLE_CTRL_SWITCHES_
+			objectsCreated	+=	CheckForSwitch(&gAlpacaIPaddrList[iii]);
+		#endif // _ENABLE_CTRL_SWITCHES_
+		#ifdef _ENABLE_CTRL_CAMERA_
+			objectsCreated	+=	CheckForCamera(&gAlpacaIPaddrList[iii]);
+		#endif // _ENABLE_CTRL_CAMERA_
 
-	#ifdef _ENABLE_CTRL_DOME_
-		objectsCreated	+=	CheckForDome(&gAlpacaIPaddrList[iii]);
-	#endif // _ENABLE_CTRL_DOME_
+		#ifdef _ENABLE_CTRL_DOME_
+			objectsCreated	+=	CheckForDome(&gAlpacaIPaddrList[iii]);
+		#endif // _ENABLE_CTRL_DOME_
 
 	}
 

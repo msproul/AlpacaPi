@@ -205,12 +205,12 @@ bool				validData;
 char				alpacaString[128];
 int					jjj;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	memset(&shtterAddr, 0, sizeof(struct sockaddr_in));
 #ifdef _ENABLE_REMOTE_SHUTTER_
 	if (cShutterInfoValid)
 	{
-		CONSOLE_DEBUG("Using remote shutter info");
+//		CONSOLE_DEBUG("Using remote shutter info");
 		shtterAddr	=	cShutterDeviceAddress;
 		shutterPort	=	cShutterPort;
 	}
@@ -241,7 +241,7 @@ int					jjj;
 			}
 			else if (strcasecmp(jsonParser.dataList[jjj].keyword, "altitude") == 0)
 			{
-				cAltitude_Dbl	=	atof(jsonParser.dataList[jjj].valueString);
+				cAltitude_Degrees	=	atof(jsonParser.dataList[jjj].valueString);
 			}
 			jjj++;
 		}

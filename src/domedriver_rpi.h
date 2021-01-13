@@ -47,6 +47,7 @@ class DomeDriverRPi: public DomeDriver
 		virtual	bool	BumpDomeSpeed(const int howMuch);
 		virtual	void	CheckDomeButtons(void);
 		virtual	void	CheckSensors(void);
+		virtual	void	UpdateDomePosition(void);
 		virtual	void 	ProcessButtonPressed(const int pressedButton);
 		virtual	void	StartDomeMoving(const int direction);
 		virtual	void	StopDomeMoving(bool rightNow);

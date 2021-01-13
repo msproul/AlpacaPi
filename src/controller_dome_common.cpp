@@ -34,6 +34,7 @@
 #ifdef _ENABLE_SKYTRAVEL_
 	#define	PARENT_CLASS	ControllerSkytravel
 	#include	"controller_skytravel.h"
+	#include	"SkyTravelExternal.h"
 #elif defined(_ENABLE_CTRL_DOME_)
 	#define	PARENT_CLASS	ControllerDome
 	#include	"controller_dome.h"
@@ -44,7 +45,7 @@ bool	PARENT_CLASS::AlpacaGetStartupData(void)
 {
 //SJP_Parser_t	jsonParser;
 bool			validData;
-//char			alpacaString[128];
+char			returnString[128];
 //char			dataString[128];
 
 	CONSOLE_DEBUG(__FUNCTION__);
@@ -59,12 +60,35 @@ bool			validData;
 	{
 	#ifdef _ENABLE_SKYTRAVEL_
 		SetWidgetValid(kTab_Dome,			kDomeBox_Readall,		cDomeHasReadAll);
+		if (cDomeHasReadAll == false)
+		{
+			cDeviceAddress	=	cDomeIpAddress;
+			cPort			=	cDomeIpPort;
+			cAlpacaDevNum	=	cDomeAlpacaDeviceNum;
+			validData	=	AlpacaGetStringValue(	"dome", "driverversion",	NULL,	returnString);
+			if (validData)
+			{
+				strcpy(cAlpacaVersionString, returnString);
+				SetWidgetText(kTab_Dome,		kDomeBox_AlpacaDrvrVersion,		cAlpacaVersionString);
+			}
+		}
 	#else
 		SetWidgetValid(kTab_Dome,			kDomeBox_Readall,		cHasReadAll);
 		SetWidgetValid(kTab_SlitTracker,	kSlitTracker_Readall,	cHasReadAll);
 		SetWidgetValid(kTab_SlitGraph,		kSlitGraph_Readall,		cHasReadAll);
 		SetWidgetValid(kTab_About,			kAboutBox_Readall,		cHasReadAll);
+
+		if (cHasReadAll == false)
+		{
+			validData	=	AlpacaGetStringValue(	"dome", "driverversion",	NULL,	returnString);
+			if (validData)
+			{
+				strcpy(cAlpacaVersionString, returnString);
+				SetWidgetText(kTab_Dome,		kDomeBox_AlpacaDrvrVersion,		cAlpacaVersionString);
+			}
+		}
 	#endif // _ENABLE_SKYTRAVEL_
+
 	}
 	else
 	{
@@ -76,6 +100,86 @@ bool			validData;
 
 	cLastUpdate_milliSecs	=	millis();
 
+	return(validData);
+}
+
+
+
+//*****************************************************************************
+//*	Get Status, One At A Time
+//*****************************************************************************
+bool	PARENT_CLASS::AlpacaGetStatus_OneAAT(void)
+{
+bool		validData;
+int			myFailureCount;
+double		argDouble;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+#ifdef _ENABLE_SKYTRAVEL_
+	cDeviceAddress	=	cDomeIpAddress;
+	cPort			=	cDomeIpPort;
+	cAlpacaDevNum	=	cDomeAlpacaDeviceNum;
+#endif // _ENABLE_SKYTRAVEL_
+
+
+	myFailureCount	=	0;
+	//========================================================
+	validData	=	AlpacaGetBooleanValue(	"dome", "athome",	NULL,	&cAtHome);
+	if (validData)
+	{
+		CONSOLE_DEBUG_W_NUM("cAtHome\t=",	cAtHome);
+	}
+	else
+	{
+		cReadFailureCnt++;
+		myFailureCount++;
+	}
+	//========================================================
+	validData	=	AlpacaGetBooleanValue(	"dome", "atpark",	NULL,	&cAtPark);
+	if (validData)
+	{
+		CONSOLE_DEBUG_W_NUM("cAtPark\t=",	cAtPark);
+	}
+	else
+	{
+		cReadFailureCnt++;
+		myFailureCount++;
+	}
+	//========================================================
+	validData	=	AlpacaGetBooleanValue(	"dome", "slewing",	NULL,	&cSlewing);
+	if (validData)
+	{
+		CONSOLE_DEBUG_W_NUM("cSlewing\t=",	cSlewing);
+	}
+	else
+	{
+		cReadFailureCnt++;
+		myFailureCount++;
+	}
+
+	//========================================================
+	validData	=	AlpacaGetDoubleValue(	"dome", "azimuth",	NULL,	&argDouble);
+	if (validData)
+	{
+		CONSOLE_DEBUG_W_DBL("argDouble\t=",	argDouble);
+		UpdateDomeAzimuth(argDouble);
+	}
+	else
+	{
+		cReadFailureCnt++;
+		myFailureCount++;
+	}
+
+
+
+	if (myFailureCount < 2)
+	{
+		validData	=	true;
+	}
+	else
+	{
+		validData	=	false;
+	}
 	return(validData);
 }
 
@@ -94,9 +198,11 @@ double	argDouble;
 		//*	"version": "AlpacaPi - V0.2.2-beta build #32",
 		strcpy(cAlpacaVersionString, valueString);
 		SetWidgetText(kTab_Dome,		kDomeBox_AlpacaDrvrVersion,		cAlpacaVersionString);
-	//	SetWidgetText(kTab_SlitTracker,	kSlitTracker_AlpacaDrvrVersion,	cAlpacaVersionString);
-	//	SetWidgetText(kTab_SlitGraph,	kSlitGraph_AlpacaDrvrVersion,	cAlpacaVersionString);
-	//	SetWidgetText(kTab_About,		kAboutBox_AlpacaDrvrVersion,	cAlpacaVersionString);
+	#ifndef _ENABLE_SKYTRAVEL_
+		SetWidgetText(kTab_SlitTracker,	kSlitTracker_AlpacaDrvrVersion,	cAlpacaVersionString);
+		SetWidgetText(kTab_SlitGraph,	kSlitGraph_AlpacaDrvrVersion,	cAlpacaVersionString);
+		SetWidgetText(kTab_About,		kAboutBox_AlpacaDrvrVersion,	cAlpacaVersionString);
+	#endif
 	}
 	else if (strcasecmp(keywordString, "canfindhome") == 0)
 	{
@@ -224,9 +330,55 @@ void	PARENT_CLASS::AlpacaProcessSupportedActionDome(const int deviveNum, const c
 		cHasReadAll	=	true;
 #endif
 	}
-	else if (strcasecmp(valueString, "foo") == 0)
+	else if (strcasecmp(valueString, "findhome") == 0)
 	{
-		//*	you get the idea
+		SetWidgetValid(		kTab_Dome,	kDomeBox_GoHome,	true);
+		SetWidgetBGColor(	kTab_Dome,	kDomeBox_GoHome,	CV_RGB(255,	255,	255));
+	}
+	else if (strcasecmp(valueString, "park") == 0)
+	{
+		SetWidgetValid(		kTab_Dome,	kDomeBox_GoPark,	true);
+		SetWidgetBGColor(	kTab_Dome,	kDomeBox_GoPark,	CV_RGB(255,	255,	255));
+	}
+	else if (strcasecmp(valueString, "goleft") == 0)
+	{
+		SetWidgetValid(		kTab_Dome,	kDomeBox_GoLeft,	true);
+		SetWidgetBGColor(	kTab_Dome,	kDomeBox_GoLeft,	CV_RGB(255,	255,	255));
+	}
+	else if (strcasecmp(valueString, "goright") == 0)
+	{
+		SetWidgetValid(		kTab_Dome,	kDomeBox_GoRight,	true);
+		SetWidgetBGColor(	kTab_Dome,	kDomeBox_GoRight,	CV_RGB(255,	255,	255));
+	}
+	else if (strcasecmp(valueString, "slowleft") == 0)
+	{
+		SetWidgetValid(		kTab_Dome,	kDomeBox_SlowLeft,	true);
+		SetWidgetBGColor(	kTab_Dome,	kDomeBox_SlowLeft,	CV_RGB(255,	255,	255));
+	}
+	else if (strcasecmp(valueString, "slowright") == 0)
+	{
+		SetWidgetValid(		kTab_Dome,	kDomeBox_SlowRight,	true);
+		SetWidgetBGColor(	kTab_Dome,	kDomeBox_SlowRight,	CV_RGB(255,	255,	255));
+	}
+	else if (strcasecmp(valueString, "bumpLeft") == 0)
+	{
+		SetWidgetValid(		kTab_Dome,	kDomeBox_BumpLeft,	true);
+		SetWidgetBGColor(	kTab_Dome,	kDomeBox_BumpLeft,	CV_RGB(255,	255,	255));
+	}
+	else if (strcasecmp(valueString, "bumpright") == 0)
+	{
+		SetWidgetValid(		kTab_Dome,	kDomeBox_BumpRight,	true);
+		SetWidgetBGColor(	kTab_Dome,	kDomeBox_BumpRight,	CV_RGB(255,	255,	255));
+	}
+	else if (strcasecmp(valueString, "abortslew") == 0)
+	{
+		SetWidgetValid(		kTab_Dome,	kDomeBox_Stop,	true);
+	//	SetWidgetBGColor(	kTab_Dome,	kDomeBox_Stop,	CV_RGB(255,	255,	255));
+	}
+	else if (strcasecmp(valueString, "slaved") == 0)
+	{
+		SetWidgetValid(		kTab_Dome,	kDomeBox_ToggleSlaveMode,	true);
+	//	SetWidgetBGColor(	kTab_Dome,	kDomeBox_Stop,	CV_RGB(255,	255,	255));
 	}
 }
 
@@ -256,6 +408,11 @@ char	textString[32];
 	cAzimuth_Dbl	=	newAzimuth;
 	sprintf(textString, "%1.1f", cAzimuth_Dbl);
 	SetWidgetText(kTab_Dome, kDomeBox_Azimuth, textString);
+#ifdef _ENABLE_SKYTRAVEL_
+
+	//*	skytravel is backwards from Alpaca
+	gDomeAzimuth_degrees	=	360.0 - newAzimuth;
+#endif
 }
 
 
@@ -298,6 +455,14 @@ char	statusString[16];
 //	{
 //		CONSOLE_DEBUG("Did not update");
 //	}
+}
+
+
+//*****************************************************************************
+void	PARENT_CLASS::AlpacaDisplayErrorMessage(const char *errorMsgString)
+{
+	CONSOLE_DEBUG_W_STR("Alpaca error=", errorMsgString);
+	SetWidgetText(kTab_Dome, kDomeBox_ErrorMsg, errorMsgString);
 }
 
 

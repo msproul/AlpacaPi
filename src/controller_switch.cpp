@@ -483,7 +483,10 @@ bool			validData;
 }
 
 //*****************************************************************************
-void	ControllerSwitch::AlpacaProcessReadAll(const char *deviceType, const char *keywordString, const char *valueString)
+void	ControllerSwitch::AlpacaProcessReadAll(	const char	*deviceType,
+												const int	deviceNum,
+												const char	*keywordString,
+												const char	*valueString)
 {
 int			switchNum;
 int			boxNumber;
@@ -598,6 +601,7 @@ char			newStateString[16];
 			strcpy(newStateString, "true");
 		}
 		sprintf(dataString,		"Id=%d&State=%s", switchNum, newStateString);
+		CONSOLE_DEBUG_W_STR("dataString=", dataString);
 		validData	=	AlpacaSendPutCmd(	"switch",	"setswitch",		dataString);
 
 		if (validData == false)

@@ -32,6 +32,10 @@
 #include	"calibrationdriver.h"
 #include	"calibrationdriver_rpi.h"
 
+#if defined(__arm__)
+	#define	_ENABLE_WIRING_PI_
+#endif
+
 #ifdef _ENABLE_WIRING_PI_
 	#include <wiringPi.h>
 	#define	kHWpin_PowerPWM		18

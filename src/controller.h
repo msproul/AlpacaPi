@@ -150,6 +150,7 @@ class Controller
 				int		AlpacaCheckForErrors(	SJP_Parser_t	*jsonParser,
 												char			*errorMsg,
 												bool			reportError=false);
+		virtual	void	AlpacaDisplayErrorMessage(const char *errorMsgString);
 
 				bool	AlpacaGetStatus_ReadAll(	sockaddr_in	*deviceAddress,
 													int			port,
@@ -164,11 +165,11 @@ class Controller
 
 
 
-		virtual	void	AlpacaDisplayErrorMessage(const char *errorMsgString);
 
-				bool	AlpacaSendPutCmd(		const char	*alpacaDevice,
-												const char	*alpacaCmd,
-												const char	*dataString);
+				bool	AlpacaSendPutCmd(			const char	*alpacaDevice,
+													const char	*alpacaCmd,
+													const char	*dataString);
+
 				bool	AlpacaSendPutCmdwResponse(	sockaddr_in		*deviceAddress,
 													int				devicePort,
 													const char		*alpacaDevice,
@@ -176,6 +177,7 @@ class Controller
 													const char		*alpacaCmd,
 													const char		*dataString,
 													SJP_Parser_t	*jsonParser);
+
 				bool	AlpacaSendPutCmdwResponse(	const char		*alpacaDevice,
 													const char		*alpacaCmd,
 													const char		*dataString,
@@ -197,6 +199,11 @@ class Controller
 												const char	*alpacaCmd,
 												const char	*dataString,
 												bool		*returnValue,
+												bool		*rtnValidData = NULL);
+				bool	AlpacaGetStringValue(	const char	*alpacaDevice,
+												const char	*alpacaCmd,
+												const char	*dataString,
+												char		*returnString,
 												bool		*rtnValidData = NULL);
 
 		virtual	void	UpdateDownloadProgress(const int unitsRead, const int totalUnits);
@@ -248,9 +255,10 @@ class Controller
 		bool				cHasReadAll;
 		bool				cForceAlpacaUpdate;
 		int					cLastAlpacaErrNum;
+		char				cLastAlpacaErrStr[512];
+
 		char				cAlpacaVersionString[128];
 		char				cLastAlpacaCmdString[256];
-		char				cLastAlpacaErrStr[512];
 		char				cAlpacaDeviceType[48];
 		char				cAlpacaDeviceName[64];
 		bool				cValidIPaddr;

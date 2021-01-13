@@ -460,30 +460,31 @@ char	ipAddrSt[32];
 static	void GetInformationFromOtherDevices(void)
 {
 int				ii;
-int				jjj;
-SJP_Parser_t	jsonParser;
-bool			validData;
-bool			domeInfo;
-double			pressure_kPa;
-double			humidity;
-char			outputString[128];
 char			ipAddressStr[32];
+#ifdef _ENABLE_CAMERA_
+	int				jjj;
+	SJP_Parser_t	jsonParser;
+	bool			validData;
+	bool			domeInfo;
+	double			pressure_kPa;
+	double			humidity;
+	char			outputString[128];
 
-	CONSOLE_DEBUG(__FUNCTION__);
-	CONSOLE_DEBUG_W_NUM("gRemoteCnt\t", gRemoteCnt);
+#endif // _ENABLE_CAMERA_
 
-	CONSOLE_DEBUG_W_NUM("gRemoteCnt\t=", gRemoteCnt);
+//	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG_W_NUM("gRemoteCnt\t=", gRemoteCnt);
 	for (ii=0; ii<gRemoteCnt; ii++)
 	{
 	#ifdef _ENABLE_SKYTRAVEL_
 	//	CONSOLE_DEBUG_W_STR("device type\t=", gRemoteList[ii].deviceType);
 
-		inet_ntop(AF_INET, &gRemoteList[ii].deviceAddress.sin_addr, ipAddressStr, INET_ADDRSTRLEN);
+//		inet_ntop(AF_INET, &gRemoteList[ii].deviceAddress.sin_addr, ipAddressStr, INET_ADDRSTRLEN);
 
-		printf("%-17s\t%-17s\t%-17s\t%-17s\t\r\n",	ipAddressStr,
-													gRemoteList[ii].deviceType,
-													gRemoteList[ii].deviceName,
-													gRemoteList[ii].versionString);
+//		printf("%-17s\t%-17s\t%-17s\t%-17s\t\r\n",	ipAddressStr,
+//													gRemoteList[ii].deviceType,
+//													gRemoteList[ii].deviceName,
+//													gRemoteList[ii].versionString);
 	#endif
 	#ifdef _ENABLE_CAMERA_
 		if ((gRemoteList[ii].notSeenCounter == 0) &&
@@ -672,7 +673,7 @@ int					sockOptValue;
 	while (sendtoRetCode >= 0)
 	{
 	#ifdef _ENABLE_SKYTRAVEL_
-		CONSOLE_DEBUG(__FUNCTION__);
+//		CONSOLE_DEBUG(__FUNCTION__);
 	#endif
 //		printf("*******************************************************************************\r\n");
 		BumpNotSeenCounter();
@@ -704,7 +705,7 @@ int					sockOptValue;
 //				SJP_DumpJsonData(&jsonParser);
 
 			#ifdef _ENABLE_SKYTRAVEL_
-				CONSOLE_DEBUG_W_STR("buf=", buf);
+//				CONSOLE_DEBUG_W_STR("buf=", buf);
 			#endif
 
 				AddDeviceToList(&from, &jsonParser);

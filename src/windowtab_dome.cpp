@@ -34,8 +34,12 @@
 
 #include	"alpaca_defs.h"
 #include	"windowtab_dome.h"
-#include	"controller_dome.h"
 
+#ifdef _ENABLE_SKYTRAVEL_
+	#include	"controller_skytravel.h"
+#else
+	#include	"controller_dome.h"
+#endif
 
 #define	kAboutBoxHeight	100
 
@@ -199,9 +203,12 @@ int		iii;
 	{
 		SetWidgetType(			iii,	kWidgetType_Button);
 		SetWidgetFont(			iii,	kFont_Medium);
-		SetWidgetBGColor(		iii,	CV_RGB(255,	255,	255));
+//		SetWidgetBGColor(		iii,	CV_RGB(255,	255,	255));
+		SetWidgetBGColor(		iii,	CV_RGB(128,	128,	128));
 		SetWidgetTextColor(		iii,	CV_RGB(0,	0,	0));
 		SetWidgetBorderColor(	iii,	CV_RGB(0,	0,	0));
+
+		SetWidgetValid(			iii,	false);
 	}
 
 	SetWidgetBGColor(	kDomeBox_Stop,		CV_RGB(255,	0,	0));
@@ -289,11 +296,45 @@ CvRect		myCVrect;
 	}
 }
 
+//*****************************************************************************
+bool	WindowTabDome::SendAlpacaCmdToDome(	const char		*theCommand,
+											const char		*dataString,
+											SJP_Parser_t	*jsonParser)
+{
+bool	validData	=	false;
+
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, theCommand);
+
+#ifdef _ENABLE_SKYTRAVEL_
+ControllerSkytravel	*myControllerObj;
+
+	myControllerObj	=	(ControllerSkytravel *)cParentObjPtr;
+	if (myControllerObj != NULL)
+	{
+		validData	=	AlpacaSendPutCmd(	&myControllerObj->cDomeIpAddress,
+											myControllerObj->cDomeIpPort,
+											"dome",
+											myControllerObj->cDomeAlpacaDeviceNum,
+											theCommand,
+											dataString,
+											jsonParser);
+	}
+	else
+	{
+		CONSOLE_DEBUG("myControllerObj is NULL");
+	}
+#else
+	validData	=	AlpacaSendPutCmd(	"dome",	theCommand,	"", jsonParser);
+
+#endif
+	return(validData);
+}
 
 //*****************************************************************************
 void	WindowTabDome::ProcessButtonClick(const int buttonIdx)
 {
-bool	validData;
+bool			validData;
+SJP_Parser_t	jsonResponse;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 //	CONSOLE_DEBUG_W_NUM("buttonIdx\t",	buttonIdx);
@@ -304,39 +345,39 @@ bool	validData;
 	switch(buttonIdx)
 	{
 		case kDomeBox_GoHome:
-			validData	=	AlpacaSendPutCmd(	"dome",	"findhome",		"");
+			validData	=	SendAlpacaCmdToDome("findhome",		"",	&jsonResponse);
 			break;
 
 		case kDomeBox_GoPark:
-			validData	=	AlpacaSendPutCmd(	"dome",	"park",			"");
+			validData	=	SendAlpacaCmdToDome("park",			"",	&jsonResponse);
 			break;
 
 		case kDomeBox_Stop:
-			validData	=	AlpacaSendPutCmd(	"dome",	"abortslew",	"");
+			validData	=	SendAlpacaCmdToDome("abortslew",	"",	&jsonResponse);
 			break;
 
 		case kDomeBox_BumpLeft:
-			validData	=	AlpacaSendPutCmd(	"dome",	"bumpleft",		"");
+			validData	=	SendAlpacaCmdToDome("bumpleft",		"",	&jsonResponse);
 			break;
 
 		case kDomeBox_BumpRight:
-			validData	=	AlpacaSendPutCmd(	"dome",	"bumpright",	"");
+			validData	=	SendAlpacaCmdToDome("bumpright",	"",	&jsonResponse);
 			break;
 
 		case kDomeBox_GoLeft:
-			validData	=	AlpacaSendPutCmd(	"dome",	"goleft",		"");
+			validData	=	SendAlpacaCmdToDome("goleft",		"",	&jsonResponse);
 			break;
 
 		case kDomeBox_GoRight:
-			validData	=	AlpacaSendPutCmd(	"dome",	"goright",		"");
+			validData	=	SendAlpacaCmdToDome("goright",		"",	&jsonResponse);
 			break;
 
 		case kDomeBox_SlowLeft:
-			validData	=	AlpacaSendPutCmd(	"dome",	"slowleft",		"");
+			validData	=	SendAlpacaCmdToDome("slowleft",		"",	&jsonResponse);
 			break;
 
 		case kDomeBox_SlowRight:
-			validData	=	AlpacaSendPutCmd(	"dome",	"slowright",	"");
+			validData	=	SendAlpacaCmdToDome("slowright",	"",	&jsonResponse);
 			break;
 
 		case kDomeBox_ToggleSlaveMode:
@@ -367,27 +408,38 @@ bool	validData;
 //*****************************************************************************
 void	WindowTabDome::SendShutterCommand(const char *shutterCmd)
 {
-ControllerDome	*myDomeController;
-#ifndef _ENABLE_SKYTRAVEL_
-	CONSOLE_DEBUG(__FUNCTION__);
-	myDomeController	=	(ControllerDome *)cParentObjPtr;
+#ifdef _ENABLE_EXTERNAL_SHUTTER_
 
-	if (myDomeController != NULL)
-	{
-		myDomeController->SendShutterCommand(shutterCmd);
-	}
-	else
-	{
-		CONSOLE_DEBUG("myDomeController is NULL");
-	}
+	#ifndef _ENABLE_SKYTRAVEL_
+	ControllerDome	*myDomeController;
+
+		CONSOLE_DEBUG(__FUNCTION__);
+		myDomeController	=	(ControllerDome *)cParentObjPtr;
+
+		if (myDomeController != NULL)
+		{
+			myDomeController->SendShutterCommand(shutterCmd);
+		}
+		else
+		{
+			CONSOLE_DEBUG("myDomeController is NULL");
+		}
+	#endif
+#else
+bool			validData;
+SJP_Parser_t	jsonResponse;
+
+	validData	=	SendAlpacaCmdToDome(shutterCmd,	"",	&jsonResponse);
+
 #endif
+
 }
 
 
 //*****************************************************************************
 void	WindowTabDome::ToggleSlaveMode(void)
 {
-ControllerDome	*myDomeController;
+#ifndef _ENABLE_SKYTRAVEL_
 bool			validData;
 //int				myShutterStatus;
 int				mySlavedMode;
@@ -395,6 +447,7 @@ SJP_Parser_t	jsonParser;
 int				alpacaErrorCode;
 char			alpacaErrorMsg[128];
 char			textString[256];
+ControllerDome	*myDomeController;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 	myDomeController	=	(ControllerDome *)cParentObjPtr;
@@ -408,12 +461,12 @@ char			textString[256];
 		{
 			CONSOLE_DEBUG("Slave mode is ON, turning off");
 			//*	send the command to turn off slave mode
-			validData	=	AlpacaSendPutCmd(	"dome",	"slaved",	"Slaved=false");
+			validData	=	SendAlpacaCmdToDome("slaved",	"Slaved=false");
 		}
 		else
 		{
 			CONSOLE_DEBUG("Slave mode is OFF, turning ON");
-			validData		=	AlpacaSendPutCmd(	"dome",	"slaved",	"Slaved=true", &jsonParser);
+			validData		=	SendAlpacaCmdToDome("slaved",	"Slaved=true", &jsonParser);
 			alpacaErrorCode	=	myDomeController->AlpacaCheckForErrors(&jsonParser, alpacaErrorMsg, false);
 			if (alpacaErrorCode != kASCOM_Err_Success)
 			{
@@ -425,7 +478,7 @@ char			textString[256];
 
 	//		if (myShutterStatus == kShutterStatus_Open)
 	//		{
-	//			validData	=	AlpacaSendPutCmd(	"dome",	"slaved",	"Slaved=true");
+	//			validData	=	SendAlpacaCmdToDome("slaved",	"Slaved=true");
 	//		}
 	//		else
 	//		{
@@ -441,6 +494,14 @@ char			textString[256];
 	{
 		CONSOLE_DEBUG("myDomeController is NULL");
 	}
+#endif
+}
+
+//*****************************************************************************
+void	WindowTabDome::AlpacaDisplayErrorMessage(const char *errorMsgString)
+{
+//	CONSOLE_DEBUG_W_STR("Alpaca error=", errorMsgString);
+	SetWidgetText(kDomeBox_ErrorMsg, errorMsgString);
 }
 
 

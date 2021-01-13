@@ -21,6 +21,10 @@
 //*****************************************************************************
 //#include	"domedriver_rpi.h"
 
+#ifndef _STDBOOL_H
+	#include	<stdbool.h>
+#endif // _STDBOOL_H
+
 #ifndef _ALPACA_DRIVER_H_
 	#include	"alpacadriver.h"
 #endif
@@ -40,8 +44,9 @@ class DomeDriverROR: public DomeDriver
 						DomeDriverROR(const int argDevNum);
 		virtual			~DomeDriverROR(void);
 		virtual	void	Init_Hardware(void);
+		virtual	int32_t	RunStateMachine_ROR(void);
 
-	protected:
+//	protected:
 
 
 //		virtual	bool	BumpDomeSpeed(const int howMuch);
@@ -49,10 +54,16 @@ class DomeDriverROR: public DomeDriver
 //		virtual	void	CheckSensors(void);
 //		virtual	void 	ProcessButtonPressed(const int pressedButton);
 //		virtual	void	StartDomeMoving(const int direction);
-//		virtual	void	StopDomeMoving(bool rightNow);
+		virtual	void	StopDomeMoving(bool rightNow);
 
-		virtual	TYPE_ASCOM_STATUS 	OpenShutter(void);
-		virtual	TYPE_ASCOM_STATUS 	CloseShutter(void);
+		virtual	TYPE_ASCOM_STATUS 	OpenShutter(char *alpacaErrMsg);
+		virtual	TYPE_ASCOM_STATUS 	CloseShutter(char *alpacaErrMsg);
+
+		int			cRelayCount;
+		int32_t		cTimeOfLastOpenClose;
+		bool		cRORisOpening;
+		bool		cRORisClosing;
+
 
 };
 

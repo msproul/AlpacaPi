@@ -79,7 +79,11 @@ class DomeDriver: public AlpacaDriver
 		virtual	void	Init_Hardware(void);
 
 		virtual	TYPE_ASCOM_STATUS	ProcessCommand(TYPE_GetPutRequestData *reqData);
+
+
 		virtual	int32_t				RunStateMachine(void);
+		virtual	int32_t				RunStateMachine_Dome(void);
+		virtual	int32_t				RunStateMachine_ROR(void);
 		virtual	void				OutputHTML(TYPE_GetPutRequestData *reqData);
 		virtual bool				GetCmdNameFromMyCmdTable(const int cmdNumber, char *comandName, char *getPut);
 
@@ -108,8 +112,9 @@ class DomeDriver: public AlpacaDriver
 				TYPE_ASCOM_STATUS	Put_OpenShutter(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 				TYPE_ASCOM_STATUS	Put_Park(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 				TYPE_ASCOM_STATUS	Put_SetPark(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
+				TYPE_ASCOM_STATUS	Put_SlewToAltitude(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 				TYPE_ASCOM_STATUS	Put_SlewToAzimuth(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
-				TYPE_ASCOM_STATUS	Put_Synctoazimuth(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
+				TYPE_ASCOM_STATUS	Put_SyncToAzimuth(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 
 				//*	extras added by MLS
 				TYPE_ASCOM_STATUS	Put_BumpMove(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, int direction);
@@ -122,6 +127,7 @@ class DomeDriver: public AlpacaDriver
 		virtual	void	StartDomeMoving(const int direction);
 		virtual	void	StopDomeMoving(bool rightNow);
 		virtual	void	CheckMoving(void);
+		virtual	void	UpdateDomePosition(void);
 		virtual	bool	BumpDomeSpeed(const int howMuch);
 		virtual	void	CheckSensors(void);
 		virtual	void	CheckDomeButtons(void);
@@ -134,13 +140,28 @@ class DomeDriver: public AlpacaDriver
 				DOME_STATE_TYPE	cDomeState;
 				DOME_STATE_TYPE	cPreviousDomeState;
 				int32_t			cShutterstatus;
-				double			cAltitude_Dbl;
-				double			cAzimuth_Dbl;
+				double			cAltitude_Degrees;
+				double			cAzimuth_Degrees;			//*	in degrees
+				double			cAzimuth_Destination;		//*	were we want to go to, must be >= to 0 to be valid
+
+				//	The dome azimuth, increasing clockwise,
+				//	i.e.,	North	=	0,
+				//			East	=	90,
+				//			South	=	180 South, 270
+				//			West	=	270.
+				//*	North is true north and not magnetic north.
+
+				double			cParkAzimuth;		//*	the azimuth value for the park position
+				double			cHomeAzimuth;		//*	the azimuth value for the Home position
+
 				int				cCurrentPWM;
 				int				cCurrentDirection;
 				int				cBumpSpeedAmount;
 				int32_t			cTimeOfLastSpeedChange;
 				int32_t			cTimeOfMovingStart;
+
+				int32_t			cTimeOfLastAzimuthUpdate;	//*	used to integrate position over time
+
 
 				DOME_CONFIG		cDomeConfig;
 				bool			cAtHome;

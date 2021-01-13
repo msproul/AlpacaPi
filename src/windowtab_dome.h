@@ -81,7 +81,11 @@ class WindowTabDome: public WindowTab
 		virtual	void	SetupWindowControls(void);
 		virtual	void	DrawGraphWidget(IplImage *openCV_Image, const int widgitIdx);
 		virtual	void	ProcessButtonClick(const int buttonIdx);
+		virtual	void	AlpacaDisplayErrorMessage(const char *errorMsgString);
 
+				bool	SendAlpacaCmdToDome(	const char		*theCommand,
+												const char		*dataString,
+												SJP_Parser_t	*jsonParser = NULL);
 				void	ToggleSlaveMode(void);
 
 				void	SendShutterCommand(const char *shutterCmd);

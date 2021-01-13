@@ -113,6 +113,7 @@
 //*	Dec 12,	2020	<MLS> Started github repository https://github.com/msproul/AlpacaPi
 //*	Dec 28,	2020	<MLS> Finished making all Alpaca error messages uniform
 //*	Jan 10,	2020	<MLS> Changed SendSupportedActions() to Get_SupportedActions()
+//*	Jan 10,	2020	<MLS> Pushed build 74 up to github
 //*****************************************************************************
 
 #include	<stdio.h>
@@ -388,6 +389,12 @@ int		ii;
 	{
 		memset(&cDeviceCMdStats[ii], 0, sizeof(TYPE_CMD_STATS));
 	}
+	GetAlpacaName(argDeviceType, cAlpacaName);
+	LogEvent(	cAlpacaName,
+				"Created",
+				NULL,
+				kASCOM_Err_Success,
+				"");
 }
 
 //**************************************************************************************
@@ -1574,7 +1581,7 @@ int		ii;
 		SocketWriteData(mySocketFD,	__DATE__);
 		SocketWriteData(mySocketFD,	"\r\n<BR>");
 		SocketWriteData(mySocketFD,	"C++ version\r\n<BR>");
-		SocketWriteData(mySocketFD,	"(C) 2020 by Mark Sproul msproul@skychariot.com\r\n<BR>");
+		SocketWriteData(mySocketFD,	"(C) 2020-21 by Mark Sproul msproul@skychariot.com\r\n<BR>");
 
 		SocketWriteData(mySocketFD,	"</BODY></HTML>\r\n");
 	}
@@ -1624,7 +1631,7 @@ int		ii;
 		SocketWriteData(mySocketFD,	__DATE__);
 		SocketWriteData(mySocketFD,	"\r\n<BR>");
 		SocketWriteData(mySocketFD,	"C++ version\r\n<BR>");
-		SocketWriteData(mySocketFD,	"(C) 2020 by Mark Sproul msproul@skychariot.com\r\n<BR>");
+		SocketWriteData(mySocketFD,	"(C) 2020-21 by Mark Sproul msproul@skychariot.com\r\n<BR>");
 
 		SocketWriteData(mySocketFD,	"</BODY></HTML>\r\n");
 	}
@@ -3273,6 +3280,29 @@ bool		rulesFileOK;
 	return(rulesFileOK);
 }
 
+//**************************************************************************
+void			GetAlpacaName(TYPE_DEVICETYPE deviceType, char *alpacaName)
+{
+	switch(deviceType)
+	{
+
+		case kDeviceType_Management:			strcpy(alpacaName, "Management");		break;
+		case kDeviceType_Camera:				strcpy(alpacaName, "Camera");			break;
+		case kDeviceType_Dome:					strcpy(alpacaName, "Dome");				break;
+		case kDeviceType_Filterwheel:			strcpy(alpacaName, "Filterwheel");		break;
+		case kDeviceType_Focuser:				strcpy(alpacaName, "Focuser");			break;
+		case kDeviceType_Rotator:				strcpy(alpacaName, "Rotator");			break;
+		case kDeviceType_Telescope:				strcpy(alpacaName, "Telescope");		break;
+		case kDeviceType_Observingconditions:	strcpy(alpacaName, "Observingconditions");	break;
+		case kDeviceType_SafetyMonitor:			strcpy(alpacaName, "SafetyMonitor");	break;
+		case kDeviceType_Shutter:				strcpy(alpacaName, "Shutter");			break;
+		case kDeviceType_Switch:				strcpy(alpacaName, "Switch");			break;
+		case kDeviceType_Multicam:				strcpy(alpacaName, "Multicam");			break;
+		case kDeviceType_SlitTracker:			strcpy(alpacaName, "SlitTracker");		break;
+		case kDeviceType_CoverCalibrator:		strcpy(alpacaName, "CoverCalibrator");	break;
+		default:								strcpy(alpacaName, "unknown");		break;
+	}
+}
 
 #pragma mark -
 

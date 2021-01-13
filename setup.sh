@@ -65,6 +65,10 @@ OPENCV_STRING="Missing"
 
 	printf "\t%-24s\t%s\r\n" "OpenCV" "$OPENCV_STRING"
 
+	echo "To install opencv on Raspberry Pi"
+	echo "    >sudo apt-get update"
+	echo "    >sudo apt-get install libopencv-dev"
+
 }
 
 

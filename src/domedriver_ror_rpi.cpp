@@ -16,9 +16,34 @@
 //*****************************************************************************
 //*	Dec  2,	2020	<MLS> Created domedriver_ror_rpi.cpp
 //*	Dec  2,	2020	<MLS> Started on Roll Off Roof implementation on R-Pi
+//*	Jan 12,	2021	<MLS> Started working on implementation for Chris A.
+//*	Jan 12,	2021	<MLS> Relay board working for open/close ROR
+//*	Jan 12,	2021	<MLS> CONFORM-dome/ror -> PASSED!!!!!!!!!!!!!!!!!!!!!
 //*****************************************************************************
 
 #ifdef _ENABLE_ROR_
+
+#define	_CHRIS_A_ROOL_OFF_ROOF_
+
+#ifdef _CHRIS_A_ROOL_OFF_ROOF_
+
+	//*	this is a specific implementation for Chris A of the Netherlands
+
+	#define		kRelay_RoofPower	1
+	#define		kRelay_RoofOpen		2
+	#define		kRelay_RoofClose	3
+	#define		kRelay_FlatScren	4
+
+	#define		kSwitchDelaySeconds	20
+
+	#include	"raspberrypi_relaylib.h"
+
+	#ifndef _ENABLE_4REALY_BOARD
+//		#error	"_ENABLE_4REALY_BOARD should be enabled"
+	#endif // _ENABLE_4REALY_BOARD
+
+#endif // _CHRIS_A_ROOL_OFF_ROOF_
+
 
 #include	<stdlib.h>
 #include	<stdio.h>
@@ -69,16 +94,21 @@ DomeDriverROR::DomeDriverROR(const int argDevNum)
 	strcpy(gWebTitle, "Dome-Roll-Off-Roof");
 
 	cDomeConfig				=	kIsRollOffRoof;
+	cAtPark					=	true;	//*	for testing
+	cAzimuth_Degrees		=	123.0;	//*	for testing
+	cCanSyncAzimuth			=	false;
+	cCanSetShutter			=	true;
+
+	//*	local stuff
+	cRORisOpening			=	false;
+	cRORisClosing			=	false;
 
 	Init_Hardware();
-	LogEvent(	"dome",
-				"ROR created",
-				NULL,
-				kASCOM_Err_Success,
-				"");
 
-	strcpy(cDeviceName,			"AlpacaPi-Dome");
-	strcpy(cDeviceDescription,	"ROR");
+	strcpy(cDeviceName,			"AlpacaPi-ROR");
+	strcpy(cDeviceDescription,	"Rool Off Roof");
+
+
 }
 
 //**************************************************************************************
@@ -92,63 +122,131 @@ DomeDriverROR::~DomeDriverROR( void )
 void	DomeDriverROR::Init_Hardware(void)
 {
 	CONSOLE_DEBUG(__FUNCTION__);
+
+#ifdef _CHRIS_A_ROOL_OFF_ROOF_
+	cRelayCount	=	RpiRelay_Init();
+
+	CONSOLE_DEBUG_W_NUM("cRelayCount\t=", cRelayCount);
+
+#endif // _CHRIS_A_ROOL_OFF_ROOF_
+
+}
+
+//*****************************************************************************
+int32_t	DomeDriverROR::RunStateMachine_ROR(void)
+{
+uint32_t	deltaMilliSecs;
+uint32_t	currentMilliSecs;
+bool		relayOK;
+int32_t		minDealy_microSecs;
+
+	minDealy_microSecs		=	1000;		//*	default to 1 millisecond
+
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+#ifdef _CHRIS_A_ROOL_OFF_ROOF_
+
+	currentMilliSecs	=	millis();
+	deltaMilliSecs		=	currentMilliSecs - cTimeOfLastOpenClose;
+	if (cRORisOpening && (deltaMilliSecs > (kSwitchDelaySeconds * 1000)))
+	{
+		CONSOLE_DEBUG("Done with OPEN switch contact");
+		relayOK		=	RpiRelay_SetRelay(kRelay_RoofOpen, false);
+
+		//*	if you want the power turned off, do it here
+		relayOK		=	RpiRelay_SetRelay(kRelay_RoofPower, false);
+
+		cShutterstatus	=	kShutterStatus_Open;
+		cSlewing		=	false;
+		cRORisOpening	=	false;
+	}
+
+	if (cRORisClosing && (deltaMilliSecs > (kSwitchDelaySeconds * 1000)))
+	{
+		CONSOLE_DEBUG("Done with CLOSE switch contact");
+		relayOK		=	RpiRelay_SetRelay(kRelay_RoofClose, false);
+		//*	if you want the power turned off, do it here
+		relayOK		=	RpiRelay_SetRelay(kRelay_RoofPower, false);
+
+		cShutterstatus	=	kShutterStatus_Closed;
+		cSlewing		=	false;
+		cRORisClosing	=	false;
+	}
+#endif // _CHRIS_A_ROOL_OFF_ROOF_
+	return(minDealy_microSecs);
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	DomeDriverROR::OpenShutter(char *alpacaErrMsg)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode;
+bool				relayOK;
+
 	CONSOLE_DEBUG(__FUNCTION__);
-#ifdef _ENABLE_DOME_HARDWARE_
-int		wiringPi_rc;
 
-int		wiringPi_verMajor;
-int		wiringPi_verMinor;
-char	wiringPi_VerString[32];
+#ifdef _CHRIS_A_ROOL_OFF_ROOF_
 
+	//*	turn the power on
+	relayOK					=	RpiRelay_SetRelay(kRelay_RoofPower, true);
+	relayOK					=	RpiRelay_SetRelay(kRelay_RoofOpen, true);
+	alpacaErrCode			=	kASCOM_Err_Success;
+	cTimeOfLastOpenClose	=	millis();
+	cRORisOpening			=	true;
+	cSlewing				=	true;
 
-	wiringPiVersion(&wiringPi_verMajor, &wiringPi_verMinor);
-	sprintf(wiringPi_VerString, "%d.%d", wiringPi_verMajor, wiringPi_verMinor);
-	AddLibraryVersion("software", "wiringPi", wiringPi_VerString);
-
-
-	CONSOLE_DEBUG("Setting up hardware io pins");
-
-	wiringPi_rc	=	wiringPiSetupGpio();
-
-	CONSOLE_DEBUG_W_NUM("wiringPi_rc", wiringPi_rc);
-
-//	pinMode(kHWpin_PowerOnOff,	OUTPUT);
-//	pinMode(kHWpin_Direction,	OUTPUT);
-
-//	pinMode(kHWpin_PowerPWM,	PWM_OUTPUT);
-
-//	pinMode(kHWpin_ButtonCW,	INPUT);
-//	pinMode(kHWpin_ButtonCCW,	INPUT);
-//	pinMode(kHWpin_Stop,		INPUT);
-//	pinMode(kHWpin_HomeSensor,	INPUT);
-//	pinMode(kHWpin_ParkSensor,	INPUT);
-
-//	pullUpDnControl(kHWpin_ButtonCW,	PUD_UP);
-//	pullUpDnControl(kHWpin_ButtonCCW,	PUD_UP);
-//	pullUpDnControl(kHWpin_Stop,		PUD_UP);
-//	pullUpDnControl(kHWpin_HomeSensor,	PUD_UP);
-//	pullUpDnControl(kHWpin_ParkSensor,	PUD_UP);
-
-
-#endif	//	_ENABLE_DOME_HARDWARE_
-
+#else
+	alpacaErrCode	=	kASCOM_Err_ActionNotImplemented;
+	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Open shutter not implemented");
+#endif
+	return(alpacaErrCode);
 }
 
 //*****************************************************************************
-//*	this should be over ridden
-TYPE_ASCOM_STATUS	DomeDriverROR::OpenShutter(void)
+TYPE_ASCOM_STATUS	DomeDriverROR::CloseShutter(char *alpacaErrMsg)
 {
-	return(kASCOM_Err_ActionNotImplemented);
+TYPE_ASCOM_STATUS	alpacaErrCode;
+bool				relayOK;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+
+#ifdef _CHRIS_A_ROOL_OFF_ROOF_
+
+	//*	turn the power on
+	relayOK					=	RpiRelay_SetRelay(kRelay_RoofPower, true);
+	relayOK					=	RpiRelay_SetRelay(kRelay_RoofClose, true);
+	alpacaErrCode			=	kASCOM_Err_Success;
+	cTimeOfLastOpenClose	=	millis();
+	cRORisClosing			=	true;
+	cSlewing				=	true;
+
+#else
+	alpacaErrCode	=	kASCOM_Err_ActionNotImplemented;
+	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Open shutter not implemented");
+#endif
+	return(alpacaErrCode);
 }
+
 
 //*****************************************************************************
-//*	this should be over ridden
-TYPE_ASCOM_STATUS	DomeDriverROR::CloseShutter(void)
+void	DomeDriverROR::StopDomeMoving(bool rightNow)
 {
-	return(kASCOM_Err_ActionNotImplemented);
+bool				relayOK;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+
+#ifdef _CHRIS_A_ROOL_OFF_ROOF_
+
+	//*	turn it all off
+	relayOK					=	RpiRelay_SetRelay(kRelay_RoofOpen, false);
+	relayOK					=	RpiRelay_SetRelay(kRelay_RoofClose, false);
+	relayOK					=	RpiRelay_SetRelay(kRelay_RoofPower, false);
+	cRORisOpening			=	false;
+	cRORisClosing			=	false;
+	cSlewing				=	false;
+
+#endif
 }
-
-
 
 
 

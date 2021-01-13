@@ -24,9 +24,10 @@
 //*	Apr 15,	2020	<MLS> Fixed dataString bug in AlpacaGet... routines
 //*	Jun 22,	2020	<MLS> Added AlpacaGetIntegerArray()
 //*	Jun 24,	2020	<MLS> Added UpdateDownloadProgress()
-//*	Jun  9,	2021	<MLS> Added new version of AlpacaGetStatus_ReadAll()
-//*	Jun  9,	2021	<MLS> Added new version of AlpacaGetSupportedActions()
-//*	Jun 10,	2021	<MLS> Added new version of AlpacaSendPutCmdwResponse()
+//*	Jan  9,	2021	<MLS> Added new version of AlpacaGetStatus_ReadAll()
+//*	Jan  9,	2021	<MLS> Added new version of AlpacaGetSupportedActions()
+//*	Jan 10,	2021	<MLS> Added new version of AlpacaSendPutCmdwResponse()
+//*	Jan 12,	2021	<MLS> Added AlpacaGetStringValue()
 //*****************************************************************************
 
 
@@ -109,7 +110,10 @@ bool	Controller::AlpacaGetSupportedActions(const char *deviceType, const int dev
 {
 bool			validData;
 
-	validData	=	AlpacaGetSupportedActions(&cDeviceAddress, cPort, deviceType, deviceNum);
+	validData	=	AlpacaGetSupportedActions(	&cDeviceAddress,
+												cPort,
+												deviceType,
+												deviceNum);
 	return(validData);
 }
 
@@ -142,7 +146,7 @@ bool			validData;
 char			alpacaString[128];
 int				jjj;
 
-	CONSOLE_DEBUG(cWindowName);
+//	CONSOLE_DEBUG(cWindowName);
 
 	SJP_Init(&jsonParser);
 	sprintf(alpacaString,	"/api/v1/%s/%d/%s", deviceType, deviceNum, "readall");
@@ -207,26 +211,33 @@ char			myDataString[512];
 
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, alpacaCmd);
 
-	SJP_Init(jsonParser);
+	if (jsonParser  != NULL)
+	{
+		SJP_Init(jsonParser);
 
-	sprintf(alpacaString, "/api/v1/%s/%d/%s", alpacaDevice, alpacaDevNum, alpacaCmd);
-	sprintf(myDataString, "%s&ClientID=%d&ClientTransactionID=%d",
-											dataString,
-											gClientID,
-											gClientTransactionID);
-	sucessFlag	=	SendPutCommand(	deviceAddress,
-									devicePort,
-									alpacaString,
-									myDataString,
-									jsonParser);
+		sprintf(alpacaString, "/api/v1/%s/%d/%s", alpacaDevice, alpacaDevNum, alpacaCmd);
+		sprintf(myDataString, "%s&ClientID=%d&ClientTransactionID=%d",
+												dataString,
+												gClientID,
+												gClientTransactionID);
+		sucessFlag	=	SendPutCommand(	deviceAddress,
+										devicePort,
+										alpacaString,
+										myDataString,
+										jsonParser);
 
-	cLastAlpacaErrNum	=	AlpacaCheckForErrors(jsonParser, cLastAlpacaErrStr, true);
+		cLastAlpacaErrNum	=	AlpacaCheckForErrors(jsonParser, cLastAlpacaErrStr, true);
 
 
-	cForceAlpacaUpdate	=	true;
-	gClientTransactionID++;
+		cForceAlpacaUpdate	=	true;
+		gClientTransactionID++;
 
-	strcpy(cLastAlpacaCmdString, alpacaString);
+		strcpy(cLastAlpacaCmdString, alpacaString);
+	}
+	else
+	{
+		CONSOLE_ABORT("Internal error, jsonParser is NULL");
+	}
 
 	return(sucessFlag);
 }
@@ -332,6 +343,51 @@ int				jjj;
 				if (returnValue != NULL)
 				{
 					*returnValue	=	myIntgerValue;
+				}
+			}
+		}
+		cLastAlpacaErrNum	=	AlpacaCheckForErrors(&jsonParser, cLastAlpacaErrStr);
+	}
+	else
+	{
+		cReadFailureCnt++;
+	}
+	return(validData);
+}
+
+//*****************************************************************************
+bool	Controller::AlpacaGetStringValue(	const char	*alpacaDevice,
+											const char	*alpacaCmd,
+											const char	*dataString,
+											char		*returnString,
+											bool		*rtnValidData)
+{
+SJP_Parser_t	jsonParser;
+bool			validData;
+char			alpacaString[128];
+int				myIntgerValue;
+int				jjj;
+
+	SJP_Init(&jsonParser);
+	sprintf(alpacaString,	"/api/v1/%s/%d/%s", alpacaDevice, cAlpacaDevNum, alpacaCmd);
+//	CONSOLE_DEBUG_W_STR("alpacaString\t=",	alpacaString);
+	validData	=	GetJsonResponse(	&cDeviceAddress,
+										cPort,
+										alpacaString,
+										dataString,
+										&jsonParser);
+	if (validData)
+	{
+		for (jjj=0; jjj<jsonParser.tokenCount_Data; jjj++)
+		{
+//			CONSOLE_DEBUG_W_2STR("json=",	jsonParser.dataList[jjj].keyword,
+//											jsonParser.dataList[jjj].valueString);
+
+			if (strcasecmp(jsonParser.dataList[jjj].keyword, "VALUE") == 0)
+			{
+				if (returnString != NULL)
+				{
+					strcpy(returnString, jsonParser.dataList[jjj].valueString);
 				}
 			}
 		}
@@ -736,23 +792,30 @@ int		alpacaErrorCode;
 
 	alpacaErrorCode	=	0;
 	strcpy(errorMsg, "");
-	for (jjj=0; jjj<jsonParser->tokenCount_Data; jjj++)
+	if (jsonParser != NULL)
 	{
-		if (strcasecmp(jsonParser->dataList[jjj].keyword, "ErrorNumber") == 0)
+		for (jjj=0; jjj<jsonParser->tokenCount_Data; jjj++)
 		{
-			alpacaErrorCode	=	atoi(jsonParser->dataList[jjj].valueString);
-		}
-		else if (strcasecmp(jsonParser->dataList[jjj].keyword, "ErrorMessage") == 0)
-		{
-			if (strlen(jsonParser->dataList[jjj].valueString) > 0)
+			if (strcasecmp(jsonParser->dataList[jjj].keyword, "ErrorNumber") == 0)
 			{
-				strcpy(errorMsg, jsonParser->dataList[jjj].valueString);
-				if (reportError)
+				alpacaErrorCode	=	atoi(jsonParser->dataList[jjj].valueString);
+			}
+			else if (strcasecmp(jsonParser->dataList[jjj].keyword, "ErrorMessage") == 0)
+			{
+				if (strlen(jsonParser->dataList[jjj].valueString) > 0)
 				{
-					AlpacaDisplayErrorMessage(errorMsg);
+					strcpy(errorMsg, jsonParser->dataList[jjj].valueString);
+					if (reportError)
+					{
+						AlpacaDisplayErrorMessage(errorMsg);
+					}
 				}
 			}
 		}
+	}
+	else
+	{
+		CONSOLE_DEBUG("jsonParser is NULL");
 	}
 	return(alpacaErrorCode);
 }

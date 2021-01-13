@@ -34,7 +34,7 @@
 
 
 
-#define	kMaxDeviceListCnt	32
+//#define	kMaxDeviceListCnt	32
 
 TYPE_ALPACA_UNIT	gAlpacaUnitList[kMaxDeviceListCnt];
 int					gAlpacaUnitCnt	=	0;
@@ -365,6 +365,8 @@ struct timeval		timeoutLength;
 int					timeOutCntr;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_NUM("argc\t=", argc);
+
 	gBroadcastSock	=	socket(AF_INET, SOCK_DGRAM, 0);
 	if (gBroadcastSock  < 0)
 	{
@@ -468,22 +470,20 @@ int					timeOutCntr;
 	//		CONSOLE_DEBUG_W_NUM("from.sin_addr=", ((from.sin_addr.s_addr) & 0x0ff));
 
 		}
-#if 1
-		from.sin_addr.s_addr	=	htonl((192 << 24) + (168 << 16) + (50 << 8) + 46);
-		inet_ntop(AF_INET, &(from.sin_addr), str, INET_ADDRSTRLEN);
-//				write(1, str, strlen(str));
-//				write(1, "\n", 1);
-//		CONSOLE_DEBUG_W_STR("str=", str);
-		AddDeviceToList(&from, &jsonParser, 6800);
 
-		from.sin_addr.s_addr	=	htonl((192 << 24) + (168 << 16) + (50 << 8) + 77);
-		inet_ntop(AF_INET, &(from.sin_addr), str, INET_ADDRSTRLEN);
-//				write(1, str, strlen(str));
-//				write(1, "\n", 1);
-//		CONSOLE_DEBUG_W_STR("str=", str);
-		AddDeviceToList(&from, &jsonParser, 6800);
+		if ((argc >= 2) && (argv[1][0] == 'x'))
+		{
+			//*	this is for my custom network
+			from.sin_addr.s_addr	=	htonl((192 << 24) + (168 << 16) + (50 << 8) + 46);
+			inet_ntop(AF_INET, &(from.sin_addr), str, INET_ADDRSTRLEN);
+		//	CONSOLE_DEBUG_W_STR("str=", str);
+			AddDeviceToList(&from, &jsonParser, 6800);
 
-#endif
+			from.sin_addr.s_addr	=	htonl((192 << 24) + (168 << 16) + (50 << 8) + 77);
+			inet_ntop(AF_INET, &(from.sin_addr), str, INET_ADDRSTRLEN);
+		//	CONSOLE_DEBUG_W_STR("str=", str);
+			AddDeviceToList(&from, &jsonParser, 6800);
+		}
 //		ReadExternalIPlist();
 
 		PollAllDevices();

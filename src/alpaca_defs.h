@@ -2,6 +2,7 @@
 //*	Mar  6,	2020	<MLS> Created alpaca_defs.h
 //*	Sep  8,	2020	<MLS> Added TYPE_ASCOM_STATUS to ASCOM error return codes
 //*	Dec  6,	2020	<MLS> Version V0.3.8-beta
+//*	Dec 10,	2020	<MLS> Version V0.3.9-beta
 //*****************************************************************************
 //*	Jan  1,	2019	-----------------------------------------------------------
 //*	Jan  1,	2020	-----------------------------------------------------------
@@ -16,7 +17,7 @@
 
 #define	kApplicationName	"AlpacaPi"
 #define	kVersionString		"V0.3.9-beta"
-#define	kBuildNumber		74
+#define	kBuildNumber		75
 
 
 #define kAlpacaDiscoveryPORT	32227

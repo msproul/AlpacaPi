@@ -27,6 +27,8 @@
 //*	Apr 13,	2020	<MLS> Turn them off at startup because they default to on when rebooted
 //*	Apr 14,	2020	<MLS> Working on analog switch (Pin 18, PWM)
 //*	Apr 16,	2020	<MLS> Added ability to disable PWM analog switch via _ENABLE_PWM_SWITCH_
+//*	Dec  1,	2020	<MLS> Pins are reset to OFF on startup
+//*	Jan 11,	2021	<MLS> Added support for alternate high/low for relay on/off
 //*****************************************************************************
 
 #ifdef _ENABLE_SWITCH_
@@ -52,7 +54,10 @@
 //*****************************************************************************
 const int	gRelayControlPinNumbers[]	=
 {
-//	5,	6,	13,	16,	19,	20,	21,	26
+//	8 port relay on DIN rail 	5,	6,	13,	16,	19,	20,	21,	26
+//	4 port relay HAT			22, 27, 17, 4
+
+
 		kHWpin_Channel1,
 		kHWpin_Channel2,
 		kHWpin_Channel3,
@@ -108,8 +113,10 @@ SwitchDriverRPi::SwitchDriverRPi(void)
 {
 	strcpy(cDeviceName, "Switch-Raspberry-Pi");
 
+	cNumSwitches	=	kR_Pi_SwitchCount;
+
 #ifdef _ENABLE_PWM_SWITCH_
-	cNumSwitches	=	9;
+	cNumSwitches	+=	1;
 #endif // _ENABLE_PWM_SWITCH_
 
 	Init_Hardware();
@@ -123,7 +130,10 @@ SwitchDriverRPi::~SwitchDriverRPi( void )
 //*****************************************************************************
 void	SwitchDriverRPi::Init_Hardware(void)
 {
-int	ii;
+int		ii;
+char	debugString[64];
+int		pinNumber;
+int		pinState;
 #ifdef _ENABLE_WIRING_PI_
 int		wiringPi_rc;
 int		wiringPi_verMajor;
@@ -140,25 +150,30 @@ int		pinValue;
 	CONSOLE_DEBUG_W_NUM("wiringPi_rc\t=", wiringPi_rc);
 #endif	//	_ENABLE_WIRING_PI_
 
+	pinState	=	0;
 	CONSOLE_DEBUG("Setting up hardware io pins");
 	//*	step through the pin list and set them all to outputs
-	for (ii=0; ii<8; ii++)
+	for (ii=0; ii<kR_Pi_SwitchCount; ii++)
 	{
-		//*	set to output
-		pinMode(gRelayControlPinNumbers[ii],		OUTPUT);
+		pinNumber		=	gRelayControlPinNumbers[ii];
+		if ((pinNumber >= 0) && (pinNumber < 50))
+		{
+			//*	set to output
+			pinMode(pinNumber,		OUTPUT);
 
-		//*	HIGH is turned off.
-		digitalWrite(gRelayControlPinNumbers[ii],	HIGH);
+			//*	on some boards, HIGH is off
+			digitalWrite(pinNumber,	TURN_PIN_OFF);
+
+			pinState	=	digitalRead(pinNumber);
+			sprintf(debugString, "Switch#%d is pin#%2d state=%d", ii+1, pinNumber, pinState);
+			CONSOLE_DEBUG(debugString);
+		}
+		else
+		{
+			CONSOLE_DEBUG_W_NUM("Invalid pin number\t=", pinNumber);
+		}
 	}
 
-	CONSOLE_DEBUG_W_NUM("kHWpin_Channel1", digitalRead(kHWpin_Channel1));
-	CONSOLE_DEBUG_W_NUM("kHWpin_Channel2", digitalRead(kHWpin_Channel2));
-	CONSOLE_DEBUG_W_NUM("kHWpin_Channel3", digitalRead(kHWpin_Channel3));
-	CONSOLE_DEBUG_W_NUM("kHWpin_Channel4", digitalRead(kHWpin_Channel4));
-	CONSOLE_DEBUG_W_NUM("kHWpin_Channel5", digitalRead(kHWpin_Channel5));
-	CONSOLE_DEBUG_W_NUM("kHWpin_Channel6", digitalRead(kHWpin_Channel6));
-	CONSOLE_DEBUG_W_NUM("kHWpin_Channel7", digitalRead(kHWpin_Channel7));
-	CONSOLE_DEBUG_W_NUM("kHWpin_Channel8", digitalRead(kHWpin_Channel8));
 
 
 #ifdef _ENABLE_PWM_SWITCH_
@@ -182,7 +197,7 @@ int		SwitchDriverRPi::TranslateSwitchToPin(const int switchNumber)
 {
 int		pinNumber;
 
-	if (switchNumber < 8)
+	if (switchNumber < kR_Pi_SwitchCount)
 	{
 		pinNumber	=	gRelayControlPinNumbers[switchNumber];
 	}
@@ -208,13 +223,13 @@ bool	switchState;
 	if (pinNumber > 0)
 	{
 		pinValue	=	digitalRead(pinNumber);
-		if (pinValue)
+		if (pinValue == TURN_PIN_ON)
 		{
-			switchState	=	false;
+			switchState	=	true;
 		}
 		else
 		{
-			switchState	=	true;
+			switchState	=	false;
 		}
 //		CONSOLE_DEBUG_W_NUM("switchState\t=", switchState);
 	}
@@ -246,13 +261,15 @@ int		pinNumber;
 	{
 		if (on_off)
 		{
-			//*	LOW turns the relay ON
-			digitalWrite(pinNumber, LOW);
+			//*	some boards have reverse logic
+			digitalWrite(pinNumber, TURN_PIN_ON);
+		//	digitalWrite(pinNumber, LOW);
 		}
 		else
 		{
 			//*	HIGH turns the relay OFF
-			digitalWrite(pinNumber, HIGH);
+			digitalWrite(pinNumber, TURN_PIN_OFF);
+		//	digitalWrite(pinNumber, HIGH);
 		}
 //		CONSOLE_DEBUG_W_NUM("on_off\t\t=", on_off);
 //		pinValue	=	digitalRead(pinNumber);

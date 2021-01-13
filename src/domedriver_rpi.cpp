@@ -25,6 +25,7 @@
 //*	Oct 14,	2019	<MLS> Added subclass for Raspberry Pi dome driver
 //*	Oct 21,	2019	<MLS> R_Pi C++ version tested for first time on dome, working
 //*	Oct 25,	2019	<MLS> Dome Raspberry Pi C++ version fully working
+//*	Jan 10,	2021	<MLS> Added UpdateDomePosition() using time integration
 //*****************************************************************************
 //*	cd /home/pi/dev-mark/alpaca
 //*	LOGFILE=logfile.txt
@@ -49,6 +50,8 @@
 #include	<stdbool.h>
 #include	<ctype.h>
 #include	<stdint.h>
+#include	<unistd.h>
+
 
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
@@ -87,7 +90,7 @@
 	#define	kHWpin_HomeSensor	5
 	#define	kHWpin_ParkSensor	6
 
-
+#define	kMaxPWMvalue	1023
 
 
 #ifndef _ENABLE_DOME_HARDWARE_
@@ -149,7 +152,10 @@ DomeDriverRPi::DomeDriverRPi(const int argDevNum)
 	cCanFindHome			=	true;
 	cCanPark				=	true;
 	cCanSetAzimuth			=	true;
-
+	cCanSyncAzimuth			=	true;
+	cCanSetShutter			=	true;
+	cParkAzimuth			=	170.0;		//*	these are approximate for my dome
+	cHomeAzimuth			=	230.0;
 	Init_Hardware();
 	LogEvent(	"dome",
 				"R-Pi Dome created",
@@ -195,6 +201,7 @@ char	wiringPi_VerString[32];
 	pinMode(kHWpin_Direction,	OUTPUT);
 
 	pinMode(kHWpin_PowerPWM,	PWM_OUTPUT);
+	pwmWrite(kHWpin_PowerPWM,	0);				//*	make sure its zero.
 
 	pinMode(kHWpin_ButtonCW,	INPUT);
 	pinMode(kHWpin_ButtonCCW,	INPUT);
@@ -225,10 +232,10 @@ char		msgBuffer[64];
 
 	returnState		=	0;
 	cCurrentPWM		+=	howMuch;
-	if (cCurrentPWM > 1023)
+	if (cCurrentPWM > kMaxPWMvalue)
 	{
 		returnState				=	true;
-		cCurrentPWM				=	1023;
+		cCurrentPWM				=	kMaxPWMvalue;
 		currentMilliSecs		=	millis();
 		movingTime_millisecs	=	currentMilliSecs - cTimeOfMovingStart;
 //		CONSOLE_DEBUG_W_INT32("Ramp up time\t=", movingTime_millisecs);
@@ -403,27 +410,37 @@ uint32_t	currentlTics;
 	cCurrentPWM	=	500;
 	pwmWrite(kHWpin_PowerPWM, cCurrentPWM);
 
-	cCurrentDirection		=	direction;
-	cDomeState				=	kDomeState_SpeedingUp;
-	cTimeOfLastSpeedChange	=	millis();
-	cTimeOfMovingStart		=	millis();
-	cSlewing				=	true;
+	cCurrentDirection			=	direction;
+	cDomeState					=	kDomeState_SpeedingUp;
+	cTimeOfLastSpeedChange		=	millis();
+	cTimeOfMovingStart			=	millis();
+	cTimeOfLastAzimuthUpdate	=	millis();
+	cSlewing					=	true;
 }
 
 
 //*****************************************************************************
 void	DomeDriverRPi::StopDomeMoving(bool rightNow)
 {
+int		iii;
 	CONSOLE_DEBUG(__FUNCTION__);
+
+	cAzimuth_Destination	=	-1;
 
 	if (rightNow)
 	{
+		CONSOLE_DEBUG("rightNow");
 		BumpDomeSpeed(-2000);	//*	this way we get the logging information as well
 
 		//*	do this anyway, just as a backup
-		pwmWrite(kHWpin_PowerPWM, 0);
+		for (iii=0; iii<5; iii++)
+		{
+			pwmWrite(kHWpin_PowerPWM, 0);
+			usleep(1000);
+		}
 		cCurrentPWM		=	0;
 		cDomeState		=	kDomeState_Stopped;
+		cSlewing		=	false;
 	}
 	else
 	{
@@ -462,11 +479,68 @@ int			sensorState;
 		{
 			CONSOLE_DEBUG("atPark state changed");
 		}
-		cAtPark	=	true;
+		cAtPark				=	true;
+		cAzimuth_Degrees	=	170.0;
 	}
 	else
 	{
 		cAtPark	=	false;
+	}
+}
+
+//*****************************************************************************
+//	The dome azimuth, increasing clockwise,
+//	i.e.,	North	=	0
+//			East	=	90
+//			South	=	180
+//			West	=	270
+//*	North is true north and not magnetic north.
+//*****************************************************************************
+void	DomeDriverRPi::UpdateDomePosition(void)
+{
+int32_t	currentMilliSecs;
+int32_t	deltaMilliSecs;
+double	speedPercent;
+double	degreesMoved;
+double	degreesPerMilliSec;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	if (cSlewing)
+	{
+		currentMilliSecs	=	millis();
+		deltaMilliSecs		=	currentMilliSecs - cTimeOfLastAzimuthUpdate;
+		if (deltaMilliSecs > 0)
+		{
+		//	CONSOLE_DEBUG_W_NUM("deltaMilliSecs\t\t=", deltaMilliSecs);
+
+			speedPercent	=	(1.0 * cCurrentPWM) / kMaxPWMvalue;
+			if (speedPercent > 0.0)
+			{
+//				CONSOLE_DEBUG_W_DBL("speedPercent\t=", speedPercent);
+
+				//*	At full speed, it takes about 2.4 minutes to go one full revolution
+				degreesPerMilliSec	=	360.0 / (2.4 * 60.0 * 1000.0);
+				degreesMoved		=	speedPercent * deltaMilliSecs * degreesPerMilliSec;
+				if (cCurrentDirection == kRotateDome_CW)
+				{
+					cAzimuth_Degrees	+=	degreesMoved;
+				}
+				else
+				{
+					cAzimuth_Degrees	-=	degreesMoved;
+				}
+				if (cAzimuth_Degrees < 0.0)
+				{
+					cAzimuth_Degrees	+=	360.0;
+				}
+				if (cAzimuth_Degrees > 360.0)
+				{
+					cAzimuth_Degrees	-=	360.0;
+				}
+			}
+			cTimeOfLastAzimuthUpdate	=	millis();
+		}
 	}
 }
 

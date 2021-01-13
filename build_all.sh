@@ -1,11 +1,12 @@
+make clean ror
+make clean switch
+make clean sky
+make clean focuser
+make clean domectrl
+make clean camera
+make clean calib
 make clean
 make
-make clean camera
-make clean focuser
-make clean switch
-make clean domectrl
-make clean calib
-make clean ror
 
 
 

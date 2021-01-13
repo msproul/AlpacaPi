@@ -192,7 +192,7 @@ int					mySocket;
 
 
 		case kCmd_Common_supportedactions:	//*	Returns the list of action names supported by this driver.
-			SendSupportedActions(reqData, gMultiCamCmdTable);
+			alpacaErrCode	=	Get_SupportedActions(reqData, gMultiCamCmdTable);
 			break;
 
 		//----------------------------------------------------------------------------------------

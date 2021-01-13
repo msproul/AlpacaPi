@@ -4,6 +4,11 @@
 #ifndef _WINDOW_TAB_H_
 #define	_WINDOW_TAB_H_
 
+#ifndef _ARPA_INET_H
+	#include	<arpa/inet.h>
+#endif // _ARPA_INET_H
+
+
 #include "opencv/highgui.h"
 #include "opencv2/highgui/highgui_c.h"
 #include "opencv2/imgproc/imgproc_c.h"
@@ -143,6 +148,16 @@ class WindowTab
 				bool	IsWidgetTextInput(const int widgetIdx);
 
 				void	SetParentObjectPtr(void *argParentObjPtr);
+				//------------------------------------------------------------
+				//*	Alpaca command stuff
+				bool	AlpacaSendPutCmd(	sockaddr_in		*deviceAddress,
+											int				devicePort,
+											const char		*alpacaDevice,
+											const int		alpacaDevNum,
+											const char		*alpacaCmd,
+											const char		*dataString,
+											SJP_Parser_t	*jsonParser);
+
 				bool	AlpacaSendPutCmd(	const char		*alpacaDevice,
 											const char		*alpacaCmd,
 											const char		*dataString,
@@ -152,6 +167,12 @@ class WindowTab
 												const char	*alpacaCmd,
 												const char	*dataString,
 												int			*returnValue);
+
+				int		AlpacaCheckForErrors(	SJP_Parser_t	*jsonParser,
+												char			*errorMsg,
+												bool			reportError=false);
+		virtual	void	AlpacaDisplayErrorMessage(const char *errorMsgString);
+
 
 				void	SetWindowTabColorScheme(const int colorScheme);
 				void	BumpColorScheme(void);
@@ -242,6 +263,10 @@ class WindowTab
 
 		int					cHelpTextBoxNuber;	//*	index of the box for help text (-1 is not set)
 		int					cPervDisplayedHelpBox;
+
+		//*	alpaca stuff duplicated from controller class
+		int					cLastAlpacaErrNum;
+		char				cLastAlpacaErrStr[512];
 };
 
 void	SetRect(CvRect *theRect, const int top, const int left, const int bottom, const int right);

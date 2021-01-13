@@ -106,13 +106,6 @@ ManagementDriver::ManagementDriver(const int argDevNum)
 {
 	strcpy(cDeviceName, "ManagementDriver");
 
-
-	LogEvent(	"managment",
-				"Started",
-				NULL,
-				kASCOM_Err_Success,
-				"");
-
 }
 
 //**************************************************************************************

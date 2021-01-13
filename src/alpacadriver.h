@@ -235,6 +235,7 @@ class AlpacaDriver
 				TYPE_DEVICETYPE		cDeviceType;
 				int					cDeviceNum;			//*	device index for alpaca
 				int					cDriverVersion;
+				char				cAlpacaName[32];
 				char				cDeviceName[128];
 				char				cDeviceModel[kDeviceModelStrLen];
 				char				cDeviceManufacturer[64];
@@ -314,7 +315,7 @@ AlpacaDriver	*FindDeviceByType(const int deviceType);
 void			GetDeviceTypeFromEnum(const int deviceEnum, char *deviceTypeString);
 bool			GetCmdNameFromTable(const int cmdNumber, char *comandName, const TYPE_CmdEntry *cmdTable, char *getPut);
 void			LogToDisk(const int whichLogFile, TYPE_GetPutRequestData *reqData);
-
+void			GetAlpacaName(TYPE_DEVICETYPE deviceType, char *alpacaName);
 
 
 //*****************************************************************************
