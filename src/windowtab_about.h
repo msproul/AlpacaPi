@@ -5,6 +5,15 @@
 #define	_WINDOWTAB_ABOUT_H_
 
 
+
+
+#ifndef _WINDOW_TAB_H_
+	#include	"windowtab.h"
+#endif
+
+
+
+
 #ifndef _WINDOW_TAB_H_
 	#include	"windowtab.h"
 #endif // _WINDOW_TAB_H
@@ -48,4 +57,9 @@ class WindowTabAbout: public WindowTab
 };
 
 
+
 #endif // _WINDOWTAB_ABOUT_H_
+
+
+
+

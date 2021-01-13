@@ -1,4 +1,4 @@
-History Comments found =1005 in 207 files
+History Comments found =1008 in 209 files
 eph.c:10                 	//*	May  2,	1996	<MLS> (Mark Sproul) Starting on Sky Travel for Frank and Cliff
 StarData.c:7             	//*	May  2,	1996	<MLS> (Mark Sproul) Starting on Sky Travel for Frank and Cliff
 StarData.c:8             	//*	Nov 18,	1999	<MLS> restarting efforts
@@ -779,7 +779,7 @@ JsonResponse.c:39        	//*	Jun 22,	2020	<MLS> Added includeHTTPheader option 
 sendrequest_lib.c:30     	//*	Jun 22,	2020	<MLS> Added OpenSocketAndSendRequest()
 controller_preview.cpp:21	//*	Jun 23,	2020	<MLS> Created controller_preview.cpp
 Makefile:30              	#++	Jun 23,	2020	<MLS> Added preview controller
-windowtab_preview.cpp:21 	//*	Jun 23,	2020	<MLS> Started on windowtab_preview.cpp
+windowtab_preview.cpp:21 	//*	Jun 23,	2020	<MLS> Created windowtab_preview.cpp
 controllerAlpaca.cpp:26  	//*	Jun 24,	2020	<MLS> Added UpdateDownloadProgress()
 controller_camera.cpp:39 	//*	Jun 24,	2020	<MLS> Made decision to switch camera to have sub classes
 controller_camera.cpp:40 	//*	Jun 24,	2020	<MLS> Added series of Update...() functions for sub class use
@@ -997,6 +997,8 @@ domedriver_ror_rpi.cpp:20	//*	Jan 12,	2021	<MLS> Relay board working for open/cl
 domedriver_ror_rpi.cpp:21	//*	Jan 12,	2021	<MLS> CONFORM-dome/ror -> PASSED!!!!!!!!!!!!!!!!!!!!!
 raspberrypi_relaylib.c:24	//*	Jan 12,	2021	<MLS> Created raspberrypi_relaylib.c
 raspberrypi_relaylib.c:25	//*	Jan 12,	2021	<MLS> Relay library working on 4 relay R-Pi hat
+Makefile:33              	#++	Jan 13,	2021	<MLS> Added build commands for touptech cameras
+windowtab_alpacalist.cpp:21	//*	Jan 13,	2021	<MLS> Created windowtab_alpacalist.cpp
 cameradriver.cpp:123     	//*	Jan  1,	2119	<TODO> ----------------------------------------
 cameradriver.cpp:124     	//*	Jun 26,	2119	<TODO> Add support for sub frames
 cameradriver_png.cpp:33  	//*	Jan 31,	2120	<TODO> Add support for libpng
@@ -1004,17 +1006,18 @@ cameradriver_TOUP.cpp:36 	//*	Feb  4,	2120	<TODO> Add 16 bit readout to Toupcam
 cameradriver_TOUP.cpp:37 	//*	Feb 16,	2120	<TODO> Add gain setting to Toupcam
 multicam.cpp:22          	//*	Mar 29,	2120	<TODO> Change multicam commands to match updated camera commands
 cameradriver_ASI.cpp:1023	//*	Jun 29,	2120	<TODO> Change video timestamp to an option
-History Comments found   = 1005 in 207 files
-Total lines              = 103136
-Total comment Lines      = 12246
-Total comments           = 14704
-Total history comments   = 1005
+discoverythread.c:17     	//*	Jan 13,	2121	<TODO> Add external IP list to discovery thread
+History Comments found   = 1008 in 209 files
+Total lines              = 103564
+Total comment Lines      = 12308
+Total comments           = 14770
+Total history comments   = 1008
 Total C files            = 30
-Total C++ files          = 74
-Total H files            = 102
-Preprocssor cnt          = 3070
-Total SLOC               = 70778
-Total SLOC-Logical       = 55542
+Total C++ files          = 75
+Total H files            = 103
+Preprocssor cnt          = 3119
+Total SLOC               = 70979
+Total SLOC-Logical       = 55723
 Programmer comment summary
-MLS             =  995
-TODO            =    7
+MLS             =  997
+TODO            =    8

@@ -18,7 +18,7 @@
 //*****************************************************************************
 //*	Edit History
 //*****************************************************************************
-//*	Jun 23,	2020	<MLS> Started on windowtab_preview.cpp
+//*	Jun 23,	2020	<MLS> Created windowtab_preview.cpp
 //*	Jun 25,	2020	<MLS> Added DownloadImage()
 //*	Jun 25,	2020	<MLS> Downloading image via Alpaca protocol working (rgbarray)
 //*	Jun 29,	2020	<MLS> Added saving the downloaded image locally

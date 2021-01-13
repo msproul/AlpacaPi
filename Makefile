@@ -30,6 +30,7 @@
 #++	Jun 23,	2020	<MLS> Added preview controller
 #++	Jul 16,	2020	<MLS> Added pi64 for 64 bit Raspberry Pi OS
 #++	Dec 12,	2020	<MLS> Moved _ENABLE_REMOTE_SHUTTER_ into Makefile
+#++	Jan 13,	2021	<MLS> Added build commands for touptech cameras
 ######################################################################################
 
 #PLATFORM			=	x86
@@ -251,7 +252,7 @@ ROR_OBJECTS=												\
 
 
 ######################################################################################
-#pragma mark C++ linux-x86
+#pragma mark make cpp  C++ linux-x86
 cpp		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
 cpp		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
 cpp		:		DEFINEFLAGS		+=	-D_ENABLE_ATIK_
@@ -296,6 +297,91 @@ cpp		:			$(CPP_OBJECTS)				\
 					-lcfitsio					\
 					-lqhyccd					\
 					-o alpacapi
+
+######################################################################################
+#pragma mark make toup
+toup	:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
+#toup	:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
+#toup	:		DEFINEFLAGS		+=	-D_ENABLE_ATIK_
+toup	:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
+#toup	:		DEFINEFLAGS		+=	-D_ENABLE_CALIBRATION_
+#toup	:		DEFINEFLAGS		+=	-D_ENABLE_DISCOVERY_QUERRY_
+#toup	:		DEFINEFLAGS		+=	-D_ENABLE_DOME_
+toup	:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
+#toup	:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_
+#toup	:		DEFINEFLAGS		+=	-D_ENABLE_FLIR_
+#toup	:		DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_
+#toup	:		DEFINEFLAGS		+=	-D_ENABLE_MULTICAM_
+#toup		:	DEFINEFLAGS		+=	-D_ENABLE_OBSERVINGCONDITIONS_
+#toup	:		DEFINEFLAGS		+=	-D_ENABLE_QHY_
+#toup	:		DEFINEFLAGS		+=	-D_ENABLE_ROTATOR_
+#toup	:		DEFINEFLAGS		+=	-D_ENABLE_SAFETYMONITOR_
+#toup	:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_
+#toup	:		DEFINEFLAGS		+=	-D_ENABLE_SLIT_TRACKER_
+#toup	:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
+toup	:		DEFINEFLAGS		+=	-D_ENABLE_TOUP_
+toup	:		DEFINEFLAGS		+=	-D_USE_OPENCV_
+#toup	:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
+toup	:			$(CPP_OBJECTS)				\
+					$(ALPACA_OBJECTS)			\
+					$(SOCKET_OBJECTS)			\
+
+
+		$(LINK)  								\
+					$(SOCKET_OBJECTS)			\
+					$(CPP_OBJECTS)				\
+					$(ALPACA_OBJECTS)			\
+					$(OPENCV_LINK)				\
+					-L$(TOUP_LIB_DIR)/			\
+					-ltoupcam					\
+					-ludev						\
+					-lusb-1.0					\
+					-lpthread					\
+					-lcfitsio					\
+					-o alpacapi
+
+######################################################################################
+#pragma mark make touppi
+touppi	:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
+#touppi	:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
+#touppi	:		DEFINEFLAGS		+=	-D_ENABLE_ATIK_
+touppi	:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
+#touppi	:		DEFINEFLAGS		+=	-D_ENABLE_CALIBRATION_
+#touppi	:		DEFINEFLAGS		+=	-D_ENABLE_DISCOVERY_QUERRY_
+#touppi	:		DEFINEFLAGS		+=	-D_ENABLE_DOME_
+touppi	:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
+#touppi	:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_
+#touppi	:		DEFINEFLAGS		+=	-D_ENABLE_FLIR_
+#touppi	:		DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_
+#touppi	:		DEFINEFLAGS		+=	-D_ENABLE_MULTICAM_
+#touppi		:	DEFINEFLAGS		+=	-D_ENABLE_OBSERVINGCONDITIONS_
+#touppi	:		DEFINEFLAGS		+=	-D_ENABLE_QHY_
+#touppi	:		DEFINEFLAGS		+=	-D_ENABLE_ROTATOR_
+#touppi	:		DEFINEFLAGS		+=	-D_ENABLE_SAFETYMONITOR_
+#touppi	:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_
+#touppi	:		DEFINEFLAGS		+=	-D_ENABLE_SLIT_TRACKER_
+#touppi	:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
+touppi	:		DEFINEFLAGS		+=	-D_ENABLE_TOUP_
+touppi	:		DEFINEFLAGS		+=	-D_USE_OPENCV_
+#touppi	:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
+touppi	:			$(CPP_OBJECTS)				\
+					$(ALPACA_OBJECTS)			\
+					$(SOCKET_OBJECTS)			\
+
+
+		$(LINK)  								\
+					$(SOCKET_OBJECTS)			\
+					$(CPP_OBJECTS)				\
+					$(ALPACA_OBJECTS)			\
+					$(OPENCV_LINK)				\
+					-L$(TOUP_LIB_DIR)/			\
+					-ltoupcam					\
+					-ludev						\
+					-lusb-1.0					\
+					-lpthread					\
+					-lcfitsio					\
+					-o alpacapi
+
 
 
 ######################################################################################
@@ -475,7 +561,7 @@ rorpi		:				$(ROR_OBJECTS)				\
 
 
 ######################################################################################
-#pragma mark C++ Raspberry pi
+#pragma mark make pi
 #pi		:		DEFINEFLAGS		+=	-D_ENABLE_OBSERVINGCONDITIONS_
 pi		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
 pi		:		DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_
@@ -1248,6 +1334,7 @@ SKYTRAVEL_OBJECTS=											\
 				$(OBJECT_DIR)ConstellationData.o			\
 				$(OBJECT_DIR)lx200_com.o					\
 				$(OBJECT_DIR)windowtab_dome.o				\
+				$(OBJECT_DIR)windowtab_alpacalist.o			\
 
 
 
@@ -1844,7 +1931,12 @@ $(OBJECT_DIR)controller_dome_common.o : $(SRC_DIR)controller_dome_common.cpp	\
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)controller_dome_common.cpp -o$(OBJECT_DIR)controller_dome_common.o
 
 
-#										$(SRC_SKYTRAVEL)controller_skytravel.h		\
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)windowtab_alpacalist.o : $(SRC_DIR)windowtab_alpacalist.cpp		\
+										$(SRC_DIR)windowtab_alpacalist.h		\
+										$(SRC_DIR)windowtab.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)windowtab_alpacalist.cpp -o$(OBJECT_DIR)windowtab_alpacalist.o
+
 
 
 #-------------------------------------------------------------------------------------

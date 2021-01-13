@@ -33,9 +33,9 @@ class WindowTabImage: public WindowTab
 		// Construction
 		//
 				WindowTabImage(	const int	xSize,
-									const int	ySize,
-									CvScalar	backGrndColor,
-									const char	*windowName);
+								const int	ySize,
+								CvScalar	backGrndColor,
+								const char	*windowName);
 		virtual	~WindowTabImage(void);
 
 //		virtual	void	DrawGraphWidget(const int widgitIdx);

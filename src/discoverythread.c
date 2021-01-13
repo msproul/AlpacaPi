@@ -13,6 +13,8 @@
 //*	Jan 27,	2020	<MLS> No longer adding myself to remote device list
 //*	Feb 11,	2020	<MLS> Discovery thread now keeps track if a device goes offline
 //*	Mar 19,	2020	<MLS> Added GetMySubnetNumber()
+//*-------------------------------
+//*	Jan 13,	2121	<TODO> Add external IP list to discovery thread
 //*****************************************************************************
 
 
@@ -56,9 +58,12 @@ int			gAlpacaListenPort	=	9999;
 
 //#define	kMaxDeviceListCnt	32
 
+//*	this is a list of IP addresses
 TYPE_ALPACA_UNIT	gAlpacaUnitList[kMaxDeviceListCnt];
 int					gAlpacaUnitCnt	=	0;
 
+
+//*	this is a list of alpaca devices, can be more than one per IP address
 TYPE_REMOTE_DEV		gRemoteList[kMaxDeviceListCnt];
 int					gRemoteCnt		=	0;
 
@@ -382,7 +387,7 @@ int		ii;
 }
 
 //*****************************************************************************
-static void	AddDeviceToList(struct sockaddr_in *deviceAddress, SJP_Parser_t *jsonParser)
+static void	AddIPaddressToList(struct sockaddr_in *deviceAddress, SJP_Parser_t *jsonParser)
 {
 int		ii;
 bool	newDevice;
@@ -460,7 +465,7 @@ char	ipAddrSt[32];
 static	void GetInformationFromOtherDevices(void)
 {
 int				ii;
-char			ipAddressStr[32];
+//char			ipAddressStr[32];
 #ifdef _ENABLE_CAMERA_
 	int				jjj;
 	SJP_Parser_t	jsonParser;
@@ -620,7 +625,7 @@ int					setOptRetCode;
 int					bindRetCode;
 int					sendtoRetCode;
 char				buf[kReceiveBufferSize + 1];
-char				str[INET_ADDRSTRLEN];
+//char				ipAddressStr[INET_ADDRSTRLEN];
 SJP_Parser_t		jsonParser;
 struct timeval		timeoutLength;
 int					timeOutCntr;
@@ -698,8 +703,6 @@ int					sockOptValue;
 			if (rcvCnt > 0)
 			{
 				buf[rcvCnt]	=	0;
-//				CONSOLE_DEBUG("We have data");
-//				CONSOLE_DEBUG_W_STR("buf=", buf);
 				SJP_Init(&jsonParser);
 				SJP_ParseData(&jsonParser, buf);
 //				SJP_DumpJsonData(&jsonParser);
@@ -708,9 +711,9 @@ int					sockOptValue;
 //				CONSOLE_DEBUG_W_STR("buf=", buf);
 			#endif
 
-				AddDeviceToList(&from, &jsonParser);
+				AddIPaddressToList(&from, &jsonParser);
 
-				inet_ntop(AF_INET, &(from.sin_addr), str, INET_ADDRSTRLEN);
+//				inet_ntop(AF_INET, &(from.sin_addr), ipAddressStr, INET_ADDRSTRLEN);
 //				CONSOLE_DEBUG_W_HEX("from.sin_addr\t=", from.sin_addr);
 			}
 			else if (rcvCnt == 0)

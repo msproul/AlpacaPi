@@ -58,7 +58,10 @@ enum
 	kDomeBox_AlpacaDrvrVersion,
 	kDomeBox_IPaddr,
 	kDomeBox_Readall,
+#ifdef _ENABLE_SKYTRAVEL_
+	kDomeBox_Rescan,
 
+#endif
 
 	kDomeBox_last
 };

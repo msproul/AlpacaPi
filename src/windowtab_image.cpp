@@ -21,7 +21,7 @@
 //*	Dec 29,	2020	<MLS> Created windowtab_image.cpp
 //*****************************************************************************
 
-#ifdef _ENABLE_IMAGE_
+#ifdef _ENABLE_CTRL_IMAGE_
 
 
 #define _ENABLE_CONSOLE_DEBUG_
@@ -146,4 +146,4 @@ void	WindowTabImage::ProcessButtonClick(const int buttonIdx)
 	}
 }
 
-#endif // _ENABLE_IMAGE_
+#endif // _ENABLE_CTRL_IMAGE_

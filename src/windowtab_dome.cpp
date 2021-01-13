@@ -260,6 +260,25 @@ int		iii;
 	//=======================================================
 	//*	IP address
 	SetIPaddressBoxes(kDomeBox_IPaddr, kDomeBox_Readall, kDomeBox_AlpacaDrvrVersion, -1);
+
+
+#ifdef _ENABLE_SKYTRAVEL_
+int	myBtnHeight;
+int	xLoc;
+
+	btnWidth		=	100;
+	myBtnHeight		=	cBtnHeight - 4;
+	xLoc			=	cWidth - (btnWidth + 5);
+	yLoc			=	cHeight- (myBtnHeight + 5);
+	SetWidget(			kDomeBox_Rescan,	xLoc,		yLoc,		btnWidth,		myBtnHeight);
+	SetWidgetFont(		kDomeBox_Rescan,	kFont_Medium);
+	SetWidgetText(		kDomeBox_Rescan, 	"Re-scan");
+	SetWidgetBGColor(	kDomeBox_Rescan,	CV_RGB(255,	255,	255));
+	SetWidgetTextColor(	kDomeBox_Rescan,	CV_RGB(0,	0,	0));
+
+#endif
+
+
 }
 
 //******************************************************************************
@@ -395,6 +414,11 @@ SJP_Parser_t	jsonResponse;
 		case kDomeBox_StopShutter:
 			SendShutterCommand("abortslew");
 			break;
+
+	#ifdef _ENABLE_SKYTRAVEL_
+		case kDomeBox_Rescan:
+			break;
+	#endif // _ENABLE_SKYTRAVEL_
 	}
 	if (validData == false)
 	{

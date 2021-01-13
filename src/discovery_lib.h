@@ -22,6 +22,7 @@
 
 
 //*****************************************************************************
+//*	this is a list of IP addresses
 typedef struct
 {
 	struct sockaddr_in	deviceAddress;
@@ -33,6 +34,7 @@ typedef struct
 
 
 //*****************************************************************************
+//*	this is a list of alpaca devices, can be more than one per IP address
 typedef struct
 {
 	struct sockaddr_in	deviceAddress;

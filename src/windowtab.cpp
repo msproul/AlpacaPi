@@ -229,11 +229,7 @@ void	WindowTab::SetWidgetJustification(	const int widgetIdx, int justification)
 //**************************************************************************************
 void	WindowTab::SetWidgetText(const int widgetIdx, const char *newText)
 {
-	if (widgetIdx == 42)
-	{
-		CONSOLE_DEBUG_W_NUM("widgetIdx\t=", widgetIdx);
-		CONSOLE_DEBUG_W_STR("newText\t=", newText);
-	}
+
 	if ((widgetIdx >= 0) && (widgetIdx < kMaxWidgets))
 	{
 		strcpy(cWidgetList[widgetIdx].textString, newText);

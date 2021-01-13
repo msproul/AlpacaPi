@@ -188,12 +188,14 @@ bool				relayOK;
 #ifdef _CHRIS_A_ROOL_OFF_ROOF_
 
 	//*	turn the power on
-	relayOK					=	RpiRelay_SetRelay(kRelay_RoofPower, true);
-	relayOK					=	RpiRelay_SetRelay(kRelay_RoofOpen, true);
+	relayOK					=	RpiRelay_SetRelay(kRelay_RoofPower,	true);
+	relayOK					=	RpiRelay_SetRelay(kRelay_RoofOpen,	true);
+	relayOK					=	RpiRelay_SetRelay(kRelay_RoofClose, false);
 	alpacaErrCode			=	kASCOM_Err_Success;
 	cTimeOfLastOpenClose	=	millis();
 	cRORisOpening			=	true;
 	cSlewing				=	true;
+	cShutterstatus			=	kShutterStatus_Opening;
 
 #else
 	alpacaErrCode	=	kASCOM_Err_ActionNotImplemented;
@@ -213,12 +215,14 @@ bool				relayOK;
 #ifdef _CHRIS_A_ROOL_OFF_ROOF_
 
 	//*	turn the power on
-	relayOK					=	RpiRelay_SetRelay(kRelay_RoofPower, true);
-	relayOK					=	RpiRelay_SetRelay(kRelay_RoofClose, true);
+	relayOK					=	RpiRelay_SetRelay(kRelay_RoofPower,	true);
+	relayOK					=	RpiRelay_SetRelay(kRelay_RoofClose,	true);
+	relayOK					=	RpiRelay_SetRelay(kRelay_RoofOpen,	false);
 	alpacaErrCode			=	kASCOM_Err_Success;
 	cTimeOfLastOpenClose	=	millis();
 	cRORisClosing			=	true;
 	cSlewing				=	true;
+	cShutterstatus			=	kShutterStatus_Closing;
 
 #else
 	alpacaErrCode	=	kASCOM_Err_ActionNotImplemented;
