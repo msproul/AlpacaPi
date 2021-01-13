@@ -36,11 +36,11 @@ make client
 if $OPENCV_OK
 then
 	echo "Building client apps"
-#	make clean switch
-#	make clean sky
-#	make clean focuser
-#	make clean domectrl
-#	make clean camera
+	make clean switch
+	make clean sky
+	make clean focuser
+	make clean domectrl
+	make clean camera
 fi
 
 
@@ -54,8 +54,8 @@ then
 	make clean pi
 else
 	echo "Building alpacapi server on x86"
-#	make clean
-#	make
+	make clean
+	make
 fi
 
 
