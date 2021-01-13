@@ -708,7 +708,7 @@ sony		:		$(SONY_OBJECTS)
 					-o sony
 
 ######################################################################################
-#pragma mark C++ Raspberry pi
+#pragma mark make pi64
 #pi64		:		DEFINEFLAGS		+=	-D_ENABLE_OBSERVINGCONDITIONS_
 pi64		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
 pi64		:		DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_
@@ -726,7 +726,7 @@ pi64		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
 #pi64		:		DEFINEFLAGS		+=	-D_ENABLE_ATIK_
 pi64		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
 #pi64		:		DEFINEFLAGS		+=	-D_ENABLE_TOUP_
-pi64		:		DEFINEFLAGS		+=	-D_ENABLE_SONY_
+#pi64		:		DEFINEFLAGS		+=	-D_ENABLE_SONY_
 pi64		:		DEFINEFLAGS		+=	-D_INCLUDE_EXIT_COMMAND_
 pi64		:		CPLUSFLAGS		+=	-fsigned-char
 pi64		:		CPLUSFLAGS		+=	-std=gnu++17
