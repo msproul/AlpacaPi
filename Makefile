@@ -639,7 +639,7 @@ calib		:		$(CPP_OBJECTS)				\
 					$(ALPACA_OBJECTS)			\
 					-lwiringPi					\
 					-lpthread					\
-					-o alpacapi
+					-o alpacapi-calib
 
 #					$(OPENCV_LINK)				\
 #					$(ASI_CAMERA_OBJECTS)		\
