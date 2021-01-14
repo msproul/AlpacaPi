@@ -87,6 +87,7 @@ char				readBuf[1024];
 char				responseBuff[128];
 int					socketOption;
 int					setSocketRtnCde;
+bool				validDiscoveryRequest;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 	printf("Staring discovery listen thread %s\r\n", __FUNCTION__);
@@ -130,9 +131,24 @@ int					setSocketRtnCde;
 				readBuf[bytesRead]	=	0;
 //				printf("%s\r\n", readBuf);
 
-//WRONG			if (strncmp("alpaca discovery", readBuf, 16) == 0)
-//CORRECT		if (strncasecmp("alpacadiscovery", readBuf, 15) == 0)
-				if (strncasecmp("alpacadiscovery", readBuf, 15) == 0)
+				validDiscoveryRequest	=	false;
+				//*	this was the original discovery query
+				if (strncmp(readBuf,	"alpaca discovery", 16) == 0)
+				{
+					CONSOLE_DEBUG_W_STR("Old style discovery request\t=", readBuf);
+					validDiscoveryRequest	=	true;
+				}
+				if (strncasecmp(readBuf,	"alpacadiscovery",  15) == 0)
+				{
+					validDiscoveryRequest	=	true;
+				}
+				//*	double check just to make sure
+				if ((validDiscoveryRequest == false) && (strncmp(readBuf, "alpaca", 6) == 0))
+				{
+					CONSOLE_DEBUG_W_STR("Incomplete discovery request\t=", readBuf);
+					validDiscoveryRequest	=	true;
+				}
+				if (validDiscoveryRequest)
 				{
 					sprintf(responseBuff, "{\"alpacaport\": %d}", gAlpacaListenPort);
 

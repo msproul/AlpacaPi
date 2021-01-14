@@ -1011,7 +1011,7 @@ multicam.cpp:22          	//*	Mar 29,	2120	<TODO> Change multicam commands to ma
 cameradriver_ASI.cpp:1023	//*	Jun 29,	2120	<TODO> Change video timestamp to an option
 discoverythread.c:18     	//*	Jan 13,	2121	<TODO> Add external IP list to discovery thread
 History Comments found   = 1011 in 211 files
-Total lines              = 103801
+Total lines              = 103817
 Total comment Lines      = 12383
 Total comments           = 14847
 Total history comments   = 1011
@@ -1019,8 +1019,8 @@ Total C files            = 30
 Total C++ files          = 76
 Total H files            = 104
 Preprocssor cnt          = 3167
-Total SLOC               = 71087
-Total SLOC-Logical       = 55821
+Total SLOC               = 71103
+Total SLOC-Logical       = 55831
 Programmer comment summary
 MLS             = 1000
 TODO            =    8

@@ -1,7 +1,7 @@
 # AlpacaPi
 Astronomy control software using Alpaca protocol on the Raspberry Pi
 
-(C) 2019, 2020 by Mark Sproul msproul@skychariot.com
+(C) 2019-2021 by Mark Sproul msproul@skychariot.com
 
 AlpacaPi is an open source project written in C/C++
 
@@ -99,6 +99,9 @@ verify the workings of my drivers.  Here my current results
 	Dec  7,	2020	<MLS> CONFORM-dome -> 4 errors, 0 warnings and 0 issues
 
 	Dec  7,	2020	<MLS> CONFORM-telescope -> 0 errors, 0 warnings and 6 issues
+
+	Jan 12,	2021	<MLS> CONFORM-dome/ror -> PASSED!!!!!!!!!!!!!!!!!!!!!
+
 
 
 ===================================================

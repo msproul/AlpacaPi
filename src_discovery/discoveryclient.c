@@ -365,7 +365,7 @@ struct timeval		timeoutLength;
 int					timeOutCntr;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
-	CONSOLE_DEBUG_W_NUM("argc\t=", argc);
+//	CONSOLE_DEBUG_W_NUM("argc\t=", argc);
 
 	gBroadcastSock	=	socket(AF_INET, SOCK_DGRAM, 0);
 	if (gBroadcastSock  < 0)
