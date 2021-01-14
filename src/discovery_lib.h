@@ -20,6 +20,8 @@
 #endif // _JSON_PARSE_H_
 
 
+#define	kAlpacaDiscoveryMsg	"alpacadiscovery1"
+
 
 //*****************************************************************************
 //*	this is a list of IP addresses

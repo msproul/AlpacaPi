@@ -625,7 +625,7 @@ int			threadErr;
 //*****************************************************************************
 static void	*LookForAlpacaDevicesThread(void *arg)
 {
-char				broadCastMsg[]	=	"alpaca discovery";
+char				broadCastMsg[]	=	kAlpacaDiscoveryMsg;
 struct sockaddr_in	servaddr;
 struct sockaddr_in	cliaddr;
 struct sockaddr_in	from;

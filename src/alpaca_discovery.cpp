@@ -53,7 +53,7 @@ SJP_Parser_t		jsonParser;
 int					timeOutCntr;
 int					iii;
 int					ipPortNumber;
-char				broadCastMsg[]	=	"alpaca discovery";
+char				broadCastMsg[]	=	kAlpacaDiscoveryMsg;
 int					closeRetCode;
 
 	CONSOLE_DEBUG(__FUNCTION__);
