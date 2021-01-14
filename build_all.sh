@@ -10,10 +10,18 @@ RASPPI=false
 PI64=false
 OPENCV_OK=false
 
+LOGFILENAME="AlpacaPi_buildlog.txt"
+
+rm $LOGFILENAME
+
+echo "*******************************************" >> $LOGFILENAME
+date >> $LOGFILENAME
+
 MACHINE=`uname -m`
 
 if [ $MACHINE = "aarch64" ]
 then
+	echo "Running on 64 bit Raspberry Pi" >> $LOGFILENAME
 	RASPPI=true
 	PI64=true
 fi
@@ -22,11 +30,17 @@ if [ $MACHINE = "armv7l" ]
 then
 	RASPPI=true
 fi
-echo "Running on $MACHINE"
+echo "Running on $MACHINE" >> $LOGFILENAME
 
-if [ -d "/usr/include/opencv" ]
+OPENCV_INCLUDE="/usr/include/opencv"
+
+if [ -d $OPENCV_INCLUDE ]
 then
 	OPENCV_OK=true
+	echo "Open CV found at $OPENCV_INCLUDE" >> $LOGFILENAME
+else
+
+	echo "$OPENCV_INCLUDE not found" >> $LOGFILENAME
 fi
 
 make client
@@ -35,25 +49,27 @@ make client
 # if openCV is present, we can compile the clients
 if $OPENCV_OK
 then
-	echo "Building client apps"
+	echo "Building client apps" >> $LOGFILENAME
 	make clean switch
 	make clean sky
 	make clean focuser
 	make clean domectrl
 	make clean camera
+else
+	echo "OpenCV not found, skipping client apps" >> $LOGFILENAME
 fi
 
 
 if $PI64
 then
-	echo "Building alpacapi server for 64 bit Raspberry Pi"
+	echo "Building alpacapi server for 64 bit Raspberry Pi" >> $LOGFILENAME
 	make clean pi64
 elif $RASPPI
 then
-	echo "Building alpacapi server for 32 bit Raspberry Pi"
+	echo "Building alpacapi server for 32 bit Raspberry Pi" >> $LOGFILENAME
 	make clean pi
 else
-	echo "Building alpacapi server on x86"
+	echo "Building alpacapi server on x86" >> $LOGFILENAME
 	make clean
 	make
 fi
@@ -73,7 +89,7 @@ ls -lt | grep -v drwxrwxr | grep rwxr | head -12
 
 	if [ -f alpacapi ]
 	then
-		echo "alpacapi server made successfully"
+		echo "alpacapi server made successfully" >> $LOGFILENAME
 	fi
 
 
@@ -82,24 +98,28 @@ then
 	############################################
 	if [ -f camera ]
 	then
-		echo "Camera client made successfully"
+		echo "Camera client made successfully" >> $LOGFILENAME
 	fi
 	############################################
 	if [ -f domectrl ]
 	then
-		echo "Dome controller client made successfully"
+		echo "Dome controller client made successfully" >> $LOGFILENAME
 	fi
 	############################################
 	if [ -f focuser ]
 	then
-		echo "Focuser client made successfully"
+		echo "Focuser client made successfully" >> $LOGFILENAME
 	fi
 	############################################
 	if [ -f switch ]
 	then
-		echo "Switch client made successfully"
+		echo "Switch client made successfully" >> $LOGFILENAME
 	fi
 
 else
-	echo "OpenCV was not found so client apps were not built"
+	echo "OpenCV was not found so client apps were not built" >> $LOGFILENAME
 fi
+
+cat  $LOGFILENAME
+
+echo "Log saved as $LOGFILENAME"

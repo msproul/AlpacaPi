@@ -15,7 +15,7 @@
 //*****************************************************************************
 //*	<MLS>	=	Mark L Sproul
 //*****************************************************************************
-//*	Dec  5,	2020	<MLS> Created telescopedriver.cpp
+//*	Dec  5,	2020	<MLS> Created telescopedriver.h
 //*****************************************************************************
 //#include	"telescopedriver.h"
 
@@ -26,7 +26,6 @@
 	#include	"alpacadriver.h"
 #endif
 
-void	CreateTelescopeObjects(void);
 
 //**************************************************************************************
 class TelescopeDriver: public AlpacaDriver

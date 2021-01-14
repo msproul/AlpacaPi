@@ -249,11 +249,6 @@ const TYPE_CmdEntry	gTelescopeCmdTable[]	=
 	{	"",						-1,	0x00	}
 };
 
-//**************************************************************************************
-void	CreateTelescopeObjects(void)
-{
-	new TelescopeDriver();
-}
 
 
 //**************************************************************************************
@@ -2492,7 +2487,7 @@ char					axisString[64];
 int						axisNumber;
 
 	CONSOLE_DEBUG(__FUNCTION__);
-	CONSOLE_DEBUG(reqData->contentData);
+//	CONSOLE_DEBUG(reqData->contentData);
 
 	axisFound		=	GetKeyWordArgument(	reqData->contentData,
 													"Axis",
@@ -3117,8 +3112,8 @@ TYPE_ASCOM_STATUS	TelescopeDriver::Get_Readall(TYPE_GetPutRequestData *reqData, 
 	TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 	int		mySocket;
 
-#ifdef _DEBUG_CONFORM_
 	CONSOLE_DEBUG(__FUNCTION__);
+#ifdef _DEBUG_CONFORM_
 	CONSOLE_DEBUG_W_STR("contentData\t=", reqData->contentData);
 #endif // _DEBUG_CONFORM_
 

@@ -599,7 +599,7 @@ struct sockaddr_in	deviceAddress;
 //*****************************************************************************
 int	SendAlpacaQueryBroadcast(void)
 {
-char				broadCastMsg[]	=	"alpaca discovery";
+char				broadCastMsg[]	=	"alpacadiscovery1";
 struct sockaddr_in	from;
 int					rcvCnt;
 unsigned int		fromlen;

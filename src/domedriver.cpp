@@ -811,6 +811,8 @@ int32_t		minDealy_microSecs;
 int32_t	DomeDriver::RunStateMachine(void)
 {
 int32_t		minDealy_microSecs;
+uint32_t	currentMilliSecs;
+uint32_t	timeSinceLastWhatever;
 char		stateString[48];
 
 //	CONSOLE_DEBUG(__FUNCTION__);
@@ -825,6 +827,8 @@ char		stateString[48];
 	{
 		minDealy_microSecs	=	RunStateMachine_ROR();
 	}
+
+	currentMilliSecs		=	millis();
 
 #ifdef _ENABLE_REMOTE_SHUTTER_
 	//====================================================================

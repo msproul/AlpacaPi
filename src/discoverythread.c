@@ -13,7 +13,8 @@
 //*	Jan 27,	2020	<MLS> No longer adding myself to remote device list
 //*	Feb 11,	2020	<MLS> Discovery thread now keeps track if a device goes offline
 //*	Mar 19,	2020	<MLS> Added GetMySubnetNumber()
-//*-------------------------------
+//*	Jan 14,	2021	<MLS> Apparently the DISCOVERY MESSAGE has changed, fixed
+//*-------------------------------------------------------------------------
 //*	Jan 13,	2121	<TODO> Add external IP list to discovery thread
 //*****************************************************************************
 
@@ -59,7 +60,7 @@ int			gAlpacaListenPort	=	9999;
 //#define	kMaxDeviceListCnt	32
 
 //*	this is a list of IP addresses
-TYPE_ALPACA_UNIT	gAlpacaUnitList[kMaxDeviceListCnt];
+TYPE_ALPACA_UNIT	gAlpacaUnitList[kMaxAlpacaIPaddrCnt];
 int					gAlpacaUnitCnt	=	0;
 
 
@@ -129,7 +130,9 @@ int					setSocketRtnCde;
 				readBuf[bytesRead]	=	0;
 //				printf("%s\r\n", readBuf);
 
-				if (strncmp("alpaca discovery", readBuf, 16) == 0)
+//WRONG			if (strncmp("alpaca discovery", readBuf, 16) == 0)
+//CORRECT		if (strncasecmp("alpacadiscovery", readBuf, 15) == 0)
+				if (strncasecmp("alpacadiscovery", readBuf, 15) == 0)
 				{
 					sprintf(responseBuff, "{\"alpacaport\": %d}", gAlpacaListenPort);
 
@@ -141,7 +144,8 @@ int					setSocketRtnCde;
 				}
 				else
 				{
-					printf("Unknown request====%s\r\n", readBuf);
+					CONSOLE_DEBUG_W_STR("Unknown request====", readBuf);
+				//	printf("Unknown request====%s\r\n", readBuf);
 				}
 			}
 			else if (bytesRead < 0)
@@ -376,7 +380,8 @@ static void	PollAllDevices(void)
 {
 int		ii;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_NUM("gAlpacaUnitCnt\t=", gAlpacaUnitCnt);
 	for (ii=0; ii<gAlpacaUnitCnt; ii++)
 	{
 		if (gAlpacaUnitList[ii].noResponseCnt == 0)
@@ -384,6 +389,7 @@ int		ii;
 			SendGetRequest(&gAlpacaUnitList[ii], "/management/v1/configureddevices");
 		}
 	}
+	CONSOLE_DEBUG_W_NUM("gRemoteCnt\t=", gRemoteCnt);
 }
 
 //*****************************************************************************
@@ -391,25 +397,25 @@ static void	AddIPaddressToList(struct sockaddr_in *deviceAddress, SJP_Parser_t *
 {
 int		ii;
 bool	newDevice;
-int		deviceIdx;
+int		theDeviceIdx;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
-	newDevice	=	true;
-	deviceIdx	=	-1;
+	CONSOLE_DEBUG(__FUNCTION__);
+	newDevice		=	true;
+	theDeviceIdx	=	-1;
 	for (ii=0; ii<gAlpacaUnitCnt; ii++)
 	{
 		if (deviceAddress->sin_addr.s_addr == gAlpacaUnitList[ii].deviceAddress.sin_addr.s_addr)
 		{
-			newDevice	=	false;
-			deviceIdx	=	ii;
+			newDevice		=	false;
+			theDeviceIdx	=	ii;
 			break;
 		}
 	}
 	if (newDevice)
 	{
 		//*	add the new devices to our list
-//		CONSOLE_DEBUG("We have a new devices")
-		if (gAlpacaUnitCnt < kMaxDeviceListCnt)
+		CONSOLE_DEBUG("We have a new devices")
+		if (gAlpacaUnitCnt < kMaxAlpacaIPaddrCnt)
 		{
 			gAlpacaUnitList[gAlpacaUnitCnt].deviceAddress	=	*deviceAddress;
 			//*	now find the alpaca port
@@ -418,17 +424,21 @@ int		deviceIdx;
 				if (strcasecmp(jsonParser->dataList[ii].keyword, "ALPACAPORT") == 0)
 				{
 					gAlpacaUnitList[gAlpacaUnitCnt].port	=	atoi(jsonParser->dataList[ii].valueString);
-					deviceIdx	=	gAlpacaUnitCnt;
+					theDeviceIdx	=	gAlpacaUnitCnt;
 				}
 			}
 			gAlpacaUnitCnt++;
 		}
+		else
+		{
+			CONSOLE_DEBUG("Ran out of space in gAlpacaUnitList")
+		}
 	}
 
-	if ((deviceIdx >= 0) && (deviceIdx < kMaxDeviceListCnt))
+	if ((theDeviceIdx >= 0) && (theDeviceIdx < kMaxAlpacaIPaddrCnt))
 	{
 		//*	set the last time we heard from it
-		gAlpacaUnitList[deviceIdx].noResponseCnt	=	0;
+		gAlpacaUnitList[theDeviceIdx].noResponseCnt	=	0;
 	}
 }
 
@@ -625,7 +635,7 @@ int					setOptRetCode;
 int					bindRetCode;
 int					sendtoRetCode;
 char				buf[kReceiveBufferSize + 1];
-//char				ipAddressStr[INET_ADDRSTRLEN];
+char				ipAddressStr[INET_ADDRSTRLEN];
 SJP_Parser_t		jsonParser;
 struct timeval		timeoutLength;
 int					timeOutCntr;
@@ -713,8 +723,9 @@ int					sockOptValue;
 
 				AddIPaddressToList(&from, &jsonParser);
 
-//				inet_ntop(AF_INET, &(from.sin_addr), ipAddressStr, INET_ADDRSTRLEN);
-//				CONSOLE_DEBUG_W_HEX("from.sin_addr\t=", from.sin_addr);
+				inet_ntop(AF_INET, &(from.sin_addr), ipAddressStr, INET_ADDRSTRLEN);
+		//		CONSOLE_DEBUG_W_HEX("from.sin_addr\t=", from.sin_addr);
+				CONSOLE_DEBUG_W_STR("from.sin_addr\t=", ipAddressStr);
 			}
 			else if (rcvCnt == 0)
 			{
@@ -741,7 +752,7 @@ int					sockOptValue;
 
 		//*	we dont need to do this very often
 	//	sleep(3000);
-		sleep(60);
+		sleep(15);
 		CONSOLE_DEBUG("Done sleeping");
 	}
 

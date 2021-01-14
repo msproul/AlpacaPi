@@ -23,9 +23,9 @@
 
 #ifdef _ENABLE_ROR_
 
-#define	_CHRIS_A_ROOL_OFF_ROOF_
+#define	_CHRIS_A_ROLL_OFF_ROOF_
 
-#ifdef _CHRIS_A_ROOL_OFF_ROOF_
+#ifdef _CHRIS_A_ROLL_OFF_ROOF_
 
 	//*	this is a specific implementation for Chris A of the Netherlands
 
@@ -42,7 +42,7 @@
 //		#error	"_ENABLE_4REALY_BOARD should be enabled"
 	#endif // _ENABLE_4REALY_BOARD
 
-#endif // _CHRIS_A_ROOL_OFF_ROOF_
+#endif // _CHRIS_A_ROLL_OFF_ROOF_
 
 
 #include	<stdlib.h>
@@ -106,7 +106,7 @@ DomeDriverROR::DomeDriverROR(const int argDevNum)
 	Init_Hardware();
 
 	strcpy(cDeviceName,			"AlpacaPi-ROR");
-	strcpy(cDeviceDescription,	"Rool Off Roof");
+	strcpy(cDeviceDescription,	"Roll Off Roof");
 
 
 }
@@ -123,12 +123,12 @@ void	DomeDriverROR::Init_Hardware(void)
 {
 	CONSOLE_DEBUG(__FUNCTION__);
 
-#ifdef _CHRIS_A_ROOL_OFF_ROOF_
+#ifdef _CHRIS_A_ROLL_OFF_ROOF_
 	cRelayCount	=	RpiRelay_Init();
 
 	CONSOLE_DEBUG_W_NUM("cRelayCount\t=", cRelayCount);
 
-#endif // _CHRIS_A_ROOL_OFF_ROOF_
+#endif // _CHRIS_A_ROLL_OFF_ROOF_
 
 }
 
@@ -145,7 +145,7 @@ int32_t		minDealy_microSecs;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-#ifdef _CHRIS_A_ROOL_OFF_ROOF_
+#ifdef _CHRIS_A_ROLL_OFF_ROOF_
 
 	currentMilliSecs	=	millis();
 	deltaMilliSecs		=	currentMilliSecs - cTimeOfLastOpenClose;
@@ -173,7 +173,7 @@ int32_t		minDealy_microSecs;
 		cSlewing		=	false;
 		cRORisClosing	=	false;
 	}
-#endif // _CHRIS_A_ROOL_OFF_ROOF_
+#endif // _CHRIS_A_ROLL_OFF_ROOF_
 	return(minDealy_microSecs);
 }
 
@@ -185,7 +185,7 @@ bool				relayOK;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
-#ifdef _CHRIS_A_ROOL_OFF_ROOF_
+#ifdef _CHRIS_A_ROLL_OFF_ROOF_
 
 	//*	turn the power on
 	relayOK					=	RpiRelay_SetRelay(kRelay_RoofPower,	true);
@@ -212,7 +212,7 @@ bool				relayOK;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
-#ifdef _CHRIS_A_ROOL_OFF_ROOF_
+#ifdef _CHRIS_A_ROLL_OFF_ROOF_
 
 	//*	turn the power on
 	relayOK					=	RpiRelay_SetRelay(kRelay_RoofPower,	true);
@@ -239,7 +239,7 @@ bool				relayOK;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
-#ifdef _CHRIS_A_ROOL_OFF_ROOF_
+#ifdef _CHRIS_A_ROLL_OFF_ROOF_
 
 	//*	turn it all off
 	relayOK					=	RpiRelay_SetRelay(kRelay_RoofOpen, false);

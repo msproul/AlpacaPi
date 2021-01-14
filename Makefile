@@ -180,6 +180,7 @@ CPP_OBJECTS=												\
 				$(OBJECT_DIR)shutterdriver_arduino.o		\
 				$(OBJECT_DIR)serialport.o					\
 				$(OBJECT_DIR)telescopedriver.o				\
+				$(OBJECT_DIR)telescopedriver_lx200.o		\
 				$(OBJECT_DIR)cpu_stats.o					\
 
 ######################################################################################
@@ -274,7 +275,8 @@ cpp		:		DEFINEFLAGS		+=	-D_ENABLE_ROTATOR_
 #cpp	:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
 #cpp		:		DEFINEFLAGS		+=	-D_ENABLE_TOUP_
 cpp		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
-cpp		:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
+#cpp		:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
+#cpp		:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_LX200_
 cpp		:			$(CPP_OBJECTS)				\
 					$(ALPACA_OBJECTS)			\
 					$(SOCKET_OBJECTS)			\
@@ -297,6 +299,48 @@ cpp		:			$(CPP_OBJECTS)				\
 					-lcfitsio					\
 					-lqhyccd					\
 					-o alpacapi
+
+
+######################################################################################
+#pragma mark make tele  C++ linux-x86
+tele		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
+#tele	:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
+#tele	:		DEFINEFLAGS		+=	-D_ENABLE_ATIK_
+#tele	:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
+#tele	:		DEFINEFLAGS		+=	-D_ENABLE_CALIBRATION_
+#tele	:		DEFINEFLAGS		+=	-D_ENABLE_DISCOVERY_QUERRY_
+#tele	:		DEFINEFLAGS		+=	-D_ENABLE_DOME_
+#tele	:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
+#tele	:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_
+#tele	:		DEFINEFLAGS		+=	-D_ENABLE_FLIR_
+#tele	:		DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_
+#tele	:		DEFINEFLAGS		+=	-D_ENABLE_MULTICAM_
+#tele		:	DEFINEFLAGS		+=	-D_ENABLE_OBSERVINGCONDITIONS_
+#tele	:		DEFINEFLAGS		+=	-D_ENABLE_QHY_
+#tele	:		DEFINEFLAGS		+=	-D_ENABLE_ROTATOR_
+#tele	:		DEFINEFLAGS		+=	-D_ENABLE_SAFETYMONITOR_
+#tele	:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_
+#tele	:		DEFINEFLAGS		+=	-D_ENABLE_SLIT_TRACKER_
+#tele	:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
+#tele	:		DEFINEFLAGS		+=	-D_ENABLE_TOUP_
+#tele	:		DEFINEFLAGS		+=	-D_USE_OPENCV_
+tele	:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
+tele	:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_LX200_
+tele	:			$(CPP_OBJECTS)				\
+					$(ALPACA_OBJECTS)			\
+					$(SOCKET_OBJECTS)			\
+
+
+		$(LINK)  								\
+					$(SOCKET_OBJECTS)			\
+					$(CPP_OBJECTS)				\
+					$(ALPACA_OBJECTS)			\
+					$(OPENCV_LINK)				\
+					-ludev						\
+					-lusb-1.0					\
+					-lpthread					\
+					-o alpacapi-telescope
+
 
 ######################################################################################
 #pragma mark make toup
@@ -1747,20 +1791,28 @@ $(OBJECT_DIR)rotatordriver_nc.o :		$(SRC_DIR)rotatordriver_nc.cpp		\
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)rotatordriver_nc.cpp -o$(OBJECT_DIR)rotatordriver_nc.o
 
 #-------------------------------------------------------------------------------------
-$(OBJECT_DIR)slittracker.o :		$(SRC_DIR)slittracker.cpp		\
-										$(SRC_DIR)slittracker.h	 	\
+$(OBJECT_DIR)slittracker.o :		$(SRC_DIR)slittracker.cpp				\
+										$(SRC_DIR)slittracker.h	 			\
 										$(SRC_DIR)alpacadriver.h			\
 										Makefile
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)slittracker.cpp -o$(OBJECT_DIR)slittracker.o
 
 #-------------------------------------------------------------------------------------
-$(OBJECT_DIR)telescopedriver.o :		$(SRC_DIR)telescopedriver.cpp	\
-										$(SRC_DIR)telescopedriver.h		\
+$(OBJECT_DIR)telescopedriver.o :		$(SRC_DIR)telescopedriver.cpp		\
+										$(SRC_DIR)telescopedriver.h			\
 										$(SRC_DIR)domedriver.h				\
 										$(SRC_DIR)alpacadriver.h			\
 										Makefile
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)telescopedriver.cpp -o$(OBJECT_DIR)telescopedriver.o
 
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)telescopedriver_lx200.o :	$(SRC_DIR)telescopedriver_lx200.cpp	\
+										$(SRC_DIR)telescopedriver_lx200.h	\
+										$(SRC_DIR)telescopedriver.h			\
+										$(SRC_DIR)alpacadriver.h			\
+										Makefile
+	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)telescopedriver_lx200.cpp -o$(OBJECT_DIR)telescopedriver_lx200.o
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)managementdriver.o :		$(SRC_DIR)managementdriver.cpp		\

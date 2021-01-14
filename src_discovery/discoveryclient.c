@@ -349,7 +349,8 @@ int		deviceIdx;
 //*****************************************************************************
 int main(int argc, char *argv[])
 {
-char				broadCastMsg[]	=	"alpaca discovery";
+//char				broadCastMsg[]	=	"alpaca discovery";
+char				broadCastMsg[]	=	"alpacadiscovery1";
 struct sockaddr_in	servaddr;
 struct sockaddr_in	cliaddr;
 struct sockaddr_in	from;

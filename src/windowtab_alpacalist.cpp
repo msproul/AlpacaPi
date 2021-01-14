@@ -80,12 +80,14 @@ int		iii;
 	yLoc			+=	cTitleHeight;
 	yLoc			+=	2;
 
+#if 0
 	SetWidget(		kAlpacaList_ControllerVersion,	0,			yLoc,		cWidth,		cTitleHeight);
 	SetWidgetFont(	kAlpacaList_ControllerVersion,	kFont_Medium);
 	SetWidgetText(	kAlpacaList_ControllerVersion,	gFullVersionString);
 	SetWidgetTextColor(kAlpacaList_ControllerVersion,	CV_RGB(255,	255,	255));
 	yLoc			+=	cTitleHeight;
 	yLoc			+=	2;
+#endif // 0
 
 	xLoc		=	10;
 	textBoxHt	=	17;
@@ -124,7 +126,8 @@ char	textString[128];
 int		boxId;
 int		myDevCount;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_NUM("gRemoteCnt\t=", gRemoteCnt);
 
 	myDevCount	=	0;
 	for (iii=0; iii<gRemoteCnt; iii++)

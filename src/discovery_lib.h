@@ -51,6 +51,8 @@ typedef struct
 
 } TYPE_REMOTE_DEV;
 
+#define	kMaxAlpacaIPaddrCnt	24
+
 #define	kMaxDeviceListCnt	48
 
 
