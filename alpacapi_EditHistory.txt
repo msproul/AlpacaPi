@@ -1,4 +1,4 @@
-History Comments found =1019 in 213 files
+History Comments found =1020 in 213 files
 eph.c:10                 	//*	May  2,	1996	<MLS> (Mark Sproul) Starting on Sky Travel for Frank and Cliff
 StarData.c:7             	//*	May  2,	1996	<MLS> (Mark Sproul) Starting on Sky Travel for Frank and Cliff
 StarData.c:8             	//*	Nov 18,	1999	<MLS> restarting efforts
@@ -1007,6 +1007,7 @@ controller_focus_generic.cpp:22	//*	Jan 14,	2021	<MLS> Focuser controller workin
 discoverythread.c:16     	//*	Jan 14,	2021	<MLS> Apparently the DISCOVERY MESSAGE has changed, fixed
 discoverythread.c:17     	//*	Jan 14,	2021	<MLS> Discovery protocol now working with ASCOM Device Hub
 sendrequest_lib.c:31     	//*	Jan 14,	2021	<MLS> Fixed GET/PUT request to have all the right header stuff
+raspberrypi_relaylib.c:26	//*	Jan 15,	2021	<MLS> Raspberry Pi 64 bit gcc/g++ does not define __arm__
 widget.h:7               	//*	Jan 15,	2021	<MLS> Added Tab stops to widget definition
 windowtab.cpp:45         	//*	Jan 15,	2021	<MLS> Added SetWidgetTabStops()
 windowtab_dome.cpp:26    	//*	Jan 15,	2021	<MLS> Got clarification of SUPPORTEDACTIONS cmd, fixed hidden controls
@@ -1018,17 +1019,17 @@ cameradriver_TOUP.cpp:37 	//*	Feb 16,	2120	<TODO> Add gain setting to Toupcam
 multicam.cpp:22          	//*	Mar 29,	2120	<TODO> Change multicam commands to match updated camera commands
 cameradriver_ASI.cpp:1023	//*	Jun 29,	2120	<TODO> Change video timestamp to an option
 discoverythread.c:19     	//*	Jan 13,	2121	<TODO> Add external IP list to discovery thread
-History Comments found   = 1019 in 213 files
-Total lines              = 104402
-Total comment Lines      = 12494
-Total comments           = 14961
-Total history comments   = 1019
+History Comments found   = 1020 in 213 files
+Total lines              = 104413
+Total comment Lines      = 12495
+Total comments           = 14963
+Total history comments   = 1020
 Total C files            = 30
 Total C++ files          = 77
 Total H files            = 105
 Preprocssor cnt          = 3192
-Total SLOC               = 71431
-Total SLOC-Logical       = 56071
+Total SLOC               = 71430
+Total SLOC-Logical       = 56070
 Programmer comment summary
-MLS             = 1008
+MLS             = 1009
 TODO            =    8

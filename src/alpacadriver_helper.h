@@ -15,6 +15,9 @@
 	extern "C" {
 #endif
 
+#if defined(__ARM_ARCH) && !defined(__arm__)
+	#define __arm__
+#endif
 
 
 //*	Helper functions

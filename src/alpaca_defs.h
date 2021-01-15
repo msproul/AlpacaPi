@@ -22,6 +22,9 @@
 
 #define kAlpacaDiscoveryPORT	32227
 
+#if defined(__ARM_ARCH) && !defined(__arm__)
+	#define __arm__
+#endif
 
 //*****************************************************************************
 //*	defined by the ascom standarads

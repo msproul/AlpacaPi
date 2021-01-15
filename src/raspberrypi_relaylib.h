@@ -6,6 +6,10 @@
 	#include	<stdbool.h>
 #endif // _STDBOOL_H
 
+#if defined(__ARM_ARCH) && !defined(__arm__)
+	#define __arm__
+#endif // defined
+
 
 #ifdef _ENABLE_4REALY_BOARD
 	//==============================================================

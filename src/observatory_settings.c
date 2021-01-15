@@ -52,6 +52,7 @@
 #include	"alpacadriver_helper.h"
 #include	"observatory_settings.h"
 
+
 TYPE_OBSERVATORY_SETTINGS	gObseratorySettings;
 
 

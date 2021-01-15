@@ -23,6 +23,7 @@
 //*****************************************************************************
 //*	Jan 12,	2021	<MLS> Created raspberrypi_relaylib.c
 //*	Jan 12,	2021	<MLS> Relay library working on 4 relay R-Pi hat
+//*	Jan 15,	2021	<MLS> Raspberry Pi 64 bit gcc/g++ does not define __arm__
 //*****************************************************************************
 
 #include	<stdio.h>

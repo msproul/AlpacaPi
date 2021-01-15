@@ -10,10 +10,14 @@ RASPPI=false
 PI64=false
 OPENCV_OK=false
 
+FILE_SEP_NAME="xxxxxxxxxxxxxxx"
+
+
 LOGFILENAME="AlpacaPi_buildlog.txt"
 
 rm $LOGFILENAME
 
+touch $FILE_SEP_NAME
 echo "*******************************************" >> $LOGFILENAME
 date >> $LOGFILENAME
 
@@ -85,7 +89,9 @@ else
 fi
 
 
-ls -lt | grep -v drwxrwxr | grep rwxr | head -12
+ls -lt | grep -v drwxrwxr |  head -12
+
+rm -f $FILE_SEP_NAME
 
 	if [ -f alpacapi ]
 	then

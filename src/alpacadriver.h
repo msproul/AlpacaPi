@@ -60,7 +60,6 @@
 #endif // _ALPACA_DEFS_H_
 
 #if defined(__ARM_ARCH) && !defined(__arm__)
-//	#warning "__arm__ was not defined"
 	#define __arm__
 #endif // defined
 
