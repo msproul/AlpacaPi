@@ -42,6 +42,7 @@
 //*	Jan  5,	2021	<MLS> Added CPenSize()
 //*	Jan  6,	2021	<MLS> Added GetWidgetText()
 //*	Jan 10,	2021	<MLS> Added new version of AlpacaSendPutCmd()
+//*	Jan 15,	2021	<MLS> Added SetWidgetTabStops()
 //*****************************************************************************
 
 
@@ -263,6 +264,30 @@ void	WindowTab::SetWidgetHelpText(const int widgetIdx, const char *newText)
 	if ((widgetIdx >= 0) && (widgetIdx < kMaxWidgets))
 	{
 		strcpy(cWidgetList[widgetIdx].helpText, newText);
+	}
+	else
+	{
+		CONSOLE_DEBUG_W_NUM("widgetIdx out of range\t=", widgetIdx);
+	}
+}
+
+//**************************************************************************************
+//*	tab list must end with a zero value
+//**************************************************************************************
+void	WindowTab::SetWidgetTabStops(const int widgetIdx, const short *tabStopList)
+{
+int		iii;
+//	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(newText);
+	if ((widgetIdx >= 0) && (widgetIdx < kMaxWidgets))
+	{
+		cWidgetList[widgetIdx].hasTabs	=	true;
+		//*	copy over the tab stop array
+		iii	=	0;
+		while ((tabStopList[iii] > 0) && (iii < kMaxTabStops))
+		{
+			cWidgetList[widgetIdx].tabStops[iii]	=	tabStopList[iii];
+		}
 	}
 	else
 	{

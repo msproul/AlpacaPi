@@ -1887,6 +1887,7 @@ char		domeConfigStr[32];
 	mySocketFD	=	reqData->socket;
 
 	SocketWriteData(mySocketFD,	"<CENTER>\r\n");
+	SocketWriteData(mySocketFD,	"<H2>Dome</H2>\r\n");
 
 	SocketWriteData(mySocketFD,	"<TABLE BORDER=1>\r\n");
 

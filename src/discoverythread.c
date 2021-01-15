@@ -136,7 +136,7 @@ char				ipAddrSt[48];
 
 				validDiscoveryRequest	=	false;
 				//*	this was the original discovery query
-				if (strncmp(readBuf,	"alpaca discovery", 16) == 0)
+				if (strncasecmp(readBuf,	"alpaca discovery", 16) == 0)
 				{
 					validDiscoveryRequest	=	true;
 
@@ -149,7 +149,7 @@ char				ipAddrSt[48];
 					validDiscoveryRequest	=	true;
 				}
 				//*	double check just to make sure
-				if ((validDiscoveryRequest == false) && (strncmp(readBuf, "alpaca", 6) == 0))
+				if ((validDiscoveryRequest == false) && (strncasecmp(readBuf, "alpaca", 6) == 0))
 				{
 					validDiscoveryRequest	=	true;
 
@@ -170,7 +170,6 @@ char				ipAddrSt[48];
 				else
 				{
 					CONSOLE_DEBUG_W_STR("Unknown request====", readBuf);
-				//	printf("Unknown request====%s\r\n", readBuf);
 				}
 			}
 			else if (bytesRead < 0)

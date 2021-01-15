@@ -79,7 +79,8 @@ TelescopeDriverLX200::TelescopeDriverLX200(LX200ConnectionType connectionType, c
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
-	strcpy(cDeviceName, "Telescope-LX200");
+	strcpy(cDeviceName,			"Telescope-LX200");
+	strcpy(cDeviceDescription,	"Telescope control using LX200 protocol");
 
 	//*	set the defaults, everything to false or zero
 	cAlginmentMode				=	kAlignmentMode_algGermanPolar;

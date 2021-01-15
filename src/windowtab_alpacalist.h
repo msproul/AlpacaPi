@@ -14,7 +14,6 @@ enum
 {
 	kAlpacaList_Title	=	0,
 
-//	kAlpacaList_ControllerVersion,
 
 	kAlpacaList_AlpacaDev_01,
 	kAlpacaList_AlpacaDev_02,

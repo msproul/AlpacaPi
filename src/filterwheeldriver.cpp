@@ -567,6 +567,7 @@ bool		isConnected;
 	{
 		mySocketFD		=	reqData->socket;
 		SocketWriteData(mySocketFD,	"<CENTER>\r\n");
+		SocketWriteData(mySocketFD,	"<H2>Filter Wheel</H2>\r\n");
 
 		isConnected		=	IsFilterwheelConnected();
 		if (isConnected)

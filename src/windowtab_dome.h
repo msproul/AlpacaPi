@@ -37,12 +37,15 @@ enum
 
 	kDomeBox_Stop,
 
+	//*	these are all extras
 	kDomeBox_GoLeft,
 	kDomeBox_GoRight,
 	kDomeBox_SlowLeft,
 	kDomeBox_SlowRight,
 	kDomeBox_BumpLeft,
 	kDomeBox_BumpRight,
+	//*	end of extras
+
 
 	kDomeBox_ToggleSlaveMode,
 

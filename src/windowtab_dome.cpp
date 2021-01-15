@@ -23,6 +23,7 @@
 //*	May  1,	2020	<MLS> Added OpenShutter() & CloseShutter()
 //*	May  4,	2020	<MLS> Slave mode set/unset logic working now
 //*	May  7,	2020	<MLS> Added SendShutterCommand() to repleace multiple other cmds
+//*	Jan 15,	2021	<MLS> Got clarification of SUPPORTEDACTIONS cmd, fixed hidden controls
 //*****************************************************************************
 
 #ifdef _ENABLE_CTRL_DOME_
@@ -203,13 +204,21 @@ int		iii;
 	{
 		SetWidgetType(			iii,	kWidgetType_Button);
 		SetWidgetFont(			iii,	kFont_Medium);
-//		SetWidgetBGColor(		iii,	CV_RGB(255,	255,	255));
-		SetWidgetBGColor(		iii,	CV_RGB(128,	128,	128));
+		SetWidgetBGColor(		iii,	CV_RGB(255,	255,	255));
 		SetWidgetTextColor(		iii,	CV_RGB(0,	0,	0));
 		SetWidgetBorderColor(	iii,	CV_RGB(0,	0,	0));
 
+	}
+
+	//============================================
+	//*	disable all of the extra commands until we know if they exist
+	for (iii=kDomeBox_GoLeft; iii<=kDomeBox_BumpRight; iii++)
+	{
+		SetWidgetBGColor(		iii,	CV_RGB(128,	128,	128));
 		SetWidgetValid(			iii,	false);
 	}
+
+
 
 	SetWidgetBGColor(	kDomeBox_Stop,		CV_RGB(255,	0,	0));
 	SetWidgetTextColor(	kDomeBox_Stop,		CV_RGB(255,	255,	255));

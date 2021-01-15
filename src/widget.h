@@ -4,6 +4,7 @@
 //*	Mar 23,	2020	<MLS> Added crossedOut to widget struct
 //*	Jun 10,	2020	<MLS> Increased kMaxWidgets from 75 to 125
 //*	Jun 15,	2020	<MLS> Increased kMaxWidgets from 125 to 150
+//*	Jan 15,	2021	<MLS> Added Tab stops to widget definition
 //*****************************************************************************
 
 //#include	"widget.h"
@@ -80,6 +81,7 @@ enum
 
 #define	kMaxWidgetStrLen	512
 #define	kMaxHelpTextStrLen	48
+#define	kMaxTabStops		10
 //*****************************************************************************
 typedef struct
 {
@@ -94,6 +96,8 @@ typedef struct
 	int			height;
 	int			justification;
 	int			iconNum;
+	bool		hasTabs;
+	short		tabStops[kMaxTabStops];
 	char		textString[kMaxWidgetStrLen];
 	char		helpText[kMaxHelpTextStrLen];
 	CvScalar	bgColor;

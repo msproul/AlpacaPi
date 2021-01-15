@@ -1402,6 +1402,51 @@ int		ii;
 		SocketWriteData(mySocketFD,	"Slit Tracker is enabled<BR>\r\n");
 	#endif // _ENABLE_SLIT_TRACKER_
 
+		SocketWriteData(mySocketFD,	separaterLine);
+		//=============================================================================
+		//*	print out a table of active devices
+		SocketWriteData(mySocketFD,	"<CENTER>\r\n");
+
+
+		SocketWriteData(mySocketFD,	"The following devices are configured on this Remote Server:<P>\r\n");
+		SocketWriteData(mySocketFD,	"<TABLE BORDER=2>\r\n");
+		//*	do the header row
+		SocketWriteData(mySocketFD,	"\t<TR>\r\n");
+		SocketWriteData(mySocketFD,	"\t\t<TH><FONT COLOR=yellow>Device Type</TH>\r\n");
+		SocketWriteData(mySocketFD,	"\t\t<TH><FONT COLOR=yellow>Device Number</TH>\r\n");
+		SocketWriteData(mySocketFD,	"\t\t<TH><FONT COLOR=yellow>Device Name</TH>\r\n");
+		SocketWriteData(mySocketFD,	"\t\t<TH><FONT COLOR=yellow>Description</TH>\r\n");
+		SocketWriteData(mySocketFD,	"\t</TR>\r\n");
+
+		for (ii=0; ii<gDeviceCnt; ii++)
+		{
+			if (gAlpacaDeviceList[ii] != NULL)
+			{
+				SocketWriteData(mySocketFD,	"\t<TR>\r\n");
+
+				SocketWriteData(mySocketFD,	"\t\t<TD>\r\n");
+					SocketWriteData(mySocketFD,	gAlpacaDeviceList[ii]->cAlpacaName);
+				SocketWriteData(mySocketFD,	"\t\t</TD>\r\n");
+
+				sprintf(lineBuffer, "<TD><CENTER>%d</TD>\r\n", gAlpacaDeviceList[ii]->cDeviceNum);
+				SocketWriteData(mySocketFD,	lineBuffer);
+
+				SocketWriteData(mySocketFD,	"\t\t<TD>\r\n");
+					SocketWriteData(mySocketFD,	gAlpacaDeviceList[ii]->cDeviceName);
+				SocketWriteData(mySocketFD,	"\t\t</TD>\r\n");
+
+				SocketWriteData(mySocketFD,	"\t\t<TD>\r\n");
+					SocketWriteData(mySocketFD,	gAlpacaDeviceList[ii]->cDeviceDescription);
+				SocketWriteData(mySocketFD,	"\t\t</TD>\r\n");
+
+				SocketWriteData(mySocketFD,	"\t</TR>\r\n");
+
+			}
+		}
+
+		SocketWriteData(mySocketFD,	"</TABLE>\r\n");
+		SocketWriteData(mySocketFD,	"</CENTER>\r\n");
+
 		//**********************************************************
 		//*	Output the html for each device
 		for (ii=0; ii<gDeviceCnt; ii++)

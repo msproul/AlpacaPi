@@ -104,8 +104,8 @@ void	CreateManagementObject(void)
 ManagementDriver::ManagementDriver(const int argDevNum)
 	:AlpacaDriver(kDeviceType_Management)
 {
-	strcpy(cDeviceName, "ManagementDriver");
-
+	strcpy(cDeviceName,			"ManagementDriver");
+	strcpy(cDeviceDescription,	"Standard Alpaca Management driver");
 }
 
 //**************************************************************************************

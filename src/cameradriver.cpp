@@ -4227,6 +4227,7 @@ int					mySocketFD;
 	mySocketFD	=	reqData->socket;
 
 	SocketWriteData(mySocketFD,	"<CENTER>\r\n");
+	SocketWriteData(mySocketFD,	"<H2>Camera</H2>\r\n");
 	SocketWriteData(mySocketFD,	"<TABLE BORDER=1>\r\n");
 
 

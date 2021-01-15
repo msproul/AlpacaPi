@@ -767,10 +767,20 @@ char			myDataString[512];
 	SJP_Init(&jsonParser);
 
 	sprintf(alpacaString, "/api/v1/%s/%d/%s", alpacaDevice, cShutterAlpacaDevNum, alpacaCmd);
-	sprintf(myDataString, "%s&ClientID=%d&ClientTransactionID=%d",
-											dataString,
-											gClientID,
-											gClientTransactionID);
+	if (strlen(dataString) > 0)
+	{
+		sprintf(myDataString, "%s&ClientID=%d&ClientTransactionID=%d",
+												dataString,
+												gClientID,
+												gClientTransactionID);
+	}
+	else
+	{
+		sprintf(myDataString, "ClientID=%d&ClientTransactionID=%d",
+												gClientID,
+												gClientTransactionID);
+	}
+	CONSOLE_DEBUG_W_STR("Sending", myDataString);
 	sucessFlag	=	SendPutCommand(	&cShutterDeviceAddress,
 									cShutterPort,
 									alpacaString,

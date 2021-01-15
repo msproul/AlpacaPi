@@ -80,26 +80,19 @@ int		iii;
 	yLoc			+=	cTitleHeight;
 	yLoc			+=	2;
 
-#if 0
-	SetWidget(		kAlpacaList_ControllerVersion,	0,			yLoc,		cWidth,		cTitleHeight);
-	SetWidgetFont(	kAlpacaList_ControllerVersion,	kFont_Medium);
-	SetWidgetText(	kAlpacaList_ControllerVersion,	gFullVersionString);
-	SetWidgetTextColor(kAlpacaList_ControllerVersion,	CV_RGB(255,	255,	255));
-	yLoc			+=	cTitleHeight;
-	yLoc			+=	2;
-#endif // 0
-
+	//=======================================================
 	xLoc		=	10;
 	textBoxHt	=	14;
 	textBoxWd	=	cWidth - (xLoc + 3);
 	for (iii=kAlpacaList_AlpacaDev_01; iii<=kAlpacaList_AlpacaDev_Last; iii++)
 	{
 		SetWidget(				iii,	xLoc,			yLoc,		textBoxWd,		textBoxHt);
-		SetWidgetType(			iii,	kWidgetType_CheckBox);
+	//	SetWidgetType(			iii,	kWidgetType_CheckBox);
 		SetWidgetJustification(	iii,	kJustification_Left);
 	//	SetWidgetFont(			iii,	kFont_Medium);
 		SetWidgetFont(			iii,	kFont_Small);
 		SetWidgetTextColor(		iii,	CV_RGB(255,	255,	255));
+		SetWidgetBorder(		iii,	false);
 
 		yLoc			+=	textBoxHt;
 		yLoc			+=	4;
