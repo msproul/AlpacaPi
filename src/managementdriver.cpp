@@ -333,6 +333,9 @@ char				alpacaErrMsg[256];
 int					mySocket;
 
 
+	CONSOLE_DEBUG_W_STR("htmlData\t=", reqData->htmlData);
+	CONSOLE_DEBUG("------------------------------------------");
+
 	strcpy(alpacaErrMsg, "");
 
 	//*	make local copies of the data structure to make the code easier to read

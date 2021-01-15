@@ -99,6 +99,7 @@ int				jjj;
 	else
 	{
 		CONSOLE_DEBUG("Read failure - supportedactions");
+		CONSOLE_ABORT(__FUNCTION__);
 		cReadFailureCnt++;
 	}
 	return(validData);

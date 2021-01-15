@@ -267,6 +267,13 @@ int			objCntr;
 	gTextFont[kFont_RadioBtn]	=	cvFont(0.8, 1);
 	gTextFont[kFont_Medium]		=	cvFont(1.0, 1);
 	gTextFont[kFont_Large]		=	cvFont(1.7, 1);
+//	gTextFont[kFont_Simplex]	=	cvFont(1.7, 1);
+
+//	cvInitFont( &gTextFont[kFont_Simplex], CV_FONT_HERSHEY_COMPLEX, 0.5, 0.5, 0, 1, CV_AA );
+
+//	CONSOLE_DEBUG_W_DBL("font dx=", gTextFont[kFont_Simplex].dx);
+//	gTextFont[kFont_Simplex].dx	=	20.0;
+//	CONSOLE_DEBUG_W_DBL("font dx=", gTextFont[kFont_Simplex].dx);
 
 	//*	set defaults for the tabs
 	for (ii=0; ii<kMaxTabs; ii++)

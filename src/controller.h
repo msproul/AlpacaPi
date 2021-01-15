@@ -152,6 +152,7 @@ class Controller
 												bool			reportError=false);
 		virtual	void	AlpacaDisplayErrorMessage(const char *errorMsgString);
 
+
 				bool	AlpacaGetStatus_ReadAll(	sockaddr_in	*deviceAddress,
 													int			port,
 													const char	*deviceType,

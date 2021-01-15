@@ -34,6 +34,7 @@
 //*	May 10,	2020	<MLS> Added Slit graphing and averaging
 //*	May 23,	2020	<MLS> Added UpdateSlitLog()
 //*	May 31,	2020	<MLS> Added gravity vector processing
+//*	Jan 14,	2021	<MLS> Dome controller working with ASCOM/Remote
 //*****************************************************************************
 
 
@@ -92,7 +93,7 @@ int				gSlitLogIdx;
 
 
 
-#define	kDefaultUpdateDelta	10
+#define	kDefaultUpdateDelta	5
 
 //**************************************************************************************
 ControllerDome::ControllerDome(	const char			*argWindowName,

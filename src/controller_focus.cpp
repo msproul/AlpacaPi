@@ -330,7 +330,7 @@ void	ControllerFocus::UpdateFromFirstRead(void)
 void	ControllerFocus::UpdateWindowTabs_Everything(void)
 {
 	CONSOLE_DEBUG(__FUNCTION__);
-	exit(0);
+//	exit(0);
 	//*	This function should be overloaded
 //-	SetWidgetNumber(kTab_Focuser,	kFocusTab_rotDesired,		cRotatorDesiredPos);
 //-	SetWidgetNumber(kTab_Focuser,	kFocusTab_focDesired,		cFocuserDesiredPos);
@@ -342,7 +342,7 @@ void	ControllerFocus::UpdateWindowTabs_SwitchBits(unsigned char switchBits)
 {
 	//*	This function should be overloaded
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, "This function should be overloaded");
-	exit(0);
+//	exit(0);
 
 }
 
@@ -432,7 +432,7 @@ void	ControllerFocus::UpdateWindowTabs_ReadAll(bool hasReadAll)
 {
 	//*	This function should be overloaded
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, "This function should be overloaded");
-	exit(0);
+//	exit(0);
 }
 
 
@@ -526,6 +526,67 @@ bool		switchStatus;
 	}
 }
 
+//*****************************************************************************
+//*	Get Status, One At A Time
+//*****************************************************************************
+bool	ControllerFocus::AlpacaGetStatus_OneAAT(void)
+{
+bool		validData;
+int			myFailureCount;
+double		argDouble;
+int			argInt;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+
+
+	myFailureCount	=	0;
+	//========================================================
+	validData	=	AlpacaGetBooleanValue(	"focuser", "ismoving",	NULL,	&cIsMoving);
+	if (validData)
+	{
+		CONSOLE_DEBUG_W_NUM("cIsMoving\t=",	cIsMoving);
+	}
+	else
+	{
+		cReadFailureCnt++;
+		myFailureCount++;
+	}
+	//========================================================
+	validData	=	AlpacaGetIntegerValue(	"focuser", "position",	NULL,	&argInt);
+	if (validData)
+	{
+		CONSOLE_DEBUG_W_NUM("argInt\t=",	argInt);
+		UpdateFocuserPostion(argInt);
+	}
+	else
+	{
+		cReadFailureCnt++;
+		myFailureCount++;
+	}
+	//========================================================
+	validData	=	AlpacaGetDoubleValue(	"focuser", "temperature",	NULL,	&argDouble);
+	if (validData)
+	{
+		CONSOLE_DEBUG_W_DBL("argDouble\t=",	argDouble);
+		UpdateTemperature(argDouble);
+	}
+	else
+	{
+		cReadFailureCnt++;
+		myFailureCount++;
+	}
+
+
+	if (myFailureCount < 2)
+	{
+		validData	=	true;
+	}
+	else
+	{
+		validData	=	false;
+	}
+	return(validData);
+}
 
 //*****************************************************************************
 bool	ControllerFocus::AlpacaGetStatus(void)
@@ -556,7 +617,7 @@ char	lineBuff[128];
 	}
 	else
 	{
-//		validData	=	AlpacaGetStatus_OneAAT();	//*	One At A Time
+		validData	=	AlpacaGetStatus_OneAAT();	//*	One At A Time
 	}
 
 	if (validData)
@@ -574,6 +635,7 @@ char	lineBuff[128];
 		CONSOLE_DEBUG_W_STR("Offline-", cWindowName);
 		cOnLine	=	false;
 	}
+	CONSOLE_DEBUG(__FUNCTION__);
 	SetWindowIPaddrInfo(NULL, cOnLine);
 
 

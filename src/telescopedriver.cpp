@@ -360,6 +360,7 @@ int					mySocket;
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG_W_STR("contentData\t=", reqData->contentData);
 #endif // _DEBUG_CONFORM_
+	CONSOLE_DEBUG_W_STR("htmlData\t=", reqData->htmlData);
 
 	//*	make local copies of the data structure to make the code easier to read
 	mySocket	=	reqData->socket;

@@ -54,6 +54,7 @@
 #include	"controller_cam_normal.h"
 #include	"controller_dome.h"
 #include	"controller_focus.h"
+#include	"controller_focus_generic.h"
 #include	"controller_ml_nc.h"
 #include	"controller_ml_single.h"
 #include	"controller_switch.h"
@@ -324,13 +325,11 @@ int				myFocuserType;
 		}
 		else
 		{
-			myController	=	new ControllerFocus(windowName,
-													&remoteDevice->deviceAddress,
-													remoteDevice->port,
-													remoteDevice->alpacaDeviceNum,
-													myFocuserType);
-			CONSOLE_DEBUG("We should not be here");
-			exit(0);
+			myController	=	new ControllerFocusGeneric(	windowName,
+															&remoteDevice->deviceAddress,
+															remoteDevice->port,
+															remoteDevice->alpacaDeviceNum);
+
 		}
 		if (myController != NULL)
 		{

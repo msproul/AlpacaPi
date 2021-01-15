@@ -90,14 +90,15 @@ int		iii;
 #endif // 0
 
 	xLoc		=	10;
-	textBoxHt	=	17;
+	textBoxHt	=	14;
 	textBoxWd	=	cWidth - (xLoc + 3);
 	for (iii=kAlpacaList_AlpacaDev_01; iii<=kAlpacaList_AlpacaDev_Last; iii++)
 	{
 		SetWidget(				iii,	xLoc,			yLoc,		textBoxWd,		textBoxHt);
 		SetWidgetType(			iii,	kWidgetType_CheckBox);
 		SetWidgetJustification(	iii,	kJustification_Left);
-		SetWidgetFont(			iii,	kFont_Medium);
+	//	SetWidgetFont(			iii,	kFont_Medium);
+		SetWidgetFont(			iii,	kFont_Small);
 		SetWidgetTextColor(		iii,	CV_RGB(255,	255,	255));
 
 		yLoc			+=	textBoxHt;
@@ -105,12 +106,20 @@ int		iii;
 	}
 
 
+	SetWidget(				kAlpacaList_AlpacaDev_Total,	0,			yLoc,		cWidth / 2,		cTitleHeight);
+	SetWidgetFont(			kAlpacaList_AlpacaDev_Total,	kFont_Medium);
+	SetWidgetText(			kAlpacaList_AlpacaDev_Total,	"Total units =?");
+	SetWidgetJustification(	kAlpacaList_AlpacaDev_Total,	kJustification_Left);
+	SetWidgetTextColor(		kAlpacaList_AlpacaDev_Total,	CV_RGB(255,	255,	255));
+	yLoc			+=	cTitleHeight;
+	yLoc			+=	2;
 
 	SetAlpacaLogo(kAlpacaList_AlpacaLogo, -1);
 
 	//=======================================================
 	//*	IP address
-	SetIPaddressBoxes(kAlpacaList_IPaddr, kAlpacaList_Readall, kAlpacaList_AlpacaDrvrVersion, -1);
+//	SetIPaddressBoxes(kAlpacaList_IPaddr, kAlpacaList_Readall, kAlpacaList_AlpacaDrvrVersion, -1);
+	SetIPaddressBoxes(kAlpacaList_IPaddr, kAlpacaList_Readall, -1, -1);
 }
 
 
@@ -155,6 +164,10 @@ int		myDevCount;
 			myDevCount++;
 		}
 	}
+	sprintf(textString, "Total Alpaca Devices found=%d", gRemoteCnt);
+	SetWidgetText(kAlpacaList_AlpacaDev_Total, textString);
+
+
 	cAlpacaDevCnt		=	myDevCount;
 	if (cAlpacaDevCnt != cPrevAlpacaDevCnt)
 	{

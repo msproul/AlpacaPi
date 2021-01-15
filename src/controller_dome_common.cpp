@@ -113,6 +113,7 @@ bool	PARENT_CLASS::AlpacaGetStatus_OneAAT(void)
 bool		validData;
 int			myFailureCount;
 double		argDouble;
+int			argInt;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 #ifdef _ENABLE_SKYTRAVEL_
@@ -170,6 +171,31 @@ double		argDouble;
 		myFailureCount++;
 	}
 
+	//========================================================
+	validData	=	AlpacaGetDoubleValue(	"dome", "altitude",	NULL,	&argDouble);
+	if (validData)
+	{
+		CONSOLE_DEBUG_W_DBL("argDouble\t=",	argDouble);
+		UpdateShutterAltitude(argDouble);
+	}
+	else
+	{
+		cReadFailureCnt++;
+		myFailureCount++;
+	}
+
+	//========================================================
+	validData	=	AlpacaGetIntegerValue(	"dome", "shutterstatus",	NULL,	&argInt);
+	if (validData)
+	{
+		CONSOLE_DEBUG_W_NUM("argInt\t=",	argInt);
+		UpdateShutterStatus(argInt);
+	}
+	else
+	{
+		cReadFailureCnt++;
+		myFailureCount++;
+	}
 
 
 	if (myFailureCount < 2)

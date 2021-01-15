@@ -195,16 +195,13 @@ char			myVersionString[64];
 		//------------------------------------
 		if (strcmp(jsonParser->dataList[ii].keyword, "ARRAY-NEXT") == 0)
 		{
-
 			myRemoteDevice.deviceAddress	=	theDevice->deviceAddress;
 			myRemoteDevice.port				=	theDevice->port;
 			strcpy(myRemoteDevice.versionString, myVersionString);
 
-
 			UpdateRemoteList(&myRemoteDevice);
 
 			memset(&myRemoteDevice, 0, sizeof(TYPE_REMOTE_DEV));
-
 		}
 	}
 }
@@ -222,6 +219,8 @@ int					recvByteCnt;
 char				returnedData[2000];
 char				xmitBuffer[2000];
 SJP_Parser_t		jsonParser;
+struct timeval		timeoutLength;
+int					setOptRetCode;
 
 
 //	CONSOLE_DEBUG(__FUNCTION__);
@@ -230,12 +229,17 @@ SJP_Parser_t		jsonParser;
 	if (socket_desc >= 0)
 	{
 
-//		CONSOLE_DEBUG_W_NUM("Connecting to port ", theDevice->port);
-//		if (theDevice->port != 3006)
-//		{
-//			CONSOLE_DEBUG("Port number is wrong");
-//			theDevice->port	=	3006;
-//		}
+		//*	set a timeout
+		timeoutLength.tv_sec	=	3;
+		timeoutLength.tv_usec	=	0;
+		setOptRetCode			=	setsockopt(	socket_desc,
+												SOL_SOCKET,
+												SO_RCVTIMEO,
+												&timeoutLength,
+												sizeof(timeoutLength));
+
+
+		CONSOLE_DEBUG_W_NUM("Connecting to port ", theDevice->port);
 		remoteDev.sin_addr.s_addr	=	theDevice->deviceAddress.sin_addr.s_addr;
 		remoteDev.sin_family		=	AF_INET;
 		remoteDev.sin_port			=	htons(theDevice->port);
@@ -245,13 +249,32 @@ SJP_Parser_t		jsonParser;
 		{
 			strcpy(xmitBuffer, "GET ");
 			strcat(xmitBuffer, sendData);
+			strcat(xmitBuffer, " HTTP/1.1\r\n");
+			strcat(xmitBuffer, "Host: 127.0.0.1:6800\r\n");
+			strcat(xmitBuffer, "Connection: keep-alive\r\n");
+			strcat(xmitBuffer, "Accept: text/html,application/json");
+			strcat(xmitBuffer, "User-Agent: AlpacaPi\r\n");
+			strcat(xmitBuffer, "\r\n");
+
+
+		//	strcat(xmitBuffer, "?ClientID=1&ClientTransactionID=1234");
+		//	strcat(xmitBuffer, "\r\n");
+		//	strcat(xmitBuffer, "\r");
+
+			//?ClientID=1&ClientTransactionID=1234" -H "accept: application/json"
+
+
+			CONSOLE_DEBUG_W_STR("Sending:", xmitBuffer);
 			sendRetCode	=	send(socket_desc , xmitBuffer , strlen(xmitBuffer) , 0);
+			CONSOLE_DEBUG_W_NUM("sendRetCode ", sendRetCode);
 			if (sendRetCode >= 0)
 			{
 				recvByteCnt	=	recv(socket_desc, returnedData , 2000 , 0);
+				CONSOLE_DEBUG_W_NUM("recvByteCnt ", recvByteCnt);
 				if (recvByteCnt >= 0)
 				{
 					returnedData[recvByteCnt]	=	0;
+					CONSOLE_DEBUG_W_STR("Recived:", returnedData);
 //					printf("%s\r\n", returnedData);
 					SJP_Init(&jsonParser);
 					SJP_ParseData(&jsonParser, returnedData);
@@ -417,7 +440,7 @@ int					timeOutCntr;
 //	while (sendtoRetCode >= 0)
 	{
 		printf("*******************************************************************************\r\n");
-//		CONSOLE_DEBUG("Calling sendto");
+		CONSOLE_DEBUG_W_STR("Calling sendto with string:", broadCastMsg);
 		//*	send the broadcast message to everyone
 		sendtoRetCode	=	sendto(	gBroadcastSock,
 									broadCastMsg,
@@ -439,7 +462,7 @@ int					timeOutCntr;
 			{
 				buf[rcvCnt]	=	0;
 //				CONSOLE_DEBUG("We have data");
-//				CONSOLE_DEBUG_W_STR("buf=", buf);
+				CONSOLE_DEBUG_W_STR("buf=", buf);
 				SJP_Init(&jsonParser);
 				SJP_ParseData(&jsonParser, buf);
 //				SJP_DumpJsonData(&jsonParser);
@@ -483,6 +506,12 @@ int					timeOutCntr;
 			inet_ntop(AF_INET, &(from.sin_addr), str, INET_ADDRSTRLEN);
 		//	CONSOLE_DEBUG_W_STR("str=", str);
 			AddDeviceToList(&from, &jsonParser, 6800);
+
+//			from.sin_addr.s_addr	=	htonl((192 << 24) + (168 << 16) + (1 << 8) + 157);
+//			inet_ntop(AF_INET, &(from.sin_addr), str, INET_ADDRSTRLEN);
+//		//	CONSOLE_DEBUG_W_STR("str=", str);
+//			AddDeviceToList(&from, &jsonParser, 11111);
+
 		}
 //		ReadExternalIPlist();
 

@@ -1296,6 +1296,7 @@ CONTROLLER_OBJECTS=												\
 				$(OBJECT_DIR)controller.o						\
 				$(OBJECT_DIR)controllerAlpaca.o					\
 				$(OBJECT_DIR)controller_focus.o					\
+				$(OBJECT_DIR)controller_focus_generic.o			\
 				$(OBJECT_DIR)controller_switch.o				\
 				$(OBJECT_DIR)controller_camera.o				\
 				$(OBJECT_DIR)controller_cam_normal.o			\
@@ -1943,6 +1944,35 @@ $(OBJECT_DIR)controller_focus.o : 		$(SRC_DIR)controller_focus.cpp		\
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)controller_focus.cpp -o$(OBJECT_DIR)controller_focus.o
 
 #-------------------------------------------------------------------------------------
+$(OBJECT_DIR)controller_focus_generic.o : 	$(SRC_DIR)controller_focus_generic.cpp	\
+											$(SRC_DIR)controller_focus_generic.h	\
+											$(SRC_DIR)controller_focus.h			\
+											$(SRC_DIR)controller.h					\
+											$(SRC_DIR)windowtab_ml_single.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)controller_focus_generic.cpp -o$(OBJECT_DIR)controller_focus_generic.o
+
+
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)controller_ml_nc.o : 		$(SRC_DIR)controller_ml_nc.cpp		\
+										$(SRC_DIR)controller_ml_nc.h		\
+										$(SRC_DIR)windowtab_about.h			\
+										$(SRC_DIR)windowtab_nitecrawler.h	\
+										$(SRC_DIR)windowtab_graphs.h		\
+										$(SRC_DIR)controller.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)controller_ml_nc.cpp -o$(OBJECT_DIR)controller_ml_nc.o
+
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)controller_ml_single.o : 	$(SRC_DIR)controller_ml_single.cpp	\
+										$(SRC_DIR)controller_ml_single.h	\
+										$(SRC_DIR)windowtab_about.h			\
+										$(SRC_DIR)controller.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)controller_ml_single.cpp -o$(OBJECT_DIR)controller_ml_single.o
+
+
+
+#-------------------------------------------------------------------------------------
 $(OBJECT_DIR)controller_switch.o : 		$(SRC_DIR)controller_switch.cpp		\
 										$(SRC_DIR)controller_switch.h		\
 										$(SRC_DIR)controller.h
@@ -2007,24 +2037,6 @@ $(OBJECT_DIR)windowtab_image.o : 		$(SRC_DIR)windowtab_image.cpp		\
 										$(SRC_DIR)controller.h
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)windowtab_image.cpp -o$(OBJECT_DIR)windowtab_image.o
 
-
-
-#-------------------------------------------------------------------------------------
-$(OBJECT_DIR)controller_ml_nc.o : 		$(SRC_DIR)controller_ml_nc.cpp		\
-										$(SRC_DIR)controller_ml_nc.h		\
-										$(SRC_DIR)windowtab_about.h			\
-										$(SRC_DIR)windowtab_nitecrawler.h	\
-										$(SRC_DIR)windowtab_graphs.h		\
-										$(SRC_DIR)controller.h
-	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)controller_ml_nc.cpp -o$(OBJECT_DIR)controller_ml_nc.o
-
-
-#-------------------------------------------------------------------------------------
-$(OBJECT_DIR)controller_ml_single.o : 	$(SRC_DIR)controller_ml_single.cpp	\
-										$(SRC_DIR)controller_ml_single.h	\
-										$(SRC_DIR)windowtab_about.h			\
-										$(SRC_DIR)controller.h
-	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)controller_ml_single.cpp -o$(OBJECT_DIR)controller_ml_single.o
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)controller_usb.o : 		$(SRC_DIR)controller_usb.cpp		\

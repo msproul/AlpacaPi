@@ -28,6 +28,7 @@
 //*	Apr 30,	2020	<MLS> Created sendrequest_lib.c
 //*	May 28,	2020	<MLS> Added timeout to SendPutCommand()
 //*	Jun 22,	2020	<MLS> Added OpenSocketAndSendRequest()
+//*	Jan 14,	2021	<MLS> Fixed GET/PUT request to have all the right header stuff
 //*****************************************************************************
 
 #include	<stdio.h>
@@ -341,11 +342,24 @@ int					setOptRetCode;
 			PrintIPaddressToString(deviceAddress->sin_addr.s_addr, ipString);
 //			CONSOLE_DEBUG_W_STR("connect open", ipString);
 
+//	PUT /api/v1/dome/0/openshutter HTTP/1.1
+//	Host: test:6800
+//	User-Agent: curl/7.47.0
+//	accept: application/json
+//	Content-Type: application/x-www-form-urlencoded
+//	Content-Length: 32
+
+//	ClientID=2&ClientTransactionID=4
+
+
 			strcpy(xmitBuffer, "PUT ");
 			strcat(xmitBuffer, putCommand);
-			strcat(xmitBuffer, "\r\n");
-			strcat(xmitBuffer, "User-Agent: AlpacaPi\r\n");
-			strcat(xmitBuffer, "accept: application/json\r\n");
+
+		strcat(xmitBuffer, " HTTP/1.1\r\n");
+		strcat(xmitBuffer, "Host: 127.0.0.1:6800\r\n");
+		strcat(xmitBuffer, "User-Agent: AlpacaPi\r\n");
+//		strcat(xmitBuffer, "Connection: keep-alive\r\n");
+		strcat(xmitBuffer, "Accept: text/html,application/json\r\n");
 
 			if (dataString != NULL)
 			{
@@ -357,6 +371,11 @@ int					setOptRetCode;
 				strcat(xmitBuffer, dataString);
 				strcat(xmitBuffer, "\r\n");
 			}
+			else
+			{
+				strcat(xmitBuffer, "\r\n");
+			}
+			CONSOLE_DEBUG_W_STR("Sending:", xmitBuffer);
 
 			sendRetCode	=	send(socket_desc , xmitBuffer , strlen(xmitBuffer) , 0);
 			if (sendRetCode >= 0)

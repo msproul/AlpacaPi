@@ -46,16 +46,24 @@ enum
 	kAlpacaList_AlpacaDev_28,
 	kAlpacaList_AlpacaDev_29,
 	kAlpacaList_AlpacaDev_30,
-//	kAlpacaList_AlpacaDev_31,
-//	kAlpacaList_AlpacaDev_32,
+	kAlpacaList_AlpacaDev_31,
+	kAlpacaList_AlpacaDev_32,
+	kAlpacaList_AlpacaDev_33,
+	kAlpacaList_AlpacaDev_34,
+	kAlpacaList_AlpacaDev_35,
+	kAlpacaList_AlpacaDev_36,
+	kAlpacaList_AlpacaDev_37,
 
-	kAlpacaList_AlpacaDev_Last	=	kAlpacaList_AlpacaDev_30,
+	kAlpacaList_AlpacaDev_Last	=	kAlpacaList_AlpacaDev_37,
 
-	kAlpacaList_AlpacaDev_OutLine,
+//	kAlpacaList_AlpacaDev_OutLine,
 
+	kAlpacaList_AlpacaDev_Total,
 
 	kAlpacaList_AlpacaLogo,
-	kAlpacaList_AlpacaDrvrVersion,
+
+//	kAlpacaList_AlpacaDrvrVersion,
+
 	kAlpacaList_IPaddr,
 	kAlpacaList_Readall,
 

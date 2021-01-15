@@ -14,6 +14,7 @@
 //*	Feb 11,	2020	<MLS> Discovery thread now keeps track if a device goes offline
 //*	Mar 19,	2020	<MLS> Added GetMySubnetNumber()
 //*	Jan 14,	2021	<MLS> Apparently the DISCOVERY MESSAGE has changed, fixed
+//*	Jan 14,	2021	<MLS> Discovery protocol now working with ASCOM Device Hub
 //*-------------------------------------------------------------------------
 //*	Jan 13,	2121	<TODO> Add external IP list to discovery thread
 //*****************************************************************************
@@ -88,6 +89,8 @@ char				responseBuff[128];
 int					socketOption;
 int					setSocketRtnCde;
 bool				validDiscoveryRequest;
+char				ipAddrSt[48];
+
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 	printf("Staring discovery listen thread %s\r\n", __FUNCTION__);
@@ -135,8 +138,11 @@ bool				validDiscoveryRequest;
 				//*	this was the original discovery query
 				if (strncmp(readBuf,	"alpaca discovery", 16) == 0)
 				{
-					CONSOLE_DEBUG_W_STR("Old style discovery request\t=", readBuf);
 					validDiscoveryRequest	=	true;
+
+					CONSOLE_DEBUG_W_STR("Old style discovery request\t=", readBuf);
+					inet_ntop(AF_INET, &(fromAddress.sin_addr), ipAddrSt, INET_ADDRSTRLEN);
+					CONSOLE_DEBUG_W_STR("From\t=", ipAddrSt);
 				}
 				if (strncasecmp(readBuf,	"alpacadiscovery",  15) == 0)
 				{
@@ -145,8 +151,11 @@ bool				validDiscoveryRequest;
 				//*	double check just to make sure
 				if ((validDiscoveryRequest == false) && (strncmp(readBuf, "alpaca", 6) == 0))
 				{
-					CONSOLE_DEBUG_W_STR("Incomplete discovery request\t=", readBuf);
 					validDiscoveryRequest	=	true;
+
+					CONSOLE_DEBUG_W_STR("Incomplete discovery request\t=", readBuf);
+					inet_ntop(AF_INET, &(fromAddress.sin_addr), ipAddrSt, INET_ADDRSTRLEN);
+					CONSOLE_DEBUG_W_STR("From\t=", ipAddrSt);
 				}
 				if (validDiscoveryRequest)
 				{
@@ -319,6 +328,13 @@ char				xmitBuffer[2000];
 		{
 			strcpy(xmitBuffer, "GET ");
 			strcat(xmitBuffer, sendData);
+
+			strcat(xmitBuffer, " HTTP/1.1\r\n");
+			strcat(xmitBuffer, "Host: 127.0.0.1:6800\r\n");
+			strcat(xmitBuffer, "User-Agent: AlpacaPi\r\n");
+			strcat(xmitBuffer, "Accept: text/html,application/json\r\n");
+			strcat(xmitBuffer, "\r\n");
+
 			sendRetCode	=	send(socket_desc , xmitBuffer , strlen(xmitBuffer) , 0);
 			if (sendRetCode >= 0)
 			{
@@ -415,7 +431,7 @@ int		ii;
 bool	newDevice;
 int		theDeviceIdx;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	newDevice		=	true;
 	theDeviceIdx	=	-1;
 	for (ii=0; ii<gAlpacaUnitCnt; ii++)
@@ -741,7 +757,7 @@ int					sockOptValue;
 
 				inet_ntop(AF_INET, &(from.sin_addr), ipAddressStr, INET_ADDRSTRLEN);
 		//		CONSOLE_DEBUG_W_HEX("from.sin_addr\t=", from.sin_addr);
-				CONSOLE_DEBUG_W_STR("from.sin_addr\t=", ipAddressStr);
+		//		CONSOLE_DEBUG_W_STR("from.sin_addr\t=", ipAddressStr);
 			}
 			else if (rcvCnt == 0)
 			{

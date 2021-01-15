@@ -53,6 +53,7 @@ enum
 	kFont_Medium,
 	kFont_RadioBtn,
 	kFont_Small,
+//	kFont_Simplex,
 
 };
 

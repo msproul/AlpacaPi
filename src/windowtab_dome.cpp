@@ -403,6 +403,9 @@ SJP_Parser_t	jsonResponse;
 			ToggleSlaveMode();
 			break;
 
+		//*	the shutter commands use a different routine to support the external shutter device
+		//*	this routine takes care of external/internal shutter control
+		//*	if external shutter is not enabled, it calls the same routine as above
 		case kDomeBox_OpenShutter:
 			SendShutterCommand("openshutter");
 			break;
@@ -432,6 +435,8 @@ SJP_Parser_t	jsonResponse;
 //*****************************************************************************
 void	WindowTabDome::SendShutterCommand(const char *shutterCmd)
 {
+	CONSOLE_DEBUG(__FUNCTION__);
+
 #ifdef _ENABLE_EXTERNAL_SHUTTER_
 
 	#ifndef _ENABLE_SKYTRAVEL_
@@ -453,6 +458,7 @@ void	WindowTabDome::SendShutterCommand(const char *shutterCmd)
 bool			validData;
 SJP_Parser_t	jsonResponse;
 
+	CONSOLE_DEBUG(__FUNCTION__);
 	validData	=	SendAlpacaCmdToDome(shutterCmd,	"",	&jsonResponse);
 
 #endif
