@@ -34,8 +34,8 @@
 #define	kMaxControllers	10
 
 
-#define	kMaxTabs	8
-#define	kFontCnt	5
+#define	kMaxTabs	10
+#define	kFontCnt	8
 #define	kButtonCnt	30
 
 extern CvFont		gTextFont[kFontCnt];
@@ -80,6 +80,7 @@ class Controller
 				void	DrawWidgetRadioButton(TYPE_WIDGET *theWidget);
 				void	DrawWidgetSlider(TYPE_WIDGET *theWidget);
 				void	DrawWidgetText(TYPE_WIDGET *theWidget);
+				void	DrawWidgetTextWithTabs(TYPE_WIDGET *theWidget);
 				void	DrawWidgetProgressBar(TYPE_WIDGET *theWidget);
 
 
@@ -139,12 +140,12 @@ class Controller
 		virtual	void	ProcessDoubleClick(const int buttonIdx);
 		virtual	void	RefreshWindow(void);
 
-				bool	AlpacaGetSupportedActions(	sockaddr_in	*deviceAddress,
-													int			devicePort,
-													const char	*deviceType,
-													const int	deviceNum);
-				bool	AlpacaGetSupportedActions(const char *deviceType, const int deviceNum);
-		virtual	void	AlpacaProcessSupportedAction(	const char	*deviceType,
+				bool	AlpacaGetSupportedActions(		sockaddr_in	*deviceAddress,
+														int			devicePort,
+														const char	*deviceTypeStr,
+														const int	deviceNum);
+				bool	AlpacaGetSupportedActions(		const char *deviceTypeStr, const int deviceNum);
+		virtual	void	AlpacaProcessSupportedAction(	const char	*deviceTypeStr,
 														const int	deviveNum,
 														const char	*valueString);
 				int		AlpacaCheckForErrors(	SJP_Parser_t	*jsonParser,
@@ -155,12 +156,12 @@ class Controller
 
 				bool	AlpacaGetStatus_ReadAll(	sockaddr_in	*deviceAddress,
 													int			port,
-													const char	*deviceType,
+													const char	*deviceTypeStr,
 													const int	deviceNum);
 
-				bool	AlpacaGetStatus_ReadAll(const char *deviceType, const int deviceNum);
-		virtual	void	AlpacaProcessReadAll(	const char	*deviceType,
-												const int deviceNum,
+				bool	AlpacaGetStatus_ReadAll(const char	*deviceTypeStr, const int deviceNum);
+		virtual	void	AlpacaProcessReadAll(	const char	*deviceTypeStr,
+												const int	deviceNum,
 												const char	*keywordString,
 												const char	*valueString);
 
@@ -215,6 +216,15 @@ class Controller
 												int			*uint32array,
 												int			arrayLength,
 												int			*actualValueCnt);
+				bool	AlpacaGetIntegerArrayShortLines(	const char	*alpacaDevice,
+												const int	alpacaDevNum,
+												const char	*alpacaCmd,
+												const char	*dataString,
+												int			*uint32array,
+												int			arrayLength,
+												int			*actualValueCnt);
+
+
 		int			cDebugCounter;
 		bool		cKeepRunning;
 		bool		cUpdateProtect;
@@ -253,15 +263,15 @@ class Controller
 		//*	Alpaca stuff
 		bool				cReadStartup;
 		bool				cOnLine;
-		bool				cHasReadAll;
+		bool				cHas_readall;
 		bool				cForceAlpacaUpdate;
 		int					cLastAlpacaErrNum;
 		char				cLastAlpacaErrStr[512];
 
 		char				cAlpacaVersionString[128];
 		char				cLastAlpacaCmdString[256];
-		char				cAlpacaDeviceType[48];
-		char				cAlpacaDeviceName[64];
+		char				cAlpacaDeviceTypeStr[48];
+		char				cAlpacaDeviceNameStr[64];
 		bool				cValidIPaddr;
 		struct sockaddr_in	cDeviceAddress;
 		int					cPort;
@@ -277,12 +287,21 @@ class Controller
 
 };
 
+#ifdef __cplusplus
+	extern "C" {
+#endif
 
-uint32_t	millis(void);
+//uint32_t	millis(void);
 CvScalar	Color16BitTo24Bit(const unsigned int color16);
 void		Controller_HandleKeyDown(const int keyPressed);
 void		LoadAlpacaLogo(void);
 bool		IsTrueFalse(const char *trueFalseString);
+bool		CheckForOpenWindowByName(const char *windowName);
+
+#ifdef __cplusplus
+}
+#endif
+
 
 extern	Controller	*gControllerList[kMaxControllers];
 extern	int			gControllerCnt;

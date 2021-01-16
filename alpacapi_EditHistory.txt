@@ -1,4 +1,4 @@
-History Comments found =1020 in 213 files
+History Comments found =1030 in 216 files
 eph.c:10                 	//*	May  2,	1996	<MLS> (Mark Sproul) Starting on Sky Travel for Frank and Cliff
 StarData.c:7             	//*	May  2,	1996	<MLS> (Mark Sproul) Starting on Sky Travel for Frank and Cliff
 StarData.c:8             	//*	Nov 18,	1999	<MLS> restarting efforts
@@ -513,7 +513,7 @@ cameradriver.cpp:93      	//*	Mar  9,	2020	<MLS> Changed Get_Status() to Get_Rea
 controller.cpp:31        	//*	Mar  9,	2020	<MLS> Added cLastAlpacaErrNum & cLastAlpacaErrStr
 controller.cpp:32        	//*	Mar  9,	2020	<MLS> Control-q now sets keep running flag to false and quits
 controller_camera.cpp:27 	//*	Mar  9,	2020	<MLS> Added flag so we dont keep asking for ccd temp when not supported
-controller_camera.cpp:28 	//*	Mar  9,	2020	<MLS> Added cHasReadAll flag
+controller_camera.cpp:28 	//*	Mar  9,	2020	<MLS> Added cHas_readall flag
 controller_camera.cpp:29 	//*	Mar  9,	2020	<MLS> Added AlpacaGetStatus_ReadAll() & AlpacaGetStatus_OneAAT()
 controller_main.cpp:23   	//*	Mar  9,	2020	<MLS> Added ability to quit
 windowtab_camera.cpp:24  	//*	Mar  9,	2020	<MLS> Added SetTempartueEnable()
@@ -538,7 +538,7 @@ controller.cpp:37        	//*	Mar 15,	2020	<MLS> Added kFont_RadioBtn
 domedriver.cpp:50        	//*	Mar 15,	2020	<MLS> Added Get_Readall()
 windowtab_camsettings.cpp:21	//*	Mar 15,	2020	<MLS> Created windowtab_camsettings.cpp
 windowtab_camsettings.cpp:22	//*	Mar 15,	2020	<MLS> Added SetObjectText()
-controller_ml_nc.cpp:33  	//*	Mar 16,	2020	<MLS> Added cHasReadAll flag
+controller_ml_nc.cpp:33  	//*	Mar 16,	2020	<MLS> Added cHas_readall flag
 controller_ml_nc.cpp:34  	//*	Mar 16,	2020	<MLS> Changed AlpacaGetStatus() to AlpacaGetStatus_ReadAll()
 windowtab_camera.cpp:26  	//*	Mar 16,	2020	<MLS> Added error message box to camera display
 cameradriver.cpp:94      	//*	Mar 17,	2020	<MLS> Fixed bug, imagedata directory was not being closed
@@ -1004,32 +1004,43 @@ windowtab_alpacalist.cpp:21	//*	Jan 13,	2021	<MLS> Created windowtab_alpacalist.
 controller_dome.cpp:37   	//*	Jan 14,	2021	<MLS> Dome controller working with ASCOM/Remote
 controller_focus_generic.cpp:21	//*	Jan 14,	2021	<MLS> Created controller_focus_generic.cpp
 controller_focus_generic.cpp:22	//*	Jan 14,	2021	<MLS> Focuser controller working with ASCOM/Remote
+controller_switch.cpp:32 	//*	Jan 14,	2021	<MLS> Added AlpacaProcessSupportedAction()
+controller_switch.cpp:33 	//*	Jan 14,	2021	<MLS> Switch controller working with ASCOM Remote Server Console/simulator
 discoverythread.c:16     	//*	Jan 14,	2021	<MLS> Apparently the DISCOVERY MESSAGE has changed, fixed
 discoverythread.c:17     	//*	Jan 14,	2021	<MLS> Discovery protocol now working with ASCOM Device Hub
 sendrequest_lib.c:31     	//*	Jan 14,	2021	<MLS> Fixed GET/PUT request to have all the right header stuff
+cameradriver_TOUP.cpp:35 	//*	Jan 15,	2021	<PDB> Found bug in GetImage_ROI_info()
+controller.cpp:54        	//*	Jan 15,	2021	<MLS> Added DrawWidgetTextWithTabs()
+controller_camera.cpp:46 	//*	Jan 15,	2021	<MLS> Added DownloadImage_rgbarray() & DownloadImage_imagearray()
 raspberrypi_relaylib.c:26	//*	Jan 15,	2021	<MLS> Raspberry Pi 64 bit gcc/g++ does not define __arm__
 widget.h:7               	//*	Jan 15,	2021	<MLS> Added Tab stops to widget definition
 windowtab.cpp:45         	//*	Jan 15,	2021	<MLS> Added SetWidgetTabStops()
 windowtab_dome.cpp:26    	//*	Jan 15,	2021	<MLS> Got clarification of SUPPORTEDACTIONS cmd, fixed hidden controls
+alpacadriver_helper.c:10 	//*	Jan 16,	2021	<MLS> Created alpacadriver_helper.c
+controller.cpp:55        	//*	Jan 16,	2021	<MLS> Added Close box in Window Tab area
+controller_main.cpp:27   	//*	Jan 16,	2021	<MLS> Added CheckForOpenWindowByName()
+HostNames.c:17           	//*	Jan 16,	2021	<MLS> Created HostNames.c
+widget.h:8               	//*	Jan 16,	2021	<MLS> Added font size kFont_TextList
 cameradriver.cpp:123     	//*	Jan  1,	2119	<TODO> ----------------------------------------
 cameradriver.cpp:124     	//*	Jun 26,	2119	<TODO> Add support for sub frames
 cameradriver_png.cpp:33  	//*	Jan 31,	2120	<TODO> Add support for libpng
-cameradriver_TOUP.cpp:36 	//*	Feb  4,	2120	<TODO> Add 16 bit readout to Toupcam
-cameradriver_TOUP.cpp:37 	//*	Feb 16,	2120	<TODO> Add gain setting to Toupcam
+cameradriver_TOUP.cpp:37 	//*	Feb  4,	2120	<TODO> Add 16 bit readout to Toupcam
+cameradriver_TOUP.cpp:38 	//*	Feb 16,	2120	<TODO> Add gain setting to Toupcam
 multicam.cpp:22          	//*	Mar 29,	2120	<TODO> Change multicam commands to match updated camera commands
 cameradriver_ASI.cpp:1023	//*	Jun 29,	2120	<TODO> Change video timestamp to an option
 discoverythread.c:19     	//*	Jan 13,	2121	<TODO> Add external IP list to discovery thread
-History Comments found   = 1020 in 213 files
-Total lines              = 104413
-Total comment Lines      = 12495
-Total comments           = 14963
-Total history comments   = 1020
-Total C files            = 30
+History Comments found   = 1030 in 216 files
+Total lines              = 105632
+Total comment Lines      = 12603
+Total comments           = 15087
+Total history comments   = 1030
+Total C files            = 32
 Total C++ files          = 77
-Total H files            = 105
-Preprocssor cnt          = 3192
-Total SLOC               = 71430
-Total SLOC-Logical       = 56070
+Total H files            = 106
+Preprocssor cnt          = 3215
+Total SLOC               = 72338
+Total SLOC-Logical       = 56698
 Programmer comment summary
-MLS             = 1009
+MLS             = 1018
 TODO            =    8
+PDB             =    1

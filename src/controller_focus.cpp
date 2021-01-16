@@ -416,7 +416,7 @@ bool			validData;
 	validData	=	AlpacaGetSupportedActions("focuser", cAlpacaDevNum);
 	if (validData)
 	{
-		UpdateWindowTabs_ReadAll(cHasReadAll);
+		UpdateWindowTabs_ReadAll(cHas_readall);
 	}
 	else
 	{
@@ -437,11 +437,17 @@ void	ControllerFocus::UpdateWindowTabs_ReadAll(bool hasReadAll)
 
 
 //*****************************************************************************
-void	ControllerFocus::AlpacaProcessReadAll(const char *deviceType, const char *keywordString, const char *valueString)
+void	ControllerFocus::AlpacaProcessReadAll(	const char	*deviceType,
+												const int	deviceNum,
+												const char	*keywordString,
+												const char	*valueString)
 {
 int			argValue;
 double		argDouble;
 bool		switchStatus;
+
+	CONSOLE_DEBUG_W_STR("deviceType\t=", deviceType);
+	CONSOLE_DEBUG_W_STR(keywordString, valueString);
 
 	if (strcasecmp(keywordString, "ismoving") == 0)
 	{
@@ -597,7 +603,7 @@ char	lineBuff[128];
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 	cIsMoving	=	false;
 	validData	=	false;
-	if (cHasReadAll)
+	if (cHas_readall)
 	{
 		validData	=	AlpacaGetStatus_ReadAll("focuser", cAlpacaDevNum);
 		sprintf(lineBuff, "%s-%s", cModelName, cSerialNumber);
@@ -842,7 +848,7 @@ double			newDegreesValue;
 
 	if (cValidIPaddr)
 	{
-		if (cHasReadAll)
+		if (cHas_readall)
 		{
 			//================================================
 			//*	stepabsolute is an added command by MLS

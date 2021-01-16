@@ -19,6 +19,7 @@ rm $LOGFILENAME
 
 touch $FILE_SEP_NAME
 echo "*******************************************" >> $LOGFILENAME
+echo -n "Start time = " >> $LOGFILENAME
 date >> $LOGFILENAME
 
 MACHINE=`uname -m`
@@ -47,7 +48,7 @@ else
 	echo "$OPENCV_INCLUDE not found" >> $LOGFILENAME
 fi
 
-make client
+make clean client
 
 ################################
 # if openCV is present, we can compile the clients
@@ -125,6 +126,11 @@ then
 else
 	echo "OpenCV was not found so client apps were not built" >> $LOGFILENAME
 fi
+
+
+echo -n "End time = " >> $LOGFILENAME
+date >> $LOGFILENAME
+
 
 cat  $LOGFILENAME
 

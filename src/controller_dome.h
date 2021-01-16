@@ -44,7 +44,7 @@ extern	bool	gUpdateSLitWindow;
 //**************************************************************************************
 enum
 {
-	kTab_Dome	=	0,
+	kTab_Dome	=	1,
 	kTab_SlitTracker,
 	kTab_SlitGraph,
 	kTab_About,

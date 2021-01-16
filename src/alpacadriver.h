@@ -54,6 +54,9 @@
 	#include	"RequestData.h"
 #endif // _REQUESTDATA_H_
 
+#ifndef _ALPACA_HELPER_H_
+	#include	"alpacadriver_helper.h"
+#endif // _ALPACA_HELPER_H_
 
 #ifndef	_ALPACA_DEFS_H_
 	#include	"alpaca_defs.h"
@@ -113,14 +116,6 @@ typedef struct
 
 } TYPE_CmdEntry;
 
-//*****************************************************************************
-#define	kMaxDeviceLen	32
-typedef struct
-{
-	char	deviceType[kMaxDeviceLen];
-	int		enumValue;
-
-} TYPE_DeviceTable;
 
 
 //*****************************************************************************
@@ -150,29 +145,6 @@ typedef struct
 
 } TYPE_CMD_STATS;
 
-
-
-//*****************************************************************************
-typedef enum
-{
-	kDeviceType_Management	=	0,
-	kDeviceType_Camera,
-	kDeviceType_Dome,
-	kDeviceType_Filterwheel,
-	kDeviceType_Focuser,
-	kDeviceType_Rotator,
-	kDeviceType_Telescope,
-	kDeviceType_Observingconditions,
-	kDeviceType_SafetyMonitor,
-	kDeviceType_Shutter,
-	kDeviceType_Switch,
-	kDeviceType_Multicam,
-	kDeviceType_SlitTracker,
-	kDeviceType_CoverCalibrator,
-
-	kDeviceType_last
-
-} TYPE_DEVICETYPE;
 
 #define	kMagicCookieValue	0x55AA7777
 
@@ -245,6 +217,8 @@ class AlpacaDriver
 				TYPE_UniqueID		cUniqueID;
 
 
+				int					cTotalCmdsProcessed;
+				int					cTotalCmdErrors;
 
 				//=========================================================
 				//*	command statistics
@@ -311,40 +285,12 @@ void			GenerateHTMLcmdLinkTable(int socketFD, const char *deviceName, const int 
 int				GetFilterWheelCnt(void);
 int				CountDevicesByType(const int deviceType);
 AlpacaDriver	*FindDeviceByType(const int deviceType);
-void			GetDeviceTypeFromEnum(const int deviceEnum, char *deviceTypeString);
 bool			GetCmdNameFromTable(const int cmdNumber, char *comandName, const TYPE_CmdEntry *cmdTable, char *getPut);
 void			LogToDisk(const int whichLogFile, TYPE_GetPutRequestData *reqData);
 void			GetAlpacaName(TYPE_DEVICETYPE deviceType, char *alpacaName);
 
 
 //*****************************************************************************
-#ifdef _ENABLE_CONSOLE_DEBUG_
-//	#define	_DEBUG_TIMING_
-#endif
-#if defined(_DEBUG_TIMING_) && defined(_ENABLE_CONSOLE_DEBUG_) && !defined(SETUP_TIMING)
-
-	#define		SETUP_TIMING()					\
-		uint32_t		tStartMillisecs;		\
-		uint32_t		tStopMillisecs;			\
-		uint32_t		tDeltaMillisecs;		\
-		tStartMillisecs	=	millis();
-
-
-	#define		START_TIMING()								\
-					tStartMillisecs	=	millis();
-
-
-	//*	this macro calculates delta milliseconds for timing testing
-	#define		DEBUG_TIMING(string)									\
-				tStopMillisecs	=	millis();							\
-				tDeltaMillisecs	=	tStopMillisecs - tStartMillisecs;	\
-				CONSOLE_DEBUG_W_NUM(string,	tDeltaMillisecs);
-
-#else
-	#define		SETUP_TIMING()
-	#define		START_TIMING()
-	#define		DEBUG_TIMING(string)
-#endif
 
 //*	this is a macro to help make all error messages consistent
 #define	GENERATE_ALPACAPI_ERRMSG(buffer,errmsg)		sprintf(buffer, "AlpacaPi: %s. L#%d", errmsg, __LINE__);

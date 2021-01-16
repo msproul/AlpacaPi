@@ -333,8 +333,8 @@ char				alpacaErrMsg[256];
 int					mySocket;
 
 
-	CONSOLE_DEBUG_W_STR("htmlData\t=", reqData->htmlData);
-	CONSOLE_DEBUG("------------------------------------------");
+//	CONSOLE_DEBUG_W_STR("htmlData\t=", reqData->htmlData);
+//	CONSOLE_DEBUG("------------------------------------------");
 
 	strcpy(alpacaErrMsg, "");
 

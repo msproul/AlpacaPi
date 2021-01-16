@@ -25,7 +25,7 @@
 //*	Mar  8,	2020	<MLS> Added camera temperature logging
 //*	Mar  8,	2020	<MLS> Gain now updating properly if set from elsewhere
 //*	Mar  9,	2020	<MLS> Added flag so we dont keep asking for ccd temp when not supported
-//*	Mar  9,	2020	<MLS> Added cHasReadAll flag
+//*	Mar  9,	2020	<MLS> Added cHas_readall flag
 //*	Mar  9,	2020	<MLS> Added AlpacaGetStatus_ReadAll() & AlpacaGetStatus_OneAAT()
 //*	Mar 10,	2020	<MLS> Re-read startup info when coming back online
 //*	Mar 14,	2020	<MLS> On exit, turn the cooler off if it is on.
@@ -43,6 +43,7 @@
 //*	Jun 25,	2020	<MLS> Added UpdateCameraTemperature()
 //*	Jun 29,	2020	<MLS> Added UpdateBackgroundColor()
 //*	Jun 29,	2020	<MLS> Added UpdateFreeDiskSpace()
+//*	Jan 15,	2021	<MLS> Added DownloadImage_rgbarray() & DownloadImage_imagearray()
 //*****************************************************************************
 
 //*	todo
@@ -121,9 +122,16 @@ int		iii;
 	cDisplayImage			=	false;
 	cHasFilterWheel			=	false;
 	cExposure				=	0.001;
+	cCameraState_imageready	=	false;
 
 	cLiveMode				=	false;
 	cSideBar				=	false;
+
+	cHas_autoexposure		=	false;
+	cHas_exposuretime		=	false;
+	cHas_livemode			=	false;
+	cHas_rgbarray			=	false;
+
 
 	//*	clear list of readout modes
 	for (iii=0; iii<kMaxReadOutModes; iii++)
@@ -158,8 +166,8 @@ int		iii;
 		cDeviceAddress	=	alpacaDevice->deviceAddress;
 		cPort			=	alpacaDevice->port;
 
-		strcpy(cAlpacaDeviceType,	alpacaDevice->deviceType);
-		strcpy(cAlpacaDeviceName,	alpacaDevice->deviceName);
+		strcpy(cAlpacaDeviceTypeStr,	alpacaDevice->deviceTypeStr);
+		strcpy(cAlpacaDeviceNameStr,	alpacaDevice->deviceNameStr);
 	}
 
 	GetConfiguredDevices();
@@ -490,7 +498,7 @@ int				readOutModeIdx;
 	if (validData)
 	{
 		CONSOLE_DEBUG_W_STR("Valid supported actions:", cWindowName);
-		//*	AlpacaGetSupportedActions() sets the cHasReadAll appropriately
+		//*	AlpacaGetSupportedActions() sets the cHas_readall appropriately
 		UpdateReadAllStatus();
 	}
 	else
@@ -606,6 +614,37 @@ int				readOutModeIdx;
 }
 
 //*****************************************************************************
+void	ControllerCamera::AlpacaProcessSupportedAction(	const char	*deviceTypeStr,
+														const int	deviveNum,
+														const char	*valueString)
+{
+	CONSOLE_DEBUG_W_STR("valueString\t=", valueString);
+
+	if (strcasecmp(valueString, "readall") == 0)
+	{
+		cHas_readall	=	true;
+	}
+	else if (strcasecmp(valueString, "autoexposure") == 0)
+	{
+		cHas_autoexposure	=	true;
+	}
+	else if (strcasecmp(valueString, "exposuretime") == 0)
+	{
+		cHas_exposuretime	=	true;
+	}
+	else if (strcasecmp(valueString, "livemode") == 0)
+	{
+		cHas_livemode	=	true;
+	}
+	else if (strcasecmp(valueString, "rgbarray") == 0)
+	{
+		cHas_rgbarray	=	true;
+	}
+
+
+}
+
+//*****************************************************************************
 //http://newt16:6800/api/v1/filterwheel/0/names
 //*****************************************************************************
 bool	ControllerCamera::AlpacaGetFilterWheelStartup(void)
@@ -710,7 +749,7 @@ int	iii;
 }
 
 //*****************************************************************************
-void	ControllerCamera::AlpacaProcessReadAll(	const char	*deviceType,
+void	ControllerCamera::AlpacaProcessReadAll(	const char	*deviceTypeStr,
 												const int	deviceNum,
 												const char	*keywordString,
 												const char	*valueString)
@@ -718,125 +757,13 @@ void	ControllerCamera::AlpacaProcessReadAll(	const char	*deviceType,
 
 //	CONSOLE_DEBUG_W_2STR("json=",	keywordString, valueString);
 
+	//*	these are supposed to be in alphabetic order for ease of reading the code
 
-	if (strcasecmp(keywordString, "cameraxsize") == 0)
+	if (strcasecmp(keywordString, "autoexposure") == 0)
 	{
-		cCameraSizeX	=	atoi(valueString);
-	}
-	else if (strcasecmp(keywordString, "cameraysize") == 0)
-	{
-		cCameraSizeY	=	atoi(valueString);
-		UpdateCameraSize();
-	}
-	else if (strcasecmp(keywordString, "ccdtemperature") == 0)
-	{
-//		CONSOLE_DEBUG("ccdtemperature");
-		//=================================================================================
-		//*	ccdtemperature
-		cCCDtemperature	=	atof(valueString);
-		UpdateCameraTemperature();
-		LogCameraTemp(cCCDtemperature);
-	}
-	else if (strcasecmp(keywordString, "exposuretime") == 0)
-	{
-//		CONSOLE_DEBUG("exposuretime");
-		//=================================================================================
-		//*	exposure
-		cExposure	=	atof(valueString);
-
-		UpdateCameraExposure();
-	}
-	else if (strcasecmp(keywordString, "gain") == 0)
-	{
-//		CONSOLE_DEBUG("gain");
-		//=================================================================================
-		//*	gain
-		cGain	=	atoi(valueString);
-		UpdateCameraGain();
-	}
-	else if (strcasecmp(keywordString, "readoutmode") == 0)
-	{
-//		CONSOLE_DEBUG("readoutmode");
-		//=================================================================================
-		//*	readoutmode
-		cReadOutMode	=	atoi(valueString);
-		UpdateCurrReadoutMode();
-	}
-	else if (strcasecmp(keywordString, "livemode") == 0)
-	{
-		//=================================================================================
-		//*	livemode
-		cLiveMode	=	IsTrueFalse(valueString);
-	}
-	else if (strcasecmp(keywordString, "sidebar") == 0)
-	{
-		//=================================================================================
-		//*	sidebar
-		cSideBar	=	IsTrueFalse(valueString);
-	}
-	else if (strcasecmp(keywordString, "autoexposure") == 0)
-	{
-//		CONSOLE_DEBUG("autoexposure");
 		//=================================================================================
 		//*	auto exposure
 		cAutoExposure	=	IsTrueFalse(valueString);
-	}
-	else if (strcasecmp(keywordString, "cooleron") == 0)
-	{
-//		CONSOLE_DEBUG("cooleron");
-		//=================================================================================
-		//*	cooler state
-		cCoolerOn	=	IsTrueFalse(valueString);
-		UpdateCoolerState();
-	}
-	else if (strcasecmp(keywordString, "filenameroot") == 0)
-	{
-//		CONSOLE_DEBUG("filenameroot");
-		//=================================================================================
-		//*	filenameroot
-		if (strlen(valueString) > 0)
-		{
-			UpdateReceivedFileName(valueString);
-		}
-	}
-	else if (strcasecmp(keywordString, "camerastate") == 0)
-	{
-//		CONSOLE_DEBUG("camerastate");
-		//=================================================================================
-		//*	camerastate
-		cAlpacaCameraState	=	atof(valueString);
-		UpdateCameraState();
-	}
-	else if (strcasecmp(keywordString, "displayImage") == 0)
-	{
-		cDisplayImage	=	IsTrueFalse(valueString);
-	}
-	else if (strcasecmp(keywordString, "fileNamePrefix") == 0)
-	{
-		UpdateSettings_Object(valueString);
-	}
-	else if (strcasecmp(keywordString, "version") == 0)
-	{
-		//*	"version": "AlpacaPi - V0.2.2-beta build #32",
-		strcpy(cAlpacaVersionString, valueString);
-		UpdateRemoteAlpacaVersion();
-
-	}
-	else if (strcasecmp(keywordString, "filenameincludefilter") == 0)
-	{
-		cFN_includeFilter	=	IsTrueFalse(valueString);
-	}
-	else if (strcasecmp(keywordString, "filenameincludecamera") == 0)
-	{
-		cFN_includeManuf	=	IsTrueFalse(valueString);
-	}
-	else if (strcasecmp(keywordString, "filenameincludeserialnum") == 0)
-	{
-		cFN_includeSerialNum	=	IsTrueFalse(valueString);
-	}
-	else if (strcasecmp(keywordString, "filenameincluderefid") == 0)
-	{
-		cFN_includeRefID	=	IsTrueFalse(valueString);
 	}
 	else if (strcasecmp(keywordString, "backgroundcolor") == 0)
 	{
@@ -876,12 +803,126 @@ void	ControllerCamera::AlpacaProcessReadAll(	const char	*deviceType,
 			cUpdateWindow	=	true;
 		}
 	}
+	else if (strcasecmp(keywordString, "camerastate") == 0)
+	{
+		//=================================================================================
+		//*	camerastate
+		cAlpacaCameraState	=	atof(valueString);
+		UpdateCameraState();
+	}
+	else if (strcasecmp(keywordString, "cameraxsize") == 0)
+	{
+		cCameraSizeX	=	atoi(valueString);
+	}
+	else if (strcasecmp(keywordString, "cameraysize") == 0)
+	{
+		cCameraSizeY	=	atoi(valueString);
+		UpdateCameraSize();
+	}
+	else if (strcasecmp(keywordString, "ccdtemperature") == 0)
+	{
+//		CONSOLE_DEBUG("ccdtemperature");
+		//=================================================================================
+		//*	ccdtemperature
+		cCCDtemperature	=	atof(valueString);
+		UpdateCameraTemperature();
+		LogCameraTemp(cCCDtemperature);
+	}
+	else if (strcasecmp(keywordString, "cooleron") == 0)
+	{
+		//=================================================================================
+		//*	cooler state
+		cCoolerOn	=	IsTrueFalse(valueString);
+		UpdateCoolerState();
+	}
+	else if (strcasecmp(keywordString, "displayImage") == 0)
+	{
+		cDisplayImage	=	IsTrueFalse(valueString);
+	}
+	else if (strcasecmp(keywordString, "exposuretime") == 0)
+	{
+		//=================================================================================
+		//*	exposure
+		cExposure	=	atof(valueString);
+
+		UpdateCameraExposure();
+	}
+	else if (strcasecmp(keywordString, "fileNamePrefix") == 0)
+	{
+		UpdateSettings_Object(valueString);
+	}
+	else if (strcasecmp(keywordString, "filenameroot") == 0)
+	{
+		//=================================================================================
+		//*	filenameroot
+		if (strlen(valueString) > 0)
+		{
+			UpdateReceivedFileName(valueString);
+		}
+	}
+	else if (strcasecmp(keywordString, "filenameincludefilter") == 0)
+	{
+		cFN_includeFilter	=	IsTrueFalse(valueString);
+	}
+	else if (strcasecmp(keywordString, "filenameincludecamera") == 0)
+	{
+		cFN_includeManuf	=	IsTrueFalse(valueString);
+	}
+	else if (strcasecmp(keywordString, "filenameincludeserialnum") == 0)
+	{
+		cFN_includeSerialNum	=	IsTrueFalse(valueString);
+	}
+	else if (strcasecmp(keywordString, "filenameincluderefid") == 0)
+	{
+		cFN_includeRefID	=	IsTrueFalse(valueString);
+	}
 	else if (strcasecmp(keywordString, "freeDisk_Gigabytes") == 0)
 	{
 	double	gigabytesFree;
 
 		gigabytesFree	=	atof(valueString);
 		UpdateFreeDiskSpace(gigabytesFree);
+	}
+	else if (strcasecmp(keywordString, "gain") == 0)
+	{
+		//=================================================================================
+		//*	gain
+		cGain	=	atoi(valueString);
+		UpdateCameraGain();
+	}
+	else if (strcasecmp(keywordString, "imageready") == 0)
+	{
+		//=================================================================================
+		//*	imageready
+		cCameraState_imageready	=	IsTrueFalse(valueString);
+		UpdateCameraState();
+	}
+	else if (strcasecmp(keywordString, "livemode") == 0)
+	{
+		//=================================================================================
+		//*	livemode
+		cLiveMode	=	IsTrueFalse(valueString);
+	}
+	else if (strcasecmp(keywordString, "readoutmode") == 0)
+	{
+//		CONSOLE_DEBUG("readoutmode");
+		//=================================================================================
+		//*	readoutmode
+		cReadOutMode	=	atoi(valueString);
+		UpdateCurrReadoutMode();
+	}
+	else if (strcasecmp(keywordString, "sidebar") == 0)
+	{
+		//=================================================================================
+		//*	sidebar
+		cSideBar	=	IsTrueFalse(valueString);
+	}
+	else if (strcasecmp(keywordString, "version") == 0)
+	{
+		//*	"version": "AlpacaPi - V0.2.2-beta build #32",
+		strcpy(cAlpacaVersionString, valueString);
+		UpdateRemoteAlpacaVersion();
+
 	}
 }
 
@@ -897,21 +938,9 @@ bool			validData;
 int				failedCnt;
 double			myExposureTime;
 
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 
 	failedCnt	=	0;
-	//=================================================================================
-	//*	exposure
-	validData	=	AlpacaGetDoubleValue(	"camera", "exposuretime",			NULL,	&myExposureTime);
-	if (validData)
-	{
-		cExposure	=	myExposureTime;
-		UpdateCameraExposure();
-	}
-	else
-	{
-		failedCnt++;
-	}
 
 
 	//=================================================================================
@@ -929,7 +958,7 @@ double			myExposureTime;
 
 	//=================================================================================
 	//*	camerastate
-	validData	=	AlpacaGetIntegerValue(	"camera", "camerastate",			NULL,	&cAlpacaCameraState);
+	validData	=	AlpacaGetIntegerValue(	"camera", "camerastate", NULL,	&cAlpacaCameraState);
 	if (validData)
 	{
 		UpdateCameraState();
@@ -939,6 +968,15 @@ double			myExposureTime;
 		failedCnt++;
 	}
 
+	validData	=	AlpacaGetBooleanValue(	"camera", "imageready",	NULL,	&cCameraState_imageready);
+	if (validData)
+	{
+		UpdateCameraState();
+	}
+	else
+	{
+		failedCnt++;
+	}
 
 	//=================================================================================
 	//*	ccdtemperature
@@ -948,7 +986,11 @@ double			myExposureTime;
 
 		tempDataValid	=	true;
 		validData	=	AlpacaGetDoubleValue(	"camera", "ccdtemperature",	NULL,	&cCCDtemperature, &tempDataValid);
-		CONSOLE_DEBUG_W_NUM("cLastAlpacaErrNum\t", cLastAlpacaErrNum);
+		if (cLastAlpacaErrNum != 0)
+		{
+			CONSOLE_DEBUG_W_NUM("cLastAlpacaErrNum\t", cLastAlpacaErrNum);
+		}
+
 		if (validData && tempDataValid)
 		{
 			UpdateCameraTemperature();
@@ -975,7 +1017,10 @@ double			myExposureTime;
 		validData	=	AlpacaGetBooleanValue(	"camera", "cooleron",	NULL,	&cCoolerOn);
 		if (validData)
 		{
-			CONSOLE_DEBUG_W_NUM("cLastAlpacaErrNum\t", cLastAlpacaErrNum);
+			if (cLastAlpacaErrNum != 0)
+			{
+				CONSOLE_DEBUG_W_NUM("cLastAlpacaErrNum\t", cLastAlpacaErrNum);
+			}
 			if (cLastAlpacaErrNum == kASCOM_Err_NotImplemented)
 			{
 				CONSOLE_DEBUG("Disabling cooler checking, not implemented");
@@ -1001,27 +1046,50 @@ double			myExposureTime;
 		failedCnt++;
 	}
 
-	//=================================================================================
-	//*	livemode
-	validData	=	AlpacaGetBooleanValue(	"camera", "livemode",	NULL,	&cLiveMode);
-	if (validData)
+	if (cHas_exposuretime)
 	{
-	}
-	else
-	{
-		failedCnt++;
+		//=================================================================================
+		//*	exposure
+		validData	=	AlpacaGetDoubleValue(	"camera", "exposuretime",			NULL,	&myExposureTime);
+		if (validData)
+		{
+			cExposure	=	myExposureTime;
+			UpdateCameraExposure();
+		}
+		else
+		{
+			failedCnt++;
+		}
 	}
 
-	//=================================================================================
-	//*	auto exposure
-	validData	=	AlpacaGetBooleanValue(	"camera", "autoexposure",	NULL,	&cAutoExposure);
-	if (validData)
+	if (cHas_livemode)
 	{
+		//=================================================================================
+		//*	livemode
+		validData	=	AlpacaGetBooleanValue(	"camera", "livemode",	NULL,	&cLiveMode);
+		if (validData)
+		{
+		}
+		else
+		{
+			failedCnt++;
+		}
 	}
-	else
+
+	if (cHas_autoexposure)
 	{
-		failedCnt++;
+		//=================================================================================
+		//*	auto exposure
+		validData	=	AlpacaGetBooleanValue(	"camera", "autoexposure",	NULL,	&cAutoExposure);
+		if (validData)
+		{
+		}
+		else
+		{
+			failedCnt++;
+		}
 	}
+
 
 	if (failedCnt > 2)
 	{
@@ -1048,7 +1116,7 @@ bool	previousOnLineState;
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 
 	previousOnLineState	=	cOnLine;
-	if (cHasReadAll)
+	if (cHas_readall)
 	{
 		validData	=	AlpacaGetStatus_ReadAll("camera", cAlpacaDevNum);
 	}
@@ -1392,17 +1460,23 @@ int				jjj;
 	UpdateReceivedFileName("---");
 	AlpacaDisplayErrorMessage("---");
 
-	if (cHasReadAll && cLiveMode)
+	if (cHas_readall && cLiveMode)
 	{
 		CONSOLE_DEBUG("savenextimage");
 		validData	=	AlpacaSendPutCmdwResponse(	"camera", "savenextimage",	NULL, &jsonParser);
 	}
 	else
 	{
-		validData	=	AlpacaSendPutCmdwResponse(	"camera", "startexposure",	NULL, &jsonParser);
+		CONSOLE_DEBUG("Calling AlpacaSendPutCmdwResponse");
+		validData	=	AlpacaSendPutCmdwResponse(	"camera",
+													"startexposure",
+													NULL,
+													&jsonParser);
 	}
+
 	if (validData)
 	{
+		CONSOLE_DEBUG(__FUNCTION__);
 		for (jjj=0; jjj<jsonParser.tokenCount_Data; jjj++)
 		{
 			if (strcasecmp(jsonParser.dataList[jjj].keyword, "filenameroot") == 0)
@@ -1411,6 +1485,10 @@ int				jjj;
 				UpdateReceivedFileName(jsonParser.dataList[jjj].valueString);
 			}
 		}
+	}
+	else
+	{
+		CONSOLE_DEBUG("validData is false");
 	}
 }
 
@@ -1431,9 +1509,8 @@ void	ControllerCamera::UpdateFreeDiskSpace(const double gigabytesFree)
 	//*	this is to be over loaded if needed
 }
 
-
 //*****************************************************************************
-IplImage	*ControllerCamera::DownloadImage(void)
+IplImage	*ControllerCamera::DownloadImage_rgbarray(void)
 {
 IplImage	*myOpenCVimage	=	NULL;
 bool		validData;
@@ -1452,7 +1529,7 @@ int			pixIdx;
 		if (imageData!= NULL)
 		{
 			valuesRead	=	0;
-			validData	=	AlpacaGetIntegerArray(	"camera",
+			validData	=	AlpacaGetIntegerArrayShortLines(	"camera",
 													cAlpacaDevNum,
 													"rgbarray",
 													"",
@@ -1494,6 +1571,91 @@ int			pixIdx;
 	}
 	return(myOpenCVimage);
 }
+
+
+//*****************************************************************************
+IplImage	*ControllerCamera::DownloadImage_imagearray(void)
+{
+IplImage	*myOpenCVimage	=	NULL;
+bool		validData;
+int			pixelsCount;
+int			pixelsCount3X;
+int			*imageData;
+int			valuesRead;
+int			iii;
+int			pixIdx;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+
+	pixelsCount		=	cCameraSizeX * cCameraSizeY;
+	pixelsCount3X	=	3 * pixelsCount;
+	if (pixelsCount > 0)
+	{
+		CONSOLE_DEBUG_W_NUM("pixelsCount\t=", pixelsCount);
+
+		imageData	=	(int *)malloc(pixelsCount3X * sizeof(int));
+		if (imageData!= NULL)
+		{
+			valuesRead	=	0;
+			validData	=	AlpacaGetIntegerArray(	"camera",
+													cAlpacaDevNum,
+													"imagearray",
+													"",
+													imageData,
+													pixelsCount3X,
+													&valuesRead);
+
+			CONSOLE_DEBUG_W_NUM("valuesRead\t\t=", valuesRead);
+			if (validData && (valuesRead > 10))
+			{
+				myOpenCVimage	=	cvCreateImage(cvSize(cCameraSizeX, cCameraSizeY), IPL_DEPTH_8U, 3);
+				if (myOpenCVimage != NULL)
+				{
+					//*	move the image data into the openCV image structure
+					pixIdx	=	0;
+					for (iii=0; iii<pixelsCount; iii++)
+					{
+						myOpenCVimage->imageData[pixIdx++]	=	(imageData[iii] >> 16) & 0x00ff;
+						myOpenCVimage->imageData[pixIdx++]	=	(imageData[iii] >> 8) & 0x00ff;
+						myOpenCVimage->imageData[pixIdx++]	=	(imageData[iii]) & 0x00ff;
+					}
+				}
+			}
+			else
+			{
+				CONSOLE_DEBUG("Failed to download integer array");
+			}
+
+			free(imageData);
+		}
+		else
+		{
+			CONSOLE_DEBUG("Failed to allocate image buffer");
+		}
+	}
+	else
+	{
+		CONSOLE_DEBUG("Image size is not known");
+	}
+	return(myOpenCVimage);
+}
+
+//*****************************************************************************
+IplImage	*ControllerCamera::DownloadImage(void)
+{
+IplImage	*myOpenCVimage	=	NULL;
+
+	if (cHas_rgbarray)
+	{
+		myOpenCVimage	=	DownloadImage_rgbarray();
+	}
+	else
+	{
+		myOpenCVimage	=	DownloadImage_imagearray();
+	}
+	return(myOpenCVimage);
+}
+
 
 //**************************************************************************************
 void	ControllerCamera::SetObjectText(const char *newObjectText, const char *newPrefixText)

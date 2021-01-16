@@ -29,6 +29,8 @@
 //*	Apr 21,	2020	<MLS> Added about box to switch controller
 //*	May  6,	2020	<MLS> Added AlpacaGetStartupData_OneAAT()
 //*	May  6,	2020	<MLS> Using ReadAll for switch startup info, much faster
+//*	Jan 14,	2021	<MLS> Added AlpacaProcessSupportedAction()
+//*	Jan 14,	2021	<MLS> Switch controller working with ASCOM Remote Server Console/simulator
 //*****************************************************************************
 
 
@@ -62,7 +64,7 @@
 //**************************************************************************************
 enum
 {
-	kTab_Switch	=	0,
+	kTab_Switch	=	1,
 	kTab_About,
 
 	kTab_Count
@@ -206,6 +208,22 @@ bool		needToUpdate;
 }
 
 //*****************************************************************************
+void	ControllerSwitch::AlpacaProcessSupportedAction(	const char	*deviceType,
+														const int	deviveNum,
+														const char	*valueString)
+{
+
+	if (strcasecmp(valueString, "readall") == 0)
+	{
+		cHas_readall	=	true;
+	}
+	else if (strcasecmp(valueString, "foo") == 0)
+	{
+		//*	you get the idea
+	}
+}
+
+//*****************************************************************************
 //*	Get data One At A Time
 //*****************************************************************************
 bool	ControllerSwitch::AlpacaGetStartupData_OneAAT(void)
@@ -230,14 +248,25 @@ double			myDoubleValue;
 		}
 	}
 
+	validData	=	AlpacaGetStringValue("switch", "description",	NULL,	alpacaString);
+	if (validData)
+	{
+		CONSOLE_DEBUG_W_STR("description\t=", alpacaString);
+		strcpy(cAlpacaVersionString, alpacaString);
+		SetWidgetText(kTab_Switch, kSwitchBox_AlpacaDrvrVersion, alpacaString);
+	}
+
+
+
 	//*	Start by getting the switch names and descriptions
 	switchNum	=	0;
 	while (switchNum < cMaxSwitch)
 	{
+//		CONSOLE_DEBUG(__FUNCTION__);
 		//-------------------------------------------------------------------------------
 		//*	get the switch name
 		SJP_Init(&jsonParser);
-		sprintf(alpacaString,	"/api/v1/switch/%d/getswitchname", cAlpacaDevNum);
+		sprintf(alpacaString,	"/api/v1/switch/%d/getswitchname?Id=%d", cAlpacaDevNum, switchNum);
 		sprintf(dataString,		"Id=%d", switchNum);
 		validData	=	GetJsonResponse(	&cDeviceAddress,
 											cPort,
@@ -256,13 +285,14 @@ double			myDoubleValue;
 		}
 		else
 		{
+			CONSOLE_DEBUG("Error from GetJsonResponse");
 			cReadFailureCnt++;
 		}
 
 		//===============================================================================
 		//*	get the switch description
 		SJP_Init(&jsonParser);
-		sprintf(alpacaString,	"/api/v1/switch/%d/getswitchdescription", cAlpacaDevNum);
+		sprintf(alpacaString,	"/api/v1/switch/%d/getswitchdescription?Id=%d", cAlpacaDevNum, switchNum);
 		sprintf(dataString,		"Id=%d", switchNum);
 		validData	=	GetJsonResponse(	&cDeviceAddress,
 											cPort,
@@ -319,8 +349,8 @@ int				boxNumber;
 
 	if (validData)
 	{
-		SetWidgetValid(kTab_Switch,		kSwitchBox_Readall,		cHasReadAll);
-		SetWidgetValid(kTab_About,		kAboutBox_Readall,		cHasReadAll);
+		SetWidgetValid(kTab_Switch,		kSwitchBox_Readall,		cHas_readall);
+		SetWidgetValid(kTab_About,		kAboutBox_Readall,		cHas_readall);
 	}
 	else
 	{
@@ -328,7 +358,7 @@ int				boxNumber;
 		cReadFailureCnt++;
 	}
 
-	if (cHasReadAll)
+	if (cHas_readall)
 	{
 		validData	=	AlpacaGetStatus_ReadAll("switch", cAlpacaDevNum);
 	}
@@ -392,17 +422,16 @@ int				myFailureCount;
 	//*	Get switch status
 	myFailureCount	=	0;
 	switchNum		=	0;
-	while (switchNum < kMaxSwitches)
+	while ((switchNum < kMaxSwitches) && (switchNum < cMaxSwitch))
 	{
 		//-------------------------------------------------------------------------------
 		//*	get the switch state
 		SJP_Init(&jsonParser);
-		sprintf(alpacaString,	"/api/v1/switch/%d/getswitch", cAlpacaDevNum);
-		sprintf(dataString,		"Id=%d", switchNum);
+		sprintf(alpacaString,	"/api/v1/switch/%d/getswitch?Id=%d", cAlpacaDevNum, switchNum);
 		validData	=	GetJsonResponse(	&cDeviceAddress,
 											cPort,
 											alpacaString,
-											dataString,
+											NULL,
 											&jsonParser);
 		if (validData)
 		{
@@ -411,6 +440,13 @@ int				myFailureCount;
 				if (strcasecmp(jsonParser.dataList[jjj].keyword, "VALUE") == 0)
 				{
 					boxNumber	=	kSwitchBox_State01 + (kBoxesPerSwitch * switchNum);
+
+					if (boxNumber >= kSwitchBox_LastCmdString)
+					{
+						CONSOLE_DEBUG_W_NUM("switchNum\t=", switchNum);
+						CONSOLE_DEBUG_W_NUM("boxNumber\t=", boxNumber);
+						CONSOLE_ABORT(__FUNCTION__);
+					}
 					if (strcasecmp(jsonParser.dataList[jjj].valueString, "true") == 0)
 					{
 						cSwitchInfo[switchNum].switchState	=	true;
@@ -426,6 +462,7 @@ int				myFailureCount;
 		}
 		else
 		{
+			CONSOLE_DEBUG("Error from GetJsonResponse");
 			cReadFailureCnt++;
 			myFailureCount++;
 		}
@@ -449,7 +486,7 @@ bool	ControllerSwitch::AlpacaGetStatus(void)
 bool			validData;
 
 	CONSOLE_DEBUG(__FUNCTION__);
-	if (cHasReadAll)
+	if (cHas_readall)
 	{
 		validData	=	AlpacaGetStatus_ReadAll("switch", cAlpacaDevNum);
 	}

@@ -63,7 +63,7 @@
 //**************************************************************************************
 enum
 {
-	kTab_MLsingle	=	0,
+	kTab_MLsingle	=	1,
 	kTab_Config,
 	kTab_About,
 
@@ -255,9 +255,9 @@ void	ControllerMLsingle::UpdateWindowTabs_ReadAll(bool hasReadAll)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-	SetWidgetValid(kTab_MLsingle,	kMLsingle_Readall,		cHasReadAll);
-	SetWidgetValid(kTab_Config,		kCongfigBox_Readall,	cHasReadAll);
-	SetWidgetValid(kTab_About,		kAboutBox_Readall,		cHasReadAll);
+	SetWidgetValid(kTab_MLsingle,	kMLsingle_Readall,		cHas_readall);
+	SetWidgetValid(kTab_Config,		kCongfigBox_Readall,	cHas_readall);
+	SetWidgetValid(kTab_About,		kAboutBox_Readall,		cHas_readall);
 }
 
 //*****************************************************************************

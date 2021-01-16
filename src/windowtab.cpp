@@ -287,6 +287,7 @@ int		iii;
 		while ((tabStopList[iii] > 0) && (iii < kMaxTabStops))
 		{
 			cWidgetList[widgetIdx].tabStops[iii]	=	tabStopList[iii];
+			iii++;
 		}
 	}
 	else
@@ -929,7 +930,7 @@ void	WindowTab::SetParentObjectPtr(void *argParentObjPtr)
 void	WindowTab::SetWindowIPaddrInfo(	const char	*textString,
 										const bool	onLine)
 {
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, (onLine ? "online" : "Offline"));
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, (onLine ? "online" : "Offline"));
 	//*	this can be be overloaded,
 	if (cIpAddrTextBox > 0)
 	{

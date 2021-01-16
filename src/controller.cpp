@@ -51,6 +51,8 @@
 //*	Jan  6,	2021	<MLS> Started on text input field
 //*	Jan  6,	2021	<MLS> Added HandleKeyDownInTextWidget()
 //*	Jan  6,	2021	<MLS> Added GetWidgetText()
+//*	Jan 15,	2021	<MLS> Added DrawWidgetTextWithTabs()
+//*	Jan 16,	2021	<MLS> Added Close box in Window Tab area
 //*****************************************************************************
 
 
@@ -180,24 +182,24 @@ int			objCntr;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
-	cKeepRunning			=	true;
-	cDebugCounter			=	0;
-	cUpdateProtect			=	false;
-	cHasReadAll				=	false;
-	cReadStartup			=	true;
-	cLeftButtonDown			=	false;
-	cRightButtonDown		=	false;
-	cLastClicked_Btn		=	-1;
-	cLastClicked_Tab		=	-1;
-	cHighlightedBtn			=	-1;
-	cCurTextInput_Widget	=	-1;
+	cKeepRunning				=	true;
+	cDebugCounter				=	0;
+	cUpdateProtect				=	false;
+	cHas_readall				=	false;
+	cReadStartup				=	true;
+	cLeftButtonDown				=	false;
+	cRightButtonDown			=	false;
+	cLastClicked_Btn			=	-1;
+	cLastClicked_Tab			=	-1;
+	cHighlightedBtn				=	-1;
+	cCurTextInput_Widget		=	-1;
 
-	cOnLine					=	true;		//*	assume its online, if it wasnt, we wouldnt be here
-	cAlpacaVersionString[0]	=	0;
-	cLastAlpacaCmdString[0]	=	0;
-	cLastAlpacaErrStr[0]	=	0;
-	cAlpacaDeviceType[0]	=	0;
-	cAlpacaDeviceName[0]	=	0;
+	cOnLine						=	true;		//*	assume its online, if it wasnt, we wouldnt be here
+	cAlpacaVersionString[0]		=	0;
+	cLastAlpacaCmdString[0]		=	0;
+	cLastAlpacaErrStr[0]		=	0;
+	cAlpacaDeviceTypeStr[0]		=	0;
+	cAlpacaDeviceNameStr[0]		=	0;
 
 	if (gControllerCnt < 0)
 	{
@@ -265,6 +267,7 @@ int			objCntr;
 
 	gTextFont[kFont_Small]		=	cvFont(0.7, 1);
 	gTextFont[kFont_RadioBtn]	=	cvFont(0.8, 1);
+	gTextFont[kFont_TextList]	=	cvFont(0.9, 1);
 	gTextFont[kFont_Medium]		=	cvFont(1.0, 1);
 	gTextFont[kFont_Large]		=	cvFont(1.7, 1);
 //	gTextFont[kFont_Simplex]	=	cvFont(1.7, 1);
@@ -459,7 +462,7 @@ int		widgetIdx;
 
 	widgetIdx	=	-1;
 	iii			=	0;
-	while ((iii<cTabCount) && (widgetIdx < 0))
+	while ((iii < cTabCount) && (widgetIdx < 0))
 	{
 		if (cTabList[iii].valid)
 		{
@@ -491,12 +494,20 @@ int		iii;
 
 //**************************************************************************************
 //*	returns the vertical offset for the tabs
+//*	a windowtab's first tab MUST be #1, NOT 0, 0 is reserved for the close box
+//**************************************************************************************
 int	Controller::SetTabCount(const int newTabCount)
 {
 int		iii;
 int		tabWidth;
 int		tabHeight;
 int		tabLeft;
+
+	//*	first go through and initialize all of the tab data
+	for (iii=0; iii<cTabCount; iii++)
+	{
+		memset(&cTabList[iii], 0, sizeof(TYPE_WIDGET));
+	}
 
 	if (newTabCount <= kMaxTabs)
 	{
@@ -507,10 +518,28 @@ int		tabLeft;
 		CONSOLE_DEBUG("Too many tabs");
 		cTabCount	=	kMaxTabs;
 	}
-	tabWidth	=	(cWidth / cTabCount) - 1;
+
+
+
 	tabHeight	=	24;
 	tabLeft		=	0;
-	for (iii=0; iii<cTabCount; iii++)
+	cTabList[0].valid		=	true;
+	cTabList[0].widgetType	=	kWidgetType_Text;
+	cTabList[0].left		=	tabLeft;
+	cTabList[0].top			=	0;
+	cTabList[0].width		=	tabHeight;
+	cTabList[0].height		=	tabHeight;
+	cTabList[0].fontNum		=	kFont_Large;
+	cTabList[0].crossedOut	=	true;
+	cTabList[0].textString[0]	=	'X';
+	cTabList[0].textString[1]	=	0;
+	cTabList[0].textColor	=	CV_RGB(255, 0, 0);
+
+	tabLeft	+=	tabHeight + 1;
+
+	tabWidth	=	((cWidth - tabLeft) / (cTabCount - 1)) - 1;
+
+	for (iii=1; iii<cTabCount; iii++)
 	{
 		cTabList[iii].valid			=	true;
 		cTabList[iii].widgetType	=	kWidgetType_Text;
@@ -523,6 +552,8 @@ int		tabLeft;
 		sprintf(cTabList[iii].textString, "Tab-%d", (iii+1));
 		tabLeft	+=	tabWidth + 1;
 	}
+	cCurrentTabNum		=	1;
+	cUpdateWindow		=	true;
 	return(tabHeight + 2);
 }
 
@@ -544,7 +575,11 @@ void	Controller::SetTabText(const int tabIdx, const char *tabName)
 //*****************************************************************************
 void	Controller::ProcessTabClick(const int tabIdx)
 {
-	if (tabIdx != cCurrentTabNum)
+	if (tabIdx == 0)
+	{
+		cKeepRunning	=	false;
+	}
+	else if (tabIdx != cCurrentTabNum)
 	{
 		cCurrentTabNum		=	tabIdx;
 		cUpdateWindow		=	true;
@@ -814,6 +849,7 @@ bool	widgitIsButton;
 			else
 			{
 				clickedBtn		=	FindClickedWidget(xxx,  yyy);
+//				CONSOLE_DEBUG_W_NUM("Double click on widget#\t",	clickedBtn);
 				if (clickedBtn >= 0)
 				{
 					ProcessDoubleClick(clickedBtn);
@@ -938,6 +974,91 @@ CvScalar	myGBcolor;
 					);
 	}
 }
+
+//**************************************************************************************
+void	Controller::DrawWidgetTextWithTabs(TYPE_WIDGET *theWidget)
+{
+CvRect		myCVrect;
+CvPoint		textLoc;
+CvSize		textSize;
+int			baseLine;
+int			textOffsetX;
+int			textOffsetY;
+int			curFontNum;
+char		textBuffer[kMaxWidgetStrLen];
+int			ccc;
+int			iii;
+char		theChar;
+int			sLen;
+int			currentTabStop;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	myCVrect.x		=	theWidget->left;
+	myCVrect.y		=	theWidget->top;
+	myCVrect.width	=	theWidget->width;
+	myCVrect.height	=	theWidget->height;
+
+
+	cvRectangleR(	cOpenCV_Image,
+					myCVrect,
+					theWidget->bgColor,			//	CvScalar color,
+					CV_FILLED,					//	int thickness CV_DEFAULT(1),
+					8,							//	int line_type CV_DEFAULT(8),
+					0);							//	int shift CV_DEFAULT(0));
+
+	if (theWidget->includeBorder)
+	{
+		cvRectangleR(	cOpenCV_Image,
+						myCVrect,
+						theWidget->borderColor,		//	CvScalar color,
+						1,							//	int thickness CV_DEFAULT(1),
+						8,							//	int line_type CV_DEFAULT(8),
+						0);							//	int shift CV_DEFAULT(0));
+	}
+	sLen	=	strlen(theWidget->textString);
+	if (sLen > 0)
+	{
+		curFontNum	=	theWidget->fontNum,
+		cvGetTextSize(	theWidget->textString,
+						&gTextFont[curFontNum],
+						&textSize,
+						&baseLine);
+		textLoc.x	=	theWidget->left + 7;
+		textOffsetY	=	(theWidget->height / 2) - (textSize.height / 2) + baseLine + 5;
+		textLoc.y	=	theWidget->top + textOffsetY;
+
+		ccc				=	0;
+		currentTabStop	=	-1;
+		for (iii=0; iii<=sLen; iii++)
+		{
+			theChar	=	theWidget->textString[iii];
+			if ((theChar == 0x09) || (theChar == 0))
+			{
+				textBuffer[ccc]	=	0;
+				textLoc.x		=	theWidget->left + 7;
+				if (currentTabStop >= 0)
+				{
+					textLoc.x	+=	theWidget->tabStops[currentTabStop];
+				}
+				cvPutText(	cOpenCV_Image,
+							textBuffer,
+							textLoc,
+							&gTextFont[curFontNum],
+							theWidget->textColor
+							);
+				currentTabStop++;
+				ccc			=	0;
+			}
+			else
+			{
+				textBuffer[ccc++]	=	theChar;
+				textBuffer[ccc]		=	0;
+			}
+		}
+	}
+}
+
 
 //**************************************************************************************
 void	Controller::DrawWidgetText(TYPE_WIDGET *theWidget)
@@ -1896,7 +2017,14 @@ CvRect		widgetRect;
 
 		case kWidgetType_Text:
 		default:
-			DrawWidgetText(widgetPtr);
+			if (widgetPtr->hasTabs)
+			{
+				DrawWidgetTextWithTabs(widgetPtr);
+			}
+			else
+			{
+				DrawWidgetText(widgetPtr);
+			}
 			break;
 	}
 }
@@ -2002,8 +2130,9 @@ bool		stillNeedsHandled;
 				gKeepRunning	=	false;
 				break;
 
+			//*	ctrl-w close window
 			case 'w':
-//				CONSOLE_DEBUG_W_STR("Close  window \t=", cWindowName);
+//				CONSOLE_DEBUG_W_STR("Close window \t=", cWindowName);
 				cKeepRunning	=	false;
 				break;
 
@@ -2113,8 +2242,8 @@ void	Controller::SetTabWindow(const int tabNum, WindowTab *theTabObjectPtr)
 	if ((tabNum >= 0) && (tabNum < kMaxTabs))
 	{
 		cWindowTabs[tabNum]	=	theTabObjectPtr;
-		//*	If the current tab is NOT set, set it tab 0
-		if ((tabNum == 0) && (cCurrentTabObjPtr == NULL))
+		//*	If the current tab is NOT set, set it tab 1
+		if ((tabNum == 1) && (cCurrentTabObjPtr == NULL))
 		{
 			cCurrentTabObjPtr	=	theTabObjectPtr;
 			cCurrentTabNum		=	tabNum;

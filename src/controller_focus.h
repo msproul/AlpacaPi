@@ -113,7 +113,10 @@ class ControllerFocus: public Controller
 
 		virtual	bool	AlpacaGetStartupData(void);
 		virtual	bool	AlpacaGetStatus(void);
-		virtual	void	AlpacaProcessReadAll(const char *deviceType, const char *keywordString, const char *valueString);
+		virtual	void	AlpacaProcessReadAll(	const char	*deviceType,
+												const int	deviceNum,
+												const char	*keywordString,
+												const char	*valueString);
 				bool	AlpacaGetStatus_OneAAT(void);	//*	One At A Time
 
 				void	SendMoveFocuserCommand(int newDesiredPosition);

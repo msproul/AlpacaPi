@@ -27,6 +27,7 @@
 #include	"ConsoleDebug.h"
 
 #include	"alpaca_defs.h"
+#include	"alpacadriver_helper.h"
 #include	"controller.h"
 
 
@@ -59,8 +60,8 @@ char			returnString[128];
 	if (validData)
 	{
 	#ifdef _ENABLE_SKYTRAVEL_
-		SetWidgetValid(kTab_Dome,			kDomeBox_Readall,		cDomeHasReadAll);
-		if (cDomeHasReadAll == false)
+		SetWidgetValid(kTab_Dome,			kDomeBox_Readall,		cDomeHas_readall);
+		if (cDomeHas_readall == false)
 		{
 			cDeviceAddress	=	cDomeIpAddress;
 			cPort			=	cDomeIpPort;
@@ -73,12 +74,12 @@ char			returnString[128];
 			}
 		}
 	#else
-		SetWidgetValid(kTab_Dome,			kDomeBox_Readall,		cHasReadAll);
-		SetWidgetValid(kTab_SlitTracker,	kSlitTracker_Readall,	cHasReadAll);
-		SetWidgetValid(kTab_SlitGraph,		kSlitGraph_Readall,		cHasReadAll);
-		SetWidgetValid(kTab_About,			kAboutBox_Readall,		cHasReadAll);
+		SetWidgetValid(kTab_Dome,			kDomeBox_Readall,		cHas_readall);
+		SetWidgetValid(kTab_SlitTracker,	kSlitTracker_Readall,	cHas_readall);
+		SetWidgetValid(kTab_SlitGraph,		kSlitGraph_Readall,		cHas_readall);
+		SetWidgetValid(kTab_About,			kAboutBox_Readall,		cHas_readall);
 
-		if (cHasReadAll == false)
+		if (cHas_readall == false)
 		{
 			validData	=	AlpacaGetStringValue(	"dome", "driverversion",	NULL,	returnString);
 			if (validData)
@@ -351,9 +352,9 @@ void	PARENT_CLASS::AlpacaProcessSupportedActionDome(const int deviveNum, const c
 	if (strcasecmp(valueString, "readall") == 0)
 	{
 #ifdef _ENABLE_SKYTRAVEL_
-		cDomeHasReadAll	=	true;
+		cDomeHas_readall	=	true;
 #else
-		cHasReadAll	=	true;
+		cHas_readall	=	true;
 #endif
 	}
 	else if (strcasecmp(valueString, "findhome") == 0)

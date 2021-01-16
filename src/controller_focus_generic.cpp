@@ -57,7 +57,7 @@
 //**************************************************************************************
 enum
 {
-	kTab_Focuser	=	0,
+	kTab_Focuser	=	1,
 	kTab_About,
 
 	kTab_Count
@@ -199,8 +199,8 @@ void	ControllerFocusGeneric::UpdateWindowTabs_ReadAll(bool hasReadAll)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-	SetWidgetValid(kTab_Focuser,	kMLsingle_Readall,		cHasReadAll);
-	SetWidgetValid(kTab_About,		kAboutBox_Readall,		cHasReadAll);
+	SetWidgetValid(kTab_Focuser,	kMLsingle_Readall,		cHas_readall);
+	SetWidgetValid(kTab_About,		kAboutBox_Readall,		cHas_readall);
 }
 
 //*****************************************************************************

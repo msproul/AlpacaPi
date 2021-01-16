@@ -144,8 +144,8 @@ int		iii;
 		cDeviceAddress	=	alpacaDevice->deviceAddress;
 		cPort			=	alpacaDevice->port;
 
-		strcpy(cAlpacaDeviceType,	alpacaDevice->deviceType);
-		strcpy(cAlpacaDeviceName,	alpacaDevice->deviceName);
+		strcpy(cAlpacaDeviceTypeStr,	alpacaDevice->deviceTypeStr);
+		strcpy(cAlpacaDeviceNameStr,	alpacaDevice->deviceNameStr);
 	}
 
 	//*	initialize the slit distance detector
@@ -351,7 +351,7 @@ bool	previousOnLineState;
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	previousOnLineState	=	cOnLine;
-	if (cHasReadAll)
+	if (cHas_readall)
 	{
 		validData	=	AlpacaGetStatus_ReadAll("dome", cAlpacaDevNum);
 	}

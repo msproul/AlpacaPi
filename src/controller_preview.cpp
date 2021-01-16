@@ -58,7 +58,7 @@
 //**************************************************************************************
 enum
 {
-	kTab_Preview	=	0,
+	kTab_Preview	=	1,
 	kTab_About,
 
 	kTab_Count
@@ -153,8 +153,8 @@ char	lineBuff[64];
 void	ControllerPreview::UpdateReadAllStatus(void)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
-	SetWidgetValid(kTab_Preview,	kPreviewBox_Readall,	cHasReadAll);
-	SetWidgetValid(kTab_About,		kAboutBox_Readall,		cHasReadAll);
+	SetWidgetValid(kTab_Preview,	kPreviewBox_Readall,	cHas_readall);
+	SetWidgetValid(kTab_About,		kAboutBox_Readall,		cHas_readall);
 }
 //*****************************************************************************
 void	ControllerPreview::UpdateRemoteAlpacaVersion(void)

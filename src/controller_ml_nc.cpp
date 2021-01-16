@@ -30,7 +30,7 @@
 //*	Feb 27,	2020	<MLS> Slowed down query rate
 //*	Feb 27,	2020	<MLS> Added SendStopMotorsCommand()
 //*	Feb 29,	2020	<MLS> Added support for NiteCrawler switches via alpaca
-//*	Mar 16,	2020	<MLS> Added cHasReadAll flag
+//*	Mar 16,	2020	<MLS> Added cHas_readall flag
 //*	Mar 16,	2020	<MLS> Changed AlpacaGetStatus() to AlpacaGetStatus_ReadAll()
 //*	Apr 19,	2020	<MLS> Fixed bug when trying to stop motors in USB mode
 //*	Apr 19,	2020	<MLS> Added CloseUSBport()
@@ -90,7 +90,7 @@
 //**************************************************************************************
 enum
 {
-	kTab_Focuser	=	0,
+	kTab_Focuser	=	1,
 	kTab_AuxMotor,
 	kTab_Config,
 	kTab_Graphs,
@@ -595,7 +595,7 @@ char	lineBuff[128];
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 	cIsMoving	=	false;
 	validData	=	false;
-	if (cHasReadAll)
+	if (cHas_readall)
 	{
 		validData	=	AlpacaGetStatus_ReadAll("focuser", cAlpacaDevNum);
 		if (cFirstDataRead)

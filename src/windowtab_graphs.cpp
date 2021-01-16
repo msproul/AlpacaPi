@@ -32,6 +32,7 @@
 
 
 #include	"windowtab_graphs.h"
+#include	"alpacadriver_helper.h"
 
 
 

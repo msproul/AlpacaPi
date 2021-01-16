@@ -46,7 +46,7 @@
 #include	"sendrequest_lib.h"
 
 #include	"obsconditions_globals.h"
-
+#include	"HostNames.h"
 
 #define kAlpacaDiscoveryPORT	32227
 
@@ -220,8 +220,8 @@ bool	newDevice;
 		for (iii=0; iii<gRemoteCnt; iii++)
 		{
 			if ((newRemoteDevice->deviceAddress.sin_addr.s_addr ==	gRemoteList[iii].deviceAddress.sin_addr.s_addr)
-				&& (strcmp(newRemoteDevice->deviceType,				gRemoteList[iii].deviceType) == 0)
-				&& (strcmp(newRemoteDevice->deviceName,				gRemoteList[iii].deviceName) == 0)
+				&& (strcmp(newRemoteDevice->deviceTypeStr,			gRemoteList[iii].deviceTypeStr) == 0)
+				&& (strcmp(newRemoteDevice->deviceNameStr,			gRemoteList[iii].deviceNameStr) == 0)
 				&& (newRemoteDevice->alpacaDeviceNum == gRemoteList[iii].alpacaDeviceNum)
 				)
 			{
@@ -230,11 +230,11 @@ bool	newDevice;
 				break;
 			}
 			//*	I dont want the management device type in the list
-			if (strcmp(newRemoteDevice->deviceType, "management") == 0)
-			{
-				newDevice	=	false;
-				break;
-			}
+	//		if (strcasecmp(newRemoteDevice->deviceTypeStr, "management") == 0)
+	//		{
+	//			newDevice	=	false;
+	//			break;
+	//		}
 		}
 	}
 
@@ -244,6 +244,10 @@ bool	newDevice;
 		{
 			gRemoteList[gRemoteCnt]					=	*newRemoteDevice;
 			gRemoteList[gRemoteCnt].notSeenCounter	=	0;
+			gRemoteList[gRemoteCnt].deviceTypeEnum	=	FindDeviceTypeByString(gRemoteList[gRemoteCnt].deviceTypeStr);
+
+			//*	lookup the host name
+
 			gRemoteCnt++;
 		}
 	}
@@ -270,11 +274,11 @@ char			myVersionString[64];
 
 		if (strcmp(jsonParser->dataList[ii].keyword, "DEVICETYPE") == 0)
 		{
-			strcpy(myRemoteDevice.deviceType, jsonParser->dataList[ii].valueString);
+			strcpy(myRemoteDevice.deviceTypeStr, jsonParser->dataList[ii].valueString);
 		}
 		if (strcmp(jsonParser->dataList[ii].keyword, "DEVICENAME") == 0)
 		{
-			strcpy(myRemoteDevice.deviceName, jsonParser->dataList[ii].valueString);
+			strcpy(myRemoteDevice.deviceNameStr, jsonParser->dataList[ii].valueString);
 		}
 		if (strcmp(jsonParser->dataList[ii].keyword, "DEVICENUMBER") == 0)
 		{
@@ -286,6 +290,7 @@ char			myVersionString[64];
 		{
 			myRemoteDevice.deviceAddress	=	theDevice->deviceAddress;
 			myRemoteDevice.port				=	theDevice->port;
+			strcpy(myRemoteDevice.hostName, theDevice->hostName);
 			strcpy(myRemoteDevice.versionString, myVersionString);
 			UpdateRemoteList(&myRemoteDevice);
 
@@ -308,6 +313,7 @@ struct sockaddr_in	remoteDev;
 int					connRetCode;
 int					sendRetCode;
 int					closeRetCode;
+int					shutdownRetCode;
 int					recvByteCnt;
 char				returnedData[2000];
 char				xmitBuffer[2000];
@@ -346,9 +352,9 @@ char				xmitBuffer[2000];
 					SJP_Init(jsonParser);
 					SJP_ParseData(jsonParser, returnedData);
 //					SJP_DumpJsonData(jsonParser);
-
 				}
 			}
+			shutdownRetCode	=	shutdown(socket_desc, SHUT_RDWR);
 			closeRetCode	=	close(socket_desc);
 			if (closeRetCode != 0)
 			{
@@ -429,8 +435,10 @@ static void	AddIPaddressToList(struct sockaddr_in *deviceAddress, SJP_Parser_t *
 int		ii;
 bool	newDevice;
 int		theDeviceIdx;
+bool	foundHostName;
+char	myHostNameStr[128];
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 	newDevice		=	true;
 	theDeviceIdx	=	-1;
 	for (ii=0; ii<gAlpacaUnitCnt; ii++)
@@ -457,6 +465,13 @@ int		theDeviceIdx;
 					gAlpacaUnitList[gAlpacaUnitCnt].port	=	atoi(jsonParser->dataList[ii].valueString);
 					theDeviceIdx	=	gAlpacaUnitCnt;
 				}
+			}
+			//*	and lookup the host name
+			foundHostName	=	LookupNameFromIPaddr(deviceAddress->sin_addr.s_addr, myHostNameStr);
+			if (foundHostName)
+			{
+			//	CONSOLE_DEBUG(myHostNameStr);
+				strcpy(gAlpacaUnitList[gAlpacaUnitCnt].hostName, myHostNameStr);
 			}
 			gAlpacaUnitCnt++;
 		}
@@ -488,8 +503,8 @@ char	ipAddrSt[32];
 
 		printf(":%d\t",		gRemoteList[ii].port);
 
-		printf("%-20s\t",	gRemoteList[ii].deviceType);
-		printf("%-20s\t",	gRemoteList[ii].deviceName);
+		printf("%-20s\t",	gRemoteList[ii].deviceTypeStr);
+		printf("%-20s\t",	gRemoteList[ii].deviceNameStr);
 		printf("%4d\t",		gRemoteList[ii].alpacaDeviceNum);
 		printf("%2d\t",		gRemoteList[ii].notSeenCounter);
 
@@ -523,18 +538,18 @@ int				ii;
 	for (ii=0; ii<gRemoteCnt; ii++)
 	{
 	#ifdef _ENABLE_SKYTRAVEL_
-	//	CONSOLE_DEBUG_W_STR("device type\t=", gRemoteList[ii].deviceType);
+	//	CONSOLE_DEBUG_W_STR("device type\t=", gRemoteList[ii].deviceTypeStr);
 
 //		inet_ntop(AF_INET, &gRemoteList[ii].deviceAddress.sin_addr, ipAddressStr, INET_ADDRSTRLEN);
 
 //		printf("%-17s\t%-17s\t%-17s\t%-17s\t\r\n",	ipAddressStr,
-//													gRemoteList[ii].deviceType,
-//													gRemoteList[ii].deviceName,
+//													gRemoteList[ii].deviceTypeStr,
+//													gRemoteList[ii].deviceNameStr,
 //													gRemoteList[ii].versionString);
 	#endif
 	#ifdef _ENABLE_CAMERA_
 		if ((gRemoteList[ii].notSeenCounter == 0) &&
-			(strcmp(gRemoteList[ii].deviceType, "observingconditions") == 0))
+			(strcmp(gRemoteList[ii].deviceTypeStr, "observingconditions") == 0))
 		{
 			domeInfo	=	false;
 			//------------------------------------------------

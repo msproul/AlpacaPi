@@ -405,7 +405,7 @@ int	ii;
 	cSaveImages						=	false;
 	cSaveNextImage					=	false;
 	cNewImageReadyToDisplay			=	false;
-	cNewImageReadyToDownload		=	false;
+	cImageReady						=	false;
 	cWorkingLoopCnt					=	0;
 #ifdef _USE_OPENCV_
 	cCreateOpenCVwindow				=	true;
@@ -953,7 +953,7 @@ char				httpHeader[500];
 		case kCmd_Camera_imageready:			//*	Indicates that an image is ready to be downloaded
 			if (reqData->get_putIndicator == 'G')
 			{
-				alpacaErrCode	=	Get_ImageReady(reqData, alpacaErrMsg);
+				alpacaErrCode	=	Get_ImageReady(reqData, alpacaErrMsg, gValueString);
 			}
 			else if (reqData->get_putIndicator == 'P')
 			{
@@ -2797,7 +2797,7 @@ char				timeString[64];
 
 
 //*****************************************************************************
-TYPE_ASCOM_STATUS	CameraDriver::Get_ImageReady(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
+TYPE_ASCOM_STATUS	CameraDriver::Get_ImageReady(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
 bool				imageReady;
@@ -2806,20 +2806,11 @@ int					exposureStatatus;
 //	CONSOLE_DEBUG(__FUNCTION__);
 	if (reqData != NULL)
 	{
-		exposureStatatus	=	Check_Exposure(false);
-		if (exposureStatatus == kExposure_Success)
-		{
-			imageReady	=	true;
-		}
-		else
-		{
-			imageReady	=	false;
-		}
 		JsonResponse_Add_Bool(	reqData->socket,
 								reqData->jsonTextBuffer,
 								kMaxJsonBuffLen,
-								gValueString,
-								imageReady,
+								responseString,
+								cImageReady,
 								INCLUDE_COMMA);
 		alpacaErrCode	=	kASCOM_Err_Success;
 	}
@@ -2886,8 +2877,8 @@ double				exposureTimeSecs;
 	CONSOLE_DEBUG_W_NUM("pixelCount\t=", pixelCount);
 
 #if 1
-	CONSOLE_DEBUG_W_NUM("cNewImageReadyToDownload\t=", cNewImageReadyToDownload);
-	if (cNewImageReadyToDownload && (cCameraDataBuffer != NULL))
+	CONSOLE_DEBUG_W_NUM("cImageReady\t=", cImageReady);
+	if (cImageReady && (cCameraDataBuffer != NULL))
 	{
 		//========================================================================================
 		//*	record the image type
@@ -3185,8 +3176,8 @@ TYPE_ASCOM_STATUS	tempSensorErr;
 	pixelCount	=	cROIinfo.currentROIwidth * cROIinfo.currentROIheight;
 	CONSOLE_DEBUG_W_NUM("pixelCount\t=", pixelCount);
 
-	CONSOLE_DEBUG_W_NUM("cNewImageReadyToDownload\t=", cNewImageReadyToDownload);
-	if (cNewImageReadyToDownload && (cCameraDataBuffer != NULL))
+	CONSOLE_DEBUG_W_NUM("cImageReady\t=", cImageReady);
+	if (cImageReady && (cCameraDataBuffer != NULL))
 	{
 		//========================================================================================
 		//*	record the image type
@@ -4892,7 +4883,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode;
 			//*	record the time the exposure ended
 			gettimeofday(&cLastExposureEndTime, NULL);
 			cNewImageReadyToDisplay		=	true;
-			cNewImageReadyToDownload	=	true;
+			cImageReady					=	true;
 
 			if (cImageMode == kImageMode_Live)
 			{
@@ -5656,6 +5647,7 @@ char				textBuffer[128];
 								cGainMin,
 								INCLUDE_COMMA);
 
+		Get_ImageReady(				reqData,	alpacaErrMsg,	"imageready");
 		Get_Lastexposureduration(	reqData, 	alpacaErrMsg,	"lastexposureduration");
 		Get_Lastexposurestarttime(	reqData,	alpacaErrMsg,	"lastexposurestarttime");
 		Get_numX(					reqData,	alpacaErrMsg,	"numx");

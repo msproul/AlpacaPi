@@ -165,6 +165,7 @@ DISCOVERY_LIB_OBJECTS=										\
 # CPP objects
 CPP_OBJECTS=												\
 				$(OBJECT_DIR)alpacadriver.o					\
+				$(OBJECT_DIR)alpacadriver_helper.o			\
 				$(OBJECT_DIR)alpaca_discovery.o				\
 				$(OBJECT_DIR)alpacadriverLogging.o			\
 				$(OBJECT_DIR)discoverythread.o				\
@@ -172,6 +173,7 @@ CPP_OBJECTS=												\
 				$(OBJECT_DIR)domeshutter.o					\
 				$(OBJECT_DIR)domedriver_rpi.o				\
 				$(OBJECT_DIR)eventlogging.o					\
+				$(OBJECT_DIR)HostNames.o					\
 				$(OBJECT_DIR)JsonResponse.o					\
 				$(OBJECT_DIR)managementdriver.o				\
 				$(OBJECT_DIR)observatory_settings.o			\
@@ -239,8 +241,9 @@ ATIK_OBJECTS=												\
 #	Roll Off Roof Objects
 ROR_OBJECTS=												\
 				$(OBJECT_DIR)alpacadriver.o					\
-				$(OBJECT_DIR)alpaca_discovery.o				\
+				$(OBJECT_DIR)alpacadriver_helper.o			\
 				$(OBJECT_DIR)alpacadriverLogging.o			\
+				$(OBJECT_DIR)alpaca_discovery.o				\
 				$(OBJECT_DIR)cpu_stats.o					\
 				$(OBJECT_DIR)discoverythread.o				\
 				$(OBJECT_DIR)domedriver.o					\
@@ -578,6 +581,7 @@ dome		:				$(CPP_OBJECTS)				\
 
 ######################################################################################
 #pragma mark ROR
+#make ror
 #ror		:	DEFINEFLAGS		+=	-D_ENABLE_DOME_
 ror		:	DEFINEFLAGS		+=	-D_ENABLE_ROR_
 ror		:					$(ROR_OBJECTS)				\
@@ -1279,15 +1283,17 @@ MANDELBROT_OBJECTS=												\
 
 ######################################################################################
 CONTROLLER_BASE_OBJECTS=										\
+				$(OBJECT_DIR)alpacadriver_helper.o				\
 				$(OBJECT_DIR)commoncolor.o						\
 				$(OBJECT_DIR)controller.o						\
 				$(OBJECT_DIR)controllerAlpaca.o					\
+				$(OBJECT_DIR)discoverythread.o					\
+				$(OBJECT_DIR)HostNames.o						\
 				$(OBJECT_DIR)json_parse.o						\
 				$(OBJECT_DIR)sendrequest_lib.o					\
 				$(OBJECT_DIR)windowtab.o						\
 				$(OBJECT_DIR)windowtab_about.o					\
 				$(OBJECT_DIR)windowtab_image.o					\
-				$(OBJECT_DIR)discoverythread.o					\
 
 #				$(OBJECT_DIR)controller_image.o					\
 
@@ -1314,11 +1320,11 @@ CONTROLLER_OBJECTS=												\
 				$(OBJECT_DIR)windowtab_camsettings.o			\
 				$(OBJECT_DIR)windowtab_config.o					\
 				$(OBJECT_DIR)windowtab_dome.o					\
+				$(OBJECT_DIR)windowtab_filelist.o				\
+				$(OBJECT_DIR)windowtab_graphs.o					\
 				$(OBJECT_DIR)windowtab_image.o					\
 				$(OBJECT_DIR)windowtab_ml_single.o				\
 				$(OBJECT_DIR)windowtab_nitecrawler.o			\
-				$(OBJECT_DIR)windowtab_filelist.o				\
-				$(OBJECT_DIR)windowtab_graphs.o					\
 				$(OBJECT_DIR)windowtab_switch.o					\
 				$(OBJECT_DIR)windowtab_slit.o					\
 				$(OBJECT_DIR)windowtab_slitgraph.o				\
@@ -1336,15 +1342,15 @@ VIDEO_OBJECTS=													\
 				$(OBJECT_DIR)controllerAlpaca.o					\
 				$(OBJECT_DIR)controller_camera.o				\
 				$(OBJECT_DIR)controller_video.o					\
-				$(OBJECT_DIR)windowtab.o						\
-				$(OBJECT_DIR)windowtab_about.o					\
-				$(OBJECT_DIR)windowtab_video.o					\
-				$(OBJECT_DIR)windowtab_preview.o				\
+				$(OBJECT_DIR)controller_preview.o				\
 				$(OBJECT_DIR)discovery_lib.o					\
 				$(OBJECT_DIR)json_parse.o						\
 				$(OBJECT_DIR)commoncolor.o						\
 				$(OBJECT_DIR)sendrequest_lib.o					\
-				$(OBJECT_DIR)controller_preview.o				\
+				$(OBJECT_DIR)windowtab.o						\
+				$(OBJECT_DIR)windowtab_about.o					\
+				$(OBJECT_DIR)windowtab_video.o					\
+				$(OBJECT_DIR)windowtab_preview.o				\
 
 
 PREVIEW_OBJECTS=												\
@@ -1358,29 +1364,6 @@ PREVIEW_OBJECTS=												\
 				$(OBJECT_DIR)json_parse.o						\
 				$(OBJECT_DIR)commoncolor.o						\
 				$(OBJECT_DIR)sendrequest_lib.o					\
-
-
-
-######################################################################################
-# SkyTravel objects
-
-SRC_SKYTRAVEL=./src_skytravel/
-SKYTRAVEL_OBJECTS=											\
-				$(OBJECT_DIR)controller_skytravel.o			\
-				$(OBJECT_DIR)controller_dome_common.o		\
-				$(OBJECT_DIR)eph.o							\
-				$(OBJECT_DIR)skytravel_main.o				\
-				$(OBJECT_DIR)windowtab_skytravel.o			\
-				$(OBJECT_DIR)StarData.o						\
-				$(OBJECT_DIR)SkyTravelTimeRoutines.o		\
-				$(OBJECT_DIR)NGCcatalog.o					\
-				$(OBJECT_DIR)StarCatalogHelper.o			\
-				$(OBJECT_DIR)YaleStarCatalog.o				\
-				$(OBJECT_DIR)HipparcosCatalog.o				\
-				$(OBJECT_DIR)ConstellationData.o			\
-				$(OBJECT_DIR)lx200_com.o					\
-				$(OBJECT_DIR)windowtab_dome.o				\
-				$(OBJECT_DIR)windowtab_alpacalist.o			\
 
 
 
@@ -1438,12 +1421,47 @@ camera		:			$(CONTROLLER_OBJECTS)					\
 							$(OPENCV_LINK)						\
 							-o camera
 
+
+
+######################################################################################
+# SkyTravel objects
+
+SRC_SKYTRAVEL=./src_skytravel/
+SKYTRAVEL_OBJECTS=											\
+				$(OBJECT_DIR)controller_skytravel.o			\
+				$(OBJECT_DIR)controller_dome_common.o		\
+				$(OBJECT_DIR)ConstellationData.o			\
+				$(OBJECT_DIR)eph.o							\
+				$(OBJECT_DIR)HipparcosCatalog.o				\
+				$(OBJECT_DIR)lx200_com.o					\
+				$(OBJECT_DIR)NGCcatalog.o					\
+				$(OBJECT_DIR)StarCatalogHelper.o			\
+				$(OBJECT_DIR)YaleStarCatalog.o				\
+				$(OBJECT_DIR)skytravel_main.o				\
+				$(OBJECT_DIR)StarData.o						\
+				$(OBJECT_DIR)SkyTravelTimeRoutines.o		\
+				$(OBJECT_DIR)windowtab_skytravel.o			\
+				$(OBJECT_DIR)windowtab_dome.o				\
+				$(OBJECT_DIR)windowtab_alpacalist.o			\
+				$(OBJECT_DIR)controller_camera.o				\
+				$(OBJECT_DIR)controller_cam_normal.o			\
+				$(OBJECT_DIR)controller_image.o					\
+				$(OBJECT_DIR)controller_switch.o				\
+				$(OBJECT_DIR)windowtab_camera.o					\
+				$(OBJECT_DIR)windowtab_camsettings.o			\
+				$(OBJECT_DIR)windowtab_filelist.o				\
+				$(OBJECT_DIR)windowtab_switch.o					\
+
+
 ######################################################################################
 #make skytravel
 #pragma mark camera-controller
 sky		:	DEFINEFLAGS		+=	-D_INCLUDE_CTRL_MAIN_
 sky		:	DEFINEFLAGS		+=	-D_ENABLE_SKYTRAVEL_
 sky		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_DOME_
+sky		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_CAMERA_
+sky		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
+sky		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_SWITCHES_
 sky		:	INCLUDES		+=	-I$(SRC_SKYTRAVEL)
 
 sky		:				$(SKYTRAVEL_OBJECTS)					\
@@ -1588,6 +1606,12 @@ $(OBJECT_DIR)alpacadriver.o :			$(SRC_DIR)alpacadriver.cpp			\
 										$(SRC_DIR)alpacadriver.h			\
 										Makefile
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)alpacadriver.cpp -o$(OBJECT_DIR)alpacadriver.o
+
+$(OBJECT_DIR)alpacadriver_helper.o :	$(SRC_DIR)alpacadriver_helper.c			\
+										$(SRC_DIR)alpacadriver_helper.h			\
+										Makefile
+	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)alpacadriver_helper.c -o$(OBJECT_DIR)alpacadriver_helper.o
+
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)alpaca_discovery.o :		$(SRC_DIR)alpaca_discovery.cpp		\
@@ -1864,11 +1888,18 @@ $(OBJECT_DIR)calibrationdriver_rpi.o :		$(SRC_DIR)calibrationdriver_rpi.cpp \
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)calibrationdriver_rpi.cpp -o$(OBJECT_DIR)calibrationdriver_rpi.o
 
 #-------------------------------------------------------------------------------------
-$(OBJECT_DIR)discoverythread.o :		$(SRC_DIR)discoverythread.c 	\
-										$(SRC_DIR)discoverythread.h 	\
+$(OBJECT_DIR)discoverythread.o :		$(SRC_DIR)discoverythread.c 		\
+										$(SRC_DIR)discoverythread.h 		\
 										$(SRC_DIR)alpacadriver.h			\
 										Makefile
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)discoverythread.c -o$(OBJECT_DIR)discoverythread.o
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)HostNames.o :				$(SRC_DIR)HostNames.c 	\
+										$(SRC_DIR)HostNames.h 	\
+										Makefile
+	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)HostNames.c -o$(OBJECT_DIR)HostNames.o
+
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)sendrequest_lib.o :		$(SRC_DIR)sendrequest_lib.c 	\

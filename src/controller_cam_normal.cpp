@@ -72,7 +72,7 @@
 //**************************************************************************************
 enum
 {
-	kTab_Camera	=	0,
+	kTab_Camera	=	1,
 	kTab_Settings,
 //	kTab_Advanced,
 //	kTab_Graphs,
@@ -155,14 +155,14 @@ char	lineBuff[64];
 													cHeight,
 													cBackGrndColor,
 													cWindowName,
-													cAlpacaDeviceName,
+													cAlpacaDeviceNameStr,
 													cHasFilterWheel);
 
 	cCamSettingsTabObjPtr	=	new WindowTabCamSettings(cWidth,
 													cHeight,
 													cBackGrndColor,
 													cWindowName,
-													cAlpacaDeviceName,
+													cAlpacaDeviceNameStr,
 													cHasFilterWheel);
 
 	cFileListTabObjPtr		=	new WindowTabFileList(	cWidth, cHeight, cBackGrndColor, cWindowName);
@@ -328,13 +328,13 @@ void	ControllerCamNormal::AlpacaDisplayErrorMessage(const char *errorMsgString)
 //*****************************************************************************
 void	ControllerCamNormal::UpdateReadAllStatus(void)
 {
-	SetWidgetValid(kTab_Camera,		kCameraBox_Readall,		cHasReadAll);
-	SetWidgetValid(kTab_Settings,	kCamSet_Readall,		cHasReadAll);
-//	SetWidgetValid(kTab_Graphs,		kHistogram_Readall,		cHasReadAll);
-	SetWidgetValid(kTab_FileList,	kFileList_Readall,		cHasReadAll);
-	SetWidgetValid(kTab_About,		kAboutBox_Readall,		cHasReadAll);
+	SetWidgetValid(kTab_Camera,		kCameraBox_Readall,		cHas_readall);
+	SetWidgetValid(kTab_Settings,	kCamSet_Readall,		cHas_readall);
+//	SetWidgetValid(kTab_Graphs,		kHistogram_Readall,		cHas_readall);
+	SetWidgetValid(kTab_FileList,	kFileList_Readall,		cHas_readall);
+	SetWidgetValid(kTab_About,		kAboutBox_Readall,		cHas_readall);
 
-	if (cHasReadAll == false)
+	if (cHas_readall == false)
 	{
 		SetWidgetCrossedout(kTab_Settings, kCamSet_ObjOutline, true);
 		SetWidgetCrossedout(kTab_Settings, kCamSet_FilenameOutline, true);
@@ -436,6 +436,14 @@ char			linebuff[64];
 		default:								strcpy(linebuff,	"unknown");		break;
 	}
 	SetWidgetText(		kTab_Camera, kCameraBox_State,			linebuff);
+	if (cCameraState_imageready)
+	{
+		SetWidgetBGColor(kTab_Camera, kCameraBox_DownloadImage, CV_RGB(255, 255, 255));
+	}
+	else
+	{
+		SetWidgetBGColor(kTab_Camera, kCameraBox_DownloadImage, CV_RGB(100, 100, 100));
+	}
 }
 //*****************************************************************************
 void	ControllerCamNormal::UpdateCameraTemperature(void)

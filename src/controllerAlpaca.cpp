@@ -58,7 +58,7 @@ static int	gClientTransactionID	=	1;
 //*****************************************************************************
 bool	Controller::AlpacaGetSupportedActions(	sockaddr_in	*deviceAddress,
 												int			devicePort,
-												const char	*deviceType,
+												const char	*deviceTypeStr,
 												const int	deviceNum)
 {
 SJP_Parser_t	jsonParser;
@@ -71,7 +71,7 @@ int				jjj;
 	//===============================================================
 	//*	get supportedactions
 	SJP_Init(&jsonParser);
-	sprintf(alpacaString,	"/api/v1/%s/%d/supportedactions", deviceType, deviceNum);
+	sprintf(alpacaString,	"/api/v1/%s/%d/supportedactions", deviceTypeStr, deviceNum);
 	validData	=	GetJsonResponse(	deviceAddress,
 										devicePort,
 										alpacaString,
@@ -79,7 +79,7 @@ int				jjj;
 										&jsonParser);
 	if (validData)
 	{
-		cHasReadAll	=	false;
+		cHas_readall	=	false;
 		jjj	=	0;
 		while (jjj<jsonParser.tokenCount_Data)
 		{
@@ -89,7 +89,7 @@ int				jjj;
 				while ((jjj<jsonParser.tokenCount_Data) &&
 						(jsonParser.dataList[jjj].keyword[0] != ']'))
 				{
-					AlpacaProcessSupportedAction(deviceType, deviceNum, jsonParser.dataList[jjj].valueString);
+					AlpacaProcessSupportedAction(deviceTypeStr, deviceNum, jsonParser.dataList[jjj].valueString);
 					jjj++;
 				}
 			}
@@ -107,13 +107,13 @@ int				jjj;
 
 
 //*****************************************************************************
-bool	Controller::AlpacaGetSupportedActions(const char *deviceType, const int deviceNum)
+bool	Controller::AlpacaGetSupportedActions(const char *deviceTypeStr, const int deviceNum)
 {
 bool			validData;
 
 	validData	=	AlpacaGetSupportedActions(	&cDeviceAddress,
 												cPort,
-												deviceType,
+												deviceTypeStr,
 												deviceNum);
 	return(validData);
 }
@@ -121,17 +121,18 @@ bool			validData;
 //*****************************************************************************
 //*	if this routine gets overloaded, the first part, checking for "readall" must be preserved
 //*****************************************************************************
-void	Controller::AlpacaProcessSupportedAction(const char *deviceType, const int deviveNum, const char *valueString)
+void	Controller::AlpacaProcessSupportedAction(const char *deviceTypeStr, const int deviveNum, const char *valueString)
 {
 
 	if (strcasecmp(valueString, "readall") == 0)
 	{
-		cHasReadAll	=	true;
+		cHas_readall	=	true;
 	}
 	else if (strcasecmp(valueString, "foo") == 0)
 	{
 		//*	you get the idea
 	}
+	CONSOLE_ABORT(__FUNCTION__);
 }
 
 //*****************************************************************************
@@ -139,7 +140,7 @@ void	Controller::AlpacaProcessSupportedAction(const char *deviceType, const int 
 //*****************************************************************************
 bool	Controller::AlpacaGetStatus_ReadAll(	sockaddr_in	*deviceAddress,
 												int			devicePort,
-												const char	*deviceType,
+												const char	*deviceTypeStr,
 												const int	deviceNum)
 {
 SJP_Parser_t	jsonParser;
@@ -150,7 +151,7 @@ int				jjj;
 //	CONSOLE_DEBUG(cWindowName);
 
 	SJP_Init(&jsonParser);
-	sprintf(alpacaString,	"/api/v1/%s/%d/%s", deviceType, deviceNum, "readall");
+	sprintf(alpacaString,	"/api/v1/%s/%d/%s", deviceTypeStr, deviceNum, "readall");
 
 	validData	=	GetJsonResponse(	deviceAddress,
 										devicePort,
@@ -162,7 +163,7 @@ int				jjj;
 		cLastAlpacaErrNum	=	0;
 		for (jjj=0; jjj<jsonParser.tokenCount_Data; jjj++)
 		{
-			AlpacaProcessReadAll(	deviceType,
+			AlpacaProcessReadAll(	deviceTypeStr,
 									deviceNum,
 									jsonParser.dataList[jjj].keyword,
 									jsonParser.dataList[jjj].valueString);
@@ -173,7 +174,7 @@ int				jjj;
 
 
 //*****************************************************************************
-bool	Controller::AlpacaGetStatus_ReadAll(const char *deviceType, const int deviceNum)
+bool	Controller::AlpacaGetStatus_ReadAll(const char *deviceTypeStr, const int deviceNum)
 {
 bool			validData;
 
@@ -181,13 +182,13 @@ bool			validData;
 
 	validData	=	AlpacaGetStatus_ReadAll(&cDeviceAddress,
 											cPort,
-											deviceType,
+											deviceTypeStr,
 											deviceNum);
 	return(validData);
 }
 
 //*****************************************************************************
-void	Controller::AlpacaProcessReadAll(	const char	*deviceType,
+void	Controller::AlpacaProcessReadAll(	const char	*deviceTypeStr,
 											const int	deviceNum,
 											const char	*keywordString,
 											const char	*valueString)
@@ -195,6 +196,7 @@ void	Controller::AlpacaProcessReadAll(	const char	*deviceType,
 	//*	this function should be overloaded
 	CONSOLE_DEBUG(cWindowName);
 	CONSOLE_DEBUG_W_2STR("json=",	keywordString, valueString);
+//	CONSOLE_ABORT(cWindowName)
 }
 
 //*****************************************************************************
@@ -206,19 +208,30 @@ bool	Controller::AlpacaSendPutCmdwResponse(	sockaddr_in		*deviceAddress,
 												const char		*dataString,
 												SJP_Parser_t	*jsonParser)
 {
-char			alpacaString[128];
-bool			sucessFlag;
-char			myDataString[512];
+char		alpacaString[128];
+bool		sucessFlag;
+char		myDataString[512]	=	"";
+int			dataStrLen;
+
 
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, alpacaCmd);
 
 	if (jsonParser  != NULL)
 	{
+		CONSOLE_DEBUG(__FUNCTION__);
+
 		SJP_Init(jsonParser);
 
 		sprintf(alpacaString, "/api/v1/%s/%d/%s", alpacaDevice, alpacaDevNum, alpacaCmd);
 
-		if (strlen(dataString) > 0)
+
+		dataStrLen	=	0;
+		if (dataString != NULL)
+		{
+			dataStrLen	=	strlen(dataString);
+		}
+
+		if (dataStrLen > 0)
 		{
 			sprintf(myDataString, "%s&ClientID=%d&ClientTransactionID=%d",
 													dataString,
@@ -227,7 +240,7 @@ char			myDataString[512];
 		}
 		else
 		{
-			sprintf(myDataString, "%ClientID=%d&ClientTransactionID=%d",
+			sprintf(myDataString, "ClientID=%d&ClientTransactionID=%d",
 													gClientID,
 													gClientTransactionID);
 		}
@@ -267,6 +280,8 @@ bool	Controller::AlpacaSendPutCmdwResponse(	const char		*alpacaDevice,
 												SJP_Parser_t	*jsonParser)
 {
 bool			sucessFlag;
+
+	CONSOLE_DEBUG(__FUNCTION__);
 
 #if 1
 	sucessFlag	=	AlpacaSendPutCmdwResponse(	&cDeviceAddress,
@@ -604,6 +619,67 @@ void	Controller::UpdateDownloadProgress(const int unitsRead, const int totalUnit
 	//*	this is to be over loaded if needed
 }
 
+#define		kImageArrayBuffSize	15000
+
+//*****************************************************************************
+static int	CountChars(const char *theString, const char theChar)
+{
+int		charCnt;
+int		iii;
+
+	charCnt	=	0;
+	iii		=	0;
+	while (theString[iii] != 0)
+	{
+		if (theString[iii] == theChar)
+		{
+			charCnt++;
+		}
+		iii++;
+	}
+//	CONSOLE_DEBUG_W_NUM("charCnt\t=", charCnt);
+	return(charCnt);
+}
+
+//*****************************************************************************
+void	ParseJsonKeyWordValuePair(const char *jsonData, char *keywordStr, char *valueStr)
+{
+int		iii;
+int		ccc;
+int		sLen;
+char	theChar;
+
+	keywordStr[0]	=	0;
+	valueStr[0]	=	0;
+	sLen	=	strlen(jsonData);
+	ccc		=	0;
+	iii		=	0;
+//{"Type":2
+
+	while ((jsonData[iii] != ':') && (iii < sLen))
+	{
+		theChar	=	jsonData[iii];
+		switch(theChar)
+		{
+			case '{':
+			case '\"':
+				break;
+
+			default:
+				keywordStr[ccc++]	=	theChar;
+				keywordStr[ccc]		=	0;
+				break;
+
+		}
+		iii++;
+	}
+	if (jsonData[iii] == ':')
+	{
+		iii++;
+		strcpy(valueStr, &jsonData[iii]);
+	}
+}
+
 
 //*****************************************************************************
 //*	AlpacaGetIntegerArray
@@ -632,7 +708,7 @@ int				closeRetCode;
 bool			keepReading;
 char			returnedData[kReadBuffLen + 10];
 int				recvByteCnt;
-char			linebuf[kLineBufSize];
+char			linebuf[kImageArrayBuffSize];
 int				iii;
 int				ccc;
 char			theChar;
@@ -644,8 +720,11 @@ int				imgRank;
 bool			valueFoundFlag;
 int				myIntegerValue;
 int				arrayIndex;
-long			totalBytesRead;
+int				totalBytesRead;
 double			downLoadSeconds;
+int				braceCnt;	//*	()
+int				bracktCnt;	//*	[]
+bool			firstRead	=	true;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG_W_NUM("kReadBuffLen\t=", kReadBuffLen);
@@ -653,7 +732,7 @@ double			downLoadSeconds;
 
 	imgArrayType	=	-1;
 	imgRank			=	-1;
-	arrayIndex		=	1;		//*	change to 0 later
+	arrayIndex		=	0;
 
 	sprintf(alpacaString,	"/api/v1/%s/%d/%s", alpacaDevice, alpacaDevNum, alpacaCmd);
 	CONSOLE_DEBUG_W_STR("alpacaString\t=",	alpacaString);
@@ -672,6 +751,9 @@ double			downLoadSeconds;
 		ccc				=	0;
 		linesProcessed	=	0;
 		totalBytesRead	=	0;
+		braceCnt		=	0;
+		bracktCnt		=	0;
+
 		while (keepReading)
 		{
 			recvByteCnt	=	recv(socket_desc, returnedData , kReadBuffLen , 0);
@@ -681,9 +763,108 @@ double			downLoadSeconds;
 				validData					=	true;
 				totalBytesRead				+=	recvByteCnt;
 				returnedData[recvByteCnt]	=	0;
+
+				if (firstRead)
+				{
+				//	CONSOLE_DEBUG(returnedData);
+					firstRead	=	false;
+				}
+
+		//		CountChars(returnedData, 0x0d);
+		//		CountChars(returnedData, 0x0a);
+//				CONSOLE_DEBUG_W_NUM("strlen(returnedData)\t=", strlen(returnedData));
+
+//{"Type":2,"Rank":2,"Value":[[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+
 				for (iii=0; iii<recvByteCnt; iii++)
 				{
 					theChar	=	returnedData[iii];
+					if (theChar == '{')
+					{
+						braceCnt++;
+					}
+					else if (theChar == '}')
+					{
+						braceCnt--;
+					}
+					else if (theChar == '[')
+					{
+						bracktCnt++;
+					}
+					else if (theChar == ']')
+					{
+						bracktCnt--;
+					}
+
+					if (valueFoundFlag && (theChar == ','))
+					{
+						linebuf[ccc]	=	0;
+						if (isdigit(linebuf[0]))
+						{
+							myIntegerValue	=	atoi(linebuf);
+							if (arrayIndex < arrayLength)
+							{
+								uint32array[arrayIndex]	=	myIntegerValue;
+								arrayIndex++;
+							}
+							else
+							{
+								CONSOLE_DEBUG("Ran out of room");
+							}
+						}
+						UpdateDownloadProgress(arrayIndex, arrayLength);
+						ccc				=	0;
+						linebuf[ccc]	=	0;
+					}
+					else if (theChar == ',')
+					{
+						linebuf[ccc]	=	0;
+						if ((strlen(linebuf) > 3) && (linebuf[0] != 0x30))
+						{
+//							CONSOLE_DEBUG_W_STR("linebuf\t=", linebuf);
+							ParseJsonKeyWordValuePair(linebuf, keywordStr, valueStr);
+//							CONSOLE_DEBUG_W_2STR("kw:val\t=", keywordStr, valueStr);
+							if (strcasecmp(keywordStr, "ArrayType") == 0)
+							{
+								imgArrayType	=	atoi(valueStr);
+							}
+							else if (strcasecmp(keywordStr, "Type") == 0)
+							{
+								imgArrayType	=	atoi(valueStr);
+							}
+							else if (strcasecmp(keywordStr, "rank") == 0)
+							{
+								imgRank	=	atoi(valueStr);
+							}
+							else if (strcasecmp(keywordStr, "value") == 0)
+							{
+							//	CONSOLE_DEBUG("value found!!!!");
+								valueFoundFlag	=	true;
+								CONSOLE_DEBUG_W_NUM("braceCnt\t=", braceCnt);
+								CONSOLE_DEBUG_W_NUM("bracktCnt\t=", bracktCnt);
+							}
+						}
+						ccc	=	0;
+					}
+					else if ((theChar == 0x0d) || (theChar == 0x0a))
+					{
+						linesProcessed++;
+						//*	ignore
+					}
+					else if (braceCnt > 0)
+					{
+						if (ccc < kImageArrayBuffSize)
+						{
+							linebuf[ccc]	=	theChar;
+							ccc++;
+						}
+						else
+						{
+							CONSOLE_DEBUG("Line to long");
+						}
+					}
+
+#if 0
 					if ((theChar == 0x0d) || (theChar == 0x0a))
 					{
 						linebuf[ccc]	=	0;
@@ -691,6 +872,10 @@ double			downLoadSeconds;
 						{
 							JSON_ExtractKeyword_Value(linebuf, keywordStr, valueStr);
 							if (strcasecmp(keywordStr, "ArrayType") == 0)
+							{
+								imgArrayType	=	atoi(valueStr);
+							}
+							if (strcasecmp(keywordStr, "Type") == 0)
 							{
 								imgArrayType	=	atoi(valueStr);
 							}
@@ -730,7 +915,7 @@ double			downLoadSeconds;
 					}
 					else
 					{
-						if (ccc < kLineBufSize)
+						if (ccc < kImageArrayBuffSize)
 						{
 							linebuf[ccc]	=	theChar;
 							ccc++;
@@ -740,8 +925,9 @@ double			downLoadSeconds;
 							CONSOLE_DEBUG("Line to long");
 						}
 					}
+#endif // 0
 				}
-				UpdateDownloadProgress(arrayIndex, arrayLength);
+			//	UpdateDownloadProgress(arrayIndex, arrayLength);
 			}
 			else
 			{
@@ -768,6 +954,8 @@ double			downLoadSeconds;
 
 		CONSOLE_DEBUG_W_NUM("imgArrayType\t=", imgArrayType);
 		CONSOLE_DEBUG_W_NUM("imgRank\t\t=", imgRank);
+		CONSOLE_DEBUG_W_NUM("totalBytesRead\t=", totalBytesRead);
+
 		CONSOLE_DEBUG_W_NUM("linesProcessed\t=", linesProcessed);
 
 		shutDownRetCode	=	shutdown(socket_desc, SHUT_RDWR);
@@ -791,6 +979,201 @@ double			downLoadSeconds;
 	return(validData);
 }
 
+//*****************************************************************************
+bool	Controller::AlpacaGetIntegerArrayShortLines(const char	*alpacaDevice,
+													const int	alpacaDevNum,
+													const char	*alpacaCmd,
+													const char	*dataString,
+													int			*uint32array,
+													int			arrayLength,
+													int			*actualValueCnt)
+{
+bool			validData;
+int				socket_desc;
+char			alpacaString[128];
+int				shutDownRetCode;
+int				closeRetCode;
+bool			keepReading;
+char			returnedData[kReadBuffLen + 10];
+int				recvByteCnt;
+char			linebuf[kImageArrayBuffSize];
+int				iii;
+int				ccc;
+char			theChar;
+int				linesProcessed;
+char			keywordStr[kLineBufSize];
+char			valueStr[kLineBufSize];
+int				imgArrayType;
+int				imgRank;
+bool			valueFoundFlag;
+int				myIntegerValue;
+int				arrayIndex;
+int				totalBytesRead;
+double			downLoadSeconds;
+int				braceCnt;	//*	()
+int				bracktCnt;	//*	[]
+bool			firstRead	=	true;
+int				progressUpdateCnt;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_NUM("kReadBuffLen\t=", kReadBuffLen);
+	CONSOLE_DEBUG_W_NUM("arrayLength\t=", arrayLength);
+
+	imgArrayType	=	-1;
+	imgRank			=	-1;
+	arrayIndex		=	0;
+
+	sprintf(alpacaString,	"/api/v1/%s/%d/%s", alpacaDevice, alpacaDevNum, alpacaCmd);
+	CONSOLE_DEBUG_W_STR("alpacaString\t=",	alpacaString);
+	socket_desc	=	OpenSocketAndSendRequest(	&cDeviceAddress,
+												cPort,
+												"GET",	//*	must be either GET or PUT
+												alpacaString,
+												dataString);
+	if (socket_desc >= 0)
+	{
+		CONSOLE_DEBUG("Success: Connection open and data sent");
+		SETUP_TIMING();
+		START_TIMING();
+		valueFoundFlag		=	false;
+		keepReading			=	true;
+		ccc					=	0;
+		linesProcessed		=	0;
+		totalBytesRead		=	0;
+		braceCnt			=	0;
+		bracktCnt			=	0;
+		progressUpdateCnt	=	0;
+
+		while (keepReading)
+		{
+			recvByteCnt	=	recv(socket_desc, returnedData , kReadBuffLen , 0);
+//			CONSOLE_DEBUG_W_NUM("recvByteCnt\t=", recvByteCnt);
+			if (recvByteCnt > 0)
+			{
+				validData					=	true;
+				totalBytesRead				+=	recvByteCnt;
+				returnedData[recvByteCnt]	=	0;
+
+
+				for (iii=0; iii<recvByteCnt; iii++)
+				{
+					theChar	=	returnedData[iii];
+					if ((theChar == 0x0d) || (theChar == 0x0a))
+					{
+						linebuf[ccc]	=	0;
+						if (strlen(linebuf) > 0)
+						{
+							JSON_ExtractKeyword_Value(linebuf, keywordStr, valueStr);
+							if (strcasecmp(keywordStr, "ArrayType") == 0)
+							{
+								imgArrayType	=	atoi(valueStr);
+							}
+							if (strcasecmp(keywordStr, "Type") == 0)
+							{
+								imgArrayType	=	atoi(valueStr);
+							}
+							else if (strcasecmp(keywordStr, "rank") == 0)
+							{
+								imgRank	=	atoi(valueStr);
+							}
+							else if (strcasecmp(keywordStr, "value") == 0)
+							{
+							//	CONSOLE_DEBUG("value found!!!!");
+								valueFoundFlag	=	true;
+							}
+							else if (valueFoundFlag)
+							{
+								if (isdigit(keywordStr[0]))
+								{
+									myIntegerValue	=	atoi(keywordStr);
+									if (arrayIndex < arrayLength)
+									{
+										uint32array[arrayIndex]	=	myIntegerValue;
+										arrayIndex++;
+									}
+									else
+									{
+										CONSOLE_DEBUG("Ran out of room");
+									}
+								}
+								else
+								{
+									printf("%-20s\t%s\r\n", keywordStr, valueStr);
+								}
+							}
+							linesProcessed++;
+						}
+						ccc				=	0;
+						linebuf[ccc]	=	0;
+					}
+					else
+					{
+						if (ccc < kImageArrayBuffSize)
+						{
+							linebuf[ccc]	=	theChar;
+							ccc++;
+						}
+						else
+						{
+							CONSOLE_DEBUG("Line to long");
+						}
+					}
+				}
+				if ((progressUpdateCnt % 1000) == 0)
+				{
+					UpdateDownloadProgress(arrayIndex, arrayLength);
+				}
+				progressUpdateCnt++;
+			}
+			else
+			{
+				keepReading		=	false;
+			}
+		}
+		*actualValueCnt	=	arrayIndex;
+
+		DEBUG_TIMING("Time to download image (ms)");
+
+		cLastDownload_Bytes			=	totalBytesRead;
+		cLastDownload_Millisecs		=	tDeltaMillisecs;
+		downLoadSeconds				=	tDeltaMillisecs / 1000.0;
+		if (downLoadSeconds > 0)
+		{
+			cLastDownload_MegaBytesPerSec	=	1.0 * totalBytesRead / downLoadSeconds;
+
+		}
+		else
+		{
+			CONSOLE_DEBUG("tDeltaMillisecs invalid");
+			cLastDownload_MegaBytesPerSec	=	0.0;
+		}
+
+		CONSOLE_DEBUG_W_NUM("imgArrayType\t=", imgArrayType);
+		CONSOLE_DEBUG_W_NUM("imgRank\t\t=", imgRank);
+		CONSOLE_DEBUG_W_NUM("totalBytesRead\t=", totalBytesRead);
+
+		CONSOLE_DEBUG_W_NUM("linesProcessed\t=", linesProcessed);
+
+		shutDownRetCode	=	shutdown(socket_desc, SHUT_RDWR);
+		if (shutDownRetCode != 0)
+		{
+			CONSOLE_DEBUG_W_NUM("shutDownRetCode\t=", shutDownRetCode);
+			CONSOLE_DEBUG_W_NUM("errno\t=", errno);
+		}
+
+		closeRetCode	=	close(socket_desc);
+		if (closeRetCode != 0)
+		{
+			CONSOLE_DEBUG("Close error");
+		}
+	}
+	else
+	{
+		CONSOLE_DEBUG("Failed");
+		cReadFailureCnt++;
+	}
+	return(validData);
+}
 
 //*****************************************************************************
 int	Controller::AlpacaCheckForErrors(	SJP_Parser_t	*jsonParser,

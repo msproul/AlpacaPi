@@ -5,6 +5,7 @@
 //*	Jun 10,	2020	<MLS> Increased kMaxWidgets from 75 to 125
 //*	Jun 15,	2020	<MLS> Increased kMaxWidgets from 125 to 150
 //*	Jan 15,	2021	<MLS> Added Tab stops to widget definition
+//*	Jan 16,	2021	<MLS> Added font size kFont_TextList
 //*****************************************************************************
 
 //#include	"widget.h"
@@ -50,10 +51,12 @@ enum
 //*****************************************************************************
 enum
 {
-	kFont_Large	=	0,
-	kFont_Medium,
+	kFont_Small	=	0,
 	kFont_RadioBtn,
-	kFont_Small,
+	kFont_TextList,
+	kFont_Medium,
+	kFont_Large,
+
 //	kFont_Simplex,
 
 };

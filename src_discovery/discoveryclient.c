@@ -39,8 +39,10 @@
 TYPE_ALPACA_UNIT	gAlpacaUnitList[kMaxDeviceListCnt];
 int					gAlpacaUnitCnt	=	0;
 
-TYPE_REMOTE_DEV		gAlpacaDeviceList[kMaxDeviceListCnt];
-int					gALpacaDeviceCnt	=	0;;
+//TYPE_REMOTE_DEV		gAlpacaDiscoveredList[kMaxDeviceListCnt];
+//int					gAlpacaDiscoveredCnt	=	0;
+TYPE_REMOTE_DEV		gAlpacaDiscoveredList[kMaxDeviceListCnt];
+int					gAlpacaDiscoveredCnt	=	0;;
 
 static	int		gBroadcastSock;
 
@@ -54,30 +56,30 @@ bool	newDevice;
 //	CONSOLE_DEBUG(__FUNCTION__);
 	//*	look to see if it is already in the list
 	newDevice	=	true;
-	for (ii=0; ii<gALpacaDeviceCnt; ii++)
+	for (ii=0; ii<gAlpacaDiscoveredCnt; ii++)
 	{
-		if ((newRemoteDevice->deviceAddress.sin_addr.s_addr == gAlpacaDeviceList[ii].deviceAddress.sin_addr.s_addr)
-			&& (strcmp(newRemoteDevice->deviceType, gAlpacaDeviceList[ii].deviceType) == 0)
-			&& (strcmp(newRemoteDevice->deviceName, gAlpacaDeviceList[ii].deviceName) == 0)
-			&& (newRemoteDevice->alpacaDeviceNum == gAlpacaDeviceList[ii].alpacaDeviceNum)
+		if ((newRemoteDevice->deviceAddress.sin_addr.s_addr == gAlpacaDiscoveredList[ii].deviceAddress.sin_addr.s_addr)
+			&& (strcmp(newRemoteDevice->deviceTypeStr, gAlpacaDiscoveredList[ii].deviceTypeStr) == 0)
+			&& (strcmp(newRemoteDevice->deviceNameStr, gAlpacaDiscoveredList[ii].deviceNameStr) == 0)
+			&& (newRemoteDevice->alpacaDeviceNum == gAlpacaDiscoveredList[ii].alpacaDeviceNum)
 			)
 		{
 			newDevice	=	false;
 			break;
 		}
 		//*	I dont want the management device type in the list
-		if (strcmp(newRemoteDevice->deviceType, "management") == 0)
-		{
-			newDevice	=	false;
-			break;
-		}
+//		if (strcmp(newRemoteDevice->deviceTypeStr, "management") == 0)
+//		{
+//			newDevice	=	false;
+//			break;
+//		}
 	}
 	if (newDevice)
 	{
-		if (gALpacaDeviceCnt < kMaxDeviceListCnt)
+		if (gAlpacaDiscoveredCnt < kMaxDeviceListCnt)
 		{
-			gAlpacaDeviceList[gALpacaDeviceCnt]	=	*newRemoteDevice;
-			gALpacaDeviceCnt++;
+			gAlpacaDiscoveredList[gAlpacaDiscoveredCnt]	=	*newRemoteDevice;
+			gAlpacaDiscoveredCnt++;
 
 		}
 	}
@@ -111,7 +113,7 @@ uint32_t			address2;
 //	retValue	=	entry1->deviceAddress.sin_addr.s_addr - entry2->deviceAddress.sin_addr.s_addr;
 	if (retValue == 0)
 	{
-		retValue	=	strcmp(entry1->deviceType, entry2->deviceType);
+		retValue	=	strcmp(entry1->deviceTypeStr, entry2->deviceTypeStr);
 	}
 	else
 	{
@@ -120,7 +122,7 @@ uint32_t			address2;
 	}
 	if (retValue == 0)
 	{
-		retValue	=	strcmp(entry1->deviceName, entry2->deviceName);
+		retValue	=	strcmp(entry1->deviceNameStr, entry2->deviceNameStr);
 	}
 	return(retValue);
 }
@@ -132,27 +134,27 @@ static	void PrintDeviceList(void)
 int		ii;
 char	ipAddrSt[32];
 
-	qsort(gAlpacaDeviceList, gALpacaDeviceCnt, sizeof(TYPE_REMOTE_DEV), DeviceSort);
+	qsort(gAlpacaDiscoveredList, gAlpacaDiscoveredCnt, sizeof(TYPE_REMOTE_DEV), DeviceSort);
 
-	for (ii=0; ii<gALpacaDeviceCnt; ii++)
+	for (ii=0; ii<gAlpacaDiscoveredCnt; ii++)
 	{
 		if (ii> 0)
 		{
-			if (gAlpacaDeviceList[ii].deviceAddress.sin_addr.s_addr != gAlpacaDeviceList[ii-1].deviceAddress.sin_addr.s_addr)
+			if (gAlpacaDiscoveredList[ii].deviceAddress.sin_addr.s_addr != gAlpacaDiscoveredList[ii-1].deviceAddress.sin_addr.s_addr)
 			{
 				printf("\r\n");
 			}
 		}
-		inet_ntop(AF_INET, &(gAlpacaDeviceList[ii].deviceAddress.sin_addr), ipAddrSt, INET_ADDRSTRLEN);
+		inet_ntop(AF_INET, &(gAlpacaDiscoveredList[ii].deviceAddress.sin_addr), ipAddrSt, INET_ADDRSTRLEN);
 
 		printf("%s\t",		ipAddrSt);
 
-		printf(":%d\t",		gAlpacaDeviceList[ii].port);
+		printf(":%d\t",		gAlpacaDiscoveredList[ii].port);
 
-		printf("%-20s\t",	gAlpacaDeviceList[ii].deviceType);
-		printf("%-25s\t",	gAlpacaDeviceList[ii].deviceName);
-		printf("%4d\t",		gAlpacaDeviceList[ii].alpacaDeviceNum);
-		printf("%s\t",		gAlpacaDeviceList[ii].versionString);
+		printf("%-20s\t",	gAlpacaDiscoveredList[ii].deviceTypeStr);
+		printf("%-25s\t",	gAlpacaDiscoveredList[ii].deviceNameStr);
+		printf("%4d\t",		gAlpacaDiscoveredList[ii].alpacaDeviceNum);
+		printf("%s\t",		gAlpacaDiscoveredList[ii].versionString);
 
 		printf("\r\n");
 	}
@@ -181,11 +183,11 @@ char			myVersionString[64];
 
 		if (strcmp(jsonParser->dataList[ii].keyword, "DEVICETYPE") == 0)
 		{
-			strcpy(myRemoteDevice.deviceType, jsonParser->dataList[ii].valueString);
+			strcpy(myRemoteDevice.deviceTypeStr, jsonParser->dataList[ii].valueString);
 		}
 		if (strcmp(jsonParser->dataList[ii].keyword, "DEVICENAME") == 0)
 		{
-			strcpy(myRemoteDevice.deviceName, jsonParser->dataList[ii].valueString);
+			strcpy(myRemoteDevice.deviceNameStr, jsonParser->dataList[ii].valueString);
 		}
 		if (strcmp(jsonParser->dataList[ii].keyword, "DEVICENUMBER") == 0)
 		{
@@ -239,7 +241,7 @@ int					setOptRetCode;
 												sizeof(timeoutLength));
 
 
-		CONSOLE_DEBUG_W_NUM("Connecting to port ", theDevice->port);
+//		CONSOLE_DEBUG_W_NUM("Connecting to port ", theDevice->port);
 		remoteDev.sin_addr.s_addr	=	theDevice->deviceAddress.sin_addr.s_addr;
 		remoteDev.sin_family		=	AF_INET;
 		remoteDev.sin_port			=	htons(theDevice->port);
@@ -264,17 +266,17 @@ int					setOptRetCode;
 			//?ClientID=1&ClientTransactionID=1234" -H "accept: application/json"
 
 
-			CONSOLE_DEBUG_W_STR("Sending:", xmitBuffer);
+//			CONSOLE_DEBUG_W_STR("Sending:", xmitBuffer);
 			sendRetCode	=	send(socket_desc , xmitBuffer , strlen(xmitBuffer) , 0);
-			CONSOLE_DEBUG_W_NUM("sendRetCode ", sendRetCode);
+//			CONSOLE_DEBUG_W_NUM("sendRetCode ", sendRetCode);
 			if (sendRetCode >= 0)
 			{
 				recvByteCnt	=	recv(socket_desc, returnedData , 2000 , 0);
-				CONSOLE_DEBUG_W_NUM("recvByteCnt ", recvByteCnt);
+//				CONSOLE_DEBUG_W_NUM("recvByteCnt ", recvByteCnt);
 				if (recvByteCnt >= 0)
 				{
 					returnedData[recvByteCnt]	=	0;
-					CONSOLE_DEBUG_W_STR("Recived:", returnedData);
+//					CONSOLE_DEBUG_W_STR("Recived:", returnedData);
 //					printf("%s\r\n", returnedData);
 					SJP_Init(&jsonParser);
 					SJP_ParseData(&jsonParser, returnedData);
@@ -462,7 +464,7 @@ int					timeOutCntr;
 			{
 				buf[rcvCnt]	=	0;
 //				CONSOLE_DEBUG("We have data");
-				CONSOLE_DEBUG_W_STR("buf=", buf);
+//				CONSOLE_DEBUG_W_STR("buf=", buf);
 				SJP_Init(&jsonParser);
 				SJP_ParseData(&jsonParser, buf);
 //				SJP_DumpJsonData(&jsonParser);

@@ -19,6 +19,9 @@
 	#include	"json_parse.h"
 #endif // _JSON_PARSE_H_
 
+#ifndef _ALPACA_HELPER_H_
+	#include	"alpacadriver_helper.h"
+#endif // _ALPACA_HELPER_H_
 
 #define	kAlpacaDiscoveryMsg	"alpacadiscovery1"
 
@@ -42,8 +45,9 @@ typedef struct
 	struct sockaddr_in	deviceAddress;
 	int					port;
 	char				hostName[64];
-	char				deviceType[64];
-	char				deviceName[64];
+	TYPE_DEVICETYPE		deviceTypeEnum;
+	char				deviceTypeStr[32];
+	char				deviceNameStr[64];
 	char				versionString[64];
 	int					alpacaDeviceNum;
 	int					notSeenCounter;
@@ -57,9 +61,10 @@ typedef struct
 
 #define	kMaxDeviceListCnt	48
 
+//extern	TYPE_ALPACA_UNIT	gAlpacaIPaddrList[kMaxAlpacaIPaddrCnt];
 
-extern	TYPE_REMOTE_DEV		gAlpacaIPaddrList[kMaxDeviceListCnt];
-extern	int					gAlpacaDeviceCnt;
+extern	TYPE_REMOTE_DEV	gAlpacaDiscoveredList[kMaxDeviceListCnt];
+extern	int				gAlpacaDiscoveredCnt;
 
 
 bool	SetupBroadcast(void);

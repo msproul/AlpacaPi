@@ -111,10 +111,14 @@ class ControllerCamera: public Controller
 
 
 		//*	sub class specific routines
+		virtual	void	AlpacaProcessSupportedAction(	const char	*deviceTypeStr,
+														const int	deviveNum,
+														const char	*valueString);
+
 				void	SetErrorTextString(const char	*errorString);
 				void	GetConfiguredDevices(void);
 				bool	AlpacaGetStartupData(void);
-		virtual	void	AlpacaProcessReadAll(	const char	*deviceType,
+		virtual	void	AlpacaProcessReadAll(	const char	*deviceTypeStr,
 												const int	deviceNum,
 												const char	*keywordString,
 												const char	*valueString);
@@ -141,6 +145,8 @@ class ControllerCamera: public Controller
 
 
 				IplImage	*DownloadImage(void);
+				IplImage	*DownloadImage_rgbarray(void);
+				IplImage	*DownloadImage_imagearray(void);
 
 
 				char					cCameraName[48];
@@ -153,6 +159,7 @@ class ControllerCamera: public Controller
 				double					cCCDtemperature;
 				READOUTMODE				cReadOutModes[kMaxReadOutModes];
 				int						cReadOutMode;
+				bool					cCameraState_imageready;
 
 				double					cExposure;
 				double					cExposureMin;
@@ -162,6 +169,11 @@ class ControllerCamera: public Controller
 				bool					cAutoExposure;
 				bool					cDisplayImage;
 				bool					cHasCooler;
+
+				bool					cHas_autoexposure;
+				bool					cHas_exposuretime;
+				bool					cHas_livemode;
+				bool					cHas_rgbarray;
 
 				//==========================================================
 				//*	File name information

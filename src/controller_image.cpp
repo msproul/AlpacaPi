@@ -35,10 +35,13 @@
 
 #include	"alpaca_defs.h"
 #include	"windowtab_image.h"
-#ifdef _ENABLE_SKYTRAVEL_
+
+
+
+#ifdef _ENABLE_SKYTRAVEL_TAB_
 	#include	"windowtab_skytravel.h"
 	#include	"lx200_com.h"
-#endif // _ENABLE_SKYTRAVEL_
+#endif // _ENABLE_SKYTRAVEL_TAB_
 
 #include	"windowtab_about.h"
 
@@ -53,8 +56,8 @@ extern char	gFullVersionString[];
 //**************************************************************************************
 enum
 {
-	kTab_Image	=	0,
-#ifdef _ENABLE_SKYTRAVEL_
+	kTab_Image	=	1,
+#ifdef _ENABLE_SKYTRAVEL_TAB_
 	kTab_SkyTravel,
 #endif
 	kTab_About,
@@ -79,9 +82,9 @@ int					reduceFactor;
 	cDisplayedImage		=	NULL;
 
 	cImageTabObjPtr		=	NULL;
-#ifdef _ENABLE_SKYTRAVEL_
+#ifdef _ENABLE_SKYTRAVEL_TAB_
 	cSkyTravelTabOjbPtr	=	NULL;
-#endif // _ENABLE_SKYTRAVEL_
+#endif // _ENABLE_SKYTRAVEL_TAB_
 	cAboutBoxTabObjPtr	=	NULL;
 
 	SetupWindowControls();
@@ -142,9 +145,9 @@ int					reduceFactor;
 	}
 	else
 	{
-#ifdef _ENABLE_SKYTRAVEL_
+#ifdef _ENABLE_SKYTRAVEL_TAB_
 		ProcessTabClick(kTab_SkyTravel);
-#endif // _ENABLE_SKYTRAVEL_
+#endif // _ENABLE_SKYTRAVEL_TAB_
 	}
 }
 
@@ -175,13 +178,13 @@ ControllerImage::~ControllerImage(void)
 		delete cImageTabObjPtr;
 		cImageTabObjPtr	=	NULL;
 	}
-#ifdef _ENABLE_SKYTRAVEL_
+#ifdef _ENABLE_SKYTRAVEL_TAB_
 	if (cSkyTravelTabOjbPtr != NULL)
 	{
 		delete cSkyTravelTabOjbPtr;
 		cSkyTravelTabOjbPtr	=	NULL;
 	}
-#endif // _ENABLE_SKYTRAVEL_
+#endif // _ENABLE_SKYTRAVEL_TAB_
 	if (cAboutBoxTabObjPtr != NULL)
 	{
 		delete cAboutBoxTabObjPtr;
@@ -206,7 +209,7 @@ void	ControllerImage::SetupWindowControls(void)
 		cImageTabObjPtr->SetParentObjectPtr(this);
 	}
 
-#ifdef _ENABLE_SKYTRAVEL_
+#ifdef _ENABLE_SKYTRAVEL_TAB_
 	SetTabText(kTab_SkyTravel,	"SkyTravel");
 	cSkyTravelTabOjbPtr		=	new WindowTabSkyTravel(	cWidth, cHeight, cBackGrndColor, cWindowName);
 	if (cSkyTravelTabOjbPtr != NULL)
@@ -214,7 +217,7 @@ void	ControllerImage::SetupWindowControls(void)
 		SetTabWindow(kTab_SkyTravel,	cSkyTravelTabOjbPtr);
 		cSkyTravelTabOjbPtr->SetParentObjectPtr(this);
 	}
-#endif // _ENABLE_SKYTRAVEL_
+#endif // _ENABLE_SKYTRAVEL_TAB_
 
 	SetTabText(kTab_About,		"About");
 	cAboutBoxTabObjPtr		=	new WindowTabAbout(	cWidth, cHeight, cBackGrndColor, cWindowName);
@@ -268,7 +271,7 @@ bool		needToUpdate;
 	{
 		cImageTabObjPtr->RunBackgroundTasks();
 	}
-#ifdef _ENABLE_SKYTRAVEL_
+#ifdef _ENABLE_SKYTRAVEL_TAB_
 	if (cSkyTravelTabOjbPtr != NULL)
 	{
 		cSkyTravelTabOjbPtr->RunBackgroundTasks();

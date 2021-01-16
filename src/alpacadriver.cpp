@@ -344,6 +344,8 @@ int		ii;
 	cDeviceVersion[0]			=	0;
 	cDriverversionStr[0]		=	0;
 	cDeviceFirmwareVersStr[0]	=	0;
+	cTotalCmdsProcessed			=	0;
+	cTotalCmdErrors				=	0;
 
 	cUniqueID.part1				=	'ALPA';				//*	4 byte manufacturer code
 	cUniqueID.part2				=	kBuildNumber;		//*	software version number
@@ -1155,65 +1157,6 @@ int		bytesWritten;
 
 
 
-//*******************************************************
-TYPE_DeviceTable	gDeviceTable[]	=
-{
-	{	"Camera",				kDeviceType_Camera				},
-	{	"Dome",					kDeviceType_Dome				},
-	{	"Filterwheel",			kDeviceType_Filterwheel			},
-	{	"Focuser",				kDeviceType_Focuser				},
-	{	"Management",			kDeviceType_Management			},
-	{	"Observingconditions",	kDeviceType_Observingconditions	},
-	{	"Rotator",				kDeviceType_Rotator				},
-	{	"SafetyMonitor",		kDeviceType_SafetyMonitor		},
-	{	"Shutter",				kDeviceType_Shutter				},
-	{	"Switch",				kDeviceType_Switch				},
-	{	"Telescope",			kDeviceType_Telescope			},
-	{	"CoverCalibrator",		kDeviceType_CoverCalibrator		},
-
-	//*	extras defined by MLS
-	{	"Multicam",				kDeviceType_Multicam			},
-	{	"SlitTracker",			kDeviceType_SlitTracker			},
-
-	{	"",				-1						}
-};
-
-
-
-//*****************************************************************************
-void	GetDeviceTypeFromEnum(const int deviceEnum, char *deviceTypeString)
-{
-int		ii;
-	ii	=	0;
-	while ((gDeviceTable[ii].deviceType[0] > 0x20 ) && (gDeviceTable[ii].enumValue >= 0))
-	{
-		if (deviceEnum == gDeviceTable[ii].enumValue)
-		{
-			strcpy(deviceTypeString, gDeviceTable[ii].deviceType);
-		}
-		ii++;
-	}
-}
-
-//*****************************************************************************
-static int	FindDeviceTypeByString(const char *deviceTypeStr)
-{
-int		ii;
-int		enumValue;
-
-	enumValue	=	-1;
-	ii				=	0;
-	while ((gDeviceTable[ii].deviceType[0] != 0) && (enumValue < 0))
-	{
-		if (strcasecmp(deviceTypeStr, gDeviceTable[ii].deviceType) == 0)
-		{
-			enumValue	=	gDeviceTable[ii].enumValue;
-		}
-		ii++;
-	}
-	return(enumValue);
-}
-
 //*****************************************************************************
 static void	StrcpyToEOL(char *newString, const char *oldString, const int maxLen)
 {
@@ -1416,6 +1359,7 @@ int		ii;
 		SocketWriteData(mySocketFD,	"\t\t<TH><FONT COLOR=yellow>Device Number</TH>\r\n");
 		SocketWriteData(mySocketFD,	"\t\t<TH><FONT COLOR=yellow>Device Name</TH>\r\n");
 		SocketWriteData(mySocketFD,	"\t\t<TH><FONT COLOR=yellow>Description</TH>\r\n");
+		SocketWriteData(mySocketFD,	"\t\t<TH><FONT COLOR=yellow>Cmds / Errs</TH>\r\n");
 		SocketWriteData(mySocketFD,	"\t</TR>\r\n");
 
 		for (ii=0; ii<gDeviceCnt; ii++)
@@ -1438,6 +1382,12 @@ int		ii;
 				SocketWriteData(mySocketFD,	"\t\t<TD>\r\n");
 					SocketWriteData(mySocketFD,	gAlpacaDeviceList[ii]->cDeviceDescription);
 				SocketWriteData(mySocketFD,	"\t\t</TD>\r\n");
+
+				sprintf(lineBuffer, "<TD><CENTER>%d/%d</TD>\r\n",
+											gAlpacaDeviceList[ii]->cTotalCmdsProcessed,
+											gAlpacaDeviceList[ii]->cTotalCmdErrors);
+				SocketWriteData(mySocketFD,	lineBuffer);
+
 
 				SocketWriteData(mySocketFD,	"\t</TR>\r\n");
 
@@ -1822,8 +1772,8 @@ char			*myFilenamePtr;
 
 
 //*****************************************************************************
-static int	ProcessAlpacaAPIrequest(TYPE_GetPutRequestData	*reqData,
-									char					*parseChrPtr)
+static TYPE_ASCOM_STATUS	ProcessAlpacaAPIrequest(TYPE_GetPutRequestData	*reqData,
+													char					*parseChrPtr)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
 //int				alpacaVerNum;
@@ -2001,7 +1951,11 @@ bool				foundKeyWord;
 				{
 					deviceFound		=	true;
 					alpacaErrCode	=	gAlpacaDeviceList[ii]->ProcessCommand(reqData);
-
+					gAlpacaDeviceList[ii]->cTotalCmdsProcessed++;
+					if (alpacaErrCode!= kASCOM_Err_Success)
+					{
+						gAlpacaDeviceList[ii]->cTotalCmdErrors++;
+					}
 
 					reqData->alpacaErrCode	=	alpacaErrCode;
 					if (gConformLogging)
@@ -2012,7 +1966,6 @@ bool				foundKeyWord;
 					{
 						LogToDisk(kLog_Error, reqData);
 					}
-
 					break;
 				}
 			}
@@ -2117,6 +2070,11 @@ int					cmdStrLen;
 			if (gAlpacaDeviceList[ii]->cDeviceType == kDeviceType_Management)
 			{
 				alpacaErrCode	=	gAlpacaDeviceList[ii]->ProcessCommand(reqData);
+				gAlpacaDeviceList[ii]->cTotalCmdsProcessed++;
+				if (alpacaErrCode!= kASCOM_Err_Success)
+				{
+					gAlpacaDeviceList[ii]->cTotalCmdErrors++;
+				}
 				break;
 			}
 		}
@@ -2277,7 +2235,7 @@ char			*queMrkPtr;
 //*****************************************************************************
 static int	ProcessGetPutRequest(const int socket, char *htmlData)
 {
-int						returnCode	=	-1;
+TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_InternalError;
 char					*parseChrPtr;
 TYPE_GetPutRequestData	reqData;
 
@@ -2311,7 +2269,7 @@ TYPE_GetPutRequestData	reqData;
 	if (strncmp(parseChrPtr, "/api/", 5) == 0)
 	{
 //		CONSOLE_DEBUG(__FUNCTION__);
-		returnCode	=	ProcessAlpacaAPIrequest(&reqData, parseChrPtr);
+		alpacaErrCode	=	ProcessAlpacaAPIrequest(&reqData, parseChrPtr);
 	}
 	//*	standard ALPACA setup
 	else if (strncmp(parseChrPtr, "/setup", 6) == 0)
@@ -2321,7 +2279,7 @@ TYPE_GetPutRequestData	reqData;
 	//*	standard ALPACA management
 	else if (strncmp(parseChrPtr, "/management", 11) == 0)
 	{
-		ProcessManagementRequest(&reqData, parseChrPtr);
+		alpacaErrCode	=	ProcessManagementRequest(&reqData, parseChrPtr);
 	}
 	//*	extra web interface
 	else if (strncmp(parseChrPtr, "/web", 4) == 0)
@@ -2362,7 +2320,7 @@ TYPE_GetPutRequestData	reqData;
 		CONSOLE_DEBUG_W_STR("Incomplete alpaca command\t=",	htmlData);
 		SocketWriteData(socket,	gBadResponse400);
 	}
-	return(returnCode);
+	return(alpacaErrCode);
 }
 
 //*****************************************************************************

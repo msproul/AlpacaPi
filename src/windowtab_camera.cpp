@@ -516,6 +516,7 @@ int			fwPosition;
 			break;
 
 		case kCameraBox_StartExposure:
+			CONSOLE_DEBUG(__FUNCTION__);
 			StartExposure();
 			break;
 
@@ -714,7 +715,7 @@ void	WindowTabCamera::StartExposure(void)
 {
 ControllerCamera	*myCameraController;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 	myCameraController	=	(ControllerCamera *)cParentObjPtr;
 
 	if (myCameraController != NULL)

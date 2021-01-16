@@ -59,8 +59,11 @@
 TYPE_ALPACA_UNIT	gAlpacaUnitList[kMaxUnitCount];
 int					gAlpacaUnitCnt	=	0;
 
-TYPE_REMOTE_DEV		gAlpacaIPaddrList[kMaxDeviceListCnt];
-int					gAlpacaDeviceCnt	=	0;
+//TYPE_REMOTE_DEV		gAlpacaIPaddrList[kMaxDeviceListCnt];
+//int					gAlpacaDeviceCnt	=	0;
+
+TYPE_REMOTE_DEV		gAlpacaDiscoveredList[kMaxDeviceListCnt];
+int					gAlpacaDiscoveredCnt	=	0;;
 
 static	int					gBroadcastSock;
 static	struct sockaddr_in	gServer_addr;
@@ -77,10 +80,10 @@ int		iii;
 	}
 	for (iii=0; iii<kMaxDeviceListCnt; iii++)
 	{
-		memset(&gAlpacaIPaddrList[iii], 0, sizeof(TYPE_REMOTE_DEV));
+		memset(&gAlpacaDiscoveredList[iii], 0, sizeof(TYPE_REMOTE_DEV));
 	}
-	gAlpacaUnitCnt	=	0;
-	gAlpacaDeviceCnt	=	0;
+	gAlpacaUnitCnt			=	0;
+	gAlpacaDiscoveredCnt	=	0;
 }
 
 //*****************************************************************************
@@ -156,13 +159,13 @@ bool	newDevice;
 //	CONSOLE_DEBUG(__FUNCTION__);
 	//*	look to see if it is already in the list
 	newDevice	=	true;
-	for (ii=0; ii<gAlpacaDeviceCnt; ii++)
+	for (ii=0; ii<gAlpacaDiscoveredCnt; ii++)
 	{
 		//*	check to see if it is already in the list
-		if ((newRemoteDevice->deviceAddress.sin_addr.s_addr == gAlpacaIPaddrList[ii].deviceAddress.sin_addr.s_addr)
-			&& (strcmp(newRemoteDevice->deviceType, gAlpacaIPaddrList[ii].deviceType) == 0)
-			&& (strcmp(newRemoteDevice->deviceName, gAlpacaIPaddrList[ii].deviceName) == 0)
-			&& (newRemoteDevice->alpacaDeviceNum == gAlpacaIPaddrList[ii].alpacaDeviceNum)
+		if ((newRemoteDevice->deviceAddress.sin_addr.s_addr == gAlpacaDiscoveredList[ii].deviceAddress.sin_addr.s_addr)
+			&& (strcmp(newRemoteDevice->deviceTypeStr,	gAlpacaDiscoveredList[ii].deviceTypeStr) == 0)
+			&& (strcmp(newRemoteDevice->deviceNameStr,	gAlpacaDiscoveredList[ii].deviceNameStr) == 0)
+			&& (newRemoteDevice->alpacaDeviceNum == gAlpacaDiscoveredList[ii].alpacaDeviceNum)
 			)
 		{
 			//*	yep, its already here, dont bother
@@ -170,7 +173,7 @@ bool	newDevice;
 			break;
 		}
 		//*	I dont want the management device type in the list
-		if (strcmp(newRemoteDevice->deviceType, "management") == 0)
+		if (strcmp(newRemoteDevice->deviceTypeStr, "management") == 0)
 		{
 			//*	its a management devices, dont bother
 			newDevice	=	false;
@@ -180,10 +183,10 @@ bool	newDevice;
 	if (newDevice)
 	{
 		//*	we have a new devices, add it in (if there's room)
-		if (gAlpacaDeviceCnt < kMaxDeviceListCnt)
+		if (gAlpacaDiscoveredCnt < kMaxDeviceListCnt)
 		{
-			gAlpacaIPaddrList[gAlpacaDeviceCnt]	=	*newRemoteDevice;
-			gAlpacaDeviceCnt++;
+			gAlpacaDiscoveredList[gAlpacaDiscoveredCnt]	=	*newRemoteDevice;
+			gAlpacaDiscoveredCnt++;
 
 		}
 	}
@@ -209,11 +212,11 @@ char			myVersionString[64];
 
 		if (strcasecmp(jsonParser->dataList[ii].keyword, "DEVICETYPE") == 0)
 		{
-			strcpy(myRemoteDevice.deviceType, jsonParser->dataList[ii].valueString);
+			strcpy(myRemoteDevice.deviceTypeStr, jsonParser->dataList[ii].valueString);
 		}
 		if (strcasecmp(jsonParser->dataList[ii].keyword, "DEVICENAME") == 0)
 		{
-			strcpy(myRemoteDevice.deviceName, jsonParser->dataList[ii].valueString);
+			strcpy(myRemoteDevice.deviceNameStr, jsonParser->dataList[ii].valueString);
 		}
 		if (strcasecmp(jsonParser->dataList[ii].keyword, "DEVICENUMBER") == 0)
 		{
@@ -435,7 +438,7 @@ uint32_t			address2;
 //	retValue	=	entry1->deviceAddress.sin_addr.s_addr - entry2->deviceAddress.sin_addr.s_addr;
 	if (retValue == 0)
 	{
-		retValue	=	strcmp(entry1->deviceType, entry2->deviceType);
+		retValue	=	strcmp(entry1->deviceTypeStr, entry2->deviceTypeStr);
 	}
 	else
 	{
@@ -444,7 +447,7 @@ uint32_t			address2;
 	}
 	if (retValue == 0)
 	{
-		retValue	=	strcmp(entry1->deviceName, entry2->deviceName);
+		retValue	=	strcmp(entry1->deviceNameStr, entry2->deviceNameStr);
 	}
 	return(retValue);
 }
@@ -455,27 +458,27 @@ static	void PrintDeviceList(void)
 int		ii;
 char	ipAddrSt[32];
 
-	qsort(gAlpacaIPaddrList, gAlpacaDeviceCnt, sizeof(TYPE_REMOTE_DEV), DeviceSort);
+	qsort(gAlpacaDiscoveredList, gAlpacaDiscoveredCnt, sizeof(TYPE_REMOTE_DEV), DeviceSort);
 
-	for (ii=0; ii<gAlpacaDeviceCnt; ii++)
+	for (ii=0; ii<gAlpacaDiscoveredCnt; ii++)
 	{
 		if (ii> 0)
 		{
-			if (gAlpacaIPaddrList[ii].deviceAddress.sin_addr.s_addr != gAlpacaIPaddrList[ii-1].deviceAddress.sin_addr.s_addr)
+			if (gAlpacaDiscoveredList[ii].deviceAddress.sin_addr.s_addr != gAlpacaDiscoveredList[ii-1].deviceAddress.sin_addr.s_addr)
 			{
 				printf("\r\n");
 			}
 		}
-		inet_ntop(AF_INET, &(gAlpacaIPaddrList[ii].deviceAddress.sin_addr), ipAddrSt, INET_ADDRSTRLEN);
+		inet_ntop(AF_INET, &(gAlpacaDiscoveredList[ii].deviceAddress.sin_addr), ipAddrSt, INET_ADDRSTRLEN);
 
 		printf("%s\t",		ipAddrSt);
 
-		printf(":%d\t",		gAlpacaIPaddrList[ii].port);
+		printf(":%d\t",		gAlpacaDiscoveredList[ii].port);
 
-		printf("%-20s\t",	gAlpacaIPaddrList[ii].deviceType);
-		printf("%-20s\t",	gAlpacaIPaddrList[ii].deviceName);
-		printf("%4d\t",		gAlpacaIPaddrList[ii].alpacaDeviceNum);
-		printf("%s\t",		gAlpacaIPaddrList[ii].versionString);
+		printf("%-20s\t",	gAlpacaDiscoveredList[ii].deviceTypeStr);
+		printf("%-20s\t",	gAlpacaDiscoveredList[ii].deviceNameStr);
+		printf("%4d\t",		gAlpacaDiscoveredList[ii].alpacaDeviceNum);
+		printf("%s\t",		gAlpacaDiscoveredList[ii].versionString);
 
 		printf("\r\n");
 	}
@@ -596,8 +599,8 @@ struct sockaddr_in	deviceAddress;
 	strcpy(myRemoteDevice.hostName,			"Alpaca");
 	strcpy(myRemoteDevice.webPrefixString,	"ASCOMInitiative");
 
-	strcpy(myRemoteDevice.deviceType, "Camera");
-	strcpy(myRemoteDevice.deviceName, "Test Camera");
+	strcpy(myRemoteDevice.deviceTypeStr, "Camera");
+	strcpy(myRemoteDevice.deviceNameStr, "Test Camera");
 	myRemoteDevice.alpacaDeviceNum	=	0;
 
 

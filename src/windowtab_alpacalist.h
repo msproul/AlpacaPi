@@ -52,19 +52,21 @@ enum
 	kAlpacaList_AlpacaDev_35,
 	kAlpacaList_AlpacaDev_36,
 	kAlpacaList_AlpacaDev_37,
+	kAlpacaList_AlpacaDev_38,
+	kAlpacaList_AlpacaDev_39,
 
-	kAlpacaList_AlpacaDev_Last	=	kAlpacaList_AlpacaDev_37,
+	kAlpacaList_AlpacaDev_Last	=	kAlpacaList_AlpacaDev_39,
 
 //	kAlpacaList_AlpacaDev_OutLine,
 
 	kAlpacaList_AlpacaDev_Total,
 
-	kAlpacaList_AlpacaLogo,
+//	kAlpacaList_AlpacaLogo,
 
 //	kAlpacaList_AlpacaDrvrVersion,
 
-	kAlpacaList_IPaddr,
-	kAlpacaList_Readall,
+//	kAlpacaList_IPaddr,
+//	kAlpacaList_Readall,
 
 
 	kAlpacaList_last
@@ -85,6 +87,8 @@ class WindowTabAlpacaList: public WindowTab
 		virtual	~WindowTabAlpacaList(void);
 
 		virtual	void	SetupWindowControls(void);
+		virtual	void	ProcessDoubleClick(const int buttonIdx);
+
 				void	UpdateList(void);
 				int		cAlpacaDevCnt;
 				int		cPrevAlpacaDevCnt;

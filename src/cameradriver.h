@@ -368,12 +368,13 @@ class CameraDriver: public AlpacaDriver
 		TYPE_ASCOM_STATUS	Get_Readoutmodes(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
 		TYPE_ASCOM_STATUS	Get_Sensortype(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
 
-		TYPE_ASCOM_STATUS	Get_SetCCDtemperature(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+		TYPE_ASCOM_STATUS	Get_SetCCDtemperature(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg,	const char *responseString);
 		TYPE_ASCOM_STATUS	Put_SetCCDtemperature(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 
-		TYPE_ASCOM_STATUS	Get_Lastexposureduration(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
-		TYPE_ASCOM_STATUS	Get_Lastexposurestarttime(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
-		TYPE_ASCOM_STATUS	Get_ImageReady(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
+		TYPE_ASCOM_STATUS	Get_Lastexposureduration(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg,	const char *responseString);
+		TYPE_ASCOM_STATUS	Get_Lastexposurestarttime(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg,	const char *responseString);
+		TYPE_ASCOM_STATUS	Get_ImageReady(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg,	const char *responseString);
+
 		TYPE_ASCOM_STATUS	Get_Imagearray(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 		TYPE_ASCOM_STATUS	Put_StartExposure(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 		TYPE_ASCOM_STATUS	Put_StopExposure(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
@@ -550,8 +551,9 @@ protected:
 	int						cGainMin;
 	bool					cHasShutter;
 //+	double					cHeatSinkTemperature;
-	//						imageReady is implemented in real time
+	bool					cImageReady;
 	bool					cIsPulseGuiding;
+
 	uint32_t				cLastexposureduration_us;	//*	stored in microseconds, ASCOM wants seconds, convert on the fly
 	//*	Reported as a string
 	struct timeval			cLastExposureStartTime;		//*	time exposure or video was started for frame rate calculations
@@ -638,7 +640,6 @@ protected:
 													//*	of supported image types. IT DOES NOT MATCH TYPE_IMAGE_TYPE
 
 	bool				cNewImageReadyToDisplay;
-	bool				cNewImageReadyToDownload;
 	long				cCameraDataBuffLen;
 	unsigned char		*cCameraDataBuffer;
 	unsigned char		*cCameraBGRbuffer;			//*	Blue, Green, Red, for FITS

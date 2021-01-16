@@ -24,6 +24,7 @@
 //*	Mar 24,	2020	<MLS> Added command line options, ProcessCmdLineArgs()
 //*	Apr 18,	2020	<MLS> Added CheckForDome()
 //*	Dec  4,	2020	<MLS> Added _ENABLE_ALPACA_QUERY_ (for nettest controller)
+//*	Jan 16,	2021	<MLS> Added CheckForOpenWindowByName()
 //*****************************************************************************
 
 #include	<stdio.h>
@@ -87,9 +88,9 @@ static int	GenerateFocuserWindowName(TYPE_REMOTE_DEV *device, int focuserNum, ch
 int	myFocuserTYpe;
 
 	CONSOLE_DEBUG(__FUNCTION__);
-	CONSOLE_DEBUG(device->deviceName);
+	CONSOLE_DEBUG(device->deviceNameStr);
 
-	if (strncasecmp(device->deviceName, "NiteCrawler", 11) == 0)
+	if (strncasecmp(device->deviceNameStr, "NiteCrawler", 11) == 0)
 	{
 		myFocuserTYpe	=	kFocuserType_NiteCrawler;
 		if (strlen(device->hostName) > 0)
@@ -114,7 +115,7 @@ int	myFocuserTYpe;
 		}
 
 	}
-	else if (strncasecmp(device->deviceName, "Moonlite", 8) == 0)
+	else if (strncasecmp(device->deviceNameStr, "Moonlite", 8) == 0)
 	{
 		myFocuserTYpe	=	kFocuserType_MoonliteSingle;
 		sprintf(windowName, "Moonlite -%d", focuserNum);
@@ -302,7 +303,7 @@ int				myFocuserType;
 
 	objectsCreated	=	0;
 	//*	is it a focuser?
-	if (strcasecmp(remoteDevice->deviceType, "focuser") == 0)
+	if (strcasecmp(remoteDevice->deviceTypeStr, "focuser") == 0)
 	{
 		//*	figure out a window name
 		myFocuserType	=	GenerateFocuserWindowName(remoteDevice, gFocuserNum, windowName);
@@ -355,7 +356,7 @@ char		windowName[128]	=	"Switch";
 Controller	*myController;
 
 	objectsCreated	=	0;
-	if (strcasecmp(remoteDevice->deviceType, "switch") == 0)
+	if (strcasecmp(remoteDevice->deviceTypeStr, "switch") == 0)
 	{
 		GenerateSwitchWindowName(remoteDevice, gSwitchNum, windowName);
 		myController	=	new ControllerSwitch(windowName,
@@ -386,7 +387,7 @@ char		windowName[128]	=	"Camera";
 int			objectsCreated;
 
 	objectsCreated	=	0;
-	if (strcasecmp(remoteDevice->deviceType, "camera") == 0)
+	if (strcasecmp(remoteDevice->deviceTypeStr, "camera") == 0)
 	{
 		GenerateCameraWindowName(remoteDevice, gCameraNum, windowName);
 		CONSOLE_DEBUG_W_STR("windowName=", windowName);
@@ -421,7 +422,7 @@ int				iii;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 	objectsCreated	=	0;
-	if (strcasecmp(remoteDevice->deviceType, "dome") == 0)
+	if (strcasecmp(remoteDevice->deviceTypeStr, "dome") == 0)
 	{
 		inet_ntop(AF_INET, &remoteDevice->deviceAddress.sin_addr, ipAddressStr, INET_ADDRSTRLEN);
 
@@ -438,15 +439,15 @@ int				iii;
 			cvWaitKey(100);
 
 			//*	now lets look thru the lsit and see if there is a shutter
-			for (iii=0; iii<gAlpacaDeviceCnt; iii++)
+			for (iii=0; iii<gAlpacaDiscoveredCnt; iii++)
 			{
-				if (strcasecmp(gAlpacaIPaddrList[iii].deviceType, "shutter") == 0)
+				if (strcasecmp(gAlpacaDiscoveredList[iii].deviceTypeStr, "shutter") == 0)
 				{
-					myDomeController->SetAlpacaShutterInfo(&gAlpacaIPaddrList[iii]);
+					myDomeController->SetAlpacaShutterInfo(&gAlpacaDiscoveredList[iii]);
 				}
-				else if (strcasecmp(gAlpacaIPaddrList[iii].deviceType, "SlitTracker") == 0)
+				else if (strcasecmp(gAlpacaDiscoveredList[iii].deviceTypeStr, "SlitTracker") == 0)
 				{
-					myDomeController->SetAlpacaSlitTrackerInfo(&gAlpacaIPaddrList[iii]);
+					myDomeController->SetAlpacaSlitTrackerInfo(&gAlpacaDiscoveredList[iii]);
 				}
 			}
 		}
@@ -488,24 +489,24 @@ int					keyPressed;
 	SetupBroadcast();
 	SendAlpacaQueryBroadcast();
 
-	CONSOLE_DEBUG_W_NUM("gAlpacaDeviceCnt\t=", gAlpacaDeviceCnt);
+	CONSOLE_DEBUG_W_NUM("gAlpacaDiscoveredCnt\t=", gAlpacaDiscoveredCnt);
 
 	//*	step through the alpaca devices and see if there are any focusers
-	for (iii=0; iii<gAlpacaDeviceCnt; iii++)
+	for (iii=0; iii<gAlpacaDiscoveredCnt; iii++)
 	{
 		#ifdef _ENABLE_CTRL_FOCUSERS_
-			objectsCreated	+=	CheckForFocuser(&gAlpacaIPaddrList[iii]);
+			objectsCreated	+=	CheckForFocuser(&gAlpacaDiscoveredList[iii]);
 		#endif // _ENABLE_CTRL_FOCUSERS_
 
 		#ifdef _ENABLE_CTRL_SWITCHES_
-			objectsCreated	+=	CheckForSwitch(&gAlpacaIPaddrList[iii]);
+			objectsCreated	+=	CheckForSwitch(&gAlpacaDiscoveredList[iii]);
 		#endif // _ENABLE_CTRL_SWITCHES_
 		#ifdef _ENABLE_CTRL_CAMERA_
-			objectsCreated	+=	CheckForCamera(&gAlpacaIPaddrList[iii]);
+			objectsCreated	+=	CheckForCamera(&gAlpacaDiscoveredList[iii]);
 		#endif // _ENABLE_CTRL_CAMERA_
 
 		#ifdef _ENABLE_CTRL_DOME_
-			objectsCreated	+=	CheckForDome(&gAlpacaIPaddrList[iii]);
+			objectsCreated	+=	CheckForDome(&gAlpacaDiscoveredList[iii]);
 		#endif // _ENABLE_CTRL_DOME_
 
 	}
@@ -590,4 +591,45 @@ int					keyPressed;
 		CONSOLE_DEBUG("No devices found");
 	}
 }
+
+
+//*****************************************************************************
+//*	this steps through the Controller Object List to see if there is a window by this name
+//*****************************************************************************
+bool	CheckForOpenWindowByName(const char *windowName)
+{
+int		iii;
+bool	windowExists;
+
+	windowExists	=	false;
+	for (iii=0; iii<kMaxControllers; iii++)
+	{
+		if (gControllerList[iii] != NULL)
+		{
+			if (strcmp(gControllerList[iii]->cWindowName, windowName) == 0)
+			{
+				windowExists	=	true;
+				break;
+			}
+		}
+	}
+	return(windowExists);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

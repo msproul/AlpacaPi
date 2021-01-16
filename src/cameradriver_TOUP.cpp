@@ -32,6 +32,7 @@
 //*	Jan 14,	2020	<MLS> Successfully saving files from ToupTek camera
 //*	Jan 29,	2020	<MLS> Toupcam is working on NVIDIA Jetson board
 //*	Mar  5,	2020	<MLS> Working on Toupcam image readout modes
+//*	Jan 15,	2021	<PDB> Found bug in GetImage_ROI_info()
 //-----------------------------------------------------------------------------
 //*	Feb  4,	2120	<TODO> Add 16 bit readout to Toupcam
 //*	Feb 16,	2120	<TODO> Add gain setting to Toupcam
@@ -557,7 +558,7 @@ int	CameraDriverTOUP::GetImage_ROI_info(void)
 
 	cROIinfo.currentROIimageType	=	kImageType_RGB24;
 	cROIinfo.currentROIwidth		=	cCameraXsize;
-	cROIinfo.currentROIwidth		=	cCameraYsize;
+	cROIinfo.currentROIheight		=	cCameraYsize;
 	cROIinfo.currentROIbin			=	1;
 
 	return(0);
