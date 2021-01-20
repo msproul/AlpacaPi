@@ -727,9 +727,9 @@ int			fitsHdrIdx;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 	//*	wipe out any previous data
-	for (iii = 0; iii <= kMaxFitsRecords; iii++)
+	for (iii = 0; iii < kMaxFitsRecords; iii++)
 	{
-		cFitsHeader[fitsHdrIdx].fitsRec[0]	=	0;
+		cFitsHeader[iii].fitsRec[0]	=	0;
 	}
 
 	fitsStatus	=	0;	//* MUST initialize status

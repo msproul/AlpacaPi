@@ -126,18 +126,13 @@
 //*	Jan 17,	2021	<MLS> CONFORM-camera -> 2 errors, 0 warnings and 0 issues
 //*	Jan 18,	2021	<MLS> Added Send_imagearray_rgb24() & Send_imagearray_raw8()
 //*	Jan 20,	2021	<MLS> Added Send_imagearray_raw16()
+//*	Jan 20,	2021	<MLS> CONFORM-camera -> PASSED!!!!!!!!!!!!!!!!!!!!!
 //*****************************************************************************
 //*	Jan  1,	2119	<TODO> ----------------------------------------
 //*	Jun 26,	2119	<TODO> Add support for sub frames
+//*	Jan 20,	2121	<TODO> Add rgb image array support
 //*****************************************************************************
 //*	 gcc -dM -E - < /dev/null
-//*************************S****************************************************
-//*	Length: unspecified [text/plain]
-//*	Saving to: "imagearray.1"
-//*
-//*		[		<=>		   ] 163,891,406 1.43MB/s   in 1m 50s
-//*
-//*	2019-04-30 21:22:24 (1.42 MB/s) - "imagearray.1" saved [163891406]
 //*****************************************************************************
 
 #ifdef _ENABLE_CAMERA_
@@ -304,7 +299,7 @@ const TYPE_CmdEntry	gCameraCmdTable[]	=
 CameraDriver::CameraDriver(void)
 	:AlpacaDriver(kDeviceType_Camera)
 {
-int	ii;
+int	iii;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 	//*	set all of the class data to known states
@@ -349,14 +344,14 @@ int	ii;
 	cBitDepth						=	0;
 	cMaxbinX						=	0;
 	cMaxbinY						=	0;
-	for (ii=0; ii<kNumSupportedFormats; ii++)
+	for (iii=0; iii<kNumSupportedFormats; iii++)
 	{
-		cSupportedFormats[ii]		=	-1;
+		cSupportedFormats[iii]		=	-1;
 	}
-	for (ii=0; ii<kMaxImageTypes; ii++)
+	for (iii=0; iii<kMaxImageTypes; iii++)
 	{
-		memset(&cSupportedImageTypes[ii], 0, sizeof(TYPE_SUPPORTED_IMG_TYPE));
-		cSupportedImageTypes[ii].internalImgageType	=	kImageType_Invalid;
+		memset(&cSupportedImageTypes[iii], 0, sizeof(TYPE_SUPPORTED_IMG_TYPE));
+		cSupportedImageTypes[iii].internalImgageType	=	kImageType_Invalid;
 	}
 
 	cGainMin						=	0;
@@ -514,6 +509,14 @@ int	ii;
 	cRotatorInfoValid		=	false;
 	cFilterWheelInfoValid	=	false;
 
+#ifdef _ENABLE_FITS_
+	//*	initialize the fits header data
+	for (iii = 0; iii < kMaxFitsRecords; iii++)
+	{
+		strcpy(cFitsHeader[iii].fitsRec, "");
+	}
+#endif // _ENABLE_FITS_
+
 	mkdir(kImageDataDir, 0744);
 
 	SendDiscoveryQuery();
@@ -626,7 +629,7 @@ char				httpHeader[500];
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 #ifndef _JETSON_
-	if (strcmp(reqData->deviceCommand, "readall") != 0)
+	if ((strcmp(reqData->deviceCommand, "readall") != 0) && (strcmp(reqData->deviceCommand, "setccdtemperature") != 0))
 	{
 		CONSOLE_DEBUG_W_STR("deviceCommand\t=",	reqData->deviceCommand);
 	}
@@ -1112,13 +1115,13 @@ char				httpHeader[500];
 			else if (reqData->get_putIndicator == 'P')
 			{
 				alpacaErrCode	=	Put_SetCCDtemperature(reqData, alpacaErrMsg);
-				CONSOLE_DEBUG_W_HEX("alpacaErrCode\t=", alpacaErrCode);
+			//	CONSOLE_DEBUG_W_HEX("alpacaErrCode\t=", alpacaErrCode);
 			}
 			else
 			{
 				CONSOLE_DEBUG("invalid request");
 				alpacaErrCode	=	kASCOM_Err_InvalidOperation;
-				CONSOLE_ABORT("We shouldnt be here!!!!!!!!!!!!!!!!!")
+			//	CONSOLE_ABORT("We shouldnt be here!!!!!!!!!!!!!!!!!")
 			}
 			break;
 
@@ -2585,9 +2588,11 @@ double				newSetCCDvalue;
 		if (setCCDtempFound)
 		{
 			newSetCCDvalue	=	atof(setCCDtempString);
-			if ((newSetCCDvalue > -273.15) && (newSetCCDvalue < 99.0))
+			CONSOLE_DEBUG_W_DBL("newSetCCDvalue\t=",	newSetCCDvalue);
+			if ((newSetCCDvalue > -273.15) && (newSetCCDvalue < 50.0))
 			{
 				alpacaErrCode	=	kASCOM_Err_Success;
+				cCCDTemperature	=	newSetCCDvalue;
 			}
 			else
 			{
@@ -2610,6 +2615,10 @@ double				newSetCCDvalue;
 	{
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Setting CCD temp not supported");
 		alpacaErrCode	=	kASCOM_Err_NotImplemented;
+	}
+	if (alpacaErrCode != kASCOM_Err_Success)
+	{
+		CONSOLE_DEBUG_W_NUM("alpacaErrCode\t=",	alpacaErrCode);
 	}
 	return(alpacaErrCode);
 }
@@ -2723,9 +2732,9 @@ double				myExposure_usecs;
 			}
 			else
 			{
+				alpacaErrCode	=	kASCOM_Err_InvalidValue;
 				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Invalid exposure time");
-				CONSOLE_DEBUG(__FUNCTION__);
-				CONSOLE_ABORT(alpacaErrMsg);
+				CONSOLE_DEBUG(alpacaErrMsg);
 			}
 		}
 		else
@@ -2742,13 +2751,14 @@ double				myExposure_usecs;
 
 			alpacaErrCode	=	kASCOM_Err_InvalidValue;
 			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "num, start,or bin is out of range");
-		//	CONSOLE_ABORT(alpacaErrMsg);
+			CONSOLE_DEBUG(alpacaErrMsg);
 		}
 	}
 	else
 	{
 		alpacaErrCode	=	kASCOM_Err_InternalError;
-		CONSOLE_ABORT("InternalError");
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "num, start,or bin is out of range");
+		CONSOLE_DEBUG(alpacaErrMsg);
 	}
 	return(alpacaErrCode);
 }
@@ -2927,9 +2937,6 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 int					pixelCount;
 int					iii;
 int					mySocket;
-unsigned char		*pixelPtr;
-char				lineBuff[64];
-uint32_t			pixelValue;
 char				imageTimeString[64];
 double				exposureTimeSecs;
 
@@ -3027,9 +3034,7 @@ double				exposureTimeSecs;
 		//*	Flush the json buffer
 		JsonResponse_SendTextBuffer(mySocket, reqData->jsonTextBuffer);
 
-		pixelPtr	=	cCameraDataBuffer;
 		CONSOLE_DEBUG_W_NUM("pixelCount\t=", pixelCount);
-		pixelPtr	=	cCameraDataBuffer;
 		switch(cLastExposure_ROIinfo.currentROIimageType)
 		{
 			case kImageType_RAW8:
@@ -3114,7 +3119,8 @@ int				totalValuesWritten;
 	CONSOLE_DEBUG_W_NUM("numRows\t=", numRows);
 	CONSOLE_DEBUG_W_NUM("numClms\t=", numClms);
 
-	myPixelPtr	=	pixelPtr;
+	totalValuesWritten	=	0;
+	myPixelPtr			=	pixelPtr;
 	if (myPixelPtr != NULL)
 	{
 		totalValuesWritten	=	0;
@@ -3193,7 +3199,8 @@ int				totalValuesWritten;
 	CONSOLE_DEBUG_W_NUM("numRows\t=", numRows);
 	CONSOLE_DEBUG_W_NUM("numClms\t=", numClms);
 
-	myPixelPtr	=	pixelPtr;
+	totalValuesWritten	=	0;
+	myPixelPtr			=	pixelPtr;
 	if (myPixelPtr != NULL)
 	{
 		totalValuesWritten	=	0;
@@ -6130,8 +6137,6 @@ char				textBuffer[128];
 				CONSOLE_DEBUG_W_LONG("cLastexposure_EndTime.tv_sec\t=",		cLastexposure_EndTime.tv_sec);
 				CONSOLE_DEBUG_W_LONG("cLastexposure_StartTime.tv_sec\t=",	cLastexposure_StartTime.tv_sec);
 
-			//	CONSOLE_DEBUG("ABORT!!!!!!!");
-			//	exit(0);
 			}
 			JsonResponse_Add_Int32(	mySocket,
 									reqData->jsonTextBuffer,

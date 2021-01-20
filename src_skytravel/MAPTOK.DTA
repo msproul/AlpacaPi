@@ -1,0 +1,302 @@
+/* maptok.dta - data for map tokens */
+
+/*
+DATA IS ARRANGED AS LATITUDE, LONGITUDE, LAT/LONG TOLERANCE,
+TIME APPEARS, TIME VANISHES, AZIMUTH (1 WORD)
+VECTOR GRAPHICS DATA IS SEPARATE
+*/
+
+const map_token_struct mapptr[]=
+	{
+/*Rebecca's birthday in Wanamassa, NJ*/
+
+	.7021314,	/*Wanamassa, NJ*/
+	-1.291951,	/*40.229N 74.023333W*/
+	.002000,	/*4' TOLERANCE!*/
+	2448666.79167,	/*Feb 14, 1992 2am local*/
+	2448666.79514,	/*5 MINUTE SPAN!*/
+	1.59,		/*ALMOST DUE west*/
+/*	Rebecca_data */
+
+/* cn tower in Toronto */
+	.761836,	/* 43:39N */
+	-1.3855,	/* 79:23W */
+	.03491,		/* 2 degree tolerance */
+	2440587.,	/*1970 */
+	2477112.,	/*2070 */
+	2.184,		/* southwest */
+/*	cn_data */
+
+/*Eifel tower in Paris */
+	.85288,		/* 48:52N */
+	0.04072,	/* 2:2E */
+	.12217,		/* 7 degree tolerance */
+	2411003.,	/*Jan 1, 1889 */
+	2776253.,	/* 1000 year span */
+	3.0925,		/* southsoutheast */
+/*	eif_data */
+
+/* BIG BEN IN LONDON (1859)*/
+
+	.89884,		/* 51:30N */
+	.002909,	/* :10E */
+	.12217,		/* 7 degree tolerance */
+	2400045.,	/* JAN 1 1859 */
+	2765295.,	/* 1000 YEAR SPAN */
+	-.07363,	/* SSW */
+/*	ben_data */
+
+/*ST. BASIL IN MOSCOW (1555) */
+
+	.97302,		/*55:45N*/
+	.65799,		/*37:42E*/
+	.12217,		/* 7 degree tolerance */
+	2289021.,	/* 1555AD - 2001AD */
+	2451922.5,	/*446 YEAR SPAN*/
+	-.7854,		/* NW */
+/* basil_data */
+
+/*MT. FUJI IN TOKYO (4713BC)*/
+
+	.6225,		/*35:40N*/
+	2.4391,		/*139:45E*/
+	.12217,		/* 7 degree tolerance */
+	0.0,		/* 4713BC-9999AD */
+	5236875.,	/*14700 YEAR SPAN */
+	.172,		/*NE*/
+/* fuji_data */
+
+/*GOLDEN GATE BRIDGE IN SAN FRANSISCO (1937)*/
+
+	.65973,		/*37d 48'N*/
+	-2.13745,	/*122 28'W*/
+	.003491,	/* 2 degree tolerance */
+	2428534.,	/*JAN 1 1937*/
+	2793784.,	/*1000 YEAR SPAN*/
+	-1.40,		/*WNW*/
+/* ggbridge_data */
+
+/*DELTRON LOGO IN PLAINFIELD, NJ*/
+
+	.70883,		/*PLAINFIELD, NJ*/
+	-1.29992,	/*40.613N 74.4385W*/
+	.000958,	/*2' TOLERANCE!*/
+	2445313.73056,	/*DEC 10, 1982 17:32 GMT*/
+	2445313.73402,	/*5 MINUTE SPAN!*/
+	1.59,		/*ALMOST DUE EAST*/
+/* deltron_data */
+
+/*POLAR BEAR IN ALERT, N. CANADA*/
+
+	1.4312,		/*82 N*/
+	-1.0996,	/*-63W*/
+	.03491,		/* 2 degree tolerance */
+	1721766.,	/*CA. 1 AD*/
+	3913266.,	/*6000 YR. SPAN*/
+	.004,		/*ALMOST DUE NORTH*/
+/* polar_data */
+
+/*PENGUIN IN JAMES ROSS, ANTARCTICA*/
+
+	-1.117,		/*-64S*/
+	-.9174,		/*-56W */
+	.0523,		/*3 DEGR. TOLERANCE*/
+	1721766.,	/*CA. 1 AD*/
+	3913266.,	/*6000 YR. SPAN*/
+	3.14,		/*ALMOST DUE SOUTH*/
+/* penguin_data */
+
+/*EMPIRE STATE BLDG. IN NYC (MAY 1,1931)*/
+
+	.711803,	/*40 47'*/
+	-1.29096,	/*-73 58'W*/
+	.003491,	/* .2 degree tolerance */
+	2426462.,	/*MAY 1, 1931*/
+	2791712.,	/*1000 YR. SPAN*/
+	-.07363,	/* SSW */
+/* empire_data */
+
+/*GATEWAY ARCH IN ST. LOUIS, MO 1948 (96 BYTES) */
+
+	.67428,		/*38 38'N*/
+	-1.57516,	/*-90 15'W*/
+	.003491,	/* .2 degree tolerance */
+	2432736.,	/*JUL 4, 1948*/
+	2797986.,	/*1000 YR. SPAN*/
+	-.261,		/*NNE*/
+/* gateway_data */
+
+/*PYRAMID IN GIZA (2613 BC)*/
+
+	.52011,		/*29.8N*/
+	.54629,		/*31.3E*/
+	.03491,		/* 2 degree tolerance */
+	767024.,	/*2613BC - 7000AD*/
+	4278172.,	/*9613 YEAR SPAN*/
+	0.		/*N*/
+/* pyramid_data */
+
+	};
+
+const char *map_shape[]=
+	{
+/*Rebecca's birthday in Wanamassa, NJ*/
+
+	//	{
+		"\x22\x01\x2a\x41\x22\x41\x22\x41\x21"
+		"\x41\x21\x42\x21\x47\x61\x42\x61"
+		"\x41\x63\x81\x61\x81\x61\x84\xa1"
+		"\x81\xa1\x81\xa3\x63\x81\x61\x81"
+		"\x61\x84\xa1\x81\xa1\x81\xa3\xc1"
+		"\xa1\xc2\xa1\xc7\xe1\xc2\xe1\xc1"
+		"\xe1\xc1\xe2\xc1\xe2\xc1\xea\x01"
+		"\xe2\x92\x5a\x7a\x4a\x04\xe1\xc3\xa1"
+		"\x84\x13\xc1\xe1\xc1\xe1\xc1\x14"
+		"\x51\xe1\x04\x21\x43\x61\x84\x61"
+		"\x43\x21\x04\xe1\x1a\x61\x83\xa1"
+		"\xc8\xe1\x03\x21\x00"
+	//	}
+		,
+
+/* CN TOWER IN TORONTO (1970) */
+
+	//	{
+		"\x51\x4F\x21\x4E\x21\x4D\x82\x61\x42"
+		"\x21\x01\x21\x48\x21\x45\xD5\xE1"
+		"\xC8\xE1\x01\xE1\xC2\xA1\x82\xCD"
+		"\xE1\xCE\xE1\xCF\x00"
+	//	}
+		,
+
+/*EIFFEL TOWER IN PARIS (1889) */
+
+	//	{
+		"\x51\x1B\x66\x81\x62\x86\xA2\x81\xA6"
+		"\x83\x28\x43\x02\x42\x21\x43\x01"
+		"\x43\x21\x46\x21\x4C\x61\x42\x22"
+		"\x44\xC4\xE2\xC2\xA1\xCC\xE1\xC6"
+		"\xE1\xC3\x01\xC3\xE1\xC2\x02\xC3"
+		"\xE8\x83\x00"
+	//	}
+		,
+
+/* BIG BEN IN LONDON (1859)*/
+
+	//	{
+		"\x51\x84\x4F\x4F\x45\x21\x41\x22\x42"
+		"\x21\x41\x01\xC1\xE1\xC2\xE2\xC1"
+		"\xE1\xB1\xA1\xC2\xA1\x83\x61\x42"
+		"\x21\x03\x12\x01\xC4\xCF\xCF\x84\x00"
+	//	}
+		,
+
+/*ST. BASIL IN MOSCOW (1555)*/
+
+	//	{
+		"\x51\x8E\x43\x21\x43\x21\x42\x61\x42"
+		"\x23\x42\xD2\xE3\x21\xE1\x42\x21"
+		"\x42\x21\x42\x21\x41\x21\x41\x61"
+		"\x22\x43\xD3\xE2\xA1\xC1\xE1\xC1"
+		"\xE1\xC2\xE1\xC2\xE1\xC9\x01\x41"
+		"\x22\x42\x61\x41\x23\x42\xD2\xE3"
+		"\xC1\xA1\xC2\xE2\xC3\xE1\xC3\x8F"
+		"\x99\x43\x21\x43\x21\x42\x61\x41"
+		"\x21\x12\xE1\xC1\xA1\xC2\xE1\xC3"
+		"\x02\x42\x22\x41\x81\x41\x22\xE2"
+		"\x41\x81\x41\xE2\x00"
+	//	}
+		,
+
+/*MT. FUJI IN TOKYO (4713BC)*/
+
+	//	{
+		"\x51\x9F\x96\x01\x21\x01\x21\x01\x21"
+		"\x01\x22\x01\x22\x01\x22\x01\x26"
+		"\x01\xE5\xA2\x61\xA2\x62\xA1\x62"
+		"\xA1\x41\x1B\x01\xE2\x01\xE2\x01"
+		"\xE2\x01\xE1\x01\xE1\x02\xE1\x03"
+		"\xE1\x01\x00"
+	//	}
+		,
+
+/*GOLDEN GATE BRIDGE IN SAN FRANSISCO (1937)*/
+
+	//	{
+		"\x51\x52\x8F\x8F\x89\x15\x21\x02\x21"
+		"\x02\x21\x02\x21\x02\x21\x01\x22"
+		"\xCA\x5A\xE2\x01\xE1\x02\xE1\x03"
+		"\xE1\x03\xE1\x04\x21\x03\x21\x03"
+		"\x21\x02\x21\x01\x22\xCA\x5A\xE2"
+		"\x01\xE1\x02\xE1\x02\xE1\x02\xE1"
+		"\x02\xE1\x05\x95\x8F\x8F\x00"
+	//	}
+		,
+
+/*DELTRON LOGO IN PLAINFIELD NJ*/
+
+	//	{
+		"\x51\x44\x26\x66\x44\x04\xE6\x26\x04"
+		"\xC4\xA6\xE6\xC4\x84\x66\xA6\x84\x00"
+	//	}
+		,
+
+/*POLAR BEAR IN ALERT N. CANADA*/
+
+	//	{
+		"\x51\x02\x22\x41\x21\x01\x41\x61\x42"
+		"\xC2\xE1\xC2\xE1\xC1\xA1\x02\x22"
+		"\x44\xE1\x44\x63\x88\xA1\x85\xA1"
+		"\x88\xA1\x81\xA1\xE1\x03\xE1\x02"
+		"\xE3\xC2\xA1\x02\x22\x42\x21\x41"
+		"\x62\xE1\xC4\x0A\x84\xC3\xA1\x00"
+	//	}
+		,
+
+/*PENGUIN IN JAMES ROSS ANTARCTICA*/
+
+	//	{
+		"\x51\x94\x81\x22\x4E\x22\x03\xE3\x84"
+		"\xC2\xE3\xC8\xE1\x02\xC1\x89\x24"
+		"\x45\x63\x00"
+	//	}
+		,
+
+/*EMPIRE STATE BLDG. IN NYC (MAY 11931)*/
+
+	//	{
+		"\x51\x88\x4B\x01\x42\x01\x43\x01\x4F"
+		"\x4C\x01\x45\x01\x44\x01\x41\x01"
+		"\x43\x21\x44\x01\x4F\xDF\x01\xC4"
+		"\xE1\xC3\x01\xC1\x01\xC4\x01\xC5"
+		"\x01\xCF\xCC\x01\xC3\x01\xC2\x01"
+		"\xCB\x88\x00"
+	//	}
+		,
+
+/*GATEWAY ARCH IN ST. LOUIS MO 1948 (96 BYTES) */
+
+	//	{
+		"\x51\x9F\x43\x21\x41\x21\x41\x21\x41"
+		"\x21\x41\x21\x41\x22\x41\x22\x41"
+		"\x23\x01\x22\x02\xE2\x01\xE3\xC1"
+		"\xE2\xC1\xE2\xC1\xE1\xC1\xE1\xC1"
+		"\xE1\xC1\xE1\xC1\xE1\xC3\x04\x61"
+		"\x41\x61\x41\x62\x41\x61\x41\x61"
+		"\x41\x61\x41\x62\x41\x63\x41\x63"
+		"\x82\x61\x84\xA1\x82\xA3\xC1\xA3"
+		"\xC1\xA2\xC1\xA1\xC1\xA1\xC1\xA1"
+		"\xC1\xA2\xC1\xA1\xC1\xA1\x04\x00"
+	//	}
+		,
+
+/*PYRAMID IN GIZA (2613 BC)*/
+
+	//	{
+		"\x8F\x88\x2F\x28\xEF\xE8\x8F\x88"
+		"\x4F\x48\xDF\xD8\x00"
+	//	}
+
+
+	};
+
+

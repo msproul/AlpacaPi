@@ -15,7 +15,7 @@
 //*	Mar 19,	2020	<MLS> Added GetMySubnetNumber()
 //*	Jan 14,	2021	<MLS> Apparently the DISCOVERY MESSAGE has changed, fixed
 //*	Jan 14,	2021	<MLS> Discovery protocol now working with ASCOM Device Hub
-//*	Jan 17,	2121	<MLS> Added external IP list to discovery thread
+//*	Jan 17,	2021	<MLS> Added external IP list to discovery thread
 //*-------------------------------------------------------------------------
 //*****************************************************************************
 

@@ -1,0 +1,714 @@
+//********************************************************************
+//*	if (gValid_name[i]!=99) then it is a constellation that has lines.
+//*	this number forms the index to the cnsvec table
+//*
+//*	e.g the 0th element (meaning constellation id 0x80=And)
+//*	has line segment data in the 12th chunk in the consvec data
+//*
+//*	e.g the 45th element (meaning constellation id 0x80+45=Leo)
+//*	has line segment data in the 0th chunk in the consvec data
+//********************************************************************
+//*	Jan  6,	2021	<MLS> Trying to add Draco to the list of constellation vectors
+//********************************************************************
+unsigned char gValid_name[]=
+{
+	12,99,99,99, 5,99,27, 6,17,99,
+	99,99,99,21,99,26,99,18,99, 8,
+	99,99,99,99,99,99,23,16,99, 3,
+	13,25,99,99,29,99,99, 9,99, 7,
+	99,99,20,99,99, 0,99,99,22,99,
+	99, 4,99,99,99,99,99,99,99,10,
+	99,11,24,99,99,99,99,99,99,99,
+	28,14,15,99,99,99,99,99,99,99,
+	99,19,99, 1, 2,99,99,99,99,99,
+	99,99,99,99
+};
+
+#define	_INCLUDE_DRACO_
+
+//********************************************************************
+//*	these entries are star idword's from the star data table */
+//*	to be connected (in that order) to form a constellation drawing */
+//*	the 0x4000 means moveto (i.e move to it with pen up) */
+//*	the code in view.c takes care of moving to the first point */
+//********************************************************************
+#ifdef _INCLUDE_DRACO_
+	#define	kConstVectCount		30
+#else
+	#define	kConstVectCount		29
+#endif
+
+#define	kConstPtsPerVect	13
+
+
+//********************************************************************
+unsigned int gConstellationVecor[kConstVectCount][kConstPtsPerVect]=
+{
+/*unsigned int LEO[]=*/
+	554,			/*HD #87901*/
+	551,			/*HD #87737*/
+	562,			/*HD #89484*/
+	557,			/*HD #89025*/
+	545,			/*HD #85503*/
+	539,			/*HD #84441*/
+	633+0x4000,		/*HD #102647*/
+	606,			/*HD #97603*/
+	607+0x4000,		/*HD #97633*/
+	606,
+	562,
+	0,
+	0,
+
+/*unsigned int UMA[]=*/
+	722,		/*HD #120315*/
+	707,		/*HD #116656*/
+	687,		/*HD #112185*/
+	650,		/*HD #106591*/
+	638,		/*HD #103287*/
+	596,		/*HD #95418*/
+	599,		/*HD #95689*/
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+
+/*unsigned int UMI[]=*/
+
+	59,			/*HD #8890*/
+	982,		/*HD #166205*/
+	912,		/*HD #153751*/
+	843,		/*HD #142105*/
+	1285,		/*HD #148048*/
+	811,		/*HD #137422*/
+	783,		/*HD #131873*/
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+
+/*unsigned int CRU[]=*/
+	659,			/*HD# 108248*/
+	664,			/*HD# 108903*/
+	681+0x4000,		/*HD# 111123*/
+	649,			/*HD# 106490*/
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+
+/*unsigned int LYR[]=*/
+	1008,		/*HD# 173648*/
+	1004,		/*HD# 172167*/
+	1283,		/*HD# 173582*/
+	1008,
+	1018,		/*HD# 175588*/
+	1023,		/*HD# 176437*/
+	1013,		/*HD# 174638*/
+	1008,
+	0,
+	0,
+	0,
+	0,
+	0,
+
+/*unsigned int AQL[]=*/
+	1062,		/*HD# 186791*/
+	1085,		/*HD# 191692*/
+	1068,		/*HD# 187929*/
+	1031,		/*HD# 177756*/
+	1062,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+
+/*unsigned int AUR[]=*/
+	260,		/*HD# 34029*/
+	315,		/*HD# 40183*/
+	317,		/*HD# 40312*/
+	271,		/*HD# 35497*/
+	241,		/*HD# 31398*/
+	260,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+
+/*unsigned int HER[]=*/
+	899,		/*HD# 150997*/
+	921,		/*HD# 156283*/
+	913,		/*HD# 153808*/
+	897,		/*HD# 150680*/
+	899,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+
+/*unsigned int CEP[]=*/
+	1153,		/*HD# 205021*/
+	1268,		/*HD# 222404*/
+	1225,		/*HD# 216228*/
+	1205,		/*HD# 213306*/
+	1145,
+	1153,
+	1225,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+
+/*unsigned int GEM[]=*/
+	403,			/*HD# 60178*/
+	335,			/*HD# 44478*/
+	416+0x4000,		/*HD# 62509*/
+	375,			/*HD# 52973*/
+	346,			/*HD# 47105*/
+	356+0x4000,		/*HD# 48737*/
+	375,
+	415+0x4000,		/*HD# 62345*/
+	363,			/*HD# 50019*/
+	0,
+	0,
+	0,
+	0,
+
+/*unsigned int ORION[]=*/
+	312,		/*HD# 39801*/
+	295,		/*HD# 37742*/
+	301,		/*HD# 38771*/
+	261,		/*HD# 34085*/
+	279,		/*HD# 36486*/
+	270,		/*HD# 35468*/
+	284,		/*HD# 36861*/
+	312,
+	0,
+	0,
+	0,
+	0,
+	0,
+
+/*unsigned int PEG[]=*/
+	1219,		/*HD# 215182*/
+	1236,		/*HD# 217906*/
+	2,			/*HD# 358*/
+	5,			/*HD# 886*/
+	1238,		/*HD# 218045*/
+	1236,
+	1238+0x4000,
+	1184,		/*HD# 210418*/
+	1164,		/*HD# 206778*/
+	0,
+	0,
+	0,
+	0,
+
+/*unsigned int ANDR[]=*/
+	48,		/*HD# 6811*/
+	41,		/*HD# 5448*/
+	23,		/*HD# 3369*/
+	2,		/*HD# 358*/
+	25,		/*HD# 3627*/
+	49,		/*HD# 6860*/
+	64,		/*HD# 9826*/
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+
+/*unsigned int CYG[]=*/
+	1112,			/*HD# 197345*/
+	1097,			/*HD# 194093*/
+	1051,			/*HD# 183912*/
+	1063+0x4000, 	/*HD# 186882*/
+	1097,			/*HD# 194093*/
+	1117,			/*HD# 197989*/
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+
+/*unsigned int SGR[]=*/
+	1007,		/*HD# 173300*/
+	1015,		/*HD# 175191*/
+	1029,		/*HD# 177716*/
+	1027,		/*HD# 176687*/
+	990,		/*HD# 169022*/
+	974,		/*HD# 165135*/
+	987,		/*HD# 168454*/
+	990,
+	987+0x4000,
+	995,		/*HD# 169916*/
+	1007,		/*HD# 173300*/
+	1027,		/*HD# 176687*/
+	0,
+
+/*unsigned int SCO[]=*/
+	847,			/*HD# 142669*/
+	852,			/*HD# 143275*/
+	859,			/*HD# 144217*/
+	867,			/*HD# 145502*/
+	852+0x4000,		/*HD# 143275*/
+	875,			/*HD# 147165*/
+	885,			/*HD# 148478*/
+	901,			/*HD# 151680*/
+	906,			/*HD# 152334*/
+	942,			/*HD# 159532*/
+	947,			/*HD# 160578*/
+	938,			/*HD# 158926*/
+	0,
+
+/*unsigned int CRV[]=*/
+	646,		/*HD# 105452*/
+	651,		/*HD# 106625*/
+	663,		/*HD# 108767*/
+	668,		/*HD# 109379*/
+	646,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+
+/*unsigned int BOO[]=*/
+	747,		/*HD# 124897*/
+	763,		/*HD# 127762*/
+	789,		/*HD# 133208*/
+	800,		/*HD# 135722*/
+	747,		/*HD# 124897*/
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+
+/*unsigned int CAS[]=*/
+	73,		/*HD# 11415*/
+	58,		/*HD# 8538*/
+	39,		/*HD# 5394*/
+	26,		/*HD# 3712*/
+	3,		/*HD# 432*/
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+
+/*unsigned int TRA[]=*/
+	898,		/*HD# 150798*/
+	841,		/*HD# 141891*/
+	799,		/*HD# 135382*/
+	898,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+
+/*unsigned int HYS[]=*/
+	85,		/*HD# 12311*/
+	14,		/*HD# 2151*/
+	178,	/*HD# 24512*/
+	85,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+
+/*unsigned int CMA[]=*/
+	336,		/*HD# 44743*/
+	357,		/*HD# 48915*/
+	377,		/*HD# 53244*/
+	357+0x4000,
+	378,		/*HD# 54605*/
+	373,		/*HD# 52089*/
+	378+0x4000,
+	396,		/*HD# 58350*/
+	0,
+	0,
+	0,
+	0,
+	0,
+
+/*unsigned int LIB[]=*/
+	781,		/*HD# 130841*/
+	802,		/*HD# 135742*/
+	819,		/*HD# 138905*/
+	797,		/*HD# 134759*/
+	781,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+
+/*unsigned int CRB[]=*/
+	817,		/*HD# 138749*/
+	813,		/*HD# 137909*/
+	822,		/*HD# 139006*/
+	831,		/*HD# 140436*/
+	839,		/*HD# 141714*/
+	850,		/*HD# 143107*/
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+
+/*unsigned int PER[]=*/
+	112,		/*HD# 17506*/
+	129,		/*HD# 18925*/
+	143,		/*HD# 20902*/
+	159,		/*HD# 22928*/
+	181,		/*HD# 24760*/
+	182,		/*HD# 24912*/
+	177,		/*HD# 24398*/
+	143+0x4000,
+	133,		/*HD# 19356*/
+	159+0x4000,
+	193,		/*HD# 26630*/
+	189,		/*HD# 25642*/
+	0,
+
+/*unsigned int DELP[]=*/
+	1103,		/*HD# 195810*/
+	1107,		/*HD# 196524*/
+	1109,		/*HD# 196867*/
+	1116,		/*HD# 107064*/
+	1113,		/*HD# 197461*/
+	1107,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+
+/*unsigned int CAP[]=*/
+	1170,		/*HD# 207098*/
+	1149,		/*HD# 204075*/
+	1123,		/*HD# 198542*/
+	1095,		/*HD# 193495*/
+	1090,		/*HD# 192876*/
+	1131,		/*HD# 200761*/
+	1170,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+
+/*unsigned int ARI[]=*/
+	89,		/*HD# 12929*/
+	77,		/*HD# 11636*/
+	75,		/*HD# 11502*/
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+
+/*unsigned int SGTE[]=*/
+	1079,		/*HD# 189319*/
+	1064,		/*HD# 187076*/
+	1061,		/*HD# 185958*/
+	1064+0x4000,
+	1060,		/*HD# 185758*/
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0
+
+#ifdef _INCLUDE_DRACO_
+	,
+
+//*	MLS> adding Draco 1/6/2021
+	619,
+	669,
+	741,
+	812,
+	860,
+	916,
+	958,
+	998,
+	1046,
+	1070,
+	959,
+	939,
+	964
+
+#endif
+
+
+};
+
+
+//*	this is no longer used but the 2D array above is used instead
+/*
+unsigned int *cnsvec[]=
+	{
+	LEO,UMA,UMI,CRU,LYR,AQL,AUR,HER,CEP,GEM,
+	ORION,PEG,ANDR,CYG,SGR,SCO,CRV,BOO,CAS,TRA,
+	HYS,CMA,LIB,CRB,PER,DELP,CAP,ARI,SGTE
+	};
+*/
+
+const char *gConstel_names[]=
+{
+	"And",
+	"Ant",
+	"Apo",
+	"Aqr",
+	"Aql",
+	"Ara",
+	"Ari",
+	"Aur",
+	"Boo",
+	"Cae",
+	"Cam",
+	"Can",
+	"CVe",
+	"CMa",
+	"CMi",
+	"Cap",
+	"Car",
+	"Cas",
+	"Cen",
+	"Cep",
+	"Cet",
+	"Cha",
+	"Cir",
+	"Col",
+	"Com",
+	"CrA",
+	"CrB",
+	"Cor",
+	"Cra",
+	"Cru",
+	"Cyg",
+	"Del",
+	"Dor",
+	"Dra",
+	"Equ",
+	"Eri",
+	"For",
+	"Gem",
+	"Gru",
+	"Her",
+	"Hor",
+	"Hya",
+	"Hys",
+	"Ind",
+	"Lac",
+	"Leo",
+	"LMi",
+	"Lep",
+	"Lib",
+	"Lup",
+	"Lyn",
+	"Lyr",
+	"Men",
+	"Mic",
+	"Mon",
+	"Mus",
+	"Nor",
+	"Oct",
+	"Oph",
+	"Orion",
+	"Pav",
+	"Pegasus",
+	"Per",
+	"Pho",
+	"Pic",
+	"Pis",
+	"PsA",
+	"Pup",
+	"Pyx",
+	"Ret",
+	"Sge",
+	"Sag",
+	"Sco",
+	"Scl",
+	"Sct",
+	"Ser",
+	"Ser",
+	"Sex",
+	"Tau",
+	"Tel",
+	"Tri",
+	"TrA",
+	"Tuc",
+	"UMajor",
+	"UMinor",
+	"Vel",
+	"Virgo",
+	"Vol",
+	"Vul",
+	"NPol",
+	"SPol",
+	"---"
+};
+
+const char *gConstel_LongNames[]=
+{
+	"Andromeda",
+	"Antlia",
+	"Apus",
+	"Aquarius",
+	"Aqulia",
+	"Ara",
+	"Aries",
+	"Auriga",
+	"Bootes",
+	"Caelum",
+
+	"Camelopardalis",
+	"Cancer",
+	"Canes Venatici",
+	"Canis Major",
+	"Canis Minor",
+	"Capricornus",
+	"Carina",
+	"Cassiopeia",
+	"Centarus",
+	"Cepheus",
+
+	"Cetus",
+	"Chamaeleon",
+	"Circinus",
+	"Columbia",
+	"Coma Berenices",
+	"Corona Australis",
+	"Corona Borealis",
+	"Corvus",
+	"Crater",
+	"Crux",
+
+	"Cygnus",
+	"Delphinus",
+	"Dorado",
+	"Draco",
+	"Equuleus",
+	"Eridanus",
+	"Fornax",
+	"Gemini",
+	"Grus",
+	"Hercules",
+	"Horologium",
+	"Hydra",
+	"Hydrus",
+	"Indus",
+	"Lacerta",
+	"Leo",
+	"Leo Minor",
+	"Lepus",
+	"Libra",
+	"Lupus",
+	"Lynx",
+	"Lyra",
+	"Mensa",
+	"Microscopium",
+	"Moniceris",
+	"Musca",
+	"Norma",
+	"Octans",
+	"Ophiuchus",
+	"Orion",
+	"Pavo",
+	"Pegasus",
+	"Perseus",
+	"Phoenix",
+	"Pictor",
+	"Pisces",
+	"PsA",
+	"Puppis",
+	"Pyxis",
+	"Reticulum",
+	"Sagitta",
+	"Sagittarius",
+	"Scorpius",
+	"Sculptor",
+	"Scutum",
+	"Serpens Caput",
+	"Serpens Cauda",
+	"Sextants",
+	"Taurus",
+	"Telescopium",
+	"Triangulum",
+	"Triangulum Australe",
+	"Tucana",
+	"Ursa Major",
+	"Ursa Minor",
+	"Vela",
+	"Virgo",
+	"Volans",
+	"Vulpecula",
+	"North Pole",
+	"South Pole",
+	"---"
+};
+
+
+#define	kMaxConstelNames	91
+
