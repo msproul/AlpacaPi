@@ -531,7 +531,7 @@ char	fullDataBuffer[10000];
 
 
 //*****************************************************************************
-int	JsonResponse_SendTextBuffer(int socketFD, const char *jsonTextBuffer)
+int	JsonResponse_SendTextBuffer(const int socketFD, char *jsonTextBuffer)
 {
 int		bytesWritten;
 int		bufLen;
@@ -550,7 +550,8 @@ bool	keepTrying;
 			bytesWritten	=	write(socketFD, jsonTextBuffer, bufLen);
 			if (bytesWritten > 0)
 			{
-				keepTrying	=	false;
+				keepTrying			=	false;
+				jsonTextBuffer[0]	=	0;	//*	reset the buffer
 			}
 			else
 			{

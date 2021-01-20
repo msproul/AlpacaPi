@@ -577,7 +577,7 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 	cInternalCameraState	=	kCameraState_TakingPicture;
 	alpacaErrCode			=	kASCOM_Err_Success;
 
-	gettimeofday(&cLastExposureStartTime, NULL);
+	gettimeofday(&cLastexposure_StartTime, NULL);
 
 	return(alpacaErrCode);
 }
@@ -854,7 +854,7 @@ HRESULT				toupResult;
 				{
 					CONSOLE_DEBUG_W_NUM("expTime_us\t=", cToupAutoExpTime_us);
 					cCurrentExposure_us			=	cToupAutoExpTime_us;
-					cLastexposureduration_us	=	cToupAutoExpTime_us;
+					cLastexposure_duration_us	=	cToupAutoExpTime_us;
 				}
 				else
 				{
@@ -880,7 +880,7 @@ HRESULT				toupResult;
 					if (cCameraAutoExposure)
 					{
 						cCurrentExposure_us			=	cToupAutoExpTime_us;
-						cLastexposureduration_us	=	cToupAutoExpTime_us;
+						cLastexposure_duration_us	=	cToupAutoExpTime_us;
 					}
 
 					cNewImageReadyToDisplay	=	true;

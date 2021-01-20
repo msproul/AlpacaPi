@@ -58,7 +58,7 @@ WindowTabCamera::WindowTabCamera(	const int	xSize,
 	strcpy(cAlpacaDeviceName, "");
  //	memset(&cAlpacaDevInfo, 0, sizeof(TYPE_REMOTE_DEV));
 
-
+	cForce8BitRead	=	false;
 	cHasFilterWheel	=	hasFilterWheel;
 	strcpy(cAlpacaDeviceName, deviceName);
 
@@ -312,6 +312,26 @@ IplImage	*logoImage;
 	yLoc			+=	cLrgBtnHeight;
 	yLoc			+=	4;
 
+	//=======================================================
+	SetWidget(			kCameraBox_Btn_8Bit,	cClm3_offset,	yLoc,	((cClmWidth * 2) -4),	cRadioBtnHt);
+	SetWidgetType(		kCameraBox_Btn_8Bit,	kWidgetType_CheckBox);
+	SetWidgetText(		kCameraBox_Btn_8Bit,	"Force 8 Bit");
+	SetWidgetFont(		kCameraBox_Btn_8Bit,	kFont_RadioBtn);
+//	SetWidgetBGColor(	kCameraBox_Btn_8Bit,	CV_RGB(255,	255,	255));
+//	SetWidgetTextColor(	kCameraBox_Btn_8Bit,	CV_RGB(255,	0,	0));
+
+
+	SetWidget(			kCameraBox_DownloadRGBarray,	cClm5_offset,	yLoc,	((cClmWidth * 2) -4),	cLrgBtnHeight);
+	SetWidgetType(		kCameraBox_DownloadRGBarray,	kWidgetType_Button);
+	SetWidgetText(		kCameraBox_DownloadRGBarray,	"DL RGBarray");
+	SetWidgetFont(		kCameraBox_DownloadRGBarray,	kFont_Medium);
+	SetWidgetBGColor(	kCameraBox_DownloadRGBarray,	CV_RGB(255,	255,	255));
+	SetWidgetTextColor(	kCameraBox_DownloadRGBarray,	CV_RGB(255,	0,	0));
+
+	yLoc			+=	cLrgBtnHeight;
+	yLoc			+=	4;
+
+
 	yLocClm4		=	yLoc;
 	//=======================================================
 	//*	Filter wheel (if present)
@@ -521,7 +541,17 @@ int			fwPosition;
 			break;
 
 		case kCameraBox_DownloadImage:
-			DownloadImage();
+			DownloadImage(false);	//*	false -> imageArray
+			break;
+
+		case kCameraBox_Btn_8Bit:
+			cForce8BitRead	=	!cForce8BitRead;
+			SetWidgetChecked(kCameraBox_Btn_8Bit, cForce8BitRead);
+			ForceUpdate();
+			break;
+
+		case kCameraBox_DownloadRGBarray:
+			DownloadImage(true);	//*	true -> Use RGBarray
 			break;
 
 		case kCameraBox_FilterWheel1:
@@ -729,7 +759,7 @@ ControllerCamera	*myCameraController;
 }
 
 //*****************************************************************************
-void	WindowTabCamera::DownloadImage(void)
+void	WindowTabCamera::DownloadImage(const bool useRGBarray)
 {
 ControllerCamera	*myCameraController;
 IplImage			*myDownLoadedImage;
@@ -752,8 +782,14 @@ int					openCVerr;
 	if (myCameraController != NULL)
 	{
 //		CONSOLE_DEBUG("Starting download");
-
-		myDownLoadedImage	=	myCameraController->DownloadImage();
+		if (useRGBarray)
+		{
+			myDownLoadedImage	=	myCameraController->DownloadImage_rgbarray();
+		}
+		else
+		{
+			myDownLoadedImage	=	myCameraController->DownloadImage(cForce8BitRead);
+		}
 		if (myDownLoadedImage != NULL)
 		{
 			CONSOLE_DEBUG("Download complete");

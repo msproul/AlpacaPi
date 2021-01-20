@@ -29,7 +29,7 @@
 //*	Apr 21,	2020	<MLS> Added about box to switch controller
 //*	May  6,	2020	<MLS> Added AlpacaGetStartupData_OneAAT()
 //*	May  6,	2020	<MLS> Using ReadAll for switch startup info, much faster
-//*	Jan 14,	2021	<MLS> Added AlpacaProcessSupportedAction()
+//*	Jan 14,	2021	<MLS> Added AlpacaProcessSupportedActions()
 //*	Jan 14,	2021	<MLS> Switch controller working with ASCOM Remote Server Console/simulator
 //*****************************************************************************
 
@@ -208,7 +208,7 @@ bool		needToUpdate;
 }
 
 //*****************************************************************************
-void	ControllerSwitch::AlpacaProcessSupportedAction(	const char	*deviceType,
+void	ControllerSwitch::AlpacaProcessSupportedActions(const char	*deviceType,
 														const int	deviveNum,
 														const char	*valueString)
 {

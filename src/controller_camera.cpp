@@ -44,8 +44,10 @@
 //*	Jun 29,	2020	<MLS> Added UpdateBackgroundColor()
 //*	Jun 29,	2020	<MLS> Added UpdateFreeDiskSpace()
 //*	Jan 15,	2021	<MLS> Added DownloadImage_rgbarray() & DownloadImage_imagearray()
+//*	Jan 16,	2021	<MLS> Now able to download monochrome image using "imagearray"
+//*	Jan 17,	2021	<MLS> Changed  UpdateReadAllStatus() to UpdateSupportedActions()
 //*****************************************************************************
-
+//*
 //*	todo
 //*		control key for different step size.
 //*		work on fits view to handle color fits images
@@ -73,6 +75,7 @@
 
 #include	"alpaca_defs.h"
 
+#define	_DEBUG_TIMING_
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
 
@@ -129,9 +132,12 @@ int		iii;
 
 	cHas_autoexposure		=	false;
 	cHas_exposuretime		=	false;
+	cHas_filelist			=	false;
 	cHas_livemode			=	false;
 	cHas_rgbarray			=	false;
+	cHas_sidebar			=	false;
 
+	cReadData8Bit			=	false;
 
 	//*	clear list of readout modes
 	for (iii=0; iii<kMaxReadOutModes; iii++)
@@ -353,7 +359,7 @@ bool		needToUpdate;
 }
 
 //*****************************************************************************
-void	ControllerCamera::UpdateReadAllStatus(void)
+void	ControllerCamera::UpdateSupportedActions(void)
 {
 	CONSOLE_DEBUG("this routine should be overloaded");
 }
@@ -499,7 +505,7 @@ int				readOutModeIdx;
 	{
 		CONSOLE_DEBUG_W_STR("Valid supported actions:", cWindowName);
 		//*	AlpacaGetSupportedActions() sets the cHas_readall appropriately
-		UpdateReadAllStatus();
+		UpdateSupportedActions();
 	}
 	else
 	{
@@ -557,13 +563,18 @@ int				readOutModeIdx;
 										alpacaString,
 										NULL,
 										&jsonParser);
+	CONSOLE_DEBUG(__FUNCTION__);
 	if (validData)
 	{
+	CONSOLE_DEBUG(__FUNCTION__);
 		jjj	=	0;
 		while (jjj<jsonParser.tokenCount_Data)
 		{
+	CONSOLE_DEBUG(jsonParser.dataList[jjj].keyword);
+	CONSOLE_DEBUG(jsonParser.dataList[jjj].valueString);
 			if (strcasecmp(jsonParser.dataList[jjj].keyword, "ARRAY") == 0)
 			{
+	CONSOLE_DEBUG(__FUNCTION__);
 				readOutModeIdx	=	0;
 				jjj++;
 				while ((jjj<jsonParser.tokenCount_Data) &&
@@ -572,7 +583,7 @@ int				readOutModeIdx;
 					if (readOutModeIdx < kMaxReadOutModes)
 					{
 						strcpy(cReadOutModes[readOutModeIdx].mode, jsonParser.dataList[jjj].valueString);
-//						CONSOLE_DEBUG(cReadOutModes[readOutModeIdx].mode);
+						CONSOLE_DEBUG(cReadOutModes[readOutModeIdx].mode);
 						readOutModeIdx++;
 					}
 					jjj++;
@@ -614,34 +625,46 @@ int				readOutModeIdx;
 }
 
 //*****************************************************************************
-void	ControllerCamera::AlpacaProcessSupportedAction(	const char	*deviceTypeStr,
+void	ControllerCamera::AlpacaProcessSupportedActions(const char	*deviceTypeStr,
 														const int	deviveNum,
 														const char	*valueString)
 {
 	CONSOLE_DEBUG_W_STR("valueString\t=", valueString);
 
-	if (strcasecmp(valueString, "readall") == 0)
-	{
-		cHas_readall	=	true;
-	}
-	else if (strcasecmp(valueString, "autoexposure") == 0)
+	//*	put these in alphabetical order for easy of reading
+
+	if (strcasecmp(valueString,			"autoexposure") == 0)
 	{
 		cHas_autoexposure	=	true;
 	}
-	else if (strcasecmp(valueString, "exposuretime") == 0)
+	else if (strcasecmp(valueString,	"displayimage") == 0)
+	{
+		cHas_displayimage	=	true;
+	}
+	else if (strcasecmp(valueString,	"exposuretime") == 0)
 	{
 		cHas_exposuretime	=	true;
 	}
-	else if (strcasecmp(valueString, "livemode") == 0)
+	else if (strcasecmp(valueString,	"filenameoptions") == 0)
+	{
+		cHas_filenameoptions	=	true;
+	}
+	else if (strcasecmp(valueString,	"livemode") == 0)
 	{
 		cHas_livemode	=	true;
 	}
-	else if (strcasecmp(valueString, "rgbarray") == 0)
+	else if (strcasecmp(valueString,	"readall") == 0)
+	{
+		cHas_readall	=	true;
+	}
+	else if (strcasecmp(valueString,	"rgbarray") == 0)
 	{
 		cHas_rgbarray	=	true;
 	}
-
-
+	else if (strcasecmp(valueString,	"sidebar") == 0)
+	{
+		cHas_sidebar	=	true;
+	}
 }
 
 //*****************************************************************************
@@ -1454,6 +1477,7 @@ void	ControllerCamera::StartExposure(void)
 bool			validData;
 SJP_Parser_t	jsonParser;
 int				jjj;
+char			parameterString[128];
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -1462,15 +1486,31 @@ int				jjj;
 
 	if (cHas_readall && cLiveMode)
 	{
-		CONSOLE_DEBUG("savenextimage");
+//		CONSOLE_DEBUG("savenextimage");
 		validData	=	AlpacaSendPutCmdwResponse(	"camera", "savenextimage",	NULL, &jsonParser);
 	}
-	else
+	else if (cHas_exposuretime)
 	{
-		CONSOLE_DEBUG("Calling AlpacaSendPutCmdwResponse");
+//		CONSOLE_DEBUG("Calling AlpacaSendPutCmdwResponse");
 		validData	=	AlpacaSendPutCmdwResponse(	"camera",
 													"startexposure",
 													NULL,
+													&jsonParser);
+	}
+	else
+	{
+	double	cExposureDuration		=	60.123456;
+	bool	cDarkExposure	=	false;
+
+		//*	OK, this is a normal alpaca driver without any of my extras.
+		//*	we need "Duration=0.123&Light=true&ClientID=22&ClientTransactionID=33"
+		//*	the "ClientID=22&ClientTransactionID=33" will be added by the next routine
+
+		sprintf(parameterString, "Duration=%f&Light=%s",	cExposureDuration,
+															(cDarkExposure ? "false" : "true"));
+		validData	=	AlpacaSendPutCmdwResponse(	"camera",
+													"startexposure",
+													parameterString,
 													&jsonParser);
 	}
 
@@ -1574,51 +1614,88 @@ int			pixIdx;
 
 
 //*****************************************************************************
-IplImage	*ControllerCamera::DownloadImage_imagearray(void)
+IplImage	*ControllerCamera::DownloadImage_imagearray(const bool force8BitRead)
 {
 IplImage	*myOpenCVimage	=	NULL;
 bool		validData;
-int			pixelsCount;
-int			pixelsCount3X;
+int			pixelCount;
+int			pixelCount3X;
 int			*imageData;
 int			valuesRead;
 int			iii;
+int			xxx;
+int			yyy;
 int			pixIdx;
+int			pixIdxRowStart;
+int			thePixValue;
 
 	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_NUM("cCameraSizeX\t=",	cCameraSizeX);
+	CONSOLE_DEBUG_W_NUM("cCameraSizeY\t=",	cCameraSizeY);
 
-	pixelsCount		=	cCameraSizeX * cCameraSizeY;
-	pixelsCount3X	=	3 * pixelsCount;
-	if (pixelsCount > 0)
+	pixelCount		=	cCameraSizeX * cCameraSizeY;
+//	pixelCount3X	=	3 * pixelCount;
+	pixelCount3X	=	1 * pixelCount;
+	pixelCount3X	+=	100;
+	if (pixelCount > 0)
 	{
-		CONSOLE_DEBUG_W_NUM("pixelsCount\t=", pixelsCount);
+		CONSOLE_DEBUG_W_NUM("pixelCount\t=", pixelCount);
 
-		imageData	=	(int *)malloc(pixelsCount3X * sizeof(int));
+		imageData	=	(int *)malloc(pixelCount3X * sizeof(int));
 		if (imageData!= NULL)
 		{
+			memset(imageData, 128, pixelCount3X * sizeof(int));
+
 			valuesRead	=	0;
+			CONSOLE_DEBUG("Calling AlpacaGetIntegerArray()");
+			SETUP_TIMING();
 			validData	=	AlpacaGetIntegerArray(	"camera",
 													cAlpacaDevNum,
 													"imagearray",
 													"",
 													imageData,
-													pixelsCount3X,
+													pixelCount3X,
 													&valuesRead);
 
+			DEBUG_TIMING("Image downloading (ms)");
 			CONSOLE_DEBUG_W_NUM("valuesRead\t\t=", valuesRead);
 			if (validData && (valuesRead > 10))
 			{
 				myOpenCVimage	=	cvCreateImage(cvSize(cCameraSizeX, cCameraSizeY), IPL_DEPTH_8U, 3);
 				if (myOpenCVimage != NULL)
 				{
+					CONSOLE_DEBUG_W_NUM("width \t=",	myOpenCVimage->width);
+					CONSOLE_DEBUG_W_NUM("height\t=",	myOpenCVimage->height);
+					CONSOLE_DEBUG_W_NUM("widthStep\t=",	myOpenCVimage->widthStep);
+
 					//*	move the image data into the openCV image structure
-					pixIdx	=	0;
-					for (iii=0; iii<pixelsCount; iii++)
+
+					START_TIMING();
+					iii	=	0;
+					for (xxx=0; xxx<myOpenCVimage->width; xxx++)
 					{
-						myOpenCVimage->imageData[pixIdx++]	=	(imageData[iii] >> 16) & 0x00ff;
-						myOpenCVimage->imageData[pixIdx++]	=	(imageData[iii] >> 8) & 0x00ff;
-						myOpenCVimage->imageData[pixIdx++]	=	(imageData[iii]) & 0x00ff;
+						pixIdxRowStart	=	0;
+						for (yyy=0; yyy<myOpenCVimage->height; yyy++)
+						{
+							pixIdx	=	pixIdxRowStart + (xxx * 3);
+							if (force8BitRead)
+							{
+								thePixValue	=	(imageData[iii]) & 0x00ff;
+							}
+							else
+							{
+								thePixValue	=	(imageData[iii] >> 8) & 0x00ff;
+							}
+							myOpenCVimage->imageData[pixIdx++]	=	thePixValue;
+							myOpenCVimage->imageData[pixIdx++]	=	thePixValue;
+							myOpenCVimage->imageData[pixIdx++]	=	thePixValue;
+							iii++;
+
+							pixIdxRowStart	+=	myOpenCVimage->widthStep;
+						}
 					}
+					DEBUG_TIMING("Image stuffing (ms)");
+
 				}
 			}
 			else
@@ -1641,17 +1718,17 @@ int			pixIdx;
 }
 
 //*****************************************************************************
-IplImage	*ControllerCamera::DownloadImage(void)
+IplImage	*ControllerCamera::DownloadImage(const bool force8BitRead)
 {
 IplImage	*myOpenCVimage	=	NULL;
 
-	if (cHas_rgbarray)
+//	if (cHas_rgbarray)
+//	{
+//		myOpenCVimage	=	DownloadImage_rgbarray();
+//	}
+//	else
 	{
-		myOpenCVimage	=	DownloadImage_rgbarray();
-	}
-	else
-	{
-		myOpenCVimage	=	DownloadImage_imagearray();
+		myOpenCVimage	=	DownloadImage_imagearray(force8BitRead);
 	}
 	return(myOpenCVimage);
 }

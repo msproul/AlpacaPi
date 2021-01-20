@@ -29,6 +29,8 @@ enum
 	kAboutBox_TextBox2,
 	kAboutBox_TextBox3,
 
+	kAboutBox_CPUinfo,
+
 	kAboutBox_AlpacaLogo,
 	kAboutBox_AlpacaDrvrVersion,
 	kAboutBox_IPaddr,

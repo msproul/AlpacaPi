@@ -1,5 +1,5 @@
 //**************************************************************************************
-//#include	"controller_focus_generic.h.h"
+//#include	"controller_focus_generic.h"
 
 
 #ifndef	_WINDOWTAB_MOONLITE_SINGLE_H_

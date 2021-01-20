@@ -1798,7 +1798,7 @@ double		percentComplete;
 					8,							//	int line_type CV_DEFAULT(8),
 					0);							//	int shift CV_DEFAULT(0));
 
-	sprintf(testString, "Downloading - %4.1f%% complete", percentComplete * 100);
+	sprintf(testString, "Downloading - %3.1f%% complete", (percentComplete * 100.0));
 
 	curFontNum	=	theWidget->fontNum,
 	cvGetTextSize(	testString,

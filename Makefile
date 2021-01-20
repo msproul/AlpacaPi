@@ -1158,7 +1158,7 @@ Debug			:		$(CPP_OBJECTS)				\
 
 
 ######################################################################################
-#pragma mark jetson
+#pragma mark make jetson
 jetson		:	DEFINEFLAGS		+=	-D_JETSON_
 jetson		:	DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
 jetson		:	DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
@@ -1336,6 +1336,7 @@ CONTROLLER_OBJECTS=												\
 				$(OBJECT_DIR)serialport.o						\
 				$(OBJECT_DIR)commoncolor.o						\
 				$(OBJECT_DIR)sendrequest_lib.o					\
+				$(OBJECT_DIR)cpu_stats.o						\
 
 VIDEO_OBJECTS=													\
 				$(OBJECT_DIR)controller.o						\
@@ -1431,6 +1432,7 @@ SKYTRAVEL_OBJECTS=											\
 				$(OBJECT_DIR)controller_skytravel.o			\
 				$(OBJECT_DIR)controller_dome_common.o		\
 				$(OBJECT_DIR)ConstellationData.o			\
+				$(OBJECT_DIR)cpu_stats.o					\
 				$(OBJECT_DIR)eph.o							\
 				$(OBJECT_DIR)HipparcosCatalog.o				\
 				$(OBJECT_DIR)lx200_com.o					\
@@ -1445,12 +1447,24 @@ SKYTRAVEL_OBJECTS=											\
 				$(OBJECT_DIR)windowtab_alpacalist.o			\
 				$(OBJECT_DIR)controller_camera.o				\
 				$(OBJECT_DIR)controller_cam_normal.o			\
+				$(OBJECT_DIR)controller_focus.o					\
+				$(OBJECT_DIR)controller_focus_generic.o			\
 				$(OBJECT_DIR)controller_image.o					\
 				$(OBJECT_DIR)controller_switch.o				\
 				$(OBJECT_DIR)windowtab_camera.o					\
 				$(OBJECT_DIR)windowtab_camsettings.o			\
 				$(OBJECT_DIR)windowtab_filelist.o				\
 				$(OBJECT_DIR)windowtab_switch.o					\
+				$(OBJECT_DIR)windowtab_ml_single.o				\
+				$(OBJECT_DIR)windowtab_nitecrawler.o			\
+				$(OBJECT_DIR)windowtab_auxmotor.o				\
+				$(OBJECT_DIR)windowtab_config.o					\
+				$(OBJECT_DIR)nitecrawler_image.o				\
+				$(OBJECT_DIR)moonlite_com.o						\
+				$(OBJECT_DIR)controller_ml_nc.o					\
+				$(OBJECT_DIR)controller_ml_single.o				\
+				$(OBJECT_DIR)windowtab_graphs.o					\
+				$(OBJECT_DIR)serialport.o					\
 
 
 ######################################################################################
@@ -1460,8 +1474,10 @@ sky		:	DEFINEFLAGS		+=	-D_INCLUDE_CTRL_MAIN_
 sky		:	DEFINEFLAGS		+=	-D_ENABLE_SKYTRAVEL_
 sky		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_DOME_
 sky		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_CAMERA_
+sky		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_FOCUSERS_
 sky		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
 sky		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_SWITCHES_
+sky		:	DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
 sky		:	INCLUDES		+=	-I$(SRC_SKYTRAVEL)
 
 sky		:				$(SKYTRAVEL_OBJECTS)					\

@@ -31,7 +31,7 @@
 //**************************************************************************************
 typedef struct
 {
-	char	mode[8];
+	char	mode[64];
 } READOUTMODE;
 
 //**************************************************************************************
@@ -93,7 +93,7 @@ class ControllerCamera: public Controller
 		virtual	void	UpdateCameraState(void);
 		virtual	void	UpdateCameraTemperature(void);
 
-		virtual	void	UpdateReadAllStatus(void);
+		virtual	void	UpdateSupportedActions(void);
 		virtual	void	UpdateRemoteAlpacaVersion(void);
 		virtual	void	UpdateReadoutModes(void);
 		virtual	void	UpdateCurrReadoutMode(void);
@@ -111,7 +111,7 @@ class ControllerCamera: public Controller
 
 
 		//*	sub class specific routines
-		virtual	void	AlpacaProcessSupportedAction(	const char	*deviceTypeStr,
+		virtual	void	AlpacaProcessSupportedActions(	const char	*deviceTypeStr,
 														const int	deviveNum,
 														const char	*valueString);
 
@@ -144,10 +144,12 @@ class ControllerCamera: public Controller
 				void	LogCameraTemp(const double cameraTemp);
 
 
-				IplImage	*DownloadImage(void);
+				IplImage	*DownloadImage(const bool force8BitRead = false);
 				IplImage	*DownloadImage_rgbarray(void);
-				IplImage	*DownloadImage_imagearray(void);
+				IplImage	*DownloadImage_imagearray(const bool force8BitRead = false);
 
+				//*	download options
+				bool					cReadData8Bit;
 
 				char					cCameraName[48];
 				int						cCameraSizeX;
@@ -171,9 +173,13 @@ class ControllerCamera: public Controller
 				bool					cHasCooler;
 
 				bool					cHas_autoexposure;
+				bool					cHas_displayimage;
 				bool					cHas_exposuretime;
+				bool					cHas_filelist;
+				bool					cHas_filenameoptions;
 				bool					cHas_livemode;
 				bool					cHas_rgbarray;
+				bool					cHas_sidebar;
 
 				//==========================================================
 				//*	File name information

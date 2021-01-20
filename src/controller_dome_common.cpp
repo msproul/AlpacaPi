@@ -345,7 +345,7 @@ void	PARENT_CLASS::AlpacaProcessReadAll(	const char	*deviceType,
 
 
 //*****************************************************************************
-void	PARENT_CLASS::AlpacaProcessSupportedActionDome(const int deviveNum, const char *valueString)
+void	PARENT_CLASS::AlpacaProcessSupportedActions_Dome(const int deviveNum, const char *valueString)
 {
 //	CONSOLE_DEBUG_W_STR("valueString=",	valueString);
 
@@ -412,13 +412,13 @@ void	PARENT_CLASS::AlpacaProcessSupportedActionDome(const int deviveNum, const c
 //*****************************************************************************
 //*	if this routine gets overloaded, the first part, checking for "readall" must be preserved
 //*****************************************************************************
-void	PARENT_CLASS::AlpacaProcessSupportedAction(const char *deviceType, const int deviveNum, const char *valueString)
+void	PARENT_CLASS::AlpacaProcessSupportedActions(const char *deviceType, const int deviveNum, const char *valueString)
 {
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, deviceType);
 
 	if (strcasecmp(deviceType, "Dome") == 0)
 	{
-		AlpacaProcessSupportedActionDome(deviveNum, valueString);
+		AlpacaProcessSupportedActions_Dome(deviveNum, valueString);
 	}
 	else if (strcasecmp(valueString, "Telescope") == 0)
 	{

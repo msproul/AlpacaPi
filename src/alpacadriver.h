@@ -270,9 +270,8 @@ extern	const char		gValueString[];
 extern	uint32_t		gClientTransactionID;
 extern	uint32_t		gServerTransactionID;
 extern	char			gDefaultTelescopeRefID[kDefaultRefIdMaxLen];
-extern	char			gOsReleaseString[];
-extern	char			gCpuInfoString[];
-extern	char			gPlatformString[];
+
+
 extern	bool			gErrorLogging;		//*	write errors to log file if true
 extern	bool			gConformLogging;	//*	log all commands to log file to match up with Conform
 extern	char			gFullVersionString[];

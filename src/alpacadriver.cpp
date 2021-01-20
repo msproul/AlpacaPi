@@ -254,10 +254,13 @@ bool				gVerbose					=	true;
 const char			gValueString[]				=	"Value";
 char				gDefaultTelescopeRefID[kDefaultRefIdMaxLen]	=	"";
 char				gWebTitle[80]				=	"AlpacaPi";
+#if 0
 char				gOsReleaseString[64]		=	"";
 char				gCpuInfoString[64]			=	"";
 char				gPlatformString[64]			=	"";
 double				gBogoMipsValue				=	0.0;
+#endif
+
 char				gFullVersionString[128];
 
 //*****************************************************************************
@@ -703,7 +706,7 @@ int			upTime_Days;
 int			ram_Megabytes;
 double		freeDiskSpace_Gigs;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	JsonResponse_Add_String(reqData->socket,
 							reqData->jsonTextBuffer,
 							kMaxJsonBuffLen,
@@ -2369,6 +2372,7 @@ static void	*ListenThread(void *arg)
 	return(NULL);
 }
 
+#if 0
 
 //**************************************************************************
 //*	examples
@@ -2573,6 +2577,7 @@ char	*stringPtr;
 //	strcat(gPlatformString, " (32 bit)");
 #endif
 }
+#endif // 0
 
 //*****************************************************************************
 static void	PrintHelp(const char *appName)
@@ -2722,8 +2727,8 @@ int				cameraCnt;
 
 	strcpy(gWebTitle, "Alpaca Driver");
 
-	Read_OSreleaseVersion();
-	Read_CpuInfo();
+	CPUstats_ReadOSreleaseVersion();
+	CPUstats_ReadInfo();
 
 	InitObsConditionGloblas();
 	ProcessCmdLineArgs(argc, argv);
@@ -2869,7 +2874,7 @@ int				cameraCnt;
 	//*	for now, we dont need this on all devices
 	if (cameraCnt > 0)
 	{
-		StartDiscoveryQuerryThread();
+//		StartDiscoveryQuerryThread();
 	}
 #endif
 

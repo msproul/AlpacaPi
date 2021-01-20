@@ -15,8 +15,8 @@
 //*	Mar 19,	2020	<MLS> Added GetMySubnetNumber()
 //*	Jan 14,	2021	<MLS> Apparently the DISCOVERY MESSAGE has changed, fixed
 //*	Jan 14,	2021	<MLS> Discovery protocol now working with ASCOM Device Hub
+//*	Jan 17,	2121	<MLS> Added external IP list to discovery thread
 //*-------------------------------------------------------------------------
-//*	Jan 13,	2121	<TODO> Add external IP list to discovery thread
 //*****************************************************************************
 
 
@@ -30,6 +30,8 @@
 #include	<netinet/in.h>
 #include	<errno.h>
 #include	<pthread.h>
+#include	<ifaddrs.h>
+
 
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
@@ -73,8 +75,9 @@ static	int			gBroadcastSock;
 static	uint32_t	gMyIPaddress	=	0;
 
 
-static void	*LookForAlpacaDevicesThread(void *arg);
-
+static void		*LookForAlpacaDevicesThread(void *arg);
+static void		ReadExternalIPlist_FromThread(void);
+static bool		gNeedToReadExternalList	=	true;	//*	we only need to do this once
 
 //*****************************************************************************
 static void	*DiscoveryListenThread(void *arg)
@@ -396,6 +399,10 @@ SJP_Parser_t		jsonParser;
 
 		ExtractDevicesFromJSON(&jsonParser, theDevice);
 	}
+	else
+	{
+		CONSOLE_DEBUG("No valid data");
+	}
 }
 
 #if 0
@@ -417,8 +424,8 @@ static void	PollAllDevices(void)
 {
 int		ii;
 
-	CONSOLE_DEBUG(__FUNCTION__);
-	CONSOLE_DEBUG_W_NUM("gAlpacaUnitCnt\t=", gAlpacaUnitCnt);
+//	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG_W_NUM("gAlpacaUnitCnt\t=", gAlpacaUnitCnt);
 	for (ii=0; ii<gAlpacaUnitCnt; ii++)
 	{
 		if (gAlpacaUnitList[ii].noResponseCnt == 0)
@@ -426,7 +433,7 @@ int		ii;
 			SendGetRequest(&gAlpacaUnitList[ii], "/management/v1/configureddevices");
 		}
 	}
-	CONSOLE_DEBUG_W_NUM("gRemoteCnt\t=", gRemoteCnt);
+//	CONSOLE_DEBUG_W_NUM("gRemoteCnt\t=", gRemoteCnt);
 }
 
 //*****************************************************************************
@@ -438,7 +445,7 @@ int		theDeviceIdx;
 bool	foundHostName;
 char	myHostNameStr[128];
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	newDevice		=	true;
 	theDeviceIdx	=	-1;
 	for (ii=0; ii<gAlpacaUnitCnt; ii++)
@@ -453,7 +460,7 @@ char	myHostNameStr[128];
 	if (newDevice)
 	{
 		//*	add the new devices to our list
-		CONSOLE_DEBUG("We have a new devices")
+//		CONSOLE_DEBUG("We have a new devices")
 		if (gAlpacaUnitCnt < kMaxAlpacaIPaddrCnt)
 		{
 			gAlpacaUnitList[gAlpacaUnitCnt].deviceAddress	=	*deviceAddress;
@@ -576,6 +583,10 @@ int				ii;
 					}
 				}
 			}
+			else
+			{
+				CONSOLE_DEBUG("No valid data");
+			}
 
 			//------------------------------------------------
 			//	pressure
@@ -613,6 +624,10 @@ int				ii;
 					}
 				}
 			}
+			else
+			{
+				CONSOLE_DEBUG("No valid data");
+			}
 
 			//------------------------------------------------
 			//	humidity
@@ -648,10 +663,14 @@ int				ii;
 					}
 				}
 			}
+			else
+			{
+				CONSOLE_DEBUG("No valid data");
+			}
 		}
 	#endif
 	}
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, "Exit");
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, "Exit");
 }
 
 //*****************************************************************************
@@ -659,7 +678,7 @@ int StartDiscoveryQuerryThread(void)
 {
 int			threadErr;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 	threadErr			=	pthread_create(&gDiscoveryFindThreadID, NULL, &LookForAlpacaDevicesThread, NULL);
 
 	return(threadErr);
@@ -789,7 +808,11 @@ int					sockOptValue;
 	//		CONSOLE_DEBUG_W_NUM("from.sin_addr=", ((from.sin_addr.s_addr) & 0x0ff));
 
 		}
-
+		if (gNeedToReadExternalList)
+		{
+			ReadExternalIPlist_FromThread();
+			gNeedToReadExternalList	=	false;
+		}
 		PollAllDevices();
 
 //		PrintDeviceList();
@@ -799,7 +822,7 @@ int					sockOptValue;
 		//*	we dont need to do this very often
 	//	sleep(3000);
 		sleep(15);
-		CONSOLE_DEBUG("Done sleeping");
+	//	CONSOLE_DEBUG("Done sleeping");
 	}
 
 	CONSOLE_DEBUG("Thread exit!!!!!!!!");
@@ -807,14 +830,75 @@ int					sockOptValue;
 	return(NULL);
 }
 
+//*****************************************************************************
+static void	ReadExternalIPlist_FromThread(void)
+{
+FILE				*filePointer;
+char				lineBuff[256];
+char				outputIPaddr[256];
+int					ii;
+int					slen;
+char				fileName[]	=	"external_ip_list.txt";
+SJP_Parser_t		jsonParser;
+struct sockaddr_in	from;
+char				portNumStr[32];
+char				*colonPtr;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+
+	//*	see if there is a file listing extra IP address
+	filePointer	=	fopen(fileName, "r");
+	if (filePointer != NULL)
+	{
+		while (fgets(lineBuff, 200, filePointer))
+		{
+			//*	get rid of the trailing CR/LF
+			slen	=	strlen(lineBuff);
+			for (ii=0; ii<slen; ii++)
+			{
+				if ((lineBuff[ii] == 0x0d) || (lineBuff[ii] == 0x0a))
+				{
+					lineBuff[ii]	=	0;
+					break;
+				}
+			}
+			CONSOLE_DEBUG_W_STR("External IP address\t=",		lineBuff);
+			slen	=	strlen(lineBuff);
+			if ((slen > 6) && (lineBuff[0] != '#'))
+			{
+				//*	look to see if there is a port number specified
+				colonPtr	=	strchr(lineBuff, ':');
+				if (colonPtr != NULL)
+				{
+					colonPtr++;
+					strcpy(portNumStr, colonPtr);
+				}
+				else
+				{
+					//*	set the default
+					strcpy(portNumStr, "6800");
+				}
+
+				SJP_Init(&jsonParser);
+				from.sin_addr.s_addr	=	htonl((192 << 24) + (168 << 16) + (50 << 8) + 46);
+				inet_pton(AF_INET, lineBuff, &(from.sin_addr));
+
+				inet_ntop(AF_INET, &(from.sin_addr), outputIPaddr, INET_ADDRSTRLEN);
+				CONSOLE_DEBUG_W_STR("outputIPaddr\t\t=",		outputIPaddr);
+
+				strcpy(jsonParser.dataList[0].keyword, "ALPACAPORT");
+				strcpy(jsonParser.dataList[0].valueString, portNumStr);
+				jsonParser.tokenCount_Data	=	1;
+
+			//	AddUnitToList(&from, &jsonParser);
+				AddIPaddressToList(&from, &jsonParser);
+			}
+		}
+		fclose(filePointer);
+	}
+}
 
 
-
-#include <sys/types.h>
-#include <ifaddrs.h>
-#include <netinet/in.h>
-#include <string.h>
-#include <arpa/inet.h>
 
 //*****************************************************************************
 int	GetMySubnetNumber(void)

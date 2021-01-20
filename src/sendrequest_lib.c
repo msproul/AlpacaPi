@@ -72,6 +72,7 @@ int					dataStrLen;
 char				ipString[32];
 struct timeval		timeoutLength;
 int					setOptRetCode;
+int					so_oobinline;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG(sendData);
@@ -90,6 +91,20 @@ int					setOptRetCode;
 		{
 			perror("setsockopt(SO_RCVTIMEO) failed");
 		}
+//	SO_NOSIGPIPE,	MSG_NOSIGNAL
+		//*	turn out of band off
+		so_oobinline	=	0;
+		setOptRetCode			=	setsockopt(	socket_desc,
+												SOL_SOCKET,
+												SO_OOBINLINE,
+												&so_oobinline,
+												sizeof(so_oobinline));
+		if (setOptRetCode != 0)
+		{
+			CONSOLE_DEBUG_W_NUM("setsockopt() returned", setOptRetCode);
+		}
+
+
 		remoteDev.sin_addr.s_addr	=	deviceAddress->sin_addr.s_addr;
 		remoteDev.sin_family		=	AF_INET;
 		remoteDev.sin_port			=	htons(port);
@@ -115,7 +130,8 @@ int					setOptRetCode;
 
 //			CONSOLE_DEBUG(xmitBuffer);
 
-			sendRetCode	=	send(socket_desc , xmitBuffer , strlen(xmitBuffer) , 0);
+//			sendRetCode	=	send(socket_desc , xmitBuffer , strlen(xmitBuffer) , 0);
+			sendRetCode	=	send(socket_desc , xmitBuffer , strlen(xmitBuffer) , MSG_NOSIGNAL);
 			if (sendRetCode >= 0)
 			{
 				//*	success
@@ -219,7 +235,7 @@ char				ipString[32];
 
 //			CONSOLE_DEBUG(xmitBuffer);
 
-			sendRetCode	=	send(socket_desc , xmitBuffer , strlen(xmitBuffer) , 0);
+			sendRetCode	=	send(socket_desc , xmitBuffer , strlen(xmitBuffer) , MSG_NOSIGNAL);
 			if (sendRetCode >= 0)
 			{
 			bool	keepReading;
@@ -228,7 +244,9 @@ char				ipString[32];
 				longBuffer[0]	=	0;
 				while (keepReading && ((strlen(longBuffer) + kReadBuffLen) < kLargeBufferSize))
 				{
-					recvByteCnt	=	recv(socket_desc, returnedData , kReadBuffLen , 0);
+				//	MSG_NOSIGNAL
+				//	recvByteCnt	=	recv(socket_desc, returnedData , kReadBuffLen , 0);
+					recvByteCnt	=	recv(socket_desc, returnedData , kReadBuffLen , MSG_NOSIGNAL);
 					if (recvByteCnt > 0)
 					{
 						validData	=	true;
@@ -355,11 +373,11 @@ int					setOptRetCode;
 			strcpy(xmitBuffer, "PUT ");
 			strcat(xmitBuffer, putCommand);
 
-		strcat(xmitBuffer, " HTTP/1.1\r\n");
-		strcat(xmitBuffer, "Host: 127.0.0.1:6800\r\n");
-		strcat(xmitBuffer, "User-Agent: AlpacaPi\r\n");
-//		strcat(xmitBuffer, "Connection: keep-alive\r\n");
-		strcat(xmitBuffer, "Accept: text/html,application/json\r\n");
+			strcat(xmitBuffer, " HTTP/1.1\r\n");
+			strcat(xmitBuffer, "Host: 127.0.0.1:6800\r\n");
+			strcat(xmitBuffer, "User-Agent: AlpacaPi\r\n");
+	//		strcat(xmitBuffer, "Connection: keep-alive\r\n");
+			strcat(xmitBuffer, "Accept: text/html,application/json\r\n");
 
 			if (dataString != NULL)
 			{
@@ -377,10 +395,10 @@ int					setOptRetCode;
 			}
 			CONSOLE_DEBUG_W_STR("Sending:", xmitBuffer);
 
-			sendRetCode	=	send(socket_desc , xmitBuffer , strlen(xmitBuffer) , 0);
+			sendRetCode	=	send(socket_desc , xmitBuffer , strlen(xmitBuffer) , MSG_NOSIGNAL);
 			if (sendRetCode >= 0)
 			{
-				recvByteCnt	=	recv(socket_desc, returnedData , kReadBuffLen , 0);
+				recvByteCnt	=	recv(socket_desc, returnedData , kReadBuffLen , MSG_NOSIGNAL);
 				if (recvByteCnt >= 0)
 				{
 					validData	=	true;

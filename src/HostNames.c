@@ -114,7 +114,7 @@ struct sockaddr_in	myIPaddress;
 				}
 				if (gHostNameCount < kMaxHostNames)
 				{
-					CONSOLE_DEBUG_W_2STR("New entry", hostAddrString, hostName);
+//					CONSOLE_DEBUG_W_2STR("New entry", hostAddrString, hostName);
 					strcpy(gHostNameTable[gHostNameCount].hostNameStr,	hostName);
 					strcpy(gHostNameTable[gHostNameCount].ipAddressStr,	hostAddrString);
 
@@ -139,7 +139,7 @@ bool	LookupNameFromString(const char *ipAddrStr, char *returnedHostName)
 int		iii;
 bool	foundIt;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	foundIt	=	false;
 	if (gHostNameCount == 0)
@@ -155,7 +155,7 @@ bool	foundIt;
 			strcpy(returnedHostName, gHostNameTable[iii].hostNameStr);
 			foundIt		=	true;
 
-			CONSOLE_DEBUG_W_STR("returnedHostName", returnedHostName);
+//			CONSOLE_DEBUG_W_STR("returnedHostName", returnedHostName);
 
 		}
 		iii++;
@@ -171,7 +171,7 @@ bool	LookupNameFromIPaddr(uint32_t ipAddrNum, char *returnedHostName)
 int		iii;
 bool	foundIt;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	foundIt	=	false;
 	if (gHostNameCount == 0)
@@ -187,7 +187,7 @@ bool	foundIt;
 			strcpy(returnedHostName, gHostNameTable[iii].hostNameStr);
 			foundIt		=	true;
 
-			CONSOLE_DEBUG_W_STR("returnedHostName", returnedHostName);
+		//	CONSOLE_DEBUG_W_STR("returnedHostName", returnedHostName);
 		}
 		iii++;
 	}

@@ -60,6 +60,9 @@
 #include	"moonlite_com.h"
 #include	"controller.h"
 #include	"controller_focus.h"
+#include	"controller_ml_nc.h"
+#include	"controller_ml_single.h"
+#include	"controller_focus_generic.h"
 #include	"focuser_common.h"
 #include	"nitecrawler_colors.h"
 
@@ -257,6 +260,20 @@ uint32_t	updateDelta;
 }
 
 //*****************************************************************************
+void	ControllerFocus::AlpacaProcessSupportedActions(const char *deviceTypeStr, const int deviveNum, const char *valueString)
+{
+
+	if (strcasecmp(valueString, "readall") == 0)
+	{
+		cHas_readall	=	true;
+	}
+	else if (strcasecmp(valueString, "foo") == 0)
+	{
+		//*	you get the idea
+	}
+}
+
+//*****************************************************************************
 void	ControllerFocus::UpdateFocuserPostion(const int newFocuserPostion)
 {
 	//*	This function should be overloaded
@@ -446,8 +463,8 @@ int			argValue;
 double		argDouble;
 bool		switchStatus;
 
-	CONSOLE_DEBUG_W_STR("deviceType\t=", deviceType);
-	CONSOLE_DEBUG_W_STR(keywordString, valueString);
+//	CONSOLE_DEBUG_W_STR("deviceType\t=", deviceType);
+//	CONSOLE_DEBUG_W_STR(keywordString, valueString);
 
 	if (strcasecmp(keywordString, "ismoving") == 0)
 	{
@@ -1140,5 +1157,131 @@ bool	closeOK;
 	UpdateWindowTabs_ConnectState(false);
 }
 
+
+
+//*****************************************************************************
+//*	returns focuser type as per enum
+//*	figure out a window name
+//*****************************************************************************
+int	GenerateFocuserWindowName(TYPE_REMOTE_DEV *device, int focuserNum, char *windowName)
+{
+int	myFocuserTYpe;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(device->deviceNameStr);
+
+	if (strncasecmp(device->deviceNameStr, "NiteCrawler", 11) == 0)
+	{
+		myFocuserTYpe	=	kFocuserType_NiteCrawler;
+		if (strlen(device->hostName) > 0)
+		{
+			//*	if we have a host name, use it
+			if (device->alpacaDeviceNum > 0)
+			{
+				//*	if there are more than one device on this host, we need to make the window name unique
+				sprintf(windowName, "NiteCrawler-%s-%d",
+									device->hostName,
+									device->alpacaDeviceNum);
+			}
+			else
+			{
+				sprintf(windowName, "NiteCrawler-%s",
+									device->hostName);
+			}
+		}
+		else
+		{
+			sprintf(windowName, "NiteCrawler -%d", focuserNum);
+		}
+
+	}
+	else if (strncasecmp(device->deviceNameStr, "Moonlite", 8) == 0)
+	{
+		myFocuserTYpe	=	kFocuserType_MoonliteSingle;
+		sprintf(windowName, "Moonlite -%d", focuserNum);
+		if (strlen(device->hostName) > 0)
+		{
+			//*	if we have a host name, use it
+			if (device->alpacaDeviceNum > 0)
+			{
+				//*	if there are more than one device on this host, we need to make the window name unique
+				sprintf(windowName, "Moonlite-%s-%d",
+									device->hostName,
+									device->alpacaDeviceNum);
+			}
+			else
+			{
+				sprintf(windowName, "Moonlite-%s",
+									device->hostName);
+			}
+		}
+		else
+		{
+			sprintf(windowName, "Moonlite -%d", focuserNum);
+		}
+	}
+	else
+	{
+		myFocuserTYpe	=	kFocuserType_Other;
+		sprintf(windowName, "Focuser -%d", focuserNum);
+
+	}
+	CONSOLE_DEBUG(windowName);
+	return(myFocuserTYpe);
+}
+
+int		gFocuserNum		=	1;
+
+//*****************************************************************************
+int	CheckForFocuser(TYPE_REMOTE_DEV *remoteDevice)
+{
+Controller		*myController;
+char			windowName[128]	=	"Moonlite NiteCrawler";
+int				objectsCreated;
+int				myFocuserType;
+
+	objectsCreated	=	0;
+	//*	is it a focuser?
+	if (strcasecmp(remoteDevice->deviceTypeStr, "focuser") == 0)
+	{
+		//*	figure out a window name
+		myFocuserType	=	GenerateFocuserWindowName(remoteDevice, gFocuserNum, windowName);
+
+		//*	create the controller window object
+		if (myFocuserType == kFocuserType_NiteCrawler)
+		{
+			myController	=	new ControllerNiteCrawler(	windowName,
+															&remoteDevice->deviceAddress,
+															remoteDevice->port,
+															remoteDevice->alpacaDeviceNum);
+
+		}
+		else if (myFocuserType == kFocuserType_MoonliteSingle)
+		{
+			myController	=	new ControllerMLsingle(		windowName,
+															&remoteDevice->deviceAddress,
+															remoteDevice->port,
+															remoteDevice->alpacaDeviceNum);
+		}
+		else
+		{
+			myController	=	new ControllerFocusGeneric(	windowName,
+															&remoteDevice->deviceAddress,
+															remoteDevice->port,
+															remoteDevice->alpacaDeviceNum);
+
+		}
+		if (myController != NULL)
+		{
+			//*	force window update
+			myController->HandleWindowUpdate();
+			cvWaitKey(100);
+		}
+
+		gFocuserNum++;
+		objectsCreated++;
+	}
+	return(objectsCreated);
+}
 
 #endif	//	_ENABLE_CTRL_FOCUSERS_

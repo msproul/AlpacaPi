@@ -8,6 +8,14 @@
 	extern "C" {
 #endif
 
+extern	char			gOsReleaseString[];
+extern	char			gCpuInfoString[];
+extern	char			gPlatformString[];
+extern	double			gBogoMipsValue;
+
+
+void		CPUstats_ReadOSreleaseVersion(void);
+void		CPUstats_ReadInfo(void);
 
 double		CPUstats_GetTemperature(char *theTempString);
 uint32_t	CPUstats_GetUptime(void);

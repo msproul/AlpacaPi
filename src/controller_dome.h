@@ -78,11 +78,11 @@ class ControllerDome: public Controller
 														const int	deviveNum,
 														const char	*keywordString,
 														const char	*valueString);
-		virtual	void	AlpacaProcessSupportedAction(	const char	*deviceType,
+		virtual	void	AlpacaProcessSupportedActions(	const char	*deviceType,
 														const int	deviveNum,
 														const char	*valueString);
 
-				void	AlpacaProcessSupportedActionDome(const int deviveNum, const char *valueString);
+				void	AlpacaProcessSupportedActions_Dome(const int deviveNum, const char *valueString);
 				void	AlpacaProcessReadAllDome(		const int	deviceNum,
 														const char	*keywordString,
 														const char	*valueString);

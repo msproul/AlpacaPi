@@ -161,6 +161,7 @@ CameraDriverFLIR::CameraDriverFLIR(spinCamera hCamera)
 	:CameraDriver()
 {
 spinError			spinErr;
+quickSpin			quickSpinStruct;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 //	cCameraID		=	deviceNum;
@@ -171,11 +172,23 @@ spinError			spinErr;
 	strcpy(cDriverversionStr,	gSpinakerVerString);
 	strcpy(cDeviceName,			"FLIR");
 
+	//*	we have to have something here
+	cCameraXsize			=	4240;
+	cCameraYsize			=	2824;
+	cNumX					=	cCameraXsize;
+	cNumY					=	cCameraYsize;
 
 	cSpinCameraHandle		=	hCamera;
 	cSpinImageHandle		=	NULL;
 	cSpinNodeMapHandle		=	NULL;
 	cSpinNodeMapTLDeviceH	=	NULL;
+
+	quickSpinInit(cSpinCameraHandle, &quickSpinStruct);
+
+	CONSOLE_DEBUG_W_NUM("quickSpinStruct.Width", quickSpinStruct.Width);
+	CONSOLE_DEBUG_W_NUM("sizeof(quickSpin)", sizeof(quickSpin));
+
+
 
 	ReadFLIRcameraInfo();
 
@@ -585,9 +598,9 @@ TYPE_ASCOM_STATUS	CameraDriverFLIR::Start_CameraExposure(int32_t exposureMicrose
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
 spinError			spinErr;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 
-	gettimeofday(&cLastExposureStartTime, NULL);
+	gettimeofday(&cLastexposure_StartTime, NULL);
 	//
 	// Begin acquiring images
 	//
@@ -952,7 +965,7 @@ TYPE_ASCOM_STATUS	CameraDriverFLIR::Read_Readoutmodes(char *readOutModeString, b
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	readOutModeString[0]	=	0;
 	if (includeQuotes)
 	{

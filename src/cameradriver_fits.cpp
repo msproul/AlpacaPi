@@ -26,6 +26,8 @@
 //*	Fits Info
 //*		http://tigra-astronomy.com/sbfitsext-guidelines-for-fits-keywords
 //*		http://iraf.noao.edu/projects/ccdmosaic/imagedef/fitsdic.html
+//*		https://free-astro.org/index.php?title=Siril:FITS_orientation
+//*
 //*****************************************************************************
 //*	Edit History
 //*****************************************************************************
@@ -75,6 +77,8 @@
 //*	Nov 29,	2020	<MLS> Added WriteFITS_MoonInfo()
 //*	Nov 30,	2020	<MLS> Added moon rise and moon set to FITS data
 //*	Dec 14,	2020	<MLS> Just discovered a new version of cfitsio (3.49)
+//*	Jan 19,	2021	<MLS> Added ROWORDER:BOTTOM-UP to FITS header
+//*	Jan 20,	2021	<MLS> Added ExtractFitsHeader()
 //*****************************************************************************
 
 #if defined(_ENABLE_CAMERA_) && defined(_ENABLE_FITS_)
@@ -113,6 +117,7 @@
 #include	"moonphase.h"
 #include	"MoonRise.h"
 #include	"julianTime.h"
+#include	"cpu_stats.h"
 
 
 
@@ -504,6 +509,13 @@ int				iii;
 														&fitsStatus);
 			}
 		}
+
+		//*	https://free-astro.org/index.php?title=Siril:FITS_orientation
+		fitsStatus	=	0;
+		fits_write_key(fitsFilePtr, TSTRING,	"ROWORDER",
+												(char *)"BOTTOM-UP",
+												NULL, &fitsStatus);
+
 		if (headerOnly)
 		{
 			strcpy(aviFileName, cFileNameRoot);
@@ -666,6 +678,8 @@ int				iii;
 		fitsStatus	=	0;
 		fits_write_chksum(fitsFilePtr, &fitsStatus);
 
+		ExtractFitsHeader(fitsFilePtr);
+
 		fitsStatus	=	0;
 		fitsRetCode	=	fits_close_file(fitsFilePtr, &fitsStatus);
 		if (fitsRetCode == 0)
@@ -699,6 +713,51 @@ int				iii;
 	return(0);
 
 }
+
+//*****************************************************************************
+//*	returns the number of lines extracted
+//*****************************************************************************
+int	CameraDriver::ExtractFitsHeader(fitsfile *fitsFilePtr)
+{
+char		card[FLEN_CARD];
+int			nkeys;
+int			fitsStatus;
+int			iii;
+int			fitsHdrIdx;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+	//*	wipe out any previous data
+	for (iii = 0; iii <= kMaxFitsRecords; iii++)
+	{
+		cFitsHeader[fitsHdrIdx].fitsRec[0]	=	0;
+	}
+
+	fitsStatus	=	0;	//* MUST initialize status
+	fits_get_hdrspace(fitsFilePtr, &nkeys, NULL, &fitsStatus);
+	fitsHdrIdx	=	0;
+	for (iii = 1; iii <= nkeys; iii++)
+	{
+		card[0]		=	0;
+		fitsStatus	=	0;
+		fits_read_record(fitsFilePtr, iii, card, &fitsStatus);	//* read keyword
+		if ((strlen(card) > 0) && (fitsHdrIdx < kMaxFitsRecords))
+		{
+//			CONSOLE_DEBUG(card);
+			strcpy(cFitsHeader[fitsHdrIdx].fitsRec, card);
+			fitsHdrIdx++;
+		}
+	}
+	if (fitsHdrIdx < kMaxFitsRecords)
+	{
+		strcpy(cFitsHeader[fitsHdrIdx].fitsRec, "END");
+	}
+	else
+	{
+		CONSOLE_DEBUG("Ran out of room in fits header buffer");
+	}
+	return(fitsHdrIdx);
+}
+				TYPE_FITS_RECORD	cFitsHeader[kMaxFitsRecords];
 
 #pragma mark -
 
@@ -772,6 +831,7 @@ char	stringBuf[128];
 double	megaPixels;
 int		intValue;
 int		ccdTempErrCode;
+char	instrumentString[128];
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -781,9 +841,18 @@ int		ccdTempErrCode;
 	//*	output info about the camera and instrument
 	if (strlen(cTS_info.instrument) > 0)
 	{
-		fitsStatus	=	0;
-		fits_write_key(fitsFilePtr, TSTRING, "INSTRUME",	cTS_info.instrument, NULL, &fitsStatus);
+		strcpy(instrumentString, cTS_info.instrument);
 	}
+	else if (strlen(cDeviceDescription) > 0)
+	{
+		strcpy(instrumentString, cDeviceDescription);
+	}
+	else
+	{
+		strcpy(instrumentString, "unknown");
+	}
+	fitsStatus	=	0;
+	fits_write_key(fitsFilePtr, TSTRING, "INSTRUME",	instrumentString, NULL, &fitsStatus);
 
 	fitsStatus	=	0;
 	fits_write_key(fitsFilePtr, TSTRING, "CAMERA",		cDeviceName, NULL, &fitsStatus);
@@ -955,7 +1024,7 @@ int		ccdTempErrCode;
 	fits_write_key(fitsFilePtr, TSTRING, "COMMENT",	stringBuf,		NULL, &fitsStatus);
 
 	//---------------------------------------------------------------------
-	sprintf(stringBuf, "Image Shutter: %d microseconds ", cLastexposureduration_us);
+	sprintf(stringBuf, "Image Shutter: %d microseconds ", cLastexposure_duration_us);
 	fitsStatus	=	0;
 	fits_write_key(fitsFilePtr, TSTRING, "COMMENT",	stringBuf,		NULL, &fitsStatus);
 
@@ -1462,12 +1531,12 @@ double			modifiedJulianDate;
 	}
 
 	//*	format the time of exposure start
-	FormatTimeStringISO8601(&cLastExposureStartTime, stringBuf);
+	FormatTimeStringISO8601(&cLastexposure_StartTime, stringBuf);
 //	CONSOLE_DEBUG_W_STR("stringBuf:", stringBuf);
 	fitsStatus	=	0;
 	fits_write_key(fitsFilePtr, TSTRING, "DATE-OBS",	stringBuf,		"UTC date of observation", &fitsStatus);
 
-	gmtime_r(&cLastExposureStartTime.tv_sec, &utcTime);
+	gmtime_r(&cLastexposure_StartTime.tv_sec, &utcTime);
 	CalcSiderealTime(&utcTime, &siderealTime, gObseratorySettings.Longitude);
 	FormatTimeString_TM(&siderealTime, stringBuf);
 	fitsStatus	=	0;
@@ -1475,14 +1544,14 @@ double			modifiedJulianDate;
 											stringBuf,
 											"Local Sidereal Time start of exposure", &fitsStatus);
 
-	modifiedJulianDate	=	Julian_CalcMJD(&cLastExposureStartTime);
+	modifiedJulianDate	=	Julian_CalcMJD(&cLastexposure_StartTime);
 	fitsStatus			=	0;
 	fits_write_key(fitsFilePtr, TDOUBLE,	"MJD-OBS",
 											&modifiedJulianDate,
 											"MJD of observation", &fitsStatus);
-	if (cLastExposureEndTime.tv_sec > cLastExposureStartTime.tv_sec)
+	if (cLastexposure_EndTime.tv_sec > cLastexposure_StartTime.tv_sec)
 	{
-		modifiedJulianDate	=	Julian_CalcMJD(&cLastExposureEndTime);
+		modifiedJulianDate	=	Julian_CalcMJD(&cLastexposure_EndTime);
 		fitsStatus	=	0;
 		fits_write_key(fitsFilePtr, TDOUBLE,	"MJDEND",
 												&modifiedJulianDate,
@@ -1490,7 +1559,7 @@ double			modifiedJulianDate;
 	}
 
 	fitsStatus	=	0;
-	exposureTime_Secs	=	(cLastexposureduration_us * 1.0) / 1000000.0;
+	exposureTime_Secs	=	(cLastexposure_duration_us * 1.0) / 1000000.0;
 	fits_write_key(fitsFilePtr, TDOUBLE,	"EXPTIME",
 											&exposureTime_Secs,
 											"Exposure time (seconds)", &fitsStatus);

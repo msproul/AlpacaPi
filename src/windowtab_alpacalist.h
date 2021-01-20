@@ -60,6 +60,8 @@ enum
 //	kAlpacaList_AlpacaDev_OutLine,
 
 	kAlpacaList_AlpacaDev_Total,
+	kAlpacaList_ChkBx_IncManagment,
+	kAlpacaList_Btn_Refresh,
 
 //	kAlpacaList_AlpacaLogo,
 
@@ -72,6 +74,7 @@ enum
 	kAlpacaList_last
 };
 
+#define	kMaxDeviceCnt	50
 
 //**************************************************************************************
 class WindowTabAlpacaList: public WindowTab
@@ -87,11 +90,15 @@ class WindowTabAlpacaList: public WindowTab
 		virtual	~WindowTabAlpacaList(void);
 
 		virtual	void	SetupWindowControls(void);
+		virtual	void	ProcessButtonClick(const int buttonIdx);
 		virtual	void	ProcessDoubleClick(const int buttonIdx);
 
 				void	UpdateList(void);
 				int		cAlpacaDevCnt;
 				int		cPrevAlpacaDevCnt;
+
+				bool	cIncludeManagment;
+				int		cDevIdxList[kMaxDeviceCnt];	//*	if managment is enabled, this is 1 to 1
 
 };
 

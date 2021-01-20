@@ -18,7 +18,7 @@
 //*****************************************************************************
 //*	Mar 17,	2020	<MLS> Created controllerAlpaca.cpp
 //*	Mar 17,	2020	<MLS> Added AlpacaGetSupportedActions()
-//*	Mar 17,	2020	<MLS> Added AlpacaProcessSupportedAction()
+//*	Mar 17,	2020	<MLS> Added AlpacaProcessSupportedActions()
 //*	Mar 17,	2020	<MLS> Added AlpacaCheckForErrors()
 //*	Mar 19,	2020	<MLS> Added ClientID and ClientTransactionID to data request
 //*	Apr 15,	2020	<MLS> Fixed dataString bug in AlpacaGet... routines
@@ -89,7 +89,7 @@ int				jjj;
 				while ((jjj<jsonParser.tokenCount_Data) &&
 						(jsonParser.dataList[jjj].keyword[0] != ']'))
 				{
-					AlpacaProcessSupportedAction(deviceTypeStr, deviceNum, jsonParser.dataList[jjj].valueString);
+					AlpacaProcessSupportedActions(deviceTypeStr, deviceNum, jsonParser.dataList[jjj].valueString);
 					jjj++;
 				}
 			}
@@ -99,7 +99,6 @@ int				jjj;
 	else
 	{
 		CONSOLE_DEBUG("Read failure - supportedactions");
-		CONSOLE_ABORT(__FUNCTION__);
 		cReadFailureCnt++;
 	}
 	return(validData);
@@ -121,7 +120,7 @@ bool			validData;
 //*****************************************************************************
 //*	if this routine gets overloaded, the first part, checking for "readall" must be preserved
 //*****************************************************************************
-void	Controller::AlpacaProcessSupportedAction(const char *deviceTypeStr, const int deviveNum, const char *valueString)
+void	Controller::AlpacaProcessSupportedActions(const char *deviceTypeStr, const int deviveNum, const char *valueString)
 {
 
 	if (strcasecmp(valueString, "readall") == 0)
@@ -132,6 +131,7 @@ void	Controller::AlpacaProcessSupportedAction(const char *deviceTypeStr, const i
 	{
 		//*	you get the idea
 	}
+	CONSOLE_DEBUG(cWindowName);
 	CONSOLE_ABORT(__FUNCTION__);
 }
 
@@ -392,7 +392,6 @@ bool	Controller::AlpacaGetStringValue(	const char	*alpacaDevice,
 SJP_Parser_t	jsonParser;
 bool			validData;
 char			alpacaString[128];
-int				myIntgerValue;
 int				jjj;
 
 	SJP_Init(&jsonParser);
@@ -706,15 +705,11 @@ char			alpacaString[128];
 int				shutDownRetCode;
 int				closeRetCode;
 bool			keepReading;
-char			returnedData[kReadBuffLen + 10];
 int				recvByteCnt;
-char			linebuf[kImageArrayBuffSize];
 int				iii;
 int				ccc;
 char			theChar;
 int				linesProcessed;
-char			keywordStr[kLineBufSize];
-char			valueStr[kLineBufSize];
 int				imgArrayType;
 int				imgRank;
 bool			valueFoundFlag;
@@ -722,9 +717,27 @@ int				myIntegerValue;
 int				arrayIndex;
 int				totalBytesRead;
 double			downLoadSeconds;
-int				braceCnt;	//*	()
+int				braceCnt;	//*	{}
 int				bracktCnt;	//*	[]
-bool			firstRead	=	true;
+int				crCnt;
+int				lfCnt;
+//-char			dataLine[500];
+int				startIdx;
+int				prefix400Cnt;
+int				socketReadCnt;
+int				recv_flags;
+char			keywordStr[kLineBufSize];
+char			valueStr[kLineBufSize];
+//char			linebuf[kImageArrayBuffSize];
+char			linebuf[kReadBuffLen];
+char			returnedData[kReadBuffLen + 10];
+char			errorBuff[kImageArrayBuffSize + 10];
+uint32_t		tStartMillisecs;
+uint32_t		tCurrentMillisecs;
+uint32_t		tLastUpdateMillisecs;
+uint32_t		tDeltaMillisecs;
+uint32_t		tStopMillisecs;
+
 
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG_W_NUM("kReadBuffLen\t=", kReadBuffLen);
@@ -733,6 +746,8 @@ bool			firstRead	=	true;
 	imgArrayType	=	-1;
 	imgRank			=	-1;
 	arrayIndex		=	0;
+	tStartMillisecs			=	millis();
+	tLastUpdateMillisecs	=	tStartMillisecs;
 
 	sprintf(alpacaString,	"/api/v1/%s/%d/%s", alpacaDevice, alpacaDevNum, alpacaCmd);
 	CONSOLE_DEBUG_W_STR("alpacaString\t=",	alpacaString);
@@ -741,10 +756,10 @@ bool			firstRead	=	true;
 												"GET",	//*	must be either GET or PUT
 												alpacaString,
 												dataString);
+	strcpy(cLastAlpacaCmdString, alpacaString);
 	if (socket_desc >= 0)
 	{
 		CONSOLE_DEBUG("Success: Connection open and data sent");
-		SETUP_TIMING();
 		START_TIMING();
 		valueFoundFlag	=	false;
 		keepReading		=	true;
@@ -753,30 +768,83 @@ bool			firstRead	=	true;
 		totalBytesRead	=	0;
 		braceCnt		=	0;
 		bracktCnt		=	0;
-
+		crCnt			=	0;
+		lfCnt			=	0;
+		prefix400Cnt	=	0;
+		socketReadCnt	=	0;
 		while (keepReading)
 		{
-			recvByteCnt	=	recv(socket_desc, returnedData , kReadBuffLen , 0);
-//			CONSOLE_DEBUG_W_NUM("recvByteCnt\t=", recvByteCnt);
+		int			getOptRetCode;
+		int			socketErrCode;
+		socklen_t	sockOptLen;
+
+			socketErrCode	=	0;
+			sockOptLen		=	sizeof(int);
+			getOptRetCode	=	getsockopt(	socket_desc,
+											SOL_SOCKET,
+											SO_ERROR,
+											&socketErrCode,
+											&sockOptLen);
+
+			if (socketErrCode!= 0)
+			{
+				CONSOLE_DEBUG_W_NUM("socketErrCode\t=", socketErrCode);
+			}
+
+		//	CONSOLE_DEBUG("Calling recv with MSG_OOB");
+			recv_flags	=	MSG_OOB;
+			recvByteCnt	=	recv(socket_desc, errorBuff , kImageArrayBuffSize , recv_flags);
+			if (recvByteCnt >= 0)
+			{
+				CONSOLE_DEBUG_W_NUM("MSG_ERRQUEUE recvByteCnt\t=", recvByteCnt);
+			}
+
+
+		//	CONSOLE_DEBUG(__FUNCTION__);
+			recvByteCnt	=	recv(socket_desc, returnedData , kReadBuffLen , MSG_NOSIGNAL);
+		//	CONSOLE_DEBUG_W_NUM("recvByteCnt\t=", recvByteCnt);
 			if (recvByteCnt > 0)
 			{
+				socketReadCnt++;
+				if (socketReadCnt < 3)
+				{
+				//	CONSOLE_DEBUG_W_STR("returnedData\t=", returnedData);
+				}
+		//		CONSOLE_DEBUG("-----");
+		//		CONSOLE_DEBUG_W_HEX("returnedData\t=", returnedData[0]);
+		//		CONSOLE_DEBUG_W_HEX("returnedData\t=", returnedData[1]);
+		//		CONSOLE_DEBUG_W_HEX("returnedData\t=", returnedData[2]);
+		//		CONSOLE_DEBUG_W_HEX("returnedData\t=", returnedData[3]);
+		//		CONSOLE_DEBUG_W_HEX("returnedData\t=", returnedData[4]);
+		//		CONSOLE_DEBUG_W_HEX("returnedData\t=", returnedData[5]);
+
 				validData					=	true;
 				totalBytesRead				+=	recvByteCnt;
 				returnedData[recvByteCnt]	=	0;
 
-				if (firstRead)
+				//*	debugging
+//				fprintf(stderr, "%s", returnedData);
+
+//				strncpy(dataLine, returnedData, 90);
+//				dataLine[89]	=	0;
+//				printf(">>>%s\r\n", dataLine);
+
+				startIdx	=	0;
+				if ((strncmp(returnedData, "400", 3) == 0) && (returnedData[3] == 0x0d))
 				{
-				//	CONSOLE_DEBUG(returnedData);
-					firstRead	=	false;
+					startIdx	=	5;
+					prefix400Cnt++;
 				}
+
+
 
 		//		CountChars(returnedData, 0x0d);
 		//		CountChars(returnedData, 0x0a);
 //				CONSOLE_DEBUG_W_NUM("strlen(returnedData)\t=", strlen(returnedData));
 
-//{"Type":2,"Rank":2,"Value":[[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				//{"Type":2,"Rank":2,"Value":[[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 
-				for (iii=0; iii<recvByteCnt; iii++)
+				for (iii=startIdx; iii<recvByteCnt; iii++)
 				{
 					theChar	=	returnedData[iii];
 					if (theChar == '{')
@@ -795,8 +863,16 @@ bool			firstRead	=	true;
 					{
 						bracktCnt--;
 					}
+					else if (theChar == 0x0d)
+					{
+						crCnt++;
+					}
+					else if (theChar == 0x0a)
+					{
+						lfCnt++;
+					}
 
-					if (valueFoundFlag && (theChar == ','))
+					if (valueFoundFlag && ((theChar == ',') || (theChar == ']')))
 					{
 						linebuf[ccc]	=	0;
 						if (isdigit(linebuf[0]))
@@ -812,18 +888,29 @@ bool			firstRead	=	true;
 								CONSOLE_DEBUG("Ran out of room");
 							}
 						}
-						UpdateDownloadProgress(arrayIndex, arrayLength);
 						ccc				=	0;
 						linebuf[ccc]	=	0;
+
+						if ((theChar == ']') || (returnedData[iii+1] == ','))
+						{
+//							CONSOLE_DEBUG_W_NUM("Skipping at \t=", iii);
+							iii++;
+						}
 					}
 					else if (theChar == ',')
 					{
 						linebuf[ccc]	=	0;
+						if (socketReadCnt < 3)
+						{
+							CONSOLE_DEBUG_W_STR("linebuf\t=", linebuf);
+						}
 						if ((strlen(linebuf) > 3) && (linebuf[0] != 0x30))
 						{
-//							CONSOLE_DEBUG_W_STR("linebuf\t=", linebuf);
 							ParseJsonKeyWordValuePair(linebuf, keywordStr, valueStr);
-//							CONSOLE_DEBUG_W_2STR("kw:val\t=", keywordStr, valueStr);
+							if (socketReadCnt < 3)
+							{
+								CONSOLE_DEBUG_W_2STR("kw:val\t=", keywordStr, valueStr);
+							}
 							if (strcasecmp(keywordStr, "ArrayType") == 0)
 							{
 								imgArrayType	=	atoi(valueStr);
@@ -840,8 +927,8 @@ bool			firstRead	=	true;
 							{
 							//	CONSOLE_DEBUG("value found!!!!");
 								valueFoundFlag	=	true;
-								CONSOLE_DEBUG_W_NUM("braceCnt\t=", braceCnt);
-								CONSOLE_DEBUG_W_NUM("bracktCnt\t=", bracktCnt);
+//								CONSOLE_DEBUG_W_NUM("braceCnt\t=", braceCnt);
+//								CONSOLE_DEBUG_W_NUM("bracktCnt\t=", bracktCnt);
 							}
 						}
 						ccc	=	0;
@@ -849,91 +936,70 @@ bool			firstRead	=	true;
 					else if ((theChar == 0x0d) || (theChar == 0x0a))
 					{
 						linesProcessed++;
+
 						//*	ignore
+						//*	check to see if there is a string
+						if (strcmp(linebuf, "400") == 0)
+						{
+						//	CONSOLE_DEBUG("Found 400");
+							ccc	=	0;
+							linebuf[ccc]	=	0;
+						}
+						else
+						{
+						int	mySlen;
+
+							mySlen	=	strlen(linebuf);
+							if ((mySlen > 1) && (linebuf[mySlen - 1] != ','))
+							{
+							//	CONSOLE_DEBUG("---------------------------------------");
+							//	CONSOLE_DEBUG(linebuf);
+							//	CONSOLE_DEBUG_W_NUM("socketReadCnt\t=", socketReadCnt);
+							//	CONSOLE_DEBUG_W_STR("returnedData\t=", returnedData);
+							}
+						}
+
 					}
 					else if (braceCnt > 0)
 					{
 						if (ccc < kImageArrayBuffSize)
 						{
-							linebuf[ccc]	=	theChar;
-							ccc++;
+							if ((theChar != '[') && (theChar > 0x20))
+							{
+								linebuf[ccc++]	=	theChar;
+								linebuf[ccc]	=	0;
+							}
 						}
 						else
 						{
 							CONSOLE_DEBUG("Line to long");
 						}
 					}
-
-#if 0
-					if ((theChar == 0x0d) || (theChar == 0x0a))
-					{
-						linebuf[ccc]	=	0;
-						if (strlen(linebuf) > 0)
-						{
-							JSON_ExtractKeyword_Value(linebuf, keywordStr, valueStr);
-							if (strcasecmp(keywordStr, "ArrayType") == 0)
-							{
-								imgArrayType	=	atoi(valueStr);
-							}
-							if (strcasecmp(keywordStr, "Type") == 0)
-							{
-								imgArrayType	=	atoi(valueStr);
-							}
-							else if (strcasecmp(keywordStr, "rank") == 0)
-							{
-								imgRank	=	atoi(valueStr);
-							}
-							else if (strcasecmp(keywordStr, "value") == 0)
-							{
-							//	CONSOLE_DEBUG("value found!!!!");
-								valueFoundFlag	=	true;
-							}
-							else if (valueFoundFlag)
-							{
-								if (isdigit(keywordStr[0]))
-								{
-									myIntegerValue	=	atoi(keywordStr);
-									if (arrayIndex < arrayLength)
-									{
-										uint32array[arrayIndex]	=	myIntegerValue;
-										arrayIndex++;
-									}
-									else
-									{
-										CONSOLE_DEBUG("Ran out of room");
-									}
-								}
-								else
-								{
-									printf("%-20s\t%s\r\n", keywordStr, valueStr);
-								}
-							}
-							linesProcessed++;
-						}
-						ccc				=	0;
-						linebuf[ccc]	=	0;
-					}
-					else
-					{
-						if (ccc < kImageArrayBuffSize)
-						{
-							linebuf[ccc]	=	theChar;
-							ccc++;
-						}
-						else
-						{
-							CONSOLE_DEBUG("Line to long");
-						}
-					}
-#endif // 0
 				}
-			//	UpdateDownloadProgress(arrayIndex, arrayLength);
 			}
 			else
 			{
 				keepReading		=	false;
 			}
+			//=================================================
+			//*	deal with the progress bar
+			tCurrentMillisecs	=	millis();
+			tDeltaMillisecs		=	tCurrentMillisecs - tStartMillisecs;
+			//*	dont do anything for the first 2 seconds
+			if (tDeltaMillisecs > 2000)
+			{
+				tDeltaMillisecs	=	tCurrentMillisecs - tLastUpdateMillisecs;
+				if (tDeltaMillisecs > 700)
+				{
+				//	CONSOLE_DEBUG_W_DBL("Percent done=", ((100.0 * arrayIndex) / arrayLength))
+					UpdateDownloadProgress(arrayIndex, arrayLength);
+					tLastUpdateMillisecs	=	tCurrentMillisecs;
+				}
+			}
 		}
+		//*	one last time to show we are done
+		UpdateDownloadProgress(arrayIndex, arrayLength);
+
 		*actualValueCnt	=	arrayIndex;
 
 		DEBUG_TIMING("Time to download image (ms)");
@@ -951,12 +1017,15 @@ bool			firstRead	=	true;
 			CONSOLE_DEBUG("tDeltaMillisecs invalid");
 			cLastDownload_MegaBytesPerSec	=	0.0;
 		}
+		CONSOLE_DEBUG_W_NUM("crCnt\t=", crCnt);
+		CONSOLE_DEBUG_W_NUM("lfCnt\t=", lfCnt);
 
 		CONSOLE_DEBUG_W_NUM("imgArrayType\t=", imgArrayType);
 		CONSOLE_DEBUG_W_NUM("imgRank\t\t=", imgRank);
 		CONSOLE_DEBUG_W_NUM("totalBytesRead\t=", totalBytesRead);
 
 		CONSOLE_DEBUG_W_NUM("linesProcessed\t=", linesProcessed);
+		CONSOLE_DEBUG_W_NUM("prefix400Cnt\t=", prefix400Cnt);
 
 		shutDownRetCode	=	shutdown(socket_desc, SHUT_RDWR);
 		if (shutDownRetCode != 0)
@@ -1012,7 +1081,7 @@ int				totalBytesRead;
 double			downLoadSeconds;
 int				braceCnt;	//*	()
 int				bracktCnt;	//*	[]
-bool			firstRead	=	true;
+int				socketReadCnt;
 int				progressUpdateCnt;
 
 	CONSOLE_DEBUG(__FUNCTION__);
@@ -1030,6 +1099,7 @@ int				progressUpdateCnt;
 												"GET",	//*	must be either GET or PUT
 												alpacaString,
 												dataString);
+	strcpy(cLastAlpacaCmdString, alpacaString);
 	if (socket_desc >= 0)
 	{
 		CONSOLE_DEBUG("Success: Connection open and data sent");
@@ -1043,7 +1113,7 @@ int				progressUpdateCnt;
 		braceCnt			=	0;
 		bracktCnt			=	0;
 		progressUpdateCnt	=	0;
-
+		socketReadCnt		=	0;
 		while (keepReading)
 		{
 			recvByteCnt	=	recv(socket_desc, returnedData , kReadBuffLen , 0);
@@ -1064,6 +1134,7 @@ int				progressUpdateCnt;
 						if (strlen(linebuf) > 0)
 						{
 							JSON_ExtractKeyword_Value(linebuf, keywordStr, valueStr);
+
 							if (strcasecmp(keywordStr, "ArrayType") == 0)
 							{
 								imgArrayType	=	atoi(valueStr);
@@ -1119,17 +1190,24 @@ int				progressUpdateCnt;
 						}
 					}
 				}
-				if ((progressUpdateCnt % 1000) == 0)
-				{
-					UpdateDownloadProgress(arrayIndex, arrayLength);
-				}
-				progressUpdateCnt++;
+				socketReadCnt++;
 			}
 			else
 			{
 				keepReading		=	false;
 			}
+			//=================================================
+			//*	deal with the progress bar
+			if ((socketReadCnt % 2000) == 0)
+			{
+				UpdateDownloadProgress(arrayIndex, arrayLength);
+				progressUpdateCnt++;
+			}
 		}
+		//*	one last time to show we are done
+		UpdateDownloadProgress(arrayIndex, arrayLength);
+
+
 		*actualValueCnt	=	arrayIndex;
 
 		DEBUG_TIMING("Time to download image (ms)");
@@ -1153,6 +1231,7 @@ int				progressUpdateCnt;
 		CONSOLE_DEBUG_W_NUM("totalBytesRead\t=", totalBytesRead);
 
 		CONSOLE_DEBUG_W_NUM("linesProcessed\t=", linesProcessed);
+		CONSOLE_DEBUG_W_NUM("progressUpdateCnt\t=", progressUpdateCnt);
 
 		shutDownRetCode	=	shutdown(socket_desc, SHUT_RDWR);
 		if (shutDownRetCode != 0)

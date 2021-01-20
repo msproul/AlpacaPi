@@ -150,7 +150,7 @@ char	lineBuff[64];
 }
 
 //*****************************************************************************
-void	ControllerPreview::UpdateReadAllStatus(void)
+void	ControllerPreview::UpdateSupportedActions(void)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
 	SetWidgetValid(kTab_Preview,	kPreviewBox_Readall,	cHas_readall);

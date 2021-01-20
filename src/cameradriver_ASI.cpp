@@ -712,8 +712,8 @@ bool				cameraIsBusy;
 					else
 					{
 //						CONSOLE_DEBUG_W_NUM("exposureStatatus\t=",	exposureStatatus);
-						cLastexposureduration_us	=	exposureMicrosecs;
-						gettimeofday(&cLastExposureStartTime, NULL);
+						cLastexposure_duration_us	=	exposureMicrosecs;
+						gettimeofday(&cLastexposure_StartTime, NULL);
 						asiErrorCode	=	ASIStartExposure(cCameraID, ASI_FALSE);
 						if (asiErrorCode == ASI_SUCCESS)
 						{
@@ -822,7 +822,7 @@ ASI_EXPOSURE_STATUS		exposureStatatus;
 					break;
 
 				case ASI_EXP_SUCCESS:		//*	exposure finished and waiting for download
-					gettimeofday(&cLastExposureEndTime, NULL);
+					gettimeofday(&cLastexposure_EndTime, NULL);
 					exposureState	=	kExposure_Success;
 					break;
 
@@ -888,7 +888,7 @@ ASI_BOOL			bAuto		=	ASI_FALSE;
 												bAuto);
 		if (asiErrorCode == ASI_SUCCESS)
 		{
-			cLastexposureduration_us	=	cCurrentExposure_us;
+			cLastexposure_duration_us	=	cCurrentExposure_us;
 		}
 		else
 		{
@@ -901,7 +901,7 @@ ASI_BOOL			bAuto		=	ASI_FALSE;
 		{
 			alpacaErrCode	=	kASCOM_Err_Success;
 
-			gettimeofday(&cLastExposureStartTime, NULL);
+			gettimeofday(&cLastexposure_StartTime, NULL);
 
 
 		#ifdef _USE_OPENCV_
@@ -1010,8 +1010,8 @@ int				deltaSecs;
 		#endif // _DEBUG_VIDEO_
 
 			//*	calculate frames per sec
-			gettimeofday(&cLastExposureEndTime, NULL);
-			deltaSecs	=	cLastExposureEndTime.tv_sec - cLastExposureStartTime.tv_sec;
+			gettimeofday(&cLastexposure_EndTime, NULL);
+			deltaSecs	=	cLastexposure_EndTime.tv_sec - cLastexposure_StartTime.tv_sec;
 			if (deltaSecs > 0)
 			{
 				cFrameRate	=	(cNumVideoFramesSaved * 1.0) / deltaSecs;
@@ -1041,7 +1041,7 @@ int				deltaSecs;
 									8,							//	int line_type CV_DEFAULT(8),
 									0);							//	int shift CV_DEFAULT(0));
 
-					FormatTimeStringISO8601(&cLastExposureEndTime, timeStampString);
+					FormatTimeStringISO8601(&cLastexposure_EndTime, timeStampString);
 					point1.x	=	5;
 					point1.y	=	cOpenCV_Image->height - 10;
 					cvPutText(	cOpenCV_Image,	timeStampString,	point1,	&cOverlayTextFont,	cVideoOverlayColor);
@@ -1054,8 +1054,8 @@ int				deltaSecs;
 					{
 					double	lastExposureTimeSecs;
 
-						lastExposureTimeSecs	=	cLastExposureEndTime.tv_sec;
-						lastExposureTimeSecs	+=	cLastExposureEndTime.tv_usec / 1000000.0;
+						lastExposureTimeSecs	=	cLastexposure_EndTime.tv_sec;
+						lastExposureTimeSecs	+=	cLastexposure_EndTime.tv_usec / 1000000.0;
 
 						fprintf(cVideoTimeStampFilePtr, "%d,%s,%1.3f\r\n",	cNumVideoFramesSaved,
 																			timeStampString,
@@ -1122,7 +1122,7 @@ int				deltaSecs;
 		asiErrorCode	=	ASIStopVideoCapture(cCameraID);
 		CONSOLE_DEBUG_W_NUM("ASI Video capture stopped, asiErrorCode\t=", asiErrorCode);
 
-		gettimeofday(&cLastExposureEndTime, NULL);
+		gettimeofday(&cLastexposure_EndTime, NULL);
 
 
 		//*	time to stop taking video
@@ -1970,7 +1970,7 @@ char				asiErrorMsgString[64];
 		if (asiErrorCode == ASI_SUCCESS)
 		{
 			alpacaErrCode	=	kASCOM_Err_Success;
-			CONSOLE_DEBUG_W_LONG("cCoolerPowerLevel\t=",		cCoolerPowerLevel);
+//			CONSOLE_DEBUG_W_LONG("cCoolerPowerLevel\t=",		cCoolerPowerLevel);
 		}
 		else if (asiErrorCode == ASI_ERROR_INVALID_CONTROL_TYPE)
 		{

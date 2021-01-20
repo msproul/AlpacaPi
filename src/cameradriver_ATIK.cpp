@@ -501,8 +501,8 @@ int					atikRetCode;
 //		CONSOLE_DEBUG_W_NUM("exposureTime_ms\t=",		exposureTime_ms);
 
 
-		gettimeofday(&cLastExposureStartTime, NULL);
-		cLastexposureduration_us	=	exposureMicrosecs;
+		gettimeofday(&cLastexposure_StartTime, NULL);
+		cLastexposure_duration_us	=	exposureMicrosecs;
 		CONSOLE_DEBUG("Calling ArtemisStartExposureMS");
 		atikRetCode					=	ArtemisStartExposureMS(hAtikCameraHandle, exposureTime_ms);
 		if (atikRetCode == ARTEMIS_OK)
@@ -587,7 +587,7 @@ int						downloadPercent;
 			case CAMERA_FLUSHING:
 				exposureState	=	kExposure_Working;
 				//*	this should probably go some place else.
-				gettimeofday(&cLastExposureEndTime, NULL);
+				gettimeofday(&cLastexposure_EndTime, NULL);
 				break;
 
 			case CAMERA_DOWNLOADING:
@@ -1111,7 +1111,7 @@ int					atikImageSize;
 				gettimeofday(&cDownloadEndTime, NULL);
 				if (atikImageBuffer != NULL)
 				{
-	//				CONSOLE_DEBUG_W_NUM("exposure start\t=",	cLastExposureStartTime.tv_sec);
+	//				CONSOLE_DEBUG_W_NUM("exposure start\t=",	cLastexposure_StartTime.tv_sec);
 	//				CONSOLE_DEBUG_W_NUM("download start\t=",	downloadStartTime.tv_sec);
 	//				CONSOLE_DEBUG_W_NUM("download end\t=",		downloadEndTime.tv_sec);
 

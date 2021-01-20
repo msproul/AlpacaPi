@@ -58,6 +58,7 @@
 #define	kCamWindowHeight	800
 
 
+#include	"windowtab.h"
 #include	"windowtab_camera.h"
 #include	"windowtab_camgraph.h"
 #include	"windowtab_filelist.h"
@@ -326,7 +327,7 @@ void	ControllerCamNormal::AlpacaDisplayErrorMessage(const char *errorMsgString)
 
 
 //*****************************************************************************
-void	ControllerCamNormal::UpdateReadAllStatus(void)
+void	ControllerCamNormal::UpdateSupportedActions(void)
 {
 	SetWidgetValid(kTab_Camera,		kCameraBox_Readall,		cHas_readall);
 	SetWidgetValid(kTab_Settings,	kCamSet_Readall,		cHas_readall);
@@ -336,13 +337,20 @@ void	ControllerCamNormal::UpdateReadAllStatus(void)
 
 	if (cHas_readall == false)
 	{
-		SetWidgetCrossedout(kTab_Settings, kCamSet_ObjOutline, true);
+		SetWidgetCrossedout(kTab_Settings, kCamSet_ObjOutline,		true);
 		SetWidgetCrossedout(kTab_Settings, kCamSet_FilenameOutline, true);
 
 		SetWidgetText(kTab_Camera,		kCameraBox_AlpacaDrvrVersion,	"readall not supported");
 		SetWidgetText(kTab_Settings,	kCamSet_AlpacaDrvrVersion,		"readall not supported");
 	}
+	SetWidgetValid(kTab_Camera,	kCameraBox_AutoExposure,		cHas_autoexposure);
+	SetWidgetValid(kTab_Camera,	kCameraBox_DisplayImage,		cHas_displayimage);
+	SetWidgetValid(kTab_Camera,	kCameraBox_LiveMode,			cHas_livemode);
+	SetWidgetValid(kTab_Camera,	kCameraBox_SideBar,				cHas_sidebar);
+	SetWidgetValid(kTab_Camera,	kCameraBox_DownloadRGBarray,	cHas_rgbarray);
+
 }
+
 //*****************************************************************************
 void	ControllerCamNormal::UpdateRemoteAlpacaVersion(void)
 {
@@ -372,6 +380,7 @@ int		jjj;
 		SetWidgetValid(	kTab_Camera, kCameraBox_Gain_Slider, true);
 	}
 }
+
 //*****************************************************************************
 void	ControllerCamNormal::UpdateReadoutModes(void)
 {
@@ -388,6 +397,7 @@ int		jjj;
 		}
 	}
 }
+
 //*****************************************************************************
 void	ControllerCamNormal::UpdateCurrReadoutMode(void)
 {
@@ -397,6 +407,7 @@ void	ControllerCamNormal::UpdateCurrReadoutMode(void)
 	SetWidgetChecked(kTab_Camera, kCameraBox_ReadMode3, (cReadOutMode == 3));
 	SetWidgetChecked(kTab_Camera, kCameraBox_ReadMode4, (cReadOutMode == 4));
 }
+
 //*****************************************************************************
 void	ControllerCamNormal::UpdateCameraGain(void)
 {
@@ -404,6 +415,7 @@ void	ControllerCamNormal::UpdateCameraGain(void)
 	SetWidgetSliderValue(	kTab_Camera, kCameraBox_Gain_Slider, cGain);
 	SetWidgetNumber(		kTab_Camera, kCameraBox_Gain, cGain);
 }
+
 //*****************************************************************************
 void	ControllerCamNormal::UpdateCameraExposure(void)
 {
@@ -419,6 +431,7 @@ char	linebuff[64];
 	sprintf(linebuff, "%d x %d", cCameraSizeX, cCameraSizeY);
 	SetWidgetText(kTab_Camera, kCameraBox_Size, linebuff);
 }
+
 //*****************************************************************************
 void	ControllerCamNormal::UpdateCameraState(void)
 {
@@ -438,13 +451,19 @@ char			linebuff[64];
 	SetWidgetText(		kTab_Camera, kCameraBox_State,			linebuff);
 	if (cCameraState_imageready)
 	{
+		//*	image is ready, highlight the buttons
 		SetWidgetBGColor(kTab_Camera, kCameraBox_DownloadImage, CV_RGB(255, 255, 255));
+		SetWidgetBGColor(kTab_Camera, kCameraBox_DownloadRGBarray, CV_RGB(255, 255, 255));
 	}
 	else
 	{
+		//*	not ready, grey the buttons
 		SetWidgetBGColor(kTab_Camera, kCameraBox_DownloadImage, CV_RGB(100, 100, 100));
+		SetWidgetBGColor(kTab_Camera, kCameraBox_DownloadRGBarray, CV_RGB(100, 100, 100));
 	}
 }
+
+
 //*****************************************************************************
 void	ControllerCamNormal::UpdateCameraTemperature(void)
 {

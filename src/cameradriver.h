@@ -41,6 +41,14 @@
 	#ifndef _FITSIO_H
 		#include <fitsio.h>
 	#endif // _FITSIO_H
+	#define	kMaxFitsRecLen	90
+	#define	kMaxFitsRecords	200
+	//*****************************************************************************
+	typedef struct
+	{
+		char	fitsRec[kMaxFitsRecLen];
+	} TYPE_FITS_RECORD;
+
 #endif // _ENABLE_FITS_
 
 
@@ -278,6 +286,9 @@ enum
 	kCmd_Camera_exposuretime,
 	kCmd_Camera_filelist,
 	kCmd_Camera_filenameoptions,
+#ifdef _ENABLE_FITS_
+	kCmd_Camera_fitsheader,
+#endif
 	kCmd_Camera_framerate,
 	kCmd_Camera_livemode,
 	kCmd_Camera_rgbarray,
@@ -288,7 +299,7 @@ enum
 	kCmd_Camera_startvideo,
 	kCmd_Camera_stopvideo,
 
-	//*	keep this one last for consistency with other drivers  (i.e. focuser)
+	//*	keep this one last for consistency with other drivers
 	kCmd_Camera_readall,
 //#endif // _INCLUDE_ALPACA_EXTRAS_
 	kCmd_Camera_last
@@ -423,6 +434,26 @@ class CameraDriver: public AlpacaDriver
 
 				void	SetImageTypeIndex(const int alpacaImgTypeIdx, const char *imageTypeString);
 				TYPE_IMAGE_TYPE	XlateAlpacaImgIdxToIntImgType(const int alpacaImgTypeIdx);
+
+				void	Send_imagearray_rgb24(	const int		socketFD,
+												unsigned char	*pixelPtr,
+												const int		numRows,
+												const int		numClms,
+												const int		pixelCount);
+				void	Send_imagearray_raw8(	const int		socketFD,
+												unsigned char	*pixelPtr,
+												const int		numRows,
+												const int		numClms,
+												const int		pixelCount);
+				void	Send_imagearray_raw16(	const int		socketFD,
+												unsigned char	*pixelPtr,
+												const int		numRows,
+												const int		numClms,
+												const int		pixelCount);
+
+				void	Send_RGBarray_rgb24(const int socketFD, unsigned char *pixelPtr, const int pixelCount);
+				void	Send_RGBarray_raw8(const int socketFD, unsigned char *pixelPtr, const int pixelCount);
+
 			#ifdef _ENABLE_FITS_
 				int		SaveImageAsFITS(bool headerOnly=false);
 				void	CreateFitsBGRimage(void);
@@ -439,6 +470,10 @@ class CameraDriver: public AlpacaDriver
 				void	WriteFITS_TelescopeInfo(	fitsfile *fitsFilePtr);
 				void	WriteFITS_VersionInfo(		fitsfile *fitsFilePtr);
 				void	WriteFITS_MoonInfo(			fitsfile *fitsFilePtr);
+
+				TYPE_ASCOM_STATUS	Get_FitsHeader(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
+				int		ExtractFitsHeader(fitsfile *fitsFilePtr);
+				TYPE_FITS_RECORD	cFitsHeader[kMaxFitsRecords];
 
 			#endif // _ENABLE_FITS_
 			#ifdef _ENABLE_JPEGLIB_
@@ -554,10 +589,17 @@ protected:
 	bool					cImageReady;
 	bool					cIsPulseGuiding;
 
-	uint32_t				cLastexposureduration_us;	//*	stored in microseconds, ASCOM wants seconds, convert on the fly
-	//*	Reported as a string
-	struct timeval			cLastExposureStartTime;		//*	time exposure or video was started for frame rate calculations
-	struct timeval			cLastExposureEndTime;		//*	NON-ALPACA----time last exposure ended
+	//==========================================================================================
+	//*	information about the last exposure
+	//*	we need to record a bunch of stuff in case they get changed before
+	//*	the image gets downloaded
+	uint32_t				cLastexposure_duration_us;	//*	stored in microseconds, ASCOM wants seconds, convert on the fly
+														//*	Reported as a strin
+	struct timeval			cLastexposure_StartTime;		//*	time exposure or video was started for frame rate calculations
+	struct timeval			cLastexposure_EndTime;		//*	NON-ALPACA----time last exposure ended
+	TYPE_IMAGE_ROI_Info		cLastExposure_ROIinfo;
+
+
 	//						cMaxADU;					//*!!!!!!!!!!!!!!	not implemented yet
 	int						cMaxbinX;					//*	Maximum binning for the camera X axis
 	int						cMaxbinY;					//*	Maximum binning for the camera Y axis

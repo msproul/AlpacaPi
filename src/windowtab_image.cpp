@@ -46,7 +46,7 @@ WindowTabImage::WindowTabImage(	const int	xSize,
 									const char	*windowName)
 	:WindowTab(xSize, ySize, backGrndColor, windowName)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	cOpenCVdownLoadedImage	=	NULL;
 
@@ -59,10 +59,10 @@ WindowTabImage::WindowTabImage(	const int	xSize,
 //**************************************************************************************
 WindowTabImage::~WindowTabImage(void)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	if (cOpenCVdownLoadedImage != NULL)
 	{
-		CONSOLE_DEBUG("destroy old image");
+//		CONSOLE_DEBUG("destroy old image");
 		SetWidgetImage(kImageDisplay_ImageDisplay, NULL);
 		cvReleaseImage(&cOpenCVdownLoadedImage);
 		cOpenCVdownLoadedImage	=	NULL;
@@ -138,8 +138,8 @@ void	WindowTabImage::ProcessButtonClick(const int buttonIdx)
 	{
 
 		default:
-			CONSOLE_DEBUG(__FUNCTION__);
-			CONSOLE_DEBUG_W_NUM("buttonIdx\t",	buttonIdx);
+//			CONSOLE_DEBUG(__FUNCTION__);
+//			CONSOLE_DEBUG_W_NUM("buttonIdx\t",	buttonIdx);
 
 			break;
 

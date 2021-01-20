@@ -119,6 +119,13 @@
 //*	Jun 20,	2020	<MLS> Added cFN_includeRefID to include the refID in the file name
 //*	Jun 21,	2020	<MLS> Added RunStateMachine_Device() so sub class can have some time
 //*	Dec 12,	2020	<MLS> Major reorganization of class variables to better match ASCOM docs
+//*	Jan 17,	2021	<MLS> Added Send_RGBarray_rgb24() to increase speed
+//*	Jan 17,	2021	<MLS> Added Send_RGBarray_raw8() to increase speed
+//*	Jan 17,	2021	<MLS> By calling write(mySocket..) directly got a great speed increase
+//*	Jan 17,	2021	<MLS> It was running around 3 megabytes/sec, now getting 12 mbytes/sec (jetson)
+//*	Jan 17,	2021	<MLS> CONFORM-camera -> 2 errors, 0 warnings and 0 issues
+//*	Jan 18,	2021	<MLS> Added Send_imagearray_rgb24() & Send_imagearray_raw8()
+//*	Jan 20,	2021	<MLS> Added Send_imagearray_raw16()
 //*****************************************************************************
 //*	Jan  1,	2119	<TODO> ----------------------------------------
 //*	Jun 26,	2119	<TODO> Add support for sub frames
@@ -266,23 +273,24 @@ const TYPE_CmdEntry	gCameraCmdTable[]	=
 #ifdef _INCLUDE_ALPACA_EXTRAS_
 	//*	items added by MLS
 	{	"--extras",					kCmd_Camera_Extras,					kCmdType_GET	},
-	{	"settelescopeinfo",			kCmd_Camera_settelescopeinfo,		kCmdType_PUT	},
+	{	"autoexposure",				kCmd_Camera_autoexposure,			kCmdType_BOTH	},
+	{	"displayimage",				kCmd_Camera_displayimage,			kCmdType_BOTH	},
 	{	"exposuretime",				kCmd_Camera_exposuretime,			kCmdType_BOTH	},
+#ifdef _ENABLE_FITS_
+	{	"fitsheader",				kCmd_Camera_fitsheader,				kCmdType_GET	},
+#endif
 	{	"filelist",					kCmd_Camera_filelist,				kCmdType_GET	},
+	{	"filenameoptions",			kCmd_Camera_filenameoptions,		kCmdType_PUT	},
+	{	"framerate",				kCmd_Camera_framerate,				kCmdType_GET	},
 	{	"livemode",					kCmd_Camera_livemode,				kCmdType_BOTH	},
-	{	"sidebar",					kCmd_Camera_sidebar,				kCmdType_BOTH	},
+	{	"rgbarray",					kCmd_Camera_rgbarray,				kCmdType_GET	},
 	{	"savenextimage",			kCmd_Camera_savenextimage,			kCmdType_PUT	},
+	{	"settelescopeinfo",			kCmd_Camera_settelescopeinfo,		kCmdType_PUT	},
+	{	"sidebar",					kCmd_Camera_sidebar,				kCmdType_BOTH	},
 	{	"startsequence",			kCmd_Camera_startsequence,			kCmdType_PUT	},
 
 	{	"startvideo",				kCmd_Camera_startvideo,				kCmdType_PUT	},
 	{	"stopvideo",				kCmd_Camera_stopvideo,				kCmdType_PUT	},
-	{	"framerate",				kCmd_Camera_framerate,				kCmdType_GET	},
-	{	"autoexposure",				kCmd_Camera_autoexposure,			kCmdType_BOTH	},
-	{	"displayimage",				kCmd_Camera_displayimage,			kCmdType_BOTH	},
-
-	{	"filenameoptions",			kCmd_Camera_filenameoptions,		kCmdType_PUT	},
-	{	"rgbarray",					kCmd_Camera_rgbarray,				kCmdType_GET	},
-
 
 	{	"readall",					kCmd_Camera_readall,				kCmdType_GET	},
 #endif // _INCLUDE_ALPACA_EXTRAS_
@@ -382,9 +390,9 @@ int	ii;
 	cInternalCameraState			=	kCameraState_Idle;
 	cCameraDataBuffer				=	NULL;
 	cCameraBGRbuffer				=	NULL;
-	cLastExposureStartTime.tv_sec	=	0;
-	cLastExposureEndTime.tv_sec		=	0;
-	cLastexposureduration_us		=	0;
+	cLastexposure_StartTime.tv_sec	=	0;
+	cLastexposure_EndTime.tv_sec	=	0;
+	cLastexposure_duration_us		=	0;
 
 	//===================================
 	//*	subframe information
@@ -617,6 +625,14 @@ char				httpHeader[500];
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
+#ifndef _JETSON_
+	if (strcmp(reqData->deviceCommand, "readall") != 0)
+	{
+		CONSOLE_DEBUG_W_STR("deviceCommand\t=",	reqData->deviceCommand);
+	}
+#endif // _JETSON_
+
+
 //*	delete this when not testing
 	cMaxbinX	=	1;
 	cMaxbinY	=	1;
@@ -637,9 +653,6 @@ char				httpHeader[500];
 
 	httpHeaderSent	=	false;
 
-#ifndef _JETSON_
-	CONSOLE_DEBUG_W_STR("reqData->deviceCommand\t=",	reqData->deviceCommand);
-#endif // _JETSON_
 
 	//*	set up the json response
 	JsonResponse_CreateHeader(reqData->jsonTextBuffer, kMaxJsonBuffLen);
@@ -1315,6 +1328,19 @@ char				httpHeader[500];
 				alpacaErrCode	=	kASCOM_Err_InvalidOperation;
 			}
 			break;
+#ifdef _ENABLE_FITS_
+		case kCmd_Camera_fitsheader:
+			if (reqData->get_putIndicator == 'G')
+			{
+				alpacaErrCode	=	Get_FitsHeader(reqData, alpacaErrMsg);
+			}
+			else
+			{
+				CONSOLE_DEBUG("invalid request")
+				alpacaErrCode	=	kASCOM_Err_InvalidOperation;
+			}
+			break;
+#endif
 
 		case kCmd_Camera_rgbarray:
 			if (reqData->get_putIndicator == 'G')
@@ -1807,6 +1833,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
 char				argumentString[32];
 bool				foundKeyWord;
 int					newValue;
+char				errorString[64];
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -1819,7 +1846,8 @@ int					newValue;
 		if (foundKeyWord)
 		{
 			newValue	=	atoi(argumentString);
-			if ((newValue >= 1) && (newValue <= cCameraXsize))
+		//	if ((newValue >= 1) && (newValue <= cCameraXsize))
+			if (1)
 			{
 				cNumX			=	newValue;
 				alpacaErrCode	=	kASCOM_Err_Success;
@@ -1827,7 +1855,8 @@ int					newValue;
 			else
 			{
 				alpacaErrCode	=	kASCOM_Err_InvalidValue;
-				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Value out of range");
+				sprintf(errorString, "Value out of range: NumX=%d", newValue);
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, errorString);
 				CONSOLE_DEBUG(alpacaErrMsg);
 			}
 		}
@@ -1850,6 +1879,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
 char				argumentString[32];
 bool				foundKeyWord;
 int					newValue;
+char				errorString[64];
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -1862,7 +1892,8 @@ int					newValue;
 		if (foundKeyWord)
 		{
 			newValue	=	atoi(argumentString);
-			if ((newValue >= 1) && (newValue <= cCameraYsize))
+//			if ((newValue >= 1) && (newValue <= cCameraYsize))
+			if (1)
 			{
 				cNumY			=	newValue;
 				alpacaErrCode	=	kASCOM_Err_Success;
@@ -1870,7 +1901,8 @@ int					newValue;
 			else
 			{
 				alpacaErrCode	=	kASCOM_Err_InvalidValue;
-				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Value out of range");
+				sprintf(errorString, "Value out of range: NumY=%d", newValue);
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, errorString);
 				CONSOLE_DEBUG(alpacaErrMsg);
 			}
 		}
@@ -1942,7 +1974,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
 char				argumentString[32];
 bool				foundKeyWord;
 int					newValue;
-
+char				errorString[64];
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	if (reqData != NULL)
@@ -1954,7 +1986,8 @@ int					newValue;
 		if (foundKeyWord)
 		{
 			newValue	=	atoi(argumentString);
-			if (newValue >= 0)
+//			if ((newValue >= 0) && (newValue < cCameraXsize))
+			if (1)
 			{
 				cStartX			=	newValue;
 				alpacaErrCode	=	kASCOM_Err_Success;
@@ -1962,7 +1995,8 @@ int					newValue;
 			else
 			{
 				alpacaErrCode	=	kASCOM_Err_InvalidValue;
-				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Value out of range");
+				sprintf(errorString, "Value out of range: StartX=%d", newValue);
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, errorString);
 				CONSOLE_DEBUG(alpacaErrMsg);
 			}
 		}
@@ -1987,6 +2021,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
 char				argumentString[32];
 bool				foundKeyWord;
 int					newValue;
+char				errorString[64];
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -1999,7 +2034,8 @@ int					newValue;
 		if (foundKeyWord)
 		{
 			newValue	=	atoi(argumentString);
-			if (newValue >= 0)
+//			if ((newValue >= 0) && (newValue < cCameraYsize))
+			if (1)
 			{
 				cStartY			=	newValue;
 				alpacaErrCode	=	kASCOM_Err_Success;
@@ -2007,7 +2043,8 @@ int					newValue;
 			else
 			{
 				alpacaErrCode	=	kASCOM_Err_InvalidValue;
-				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Value out of range");
+				sprintf(errorString, "Value out of range: StartY=%d", newValue);
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, errorString);
 				CONSOLE_DEBUG(alpacaErrMsg);
 			}
 		}
@@ -2601,56 +2638,117 @@ TYPE_ASCOM_STATUS	CameraDriver::Put_StartExposure(TYPE_GetPutRequestData *reqDat
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
 double				currExposure_secs;
+bool				durationFound;
+char				duarationString[32];
+bool				lightFound;
+char				lightString[32];
+double				myExposureDuration_secs;
+double				myExposure_usecs;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
 	if (reqData != NULL)
 	{
-//		CONSOLE_DEBUG_W_STR("contentData\t=",	reqData->contentData);
+		CONSOLE_DEBUG_W_STR("contentData\t=",	reqData->contentData);
 
-		ProcessExposureOptions(reqData);
-
-		cAVIfourcc					=	0;
-		cFrameRate					=	0;
-		cSaveNextImage				=	true;
-		cLastexposureduration_us	=	cCurrentExposure_us;
-//-?		cNumFramesSaved				=	0;
-
-		//*	save the time we started the exposure
-		//*	this really belongs in Start_CameraExposure, but just in case
-		gettimeofday(&cLastExposureStartTime, NULL);
-
-//		CONSOLE_DEBUG(__FUNCTION__);
-		alpacaErrCode				=	Start_CameraExposure(cCurrentExposure_us);
-//		CONSOLE_DEBUG(__FUNCTION__);
-		GenerateFileNameRoot();
-//		CONSOLE_DEBUG(__FUNCTION__);
-
-		if (alpacaErrCode == 0)
+		//*	first we are going to check a bunch of stuff to make CONFORM happy
+		if ((cStartX >= 0) && (cStartX < cCameraXsize) && (cStartY >= 0) && (cStartY < cCameraYsize) &&
+			(cNumX >= 1) && (cNumX <= cCameraXsize) && (cNumY >= 1) && (cNumY <= cCameraYsize) &&
+			(cCurrentBinX >= 1) && (cCurrentBinX <= cMaxbinX) &&
+			(cCurrentBinY >= 1) && (cCurrentBinY <= cMaxbinY))
 		{
-			JsonResponse_Add_String(reqData->socket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									"filenameroot",
-									cFileNameRoot,
-									INCLUDE_COMMA);
+			ProcessExposureOptions(reqData);
+			durationFound		=	GetKeyWordArgument(	reqData->contentData,
+														"Duration",
+														duarationString,
+														(sizeof(duarationString) -1));
 
-			currExposure_secs	=	(1.0 * cCurrentExposure_us) / 1000000.0;
-			JsonResponse_Add_Double(reqData->socket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									"exposure",
-									currExposure_secs,
-									INCLUDE_COMMA);
+			lightFound		=	GetKeyWordArgument(	reqData->contentData,
+														"Light",
+														lightString,
+														(sizeof(lightString) -1));
+
+			if (durationFound)
+			{
+				myExposureDuration_secs	=	atof(duarationString);
+				myExposure_usecs		=	myExposureDuration_secs * (1000.0 * 1000.0);
+			}
+			else
+			{
+				myExposure_usecs		=	cCurrentExposure_us;
+			}
+			if ((myExposure_usecs > 0) && (myExposure_usecs >= cExposureMin_us))
+			{
+				CONSOLE_DEBUG(__FUNCTION__);
+				cImageReady					=	false;
+				cAVIfourcc					=	0;
+				cFrameRate					=	0;
+				cSaveNextImage				=	true;
+		//?		cNumFramesSaved				=	0;
+
+				//======================================================================================
+				//*	Save all of the info about this exposure for reference
+				GetImage_ROI_info();
+				cLastExposure_ROIinfo		=	cROIinfo;
+
+				cLastexposure_duration_us	=	cCurrentExposure_us;
+				gettimeofday(&cLastexposure_StartTime, NULL);	//*	save the time we started the exposure
+																//*	this really belongs in Start_CameraExposure, but just in case
+				//======================================================================================
+
+				alpacaErrCode				=	Start_CameraExposure(cCurrentExposure_us);
+				GenerateFileNameRoot();
+
+				if (alpacaErrCode == 0)
+				{
+					JsonResponse_Add_String(reqData->socket,
+											reqData->jsonTextBuffer,
+											kMaxJsonBuffLen,
+											"filenameroot",
+											cFileNameRoot,
+											INCLUDE_COMMA);
+
+					currExposure_secs	=	(1.0 * cCurrentExposure_us) / 1000000.0;
+					JsonResponse_Add_Double(reqData->socket,
+											reqData->jsonTextBuffer,
+											kMaxJsonBuffLen,
+											"exposure",
+											currExposure_secs,
+											INCLUDE_COMMA);
+				}
+				else
+				{
+					GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, cLastCameraErrMsg);
+				}
+			}
+			else
+			{
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Invalid exposure time");
+				CONSOLE_DEBUG(__FUNCTION__);
+				CONSOLE_ABORT(alpacaErrMsg);
+			}
 		}
 		else
 		{
-			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, cLastCameraErrMsg);
+			CONSOLE_DEBUG_W_NUM("cStartX\t\t=",		cStartX);
+			CONSOLE_DEBUG_W_NUM("cStartY\t\t=",		cStartY);
+			CONSOLE_DEBUG_W_NUM("cCameraXsize\t=",	cCameraXsize);
+			CONSOLE_DEBUG_W_NUM("cCameraYsize\t=",	cCameraYsize);
+			CONSOLE_DEBUG_W_NUM("cNumX\t\t=",		cNumX);
+			CONSOLE_DEBUG_W_NUM("cNumY\t\t=",		cNumY);
+			CONSOLE_DEBUG_W_NUM("cCurrentBinX\t=",	cCurrentBinX);
+			CONSOLE_DEBUG_W_NUM("cCurrentBinY\t=",	cCurrentBinY);
+
+
+			alpacaErrCode	=	kASCOM_Err_InvalidValue;
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "num, start,or bin is out of range");
+		//	CONSOLE_ABORT(alpacaErrMsg);
 		}
 	}
 	else
 	{
 		alpacaErrCode	=	kASCOM_Err_InternalError;
+		CONSOLE_ABORT("InternalError");
 	}
 	return(alpacaErrCode);
 }
@@ -2702,7 +2800,7 @@ TYPE_ALPACA_CAMERASTATE	CameraDriver::Read_AlapcaCameraState(void)
 TYPE_ALPACA_CAMERASTATE	alpacaCameraState;
 TYPE_EXPOSURE_STATUS	internalCameraState;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	//*	set a default value
 	alpacaCameraState	=	kALPACA_CameraState_Idle;
 
@@ -2742,9 +2840,9 @@ TYPE_ASCOM_STATUS	CameraDriver::Get_Lastexposureduration(TYPE_GetPutRequestData 
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
 double				exposureTimeSecs;
 
-	if (cLastexposureduration_us > 0)
+	if (cLastexposure_duration_us > 0)
 	{
-		exposureTimeSecs	=	(cLastexposureduration_us * 1.0) / 1000000.0;
+		exposureTimeSecs	=	(cLastexposure_duration_us * 1.0) / 1000000.0;
 
 		JsonResponse_Add_Double(reqData->socket,
 								reqData->jsonTextBuffer,
@@ -2758,7 +2856,7 @@ double				exposureTimeSecs;
 	{
 		alpacaErrCode	=	kASCOM_Err_InvalidOperation;
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "No valid image");
-		CONSOLE_DEBUG(alpacaErrMsg);
+//		CONSOLE_DEBUG(alpacaErrMsg);
 	}
 	return(alpacaErrCode);
 }
@@ -2772,10 +2870,12 @@ char				timeString[64];
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-	if (cLastExposureStartTime.tv_sec > 0)
+	if (cLastexposure_StartTime.tv_sec > 0)
 	{
-		FormatTimeString(	&cLastExposureStartTime.tv_sec,
-							timeString);
+	//	FormatTimeString(	&cLastexposure_StartTime.tv_sec,
+	//						timeString);
+		FormatTimeStringISO8601(	&cLastexposure_StartTime,
+									timeString);
 
 	//	CONSOLE_DEBUG(timeString);
 		JsonResponse_Add_String(reqData->socket,
@@ -2790,7 +2890,7 @@ char				timeString[64];
 	{
 		alpacaErrCode	=	kASCOM_Err_InvalidOperation;
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "No valid image");
-		CONSOLE_DEBUG(alpacaErrMsg);
+//		CONSOLE_DEBUG(alpacaErrMsg);
 	}
 	return(alpacaErrCode);
 }
@@ -2800,8 +2900,6 @@ char				timeString[64];
 TYPE_ASCOM_STATUS	CameraDriver::Get_ImageReady(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
-bool				imageReady;
-int					exposureStatatus;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 	if (reqData != NULL)
@@ -2827,7 +2925,7 @@ TYPE_ASCOM_STATUS	CameraDriver::Get_Imagearray(TYPE_GetPutRequestData *reqData, 
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 int					pixelCount;
-int					ii;
+int					iii;
 int					mySocket;
 unsigned char		*pixelPtr;
 char				lineBuff[64];
@@ -2835,13 +2933,13 @@ uint32_t			pixelValue;
 char				imageTimeString[64];
 double				exposureTimeSecs;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 
 	mySocket	=	reqData->socket;
 
 	//========================================================================================
 	//*	record the time the image was taken
-	FormatTimeString(&cLastExposureStartTime.tv_sec, imageTimeString);
+	FormatTimeString(&cLastexposure_StartTime.tv_sec, imageTimeString);
 	JsonResponse_Add_String(mySocket,
 							reqData->jsonTextBuffer,
 							kMaxJsonBuffLen,
@@ -2851,7 +2949,7 @@ double				exposureTimeSecs;
 
 	//========================================================================================
 	//*	record the exposure time
-	exposureTimeSecs	=	(cLastexposureduration_us * 1.0) /
+	exposureTimeSecs	=	(cLastexposure_duration_us * 1.0) /
 							1000000.0;
 	JsonResponse_Add_Double(mySocket,
 							reqData->jsonTextBuffer,
@@ -2872,17 +2970,18 @@ double				exposureTimeSecs;
 
 
 	//*	get the ROI information which has the current image type
-	GetImage_ROI_info();
-	pixelCount	=	cROIinfo.currentROIwidth * cROIinfo.currentROIheight;
+//	GetImage_ROI_info();
+	pixelCount	=	cLastExposure_ROIinfo.currentROIwidth * cLastExposure_ROIinfo.currentROIheight;
+	CONSOLE_DEBUG_W_NUM("cLastExposure_ROIinfo.currentROIwidth\t=", cLastExposure_ROIinfo.currentROIwidth);
+	CONSOLE_DEBUG_W_NUM("cLastExposure_ROIinfo.currentROIheight\t=", cLastExposure_ROIinfo.currentROIheight);
 	CONSOLE_DEBUG_W_NUM("pixelCount\t=", pixelCount);
 
-#if 1
 	CONSOLE_DEBUG_W_NUM("cImageReady\t=", cImageReady);
 	if (cImageReady && (cCameraDataBuffer != NULL))
 	{
 		//========================================================================================
 		//*	record the image type
-//+			Read_ImageTypeString(cROIinfo.currentROIimageType, asiImageTypeString);
+//+			Read_ImageTypeString(cLastExposure_ROIinfo.currentROIimageType, asiImageTypeString);
 //+			JsonResponse_Add_String(mySocket,
 //+									reqData->jsonTextBuffer,
 //+									kMaxJsonBuffLen,
@@ -2894,22 +2993,22 @@ double				exposureTimeSecs;
 								reqData->jsonTextBuffer,
 								kMaxJsonBuffLen,
 								"xsize",
-								cROIinfo.currentROIwidth,
+								cLastExposure_ROIinfo.currentROIwidth,
 								INCLUDE_COMMA);
 
 		JsonResponse_Add_Int32(mySocket,
 								reqData->jsonTextBuffer,
 								kMaxJsonBuffLen,
 								"ysize",
-								cROIinfo.currentROIheight,
+								cLastExposure_ROIinfo.currentROIheight,
 								INCLUDE_COMMA);
 
 //		CONSOLE_DEBUG(__FUNCTION__);
-		//*	arraytype = 2  >> 32 bit interger
+		//*	Type = 2  >> 32 bit interger
 		JsonResponse_Add_Int32(	mySocket,
 								reqData->jsonTextBuffer,
 								kMaxJsonBuffLen,
-								"ArrayType",
+								"Type",
 								2,
 								INCLUDE_COMMA);
 
@@ -2924,54 +3023,45 @@ double				exposureTimeSecs;
 										reqData->jsonTextBuffer,
 										kMaxJsonBuffLen,
 										gValueString);
+
+		//*	Flush the json buffer
+		JsonResponse_SendTextBuffer(mySocket, reqData->jsonTextBuffer);
+
 		pixelPtr	=	cCameraDataBuffer;
 		CONSOLE_DEBUG_W_NUM("pixelCount\t=", pixelCount);
-		for (ii=0; ii<pixelCount; ii++)
+		pixelPtr	=	cCameraDataBuffer;
+		switch(cLastExposure_ROIinfo.currentROIimageType)
 		{
-			switch(cROIinfo.currentROIimageType)
-			{
-				case kImageType_RAW8:
-					pixelValue		=	(pixelPtr[0] & 0x00ff);
-					pixelPtr		+=	1;
-				//	sprintf(lineBuff, "0x%02lX,\n", pixelValue);
-					sprintf(lineBuff, "%d,\n", pixelValue);
-					break;
+			case kImageType_RAW8:
+			case kImageType_Y8:
+				Send_imagearray_raw8(	mySocket,
+										cCameraDataBuffer,
+										cLastExposure_ROIinfo.currentROIheight,		//*	# of rows
+										cLastExposure_ROIinfo.currentROIwidth,		//*	# of columns
+										pixelCount);
+				break;
 
-				case kImageType_RAW16:
-					pixelValue		=	(pixelPtr[0] << 8) +
-										(pixelPtr[1]);
-					pixelPtr		+=	2;
-				//	sprintf(lineBuff, "0x%04X,\n", pixelValue);
-					sprintf(lineBuff, "%d,\n", pixelValue);
-					break;
+			case kImageType_RAW16:
+				Send_imagearray_raw16(	mySocket,
+										cCameraDataBuffer,
+										cLastExposure_ROIinfo.currentROIheight,		//*	# of rows
+										cLastExposure_ROIinfo.currentROIwidth,		//*	# of columns
+										pixelCount);
+				break;
 
-				case kImageType_RGB24:
-					pixelValue		=	(pixelPtr[0] << 16) +
-										(pixelPtr[1] << 8) +
-										(pixelPtr[2]);
-					pixelPtr		+=	3;
-				//	sprintf(lineBuff, "0x%06X,\n", pixelValue);
-					sprintf(lineBuff, "%d,\n", pixelValue);
-					break;
+			case kImageType_RGB24:
+				Send_imagearray_rgb24(	mySocket,
+										cCameraDataBuffer,
+										cLastExposure_ROIinfo.currentROIheight,		//*	# of rows
+										cLastExposure_ROIinfo.currentROIwidth,		//*	# of columns
+										pixelCount);
+				break;
 
-				case kImageType_Y8:
-					break;
 
-				default:
-					break;
-			}
-			JsonResponse_Add_RawText(	mySocket,
-										reqData->jsonTextBuffer,
-										kMaxJsonBuffLen,
-										lineBuff);
-
-			if ((ii % 50000) == 0)
-			{
-				CONSOLE_DEBUG_W_NUM("ii\t\t=", ii);
-			}
+			default:
+				break;
 		}
 
-		CONSOLE_DEBUG_W_NUM("Lines sent\t=", ii);
 
 		JsonResponse_Add_ArrayEnd(	mySocket,
 									reqData->jsonTextBuffer,
@@ -2985,131 +3075,177 @@ double				exposureTimeSecs;
 		alpacaErrCode	=	kASCOM_Err_InvalidOperation;
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "No image to get");
 	}
-#else
-	alpacaErrCode	=	Read_ImageData();
-	CONSOLE_DEBUG_W_NUM("Read_ImageData returned", alpacaErrCode);
 
-
-	if (alpacaErrCode == 0)
-	{
-		//========================================================================================
-		//*	record the image type
-//+			Read_ImageTypeString(cROIinfo.currentROIimageType, asiImageTypeString);
-//+			JsonResponse_Add_String(mySocket,
-//+									reqData->jsonTextBuffer,
-//+									kMaxJsonBuffLen,
-//+									"ImageType",
-//+									asiImageTypeString,
-//+									INCLUDE_COMMA);
-		//*	record the image size
-		JsonResponse_Add_Int32(mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"xsize",
-								cROIinfo.currentROIwidth,
-								INCLUDE_COMMA);
-
-		JsonResponse_Add_Int32(mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"ysize",
-								cROIinfo.currentROIheight,
-								INCLUDE_COMMA);
-
-		CONSOLE_DEBUG(__FUNCTION__);
-		if (cCameraDataBuffer != NULL)
-		{
-		#ifdef _USE_OPENCV_
-			CONSOLE_DEBUG("Saving image via OpenCV");
-			CreateOpenCVImage(cCameraDataBuffer);
-		#else
-			CONSOLE_DEBUG("Image save not enabled");
-		#endif
-			//*	arraytype = 2  >> 32 bit interger
-			JsonResponse_Add_Int32(	mySocket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									"ArrayType",
-									2,
-									INCLUDE_COMMA);
-
-			JsonResponse_Add_Int32(	mySocket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									"Rank",
-									2,
-									INCLUDE_COMMA);
-
-			JsonResponse_Add_ArrayStart(	mySocket,
-											reqData->jsonTextBuffer,
-											kMaxJsonBuffLen,
-											gValueString);
-			pixelPtr	=	cCameraDataBuffer;
-			for (ii=0; ii<pixelCount; ii++)
-			{
-				switch(cROIinfo.currentROIimageType)
-				{
-					case kImageType_RAW8:
-						pixelValue		=	(pixelPtr[0] & 0x00ff);
-						pixelPtr		+=	1;
-					//	sprintf(lineBuff, "0x%02lX,\n", pixelValue);
-						sprintf(lineBuff, "%d,\n", pixelValue);
-						break;
-
-					case kImageType_RAW16:
-						pixelValue		=	(pixelPtr[0] << 8) +
-											(pixelPtr[1]);
-						pixelPtr		+=	2;
-						sprintf(lineBuff, "0x%04X,\n", pixelValue);
-						break;
-
-					case kImageType_RGB24:
-						pixelValue		=	(pixelPtr[0] << 16) +
-											(pixelPtr[1] << 8) +
-											(pixelPtr[2]);
-						pixelPtr		+=	3;
-						sprintf(lineBuff, "0x%06X,\n", pixelValue);
-						break;
-
-					case kImageType_Y8:
-						break;
-
-					default:
-						break;
-				}
-				JsonResponse_Add_RawText(	mySocket,
-											reqData->jsonTextBuffer,
-											kMaxJsonBuffLen,
-											lineBuff);
-
-				if ((ii % 50000) == 0)
-				{
-					CONSOLE_DEBUG_W_NUM("ii\t\t=", ii);
-				}
-			}
-
-			CONSOLE_DEBUG_W_NUM("Lines sent\t=", ii);
-
-			JsonResponse_Add_ArrayEnd(	mySocket,
-										reqData->jsonTextBuffer,
-										kMaxJsonBuffLen,
-										INCLUDE_COMMA);
-		}
-		else
-		{
-			CONSOLE_DEBUG("Failed to allocate buffer");
-		}
-	}
-	else
-	{
-		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Failed to read image-");
-		strcat(alpacaErrMsg, cLastCameraErrMsg);
-		CONSOLE_DEBUG_W_STR("alpacaErrCode\t=",		alpacaErrMsg);
-	}
-#endif
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, "--exit");
 	return(alpacaErrCode);
 }
+
+
+//*****************************************************************************
+void	CameraDriver::Send_imagearray_rgb24(	const int		socketFD,
+												unsigned char	*pixelPtr,
+												const int		numRows,
+												const int		numClms,
+												const int		pixelCount)
+{
+
+}
+
+//*****************************************************************************
+void	CameraDriver::Send_imagearray_raw8(		const int		socketFD,
+												unsigned char	*pixelPtr,
+												const int		numRows,
+												const int		numClms,
+												const int		pixelCount)
+{
+unsigned char	*myPixelPtr;
+uint32_t		pixelValue;
+char			lineBuff[256];
+int				xxx;
+int				yyy;
+int				bufLen;
+int				bytesWritten;
+char			longBuffer[1024];
+int				dataElementCnt;
+int				pixelIndex;
+int				totalValuesWritten;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_NUM("numRows\t=", numRows);
+	CONSOLE_DEBUG_W_NUM("numClms\t=", numClms);
+
+	myPixelPtr	=	pixelPtr;
+	if (myPixelPtr != NULL)
+	{
+		totalValuesWritten	=	0;
+		dataElementCnt		=	0;
+		longBuffer[0]		=	0;
+		for (xxx=0; xxx < numClms; xxx++)
+		{
+			if ((xxx % 500) == 0)
+			{
+				CONSOLE_DEBUG_W_NUM("xxx\t=", xxx);
+			}
+			strcpy(longBuffer, "[");
+			dataElementCnt	=	0;
+			pixelIndex		=	xxx;
+			//*	stop at n-1 so we can do the last one without a comma
+			for (yyy=0; yyy < (numRows - 1); yyy++)
+			{
+				pixelValue		=	((myPixelPtr[pixelIndex] & 0x00ff) << 8);
+			//	pixelValue		=	((myPixelPtr[pixelIndex] & 0x00ff));
+				sprintf(lineBuff, "%d,", pixelValue);
+				strcat(longBuffer, lineBuff);
+				dataElementCnt++;
+				if (dataElementCnt >= 50)
+				{
+					strcat(longBuffer, "\n");
+					bufLen			=	strlen(longBuffer);
+					bytesWritten	=	write(socketFD, longBuffer, bufLen);
+					dataElementCnt	=	0;
+					longBuffer[0]	=	0;
+				}
+				pixelIndex	+=	numClms;
+
+				totalValuesWritten++;
+			}
+			//*	now do the last one WITHOUT the comma
+			pixelValue		=	((myPixelPtr[pixelIndex] & 0x00ff) << 8);
+		//	pixelValue		=	((myPixelPtr[pixelIndex] & 0x00ff));
+			sprintf(lineBuff, "%d]", pixelValue);
+			totalValuesWritten++;
+			if (xxx < (numClms - 1))
+			{
+				strcat(lineBuff, ",");
+			}
+			strcat(lineBuff, "\n");
+
+			strcat(longBuffer, lineBuff);
+			bufLen			=	strlen(longBuffer);
+			bytesWritten	=	write(socketFD, longBuffer, bufLen);
+		}
+	}
+	CONSOLE_DEBUG_W_NUM("totalValuesWritten\t=", totalValuesWritten);
+	CONSOLE_DEBUG("Done");
+}
+
+
+//*****************************************************************************
+void	CameraDriver::Send_imagearray_raw16(	const int		socketFD,
+												unsigned char	*pixelPtr,
+												const int		numRows,
+												const int		numClms,
+												const int		pixelCount)
+{
+unsigned char	*myPixelPtr;
+uint32_t		pixelValue;
+char			lineBuff[256];
+int				xxx;
+int				yyy;
+int				bufLen;
+int				bytesWritten;
+char			longBuffer[1024];
+int				dataElementCnt;
+int				pixelIndex;
+int				totalValuesWritten;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_NUM("numRows\t=", numRows);
+	CONSOLE_DEBUG_W_NUM("numClms\t=", numClms);
+
+	myPixelPtr	=	pixelPtr;
+	if (myPixelPtr != NULL)
+	{
+		totalValuesWritten	=	0;
+		dataElementCnt		=	0;
+		longBuffer[0]		=	0;
+		for (xxx=0; xxx < numClms; xxx++)
+		{
+			if ((xxx % 500) == 0)
+			{
+				CONSOLE_DEBUG_W_NUM("xxx\t=", xxx);
+			}
+			strcpy(longBuffer, "[");
+			dataElementCnt	=	0;
+			pixelIndex		=	xxx;
+			//*	stop at n-1 so we can do the last one without a comma
+			for (yyy=0; yyy < (numRows - 1); yyy++)
+			{
+				pixelValue		=	((myPixelPtr[pixelIndex] & 0x0ffff));
+				sprintf(lineBuff, "%d,", pixelValue);
+				strcat(longBuffer, lineBuff);
+				dataElementCnt++;
+				if (dataElementCnt >= 50)
+				{
+					strcat(longBuffer, "\n");
+					bufLen			=	strlen(longBuffer);
+					bytesWritten	=	write(socketFD, longBuffer, bufLen);
+					dataElementCnt	=	0;
+					longBuffer[0]	=	0;
+				}
+				pixelIndex	+=	numClms;
+
+				totalValuesWritten++;
+			}
+			//*	now do the last one WITHOUT the comma
+			pixelValue		=	((myPixelPtr[pixelIndex] & 0x0ffff));
+			sprintf(lineBuff, "%d]", pixelValue);
+			totalValuesWritten++;
+			if (xxx < (numClms - 1))
+			{
+				strcat(lineBuff, ",");
+			}
+			strcat(lineBuff, "\n");
+
+			strcat(longBuffer, lineBuff);
+			bufLen			=	strlen(longBuffer);
+			bytesWritten	=	write(socketFD, longBuffer, bufLen);
+		}
+	}
+	CONSOLE_DEBUG_W_NUM("totalValuesWritten\t=", totalValuesWritten);
+	CONSOLE_DEBUG("Done");
+}
+
 
 //*****************************************************************************
 //*	this always returns 24 bit pixels, in hex they are 0x00RRGGBB
@@ -3128,6 +3264,10 @@ char				lineBuff[256];
 char				imageTimeString[256];
 double				exposureTimeSecs;
 TYPE_ASCOM_STATUS	tempSensorErr;
+//-int					bufLen;
+//-int					bytesWritten;
+//-char				longBuffer[1024];
+//-int					dataElementCnt;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 //*	Jun 25,	2020	<MLS> Changed JSON xmit buffer limit to 1475, significant speed improvement
@@ -3138,7 +3278,7 @@ TYPE_ASCOM_STATUS	tempSensorErr;
 
 	//========================================================================================
 	//*	record the time the image was taken
-	FormatTimeString(&cLastExposureStartTime.tv_sec, imageTimeString);
+	FormatTimeString(&cLastexposure_StartTime.tv_sec, imageTimeString);
 	JsonResponse_Add_String(mySocket,
 							reqData->jsonTextBuffer,
 							kBuffSize_MaxSpeed,
@@ -3148,7 +3288,7 @@ TYPE_ASCOM_STATUS	tempSensorErr;
 
 	//========================================================================================
 	//*	record the exposure time
-	exposureTimeSecs	=	(cLastexposureduration_us * 1.0) /
+	exposureTimeSecs	=	(cLastexposure_duration_us * 1.0) /
 							1000000.0;
 	JsonResponse_Add_Double(mySocket,
 							reqData->jsonTextBuffer,
@@ -3204,11 +3344,11 @@ TYPE_ASCOM_STATUS	tempSensorErr;
 								INCLUDE_COMMA);
 
 //		CONSOLE_DEBUG(__FUNCTION__);
-		//*	arraytype = 2  >> 32 bit interger
+		//*	Type = 2  >> 32 bit interger
 		JsonResponse_Add_Int32(	mySocket,
 								reqData->jsonTextBuffer,
 								kBuffSize_MaxSpeed,
-								"ArrayType",
+								"Type",
 								2,
 								INCLUDE_COMMA);
 
@@ -3226,6 +3366,9 @@ TYPE_ASCOM_STATUS	tempSensorErr;
 		pixelPtr	=	cCameraDataBuffer;
 		CONSOLE_DEBUG_W_NUM("pixelCount\t=", pixelCount);
 
+		//*	Flush the json buffer
+		JsonResponse_SendTextBuffer(mySocket, reqData->jsonTextBuffer);
+
 		//====================================================================
 		//*	this is broken up the way it is to increase transmission speed
 		iii		=	0;
@@ -3233,71 +3376,13 @@ TYPE_ASCOM_STATUS	tempSensorErr;
 		{
 			//====================================================================
 			case kImageType_RGB24:
-				CONSOLE_DEBUG("kImageType_RGB24");
-				pixelLimit	=	pixelCount - 1;
-				iii	=	0;
-				while (iii < pixelLimit)
-				{
-					pixelValue		=	((pixelPtr[0] & 0x00ff) << 16) +
-										((pixelPtr[1] & 0x00ff) << 8) +
-										((pixelPtr[2] & 0x00ff));
-					pixelPtr		+=	3;
-					sprintf(lineBuff, "%d,\n", pixelValue);
-					JsonResponse_Add_RawText(	mySocket,
-												reqData->jsonTextBuffer,
-												kBuffSize_MaxSpeed,
-												lineBuff);
-					iii++;
-
-					if ((iii % 500000) == 0)
-					{
-					double	cpuTemp_DegC;
-					double	cpuTemp_DegF;
-						cpuTemp_DegC	=	CPUstats_GetTemperature(NULL);
-						cpuTemp_DegF	=	((cpuTemp_DegC * (9.0/5.0)) + 32);
-						CONSOLE_DEBUG_W_DBL("cpuTemp_DegF\t=", cpuTemp_DegF);
-					}
-				}
-				CONSOLE_DEBUG("Done");
-				//*	now do the last one WITHOUT the comma
-				pixelValue		=	(pixelPtr[0] << 16) +
-									(pixelPtr[1] << 8) +
-									(pixelPtr[2]);
-				sprintf(lineBuff, "%d\n", pixelValue);
-				JsonResponse_Add_RawText(	mySocket,
-											reqData->jsonTextBuffer,
-											kBuffSize_MaxSpeed,
-											lineBuff);
-				CONSOLE_DEBUG("Done");
+				Send_RGBarray_rgb24(mySocket, pixelPtr, pixelCount);
 				break;
 
 			//====================================================================
 			case kImageType_RAW8:
 				CONSOLE_DEBUG("kImageType_RAW8");
-				pixelLimit	=	pixelCount - 1;
-				iii	=	0;
-				while (iii < pixelLimit)
-				{
-					pixelValue		=	(pixelPtr[0] & 0x00ff);
-					pixelValue		=	pixelValue * 0x010101;
-					pixelPtr		+=	1;
-					sprintf(lineBuff, "%d,\n", pixelValue);
-					JsonResponse_Add_RawText(	mySocket,
-												reqData->jsonTextBuffer,
-												kBuffSize_MaxSpeed,
-												lineBuff);
-					iii++;
-				}
-				//*	now do the last one WITHOUT the comma
-				pixelValue		=	(pixelPtr[0] & 0x00ff);
-				pixelValue		=	pixelValue * 0x010101;
-				pixelPtr		+=	1;
-				sprintf(lineBuff, "%d\n", pixelValue);
-				JsonResponse_Add_RawText(	mySocket,
-											reqData->jsonTextBuffer,
-											kBuffSize_MaxSpeed,
-											lineBuff);
-				CONSOLE_DEBUG("Done");
+				Send_RGBarray_raw8(mySocket, pixelPtr, pixelCount);
 				break;
 
 			//====================================================================
@@ -3363,7 +3448,6 @@ TYPE_ASCOM_STATUS	tempSensorErr;
 
 		}
 
-		CONSOLE_DEBUG_W_NUM("Lines sent\t=", iii);
 
 		JsonResponse_Add_ArrayEnd(	mySocket,
 									reqData->jsonTextBuffer,
@@ -3381,6 +3465,120 @@ TYPE_ASCOM_STATUS	tempSensorErr;
 	return(alpacaErrCode);
 }
 
+//*****************************************************************************
+void	CameraDriver::Send_RGBarray_rgb24(	const int		socketFD,
+											unsigned char	*pixelPtr,
+											const int		pixelCount)
+{
+unsigned char	*myPixelPtr;
+uint32_t		pixelValue;
+char			lineBuff[256];
+int				pixelLimit;
+int				iii;
+int				bufLen;
+int				bytesWritten;
+char			longBuffer[1024];
+int				dataElementCnt;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+
+	pixelLimit	=	pixelCount - 1;
+	myPixelPtr	=	pixelPtr;
+	if (myPixelPtr != NULL)
+	{
+		longBuffer[0]	=	0;
+		dataElementCnt	=	0;
+		for (iii=0; iii < pixelLimit; iii++)
+		{
+			pixelValue		=	((myPixelPtr[0] & 0x00ff) << 16) +
+								((myPixelPtr[1] & 0x00ff) << 8) +
+								((myPixelPtr[2] & 0x00ff));
+			myPixelPtr		+=	3;
+
+			sprintf(lineBuff, "%d,\n", pixelValue);
+			strcat(longBuffer, lineBuff);
+			dataElementCnt++;
+			if (dataElementCnt >= 10)
+			{
+				strcat(longBuffer, "\n");
+				bufLen			=	strlen(longBuffer);
+				bytesWritten	=	write(socketFD, longBuffer, bufLen);
+				dataElementCnt	=	0;
+				longBuffer[0]	=	0;
+			}
+		}
+		//*	now do the last one WITHOUT the comma
+		pixelValue		=	(myPixelPtr[0] << 16) +
+							(myPixelPtr[1] << 8) +
+							(myPixelPtr[2]);
+		sprintf(lineBuff, "%d", pixelValue);
+		strcat(longBuffer, lineBuff);
+		strcat(longBuffer, "\n");
+		bufLen			=	strlen(longBuffer);
+		bytesWritten	=	write(socketFD, longBuffer, bufLen);
+	}
+
+
+	CONSOLE_DEBUG("Done");
+
+}
+
+//*****************************************************************************
+void	CameraDriver::Send_RGBarray_raw8(	const int		socketFD,
+											unsigned char	*pixelPtr,
+											const int		pixelCount)
+{
+unsigned char	*myPixelPtr;
+uint32_t		pixelValue;
+char			lineBuff[256];
+int				pixelLimit;
+int				iii;
+int				bufLen;
+int				bytesWritten;
+char			longBuffer[1500];
+int				dataElementCnt;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_NUM("pixelCount\t=", pixelCount);
+
+	pixelLimit	=	pixelCount - 1;
+	myPixelPtr	=	pixelPtr;
+	if (myPixelPtr != NULL)
+	{
+		longBuffer[0]	=	0;
+		dataElementCnt	=	0;
+		for (iii=0; iii < pixelLimit; iii++)
+		{
+			pixelValue		=	(pixelPtr[0] & 0x00ff);
+			pixelValue		=	pixelValue * 0x010101;
+			pixelPtr		+=	1;
+//			sprintf(lineBuff, "%d,\n", pixelValue);
+			sprintf(lineBuff, "%d,\n", pixelValue);
+			strcat(longBuffer, lineBuff);
+			dataElementCnt++;
+			if (dataElementCnt >= 50)
+			{
+				bufLen			=	strlen(longBuffer);
+				bytesWritten	=	write(socketFD, longBuffer, bufLen);
+				dataElementCnt	=	0;
+				longBuffer[0]	=	0;
+			}
+		}
+		//*	now do the last one WITHOUT the comma
+		pixelValue		=	(pixelPtr[0] & 0x00ff);
+		pixelValue		=	pixelValue * 0x010101;
+		pixelPtr		+=	1;
+		sprintf(lineBuff, "%d", pixelValue);
+		strcat(longBuffer, lineBuff);
+
+		strcat(longBuffer, "\n");
+		bufLen			=	strlen(longBuffer);
+		bytesWritten	=	write(socketFD, longBuffer, bufLen);
+		dataElementCnt	=	0;
+	}
+	CONSOLE_DEBUG("Done");
+
+}
 
 //*****************************************************************************
 TYPE_ASCOM_STATUS	CameraDriver::Get_Camerastate(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
@@ -4778,7 +4976,7 @@ uint32_t			elapsedMilliSecs;
 				//*	calculate time since last picture was STARTED
 				gettimeofday(&currentTime, NULL);
 				currentMilliSecs	=	Calc_millisFromTimeStruct(&currentTime);
-				startofLastExp		=	Calc_millisFromTimeStruct(&cLastExposureStartTime);
+				startofLastExp		=	Calc_millisFromTimeStruct(&cLastexposure_StartTime);
 				elapsedMilliSecs	=	currentMilliSecs - startofLastExp;
 
 				//*	is it time to start the next image?
@@ -4881,7 +5079,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode;
 				CONSOLE_DEBUG_W_NUM("Read_ImageData returned error", alpacaErrCode);
 			}
 			//*	record the time the exposure ended
-			gettimeofday(&cLastExposureEndTime, NULL);
+			gettimeofday(&cLastexposure_EndTime, NULL);
 			cNewImageReadyToDisplay		=	true;
 			cImageReady					=	true;
 
@@ -5046,7 +5244,7 @@ char		fileNameDateString[64];
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-	FormatTimeStringFileName(&cLastExposureStartTime, fileNameDateString);
+	FormatTimeStringFileName(&cLastexposure_StartTime, fileNameDateString);
 //	CONSOLE_DEBUG_W_STR("fileNameDateString\t=", fileNameDateString);
 
 	cFileNameRoot[0]	=	0;
@@ -5486,6 +5684,54 @@ bool				foundKeyWord;
 	return(alpacaErrCode);
 }
 
+#ifdef _ENABLE_FITS_
+//*****************************************************************************
+TYPE_ASCOM_STATUS	CameraDriver::Get_FitsHeader(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
+int					mySocketFD;
+char				lineBuff[128];
+int					fitsHdrIdx;
+
+	mySocketFD	=	reqData->socket;
+
+	JsonResponse_Add_ArrayStart(mySocketFD,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								gValueString);
+
+	JsonResponse_Add_RawText(	mySocketFD,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								"\n");
+
+	fitsHdrIdx	=	0;
+    while (cFitsHeader[fitsHdrIdx].fitsRec[0] != 0)
+    {
+		strcpy(lineBuff, "\"");
+		strcat(lineBuff, cFitsHeader[fitsHdrIdx].fitsRec);
+		strcat(lineBuff, "\",\n");
+
+		JsonResponse_Add_RawText(	mySocketFD,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									lineBuff);
+		fitsHdrIdx++;
+    }
+	JsonResponse_Add_RawText(	mySocketFD,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								"\"----------\"\n");
+
+	JsonResponse_Add_ArrayEnd(	mySocketFD,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								INCLUDE_COMMA);
+	return(alpacaErrCode);
+
+}
+
+#endif
 
 
 //*****************************************************************************
@@ -5868,7 +6114,7 @@ char				textBuffer[128];
 		int	deltaSecs;
 		int	timeRemaining;
 
-			deltaSecs		=	cLastExposureEndTime.tv_sec - cLastExposureStartTime.tv_sec;
+			deltaSecs		=	cLastexposure_EndTime.tv_sec - cLastexposure_StartTime.tv_sec;
 			if ((cVideoDuration_secs > deltaSecs) && (deltaSecs > 0))
 			{
 				timeRemaining	=	cVideoDuration_secs - deltaSecs;
@@ -5881,8 +6127,8 @@ char				textBuffer[128];
 			{
 				CONSOLE_DEBUG_W_DBL("cVideoDuration_secs\t\t=",				cVideoDuration_secs);
 				CONSOLE_DEBUG_W_NUM("deltaSecs\t\t\t\t=",					deltaSecs);
-				CONSOLE_DEBUG_W_LONG("cLastExposureEndTime.tv_sec\t=",		cLastExposureEndTime.tv_sec);
-				CONSOLE_DEBUG_W_LONG("cLastExposureStartTime.tv_sec\t=",	cLastExposureStartTime.tv_sec);
+				CONSOLE_DEBUG_W_LONG("cLastexposure_EndTime.tv_sec\t=",		cLastexposure_EndTime.tv_sec);
+				CONSOLE_DEBUG_W_LONG("cLastexposure_StartTime.tv_sec\t=",	cLastexposure_StartTime.tv_sec);
 
 			//	CONSOLE_DEBUG("ABORT!!!!!!!");
 			//	exit(0);

@@ -36,6 +36,11 @@
 #endif
 
 
+#ifndef _DISCOVERY_LIB_H_
+	#include	"discovery_lib.h"
+#endif
+
+
 #define	kFocuserBoxWidth	302
 #define	kFocuserBoxHeight	715
 
@@ -117,6 +122,9 @@ class ControllerFocus: public Controller
 												const int	deviceNum,
 												const char	*keywordString,
 												const char	*valueString);
+		virtual	void	AlpacaProcessSupportedActions(	const char	*deviceTypeStr,
+														const int	deviveNum,
+														const char	*valueString);
 				bool	AlpacaGetStatus_OneAAT(void);	//*	One At A Time
 
 				void	SendMoveFocuserCommand(int newDesiredPosition);
@@ -159,3 +167,8 @@ class ControllerFocus: public Controller
 
 
 };
+
+
+int		GenerateFocuserWindowName(TYPE_REMOTE_DEV *device, int focuserNum, char *windowName);
+int		CheckForFocuser(TYPE_REMOTE_DEV *remoteDevice);
+

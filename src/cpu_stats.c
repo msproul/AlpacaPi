@@ -5,9 +5,11 @@
 //*	Apr 27,	2020	<MLS> Added CPUstats_GetUptime()
 //*	Apr 27,	2020	<MLS> Added CPUstats_GetTotalRam() & CPUstats_GetFreeRam()
 //*	Jun 24,	2020	<MLS> Added CPUstats_GetFreeDiskSpace()
+//*	Jan 17,	2021	<MLS> Moved CPU info routines to this file, changed names
 //*****************************************************************************
 
 #include	<stdlib.h>
+#include	<stdbool.h>
 #include	<stdio.h>
 #include	<sys/sysinfo.h>
 #include	<stdint.h>
@@ -20,6 +22,219 @@
 #include	"cpu_stats.h"
 
 //#define _INCLUDE_MAIN_CPU_STATS_
+
+char				gOsReleaseString[64]		=	"";
+char				gCpuInfoString[64]			=	"";
+char				gPlatformString[64]			=	"";
+double				gBogoMipsValue				=	0.0;
+char				gFullVersionString[128];
+
+
+
+//**************************************************************************
+//*	examples
+//*		PRETTY_NAME="Mendel GNU/Linux 4 (Day)"
+//*		PRETTY_NAME="Ubuntu 16.04 LTS"
+//*		Model		: Raspberry Pi 3 Model B Plus Rev 1.3
+//*
+//*	returns true on successful extraction
+//**************************************************************************
+static bool	ExtractArgValue(char *string, char delimChar, char *valueString)
+{
+int		slen;
+char	*delimPtr;
+bool	successFlag;
+
+	successFlag	=	false;
+	delimPtr	=	strchr(string, delimChar);
+	if (delimPtr != NULL)
+	{
+		//*	skip the delim char
+		delimPtr++;
+		while ((*delimPtr == ' ') || (*delimPtr == '"'))
+		{
+			delimPtr++;
+		}
+		strcpy(valueString, delimPtr);
+		slen	=	strlen(valueString);
+		while (((valueString[slen] < 0x20) || (valueString[slen] == '"')) && (slen > 0))
+		{
+			valueString[slen]	=	0;
+			slen--;
+		}
+		successFlag	=	true;
+	}
+	return(successFlag);
+}
+
+
+//**************************************************************************
+void	CPUstats_ReadOSreleaseVersion(void)
+{
+FILE	*filePointer;
+char	lineBuff[256];
+int		slen;
+char	codeName[64];
+bool	codeNameFound;
+
+	filePointer	=	fopen("/etc/os-release", "r");
+	if (filePointer != NULL)
+	{
+		codeName[0]		=	0;
+		codeNameFound	=	false;
+		while (fgets(lineBuff, 200, filePointer))
+		{
+			slen	=	strlen(lineBuff);
+			if (slen > 1)
+			{
+				if (strncmp(lineBuff, "PRETTY_NAME", 11) == 0)
+				{
+					ExtractArgValue(lineBuff, '=', gOsReleaseString);
+				}
+				else if (strncmp(lineBuff, "UBUNTU_CODENAME", 15) == 0)
+				{
+					//*	this was added for the case of the nvidia jetson board.
+					codeNameFound	=	ExtractArgValue(lineBuff, '=', codeName);
+				}
+			}
+		}
+		fclose(filePointer);
+
+		if (codeNameFound)
+		{
+			//*	check to see if the code name is in the release string
+			if (strstr(gOsReleaseString, codeName) == NULL)
+			{
+				//*	it is NOT there, put it in
+				strcat(gOsReleaseString, " (");
+				strcat(gOsReleaseString, codeName);
+				strcat(gOsReleaseString, ")");
+			}
+		}
+	}
+	else
+	{
+		CONSOLE_DEBUG("/etc/os-release not found");
+	}
+}
+
+//**************************************************************************
+void	CPUstats_ReadInfo(void)
+{
+FILE	*filePointer;
+char	lineBuff[256];
+int		slen;
+bool	stillNeedModel;
+char	argValueString[64];
+char	*stringPtr;
+
+	//*	set the default value in case we fail to read /proc/cpuinfo
+	strcpy(gPlatformString,	"");
+	strcpy(gCpuInfoString,	"");
+	stillNeedModel	=	true;
+
+#if defined(__arm__) && !defined(_PLATFORM_STRING_)
+	strcpy(gPlatformString,	"Raspberry Pi - ");
+#endif
+
+
+
+#if defined(__arm__)
+	strcpy(gCpuInfoString,	"Arm");
+#elif defined( __ARM_ARCH)
+	strcpy(gCpuInfoString,	"Arm");
+#elif defined( __x86_64)
+	strcpy(gCpuInfoString,	"64 bit x86");
+#elif defined( __i386__)
+	strcpy(gCpuInfoString,	"32 bit x86");
+#endif
+
+
+	filePointer	=	fopen("/proc/cpuinfo", "r");
+	if (filePointer != NULL)
+	{
+		while (fgets(lineBuff, 200, filePointer))
+		{
+			slen	=	strlen(lineBuff);
+			if (slen > 1)
+			{
+				if (strncmp(lineBuff, "model name", 10) == 0)
+				{
+					ExtractArgValue(lineBuff, ':', gCpuInfoString);
+				}
+				else if (strncmp(lineBuff, "Model", 5) == 0)
+				{
+					//*	so far I have only found this is only on Raspberry Pi
+					ExtractArgValue(lineBuff, ':', gPlatformString);
+					stillNeedModel	=	false;
+				}
+				else if (strncmp(lineBuff, "Revision", 8) == 0)
+				{
+					if (stillNeedModel)
+					{
+						ExtractArgValue(lineBuff, ':', argValueString);
+						if (strcmp(argValueString, "a020d3") == 0)
+						{
+							strcpy(gPlatformString,	"Raspberry Pi 3");
+						}
+						else
+						{
+							strcat(gPlatformString,	argValueString);
+						}
+					}
+				}
+				else if (strncasecmp(lineBuff, "bogomips", 8) == 0)
+				{
+					ExtractArgValue(lineBuff, ':', argValueString);
+					gBogoMipsValue	=	atof(argValueString);
+				}
+			}
+		}
+		fclose(filePointer);
+	}
+	else
+	{
+		CONSOLE_DEBUG("failed to open /proc/cpuinfo");
+	}
+
+	//=======================================================================
+	filePointer	=	fopen("/sys/firmware/devicetree/base/model", "r");
+	if (filePointer != NULL)
+	{
+		lineBuff[0]	=	0;
+		stringPtr	=	fgets(lineBuff, 200, filePointer);
+		if (stringPtr != NULL)
+		{
+			if (strlen(lineBuff) > 5)
+			{
+				strcpy(gPlatformString, lineBuff);
+			}
+		}
+		else
+		{
+			CONSOLE_DEBUG("Error reading /sys/firmware/devicetree/base/model");
+		}
+		fclose(filePointer);
+	}
+
+	//*	check to see if we have a valid platform string
+	if (strlen(gPlatformString) == 0)
+	{
+	#ifdef _PLATFORM_STRING_
+		//*	_PLATFORM_STRING_ can be defined in the make file
+		//	exmple, note the back slashes
+		//	jetson		:	DEFINEFLAGS		+=	-D_PLATFORM_STRING_=\"Nvidia-jetson\"
+		strcpy(gPlatformString, _PLATFORM_STRING_);
+	#endif
+
+	}
+#if (__SIZEOF_POINTER__ == 8)
+	strcat(gPlatformString, " (64 bit)");
+#elif (__SIZEOF_POINTER__ == 4)
+//	strcat(gPlatformString, " (32 bit)");
+#endif
+}
+
 
 //*****************************************************************************
 //	Returns a double with the temp in deg C

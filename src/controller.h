@@ -145,7 +145,7 @@ class Controller
 														const char	*deviceTypeStr,
 														const int	deviceNum);
 				bool	AlpacaGetSupportedActions(		const char *deviceTypeStr, const int deviceNum);
-		virtual	void	AlpacaProcessSupportedAction(	const char	*deviceTypeStr,
+		virtual	void	AlpacaProcessSupportedActions(	const char	*deviceTypeStr,
 														const int	deviveNum,
 														const char	*valueString);
 				int		AlpacaCheckForErrors(	SJP_Parser_t	*jsonParser,

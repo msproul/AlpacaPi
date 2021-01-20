@@ -222,6 +222,7 @@ int				bytesRead;
 char			readBuffer[kReadBuffLen];
 struct timeval	timeoutLength;
 int				setOptRetCode;
+int				so_oobinline;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -240,6 +241,17 @@ int				setOptRetCode;
 		CONSOLE_DEBUG_W_NUM("setsockopt() returned", setOptRetCode);
 	}
 
+	//*	turn out of band off
+	so_oobinline			=	0;
+	setOptRetCode			=	setsockopt(	sock,
+											SOL_SOCKET,
+											SO_OOBINLINE,
+											&so_oobinline,
+											sizeof(so_oobinline));
+	if (setOptRetCode != 0)
+	{
+		CONSOLE_DEBUG_W_NUM("setsockopt() returned", setOptRetCode);
+	}
 
 	do
 	{
@@ -264,7 +276,7 @@ int				setOptRetCode;
 //*	SendDataToSocket()
 //*		There is a separate instance of this function
 //*		for each connection.  It handles all communication
-//*		once a connnection has been established.
+//*		once a connection has been established.
 //*****************************************************************************
 void SendDataToSocket(int sock)
 {
@@ -276,7 +288,7 @@ char			htmlBuffer[kReadBuffLen];
 struct timeval	timeoutLength;
 int				setOptRetCode;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	memset(readBuffer, 0, kReadBuffLen);
 	//*	3/31/2020, trying to see if we are missing anything

@@ -100,7 +100,7 @@ int	ii;
 	#ifdef _ENABLE_FITS_
 		SaveImageAsFITS();
 	#endif // _ENABLE_FITS_
-	#ifdef _JETSON_
+	#if defined(_JETSON_) && defined(_FIND_STARS_)
 		long	keyPointCnt;
 		char	imageFilePath[128];
 		int		quality[3] = {16, 200, 0};
@@ -461,7 +461,7 @@ int		gainPercent;
 		fprintf(filePointer, "FireCapture v2.6  Settings\r\n");
 		fprintf(filePointer, "------------------------------------\r\n");
 
-		exposureTim_ms	=	(cLastexposureduration_us * 1.0) / 1000.0;
+		exposureTim_ms	=	(cLastexposure_duration_us * 1.0) / 1000.0;
 
 		fprintf(filePointer, "Camera=%s\r\n",					cDeviceName);
 //		fprintf(filePointer, "Filter=%s\r\n",					foo);L
@@ -472,15 +472,15 @@ int		gainPercent;
 //		fprintf(filePointer, "Mid=%s\r\n",						foo);134141.422
 //		fprintf(filePointer, "End=%s\r\n",						foo);134156.435
 
-		FormatTimeStringISO8601(&cLastExposureStartTime, timeStampString);
+		FormatTimeStringISO8601(&cLastexposure_StartTime, timeStampString);
 		fprintf(filePointer, "Start(UT)=%s\r\n",				timeStampString);	//	174126.410
 
 //		fprintf(filePointer, "Mid(UT)=%s\r\n",					foo);174141.422
 
-		FormatTimeStringISO8601(&cLastExposureEndTime, timeStampString);
+		FormatTimeStringISO8601(&cLastexposure_EndTime, timeStampString);
 		fprintf(filePointer, "End(UT)=%s\r\n",					timeStampString);	//	174156.435
 
-		imageDuration_secs	=	cLastExposureEndTime.tv_sec - cLastExposureStartTime.tv_sec;
+		imageDuration_secs	=	cLastexposure_EndTime.tv_sec - cLastexposure_StartTime.tv_sec;
 		fprintf(filePointer, "Duration=%3.3fs\r\n",				imageDuration_secs);	//	30.025s
 
 //		fprintf(filePointer, "Date_format=%s\r\n",				foo);ddMMyy

@@ -20,6 +20,7 @@
 //*****************************************************************************
 //*	Apr 21,	2020	<MLS> Created windowtab_about.cpp
 //*	Dec 14,	2020	<MLS> Updated web link in about box
+//*	Jan 17,	2021	<MLS> Added CPU info to about box
 //*****************************************************************************
 
 
@@ -31,6 +32,7 @@
 #include	"windowtab.h"
 #include	"windowtab_about.h"
 #include	"controller.h"
+#include	"cpu_stats.h"
 
 
 #define	kAboutBoxHeight	100
@@ -83,7 +85,7 @@ static char	gAlpacaPiTxt3[]	=
 	"Quick help\r"
 	"^q to quit\r"
 	"^w Closes current window, quits if only one\r"
-	"Clicking the close x does not work\r"
+//	"Clicking the close x does not work\r"
 };
 
 
@@ -93,6 +95,8 @@ void	WindowTabAbout::SetupWindowControls(void)
 int		yLoc;
 int		textBoxHt;
 int		iii;
+char	multiLineTextBuff[256];
+
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	//------------------------------------------
@@ -113,8 +117,8 @@ int		iii;
 	yLoc			+=	2;
 
 
-	textBoxHt		=	150;
-	for (iii=kAboutBox_TextBox1; iii<=kAboutBox_TextBox3; iii++)
+	textBoxHt		=	125;
+	for (iii=kAboutBox_TextBox1; iii<=kAboutBox_CPUinfo; iii++)
 	{
 		SetWidget(				iii,	0,			yLoc,		cWidth,		textBoxHt);
 		SetWidgetType(			iii,	kWidgetType_MultiLineText);
@@ -130,6 +134,14 @@ int		iii;
 	SetWidgetText(kAboutBox_TextBox2, gAlpacaPiTxt2);
 	SetWidgetText(kAboutBox_TextBox3, gAlpacaPiTxt3);
 
+	strcpy(multiLineTextBuff,	gOsReleaseString);
+	strcat(multiLineTextBuff,	"\r");
+	strcat(multiLineTextBuff,	gCpuInfoString);
+	strcat(multiLineTextBuff,	"\r");
+	strcat(multiLineTextBuff,	gPlatformString);
+	strcat(multiLineTextBuff,	"\r");
+
+	SetWidgetText(kAboutBox_CPUinfo, multiLineTextBuff);
 
 	SetAlpacaLogo(kAboutBox_AlpacaLogo, -1);
 

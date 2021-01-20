@@ -92,9 +92,9 @@ void	GetDefaultColors(	const char	overRideChar,
 		//*	gold
 		SetRGBColor(	bgColor,	(0x0CD - 0x10),	(0x0AC - 0x10),	(0x006));
 		SetRGBColor(	txColor,	0,		0,		0);
-		CONSOLE_DEBUG_W_HEX("bgColor->red\t=",	bgColor->red);
-		CONSOLE_DEBUG_W_HEX("bgColor->grn\t=",	bgColor->grn);
-		CONSOLE_DEBUG_W_HEX("bgColor->blu\t=",	bgColor->blu);
+//		CONSOLE_DEBUG_W_HEX("bgColor->red\t=",	bgColor->red);
+//		CONSOLE_DEBUG_W_HEX("bgColor->grn\t=",	bgColor->grn);
+//		CONSOLE_DEBUG_W_HEX("bgColor->blu\t=",	bgColor->blu);
 	}
 	else if (strcasestr(windowName, "pi") != NULL)
 	{

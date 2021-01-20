@@ -6,6 +6,7 @@
 //*	Jun 15,	2020	<MLS> Increased kMaxWidgets from 125 to 150
 //*	Jan 15,	2021	<MLS> Added Tab stops to widget definition
 //*	Jan 16,	2021	<MLS> Added font size kFont_TextList
+//*	Jan 17,	2021	<MLS> Added textPtr to widget
 //*****************************************************************************
 
 //#include	"widget.h"
@@ -103,6 +104,7 @@ typedef struct
 	short		tabStops[kMaxTabStops];
 	char		textString[kMaxWidgetStrLen];
 	char		helpText[kMaxHelpTextStrLen];
+	char		*textPtr;			//*	this is for large external text
 	CvScalar	bgColor;
 	CvScalar	textColor;
 	CvScalar	borderColor;

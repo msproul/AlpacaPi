@@ -49,6 +49,7 @@
 
 
 #include	"alpaca_defs.h"
+#include	"cpu_stats.h"
 
 #include	"controller.h"
 #include	"controller_camera.h"
@@ -78,78 +79,6 @@ char	gColorOverRide	=	0;
 char	gFullVersionString[128];
 char	gFirstArgString[256];
 
-#ifdef _ENABLE_CTRL_FOCUSERS_
-//*****************************************************************************
-//*	returns focuser type as per enum
-//*	figure out a window name
-//*****************************************************************************
-static int	GenerateFocuserWindowName(TYPE_REMOTE_DEV *device, int focuserNum, char *windowName)
-{
-int	myFocuserTYpe;
-
-	CONSOLE_DEBUG(__FUNCTION__);
-	CONSOLE_DEBUG(device->deviceNameStr);
-
-	if (strncasecmp(device->deviceNameStr, "NiteCrawler", 11) == 0)
-	{
-		myFocuserTYpe	=	kFocuserType_NiteCrawler;
-		if (strlen(device->hostName) > 0)
-		{
-			//*	if we have a host name, use it
-			if (device->alpacaDeviceNum > 0)
-			{
-				//*	if there are more than one device on this host, we need to make the window name unique
-				sprintf(windowName, "NiteCrawler-%s-%d",
-									device->hostName,
-									device->alpacaDeviceNum);
-			}
-			else
-			{
-				sprintf(windowName, "NiteCrawler-%s",
-									device->hostName);
-			}
-		}
-		else
-		{
-			sprintf(windowName, "NiteCrawler -%d", focuserNum);
-		}
-
-	}
-	else if (strncasecmp(device->deviceNameStr, "Moonlite", 8) == 0)
-	{
-		myFocuserTYpe	=	kFocuserType_MoonliteSingle;
-		sprintf(windowName, "Moonlite -%d", focuserNum);
-		if (strlen(device->hostName) > 0)
-		{
-			//*	if we have a host name, use it
-			if (device->alpacaDeviceNum > 0)
-			{
-				//*	if there are more than one device on this host, we need to make the window name unique
-				sprintf(windowName, "Moonlite-%s-%d",
-									device->hostName,
-									device->alpacaDeviceNum);
-			}
-			else
-			{
-				sprintf(windowName, "Moonlite-%s",
-									device->hostName);
-			}
-		}
-		else
-		{
-			sprintf(windowName, "Moonlite -%d", focuserNum);
-		}
-	}
-	else
-	{
-		myFocuserTYpe	=	kFocuserType_Other;
-		sprintf(windowName, "Focuser -%d", focuserNum);
-
-	}
-	CONSOLE_DEBUG(windowName);
-	return(myFocuserTYpe);
-}
-#endif // _ENABLE_CTRL_FOCUSERS_
 
 
 #ifdef _ENABLE_CTRL_SWITCHES_
@@ -210,45 +139,6 @@ static void	GenerateCameraWindowName(TYPE_REMOTE_DEV *device, int switchNum, cha
 }
 #endif // _ENABLE_CTRL_CAMERA_
 
-//*****************************************************************************
-static void	ProcessCmdLineArgs(int argc, char **argv)
-{
-int		ii;
-char	theChar;
-
-	strcpy(gFirstArgString, "");
-
-	CONSOLE_DEBUG(__FUNCTION__);
-	ii	=	1;
-	while (ii<argc)
-	{
-		if (argv[ii][0] == '-')
-		{
-			theChar	=	argv[ii][1];
-			switch(theChar)
-			{
-				//*	-c	force color
-				//*	-cr		means red
-				case 'c':
-					if (isalpha(argv[ii][2]))
-					{
-						gColorOverRide	=	argv[ii][2];
-					}
-					break;
-
-				//*	-i ip address
-				case 'i':
-					break;
-
-			}
-		}
-		else
-		{
-			strcpy(gFirstArgString, argv[ii]);
-		}
-		ii++;
-	}
-}
 
 
 #ifdef _ENABLE_USB_FOCUSERS_
@@ -290,61 +180,6 @@ ControllerUSB		*myController;
 }
 #endif // _ENABLE_USB_FOCUSERS_
 
-#ifdef _ENABLE_CTRL_FOCUSERS_
-int		gFocuserNum		=	1;
-
-//*****************************************************************************
-static int	CheckForFocuser(TYPE_REMOTE_DEV *remoteDevice)
-{
-Controller		*myController;
-char			windowName[128]	=	"Moonlite NiteCrawler";
-int				objectsCreated;
-int				myFocuserType;
-
-	objectsCreated	=	0;
-	//*	is it a focuser?
-	if (strcasecmp(remoteDevice->deviceTypeStr, "focuser") == 0)
-	{
-		//*	figure out a window name
-		myFocuserType	=	GenerateFocuserWindowName(remoteDevice, gFocuserNum, windowName);
-
-		//*	create the controller window object
-		if (myFocuserType == kFocuserType_NiteCrawler)
-		{
-			myController	=	new ControllerNiteCrawler(	windowName,
-															&remoteDevice->deviceAddress,
-															remoteDevice->port,
-															remoteDevice->alpacaDeviceNum);
-
-		}
-		else if (myFocuserType == kFocuserType_MoonliteSingle)
-		{
-			myController	=	new ControllerMLsingle(		windowName,
-															&remoteDevice->deviceAddress,
-															remoteDevice->port,
-															remoteDevice->alpacaDeviceNum);
-		}
-		else
-		{
-			myController	=	new ControllerFocusGeneric(	windowName,
-															&remoteDevice->deviceAddress,
-															remoteDevice->port,
-															remoteDevice->alpacaDeviceNum);
-
-		}
-		if (myController != NULL)
-		{
-			//*	force window update
-			myController->HandleWindowUpdate();
-			cvWaitKey(100);
-		}
-
-		gFocuserNum++;
-		objectsCreated++;
-	}
-	return(objectsCreated);
-}
-#endif // _ENABLE_CTRL_FOCUSERS_
 
 #ifdef _ENABLE_CTRL_SWITCHES_
 int		gSwitchNum		=	1;
@@ -461,6 +296,46 @@ int				iii;
 }
 #endif // _ENABLE_CTRL_CAMERA_
 
+//*****************************************************************************
+static void	ProcessCmdLineArgs(int argc, char **argv)
+{
+int		ii;
+char	theChar;
+
+	strcpy(gFirstArgString, "");
+
+	CONSOLE_DEBUG(__FUNCTION__);
+	ii	=	1;
+	while (ii<argc)
+	{
+		if (argv[ii][0] == '-')
+		{
+			theChar	=	argv[ii][1];
+			switch(theChar)
+			{
+				//*	-c	force color
+				//*	-cr		means red
+				case 'c':
+					if (isalpha(argv[ii][2]))
+					{
+						gColorOverRide	=	argv[ii][2];
+					}
+					break;
+
+				//*	-i ip address
+				case 'i':
+					break;
+
+			}
+		}
+		else
+		{
+			strcpy(gFirstArgString, argv[ii]);
+		}
+		ii++;
+	}
+}
+
 
 //*****************************************************************************
 int main(int argc, char *argv[])
@@ -478,6 +353,9 @@ int					keyPressed;
 	ProcessCmdLineArgs(argc, argv);
 
 	sprintf(gFullVersionString, "%s - %s build #%d", kApplicationName, kVersionString, kBuildNumber);
+
+	CPUstats_ReadOSreleaseVersion();
+	CPUstats_ReadInfo();
 
 #ifdef _ENABLE_ALPACA_QUERY_
 

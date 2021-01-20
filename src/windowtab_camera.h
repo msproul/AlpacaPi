@@ -55,6 +55,8 @@ enum
 	kCameraBox_Reset,
 	kCameraBox_StartExposure,
 	kCameraBox_DownloadImage,
+	kCameraBox_Btn_8Bit,
+	kCameraBox_DownloadRGBarray,
 
 	kCameraBox_FilterWheelName,
 	kCameraBox_FilterWheel1,
@@ -125,7 +127,9 @@ class WindowTabCamera: public WindowTab
 				void	StartExposure(void);
 				void	SetTempartueDisplayEnable(bool enabled);
 				void	SetReceivedFileName(const char *newFileName);
-				void	DownloadImage(void);
+				void	DownloadImage(const bool useRGBarray);
+
+				bool	cForce8BitRead;
 
 //				void	DrawGraph(IplImage *openCV_Image, TYPE_WIDGET *graphWidget, double *arrayData, int arrayCount);
 

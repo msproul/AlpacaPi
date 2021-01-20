@@ -90,7 +90,8 @@ void	JsonResponse_Add_RawText(	const int		socketFD,
 									char			*jsonTextBuffer,
 									const int		maxLen,
 									const char		*rawTextBuffer);
-int		JsonResponse_SendTextBuffer(int socketFD, const char *jsonTextBuffer);
+int		JsonResponse_SendTextBuffer(const int		socketFD,
+									char			*jsonTextBuffer);
 
 #define	INCLUDE_COMMA	true
 #define	NO_COMMA		false
