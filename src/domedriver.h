@@ -25,6 +25,9 @@
 #ifndef _DOME_DRIVER_H_
 #define	_DOME_DRIVER_H_
 
+#ifndef	_ALPACA_DEFS_H_
+	#include	"alpaca_defs.h"
+#endif // _ALPACA_DEFS_H_
 
 #ifndef _ALPACA_DRIVER_H_
 	#include	"alpacadriver.h"
@@ -139,10 +142,6 @@ class DomeDriver: public AlpacaDriver
 
 				DOME_STATE_TYPE	cDomeState;
 				DOME_STATE_TYPE	cPreviousDomeState;
-				int32_t			cShutterstatus;
-				double			cAltitude_Degrees;
-				double			cAzimuth_Degrees;			//*	in degrees
-				double			cAzimuth_Destination;		//*	were we want to go to, must be >= to 0 to be valid
 
 				//	The dome azimuth, increasing clockwise,
 				//	i.e.,	North	=	0,
@@ -162,24 +161,21 @@ class DomeDriver: public AlpacaDriver
 
 				int32_t			cTimeOfLastAzimuthUpdate;	//*	used to integrate position over time
 
-
-				DOME_CONFIG		cDomeConfig;
-				bool			cAtHome;
-				bool			cAtPark;
-				bool			cCanFindHome;
-				bool			cCanPark;
-				bool			cCanSlave;
 				bool			cGoingBump;
+				bool			cGoingHome;
 				bool			cGoingPark;
 				bool			cManualMove;
-				bool			cCanSetAltitude;
-				bool			cCanSetAzimuth;
-				bool			cCanSetPark;
-				bool			cCanSetShutter;
-				bool			cCanSyncAzimuth;
-				bool			cSlaved;
-				bool			cSlewing;
-				bool			cGoingHome;
+
+				DOME_CONFIG		cDomeConfig;
+
+				//-----------------------------------------------------
+				//*	ASCOM properties
+				TYPE_DomeProperties	cDomeProp;
+
+
+		//		int32_t			cShutterstatus;
+				double			cAzimuth_Destination;		//*	were we want to go to, must be >= to 0 to be valid
+
 
 	protected:
 		//=====================================================

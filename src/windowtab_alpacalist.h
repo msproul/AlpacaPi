@@ -4,6 +4,9 @@
 #ifndef	_WINDOWTAB_ALPACALIST_H_
 #define	_WINDOWTAB_ALPACALIST_H_
 
+#ifndef _DISCOVERY_LIB_H_
+	#include	"discovery_lib.h"
+#endif // _DISCOVERY_LIB_H_
 
 #ifndef _WINDOW_TAB_H_
 	#include	"windowtab.h"
@@ -14,6 +17,11 @@ enum
 {
 	kAlpacaList_Title	=	0,
 
+	kAlpacaList_ClmTitle1,
+	kAlpacaList_ClmTitle2,
+	kAlpacaList_ClmTitle3,
+	kAlpacaList_ClmTitle4,
+	kAlpacaList_ClmTitle5,
 
 	kAlpacaList_AlpacaDev_01,
 	kAlpacaList_AlpacaDev_02,
@@ -53,9 +61,9 @@ enum
 	kAlpacaList_AlpacaDev_36,
 	kAlpacaList_AlpacaDev_37,
 	kAlpacaList_AlpacaDev_38,
-	kAlpacaList_AlpacaDev_39,
+//	kAlpacaList_AlpacaDev_39,
 
-	kAlpacaList_AlpacaDev_Last	=	kAlpacaList_AlpacaDev_39,
+	kAlpacaList_AlpacaDev_Last	=	kAlpacaList_AlpacaDev_38,
 
 //	kAlpacaList_AlpacaDev_OutLine,
 
@@ -93,12 +101,17 @@ class WindowTabAlpacaList: public WindowTab
 		virtual	void	ProcessButtonClick(const int buttonIdx);
 		virtual	void	ProcessDoubleClick(const int buttonIdx);
 
-				void	UpdateList(void);
-				int		cAlpacaDevCnt;
-				int		cPrevAlpacaDevCnt;
+				void	ClearRemoteDeviceList(void);
+				void	UpdateRemoteDeviceList(void);
+				void	UpdateOnScreenWidgetList(void);
+				void	UpdateSortOrder(void);
 
-				bool	cIncludeManagment;
-				int		cDevIdxList[kMaxDeviceCnt];	//*	if managment is enabled, this is 1 to 1
+				TYPE_REMOTE_DEV	cRemoteDeviceList[kMaxDeviceCnt];
+				int				cAlpacaDevCnt;
+				int				cPrevAlpacaDevCnt;
+				int				cSortColumn;
+
+				bool			cIncludeManagment;
 
 };
 

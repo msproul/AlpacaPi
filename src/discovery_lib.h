@@ -42,6 +42,7 @@ typedef struct
 //*	this is a list of alpaca devices, can be more than one per IP address
 typedef struct
 {
+	bool				validEntry;
 	struct sockaddr_in	deviceAddress;
 	int					port;
 	char				hostName[64];

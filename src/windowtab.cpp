@@ -43,6 +43,7 @@
 //*	Jan  6,	2021	<MLS> Added GetWidgetText()
 //*	Jan 10,	2021	<MLS> Added new version of AlpacaSendPutCmd()
 //*	Jan 15,	2021	<MLS> Added SetWidgetTabStops()
+//*	Jan 23,	2021	<MLS> Added overflow checking to help text string
 //*****************************************************************************
 
 
@@ -263,7 +264,16 @@ void	WindowTab::SetWidgetHelpText(const int widgetIdx, const char *newText)
 //	CONSOLE_DEBUG(newText);
 	if ((widgetIdx >= 0) && (widgetIdx < kMaxWidgets))
 	{
-		strcpy(cWidgetList[widgetIdx].helpText, newText);
+		if (strlen(newText) < kMaxHelpTextStrLen)
+		{
+			strcpy(cWidgetList[widgetIdx].helpText, newText);
+		}
+		else
+		{
+			CONSOLE_DEBUG("Help text is to long");
+			CONSOLE_DEBUG(newText);
+			CONSOLE_ABORT(__FUNCTION__);
+		}
 	}
 	else
 	{
@@ -592,7 +602,7 @@ Controller	*myControllerObj;
 				strcpy(textStr, "Cmd=");
 				strcat(textStr, myControllerObj->cLastAlpacaCmdString);
 				SetWidgetText(	cLastCmdTextBox, textStr);
-				CONSOLE_DEBUG_W_STR("cLastAlpacaCmdString\t=", textStr);
+//				CONSOLE_DEBUG_W_STR("cLastAlpacaCmdString\t=", textStr);
 			}
 		}
 	}
@@ -1020,28 +1030,28 @@ bool	WindowTab::AlpacaSendPutCmd(const char		*alpacaDevice,
 bool		validData;
 Controller	*myControllerObj;
 
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, alpacaCmd);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, alpacaCmd);
 
 	myControllerObj	=	(Controller *)cParentObjPtr;
 	if (myControllerObj != NULL)
 	{
-		CONSOLE_DEBUG_W_STR(alpacaDevice, alpacaCmd);
+//		CONSOLE_DEBUG_W_STR(alpacaDevice, alpacaCmd);
 		if (jsonParser != NULL)
 		{
 			validData	=	myControllerObj->AlpacaSendPutCmdwResponse(	alpacaDevice,
 																		alpacaCmd,
 																		dataString,
 																		jsonParser);
-			CONSOLE_DEBUG("Calling AlpacaCheckForErrors()");
+//			CONSOLE_DEBUG("Calling AlpacaCheckForErrors()");
 			cLastAlpacaErrNum	=	AlpacaCheckForErrors(jsonParser, cLastAlpacaErrStr, true);
 
 
-			CONSOLE_DEBUG_W_NUM("cLastAlpacaErrNum\t=", cLastAlpacaErrNum);
-			CONSOLE_DEBUG_W_STR("cLastAlpacaErrStr\t=", cLastAlpacaErrStr);
+//			CONSOLE_DEBUG_W_NUM("cLastAlpacaErrNum\t=", cLastAlpacaErrNum);
+//			CONSOLE_DEBUG_W_STR("cLastAlpacaErrStr\t=", cLastAlpacaErrStr);
 		}
 		else
 		{
-			CONSOLE_DEBUG("jsonParser is NULL");
+//			CONSOLE_DEBUG("jsonParser is NULL");
 			validData	=	myControllerObj->AlpacaSendPutCmd(	alpacaDevice,
 																alpacaCmd,
 																dataString);

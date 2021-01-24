@@ -36,6 +36,7 @@
 //*	Dec 19,	2019	<MLS> Added HaltFocuser()
 //*	Feb 29,	2020	<MLS> Added moonlite switch info to ReadAll
 //*	Apr  2,	2020	<MLS> CONFORM-focuser -> PASSED!!!!!!!!!!!!!!!!!!!!!
+//*	Jan 24,	2021	<MLS> Converted FocuserDriver to use properties struct
 //*****************************************************************************
 
 #ifdef _ENABLE_FOCUSER_
@@ -104,28 +105,31 @@ FocuserDriver::FocuserDriver(const int argDevNum)
 
 	strcpy(cDeviceName, "Focuser");
 
-	cFocuserPostion				=	-1;
-	cPrevFocuserPostion			=	-1;
-	cNewFocuserPostion			=	-1;
-	cFocusIsMoving				=	false;
-	cFocuserStepSize			=	0.0;
-	cMaxStep					=	10;
-	cMaxIncrement				=	10;
-	cHasTempComp				=	false;
-	cTempCompEnabled			=	false;
+	memset(&cFocuserProp, 0, sizeof(TYPE_FocuserProperties));
+
+	cFocuserProp.MaxStep		=	10;
+	cFocuserProp.MaxIncrement	=	10;
+	cFocuserProp.Position		=	-1;
+
+
+	cPrevFocuserPosition		=	-1;
+	cNewFocuserPosition			=	-1;
+//-	cFocuserStepSize			=	0.0;
+//-	cHasTempComp				=	false;
+//-	cTempCompEnabled			=	false;
 
 	//*	all of the following is for support of Moonlite NiteCrawler
 	cIsNiteCrawler				=	false;
 	cFocuserSupportsRotation	=	false;
-	cRotatorPostion				=	-1;
-	cPrevRotatorPostion			=	-1;
-	cNewRotatorPostion			=	-1;
+	cRotatorPosition			=	-1;
+	cPrevRotatorPosition		=	-1;
+	cNewRotatorPosition			=	-1;
 	cRotatorIsMoving			=	false;
 
 	cFocuserSupportsAux			=	false;
 	cAuxPosition				=	-1;
-	cPrevAuxPostion				=	-1;
-	cNewAuxPostion				=	-1;
+	cPrevAuxPosition			=	-1;
+	cNewAuxPosition				=	-1;
 	cAuxIsMoving				=	false;
 
 	cFocuserHasVoltage			=	false;
@@ -335,7 +339,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 							reqData->jsonTextBuffer,
 							kMaxJsonBuffLen,
 							responseString,
-							true,
+							cFocuserProp.Absolute,
 							INCLUDE_COMMA);
 
 
@@ -353,7 +357,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 							reqData->jsonTextBuffer,
 							kMaxJsonBuffLen,
 							responseString,
-							cFocusIsMoving,
+							cFocuserProp.IsMoving,
 							INCLUDE_COMMA);
 
 	alpacaErrCode	=	kASCOM_Err_Success;
@@ -369,7 +373,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 							reqData->jsonTextBuffer,
 							kMaxJsonBuffLen,
 							responseString,
-							cMaxIncrement,
+							cFocuserProp.MaxIncrement,
 							INCLUDE_COMMA);
 
 	alpacaErrCode	=	kASCOM_Err_Success;
@@ -387,7 +391,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 							reqData->jsonTextBuffer,
 							kMaxJsonBuffLen,
 							responseString,
-							cMaxStep,
+							cFocuserProp.MaxStep,
 							INCLUDE_COMMA);
 
 	alpacaErrCode	=	kASCOM_Err_Success;
@@ -405,7 +409,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 							reqData->jsonTextBuffer,
 							kMaxJsonBuffLen,
 							responseString,
-							cFocuserPostion,
+							cFocuserProp.Position,
 							INCLUDE_COMMA);
 
 	alpacaErrCode	=	kASCOM_Err_Success;
@@ -422,7 +426,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 								reqData->jsonTextBuffer,
 								kMaxJsonBuffLen,
 								responseString,
-								cFocuserStepSize,
+								cFocuserProp.StepSize,
 								INCLUDE_COMMA);
 
 	JsonResponse_Add_String(	reqData->socket,
@@ -447,7 +451,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 								reqData->jsonTextBuffer,
 								kMaxJsonBuffLen,
 								responseString,
-								cTempCompEnabled,
+								cFocuserProp.TempComp,
 								INCLUDE_COMMA);
 
 
@@ -469,7 +473,7 @@ char				argumentString[32];
 
 	if (reqData != NULL)
 	{
-		if (cHasTempComp)
+		if (cFocuserProp.TempCompAvailable)
 		{
 			foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
 													"TempComp",
@@ -479,11 +483,11 @@ char				argumentString[32];
 			{
 				if (strcasecmp(argumentString, "true") == 0)
 				{
-					cTempCompEnabled	=	true;
+					cFocuserProp.TempComp	=	true;
 				}
 				else
 				{
-					cTempCompEnabled	=	false;
+					cFocuserProp.TempComp	=	false;
 				}
 
 				alpacaErrCode	=	kASCOM_Err_Success;
@@ -517,7 +521,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 							reqData->jsonTextBuffer,
 							kMaxJsonBuffLen,
 							responseString,
-							cHasTempComp,
+							cFocuserProp.TempCompAvailable,
 							INCLUDE_COMMA);
 
 
@@ -588,7 +592,7 @@ int32_t				newPosition;
 		if (foundKeyWord)
 		{
 			newPosition		=	atoi(argumentString);
-			alpacaErrCode	=	SetFocuserPostion(newPosition, alpacaErrMsg);
+			alpacaErrCode	=	SetFocuserPosition(newPosition, alpacaErrMsg);
 		}
 		else
 		{
@@ -622,8 +626,8 @@ int32_t				newPosition;
 		if (foundKeyWord)
 		{
 			//*	new position is the current position plus the new offset
-			newPosition		=	cFocuserPostion + atoi(argumentString);
-			alpacaErrCode	=	SetFocuserPostion(newPosition, alpacaErrMsg);
+			newPosition		=	cFocuserProp.Position + atoi(argumentString);
+			alpacaErrCode	=	SetFocuserPosition(newPosition, alpacaErrMsg);
 		}
 		else
 		{
@@ -709,7 +713,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 									reqData->jsonTextBuffer,
 									kMaxJsonBuffLen,
 									"RotatorPosition",
-									cRotatorPostion,
+									cRotatorPosition,
 									INCLUDE_COMMA);
 
 			JsonResponse_Add_Bool(	reqData->socket,
@@ -810,11 +814,11 @@ char		lineBuffer[128];
 		OutputHTMLrowData(mySocketFD,	"Serial Num",	cDeviceSerialNum);
 
 		//*	focuser position
-		sprintf(lineBuffer, "%d", cFocuserPostion);
+		sprintf(lineBuffer, "%d", cFocuserProp.Position);
 		OutputHTMLrowData(mySocketFD,	"Focuser position",	lineBuffer);
 
 		//*	rotator position
-		sprintf(lineBuffer, "%d", cRotatorPostion);
+		sprintf(lineBuffer, "%d", cRotatorPosition);
 		OutputHTMLrowData(mySocketFD,	"Rotator position",	lineBuffer);
 
 		//*	Aux position
@@ -850,7 +854,7 @@ void	FocuserDriver::OutputHTML_Part2(TYPE_GetPutRequestData *reqData)
 }
 
 //*****************************************************************************
-TYPE_ASCOM_STATUS		FocuserDriver::SetFocuserPostion(const int32_t newPosition, char *alpacaErrMsg)
+TYPE_ASCOM_STATUS		FocuserDriver::SetFocuserPosition(const int32_t newPosition, char *alpacaErrMsg)
 {
 	//*	this should be overridden by the subclass
 	return(kASCOM_Err_NotImplemented);
@@ -873,9 +877,9 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 }
 
 //*****************************************************************************
-int32_t	FocuserDriver::GetFocuserPostion(void)
+int32_t	FocuserDriver::GetFocuserPosition(void)
 {
-	return(cFocuserPostion);
+	return(cFocuserProp.Position);
 }
 
 //*****************************************************************************
@@ -926,7 +930,7 @@ bool	FocuserDriver::RotationSupported(void)
 //*****************************************************************************
 int32_t	FocuserDriver::GetRotatorPosition(void)
 {
-	return(cRotatorPostion);
+	return(cRotatorPosition);
 }
 
 //*****************************************************************************

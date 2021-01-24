@@ -107,7 +107,14 @@
 //***************************************************************************************
 #if defined(_DEBUG_TIMING_) && defined(_ENABLE_CONSOLE_DEBUG_)
 #include	<stdint.h>
-uint32_t	millis(void);
+
+#ifdef __cplusplus
+	extern "C" {
+#endif
+	uint32_t	millis(void);
+#ifdef __cplusplus
+}
+#endif
 
 	#define		SETUP_TIMING()					\
 		uint32_t		tStartMillisecs;		\

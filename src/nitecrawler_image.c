@@ -51,7 +51,7 @@ IplImage	*myImage;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
-	myImage	=	cvLoadImage("Moonlite-logo.png", CV_LOAD_IMAGE_COLOR);
+	myImage	=	cvLoadImage("logos/Moonlite-logo.png", CV_LOAD_IMAGE_COLOR);
 	if (myImage == NULL)
 	{
 		CONSOLE_DEBUG("failed to load Moonlite-logo.png");

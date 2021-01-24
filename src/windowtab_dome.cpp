@@ -494,7 +494,7 @@ ControllerDome	*myDomeController;
 	if (myDomeController != NULL)
 	{
 		//*	we need to find out the current slaved mode
-		mySlavedMode	=	myDomeController->cSlaved;
+		mySlavedMode	=	myDomeController->cDomeProp.Slaved;
 //		myShutterStatus	=	myDomeController->cShutterStatus;
 		if (mySlavedMode)
 		{

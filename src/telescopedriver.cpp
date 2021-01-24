@@ -31,10 +31,16 @@
 //*****************************************************************************
 //*	Dec  5,	2020	<MLS> Created telescopedriver.cpp
 //*	Dec  5,	2020	<MLS> CONFORM-telescope -> lots of errors
-//*	Dec  5,	2020	<MLS> CONFORM-telescope -> 25 errors, 0 warnings and 2 issues (tracking rates disabled)
-//*	Dec  6,	2020	<MLS> CONFORM-telescope -> 4 errors, 0 warnings and 0 issues (tracking rates disabled)
-//*	Dec  6,	2020	<MLS> CONFORM-telescope -> 35 errors, 0 warnings and 3 issues (tracking rates enabled)
+//*	Dec  5,	2020	<MLS> CONFORM-telescope -> 25 errors, 0 warnings and 2 issues
+//*	Dec  6,	2020	<MLS> CONFORM-telescope -> tracking rates disabled
+//*	Dec  6,	2020	<MLS> CONFORM-telescope -> 4 errors, 0 warnings and 0 issues
+//*	Dec  6,	2020	<MLS> CONFORM-telescope - tracking rates enabled
+//*	Dec  6,	2020	<MLS> CONFORM-telescope -> 35 errors, 0 warnings and 3 issues
 //*	Dec  7,	2020	<MLS> CONFORM-telescope -> 0 errors, 0 warnings and 6 issues
+//*	Jan 22,	2021	<MLS> Added Telescope_SyncToRA_DEC()
+//*	Jan 22,	2021	<MLS> Added Telescope_SlewToRA_DEC()
+//*	Jan 23,	2021	<MLS> Added Telescope_TrackingOnOff()
+//*	Jan 24,	2021	<MLS> Converted TelescopeDriver to use properties struct
 //*****************************************************************************
 
 
@@ -261,81 +267,84 @@ TelescopeDriver::TelescopeDriver(void)
 	strcpy(cDeviceName, "Telescope");
 
 	//*	set the defaults, everything to false or zero
-	cDriverVersion				=	3;
-	cAlginmentMode				=	kAlignmentMode_algGermanPolar;
-	cAltitude					=	0.0;
-	cApertureArea				=	0.0;
-	cApertureDiameter			=	0.0;
-	cAtHome						=	false;
-	cAtPark						=	false;
-	cAzimuth					=	0.0;
-	cCanFindHome				=	false;
-	cCanMoveAxis				=	false;
-	cCanPark					=	false;
-	cCanPulseGuide				=	false;
-	cCanSetDeclinationRate		=	false;
-	cCanSetGuideRates			=	false;
-	cCanSetPark					=	false;
-	cCanSetPierSide				=	false;
-	cCanSetRightAscensionRate	=	false;
-	cCanSetTracking				=	false;
-	cCanSlew					=	false;
-	cCanSlewAltAz				=	false;
-	cCanSlewAltAzAsync			=	false;
-	cCanSlewAsync				=	false;
-	cCanSync					=	false;
-	cCanSyncAltAz				=	false;
-	cCanUnpark					=	false;
-	cDeclination				=	0.0;
-	cDeclinationRate			=	0.0;
-	cDoesRefraction				=	false;
-	cEquatorialSystem			=	kECT_equOther;
-	cFocalLength				=	0.0;
-	cGuideRateDeclination		=	0.0;
-	cGuideRateRightAscension	=	0.0;
-	cIsPulseGuiding				=	false;
-	cRightAscension				=	0.0;
-	cRightAscensionRate			=	0.0;
-	cSideOfPier					=	kPierSide_pierUnknown;
-	cSiderealTime				=	0.0;
-	cSiteElevation				=	0.0;
-	cSiteLatitude				=	0.0;
-	cSiteLongitude				=	0.0;
-	cSlewing					=	false;
-	cSlewSettleTime				=	0;
-	cTargetDec_HasBeenSet		=	false;
-	cTargetRA_HasBeenSet		=	false;
-	cTargetDeclination			=	0.0;
-	cTargetRightAscension		=	0.0;
-	cTracking					=	false;
-	cTrackingRate				=	kDriveRate_driveSidereal;
+	memset(&cTelescopeProp, 0, sizeof(TYPE_TelescopeProperties));
+
+	cDriverVersion					=	3;
+	cTelescopeProp.AlginmentMode	=	kAlignmentMode_algGermanPolar;
+
+//-	cAltitude					=	0.0;
+//-	cApertureArea				=	0.0;
+//-	cApertureDiameter			=	0.0;
+//-	cAtHome						=	false;
+//-	cAtPark						=	false;
+//-	cAzimuth					=	0.0;
+//-	cCanFindHome				=	false;
+//-	cCanMoveAxis				=	false;
+//-	cCanPark					=	false;
+//-	cCanPulseGuide				=	false;
+//-	cCanSetDeclinationRate		=	false;
+//-	cCanSetGuideRates			=	false;
+//-	cCanSetPark					=	false;
+//-	cCanSetPierSide				=	false;
+//-	cCanSetRightAscensionRate	=	false;
+//-	cCanSetTracking				=	false;
+//-	cCanSlew					=	false;
+//-	cCanSlewAltAz				=	false;
+//-	cCanSlewAltAzAsync			=	false;
+//-	cCanSlewAsync				=	false;
+//-	cCanSync					=	false;
+//-	cCanSyncAltAz				=	false;
+//-	cCanUnpark					=	false;
+//-	cDeclination				=	0.0;
+//-	cDeclinationRate			=	0.0;
+//-	cDoesRefraction				=	false;
+	cTelescopeProp.EquatorialSystem			=	kECT_equOther;
+//-	cFocalLength				=	0.0;
+//-	cGuideRateDeclination		=	0.0;
+//-	cGuideRateRightAscension	=	0.0;
+//-	cIsPulseGuiding				=	false;
+//-	cRightAscension				=	0.0;
+//-	cRightAscensionRate			=	0.0;
+	cTelescopeProp.SideOfPier					=	kPierSide_pierUnknown;
+//-	cSiderealTime				=	0.0;
+//-	cSiteElevation				=	0.0;
+//-	cSiteLatitude				=	0.0;
+//-	cSiteLongitude				=	0.0;
+//-	cSlewing					=	false;
+//-	cSlewSettleTime				=	0;
+//-	cTargetDec_HasBeenSet		=	false;
+//-	cTargetRA_HasBeenSet		=	false;
+//-	cTargetDeclination			=	0.0;
+//-	cTargetRightAscension		=	0.0;
+//-	cTracking					=	false;
+	cTelescopeProp.TrackingRate				=	kDriveRate_driveSidereal;
 //+	cTrackingRates;
 //+	cUTCDate;
 
 	if (gObseratorySettings.ValidInfo)
 	{
 		//*	now set the things we do know
-		cSiteElevation			=	gObseratorySettings.Elevation_m;
-		cSiteLatitude			=	gObseratorySettings.Latitude;
-		cSiteLongitude			=	gObseratorySettings.Longitude;
+		cTelescopeProp.SiteElevation	=	gObseratorySettings.Elevation_m;
+		cTelescopeProp.SiteLatitude		=	gObseratorySettings.Latitude;
+		cTelescopeProp.SiteLongitude	=	gObseratorySettings.Longitude;
 	}
 
 
 	//*	these are temporary to get CONFORM to work
-	cApertureDiameter			=	16 * 25.4;
-	cFocalLength				=	cApertureDiameter * 4;
-	cApertureArea				=	M_PI * ((cApertureDiameter/2) * (cApertureDiameter/2));
+	cTelescopeProp.ApertureDiameter		=	16 * 25.4;
+	cTelescopeProp.FocalLength			=	cTelescopeProp.ApertureDiameter * 4;
+	cTelescopeProp.ApertureArea			=	M_PI * ((cTelescopeProp.ApertureDiameter/2) * (cTelescopeProp.ApertureDiameter/2));
 
 
 
 	//*	turn some of the features back on for CONFORM testing
-	cCanSetTracking				=	true;
-	cCanPark					=	true;
-	cCanUnpark					=	true;
-	cCanSync					=	true;
-	cCanSlew					=	true;
-	cCanSetRightAscensionRate	=	true;
-	cCanSetDeclinationRate		=	true;
+//	cCanSetTracking				=	true;
+//	cCanPark					=	true;
+//	cCanUnpark					=	true;
+//	cCanSync					=	true;
+//	cCanSlew					=	true;
+//	cCanSetRightAscensionRate	=	true;
+//	cCanSetDeclinationRate		=	true;
 }
 
 //**************************************************************************************
@@ -356,11 +365,11 @@ int					cmdEnumValue;
 int					cmdType;
 int					mySocket;
 
-#ifdef _DEBUG_CONFORM_
-	CONSOLE_DEBUG(__FUNCTION__);
-	CONSOLE_DEBUG_W_STR("contentData\t=", reqData->contentData);
-#endif // _DEBUG_CONFORM_
-	CONSOLE_DEBUG_W_STR("htmlData\t=", reqData->htmlData);
+//	CONSOLE_DEBUG_W_STR("htmlData\t=", reqData->htmlData);
+	if (strcmp(reqData->deviceCommand, "readall") != 0)
+	{
+		CONSOLE_DEBUG_W_STR("deviceCommand\t=",	reqData->deviceCommand);
+	}
 
 	//*	make local copies of the data structure to make the code easier to read
 	mySocket	=	reqData->socket;
@@ -720,59 +729,101 @@ int					mySocket;
 		break;
 
 	case kCmd_Telescope_findhome:					//*	Moves the mount to the "home" position.
-		alpacaErrCode	=	Put_FindHome(reqData, alpacaErrMsg);
+		if (reqData->get_putIndicator == 'P')
+		{
+			alpacaErrCode	=	Put_FindHome(reqData, alpacaErrMsg);
+		}
 		break;
 
 	case kCmd_Telescope_moveaxis:					//*	Moves a telescope axis at the given rate.
-		alpacaErrCode	=	Put_MoveAxis(reqData, alpacaErrMsg);
+		if (reqData->get_putIndicator == 'P')
+		{
+			alpacaErrCode	=	Put_MoveAxis(reqData, alpacaErrMsg);
+		}
 		break;
 
 	case kCmd_Telescope_park:						//*	Park the mount
-		alpacaErrCode	=	Put_Park(reqData, alpacaErrMsg);
+		if (reqData->get_putIndicator == 'P')
+		{
+			alpacaErrCode	=	Put_Park(reqData, alpacaErrMsg);
+		}
 		break;
 
 	case kCmd_Telescope_pulseguide:					//*	Moves the scope in the given direction for the given time.
-		alpacaErrCode	=	Put_PulseGuide(reqData, alpacaErrMsg);
+		if (reqData->get_putIndicator == 'P')
+		{
+			alpacaErrCode	=	Put_PulseGuide(reqData, alpacaErrMsg);
+		}
 		break;
 
 	case kCmd_Telescope_setpark:					//*	Sets the telescope's park position
-		alpacaErrCode	=	Put_SetPark(reqData, alpacaErrMsg);
+		if (reqData->get_putIndicator == 'P')
+		{
+			alpacaErrCode	=	Put_SetPark(reqData, alpacaErrMsg);
+		}
 		break;
 
 	case kCmd_Telescope_slewtoaltaz:				//*	Synchronously slew to the given local horizontal coordinates.
-		alpacaErrCode	=	Put_SlewToAltAz(reqData, alpacaErrMsg);
+		if (reqData->get_putIndicator == 'P')
+		{
+			alpacaErrCode	=	Put_SlewToAltAz(reqData, alpacaErrMsg);
+		}
 		break;
 
 	case kCmd_Telescope_slewtoaltazasync:			//*	Asynchronously slew to the given local horizontal coordinates.
-		alpacaErrCode	=	Put_SlewToAltAzAsync(reqData, alpacaErrMsg);
+		if (reqData->get_putIndicator == 'P')
+		{
+			alpacaErrCode	=	Put_SlewToAltAzAsync(reqData, alpacaErrMsg);
+		}
 		break;
 
 	case kCmd_Telescope_slewtocoordinates:			//*	Synchronously slew to the given equatorial coordinates.
-		alpacaErrCode	=	Put_SlewToCoordinates(reqData, alpacaErrMsg);
+		if (reqData->get_putIndicator == 'P')
+		{
+			alpacaErrCode	=	Put_SlewToCoordinates(reqData, alpacaErrMsg);
+		}
 		break;
 
 	case kCmd_Telescope_slewtocoordinatesasync:		//*	Asynchronously slew to the given equatorial coordinates.
-		alpacaErrCode	=	Put_SlewToCoordinatesAsync(reqData, alpacaErrMsg);
+		if (reqData->get_putIndicator == 'P')
+		{
+			alpacaErrCode	=	Put_SlewToCoordinatesAsync(reqData, alpacaErrMsg);
+		}
 		break;
 
 	case kCmd_Telescope_slewtotarget:				//*	Synchronously slew to the TargetRightAscension and TargetDeclination coordinates.
-		alpacaErrCode	=	Put_SlewToTarget(reqData, alpacaErrMsg);
+		if (reqData->get_putIndicator == 'P')
+		{
+			alpacaErrCode	=	Put_SlewToTarget(reqData, alpacaErrMsg);
+		}
 		break;
 
 	case kCmd_Telescope_slewtotargetasync:			//*	Asynchronously slew to the TargetRightAscension and TargetDeclination coordinates.
-		alpacaErrCode	=	Put_SlewToTargetAsync(reqData, alpacaErrMsg);
+		if (reqData->get_putIndicator == 'P')
+		{
+			alpacaErrCode	=	Put_SlewToTargetAsync(reqData, alpacaErrMsg);
+		}
 		break;
 
 	case kCmd_Telescope_synctoaltaz:				//*	Syncs to the given local horizontal coordinates.
-		alpacaErrCode	=	Put_SyncToAltAz(reqData, alpacaErrMsg);
+		if (reqData->get_putIndicator == 'P')
+		{
+			alpacaErrCode	=	Put_SyncToAltAz(reqData, alpacaErrMsg);
+		}
 		break;
 
 	case kCmd_Telescope_synctocoordinates:			//*	Syncs to the given equatorial coordinates.
-		alpacaErrCode	=	Put_SyncToCoordinates(reqData, alpacaErrMsg);
+		if (reqData->get_putIndicator == 'P')
+		{
+			alpacaErrCode	=	Put_SyncToCoordinates(reqData, alpacaErrMsg);
+		}
 		break;
 
 	case kCmd_Telescope_synctotarget:				//*	Syncs to the TargetRightAscension and TargetDeclination coordinates.
-		alpacaErrCode	=	Put_SyncToTarget(reqData, alpacaErrMsg);
+		if (reqData->get_putIndicator == 'P')
+		{
+			alpacaErrCode	=	Put_SyncToTarget(reqData, alpacaErrMsg);
+		}
 		break;
 
 	case kCmd_Telescope_unpark:						//*	Unparks the mount.
@@ -865,10 +916,10 @@ char					alignmentModeStr[64];
 								reqData->jsonTextBuffer,
 								kMaxJsonBuffLen,
 								responseString,
-								cAlginmentMode,
+								cTelescopeProp.AlginmentMode,
 								INCLUDE_COMMA);
 
-		switch(cAlginmentMode)
+		switch(cTelescopeProp.AlginmentMode)
 		{
 			case kAlignmentMode_algAltAz:		//*	Altitude-Azimuth alignment.
 				strcpy(alignmentModeStr, "Altitude-Azimuth mount");
@@ -909,7 +960,7 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 							reqData->jsonTextBuffer,
 							kMaxJsonBuffLen,
 							responseString,
-							cAltitude,
+							cTelescopeProp.Altitude,
 							INCLUDE_COMMA);
 
 	return(alpacaErrCode);
@@ -926,7 +977,7 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 							reqData->jsonTextBuffer,
 							kMaxJsonBuffLen,
 							responseString,
-							cApertureArea,
+							cTelescopeProp.ApertureArea,
 							INCLUDE_COMMA);
 	return(alpacaErrCode);
 }
@@ -943,7 +994,7 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 							reqData->jsonTextBuffer,
 							kMaxJsonBuffLen,
 							responseString,
-							cApertureDiameter,
+							cTelescopeProp.ApertureDiameter,
 							INCLUDE_COMMA);
 	return(alpacaErrCode);
 }
@@ -960,25 +1011,25 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 							reqData->jsonTextBuffer,
 							kMaxJsonBuffLen,
 							responseString,
-							cAtHome,
+							cTelescopeProp.AtHome,
 							INCLUDE_COMMA);
 	return(alpacaErrCode);
 }
 
 
 //*****************************************************************************
-TYPE_ASCOM_STATUS	TelescopeDriver::Get_AtPark(	TYPE_GetPutRequestData *reqData,
-														char *alpacaErrMsg,
-														const char *responseString)
+TYPE_ASCOM_STATUS	TelescopeDriver::Get_AtPark(TYPE_GetPutRequestData *reqData,
+												char					*alpacaErrMsg,
+												const char				*responseString)
 {
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	JsonResponse_Add_Bool(	reqData->socket,
 							reqData->jsonTextBuffer,
 							kMaxJsonBuffLen,
 							responseString,
-							cAtPark,
+							cTelescopeProp.AtPark,
 							INCLUDE_COMMA);
 	return(alpacaErrCode);
 }
@@ -995,7 +1046,7 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 							reqData->jsonTextBuffer,
 							kMaxJsonBuffLen,
 							responseString,
-							cAzimuth,
+							cTelescopeProp.Azimuth,
 							INCLUDE_COMMA);
 	return(alpacaErrCode);
 }
@@ -1012,7 +1063,7 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 							reqData->jsonTextBuffer,
 							kMaxJsonBuffLen,
 							responseString,
-							cCanFindHome,
+							cTelescopeProp.CanFindHome,
 							INCLUDE_COMMA);
 	return(alpacaErrCode);
 }
@@ -1028,7 +1079,7 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 							reqData->jsonTextBuffer,
 							kMaxJsonBuffLen,
 							responseString,
-							cCanPark,
+							cTelescopeProp.CanPark,
 							INCLUDE_COMMA);
 	return(alpacaErrCode);
 }
@@ -1045,7 +1096,7 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 							reqData->jsonTextBuffer,
 							kMaxJsonBuffLen,
 							responseString,
-							cCanPulseGuide,
+							cTelescopeProp.CanPulseGuide,
 							INCLUDE_COMMA);
 	return(alpacaErrCode);
 }
@@ -1062,7 +1113,7 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 							reqData->jsonTextBuffer,
 							kMaxJsonBuffLen,
 							responseString,
-							cCanSetDeclinationRate,
+							cTelescopeProp.CanSetDeclinationRate,
 							INCLUDE_COMMA);
 	return(alpacaErrCode);
 }
@@ -1079,7 +1130,7 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 							reqData->jsonTextBuffer,
 							kMaxJsonBuffLen,
 							responseString,
-							cCanSetGuideRates,
+							cTelescopeProp.CanSetGuideRates,
 							INCLUDE_COMMA);
 	return(alpacaErrCode);
 }
@@ -1096,7 +1147,7 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 							reqData->jsonTextBuffer,
 							kMaxJsonBuffLen,
 							responseString,
-							cCanSetPark,
+							cTelescopeProp.CanSetPark,
 							INCLUDE_COMMA);
 	return(alpacaErrCode);
 }
@@ -1113,7 +1164,7 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 							reqData->jsonTextBuffer,
 							kMaxJsonBuffLen,
 							responseString,
-							cCanSetPierSide,
+							cTelescopeProp.CanSetPierSide,
 							INCLUDE_COMMA);
 	return(alpacaErrCode);
 }
@@ -1130,7 +1181,7 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 							reqData->jsonTextBuffer,
 							kMaxJsonBuffLen,
 							responseString,
-							cCanSetRightAscensionRate,
+							cTelescopeProp.CanSetRightAscensionRate,
 							INCLUDE_COMMA);
 	return(alpacaErrCode);
 }
@@ -1147,7 +1198,7 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 							reqData->jsonTextBuffer,
 							kMaxJsonBuffLen,
 							responseString,
-							cCanSetTracking,
+							cTelescopeProp.CanSetTracking,
 							INCLUDE_COMMA);
 	return(alpacaErrCode);
 }
@@ -1164,7 +1215,7 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 							reqData->jsonTextBuffer,
 							kMaxJsonBuffLen,
 							responseString,
-							cCanSlew,
+							cTelescopeProp.CanSlew,
 							INCLUDE_COMMA);
 	return(alpacaErrCode);
 }
@@ -1181,7 +1232,7 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 							reqData->jsonTextBuffer,
 							kMaxJsonBuffLen,
 							responseString,
-							cCanSlewAltAz,
+							cTelescopeProp.CanSlewAltAz,
 							INCLUDE_COMMA);
 	return(alpacaErrCode);
 }
@@ -1198,7 +1249,7 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 							reqData->jsonTextBuffer,
 							kMaxJsonBuffLen,
 							responseString,
-							cCanSlewAltAzAsync,
+							cTelescopeProp.CanSlewAltAzAsync,
 							INCLUDE_COMMA);
 	return(alpacaErrCode);
 }
@@ -1215,7 +1266,7 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 							reqData->jsonTextBuffer,
 							kMaxJsonBuffLen,
 							responseString,
-							cCanSlewAsync,
+							cTelescopeProp.CanSlewAsync,
 							INCLUDE_COMMA);
 	return(alpacaErrCode);
 }
@@ -1232,7 +1283,7 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 							reqData->jsonTextBuffer,
 							kMaxJsonBuffLen,
 							responseString,
-							cCanSync,
+							cTelescopeProp.CanSync,
 							INCLUDE_COMMA);
 	return(alpacaErrCode);
 }
@@ -1249,7 +1300,7 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 							reqData->jsonTextBuffer,
 							kMaxJsonBuffLen,
 							responseString,
-							cCanSyncAltAz,
+							cTelescopeProp.CanSyncAltAz,
 							INCLUDE_COMMA);
 	return(alpacaErrCode);
 }
@@ -1266,7 +1317,7 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 							reqData->jsonTextBuffer,
 							kMaxJsonBuffLen,
 							responseString,
-							cCanUnpark,
+							cTelescopeProp.CanUnpark,
 							INCLUDE_COMMA);
 	return(alpacaErrCode);
 }
@@ -1283,7 +1334,7 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 							reqData->jsonTextBuffer,
 							kMaxJsonBuffLen,
 							responseString,
-							cDeclination,
+							cTelescopeProp.Declination,
 							INCLUDE_COMMA);
 	return(alpacaErrCode);
 }
@@ -1291,21 +1342,21 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 
 //*****************************************************************************
 TYPE_ASCOM_STATUS	TelescopeDriver::Get_DeclinationRate(	TYPE_GetPutRequestData *reqData,
-														char *alpacaErrMsg,
-														const char *responseString)
+															char *alpacaErrMsg,
+															const char *responseString)
 {
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 
-	if (cCanSetDeclinationRate == false)
+	if (cTelescopeProp.CanSetDeclinationRate == false)
 	{
-		cDeclinationRate	=	0.0;
+		cTelescopeProp.DeclinationRate	=	0.0;
 	}
 
 	JsonResponse_Add_Double(reqData->socket,
 							reqData->jsonTextBuffer,
 							kMaxJsonBuffLen,
 							responseString,
-							cDeclinationRate,
+							cTelescopeProp.DeclinationRate,
 							INCLUDE_COMMA);
 	return(alpacaErrCode);
 }
@@ -1320,7 +1371,7 @@ double					newDecRate;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-	if (cCanSetDeclinationRate)
+	if (cTelescopeProp.CanSetDeclinationRate)
 	{
 		decRateFound		=	GetKeyWordArgument(	reqData->contentData,
 													"DeclinationRate",
@@ -1330,8 +1381,8 @@ double					newDecRate;
 		{
 			newDecRate			=	atof(decRateString);
 			CONSOLE_DEBUG_W_DBL("newDecRate\t=", newDecRate);
-			cDeclinationRate	=	newDecRate;
-			alpacaErrCode		=	kASCOM_Err_Success;
+			cTelescopeProp.DeclinationRate	=	newDecRate;
+			alpacaErrCode					=	kASCOM_Err_Success;
 		}
 		else
 		{
@@ -1351,9 +1402,9 @@ double					newDecRate;
 
 
 //*****************************************************************************
-TYPE_ASCOM_STATUS	TelescopeDriver::Get_DoesRefraction(	TYPE_GetPutRequestData *reqData,
-														char *alpacaErrMsg,
-														const char *responseString)
+TYPE_ASCOM_STATUS	TelescopeDriver::Get_DoesRefraction(TYPE_GetPutRequestData	*reqData,
+														char					*alpacaErrMsg,
+														const char				*responseString)
 {
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 
@@ -1361,7 +1412,7 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 							reqData->jsonTextBuffer,
 							kMaxJsonBuffLen,
 							responseString,
-							cDoesRefraction,
+							cTelescopeProp.DoesRefraction,
 							INCLUDE_COMMA);
 	return(alpacaErrCode);
 }
@@ -1382,15 +1433,14 @@ char					doseRefractionString[64];
 												(sizeof(doseRefractionString) -1));
 	if (doseRefractionFound)
 	{
-		cDoesRefraction		=	IsTrueFalse(doseRefractionString);
-
-		alpacaErrCode		=	kASCOM_Err_Success;
+		cTelescopeProp.DoesRefraction	=	IsTrueFalse(doseRefractionString);
+		alpacaErrCode					=	kASCOM_Err_Success;
 	}
 	else
 	{
 		alpacaErrCode	=	kASCOM_Err_InvalidValue;
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "DoesRefraction is missing");
-		CONSOLE_DEBUG(alpacaErrMsg);
+//		CONSOLE_DEBUG(alpacaErrMsg);
 	}
 
 	return(alpacaErrCode);
@@ -1398,9 +1448,9 @@ char					doseRefractionString[64];
 
 
 //*****************************************************************************
-TYPE_ASCOM_STATUS	TelescopeDriver::Get_EquatorialSystem(	TYPE_GetPutRequestData *reqData,
-															char *alpacaErrMsg,
-															const char *responseString)
+TYPE_ASCOM_STATUS	TelescopeDriver::Get_EquatorialSystem(	TYPE_GetPutRequestData	*reqData,
+															char					*alpacaErrMsg,
+															const char				*responseString)
 {
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 char					extraString[128];
@@ -1409,10 +1459,10 @@ char					extraString[128];
 							reqData->jsonTextBuffer,
 							kMaxJsonBuffLen,
 							responseString,
-							cEquatorialSystem,
+							cTelescopeProp.EquatorialSystem,
 							INCLUDE_COMMA);
 
-		switch(cEquatorialSystem)
+		switch(cTelescopeProp.EquatorialSystem)
 		{
 			case kECT_equOther:		//*	Altitude-Azimuth alignment.
 				strcpy(extraString, "Custom or unknown equinox and/or reference frame");
@@ -1457,7 +1507,7 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 							reqData->jsonTextBuffer,
 							kMaxJsonBuffLen,
 							responseString,
-							cFocalLength,
+							cTelescopeProp.FocalLength,
 							INCLUDE_COMMA);
 	return(alpacaErrCode);
 }
@@ -1474,7 +1524,7 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 							reqData->jsonTextBuffer,
 							kMaxJsonBuffLen,
 							responseString,
-							cGuideRateDeclination,
+							cTelescopeProp.GuideRateDeclination,
 							INCLUDE_COMMA);
 
 	return(alpacaErrCode);
@@ -1490,7 +1540,7 @@ double				newGuideRateDeclination;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-	if (cCanSetGuideRates)
+	if (cTelescopeProp.CanSetGuideRates)
 	{
 		guideRateDeclinationFound		=	GetKeyWordArgument(	reqData->contentData,
 														"GuideRateDeclination",
@@ -1502,21 +1552,21 @@ double				newGuideRateDeclination;
 			CONSOLE_DEBUG_W_STR("guideRateDeclinationStr\t=", guideRateDeclinationStr);
 			CONSOLE_DEBUG_W_DBL("newGuideRateDeclination\t=", newGuideRateDeclination);
 
-			cGuideRateDeclination	=	newGuideRateDeclination;
-			alpacaErrCode			=	kASCOM_Err_Success;
+			cTelescopeProp.GuideRateDeclination	=	newGuideRateDeclination;
+			alpacaErrCode						=	kASCOM_Err_Success;
 		}
 		else
 		{
 			alpacaErrCode	=	kASCOM_Err_InvalidValue;
 			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "GuideRateDeclination is missing");
-			CONSOLE_DEBUG(alpacaErrMsg);
+//			CONSOLE_DEBUG(alpacaErrMsg);
 		}
 	}
 	else
 	{
 		alpacaErrCode	=	kASCOM_Err_PropertyNotImplemented;
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "cCanSetGuideRates is false");
-		CONSOLE_DEBUG(alpacaErrMsg);
+//		CONSOLE_DEBUG(alpacaErrMsg);
 	}
 
 	return(alpacaErrCode);
@@ -1526,8 +1576,8 @@ double				newGuideRateDeclination;
 
 //*****************************************************************************
 TYPE_ASCOM_STATUS	TelescopeDriver::Get_GuideRateRightAscension(	TYPE_GetPutRequestData *reqData,
-														char *alpacaErrMsg,
-														const char *responseString)
+																	char *alpacaErrMsg,
+																	const char *responseString)
 {
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 
@@ -1535,7 +1585,7 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 							reqData->jsonTextBuffer,
 							kMaxJsonBuffLen,
 							responseString,
-							cGuideRateRightAscension,
+							cTelescopeProp.GuideRateRightAscension,
 							INCLUDE_COMMA);
 	return(alpacaErrCode);
 }
@@ -1551,7 +1601,7 @@ double				newGuideRateRightAscension;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-	if (cCanSetGuideRates)
+	if (cTelescopeProp.CanSetGuideRates)
 	{
 		guideRateRightAscensionFound		=	GetKeyWordArgument(	reqData->contentData,
 														"GuideRateRightAscension",
@@ -1563,30 +1613,30 @@ double				newGuideRateRightAscension;
 			CONSOLE_DEBUG_W_STR("guideRateRightAscensionStr\t=", guideRateRightAscensionStr);
 			CONSOLE_DEBUG_W_DBL("newGuideRateRightAscension\t=", newGuideRateRightAscension);
 
-			cGuideRateRightAscension	=	newGuideRateRightAscension;
-			alpacaErrCode				=	kASCOM_Err_Success;
+			cTelescopeProp.GuideRateRightAscension	=	newGuideRateRightAscension;
+			alpacaErrCode							=	kASCOM_Err_Success;
 		}
 		else
 		{
 			alpacaErrCode	=	kASCOM_Err_InvalidValue;
 			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "GuideRateRightAscension is missing");
-			CONSOLE_DEBUG(alpacaErrMsg);
+//			CONSOLE_DEBUG(alpacaErrMsg);
 		}
 	}
 	else
 	{
 		alpacaErrCode	=	kASCOM_Err_PropertyNotImplemented;
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "cCanSetGuideRates is false");
-		CONSOLE_DEBUG(alpacaErrMsg);
+//		CONSOLE_DEBUG(alpacaErrMsg);
 	}
 
 	return(alpacaErrCode);
 }
 
 //*****************************************************************************
-TYPE_ASCOM_STATUS	TelescopeDriver::Get_IsPulseGuiding(	TYPE_GetPutRequestData *reqData,
-														char *alpacaErrMsg,
-														const char *responseString)
+TYPE_ASCOM_STATUS	TelescopeDriver::Get_IsPulseGuiding(TYPE_GetPutRequestData	*reqData,
+														char					*alpacaErrMsg,
+														const char				*responseString)
 {
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 
@@ -1594,10 +1644,10 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 							reqData->jsonTextBuffer,
 							kMaxJsonBuffLen,
 							responseString,
-							cIsPulseGuiding,
+							cTelescopeProp.IsPulseGuiding,
 							INCLUDE_COMMA);
 
-	if (cCanPulseGuide)
+	if (cTelescopeProp.CanPulseGuide)
 	{
 		alpacaErrCode	=	kASCOM_Err_Success;
 	}
@@ -1605,16 +1655,16 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 	{
 		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "cCanPulseGuide is false");
-		CONSOLE_DEBUG(alpacaErrMsg);
+//		CONSOLE_DEBUG(alpacaErrMsg);
 	}
 	return(alpacaErrCode);
 }
 
 
 //*****************************************************************************
-TYPE_ASCOM_STATUS	TelescopeDriver::Get_RightAscension(	TYPE_GetPutRequestData *reqData,
-														char *alpacaErrMsg,
-														const char *responseString)
+TYPE_ASCOM_STATUS	TelescopeDriver::Get_RightAscension(TYPE_GetPutRequestData	*reqData,
+														char					*alpacaErrMsg,
+														const char				*responseString)
 {
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 
@@ -1622,7 +1672,7 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 							reqData->jsonTextBuffer,
 							kMaxJsonBuffLen,
 							responseString,
-							cRightAscension,
+							cTelescopeProp.RightAscension,
 							INCLUDE_COMMA);
 	return(alpacaErrCode);
 }
@@ -1639,7 +1689,7 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 							reqData->jsonTextBuffer,
 							kMaxJsonBuffLen,
 							responseString,
-							cRightAscensionRate,
+							cTelescopeProp.RightAscensionRate,
 							INCLUDE_COMMA);
 	return(alpacaErrCode);
 }
@@ -1655,7 +1705,7 @@ double				newrightAscenRate;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-	if (cCanSetRightAscensionRate)
+	if (cTelescopeProp.CanSetRightAscensionRate)
 	{
 		rightAscenRateFound		=	GetKeyWordArgument(	reqData->contentData,
 														"RightAscensionRate",
@@ -1667,22 +1717,22 @@ double				newrightAscenRate;
 			CONSOLE_DEBUG_W_STR("rightAscenRateString\t=", rightAscenRateString);
 			CONSOLE_DEBUG_W_DBL("newrightAscenRate\t=", newrightAscenRate);
 
-			cRightAscensionRate	=	newrightAscenRate;
-			alpacaErrCode		=	kASCOM_Err_Success;
+			cTelescopeProp.RightAscensionRate	=	newrightAscenRate;
+			alpacaErrCode						=	kASCOM_Err_Success;
 		}
 		else
 		{
 			CONSOLE_DEBUG("RightAscensionRate not found in command string");
 			alpacaErrCode	=	kASCOM_Err_InvalidValue;
 			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "RightAscensionRate is missing");
-			CONSOLE_DEBUG(alpacaErrMsg);
+//			CONSOLE_DEBUG(alpacaErrMsg);
 		}
 	}
 	else
 	{
 		alpacaErrCode	=	kASCOM_Err_PropertyNotImplemented;
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "cCanSetRightAscensionRate is false");
-		CONSOLE_DEBUG(alpacaErrMsg);
+//		CONSOLE_DEBUG(alpacaErrMsg);
 	}
 
 	return(alpacaErrCode);
@@ -1702,10 +1752,10 @@ char					extraString[128];
 							reqData->jsonTextBuffer,
 							kMaxJsonBuffLen,
 							responseString,
-							cSideOfPier,
+							cTelescopeProp.SideOfPier,
 							INCLUDE_COMMA);
 
-		switch(cSideOfPier)
+		switch(cTelescopeProp.SideOfPier)
 		{
 			case kPierSide_pierEast:		//*	Altitude-Azimuth alignment.
 				strcpy(extraString, "Normal pointing state - Mount on the East side of pier (looking West)");
@@ -1733,19 +1783,19 @@ char					extraString[128];
 
 
 //*****************************************************************************
-TYPE_ASCOM_STATUS	TelescopeDriver::Get_SiderealTime(	TYPE_GetPutRequestData *reqData,
-														char *alpacaErrMsg,
-														const char *responseString)
+TYPE_ASCOM_STATUS	TelescopeDriver::Get_SiderealTime(	TYPE_GetPutRequestData	*reqData,
+														char					*alpacaErrMsg,
+														const char				*responseString)
 {
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 
-	cSiderealTime	=	CalcSiderealTime_dbl(NULL, gObseratorySettings.Longitude);
+	cTelescopeProp.SiderealTime	=	CalcSiderealTime_dbl(NULL, gObseratorySettings.Longitude);
 
 	JsonResponse_Add_Double(reqData->socket,
 							reqData->jsonTextBuffer,
 							kMaxJsonBuffLen,
 							responseString,
-							cSiderealTime,
+							cTelescopeProp.SiderealTime,
 							INCLUDE_COMMA);
 
 	return(alpacaErrCode);
@@ -1763,7 +1813,7 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 							reqData->jsonTextBuffer,
 							kMaxJsonBuffLen,
 							responseString,
-							cSiteElevation,
+							cTelescopeProp.SiteElevation,
 							INCLUDE_COMMA);
 	return(alpacaErrCode);
 }
@@ -1790,22 +1840,22 @@ double				newElevation;
 
 		if ((newElevation >= -300.0) && (newElevation <= 10000.0))
 		{
-			cSiteElevation	=	newElevation;
-			alpacaErrCode	=	kASCOM_Err_Success;
+			cTelescopeProp.SiteElevation	=	newElevation;
+			alpacaErrCode					=	kASCOM_Err_Success;
 		}
 		else
 		{
 //			CONSOLE_DEBUG_W_DBL("INVALID VALUE, newElevation\t=", newElevation);
 			alpacaErrCode	=	kASCOM_Err_InvalidValue;
 			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "SiteElevation is out of bounds");
-			CONSOLE_DEBUG(alpacaErrMsg);
+//			CONSOLE_DEBUG(alpacaErrMsg);
 		}
 	}
 	else
 	{
 		alpacaErrCode	=	kASCOM_Err_InvalidValue;
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "SiteElevation is missing");
-		CONSOLE_DEBUG(alpacaErrMsg);
+//		CONSOLE_DEBUG(alpacaErrMsg);
 	}
 
 	return(alpacaErrCode);
@@ -1813,9 +1863,9 @@ double				newElevation;
 
 
 //*****************************************************************************
-TYPE_ASCOM_STATUS	TelescopeDriver::Get_SiteLatitude(	TYPE_GetPutRequestData *reqData,
-														char *alpacaErrMsg,
-														const char *responseString)
+TYPE_ASCOM_STATUS	TelescopeDriver::Get_SiteLatitude(	TYPE_GetPutRequestData	*reqData,
+														char					*alpacaErrMsg,
+														const char				*responseString)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
@@ -1823,7 +1873,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 							reqData->jsonTextBuffer,
 							kMaxJsonBuffLen,
 							responseString,
-							cSiteLatitude,
+							cTelescopeProp.SiteLatitude,
 							INCLUDE_COMMA);
 	return(alpacaErrCode);
 }
@@ -1851,30 +1901,30 @@ double				newLatitude;
 
 		if ((newLatitude >= -90.0) && (newLatitude <= 90.0))
 		{
-			cSiteLatitude	=	newLatitude;
-			alpacaErrCode	=	kASCOM_Err_Success;
+			cTelescopeProp.SiteLatitude	=	newLatitude;
+			alpacaErrCode				=	kASCOM_Err_Success;
 		}
 		else
 		{
 			alpacaErrCode	=	kASCOM_Err_InvalidValue;
 			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "SiteLatitude is out of bounds");
-			CONSOLE_DEBUG(alpacaErrMsg);
+//			CONSOLE_DEBUG(alpacaErrMsg);
 		}
 	}
 	else
 	{
 		alpacaErrCode	=	kASCOM_Err_InvalidValue;
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "SiteLatitude is missing");
-		CONSOLE_DEBUG(alpacaErrMsg);
+//		CONSOLE_DEBUG(alpacaErrMsg);
 	}
 
 	return(alpacaErrCode);
 }
 
 //*****************************************************************************
-TYPE_ASCOM_STATUS	TelescopeDriver::Get_SiteLongitude(	TYPE_GetPutRequestData *reqData,
-														char *alpacaErrMsg,
-														const char *responseString)
+TYPE_ASCOM_STATUS	TelescopeDriver::Get_SiteLongitude(	TYPE_GetPutRequestData	*reqData,
+														char					*alpacaErrMsg,
+														const char				*responseString)
 {
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 
@@ -1882,7 +1932,7 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 							reqData->jsonTextBuffer,
 							kMaxJsonBuffLen,
 							responseString,
-							cSiteLongitude,
+							cTelescopeProp.SiteLongitude,
 							INCLUDE_COMMA);
 	return(alpacaErrCode);
 }
@@ -1908,22 +1958,22 @@ double				newLongitude;
 
 		if ((newLongitude >= -180.0) && (newLongitude <= 180.0))
 		{
-			cSiteLongitude	=	newLongitude;
-			alpacaErrCode	=	kASCOM_Err_Success;
+			cTelescopeProp.SiteLongitude	=	newLongitude;
+			alpacaErrCode					=	kASCOM_Err_Success;
 		}
 		else
 		{
 //			CONSOLE_DEBUG_W_DBL("INVALID VALUE, newLongitude\t=", newLongitude);
 			alpacaErrCode	=	kASCOM_Err_InvalidValue;
 			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "SiteLongitude is out of bounds");
-			CONSOLE_DEBUG(alpacaErrMsg);
+//			CONSOLE_DEBUG(alpacaErrMsg);
 		}
 	}
 	else
 	{
 		alpacaErrCode	=	kASCOM_Err_InvalidValue;
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "SiteLongitude is missing");
-		CONSOLE_DEBUG(alpacaErrMsg);
+//		CONSOLE_DEBUG(alpacaErrMsg);
 	}
 
 	return(alpacaErrCode);
@@ -1941,7 +1991,7 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 							reqData->jsonTextBuffer,
 							kMaxJsonBuffLen,
 							responseString,
-							cSlewing,
+							cTelescopeProp.Slewing,
 							INCLUDE_COMMA);
 	return(alpacaErrCode);
 }
@@ -1958,7 +2008,7 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 							reqData->jsonTextBuffer,
 							kMaxJsonBuffLen,
 							responseString,
-							cSlewSettleTime,
+							cTelescopeProp.SlewSettleTime,
 							INCLUDE_COMMA);
 	return(alpacaErrCode);
 }
@@ -1985,21 +2035,21 @@ short				newSlewSettleTime;
 //		CONSOLE_DEBUG_W_DBL("newSlewSettleTime\t=", newSlewSettleTime);
 		if (newSlewSettleTime >= 0)
 		{
-			cSlewSettleTime	=	newSlewSettleTime;
-			alpacaErrCode	=	kASCOM_Err_Success;
+			cTelescopeProp.SlewSettleTime	=	newSlewSettleTime;
+			alpacaErrCode					=	kASCOM_Err_Success;
 		}
 		else
 		{
 			alpacaErrCode	=	kASCOM_Err_InvalidValue;
 			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "SlewSettleTime is out of bounds");
-			CONSOLE_DEBUG(alpacaErrMsg);
+//			CONSOLE_DEBUG(alpacaErrMsg);
 		}
 	}
 	else
 	{
 		alpacaErrCode	=	kASCOM_Err_InvalidValue;
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "SlewSettleTime is missing");
-		CONSOLE_DEBUG(alpacaErrMsg);
+//		CONSOLE_DEBUG(alpacaErrMsg);
 	}
 
 	return(alpacaErrCode);
@@ -2017,9 +2067,9 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 							reqData->jsonTextBuffer,
 							kMaxJsonBuffLen,
 							responseString,
-							cTargetDeclination,
+							cTelescopeProp.TargetDeclination,
 							INCLUDE_COMMA);
-	if (cTargetDec_HasBeenSet)
+	if (cTelescopeProp.TargetDec_HasBeenSet)
 	{
 		alpacaErrCode	=	kASCOM_Err_Success;
 	}
@@ -2027,7 +2077,7 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 	{
 		alpacaErrCode	=	kASCOM_Err_InvalidOperation;
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "TargetDeclination has not been set");
-		CONSOLE_DEBUG(alpacaErrMsg);
+//		CONSOLE_DEBUG(alpacaErrMsg);
 	}
 	return(alpacaErrCode);
 }
@@ -2057,22 +2107,22 @@ double				newTargetDeclination;
 
 		if ((newTargetDeclination >= -90.0) && (newTargetDeclination <= 90.0))
 		{
-			cDeclination			=	newTargetDeclination;
-			cTargetDeclination		=	newTargetDeclination;
-			cTargetDec_HasBeenSet	=	true;
+			cTelescopeProp.Declination			=	newTargetDeclination;
+			cTelescopeProp.TargetDeclination	=	newTargetDeclination;
+			cTelescopeProp.TargetDec_HasBeenSet	=	true;
 		}
 		else
 		{
 			alpacaErrCode	=	kASCOM_Err_InvalidValue;
 			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "TargetDeclination out of bounds");
-			CONSOLE_DEBUG(alpacaErrMsg);
+//			CONSOLE_DEBUG(alpacaErrMsg);
 		}
 	}
 	else
 	{
 		alpacaErrCode	=	kASCOM_Err_InvalidValue;
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "TargetDeclination missing");
-		CONSOLE_DEBUG(alpacaErrMsg);
+//		CONSOLE_DEBUG(alpacaErrMsg);
 	}
 	return(alpacaErrCode);
 }
@@ -2081,8 +2131,8 @@ double				newTargetDeclination;
 
 //*****************************************************************************
 TYPE_ASCOM_STATUS	TelescopeDriver::Get_TargetRightAscension(	TYPE_GetPutRequestData *reqData,
-														char *alpacaErrMsg,
-														const char *responseString)
+																char *alpacaErrMsg,
+																const char *responseString)
 {
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 
@@ -2090,10 +2140,10 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 							reqData->jsonTextBuffer,
 							kMaxJsonBuffLen,
 							responseString,
-							cTargetRightAscension,
+							cTelescopeProp.TargetRightAscension,
 							INCLUDE_COMMA);
 
-	if (cTargetRA_HasBeenSet)
+	if (cTelescopeProp.TargetRA_HasBeenSet)
 	{
 		alpacaErrCode	=	kASCOM_Err_Success;
 	}
@@ -2101,7 +2151,7 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 	{
 		alpacaErrCode	=	kASCOM_Err_InvalidOperation;
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "TargetRightAscension has not been set");
-		CONSOLE_DEBUG(alpacaErrMsg);
+//		CONSOLE_DEBUG(alpacaErrMsg);
 	}
 	return(alpacaErrCode);
 }
@@ -2130,22 +2180,22 @@ double				newTargetRightAscension;
 
 		if ((newTargetRightAscension >= 0.0) && (newTargetRightAscension <= 24.0))
 		{
-			cRightAscension			=	newTargetRightAscension;
-			cTargetRightAscension	=	newTargetRightAscension;
-			cTargetRA_HasBeenSet	=	true;
+			cTelescopeProp.RightAscension		=	newTargetRightAscension;
+			cTelescopeProp.TargetRightAscension	=	newTargetRightAscension;
+			cTelescopeProp.TargetRA_HasBeenSet	=	true;
 		}
 		else
 		{
 			alpacaErrCode	=	kASCOM_Err_InvalidValue;
 			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "TargetRightAscension out of bounds");
-			CONSOLE_DEBUG(alpacaErrMsg);
+//			CONSOLE_DEBUG(alpacaErrMsg);
 		}
 	}
 	else
 	{
 		alpacaErrCode	=	kASCOM_Err_InvalidValue;
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "TargetRightAscension missing");
-		CONSOLE_DEBUG(alpacaErrMsg);
+//		CONSOLE_DEBUG(alpacaErrMsg);
 	}
 	return(alpacaErrCode);
 }
@@ -2161,7 +2211,7 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 							reqData->jsonTextBuffer,
 							kMaxJsonBuffLen,
 							responseString,
-							cTracking,
+							cTelescopeProp.Tracking,
 							INCLUDE_COMMA);
 	return(alpacaErrCode);
 }
@@ -2175,7 +2225,7 @@ char					trackingString[64];
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
-	if (cCanSetTracking)
+	if (cTelescopeProp.CanSetTracking)
 	{
 		trackingFound		=	GetKeyWordArgument(	reqData->contentData,
 													"Tracking",
@@ -2183,15 +2233,15 @@ char					trackingString[64];
 													(sizeof(trackingString) -1));
 		if (trackingFound)
 		{
-			cTracking		=	IsTrueFalse(trackingString);
-			if (cTracking)
+			cTelescopeProp.Tracking		=	IsTrueFalse(trackingString);
+			if (cTelescopeProp.Tracking)
 			{
-				cAtPark			=	false;
+				cTelescopeProp.AtPark	=	false;
 			}
+			alpacaErrCode	=	Telescope_TrackingOnOff(cTelescopeProp.Tracking, alpacaErrMsg);
 
-			alpacaErrCode	=	kASCOM_Err_Success;
 
-			CONSOLE_DEBUG(cTracking ? "Tracking is ENABLED" : "Tracking is DISABLED");
+			CONSOLE_DEBUG(cTelescopeProp.Tracking ? "Tracking is ENABLED" : "Tracking is DISABLED");
 		}
 		else
 		{
@@ -2222,10 +2272,10 @@ char					extraString[128];
 							reqData->jsonTextBuffer,
 							kMaxJsonBuffLen,
 							responseString,
-							cTrackingRate,
+							cTelescopeProp.TrackingRate,
 							INCLUDE_COMMA);
 
-	switch(cTrackingRate)
+	switch(cTelescopeProp.TrackingRate)
 	{
 		case kDriveRate_driveSidereal:		//*	Sidereal tracking rate (15.041 arcseconds per second).
 			strcpy(extraString, "Sidereal tracking rate (15.041 arcseconds per second).");
@@ -2277,14 +2327,14 @@ TYPE_DriveRates			newtrackingRate;
 		CONSOLE_DEBUG_W_NUM("newtrackingRate\t=", newtrackingRate);
 		if ((newtrackingRate >= kDriveRate_driveSidereal) && (newtrackingRate <= kDriveRate_driveKing))
 		{
-			cTrackingRate		=	newtrackingRate;
-			alpacaErrCode		=	kASCOM_Err_Success;
+			cTelescopeProp.TrackingRate	=	newtrackingRate;
+			alpacaErrCode				=	kASCOM_Err_Success;
 		}
 		else
 		{
 			alpacaErrCode	=	kASCOM_Err_InvalidValue;
 			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "TrackingRate is out of bounds");
-			CONSOLE_DEBUG(alpacaErrMsg);
+//			CONSOLE_DEBUG(alpacaErrMsg);
 		}
 	}
 	else
@@ -2292,7 +2342,7 @@ TYPE_DriveRates			newtrackingRate;
 		CONSOLE_DEBUG("TrackingRate not found in command string");
 		alpacaErrCode	=	kASCOM_Err_InvalidValue;
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "TrackingRate is missing");
-		CONSOLE_DEBUG(alpacaErrMsg);
+//		CONSOLE_DEBUG(alpacaErrMsg);
 	}
 
 	return(alpacaErrCode);
@@ -2384,18 +2434,22 @@ TYPE_ASCOM_STATUS	TelescopeDriver::Put_AbortSlew(TYPE_GetPutRequestData *reqData
 {
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
+
 //	CONSOLE_DEBUG(reqData->contentData);
-	if (cAtPark)
+	if (cTelescopeProp.AtPark)
 	{
 		alpacaErrCode	=	kASCOM_Err_InvalidWhileParked;
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Invalid While Parked");
-		CONSOLE_DEBUG(alpacaErrMsg);
+//		CONSOLE_DEBUG(alpacaErrMsg);
 	}
 	else
 	{
 		alpacaErrCode	=	kASCOM_Err_Success;
 	}
+	//*	send the abort anyway
+	Telescope_AbortSlew(alpacaErrMsg);
+
 	return(alpacaErrCode);
 }
 
@@ -2464,14 +2518,14 @@ int						axisNumber;
 		{
 			alpacaErrCode	=	kASCOM_Err_InvalidValue;
 			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Axis is out of bounds");
-			CONSOLE_DEBUG(alpacaErrMsg);
+//			CONSOLE_DEBUG(alpacaErrMsg);
 		}
 	}
 	else
 	{
 		alpacaErrCode	=	kASCOM_Err_InvalidValue;
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Axis is missing");
-		CONSOLE_DEBUG(alpacaErrMsg);
+//		CONSOLE_DEBUG(alpacaErrMsg);
 	}
 
 	return(alpacaErrCode);
@@ -2487,7 +2541,7 @@ bool					axisFound;
 char					axisString[64];
 int						axisNumber;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 //	CONSOLE_DEBUG(reqData->contentData);
 
 	axisFound		=	GetKeyWordArgument(	reqData->contentData,
@@ -2505,7 +2559,7 @@ int						axisNumber;
 									reqData->jsonTextBuffer,
 									kMaxJsonBuffLen,
 									responseString,
-									cCanMoveAxis,
+									cTelescopeProp.CanMoveAxis,
 									INCLUDE_COMMA);
 
 		}
@@ -2513,14 +2567,14 @@ int						axisNumber;
 		{
 			alpacaErrCode	=	kASCOM_Err_InvalidValue;
 			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Axis is out of bounds");
-			CONSOLE_DEBUG(alpacaErrMsg);
+//			CONSOLE_DEBUG(alpacaErrMsg);
 		}
 	}
 	else
 	{
 		alpacaErrCode	=	kASCOM_Err_InvalidValue;
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Axis is missing");
-		CONSOLE_DEBUG(alpacaErrMsg);
+//		CONSOLE_DEBUG(alpacaErrMsg);
 	}
 
 	return(alpacaErrCode);
@@ -2545,7 +2599,7 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 //	CONSOLE_DEBUG(__FUNCTION__);
 //	CONSOLE_DEBUG(reqData->contentData);
 
-	if (cCanFindHome)
+	if (cTelescopeProp.CanFindHome)
 	{
 		alpacaErrCode	=	kASCOM_Err_Success;
 	}
@@ -2553,7 +2607,7 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 	{
 		alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "cCanFindHome is false");
-		CONSOLE_DEBUG(alpacaErrMsg);
+//		CONSOLE_DEBUG(alpacaErrMsg);
 	}
 
 	return(alpacaErrCode);
@@ -2574,7 +2628,7 @@ double					newRate;
 //	CONSOLE_DEBUG(__FUNCTION__);
 //	CONSOLE_DEBUG(reqData->contentData);
 
-	if (cCanMoveAxis)
+	if (cTelescopeProp.CanMoveAxis)
 	{
 		axisFound		=	GetKeyWordArgument(	reqData->contentData,
 														"Axis",
@@ -2607,14 +2661,14 @@ double					newRate;
 			{
 				alpacaErrCode	=	kASCOM_Err_InvalidValue;
 				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Axis is out of bounds");
-				CONSOLE_DEBUG(alpacaErrMsg);
+//				CONSOLE_DEBUG(alpacaErrMsg);
 			}
 		}
 		else
 		{
 			alpacaErrCode	=	kASCOM_Err_InvalidValue;
 			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Axis is missing");
-			CONSOLE_DEBUG(alpacaErrMsg);
+//			CONSOLE_DEBUG(alpacaErrMsg);
 		}
 	}
 	else
@@ -2642,7 +2696,7 @@ double					newRate;
 //	CONSOLE_DEBUG(__FUNCTION__);
 //	CONSOLE_DEBUG(reqData->contentData);
 
-	if (cCanPulseGuide)
+	if (cTelescopeProp.CanPulseGuide)
 	{
 		axisFound		=	GetKeyWordArgument(	reqData->contentData,
 														"Axis",
@@ -2701,7 +2755,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG(reqData->contentData);
 
-	if (cCanSetPark)
+	if (cTelescopeProp.CanSetPark)
 	{
 		alpacaErrCode	=	kASCOM_Err_Success;
 	}
@@ -2723,7 +2777,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG(reqData->contentData);
 
-	if (cCanSlewAltAz)
+	if (cTelescopeProp.CanSlewAltAz)
 	{
 		alpacaErrCode	=	kASCOM_Err_Success;
 	}
@@ -2749,7 +2803,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG(reqData->contentData);
 
-	if (cCanSlewAltAzAsync)
+	if (cTelescopeProp.CanSlewAltAzAsync)
 	{
 		alpacaErrCode	=	kASCOM_Err_Success;
 	}
@@ -2770,6 +2824,30 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 TYPE_ASCOM_STATUS	TelescopeDriver::Put_SlewToCoordinates(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(reqData->contentData);
+
+	if (cTelescopeProp.AtPark)
+	{
+		alpacaErrCode	=	kASCOM_Err_InvalidWhileParked;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Invalid While Parked");
+//		CONSOLE_DEBUG(alpacaErrMsg);
+	}
+	else
+	{
+		alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Use async methods instead");
+//		CONSOLE_DEBUG(alpacaErrMsg);
+	}
+
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	TelescopeDriver::Put_SlewToCoordinatesAsync(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 bool				rightAscensionFound;
 char				rightAscensionStr[64];
 bool				declinationFound;
@@ -2780,13 +2858,7 @@ double				newDeclination;
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG(reqData->contentData);
 
-	if (cAtPark)
-	{
-		alpacaErrCode	=	kASCOM_Err_InvalidWhileParked;
-		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Invalid While Parked");
-		CONSOLE_DEBUG(alpacaErrMsg);
-	}
-	else if (cCanSlew)
+	if (cTelescopeProp.CanSlewAsync)
 	{
 		rightAscensionFound		=	GetKeyWordArgument(	reqData->contentData,
 														"RightAscension",
@@ -2809,15 +2881,18 @@ double				newDeclination;
 			if ((newRightAscension >= 0.0) && (newRightAscension <= 24.0) &&
 				(newDeclination >= -90.0) && (newDeclination <= 90.0))
 			{
-				cRightAscension			=	newRightAscension;
-				cDeclination			=	newDeclination;
-				cTargetRightAscension	=	newRightAscension;
-				cTargetDeclination		=	newDeclination;
+				cTelescopeProp.RightAscension		=	newRightAscension;
+				cTelescopeProp.Declination			=	newDeclination;
+				cTelescopeProp.TargetRightAscension	=	newRightAscension;
+				cTelescopeProp.TargetDeclination	=	newDeclination;
 
-				cTargetDec_HasBeenSet	=	true;
-				cTargetRA_HasBeenSet	=	true;
+				cTelescopeProp.TargetDec_HasBeenSet	=	true;
+				cTelescopeProp.TargetRA_HasBeenSet	=	true;
 
-				alpacaErrCode			=	kASCOM_Err_Success;
+				alpacaErrCode			=	Telescope_SlewToRA_DEC(	cTelescopeProp.RightAscension,
+																	cTelescopeProp.Declination,
+																	alpacaErrMsg);
+
 			}
 			else
 			{
@@ -2839,28 +2914,6 @@ double				newDeclination;
 	else
 	{
 		alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
-		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "cCanSlew is false");
-//		CONSOLE_DEBUG(alpacaErrMsg);
-	}
-
-	return(alpacaErrCode);
-}
-
-//*****************************************************************************
-TYPE_ASCOM_STATUS	TelescopeDriver::Put_SlewToCoordinatesAsync(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
-{
-TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
-
-	CONSOLE_DEBUG(__FUNCTION__);
-	CONSOLE_DEBUG(reqData->contentData);
-
-	if (cCanSlewAsync)
-	{
-		alpacaErrCode	=	kASCOM_Err_Success;
-	}
-	else
-	{
-		alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "cCanSlewAsync is false");
 //		CONSOLE_DEBUG(alpacaErrMsg);
 	}
@@ -2876,18 +2929,18 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG(reqData->contentData);
 
-	if (cAtPark)
+	if (cTelescopeProp.AtPark)
 	{
 		alpacaErrCode	=	kASCOM_Err_InvalidWhileParked;
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Invalid While Parked");
-		CONSOLE_DEBUG(alpacaErrMsg);
+//		CONSOLE_DEBUG(alpacaErrMsg);
 	}
-	else if (cCanSlew)
+	else if (cTelescopeProp.CanSlew)
 	{
-		alpacaErrCode	=	kASCOM_Err_Success;
-		cAtPark			=	false;
-		CONSOLE_DEBUG_W_DBL("cTargetRightAscension\t=",	cTargetRightAscension);
-		CONSOLE_DEBUG_W_DBL("cTargetDeclination\t=",	cTargetDeclination);
+		alpacaErrCode			=	kASCOM_Err_Success;
+		cTelescopeProp.AtPark	=	false;
+		CONSOLE_DEBUG_W_DBL("cTargetRightAscension\t=",	cTelescopeProp.TargetRightAscension);
+		CONSOLE_DEBUG_W_DBL("cTargetDeclination\t=",	cTelescopeProp.TargetDeclination);
 	}
 	else
 	{
@@ -2906,20 +2959,20 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG(reqData->contentData);
 
-	if (cAtPark)
+	if (cTelescopeProp.AtPark)
 	{
 		alpacaErrCode	=	kASCOM_Err_InvalidWhileParked;
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Invalid While Parked");
-		CONSOLE_DEBUG(alpacaErrMsg);
+//		CONSOLE_DEBUG(alpacaErrMsg);
 	}
-	else if (cCanSlewAsync)
+	else if (cTelescopeProp.CanSlewAsync)
 	{
 		alpacaErrCode	=	kASCOM_Err_Success;
 	}
 	else
 	{
 		alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
-		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "cCanSlew is false");
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "CanSlew is false");
 //		CONSOLE_DEBUG(alpacaErrMsg);
 	}
 
@@ -2934,16 +2987,16 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-	if (cCanPark)
+	if (cTelescopeProp.CanPark)
 	{
 		alpacaErrCode	=	kASCOM_Err_Success;
 
-		cAtPark			=	true;
+		cTelescopeProp.AtPark			=	true;
 	}
 	else
 	{
 		alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
-		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "cCanPark is false");
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "cTelescopeProp.CanPark is false");
 //		CONSOLE_DEBUG(alpacaErrMsg);
 	}
 
@@ -2960,14 +3013,14 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG(reqData->contentData);
 
-	if (cCanSyncAltAz)
+	if (cTelescopeProp.CanSyncAltAz)
 	{
 		alpacaErrCode	=	kASCOM_Err_Success;
 	}
 	else
 	{
 		alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
-		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "cCanSyncAltAz is false");
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "CanSyncAltAz is false");
 //		CONSOLE_DEBUG(alpacaErrMsg);
 	}
 	return(alpacaErrCode);
@@ -2991,13 +3044,13 @@ double				newDeclination;
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG(reqData->contentData);
 
-	if (cAtPark)
+	if (cTelescopeProp.AtPark)
 	{
 		alpacaErrCode	=	kASCOM_Err_InvalidWhileParked;
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Invalid While Parked");
-		CONSOLE_DEBUG(alpacaErrMsg);
+//		CONSOLE_DEBUG(alpacaErrMsg);
 	}
-	else if (cCanSync)
+	else if (cTelescopeProp.CanSync)
 	{
 		rightAscensionFound		=	GetKeyWordArgument(	reqData->contentData,
 														"RightAscension",
@@ -3015,35 +3068,37 @@ double				newDeclination;
 			if ((newRightAscension >= 0.0) && (newRightAscension <= 24.0) &&
 				(newDeclination >= -90.0) && (newDeclination <= 90.0))
 			{
-				cRightAscension			=	newRightAscension;
-				cDeclination			=	newDeclination;
-				cTargetRightAscension	=	newRightAscension;
-				cTargetDeclination		=	newDeclination;
+				cTelescopeProp.RightAscension		=	newRightAscension;
+				cTelescopeProp.Declination			=	newDeclination;
+				cTelescopeProp.TargetRightAscension	=	newRightAscension;
+				cTelescopeProp.TargetDeclination	=	newDeclination;
 
-				cTargetDec_HasBeenSet	=	true;
-				cTargetRA_HasBeenSet	=	true;
+				cTelescopeProp.TargetDec_HasBeenSet	=	true;
+				cTelescopeProp.TargetRA_HasBeenSet	=	true;
 
-				alpacaErrCode			=	kASCOM_Err_Success;
+				alpacaErrCode	=	Telescope_SyncToRA_DEC(	cTelescopeProp.RightAscension,
+															cTelescopeProp.Declination,
+															alpacaErrMsg);
 			}
 			else
 			{
 				alpacaErrCode	=	kASCOM_Err_InvalidValue;
 				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "values out of bounds");
-				CONSOLE_DEBUG(alpacaErrMsg);
+//				CONSOLE_DEBUG(alpacaErrMsg);
 			}
 		}
 		else
 		{
 			alpacaErrCode	=	kASCOM_Err_InvalidValue;
 			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "cmd values missing");
-				CONSOLE_DEBUG(alpacaErrMsg);
+//			CONSOLE_DEBUG(alpacaErrMsg);
 		}
 	}
 	else
 	{
 		alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "cCanSync is false");
-		CONSOLE_DEBUG(alpacaErrMsg);
+//		CONSOLE_DEBUG(alpacaErrMsg);
 	}
 	return(alpacaErrCode);
 }
@@ -3056,13 +3111,13 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 	CONSOLE_DEBUG(__FUNCTION__);
 //	CONSOLE_DEBUG(reqData->contentData);
 
-	if (cAtPark)
+	if (cTelescopeProp.AtPark)
 	{
 		alpacaErrCode	=	kASCOM_Err_InvalidWhileParked;
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Invalid While Parked");
-		CONSOLE_DEBUG(alpacaErrMsg);
+//		CONSOLE_DEBUG(alpacaErrMsg);
 	}
-	else if (cCanSync)
+	else if (cTelescopeProp.CanSync)
 	{
 		alpacaErrCode	=	kASCOM_Err_Success;
 	}
@@ -3083,15 +3138,15 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-	if (cCanUnpark)
+	if (cTelescopeProp.CanUnpark)
 	{
 		alpacaErrCode	=	kASCOM_Err_Success;
-		cAtPark			=	false;
+		cTelescopeProp.AtPark			=	false;
 	}
 	else
 	{
 		alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
-		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "cCanUnpark is false");
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "CanUnpark is false");
 //		CONSOLE_DEBUG(alpacaErrMsg);
 	}
 
@@ -3110,10 +3165,10 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 //*****************************************************************************
 TYPE_ASCOM_STATUS	TelescopeDriver::Get_Readall(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
 {
-	TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
-	int		mySocket;
+TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
+int		mySocket;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 #ifdef _DEBUG_CONFORM_
 	CONSOLE_DEBUG_W_STR("contentData\t=", reqData->contentData);
 #endif // _DEBUG_CONFORM_
@@ -3226,17 +3281,48 @@ int		mySocketFD;
 	}
 }
 
-
 //*****************************************************************************
-TYPE_ASCOM_STATUS	TelescopeDriver::Calibrator_TurnOn(const int brightnessValue, char *alpacaErrMsg)
+//*	needs to be over-ridden
+TYPE_ASCOM_STATUS	TelescopeDriver::Telescope_AbortSlew(char *alpacaErrMsg)
 {
 	TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
-
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, "This function should be over-ridden");
 
 	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
 	return(alpacaErrCode);
 
+}
+
+
+//*****************************************************************************
+//*	needs to be over-ridden
+TYPE_ASCOM_STATUS	TelescopeDriver::Telescope_SlewToRA_DEC(const double newRA, const double newDec, char *alpacaErrMsg)
+{
+	TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
+
+	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+//*	needs to be over-ridden
+TYPE_ASCOM_STATUS	TelescopeDriver::Telescope_TrackingOnOff(const bool newTrackingState, char *alpacaErrMsg)
+{
+	TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
+
+	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
+	return(alpacaErrCode);
+}
+
+
+
+//*****************************************************************************
+//*	needs to be over-ridden
+TYPE_ASCOM_STATUS	TelescopeDriver::Telescope_SyncToRA_DEC(const double newRA, const double newDec, char *alpacaErrMsg)
+{
+	TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
+
+	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
+	return(alpacaErrCode);
 }
 
 #endif	//	_ENABLE_TELESCOPE_

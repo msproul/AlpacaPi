@@ -89,7 +89,7 @@ static void	UpdateFromHipparcos(TYPE_ConstVector *constelVectors, int vectorCnt)
 {
 int		iii;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	//*	first we have to read in the hipparcos catalog
 	gHippData	=	ReadHipparcosStarCatalog(&gHippCount);
@@ -101,7 +101,7 @@ int		iii;
 		}
 		free(gHippData);
 	}
-	CONSOLE_DEBUG_W_NUM("gFailedToFindCnt\t=", gFailedToFindCnt);
+//	CONSOLE_DEBUG_W_NUM("gFailedToFindCnt\t=", gFailedToFindCnt);
 }
 
 
@@ -263,9 +263,8 @@ bool				moveFlag;
 	{
 		CONSOLE_DEBUG_W_STR("Failed to read:", filePath);
 	}
-	CONSOLE_DEBUG_W_NUM("linesRead\t=", linesRead);
+//	CONSOLE_DEBUG_W_NUM("linesRead\t=", linesRead);
 
- //	CONSOLE_ABORT(__FUNCTION__);
 	return(constelVectorData);
 }
 
@@ -346,7 +345,7 @@ int					subCnt;
 
 	if ((constVectors_simp != NULL) && (constVectors_rey != NULL))
 	{
-		CONSOLE_DEBUG("We have both files, starting with substitution");
+//		CONSOLE_DEBUG("We have both files, starting with substitution");
 		//*	ok, do the substitutions
 		//------------------------------------------
 		subCnt	=	0;
@@ -359,7 +358,7 @@ int					subCnt;
 		subCnt	+=	ReplaceVectorDef(constVectors_simp, objectCount_simp, constVectors_rey, objectCount_rey, "Perseus");
 		subCnt	+=	ReplaceVectorDef(constVectors_simp, objectCount_simp, constVectors_rey, objectCount_rey, "Vela");
 
-		CONSOLE_DEBUG_W_NUM("Definitions substituted\t=", subCnt);
+//		CONSOLE_DEBUG_W_NUM("Definitions substituted\t=", subCnt);
 		free(constVectors_rey);
 		constVectors_rey	=	NULL;
 		constVectors_return	=	constVectors_simp;

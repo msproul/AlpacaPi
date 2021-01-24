@@ -29,6 +29,7 @@
 //*	May 28,	2020	<MLS> Added timeout to SendPutCommand()
 //*	Jun 22,	2020	<MLS> Added OpenSocketAndSendRequest()
 //*	Jan 14,	2021	<MLS> Fixed GET/PUT request to have all the right header stuff
+//*	Jan 21,	2021	<MLS> Must use HTTP/1.0 to disable "Transfer-Encoding: chunked"
 //*****************************************************************************
 
 #include	<stdio.h>
@@ -91,7 +92,6 @@ int					so_oobinline;
 		{
 			perror("setsockopt(SO_RCVTIMEO) failed");
 		}
-//	SO_NOSIGPIPE,	MSG_NOSIGNAL
 		//*	turn out of band off
 		so_oobinline	=	0;
 		setOptRetCode			=	setsockopt(	socket_desc,
@@ -112,23 +112,29 @@ int					so_oobinline;
 		connRetCode	=	connect(socket_desc , (struct sockaddr *)&remoteDev , sizeof(remoteDev));
 		if (connRetCode >= 0)
 		{
+
+			//*	Must be HTTP/1.0 to disable "Transfer-Encoding: chunked"
 			strcpy(xmitBuffer, "GET ");
 			strcat(xmitBuffer, sendData);
-			strcat(xmitBuffer, "\r\n");
-			strcat(xmitBuffer, "User-Agent: Alpaca\r\n");
-			strcat(xmitBuffer, "accept: application/json\r\n");
+			strcat(xmitBuffer, " HTTP/1.0\n");
+			strcat(xmitBuffer, "Accept: application/json\n");
+//			strcat(xmitBuffer, "Accept: application/json, text/json, text/x-json, text/javascript, application/xml, text/xml\n");
+			strcat(xmitBuffer, "User-Agent: AlpacaPi\n");
+//			strcat(xmitBuffer, "Host: 192.168.1.161:6800\n");
+			strcat(xmitBuffer, "Connection: Keep-Alive\n");
+//
 			if (dataString != NULL)
 			{
 				dataStrLen	=	strlen(dataString);
-				sprintf(linebuf, "Content-Length: %d\r\n", dataStrLen);
+				sprintf(linebuf, "Content-Length: %d\n", dataStrLen);
 				strcat(xmitBuffer, linebuf);
-				strcat(xmitBuffer, "\r\n");
+				strcat(xmitBuffer, "\n");
 
 				strcat(xmitBuffer, dataString);
-				strcat(xmitBuffer, "\r\n");
+				strcat(xmitBuffer, "\n");
 			}
 
-//			CONSOLE_DEBUG(xmitBuffer);
+			CONSOLE_DEBUG(xmitBuffer);
 
 //			sendRetCode	=	send(socket_desc , xmitBuffer , strlen(xmitBuffer) , 0);
 			sendRetCode	=	send(socket_desc , xmitBuffer , strlen(xmitBuffer) , MSG_NOSIGNAL);
@@ -185,9 +191,12 @@ char				longBuffer[kLargeBufferSize + 10];
 char				linebuf[100];
 int					dataStrLen;
 char				ipString[32];
+bool				keepReading;
 #ifdef _USE_SOCKET_LINGER_
 	int					setOptRetCode;
 	struct linger		myLingerStruct;
+	CONSOLE_DEBUG("_USE_SOCKET_LINGER_");
+	CONSOLE_ABORT(__FUNCTION__);
 #endif // _USE_SOCKET_LINGER_
 
 //	CONSOLE_DEBUG(__FUNCTION__);
@@ -217,6 +226,7 @@ char				ipString[32];
 		connRetCode	=	connect(socket_desc , (struct sockaddr *)&remoteDev , sizeof(remoteDev));
 		if (connRetCode >= 0)
 		{
+//			CONSOLE_DEBUG("Connected");
 			strcpy(xmitBuffer, "GET ");
 			strcat(xmitBuffer, sendData);
 			strcat(xmitBuffer, "\r\n");
@@ -238,8 +248,8 @@ char				ipString[32];
 			sendRetCode	=	send(socket_desc , xmitBuffer , strlen(xmitBuffer) , MSG_NOSIGNAL);
 			if (sendRetCode >= 0)
 			{
-			bool	keepReading;
 
+//			CONSOLE_DEBUG("Request sent");
 				keepReading		=	true;
 				longBuffer[0]	=	0;
 				while (keepReading && ((strlen(longBuffer) + kReadBuffLen) < kLargeBufferSize))
@@ -249,17 +259,24 @@ char				ipString[32];
 					recvByteCnt	=	recv(socket_desc, returnedData , kReadBuffLen , MSG_NOSIGNAL);
 					if (recvByteCnt > 0)
 					{
+//						CONSOLE_DEBUG_W_NUM("recvByteCnt\t=",	recvByteCnt);
 						validData	=	true;
 						returnedData[recvByteCnt]	=	0;
+
+//						CONSOLE_DEBUG_W_STR("returnedData\t=",	returnedData);
+
 						strcat(longBuffer, returnedData);
+//						CONSOLE_DEBUG_W_STR("longBuffer\t=",	longBuffer);
 					}
 					else
 					{
 						keepReading		=	false;
 					}
 				}
+//				CONSOLE_DEBUG_W_STR("longBuffer\t=",	longBuffer);
 				SJP_Init(jsonParser);
 				SJP_ParseData(jsonParser, longBuffer);
+//				CONSOLE_DEBUG(__FUNCTION__);
 			}
 			else
 			{
@@ -271,6 +288,7 @@ char				ipString[32];
 				CONSOLE_DEBUG_W_NUM("shutDownRetCode\t=", shutDownRetCode);
 				CONSOLE_DEBUG_W_NUM("errno\t=", errno);
 			}
+//			CONSOLE_DEBUG(__FUNCTION__);
 		}
 		else if (errno == ECONNREFUSED)
 		{
@@ -296,6 +314,7 @@ char				ipString[32];
 		CONSOLE_DEBUG_W_NUM("socket_desc\t=", socket_desc);
 		CONSOLE_DEBUG_W_NUM("errno\t\t=", errno);
 	}
+//	CONSOLE_DEBUG(__FUNCTION__);
 	return(validData);
 }
 
@@ -393,7 +412,7 @@ int					setOptRetCode;
 			{
 				strcat(xmitBuffer, "\r\n");
 			}
-			CONSOLE_DEBUG_W_STR("Sending:", xmitBuffer);
+//			CONSOLE_DEBUG_W_STR("Sending:", xmitBuffer);
 
 			sendRetCode	=	send(socket_desc , xmitBuffer , strlen(xmitBuffer) , MSG_NOSIGNAL);
 			if (sendRetCode >= 0)

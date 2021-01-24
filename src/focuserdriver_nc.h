@@ -31,10 +31,10 @@ class FocuserNiteCrawler: public FocuserDriver
 		virtual			~FocuserNiteCrawler(void);
 		virtual	int32_t	RunStateMachine(void);
 
-		virtual	TYPE_ASCOM_STATUS	SetFocuserPostion(const int32_t newPosition, char *alpacaErrMsg);
+		virtual	TYPE_ASCOM_STATUS	SetFocuserPosition(const int32_t newPosition, char *alpacaErrMsg);
 		virtual	TYPE_ASCOM_STATUS	HaltFocuser(char *alpacaErrMsg);
 
-		virtual	TYPE_ASCOM_STATUS	SetStepperPostion(const int axisNumber, const int32_t newPosition);
+		virtual	TYPE_ASCOM_STATUS	SetStepperPosition(const int axisNumber, const int32_t newPosition);
 		virtual	TYPE_ASCOM_STATUS	HaltStepper(const int axisNumber);
 
 	protected:

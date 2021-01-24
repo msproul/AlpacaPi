@@ -93,11 +93,11 @@ DomeDriverROR::DomeDriverROR(const int argDevNum)
 	strcpy(cDeviceName, "Dome-Roll-Off-Roof");
 	strcpy(gWebTitle, "Dome-Roll-Off-Roof");
 
-	cDomeConfig				=	kIsRollOffRoof;
-	cAtPark					=	true;	//*	for testing
-	cAzimuth_Degrees		=	123.0;	//*	for testing
-	cCanSyncAzimuth			=	false;
-	cCanSetShutter			=	true;
+	cDomeConfig					=	kIsRollOffRoof;
+	cDomeProp.AtPark			=	true;	//*	for testing
+	cDomeProp.Azimuth			=	123.0;	//*	for testing
+	cDomeProp.CanSyncAzimuth	=	false;
+	cDomeProp.CanSetShutter		=	true;
 
 	//*	local stuff
 	cRORisOpening			=	false;
@@ -157,9 +157,9 @@ int32_t		minDealy_microSecs;
 		//*	if you want the power turned off, do it here
 		relayOK		=	RpiRelay_SetRelay(kRelay_RoofPower, false);
 
-		cShutterstatus	=	kShutterStatus_Open;
-		cSlewing		=	false;
-		cRORisOpening	=	false;
+		cDomeProp.ShutterStatus	=	kShutterStatus_Open;
+		cDomeProp.Slewing		=	false;
+		cRORisOpening			=	false;
 	}
 
 	if (cRORisClosing && (deltaMilliSecs > (kSwitchDelaySeconds * 1000)))
@@ -169,9 +169,9 @@ int32_t		minDealy_microSecs;
 		//*	if you want the power turned off, do it here
 		relayOK		=	RpiRelay_SetRelay(kRelay_RoofPower, false);
 
-		cShutterstatus	=	kShutterStatus_Closed;
-		cSlewing		=	false;
-		cRORisClosing	=	false;
+		cDomeProp.ShutterStatus	=	kShutterStatus_Closed;
+		cDomeProp.Slewing		=	false;
+		cRORisClosing			=	false;
 	}
 #endif // _CHRIS_A_ROLL_OFF_ROOF_
 	return(minDealy_microSecs);
@@ -194,8 +194,8 @@ bool				relayOK;
 	alpacaErrCode			=	kASCOM_Err_Success;
 	cTimeOfLastOpenClose	=	millis();
 	cRORisOpening			=	true;
-	cSlewing				=	true;
-	cShutterstatus			=	kShutterStatus_Opening;
+	cDomeProp.Slewing		=	true;
+	cDomeProp.ShutterStatus	=	kShutterStatus_Opening;
 
 #else
 	alpacaErrCode	=	kASCOM_Err_ActionNotImplemented;
@@ -221,8 +221,8 @@ bool				relayOK;
 	alpacaErrCode			=	kASCOM_Err_Success;
 	cTimeOfLastOpenClose	=	millis();
 	cRORisClosing			=	true;
-	cSlewing				=	true;
-	cShutterstatus			=	kShutterStatus_Closing;
+	cDomeProp.Slewing		=	true;
+	cDomeProp.ShutterStatus	=	kShutterStatus_Closing;
 
 #else
 	alpacaErrCode	=	kASCOM_Err_ActionNotImplemented;
@@ -247,7 +247,7 @@ bool				relayOK;
 	relayOK					=	RpiRelay_SetRelay(kRelay_RoofPower, false);
 	cRORisOpening			=	false;
 	cRORisClosing			=	false;
-	cSlewing				=	false;
+	cDomeProp.Slewing		=	false;
 
 #endif
 }

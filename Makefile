@@ -184,6 +184,7 @@ CPP_OBJECTS=												\
 				$(OBJECT_DIR)telescopedriver.o				\
 				$(OBJECT_DIR)telescopedriver_lx200.o		\
 				$(OBJECT_DIR)cpu_stats.o					\
+				$(OBJECT_DIR)lx200_com.o					\
 
 ######################################################################################
 #	Camera Objects
@@ -253,6 +254,7 @@ ROR_OBJECTS=												\
 				$(OBJECT_DIR)managementdriver.o				\
 				$(OBJECT_DIR)observatory_settings.o			\
 				$(OBJECT_DIR)raspberrypi_relaylib.o			\
+				$(OBJECT_DIR)HostNames.o					\
 
 
 ######################################################################################
@@ -814,7 +816,7 @@ pi64		:		$(CPP_OBJECTS)				\
 pizwo		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
 #pizwo		:		DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_
 #pizwo		:		DEFINEFLAGS		+=	-D_ENABLE_ROTATOR_
-#pizwo		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_
+pizwo		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_
 #pizwo		:		DEFINEFLAGS		+=	-D_ENABLE_SAFETYMONITOR_
 #pizwo		:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_
 #pizwo		:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
@@ -1431,6 +1433,8 @@ SRC_SKYTRAVEL=./src_skytravel/
 SKYTRAVEL_OBJECTS=											\
 				$(OBJECT_DIR)controller_skytravel.o			\
 				$(OBJECT_DIR)controller_dome_common.o		\
+				$(OBJECT_DIR)controller_dome.o				\
+				$(OBJECT_DIR)controller_telescope.o			\
 				$(OBJECT_DIR)ConstellationData.o			\
 				$(OBJECT_DIR)cpu_stats.o					\
 				$(OBJECT_DIR)eph.o							\
@@ -1443,6 +1447,7 @@ SKYTRAVEL_OBJECTS=											\
 				$(OBJECT_DIR)StarData.o						\
 				$(OBJECT_DIR)SkyTravelTimeRoutines.o		\
 				$(OBJECT_DIR)windowtab_skytravel.o			\
+				$(OBJECT_DIR)windowtab_telescope.o			\
 				$(OBJECT_DIR)windowtab_dome.o				\
 				$(OBJECT_DIR)windowtab_alpacalist.o			\
 				$(OBJECT_DIR)controller_camera.o				\
@@ -1465,6 +1470,8 @@ SKYTRAVEL_OBJECTS=											\
 				$(OBJECT_DIR)controller_ml_single.o				\
 				$(OBJECT_DIR)windowtab_graphs.o					\
 				$(OBJECT_DIR)serialport.o					\
+				$(OBJECT_DIR)windowtab_slit.o					\
+				$(OBJECT_DIR)windowtab_slitgraph.o				\
 
 
 ######################################################################################
@@ -1472,11 +1479,12 @@ SKYTRAVEL_OBJECTS=											\
 #pragma mark camera-controller
 sky		:	DEFINEFLAGS		+=	-D_INCLUDE_CTRL_MAIN_
 sky		:	DEFINEFLAGS		+=	-D_ENABLE_SKYTRAVEL_
-sky		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_DOME_
 sky		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_CAMERA_
+sky		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_DOME_
 sky		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_FOCUSERS_
 sky		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
 sky		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_SWITCHES_
+sky		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_TELESCOPE_
 sky		:	DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
 sky		:	INCLUDES		+=	-I$(SRC_SKYTRAVEL)
 
@@ -2060,6 +2068,16 @@ $(OBJECT_DIR)controller_dome_common.o : $(SRC_DIR)controller_dome_common.cpp	\
 										$(SRC_DIR)controller.h
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)controller_dome_common.cpp -o$(OBJECT_DIR)controller_dome_common.o
 
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)controller_telescope.o :	$(SRC_DIR)controller_telescope.cpp		\
+										$(SRC_DIR)controller_tscope_common.cpp	\
+										$(SRC_DIR)controller_telescope.h		\
+										$(SRC_DIR)windowtab_telescope.h			\
+										$(SRC_DIR)windowtab_about.h				\
+										$(SRC_DIR)controller.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)controller_telescope.cpp -o$(OBJECT_DIR)controller_telescope.o
+
+
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)windowtab_alpacalist.o : $(SRC_DIR)windowtab_alpacalist.cpp		\
@@ -2074,6 +2092,7 @@ $(OBJECT_DIR)controller_image.o : 		$(SRC_DIR)controller_image.cpp		\
 										$(SRC_DIR)controller_image.h		\
 										$(SRC_DIR)windowtab_image.h			\
 										$(SRC_DIR)windowtab_about.h			\
+										$(SRC_DIR)windowtab.h				\
 										$(SRC_DIR)controller.h
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)controller_image.cpp -o$(OBJECT_DIR)controller_image.o
 
@@ -2082,6 +2101,7 @@ $(OBJECT_DIR)controller_image.o : 		$(SRC_DIR)controller_image.cpp		\
 $(OBJECT_DIR)windowtab_image.o : 		$(SRC_DIR)windowtab_image.cpp		\
 										$(SRC_DIR)windowtab_image.h			\
 										$(SRC_DIR)controller_image.h		\
+										$(SRC_DIR)windowtab.h				\
 										$(SRC_DIR)controller.h
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)windowtab_image.cpp -o$(OBJECT_DIR)windowtab_image.o
 
@@ -2131,6 +2151,7 @@ $(OBJECT_DIR)windowtab_camsettings.o : 	$(SRC_DIR)windowtab_camsettings.cpp	\
 $(OBJECT_DIR)windowtab_filelist.o : 	$(SRC_DIR)windowtab_filelist.cpp	\
 										$(SRC_DIR)controller_camera.h		\
 										$(SRC_DIR)windowtab_filelist.h		\
+										$(SRC_DIR)windowtab.h				\
 										$(SRC_DIR)controller.h
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)windowtab_filelist.cpp -o$(OBJECT_DIR)windowtab_filelist.o
 
@@ -2158,7 +2179,7 @@ $(OBJECT_DIR)windowtab_about.o : 		$(SRC_DIR)windowtab_about.cpp		\
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)windowtab_preview.o : 		$(SRC_DIR)windowtab_preview.cpp		\
-										$(SRC_DIR)windowtab_preview.h			\
+										$(SRC_DIR)windowtab_preview.h		\
 										$(SRC_DIR)windowtab.h				\
 										$(SRC_DIR)controller.h
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)windowtab_preview.cpp -o$(OBJECT_DIR)windowtab_preview.o
@@ -2306,9 +2327,16 @@ $(OBJECT_DIR)skytravel_main.o :			$(SRC_SKYTRAVEL)skytravel_main.cpp	\
 										$(SRC_SKYTRAVEL)windowtab_skytravel.h
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYTRAVEL)skytravel_main.cpp -o$(OBJECT_DIR)skytravel_main.o
 
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)windowtab_telescope.o :	$(SRC_DIR)windowtab_telescope.cpp	\
+										$(SRC_DIR)windowtab_telescope.h		\
+										$(SRC_DIR)windowtab.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)windowtab_telescope.cpp -o$(OBJECT_DIR)windowtab_telescope.o
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)controller_skytravel.o :	$(SRC_SKYTRAVEL)controller_skytravel.cpp	\
+										$(SRC_DIR)controller_tscope_common.cpp		\
+										$(SRC_DIR)controller_dome_common.cpp		\
 										$(SRC_SKYTRAVEL)controller_skytravel.h
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYTRAVEL)controller_skytravel.cpp -o$(OBJECT_DIR)controller_skytravel.o
 
@@ -2321,7 +2349,8 @@ $(OBJECT_DIR)StarData.o :				$(SRC_SKYTRAVEL)StarData.c	\
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)windowtab_skytravel.o :	$(SRC_SKYTRAVEL)windowtab_skytravel.cpp	\
-										$(SRC_SKYTRAVEL)windowtab_skytravel.h
+										$(SRC_SKYTRAVEL)windowtab_skytravel.h	\
+										$(SRC_DIR)windowtab.h
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYTRAVEL)windowtab_skytravel.cpp -o$(OBJECT_DIR)windowtab_skytravel.o
 
 
@@ -2365,8 +2394,8 @@ $(OBJECT_DIR)ConstellationData.o :		$(SRC_SKYTRAVEL)ConstellationData.c	\
 
 
 #-------------------------------------------------------------------------------------
-$(OBJECT_DIR)lx200_com.o :				$(SRC_SKYTRAVEL)lx200_com.c	\
-										$(SRC_SKYTRAVEL)lx200_com.h
-	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYTRAVEL)lx200_com.c -o$(OBJECT_DIR)lx200_com.o
+$(OBJECT_DIR)lx200_com.o :				$(SRC_DIR)lx200_com.c	\
+										$(SRC_DIR)lx200_com.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)lx200_com.c -o$(OBJECT_DIR)lx200_com.o
 
 

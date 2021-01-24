@@ -1285,7 +1285,7 @@ int		fitsStatus;
 		char	lineBuff[128];
 		double	dblValue;
 
-			focuserPosition	=	cConnectedFocuser->GetFocuserPostion();
+			focuserPosition	=	cConnectedFocuser->GetFocuserPosition();
 			fitsStatus	=	0;
 			fits_write_key(fitsFilePtr, TINT,		"TELFOCUS",
 													&focuserPosition,

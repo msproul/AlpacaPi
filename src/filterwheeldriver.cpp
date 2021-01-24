@@ -94,7 +94,7 @@ int	ii;
 	strcpy(cDeviceDescription,	"Generic filterwheel");
 
 	cFilterWheelConnected		=	false;
-	cNumberOfPostions			=	0;
+	cNumberOfPositions			=	0;
 	cFilterWheelCurrPos			=	0;
 	cSuccesfullOpens			=	0;
 	cSuccesfullCloses			=	0;
@@ -315,7 +315,7 @@ char				lineBuffer[256];
 		mySocketFD	=	reqData->socket;
 
 
-		if (cNumberOfPostions > 0)
+		if (cNumberOfPositions > 0)
 		{
 		//	JsonResponse_Add_RawText(mySocketFD,
 		//							reqData->jsonTextBuffer,
@@ -330,10 +330,10 @@ char				lineBuffer[256];
 										reqData->jsonTextBuffer,
 										kMaxJsonBuffLen,
 										"\r\n");
-			for (ii=0; ii<cNumberOfPostions; ii++)
+			for (ii=0; ii<cNumberOfPositions; ii++)
 			{
 				sprintf(lineBuffer, "\t\t\t%d", cFilterDef[ii].focusOffset);
-				if (ii < (cNumberOfPostions - 1))
+				if (ii < (cNumberOfPositions - 1))
 				{
 					strcat(lineBuffer, ",");
 					strcat(lineBuffer, "\r\n");
@@ -377,7 +377,7 @@ char				lineBuffer[256];
 		mySocketFD	=	reqData->socket;
 
 
-		if (cNumberOfPostions > 0)
+		if (cNumberOfPositions > 0)
 		{
 		//	JsonResponse_Add_RawText(mySocketFD,
 		//							reqData->jsonTextBuffer,
@@ -391,12 +391,12 @@ char				lineBuffer[256];
 										reqData->jsonTextBuffer,
 										kMaxJsonBuffLen,
 										"\r\n");
-			for (ii=0; ii<cNumberOfPostions; ii++)
+			for (ii=0; ii<cNumberOfPositions; ii++)
 			{
 				strcpy(lineBuffer, "\t\t\t\"");
 				strcat(lineBuffer, cFilterDef[ii].filterDesciption);
 				strcat(lineBuffer, "\"");
-				if (ii < (cNumberOfPostions - 1))
+				if (ii < (cNumberOfPositions - 1))
 				{
 					strcat(lineBuffer, ",");
 					strcat(lineBuffer, "\r\n");
@@ -493,7 +493,7 @@ char				poisitonString[32];
 char				commentString[128];
 
 	CONSOLE_DEBUG_W_STR("contentData\t=",	reqData->contentData);
-	CONSOLE_DEBUG_W_NUM("max positions\t=",	cNumberOfPostions);
+	CONSOLE_DEBUG_W_NUM("max positions\t=",	cNumberOfPositions);
 
 	positionFound		=	GetKeyWordArgument(	reqData->contentData,
 												"Position",
@@ -508,7 +508,7 @@ char				commentString[128];
 		//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		//*	newPosition starts at "0"
 		//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-		if ((newPosition >= 0) && (newPosition < cNumberOfPostions))
+		if ((newPosition >= 0) && (newPosition < cNumberOfPositions))
 		{
 			alpacaErrCode	=	Set_CurrentFilterPositon(newPosition);
 			if (alpacaErrCode == 0)
@@ -581,7 +581,7 @@ bool		isConnected;
 			SocketWriteData(mySocketFD,	cDeviceName);
 			SocketWriteData(mySocketFD,	"</TD>\r\n");
 
-			sprintf(lineBuffer,	"\t<TD><CENTER>Slots=%d</TD>\r\n",	cNumberOfPostions);
+			sprintf(lineBuffer,	"\t<TD><CENTER>Slots=%d</TD>\r\n",	cNumberOfPositions);
 			SocketWriteData(mySocketFD,	lineBuffer);
 
 			Read_CurrentFilterPositon();
@@ -593,7 +593,7 @@ bool		isConnected;
 
 			//*******************************************************
 			//*	list out the filter names
-			for (ii=0; ii < cNumberOfPostions; ii++)
+			for (ii=0; ii < cNumberOfPositions; ii++)
 			{
 				SocketWriteData(mySocketFD,	"<TR>\r\n");
 
@@ -654,7 +654,7 @@ int	FilterwheelDriver::Read_CurrentFWstate(void)
 //*	if the specific device uses 0 as the starting location, this routine must adjust +1
 //*	return -1 if unable to determine position
 //*****************************************************************************
-TYPE_ASCOM_STATUS	FilterwheelDriver::Read_CurrentFilterPositon(int *rtnCurrentPostion)
+TYPE_ASCOM_STATUS	FilterwheelDriver::Read_CurrentFilterPositon(int *rtnCurrentPosition)
 {
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_FailedUnknown;
 
@@ -687,7 +687,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 //*	this accepts a position starting with 1
 //*	if the specific device uses 0 as the starting location, this routine must adjust
 //*****************************************************************************
-TYPE_ASCOM_STATUS		FilterwheelDriver::Set_CurrentFilterPositon(const int newPostion)
+TYPE_ASCOM_STATUS		FilterwheelDriver::Set_CurrentFilterPositon(const int newPosition)
 {
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 

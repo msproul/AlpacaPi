@@ -7,6 +7,9 @@
 #ifndef _CONTROLLER_DOME_H_
 #define	_CONTROLLER_DOME_H_
 
+#ifndef	_ALPACA_DEFS_H_
+	#include	"alpaca_defs.h"
+#endif // _ALPACA_DEFS_H_
 
 //#define	_ENABLE_EXTERNAL_SHUTTER_
 #define	_ENABLE_SLIT_TRACKER_
@@ -70,7 +73,7 @@ class ControllerDome: public Controller
 		virtual	void	SetupWindowControls(void);
 		virtual	void	RunBackgroundTasks(void);
 	//	virtual	void	DrawGraphWidget(const int widgitIdx);
-				bool	AlpacaGetStartupData(void);
+		virtual	bool	AlpacaGetStartupData(void);
 				bool	AlpacaGetStatus(void);
 		virtual	void	AlpacaDisplayErrorMessage(const char *errorMsgString);
 
@@ -83,12 +86,12 @@ class ControllerDome: public Controller
 														const char	*valueString);
 
 				void	AlpacaProcessSupportedActions_Dome(const int deviveNum, const char *valueString);
-				void	AlpacaProcessReadAllDome(		const int	deviceNum,
+				void	AlpacaProcessReadAll_Dome(		const int	deviceNum,
 														const char	*keywordString,
 														const char	*valueString);
 
 
-				bool	AlpacaGetStatus_OneAAT(void);	//*	One At A Time
+				bool	AlpacaGetStatus_DomeOneAAT(void);	//*	One At A Time
 				void	ToggleSwitchState(const int switchNum);
 				void	UpdateDomeAzimuth(const double newAzimuth);
 
@@ -120,22 +123,8 @@ class ControllerDome: public Controller
 				WindowTabDome			*cDomeTabObjPtr;
 				WindowTabAbout			*cAboutBoxTabObjPtr;
 
-				bool			cCanFindHome;
-				bool			cCanPark;
-				bool			cCanSetAltitude;
-				bool			cCanSetAzimuth;
-				bool			cCanSetPark;
-				bool			cCanSetShutter;
-				bool			cCanSlave;
-				bool			cCanSyncAzimuth;
-				int				cShutterStatus;
+				TYPE_DomeProperties	cDomeProp;
 
-				bool			cAtHome;
-				bool			cAtPark;
-				bool			cSlaved;
-				bool			cSlewing;
-				double			cAzimuth_Dbl;
-				double			cAltitude_Dbl;
 
 				uint32_t		cUpdateDelta;
 

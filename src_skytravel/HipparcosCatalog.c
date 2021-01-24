@@ -310,7 +310,7 @@ char			lineBuff[512];
 char			filePath[128];
 size_t			bufferSize;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	hipStarData	=	NULL;
 
@@ -324,8 +324,8 @@ size_t			bufferSize;
 		hipFileSize		=	GetFileSize(filePath);
 		hipLineCount	=	hipFileSize / kHIPrecordSize;
 
-		CONSOLE_DEBUG_W_LONG("hipFileSize\t=", hipFileSize);
-		CONSOLE_DEBUG_W_LONG("hipLineCount\t=", hipLineCount);
+//		CONSOLE_DEBUG_W_LONG("hipFileSize\t=", hipFileSize);
+//		CONSOLE_DEBUG_W_LONG("hipLineCount\t=", hipLineCount);
 
 
 		bufferSize	=	hipLineCount * sizeof(TYPE_CelestData);
@@ -353,9 +353,9 @@ size_t			bufferSize;
 		fclose(filePointer);
 	}
 
-	CONSOLE_DEBUG_W_DBL("gLargestMag\t=", gLargestMag);
-	CONSOLE_DEBUG_W_DBL("gSmallestMag\t=", gSmallestMag);
-	CONSOLE_DEBUG_W_NUM("g99Count\t=", g99Count);
+//	CONSOLE_DEBUG_W_DBL("gLargestMag\t=", gLargestMag);
+//	CONSOLE_DEBUG_W_DBL("gSmallestMag\t=", gSmallestMag);
+//	CONSOLE_DEBUG_W_NUM("g99Count\t=", g99Count);
 
 	return(hipStarData);
 }

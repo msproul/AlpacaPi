@@ -87,7 +87,7 @@ class FocuserDriver: public AlpacaDriver
 
 
 		//*	these are access functions for FITS output
-		int32_t	GetFocuserPostion(void);
+		int32_t	GetFocuserPosition(void);
 		void	GetFocuserManufacturer(char *manufactString);
 		void	GetFocuserModel(char *modelName);
 		void	GetFocuserVersion(char *versionString);
@@ -97,7 +97,7 @@ class FocuserDriver: public AlpacaDriver
 
 
 		//*	focuser specific commands
-		virtual	TYPE_ASCOM_STATUS	SetFocuserPostion(const int32_t newPosition, char *alpacaErrMsg);
+		virtual	TYPE_ASCOM_STATUS	SetFocuserPosition(const int32_t newPosition, char *alpacaErrMsg);
 		virtual	TYPE_ASCOM_STATUS	HaltFocuser(char *alpacaErrMsg);
 
 
@@ -108,37 +108,33 @@ class FocuserDriver: public AlpacaDriver
 
 
 	protected:
+		TYPE_FocuserProperties	cFocuserProp;
 
 		int32_t			cFocuserPGet_Readallostion;
-		int32_t			cFocuserPostion;
-		int32_t			cPrevFocuserPostion;
-		int32_t			cNewFocuserPostion;
-		int32_t			cMaxStep;				//*	the maximum position the focuser can go to
-		int32_t			cMaxIncrement;			//*	Maximum increment size allowed by the focuser;
+		int32_t			cPrevFocuserPosition;
+		int32_t			cNewFocuserPosition;
 												//*	i.e. the maximum number of steps allowed in one move operation
-		bool			cFocusIsMoving;
-		double			cFocuserStepSize;
 
 		//*	this is for support of Moonlite NiteCrawler
 		bool			cIsNiteCrawler;
 		bool			cFocuserSupportsRotation;
-		int32_t			cRotatorPostion;
+		int32_t			cRotatorPosition;
 		int32_t			cRotatorStepsPerRev;
-		int32_t			cPrevRotatorPostion;
-		int32_t			cNewRotatorPostion;
+		int32_t			cPrevRotatorPosition;
+		int32_t			cNewRotatorPosition;
 		bool			cRotatorIsMoving;
 
 		bool			cFocuserSupportsAux;
 		int32_t			cAuxPosition;
-		int32_t			cPrevAuxPostion;
-		int32_t			cNewAuxPostion;
+		int32_t			cPrevAuxPosition;
+		int32_t			cNewAuxPosition;
 		bool			cAuxIsMoving;
 
 
 		bool			cFocuserHasTemperature;
 		double			cFocuserTemp;			//*	degrees C
 		bool			cHasTempComp;
-		bool			cTempCompEnabled;
+//-		bool			cTempCompEnabled;
 
 		bool			cFocuserHasVoltage;
 		double			cFocuserVoltage;

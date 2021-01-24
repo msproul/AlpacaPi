@@ -142,19 +142,19 @@ int		myClmWidth;
 	CONSOLE_DEBUG_W_STR("cAlpacaDeviceName=", cAlpacaDeviceName);
 	if (strcasestr(cAlpacaDeviceName, "ZWO") != NULL)
 	{
-		logoImage		=	cvLoadImage("zwo-logo.png",		CV_LOAD_IMAGE_COLOR);
+		logoImage		=	cvLoadImage("logos/zwo-logo.png",		CV_LOAD_IMAGE_COLOR);
 	}
 	else if (strcasestr(cAlpacaDeviceName, "Atik") != NULL)
 	{
-		logoImage		=	cvLoadImage("atik-logo.png",	CV_LOAD_IMAGE_COLOR);
+		logoImage		=	cvLoadImage("logos/atik-logo.png",	CV_LOAD_IMAGE_COLOR);
 	}
 	else if ((strcasestr(cAlpacaDeviceName, "toup") != NULL) || (strcasestr(cAlpacaDeviceName, "GCMOS") != NULL))
 	{
-		logoImage		=	cvLoadImage("touptek-logo.png",	CV_LOAD_IMAGE_COLOR);
+		logoImage		=	cvLoadImage("logos/touptek-logo.png",	CV_LOAD_IMAGE_COLOR);
 	}
 	else if (strcasestr(cAlpacaDeviceName, "QHY") != NULL)
 	{
-		logoImage		=	cvLoadImage("qhy-logo.png",		CV_LOAD_IMAGE_COLOR);
+		logoImage		=	cvLoadImage("logos/qhy-logo.png",		CV_LOAD_IMAGE_COLOR);
 	}
 	if (logoImage != NULL)
 	{
@@ -430,19 +430,19 @@ IplImage	*logoImage;
 	CONSOLE_DEBUG_W_STR("cAlpacaDeviceName=", cAlpacaDeviceName);
 	if (strcasestr(cAlpacaDeviceName, "ZWO") != NULL)
 	{
-		logoImage		=	cvLoadImage("zwo-logo.png",		CV_LOAD_IMAGE_COLOR);
+		logoImage		=	cvLoadImage("logos/zwo-logo.png",		CV_LOAD_IMAGE_COLOR);
 	}
 	else if (strcasestr(cAlpacaDeviceName, "Atik") != NULL)
 	{
-		logoImage		=	cvLoadImage("atik-logo.png",	CV_LOAD_IMAGE_COLOR);
+		logoImage		=	cvLoadImage("logos/atik-logo.png",	CV_LOAD_IMAGE_COLOR);
 	}
 	else if ((strcasestr(cAlpacaDeviceName, "toup") != NULL) || (strcasestr(cAlpacaDeviceName, "GCMOS") != NULL))
 	{
-		logoImage		=	cvLoadImage("touptek-logo.png",	CV_LOAD_IMAGE_COLOR);
+		logoImage		=	cvLoadImage("logos/touptek-logo.png",	CV_LOAD_IMAGE_COLOR);
 	}
 	else if (strcasestr(cAlpacaDeviceName, "QHY") != NULL)
 	{
-		logoImage		=	cvLoadImage("qhy-logo.png",		CV_LOAD_IMAGE_COLOR);
+		logoImage		=	cvLoadImage("logos/qhy-logo.png",		CV_LOAD_IMAGE_COLOR);
 	}
 	if (logoImage != NULL)
 	{

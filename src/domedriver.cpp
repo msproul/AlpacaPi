@@ -66,6 +66,7 @@
 //*	Jan 10,	2021	<MLS> Added Put_SlewToAltitude() (not finished)
 //*	Jan 10,	2021	<MLS> Put_FindHome() can now can figure out which way to go home ;)
 //*	Jan 12,	2021	<MLS> Added RunStateMachine_Dome() & RunStateMachine_ROR()
+//*	Jan 24,	2021	<MLS> Converted Domedriver to use properties struct
 //*****************************************************************************
 //*	cd /home/pi/dev-mark/alpaca
 //*	LOGFILE=logfile.txt
@@ -252,38 +253,28 @@ DomeDriver::DomeDriver(const int argDevNum)
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
-	cShutterstatus			=	kShutterStatus_Closed;
-	cAltitude_Degrees		=	0.0;
-	cAzimuth_Degrees		=	0.0;
-	cAzimuth_Destination	=	-1.0;		//*	must be >= to 0 to be valid
-	cParkAzimuth			=	0.0;
-	cHomeAzimuth			=	0.0;
-	cCurrentPWM				=	0;
-	cCurrentDirection		=	kRotateDome_CW;
-	cBumpSpeedAmount		=	1;
-	cTimeOfLastSpeedChange	=	0;
-	cTimeOfMovingStart		=	0;
+	cDomeProp.ShutterStatus	=	kShutterStatus_Closed;
+	cAzimuth_Destination		=	-1.0;		//*	must be >= to 0 to be valid
+	cParkAzimuth				=	0.0;
+	cHomeAzimuth				=	0.0;
+	cCurrentPWM					=	0;
+	cCurrentDirection			=	kRotateDome_CW;
+	cBumpSpeedAmount			=	1;
+	cTimeOfLastSpeedChange		=	0;
+	cTimeOfMovingStart			=	0;
 
-	cDomeConfig				=	kIsDome;
-	cAtHome					=	false;
-	cAtPark					=	false;
-	cCanSlave				=	false;
-	cCanFindHome			=	false;
-	cCanPark				=	false;
-	cGoingHome				=	false;
-	cCanSetAltitude			=	false;
-	cCanSetAzimuth			=	false;
-	cCanSetPark				=	false;
-	cCanSetShutter			=	false;
-	cCanSyncAzimuth			=	false;
-	cGoingPark				=	false;
-	cGoingBump				=	false;
-	cManualMove				=	false;
-	cSlaved					=	false;
-	cSlewing				=	false;
+	cDomeConfig					=	kIsDome;
 
-	cDomeState				=	kDomeState_Idle;
-	cPreviousDomeState		=	kDomeState_Idle;
+	//*	clear out all of the properties data
+	memset(&cDomeProp, 0, sizeof(TYPE_DomeProperties));
+
+	cGoingHome					=	false;
+	cGoingPark					=	false;
+	cGoingBump					=	false;
+	cManualMove					=	false;
+
+	cDomeState					=	kDomeState_Idle;
+	cPreviousDomeState			=	kDomeState_Idle;
 
 	strcpy(cDeviceName,			"Dome");
 	strcpy(cDeviceDescription,	"Dome");
@@ -924,7 +915,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 									reqData->jsonTextBuffer,
 									kMaxJsonBuffLen,
 									responseString,
-									cAltitude_Degrees,
+									cDomeProp.Altitude,
 									INCLUDE_COMMA);
 	}
 	else
@@ -945,7 +936,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 								reqData->jsonTextBuffer,
 								kMaxJsonBuffLen,
 								responseString,
-								cAtHome,
+								cDomeProp.AtHome,
 								INCLUDE_COMMA);
 	}
 	else
@@ -966,7 +957,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 								reqData->jsonTextBuffer,
 								kMaxJsonBuffLen,
 								responseString,
-								cAtPark,
+								cDomeProp.AtPark,
 								INCLUDE_COMMA);
 	}
 	else
@@ -987,7 +978,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 								reqData->jsonTextBuffer,
 								kMaxJsonBuffLen,
 								responseString,
-								cAzimuth_Degrees,
+								cDomeProp.Azimuth,
 								INCLUDE_COMMA);
 	}
 	else
@@ -1008,7 +999,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 								reqData->jsonTextBuffer,
 								kMaxJsonBuffLen,
 								responseString,
-								cCanFindHome,
+								cDomeProp.CanFindHome,
 								INCLUDE_COMMA);
 	}
 	else
@@ -1030,7 +1021,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 								reqData->jsonTextBuffer,
 								kMaxJsonBuffLen,
 								responseString,
-								cCanPark,
+								cDomeProp.CanPark,
 								INCLUDE_COMMA);
 	}
 	else
@@ -1052,7 +1043,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 								reqData->jsonTextBuffer,
 								kMaxJsonBuffLen,
 								responseString,
-								cCanSetAltitude,
+								cDomeProp.CanSetAltitude,
 								INCLUDE_COMMA);
 	}
 	else
@@ -1074,7 +1065,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 								reqData->jsonTextBuffer,
 								kMaxJsonBuffLen,
 								responseString,
-								cCanSetAzimuth,
+								cDomeProp.CanSetAzimuth,
 								INCLUDE_COMMA);
 	}
 	else
@@ -1096,7 +1087,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 								reqData->jsonTextBuffer,
 								kMaxJsonBuffLen,
 								responseString,
-								cCanSetPark,
+								cDomeProp.CanSetPark,
 								INCLUDE_COMMA);
 	}
 	else
@@ -1119,7 +1110,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 								reqData->jsonTextBuffer,
 								kMaxJsonBuffLen,
 								responseString,
-								cCanSetShutter,
+								cDomeProp.CanSetShutter,
 								INCLUDE_COMMA);
 	}
 	else
@@ -1140,7 +1131,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 								reqData->jsonTextBuffer,
 								kMaxJsonBuffLen,
 								responseString,
-								cCanSlave,
+								cDomeProp.CanSlave,
 								INCLUDE_COMMA);
 	}
 	else
@@ -1162,7 +1153,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 								reqData->jsonTextBuffer,
 								kMaxJsonBuffLen,
 								responseString,
-								cCanSyncAzimuth,
+								cDomeProp.CanSyncAzimuth,
 								INCLUDE_COMMA);
 	}
 	else
@@ -1185,7 +1176,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 								reqData->jsonTextBuffer,
 								kMaxJsonBuffLen,
 								responseString,
-								cSlewing,
+								cDomeProp.Slewing,
 								INCLUDE_COMMA);
 	}
 	else
@@ -1209,10 +1200,10 @@ char				statusString[32];
 								reqData->jsonTextBuffer,
 								kMaxJsonBuffLen,
 								responseString,
-								cShutterstatus,
+								cDomeProp.ShutterStatus,
 								INCLUDE_COMMA);
 
-		DomeControl_GetStatusString(cShutterstatus, statusString);
+		DomeControl_GetStatusString(cDomeProp.ShutterStatus, statusString);
 
 		JsonResponse_Add_String(	reqData->socket,
 									reqData->jsonTextBuffer,
@@ -1241,7 +1232,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 								reqData->jsonTextBuffer,
 								kMaxJsonBuffLen,
 								responseString,
-								cSlaved,
+								cDomeProp.Slaved,
 								INCLUDE_COMMA);
 
 	}
@@ -1263,7 +1254,7 @@ bool				newSlavedValue;
 	CONSOLE_DEBUG(__FUNCTION__);
 	if (reqData != NULL)
 	{
-		if (cCanSlave)
+		if (cDomeProp.CanSlave)
 		{
 			foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
 													"Slaved",
@@ -1274,13 +1265,13 @@ bool				newSlavedValue;
 				newSlavedValue	=	IsTrueFalse(argumentString);
 				if (newSlavedValue)
 				{
-					if (cCanSlave)
+					if (cDomeProp.CanSlave)
 					{
 						//*	we can only slave if the shutter is open
-						if (cShutterstatus == kShutterStatus_Open)
+						if (cDomeProp.ShutterStatus == kShutterStatus_Open)
 						{
-							cSlaved			=	true;
-							alpacaErrCode	=	kASCOM_Err_Success;
+							cDomeProp.Slaved	=	true;
+							alpacaErrCode		=	kASCOM_Err_Success;
 						}
 						else
 						{
@@ -1298,8 +1289,8 @@ bool				newSlavedValue;
 				}
 				else
 				{
-					cSlaved			=	false;
-					alpacaErrCode	=	kASCOM_Err_Success;
+					cDomeProp.Slaved	=	false;
+					alpacaErrCode		=	kASCOM_Err_Success;
 				}
 			}
 			else
@@ -1356,13 +1347,13 @@ int 				direction;
 		cGoingBump	=	false;
 		cGoingHome	=	false;
 
-		if (cCanPark)
+		if (cDomeProp.CanPark)
 		{
-			if (cAtPark)
+			if (cDomeProp.AtPark)
 			{
 				CONSOLE_DEBUG("Already at park, command ignored");
 			}
-			else if (cSlewing)
+			else if (cDomeProp.Slewing)
 			{
 				cGoingPark	=	true;
 			}
@@ -1370,7 +1361,7 @@ int 				direction;
 			{
 				//*	lets try and figure out which way to go.
 				direction		=	kRotateDome_CW;	//*	set a default
-				deltaDegrees	=	cAzimuth_Degrees - cParkAzimuth;
+				deltaDegrees	=	cDomeProp.Azimuth - cParkAzimuth;
 				CONSOLE_DEBUG_W_DBL("Distance from park\t=", deltaDegrees);
 
 				if ((deltaDegrees > 0.0) && (deltaDegrees < 180.0))
@@ -1379,7 +1370,7 @@ int 				direction;
 				}
 				cGoingPark		=	true;
 
-				if (cAtHome)
+				if (cDomeProp.AtHome)
 				{
 					StartDomeMoving(kRotateDome_CCW);
 				}
@@ -1407,9 +1398,9 @@ TYPE_ASCOM_STATUS	DomeDriver::Put_OpenShutter(	TYPE_GetPutRequestData *reqData, 
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
-	alpacaErrCode	=	OpenShutter(alpacaErrMsg);
+	alpacaErrCode			=	OpenShutter(alpacaErrMsg);
 
-	cShutterstatus	=	kShutterStatus_Opening;
+	cDomeProp.ShutterStatus	=	kShutterStatus_Opening;
 
 	return(alpacaErrCode);
 }
@@ -1420,9 +1411,9 @@ TYPE_ASCOM_STATUS	DomeDriver::Put_CloseShutter(	TYPE_GetPutRequestData *reqData,
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
-	cShutterstatus	=	kShutterStatus_Closing;
+	cDomeProp.ShutterStatus	=	kShutterStatus_Closing;
 
-	alpacaErrCode	=	CloseShutter(alpacaErrMsg);
+	alpacaErrCode			=	CloseShutter(alpacaErrMsg);
 	return(alpacaErrCode);
 }
 
@@ -1434,16 +1425,16 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 int					direction;
 double				deltaDegrees;
 
-	if (cCanFindHome)
+	if (cDomeProp.CanFindHome)
 	{
 		cGoingBump	=	false;
 		cGoingPark	=	false;
 
-		if (cAtHome)
+		if (cDomeProp.AtHome)
 		{
 			CONSOLE_DEBUG("Already at home, command ignored");
 		}
-		else if (cSlewing)
+		else if (cDomeProp.Slewing)
 		{
 			cGoingHome	=	true;
 		}
@@ -1452,7 +1443,7 @@ double				deltaDegrees;
 			cGoingHome	=	true;
 			//*	lets try and figure out which way to go.
 			direction		=	kRotateDome_CW;	//*	set a default
-			deltaDegrees	=	cAzimuth_Degrees - cHomeAzimuth;
+			deltaDegrees	=	cDomeProp.Azimuth - cHomeAzimuth;
 			CONSOLE_DEBUG_W_DBL("Distance from home\t=", deltaDegrees);
 
 			if ((deltaDegrees > 0.0) && (deltaDegrees < 180.0))
@@ -1460,7 +1451,7 @@ double				deltaDegrees;
 				direction		=	kRotateDome_CCW;	//*	set a default
 			}
 
-			if (cAtPark)
+			if (cDomeProp.AtPark)
 			{
 				//*	because my HOME is CW from my PARK
 				StartDomeMoving(kRotateDome_CW);
@@ -1514,7 +1505,7 @@ char				argumentString[64];
 bool				foundKeyWord;
 
 	CONSOLE_DEBUG(__FUNCTION__);
-	if (cCanSetAzimuth)
+	if (cDomeProp.CanSetAzimuth)
 	{
 		if (reqData != NULL)
 		{
@@ -1527,7 +1518,7 @@ bool				foundKeyWord;
 				if ((newAzimuthValue >= 0.0) && (newAzimuthValue <= 360.0))
 				{
 					cAzimuth_Destination	=	newAzimuthValue;
-					deltaDegrees			=	cAzimuth_Destination - cAzimuth_Degrees;
+					deltaDegrees			=	cAzimuth_Destination - cDomeProp.Azimuth;
 					CONSOLE_DEBUG_W_DBL("deltaDegrees\t=", deltaDegrees);
 					if ((deltaDegrees >= 1.0) && (deltaDegrees < 180.0))
 					{
@@ -1588,7 +1579,7 @@ char				argumentString[64];
 bool				foundKeyWord;
 
 	CONSOLE_DEBUG(__FUNCTION__);
-	if (cCanSyncAzimuth)
+	if (cDomeProp.CanSyncAzimuth)
 	{
 		if (reqData != NULL)
 		{
@@ -1600,7 +1591,7 @@ bool				foundKeyWord;
 				CONSOLE_DEBUG_W_DBL("newAzimuthValue\t=", newAzimuthValue);
 				if ((newAzimuthValue >= 0.0) && (newAzimuthValue <= 360.0))
 				{
-					cAzimuth_Degrees	=	newAzimuthValue;
+					cDomeProp.Azimuth	=	newAzimuthValue;
 					alpacaErrCode		=	kASCOM_Err_Success;
 				}
 				else
@@ -1645,7 +1636,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 	{
 		if (reqData != NULL)
 		{
-			if (cSlewing)
+			if (cDomeProp.Slewing)
 			{
 				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Dome already in motion, command ignored");
 			}
@@ -1680,7 +1671,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 	{
 		if (reqData != NULL)
 		{
-			if (cSlewing)
+			if (cDomeProp.Slewing)
 			{
 				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Dome already in motion, command ignored");
 			}
@@ -1711,7 +1702,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 	{
 		if (reqData != NULL)
 		{
-			if (cSlewing)
+			if (cDomeProp.Slewing)
 			{
 				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Dome already in motion, command ignored");
 			}
@@ -1904,29 +1895,29 @@ char		domeConfigStr[32];
 	//*-----------------------------------------------------------
 	SocketWriteData(mySocketFD,	"<TR>\r\n");
 	SocketWriteData(mySocketFD,	"\t<TD>Shutter status:</TD><TD>");
-	DomeControl_GetStatusString(cShutterstatus, lineBuffer);
+	DomeControl_GetStatusString(cDomeProp.ShutterStatus, lineBuffer);
 	SocketWriteData(mySocketFD,	lineBuffer);
 	SocketWriteData(mySocketFD,	"</TD></TR>\r\n");
 
 
 	//*-----------------------------------------------------------
-	sprintf(lineBuffer,	"\t<TR><TD>At home</TD><TD>%s</TD></TR>\r\n",		(cAtHome)	? "Yes" : "No");
+	sprintf(lineBuffer,	"\t<TR><TD>At home</TD><TD>%s</TD></TR>\r\n",		(cDomeProp.AtHome)	? "Yes" : "No");
 	SocketWriteData(mySocketFD,	lineBuffer);
 
 	//*-----------------------------------------------------------
-	sprintf(lineBuffer,	"\t<TR><TD>At park</TD><TD>%s</TD></TR>\r\n",		(cAtPark)	? "Yes" : "No");
+	sprintf(lineBuffer,	"\t<TR><TD>At park</TD><TD>%s</TD></TR>\r\n",		(cDomeProp.AtPark)	? "Yes" : "No");
 	SocketWriteData(mySocketFD,	lineBuffer);
 
 	//*-----------------------------------------------------------
-	sprintf(lineBuffer,	"\t<TR><TD>Slewing</TD><TD>%s</TD></TR>\r\n",		(cSlewing)	? "Yes" : "No");
+	sprintf(lineBuffer,	"\t<TR><TD>Slewing</TD><TD>%s</TD></TR>\r\n",		(cDomeProp.Slewing)	? "Yes" : "No");
 	SocketWriteData(mySocketFD,	lineBuffer);
 
 	//*-----------------------------------------------------------
-	sprintf(lineBuffer,	"\t<TR><TD>Altitude</TD><TD>%1.2f</TD></TR>\r\n",	cAltitude_Degrees);
+	sprintf(lineBuffer,	"\t<TR><TD>Altitude</TD><TD>%1.2f</TD></TR>\r\n",	cDomeProp.Altitude);
 	SocketWriteData(mySocketFD,	lineBuffer);
 
 	//*-----------------------------------------------------------
-	sprintf(lineBuffer,	"\t<TR><TD>Azimuth</TD><TD>%1.2f</TD></TR>\r\n",	cAzimuth_Degrees);
+	sprintf(lineBuffer,	"\t<TR><TD>Azimuth</TD><TD>%1.2f</TD></TR>\r\n",	cDomeProp.Azimuth);
 	SocketWriteData(mySocketFD,	lineBuffer);
 
 
@@ -2074,7 +2065,7 @@ uint32_t	movingTime_seconds;
 
 	//****************************************************
 	//*	are we going home?
-	if (cGoingHome && cAtHome)
+	if (cGoingHome && cDomeProp.AtHome)
 	{
 		CONSOLE_DEBUG("Stopping at Home");
 		StopDomeMoving(kStopNormal);
@@ -2085,13 +2076,13 @@ uint32_t	movingTime_seconds;
 	//*	are going to the park position?
 	if (cGoingPark)
 	{
-		if (cAtPark)
+		if (cDomeProp.AtPark)
 		{
 			CONSOLE_DEBUG("Stopping at Park");
 			StopDomeMoving(kStopNormal);
 			cGoingPark	=	false;
 		}
-		else if (cAtHome && (cCurrentDirection == kRotateDome_CW))
+		else if (cDomeProp.AtHome && (cCurrentDirection == kRotateDome_CW))
 		{
 			//*	the home sensor is to the right (CW) from the park sensor
 			//*	if we are trying to go to park, and we get to home, we are going
@@ -2114,7 +2105,7 @@ uint32_t	movingTime_seconds;
 	{
     double	deltaDegrees;
 
-		deltaDegrees	=	fabs(cAzimuth_Destination - cAzimuth_Degrees);
+		deltaDegrees	=	fabs(cAzimuth_Destination - cDomeProp.Azimuth);
 
 
 		if (deltaDegrees < 0.10)
@@ -2137,12 +2128,12 @@ uint32_t	movingTime_seconds;
 			}
 		}
 		//*	we might have already stopped
-		if (cSlewing)
+		if (cDomeProp.Slewing)
 		{
 			//*	now check to see if we have gone too far
 			if (cCurrentDirection == kRotateDome_CW)
 			{
-				if (cAzimuth_Degrees > cAzimuth_Destination)
+				if (cDomeProp.Azimuth > cAzimuth_Destination)
 				{
 					CONSOLE_DEBUG("Went too far");
 					StopDomeMoving(kStopRightNow);
@@ -2150,7 +2141,7 @@ uint32_t	movingTime_seconds;
 			}
 			else if (cCurrentDirection == kRotateDome_CCW)
 			{
-				if (cAzimuth_Degrees < cAzimuth_Destination)
+				if (cDomeProp.Azimuth < cAzimuth_Destination)
 				{
 					CONSOLE_DEBUG("Went too far");
 					StopDomeMoving(kStopRightNow);
@@ -2168,11 +2159,11 @@ uint32_t	movingTime_seconds;
 	if (cManualMove && (movingTime_seconds >= 2))
 	{
 		//*	manual move will stop at the next stop point
-		if (cAtHome || cAtPark)
+		if (cDomeProp.AtHome || cDomeProp.AtPark)
 		{
 			StopDomeMoving(kStopNormal);
-			CONSOLE_DEBUG_W_NUM("cAtHome\t=",	cAtHome);
-			CONSOLE_DEBUG_W_NUM("cAtPark\t=",	cAtPark);
+			CONSOLE_DEBUG_W_NUM("AtHome\t=",	cDomeProp.AtHome);
+			CONSOLE_DEBUG_W_NUM("AtPark\t=",	cDomeProp.AtPark);
 			CONSOLE_DEBUG("Stopping at stop point, move time > 2 secs");
 			LogEvent(	"dome",
 						"Stopping",
@@ -2218,13 +2209,13 @@ double			inchValue;
 										&jsonParser);
 	if (validData)
 	{
-		if (cCanSlave == false)
+		if (cDomeProp.CanSlave == false)
 		{
 			//*	change of state from off line to on line
 			LogEvent("dome",	"slittracker",	NULL,	kASCOM_Err_Success,	"Online");
 		}
 
-		cCanSlave	=	true;
+		cDomeProp.CanSlave	=	true;
 		for (jjj=0; jjj<jsonParser.tokenCount_Data; jjj++)
 		{
 //			CONSOLE_DEBUG_W_STR("keyword\t=",	jsonParser.dataList[jjj].keyword);
@@ -2254,12 +2245,12 @@ double			inchValue;
 	}
 	else
 	{
-		if (cCanSlave)
+		if (cDomeProp.CanSlave)
 		{
 			//*	change of state from on line to off line
 			LogEvent("dome",	"slittracker",	NULL,	kASCOM_Err_Success,	"Offline");
 		}
-		cCanSlave	=	false;
+		cDomeProp.CanSlave	=	false;
 		CONSOLE_DEBUG("Failed to get data from slit tracker");
 	}
 

@@ -41,6 +41,9 @@
 extern CvFont		gTextFont[kFontCnt];
 
 
+#define	RADIANS(degrees)	(degrees * M_PI / 180.0)
+#define	DEGREES(radians)	(radians * 180.0 / M_PI)
+
 
 //*****************************************************************************
 class Controller
@@ -63,6 +66,7 @@ class Controller
 				void	InitWindowTabs(void);
 				int		SetTabCount(const int newTabCount);
 				void	SetTabText(const int tabIdx, const char *tabName);
+				void	GetCurrentTabName(char *currentTabName);
 				int		FindClickedTab(const int xxx, const int yyy);
 				void	ProcessTabClick(const int tabIdx);
 
@@ -125,6 +129,7 @@ class Controller
 
 		virtual	void	UpdateWindowTabColors(void);
 
+		virtual	bool	AlpacaGetStartupData(void);
 		virtual	void	RunBackgroundTasks(void);
 		virtual	void	SetupWindowControls(void);
 				void	SetWindowIPaddrInfo(const char	*textString, const bool	onLine);
@@ -165,6 +170,7 @@ class Controller
 												const char	*keywordString,
 												const char	*valueString);
 
+		virtual	void	UpdateDownloadProgress(const int unitsRead, const int totalUnits);
 
 
 
@@ -208,7 +214,12 @@ class Controller
 												char		*returnString,
 												bool		*rtnValidData = NULL);
 
-		virtual	void	UpdateDownloadProgress(const int unitsRead, const int totalUnits);
+				bool	AlpacaGetMinMax(		const char	*alpacaDevice,
+												const char	*alpacaCmd,
+												const char	*dataString,
+												double		*returnMinValue,
+												double		*returnMaxValue,
+												bool		*rtnValidData = NULL);
 				bool	AlpacaGetIntegerArray(	const char	*alpacaDevice,
 												const int	alpacaDevNum,
 												const char	*alpacaCmd,
@@ -291,12 +302,13 @@ class Controller
 	extern "C" {
 #endif
 
-//uint32_t	millis(void);
+uint32_t	millis(void);
 CvScalar	Color16BitTo24Bit(const unsigned int color16);
 void		Controller_HandleKeyDown(const int keyPressed);
 void		LoadAlpacaLogo(void);
 bool		IsTrueFalse(const char *trueFalseString);
 bool		CheckForOpenWindowByName(const char *windowName);
+void		FormatHHMMSS(const double argDegreeValue, char *timeString, bool includeSign);
 
 #ifdef __cplusplus
 }

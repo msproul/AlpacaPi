@@ -53,6 +53,7 @@
 //*	Jan  6,	2021	<MLS> Added GetWidgetText()
 //*	Jan 15,	2021	<MLS> Added DrawWidgetTextWithTabs()
 //*	Jan 16,	2021	<MLS> Added Close box in Window Tab area
+//*	Jan 20,	2021	<MLS> Added GetCurrentTabName()
 //*****************************************************************************
 
 
@@ -571,6 +572,17 @@ void	Controller::SetTabText(const int tabIdx, const char *tabName)
 		CONSOLE_DEBUG_W_NUM("tabIdx out of range\t=", tabIdx);
 	}
 }
+
+//**************************************************************************************
+void	Controller::GetCurrentTabName(char *currentTabName)
+{
+	if ((cCurrentTabNum >= 0) && (cCurrentTabNum < kMaxTabs))
+	{
+		strcpy(currentTabName, cTabList[cCurrentTabNum].textString);
+	}
+}
+
+
 
 //*****************************************************************************
 void	Controller::ProcessTabClick(const int tabIdx)
@@ -2100,7 +2112,7 @@ int			openCVerr;
 char		imageFileName[64];
 int			quality[3] = {16, 200, 0};
 bool		stillNeedsHandled;
-
+char		currentTabName[64]	=	"";
 //	CONSOLE_DEBUG_W_HEX("keyPressed\t=", keyPressed);
 
 	stillNeedsHandled	=	true;
@@ -2118,9 +2130,11 @@ bool		stillNeedsHandled;
 				RefreshWindow();
 				break;
 
+			//	ctrl-s   ^s
 			case 's':
 				CONSOLE_DEBUG("Save file");
-				sprintf(imageFileName, "%s-screenshot.jpg", cWindowName);
+				GetCurrentTabName(currentTabName);
+				sprintf(imageFileName, "%s-%s-screenshot.jpg", cWindowName, currentTabName);
 				openCVerr	=	cvSaveImage(imageFileName, cOpenCV_Image, quality);
 				CONSOLE_DEBUG_W_NUM("openCVerr\t=", openCVerr);
 				break;
@@ -2143,7 +2157,7 @@ bool		stillNeedsHandled;
 	}
 	if (stillNeedsHandled)
 	{
-		CONSOLE_DEBUG(__FUNCTION__);
+//		CONSOLE_DEBUG(__FUNCTION__);
 		if (cCurTextInput_Widget >= 0)
 		{
 
@@ -2701,6 +2715,41 @@ struct timeval	currentTime;
 }
 
 
+//*****************************************************************************
+//*	Right Ascension is never negitive (0->24) and therefore does not need a sign
+//*****************************************************************************
+void	FormatHHMMSS(const double argDegreeValue, char *timeString, bool includeSign)
+{
+double	myDegreeValue;
+double	minutes_dbl;
+double	seconds_dbl;
+int		degrees;
+int		minutes;
+int		seconds;
+char	signChar;
+
+	signChar		=	'+';
+	myDegreeValue	=	argDegreeValue;
+	if (myDegreeValue < 0)
+	{
+		myDegreeValue	=	-argDegreeValue;
+		signChar		=	'-';
+	}
+	degrees		=	myDegreeValue;
+	minutes_dbl	=	myDegreeValue - (1.0 * degrees);
+	minutes		=	minutes_dbl * 60.0;
+	seconds_dbl	=	(minutes_dbl * 60) - (1.0 * minutes);
+	seconds		=	seconds_dbl * 60;;
+
+	if (includeSign)
+	{
+		sprintf(timeString, "%c%02d:%02d:%02d", signChar, degrees, minutes, seconds);
+	}
+	else
+	{
+		sprintf(timeString, "%02d:%02d:%02d", degrees, minutes, seconds);
+	}
+}
 
 
 //******************************************************************************
@@ -2745,7 +2794,7 @@ void	LoadAlpacaLogo(void)
 {
 	if (gAlpacaLogoPtr == NULL)
 	{
-		gAlpacaLogoPtr	=	cvLoadImage("AlpacaLogo-vsmall.png", CV_LOAD_IMAGE_COLOR);
+		gAlpacaLogoPtr	=	cvLoadImage("logos/AlpacaLogo-vsmall.png", CV_LOAD_IMAGE_COLOR);
 	}
 }
 

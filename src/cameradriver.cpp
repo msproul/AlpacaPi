@@ -126,7 +126,7 @@
 //*	Jan 17,	2021	<MLS> CONFORM-camera -> 2 errors, 0 warnings and 0 issues
 //*	Jan 18,	2021	<MLS> Added Send_imagearray_rgb24() & Send_imagearray_raw8()
 //*	Jan 20,	2021	<MLS> Added Send_imagearray_raw16()
-//*	Jan 20,	2021	<MLS> CONFORM-camera -> PASSED!!!!!!!!!!!!!!!!!!!!!
+//*	Jan 20,	2021	<MLS> CONFORM-camera/zwo -> PASSED!!!!!!!!!!!!!!!!!!!!!
 //*****************************************************************************
 //*	Jan  1,	2119	<TODO> ----------------------------------------
 //*	Jun 26,	2119	<TODO> Add support for sub frames
@@ -2556,6 +2556,13 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
 
 	if (cCansetccdtemperature)
 	{
+		JsonResponse_Add_Double(reqData->socket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								gValueString,
+								cSetCCDTemperature,
+								INCLUDE_COMMA);
+
 		alpacaErrCode	=	kASCOM_Err_Success;
 	}
 	else
@@ -2589,10 +2596,11 @@ double				newSetCCDvalue;
 		{
 			newSetCCDvalue	=	atof(setCCDtempString);
 			CONSOLE_DEBUG_W_DBL("newSetCCDvalue\t=",	newSetCCDvalue);
-			if ((newSetCCDvalue > -273.15) && (newSetCCDvalue < 50.0))
+		//	if ((newSetCCDvalue > -273.15) && (newSetCCDvalue < 95.0))
+			if ((newSetCCDvalue > -273.15) && (newSetCCDvalue <= 100.0))
 			{
-				alpacaErrCode	=	kASCOM_Err_Success;
-				cCCDTemperature	=	newSetCCDvalue;
+				alpacaErrCode		=	kASCOM_Err_Success;
+				cSetCCDTemperature	=	newSetCCDvalue;
 			}
 			else
 			{
@@ -2941,6 +2949,7 @@ char				imageTimeString[64];
 double				exposureTimeSecs;
 
 	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(reqData->htmlData);
 
 	mySocket	=	reqData->socket;
 

@@ -3,6 +3,11 @@
 //*	Sep  8,	2020	<MLS> Added TYPE_ASCOM_STATUS to ASCOM error return codes
 //*	Dec  6,	2020	<MLS> Version V0.3.8-beta
 //*	Dec 10,	2020	<MLS> Version V0.3.9-beta
+//*	Jan 24,	2021	<MLS> Major improvement in ASCOM property definition
+//*	Jan 24,	2021	<MLS> Added TYPE_TelescopeProperties structure
+//*	Jan 24,	2021	<MLS> Added TYPE_DomeProperties structure
+//*	Jan 24,	2021	<MLS> Added TYPE_FocuserProperties structure
+//*	Jan 24,	2021	<MLS> Version V0.4.0-beta
 //*****************************************************************************
 //*	Jan  1,	2019	-----------------------------------------------------------
 //*	Jan  1,	2020	-----------------------------------------------------------
@@ -15,9 +20,14 @@
 #ifndef	_ALPACA_DEFS_H_
 #define	_ALPACA_DEFS_H_
 
+
+#ifndef _STDINT_H
+	#include	<stdint.h>
+#endif // _STDINT_H
+
 #define	kApplicationName	"AlpacaPi"
-#define	kVersionString		"V0.3.9-beta"
-#define	kBuildNumber		82
+#define	kVersionString		"V0.4.0-beta"
+#define	kBuildNumber		84
 
 
 #define kAlpacaDiscoveryPORT	32227
@@ -169,6 +179,135 @@ enum TYPE_SensorType
 };
 
 
+//*****************************************************************************
+typedef struct
+{
+	double	Minimum;
+	double	Maximum;
+} TYPE_AxisRates;
+
+//*****************************************************************************
+//*	these are the exact properties from ASCOM Telescope V3
+//*****************************************************************************
+typedef struct
+{
+	TYPE_AlignmentModes				AlginmentMode;
+	double							Altitude;
+	double							ApertureArea;
+	double							ApertureDiameter;
+	bool							AtHome;
+	bool							AtPark;
+	TYPE_AxisRates					AxisRates[3];	//*	there are 3 possible axis
+	double							Azimuth;
+	bool							CanFindHome;
+	bool							CanMoveAxis;
+	bool							CanPark;
+	bool							CanPulseGuide;
+	bool							CanSetDeclinationRate;
+	bool							CanSetGuideRates;
+	bool							CanSetPark;
+	bool							CanSetPierSide;
+	bool							CanSetRightAscensionRate;
+	bool							CanSetTracking;
+	bool							CanSlew;
+	bool							CanSlewAltAz;
+	bool							CanSlewAltAzAsync;
+	bool							CanSlewAsync;
+	bool							CanSync;
+	bool							CanSyncAltAz;
+	bool							CanUnpark;
+	bool							TargetDec_HasBeenSet;
+	double							Declination;				//*	degrees
+	double							DeclinationRate;
+	bool							TargetRA_HasBeenSet;
+	double							RightAscension;				//*	hours
+	double							RightAscensionRate;
+	bool							DoesRefraction;
+	TYPE_EquatorialCoordinateType	EquatorialSystem;
+	double							FocalLength;
+	double							GuideRateDeclination;
+	double							GuideRateRightAscension;
+	bool							IsPulseGuiding;
+	TYPE_PierSide					SideOfPier;
+	double							SiderealTime;
+	double							SiteElevation;
+	double							SiteLatitude;
+	double							SiteLongitude;
+	bool							Slewing;
+	short							SlewSettleTime;
+	double							TargetDeclination;
+	double							TargetRightAscension;
+	bool							Tracking;
+	TYPE_DriveRates					TrackingRate;
+	double							TrackingRates;
+	double							UTCDate;
+
+
+} TYPE_TelescopeProperties;
+
+
+//*****************************************************************************
+typedef struct
+{
+	double			Altitude;			//*	Degrees;
+	bool			AtHome;
+	bool			AtPark;
+	double			Azimuth;			//*	Degrees
+	bool			CanFindHome;
+	bool			CanPark;
+	bool			CanSetAltitude;
+	bool			CanSetAzimuth;
+	bool			CanSetPark;
+	bool			CanSetShutter;
+	bool			CanSlave;
+	bool			CanSyncAzimuth;
+	int32_t			ShutterStatus;
+	bool			Slaved;
+	bool			Slewing;
+
+
+} TYPE_DomeProperties;
+
+
+//*****************************************************************************
+typedef struct
+{
+
+
+	bool			Absolute;			//	Indicates whether the focuser is capable of absolute position.
+	bool			IsMoving;			//	Indicates whether the focuser is currently moving.
+	int32_t			MaxIncrement;		//	Returns the focuser's maximum increment size.
+	int32_t			MaxStep;			//	Returns the focuser's maximum step size.
+	int32_t			Position;			//	Returns the focuser's current position.
+	double			StepSize;			//	Returns the focuser's step size.
+	bool			TempComp;			//	Retrieves the state of temperature compensation mode
+	bool			TempCompAvailable;	//	Indicates whether the focuser has temperature compensation.
+	double			Temperature;		//	Returns the focuser's current temperature.
+
+} TYPE_FocuserProperties;
+
+
+#if 0
+//*	not finished, havent started using this yet
+#define	kMaxSwitchNameLen		32
+#define	kMaxSwitchDescLen		64
+//*****************************************************************************
+typedef struct
+{
+	char	switchName[kMaxSwitchNameLen];
+	char	switchDesciption[kMaxSwitchDescLen];
+
+} TYPE_SwitchInfo;
+
+//*****************************************************************************
+typedef struct
+{
+	int						MaxSwitch;
+	TYPE_SwitchDescription	SwitchTable[kMaxSwitchCnt];
+
+} TYPE_SwitchProperties
+
+#endif
 #endif // _ALPACA_DEFS_H_
 
 

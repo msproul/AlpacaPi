@@ -23,93 +23,35 @@
 
 #if defined(_ENABLE_SKYTRAVEL_) || defined(_ENABLE_CTRL_DOME_)
 
-#define _ENABLE_CONSOLE_DEBUG_
-#include	"ConsoleDebug.h"
-
-#include	"alpaca_defs.h"
-#include	"alpacadriver_helper.h"
-#include	"controller.h"
 
 
+#ifndef PARENT_CLASS
+	#define _ENABLE_CONSOLE_DEBUG_
+	#include	"ConsoleDebug.h"
 
-#ifdef _ENABLE_SKYTRAVEL_
-	#define	PARENT_CLASS	ControllerSkytravel
-	#include	"controller_skytravel.h"
-	#include	"SkyTravelExternal.h"
-#elif defined(_ENABLE_CTRL_DOME_)
-	#define	PARENT_CLASS	ControllerDome
-	#include	"controller_dome.h"
+	#include	"alpaca_defs.h"
+	#include	"alpacadriver_helper.h"
+	#include	"controller.h"
+
+
+
+	#ifdef _ENABLE_SKYTRAVEL_
+		#define	PARENT_CLASS	ControllerSkytravel
+		#include	"controller_skytravel.h"
+		#include	"SkyTravelExternal.h"
+	#elif defined(_ENABLE_CTRL_DOME_)
+		#define	PARENT_CLASS	ControllerDome
+		#include	"controller_dome.h"
+	#endif
 #endif
 
-//*****************************************************************************
-bool	PARENT_CLASS::AlpacaGetStartupData(void)
-{
-//SJP_Parser_t	jsonParser;
-bool			validData;
-char			returnString[128];
-//char			dataString[128];
-
-	CONSOLE_DEBUG(__FUNCTION__);
-	//===============================================================
-	//*	get supportedactions
-#ifdef _ENABLE_SKYTRAVEL_
-	validData	=	AlpacaGetSupportedActions(&cDomeIpAddress, cDomeIpPort, "dome", cDomeAlpacaDeviceNum);
-#else
-	validData	=	AlpacaGetSupportedActions("dome", cAlpacaDevNum);
-#endif // _ENABLE_SKYTRAVEL_
-	if (validData)
-	{
-	#ifdef _ENABLE_SKYTRAVEL_
-		SetWidgetValid(kTab_Dome,			kDomeBox_Readall,		cDomeHas_readall);
-		if (cDomeHas_readall == false)
-		{
-			cDeviceAddress	=	cDomeIpAddress;
-			cPort			=	cDomeIpPort;
-			cAlpacaDevNum	=	cDomeAlpacaDeviceNum;
-			validData	=	AlpacaGetStringValue(	"dome", "driverversion",	NULL,	returnString);
-			if (validData)
-			{
-				strcpy(cAlpacaVersionString, returnString);
-				SetWidgetText(kTab_Dome,		kDomeBox_AlpacaDrvrVersion,		cAlpacaVersionString);
-			}
-		}
-	#else
-		SetWidgetValid(kTab_Dome,			kDomeBox_Readall,		cHas_readall);
-		SetWidgetValid(kTab_SlitTracker,	kSlitTracker_Readall,	cHas_readall);
-		SetWidgetValid(kTab_SlitGraph,		kSlitGraph_Readall,		cHas_readall);
-		SetWidgetValid(kTab_About,			kAboutBox_Readall,		cHas_readall);
-
-		if (cHas_readall == false)
-		{
-			validData	=	AlpacaGetStringValue(	"dome", "driverversion",	NULL,	returnString);
-			if (validData)
-			{
-				strcpy(cAlpacaVersionString, returnString);
-				SetWidgetText(kTab_Dome,		kDomeBox_AlpacaDrvrVersion,		cAlpacaVersionString);
-			}
-		}
-	#endif // _ENABLE_SKYTRAVEL_
-
-	}
-	else
-	{
-		CONSOLE_DEBUG("Read failure - supportedactions");
-		cReadFailureCnt++;
-	}
-
-
-
-	cLastUpdate_milliSecs	=	millis();
-
-	return(validData);
-}
 
 
 
 //*****************************************************************************
 //*	Get Status, One At A Time
 //*****************************************************************************
-bool	PARENT_CLASS::AlpacaGetStatus_OneAAT(void)
+bool	PARENT_CLASS::AlpacaGetStatus_DomeOneAAT(void)
 {
 bool		validData;
 int			myFailureCount;
@@ -126,10 +68,10 @@ int			argInt;
 
 	myFailureCount	=	0;
 	//========================================================
-	validData	=	AlpacaGetBooleanValue(	"dome", "athome",	NULL,	&cAtHome);
+	validData	=	AlpacaGetBooleanValue(	"dome", "athome",	NULL,	&cDomeProp.AtHome);
 	if (validData)
 	{
-		CONSOLE_DEBUG_W_NUM("cAtHome\t=",	cAtHome);
+		CONSOLE_DEBUG_W_NUM("cAtHome\t=",	cDomeProp.AtHome);
 	}
 	else
 	{
@@ -137,10 +79,10 @@ int			argInt;
 		myFailureCount++;
 	}
 	//========================================================
-	validData	=	AlpacaGetBooleanValue(	"dome", "atpark",	NULL,	&cAtPark);
+	validData	=	AlpacaGetBooleanValue(	"dome", "atpark",	NULL,	&cDomeProp.AtPark);
 	if (validData)
 	{
-		CONSOLE_DEBUG_W_NUM("cAtPark\t=",	cAtPark);
+		CONSOLE_DEBUG_W_NUM("cAtPark\t=",	cDomeProp.AtPark);
 	}
 	else
 	{
@@ -148,10 +90,10 @@ int			argInt;
 		myFailureCount++;
 	}
 	//========================================================
-	validData	=	AlpacaGetBooleanValue(	"dome", "slewing",	NULL,	&cSlewing);
+	validData	=	AlpacaGetBooleanValue(	"dome", "slewing",	NULL,	&cDomeProp.Slewing);
 	if (validData)
 	{
-		CONSOLE_DEBUG_W_NUM("cSlewing\t=",	cSlewing);
+		CONSOLE_DEBUG_W_NUM("cSlewing\t=",	cDomeProp.Slewing);
 	}
 	else
 	{
@@ -211,7 +153,7 @@ int			argInt;
 }
 
 //*****************************************************************************
-void	PARENT_CLASS::AlpacaProcessReadAllDome(	const int	deviceNum,
+void	PARENT_CLASS::AlpacaProcessReadAll_Dome(const int	deviceNum,
 												const char	*keywordString,
 												const char	*valueString)
 {
@@ -233,32 +175,32 @@ double	argDouble;
 	}
 	else if (strcasecmp(keywordString, "canfindhome") == 0)
 	{
-		cCanFindHome	=	IsTrueFalse(valueString);
+		cDomeProp.CanFindHome	=	IsTrueFalse(valueString);
 	}
 	else if (strcasecmp(keywordString, "canpark") == 0)
 	{
-		cCanPark		=	IsTrueFalse(valueString);
+		cDomeProp.CanPark		=	IsTrueFalse(valueString);
 	}
 	else if (strcasecmp(keywordString, "cansetaltitude") == 0)
 	{
-		cCanSetAltitude	=	IsTrueFalse(valueString);
+		cDomeProp.CanSetAltitude	=	IsTrueFalse(valueString);
 	}
 	else if (strcasecmp(keywordString, "cansetazimuth") == 0)
 	{
-		cCanSetAzimuth	=	IsTrueFalse(valueString);
+		cDomeProp.CanSetAzimuth	=	IsTrueFalse(valueString);
 	}
 	else if (strcasecmp(keywordString, "cansetpark") == 0)
 	{
-		cCanSetPark		=	IsTrueFalse(valueString);
+		cDomeProp.CanSetPark		=	IsTrueFalse(valueString);
 	}
 	else if (strcasecmp(keywordString, "cansetshutter") == 0)
 	{
-		cCanSetShutter	=	IsTrueFalse(valueString);
+		cDomeProp.CanSetShutter	=	IsTrueFalse(valueString);
 	}
 	else if (strcasecmp(keywordString, "canslave") == 0)
 	{
-		cCanSlave		=	IsTrueFalse(valueString);
-		if (cCanSlave)
+		cDomeProp.CanSlave		=	IsTrueFalse(valueString);
+		if (cDomeProp.CanSlave)
 		{
 			SetWidgetBGColor(kTab_Dome, kDomeBox_ToggleSlaveMode,	CV_RGB(255,	255,	255));
 		}
@@ -270,24 +212,24 @@ double	argDouble;
 	}
 	else if (strcasecmp(keywordString, "cansyncazimuth") == 0)
 	{
-		cCanSyncAzimuth	=	IsTrueFalse(valueString);
+		cDomeProp.CanSyncAzimuth	=	IsTrueFalse(valueString);
 	}
 	else if (strcasecmp(keywordString, "slaved") == 0)
 	{
-		cSlaved			=	IsTrueFalse(valueString);
-		if (cCanSlave)
+		cDomeProp.Slaved			=	IsTrueFalse(valueString);
+		if (cDomeProp.CanSlave)
 		{
-			SetWidgetText(kTab_Dome,	kDomeBox_SlavedStatus,		(cSlaved ? "Yes" : "No"));
-			SetWidgetText(kTab_Dome,	kDomeBox_ToggleSlaveMode, 	(cSlaved ? "Disable Slave mode" : "Enable Slave mode"));
+			SetWidgetText(kTab_Dome,	kDomeBox_SlavedStatus,		(cDomeProp.Slaved ? "Yes" : "No"));
+			SetWidgetText(kTab_Dome,	kDomeBox_ToggleSlaveMode, 	(cDomeProp.Slaved ? "Disable Slave mode" : "Enable Slave mode"));
 		}
 	}
 	else if (strcasecmp(keywordString, "athome") == 0)
 	{
-		cAtHome			=	IsTrueFalse(valueString);
+		cDomeProp.AtHome			=	IsTrueFalse(valueString);
 	}
 	else if (strcasecmp(keywordString, "atpark") == 0)
 	{
-		cAtPark			=	IsTrueFalse(valueString);
+		cDomeProp.AtPark			=	IsTrueFalse(valueString);
 	}
 	else if (strcasecmp(keywordString, "azimuth") == 0)
 	{
@@ -307,7 +249,7 @@ double	argDouble;
 	}
 	else if (strcasecmp(keywordString, "slewing") == 0)
 	{
-		cSlewing		=	IsTrueFalse(valueString);
+		cDomeProp.Slewing		=	IsTrueFalse(valueString);
 	}
 	else if (strcasecmp(keywordString, "shutterstatus") == 0)
 	{
@@ -322,25 +264,6 @@ double	argDouble;
 	}
 }
 
-
-//*****************************************************************************
-void	PARENT_CLASS::AlpacaProcessReadAll(	const char	*deviceType,
-											const int	deviceNum,
-											const char	*keywordString,
-											const char *valueString)
-{
-//	CONSOLE_DEBUG_W_2STR("json=",	keywordString, valueString);
-	if (strcasecmp(deviceType, "Dome") == 0)
-	{
-		AlpacaProcessReadAllDome(deviceNum, keywordString, valueString);
-	}
-#ifdef _ENABLE_SKYTRAVEL_
-	else if (strcasecmp(valueString, "Telescope") == 0)
-	{
-		//*	you get the idea
-	}
-#endif // _ENABLE_SKYTRAVEL_
-}
 
 
 
@@ -409,22 +332,6 @@ void	PARENT_CLASS::AlpacaProcessSupportedActions_Dome(const int deviveNum, const
 	}
 }
 
-//*****************************************************************************
-//*	if this routine gets overloaded, the first part, checking for "readall" must be preserved
-//*****************************************************************************
-void	PARENT_CLASS::AlpacaProcessSupportedActions(const char *deviceType, const int deviveNum, const char *valueString)
-{
-//	CONSOLE_DEBUG_W_STR(__FUNCTION__, deviceType);
-
-	if (strcasecmp(deviceType, "Dome") == 0)
-	{
-		AlpacaProcessSupportedActions_Dome(deviveNum, valueString);
-	}
-	else if (strcasecmp(valueString, "Telescope") == 0)
-	{
-		//*	you get the idea
-	}
-}
 
 
 //*****************************************************************************
@@ -432,8 +339,8 @@ void	PARENT_CLASS::UpdateDomeAzimuth(const double newAzimuth)
 {
 char	textString[32];
 
-	cAzimuth_Dbl	=	newAzimuth;
-	sprintf(textString, "%1.1f", cAzimuth_Dbl);
+	cDomeProp.Azimuth	=	newAzimuth;
+	sprintf(textString, "%1.1f", cDomeProp.Azimuth);
 	SetWidgetText(kTab_Dome, kDomeBox_Azimuth, textString);
 #ifdef _ENABLE_SKYTRAVEL_
 
@@ -448,8 +355,8 @@ void	PARENT_CLASS::UpdateShutterAltitude(const double newAltitude)
 {
 char	textString[32];
 
-	cAltitude_Dbl	=	newAltitude;
-	sprintf(textString, "%1.1f %%", cAltitude_Dbl);
+	cDomeProp.Altitude	=	newAltitude;
+	sprintf(textString, "%1.1f %%", cDomeProp.Altitude);
 	SetWidgetText(kTab_Dome, kDomeBox_Altitude, textString);
 }
 
@@ -461,10 +368,10 @@ char	statusString[16];
 //	CONSOLE_DEBUG(__FUNCTION__);
 //	CONSOLE_DEBUG_W_NUM("newShutterStatus\t=", newShutterStatus);
 
-	if (newShutterStatus != cShutterStatus)
+	if (newShutterStatus != cDomeProp.ShutterStatus)
 	{
-		cShutterStatus	=	newShutterStatus;
-		switch(cShutterStatus)
+		cDomeProp.ShutterStatus	=	newShutterStatus;
+		switch(cDomeProp.ShutterStatus)
 		{
 			case kShutterStatus_Open:		strcpy(statusString,	"Open");	break;
 			case kShutterStatus_Closed:		strcpy(statusString,	"Closed");	break;

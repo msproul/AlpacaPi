@@ -262,12 +262,12 @@ int		ii;
 	//	hometime(&gcCurrentTime);	//* default system Greenwich date/time
 	SetCurrentTime();
 
-	cCurrentTime.strflag			=	TRUE;		//* say 2000 data present
+	cCurrentTime.strflag			=	true;		//* say 2000 data present
 	cCurrentTime.starDataModified	=	false;
 	cCurrentTime.calflag			=	0;			//* auto calendar
-	cCurrentTime.precflag			=	FALSE;
-	cCurrentTime.negflag			=	FALSE;
-	cCurrentTime.local_time_flag	=	TRUE;		//* default use local time
+	cCurrentTime.precflag			=	false;
+	cCurrentTime.negflag			=	false;
+	cCurrentTime.local_time_flag	=	true;		//* default use local time
 	cCurrentTime.timeOfLastPrec		=	JD2000;		//* set last prec = Julian day 2000
 	cCurrentTime.delprc				=	DELPRC0;	//* set delta prec to default
 
@@ -276,19 +276,20 @@ int		ii;
 	memset(&cDispOptions, 0, sizeof(TYPE_SkyDispOptions));
 
 	cCurrentSkyColor				=	BLUE;
+	cChart							=	false;
+	cDispOptions.dispDeep			=	true;
+	cDispOptions.dispEarth			=	true;
+	cDispOptions.dispHorizon_line	=	true;
+	cDispOptions.dispLines			=	true;
+	cDispOptions.dispNames			=	true;
+	cDispOptions.dispNGC			=	false;
+ 	cDispOptions.dispSymbols		=	true;
+ 	cDispOptions.dispMessier		=	true;
+ 	cDispOptions.dispConstOutlines	=	true;
+ 	cDispOptions.dispConstellations	=	true;
+	cDispOptions.dispHIP			=	false;
 
-	cDispOptions.dispDeep			=	TRUE;
-	cDispOptions.dispEarth			=	TRUE;
-	cDispOptions.dispHorizon_line	=	TRUE;
-	cDispOptions.dispLines			=	TRUE;
-	cDispOptions.dispNames			=	TRUE;
-	cDispOptions.dispNGC			=	FALSE;
- 	cDispOptions.dispSymbols		=	TRUE;
- 	cDispOptions.dispMessier		=	TRUE;
- 	cDispOptions.dispConstOutlines	=	TRUE;
- 	cDispOptions.dispConstellations	=	TRUE;
-
-	cDispOptions.dispTelescope		=	FALSE;
+	cDispOptions.dispTelescope		=	false;
 
 	cDisplayedMagnitudeLimit		=	15.0;
 
@@ -359,12 +360,18 @@ int		ii;
 
 	cConstOutlinePtr	=	ReadConstellationOutlines("skytravel_data/constOutlines.txt", &cConstOutlineCount);
 
+	CONSOLE_DEBUG(__FUNCTION__);
 	cConstVecotrPtr		=	ReadConstellationVectors(kSkyTravelDataDirectory, &cConstVectorCnt);
 	if (cConstVecotrPtr != NULL)
 	{
 		//*	if we successfully read in the good constellation lines, turn off the old ones
 		cDispOptions.dispLines			=	false;
 	}
+	CONSOLE_DEBUG(__FUNCTION__);
+
+	Precess();		//*	make sure all of the data bases are sorted properly
+
+
 	//--------------------------------------------------------------
 	//*	Telescope tracking stuff
 	memset(&cTelescopeDisplayOptions,	0, sizeof(TYPE_TeleDispOptions));
@@ -375,6 +382,7 @@ int		ii;
 
 	SetupWindowControls();
 
+	ResetView();
 }
 
 //**************************************************************************************
@@ -487,6 +495,7 @@ int		searchBoxWidth;
 
 	SetWidgetType(		kSkyTravel_Btn_ZoomLevel, 	kWidgetType_Text);
 	SetWidgetFont(		kSkyTravel_Btn_ZoomLevel, 	kFont_Medium);
+	SetWidgetTextColor(	kSkyTravel_Btn_ZoomLevel, 	CV_RGB(255,	255,	255));
 
 
 	SetWidgetHelpText(	kSkyTravel_Btn_Reset,			"Reset");
@@ -510,8 +519,9 @@ int		searchBoxWidth;
 	SetWidgetHelpText(	kSkyTravel_Btn_TscopeDisp,		"Toggle telescope position display");
 
 
-	SetWidgetHelpText(	kSkyTravel_Btn_Plus,	"Zoom In");
-	SetWidgetHelpText(	kSkyTravel_Btn_Minus,	"Zoom Out");
+	SetWidgetHelpText(	kSkyTravel_Btn_Plus,		"Zoom In");
+	SetWidgetHelpText(	kSkyTravel_Btn_Minus,		"Zoom Out");
+	SetWidgetHelpText(	kSkyTravel_Btn_ZoomLevel,	"Current Zoom level");
 
 
 
@@ -541,6 +551,21 @@ int		searchBoxWidth;
 	yLoc			+=	cTitleHeight;
 	yLoc			+=	2;
 
+	//------------------------------------------------------------------------------------
+	//*	Dome/Telescope indicators
+	SetWidgetText(		kSkyTravel_DomeIndicator,		"D");
+	SetWidgetTextColor(	kSkyTravel_DomeIndicator,		CV_RGB(0,	0, 0));
+	SetWidgetBGColor(	kSkyTravel_DomeIndicator,		CV_RGB(255,	0,	0));
+	SetWidgetHelpText(	kSkyTravel_DomeIndicator,		"Indicates if Dome is OnLine (Grn=yes/Red=no)");
+
+	SetWidgetText(		kSkyTravel_TelescopeIndicator,	"T");
+	SetWidgetTextColor(	kSkyTravel_TelescopeIndicator,	CV_RGB(0,	0, 0));
+	SetWidgetBGColor(	kSkyTravel_TelescopeIndicator,	CV_RGB(255,	0,	0));
+	SetWidgetHelpText(	kSkyTravel_TelescopeIndicator,	"Indicates if Telescope is OnLine (Grn=yes/Red=no)");
+
+
+	//------------------------------------------------------------------------------------
+	//*	LX200 connection
 	xLoc	=	1;
 	SetWidget(			kSkyTravel_ConnLX200,	xLoc,	yLoc, cBtnWidth,	cTitleHeight);
 	SetWidgetType(		kSkyTravel_ConnLX200, 	kWidgetType_Button);
@@ -831,7 +856,7 @@ bool			reDrawSky;
 		case 'T':			//* cTrack toggle
 			cTrack		^=	1;	//*	toggle cTrack flag
 			cTrack		&=	1;	//* clean higher bits
-			cFindFlag	=	TRUE;
+			cFindFlag	=	true;
 			break;
 
 
@@ -1047,7 +1072,8 @@ char	searchText[128];
 			break;
 
 		case kSkyTravel_ConnLX200:
-			lx200_threadErr	=	LX200_StartThread(lx200_errorMsg);
+			//*	The IP address/port needs to be a preference
+			lx200_threadErr	=	LX200_StartThread("192.168.1.104", 49152, lx200_errorMsg);
 			if (lx200_threadErr == 0)
 			{
 				//*	turn on the display of the telescope
@@ -1593,6 +1619,7 @@ void	WindowTabSkyTravel::PlotObjectsByDataSource(TYPE_CelestData	*objectptr, lon
 {
 short	dataSource;
 
+//	CONSOLE_DEBUG(__FUNCTION__);
 	if (objectptr != NULL)
 	{
 		//*	all of the objects in a list should have come from the same source,
@@ -1621,6 +1648,11 @@ short	dataSource;
 				Search_and_plot(objectptr, maxObjects);
 				break;
 		}
+	}
+	else
+	{
+		CONSOLE_DEBUG("objectptr is NULL");
+		CONSOLE_ABORT(__FUNCTION__);
 	}
 }
 
@@ -1711,7 +1743,7 @@ short		ii;
 
 	if (sunMonStruct.lunar_ecl_flag)
 	{
-		cLunarEclipseFlag	=	TRUE;
+		cLunarEclipseFlag	=	true;
 	}
 	else
 	{
@@ -1810,14 +1842,36 @@ short		ii;
 //*****************************************************************************
 void	WindowTabSkyTravel::ResetView(void)
 {
-	cElev0						=	kHALFPI / 2;		//* 45 degrees
-//	cAz0						=	-PI / 3.0;			//* 60 degrees (ca. eastnortheast)
-	cAz0						=	0.0;				//* north
-	cRa0						=	0.0;
-	cDecl0						=	0.0;
-	cView_index					=	8;
-	cView_angle					=	gView_table[cView_index];
-	cDisplayedMagnitudeLimit	=	15.0;
+	cElev0							=	kHALFPI / 2;		//* 45 degrees
+	cAz0							=	0.0;				//* north
+	cRa0							=	0.0;
+	cDecl0							=	0.0;
+	cView_index						=	8;
+	cView_angle						=	gView_table[cView_index];
+	cDisplayedMagnitudeLimit		=	15.0;
+
+	cChart							=	false;
+	cDispOptions.dispDeep			=	true;
+	cDispOptions.dispEarth			=	true;
+	cDispOptions.dispHorizon_line	=	true;
+	cDispOptions.dispNames			=	true;
+	cDispOptions.dispNGC			=	false;
+ 	cDispOptions.dispSymbols		=	true;
+ 	cDispOptions.dispMessier		=	true;
+ 	cDispOptions.dispConstOutlines	=	true;
+ 	cDispOptions.dispConstellations	=	true;
+	cDispOptions.dispHIP			=	false;
+
+	if (cConstVecotrPtr != NULL)
+	{
+		//*	if we successfully read in the good constellation lines, turn off the old ones
+		cDispOptions.dispConstellations	=	true;
+		cDispOptions.dispLines			=	false;
+	}
+	else
+	{
+		cDispOptions.dispLines			=	true;
+	}
 
 }
 
@@ -2492,7 +2546,7 @@ int				returnValue;
 //********************************************************************
 //* precess if necessary, re-load objall if necessary
 //* i.e. precession math always starts with the year 2000 data
-//*	returns TRUE if precess occured
+//*	returns TRUE if precess occurred
 //********************************************************************
 bool	WindowTabSkyTravel::Precess(TYPE_CelestData	*celestObjPtr,
 									long			celestObjCount,
@@ -2532,8 +2586,8 @@ bool			pressesOccurred;
 
 //		DisplayHelpMessage("Precessing");
 
-		cCurrentTime.precflag			=	FALSE;			//*	force off
-		cCurrentTime.strflag			=	FALSE;			//*	say year 2000 data not present
+		cCurrentTime.precflag			=	false;			//*	force off
+		cCurrentTime.strflag			=	false;			//*	say year 2000 data not present
 		cCurrentTime.starDataModified	=	true;			//*	say year 2000 data not present
 		cCurrentTime.timeOfLastPrec		=	cCurrentTime.fJulianDay;	//*	set new lst prc
 
@@ -2895,14 +2949,14 @@ short				dataSource;
 			shape	=	ST_ALWAYS;
 		}
 
-		goflag	=	TRUE;
+		goflag	=	true;
 		if (dataSource == kDataSrc_Orginal)
 		{
 			switch(shape)
 			{
-				case ST_NAME: if (!cDispOptions.dispNames)	goflag	=	FALSE; break;
-				case ST_DEEP: if (!cDispOptions.dispDeep)	goflag	=	FALSE; break;
-	//?			case ST_STAR: if (magn < cMagmin)			goflag	=	FALSE; break;
+				case ST_NAME: if (!cDispOptions.dispNames)	goflag	=	false; break;
+				case ST_DEEP: if (!cDispOptions.dispDeep)	goflag	=	false; break;
+	//?			case ST_STAR: if (magn < cMagmin)			goflag	=	false; break;
 			}
 		}
 
@@ -3000,215 +3054,7 @@ short				dataSource;
 		ii++;
 	}
 
-#if 0
-//*	I believe this code draws the constellations which is redundant
-xy_struct			constbuf[kMAXCON];	//*	holds point pairs for const. lines
-unsigned int		idbuf[kMAXID];		//*	holds constellation id's
-unsigned int		id;
-unsigned int		line_count;
-unsigned int		name_count;
-int			 		jj;
-int					kk;
-bool				success;
-bool				ftflag;
-
-
-	//* search the data base for constellation line and name objects
-	line_count	=	0;
-	name_count	=	0;
-
-	//* init the buffers
-
-	//* constellation lines buffer
-	for (ii=0;ii<kMAXCON;ii++)
-	{
-		constbuf[ii].xpos	=	0;
-		constbuf[ii].ypos	=	0;
-		constbuf[ii].idword	=	0;
-	}
-
-
-	//* constellation id buffer
-	for (ii=0;ii<kMAXID;ii++)
-	{
-		idbuf[ii]	=	0;
-	}
-
-	if (cDispOptions.dispLines && (cView_index > 3))
-	{
-	//+	setlinestyle(USERBIT_LINE,0x0f0f,NORM_WIDTH);
-
-		//* increase the search area because line endpoints can be offscreen
-
-		rangle		*=	LFACT;
-
-		cDecmax		=	cDecl0 + rangle;
-		if (cDecmax > kHALFPI)
-		{
-			cDecmax	=	(kHALFPI - kEPSILON);	//* clip at 90 degrees
-		}
-		cDecmin		=	cDecl0 - rangle;
-		if (cDecmin < -kHALFPI)
-		{
-			cDecmin	=	-(kHALFPI - kEPSILON);	//* clip at -90 degrees
-		}
-		cRamax	=	0.0;						//*default ramax	=	0.
-		temp	=	kHALFPI - fabs(cDecl0);
-		if (temp>rangle)
-		{
-			cRamax	=	asin(sin(rangle) / sin(temp));
-		}
-
-		//*	the database is sorted by declination, from high value (north pole) to low
-		//*	value (south pole)
-		//*	skip quickly until we find the first star within our current display
-
-		//* continue scan until decl < cDecmin
-		ii	=	0;
-		while ((objectptr[ii].decl > cDecmax) && (ii < maxObjects))	//* skip down to where decl < cDecmax
-		{
-			ii++;
-		}
-		//*	debuging code
-		if (ii >= maxObjects)
-		{
-			SysBeep(1);
-		}
-
-	#ifdef _DEBUG_CONST_LINES_
-		ii	=	0;	//	DEBUG
-	#endif
-		do
-		{
-		#ifdef _DEBUG_CONST_LINES_
-			//	DEBUG
-			if (objptr[ii].id == 89)
-			{
-				SysBeep(1);
-			}
-			if (objptr[ii].id == 77)
-			{
-				SysBeep(1);
-			}
-			if (objptr[ii].id == 75)
-			{
-				SysBeep(1);
-			}
-		#endif
-			magn	=	objectptr[ii].magn & 0x00ff;
-
-			//* its a name but is it one that has lines ?
-			if ((magn > 0x007f) && (magn < 0x00d9))
-			{
-				if (gValid_name[magn - 0x80] != 99)
-				{
-					idbuf[name_count++]	=	gValid_name[magn - 0x80];
-				}
-			}
-
-		  	//* is it part of a constel line
-			if ((magn > 0x0007) && (magn < 0x0010))
-		  	{
-		  		alpha	=	cRa0 - objectptr[ii].ra;
-		  		if (alpha > PI)
-		  		{
-		  			alpha	-=	kTWOPI;
-		  		}
-		  		else if (alpha<-PI)
-		  		{
-		  			alpha	+=	kTWOPI;
-				}
-		  		if ((cRamax == 0.0) || (fabs(alpha) <= cRamax))	//* in bounds for ra?
-		  		{
-		  			cside	=	kHALFPI - objectptr[ii].decl;
-		  			aside	=	acos((cos_bside * cos(cside)) + (sin_bside * sin(cside) * cos(alpha)));
-		  			if (aside < cRadmax)	//* within bounding circle?
-		  			{
-		  				if (aside>kEPSILON)
-		  				{
-		  					gamma	=	asin(sin(cside) * sin(alpha) / sin(aside));
-		  				}
-		  				else
-		  				{
-		  					gamma	=	0.0;
-		  				}
-		  				if (cos(cside)<(cos_bside*cos(aside)))
-		  				{
-		  					gamma	=	PI-gamma;	//* supplement gamma if cos(c)<cos(b)*cos(a)
-						}
-		  				angle	=	gamma + cGamang;
-
-						//*compute x and y coordinates
-						//* x	=	x0+cXfactor*aside*cos(angle)
-						//* y	=	y0-cYfactor*aside*sin(angle) (minus sign is because plus y is down)
-
-		  				constbuf[line_count].xpos	=	cWind_x0 + (cXfactor * aside * sin(angle));
-		  				constbuf[line_count].ypos	=	cWind_y0 - (cYfactor * aside * cos(angle));
-		  				constbuf[line_count].idword	=	objectptr[ii].id;
-		  				line_count++;
-					}
-				}
-			}
-			ii++;
-		} while((line_count < kMAXCON) && (objectptr[ii].decl > cDecmin) && (ii < maxObjects));
-
-		// while((line_count<kMAXCON) && (objptr[sort_index[ii]].decl>decmin));
-
-		//*CONLIN - DRAW CONSTELLATION LINES
-		//*1. SEARCH IDBUF FOR MATCH WITH CONBEG LIST
-		//*2. IF A MATCH, PLOT THE LINES IT'S IN THE CORRECT ORDER
-
-		if (cNightMode)
-		{
-			SetColor(RED);
-		}
-		else
-		{
-			SetColor(LIGHTGRAY);
-		}
-
-		for (ii=0; ii<name_count;ii++)	//* go thru all the found const names
-		{
-			jj		=	0;
-			success	=	FALSE;
-			while((id = gConstellationVecor[idbuf[ii]][jj++]) != 0)	//* pick up a valid star id
-			{
-
-				if (!success)
-				{
-					ftflag	=	TRUE;		//*if jj was not sequential, then set ftflag=TRUE
-				}
-				for (kk=0; kk<line_count; kk++)			//* search buffer for matching entries
-				{
-					success	=	FALSE;						//* default fail (not in sequence)
-					if ((id & 0xbfff) == constbuf[kk].idword)	//* bit 14 of id on means part of a const line
-					{
-						if ((ftflag) || ((id & 0x4000) == 0x4000))
-						{
-							CMoveTo(constbuf[kk].xpos, constbuf[kk].ypos);
-						}
-						else
-						{
-							CLineTo(constbuf[kk].xpos,constbuf[kk].ypos);
-						}
-						ftflag	=	FALSE;
-						success	=	TRUE;
-						kk		=	line_count;	//* terminate k-loop
-					}
-				}
-			}
-		}
-	}
-#endif // 0
-
-//?	if (cDispOptions.dispLines)
-//?	{
-//?		return(name_count);
-//?	}
-//?	else
-//?	{
-//?		return(myCount);
-//?	}
+//	CONSOLE_DEBUG_W_NUM("myCount\t\t=",		myCount);
 	return(myCount);
 }
 
@@ -3476,7 +3322,7 @@ void	WindowTabSkyTravel::DrawWindowOverlays(void)
 				//*	force an update
 				cRa0		=	gTelescopeRA_Radians;
 				cDecl0		=	gTelescopeDecl_Radians;
-				cFindFlag	=	TRUE;
+				cFindFlag	=	true;
 				ReDrawWorkSpace();
 				InvalWindowRect();
 			}
@@ -4353,11 +4199,11 @@ int				myColor;
 
 		if ((objCnt == kZodiacCount) || ((objCnt == kPlanetObjectCnt) && (ii > 1)))
 		{
-			not_sunmoon	=	TRUE;
+			not_sunmoon	=	true;
 		}
 		else
 		{
-			not_sunmoon	=	FALSE;
+			not_sunmoon	=	false;
 		}
 		sphptr.alpha	=	cRa0 - objectptr[ii].ra;
 

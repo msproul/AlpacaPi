@@ -27,6 +27,7 @@
 //*	Apr  5,	2020	<MLS> Added ToggleDisplayImage()
 //*	Dec 26,	2020	<MLS> Started on image download for camera controller
 //*	Dec 27,	2020	<MLS> Added DownloadImage()
+//*	Jan 22,	2021	<MLS> Moved all logo png files to "logos" directory
 //*****************************************************************************
 
 #ifdef _ENABLE_CTRL_CAMERA_
@@ -121,19 +122,19 @@ IplImage	*logoImage;
 	CONSOLE_DEBUG_W_STR("cAlpacaDeviceName=", cAlpacaDeviceName);
 	if (strcasestr(cAlpacaDeviceName, "ZWO") != NULL)
 	{
-		logoImage		=	cvLoadImage("zwo-logo.png",		CV_LOAD_IMAGE_COLOR);
+		logoImage		=	cvLoadImage("logos/zwo-logo.png",		CV_LOAD_IMAGE_COLOR);
 	}
 	else if (strcasestr(cAlpacaDeviceName, "Atik") != NULL)
 	{
-		logoImage		=	cvLoadImage("atik-logo.png",	CV_LOAD_IMAGE_COLOR);
+		logoImage		=	cvLoadImage("logos/atik-logo.png",	CV_LOAD_IMAGE_COLOR);
 	}
 	else if ((strcasestr(cAlpacaDeviceName, "toup") != NULL) || (strcasestr(cAlpacaDeviceName, "GCMOS") != NULL))
 	{
-		logoImage		=	cvLoadImage("touptek-logo.png",	CV_LOAD_IMAGE_COLOR);
+		logoImage		=	cvLoadImage("logos/touptek-logo.png",	CV_LOAD_IMAGE_COLOR);
 	}
 	else if (strcasestr(cAlpacaDeviceName, "QHY") != NULL)
 	{
-		logoImage		=	cvLoadImage("qhy-logo.png",		CV_LOAD_IMAGE_COLOR);
+		logoImage		=	cvLoadImage("logos/qhy-logo.png",		CV_LOAD_IMAGE_COLOR);
 	}
 	SetWidgetImage(kCameraBox_Logo, logoImage);
 

@@ -58,6 +58,9 @@ enum
 	kSkyTravel_Btn_Minus,
 	kSkyTravel_Btn_ZoomLevel,
 
+	kSkyTravel_DomeIndicator,
+	kSkyTravel_TelescopeIndicator,
+
 	//*	this MUST be the first one after the buttons
 	kSkyTravel_MsgTextBox,
 

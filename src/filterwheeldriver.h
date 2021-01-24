@@ -66,14 +66,14 @@ class FilterwheelDriver: public AlpacaDriver
 
 		virtual void				ReadFilterNamesTextFile(void);
 		virtual	int					Read_CurrentFWstate(void);
-		virtual	TYPE_ASCOM_STATUS	Read_CurrentFilterPositon(int *rtnCurrentPostion = NULL);
+		virtual	TYPE_ASCOM_STATUS	Read_CurrentFilterPositon(int *rtnCurrentPosition = NULL);
 		virtual	TYPE_ASCOM_STATUS	Read_CurrentFilterName(char *rtnCurrentName);
-		virtual	TYPE_ASCOM_STATUS	Set_CurrentFilterPositon(const int newPostion);
+		virtual	TYPE_ASCOM_STATUS	Set_CurrentFilterPositon(const int newPosition);
 		virtual	bool				IsFilterwheelConnected(void);
 
 				bool			cFilterWheelConnected;
 				int				cFilterWheelDevNum;
-				int				cNumberOfPostions;
+				int				cNumberOfPositions;
 				int				cFilterWheelCurrPos;
 				char			cFilterWheelCurrName[48];
 

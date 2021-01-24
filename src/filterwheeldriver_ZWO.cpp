@@ -115,7 +115,7 @@ bool	rulesFileOK;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 	cFilterWheelDevNum	=	argDevNum;
-	cNumberOfPostions	=	0;
+	cNumberOfPositions	=	0;
 
 	strcpy(cDeviceDescription, "ZWO EFW filterwheel");
 	strcpy(cDriverversionStr,	EFWGetSDKVersion());
@@ -175,9 +175,9 @@ bool			rulesFileOK;
 						kASCOM_Err_Success,
 						cFilterwheelInfo.Name);
 		//	strcpy(cDeviceName, cFilterwheelInfo.Name);
-			cNumberOfPostions	=	cFilterwheelInfo.slotNum;
+			cNumberOfPositions	=	cFilterwheelInfo.slotNum;
 
-			sprintf(cDeviceName, "ZWO %s-%d", cFilterwheelInfo.Name, cNumberOfPostions);
+			sprintf(cDeviceName, "ZWO %s-%d", cFilterwheelInfo.Name, cNumberOfPositions);
 		}
 		else
 		{
@@ -241,7 +241,7 @@ int	FilterwheelZWO::Read_CurrentFWstate(void)
 //*	this returns a position starting with 0
 //*	return -1 if unable to determine position
 //*****************************************************************************
-TYPE_ASCOM_STATUS	FilterwheelZWO::Read_CurrentFilterPositon(int *rtnCurrentPostion)
+TYPE_ASCOM_STATUS	FilterwheelZWO::Read_CurrentFilterPositon(int *rtnCurrentPosition)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 EFW_ERROR_CODE		efwErrorCode;
@@ -299,9 +299,9 @@ int					myCurPosition;
 		cOpenFailures++;
 		alpacaErrCode	=	kASCOM_Err_NotConnected;
 	}
-	if (rtnCurrentPostion != NULL)
+	if (rtnCurrentPosition != NULL)
 	{
-		*rtnCurrentPostion	=	myCurPosition;
+		*rtnCurrentPosition	=	myCurPosition;
 	}
 
 	return(alpacaErrCode);

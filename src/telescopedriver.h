@@ -22,6 +22,13 @@
 #ifndef _TELESCOPE_DRIVER_H_
 #define	_TELESCOPE_DRIVER_H_
 
+#ifndef	_ALPACA_DEFS_H_
+	#include	"alpaca_defs.h"
+#endif // _ALPACA_DEFS_H_
+
+
+
+
 #ifndef _ALPACA_DRIVER_H_
 	#include	"alpacadriver.h"
 #endif
@@ -167,64 +174,17 @@ class TelescopeDriver: public AlpacaDriver
 		TYPE_ASCOM_STATUS	Get_Readall(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 
 
-				//*	these routines should be implemented by the sub-classes
-				//*	all have to return an Alpaca Error code
-		virtual	TYPE_ASCOM_STATUS		Calibrator_TurnOn(const int brightnessValue, char *alpacaErrMsg);
-
-		TYPE_AlignmentModes	cAlginmentMode;
-		double				cAltitude;
-		double				cApertureArea;
-		double				cApertureDiameter;
-		bool				cAtHome;
-		bool				cAtPark;
-		double				cAzimuth;
-		bool				cCanFindHome;
-		bool				cCanMoveAxis;
-		bool				cCanPark;
-		bool				cCanPulseGuide;
-		bool				cCanSetDeclinationRate;
-		bool				cCanSetGuideRates;
-		bool				cCanSetPark;
-		bool				cCanSetPierSide;
-		bool				cCanSetRightAscensionRate;
-		bool				cCanSetTracking;
-		bool				cCanSlew;
-		bool				cCanSlewAltAz;
-		bool				cCanSlewAltAzAsync;
-		bool				cCanSlewAsync;
-		bool				cCanSync;
-		bool				cCanSyncAltAz;
-		bool				cCanUnpark;
-
-		bool				cTargetDec_HasBeenSet;
-		double				cDeclination;
-		double				cDeclinationRate;
-
-		bool				cTargetRA_HasBeenSet;
-		double				cRightAscension;
-		double				cRightAscensionRate;
+		//--------------------------------------------------------------------------------------------------
+		//*	these routines should be implemented by the sub-classes
+		//*	all have to return an Alpaca Error code
+		virtual	TYPE_ASCOM_STATUS		Telescope_AbortSlew(char *alpacaErrMsg);
+		virtual	TYPE_ASCOM_STATUS		Telescope_SlewToRA_DEC(const double newRA, const double newDec, char *alpacaErrMsg);
+		virtual	TYPE_ASCOM_STATUS		Telescope_SyncToRA_DEC(const double newRA, const double newDec, char *alpacaErrMsg);
+		virtual	TYPE_ASCOM_STATUS		Telescope_TrackingOnOff(const bool newTrackingState, char *alpacaErrMsg);
 
 
-		bool				cDoesRefraction;
-		TYPE_EquatorialCoordinateType	cEquatorialSystem;
-		double				cFocalLength;
-		double				cGuideRateDeclination;
-		double				cGuideRateRightAscension;
-		bool				cIsPulseGuiding;
-		TYPE_PierSide		cSideOfPier;
-		double				cSiderealTime;
-		double				cSiteElevation;
-		double				cSiteLatitude;
-		double				cSiteLongitude;
-		bool				cSlewing;
-		short				cSlewSettleTime;
-		double				cTargetDeclination;
-		double				cTargetRightAscension;
-		bool				cTracking;
-		TYPE_DriveRates		cTrackingRate;
-//+		double				cTrackingRates;
-//+		double				cUTCDate;
-
+				//*	full list of ASCOM telescope properties
+				TYPE_TelescopeProperties	cTelescopeProp;
 
 
 };

@@ -274,16 +274,16 @@ void	ControllerFocus::AlpacaProcessSupportedActions(const char *deviceTypeStr, c
 }
 
 //*****************************************************************************
-void	ControllerFocus::UpdateFocuserPostion(const int newFocuserPostion)
+void	ControllerFocus::UpdateFocuserPosition(const int newFocuserPosition)
 {
 	//*	This function should be overloaded
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, "This function should be overloaded");
 
-	cFocuserPosition	=	newFocuserPostion;
+	cFocuserPosition	=	newFocuserPosition;
 }
 
 //*****************************************************************************
-void	ControllerFocus::UpdateRotatorPostion(const int newRotatorPostion)
+void	ControllerFocus::UpdateRotatorPosition(const int newRotatorPosition)
 {
 	//*	This function should be overloaded
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, "This function should be overloaded");
@@ -291,7 +291,7 @@ void	ControllerFocus::UpdateRotatorPostion(const int newRotatorPostion)
 }
 
 //*****************************************************************************
-void	ControllerFocus::UpdateAuxMotorPostion(const int newAuxMotorPostion)
+void	ControllerFocus::UpdateAuxMotorPosition(const int newAuxMotorPosition)
 {
 	//*	This function should be overloaded
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, "This function should be overloaded");
@@ -473,7 +473,7 @@ bool		switchStatus;
 	else if (strcasecmp(keywordString, "position") == 0)
 	{
 		argValue	=	atoi(valueString);
-		UpdateFocuserPostion(argValue);
+		UpdateFocuserPosition(argValue);
 	}
 	else if (strcasecmp(keywordString, "temperature") == 0)
 	{
@@ -512,12 +512,12 @@ bool		switchStatus;
 	else if (strcasecmp(keywordString, "RotatorPosition") == 0)
 	{
 		argValue	=	atoi(valueString);
-		UpdateRotatorPostion(argValue);
+		UpdateRotatorPosition(argValue);
 	}
 	else if (strcasecmp(keywordString, "AuxPosition") == 0)
 	{
 		argValue	=	atoi(valueString);
-		UpdateAuxMotorPostion(argValue);
+		UpdateAuxMotorPosition(argValue);
 	}
 	else if (strcasecmp(keywordString, "Voltage") == 0)
 	{
@@ -579,7 +579,7 @@ int			argInt;
 	if (validData)
 	{
 		CONSOLE_DEBUG_W_NUM("argInt\t=",	argInt);
-		UpdateFocuserPostion(argInt);
+		UpdateFocuserPosition(argInt);
 	}
 	else
 	{
@@ -693,7 +693,7 @@ unsigned char	previousSwitchBits;
 			cIsMoving	=	true;
 		}
 //		CONSOLE_DEBUG_W_NUM("newPositionValue\t=",		newPositionValue);
-		UpdateFocuserPostion(newPositionValue);
+		UpdateFocuserPosition(newPositionValue);
 	}
 	else
 	{
@@ -712,7 +712,7 @@ unsigned char	previousSwitchBits;
 			{
 				cIsMoving	=	true;
 			}
-			UpdateRotatorPostion(newPositionValue);
+			UpdateRotatorPosition(newPositionValue);
 		}
 		else
 		{
@@ -729,7 +729,7 @@ unsigned char	previousSwitchBits;
 			{
 				cIsMoving	=	true;
 			}
-			UpdateAuxMotorPostion(newPositionValue);
+			UpdateAuxMotorPosition(newPositionValue);
 		}
 		else
 		{
@@ -839,7 +839,7 @@ bool		validData;
 	else if (cUSBportOpen)
 	{
 		CONSOLE_DEBUG("Sending move command to USB port");
-		MoonLite_SetPostion(	&cMoonliteCom,
+		MoonLite_SetPosition(	&cMoonliteCom,
 								1,
 								cFocuserDesiredPos);
 	}
@@ -897,7 +897,7 @@ double			newDegreesValue;
 	}
 	else if (cUSBportOpen)
 	{
-		MoonLite_SetPostion(	&cMoonliteCom,
+		MoonLite_SetPosition(	&cMoonliteCom,
 								2,
 								cRotatorDesiredPos);
 	}
@@ -932,7 +932,7 @@ bool			validData;
 	}
 	else if (cUSBportOpen)
 	{
-		MoonLite_SetPostion(	&cMoonliteCom,
+		MoonLite_SetPosition(	&cMoonliteCom,
 								3,
 								cAuxMotorDesiredPos);
 	}
@@ -994,7 +994,7 @@ unsigned char	switchBits;
 		{
 			CONSOLE_DEBUG("Rotator is in the HOME position");
 			CONSOLE_DEBUG(__FUNCTION__);
-			validUSBdata	=	MoonLite_SetCurrentPostion(	&cMoonliteCom,
+			validUSBdata	=	MoonLite_SetCurrentPosition(&cMoonliteCom,
 															2,
 															0);
 			if (validUSBdata)
@@ -1013,7 +1013,7 @@ unsigned char	switchBits;
 
 		//===========================================================
 		//*	set the AUX to zero regardless of switches
-		validUSBdata	=	MoonLite_SetCurrentPostion(	&cMoonliteCom,
+		validUSBdata	=	MoonLite_SetCurrentPosition(	&cMoonliteCom,
 														3,
 														0);
 		if (validUSBdata)

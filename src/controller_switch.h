@@ -44,7 +44,7 @@ class ControllerSwitch: public Controller
 	//	virtual	void	ProcessButtonClick(const int buttonIdx);
 		virtual	void	RunBackgroundTasks(void);
 	//	virtual	void	DrawGraphWidget(const int widgitIdx);
-				bool	AlpacaGetStartupData(void);
+		virtual	bool	AlpacaGetStartupData(void);
 				bool	AlpacaGetStartupData_OneAAT(void);
 				bool	AlpacaGetStatus(void);
 		virtual	void	AlpacaProcessSupportedActions(	const char	*deviceType,

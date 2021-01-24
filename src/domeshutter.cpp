@@ -241,7 +241,7 @@ int					jjj;
 			}
 			else if (strcasecmp(jsonParser.dataList[jjj].keyword, "altitude") == 0)
 			{
-				cAltitude_Degrees	=	atof(jsonParser.dataList[jjj].valueString);
+				cDomeProp.Altitude	=	atof(jsonParser.dataList[jjj].valueString);
 			}
 			jjj++;
 		}

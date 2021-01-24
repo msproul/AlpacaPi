@@ -74,7 +74,7 @@ void	LoadAlpacaImage(void)
 {
 	if (gAlpacaImgPtr == NULL)
 	{
-		gAlpacaImgPtr	=	cvLoadImage("AlpacaLogo-small.png", CV_LOAD_IMAGE_COLOR);
+		gAlpacaImgPtr	=	cvLoadImage("logos/AlpacaLogo-small.png", CV_LOAD_IMAGE_COLOR);
 	}
 }
 

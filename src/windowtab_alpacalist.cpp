@@ -19,8 +19,10 @@
 //*	Edit History
 //*****************************************************************************
 //*	Jan 13,	2021	<MLS> Created windowtab_alpacalist.cpp
+//*	Jan 21,	2021	<MLS> Added sortable columns
 //*****************************************************************************
 
+#include	<stdlib.h>
 
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
@@ -33,29 +35,29 @@
 
 #include	"controller.h"
 #include	"controller_cam_normal.h"
+#include	"controller_dome.h"
 #include	"controller_focus.h"
 #include	"controller_switch.h"
+#include	"controller_telescope.h"
 
 
 
 //**************************************************************************************
 WindowTabAlpacaList::WindowTabAlpacaList(	const int	xSize,
-								const int	ySize,
-								CvScalar	backGrndColor,
-								const char	*windowName)
+		const int	ySize,
+		CvScalar	backGrndColor,
+		const char	*windowName)
 	:WindowTab(xSize, ySize, backGrndColor, windowName)
 {
-int	iii;
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	cAlpacaDevCnt		=	0;
 	cPrevAlpacaDevCnt	=	0;
-	cIncludeManagment	=	true;
+	cIncludeManagment	=	false;
+	cSortColumn			=	-1;
 
-	for (iii=0; iii<kMaxDeviceCnt; iii++)
-	{
-		cDevIdxList[iii]	=	-1;
-	}
+	ClearRemoteDeviceList();
+
 	SetupWindowControls();
 }
 
@@ -72,14 +74,15 @@ WindowTabAlpacaList::~WindowTabAlpacaList(void)
 //**************************************************************************************
 void	WindowTabAlpacaList::SetupWindowControls(void)
 {
-int		xLoc;
-int		yLoc;
-int		textBoxHt;
-int		textBoxWd;
-int		widgetWidth;
-int		iii;
-short	tabArray[kMaxTabStops]	=	{200, 400, 600, 800, 0};
-
+	int		xLoc;
+	int		yLoc;
+	int		textBoxHt;
+	int		textBoxWd;
+	int		widgetWidth;
+	int		iii;
+	short	tabArray[kMaxTabStops]	=	{200, 400, 600, 1000, 1199, 0};
+	int		clmnHdr_xLoc;
+	int		clmnHdrWidth;
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	//------------------------------------------
@@ -92,6 +95,37 @@ short	tabArray[kMaxTabStops]	=	{200, 400, 600, 800, 0};
 	yLoc			+=	cTitleHeight;
 	yLoc			+=	2;
 
+	clmnHdr_xLoc		=	1;
+	iii	=	kAlpacaList_ClmTitle1;
+	while(iii <= kAlpacaList_ClmTitle5)
+	{
+		clmnHdrWidth	=	tabArray[iii - kAlpacaList_ClmTitle1] - clmnHdr_xLoc;
+
+//		CONSOLE_DEBUG_W_NUM("clmnHdr_xLoc\t=",	clmnHdr_xLoc);
+//		CONSOLE_DEBUG_W_NUM("clmnHdrWidth\t=",	clmnHdrWidth);
+
+		SetWidget(				iii,	clmnHdr_xLoc,			yLoc,		clmnHdrWidth,		cRadioBtnHt);
+		SetWidgetType(			iii,	kWidgetType_Button);
+		SetWidgetFont(			iii,	kFont_RadioBtn);
+		SetWidgetBGColor(		iii,	CV_RGB(128,	128,	128));
+		//	SetWidgetTextColor(		iii,	CV_RGB(255,	255,	255));
+		SetWidgetTextColor(		iii,	CV_RGB(0,	0,	0));
+
+		clmnHdr_xLoc	=	tabArray[iii - kAlpacaList_ClmTitle1];;
+		clmnHdr_xLoc	+=	2;
+
+
+		iii++;
+	}
+	SetWidgetText(		kAlpacaList_ClmTitle1,	"ip-addr:port");
+	SetWidgetText(		kAlpacaList_ClmTitle2,	"/etc/hosts");
+	SetWidgetText(		kAlpacaList_ClmTitle3,	"type");
+	SetWidgetText(		kAlpacaList_ClmTitle4,	"name");
+	SetWidgetText(		kAlpacaList_ClmTitle5,	"TBD");
+	yLoc			+=	cRadioBtnHt;
+	yLoc			+=	2;
+
+
 	//=======================================================
 	xLoc		=	10;
 	textBoxHt	=	14;
@@ -99,12 +133,12 @@ short	tabArray[kMaxTabStops]	=	{200, 400, 600, 800, 0};
 	for (iii=kAlpacaList_AlpacaDev_01; iii<=kAlpacaList_AlpacaDev_Last; iii++)
 	{
 		SetWidget(				iii,	xLoc,			yLoc,		textBoxWd,		textBoxHt);
-	//	SetWidgetType(			iii,	kWidgetType_CheckBox);
-	//	SetWidgetType(			iii,	kWidgetType_Button);
+		//	SetWidgetType(			iii,	kWidgetType_CheckBox);
+		//	SetWidgetType(			iii,	kWidgetType_Button);
 		SetWidgetJustification(	iii,	kJustification_Left);
-	//	SetWidgetFont(			iii,	kFont_Medium);
+		//	SetWidgetFont(			iii,	kFont_Medium);
 		SetWidgetFont(			iii,	kFont_TextList);
-	//	SetWidgetFont(			iii,	kFont_RadioBtn);
+		//	SetWidgetFont(			iii,	kFont_RadioBtn);
 		SetWidgetTextColor(		iii,	CV_RGB(255,	255,	255));
 		SetWidgetBorder(		iii,	false);
 		SetWidgetTabStops(		iii,	tabArray);
@@ -156,121 +190,152 @@ short	tabArray[kMaxTabStops]	=	{200, 400, 600, 800, 0};
 //*****************************************************************************
 void	WindowTabAlpacaList::ProcessButtonClick(const int buttonIdx)
 {
-int	iii;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 
 	switch(buttonIdx)
 	{
-		case kAlpacaList_ChkBx_IncManagment:
-			cIncludeManagment	=	!cIncludeManagment;
-			SetWidgetChecked(kAlpacaList_ChkBx_IncManagment, cIncludeManagment);
-		//*	fall through to force refresh
+	case kAlpacaList_ClmTitle1:
+	case kAlpacaList_ClmTitle2:
+	case kAlpacaList_ClmTitle3:
+	case kAlpacaList_ClmTitle4:
+	case kAlpacaList_ClmTitle5:
+		cSortColumn	=	buttonIdx - kAlpacaList_ClmTitle1;
+		UpdateSortOrder();
+		ForceUpdate();
+		break;
 
-		case kAlpacaList_Btn_Refresh:
-			for (iii=kAlpacaList_AlpacaDev_01; iii<=kAlpacaList_AlpacaDev_Last; iii++)
-			{
-				SetWidgetText(		iii,	"");
-				SetWidgetTextColor(	iii,	CV_RGB(255,	255,	255));
-			}
-			for (iii=0; iii<kMaxDeviceCnt; iii++)
-			{
-				cDevIdxList[iii]	=	-1;
-			}
-			cAlpacaDevCnt		=	0;
-			cPrevAlpacaDevCnt	=	-1;
-			ForceUpdate();
-			break;
+	case kAlpacaList_ChkBx_IncManagment:
+		cIncludeManagment	=	!cIncludeManagment;
+		SetWidgetChecked(kAlpacaList_ChkBx_IncManagment, cIncludeManagment);
+	//*	fall through to force refresh
+
+	case kAlpacaList_Btn_Refresh:
+		ClearRemoteDeviceList();
+		ForceUpdate();
+		break;
 	}
 }
 
 //*****************************************************************************
 void	WindowTabAlpacaList::ProcessDoubleClick(const int buttonIdx)
 {
-int		tableIdx;
-int		deviceIdx;
-char	windowName[64];
-bool	windowExists;
+	int		deviceIdx;
+	char	windowName[64];
+	bool	windowExists;
 //	CONSOLE_DEBUG(__FUNCTION__);
 //	CONSOLE_DEBUG_W_NUM("buttonIdx\t=", buttonIdx);
 
 	if ((buttonIdx >= kAlpacaList_AlpacaDev_01) && (buttonIdx <= kAlpacaList_AlpacaDev_Last))
 	{
-		tableIdx	=	buttonIdx - kAlpacaList_AlpacaDev_01;
-		deviceIdx	=	cDevIdxList[tableIdx];
+		deviceIdx	=	buttonIdx - kAlpacaList_AlpacaDev_01;
 		if (deviceIdx >= 0)
 		{
-			switch(gRemoteList[deviceIdx].deviceTypeEnum)
+			switch(cRemoteDeviceList[deviceIdx].deviceTypeEnum)
 			{
 
-				case kDeviceType_Camera:
-					strcpy(windowName, "Camera-");
-					strcat(windowName, gRemoteList[deviceIdx].hostName);
-					windowExists	=	CheckForOpenWindowByName(windowName);
-					if (windowExists)
-					{
-						CONSOLE_DEBUG_W_STR("Window already open:", windowName);
-					}
-					else
-					{
-						new ControllerCamNormal(windowName, &gRemoteList[deviceIdx]);
-					}
-					break;
+			case kDeviceType_Camera:
+				strcpy(windowName, "Camera-");
+				strcat(windowName, cRemoteDeviceList[deviceIdx].hostName);
+				windowExists	=	CheckForOpenWindowByName(windowName);
+				if (windowExists)
+				{
+					CONSOLE_DEBUG_W_STR("Window already open:", windowName);
+				}
+				else
+				{
+					new ControllerCamNormal(windowName, &cRemoteDeviceList[deviceIdx]);
+				}
+				break;
 
-				case kDeviceType_CoverCalibrator:
-				case kDeviceType_Dome:
-				case kDeviceType_Filterwheel:
-					break;
+			case kDeviceType_CoverCalibrator:
+				break;
 
-				case kDeviceType_Focuser:
-					GenerateFocuserWindowName(&gRemoteList[deviceIdx], 1, windowName);
-					windowExists	=	CheckForOpenWindowByName(windowName);
-					if (windowExists)
-					{
-						CONSOLE_DEBUG_W_STR("Window already open:", windowName);
-					}
-					else
-					{
-						CheckForFocuser(&gRemoteList[deviceIdx]);
-					}
-					break;
+			case kDeviceType_Dome:
+				strcpy(windowName, "Dome-");
+				strcat(windowName, cRemoteDeviceList[deviceIdx].hostName);
+				windowExists	=	CheckForOpenWindowByName(windowName);
+				if (windowExists)
+				{
+					CONSOLE_DEBUG_W_STR("Window already open:", windowName);
+				}
+				else
+				{
+					new ControllerDome(windowName, &cRemoteDeviceList[deviceIdx]);
+				}
+				break;
 
-				case kDeviceType_Management:
-				case kDeviceType_Observingconditions:
-				case kDeviceType_Rotator:
-				case kDeviceType_Telescope:
-				case kDeviceType_SafetyMonitor:
-					break;
+			case kDeviceType_Filterwheel:
+				break;
 
-				case kDeviceType_Switch:
-					strcpy(windowName, "Switch-");
-					strcat(windowName, gRemoteList[deviceIdx].hostName);
-					windowExists	=	CheckForOpenWindowByName(windowName);
-					if (windowExists)
-					{
-						CONSOLE_DEBUG_W_STR("Window already open:", windowName);
-					}
-					else
-					{
-						new ControllerSwitch(	windowName,
-												&gRemoteList[deviceIdx].deviceAddress,
-												gRemoteList[deviceIdx].port,
-												gRemoteList[deviceIdx].alpacaDeviceNum);
-					}
-					break;
+			case kDeviceType_Focuser:
+				GenerateFocuserWindowName(&cRemoteDeviceList[deviceIdx], 1, windowName);
+				windowExists	=	CheckForOpenWindowByName(windowName);
+				if (windowExists)
+				{
+					CONSOLE_DEBUG_W_STR("Window already open:", windowName);
+				}
+				else
+				{
+					CheckForFocuser(&cRemoteDeviceList[deviceIdx]);
+				}
+				break;
 
-				//*	extras defined by MLS
-				case kDeviceType_Multicam:
-				case kDeviceType_Shutter:
-				case kDeviceType_SlitTracker:
-					break;
+			case kDeviceType_Management:
+			case kDeviceType_Observingconditions:
+			case kDeviceType_Rotator:
+				break;
+
+			case kDeviceType_Telescope:
+				strcpy(windowName, "Telescope-");
+				strcat(windowName, cRemoteDeviceList[deviceIdx].hostName);
+				windowExists	=	CheckForOpenWindowByName(windowName);
+				if (windowExists)
+				{
+					CONSOLE_DEBUG_W_STR("Window already open:", windowName);
+				}
+				else
+				{
+					new ControllerTelescope(	windowName,
+												&cRemoteDeviceList[deviceIdx].deviceAddress,
+												cRemoteDeviceList[deviceIdx].port,
+												cRemoteDeviceList[deviceIdx].alpacaDeviceNum);
+				}
+				break;
+
+			case kDeviceType_SafetyMonitor:
+				break;
+
+			case kDeviceType_Switch:
+				strcpy(windowName, "Switch-");
+				strcat(windowName, cRemoteDeviceList[deviceIdx].hostName);
+				windowExists	=	CheckForOpenWindowByName(windowName);
+				if (windowExists)
+				{
+					CONSOLE_DEBUG_W_STR("Window already open:", windowName);
+				}
+				else
+				{
+					new ControllerSwitch(	windowName,
+											&cRemoteDeviceList[deviceIdx].deviceAddress,
+											cRemoteDeviceList[deviceIdx].port,
+											cRemoteDeviceList[deviceIdx].alpacaDeviceNum);
+				}
+				break;
+
+			//*	extras defined by MLS
+			case kDeviceType_Multicam:
+			case kDeviceType_Shutter:
+			case kDeviceType_SlitTracker:
+			case kDeviceType_undefined:
+			case kDeviceType_last:
+				break;
 
 			}
 		}
 		else
 		{
 			CONSOLE_DEBUG_W_NUM("buttonIdx\t=", buttonIdx);
-			CONSOLE_DEBUG_W_NUM("tableIdx\t=", tableIdx);
 			CONSOLE_DEBUG_W_NUM("deviceIdx\t=", deviceIdx);
 			CONSOLE_ABORT(__FUNCTION__);
 		}
@@ -279,79 +344,254 @@ bool	windowExists;
 
 
 //**************************************************************************************
-void	WindowTabAlpacaList::UpdateList(void)
+static int	FindDeviceInList(TYPE_REMOTE_DEV *theDevice, TYPE_REMOTE_DEV *theList, int maxDevices)
 {
-int		iii;
-char	ipAddrSt[32];
-char	textString[128];
-int		boxId;
-int		myDevCount;
-bool	includeDevice;
+	int		foundIndex;
+	int		iii;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	foundIndex	=	-1;
+	iii			=	0;
+	while ((foundIndex < 0) && (iii < maxDevices))
+	{
+		if ((theDevice->deviceAddress.sin_addr.s_addr == theList[iii].deviceAddress.sin_addr.s_addr) &&
+				(theDevice->port == theList[iii].port) &&
+				(strcasecmp(theDevice->deviceTypeStr, theList[iii].deviceTypeStr) == 0))
+		{
+			foundIndex	=	iii;
+		}
+		iii++;
+	}
+	return(foundIndex);
+}
+
+//**************************************************************************************
+void	WindowTabAlpacaList::ClearRemoteDeviceList(void)
+{
+	int		iii;
+
+	for (iii=kAlpacaList_AlpacaDev_01; iii<=kAlpacaList_AlpacaDev_Last; iii++)
+	{
+		SetWidgetTextColor(		iii,	CV_RGB(255,	255,	255));
+		SetWidgetText(			iii,	"");
+
+	}
+
+	for (iii=0; iii<kMaxDeviceCnt; iii++)
+	{
+		memset(&cRemoteDeviceList[iii], 0, sizeof(TYPE_REMOTE_DEV));
+	}
+	cAlpacaDevCnt		=	0;
+	cPrevAlpacaDevCnt	=	-1;
+	cSortColumn			=	-1;
+
+	SetWidgetBGColor(kAlpacaList_ClmTitle1,	((cSortColumn == 0) ? CV_RGB(255,	255,	255) : CV_RGB(128,	128,	128)));
+	SetWidgetBGColor(kAlpacaList_ClmTitle2,	((cSortColumn == 1) ? CV_RGB(255,	255,	255) : CV_RGB(128,	128,	128)));
+	SetWidgetBGColor(kAlpacaList_ClmTitle3,	((cSortColumn == 2) ? CV_RGB(255,	255,	255) : CV_RGB(128,	128,	128)));
+	SetWidgetBGColor(kAlpacaList_ClmTitle4,	((cSortColumn == 3) ? CV_RGB(255,	255,	255) : CV_RGB(128,	128,	128)));
+	SetWidgetBGColor(kAlpacaList_ClmTitle5,	((cSortColumn == 4) ? CV_RGB(255,	255,	255) : CV_RGB(128,	128,	128)));
+
+}
+
+//**************************************************************************************
+void	WindowTabAlpacaList::UpdateRemoteDeviceList(void)
+{
+	int		iii;
+	bool	includeDevice;
+	int		foundIndex;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 //	CONSOLE_DEBUG_W_NUM("gRemoteCnt\t=", gRemoteCnt);
 
-	myDevCount	=	0;
-	boxId		=	kAlpacaList_AlpacaDev_01;
 	for (iii=0; iii<gRemoteCnt; iii++)
 	{
-		includeDevice	=	true;
-
-//		CONSOLE_DEBUG_W_STR("deviceTypeStr\t=", gRemoteList[iii].deviceTypeStr);
-		if ((cIncludeManagment == false) && (strcasecmp(gRemoteList[iii].deviceTypeStr, "management") == 0))
+		//*	first, see if this device is already in our list.
+		foundIndex		=	FindDeviceInList(&gRemoteList[iii], cRemoteDeviceList, kMaxDeviceCnt);
+		if (foundIndex >= 0)
 		{
-			includeDevice	=	false;
+			//*	its already in the list
 		}
-		if (includeDevice)
+		else
 		{
-			//*	this is for that double click click can get the right index if management devices are not displayed
-			cDevIdxList[myDevCount]	=	iii;
+			includeDevice	=	true;
 
-			inet_ntop(AF_INET, &(gRemoteList[iii].deviceAddress.sin_addr), ipAddrSt, INET_ADDRSTRLEN);
-
-
-			sprintf(textString, "%s:%d\t%s\t%s\t%s",	ipAddrSt,
-														gRemoteList[iii].port,
-														gRemoteList[iii].hostName,
-														gRemoteList[iii].deviceTypeStr,
-														gRemoteList[iii].deviceNameStr);
-
-
-			//					gRemoteList[iii].alpacaDeviceNum,
-			//					gRemoteList[iii].notSeenCounter);
-
-			if (boxId <= kAlpacaList_AlpacaDev_Last)
+			//		CONSOLE_DEBUG_W_STR("deviceTypeStr\t=", gRemoteList[iii].deviceTypeStr);
+			if ((cIncludeManagment == false) && (strcasecmp(gRemoteList[iii].deviceTypeStr, "management") == 0))
 			{
-				SetWidgetText(boxId, textString);
+				includeDevice	=	false;
+			}
+			if (includeDevice)
+			{
+				if (cAlpacaDevCnt < kMaxDeviceCnt)
+				{
+					cRemoteDeviceList[cAlpacaDevCnt]			=	gRemoteList[iii];
+					cRemoteDeviceList[cAlpacaDevCnt].validEntry	=	true;
 
-				if (gRemoteList[iii].deviceTypeEnum == kDeviceType_Focuser)
-				{
-					SetWidgetTextColor(		boxId,	CV_RGB(0,	255,	0));
+					cAlpacaDevCnt++;
 				}
-				if (gRemoteList[iii].deviceTypeEnum == kDeviceType_Camera)
-				{
-					SetWidgetTextColor(		boxId,	CV_RGB(255,	255,	0));
-				}
-				if (gRemoteList[iii].deviceTypeEnum == kDeviceType_Switch)
-				{
-					SetWidgetTextColor(		boxId,	CV_RGB(0,	255,	255));
-				}
-
-				myDevCount++;
-				boxId++;
 			}
 		}
 	}
-	sprintf(textString, "Total Alpaca Devices found=%d", myDevCount);
-	SetWidgetText(kAlpacaList_AlpacaDev_Total, textString);
 
+	//*	now update the widget text
+	UpdateOnScreenWidgetList();
 
-	cAlpacaDevCnt		=	myDevCount;
 	if (cAlpacaDevCnt != cPrevAlpacaDevCnt)
 	{
 		ForceUpdate();
 		cPrevAlpacaDevCnt	=	cAlpacaDevCnt;
 	}
+}
+
+//**************************************************************************************
+void	WindowTabAlpacaList::UpdateOnScreenWidgetList(void)
+{
+	int		boxId;
+	int		iii;
+	char	textString[128];
+	char	ipAddrStr[32];
+	int		myDevCount;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	iii			=	0;
+	myDevCount	=	0;
+	while ((iii < kMaxDeviceCnt))
+	{
+		boxId	=	iii + kAlpacaList_AlpacaDev_01;
+		if ((boxId <= kAlpacaList_AlpacaDev_Last) && (cRemoteDeviceList[iii].validEntry))
+		{
+			inet_ntop(AF_INET, &(cRemoteDeviceList[iii].deviceAddress.sin_addr), ipAddrStr, INET_ADDRSTRLEN);
+
+			sprintf(textString, "%s:%d\t%s\t%s\t%s",	ipAddrStr,
+					cRemoteDeviceList[iii].port,
+					cRemoteDeviceList[iii].hostName,
+					cRemoteDeviceList[iii].deviceTypeStr,
+					cRemoteDeviceList[iii].deviceNameStr);
+			SetWidgetText(boxId, textString);
+
+			SetWidgetTextColor(		boxId,	CV_RGB(255,	255,	255));
+
+			if (cRemoteDeviceList[iii].deviceTypeEnum == kDeviceType_Focuser)
+			{
+				SetWidgetTextColor(		boxId,	CV_RGB(0,	255,	0));		//*	green
+			}
+			if (cRemoteDeviceList[iii].deviceTypeEnum == kDeviceType_Camera)
+			{
+				SetWidgetTextColor(		boxId,	CV_RGB(255,	255,	0));		//*	yellow
+			}
+			if (cRemoteDeviceList[iii].deviceTypeEnum == kDeviceType_Switch)
+			{
+				SetWidgetTextColor(		boxId,	CV_RGB(0,	255,	255));		//*	cyan
+			}
+			if (cRemoteDeviceList[iii].deviceTypeEnum == kDeviceType_Dome)
+			{
+				SetWidgetTextColor(		boxId,	CV_RGB(255,	0,	255));			//*	magenta
+			}
+			if (cRemoteDeviceList[iii].deviceTypeEnum == kDeviceType_Telescope)
+			{
+				SetWidgetTextColor(		boxId,	CV_RGB(100,	100,	255));		//*	blue
+			}
+			myDevCount++;
+		}
+		else
+		{
+			//	CONSOLE_DEBUG_W_NUM("iii\t=", iii);
+		}
+		iii++;
+	}
+	sprintf(textString, "Total Alpaca Devices found=%d", myDevCount);
+	SetWidgetText(kAlpacaList_AlpacaDev_Total, textString);
+
+	SetWidgetBGColor(kAlpacaList_ClmTitle1,	((cSortColumn == 0) ? CV_RGB(255,	255,	255) : CV_RGB(128,	128,	128)));
+	SetWidgetBGColor(kAlpacaList_ClmTitle2,	((cSortColumn == 1) ? CV_RGB(255,	255,	255) : CV_RGB(128,	128,	128)));
+	SetWidgetBGColor(kAlpacaList_ClmTitle3,	((cSortColumn == 2) ? CV_RGB(255,	255,	255) : CV_RGB(128,	128,	128)));
+	SetWidgetBGColor(kAlpacaList_ClmTitle4,	((cSortColumn == 3) ? CV_RGB(255,	255,	255) : CV_RGB(128,	128,	128)));
+	SetWidgetBGColor(kAlpacaList_ClmTitle5,	((cSortColumn == 4) ? CV_RGB(255,	255,	255) : CV_RGB(128,	128,	128)));
+
+}
+
+static int	gSortColumn;
+
+//**************************************************************************************
+static  int RemoteObjectQsortProc(const void *e1, const void *e2)
+{
+	TYPE_REMOTE_DEV	*obj1, *obj2;
+	int				returnValue;
+	uint32_t		ipAddr1;
+	uint32_t		ipAddr2;
+
+
+	obj1		=	(TYPE_REMOTE_DEV *)e1;
+	obj2		=	(TYPE_REMOTE_DEV *)e2;
+
+	returnValue	=	0;
+	switch(gSortColumn)
+	{
+	case 0:
+		returnValue	=	0;	//*	let the default code below take care of this
+		break;
+
+	case 1:
+		returnValue	=	strcasecmp(obj1->hostName, obj2->hostName);
+		break;
+
+	case 2:
+		returnValue	=	strcasecmp(obj1->deviceTypeStr, obj2->deviceTypeStr);
+		break;
+
+	case 3:
+		returnValue	=	strcasecmp(obj1->deviceNameStr, obj2->deviceNameStr);
+		break;
+
+	case 4:
+		break;
+	}
+	//*	if they are the same, sort by address
+	if (returnValue == 0)
+	{
+		ipAddr1	=	(obj1->deviceAddress.sin_addr.s_addr & 0x000000ff) << 24;
+		ipAddr1	+=	(obj1->deviceAddress.sin_addr.s_addr & 0x0000ff00) << 8;
+		ipAddr1	+=	(obj1->deviceAddress.sin_addr.s_addr & 0x00ff0000) >> 8;
+		ipAddr1	+=	(obj1->deviceAddress.sin_addr.s_addr & 0xff000000) >> 24;
+
+		ipAddr2	=	(obj2->deviceAddress.sin_addr.s_addr & 0x000000ff) << 24;
+		ipAddr2	+=	(obj2->deviceAddress.sin_addr.s_addr & 0x0000ff00) << 8;
+		ipAddr2	+=	(obj2->deviceAddress.sin_addr.s_addr & 0x00ff0000) >> 8;
+		ipAddr2	+=	(obj2->deviceAddress.sin_addr.s_addr & 0xff000000) >> 24;
+
+		if (ipAddr1 < ipAddr2)
+		{
+			returnValue	=	-1;
+		}
+		else if (ipAddr1 > ipAddr2)
+		{
+			returnValue	=	1;
+		}
+	}
+
+//	CONSOLE_DEBUG_W_NUM("returnValue\t=", returnValue);
+
+	return(returnValue);
+
+}
+
+
+//**************************************************************************************
+void	WindowTabAlpacaList::UpdateSortOrder(void)
+{
+//	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG_W_NUM("cAlpacaDevCnt\t=", cAlpacaDevCnt);
+
+	if (cSortColumn >= 0)
+	{
+		gSortColumn	=	cSortColumn;
+		qsort(cRemoteDeviceList, cAlpacaDevCnt, sizeof(TYPE_REMOTE_DEV), RemoteObjectQsortProc);
+
+		UpdateOnScreenWidgetList();
+	}
+
 }
 
 

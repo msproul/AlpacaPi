@@ -12,15 +12,33 @@
 	extern "C" {
 #endif
 
-int		LX200_StartThread(char *errorMsg);
+int		LX200_StartThread(const char *ipAddrString, const int tcpPort, char *errorMsg);
 void	LX200_StopThread(void);
 
-int		LX200_OpenSocket(struct sockaddr_in *deviceAddress, const int port);
 int		LX200_SendCommand(int socket_desc, const char *cmdString, char *dataBuffer, unsigned int dataBufferLen);
-bool	LX200_SyncScope(const double newRtAscen_Radians, const double new_Declination_Radians, char *returnErrMsg);
+bool	LX200_SyncScope(		const double	newRtAscen_Radians,
+								const double	new_Declination_Radians,
+								char			*returnErrMsg);
 
+bool	LX200_SlewScopeDegrees(	const double	newRtAscen_Hours,
+								const double	newDeclination_Degrees,
+								char			*returnErrMsg);
+
+bool	LX200_SyncScopeDegrees(	const double	newRtAscen_Hours,
+								const double	newDeclination_Degrees,
+								char			*returnErrMsg);
+
+
+bool	LX200_StopMovement(void);
+
+
+extern	double	gTelescopeRA_Hours;
+extern	double	gTelescopeDecl_Degrees;
 extern	double	gTelescopeRA_Radians;
 extern	double	gTelescopeDecl_Radians;
+extern	double	gTelescopeTrackingRate;
+
+
 
 extern	bool	gTelescopeUpdated;
 extern	bool	gTelescopeInfoValid;

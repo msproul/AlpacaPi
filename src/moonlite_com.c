@@ -29,7 +29,7 @@
 //*	Apr 26,	2020	<MLS> Added MoonLite_GetNC_Color()
 //*	Apr 26,	2020	<MLS> Added MoonLite_FlushReadBuffer()
 //*	Jun 30,	2020	<MLS> Added _DEBUG_NITECRAWLER_DETECTION_
-//*	Dec 28,	2020	<MLS> Added MoonLite_SetCurrentPostion()
+//*	Dec 28,	2020	<MLS> Added MoonLite_SetCurrentPosition()
 //*****************************************************************************
 
 #include	<stdlib.h>
@@ -556,7 +556,7 @@ int		cc;
 	if ((moonliteCom->model == kMoonLite_NiteCrawler) ||
 		((moonliteCom->model == kMoonLite_HighRes) && (axisNumber == 1)))
 	{
-		//*	send GetPostion command
+		//*	send GetPosition command
 		cc	=	0;
 		if (moonliteCom->model == kMoonLite_NiteCrawler)
 		{
@@ -595,7 +595,7 @@ int		cc;
 
 //*****************************************************************************
 //*	returns true if success
-bool	MoonLite_SetPostion(	TYPE_MOONLITECOM	*moonliteCom,
+bool	MoonLite_SetPosition(	TYPE_MOONLITECOM	*moonliteCom,
 								const int			axisNumber,
 								int32_t				newPosition)
 {
@@ -656,7 +656,7 @@ bool	successFlag;
 
 //*****************************************************************************
 //*	returns true if success
-bool	MoonLite_SetCurrentPostion(	TYPE_MOONLITECOM	*moonliteCom,
+bool	MoonLite_SetCurrentPosition(TYPE_MOONLITECOM	*moonliteCom,
 									const int			axisNumber,
 									int32_t				newPosition)
 {

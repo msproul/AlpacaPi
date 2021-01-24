@@ -35,6 +35,7 @@
 //*	May 23,	2020	<MLS> Added UpdateSlitLog()
 //*	May 31,	2020	<MLS> Added gravity vector processing
 //*	Jan 14,	2021	<MLS> Dome controller working with ASCOM/Remote
+//*	Jan 24,	2021	<MLS> Converted DomeController to use properties struct
 //*****************************************************************************
 
 
@@ -104,21 +105,9 @@ int		iii;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
-	cCanFindHome			=	false;
-	cCanPark				=	false;
-	cCanSetAltitude			=	false;
-	cCanSetAzimuth			=	false;
-	cCanSetPark				=	false;
-	cCanSetShutter			=	false;
-	cCanSlave				=	false;
-	cCanSyncAzimuth			=	false;
-	cCanPark				=	false;
-	cAtHome					=	false;
-	cAtPark					=	false;
-	cSlewing				=	false;
-	cAzimuth_Dbl			=	0.0;
-	cAltitude_Dbl			=	0.0;
-	cShutterStatus			=	-1;
+	memset(&cDomeProp, 0, sizeof(TYPE_DomeProperties));
+	cDomeProp.ShutterStatus	=	-1;
+
 #ifdef _ENABLE_EXTERNAL_SHUTTER_
 	cShutterInfoValid		=	false;
 #endif // _ENABLE_EXTERNAL_SHUTTER_
@@ -181,50 +170,29 @@ ControllerDome::~ControllerDome(void)
 	{
 		CloseSlitTrackerDataFile();
 	}
-}
-
-
-//**************************************************************************************
-void	ControllerDome::SetAlpacaShutterInfo(TYPE_REMOTE_DEV *alpacaDevice)
-{
-	CONSOLE_DEBUG(__FUNCTION__);
-
-	if (alpacaDevice != NULL)
+	//-----------------------------
+	if (cDomeTabObjPtr != NULL)
 	{
-#ifdef _ENABLE_EXTERNAL_SHUTTER_
-		cShutterInfoValid		=	true;
-
-		cShutterDeviceAddress	=	alpacaDevice->deviceAddress;
-		cShutterPort			=	alpacaDevice->port;
-		cShutterAlpacaDevNum	=	alpacaDevice->alpacaDeviceNum;
-
-		SetWidgetText(kTab_Dome,		kDomeBox_Readall,		"RS");
-		SetWidgetText(kTab_SlitTracker,	kSlitTracker_Readall,	"RS");
-		SetWidgetText(kTab_SlitGraph,	kSlitGraph_Readall,		"RS");
-		SetWidgetText(kTab_About,		kAboutBox_Readall,		"RS");
-#endif // _ENABLE_EXTERNAL_SHUTTER_
+		delete cDomeTabObjPtr;
+		cDomeTabObjPtr	=	NULL;
 	}
-}
-
-//**************************************************************************************
-void	ControllerDome::SetAlpacaSlitTrackerInfo(TYPE_REMOTE_DEV *alpacaDevice)
-{
-char	ipString[64];
-char	lineBuff[128];
-
-	CONSOLE_DEBUG(__FUNCTION__);
-
-	if (alpacaDevice != NULL)
+	//-----------------------------
+	if (cSlitTrackerTabObjPtr != NULL)
 	{
-		cSlitTrackerInfoValid		=	true;
-		cSlitTrackerDeviceAddress	=	alpacaDevice->deviceAddress;
-		cSlitTrackerPort			=	alpacaDevice->port;
-		cSlitTrackerAlpacaDevNum	=	alpacaDevice->alpacaDeviceNum;
-
-		PrintIPaddressToString(cSlitTrackerDeviceAddress.sin_addr.s_addr, ipString);
-		sprintf(lineBuff, "%s:%d/%d", ipString, cSlitTrackerPort, cSlitTrackerAlpacaDevNum);
-
-		SetWidgetText(kTab_SlitTracker,	kSlitTracker_RemoteAddress,	lineBuff);
+		delete cSlitTrackerTabObjPtr;
+		cSlitTrackerTabObjPtr	=	NULL;
+	}
+	//-----------------------------
+	if (cSlitGraphTabObjPtr != NULL)
+	{
+		delete cSlitGraphTabObjPtr;
+		cSlitGraphTabObjPtr	=	NULL;
+	}
+	//-----------------------------
+	if (cAboutBoxTabObjPtr != NULL)
+	{
+		delete cAboutBoxTabObjPtr;
+		cAboutBoxTabObjPtr	=	NULL;
 	}
 }
 
@@ -285,6 +253,51 @@ char	lineBuff[64];
 	}
 }
 
+
+//**************************************************************************************
+void	ControllerDome::SetAlpacaShutterInfo(TYPE_REMOTE_DEV *alpacaDevice)
+{
+	CONSOLE_DEBUG(__FUNCTION__);
+
+	if (alpacaDevice != NULL)
+	{
+#ifdef _ENABLE_EXTERNAL_SHUTTER_
+		cShutterInfoValid		=	true;
+
+		cShutterDeviceAddress	=	alpacaDevice->deviceAddress;
+		cShutterPort			=	alpacaDevice->port;
+		cShutterAlpacaDevNum	=	alpacaDevice->alpacaDeviceNum;
+
+		SetWidgetText(kTab_Dome,		kDomeBox_Readall,		"RS");
+		SetWidgetText(kTab_SlitTracker,	kSlitTracker_Readall,	"RS");
+		SetWidgetText(kTab_SlitGraph,	kSlitGraph_Readall,		"RS");
+		SetWidgetText(kTab_About,		kAboutBox_Readall,		"RS");
+#endif // _ENABLE_EXTERNAL_SHUTTER_
+	}
+}
+
+//**************************************************************************************
+void	ControllerDome::SetAlpacaSlitTrackerInfo(TYPE_REMOTE_DEV *alpacaDevice)
+{
+char	ipString[64];
+char	lineBuff[128];
+
+	CONSOLE_DEBUG(__FUNCTION__);
+
+	if (alpacaDevice != NULL)
+	{
+		cSlitTrackerInfoValid		=	true;
+		cSlitTrackerDeviceAddress	=	alpacaDevice->deviceAddress;
+		cSlitTrackerPort			=	alpacaDevice->port;
+		cSlitTrackerAlpacaDevNum	=	alpacaDevice->alpacaDeviceNum;
+
+		PrintIPaddressToString(cSlitTrackerDeviceAddress.sin_addr.s_addr, ipString);
+		sprintf(lineBuff, "%s:%d/%d", ipString, cSlitTrackerPort, cSlitTrackerAlpacaDevNum);
+
+		SetWidgetText(kTab_SlitTracker,	kSlitTracker_RemoteAddress,	lineBuff);
+	}
+}
+
 //**************************************************************************************
 void	ControllerDome::RunBackgroundTasks(void)
 {
@@ -340,6 +353,44 @@ bool		needToUpdate;
 
 
 
+//*****************************************************************************
+bool	ControllerDome::AlpacaGetStartupData(void)
+{
+//SJP_Parser_t	jsonParser;
+bool			validData;
+char			returnString[128];
+//char			dataString[128];
+
+	CONSOLE_DEBUG(__FUNCTION__);
+	//===============================================================
+	//*	get supportedactions
+	validData	=	AlpacaGetSupportedActions("dome", cAlpacaDevNum);
+	if (validData)
+	{
+		SetWidgetValid(kTab_Dome,			kDomeBox_Readall,		cHas_readall);
+		SetWidgetValid(kTab_SlitTracker,	kSlitTracker_Readall,	cHas_readall);
+		SetWidgetValid(kTab_SlitGraph,		kSlitGraph_Readall,		cHas_readall);
+		SetWidgetValid(kTab_About,			kAboutBox_Readall,		cHas_readall);
+
+		if (cHas_readall == false)
+		{
+			validData	=	AlpacaGetStringValue(	"dome", "driverversion",	NULL,	returnString);
+			if (validData)
+			{
+				strcpy(cAlpacaVersionString, returnString);
+				SetWidgetText(kTab_Dome,		kDomeBox_AlpacaDrvrVersion,		cAlpacaVersionString);
+			}
+		}
+	}
+	else
+	{
+		CONSOLE_DEBUG("Read failure - supportedactions");
+		cReadFailureCnt++;
+	}
+	cLastUpdate_milliSecs	=	millis();
+
+	return(validData);
+}
 
 
 //*****************************************************************************
@@ -357,7 +408,7 @@ bool	previousOnLineState;
 	}
 	else
 	{
-		validData	=	AlpacaGetStatus_OneAAT();
+		validData	=	AlpacaGetStatus_DomeOneAAT();
 	}
 #ifdef _ENABLE_EXTERNAL_SHUTTER_
 	//=================================================
@@ -383,17 +434,17 @@ bool	previousOnLineState;
 
 		//======================================================================
 		cUpdateDelta	=	kDefaultUpdateDelta;
-		if (cSlewing)
+		if (cDomeProp.Slewing)
 		{
 			//*	if we slewing, we want to update more often
 			cUpdateDelta	=	2;
 			SetWidgetText(kTab_Dome, kDomeBox_CurPosition, "Slewing");
 		}
-		else if (cAtHome)
+		else if (cDomeProp.AtHome)
 		{
 			SetWidgetText(kTab_Dome, kDomeBox_CurPosition, "Home");
 		}
-		else if (cAtPark)
+		else if (cDomeProp.AtPark)
 		{
 			SetWidgetText(kTab_Dome, kDomeBox_CurPosition, "Park");
 		}
@@ -403,7 +454,7 @@ bool	previousOnLineState;
 		}
 
 		//*	if we shutter is opening or closing, we want to update more often
-		if ((cShutterStatus == kShutterStatus_Opening) || (cShutterStatus == kShutterStatus_Closing))
+		if ((cDomeProp.ShutterStatus == kShutterStatus_Opening) || (cDomeProp.ShutterStatus == kShutterStatus_Closing))
 		{
 			cUpdateDelta	=	2;
 		}
@@ -421,6 +472,41 @@ bool	previousOnLineState;
 	cFirstDataRead			=	false;
 	return(validData);
 }
+
+//*****************************************************************************
+void	ControllerDome::AlpacaProcessReadAll(	const char	*deviceType,
+											const int	deviceNum,
+											const char	*keywordString,
+											const char *valueString)
+{
+//	CONSOLE_DEBUG_W_2STR("json=",	keywordString, valueString);
+	if (strcasecmp(deviceType, "Dome") == 0)
+	{
+		AlpacaProcessReadAll_Dome(deviceNum, keywordString, valueString);
+	}
+	else
+	{
+		CONSOLE_ABORT(__FUNCTION__);
+	}
+}
+
+//*****************************************************************************
+//*	if this routine gets overloaded, the first part, checking for "readall" must be preserved
+//*****************************************************************************
+void	ControllerDome::AlpacaProcessSupportedActions(const char *deviceType, const int deviveNum, const char *valueString)
+{
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, deviceType);
+
+	if (strcasecmp(deviceType, "Dome") == 0)
+	{
+		AlpacaProcessSupportedActions_Dome(deviveNum, valueString);
+	}
+	else
+	{
+		CONSOLE_ABORT(__FUNCTION__);
+	}
+}
+
 
 #ifdef  _ENABLE_EXTERNAL_SHUTTER_
 //*****************************************************************************
@@ -1000,6 +1086,11 @@ ssize_t	bytesWritten;
 }
 #endif // _SLIT_TRACKER_DIRECT_
 
+#ifdef _ENABLE_SKYTRAVEL_
+	#undef _ENABLE_SKYTRAVEL_
+	#define	PARENT_CLASS	ControllerDome
+	#include	"controller_dome_common.cpp"
+#endif
 
 
-#endif // _ENABLE_CTRL_SWITCHES_
+#endif // _ENABLE_CTRL_DOME_

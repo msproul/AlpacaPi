@@ -567,7 +567,7 @@ protected:
 	bool					cCanPulseGuide;
 	bool					cCansetccdtemperature;
 	bool					cCanStopExposure;
-	double					cCCDTemperature;
+	double					cSetCCDTemperature;
 //+	bool					cConnected;
 //+	bool					cCoolerOn;
 //+	double					cCoolerPower;

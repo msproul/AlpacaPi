@@ -124,6 +124,18 @@ int		iii;
 ControllerSwitch::~ControllerSwitch(void)
 {
 	CONSOLE_DEBUG(__FUNCTION__);
+	//-----------------------------
+	if (cSwitchTabObjPtr != NULL)
+	{
+		delete cSwitchTabObjPtr;
+		cSwitchTabObjPtr	=	NULL;
+	}
+	//-----------------------------
+	if (cAboutBoxTabObjPtr != NULL)
+	{
+		delete cAboutBoxTabObjPtr;
+		cAboutBoxTabObjPtr	=	NULL;
+	}
 }
 
 

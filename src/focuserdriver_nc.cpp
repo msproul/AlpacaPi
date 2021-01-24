@@ -35,7 +35,7 @@
 //*	Dec  7,	2019	<MLS> Talking to NiteCrawler with /dev/ttyUSBx, no longer using libusb
 //*	Dec  7,	2019	<MLS> Reading NiteCrawler focuser position values
 //*	Dec 13,	2019	<MLS> Successfully sending set position commands to NiteCrawler
-//*	Dec 16,	2019	<MLS> Added SetStepperPostion()
+//*	Dec 16,	2019	<MLS> Added SetStepperPosition()
 //*	Dec 19,	2019	<MLS> Added HaltStepper()
 //*	Dec 19,	2019	<MLS> Halt working, command is "nSQ0"
 //*	Jan  1,	2020	<MLS> Added OpenFocuserConnection() to separate functionality
@@ -120,9 +120,11 @@ FocuserNiteCrawler::FocuserNiteCrawler(const int argDevNum, const char *devicePa
 	CONSOLE_DEBUG(__FUNCTION__);
 
 	strcpy(cDeviceManufacturer,	"Moonlite");
-	cFocuserStepSize			=	0.2667;	//	Step size (microns) for the focuser.
-	cMaxStep					=	87000;
-	cMaxIncrement				=	10000;
+
+	cFocuserProp.Absolute		=	true;
+	cFocuserProp.MaxIncrement	=	10000;
+	cFocuserProp.MaxStep		=	87000;
+	cFocuserProp.StepSize		=	0.2667;	//	Step size (microns) for the focuser.
 
 	cLastTimeSecs_Temperature	=	0;
 	cLastTimeMilSecs_Position	=	0;
@@ -318,48 +320,48 @@ uint32_t	currentSeconds;
 	//*	get the position information every 200 milliseconds (5 times a second)
 	if ((currentMillis - cLastTimeMilSecs_Position) > 200)
 	{
-		GetPosition(1, &cFocuserPostion);
+		GetPosition(1, &cFocuserProp.Position);
 		if (cFocuserSupportsRotation)
 		{
-			GetPosition(2, &cRotatorPostion);
+			GetPosition(2, &cRotatorPosition);
 		}
 		if (cFocuserSupportsAux)
 		{
 			GetPosition(3, &cAuxPosition);
 		}
 
-//		CONSOLE_DEBUG_W_INT32("pos1=", cFocuserPostion);
-//		CONSOLE_DEBUG_W_INT32("pos2=", cRotatorPostion);
+//		CONSOLE_DEBUG_W_INT32("pos1=", cFocuserProp.Position);
+//		CONSOLE_DEBUG_W_INT32("pos2=", cRotatorPosition);
 //		CONSOLE_DEBUG_W_INT32("pos3=", cAuxPosition);
 
 		//*	check to see if the focuser is moving...
-		if (cFocuserPostion != cPrevFocuserPostion)
+		if (cFocuserProp.Position != cPrevFocuserPosition)
 		{
-			cFocusIsMoving	=	true;
-			CONSOLE_DEBUG_W_NUM("pos1=", cFocuserPostion);
+			cFocuserProp.IsMoving	=	true;
+			CONSOLE_DEBUG_W_NUM("pos1=", cFocuserProp.Position);
 		}
 		else
 		{
-			cFocusIsMoving	=	false;
+			cFocuserProp.IsMoving	=	false;
 		}
-		cPrevFocuserPostion	=	cFocuserPostion;
+		cPrevFocuserPosition	=	cFocuserProp.Position;
 
 
 		//*	check to see if the rotator moving...
-		if (cRotatorPostion != cPrevRotatorPostion)
+		if (cRotatorPosition != cPrevRotatorPosition)
 		{
 			cRotatorIsMoving	=	true;
-//			CONSOLE_DEBUG_W_NUM("pos2=", cRotatorPostion);
+//			CONSOLE_DEBUG_W_NUM("pos2=", cRotatorPosition);
 		}
 		else
 		{
 			cRotatorIsMoving	=	false;
 		}
-		cPrevRotatorPostion		=	cRotatorPostion;
+		cPrevRotatorPosition		=	cRotatorPosition;
 
 
 		//*	check to see if the Aux moving...
-		if (cAuxPosition != cPrevAuxPostion)
+		if (cAuxPosition != cPrevAuxPosition)
 		{
 			cAuxIsMoving	=	true;
 			CONSOLE_DEBUG_W_NUM("pos3=", cAuxPosition);
@@ -368,7 +370,7 @@ uint32_t	currentSeconds;
 		{
 			cAuxIsMoving	=	false;
 		}
-		cPrevAuxPostion		=	cAuxPosition;
+		cPrevAuxPosition		=	cAuxPosition;
 
 		//*	if anything is moving, get the switch bits
 		//*	The GS query the switch status for the limit and rotation home switches:
@@ -379,7 +381,7 @@ uint32_t	currentSeconds;
 		//*	GA is the AUX channel switch status:
 		//*	b0= Out limit
 		//*	b1=In lmit
-		if (cFocusIsMoving || cRotatorIsMoving || cAuxIsMoving)
+		if (cFocuserProp.IsMoving || cRotatorIsMoving || cAuxIsMoving)
 		{
 		unsigned char	switchBits;
 
@@ -479,7 +481,7 @@ bool	keepGoing;
 
 
 //*****************************************************************************
-TYPE_ASCOM_STATUS	FocuserNiteCrawler::SetStepperPostion(const int axisNumber, const int32_t newPosition)
+TYPE_ASCOM_STATUS	FocuserNiteCrawler::SetStepperPosition(const int axisNumber, const int32_t newPosition)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 bool				validFlag;
@@ -488,7 +490,7 @@ bool				validFlag;
 	CONSOLE_DEBUG(__FUNCTION__);
 	if ((axisNumber >= 1) && (axisNumber <= 3))
 	{
-		validFlag	=	MoonLite_SetPostion(&cMoonliteCom,	axisNumber, newPosition);
+		validFlag	=	MoonLite_SetPosition(&cMoonliteCom,	axisNumber, newPosition);
 		if (validFlag)
 		{
 			alpacaErrCode	=	kASCOM_Err_Success;
@@ -537,7 +539,7 @@ bool				validFlag;
 
 
 //*****************************************************************************
-TYPE_ASCOM_STATUS		FocuserNiteCrawler::SetFocuserPostion(const int32_t newPosition, char *alpacaErrMsg)
+TYPE_ASCOM_STATUS		FocuserNiteCrawler::SetFocuserPosition(const int32_t newPosition, char *alpacaErrMsg)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
@@ -545,7 +547,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
-	alpacaErrCode	=	SetStepperPostion(1, newPosition);
+	alpacaErrCode	=	SetStepperPosition(1, newPosition);
 
 	return(alpacaErrCode);
 }

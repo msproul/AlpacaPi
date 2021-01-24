@@ -148,14 +148,14 @@ DomeDriverRPi::DomeDriverRPi(const int argDevNum)
 	strcpy(cDeviceName, "Dome-Raspberry-Pi");
 	strcpy(gWebTitle, "Dome-Raspberry-Pi");
 
-	cDomeConfig				=	kIsDome;
-	cCanFindHome			=	true;
-	cCanPark				=	true;
-	cCanSetAzimuth			=	true;
-	cCanSyncAzimuth			=	true;
-	cCanSetShutter			=	true;
-	cParkAzimuth			=	170.0;		//*	these are approximate for my dome
-	cHomeAzimuth			=	230.0;
+	cDomeConfig					=	kIsDome;
+	cDomeProp.CanFindHome		=	true;
+	cDomeProp.CanPark			=	true;
+	cDomeProp.CanSetAzimuth		=	true;
+	cDomeProp.CanSyncAzimuth	=	true;
+	cDomeProp.CanSetShutter		=	true;
+	cParkAzimuth				=	170.0;		//*	these are approximate for my dome
+	cHomeAzimuth				=	230.0;
 	Init_Hardware();
 	LogEvent(	"dome",
 				"R-Pi Dome created",
@@ -261,11 +261,11 @@ char		msgBuffer[64];
 
 	if (cCurrentPWM > 0)
 	{
-		cSlewing			=	true;
+		cDomeProp.Slewing			=	true;
 	}
 	else
 	{
-		cSlewing			=	false;
+		cDomeProp.Slewing			=	false;
 	}
 
 	cTimeOfLastSpeedChange	=	millis();
@@ -329,7 +329,7 @@ char		command[64];
 	{
 		case kHWpin_ButtonCW:
 			strcpy(command, "Button-CW");
-			if (cSlewing)
+			if (cDomeProp.Slewing)
 			{
 				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Dome already in motion, command ignored");
 			}
@@ -342,7 +342,7 @@ char		command[64];
 
 		case kHWpin_ButtonCCW:
 			strcpy(command, "Button-CCW");
-			if (cSlewing)
+			if (cDomeProp.Slewing)
 			{
 				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Dome already in motion, command ignored");
 			}
@@ -415,7 +415,7 @@ uint32_t	currentlTics;
 	cTimeOfLastSpeedChange		=	millis();
 	cTimeOfMovingStart			=	millis();
 	cTimeOfLastAzimuthUpdate	=	millis();
-	cSlewing					=	true;
+	cDomeProp.Slewing			=	true;
 }
 
 
@@ -438,9 +438,9 @@ int		iii;
 			pwmWrite(kHWpin_PowerPWM, 0);
 			usleep(1000);
 		}
-		cCurrentPWM		=	0;
-		cDomeState		=	kDomeState_Stopped;
-		cSlewing		=	false;
+		cCurrentPWM			=	0;
+		cDomeState			=	kDomeState_Stopped;
+		cDomeProp.Slewing	=	false;
 	}
 	else
 	{
@@ -461,30 +461,30 @@ int			sensorState;
 	sensorState	=	digitalRead(kHWpin_HomeSensor);
 	if (sensorState == 0)
 	{
-		if (cAtHome == false)
+		if (cDomeProp.AtHome == false)
 		{
 			CONSOLE_DEBUG("cAtHome state changed");
 		}
-		cAtHome	=	true;
+		cDomeProp.AtHome	=	true;
 	}
 	else
 	{
-		cAtHome	=	false;
+		cDomeProp.AtHome	=	false;
 	}
 
 	sensorState	=	digitalRead(kHWpin_ParkSensor);
 	if (sensorState == 0)
 	{
-		if (cAtPark == false)
+		if (cDomeProp.AtPark == false)
 		{
 			CONSOLE_DEBUG("atPark state changed");
 		}
-		cAtPark				=	true;
-		cAzimuth_Degrees	=	170.0;
+		cDomeProp.AtPark	=	true;
+		cDomeProp.Azimuth	=	170.0;
 	}
 	else
 	{
-		cAtPark	=	false;
+		cDomeProp.AtPark	=	false;
 	}
 }
 
@@ -506,7 +506,7 @@ double	degreesPerMilliSec;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-	if (cSlewing)
+	if (cDomeProp.Slewing)
 	{
 		currentMilliSecs	=	millis();
 		deltaMilliSecs		=	currentMilliSecs - cTimeOfLastAzimuthUpdate;
@@ -524,19 +524,19 @@ double	degreesPerMilliSec;
 				degreesMoved		=	speedPercent * deltaMilliSecs * degreesPerMilliSec;
 				if (cCurrentDirection == kRotateDome_CW)
 				{
-					cAzimuth_Degrees	+=	degreesMoved;
+					cDomeProp.Azimuth	+=	degreesMoved;
 				}
 				else
 				{
-					cAzimuth_Degrees	-=	degreesMoved;
+					cDomeProp.Azimuth	-=	degreesMoved;
 				}
-				if (cAzimuth_Degrees < 0.0)
+				if (cDomeProp.Azimuth < 0.0)
 				{
-					cAzimuth_Degrees	+=	360.0;
+					cDomeProp.Azimuth	+=	360.0;
 				}
-				if (cAzimuth_Degrees > 360.0)
+				if (cDomeProp.Azimuth > 360.0)
 				{
-					cAzimuth_Degrees	-=	360.0;
+					cDomeProp.Azimuth	-=	360.0;
 				}
 			}
 			cTimeOfLastAzimuthUpdate	=	millis();

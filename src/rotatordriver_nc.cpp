@@ -137,7 +137,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 	CONSOLE_DEBUG_W_INT32("newPosition\t=", newPosition);
 	if (cFocuserObject != NULL)
 	{
-		alpacaErrCode		=	cFocuserObject->SetStepperPostion(2, newPosition);
+		alpacaErrCode		=	cFocuserObject->SetStepperPosition(2, newPosition);
 		cRotatorIsMoving	=	true;
 	}
 	else

@@ -435,8 +435,8 @@ int					keyPressed;
 				{
 					activeObjCnt++;
 					gControllerList[iii]->HandleWindow();
-			//		usleep(100);
-					keyPressed	=	cvWaitKey(25);
+				//	usleep(10);
+					keyPressed	=	cvWaitKey(50);
 					if (keyPressed > 0)
 					{
 						Controller_HandleKeyDown(keyPressed);

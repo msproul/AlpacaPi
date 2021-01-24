@@ -4,6 +4,7 @@
 #	I apologize for that.
 ###############################################################################
 ###	Jan 12,	2021	<MLS> Adding machine specific build commands
+###	Jan 21,	2021	<MLS> Adding skytravel to build process
 ###############################################################################
 
 RASPPI=false
@@ -78,15 +79,35 @@ else
 	make clean
 	make
 fi
+if [ -f alpacapi ]
+then
+	echo "alpacapi client made successfully" >> $LOGFILENAME
+else
+	echo "Failed to build alpacapi client !!!!!!!!!!!!!!!!!!!!!" >> $LOGFILENAME
+fi
 
 
 if $RASPPI
 then
+	##################################
 	#this only compiles on Raspberry Pi (depends on wiringPi library)
 	make clean calib
+	if [ -f alpacapi-calib ]
+	then
+		echo "alpacapi-calib driver made successfully" >> $LOGFILENAME
+	else
+		echo "Failed to build alpacapi-calib driver !!!!!!!!!!!!!!!!!!!!!" >> $LOGFILENAME
+	fi
+	##################################
 	make clean rorpi
 else
 	make clean ror
+fi
+if [ -f ror ]
+then
+	echo "rorpi driver made successfully" >> $LOGFILENAME
+else
+	echo "Failed to build rorpi driver !!!!!!!!!!!!!!!!!!!!!" >> $LOGFILENAME
 fi
 
 
@@ -94,33 +115,54 @@ ls -lt | grep -v drwxrwxr |  head -12
 
 rm -f $FILE_SEP_NAME
 
-	if [ -f alpacapi ]
-	then
-		echo "alpacapi server made successfully" >> $LOGFILENAME
-	fi
+if [ -f alpacapi ]
+then
+	echo "alpacapi server made successfully" >> $LOGFILENAME
+fi
 
 
 if $OPENCV_OK
 then
+	##############################################
+	#	lets try sky travel
+	if [ -d src_skytravel ]
+	then
+		make clean sky
+		if [ -f skytravel ]
+		then
+			echo "skytravel client made successfully" >> $LOGFILENAME
+		else
+			echo "Failed to build skytravel client !!!!!!!!!!!!!!!!!!!!!" >> $LOGFILENAME
+		fi
+	fi
+
 	############################################
 	if [ -f camera ]
 	then
 		echo "Camera client made successfully" >> $LOGFILENAME
+	else
+		echo "Failed to build Camera client !!!!!!!!!!!!!!!!!!!!!" >> $LOGFILENAME
 	fi
 	############################################
 	if [ -f domectrl ]
 	then
 		echo "Dome controller client made successfully" >> $LOGFILENAME
+	else
+		echo "Failed to build Dome client !!!!!!!!!!!!!!!!!!!!!" >> $LOGFILENAME
 	fi
 	############################################
 	if [ -f focuser ]
 	then
 		echo "Focuser client made successfully" >> $LOGFILENAME
+	else
+		echo "Failed to build Focuser client !!!!!!!!!!!!!!!!!!!!!" >> $LOGFILENAME
 	fi
 	############################################
 	if [ -f switch ]
 	then
 		echo "Switch client made successfully" >> $LOGFILENAME
+	else
+		echo "Failed to build Switch client !!!!!!!!!!!!!!!!!!!!!" >> $LOGFILENAME
 	fi
 
 else

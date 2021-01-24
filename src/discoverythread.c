@@ -101,7 +101,6 @@ char				ipAddrSt[48];
 	mySocket	=	socket(AF_INET, SOCK_DGRAM, 0);
 	if (mySocket >= 0)
 	{
-
 		memset(&serverAddress, '\0', sizeof(struct sockaddr_in));
 		serverAddress.sin_family			=	AF_INET;
 		serverAddress.sin_family			=	AF_INET;
@@ -879,13 +878,13 @@ char				*colonPtr;
 					strcpy(portNumStr, "6800");
 				}
 
-				SJP_Init(&jsonParser);
-				from.sin_addr.s_addr	=	htonl((192 << 24) + (168 << 16) + (50 << 8) + 46);
+//---				from.sin_addr.s_addr	=	htonl((192 << 24) + (168 << 16) + (50 << 8) + 46);
 				inet_pton(AF_INET, lineBuff, &(from.sin_addr));
 
 				inet_ntop(AF_INET, &(from.sin_addr), outputIPaddr, INET_ADDRSTRLEN);
 				CONSOLE_DEBUG_W_STR("outputIPaddr\t\t=",		outputIPaddr);
 
+				SJP_Init(&jsonParser);
 				strcpy(jsonParser.dataList[0].keyword, "ALPACAPORT");
 				strcpy(jsonParser.dataList[0].valueString, portNumStr);
 				jsonParser.tokenCount_Data	=	1;

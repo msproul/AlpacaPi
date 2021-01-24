@@ -56,6 +56,14 @@ static int	gClientID				=	1;
 static int	gClientTransactionID	=	1;
 
 //*****************************************************************************
+//*	this should be over-ridden
+bool	Controller::AlpacaGetStartupData(void)
+{
+	CONSOLE_ABORT(__FUNCTION__);
+}
+
+
+//*****************************************************************************
 bool	Controller::AlpacaGetSupportedActions(	sockaddr_in	*deviceAddress,
 												int			devicePort,
 												const char	*deviceTypeStr,
@@ -67,29 +75,42 @@ char			alpacaString[128];
 int				jjj;
 
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, deviceTypeStr);
 
 	//===============================================================
 	//*	get supportedactions
 	SJP_Init(&jsonParser);
+	CONSOLE_DEBUG_W_NUM("tokenCount_Data\t=", jsonParser.tokenCount_Data);
 	sprintf(alpacaString,	"/api/v1/%s/%d/supportedactions", deviceTypeStr, deviceNum);
+	CONSOLE_DEBUG_W_STR("alpacaString\t=", alpacaString);
 	validData	=	GetJsonResponse(	deviceAddress,
 										devicePort,
 										alpacaString,
 										NULL,
 										&jsonParser);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	if (validData)
 	{
 		cHas_readall	=	false;
 		jjj	=	0;
 		while (jjj<jsonParser.tokenCount_Data)
 		{
+//			CONSOLE_DEBUG_W_NUM("jjj\t=", jjj);
+//			CONSOLE_DEBUG_W_2STR("kw:val=", jsonParser.dataList[jjj].keyword,
+//											jsonParser.dataList[jjj].valueString);
 			if (strcasecmp(jsonParser.dataList[jjj].keyword, "ARRAY") == 0)
 			{
-				jjj++;
-				while ((jjj<jsonParser.tokenCount_Data) &&
+				jjj++;	//*	skip over the ARRAY entry
+
+//				CONSOLE_DEBUG_W_NUM("ARRAY found, jjj\t=", jjj);
+//				CONSOLE_DEBUG_W_STR("keyword\t=", jsonParser.dataList[jjj].keyword);
+				while ((jjj < jsonParser.tokenCount_Data) &&
 						(jsonParser.dataList[jjj].keyword[0] != ']'))
 				{
-					AlpacaProcessSupportedActions(deviceTypeStr, deviceNum, jsonParser.dataList[jjj].valueString);
+//					CONSOLE_DEBUG_W_STR("Calling AlpacaProcessSupportedActions", deviceTypeStr);
+					AlpacaProcessSupportedActions(	deviceTypeStr,
+													deviceNum,
+													jsonParser.dataList[jjj].valueString);
 					jjj++;
 				}
 			}
@@ -101,6 +122,7 @@ int				jjj;
 		CONSOLE_DEBUG("Read failure - supportedactions");
 		cReadFailureCnt++;
 	}
+//	CONSOLE_DEBUG(__FUNCTION__);
 	return(validData);
 }
 
@@ -214,16 +236,13 @@ char		myDataString[512]	=	"";
 int			dataStrLen;
 
 
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, alpacaCmd);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, alpacaCmd);
 
 	if (jsonParser  != NULL)
 	{
-		CONSOLE_DEBUG(__FUNCTION__);
-
 		SJP_Init(jsonParser);
 
 		sprintf(alpacaString, "/api/v1/%s/%d/%s", alpacaDevice, alpacaDevNum, alpacaCmd);
-
 
 		dataStrLen	=	0;
 		if (dataString != NULL)
@@ -281,7 +300,7 @@ bool	Controller::AlpacaSendPutCmdwResponse(	const char		*alpacaDevice,
 {
 bool			sucessFlag;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 #if 1
 	sucessFlag	=	AlpacaSendPutCmdwResponse(	&cDeviceAddress,
@@ -295,7 +314,7 @@ bool			sucessFlag;
 char			alpacaString[128];
 char			myDataString[512];
 
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, alpacaCmd);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, alpacaCmd);
 
 	SJP_Init(jsonParser);
 
@@ -426,6 +445,7 @@ int				jjj;
 	return(validData);
 }
 
+
 //*****************************************************************************
 //*	return value is true if the message was sent and a response was received
 //*	The *validData flag indicates if data was found
@@ -451,6 +471,7 @@ double			myDoubleValue;
 										alpacaString,
 										dataString,
 										&jsonParser);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	if (validData)
 	{
 		cLastAlpacaErrNum	=	0;
@@ -480,8 +501,75 @@ double			myDoubleValue;
 	{
 		cReadFailureCnt++;
 	}
+//	CONSOLE_DEBUG(__FUNCTION__);
 	return(validData);
 }
+
+//*****************************************************************************
+//*	this is a very special case, but it gets used at least twice by the telescope controller
+//*****************************************************************************
+bool	Controller::AlpacaGetMinMax(	const char	*alpacaDevice,
+										const char	*alpacaCmd,
+										const char	*dataString,
+										double		*returnMinValue,
+										double		*returnMaxValue,
+										bool		*rtnValidData)
+{
+SJP_Parser_t	jsonParser;
+bool			validData;
+char			alpacaString[128];
+int				jjj;
+double			myDoubleValue;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+	SJP_Init(&jsonParser);
+	sprintf(alpacaString,	"/api/v1/%s/%d/%s", alpacaDevice, cAlpacaDevNum, alpacaCmd);
+
+	validData	=	GetJsonResponse(	&cDeviceAddress,
+										cPort,
+										alpacaString,
+										dataString,
+										&jsonParser);
+	if (validData)
+	{
+		cLastAlpacaErrNum	=	0;
+		for (jjj=0; jjj<jsonParser.tokenCount_Data; jjj++)
+		{
+			if (strcasecmp(jsonParser.dataList[jjj].keyword, "MINIMUM") == 0)
+			{
+				myDoubleValue	=	atof(jsonParser.dataList[jjj].valueString);
+				if (returnMinValue != NULL)
+				{
+					*returnMinValue	=	myDoubleValue;
+				}
+			}
+			if (strcasecmp(jsonParser.dataList[jjj].keyword, "MAXIMUM") == 0)
+			{
+				myDoubleValue	=	atof(jsonParser.dataList[jjj].valueString);
+				if (returnMaxValue != NULL)
+				{
+					*returnMaxValue	=	myDoubleValue;
+				}
+			}
+		}
+		cLastAlpacaErrNum	=	AlpacaCheckForErrors(&jsonParser, cLastAlpacaErrStr);
+		if (cLastAlpacaErrNum != 0)
+		{
+			//*	does the calling routine want to know if the data was good
+			if (rtnValidData != NULL)
+			{
+				*rtnValidData	=	false;
+			}
+		}
+	}
+	else
+	{
+		cReadFailureCnt++;
+	}
+//	CONSOLE_DEBUG(__FUNCTION__);
+	return(validData);
+}
+
 
 
 //*****************************************************************************
@@ -792,23 +880,28 @@ uint32_t		tStopMillisecs;
 			}
 
 		//	CONSOLE_DEBUG("Calling recv with MSG_OOB");
-			recv_flags	=	MSG_OOB;
+			recv_flags	=	MSG_ERRQUEUE;
 			recvByteCnt	=	recv(socket_desc, errorBuff , kImageArrayBuffSize , recv_flags);
 			if (recvByteCnt >= 0)
 			{
 				CONSOLE_DEBUG_W_NUM("MSG_ERRQUEUE recvByteCnt\t=", recvByteCnt);
+				CONSOLE_DEBUG_W_STR("errorBuff\t=", errorBuff);
+				CONSOLE_ABORT(__FUNCTION__)
 			}
 
 
 		//	CONSOLE_DEBUG(__FUNCTION__);
-			recvByteCnt	=	recv(socket_desc, returnedData , kReadBuffLen , MSG_NOSIGNAL);
+			recvByteCnt	=	recv(socket_desc, returnedData , kReadBuffLen , 0);
 		//	CONSOLE_DEBUG_W_NUM("recvByteCnt\t=", recvByteCnt);
 			if (recvByteCnt > 0)
 			{
 				socketReadCnt++;
-				if (socketReadCnt < 3)
+				if (socketReadCnt < 6)
 				{
-				//	CONSOLE_DEBUG_W_STR("returnedData\t=", returnedData);
+					CONSOLE_DEBUG("--------------------------------------------------");
+					CONSOLE_DEBUG_W_NUM("socketReadCnt\t=",	socketReadCnt);
+					CONSOLE_DEBUG_W_NUM("recvByteCnt\t=",	recvByteCnt);
+					CONSOLE_DEBUG_W_STR("returnedData\t=",	returnedData);
 				}
 		//		CONSOLE_DEBUG("-----");
 		//		CONSOLE_DEBUG_W_HEX("returnedData\t=", returnedData[0]);

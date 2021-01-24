@@ -76,7 +76,7 @@ TYPE_CelestData		*myObjectPtr;
 char				filePath[128];
 int					bytesRead;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	myObjectPtr		=	NULL;
 	*objectCount	=	0;
@@ -85,8 +85,8 @@ int					bytesRead;
 	strcat(filePath, "/OBJALL.B");
 
 	fileSize		=	GetFileSize(filePath);
-	CONSOLE_DEBUG_W_STR("filePath\t=", filePath);
-	CONSOLE_DEBUG_W_LONG("fileSize\t=", fileSize);
+//	CONSOLE_DEBUG_W_STR("filePath\t=", filePath);
+//	CONSOLE_DEBUG_W_LONG("fileSize\t=", fileSize);
 
 	if (fileSize > 0)
 	{
@@ -96,15 +96,14 @@ int					bytesRead;
 			filePointer	=	fopen(filePath, "r");
 			if (filePointer != NULL)
 			{
-				CONSOLE_DEBUG("File is open");
 				bytesRead	=	fread(myDiskObjectPtr, 1, fileSize, filePointer);
 
-				CONSOLE_DEBUG_W_NUM("bytesRead\t=", bytesRead);
+//				CONSOLE_DEBUG_W_NUM("bytesRead\t=", bytesRead);
 
 				myDiskObjectCount	=	fileSize / sizeof(TYPE_CelestDataDisk);
 
-				CONSOLE_DEBUG_W_LONG("TYPE_CelestDataDisk\t=", sizeof(TYPE_CelestDataDisk));
-				CONSOLE_DEBUG_W_LONG("myDiskObjectCount\t=", myDiskObjectCount);
+//				CONSOLE_DEBUG_W_LONG("TYPE_CelestDataDisk\t=", sizeof(TYPE_CelestDataDisk));
+//				CONSOLE_DEBUG_W_LONG("myDiskObjectCount\t=", myDiskObjectCount);
 
 			#ifdef _BIG_ENDIAN_
 				CONSOLE_DEBUG("_BIG_ENDIAN_");
@@ -157,7 +156,7 @@ TYPE_CelestData	*GetDefaultStarData(long *objectCount, TYPE_Time *timePtr)
 long			ii;
 TYPE_CelestData	*myObjectPtr;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	myObjectPtr	=	NULL;
 	if (gDefaultStarCatalog == NULL)
 	{
@@ -346,7 +345,7 @@ TYPE_CelestData	*tscStarData;
 char			lineBuff[256];
 size_t			bufferSize;
 
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, filePath);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, filePath);
 
 	tscStarData	=	NULL;
 	filePointer	=	fopen(filePath, "r");
@@ -359,7 +358,7 @@ size_t			bufferSize;
 			specifiedLnCnt	=	atoi(lineBuff);
 			if (specifiedLnCnt > 10)
 			{
-				CONSOLE_DEBUG_W_NUM("specifiedLnCnt\t=", specifiedLnCnt);
+//				CONSOLE_DEBUG_W_NUM("specifiedLnCnt\t=", specifiedLnCnt);
 
 				//*	get the dataset year
 				if (fgets(lineBuff, 100, filePointer))
@@ -392,7 +391,7 @@ size_t			bufferSize;
 	{
 		CONSOLE_DEBUG_W_STR("Failed to read:", filePath);
 	}
-	CONSOLE_DEBUG_W_NUM("gMaxArgLen\t=", gMaxArgLen);
+//	CONSOLE_DEBUG_W_NUM("gMaxArgLen\t=", gMaxArgLen);
 
 	return(tscStarData);
 }
