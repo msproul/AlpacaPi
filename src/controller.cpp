@@ -994,7 +994,6 @@ CvRect		myCVrect;
 CvPoint		textLoc;
 CvSize		textSize;
 int			baseLine;
-int			textOffsetX;
 int			textOffsetY;
 int			curFontNum;
 char		textBuffer[kMaxWidgetStrLen];

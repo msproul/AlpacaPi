@@ -71,7 +71,7 @@ int			argInt;
 	validData	=	AlpacaGetBooleanValue(	"dome", "athome",	NULL,	&cDomeProp.AtHome);
 	if (validData)
 	{
-		CONSOLE_DEBUG_W_NUM("cAtHome\t=",	cDomeProp.AtHome);
+//		CONSOLE_DEBUG_W_NUM("cAtHome\t=",	cDomeProp.AtHome);
 	}
 	else
 	{
@@ -82,7 +82,7 @@ int			argInt;
 	validData	=	AlpacaGetBooleanValue(	"dome", "atpark",	NULL,	&cDomeProp.AtPark);
 	if (validData)
 	{
-		CONSOLE_DEBUG_W_NUM("cAtPark\t=",	cDomeProp.AtPark);
+//		CONSOLE_DEBUG_W_NUM("cAtPark\t=",	cDomeProp.AtPark);
 	}
 	else
 	{
@@ -93,7 +93,7 @@ int			argInt;
 	validData	=	AlpacaGetBooleanValue(	"dome", "slewing",	NULL,	&cDomeProp.Slewing);
 	if (validData)
 	{
-		CONSOLE_DEBUG_W_NUM("cSlewing\t=",	cDomeProp.Slewing);
+//		CONSOLE_DEBUG_W_NUM("cSlewing\t=",	cDomeProp.Slewing);
 	}
 	else
 	{
@@ -105,7 +105,7 @@ int			argInt;
 	validData	=	AlpacaGetDoubleValue(	"dome", "azimuth",	NULL,	&argDouble);
 	if (validData)
 	{
-		CONSOLE_DEBUG_W_DBL("argDouble\t=",	argDouble);
+//		CONSOLE_DEBUG_W_DBL("argDouble\t=",	argDouble);
 		UpdateDomeAzimuth(argDouble);
 	}
 	else
@@ -118,7 +118,7 @@ int			argInt;
 	validData	=	AlpacaGetDoubleValue(	"dome", "altitude",	NULL,	&argDouble);
 	if (validData)
 	{
-		CONSOLE_DEBUG_W_DBL("argDouble\t=",	argDouble);
+//		CONSOLE_DEBUG_W_DBL("argDouble\t=",	argDouble);
 		UpdateShutterAltitude(argDouble);
 	}
 	else
@@ -131,7 +131,7 @@ int			argInt;
 	validData	=	AlpacaGetIntegerValue(	"dome", "shutterstatus",	NULL,	&argInt);
 	if (validData)
 	{
-		CONSOLE_DEBUG_W_NUM("argInt\t=",	argInt);
+//		CONSOLE_DEBUG_W_NUM("argInt\t=",	argInt);
 		UpdateShutterStatus(argInt);
 	}
 	else

@@ -102,6 +102,7 @@ ControllerDome::ControllerDome(	const char			*argWindowName,
 	:Controller(argWindowName, kWindowWidth,  kWindowHeight)
 {
 int		iii;
+char	ipAddrStr[32];
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -135,7 +136,17 @@ int		iii;
 
 		strcpy(cAlpacaDeviceTypeStr,	alpacaDevice->deviceTypeStr);
 		strcpy(cAlpacaDeviceNameStr,	alpacaDevice->deviceNameStr);
+	#ifdef _ENABLE_SKYTRAVEL_
+		//*	make a 2nd copy if we are in SKYTRAVEL
+	//	cDomeIpAddress			=	cDeviceAddress;
+	//	cDomeIpPort				=	cPort;
+	//	cDomeAlpacaDeviceNum	=	cPort;
+	#endif
+
 	}
+
+	inet_ntop(AF_INET, &(cDeviceAddress.sin_addr), ipAddrStr, INET_ADDRSTRLEN);
+	CONSOLE_DEBUG_W_STR("IP address=", ipAddrStr);
 
 	//*	initialize the slit distance detector
 	for (iii=0; iii<kSensorValueCnt; iii++)

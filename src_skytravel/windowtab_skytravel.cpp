@@ -557,11 +557,13 @@ int		searchBoxWidth;
 	SetWidgetTextColor(	kSkyTravel_DomeIndicator,		CV_RGB(0,	0, 0));
 	SetWidgetBGColor(	kSkyTravel_DomeIndicator,		CV_RGB(255,	0,	0));
 	SetWidgetHelpText(	kSkyTravel_DomeIndicator,		"Indicates if Dome is OnLine (Grn=yes/Red=no)");
+	SetWidgetType(		kSkyTravel_DomeIndicator, 		kWidgetType_Text);
 
 	SetWidgetText(		kSkyTravel_TelescopeIndicator,	"T");
 	SetWidgetTextColor(	kSkyTravel_TelescopeIndicator,	CV_RGB(0,	0, 0));
 	SetWidgetBGColor(	kSkyTravel_TelescopeIndicator,	CV_RGB(255,	0,	0));
 	SetWidgetHelpText(	kSkyTravel_TelescopeIndicator,	"Indicates if Telescope is OnLine (Grn=yes/Red=no)");
+	SetWidgetType(		kSkyTravel_TelescopeIndicator, 	kWidgetType_Text);
 
 
 	//------------------------------------------------------------------------------------

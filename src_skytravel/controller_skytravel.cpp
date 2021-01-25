@@ -139,7 +139,7 @@ void	ControllerSkytravel::SetupWindowControls(void)
 
 	//=============================================================
 	SetTabText(kTab_Dome,		"Dome");
-	cDomeTabObjPtr	=	new WindowTabDome(cWidth, cHeight, cBackGrndColor, cWindowName);
+	cDomeTabObjPtr	=	new WindowTabDome(cWidth, cHeight, cBackGrndColor, cWindowName, true);
 	if (cDomeTabObjPtr != NULL)
 	{
 		SetTabWindow(kTab_Dome,	cDomeTabObjPtr);

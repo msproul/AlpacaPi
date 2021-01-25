@@ -81,7 +81,8 @@ class WindowTabDome: public WindowTab
 				WindowTabDome(	const int	xSize,
 									const int	ySize,
 									CvScalar	backGrndColor,
-									const char	*windowName);
+									const char	*windowName,
+									const bool	parrentIsSkyTravel = false);
 		virtual	~WindowTabDome(void);
 
 		virtual	void	SetupWindowControls(void);
@@ -95,6 +96,8 @@ class WindowTabDome: public WindowTab
 				void	ToggleSlaveMode(void);
 
 				void	SendShutterCommand(const char *shutterCmd);
+
+				bool	cParrentIsSkyTravel;
 };
 
 

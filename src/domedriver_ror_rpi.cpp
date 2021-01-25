@@ -34,6 +34,9 @@
 	#define		kRelay_RoofClose	3
 	#define		kRelay_FlatScren	4
 
+//	#define		_TURN_POWER_OFF_WHEN_OPEN_
+	#define		_ENABLE_FLAT_SCREEN_
+
 	#define		kSwitchDelaySeconds	20
 
 	#include	"raspberrypi_relaylib.h"
@@ -154,8 +157,10 @@ int32_t		minDealy_microSecs;
 		CONSOLE_DEBUG("Done with OPEN switch contact");
 		relayOK		=	RpiRelay_SetRelay(kRelay_RoofOpen, false);
 
+	#ifdef _TURN_POWER_OFF_WHEN_OPEN_
 		//*	if you want the power turned off, do it here
 		relayOK		=	RpiRelay_SetRelay(kRelay_RoofPower, false);
+	#endif
 
 		cDomeProp.ShutterStatus	=	kShutterStatus_Open;
 		cDomeProp.Slewing		=	false;
@@ -172,6 +177,11 @@ int32_t		minDealy_microSecs;
 		cDomeProp.ShutterStatus	=	kShutterStatus_Closed;
 		cDomeProp.Slewing		=	false;
 		cRORisClosing			=	false;
+
+	#ifdef _ENABLE_FLAT_SCREEN_
+		relayOK				=	RpiRelay_SetRelay(kRelay_FlatScren,	false);
+	#endif
+
 	}
 #endif // _CHRIS_A_ROLL_OFF_ROOF_
 	return(minDealy_microSecs);
@@ -196,6 +206,10 @@ bool				relayOK;
 	cRORisOpening			=	true;
 	cDomeProp.Slewing		=	true;
 	cDomeProp.ShutterStatus	=	kShutterStatus_Opening;
+
+	#ifdef _ENABLE_FLAT_SCREEN_
+		relayOK				=	RpiRelay_SetRelay(kRelay_FlatScren,	true);
+	#endif
 
 #else
 	alpacaErrCode	=	kASCOM_Err_ActionNotImplemented;

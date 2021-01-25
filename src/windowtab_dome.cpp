@@ -24,6 +24,7 @@
 //*	May  4,	2020	<MLS> Slave mode set/unset logic working now
 //*	May  7,	2020	<MLS> Added SendShutterCommand() to repleace multiple other cmds
 //*	Jan 15,	2021	<MLS> Got clarification of SUPPORTEDACTIONS cmd, fixed hidden controls
+//*	Jan 24,	2021	<MLS> Added ParentIsSkyTravel flag
 //*****************************************************************************
 
 #ifdef _ENABLE_CTRL_DOME_
@@ -48,12 +49,13 @@
 WindowTabDome::WindowTabDome(	const int	xSize,
 								const int	ySize,
 								CvScalar	backGrndColor,
-								const char	*windowName)
+								const char	*windowName,
+								const bool	parrentIsSkyTravel)
 	:WindowTab(xSize, ySize, backGrndColor, windowName)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-
+	cParrentIsSkyTravel	=	parrentIsSkyTravel;
 	SetupWindowControls();
 }
 
@@ -272,18 +274,21 @@ int		iii;
 
 
 #ifdef _ENABLE_SKYTRAVEL_
-int	myBtnHeight;
-int	xLoc;
+	if (cParrentIsSkyTravel)
+	{
+	int	myBtnHeight;
+	int	xLoc;
 
-	btnWidth		=	100;
-	myBtnHeight		=	cBtnHeight - 4;
-	xLoc			=	cWidth - (btnWidth + 5);
-	yLoc			=	cHeight- (myBtnHeight + 5);
-	SetWidget(			kDomeBox_Rescan,	xLoc,		yLoc,		btnWidth,		myBtnHeight);
-	SetWidgetFont(		kDomeBox_Rescan,	kFont_Medium);
-	SetWidgetText(		kDomeBox_Rescan, 	"Re-scan");
-	SetWidgetBGColor(	kDomeBox_Rescan,	CV_RGB(255,	255,	255));
-	SetWidgetTextColor(	kDomeBox_Rescan,	CV_RGB(0,	0,	0));
+		btnWidth		=	100;
+		myBtnHeight		=	cBtnHeight - 4;
+		xLoc			=	cWidth - (btnWidth + 5);
+		yLoc			=	cHeight- (myBtnHeight + 5);
+		SetWidget(			kDomeBox_Rescan,	xLoc,		yLoc,		btnWidth,		myBtnHeight);
+		SetWidgetFont(		kDomeBox_Rescan,	kFont_Medium);
+		SetWidgetText(		kDomeBox_Rescan, 	"Re-scan");
+		SetWidgetBGColor(	kDomeBox_Rescan,	CV_RGB(255,	255,	255));
+		SetWidgetTextColor(	kDomeBox_Rescan,	CV_RGB(0,	0,	0));
+	}
 
 #endif
 
@@ -334,27 +339,39 @@ bool	validData	=	false;
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, theCommand);
 
 #ifdef _ENABLE_SKYTRAVEL_
-ControllerSkytravel	*myControllerObj;
-
-	myControllerObj	=	(ControllerSkytravel *)cParentObjPtr;
-	if (myControllerObj != NULL)
+	if (cParrentIsSkyTravel)
 	{
-		validData	=	AlpacaSendPutCmd(	&myControllerObj->cDomeIpAddress,
-											myControllerObj->cDomeIpPort,
-											"dome",
-											myControllerObj->cDomeAlpacaDeviceNum,
-											theCommand,
-											dataString,
-											jsonParser);
+	ControllerSkytravel	*myControllerObj;
+
+		CONSOLE_DEBUG("_ENABLE_SKYTRAVEL_");
+
+		myControllerObj	=	(ControllerSkytravel *)cParentObjPtr;
+		if (myControllerObj != NULL)
+		{
+		char	ipAddrStr[32];
+
+			inet_ntop(AF_INET, &(myControllerObj->cDomeIpAddress.sin_addr), ipAddrStr, INET_ADDRSTRLEN);
+			CONSOLE_DEBUG_W_STR("IP address=", ipAddrStr);
+
+			validData	=	AlpacaSendPutCmd(	&myControllerObj->cDomeIpAddress,
+												myControllerObj->cDomeIpPort,
+												"dome",
+												myControllerObj->cDomeAlpacaDeviceNum,
+												theCommand,
+												dataString,
+												jsonParser);
+		}
+		else
+		{
+			CONSOLE_DEBUG("myControllerObj is NULL");
+		}
 	}
 	else
-	{
-		CONSOLE_DEBUG("myControllerObj is NULL");
-	}
-#else
-	validData	=	AlpacaSendPutCmd(	"dome",	theCommand,	"", jsonParser);
-
 #endif
+	{
+		CONSOLE_DEBUG("NORMAL");
+		validData	=	AlpacaSendPutCmd(	"dome",	theCommand,	"", jsonParser);
+	}
 	return(validData);
 }
 
