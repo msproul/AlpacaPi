@@ -26,7 +26,7 @@ class ControllerFocusGeneric: public ControllerFocus
 		virtual	void	CreateWindowTabs(void);
 
 
-		virtual	void	UpdateFocuserPostion(	const int newFocuserPostion);
+		virtual	void	UpdateFocuserPosition(	const int newFocuserPosition);
 		virtual	void	UpdateTemperature(		const double newTemperature);
 //		virtual	void	UpdateVoltage(			const double newVoltage);
 

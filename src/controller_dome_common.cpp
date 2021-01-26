@@ -58,7 +58,7 @@ int			myFailureCount;
 double		argDouble;
 int			argInt;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 #ifdef _ENABLE_SKYTRAVEL_
 	cDeviceAddress	=	cDomeIpAddress;
 	cPort			=	cDomeIpPort;

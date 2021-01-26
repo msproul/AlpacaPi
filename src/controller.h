@@ -31,7 +31,13 @@
 #endif
 
 
-#define	kMaxControllers	10
+#ifndef kMagicCookieValue
+	#define	kMagicCookieValue	0x55AA7777
+#endif
+
+
+
+#define	kMaxControllers	16
 
 
 #define	kMaxTabs	10
@@ -236,6 +242,7 @@ class Controller
 												int			*actualValueCnt);
 
 
+		uint32_t	cMagicCookie;		//*	an indicator so we know the object is valid
 		int			cDebugCounter;
 		bool		cKeepRunning;
 		bool		cUpdateProtect;

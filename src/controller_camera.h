@@ -4,35 +4,40 @@
 #ifndef _CONTROLLER_CAMERA_H_
 #define	_CONTROLLER_CAMERA_H_
 
+#ifndef	_ALPACA_DEFS_H_
+	#include	"alpaca_defs.h"
+#endif
+
+
+
+
 #ifndef _DISCOVERY_LIB_H_
 	#include	"discovery_lib.h"
-#endif // _DISCOVERY_LIB_H_
+#endif
 
 #ifndef	_CONTROLLER_H_
 	#include	"controller.h"
-#endif // _CONTROLLER_H_
+#endif
+
 #ifndef	_WINDOWTAB_CAMERA_H_
 	#include	"windowtab_camera.h"
-#endif // _WINDOWTAB_CAMERA_H_
+#endif
+
 #ifndef	_WINDOWTAB_FILELIST_H_
 	#include	"windowtab_filelist.h"
-#endif // _WINDOWTAB_FILELIST_H_
+#endif
+
 #ifndef	_WINDOWTAB_CAMSETTINGS_H_
 	#include	"windowtab_camsettings.h"
-#endif // _WINDOWTAB_CAMSETTINGS_H_
+#endif
 
 
 #ifndef	_WINDOWTAB_ABOUT_H_
 	#include	"windowtab_about.h"
-#endif // _WINDOWTAB_ABOUT_H_
+#endif
 
 
 
-//**************************************************************************************
-typedef struct
-{
-	char	mode[64];
-} READOUTMODE;
 
 //**************************************************************************************
 typedef struct
@@ -55,7 +60,6 @@ typedef struct
 
 #define	kMaxRemoteFileCnt		200
 #define	kMaxTemperatureValues	(450)
-#define	kMaxReadOutModes		5
 #define	kMaxFilters				8
 
 //**************************************************************************************
@@ -148,24 +152,23 @@ class ControllerCamera: public Controller
 				IplImage	*DownloadImage_rgbarray(void);
 				IplImage	*DownloadImage_imagearray(const bool force8BitRead = false);
 
+
+
+				TYPE_CameraProperties	cCameraProp;
+
+				//*	temp related stuff
+				bool					cHasCCDtemp;
+				double					cCameraTempLog[kMaxTemperatureValues];
+				int						cTempLogCount;
+
 				//*	download options
 				bool					cReadData8Bit;
 
 				char					cCameraName[48];
-				int						cCameraSizeX;
-				int						cCameraSizeY;
 				int						cAlpacaCameraState;
-				int						cGain;
-				int						cGainMin;
-				int						cGainMax;
-				double					cCCDtemperature;
-				READOUTMODE				cReadOutModes[kMaxReadOutModes];
-				int						cReadOutMode;
 				bool					cCameraState_imageready;
 
 				double					cExposure;
-				double					cExposureMin;
-				double					cExposureMax;
 				bool					cLiveMode;
 				bool					cSideBar;
 				bool					cAutoExposure;
@@ -183,25 +186,20 @@ class ControllerCamera: public Controller
 
 				//==========================================================
 				//*	File name information
-				bool				cFN_includeSerialNum;
-				bool				cFN_includeManuf;
-				bool				cFN_includeFilter;
-				bool				cFN_includeRefID;
+				bool					cFN_includeSerialNum;
+				bool					cFN_includeManuf;
+				bool					cFN_includeFilter;
+				bool					cFN_includeRefID;
 
 				//==========================================================
 				//*	filter wheel information
-				bool				cHasFilterWheel;
-				char				cFilterWheelName[32];
-				FILTERWHEEL			cFilterNames[kMaxFilters];
-				int					cFilterWheelPosition;
+				bool					cHasFilterWheel;
+				char					cFilterWheelName[32];
+				FILTERWHEEL				cFilterNames[kMaxFilters];
+				int						cFilterWheelPosition;
 
-				//*	temp related stuf
-				bool				cCoolerOn;
-				bool				cHasCCDtemp;
-				double				cCameraTempLog[kMaxTemperatureValues];
-				int					cTempLogCount;
 
-				TYPE_REMOTE_FILE	cRemoteFiles[kMaxRemoteFileCnt];
+				TYPE_REMOTE_FILE		cRemoteFiles[kMaxRemoteFileCnt];
 
 				//==========================================================
 				//*	download status stuff

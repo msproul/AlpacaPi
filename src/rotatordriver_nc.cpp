@@ -54,7 +54,7 @@ RotatorDriver_NiteCrawler::RotatorDriver_NiteCrawler(const int argDevNum, Focuse
 	strcpy(cDeviceName, "NiteCrawler Rotator");
 	strcpy(cRotatorManufacturer,	"Moonlite");
 
-	cRotatorCanReverse	=	false;
+	cRotatorProp.CanReverse	=	false;
 
 	if (cFocuserObject != NULL)
 	{
@@ -64,7 +64,7 @@ RotatorDriver_NiteCrawler::RotatorDriver_NiteCrawler(const int argDevNum, Focuse
 		cRotatorStepsPerRev	=	cFocuserObject->GetRotatorStepsPerRev();
 		if (cRotatorStepsPerRev> 0)
 		{
-			cRotatorStepSize	=	360.0 / cRotatorStepsPerRev;
+			cRotatorProp.StepSize	=	360.0 / cRotatorStepsPerRev;
 		}
 	}
 }
@@ -137,8 +137,8 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 	CONSOLE_DEBUG_W_INT32("newPosition\t=", newPosition);
 	if (cFocuserObject != NULL)
 	{
-		alpacaErrCode		=	cFocuserObject->SetStepperPosition(2, newPosition);
-		cRotatorIsMoving	=	true;
+		alpacaErrCode			=	cFocuserObject->SetStepperPosition(2, newPosition);
+		cRotatorProp.IsMoving	=	true;
 	}
 	else
 	{

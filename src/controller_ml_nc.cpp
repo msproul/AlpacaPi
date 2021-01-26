@@ -321,35 +321,35 @@ void	ControllerNiteCrawler::CreateWindowTabs(void)
 
 
 //*****************************************************************************
-void	ControllerNiteCrawler::UpdateFocuserPostion(const int newFocuserPostion)
+void	ControllerNiteCrawler::UpdateFocuserPosition(const int newFocuserPosition)
 {
-//	CONSOLE_DEBUG_W_NUM(__FUNCTION__, newFocuserPostion);
-	cFocuserPosition	=	newFocuserPostion;
+	CONSOLE_DEBUG_W_NUM(__FUNCTION__, newFocuserPosition);
+	cFocuserPosition	=	newFocuserPosition;
 	SetWidgetNumber(kTab_Focuser, kNiteCrawlerTab_focValue, cFocuserPosition);
 
 }
 
 //*****************************************************************************
-void	ControllerNiteCrawler::UpdateRotatorPostion(const int newRotatorPostion)
+void	ControllerNiteCrawler::UpdateRotatorPosition(const int newRotatorPosition)
 {
-//	CONSOLE_DEBUG_W_NUM(__FUNCTION__, newRotatorPostion);
-	cRotatorPosition	=	newRotatorPostion;
+//	CONSOLE_DEBUG_W_NUM(__FUNCTION__, newRotatorPosition);
+	cRotatorPosition	=	newRotatorPosition;
 	SetWidgetNumber(kTab_Focuser, kNiteCrawlerTab_rotValue, cRotatorPosition);
 
 	//*	tell the window tabs the new information
 	if (cNiteCrawlerTabObjPtr != NULL)
 	{
-		cNiteCrawlerTabObjPtr->cRotatorPosition		=	newRotatorPostion;
+		cNiteCrawlerTabObjPtr->cRotatorPosition		=	newRotatorPosition;
 		cNiteCrawlerTabObjPtr->cRotatorDesiredPos	=	cRotatorDesiredPos;
 	}
 }
 
 //*****************************************************************************
-void	ControllerNiteCrawler::UpdateAuxMotorPostion(const int newAuxMotorPostion)
+void	ControllerNiteCrawler::UpdateAuxMotorPosition(const int newAuxMotorPosition)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
-	cAuxMotorPosition	=	newAuxMotorPostion;
-	SetWidgetNumber(kTab_AuxMotor, kAuxMotorBox_Position, newAuxMotorPostion);
+	cAuxMotorPosition	=	newAuxMotorPosition;
+	SetWidgetNumber(kTab_AuxMotor, kAuxMotorBox_Position, newAuxMotorPosition);
 
 }
 

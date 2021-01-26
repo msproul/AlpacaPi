@@ -194,7 +194,6 @@ typedef struct
 
 #define	kNumSupportedFormats	8
 #define	kMaxCameraNameLen		64
-#define	kMaxSensorNameLen		32
 #define	kObjectNameMaxLen		31
 #define	kTelescopeNameMaxLen	80
 #define	kFileNamePrefixMaxLen	16

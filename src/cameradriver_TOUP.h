@@ -51,12 +51,18 @@ class CameraDriverTOUP: public CameraDriver
 
 		virtual	TYPE_ASCOM_STATUS		Cooler_TurnOn(void);
 		virtual	TYPE_ASCOM_STATUS		Cooler_TurnOff(void);
+		virtual	TYPE_ASCOM_STATUS		Read_Gain(int *cameraGainValue);
 		virtual	TYPE_ASCOM_STATUS		Read_SensorTemp(void);
 		virtual	TYPE_ASCOM_STATUS		Read_CoolerState(bool *coolerOnOff);
 		virtual	TYPE_ASCOM_STATUS		Read_CoolerPowerLevel(void);
-//-		virtual	TYPE_ASCOM_STATUS		Read_Readoutmodes(char *readOutModeString, bool includeQuotes=false);
+		virtual	TYPE_ASCOM_STATUS		Read_Readoutmodes(char *readOutModeString, bool includeQuotes=false);
 		virtual	TYPE_ASCOM_STATUS		Read_Fastreadout(void);
 		virtual	TYPE_ASCOM_STATUS		Read_ImageData(void);
+
+
+
+
+
 
 
 
@@ -72,6 +78,9 @@ class CameraDriverTOUP: public CameraDriver
 				bool				cToupPicReady;
 				unsigned int		cToupAutoExpTime_us;
 
+				unsigned int		cToupCamFormat;
+
+				boll				cIsTriggerCam;
 };
 
 

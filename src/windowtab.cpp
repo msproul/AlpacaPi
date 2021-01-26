@@ -234,8 +234,16 @@ void	WindowTab::SetWidgetText(const int widgetIdx, const char *newText)
 
 	if ((widgetIdx >= 0) && (widgetIdx < kMaxWidgets))
 	{
-		strcpy(cWidgetList[widgetIdx].textString, newText);
-		cWidgetList[widgetIdx].needsUpdated	=	true;
+		if (strlen(newText) < kMaxWidgetStrLen)
+		{
+			strcpy(cWidgetList[widgetIdx].textString, newText);
+			cWidgetList[widgetIdx].needsUpdated	=	true;
+		}
+		else
+		{
+			CONSOLE_DEBUG_W_STR("String to long\t=", newText);
+			CONSOLE_ABORT(__FUNCTION__);
+		}
 	}
 	else
 	{

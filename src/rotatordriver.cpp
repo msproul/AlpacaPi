@@ -86,18 +86,22 @@ RotatorDriver::RotatorDriver(const int argDevNum)
 
 	strcpy(cDeviceName, "Rotator");
 
+	memset(&cRotatorProp, 0, sizeof(TYPE_RotatorProperties));
+
+
 	cRotatorManufacturer[0]	=	0;
 	cRotatorModel[0]		=	0;
 	cRotatorSerialNum[0]	=	0;
-	cRotatorCanReverse		=	false;		//*	True if the rotation and angular direction must be reversed for the optics
-	cRotatorReverseState	=	false;
-	cRotatorIsMoving		=	false;
-	cRotatorStepSize		=	1.0;
-	cRotatorStepsPerRev		=	360;
 
-	cRotatorPos_step		=	0;
-	cRotatorPos_degs		=	0.0;
-	cRotatorTrgtPos_degs	=	0.0;
+	cRotatorProp.CanReverse		=	false;		//*	True if the rotation and angular direction must be reversed for the optics
+	cRotatorProp.Reverse		=	false;
+	cRotatorProp.IsMoving		=	false;
+	cRotatorProp.StepSize		=	1.0;
+
+	cRotatorStepsPerRev			=	360;
+	cRotatorPos_step			=	0;
+	cRotatorPos_degs			=	0.0;
+	cRotatorTrgtPos_degs		=	0.0;
 }
 
 
@@ -277,7 +281,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 								reqData->jsonTextBuffer,
 								kMaxJsonBuffLen,
 								responseString,
-								cRotatorCanReverse,
+								cRotatorProp.CanReverse,
 								INCLUDE_COMMA);
 
 		alpacaErrCode	=	kASCOM_Err_Success;
@@ -297,12 +301,12 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
 	if (reqData != NULL)
 	{
-		cRotatorIsMoving	=	IsRotatorMoving();
+		cRotatorProp.IsMoving	=	IsRotatorMoving();
 		JsonResponse_Add_Bool(	reqData->socket,
 								reqData->jsonTextBuffer,
 								kMaxJsonBuffLen,
 								responseString,
-								cRotatorIsMoving,
+								cRotatorProp.IsMoving,
 								INCLUDE_COMMA);
 
 		alpacaErrCode	=	kASCOM_Err_Success;
@@ -401,7 +405,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 									reqData->jsonTextBuffer,
 									kMaxJsonBuffLen,
 									responseString,
-									cRotatorStepSize,
+									cRotatorProp.StepSize,
 									INCLUDE_COMMA);
 
 		JsonResponse_Add_String(	reqData->socket,

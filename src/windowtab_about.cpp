@@ -44,7 +44,7 @@ WindowTabAbout::WindowTabAbout(	const int	xSize,
 								const char	*windowName)
 	:WindowTab(xSize, ySize, backGrndColor, windowName)
 {
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 
 
 	SetupWindowControls();
@@ -84,8 +84,9 @@ static char	gAlpacaPiTxt3[]	=
 {
 	"Quick help\r"
 	"^q to quit\r"
+	"^s will save a screen shot\r"
 	"^w Closes current window, quits if only one\r"
-//	"Clicking the close x does not work\r"
+	"Clicking the round x in the title bar does not work\r"
 };
 
 
@@ -95,9 +96,9 @@ void	WindowTabAbout::SetupWindowControls(void)
 int		yLoc;
 int		textBoxHt;
 int		iii;
-char	multiLineTextBuff[256];
+char	multiLineTextBuff[512];
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 
 	//------------------------------------------
 	yLoc			=	cTabVertOffset;
@@ -140,6 +141,12 @@ char	multiLineTextBuff[256];
 	strcat(multiLineTextBuff,	"\r");
 	strcat(multiLineTextBuff,	gPlatformString);
 	strcat(multiLineTextBuff,	"\r");
+
+	CONSOLE_DEBUG(gOsReleaseString);
+	CONSOLE_DEBUG(gCpuInfoString);
+	CONSOLE_DEBUG(gPlatformString);
+	CONSOLE_DEBUG(multiLineTextBuff);
+	CONSOLE_DEBUG_W_NUM("strlen()", strlen(multiLineTextBuff));
 
 	SetWidgetText(kAboutBox_CPUinfo, multiLineTextBuff);
 

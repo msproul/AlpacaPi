@@ -46,15 +46,14 @@
 //*	Jan 15,	2021	<MLS> Added DownloadImage_rgbarray() & DownloadImage_imagearray()
 //*	Jan 16,	2021	<MLS> Now able to download monochrome image using "imagearray"
 //*	Jan 17,	2021	<MLS> Changed  UpdateReadAllStatus() to UpdateSupportedActions()
+//*	Jan 25,	2021	<MLS> Converted CameraController to use properties struct
 //*****************************************************************************
-//*
-//*	todo
-//*		control key for different step size.
-//*		work on fits view to handle color fits images
-//*		add error list window
-//*		save cross hair location
-//*		finish exposure step options
-//*		clear error msg
+//*	Jan  1,	2121	<TODO> control key for different step size.
+//*	Jan  1,	2121	<TODO> work on fits view to handle color fits images
+//*	Jan  1,	2121	<TODO> add error list window
+//*	Jan  1,	2121	<TODO> save cross hair location
+//*	Jan  1,	2121	<TODO> finish exposure step options
+//*	Jan  1,	2121	<TODO> clear error msg
 //*****************************************************************************
 
 #ifdef _ENABLE_CTRL_CAMERA_
@@ -107,20 +106,18 @@ int		iii;
 
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 
+	memset(&cCameraProp, 0, sizeof(TYPE_CameraProperties));
+
+
 //-	cAlpacaDevNum			=	deviceNum;
 	cFirstDataRead			=	true;
-	cCameraSizeX			=	0;
-	cCameraSizeY			=	0;
 	cLastUpdate_milliSecs	=	millis();
-	cGain					=	0;
-	cGainMin				=	0;
-	cGainMax				=	0;
 
 	cOnLine					=	true;		//*	assume its online, if it wasnt, we wouldnt be here
 	cReadStartup			=	true;
 	cHasCCDtemp				=	true;
 	cHasCooler				=	true;
-	cCoolerOn				=	false;
+//-	cCoolerOn				=	false;
 	cAutoExposure			=	false;
 	cDisplayImage			=	false;
 	cHasFilterWheel			=	false;
@@ -142,7 +139,7 @@ int		iii;
 	//*	clear list of readout modes
 	for (iii=0; iii<kMaxReadOutModes; iii++)
 	{
-		memset(&cReadOutModes[iii], 0, sizeof(READOUTMODE));
+		memset(&cCameraProp.ReadOutModes[iii], 0, sizeof(READOUTMODE));
 	}
 
 	//*	clear list of filterwheel names
@@ -187,7 +184,7 @@ int		iii;
 ControllerCamera::~ControllerCamera(void)
 {
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
-	if (cCoolerOn)
+	if (cCameraProp.CoolerOn)
 	{
 		//*	the ATIK cameras need to have cooling turned off gracefully
 		//*	so, just as a last minute thing, turn it off.
@@ -582,8 +579,10 @@ int				readOutModeIdx;
 				{
 					if (readOutModeIdx < kMaxReadOutModes)
 					{
-						strcpy(cReadOutModes[readOutModeIdx].mode, jsonParser.dataList[jjj].valueString);
-						CONSOLE_DEBUG(cReadOutModes[readOutModeIdx].mode);
+						strcpy(cCameraProp.ReadOutModes[readOutModeIdx].mode,
+									jsonParser.dataList[jjj].valueString);
+
+						CONSOLE_DEBUG(cCameraProp.ReadOutModes[readOutModeIdx].mode);
 						readOutModeIdx++;
 					}
 					jjj++;
@@ -603,18 +602,18 @@ int				readOutModeIdx;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
-	validData	=	AlpacaGetIntegerValue("camera", "cameraxsize",	NULL,	&cCameraSizeX);
-	validData	=	AlpacaGetIntegerValue("camera", "cameraysize",	NULL,	&cCameraSizeY);
+	validData	=	AlpacaGetIntegerValue("camera", "cameraxsize",	NULL,	&cCameraProp.CameraXsize);
+	validData	=	AlpacaGetIntegerValue("camera", "cameraysize",	NULL,	&cCameraProp.CameraYsize);
 	UpdateCameraSize();
 
-	validData	=	AlpacaGetIntegerValue("camera", "gain",			NULL,	&cGain);
-	validData	=	AlpacaGetIntegerValue("camera", "gainmin",		NULL,	&cGainMin);
-	validData	=	AlpacaGetIntegerValue("camera", "gainmax",		NULL,	&cGainMax);
+	validData	=	AlpacaGetIntegerValue("camera", "gain",			NULL,	&cCameraProp.Gain);
+	validData	=	AlpacaGetIntegerValue("camera", "gainmin",		NULL,	&cCameraProp.GainMin);
+	validData	=	AlpacaGetIntegerValue("camera", "gainmax",		NULL,	&cCameraProp.GainMax);
 	UpdateCameraGain();
 
 
-	validData	=	AlpacaGetDoubleValue(	"camera", "exposuremin",	NULL,	&cExposureMin);
-	validData	=	AlpacaGetDoubleValue(	"camera", "exposuremax",	NULL,	&cExposureMax);
+	validData	=	AlpacaGetDoubleValue(	"camera", "exposuremin",	NULL,	&cCameraProp.ExposureMin_seconds);
+	validData	=	AlpacaGetDoubleValue(	"camera", "exposuremax",	NULL,	&cCameraProp.ExposureMax_seconds);
 	UpdateCameraExposure();
 
 
@@ -835,11 +834,11 @@ void	ControllerCamera::AlpacaProcessReadAll(	const char	*deviceTypeStr,
 	}
 	else if (strcasecmp(keywordString, "cameraxsize") == 0)
 	{
-		cCameraSizeX	=	atoi(valueString);
+		cCameraProp.CameraXsize	=	atoi(valueString);
 	}
 	else if (strcasecmp(keywordString, "cameraysize") == 0)
 	{
-		cCameraSizeY	=	atoi(valueString);
+		cCameraProp.CameraYsize	=	atoi(valueString);
 		UpdateCameraSize();
 	}
 	else if (strcasecmp(keywordString, "ccdtemperature") == 0)
@@ -847,15 +846,15 @@ void	ControllerCamera::AlpacaProcessReadAll(	const char	*deviceTypeStr,
 //		CONSOLE_DEBUG("ccdtemperature");
 		//=================================================================================
 		//*	ccdtemperature
-		cCCDtemperature	=	atof(valueString);
+		cCameraProp.CCDtemperature	=	atof(valueString);
 		UpdateCameraTemperature();
-		LogCameraTemp(cCCDtemperature);
+		LogCameraTemp(cCameraProp.CCDtemperature);
 	}
 	else if (strcasecmp(keywordString, "cooleron") == 0)
 	{
 		//=================================================================================
 		//*	cooler state
-		cCoolerOn	=	IsTrueFalse(valueString);
+		cCameraProp.CoolerOn	=	IsTrueFalse(valueString);
 		UpdateCoolerState();
 	}
 	else if (strcasecmp(keywordString, "displayImage") == 0)
@@ -910,7 +909,7 @@ void	ControllerCamera::AlpacaProcessReadAll(	const char	*deviceTypeStr,
 	{
 		//=================================================================================
 		//*	gain
-		cGain	=	atoi(valueString);
+		cCameraProp.Gain	=	atoi(valueString);
 		UpdateCameraGain();
 	}
 	else if (strcasecmp(keywordString, "imageready") == 0)
@@ -931,7 +930,7 @@ void	ControllerCamera::AlpacaProcessReadAll(	const char	*deviceTypeStr,
 //		CONSOLE_DEBUG("readoutmode");
 		//=================================================================================
 		//*	readoutmode
-		cReadOutMode	=	atoi(valueString);
+		cCameraProp.ReadOutMode	=	atoi(valueString);
 		UpdateCurrReadoutMode();
 	}
 	else if (strcasecmp(keywordString, "sidebar") == 0)
@@ -968,7 +967,7 @@ double			myExposureTime;
 
 	//=================================================================================
 	//*	gain
-	validData	=	AlpacaGetIntegerValue(	"camera", "gain",			NULL,	&cGain);
+	validData	=	AlpacaGetIntegerValue(	"camera", "gain",			NULL,	&cCameraProp.Gain);
 	if (validData)
 	{
 		UpdateCameraGain();
@@ -1008,7 +1007,11 @@ double			myExposureTime;
 	bool	tempDataValid;
 
 		tempDataValid	=	true;
-		validData	=	AlpacaGetDoubleValue(	"camera", "ccdtemperature",	NULL,	&cCCDtemperature, &tempDataValid);
+		validData	=	AlpacaGetDoubleValue(	"camera",
+												"ccdtemperature",
+												NULL,
+												&cCameraProp.CCDtemperature,
+												&tempDataValid);
 		if (cLastAlpacaErrNum != 0)
 		{
 			CONSOLE_DEBUG_W_NUM("cLastAlpacaErrNum\t", cLastAlpacaErrNum);
@@ -1017,7 +1020,7 @@ double			myExposureTime;
 		if (validData && tempDataValid)
 		{
 			UpdateCameraTemperature();
-			LogCameraTemp(cCCDtemperature);
+			LogCameraTemp(cCameraProp.CCDtemperature);
 		}
 		else
 		{
@@ -1037,7 +1040,7 @@ double			myExposureTime;
 	//*	cooler state
 	if (cHasCooler)
 	{
-		validData	=	AlpacaGetBooleanValue(	"camera", "cooleron",	NULL,	&cCoolerOn);
+		validData	=	AlpacaGetBooleanValue(	"camera", "cooleron",	NULL,	&cCameraProp.CoolerOn);
 		if (validData)
 		{
 			if (cLastAlpacaErrNum != 0)
@@ -1059,7 +1062,7 @@ double			myExposureTime;
 
 	//=================================================================================
 	//*	readoutmode
-	validData	=	AlpacaGetIntegerValue(	"camera", "readoutmode",	NULL,	&cReadOutMode);
+	validData	=	AlpacaGetIntegerValue(	"camera", "readoutmode",	NULL,	&cCameraProp.ReadOutMode);
 	if (validData)
 	{
 		UpdateCurrReadoutMode();
@@ -1353,7 +1356,7 @@ bool	validData;
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 
 
-	newGainValue	=	cGain + howMuch;
+	newGainValue	=	cCameraProp.Gain + howMuch;
 	sprintf(dataString, "Gain=%d", newGainValue);
 	validData		=	AlpacaSendPutCmd(	"camera",
 											"gain",
@@ -1461,7 +1464,7 @@ void	ControllerCamera::ToggleCooler(void)
 char	dataString[48];
 bool	validData;
 
-	sprintf(dataString, "CoolerOn=%s", (cCoolerOn ? "false" : "true"));
+	sprintf(dataString, "CoolerOn=%s", (cCameraProp.CoolerOn ? "false" : "true"));
 //	CONSOLE_DEBUG_W_STR("dataString\t=",	dataString);
 	validData	=	AlpacaSendPutCmd(	"camera", "cooleron",	dataString);
 	if (validData == false)
@@ -1562,7 +1565,7 @@ int			pixIdx;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
-	pixelsCount	=	cCameraSizeX * cCameraSizeY;
+	pixelsCount	=	cCameraProp.CameraXsize * cCameraProp.CameraYsize;
 	if (pixelsCount > 0)
 	{
 		imageData	=	(int *)malloc(pixelsCount * sizeof(int));
@@ -1580,7 +1583,9 @@ int			pixIdx;
 			CONSOLE_DEBUG_W_NUM("valuesRead\t\t=", valuesRead);
 			if (validData && (valuesRead > 10))
 			{
-				myOpenCVimage	=	cvCreateImage(cvSize(cCameraSizeX, cCameraSizeY), IPL_DEPTH_8U, 3);
+				myOpenCVimage	=	cvCreateImage(	cvSize(cCameraProp.CameraXsize, cCameraProp.CameraYsize),
+													IPL_DEPTH_8U,
+													3);
 				if (myOpenCVimage != NULL)
 				{
 					//*	move the image data into the openCV image structure
@@ -1630,10 +1635,10 @@ int			pixIdxRowStart;
 int			thePixValue;
 
 	CONSOLE_DEBUG(__FUNCTION__);
-	CONSOLE_DEBUG_W_NUM("cCameraSizeX\t=",	cCameraSizeX);
-	CONSOLE_DEBUG_W_NUM("cCameraSizeY\t=",	cCameraSizeY);
+	CONSOLE_DEBUG_W_NUM("cCameraProp.CameraXsize\t=",	cCameraProp.CameraXsize);
+	CONSOLE_DEBUG_W_NUM("cCameraProp.CameraYsize\t=",	cCameraProp.CameraYsize);
 
-	pixelCount		=	cCameraSizeX * cCameraSizeY;
+	pixelCount		=	cCameraProp.CameraXsize * cCameraProp.CameraYsize;
 //	pixelCount3X	=	3 * pixelCount;
 	pixelCount3X	=	1 * pixelCount;
 	pixelCount3X	+=	100;
@@ -1661,7 +1666,9 @@ int			thePixValue;
 			CONSOLE_DEBUG_W_NUM("valuesRead\t\t=", valuesRead);
 			if (validData && (valuesRead > 10))
 			{
-				myOpenCVimage	=	cvCreateImage(cvSize(cCameraSizeX, cCameraSizeY), IPL_DEPTH_8U, 3);
+				myOpenCVimage	=	cvCreateImage(cvSize(	cCameraProp.CameraXsize, cCameraProp.CameraYsize),
+															IPL_DEPTH_8U,
+															3);
 				if (myOpenCVimage != NULL)
 				{
 					CONSOLE_DEBUG_W_NUM("width \t=",	myOpenCVimage->width);

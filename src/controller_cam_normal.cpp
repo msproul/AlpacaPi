@@ -106,7 +106,7 @@ ControllerCamNormal::ControllerCamNormal(	const char			*argWindowName,
 ControllerCamNormal::~ControllerCamNormal(void)
 {
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
-	if (cCoolerOn)
+	if (cCameraProp.CoolerOn)
 	{
 		//*	the ATIK cameras need to have cooling turned off gracefully
 		//*	so, just as a last minute thing, turn it off.
@@ -388,12 +388,12 @@ int		jjj;
 
 	for (jjj=0; jjj<kMaxReadOutModes; jjj++)
 	{
-		if (strlen(cReadOutModes[jjj].mode) > 0)
+		if (strlen(cCameraProp.ReadOutModes[jjj].mode) > 0)
 		{
 			SetWidgetValid(	kTab_Camera, (kCameraBox_ReadMode0 + jjj), true);
 			SetWidgetText(	kTab_Camera,
 						(kCameraBox_ReadMode0 + jjj),
-						cReadOutModes[jjj].mode);
+						cCameraProp.ReadOutModes[jjj].mode);
 		}
 	}
 }
@@ -401,25 +401,26 @@ int		jjj;
 //*****************************************************************************
 void	ControllerCamNormal::UpdateCurrReadoutMode(void)
 {
-	SetWidgetChecked(kTab_Camera, kCameraBox_ReadMode0, (cReadOutMode == 0));
-	SetWidgetChecked(kTab_Camera, kCameraBox_ReadMode1, (cReadOutMode == 1));
-	SetWidgetChecked(kTab_Camera, kCameraBox_ReadMode2, (cReadOutMode == 2));
-	SetWidgetChecked(kTab_Camera, kCameraBox_ReadMode3, (cReadOutMode == 3));
-	SetWidgetChecked(kTab_Camera, kCameraBox_ReadMode4, (cReadOutMode == 4));
+	SetWidgetChecked(kTab_Camera, kCameraBox_ReadMode0, (cCameraProp.ReadOutMode == 0));
+	SetWidgetChecked(kTab_Camera, kCameraBox_ReadMode1, (cCameraProp.ReadOutMode == 1));
+	SetWidgetChecked(kTab_Camera, kCameraBox_ReadMode2, (cCameraProp.ReadOutMode == 2));
+	SetWidgetChecked(kTab_Camera, kCameraBox_ReadMode3, (cCameraProp.ReadOutMode == 3));
+	SetWidgetChecked(kTab_Camera, kCameraBox_ReadMode4, (cCameraProp.ReadOutMode == 4));
 }
 
 //*****************************************************************************
 void	ControllerCamNormal::UpdateCameraGain(void)
 {
-	SetWidgetSliderLimits(	kTab_Camera, kCameraBox_Gain_Slider, cGainMin, cGainMax);
-	SetWidgetSliderValue(	kTab_Camera, kCameraBox_Gain_Slider, cGain);
-	SetWidgetNumber(		kTab_Camera, kCameraBox_Gain, cGain);
+	SetWidgetSliderLimits(	kTab_Camera, kCameraBox_Gain_Slider, cCameraProp.GainMin, cCameraProp.GainMax);
+	SetWidgetSliderValue(	kTab_Camera, kCameraBox_Gain_Slider, cCameraProp.Gain);
+	SetWidgetNumber(		kTab_Camera, kCameraBox_Gain, cCameraProp.Gain);
 }
 
 //*****************************************************************************
 void	ControllerCamNormal::UpdateCameraExposure(void)
 {
-	SetWidgetSliderLimits(	kTab_Camera, kCameraBox_Exposure_Slider,	cExposureMin, cExposureMax);
+	SetWidgetSliderLimits(	kTab_Camera, kCameraBox_Exposure_Slider,	cCameraProp.ExposureMin_seconds,
+																		cCameraProp.ExposureMax_seconds);
 	SetWidgetSliderValue(	kTab_Camera, kCameraBox_Exposure_Slider,	cExposure);
 	SetWidgetNumber(		kTab_Camera, kCameraBox_Exposure,			cExposure);
 }
@@ -428,7 +429,7 @@ void	ControllerCamNormal::UpdateCameraSize(void)
 {
 char	linebuff[64];
 
-	sprintf(linebuff, "%d x %d", cCameraSizeX, cCameraSizeY);
+	sprintf(linebuff, "%d x %d", cCameraProp.CameraXsize, cCameraProp.CameraYsize);
 	SetWidgetText(kTab_Camera, kCameraBox_Size, linebuff);
 }
 
@@ -469,7 +470,8 @@ void	ControllerCamNormal::UpdateCameraTemperature(void)
 {
 char			linebuff[128];
 
-	sprintf(linebuff, "%1.1f C / %1.1f F", cCCDtemperature, (cCCDtemperature * 9.0/5.0) +32.0);
+	sprintf(linebuff, "%1.1f C / %1.1f F", cCameraProp.CCDtemperature,
+											(cCameraProp.CCDtemperature * 9.0/5.0) +32.0);
 	SetWidgetText(kTab_Camera, kCameraBox_Temperature, linebuff);
 
 	if (cHasCCDtemp	== false)
@@ -484,7 +486,7 @@ char			linebuff[128];
 //*****************************************************************************
 void	ControllerCamNormal::UpdateCoolerState(void)
 {
-	SetWidgetChecked(kTab_Camera, kCameraBox_CoolerChkBox, cCoolerOn);
+	SetWidgetChecked(kTab_Camera, kCameraBox_CoolerChkBox, cCameraProp.CoolerOn);
 
 }
 //*****************************************************************************

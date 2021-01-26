@@ -210,9 +210,9 @@ void	ControllerMLsingle::CreateWindowTabs(void)
 
 
 //**************************************************************************************
-void	ControllerMLsingle::UpdateFocuserPostion(const int newFocuserPostion)
+void	ControllerMLsingle::UpdateFocuserPosition(const int newFocuserPosition)
 {
-	cFocuserPosition	=	newFocuserPostion;
+	cFocuserPosition	=	newFocuserPosition;
 
 	SetWidgetNumber(kTab_MLsingle,	kMLsingle_focValue,		cFocuserPosition);
 

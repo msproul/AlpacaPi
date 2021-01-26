@@ -33,6 +33,10 @@
 //*	Jan 29,	2020	<MLS> Toupcam is working on NVIDIA Jetson board
 //*	Mar  5,	2020	<MLS> Working on Toupcam image readout modes
 //*	Jan 15,	2021	<PDB> Found bug in GetImage_ROI_info()
+//*	Jan 24,	2021	<PDB> Working on Read_ImageData()
+//*	Jan 24,	2021	<PDB> Added Read_Gain()
+//*	Jan 25,	2021	<MLS> Upgraded to driver version 48.18081.20201206
+//*	Jan 25,	2021	<MLS> Integrating updates from <PDB>
 //-----------------------------------------------------------------------------
 //*	Feb  4,	2120	<TODO> Add 16 bit readout to Toupcam
 //*	Feb 16,	2120	<TODO> Add gain setting to Toupcam
@@ -55,7 +59,7 @@
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
 
-
+#define _USE_PDB_ADDITIONS_
 
 #ifdef _USE_OPENCV_
 	#include "opencv/highgui.h"
@@ -174,6 +178,7 @@ HRESULT			toupResult;
 
 	cCameraID			=	deviceNum;
 	cToupPicReady		=	false;
+	cIsTriggerCam		=	false;
 	cExposureMin_us		=	400;				//*	0.4 ms
 	cExposureMax_us		=	800 * 1000 *1000;	//*	800 seconds
 
@@ -272,29 +277,36 @@ int				alpacaReadModeIdx;
 		if (cToupDeviceInfo.model->flag & TOUPCAM_FLAG_RAW8)
 		{
 			CONSOLE_DEBUG("TOUPCAM_FLAG_RAW8");
-			cBitDepth	=	8;
+			cBitDepth		=	8;
+			cToupCamFormat	=	TOUPCAM_FLAG_RAW8;
 			SetImageTypeIndex(alpacaReadModeIdx++, "RAW8");
 		}
 		if (cToupDeviceInfo.model->flag & TOUPCAM_FLAG_RAW10)
 		{
 			CONSOLE_DEBUG("TOUPCAM_FLAG_RAW10");
-			cBitDepth	=	10;
+			cBitDepth		=	10;
+			cToupCamFormat	=	TOUPCAM_FLAG_RAW16;
+			SetImageTypeIndex(alpacaReadModeIdx++, "RAW16");
 		}
 		if (cToupDeviceInfo.model->flag & TOUPCAM_FLAG_RAW12)
 		{
 			CONSOLE_DEBUG("TOUPCAM_FLAG_RAW12");
-			cBitDepth	=	12;
-			SetImageTypeIndex(alpacaReadModeIdx++, "RAW12");
+			cBitDepth		=	12;
+			cToupCamFormat	=	TOUPCAM_FLAG_RAW16;
+			SetImageTypeIndex(alpacaReadModeIdx++, "RAW16");
 		}
 		if (cToupDeviceInfo.model->flag & TOUPCAM_FLAG_RAW14)
 		{
 			CONSOLE_DEBUG("TOUPCAM_FLAG_RAW14");
-			cBitDepth	=	14;
+			cBitDepth		=	14;
+			cToupCamFormat	=	TOUPCAM_FLAG_RAW16;
+			SetImageTypeIndex(alpacaReadModeIdx++, "RAW16");
 		}
 		if (cToupDeviceInfo.model->flag & TOUPCAM_FLAG_RAW16)
 		{
 			CONSOLE_DEBUG("TOUPCAM_FLAG_RAW16");
-			cBitDepth	=	16;
+			cBitDepth		=	16;
+			cToupCamFormat	=	TOUPCAM_FLAG_RAW16;
 			SetImageTypeIndex(alpacaReadModeIdx++, "RAW16");
 		}
 		if (cToupDeviceInfo.model->flag & TOUPCAM_FLAG_ST4)
@@ -317,6 +329,23 @@ int				alpacaReadModeIdx;
 		char			firmWareVersion[32];
 
 			CONSOLE_DEBUG("Toupcam_Open OK");
+#ifdef _USE_PDB_ADDITIONS_
+			toupResult  =   Toupcam_put_Option (cToupCamH, TOUPCAM_OPTION_RAW, 1);
+			CONSOLE_DEBUG_W_HEX("toupResult\t\t=",		toupResult);
+			if (FAILED(toupResult))
+			{
+				CONSOLE_DEBUG("Failed RAW");
+			}
+			if (cToupDeviceInfo.model->flag & TOUPCAM_FLAG_TRIGGER_SOFTWARE)
+			{
+				cIsTriggerCam	=	true;	//*	<MLS> 1/25/2021
+				CONSOLE_DEBUG("TOUPCAM_FLAG_TRIGGER_SOFTWARE");
+				toupResult	=	Toupcam_put_Option(cToupCamH, TOUPCAM_OPTION_TRIGGER, 1);
+			}
+			toupResult	=	Toupcam_get_RawFormat(cToupCamH, &nFourCC, &bitsperpixel);
+#endif
+
+
 			toupResult	=	Toupcam_get_RawFormat(cToupCamH, &nFourCC, &bitsperpixel);
 			CONSOLE_DEBUG_W_HEX("toupResult\t\t=",		toupResult);
 			CONSOLE_DEBUG_W_NUM("bitsperpixel\t=",	bitsperpixel);
@@ -367,7 +396,10 @@ int		bAutoExposure;
 			{
 				cIsColorCam	=	false;
 			}
-
+#ifdef _USE_PDB_ADDITIONS_
+			// Disable AutoExposure
+			toupResult	=	Toupcam_put_AutoExpoEnable(cToupCamH, false);
+#endif // _USE_PDB_ADDITIONS_
 
 			toupResult	=	Toupcam_get_AutoExpoEnable(cToupCamH, &bAutoExposure);
 			if (toupResult == S_OK)
@@ -448,10 +480,12 @@ int		bAutoExposure;
 		{
 			CONSOLE_DEBUG("TOUPCAM_FLAG_GETTEMPERATURE");
 		}
+#ifdef TOUPCAM_FLAG_PUTTEMPERATURE
 		if (cToupDeviceInfo.model->flag & TOUPCAM_FLAG_PUTTEMPERATURE)
 		{
 			CONSOLE_DEBUG("TOUPCAM_FLAG_PUTTEMPERATURE");
 		}
+#endif
 		if (cToupDeviceInfo.model->flag & TOUPCAM_FLAG_FAN)
 		{
 			CONSOLE_DEBUG("TOUPCAM_FLAG_FAN");
@@ -573,6 +607,7 @@ TYPE_ASCOM_STATUS	CameraDriverTOUP::Start_CameraExposure(int32_t exposureMicrose
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 
 	//*	this camera is a bit different, it is ALWAYS exposing,
+//*	istrigger
 
 	cInternalCameraState	=	kCameraState_TakingPicture;
 	alpacaErrCode			=	kASCOM_Err_Success;
@@ -704,6 +739,46 @@ HRESULT				toupResult;
 
 #pragma mark -
 #pragma mark Virtual functions
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	CameraDriverTOUP::Read_Gain(int *cameraGainValue)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
+unsigned short		gain;
+HRESULT				toupResult;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+	if (cToupCamH != NULL)
+	{
+		CONSOLE_DEBUG("reading gain");
+		toupResult	=	Toupcam_get_ExpoAGain(cToupCamH, &gain);
+		if (toupResult != S_OK)
+		{
+			if (toupResult == E_NOTIMPL)
+			{
+				alpacaErrCode	=	kASCOM_Err_NotImplemented;
+				strcpy(cLastCameraErrMsg, "Camera does not support gain");
+			}
+			else
+			{
+				alpacaErrCode	=	kASCOM_Err_FailedUnknown;
+			}
+		}
+		else
+		{
+			CONSOLE_DEBUG("found gain");
+			*cameraGainValue	=	gain;
+		}
+	}
+	else
+	{
+		alpacaErrCode	=	kASCOM_Err_NotConnected;
+	}
+//	CONSOLE_DEBUG(cLastCameraErrMsg);
+	return(alpacaErrCode);
+}
+
+
 //*****************************************************************************
 //	Set Cooling:
 //	int ArtemisSetCooling(ArtemisHandle hCam, int setpoint);
@@ -819,6 +894,21 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
 	strcat(cLastCameraErrMsg, __FILE__);
 	strcat(cLastCameraErrMsg, ":");
 	strcat(cLastCameraErrMsg, __FUNCTION__);
+//	CONSOLE_DEBUG(cLastCameraErrMsg);
+	return(alpacaErrCode);
+}
+
+//**************************************************************************
+TYPE_ASCOM_STATUS	CameraDriverTOUP::Read_Readoutmodes(char *readOutModeString, bool includeQuotes)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	strcpy(cLastCameraErrMsg, "Not finished-");
+	strcat(cLastCameraErrMsg, __FILE__);
+	strcat(cLastCameraErrMsg, ":");
+	strcat(cLastCameraErrMsg, __FUNCTION__);
 	CONSOLE_DEBUG(cLastCameraErrMsg);
 	return(alpacaErrCode);
 }
@@ -826,15 +916,57 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
 //**************************************************************************
 TYPE_ASCOM_STATUS	CameraDriverTOUP::Read_ImageData(void)
 {
-TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
+ToupcamFrameInfoV2	toupFrameInfo	=	{ 0 };
+HRESULT				toupResult;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
-	strcpy(cLastCameraErrMsg, "Not finished-");
-	strcat(cLastCameraErrMsg, __FILE__);
-	strcat(cLastCameraErrMsg, ":");
-	strcat(cLastCameraErrMsg, __FUNCTION__);
-	CONSOLE_DEBUG(cLastCameraErrMsg);
 
+	GetImage_ROI_info();
+
+	if ((cToupCamH != NULL) && (cCameraDataBuffer != NULL))
+	{
+		//*	we do not want to read the image if an image save is in progress
+		toupResult	=	Toupcam_PullImageV2(cToupCamH, cCameraDataBuffer, 24, &toupFrameInfo);
+		if (SUCCEEDED(toupResult))
+		{
+		//	CONSOLE_DEBUG_W_HEX("toupFrameInfo.flag\t\t=",		toupFrameInfo.flag);
+		//	CONSOLE_DEBUG_W_NUM("toupFrameInfo.timestamp\t=",	toupFrameInfo.timestamp);
+			if (cCameraAutoExposure)
+			{
+				cCurrentExposure_us			=	cToupAutoExpTime_us;
+				cLastexposure_duration_us	=	cToupAutoExpTime_us;
+			}
+
+			cNewImageReadyToDisplay	=	true;
+//			if (cInternalCameraState == kCameraState_TakingPicture)
+//			{
+				cToupPicReady	=	false;
+//			}
+			//*	get the frame rate: framerate (fps) = Frame * 1000.0 / nTime
+			// unsigned	nFrame;
+			// unsigned	nTime;
+			// unsigned	nTotalFrame;
+		//	double		myFrameRate;
+// 			toupResult	=	Toupcam_get_FrameRate(cToupCamH, &nFrame, &nTime, &nTotalFrame);
+// 			if (SUCCEEDED(toupResult))
+// 			{
+// 		//		myFrameRate	=	(nFrame * 1000.0) / nTime;
+// 			//	CONSOLE_DEBUG_W_NUM("nFrame\t=",		nFrame);
+// 			//	CONSOLE_DEBUG_W_NUM("nTime\t\t=",		nTime);
+// 			//	CONSOLE_DEBUG_W_NUM("nTotalFrame\t=",	nTotalFrame);
+// //						CONSOLE_DEBUG_W_DBL("myFrameRate\t=",	myFrameRate);
+// 			}
+		}
+		else
+		{
+			CONSOLE_DEBUG_W_HEX("failed to pull image, toupResult = ", toupResult);
+			alpacaErrCode	=	kASCOM_Err_FailedUnknown;
+		}
+	}
+	else
+	{
+		CONSOLE_DEBUG("Invalid device number");
+	}
 	return(alpacaErrCode);
 }
 

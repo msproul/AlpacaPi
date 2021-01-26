@@ -2949,7 +2949,7 @@ char				imageTimeString[64];
 double				exposureTimeSecs;
 
 	CONSOLE_DEBUG(__FUNCTION__);
-	CONSOLE_DEBUG(reqData->htmlData);
+//	CONSOLE_DEBUG(reqData->htmlData);
 
 	mySocket	=	reqData->socket;
 
@@ -2993,6 +2993,7 @@ double				exposureTimeSecs;
 	CONSOLE_DEBUG_W_NUM("pixelCount\t=", pixelCount);
 
 	CONSOLE_DEBUG_W_NUM("cImageReady\t=", cImageReady);
+	CONSOLE_DEBUG_W_HEX("cCameraDataBuffer\t=", cCameraDataBuffer);
 	if (cImageReady && (cCameraDataBuffer != NULL))
 	{
 		//========================================================================================
@@ -3048,6 +3049,7 @@ double				exposureTimeSecs;
 		{
 			case kImageType_RAW8:
 			case kImageType_Y8:
+				CONSOLE_DEBUG("kImageType_RAW8");
 				Send_imagearray_raw8(	mySocket,
 										cCameraDataBuffer,
 										cLastExposure_ROIinfo.currentROIheight,		//*	# of rows
@@ -3056,6 +3058,7 @@ double				exposureTimeSecs;
 				break;
 
 			case kImageType_RAW16:
+				CONSOLE_DEBUG("kImageType_RAW16");
 				Send_imagearray_raw16(	mySocket,
 										cCameraDataBuffer,
 										cLastExposure_ROIinfo.currentROIheight,		//*	# of rows
@@ -3064,6 +3067,7 @@ double				exposureTimeSecs;
 				break;
 
 			case kImageType_RGB24:
+				CONSOLE_DEBUG("kImageType_RGB24");
 				Send_imagearray_rgb24(	mySocket,
 										cCameraDataBuffer,
 										cLastExposure_ROIinfo.currentROIheight,		//*	# of rows
@@ -3088,6 +3092,7 @@ double				exposureTimeSecs;
 		//*	as per Rick B 6/22/2020
 		alpacaErrCode	=	kASCOM_Err_InvalidOperation;
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "No image to get");
+		CONSOLE_DEBUG(alpacaErrMsg);
 	}
 
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, "--exit");
@@ -3102,6 +3107,7 @@ void	CameraDriver::Send_imagearray_rgb24(	const int		socketFD,
 												const int		numClms,
 												const int		pixelCount)
 {
+	CONSOLE_DEBUG(__FUNCTION__);
 
 }
 

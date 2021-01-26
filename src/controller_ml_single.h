@@ -29,9 +29,9 @@ class ControllerMLsingle: public ControllerFocus
 		virtual	void	CreateWindowTabs(void);
 
 
-		virtual	void	UpdateFocuserPostion(	const int newFocuserPostion);
-//		virtual	void	UpdateRotatorPostion(	const int newRotatorPostion);
-//		virtual	void	UpdateAuxMotorPostion(	const int newAuxMotorPostion);
+		virtual	void	UpdateFocuserPosition(	const int newFocuserPosition);
+//		virtual	void	UpdateRotatorPosition(	const int newRotatorPosition);
+//		virtual	void	UpdateAuxMotorPosition(	const int newAuxMotorPosition);
 //		virtual	void	UpdateStepsPerRev(		const int newStepsPerRev);
 		virtual	void	UpdateTemperature(		const double newTemperature);
 //		virtual	void	UpdateVoltage(			const double newVoltage);

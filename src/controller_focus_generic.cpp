@@ -163,9 +163,9 @@ void	ControllerFocusGeneric::CreateWindowTabs(void)
 
 
 //**************************************************************************************
-void	ControllerFocusGeneric::UpdateFocuserPostion(const int newFocuserPostion)
+void	ControllerFocusGeneric::UpdateFocuserPosition(const int newFocuserPosition)
 {
-	cFocuserPosition	=	newFocuserPostion;
+	cFocuserPosition	=	newFocuserPosition;
 
 	SetWidgetNumber(kTab_Focuser,	kMLsingle_focValue,		cFocuserPosition);
 

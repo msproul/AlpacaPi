@@ -15,6 +15,11 @@
 #ifndef	_ROTATOR_DRIVER_H_
 #define	_ROTATOR_DRIVER_H_
 
+
+#ifndef	_ALPACA_DEFS_H_
+	#include	"alpaca_defs.h"
+#endif
+
 #ifndef _ALPACA_DRIVER_H_
 	#include	"alpacadriver.h"
 #endif
@@ -91,13 +96,16 @@ class RotatorDriver: public AlpacaDriver
 		virtual	bool					IsRotatorMoving(void);
 
 	protected:
+		TYPE_RotatorProperties	cRotatorProp;
+
 		char		cRotatorManufacturer[64];
 		char		cRotatorModel[64];
 		char		cRotatorSerialNum[64];
-		bool		cRotatorCanReverse;
+
+//-		bool		cRotatorCanReverse;
 		bool		cRotatorReverseState;		//*	reverse enable (default = false)
-		bool		cRotatorIsMoving;
-		double		cRotatorStepSize;
+//-		bool		cRotatorIsMoving;
+//-		double		cRotatorStepSize;
 
 		int32_t		cRotatorStepsPerRev;		//*	number of steps per rev
 		int32_t		cRotatorPos_step;			//*	current rotator position

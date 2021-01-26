@@ -29,6 +29,7 @@
 //*	May  8,	2020	<MLS> Added UpdateWindowTabs_DesiredAuxPos()
 //*	Jun 19,	2020	<MLS> USB port now get closed by destructor
 //*	Dec 28,	2020	<MLS> Added ZeroMotorValues()
+//*	Jan 26,	2021	<MLS> Updated several routine names
 //*****************************************************************************
 //*	From the Nitecrawler web site
 //*	Rotating drawtube .001 degree resolution
@@ -287,7 +288,7 @@ void	ControllerFocus::UpdateRotatorPosition(const int newRotatorPosition)
 {
 	//*	This function should be overloaded
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, "This function should be overloaded");
-	exit(0);
+//	CONSOLE_ABORT(__FUNCTION__);
 }
 
 //*****************************************************************************
@@ -295,7 +296,7 @@ void	ControllerFocus::UpdateAuxMotorPosition(const int newAuxMotorPosition)
 {
 	//*	This function should be overloaded
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, "This function should be overloaded");
-	exit(0);
+//	CONSOLE_ABORT(__FUNCTION__);
 }
 
 //*****************************************************************************
@@ -303,7 +304,7 @@ void	ControllerFocus::UpdateTemperature(const double newTemperature)
 {
 	//*	This function should be overloaded
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, "This function should be overloaded");
-	exit(0);
+//	CONSOLE_ABORT(__FUNCTION__);
 }
 
 //*****************************************************************************
@@ -311,7 +312,7 @@ void	ControllerFocus::UpdateVoltage(const double newVoltage)
 {
 	//*	This function should be overloaded
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, "This function should be overloaded");
-	exit(0);
+//	CONSOLE_ABORT(__FUNCTION__);
 }
 
 //*****************************************************************************
@@ -319,7 +320,7 @@ void	ControllerFocus::UpdateStepsPerRev(const int newStepsPerRev)
 {
 	//*	This function should be overloaded
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, "This function should be overloaded");
-	exit(0);
+//	CONSOLE_ABORT(__FUNCTION__);
 }
 
 //*****************************************************************************
@@ -368,7 +369,7 @@ void	ControllerFocus::UpdateWindowTabs_AuxSwitchBits(unsigned char auxSwitchBits
 {
 	//*	This function should be overloaded
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, "This function should be overloaded");
-	exit(0);
+//	CONSOLE_ABORT(__FUNCTION__);
 }
 
 //*****************************************************************************
@@ -385,7 +386,7 @@ void	ControllerFocus::UpdateWindowTabs_DesiredFocusPos(const int newDesiredPoist
 {
 	//*	This function should be overloaded
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, "This function should be overloaded");
-	exit(0);
+//	CONSOLE_ABORT(__FUNCTION__);
 
 }
 
@@ -394,7 +395,7 @@ void	ControllerFocus::UpdateWindowTabs_DesiredRotatorPos(const int newDesiredPoi
 {
 	//*	This function should be overloaded
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, "This function should be overloaded");
-	exit(0);
+//	CONSOLE_ABORT(__FUNCTION__);
 }
 
 //*****************************************************************************
@@ -402,7 +403,7 @@ void	ControllerFocus::UpdateWindowTabs_DesiredAuxPos(const int newDesiredPoistio
 {
 	//*	This function should be overloaded
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, "This function should be overloaded");
-	exit(0);
+//	CONSOLE_ABORT(__FUNCTION__);
 }
 
 

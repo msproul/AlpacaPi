@@ -27,7 +27,7 @@ class FilterwheelZWO: public FilterwheelDriver
 		void						ReadZWOfilterWheelInfo(void);
 
 		virtual	int					Read_CurrentFWstate(void);
-		virtual	TYPE_ASCOM_STATUS	Read_CurrentFilterPositon(int *rtnCurrentPostion = NULL);
+		virtual	TYPE_ASCOM_STATUS	Read_CurrentFilterPositon(int *rtnCurrentPosition = NULL);
 		virtual	TYPE_ASCOM_STATUS	Set_CurrentFilterPositon(const int newPosition);
 
 		EFW_INFO		cFilterwheelInfo;

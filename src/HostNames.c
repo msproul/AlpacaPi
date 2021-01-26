@@ -61,7 +61,7 @@ char	hostName[48];
 char	hostsFileName[]	=	"/etc/hosts";
 struct sockaddr_in	myIPaddress;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	for (iii=0; iii<kMaxHostNames; iii++)
 	{
@@ -77,7 +77,7 @@ struct sockaddr_in	myIPaddress;
 			hostAddrString[0]	=	0;
 			hostName[0]			=	0;
 			slen	=	strlen(lineBuff);
-			if ((slen > 10) && (lineBuff[0] != '#'))
+			if ((slen > 10) && (lineBuff[0] != '#') && isdigit(lineBuff[0]))
 			{
 				//*	extract the address string from the hosts file
 				ccc	=	0;
@@ -131,6 +131,7 @@ struct sockaddr_in	myIPaddress;
 	{
 		CONSOLE_DEBUG_W_STR("failed to open", hostsFileName);
 	}
+//	CONSOLE_DEBUG(__FUNCTION__);
 }
 
 //*****************************************************************************

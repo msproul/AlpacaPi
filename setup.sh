@@ -243,6 +243,17 @@ fi
 }
 
 
+##################################################################
+setupJPEGlib()
+{
+	echo	"*******************************************************"
+	echo "Getting ready to install libjpeg-dev"
+	sudo apt-get install libjpeg-dev
+
+}
+
+
+##############################################################
 #	Determine platform
 
 ARMCNT=`grep ARMv7 /proc/cpuinfo | wc -l`

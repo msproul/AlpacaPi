@@ -8,6 +8,8 @@
 //*	Jan 24,	2021	<MLS> Added TYPE_DomeProperties structure
 //*	Jan 24,	2021	<MLS> Added TYPE_FocuserProperties structure
 //*	Jan 24,	2021	<MLS> Version V0.4.0-beta
+//*	Jan 25,	2021	<MLS> Added TYPE_CameraProperties structure
+//*	Jan 25,	2021	<MLS> Added TYPE_RotatorProperties
 //*****************************************************************************
 //*	Jan  1,	2019	-----------------------------------------------------------
 //*	Jan  1,	2020	-----------------------------------------------------------
@@ -20,14 +22,21 @@
 #ifndef	_ALPACA_DEFS_H_
 #define	_ALPACA_DEFS_H_
 
+#ifndef _SYS_TIME_H
+	#include	<sys/time.h>
+#endif
+
+#ifndef	_TIME_H
+	#include	<time.h>
+#endif
 
 #ifndef _STDINT_H
 	#include	<stdint.h>
-#endif // _STDINT_H
+#endif
 
 #define	kApplicationName	"AlpacaPi"
 #define	kVersionString		"V0.4.0-beta"
-#define	kBuildNumber		85
+#define	kBuildNumber		86
 
 
 #define kAlpacaDiscoveryPORT	32227
@@ -178,10 +187,108 @@ enum TYPE_SensorType
 	kSensorType_LRGB		=	5,	//*	Camera produces Kodak TRUESENSE Bayer LRGB array images
 };
 
+#define	kMaxSensorNameLen		32
+#define	kMaxReadOutModes		5
+
+//**************************************************************************************
+typedef struct
+{
+	char	mode[64];
+} READOUTMODE;
+
 
 //*****************************************************************************
 typedef struct
 {
+	//*	ASCOM variables (properties)
+	//*	the ones commented out with //+ need to be implemented.....
+//+	short					BayerOffsetX;			//*	The X offset of the Bayer matrix.
+//+	short					BayerOffsetY;			//*	The Y offset of the Bayer matrix.
+	int						Binx;					//*	The binning factor for the X axis.
+	int						Biny;					//*	The binning factor for the Y axis.
+	int						CameraXsize;			//*	The width of the CCD camera chip.
+	int						CameraYsize;			//*	The height of the CCD camera chip.
+//+	TYPE_ALPACA_CAMERASTATE	CameraState;			//*	the camera operational state.
+	int						CanAbortExposure;		//*	Indicates whether the camera can abort exposures.
+	bool					CanAsymmetricBin;		//*	Indicates whether the camera supports asymmetric binning
+	bool					CanFastReadout;			//*	Indicates whether the camera has a fast readout mode.
+	bool					CanGetCoolerPower;		//*	Indicates whether the camera's cooler power setting can be read.
+	bool					CanPulseGuide;			//*	Indicates whether this camera supports pulse guiding
+	bool					Cansetccdtemperature;	//*	Indicates whether this camera supports setting the CCD temperature
+	bool					CanStopExposure;		//*	Returns a flag indicating whether this camera can stop an exposure that is in progress
+	double					CCDtemperature;			//*	Returns the current CCD temperature
+	bool					CoolerOn;				//*	Returns the current cooler on/off state.
+//+	double					CoolerPower;			//*	Returns the present cooler power level
+	double					ElectronsPerADU;		//*	Returns the gain of the camera
+	double					ExposureMax_seconds;	//*	Returns the maximum exposure time supported by StartExposure.
+	long					ExposureMax_us;			//*	micro-seconds
+	double					ExposureMin_seconds;	//*	Returns the Minimium exposure time
+	long					ExposureMin_us;			//*	micro-seconds
+	double					ExposureResolution;		//*	The smallest increment in exposure time supported by StartExposure.
+
+//+	bool					FastReadout;			//*	Returns whenther Fast Readout Mode is enabled.
+//+	double					FullWellCapacity;		//*	Reports the full well capacity of the camera
+	int						Gain;					//*	Returns the camera's gain
+	int						GainMax;				//*	Maximum Gain value of that this camera supports
+	int						GainMin;				//*	Minimum Gain value of that this camera supports
+//+	???						Gains;					//*	List of Gain names supported by the camera
+	bool					HasShutter;				//*	Indicates whether the camera has a mechanical shutter
+//+	double					HeatSinkTemperature;	//*	Returns the current heat sink temperature.
+	bool					ImageReady;				//*	Indicates that an image is ready to be downloaded
+	bool					IsPulseGuiding;			//*	Indicates that the camera is pulse guideing.
+
+
+
+	//==========================================================================================
+	//*	information about the last exposure
+	//*	we need to record a bunch of stuff in case they get changed before
+	//*	the image gets downloaded
+	uint32_t				Lastexposure_duration_us;	//*	stored in microseconds, ASCOM wants seconds, convert on the fly
+														//*	Reported as a strin
+	struct timeval			Lastexposure_StartTime;		//*	time exposure or video was started for frame rate calculations
+	struct timeval			Lastexposure_EndTime;		//*	NON-ALPACA----time last exposure ended
+//+	TYPE_IMAGE_ROI_Info		LastExposure_ROIinfo;
+
+
+//+	???						MaxADU;						//*	Camera's maximum ADU value
+	int						MaxbinX;					//*	Maximum binning for the camera X axis
+	int						MaxbinY;					//*	Maximum binning for the camera Y axis
+
+	//===================================
+	//*	subframe information
+	int						NumX;						//*	The current subframe width
+	int						NumY;						//*	The current subframe height
+
+
+	int						StartX;					//*	The current subframe X axis start position
+	int						StartY;					//*	The current subframe Y axis start position
+
+
+//+	int						Offset;					//*	The camera's offset
+//+	int						OffsetMax;				//*	Maximum offset value of that this camera supports
+//+	int						OffsetMin;				//*	Minimum offset value of that this camera supports
+//+	int						Offsets;				//*	List of offset names supported by the camera
+//+	int						PercentCompleted;		//*	Indicates percentage completeness of the current operation
+	double					PixelSizeX;				//*	the pixel size of the camera, unit is um. (microns) such as 5.6um
+	double					PixelSizeY;				//*	the pixel size of the camera, unit is um. (microns) such as 5.6um
+
+
+	double					SetCCDTemperature;		//*	The current camera cooler setpoint in degrees Celsius.
+
+//	currently ReadoutMode is implemented at execution time
+	int						ReadOutMode;			//*	Indicates the canera's readout mode as an index into the array ReadoutModes
+//+	??						ReadOutModes;			//*	List of available readout modes
+	READOUTMODE				ReadOutModes[kMaxReadOutModes];
+
+	char					SensorName[kMaxSensorNameLen];	//	Sensor name
+//+	TYPE_SensorType			SensorType;						//*	Type of information returned by the the camera sensor (monochrome or colour)
+
+} TYPE_CameraProperties;
+
+//*****************************************************************************
+typedef struct
+{
+	//*	The rate of motion (deg/sec) about the specified axis
 	double	Minimum;
 	double	Maximum;
 } TYPE_AxisRates;
@@ -286,6 +393,18 @@ typedef struct
 
 } TYPE_FocuserProperties;
 
+//*****************************************************************************
+typedef struct
+{
+	bool	CanReverse;			//*	Indicates whether the Rotator supports the Reverse method.
+	bool	IsMoving;			//*	Indicates whether the rotator is currently moving
+	double	MechanicalPosition;	//*	This returns the raw mechanical position of the rotator in degrees.
+	double	Position;			//*	Current instantaneous Rotator position, allowing for any sync offset, in degrees.
+	bool	Reverse;			//*	Sets or Returns the rotator’s Reverse state.
+	double	StepSize;			//*	The minimum StepSize, in degrees.
+	double	TargetPosition;		//*	The destination position angle for Move() and MoveAbsolute().
+} TYPE_RotatorProperties;
+
 
 #if 0
 //*	not finished, havent started using this yet
@@ -305,9 +424,11 @@ typedef struct
 	int						MaxSwitch;
 	TYPE_SwitchDescription	SwitchTable[kMaxSwitchCnt];
 
-} TYPE_SwitchProperties
+} TYPE_SwitchProperties;
 
 #endif
+
+
 #endif // _ALPACA_DEFS_H_
 
 

@@ -54,6 +54,7 @@
 //*	Jan 15,	2021	<MLS> Added DrawWidgetTextWithTabs()
 //*	Jan 16,	2021	<MLS> Added Close box in Window Tab area
 //*	Jan 20,	2021	<MLS> Added GetCurrentTabName()
+//*	Jan 26,	2021	<MLS> Added more text buffer overflow checking
 //*****************************************************************************
 
 
@@ -111,9 +112,17 @@ Controller	*myController;
 	myController	=	(Controller *)param;
 	if (myController != NULL)
 	{
-		gCurrentActiveWindow	=	myController;
-		myController->ProcessMouseEvent(event, x, y, flags);
-
+		if (myController->cMagicCookie == kMagicCookieValue)
+		{
+//			CONSOLE_DEBUG("Magic cookie tastes good");
+			gCurrentActiveWindow	=	myController;
+			myController->ProcessMouseEvent(event, x, y, flags);
+		}
+		else
+		{
+			CONSOLE_DEBUG("Magic cookie is incorrect");
+		//	CONSOLE_ABORT("Magic cookie is incorrect");
+		}
 	}
 	else
 	{
@@ -182,6 +191,8 @@ int			ii;
 int			objCntr;
 
 	CONSOLE_DEBUG(__FUNCTION__);
+
+	cMagicCookie				=	kMagicCookieValue;
 
 	cKeepRunning				=	true;
 	cDebugCounter				=	0;
@@ -587,15 +598,26 @@ void	Controller::GetCurrentTabName(char *currentTabName)
 //*****************************************************************************
 void	Controller::ProcessTabClick(const int tabIdx)
 {
+//	CONSOLE_DEBUG(__FUNCTION__);
 	if (tabIdx == 0)
 	{
 		cKeepRunning	=	false;
 	}
 	else if (tabIdx != cCurrentTabNum)
 	{
-		cCurrentTabNum		=	tabIdx;
-		cUpdateWindow		=	true;
-		cCurrentTabObjPtr	=	cWindowTabs[cCurrentTabNum];
+		if ((cCurrentTabNum >= 1) && (cCurrentTabNum < cTabCount))
+		{
+//			CONSOLE_DEBUG_W_NUM("Switching tabs to #", tabIdx);
+			cCurrentTabNum		=	tabIdx;
+			cUpdateWindow		=	true;
+			cCurrentTabObjPtr	=	cWindowTabs[cCurrentTabNum];
+		}
+		else
+		{
+			CONSOLE_DEBUG_W_NUM("Tab number out of bounds:", tabIdx);
+			CONSOLE_DEBUG_W_NUM("cTabCount\t=", cTabCount);
+			CONSOLE_ABORT(__FUNCTION__);
+		}
 	}
 	else
 	{
@@ -822,6 +844,7 @@ bool	widgitIsButton;
 				{
 					ProcessTabClick(clickedBtn);
 				}
+			//	CONSOLE_DEBUG(__FUNCTION__);
 			}
 			else
 			{
@@ -883,6 +906,10 @@ bool	widgitIsButton;
 	{
 		cCurrentTabObjPtr->ProcessMouseEvent(myWidgitIdx, event,  xxx,  yyy,  flags);
 	}
+//	if (event == CV_EVENT_LBUTTONUP)
+//	{
+//		CONSOLE_DEBUG("exit");
+//	}
 }
 
 
@@ -1139,6 +1166,7 @@ int			curFontNum;
 	}
 }
 
+#define	kMaxTextLineLen	512
 //**************************************************************************************
 void	Controller::DrawWidgetMultiLineText(TYPE_WIDGET *theWidget)
 {
@@ -1147,7 +1175,7 @@ CvPoint		textLoc;
 CvSize		textSize;
 int			baseLine;
 int			curFontNum;
-char		lineBuff[128];
+char		lineBuff[kMaxTextLineLen];
 int			iii;
 int			ccc;
 int			sLen;
@@ -1194,13 +1222,21 @@ bool		drawTextFlg;
 		{
 			if (theWidget->textString[iii] > 0x20)
 			{
-				lineBuff[ccc++]	=	theWidget->textString[iii];
-				lineBuff[ccc]	=	0;
+				if (ccc < kMaxTextLineLen)
+				{
+					lineBuff[ccc++]	=	theWidget->textString[iii];
+					lineBuff[ccc]	=	0;
+				}
 			}
 			else if (theWidget->textString[iii] == 0x20)
 			{
-				lineBuff[ccc++]	=	theWidget->textString[iii];
-				lineBuff[ccc]	=	0;
+				if (ccc < kMaxTextLineLen)
+				{
+					lineBuff[ccc++]	=	theWidget->textString[iii];
+					lineBuff[ccc]	=	0;
+				}
+
+				//*	check the width of the line to make sure its going to fit
 				cvGetTextSize(	lineBuff,
 								&gTextFont[curFontNum],
 								&textSize,
@@ -1212,6 +1248,7 @@ bool		drawTextFlg;
 			}
 			else
 			{
+				//*	its a control char (probably a CR or LF), draw the line
 				drawTextFlg	=	true;
 			}
 
@@ -2108,7 +2145,7 @@ CvRect		myCVrect;
 void	Controller::HandleKeyDown(const int keyPressed)
 {
 int			openCVerr;
-char		imageFileName[64];
+char		imageFileName[512];
 int			quality[3] = {16, 200, 0};
 bool		stillNeedsHandled;
 char		currentTabName[64]	=	"";

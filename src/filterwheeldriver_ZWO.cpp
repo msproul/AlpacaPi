@@ -252,7 +252,7 @@ int					myCurPosition;
 	{
 		CONSOLE_DEBUG("Filter wheel is ALREADY OPEN!!!!!!!!!!!!!!!!!!!!");
 	}
-	myCurPosition		=	-99;
+	myCurPosition	=	-99;
 	efwErrorCode	=	EFWOpen(cFilterWheelDevNum);
 	if (efwErrorCode == EFW_SUCCESS)
 	{
