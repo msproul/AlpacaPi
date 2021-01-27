@@ -656,7 +656,7 @@ const int	deltaY	=	16;
 	//*	Gain
 	point1.y	=	yLoc;
 	point2.y	=	yLoc;
-	sprintf(textBuffer, "%d", cGain);
+	sprintf(textBuffer, "%d", cCameraProp.Gain);
 	cvPutText(	imageDisplay,	"Gain:",				point1,	&cTextFont,	cSideBarTXTcolor);
 	cvPutText(	imageDisplay,	textBuffer,				point2,	&cTextFont,	cSideBarTXTcolor);
 	yLoc	+=	deltaY;

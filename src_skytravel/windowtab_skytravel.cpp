@@ -36,6 +36,7 @@
 //*	Jan  7,	2021	<MLS> Added DrawConstellationVectors()
 //*	Jan  7,	2021	<MLS> Added GetXYfromAz_Elev()
 //*	Jan  8,	2021	<MLS> Added DrawVerticalArc()
+//*	Jan 26,	2021	<MLS> Removed support for direct LX200 comm, using Alpaca instead
 //*****************************************************************************
 //*	TODO
 //*			star catalog lists
@@ -413,7 +414,7 @@ WindowTabSkyTravel::~WindowTabSkyTravel(void)
 //**************************************************************************************
 void WindowTabSkyTravel::RunBackgroundTasks(void)
 {
-	//*	check LX200 stuff
+	//*	check for telescope information
 	if (gTelescopeUpdated)
 	{
 	char	ra_dec_string[128];
@@ -423,15 +424,15 @@ void WindowTabSkyTravel::RunBackgroundTasks(void)
 
 		if (strlen(gTelescopeErrorString) > 0)
 		{
-			SetWidgetText(kSkyTravel_LX200_RA_DEC, gTelescopeErrorString);
+			SetWidgetText(kSkyTravel_Telescope_RA_DEC, gTelescopeErrorString);
 			gTelescopeErrorString[0]	=	0;
 		}
 		else
 		{
 			sprintf(ra_dec_string, "%s / %s (%d)", gTelescopeRA_String, gTelescopeDecl_String, gTelescopeUpdateCnt);
-			SetWidgetText(kSkyTravel_LX200_RA_DEC, ra_dec_string);
+			SetWidgetText(kSkyTravel_Telescope_RA_DEC, ra_dec_string);
 		}
-		SetWidgetChecked(kSkyTravel_ConnLX200, gLX200_ThreadActive);
+//-		SetWidgetChecked(kSkyTravel_ConnLX200, gLX200_ThreadActive);
 
 		//*	this makes it real time.
 		SetCurrentTime();
@@ -466,6 +467,7 @@ int		searchBoxWidth;
 	yLoc			+=	2;
 
 
+	//------------------------------------------
 	SetWidget(			kSkyTravel_Display,		0,			yLoc,		labelWidth,		cTitleHeight);
 	SetWidgetText(		kSkyTravel_Display, 	"Display control");
 	SetWidgetFont(		kSkyTravel_Display,		kFont_Small);
@@ -548,8 +550,8 @@ int		searchBoxWidth;
 	SetWidgetText(		kSkyTravel_Btn_Plus,			"+");
 	SetWidgetText(		kSkyTravel_Btn_Minus,			"-");
 
-	yLoc			+=	cTitleHeight;
-	yLoc			+=	2;
+//	yLoc			+=	cTitleHeight;
+//	yLoc			+=	2;
 
 	//------------------------------------------------------------------------------------
 	//*	Dome/Telescope indicators
@@ -566,30 +568,9 @@ int		searchBoxWidth;
 	SetWidgetType(		kSkyTravel_TelescopeIndicator, 	kWidgetType_Text);
 
 
-	//------------------------------------------------------------------------------------
-	//*	LX200 connection
-	xLoc	=	1;
-	SetWidget(			kSkyTravel_ConnLX200,	xLoc,	yLoc, cBtnWidth,	cTitleHeight);
-	SetWidgetType(		kSkyTravel_ConnLX200, 	kWidgetType_Button);
-	SetWidgetFont(		kSkyTravel_ConnLX200,	kFont_Medium);
-	SetWidgetText(		kSkyTravel_ConnLX200,	"Conn LX200");
-	SetWidgetHelpText(	kSkyTravel_ConnLX200,	"Open Connection to LX200 telescope");
-	xLoc	+=	cBtnWidth;
-	xLoc	+=	5;
-
-	SetWidget(			kSkyTravel_SyncLX200,	xLoc,	yLoc, cBtnWidth,	cTitleHeight);
-	SetWidgetType(		kSkyTravel_SyncLX200, 	kWidgetType_Button);
-	SetWidgetFont(		kSkyTravel_SyncLX200,	kFont_Medium);
-	SetWidgetText(		kSkyTravel_SyncLX200,	"Sync LX200");
-	SetWidgetHelpText(	kSkyTravel_SyncLX200,	"Sync LX200 to center of screen");
-	xLoc	+=	cBtnWidth;
-	xLoc	+=	5;
-
-
-
-	SetWidget(		kSkyTravel_LX200_RA_DEC,	xLoc,	yLoc, cBtnWidth * 2,	cTitleHeight);
-	SetWidgetFont(	kSkyTravel_LX200_RA_DEC,	kFont_Medium);
-	SetWidgetText(	kSkyTravel_LX200_RA_DEC,	"--");
+	SetWidget(		kSkyTravel_Telescope_RA_DEC,	xLoc,	yLoc, cBtnWidth * 2,	cTitleHeight);
+	SetWidgetFont(	kSkyTravel_Telescope_RA_DEC,	kFont_Medium);
+	SetWidgetText(	kSkyTravel_Telescope_RA_DEC,	"--");
 
 	yLoc			+=	cTitleHeight;
 	yLoc			+=	2;
@@ -1072,7 +1053,7 @@ char	searchText[128];
 			}
 			cView_angle	=	gView_table[cView_index];
 			break;
-
+#if 0
 		case kSkyTravel_ConnLX200:
 			//*	The IP address/port needs to be a preference
 			lx200_threadErr	=	LX200_StartThread("192.168.1.104", 49152, lx200_errorMsg);
@@ -1084,7 +1065,7 @@ char	searchText[128];
 			else
 			{
 				SetWidgetText(kSkyTravel_MsgTextBox, lx200_errorMsg);
-				SetWidgetText(kSkyTravel_LX200_RA_DEC, lx200_errorMsg);
+				SetWidgetText(kSkyTravel_Telescope_RA_DEC, lx200_errorMsg);
 			}
 			break;
 
@@ -1092,7 +1073,7 @@ char	searchText[128];
 		case kSkyTravel_SyncLX200:
 			LX200_SyncScope(cRa0, cDecl0, NULL);
 			break;
-
+#endif // 0
 
 		case kSkyTravel_Search_Btn:
 			GetWidgetText(kSkyTravel_Search_Text, searchText);
@@ -1124,7 +1105,7 @@ bool			reDrawSky;
 	switch(buttonIdx)
 	{
 		//*	double click in the RA/DEC box from the LX200 comm makes it center on the current telescope position
-		case kSkyTravel_LX200_RA_DEC:
+		case kSkyTravel_Telescope_RA_DEC:
 			cDispOptions.dispTelescope	=	true;
 			cRa0		=	gTelescopeRA_Radians;
 			cDecl0		=	gTelescopeDecl_Radians;

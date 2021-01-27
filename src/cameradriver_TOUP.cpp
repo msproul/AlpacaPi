@@ -176,11 +176,11 @@ HRESULT			toupResult;
 	strcpy(cDeviceManufAbrev,	"TOUP");
 
 
-	cCameraID			=	deviceNum;
-	cToupPicReady		=	false;
-	cIsTriggerCam		=	false;
-	cExposureMin_us		=	400;				//*	0.4 ms
-	cExposureMax_us		=	800 * 1000 *1000;	//*	800 seconds
+	cCameraID					=	deviceNum;
+	cToupPicReady				=	false;
+	cIsTriggerCam				=	false;
+	cCameraProp.ExposureMin_us	=	400;				//*	0.4 ms
+	cCameraProp.ExposureMax_us	=	800 * 1000 *1000;	//*	800 seconds
 
 	ReadTOUPcameraInfo();
 
@@ -241,15 +241,15 @@ int				alpacaReadModeIdx;
 		strcpy(cDeviceName,			cToupDeviceInfo.displayname);
 
 
-		cCameraXsize	=	cToupDeviceInfo.model->res[0].width;
-		cCameraYsize	=	cToupDeviceInfo.model->res[0].height;
-		cNumX			=	cCameraXsize;
-		cNumY			=	cCameraYsize;
-		cPixelSizeY		=	cToupDeviceInfo.model->xpixsz;
-		cPixelSizeX		=	cToupDeviceInfo.model->ypixsz;
-		cIsColorCam		=	true;
+		cCameraProp.CameraXsize	=	cToupDeviceInfo.model->res[0].width;
+		cCameraProp.CameraYsize	=	cToupDeviceInfo.model->res[0].height;
+		cCameraProp.NumX		=	cCameraProp.CameraXsize;
+		cCameraProp.NumY		=	cCameraProp.CameraYsize;
+		cCameraProp.PixelSizeY	=	cToupDeviceInfo.model->xpixsz;
+		cCameraProp.PixelSizeX	=	cToupDeviceInfo.model->ypixsz;
+		cIsColorCam				=	true;
 
-		if ((cCameraXsize > 0) && (cCameraYsize > 0))
+		if ((cCameraProp.CameraXsize > 0) && (cCameraProp.CameraYsize > 0))
 		{
 			AllcateImageBuffer(0);
 		}
@@ -591,8 +591,8 @@ int	CameraDriverTOUP::GetImage_ROI_info(void)
 	memset(&cROIinfo, 0, sizeof(TYPE_IMAGE_ROI_Info));
 
 	cROIinfo.currentROIimageType	=	kImageType_RGB24;
-	cROIinfo.currentROIwidth		=	cCameraXsize;
-	cROIinfo.currentROIheight		=	cCameraYsize;
+	cROIinfo.currentROIwidth		=	cCameraProp.CameraXsize;
+	cROIinfo.currentROIheight		=	cCameraProp.CameraYsize;
 	cROIinfo.currentROIbin			=	1;
 
 	return(0);
@@ -612,7 +612,7 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 	cInternalCameraState	=	kCameraState_TakingPicture;
 	alpacaErrCode			=	kASCOM_Err_Success;
 
-	gettimeofday(&cLastexposure_StartTime, NULL);
+	gettimeofday(&cCameraProp.Lastexposure_StartTime, NULL);
 
 	return(alpacaErrCode);
 }
@@ -933,8 +933,8 @@ HRESULT				toupResult;
 		//	CONSOLE_DEBUG_W_NUM("toupFrameInfo.timestamp\t=",	toupFrameInfo.timestamp);
 			if (cCameraAutoExposure)
 			{
-				cCurrentExposure_us			=	cToupAutoExpTime_us;
-				cLastexposure_duration_us	=	cToupAutoExpTime_us;
+				cCurrentExposure_us						=	cToupAutoExpTime_us;
+				cCameraProp.Lastexposure_duration_us	=	cToupAutoExpTime_us;
 			}
 
 			cNewImageReadyToDisplay	=	true;
@@ -985,8 +985,8 @@ HRESULT				toupResult;
 				if (SUCCEEDED(toupResult))
 				{
 					CONSOLE_DEBUG_W_NUM("expTime_us\t=", cToupAutoExpTime_us);
-					cCurrentExposure_us			=	cToupAutoExpTime_us;
-					cLastexposure_duration_us	=	cToupAutoExpTime_us;
+					cCurrentExposure_us						=	cToupAutoExpTime_us;
+					cCameraProp.Lastexposure_duration_us	=	cToupAutoExpTime_us;
 				}
 				else
 				{
@@ -1011,8 +1011,8 @@ HRESULT				toupResult;
 				//	CONSOLE_DEBUG_W_NUM("toupFrameInfo.timestamp\t=",	toupFrameInfo.timestamp);
 					if (cCameraAutoExposure)
 					{
-						cCurrentExposure_us			=	cToupAutoExpTime_us;
-						cLastexposure_duration_us	=	cToupAutoExpTime_us;
+						cCurrentExposure_us						=	cToupAutoExpTime_us;
+						cCameraProp.Lastexposure_duration_us	=	cToupAutoExpTime_us;
 					}
 
 					cNewImageReadyToDisplay	=	true;

@@ -80,10 +80,12 @@ class CameraDriverTOUP: public CameraDriver
 
 				unsigned int		cToupCamFormat;
 
-				boll				cIsTriggerCam;
+				bool				cIsTriggerCam;
 };
 
 
 
 #endif	//	_CAMERA_DRIVER_TOUP_H_
+
+
 

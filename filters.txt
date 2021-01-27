@@ -1,0 +1,6 @@
+Luminance
+Red
+Green
+Blue
+none
+

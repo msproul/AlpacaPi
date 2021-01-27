@@ -29,7 +29,7 @@
 void	PARENT_CLASS::AlpacaProcessSupportedActions_Telescope(	const int	deviveNum,
 																const char	*valueString)
 {
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, valueString);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, valueString);
 
 	if (strcasecmp(valueString, "readall") == 0)
 	{

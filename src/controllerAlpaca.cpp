@@ -72,23 +72,26 @@ bool	Controller::AlpacaGetSupportedActions(	sockaddr_in	*deviceAddress,
 SJP_Parser_t	jsonParser;
 bool			validData;
 char			alpacaString[128];
+char			ipAddrStr[32];
 int				jjj;
 
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, deviceTypeStr);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, deviceTypeStr);
+
+//	inet_ntop(AF_INET, &(deviceAddress->sin_addr), ipAddrStr, INET_ADDRSTRLEN);
+//	CONSOLE_DEBUG_W_STR("IP address=", ipAddrStr);
 
 	//===============================================================
 	//*	get supportedactions
 	SJP_Init(&jsonParser);
-	CONSOLE_DEBUG_W_NUM("tokenCount_Data\t=", jsonParser.tokenCount_Data);
+//	CONSOLE_DEBUG_W_NUM("tokenCount_Data\t=", jsonParser.tokenCount_Data);
 	sprintf(alpacaString,	"/api/v1/%s/%d/supportedactions", deviceTypeStr, deviceNum);
-	CONSOLE_DEBUG_W_STR("alpacaString\t=", alpacaString);
+//	CONSOLE_DEBUG_W_STR("alpacaString\t=", alpacaString);
 	validData	=	GetJsonResponse(	deviceAddress,
 										devicePort,
 										alpacaString,
 										NULL,
 										&jsonParser);
-//	CONSOLE_DEBUG(__FUNCTION__);
 	if (validData)
 	{
 		cHas_readall	=	false;

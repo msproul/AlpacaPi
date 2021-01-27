@@ -67,10 +67,7 @@ enum
 
 	kSkyTravel_HelpTextBox,
 
-
-	kSkyTravel_ConnLX200,
-	kSkyTravel_SyncLX200,
-	kSkyTravel_LX200_RA_DEC,
+	kSkyTravel_Telescope_RA_DEC,
 
 	kSkyTravel_Search_Text,
 	kSkyTravel_Search_Btn,

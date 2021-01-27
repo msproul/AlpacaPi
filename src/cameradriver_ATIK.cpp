@@ -201,10 +201,10 @@ char				tempDeviceName[64];
 	{
 		CONSOLE_DEBUG("Houston, we have a problem");
 	}
-	cSt4Port	=	ArtemisDeviceHasGuidePort(cCameraID);
-	cBitDepth	=	16;
-	cGainMin	=	0;
-	cGainMax	=	512;	//*	information found on the web
+	cSt4Port			=	ArtemisDeviceHasGuidePort(cCameraID);
+	cBitDepth			=	16;
+	cCameraProp.GainMin	=	0;
+	cCameraProp.GainMax	=	512;	//*	information found on the web
 
 	SetImageTypeIndex(cATIKimageTypeIdx++, "RAW16");
 
@@ -214,29 +214,29 @@ char				tempDeviceName[64];
 		CONSOLE_DEBUG_W_STR("Failed to get serial number\t=",	cDeviceSerialNum);
 	}
 
-	cExposureMax_us			=	999999999;
-	cExposureMax_seconds	=	999999999.9999;
+	cCameraProp.ExposureMax_us		=	999999999;
+	cCameraProp.ExposureMax_seconds	=	999999999.9999;
 
 	if (strcmp(cDeviceName, "Atik Titan") == 0)
 	{
 		strcpy(cSensorName, "Sony ICX424");
 		//*	https://www.atik-cameras.com/product/atik-titan/
-		cElectronsPerADU	=	0.34;
+		cCameraProp.ElectronsPerADU	=	0.34;
 	}
 	else if (strcmp(cDeviceName, "Atik 460ex") == 0)
 	{
 		strcpy(cSensorName, "Sony ICX694");
 		//*	https://www.atik-cameras.com/product/atik-460ex/
-		cElectronsPerADU			=	0.27;
-		cExposureMin_us			=	1000;		//*	1/1000 sec = 1000 micro seconds
+		cCameraProp.ElectronsPerADU	=	0.27;
+		cCameraProp.ExposureMin_us	=	1000;		//*	1/1000 sec = 1000 micro seconds
 	}
 	else if (strcmp(cDeviceName, "Atik Horizon") == 0)
 	{
 		strcpy(cSensorName, "Panasonic MN34230");
 		//*	https://www.atik-cameras.com/product/atik-horizon/
-		cBitDepth				=	12;
-		cElectronsPerADU		=	1;
-		cExposureMin_us			=	18;			//*	micro seconds
+		cBitDepth					=	12;
+		cCameraProp.ElectronsPerADU	=	1;
+		cCameraProp.ExposureMin_us	=	18;			//*	micro seconds
 	}
 
 	CONSOLE_DEBUG_W_NUM("ATIK camera #\t=",	cCameraID);
@@ -252,11 +252,11 @@ char				tempDeviceName[64];
 
 
 		// get the maximum x,y binning factors
-		cMaxbinX	=	0;
-		cMaxbinY	=	0;
-		atikRetCode	=	ArtemisGetMaxBin( hAtikCameraHandle, &cMaxbinX, &cMaxbinY);
-		CONSOLE_DEBUG_W_NUM("cMaxbinX\t=", cMaxbinX);
-		CONSOLE_DEBUG_W_NUM("cMaxbinY\t=", cMaxbinY);
+		cCameraProp.MaxbinX	=	1;
+		cCameraProp.MaxbinY	=	1;
+		atikRetCode	=	ArtemisGetMaxBin( hAtikCameraHandle, &cCameraProp.MaxbinX, &cCameraProp.MaxbinY);
+		CONSOLE_DEBUG_W_NUM("cCameraProp.MaxbinX\t=", cCameraProp.MaxbinX);
+		CONSOLE_DEBUG_W_NUM("cCameraProp.MaxbinY\t=", cCameraProp.MaxbinY);
 
 		CONSOLE_DEBUG("ArtemisTemperatureSensorInfo");
 		tempSensorCnt	=	0;
@@ -308,15 +308,15 @@ void	CameraDriverATIK::ProcessATIKproperties(ARTEMISPROPERTIES	*atikProperties)
 	CONSOLE_DEBUG_W_NUM("Protocol\t\t=", atikProperties->Protocol);
 
 
-	cCameraXsize	=	atikProperties->nPixelsX;
-	cCameraYsize	=	atikProperties->nPixelsY;
-	cPixelSizeX		=	atikProperties->PixelMicronsX;
-	cPixelSizeY		=	atikProperties->PixelMicronsY;
+	cCameraProp.CameraXsize		=	atikProperties->nPixelsX;
+	cCameraProp.CameraYsize		=	atikProperties->nPixelsY;
+	cCameraProp.PixelSizeX		=	atikProperties->PixelMicronsX;
+	cCameraProp.PixelSizeY		=	atikProperties->PixelMicronsY;
 	strcpy(cDeviceDescription,	atikProperties->Description);
 	strcpy(cDeviceManufacturer,	atikProperties->Manufacturer);
 
-	cNumX			=	cCameraXsize;
-	cNumY			=	cCameraYsize;
+	cCameraProp.NumX	=	cCameraProp.CameraXsize;
+	cCameraProp.NumY	=	cCameraProp.CameraYsize;
 
 	CONSOLE_DEBUG_W_HEX("cameraflags\t=", atikProperties->cameraflags);
 
@@ -344,7 +344,7 @@ void	CameraDriverATIK::ProcessATIKproperties(ARTEMISPROPERTIES	*atikProperties)
 	{
 		// Camera has a mechanical shutter
 		CONSOLE_DEBUG("ARTEMIS_PROPERTIES_CAMERAFLAGS_HAS_SHUTTER");
-		cHasShutter	=	true;
+		cCameraProp.HasShutter	=	true;
 	}
 	if (atikProperties->cameraflags & ARTEMIS_PROPERTIES_CAMERAFLAGS_HAS_GUIDE_PORT)
 	{
@@ -427,8 +427,8 @@ int		setpoint;
 	{
 		//	b1	0 = always on 1= controllable
 		CONSOLE_DEBUG("ARTEMIS_COOLING_INFO_CONTROLLABLE");
-		cCanGetCoolerPower		=	true;
-		cCansetccdtemperature	=	true;
+		cCameraProp.CanGetCoolerPower		=	true;
+		cCameraProp.Cansetccdtemperature	=	true;
 	}
 	if (coolingFlags & ARTEMIS_COOLING_INFO_ONOFFCOOLINGCONTROL)
 	{
@@ -474,8 +474,8 @@ int	CameraDriverATIK::GetImage_ROI_info(void)
 	memset(&cROIinfo, 0, sizeof(TYPE_IMAGE_ROI_Info));
 
 	cROIinfo.currentROIimageType	=	kImageType_RAW16;
-	cROIinfo.currentROIwidth		=	cCameraXsize;
-	cROIinfo.currentROIwidth		=	cCameraYsize;
+	cROIinfo.currentROIwidth		=	cCameraProp.CameraXsize;
+	cROIinfo.currentROIwidth		=	cCameraProp.CameraYsize;
 	cROIinfo.currentROIbin			=	1;
 
 	return(0);
@@ -501,8 +501,8 @@ int					atikRetCode;
 //		CONSOLE_DEBUG_W_NUM("exposureTime_ms\t=",		exposureTime_ms);
 
 
-		gettimeofday(&cLastexposure_StartTime, NULL);
-		cLastexposure_duration_us	=	exposureMicrosecs;
+		gettimeofday(&cCameraProp.Lastexposure_StartTime, NULL);
+		cCameraProp.Lastexposure_duration_us	=	exposureMicrosecs;
 		CONSOLE_DEBUG("Calling ArtemisStartExposureMS");
 		atikRetCode					=	ArtemisStartExposureMS(hAtikCameraHandle, exposureTime_ms);
 		if (atikRetCode == ARTEMIS_OK)
@@ -587,7 +587,7 @@ int						downloadPercent;
 			case CAMERA_FLUSHING:
 				exposureState	=	kExposure_Working;
 				//*	this should probably go some place else.
-				gettimeofday(&cLastexposure_EndTime, NULL);
+				gettimeofday(&cCameraProp.Lastexposure_EndTime, NULL);
 				break;
 
 			case CAMERA_DOWNLOADING:
@@ -1017,7 +1017,7 @@ int					maxlvl;
 int					setpoint;
 
 	cCoolerPowerLevel	=	0;
-	if (cCanGetCoolerPower)
+	if (cCameraProp.CanGetCoolerPower)
 	{
 		if (hAtikCameraHandle != NULL)
 		{
@@ -1111,7 +1111,7 @@ int					atikImageSize;
 				gettimeofday(&cDownloadEndTime, NULL);
 				if (atikImageBuffer != NULL)
 				{
-	//				CONSOLE_DEBUG_W_NUM("exposure start\t=",	cLastexposure_StartTime.tv_sec);
+	//				CONSOLE_DEBUG_W_NUM("exposure start\t=",	cCameraProp.Lastexposure_StartTime.tv_sec);
 	//				CONSOLE_DEBUG_W_NUM("download start\t=",	downloadStartTime.tv_sec);
 	//				CONSOLE_DEBUG_W_NUM("download end\t=",		downloadEndTime.tv_sec);
 

@@ -23,6 +23,8 @@ echo "*******************************************" >> $LOGFILENAME
 echo -n "Start time = " >> $LOGFILENAME
 date >> $LOGFILENAME
 
+
+#################################################
 MACHINE=`uname -m`
 
 if [ $MACHINE = "aarch64" ]
@@ -38,6 +40,7 @@ then
 fi
 echo "Running on $MACHINE" >> $LOGFILENAME
 
+#################################################
 OPENCV_INCLUDE="/usr/include/opencv"
 
 if [ -d $OPENCV_INCLUDE ]
@@ -48,6 +51,29 @@ else
 
 	echo "$OPENCV_INCLUDE not found" >> $LOGFILENAME
 fi
+
+#	check a second location for opencv
+if [ -d "/usr/local/include/opencv" ]
+then
+	OPENCV_INCLUDE="/usr/local/include/opencv"
+	OPENCV_OK=true
+	echo "Open CV found at $OPENCV_INCLUDE" >> $LOGFILENAME
+fi
+
+
+#################################################
+#	check for JETSON
+if [ -f "/sys/firmware/devicetree/base/model" ]
+then
+	PLATFORM=`cat /sys/firmware/devicetree/base/model`
+	if [[ $PLATFORM == *"Jetson"* ]]; then
+		JETSON=true
+	fi
+else
+	PLATFORM="unknown"
+fi
+echo "$PLATFORM"
+
 
 make clean client
 
@@ -81,9 +107,9 @@ else
 fi
 if [ -f alpacapi ]
 then
-	echo "alpacapi client made successfully" >> $LOGFILENAME
+	echo "'alpacapi' server made successfully" >> $LOGFILENAME
 else
-	echo "Failed to build alpacapi client !!!!!!!!!!!!!!!!!!!!!" >> $LOGFILENAME
+	echo "Failed to build 'alpacapi' server !!!!!!!!!!!!!!!!!!!!!" >> $LOGFILENAME
 fi
 
 

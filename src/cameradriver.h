@@ -32,6 +32,14 @@
 #include	<sys/time.h>
 #include	<time.h>
 
+
+#ifndef	_ALPACA_DEFS_H_
+	#include	"alpaca_defs.h"
+#endif
+
+
+
+
 //*	moved to make file
 //	#define		_ENABLE_FITS_
 #define		_INCLUDE_HISTOGRAM_
@@ -550,79 +558,13 @@ class CameraDriver: public AlpacaDriver
 	//*****************************************************************************
 public:
 	char					cSensorName[kMaxSensorNameLen];	//*	obtained from my table lookup
+
 	//*****************************************************************************
 protected:
-	//*	ASCOM variables (properties)
-	//*	the ones commented out with //+ need to be implemented.....
-//+	short					cBayerOffsetX;
-//+	short					cBayerOffsetY;
-//+	TYPE_ALPACA_CAMERASTATE	cCameraState;
-	int						cCameraXsize;			//*	max width of camera image
-	int						cCameraYsize;			//*	max width of camera image
-	bool					cCanAbortExposure;
-	bool					cCanAsymmetricBin;
-	bool					cCanFastReadout;
-	bool					cCanGetCoolerPower;
-	bool					cCanPulseGuide;
-	bool					cCansetccdtemperature;
-	bool					cCanStopExposure;
-	double					cSetCCDTemperature;
-//+	bool					cConnected;
-//+	bool					cCoolerOn;
-//+	double					cCoolerPower;
-	double					cElectronsPerADU;
-
-	double					cExposureMax_seconds;
-	double					cExposureMin_seconds;
-	long					cExposureMax_us;		//*	micro-seconds
-	long					cExposureMin_us;		//*	micro-seconds
-
-	double					cExposureResolution;	//*	exposure resolution in seconds
-//+	bool					cFastReadout;
-//+	double					cFullWellCapacity;
-	int						cGain;					//*	see gain min/max
-	int						cGainMax;
-	int						cGainMin;
-	bool					cHasShutter;
-//+	double					cHeatSinkTemperature;
-	bool					cImageReady;
-	bool					cIsPulseGuiding;
-
-	//==========================================================================================
-	//*	information about the last exposure
-	//*	we need to record a bunch of stuff in case they get changed before
-	//*	the image gets downloaded
-	uint32_t				cLastexposure_duration_us;	//*	stored in microseconds, ASCOM wants seconds, convert on the fly
-														//*	Reported as a strin
-	struct timeval			cLastexposure_StartTime;		//*	time exposure or video was started for frame rate calculations
-	struct timeval			cLastexposure_EndTime;		//*	NON-ALPACA----time last exposure ended
-	TYPE_IMAGE_ROI_Info		cLastExposure_ROIinfo;
+	//*	ASCOM camera properties
+	TYPE_CameraProperties	cCameraProp;
 
 
-	//						cMaxADU;					//*!!!!!!!!!!!!!!	not implemented yet
-	int						cMaxbinX;					//*	Maximum binning for the camera X axis
-	int						cMaxbinY;					//*	Maximum binning for the camera Y axis
-
-	//===================================
-	//*	subframe information
-	int						cNumX;
-	int						cNumY;
-	int						cStartX;
-	int						cStartY;
-
-
-//+	int						cOffset;					//*!!!!!!!!!!!!!!	not implemented yet
-//+	int						cOffsetMax;
-//+	int						cOffsetMin;
-//+	int						Offsets;
-//+	int						cPercentCompleted;
-	double					cPixelSizeX;				//*	the pixel size of the camera, unit is um. (microns) such as 5.6um
-	double					cPixelSizeY;				//*	the pixel size of the camera, unit is um. (microns) such as 5.6um
-
-	//	ReadoutMode is implemented at execution time
-	//	ReadoutModes is implemented at execution time
-
-//+	TYPE_SensorType			cSensorType;
 
 
 	//=========================================================================================
@@ -636,8 +578,8 @@ protected:
 	bool		cUpdateOtherDevices;
 	//=========================================================================================
 	//*	Binning information
-	int			cCurrentBinX;
-	int			cCurrentBinY;
+//-	int			cCurrentBinX;
+//-	int			cCurrentBinY;
 
 	bool		cTempReadSupported;			//*	true if temperature can be read from device
 	double		cCameraTemp_Dbl;			//*	deg C

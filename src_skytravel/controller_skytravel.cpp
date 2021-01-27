@@ -10,6 +10,8 @@
 //*	Jan  9,	2021	<MLS> Added LookForIPaddress()
 //*	Jan  9,	2021	<MLS> Added a bunch of stuff from controller_dome
 //*	Jan  9,	2021	<MLS> SkyTravel is now talking to the dome controller
+//*	Jan 26,	2021	<MLS> Added SetDomeIPaddress() & SetTelescopeIPaddress()
+//*	Jan 26,	2021	<MLS> SkyTravel can choose which dome/telescope to sync with
 //*****************************************************************************
 
 
@@ -40,6 +42,8 @@
 #include	"alpaca_defs.h"
 #include	"windowtab_skytravel.h"
 #include	"windowtab_dome.h"
+#include	"windowtab_alpacalist.h"
+#include	"windowtab_deviceselect.h"
 #include	"windowtab_about.h"
 
 
@@ -62,6 +66,8 @@ ControllerSkytravel::ControllerSkytravel(	const char *argWindowName)
 
 	cSkyTravelTabOjbPtr		=	NULL;
 	cDomeTabObjPtr			=	NULL;
+	cDeviceSelectObjPtr		=	NULL;
+	cAlpacaListObjPtr		=	NULL;
 	cAboutBoxTabObjPtr		=	NULL;
 
 	cDomeAddressValid		=	false;
@@ -111,6 +117,12 @@ ControllerSkytravel::~ControllerSkytravel(void)
 		delete cAlpacaListObjPtr;
 		cAlpacaListObjPtr	=	NULL;
 	}
+	//=============================================================
+	if (cDeviceSelectObjPtr != NULL)
+	{
+		delete cDeviceSelectObjPtr;
+		cDeviceSelectObjPtr	=	NULL;
+	}
 
 	//=============================================================
 	if (cAboutBoxTabObjPtr != NULL)
@@ -129,6 +141,7 @@ void	ControllerSkytravel::SetupWindowControls(void)
 
 	SetTabCount(kTab_Count);
 
+	//=============================================================
 	SetTabText(kTab_SkyTravel,	"SkyTravel");
 	cSkyTravelTabOjbPtr		=	new WindowTabSkyTravel(	cWidth, cHeight, cBackGrndColor, cWindowName);
 	if (cSkyTravelTabOjbPtr != NULL)
@@ -149,12 +162,20 @@ void	ControllerSkytravel::SetupWindowControls(void)
 	//=============================================================
 	SetTabText(kTab_AlpacaList,		"Alpaca List");
 	cAlpacaListObjPtr	=	new WindowTabAlpacaList(cWidth, cHeight, cBackGrndColor, cWindowName);
-	if (cDomeTabObjPtr != NULL)
+	if (cAlpacaListObjPtr != NULL)
 	{
 		SetTabWindow(kTab_AlpacaList,	cAlpacaListObjPtr);
 		cAlpacaListObjPtr->SetParentObjectPtr(this);
 	}
 
+	//=============================================================
+	SetTabText(kTab_DeviceList,		"Device Selections");
+	cDeviceSelectObjPtr	=	new WindowTabDeviceSelect(cWidth, cHeight, cBackGrndColor, cWindowName);
+	if (cDeviceSelectObjPtr != NULL)
+	{
+		SetTabWindow(kTab_DeviceList,	cDeviceSelectObjPtr);
+		cDeviceSelectObjPtr->SetParentObjectPtr(this);
+	}
 
 	//=============================================================
 	SetTabText(kTab_About,		"About");
@@ -164,11 +185,6 @@ void	ControllerSkytravel::SetupWindowControls(void)
 		SetTabWindow(kTab_About,	cAboutBoxTabObjPtr);
 		cAboutBoxTabObjPtr->SetParentObjectPtr(this);
 	}
-
-//	SetWidgetFont(kTab_Video,	kUSBselect_IPaddr, kFont_Medium);
-
-//	SetWidgetText(kTab_Video,	kUSBselect_IPaddr,	cUSBpath);
-//	SetWidgetText(kTab_About,	kAboutBox_IPaddr,	cUSBpath);
 }
 
 //**************************************************************************************
@@ -176,8 +192,8 @@ void	ControllerSkytravel::SetupWindowControls(void)
 bool	ControllerSkytravel::LookForIPaddress(void)
 {
 int		iii;
-char	ipString[32];
-char	lineBuff[64];
+//-char	ipString[32];
+//-char	lineBuff[64];
 bool	foundSomething;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
@@ -190,20 +206,7 @@ bool	foundSomething;
 			if (strcasecmp("Dome", gRemoteList[iii].deviceTypeStr) == 0)
 			{
 				CONSOLE_DEBUG_W_STR("We found a dome", gRemoteList[iii].deviceNameStr);
-				cDomeIpAddress			=	gRemoteList[iii].deviceAddress;
-				cDomeIpPort				=	gRemoteList[iii].port;
-				cDomeAlpacaDeviceNum	=	gRemoteList[iii].alpacaDeviceNum;
-				cDomeAddressValid		=	true;
-
-				cReadStartup_Dome		=	true;
-				cDomeHas_readall		=	false;
-
-				PrintIPaddressToString(cDomeIpAddress.sin_addr.s_addr, ipString);
-				sprintf(lineBuff, "%s:%d/%d", ipString, cDomeIpPort, cDomeAlpacaDeviceNum);
-
-				SetWindowIPaddrInfo(lineBuff, true);
-
-				SetWidgetBGColor(kTab_SkyTravel,	kSkyTravel_DomeIndicator,		CV_RGB(64,	255,	64));
+				SetDomeIPaddress(&gRemoteList[iii]);
 				foundSomething			=	true;
 			}
 		}
@@ -212,19 +215,67 @@ bool	foundSomething;
 			if (strcasecmp("Telescope", gRemoteList[iii].deviceTypeStr) == 0)
 			{
 				CONSOLE_DEBUG_W_STR("We found a Telescope", gRemoteList[iii].deviceNameStr);
-				cTelescopeIpAddress		=	gRemoteList[iii].deviceAddress;
-				cTelescopeIpPort		=	gRemoteList[iii].port;
-				cTelescopeAddressValid	=	true;
-
-				cReadStartup_Telescope	=	true;
-				cTelescopeHas_readall	=	false;
-
-				SetWidgetBGColor(kTab_SkyTravel,	kSkyTravel_TelescopeIndicator,	CV_RGB(64,	255,	64));
+				SetTelescopeIPaddress(&gRemoteList[iii]);
 				foundSomething			=	true;
 			}
 		}
 	}
 	return(foundSomething);
+}
+
+//**************************************************************************************
+void	ControllerSkytravel::SetDomeIPaddress(TYPE_REMOTE_DEV *remoteDomeDevice)
+{
+char	ipAddrStr[32];
+char	lineBuff[64];
+
+
+	//============================================
+	//*	disable all of the extra commands until we know if they exist
+	if (cDomeTabObjPtr != NULL)
+	{
+		cDomeTabObjPtr->ResetKnownCommands();
+	}
+
+	cDomeIpAddress			=	remoteDomeDevice->deviceAddress;
+	cDomeIpPort				=	remoteDomeDevice->port;
+	cDomeAlpacaDeviceNum	=	remoteDomeDevice->alpacaDeviceNum;
+	cDomeAddressValid		=	true;
+
+	cReadStartup_Dome		=	true;
+	cDomeHas_readall		=	false;
+
+	PrintIPaddressToString(cDomeIpAddress.sin_addr.s_addr, ipAddrStr);
+	sprintf(lineBuff, "%s:%d/%d", ipAddrStr, cDomeIpPort, cDomeAlpacaDeviceNum);
+
+	SetWindowIPaddrInfo(lineBuff, true);
+
+	SetWidgetBGColor(kTab_SkyTravel,	kSkyTravel_DomeIndicator,		CV_RGB(64,	255,	64));
+
+	CONSOLE_DEBUG_W_STR("IP address=", ipAddrStr);
+}
+
+//**************************************************************************************
+void	ControllerSkytravel::SetTelescopeIPaddress(TYPE_REMOTE_DEV *remoteDomeDevice)
+{
+char	ipAddrStr[32];
+char	lineBuff[64];
+
+	cTelescopeIpAddress			=	remoteDomeDevice->deviceAddress;
+	cTelescopeIpPort			=	remoteDomeDevice->port;
+	cTelescopeAlpacaDeviceNum	=	remoteDomeDevice->alpacaDeviceNum;
+	cTelescopeAddressValid		=	true;
+
+	cReadStartup_Telescope		=	true;
+	cTelescopeHas_readall		=	false;
+
+	SetWidgetBGColor(kTab_SkyTravel,	kSkyTravel_TelescopeIndicator,	CV_RGB(64,	255,	64));
+
+	SetWidgetText(kTab_SkyTravel,	kSkyTravel_Telescope_RA_DEC,	"-----------");
+
+	inet_ntop(AF_INET, &(cTelescopeIpAddress.sin_addr), ipAddrStr, INET_ADDRSTRLEN);
+	CONSOLE_DEBUG_W_STR("IP address=", ipAddrStr);
+
 }
 
 //**************************************************************************************
@@ -278,6 +329,7 @@ bool		foundSomething;
 	if (foundSomething || needToUpdate)
 	{
 		cAlpacaListObjPtr->UpdateRemoteDeviceList();
+		cDeviceSelectObjPtr->UpdateRemoteDeviceList();
 	}
 
 	if (needToUpdate)
@@ -371,7 +423,7 @@ bool			validData;
 char			returnString[128];
 char			ipAddrStr[128];
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 
 	inet_ntop(AF_INET, &(cTelescopeIpAddress.sin_addr), ipAddrStr, INET_ADDRSTRLEN);
 	CONSOLE_DEBUG(ipAddrStr);
@@ -506,7 +558,7 @@ char	textBuff[64];
 		sprintf(textBuff, "%s / %s", raString, decString);
 
 
-		SetWidgetText(kTab_SkyTravel, kSkyTravel_LX200_RA_DEC, textBuff);
+		SetWidgetText(kTab_SkyTravel, kSkyTravel_Telescope_RA_DEC, textBuff);
 	}
 	else
 	{
@@ -575,7 +627,7 @@ void	ControllerSkytravel::Update_TelescopeRtAscension(void)
 //	CONSOLE_DEBUG_W_DBL("cTelescopeProp.RightAscension", cTelescopeProp.RightAscension);
 	gTelescopeRA_Radians	=	RADIANS(cTelescopeProp.RightAscension * 15.0);
 
-//	SetWidgetText(kSkyTravel_LX200_RA_DEC, ra_dec_string);
+//	SetWidgetText(kSkyTravel_Telescope_RA_DEC, ra_dec_string);
 
 }
 

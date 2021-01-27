@@ -9,7 +9,7 @@
 //*	Jan 24,	2021	<MLS> Added TYPE_FocuserProperties structure
 //*	Jan 24,	2021	<MLS> Version V0.4.0-beta
 //*	Jan 25,	2021	<MLS> Added TYPE_CameraProperties structure
-//*	Jan 25,	2021	<MLS> Added TYPE_RotatorProperties
+//*	Jan 25,	2021	<MLS> Added TYPE_RotatorProperties structure
 //*****************************************************************************
 //*	Jan  1,	2019	-----------------------------------------------------------
 //*	Jan  1,	2020	-----------------------------------------------------------
@@ -36,7 +36,7 @@
 
 #define	kApplicationName	"AlpacaPi"
 #define	kVersionString		"V0.4.0-beta"
-#define	kBuildNumber		86
+#define	kBuildNumber		87
 
 
 #define kAlpacaDiscoveryPORT	32227
@@ -204,8 +204,8 @@ typedef struct
 	//*	the ones commented out with //+ need to be implemented.....
 //+	short					BayerOffsetX;			//*	The X offset of the Bayer matrix.
 //+	short					BayerOffsetY;			//*	The Y offset of the Bayer matrix.
-	int						Binx;					//*	The binning factor for the X axis.
-	int						Biny;					//*	The binning factor for the Y axis.
+	int						BinX;					//*	The binning factor for the X axis.
+	int						BinY;					//*	The binning factor for the Y axis.
 	int						CameraXsize;			//*	The width of the CCD camera chip.
 	int						CameraYsize;			//*	The height of the CCD camera chip.
 //+	TYPE_ALPACA_CAMERASTATE	CameraState;			//*	the camera operational state.
@@ -244,7 +244,7 @@ typedef struct
 	//*	we need to record a bunch of stuff in case they get changed before
 	//*	the image gets downloaded
 	uint32_t				Lastexposure_duration_us;	//*	stored in microseconds, ASCOM wants seconds, convert on the fly
-														//*	Reported as a strin
+														//*	Reported as a string
 	struct timeval			Lastexposure_StartTime;		//*	time exposure or video was started for frame rate calculations
 	struct timeval			Lastexposure_EndTime;		//*	NON-ALPACA----time last exposure ended
 //+	TYPE_IMAGE_ROI_Info		LastExposure_ROIinfo;

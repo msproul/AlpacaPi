@@ -258,31 +258,31 @@ ROR_OBJECTS=												\
 
 
 ######################################################################################
-#pragma mark make cpp  C++ linux-x86
-cpp		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
-cpp		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
-cpp		:		DEFINEFLAGS		+=	-D_ENABLE_ATIK_
-cpp		:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
-cpp		:		DEFINEFLAGS		+=	-D_ENABLE_CALIBRATION_
-cpp		:		DEFINEFLAGS		+=	-D_ENABLE_DISCOVERY_QUERRY_
-#cpp	:		DEFINEFLAGS		+=	-D_ENABLE_DOME_
-cpp		:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
-cpp		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_
-#cpp	:		DEFINEFLAGS		+=	-D_ENABLE_FLIR_
-cpp		:		DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_
-#cpp		:		DEFINEFLAGS		+=	-D_ENABLE_MULTICAM_
-#cpp			:	DEFINEFLAGS		+=	-D_ENABLE_OBSERVINGCONDITIONS_
-#cpp		:		DEFINEFLAGS		+=	-D_ENABLE_QHY_
-cpp		:		DEFINEFLAGS		+=	-D_ENABLE_ROTATOR_
-#cpp	:		DEFINEFLAGS		+=	-D_ENABLE_SAFETYMONITOR_
-#cpp		:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_
-#cpp		:		DEFINEFLAGS		+=	-D_ENABLE_SLIT_TRACKER_
-#cpp	:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
-cpp		:		DEFINEFLAGS		+=	-D_ENABLE_TOUP_
-cpp		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
-#cpp		:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
-#cpp		:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_LX200_
-cpp		:			$(CPP_OBJECTS)				\
+#pragma mark make alpacapi  C++ linux-x86
+alpacapi		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
+alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
+alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_ATIK_
+alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
+alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_CALIBRATION_
+alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_DISCOVERY_QUERRY_
+#alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_DOME_
+alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
+alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_
+#alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_FLIR_
+alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_
+#alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_MULTICAM_
+#alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_OBSERVINGCONDITIONS_
+#alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_QHY_
+alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_ROTATOR_
+#alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_SAFETYMONITOR_
+#alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_
+#alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_SLIT_TRACKER_
+#alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
+#alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_TOUP_
+alpacapi		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
+#alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
+#alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_LX200_
+default			:	$(CPP_OBJECTS)				\
 					$(ALPACA_OBJECTS)			\
 					$(SOCKET_OBJECTS)			\
 
@@ -304,6 +304,58 @@ cpp		:			$(CPP_OBJECTS)				\
 					-lcfitsio					\
 					-lqhyccd					\
 					-o alpacapi
+
+
+######################################################################################
+#pragma mark make allcam
+#	this is primarily for development, all cameras are enabled
+allcam		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
+allcam		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
+allcam		:		DEFINEFLAGS		+=	-D_ENABLE_ATIK_
+allcam		:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
+allcam		:		DEFINEFLAGS		+=	-D_ENABLE_CALIBRATION_
+allcam		:		DEFINEFLAGS		+=	-D_ENABLE_DISCOVERY_QUERRY_
+#allcam		:		DEFINEFLAGS		+=	-D_ENABLE_DOME_
+allcam		:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
+allcam		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_
+allcam		:		DEFINEFLAGS		+=	-D_ENABLE_FLIR_
+allcam		:		DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_
+#allcam		:		DEFINEFLAGS		+=	-D_ENABLE_MULTICAM_
+#allcam		:		DEFINEFLAGS		+=	-D_ENABLE_OBSERVINGCONDITIONS_
+allcam		:		DEFINEFLAGS		+=	-D_ENABLE_QHY_
+allcam		:		DEFINEFLAGS		+=	-D_ENABLE_ROTATOR_
+#allcam		:		DEFINEFLAGS		+=	-D_ENABLE_SAFETYMONITOR_
+#allcam		:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_
+#allcam		:		DEFINEFLAGS		+=	-D_ENABLE_SLIT_TRACKER_
+#allcam		:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
+allcam		:		DEFINEFLAGS		+=	-D_ENABLE_TOUP_
+allcam		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
+#allcam		:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
+#allcam		:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_LX200_
+allcam		:		$(CPP_OBJECTS)				\
+					$(ALPACA_OBJECTS)			\
+					$(SOCKET_OBJECTS)			\
+
+
+		$(LINK)  								\
+					$(SOCKET_OBJECTS)			\
+					$(CPP_OBJECTS)				\
+					$(ALPACA_OBJECTS)			\
+					$(OPENCV_LINK)				\
+					-L$(ATIK_LIB_DIR)/			\
+					-L$(TOUP_LIB_DIR)/			\
+					$(ASI_CAMERA_OBJECTS)		\
+					$(ZWO_EFW_OBJECTS)			\
+					-lSpinnaker_C				\
+					-latikcameras				\
+					-ltoupcam					\
+					-ludev						\
+					-lusb-1.0					\
+					-lpthread					\
+					-lcfitsio					\
+					-lqhyccd					\
+					-o alpacapi
+
 
 
 ######################################################################################
@@ -1446,6 +1498,7 @@ SKYTRAVEL_OBJECTS=											\
 				$(OBJECT_DIR)skytravel_main.o				\
 				$(OBJECT_DIR)StarData.o						\
 				$(OBJECT_DIR)SkyTravelTimeRoutines.o		\
+				$(OBJECT_DIR)windowtab_deviceselect.o		\
 				$(OBJECT_DIR)windowtab_skytravel.o			\
 				$(OBJECT_DIR)windowtab_telescope.o			\
 				$(OBJECT_DIR)windowtab_dome.o				\
@@ -2085,6 +2138,11 @@ $(OBJECT_DIR)windowtab_alpacalist.o : $(SRC_DIR)windowtab_alpacalist.cpp		\
 										$(SRC_DIR)windowtab.h
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)windowtab_alpacalist.cpp -o$(OBJECT_DIR)windowtab_alpacalist.o
 
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)windowtab_deviceselect.o : $(SRC_DIR)windowtab_deviceselect.cpp	\
+										$(SRC_DIR)windowtab_deviceselect.h		\
+										$(SRC_DIR)windowtab.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)windowtab_deviceselect.cpp -o$(OBJECT_DIR)windowtab_deviceselect.o
 
 
 #-------------------------------------------------------------------------------------

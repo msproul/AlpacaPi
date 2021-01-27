@@ -16,18 +16,23 @@
 
 #ifndef	_WINDOWTAB_ABOUT_H_
 	#include	"windowtab_about.h"
-#endif // _WINDOWTAB_ABOUT_H_
+#endif
+
 #ifndef	_WINDOWTAB_DOME_H_
 	#include	"windowtab_dome.h"
-#endif // _WINDOWTAB_DOME_H_
-
+#endif
 #ifndef	_WINDOWTAB_SKYTRAVEL_H_
 	#include	"windowtab_skytravel.h"
-#endif // _WINDOWTAB_SKYTRAVEL_H_
+#endif
 
 #ifndef	_WINDOWTAB_ALPACALIST_H_
 	#include	"windowtab_alpacalist.h"
-#endif // _WINDOWTAB_ALPACALIST_H_
+#endif
+
+
+#ifndef	_WINDOWTAB_DEVICE_SELECT_H_
+	#include	"windowtab_deviceselect.h"
+#endif
 
 //**************************************************************************************
 enum
@@ -35,6 +40,7 @@ enum
 	kTab_SkyTravel	=	1,
 	kTab_Dome,
 	kTab_AlpacaList,
+	kTab_DeviceList,
 	kTab_About,
 
 	kTab_Count
@@ -86,13 +92,16 @@ class ControllerSkytravel: public Controller
 
 		//====================================================
 		//*	tab information
-				WindowTabSkyTravel	*cSkyTravelTabOjbPtr;
-				WindowTabDome		*cDomeTabObjPtr;
-				WindowTabAlpacaList	*cAlpacaListObjPtr;
-				WindowTabAbout		*cAboutBoxTabObjPtr;
+				WindowTabSkyTravel		*cSkyTravelTabOjbPtr;
+				WindowTabDome			*cDomeTabObjPtr;
+				WindowTabAlpacaList		*cAlpacaListObjPtr;
+				WindowTabDeviceSelect	*cDeviceSelectObjPtr;
+				WindowTabAbout			*cAboutBoxTabObjPtr;
 		//====================================================
 		//*	alpaca device information
 				bool				LookForIPaddress(void);
+				void				SetDomeIPaddress(TYPE_REMOTE_DEV *remoteDomeDevice);
+				void				SetTelescopeIPaddress(TYPE_REMOTE_DEV *remoteDomeDevice);
 				bool				AlpacaGetDomeStatus(void);
 
 				bool				cDomeAddressValid;

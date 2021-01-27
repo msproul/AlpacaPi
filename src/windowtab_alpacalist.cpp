@@ -74,15 +74,16 @@ WindowTabAlpacaList::~WindowTabAlpacaList(void)
 //**************************************************************************************
 void	WindowTabAlpacaList::SetupWindowControls(void)
 {
-	int		xLoc;
-	int		yLoc;
-	int		textBoxHt;
-	int		textBoxWd;
-	int		widgetWidth;
-	int		iii;
-	short	tabArray[kMaxTabStops]	=	{200, 400, 600, 1000, 1199, 0};
-	int		clmnHdr_xLoc;
-	int		clmnHdrWidth;
+int		xLoc;
+int		yLoc;
+int		textBoxHt;
+int		textBoxWd;
+int		widgetWidth;
+int		iii;
+short	tabArray[kMaxTabStops]	=	{200, 400, 600, 1000, 1199, 0};
+int		clmnHdr_xLoc;
+int		clmnHdrWidth;
+
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	//------------------------------------------
@@ -195,34 +196,34 @@ void	WindowTabAlpacaList::ProcessButtonClick(const int buttonIdx)
 
 	switch(buttonIdx)
 	{
-	case kAlpacaList_ClmTitle1:
-	case kAlpacaList_ClmTitle2:
-	case kAlpacaList_ClmTitle3:
-	case kAlpacaList_ClmTitle4:
-	case kAlpacaList_ClmTitle5:
-		cSortColumn	=	buttonIdx - kAlpacaList_ClmTitle1;
-		UpdateSortOrder();
-		ForceUpdate();
-		break;
+		case kAlpacaList_ClmTitle1:
+		case kAlpacaList_ClmTitle2:
+		case kAlpacaList_ClmTitle3:
+		case kAlpacaList_ClmTitle4:
+		case kAlpacaList_ClmTitle5:
+			cSortColumn	=	buttonIdx - kAlpacaList_ClmTitle1;
+			UpdateSortOrder();
+			ForceUpdate();
+			break;
 
-	case kAlpacaList_ChkBx_IncManagment:
-		cIncludeManagment	=	!cIncludeManagment;
-		SetWidgetChecked(kAlpacaList_ChkBx_IncManagment, cIncludeManagment);
-	//*	fall through to force refresh
+		case kAlpacaList_ChkBx_IncManagment:
+			cIncludeManagment	=	!cIncludeManagment;
+			SetWidgetChecked(kAlpacaList_ChkBx_IncManagment, cIncludeManagment);
+		//*	fall through to force refresh
 
-	case kAlpacaList_Btn_Refresh:
-		ClearRemoteDeviceList();
-		ForceUpdate();
-		break;
+		case kAlpacaList_Btn_Refresh:
+			ClearRemoteDeviceList();
+			ForceUpdate();
+			break;
 	}
 }
 
 //*****************************************************************************
 void	WindowTabAlpacaList::ProcessDoubleClick(const int buttonIdx)
 {
-	int		deviceIdx;
-	char	windowName[64];
-	bool	windowExists;
+int		deviceIdx;
+char	windowName[64];
+bool	windowExists;
 //	CONSOLE_DEBUG(__FUNCTION__);
 //	CONSOLE_DEBUG_W_NUM("buttonIdx\t=", buttonIdx);
 
@@ -447,11 +448,11 @@ void	WindowTabAlpacaList::UpdateRemoteDeviceList(void)
 //**************************************************************************************
 void	WindowTabAlpacaList::UpdateOnScreenWidgetList(void)
 {
-	int		boxId;
-	int		iii;
-	char	textString[128];
-	char	ipAddrStr[32];
-	int		myDevCount;
+int		boxId;
+int		iii;
+char	textString[128];
+char	ipAddrStr[32];
+int		myDevCount;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 

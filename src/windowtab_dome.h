@@ -90,6 +90,7 @@ class WindowTabDome: public WindowTab
 		virtual	void	ProcessButtonClick(const int buttonIdx);
 		virtual	void	AlpacaDisplayErrorMessage(const char *errorMsgString);
 
+				void	ResetKnownCommands(void);
 				bool	SendAlpacaCmdToDome(	const char		*theCommand,
 												const char		*dataString,
 												SJP_Parser_t	*jsonParser = NULL);

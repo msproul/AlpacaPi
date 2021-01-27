@@ -391,8 +391,8 @@ int				iii;
 	strcat(imageFilePath, "/");
 	strcat(imageFilePath, imageFileName);
 
-	naxes[0]		=	cCameraXsize;
-	naxes[1]		=	cCameraYsize;
+	naxes[0]		=	cCameraProp.CameraXsize;
+	naxes[1]		=	cCameraProp.CameraYsize;
 	naxes[2]		=	3;				//*	only used for color RGB images (3 planes)
 	axisCnt			=	2;				//*	for all formats except RGB
 	fits_bitpix		=	SHORT_IMG;
@@ -579,7 +579,7 @@ int				iii;
 		long			fpixelArray[4];
 
 //			CONSOLE_DEBUG("Writing image data to FITS file");
-			nelements	=	cCameraXsize * cCameraYsize;
+			nelements	=	cCameraProp.CameraXsize * cCameraProp.CameraYsize;
 
 
 			fpixelArray[0]	=	1;
@@ -606,7 +606,7 @@ int				iii;
 //					CONSOLE_DEBUG(__FUNCTION__);
 					if (cCameraBGRbuffer != NULL)
 					{
-						nelements		=	3 * cCameraXsize * cCameraYsize;
+						nelements		=	3 * cCameraProp.CameraXsize * cCameraProp.CameraYsize;
 						fitsRetCode		=	fits_write_pix(	fitsFilePtr,
 												fitsDataType,
 												fpixelArray,
@@ -883,7 +883,7 @@ char	instrumentString[128];
 		fits_write_key(fitsFilePtr, TSTRING, "DETECTOR",	cSensorName,		NULL, &fitsStatus);
 	}
 
-	sprintf(stringBuf, "[1:%d,1:%d]", cCameraXsize, cCameraYsize);
+	sprintf(stringBuf, "[1:%d,1:%d]", cCameraProp.CameraXsize, cCameraProp.CameraYsize);
 	fitsStatus	=	0;
 	fits_write_key(fitsFilePtr, TSTRING, "DETSIZE",	stringBuf,		"Detector size", &fitsStatus);
 
@@ -906,34 +906,34 @@ char	instrumentString[128];
 
 	fitsStatus	=	0;
 	fits_write_key(fitsFilePtr, TDOUBLE,	"XPIXSZ",
-											&cPixelSizeX,
+											&cCameraProp.PixelSizeX,
 											"X Pixel size in microns", &fitsStatus);
 
 	fitsStatus	=	0;
 	fits_write_key(fitsFilePtr, TDOUBLE,	"YPIXSZ",
-											&cPixelSizeY,
+											&cCameraProp.PixelSizeY,
 											"Y Pixel size in microns", &fitsStatus);
 
 
 	fitsStatus	=	0;
-	fits_write_key(fitsFilePtr, TINT,		"XBINNING",	&cCurrentBinX,			NULL, &fitsStatus);
+	fits_write_key(fitsFilePtr, TINT,		"XBINNING",	&cCameraProp.BinX,	NULL, &fitsStatus);
 
 	fitsStatus	=	0;
-	fits_write_key(fitsFilePtr, TINT,		"YBINNING",	&cCurrentBinY,			NULL, &fitsStatus);
+	fits_write_key(fitsFilePtr, TINT,		"YBINNING",	&cCameraProp.BinY,	NULL, &fitsStatus);
 
-	if (cElectronsPerADU > 0.0)
+	if (cCameraProp.ElectronsPerADU > 0.0)
 	{
 		fitsStatus	=	0;
 		fits_write_key(fitsFilePtr, TDOUBLE,	"EGAIN",
-												&cElectronsPerADU,
+												&cCameraProp.ElectronsPerADU,
 												"Electrons Per ADU",
 												&fitsStatus);
 	}
 
-	sprintf(stringBuf, "Camera gain [%d:%d]", cGainMin, cGainMax);
+	sprintf(stringBuf, "Camera gain [%d:%d]", cCameraProp.GainMin, cCameraProp.GainMax);
 	fitsStatus	=	0;
 	fits_write_key(fitsFilePtr,		TINT,		"GAIN",
-												&cGain,
+												&cCameraProp.Gain,
 												stringBuf,
 												&fitsStatus);
 
@@ -988,11 +988,11 @@ char	instrumentString[128];
 		fits_write_key(fitsFilePtr, TSTRING, "COMMENT",	stringBuf,		NULL, &fitsStatus);
 	}
 
-	sprintf(stringBuf, "Camera image size: %d x %d", cCameraXsize, cCameraYsize);
+	sprintf(stringBuf, "Camera image size: %d x %d", cCameraProp.CameraXsize, cCameraProp.CameraYsize);
 	fitsStatus	=	0;
 	fits_write_key(fitsFilePtr, TSTRING, "COMMENT",	stringBuf,		NULL, &fitsStatus);
 
-	megaPixels	=	(1.0 * cCameraXsize * cCameraYsize) / (1024 * 1024);
+	megaPixels	=	(1.0 * cCameraProp.CameraXsize * cCameraProp.CameraYsize) / (1024 * 1024);
 	sprintf(stringBuf, "Camera image size: %1.1f megapixels", megaPixels);
 	fitsStatus	=	0;
 	fits_write_key(fitsFilePtr, TSTRING, "COMMENT",	stringBuf,		NULL, &fitsStatus);
@@ -1024,7 +1024,7 @@ char	instrumentString[128];
 	fits_write_key(fitsFilePtr, TSTRING, "COMMENT",	stringBuf,		NULL, &fitsStatus);
 
 	//---------------------------------------------------------------------
-	sprintf(stringBuf, "Image Shutter: %d microseconds ", cLastexposure_duration_us);
+	sprintf(stringBuf, "Image Shutter: %d microseconds ", cCameraProp.Lastexposure_duration_us);
 	fitsStatus	=	0;
 	fits_write_key(fitsFilePtr, TSTRING, "COMMENT",	stringBuf,		NULL, &fitsStatus);
 
@@ -1531,12 +1531,12 @@ double			modifiedJulianDate;
 	}
 
 	//*	format the time of exposure start
-	FormatTimeStringISO8601(&cLastexposure_StartTime, stringBuf);
+	FormatTimeStringISO8601(&cCameraProp.Lastexposure_StartTime, stringBuf);
 //	CONSOLE_DEBUG_W_STR("stringBuf:", stringBuf);
 	fitsStatus	=	0;
 	fits_write_key(fitsFilePtr, TSTRING, "DATE-OBS",	stringBuf,		"UTC date of observation", &fitsStatus);
 
-	gmtime_r(&cLastexposure_StartTime.tv_sec, &utcTime);
+	gmtime_r(&cCameraProp.Lastexposure_StartTime.tv_sec, &utcTime);
 	CalcSiderealTime(&utcTime, &siderealTime, gObseratorySettings.Longitude);
 	FormatTimeString_TM(&siderealTime, stringBuf);
 	fitsStatus	=	0;
@@ -1544,14 +1544,14 @@ double			modifiedJulianDate;
 											stringBuf,
 											"Local Sidereal Time start of exposure", &fitsStatus);
 
-	modifiedJulianDate	=	Julian_CalcMJD(&cLastexposure_StartTime);
+	modifiedJulianDate	=	Julian_CalcMJD(&cCameraProp.Lastexposure_StartTime);
 	fitsStatus			=	0;
 	fits_write_key(fitsFilePtr, TDOUBLE,	"MJD-OBS",
 											&modifiedJulianDate,
 											"MJD of observation", &fitsStatus);
-	if (cLastexposure_EndTime.tv_sec > cLastexposure_StartTime.tv_sec)
+	if (cCameraProp.Lastexposure_EndTime.tv_sec > cCameraProp.Lastexposure_StartTime.tv_sec)
 	{
-		modifiedJulianDate	=	Julian_CalcMJD(&cLastexposure_EndTime);
+		modifiedJulianDate	=	Julian_CalcMJD(&cCameraProp.Lastexposure_EndTime);
 		fitsStatus	=	0;
 		fits_write_key(fitsFilePtr, TDOUBLE,	"MJDEND",
 												&modifiedJulianDate,
@@ -1559,7 +1559,7 @@ double			modifiedJulianDate;
 	}
 
 	fitsStatus	=	0;
-	exposureTime_Secs	=	(cLastexposure_duration_us * 1.0) / 1000000.0;
+	exposureTime_Secs	=	(cCameraProp.Lastexposure_duration_us * 1.0) / 1000000.0;
 	fits_write_key(fitsFilePtr, TDOUBLE,	"EXPTIME",
 											&exposureTime_Secs,
 											"Exposure time (seconds)", &fitsStatus);
@@ -1930,15 +1930,15 @@ double	f_ratio;
 													stringBuf,
 													NULL, &fitsStatus);
 
-			angularResolution_perPixel	=	Calc_AngularResolutionPerPixel(cTS_info.focalLen_mm, cPixelSizeX);
+			angularResolution_perPixel	=	Calc_AngularResolutionPerPixel(cTS_info.focalLen_mm, cCameraProp.PixelSizeX);
 			sprintf(stringBuf, "Angular resolution per pixel: %5.4f (arc-seconds / pixel)",	angularResolution_perPixel);
 			fitsStatus	=	0;
 			fits_write_key(fitsFilePtr, TSTRING,	"COMMENT",
 													stringBuf,
 													NULL, &fitsStatus);
 
-			fov_arcSeconds_X	=	Calc_FieldOfView_arcSecs(cTS_info.focalLen_mm, cPixelSizeX, cCameraXsize);
-			fov_arcSeconds_Y	=	Calc_FieldOfView_arcSecs(cTS_info.focalLen_mm, cPixelSizeX, cCameraYsize);
+			fov_arcSeconds_X	=	Calc_FieldOfView_arcSecs(cTS_info.focalLen_mm, cCameraProp.PixelSizeX, cCameraProp.CameraXsize);
+			fov_arcSeconds_Y	=	Calc_FieldOfView_arcSecs(cTS_info.focalLen_mm, cCameraProp.PixelSizeX, cCameraProp.CameraYsize);
 			sprintf(stringBuf, "Field of view: %1.1f x %1.1f (arc-minutes)", (fov_arcSeconds_X / 60.0), (fov_arcSeconds_Y / 60.0));
 			fitsStatus	=	0;
 			fits_write_key(fitsFilePtr, TSTRING,	"COMMENT",
@@ -2138,7 +2138,7 @@ unsigned char	*bluBufPtr;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
-	frameBufSize	=	cCameraXsize * cCameraYsize;
+	frameBufSize	=	cCameraProp.CameraXsize * cCameraProp.CameraYsize;
 	if (cCameraDataBuffer != NULL)
 	{
 		if (cCameraBGRbuffer == NULL)

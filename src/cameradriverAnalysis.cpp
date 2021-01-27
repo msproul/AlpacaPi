@@ -83,7 +83,7 @@ uint32_t		bluValue;
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	minPixelValue	=	65535;
-	imageDataLen	=	cCameraXsize * cCameraYsize;
+	imageDataLen	=	cCameraProp.CameraXsize * cCameraProp.CameraYsize;
 
 	if (cCameraDataBuffer != NULL)
 	{
@@ -171,7 +171,7 @@ uint32_t		bluValue;
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	maxPixelValue	=	0;
-	imageDataLen	=	cCameraXsize * cCameraYsize;
+	imageDataLen	=	cCameraProp.CameraXsize * cCameraProp.CameraYsize;
 
 	if (cCameraDataBuffer != NULL)
 	{
@@ -262,7 +262,7 @@ uint8_t			*imageDataPtr8bit;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-	imageDataLen	=	cCameraXsize * cCameraYsize;
+	imageDataLen	=	cCameraProp.CameraXsize * cCameraProp.CameraYsize;
 	saturatedPixCnt	=	0;
 
 	if (cCameraDataBuffer != NULL)
@@ -341,7 +341,7 @@ uint32_t		imageDataLen;
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	saturatedPixCnt	=	CountSaturationPixels();
-	imageDataLen	=	cCameraXsize * cCameraYsize;
+	imageDataLen	=	cCameraProp.CameraXsize * cCameraProp.CameraYsize;
 	saturatedPrct	=	(saturatedPixCnt * 100.0) / imageDataLen;
 
 //	CONSOLE_DEBUG_W_INT32("saturatedPixCnt\t=",	saturatedPixCnt);
@@ -470,9 +470,9 @@ long			exposureAdjustment_us;	//*	micro-seconds
 		}
 //		CONSOLE_DEBUG_W_INT32("exposureAdjustment_us\t=",	exposureAdjustment_us);
 		cCurrentExposure_us	-=	exposureAdjustment_us;
-		if ((cCurrentExposure_us < cExposureMin_us) || (cCurrentExposure_us < 0))
+		if ((cCurrentExposure_us < cCameraProp.ExposureMin_us) || (cCurrentExposure_us < 0))
 		{
-			cCurrentExposure_us	=	cExposureMin_us;
+			cCurrentExposure_us	=	cCameraProp.ExposureMin_us;
 			//*	now double check
 			if (cCurrentExposure_us < 1)
 			{
@@ -515,13 +515,13 @@ long			exposureAdjustment_us;	//*	micro-seconds
 		}
 
 		//*	check the limits
-		if (cCurrentExposure_us < cExposureMin_us)
+		if (cCurrentExposure_us < cCameraProp.ExposureMin_us)
 		{
-			cCurrentExposure_us	=	cExposureMin_us;
+			cCurrentExposure_us	=	cCameraProp.ExposureMin_us;
 		}
-		if (cCurrentExposure_us > cExposureMax_us)
+		if (cCurrentExposure_us > cCameraProp.ExposureMax_us)
 		{
-			cCurrentExposure_us	=	cExposureMax_us;
+			cCurrentExposure_us	=	cCameraProp.ExposureMax_us;
 		}
 
 		//*	now check the EXTREAME limits
@@ -562,7 +562,7 @@ bool			lookingForMin;
 	CONSOLE_DEBUG(__FUNCTION__);
 	START_TIMING();
 
-	imageDataLen	=	cCameraXsize * cCameraYsize;
+	imageDataLen	=	cCameraProp.CameraXsize * cCameraProp.CameraYsize;
 
 	if (cCameraDataBuffer != NULL)
 	{

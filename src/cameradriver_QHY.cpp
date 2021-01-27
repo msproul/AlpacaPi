@@ -213,13 +213,13 @@ char			modeName[32];
 			printf("Chip Max Resolution is %d x %d,depth is %d\n",width, height, bpp);
 
 			cBitDepth		=	bpp;
-			cCameraXsize	=	width;
-			cCameraYsize	=	height;
-			cPixelSizeX		=	pixelw;
-			cPixelSizeY		=	pixelh;
+			cCameraProp.CameraXsize	=	width;
+			cCameraProp.CameraYsize	=	height;
+			cCameraProp.PixelSizeX	=	pixelw;
+			cCameraProp.PixelSizeY	=	pixelh;
 
-			cNumX			=	cCameraXsize;
-			cNumY			=	cCameraYsize;
+			cCameraProp.NumX		=	cCameraProp.CameraXsize;
+			cCameraProp.NumY		=	cCameraProp.CameraYsize;
 		}
 		qhyRetCode	=	InitQHYCCD(cQHYcamHandle);
 //		CONSOLE_DEBUG_W_INT32("InitQHYCCD() returned qhyRetCode\t=",	qhyRetCode);
@@ -344,37 +344,37 @@ char			modeName[32];
 				case CAM_BIN1X1MODE:				//!< check if camera has bin1x1 mode
 					if (controlValid)
 					{
-						cMaxbinX	=	1;
-						cMaxbinY	=	1;
+						cCameraProp.MaxbinX	=	1;
+						cCameraProp.MaxbinY	=	1;
 					}
 					break;
 
 				case CAM_BIN2X2MODE:				//!< check if camera has bin2x2 mode
 					if (controlValid)
 					{
-						cMaxbinX	=	2;
-						cMaxbinY	=	2;
+						cCameraProp.MaxbinX	=	2;
+						cCameraProp.MaxbinY	=	2;
 					}
 					break;
 
 				case CAM_BIN3X3MODE:				//!< check if camera has bin3x3 mode
 					if (controlValid)
 					{
-						cMaxbinX	=	3;
-						cMaxbinY	=	3;
+						cCameraProp.MaxbinX	=	3;
+						cCameraProp.MaxbinY	=	3;
 					}
 					break;
 
 				case CAM_BIN4X4MODE:				//!< check if camera has bin4x4 mode
 					if (controlValid)
 					{
-						cMaxbinX	=	4;
-						cMaxbinY	=	4;
+						cCameraProp.MaxbinX	=	4;
+						cCameraProp.MaxbinY	=	4;
 					}
 					break;
 
 				case CAM_MECHANICALSHUTTER:					//!< mechanical shutter
-					cHasShutter	=	controlValid;
+					cCameraProp.HasShutter	=	controlValid;
 					break;
 
 				case CAM_TRIGER_INTERFACE:					//!< triger
@@ -498,7 +498,7 @@ char			modeName[32];
 
 			}
 		}
-		CONSOLE_DEBUG_W_NUM("cMaxbinX\t\t\t=",	cMaxbinX);
+		CONSOLE_DEBUG_W_NUM("cCameraProp.MaxbinX\t\t\t=",	cCameraProp.MaxbinX);
 
 		qhyRetCode	=	GetQHYCCDHumidity(cQHYcamHandle, &humidity);
 		if (qhyRetCode == QHYCCD_SUCCESS)
@@ -540,8 +540,8 @@ double	controlStep;
 		{
 			CONSOLE_DEBUG_W_DBL("Gain_min\t\t\t=", controlMin);
 			CONSOLE_DEBUG_W_DBL("Gain_max\t\t\t=", controlMax);
-			cGainMin	=	controlMin;
-			cGainMax	=	controlMax;
+			cCameraProp.GainMin	=	controlMin;
+			cCameraProp.GainMax	=	controlMax;
 		}
 		//===============================================================
 		//*	Exposure min/max/step
@@ -555,8 +555,8 @@ double	controlStep;
 		{
 			CONSOLE_DEBUG_W_DBL("exposure min\t\t=", controlMin);
 			CONSOLE_DEBUG_W_DBL("exposure max\t\t=", controlMax);
-			cExposureMin_us	=	controlMin;
-			cExposureMax_us	=	controlMax;
+			cCameraProp.ExposureMin_us	=	controlMin;
+			cCameraProp.ExposureMax_us	=	controlMax;
 		}
 
 

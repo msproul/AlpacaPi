@@ -214,12 +214,7 @@ int		iii;
 
 	//============================================
 	//*	disable all of the extra commands until we know if they exist
-	for (iii=kDomeBox_GoLeft; iii<=kDomeBox_BumpRight; iii++)
-	{
-		SetWidgetBGColor(		iii,	CV_RGB(128,	128,	128));
-		SetWidgetValid(			iii,	false);
-	}
-
+	ResetKnownCommands();
 
 
 	SetWidgetBGColor(	kDomeBox_Stop,		CV_RGB(255,	0,	0));
@@ -294,6 +289,21 @@ int		iii;
 
 
 }
+
+//******************************************************************************
+void	WindowTabDome::ResetKnownCommands(void)
+{
+int		iii;
+	//============================================
+	//*	disable all of the extra commands until we know if they exist
+	for (iii=kDomeBox_GoLeft; iii<=kDomeBox_BumpRight; iii++)
+	{
+		SetWidgetBGColor(		iii,	CV_RGB(128,	128,	128));
+		SetWidgetValid(			iii,	false);
+	}
+
+}
+
 
 //******************************************************************************
 void	WindowTabDome::DrawGraphWidget(IplImage *openCV_Image, const int widgitIdx)

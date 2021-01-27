@@ -194,8 +194,8 @@ int				bytesPerPixel2;	//*	calculated 2 different ways
 		cOpenCV_LiveDisplay	=	NULL;
 	}
 
-	width			=	cCameraXsize;
-	height			=	cCameraYsize;
+	width			=	cCameraProp.CameraXsize;
+	height			=	cCameraProp.CameraYsize;
 	GetImage_ROI_info();
 
 //	CONSOLE_DEBUG_W_NUM("currentROIimageType\t=",	cROIinfo.currentROIimageType);
@@ -433,9 +433,9 @@ int		gainPercent;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
-	if (cGainMax > 0)
+	if (cCameraProp.GainMax > 0)
 	{
-		gainPercent	=	(cGain * 100) / cGainMax;
+		gainPercent	=	(cCameraProp.Gain * 100) / cCameraProp.GainMax;
 	}
 	else
 	{
@@ -461,7 +461,7 @@ int		gainPercent;
 		fprintf(filePointer, "FireCapture v2.6  Settings\r\n");
 		fprintf(filePointer, "------------------------------------\r\n");
 
-		exposureTim_ms	=	(cLastexposure_duration_us * 1.0) / 1000.0;
+		exposureTim_ms	=	(cCameraProp.Lastexposure_duration_us * 1.0) / 1000.0;
 
 		fprintf(filePointer, "Camera=%s\r\n",					cDeviceName);
 //		fprintf(filePointer, "Filter=%s\r\n",					foo);L
@@ -472,15 +472,15 @@ int		gainPercent;
 //		fprintf(filePointer, "Mid=%s\r\n",						foo);134141.422
 //		fprintf(filePointer, "End=%s\r\n",						foo);134156.435
 
-		FormatTimeStringISO8601(&cLastexposure_StartTime, timeStampString);
+		FormatTimeStringISO8601(&cCameraProp.Lastexposure_StartTime, timeStampString);
 		fprintf(filePointer, "Start(UT)=%s\r\n",				timeStampString);	//	174126.410
 
 //		fprintf(filePointer, "Mid(UT)=%s\r\n",					foo);174141.422
 
-		FormatTimeStringISO8601(&cLastexposure_EndTime, timeStampString);
+		FormatTimeStringISO8601(&cCameraProp.Lastexposure_EndTime, timeStampString);
 		fprintf(filePointer, "End(UT)=%s\r\n",					timeStampString);	//	174156.435
 
-		imageDuration_secs	=	cLastexposure_EndTime.tv_sec - cLastexposure_StartTime.tv_sec;
+		imageDuration_secs	=	cCameraProp.Lastexposure_EndTime.tv_sec - cCameraProp.Lastexposure_StartTime.tv_sec;
 		fprintf(filePointer, "Duration=%3.3fs\r\n",				imageDuration_secs);	//	30.025s
 
 //		fprintf(filePointer, "Date_format=%s\r\n",				foo);ddMMyy
@@ -495,11 +495,11 @@ int		gainPercent;
 
 //		fprintf(filePointer, "Compressed AVI=%s\r\n",			foo);false
 		fprintf(filePointer, "Binning=%s\r\n",					"no");
-		fprintf(filePointer, "ROI=%dx%d\r\n",					cCameraXsize, cCameraYsize);
+		fprintf(filePointer, "ROI=%dx%d\r\n",					cCameraProp.CameraXsize, cCameraProp.CameraYsize);
 		fprintf(filePointer, "ROI(Offset)=%dx%d\r\n",			0, 0);
 		fprintf(filePointer, "FPS (avg.)=%1.1f\r\n",			cFrameRate);
 		fprintf(filePointer, "Shutter=%1.3fms\r\n",				exposureTim_ms);
-		fprintf(filePointer, "Gain=%d (%d)\r\n",				cGain, gainPercent);	//	298 (49%)
+		fprintf(filePointer, "Gain=%d (%d)\r\n",				cCameraProp.Gain, gainPercent);	//	298 (49%)
 //		fprintf(filePointer, "Gamma=%s\r\n",					foo);50
 //		fprintf(filePointer, "FPS=%s\r\n",						foo);100 (off)
 //		fprintf(filePointer, "HardwareBin=%s\r\n",				foo);off

@@ -250,25 +250,25 @@ ASI_ERROR_CODE		asiErrorCode;
 
 	strcpy(cDeviceName,		cAsiCameraInfo.Name);
 
-	cCameraID			=	cAsiCameraInfo.CameraID;
-	cCameraXsize		=	cAsiCameraInfo.MaxWidth;
-	cCameraYsize		=	cAsiCameraInfo.MaxHeight;
-	cIsColorCam			=	cAsiCameraInfo.IsColorCam;
-	cBayerPattern		=	cAsiCameraInfo.BayerPattern;
-	cPixelSizeX			=	cAsiCameraInfo.PixelSize;
-	cPixelSizeY			=	cAsiCameraInfo.PixelSize;
-	cHasShutter			=	cAsiCameraInfo.MechanicalShutter;
-	cSt4Port			=	cAsiCameraInfo.ST4Port;
-	cIsCoolerCam		=	cAsiCameraInfo.IsCoolerCam;
-	cIsUSB3Host			=	cAsiCameraInfo.IsUSB3Host;
-	cIsUSB3Camera		=	cAsiCameraInfo.IsUSB3Camera;
-	cElectronsPerADU	=	cAsiCameraInfo.ElecPerADU;
-	cBitDepth			=	cAsiCameraInfo.BitDepth;
-	cIsTriggerCam		=	cAsiCameraInfo.IsTriggerCam;
-	cExposureResolution	=	0.000001;
+	cCameraID						=	cAsiCameraInfo.CameraID;
+	cCameraProp.CameraXsize			=	cAsiCameraInfo.MaxWidth;
+	cCameraProp.CameraYsize			=	cAsiCameraInfo.MaxHeight;
+	cIsColorCam						=	cAsiCameraInfo.IsColorCam;
+	cBayerPattern					=	cAsiCameraInfo.BayerPattern;
+	cCameraProp.PixelSizeX			=	cAsiCameraInfo.PixelSize;
+	cCameraProp.PixelSizeY			=	cAsiCameraInfo.PixelSize;
+	cCameraProp.HasShutter			=	cAsiCameraInfo.MechanicalShutter;
+	cSt4Port						=	cAsiCameraInfo.ST4Port;
+	cIsCoolerCam					=	cAsiCameraInfo.IsCoolerCam;
+	cIsUSB3Host						=	cAsiCameraInfo.IsUSB3Host;
+	cIsUSB3Camera					=	cAsiCameraInfo.IsUSB3Camera;
+	cCameraProp.ElectronsPerADU		=	cAsiCameraInfo.ElecPerADU;
+	cBitDepth						=	cAsiCameraInfo.BitDepth;
+	cIsTriggerCam					=	cAsiCameraInfo.IsTriggerCam;
+	cCameraProp.ExposureResolution	=	0.000001;
 
-	cNumX				=	cCameraXsize;
-	cNumY				=	cCameraYsize;
+	cCameraProp.NumX		=	cCameraProp.CameraXsize;
+	cCameraProp.NumY		=	cCameraProp.CameraYsize;
 
 	Get_ASI_SensorName(cDeviceName, cSensorName);
 
@@ -278,12 +278,12 @@ ASI_ERROR_CODE		asiErrorCode;
 	ii	=	0;
 	while ((cAsiCameraInfo.SupportedBins[ii] > 0) && (ii<16))
 	{
-		if (cAsiCameraInfo.SupportedBins[ii] > cMaxbinX)
+		if (cAsiCameraInfo.SupportedBins[ii] > cCameraProp.MaxbinX)
 		{
 			//*	Maximum binning for the camera X axis
-			cMaxbinX	=	cAsiCameraInfo.SupportedBins[ii];
+			cCameraProp.MaxbinX	=	cAsiCameraInfo.SupportedBins[ii];
 			//*	Maximum binning for the camera Y axis
-			cMaxbinY	=	cAsiCameraInfo.SupportedBins[ii];
+			cCameraProp.MaxbinY	=	cAsiCameraInfo.SupportedBins[ii];
 		}
 		ii++;
 	}
@@ -414,16 +414,16 @@ ASI_CONTROL_CAPS	controlCaps;
 		switch(controlCaps.ControlType)
 		{
 			case ASI_GAIN:
-				cGainMin		=	controlCaps.MinValue;
-				cGainMax		=	controlCaps.MaxValue;
-				cGain_default	=	controlCaps.DefaultValue;
+				cCameraProp.GainMin	=	controlCaps.MinValue;
+				cCameraProp.GainMax	=	controlCaps.MaxValue;
+				cGain_default		=	controlCaps.DefaultValue;
 
 				break;
 
 			case ASI_EXPOSURE:
-				cExposureMin_us		=	controlCaps.MinValue;
-				cExposureMax_us		=	controlCaps.MaxValue;
-				cExposureDefault_us	=	controlCaps.DefaultValue;
+				cCameraProp.ExposureMin_us	=	controlCaps.MinValue;
+				cCameraProp.ExposureMax_us	=	controlCaps.MaxValue;
+				cExposureDefault_us			=	controlCaps.DefaultValue;
 				break;
 
 			case ASI_GAMMA:
@@ -446,17 +446,17 @@ ASI_CONTROL_CAPS	controlCaps;
 				break;
 
 			case ASI_HIGH_SPEED_MODE:
-				cCanFastReadout		=	true;
+				cCameraProp.CanFastReadout		=	true;
 				break;
 
 			case ASI_COOLER_POWER_PERC:
-				cCanGetCoolerPower	=	true;
+				cCameraProp.CanGetCoolerPower	=	true;
 				break;
 
 			case ASI_TARGET_TEMP:				// not need *10
 				if (controlCaps.IsWritable)
 				{
-					cCansetccdtemperature		=	true;
+					cCameraProp.Cansetccdtemperature		=	true;
 				}
 				break;
 
@@ -712,8 +712,8 @@ bool				cameraIsBusy;
 					else
 					{
 //						CONSOLE_DEBUG_W_NUM("exposureStatatus\t=",	exposureStatatus);
-						cLastexposure_duration_us	=	exposureMicrosecs;
-						gettimeofday(&cLastexposure_StartTime, NULL);
+						cCameraProp.Lastexposure_duration_us	=	exposureMicrosecs;
+						gettimeofday(&cCameraProp.Lastexposure_StartTime, NULL);
 						asiErrorCode	=	ASIStartExposure(cCameraID, ASI_FALSE);
 						if (asiErrorCode == ASI_SUCCESS)
 						{
@@ -822,7 +822,7 @@ ASI_EXPOSURE_STATUS		exposureStatatus;
 					break;
 
 				case ASI_EXP_SUCCESS:		//*	exposure finished and waiting for download
-					gettimeofday(&cLastexposure_EndTime, NULL);
+					gettimeofday(&cCameraProp.Lastexposure_EndTime, NULL);
 					exposureState	=	kExposure_Success;
 					break;
 
@@ -888,7 +888,7 @@ ASI_BOOL			bAuto		=	ASI_FALSE;
 												bAuto);
 		if (asiErrorCode == ASI_SUCCESS)
 		{
-			cLastexposure_duration_us	=	cCurrentExposure_us;
+			cCameraProp.Lastexposure_duration_us	=	cCurrentExposure_us;
 		}
 		else
 		{
@@ -901,7 +901,7 @@ ASI_BOOL			bAuto		=	ASI_FALSE;
 		{
 			alpacaErrCode	=	kASCOM_Err_Success;
 
-			gettimeofday(&cLastexposure_StartTime, NULL);
+			gettimeofday(&cCameraProp.Lastexposure_StartTime, NULL);
 
 
 		#ifdef _USE_OPENCV_
@@ -1010,8 +1010,8 @@ int				deltaSecs;
 		#endif // _DEBUG_VIDEO_
 
 			//*	calculate frames per sec
-			gettimeofday(&cLastexposure_EndTime, NULL);
-			deltaSecs	=	cLastexposure_EndTime.tv_sec - cLastexposure_StartTime.tv_sec;
+			gettimeofday(&cCameraProp.Lastexposure_EndTime, NULL);
+			deltaSecs	=	cCameraProp.Lastexposure_EndTime.tv_sec - cCameraProp.Lastexposure_StartTime.tv_sec;
 			if (deltaSecs > 0)
 			{
 				cFrameRate	=	(cNumVideoFramesSaved * 1.0) / deltaSecs;
@@ -1041,7 +1041,7 @@ int				deltaSecs;
 									8,							//	int line_type CV_DEFAULT(8),
 									0);							//	int shift CV_DEFAULT(0));
 
-					FormatTimeStringISO8601(&cLastexposure_EndTime, timeStampString);
+					FormatTimeStringISO8601(&cCameraProp.Lastexposure_EndTime, timeStampString);
 					point1.x	=	5;
 					point1.y	=	cOpenCV_Image->height - 10;
 					cvPutText(	cOpenCV_Image,	timeStampString,	point1,	&cOverlayTextFont,	cVideoOverlayColor);
@@ -1054,8 +1054,8 @@ int				deltaSecs;
 					{
 					double	lastExposureTimeSecs;
 
-						lastExposureTimeSecs	=	cLastexposure_EndTime.tv_sec;
-						lastExposureTimeSecs	+=	cLastexposure_EndTime.tv_usec / 1000000.0;
+						lastExposureTimeSecs	=	cCameraProp.Lastexposure_EndTime.tv_sec;
+						lastExposureTimeSecs	+=	cCameraProp.Lastexposure_EndTime.tv_usec / 1000000.0;
 
 						fprintf(cVideoTimeStampFilePtr, "%d,%s,%1.3f\r\n",	cNumVideoFramesSaved,
 																			timeStampString,
@@ -1122,7 +1122,7 @@ int				deltaSecs;
 		asiErrorCode	=	ASIStopVideoCapture(cCameraID);
 		CONSOLE_DEBUG_W_NUM("ASI Video capture stopped, asiErrorCode\t=", asiErrorCode);
 
-		gettimeofday(&cLastexposure_EndTime, NULL);
+		gettimeofday(&cCameraProp.Lastexposure_EndTime, NULL);
 
 
 		//*	time to stop taking video
@@ -2132,8 +2132,8 @@ char				asiErrorMsgString[64];
 
 
 				//*	we have to allocate a buffer big enough to hold the image
-				pixelCount	=	cCameraXsize *
-								cCameraYsize;
+				pixelCount	=	cCameraProp.CameraXsize *
+								cCameraProp.CameraYsize;
 				bufferSize	=	(pixelCount * 3) + 100;
 
 				AllcateImageBuffer(-1);		//*	let it figure out how much

@@ -173,10 +173,10 @@ quickSpin			quickSpinStruct;
 	strcpy(cDeviceName,			"FLIR");
 
 	//*	we have to have something here
-	cCameraXsize			=	4240;
-	cCameraYsize			=	2824;
-	cNumX					=	cCameraXsize;
-	cNumY					=	cCameraYsize;
+	cCameraProp.CameraXsize	=	4240;
+	cCameraProp.CameraYsize	=	2824;
+	cCameraProp.NumX		=	cCameraProp.CameraXsize;
+	cCameraProp.NumY		=	cCameraProp.CameraYsize;
 
 	cSpinCameraHandle		=	hCamera;
 	cSpinImageHandle		=	NULL;
@@ -600,7 +600,7 @@ spinError			spinErr;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
-	gettimeofday(&cLastexposure_StartTime, NULL);
+	gettimeofday(&cCameraProp.Lastexposure_StartTime, NULL);
 	//
 	// Begin acquiring images
 	//
@@ -736,13 +736,13 @@ size_t					bufferLen;
 				spinErr	=	spinImageGetWidth(cSpinImageHandle, &spinnakerWidth);
 				if (spinErr == SPINNAKER_ERR_SUCCESS)
 				{
-					cCameraXsize	=	spinnakerWidth;
+					cCameraProp.CameraXsize	=	spinnakerWidth;
 				}
 				// Retrieve image height
 				spinErr	=	spinImageGetHeight(cSpinImageHandle, &spinnakerHeight);
 				if (spinErr == SPINNAKER_ERR_SUCCESS)
 				{
-					cCameraYsize	=	spinnakerHeight;
+					cCameraProp.CameraYsize	=	spinnakerHeight;
 				}
 				// Retrieve bits per pixel
 				spinErr	=	spinImageGetBitsPerPixel(cSpinImageHandle, &spinnakerBitsPerPixel);
