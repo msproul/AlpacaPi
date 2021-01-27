@@ -70,19 +70,6 @@ static char	gAlpacaPiTxt1[]	=
 };
 
 //**************************************************************************************
-static char	gAlpacaPiTxt2[]	=
-{
-	"AlpacaPi Project\r"
-};
-
-//**************************************************************************************
-static char	gAlpacaPiTxt3[]	=
-{
-	"AlpacaPi Project\r"
-};
-
-
-//**************************************************************************************
 void	WindowTabDeviceSelect::SetupWindowControls(void)
 {
 int		yLoc;

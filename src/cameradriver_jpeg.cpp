@@ -76,8 +76,8 @@ char						imageFilePath[128];
 	{
 		jpeg_stdio_dest(&jinfo, outputFile);
 
-		jinfo.image_width		=	cCameraXsize;
-		jinfo.image_height		=	cCameraYsize;
+		jinfo.image_width		=	cCameraProp.CameraXsize;
+		jinfo.image_height		=	cCameraProp.CameraYsize;
 		jinfo.input_components	=	3;
 		jinfo.in_color_space	=	JCS_RGB;
 
@@ -86,7 +86,7 @@ char						imageFilePath[128];
 
 		jpeg_start_compress(&jinfo, TRUE);
 
-		row_stride				=	cCameraXsize * 3;
+		row_stride				=	cCameraProp.CameraXsize * 3;
 
 		while (jinfo.next_scanline < jinfo.image_height)
 		{

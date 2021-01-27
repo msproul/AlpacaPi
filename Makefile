@@ -282,7 +282,7 @@ alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_ROTATOR_
 alpacapi		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
 #alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
 #alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_LX200_
-default			:	$(CPP_OBJECTS)				\
+alpacapi		:	$(CPP_OBJECTS)				\
 					$(ALPACA_OBJECTS)			\
 					$(SOCKET_OBJECTS)			\
 

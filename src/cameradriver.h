@@ -565,7 +565,11 @@ protected:
 	TYPE_CameraProperties	cCameraProp;
 
 
-
+	//*****************************************************************************
+//?	TYPE_CAMERA_STATE		cInternalCameraState;
+//?	TYPE_IMAGE_ROI_Info		cROIinfo;
+//?	TYPE_IMAGE_TYPE			cDesiredImageType;
+	TYPE_IMAGE_ROI_Info		cLastExposure_ROIinfo;
 
 	//=========================================================================================
 	//=========================================================================================
