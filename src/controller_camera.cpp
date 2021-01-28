@@ -1484,7 +1484,7 @@ char			parameterString[128];
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
-	UpdateReceivedFileName("---");
+	UpdateReceivedFileName("unkown");
 	AlpacaDisplayErrorMessage("---");
 
 	if (cHas_readall && cLiveMode)

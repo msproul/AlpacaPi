@@ -1,4 +1,3 @@
-
 //**************************************************************************
 //*	Name:			cameradriver_FLIR.cpp
 //*
@@ -61,8 +60,6 @@ static	spinLibraryVersion	gLibraryVersionHandle;
 static	spinCameraList		gCameraList;
 
 
-
-
 //**************************************************************************************
 void	CreateFLIR_CameraObjects(void)
 {
@@ -77,7 +74,11 @@ spinError		spinErr;
 
 
 	rulesFileOK	=	Check_udev_rulesFile(rulesFileName);
-	if (rulesFileOK == false)
+	if (rulesFileOK)
+	{
+		CONSOLE_DEBUG_W_STR("Rules file is OK:", rulesFileName);
+	}
+	else
 	{
 		LogEvent(	"camera",
 					"Problem with FLIR rules",
@@ -98,6 +99,12 @@ spinError		spinErr;
 									gLibraryVersionHandle.minor,
 									gLibraryVersionHandle.type,
 									gLibraryVersionHandle.build);
+
+		LogEvent(	"camera",
+					"Library version (FLIR)",
+					NULL,
+					kASCOM_Err_Success,
+					gSpinakerVerString);
 
 		AddLibraryVersion("camera", "FLIR", gSpinakerVerString);
 		printf(	"Spinnaker library version: %s\n\n", gSpinakerVerString);
@@ -469,7 +476,7 @@ spinNodeType		featureType;
 					strcpy(featureValue, "Unknown value");
 				}
 
-				CONSOLE_DEBUG_W_2STR("Feature:", featureName, featureValue);
+		//		CONSOLE_DEBUG_W_2STR("Feature:", featureName, featureValue);
 				//==========================================================
 				//*	extract the information we care about
 				if (strcasecmp(featureName, "DeviceSerialNumber") == 0)
@@ -621,6 +628,7 @@ spinError			spinErr;
 			spinErr	=	spinCameraGetNodeMap(cSpinCameraHandle, &cSpinNodeMapHandle);
 			if (spinErr == SPINNAKER_ERR_SUCCESS)
 			{
+				CONSOLE_DEBUG("Calling SetFlirAqcuistionMode()");
 				spinErr	=	SetFlirAqcuistionMode(1);
 				CONSOLE_DEBUG_W_NUM("SetFlirAqcuistionMode returned", spinErr);
 			}
@@ -630,9 +638,11 @@ spinError			spinErr;
 			}
 
 		}
+		CONSOLE_DEBUG(__FUNCTION__);
 		spinErr	=	spinCameraBeginAcquisition(cSpinCameraHandle);
 		if (spinErr == SPINNAKER_ERR_SUCCESS)
 		{
+			CONSOLE_DEBUG("spinCameraBeginAcquisition  SUCCESS!!!");
 			cInternalCameraState	=	kCameraState_TakingPicture;
 			alpacaErrCode			=	kASCOM_Err_Success;
 		}
@@ -646,6 +656,7 @@ spinError			spinErr;
 	{
 		CONSOLE_DEBUG("cSpinCameraHandle is NULL");
 	}
+	CONSOLE_DEBUG(__FUNCTION__);
 	return(alpacaErrCode);
 }
 

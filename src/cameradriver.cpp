@@ -389,16 +389,7 @@ int	iii;
 	cInternalCameraState			=	kCameraState_Idle;
 	cCameraDataBuffer				=	NULL;
 	cCameraBGRbuffer				=	NULL;
-//-	cLastexposure_StartTime.tv_sec	=	0;
-//-	cLastexposure_EndTime.tv_sec	=	0;
-//-	cLastexposure_duration_us		=	0;
 
-	//===================================
-	//*	subframe information
-//-	cStartX							=	0;
-//-	cStartY							=	0;
-//-	cNumX							=	0;
-//-	cNumY							=	0;
 
 	cCameraDataBuffLen				=	0;
 	cAutoAdjustExposure				=	gAutoExposure;
@@ -412,7 +403,6 @@ int	iii;
 	cSaveImages						=	false;
 	cSaveNextImage					=	false;
 	cNewImageReadyToDisplay			=	false;
-//-	cImageReady						=	false;
 	cWorkingLoopCnt					=	0;
 #ifdef _USE_OPENCV_
 	cCreateOpenCVwindow				=	true;
@@ -2702,7 +2692,7 @@ double				myExposure_usecs;
 			}
 			if ((myExposure_usecs > 0) && (myExposure_usecs >= cCameraProp.ExposureMin_us))
 			{
-				CONSOLE_DEBUG(__FUNCTION__);
+				CONSOLE_DEBUG("cCameraProp.ImageReady set to FALSE!!!!!!!!!!!!!!");
 				cCameraProp.ImageReady		=	false;
 				cAVIfourcc					=	0;
 				cFrameRate					=	0;
@@ -2948,8 +2938,8 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
 TYPE_ASCOM_STATUS	CameraDriver::Get_Imagearray(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
+TYPE_ASCOM_STATUS	tempErrCode;
 int					pixelCount;
-int					iii;
 int					mySocket;
 char				imageTimeString[64];
 double				exposureTimeSecs;
@@ -2982,26 +2972,30 @@ double				exposureTimeSecs;
 
 	//========================================================================================
 	//*	record the sensor temp
-	alpacaErrCode	=	Read_SensorTemp();
-	JsonResponse_Add_Double(mySocket,
-							reqData->jsonTextBuffer,
-							kMaxJsonBuffLen,
-							"ccdtemperature",
-							cCameraTemp_Dbl,
-							INCLUDE_COMMA);
+	tempErrCode	=	Read_SensorTemp();
+	if (tempErrCode == kASCOM_Err_Success)
+	{
+		JsonResponse_Add_Double(mySocket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								"ccdtemperature",
+								cCameraTemp_Dbl,
+								INCLUDE_COMMA);
+	}
 
 
 	//*	get the ROI information which has the current image type
 //	GetImage_ROI_info();
 	pixelCount	=	cLastExposure_ROIinfo.currentROIwidth * cLastExposure_ROIinfo.currentROIheight;
-	CONSOLE_DEBUG_W_NUM("cLastExposure_ROIinfo.currentROIwidth\t=", cLastExposure_ROIinfo.currentROIwidth);
-	CONSOLE_DEBUG_W_NUM("cLastExposure_ROIinfo.currentROIheight\t=", cLastExposure_ROIinfo.currentROIheight);
+	CONSOLE_DEBUG_W_NUM("cLastExposure_ROIinfo.currentROIwidth\t=",		cLastExposure_ROIinfo.currentROIwidth);
+	CONSOLE_DEBUG_W_NUM("cLastExposure_ROIinfo.currentROIheight\t=",	cLastExposure_ROIinfo.currentROIheight);
 	CONSOLE_DEBUG_W_NUM("pixelCount\t=", pixelCount);
 
 	CONSOLE_DEBUG_W_NUM("cCameraProp.ImageReady\t=", cCameraProp.ImageReady);
 	CONSOLE_DEBUG_W_HEX("cCameraDataBuffer\t=", cCameraDataBuffer);
 	if (cCameraProp.ImageReady && (cCameraDataBuffer != NULL))
 	{
+		alpacaErrCode	=	kASCOM_Err_Success;
 		//========================================================================================
 		//*	record the image type
 //+			Read_ImageTypeString(cLastExposure_ROIinfo.currentROIimageType, asiImageTypeString);
@@ -3074,6 +3068,9 @@ double				exposureTimeSecs;
 
 			case kImageType_RGB24:
 				CONSOLE_DEBUG("kImageType_RGB24");
+
+				alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "RGB24 not finished");
 				Send_imagearray_rgb24(	mySocket,
 										cCameraDataBuffer,
 										cLastExposure_ROIinfo.currentROIheight,		//*	# of rows
@@ -3164,7 +3161,8 @@ int				totalValuesWritten;
 				sprintf(lineBuff, "%d,", pixelValue);
 				strcat(longBuffer, lineBuff);
 				dataElementCnt++;
-				if (dataElementCnt >= 50)
+		//		if (dataElementCnt >= 50)
+				if (dataElementCnt >= 16)
 				{
 					strcat(longBuffer, "\n");
 					bufLen			=	strlen(longBuffer);
@@ -5110,6 +5108,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode;
 			gettimeofday(&cCameraProp.Lastexposure_EndTime, NULL);
 			cNewImageReadyToDisplay		=	true;
 			cCameraProp.ImageReady		=	true;
+			CONSOLE_DEBUG("cCameraProp.ImageReady set to TRUE!!!!!!!!!!!!!!");
 
 			if (cImageMode == kImageMode_Live)
 			{

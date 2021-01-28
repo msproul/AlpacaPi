@@ -120,6 +120,11 @@ class DomeDriver: public AlpacaDriver
 				TYPE_ASCOM_STATUS	Put_SyncToAzimuth(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 
 				//*	extras added by MLS
+				TYPE_ASCOM_STATUS	Put_PowerOn(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
+				TYPE_ASCOM_STATUS	Put_PowerOff(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
+				TYPE_ASCOM_STATUS	Put_AuxiliaryOn(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
+				TYPE_ASCOM_STATUS	Put_AuxiliaryOff(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
+
 				TYPE_ASCOM_STATUS	Put_BumpMove(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, int direction);
 				TYPE_ASCOM_STATUS	Put_NormalMove(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, int direction);
 				TYPE_ASCOM_STATUS	Put_SlowMove(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, int direction);
@@ -127,15 +132,17 @@ class DomeDriver: public AlpacaDriver
 				TYPE_ASCOM_STATUS	Get_Currentstate(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 				TYPE_ASCOM_STATUS	Get_Readall(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 
-		virtual	void	StartDomeMoving(const int direction);
-		virtual	void	StopDomeMoving(bool rightNow);
-		virtual	void	CheckMoving(void);
-		virtual	void	UpdateDomePosition(void);
-		virtual	bool	BumpDomeSpeed(const int howMuch);
-		virtual	void	CheckSensors(void);
-		virtual	void	CheckDomeButtons(void);
-		virtual	void 	ProcessButtonPressed(const int pressedButton);
+		virtual	void				StartDomeMoving(const int direction);
+		virtual	void				StopDomeMoving(bool rightNow);
+		virtual	void				CheckMoving(void);
+		virtual	void				UpdateDomePosition(void);
+		virtual	bool				BumpDomeSpeed(const int howMuch);
+		virtual	void				CheckSensors(void);
+		virtual	void				CheckDomeButtons(void);
+		virtual	void 				ProcessButtonPressed(const int pressedButton);
 
+		virtual	TYPE_ASCOM_STATUS	SetPower(bool onOffFlag);
+		virtual	TYPE_ASCOM_STATUS	SetAuxiliary(bool onOffFlag);
 		virtual	TYPE_ASCOM_STATUS 	OpenShutter(char *alpacaErrMsg);
 		virtual	TYPE_ASCOM_STATUS 	CloseShutter(char *alpacaErrMsg);
 

@@ -67,6 +67,8 @@
 //*	Jan 10,	2021	<MLS> Put_FindHome() can now can figure out which way to go home ;)
 //*	Jan 12,	2021	<MLS> Added RunStateMachine_Dome() & RunStateMachine_ROR()
 //*	Jan 24,	2021	<MLS> Converted Domedriver to use properties struct
+//*	Jan 27,	2021	<MLS> Added Added Put_PowerOn(), Put_PowerOff() & SetPower()
+//*	Jan 27,	2021	<MLS> Added Added Put_AuxiliaryOn(), Put_AuxiliaryOff() & SetAuxiliary
 //*****************************************************************************
 //*	cd /home/pi/dev-mark/alpaca
 //*	LOGFILE=logfile.txt
@@ -173,6 +175,14 @@ enum
 	//==============================================================
 	//*	extra commands added by MLS
 	kCmd_Dome_Extras,
+
+	kCmd_Dome_poweron,			//*	Turn dome power on
+	kCmd_Dome_poweroff,			//*	Turn dome power off
+
+	kCmd_Dome_auxiliaryon,		//*	Turn auxiliary   on
+	kCmd_Dome_auxiliaryoff,		//*	Turn auxiliary off
+
+
 	kCmd_Dome_goleft,			//*	Move the dome left (CCW)
 	kCmd_Dome_goright,			//*	Move the dome right (CW)
 
@@ -225,6 +235,14 @@ static TYPE_CmdEntry	gDomeCmdTable[]	=
 	//==============================================================
 	//*	extra commands added by MLS
 	{	"--extras",			kCmd_Dome_Extras,			kCmdType_GET	},
+
+
+	{	"poweron",			kCmd_Dome_poweron,			kCmdType_PUT	},
+	{	"poweroff",			kCmd_Dome_poweroff,			kCmdType_PUT	},
+
+	{	"auxiliaryon",		kCmd_Dome_auxiliaryon,		kCmdType_PUT	},
+	{	"auxiliaryoff",		kCmd_Dome_auxiliaryoff,		kCmdType_PUT	},
+
 
 #ifndef _ENABLE_ROR_
 	{	"goleft",			kCmd_Dome_goleft,			kCmdType_PUT	},
@@ -553,6 +571,55 @@ int					mySocket;
 				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Get not supported");
 			}
 			break;
+
+		case kCmd_Dome_poweron:
+			if (reqData->get_putIndicator == 'P')
+			{
+				alpacaErrCode	=	Put_PowerOn(reqData, alpacaErrMsg);
+			}
+			else
+			{
+				alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Get not supported");
+			}
+			break;
+
+		case kCmd_Dome_poweroff:
+			if (reqData->get_putIndicator == 'P')
+			{
+				alpacaErrCode	=	Put_PowerOff(reqData, alpacaErrMsg);
+			}
+			else
+			{
+				alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Get not supported");
+			}
+			break;
+
+		case kCmd_Dome_auxiliaryon:
+			if (reqData->get_putIndicator == 'P')
+			{
+				alpacaErrCode	=	Put_AuxiliaryOn(reqData, alpacaErrMsg);
+			}
+			else
+			{
+				alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Get not supported");
+			}
+			break;
+
+		case kCmd_Dome_auxiliaryoff:
+			if (reqData->get_putIndicator == 'P')
+			{
+				alpacaErrCode	=	Put_AuxiliaryOff(reqData, alpacaErrMsg);
+			}
+			else
+			{
+				alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Get not supported");
+			}
+			break;
+
 
 		case kCmd_Dome_goleft:
 			if (reqData->get_putIndicator == 'P')
@@ -1751,6 +1818,43 @@ char				stateString[48];
 }
 
 //*****************************************************************************
+TYPE_ASCOM_STATUS	DomeDriver::Put_PowerOn(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode;
+
+	alpacaErrCode	=	SetPower(true);
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	DomeDriver::Put_PowerOff(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode;
+
+	alpacaErrCode	=	SetPower(false);
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	DomeDriver::Put_AuxiliaryOn(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode;
+
+	alpacaErrCode	=	SetAuxiliary(true);
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	DomeDriver::Put_AuxiliaryOff(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode;
+
+	alpacaErrCode	=	SetAuxiliary(false);
+	return(alpacaErrCode);
+}
+
+
+//*****************************************************************************
 TYPE_ASCOM_STATUS	DomeDriver::Get_Readall(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
@@ -1810,6 +1914,20 @@ char				stateString[48];
 		alpacaErrCode	=	kASCOM_Err_InternalError;
 	}
 	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	DomeDriver::SetPower(bool onOffFlag)
+{
+	//*	this meant to be over-ridden
+	return(kASCOM_Err_MethodNotImplemented);
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	DomeDriver::SetAuxiliary(bool onOffFlag)
+{
+	//*	this meant to be over-ridden
+	return(kASCOM_Err_MethodNotImplemented);
 }
 
 
