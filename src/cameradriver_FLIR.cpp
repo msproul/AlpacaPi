@@ -614,7 +614,7 @@ spinError			spinErr;
 	// *** NOTES ***
 	// What happens when the camera begins acquiring images depends on the
 	// acquisition mode. Single frame captures only a single image, multi
-	// frame catures a set number of images, and continuous captures a
+	// frame captures a set number of images, and continuous captures a
 	// continuous stream of images. Because the example calls for the retrieval
 	// of 10 images, continuous mode has been set.
 	//
@@ -672,6 +672,61 @@ TYPE_EXPOSURE_STATUS	exposureState;
 //	exposureState	=	kExposure_Failed;
 //	exposureState	=	kExposure_Unknown;
 
+#if 1
+//*	experimenting 1/28/2021
+spinError				spinErr;
+bool8_t					isIncomplete	=	false;
+
+	if (cSpinCameraHandle != NULL)
+	{
+		cSpinImageHandle	=	NULL;
+		spinErr	=	spinCameraGetNextImage(cSpinCameraHandle, &cSpinImageHandle);
+		if (spinErr == SPINNAKER_ERR_SUCCESS)
+		{
+			if (cSpinImageHandle != NULL)
+			{
+				// *** NOTES ***
+				// Images can easily be checked for completion. This should be done
+				// whenever a complete image is expected or required. Further, check
+				// image status for a little more insight into why an image is
+				// incomplete.
+				//
+
+				spinErr	=	spinImageIsIncomplete(cSpinImageHandle, &isIncomplete);
+				if (spinErr == SPINNAKER_ERR_SUCCESS)
+				{
+					CONSOLE_DEBUG("spinImageIsIncomplete");
+					if (isIncomplete)
+					{
+						CONSOLE_DEBUG("kExposure_Working");
+						exposureState	=	kExposure_Working;
+					}
+					else
+					{
+
+					}
+				}
+				else
+				{
+					CONSOLE_DEBUG_W_NUM("Unable to determine image completion. Non-fatal error=", spinErr);
+				}
+
+				spinErr				=	spinImageRelease(cSpinImageHandle);
+				cSpinImageHandle	=	NULL;
+			}
+			else
+			{
+				CONSOLE_DEBUG_W_NUM("Unable to determine image completion. Non-fatal error=", spinErr);
+			}
+		}
+		else
+		{
+//			CONSOLE_DEBUG("Failed to get cSpinImageHandle");
+		}
+	}
+#endif
+
+
 	return(exposureState);
 }
 
@@ -701,7 +756,7 @@ size_t					bufferLen;
 	//
 	// *** LATER ***
 	// Once an image from the buffer is saved and/or no longer needed, the
-	// image must be released in orer to keep the buffer from filling up.
+	// image must be released in order to keep the buffer from filling up.
 	//
 
 	if (cSpinCameraHandle != NULL)
@@ -765,7 +820,9 @@ size_t					bufferLen;
 //				CONSOLE_DEBUG_W_NUM("spinnakerPixelFormat=", spinnakerPixelFormat);
 
 				bufferLen	=	sizeof(spinnakerPixelFormatName) - 1;
-				spinErr		=	spinImageGetPixelFormatName(cSpinImageHandle, spinnakerPixelFormatName, &bufferLen);
+				spinErr		=	spinImageGetPixelFormatName(cSpinImageHandle,
+															spinnakerPixelFormatName,
+															&bufferLen);
 //				CONSOLE_DEBUG_W_STR("spinImageGetPixelFormatName=", spinnakerPixelFormatName);
 
 

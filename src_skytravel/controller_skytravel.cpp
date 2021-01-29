@@ -65,6 +65,7 @@ ControllerSkytravel::ControllerSkytravel(	const char *argWindowName)
 	CONSOLE_DEBUG(__FUNCTION__);
 
 	cSkyTravelTabOjbPtr		=	NULL;
+	cSkySettingsTabObjPtr	=	NULL;
 	cDomeTabObjPtr			=	NULL;
 	cDeviceSelectObjPtr		=	NULL;
 	cAlpacaListObjPtr		=	NULL;
@@ -76,7 +77,7 @@ ControllerSkytravel::ControllerSkytravel(	const char *argWindowName)
 	//*	dome specific stuff
 	//*	clear out all of the dome properties data
 	memset(&cDomeProp, 0, sizeof(TYPE_DomeProperties));
-	cDomeProp.ShutterStatus			=	-1;
+	cDomeProp.ShutterStatus	=	-1;
 
 
 	//*	clear all of the telescope specific properties
@@ -85,11 +86,16 @@ ControllerSkytravel::ControllerSkytravel(	const char *argWindowName)
 
 	SetupWindowControls();
 
-	SetWidgetText(kTab_About,		kAboutBox_AlpacaDrvrVersion,		gFullVersionString);
+	SetWidgetText(kTab_ST_About,	kAboutBox_AlpacaDrvrVersion,		gFullVersionString);
 
 }
 
-
+#define	DELETE_OBJ_IF_VALID(objectPtr)	\
+	if (objectPtr != NULL)				\
+	{									\
+		delete objectPtr;				\
+		objectPtr	=	NULL;			\
+	}
 
 //**************************************************************************************
 // Destructor
@@ -97,39 +103,13 @@ ControllerSkytravel::ControllerSkytravel(	const char *argWindowName)
 ControllerSkytravel::~ControllerSkytravel(void)
 {
 	CONSOLE_DEBUG(__FUNCTION__);
-	//=============================================================
-	if (cSkyTravelTabOjbPtr != NULL)
-	{
-		delete cSkyTravelTabOjbPtr;
-		cSkyTravelTabOjbPtr	=	NULL;
-	}
 
-	//=============================================================
-	if (cDomeTabObjPtr != NULL)
-	{
-		delete cDomeTabObjPtr;
-		cDomeTabObjPtr	=	NULL;
-	}
-
-	//=============================================================
-	if (cAlpacaListObjPtr != NULL)
-	{
-		delete cAlpacaListObjPtr;
-		cAlpacaListObjPtr	=	NULL;
-	}
-	//=============================================================
-	if (cDeviceSelectObjPtr != NULL)
-	{
-		delete cDeviceSelectObjPtr;
-		cDeviceSelectObjPtr	=	NULL;
-	}
-
-	//=============================================================
-	if (cAboutBoxTabObjPtr != NULL)
-	{
-		delete cAboutBoxTabObjPtr;
-		cAboutBoxTabObjPtr	=	NULL;
-	}
+	DELETE_OBJ_IF_VALID(cSkyTravelTabOjbPtr);
+	DELETE_OBJ_IF_VALID(cSkySettingsTabObjPtr);
+	DELETE_OBJ_IF_VALID(cDomeTabObjPtr);
+	DELETE_OBJ_IF_VALID(cAlpacaListObjPtr);
+	DELETE_OBJ_IF_VALID(cDeviceSelectObjPtr);
+	DELETE_OBJ_IF_VALID(cAboutBoxTabObjPtr);
 }
 
 
@@ -139,7 +119,7 @@ void	ControllerSkytravel::SetupWindowControls(void)
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-	SetTabCount(kTab_Count);
+	SetTabCount(kTab_ST_Count);
 
 	//=============================================================
 	SetTabText(kTab_SkyTravel,	"SkyTravel");
@@ -151,11 +131,20 @@ void	ControllerSkytravel::SetupWindowControls(void)
 	}
 
 	//=============================================================
-	SetTabText(kTab_Dome,		"Dome");
+	SetTabText(kTab_ST_Settings,	"Settings");
+	cSkySettingsTabObjPtr		=	new WindowTabSTsettings(	cWidth, cHeight, cBackGrndColor, cWindowName);
+	if (cSkySettingsTabObjPtr != NULL)
+	{
+		SetTabWindow(kTab_ST_Settings,	cSkySettingsTabObjPtr);
+		cSkySettingsTabObjPtr->SetParentObjectPtr(this);
+	}
+
+	//=============================================================
+	SetTabText(kTab_ST_Dome,		"Dome");
 	cDomeTabObjPtr	=	new WindowTabDome(cWidth, cHeight, cBackGrndColor, cWindowName, true);
 	if (cDomeTabObjPtr != NULL)
 	{
-		SetTabWindow(kTab_Dome,	cDomeTabObjPtr);
+		SetTabWindow(kTab_ST_Dome,	cDomeTabObjPtr);
 		cDomeTabObjPtr->SetParentObjectPtr(this);
 	}
 
@@ -178,11 +167,11 @@ void	ControllerSkytravel::SetupWindowControls(void)
 	}
 
 	//=============================================================
-	SetTabText(kTab_About,		"About");
+	SetTabText(kTab_ST_About,		"About");
 	cAboutBoxTabObjPtr		=	new WindowTabAbout(	cWidth, cHeight, cBackGrndColor, cWindowName);
 	if (cAboutBoxTabObjPtr != NULL)
 	{
-		SetTabWindow(kTab_About,	cAboutBoxTabObjPtr);
+		SetTabWindow(kTab_ST_About,	cAboutBoxTabObjPtr);
 		cAboutBoxTabObjPtr->SetParentObjectPtr(this);
 	}
 }
@@ -388,7 +377,7 @@ char			ipAddrStr[128];
 												cDomeAlpacaDeviceNum);
 	if (validData)
 	{
-		SetWidgetValid(kTab_Dome,			kDomeBox_Readall,		cDomeHas_readall);
+		SetWidgetValid(kTab_ST_Dome,			kDomeBox_Readall,		cDomeHas_readall);
 		if (cDomeHas_readall == false)
 		{
 			cDeviceAddress	=	cDomeIpAddress;
@@ -398,7 +387,7 @@ char			ipAddrStr[128];
 			if (validData)
 			{
 				strcpy(cAlpacaVersionString, returnString);
-				SetWidgetText(kTab_Dome,		kDomeBox_AlpacaDrvrVersion,		cAlpacaVersionString);
+				SetWidgetText(kTab_ST_Dome,		kDomeBox_AlpacaDrvrVersion,		cAlpacaVersionString);
 			}
 		}
 
@@ -485,19 +474,19 @@ bool	previousOnLineState;
 		{
 			//*	if we slewing, we want to update more often
 //			cUpdateDelta	=	2;
-			SetWidgetText(kTab_Dome, kDomeBox_CurPosition, "Slewing");
+			SetWidgetText(kTab_ST_Dome, kDomeBox_CurPosition, "Slewing");
 		}
 		else if (cDomeProp.AtHome)
 		{
-			SetWidgetText(kTab_Dome, kDomeBox_CurPosition, "Home");
+			SetWidgetText(kTab_ST_Dome, kDomeBox_CurPosition, "Home");
 		}
 		else if (cDomeProp.AtPark)
 		{
-			SetWidgetText(kTab_Dome, kDomeBox_CurPosition, "Park");
+			SetWidgetText(kTab_ST_Dome, kDomeBox_CurPosition, "Park");
 		}
 		else
 		{
-			SetWidgetText(kTab_Dome, kDomeBox_CurPosition, "---");
+			SetWidgetText(kTab_ST_Dome, kDomeBox_CurPosition, "---");
 		}
 
 

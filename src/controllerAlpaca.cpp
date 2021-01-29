@@ -1081,11 +1081,11 @@ uint32_t		tStopMillisecs;
 			//*	deal with the progress bar
 			tCurrentMillisecs	=	millis();
 			tDeltaMillisecs		=	tCurrentMillisecs - tStartMillisecs;
-			//*	dont do anything for the first 2 seconds
-			if (tDeltaMillisecs > 2000)
+			//*	dont do anything at first
+			if (tDeltaMillisecs > 1500)
 			{
 				tDeltaMillisecs	=	tCurrentMillisecs - tLastUpdateMillisecs;
-				if (tDeltaMillisecs > 700)
+				if (tDeltaMillisecs > 400)
 				{
 				//	CONSOLE_DEBUG_W_DBL("Percent done=", ((100.0 * arrayIndex) / arrayLength))
 					UpdateDownloadProgress(arrayIndex, arrayLength);

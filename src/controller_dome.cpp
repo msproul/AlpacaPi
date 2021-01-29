@@ -214,7 +214,7 @@ char	lineBuff[64];
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-	SetTabCount(kTab_Count);
+	SetTabCount(kTab_Dome_Count);
 	SetTabText(kTab_Dome,			"Dome");
 	SetTabText(kTab_SlitTracker,	"Slit Tracker");
 	SetTabText(kTab_SlitGraph,		"Slit Graph");

@@ -438,6 +438,8 @@ void	ControllerCamNormal::UpdateCameraState(void)
 {
 char			linebuff[64];
 
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+
 	switch(cAlpacaCameraState)
 	{
 		case	kALPACA_CameraState_Idle:		strcpy(linebuff,	"Idle");		break;

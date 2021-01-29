@@ -114,7 +114,7 @@ int		iii;
 //*****************************************************************************
 void	WindowTabUSB::ProcessButtonClick(const int buttonIdx)
 {
-ControllerUSB	*parrentController;
+ControllerUSB	*parentController;
 char			usbPath[45];
 
 	switch(buttonIdx)
@@ -122,12 +122,12 @@ char			usbPath[45];
 		case kUSBselect_BtnNiteCrawler:
 			if (cParentObjPtr != NULL)
 			{
-				parrentController	=	(ControllerUSB *)cParentObjPtr;
-				strcpy(usbPath, parrentController->cUSBpath);
+				parentController	=	(ControllerUSB *)cParentObjPtr;
+				strcpy(usbPath, parentController->cUSBpath);
 
 				new ControllerNiteCrawler("NiteCrawler", usbPath);
 
-				parrentController->cKeepRunning	=	false;
+				parentController->cKeepRunning	=	false;
 			}
 			else
 			{
@@ -139,12 +139,12 @@ char			usbPath[45];
 		case kUSBselect_BtnSingle:
 			if (cParentObjPtr != NULL)
 			{
-				parrentController	=	(ControllerUSB *)cParentObjPtr;
-				strcpy(usbPath, parrentController->cUSBpath);
+				parentController	=	(ControllerUSB *)cParentObjPtr;
+				strcpy(usbPath, parentController->cUSBpath);
 
 				new ControllerMLsingle("Moonlite Single Focuser", usbPath);
 
-				parrentController->cKeepRunning	=	false;
+				parentController->cKeepRunning	=	false;
 			}
 			else
 			{

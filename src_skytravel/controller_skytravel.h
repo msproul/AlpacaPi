@@ -14,6 +14,8 @@
 	#include	"windowtab_image.h"
 #endif
 
+#include	"windowtab_STsettings.h"
+
 #ifndef	_WINDOWTAB_ABOUT_H_
 	#include	"windowtab_about.h"
 #endif
@@ -38,12 +40,13 @@
 enum
 {
 	kTab_SkyTravel	=	1,
-	kTab_Dome,
+	kTab_ST_Settings,
+	kTab_ST_Dome,
 	kTab_AlpacaList,
 	kTab_DeviceList,
-	kTab_About,
+	kTab_ST_About,
 
-	kTab_Count
+	kTab_ST_Count
 
 };
 
@@ -93,6 +96,7 @@ class ControllerSkytravel: public Controller
 		//====================================================
 		//*	tab information
 				WindowTabSkyTravel		*cSkyTravelTabOjbPtr;
+				WindowTabSTsettings		*cSkySettingsTabObjPtr;
 				WindowTabDome			*cDomeTabObjPtr;
 				WindowTabAlpacaList		*cAlpacaListObjPtr;
 				WindowTabDeviceSelect	*cDeviceSelectObjPtr;

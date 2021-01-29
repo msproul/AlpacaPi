@@ -1493,6 +1493,7 @@ SKYTRAVEL_OBJECTS=											\
 				$(OBJECT_DIR)HipparcosCatalog.o				\
 				$(OBJECT_DIR)lx200_com.o					\
 				$(OBJECT_DIR)NGCcatalog.o					\
+				$(OBJECT_DIR)observatory_settings.o			\
 				$(OBJECT_DIR)StarCatalogHelper.o			\
 				$(OBJECT_DIR)YaleStarCatalog.o				\
 				$(OBJECT_DIR)skytravel_main.o				\
@@ -1500,6 +1501,7 @@ SKYTRAVEL_OBJECTS=											\
 				$(OBJECT_DIR)SkyTravelTimeRoutines.o		\
 				$(OBJECT_DIR)windowtab_deviceselect.o		\
 				$(OBJECT_DIR)windowtab_skytravel.o			\
+				$(OBJECT_DIR)windowtab_STsettings.o			\
 				$(OBJECT_DIR)windowtab_telescope.o			\
 				$(OBJECT_DIR)windowtab_dome.o				\
 				$(OBJECT_DIR)windowtab_alpacalist.o			\
@@ -2385,6 +2387,7 @@ $(OBJECT_DIR)skytravel_main.o :			$(SRC_SKYTRAVEL)skytravel_main.cpp	\
 										$(SRC_SKYTRAVEL)windowtab_skytravel.h
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYTRAVEL)skytravel_main.cpp -o$(OBJECT_DIR)skytravel_main.o
 
+
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)windowtab_telescope.o :	$(SRC_DIR)windowtab_telescope.cpp	\
 										$(SRC_DIR)windowtab_telescope.h		\
@@ -2395,7 +2398,8 @@ $(OBJECT_DIR)windowtab_telescope.o :	$(SRC_DIR)windowtab_telescope.cpp	\
 $(OBJECT_DIR)controller_skytravel.o :	$(SRC_SKYTRAVEL)controller_skytravel.cpp	\
 										$(SRC_DIR)controller_tscope_common.cpp		\
 										$(SRC_DIR)controller_dome_common.cpp		\
-										$(SRC_SKYTRAVEL)controller_skytravel.h
+										$(SRC_SKYTRAVEL)controller_skytravel.h		\
+										$(SRC_SKYTRAVEL)SkyStruc.h
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYTRAVEL)controller_skytravel.cpp -o$(OBJECT_DIR)controller_skytravel.o
 
 
@@ -2408,9 +2412,15 @@ $(OBJECT_DIR)StarData.o :				$(SRC_SKYTRAVEL)StarData.c	\
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)windowtab_skytravel.o :	$(SRC_SKYTRAVEL)windowtab_skytravel.cpp	\
 										$(SRC_SKYTRAVEL)windowtab_skytravel.h	\
-										$(SRC_DIR)windowtab.h
+										$(SRC_DIR)windowtab.h					\
+										$(SRC_SKYTRAVEL)SkyStruc.h
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYTRAVEL)windowtab_skytravel.cpp -o$(OBJECT_DIR)windowtab_skytravel.o
 
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)windowtab_STsettings.o :	$(SRC_SKYTRAVEL)windowtab_STsettings.cpp	\
+										$(SRC_SKYTRAVEL)windowtab_STsettings.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYTRAVEL)windowtab_STsettings.cpp -o$(OBJECT_DIR)windowtab_STsettings.o
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)eph.o :					$(SRC_SKYTRAVEL)eph.c	\

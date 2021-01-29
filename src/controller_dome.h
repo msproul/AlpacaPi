@@ -52,7 +52,7 @@ enum
 	kTab_SlitGraph,
 	kTab_About,
 
-	kTab_Count
+	kTab_Dome_Count
 
 };
 
@@ -126,7 +126,7 @@ class ControllerDome: public Controller
 				TYPE_DomeProperties	cDomeProp;
 
 
-				uint32_t		cUpdateDelta;
+				uint32_t			cUpdateDelta;
 
 			#ifdef _ENABLE_EXTERNAL_SHUTTER_
 				//*	shutter device info

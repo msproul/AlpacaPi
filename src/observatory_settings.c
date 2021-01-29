@@ -464,15 +464,17 @@ char			fileName[]	=	"observatorysettings.txt";
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-	//*	see if there is a file describing the filters currently installed
+	//*	check for the observatory settings file
 	filePointer	=	fopen(fileName, "r");
 	if (filePointer != NULL)
 	{
+#ifndef _ENABLE_SKYTRAVEL_
 		LogEvent(	"AlpacaPi",
 					"Obs settings file read",
 					NULL,
 					kASCOM_Err_Success,
 					fileName);
+#endif // _ENABLE_SKYTRAVEL_
 
 		gObseratorySettings.ValidInfo	=	true;
 		while (fgets(lineBuff, 200, filePointer))
@@ -557,13 +559,14 @@ int		ii;
 	{
 		//*	copy the entire block over
 		*ts_info	=	gObseratorySettings.TS_info[telescopeIdx];
-
+	#ifndef _ENABLE_SKYTRAVEL_
 		if (strlen(ts_info->telescp_manufacturer) > 0)
 		{
 			strcpy(gWebTitle, ts_info->telescp_manufacturer);
 			strcat(gWebTitle, " ");
 			strcat(gWebTitle, ts_info->telescp_model);
 		}
+	#endif
 	}
 }
 
@@ -587,6 +590,7 @@ int		keywordEnumValue;
 	return(keywordEnumValue);
 }
 
+#ifndef _ENABLE_SKYTRAVEL_
 //*****************************************************************************
 void OutPutObservatoryInfoHTML(int socketFD)
 {
@@ -622,5 +626,6 @@ void OutPutObservatoryInfoHTML(int socketFD)
 		SocketWriteData(socketFD,	"</CENTER>\r\n");
 	}
 }
+#endif // _ENABLE_SKYTRAVEL_
 
 

@@ -156,14 +156,15 @@ typedef struct
 
 	int				timeinc;
 
-	unsigned int	calflag:2;			//*	0=auto,1=julian,anything else=gregorian
-	unsigned int	precflag:1;			//*	=1 means force a precession
-	unsigned int	strflag:1;			//*	1= year 2000 data is present
+	//*	in the original code, these were individual bit fields, we dont need to be
+	//*	that paranoid about memory any more
+	unsigned char	calflag;			//*	0=auto, 1=julian, anything else=gregorian
+	bool			precflag;			//*	=1 means force a precession
+	bool			strflag;			//*	1= year 2000 data is present
 	bool			starDataModified;
-	unsigned int	negflag:1;			//*	1= time decrements 0 = time increments
-	unsigned int	local_time_flag:1;	//*	1=use local time 0=use gmt
-	unsigned int	dstflag:1;			//*	1=use daylight savings
-//										:0;	//*	pad*/
+	bool			negflag;			//*	1= time decrements 0 = time increments
+	bool			local_time_flag;	//*	1=use local time 0=use gmt
+	bool			dstflag;			//*	1=use daylight savings
 
 	double			fgmt;				//*	floating point form of gmt
 	double			fSiderealTime;		//*	sidereal time

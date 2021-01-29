@@ -622,12 +622,12 @@ char				httpHeader[500];
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-#ifndef _JETSON_
+//#ifndef _JETSON_
 	if ((strcmp(reqData->deviceCommand, "readall") != 0) && (strcmp(reqData->deviceCommand, "setccdtemperature") != 0))
 	{
 		CONSOLE_DEBUG_W_STR("deviceCommand\t=",	reqData->deviceCommand);
 	}
-#endif // _JETSON_
+//#endif // _JETSON_
 
 
 //*	delete this when not testing
@@ -5066,7 +5066,7 @@ int					exposureState;
 TYPE_ASCOM_STATUS	alpacaErrCode;
 
 	exposureState	=	Check_Exposure(true);
-//	CONSOLE_DEBUG_W_NUM("Taking picture: exposureState=", exposureState);
+	CONSOLE_DEBUG_W_NUM("Taking picture: exposureState=", exposureState);
 	switch(exposureState)
 	{
 		case kExposure_Idle:
@@ -5772,6 +5772,7 @@ int					exposureState;
 char				exposureStateString[32];
 char				textBuffer[128];
 
+//	CONSOLE_DEBUG(__FUNCTION__);
 	alpacaErrCode	=	Read_SensorTemp();
 
 	switch(cInternalCameraState)

@@ -498,6 +498,7 @@ CvRect		myCVrect;
 				}
 			#ifdef _JETSON_
 				long	keyPointCnt;
+				//*	this is an attempt at finding the locations of all of the stars in an image.
 
 //				CONSOLE_DEBUG("Calling ProcessORB_Image!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 				SETUP_TIMING();

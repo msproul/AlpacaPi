@@ -271,7 +271,6 @@ DomeDriver::DomeDriver(const int argDevNum)
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
-	cDomeProp.ShutterStatus	=	kShutterStatus_Closed;
 	cAzimuth_Destination		=	-1.0;		//*	must be >= to 0 to be valid
 	cParkAzimuth				=	0.0;
 	cHomeAzimuth				=	0.0;
@@ -285,6 +284,7 @@ DomeDriver::DomeDriver(const int argDevNum)
 
 	//*	clear out all of the properties data
 	memset(&cDomeProp, 0, sizeof(TYPE_DomeProperties));
+	cDomeProp.ShutterStatus		=	kShutterStatus_Closed;
 
 	cGoingHome					=	false;
 	cGoingPark					=	false;

@@ -751,6 +751,9 @@ ControllerCamera	*myCameraController;
 
 	if (myCameraController != NULL)
 	{
+		SetWidgetText(kCameraBox_State,			"-----");
+		ForceUpdate();
+
 		myCameraController->StartExposure();
 	}
 	else

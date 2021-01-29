@@ -35,6 +35,16 @@ enum
 	kDomeBox_GoHome,
 	kDomeBox_GoPark,
 
+	kDomeBox_Minus20,
+	kDomeBox_Minus10,
+	kDomeBox_Minus5,
+	kDomeBox_Minus1,
+
+	kDomeBox_Plus1,
+	kDomeBox_Plus5,
+	kDomeBox_Plus10,
+	kDomeBox_Plus20,
+
 	kDomeBox_Stop,
 
 	//*	these are all extras
@@ -82,7 +92,7 @@ class WindowTabDome: public WindowTab
 									const int	ySize,
 									CvScalar	backGrndColor,
 									const char	*windowName,
-									const bool	parrentIsSkyTravel = false);
+									const bool	parentIsSkyTravel = false);
 		virtual	~WindowTabDome(void);
 
 		virtual	void	SetupWindowControls(void);
@@ -97,8 +107,9 @@ class WindowTabDome: public WindowTab
 				void	ToggleSlaveMode(void);
 
 				void	SendShutterCommand(const char *shutterCmd);
+				void	MoveDomeByAmount(const double moveAmount);
 
-				bool	cParrentIsSkyTravel;
+				bool	cParentIsSkyTravel;
 };
 
 

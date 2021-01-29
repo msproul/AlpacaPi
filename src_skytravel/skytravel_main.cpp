@@ -43,6 +43,7 @@
 
 #include	"alpaca_defs.h"
 #include	"discoverythread.h"
+#include	"observatory_settings.h"
 
 #include	"controller.h"
 #include	"controller_skytravel.h"
@@ -116,6 +117,9 @@ int					keyPressed;
 	CPUstats_ReadOSreleaseVersion();
 	CPUstats_ReadInfo();
 
+	//*	read in lat/lon values for this location
+	ObservatorySettings_Init();
+	ObservatorySettings_ReadFile();
 
 
 	new ControllerSkytravel("SkyTravel");

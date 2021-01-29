@@ -25,6 +25,8 @@
 //*	May  7,	2020	<MLS> Added SendShutterCommand() to repleace multiple other cmds
 //*	Jan 15,	2021	<MLS> Got clarification of SUPPORTEDACTIONS cmd, fixed hidden controls
 //*	Jan 24,	2021	<MLS> Added ParentIsSkyTravel flag
+//*	Jan 28,	2021	<MLS> Added -20,-10,-5,-1,+1,+5,+10,+20 buttons
+//*	Jan 28,	2021	<MLS> Added MoveDomeByAmount()
 //*****************************************************************************
 
 #ifdef _ENABLE_CTRL_DOME_
@@ -39,9 +41,9 @@
 
 #ifdef _ENABLE_SKYTRAVEL_
 	#include	"controller_skytravel.h"
-#else
-	#include	"controller_dome.h"
 #endif
+
+#include	"controller_dome.h"
 
 #define	kAboutBoxHeight	100
 
@@ -50,12 +52,12 @@ WindowTabDome::WindowTabDome(	const int	xSize,
 								const int	ySize,
 								CvScalar	backGrndColor,
 								const char	*windowName,
-								const bool	parrentIsSkyTravel)
+								const bool	parentIsSkyTravel)
 	:WindowTab(xSize, ySize, backGrndColor, windowName)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-	cParrentIsSkyTravel	=	parrentIsSkyTravel;
+	cParentIsSkyTravel	=	parentIsSkyTravel;
 	SetupWindowControls();
 }
 
@@ -70,15 +72,18 @@ WindowTabDome::~WindowTabDome(void)
 //**************************************************************************************
 void	WindowTabDome::SetupWindowControls(void)
 {
+int		xLoc;
 int		yLoc;
 int		btnWidth;
 int		iii;
+int		myButtonHt;
+int		myPlusMinusBtnWidth;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	//============================================
 	yLoc			=	cTabVertOffset;
-
+	myButtonHt		=	cBtnHeight - 3;
 	//============================================
 	SetWidget(kDomeBox_Title,		0,			yLoc,		cWidth,		cTitleHeight);
 	SetWidgetText(kDomeBox_Title, "AlpacaPi Dome");
@@ -90,116 +95,139 @@ int		iii;
 	btnWidth		=	(cClmWidth * 3);
 
 	//============================================
-	SetWidget(			kDomeBox_CurPosLabel,	cClm1_offset,		yLoc,		btnWidth,		cBtnHeight);
+	SetWidget(			kDomeBox_CurPosLabel,	cClm1_offset,		yLoc,		btnWidth,		myButtonHt);
 	SetWidgetTextColor(	kDomeBox_CurPosLabel,	CV_RGB(255,	255,	255));
 	SetWidgetText(		kDomeBox_CurPosLabel,	"Position");
 	SetWidgetBorder(	kDomeBox_CurPosLabel,	false);
 
-	SetWidget(			kDomeBox_CurPosition,	cClm4_offset,		yLoc,		btnWidth,		cBtnHeight);
+	SetWidget(			kDomeBox_CurPosition,	cClm4_offset,		yLoc,		btnWidth,		myButtonHt);
 	SetWidgetTextColor(	kDomeBox_CurPosition,	CV_RGB(0,	255,	0));
-	yLoc			+=	cBtnHeight;
+	yLoc			+=	myButtonHt;
 	yLoc			+=	2;
 
 
 	//============================================
-	SetWidget(			kDomeBox_AzimLabel,		cClm1_offset,		yLoc,		btnWidth,		cBtnHeight);
+	SetWidget(			kDomeBox_AzimLabel,		cClm1_offset,		yLoc,		btnWidth,		myButtonHt);
 	SetWidgetTextColor(	kDomeBox_AzimLabel,		CV_RGB(255,	255,	255));
 	SetWidgetText(		kDomeBox_AzimLabel,		"Azimuth");
 	SetWidgetBorder(	kDomeBox_AzimLabel,		false);
 
-	SetWidget(			kDomeBox_Azimuth,		cClm4_offset,		yLoc,		btnWidth,		cBtnHeight);
+	SetWidget(			kDomeBox_Azimuth,		cClm4_offset,		yLoc,		btnWidth,		myButtonHt);
 	SetWidgetText(		kDomeBox_Azimuth,		"Azimuth");
 	SetWidgetTextColor(	kDomeBox_Azimuth,		CV_RGB(0,	255,	0));
-	yLoc			+=	cBtnHeight;
+	yLoc			+=	myButtonHt;
 	yLoc			+=	2;
 
 	//============================================
-	SetWidget(			kDomeBox_AltitudeLabel,		cClm1_offset,		yLoc,		btnWidth,		cBtnHeight);
+	SetWidget(			kDomeBox_AltitudeLabel,		cClm1_offset,		yLoc,		btnWidth,		myButtonHt);
 	SetWidgetTextColor(	kDomeBox_AltitudeLabel,		CV_RGB(255,	255,	255));
 	SetWidgetText(		kDomeBox_AltitudeLabel,		"Altitude");
 	SetWidgetBorder(	kDomeBox_AltitudeLabel,		false);
 
-	SetWidget(			kDomeBox_Altitude,			cClm4_offset,		yLoc,		btnWidth,		cBtnHeight);
+	SetWidget(			kDomeBox_Altitude,			cClm4_offset,		yLoc,		btnWidth,		myButtonHt);
 	SetWidgetText(		kDomeBox_Altitude,			"Altitude");
 	SetWidgetTextColor(	kDomeBox_Altitude,			CV_RGB(0,	255,	0));
-	yLoc			+=	cBtnHeight;
+	yLoc			+=	myButtonHt;
 	yLoc			+=	2;
 
 
 	//============================================
-	SetWidget(			kDomeBox_ShutterLabel,	cClm1_offset,		yLoc,		btnWidth,		cBtnHeight);
+	SetWidget(			kDomeBox_ShutterLabel,	cClm1_offset,		yLoc,		btnWidth,		myButtonHt);
 	SetWidgetText(		kDomeBox_ShutterLabel,	"Shutter");
 	SetWidgetTextColor(	kDomeBox_ShutterLabel,	CV_RGB(255,	255,	255));
 	SetWidgetBorder(	kDomeBox_ShutterLabel,	false);
 
-	SetWidget(			kDomeBox_ShutterStatus,	cClm4_offset,		yLoc,		btnWidth,		cBtnHeight);
+	SetWidget(			kDomeBox_ShutterStatus,	cClm4_offset,		yLoc,		btnWidth,		myButtonHt);
 	SetWidgetTextColor(	kDomeBox_ShutterStatus,	CV_RGB(0,	255,	0));
 	SetWidgetText(		kDomeBox_ShutterStatus,	"---");
-	yLoc			+=	cBtnHeight;
+	yLoc			+=	myButtonHt;
 	yLoc			+=	2;
 
 	//============================================
-	SetWidget(			kDomeBox_SlavedLabel,	cClm1_offset,		yLoc,		btnWidth,		cBtnHeight);
+	SetWidget(			kDomeBox_SlavedLabel,	cClm1_offset,		yLoc,		btnWidth,		myButtonHt);
 	SetWidgetText(		kDomeBox_SlavedLabel,	"Slaved");
 	SetWidgetTextColor(	kDomeBox_SlavedLabel,	CV_RGB(255,	255,	255));
 	SetWidgetBorder(	kDomeBox_SlavedLabel,	false);
 
-	SetWidget(			kDomeBox_SlavedStatus,	cClm4_offset,		yLoc,		btnWidth,		cBtnHeight);
+	SetWidget(			kDomeBox_SlavedStatus,	cClm4_offset,		yLoc,		btnWidth,		myButtonHt);
 	SetWidgetTextColor(	kDomeBox_SlavedStatus,	CV_RGB(0,	255,	0));
 	SetWidgetText(		kDomeBox_SlavedStatus,	"---");
-	yLoc			+=	cBtnHeight;
+	yLoc			+=	myButtonHt;
 	yLoc			+=	2;
 
 	//============================================
 	btnWidth		=	(cClmWidth * 3);
-	SetWidget(		kDomeBox_GoHome,	cClm1_offset,		yLoc,		btnWidth,		cBtnHeight);
+	SetWidget(		kDomeBox_GoHome,	cClm1_offset,		yLoc,		btnWidth,		myButtonHt);
 	SetWidgetText(	kDomeBox_GoHome, 	"Go Home");
 
-	SetWidget(		kDomeBox_GoPark,	cClm4_offset,		yLoc,		btnWidth,		cBtnHeight);
+	SetWidget(		kDomeBox_GoPark,	cClm4_offset,		yLoc,		btnWidth,		myButtonHt);
 	SetWidgetText(	kDomeBox_GoPark, 	"Go Park");
-	yLoc			+=	cBtnHeight;
+	yLoc			+=	myButtonHt;
+	yLoc			+=	2;
+
+	//**************************************************************
+	myPlusMinusBtnWidth	=	((cWidth - cClm1_offset) / 8) - 1;
+	xLoc				=	cClm1_offset;
+	for (iii=kDomeBox_Minus20; iii<=kDomeBox_Plus20; iii++)
+	{
+		SetWidget(				iii,	xLoc,		yLoc,	myPlusMinusBtnWidth,	myButtonHt);
+		SetWidgetType(			iii,	kWidgetType_Button);
+		SetWidgetBGColor(		iii,	CV_RGB(255,	255,	255));
+		SetWidgetTextColor(		iii,	CV_RGB(0,	0,	0));
+		SetWidgetBorderColor(	iii,	CV_RGB(0,	0,	0));
+		xLoc	+=	myPlusMinusBtnWidth;
+	}
+	SetWidgetText(		kDomeBox_Minus20, 	"-20");
+	SetWidgetText(		kDomeBox_Minus10, 	"-10");
+	SetWidgetText(		kDomeBox_Minus5, 	"-5");
+	SetWidgetText(		kDomeBox_Minus1, 	"-1");
+	SetWidgetText(		kDomeBox_Plus1, 	"+1");
+	SetWidgetText(		kDomeBox_Plus5, 	"+5");
+	SetWidgetText(		kDomeBox_Plus10, 	"+10");
+	SetWidgetText(		kDomeBox_Plus20, 	"+20");
+	yLoc			+=	myButtonHt;
 	yLoc			+=	2;
 
 	//**************************************************************
 	btnWidth		=	cClmWidth * 2;
-	SetWidget(			kDomeBox_GoLeft,	cClm1_offset,		yLoc,		btnWidth,		cBtnHeight);
+	SetWidget(			kDomeBox_GoLeft,	cClm1_offset,		yLoc,		btnWidth,		myButtonHt);
 	SetWidgetText(		kDomeBox_GoLeft,	"Go Left");
 
-	SetWidget(			kDomeBox_GoRight,	cClm5_offset,		yLoc,		btnWidth,		cBtnHeight);
+	SetWidget(			kDomeBox_GoRight,	cClm5_offset,		yLoc,		btnWidth,		myButtonHt);
 	SetWidgetText(		kDomeBox_GoRight,	"Go Right");
 
-	SetWidget(			kDomeBox_Stop,	cClm3_offset+6,		yLoc,		btnWidth-8,		3 * cBtnHeight);
+	SetWidget(			kDomeBox_Stop,	cClm3_offset+6,		yLoc,		btnWidth-8,		3 * myButtonHt);
 	SetWidgetText(		kDomeBox_Stop,	"STOP");
 	SetWidgetBGColor(	kDomeBox_Stop,	CV_RGB(255,	0,	0));
 	SetWidgetTextColor(	kDomeBox_Stop,	CV_RGB(255,	255,	255));
 	SetWidgetFont(		kDomeBox_Stop,	kFont_Large);
-	yLoc			+=	cBtnHeight;
+	yLoc			+=	myButtonHt;
 	yLoc			+=	2;
 
 
 	//**************************************************************
-	SetWidget(			kDomeBox_SlowLeft,	cClm1_offset,		yLoc,		btnWidth,		cBtnHeight);
+	SetWidget(			kDomeBox_SlowLeft,	cClm1_offset,		yLoc,		btnWidth,		myButtonHt);
 	SetWidgetText(		kDomeBox_SlowLeft,	"Slow Left");
 
-	SetWidget(			kDomeBox_SlowRight,	cClm5_offset,		yLoc,		btnWidth,		cBtnHeight);
+	SetWidget(			kDomeBox_SlowRight,	cClm5_offset,		yLoc,		btnWidth,		myButtonHt);
 	SetWidgetText(		kDomeBox_SlowRight, "Slow Right");
-	yLoc			+=	cBtnHeight;
+	yLoc			+=	myButtonHt;
 	yLoc			+=	2;
 
 	//**************************************************************
-	SetWidget(			kDomeBox_BumpLeft,	cClm1_offset,		yLoc,		btnWidth,		cBtnHeight);
+	SetWidget(			kDomeBox_BumpLeft,	cClm1_offset,		yLoc,		btnWidth,		myButtonHt);
 	SetWidgetText(		kDomeBox_BumpLeft, "Bump Left");
 
-	SetWidget(			kDomeBox_BumpRight,	cClm5_offset,		yLoc,		btnWidth,		cBtnHeight);
+	SetWidget(			kDomeBox_BumpRight,	cClm5_offset,		yLoc,		btnWidth,		myButtonHt);
 	SetWidgetText(		kDomeBox_BumpRight, "Bump Right");
-	yLoc			+=	cBtnHeight;
+	yLoc			+=	myButtonHt;
 	yLoc			+=	2;
 
 	//============================================
 	btnWidth		=	(cClmWidth * 6);
-	SetWidget(			kDomeBox_ToggleSlaveMode,	cClm1_offset,		yLoc,		btnWidth,		cBtnHeight);
+	SetWidget(			kDomeBox_ToggleSlaveMode,	cClm1_offset,		yLoc,		btnWidth,		myButtonHt);
 	SetWidgetText(		kDomeBox_ToggleSlaveMode, 	"Enable Slave mode");
-	yLoc			+=	cBtnHeight;
+	yLoc			+=	myButtonHt;
 	yLoc			+=	2;
 
 	for (iii=kDomeBox_GoHome; iii<=kDomeBox_ToggleSlaveMode; iii++)
@@ -225,39 +253,39 @@ int		iii;
 	//============================================
 	yLoc			+=	5;
 	btnWidth		=	(cClmWidth * 3);
-	SetWidget(			kDomeBox_OpenShutter,	cClm1_offset,		yLoc,		btnWidth,		cBtnHeight);
+	SetWidget(			kDomeBox_OpenShutter,	cClm1_offset,		yLoc,		btnWidth,		myButtonHt);
 	SetWidgetText(		kDomeBox_OpenShutter, 	"Open Shutter");
 	SetWidgetType(		kDomeBox_OpenShutter,	kWidgetType_Button);
 	SetWidgetBGColor(	kDomeBox_OpenShutter,	CV_RGB(0,	128,	240));
 	SetWidgetTextColor(	kDomeBox_OpenShutter,	CV_RGB(0,	0,	0));
 
-	SetWidget(			kDomeBox_CloseShutter,	cClm4_offset,		yLoc,		btnWidth,		cBtnHeight);
+	SetWidget(			kDomeBox_CloseShutter,	cClm4_offset,		yLoc,		btnWidth,		myButtonHt);
 	SetWidgetType(		kDomeBox_CloseShutter,	kWidgetType_Button);
 	SetWidgetText(		kDomeBox_CloseShutter, 	"Close Shutter");
 	SetWidgetBGColor(	kDomeBox_CloseShutter,	CV_RGB(0,	128,	240));
 	SetWidgetTextColor(	kDomeBox_CloseShutter,	CV_RGB(0,	0,	0));
 
-	yLoc			+=	cBtnHeight;
+	yLoc			+=	myButtonHt;
 	yLoc			+=	2;
 
 	//============================================
 	btnWidth		=	(cClmWidth * 6);
-	SetWidget(			kDomeBox_StopShutter,	cClm1_offset,		yLoc,		btnWidth,		cBtnHeight);
+	SetWidget(			kDomeBox_StopShutter,	cClm1_offset,		yLoc,		btnWidth,		myButtonHt);
 	SetWidgetType(		kDomeBox_StopShutter,	kWidgetType_Button);
 	SetWidgetText(		kDomeBox_StopShutter, 	"STOP Shutter");
 	SetWidgetBGColor(	kDomeBox_StopShutter,	CV_RGB(255,	0,	0));
 	SetWidgetTextColor(	kDomeBox_StopShutter,	CV_RGB(255,	255,	255));
-	yLoc			+=	cBtnHeight;
+	yLoc			+=	myButtonHt;
 	yLoc			+=	2;
 
 
 	//============================================
 	btnWidth		=	(cClmWidth * 6);
-	SetWidget(			kDomeBox_ErrorMsg,	cClm1_offset,		yLoc,		btnWidth,		cBtnHeight);
+	SetWidget(			kDomeBox_ErrorMsg,	cClm1_offset,		yLoc,		btnWidth,		myButtonHt);
 	SetWidgetFont(		kDomeBox_ErrorMsg,	kFont_Medium);
 	SetWidgetTextColor(	kDomeBox_ErrorMsg,	CV_RGB(255,	0,	0));
 	SetWidgetText(		kDomeBox_ErrorMsg, 	"---");
-	yLoc			+=	cBtnHeight;
+	yLoc			+=	myButtonHt;
 	yLoc			+=	2;
 
 
@@ -269,13 +297,13 @@ int		iii;
 
 
 #ifdef _ENABLE_SKYTRAVEL_
-	if (cParrentIsSkyTravel)
+	if (cParentIsSkyTravel)
 	{
 	int	myBtnHeight;
 	int	xLoc;
 
 		btnWidth		=	100;
-		myBtnHeight		=	cBtnHeight - 4;
+		myBtnHeight		=	myButtonHt - 4;
 		xLoc			=	cWidth - (btnWidth + 5);
 		yLoc			=	cHeight- (myBtnHeight + 5);
 		SetWidget(			kDomeBox_Rescan,	xLoc,		yLoc,		btnWidth,		myBtnHeight);
@@ -349,7 +377,7 @@ bool	validData	=	false;
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, theCommand);
 
 #ifdef _ENABLE_SKYTRAVEL_
-	if (cParrentIsSkyTravel)
+	if (cParentIsSkyTravel)
 	{
 	ControllerSkytravel	*myControllerObj;
 
@@ -380,9 +408,63 @@ bool	validData	=	false;
 #endif
 	{
 		CONSOLE_DEBUG("NORMAL");
-		validData	=	AlpacaSendPutCmd(	"dome",	theCommand,	"", jsonParser);
+		validData	=	AlpacaSendPutCmd(	"dome",	theCommand,	dataString, jsonParser);
 	}
 	return(validData);
+}
+
+//*****************************************************************************
+//	curl -X PUT "http://dome:6800/api/v1/dome/0/slewtoazimuth" \
+//			-H  "accept: application/json" -H  "Content-Type: application/x-www-form-urlencoded" \
+//			-d "Azimuth=$1&ClientID=1&ClientTransactionID=223"
+//*****************************************************************************
+void	WindowTabDome::MoveDomeByAmount(const double moveAmount)
+{
+bool			validData;
+double			newAzimuthValue;
+char			dataString[64];
+ControllerDome	*myDomeController;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_STR("cWindowName\t=",	cWindowName);
+
+	newAzimuthValue	=	0.0;
+
+#ifdef _ENABLE_SKYTRAVEL_
+	if (cParentIsSkyTravel)
+	{
+	ControllerSkytravel	*mySkyTravelController;
+
+		mySkyTravelController	=	(ControllerSkytravel *)cParentObjPtr;
+		if (mySkyTravelController != NULL)
+		{
+			newAzimuthValue			=	mySkyTravelController->cDomeProp.Azimuth;
+		}
+	}
+	else
+#endif // _ENABLE_SKYTRAVEL_
+	{
+		myDomeController	=	(ControllerDome *)cParentObjPtr;
+		if (myDomeController != NULL)
+		{
+			newAzimuthValue			=	myDomeController->cDomeProp.Azimuth;
+		}
+
+	}
+	CONSOLE_DEBUG_W_DBL("prev Azimuth value\t=", newAzimuthValue);
+
+	newAzimuthValue	+=	moveAmount;
+	if (newAzimuthValue < 0.0)
+	{
+		newAzimuthValue	+=	360.0;
+	}
+	if (newAzimuthValue >= 360.0)
+	{
+		newAzimuthValue	-=	360.0;
+	}
+	CONSOLE_DEBUG_W_DBL("newAzimuthValue\t=", newAzimuthValue);
+	sprintf(dataString, "Azimuth=%f", newAzimuthValue);
+	validData	=	SendAlpacaCmdToDome("slewtoazimuth",	dataString,	NULL);
 }
 
 //*****************************************************************************
@@ -406,6 +488,15 @@ SJP_Parser_t	jsonResponse;
 		case kDomeBox_GoPark:
 			validData	=	SendAlpacaCmdToDome("park",			"",	&jsonResponse);
 			break;
+
+		case kDomeBox_Minus20:	MoveDomeByAmount(-20.0);	break;
+		case kDomeBox_Minus10:	MoveDomeByAmount(-10.0);	break;
+		case kDomeBox_Minus5:	MoveDomeByAmount(-5.0);		break;
+		case kDomeBox_Minus1:	MoveDomeByAmount(-1.0);		break;
+		case kDomeBox_Plus1:	MoveDomeByAmount(1.0);		break;
+		case kDomeBox_Plus5:	MoveDomeByAmount(5.0);		break;
+		case kDomeBox_Plus10:	MoveDomeByAmount(10.0);		break;
+		case kDomeBox_Plus20:	MoveDomeByAmount(20.0);		break;
 
 		case kDomeBox_Stop:
 			validData	=	SendAlpacaCmdToDome("abortslew",	"",	&jsonResponse);

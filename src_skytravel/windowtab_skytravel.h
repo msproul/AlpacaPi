@@ -302,7 +302,7 @@ class WindowTabSkyTravel: public WindowTab
 		bool					cTrackTelescope;
 		TYPE_TeleDispOptions	cTelescopeDisplayOptions;
 
-		int					cDebugCounter;
+		int						cDebugCounter;
 };
 
 

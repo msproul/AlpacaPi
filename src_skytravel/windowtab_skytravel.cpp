@@ -63,6 +63,7 @@
 
 #include	"controller.h"
 #include	"controller_image.h"
+#include	"observatory_settings.h"
 
 
 #include	"SkyStruc.h"
@@ -222,23 +223,25 @@ int		ii;
 	cWorkSpaceLeftOffset	=	0;
 
 
+//	CONSOLE_DEBUG_W_NUM("sizeof(TYPE_Time)\t=",	sizeof(TYPE_Time));
+
 	//*	zero out everything
 	memset(&cCurrentTime,		0, sizeof(TYPE_Time));
 	memset(&cCurrLatLon,		0, sizeof(TYPE_LatLon));
-	cNightMode			=	false;
-	cStarDataPtr		=	NULL;
-	cStarCount			=	0;
-	constelations		=	NULL;
-	constelationCount	=	0;
-	constStarPtr		=	NULL;
-	constStarCount		=	0;
-	cNGCobjectPtr		=	NULL;
-	cNGCobjectCount		=	0;
-	cHipObjectPtr		=	NULL;
-	cHipObjectCount		=	0;
+	cNightMode				=	false;
+	cStarDataPtr			=	NULL;
+	cStarCount				=	0;
+	constelations			=	NULL;
+	constelationCount		=	0;
+	constStarPtr			=	NULL;
+	constStarCount			=	0;
+	cNGCobjectPtr			=	NULL;
+	cNGCobjectCount			=	0;
+	cHipObjectPtr			=	NULL;
+	cHipObjectCount			=	0;
 
-	cYaleStarDataPtr	=	NULL;
-	cYaleStarCount		=	0;
+	cYaleStarDataPtr		=	NULL;
+	cYaleStarCount			=	0;
 
 
 	cTSCmessierOjbectPtr	=	NULL;
@@ -255,9 +258,19 @@ int		ii;
 	cCsry					=	0;
 	cMouseDragInProgress	=	false;
 
+	if (gObseratorySettings.ValidLatLon)
+	{
+		cCurrLatLon.latitude		=	RADIANS(gObseratorySettings.Latitude);
+		cCurrLatLon.longitude		=	RADIANS(gObseratorySettings.Longitude);
+	}
+	else
+	{
+		//*	we need to have a default of someplace
+		cCurrLatLon.latitude		=	RADIANS(41.361090);
+		cCurrLatLon.longitude		=	RADIANS(-74.980333);
+	}
 
-	cCurrLatLon.latitude		=	RADIANS(41.361090);
-	cCurrLatLon.longitude		=	RADIANS(-74.980333);
+
 	Compute_Timezone(&cCurrLatLon, &cCurrentTime);
 
 	//	hometime(&gcCurrentTime);	//* default system Greenwich date/time
@@ -678,8 +691,8 @@ bool			reDrawSky;
 			break;
 
 	//	case kLeftArrowKey:	//change azimuth
-		case 0x0f51:
 		case '1':	//change azimuth
+		case 0x0f51:
 			cAz0	+=	(0.002 *  (cView_index + 1));
 			if (cAz0 > kTWOPI)
 			{
@@ -688,8 +701,8 @@ bool			reDrawSky;
 			break;
 
 	//	case kRightArrowKey:
-		case 0x0f53:
 		case '2':
+		case 0x0f53:
 			cAz0	-=	(0.002 * (cView_index + 1));
 			if (cAz0 < -kTWOPI)
 			{
@@ -715,6 +728,14 @@ bool			reDrawSky;
 			{
 				cElev0	=	-(kHALFPI + kEPSILON);
 			}
+			break;
+
+		case '#':	//*	toggle GRID
+			cDispOptions.dispGrid	=	!cDispOptions.dispGrid;
+			break;
+
+		case '?':	//*	toggle Constellation lines (new stylle)
+			cDispOptions.dispConstellations	=	!cDispOptions.dispConstellations;
 			break;
 
 		case 'C':	//*	toggle ECLIPTIC LINE
@@ -751,10 +772,6 @@ bool			reDrawSky;
 		case 'F':	//*	Draw Find cross hairs
 //			DrawCrossHairsAtCenter();
 			reDrawSky	=	false;
-			break;
-
-		case '#':	//*	toggle GRID
-			cDispOptions.dispGrid	=	!cDispOptions.dispGrid;
 			break;
 
 		case 'G':	//*	toggle NGC objects

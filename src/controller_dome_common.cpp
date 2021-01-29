@@ -39,6 +39,8 @@
 		#define	PARENT_CLASS	ControllerSkytravel
 		#include	"controller_skytravel.h"
 		#include	"SkyTravelExternal.h"
+
+		#define	kTab_Dome kTab_ST_Dome
 	#elif defined(_ENABLE_CTRL_DOME_)
 		#define	PARENT_CLASS	ControllerDome
 		#include	"controller_dome.h"
@@ -339,11 +341,15 @@ void	PARENT_CLASS::UpdateDomeAzimuth(const double newAzimuth)
 {
 char	textString[32];
 
+//	CONSOLE_DEBUG_W_STR("cWindowName\t=",	cWindowName);
+
 	cDomeProp.Azimuth	=	newAzimuth;
 	sprintf(textString, "%1.1f", cDomeProp.Azimuth);
 	SetWidgetText(kTab_Dome, kDomeBox_Azimuth, textString);
-#ifdef _ENABLE_SKYTRAVEL_
 
+//	CONSOLE_DEBUG_W_DBL("cDomeProp.Azimuth\t=", cDomeProp.Azimuth);
+
+#ifdef _ENABLE_SKYTRAVEL_
 	//*	skytravel is backwards from Alpaca
 	gDomeAzimuth_degrees	=	360.0 - newAzimuth;
 #endif
