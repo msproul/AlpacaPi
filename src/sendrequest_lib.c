@@ -30,6 +30,7 @@
 //*	Jun 22,	2020	<MLS> Added OpenSocketAndSendRequest()
 //*	Jan 14,	2021	<MLS> Fixed GET/PUT request to have all the right header stuff
 //*	Jan 21,	2021	<MLS> Must use HTTP/1.0 to disable "Transfer-Encoding: chunked"
+//*	Jan 30,	2021	<MLS> Changed TCP socket timeout to 4 seconds
 //*****************************************************************************
 
 #include	<stdio.h>
@@ -51,6 +52,8 @@
 
 
 #include	"sendrequest_lib.h"
+
+#define		kTimeOutLenSeconds	4
 
 //#define		_USE_SOCKET_LINGER_
 
@@ -81,7 +84,7 @@ int					so_oobinline;
 	if (socket_desc >= 0)
 	{
 		//*	set a timeout
-		timeoutLength.tv_sec	=	1;
+		timeoutLength.tv_sec	=	kTimeOutLenSeconds;
 		timeoutLength.tv_usec	=	0;
 		setOptRetCode			=	setsockopt(	socket_desc,
 												SOL_SOCKET,
@@ -134,7 +137,7 @@ int					so_oobinline;
 				strcat(xmitBuffer, "\n");
 			}
 
-			CONSOLE_DEBUG(xmitBuffer);
+//			CONSOLE_DEBUG(xmitBuffer);
 
 //			sendRetCode	=	send(socket_desc , xmitBuffer , strlen(xmitBuffer) , 0);
 			sendRetCode	=	send(socket_desc , xmitBuffer , strlen(xmitBuffer) , MSG_NOSIGNAL);
@@ -166,6 +169,7 @@ int					so_oobinline;
 		CONSOLE_DEBUG_W_NUM("socket_desc\t=", socket_desc);
 		CONSOLE_DEBUG_W_NUM("errno\t\t=", errno);
 	}
+	CONSOLE_DEBUG("exit");
 	return(socket_desc);
 }
 
@@ -357,7 +361,7 @@ int					setOptRetCode;
 	if (socket_desc >= 0)
 	{
 		//*	set a timeout
-		timeoutLength.tv_sec	=	2;
+		timeoutLength.tv_sec	=	kTimeOutLenSeconds;
 		timeoutLength.tv_usec	=	0;
 		setOptRetCode			=	setsockopt(	socket_desc,
 												SOL_SOCKET,

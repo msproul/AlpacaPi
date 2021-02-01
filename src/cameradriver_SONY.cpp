@@ -546,13 +546,14 @@ int					iii;
 #endif // _ALPACA_PI_
 
 //*****************************************************************************
-void	CameraDriverSONY::AlpacaConnect(void)
+bool	CameraDriverSONY::AlpacaConnect(void)
 {
 	CONSOLE_DEBUG(__FUNCTION__);
+	return(true);
 }
 
 //*****************************************************************************
-void	CameraDriverSONY::AlpacaDisConnect(void)
+bool	CameraDriverSONY::AlpacaDisConnect(void)
 {
 CrError		sonyErrCode;
 char		sonyErrorString[128];
@@ -572,6 +573,7 @@ char		sonyErrorString[128];
 		cSonyDeviceHandle	=	(CrDeviceHandle)NULL;
 		cDeviceConnected	=	false;
 	}
+	return(true);
 }
 
 

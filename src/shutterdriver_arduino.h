@@ -48,6 +48,8 @@ class ShutterArduino: public ShutterDriver
 				int		cLogLineCnt;
 				int		cNoDataCnt;
 
+				int		cArduinoSkipCnt;
+
 };
 
 void	CreateShuterArduinoObjects(void);

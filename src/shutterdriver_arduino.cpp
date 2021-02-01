@@ -77,6 +77,7 @@ ShutterArduino::ShutterArduino(const int argDevNum)
 	cPreviousShutterStatus	=	kShutterStatus_Unknown;
 
 	cNoDataCnt				=	0;
+	cArduinoSkipCnt			=	0;
 
 	Init_Hardware();
 
@@ -316,7 +317,7 @@ int		charsRead;
 	}
 	else
 	{
-//		CONSOLE_DEBUG("Slit tracker port not open");
+//		CONSOLE_DEBUG("Arduino serial port not open");
 	}
 }
 
@@ -328,19 +329,27 @@ int32_t		ShutterArduino::RunStateMachine(void)
 int32_t		minDealy_microSecs;
 char		stateString[48];
 
-
-	ReadArduinoData();
 	minDealy_microSecs	=	50000;
-
-	if (cShutterStatus != cPreviousShutterStatus)
+	if ((gImageDownloadInProgress == false) || (cArduinoSkipCnt > 100))
 	{
-		Shutter_GetStatusString(cShutterStatus, stateString);
-		LogEvent(	"shutter",
-					"StateChanged",
-					NULL,
-					kASCOM_Err_Success,
-					stateString);
-		cPreviousShutterStatus	=	cShutterStatus;
+		ReadArduinoData();
+
+		if (cShutterStatus != cPreviousShutterStatus)
+		{
+			Shutter_GetStatusString(cShutterStatus, stateString);
+			LogEvent(	"shutter",
+						"StateChanged",
+						NULL,
+						kASCOM_Err_Success,
+						stateString);
+			cPreviousShutterStatus	=	cShutterStatus;
+		}
+		cArduinoSkipCnt	=	0;;
+	}
+	else
+	{
+	//	CONSOLE_DEBUG("Skipping Arduino update due to image downloading");
+		cArduinoSkipCnt++;
 	}
 	return(minDealy_microSecs);
 }

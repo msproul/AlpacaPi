@@ -190,7 +190,7 @@ Controller::Controller(	const char	*argWindowName,
 int			ii;
 int			objCntr;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	cMagicCookie				=	kMagicCookieValue;
 
@@ -223,7 +223,7 @@ int			objCntr;
 	{
 		if (gControllerList[ii] == NULL)
 		{
-			CONSOLE_DEBUG_W_STR("Controller added to list", argWindowName);
+//			CONSOLE_DEBUG_W_STR("Controller added to list", argWindowName);
 			gControllerList[ii]	=	this;
 			break;
 		}
@@ -285,6 +285,11 @@ int			objCntr;
 //	gTextFont[kFont_Simplex]	=	cvFont(1.7, 1);
 
 //	cvInitFont( &gTextFont[kFont_Simplex], CV_FONT_HERSHEY_COMPLEX, 0.5, 0.5, 0, 1, CV_AA );
+
+	cvInitFont( &gTextFont[kFont_ScriptLarge], CV_FONT_HERSHEY_SCRIPT_COMPLEX, 2.0, 2.0, 0, 1, CV_AA );
+
+
+
 
 //	CONSOLE_DEBUG_W_DBL("font dx=", gTextFont[kFont_Simplex].dx);
 //	gTextFont[kFont_Simplex].dx	=	20.0;

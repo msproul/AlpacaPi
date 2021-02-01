@@ -894,13 +894,14 @@ char			myDataString[512];
 //*****************************************************************************
 void	ControllerDome::SendShutterCommand(const char *shutterCmd)
 {
-bool		sucessFlag;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 #ifdef _ENABLE_EXTERNAL_SHUTTER_
 	//*	this is for a separate alpaca device called "shutter"
 	if (cShutterInfoValid)
 	{
+	bool	sucessFlag;
+
 		sucessFlag	=	ShutterSendPutCmd("shutter", shutterCmd, "");
 		if (sucessFlag == false)
 		{
@@ -917,7 +918,7 @@ bool		sucessFlag;
 	}
 #else
 	//*	normal, send command to the dome controller.
-
+	#warning "SendShutterCommand needs to be finished"
 
 #endif
 }

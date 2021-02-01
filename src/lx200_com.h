@@ -33,9 +33,10 @@ bool	LX200_StopMovement(void);
 
 
 extern	double	gTelescopeRA_Hours;
-extern	double	gTelescopeDecl_Degrees;
 extern	double	gTelescopeRA_Radians;
+extern	double	gTelescopeDecl_Degrees;
 extern	double	gTelescopeDecl_Radians;
+
 extern	double	gTelescopeTrackingRate;
 
 

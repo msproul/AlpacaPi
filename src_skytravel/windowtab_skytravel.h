@@ -44,6 +44,7 @@ enum
 
 	//*	these are display controls
 	kSkyTravel_Btn_Reset,
+	kSkyTravel_Btn_AutoAdvTime,
 	kSkyTravel_Btn_Chart,
 	kSkyTravel_Btn_Earth,
 	kSkyTravel_Btn_Grid,
@@ -171,6 +172,7 @@ class WindowTabSkyTravel: public WindowTab
 				//*	this routine draws cute little easter eggs along the horizon,
 				void	MapTokens(TYPE_Time *timeptr, TYPE_LatLon *locptr);
 
+		uint32_t			cLastUpdateTime_ms;
 
 		//*	I am using openCV ROI for the drawing so these are always zero
 		int					cWorkSpaceLeftOffset;
@@ -179,6 +181,7 @@ class WindowTabSkyTravel: public WindowTab
 		//*	still need the offset for doing cursor calculations
 		int					cCursorOffsetY;
 
+		bool				cAutoAdvanceTime;
 		bool				cNightMode;
 		unsigned short		cTrack;		//*	0=no tracking, 1=track cursor, 2,3 etc. means track planet
 		TYPE_SkyDispOptions	cDispOptions;

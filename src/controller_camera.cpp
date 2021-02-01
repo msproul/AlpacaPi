@@ -47,6 +47,7 @@
 //*	Jan 16,	2021	<MLS> Now able to download monochrome image using "imagearray"
 //*	Jan 17,	2021	<MLS> Changed  UpdateReadAllStatus() to UpdateSupportedActions()
 //*	Jan 25,	2021	<MLS> Converted CameraController to use properties struct
+//*	Jan 29,	2021	<MLS> Added support for RANK=3 in DownloadImage_imagearray()
 //*****************************************************************************
 //*	Jan  1,	2121	<TODO> control key for different step size.
 //*	Jan  1,	2121	<TODO> work on fits view to handle color fits images
@@ -500,7 +501,6 @@ int				readOutModeIdx;
 	validData	=	AlpacaGetSupportedActions("camera", cAlpacaDevNum);
 	if (validData)
 	{
-		CONSOLE_DEBUG_W_STR("Valid supported actions:", cWindowName);
 		//*	AlpacaGetSupportedActions() sets the cHas_readall appropriately
 		UpdateSupportedActions();
 	}
@@ -510,8 +510,6 @@ int				readOutModeIdx;
 		cReadFailureCnt++;
 	}
 
-
-	CONSOLE_DEBUG(__FUNCTION__);
 
 	//*	Start by getting info about the camera
 	//===============================================================
@@ -549,8 +547,6 @@ int				readOutModeIdx;
 		cReadFailureCnt++;
 	}
 
-
-	CONSOLE_DEBUG(__FUNCTION__);
 	//===============================================================
 	//*	get the readout modes
 	SJP_Init(&jsonParser);
@@ -560,18 +556,13 @@ int				readOutModeIdx;
 										alpacaString,
 										NULL,
 										&jsonParser);
-	CONSOLE_DEBUG(__FUNCTION__);
 	if (validData)
 	{
-	CONSOLE_DEBUG(__FUNCTION__);
 		jjj	=	0;
 		while (jjj<jsonParser.tokenCount_Data)
 		{
-	CONSOLE_DEBUG(jsonParser.dataList[jjj].keyword);
-	CONSOLE_DEBUG(jsonParser.dataList[jjj].valueString);
 			if (strcasecmp(jsonParser.dataList[jjj].keyword, "ARRAY") == 0)
 			{
-	CONSOLE_DEBUG(__FUNCTION__);
 				readOutModeIdx	=	0;
 				jjj++;
 				while ((jjj<jsonParser.tokenCount_Data) &&
@@ -582,7 +573,7 @@ int				readOutModeIdx;
 						strcpy(cCameraProp.ReadOutModes[readOutModeIdx].mode,
 									jsonParser.dataList[jjj].valueString);
 
-						CONSOLE_DEBUG(cCameraProp.ReadOutModes[readOutModeIdx].mode);
+//						CONSOLE_DEBUG(cCameraProp.ReadOutModes[readOutModeIdx].mode);
 						readOutModeIdx++;
 					}
 					jjj++;
@@ -598,9 +589,6 @@ int				readOutModeIdx;
 		cReadFailureCnt++;
 	}
 
-
-
-	CONSOLE_DEBUG(__FUNCTION__);
 
 	validData	=	AlpacaGetIntegerValue("camera", "cameraxsize",	NULL,	&cCameraProp.CameraXsize);
 	validData	=	AlpacaGetIntegerValue("camera", "cameraysize",	NULL,	&cCameraProp.CameraYsize);
@@ -619,7 +607,7 @@ int				readOutModeIdx;
 
 	cLastUpdate_milliSecs	=	millis();
 
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, "EXIT");
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, "EXIT");
 	return(validData);
 }
 
@@ -628,7 +616,7 @@ void	ControllerCamera::AlpacaProcessSupportedActions(const char	*deviceTypeStr,
 														const int	deviveNum,
 														const char	*valueString)
 {
-	CONSOLE_DEBUG_W_STR("valueString\t=", valueString);
+//	CONSOLE_DEBUG_W_STR("valueString\t=", valueString);
 
 	//*	put these in alphabetical order for easy of reading
 
@@ -1588,6 +1576,11 @@ int			pixIdx;
 													3);
 				if (myOpenCVimage != NULL)
 				{
+					if (myOpenCVimage->imageData != NULL)
+					{
+						memset(myOpenCVimage->imageData, 128, (myOpenCVimage->height * myOpenCVimage->widthStep));
+					}
+
 					//*	move the image data into the openCV image structure
 					pixIdx	=	0;
 					for (iii=0; iii<pixelsCount; iii++)
@@ -1617,100 +1610,104 @@ int			pixIdx;
 	return(myOpenCVimage);
 }
 
-
 //*****************************************************************************
 IplImage	*ControllerCamera::DownloadImage_imagearray(const bool force8BitRead)
 {
-IplImage	*myOpenCVimage	=	NULL;
-bool		validData;
-int			pixelCount;
-int			pixelCount3X;
-int			*imageData;
-int			valuesRead;
-int			iii;
-int			xxx;
-int			yyy;
-int			pixIdx;
-int			pixIdxRowStart;
-int			thePixValue;
+IplImage		*myOpenCVimage	=	NULL;
+int				pixelCount;
+int				valuesRead;
+int				iii;
+int				xxx;
+int				yyy;
+int				pixIdx;
+int				pixIdxRowStart;
+int				imgRank;
+TYPE_ImageArray	*imageArray;
+int				buffSize;
+
 
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG_W_NUM("cCameraProp.CameraXsize\t=",	cCameraProp.CameraXsize);
 	CONSOLE_DEBUG_W_NUM("cCameraProp.CameraYsize\t=",	cCameraProp.CameraYsize);
 
+	imageArray		=	NULL;
 	pixelCount		=	cCameraProp.CameraXsize * cCameraProp.CameraYsize;
-//	pixelCount3X	=	3 * pixelCount;
-	pixelCount3X	=	1 * pixelCount;
-	pixelCount3X	+=	100;
 	if (pixelCount > 0)
 	{
 		CONSOLE_DEBUG_W_NUM("pixelCount\t=", pixelCount);
-
-		imageData	=	(int *)malloc(pixelCount3X * sizeof(int));
-		if (imageData!= NULL)
+		buffSize	=	(pixelCount + 100) * sizeof(TYPE_ImageArray);
+		CONSOLE_DEBUG_W_NUM("buffSize\t=", buffSize);
+		imageArray	=	(TYPE_ImageArray *)malloc(buffSize);
+		if (imageArray!= NULL)
 		{
-			memset(imageData, 128, pixelCount3X * sizeof(int));
-
+			memset(imageArray, 0, buffSize);
 			valuesRead	=	0;
-			CONSOLE_DEBUG("Calling AlpacaGetIntegerArray()");
+			CONSOLE_DEBUG("Calling AlpacaGetImageArray()");
 			SETUP_TIMING();
-			validData	=	AlpacaGetIntegerArray(	"camera",
-													cAlpacaDevNum,
-													"imagearray",
-													"",
-													imageData,
-													pixelCount3X,
-													&valuesRead);
+			imgRank	=	AlpacaGetImageArray(	"camera",
+												cAlpacaDevNum,
+												"imagearray",
+												"",
+												imageArray,
+												pixelCount,
+												&valuesRead);
 
 			DEBUG_TIMING("Image downloading (ms)");
-			CONSOLE_DEBUG_W_NUM("valuesRead\t\t=", valuesRead);
-			if (validData && (valuesRead > 10))
+			CONSOLE_DEBUG_W_NUM("valuesRead\t\t=",	valuesRead);
+			CONSOLE_DEBUG_W_NUM("imgRank\t\t=",		imgRank);
+			if ((imgRank > 0) && (valuesRead > 10))
 			{
 				myOpenCVimage	=	cvCreateImage(cvSize(	cCameraProp.CameraXsize, cCameraProp.CameraYsize),
 															IPL_DEPTH_8U,
 															3);
 				if (myOpenCVimage != NULL)
 				{
-					CONSOLE_DEBUG_W_NUM("width \t=",	myOpenCVimage->width);
-					CONSOLE_DEBUG_W_NUM("height\t=",	myOpenCVimage->height);
+					if (myOpenCVimage->imageData != NULL)
+					{
+						memset(myOpenCVimage->imageData, 128, (myOpenCVimage->height * myOpenCVimage->widthStep));
+					}
+					CONSOLE_DEBUG_W_NUM("width \t\t=",	myOpenCVimage->width);
+					CONSOLE_DEBUG_W_NUM("height\t\t=",	myOpenCVimage->height);
 					CONSOLE_DEBUG_W_NUM("widthStep\t=",	myOpenCVimage->widthStep);
 
 					//*	move the image data into the openCV image structure
-
 					START_TIMING();
 					iii	=	0;
+					//*	stepping ACROSS the field
 					for (xxx=0; xxx<myOpenCVimage->width; xxx++)
 					{
 						pixIdxRowStart	=	0;
+						//*	stepping DOWN the column
 						for (yyy=0; yyy<myOpenCVimage->height; yyy++)
 						{
 							pixIdx	=	pixIdxRowStart + (xxx * 3);
+
+							//*	openCV uses BGR instead of RGB
+							//*	https://docs.opencv.org/master/df/d24/tutorial_js_image_display.html
+
 							if (force8BitRead)
 							{
-								thePixValue	=	(imageData[iii]) & 0x00ff;
+								myOpenCVimage->imageData[pixIdx++]	=	(imageArray[iii].BluValue) & 0x00ff;
+								myOpenCVimage->imageData[pixIdx++]	=	(imageArray[iii].GrnValue) & 0x00ff;
+								myOpenCVimage->imageData[pixIdx++]	=	(imageArray[iii].RedValue) & 0x00ff;
 							}
 							else
 							{
-								thePixValue	=	(imageData[iii] >> 8) & 0x00ff;
+								myOpenCVimage->imageData[pixIdx++]	=	(imageArray[iii].BluValue >> 8) & 0x00ff;
+								myOpenCVimage->imageData[pixIdx++]	=	(imageArray[iii].GrnValue >> 8) & 0x00ff;
+								myOpenCVimage->imageData[pixIdx++]	=	(imageArray[iii].RedValue >> 8) & 0x00ff;
 							}
-							myOpenCVimage->imageData[pixIdx++]	=	thePixValue;
-							myOpenCVimage->imageData[pixIdx++]	=	thePixValue;
-							myOpenCVimage->imageData[pixIdx++]	=	thePixValue;
-							iii++;
 
+							iii++;
+							//*	advance to the next row
 							pixIdxRowStart	+=	myOpenCVimage->widthStep;
 						}
 					}
 					DEBUG_TIMING("Image stuffing (ms)");
-
+					CONSOLE_DEBUG_W_NUM("iii\t\t=",		iii);
 				}
 			}
-			else
-			{
-				CONSOLE_DEBUG("Failed to download integer array");
-			}
-
-			free(imageData);
+			free(imageArray);
 		}
 		else
 		{
@@ -1729,14 +1726,8 @@ IplImage	*ControllerCamera::DownloadImage(const bool force8BitRead)
 {
 IplImage	*myOpenCVimage	=	NULL;
 
-//	if (cHas_rgbarray)
-//	{
-//		myOpenCVimage	=	DownloadImage_rgbarray();
-//	}
-//	else
-	{
-		myOpenCVimage	=	DownloadImage_imagearray(force8BitRead);
-	}
+	myOpenCVimage	=	DownloadImage_imagearray(force8BitRead);
+
 	return(myOpenCVimage);
 }
 

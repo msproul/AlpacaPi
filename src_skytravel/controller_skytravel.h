@@ -36,6 +36,22 @@
 	#include	"windowtab_deviceselect.h"
 #endif
 
+
+extern	double	gTelescopeRA_Hours;
+extern	double	gTelescopeRA_Radians;
+extern	double	gTelescopeDecl_Degrees;
+extern	double	gTelescopeDecl_Radians;
+
+//**************************************************************************************
+typedef struct
+{
+	int		EarthDispMode;
+
+} SkyTravelDispOptions;
+
+
+extern	SkyTravelDispOptions	gST_DispOptions;
+
 //**************************************************************************************
 enum
 {

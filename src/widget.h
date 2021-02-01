@@ -59,6 +59,10 @@ enum
 	kFont_Large,
 
 //	kFont_Simplex,
+	kFont_ScriptLarge,
+
+	kFont_last
+
 
 };
 

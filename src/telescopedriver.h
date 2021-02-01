@@ -186,6 +186,10 @@ class TelescopeDriver: public AlpacaDriver
 				//*	full list of ASCOM telescope properties
 				TYPE_TelescopeProperties	cTelescopeProp;
 
+				//*	device communications information
+				DeviceConnectionType	cDeviceConnType;
+				char					cDeviceConnPath[64];	//*	this may be an IP address or a /dev/tty... string
+				int						cDeviceConnFileDesc;	//*	port file descriptor
 
 };
 

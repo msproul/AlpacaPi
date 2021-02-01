@@ -183,6 +183,7 @@ CPP_OBJECTS=												\
 				$(OBJECT_DIR)serialport.o					\
 				$(OBJECT_DIR)telescopedriver.o				\
 				$(OBJECT_DIR)telescopedriver_lx200.o		\
+				$(OBJECT_DIR)telescopedriver_skywatch.o		\
 				$(OBJECT_DIR)cpu_stats.o					\
 				$(OBJECT_DIR)lx200_com.o					\
 
@@ -384,6 +385,8 @@ tele		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
 #tele	:		DEFINEFLAGS		+=	-D_USE_OPENCV_
 tele	:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
 tele	:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_LX200_
+tele	:		DEFINEFLAGS		+=	-D_ENABLE_LX200_COM_
+tele	:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_SKYWATCH_
 tele	:			$(CPP_OBJECTS)				\
 					$(ALPACA_OBJECTS)			\
 					$(SOCKET_OBJECTS)			\
@@ -1099,7 +1102,7 @@ piswitch64		:	$(CPP_OBJECTS)				\
 
 
 ######################################################################################
-#pragma mark shutter
+#pragma mark make shutter
 #shutter	:		DEFINEFLAGS		+=	-D_ENABLE_OBSERVINGCONDITIONS_
 #shutter	:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
 #shutter	:		DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_
@@ -1116,10 +1119,10 @@ shutter		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
 #shutter	:		DEFINEFLAGS		+=	-D_ENABLE_ATIK_
 shutter		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
 shutter		:		DEFINEFLAGS		+=	-D_ENABLE_SHUTTER_
-shutter		:		DEFINEFLAGS		+=	-D_ENABLE_PWM_SWITCH_
+#shutter		:		DEFINEFLAGS		+=	-D_ENABLE_PWM_SWITCH_
 shutter		:		DEFINEFLAGS		+=	-D_INCLUDE_WIRINGPI_
 shutter		:		PLATFORM		=	armv7
-shutter		:		ATIK_LIB_DIR	=	$(ATIK_LIB_MASTER_DIR)/ARM/x86/NoFlyCapture
+#shutter		:		ATIK_LIB_DIR	=	$(ATIK_LIB_MASTER_DIR)/ARM/x86/NoFlyCapture
 
 shutter		:		$(CPP_OBJECTS)				\
 					$(ALPACA_OBJECTS)			\
@@ -1131,10 +1134,7 @@ shutter		:		$(CPP_OBJECTS)				\
 					$(CPP_OBJECTS)				\
 					$(ALPACA_OBJECTS)			\
 					$(OPENCV_LINK)				\
-					-L$(ATIK_LIB_DIR)/			\
-					-L$(ATIK_LIB_DIR_V129)/		\
 					$(ASI_CAMERA_OBJECTS)		\
-					$(ZWO_EFW_OBJECTS)			\
 					-lcfitsio					\
 					-lusb-1.0					\
 					-ludev						\
@@ -1491,7 +1491,6 @@ SKYTRAVEL_OBJECTS=											\
 				$(OBJECT_DIR)cpu_stats.o					\
 				$(OBJECT_DIR)eph.o							\
 				$(OBJECT_DIR)HipparcosCatalog.o				\
-				$(OBJECT_DIR)lx200_com.o					\
 				$(OBJECT_DIR)NGCcatalog.o					\
 				$(OBJECT_DIR)observatory_settings.o			\
 				$(OBJECT_DIR)StarCatalogHelper.o			\
@@ -1918,6 +1917,17 @@ $(OBJECT_DIR)telescopedriver_lx200.o :	$(SRC_DIR)telescopedriver_lx200.cpp	\
 										$(SRC_DIR)alpacadriver.h			\
 										Makefile
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)telescopedriver_lx200.cpp -o$(OBJECT_DIR)telescopedriver_lx200.o
+
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)telescopedriver_skywatch.o :	$(SRC_DIR)telescopedriver_skywatch.cpp	\
+											$(SRC_DIR)telescopedriver_skywatch.h	\
+											$(SRC_DIR)telescopedriver.h				\
+											$(SRC_DIR)alpacadriver.h				\
+											Makefile
+	$(COMPILEPLUS) $(INCLUDES)				$(SRC_DIR)telescopedriver_skywatch.cpp -o$(OBJECT_DIR)telescopedriver_skywatch.o
+
+
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)managementdriver.o :		$(SRC_DIR)managementdriver.cpp		\

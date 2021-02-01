@@ -103,6 +103,7 @@ class WindowTab
 
 				//*	set up functions
 		virtual	void	RunBackgroundTasks(void);
+				void	ComputeWidgetColumns(const int windowWitdh);
 				void	SetWidget(				const int widgetIdx, int left, int top, int width, int height);
 				void	SetWidgetType(			const int widgetIdx, const int widetType);
 				void	SetWidgetFont(			const int widgetIdx, int fontNum);

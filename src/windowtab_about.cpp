@@ -44,7 +44,7 @@ WindowTabAbout::WindowTabAbout(	const int	xSize,
 								const char	*windowName)
 	:WindowTab(xSize, ySize, backGrndColor, windowName)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 
 	SetupWindowControls();
@@ -55,7 +55,7 @@ WindowTabAbout::WindowTabAbout(	const int	xSize,
 //**************************************************************************************
 WindowTabAbout::~WindowTabAbout(void)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 }
 
 //**************************************************************************************
@@ -98,7 +98,7 @@ int		textBoxHt;
 int		iii;
 char	multiLineTextBuff[512];
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	//------------------------------------------
 	yLoc			=	cTabVertOffset;
@@ -142,11 +142,11 @@ char	multiLineTextBuff[512];
 	strcat(multiLineTextBuff,	gPlatformString);
 	strcat(multiLineTextBuff,	"\r");
 
-	CONSOLE_DEBUG(gOsReleaseString);
-	CONSOLE_DEBUG(gCpuInfoString);
-	CONSOLE_DEBUG(gPlatformString);
-	CONSOLE_DEBUG(multiLineTextBuff);
-	CONSOLE_DEBUG_W_NUM("strlen()", strlen(multiLineTextBuff));
+//	CONSOLE_DEBUG(gOsReleaseString);
+//	CONSOLE_DEBUG(gCpuInfoString);
+//	CONSOLE_DEBUG(gPlatformString);
+//	CONSOLE_DEBUG(multiLineTextBuff);
+//	CONSOLE_DEBUG_W_NUM("strlen()", strlen(multiLineTextBuff));
 
 	SetWidgetText(kAboutBox_CPUinfo, multiLineTextBuff);
 

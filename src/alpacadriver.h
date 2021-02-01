@@ -154,6 +154,16 @@ typedef struct
 
 
 //**************************************************************************************
+enum DeviceConnectionType
+{
+	kDevCon_Ethernet,
+	kDevCon_USB,
+	kDevCon_Serial
+
+};
+
+
+//**************************************************************************************
 class AlpacaDriver
 {
 	public:
@@ -182,8 +192,8 @@ class AlpacaDriver
 
 
 						//*	Connect and Disconnect conflicted with other libraries
-		virtual	void	AlpacaConnect(void);
-		virtual	void	AlpacaDisConnect(void);
+		virtual	bool	AlpacaConnect(void);
+		virtual	bool	AlpacaDisConnect(void);
 
 		virtual	void	OutputHTML(				TYPE_GetPutRequestData *reqData);
 		virtual	void	OutputHTML_Part2(		TYPE_GetPutRequestData *reqData);
@@ -266,6 +276,7 @@ extern	bool			gAutoExposure;
 extern	bool			gDisplayImage;
 extern	bool			gVerbose;
 extern	const char		gValueString[];
+extern	bool			gImageDownloadInProgress;
 
 extern	uint32_t		gClientTransactionID;
 extern	uint32_t		gServerTransactionID;

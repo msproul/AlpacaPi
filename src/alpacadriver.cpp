@@ -160,11 +160,12 @@
 
 #define		kAlpacaListenPort	6800
 
-uint32_t	gClientID				=	0;
-uint32_t	gClientTransactionID	=	0;
-uint32_t	gServerTransactionID	=	0;		//*	we are the server, we will increment this each time a transaction occurs
-bool		gErrorLogging			=	false;	//*	write errors to log file if true
-bool		gConformLogging			=	false;	//*	log all commands to log file to match up with Conform
+uint32_t	gClientID					=	0;
+uint32_t	gClientTransactionID		=	0;
+uint32_t	gServerTransactionID		=	0;		//*	we are the server, we will increment this each time a transaction occurs
+bool		gErrorLogging				=	false;	//*	write errors to log file if true
+bool		gConformLogging				=	false;	//*	log all commands to log file to match up with Conform
+bool		gImageDownloadInProgress	=	false;
 
 #if defined(_ENABLE_CAMERA_) && defined(_ENABLE_ASI_)
 	#include	"cameradriver_ASI.h"
@@ -573,15 +574,17 @@ char	argumentString[32];
 }
 
 //*****************************************************************************
-void	AlpacaDriver::AlpacaConnect(void)
+bool	AlpacaDriver::AlpacaConnect(void)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
+	return(false);
 }
 
 //*****************************************************************************
-void	AlpacaDriver::AlpacaDisConnect(void)
+bool	AlpacaDriver::AlpacaDisConnect(void)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
+	return(false);
 }
 
 
@@ -1742,7 +1745,7 @@ char			*myFilenamePtr;
 	filePointer	=	fopen(myJpegFileName, "r");
 	if (filePointer != NULL)
 	{
-		CONSOLE_DEBUG("File is open");
+		CONSOLE_DEBUG_W_STR("File is open:", myJpegFileName);
 		totalBytesWritten	=	0;
 		keepGoing	=	true;
 		while (keepGoing)
@@ -1764,6 +1767,7 @@ char			*myFilenamePtr;
 			}
 		}
 		fclose(filePointer);
+		CONSOLE_DEBUG_W_STR("File is closed:", myJpegFileName);
 		CONSOLE_DEBUG_W_NUM("totalBytesWritten\t=",	totalBytesWritten);
 	}
 	else

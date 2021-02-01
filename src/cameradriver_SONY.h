@@ -67,8 +67,8 @@ class CameraDriverSONY: public CameraDriver
 		virtual			~CameraDriverSONY(void);
 		virtual	void	OutputHTML_Part2(TYPE_GetPutRequestData *reqData);
 
-		virtual	void	AlpacaConnect(void);
-		virtual	void	AlpacaDisConnect(void);
+		virtual	bool	AlpacaConnect(void);
+		virtual	bool	AlpacaDisConnect(void);
 		virtual	void	RunStateMachine_Device(void);
 
 		//*****************************************************************************

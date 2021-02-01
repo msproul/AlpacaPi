@@ -128,10 +128,10 @@
 //*	Jan 20,	2021	<MLS> Added Send_imagearray_raw16()
 //*	Jan 20,	2021	<MLS> CONFORM-camera/zwo -> PASSED!!!!!!!!!!!!!!!!!!!!!
 //*	Jan 26,	2021	<MLS> Converted CameraDriver to use properties structure
+//*	Jan 29,	2021	<MLS> Finished Alpaca rgb image array support (Send_imagearray_rgb24())
 //*****************************************************************************
 //*	Jan  1,	2119	<TODO> ----------------------------------------
 //*	Jun 26,	2119	<TODO> Add support for sub frames
-//*	Jan 20,	2121	<TODO> Add rgb image array support
 //*****************************************************************************
 //*	 gcc -dM -E - < /dev/null
 //*****************************************************************************
@@ -2943,9 +2943,11 @@ int					pixelCount;
 int					mySocket;
 char				imageTimeString[64];
 double				exposureTimeSecs;
+int					imgRank;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 //	CONSOLE_DEBUG(reqData->htmlData);
+	gImageDownloadInProgress	=	true;
 
 	mySocket	=	reqData->socket;
 
@@ -2992,7 +2994,7 @@ double				exposureTimeSecs;
 	CONSOLE_DEBUG_W_NUM("pixelCount\t=", pixelCount);
 
 	CONSOLE_DEBUG_W_NUM("cCameraProp.ImageReady\t=", cCameraProp.ImageReady);
-	CONSOLE_DEBUG_W_HEX("cCameraDataBuffer\t=", cCameraDataBuffer);
+//	CONSOLE_DEBUG_W_HEX("cCameraDataBuffer\t=", cCameraDataBuffer);
 	if (cCameraProp.ImageReady && (cCameraDataBuffer != NULL))
 	{
 		alpacaErrCode	=	kASCOM_Err_Success;
@@ -3029,11 +3031,25 @@ double				exposureTimeSecs;
 								2,
 								INCLUDE_COMMA);
 
+		//*	determine the RANK of the image we are about to send.
+		switch(cLastExposure_ROIinfo.currentROIimageType)
+		{
+			case kImageType_RGB24:
+				imgRank	=	3;
+				break;
+
+			case kImageType_RAW8:
+			case kImageType_Y8:
+			case kImageType_RAW16:
+			default:
+				imgRank	=	2;
+				break;
+		}
 		JsonResponse_Add_Int32(	mySocket,
 								reqData->jsonTextBuffer,
 								kMaxJsonBuffLen,
 								"Rank",
-								2,
+								imgRank,
 								INCLUDE_COMMA);
 
 		JsonResponse_Add_ArrayStart(	mySocket,
@@ -3069,8 +3085,6 @@ double				exposureTimeSecs;
 			case kImageType_RGB24:
 				CONSOLE_DEBUG("kImageType_RGB24");
 
-				alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
-				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "RGB24 not finished");
 				Send_imagearray_rgb24(	mySocket,
 										cCameraDataBuffer,
 										cLastExposure_ROIinfo.currentROIheight,		//*	# of rows
@@ -3099,6 +3113,7 @@ double				exposureTimeSecs;
 	}
 
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, "--exit");
+	gImageDownloadInProgress	=	false;
 	return(alpacaErrCode);
 }
 
@@ -3110,19 +3125,10 @@ void	CameraDriver::Send_imagearray_rgb24(	const int		socketFD,
 												const int		numClms,
 												const int		pixelCount)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
-
-}
-
-//*****************************************************************************
-void	CameraDriver::Send_imagearray_raw8(		const int		socketFD,
-												unsigned char	*pixelPtr,
-												const int		numRows,
-												const int		numClms,
-												const int		pixelCount)
-{
 unsigned char	*myPixelPtr;
-uint32_t		pixelValue;
+uint32_t		pixelValue_Red;
+uint32_t		pixelValue_Grn;
+uint32_t		pixelValue_Blu;
 char			lineBuff[256];
 int				xxx;
 int				yyy;
@@ -3144,12 +3150,104 @@ int				totalValuesWritten;
 		totalValuesWritten	=	0;
 		dataElementCnt		=	0;
 		longBuffer[0]		=	0;
+		//*	step across from left to right
+		for (xxx=0; xxx < numClms; xxx++)
+		{
+			if ((xxx % 100) == 0)
+			{
+				CONSOLE_DEBUG_W_NUM("xxx\t=", xxx);
+			}
+			strcpy(longBuffer, "[\n");
+			dataElementCnt	=	0;
+			pixelIndex		=	xxx * 3;
+			//*	step through the rows (going from top to bottom)
+			for (yyy=0; yyy < numRows; yyy++)
+			{
+
+				//*	openCV uses BGR instead of RGB
+				//*	https://docs.opencv.org/master/df/d24/tutorial_js_image_display.html
+				pixelValue_Red		=	((myPixelPtr[pixelIndex + 2] & 0x00ff) << 8);
+				pixelValue_Grn		=	((myPixelPtr[pixelIndex + 1] & 0x00ff) << 8);
+				pixelValue_Blu		=	((myPixelPtr[pixelIndex + 0] & 0x00ff) << 8);
+
+				//	[65535,65535,65535],
+				sprintf(lineBuff, "[%d,%d,%d]", pixelValue_Red, pixelValue_Grn, pixelValue_Blu);
+				if (yyy < (numRows - 1))
+				{
+					strcat(lineBuff, ",");
+				}
+				strcat(longBuffer, lineBuff);
+				dataElementCnt++;
+				if (dataElementCnt >= 50)
+				{
+				//	printf("xxx=%3d\t>>%s\r\n", xxx, longBuffer);
+					strcat(longBuffer, "\n");
+					bufLen			=	strlen(longBuffer);
+					bytesWritten	=	write(socketFD, longBuffer, bufLen);
+					dataElementCnt	=	0;
+					longBuffer[0]	=	0;
+				}
+				//*	advance to the next row
+				pixelIndex	+=	(3 * numClms);
+
+				totalValuesWritten++;
+			}
+			if (xxx < (numClms - 1))
+			{
+				strcat(longBuffer, "],\n");
+			}
+			else
+			{
+				strcat(longBuffer, "]\n");
+			}
+			bufLen			=	strlen(longBuffer);
+			bytesWritten	=	write(socketFD, longBuffer, bufLen);
+			dataElementCnt	=	0;
+			longBuffer[0]	=	0;
+		}
+		CONSOLE_DEBUG(__FUNCTION__);
+	}
+	CONSOLE_DEBUG_W_NUM("totalValuesWritten\t=", totalValuesWritten);
+	CONSOLE_DEBUG("Done");
+}
+
+//*****************************************************************************
+void	CameraDriver::Send_imagearray_raw8(		const int		socketFD,
+												unsigned char	*pixelPtr,
+												const int		numRows,
+												const int		numClms,
+												const int		pixelCount)
+{
+unsigned char	*myPixelPtr;
+int				pixelValue;
+char			lineBuff[256];
+int				xxx;
+int				yyy;
+int				bufLen;
+int				bytesWritten;
+char			longBuffer[2048];
+int				dataElementCnt;
+int				pixelIndex;
+int				totalValuesWritten;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_NUM("numRows\t=", numRows);
+	CONSOLE_DEBUG_W_NUM("numClms\t=", numClms);
+
+	totalValuesWritten	=	0;
+	myPixelPtr			=	pixelPtr;
+	if (myPixelPtr != NULL)
+	{
+		totalValuesWritten	=	0;
+		dataElementCnt		=	0;
+		longBuffer[0]		=	0;
 		for (xxx=0; xxx < numClms; xxx++)
 		{
 			if ((xxx % 500) == 0)
 			{
 				CONSOLE_DEBUG_W_NUM("xxx\t=", xxx);
 			}
+
 			strcpy(longBuffer, "[");
 			dataElementCnt	=	0;
 			pixelIndex		=	xxx;
@@ -3157,12 +3255,12 @@ int				totalValuesWritten;
 			for (yyy=0; yyy < (numRows - 1); yyy++)
 			{
 				pixelValue		=	((myPixelPtr[pixelIndex] & 0x00ff) << 8);
-			//	pixelValue		=	((myPixelPtr[pixelIndex] & 0x00ff));
 				sprintf(lineBuff, "%d,", pixelValue);
 				strcat(longBuffer, lineBuff);
+				bufLen	=	strlen(longBuffer);
+
 				dataElementCnt++;
-		//		if (dataElementCnt >= 50)
-				if (dataElementCnt >= 16)
+				if (dataElementCnt >= 100)
 				{
 					strcat(longBuffer, "\n");
 					bufLen			=	strlen(longBuffer);
@@ -3176,7 +3274,6 @@ int				totalValuesWritten;
 			}
 			//*	now do the last one WITHOUT the comma
 			pixelValue		=	((myPixelPtr[pixelIndex] & 0x00ff) << 8);
-		//	pixelValue		=	((myPixelPtr[pixelIndex] & 0x00ff));
 			sprintf(lineBuff, "%d]", pixelValue);
 			totalValuesWritten++;
 			if (xxx < (numClms - 1))
@@ -3241,7 +3338,7 @@ int				totalValuesWritten;
 				sprintf(lineBuff, "%d,", pixelValue);
 				strcat(longBuffer, lineBuff);
 				dataElementCnt++;
-				if (dataElementCnt >= 50)
+				if (dataElementCnt >= 100)
 				{
 					strcat(longBuffer, "\n");
 					bufLen			=	strlen(longBuffer);
@@ -3290,12 +3387,10 @@ char				lineBuff[256];
 char				imageTimeString[256];
 double				exposureTimeSecs;
 TYPE_ASCOM_STATUS	tempSensorErr;
-//-int					bufLen;
-//-int					bytesWritten;
-//-char				longBuffer[1024];
-//-int					dataElementCnt;
 
 	CONSOLE_DEBUG(__FUNCTION__);
+	gImageDownloadInProgress	=	true;
+
 //*	Jun 25,	2020	<MLS> Changed JSON xmit buffer limit to 1475, significant speed improvement
 
 #define		kBuffSize_MaxSpeed	1475
@@ -3488,6 +3583,7 @@ TYPE_ASCOM_STATUS	tempSensorErr;
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "No image available");
 	}
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, "--exit");
+	gImageDownloadInProgress	=	false;
 	return(alpacaErrCode);
 }
 
@@ -3498,41 +3594,52 @@ void	CameraDriver::Send_RGBarray_rgb24(	const int		socketFD,
 {
 unsigned char	*myPixelPtr;
 uint32_t		pixelValue;
-char			lineBuff[256];
+char			lineBuff[512];
 int				pixelLimit;
 int				iii;
 int				bufLen;
 int				bytesWritten;
-char			longBuffer[1024];
+int				totalBytesWritten;
+char			longBuffer[2048];
 int				dataElementCnt;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
-	pixelLimit	=	pixelCount - 1;
-	myPixelPtr	=	pixelPtr;
+	pixelLimit			=	pixelCount - 1;
+	myPixelPtr			=	pixelPtr;
+	totalBytesWritten	=	0;
 	if (myPixelPtr != NULL)
 	{
 		longBuffer[0]	=	0;
 		dataElementCnt	=	0;
 		for (iii=0; iii < pixelLimit; iii++)
 		{
-			pixelValue		=	((myPixelPtr[0] & 0x00ff) << 16) +
-								((myPixelPtr[1] & 0x00ff) << 8) +
-								((myPixelPtr[2] & 0x00ff));
+			if ((iii % 10000) == 0)
+			{
+				CONSOLE_DEBUG_W_NUM("iii\t=", iii);
+			}
+
+			pixelValue		=	((myPixelPtr[0] & 0x00ff) << 16);
+			pixelValue		+=	((myPixelPtr[1] & 0x00ff) << 8);
+			pixelValue		+=	((myPixelPtr[2] & 0x00ff));
+
 			myPixelPtr		+=	3;
 
 			sprintf(lineBuff, "%d,\n", pixelValue);
 			strcat(longBuffer, lineBuff);
 			dataElementCnt++;
-			if (dataElementCnt >= 10)
+			if (dataElementCnt >= 50)
 			{
 				strcat(longBuffer, "\n");
-				bufLen			=	strlen(longBuffer);
-				bytesWritten	=	write(socketFD, longBuffer, bufLen);
-				dataElementCnt	=	0;
-				longBuffer[0]	=	0;
+				bufLen				=	strlen(longBuffer);
+
+				bytesWritten		=	write(socketFD, longBuffer, bufLen);
+				totalBytesWritten	+=	bytesWritten;
+				dataElementCnt		=	0;
+				longBuffer[0]		=	0;
 			}
 		}
+		CONSOLE_DEBUG("Main loop Done");
 		//*	now do the last one WITHOUT the comma
 		pixelValue		=	(myPixelPtr[0] << 16) +
 							(myPixelPtr[1] << 8) +
@@ -3540,8 +3647,16 @@ int				dataElementCnt;
 		sprintf(lineBuff, "%d", pixelValue);
 		strcat(longBuffer, lineBuff);
 		strcat(longBuffer, "\n");
-		bufLen			=	strlen(longBuffer);
-		bytesWritten	=	write(socketFD, longBuffer, bufLen);
+		bufLen				=	strlen(longBuffer);
+		CONSOLE_DEBUG_W_NUM("bufLen\t=", bufLen);
+		bytesWritten		=	write(socketFD, longBuffer, bufLen);
+		totalBytesWritten	+=	bytesWritten;
+
+		CONSOLE_DEBUG_W_NUM("totalBytesWritten\t=", totalBytesWritten);
+	}
+	else
+	{
+		CONSOLE_DEBUG("myPixelPtr is NULL");
 	}
 
 
@@ -3554,35 +3669,36 @@ void	CameraDriver::Send_RGBarray_raw8(	const int		socketFD,
 											unsigned char	*pixelPtr,
 											const int		pixelCount)
 {
-unsigned char	*myPixelPtr;
 uint32_t		pixelValue;
 char			lineBuff[256];
 int				pixelLimit;
 int				iii;
 int				bufLen;
 int				bytesWritten;
-char			longBuffer[1500];
+char			longBuffer[2000];
 int				dataElementCnt;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG_W_NUM("pixelCount\t=", pixelCount);
 
 	pixelLimit	=	pixelCount - 1;
-	myPixelPtr	=	pixelPtr;
-	if (myPixelPtr != NULL)
+	if (pixelPtr != NULL)
 	{
 		longBuffer[0]	=	0;
 		dataElementCnt	=	0;
 		for (iii=0; iii < pixelLimit; iii++)
 		{
-			pixelValue		=	(pixelPtr[0] & 0x00ff);
+			if ((iii % 10000) == 0)
+			{
+				CONSOLE_DEBUG_W_NUM("iii\t=", iii);
+			}
+			pixelValue		=	(pixelPtr[iii] & 0x00ff);
 			pixelValue		=	pixelValue * 0x010101;
-			pixelPtr		+=	1;
-//			sprintf(lineBuff, "%d,\n", pixelValue);
 			sprintf(lineBuff, "%d,\n", pixelValue);
+//			sprintf(lineBuff, "%d,", pixelValue);
 			strcat(longBuffer, lineBuff);
 			dataElementCnt++;
-			if (dataElementCnt >= 50)
+			if (dataElementCnt >= 25)
 			{
 				bufLen			=	strlen(longBuffer);
 				bytesWritten	=	write(socketFD, longBuffer, bufLen);
@@ -3590,8 +3706,9 @@ int				dataElementCnt;
 				longBuffer[0]	=	0;
 			}
 		}
+		CONSOLE_DEBUG("Main loop Done");
 		//*	now do the last one WITHOUT the comma
-		pixelValue		=	(pixelPtr[0] & 0x00ff);
+		pixelValue		=	(pixelPtr[iii] & 0x00ff);
 		pixelValue		=	pixelValue * 0x010101;
 		pixelPtr		+=	1;
 		sprintf(lineBuff, "%d", pixelValue);
@@ -3601,6 +3718,11 @@ int				dataElementCnt;
 		bufLen			=	strlen(longBuffer);
 		bytesWritten	=	write(socketFD, longBuffer, bufLen);
 		dataElementCnt	=	0;
+	}
+	else
+	{
+		CONSOLE_DEBUG("pixelPtr is NULL");
+
 	}
 	CONSOLE_DEBUG("Done");
 

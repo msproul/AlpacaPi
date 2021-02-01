@@ -96,7 +96,7 @@ DomeDriverROR::DomeDriverROR(const int argDevNum)
 
 	cDomeConfig					=	kIsRollOffRoof;
 	cDomeProp.AtPark			=	true;	//*	for testing
-	cDomeProp.Azimuth			=	123.0;	//*	for testing
+	cDomeProp.Azimuth			=	0.0;	//*	Azimuth is meaningless for a ROR
 	cDomeProp.CanSyncAzimuth	=	false;
 	cDomeProp.CanSetShutter		=	true;
 
@@ -108,8 +108,6 @@ DomeDriverROR::DomeDriverROR(const int argDevNum)
 
 	strcpy(cDeviceName,			"AlpacaPi-ROR");
 	strcpy(cDeviceDescription,	"Roll Off Roof");
-
-
 }
 
 //**************************************************************************************

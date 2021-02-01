@@ -47,8 +47,6 @@ void	PARENT_CLASS::AlpacaProcessReadAll_Telescope(	const int	deviceNum,
 														const char	*keywordString,
 														const char *valueString)
 {
-//double	myDoubleValue;
-char	hhmmssString[32];
 
 //	CONSOLE_DEBUG_W_2STR("json=",	keywordString, valueString);
 
@@ -145,10 +143,7 @@ bool	PARENT_CLASS::AlpacaGetStatus_TelescopeOneAAT(void)
 bool			validData;
 int				myFailureCount;
 double			argDouble;
-double			argDouble2;
 bool			argBoolean;
-int				argInt;
-char			hhmmssString[32];
 //	CONSOLE_DEBUG(__FUNCTION__);
 #ifndef _PARENT_IS_TELESCOPE_
 //	CONSOLE_DEBUG("NOT   _PARENT_IS_TELESCOPE_");

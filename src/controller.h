@@ -21,6 +21,13 @@
 #include	"json_parse.h"
 
 
+#ifndef	_ALPACA_DEFS_H_
+	#include	"alpaca_defs.h"
+#endif
+
+
+
+
 #ifndef _WINDOW_TAB_H
 	#include	"windowtab.h"
 #endif // _WINDOW_TAB_H
@@ -47,8 +54,8 @@
 extern CvFont		gTextFont[kFontCnt];
 
 
-#define	RADIANS(degrees)	(degrees * M_PI / 180.0)
-#define	DEGREES(radians)	(radians * 180.0 / M_PI)
+#define	RADIANS(degrees)	((degrees) * (M_PI / 180.0))
+#define	DEGREES(radians)	((radians) * (180.0 / M_PI))
 
 
 //*****************************************************************************
@@ -226,20 +233,28 @@ class Controller
 												double		*returnMinValue,
 												double		*returnMaxValue,
 												bool		*rtnValidData = NULL);
-				bool	AlpacaGetIntegerArray(	const char	*alpacaDevice,
+				int		AlpacaGetIntegerArray(	const char	*alpacaDevice,
 												const int	alpacaDevNum,
 												const char	*alpacaCmd,
 												const char	*dataString,
 												int			*uint32array,
 												int			arrayLength,
 												int			*actualValueCnt);
-				bool	AlpacaGetIntegerArrayShortLines(	const char	*alpacaDevice,
+				int		AlpacaGetIntegerArrayShortLines(	const char	*alpacaDevice,
 												const int	alpacaDevNum,
 												const char	*alpacaCmd,
 												const char	*dataString,
 												int			*uint32array,
 												int			arrayLength,
 												int			*actualValueCnt);
+
+				int		AlpacaGetImageArray(	const char		*alpacaDevice,
+												const int		alpacaDevNum,
+												const char		*alpacaCmd,
+												const char		*dataString,
+												TYPE_ImageArray	*imageArray,
+												int				arrayLength,
+												int				*actualValueCnt);
 
 
 		uint32_t	cMagicCookie;		//*	an indicator so we know the object is valid

@@ -37,6 +37,8 @@
 //*	Jan  7,	2021	<MLS> Added GetXYfromAz_Elev()
 //*	Jan  8,	2021	<MLS> Added DrawVerticalArc()
 //*	Jan 26,	2021	<MLS> Removed support for direct LX200 comm, using Alpaca instead
+//*	Jan 29,	2021	<MLS> Finished removing all LX200 direct comm code
+//*	Jan 29,	2021	<MLS> Added auto time update option
 //*****************************************************************************
 //*	TODO
 //*			star catalog lists
@@ -78,7 +80,7 @@
 
 #include	"windowtab.h"
 #include	"windowtab_skytravel.h"
-#include	"lx200_com.h"
+#include	"controller_skytravel.h"
 
 #include	"SHAPES.DTA"
 #include	"DEEP.DTA"
@@ -100,6 +102,8 @@ double	gSlitBottom_degrees		=	25.0;
 double	gSlitTop_degrees		=	75.0;
 double	gDomeAzimuth_degrees	=	90.0;
 
+
+SkyTravelDispOptions	gST_DispOptions;
 
 
 static bool		gDashedLines	=	false;
@@ -228,6 +232,9 @@ int		ii;
 	//*	zero out everything
 	memset(&cCurrentTime,		0, sizeof(TYPE_Time));
 	memset(&cCurrLatLon,		0, sizeof(TYPE_LatLon));
+
+	cAutoAdvanceTime		=	true;
+	cLastUpdateTime_ms		=	0;
 	cNightMode				=	false;
 	cStarDataPtr			=	NULL;
 	cStarCount				=	0;
@@ -306,6 +313,9 @@ int		ii;
 	cDispOptions.dispTelescope		=	false;
 
 	cDisplayedMagnitudeLimit		=	15.0;
+
+	gST_DispOptions.EarthDispMode	=	0;
+
 
 	cElev0			=	kHALFPI / 2;		//* 45 degrees
 	cAz0			=	-PI / 3.0;			//* 60 degrees (ca. eastnortheast)
@@ -424,35 +434,6 @@ WindowTabSkyTravel::~WindowTabSkyTravel(void)
 
 }
 
-//**************************************************************************************
-void WindowTabSkyTravel::RunBackgroundTasks(void)
-{
-	//*	check for telescope information
-	if (gTelescopeUpdated)
-	{
-	char	ra_dec_string[128];
-
-
-		gTelescopeUpdated	=	false;
-
-		if (strlen(gTelescopeErrorString) > 0)
-		{
-			SetWidgetText(kSkyTravel_Telescope_RA_DEC, gTelescopeErrorString);
-			gTelescopeErrorString[0]	=	0;
-		}
-		else
-		{
-			sprintf(ra_dec_string, "%s / %s (%d)", gTelescopeRA_String, gTelescopeDecl_String, gTelescopeUpdateCnt);
-			SetWidgetText(kSkyTravel_Telescope_RA_DEC, ra_dec_string);
-		}
-//-		SetWidgetChecked(kSkyTravel_ConnLX200, gLX200_ThreadActive);
-
-		//*	this makes it real time.
-		SetCurrentTime();
-
-		ForceUpdate();
-	}
-}
 
 
 //**************************************************************************************
@@ -514,6 +495,8 @@ int		searchBoxWidth;
 
 
 	SetWidgetHelpText(	kSkyTravel_Btn_Reset,			"Reset");
+
+	SetWidgetHelpText(	kSkyTravel_Btn_AutoAdvTime,		"Toggle Auto Advance Time");
 	SetWidgetHelpText(	kSkyTravel_Btn_Chart,			"Toggle Chart mode");
 	SetWidgetHelpText(	kSkyTravel_Btn_DeepSky,			"Toggle Deep Sky Objects");
 	SetWidgetHelpText(	kSkyTravel_Btn_Names,			"Toggle Name display");
@@ -538,8 +521,11 @@ int		searchBoxWidth;
 	SetWidgetHelpText(	kSkyTravel_Btn_Minus,		"Zoom Out");
 	SetWidgetHelpText(	kSkyTravel_Btn_ZoomLevel,	"Current Zoom level");
 
+	SetWidgetHelpText(	kSkyTravel_Search_Text,	"Enter object to search for");
+	SetWidgetHelpText(	kSkyTravel_Search_Btn,	"Click to search");
 
 
+	SetWidgetText(		kSkyTravel_Btn_AutoAdvTime,		"@");
 	SetWidgetText(		kSkyTravel_Btn_Reset,			"r");
 	SetWidgetText(		kSkyTravel_Btn_Chart,			"c");
 	SetWidgetText(		kSkyTravel_Btn_DeepSky,			"D");
@@ -644,6 +630,55 @@ int		searchBoxWidth;
 	UpdateButtonStatus();
 }
 
+//**************************************************************************************
+void WindowTabSkyTravel::RunBackgroundTasks(void)
+{
+uint32_t	currentMilliSecs;
+uint32_t	deltaMilliSecs;
+
+	currentMilliSecs	=	millis();
+	deltaMilliSecs		=	currentMilliSecs - cLastUpdateTime_ms;
+	if (deltaMilliSecs > 60000)
+	{
+		if (cAutoAdvanceTime)
+		{
+			//*	this makes it real time.
+			SetCurrentTime();
+			ForceUpdate();
+		}
+		cLastUpdateTime_ms		=	millis();
+	}
+
+#if 0
+	//*	check for telescope information
+	if (gTelescopeUpdated)
+	{
+	char	ra_dec_string[128];
+
+		CONSOLE_DEBUG("gTelescopeUpdated");
+
+		gTelescopeUpdated	=	false;
+
+		if (strlen(gTelescopeErrorString) > 0)
+		{
+			SetWidgetText(kSkyTravel_Telescope_RA_DEC, gTelescopeErrorString);
+			gTelescopeErrorString[0]	=	0;
+		}
+		else
+		{
+			sprintf(ra_dec_string, "%s / %s (%d)", gTelescopeRA_String, gTelescopeDecl_String, gTelescopeUpdateCnt);
+			SetWidgetText(kSkyTravel_Telescope_RA_DEC, ra_dec_string);
+		}
+//-		SetWidgetChecked(kSkyTravel_ConnLX200, gLX200_ThreadActive);
+
+		//*	this makes it real time.
+		SetCurrentTime();
+
+		ForceUpdate();
+	}
+#endif
+}
+
 //*****************************************************************************
 void	WindowTabSkyTravel::UpdateButtonStatus(void)
 {
@@ -658,16 +693,18 @@ void	WindowTabSkyTravel::UpdateButtonStatus(void)
 	SetWidgetChecked(		kSkyTravel_Btn_Hipparcos,		cDispOptions.dispHIP);
 
 
-	SetWidgetChecked(		kSkyTravel_Btn_Chart,		cChart);
-	SetWidgetChecked(		kSkyTravel_Btn_Earth,		cDispOptions.dispEarth);
-	SetWidgetChecked(		kSkyTravel_Btn_Grid,		cDispOptions.dispGrid);
-	SetWidgetChecked(		kSkyTravel_Btn_Equator,		cDispOptions.dispEquator_line);
-	SetWidgetChecked(		kSkyTravel_Btn_Ecliptic,	cDispOptions.ecliptic_line);
-	SetWidgetChecked(		kSkyTravel_Btn_NightMode,	cNightMode);
-	SetWidgetChecked(		kSkyTravel_Btn_Symbols,		cDispOptions.dispSymbols);
-	SetWidgetChecked(		kSkyTravel_Btn_TscopeDisp,	cDispOptions.dispTelescope);
+	SetWidgetChecked(		kSkyTravel_Btn_AutoAdvTime,		cAutoAdvanceTime);
 
-	SetWidgetNumber(		kSkyTravel_Btn_ZoomLevel,	cView_index);
+	SetWidgetChecked(		kSkyTravel_Btn_Chart,			cChart);
+	SetWidgetChecked(		kSkyTravel_Btn_Earth,			cDispOptions.dispEarth);
+	SetWidgetChecked(		kSkyTravel_Btn_Grid,			cDispOptions.dispGrid);
+	SetWidgetChecked(		kSkyTravel_Btn_Equator,			cDispOptions.dispEquator_line);
+	SetWidgetChecked(		kSkyTravel_Btn_Ecliptic,		cDispOptions.ecliptic_line);
+	SetWidgetChecked(		kSkyTravel_Btn_NightMode,		cNightMode);
+	SetWidgetChecked(		kSkyTravel_Btn_Symbols,			cDispOptions.dispSymbols);
+	SetWidgetChecked(		kSkyTravel_Btn_TscopeDisp,		cDispOptions.dispTelescope);
+
+	SetWidgetNumber(		kSkyTravel_Btn_ZoomLevel,		cView_index);
 
 }
 
@@ -730,6 +767,10 @@ bool			reDrawSky;
 			}
 			break;
 
+		case '@':
+			cAutoAdvanceTime	=	!cAutoAdvanceTime;
+			break;
+
 		case '#':	//*	toggle GRID
 			cDispOptions.dispGrid	=	!cDispOptions.dispGrid;
 			break;
@@ -780,8 +821,8 @@ bool			reDrawSky;
 
 		case 'g':
 			SetCurrentTime();
-			cCurrLatLon.latitude		=	RADIANS(41.361090);
-			cCurrLatLon.longitude		=	RADIANS(-74.980333);
+//-			cCurrLatLon.latitude		=	RADIANS(41.361090);
+//-			cCurrLatLon.longitude		=	RADIANS(-74.980333);
 			break;
 
 		case 'H':	//*	toggle HORIZON LINE
@@ -924,6 +965,12 @@ bool			reDrawSky;
 				}
 			}
 			cDisplayedMagnitudeLimit		-=	0.5;
+
+			gST_DispOptions.EarthDispMode++;
+			if (gST_DispOptions.EarthDispMode >= 4)
+			{
+				gST_DispOptions.EarthDispMode	=	0;
+			}
 			break;
 
 		case '/':
@@ -951,8 +998,6 @@ bool			reDrawSky;
 void	WindowTabSkyTravel::ProcessButtonClick(const int buttonIdx)
 {
 bool	reDrawSky;
-int		lx200_threadErr;
-char	lx200_errorMsg[64];
 char	searchText[128];
 
 	reDrawSky	=	true;
@@ -960,6 +1005,11 @@ char	searchText[128];
 	{
 		case kSkyTravel_Btn_Reset:
 			ResetView();
+			break;
+
+		case kSkyTravel_Btn_AutoAdvTime:
+			cAutoAdvanceTime	=	!cAutoAdvanceTime;
+			SetWidgetChecked(		kSkyTravel_Btn_AutoAdvTime,		cAutoAdvanceTime);
 			break;
 
 		case kSkyTravel_Btn_Chart:
@@ -1070,27 +1120,6 @@ char	searchText[128];
 			}
 			cView_angle	=	gView_table[cView_index];
 			break;
-#if 0
-		case kSkyTravel_ConnLX200:
-			//*	The IP address/port needs to be a preference
-			lx200_threadErr	=	LX200_StartThread("192.168.1.104", 49152, lx200_errorMsg);
-			if (lx200_threadErr == 0)
-			{
-				//*	turn on the display of the telescope
-				cDispOptions.dispTelescope	=	true;
-			}
-			else
-			{
-				SetWidgetText(kSkyTravel_MsgTextBox, lx200_errorMsg);
-				SetWidgetText(kSkyTravel_Telescope_RA_DEC, lx200_errorMsg);
-			}
-			break;
-
-		//*	sync the scope to the current center of the screen
-		case kSkyTravel_SyncLX200:
-			LX200_SyncScope(cRa0, cDecl0, NULL);
-			break;
-#endif // 0
 
 		case kSkyTravel_Search_Btn:
 			GetWidgetText(kSkyTravel_Search_Text, searchText);
@@ -1546,6 +1575,7 @@ void	WindowTabSkyTravel::SetCurrentTime(void)
 struct timeval	currentTimeVal;
 struct tm		*linuxTime;
 
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	gettimeofday(&currentTimeVal, NULL);
 
@@ -3025,7 +3055,8 @@ short				dataSource;
 
 							if (dataSource == kDataSrc_TSC_Messier)
 							{
-								SetColor(GREEN);
+							//	SetColor(GREEN);
+								SetColor(CYAN);
 								DrawCString(xcoord, ycoord, objectptr[ii].shortName);
 								if (cView_index < 4)
 								{
@@ -3588,13 +3619,27 @@ int		xcoord,ycoord,ftflag	=	0;
 	sin_bside	=	sin(codecl);
 	cos_bside	=	cos(codecl);
 
-//#define	_USE_THICK_HORIZON_
-#ifdef _USE_THICK_HORIZON_
-	delta_ra	=	rtasc / 20.0;		//*increment
-	CPenSize(2);
-#else
-	delta_ra	=	rtasc / 100.0;		//*increment
-#endif
+	switch(gST_DispOptions.EarthDispMode)
+	{
+		case 0:
+			delta_ra	=	rtasc / 100.0;		//*increment
+			break;
+
+		case 1:
+			delta_ra	=	rtasc / 20.0;		//*increment
+			CPenSize(2);
+			break;
+
+		case 2:
+			delta_ra	=	rtasc / 900.0;		//*increment
+			break;
+
+		case 3:
+			SetColor(DARKGREEN);
+			delta_ra	=	rtasc / 900.0;		//*increment
+			break;
+
+	}
 
 	for (alpha = -rtasc; alpha < rtasc; alpha += delta_ra)
 	{

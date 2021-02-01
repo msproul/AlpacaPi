@@ -77,7 +77,6 @@ int		xLoc;
 int		save_yLoc;
 int		textBoxHt;
 int		iii;
-char	multiLineTextBuff[512];
 int		myRadioBtnWidth;
 
 	CONSOLE_DEBUG(__FUNCTION__);
@@ -282,7 +281,6 @@ static int	FindDeviceInList(TYPE_REMOTE_DEV *theDevice, TYPE_REMOTE_DEV *theList
 void	WindowTabDeviceSelect::UpdateRemoteDeviceList(void)
 {
 int		iii;
-bool	includeDevice;
 int		foundIndex;
 bool	domeListChanged;
 bool	telescopeListChanged;

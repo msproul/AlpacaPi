@@ -438,7 +438,7 @@ void	ControllerCamNormal::UpdateCameraState(void)
 {
 char			linebuff[64];
 
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 
 	switch(cAlpacaCameraState)
 	{

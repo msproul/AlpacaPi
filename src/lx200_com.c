@@ -26,6 +26,7 @@
 //*	Jan  3,	2021	<MLS> Added LX200_SyncScope()
 //*	Jan  3,	2021	<MLS> Sync working with TSC telescope controller
 //*	Jan 22,	2021	<MLS> Added LX200_SyncScopeDegrees(), LX200_StopMovement()
+//*	Jan 30,	2021	<MLS> Added _ENABLE_LX200_COM_ compile flag
 //*****************************************************************************
 //*	reference
 //*		https://astro-physics.info/index.htm?tech_support/tech_support
@@ -33,6 +34,9 @@
 //*		https://astro-physics.info/tech_support/mounts/protocol-d.pdf
 //*		https://astro-physics.info/tech_support/mounts/protocol-cp3-cp4.pdf
 //*****************************************************************************
+
+#ifdef	_ENABLE_LX200_COM_
+
 
 #include	<stdio.h>
 #include	<stdlib.h>
@@ -391,8 +395,6 @@ bool	isValid;
 //*****************************************************************************
 static bool	LX200_Process_GT(char *dataBuffer)
 {
-double	degrees_Dbl;
-
 bool	isValid;
 
 	isValid		=	CheckForValidResponse(dataBuffer);
@@ -938,3 +940,8 @@ char	errorMsg[128];
 178 [LX200_SendCommand   ] sending	= :GZ#
 210 [LX200_SendCommand   ] dataBuffer	=
 #endif // 0
+
+
+
+
+#endif // _ENABLE_LX200_COM_

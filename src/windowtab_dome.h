@@ -72,7 +72,15 @@ enum
 	kDomeBox_IPaddr,
 	kDomeBox_Readall,
 #ifdef _ENABLE_SKYTRAVEL_
+	kDomeBox_Outline,
+
 	kDomeBox_Rescan,
+
+	kDomeBox_DomeGraphic,
+	kDomeBox_North,
+	kDomeBox_South,
+	kDomeBox_East,
+	kDomeBox_West,
 
 #endif
 
@@ -100,6 +108,11 @@ class WindowTabDome: public WindowTab
 		virtual	void	ProcessButtonClick(const int buttonIdx);
 		virtual	void	AlpacaDisplayErrorMessage(const char *errorMsgString);
 
+				void	SetDomePropertersPtr(TYPE_DomeProperties *domePropPtr);
+
+				void	UpdateDomeAzimuth(const double newAzimuth);
+				void	DrawDomeGraphic(IplImage *openCV_Image, TYPE_WIDGET *theWidget);
+
 				void	ResetKnownCommands(void);
 				bool	SendAlpacaCmdToDome(	const char		*theCommand,
 												const char		*dataString,
@@ -110,6 +123,8 @@ class WindowTabDome: public WindowTab
 				void	MoveDomeByAmount(const double moveAmount);
 
 				bool	cParentIsSkyTravel;
+
+				TYPE_DomeProperties	*cDomePropPtr;
 };
 
 

@@ -1,5 +1,5 @@
 //**************************************************************************
-//*	Name:			telescopedriver_lx200.h
+//*	Name:			telescopedriver_skywatch.h
 //*
 //*	Author:			Mark Sproul (C) 2021
 //*
@@ -15,9 +15,9 @@
 //*****************************************************************************
 //*	<MLS>	=	Mark L Sproul
 //*****************************************************************************
-//*	Jan 13,	2021	<MLS> Created telescopedriver_lx200.h
+//*	Jan 30,	2021	<MLS> Created telescopedriver_skywatch.h
 //*****************************************************************************
-//#include	"telescopedriver_lx200.h"
+//#include	"telescopedriver_skywatch.h"
 
 
 
@@ -25,21 +25,22 @@
 	#include	"telescopedriver.h"
 #endif
 
-void	CreateTelescopeObjects(void);
+void	CreateTelescope_SkyWatchObjects(void);
 
 
 //**************************************************************************************
-class TelescopeDriverLX200: public TelescopeDriver
+class TelescopeDriverSkyWatch: public TelescopeDriver
 {
 	public:
 
 		//
 		// Construction
 		//
-								TelescopeDriverLX200(	DeviceConnectionType	connectionType,
-														const char				*devicePath);
-		virtual					~TelescopeDriverLX200(void);
+								TelescopeDriverSkyWatch(	DeviceConnectionType	connectionType,
+															const char			*devicePath);
+		virtual					~TelescopeDriverSkyWatch(void);
 		virtual	int32_t			RunStateMachine(void);
+
 
 
 
@@ -50,4 +51,5 @@ class TelescopeDriverLX200: public TelescopeDriver
 		virtual	TYPE_ASCOM_STATUS	Telescope_SyncToRA_DEC(const double newRA, const double newDec, char *alpacaErrMsg);
 
 
+		char					cSkyWatchDevicePath[64];	//*	this may be an IP address or a /dev/tty... string
 };

@@ -618,6 +618,7 @@ bool			lookingForMin;
 				for (ii=0; ii<imageDataLen; ii++)
 				{
 					//*	openCV uses BGR instead of RGB
+					//*	https://docs.opencv.org/master/df/d24/tutorial_js_image_display.html
 					bluValue	=	imageDataPtr8bit[cc + 0] & 0x00ff;
 					grnValue	=	imageDataPtr8bit[cc + 1] & 0x00ff;
 					redValue	=	imageDataPtr8bit[cc + 2] & 0x00ff;

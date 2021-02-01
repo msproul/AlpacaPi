@@ -2035,10 +2035,10 @@ char		moonPhaseStr[64];
 
 		//	Returned values:
 		bool	moonVisible	=	mr.isVisible;
-		bool	moonHasRise	=	mr.hasRise;
-		bool	moonHasSet	=	mr.hasSet;
-		float	moonRiseAz	=	mr.riseAz;	// Where the moon will rise/set in degrees from
-		float	moonSetAz	=	mr.setAz;	// North.
+//		bool	moonHasRise	=	mr.hasRise;
+//		bool	moonHasSet	=	mr.hasSet;
+//		float	moonRiseAz	=	mr.riseAz;	// Where the moon will rise/set in degrees from
+//		float	moonSetAz	=	mr.setAz;	// North.
 
 		fitsStatus	=	0;
 		fits_write_key(fitsFilePtr, TLOGICAL,	"MOONVIS",

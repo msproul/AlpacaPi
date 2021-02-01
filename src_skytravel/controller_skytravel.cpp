@@ -49,12 +49,15 @@
 
 #include	"controller.h"
 #include	"controller_skytravel.h"
-#include	"lx200_com.h"
 
 
 extern char	gFullVersionString[];
 
 
+double	gTelescopeRA_Hours		=	0.0;
+double	gTelescopeRA_Radians	=	0.0;
+double	gTelescopeDecl_Degrees	=	0.0;
+double	gTelescopeDecl_Radians	=	0.0;
 
 
 //**************************************************************************************
@@ -146,6 +149,7 @@ void	ControllerSkytravel::SetupWindowControls(void)
 	{
 		SetTabWindow(kTab_ST_Dome,	cDomeTabObjPtr);
 		cDomeTabObjPtr->SetParentObjectPtr(this);
+		cDomeTabObjPtr->SetDomePropertersPtr(&cDomeProp);
 	}
 
 	//=============================================================
@@ -248,7 +252,6 @@ char	lineBuff[64];
 void	ControllerSkytravel::SetTelescopeIPaddress(TYPE_REMOTE_DEV *remoteDomeDevice)
 {
 char	ipAddrStr[32];
-char	lineBuff[64];
 
 	cTelescopeIpAddress			=	remoteDomeDevice->deviceAddress;
 	cTelescopeIpPort			=	remoteDomeDevice->port;
@@ -407,9 +410,7 @@ char			ipAddrStr[128];
 //*****************************************************************************
 bool	ControllerSkytravel::AlpacaGetStartupData_Telescope(void)
 {
-//SJP_Parser_t	jsonParser;
 bool			validData;
-char			returnString[128];
 char			ipAddrStr[128];
 
 	CONSOLE_DEBUG(__FUNCTION__);
@@ -515,14 +516,14 @@ bool	previousOnLineState;
 bool	ControllerSkytravel::AlpacaGetTelescopeStatus(void)
 {
 bool	validData;
-bool	previousOnLineState;
+//bool	previousOnLineState;
 char	raString[64];
 char	decString[64];
 char	textBuff[64];
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 	validData			=	false;
-	previousOnLineState	=	cOnLine;
+//	previousOnLineState	=	cOnLine;
 	if (cTelescopeHas_readall)
 	{
 //		CONSOLE_DEBUG("cTelescopeHas_readall");

@@ -2,8 +2,8 @@
 //#include	"StarData.h"
 
 
-#define	RADIANS(degrees)	(degrees * M_PI / 180.0)
-#define	DEGREES(radians)	(radians * 180.0 / M_PI)
+#define	RADIANS(degrees)	((degrees) * (M_PI / 180.0))
+#define	DEGREES(radians)	((radians) * (180.0 / M_PI))
 
 
 #ifndef _SKY_STRUCTS_H_

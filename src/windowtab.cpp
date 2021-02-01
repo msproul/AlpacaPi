@@ -44,6 +44,7 @@
 //*	Jan 10,	2021	<MLS> Added new version of AlpacaSendPutCmd()
 //*	Jan 15,	2021	<MLS> Added SetWidgetTabStops()
 //*	Jan 23,	2021	<MLS> Added overflow checking to help text string
+//*	Jan 30,	2021	<MLS> Added ComputeWidgetColumns()
 //*****************************************************************************
 
 
@@ -92,20 +93,7 @@ int		iii;
 	cParentObjPtr	=	NULL;
 	cWindowName[0]	=	0;
 
-
-	//*	these are for consistency between window tabs
-	cClmWidth		=	cWidth / 6;
-	cClmWidth		-=	2;
-	cBtnWidth		=	cWidth / 6;
-	cClm1_offset	=	3;
-	cClm2_offset	=	1 * cClmWidth;
-	cClm3_offset	=	2 * cClmWidth;
-	cClm4_offset	=	3 * cClmWidth;
-	cClm5_offset	=	4 * cClmWidth;
-	cClm6_offset	=	5 * cClmWidth;
-	cLrgBtnWidth	=	cClmWidth;
-	cLrgBtnHeight	=	cClmWidth / 2;
-	cFullWidthBtn	=	cWidth - cClm1_offset - 1;
+	ComputeWidgetColumns(cWidth);
 
 	cIpAddrTextBox		=	-1;
 	cLastCmdTextBox		=	-1;
@@ -149,6 +137,25 @@ WindowTab::~WindowTab(void)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
 }
+
+//**************************************************************************************
+void WindowTab::ComputeWidgetColumns(const int windowWitdh)
+{
+	//*	these are for consistency between window tabs
+	cClmWidth		=	windowWitdh / 6;
+	cClmWidth		-=	2;
+	cBtnWidth		=	windowWitdh / 6;
+	cClm1_offset	=	3;
+	cClm2_offset	=	1 * cClmWidth;
+	cClm3_offset	=	2 * cClmWidth;
+	cClm4_offset	=	3 * cClmWidth;
+	cClm5_offset	=	4 * cClmWidth;
+	cClm6_offset	=	5 * cClmWidth;
+	cLrgBtnWidth	=	cClmWidth;
+	cLrgBtnHeight	=	cClmWidth / 2;
+	cFullWidthBtn	=	windowWitdh - cClm1_offset - 1;
+}
+
 
 //**************************************************************************************
 void WindowTab::RunBackgroundTasks(void)
