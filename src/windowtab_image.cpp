@@ -19,6 +19,7 @@
 //*	Edit History
 //*****************************************************************************
 //*	Dec 29,	2020	<MLS> Created windowtab_image.cpp
+//*	Feb  2,	2021	<MLS> Added the ability to zoom and scroll image by draging the mouse.
 //*****************************************************************************
 
 #ifdef _ENABLE_CTRL_IMAGE_
@@ -41,14 +42,21 @@
 
 //**************************************************************************************
 WindowTabImage::WindowTabImage(	const int	xSize,
-									const int	ySize,
-									CvScalar	backGrndColor,
-									const char	*windowName)
+								const int	ySize,
+								CvScalar	backGrndColor,
+								const char	*windowName)
 	:WindowTab(xSize, ySize, backGrndColor, windowName)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	cOpenCVdownLoadedImage	=	NULL;
+	cOpenCVdisplayedImage	=	NULL;
+	cImageZoomState			=	0;			//*	more state to be defined later
+	//*	save these for image dragging.
+	cZoomTopLeft.x			=	0;
+	cZoomTopLeft.y			=	0;
+	cMouseDragInProgress	=	false;
+
 
 	SetupWindowControls();
 
@@ -63,9 +71,9 @@ WindowTabImage::~WindowTabImage(void)
 	if (cOpenCVdownLoadedImage != NULL)
 	{
 //		CONSOLE_DEBUG("destroy old image");
-		SetWidgetImage(kImageDisplay_ImageDisplay, NULL);
-		cvReleaseImage(&cOpenCVdownLoadedImage);
-		cOpenCVdownLoadedImage	=	NULL;
+//		SetWidgetImage(kImageDisplay_ImageDisplay, NULL);
+//		cvReleaseImage(&cOpenCVdownLoadedImage);
+//		cOpenCVdownLoadedImage	=	NULL;
 	}
 }
 
@@ -73,40 +81,11 @@ WindowTabImage::~WindowTabImage(void)
 //**************************************************************************************
 void	WindowTabImage::SetupWindowControls(void)
 {
+int			xLoc;
 int			yLoc;
 int			yLocSave;
 int			iii;
-IplImage	*logoImage;
 
-//*	create our own set of column offsets
-int		myClm1_offset;
-int		myClm2_offset;
-int		myClm3_offset;
-int		myClm4_offset;
-int		myClm5_offset;
-int		myClm6_offset;
-//int		myClm7_offset;
-//int		myClm8_offset;
-//int		myClm9_offset;
-//int		myClm10_offset;
-//int		myClm11_offset;
-//int		myClm12_offset;
-int		myClmWidth;
-
-	myClmWidth		=	cWidth / 12;
-	myClmWidth		-=	2;
-	myClm1_offset	=	3;
-	myClm2_offset	=	1 * myClmWidth;
-	myClm3_offset	=	2 * myClmWidth;
-	myClm4_offset	=	3 * myClmWidth;
-	myClm5_offset	=	4 * myClmWidth;
-	myClm6_offset	=	5 * myClmWidth;
-//	myClm7_offset	=	6 * myClmWidth;
-//	myClm8_offset	=	7 * myClmWidth;
-//	myClm9_offset	=	8 * myClmWidth;
-//	myClm10_offset	=	9 * myClmWidth;
-//	myClm11_offset	=	10 * myClmWidth;
-//	myClm12_offset	=	11 * myClmWidth;
 
 
 //	CONSOLE_DEBUG(__FUNCTION__);
@@ -121,14 +100,26 @@ int		myClmWidth;
 	yLoc			+=	cTitleHeight;
 	yLoc			+=	2;
 
+	//------------------------------------------
+	xLoc	=	5;
+	for (iii=kImageDisplay_Btn_1; iii<kImageDisplay_Btn_N; iii++)
+	{
+		SetWidget(				iii,	xLoc,	yLoc,		cTitleHeight,		cTitleHeight);
+		SetWidgetType(			iii, 	kWidgetType_Button);
+
+		xLoc	+=	cTitleHeight;
+		xLoc	+=	2;
+	}
+	yLoc			+=	cTitleHeight;
+	yLoc			+=	2;
 
 
 	SetWidget(				kImageDisplay_ImageDisplay,	0,	yLoc,		cWidth,		((3 * cWidth) / 7));
 	SetWidgetBGColor(		kImageDisplay_ImageDisplay,	CV_RGB(128,	128,	128));
 	SetWidgetBorderColor(	kImageDisplay_ImageDisplay,	CV_RGB(255,	255,	255));
 	SetWidgetBorder(		kImageDisplay_ImageDisplay,	true);
-
 }
+
 
 //*****************************************************************************
 void	WindowTabImage::ProcessButtonClick(const int buttonIdx)
@@ -142,8 +133,216 @@ void	WindowTabImage::ProcessButtonClick(const int buttonIdx)
 //			CONSOLE_DEBUG_W_NUM("buttonIdx\t",	buttonIdx);
 
 			break;
+	}
+}
+
+//*****************************************************************************
+void	WindowTabImage::ProcessDoubleClick(const int buttonIdx)
+{
+int		iii;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+	switch(buttonIdx)
+	{
+		case kImageDisplay_ImageDisplay:
+			CONSOLE_DEBUG(__FUNCTION__);
+			ZoomImage();
+			cMouseDragInProgress	=	false;
+			break;
+
+		default:
+			if (cOpenCVdisplayedImage != NULL)
+			{
+				for (iii= 0; iii< cOpenCVdisplayedImage->imageSize; iii+=3)
+				{
+					cOpenCVdisplayedImage->imageData[iii]	+=	75;
+				}
+				ForceUpdate();
+			}
+			else
+			{
+				CONSOLE_DEBUG("cOpenCVdisplayedImage is NULL");
+			}
+			break;
+	}
+}
+
+
+//*****************************************************************************
+void	WindowTabImage::ProcessMouseLeftButtonDown(	const int	widgitIdx,
+													const int	event,
+													const int	xxx,
+													const int	yyy,
+													const int	flags)
+{
+
+	if (widgitIdx == kImageDisplay_ImageDisplay)
+	{
+		cSavedMouseClick_X	=	xxx;
+		cSavedMouseClick_Y	=	yyy;
 
 	}
 }
+
+
+//*****************************************************************************
+void	WindowTabImage::ProcessMouseLeftButtonUp(	const int	widgitIdx,
+													const int	event,
+													const int	xxx,
+													const int	yyy,
+													const int	flags)
+{
+	CONSOLE_DEBUG(__FUNCTION__);
+	cMouseDragInProgress	=	false;
+}
+
+
+
+//*****************************************************************************
+void	WindowTabImage::ProcessMouseLeftButtonDragged(	const int	widgitIdx,
+														const int	event,
+														const int	xxx,
+														const int	yyy,
+														const int	flags)
+{
+double		deltaXX;
+double		deltaYY;
+double		moveAmount;
+CvRect		sourceImgROIrect;
+int			displayedWidth;
+int			displayedHeight;
+int			sourceImageWidth;
+int			sourceImageHeight;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+
+//	if (cMouseDragInProgress == false)
+	{
+		cMouseDragInProgress	=	true;
+//		CONSOLE_DEBUG("--------------------------------------------------------");
+		CONSOLE_DEBUG_W_NUM(__FUNCTION__, xxx);
+
+//		if (widgitIdx == kImageDisplay_ImageDisplay)
+		{
+
+			deltaXX	=	xxx - cSavedMouseClick_X;
+			deltaYY	=	yyy - cSavedMouseClick_Y;
+
+			cZoomTopLeft.x	-=	deltaXX;
+			cZoomTopLeft.y	-=	deltaYY;
+
+
+			//*	get the size of the destination image
+			displayedWidth			=	cOpenCVdisplayedImage->width;
+			displayedHeight			=	cOpenCVdisplayedImage->height;
+
+			//*	get the size of the source image
+			sourceImageWidth		=	cOpenCVdownLoadedImage->width;
+			sourceImageHeight		=	cOpenCVdownLoadedImage->height;
+
+
+			//*	check the boundaries
+			if (cZoomTopLeft.x < 0)
+			{
+				CONSOLE_DEBUG("Too far left");
+				cZoomTopLeft.x	=	0;
+			}
+			if (cZoomTopLeft.y < 0)
+			{
+				CONSOLE_DEBUG("Too far up");
+				cZoomTopLeft.y	=	0;
+			}
+
+			if (cZoomTopLeft.x > (sourceImageWidth - displayedWidth))
+			{
+				CONSOLE_DEBUG("Too far right");
+				cZoomTopLeft.x	=	sourceImageWidth - displayedWidth;
+			}
+			if (cZoomTopLeft.y > (sourceImageHeight - displayedHeight))
+			{
+				CONSOLE_DEBUG("Too far down");
+				cZoomTopLeft.y	=	sourceImageHeight - displayedHeight;
+			}
+
+//			CONSOLE_DEBUG_W_NUM("cZoomTopLeft.x\t=", cZoomTopLeft.x);
+
+			sourceImgROIrect.x		=	cZoomTopLeft.x;
+			sourceImgROIrect.y		=	cZoomTopLeft.y;
+			sourceImgROIrect.width	=	cOpenCVdisplayedImage->width;
+			sourceImgROIrect.height	=	cOpenCVdisplayedImage->height;
+
+
+
+			cvSetImageROI(cOpenCVdownLoadedImage,  sourceImgROIrect);
+			cvCopy(cOpenCVdownLoadedImage, cOpenCVdisplayedImage);
+			cvResetImageROI(cOpenCVdownLoadedImage);
+
+
+			cSavedMouseClick_X	=	xxx;
+			cSavedMouseClick_Y	=	yyy;
+
+			ForceUpdate();
+			cMouseDragInProgress	=	false;
+
+		}
+	}
+}
+
+
+
+//*****************************************************************************
+void	WindowTabImage::SetImagePtrs(IplImage *originalImage, IplImage *displayedImage)
+{
+	cOpenCVdownLoadedImage	=	originalImage;
+	cOpenCVdisplayedImage	=	displayedImage;
+
+}
+
+
+
+//*****************************************************************************
+void	WindowTabImage::ZoomImage(void)
+{
+CvRect		displayedImgRect;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+
+	if ((cOpenCVdownLoadedImage != NULL) && (cOpenCVdisplayedImage != NULL))
+	{
+		if (cImageZoomState != 0)
+		{
+			//*	set it back to fit on the screen
+
+			//*	Check to see if the original is color
+			if ((cOpenCVdownLoadedImage->nChannels == 3) && (cOpenCVdownLoadedImage->depth == 8))
+			{
+				cvResize(cOpenCVdownLoadedImage, cOpenCVdisplayedImage, CV_INTER_LINEAR);
+			}
+			else if ((cOpenCVdownLoadedImage->nChannels == 1) && (cOpenCVdownLoadedImage->depth == 8))
+			{
+				cvCvtColor(cOpenCVdownLoadedImage, cOpenCVdisplayedImage, CV_GRAY2RGB);
+			}
+			cImageZoomState	=	0;
+		}
+		else
+		{
+			//*	first get the size of the displayed image
+			displayedImgRect.x		=	0;
+			displayedImgRect.y		=	0;
+			displayedImgRect.width	=	cOpenCVdisplayedImage->width;
+			displayedImgRect.height	=	cOpenCVdisplayedImage->height;
+
+			cvSetImageROI(cOpenCVdownLoadedImage,  displayedImgRect);
+			cvCopy(cOpenCVdownLoadedImage, cOpenCVdisplayedImage);
+			cvResetImageROI(cOpenCVdownLoadedImage);
+
+			cImageZoomState	=	1;
+
+		}
+
+		ForceUpdate();
+	}
+}
+
 
 #endif // _ENABLE_CTRL_IMAGE_

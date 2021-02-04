@@ -16,7 +16,7 @@
 //*	Jan 14,	2021	<MLS> Apparently the DISCOVERY MESSAGE has changed, fixed
 //*	Jan 14,	2021	<MLS> Discovery protocol now working with ASCOM Device Hub
 //*	Jan 17,	2021	<MLS> Added external IP list to discovery thread
-//*-------------------------------------------------------------------------
+//*	Feb  4,	2021	<MLS> Rearranged close logic in GetJsonResponse()
 //*****************************************************************************
 
 
@@ -357,10 +357,9 @@ char				xmitBuffer[2000];
 				}
 			}
 			shutdownRetCode	=	shutdown(socket_desc, SHUT_RDWR);
-			closeRetCode	=	close(socket_desc);
-			if (closeRetCode != 0)
+			if (shutdownRetCode != 0)
 			{
-				CONSOLE_DEBUG("Close error");
+				CONSOLE_DEBUG("shutdown error");
 			}
 		}
 		else if (errno == ECONNREFUSED)
@@ -375,6 +374,12 @@ char				xmitBuffer[2000];
 			CONSOLE_DEBUG("connect error");
 			CONSOLE_DEBUG_W_NUM("errno\t=", errno);
 		}
+		//*	Moved 2/4/2021
+		closeRetCode	=	close(socket_desc);
+		if (closeRetCode != 0)
+		{
+			CONSOLE_DEBUG("Close error");
+		}
 	}
 	return(validData);
 }
@@ -385,6 +390,7 @@ static void	SendGetRequest(TYPE_ALPACA_UNIT *theDevice, const char *sendData)
 {
 bool				validData;
 SJP_Parser_t		jsonParser;
+char				ipString[32];
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -400,7 +406,8 @@ SJP_Parser_t		jsonParser;
 	}
 	else
 	{
-		CONSOLE_DEBUG("No valid data");
+		inet_ntop(AF_INET, &theDevice->deviceAddress, ipString, INET_ADDRSTRLEN);
+		CONSOLE_DEBUG_W_STR("No valid data from", ipString);
 	}
 }
 

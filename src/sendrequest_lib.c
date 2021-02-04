@@ -31,6 +31,7 @@
 //*	Jan 14,	2021	<MLS> Fixed GET/PUT request to have all the right header stuff
 //*	Jan 21,	2021	<MLS> Must use HTTP/1.0 to disable "Transfer-Encoding: chunked"
 //*	Jan 30,	2021	<MLS> Changed TCP socket timeout to 4 seconds
+//*	Feb  3,	2021	<MLS> Added checking for ERRNO=24 (EMFILE), too many files open
 //*****************************************************************************
 
 #include	<stdio.h>
@@ -55,7 +56,12 @@
 
 #define		kTimeOutLenSeconds	4
 
-//#define		_USE_SOCKET_LINGER_
+
+int		gNumSocketOpenOKcnt		=	0;
+int		gNumSocketOpenErrCnt	=	0;
+int		gNumSocketConnOKcnt		=	0;
+int		gNumSocketConnErrCnt	=	0;
+bool	gReportError			=	true;
 
 //*****************************************************************************
 //*	returns a socket description
@@ -83,6 +89,8 @@ int					so_oobinline;
 	socket_desc	=	socket(AF_INET , SOCK_STREAM , 0);
 	if (socket_desc >= 0)
 	{
+		gNumSocketOpenOKcnt++;
+
 		//*	set a timeout
 		timeoutLength.tv_sec	=	kTimeOutLenSeconds;
 		timeoutLength.tv_usec	=	0;
@@ -115,6 +123,7 @@ int					so_oobinline;
 		connRetCode	=	connect(socket_desc , (struct sockaddr *)&remoteDev , sizeof(remoteDev));
 		if (connRetCode >= 0)
 		{
+			gNumSocketConnOKcnt++;
 
 			//*	Must be HTTP/1.0 to disable "Transfer-Encoding: chunked"
 			strcpy(xmitBuffer, "GET ");
@@ -196,12 +205,6 @@ char				linebuf[100];
 int					dataStrLen;
 char				ipString[32];
 bool				keepReading;
-#ifdef _USE_SOCKET_LINGER_
-	int					setOptRetCode;
-	struct linger		myLingerStruct;
-	CONSOLE_DEBUG("_USE_SOCKET_LINGER_");
-	CONSOLE_ABORT(__FUNCTION__);
-#endif // _USE_SOCKET_LINGER_
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 //	CONSOLE_DEBUG(sendData);
@@ -209,20 +212,7 @@ bool				keepReading;
 	socket_desc	=	socket(AF_INET , SOCK_STREAM , 0);
 	if (socket_desc >= 0)
 	{
-	#ifdef _USE_SOCKET_LINGER_
-		myLingerStruct.l_onoff	=	1;
-		myLingerStruct.l_linger	=	2;
-		setOptRetCode	=	setsockopt(	socket_desc,
-										SOL_SOCKET,
-										SO_LINGER,
-										&myLingerStruct,
-										sizeof(myLingerStruct));
-		if (setOptRetCode != 0)
-		{
-			CONSOLE_DEBUG_W_NUM("setsockopt returned\t=",	setOptRetCode);
-			CONSOLE_DEBUG_W_NUM("errno\t\t\t=",				errno);
-		}
-	#endif // _USE_SOCKET_LINGER_
+		gNumSocketOpenOKcnt++;
 		remoteDev.sin_addr.s_addr	=	deviceAddress->sin_addr.s_addr;
 		remoteDev.sin_family		=	AF_INET;
 		remoteDev.sin_port			=	htons(port);
@@ -230,6 +220,8 @@ bool				keepReading;
 		connRetCode	=	connect(socket_desc , (struct sockaddr *)&remoteDev , sizeof(remoteDev));
 		if (connRetCode >= 0)
 		{
+			gNumSocketConnOKcnt++;
+
 //			CONSOLE_DEBUG("Connected");
 			strcpy(xmitBuffer, "GET ");
 			strcat(xmitBuffer, sendData);
@@ -315,8 +307,15 @@ bool				keepReading;
 	}
 	else
 	{
-		CONSOLE_DEBUG_W_NUM("socket_desc\t=", socket_desc);
-		CONSOLE_DEBUG_W_NUM("errno\t\t=", errno);
+		if (errno == EMFILE)
+		{
+			CONSOLE_DEBUG("Too many files open!!!!!!!!!!!!!!!!!!!!!!!!!");
+		}
+		else
+		{
+			CONSOLE_DEBUG_W_NUM("socket_desc\t=", socket_desc);
+			CONSOLE_DEBUG_W_NUM("errno\t\t=", errno);
+		}
 	}
 //	CONSOLE_DEBUG(__FUNCTION__);
 	return(validData);
@@ -452,6 +451,18 @@ int					setOptRetCode;
 		{
 			CONSOLE_DEBUG("connect error");
 			CONSOLE_DEBUG_W_NUM("errno\t=", errno);
+		}
+	}
+	else
+	{
+		if (errno == EMFILE)
+		{
+			CONSOLE_DEBUG("Too many files open!!!!!!!!!!!!!!!!!!!!!!!!!");
+		}
+		else
+		{
+			CONSOLE_DEBUG_W_NUM("socket_desc\t=", socket_desc);
+			CONSOLE_DEBUG_W_NUM("errno\t\t=", errno);
 		}
 	}
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, "Exit");

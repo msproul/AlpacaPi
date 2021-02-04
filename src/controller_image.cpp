@@ -38,11 +38,6 @@
 
 
 
-#ifdef _ENABLE_SKYTRAVEL_TAB_
-	#include	"windowtab_skytravel.h"
-	#include	"lx200_com.h"
-#endif // _ENABLE_SKYTRAVEL_TAB_
-
 #include	"windowtab_about.h"
 
 
@@ -57,9 +52,6 @@ extern char	gFullVersionString[];
 enum
 {
 	kTab_Image	=	1,
-#ifdef _ENABLE_SKYTRAVEL_TAB_
-	kTab_SkyTravel,
-#endif
 	kTab_About,
 
 	kTab_Count
@@ -82,9 +74,6 @@ int					reduceFactor;
 	cDisplayedImage		=	NULL;
 
 	cImageTabObjPtr		=	NULL;
-#ifdef _ENABLE_SKYTRAVEL_TAB_
-	cSkyTravelTabOjbPtr	=	NULL;
-#endif // _ENABLE_SKYTRAVEL_TAB_
 	cAboutBoxTabObjPtr	=	NULL;
 
 	SetupWindowControls();
@@ -142,12 +131,15 @@ int					reduceFactor;
 		{
 			CONSOLE_DEBUG("Failed to create new image");
 		}
+
+		if (cImageTabObjPtr != NULL)
+		{
+			cImageTabObjPtr->SetImagePtrs(cDownLoadedImage,	cDisplayedImage);
+		}
 	}
 	else
 	{
-#ifdef _ENABLE_SKYTRAVEL_TAB_
-		ProcessTabClick(kTab_SkyTravel);
-#endif // _ENABLE_SKYTRAVEL_TAB_
+
 	}
 }
 
@@ -160,6 +152,8 @@ ControllerImage::~ControllerImage(void)
 {
 	CONSOLE_DEBUG(__FUNCTION__);
 	SetWidgetImage(kTab_Image, kImageDisplay_ImageDisplay, NULL);
+	//--------------------------------------------
+	//*	free up the image memory
 	if (cDownLoadedImage != NULL)
 	{
 		CONSOLE_DEBUG("destroy downloaded image");
@@ -173,18 +167,13 @@ ControllerImage::~ControllerImage(void)
 		cDisplayedImage	=	NULL;
 	}
 
+	//--------------------------------------------
+	//*	delete the window tab objects
 	if (cImageTabObjPtr != NULL)
 	{
 		delete cImageTabObjPtr;
 		cImageTabObjPtr	=	NULL;
 	}
-#ifdef _ENABLE_SKYTRAVEL_TAB_
-	if (cSkyTravelTabOjbPtr != NULL)
-	{
-		delete cSkyTravelTabOjbPtr;
-		cSkyTravelTabOjbPtr	=	NULL;
-	}
-#endif // _ENABLE_SKYTRAVEL_TAB_
 	if (cAboutBoxTabObjPtr != NULL)
 	{
 		delete cAboutBoxTabObjPtr;
@@ -209,15 +198,6 @@ void	ControllerImage::SetupWindowControls(void)
 		cImageTabObjPtr->SetParentObjectPtr(this);
 	}
 
-#ifdef _ENABLE_SKYTRAVEL_TAB_
-	SetTabText(kTab_SkyTravel,	"SkyTravel");
-	cSkyTravelTabOjbPtr		=	new WindowTabSkyTravel(	cWidth, cHeight, cBackGrndColor, cWindowName);
-	if (cSkyTravelTabOjbPtr != NULL)
-	{
-		SetTabWindow(kTab_SkyTravel,	cSkyTravelTabOjbPtr);
-		cSkyTravelTabOjbPtr->SetParentObjectPtr(this);
-	}
-#endif // _ENABLE_SKYTRAVEL_TAB_
 
 	SetTabText(kTab_About,		"About");
 	cAboutBoxTabObjPtr		=	new WindowTabAbout(	cWidth, cHeight, cBackGrndColor, cWindowName);
@@ -271,12 +251,6 @@ bool		needToUpdate;
 	{
 		cImageTabObjPtr->RunBackgroundTasks();
 	}
-#ifdef _ENABLE_SKYTRAVEL_TAB_
-	if (cSkyTravelTabOjbPtr != NULL)
-	{
-		cSkyTravelTabOjbPtr->RunBackgroundTasks();
-	}
-#endif
 
 }
 

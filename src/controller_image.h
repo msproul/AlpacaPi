@@ -13,11 +13,6 @@
 #endif // _WINDOWTAB_ABOUT_H_
 
 
-#ifdef _ENABLE_SKYTRAVEL_
-	#ifndef	_WINDOWTAB_SKYTRAVEL_H_
-		#include	"windowtab_skytravel.h"
-	#endif // _WINDOWTAB_SKYTRAVEL_H_
-#endif // _ENABLE_SKYTRAVEL_
 
 //**************************************************************************************
 class ControllerImage: public Controller
@@ -44,9 +39,6 @@ class ControllerImage: public Controller
 
 		//*	tab information
 				WindowTabImage		*cImageTabObjPtr;
-#ifdef _ENABLE_SKYTRAVEL_
-				WindowTabSkyTravel	*cSkyTravelTabOjbPtr;
-#endif
 				WindowTabAbout		*cAboutBoxTabObjPtr;
 };
 

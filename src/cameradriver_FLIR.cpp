@@ -648,13 +648,15 @@ spinError			spinErr;
 		}
 		else
 		{
-			CONSOLE_DEBUG_W_NUM("Unable to begin image acquisition. Aborting with error=", spinErr);
+			sprintf(cLastCameraErrMsg, "Unable to begin image acquisition. spinErr=%d", spinErr);
+			CONSOLE_DEBUG(cLastCameraErrMsg);
 			alpacaErrCode	=	kASCOM_Err_FailedToTakePicture;
 		}
 	}
 	else
 	{
-		CONSOLE_DEBUG("cSpinCameraHandle is NULL");
+		strcpy(cLastCameraErrMsg, "cSpinCameraHandle is NULL");
+		CONSOLE_DEBUG(cLastCameraErrMsg);
 	}
 	CONSOLE_DEBUG(__FUNCTION__);
 	return(alpacaErrCode);

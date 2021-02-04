@@ -18,8 +18,18 @@ enum
 	kImageDisplay_Logo,
 
 
-	kImageDisplay_ImageDisplay,
 
+	kImageDisplay_Btn_1,
+	kImageDisplay_Btn_2,
+	kImageDisplay_Btn_3,
+	kImageDisplay_Btn_4,
+	kImageDisplay_Btn_5,
+	kImageDisplay_Btn_6,
+
+	kImageDisplay_Btn_N,
+
+
+	kImageDisplay_ImageDisplay,
 
 	kImageDisplay_last
 };
@@ -43,9 +53,26 @@ class WindowTabImage: public WindowTab
 //		virtual	void	DrawWindow(void);
 //		virtual void	HandleKeyDown(const int keyPressed);
 		virtual	void	ProcessButtonClick(const int buttonIdx);
-//		virtual	void	ProcessDoubleClick(const int buttonIdx);
+		virtual	void	ProcessDoubleClick(const int buttonIdx);
+//		virtual void	ProcessMouseEvent(const int widgitIdx, const int event, const int xxx, const int yyy, const int flags);
+		virtual void	ProcessMouseLeftButtonDown(const int widgitIdx, const int event, const int xxx, const int yyy, const int flags);
+		virtual void	ProcessMouseLeftButtonUp(const int widgitIdx, const int event, const int xxx, const int yyy, const int flags);
+		virtual void	ProcessMouseLeftButtonDragged(const int widgitIdx, const int event, const int xxx, const int yyy, const int flags);
+
+				void	SetImagePtrs(IplImage *originalImage, IplImage *displayedImage);
+				void	ZoomImage(void);
 
 				IplImage	*cOpenCVdownLoadedImage;
+				IplImage	*cOpenCVdisplayedImage;
+
+
+				int			cSavedMouseClick_X;	//*	these are for left mouse drag operation
+				int			cSavedMouseClick_Y;
+				bool		cMouseDragInProgress;
+
+				//*	these are for zooming in and scrolling
+				int			cImageZoomState;
+				CvPoint		cZoomTopLeft;
 
 
 };

@@ -91,7 +91,8 @@
 
 #define	TRUE	true
 #define	FALSE	false
-#define	DEGREES(radians)	(radians * 180.0 / M_PI)
+
+//#define	DEGREES(radians)	((radians) * 180.0 / M_PI)
 
 
 //*	for the moment, these are hard coded
@@ -769,6 +770,10 @@ bool			reDrawSky;
 
 		case '@':
 			cAutoAdvanceTime	=	!cAutoAdvanceTime;
+			if (cAutoAdvanceTime)
+			{
+				SetCurrentTime();
+			}
 			break;
 
 		case '#':	//*	toggle GRID
@@ -1010,6 +1015,10 @@ char	searchText[128];
 		case kSkyTravel_Btn_AutoAdvTime:
 			cAutoAdvanceTime	=	!cAutoAdvanceTime;
 			SetWidgetChecked(		kSkyTravel_Btn_AutoAdvTime,		cAutoAdvanceTime);
+			if (cAutoAdvanceTime)
+			{
+				SetCurrentTime();
+			}
 			break;
 
 		case kSkyTravel_Btn_Chart:
@@ -1247,10 +1256,10 @@ void	WindowTabSkyTravel::ProcessMouseEvent(	const int	widgitIdx,
 
 //*****************************************************************************
 void	WindowTabSkyTravel::ProcessMouseLeftButtonDown(	const int	widgitIdx,
-															const int	event,
-															const int	xxx,
-															const int	yyy,
-															const int	flags)
+														const int	event,
+														const int	xxx,
+														const int	yyy,
+														const int	flags)
 {
 
 //	CONSOLE_DEBUG_W_NUM(__FUNCTION__, xxx);

@@ -1244,14 +1244,6 @@ jetson		:				$(ALPACA_OBJECTS)			\
 							-lSpinnaker_C				\
 							-o alpacapi
 
-#							$(ASI_CAMERA_OBJECTS)		\
-#							$(ZWO_EFW_OBJECTS)			\
-#							-lusb-1.0					\
-#							-ltoupcam					\
-#							-ljpeg						\
-#							-lSpinnaker					\
-
-#							-ludev						\
 
 
 ######################################################################################
@@ -1580,12 +1572,13 @@ NETTEST_OBJECTS=												\
 				$(OBJECT_DIR)json_parse.o						\
 				$(OBJECT_DIR)commoncolor.o						\
 				$(OBJECT_DIR)sendrequest_lib.o					\
+				$(OBJECT_DIR)cpu_stats.o						\
 
 
 ######################################################################################
+#pragma mark make net
 SRC_NETTEST=./src_nettest/
 
-#pragma mark camera-controller
 net		:		DEFINEFLAGS		+=	-D_INCLUDE_CTRL_MAIN_
 net		:		DEFINEFLAGS		+=	-D_ENABLE_NET_TEST_
 net		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_

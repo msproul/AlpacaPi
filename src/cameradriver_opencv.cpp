@@ -49,9 +49,9 @@
 #include "opencv2/highgui/highgui_c.h"
 #include "opencv2/imgproc/imgproc_c.h"
 
-#ifdef _JETSON_
+#ifdef _ENABLE_STAR_SEARCH_
 	#include	"imageprocess_orb.h"
-#endif // _JETSON_
+#endif
 
 
 #define _ENABLE_CONSOLE_DEBUG_
@@ -496,7 +496,7 @@ CvRect		myCVrect;
 				{
 					CONSOLE_DEBUG("SAME");
 				}
-			#ifdef _JETSON_
+			#ifdef _ENABLE_STAR_SEARCH_
 				long	keyPointCnt;
 				//*	this is an attempt at finding the locations of all of the stars in an image.
 
@@ -521,7 +521,7 @@ CvRect		myCVrect;
 					if (smallImg != NULL)
 					{
 						cvResize(cOpenCV_Image, smallImg, CV_INTER_LINEAR);
-					#ifdef _JETSON_FOO
+					#ifdef _ENABLE_STAR_SEARCH_
 						CONSOLE_DEBUG("Calling ProcessORB_Image!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 						SETUP_TIMING();
 
