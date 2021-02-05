@@ -24,7 +24,6 @@
 //*****************************************************************************
 
 
-#include	"controller.h"
 
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
@@ -147,6 +146,11 @@ char	multiLineTextBuff[512];
 //	CONSOLE_DEBUG(gPlatformString);
 //	CONSOLE_DEBUG(multiLineTextBuff);
 //	CONSOLE_DEBUG_W_NUM("strlen()", strlen(multiLineTextBuff));
+
+#ifdef __ARM_NEON
+	strcat(multiLineTextBuff,	"ARM NEON instructions\r");
+
+#endif
 
 	SetWidgetText(kAboutBox_CPUinfo, multiLineTextBuff);
 

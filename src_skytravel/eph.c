@@ -63,7 +63,7 @@ void	eph(	TYPE_Time		*timeptr,
 				planet_struct	*planptr,
 				sun_moon_struct	*sunmonptr)
 {
-int				ii;
+int				iii;
 double			dte,delta_dte;
 double			ra,decl,dist,delta_ra;
 double			emr0;					//* earth moon distance ratio
@@ -73,32 +73,32 @@ TYPE_SpherTrig	sphptr;
 
 	dte		=	timeptr->daysTillEpoch2000;
 
-	for (ii=PLU;ii>=0;ii--)
+	for (iii=PLU;iii>=0;iii--)
 	{
-		delta_dte	=	dte - planptr[ii].dte0;
-		if (fabs(delta_dte)>planptr[ii].delta_dte)
+		delta_dte	=	dte - planptr[iii].dte0;
+		if (fabs(delta_dte)>planptr[iii].delta_dte)
 		{
 			//* compute the pseries for dte+delta dte
 
-			pseries(primary_arg, dte+planptr[ii].delta_dte, ii, &planptr[ii]);	//* update series for t+delta t
-			ra		=	planptr[ii].ra;		//* hang on to the coords for t=t+delta t
-			decl	=	planptr[ii].decl;
-			dist	=	planptr[ii].dist;
+			pseries(primary_arg, dte+planptr[iii].delta_dte, iii, &planptr[iii]);	//* update series for t+delta t
+			ra		=	planptr[iii].ra;		//* hang on to the coords for t=t+delta t
+			decl	=	planptr[iii].decl;
+			dist	=	planptr[iii].dist;
 
 			//* compute the pseries for dte
 
-			pseries(primary_arg, dte, ii, &planptr[ii]);	//* update series for time t
+			pseries(primary_arg, dte, iii, &planptr[iii]);	//* update series for time t
 
 			//* save the new dte, ra,decl and dist
 
-			planptr[ii].ra_t0	=	planptr[ii].ra;
-			planptr[ii].decl_t0	=	planptr[ii].decl;
-			planptr[ii].dist_t0	=	planptr[ii].dist;
-			planptr[ii].dte0	=	dte;					//* reset t0
+			planptr[iii].ra_t0		=	planptr[iii].ra;
+			planptr[iii].decl_t0	=	planptr[iii].decl;
+			planptr[iii].dist_t0	=	planptr[iii].dist;
+			planptr[iii].dte0		=	dte;					//* reset t0
 
 			//* save the new slopes = (param(t+delta t) -parm(t))/(delta t)
 
-			delta_ra	=	ra-planptr[ii].ra_t0;
+			delta_ra	=	ra-planptr[iii].ra_t0;
 
 			if (delta_ra>PI)
 			{
@@ -108,15 +108,15 @@ TYPE_SpherTrig	sphptr;
 			{
 				delta_ra	+=	kTWOPI;
 			}
-			planptr[ii].ra_slope	=	delta_ra/planptr[ii].delta_dte;
-			planptr[ii].decl_slope	=	(decl-planptr[ii].decl_t0)/planptr[ii].delta_dte;
-			planptr[ii].dist_slope	=	(dist-planptr[ii].dist_t0)/planptr[ii].delta_dte;
+			planptr[iii].ra_slope	=	delta_ra/planptr[iii].delta_dte;
+			planptr[iii].decl_slope	=	(decl-planptr[iii].decl_t0) / planptr[iii].delta_dte;
+			planptr[iii].dist_slope	=	(dist-planptr[iii].dist_t0) / planptr[iii].delta_dte;
 		}
 		else	//* do interpolation param=param(t0)+slope*(t-t0)
 		{
-			planptr[ii].ra		=	planptr[ii].ra_t0+(planptr[ii].ra_slope*delta_dte);
-			planptr[ii].decl	=	planptr[ii].decl_t0+(planptr[ii].decl_slope*delta_dte);
-			planptr[ii].dist	=	planptr[ii].dist_t0+(planptr[ii].dist_slope*delta_dte);
+			planptr[iii].ra		=	planptr[iii].ra_t0+(planptr[iii].ra_slope*delta_dte);
+			planptr[iii].decl	=	planptr[iii].decl_t0+(planptr[iii].decl_slope*delta_dte);
+			planptr[iii].dist	=	planptr[iii].dist_t0+(planptr[iii].dist_slope*delta_dte);
 		}
 	}
 

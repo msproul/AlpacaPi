@@ -12,6 +12,7 @@
 //*	Jan  9,	2021	<MLS> SkyTravel is now talking to the dome controller
 //*	Jan 26,	2021	<MLS> Added SetDomeIPaddress() & SetTelescopeIPaddress()
 //*	Jan 26,	2021	<MLS> SkyTravel can choose which dome/telescope to sync with
+//*	Feb  4,	2021	<MLS> Added MOON window tab for phase of the moon info
 //*****************************************************************************
 
 
@@ -45,6 +46,7 @@
 #include	"windowtab_alpacalist.h"
 #include	"windowtab_deviceselect.h"
 #include	"windowtab_about.h"
+#include	"windowtab_moon.h"
 
 
 #include	"controller.h"
@@ -140,6 +142,15 @@ void	ControllerSkytravel::SetupWindowControls(void)
 	{
 		SetTabWindow(kTab_ST_Settings,	cSkySettingsTabObjPtr);
 		cSkySettingsTabObjPtr->SetParentObjectPtr(this);
+	}
+
+	//=============================================================
+	SetTabText(kTab_Moon,	"Moon");
+	cMoonTabObjPtr		=	new WindowTabMoon(	cWidth, cHeight, cBackGrndColor, cWindowName);
+	if (cMoonTabObjPtr != NULL)
+	{
+		SetTabWindow(kTab_Moon,	cMoonTabObjPtr);
+		cMoonTabObjPtr->SetParentObjectPtr(this);
 	}
 
 	//=============================================================
@@ -357,6 +368,10 @@ bool		foundSomething;
 		cSkyTravelTabOjbPtr->RunBackgroundTasks();
 	}
 
+	if (cMoonTabObjPtr != NULL)
+	{
+		cMoonTabObjPtr->RunBackgroundTasks();
+	}
 }
 
 //*****************************************************************************

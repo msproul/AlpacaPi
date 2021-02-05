@@ -703,7 +703,6 @@ pi		:			$(CPP_OBJECTS)				\
 					$(ZWO_EFW_OBJECTS)			\
 					-latikcameras				\
 					-lcfitsio					\
-					-ltoupcam					\
 					-lusb-1.0					\
 					-ludev						\
 					-lwiringPi					\
@@ -1475,49 +1474,52 @@ camera		:			$(CONTROLLER_OBJECTS)					\
 
 SRC_SKYTRAVEL=./src_skytravel/
 SKYTRAVEL_OBJECTS=											\
+				$(OBJECT_DIR)ConstellationData.o			\
 				$(OBJECT_DIR)controller_skytravel.o			\
 				$(OBJECT_DIR)controller_dome_common.o		\
 				$(OBJECT_DIR)controller_dome.o				\
 				$(OBJECT_DIR)controller_telescope.o			\
-				$(OBJECT_DIR)ConstellationData.o			\
+				$(OBJECT_DIR)controller_camera.o			\
+				$(OBJECT_DIR)controller_cam_normal.o		\
+				$(OBJECT_DIR)controller_focus.o				\
+				$(OBJECT_DIR)controller_focus_generic.o		\
+				$(OBJECT_DIR)controller_image.o				\
+				$(OBJECT_DIR)controller_switch.o			\
+				$(OBJECT_DIR)controller_ml_nc.o				\
+				$(OBJECT_DIR)controller_ml_single.o			\
 				$(OBJECT_DIR)cpu_stats.o					\
 				$(OBJECT_DIR)eph.o							\
 				$(OBJECT_DIR)HipparcosCatalog.o				\
+				$(OBJECT_DIR)moonlite_com.o					\
+				$(OBJECT_DIR)julianTime.o					\
+				$(OBJECT_DIR)moonphase.o					\
 				$(OBJECT_DIR)NGCcatalog.o					\
+				$(OBJECT_DIR)nitecrawler_image.o			\
 				$(OBJECT_DIR)observatory_settings.o			\
 				$(OBJECT_DIR)StarCatalogHelper.o			\
-				$(OBJECT_DIR)YaleStarCatalog.o				\
 				$(OBJECT_DIR)skytravel_main.o				\
 				$(OBJECT_DIR)StarData.o						\
 				$(OBJECT_DIR)SkyTravelTimeRoutines.o		\
+				$(OBJECT_DIR)serialport.o					\
 				$(OBJECT_DIR)windowtab_deviceselect.o		\
 				$(OBJECT_DIR)windowtab_skytravel.o			\
 				$(OBJECT_DIR)windowtab_STsettings.o			\
 				$(OBJECT_DIR)windowtab_telescope.o			\
 				$(OBJECT_DIR)windowtab_dome.o				\
 				$(OBJECT_DIR)windowtab_alpacalist.o			\
-				$(OBJECT_DIR)controller_camera.o				\
-				$(OBJECT_DIR)controller_cam_normal.o			\
-				$(OBJECT_DIR)controller_focus.o					\
-				$(OBJECT_DIR)controller_focus_generic.o			\
-				$(OBJECT_DIR)controller_image.o					\
-				$(OBJECT_DIR)controller_switch.o				\
-				$(OBJECT_DIR)windowtab_camera.o					\
-				$(OBJECT_DIR)windowtab_camsettings.o			\
-				$(OBJECT_DIR)windowtab_filelist.o				\
-				$(OBJECT_DIR)windowtab_switch.o					\
-				$(OBJECT_DIR)windowtab_ml_single.o				\
-				$(OBJECT_DIR)windowtab_nitecrawler.o			\
-				$(OBJECT_DIR)windowtab_auxmotor.o				\
-				$(OBJECT_DIR)windowtab_config.o					\
-				$(OBJECT_DIR)nitecrawler_image.o				\
-				$(OBJECT_DIR)moonlite_com.o						\
-				$(OBJECT_DIR)controller_ml_nc.o					\
-				$(OBJECT_DIR)controller_ml_single.o				\
-				$(OBJECT_DIR)windowtab_graphs.o					\
-				$(OBJECT_DIR)serialport.o					\
-				$(OBJECT_DIR)windowtab_slit.o					\
-				$(OBJECT_DIR)windowtab_slitgraph.o				\
+				$(OBJECT_DIR)windowtab_camera.o				\
+				$(OBJECT_DIR)windowtab_camsettings.o		\
+				$(OBJECT_DIR)windowtab_filelist.o			\
+				$(OBJECT_DIR)windowtab_switch.o				\
+				$(OBJECT_DIR)windowtab_ml_single.o			\
+				$(OBJECT_DIR)windowtab_nitecrawler.o		\
+				$(OBJECT_DIR)windowtab_auxmotor.o			\
+				$(OBJECT_DIR)windowtab_config.o				\
+				$(OBJECT_DIR)windowtab_graphs.o				\
+				$(OBJECT_DIR)windowtab_slit.o				\
+				$(OBJECT_DIR)windowtab_slitgraph.o			\
+				$(OBJECT_DIR)windowtab_moon.o				\
+				$(OBJECT_DIR)YaleStarCatalog.o				\
 
 
 ######################################################################################
@@ -2239,6 +2241,15 @@ $(OBJECT_DIR)windowtab_about.o : 		$(SRC_DIR)windowtab_about.cpp		\
 										$(SRC_DIR)windowtab.h				\
 										$(SRC_DIR)controller.h
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)windowtab_about.cpp -o$(OBJECT_DIR)windowtab_about.o
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)windowtab_moon.o : 		$(SRC_DIR)windowtab_moon.cpp		\
+										$(SRC_DIR)windowtab_moon.h			\
+										$(SRC_DIR)windowtab.h				\
+										$(SRC_DIR)controller.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)windowtab_moon.cpp -o$(OBJECT_DIR)windowtab_moon.o
+
+
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)windowtab_preview.o : 		$(SRC_DIR)windowtab_preview.cpp		\

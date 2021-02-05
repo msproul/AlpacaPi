@@ -18,6 +18,7 @@
 #include	<unistd.h>
 
 
+
 #include "opencv/highgui.h"
 #include "opencv2/highgui/highgui_c.h"
 #include "opencv2/imgproc/imgproc_c.h"
@@ -43,6 +44,8 @@
 
 #include	"controller.h"
 #include	"controller_image.h"
+
+
 
 
 extern char	gFullVersionString[];

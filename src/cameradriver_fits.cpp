@@ -79,6 +79,7 @@
 //*	Dec 14,	2020	<MLS> Just discovered a new version of cfitsio (3.49)
 //*	Jan 19,	2021	<MLS> Added ROWORDER:BOTTOM-UP to FITS header
 //*	Jan 20,	2021	<MLS> Added ExtractFitsHeader()
+//*	Feb  5,	2021	<MLS> Started working on NEON support for image processing
 //*****************************************************************************
 
 #if defined(_ENABLE_CAMERA_) && defined(_ENABLE_FITS_)
@@ -2126,6 +2127,43 @@ char		moonPhaseStr[64];
 
 #pragma mark -
 
+//*	some testing of advanced ARM NEON cpu options
+//	https://developer.arm.com/documentation/101028/0012/3--C-language-extensions?lang=en
+//	https://developer.arm.com/architectures/instruction-sets/simd-isas/neon/intrinsics
+//	https://developer.arm.com/architectures/instruction-sets/simd-isas/neon/neon-programmers-guide-for-armv8-a/optimizing-c-code-with-neon-intrinsics/rgb-deinterleaving
+#ifdef __ARM_ACLE
+	#include <arm_acle.h>
+#endif
+#ifdef __ARM_NEON
+	//	define the Neon intrinsics.
+	#include <arm_neon.h>
+
+//*****************************************************************************
+void NEON_Deinterleave_RGB(	uint8_t	*rgb,
+							uint8_t	*r,
+							uint8_t	*g,
+							uint8_t	*b,
+							int len_color)
+{
+int				num8x16;
+uint8x16x3_t	intlv_rgb;
+int				iii;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+	//*
+	//*	Take the elements of "rgb" and store the individual colors "r", "g", and "b"
+	//*
+	num8x16	=	len_color / 16;
+	for (iii = 0; iii < num8x16; iii++)
+	{
+		intlv_rgb	=	vld3q_u8(rgb + (3 * 16 * iii));
+		vst1q_u8(r + (16 * iii), intlv_rgb.val[0]);
+		vst1q_u8(g + (16 * iii), intlv_rgb.val[1]);
+		vst1q_u8(b + (16 * iii), intlv_rgb.val[2]);
+	}
+}
+#endif
+
 //*****************************************************************************
 void		CameraDriver::CreateFitsBGRimage(void)
 {
@@ -2163,6 +2201,39 @@ unsigned char	*bluBufPtr;
 		{
 			CONSOLE_DEBUG("Failed to allocated cCameraBGRbuffer");
 		}
+	#ifdef __ARM_NEON
+		unsigned char	*neonBFRbuffer;
+		int				diffCnt;
+
+		CONSOLE_DEBUG(__FUNCTION__);
+
+			neonBFRbuffer	=		(unsigned char *)malloc(frameBufSize * 3);
+			if (neonBFRbuffer != NULL)
+			{
+				bluBufPtr	=	neonBFRbuffer;
+				grnBufPtr	=	neonBFRbuffer + frameBufSize;
+				redBufPtr	=	neonBFRbuffer + frameBufSize + frameBufSize;
+
+				NEON_Deinterleave_RGB(cCameraDataBuffer, redBufPtr, grnBufPtr, bluBufPtr, frameBufSize);
+				//*	now lets check to see if its the same
+				diffCnt	=	0;
+                for (ii=0; ii<(frameBufSize * 3); ii++)
+                {
+					if ((neonBFRbuffer[ii] & 0x00ff) != ((cCameraBGRbuffer[ii] & 0x00ff)))
+					{
+						diffCnt++;
+					}
+                }
+				CONSOLE_DEBUG_W_NUM("NEON diff count\t=", diffCnt);
+				free(neonBFRbuffer);
+			}
+			else
+			{
+				CONSOLE_DEBUG("Failed to allocate neonBFRbuffer");
+			}
+
+	#endif // __ARM_NEON
+
 	}
 	CONSOLE_DEBUG(__FUNCTION__);
 

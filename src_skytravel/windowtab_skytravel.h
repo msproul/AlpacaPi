@@ -287,8 +287,8 @@ class WindowTabSkyTravel: public WindowTab
 
 
 
-		sun_moon_struct		sunMonStruct;
-		planet_struct		planetStruct[kPlanetObjectCnt];
+		sun_moon_struct		cSunMonStruct;
+		planet_struct		cPlanetStruct[kPlanetObjectCnt];
 		TYPE_CelestData		cPlanets[kPlanetObjectCnt];
 
 

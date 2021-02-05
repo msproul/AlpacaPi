@@ -413,8 +413,7 @@ enum
 	extern "C" {
 #endif
 
-long			ReadStarData(TYPE_CelestData **objptr,unsigned int *sort_index, TYPE_Time *timePtr);
-//void	eph(time_struct*,locn_struct*,planet_struct**,sun_moon_struct*);
+long	ReadStarData(TYPE_CelestData **objptr,unsigned int *sort_index, TYPE_Time *timePtr);
 
 #ifdef __cplusplus
 }

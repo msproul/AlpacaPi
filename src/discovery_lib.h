@@ -62,7 +62,6 @@ typedef struct
 
 #define	kMaxDeviceListCnt	48
 
-//extern	TYPE_ALPACA_UNIT	gAlpacaIPaddrList[kMaxAlpacaIPaddrCnt];
 
 extern	TYPE_REMOTE_DEV	gAlpacaDiscoveredList[kMaxDeviceListCnt];
 extern	int				gAlpacaDiscoveredCnt;
@@ -73,7 +72,6 @@ int		SendAlpacaQueryBroadcast(void);
 void	ExtractDevicesFromJSON(SJP_Parser_t *jsonParser, TYPE_ALPACA_UNIT *theDevice);
 void	ReadExternalIPlist(void);
 
-//--void	PrintIPaddressToString(const long ipAddress, char *ipString);
 
 #ifdef __cplusplus
 }

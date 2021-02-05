@@ -423,7 +423,6 @@ bool	ControllerSwitch::AlpacaGetStatus_OneAAT(void)
 SJP_Parser_t	jsonParser;
 bool			validData;
 char			alpacaString[128];
-char			dataString[128];
 int				jjj;
 int				switchNum;
 int				boxNumber;

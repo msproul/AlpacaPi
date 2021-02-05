@@ -349,10 +349,10 @@ int		ii;
 		cPlanets[ii].magn			=	0x00db + ii;
 		cPlanets[ii].id				=	0x076c + ii;	//*fill in the id field
 
-		memset(&planetStruct[ii], 0, sizeof(planet_struct));
+		memset(&cPlanetStruct[ii], 0, sizeof(planet_struct));
 
-		planetStruct[ii].delta_dte	=	gDeltaPlanet[ii];	//*interpolation deltas
-		planetStruct[ii].dte0		=	1.e20;				//*impossible dte0 so that eph does a full compute
+		cPlanetStruct[ii].delta_dte	=	gDeltaPlanet[ii];	//*interpolation deltas
+		cPlanetStruct[ii].dte0		=	1.e20;				//*impossible dte0 so that eph does a full compute
 	}
 
 
@@ -1732,10 +1732,11 @@ short		ii;
 
 	eph(	&cCurrentTime,
 			&cCurrLatLon,
-			(planet_struct *)&planetStruct,
-			&sunMonStruct);
+//?			(planet_struct *)&cPlanetStruct,
+			cPlanetStruct,	//*	changed 2/4/2021
+			&cSunMonStruct);
 
-//	cCurrentSkyColor	=	Set_Skycolor((planet_struct *)&planetStruct, &sunMonStruct, cDispOptions.dispEarth);
+//	cCurrentSkyColor	=	Set_Skycolor((planet_struct *)&cPlanetStruct, &cSunMonStruct, cDispOptions.dispEarth);
 #ifdef _ENBABLE_WHITE_CHART_
 	if (cChart)
 	{
@@ -1758,29 +1759,29 @@ short		ii;
 	//* transfer planetary ra/dec data except for moon
 	for (ii=1;ii<10;ii++)
 	{
-		cPlanets[ii].decl	=	planetStruct[ii].decl;
-		cPlanets[ii].ra		=	planetStruct[ii].ra;
-		cPlanets[ii].magn	=	planetStruct[ii].magn;
+		cPlanets[ii].decl	=	cPlanetStruct[ii].decl;
+		cPlanets[ii].ra		=	cPlanetStruct[ii].ra;
+		cPlanets[ii].magn	=	cPlanetStruct[ii].magn;
 	}
 
 	//* moon topo coords
 
-	cPlanets[0].decl	=	sunMonStruct.mon_topo_decl;
-	cPlanets[0].ra		=	sunMonStruct.mon_topo_ra;
+	cPlanets[0].decl	=	cSunMonStruct.mon_topo_decl;
+	cPlanets[0].ra		=	cSunMonStruct.mon_topo_ra;
 
-	mon_geo_decl		=	planetStruct[MON].decl;
-	mon_geo_ra			=	planetStruct[MON].ra;
+	mon_geo_decl		=	cPlanetStruct[MON].decl;
+	mon_geo_ra			=	cPlanetStruct[MON].ra;
 
 	//*	needed for crescent moon and sun graphics
 
-	phase_angle			=	sunMonStruct.smdist;
-	position_angle		=	-sunMonStruct.smang;
+	phase_angle			=	cSunMonStruct.smdist;
+	position_angle		=	-cSunMonStruct.smang;
 
-	sun_radius			=	planetStruct[SUN].radius;
-	moon_radius			=	planetStruct[MON].radius;
-	earth_shadow_radius	=	sunMonStruct.earth_shadow_radius;
+	sun_radius			=	cPlanetStruct[SUN].radius;
+	moon_radius			=	cPlanetStruct[MON].radius;
+	earth_shadow_radius	=	cSunMonStruct.earth_shadow_radius;
 
-	if (sunMonStruct.lunar_ecl_flag)
+	if (cSunMonStruct.lunar_ecl_flag)
 	{
 		cLunarEclipseFlag	=	true;
 	}

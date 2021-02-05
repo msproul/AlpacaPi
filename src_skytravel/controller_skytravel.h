@@ -36,6 +36,10 @@
 	#include	"windowtab_deviceselect.h"
 #endif
 
+#ifndef _WINDOWTAB_MOON_H_
+	#include	"windowtab_moon.h"
+#endif
+
 
 extern	double	gTelescopeRA_Hours;
 extern	double	gTelescopeRA_Radians;
@@ -57,6 +61,7 @@ enum
 {
 	kTab_SkyTravel	=	1,
 	kTab_ST_Settings,
+	kTab_Moon,
 	kTab_ST_Dome,
 	kTab_AlpacaList,
 	kTab_DeviceList,
@@ -113,6 +118,7 @@ class ControllerSkytravel: public Controller
 		//*	tab information
 				WindowTabSkyTravel		*cSkyTravelTabOjbPtr;
 				WindowTabSTsettings		*cSkySettingsTabObjPtr;
+				WindowTabMoon			*cMoonTabObjPtr;
 				WindowTabDome			*cDomeTabObjPtr;
 				WindowTabAlpacaList		*cAlpacaListObjPtr;
 				WindowTabDeviceSelect	*cDeviceSelectObjPtr;

@@ -37,6 +37,9 @@
 #include	"ConsoleDebug.h"
 
 
+//*	for debugging rouge IP address
+#define	LOG_DISCOVERED_IP_ADDRS
+
 
 #ifndef SO_REUSEPORT
 	#define	SO_REUSEPORT 1
@@ -442,6 +445,61 @@ int		ii;
 //	CONSOLE_DEBUG_W_NUM("gRemoteCnt\t=", gRemoteCnt);
 }
 
+
+#ifdef LOG_DISCOVERED_IP_ADDRS
+#ifdef _ENABLE_SKYTRAVEL_
+//*****************************************************************************
+void	FormatTimeStringISO8601(struct timeval *tv, char *timeString)
+{
+struct tm	*linuxTime;
+long		milliSecs;
+
+	if ((tv != NULL) && (timeString != NULL))
+	{
+		linuxTime		=	gmtime(&tv->tv_sec);
+		milliSecs		=	tv->tv_usec / 1000;
+
+		sprintf(timeString, "%d-%02d-%02dT%02d:%02d:%02d.%03ld",
+								(1900 + linuxTime->tm_year),
+								(1 + linuxTime->tm_mon),
+								linuxTime->tm_mday,
+								linuxTime->tm_hour,
+								linuxTime->tm_min,
+								linuxTime->tm_sec,
+								milliSecs);
+
+	}
+}
+#endif // _ENABLE_SKYTRAVEL_
+
+
+//*****************************************************************************
+static void	LogNewIpAddress(struct sockaddr_in *deviceAddress)
+{
+char			logFileName[]	=	"IPaddressLog.txt";
+char			timeString[64];
+char			ipAddrSt[64];
+FILE			*filePointer;
+struct timeval	currentTime;		//*	time exposure or video was started for frame rate calculations
+
+	filePointer	=	fopen(logFileName, "a");
+	if (filePointer != NULL)
+	{
+		gettimeofday(&currentTime, NULL);	//*	save the time we started the exposure
+		FormatTimeStringISO8601(	&currentTime, timeString);
+
+		inet_ntop(AF_INET, &deviceAddress->sin_addr, ipAddrSt, INET_ADDRSTRLEN);
+
+
+		fprintf(filePointer, "%s\t%s\n",	timeString, ipAddrSt);
+
+		fclose(filePointer);
+	}
+}
+#endif // LOG_DISCOVERED_IP_ADDRS
+
+
+
 //*****************************************************************************
 static void	AddIPaddressToList(struct sockaddr_in *deviceAddress, SJP_Parser_t *jsonParser)
 {
@@ -492,6 +550,10 @@ char	myHostNameStr[128];
 		{
 			CONSOLE_DEBUG("Ran out of space in gAlpacaUnitList")
 		}
+#ifdef LOG_DISCOVERED_IP_ADDRS
+		LogNewIpAddress(deviceAddress);
+#endif // LOG_DISCOVERED_IP_ADDRS
+
 	}
 
 	if ((theDeviceIdx >= 0) && (theDeviceIdx < kMaxAlpacaIPaddrCnt))

@@ -109,7 +109,24 @@ if [ -f alpacapi ]
 then
 	echo "'alpacapi' server made successfully" >> $LOGFILENAME
 else
+	ERRORLOGFILE="alpacapi-errorlog.txt"
 	echo "Failed to build 'alpacapi' server !!!!!!!!!!!!!!!!!!!!!" >> $LOGFILENAME
+	echo "Failed to build alpacapi server, going to try again with log files"
+	if $PI64
+	then
+		echo "Building alpacapi server for 64 bit Raspberry Pi"
+		make clean pi64 2>$ERRORLOGFILE
+	elif $RASPPI
+	then
+		echo "Building alpacapi server for 32 bit Raspberry Pi"
+		make clean pi  2>$ERRORLOGFILE
+	else
+		echo "Building alpacapi server on x86"
+		make clean   2>$ERRORLOGFILE
+		make
+	fi
+
+
 fi
 
 
