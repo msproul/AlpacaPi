@@ -300,12 +300,12 @@ char		savePrefix[]	=	"SONY-";
 		CONSOLE_ABORT("Failed to create call back object");
 	}
 
-	strcpy(cDeviceDescription, cDeviceManufacturer);
-	strcat(cDeviceDescription, " - Model:");
-	strcat(cDeviceDescription, cDeviceName);
+	strcpy(cCommonProp.Description, cDeviceManufacturer);
+	strcat(cCommonProp.Description, " - Model:");
+	strcat(cCommonProp.Description, cCommonProp.Name);
 
 #ifdef _USE_OPENCV_
-	sprintf(cOpenCV_ImgWindowName, "%s-%d", cDeviceName, cCameraID);
+	sprintf(cOpenCV_ImgWindowName, "%s-%d", cCommonProp.Name, cCameraID);
 #endif // _USE_OPENCV_
 
 	CONSOLE_DEBUG("exit");
@@ -1774,10 +1774,10 @@ void	CameraDriverSONY::ReadSONYcameraInfo(void)
 	if (cSonyCamera_info != NULL)
 	{
 		strcpy(cSONYidString,		cSonyCamera_info->GetModel());
-		strcpy(cDeviceName,			cSonyCamera_info->GetModel());
+		strcpy(cCommonProp.Name,			cSonyCamera_info->GetModel());
 
 		CONSOLE_DEBUG_W_STR("Conn type\t\t=",	cSONYidString);
-		CONSOLE_DEBUG_W_STR("Camera model\t=",	cDeviceName);
+		CONSOLE_DEBUG_W_STR("Camera model\t=",	cCommonProp.Name);
 	}
 	else
 	{

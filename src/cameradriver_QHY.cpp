@@ -143,12 +143,12 @@ CameraDriverQHY::CameraDriverQHY(const int deviceNum, const char *qhyIDstring)
 
 	ReadQHYcameraInfo();
 
-	strcpy(cDeviceDescription, cDeviceManufacturer);
-	strcat(cDeviceDescription, " - Model:");
-	strcat(cDeviceDescription, cDeviceName);
+	strcpy(cCommonProp.Description, cDeviceManufacturer);
+	strcat(cCommonProp.Description, " - Model:");
+	strcat(cCommonProp.Description, cCommonProp.Name);
 
 #ifdef _USE_OPENCV_
-	sprintf(cOpenCV_ImgWindowName, "%s-%d", cDeviceName, cCameraID);
+	sprintf(cOpenCV_ImgWindowName, "%s-%d", cCommonProp.Name, cCameraID);
 #endif // _USE_OPENCV_
 
 }
@@ -189,7 +189,7 @@ char			modeName[32];
 	{
 		CONSOLE_DEBUG_W_STR("qhyModelString\t=", qhyModelString);
 		strcpy(cDeviceModel,	qhyModelString);
-		strcpy(cDeviceName,		qhyModelString);
+		strcpy(cCommonProp.Name,		qhyModelString);
 	}
 
 	cQHYcamHandle	=	OpenQHYCCD(cQHYidString);

@@ -178,7 +178,7 @@ CvScalar	btnTXTcolor;
 	//---------------------------------------------------------------------------------------
 	//*	Tracking On/Off and Status
 	xLoc				=	myClm1_offset;
-	trackingBtnWidth	=	(2 * myClmWidth) + 10;
+	trackingBtnWidth	=	(2 * myClmWidth) + 30;
 	SetWidget(			kTelescope_BtnTrackingOn,	xLoc,		yLoc,		trackingBtnWidth,		cBtnHeight);
 	SetWidgetType(		kTelescope_BtnTrackingOn,	kWidgetType_Button);
 	SetWidgetText(		kTelescope_BtnTrackingOn,	"Tracking On");

@@ -113,7 +113,7 @@ CalibrationDriver::CalibrationDriver(void)
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
-	strcpy(cDeviceName, "CoverCalibrator");
+	strcpy(cCommonProp.Name, "CoverCalibrator");
 
 	cCalibratorBrightness	=	0;
 	cCalibratorStatus		=	kCalibrator_NotPresent;
@@ -161,7 +161,7 @@ int					mySocket;
 								reqData->jsonTextBuffer,
 								kMaxJsonBuffLen,
 								"Device",
-								cDeviceName,
+								cCommonProp.Name,
 								INCLUDE_COMMA);
 
 	JsonResponse_Add_String(	mySocket,

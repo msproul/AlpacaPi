@@ -295,13 +295,13 @@ bool	previousOnLineState;
 		//*	update telescope tracking
 		if (cTelescopeProp.Tracking)
 		{
-			SetWidgetText(kTab_Telescope,		kTelescope_TrackingStatus, "Tracking On");
+			SetWidgetText(kTab_Telescope,		kTelescope_TrackingStatus, "Tracking is On");
 			SetWidgetBGColor(kTab_Telescope,	kTelescope_TrackingStatus,	CV_RGB(0,	255,	0));
 			SetWidgetTextColor(kTab_Telescope,	kTelescope_TrackingStatus,	CV_RGB(0,	0,	0));
 		}
 		else
 		{
-			SetWidgetText(kTab_Telescope,		kTelescope_TrackingStatus, "Tracking Off");
+			SetWidgetText(kTab_Telescope,		kTelescope_TrackingStatus, "Tracking is Off");
 			SetWidgetBGColor(kTab_Telescope,	kTelescope_TrackingStatus,	CV_RGB(0,	0,	0));
 			SetWidgetTextColor(kTab_Telescope,	kTelescope_TrackingStatus,	CV_RGB(255,	0,	0));
 		}
@@ -309,18 +309,16 @@ bool	previousOnLineState;
 		//*	update slewing
 		if (cTelescopeProp.Slewing)
 		{
-			SetWidgetText(kTab_Telescope,		kTelescope_SlewingStatus,	"Slewing On");
+			SetWidgetText(kTab_Telescope,		kTelescope_SlewingStatus,	"Slewing is On");
 			SetWidgetBGColor(kTab_Telescope,	kTelescope_SlewingStatus,	CV_RGB(0,	255,	0));
 			SetWidgetTextColor(kTab_Telescope,	kTelescope_SlewingStatus,	CV_RGB(0,	0,	0));
 		}
 		else
 		{
-			SetWidgetText(kTab_Telescope,		kTelescope_SlewingStatus, "Slewing Off");
+			SetWidgetText(kTab_Telescope,		kTelescope_SlewingStatus, "Slewing is Off");
 			SetWidgetBGColor(kTab_Telescope,	kTelescope_SlewingStatus,	CV_RGB(0,	0,	0));
 			SetWidgetTextColor(kTab_Telescope,	kTelescope_SlewingStatus,	CV_RGB(255,	0,	0));
 		}
-
-
 	}
 	else
 	{
@@ -330,7 +328,6 @@ bool	previousOnLineState;
 	{
 		SetWindowIPaddrInfo(NULL, cOnLine);
 	}
-
 	cLastUpdate_milliSecs	=	millis();
 	cFirstDataRead			=	false;
 	return(validData);

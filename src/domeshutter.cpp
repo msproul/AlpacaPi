@@ -237,7 +237,7 @@ int					jjj;
 		{
 			if (strcasecmp(jsonParser.dataList[jjj].keyword, "SHUTTERSTATUS") == 0)
 			{
-				cShutterstatus	=	atoi(jsonParser.dataList[jjj].valueString);
+				cDomeProp.ShutterStatus	=	atoi(jsonParser.dataList[jjj].valueString);
 			}
 			else if (strcasecmp(jsonParser.dataList[jjj].keyword, "altitude") == 0)
 			{

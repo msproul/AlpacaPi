@@ -175,9 +175,9 @@ quickSpin			quickSpinStruct;
 
 	strcpy(cDeviceManufAbrev,	"FLIR");
 	strcpy(cDeviceManufacturer,	"FLIR");
-	strcpy(cDeviceDescription,	"FLIR Camera");
+	strcpy(cCommonProp.Description,	"FLIR Camera");
 	strcpy(cDriverversionStr,	gSpinakerVerString);
-	strcpy(cDeviceName,			"FLIR");
+	strcpy(cCommonProp.Name,			"FLIR");
 
 	//*	we have to have something here
 	cCameraProp.CameraXsize	=	4240;
@@ -199,9 +199,9 @@ quickSpin			quickSpinStruct;
 
 	ReadFLIRcameraInfo();
 
-	strcpy(cDeviceDescription, cDeviceManufacturer);
-	strcat(cDeviceDescription, " - ");
-	strcat(cDeviceDescription, cDeviceModel);
+	strcpy(cCommonProp.Description, cDeviceManufacturer);
+	strcat(cCommonProp.Description, " - ");
+	strcat(cCommonProp.Description, cDeviceModel);
 
 
 	// Initialize camera
@@ -219,7 +219,7 @@ quickSpin			quickSpinStruct;
 
 
 #ifdef _USE_OPENCV_
-	sprintf(cOpenCV_ImgWindowName, "%s-%d", cDeviceName, cCameraID);
+	sprintf(cOpenCV_ImgWindowName, "%s-%d", cCommonProp.Name, cCameraID);
 #endif // _USE_OPENCV_
 
 }

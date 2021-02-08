@@ -103,7 +103,7 @@ FocuserDriver::FocuserDriver(const int argDevNum)
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
-	strcpy(cDeviceName, "Focuser");
+	strcpy(cCommonProp.Name, "Focuser");
 
 	memset(&cFocuserProp, 0, sizeof(TYPE_FocuserProperties));
 
@@ -196,7 +196,7 @@ int					mySocket;
 								reqData->jsonTextBuffer,
 								kMaxJsonBuffLen,
 								"Device",
-								cDeviceName,
+								cCommonProp.Name,
 								INCLUDE_COMMA);
 
 	JsonResponse_Add_String(	mySocket,
@@ -808,7 +808,7 @@ char		lineBuffer[128];
 
 
 		//*-----------------------------------------------------------
-		OutputHTMLrowData(mySocketFD,	"Focuser",		cDeviceName);
+		OutputHTMLrowData(mySocketFD,	"Focuser",		cCommonProp.Name);
 		OutputHTMLrowData(mySocketFD,	"Model",		cDeviceModel);
 		OutputHTMLrowData(mySocketFD,	"Version",		cDeviceVersion);
 		OutputHTMLrowData(mySocketFD,	"Serial Num",	cDeviceSerialNum);

@@ -294,10 +294,22 @@ bool				keepReading;
 		}
 		else
 		{
+		char	errString[64];
+
 			PrintIPaddressToString(deviceAddress->sin_addr.s_addr, ipString);
 			CONSOLE_DEBUG_W_STR("connect error, ipaddress\t=",	ipString);
 			CONSOLE_DEBUG_W_STR("connect error, send data\t=",	sendData);
 			CONSOLE_DEBUG_W_NUM("errno\t\t\t=", errno);
+			switch(errno)
+			{
+				case ENETDOWN:		strcpy(errString,	"Network is down");				break;
+				case ENETUNREACH:	strcpy(errString,	"Network is unreachable");		break;
+				case ENETRESET:		strcpy(errString,	"Connection reset by peer");	break;
+				case ECONNABORTED:	strcpy(errString,	"Software caused connection abort");	break;
+				case ECONNRESET:	strcpy(errString,	"Connection reset by peer");	break;
+				default:			strcpy(errString,	"unknown");
+			}
+			CONSOLE_DEBUG_W_STR("Error message\t=",	errString);
 		}
 		closeRetCode	=	close(socket_desc);
 		if (closeRetCode != 0)

@@ -104,8 +104,8 @@ void	CreateManagementObject(void)
 ManagementDriver::ManagementDriver(const int argDevNum)
 	:AlpacaDriver(kDeviceType_Management)
 {
-	strcpy(cDeviceName,			"ManagementDriver");
-	strcpy(cDeviceDescription,	"Standard Alpaca Management driver");
+	strcpy(cCommonProp.Name,		"ManagementDriver");
+	strcpy(cCommonProp.Description,	"AlpacaPi Management driver");
 }
 
 //**************************************************************************************
@@ -267,7 +267,7 @@ char				uniqueIDstring[64];
 										reqData->jsonTextBuffer,
 										kMaxJsonBuffLen,
 										"DeviceName",
-										devicePtr->cDeviceName,
+										devicePtr->cCommonProp.Name,
 										INCLUDE_COMMA);
 
 				JsonResponse_Add_Int32(reqData->socket,
@@ -352,7 +352,7 @@ int					mySocket;
 								reqData->jsonTextBuffer,
 								kMaxJsonBuffLen,
 								"Device",
-								cDeviceName,
+								cCommonProp.Name,
 								INCLUDE_COMMA);
 
 	JsonResponse_Add_String(	mySocket,

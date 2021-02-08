@@ -463,7 +463,7 @@ int		gainPercent;
 
 		exposureTim_ms	=	(cCameraProp.Lastexposure_duration_us * 1.0) / 1000.0;
 
-		fprintf(filePointer, "Camera=%s\r\n",					cDeviceName);
+		fprintf(filePointer, "Camera=%s\r\n",					cCommonProp.Name);
 //		fprintf(filePointer, "Filter=%s\r\n",					foo);L
 		fprintf(filePointer, "Profile=%s\r\n",					cFileNamePrefix);
 		fprintf(filePointer, "Filename=%s\r\n",					cFileNameRoot);

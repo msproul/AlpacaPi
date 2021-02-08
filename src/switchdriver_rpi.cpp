@@ -111,7 +111,7 @@ void	CreateSwitchObjectsRPi(void)
 SwitchDriverRPi::SwitchDriverRPi(void)
 	:SwitchDriver()
 {
-	strcpy(cDeviceName, "Switch-Raspberry-Pi");
+	strcpy(cCommonProp.Name, "Switch-Raspberry-Pi");
 
 	cNumSwitches	=	kR_Pi_SwitchCount;
 

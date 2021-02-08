@@ -264,7 +264,7 @@ TelescopeDriver::TelescopeDriver(void)
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
-	strcpy(cDeviceName, "Telescope");
+	strcpy(cCommonProp.Name, "Telescope");
 
 	//*	set the defaults, everything to false or zero
 	memset(&cTelescopeProp, 0, sizeof(TYPE_TelescopeProperties));
@@ -272,52 +272,11 @@ TelescopeDriver::TelescopeDriver(void)
 	cDriverVersion					=	3;
 	cTelescopeProp.AlginmentMode	=	kAlignmentMode_algGermanPolar;
 
-//-	cAltitude					=	0.0;
-//-	cApertureArea				=	0.0;
-//-	cApertureDiameter			=	0.0;
-//-	cAtHome						=	false;
-//-	cAtPark						=	false;
-//-	cAzimuth					=	0.0;
-//-	cCanFindHome				=	false;
-//-	cCanMoveAxis				=	false;
-//-	cCanPark					=	false;
-//-	cCanPulseGuide				=	false;
-//-	cCanSetDeclinationRate		=	false;
-//-	cCanSetGuideRates			=	false;
-//-	cCanSetPark					=	false;
-//-	cCanSetPierSide				=	false;
-//-	cCanSetRightAscensionRate	=	false;
-//-	cCanSetTracking				=	false;
-//-	cCanSlew					=	false;
-//-	cCanSlewAltAz				=	false;
-//-	cCanSlewAltAzAsync			=	false;
-//-	cCanSlewAsync				=	false;
-//-	cCanSync					=	false;
-//-	cCanSyncAltAz				=	false;
-//-	cCanUnpark					=	false;
-//-	cDeclination				=	0.0;
-//-	cDeclinationRate			=	0.0;
-//-	cDoesRefraction				=	false;
-	cTelescopeProp.EquatorialSystem			=	kECT_equOther;
-//-	cFocalLength				=	0.0;
-//-	cGuideRateDeclination		=	0.0;
-//-	cGuideRateRightAscension	=	0.0;
-//-	cIsPulseGuiding				=	false;
-//-	cRightAscension				=	0.0;
-//-	cRightAscensionRate			=	0.0;
-	cTelescopeProp.SideOfPier					=	kPierSide_pierUnknown;
-//-	cSiderealTime				=	0.0;
-//-	cSiteElevation				=	0.0;
-//-	cSiteLatitude				=	0.0;
-//-	cSiteLongitude				=	0.0;
-//-	cSlewing					=	false;
-//-	cSlewSettleTime				=	0;
-//-	cTargetDec_HasBeenSet		=	false;
-//-	cTargetRA_HasBeenSet		=	false;
-//-	cTargetDeclination			=	0.0;
-//-	cTargetRightAscension		=	0.0;
-//-	cTracking					=	false;
-	cTelescopeProp.TrackingRate				=	kDriveRate_driveSidereal;
+	cTelescopeProp.EquatorialSystem	=	kECT_equOther;
+	cTelescopeProp.SideOfPier		=	kPierSide_pierUnknown;
+	cTelescopeProp.TrackingRate		=	kDriveRate_driveSidereal;
+
+	cDeviceConnected				=	false;
 //+	cTrackingRates;
 //+	cUTCDate;
 
@@ -385,7 +344,7 @@ int					mySocket;
 								reqData->jsonTextBuffer,
 								kMaxJsonBuffLen,
 								"Device",
-								cDeviceName,
+								cCommonProp.Name,
 								INCLUDE_COMMA);
 
 	JsonResponse_Add_String(	mySocket,
@@ -844,7 +803,6 @@ int					mySocket;
 			CONSOLE_DEBUG(__FUNCTION__);
 			CONSOLE_DEBUG(reqData->cmdBuffer);
 			CONSOLE_DEBUG(reqData->contentData);
-			CONSOLE_ABORT("aborting");
 		}
 		alpacaErrCode	=	ProcessCommand_Common(reqData, cmdEnumValue, alpacaErrMsg);
 		break;

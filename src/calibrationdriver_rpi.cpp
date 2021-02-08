@@ -54,7 +54,7 @@ CalibrationDriverRPI::CalibrationDriverRPI(void)
 {
 	CONSOLE_DEBUG(__FUNCTION__);
 
-	strcpy(cDeviceName, "CoverCalibration-Raspberry-Pi");
+	strcpy(cCommonProp.Name, "CoverCalibration-Raspberry-Pi");
 
 
 	Init_Hardware();

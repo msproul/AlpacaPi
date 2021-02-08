@@ -108,7 +108,7 @@ MultiCam::MultiCam(const int argDevNum)
 {
 	CONSOLE_DEBUG(__FUNCTION__);
 
-	strcpy(cDeviceName, "MultiCam");
+	strcpy(cCommonProp.Name, "MultiCam");
 
 }
 
@@ -157,7 +157,7 @@ int					mySocket;
 								reqData->jsonTextBuffer,
 								kMaxJsonBuffLen,
 								"Device",
-								cDeviceName,
+								cCommonProp.Name,
 								INCLUDE_COMMA);
 
 	JsonResponse_Add_String(	mySocket,
@@ -614,7 +614,7 @@ CameraDriver	*cameraObj;
 
 					sprintf(lineBuffer, "\t<TR><TD>%s</TD><TD>%s</TD><TD>%s</TD></TR>",
 												cameraObj->cDeviceManufacturer,
-												cameraObj->cDeviceName,
+												cameraObj->cCommonProp.Name,
 												cameraObj->cDeviceSerialNum);
 					SocketWriteData(mySocketFD,	lineBuffer);
 				}

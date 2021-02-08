@@ -184,12 +184,12 @@ HRESULT			toupResult;
 
 	ReadTOUPcameraInfo();
 
-	strcpy(cDeviceDescription, cDeviceManufacturer);
-	strcat(cDeviceDescription, " - Model:");
-	strcat(cDeviceDescription, cDeviceName);
+	strcpy(cCommonProp.Description, cDeviceManufacturer);
+	strcat(cCommonProp.Description, " - Model:");
+	strcat(cCommonProp.Description, cCommonProp.Name);
 
 #ifdef _USE_OPENCV_
-	sprintf(cOpenCV_ImgWindowName, "%s-%d", cDeviceName, cCameraID);
+	sprintf(cOpenCV_ImgWindowName, "%s-%d", cCommonProp.Name, cCameraID);
 #endif // _USE_OPENCV_
 
 	if (cToupCamH != NULL)
@@ -235,10 +235,10 @@ int				alpacaReadModeIdx;
 		strcpy(cDeviceManufAbrev,	"TOUP");
 		strcpy(cDeviceSerialNum,	cToupDeviceInfo.id);
 
-	//	strcpy(cDeviceName,			"ToupTek-");
-	//	strcat(cDeviceName,			cToupDeviceInfo.displayname);
+	//	strcpy(cCommonProp.Name,			"ToupTek-");
+	//	strcat(cCommonProp.Name,			cToupDeviceInfo.displayname);
 
-		strcpy(cDeviceName,			cToupDeviceInfo.displayname);
+		strcpy(cCommonProp.Name,			cToupDeviceInfo.displayname);
 
 
 		cCameraProp.CameraXsize	=	cToupDeviceInfo.model->res[0].width;

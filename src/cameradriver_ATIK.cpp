@@ -143,12 +143,12 @@ CameraDriverATIK::CameraDriverATIK(const int deviceNum)
 
 	ReadATIKcameraInfo();
 
-	strcpy(cDeviceDescription, cDeviceManufacturer);
-	strcat(cDeviceDescription, " - Model:");
-	strcat(cDeviceDescription, cDeviceName);
+	strcpy(cCommonProp.Description, cDeviceManufacturer);
+	strcat(cCommonProp.Description, " - Model:");
+	strcat(cCommonProp.Description, cCommonProp.Name);
 
 #ifdef _USE_OPENCV_
-	sprintf(cOpenCV_ImgWindowName, "%s-%d", cDeviceName, cCameraID);
+	sprintf(cOpenCV_ImgWindowName, "%s-%d", cCommonProp.Name, cCameraID);
 #endif // _USE_OPENCV_
 }
 
@@ -185,14 +185,14 @@ char				tempDeviceName[64];
 	atikOK				=	ArtemisDeviceName(cCameraID, tempDeviceName);
 	if (atikOK)
 	{
-		strcpy(cDeviceName, tempDeviceName);
+		strcpy(cCommonProp.Name, tempDeviceName);
 	}
-	CONSOLE_DEBUG_W_STR("cDeviceName=", cDeviceName);
+	CONSOLE_DEBUG_W_STR("cCommonProp.Name=", cCommonProp.Name);
 	LogEvent(	"camera",
 				"ATIK Camera detected",
 				NULL,
 				kASCOM_Err_Success,
-				cDeviceName);
+				cCommonProp.Name);
 
 	CONSOLE_DEBUG_W_NUM("ATIK camera #\t=",	cCameraID);
 
@@ -217,20 +217,20 @@ char				tempDeviceName[64];
 	cCameraProp.ExposureMax_us		=	999999999;
 	cCameraProp.ExposureMax_seconds	=	999999999.9999;
 
-	if (strcmp(cDeviceName, "Atik Titan") == 0)
+	if (strcmp(cCommonProp.Name, "Atik Titan") == 0)
 	{
 		strcpy(cSensorName, "Sony ICX424");
 		//*	https://www.atik-cameras.com/product/atik-titan/
 		cCameraProp.ElectronsPerADU	=	0.34;
 	}
-	else if (strcmp(cDeviceName, "Atik 460ex") == 0)
+	else if (strcmp(cCommonProp.Name, "Atik 460ex") == 0)
 	{
 		strcpy(cSensorName, "Sony ICX694");
 		//*	https://www.atik-cameras.com/product/atik-460ex/
 		cCameraProp.ElectronsPerADU	=	0.27;
 		cCameraProp.ExposureMin_us	=	1000;		//*	1/1000 sec = 1000 micro seconds
 	}
-	else if (strcmp(cDeviceName, "Atik Horizon") == 0)
+	else if (strcmp(cCommonProp.Name, "Atik Horizon") == 0)
 	{
 		strcpy(cSensorName, "Panasonic MN34230");
 		//*	https://www.atik-cameras.com/product/atik-horizon/
@@ -312,7 +312,7 @@ void	CameraDriverATIK::ProcessATIKproperties(ARTEMISPROPERTIES	*atikProperties)
 	cCameraProp.CameraYsize		=	atikProperties->nPixelsY;
 	cCameraProp.PixelSizeX		=	atikProperties->PixelMicronsX;
 	cCameraProp.PixelSizeY		=	atikProperties->PixelMicronsY;
-	strcpy(cDeviceDescription,	atikProperties->Description);
+	strcpy(cCommonProp.Description,	atikProperties->Description);
 	strcpy(cDeviceManufacturer,	atikProperties->Manufacturer);
 
 	cCameraProp.NumX	=	cCameraProp.CameraXsize;

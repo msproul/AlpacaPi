@@ -25,11 +25,15 @@
 	#include	"telescopedriver.h"
 #endif
 
+#ifndef _TELESCOPE_DRIVER_COMM_H_
+	#include	"telescopedriver_comm.h"
+#endif
+
 void	CreateTelescope_SkyWatchObjects(void);
 
 
 //**************************************************************************************
-class TelescopeDriverSkyWatch: public TelescopeDriver
+class TelescopeDriverSkyWatch: public TelescopeDriverComm
 {
 	public:
 
@@ -39,17 +43,10 @@ class TelescopeDriverSkyWatch: public TelescopeDriver
 								TelescopeDriverSkyWatch(	DeviceConnectionType	connectionType,
 															const char			*devicePath);
 		virtual					~TelescopeDriverSkyWatch(void);
-		virtual	int32_t			RunStateMachine(void);
+//		virtual	int32_t			RunStateMachine(void);
 
 
 
 
-		virtual	bool				AlpacaConnect(void);
-		virtual	bool				AlpacaDisConnect(void);
-		virtual	TYPE_ASCOM_STATUS	Telescope_AbortSlew(char *alpacaErrMsg);
-		virtual	TYPE_ASCOM_STATUS	Telescope_SlewToRA_DEC(const double newRA, const double newDec, char *alpacaErrMsg);
-		virtual	TYPE_ASCOM_STATUS	Telescope_SyncToRA_DEC(const double newRA, const double newDec, char *alpacaErrMsg);
 
-
-		char					cSkyWatchDevicePath[64];	//*	this may be an IP address or a /dev/tty... string
 };

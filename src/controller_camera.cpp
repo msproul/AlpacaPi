@@ -55,6 +55,7 @@
 //*	Jan  1,	2121	<TODO> save cross hair location
 //*	Jan  1,	2121	<TODO> finish exposure step options
 //*	Jan  1,	2121	<TODO> clear error msg
+//*	Feb  6,	2121	<TODO> Move downloading of images to a separate thread
 //*****************************************************************************
 
 #ifdef _ENABLE_CTRL_CAMERA_

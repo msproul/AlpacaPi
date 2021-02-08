@@ -91,7 +91,7 @@ DomeDriverROR::DomeDriverROR(const int argDevNum)
 	:DomeDriver(argDevNum)
 {
 	CONSOLE_DEBUG(__FUNCTION__);
-	strcpy(cDeviceName, "Dome-Roll-Off-Roof");
+	strcpy(cCommonProp.Name, "Dome-Roll-Off-Roof");
 	strcpy(gWebTitle, "Dome-Roll-Off-Roof");
 
 	cDomeConfig					=	kIsRollOffRoof;
@@ -106,8 +106,8 @@ DomeDriverROR::DomeDriverROR(const int argDevNum)
 
 	Init_Hardware();
 
-	strcpy(cDeviceName,			"AlpacaPi-ROR");
-	strcpy(cDeviceDescription,	"Roll Off Roof");
+	strcpy(cCommonProp.Name,		"AlpacaPi-ROR");
+	strcpy(cCommonProp.Description,	"Roll Off Roof");
 }
 
 //**************************************************************************************

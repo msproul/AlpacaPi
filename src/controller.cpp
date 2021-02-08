@@ -55,6 +55,7 @@
 //*	Jan 16,	2021	<MLS> Added Close box in Window Tab area
 //*	Jan 20,	2021	<MLS> Added GetCurrentTabName()
 //*	Jan 26,	2021	<MLS> Added more text buffer overflow checking
+//*	Feb  6,	2021	<MLS> Minor fix to tab display when clicked
 //*****************************************************************************
 
 
@@ -304,6 +305,7 @@ int			objCntr;
 		cTabList[ii].borderColor		=	CV_RGB(255,	255,	255);
 		cTabList[ii].fontNum			=	kFont_Medium;
 		cTabList[ii].justification		=	kJustification_Center;
+		cTabList[ii].widgetType			=	kWidgetType_Button;
 	}
 	cTabCount		=	0;
 	cCurrentTabNum	=	0;
@@ -540,17 +542,17 @@ int		tabLeft;
 
 	tabHeight	=	24;
 	tabLeft		=	0;
-	cTabList[0].valid		=	true;
-	cTabList[0].widgetType	=	kWidgetType_Text;
-	cTabList[0].left		=	tabLeft;
-	cTabList[0].top			=	0;
-	cTabList[0].width		=	tabHeight;
-	cTabList[0].height		=	tabHeight;
-	cTabList[0].fontNum		=	kFont_Large;
-	cTabList[0].crossedOut	=	true;
+	cTabList[0].valid			=	true;
+	cTabList[0].widgetType		=	kWidgetType_Button;
+	cTabList[0].left			=	tabLeft;
+	cTabList[0].top				=	0;
+	cTabList[0].width			=	tabHeight;
+	cTabList[0].height			=	tabHeight;
+	cTabList[0].fontNum			=	kFont_Large;
+	cTabList[0].crossedOut		=	true;
 	cTabList[0].textString[0]	=	'X';
 	cTabList[0].textString[1]	=	0;
-	cTabList[0].textColor	=	CV_RGB(255, 0, 0);
+	cTabList[0].textColor		=	CV_RGB(255, 0, 0);
 
 	tabLeft	+=	tabHeight + 1;
 
@@ -559,7 +561,8 @@ int		tabLeft;
 	for (iii=1; iii<cTabCount; iii++)
 	{
 		cTabList[iii].valid			=	true;
-		cTabList[iii].widgetType	=	kWidgetType_Text;
+//		cTabList[iii].widgetType	=	kWidgetType_Text;
+		cTabList[iii].widgetType	=	kWidgetType_Button;
 		cTabList[iii].left			=	tabLeft;
 		cTabList[iii].top			=	0;
 		cTabList[iii].width			=	tabWidth;
@@ -791,6 +794,15 @@ bool	widgitIsButton;
 			cLastLClickY			=	yyy;
 			//*	keep track of the what button/tab was clicked on
 			cLastClicked_Tab		=	FindClickedTab(xxx,  yyy);
+			if (cLastClicked_Tab >= 0)
+			{
+//				CONSOLE_DEBUG_W_NUM("cLastClicked_Tab\t=", cLastClicked_Tab);
+				cTabList[cLastClicked_Tab].highLighted	=	true;
+				DrawWidgetButton(&cTabList[cLastClicked_Tab]);
+				cvShowImage(cWindowName, cOpenCV_Image);
+				cTabList[cLastClicked_Tab].highLighted	=	false;
+			}
+
 			cLastClicked_Btn		=	FindClickedWidget(xxx,  yyy);
 			if (cLastClicked_Btn >= 0)
 			{

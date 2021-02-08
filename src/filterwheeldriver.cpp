@@ -89,9 +89,9 @@ int	ii;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-	strcpy(cDeviceName,			"Filterwheel");
+	strcpy(cCommonProp.Name,			"Filterwheel");
 	strcpy(cFilterWheelCurrName, "none");
-	strcpy(cDeviceDescription,	"Generic filterwheel");
+	strcpy(cCommonProp.Description,	"Generic filterwheel");
 
 	cFilterWheelConnected		=	false;
 	cNumberOfPositions			=	0;
@@ -204,7 +204,7 @@ int					mySocket;
 								reqData->jsonTextBuffer,
 								kMaxJsonBuffLen,
 								"Device",
-								cDeviceName,
+								cCommonProp.Name,
 								INCLUDE_COMMA);
 
 	JsonResponse_Add_String(	mySocket,
@@ -578,7 +578,7 @@ bool		isConnected;
 			SocketWriteData(mySocketFD,	"<TR>\r\n");
 
 			SocketWriteData(mySocketFD,	"\t<TD>");
-			SocketWriteData(mySocketFD,	cDeviceName);
+			SocketWriteData(mySocketFD,	cCommonProp.Name);
 			SocketWriteData(mySocketFD,	"</TD>\r\n");
 
 			sprintf(lineBuffer,	"\t<TD><CENTER>Slots=%d</TD>\r\n",	cNumberOfPositions);

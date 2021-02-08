@@ -124,12 +124,12 @@ ShutterDriver::ShutterDriver(const int argDevNum)
 	cShutterStatus			=	kShutterStatus_Unknown;
 	cPreviousShutterStatus	=	kShutterStatus_Unknown;
 
-	strcpy(cDeviceName, "shutter");
+	strcpy(cCommonProp.Name, "shutter");
 	strcpy(gWebTitle, "shutter");
 
 	Init_Hardware();
 
-	strcpy(cDeviceDescription, "Shutter");
+	strcpy(cCommonProp.Description, "Shutter");
 
 }
 
@@ -218,7 +218,7 @@ int				mySocket;
 								reqData->jsonTextBuffer,
 								kMaxJsonBuffLen,
 								"Device",
-								cDeviceName,
+								cCommonProp.Name,
 								INCLUDE_COMMA);
 
 	JsonResponse_Add_String(	mySocket,

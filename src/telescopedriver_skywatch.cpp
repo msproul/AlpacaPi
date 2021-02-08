@@ -73,15 +73,13 @@ void	CreateTelescopeObjects_SkyWatch(void)
 //*		/dev/ttyS0
 //**************************************************************************************
 TelescopeDriverSkyWatch::TelescopeDriverSkyWatch(DeviceConnectionType connectionType, const char *devicePath)
-	:TelescopeDriver()
+	:TelescopeDriverComm(connectionType, devicePath)
 {
 
 	CONSOLE_DEBUG(__FUNCTION__);
-	strcpy(cDeviceName,			"Telescope-SkyWatch");
-	strcpy(cDeviceDescription,	"Telescope control using SkyWatch protocol");
+	strcpy(cCommonProp.Name,		"Telescope-SkyWatch");
+	strcpy(cCommonProp.Description,	"Telescope control using SkyWatch protocol");
 
-	cDeviceConnType	=	connectionType;
-	strcpy(cDeviceConnPath,	devicePath);
 
 	//*	setup the options for this driver
 	cTelescopeProp.AlginmentMode	=	kAlignmentMode_algGermanPolar;
@@ -100,93 +98,6 @@ TelescopeDriverSkyWatch::~TelescopeDriverSkyWatch(void)
 	CONSOLE_DEBUG(__FUNCTION__);
 }
 
-//**************************************************************************************
-int32_t	TelescopeDriverSkyWatch::RunStateMachine(void)
-{
-//	CONSOLE_DEBUG(__FUNCTION__);
 
-	return(15 * 1000 * 1000);
-}
-
-//*****************************************************************************
-bool	TelescopeDriverSkyWatch::AlpacaConnect(void)
-{
-bool	openOK;
-
-	CONSOLE_DEBUG(__FUNCTION__);
-
-	openOK	=	false;
-	switch(cDeviceConnType)
-	{
-		case kDevCon_Ethernet:
-			break;
-
-		case kDevCon_USB:
-			break;
-
-		case kDevCon_Serial:
-			cDeviceConnFileDesc	=	open(cDeviceConnPath, O_RDWR);	//* connect to port
-			if (cDeviceConnFileDesc >= 0)
-			{
-				openOK	=	true;
-				Set_Serial_attribs(cDeviceConnFileDesc, B9600, 0);	//*	set the baud rate
-			}
-			else
-			{
-				CONSOLE_DEBUG_W_STR("failed to open", cDeviceConnPath);
-				openOK	=	false;
-			}
-			break;
-	}
-	return(openOK);
-}
-
-//*****************************************************************************
-bool	TelescopeDriverSkyWatch::AlpacaDisConnect(void)
-{
-	CONSOLE_DEBUG(__FUNCTION__);
-	return(true);
-}
-
-//*****************************************************************************
-//*	needs to be over-ridden
-TYPE_ASCOM_STATUS	TelescopeDriverSkyWatch::Telescope_AbortSlew(char *alpacaErrMsg)
-{
-TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
-
-	CONSOLE_DEBUG(__FUNCTION__);
-
-
-//	alpacaErrCode	=	kASCOM_Err_Success;
-
-	return(alpacaErrCode);
-}
-
-//*****************************************************************************
-TYPE_ASCOM_STATUS	TelescopeDriverSkyWatch::Telescope_SlewToRA_DEC(	const double	newRA,
-																	const double	newDec,
-																	char			*alpacaErrMsg)
-{
-TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
-
-	CONSOLE_DEBUG(__FUNCTION__);
-
-//		alpacaErrCode			=	kASCOM_Err_Success;
-
-	return(alpacaErrCode);
-}
-
-
-//*****************************************************************************
-TYPE_ASCOM_STATUS	TelescopeDriverSkyWatch::Telescope_SyncToRA_DEC(	const double	newRA,
-																	const double	newDec,
-																	char			*alpacaErrMsg)
-{
-TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
-bool				lx2000ReturnCode;
-
-
-	return(alpacaErrCode);
-}
 
 #endif // _ENABLE_TELESCOPE_LX200_

@@ -294,8 +294,8 @@ DomeDriver::DomeDriver(const int argDevNum)
 	cDomeState					=	kDomeState_Idle;
 	cPreviousDomeState			=	kDomeState_Idle;
 
-	strcpy(cDeviceName,			"Dome");
-	strcpy(cDeviceDescription,	"Dome");
+	strcpy(cCommonProp.Name,			"Dome");
+	strcpy(cCommonProp.Description,	"Dome");
 
 	Init_Hardware();
 
@@ -378,7 +378,7 @@ int					mySocket;
 								reqData->jsonTextBuffer,
 								kMaxJsonBuffLen,
 								"Device",
-								cDeviceName,
+								cCommonProp.Name,
 								INCLUDE_COMMA);
 
 	JsonResponse_Add_String(	mySocket,

@@ -207,7 +207,9 @@ class AlpacaDriver
 				//*	class variables start with "c"
 
 				//*	start with the Alpaca properties
-				char				cDeviceDescription[64];
+				TYPE_CommonProperties	cCommonProp;
+
+//				char				cDeviceDescription[64];
 				//					cDriverInfo				//	is hard coded in alpacadriver.cpp
 				char				cDriverversionStr[64];
 
@@ -215,9 +217,11 @@ class AlpacaDriver
 				uint32_t			cMagicCookie;		//*	used to validate objects
 				TYPE_DEVICETYPE		cDeviceType;
 				int					cDeviceNum;			//*	device index for alpaca
+
+
 				int					cDriverVersion;
 				char				cAlpacaName[32];
-				char				cDeviceName[128];
+//				char				cDeviceName[128];
 				char				cDeviceModel[kDeviceModelStrLen];
 				char				cDeviceManufacturer[64];
 				char				cDeviceManufAbrev[8];

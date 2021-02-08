@@ -44,6 +44,7 @@
 #include	"windowtab_skytravel.h"
 #include	"windowtab_dome.h"
 #include	"windowtab_alpacalist.h"
+#include	"windowtab_iplist.h"
 #include	"windowtab_deviceselect.h"
 #include	"windowtab_about.h"
 #include	"windowtab_moon.h"
@@ -74,6 +75,7 @@ ControllerSkytravel::ControllerSkytravel(	const char *argWindowName)
 	cDomeTabObjPtr			=	NULL;
 	cDeviceSelectObjPtr		=	NULL;
 	cAlpacaListObjPtr		=	NULL;
+	cIPaddrListObjPtr		=	NULL;
 	cAboutBoxTabObjPtr		=	NULL;
 
 	cDomeAddressValid		=	false;
@@ -113,6 +115,7 @@ ControllerSkytravel::~ControllerSkytravel(void)
 	DELETE_OBJ_IF_VALID(cSkySettingsTabObjPtr);
 	DELETE_OBJ_IF_VALID(cDomeTabObjPtr);
 	DELETE_OBJ_IF_VALID(cAlpacaListObjPtr);
+	DELETE_OBJ_IF_VALID(cIPaddrListObjPtr);
 	DELETE_OBJ_IF_VALID(cDeviceSelectObjPtr);
 	DELETE_OBJ_IF_VALID(cAboutBoxTabObjPtr);
 }
@@ -173,7 +176,17 @@ void	ControllerSkytravel::SetupWindowControls(void)
 	}
 
 	//=============================================================
-	SetTabText(kTab_DeviceList,		"Device Selections");
+	SetTabText(kTab_IPList,		"IP List");
+	cIPaddrListObjPtr	=	new WindowTabIPList(cWidth, cHeight, cBackGrndColor, cWindowName);
+	if (cIPaddrListObjPtr != NULL)
+	{
+		SetTabWindow(kTab_IPList,	cIPaddrListObjPtr);
+		cIPaddrListObjPtr->SetParentObjectPtr(this);
+	}
+
+
+	//=============================================================
+	SetTabText(kTab_DeviceList,		"Device Selection");
 	cDeviceSelectObjPtr	=	new WindowTabDeviceSelect(cWidth, cHeight, cBackGrndColor, cWindowName);
 	if (cDeviceSelectObjPtr != NULL)
 	{
@@ -333,6 +346,7 @@ bool		foundSomething;
 	{
 		cAlpacaListObjPtr->UpdateRemoteDeviceList();
 		cDeviceSelectObjPtr->UpdateRemoteDeviceList();
+		cIPaddrListObjPtr->UpdateIPaddrList();
 	}
 
 	if (needToUpdate)

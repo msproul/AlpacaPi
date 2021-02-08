@@ -17,6 +17,8 @@
 //*	Jan 14,	2021	<MLS> Discovery protocol now working with ASCOM Device Hub
 //*	Jan 17,	2021	<MLS> Added external IP list to discovery thread
 //*	Feb  4,	2021	<MLS> Rearranged close logic in GetJsonResponse()
+//*	Feb  7,	2021	<MLS> Added Discovery_ClearIPAddrList()
+//*	Feb  7,	2021	<MLS> Fixed bug that did not discover 2 listen ports on same IP addrr
 //*****************************************************************************
 
 
@@ -61,7 +63,6 @@
 
 pthread_t	gDiscoveryListenThreadID;
 pthread_t	gDiscoveryFindThreadID;
-int			gAlpacaListenPort	=	9999;
 
 //#define	kMaxDeviceListCnt	32
 
@@ -74,13 +75,38 @@ int					gAlpacaUnitCnt	=	0;
 TYPE_REMOTE_DEV		gRemoteList[kMaxDeviceListCnt];
 int					gRemoteCnt		=	0;
 
+bool				gDiscoveryThreadIsRunning	=	false;
+bool				gDiscoveryThreadKeepRunning	=	true;
+
 static	int			gBroadcastSock;
-static	uint32_t	gMyIPaddress	=	0;
+static	uint32_t	gMyIPaddress		=	0;
+static	int			gAlpacaListenPort	=	9999;
 
 
 static void		*LookForAlpacaDevicesThread(void *arg);
 static void		ReadExternalIPlist_FromThread(void);
 static bool		gNeedToReadExternalList	=	true;	//*	we only need to do this once
+
+
+//*****************************************************************************
+void	Discovery_ClearIPAddrList(void)
+{
+int	iii;
+
+	gAlpacaUnitCnt	=	0;
+	gRemoteCnt		=	0;
+	for (iii=0; iii<kMaxAlpacaIPaddrCnt; iii++)
+	{
+		memset(&gAlpacaUnitList[iii], 0, sizeof(TYPE_ALPACA_UNIT));
+	}
+
+	for (iii=0; iii<kMaxDeviceListCnt; iii++)
+	{
+		memset(&gRemoteList[iii], 0, sizeof(TYPE_REMOTE_DEV));
+	}
+
+	gAlpacaUnitCnt	=	0;
+}
 
 //*****************************************************************************
 static void	*DiscoveryListenThread(void *arg)
@@ -98,8 +124,7 @@ bool				validDiscoveryRequest;
 char				ipAddrSt[48];
 
 
-//	CONSOLE_DEBUG(__FUNCTION__);
-	printf("Staring discovery listen thread %s\r\n", __FUNCTION__);
+	CONSOLE_DEBUG("Starting discovery listen thread");
 
 	mySocket	=	socket(AF_INET, SOCK_DGRAM, 0);
 	if (mySocket >= 0)
@@ -209,14 +234,29 @@ static void	UpdateRemoteList(TYPE_REMOTE_DEV *newRemoteDevice)
 {
 int		iii;
 bool	newDevice;
+char	ipString[32];
+char	urlString[128];
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 	newDevice	=	true;
 
+//	if (newRemoteDevice->port != 6800)
+	{
+//		inet_ntop(AF_INET, &newRemoteDevice->deviceAddress.sin_addr, ipString, INET_ADDRSTRLEN);
+//		sprintf(urlString, "%s:%d\t%s", ipString, newRemoteDevice->port, newRemoteDevice->deviceTypeStr);
+//		CONSOLE_DEBUG(urlString);
+
+	//	CONSOLE_DEBUG_W_STR("newRemoteDevice->deviceTypeStr\t=",	newRemoteDevice->deviceTypeStr);
+	//	CONSOLE_DEBUG_W_STR("newRemoteDevice->deviceNameStr\t=",	newRemoteDevice->deviceNameStr);
+	//	CONSOLE_DEBUG_W_NUM("newRemoteDevice->alpacaDeviceNum\t=",	newRemoteDevice->alpacaDeviceNum);
+	}
+
 	//*	dont add myself to the list
 	if (newRemoteDevice->deviceAddress.sin_addr.s_addr == gMyIPaddress)
 	{
-//		CONSOLE_DEBUG("Leave me out of the list");
+		CONSOLE_DEBUG("Leave me out of the list");
+//		CONSOLE_DEBUG_W_STR("newRemoteDevice->deviceTypeStr\t=",	newRemoteDevice->deviceTypeStr);
+//		CONSOLE_DEBUG_W_STR("newRemoteDevice->deviceNameStr\t=",	newRemoteDevice->deviceNameStr);
 		newDevice	=	false;
 	}
 	else
@@ -224,22 +264,17 @@ bool	newDevice;
 		//*	look to see if it is already in the list
 		for (iii=0; iii<gRemoteCnt; iii++)
 		{
-			if ((newRemoteDevice->deviceAddress.sin_addr.s_addr ==	gRemoteList[iii].deviceAddress.sin_addr.s_addr)
-				&& (strcmp(newRemoteDevice->deviceTypeStr,			gRemoteList[iii].deviceTypeStr) == 0)
-				&& (strcmp(newRemoteDevice->deviceNameStr,			gRemoteList[iii].deviceNameStr) == 0)
-				&& (newRemoteDevice->alpacaDeviceNum == gRemoteList[iii].alpacaDeviceNum)
+			if (	(newRemoteDevice->deviceAddress.sin_addr.s_addr ==	gRemoteList[iii].deviceAddress.sin_addr.s_addr)
+				&&	(newRemoteDevice->port 							==	gRemoteList[iii].port)
+				&&	(newRemoteDevice->alpacaDeviceNum				==	gRemoteList[iii].alpacaDeviceNum)
+				&&	(strcmp(newRemoteDevice->deviceTypeStr,			gRemoteList[iii].deviceTypeStr) == 0)
+				&&	(strcmp(newRemoteDevice->deviceNameStr,			gRemoteList[iii].deviceNameStr) == 0)
 				)
 			{
 				gRemoteList[iii].notSeenCounter	=	0;
-				newDevice	=	false;
+				newDevice						=	false;
 				break;
 			}
-			//*	I dont want the management device type in the list
-	//		if (strcasecmp(newRemoteDevice->deviceTypeStr, "management") == 0)
-	//		{
-	//			newDevice	=	false;
-	//			break;
-	//		}
 		}
 	}
 
@@ -256,7 +291,50 @@ bool	newDevice;
 			gRemoteCnt++;
 		}
 	}
+	else
+	{
+	//	CONSOLE_DEBUG_W_STR("Ignoring device\t=",	newRemoteDevice->deviceNameStr);
+	}
 }
+
+
+/*
+{"Value":[{	"DeviceName":"ASCOM Simulator SafetyMonitor Driver",
+			"DeviceType":"SafetyMonitor",
+			"DeviceNumber":0,
+			"UniqueID":"7B79C9E6-6338-41E5-89DE-4B85EAB47953"},
+			{
+			"DeviceName":"ASCOM Observing Conditions Hub (OCH)",
+			"DeviceType":"ObservingConditions",
+			"DeviceNumber":0,
+			"UniqueID":"4BDFE843-5E27-4983-816A-45FF3F92914C"},
+			{
+			"DeviceName":"Dome Simulator .NET",
+			"DeviceType":"Dome",
+			"DeviceNumber":0,
+			"UniqueID":"BEAD123F-518A-472F-BEBD-17CABA2994A8"},
+			{
+			"DeviceName":"Simulator",
+			"DeviceType":"Telescope",
+			"DeviceNumber":0,
+			"UniqueID":"8CBF0B5B-63EB-4B79-AF6D-A05FD7805A98"},
+			{
+			"DeviceName":"ASCOM Simulator Focuser Driver",
+			"DeviceType":"Focuser",
+			"DeviceNumber":0,
+			"UniqueID":"596C180F-8049-47ED-8D03-2D59237A6198"},
+			{
+			"DeviceName":"Camera V2 simulator",
+			"DeviceType":"Camera",
+			"DeviceNumber":0,
+			"UniqueID":"AE6042D5-161F-4DF3-B9C8-85D37E0CAEB0"}
+			],
+			"ClientTransactionID":0,
+			"ServerTransactionID":105682,
+			"ErrorNumber":0,
+			"ErrorMessage":""}
+
+*/
 
 
 //*****************************************************************************
@@ -272,26 +350,26 @@ char			myVersionString[64];
 
 	for (ii=0; ii<jsonParser->tokenCount_Data; ii++)
 	{
-		if (strcmp(jsonParser->dataList[ii].keyword, "VERSION") == 0)
+		if (strcasecmp(jsonParser->dataList[ii].keyword, "VERSION") == 0)
 		{
-			strcpy(myVersionString, jsonParser->dataList[ii].valueString);
+			strcpy(myVersionString,				jsonParser->dataList[ii].valueString);
+			strcpy(theDevice->versionString,	jsonParser->dataList[ii].valueString);
 		}
-
-		if (strcmp(jsonParser->dataList[ii].keyword, "DEVICETYPE") == 0)
+		else if (strcasecmp(jsonParser->dataList[ii].keyword, "DEVICETYPE") == 0)
 		{
 			strcpy(myRemoteDevice.deviceTypeStr, jsonParser->dataList[ii].valueString);
 		}
-		if (strcmp(jsonParser->dataList[ii].keyword, "DEVICENAME") == 0)
+		else if (strcasecmp(jsonParser->dataList[ii].keyword, "DEVICENAME") == 0)
 		{
 			strcpy(myRemoteDevice.deviceNameStr, jsonParser->dataList[ii].valueString);
 		}
-		if (strcmp(jsonParser->dataList[ii].keyword, "DEVICENUMBER") == 0)
+		else if (strcasecmp(jsonParser->dataList[ii].keyword, "DEVICENUMBER") == 0)
 		{
 			myRemoteDevice.alpacaDeviceNum	=	atoi(jsonParser->dataList[ii].valueString);
 		}
 
 		//------------------------------------
-		if (strcmp(jsonParser->dataList[ii].keyword, "ARRAY-NEXT") == 0)
+		if (strcasecmp(jsonParser->dataList[ii].keyword, "ARRAY-NEXT") == 0)
 		{
 			myRemoteDevice.deviceAddress	=	theDevice->deviceAddress;
 			myRemoteDevice.port				=	theDevice->port;
@@ -406,11 +484,16 @@ char				ipString[32];
 //		SJP_DumpJsonData(&jsonParser);
 
 		ExtractDevicesFromJSON(&jsonParser, theDevice);
+		theDevice->queryOKcnt++;
+		theDevice->currentlyActive	=	true;
 	}
 	else
 	{
-		inet_ntop(AF_INET, &theDevice->deviceAddress, ipString, INET_ADDRSTRLEN);
+		inet_ntop(AF_INET, &theDevice->deviceAddress.sin_addr, ipString, INET_ADDRSTRLEN);
 		CONSOLE_DEBUG_W_STR("No valid data from", ipString);
+
+		theDevice->queryERRcnt++;
+		theDevice->currentlyActive	=	false;
 	}
 }
 
@@ -437,6 +520,7 @@ int		ii;
 //	CONSOLE_DEBUG_W_NUM("gAlpacaUnitCnt\t=", gAlpacaUnitCnt);
 	for (ii=0; ii<gAlpacaUnitCnt; ii++)
 	{
+//		CONSOLE_DEBUG_W_NUM("ii\t=", ii);
 		if (gAlpacaUnitList[ii].noResponseCnt == 0)
 		{
 			SendGetRequest(&gAlpacaUnitList[ii], "/management/v1/configureddevices");
@@ -503,21 +587,33 @@ struct timeval	currentTime;		//*	time exposure or video was started for frame ra
 //*****************************************************************************
 static void	AddIPaddressToList(struct sockaddr_in *deviceAddress, SJP_Parser_t *jsonParser)
 {
-int		ii;
+int		iii;
 bool	newDevice;
 int		theDeviceIdx;
 bool	foundHostName;
 char	myHostNameStr[128];
+int		alpacaListenPort;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
+	//*	find the alpaca port
+	for (iii=0; iii<jsonParser->tokenCount_Data; iii++)
+	{
+		if (strcmp(jsonParser->dataList[iii].keyword, "ALPACAPORT") == 0)
+		{
+			alpacaListenPort	=	atoi(jsonParser->dataList[iii].valueString);
+		}
+	}
+
+
 	newDevice		=	true;
 	theDeviceIdx	=	-1;
-	for (ii=0; ii<gAlpacaUnitCnt; ii++)
+	for (iii=0; iii<gAlpacaUnitCnt; iii++)
 	{
-		if (deviceAddress->sin_addr.s_addr == gAlpacaUnitList[ii].deviceAddress.sin_addr.s_addr)
+		if (	(deviceAddress->sin_addr.s_addr	==	gAlpacaUnitList[iii].deviceAddress.sin_addr.s_addr)
+			&&	(alpacaListenPort				==	gAlpacaUnitList[iii].port))
 		{
 			newDevice		=	false;
-			theDeviceIdx	=	ii;
+			theDeviceIdx	=	iii;
 			break;
 		}
 	}
@@ -528,15 +624,8 @@ char	myHostNameStr[128];
 		if (gAlpacaUnitCnt < kMaxAlpacaIPaddrCnt)
 		{
 			gAlpacaUnitList[gAlpacaUnitCnt].deviceAddress	=	*deviceAddress;
-			//*	now find the alpaca port
-			for (ii=0; ii<jsonParser->tokenCount_Data; ii++)
-			{
-				if (strcasecmp(jsonParser->dataList[ii].keyword, "ALPACAPORT") == 0)
-				{
-					gAlpacaUnitList[gAlpacaUnitCnt].port	=	atoi(jsonParser->dataList[ii].valueString);
-					theDeviceIdx	=	gAlpacaUnitCnt;
-				}
-			}
+			gAlpacaUnitList[gAlpacaUnitCnt].port			=	alpacaListenPort;
+
 			//*	and lookup the host name
 			foundHostName	=	LookupNameFromIPaddr(deviceAddress->sin_addr.s_addr, myHostNameStr);
 			if (foundHostName)
@@ -747,6 +836,7 @@ int StartDiscoveryQuerryThread(void)
 int			threadErr;
 
 	CONSOLE_DEBUG(__FUNCTION__);
+	gDiscoveryThreadKeepRunning	=	true;
 	threadErr			=	pthread_create(&gDiscoveryFindThreadID, NULL, &LookForAlpacaDevicesThread, NULL);
 
 	return(threadErr);
@@ -818,8 +908,9 @@ int					sockOptValue;
 	}
 
 	sendtoRetCode	=	0;
-	while (sendtoRetCode >= 0)
+	while (gDiscoveryThreadKeepRunning && (sendtoRetCode >= 0))
 	{
+		gDiscoveryThreadIsRunning	=	true;
 	#ifdef _ENABLE_SKYTRAVEL_
 //		CONSOLE_DEBUG(__FUNCTION__);
 	#endif
@@ -895,6 +986,7 @@ int					sockOptValue;
 
 	CONSOLE_DEBUG("Thread exit!!!!!!!!");
 
+	gDiscoveryThreadIsRunning	=	false;
 	return(NULL);
 }
 
@@ -997,15 +1089,15 @@ uint32_t		ipAddress32;
 			tmpAddrPtr	=	&((struct sockaddr_in *)ifa->ifa_addr)->sin_addr;
 
 			ipAddress32	=	ntohl(*((uint32_t *)tmpAddrPtr));
-			CONSOLE_DEBUG_W_HEX("ipAddress32\t=", ipAddress32);
+//			CONSOLE_DEBUG_W_HEX("ipAddress32\t=", ipAddress32);
 	//		if (ipAddress32 != 0x0100007f)
 			if (ipAddress32 != 0x7f000001)
 			{
 				gMyIPaddress	=	ipAddress32;
-				CONSOLE_DEBUG_W_HEX("gMyIPaddress\t=", gMyIPaddress);
+//				CONSOLE_DEBUG_W_HEX("gMyIPaddress\t=", gMyIPaddress);
 			}
 			inet_ntop(AF_INET, tmpAddrPtr, addressBuffer, INET_ADDRSTRLEN);
-			printf("%s IPV4 Address %s\n", ifa->ifa_name, addressBuffer);
+//			printf("%s IPV4 Address %s\n", ifa->ifa_name, addressBuffer);
 		}
 		// Check if it is a valid IPv6 address
 //		else if (ifa->ifa_addr->sa_family==AF_INET6)
@@ -1030,9 +1122,9 @@ int StartDiscoveryListenThread(int alpacaListenPort)
 int			threadErr;
 
 	GetMyAddress();
-
-//	printf("Staring discovery listen thread %s\r\n", __FUNCTION__);
 	gAlpacaListenPort	=	alpacaListenPort;
+
+	CONSOLE_DEBUG_W_NUM("Staring discovery listen thread on port", gAlpacaListenPort);
 	threadErr			=	pthread_create(&gDiscoveryListenThreadID, NULL, &DiscoveryListenThread, NULL);
 
 	return(threadErr);

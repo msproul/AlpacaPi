@@ -151,7 +151,7 @@ int	ii;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
-	strcpy(cDeviceName, "ObsConditionsDriver");
+	strcpy(cCommonProp.Name, "ObsConditionsDriver");
 	strcpy(cObsCondDescription, "outdoor conditions");
 	cCurrentPressure_kPa	=	0;		//*	kPa
 	cCurrentPressure_hPa	=	0;		//*	hPa

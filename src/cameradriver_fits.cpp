@@ -80,6 +80,7 @@
 //*	Jan 19,	2021	<MLS> Added ROWORDER:BOTTOM-UP to FITS header
 //*	Jan 20,	2021	<MLS> Added ExtractFitsHeader()
 //*	Feb  5,	2021	<MLS> Started working on NEON support for image processing
+//*	Feb  5,	2021	<MLS> Added NEON_Deinterleave_RGB()
 //*****************************************************************************
 
 #if defined(_ENABLE_CAMERA_) && defined(_ENABLE_FITS_)
@@ -107,6 +108,7 @@
 #endif // _FITSIO2_H
 
 #define _ENABLE_CONSOLE_DEBUG_
+#define	_DEBUG_TIMING_
 #include	"ConsoleDebug.h"
 
 #include	"alpacadriver.h"
@@ -844,9 +846,9 @@ char	instrumentString[128];
 	{
 		strcpy(instrumentString, cTS_info.instrument);
 	}
-	else if (strlen(cDeviceDescription) > 0)
+	else if (strlen(cCommonProp.Description) > 0)
 	{
-		strcpy(instrumentString, cDeviceDescription);
+		strcpy(instrumentString, cCommonProp.Description);
 	}
 	else
 	{
@@ -856,7 +858,7 @@ char	instrumentString[128];
 	fits_write_key(fitsFilePtr, TSTRING, "INSTRUME",	instrumentString, NULL, &fitsStatus);
 
 	fitsStatus	=	0;
-	fits_write_key(fitsFilePtr, TSTRING, "CAMERA",		cDeviceName, NULL, &fitsStatus);
+	fits_write_key(fitsFilePtr, TSTRING, "CAMERA",		cCommonProp.Name, NULL, &fitsStatus);
 
 	if (strlen(cDriverversionStr) > 0)
 	{
@@ -963,19 +965,19 @@ char	instrumentString[128];
 	}
 
 	//*	camera name
-	if (strlen(cDeviceName) > 0)
+	if (strlen(cCommonProp.Name) > 0)
 	{
 		strcpy(stringBuf, "Camera Model: ");
-		strcat(stringBuf, cDeviceName);
+		strcat(stringBuf, cCommonProp.Name);
 		fitsStatus	=	0;
 		fits_write_key(fitsFilePtr, TSTRING, "COMMENT",	stringBuf,		NULL, &fitsStatus);
 	}
 
 	//*	camera description
-	if (strlen(cDeviceDescription) > 0)
+	if (strlen(cCommonProp.Description) > 0)
 	{
 		strcpy(stringBuf, "Camera Description: ");
-		strcat(stringBuf, cDeviceDescription);
+		strcat(stringBuf, cCommonProp.Description);
 		fitsStatus	=	0;
 		fits_write_key(fitsFilePtr, TSTRING, "COMMENT",	stringBuf,		NULL, &fitsStatus);
 	}
@@ -2127,17 +2129,25 @@ char		moonPhaseStr[64];
 
 #pragma mark -
 
+#ifdef __ARM_NEON
+
+//	define the Neon intrinsics.
+#include <arm_neon.h>
+
+//*****************************************************************************
 //*	some testing of advanced ARM NEON cpu options
 //	https://developer.arm.com/documentation/101028/0012/3--C-language-extensions?lang=en
 //	https://developer.arm.com/architectures/instruction-sets/simd-isas/neon/intrinsics
 //	https://developer.arm.com/architectures/instruction-sets/simd-isas/neon/neon-programmers-guide-for-armv8-a/optimizing-c-code-with-neon-intrinsics/rgb-deinterleaving
-#ifdef __ARM_ACLE
-	#include <arm_acle.h>
-#endif
-#ifdef __ARM_NEON
-	//	define the Neon intrinsics.
-	#include <arm_neon.h>
-
+//*****************************************************************************
+//*****************************************************************************
+//*	this routine uses ARM NEON SIMD instructions to do the interleaving of the RGB image
+//*	to the bbbb...... ggggg..... rrrrr.... buffer required by FITS
+//*	In testing with a ZWO-120MC camera (1.2 megapixles) it reduced the time
+//*	from 9 millisces to 5 millisecs.  Not much, but should be a lot on the bigger cameras.
+//*	This only works on 64 bit ARM such as Jetson or Raspbian64.
+//*
+//*	This is a first stepping stone to take advantage of the NEON SIMD instructions
 //*****************************************************************************
 void NEON_Deinterleave_RGB(	uint8_t	*rgb,
 							uint8_t	*r,
@@ -2150,6 +2160,7 @@ uint8x16x3_t	intlv_rgb;
 int				iii;
 
 	CONSOLE_DEBUG(__FUNCTION__);
+	SETUP_TIMING();
 	//*
 	//*	Take the elements of "rgb" and store the individual colors "r", "g", and "b"
 	//*
@@ -2161,6 +2172,7 @@ int				iii;
 		vst1q_u8(g + (16 * iii), intlv_rgb.val[1]);
 		vst1q_u8(b + (16 * iii), intlv_rgb.val[2]);
 	}
+	DEBUG_TIMING("Using NEON to Deinterleave");
 }
 #endif
 
@@ -2186,6 +2198,7 @@ unsigned char	*bluBufPtr;
 
 		if (cCameraBGRbuffer != NULL)
 		{
+			SETUP_TIMING();
 			bluBufPtr	=	cCameraBGRbuffer;
 			grnBufPtr	=	cCameraBGRbuffer + frameBufSize;
 			redBufPtr	=	cCameraBGRbuffer + frameBufSize + frameBufSize;
@@ -2196,6 +2209,7 @@ unsigned char	*bluBufPtr;
 				grnBufPtr[pp]	=	cCameraDataBuffer[ii++];
 				bluBufPtr[pp]	=	cCameraDataBuffer[ii++];
 			}
+			DEBUG_TIMING("Using CPU to Deinterleave");
 		}
 		else
 		{
@@ -2205,7 +2219,7 @@ unsigned char	*bluBufPtr;
 		unsigned char	*neonBFRbuffer;
 		int				diffCnt;
 
-		CONSOLE_DEBUG(__FUNCTION__);
+			CONSOLE_DEBUG("NEON instructions set is available");
 
 			neonBFRbuffer	=		(unsigned char *)malloc(frameBufSize * 3);
 			if (neonBFRbuffer != NULL)
@@ -2213,7 +2227,6 @@ unsigned char	*bluBufPtr;
 				bluBufPtr	=	neonBFRbuffer;
 				grnBufPtr	=	neonBFRbuffer + frameBufSize;
 				redBufPtr	=	neonBFRbuffer + frameBufSize + frameBufSize;
-
 				NEON_Deinterleave_RGB(cCameraDataBuffer, redBufPtr, grnBufPtr, bluBufPtr, frameBufSize);
 				//*	now lets check to see if its the same
 				diffCnt	=	0;

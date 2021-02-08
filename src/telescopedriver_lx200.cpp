@@ -35,6 +35,8 @@
 //*	Jan 13,	2021	<MLS> Created telescopedriver_lx200.cpp
 //*	Jan 21,	2021	<MLS> Added  AlpacaConnect() & AlpacaDisConnect() to telescope
 //*	Jan 21,	2021	<MLS> TelescopeLX200 now talking via ethernet to LX200 (TSC)
+//*	Feb  7,	2021	<MLS> Started adding Telescope_comm support
+//*	Feb  7,	2021	<MLS> Added _USE_TELESCOPE_COM_OBJECT_
 //*****************************************************************************
 
 
@@ -57,17 +59,24 @@
 //#include	"JsonResponse.h"
 //#include	"sidereal.h"
 
+#define	_USE_TELESCOPE_COM_OBJECT_
+
+#ifdef _USE_TELESCOPE_COM_OBJECT_
+	#include	"telescope_comm.h"
+#else
+	#include	"lx200_com.h"
+#endif
+
 
 #include	"telescopedriver.h"
 #include	"telescopedriver_lx200.h"
-#include	"lx200_com.h"
+
 
 //**************************************************************************************
-void	CreateTelescopeObjects(void)
+void	CreateTelescopeLX200Objects(void)
 {
 	new TelescopeDriverLX200(kDevCon_Ethernet, "192.168.1.104:49152");
 }
-
 
 //**************************************************************************************
 //*	the device path is one of these options
@@ -80,8 +89,8 @@ TelescopeDriverLX200::TelescopeDriverLX200(DeviceConnectionType connectionType, 
 {
 
 	CONSOLE_DEBUG(__FUNCTION__);
-	strcpy(cDeviceName,			"Telescope-LX200");
-	strcpy(cDeviceDescription,	"Telescope control using LX200 protocol");
+	strcpy(cCommonProp.Name,			"Telescope-LX200");
+	strcpy(cCommonProp.Description,	"Telescope control using LX200 protocol");
 
 	cDeviceConnType	=	connectionType;
 	strcpy(cDeviceConnPath,	devicePath);
@@ -92,6 +101,10 @@ TelescopeDriverLX200::TelescopeDriverLX200(DeviceConnectionType connectionType, 
 	cTelescopeProp.CanSync			=	true;
 	cTelescopeProp.CanSetTracking	=	true;
 
+
+#ifdef _USE_TELESCOPE_COM_OBJECT_
+	cTelescopeComm	=	NULL;
+#endif
 	AlpacaConnect();
 }
 
@@ -101,6 +114,7 @@ TelescopeDriverLX200::TelescopeDriverLX200(DeviceConnectionType connectionType, 
 TelescopeDriverLX200::~TelescopeDriverLX200(void)
 {
 	CONSOLE_DEBUG(__FUNCTION__);
+	AlpacaDisConnect();
 }
 
 //**************************************************************************************
@@ -108,6 +122,8 @@ int32_t	TelescopeDriverLX200::RunStateMachine(void)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
 
+#ifdef _USE_TELESCOPE_COM_OBJECT_
+#else
 	if (gTelescopeUpdated)
 	{
 //		CONSOLE_DEBUG("gTelescopeUpdated");
@@ -139,6 +155,7 @@ int32_t	TelescopeDriverLX200::RunStateMachine(void)
 
 		cTelescopeProp.Slewing	=	false;
 	}
+#endif
 	return(15 * 1000 * 1000);
 }
 
@@ -166,8 +183,18 @@ bool	okFlag;
 				tcpPort		=	atoi(colonPtr);
 				CONSOLE_DEBUG_W_STR("ipAddrString\t=",	ipAddrString);
 				CONSOLE_DEBUG_W_NUM("tcpPort\t=",	tcpPort);
+			#ifdef _USE_TELESCOPE_COM_OBJECT_
+				CONSOLE_DEBUG("creating TelescopeComm object!!!!!!!!!!!!!!!!");
+				if (cTelescopeComm == NULL)
+				{
+					cTelescopeComm	=	new TelescopeComm(kDevCon_Ethernet, ipAddrString, tcpPort);
+				}
+
+				cTelescopeComm->StartThread();
+			#else
 				lx200ErrCode	=	LX200_StartThread(ipAddrString, tcpPort, lx200ErrMsg);
 				okFlag			=	true;
+			#endif
 			}
 			break;
 
@@ -179,7 +206,14 @@ bool	okFlag;
 bool	TelescopeDriverLX200::AlpacaDisConnect(void)
 {
 	CONSOLE_DEBUG(__FUNCTION__);
+#ifdef _USE_TELESCOPE_COM_OBJECT_
+	if (cTelescopeComm != NULL)
+	{
+		cTelescopeComm->StopThread();
+	}
+#else
 	LX200_StopThread();
+#endif
 	return(true);
 }
 
@@ -191,9 +225,21 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
+#ifdef _USE_TELESCOPE_COM_OBJECT_
+	if (cTelescopeComm != NULL)
+	{
+		cTelescopeComm->StopMovement();
+		alpacaErrCode	=	kASCOM_Err_Success;
+	}
+	else
+	{
+		alpacaErrCode	=	kASCOM_Err_NotConnected;
+	}
+#else
 	LX200_StopMovement();
-
 	alpacaErrCode	=	kASCOM_Err_Success;
+#endif
+
 
 	return(alpacaErrCode);
 }
@@ -204,12 +250,20 @@ TYPE_ASCOM_STATUS	TelescopeDriverLX200::Telescope_SlewToRA_DEC(	const double	new
 																	char			*alpacaErrMsg)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
-bool				lx2000ReturnCode;
+bool				returnCode;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
-	lx2000ReturnCode	=	LX200_SlewScopeDegrees(newRA, newDec, alpacaErrMsg);
-	if (lx2000ReturnCode)
+	returnCode	=	false;
+#ifdef _USE_TELESCOPE_COM_OBJECT_
+	if (cTelescopeComm != NULL)
+	{
+		returnCode	=	cTelescopeComm->SlewScopeDegrees(newRA, newDec, alpacaErrMsg);
+	}
+#else
+	returnCode	=	LX200_SlewScopeDegrees(newRA, newDec, alpacaErrMsg);
+#endif // _USE_TELESCOPE_COM_OBJECT_
+	if (returnCode)
 	{
 		cTelescopeProp.Slewing	=	true;
 		alpacaErrCode			=	kASCOM_Err_Success;
@@ -229,13 +283,21 @@ TYPE_ASCOM_STATUS	TelescopeDriverLX200::Telescope_SyncToRA_DEC(	const double	new
 																	char			*alpacaErrMsg)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
-bool				lx2000ReturnCode;
+bool				returnCode;
 
 	CONSOLE_DEBUG("-------------------------------------------------------------");
 	CONSOLE_DEBUG(__FUNCTION__);
 
-	lx2000ReturnCode	=	LX200_SyncScopeDegrees(newRA, newDec, alpacaErrMsg);
-	if (lx2000ReturnCode)
+	returnCode	=	false;
+#ifdef _USE_TELESCOPE_COM_OBJECT_
+	if (cTelescopeComm != NULL)
+	{
+		returnCode	=	cTelescopeComm->SyncScopeDegrees(newRA, newDec, alpacaErrMsg);
+	}
+#else
+	returnCode	=	LX200_SyncScopeDegrees(newRA, newDec, alpacaErrMsg);
+#endif // _USE_TELESCOPE_COM_OBJECT_
+	if (returnCode)
 	{
 		CONSOLE_DEBUG("kASCOM_Err_Success");
 		alpacaErrCode	=	kASCOM_Err_Success;

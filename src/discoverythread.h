@@ -14,9 +14,16 @@
 //-	#include	"json_parse.h"
 #endif // _JSON_PARSE_H_
 
+//*	this is a list of IP addresses
+extern	TYPE_ALPACA_UNIT	gAlpacaUnitList[];
+extern	int					gAlpacaUnitCnt;
 
-extern TYPE_REMOTE_DEV		gRemoteList[kMaxDeviceListCnt];
+
+//*	this is a list of alpaca devices, can be more than one per IP address
+extern TYPE_REMOTE_DEV		gRemoteList[];
 extern int					gRemoteCnt;
+extern bool					gDiscoveryThreadIsRunning;
+extern bool					gDiscoveryThreadKeepRunning;
 
 
 #ifdef __cplusplus
@@ -24,8 +31,9 @@ extern int					gRemoteCnt;
 #endif
 
 
-int StartDiscoveryListenThread(int alpacaListenPort);
-int StartDiscoveryQuerryThread(void);
+int		StartDiscoveryListenThread(int alpacaListenPort);
+int		StartDiscoveryQuerryThread(void);
+void	Discovery_ClearIPAddrList(void);
 
 int	GetMySubnetNumber(void);
 

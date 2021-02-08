@@ -35,6 +35,12 @@ typedef struct
 	int					noResponseCnt;
 	char				hostName[48];		//*	device name from hosts file
 
+	//*	for use by discovery thread for keeping track of responses
+	int					queryOKcnt;
+	int					queryERRcnt;
+	bool				currentlyActive;
+	char				versionString[64];
+
 } TYPE_ALPACA_UNIT;
 
 
@@ -63,7 +69,13 @@ typedef struct
 #define	kMaxDeviceListCnt	48
 
 
-extern	TYPE_REMOTE_DEV	gAlpacaDiscoveredList[kMaxDeviceListCnt];
+//*	this is a list of IP addresses
+//extern	TYPE_ALPACA_UNIT	gAlpacaUnitList[kMaxAlpacaIPaddrCnt];
+//extern	int					gAlpacaUnitCnt	=	0;
+
+
+//*	this is a list of alpaca devices, can be more than one per IP address
+extern	TYPE_REMOTE_DEV	gAlpacaDiscoveredList[];
 extern	int				gAlpacaDiscoveredCnt;
 
 

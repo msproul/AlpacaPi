@@ -58,21 +58,16 @@ bool	newDevice;
 	newDevice	=	true;
 	for (ii=0; ii<gAlpacaDiscoveredCnt; ii++)
 	{
-		if ((newRemoteDevice->deviceAddress.sin_addr.s_addr == gAlpacaDiscoveredList[ii].deviceAddress.sin_addr.s_addr)
-			&& (strcmp(newRemoteDevice->deviceTypeStr, gAlpacaDiscoveredList[ii].deviceTypeStr) == 0)
-			&& (strcmp(newRemoteDevice->deviceNameStr, gAlpacaDiscoveredList[ii].deviceNameStr) == 0)
-			&& (newRemoteDevice->alpacaDeviceNum == gAlpacaDiscoveredList[ii].alpacaDeviceNum)
+		if (	(newRemoteDevice->deviceAddress.sin_addr.s_addr	==	gAlpacaDiscoveredList[ii].deviceAddress.sin_addr.s_addr)
+			&&	(newRemoteDevice->port							==	gAlpacaDiscoveredList[ii].port)
+			&&	(newRemoteDevice->alpacaDeviceNum				==	gAlpacaDiscoveredList[ii].alpacaDeviceNum)
+			&&	(strcmp(newRemoteDevice->deviceTypeStr, gAlpacaDiscoveredList[ii].deviceTypeStr) == 0)
+			&&	(strcmp(newRemoteDevice->deviceNameStr, gAlpacaDiscoveredList[ii].deviceNameStr) == 0)
 			)
 		{
 			newDevice	=	false;
 			break;
 		}
-		//*	I dont want the management device type in the list
-//		if (strcmp(newRemoteDevice->deviceTypeStr, "management") == 0)
-//		{
-//			newDevice	=	false;
-//			break;
-//		}
 	}
 	if (newDevice)
 	{
@@ -140,7 +135,8 @@ char	ipAddrSt[32];
 	{
 		if (ii> 0)
 		{
-			if (gAlpacaDiscoveredList[ii].deviceAddress.sin_addr.s_addr != gAlpacaDiscoveredList[ii-1].deviceAddress.sin_addr.s_addr)
+			if (	(gAlpacaDiscoveredList[ii].deviceAddress.sin_addr.s_addr != gAlpacaDiscoveredList[ii-1].deviceAddress.sin_addr.s_addr)
+				||	(gAlpacaDiscoveredList[ii].port != gAlpacaDiscoveredList[ii-1].port))
 			{
 				printf("\r\n");
 			}
@@ -323,13 +319,37 @@ static void	AddDeviceToList(struct sockaddr_in *deviceAddress, SJP_Parser_t *jso
 int		ii;
 bool	newDevice;
 int		deviceIdx;
+int		alpacaListenPort;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 	newDevice	=	true;
 	deviceIdx	=	-1;
+
+	//*	find the specified port
+	alpacaListenPort	=	-1;
+	if (optionalPort > 0)
+	{
+		alpacaListenPort	=	optionalPort;
+	}
+	else
+	{
+		//*	find the alpaca port
+		for (ii=0; ii<jsonParser->tokenCount_Data; ii++)
+		{
+			if (strcmp(jsonParser->dataList[ii].keyword, "ALPACAPORT") == 0)
+			{
+				alpacaListenPort	=	atoi(jsonParser->dataList[ii].valueString);
+			}
+		}
+	}
+//	CONSOLE_DEBUG_W_NUM("alpacaListenPort\t=", alpacaListenPort);
+
+
 	for (ii=0; ii<gAlpacaUnitCnt; ii++)
 	{
-		if (deviceAddress->sin_addr.s_addr == gAlpacaUnitList[ii].deviceAddress.sin_addr.s_addr)
+		if (	(deviceAddress->sin_addr.s_addr	==	gAlpacaUnitList[ii].deviceAddress.sin_addr.s_addr)
+			&&	(alpacaListenPort				==	gAlpacaUnitList[ii].port)
+			)
 		{
 			newDevice	=	false;
 			deviceIdx	=	ii;
@@ -343,23 +363,8 @@ int		deviceIdx;
 		if (gAlpacaUnitCnt < kMaxDeviceListCnt)
 		{
 			gAlpacaUnitList[gAlpacaUnitCnt].deviceAddress	=	*deviceAddress;
+			gAlpacaUnitList[gAlpacaUnitCnt].port			=	alpacaListenPort;
 
-			if (optionalPort > 0)
-			{
-				gAlpacaUnitList[gAlpacaUnitCnt].port	=	optionalPort;
-			}
-			else
-			{
-				//*	now find the alpaca port
-				for (ii=0; ii<jsonParser->tokenCount_Data; ii++)
-				{
-					if (strcmp(jsonParser->dataList[ii].keyword, "ALPACAPORT") == 0)
-					{
-						gAlpacaUnitList[gAlpacaUnitCnt].port	=	atoi(jsonParser->dataList[ii].valueString);
-						deviceIdx	=	gAlpacaUnitCnt;
-					}
-				}
-			}
 			gAlpacaUnitCnt++;
 		}
 	}

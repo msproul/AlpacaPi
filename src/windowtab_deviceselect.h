@@ -35,7 +35,7 @@ enum
 	kDeviceSelect_Dome2,
 	kDeviceSelect_Dome3,
 	kDeviceSelect_Dome4,
-//	kDeviceSelect_Dome5,
+	kDeviceSelect_Dome5,
 	kDeviceSelect_DomeOutline,
 
 	kDeviceSelect_TelescopeTitle,
@@ -43,7 +43,7 @@ enum
 	kDeviceSelect_Telescope2,
 	kDeviceSelect_Telescope3,
 	kDeviceSelect_Telescope4,
-//	kDeviceSelect_Telescope5,
+	kDeviceSelect_Telescope5,
 	kDeviceSelect_TelescopeOutline,
 
 
@@ -57,7 +57,7 @@ enum
 };
 
 
-#define	kSelectionCnt	4
+#define	kSelectionCnt	5
 //**************************************************************************************
 class WindowTabDeviceSelect: public WindowTab
 {

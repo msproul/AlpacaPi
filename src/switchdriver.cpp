@@ -99,7 +99,7 @@ int		iii;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
-	strcpy(cDeviceName, "Switch");
+	strcpy(cCommonProp.Name, "Switch");
 	cNumSwitches	=	8;
 
 	//*	zero out the switch description table
@@ -157,7 +157,7 @@ int					mySocket;
 								reqData->jsonTextBuffer,
 								kMaxJsonBuffLen,
 								"Device",
-								cDeviceName,
+								cCommonProp.Name,
 								INCLUDE_COMMA);
 
 	JsonResponse_Add_String(	mySocket,

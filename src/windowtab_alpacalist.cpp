@@ -44,10 +44,10 @@
 
 //**************************************************************************************
 WindowTabAlpacaList::WindowTabAlpacaList(	const int	xSize,
-		const int	ySize,
-		CvScalar	backGrndColor,
-		const char	*windowName)
-	:WindowTab(xSize, ySize, backGrndColor, windowName)
+											const int	ySize,
+											CvScalar	backGrndColor,
+											const char	*windowName)
+										:WindowTab(xSize, ySize, backGrndColor, windowName)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -118,7 +118,7 @@ int		clmnHdrWidth;
 
 		iii++;
 	}
-	SetWidgetText(		kAlpacaList_ClmTitle1,	"ip-addr:port");
+	SetWidgetText(		kAlpacaList_ClmTitle1,	"ip-address : port");
 	SetWidgetText(		kAlpacaList_ClmTitle2,	"/etc/hosts");
 	SetWidgetText(		kAlpacaList_ClmTitle3,	"type");
 	SetWidgetText(		kAlpacaList_ClmTitle4,	"name");
@@ -223,6 +223,7 @@ void	WindowTabAlpacaList::ProcessDoubleClick(const int buttonIdx)
 {
 int		deviceIdx;
 char	windowName[64];
+char	myHostName[64];
 bool	windowExists;
 //	CONSOLE_DEBUG(__FUNCTION__);
 //	CONSOLE_DEBUG_W_NUM("buttonIdx\t=", buttonIdx);
@@ -232,12 +233,25 @@ bool	windowExists;
 		deviceIdx	=	buttonIdx - kAlpacaList_AlpacaDev_01;
 		if (deviceIdx >= 0)
 		{
+			if (strlen(cRemoteDeviceList[deviceIdx].hostName) > 0)
+			{
+				strcpy(myHostName, cRemoteDeviceList[deviceIdx].hostName);
+			}
+			else
+			{
+				inet_ntop(AF_INET, &(cRemoteDeviceList[deviceIdx].deviceAddress.sin_addr), myHostName, INET_ADDRSTRLEN);
+			}
+			//*	generate the window name
+			sprintf(windowName, "%s-%s-%d",	cRemoteDeviceList[deviceIdx].deviceTypeStr,
+											myHostName,
+											cRemoteDeviceList[deviceIdx].alpacaDeviceNum);
+
 			switch(cRemoteDeviceList[deviceIdx].deviceTypeEnum)
 			{
 
 			case kDeviceType_Camera:
-				strcpy(windowName, "Camera-");
-				strcat(windowName, cRemoteDeviceList[deviceIdx].hostName);
+//-				strcpy(windowName, "Camera-");
+//-				strcat(windowName, cRemoteDeviceList[deviceIdx].hostName);
 				windowExists	=	CheckForOpenWindowByName(windowName);
 				if (windowExists)
 				{
@@ -253,8 +267,8 @@ bool	windowExists;
 				break;
 
 			case kDeviceType_Dome:
-				strcpy(windowName, "Dome-");
-				strcat(windowName, cRemoteDeviceList[deviceIdx].hostName);
+//-				strcpy(windowName, "Dome-");
+//-				strcat(windowName, cRemoteDeviceList[deviceIdx].hostName);
 				windowExists	=	CheckForOpenWindowByName(windowName);
 				if (windowExists)
 				{
@@ -288,8 +302,8 @@ bool	windowExists;
 				break;
 
 			case kDeviceType_Telescope:
-				strcpy(windowName, "Telescope-");
-				strcat(windowName, cRemoteDeviceList[deviceIdx].hostName);
+//-				strcpy(windowName, "Telescope-");
+//-				strcat(windowName, cRemoteDeviceList[deviceIdx].hostName);
 				windowExists	=	CheckForOpenWindowByName(windowName);
 				if (windowExists)
 				{
@@ -308,8 +322,8 @@ bool	windowExists;
 				break;
 
 			case kDeviceType_Switch:
-				strcpy(windowName, "Switch-");
-				strcat(windowName, cRemoteDeviceList[deviceIdx].hostName);
+//-				strcpy(windowName, "Switch-");
+//-				strcat(windowName, cRemoteDeviceList[deviceIdx].hostName);
 				windowExists	=	CheckForOpenWindowByName(windowName);
 				if (windowExists)
 				{
@@ -347,8 +361,8 @@ bool	windowExists;
 //**************************************************************************************
 static int	FindDeviceInList(TYPE_REMOTE_DEV *theDevice, TYPE_REMOTE_DEV *theList, int maxDevices)
 {
-	int		foundIndex;
-	int		iii;
+int		foundIndex;
+int		iii;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -356,9 +370,11 @@ static int	FindDeviceInList(TYPE_REMOTE_DEV *theDevice, TYPE_REMOTE_DEV *theList
 	iii			=	0;
 	while ((foundIndex < 0) && (iii < maxDevices))
 	{
-		if ((theDevice->deviceAddress.sin_addr.s_addr == theList[iii].deviceAddress.sin_addr.s_addr) &&
-				(theDevice->port == theList[iii].port) &&
-				(strcasecmp(theDevice->deviceTypeStr, theList[iii].deviceTypeStr) == 0))
+		if ((theDevice->deviceAddress.sin_addr.s_addr	==	theList[iii].deviceAddress.sin_addr.s_addr)
+			&&	(theDevice->port						==	theList[iii].port)
+			&&	(theDevice->alpacaDeviceNum				==	theList[iii].alpacaDeviceNum)
+			&&	(strcasecmp(theDevice->deviceTypeStr, theList[iii].deviceTypeStr) == 0)
+				)
 		{
 			foundIndex	=	iii;
 		}
@@ -370,7 +386,7 @@ static int	FindDeviceInList(TYPE_REMOTE_DEV *theDevice, TYPE_REMOTE_DEV *theList
 //**************************************************************************************
 void	WindowTabAlpacaList::ClearRemoteDeviceList(void)
 {
-	int		iii;
+int		iii;
 
 	for (iii=kAlpacaList_AlpacaDev_01; iii<=kAlpacaList_AlpacaDev_Last; iii++)
 	{
@@ -398,9 +414,9 @@ void	WindowTabAlpacaList::ClearRemoteDeviceList(void)
 //**************************************************************************************
 void	WindowTabAlpacaList::UpdateRemoteDeviceList(void)
 {
-	int		iii;
-	bool	includeDevice;
-	int		foundIndex;
+int		iii;
+bool	includeDevice;
+int		foundIndex;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 //	CONSOLE_DEBUG_W_NUM("gRemoteCnt\t=", gRemoteCnt);

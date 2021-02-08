@@ -71,63 +71,6 @@ class ControllerTelescope: public Controller
 				TYPE_TelescopeProperties	cTelescopeProp;
 
 
-//				double				cAltitude;
-//				double				cApertureArea;
-//				double				cApertureDiameter;
-//				bool				cAtHome;
-//				bool				cAtPark;
-//				double				cAzimuth;
-//				bool				cCanFindHome;
-//				bool				cCanMoveAxis;
-//				bool				cCanPark;
-//				bool				cCanPulseGuide;
-//				bool				cCanSetDeclinationRate;
-//				bool				cCanSetGuideRates;
-//				bool				cCanSetPark;
-//				bool				cCanSetPierSide;
-//				bool				cCanSetRightAscensionRate;
-//				bool				cCanSetTracking;
-//				bool				cCanSlew;
-//				bool				cCanSlewAltAz;
-//				bool				cCanSlewAltAzAsync;
-//				bool				cCanSlewAsync;
-//				bool				cCanSync;
-//				bool				cCanSyncAltAz;
-//				bool				cCanUnpark;
-
-//				bool				cTargetDec_HasBeenSet;
-//				double				cDeclination;				//*	degrees
-//				double				cDeclinationRate;
-
-//				bool				cTargetRA_HasBeenSet;
-//				double				cRightAscension;			//*	hours
-//				double				cRightAscensionRate;
-
-
-//				bool				cDoesRefraction;
-//				TYPE_EquatorialCoordinateType	cEquatorialSystem;
-//				double				cFocalLength;
-//				double				cGuideRateDeclination;
-//				double				cGuideRateRightAscension;
-//				bool				cIsPulseGuiding;
-//				TYPE_PierSide		cSideOfPier;
-//				double				cSiderealTime;
-//				double				cSiteElevation;
-//				double				cSiteLatitude;
-//				double				cSiteLongitude;
-//				short				cSlewSettleTime;
-//				double				cTargetDeclination;
-//				double				cTargetRightAscension;
-
-				//*	had to change the name of some of them because of conflict with DOME
-//				bool				cTelescopeSlewing;
-//				bool				cTelescopeTracking;
-
-//				TYPE_DriveRates		cTrackingRate;
-		//+		double				cTrackingRates;
-		//+		double				cUTCDate;
-
-
 };
 
 

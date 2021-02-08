@@ -71,14 +71,14 @@ ObsConditionsDriverRpi::ObsConditionsDriverRpi(const int argDevNum)
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
-	strcpy(cDeviceName, "RPiSenseHat");
+	strcpy(cCommonProp.Name, "RPiSenseHat");
 	strcpy(gEnvData.siteDataSource,	"Data source:Raspberry Pi Sense hat");
 	strcpy(gEnvData.domeDataSource,	"Data source:Raspberry Pi Sense hat");
 
 
 #ifdef _ENABLE_RTIMULib_
 	strcpy(cObsCondDescription, "dome conditions");
-//	strcat(cDeviceName, "-RTIMULib");
+//	strcat(cCommonProp.Name, "-RTIMULib");
 
 	cHasTempSensor			=	true;
 	cHasPresSensor			=	true;

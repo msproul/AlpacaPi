@@ -325,7 +325,6 @@ int	iii;
 	cCameraTemp_Dbl					=	0.0;
 	cCoolerPowerLevel				=	0;
 	cLastCameraErrMsg[0]			=	0;
-	cDeviceName[0]					=	0;
 	cSensorName[0]					=	0;
 	cLastJpegImageName[0]			=	0;
 	cCameraID						=	-1;
@@ -448,8 +447,8 @@ int	iii;
 	}
 
 
-	strcpy(cDeviceName,			"CameraDriver");
-	strcpy(cDeviceDescription,	"Camera");
+	strcpy(cCommonProp.Name,		"CameraDriver");
+	strcpy(cCommonProp.Description,	"Camera");
 
 	strcpy(cDeviceManufAbrev,	"uknwn");
 	strcpy(cFileNamePrefix,		"TEST");
@@ -659,7 +658,7 @@ char				httpHeader[500];
 								reqData->jsonTextBuffer,
 								kMaxJsonBuffLen,
 								"Device",
-								cDeviceName,
+								cCommonProp.Name,
 								INCLUDE_COMMA);
 
 	JsonResponse_Add_String(	mySocket,
@@ -3614,7 +3613,7 @@ int				dataElementCnt;
 		dataElementCnt	=	0;
 		for (iii=0; iii < pixelLimit; iii++)
 		{
-			if ((iii % 10000) == 0)
+			if ((iii % 50000) == 0)
 			{
 				CONSOLE_DEBUG_W_NUM("iii\t=", iii);
 			}
@@ -4572,7 +4571,7 @@ int					mySocketFD;
 	SocketWriteData(mySocketFD,	"<TR>\r\n");
 //	SocketWriteData(mySocketFD,	"\t<TD>Camera</TD>");
 	SocketWriteData(mySocketFD,	"\t<TD>");
-	SocketWriteData(mySocketFD,	cDeviceName);
+	SocketWriteData(mySocketFD,	cCommonProp.Name);
 	SocketWriteData(mySocketFD,	"</TD></TR>\r\n");
 
 
@@ -4611,13 +4610,13 @@ int					mySocketFD;
 	}
 
 	//===============================================================
-	if (strlen(cDeviceDescription) > 0)
+	if (strlen(cCommonProp.Description) > 0)
 	{
 		SocketWriteData(mySocketFD,	"<TR>\r\n");
 		SocketWriteData(mySocketFD,	"\t<TD></TD>\r\n");
 		SocketWriteData(mySocketFD,	"\t<TD>Description</TD>\r\n");
 		SocketWriteData(mySocketFD,	"\t<TD>");
-		SocketWriteData(mySocketFD,	cDeviceDescription);
+		SocketWriteData(mySocketFD,	cCommonProp.Description);
 		SocketWriteData(mySocketFD,	"</TD></TR>\r\n");
 	}
 	//===============================================================

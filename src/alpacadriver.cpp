@@ -158,8 +158,7 @@
 //#define _DEBUG_CONFORM_
 
 
-#define		kAlpacaListenPort	6800
-
+int			gAlpacaListenPort			=	6800;
 uint32_t	gClientID					=	0;
 uint32_t	gClientTransactionID		=	0;
 uint32_t	gServerTransactionID		=	0;		//*	we are the server, we will increment this each time a transaction occurs
@@ -228,6 +227,7 @@ bool		gImageDownloadInProgress	=	false;
 #ifdef _ENABLE_TELESCOPE_
 	#include	"telescopedriver.h"
 	#include	"telescopedriver_lx200.h"
+	#include	"telescopedriver_comm.h"
 #endif // _ENABLE_TELESCOPE_
 
 
@@ -336,14 +336,15 @@ int		ii;
 //	CONSOLE_DEBUG("---------------------------------------");
 //	CONSOLE_DEBUG_W_NUM(__FUNCTION__, argDeviceType);
 
+	memset(&cCommonProp, 0, sizeof(TYPE_CommonProperties));
+
+
 	cMagicCookie				=	kMagicCookieValue;
 	cDeviceConnected			=	true;
 	cDriverVersion				=	1;
-	cDeviceName[0]				=	0;
 	cDeviceModel[0]				=	0;
 	cDeviceManufacturer[0]		=	0;
 	cDeviceManufAbrev[0]		=	0;
-	cDeviceDescription[0]		=	0;
 	cDeviceSerialNum[0]			=	0;
 	cDeviceVersion[0]			=	0;
 	cDriverversionStr[0]		=	0;
@@ -379,7 +380,7 @@ int		ii;
 	cDeviceNum		=	alpacaDeviceNum;
 //	CONSOLE_DEBUG_W_NUM("cDeviceNum\t=", cDeviceNum);
 
-	strcpy(cDeviceName, "unknown");
+	strcpy(cCommonProp.Name, "unknown");
 
 	if (gDeviceCnt < kMaxDevices)
 	{
@@ -594,15 +595,15 @@ TYPE_ASCOM_STATUS	AlpacaDriver::Get_Description(		TYPE_GetPutRequestData *reqDat
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 
 #ifdef _DEBUG_CONFORM_
-//	CONSOLE_DEBUG_W_LONG("description length\t=", strlen(cDeviceDescription))
-//	CONSOLE_DEBUG_W_STR("cDeviceDescription\t=", cDeviceDescription)
+//	CONSOLE_DEBUG_W_LONG("description length\t=", strlen(cCommonProp.Description))
+//	CONSOLE_DEBUG_W_STR("cCommonProp.Description\t=", cCommonProp.Description)
 #endif // _DEBUG_CONFORM_
 
 	JsonResponse_Add_String(reqData->socket,
 							reqData->jsonTextBuffer,
 							kMaxJsonBuffLen,
 							responseString,
-							cDeviceDescription,
+							cCommonProp.Description,
 							INCLUDE_COMMA);
 	return(alpacaErrCode);
 }
@@ -669,12 +670,12 @@ TYPE_ASCOM_STATUS	AlpacaDriver::Get_Name(				TYPE_GetPutRequestData *reqData, ch
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
-//	CONSOLE_DEBUG_W_STR("cDeviceName\t=", cDeviceName)
+//	CONSOLE_DEBUG_W_STR("cCommonProp.Name\t=", cCommonProp.Name)
 	JsonResponse_Add_String(reqData->socket,
 							reqData->jsonTextBuffer,
 							kMaxJsonBuffLen,
 							responseString,
-							cDeviceName,
+							cCommonProp.Name,
 							INCLUDE_COMMA);
 
 	return(alpacaErrCode);
@@ -973,13 +974,13 @@ int		total_Put;
 int		total_Errors;
 char	getPutIndicator;
 
-//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cDeviceName);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cCommonProp.Name);
 
 	mySocketFD	=	reqData->socket;
 
 	SocketWriteData(mySocketFD,	"<CENTER>\r\n");
 
-	sprintf(lineBuffer, "%s<BR>\r\n", cDeviceName);
+	sprintf(lineBuffer, "%s<BR>\r\n", cCommonProp.Name);
 	SocketWriteData(mySocketFD,	lineBuffer);
 	SocketWriteData(mySocketFD,	"<TABLE BORDER=1>\r\n");
 
@@ -1382,11 +1383,11 @@ int		ii;
 				SocketWriteData(mySocketFD,	lineBuffer);
 
 				SocketWriteData(mySocketFD,	"\t\t<TD>\r\n");
-					SocketWriteData(mySocketFD,	gAlpacaDeviceList[ii]->cDeviceName);
+					SocketWriteData(mySocketFD,	gAlpacaDeviceList[ii]->cCommonProp.Name);
 				SocketWriteData(mySocketFD,	"\t\t</TD>\r\n");
 
 				SocketWriteData(mySocketFD,	"\t\t<TD>\r\n");
-					SocketWriteData(mySocketFD,	gAlpacaDeviceList[ii]->cDeviceDescription);
+					SocketWriteData(mySocketFD,	gAlpacaDeviceList[ii]->cCommonProp.Description);
 				SocketWriteData(mySocketFD,	"\t\t</TD>\r\n");
 
 				sprintf(lineBuffer, "<TD><CENTER>%d/%d</TD>\r\n",
@@ -2367,7 +2368,7 @@ static void	*ListenThread(void *arg)
 
 	SocketListen_SetCallback(&AlpacaCallback);
 
-	SocketListen_Init(kAlpacaListenPort);
+	SocketListen_Init(gAlpacaListenPort);
 
 	while (1)
 	{
@@ -2603,6 +2604,7 @@ static void	ProcessCmdLineArgs(int argc, char **argv)
 {
 int		ii;
 char	theChar;
+int		newListenPort;
 
 	for (ii=1; ii<argc; ii++)
 	{
@@ -2645,6 +2647,21 @@ char	theChar;
 				#else
 					CONSOLE_DEBUG("Cannot do live mode without opencv");
 				#endif
+					break;
+
+				//	-p specifies a port
+				case 'p':
+					ii++;
+					newListenPort		=	atoi(argv[ii]);
+					if ((newListenPort > 1024) && (newListenPort <= 65535))
+					{
+						gAlpacaListenPort	=	newListenPort;
+					}
+					else
+					{
+						CONSOLE_DEBUG("Invalid listen port specified");
+						CONSOLE_ABORT(__FUNCTION__);
+					}
 					break;
 
 				//	"-q" means quiet
@@ -2869,7 +2886,7 @@ int				cameraCnt;
 	CreateManagementObject();
 
 	//*********************************************************
-	StartDiscoveryListenThread(kAlpacaListenPort);
+	StartDiscoveryListenThread(gAlpacaListenPort);
 
 	cameraCnt	=	CountDevicesByType(kDeviceType_Camera);
 	CONSOLE_DEBUG_W_NUM("cameraCnt=", cameraCnt);
@@ -2928,7 +2945,7 @@ int				cameraCnt;
 	{
 		if (gAlpacaDeviceList[ii] != NULL)
 		{
-			CONSOLE_DEBUG_W_STR("Deleting ", gAlpacaDeviceList[ii]->cDeviceName);
+			CONSOLE_DEBUG_W_STR("Deleting ", gAlpacaDeviceList[ii]->cCommonProp.Name);
 			delete gAlpacaDeviceList[ii];
 		}
 	}
@@ -2980,34 +2997,33 @@ struct timeval	currentTime;
 //*****************************************************************************
 int	FindCmdFromTable(const char *theCmd, const TYPE_CmdEntry *theCmdTable, int *cmdType)
 {
-int		ii;
+int		iii;
 int		cmdEnumValue;
 
 	cmdEnumValue	=	-1;
-	ii				=	0;
-	while ((theCmdTable[ii].commandName[0] != 0) && (cmdEnumValue < 0))
+	iii				=	0;
+	while ((theCmdTable[iii].commandName[0] != 0) && (cmdEnumValue < 0))
 	{
-		if (strcasecmp(theCmd, theCmdTable[ii].commandName) == 0)
+		if (strcasecmp(theCmd, theCmdTable[iii].commandName) == 0)
 		{
-			cmdEnumValue	=	theCmdTable[ii].enumValue;
+			cmdEnumValue	=	theCmdTable[iii].enumValue;
 		}
-		ii++;
+		iii++;
 	}
-	//*	if we havent found the command, look it up in the common table
+
+	//*	if we haven't found the command, look it up in the common table
 	if (cmdEnumValue < 0)
 	{
-		ii				=	0;
-		while ((gCommonCmdTable[ii].commandName[0] != 0) && (cmdEnumValue < 0))
+		iii				=	0;
+		while ((gCommonCmdTable[iii].commandName[0] != 0) && (cmdEnumValue < 0))
 		{
-			if (strcasecmp(theCmd, gCommonCmdTable[ii].commandName) == 0)
+			if (strcasecmp(theCmd, gCommonCmdTable[iii].commandName) == 0)
 			{
-				cmdEnumValue	=	gCommonCmdTable[ii].enumValue;
+				cmdEnumValue	=	gCommonCmdTable[iii].enumValue;
 			}
-			ii++;
+			iii++;
 		}
 	}
-
-
 	return(cmdEnumValue);
 }
 

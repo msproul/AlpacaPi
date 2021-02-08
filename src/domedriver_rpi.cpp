@@ -145,7 +145,7 @@ DomeDriverRPi::DomeDriverRPi(const int argDevNum)
 	:DomeDriver(argDevNum)
 {
 	CONSOLE_DEBUG(__FUNCTION__);
-	strcpy(cDeviceName, "Dome-Raspberry-Pi");
+	strcpy(cCommonProp.Name, "Dome-Raspberry-Pi");
 	strcpy(gWebTitle, "Dome-Raspberry-Pi");
 
 	cDomeConfig					=	kIsDome;
@@ -163,8 +163,8 @@ DomeDriverRPi::DomeDriverRPi(const int argDevNum)
 				kASCOM_Err_Success,
 				"");
 
-	strcpy(cDeviceName,			"AlpacaPi-Dome");
-	strcpy(cDeviceDescription,	"Dome controlled by Raspberry Pi");
+	strcpy(cCommonProp.Name,		"AlpacaPi-Dome");
+	strcpy(cCommonProp.Description,	"Dome controlled by Raspberry Pi");
 }
 
 //**************************************************************************************

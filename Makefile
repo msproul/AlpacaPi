@@ -181,7 +181,9 @@ CPP_OBJECTS=												\
 				$(OBJECT_DIR)shutterdriver.o				\
 				$(OBJECT_DIR)shutterdriver_arduino.o		\
 				$(OBJECT_DIR)serialport.o					\
+				$(OBJECT_DIR)telescope_comm.o				\
 				$(OBJECT_DIR)telescopedriver.o				\
+				$(OBJECT_DIR)telescopedriver_comm.o			\
 				$(OBJECT_DIR)telescopedriver_lx200.o		\
 				$(OBJECT_DIR)telescopedriver_skywatch.o		\
 				$(OBJECT_DIR)cpu_stats.o					\
@@ -1510,6 +1512,7 @@ SKYTRAVEL_OBJECTS=											\
 				$(OBJECT_DIR)windowtab_camera.o				\
 				$(OBJECT_DIR)windowtab_camsettings.o		\
 				$(OBJECT_DIR)windowtab_filelist.o			\
+				$(OBJECT_DIR)windowtab_iplist.o				\
 				$(OBJECT_DIR)windowtab_switch.o				\
 				$(OBJECT_DIR)windowtab_ml_single.o			\
 				$(OBJECT_DIR)windowtab_nitecrawler.o		\
@@ -1906,12 +1909,28 @@ $(OBJECT_DIR)telescopedriver.o :		$(SRC_DIR)telescopedriver.cpp		\
 
 
 #-------------------------------------------------------------------------------------
+$(OBJECT_DIR)telescopedriver_comm.o :	$(SRC_DIR)telescopedriver_comm.cpp	\
+										$(SRC_DIR)telescopedriver_comm.h	\
+										$(SRC_DIR)telescopedriver.h			\
+										$(SRC_DIR)alpacadriver.h			\
+										Makefile
+	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)telescopedriver_comm.cpp -o$(OBJECT_DIR)telescopedriver_comm.o
+
+#-------------------------------------------------------------------------------------
 $(OBJECT_DIR)telescopedriver_lx200.o :	$(SRC_DIR)telescopedriver_lx200.cpp	\
 										$(SRC_DIR)telescopedriver_lx200.h	\
 										$(SRC_DIR)telescopedriver.h			\
 										$(SRC_DIR)alpacadriver.h			\
 										Makefile
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)telescopedriver_lx200.cpp -o$(OBJECT_DIR)telescopedriver_lx200.o
+
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)telescope_comm.o :			$(SRC_DIR)telescope_comm.cpp	\
+										$(SRC_DIR)telescope_comm.h		\
+										Makefile
+	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)telescope_comm.cpp -o$(OBJECT_DIR)telescope_comm.o
+
 
 
 #-------------------------------------------------------------------------------------
@@ -2140,10 +2159,20 @@ $(OBJECT_DIR)controller_telescope.o :	$(SRC_DIR)controller_telescope.cpp		\
 
 
 #-------------------------------------------------------------------------------------
-$(OBJECT_DIR)windowtab_alpacalist.o : $(SRC_DIR)windowtab_alpacalist.cpp		\
+$(OBJECT_DIR)windowtab_alpacalist.o :	$(SRC_DIR)windowtab_alpacalist.cpp		\
 										$(SRC_DIR)windowtab_alpacalist.h		\
-										$(SRC_DIR)windowtab.h
+										$(SRC_DIR)windowtab.h					\
+										$(SRC_DIR)discoverythread.h
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)windowtab_alpacalist.cpp -o$(OBJECT_DIR)windowtab_alpacalist.o
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)windowtab_iplist.o : 		$(SRC_DIR)windowtab_iplist.cpp		\
+										$(SRC_DIR)windowtab_iplist.h		\
+										$(SRC_DIR)windowtab.h				\
+										$(SRC_DIR)discoverythread.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)windowtab_iplist.cpp -o$(OBJECT_DIR)windowtab_iplist.o
+
+
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)windowtab_deviceselect.o : $(SRC_DIR)windowtab_deviceselect.cpp	\

@@ -183,12 +183,12 @@ CameraDriverASI::CameraDriverASI(const int deviceNum)
 	strcpy(cDeviceManufAbrev,	"ZWO");
 	ReadASIcameraInfo();
 
-	strcpy(cDeviceDescription, cDeviceManufacturer);
-	strcat(cDeviceDescription, " - Model:");
-	strcat(cDeviceDescription, cDeviceName);
+	strcpy(cCommonProp.Description, cDeviceManufacturer);
+	strcat(cCommonProp.Description, " - Model:");
+	strcat(cCommonProp.Description, cCommonProp.Name);
 
 #ifdef _USE_OPENCV_
-	sprintf(cOpenCV_ImgWindowName, "%s-%d", cDeviceName, cCameraID);
+	sprintf(cOpenCV_ImgWindowName, "%s-%d", cCommonProp.Name, cCameraID);
 #endif // _USE_OPENCV_
 
 }
@@ -220,7 +220,7 @@ ASI_ERROR_CODE		asiErrorCode;
 	asiErrorCode	=	ASIGetCameraProperty(&cAsiCameraInfo, cCameraID);
 	if (asiErrorCode == ASI_SUCCESS)
 	{
-		strcpy(cDeviceName, cAsiCameraInfo.Name);
+		strcpy(cCommonProp.Name, cAsiCameraInfo.Name);
 		LogEvent(	"camera",
 					"ZWO Camera detected",
 					NULL,
@@ -248,7 +248,7 @@ ASI_ERROR_CODE		asiErrorCode;
 		printf("ASIGetCameraProperty failed with return code %d\r\n", asiErrorCode);
 	}
 
-	strcpy(cDeviceName,		cAsiCameraInfo.Name);
+	strcpy(cCommonProp.Name,		cAsiCameraInfo.Name);
 
 	cCameraID						=	cAsiCameraInfo.CameraID;
 	cCameraProp.CameraXsize			=	cAsiCameraInfo.MaxWidth;
@@ -270,7 +270,7 @@ ASI_ERROR_CODE		asiErrorCode;
 	cCameraProp.NumX		=	cCameraProp.CameraXsize;
 	cCameraProp.NumY		=	cCameraProp.CameraYsize;
 
-	Get_ASI_SensorName(cDeviceName, cSensorName);
+	Get_ASI_SensorName(cCommonProp.Name, cSensorName);
 
 //	CONSOLE_DEBUG_W_NUM("cCameraID\t\t=", cCameraID);
 

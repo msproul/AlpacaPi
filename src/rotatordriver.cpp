@@ -84,7 +84,7 @@ RotatorDriver::RotatorDriver(const int argDevNum)
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
-	strcpy(cDeviceName, "Rotator");
+	strcpy(cCommonProp.Name, "Rotator");
 
 	memset(&cRotatorProp, 0, sizeof(TYPE_RotatorProperties));
 
@@ -141,7 +141,7 @@ int					mySocket;
 								reqData->jsonTextBuffer,
 								kMaxJsonBuffLen,
 								"Device",
-								cDeviceName,
+								cCommonProp.Name,
 								INCLUDE_COMMA);
 
 	JsonResponse_Add_String(	mySocket,
@@ -703,7 +703,7 @@ char		lineBuffer[128];
 
 
 
-		OutputHTMLrowData(mySocketFD,	"Rotator",		cDeviceName);
+		OutputHTMLrowData(mySocketFD,	"Rotator",		cCommonProp.Name);
 		OutputHTMLrowData(mySocketFD,	"Model",		cRotatorModel);
 
 		//*	rotator position

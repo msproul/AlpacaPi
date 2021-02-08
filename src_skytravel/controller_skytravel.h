@@ -31,6 +31,9 @@
 	#include	"windowtab_alpacalist.h"
 #endif
 
+#ifndef _WINDOWTAB_IP_LIST_H_
+	#include	"windowtab_iplist.h"
+#endif
 
 #ifndef	_WINDOWTAB_DEVICE_SELECT_H_
 	#include	"windowtab_deviceselect.h"
@@ -63,8 +66,9 @@ enum
 	kTab_ST_Settings,
 	kTab_Moon,
 	kTab_ST_Dome,
-	kTab_AlpacaList,
 	kTab_DeviceList,
+	kTab_AlpacaList,
+	kTab_IPList,
 	kTab_ST_About,
 
 	kTab_ST_Count
@@ -121,6 +125,7 @@ class ControllerSkytravel: public Controller
 				WindowTabMoon			*cMoonTabObjPtr;
 				WindowTabDome			*cDomeTabObjPtr;
 				WindowTabAlpacaList		*cAlpacaListObjPtr;
+				WindowTabIPList			*cIPaddrListObjPtr;
 				WindowTabDeviceSelect	*cDeviceSelectObjPtr;
 				WindowTabAbout			*cAboutBoxTabObjPtr;
 		//====================================================

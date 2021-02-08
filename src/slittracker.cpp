@@ -108,8 +108,8 @@ SlitTrackerDriver::SlitTrackerDriver(const int argDevNum, const char *devicePath
 int	iii;
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-	strcpy(cDeviceName,			"SlitTracker");
-	strcpy(cDeviceDescription,	"Slit tracking  for dome slaving");
+	strcpy(cCommonProp.Name,		"SlitTracker");
+	strcpy(cCommonProp.Description,	"Slit tracking  for dome slaving");
 	if (devicePath != NULL)
 	{
 		strcpy(cUSBpath, devicePath);
@@ -182,7 +182,7 @@ int					mySocket;
 								reqData->jsonTextBuffer,
 								kMaxJsonBuffLen,
 								"Device",
-								cDeviceName,
+								cCommonProp.Name,
 								INCLUDE_COMMA);
 
 	JsonResponse_Add_String(	mySocket,

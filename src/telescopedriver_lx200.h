@@ -21,11 +21,15 @@
 
 
 
+#ifndef _TELESCOPE_COMM_H_
+	#include	"telescope_comm.h"
+#endif
+
 #ifndef _TELESCOPE_DRIVER_H_
 	#include	"telescopedriver.h"
 #endif
 
-void	CreateTelescopeObjects(void);
+void	CreateTelescopeLX200Objects(void);
 
 
 //**************************************************************************************
@@ -49,5 +53,7 @@ class TelescopeDriverLX200: public TelescopeDriver
 		virtual	TYPE_ASCOM_STATUS	Telescope_SlewToRA_DEC(const double newRA, const double newDec, char *alpacaErrMsg);
 		virtual	TYPE_ASCOM_STATUS	Telescope_SyncToRA_DEC(const double newRA, const double newDec, char *alpacaErrMsg);
 
+
+		TelescopeComm				*cTelescopeComm;
 
 };

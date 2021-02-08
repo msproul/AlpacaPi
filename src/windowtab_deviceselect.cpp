@@ -191,14 +191,14 @@ ControllerSkytravel	*myControllerObj;
 		case kDeviceSelect_Dome2:
 		case kDeviceSelect_Dome3:
 		case kDeviceSelect_Dome4:
-//		case kDeviceSelect_Dome5:
+		case kDeviceSelect_Dome5:
 			if (cDomeCnt > 1)
 			{
 				SetWidgetChecked(kDeviceSelect_Dome1, (buttonIdx == kDeviceSelect_Dome1));
 				SetWidgetChecked(kDeviceSelect_Dome2, (buttonIdx == kDeviceSelect_Dome2));
 				SetWidgetChecked(kDeviceSelect_Dome3, (buttonIdx == kDeviceSelect_Dome3));
 				SetWidgetChecked(kDeviceSelect_Dome4, (buttonIdx == kDeviceSelect_Dome4));
-	//			SetWidgetChecked(kDeviceSelect_Dome5, (buttonIdx == kDeviceSelect_Dome5));
+				SetWidgetChecked(kDeviceSelect_Dome5, (buttonIdx == kDeviceSelect_Dome5));
 				previousDevIdx	=	cSelectedDomeIdx;
 				newDevIdx		=	buttonIdx - kDeviceSelect_Dome1;
 				if (newDevIdx != previousDevIdx)
@@ -219,14 +219,14 @@ ControllerSkytravel	*myControllerObj;
 		case kDeviceSelect_Telescope2:
 		case kDeviceSelect_Telescope3:
 		case kDeviceSelect_Telescope4:
-//		case kDeviceSelect_Telescope5:
+		case kDeviceSelect_Telescope5:
 			if (cTelescopeCnt > 1)
 			{
 				SetWidgetChecked(kDeviceSelect_Telescope1, (buttonIdx == kDeviceSelect_Telescope1));
 				SetWidgetChecked(kDeviceSelect_Telescope2, (buttonIdx == kDeviceSelect_Telescope2));
 				SetWidgetChecked(kDeviceSelect_Telescope3, (buttonIdx == kDeviceSelect_Telescope3));
 				SetWidgetChecked(kDeviceSelect_Telescope4, (buttonIdx == kDeviceSelect_Telescope4));
-	//			SetWidgetChecked(kDeviceSelect_Telescope5, (buttonIdx == kDeviceSelect_Telescope5));
+				SetWidgetChecked(kDeviceSelect_Telescope5, (buttonIdx == kDeviceSelect_Telescope5));
 				previousDevIdx	=	cSelectedTelescopeIdx;
 				newDevIdx		=	buttonIdx - kDeviceSelect_Telescope1;
 				if (newDevIdx != previousDevIdx)
@@ -268,7 +268,8 @@ static int	FindDeviceInList(TYPE_REMOTE_DEV *theDevice, TYPE_REMOTE_DEV *theList
 	{
 		if ((theDevice->deviceAddress.sin_addr.s_addr == theList[iii].deviceAddress.sin_addr.s_addr) &&
 				(theDevice->port == theList[iii].port) &&
-				(strcasecmp(theDevice->deviceTypeStr, theList[iii].deviceTypeStr) == 0))
+				(strcasecmp(theDevice->deviceTypeStr, theList[iii].deviceTypeStr) == 0) &&
+				(theDevice->alpacaDeviceNum == theList[iii].alpacaDeviceNum))
 		{
 			foundIndex	=	iii;
 		}
@@ -310,7 +311,7 @@ int		boxId;
 			{
 				if (cDomeCnt < kSelectionCnt)
 				{
-					cDeviceList_Domes[cDomeCnt]			=	gRemoteList[iii];
+					cDeviceList_Domes[cDomeCnt]				=	gRemoteList[iii];
 					cDeviceList_Domes[cDomeCnt].validEntry	=	true;
 
 					cDomeCnt++;

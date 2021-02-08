@@ -166,7 +166,7 @@ int					setOptRetCode;
 //*	returns # of bytes received
 //*	<0 for error
 //*****************************************************************************
-int	LX200_SendCommand(int socket_desc, const char *cmdString, char *dataBuffer, unsigned int dataBufferLen)
+int	LX200_SendCommand(int socket_desc, const char *cmdString, char *returnBuffer, unsigned int returnBufferLen)
 {
 char	xmitBuffer[32];
 char	returnedData[kLX200ReadBuffLen];
@@ -176,7 +176,7 @@ int		sendRetCode;
 int		recvByteCnt;
 
 
-	memset(dataBuffer, 0, dataBufferLen);
+	memset(returnBuffer, 0, returnBufferLen);
 
 	strcpy(xmitBuffer, ":");
 	strcat(xmitBuffer, cmdString);
@@ -191,8 +191,8 @@ int		recvByteCnt;
 	if (sendRetCode >= 0)
 	{
 		keepReading		=	true;
-		dataBuffer[0]	=	0;
-		while (keepReading && ((strlen(dataBuffer) + kLX200ReadBuffLen) < dataBufferLen))
+		returnBuffer[0]	=	0;
+		while (keepReading && ((strlen(returnBuffer) + kLX200ReadBuffLen) < returnBufferLen))
 		{
 		//	sleep(10);
 			recvByteCnt	=	recv(socket_desc, returnedData , kLX200ReadBuffLen , 0);
@@ -200,14 +200,14 @@ int		recvByteCnt;
 			{
 				returnedData[recvByteCnt]	=	0;
 			//	CONSOLE_DEBUG_W_STR("returnedData\t=",	returnedData);
-				strcat(dataBuffer, returnedData);
+				strcat(returnBuffer, returnedData);
 			}
 			else
 			{
 				keepReading		=	false;
 			}
 		}
-		dataLen	=	strlen(dataBuffer);
+		dataLen	=	strlen(returnBuffer);
 	}
 	else
 	{
@@ -216,7 +216,7 @@ int		recvByteCnt;
 		gTelescopeUpdated	=	true;
 	}
 #ifdef _ENABLE_STANDALONE_
-	CONSOLE_DEBUG_W_STR("dataBuffer\t=", dataBuffer);
+	CONSOLE_DEBUG_W_STR("returnBuffer\t=", returnBuffer);
 #endif // _ENABLE_STANDALONE_
 	return(dataLen);
 }

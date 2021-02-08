@@ -11,6 +11,7 @@
 //*	Jan 25,	2021	<MLS> Added TYPE_CameraProperties structure
 //*	Jan 25,	2021	<MLS> Added TYPE_RotatorProperties structure
 //*	Jan 30,	2021	<MLS> Added TYPE_ImageArray structure
+//*	Feb  7,	2021	<MLS> Added TYPE_CommonProperties
 //*****************************************************************************
 //*	These are for my comment extraction program that sorts comments by date.
 //*	Jan  1,	2019	-----------------------------------------------------------
@@ -38,7 +39,7 @@
 
 #define	kApplicationName	"AlpacaPi"
 #define	kVersionString		"V0.4.0-beta"
-#define	kBuildNumber		92
+#define	kBuildNumber		93
 
 
 #define kAlpacaDiscoveryPORT	32227
@@ -197,6 +198,20 @@ typedef struct
 {
 	char	mode[64];
 } READOUTMODE;
+
+
+//*****************************************************************************
+typedef struct
+{
+	//*	ASCOM common properties
+	char	Description[256];
+	char	DriverInfo[256];
+	char	DriverVersion[256];
+	int		InterfaceVersion;
+	char	Name[256];
+
+} TYPE_CommonProperties;
+
 
 
 //*****************************************************************************

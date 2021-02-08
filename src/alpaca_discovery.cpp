@@ -258,7 +258,7 @@ AlpacaDriver	*parentThisPtr;
 	parentThisPtr	=	(AlpacaDriver *)arg;
 	if (parentThisPtr != NULL)
 	{
-		CONSOLE_DEBUG_W_STR("Thread started from device", parentThisPtr->cDeviceName);
+		CONSOLE_DEBUG_W_STR("Thread started from device", parentThisPtr->cCommonProp.Name);
 		parentThisPtr->HandleDiscoveryResponse();
 	}
 	else

@@ -69,7 +69,7 @@ ShutterArduino::ShutterArduino(const int argDevNum)
 	:ShutterDriver(argDevNum)
 {
 	CONSOLE_DEBUG(__FUNCTION__);
-	strcpy(cDeviceName, "Arduino-shutter");
+	strcpy(cCommonProp.Name, "Arduino-shutter");
 	strcpy(gWebTitle, "Arduino-shutter");
 
 	cLogBuffer[0]			=	0;

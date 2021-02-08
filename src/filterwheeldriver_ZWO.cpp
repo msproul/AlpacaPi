@@ -117,7 +117,7 @@ bool	rulesFileOK;
 	cFilterWheelDevNum	=	argDevNum;
 	cNumberOfPositions	=	0;
 
-	strcpy(cDeviceDescription, "ZWO EFW filterwheel");
+	strcpy(cCommonProp.Description, "ZWO EFW filterwheel");
 	strcpy(cDriverversionStr,	EFWGetSDKVersion());
 
 	rulesFileOK	=	Check_udev_rulesFile(kEFW_rulesFile);
@@ -160,7 +160,7 @@ bool			rulesFileOK;
 
 
 	CONSOLE_DEBUG(__FUNCTION__);
-	strcpy(cDeviceName, "ZWO Filterwheel");	//*	put somethere in case of failure to open
+	strcpy(cCommonProp.Name, "ZWO Filterwheel");	//*	put somethere in case of failure to open
 	efwErrorCode	=	EFWOpen(cFilterWheelDevNum);
 	if (efwErrorCode == EFW_SUCCESS)
 	{
@@ -174,10 +174,10 @@ bool			rulesFileOK;
 						NULL,
 						kASCOM_Err_Success,
 						cFilterwheelInfo.Name);
-		//	strcpy(cDeviceName, cFilterwheelInfo.Name);
+		//	strcpy(cCommonProp.Name, cFilterwheelInfo.Name);
 			cNumberOfPositions	=	cFilterwheelInfo.slotNum;
 
-			sprintf(cDeviceName, "ZWO %s-%d", cFilterwheelInfo.Name, cNumberOfPositions);
+			sprintf(cCommonProp.Name, "ZWO %s-%d", cFilterwheelInfo.Name, cNumberOfPositions);
 		}
 		else
 		{

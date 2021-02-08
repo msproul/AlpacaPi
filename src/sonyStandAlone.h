@@ -54,6 +54,8 @@ class CameraDriver
 				char		cFileNameRoot[256];
 				char		cDriverversionStr[64];
 				char		cLastCameraErrMsg[256];
+
+				TYPE_CommonProperties	cCommonProp;
 };
 
 
