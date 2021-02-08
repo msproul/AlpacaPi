@@ -1133,16 +1133,16 @@ controller_camera.cpp:57 	//*	Jan  1,	2121	<TODO> clear error msg
 controller_camera.cpp:58 	//*	Feb  6,	2121	<TODO> Move downloading of images to a separate thread
 telescopedriver.h:189    	//*	Feb  7,	2121	<TODO> Move these to telescopedriver_comm once finished
 History Comments found   = 1133 in 235 files
-Total lines              = 114051
-Total comment Lines      = 14074
-Total comments           = 16672
+Total lines              = 114053
+Total comment Lines      = 14075
+Total comments           = 16673
 Total history comments   = 1133
 Total C files            = 32
 Total C++ files          = 87
 Total H files            = 115
 Preprocssor cnt          = 3430
-Total SLOC               = 77077
-Total SLOC-Logical       = 60201
+Total SLOC               = 77076
+Total SLOC-Logical       = 60200
 Programmer comment summary
 MLS             = 1112
 TODO            =   15

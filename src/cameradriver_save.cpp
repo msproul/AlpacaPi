@@ -51,7 +51,7 @@
 	#include "opencv2/imgproc/imgproc_c.h"
 #endif
 
-#ifdef _JETSON_
+#if defined(_JETSON_) && defined(_FIND_STARS_)
 	#include	"imageprocess_orb.h"
 #endif // _JETSON_
 

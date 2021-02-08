@@ -1,18 +1,19 @@
-####################################################
+###############################################################################
 #	script to install opencv version 3.3.1
 #	by Mark Sproul
-####################################################
+###############################################################################
 ###	Mar 27,	2020	<MLS> Started on install script
 ###	Mar 27,	2020	<MLS> Working!!!!!
 ###	Jul  6,	2020	<MLS> Install of 3.3.1 failed on Raspberry-Pi 4
 ###	Jul  7,	2020	<MLS> Now will install 3.3.1 or 3.2.0, which ever is present
 ###	Jan 25,	2021	<MLS> Took 5 hours on a Jetson-Nano
 ###	Feb  8,	2021	<MLS> Added system update
-####################################################
+###############################################################################
 
 #	https://opencv.org/releases/page/4/
 LOGFILENAME="opencvinstall-log.txt"
-echo -n "Start time" >> $LOGFILENAME
+echo  "*******************************************************" >> $LOGFILENAME
+echo -n "Start time=" >> $LOGFILENAME
 date  >> $LOGFILENAME
 clear
 echo "********************************************************************"
@@ -23,12 +24,18 @@ echo "********************************************************************"
 echo -n "Hit return to continue, ^C to abort"
 read WAITINPUT
 
-echo -n "Hit return to continue, ^C to abort"
 echo "First we are going to do a system update"
+echo -n "Hit return to continue, ^C to abort"
+read WAITINPUT
 echo "	>sudo apt-get update"
 echo -n "Hit return to continue, ^C to abort"
 read WAITINPUT
 sudo apt-get update
+
+
+echo "Installing libjpeg-dev"
+sudo apt-get install libjpeg-dev
+
 
 echo "Checking for required programs..."
 echo "Checking for make and cmake"
@@ -41,6 +48,7 @@ then
 	echo "make is installed" >> $LOGFILENAME
 else
 	echo "make is missing!!!!!!!!!!!!!!"
+	echo "make is missing!!!!!!!!!!!!!!"  >> $LOGFILENAME
 	exit
 fi
 
@@ -55,6 +63,7 @@ else
 fi
 cd $OPENCV_DIR
 echo "Installing libgtk2.0-dev"
+echo "Installing libgtk2.0-dev"  >> $LOGFILENAME
 
 sudo apt-get install libgtk2.0-dev
 
@@ -70,9 +79,11 @@ else
 	if [ $WAITINPUT = "y" ]
 	then
 		echo "Installing cmake with apt-get"
+		echo "Installing cmake with apt-get" >> $LOGFILENAME
 		sudo apt-get install cmake
 	else
 		echo "Aborting, cant install without cmake."
+		echo "Aborting, cant install without cmake." >> $LOGFILENAME
 		exit
 	fi
 fi

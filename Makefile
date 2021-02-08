@@ -181,13 +181,15 @@ CPP_OBJECTS=												\
 				$(OBJECT_DIR)shutterdriver.o				\
 				$(OBJECT_DIR)shutterdriver_arduino.o		\
 				$(OBJECT_DIR)serialport.o					\
-				$(OBJECT_DIR)telescope_comm.o				\
 				$(OBJECT_DIR)telescopedriver.o				\
 				$(OBJECT_DIR)telescopedriver_comm.o			\
 				$(OBJECT_DIR)telescopedriver_lx200.o		\
 				$(OBJECT_DIR)telescopedriver_skywatch.o		\
 				$(OBJECT_DIR)cpu_stats.o					\
 				$(OBJECT_DIR)lx200_com.o					\
+
+#				$(OBJECT_DIR)telescope_comm.o				\
+
 
 ######################################################################################
 #	Camera Objects

@@ -59,7 +59,7 @@
 //#include	"JsonResponse.h"
 //#include	"sidereal.h"
 
-#define	_USE_TELESCOPE_COM_OBJECT_
+//#define	_USE_TELESCOPE_COM_OBJECT_
 
 #ifdef _USE_TELESCOPE_COM_OBJECT_
 	#include	"telescope_comm.h"

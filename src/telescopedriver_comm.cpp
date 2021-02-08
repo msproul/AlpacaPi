@@ -513,7 +513,7 @@ bool		sendOK;
 		//*	we will do the following
 		//*		check for and send queued commands
 		//*		send on going GET INFO commands
-		//*		parse the info comming back from the telescope
+		//*		parse the info coming back from the telescope
 		//*		update as appropriate
 		errorCount	=	0;
 		while (cKeepRunningFlag)
