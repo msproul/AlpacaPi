@@ -19,6 +19,13 @@ echo "********************************************************************"
 echo -n "Hit return to continue, ^C to abort"
 read WAITINPUT
 
+echo -n "Hit return to continue, ^C to abort"
+echo "First we are going to do a system update"
+echo "	>sudo apt-get update"
+echo -n "Hit return to continue, ^C to abort"
+read WAITINPUT
+sudo apt-get update
+
 echo "Checking for required programs..."
 echo "Checking for make and cmake"
 MAKE_VERSION_LNCNT=`make -version | wc -l`
