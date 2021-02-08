@@ -7,9 +7,13 @@
 ###	Jul  6,	2020	<MLS> Install of 3.3.1 failed on Raspberry-Pi 4
 ###	Jul  7,	2020	<MLS> Now will install 3.3.1 or 3.2.0, which ever is present
 ###	Jan 25,	2021	<MLS> Took 5 hours on a Jetson-Nano
+###	Feb  8,	2021	<MLS> Added system update
 ####################################################
 
 #	https://opencv.org/releases/page/4/
+LOGFILENAME="opencvinstall-log.txt"
+echo -n "Start time" >> $LOGFILENAME
+date  >> $LOGFILENAME
 clear
 echo "********************************************************************"
 echo "This script installs opencv version 3.3.1 on a linux machine"
@@ -34,6 +38,7 @@ CMAKE_VERSION_LNGCNT=`cmake -version | wc -l`
 if [ $MAKE_VERSION_LNCNT -ge 1 ]
 then
 	echo "make is installed"
+	echo "make is installed" >> $LOGFILENAME
 else
 	echo "make is missing!!!!!!!!!!!!!!"
 	exit
@@ -57,6 +62,7 @@ sudo apt-get install libgtk2.0-dev
 if [ $CMAKE_VERSION_LNGCNT -ge 1 ]
 then
 	echo "cmake is installed"
+	echo "cmake is installed" >> $LOGFILENAME
 else
 	echo "cmake is missing!!!!!!!!!!!!!!!!"
 	echo -n "Do you want to install cmake? [y/n]"
@@ -92,7 +98,7 @@ then
 	OPENCV_REMOTE_FILE="3.2.0.tar.gz"
 	ISZIP=0
 else
-	echo "Valid version of Opencv was not found, aborting!!!!!"
+	echo "Valid version of Opencv was not found, tyring to download!!!!!"
 	echo "Getting ready to try downloading"
 	OPENCV_TARFILE="opencv-3.3.1.tar.gz"
 	OPENCV_DIR="opencv-3.3.1"
@@ -128,6 +134,7 @@ then
 	echo "$OPENCV_TARFILE is present"
 else
 
+	echo "Downloading $OPENCV_WGET_FILE" >> $LOGFILENAME
 	echo "Getting ready to download $OPENCV_TARFILE"
 	echo -n "Hit return to continue, ^C to abort"
 	read WAITINPUT
@@ -184,6 +191,7 @@ then
 		echo "********************************************************"
 		echo -n "Hit return to continue"
 		read WAITINPUT
+		date  >> $LOGFILENAME
 		time make all
 
 		echo "Getting ready to install"
@@ -194,6 +202,7 @@ then
 	else
 		echo "Makefile is missing"
 	fi
+	date  >> $LOGFILENAME
 
 #export LD_LIBRARY_PATH=/lib:/usr/lib:/usr/local/lib
 
