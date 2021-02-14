@@ -206,34 +206,12 @@ ControllerNiteCrawler::~ControllerNiteCrawler(void)
 {
 	CONSOLE_DEBUG(__FUNCTION__);
 	//*	delete the windowtab objects
-	if (cNiteCrawlerTabObjPtr != NULL)
-	{
-		delete cNiteCrawlerTabObjPtr;
-		cNiteCrawlerTabObjPtr	=	NULL;
-	}
-	if (cAuxTabObjPtr != NULL)
-	{
-		delete cAuxTabObjPtr;
-		cAuxTabObjPtr	=	NULL;
-	}
-	if (cConfigTabObjPtr != NULL)
-	{
-		delete cConfigTabObjPtr;
-		cConfigTabObjPtr	=	NULL;
-	}
-	if (cGraphTabObjPtr != NULL)
-	{
-		delete cGraphTabObjPtr;
-		cGraphTabObjPtr	=	NULL;
-	}
-	if (cAboutBoxTabObjPtr != NULL)
-	{
-		delete cAboutBoxTabObjPtr;
-		cAboutBoxTabObjPtr	=	NULL;
-	}
+	DELETE_OBJ_IF_VALID(cNiteCrawlerTabObjPtr);
+	DELETE_OBJ_IF_VALID(cAuxTabObjPtr);
+	DELETE_OBJ_IF_VALID(cConfigTabObjPtr);
+	DELETE_OBJ_IF_VALID(cGraphTabObjPtr);
+	DELETE_OBJ_IF_VALID(cAboutBoxTabObjPtr);
 }
-
-
 
 //**************************************************************************************
 void	ControllerNiteCrawler::CreateWindowTabs(void)
@@ -422,10 +400,7 @@ void	ControllerNiteCrawler::UpdateWindowTabs_ReadAll(bool hasReadAll)
 	SetWidgetValid(kTab_AuxMotor,	kAuxMotorBox_Readall,		hasReadAll);
 	SetWidgetValid(kTab_Config,		kCongfigBox_Readall,		hasReadAll);
 	SetWidgetValid(kTab_Graphs,		kGraphBox_Readall,			hasReadAll);
-	SetWidgetValid(kTab_About,		kAboutBox_Readall,			hasReadAll);
-
 }
-
 
 //*****************************************************************************
 void	ControllerNiteCrawler::UpdateWindowTabs_SwitchBits(unsigned char switchBits)
@@ -498,8 +473,6 @@ void	ControllerNiteCrawler::UpdateWindowTabs_Version(const char *versionString)
 	SetWidgetText(kTab_AuxMotor,	kAuxMotorBox_AlpacaDrvrVersion,	cAlpacaVersionString);
 	SetWidgetText(kTab_Config,		kCongfigBox_AlpacaDrvrVersion,	cAlpacaVersionString);
 	SetWidgetText(kTab_Graphs,		kGraphBox_AlpacaDrvrVersion,	cAlpacaVersionString);
-	SetWidgetText(kTab_About,		kAboutBox_AlpacaDrvrVersion,	cAlpacaVersionString);
-
 }
 
 //*****************************************************************************

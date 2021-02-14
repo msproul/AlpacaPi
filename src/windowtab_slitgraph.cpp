@@ -183,16 +183,16 @@ int		graphHeight;
 
 
 //**************************************************************************************
-void	WindowTabSlitGraph::DrawGraphWidget(IplImage *openCV_Image, const int widgitIdx)
+void	WindowTabSlitGraph::DrawGraphWidget(IplImage *openCV_Image, const int widgetIdx)
 {
-	switch(widgitIdx)
+	switch(widgetIdx)
 	{
 		case kSlitGraph_Graph:
-			DrawSlitGraph(openCV_Image, &cWidgetList[widgitIdx]);
+			DrawSlitGraph(openCV_Image, &cWidgetList[widgetIdx]);
 			break;
 
 		default:
-			CONSOLE_DEBUG_W_NUM("widgitIdx\t",	widgitIdx);
+			CONSOLE_DEBUG_W_NUM("widgetIdx\t",	widgetIdx);
 			break;
 	}
 }

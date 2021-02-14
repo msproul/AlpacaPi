@@ -160,7 +160,7 @@ int					setOptRetCode;
 	return(socket_desc);
 }
 
-#define	kLX200ReadBuffLen		100
+#define	kLX200ReadBuffLen		48
 
 //*****************************************************************************
 //*	returns # of bytes received
@@ -169,13 +169,15 @@ int					setOptRetCode;
 int	LX200_SendCommand(int socket_desc, const char *cmdString, char *returnBuffer, unsigned int returnBufferLen)
 {
 char	xmitBuffer[32];
-char	returnedData[kLX200ReadBuffLen];
+char	readData[kLX200ReadBuffLen + 8];
 bool	keepReading;
 int		dataLen;
 int		sendRetCode;
 int		recvByteCnt;
 
 
+//	CONSOLE_DEBUG("----------------------------------------------");
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cmdString);
 	memset(returnBuffer, 0, returnBufferLen);
 
 	strcpy(xmitBuffer, ":");
@@ -191,16 +193,16 @@ int		recvByteCnt;
 	if (sendRetCode >= 0)
 	{
 		keepReading		=	true;
-		returnBuffer[0]	=	0;
 		while (keepReading && ((strlen(returnBuffer) + kLX200ReadBuffLen) < returnBufferLen))
 		{
-		//	sleep(10);
-			recvByteCnt	=	recv(socket_desc, returnedData , kLX200ReadBuffLen , 0);
+			recvByteCnt	=	recv(socket_desc, readData , kLX200ReadBuffLen , 0);
+//			CONSOLE_DEBUG_W_NUM("recvByteCnt\t=", recvByteCnt);
 			if (recvByteCnt > 0)
 			{
-				returnedData[recvByteCnt]	=	0;
-			//	CONSOLE_DEBUG_W_STR("returnedData\t=",	returnedData);
-				strcat(returnBuffer, returnedData);
+				readData[recvByteCnt]	=	0;
+//				CONSOLE_DEBUG_W_STR("readData\t\t=",	readData);
+				strcat(returnBuffer, readData);
+//				CONSOLE_DEBUG_W_STR("returnBuffer\t=",	returnBuffer);
 			}
 			else
 			{
@@ -208,6 +210,7 @@ int		recvByteCnt;
 			}
 		}
 		dataLen	=	strlen(returnBuffer);
+//		CONSOLE_DEBUG_W_NUM("dataLen\t=", dataLen);
 	}
 	else
 	{
@@ -445,6 +448,8 @@ int		shutDownRetCode;
 int		closeRetCode;
 bool	isValid;
 
+	CONSOLE_ABORT(__FUNCTION__);
+
 	gLX200_ThreadActive	=	true;
 	gLX200_SocketErrCnt	=	0;
 	gLX200CmdQueCnt		=	0;
@@ -613,6 +618,7 @@ int		LX200_StartThread(const char *ipAddrString, const int tcpPort, char *errorM
 int			threadErr;
 
 	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_ABORT(__FUNCTION__);
 	threadErr	=	-1;
 	errorMsg[0]	=	0;
 

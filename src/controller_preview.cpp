@@ -98,16 +98,8 @@ ControllerPreview::ControllerPreview(	const char			*argWindowName,
 ControllerPreview::~ControllerPreview(void)
 {
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
-	if (cPreviewTabObjPtr != NULL)
-	{
-		delete cPreviewTabObjPtr;
-		cPreviewTabObjPtr	=	NULL;
-	}
-	if (cAboutBoxTabObjPtr != NULL)
-	{
-		delete cAboutBoxTabObjPtr;
-		cAboutBoxTabObjPtr	=	NULL;
-	}
+	DELETE_OBJ_IF_VALID(cPreviewTabObjPtr);
+	DELETE_OBJ_IF_VALID(cAboutBoxTabObjPtr);
 }
 
 
@@ -154,19 +146,21 @@ void	ControllerPreview::UpdateSupportedActions(void)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
 	SetWidgetValid(kTab_Preview,	kPreviewBox_Readall,	cHas_readall);
-	SetWidgetValid(kTab_About,		kAboutBox_Readall,		cHas_readall);
 }
+
 //*****************************************************************************
 void	ControllerPreview::UpdateRemoteAlpacaVersion(void)
 {
-	SetWidgetText(kTab_About,		kAboutBox_AlpacaDrvrVersion,	cAlpacaVersionString);
+
 }
+
 //*****************************************************************************
 void	ControllerPreview::UpdateCameraName(void)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
 	SetWidgetText(kTab_Preview,		kPreviewBox_Title,	cCameraName);
 }
+
 //*****************************************************************************
 void	ControllerPreview::UpdateReadoutModes(void)
 {

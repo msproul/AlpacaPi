@@ -90,19 +90,10 @@ ControllerSkytravel::ControllerSkytravel(	const char *argWindowName)
 	//*	clear all of the telescope specific properties
 	memset(&cTelescopeProp, 0, sizeof(TYPE_TelescopeProperties));
 
-
 	SetupWindowControls();
-
-	SetWidgetText(kTab_ST_About,	kAboutBox_AlpacaDrvrVersion,		gFullVersionString);
 
 }
 
-#define	DELETE_OBJ_IF_VALID(objectPtr)	\
-	if (objectPtr != NULL)				\
-	{									\
-		delete objectPtr;				\
-		objectPtr	=	NULL;			\
-	}
 
 //**************************************************************************************
 // Destructor
@@ -163,7 +154,7 @@ void	ControllerSkytravel::SetupWindowControls(void)
 	{
 		SetTabWindow(kTab_ST_Dome,	cDomeTabObjPtr);
 		cDomeTabObjPtr->SetParentObjectPtr(this);
-		cDomeTabObjPtr->SetDomePropertersPtr(&cDomeProp);
+		cDomeTabObjPtr->SetDomePropertiesPtr(&cDomeProp);
 	}
 
 	//=============================================================
@@ -409,12 +400,13 @@ char			ipAddrStr[128];
 												cDomeAlpacaDeviceNum);
 	if (validData)
 	{
+		cDeviceAddress	=	cDomeIpAddress;
+		cPort			=	cDomeIpPort;
+		cAlpacaDevNum	=	cDomeAlpacaDeviceNum;
+
 		SetWidgetValid(kTab_ST_Dome,			kDomeBox_Readall,		cDomeHas_readall);
 		if (cDomeHas_readall == false)
 		{
-			cDeviceAddress	=	cDomeIpAddress;
-			cPort			=	cDomeIpPort;
-			cAlpacaDevNum	=	cDomeAlpacaDeviceNum;
 			validData	=	AlpacaGetStringValue(	"dome", "driverversion",	NULL,	returnString);
 			if (validData)
 			{
@@ -422,7 +414,17 @@ char			ipAddrStr[128];
 				SetWidgetText(kTab_ST_Dome,		kDomeBox_AlpacaDrvrVersion,		cAlpacaVersionString);
 			}
 		}
+		validData	=	AlpacaGetBooleanValue(	"dome", "cansetazimuth",	NULL,	&cDomeProp.CanSetAzimuth);
+		validData	=	AlpacaGetBooleanValue(	"dome", "cansetpark",		NULL,	&cDomeProp.CanSetPark);
+		validData	=	AlpacaGetBooleanValue(	"dome", "canfindhome",		NULL,	&cDomeProp.CanFindHome);
+		validData	=	AlpacaGetBooleanValue(	"dome", "canslave",			NULL,	&cDomeProp.CanSlave);
 
+		CONSOLE_DEBUG_W_NUM("cDomeProp.CanSetAzimuth\t=",	cDomeProp.CanSetAzimuth);
+		CONSOLE_DEBUG_W_NUM("cDomeProp.CanSetPark   \t=",	cDomeProp.CanSetPark);
+		CONSOLE_DEBUG_W_NUM("cDomeProp.CanFindHome  \t=",	cDomeProp.CanFindHome);
+		CONSOLE_DEBUG_W_NUM("cDomeProp.CanSlave     \t=",	cDomeProp.CanSlave);
+
+		cDomeTabObjPtr->UpdateControls();
 	}
 	else
 	{

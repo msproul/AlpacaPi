@@ -197,6 +197,7 @@ int		clmnHdrWidth;
 	yLoc			+=	cTitleHeight;
 	yLoc			+=	2;
 
+	SetAlpacaLogoBottomCorner(kIPaddrList_AlpacaLogo);
 }
 
 //*****************************************************************************

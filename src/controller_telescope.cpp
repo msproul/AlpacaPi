@@ -48,6 +48,7 @@
 #define	kWindowHeight	550
 
 #include	"windowtab_telescope.h"
+#include	"windowtab_drvrInfo.h"
 #include	"windowtab_about.h"
 
 #include	"controller.h"
@@ -58,6 +59,7 @@
 enum
 {
 	kTab_Telescope	=	1,
+	kTab_DriverInfo,
 	kTab_About,
 
 	kTab_Count
@@ -72,9 +74,17 @@ ControllerTelescope::ControllerTelescope(	const char			*argWindowName,
 	:Controller(argWindowName, kWindowWidth,  kWindowHeight)
 {
 
+	//*	zero out all of the Telescope ASCOM properties
+	memset(&cTelescopeProp, 0, sizeof(TYPE_TelescopeProperties));
+
+
 	cAlpacaDevNum			=	deviceNum;
 	cFirstDataRead			=	true;
 	cLastUpdate_milliSecs	=	millis();
+
+	cTelescopeTabObjPtr		=	NULL;
+	cDriverInfoTabObjPtr	=	NULL;
+	cAboutBoxTabObjPtr		=	NULL;
 
 	if (deviceAddress != NULL)
 	{
@@ -84,16 +94,7 @@ ControllerTelescope::ControllerTelescope(	const char			*argWindowName,
 	}
 	cLastUpdate_milliSecs	=	0;
 	SetupWindowControls();
-
-	//*	zero out all of the Telescope ASCOM properties
-	memset(&cTelescopeProp, 0, sizeof(TYPE_TelescopeProperties));
-
-
-	SetWidgetText(kTab_About,		kAboutBox_AlpacaDrvrVersion,		gFullVersionString);
 }
-
-
-
 
 //**************************************************************************************
 // Destructor
@@ -101,18 +102,11 @@ ControllerTelescope::ControllerTelescope(	const char			*argWindowName,
 ControllerTelescope::~ControllerTelescope(void)
 {
 	CONSOLE_DEBUG(__FUNCTION__);
-	if (cTelescopeTabObjPtr != NULL)
-	{
-		CONSOLE_DEBUG("Deleting cTelescopeTabObjPtr");
-		delete cTelescopeTabObjPtr;
-		cTelescopeTabObjPtr	=	NULL;
-	}
-	if (cAboutBoxTabObjPtr != NULL)
-	{
-		CONSOLE_DEBUG("Deleting cAboutBoxTabObjPtr");
-		delete cAboutBoxTabObjPtr;
-		cAboutBoxTabObjPtr	=	NULL;
-	}
+	//--------------------------------------------
+	DELETE_OBJ_IF_VALID(cTelescopeTabObjPtr);
+	DELETE_OBJ_IF_VALID(cDriverInfoTabObjPtr);
+	DELETE_OBJ_IF_VALID(cAboutBoxTabObjPtr);
+
 }
 
 
@@ -124,9 +118,11 @@ void	ControllerTelescope::SetupWindowControls(void)
 
 	SetTabCount(kTab_Count);
 	SetTabText(kTab_Telescope,	"Telescope");
+	SetTabText(kTab_DriverInfo,	"Driver Info");
 	SetTabText(kTab_About,		"About");
 
 
+	//--------------------------------------------
 	cTelescopeTabObjPtr	=	new WindowTabTelescope(cWidth, cHeight, cBackGrndColor, cWindowName);
 	if (cTelescopeTabObjPtr != NULL)
 	{
@@ -134,6 +130,15 @@ void	ControllerTelescope::SetupWindowControls(void)
 		cTelescopeTabObjPtr->SetParentObjectPtr(this);
 	}
 
+	//--------------------------------------------
+	cDriverInfoTabObjPtr		=	new WindowTabDriverInfo(	cWidth, cHeight, cBackGrndColor, cWindowName);
+	if (cDriverInfoTabObjPtr != NULL)
+	{
+		SetTabWindow(kTab_DriverInfo,	cDriverInfoTabObjPtr);
+		cDriverInfoTabObjPtr->SetParentObjectPtr(this);
+	}
+
+	//--------------------------------------------
 	cAboutBoxTabObjPtr		=	new WindowTabAbout(	cWidth, cHeight, cBackGrndColor, cWindowName);
 	if (cAboutBoxTabObjPtr != NULL)
 	{
@@ -168,6 +173,14 @@ bool		validData;
 	if (cReadStartup)
 	{
 		AlpacaGetStartupData();
+		AlpacaGetCommonProperties("telescope");
+
+		SetWidgetText(kTab_DriverInfo,		kDriverInfo_Name,				cCommonProp.Name);
+		SetWidgetText(kTab_DriverInfo,		kDriverInfo_Description,		cCommonProp.Description);
+		SetWidgetText(kTab_DriverInfo,		kDriverInfo_DriverInfo,			cCommonProp.DriverInfo);
+		SetWidgetText(kTab_DriverInfo,		kDriverInfo_DriverVersion,		cCommonProp.DriverVersion);
+		SetWidgetNumber(kTab_DriverInfo,	kDriverInfo_InterfaceVersion,	cCommonProp.InterfaceVersion);
+
 		cReadStartup	=	false;
 	}
 
@@ -218,11 +231,7 @@ char	returnString[256];
 			SetWidgetText(kTab_Telescope, kTelescope_AlpacaDrvrVersion, returnString);
 		}
 	}
-
-
 	SetWidgetValid(kTab_Telescope,	kTelescope_Readall,		cHas_readall);
-	SetWidgetValid(kTab_About,		kAboutBox_Readall,		cHas_readall);
-
 	return(validData);
 }
 
@@ -232,7 +241,6 @@ void	ControllerTelescope::AlpacaDisplayErrorMessage(const char *errorMsgString)
 	CONSOLE_DEBUG_W_STR("Alpaca error=", errorMsgString);
 	SetWidgetText(kTab_Telescope, kTelescope_ErrorMsg, errorMsgString);
 }
-
 
 //*****************************************************************************
 void	ControllerTelescope::AlpacaProcessReadAll(	const char	*deviceType,
@@ -244,6 +252,27 @@ void	ControllerTelescope::AlpacaProcessReadAll(	const char	*deviceType,
 	if (strcasecmp(deviceType, "Telescope") == 0)
 	{
 		AlpacaProcessReadAll_Telescope(deviceNum, keywordString, valueString);
+		if (strcasecmp(keywordString, "name") == 0)
+		{
+			SetWidgetText(kTab_DriverInfo, kDriverInfo_Name, valueString);
+		}
+		else if (strcasecmp(keywordString, "driverinfo") == 0)
+		{
+			SetWidgetText(kTab_DriverInfo, kDriverInfo_DriverInfo, valueString);
+		}
+		else if (strcasecmp(keywordString, "description") == 0)
+		{
+			SetWidgetText(kTab_DriverInfo, kDriverInfo_Description, valueString);
+		}
+		else if (strcasecmp(keywordString, "driverversion") == 0)
+		{
+			SetWidgetText(kTab_DriverInfo, kDriverInfo_DriverVersion, valueString);
+		}
+		else if (strcasecmp(keywordString, "interfaceversion") == 0)
+		{
+			SetWidgetText(kTab_DriverInfo, kDriverInfo_InterfaceVersion, valueString);
+		}
+
 	}
 #ifdef _ENABLE_SKYTRAVEL_
 	else if (strcasecmp(valueString, "Telescope") == 0)
@@ -259,7 +288,7 @@ void	ControllerTelescope::AlpacaProcessSupportedActions(	const char	*deviceType,
 															const int	deviveNum,
 															const char	*valueString)
 {
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, valueString);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, valueString);
 
 	AlpacaProcessSupportedActions_Telescope(deviveNum, valueString);
 }

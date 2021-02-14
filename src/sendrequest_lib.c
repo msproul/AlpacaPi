@@ -477,7 +477,7 @@ int					setOptRetCode;
 			CONSOLE_DEBUG_W_NUM("errno\t\t=", errno);
 		}
 	}
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, "Exit");
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, "Exit");
 	return(validData);
 }
 

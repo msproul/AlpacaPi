@@ -7,6 +7,7 @@
 #	Dec 13, 2020	<MLS> Starting on setup for github downloads
 #	Dec 14, 2020	<MLS> Working on FITS install
 #	Dec 16, 2020	<MLS> FITS install working
+#	Feb  9,	2021	<MLS> Added support for FLIR-SDK
 #############################################################
 
 
@@ -252,6 +253,30 @@ setupJPEGlib()
 
 }
 
+###########################################################
+function CheckForFLIR()
+{
+	if [ -d "FLIR-SDK" ]
+	then
+		echo "FLIR SDK present, checking for installation"
+		cd FLIR-SDK
+		if [ -f "install_spinnaker_mls.sh" ]
+		then
+			echo -n "Would you like to install FLIR support [y/n]?"
+			read YESNO
+			if [ $YESNO == "y" ]
+			then
+				echo "Running FLIR install script"
+				./install_spinnaker_mls.sh
+			fi
+		else
+			echo "FLIR install script not found"
+		fi
+	fi
+
+}
+
+
 
 ##############################################################
 #	Determine platform
@@ -266,6 +291,8 @@ else
 	ISARM=false
 fi
 
+#install udev
+sudo apt-get install libudev-dev
 
 mkdir -p Objectfiles
 Checksystem
@@ -282,6 +309,8 @@ then
 fi
 
 InstallFits
+
+CheckForFLIR
 
 Checksystem
 

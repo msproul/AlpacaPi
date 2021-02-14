@@ -45,6 +45,9 @@
 //*	Jan 15,	2021	<MLS> Added SetWidgetTabStops()
 //*	Jan 23,	2021	<MLS> Added overflow checking to help text string
 //*	Jan 30,	2021	<MLS> Added ComputeWidgetColumns()
+//*	Feb 10,	2021	<MLS> Added SetAlpacaLogoBottomCorner()
+//*	Feb 13,	2021	<MLS> Added UpdateSliderValue()
+//*	Feb 13,	2021	<MLS> Dragging the slider now works
 //*****************************************************************************
 
 
@@ -567,6 +570,8 @@ int	logoHeight;
 int	xLoc;
 int	yLoc;
 
+//	CONSOLE_DEBUG(__FUNCTION__);
+
 	if (lastCmdWidgetIdx >= 0)
 	{
 		cLastCmdTextBox	=	lastCmdWidgetIdx;
@@ -599,6 +604,35 @@ int	yLoc;
 	}
 }
 
+//**************************************************************************************
+//*	returns logo height
+int	WindowTab::SetAlpacaLogoBottomCorner(const int logoWidgetIdx)
+{
+int	logoWidth;
+int	logoHeight;
+int	xLoc;
+int	yLoc;
+
+	logoHeight	=	0;
+	if (logoWidgetIdx >= 0)
+	{
+		//*	now set the Alpaca Logo
+		LoadAlpacaLogo();
+		if (gAlpacaLogoPtr != NULL)
+		{
+			logoWidth	=	gAlpacaLogoPtr->width;
+			logoHeight	=	gAlpacaLogoPtr->height;
+
+			xLoc		=	cWidth - logoWidth;
+			yLoc		=	cHeight - logoHeight;
+
+			SetWidget(		logoWidgetIdx,	xLoc,	yLoc,	logoWidth,	logoHeight);
+			SetWidgetImage(	logoWidgetIdx, gAlpacaLogoPtr);
+		}
+	}
+	return(logoHeight);
+}
+
 
 //**************************************************************************************
 void	WindowTab::DisplayLastAlpacaCommand(void)
@@ -618,9 +652,23 @@ Controller	*myControllerObj;
 				strcpy(textStr, "Cmd=");
 				strcat(textStr, myControllerObj->cLastAlpacaCmdString);
 				SetWidgetText(	cLastCmdTextBox, textStr);
+//				CONSOLE_DEBUG_W_NUM("cLastCmdTextBox\t=", cLastCmdTextBox);
 //				CONSOLE_DEBUG_W_STR("cLastAlpacaCmdString\t=", textStr);
 			}
+			else
+			{
+//				CONSOLE_DEBUG("Nothing to show");
+			}
 		}
+		else
+		{
+//			CONSOLE_DEBUG("myControllerObj is NULL");
+		}
+	}
+	else
+	{
+//		CONSOLE_DEBUG("cLastCmdTextBox not set");
+//		CONSOLE_ABORT(__FUNCTION__);
 	}
 }
 
@@ -695,10 +743,16 @@ void	WindowTab::SetWidgetSliderLimits(const int widgetIdx, double sliderMin, dou
 void	WindowTab::SetWidgetSliderValue(const int widgetIdx, double sliderValue)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG_W_NUM("Widget index \t=", widgetIdx);
+//	CONSOLE_DEBUG_W_DBL("new value \t=", sliderValue);
 	if ((widgetIdx >= 0) && (widgetIdx < kMaxWidgets))
 	{
 		cWidgetList[widgetIdx].sliderValue	=	sliderValue;
 		cWidgetList[widgetIdx].needsUpdated	=	true;
+	}
+	else
+	{
+		CONSOLE_DEBUG_W_NUM("Widget index out of range", widgetIdx);
 	}
 }
 
@@ -723,7 +777,7 @@ void	WindowTab::SetupWindowControls(void)
 }
 
 //**************************************************************************************
-void	WindowTab::DrawGraphWidget(IplImage *openCV_Image, const int widgitIdx)
+void	WindowTab::DrawGraphWidget(IplImage *openCV_Image, const int widgetIdx)
 {
 	//*	this routine should be overloaded
 }
@@ -733,6 +787,8 @@ void	WindowTab::DrawGraphWidget(IplImage *openCV_Image, const int widgitIdx)
 void	WindowTab::ForceUpdate(void)
 {
 Controller	*myControllerObj;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	myControllerObj	=	(Controller *)cParentObjPtr;
 	if (myControllerObj != NULL)
@@ -788,9 +844,9 @@ int		widgetIdx;
 //*****************************************************************************
 bool	WindowTab::IsWidgetButton(const int widgetIdx)
 {
-bool	widgitIsButton;
+bool	widgetIsButton;
 
-	widgitIsButton	=	false;
+	widgetIsButton	=	false;
 	if ((widgetIdx >= 0) && (widgetIdx < kMaxWidgets))
 	{
 		switch (cWidgetList[widgetIdx].widgetType)
@@ -799,7 +855,7 @@ bool	widgitIsButton;
 			case kWidgetType_CheckBox:
 			case kWidgetType_Icon:
 			case kWidgetType_RadioButton:
-				widgitIsButton	=	true;
+				widgetIsButton	=	true;
 				break;
 
 			case kWidgetType_Custom:
@@ -814,35 +870,35 @@ bool	widgitIsButton;
 			case kWidgetType_Text:
 			case kWidgetType_TextInput:
 			default:
-				widgitIsButton	=	false;
+				widgetIsButton	=	false;
 				break;
 
 		}
 	}
-	return(widgitIsButton);
+	return(widgetIsButton);
 }
 
 
 //*****************************************************************************
 bool	WindowTab::IsWidgetTextInput(const int widgetIdx)
 {
-bool	widgitIsTextInput;
+bool	widgetIsTextInput;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-	widgitIsTextInput	=	false;
+	widgetIsTextInput	=	false;
 	if ((widgetIdx >= 0) && (widgetIdx < kMaxWidgets))
 	{
 		if (cWidgetList[widgetIdx].widgetType == kWidgetType_TextInput)
 		{
-			widgitIsTextInput	=	true;
+			widgetIsTextInput	=	true;
 		}
 	}
 	else
 	{
 		CONSOLE_DEBUG_W_NUM("Widget index out of bounds=", widgetIdx);
 	}
-	return(widgitIsTextInput);
+	return(widgetIsTextInput);
 }
 
 //*****************************************************************************
@@ -868,7 +924,7 @@ void	WindowTab::ProcessDoubleClick(const int buttonIdx)
 }
 
 //*****************************************************************************
-void	WindowTab::ProcessMouseEvent(	const int	widgitIdx,
+void	WindowTab::ProcessMouseEvent(	const int	widgetIdx,
 										const int	event,
 										const int	xxx,
 										const int	yyy,
@@ -879,7 +935,7 @@ void	WindowTab::ProcessMouseEvent(	const int	widgitIdx,
 }
 
 //*****************************************************************************
-void	WindowTab::ProcessMouseLeftButtonDown(const int	widgitIdx,
+void	WindowTab::ProcessMouseLeftButtonDown(const int	widgetIdx,
 												const int	event,
 												const int	xxx,
 												const int	yyy,
@@ -890,7 +946,7 @@ void	WindowTab::ProcessMouseLeftButtonDown(const int	widgitIdx,
 }
 
 //*****************************************************************************
-void	WindowTab::ProcessMouseLeftButtonUp(const int	widgitIdx,
+void	WindowTab::ProcessMouseLeftButtonUp(const int	widgetIdx,
 												const int	event,
 												const int	xxx,
 												const int	yyy,
@@ -901,14 +957,82 @@ void	WindowTab::ProcessMouseLeftButtonUp(const int	widgitIdx,
 }
 
 //*****************************************************************************
-void	WindowTab::ProcessMouseLeftButtonDragged(const int	widgitIdx,
-												const int	event,
-												const int	xxx,
-												const int	yyy,
-												const int	flags)
+//*	this routine SHOULD be overloaded
+void	WindowTab::UpdateControls(void)
 {
-	CONSOLE_DEBUG_W_NUM(__FUNCTION__, xxx);
-	//*	this routine can be overloaded
+}
+
+//*****************************************************************************
+//*	this routine SHOULD be overloaded
+void	WindowTab::UpdateSliderValue(const int	widgetIdx, double newSliderValue)
+{
+//	CONSOLE_DEBUG_W_DBL(__FUNCTION__, newSliderValue);
+	SetWidgetSliderValue(widgetIdx, newSliderValue);
+}
+
+//*****************************************************************************
+//*	this routine can be overloaded
+void	WindowTab::ProcessMouseLeftButtonDragged(	const int	widgetIdx,
+													const int	event,
+													const int	xxx,
+													const int	yyy,
+													const int	flags)
+{
+bool	sliderIsHorizontal;
+int		minimumPixelValue;
+int		maximumPixelValue;
+int		pixelRange;
+int		myPixelOffset;
+double	mySliderValuePercent;
+double	sliderRange;
+double	newSliderValue;
+
+	if (cWidgetList[widgetIdx].widgetType == kWidgetType_Slider)
+	{
+//		CONSOLE_DEBUG_W_NUM("WE have a slider", xxx);
+		if (cWidgetList[widgetIdx].width > cWidgetList[widgetIdx].height)
+		{
+			sliderIsHorizontal	=	true;
+		}
+		else
+		{
+			sliderIsHorizontal	=	false;
+		}
+
+		if (sliderIsHorizontal)
+		{
+			//*	figure out min and max and the current relative position
+			minimumPixelValue	=	cWidgetList[widgetIdx].left + 50;
+			maximumPixelValue	=	cWidgetList[widgetIdx].left +  cWidgetList[widgetIdx].width - 50;
+			pixelRange			=	maximumPixelValue - minimumPixelValue;
+
+			myPixelOffset		=	xxx - minimumPixelValue;
+			if (myPixelOffset < 0)
+			{
+				myPixelOffset	=	0;
+			}
+			else if (myPixelOffset > pixelRange)
+			{
+				myPixelOffset	=	pixelRange;
+			}
+			mySliderValuePercent	=	(1.0 * myPixelOffset) / (1.0 * pixelRange);
+//			CONSOLE_DEBUG_W_NUM("minimumPixelValue\t=", minimumPixelValue);
+//			CONSOLE_DEBUG_W_NUM("myPixelOffset    \t=", myPixelOffset);
+//			CONSOLE_DEBUG_W_NUM("maximumPixelValue\t=", maximumPixelValue);
+
+//			CONSOLE_DEBUG_W_DBL("mySliderValuePercent\t=", mySliderValuePercent);
+
+			//*	now translate this to a range within the sliders min/max
+			sliderRange		=	cWidgetList[widgetIdx].sliderMax - cWidgetList[widgetIdx].sliderMin;
+			newSliderValue	=	mySliderValuePercent * sliderRange;
+//			CONSOLE_DEBUG_W_DBL("newSliderValue\t=", newSliderValue);
+			UpdateSliderValue(widgetIdx, newSliderValue);
+		}
+	}
+	else
+	{
+	//	CONSOLE_DEBUG_W_NUM(__FUNCTION__, xxx);
+	}
 }
 
 //*****************************************************************************

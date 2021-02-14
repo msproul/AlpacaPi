@@ -56,7 +56,7 @@ class WindowTabAuxMotor: public WindowTab
 		virtual	~WindowTabAuxMotor(void);
 
 		virtual	void	SetupWindowControls(void);
-		virtual	void	DrawGraphWidget(IplImage *openCV_Image, const int widgitIdx);
+		virtual	void	DrawGraphWidget(IplImage *openCV_Image, const int widgetIdx);
 		virtual	void	ProcessButtonClick(const int buttonIdx);
 				void	DisableAuxMotorButons(void);
 

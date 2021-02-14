@@ -109,7 +109,7 @@ class WindowTabNitecrawler: public WindowTab
 		virtual	~WindowTabNitecrawler(void);
 
 		virtual	void	SetupWindowControls(void);
-		virtual	void	DrawGraphWidget(IplImage *openCV_Image, const int widgitIdx);
+		virtual	void	DrawGraphWidget(IplImage *openCV_Image, const int widgetIdx);
 		virtual	void	ProcessButtonClick(const int buttonIdx);
 		virtual	void	ProcessDoubleClick(const int buttonIdx);
 

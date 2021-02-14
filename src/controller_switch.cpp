@@ -31,6 +31,7 @@
 //*	May  6,	2020	<MLS> Using ReadAll for switch startup info, much faster
 //*	Jan 14,	2021	<MLS> Added AlpacaProcessSupportedActions()
 //*	Jan 14,	2021	<MLS> Switch controller working with ASCOM Remote Server Console/simulator
+//*	Feb 12,	2021	<MLS> Added driver info display to switch controller
 //*****************************************************************************
 
 
@@ -65,6 +66,7 @@
 enum
 {
 	kTab_Switch	=	1,
+	kTab_DriverInfo,
 	kTab_About,
 
 	kTab_Count
@@ -125,17 +127,9 @@ ControllerSwitch::~ControllerSwitch(void)
 {
 	CONSOLE_DEBUG(__FUNCTION__);
 	//-----------------------------
-	if (cSwitchTabObjPtr != NULL)
-	{
-		delete cSwitchTabObjPtr;
-		cSwitchTabObjPtr	=	NULL;
-	}
-	//-----------------------------
-	if (cAboutBoxTabObjPtr != NULL)
-	{
-		delete cAboutBoxTabObjPtr;
-		cAboutBoxTabObjPtr	=	NULL;
-	}
+	DELETE_OBJ_IF_VALID(cSwitchTabObjPtr);
+	DELETE_OBJ_IF_VALID(cDriverInfoTabObjPtr);
+	DELETE_OBJ_IF_VALID(cAboutBoxTabObjPtr);
 }
 
 
@@ -149,6 +143,7 @@ char	ipString[32];
 
 	SetTabCount(kTab_Count);
 	SetTabText(kTab_Switch,		"Switch");
+	SetTabText(kTab_DriverInfo,	"Driver Info");
 	SetTabText(kTab_About,		"About");
 
 
@@ -157,6 +152,14 @@ char	ipString[32];
 	{
 		SetTabWindow(kTab_Switch,	cSwitchTabObjPtr);
 		cSwitchTabObjPtr->SetParentObjectPtr(this);
+	}
+
+	//--------------------------------------------
+	cDriverInfoTabObjPtr		=	new WindowTabDriverInfo(	cWidth, cHeight, cBackGrndColor, cWindowName);
+	if (cDriverInfoTabObjPtr != NULL)
+	{
+		SetTabWindow(kTab_DriverInfo,	cDriverInfoTabObjPtr);
+		cDriverInfoTabObjPtr->SetParentObjectPtr(this);
 	}
 
 	cAboutBoxTabObjPtr		=	new WindowTabAbout(	cWidth, cHeight, cBackGrndColor, cWindowName);
@@ -187,6 +190,7 @@ bool		needToUpdate;
 	if (cReadStartup)
 	{
 		AlpacaGetStartupData();
+		AlpacaGetCommonProperties("switch");
 		cReadStartup	=	false;
 	}
 
@@ -362,7 +366,6 @@ int				boxNumber;
 	if (validData)
 	{
 		SetWidgetValid(kTab_Switch,		kSwitchBox_Readall,		cHas_readall);
-		SetWidgetValid(kTab_About,		kAboutBox_Readall,		cHas_readall);
 	}
 	else
 	{
@@ -388,7 +391,6 @@ int				boxNumber;
 		cSwitchTabObjPtr->SetActiveSwitchCount(cMaxSwitch);
 	}
 	SetWidgetText(kTab_Switch,	kSwitchBox_AlpacaDrvrVersion,	cAlpacaVersionString);
-	SetWidgetText(kTab_About,	kAboutBox_AlpacaDrvrVersion,	cAlpacaVersionString);
 
 	for (jjj=0; jjj<cMaxSwitch; jjj++)
 	{
@@ -623,6 +625,16 @@ double		switchValue;
 			CONSOLE_DEBUG_W_NUM("Switch number out of range\t=", switchNum);
 		}
 	}
+}
+
+//*****************************************************************************
+void	ControllerSwitch::UpdateCommonProperties(void)
+{
+	SetWidgetText(kTab_DriverInfo,		kDriverInfo_Name,				cCommonProp.Name);
+	SetWidgetText(kTab_DriverInfo,		kDriverInfo_Description,		cCommonProp.Description);
+	SetWidgetText(kTab_DriverInfo,		kDriverInfo_DriverInfo,			cCommonProp.DriverInfo);
+	SetWidgetText(kTab_DriverInfo,		kDriverInfo_DriverVersion,		cCommonProp.DriverVersion);
+	SetWidgetNumber(kTab_DriverInfo,	kDriverInfo_InterfaceVersion,	cCommonProp.InterfaceVersion);
 }
 
 //*****************************************************************************

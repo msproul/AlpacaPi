@@ -74,8 +74,6 @@ enum
 #ifdef _ENABLE_SKYTRAVEL_
 	kDomeBox_Outline,
 
-	kDomeBox_Rescan,
-
 	kDomeBox_DomeGraphic,
 	kDomeBox_North,
 	kDomeBox_South,
@@ -104,11 +102,12 @@ class WindowTabDome: public WindowTab
 		virtual	~WindowTabDome(void);
 
 		virtual	void	SetupWindowControls(void);
-		virtual	void	DrawGraphWidget(IplImage *openCV_Image, const int widgitIdx);
+		virtual	void	DrawGraphWidget(IplImage *openCV_Image, const int widgetIdx);
 		virtual	void	ProcessButtonClick(const int buttonIdx);
 		virtual	void	AlpacaDisplayErrorMessage(const char *errorMsgString);
+		virtual	void	UpdateControls(void);
 
-				void	SetDomePropertersPtr(TYPE_DomeProperties *domePropPtr);
+				void	SetDomePropertiesPtr(TYPE_DomeProperties *domePropPtr);
 
 				void	UpdateDomeAzimuth(const double newAzimuth);
 				void	DrawDomeGraphic(IplImage *openCV_Image, TYPE_WIDGET *theWidget);

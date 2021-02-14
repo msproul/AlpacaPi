@@ -48,6 +48,7 @@
 //*	Jan 17,	2021	<MLS> Changed  UpdateReadAllStatus() to UpdateSupportedActions()
 //*	Jan 25,	2021	<MLS> Converted CameraController to use properties struct
 //*	Jan 29,	2021	<MLS> Added support for RANK=3 in DownloadImage_imagearray()
+//*	Feb 14,	2021	<MLS> Added SetExposure() and SetGain()
 //*****************************************************************************
 //*	Jan  1,	2121	<TODO> control key for different step size.
 //*	Jan  1,	2121	<TODO> work on fits view to handle color fits images
@@ -89,6 +90,7 @@
 #include	"windowtab_camgraph.h"
 #include	"windowtab_filelist.h"
 #include	"windowtab_camsettings.h"
+#include	"windowtab_drvrInfo.h"
 #include	"windowtab_about.h"
 
 #include	"controller.h"
@@ -122,8 +124,9 @@ int		iii;
 //-	cCoolerOn				=	false;
 	cAutoExposure			=	false;
 	cDisplayImage			=	false;
-	cHasFilterWheel			=	false;
+	cHas_FilterWheel		=	false;
 	cExposure				=	0.001;
+	cDarkExposure			=	false;
 	cCameraState_imageready	=	false;
 
 	cLiveMode				=	false;
@@ -308,15 +311,17 @@ bool		needToUpdate;
 		CONSOLE_DEBUG_W_STR("cReadStartup", cWindowName);
 		//*	so the window shows up
 		HandleWindowUpdate();
-		cvWaitKey(1);
+		cvWaitKey(60);
 
 		GetConfiguredDevices();
 
 		AlpacaGetStartupData();
-		if (cHasFilterWheel)
+		if (cHas_FilterWheel)
 		{
 			AlpacaGetFilterWheelStartup();
 		}
+		AlpacaGetCommonProperties("camera");
+
 
 		cReadStartup	=	false;
 	}
@@ -383,7 +388,7 @@ void	ControllerCamera::UpdateCurrReadoutMode(void)
 	CONSOLE_DEBUG("this routine should be overloaded");
 }
 //*****************************************************************************
-void	ControllerCamera::UpdateCameraGain(void)
+void	ControllerCamera::UpdateCameraGain(const TYPE_ASCOM_STATUS lastAlpacaErr)
 {
 	CONSOLE_DEBUG("this routine should be overloaded");
 }
@@ -473,7 +478,7 @@ int				jjj;
 				if (strcasecmp(jsonParser.dataList[jjj].valueString, "Filterwheel") == 0)
 				{
 				//	CONSOLE_DEBUG("FilterWheel - !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-					cHasFilterWheel	=	true;
+					cHas_FilterWheel	=	true;
 				}
 			}
 		}
@@ -496,6 +501,8 @@ int				readOutModeIdx;
 
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 
+	CONSOLE_DEBUG("Timing Start----------------------");
+	SETUP_TIMING();
 
 	//===============================================================
 	//*	get supportedactions
@@ -510,11 +517,12 @@ int				readOutModeIdx;
 		CONSOLE_DEBUG("Read failure - supportedactions");
 		cReadFailureCnt++;
 	}
+	DEBUG_TIMING("supportedactions");
 
 
 	//*	Start by getting info about the camera
 	//===============================================================
-	//*	get the camera name
+	//*	get the camera description
 	SJP_Init(&jsonParser);
 
 	sprintf(alpacaString,	"/api/v1/camera/%d/description", cAlpacaDevNum);
@@ -547,6 +555,7 @@ int				readOutModeIdx;
 	{
 		cReadFailureCnt++;
 	}
+	DEBUG_TIMING("description");
 
 	//===============================================================
 	//*	get the readout modes
@@ -589,6 +598,7 @@ int				readOutModeIdx;
 		CONSOLE_DEBUG("Read failure - readoutmodes");
 		cReadFailureCnt++;
 	}
+	DEBUG_TIMING("readoutmodes");
 
 
 	validData	=	AlpacaGetIntegerValue("camera", "cameraxsize",	NULL,	&cCameraProp.CameraXsize);
@@ -598,15 +608,19 @@ int				readOutModeIdx;
 	validData	=	AlpacaGetIntegerValue("camera", "gain",			NULL,	&cCameraProp.Gain);
 	validData	=	AlpacaGetIntegerValue("camera", "gainmin",		NULL,	&cCameraProp.GainMin);
 	validData	=	AlpacaGetIntegerValue("camera", "gainmax",		NULL,	&cCameraProp.GainMax);
-	UpdateCameraGain();
+//	CONSOLE_DEBUG_W_NUM("cLastAlpacaErrNum\t", cLastAlpacaErrNum);
+//	CONSOLE_DEBUG_W_STR("cLastAlpacaErrStr\t", cLastAlpacaErrStr);
+	UpdateCameraGain(cLastAlpacaErrNum);
 
 
-	validData	=	AlpacaGetDoubleValue(	"camera", "exposuremin",	NULL,	&cCameraProp.ExposureMin_seconds);
-	validData	=	AlpacaGetDoubleValue(	"camera", "exposuremax",	NULL,	&cCameraProp.ExposureMax_seconds);
+	validData	=	AlpacaGetDoubleValue("camera", "exposuremin",	NULL,	&cCameraProp.ExposureMin_seconds);
+	validData	=	AlpacaGetDoubleValue("camera", "exposuremax",	NULL,	&cCameraProp.ExposureMax_seconds);
 	UpdateCameraExposure();
 
 
 	cLastUpdate_milliSecs	=	millis();
+
+	DEBUG_TIMING("camera specs");
 
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, "EXIT");
 	return(validData);
@@ -1173,7 +1187,7 @@ bool	previousOnLineState;
 
 	//=================================================================================
 	//*	get the filter wheel position
-	if (cHasFilterWheel)
+	if (cHas_FilterWheel)
 	{
 		validData	=	AlpacaGetIntegerValue("filterwheel", "position",	NULL,	&cFilterWheelPosition);
 		if (validData)
@@ -1334,18 +1348,15 @@ int		fileIndex;
 	}
 }
 
-
 //*****************************************************************************
-void	ControllerCamera::BumpGain(const int howMuch)
+void	ControllerCamera::SetGain(const int newGainValue)
 {
 char	dataString[48];
-int		newGainValue;
 bool	validData;
 
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 
 
-	newGainValue	=	cCameraProp.Gain + howMuch;
 	sprintf(dataString, "Gain=%d", newGainValue);
 	validData		=	AlpacaSendPutCmd(	"camera",
 											"gain",
@@ -1356,28 +1367,59 @@ bool	validData;
 	}
 
 	cForceAlpacaUpdate	=	true;
-
 }
+
+
+//*****************************************************************************
+void	ControllerCamera::BumpGain(const int howMuch)
+{
+int		newGainValue;
+
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+
+
+	newGainValue	=	cCameraProp.Gain + howMuch;
+	SetGain(newGainValue);
+}
+
+//*****************************************************************************
+void	ControllerCamera::SetExposure(const double newExposure)
+{
+char	dataString[48];
+bool	validData;
+
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+
+	cExposure	=	newExposure;
+
+	if (cHas_exposuretime)
+	{
+		sprintf(dataString, "Duration=%f", cExposure);
+		validData		=	AlpacaSendPutCmd(	"camera",
+												"exposuretime",
+												dataString);
+		if (validData == false)
+		{
+			CONSOLE_DEBUG_W_STR("Failed to get data, Req=", dataString)
+		}
+	}
+	else
+	{
+		UpdateCameraExposure();
+	}
+	cForceAlpacaUpdate	=	true;
+}
+
 
 //*****************************************************************************
 void	ControllerCamera::BumpExposure(const double howMuch)
 {
 char	dataString[48];
 bool	validData;
+double	newExposure;
 
-//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
-
-	cExposure	=	cExposure + howMuch;
-	sprintf(dataString, "Duration=%f", cExposure);
-	validData		=	AlpacaSendPutCmd(	"camera",
-											"exposuretime",
-											dataString);
-	if (validData == false)
-	{
-		CONSOLE_DEBUG_W_STR("Failed to get data, Req=", dataString)
-	}
-	cForceAlpacaUpdate	=	true;
-
+	newExposure	=	cExposure + howMuch;
+	SetExposure(newExposure);
 }
 
 
@@ -1491,15 +1533,15 @@ char			parameterString[128];
 	}
 	else
 	{
-	double	cExposureDuration		=	60.123456;
-	bool	cDarkExposure	=	false;
 
 		//*	OK, this is a normal alpaca driver without any of my extras.
 		//*	we need "Duration=0.123&Light=true&ClientID=22&ClientTransactionID=33"
 		//*	the "ClientID=22&ClientTransactionID=33" will be added by the next routine
 
-		sprintf(parameterString, "Duration=%f&Light=%s",	cExposureDuration,
+		sprintf(parameterString, "Duration=%f&Light=%s",	cExposure,
 															(cDarkExposure ? "false" : "true"));
+		CONSOLE_DEBUG("NORMAL CAMERA, NOT AlpacaPi");
+		CONSOLE_DEBUG_W_2STR("sending", "startexposure", parameterString);
 		validData	=	AlpacaSendPutCmdwResponse(	"camera",
 													"startexposure",
 													parameterString,

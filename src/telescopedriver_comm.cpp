@@ -32,6 +32,7 @@
 //*	<MLS>	=	Mark L Sproul
 //*****************************************************************************
 //*	Feb  7,	2021	<MLS> Created telescopedriver_comm.cpp
+//*	Feb  9,	2021	<MLS> Moved device comm variables from main class to comm class
 //*****************************************************************************
 
 
@@ -61,14 +62,18 @@
 #include	"telescopedriver.h"
 #include	"telescopedriver_comm.h"
 #include	"telescopedriver_skywatch.h"
+#include	"telescopedriver_lx200.h"
 
 static void	*Telescope_Comm_Thread(void *arg);
 
 //**************************************************************************************
 void	CreateTelescopeObjects(void)
 {
+	CONSOLE_DEBUG(__FUNCTION__);
+
 //	new TelescopeDriverComm(kDevCon_Ethernet, "192.168.1.104:49152");
-	new TelescopeDriverSkyWatch(kDevCon_Serial, "/dev/ttyS0");
+//	new TelescopeDriverSkyWatch(kDevCon_Serial, "/dev/ttyS0");
+	new TelescopeDriverLX200(kDevCon_Ethernet, "192.168.1.104:49152");
 }
 
 //**************************************************************************************
@@ -80,16 +85,34 @@ void	CreateTelescopeObjects(void)
 TelescopeDriverComm::TelescopeDriverComm(DeviceConnectionType connectionType, const char *devicePath)
 	:TelescopeDriver()
 {
+char	*colonPtr;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 	strcpy(cCommonProp.Name,		"Telescope-Comm");
 	strcpy(cCommonProp.Description,	"Telescope control using ??? protocol");
 
 	strcpy(cDeviceIPaddress,	"0.0.0.0-Not set");
-
+	cIPaddrValid	=	false;
 
 	cDeviceConnType	=	connectionType;
 	strcpy(cDeviceConnPath,	devicePath);
+
+	if (connectionType == kDevCon_Ethernet)
+	{
+		strcpy(cDeviceIPaddress, cDeviceConnPath);
+		colonPtr	=	strchr(cDeviceIPaddress, ':');
+		if (colonPtr != NULL)
+		{
+			*colonPtr	=	0;
+			colonPtr++;
+			cTCPportNum		=	atoi(colonPtr);
+			CONSOLE_DEBUG_W_STR("cDeviceIPaddress\t=",	cDeviceIPaddress);
+			CONSOLE_DEBUG_W_NUM("cTCPportNum\t=",	cTCPportNum);
+
+			cIPaddrValid			=	true;
+		}
+
+	}
 
 	//*	setup the options for this driver
 	cTelescopeProp.AlginmentMode	=	kAlignmentMode_algGermanPolar;
@@ -98,7 +121,7 @@ TelescopeDriverComm::TelescopeDriverComm(DeviceConnectionType connectionType, co
 	cTelescopeProp.CanSetTracking	=	true;
 
 
-	AlpacaConnect();
+//	AlpacaConnect();
 }
 
 //**************************************************************************************
@@ -164,17 +187,9 @@ bool	connectionOKflag;
 	{
 		case kDevCon_Ethernet:
 			CONSOLE_DEBUG("kDevCon_Ethernet");
-			strcpy(cDeviceIPaddress, cDeviceConnPath);
-			colonPtr	=	strchr(cDeviceIPaddress, ':');
-			if (colonPtr != NULL)
+			if (cIPaddrValid)
 			{
-				*colonPtr	=	0;
-				colonPtr++;
-				cTCPportNum		=	atoi(colonPtr);
-				CONSOLE_DEBUG_W_STR("cDeviceIPaddress\t=",	cDeviceIPaddress);
-				CONSOLE_DEBUG_W_NUM("cTCPportNum\t=",	cTCPportNum);
-
-				connectionOKflag			=	true;
+				connectionOKflag	=	true;
 			}
 			break;
 
@@ -202,6 +217,10 @@ bool	connectionOKflag;
 	if (connectionOKflag)
 	{
 		StartThread();
+	}
+	else
+	{
+		CONSOLE_DEBUG("Connection failure");
 	}
 	return(connectionOKflag);
 }
@@ -312,6 +331,7 @@ char	errorMsg[64];
 		strcpy(errorMsg, "Thread already running");
 		CONSOLE_DEBUG(errorMsg);
 		threadErr	=	-1;
+		CONSOLE_ABORT(__FUNCTION__);
 	}
 	return(successFlag);
 }
@@ -478,14 +498,16 @@ int			closeRetCode;
 int			errorCount;
 bool		sendOK;
 
+	cThreadIsActive	=	true;
+
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG_W_STR("cDeviceIPaddress\t=",	cDeviceIPaddress);
 	CONSOLE_DEBUG_W_NUM("cTCPportNum\t=",	cTCPportNum);
 
-	cThreadIsActive	=	true;
-	connectionOpen	=	false;
+
 	//########################################################
 	//*	open the connection
+	connectionOpen	=	false;
 	switch(cDeviceConnType)
 	{
 		case kDevCon_Ethernet:
@@ -526,6 +548,7 @@ bool		sendOK;
 				{
 					errorCount++;
 				}
+				sleep(1);
 			}
 			else
 			{
@@ -535,9 +558,8 @@ bool		sendOK;
 				{
 					errorCount++;
 				}
+				sleep(5);
 			}
-
-			sleep(1);
 		}
 		//########################################################
 		//*	close the connection

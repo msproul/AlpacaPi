@@ -30,6 +30,7 @@
 //*	Jan 12,	2021	<MLS> Added AlpacaGetStringValue()
 //*	Jan 30,	2021	<MLS> Added AlpacaGetImageArray()
 //*	Jan 31,	2021	<MLS> Finished debugging AlpacaGetImageArray()
+//*	Feb  9,	2021	<MLS> Added AlpacaGetCommonProperties()
 //*****************************************************************************
 
 
@@ -62,6 +63,62 @@ static int	gClientTransactionID	=	1;
 bool	Controller::AlpacaGetStartupData(void)
 {
 	CONSOLE_ABORT(__FUNCTION__);
+}
+
+//*****************************************************************************
+bool	Controller::AlpacaGetCommonProperties(const char *deviceTypeStr)
+{
+char	returnString[256];
+bool	validData;
+
+
+	CONSOLE_DEBUG(__FUNCTION__);
+	//-----------------------------------------------------------------------------------------
+	validData	=	AlpacaGetStringValue(	deviceTypeStr, "description",	NULL,	returnString);
+	if (validData)
+	{
+		strcpy(cCommonProp.Description,	returnString);
+	}
+	//-----------------------------------------------------------------------------------------
+	validData	=	AlpacaGetStringValue(	deviceTypeStr, "driverinfo",	NULL,	returnString);
+	if (validData)
+	{
+		strcpy(cCommonProp.DriverInfo,	returnString);
+	}
+	//-----------------------------------------------------------------------------------------
+	validData	=	AlpacaGetStringValue(	deviceTypeStr, "driverinfo",	NULL,	returnString);
+	if (validData)
+	{
+		strcpy(cCommonProp.DriverInfo,	returnString);
+	}
+	//-----------------------------------------------------------------------------------------
+	validData	=	AlpacaGetStringValue(	deviceTypeStr, "interfaceversion",	NULL,	returnString);
+	if (validData)
+	{
+		cCommonProp.InterfaceVersion	=	atoi(returnString);
+	}
+	//-----------------------------------------------------------------------------------------
+	validData	=	AlpacaGetStringValue(	deviceTypeStr, "driverversion",	NULL,	returnString);
+	if (validData)
+	{
+		strcpy(cCommonProp.DriverVersion,	returnString);
+	}
+	//-----------------------------------------------------------------------------------------
+	validData	=	AlpacaGetStringValue(	deviceTypeStr, "name",	NULL,	returnString);
+	if (validData)
+	{
+		strcpy(cCommonProp.Name,	returnString);
+	}
+
+	UpdateCommonProperties();
+	return(validData);
+}
+
+
+//*****************************************************************************
+void	Controller::UpdateCommonProperties(void)
+{
+	//*	needs to be overloaded
 }
 
 
@@ -158,8 +215,8 @@ void	Controller::AlpacaProcessSupportedActions(const char *deviceTypeStr, const 
 	{
 		//*	you get the idea
 	}
-	CONSOLE_DEBUG(cWindowName);
-	CONSOLE_ABORT(__FUNCTION__);
+//	CONSOLE_DEBUG(cWindowName);
+//	CONSOLE_ABORT(__FUNCTION__);
 }
 
 //*****************************************************************************
@@ -187,7 +244,7 @@ int				jjj;
 										&jsonParser);
 	if (validData)
 	{
-		cLastAlpacaErrNum	=	0;
+		cLastAlpacaErrNum	=	kASCOM_Err_Success;
 		for (jjj=0; jjj<jsonParser.tokenCount_Data; jjj++)
 		{
 			AlpacaProcessReadAll(	deviceTypeStr,
@@ -268,7 +325,7 @@ int			dataStrLen;
 													gClientID,
 													gClientTransactionID);
 		}
-		CONSOLE_DEBUG_W_STR("Sending:", myDataString);
+//		CONSOLE_DEBUG_W_STR("Sending:", myDataString);
 		sucessFlag	=	SendPutCommand(	deviceAddress,
 										devicePort,
 										alpacaString,
@@ -353,7 +410,7 @@ bool	Controller::AlpacaSendPutCmd(	const char	*alpacaDevice,
 SJP_Parser_t	jsonParser;
 bool			sucessFlag;
 
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, alpacaCmd);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, alpacaCmd);
 
 	sucessFlag	=	AlpacaSendPutCmdwResponse(alpacaDevice, alpacaCmd, dataString, &jsonParser);
 
@@ -479,7 +536,7 @@ double			myDoubleValue;
 //	CONSOLE_DEBUG(__FUNCTION__);
 	if (validData)
 	{
-		cLastAlpacaErrNum	=	0;
+		cLastAlpacaErrNum	=	kASCOM_Err_Success;
 		for (jjj=0; jjj<jsonParser.tokenCount_Data; jjj++)
 		{
 
@@ -493,7 +550,7 @@ double			myDoubleValue;
 			}
 		}
 		cLastAlpacaErrNum	=	AlpacaCheckForErrors(&jsonParser, cLastAlpacaErrStr);
-		if (cLastAlpacaErrNum != 0)
+		if (cLastAlpacaErrNum != kASCOM_Err_Success)
 		{
 			//*	does the calling routine want to know if the data was good
 			if (rtnValidData != NULL)
@@ -537,7 +594,7 @@ double			myDoubleValue;
 										&jsonParser);
 	if (validData)
 	{
-		cLastAlpacaErrNum	=	0;
+		cLastAlpacaErrNum	=	kASCOM_Err_Success;
 		for (jjj=0; jjj<jsonParser.tokenCount_Data; jjj++)
 		{
 			if (strcasecmp(jsonParser.dataList[jjj].keyword, "MINIMUM") == 0)
@@ -558,7 +615,7 @@ double			myDoubleValue;
 			}
 		}
 		cLastAlpacaErrNum	=	AlpacaCheckForErrors(&jsonParser, cLastAlpacaErrStr);
-		if (cLastAlpacaErrNum != 0)
+		if (cLastAlpacaErrNum != kASCOM_Err_Success)
 		{
 			//*	does the calling routine want to know if the data was good
 			if (rtnValidData != NULL)
@@ -1371,16 +1428,16 @@ socklen_t		sockOptLen;
 }
 
 //*****************************************************************************
-int	Controller::AlpacaCheckForErrors(	SJP_Parser_t	*jsonParser,
+TYPE_ASCOM_STATUS	Controller::AlpacaCheckForErrors(	SJP_Parser_t	*jsonParser,
 										char			*errorMsg,
 										bool 			reportError)
 {
-int		jjj;
-int		alpacaErrorCode;
+int					jjj;
+TYPE_ASCOM_STATUS	alpacaErrorCode;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-	alpacaErrorCode	=	0;
+	alpacaErrorCode	=	kASCOM_Err_Success;
 	strcpy(errorMsg, "");
 	if (jsonParser != NULL)
 	{
@@ -1388,7 +1445,7 @@ int		alpacaErrorCode;
 		{
 			if (strcasecmp(jsonParser->dataList[jjj].keyword, "ErrorNumber") == 0)
 			{
-				alpacaErrorCode	=	atoi(jsonParser->dataList[jjj].valueString);
+				alpacaErrorCode	=	(TYPE_ASCOM_STATUS)atoi(jsonParser->dataList[jjj].valueString);
 			}
 			else if (strcasecmp(jsonParser->dataList[jjj].keyword, "ErrorMessage") == 0)
 			{

@@ -142,35 +142,35 @@ int		iii;
 }
 
 //**************************************************************************************
-void	WindowTabAuxMotor::DrawGraphWidget(IplImage *openCV_Image, const int widgitIdx)
+void	WindowTabAuxMotor::DrawGraphWidget(IplImage *openCV_Image, const int widgetIdx)
 {
 CvRect		myCVrect;
 
-	myCVrect.x		=	cWidgetList[widgitIdx].left;
-	myCVrect.y		=	cWidgetList[widgitIdx].top;
-	myCVrect.width	=	cWidgetList[widgitIdx].width;
-	myCVrect.height	=	cWidgetList[widgitIdx].height;
+	myCVrect.x		=	cWidgetList[widgetIdx].left;
+	myCVrect.y		=	cWidgetList[widgetIdx].top;
+	myCVrect.width	=	cWidgetList[widgetIdx].width;
+	myCVrect.height	=	cWidgetList[widgetIdx].height;
 
 
 	cvRectangleR(	openCV_Image,
 					myCVrect,
-					cWidgetList[widgitIdx].bgColor,			//	CvScalar color,
+					cWidgetList[widgetIdx].bgColor,			//	CvScalar color,
 					CV_FILLED,								//	int thickness CV_DEFAULT(1),
 					8,										//	int line_type CV_DEFAULT(8),
 					0);										//	int shift CV_DEFAULT(0));
 
 //	cvRectangleR(	openCV_Image,
 //					myCVrect,
-//					cWidgetList[widgitIdx].borderColor,		//	CvScalar color,
+//					cWidgetList[widgetIdx].borderColor,		//	CvScalar color,
 //					1,										//	int thickness CV_DEFAULT(1),
 //					8,										//	int line_type CV_DEFAULT(8),
 //					0);										//	int shift CV_DEFAULT(0));
 
-	switch(widgitIdx)
+	switch(widgetIdx)
 	{
 
 		default:
-			CONSOLE_DEBUG_W_NUM("widgitIdx\t",	widgitIdx);
+			CONSOLE_DEBUG_W_NUM("widgetIdx\t",	widgetIdx);
 			break;
 	}
 }

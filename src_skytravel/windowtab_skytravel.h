@@ -94,16 +94,16 @@ class WindowTabSkyTravel: public WindowTab
 		virtual	~WindowTabSkyTravel(void);
 
 		virtual	void	RunBackgroundTasks(void);
-		virtual	void	DrawGraphWidget(IplImage *openCV_Image, const int widgitIdx);
+		virtual	void	DrawGraphWidget(IplImage *openCV_Image, const int widgetIdx);
 		virtual	void	SetupWindowControls(void);
 //		virtual	void	DrawWindow(void);
 		virtual void	HandleKeyDown(const int keyPressed);
 		virtual	void	ProcessButtonClick(const int buttonIdx);
 		virtual	void	ProcessDoubleClick(const int buttonIdx);
-		virtual void	ProcessMouseEvent(const int widgitIdx, const int event, const int xxx, const int yyy, const int flags);
-		virtual void	ProcessMouseLeftButtonDown(const int widgitIdx, const int event, const int xxx, const int yyy, const int flags);
-		virtual void	ProcessMouseLeftButtonUp(const int widgitIdx, const int event, const int xxx, const int yyy, const int flags);
-		virtual void	ProcessMouseLeftButtonDragged(const int widgitIdx, const int event, const int xxx, const int yyy, const int flags);
+		virtual void	ProcessMouseEvent(const int widgetIdx, const int event, const int xxx, const int yyy, const int flags);
+		virtual void	ProcessMouseLeftButtonDown(const int widgetIdx, const int event, const int xxx, const int yyy, const int flags);
+		virtual void	ProcessMouseLeftButtonUp(const int widgetIdx, const int event, const int xxx, const int yyy, const int flags);
+		virtual void	ProcessMouseLeftButtonDragged(const int widgetIdx, const int event, const int xxx, const int yyy, const int flags);
 
 				void	UpdateButtonStatus(void);
 		//--------------------------------------------------------------

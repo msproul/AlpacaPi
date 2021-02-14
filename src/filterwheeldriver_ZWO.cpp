@@ -118,7 +118,7 @@ bool	rulesFileOK;
 	cNumberOfPositions	=	0;
 
 	strcpy(cCommonProp.Description, "ZWO EFW filterwheel");
-	strcpy(cDriverversionStr,	EFWGetSDKVersion());
+	strcpy(cDeviceVersion,	EFWGetSDKVersion());
 
 	rulesFileOK	=	Check_udev_rulesFile(kEFW_rulesFile);
 	if (rulesFileOK == false)

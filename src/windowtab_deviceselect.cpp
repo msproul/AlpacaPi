@@ -165,11 +165,8 @@ int		myRadioBtnWidth;
 	SetWidgetChecked(kDeviceSelect_Telescope1, true);
 
 
-//	SetAlpacaLogo(kDeviceSelect_AlpacaLogo, -1);
+	SetAlpacaLogoBottomCorner(kDeviceSelect_AlpacaLogo);
 
-	//=======================================================
-	//*	IP address
-//	SetIPaddressBoxes(kDeviceSelect_IPaddr, kDeviceSelect_Readall, kDeviceSelect_AlpacaDrvrVersion, -1);
 }
 
 //*****************************************************************************

@@ -93,7 +93,7 @@ int				setOptRetCode;
 int				bindRetCode;
 struct timeval	timeoutLength;
 bool			success	=	true;
-
+int				argValue;
 //	CONSOLE_DEBUG(__FUNCTION__);
 	InitArrays();
 
@@ -120,8 +120,8 @@ bool			success	=	true;
 //	inet_ntop(AF_INET, &(gClient_addr.sin_addr), str, INET_ADDRSTRLEN);
 //	CONSOLE_DEBUG_W_STR("gClient_addr.sin_addr", str);
 
-
-	setOptRetCode	=	setsockopt(gBroadcastSock, SOL_SOCKET, (SO_BROADCAST), &(int) { 1 }, sizeof(int));
+	argValue		=	1;
+	setOptRetCode	=	setsockopt(gBroadcastSock, SOL_SOCKET, (SO_BROADCAST), &argValue, sizeof(int));
 	if (setOptRetCode < 0)
 	{
 		perror("setsockopt(SO_BROADCAST) failed");

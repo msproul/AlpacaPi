@@ -188,7 +188,6 @@ CPP_OBJECTS=												\
 				$(OBJECT_DIR)cpu_stats.o					\
 				$(OBJECT_DIR)lx200_com.o					\
 
-#				$(OBJECT_DIR)telescope_comm.o				\
 
 
 ######################################################################################
@@ -723,20 +722,20 @@ calib		:		DEFINEFLAGS		+=	-D_ENABLE_CALIBRATION_
 #calib		:		DEFINEFLAGS		+=	-D_ENABLE_ROTATOR_
 #calib		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_
 #calib		:		DEFINEFLAGS		+=	-D_ENABLE_SAFETYMONITOR_
-calib		:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_
+#calib		:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_
 #calib		:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
-#calib		:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
-#calib		:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
+calib		:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
+calib		:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
 #calib		:		DEFINEFLAGS		+=	-D_ENABLE_DISCOVERY_QUERRY_
 #calib		:		DEFINEFLAGS		+=	-D_ENABLE_MULTICAM_
 #calib		:		DEFINEFLAGS		+=	-D_ENABLE_DOME_
-#calib		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
+calib		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
 #calib		:		DEFINEFLAGS		+=	-D_ENABLE_ATIK_
-#calib		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
+calib		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
 #calib		:		DEFINEFLAGS		+=	-D_ENABLE_TOUP_
 #calib		:		DEFINEFLAGS		+=	-D_ENABLE_WIRING_PI_
 calib		:		PLATFORM		=	armv7
-calib		:		ATIK_LIB_DIR	=	$(ATIK_LIB_MASTER_DIR)/ARM/x86/NoFlyCapture
+#calib		:		ATIK_LIB_DIR	=	$(ATIK_LIB_MASTER_DIR)/ARM/x86/NoFlyCapture
 calib		:		$(CPP_OBJECTS)				\
 					$(ALPACA_OBJECTS)			\
 					$(SOCKET_OBJECTS)			\
@@ -746,8 +745,12 @@ calib		:		$(CPP_OBJECTS)				\
 					$(SOCKET_OBJECTS)			\
 					$(CPP_OBJECTS)				\
 					$(ALPACA_OBJECTS)			\
+					$(OPENCV_LINK)				\
+					$(ASI_CAMERA_OBJECTS)		\
 					-lwiringPi					\
+					-lcfitsio					\
 					-lpthread					\
+					-lusb-1.0					\
 					-o alpacapi-calib
 
 #					$(OPENCV_LINK)				\
@@ -1316,7 +1319,7 @@ atik	:					$(ATIK_OBJECTS)
 
 
 ######################################################################################
-#pragama mark client
+#pragama mark make client client
 client	:	DEFINEFLAGS		+=	-D_CLIENT_MAIN_
 client	:			$(CLIENT_OBJECTS)
 
@@ -1369,6 +1372,7 @@ CONTROLLER_OBJECTS=												\
 				$(OBJECT_DIR)windowtab_camsettings.o			\
 				$(OBJECT_DIR)windowtab_config.o					\
 				$(OBJECT_DIR)windowtab_dome.o					\
+				$(OBJECT_DIR)windowtab_drvrInfo.o				\
 				$(OBJECT_DIR)windowtab_filelist.o				\
 				$(OBJECT_DIR)windowtab_graphs.o					\
 				$(OBJECT_DIR)windowtab_image.o					\
@@ -1479,18 +1483,19 @@ camera		:			$(CONTROLLER_OBJECTS)					\
 SRC_SKYTRAVEL=./src_skytravel/
 SKYTRAVEL_OBJECTS=											\
 				$(OBJECT_DIR)ConstellationData.o			\
-				$(OBJECT_DIR)controller_skytravel.o			\
-				$(OBJECT_DIR)controller_dome_common.o		\
-				$(OBJECT_DIR)controller_dome.o				\
-				$(OBJECT_DIR)controller_telescope.o			\
 				$(OBJECT_DIR)controller_camera.o			\
 				$(OBJECT_DIR)controller_cam_normal.o		\
+				$(OBJECT_DIR)controller_covercalib.o		\
+				$(OBJECT_DIR)controller_dome.o				\
+				$(OBJECT_DIR)controller_dome_common.o		\
 				$(OBJECT_DIR)controller_focus.o				\
 				$(OBJECT_DIR)controller_focus_generic.o		\
 				$(OBJECT_DIR)controller_image.o				\
-				$(OBJECT_DIR)controller_switch.o			\
 				$(OBJECT_DIR)controller_ml_nc.o				\
 				$(OBJECT_DIR)controller_ml_single.o			\
+				$(OBJECT_DIR)controller_skytravel.o			\
+				$(OBJECT_DIR)controller_switch.o			\
+				$(OBJECT_DIR)controller_telescope.o			\
 				$(OBJECT_DIR)cpu_stats.o					\
 				$(OBJECT_DIR)eph.o							\
 				$(OBJECT_DIR)HipparcosCatalog.o				\
@@ -1505,25 +1510,27 @@ SKYTRAVEL_OBJECTS=											\
 				$(OBJECT_DIR)StarData.o						\
 				$(OBJECT_DIR)SkyTravelTimeRoutines.o		\
 				$(OBJECT_DIR)serialport.o					\
-				$(OBJECT_DIR)windowtab_deviceselect.o		\
-				$(OBJECT_DIR)windowtab_skytravel.o			\
-				$(OBJECT_DIR)windowtab_STsettings.o			\
-				$(OBJECT_DIR)windowtab_telescope.o			\
-				$(OBJECT_DIR)windowtab_dome.o				\
 				$(OBJECT_DIR)windowtab_alpacalist.o			\
+				$(OBJECT_DIR)windowtab_auxmotor.o			\
 				$(OBJECT_DIR)windowtab_camera.o				\
 				$(OBJECT_DIR)windowtab_camsettings.o		\
-				$(OBJECT_DIR)windowtab_filelist.o			\
-				$(OBJECT_DIR)windowtab_iplist.o				\
-				$(OBJECT_DIR)windowtab_switch.o				\
-				$(OBJECT_DIR)windowtab_ml_single.o			\
-				$(OBJECT_DIR)windowtab_nitecrawler.o		\
-				$(OBJECT_DIR)windowtab_auxmotor.o			\
 				$(OBJECT_DIR)windowtab_config.o				\
+				$(OBJECT_DIR)windowtab_covercalib.o			\
+				$(OBJECT_DIR)windowtab_deviceselect.o		\
+				$(OBJECT_DIR)windowtab_dome.o				\
+				$(OBJECT_DIR)windowtab_drvrInfo.o			\
+				$(OBJECT_DIR)windowtab_filelist.o			\
 				$(OBJECT_DIR)windowtab_graphs.o				\
+				$(OBJECT_DIR)windowtab_iplist.o				\
+				$(OBJECT_DIR)windowtab_ml_single.o			\
+				$(OBJECT_DIR)windowtab_moon.o				\
+				$(OBJECT_DIR)windowtab_nitecrawler.o		\
 				$(OBJECT_DIR)windowtab_slit.o				\
 				$(OBJECT_DIR)windowtab_slitgraph.o			\
-				$(OBJECT_DIR)windowtab_moon.o				\
+				$(OBJECT_DIR)windowtab_skytravel.o			\
+				$(OBJECT_DIR)windowtab_STsettings.o			\
+				$(OBJECT_DIR)windowtab_switch.o				\
+				$(OBJECT_DIR)windowtab_telescope.o			\
 				$(OBJECT_DIR)YaleStarCatalog.o				\
 
 
@@ -1927,13 +1934,6 @@ $(OBJECT_DIR)telescopedriver_lx200.o :	$(SRC_DIR)telescopedriver_lx200.cpp	\
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)telescopedriver_lx200.cpp -o$(OBJECT_DIR)telescopedriver_lx200.o
 
 
-#-------------------------------------------------------------------------------------
-$(OBJECT_DIR)telescope_comm.o :			$(SRC_DIR)telescope_comm.cpp	\
-										$(SRC_DIR)telescope_comm.h		\
-										Makefile
-	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)telescope_comm.cpp -o$(OBJECT_DIR)telescope_comm.o
-
-
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)telescopedriver_skywatch.o :	$(SRC_DIR)telescopedriver_skywatch.cpp	\
@@ -2047,7 +2047,7 @@ $(OBJECT_DIR)json_parse.o : $(MLS_LIB_DIR)json_parse.c $(MLS_LIB_DIR)json_parse.
 	$(COMPILE) $(INCLUDES) $(MLS_LIB_DIR)json_parse.c -o$(OBJECT_DIR)json_parse.o
 
 $(OBJECT_DIR)discoveryclient.o : $(SRC_DISCOVERY)discoveryclient.c $(SRC_DISCOVERY)discoveryclient.h
-	$(COMPILE) $(INCLUDES) $(SRC_DISCOVERY)discoveryclient.c -o$(OBJECT_DIR)discoveryclient.o
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_DISCOVERY)discoveryclient.c -o$(OBJECT_DIR)discoveryclient.o
 
 
 
@@ -2132,6 +2132,14 @@ $(OBJECT_DIR)controller_cam_normal.o : 	$(SRC_DIR)controller_cam_normal.cpp		\
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)controller_cam_normal.cpp -o$(OBJECT_DIR)controller_cam_normal.o
 
 
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)controller_covercalib.o : 	$(SRC_DIR)controller_covercalib.cpp	\
+										$(SRC_DIR)controller_covercalib.h	\
+										$(SRC_DIR)windowtab_covercalib.h	\
+										$(SRC_DIR)windowtab_about.h			\
+										$(SRC_DIR)controller.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)controller_covercalib.cpp -o$(OBJECT_DIR)controller_covercalib.o
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)controller_dome.o : 		$(SRC_DIR)controller_dome.cpp		\
@@ -2274,6 +2282,15 @@ $(OBJECT_DIR)windowtab_about.o : 		$(SRC_DIR)windowtab_about.cpp		\
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)windowtab_about.cpp -o$(OBJECT_DIR)windowtab_about.o
 
 #-------------------------------------------------------------------------------------
+$(OBJECT_DIR)windowtab_drvrInfo.o : 	$(SRC_DIR)windowtab_drvrInfo.cpp		\
+										$(SRC_DIR)windowtab_drvrInfo.h			\
+										$(SRC_DIR)windowtab.h					\
+										$(SRC_DIR)controller.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)windowtab_drvrInfo.cpp -o$(OBJECT_DIR)windowtab_drvrInfo.o
+
+
+
+#-------------------------------------------------------------------------------------
 $(OBJECT_DIR)windowtab_moon.o : 		$(SRC_DIR)windowtab_moon.cpp		\
 										$(SRC_DIR)windowtab_moon.h			\
 										$(SRC_DIR)windowtab.h				\
@@ -2312,6 +2329,13 @@ $(OBJECT_DIR)windowtab_config.o : 		$(SRC_DIR)windowtab_config.cpp		\
 										$(SRC_DIR)windowtab.h				\
 										$(SRC_DIR)controller.h
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)windowtab_config.cpp -o$(OBJECT_DIR)windowtab_config.o
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)windowtab_covercalib.o : 	$(SRC_DIR)windowtab_covercalib.cpp	\
+										$(SRC_DIR)windowtab_covercalib.h	\
+										$(SRC_DIR)windowtab.h				\
+										$(SRC_DIR)controller.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)windowtab_covercalib.cpp -o$(OBJECT_DIR)windowtab_covercalib.o
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)windowtab_dome.o : 		$(SRC_DIR)windowtab_dome.cpp		\
@@ -2388,7 +2412,7 @@ $(OBJECT_DIR)controller_main.o : 		$(SRC_DIR)controller_main.cpp		\
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)discovery_lib.o :			$(SRC_DIR)discovery_lib.c			\
 										$(SRC_DIR)discovery_lib.h
-	$(COMPILE) $(INCLUDES) $(SRC_DIR)discovery_lib.c -o$(OBJECT_DIR)discovery_lib.o
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)discovery_lib.c -o$(OBJECT_DIR)discovery_lib.o
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)commoncolor.o :			$(SRC_DIR)commoncolor.c				\

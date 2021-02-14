@@ -65,17 +65,12 @@ ControllerUSB::ControllerUSB(	const char			*argWindowName,
 								const char			*usbPath)
 	:Controller(argWindowName, kWindowWidth,  kWindowHeight)
 {
-
 	strcpy(cUSBpath, usbPath);
 
 	SetupWindowControls();
 
 	SetWidgetText(kTab_USB,		kUSBselect_AlpacaDrvrVersion,		gFullVersionString);
-	SetWidgetText(kTab_About,	kAboutBox_AlpacaDrvrVersion,		gFullVersionString);
 }
-
-
-
 
 //**************************************************************************************
 // Destructor
@@ -83,6 +78,8 @@ ControllerUSB::ControllerUSB(	const char			*argWindowName,
 ControllerUSB::~ControllerUSB(void)
 {
 	CONSOLE_DEBUG(__FUNCTION__);
+	DELETE_OBJ_IF_VALID(cUSBTabObjPtr);
+	DELETE_OBJ_IF_VALID(cAboutBoxTabObjPtr);
 }
 
 
@@ -114,7 +111,6 @@ void	ControllerUSB::SetupWindowControls(void)
 	SetWidgetFont(kTab_USB,		kUSBselect_IPaddr, kFont_Medium);
 
 	SetWidgetText(kTab_USB,		kUSBselect_IPaddr,	cUSBpath);
-	SetWidgetText(kTab_About,	kAboutBox_IPaddr,	cUSBpath);
 }
 
 //**************************************************************************************

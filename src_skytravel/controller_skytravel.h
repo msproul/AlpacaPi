@@ -172,6 +172,7 @@ class ControllerSkytravel: public Controller
 
 };
 
+void		CloseAllExceptFirst(void);
 
 
 

@@ -56,6 +56,8 @@
 //*	Jan 20,	2021	<MLS> Added GetCurrentTabName()
 //*	Jan 26,	2021	<MLS> Added more text buffer overflow checking
 //*	Feb  6,	2021	<MLS> Minor fix to tab display when clicked
+//*	Feb 13,	2021	<MLS> Added UpdateSupportedActions()
+//*	Feb 13,	2021	<MLS> Added UpdateCommonProperties()
 //*****************************************************************************
 
 
@@ -88,6 +90,7 @@ int			gControllerCnt	=	-1;
 CvFont		gTextFont[kFontCnt];
 
 Controller	*gCurrentActiveWindow	=	NULL;
+
 
 //*****************************************************************************
 static void	InitControllerList(void)
@@ -193,6 +196,8 @@ int			objCntr;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
+	memset(&cCommonProp, 0, sizeof(TYPE_CommonProperties));
+
 	cMagicCookie				=	kMagicCookieValue;
 
 	cKeepRunning				=	true;
@@ -249,7 +254,7 @@ int			objCntr;
 	cWidth				=	xSize;
 	cHeight				=	ySize;
 	cUpdateWindow		=	true;
-	cLastAlpacaErrNum	=	0;
+	cLastAlpacaErrNum	=	kASCOM_Err_Success;
 
 	cBackGrndColor		=	CV_RGB(0,	0,	0);					//	CvScalar color,
 
@@ -323,7 +328,7 @@ Controller::~Controller(void)
 {
 int		iii;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 	//*	if we are the active window, make sure we dont get any more key presses
 	if (gCurrentActiveWindow == this)
 	{
@@ -740,7 +745,7 @@ void	Controller::ProcessMouseEvent(int event, int xxx, int yyy, int flags)
 {
 int		clickedBtn;
 int		myWidgitIdx;
-bool	widgitIsButton;
+bool	widgetIsButton;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 	myWidgitIdx	=	FindClickedWidget(xxx,  yyy);
@@ -806,8 +811,8 @@ bool	widgitIsButton;
 			cLastClicked_Btn		=	FindClickedWidget(xxx,  yyy);
 			if (cLastClicked_Btn >= 0)
 			{
-				widgitIsButton	=	IsWidgetButton(cLastClicked_Btn);
-				if (widgitIsButton)
+				widgetIsButton	=	IsWidgetButton(cLastClicked_Btn);
+				if (widgetIsButton)
 				{
 	//				CONSOLE_DEBUG("Highlighting button");
 					cHighlightedBtn	=	cLastClicked_Btn;
@@ -1198,6 +1203,8 @@ int			ccc;
 int			sLen;
 int			textOffsetX;
 bool		drawTextFlg;
+char		theChar;
+char		previousChar;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -1222,7 +1229,8 @@ bool		drawTextFlg;
 
 	if (strlen(theWidget->textString) > 0)
 	{
-		curFontNum	=	theWidget->fontNum,
+		previousChar	=	0;
+		curFontNum		=	theWidget->fontNum,
 		cvGetTextSize(	theWidget->textString,
 						&gTextFont[curFontNum],
 						&textSize,
@@ -1237,15 +1245,16 @@ bool		drawTextFlg;
 		curFontNum	=	theWidget->fontNum;
 		for (iii=0; iii<=sLen; iii++)
 		{
-			if (theWidget->textString[iii] > 0x20)
+			theChar	=	theWidget->textString[iii];
+			if (theChar > 0x20)
 			{
 				if (ccc < kMaxTextLineLen)
 				{
-					lineBuff[ccc++]	=	theWidget->textString[iii];
+					lineBuff[ccc++]	=	theChar;
 					lineBuff[ccc]	=	0;
 				}
 			}
-			else if (theWidget->textString[iii] == 0x20)
+			else if (theChar == 0x20)
 			{
 				if (ccc < kMaxTextLineLen)
 				{
@@ -1258,7 +1267,7 @@ bool		drawTextFlg;
 								&gTextFont[curFontNum],
 								&textSize,
 								&baseLine);
-				if (textSize.width > (theWidget->width - 70))
+				if (textSize.width > (theWidget->width - 150))
 				{
 					drawTextFlg	=	true;
 				}
@@ -1266,8 +1275,12 @@ bool		drawTextFlg;
 			else
 			{
 				//*	its a control char (probably a CR or LF), draw the line
-				drawTextFlg	=	true;
+				if ((previousChar != 0x0d) && (previousChar != 0x0a))
+				{
+					drawTextFlg		=	true;
+				}
 			}
+			previousChar	=	theChar;
 
 			if (drawTextFlg)
 			{
@@ -2674,6 +2687,12 @@ TYPE_WIDGET		*myWidgetPtr;
 		{
 		}
 	}
+}
+
+//*****************************************************************************
+void	Controller::UpdateSupportedActions(void)
+{
+	CONSOLE_DEBUG(__FUNCTION__);
 }
 
 

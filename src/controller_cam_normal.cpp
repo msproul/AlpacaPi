@@ -78,6 +78,7 @@ enum
 //	kTab_Advanced,
 //	kTab_Graphs,
 	kTab_FileList,
+	kTab_DriverInfo,
 	kTab_About,
 
 	kTab_Count
@@ -99,7 +100,6 @@ ControllerCamNormal::ControllerCamNormal(	const char			*argWindowName,
 
 
 
-
 //**************************************************************************************
 // Destructor
 //**************************************************************************************
@@ -114,28 +114,12 @@ ControllerCamNormal::~ControllerCamNormal(void)
 		ToggleCooler();
 	}
 	//*	delete the windowtab objects
-	if (cCameraTabObjPtr != NULL)
-	{
-		delete cCameraTabObjPtr;
-		cCameraTabObjPtr	=	NULL;
-	}
-	if (cCamSettingsTabObjPtr != NULL)
-	{
-		delete cCamSettingsTabObjPtr;
-		cCamSettingsTabObjPtr	=	NULL;
-	}
-	if (cFileListTabObjPtr != NULL)
-	{
-		delete cFileListTabObjPtr;
-		cFileListTabObjPtr	=	NULL;
-	}
-	if (cAboutBoxTabObjPtr != NULL)
-	{
-		delete cAboutBoxTabObjPtr;
-		cAboutBoxTabObjPtr	=	NULL;
-	}
+	DELETE_OBJ_IF_VALID(cCameraTabObjPtr);
+	DELETE_OBJ_IF_VALID(cCamSettingsTabObjPtr);
+	DELETE_OBJ_IF_VALID(cFileListTabObjPtr);
+	DELETE_OBJ_IF_VALID(cDriverInfoTabObjPtr);
+	DELETE_OBJ_IF_VALID(cAboutBoxTabObjPtr);
 }
-
 
 //**************************************************************************************
 void	ControllerCamNormal::SetupWindowControls(void)
@@ -150,51 +134,60 @@ char	lineBuff[64];
 //	SetTabText(kTab_Advanced,		"Adv");
 //	SetTabText(kTab_Graphs,			"Graphs");
 	SetTabText(kTab_FileList,		"File List");
+	SetTabText(kTab_DriverInfo,		"Driver Info");
 	SetTabText(kTab_About,			"About");
 
+	//--------------------------------------------
 	cCameraTabObjPtr		=	new WindowTabCamera(cWidth,
 													cHeight,
 													cBackGrndColor,
 													cWindowName,
 													cAlpacaDeviceNameStr,
-													cHasFilterWheel);
+													cHas_FilterWheel);
+	if (cCameraTabObjPtr != NULL)
+	{
+		SetTabWindow(kTab_Camera,	cCameraTabObjPtr);
+		cCameraTabObjPtr->SetParentObjectPtr(this);
+	}
 
+	//--------------------------------------------
 	cCamSettingsTabObjPtr	=	new WindowTabCamSettings(cWidth,
 													cHeight,
 													cBackGrndColor,
 													cWindowName,
 													cAlpacaDeviceNameStr,
-													cHasFilterWheel);
-
-	cFileListTabObjPtr		=	new WindowTabFileList(	cWidth, cHeight, cBackGrndColor, cWindowName);
-
-	cAboutBoxTabObjPtr		=	new WindowTabAbout(	cWidth, cHeight, cBackGrndColor, cWindowName);
-
-	SetTabWindow(kTab_Camera,	cCameraTabObjPtr);
-	SetTabWindow(kTab_Settings,	cCamSettingsTabObjPtr);
-	SetTabWindow(kTab_FileList,	cFileListTabObjPtr);
-	SetTabWindow(kTab_About,	cAboutBoxTabObjPtr);
-
-
-	if (cCameraTabObjPtr != NULL)
-	{
-		cCameraTabObjPtr->SetParentObjectPtr(this);
-	}
-
-	if (cFileListTabObjPtr != NULL)
-	{
-		cFileListTabObjPtr->SetParentObjectPtr(this);
-	}
-
+													cHas_FilterWheel);
 	if (cCamSettingsTabObjPtr != NULL)
 	{
+		SetTabWindow(kTab_Settings,	cCamSettingsTabObjPtr);
 		cCamSettingsTabObjPtr->SetParentObjectPtr(this);
 	}
 
+	//--------------------------------------------
+	cFileListTabObjPtr		=	new WindowTabFileList(	cWidth, cHeight, cBackGrndColor, cWindowName);
+	if (cFileListTabObjPtr != NULL)
+	{
+		SetTabWindow(kTab_FileList,	cFileListTabObjPtr);
+		cFileListTabObjPtr->SetParentObjectPtr(this);
+	}
+
+	//--------------------------------------------
+	cDriverInfoTabObjPtr		=	new WindowTabDriverInfo(	cWidth, cHeight, cBackGrndColor, cWindowName);
+	if (cDriverInfoTabObjPtr != NULL)
+	{
+		SetTabWindow(kTab_DriverInfo,	cDriverInfoTabObjPtr);
+		cDriverInfoTabObjPtr->SetParentObjectPtr(this);
+	}
+
+	//--------------------------------------------
+	cAboutBoxTabObjPtr		=	new WindowTabAbout(	cWidth, cHeight, cBackGrndColor, cWindowName);
 	if (cAboutBoxTabObjPtr != NULL)
 	{
+		SetTabWindow(kTab_About,	cAboutBoxTabObjPtr);
 		cAboutBoxTabObjPtr->SetParentObjectPtr(this);
 	}
+
+
 
 
 	//*	display the IPaddres/port
@@ -209,103 +202,18 @@ char	lineBuff[64];
 	}
 }
 
-#if 0
-//**************************************************************************************
-void	ControllerCamNormal::DrawWidgetCustom(TYPE_WIDGET *theWidget)
-{
-CvRect		myCVrect;
-CvPoint		textLoc;
-CvPoint		textLoc2;
-CvSize		textSize;
-int			baseLine;
-int			lineSpacing;
-int			curFontNum;
-int			iii;
-char		fileTypeStr[8];
-
-//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
-	if (theWidget != NULL)
-	{
-		myCVrect.x		=	theWidget->left;
-		myCVrect.y		=	theWidget->top;
-		myCVrect.width	=	theWidget->width;
-		myCVrect.height	=	theWidget->height;
-
-
-		cvRectangleR(	cOpenCV_Image,
-						myCVrect,
-						theWidget->bgColor,			//	CvScalar color,
-						CV_FILLED,					//	int thickness CV_DEFAULT(1),
-						8,							//	int line_type CV_DEFAULT(8),
-						0);							//	int shift CV_DEFAULT(0));
-
-		cvRectangleR(	cOpenCV_Image,
-						myCVrect,
-						theWidget->boarderColor,	//	CvScalar color,
-						1,							//	int thickness CV_DEFAULT(1),
-						8,							//	int line_type CV_DEFAULT(8),
-						0);							//	int shift CV_DEFAULT(0));
-
-		//*	draw the file list
-//		curFontNum	=	kFont_Small,
-		curFontNum	=	kFont_Medium,
-		cvGetTextSize(	"foo",
-						&gTextFont[curFontNum],
-						&textSize,
-						&baseLine);
-		lineSpacing	=	textSize.height + baseLine + 3;
-		textLoc.x	=	theWidget->left + 10;
-		textLoc.y	=	theWidget->top + lineSpacing;
-		iii			=	0;
-		while ((iii<kMaxRemoteFileCnt) && (textLoc.y < cHeight))
-		{
-			if (cRemoteFiles[iii].validData)
-			{
-				cvPutText(	cOpenCV_Image,
-							cRemoteFiles[iii].filename,
-							textLoc,
-							&gTextFont[curFontNum],
-							theWidget->textColor
-							);
-
-				strcpy(fileTypeStr, "       ");
-				if (cRemoteFiles[iii].hasCSV)
-				{
-					fileTypeStr[0]	=	'C';
-				}
-				if (cRemoteFiles[iii].hasFTS)
-				{
-					fileTypeStr[1]	=	'F';
-				}
-				if (cRemoteFiles[iii].hasJPG)
-				{
-					fileTypeStr[2]	=	'J';
-				}
-				if (cRemoteFiles[iii].hasPNG)
-				{
-					fileTypeStr[3]	=	'P';
-				}
-				fileTypeStr[4]	=	0;
-				textLoc2		=	textLoc;
-				textLoc2.x		=	cWidth - 80;
-				cvPutText(	cOpenCV_Image,
-							fileTypeStr,
-							textLoc2,
-							&gTextFont[curFontNum],
-							theWidget->textColor
-							);
-
-				textLoc.y	+=	lineSpacing;
-			}
-			iii++;
-		}
-	}
-}
-
-#endif // 0
 
 #pragma mark -
 
+//*****************************************************************************
+void	ControllerCamNormal::UpdateCommonProperties(void)
+{
+	SetWidgetText(kTab_DriverInfo,		kDriverInfo_Name,				cCommonProp.Name);
+	SetWidgetText(kTab_DriverInfo,		kDriverInfo_Description,		cCommonProp.Description);
+	SetWidgetText(kTab_DriverInfo,		kDriverInfo_DriverInfo,			cCommonProp.DriverInfo);
+	SetWidgetText(kTab_DriverInfo,		kDriverInfo_DriverVersion,		cCommonProp.DriverVersion);
+	SetWidgetNumber(kTab_DriverInfo,	kDriverInfo_InterfaceVersion,	cCommonProp.InterfaceVersion);
+}
 
 //*****************************************************************************
 void	ControllerCamNormal::UpdateSettings_Object(const char *filePrefix)
@@ -321,7 +229,7 @@ void	ControllerCamNormal::UpdateSettings_Object(const char *filePrefix)
 //*****************************************************************************
 void	ControllerCamNormal::AlpacaDisplayErrorMessage(const char *errorMsgString)
 {
-	CONSOLE_DEBUG_W_STR("Alpaca error=", errorMsgString);
+//	CONSOLE_DEBUG_W_STR("Alpaca error=", errorMsgString);
 	SetWidgetText(kTab_Camera, kCameraBox_ErrorMsg, errorMsgString);
 }
 
@@ -333,7 +241,6 @@ void	ControllerCamNormal::UpdateSupportedActions(void)
 	SetWidgetValid(kTab_Settings,	kCamSet_Readall,		cHas_readall);
 //	SetWidgetValid(kTab_Graphs,		kHistogram_Readall,		cHas_readall);
 	SetWidgetValid(kTab_FileList,	kFileList_Readall,		cHas_readall);
-	SetWidgetValid(kTab_About,		kAboutBox_Readall,		cHas_readall);
 
 	if (cHas_readall == false)
 	{
@@ -357,7 +264,6 @@ void	ControllerCamNormal::UpdateRemoteAlpacaVersion(void)
 	SetWidgetText(kTab_Camera,		kCameraBox_AlpacaDrvrVersion,	cAlpacaVersionString);
 	SetWidgetText(kTab_Settings,	kCamSet_AlpacaDrvrVersion,		cAlpacaVersionString);
 	SetWidgetText(kTab_FileList,	kFileList_AlpacaDrvrVersion,	cAlpacaVersionString);
-	SetWidgetText(kTab_About,		kAboutBox_AlpacaDrvrVersion,	cAlpacaVersionString);
 }
 
 //*****************************************************************************
@@ -409,11 +315,19 @@ void	ControllerCamNormal::UpdateCurrReadoutMode(void)
 }
 
 //*****************************************************************************
-void	ControllerCamNormal::UpdateCameraGain(void)
+void	ControllerCamNormal::UpdateCameraGain(const TYPE_ASCOM_STATUS lastAlpacaErr)
 {
-	SetWidgetSliderLimits(	kTab_Camera, kCameraBox_Gain_Slider, cCameraProp.GainMin, cCameraProp.GainMax);
-	SetWidgetSliderValue(	kTab_Camera, kCameraBox_Gain_Slider, cCameraProp.Gain);
-	SetWidgetNumber(		kTab_Camera, kCameraBox_Gain, cCameraProp.Gain);
+	if (lastAlpacaErr == kASCOM_Err_PropertyNotImplemented)
+	{
+		SetWidgetType(	kTab_Camera, kCameraBox_Gain_Slider, kWidgetType_Text);
+		SetWidgetText(	kTab_Camera, kCameraBox_Gain_Slider, "Gain not implemented");
+	}
+	else
+	{
+		SetWidgetSliderLimits(	kTab_Camera, kCameraBox_Gain_Slider, cCameraProp.GainMin, cCameraProp.GainMax);
+		SetWidgetSliderValue(	kTab_Camera, kCameraBox_Gain_Slider, cCameraProp.Gain);
+		SetWidgetNumber(		kTab_Camera, kCameraBox_Gain, cCameraProp.Gain);
+	}
 }
 
 //*****************************************************************************

@@ -20,6 +20,7 @@
 //*	Edit History
 //*****************************************************************************
 //*	Jan  9,	2021	<MLS> Created skytravel_main.cpp
+//*	Feb 12,	2021	<MLS> Added CloseAllExceptFirst()
 //*****************************************************************************
 
 
@@ -37,7 +38,7 @@
 #include	"discovery_lib.h"
 #include	"cpu_stats.h"
 
-//#define _ENABLE_CONSOLE_DEBUG_
+#define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
 
 
@@ -151,9 +152,13 @@ int					keyPressed;
 
 					if (gControllerList[iii]->cKeepRunning == false)
 					{
-						CONSOLE_DEBUG_W_NUM("Deleting control #", iii);
-						CONSOLE_DEBUG_W_STR("Deleting window", gControllerList[iii]->cWindowName);
+					//	CONSOLE_DEBUG_W_NUM("Deleting control #", iii);
+					//	CONSOLE_DEBUG_W_STR("Deleting window", gControllerList[iii]->cWindowName);
 						delete gControllerList[iii];
+						if (gControllerList[iii] != NULL)
+						{
+							CONSOLE_DEBUG_W_STR("Delete had a problem", gControllerList[iii]->cWindowName);
+						}
 					}
 				}
 			}
@@ -177,6 +182,22 @@ int					keyPressed;
 	}
 }
 
+//*****************************************************************************
+void	CloseAllExceptFirst(void)
+{
+int		iii;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	for (iii=1; iii<kMaxControllers; iii++)
+	{
+		if (gControllerList[iii] != NULL)
+		{
+//			CONSOLE_DEBUG_W_STR("Closing ", gControllerList[iii]->cWindowName);
+			gControllerList[iii]->cKeepRunning	=	false;
+		}
+	}
+}
 
 //*****************************************************************************
 //*	this steps through the Controller Object List to see if there is a window by this name

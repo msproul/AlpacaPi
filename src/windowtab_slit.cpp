@@ -184,16 +184,16 @@ int	previousDispMode;
 
 
 //**************************************************************************************
-void	WindowTabSlitTracker::DrawGraphWidget(IplImage *openCV_Image, const int widgitIdx)
+void	WindowTabSlitTracker::DrawGraphWidget(IplImage *openCV_Image, const int widgetIdx)
 {
-	switch(widgitIdx)
+	switch(widgetIdx)
 	{
 		case kSlitTracker_SlitClockFace:
-			DrawClockFace(openCV_Image, &cWidgetList[widgitIdx]);
+			DrawClockFace(openCV_Image, &cWidgetList[widgetIdx]);
 			break;
 
 		default:
-			CONSOLE_DEBUG_W_NUM("widgitIdx\t",	widgitIdx);
+			CONSOLE_DEBUG_W_NUM("widgetIdx\t",	widgetIdx);
 			break;
 	}
 }

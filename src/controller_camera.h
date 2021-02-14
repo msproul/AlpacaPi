@@ -86,11 +86,11 @@ class ControllerCamera: public Controller
 		virtual	void	SetupWindowControls(void);
 	//	virtual	void	ProcessButtonClick(const int buttonIdx);
 		virtual	void	RunBackgroundTasks(void);
-	//	virtual	void	DrawGraphWidget(const int widgitIdx);
+	//	virtual	void	DrawGraphWidget(const int widgetIdx);
 		virtual	void	DrawWidgetCustom(TYPE_WIDGET *theWidget);
 
 		//*	this is a large list of update routines, they should be implemented in the subclass
-		virtual	void	UpdateCameraGain(void);
+		virtual	void	UpdateCameraGain(const TYPE_ASCOM_STATUS lastAlpacaErr = kASCOM_Err_Success);
 		virtual	void	UpdateCameraExposure(void);
 		virtual	void	UpdateCameraName(void);
 		virtual	void	UpdateCameraSize(void);
@@ -136,8 +136,12 @@ class ControllerCamera: public Controller
 
 				void	AddFileToRemoteList(const char *fileName);
 
-				void	BumpGain(const int howMuch);
 				void	BumpExposure(const double howMuch);
+				void	SetExposure(const double newExposure);
+
+				void	BumpGain(const int howMuch);
+				void	SetGain(const int newGain);
+
 				void	ToggleLiveMode(void);
 				void	ToggleSideBar(void);
 				void	ToggleAutoExposure(void);
@@ -169,6 +173,7 @@ class ControllerCamera: public Controller
 				bool					cCameraState_imageready;
 
 				double					cExposure;
+				bool					cDarkExposure;
 				bool					cLiveMode;
 				bool					cSideBar;
 				bool					cAutoExposure;
@@ -193,7 +198,7 @@ class ControllerCamera: public Controller
 
 				//==========================================================
 				//*	filter wheel information
-				bool					cHasFilterWheel;
+				bool					cHas_FilterWheel;
 				char					cFilterWheelName[32];
 				FILTERWHEEL				cFilterNames[kMaxFilters];
 				int						cFilterWheelPosition;

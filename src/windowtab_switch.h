@@ -126,7 +126,7 @@ class WindowTabSwitch: public WindowTab
 		virtual	~WindowTabSwitch(void);
 
 		virtual	void	SetupWindowControls(void);
-		virtual	void	DrawGraphWidget(IplImage *openCV_Image, const int widgitIdx);
+		virtual	void	DrawGraphWidget(IplImage *openCV_Image, const int widgetIdx);
 		virtual	void	ProcessButtonClick(const int buttonIdx);
 
 				void	ToggleSwitchState(const int switchNum);

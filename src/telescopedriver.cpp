@@ -135,6 +135,8 @@ enum
 	kCmd_Telescope_trackingrates,			//*	Returns a collection of supported DriveRates values.
 	kCmd_Telescope_utcdate,					//*	Returns the UTC date/time of the telescope's internal clock.
 											//*	Sets the UTC date/time of the telescope's internal clock.
+
+	//*	these are the methods
 	kCmd_Telescope_abortslew,				//*	Immediately stops a slew in progress.
 	kCmd_Telescope_axisrates,				//*	Returns the rates at which the telescope may be moved about the specified axis.
 	kCmd_Telescope_canmoveaxis,				//*	Indicates whether the telescope can move the requested axis.
@@ -269,7 +271,7 @@ TelescopeDriver::TelescopeDriver(void)
 	//*	set the defaults, everything to false or zero
 	memset(&cTelescopeProp, 0, sizeof(TYPE_TelescopeProperties));
 
-	cDriverVersion					=	3;
+	cCommonProp.InterfaceVersion	=	3;
 	cTelescopeProp.AlginmentMode	=	kAlignmentMode_algGermanPolar;
 
 	cTelescopeProp.EquatorialSystem	=	kECT_equOther;

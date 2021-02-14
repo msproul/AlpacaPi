@@ -5,10 +5,11 @@
 #include	"controller.h"
 
 #include	"windowtab_switch.h"
+#include	"windowtab_drvrInfo.h"
+
 #ifndef	_WINDOWTAB_ABOUT_H_
 	#include	"windowtab_about.h"
-#endif // _WINDOWTAB_ABOUT_H_
-
+#endif
 
 //**************************************************************************************
 typedef struct
@@ -43,7 +44,7 @@ class ControllerSwitch: public Controller
 		virtual	void	SetupWindowControls(void);
 	//	virtual	void	ProcessButtonClick(const int buttonIdx);
 		virtual	void	RunBackgroundTasks(void);
-	//	virtual	void	DrawGraphWidget(const int widgitIdx);
+	//	virtual	void	DrawGraphWidget(const int widgetIdx);
 		virtual	bool	AlpacaGetStartupData(void);
 				bool	AlpacaGetStartupData_OneAAT(void);
 				bool	AlpacaGetStatus(void);
@@ -54,11 +55,13 @@ class ControllerSwitch: public Controller
 												const int	deviceNum,
 												const char	*keywordString,
 												const char	*valueString);
+		virtual	void	UpdateCommonProperties(void);
 				bool	AlpacaGetStatus_OneAAT(void);	//*	One At A Time
 				void	ToggleSwitchState(const int switchNum);
 
 			//*	tab information
 				WindowTabSwitch		*cSwitchTabObjPtr;
+				WindowTabDriverInfo	*cDriverInfoTabObjPtr;
 				WindowTabAbout		*cAboutBoxTabObjPtr;
 				int					cMaxSwitch;
 

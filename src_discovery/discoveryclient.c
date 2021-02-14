@@ -393,6 +393,7 @@ char				str[INET_ADDRSTRLEN];
 SJP_Parser_t		jsonParser;
 struct timeval		timeoutLength;
 int					timeOutCntr;
+int					argInt;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 //	CONSOLE_DEBUG_W_NUM("argc\t=", argc);
@@ -420,7 +421,8 @@ int					timeOutCntr;
 //	CONSOLE_DEBUG_W_STR("cliaddr.sin_addr", str);
 
 
-	setOptRetCode	=	setsockopt(gBroadcastSock, SOL_SOCKET, (SO_BROADCAST), &(int) { 1 }, sizeof(int));
+	argInt			=	1;
+	setOptRetCode	=	setsockopt(gBroadcastSock, SOL_SOCKET, (SO_BROADCAST), &argInt, sizeof(int));
 	if (setOptRetCode < 0)
 	{
 		perror("setsockopt(SO_BROADCAST) failed");

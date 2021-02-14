@@ -1212,13 +1212,13 @@ ControllerImage	*myControllerObj;
 
 
 //*****************************************************************************
-void	WindowTabSkyTravel::ProcessMouseEvent(	const int	widgitIdx,
+void	WindowTabSkyTravel::ProcessMouseEvent(	const int	widgetIdx,
 												const int	event,
 												const int	xxx,
 												const int	yyy,
 												const int	flags)
 {
-	if (widgitIdx == kSkyTravel_NightSky)
+	if (widgetIdx == kSkyTravel_NightSky)
 	{
 //		CONSOLE_DEBUG("kSkyTravel_NightSky");
 		cCsrx	=	xxx;
@@ -1255,7 +1255,7 @@ void	WindowTabSkyTravel::ProcessMouseEvent(	const int	widgitIdx,
 }
 
 //*****************************************************************************
-void	WindowTabSkyTravel::ProcessMouseLeftButtonDown(	const int	widgitIdx,
+void	WindowTabSkyTravel::ProcessMouseLeftButtonDown(	const int	widgetIdx,
 														const int	event,
 														const int	xxx,
 														const int	yyy,
@@ -1264,7 +1264,7 @@ void	WindowTabSkyTravel::ProcessMouseLeftButtonDown(	const int	widgitIdx,
 
 //	CONSOLE_DEBUG_W_NUM(__FUNCTION__, xxx);
 
-	if (widgitIdx == kSkyTravel_NightSky)
+	if (widgetIdx == kSkyTravel_NightSky)
 	{
 		cSavedMouseClick_X	=	xxx;
 		cSavedMouseClick_Y	=	yyy;
@@ -1277,13 +1277,13 @@ void	WindowTabSkyTravel::ProcessMouseLeftButtonDown(	const int	widgitIdx,
 }
 
 //*****************************************************************************
-void	WindowTabSkyTravel::ProcessMouseLeftButtonUp(	const int	widgitIdx,
-															const int	event,
-															const int	xxx,
-															const int	yyy,
-															const int	flags)
+void	WindowTabSkyTravel::ProcessMouseLeftButtonUp(	const int	widgetIdx,
+														const int	event,
+														const int	xxx,
+														const int	yyy,
+														const int	flags)
 {
-	if (widgitIdx == kSkyTravel_NightSky)
+	if (widgetIdx == kSkyTravel_NightSky)
 	{
 //		if (cDispOptions.dispHIP)
 		{
@@ -1293,7 +1293,7 @@ void	WindowTabSkyTravel::ProcessMouseLeftButtonUp(	const int	widgitIdx,
 }
 
 //*****************************************************************************
-void	WindowTabSkyTravel::ProcessMouseLeftButtonDragged(	const int	widgitIdx,
+void	WindowTabSkyTravel::ProcessMouseLeftButtonDragged(	const int	widgetIdx,
 															const int	event,
 															const int	xxx,
 															const int	yyy,
@@ -1310,7 +1310,7 @@ TYPE_SkyDispOptions	savedDispOptions;
 //		CONSOLE_DEBUG("--------------------------------------------------------");
 //		CONSOLE_DEBUG_W_NUM(__FUNCTION__, xxx);
 
-		if (widgitIdx == kSkyTravel_NightSky)
+		if (widgetIdx == kSkyTravel_NightSky)
 		{
 
 			deltaXX	=	xxx - cSavedMouseClick_X;
@@ -2485,22 +2485,22 @@ short				deltaPixels;
 }
 
 //**************************************************************************************
-void	WindowTabSkyTravel::DrawGraphWidget(IplImage *openCV_Image, const int widgitIdx)
+void	WindowTabSkyTravel::DrawGraphWidget(IplImage *openCV_Image, const int widgetIdx)
 {
 CvRect		myCVrect;
 CvScalar	myBackGroundColor;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-	myCVrect.x		=	cWidgetList[widgitIdx].left;
-	myCVrect.y		=	cWidgetList[widgitIdx].top;
-	myCVrect.width	=	cWidgetList[widgitIdx].width;
-	myCVrect.height	=	cWidgetList[widgitIdx].height;
+	myCVrect.x		=	cWidgetList[widgetIdx].left;
+	myCVrect.y		=	cWidgetList[widgetIdx].top;
+	myCVrect.width	=	cWidgetList[widgetIdx].width;
+	myCVrect.height	=	cWidgetList[widgetIdx].height;
 
 	cOpenCV_Image	=	openCV_Image;
-	cCursorOffsetY	=	cWidgetList[widgitIdx].top;
+	cCursorOffsetY	=	cWidgetList[widgetIdx].top;
 
-	switch(widgitIdx)
+	switch(widgetIdx)
 	{
 		case kSkyTravel_NightSky:
 //			CONSOLE_DEBUG_W_NUM("myCVrect.x\t=",	myCVrect.x);
@@ -2539,7 +2539,7 @@ CvScalar	myBackGroundColor;
 			break;
 
 		default:
-			CONSOLE_DEBUG_W_NUM("widgitIdx\t",	widgitIdx);
+			CONSOLE_DEBUG_W_NUM("widgetIdx\t",	widgetIdx);
 			CONSOLE_DEBUG("We shouldnt be here");
 //			CONSOLE_ABORT("We shouldnt be here");
 			break;

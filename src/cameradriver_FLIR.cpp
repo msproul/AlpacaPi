@@ -33,6 +33,8 @@
 //*	Apr 22,	2020	<MLS> Switched over to use FLIR C example
 //*	Apr 23,	2020	<MLS> Finally can read image data from FLIR camera
 //*	Apr 29,	2020	<MLS> Added image processing
+//*	Feb 13,	2021	<MLS> Added ExtractColorImage()
+//*	Feb 13,	2021	<MLS> Working on FLIR color image support
 //*****************************************************************************
 
 #if defined(_ENABLE_CAMERA_) && defined(_ENABLE_FLIR_)
@@ -176,7 +178,7 @@ quickSpin			quickSpinStruct;
 	strcpy(cDeviceManufAbrev,	"FLIR");
 	strcpy(cDeviceManufacturer,	"FLIR");
 	strcpy(cCommonProp.Description,	"FLIR Camera");
-	strcpy(cDriverversionStr,	gSpinakerVerString);
+	strcpy(cDeviceVersion,	gSpinakerVerString);
 	strcpy(cCommonProp.Name,			"FLIR");
 
 	//*	we have to have something here
@@ -393,6 +395,7 @@ char				featureName[MAX_BUFF_LEN];
 spinError			spinErr;
 spinNodeHandle		hDeviceInformation;
 unsigned int		iii;
+int					sLen;
 size_t				lenFeatureName;
 size_t				lenFeatureValue;
 size_t				numFeatures;
@@ -405,6 +408,8 @@ spinNodeType		featureType;
 	cSpinNodeMapTLDeviceH	=	NULL;
 	hDeviceInformation		=	NULL;
 	numFeatures				=	0;
+
+
 
 	spinErr	=	spinCameraGetTLDeviceNodeMap(cSpinCameraHandle, &cSpinNodeMapTLDeviceH);
 	if (spinErr == SPINNAKER_ERR_SUCCESS)
@@ -486,6 +491,11 @@ spinNodeType		featureType;
 				else if (strcasecmp(featureName, "DeviceModelName") == 0)
 				{
 					strcpy(cDeviceModel,		featureValue);
+					sLen	=	strlen(cDeviceModel);
+					if (cDeviceModel[sLen - 1] == 'C')
+					{
+						cIsColorCam		=	true;
+					}
 				}
 				else if (strcasecmp(featureName, "DeviceVersion") == 0)
 				{
@@ -796,6 +806,7 @@ size_t					bufferLen;
 
 			if (imageIsGood)
 			{
+				CONSOLE_DEBUG("imageIsGood");
 				alpacaErrCode		=	kASCOM_Err_Success;
 
 				//*	get the info about the image
@@ -819,17 +830,42 @@ size_t					bufferLen;
 					cBitDepth	=	spinnakerBitsPerPixel;
 				}
 				spinErr	=	spinImageGetPixelFormat(cSpinImageHandle, &spinnakerPixelFormat);
-//				CONSOLE_DEBUG_W_NUM("spinnakerPixelFormat=", spinnakerPixelFormat);
+				if (spinErr == SPINNAKER_ERR_SUCCESS)
+				{
+//					CONSOLE_DEBUG_W_NUM("spinnakerPixelFormat=", spinnakerPixelFormat);
+				}
+				else
+				{
+					CONSOLE_DEBUG_W_NUM("spinImageGetPixelFormat() returned error=", spinErr);
+				}
 
 				bufferLen	=	sizeof(spinnakerPixelFormatName) - 1;
 				spinErr		=	spinImageGetPixelFormatName(cSpinImageHandle,
 															spinnakerPixelFormatName,
 															&bufferLen);
-//				CONSOLE_DEBUG_W_STR("spinImageGetPixelFormatName=", spinnakerPixelFormatName);
+				if (spinErr == SPINNAKER_ERR_SUCCESS)
+				{
+	//				CONSOLE_DEBUG_W_STR("spinImageGetPixelFormatName=", spinnakerPixelFormatName);
+				}
+				else
+				{
+					CONSOLE_DEBUG_W_NUM("spinImageGetPixelFormatName() returned error=", spinErr);
+				}
 
+				if (cSpinImageHandle != NULL)
+				{
+					CONSOLE_DEBUG("cSpinImageHandle GOOD!!!!!");
+					ExtractColorImage();
+				//	ConvertToMono();
+				}
+				else
+				{
+					CONSOLE_DEBUG("cSpinImageHandle is NULL");
+				}
 
 				if (cSaveNextImage)
 				{
+					CONSOLE_DEBUG("cSaveNextImage");
 					GenerateFileNameRoot();
 					strcpy(myImageFileName, cFileNameRoot);
 					strcat(myImageFileName, "-spin.jpg");
@@ -843,8 +879,11 @@ size_t					bufferLen;
 						CONSOLE_DEBUG_W_NUM("Unable to save image. Non-fatal error=", spinErr);
 					}
 				}
-
-				ConvertToMono();
+				if (cSpinImageHandle == NULL)
+				{
+					CONSOLE_DEBUG("cSpinImageHandle is NULL");
+				}
+			//	ConvertToMono();
 			}
 			else
 			{
@@ -880,6 +919,73 @@ size_t					bufferLen;
 }
 
 //*****************************************************************************
+int	CameraDriverFLIR::ExtractColorImage(void)
+{
+spinError				spinErr;
+bool					buffOk;
+size_t					bufferLen;
+int				imageSize;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+	if (cSpinImageHandle != NULL)
+	{
+
+		buffOk	=	AllcateImageBuffer(0);
+		if (buffOk && (cCameraDataBuffer != NULL) && (cCameraDataBuffLen > 0))
+		{
+		void	 	**data;
+		size_t		memBuffSize;
+
+
+			imageSize	=	cCameraProp.CameraXsize * cCameraProp.CameraYsize * (cBitDepth / 8);
+
+			CONSOLE_DEBUG_W_LONG("cCameraDataBuffLen\t\t=",		cCameraDataBuffLen);
+			CONSOLE_DEBUG_W_NUM("cCameraProp.CameraXsize\t=",	cCameraProp.CameraXsize);
+			CONSOLE_DEBUG_W_NUM("cCameraProp.CameraYsize\t=",	cCameraProp.CameraYsize);
+			CONSOLE_DEBUG_W_NUM("cBitDepth\t\t\t=",				cBitDepth);
+			CONSOLE_DEBUG_W_NUM("imageSize\t\t\t=",				imageSize);
+
+
+			memBuffSize	=	3 * imageSize * sizeof(void*);
+			CONSOLE_DEBUG_W_LONG("memBuffSize=", memBuffSize);
+			CONSOLE_DEBUG("Allocating spinnaker data buffer");
+
+			data	=	(void **)malloc(memBuffSize);
+
+			if (data != NULL)
+			{
+				CONSOLE_DEBUG("Calling spinImageGetData");
+				spinErr		=	spinImageGetData(	cSpinImageHandle,	data);
+
+				if (spinErr == SPINNAKER_ERR_SUCCESS)
+				{
+					CONSOLE_DEBUG_W_LONG("memBuffSize\t=",			memBuffSize);
+					CONSOLE_DEBUG_W_LONG("cCameraDataBuffLen\t=",	cCameraDataBuffLen);
+					CONSOLE_DEBUG("Calling memcpy");
+					memcpy(cCameraDataBuffer, *data, imageSize);
+					CONSOLE_DEBUG("Done with memcpy");
+				}
+				else
+				{
+					CONSOLE_DEBUG_W_NUM("spinImageGetData failed, err=", spinErr);
+				}
+
+				free(data);
+			}
+			else
+			{
+				CONSOLE_DEBUG("Failed to allocate image data buffer");
+			}
+		}
+	}
+	else
+	{
+		CONSOLE_DEBUG("cSpinImageHandle is NULL");
+	}
+
+}
+
+//*****************************************************************************
 int	CameraDriverFLIR::ConvertToMono(void)
 {
 spinError				spinErr;
@@ -897,7 +1003,7 @@ char					spinnakerPixelFormatName[64];
 size_t					bufferLen;
 bool					buffOk;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 	//
 	// Convert image to mono 8
 	//
@@ -921,6 +1027,7 @@ bool					buffOk;
 	//
 	if (cSpinImageHandle != NULL)
 	{
+		CONSOLE_DEBUG(__FUNCTION__);
 		spinErr	=	spinImageCreateEmpty(&hConvertedImage);
 		if (spinErr == SPINNAKER_ERR_SUCCESS)
 		{
@@ -983,16 +1090,16 @@ bool					buffOk;
 
 					if (data != NULL)
 					{
-//						CONSOLE_DEBUG("Calling spinImageGetData");
+						CONSOLE_DEBUG("Calling spinImageGetData");
 						spinErr		=	spinImageGetData(	hConvertedImage,	data);
 
 						if (spinErr == SPINNAKER_ERR_SUCCESS)
 						{
-//							CONSOLE_DEBUG_W_LONG("memBuffSize\t=",			memBuffSize);
-//							CONSOLE_DEBUG_W_LONG("cCameraDataBuffLen\t=",	cCameraDataBuffLen);
-//							CONSOLE_DEBUG("Calling memcpy");
+							CONSOLE_DEBUG_W_LONG("memBuffSize\t=",			memBuffSize);
+							CONSOLE_DEBUG_W_LONG("cCameraDataBuffLen\t=",	cCameraDataBuffLen);
+							CONSOLE_DEBUG("Calling memcpy");
 							memcpy(cCameraDataBuffer, *data, spinnakerImageSize);
-//							CONSOLE_DEBUG("Done with memcpy");
+							CONSOLE_DEBUG("Done with memcpy");
 						}
 						else
 						{
@@ -1025,6 +1132,10 @@ bool					buffOk;
 		{
 			CONSOLE_DEBUG_W_NUM("Unable to create image. Non-fatal error=", spinErr);
 		}
+	}
+	else
+	{
+		CONSOLE_DEBUG("cSpinImageHandle is NULL");
 	}
 	return(0);
 }

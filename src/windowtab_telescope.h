@@ -68,7 +68,7 @@ class WindowTabTelescope: public WindowTab
 								const char	*windowName);
 		virtual	~WindowTabTelescope(void);
 
-//		virtual	void	DrawGraphWidget(const int widgitIdx);
+//		virtual	void	DrawGraphWidget(const int widgetIdx);
 		virtual	void	SetupWindowControls(void);
 //		virtual	void	DrawWindow(void);
 //		virtual void	HandleKeyDown(const int keyPressed);

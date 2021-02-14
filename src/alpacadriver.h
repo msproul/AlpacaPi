@@ -27,6 +27,7 @@
 //*	Sep  1,	2020	<MLS> Added _INCLUDE_EXIT_COMMAND_
 //*	Dec  5,	2020	<MLS> Added cDriverVersion so that different drivers can have different versions
 //*	Dec 11,	2020	<MLS> Added GENERATE_ALPACAPI_ERRMSG() macro to make error messages consistent
+//*	Feb 11,	2021	<MLS> Deleted cDriverVersion, use cCommonProp.InterfaceVersion
 //*****************************************************************************
 //#include	"alpacadriver.h"
 
@@ -209,19 +210,13 @@ class AlpacaDriver
 				//*	start with the Alpaca properties
 				TYPE_CommonProperties	cCommonProp;
 
-//				char				cDeviceDescription[64];
-				//					cDriverInfo				//	is hard coded in alpacadriver.cpp
-				char				cDriverversionStr[64];
-
 
 				uint32_t			cMagicCookie;		//*	used to validate objects
 				TYPE_DEVICETYPE		cDeviceType;
 				int					cDeviceNum;			//*	device index for alpaca
 
 
-				int					cDriverVersion;
 				char				cAlpacaName[32];
-//				char				cDeviceName[128];
 				char				cDeviceModel[kDeviceModelStrLen];
 				char				cDeviceManufacturer[64];
 				char				cDeviceManufAbrev[8];

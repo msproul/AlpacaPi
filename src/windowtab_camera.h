@@ -113,8 +113,9 @@ class WindowTabCamera: public WindowTab
 		virtual	~WindowTabCamera(void);
 
 		virtual	void	SetupWindowControls(void);
-		virtual	void	DrawGraphWidget(IplImage *openCV_Image, const int widgitIdx);
+		virtual	void	DrawGraphWidget(IplImage *openCV_Image, const int widgetIdx);
 		virtual	void	ProcessButtonClick(const int buttonIdx);
+		virtual	void	UpdateSliderValue(const int widgetIdx, double newSliderValue);
 
 				void	ForceUpdate(void);
 				void	BumpGain(const int howMuch);

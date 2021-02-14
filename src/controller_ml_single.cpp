@@ -127,11 +127,7 @@ ControllerMLsingle::ControllerMLsingle(	const char			*argWindowName,
 
 	SetWidgetText(kTab_MLsingle,	kMLsingle_AlpacaDrvrVersion,		gFullVersionString);
 	SetWidgetText(kTab_Config,		kCongfigBox_AlpacaDrvrVersion,		gFullVersionString);
-	SetWidgetText(kTab_About,		kAboutBox_AlpacaDrvrVersion,		gFullVersionString);
-
-
 }
-
 
 //**************************************************************************************
 // Destructor
@@ -140,21 +136,9 @@ ControllerMLsingle::~ControllerMLsingle(void)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
 	//*	delete the windowtab objects
-	if (cMLsingleTabObjPtr != NULL)
-	{
-		delete cMLsingleTabObjPtr;
-		cMLsingleTabObjPtr	=	NULL;
-	}
-	if (cConfigTabObjPtr != NULL)
-	{
-		delete cConfigTabObjPtr;
-		cConfigTabObjPtr	=	NULL;
-	}
-	if (cAboutBoxTabObjPtr != NULL)
-	{
-		delete cAboutBoxTabObjPtr;
-		cAboutBoxTabObjPtr	=	NULL;
-	}
+	DELETE_OBJ_IF_VALID(cMLsingleTabObjPtr);
+	DELETE_OBJ_IF_VALID(cConfigTabObjPtr);
+	DELETE_OBJ_IF_VALID(cAboutBoxTabObjPtr);
 }
 
 //**************************************************************************************
@@ -257,7 +241,6 @@ void	ControllerMLsingle::UpdateWindowTabs_ReadAll(bool hasReadAll)
 
 	SetWidgetValid(kTab_MLsingle,	kMLsingle_Readall,		cHas_readall);
 	SetWidgetValid(kTab_Config,		kCongfigBox_Readall,	cHas_readall);
-	SetWidgetValid(kTab_About,		kAboutBox_Readall,		cHas_readall);
 }
 
 //*****************************************************************************
@@ -268,7 +251,6 @@ void	ControllerMLsingle::UpdateWindowTabs_Version(const char *versionString)
 
 	SetWidgetText(kTab_MLsingle,	kMLsingle_AlpacaDrvrVersion,	cAlpacaVersionString);
 	SetWidgetText(kTab_Config,		kCongfigBox_AlpacaDrvrVersion,	cAlpacaVersionString);
-	SetWidgetText(kTab_About,		kAboutBox_AlpacaDrvrVersion,	cAlpacaVersionString);
 }
 
 //*****************************************************************************

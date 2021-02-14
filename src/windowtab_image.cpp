@@ -169,14 +169,14 @@ int		iii;
 
 
 //*****************************************************************************
-void	WindowTabImage::ProcessMouseLeftButtonDown(	const int	widgitIdx,
+void	WindowTabImage::ProcessMouseLeftButtonDown(	const int	widgetIdx,
 													const int	event,
 													const int	xxx,
 													const int	yyy,
 													const int	flags)
 {
 
-	if (widgitIdx == kImageDisplay_ImageDisplay)
+	if (widgetIdx == kImageDisplay_ImageDisplay)
 	{
 		cSavedMouseClick_X	=	xxx;
 		cSavedMouseClick_Y	=	yyy;
@@ -186,7 +186,7 @@ void	WindowTabImage::ProcessMouseLeftButtonDown(	const int	widgitIdx,
 
 
 //*****************************************************************************
-void	WindowTabImage::ProcessMouseLeftButtonUp(	const int	widgitIdx,
+void	WindowTabImage::ProcessMouseLeftButtonUp(	const int	widgetIdx,
 													const int	event,
 													const int	xxx,
 													const int	yyy,
@@ -199,7 +199,7 @@ void	WindowTabImage::ProcessMouseLeftButtonUp(	const int	widgitIdx,
 
 
 //*****************************************************************************
-void	WindowTabImage::ProcessMouseLeftButtonDragged(	const int	widgitIdx,
+void	WindowTabImage::ProcessMouseLeftButtonDragged(	const int	widgetIdx,
 														const int	event,
 														const int	xxx,
 														const int	yyy,
@@ -222,7 +222,7 @@ int			sourceImageHeight;
 //		CONSOLE_DEBUG("--------------------------------------------------------");
 		CONSOLE_DEBUG_W_NUM(__FUNCTION__, xxx);
 
-//		if (widgitIdx == kImageDisplay_ImageDisplay)
+//		if (widgetIdx == kImageDisplay_ImageDisplay)
 		{
 
 			deltaXX	=	xxx - cSavedMouseClick_X;

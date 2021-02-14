@@ -124,7 +124,7 @@ bool				validDiscoveryRequest;
 char				ipAddrSt[48];
 
 
-	CONSOLE_DEBUG("Starting discovery listen thread");
+//	CONSOLE_DEBUG("Starting discovery listen thread");
 
 	mySocket	=	socket(AF_INET, SOCK_DGRAM, 0);
 	if (mySocket >= 0)
@@ -596,6 +596,8 @@ int		alpacaListenPort;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 	//*	find the alpaca port
+	alpacaListenPort	=	12345;
+
 	for (iii=0; iii<jsonParser->tokenCount_Data; iii++)
 	{
 		if (strcmp(jsonParser->dataList[iii].keyword, "ALPACAPORT") == 0)

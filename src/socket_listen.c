@@ -15,16 +15,17 @@
 //*	<MLS>	=	Mark L Sproul
 //*****************************************************************************
 //*	Feb 14,	2019	<MLS> Started on socket_listen.c
-//*	Apr  9,	2019	<MLS> Added _USE_POLLING_
 //*	Apr  9,	2019	<MLS> Added SocketListen_SetCallback()
 //*	Apr  9,	2019	<MLS> Got polling version to work
 //*	May 25,	2019	<MLS> Fixed EIVAL errors on accept
 //*	Mar 31,	2020	<MLS> Updated socket receive code to have a timeout and do multiple reads
 //*	Apr  7,	2020	<MLS> Added _FIX_ESCAPE_CHARS_ compile flag
 //*	Apr  7,	2020	<MLS> Added bytesRead to callback function
+//*	Feb 10,	2021	<MLS> Reduced timeout from 150000 to 15000 (micro-secs)
+//*	Feb 10,	2021	<MLS> Reduced timeout to 10000 (micro-secs)
+//*	Feb 10,	2021	<MLS> Reduced timeout to 2500 (micro-secs)
 //*****************************************************************************
 
-#define	_USE_POLLING_
 
 #ifdef _ALPACA_PI_
 	#define	_FIX_ESCAPE_CHARS_
@@ -50,6 +51,7 @@
 
 #include	"socket_listen.h"
 
+#define		kTimeOut_MicroSecs	2500
 
 SocketData_Callback			gSocketCallbackProcPtr		=	NULL;
 
@@ -167,10 +169,12 @@ int		ii;
 int		sLen;
 char	hi4bits;
 char	lo4bits;
+int		escCharCnt;
 
-	ii		=	0;
-	cc		=	0;
-	sLen	=	strlen(buffer);
+	ii			=	0;
+	cc			=	0;
+	escCharCnt	=	0;
+	sLen		=	strlen(buffer);
 	while (ii<sLen)
 	{
 		if (buffer[ii] == '%')
@@ -188,6 +192,7 @@ char	lo4bits;
 			}
 			buffer[cc++]	=	hi4bits + lo4bits;
 
+			escCharCnt++;
 		}
 		else
 		{
@@ -197,6 +202,11 @@ char	lo4bits;
 	buffer[cc]	=	0;
 
 	sLen	=	strlen(buffer);
+
+	if (escCharCnt > 0)
+	{
+		printf("%s\tescCharCnt=%d\r\n", __FUNCTION__, escCharCnt);
+	}
 	return(sLen);
 }
 #endif // _FIX_ESCAPE_CHARS_
@@ -208,21 +218,21 @@ int	gMessageCnt	=	1;
 #define	kMaxResponseLen	2048
 
 #ifdef _BANDWIDTH_
+
+#warning "_BANDWIDTH_ is defined"
+
 //*****************************************************************************
 //*	SendDataToSocket()
 //*		There is a separate instance of this function
 //*		for each connection.  It handles all communication
-//*		once a connnection has been established.
+//*		once a connection has been established.
 //*****************************************************************************
 void SendDataToSocket(int sock)
 {
 int				bytesRead;
-//int			bytesWritten;
-//int			resultsMsgLen;
 char			readBuffer[kReadBuffLen];
 struct timeval	timeoutLength;
 int				setOptRetCode;
-int				so_oobinline;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -230,7 +240,7 @@ int				so_oobinline;
 
 	//*	set a timeout
 	timeoutLength.tv_sec	=	0;
-	timeoutLength.tv_usec	=	150000;
+	timeoutLength.tv_usec	=	kTimeOut_MicroSecs;
 	setOptRetCode			=	setsockopt(	sock,
 											SOL_SOCKET,
 											SO_RCVTIMEO,
@@ -241,22 +251,11 @@ int				so_oobinline;
 		CONSOLE_DEBUG_W_NUM("setsockopt() returned", setOptRetCode);
 	}
 
-	//*	turn out of band off
-	so_oobinline			=	0;
-	setOptRetCode			=	setsockopt(	sock,
-											SOL_SOCKET,
-											SO_OOBINLINE,
-											&so_oobinline,
-											sizeof(so_oobinline));
-	if (setOptRetCode != 0)
-	{
-		CONSOLE_DEBUG_W_NUM("setsockopt() returned", setOptRetCode);
-	}
 
 	do
 	{
 		bytesRead	=	read(sock, readBuffer, (kReadBuffLen - 2));
-		CONSOLE_DEBUG_W_NUM("bytesRead=", bytesRead);
+//		CONSOLE_DEBUG_W_NUM("bytesRead=", bytesRead);
 		if (gSocketCallbackProcPtr != NULL)
 		{
 			CONSOLE_DEBUG("Calling gSocketCallbackProcPtr");
@@ -266,9 +265,8 @@ int				so_oobinline;
 
 
 	gMessageCnt++;
-	CONSOLE_DEBUG("EXIT");
+//	CONSOLE_DEBUG("EXIT");
 }
-
 
 #else
 
@@ -295,7 +293,7 @@ int				setOptRetCode;
 	memset(htmlBuffer, 0, kReadBuffLen);
 	//*	set a timeout
 	timeoutLength.tv_sec	=	0;
-	timeoutLength.tv_usec	=	150000;
+	timeoutLength.tv_usec	=	kTimeOut_MicroSecs;
 	setOptRetCode			=	setsockopt(	sock,
 											SOL_SOCKET,
 											SO_RCVTIMEO,

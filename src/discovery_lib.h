@@ -64,9 +64,9 @@ typedef struct
 
 } TYPE_REMOTE_DEV;
 
-#define	kMaxAlpacaIPaddrCnt	24
+#define	kMaxAlpacaIPaddrCnt	32
 
-#define	kMaxDeviceListCnt	48
+#define	kMaxDeviceListCnt	64
 
 
 //*	this is a list of IP addresses

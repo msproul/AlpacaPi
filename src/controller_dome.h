@@ -37,6 +37,9 @@
 #endif // _WINDOWTAB_SLIT_GRAPH_H_
 
 //===========================================
+#include	"windowtab_drvrInfo.h"
+
+//===========================================
 #ifndef	_WINDOWTAB_ABOUT_H_
 	#include	"windowtab_about.h"
 #endif // _WINDOWTAB_ABOUT_H_
@@ -50,6 +53,7 @@ enum
 	kTab_Dome	=	1,
 	kTab_SlitTracker,
 	kTab_SlitGraph,
+	kTab_DriverInfo,
 	kTab_About,
 
 	kTab_Dome_Count
@@ -72,7 +76,7 @@ class ControllerDome: public Controller
 
 		virtual	void	SetupWindowControls(void);
 		virtual	void	RunBackgroundTasks(void);
-	//	virtual	void	DrawGraphWidget(const int widgitIdx);
+	//	virtual	void	DrawGraphWidget(const int widgetIdx);
 		virtual	bool	AlpacaGetStartupData(void);
 				bool	AlpacaGetStatus(void);
 		virtual	void	AlpacaDisplayErrorMessage(const char *errorMsgString);
@@ -85,6 +89,7 @@ class ControllerDome: public Controller
 														const int	deviveNum,
 														const char	*valueString);
 
+		virtual	void	UpdateCommonProperties(void);
 				void	AlpacaProcessSupportedActions_Dome(const int deviveNum, const char *valueString);
 				void	AlpacaProcessReadAll_Dome(		const int	deviceNum,
 														const char	*keywordString,
@@ -121,6 +126,7 @@ class ControllerDome: public Controller
 
 				//*	tab information
 				WindowTabDome			*cDomeTabObjPtr;
+				WindowTabDriverInfo		*cDriverInfoTabObjPtr;
 				WindowTabAbout			*cAboutBoxTabObjPtr;
 
 				TYPE_DomeProperties	cDomeProp;

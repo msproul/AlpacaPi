@@ -47,7 +47,7 @@ enum
 	kDeviceSelect_TelescopeOutline,
 
 
-//	kDeviceSelect_AlpacaLogo,
+	kDeviceSelect_AlpacaLogo,
 //	kDeviceSelect_AlpacaDrvrVersion,
 //	kDeviceSelect_IPaddr,
 //	kDeviceSelect_Readall,

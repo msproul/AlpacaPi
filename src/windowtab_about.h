@@ -24,9 +24,6 @@ enum
 	kAboutBox_CPUinfo,
 
 	kAboutBox_AlpacaLogo,
-	kAboutBox_AlpacaDrvrVersion,
-	kAboutBox_IPaddr,
-	kAboutBox_Readall,
 
 
 	kAboutBox_last

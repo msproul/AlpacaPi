@@ -168,16 +168,16 @@ int		dh,dm,ds;	// local sidereal time
 	//**********************************************
 	//*	Added by MLS, Nov 8, 2019
 	//*	check to see if we went over a day boundary
-	if (siderealTimePtr->tm_hour == 0)
-	{
-		//*	we are on the next day
-		CONSOLE_DEBUG("We have crossed a day boundry!!!!!!!!!!!!!!!!!!!!!");
-		CONSOLE_DEBUG_W_NUM("utcTime->tm_mon\t=",	(utcTime->tm_mon + 1));
-		CONSOLE_DEBUG_W_NUM("utcTime->tm_mday\t=",	utcTime->tm_mday);
-		CONSOLE_DEBUG_W_NUM("utcTime->tm_hour\t=",	utcTime->tm_hour);
-		CONSOLE_DEBUG_W_NUM("sidTime->tm_hour\t=",	siderealTimePtr->tm_hour);
+//	if (siderealTimePtr->tm_hour == 0)
+//	{
+//		//*	we are on the next day
+//		CONSOLE_DEBUG("We have crossed a day boundry!!!!!!!!!!!!!!!!!!!!!");
+//		CONSOLE_DEBUG_W_NUM("utcTime->tm_mon\t=",	(utcTime->tm_mon + 1));
+//		CONSOLE_DEBUG_W_NUM("utcTime->tm_mday\t=",	utcTime->tm_mday);
+//		CONSOLE_DEBUG_W_NUM("utcTime->tm_hour\t=",	utcTime->tm_hour);
+//		CONSOLE_DEBUG_W_NUM("sidTime->tm_hour\t=",	siderealTimePtr->tm_hour);
 //		exit(0);
-	}
+//	}
 
 //	CONSOLE_DEBUG_W_NUM("tm_year\t\t=",	siderealTimePtr->tm_year);
 //	CONSOLE_DEBUG_W_NUM("tm_hour\t\t=",	siderealTimePtr->tm_hour);

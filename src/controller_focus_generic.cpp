@@ -105,17 +105,8 @@ ControllerFocusGeneric::~ControllerFocusGeneric(void)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
 	//*	delete the windowtab objects
-	if (cMLsingleTabObjPtr != NULL)
-	{
-		delete cMLsingleTabObjPtr;
-		cMLsingleTabObjPtr	=	NULL;
-	}
-
-	if (cAboutBoxTabObjPtr != NULL)
-	{
-		delete cAboutBoxTabObjPtr;
-		cAboutBoxTabObjPtr	=	NULL;
-	}
+	DELETE_OBJ_IF_VALID(cMLsingleTabObjPtr);
+	DELETE_OBJ_IF_VALID(cAboutBoxTabObjPtr);
 }
 
 //**************************************************************************************
@@ -200,7 +191,6 @@ void	ControllerFocusGeneric::UpdateWindowTabs_ReadAll(bool hasReadAll)
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	SetWidgetValid(kTab_Focuser,	kMLsingle_Readall,		cHas_readall);
-	SetWidgetValid(kTab_About,		kAboutBox_Readall,		cHas_readall);
 }
 
 //*****************************************************************************
@@ -210,7 +200,6 @@ void	ControllerFocusGeneric::UpdateWindowTabs_Version(const char *versionString)
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, cAlpacaVersionString);
 
 	SetWidgetText(kTab_Focuser,	kMLsingle_AlpacaDrvrVersion,	cAlpacaVersionString);
-	SetWidgetText(kTab_About,		kAboutBox_AlpacaDrvrVersion,	cAlpacaVersionString);
 }
 
 //*****************************************************************************

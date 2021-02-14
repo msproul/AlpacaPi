@@ -345,7 +345,7 @@ int		homeBtnWidth;
 }
 
 //**************************************************************************************
-void	WindowTabNitecrawler::DrawGraphWidget(IplImage *openCV_Image, const int widgitIdx)
+void	WindowTabNitecrawler::DrawGraphWidget(IplImage *openCV_Image, const int widgetIdx)
 {
 CvRect		myCVrect;
 CvPoint		myCVcenter;
@@ -357,27 +357,27 @@ CvPoint		pt1;
 CvPoint		pt2;
 char		lineBuff[32];
 
-	myCVrect.x		=	cWidgetList[widgitIdx].left;
-	myCVrect.y		=	cWidgetList[widgitIdx].top;
-	myCVrect.width	=	cWidgetList[widgitIdx].width;
-	myCVrect.height	=	cWidgetList[widgitIdx].height;
+	myCVrect.x		=	cWidgetList[widgetIdx].left;
+	myCVrect.y		=	cWidgetList[widgetIdx].top;
+	myCVrect.width	=	cWidgetList[widgetIdx].width;
+	myCVrect.height	=	cWidgetList[widgetIdx].height;
 
 
 	cvRectangleR(	openCV_Image,
 					myCVrect,
-					cWidgetList[widgitIdx].bgColor,			//	CvScalar color,
+					cWidgetList[widgetIdx].bgColor,			//	CvScalar color,
 					CV_FILLED,								//	int thickness CV_DEFAULT(1),
 					8,										//	int line_type CV_DEFAULT(8),
 					0);										//	int shift CV_DEFAULT(0));
 
 //	cvRectangleR(	openCV_Image,
 //					myCVrect,
-//					cWidgetList[widgitIdx].borderColor,	//	CvScalar color,
+//					cWidgetList[widgetIdx].borderColor,	//	CvScalar color,
 //					1,										//	int thickness CV_DEFAULT(1),
 //					8,										//	int line_type CV_DEFAULT(8),
 //					0);										//	int shift CV_DEFAULT(0));
 
-	switch(widgitIdx)
+	switch(widgetIdx)
 	{
 		case kNiteCrawlerTab_RotatorCompass:
 			myCVcenter.x	=	myCVrect.x + (myCVrect.width / 2);
@@ -386,7 +386,7 @@ char		lineBuff[32];
 			cvCircle(	openCV_Image,
 						myCVcenter,
 						radius1,
-						cWidgetList[widgitIdx].borderColor,
+						cWidgetList[widgetIdx].borderColor,
 						1,									//	int thickness CV_DEFAULT(1),
 						8,									//	int line_type CV_DEFAULT(8),
 						0);									//	int shift CV_DEFAULT(0));
@@ -405,7 +405,7 @@ char		lineBuff[32];
 				cvLine(	openCV_Image,
 						pt1,
 						pt2,
-						cWidgetList[widgitIdx].borderColor,		//	CvScalar color,
+						cWidgetList[widgetIdx].borderColor,		//	CvScalar color,
 						1,										//	int thickness CV_DEFAULT(1),
 						8,										//	int line_type CV_DEFAULT(8),
 						0);										//	int shift CV_DEFAULT(0));
@@ -426,7 +426,7 @@ char		lineBuff[32];
 				cvLine(	openCV_Image,
 						pt1,
 						pt2,
-						cWidgetList[widgitIdx].borderColor,		//	CvScalar color,
+						cWidgetList[widgetIdx].borderColor,		//	CvScalar color,
 						2,										//	int thickness CV_DEFAULT(1),
 						8,										//	int line_type CV_DEFAULT(8),
 						0);										//	int shift CV_DEFAULT(0));
@@ -447,7 +447,7 @@ char		lineBuff[32];
 						lineBuff,
 						pt1,
 						&gTextFont[kFont_Medium],
-						cWidgetList[widgitIdx].borderColor
+						cWidgetList[widgetIdx].borderColor
 						);
 
 
@@ -492,7 +492,7 @@ char		lineBuff[32];
 			break;
 
 		default:
-			CONSOLE_DEBUG_W_NUM("widgitIdx\t",	widgitIdx);
+			CONSOLE_DEBUG_W_NUM("widgetIdx\t",	widgetIdx);
 			break;
 	}
 }

@@ -48,16 +48,16 @@ class WindowTabImage: public WindowTab
 								const char	*windowName);
 		virtual	~WindowTabImage(void);
 
-//		virtual	void	DrawGraphWidget(const int widgitIdx);
+//		virtual	void	DrawGraphWidget(const int widgetIdx);
 		virtual	void	SetupWindowControls(void);
 //		virtual	void	DrawWindow(void);
 //		virtual void	HandleKeyDown(const int keyPressed);
 		virtual	void	ProcessButtonClick(const int buttonIdx);
 		virtual	void	ProcessDoubleClick(const int buttonIdx);
-//		virtual void	ProcessMouseEvent(const int widgitIdx, const int event, const int xxx, const int yyy, const int flags);
-		virtual void	ProcessMouseLeftButtonDown(const int widgitIdx, const int event, const int xxx, const int yyy, const int flags);
-		virtual void	ProcessMouseLeftButtonUp(const int widgitIdx, const int event, const int xxx, const int yyy, const int flags);
-		virtual void	ProcessMouseLeftButtonDragged(const int widgitIdx, const int event, const int xxx, const int yyy, const int flags);
+//		virtual void	ProcessMouseEvent(const int widgetIdx, const int event, const int xxx, const int yyy, const int flags);
+		virtual void	ProcessMouseLeftButtonDown(const int widgetIdx, const int event, const int xxx, const int yyy, const int flags);
+		virtual void	ProcessMouseLeftButtonUp(const int widgetIdx, const int event, const int xxx, const int yyy, const int flags);
+		virtual void	ProcessMouseLeftButtonDragged(const int widgetIdx, const int event, const int xxx, const int yyy, const int flags);
 
 				void	SetImagePtrs(IplImage *originalImage, IplImage *displayedImage);
 				void	ZoomImage(void);

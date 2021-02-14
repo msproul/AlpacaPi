@@ -65,7 +65,7 @@ class WindowTabConfig: public WindowTab
 		virtual	~WindowTabConfig(void);
 
 		virtual	void	SetupWindowControls(void);
-		virtual	void	DrawGraphWidget(IplImage *openCV_Image, const int widgitIdx);
+		virtual	void	DrawGraphWidget(IplImage *openCV_Image, const int widgetIdx);
 
 
 };

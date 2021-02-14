@@ -19,30 +19,9 @@
 #endif
 
 
-//*****************************************************************************
-typedef enum
-{
-	kDeviceType_undefined	=	-1,
-	kDeviceType_Camera,
-	kDeviceType_CoverCalibrator,
-	kDeviceType_Dome,
-	kDeviceType_Filterwheel,
-	kDeviceType_Focuser,
-	kDeviceType_Management,
-	kDeviceType_Observingconditions,
-	kDeviceType_Rotator,
-	kDeviceType_Telescope,
-	kDeviceType_SafetyMonitor,
-	kDeviceType_Switch,
-
-	//*	extras defined by MLS
-	kDeviceType_Multicam,
-	kDeviceType_Shutter,
-	kDeviceType_SlitTracker,
-
-	kDeviceType_last
-
-} TYPE_DEVICETYPE;
+#ifndef	_ALPACA_DEFS_H_
+	#include	"alpaca_defs.h"
+#endif
 
 
 //*****************************************************************************

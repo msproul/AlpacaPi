@@ -158,6 +158,7 @@
 #endif
 
 
+//#define _DEBUG_TIMING_
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
 
@@ -306,15 +307,10 @@ int	iii;
 	//*	set all of the class data to known states
 
 
-	memset(&cCameraProp, 0, sizeof(TYPE_CameraProperties));
-
 	//======================================================
 	//*	Start with the ASCOM properties
 	//*	set everything to false first
-//-	cCanAbortExposure				=	false;
-//-	cCanAsymmetricBin				=	false;
-//-	cCanStopExposure				=	true;
-
+	memset(&cCameraProp, 0, sizeof(TYPE_CameraProperties));
 
 
 	//======================================================
@@ -329,24 +325,15 @@ int	iii;
 	cLastJpegImageName[0]			=	0;
 	cCameraID						=	-1;
 	cCameraIsOpen					=	false;
-//-	cCameraXsize					=	0;
-//-	cCameraYsize					=	0;
 	cBayerPattern					=	0;
-//-	cPixelSizeX						=	0.0;
-//-	cPixelSizeY						=	0.0;
 	cIsColorCam						=	false;
-//-	cHasShutter						=	false;
 	cSt4Port						=	false;
-//-	cIsPulseGuiding					=	false;
 	cIsCoolerCam					=	false;
 	cIsUSB3Host						=	false;
 	cIsUSB3Camera					=	false;
-//-	cElectronsPerADU				=	0.0;
 	cIsTriggerCam					=	false;
 	cCameraProp.ExposureResolution	=	1.0;
 	cBitDepth						=	0;
-//-	cMaxbinX						=	0;
-//-	cMaxbinY						=	0;
 	for (iii=0; iii<kNumSupportedFormats; iii++)
 	{
 		cSupportedFormats[iii]		=	-1;
@@ -357,17 +344,11 @@ int	iii;
 		cSupportedImageTypes[iii].internalImgageType	=	kImageType_Invalid;
 	}
 
-//-	cGainMin						=	0;
-//-	cGainMax						=	0;
 	cGain_default					=	0;
-//-	cGain							=	0;
 	cCameraProp.ExposureMin_us		=	32;
 	cCameraProp.ExposureMax_us		=	2000 * 1000 *1000;
 	cCameraProp.ExposureMax_seconds	=	10000.0;
 	cExposureDefault_us				=	0;
-//-	cCanFastReadout					=	false;
-//-	cCanGetCoolerPower				=	false;
-//-	cCansetccdtemperature			=	false;
 	cCanRead8Bit					=	true;
 	cHighSpeedMode					=	0;
 	cAlpacaCameraState				=	kALPACA_CameraState_Idle;
@@ -389,7 +370,6 @@ int	iii;
 	cCameraDataBuffer				=	NULL;
 	cCameraBGRbuffer				=	NULL;
 
-
 	cCameraDataBuffLen				=	0;
 	cAutoAdjustExposure				=	gAutoExposure;
 	cAutoAdjustStepSz_us			=	5;
@@ -403,6 +383,8 @@ int	iii;
 	cSaveNextImage					=	false;
 	cNewImageReadyToDisplay			=	false;
 	cWorkingLoopCnt					=	0;
+
+
 #ifdef _USE_OPENCV_
 	cCreateOpenCVwindow				=	true;
 	cOpenCV_Image					=	NULL;
@@ -1410,6 +1392,8 @@ char				httpHeader[500];
 	}
 	//*	this is for the logging function
 	strcpy(reqData->alpacaErrMsg, alpacaErrMsg);
+
+
 	return(alpacaErrCode);
 }
 
@@ -3687,7 +3671,7 @@ int				dataElementCnt;
 		dataElementCnt	=	0;
 		for (iii=0; iii < pixelLimit; iii++)
 		{
-			if ((iii % 10000) == 0)
+			if ((iii % 500000) == 0)
 			{
 				CONSOLE_DEBUG_W_NUM("iii\t=", iii);
 			}
@@ -4576,13 +4560,13 @@ int					mySocketFD;
 
 
 	//===============================================================
-	if (strlen(cDriverversionStr) > 0)
+	if (strlen(cDeviceVersion) > 0)
 	{
 		SocketWriteData(mySocketFD,	"<TR>\r\n");
 		SocketWriteData(mySocketFD,	"\t<TD></TD>\r\n");
 		SocketWriteData(mySocketFD,	"\t<TD>Library Version</TD>");
 		SocketWriteData(mySocketFD,	"\t<TD>");
-		SocketWriteData(mySocketFD,	cDriverversionStr);
+		SocketWriteData(mySocketFD,	cDeviceVersion);
 		SocketWriteData(mySocketFD,	"</TD></TR>\r\n");
 	}
 

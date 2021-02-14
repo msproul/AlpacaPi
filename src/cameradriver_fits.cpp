@@ -860,12 +860,12 @@ char	instrumentString[128];
 	fitsStatus	=	0;
 	fits_write_key(fitsFilePtr, TSTRING, "CAMERA",		cCommonProp.Name, NULL, &fitsStatus);
 
-	if (strlen(cDriverversionStr) > 0)
+	if (strlen(cDeviceVersion) > 0)
 	{
 		fitsStatus	=	0;
 		fits_write_key(fitsFilePtr,	TSTRING,
 									"CAMSWV",
-									cDriverversionStr,
+									cDeviceVersion,
 									"Camera Driver version", &fitsStatus);
 	}
 
@@ -1005,10 +1005,10 @@ char	instrumentString[128];
 	fits_write_key(fitsFilePtr, TSTRING, "COMMENT",	stringBuf,		NULL, &fitsStatus);
 
 	//*	Camera driver version
-	if (strlen(cDriverversionStr) > 0)
+	if (strlen(cDeviceVersion) > 0)
 	{
 		strcpy(stringBuf, "Camera Driver Version: ");
-		strcat(stringBuf, cDriverversionStr);
+		strcat(stringBuf, cDeviceVersion);
 		fitsStatus	=	0;
 		fits_write_key(fitsFilePtr, TSTRING, "COMMENT",	stringBuf,		NULL, &fitsStatus);
 	}

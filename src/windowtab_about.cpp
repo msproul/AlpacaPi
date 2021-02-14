@@ -93,7 +93,9 @@ static char	gAlpacaPiTxt3[]	=
 void	WindowTabAbout::SetupWindowControls(void)
 {
 int		yLoc;
+int		availSpace;
 int		textBoxHt;
+int		logoHeight;
 int		iii;
 char	multiLineTextBuff[512];
 
@@ -117,7 +119,19 @@ char	multiLineTextBuff[512];
 	yLoc			+=	2;
 
 
-	textBoxHt		=	125;
+	logoHeight	=	SetAlpacaLogoBottomCorner(kAboutBox_AlpacaLogo);
+
+	availSpace		=	cHeight;
+	availSpace		-=	cTabVertOffset;
+	availSpace		-=	cTitleHeight + 2;
+	availSpace		-=	cTitleHeight + 2;
+//	availSpace		-=	logoHeight;
+	availSpace		-=	5;
+
+	textBoxHt		=	availSpace / 4;
+	textBoxHt		-=	2;
+	CONSOLE_DEBUG_W_NUM("textBoxHt\t=", textBoxHt);
+
 	for (iii=kAboutBox_TextBox1; iii<=kAboutBox_CPUinfo; iii++)
 	{
 		SetWidget(				iii,	0,			yLoc,		cWidth,		textBoxHt);
@@ -154,11 +168,7 @@ char	multiLineTextBuff[512];
 
 	SetWidgetText(kAboutBox_CPUinfo, multiLineTextBuff);
 
-	SetAlpacaLogo(kAboutBox_AlpacaLogo, -1);
 
-	//=======================================================
-	//*	IP address
-	SetIPaddressBoxes(kAboutBox_IPaddr, kAboutBox_Readall, kAboutBox_AlpacaDrvrVersion, -1);
 }
 
 

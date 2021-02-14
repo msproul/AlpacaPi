@@ -35,10 +35,12 @@
 
 #include	"controller.h"
 #include	"controller_cam_normal.h"
+#include	"controller_covercalib.h"
 #include	"controller_dome.h"
 #include	"controller_focus.h"
 #include	"controller_switch.h"
 #include	"controller_telescope.h"
+#include	"controller_skytravel.h"
 
 
 
@@ -134,23 +136,20 @@ int		clmnHdrWidth;
 	for (iii=kAlpacaList_AlpacaDev_01; iii<=kAlpacaList_AlpacaDev_Last; iii++)
 	{
 		SetWidget(				iii,	xLoc,			yLoc,		textBoxWd,		textBoxHt);
-		//	SetWidgetType(			iii,	kWidgetType_CheckBox);
-		//	SetWidgetType(			iii,	kWidgetType_Button);
 		SetWidgetJustification(	iii,	kJustification_Left);
-		//	SetWidgetFont(			iii,	kFont_Medium);
 		SetWidgetFont(			iii,	kFont_TextList);
-		//	SetWidgetFont(			iii,	kFont_RadioBtn);
 		SetWidgetTextColor(		iii,	CV_RGB(255,	255,	255));
 		SetWidgetBorder(		iii,	false);
 		SetWidgetTabStops(		iii,	tabArray);
 
 		yLoc			+=	textBoxHt;
-		yLoc			+=	4;
+		yLoc			+=	3;
 	}
 
+	//---------------------------------------------------------------------
 	xLoc		=	0;
-	widgetWidth	=	cWidth / 2;
-	SetWidget(				kAlpacaList_AlpacaDev_Total,	xLoc,	yLoc,	widgetWidth,	cTitleHeight);
+	widgetWidth	=	cWidth / 4;
+	SetWidget(				kAlpacaList_AlpacaDev_Total,	xLoc,	yLoc,	widgetWidth,	cSmallBtnHt);
 	SetWidgetFont(			kAlpacaList_AlpacaDev_Total,	kFont_Medium);
 	SetWidgetText(			kAlpacaList_AlpacaDev_Total,	"Total units =?");
 	SetWidgetJustification(	kAlpacaList_AlpacaDev_Total,	kJustification_Left);
@@ -159,8 +158,9 @@ int		clmnHdrWidth;
 	xLoc		+=	widgetWidth;
 	xLoc		+=	2;
 
+	//---------------------------------------------------------------------
 	widgetWidth	=	cWidth / 5;
-	SetWidget(			kAlpacaList_ChkBx_IncManagment,	xLoc,	yLoc,		widgetWidth,	cTitleHeight);
+	SetWidget(			kAlpacaList_ChkBx_IncManagment,	xLoc,	yLoc,		widgetWidth,	cSmallBtnHt);
 	SetWidgetFont(		kAlpacaList_ChkBx_IncManagment,	kFont_Medium);
 	SetWidgetType(		kAlpacaList_ChkBx_IncManagment,	kWidgetType_CheckBox);
 	SetWidgetText(		kAlpacaList_ChkBx_IncManagment,	"Include Management");
@@ -169,18 +169,33 @@ int		clmnHdrWidth;
 	xLoc		+=	widgetWidth;
 	xLoc		+=	2;
 
-	SetWidget(			kAlpacaList_Btn_Refresh,	xLoc,	yLoc,		widgetWidth,		cTitleHeight);
+	//---------------------------------------------------------------------
+	widgetWidth	=	cWidth / 8;
+	SetWidget(			kAlpacaList_Btn_Refresh,	xLoc,	yLoc,		widgetWidth,		cSmallBtnHt);
 	SetWidgetFont(		kAlpacaList_Btn_Refresh,	kFont_Medium);
 	SetWidgetType(		kAlpacaList_Btn_Refresh,	kWidgetType_Button);
+	SetWidgetBGColor(	kAlpacaList_Btn_Refresh,	CV_RGB(255,	255,	255));
 	SetWidgetText(		kAlpacaList_Btn_Refresh,	"Refresh");
 
+	xLoc		+=	widgetWidth;
+	xLoc		+=	2;
 
+
+	//---------------------------------------------------------------------
+	SetWidget(			kAlpacaList_Btn_CloseAll,	xLoc,	yLoc,		widgetWidth,		cSmallBtnHt);
+	SetWidgetFont(		kAlpacaList_Btn_CloseAll,	kFont_Medium);
+	SetWidgetType(		kAlpacaList_Btn_CloseAll,	kWidgetType_Button);
+	SetWidgetBGColor(	kAlpacaList_Btn_CloseAll,	CV_RGB(255,	255,	255));
+	SetWidgetText(		kAlpacaList_Btn_CloseAll,	"Close All");
+
+	xLoc		+=	widgetWidth;
+	xLoc		+=	2;
 
 
 	yLoc			+=	cTitleHeight;
 	yLoc			+=	2;
 
-//	SetAlpacaLogo(kAlpacaList_AlpacaLogo, -1);
+	SetAlpacaLogoBottomCorner(kAlpacaList_AlpacaLogo);
 
 	//=======================================================
 	//*	IP address
@@ -214,6 +229,10 @@ void	WindowTabAlpacaList::ProcessButtonClick(const int buttonIdx)
 		case kAlpacaList_Btn_Refresh:
 			ClearRemoteDeviceList();
 			ForceUpdate();
+			break;
+
+		case kAlpacaList_Btn_CloseAll:
+			CloseAllExceptFirst();
 			break;
 	}
 }
@@ -250,8 +269,6 @@ bool	windowExists;
 			{
 
 			case kDeviceType_Camera:
-//-				strcpy(windowName, "Camera-");
-//-				strcat(windowName, cRemoteDeviceList[deviceIdx].hostName);
 				windowExists	=	CheckForOpenWindowByName(windowName);
 				if (windowExists)
 				{
@@ -264,11 +281,21 @@ bool	windowExists;
 				break;
 
 			case kDeviceType_CoverCalibrator:
+				windowExists	=	CheckForOpenWindowByName(windowName);
+				if (windowExists)
+				{
+					CONSOLE_DEBUG_W_STR("Window already open:", windowName);
+				}
+				else
+				{
+					new ControllerCoverCalib(	windowName,
+												&cRemoteDeviceList[deviceIdx].deviceAddress,
+												cRemoteDeviceList[deviceIdx].port,
+												cRemoteDeviceList[deviceIdx].alpacaDeviceNum);
+				}
 				break;
 
 			case kDeviceType_Dome:
-//-				strcpy(windowName, "Dome-");
-//-				strcat(windowName, cRemoteDeviceList[deviceIdx].hostName);
 				windowExists	=	CheckForOpenWindowByName(windowName);
 				if (windowExists)
 				{
@@ -302,8 +329,6 @@ bool	windowExists;
 				break;
 
 			case kDeviceType_Telescope:
-//-				strcpy(windowName, "Telescope-");
-//-				strcat(windowName, cRemoteDeviceList[deviceIdx].hostName);
 				windowExists	=	CheckForOpenWindowByName(windowName);
 				if (windowExists)
 				{
@@ -322,8 +347,6 @@ bool	windowExists;
 				break;
 
 			case kDeviceType_Switch:
-//-				strcpy(windowName, "Switch-");
-//-				strcat(windowName, cRemoteDeviceList[deviceIdx].hostName);
 				windowExists	=	CheckForOpenWindowByName(windowName);
 				if (windowExists)
 				{
@@ -474,6 +497,7 @@ int		myDevCount;
 
 	iii			=	0;
 	myDevCount	=	0;
+	boxId		=	0;
 	while ((iii < kMaxDeviceCnt))
 	{
 		boxId	=	iii + kAlpacaList_AlpacaDev_01;
@@ -488,36 +512,54 @@ int		myDevCount;
 					cRemoteDeviceList[iii].deviceNameStr);
 			SetWidgetText(boxId, textString);
 
-			SetWidgetTextColor(		boxId,	CV_RGB(255,	255,	255));
 
-			if (cRemoteDeviceList[iii].deviceTypeEnum == kDeviceType_Focuser)
+			switch(cRemoteDeviceList[iii].deviceTypeEnum)
 			{
-				SetWidgetTextColor(		boxId,	CV_RGB(0,	255,	0));		//*	green
+				case kDeviceType_Camera:
+					SetWidgetTextColor(		boxId,	CV_RGB(255,	255,	0));		//*	yellow
+					break;
+
+				case kDeviceType_CoverCalibrator:
+					SetWidgetTextColor(		boxId,	CV_RGB(255,	0,		0));		//*	Red
+					break;
+
+				case kDeviceType_Dome:
+					SetWidgetTextColor(		boxId,	CV_RGB(255,	0,		255));		//*	magenta
+					break;
+
+				case kDeviceType_Focuser:
+					SetWidgetTextColor(		boxId,	CV_RGB(0,	255,	0));		//*	green
+					break;
+
+				case kDeviceType_Switch:
+					SetWidgetTextColor(		boxId,	CV_RGB(0,	255,	255));		//*	cyan
+					break;
+
+				case kDeviceType_Telescope:
+					SetWidgetTextColor(		boxId,	CV_RGB(100,	100,	255));		//*	blue
+					break;
+
+				default:
+					SetWidgetTextColor(		boxId,	CV_RGB(255,	255,	255));
+					break;
 			}
-			if (cRemoteDeviceList[iii].deviceTypeEnum == kDeviceType_Camera)
-			{
-				SetWidgetTextColor(		boxId,	CV_RGB(255,	255,	0));		//*	yellow
-			}
-			if (cRemoteDeviceList[iii].deviceTypeEnum == kDeviceType_Switch)
-			{
-				SetWidgetTextColor(		boxId,	CV_RGB(0,	255,	255));		//*	cyan
-			}
-			if (cRemoteDeviceList[iii].deviceTypeEnum == kDeviceType_Dome)
-			{
-				SetWidgetTextColor(		boxId,	CV_RGB(255,	0,	255));			//*	magenta
-			}
-			if (cRemoteDeviceList[iii].deviceTypeEnum == kDeviceType_Telescope)
-			{
-				SetWidgetTextColor(		boxId,	CV_RGB(100,	100,	255));		//*	blue
-			}
+
 			myDevCount++;
+		}
+		else if (boxId <= kAlpacaList_AlpacaDev_Last)
+		{
+			SetWidgetText(boxId, "---");
+		//	SetWidgetNumber(boxId, iii);
 		}
 		else
 		{
-			//	CONSOLE_DEBUG_W_NUM("iii\t=", iii);
+		//	CONSOLE_DEBUG_W_NUM("iii\t=", iii);
+			break;
 		}
 		iii++;
 	}
+
+
 	sprintf(textString, "Total Alpaca Devices found=%d", myDevCount);
 	SetWidgetText(kAlpacaList_AlpacaDev_Total, textString);
 

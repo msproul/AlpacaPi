@@ -91,6 +91,7 @@ class CameraDriverFLIR: public CameraDriver
 		int				ReadFLIRcameraInfo(void);
 		spinError		SetFlirAqcuistionMode(int mode);
 		int				ConvertToMono(void);
+		int				ExtractColorImage(void);
 
 		spinCamera			cSpinCameraHandle;
 		spinImage			cSpinImageHandle;

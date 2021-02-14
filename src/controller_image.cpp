@@ -81,7 +81,6 @@ int					reduceFactor;
 
 	SetupWindowControls();
 
-	SetWidgetText(kTab_About,		kAboutBox_AlpacaDrvrVersion,		gFullVersionString);
 
 //	SetWidgetImage(kTab_Image, kImageDisplay_ImageDisplay, cDownLoadedImage);
 
@@ -172,16 +171,8 @@ ControllerImage::~ControllerImage(void)
 
 	//--------------------------------------------
 	//*	delete the window tab objects
-	if (cImageTabObjPtr != NULL)
-	{
-		delete cImageTabObjPtr;
-		cImageTabObjPtr	=	NULL;
-	}
-	if (cAboutBoxTabObjPtr != NULL)
-	{
-		delete cAboutBoxTabObjPtr;
-		cAboutBoxTabObjPtr	=	NULL;
-	}
+	DELETE_OBJ_IF_VALID(cImageTabObjPtr);
+	DELETE_OBJ_IF_VALID(cAboutBoxTabObjPtr);
 }
 
 
@@ -213,7 +204,6 @@ void	ControllerImage::SetupWindowControls(void)
 //	SetWidgetFont(kTab_Video,	kUSBselect_IPaddr, kFont_Medium);
 
 //	SetWidgetText(kTab_Video,	kUSBselect_IPaddr,	cUSBpath);
-//	SetWidgetText(kTab_About,	kAboutBox_IPaddr,	cUSBpath);
 }
 
 //**************************************************************************************

@@ -112,6 +112,11 @@ SwitchDriverRPi::SwitchDriverRPi(void)
 	:SwitchDriver()
 {
 	strcpy(cCommonProp.Name, "Switch-Raspberry-Pi");
+#ifdef _ENABLE_4REALY_BOARD
+	strcpy(cCommonProp.Description,	"Switch utilizing R-Pi 4 channel relay board");
+#else
+	strcpy(cCommonProp.Description,	"Switch utilizing R-Pi 8 channel relay board");
+#endif
 
 	cNumSwitches	=	kR_Pi_SwitchCount;
 

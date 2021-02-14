@@ -223,8 +223,8 @@ HRESULT			toupResult;
 int				alpacaReadModeIdx;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
-	strcpy(cDriverversionStr, Toupcam_Version());
-	CONSOLE_DEBUG_W_STR("Toupcam_Version", cDriverversionStr);
+	strcpy(cDeviceVersion, Toupcam_Version());
+	CONSOLE_DEBUG_W_STR("Toupcam_Version", cDeviceVersion);
 	toupCameraCnt	=	Toupcam_EnumV2(toupCamList);
 
 	if (cCameraID < toupCameraCnt)

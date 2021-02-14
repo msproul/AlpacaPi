@@ -368,7 +368,7 @@ void	WindowTab::SetupWindowControls(void)
 }
 
 //**************************************************************************************
-void	WindowTab::DrawGraphWidget(IplImage *openCV_Image, const int widgitIdx)
+void	WindowTab::DrawGraphWidget(IplImage *openCV_Image, const int widgetIdx)
 {
 	//*	this routine should be overloaded
 }

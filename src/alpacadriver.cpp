@@ -141,6 +141,7 @@
 
 #include <pthread.h>
 
+//#define _DEBUG_TIMING_
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
 
@@ -337,17 +338,17 @@ int		ii;
 //	CONSOLE_DEBUG_W_NUM(__FUNCTION__, argDeviceType);
 
 	memset(&cCommonProp, 0, sizeof(TYPE_CommonProperties));
-
+	cCommonProp.InterfaceVersion	=	1;
+	strcpy(cCommonProp.Name,			"unknown");
+	sprintf(cCommonProp.DriverVersion, "%s Build %d", kVersionString, kBuildNumber);
 
 	cMagicCookie				=	kMagicCookieValue;
 	cDeviceConnected			=	true;
-	cDriverVersion				=	1;
 	cDeviceModel[0]				=	0;
 	cDeviceManufacturer[0]		=	0;
 	cDeviceManufAbrev[0]		=	0;
 	cDeviceSerialNum[0]			=	0;
 	cDeviceVersion[0]			=	0;
-	cDriverversionStr[0]		=	0;
 	cDeviceFirmwareVersStr[0]	=	0;
 	cTotalCmdsProcessed			=	0;
 	cTotalCmdErrors				=	0;
@@ -380,7 +381,6 @@ int		ii;
 	cDeviceNum		=	alpacaDeviceNum;
 //	CONSOLE_DEBUG_W_NUM("cDeviceNum\t=", cDeviceNum);
 
-	strcpy(cCommonProp.Name, "unknown");
 
 	if (gDeviceCnt < kMaxDevices)
 	{
@@ -634,18 +634,18 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 							reqData->jsonTextBuffer,
 							kMaxJsonBuffLen,
 							responseString,
-							kVersionString,
+							cCommonProp.DriverVersion,
 							INCLUDE_COMMA);
 
-	if (strlen(cDriverversionStr) > 0)
-	{
-		JsonResponse_Add_String(reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"libraryVersion",
-								cDriverversionStr,
-								INCLUDE_COMMA);
-	}
+//?	if (strlen(cDriverversionStr) > 0)
+//?	{
+//?		JsonResponse_Add_String(reqData->socket,
+//?								reqData->jsonTextBuffer,
+//?								kMaxJsonBuffLen,
+//?								"libraryVersion",
+//?								cDriverversionStr,
+//?								INCLUDE_COMMA);
+//?	}
 	return(alpacaErrCode);
 }
 
@@ -659,7 +659,7 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 							reqData->jsonTextBuffer,
 							kMaxJsonBuffLen,
 							responseString,
-							cDriverVersion,
+							cCommonProp.InterfaceVersion,
 							INCLUDE_COMMA);
 	return(alpacaErrCode);
 }
@@ -2340,6 +2340,9 @@ static int AlpacaCallback(const int socket, char *htmlData, long byteCount)
 {
 int		returnCode	=	-1;
 
+//	CONSOLE_DEBUG("Timing Start----------------------");
+//	SETUP_TIMING();
+
 	//*	we are looking for GET or PUT
 	if (strncmp(htmlData, "GET /favicon.ico", 16) == 0)
 	{
@@ -2356,6 +2359,8 @@ int		returnCode	=	-1;
 	}
 
 	gServerTransactionID++;	//*	we are the "server"
+
+//	DEBUG_TIMING(__FUNCTION__);
 
 	return(returnCode);
 }
@@ -2587,16 +2592,17 @@ char	*stringPtr;
 //*****************************************************************************
 static void	PrintHelp(const char *appName)
 {
-	printf("usage: %s [-acdehlqvt]\r\n", appName);
-	printf("\ta\tAuto exposure\r\n");
-	printf("\tc\tConform logging, log ALL commands to disk\r\n");
-	printf("\td\tDisplay images as they are taken\r\n");
-	printf("\te\tError logging, log errors commands to disk\r\n");
-	printf("\th\tThis help message\r\n");
-	printf("\tl\tLive mode\r\n");
-	printf("\tq\tquiet (less console messages)\r\n");
-	printf("\tv\tverbose (more console messages default)\r\n");
-	printf("\tt<profile>\tWhich telescope profile to use\r\n");
+	printf("usage: %s [-acdehlpqtv]\r\n", appName);
+	printf("\t%-12s\t%s\r\n",	"a",			"Auto exposure");
+	printf("\t%-12s\t%s\r\n",	"c",			"Conform logging, log ALL commands to disk");
+	printf("\t%-12s\t%s\r\n",	"d",			"Display images as they are taken");
+	printf("\t%-12s\t%s\r\n",	"e",			"Error logging, log errors commands to disk");
+	printf("\t%-12s\t%s\r\n",	"h",			"This help message");
+	printf("\t%-12s\t%s\r\n",	"l",			"Live mode");
+	printf("\t%-12s\t%s\r\n",	"p <port>",		"what port to use (default 6800)");
+	printf("\t%-12s\t%s\r\n",	"q",			"quiet (less console messages)");
+	printf("\t%-12s\t%s\r\n",	"t <profile>",	"Which telescope profile to use");
+	printf("\t%-12s\t%s\r\n",	"v",			"verbose (more console messages default)");
 }
 
 //*****************************************************************************
@@ -2713,7 +2719,7 @@ int				cameraCnt;
 //struct rlimit	myRlimit;
 //int				errorCode;
 
-	printf("Alpaca driver\r\n");
+	printf("AlpacaPi driver\r\n");
 	sprintf(gFullVersionString, "%s - %s build #%d", kApplicationName, kVersionString, kBuildNumber);
 
 

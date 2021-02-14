@@ -28,6 +28,9 @@
 //*	Dec 26,	2020	<MLS> Started on image download for camera controller
 //*	Dec 27,	2020	<MLS> Added DownloadImage()
 //*	Jan 22,	2021	<MLS> Moved all logo png files to "logos" directory
+//*	Feb 14,	2021	<MLS> Added UpdateSliderValue() to windowtab_camera
+//*	Feb 14,	2021	<MLS> Slider now working for exposure
+//*	Feb 14,	2021	<MLS> Slider now working for gain
 //*****************************************************************************
 
 #ifdef _ENABLE_CTRL_CAMERA_
@@ -438,35 +441,35 @@ void	WindowTabCamera::SetTempartueDisplayEnable(bool enabled)
 
 
 //******************************************************************************
-void	WindowTabCamera::DrawGraphWidget(IplImage *openCV_Image, const int widgitIdx)
+void	WindowTabCamera::DrawGraphWidget(IplImage *openCV_Image, const int widgetIdx)
 {
 CvRect		myCVrect;
 
-	myCVrect.x		=	cWidgetList[widgitIdx].left;
-	myCVrect.y		=	cWidgetList[widgitIdx].top;
-	myCVrect.width	=	cWidgetList[widgitIdx].width;
-	myCVrect.height	=	cWidgetList[widgitIdx].height;
+	myCVrect.x		=	cWidgetList[widgetIdx].left;
+	myCVrect.y		=	cWidgetList[widgetIdx].top;
+	myCVrect.width	=	cWidgetList[widgetIdx].width;
+	myCVrect.height	=	cWidgetList[widgetIdx].height;
 
 
 	cvRectangleR(	openCV_Image,
 					myCVrect,
-					cWidgetList[widgitIdx].bgColor,			//	CvScalar color,
+					cWidgetList[widgetIdx].bgColor,			//	CvScalar color,
 					CV_FILLED,								//	int thickness CV_DEFAULT(1),
 					8,										//	int line_type CV_DEFAULT(8),
 					0);										//	int shift CV_DEFAULT(0));
 
 //	cvRectangleR(	openCV_Image,
 //					myCVrect,
-//					cWidgetList[widgitIdx].boarderColor,	//	CvScalar color,
+//					cWidgetList[widgetIdx].boarderColor,	//	CvScalar color,
 //					1,										//	int thickness CV_DEFAULT(1),
 //					8,										//	int line_type CV_DEFAULT(8),
 //					0);										//	int shift CV_DEFAULT(0));
 
-	switch(widgitIdx)
+	switch(widgetIdx)
 	{
 
 		default:
-			CONSOLE_DEBUG_W_NUM("widgitIdx\t",	widgitIdx);
+			CONSOLE_DEBUG_W_NUM("widgetIdx\t",	widgetIdx);
 			break;
 	}
 }
@@ -588,6 +591,45 @@ int			fwPosition;
 	}
 	DisplayLastAlpacaCommand();
 }
+
+
+//*****************************************************************************
+void	WindowTabCamera::UpdateSliderValue(const int	widgetIdx, double newSliderValue)
+{
+ControllerCamera	*myCameraController;
+//uint32_t			currentMillis;
+//uint32_t			deltaMilliSecs;
+int					newSliderValue_int;
+
+
+	CONSOLE_DEBUG(__FUNCTION__);
+//	currentMillis	=	millis();
+//	deltaMilliSecs	=	currentMillis - cLastBrightnewssUpdate_Millis;
+
+	myCameraController	=	(ControllerCamera *)cParentObjPtr;
+
+	switch(widgetIdx)
+	{
+		case kCameraBox_Exposure_Slider:
+			if (myCameraController != NULL)
+			{
+				myCameraController->SetExposure(newSliderValue);
+			}
+			break;
+
+		case kCameraBox_Gain_Slider:
+			if (myCameraController != NULL)
+			{
+				newSliderValue_int	=	newSliderValue;
+				myCameraController->SetGain(newSliderValue_int);
+			}
+			break;
+	}
+
+	ForceUpdate();
+//	cLastBrightnewssUpdate_Millis	=	millis();
+}
+
 
 //*****************************************************************************
 void	WindowTabCamera::ForceUpdate(void)
@@ -767,9 +809,6 @@ void	WindowTabCamera::DownloadImage(const bool useRGBarray)
 {
 ControllerCamera	*myCameraController;
 IplImage			*myDownLoadedImage;
-int					liveDispalyWidth;
-int					liveDisplayHeight;
-int					reduceFactor;
 char				textBuf[128];
 double				download_MBytes;
 double				download_MB_per_sec;

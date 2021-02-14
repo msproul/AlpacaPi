@@ -78,6 +78,7 @@ enum
 	kIPaddrList_AlpacaDev_Total,
 
 
+	kIPaddrList_AlpacaLogo,
 
 
 	kIPaddrList_last

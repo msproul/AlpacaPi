@@ -62,7 +62,7 @@ class WindowTabSlitGraph: public WindowTab
 		virtual	~WindowTabSlitGraph(void);
 
 		virtual	void	SetupWindowControls(void);
-		virtual	void	DrawGraphWidget(IplImage *openCV_Image, const int widgitIdx);
+		virtual	void	DrawGraphWidget(IplImage *openCV_Image, const int widgetIdx);
 		virtual	void	ProcessButtonClick(const int buttonIdx);
 
 				void	DrawSlitGraph(IplImage *openCV_Image, TYPE_WIDGET *theWidget);

@@ -212,7 +212,7 @@ ASI_ERROR_CODE		asiErrorCode;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-	strcpy(cDriverversionStr,	ASIGetSDKVersion());
+	strcpy(cDeviceVersion,	ASIGetSDKVersion());
 	strcpy(cDeviceManufacturer,	"ZWO");
 
 

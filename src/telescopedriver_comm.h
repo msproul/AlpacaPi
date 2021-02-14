@@ -84,10 +84,11 @@ class TelescopeDriverComm: public TelescopeDriver
 				//*	device communications information
 //-				DeviceConnectionType	cDeviceConnType;
 //-				char					cDeviceConnPath[64];	//*	this may be an IP address or a /dev/tty... string
-//-				int						cDeviceConnFileDesc;	//*	port file descriptor
 
-//+				DeviceConnectionType	cDeviceConnType;
-//+				char					cDeviceConnPath[128];	//*	Ip addr, or device path
+				DeviceConnectionType	cDeviceConnType;
+				char					cDeviceConnPath[128];	//*	Ip addr, or device path
+				int						cDeviceConnFileDesc;	//*	port file descriptor
+				bool					cIPaddrValid;
 				char					cDeviceIPaddress[128];
 				int						cTCPportNum;
 				int						cSocket_desc;

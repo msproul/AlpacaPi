@@ -106,7 +106,7 @@ int		iii;
 	SetWidgetText(kMoon_PhaseLbl,			"Moon Phase");
 	SetWidgetText(kMoon_IlluminationLbl,	"Illumination (%)");
 
-	SetAlpacaLogo(kMoon_AlpacaLogo, -1);
+	SetAlpacaLogoBottomCorner(kMoon_AlpacaLogo);
 
 }
 

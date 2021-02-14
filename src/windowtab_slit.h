@@ -55,7 +55,7 @@ class WindowTabSlitTracker: public WindowTab
 		virtual	~WindowTabSlitTracker(void);
 
 		virtual	void	SetupWindowControls(void);
-		virtual	void	DrawGraphWidget(IplImage *openCV_Image, const int widgitIdx);
+		virtual	void	DrawGraphWidget(IplImage *openCV_Image, const int widgetIdx);
 		virtual	void	ProcessButtonClick(const int buttonIdx);
 
 				void	DrawClockFace(IplImage *openCV_Image, TYPE_WIDGET *theWidget);

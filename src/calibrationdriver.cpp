@@ -31,6 +31,7 @@
 //*****************************************************************************
 //*	Sep  1,	2020	<MLS> Created calibrationdriver.cpp
 //*	Oct 21,	2020	<MLS> Finished GetCmdNameFromMyCmdTable() for calibrationdriver
+//*	Feb 12,	2021	<MLS> Added GetCalibrationStateString()
 //*****************************************************************************
 
 
@@ -115,12 +116,12 @@ CalibrationDriver::CalibrationDriver(void)
 
 	strcpy(cCommonProp.Name, "CoverCalibrator");
 
-	cCalibratorBrightness	=	0;
-	cCalibratorStatus		=	kCalibrator_NotPresent;
-	cCalibratorStatus		=	kCalibrator_Ready;
-	cCoverStatus			=	kCover_NotPresent;
-	cMaxBrightness			=	1023;
+	memset(&cCoverCalibrationProp, 0, sizeof(TYPE_CoverCalibrationProperties));
 
+	cCoverCalibrationProp.Brightness		=	0;
+	cCoverCalibrationProp.CalibratorState	=	kCalibrator_NotPresent;
+	cCoverCalibrationProp.CoverState		=	kCover_NotPresent;
+	cCoverCalibrationProp.MaxBrightness		=	1;
 }
 
 //**************************************************************************************
@@ -141,7 +142,7 @@ int					cmdEnumValue;
 int					cmdType;
 int					mySocket;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, reqData->deviceCommand);
 #ifdef _DEBUG_CONFORM_
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG_W_STR("contentData\t=", reqData->contentData);
@@ -232,7 +233,6 @@ int					mySocket;
 			alpacaErrCode	=	ProcessCommand_Common(reqData, cmdEnumValue, alpacaErrMsg);
 			break;
 	}
-	CONSOLE_DEBUG_W_NUM("Calling RecordCmdStats(), cmdEnumValue=", cmdEnumValue);
 	RecordCmdStats(cmdEnumValue, reqData->get_putIndicator, alpacaErrCode);
 
 	//*	send the response information
@@ -288,7 +288,7 @@ TYPE_ASCOM_STATUS	CalibrationDriver::Get_Brightness(TYPE_GetPutRequestData *reqD
 {
 TYPE_ASCOM_STATUS		alpacaErrCode;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	if (reqData != NULL)
 	{
@@ -296,7 +296,7 @@ TYPE_ASCOM_STATUS		alpacaErrCode;
 								reqData->jsonTextBuffer,
 								kMaxJsonBuffLen,
 								responseString,
-								cCalibratorBrightness,
+								cCoverCalibrationProp.Brightness,
 								INCLUDE_COMMA);
 
 		alpacaErrCode	=	kASCOM_Err_Success;
@@ -309,18 +309,41 @@ TYPE_ASCOM_STATUS		alpacaErrCode;
 }
 
 //*****************************************************************************
+static void	GetCalibrationStateString(CalibratorStatus calibState, char *stateString)
+{
+	switch(calibState)
+	{
+		case kCalibrator_NotPresent:	strcpy(stateString, "This device does not have a calibration capability");	break;
+		case kCalibrator_Off:			strcpy(stateString, "The calibrator is off");	break;
+		case kCalibrator_NotReady:		strcpy(stateString, "The calibrator is stabilizing or is not yet in the commanded state");	break;
+		case kCalibrator_Ready:			strcpy(stateString, "The calibrator is ready for use");	break;
+		case kCalibrator_Unknown:		strcpy(stateString, "The calibrator state is unknown");	break;
+		case kCalibrator_Error:			strcpy(stateString, "The calibrator encountered an error when changing state");	break;
+	}
+}
+
+//*****************************************************************************
 TYPE_ASCOM_STATUS	CalibrationDriver::Get_Calibratorstate(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
 {
 TYPE_ASCOM_STATUS		alpacaErrCode;
+char					calibrationStateStr[128];
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	if (reqData != NULL)
 	{
 		JsonResponse_Add_Int32(	reqData->socket,
 								reqData->jsonTextBuffer,
 								kMaxJsonBuffLen,
 								responseString,
-								cCalibratorStatus,
+								cCoverCalibrationProp.CalibratorState,
+								INCLUDE_COMMA);
+
+		GetCalibrationStateString(cCoverCalibrationProp.CalibratorState, calibrationStateStr);
+		JsonResponse_Add_String(reqData->socket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								"calibratorstate-str",
+								calibrationStateStr,
 								INCLUDE_COMMA);
 
 		alpacaErrCode	=	kASCOM_Err_Success;
@@ -338,14 +361,14 @@ TYPE_ASCOM_STATUS	CalibrationDriver::Get_Coverstate(TYPE_GetPutRequestData *reqD
 {
 TYPE_ASCOM_STATUS		alpacaErrCode;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	if (reqData != NULL)
 	{
 		JsonResponse_Add_Int32(	reqData->socket,
 								reqData->jsonTextBuffer,
 								kMaxJsonBuffLen,
 								responseString,
-								cCoverStatus,
+								cCoverCalibrationProp.CoverState,
 								INCLUDE_COMMA);
 
 		alpacaErrCode	=	kASCOM_Err_Success;
@@ -363,14 +386,14 @@ TYPE_ASCOM_STATUS	CalibrationDriver::Get_Maxbrightness(TYPE_GetPutRequestData *r
 {
 TYPE_ASCOM_STATUS		alpacaErrCode;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	if (reqData != NULL)
 	{
 		JsonResponse_Add_Int32(	reqData->socket,
 								reqData->jsonTextBuffer,
 								kMaxJsonBuffLen,
 								responseString,
-								cMaxBrightness,
+								cCoverCalibrationProp.MaxBrightness,
 								INCLUDE_COMMA);
 
 		alpacaErrCode	=	kASCOM_Err_Success;
@@ -391,8 +414,8 @@ bool				brightnessFound;
 char				brightnessString[32];
 int					brightnessValue;
 
-	CONSOLE_DEBUG(__FUNCTION__);
-	if (cCalibratorStatus == kCalibrator_NotPresent)
+//	CONSOLE_DEBUG(__FUNCTION__);
+	if (cCoverCalibrationProp.CalibratorState == kCalibrator_NotPresent)
 	{
 		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Calibrator not present");
@@ -408,7 +431,7 @@ int					brightnessValue;
 		if (brightnessFound)
 		{
 			brightnessValue	=	atoi(brightnessString);
-			CONSOLE_DEBUG_W_NUM("brightnessValue\t=", brightnessValue);
+//			CONSOLE_DEBUG_W_NUM("brightnessValue\t=", brightnessValue);
 
 			alpacaErrCode	=	Calibrator_TurnOn(brightnessValue, alpacaErrMsg);
 		}
@@ -426,8 +449,8 @@ TYPE_ASCOM_STATUS	CalibrationDriver::Put_CalibratorOff(TYPE_GetPutRequestData *r
 {
 TYPE_ASCOM_STATUS		alpacaErrCode;
 
-	CONSOLE_DEBUG(__FUNCTION__);
-	if (cCalibratorStatus == kCalibrator_NotPresent)
+//	CONSOLE_DEBUG(__FUNCTION__);
+	if (cCoverCalibrationProp.CalibratorState == kCalibrator_NotPresent)
 	{
 		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Calibrator not present");
@@ -447,8 +470,8 @@ TYPE_ASCOM_STATUS	CalibrationDriver::Put_CloseCover(TYPE_GetPutRequestData *reqD
 {
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 
-	CONSOLE_DEBUG(__FUNCTION__);
-	if (cCoverStatus == kCover_NotPresent)
+//	CONSOLE_DEBUG(__FUNCTION__);
+	if (cCoverCalibrationProp.CoverState == kCover_NotPresent)
 	{
 		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Cover not present");
@@ -466,9 +489,9 @@ TYPE_ASCOM_STATUS	CalibrationDriver::Put_HaltCover(TYPE_GetPutRequestData *reqDa
 {
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
-	if (cCoverStatus == kCover_NotPresent)
+	if (cCoverCalibrationProp.CoverState == kCover_NotPresent)
 	{
 		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Cover not present");
@@ -487,9 +510,9 @@ TYPE_ASCOM_STATUS	CalibrationDriver::Put_OpenCover(TYPE_GetPutRequestData *reqDa
 {
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
-	if (cCoverStatus == kCover_NotPresent)
+	if (cCoverCalibrationProp.CoverState == kCover_NotPresent)
 	{
 		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Cover not present");

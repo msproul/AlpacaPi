@@ -77,6 +77,7 @@ void	PARENT_CLASS::AlpacaProcessReadAll_Telescope(	const int	deviceNum,
 		//*	"version": "AlpacaPi - V0.2.2-beta build #32",
 		strcpy(cAlpacaVersionString, valueString);
 		SetWidgetText(kTab_Telescope,	kTelescope_AlpacaDrvrVersion,		cAlpacaVersionString);
+		SetWidgetText(kTab_DriverInfo,	kDriverInfo_AlpacaDrvrVersion,		cAlpacaVersionString);
 	}
 #endif // _PARENT_IS_TELESCOPE_
 

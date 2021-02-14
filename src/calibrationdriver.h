@@ -69,10 +69,12 @@ class CalibrationDriver: public AlpacaDriver
 		virtual	TYPE_ASCOM_STATUS		Cover_Close(char *alpacaErrMsg);
 		virtual	TYPE_ASCOM_STATUS		Cover_Halt(char *alpacaErrMsg);
 
-				int					cCalibratorBrightness;
-				CalibratorStatus	cCalibratorStatus;
-				CoverStatus			cCoverStatus;
-				int					cMaxBrightness;
+				TYPE_CoverCalibrationProperties	cCoverCalibrationProp;
+
+//				int					cCalibratorBrightness;
+//				CalibratorStatus	cCalibratorStatus;
+//				CoverStatus			cCoverStatus;
+//				int					cMaxBrightness;
 };
 
 

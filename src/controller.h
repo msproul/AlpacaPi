@@ -57,6 +57,12 @@ extern CvFont		gTextFont[kFontCnt];
 #define	RADIANS(degrees)	((degrees) * (M_PI / 180.0))
 #define	DEGREES(radians)	((radians) * (180.0 / M_PI))
 
+#define	DELETE_OBJ_IF_VALID(objectPtr)	\
+	if (objectPtr != NULL)				\
+	{									\
+		delete objectPtr;				\
+		objectPtr	=	NULL;			\
+	}
 
 //*****************************************************************************
 class Controller
@@ -140,7 +146,11 @@ class Controller
 				void	SetWidgetHighlighted(	const int tabNum, const int widgetIdx, bool highlighted);
 				void	SetWidgetProgress(		const int tabNum, const int widgetIdx, const int currPosition, const int totalValue);
 
+		virtual	void	UpdateSupportedActions(void);
 		virtual	void	UpdateWindowTabColors(void);
+
+				bool	AlpacaGetCommonProperties(const char *deviceTypeStr);
+		virtual	void	UpdateCommonProperties(void);
 
 		virtual	bool	AlpacaGetStartupData(void);
 		virtual	void	RunBackgroundTasks(void);
@@ -166,7 +176,7 @@ class Controller
 		virtual	void	AlpacaProcessSupportedActions(	const char	*deviceTypeStr,
 														const int	deviveNum,
 														const char	*valueString);
-				int		AlpacaCheckForErrors(	SJP_Parser_t	*jsonParser,
+				TYPE_ASCOM_STATUS	AlpacaCheckForErrors(	SJP_Parser_t	*jsonParser,
 												char			*errorMsg,
 												bool			reportError=false);
 		virtual	void	AlpacaDisplayErrorMessage(const char *errorMsgString);
@@ -298,8 +308,10 @@ class Controller
 		bool				cOnLine;
 		bool				cHas_readall;
 		bool				cForceAlpacaUpdate;
-		int					cLastAlpacaErrNum;
+		TYPE_ASCOM_STATUS	cLastAlpacaErrNum;
 		char				cLastAlpacaErrStr[512];
+
+		TYPE_CommonProperties	cCommonProp;
 
 		char				cAlpacaVersionString[128];
 		char				cLastAlpacaCmdString[256];

@@ -40,7 +40,7 @@ class WindowTabGraph: public WindowTab
 		virtual	~WindowTabGraph(void);
 
 		virtual	void	SetupWindowControls(void);
-		virtual	void	DrawGraphWidget(IplImage *openCV_Image, const int widgitIdx);
+		virtual	void	DrawGraphWidget(IplImage *openCV_Image, const int widgetIdx);
 
 				void	DrawGraph(IplImage *openCV_Image, TYPE_WIDGET *graphWidget, double *arrayData, int arrayCount);
 				void	LogVoltage(double voltageValue);

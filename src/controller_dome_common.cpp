@@ -172,7 +172,6 @@ double	argDouble;
 	#ifndef _ENABLE_SKYTRAVEL_
 		SetWidgetText(kTab_SlitTracker,	kSlitTracker_AlpacaDrvrVersion,	cAlpacaVersionString);
 		SetWidgetText(kTab_SlitGraph,	kSlitGraph_AlpacaDrvrVersion,	cAlpacaVersionString);
-		SetWidgetText(kTab_About,		kAboutBox_AlpacaDrvrVersion,	cAlpacaVersionString);
 	#endif
 	}
 	else if (strcasecmp(keywordString, "canfindhome") == 0)

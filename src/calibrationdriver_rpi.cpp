@@ -55,7 +55,12 @@ CalibrationDriverRPI::CalibrationDriverRPI(void)
 	CONSOLE_DEBUG(__FUNCTION__);
 
 	strcpy(cCommonProp.Name, "CoverCalibration-Raspberry-Pi");
+	strcpy(cCommonProp.Description,	"Calibration using PWM motor control");
 
+	cCoverCalibrationProp.Brightness		=	0;
+	cCoverCalibrationProp.CalibratorState	=	kCalibrator_Ready;
+	cCoverCalibrationProp.CoverState		=	kCover_NotPresent;
+	cCoverCalibrationProp.MaxBrightness		=	1023;
 
 	Init_Hardware();
 }
@@ -99,14 +104,14 @@ TYPE_ASCOM_STATUS	CalibrationDriverRPI::Calibrator_TurnOn(const int brightnessVa
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 #ifdef _ENABLE_WIRING_PI_
 	//*	check to make sure the value is within the range of the R-Pi PWM
 	if ((brightnessValue >= 0) && (brightnessValue <= 1023))
 	{
-		cCalibratorBrightness	=	brightnessValue;
-		pwmWrite(kHWpin_PowerPWM,	cCalibratorBrightness);
+		cCoverCalibrationProp.Brightness	=	brightnessValue;
+		pwmWrite(kHWpin_PowerPWM,	cCoverCalibrationProp.Brightness);
 		alpacaErrCode			=	kASCOM_Err_Success;
 	}
 	else
@@ -115,7 +120,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Brightness level out of range (0 <-> 1023)");
 	}
 #else
-
+	alpacaErrCode	=	kASCOM_Err_NotImplemented;
 	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
 
 #endif // _ENABLE_WIRING_PI_
@@ -133,7 +138,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
 
 #ifdef _ENABLE_WIRING_PI_
 
-	cCalibratorBrightness	=	0;
+	cCoverCalibrationProp.Brightness	=	0;
 	pwmWrite(kHWpin_PowerPWM,	0);
 	alpacaErrCode	=	kASCOM_Err_Success;
 

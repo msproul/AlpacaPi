@@ -36,6 +36,7 @@
 //*	May 31,	2020	<MLS> Added gravity vector processing
 //*	Jan 14,	2021	<MLS> Dome controller working with ASCOM/Remote
 //*	Jan 24,	2021	<MLS> Converted DomeController to use properties struct
+//*	Feb 12,	2021	<MLS> Added driver info display to dome controller
 //*****************************************************************************
 
 
@@ -181,30 +182,11 @@ ControllerDome::~ControllerDome(void)
 	{
 		CloseSlitTrackerDataFile();
 	}
-	//-----------------------------
-	if (cDomeTabObjPtr != NULL)
-	{
-		delete cDomeTabObjPtr;
-		cDomeTabObjPtr	=	NULL;
-	}
-	//-----------------------------
-	if (cSlitTrackerTabObjPtr != NULL)
-	{
-		delete cSlitTrackerTabObjPtr;
-		cSlitTrackerTabObjPtr	=	NULL;
-	}
-	//-----------------------------
-	if (cSlitGraphTabObjPtr != NULL)
-	{
-		delete cSlitGraphTabObjPtr;
-		cSlitGraphTabObjPtr	=	NULL;
-	}
-	//-----------------------------
-	if (cAboutBoxTabObjPtr != NULL)
-	{
-		delete cAboutBoxTabObjPtr;
-		cAboutBoxTabObjPtr	=	NULL;
-	}
+	DELETE_OBJ_IF_VALID(cDomeTabObjPtr);
+	DELETE_OBJ_IF_VALID(cSlitTrackerTabObjPtr);
+	DELETE_OBJ_IF_VALID(cSlitGraphTabObjPtr);
+	DELETE_OBJ_IF_VALID(cDriverInfoTabObjPtr);
+	DELETE_OBJ_IF_VALID(cAboutBoxTabObjPtr);
 }
 
 //**************************************************************************************
@@ -218,6 +200,7 @@ char	lineBuff[64];
 	SetTabText(kTab_Dome,			"Dome");
 	SetTabText(kTab_SlitTracker,	"Slit Tracker");
 	SetTabText(kTab_SlitGraph,		"Slit Graph");
+	SetTabText(kTab_DriverInfo,		"Driver Info");
 	SetTabText(kTab_About,			"About");
 
 	//=============================================================
@@ -226,6 +209,7 @@ char	lineBuff[64];
 	{
 		SetTabWindow(kTab_Dome,	cDomeTabObjPtr);
 		cDomeTabObjPtr->SetParentObjectPtr(this);
+		cDomeTabObjPtr->SetDomePropertiesPtr(&cDomeProp);
 	}
 
 	//=============================================================
@@ -244,6 +228,13 @@ char	lineBuff[64];
 		cSlitGraphTabObjPtr->SetParentObjectPtr(this);
 	}
 
+	//=============================================================
+	cDriverInfoTabObjPtr		=	new WindowTabDriverInfo(	cWidth, cHeight, cBackGrndColor, cWindowName);
+	if (cDriverInfoTabObjPtr != NULL)
+	{
+		SetTabWindow(kTab_DriverInfo,	cDriverInfoTabObjPtr);
+		cDriverInfoTabObjPtr->SetParentObjectPtr(this);
+	}
 	//=============================================================
 	cAboutBoxTabObjPtr		=	new WindowTabAbout(	cWidth, cHeight, cBackGrndColor, cWindowName);
 	if (cAboutBoxTabObjPtr != NULL)
@@ -264,6 +255,15 @@ char	lineBuff[64];
 	}
 }
 
+//*****************************************************************************
+void	ControllerDome::UpdateCommonProperties(void)
+{
+	SetWidgetText(kTab_DriverInfo,		kDriverInfo_Name,				cCommonProp.Name);
+	SetWidgetText(kTab_DriverInfo,		kDriverInfo_Description,		cCommonProp.Description);
+	SetWidgetText(kTab_DriverInfo,		kDriverInfo_DriverInfo,			cCommonProp.DriverInfo);
+	SetWidgetText(kTab_DriverInfo,		kDriverInfo_DriverVersion,		cCommonProp.DriverVersion);
+	SetWidgetNumber(kTab_DriverInfo,	kDriverInfo_InterfaceVersion,	cCommonProp.InterfaceVersion);
+}
 
 //**************************************************************************************
 void	ControllerDome::SetAlpacaShutterInfo(TYPE_REMOTE_DEV *alpacaDevice)
@@ -282,7 +282,6 @@ void	ControllerDome::SetAlpacaShutterInfo(TYPE_REMOTE_DEV *alpacaDevice)
 		SetWidgetText(kTab_Dome,		kDomeBox_Readall,		"RS");
 		SetWidgetText(kTab_SlitTracker,	kSlitTracker_Readall,	"RS");
 		SetWidgetText(kTab_SlitGraph,	kSlitGraph_Readall,		"RS");
-		SetWidgetText(kTab_About,		kAboutBox_Readall,		"RS");
 #endif // _ENABLE_EXTERNAL_SHUTTER_
 	}
 }
@@ -320,8 +319,10 @@ bool		needToUpdate;
 	if (cReadStartup)
 	{
 		CONSOLE_DEBUG(__FUNCTION__);
+		AlpacaGetCommonProperties("dome");
 		AlpacaGetStartupData();
 		cReadStartup	=	false;
+		cDomeTabObjPtr->UpdateControls();
 	}
 
 
@@ -367,10 +368,8 @@ bool		needToUpdate;
 //*****************************************************************************
 bool	ControllerDome::AlpacaGetStartupData(void)
 {
-//SJP_Parser_t	jsonParser;
 bool			validData;
 char			returnString[128];
-//char			dataString[128];
 
 	CONSOLE_DEBUG(__FUNCTION__);
 	//===============================================================
@@ -381,7 +380,6 @@ char			returnString[128];
 		SetWidgetValid(kTab_Dome,			kDomeBox_Readall,		cHas_readall);
 		SetWidgetValid(kTab_SlitTracker,	kSlitTracker_Readall,	cHas_readall);
 		SetWidgetValid(kTab_SlitGraph,		kSlitGraph_Readall,		cHas_readall);
-		SetWidgetValid(kTab_About,			kAboutBox_Readall,		cHas_readall);
 
 		if (cHas_readall == false)
 		{
@@ -392,6 +390,15 @@ char			returnString[128];
 				SetWidgetText(kTab_Dome,		kDomeBox_AlpacaDrvrVersion,		cAlpacaVersionString);
 			}
 		}
+		validData	=	AlpacaGetBooleanValue(	"dome", "cansetazimuth",	NULL,	&cDomeProp.CanSetAzimuth);
+		validData	=	AlpacaGetBooleanValue(	"dome", "cansetpark",		NULL,	&cDomeProp.CanSetPark);
+		validData	=	AlpacaGetBooleanValue(	"dome", "canfindhome",		NULL,	&cDomeProp.CanFindHome);
+		validData	=	AlpacaGetBooleanValue(	"dome", "canslave",			NULL,	&cDomeProp.CanSlave);
+
+		CONSOLE_DEBUG_W_NUM("cDomeProp.CanSetAzimuth\t=",	cDomeProp.CanSetAzimuth);
+		CONSOLE_DEBUG_W_NUM("cDomeProp.CanSetPark   \t=",	cDomeProp.CanSetPark);
+		CONSOLE_DEBUG_W_NUM("cDomeProp.CanFindHome  \t=",	cDomeProp.CanFindHome);
+		CONSOLE_DEBUG_W_NUM("cDomeProp.CanSlave     \t=",	cDomeProp.CanSlave);
 	}
 	else
 	{
@@ -610,7 +617,7 @@ char			gravityVectorChar;
 										&jsonParser);
 	if (validData)
 	{
-		cLastAlpacaErrNum	=	0;
+		cLastAlpacaErrNum	=	kASCOM_Err_Success;
 		for (jjj=0; jjj<jsonParser.tokenCount_Data; jjj++)
 		{
 //			CONSOLE_DEBUG_W_STR(	jsonParser.dataList[jjj].keyword,

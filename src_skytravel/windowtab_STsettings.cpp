@@ -184,7 +184,7 @@ char	textString[64];
 
 	}
 
-	SetAlpacaLogo(kSkyT_Settings_AlpacaLogo, -1);
+	SetAlpacaLogoBottomCorner(kSkyT_Settings_AlpacaLogo);
 
 }
 

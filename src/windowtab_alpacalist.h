@@ -61,23 +61,20 @@ enum
 	kAlpacaList_AlpacaDev_36,
 	kAlpacaList_AlpacaDev_37,
 	kAlpacaList_AlpacaDev_38,
-//	kAlpacaList_AlpacaDev_39,
+	kAlpacaList_AlpacaDev_39,
+	kAlpacaList_AlpacaDev_40,
+	kAlpacaList_AlpacaDev_41,
+	kAlpacaList_AlpacaDev_42,
 
-	kAlpacaList_AlpacaDev_Last	=	kAlpacaList_AlpacaDev_38,
+	kAlpacaList_AlpacaDev_Last	=	kAlpacaList_AlpacaDev_42,
 
-//	kAlpacaList_AlpacaDev_OutLine,
 
 	kAlpacaList_AlpacaDev_Total,
 	kAlpacaList_ChkBx_IncManagment,
 	kAlpacaList_Btn_Refresh,
+	kAlpacaList_Btn_CloseAll,
 
-//	kAlpacaList_AlpacaLogo,
-
-//	kAlpacaList_AlpacaDrvrVersion,
-
-//	kAlpacaList_IPaddr,
-//	kAlpacaList_Readall,
-
+	kAlpacaList_AlpacaLogo,
 
 	kAlpacaList_last
 };

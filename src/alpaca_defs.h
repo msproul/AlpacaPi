@@ -12,6 +12,7 @@
 //*	Jan 25,	2021	<MLS> Added TYPE_RotatorProperties structure
 //*	Jan 30,	2021	<MLS> Added TYPE_ImageArray structure
 //*	Feb  7,	2021	<MLS> Added TYPE_CommonProperties
+//*	Feb 12,	2021	<MLS> Added TYPE_CoverCalibrationProperties
 //*****************************************************************************
 //*	These are for my comment extraction program that sorts comments by date.
 //*	Jan  1,	2019	-----------------------------------------------------------
@@ -19,7 +20,6 @@
 //*	Jan  1,	2021	-----------------------------------------------------------
 //*****************************************************************************
 //#include	"alpaca_defs.h"
-
 
 
 #ifndef	_ALPACA_DEFS_H_
@@ -39,7 +39,7 @@
 
 #define	kApplicationName	"AlpacaPi"
 #define	kVersionString		"V0.4.0-beta"
-#define	kBuildNumber		93
+#define	kBuildNumber		94
 
 
 #define kAlpacaDiscoveryPORT	32227
@@ -47,6 +47,35 @@
 #if defined(__ARM_ARCH) && !defined(__arm__)
 	#define __arm__
 #endif
+
+
+//*****************************************************************************
+//*	enum for the various driver types
+//*****************************************************************************
+typedef enum
+{
+	kDeviceType_undefined	=	-1,
+	kDeviceType_Camera,
+	kDeviceType_CoverCalibrator,
+	kDeviceType_Dome,
+	kDeviceType_Filterwheel,
+	kDeviceType_Focuser,
+	kDeviceType_Management,
+	kDeviceType_Observingconditions,
+	kDeviceType_Rotator,
+	kDeviceType_Telescope,
+	kDeviceType_SafetyMonitor,
+	kDeviceType_Switch,
+
+	//*	extras defined by MLS
+	kDeviceType_Multicam,
+	kDeviceType_Shutter,
+	kDeviceType_SlitTracker,
+
+	kDeviceType_last
+
+} TYPE_DEVICETYPE;
+
 
 //*****************************************************************************
 //*	defined by the ascom standarads
@@ -109,30 +138,25 @@ enum TYPE_ASCOM_STATUS
 
 	kASCOM_Err_FailedUnknown,
 
-
 	kASCOM_Err_last
 
 };
 
-
 //*****************************************************************************
 enum CalibratorStatus
 {
-
 	kCalibrator_NotPresent	=	0,	//*	This device does not have a calibration capability
 	kCalibrator_Off			=	1,	//*	The calibrator is off
-	kCalibrator_NotReady	=	2,	//*	The calibrator is stabilising or is not yet in the commanded state
+	kCalibrator_NotReady	=	2,	//*	The calibrator is stabilizing or is not yet in the commanded state
 	kCalibrator_Ready		=	3,	//*	The calibrator is ready for use
 	kCalibrator_Unknown		=	4,	//*	The calibrator state is unknown
 	kCalibrator_Error		=	5	//*	The calibrator encountered an error when changing state
-
 };
 
 
 //*****************************************************************************
 enum CoverStatus
 {
-
 	kCover_NotPresent	=	0,	//*	This device does not have a cover that can be closed independently
 	kCover_Closed		=	1,	//*	The cover is closed
 	kCover_Moving		=	2,	//*	The cover is moving to a new position
@@ -144,7 +168,6 @@ enum CoverStatus
 //*****************************************************************************
 enum TYPE_AlignmentModes
 {
-
 	kAlignmentMode_algAltAz			=	0,	//*	Altitude-Azimuth alignment.
 	kAlignmentMode_algPolar			=	1,	//*	Polar (equatorial) mount other than German equatorial.
 	kAlignmentMode_algGermanPolar	=	2,	//*	German equatorial mount.
@@ -155,7 +178,9 @@ enum TYPE_EquatorialCoordinateType
 {
 
 	kECT_equOther				=	0,	//*	Custom or unknown equinox and/or reference frame.
-	kECT_equTopocentric			=	1,	//*	Topocentric coordinates. Coordinates of the object at the current date having allowed for annual aberration, precession and nutation. This is the most common coordinate type for amateur telescopes.
+	kECT_equTopocentric			=	1,	//*	Topocentric coordinates.
+										//*	Coordinates of the object at the current date having allowed for annual aberration, precession and nutation.
+										//*	This is the most common coordinate type for amateur telescopes.
 	kECT_equJ2000				=	2,	//*	J2000 equator/equinox. Coordinates of the object at mid-day on 1st January 2000, ICRS reference frame.
 	kECT_equJ2050				=	3,	//*	J2050 equator/equinox, ICRS reference frame.
 	kECT_equB1950				=	4,	//*	B1950 equinox, FK4 reference frame.
@@ -243,7 +268,7 @@ typedef struct
 	long					ExposureMin_us;			//*	micro-seconds
 	double					ExposureResolution;		//*	The smallest increment in exposure time supported by StartExposure.
 
-//+	bool					FastReadout;			//*	Returns whenther Fast Readout Mode is enabled.
+//+	bool					FastReadout;			//*	Returns whether Fast Readout Mode is enabled.
 //+	double					FullWellCapacity;		//*	Reports the full well capacity of the camera
 	int						Gain;					//*	Returns the camera's gain
 	int						GainMax;				//*	Maximum Gain value of that this camera supports
@@ -309,6 +334,18 @@ typedef struct
 	double	Minimum;
 	double	Maximum;
 } TYPE_AxisRates;
+
+
+//*****************************************************************************
+typedef struct
+{
+	int					Brightness;
+	CalibratorStatus	CalibratorState;
+	CoverStatus			CoverState;
+	int					MaxBrightness;
+
+} 	TYPE_CoverCalibrationProperties;
+
 
 //*****************************************************************************
 //*	these are the exact properties from ASCOM Telescope V3

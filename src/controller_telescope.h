@@ -16,6 +16,7 @@
 	#include	"windowtab_about.h"
 #endif // _WINDOWTAB_ABOUT_H_
 
+#include	"windowtab_drvrInfo.h"
 
 
 //*****************************************************************************
@@ -59,8 +60,8 @@ class ControllerTelescope: public Controller
 				bool	AlpacaGetStartupData_TelescopeOneAAT(void);	//*	One At A Time
 			//*	tab information
 				WindowTabTelescope	*cTelescopeTabObjPtr;
+				WindowTabDriverInfo	*cDriverInfoTabObjPtr;
 				WindowTabAbout		*cAboutBoxTabObjPtr;
-
 
 				//---------------------------------------------------
 				void			Update_TelescopeRtAscension(void);

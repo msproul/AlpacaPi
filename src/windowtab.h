@@ -21,6 +21,7 @@
 	#include	"widget.h"
 #endif // _WIDGET_H_
 
+
 //*****************************************************************************
 typedef struct
 {
@@ -117,12 +118,13 @@ class WindowTab
 				void	DumpWidgetList(			const int startIdx, const int stopIdx);
 
 				//*	special purpose routines
-				void	SetBGcolorFromWindowName(const int widgetIdx);
-				void	SetIPaddressBoxes(	const int	ipaddrBox,
-											const int	readAllBox,
-											const int	versionBox,
-											const int	connectBtnBox = -1);
+				void	SetBGcolorFromWindowName(	const int	widgetIdx);
+				void	SetIPaddressBoxes(			const int	ipaddrBox,
+													const int	readAllBox,
+													const int	versionBox,
+													const int	connectBtnBox = -1);
 				void	SetAlpacaLogo(const int logoWidgetIdx, const int lastCmdWidgetIdx = -1);
+				int		SetAlpacaLogoBottomCorner(const int logoWidgetIdx);
 				void	DisplayLastAlpacaCommand(void);
 
 				//*	display value functions
@@ -133,6 +135,9 @@ class WindowTab
 
 				void	SetWidgetSliderLimits(	const int widgetIdx, double sliderMin, double sliderMax);
 				void	SetWidgetSliderValue(	const int widgetIdx, double sliderValue);
+		virtual	void	UpdateControls(void);
+		virtual	void	UpdateSliderValue(		const int widgetIdx, double newSliderValue);
+
 				void	SetWidgetText(			const int widgetIdx, const char *newText);
 				void	GetWidgetText(			const int widgetIdx, char *getText);
 				void	SetWidgetTabStops(		const int widgetIdx, const short *tabStopList);
@@ -184,7 +189,7 @@ class WindowTab
 		virtual	void	UpdateColors(void);
 
 
-		virtual	void	DrawGraphWidget(IplImage *openCV_Image, const int widgitIdx);
+		virtual	void	DrawGraphWidget(IplImage *openCV_Image, const int widgetIdx);
 
 		virtual	void	SetWindowIPaddrInfo(const char	*textString = NULL,
 											const bool	onLine = true);
@@ -195,10 +200,10 @@ class WindowTab
 		virtual void	HandleKeyDown(const int keyPressed);
 		virtual	void	ProcessButtonClick(const int buttonIdx);
 		virtual	void	ProcessDoubleClick(const int buttonIdx);
-		virtual void	ProcessMouseEvent(const int widgitIdx, const int event, const int xxx, const int yyy, const int flags);
-		virtual void	ProcessMouseLeftButtonDown(const int widgitIdx, const int event, const int xxx, const int yyy, const int flags);
-		virtual void	ProcessMouseLeftButtonUp(const int widgitIdx, const int event, const int xxx, const int yyy, const int flags);
-		virtual void	ProcessMouseLeftButtonDragged(const int widgitIdx, const int event, const int xxx, const int yyy, const int flags);
+		virtual void	ProcessMouseEvent(const int widgetIdx, const int event, const int xxx, const int yyy, const int flags);
+		virtual void	ProcessMouseLeftButtonDown(const int widgetIdx, const int event, const int xxx, const int yyy, const int flags);
+		virtual void	ProcessMouseLeftButtonUp(const int widgetIdx, const int event, const int xxx, const int yyy, const int flags);
+		virtual void	ProcessMouseLeftButtonDragged(const int widgetIdx, const int event, const int xxx, const int yyy, const int flags);
 
 				void	SetHelpTextBoxNumber(const int buttonIdx);
 				bool	DisplayButtonHelpText(const int buttonIdx);
@@ -233,6 +238,7 @@ class WindowTab
 		int			cWidth;
 		int			cHeight;
 		void		*cParentObjPtr;
+//		Controller	*cParentObjPtr;
 
 	protected:
 		//*	these are for consistency between tab windows

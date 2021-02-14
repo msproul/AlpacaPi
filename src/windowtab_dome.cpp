@@ -313,22 +313,11 @@ int		domeGraphic_yLoc;
 	int	myBtnHeight;
 	int	domeBoxSize;
 	int	xLoc;
-
-
-
+	int	compassLetterBxSize	=	80;
+	int	compassBox_xloc;
+	int	compassBox_yLoc;
 
 		SetWidgetOutlineBox(kDomeBox_Outline, kDomeBox_CurPosLabel, kDomeBox_ErrorMsg);
-
-		//------------------------------------------------------
-		btnWidth		=	100;
-		myBtnHeight		=	myButtonHt - 4;
-		xLoc			=	cWidth - (btnWidth + 5);
-		yLoc			=	cHeight- (myBtnHeight + 5);
-		SetWidget(			kDomeBox_Rescan,	xLoc,		yLoc,		btnWidth,		myBtnHeight);
-		SetWidgetFont(		kDomeBox_Rescan,	kFont_Medium);
-		SetWidgetText(		kDomeBox_Rescan, 	"Re-scan");
-		SetWidgetBGColor(	kDomeBox_Rescan,	CV_RGB(255,	255,	255));
-		SetWidgetTextColor(	kDomeBox_Rescan,	CV_RGB(0,	0,	0));
 
 		//------------------------------------------------------
 		xLoc		=	600;
@@ -340,9 +329,6 @@ int		domeGraphic_yLoc;
 		SetWidgetType(		kDomeBox_DomeGraphic,	kWidgetType_Graphic);
 		SetWidgetBGColor(	kDomeBox_DomeGraphic,	CV_RGB(128,	128,	128));
 
-int	compassLetterBxSize	=	80;
-int	compassBox_xloc;
-int	compassBox_yLoc;
 		compassBox_xloc	=	xLoc + (domeBoxSize / 2) - (compassLetterBxSize / 2) - 10;
 		compassBox_yLoc	=	yLoc;
 
@@ -390,7 +376,7 @@ int	compassBox_yLoc;
 }
 
 //******************************************************************************
-void	WindowTabDome::SetDomePropertersPtr(TYPE_DomeProperties *domePropPtr)
+void	WindowTabDome::SetDomePropertiesPtr(TYPE_DomeProperties *domePropPtr)
 {
 	cDomePropPtr		=	domePropPtr;
 }
@@ -409,44 +395,77 @@ int		iii;
 
 }
 
+//*****************************************************************************
+void	WindowTabDome::UpdateControls(void)
+{
+	CONSOLE_DEBUG(__FUNCTION__);
+
+	SetWidgetValid(		kDomeBox_GoHome,	cDomePropPtr->CanSetAzimuth);
+	SetWidgetValid(		kDomeBox_GoPark,	cDomePropPtr->CanSetAzimuth);
+
+	SetWidgetValid(		kDomeBox_Minus20,	cDomePropPtr->CanSetAzimuth);
+	SetWidgetValid(		kDomeBox_Minus10,	cDomePropPtr->CanSetAzimuth);
+	SetWidgetValid(		kDomeBox_Minus5,	cDomePropPtr->CanSetAzimuth);
+	SetWidgetValid(		kDomeBox_Minus1,	cDomePropPtr->CanSetAzimuth);
+
+	SetWidgetValid(		kDomeBox_Plus1,		cDomePropPtr->CanSetAzimuth);
+	SetWidgetValid(		kDomeBox_Plus5,		cDomePropPtr->CanSetAzimuth);
+	SetWidgetValid(		kDomeBox_Plus10,	cDomePropPtr->CanSetAzimuth);
+	SetWidgetValid(		kDomeBox_Plus20,	cDomePropPtr->CanSetAzimuth);
+
+	SetWidgetValid(		kDomeBox_Stop,		cDomePropPtr->CanSetAzimuth);
+
+	SetWidgetValid(		kDomeBox_ToggleSlaveMode,	cDomePropPtr->CanSlave);
+
+
+	//*	these are all extras
+	SetWidgetValid(		kDomeBox_GoLeft,	cDomePropPtr->CanSetAzimuth);
+	SetWidgetValid(		kDomeBox_GoRight,	cDomePropPtr->CanSetAzimuth);
+	SetWidgetValid(		kDomeBox_SlowLeft,	cDomePropPtr->CanSetAzimuth);
+	SetWidgetValid(		kDomeBox_SlowRight,	cDomePropPtr->CanSetAzimuth);
+	SetWidgetValid(		kDomeBox_BumpLeft,	cDomePropPtr->CanSetAzimuth);
+	SetWidgetValid(		kDomeBox_BumpRight,	cDomePropPtr->CanSetAzimuth);
+
+}
+
 
 //******************************************************************************
-void	WindowTabDome::DrawGraphWidget(IplImage *openCV_Image, const int widgitIdx)
+void	WindowTabDome::DrawGraphWidget(IplImage *openCV_Image, const int widgetIdx)
 {
 CvRect		myCVrect;
 
-//	CONSOLE_DEBUG_W_NUM(__FUNCTION__, widgitIdx);
+//	CONSOLE_DEBUG_W_NUM(__FUNCTION__, widgetIdx);
 
-	myCVrect.x		=	cWidgetList[widgitIdx].left;
-	myCVrect.y		=	cWidgetList[widgitIdx].top;
-	myCVrect.width	=	cWidgetList[widgitIdx].width;
-	myCVrect.height	=	cWidgetList[widgitIdx].height;
+	myCVrect.x		=	cWidgetList[widgetIdx].left;
+	myCVrect.y		=	cWidgetList[widgetIdx].top;
+	myCVrect.width	=	cWidgetList[widgetIdx].width;
+	myCVrect.height	=	cWidgetList[widgetIdx].height;
 
 
 	cvRectangleR(	openCV_Image,
 					myCVrect,
-					cWidgetList[widgitIdx].bgColor,			//	CvScalar color,
+					cWidgetList[widgetIdx].bgColor,			//	CvScalar color,
 					CV_FILLED,								//	int thickness CV_DEFAULT(1),
 					8,										//	int line_type CV_DEFAULT(8),
 					0);										//	int shift CV_DEFAULT(0));
 
 //	cvRectangleR(	openCV_Image,
 //					myCVrect,
-//					cWidgetList[widgitIdx].boarderColor,	//	CvScalar color,
+//					cWidgetList[widgetIdx].boarderColor,	//	CvScalar color,
 //					1,										//	int thickness CV_DEFAULT(1),
 //					8,										//	int line_type CV_DEFAULT(8),
 //					0);										//	int shift CV_DEFAULT(0));
 
-	switch(widgitIdx)
+	switch(widgetIdx)
 	{
 #ifdef _ENABLE_SKYTRAVEL_
 		case kDomeBox_DomeGraphic:
-			DrawDomeGraphic(openCV_Image, &cWidgetList[widgitIdx]);
+			DrawDomeGraphic(openCV_Image, &cWidgetList[widgetIdx]);
 			break;
 #endif // _ENABLE_SKYTRAVEL_
 
 		default:
-			CONSOLE_DEBUG_W_NUM("widgitIdx\t",	widgitIdx);
+			CONSOLE_DEBUG_W_NUM("widgetIdx\t",	widgetIdx);
 			break;
 	}
 }
@@ -828,10 +847,6 @@ SJP_Parser_t	jsonResponse;
 			SendShutterCommand("abortslew");
 			break;
 
-	#ifdef _ENABLE_SKYTRAVEL_
-		case kDomeBox_Rescan:
-			break;
-	#endif // _ENABLE_SKYTRAVEL_
 	}
 	if (validData == false)
 	{
