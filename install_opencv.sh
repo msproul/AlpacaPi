@@ -34,6 +34,7 @@ sudo apt-get update
 
 
 echo "Installing libjpeg-dev"
+echo "Installing libjpeg-dev"  >> $LOGFILENAME
 sudo apt-get install libjpeg-dev
 
 
