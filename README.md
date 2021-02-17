@@ -18,6 +18,9 @@ You must determine the suitability of this source code for your use.
 
 Redistributions of this source code must retain this copyright notice.
 
+
+More documentation can be found at  https://msproul.github.io/AlpacaPi/
+
 ===================================================
 
 ## Getting started:

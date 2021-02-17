@@ -121,6 +121,8 @@ char	*colonPtr;
 	cTelescopeProp.CanSetTracking	=	true;
 
 
+	cQueuedCmdCnt	=	0;
+
 //	AlpacaConnect();
 }
 
@@ -166,8 +168,7 @@ int32_t	TelescopeDriverComm::RunStateMachine(void)
 //		CONSOLE_DEBUG_W_DBL("cRightAscension\t=",	cRightAscension);
 //		CONSOLE_DEBUG_W_DBL("cDeclination\t=",		cDeclination);
 
-
-		gTelescopeUpdated	=	false;
+		gTelescopeUpdated		=	false;
 
 		cTelescopeProp.Slewing	=	false;
 	}
@@ -241,66 +242,53 @@ TYPE_ASCOM_STATUS	TelescopeDriverComm::Telescope_AbortSlew(char *alpacaErrMsg)
 {
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 
-	CONSOLE_DEBUG(__FUNCTION__);
-
-	StopMovement();
-	alpacaErrCode	=	kASCOM_Err_Success;
-
+	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
 	return(alpacaErrCode);
 }
 
 //*****************************************************************************
-TYPE_ASCOM_STATUS	TelescopeDriverComm::Telescope_SlewToRA_DEC(	const double	newRA,
-																	const double	newDec,
+//*	needs to be over-ridden
+TYPE_ASCOM_STATUS	TelescopeDriverComm::Telescope_MoveAxis(const int axisNum, const double moveRate_degPerSec, char *alpacaErrMsg)
+{
+	TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
+
+	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	TelescopeDriverComm::Telescope_SlewToRA_DEC(	const double	newRtAscen_Hours,
+																	const double	newDeclination_Degrees,
 																	char			*alpacaErrMsg)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
-bool				returnCode;
 
-	CONSOLE_DEBUG(__FUNCTION__);
-
-	returnCode	=	false;
-
-	returnCode	=	SlewScopeDegrees(newRA, newDec, alpacaErrMsg);
-	if (returnCode)
-	{
-		cTelescopeProp.Slewing	=	true;
-		alpacaErrCode			=	kASCOM_Err_Success;
-	}
-	else
-	{
-		alpacaErrCode	=	kASCOM_Err_NotConnected;
-	}
-
+	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
 	return(alpacaErrCode);
 }
 
 
 //*****************************************************************************
-TYPE_ASCOM_STATUS	TelescopeDriverComm::Telescope_SyncToRA_DEC(	const double	newRA,
-																	const double	newDec,
+TYPE_ASCOM_STATUS	TelescopeDriverComm::Telescope_SyncToRA_DEC(	const double	newRtAscen_Hours,
+																	const double	newDeclination_Degrees,
 																	char			*alpacaErrMsg)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
-bool				returnCode;
 
-	CONSOLE_DEBUG("-------------------------------------------------------------");
-	CONSOLE_DEBUG(__FUNCTION__);
-
-	returnCode	=	SyncScopeDegrees(newRA, newDec, alpacaErrMsg);
-	if (returnCode)
-	{
-		CONSOLE_DEBUG("kASCOM_Err_Success");
-		alpacaErrCode	=	kASCOM_Err_Success;
-	}
-	else
-	{
-		CONSOLE_DEBUG("kASCOM_Err_NotConnected");
-		alpacaErrCode	=	kASCOM_Err_NotConnected;
-	}
-
+	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
 	return(alpacaErrCode);
 }
+
+//*****************************************************************************
+//*	needs to be over-ridden
+TYPE_ASCOM_STATUS	TelescopeDriverComm::Telescope_TrackingOnOff(const bool newTrackingState, char *alpacaErrMsg)
+{
+TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
+
+	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
+	return(alpacaErrCode);
+}
+
 
 //*****************************************************************************
 bool	TelescopeDriverComm::StartThread(void)
@@ -341,40 +329,6 @@ char	errorMsg[64];
 void	TelescopeDriverComm::StopThread(void)
 {
 	cKeepRunningFlag	=	false;
-
-}
-
-//*****************************************************************************
-bool	TelescopeDriverComm::SlewScopeDegrees(	const double	newRtAscen_Hours,
-												const double	newDeclination_Degrees,
-												char			*returnErrMsg)
-{
-	return(false);
-
-}
-
-//*****************************************************************************
-bool	TelescopeDriverComm::SyncScope(	const double	newRtAscen_Radians,
-										const double	new_Declination_Radians,
-										char			*returnErrMsg)
-{
-	return(false);
-
-}
-
-//*****************************************************************************
-bool	TelescopeDriverComm::SyncScopeDegrees(	const double	newRtAscen_Hours,
-												const double	newDeclination_Degrees,
-												char			*returnErrMsg)
-{
-	return(false);
-
-}
-
-//*****************************************************************************
-bool	TelescopeDriverComm::StopMovement(void)
-{
-	return(false);
 
 }
 
@@ -505,93 +459,103 @@ bool		sendOK;
 	CONSOLE_DEBUG_W_NUM("cTCPportNum\t=",	cTCPportNum);
 
 
-	//########################################################
-	//*	open the connection
-	connectionOpen	=	false;
-	switch(cDeviceConnType)
+	while (cKeepRunningFlag)
 	{
-		case kDevCon_Ethernet:
-			cSocket_desc	=	OpenSocket(cDeviceIPaddress, cTCPportNum);
-			if (cSocket_desc > 0)
-			{
-				connectionOpen	=	true;
-			}
-			break;
-
-		case kDevCon_USB:
-			connectionOpen		=	false;
-			break;
-
-		case kDevCon_Serial:
-			connectionOpen	=	true;
-			break;
-	}
-
-	//########################################################
-	//*	did we open the connection OK
-	if (connectionOpen)
-	{
-		//*	this is our main loop for the communications thread
-		//*	we will do the following
-		//*		check for and send queued commands
-		//*		send on going GET INFO commands
-		//*		parse the info coming back from the telescope
-		//*		update as appropriate
-		errorCount	=	0;
-		while (cKeepRunningFlag)
-		{
-			//*	now we are going to send commands to the telescope
-			if (cQueuedCmdCnt > 0)
-			{
-				sendOK	=	SendCmdsFromQueue();
-				if (sendOK == false)
-				{
-					errorCount++;
-				}
-				sleep(1);
-			}
-			else
-			{
-				//*	send periodic commands
-				sendOK	=	SendCmdsPeriodic();
-				if (sendOK == false)
-				{
-					errorCount++;
-				}
-				sleep(5);
-			}
-		}
 		//########################################################
-		//*	close the connection
+		//*	open the connection
+		connectionOpen	=	false;
 		switch(cDeviceConnType)
 		{
 			case kDevCon_Ethernet:
-				shutDownRetCode	=	shutdown(cSocket_desc, SHUT_RDWR);
-				if (shutDownRetCode != 0)
+				cSocket_desc	=	OpenSocket(cDeviceIPaddress, cTCPportNum);
+				if (cSocket_desc > 0)
 				{
-					CONSOLE_DEBUG_W_NUM("shutDownRetCode\t=", shutDownRetCode);
-					CONSOLE_DEBUG_W_NUM("errno\t=", errno);
+					connectionOpen	=	true;
 				}
-				CONSOLE_DEBUG("close");
-				closeRetCode	=	close(cSocket_desc);
-				if (closeRetCode != 0)
-				{
-					CONSOLE_DEBUG_W_NUM("closeRetCode\t=", closeRetCode);
-					CONSOLE_DEBUG_W_NUM("errno\t=", errno);
-				}
-				cSocket_desc	=	-1;
 				break;
 
 			case kDevCon_USB:
+				connectionOpen		=	false;
 				break;
 
 			case kDevCon_Serial:
+				connectionOpen	=	true;
 				break;
 		}
-	}
-	else
-	{
-		CONSOLE_DEBUG("Failed to open connection");
+
+		//########################################################
+		//*	did we open the connection OK
+		if (connectionOpen)
+		{
+			//*	this is our main loop for the communications thread
+			//*	we will do the following
+			//*		check for and send queued commands
+			//*		send on going GET INFO commands
+			//*		parse the info coming back from the telescope
+			//*		update as appropriate
+			errorCount	=	0;
+			while (cKeepRunningFlag)
+			{
+				//*	now we are going to send commands to the telescope
+				if (cQueuedCmdCnt > 0)
+				{
+					sendOK	=	SendCmdsFromQueue();
+					if (sendOK == false)
+					{
+						errorCount++;
+					}
+				}
+				else
+				{
+					//*	send periodic commands
+					sendOK	=	SendCmdsPeriodic();
+					if (sendOK == false)
+					{
+						errorCount++;
+					}
+				}
+				usleep(500000);
+
+				//*	if the error count gets too big, shut down and re-open the connection
+				if (errorCount > 20)
+				{
+					CONSOLE_DEBUG("Closing connection due to error count, will try to re-open");
+					break;
+				}
+			}
+			//########################################################
+			//*	close the connection
+			switch(cDeviceConnType)
+			{
+				case kDevCon_Ethernet:
+					shutDownRetCode	=	shutdown(cSocket_desc, SHUT_RDWR);
+					if (shutDownRetCode != 0)
+					{
+						CONSOLE_DEBUG_W_NUM("shutDownRetCode\t=", shutDownRetCode);
+						CONSOLE_DEBUG_W_NUM("errno\t=", errno);
+					}
+					CONSOLE_DEBUG("close");
+					closeRetCode	=	close(cSocket_desc);
+					if (closeRetCode != 0)
+					{
+						CONSOLE_DEBUG_W_NUM("closeRetCode\t=", closeRetCode);
+						CONSOLE_DEBUG_W_NUM("errno\t=", errno);
+					}
+					cSocket_desc	=	-1;
+					break;
+
+				case kDevCon_USB:
+					break;
+
+				case kDevCon_Serial:
+					break;
+			}
+		}
+		else
+		{
+			CONSOLE_DEBUG("Failed to open connection");
+			cKeepRunningFlag	=	false;
+		}
 	}
 	CONSOLE_DEBUG("Thread EXIT!!!!!!!!!!!!!!!!!!");
 
@@ -627,136 +591,6 @@ void				*returnValue;
 		CONSOLE_DEBUG("telscopeCommPtr is NULL");
 		CONSOLE_ABORT(__FUNCTION__);
 	}
-
-#if 0
-//+	gLX200_ThreadActive	=	true;
-//+	gLX200_SocketErrCnt	=	0;
-//+	gLX200CmdQueCnt		=	0;
-
-	socket_desc	=	telscopeCommPtr->OpenSocket();
-
-
-	if (socket_desc > 0)
-	{
-//+		while (gLX200_keepRunning && (gLX200_SocketErrCnt < 20))
-		{
-
-			//*	if we have commands queued up, get them done first
-//+			if (gLX200CmdQueCnt > 0)
-			{
-//+				SendCmdsFromQueue(socket_desc);
-			}
-//+			else
-			{
-				//--------------------------------------------------------------------------
-				//*	Right Ascension
-//+				returnByteCNt	=	LX200_SendCommand(socket_desc, "GR", dataBuffer, 400);
-				if (returnByteCNt > 0)
-				{
-//+					isValid			=	LX200_Process_GR_RtAsc(dataBuffer);
-					if (isValid)
-					{
-//+						gTelescopeInfoValid	=	true;
-					}
-					else
-					{
-//+						strcpy(gTelescopeRA_String, "RA failed");
-//+						gLX200_SocketErrCnt++;
-//+						gTelescopeInfoValid	=	false;
-//+						CONSOLE_DEBUG_W_NUM("gLX200_SocketErrCnt\t=", gLX200_SocketErrCnt);
-					}
-					usleep(1000);
-				}
-				else
-				{
-//+					gLX200_SocketErrCnt++;
-//+					CONSOLE_DEBUG_W_NUM("gLX200_SocketErrCnt\t=", gLX200_SocketErrCnt);
-				}
-
-				//--------------------------------------------------------------------------
-				//*	Declination
-//+				returnByteCNt	=	LX200_SendCommand(socket_desc, "GD", dataBuffer, 400);
-				if (returnByteCNt > 0)
-				{
-//+					isValid			=	LX200_Process_GD(dataBuffer);
-					if (isValid)
-					{
-//+						gTelescopeInfoValid	=	true;
-					}
-					else
-					{
-//+						strcpy(gTelescopeDecl_String, "DEC failed");
-//+						gLX200_SocketErrCnt++;
-//+						gTelescopeInfoValid	=	false;
-					}
-					usleep(1000);
-				}
-				else
-				{
-//+					gLX200_SocketErrCnt++;
-//+					CONSOLE_DEBUG_W_NUM("gLX200_SocketErrCnt\t=", gLX200_SocketErrCnt);
-				}
-
-				//--------------------------------------------------------------------------
-				//*	TrackingRate
-//+				returnByteCNt	=	LX200_SendCommand(socket_desc, "GT", dataBuffer, 400);
-				if (returnByteCNt > 0)
-				{
-//+					isValid			=	LX200_Process_GT(dataBuffer);
-					if (isValid)
-					{
-//+						gTelescopeInfoValid	=	true;
-					}
-					else
-					{
-					}
-					usleep(1000);
-				}
-				else
-				{
-//+					gLX200_SocketErrCnt++;
-//+					CONSOLE_DEBUG_W_NUM("gLX200_SocketErrCnt\t=", gLX200_SocketErrCnt);
-				}
-				//--------------------------------------------------------------------------
-
-
-
-//+				gTelescopeUpdateCnt++;
-				gTelescopeUpdated		=	true;
-				sleep(1);
-			}
-
-
-
-//+			if (gLX200_OutOfBoundsCnt > 0)
-			{
-//+				CONSOLE_DEBUG_W_NUM("gLX200_OutOfBoundsCnt\t=", gLX200_OutOfBoundsCnt);
-			}
-		}
-		CONSOLE_DEBUG("shutdown");
-
-		shutDownRetCode	=	shutdown(socket_desc, SHUT_RDWR);
-		if (shutDownRetCode != 0)
-		{
-			CONSOLE_DEBUG_W_NUM("shutDownRetCode\t=", shutDownRetCode);
-			CONSOLE_DEBUG_W_NUM("errno\t=", errno);
-		}
-		CONSOLE_DEBUG("close");
-		closeRetCode	=	close(socket_desc);
-		if (closeRetCode != 0)
-		{
-			CONSOLE_DEBUG_W_NUM("closeRetCode\t=", closeRetCode);
-			CONSOLE_DEBUG_W_NUM("errno\t=", errno);
-		}
-	}
-	else
-	{
-//+		strcpy(cTelescopeErrorString, "Socket failed to open");
-	}
-//+	strcpy(gTelescopeRA_String, "Thread exit");
-//+	gLX200_ThreadActive		=	false;
-	gTelescopeUpdated		=	true;
-#endif // 0
 
 	return(returnValue);
 }

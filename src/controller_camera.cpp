@@ -1388,7 +1388,7 @@ void	ControllerCamera::SetExposure(const double newExposure)
 char	dataString[48];
 bool	validData;
 
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 
 	cExposure	=	newExposure;
 
@@ -1414,14 +1414,8 @@ bool	validData;
 //*****************************************************************************
 void	ControllerCamera::BumpExposure(const double howMuch)
 {
-char	dataString[48];
-bool	validData;
-double	newExposure;
-
-	newExposure	=	cExposure + howMuch;
-	SetExposure(newExposure);
+	SetExposure(cExposure + howMuch);
 }
-
 
 //*****************************************************************************
 void	ControllerCamera::ToggleLiveMode(void)

@@ -49,8 +49,19 @@ class TelescopeDriverComm: public TelescopeDriver
 		virtual	bool				AlpacaConnect(void);
 		virtual	bool				AlpacaDisConnect(void);
 		virtual	TYPE_ASCOM_STATUS	Telescope_AbortSlew(char *alpacaErrMsg);
-		virtual	TYPE_ASCOM_STATUS	Telescope_SlewToRA_DEC(const double newRA, const double newDec, char *alpacaErrMsg);
-		virtual	TYPE_ASCOM_STATUS	Telescope_SyncToRA_DEC(const double newRA, const double newDec, char *alpacaErrMsg);
+		virtual	TYPE_ASCOM_STATUS	Telescope_MoveAxis(		const int axisNum,
+															const double moveRate_degPerSec,
+															char *alpacaErrMsg);
+
+		virtual	TYPE_ASCOM_STATUS	Telescope_SlewToRA_DEC(	const double	newRtAscen_Hours,
+															const double	newDeclination_Degrees,
+															char *alpacaErrMsg);
+
+		virtual	TYPE_ASCOM_STATUS	Telescope_SyncToRA_DEC(	const double	newRtAscen_Hours,
+															const double	newDeclination_Degrees,
+															char *alpacaErrMsg);
+		virtual	TYPE_ASCOM_STATUS	Telescope_TrackingOnOff(const bool newTrackingState,
+															char *alpacaErrMsg);
 
 
 		//####################################################################
@@ -61,21 +72,6 @@ class TelescopeDriverComm: public TelescopeDriver
 		virtual	bool	SendCmdsFromQueue(void);
 		virtual	bool	SendCmdsPeriodic(void);
 
-
-		virtual	bool	SlewScopeDegrees(	const double	newRtAscen_Hours,
-											const double	newDeclination_Degrees,
-											char			*returnErrMsg);
-
-		virtual	bool	SyncScope(			const double	newRtAscen_Radians,
-											const double	new_Declination_Radians,
-											char			*returnErrMsg);
-
-		virtual	bool	SyncScopeDegrees(	const double	newRtAscen_Hours,
-											const double	newDeclination_Degrees,
-											char			*returnErrMsg);
-
-
-		virtual	bool	StopMovement(void);
 
 		int		OpenSocket(struct sockaddr_in	*deviceAddress, const int port);
 		int		OpenSocket(const char *ipAddress, const int port);

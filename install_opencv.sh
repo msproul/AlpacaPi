@@ -8,6 +8,7 @@
 ###	Jul  7,	2020	<MLS> Now will install 3.3.1 or 3.2.0, which ever is present
 ###	Jan 25,	2021	<MLS> Took 5 hours on a Jetson-Nano
 ###	Feb  8,	2021	<MLS> Added system update
+###	Feb  8,	2021	<MLS> Added log file
 ###############################################################################
 
 #	https://opencv.org/releases/page/4/

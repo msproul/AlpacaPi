@@ -26,6 +26,10 @@ enum
 	kMoon_IlluminationLbl,
 	kMoon_Illumination,
 
+	kMoon_Image,
+	kMoon_MoonImgOutline,
+
+
 	kMoon_AlpacaLogo,
 //	kMoon_AlpacaDrvrVersion,
 //	kMoon_IPaddr,
@@ -52,9 +56,10 @@ class WindowTabMoon: public WindowTab
 
 		virtual	void	SetupWindowControls(void);
 
-		bool				cFirstRead;
-		uint32_t			cLastUpdateTime_ms;
+		bool			cFirstRead;
+		uint32_t		cLastUpdateTime_ms;
 
+		IplImage		*cMoonImage;
 };
 
 

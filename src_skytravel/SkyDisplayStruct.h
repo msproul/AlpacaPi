@@ -14,10 +14,13 @@ typedef struct
 		//*	overlays
 		bool				dispGrid;			//*	Grid on/off
 		bool				dispHorizon_line;	//*	Horizon line on/off
-		bool				dispTelescope;		//*	telescope pointing area on/off
 		bool				dispEquator_line;	//*	equator line on/off
 		bool				ecliptic_line;
 		bool				dispEarth;			//*	earth lines on/off
+
+		bool				dispTelescope;		//*	telescope pointing area on/off
+		bool				dispDomeSlit;		//*	dome slit opening
+
 
 		//*	data
 		bool				dispLines;			//*	Constellation lines on/off

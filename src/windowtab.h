@@ -206,6 +206,7 @@ class WindowTab
 		virtual void	ProcessMouseLeftButtonDragged(const int widgetIdx, const int event, const int xxx, const int yyy, const int flags);
 
 				void	SetHelpTextBoxNumber(const int buttonIdx);
+				void	SetHelpTextBoxColor(CvScalar newtextColor);
 				bool	DisplayButtonHelpText(const int buttonIdx);
 
 
@@ -269,7 +270,8 @@ class WindowTab
 		int					cLastCmdTextBox;	//*	index of the box for the last alpaca command, < 0 means not set
 //-		char				cLastAlpacaCmdString[256];
 
-		int					cHelpTextBoxNuber;	//*	index of the box for help text (-1 is not set)
+		int					cHelpTextBoxNumber;	//*	index of the box for help text (-1 is not set)
+		CvScalar 			cHelpTextBoxColor;
 		int					cPervDisplayedHelpBox;
 
 		//*	alpaca stuff duplicated from controller class

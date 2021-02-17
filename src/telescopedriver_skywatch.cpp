@@ -60,8 +60,7 @@
 
 
 #include	"telescopedriver.h"
-#include	"telescopedriver_skywatch.h"
-
+#include	"telescopedriver_skywatch.h
 //**************************************************************************************
 void	CreateTelescopeObjects_SkyWatch(void)
 {
@@ -98,6 +97,59 @@ TelescopeDriverSkyWatch::~TelescopeDriverSkyWatch(void)
 	CONSOLE_DEBUG(__FUNCTION__);
 }
 
+
+//*****************************************************************************
+//*	needs to be over-ridden
+TYPE_ASCOM_STATUS	TelescopeDriverSkyWatch::Telescope_AbortSlew(char *alpacaErrMsg)
+{
+TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
+
+	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+//*	needs to be over-ridden
+TYPE_ASCOM_STATUS	TelescopeDriverSkyWatch::Telescope_MoveAxis(const int axisNum, const double moveRate_degPerSec, char *alpacaErrMsg)
+{
+	TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
+
+	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	TelescopeDriverSkyWatch::Telescope_SlewToRA_DEC(	const double	newRtAscen_Hours,
+																	const double	newDeclination_Degrees,
+																	char			*alpacaErrMsg)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
+
+	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
+	return(alpacaErrCode);
+}
+
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	TelescopeDriverSkyWatch::Telescope_SyncToRA_DEC(	const double	newRtAscen_Hours,
+																	const double	newDeclination_Degrees,
+																	char			*alpacaErrMsg)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
+
+	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+//*	needs to be over-ridden
+TYPE_ASCOM_STATUS	TelescopeDriverSkyWatch::Telescope_TrackingOnOff(const bool newTrackingState, char *alpacaErrMsg)
+{
+TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
+
+	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
+	return(alpacaErrCode);
+}
 
 
 #endif // _ENABLE_TELESCOPE_LX200_

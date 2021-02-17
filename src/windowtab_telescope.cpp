@@ -302,6 +302,8 @@ bool	update;
 double	slewRate	=	2.51234;
 //	CONSOLE_DEBUG(__FUNCTION__);
 
+	SetWidgetText(kTelescope_ErrorMsg, "");
+
 	switch(cCurrentSlewRate)
 	{
 		case kTelescope_SlewRate_Fast:		slewRate	=	3.0;	break;

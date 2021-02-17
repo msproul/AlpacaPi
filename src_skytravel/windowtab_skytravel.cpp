@@ -39,6 +39,8 @@
 //*	Jan 26,	2021	<MLS> Removed support for direct LX200 comm, using Alpaca instead
 //*	Jan 29,	2021	<MLS> Finished removing all LX200 direct comm code
 //*	Jan 29,	2021	<MLS> Added auto time update option
+//*	Feb 15,	2021	<MLS> Added SyncTelescopeToCenter() & SlewTelescopeToCenter()
+//*	Feb 15,	2021	<MLS> Added separate flag for dome slit display
 //*****************************************************************************
 //*	TODO
 //*			star catalog lists
@@ -47,6 +49,8 @@
 //*		http://www.astrosurf.com/jephem/astro/skymap/sm200coordinates_en.htm
 //*		https://github.com/dcf21/constellation-stick-figures
 //*****************************************************************************
+
+
 
 
 #ifdef _ENABLE_SKYTRAVEL_
@@ -100,7 +104,7 @@ double	gDomeDiameter_inches	=	(15.0 * 12.0);
 double	gSlitWidth_inches		=	41.0;
 
 double	gSlitBottom_degrees		=	25.0;
-double	gSlitTop_degrees		=	75.0;
+double	gSlitTop_degrees		=	100.0;
 double	gDomeAzimuth_degrees	=	90.0;
 
 
@@ -312,6 +316,7 @@ int		ii;
 	cDispOptions.dispHIP			=	false;
 
 	cDispOptions.dispTelescope		=	false;
+	cDispOptions.dispDomeSlit		=	false;
 
 	cDisplayedMagnitudeLimit		=	15.0;
 
@@ -446,6 +451,7 @@ int		labelWidth;
 int		skyBoxHeight;
 int		iii;
 int		searchBoxWidth;
+int		buttonWidthGoto;
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	//------------------------------------------
@@ -473,7 +479,7 @@ int		searchBoxWidth;
 	yLoc			=	cTabVertOffset;
 
 	xLoc	=	labelWidth + 5;
-	for (iii=kSkyTravel_Btn_DeepSky; iii<kSkyTravel_MsgTextBox; iii++)
+	for (iii = kSkyTravel_Btn_DeepSky; iii < kSkyTravel_MsgTextBox; iii++)
 	{
 		if (iii == kSkyTravel_Btn_Reset)
 		{
@@ -488,7 +494,6 @@ int		searchBoxWidth;
 		xLoc	+=	cTitleHeight;
 		xLoc	+=	2;
 	}
-//	saveXloc	=	xLoc;
 
 	SetWidgetType(		kSkyTravel_Btn_ZoomLevel, 	kWidgetType_Text);
 	SetWidgetFont(		kSkyTravel_Btn_ZoomLevel, 	kFont_Medium);
@@ -568,9 +573,33 @@ int		searchBoxWidth;
 	SetWidgetType(		kSkyTravel_TelescopeIndicator, 	kWidgetType_Text);
 
 
-	SetWidget(		kSkyTravel_Telescope_RA_DEC,	xLoc,	yLoc, cBtnWidth * 2,	cTitleHeight);
-	SetWidgetFont(	kSkyTravel_Telescope_RA_DEC,	kFont_Medium);
-	SetWidgetText(	kSkyTravel_Telescope_RA_DEC,	"--");
+	SetWidget(			kSkyTravel_Telescope_RA_DEC,	xLoc,	yLoc, cBtnWidth,	cTitleHeight);
+	SetWidgetFont(		kSkyTravel_Telescope_RA_DEC,	kFont_Medium);
+	SetWidgetText(		kSkyTravel_Telescope_RA_DEC,	"--");
+	SetWidgetHelpText(	kSkyTravel_Telescope_RA_DEC,	"Double click to center screen on current telescope location");
+
+	xLoc	+=	cBtnWidth;
+	xLoc	+=	2;
+
+	//------------------------------------------------------------------------------------
+	buttonWidthGoto	=	cBtnWidth / 2;
+	SetWidget(			kSkyTravel_Telescope_Sync,	xLoc,	yLoc, buttonWidthGoto,	cTitleHeight);
+	SetWidgetText(		kSkyTravel_Telescope_Sync,	"Sync");
+	SetWidgetFont(		kSkyTravel_Telescope_Sync,	kFont_Medium);
+	SetWidgetTextColor(	kSkyTravel_Telescope_Sync,	CV_RGB(0,	0, 0));
+	SetWidgetBGColor(	kSkyTravel_Telescope_Sync,	CV_RGB(255,	255,	255));
+	SetWidgetType(		kSkyTravel_Telescope_Sync, 	kWidgetType_Button);
+	SetWidgetHelpText(	kSkyTravel_Telescope_Sync,	"Sync telescope to center of screen");
+
+	xLoc	+=	buttonWidthGoto;
+	xLoc	+=	2;
+	SetWidget(			kSkyTravel_Telescope_GoTo,	xLoc,	yLoc, buttonWidthGoto,	cTitleHeight);
+	SetWidgetText(		kSkyTravel_Telescope_GoTo,	"GoTo");
+	SetWidgetFont(		kSkyTravel_Telescope_GoTo,	kFont_Medium);
+	SetWidgetTextColor(	kSkyTravel_Telescope_GoTo,	CV_RGB(0,	0, 0));
+	SetWidgetBGColor(	kSkyTravel_Telescope_GoTo,	CV_RGB(255,	255,	255));
+	SetWidgetType(		kSkyTravel_Telescope_GoTo, 	kWidgetType_Button);
+	SetWidgetHelpText(	kSkyTravel_Telescope_GoTo,	"Slew telescope to center of screen");
 
 	yLoc			+=	cTitleHeight;
 	yLoc			+=	2;
@@ -582,19 +611,20 @@ int		searchBoxWidth;
 	SetWidgetTextColor(		kSkyTravel_MsgTextBox, CV_RGB(128,	128, 128));
 	SetWidgetText(			kSkyTravel_MsgTextBox,	"message text box");
 	SetWidgetJustification(	kSkyTravel_MsgTextBox,	kJustification_Left);
+
 	SetHelpTextBoxNumber(	kSkyTravel_MsgTextBox);
 
 	yLoc			+=	cTitleHeight;
 	yLoc			+=	2;
 
 	//-----------------------------------------------
-	SetWidget(				kSkyTravel_HelpTextBox,	1,		yLoc,	(cWidth - 2),		cTitleHeight);
-	SetWidgetType(			kSkyTravel_HelpTextBox, kWidgetType_Text);
-	SetWidgetFont(			kSkyTravel_HelpTextBox,	kFont_Medium);
-	SetWidgetTextColor(		kSkyTravel_HelpTextBox, CV_RGB(128,	128, 128));
-	SetWidgetText(			kSkyTravel_HelpTextBox,	"Help text box");
-	SetWidgetJustification(	kSkyTravel_HelpTextBox,	kJustification_Left);
-	SetHelpTextBoxNumber(	kSkyTravel_HelpTextBox);
+	SetWidget(				kSkyTravel_CursorInfoTextBox,	1,		yLoc,	(cWidth - 2),		cTitleHeight);
+	SetWidgetType(			kSkyTravel_CursorInfoTextBox,	kWidgetType_Text);
+	SetWidgetFont(			kSkyTravel_CursorInfoTextBox,	kFont_Medium);
+	SetWidgetTextColor(		kSkyTravel_CursorInfoTextBox,	CV_RGB(128, 128, 128));
+	SetWidgetText(			kSkyTravel_CursorInfoTextBox,	"Help text box");
+	SetWidgetJustification(	kSkyTravel_CursorInfoTextBox,	kJustification_Left);
+
 
 	yLoc			+=	cTitleHeight;
 	yLoc			+=	2;
@@ -952,8 +982,13 @@ bool			reDrawSky;
 
 //		case '-':
 //			cCurrentTime.negflag	=	true;
+//			break;
+
+		case '|':			//* dome slit toggle
+			cDispOptions.dispDomeSlit	=	!cDispOptions.dispDomeSlit;
 			break;
-//
+
+
 		case 0x07:	//* cntl-g local time/Gmtime
 			cCurrentTime.local_time_flag	^=	1;
 			break;
@@ -1135,6 +1170,16 @@ char	searchText[128];
 			SearchSkyObjects(searchText);
 			break;
 
+
+		case kSkyTravel_Telescope_Sync:
+			SyncTelescopeToCenter();
+			break;
+
+		case kSkyTravel_Telescope_GoTo:
+			SlewTelescopeToCenter();
+			break;
+
+
 		default:
 			CONSOLE_DEBUG(__FUNCTION__);
 			CONSOLE_DEBUG_W_NUM("buttonIdx\t",	buttonIdx);
@@ -1149,6 +1194,93 @@ char	searchText[128];
 	}
 }
 
+//*****************************************************************************
+//	RightAscension=12.123&Declination=34.123
+//*****************************************************************************
+bool	WindowTabSkyTravel::SyncTelescopeToCenter(void)
+{
+bool			validData;
+char			dataString[64];
+SJP_Parser_t	jsonParser;
+
+	sprintf(dataString, "RightAscension=%f&Declination=%f", DEGREES(cRa0 / 15.0), DEGREES(cDecl0));
+	CONSOLE_DEBUG_W_STR("Sending", dataString);
+
+	validData	=	SendAlpacaCmdToTelescope("synctocoordinates",	dataString, &jsonParser);
+	return(validData);
+}
+
+
+//*****************************************************************************
+//	RightAscension=12.123&Declination=34.123
+//*****************************************************************************
+bool	WindowTabSkyTravel::SlewTelescopeToCenter(void)
+{
+bool			validData;
+char			dataString[64];
+SJP_Parser_t	jsonParser;
+double			myRA_degrees;
+
+
+//	CONSOLE_DEBUG_W_DBL("DEGREES(cRa0 / 15.0)\t=", DEGREES(cRa0 / 15.0));
+//	CONSOLE_DEBUG_W_DBL("DEGREES(cDecl0)\t\t=", DEGREES(cDecl0));
+
+	myRA_degrees	=	DEGREES(cRa0 / 15.0);
+	while (myRA_degrees < 0.0)
+	{
+		myRA_degrees	+=	24.0;
+	}
+	while (myRA_degrees >= 24.0)
+	{
+		myRA_degrees	-=	24.0;
+	}
+//	CONSOLE_DEBUG_W_DBL("myRA_degrees\t\t=", myRA_degrees);
+
+	sprintf(dataString, "RightAscension=%f&Declination=%f", myRA_degrees, DEGREES(cDecl0));
+//	CONSOLE_DEBUG_W_STR("Sending", dataString);
+
+	validData	=	SendAlpacaCmdToTelescope("slewtocoordinatesasync",	dataString, &jsonParser);
+	return(validData);
+}
+
+//*****************************************************************************
+bool	WindowTabSkyTravel::SendAlpacaCmdToTelescope(	const char		*theCommand,
+														const char		*dataString,
+														SJP_Parser_t	*jsonParser)
+{
+bool				validData	=	false;
+ControllerSkytravel	*myControllerObj;
+char				ipAddrStr[32];
+
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, theCommand);
+
+	myControllerObj	=	(ControllerSkytravel *)cParentObjPtr;
+	if (myControllerObj != NULL)
+	{
+		if (myControllerObj->cTelescopeAddressValid)
+		{
+			inet_ntop(AF_INET, &(myControllerObj->cDomeIpAddress.sin_addr), ipAddrStr, INET_ADDRSTRLEN);
+			CONSOLE_DEBUG_W_STR("IP address=", ipAddrStr);
+
+			validData	=	AlpacaSendPutCmd(	&myControllerObj->cTelescopeIpAddress,
+												myControllerObj->cTelescopeIpPort,
+												"telescope",
+												myControllerObj->cTelescopeAlpacaDeviceNum,
+												theCommand,
+												dataString,
+												jsonParser);
+		}
+		else
+		{
+			CONSOLE_DEBUG("Telescope IP address not valid");
+		}
+	}
+	else
+	{
+		CONSOLE_DEBUG("myControllerObj is NULL");
+	}
+	return(validData);
+}
 
 //*****************************************************************************
 void	WindowTabSkyTravel::ProcessDoubleClick(const int buttonIdx)
@@ -1159,7 +1291,7 @@ bool			reDrawSky;
 
 	switch(buttonIdx)
 	{
-		//*	double click in the RA/DEC box from the LX200 comm makes it center on the current telescope position
+		//*	double click in the RA/DEC box from the Alpaca telescope device and makes it center on the current telescope position
 		case kSkyTravel_Telescope_RA_DEC:
 			cDispOptions.dispTelescope	=	true;
 			cRa0		=	gTelescopeRA_Radians;
@@ -1182,7 +1314,7 @@ bool			reDrawSky;
 	{
 		ForceReDrawSky();
 
-		printf("=foo=%07.4f:%07.4f\r\n", DEGREES(cRa0 / 15), DEGREES(cDecl0));
+		printf("Center of screen=%07.4f:%07.4f\r\n", DEGREES(cRa0 / 15), DEGREES(cDecl0));
 
 	}
 }
@@ -3386,6 +3518,10 @@ void	WindowTabSkyTravel::DrawWindowOverlays(void)
 		//	CONSOLE_DEBUG_W_STR("gTelescopeDecl_String \t=",	gTelescopeDecl_String);
 		//	CONSOLE_DEBUG_W_DBL("gTelescopeDecl_Radians\t=",	DEGREES(gTelescopeDecl_Radians));
 		}
+	}
+
+	if (cDispOptions.dispDomeSlit)
+	{
 		DrawDomeSlit();
 	}
 
@@ -3489,6 +3625,8 @@ void	WindowTabSkyTravel::CenterOnDomeSlit(void)
 {
 	cAz0	=	RADIANS(gDomeAzimuth_degrees);
 	cElev0	=	RADIANS((gSlitBottom_degrees + gSlitTop_degrees) / 2);
+
+	cDispOptions.dispDomeSlit		=	true;
 
 	ForceReDrawSky();
 }
@@ -3647,6 +3785,10 @@ int		xcoord,ycoord,ftflag	=	0;
 		case 3:
 			SetColor(DARKGREEN);
 			delta_ra	=	rtasc / 900.0;		//*increment
+			break;
+
+		default:
+			delta_ra	=	rtasc / 100.0;		//*increment
 			break;
 
 	}
@@ -4561,7 +4703,7 @@ double	declSecs;
 		}
 	}
 
-	SetWidgetText(kSkyTravel_HelpTextBox,	cursorString);
+	SetWidgetText(kSkyTravel_CursorInfoTextBox,	cursorString);
 
 }
 
@@ -5036,7 +5178,8 @@ char	*argPtr;
 		sprintf(msgString, "Nothing Found for %s", objectName);
 	}
 	CONSOLE_DEBUG(__FUNCTION__);
-	SetWidgetText(kSkyTravel_MsgTextBox, msgString);
+	SetWidgetTextColor(	kSkyTravel_MsgTextBox, CV_RGB(128,	128, 128));
+	SetWidgetText(		kSkyTravel_MsgTextBox, msgString);
 }
 
 

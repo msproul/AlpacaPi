@@ -40,7 +40,10 @@ typedef struct
 
 //*****************************************************************************
 //*	Helper functions
+void			FormatHHMMSS(const double argDegreeValue, char *timeString, bool includeSign);
 void			FormatTimeString(time_t *time, char *timeString);
+void			FormatTimeStringISO8601(struct timeval *tv, char *timeString);
+
 int				SocketWriteData(const int socket, const char *dataBuffer);
 bool			GetKeyWordArgument(const char *dataSource, const char *keyword, char *argument, int maxArgLen);
 bool			IsTrueFalse(const char *trueFalseString);
@@ -50,7 +53,6 @@ uint32_t		Calc_millisFromTimeStruct(struct timeval *theTimeStruct);
 bool			Check_udev_rulesFile(const char *rulesFileName);
 void			LoadAlpacaImage(void);
 void			AddLibraryVersion(const char *device, const char *manuf, const char *versionString);
-void			FormatTimeStringISO8601(struct timeval *tv, char *timeString);
 TYPE_DEVICETYPE	FindDeviceTypeByString(const char *deviceTypeStr);
 void			GetDeviceTypeFromEnum(const int deviceEnum, char *deviceTypeString);
 

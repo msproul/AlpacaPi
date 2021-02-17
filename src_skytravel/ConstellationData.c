@@ -169,7 +169,7 @@ int					intgerArray[20];
 int					integerCount;
 bool				moveFlag;
 
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, filePath);
+	CONSOLE_DEBUG_W_STR("Reading:", filePath);
 
 	constelVectorData	=	NULL;
 	*objectCount		=	0;

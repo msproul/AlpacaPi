@@ -66,9 +66,12 @@ enum
 	kSkyTravel_MsgTextBox,
 
 
-	kSkyTravel_HelpTextBox,
+	kSkyTravel_CursorInfoTextBox,
+//	kSkyTravel_HelpTextBox,
 
 	kSkyTravel_Telescope_RA_DEC,
+	kSkyTravel_Telescope_Sync,
+	kSkyTravel_Telescope_GoTo,
 
 	kSkyTravel_Search_Text,
 	kSkyTravel_Search_Btn,
@@ -106,6 +109,16 @@ class WindowTabSkyTravel: public WindowTab
 		virtual void	ProcessMouseLeftButtonDragged(const int widgetIdx, const int event, const int xxx, const int yyy, const int flags);
 
 				void	UpdateButtonStatus(void);
+
+		//--------------------------------------------------------------
+		//*	Telescope control stuff
+				bool	SyncTelescopeToCenter(void);
+				bool	SlewTelescopeToCenter(void);
+
+				bool	SendAlpacaCmdToTelescope(	const char		*theCommand,
+													const char		*dataString,
+													SJP_Parser_t	*jsonParser);
+
 		//--------------------------------------------------------------
 		//*	SkyTravel stuff
 				void	SetSkyDisplaySize(short xSize, short ySize);

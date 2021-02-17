@@ -19,6 +19,7 @@
 //*	Edit History
 //*****************************************************************************
 //*	Feb  4,	2021	<MLS> Created windowtab_moon.cpp
+//*	Feb 14,	2021	<MLS> Added moon image, will add phases later
 //*****************************************************************************
 
 
@@ -32,7 +33,6 @@
 
 #include	"moonphase.h"
 
-#define	kMoonHeight	100
 
 //**************************************************************************************
 WindowTabMoon::WindowTabMoon(	const int	xSize,
@@ -65,7 +65,10 @@ void	WindowTabMoon::SetupWindowControls(void)
 int		yLoc;
 int		xLoc;
 int		iii;
-
+int		saveYloc;
+int		moonXloc;
+int		availablePixels;
+int		moonImageSize;
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	//------------------------------------------
@@ -77,9 +80,9 @@ int		iii;
 	SetBGcolorFromWindowName(kMoon_Title);
 	yLoc			+=	cTitleHeight;
 	yLoc			+=	2;
+	saveYloc		=	yLoc;
+
 	yLoc			+=	12;
-
-
 
 	iii	=	kMoon_AgeLbl;
 	while (iii < kMoon_AlpacaLogo)
@@ -105,6 +108,25 @@ int		iii;
 	SetWidgetText(kMoon_AgeLbl,				"Moon age (days)");
 	SetWidgetText(kMoon_PhaseLbl,			"Moon Phase");
 	SetWidgetText(kMoon_IlluminationLbl,	"Illumination (%)");
+
+	availablePixels	=	cWidth - cClm3_offset;
+	moonImageSize	=   675;
+	moonXloc		=	cClm3_offset + ((availablePixels - moonImageSize) / 2);
+	saveYloc		+=	5;
+
+	SetWidget(				kMoon_Image,	moonXloc,		saveYloc,	moonImageSize,		moonImageSize);
+	SetWidgetType(			kMoon_Image,	kWidgetType_Text);
+	SetWidgetText(			kMoon_Image,	"Moon image goes here");
+	SetWidgetBorder(		kMoon_Image,	false);
+//	SetWidgetBorderColor(	kMoon_Image,	CV_RGB(0,	0,	255));
+	SetWidgetOutlineBox(	kMoon_MoonImgOutline, kMoon_Image, kMoon_Image);
+
+	cMoonImage	=	cvLoadImage("moon_fits/moon.jpg", CV_LOAD_IMAGE_COLOR);
+	if (cMoonImage != NULL)
+	{
+		SetWidgetImage(kMoon_Image, cMoonImage);
+	}
+
 
 	SetAlpacaLogoBottomCorner(kMoon_AlpacaLogo);
 

@@ -302,12 +302,9 @@ int			deltaBrightness;
 	}
 	else
 	{
-		CONSOLE_DEBUG_W_NUM("deltaBrightness\t=", deltaBrightness);
-		CONSOLE_DEBUG_W_NUM("deltaMilliSecs\t=", deltaMilliSecs);
-
+	//	CONSOLE_DEBUG_W_NUM("deltaBrightness\t=", deltaBrightness);
+	//	CONSOLE_DEBUG_W_NUM("deltaMilliSecs\t=", deltaMilliSecs);
 	}
-
-
 	ForceUpdate();
 	cLastBrightnewssUpdate_Millis	=	millis();
 }

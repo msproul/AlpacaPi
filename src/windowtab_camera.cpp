@@ -602,7 +602,7 @@ ControllerCamera	*myCameraController;
 int					newSliderValue_int;
 
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 //	currentMillis	=	millis();
 //	deltaMilliSecs	=	currentMillis - cLastBrightnewssUpdate_Millis;
 

@@ -39,7 +39,7 @@
 
 #define	kApplicationName	"AlpacaPi"
 #define	kVersionString		"V0.4.0-beta"
-#define	kBuildNumber		94
+#define	kBuildNumber		95
 
 
 #define kAlpacaDiscoveryPORT	32227
@@ -189,8 +189,8 @@ enum TYPE_EquatorialCoordinateType
 //*****************************************************************************
 enum TYPE_PierSide
 {
-	kPierSide_pierEast		=	0,	//*	Normal pointing state - Mount on the East side of pier (looking West)
 	kPierSide_pierUnknown	=	-1,	//*	Unknown or indeterminate.
+	kPierSide_pierEast		=	0,	//*	Normal pointing state - Mount on the East side of pier (looking West)
 	kPierSide_pierWest		=	1,	//*	Through the pole pointing state - Mount on the West side of pier (looking East)
 };
 

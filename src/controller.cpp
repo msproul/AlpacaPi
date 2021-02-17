@@ -2250,7 +2250,6 @@ int		myChar;
 
 	GetWidgetText(tabNum, widgetIdx, myTextString);
 	textLen	=	strlen(myTextString);
-
 	myChar	=	0;
 	//*	check for control key down
 	if (keyPressed & 0x040000)
@@ -2300,6 +2299,7 @@ int		myChar;
 
 //	CONSOLE_DEBUG_W_STR("myTextString\t=", myTextString);
 
+	strcat(myTextString, "_");
 	SetWidgetText(tabNum, widgetIdx, myTextString);
 }
 

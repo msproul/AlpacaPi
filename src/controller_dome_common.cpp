@@ -402,6 +402,10 @@ void	PARENT_CLASS::AlpacaDisplayErrorMessage(const char *errorMsgString)
 {
 	CONSOLE_DEBUG_W_STR("Alpaca error=", errorMsgString);
 	SetWidgetText(kTab_Dome, kDomeBox_ErrorMsg, errorMsgString);
+#ifdef _ENABLE_SKYTRAVEL_
+	SetWidgetTextColor(	kTab_SkyTravel, kSkyTravel_MsgTextBox, CV_RGB(255, 0, 0));
+	SetWidgetText(		kTab_SkyTravel, kSkyTravel_MsgTextBox, errorMsgString);
+#endif
 }
 
 

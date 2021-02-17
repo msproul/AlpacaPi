@@ -130,7 +130,7 @@ char	multiLineTextBuff[512];
 
 	textBoxHt		=	availSpace / 4;
 	textBoxHt		-=	2;
-	CONSOLE_DEBUG_W_NUM("textBoxHt\t=", textBoxHt);
+//	CONSOLE_DEBUG_W_NUM("textBoxHt\t=", textBoxHt);
 
 	for (iii=kAboutBox_TextBox1; iii<=kAboutBox_CPUinfo; iii++)
 	{

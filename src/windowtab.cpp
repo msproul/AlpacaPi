@@ -48,6 +48,7 @@
 //*	Feb 10,	2021	<MLS> Added SetAlpacaLogoBottomCorner()
 //*	Feb 13,	2021	<MLS> Added UpdateSliderValue()
 //*	Feb 13,	2021	<MLS> Dragging the slider now works
+//*	Feb 16,	2021	<MLS> Added SetHelpTextBoxColor()
 //*****************************************************************************
 
 
@@ -100,7 +101,8 @@ int		iii;
 
 	cIpAddrTextBox		=	-1;
 	cLastCmdTextBox		=	-1;
-	cHelpTextBoxNuber	=	-1;
+	cHelpTextBoxNumber	=	-1;
+	cHelpTextBoxColor	=	CV_RGB(255,	255,	255);
 	cPervDisplayedHelpBox	=	-1;
 
 	cOpenCV_Image		=	NULL;
@@ -203,6 +205,11 @@ void	WindowTab::SetWidgetType(const int widgetIdx, const int widetType)
 		{
 			cWidgetList[widgetIdx].includeBorder	=	false;
 		}
+
+		if (widetType == kWidgetType_TextInput)
+		{
+			strcpy(cWidgetList[widgetIdx].textString, "_");
+		}
 	}
 }
 
@@ -268,6 +275,19 @@ void	WindowTab::GetWidgetText(const int widgetIdx, char *getText)
 	if ((widgetIdx >= 0) && (widgetIdx < kMaxWidgets))
 	{
 		strcpy(getText, cWidgetList[widgetIdx].textString);
+		if (cWidgetList[widgetIdx].widgetType == kWidgetType_TextInput)
+		{
+		int	textLen;
+
+			textLen	=	strlen(getText);
+			if (textLen > 0)
+			{
+				if (getText[textLen - 1] == '_')
+				{
+					getText[textLen - 1]	=	0;
+				}
+			}
+		}
 	}
 	else
 	{
@@ -1039,9 +1059,15 @@ double	newSliderValue;
 void	WindowTab::SetHelpTextBoxNumber(const int buttonIdx)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
-	cHelpTextBoxNuber	=	buttonIdx;
+	cHelpTextBoxNumber	=	buttonIdx;
 }
 
+//*****************************************************************************
+//*	this is so that the box can be used for error messages that might set to red
+void	WindowTab::SetHelpTextBoxColor(CvScalar newtextColor)
+{
+	cHelpTextBoxColor	=	newtextColor;
+}
 
 //*****************************************************************************
 //*	returns true if update occurred
@@ -1050,16 +1076,17 @@ bool	WindowTab::DisplayButtonHelpText(const int buttonIdx)
 bool	updateOccured;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
-//	CONSOLE_DEBUG_W_NUM("cHelpTextBoxNuber\t=", cHelpTextBoxNuber);
+//	CONSOLE_DEBUG_W_NUM("cHelpTextBoxNumber\t=", cHelpTextBoxNumber);
 	updateOccured	=	false;
-	if (cHelpTextBoxNuber >= 0)
+	if (cHelpTextBoxNumber >= 0)
 	{
 		if (strlen(cWidgetList[buttonIdx].helpText) > 0)
 		{
 			//*	dont update the text if it has already been updated
 			if (buttonIdx != cPervDisplayedHelpBox)
 			{
-				SetWidgetText(cHelpTextBoxNuber, cWidgetList[buttonIdx].helpText);
+				SetWidgetTextColor(	cHelpTextBoxNumber, cHelpTextBoxColor);
+				SetWidgetText(		cHelpTextBoxNumber, cWidgetList[buttonIdx].helpText);
 				updateOccured			=	true;
 				//*	keep track of which button we did
 				cPervDisplayedHelpBox	=	buttonIdx;

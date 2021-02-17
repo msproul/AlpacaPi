@@ -36,7 +36,13 @@
 #endif
 
 void	CreateTelescopeLX200Objects(void);
+//*****************************************************************************
+typedef struct
+{
+	char	cmdString[32];
+} TYPE_LX200CmdQue;
 
+#define	kMaxLX200Cmds	16
 
 //**************************************************************************************
 class TelescopeDriverLX200: public TelescopeDriverComm
@@ -57,10 +63,26 @@ class TelescopeDriverLX200: public TelescopeDriverComm
 
 //-		virtual	bool				AlpacaConnect(void);
 //-		virtual	bool				AlpacaDisConnect(void);
-//-		virtual	TYPE_ASCOM_STATUS	Telescope_AbortSlew(char *alpacaErrMsg);
-//-		virtual	TYPE_ASCOM_STATUS	Telescope_SlewToRA_DEC(const double newRA, const double newDec, char *alpacaErrMsg);
-//-		virtual	TYPE_ASCOM_STATUS	Telescope_SyncToRA_DEC(const double newRA, const double newDec, char *alpacaErrMsg);
+		//--------------------------------------------------------------------------------------------------
+		//*	these routines should be implemented by the sub-classes
+		//*	all have to return an Alpaca Error code
+		virtual	TYPE_ASCOM_STATUS	Telescope_AbortSlew(char *alpacaErrMsg);
+		virtual	TYPE_ASCOM_STATUS	Telescope_MoveAxis(		const int axisNum,
+															const double moveRate_degPerSec,
+															char *alpacaErrMsg);
 
+		virtual	TYPE_ASCOM_STATUS	Telescope_SlewToRA_DEC(	const double	newRtAscen_Hours,
+															const double	newDeclination_Degrees,
+															char *alpacaErrMsg);
+
+		virtual	TYPE_ASCOM_STATUS	Telescope_SyncToRA_DEC(	const double	newRtAscen_Hours,
+															const double	newDeclination_Degrees,
+															char *alpacaErrMsg);
+		virtual	TYPE_ASCOM_STATUS	Telescope_TrackingOnOff(const bool newTrackingState,
+															char *alpacaErrMsg);
+
+
+				void			AddCmdToLX200queue(const char *cmdString);
 				bool			Process_GR_RtAsc(char *dataBuffer);
 				bool			Process_GD(char *dataBuffer);
 				bool			Process_GT(char *dataBuffer);
@@ -71,7 +93,9 @@ class TelescopeDriverLX200: public TelescopeDriverComm
 				char			cTelescopeRA_String[32];
 				char			cTelescopeDecl_String[32];
 
-#ifdef _USE_TELESCOPE_COM_OBJECT_
-		TelescopeComm				*cTelescopeComm;
-#endif
+
+
+				TYPE_LX200CmdQue	cLX200CmdQueue[kMaxLX200Cmds];
+
+
 };
