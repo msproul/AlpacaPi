@@ -60,7 +60,7 @@
 
 
 #include	"telescopedriver.h"
-#include	"telescopedriver_skywatch.h
+#include	"telescopedriver_skywatch.h"
 //**************************************************************************************
 void	CreateTelescopeObjects_SkyWatch(void)
 {
@@ -95,6 +95,33 @@ TelescopeDriverSkyWatch::TelescopeDriverSkyWatch(DeviceConnectionType connection
 TelescopeDriverSkyWatch::~TelescopeDriverSkyWatch(void)
 {
 	CONSOLE_DEBUG(__FUNCTION__);
+}
+
+
+//**************************************************************************************
+bool	TelescopeDriverSkyWatch::SendCmdsFromQueue(void)
+{
+	return(false);
+}
+
+
+
+
+//**************************************************************************************
+bool	TelescopeDriverSkyWatch::SendCmdsPeriodic(void)
+{
+bool	isValid;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+	isValid	=	false;
+	//--------------------------------------------------------------------------
+	//*	Right Ascension
+
+	//--------------------------------------------------------------------------
+	//*	Declination
+
+
+	return(isValid);
 }
 
 

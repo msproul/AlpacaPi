@@ -528,10 +528,12 @@ bool	previousOnLineState;
 		{
 //			cUpdateDelta	=	2;
 		}
+		SetWidgetBGColor(	kTab_SkyTravel,	kSkyTravel_DomeIndicator,	CV_RGB(64,	255,	64));
 	}
 	else
 	{
 		cOnLine	=	false;
+		SetWidgetBGColor(	kTab_SkyTravel,	kSkyTravel_DomeIndicator,	CV_RGB(255,	0,	0));
 	}
 	if (cOnLine != previousOnLineState)
 	{
@@ -579,11 +581,14 @@ char	textBuff[64];
 		sprintf(textBuff, "%s / %s", raString, decString);
 
 
-		SetWidgetText(kTab_SkyTravel, kSkyTravel_Telescope_RA_DEC, textBuff);
+		SetWidgetText(		kTab_SkyTravel, kSkyTravel_Telescope_RA_DEC, textBuff);
+		SetWidgetBGColor(	kTab_SkyTravel,	kSkyTravel_TelescopeIndicator,	CV_RGB(64,	255,	64));
 	}
 	else
 	{
 		CONSOLE_DEBUG("Failed to get telescope status!!!!!!!!!!");
+		SetWidgetText(kTab_SkyTravel, kSkyTravel_Telescope_RA_DEC, "Telescope failed");
+		SetWidgetBGColor(	kTab_SkyTravel,	kSkyTravel_TelescopeIndicator,	CV_RGB(255,	0,	0));
 	}
 
 

@@ -54,16 +54,15 @@ else
 	exit
 fi
 
-OPENCV_DIR="opencv"
-mkdir $OPENCV_DIR
-if [ -d $OPENCV_DIR ]
+OPENCV_INSTALL_DIR="opencv"
+mkdir $OPENCV_INSTALL_DIR
+if [ -d $OPENCV_INSTALL_DIR ]
 then
-	echo "Successfully created $OPENCV_DIR directory"
+	echo "Successfully created $OPENCV_INSTALL_DIR directory"
 else
-	echo "Failed to create $OPENCV_DIR directory"
+	echo "Failed to create $OPENCV_INSTALL_DIR directory"
 	exit
 fi
-cd $OPENCV_DIR
 echo "Installing libgtk2.0-dev"
 echo "Installing libgtk2.0-dev"  >> $LOGFILENAME
 
@@ -92,6 +91,7 @@ fi
 
 echo -n "Hit return to continue, ^C to abort"
 read WAITINPUT
+cd $OPENCV_INSTALL_DIR
 
 ##########################################################
 # lets check to see which version is available
@@ -118,7 +118,6 @@ else
 	OPENCV_WGET_FILE="https://github.com/opencv/opencv/archive/3.3.1.tar.gz"
 	OPENCV_REMOTE_FILE="3.3.1.tar.gz"
 	ISZIP=0
-#	exit
 fi
 
 echo

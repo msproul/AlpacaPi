@@ -86,6 +86,10 @@ int			yLoc;
 int			yLocSave;
 int			yLocClm4;
 int			iii;
+int			valueXloc;
+int			updownXloc;
+int			sliderWidth;
+int			valueWidth;
 char		textBuff[32];
 IplImage	*logoImage;
 
@@ -146,12 +150,17 @@ IplImage	*logoImage;
 
 	//=======================================================
 	//*	exposure with slider
-	SetWidget(		kCameraBox_Exposure_Label,	cClm1_offset,	yLoc,		cClmWidth,			cRadioBtnHt	);
-	SetWidget(		kCameraBox_Exposure_Slider,	cClm2_offset,	yLoc,		(3 * cClmWidth),	cRadioBtnHt	);
-	SetWidget(		kCameraBox_Exposure,		cClm5_offset,	yLoc,		cClmWidth,			cRadioBtnHt	);
+	valueWidth		=	cClmWidth;
+	updownXloc		=	cWidth - cSmIconSize - 5;
+	valueXloc		=	cWidth - valueWidth - cSmIconSize - 8;
+	sliderWidth		=	valueXloc - cClm2_offset - 2;
 
-	SetWidget(				kCameraBox_Exposure_Up,		cClm6_offset+5,	yLoc -2,	cSmIconSize,		cSmIconSize);
-	SetWidget(				kCameraBox_Exposure_Down,	cClm6_offset+5,	yLoc + cSmIconSize,	cSmIconSize,cSmIconSize);
+	SetWidget(		kCameraBox_Exposure_Label,	cClm1_offset,	yLoc,		cClmWidth,		cRadioBtnHt	);
+	SetWidget(		kCameraBox_Exposure_Slider,	cClm2_offset,	yLoc,		sliderWidth,	cRadioBtnHt	);
+	SetWidget(		kCameraBox_Exposure,		valueXloc,		yLoc,		valueWidth,		cRadioBtnHt	);
+
+	SetWidget(				kCameraBox_Exposure_Up,		updownXloc,	yLoc -2,	cSmIconSize,		cSmIconSize);
+	SetWidget(				kCameraBox_Exposure_Down,	updownXloc,	yLoc + cSmIconSize,	cSmIconSize,cSmIconSize);
 	SetWidgetBGColor(		kCameraBox_Exposure_Up,		CV_RGB(255,	255,	255));
 	SetWidgetBGColor(		kCameraBox_Exposure_Down,	CV_RGB(255,	255,	255));
 
@@ -173,16 +182,15 @@ IplImage	*logoImage;
 	SetWidgetSliderValue(	kCameraBox_Exposure_Slider,	123.0);
 	yLoc			+=	cSmIconSize * 2;
 	yLoc			+=	2;
-
 	yLoc			+=	8;
 
 	//=======================================================
 	//*	gain with slider
-	SetWidget(		kCameraBox_Gain_Label,	cClm1_offset,	yLoc,		cClmWidth,			cRadioBtnHt	);
-	SetWidget(		kCameraBox_Gain_Slider,	cClm2_offset,	yLoc,		(3 * cClmWidth),	cRadioBtnHt	);
-	SetWidget(		kCameraBox_Gain,		cClm5_offset,	yLoc,		cClmWidth,			cRadioBtnHt	);
-	SetWidget(		kCameraBox_Gain_Up,		cClm6_offset+5,	yLoc -2,	cSmIconSize,		cSmIconSize);
-	SetWidget(		kCameraBox_Gain_Down,	cClm6_offset+5,	yLoc + cSmIconSize,	cSmIconSize,		cSmIconSize);
+	SetWidget(		kCameraBox_Gain_Label,	cClm1_offset,	yLoc,		cClmWidth,		cRadioBtnHt	);
+	SetWidget(		kCameraBox_Gain_Slider,	cClm2_offset,	yLoc,		sliderWidth,	cRadioBtnHt	);
+	SetWidget(		kCameraBox_Gain,		valueXloc,		yLoc,		valueWidth,		cRadioBtnHt	);
+	SetWidget(		kCameraBox_Gain_Up,		updownXloc,	yLoc -2,			cSmIconSize,	cSmIconSize);
+	SetWidget(		kCameraBox_Gain_Down,	updownXloc,	yLoc + cSmIconSize,	cSmIconSize,	cSmIconSize);
 	SetWidgetBGColor(kCameraBox_Gain_Up,	CV_RGB(255,	255,	255));
 	SetWidgetBGColor(kCameraBox_Gain_Down,	CV_RGB(255,	255,	255));
 
@@ -483,6 +491,7 @@ bool		validData;
 char		dataString[64];
 int			fwPosition;
 
+	SetWidgetText(kCameraBox_ErrorMsg, "");
 	switch(buttonIdx)
 	{
 		case kCameraBox_Gain_Up:
@@ -613,6 +622,7 @@ int					newSliderValue_int;
 		case kCameraBox_Exposure_Slider:
 			if (myCameraController != NULL)
 			{
+//				CONSOLE_DEBUG_W_DBL("newSliderValue\t=", newSliderValue);
 				myCameraController->SetExposure(newSliderValue);
 			}
 			break;
