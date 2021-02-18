@@ -9,10 +9,13 @@
 ###	Jan 25,	2021	<MLS> Took 5 hours on a Jetson-Nano
 ###	Feb  8,	2021	<MLS> Added system update
 ###	Feb  8,	2021	<MLS> Added log file
+###	Feb 18,	2021	<MLS> Added more logging
 ###############################################################################
 
 #	https://opencv.org/releases/page/4/
-LOGFILENAME="opencvinstall-log.txt"
+BASE_DIR=`pwd`
+LOGFILENAME=$BASE_DIR/"opencvinstall-log.txt"
+echo $LOGFILENAME
 echo  "*******************************************************" >> $LOGFILENAME
 echo -n "Start time=" >> $LOGFILENAME
 date  >> $LOGFILENAME
@@ -31,6 +34,7 @@ read WAITINPUT
 echo "	>sudo apt-get update"
 echo -n "Hit return to continue, ^C to abort"
 read WAITINPUT
+echo "running 'apt-get update'"  >> $LOGFILENAME
 sudo apt-get update
 
 
@@ -190,6 +194,7 @@ then
 		echo "Getting ready to run cmake"
 		echo -n "Hit return to continue"
 		read WAITINPUT
+		echo "Running cmake"  >> $LOGFILENAME
 		time cmake $OPENCV_DIR
 	fi
 

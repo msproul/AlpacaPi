@@ -335,7 +335,7 @@ int			dataStrLen;
 		cLastAlpacaErrNum	=	AlpacaCheckForErrors(jsonParser, cLastAlpacaErrStr, true);
 
 
-		cForceAlpacaUpdate	=	true;
+//?		cForceAlpacaUpdate	=	true;
 		gClientTransactionID++;
 
 		strcpy(cLastAlpacaCmdString, alpacaString);
@@ -394,7 +394,7 @@ char			myDataString[512];
 	cLastAlpacaErrNum	=	AlpacaCheckForErrors(jsonParser, cLastAlpacaErrStr, true);
 
 
-	cForceAlpacaUpdate	=	true;
+//?	cForceAlpacaUpdate	=	true;
 	gClientTransactionID++;
 
 	strcpy(cLastAlpacaCmdString, alpacaString);

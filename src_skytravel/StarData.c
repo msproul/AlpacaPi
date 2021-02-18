@@ -9,8 +9,6 @@
 //*	Nov 20,	1999	<MLS> major re-writing and re-orginization
 //*	Dec 29,	2020	<MLS> Starting to integrate SkyTravel into AlpacaPi
 //*	Jan  3,	2021	<MLS> Added ReadTSCfile() & ParseOneLineOfTSCdata()
-//*	Jan  5,	2021	<MLS> Added ReadConstellationOutlines()
-//*	Jan  5,	2021	<MLS> Reading data from https://www.iau.org/public/themes/constellations/
 //*	Jan  6,	2021	<MLS> Added DumpCelestDataStruct() for debugging
 //*****************************************************************************
 

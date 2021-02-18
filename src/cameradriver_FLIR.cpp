@@ -828,11 +828,12 @@ size_t					bufferLen;
 				if (spinErr == SPINNAKER_ERR_SUCCESS)
 				{
 					cBitDepth	=	spinnakerBitsPerPixel;
+					CONSOLE_DEBUG_W_NUM("cBitDepth\t=", cBitDepth);
 				}
 				spinErr	=	spinImageGetPixelFormat(cSpinImageHandle, &spinnakerPixelFormat);
 				if (spinErr == SPINNAKER_ERR_SUCCESS)
 				{
-//					CONSOLE_DEBUG_W_NUM("spinnakerPixelFormat=", spinnakerPixelFormat);
+					CONSOLE_DEBUG_W_NUM("spinnakerPixelFormat=", spinnakerPixelFormat);
 				}
 				else
 				{
@@ -845,7 +846,7 @@ size_t					bufferLen;
 															&bufferLen);
 				if (spinErr == SPINNAKER_ERR_SUCCESS)
 				{
-	//				CONSOLE_DEBUG_W_STR("spinImageGetPixelFormatName=", spinnakerPixelFormatName);
+					CONSOLE_DEBUG_W_STR("spinImageGetPixelFormatName=", spinnakerPixelFormatName);
 				}
 				else
 				{

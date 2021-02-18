@@ -4,6 +4,7 @@
 //*	Edit History
 //*****************************************************************************
 //*	Jan  5,	2021	<MLS> Added ReadConstellationOutlines()
+//*	Jan  5,	2021	<MLS> Reading data from https://www.iau.org/public/themes/constellations/
 //*	Jan  7,	2021	<MLS> Created ConstellationData.c
 //*	Jan  7,	2021	<MLS> Downloaded much better constellation data
 //*	Jan  7,	2021	<MLS> From https://github.com/dcf21/constellation-stick-figures
@@ -152,7 +153,7 @@ int			currentInt;
 }
 
 //************************************************************************
-TYPE_ConstVector	*ReadConstellationVectorsFile(const char *filePath, int *objectCount)
+static TYPE_ConstVector	*ReadConstellationVectorsFile(const char *filePath, int *objectCount)
 {
 FILE				*filePointer;
 int					iii;
@@ -197,7 +198,6 @@ bool				moveFlag;
 					lineBuff[lineLength - 1]	=	0;
 					lineLength	=	strlen(lineBuff);
 				}
-
 
 				if ((lineBuff[0] == '#') || (lineLength == 0))
 				{
@@ -249,7 +249,6 @@ bool				moveFlag;
 						}
 //						CONSOLE_DEBUG_W_NUM("Star count\t=", starIdx);
 					}
-
 				}
 			}
 			*objectCount	=	constelIdx;
@@ -257,7 +256,6 @@ bool				moveFlag;
 
 		}
 		fclose(filePointer);
-
 	}
 	else
 	{

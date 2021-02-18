@@ -3197,8 +3197,14 @@ short				dataSource;
 
 							if (dataSource == kDataSrc_TSC_Messier)
 							{
-							//	SetColor(GREEN);
-								SetColor(CYAN);
+								if (cNightMode)
+								{
+									SetColor(RED);
+								}
+								else
+								{
+									SetColor(CYAN);
+								}
 								DrawCString(xcoord, ycoord, objectptr[ii].shortName);
 								if (cView_index < 4)
 								{

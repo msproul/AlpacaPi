@@ -137,6 +137,10 @@ class WindowTabCamera: public WindowTab
 				char		cAlpacaDeviceName[64];
 				bool		cHasFilterWheel;
 				char		cDownLoadedFileNameRoot[256];
+
+				uint32_t	cLastExposureUpdate_Millis;
+				uint32_t	cLastGainUpdate_Millis;
+
 };
 
 

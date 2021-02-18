@@ -68,6 +68,9 @@ WindowTabCamera::WindowTabCamera(	const int	xSize,
 
 	strcpy(cDownLoadedFileNameRoot, "unknown");
 
+	cLastExposureUpdate_Millis	=	0;
+	cLastGainUpdate_Millis		=	0;
+
 	SetupWindowControls();
 }
 
@@ -225,7 +228,7 @@ IplImage	*logoImage;
 	yLocSave	=	yLoc;
 	for (iii=0; iii<kMaxReadOutModes; iii++)
 	{
-		SetWidget(		(kCameraBox_ReadMode0 + iii),	2,			yLoc,		cWidth/4,		cRadioBtnHt	);
+		SetWidget(		(kCameraBox_ReadMode0 + iii),	2,			yLoc,		cWidth/3,		cRadioBtnHt	);
 		SetWidgetFont(	(kCameraBox_ReadMode0 + iii),	kFont_RadioBtn);
 		SetWidgetType(	(kCameraBox_ReadMode0 + iii),	kWidgetType_RadioButton);
 		SetWidgetValid(	(kCameraBox_ReadMode0 + iii),	false);
@@ -244,7 +247,7 @@ IplImage	*logoImage;
 
 	//=======================================================
 	//*	Live mode
-	SetWidget(		kCameraBox_LiveMode,	cClm3_offset,	yLocSave,		cWidth/4,		cRadioBtnHt	);
+	SetWidget(		kCameraBox_LiveMode,	cClm4_offset,	yLocSave,		cWidth/4,		cRadioBtnHt	);
 	SetWidgetType(	kCameraBox_LiveMode,	kWidgetType_CheckBox);
 	SetWidgetText(	kCameraBox_LiveMode,	"LIVE");
 	SetWidgetFont(	kCameraBox_LiveMode,	kFont_Medium);
@@ -253,7 +256,7 @@ IplImage	*logoImage;
 
 	//=======================================================
 	//*	Live mode
-	SetWidget(		kCameraBox_SideBar,	cClm3_offset,	yLocSave,		cWidth/4,		cRadioBtnHt	);
+	SetWidget(		kCameraBox_SideBar,	cClm4_offset,	yLocSave,		cWidth/4,		cRadioBtnHt	);
 	SetWidgetType(	kCameraBox_SideBar,	kWidgetType_CheckBox);
 	SetWidgetText(	kCameraBox_SideBar,	"SideBar");
 	SetWidgetFont(	kCameraBox_SideBar,	kFont_Medium);
@@ -263,7 +266,7 @@ IplImage	*logoImage;
 
 	//=======================================================
 	//*	Auto exposure
-	SetWidget(		kCameraBox_AutoExposure,	cClm3_offset,	yLocSave,	cWidth/4,		cRadioBtnHt	);
+	SetWidget(		kCameraBox_AutoExposure,	cClm4_offset,	yLocSave,	cWidth/4,		cRadioBtnHt	);
 	SetWidgetType(	kCameraBox_AutoExposure,	kWidgetType_CheckBox);
 	SetWidgetText(	kCameraBox_AutoExposure,	"AUTO EXP");
 	SetWidgetFont(	kCameraBox_AutoExposure,	kFont_Medium);
@@ -272,7 +275,7 @@ IplImage	*logoImage;
 
 	//=======================================================
 	//*	Display Image
-	SetWidget(		kCameraBox_DisplayImage,	cClm3_offset,	yLocSave,	cWidth/4,		cRadioBtnHt	);
+	SetWidget(		kCameraBox_DisplayImage,	cClm4_offset,	yLocSave,	cWidth/4,		cRadioBtnHt	);
 	SetWidgetType(	kCameraBox_DisplayImage,	kWidgetType_CheckBox);
 	SetWidgetText(	kCameraBox_DisplayImage,	"Display Image");
 	SetWidgetFont(	kCameraBox_DisplayImage,	kFont_Medium);
@@ -606,38 +609,47 @@ int			fwPosition;
 void	WindowTabCamera::UpdateSliderValue(const int	widgetIdx, double newSliderValue)
 {
 ControllerCamera	*myCameraController;
-//uint32_t			currentMillis;
-//uint32_t			deltaMilliSecs;
+uint32_t			currentMillis;
+uint32_t			deltaMilliSecs;
 int					newSliderValue_int;
 
 
 //	CONSOLE_DEBUG(__FUNCTION__);
-//	currentMillis	=	millis();
-//	deltaMilliSecs	=	currentMillis - cLastBrightnewssUpdate_Millis;
+	currentMillis	=	millis();
 
 	myCameraController	=	(ControllerCamera *)cParentObjPtr;
 
 	switch(widgetIdx)
 	{
 		case kCameraBox_Exposure_Slider:
-			if (myCameraController != NULL)
+			deltaMilliSecs	=	currentMillis - cLastExposureUpdate_Millis;
+			if (deltaMilliSecs > 4)
 			{
-//				CONSOLE_DEBUG_W_DBL("newSliderValue\t=", newSliderValue);
-				myCameraController->SetExposure(newSliderValue);
+				if (myCameraController != NULL)
+				{
+	//				CONSOLE_DEBUG_W_DBL("newSliderValue\t=", newSliderValue);
+					myCameraController->SetExposure(newSliderValue);
+
+				}
+				cLastExposureUpdate_Millis	=	millis();
 			}
 			break;
 
 		case kCameraBox_Gain_Slider:
-			if (myCameraController != NULL)
+			deltaMilliSecs	=	currentMillis - cLastGainUpdate_Millis;
+			if (deltaMilliSecs > 4)
 			{
-				newSliderValue_int	=	newSliderValue;
-				myCameraController->SetGain(newSliderValue_int);
+				if (myCameraController != NULL)
+				{
+					newSliderValue_int	=	newSliderValue;
+					myCameraController->SetGain(newSliderValue_int);
+				}
+				cLastGainUpdate_Millis	=	millis();
 			}
 			break;
 	}
 
 	ForceUpdate();
-//	cLastBrightnewssUpdate_Millis	=	millis();
 }
 
 

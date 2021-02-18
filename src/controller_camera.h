@@ -127,6 +127,8 @@ class ControllerCamera: public Controller
 												const char	*keywordString,
 												const char	*valueString);
 				bool	AlpacaGetStatus_OneAAT(void);	//*	One At A Time
+				bool	AlpacaGetStatus_Gain(void);
+				bool	AlpacaGetStatus_Exposure(void);
 				bool	AlpacaGetStatus(void);
 				bool	AlpacaGetFileList(void);
 				bool	AlpacaGetFilterWheelStartup(void);

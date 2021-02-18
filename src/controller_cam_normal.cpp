@@ -328,6 +328,7 @@ void	ControllerCamNormal::UpdateCameraGain(const TYPE_ASCOM_STATUS lastAlpacaErr
 		SetWidgetSliderValue(	kTab_Camera, kCameraBox_Gain_Slider, cCameraProp.Gain);
 		SetWidgetNumber(		kTab_Camera, kCameraBox_Gain, cCameraProp.Gain);
 	}
+	cUpdateWindow	=	true;
 }
 
 //*****************************************************************************
@@ -337,7 +338,10 @@ void	ControllerCamNormal::UpdateCameraExposure(void)
 																		cCameraProp.ExposureMax_seconds);
 	SetWidgetSliderValue(	kTab_Camera, kCameraBox_Exposure_Slider,	cExposure);
 	SetWidgetNumber(		kTab_Camera, kCameraBox_Exposure,			cExposure);
+
+	cUpdateWindow	=	true;
 }
+
 //*****************************************************************************
 void	ControllerCamNormal::UpdateCameraSize(void)
 {
@@ -345,6 +349,8 @@ char	linebuff[64];
 
 	sprintf(linebuff, "%d x %d", cCameraProp.CameraXsize, cCameraProp.CameraYsize);
 	SetWidgetText(kTab_Camera, kCameraBox_Size, linebuff);
+
+	cUpdateWindow	=	true;
 }
 
 //*****************************************************************************
@@ -378,6 +384,7 @@ char			linebuff[64];
 		SetWidgetBGColor(kTab_Camera, kCameraBox_DownloadImage, CV_RGB(100, 100, 100));
 		SetWidgetBGColor(kTab_Camera, kCameraBox_DownloadRGBarray, CV_RGB(100, 100, 100));
 	}
+	cUpdateWindow	=	true;
 }
 
 

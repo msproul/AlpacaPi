@@ -1,9 +1,12 @@
-//************************************************************************
+//*****************************************************************************
 //*	Hipparcos data
-//************************************************************************
+//*****************************************************************************
 //*	http://adc.gsfc.nasa.gov/adc-cgi/cat.pl?/catalogs/1/1239/
-//************************************************************************
-
+//*****************************************************************************
+//*	Edit History
+//*****************************************************************************
+//*	Jan  1,	2021	<MLS> Hipparcos stars catalog working in SkyTravel
+//*****************************************************************************
 
 
 /*
@@ -360,4 +363,28 @@ size_t			bufferSize;
 	return(hipStarData);
 }
 
+
+//************************************************************************
+int	ReadCommonStarNames(void)
+{
+FILE			*filePointer;
+bool			validObject;
+char			lineBuff[512];
+char			filePath[128];
+size_t			bufferSize;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	strcpy(filePath, kSkyTravelDataDirectory);
+	strcat(filePath, "/commonstars.txt");
+
+	filePointer	=	fopen(filePath, "r");
+	if (filePointer != NULL)
+	{
+		fclose(filePointer);
+	}
+
+
+	return(1);
+}
 
