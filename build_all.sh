@@ -87,6 +87,26 @@ then
 	make clean focuser
 	make clean domectrl
 	make clean camera
+	if [ -f switch ]
+	then
+		echo "client switch made OK" >> $LOGFILENAME
+	fi
+	if [ -f focuser ]
+	then
+		echo "client focuser made OK" >> $LOGFILENAME
+	fi
+	if [ -f domectrl ]
+	then
+		echo "client domectrl made OK" >> $LOGFILENAME
+	fi
+	if [ -f camera ]
+	then
+		echo "client camera made OK" >> $LOGFILENAME
+	fi
+	if [ -f skytravel ]
+	then
+		echo "client skytravel made OK" >> $LOGFILENAME
+	fi
 else
 	echo "OpenCV not found, skipping client apps" >> $LOGFILENAME
 fi

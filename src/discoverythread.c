@@ -40,7 +40,7 @@
 
 
 //*	for debugging rouge IP address
-#define	LOG_DISCOVERED_IP_ADDRS
+//#define	LOG_DISCOVERED_IP_ADDRS
 
 
 #ifndef SO_REUSEPORT

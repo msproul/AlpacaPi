@@ -39,7 +39,7 @@
 
 #define	kApplicationName	"AlpacaPi"
 #define	kVersionString		"V0.4.0-beta"
-#define	kBuildNumber		95
+#define	kBuildNumber		96
 
 
 #define kAlpacaDiscoveryPORT	32227
@@ -402,8 +402,6 @@ typedef struct
 	TYPE_DriveRates					TrackingRate;
 	double							TrackingRates;
 	double							UTCDate;
-
-
 } TYPE_TelescopeProperties;
 
 
@@ -425,8 +423,6 @@ typedef struct
 	int32_t			ShutterStatus;
 	bool			Slaved;
 	bool			Slewing;
-
-
 } TYPE_DomeProperties;
 
 
