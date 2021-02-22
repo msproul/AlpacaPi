@@ -22,7 +22,7 @@
 //*	May 10,	2020	<MLS> Added graph of slit distance values
 //*****************************************************************************
 
-#ifdef _ENABLE_CTRL_DOME_
+#if defined(_ENABLE_CTRL_DOME_) && defined(_ENABLE_SLIT_TRACKER_)
 #include	"controller.h"
 
 #define _ENABLE_CONSOLE_DEBUG_

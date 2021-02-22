@@ -51,29 +51,28 @@ class CameraDriverQHY: public CameraDriver
 
 		//*****************************************************************************
 		//*	Camera specific routines
-//		virtual	TYPE_ASCOM_STATUS		Start_CameraExposure(int32_t exposureMicrosecs);
+		virtual	TYPE_ASCOM_STATUS		Start_CameraExposure(int32_t exposureMicrosecs);
 //		virtual	TYPE_ASCOM_STATUS		Stop_Exposure(void);
-//		virtual	TYPE_EXPOSURE_STATUS	Check_Exposure(bool verboseFlag = false);
-//		virtual	int						SetImageTypeCameraOpen(TYPE_IMAGE_TYPE newImageType);
-//		virtual	int						SetImageType(TYPE_IMAGE_TYPE newImageType);
+		virtual	TYPE_EXPOSURE_STATUS	Check_Exposure(bool verboseFlag = false);
+//		virtual	TYPE_ASCOM_STATUS		SetImageTypeCameraOpen(TYPE_IMAGE_TYPE newImageType);
+		virtual	TYPE_ASCOM_STATUS		SetImageType(TYPE_IMAGE_TYPE newImageType);
 
 		virtual	TYPE_ASCOM_STATUS		Write_Gain(const int newGainValue);
 		virtual	TYPE_ASCOM_STATUS		Read_Gain(int *cameraGainValue);
 
-//		virtual	int		Start_Video(void);
-//		virtual	int		Stop_Video(void);
-//		virtual	int		Take_Video(void);
+//		virtual	int						Start_Video(void);
+//		virtual	int						Stop_Video(void);
+//		virtual	int						Take_Video(void);
 
-//		virtual	int		GetImage_ROI_info(void);
+		virtual	bool					GetImage_ROI_info(void);
 
-//		virtual	int		Cooler_TurnOn(void);
-//		virtual	int		Cooler_TurnOff(void);
-//		virtual	int		Read_CoolerState(bool *coolerOnOff);
-//		virtual	int		Read_CoolerPowerLevel(void);
-		virtual	TYPE_ASCOM_STATUS		Read_Readoutmodes(char *readOutModeString, bool includeQuotes=false);
-//		virtual	int		Read_Fastreadout(void);
+//		virtual	int						Cooler_TurnOn(void);
+//		virtual	int						Cooler_TurnOff(void);
+//		virtual	int						Read_CoolerState(bool *coolerOnOff);
+//		virtual	int						Read_CoolerPowerLevel(void);
+//		virtual	int						Read_Fastreadout(void);
 		virtual	TYPE_ASCOM_STATUS		Read_SensorTemp(void);
-//		virtual	int		Read_ImageData(void);
+		virtual	TYPE_ASCOM_STATUS		Read_ImageData(void);
 
 
 	protected:
@@ -81,6 +80,13 @@ class CameraDriverQHY: public CameraDriver
 
 		qhyccd_handle	*cQHYcamHandle;
 		char			cQHYidString[64];
+
+		//*	QHY camera properties
+		bool			cQHY_CAM_8BITS;
+		bool			cQHY_CAM_16BITS;
+		bool			cQHY_CAM_COLOR;
+		bool			cQHY_CAM_GPS;
+		bool			cQHY_NumberOfReadModes;
 
 };
 #endif // _CAMERA_DRIVER_QHY_H_

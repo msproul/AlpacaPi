@@ -38,6 +38,7 @@
 //*	Apr 11,	2020	<MLS> Added frames saved to sidebar
 //*	Apr 16,	2020	<MLS> Switched to using commoncolor for background color selection
 //*	Apr 19,	2020	<MLS> Fixed cross hair location when using sidebar
+//*	Feb 21,	2021	<MLS> Added CloseLiveImage(), live window now closes properly
 //*****************************************************************************
 
 #if defined(_ENABLE_CAMERA_) && defined(_USE_OPENCV_)
@@ -259,6 +260,29 @@ void	CameraDriver::SetOpenCVcallbackFunction(const char *windowName)
 
 }
 
+//*****************************************************************************
+void	CameraDriver::CloseLiveImage(void)
+{
+int	iii;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+
+	if (cOpenCV_LiveDisplay != NULL)
+	{
+		cvReleaseImage(&cOpenCV_LiveDisplay);
+		cOpenCV_LiveDisplay	=	NULL;
+	}
+	cvDestroyWindow(cOpenCV_ImgWindowName);
+	cCreateOpenCVwindow		=	true;
+	cOpenCV_ImgWindowValid	=	false;
+
+	//*	the key to closing the window properly is calling cvWaitKey
+	for (iii=0; iii<20; iii++)
+	{
+		cvWaitKey(20);
+	}
+	CONSOLE_DEBUG(__FUNCTION__);
+}
 
 //*****************************************************************************
 void	CameraDriver::DisplayLiveImage(void)
@@ -1091,8 +1115,8 @@ void	CameraDriver::SetOpenCVcolors(IplImage *imageDisplay)
 RGBcolor	bgc;	//*	background color
 RGBcolor	txc;	//*	text color
 
-	CONSOLE_DEBUG(__FUNCTION__);
-	CONSOLE_DEBUG(cTS_info.refID);
+//	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(cTS_info.refID);
 	GetDefaultColors(0, cTS_info.refID, &bgc, &txc);
 
 	if (imageDisplay != NULL)
@@ -1148,7 +1172,7 @@ RGBcolor	txc;	//*	text color
 	}
 	else
 	{
-		CONSOLE_DEBUG("Image display is null, setting to RGB 8 bit values")
+	//	CONSOLE_DEBUG("Image display is null, setting to RGB 8 bit values")
 		//*	defaults
 		cSideBarBGcolor		=	CV_RGB(bgc.red,	bgc.grn,	bgc.blu);
 		cSideBarTXTcolor	=	CV_RGB(txc.red,	txc.grn,	txc.blu);
@@ -1161,7 +1185,7 @@ RGBcolor	txc;	//*	text color
 		cSideBarGry			=	CV_RGB(128,		128,	128);
 		cCrossHairColor		=	CV_RGB(255,		0,		0);
 	}
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 }
 
 #endif	//	defined(_ENABLE_CAMERA_) && defined(_USE_OPENCV_)

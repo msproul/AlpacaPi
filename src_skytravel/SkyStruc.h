@@ -67,7 +67,7 @@ enum
 };
 
 #define	kShortNameMax	8
-#define	kLongNameMax	16
+#define	kLongNameMax	24
 
 //*****************************************************************************
 typedef struct

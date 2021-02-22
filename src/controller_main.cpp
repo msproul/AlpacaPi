@@ -280,10 +280,12 @@ int				iii;
 				{
 					myDomeController->SetAlpacaShutterInfo(&gAlpacaDiscoveredList[iii]);
 				}
+			#ifdef _ENABLE_SLIT_TRACKER_
 				else if (strcasecmp(gAlpacaDiscoveredList[iii].deviceTypeStr, "SlitTracker") == 0)
 				{
 					myDomeController->SetAlpacaSlitTrackerInfo(&gAlpacaDiscoveredList[iii]);
 				}
+			#endif
 			}
 		}
 		objectsCreated++;

@@ -57,7 +57,9 @@
 //*	Jan 26,	2021	<MLS> Added more text buffer overflow checking
 //*	Feb  6,	2021	<MLS> Minor fix to tab display when clicked
 //*	Feb 13,	2021	<MLS> Added UpdateSupportedActions()
-//*	Feb 13,	2021	<MLS> Added UpdateCommonProperties()
+//*	Feb 19,	2021	<MLS> Added ClearCapabilitiesList() & AddCapability()
+//*	Feb 19,	2021	<MLS> Added UpdateCapabilityList()
+//*	Feb 20,	2021	<MLS> Added ReadOneDriverCapability()
 //*****************************************************************************
 
 
@@ -218,6 +220,8 @@ int			objCntr;
 	cLastAlpacaErrStr[0]		=	0;
 	cAlpacaDeviceTypeStr[0]		=	0;
 	cAlpacaDeviceNameStr[0]		=	0;
+
+	ClearCapabilitiesList();
 
 	if (gControllerCnt < 0)
 	{
@@ -2702,6 +2706,82 @@ void	Controller::UpdateWindowTabColors(void)
 	CONSOLE_DEBUG(__FUNCTION__);
 }
 
+//*****************************************************************************
+//*****************************************************************************
+//*****************************************************************************
+		TYPE_CAPABILITY		cCapabilitiesList[kMaxCapabilities];
+//**************************************************************************************
+void	Controller::ClearCapabilitiesList(void)
+{
+int	iii;
+
+	for (iii=0; iii<kMaxCapabilities; iii++)
+	{
+		memset(&cCapabilitiesList[iii], 0, sizeof(TYPE_CAPABILITY));
+	}
+}
+
+//**************************************************************************************
+void	Controller::AddCapability(const char *capability, const char *value)
+{
+int		iii;
+int		foundIdx;
+
+//	CONSOLE_DEBUG_W_2STR(__FUNCTION__, capability, value);
+
+	foundIdx	=	-1;
+	iii			=	0;
+
+	while ((foundIdx < 0) && (iii<kMaxCapabilities))
+	{
+		if (cCapabilitiesList[iii].capabilityName[0] == 0)
+		{
+			foundIdx	=	iii;
+			strcpy(cCapabilitiesList[iii].capabilityName, capability);
+		}
+		else if (strcasecmp(capability, cCapabilitiesList[iii].capabilityName) == 0)
+		{
+			foundIdx	=	iii;
+		}
+		iii++;
+	}
+	if ((foundIdx >= 0) && (foundIdx < kMaxCapabilities))
+	{
+		strcpy(cCapabilitiesList[foundIdx].capabilityValue, value);
+
+		UpdateCapabilityList();
+	}
+}
+
+
+//**************************************************************************************
+//*	this is intended to get over ridden by a sub class
+void	Controller::UpdateCapabilityList(void)
+{
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+}
+
+//*****************************************************************************
+void	Controller::ReadOneDriverCapability(const char	*driverNameStr,
+											const char	*propertyStr,
+											const char	*reportedStr,
+											bool		*booleanValue)
+{
+bool			validData;
+bool			argBoolean;
+
+	validData	=	AlpacaGetBooleanValue(	driverNameStr, propertyStr,	NULL,	&argBoolean);
+	if (validData)
+	{
+		AddCapability(reportedStr, (argBoolean ? "\tTrue" : "False"));
+		*booleanValue	=	argBoolean;
+	}
+	else
+	{
+		CONSOLE_DEBUG("Failed");
+		cReadFailureCnt++;
+	}
+}
 
 #pragma mark -
 

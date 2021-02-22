@@ -206,7 +206,7 @@ char				tempDeviceName[64];
 	cCameraProp.GainMin	=	0;
 	cCameraProp.GainMax	=	512;	//*	information found on the web
 
-	SetImageTypeIndex(cATIKimageTypeIdx++, "RAW16");
+	AddReadoutModeToList(kImageType_RAW16);
 
 	atikOK	=	ArtemisDeviceSerial(cCameraID, cDeviceSerialNum);
 	if (atikOK == false)
@@ -283,7 +283,7 @@ char				tempDeviceName[64];
 		CONSOLE_DEBUG_W_NUM("previewOffsetY\t=",	previewOffsetY);
 		if (colourType == ARTEMIS_COLOUR_RGGB)
 		{
-			SetImageTypeIndex(cATIKimageTypeIdx++, "RGB24");
+			AddReadoutModeToList(kImageType_RGB24);
 			cIsColorCam	=	true;
 		}
 		else
@@ -295,12 +295,7 @@ char				tempDeviceName[64];
 	{
 		CONSOLE_DEBUG_W_NUM("Failed to open ATIK camera #\t=",	cCameraID);
 	}
-
-//	SetImageTypeIndex(cATIKimageTypeIdx++, "FOO");
-
 }
-
-
 
 //*****************************************************************************
 void	CameraDriverATIK::ProcessATIKproperties(ARTEMISPROPERTIES	*atikProperties)
@@ -367,7 +362,7 @@ void	CameraDriverATIK::ProcessATIKproperties(ARTEMISPROPERTIES	*atikProperties)
 		// Camera can download 8-bit images
 		CONSOLE_DEBUG("ARTEMIS_PROPERTIES_CAMERAFLAGS_HAS_EIGHT_BIT_MODE");
 		cCanRead8Bit	=	true;
-		SetImageTypeIndex(cATIKimageTypeIdx++, "RAW8");
+		AddReadoutModeToList(kImageType_RAW8);
 	}
 	else
 	{
@@ -468,7 +463,7 @@ int		setpoint;
 //*****************************************************************************
 //*	the camera must already be open when this is called
 //*****************************************************************************
-int	CameraDriverATIK::GetImage_ROI_info(void)
+bool	CameraDriverATIK::GetImage_ROI_info(void)
 {
 
 	memset(&cROIinfo, 0, sizeof(TYPE_IMAGE_ROI_Info));
@@ -478,7 +473,7 @@ int	CameraDriverATIK::GetImage_ROI_info(void)
 	cROIinfo.currentROIwidth		=	cCameraProp.CameraYsize;
 	cROIinfo.currentROIbin			=	1;
 
-	return(0);
+	return(true);
 }
 
 

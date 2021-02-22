@@ -220,7 +220,6 @@ unsigned int	ii;
 int				toupCameraCnt;
 ToupcamDeviceV2	toupCamList[TOUPCAM_MAX];
 HRESULT			toupResult;
-int				alpacaReadModeIdx;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 	strcpy(cDeviceVersion, Toupcam_Version());
@@ -271,43 +270,41 @@ int				alpacaReadModeIdx;
 			CONSOLE_DEBUG_W_NUM("height\t\t=",		cToupDeviceInfo.model->res[ii].height);
 		}
 
-		alpacaReadModeIdx	=	0;
-
 		//*	check these in this order to make sure we record the highest value
 		if (cToupDeviceInfo.model->flag & TOUPCAM_FLAG_RAW8)
 		{
 			CONSOLE_DEBUG("TOUPCAM_FLAG_RAW8");
 			cBitDepth		=	8;
 			cToupCamFormat	=	TOUPCAM_FLAG_RAW8;
-			SetImageTypeIndex(alpacaReadModeIdx++, "RAW8");
+			AddReadoutModeToList(kImageType_RAW8);
 		}
 		if (cToupDeviceInfo.model->flag & TOUPCAM_FLAG_RAW10)
 		{
 			CONSOLE_DEBUG("TOUPCAM_FLAG_RAW10");
 			cBitDepth		=	10;
 			cToupCamFormat	=	TOUPCAM_FLAG_RAW16;
-			SetImageTypeIndex(alpacaReadModeIdx++, "RAW16");
+			AddReadoutModeToList(kImageType_RAW16);
 		}
 		if (cToupDeviceInfo.model->flag & TOUPCAM_FLAG_RAW12)
 		{
 			CONSOLE_DEBUG("TOUPCAM_FLAG_RAW12");
 			cBitDepth		=	12;
 			cToupCamFormat	=	TOUPCAM_FLAG_RAW16;
-			SetImageTypeIndex(alpacaReadModeIdx++, "RAW16");
+			AddReadoutModeToList(kImageType_RAW16);
 		}
 		if (cToupDeviceInfo.model->flag & TOUPCAM_FLAG_RAW14)
 		{
 			CONSOLE_DEBUG("TOUPCAM_FLAG_RAW14");
 			cBitDepth		=	14;
 			cToupCamFormat	=	TOUPCAM_FLAG_RAW16;
-			SetImageTypeIndex(alpacaReadModeIdx++, "RAW16");
+			AddReadoutModeToList(kImageType_RAW16);
 		}
 		if (cToupDeviceInfo.model->flag & TOUPCAM_FLAG_RAW16)
 		{
 			CONSOLE_DEBUG("TOUPCAM_FLAG_RAW16");
 			cBitDepth		=	16;
 			cToupCamFormat	=	TOUPCAM_FLAG_RAW16;
-			SetImageTypeIndex(alpacaReadModeIdx++, "RAW16");
+			AddReadoutModeToList(kImageType_RAW16);
 		}
 		if (cToupDeviceInfo.model->flag & TOUPCAM_FLAG_ST4)
 		{
@@ -348,8 +345,13 @@ int				alpacaReadModeIdx;
 
 			toupResult	=	Toupcam_get_RawFormat(cToupCamH, &nFourCC, &bitsperpixel);
 			CONSOLE_DEBUG_W_HEX("toupResult\t\t=",		toupResult);
-			CONSOLE_DEBUG_W_NUM("bitsperpixel\t=",	bitsperpixel);
+			CONSOLE_DEBUG_W_NUM("bitsperpixel\t=",		bitsperpixel);
 			CONSOLE_DEBUG_W_HEX("nFourCC\t\t=",			nFourCC);
+
+			if (nFourCC == 'GRBG')
+			{
+				AddReadoutModeToList(kImageType_RGB24);
+			}
 			fourCCstring[0]	=	(nFourCC >> 24) & 0x0ff;
 			fourCCstring[1]	=	(nFourCC >> 16) & 0x0ff;
 			fourCCstring[2]	=	(nFourCC >> 8) & 0x0ff;
@@ -546,12 +548,12 @@ int		bAutoExposure;
 		if (cToupDeviceInfo.model->flag & TOUPCAM_FLAG_RGB888)
 		{
 			CONSOLE_DEBUG("TOUPCAM_FLAG_RGB888");
-			SetImageTypeIndex(alpacaReadModeIdx++, "RGB24");
+			AddReadoutModeToList(kImageType_RGB24);
 		}
 		if (cToupDeviceInfo.model->flag & TOUPCAM_FLAG_GMCY8)
 		{
 			CONSOLE_DEBUG("TOUPCAM_FLAG_GMCY8");
-			SetImageTypeIndex(alpacaReadModeIdx++, "Y8");
+			AddReadoutModeToList(kImageType_Y8);
 		}
 		if (cToupDeviceInfo.model->flag & TOUPCAM_FLAG_GMCY12)
 		{
@@ -585,7 +587,7 @@ int		bAutoExposure;
 //*****************************************************************************
 //*	the camera must already be open when this is called
 //*****************************************************************************
-int	CameraDriverTOUP::GetImage_ROI_info(void)
+bool	CameraDriverTOUP::GetImage_ROI_info(void)
 {
 
 	memset(&cROIinfo, 0, sizeof(TYPE_IMAGE_ROI_Info));
@@ -595,7 +597,7 @@ int	CameraDriverTOUP::GetImage_ROI_info(void)
 	cROIinfo.currentROIheight		=	cCameraProp.CameraYsize;
 	cROIinfo.currentROIbin			=	1;
 
-	return(0);
+	return(true);
 }
 
 
@@ -750,9 +752,15 @@ HRESULT				toupResult;
 //	CONSOLE_DEBUG(__FUNCTION__);
 	if (cToupCamH != NULL)
 	{
-		CONSOLE_DEBUG("reading gain");
+//		CONSOLE_DEBUG("reading gain");
 		toupResult	=	Toupcam_get_ExpoAGain(cToupCamH, &gain);
-		if (toupResult != S_OK)
+		if (toupResult == S_OK)
+		{
+//			CONSOLE_DEBUG("found gain");
+			*cameraGainValue	=	gain;
+			alpacaErrCode		=	kASCOM_Err_Success;
+		}
+		else
 		{
 			if (toupResult == E_NOTIMPL)
 			{
@@ -763,11 +771,6 @@ HRESULT				toupResult;
 			{
 				alpacaErrCode	=	kASCOM_Err_FailedUnknown;
 			}
-		}
-		else
-		{
-			CONSOLE_DEBUG("found gain");
-			*cameraGainValue	=	gain;
 		}
 	}
 	else
@@ -899,27 +902,13 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
 }
 
 //**************************************************************************
-TYPE_ASCOM_STATUS	CameraDriverTOUP::Read_Readoutmodes(char *readOutModeString, bool includeQuotes)
-{
-TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
-
-//	CONSOLE_DEBUG(__FUNCTION__);
-
-	strcpy(cLastCameraErrMsg, "Not finished-");
-	strcat(cLastCameraErrMsg, __FILE__);
-	strcat(cLastCameraErrMsg, ":");
-	strcat(cLastCameraErrMsg, __FUNCTION__);
-	CONSOLE_DEBUG(cLastCameraErrMsg);
-	return(alpacaErrCode);
-}
-
-//**************************************************************************
 TYPE_ASCOM_STATUS	CameraDriverTOUP::Read_ImageData(void)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 ToupcamFrameInfoV2	toupFrameInfo	=	{ 0 };
 HRESULT				toupResult;
 
+	CONSOLE_DEBUG(__FUNCTION__);
 
 	GetImage_ROI_info();
 
@@ -929,8 +918,8 @@ HRESULT				toupResult;
 		toupResult	=	Toupcam_PullImageV2(cToupCamH, cCameraDataBuffer, 24, &toupFrameInfo);
 		if (SUCCEEDED(toupResult))
 		{
-		//	CONSOLE_DEBUG_W_HEX("toupFrameInfo.flag\t\t=",		toupFrameInfo.flag);
-		//	CONSOLE_DEBUG_W_NUM("toupFrameInfo.timestamp\t=",	toupFrameInfo.timestamp);
+			CONSOLE_DEBUG_W_HEX("toupFrameInfo.flag\t\t=",		toupFrameInfo.flag);
+			CONSOLE_DEBUG_W_NUM("toupFrameInfo.timestamp\t=",	toupFrameInfo.timestamp);
 			if (cCameraAutoExposure)
 			{
 				cCurrentExposure_us						=	cToupAutoExpTime_us;
@@ -960,12 +949,17 @@ HRESULT				toupResult;
 		else
 		{
 			CONSOLE_DEBUG_W_HEX("failed to pull image, toupResult = ", toupResult);
+			switch(toupResult)
+			{
+				case E_FAIL:			CONSOLE_DEBUG("Unspecified failure");			break;
+				case E_ACCESSDENIED:	CONSOLE_DEBUG("General access denied error");	break;
+			}
 			alpacaErrCode	=	kASCOM_Err_FailedUnknown;
 		}
 	}
 	else
 	{
-		CONSOLE_DEBUG("Invalid device number");
+		CONSOLE_DEBUG("Invalid device number or camera buffer failed to allocate");
 	}
 	return(alpacaErrCode);
 }
@@ -979,6 +973,7 @@ HRESULT				toupResult;
 	switch(nEvent)
 	{
 		case TOUPCAM_EVENT_EXPOSURE:		//*	exposure time changed
+			CONSOLE_DEBUG("TOUPCAM_EVENT_EXPOSURE");
 			if (cToupCamH != NULL)
 			{
 				toupResult	=	Toupcam_get_ExpoTime(cToupCamH, &cToupAutoExpTime_us);	//*	in microseconds
@@ -1000,7 +995,7 @@ HRESULT				toupResult;
 			break;
 
 		case TOUPCAM_EVENT_IMAGE:			//*	live image arrived, use Toupcam_PullImage to get this image
-		//	CONSOLE_DEBUG("TOUPCAM_EVENT_IMAGE");
+//			CONSOLE_DEBUG("TOUPCAM_EVENT_IMAGE");
 			if ((cToupCamH != NULL) && (cCameraDataBuffer != NULL))
 			{
 				//*	we do not want to read the image if an image save is in progress

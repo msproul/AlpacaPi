@@ -43,18 +43,18 @@ void	PARENT_CLASS::AlpacaProcessSupportedActions_Telescope(	const int	deviveNum,
 
 
 //*****************************************************************************
-void	PARENT_CLASS::AlpacaProcessReadAll_Telescope(	const int	deviceNum,
+bool	PARENT_CLASS::AlpacaProcessReadAll_Telescope(	const int	deviceNum,
 														const char	*keywordString,
 														const char *valueString)
 {
+bool	dataWasHandled;
 
 //	CONSOLE_DEBUG_W_2STR("json=",	keywordString, valueString);
-
+	dataWasHandled	=	true;
 	if (strcasecmp(keywordString, "Declination") == 0)
 	{
 		cTelescopeProp.Declination	=	atof(valueString);
 		Update_TelescopeDeclination();
-
 	}
 	else if (strcasecmp(keywordString, "RightAscension") == 0)
 	{
@@ -69,6 +69,10 @@ void	PARENT_CLASS::AlpacaProcessReadAll_Telescope(	const int	deviceNum,
 	{
 		cTelescopeProp.Slewing	=	IsTrueFalse(valueString);
 	}
+	else
+	{
+		dataWasHandled	=	false;
+	}
 
 
 #ifdef _PARENT_IS_TELESCOPE_
@@ -78,9 +82,20 @@ void	PARENT_CLASS::AlpacaProcessReadAll_Telescope(	const int	deviceNum,
 		strcpy(cAlpacaVersionString, valueString);
 		SetWidgetText(kTab_Telescope,	kTelescope_AlpacaDrvrVersion,		cAlpacaVersionString);
 		SetWidgetText(kTab_DriverInfo,	kDriverInfo_AlpacaDrvrVersion,		cAlpacaVersionString);
+		dataWasHandled	=	true;
 	}
 #endif // _PARENT_IS_TELESCOPE_
 
+	return(dataWasHandled);
+}
+
+//*****************************************************************************
+void	PARENT_CLASS::ReadOneTelescopeCapability(	const char	*propertyStr,
+													const char	*reportedStr,
+													bool		*booleanValue)
+{
+
+	ReadOneDriverCapability("telescope", propertyStr, reportedStr, booleanValue);
 }
 
 //*****************************************************************************
@@ -90,10 +105,9 @@ bool			validData;
 int				myFailureCount;
 double			argDoubleMin;
 double			argDoubleMax;
-//bool			argBoolean;
-//int				argInt;
 char			alpacaString[64];
 int				iii;
+
 //	CONSOLE_DEBUG(__FUNCTION__);
 #ifndef _PARENT_IS_TELESCOPE_
 //	CONSOLE_DEBUG("NOT   _PARENT_IS_TELESCOPE_");
@@ -101,6 +115,28 @@ int				iii;
 	cPort			=	cTelescopeIpPort;
 	cAlpacaDevNum	=	cTelescopeAlpacaDeviceNum;
 #endif
+
+	ReadOneTelescopeCapability("canfindhome",			"CanFindHome",			&cTelescopeProp.CanFindHome);
+	ReadOneTelescopeCapability("canpark",				"CanPark",				&cTelescopeProp.CanPark);
+	ReadOneTelescopeCapability("canpulseguide",			"CanPulseGuide",		&cTelescopeProp.CanPulseGuide);
+	ReadOneTelescopeCapability("cansetdeclinationrate",	"CanSetDeclinationRate",
+																				&cTelescopeProp.CanSetDeclinationRate);
+	ReadOneTelescopeCapability("cansetguiderates",		"CanSetGuideRates",		&cTelescopeProp.CanSetGuideRates);
+	ReadOneTelescopeCapability("cansetpark",			"CanSetPark",			&cTelescopeProp.CanSetPark);
+
+	ReadOneTelescopeCapability("cansetpierside",		"CanSetPierSide",		&cTelescopeProp.CanSetPierSide);
+	ReadOneTelescopeCapability("cansetrightascensionrate",
+														"CanSetRightAscensionRate",
+																				&cTelescopeProp.CanSetRightAscensionRate);
+	ReadOneTelescopeCapability("cansettracking",		"CanSetTracking",		&cTelescopeProp.CanSetTracking);
+	ReadOneTelescopeCapability("canslew",				"CanSlew",				&cTelescopeProp.CanSlew);
+	ReadOneTelescopeCapability("canslewaltaz",			"CanSlewAltAz",			&cTelescopeProp.CanSlewAltAz);
+	ReadOneTelescopeCapability("canslewaltazasync",		"CanSlewAltAzAsync",	&cTelescopeProp.CanSlewAltAzAsync);
+	ReadOneTelescopeCapability("canslewasync",			"CanSlewAsync",			&cTelescopeProp.CanSlewAsync);
+	ReadOneTelescopeCapability("cansync",				"CanSync",				&cTelescopeProp.CanSync);
+	ReadOneTelescopeCapability("cansyncaltaz",			"CanSyncAltAz",			&cTelescopeProp.CanSyncAltAz);
+	ReadOneTelescopeCapability("canunpark",				"CanUnpark",			&cTelescopeProp.CanUnpark);
+	ReadOneTelescopeCapability("doesrefraction",		"DoesRefraction",		&cTelescopeProp.DoesRefraction);
 
 
 	myFailureCount	=	0;

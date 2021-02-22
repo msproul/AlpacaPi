@@ -6,6 +6,8 @@
 //*	Edit History
 //*****************************************************************************
 //*	Jan  1,	2021	<MLS> Hipparcos stars catalog working in SkyTravel
+//*	Feb 18,	2021	<MLS> Added support for common star names
+//*	Feb 18,	2021	<MLS> Added ReadCommonStarNames()
 //*****************************************************************************
 
 
@@ -330,7 +332,6 @@ size_t			bufferSize;
 //		CONSOLE_DEBUG_W_LONG("hipFileSize\t=", hipFileSize);
 //		CONSOLE_DEBUG_W_LONG("hipLineCount\t=", hipLineCount);
 
-
 		bufferSize	=	hipLineCount * sizeof(TYPE_CelestData);
 		hipStarData	=	(TYPE_CelestData *)malloc(bufferSize);
 
@@ -338,9 +339,7 @@ size_t			bufferSize;
 		{
 			memset(hipStarData, 0, bufferSize);
 
-	//		hipLineCount	=	10;
 			recordCount		=	0;
-		//	while (fgets(lineBuff, kHIPrecordSize, filePointer) && (recordCount < hipLineCount))
 			while (fread(lineBuff, kHIPrecordSize, 1, filePointer) && (recordCount < hipLineCount))
 			{
 				lineBuff[kHIPrecordSize]	=	0;
@@ -365,26 +364,77 @@ size_t			bufferSize;
 
 
 //************************************************************************
-int	ReadCommonStarNames(void)
+int	ReadCommonStarNames(TYPE_CelestData	*hipStarData, long hipStarCount)
 {
-FILE			*filePointer;
-bool			validObject;
-char			lineBuff[512];
-char			filePath[128];
-size_t			bufferSize;
+FILE	*filePointer;
+bool	validObject;
+char	lineBuff[512];
+char	filePath[128];
+int		iii;
+int		ccc;
+int		sLen;
+char	starNameStr[48];
+char	hippNumberStr[48];
+long	hippStarNumber;
+long	hhh;
+int		foundCount;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
-
+	CONSOLE_DEBUG(__FUNCTION__);
+	foundCount	=	0;
 	strcpy(filePath, kSkyTravelDataDirectory);
 	strcat(filePath, "/commonstars.txt");
 
 	filePointer	=	fopen(filePath, "r");
 	if (filePointer != NULL)
 	{
+		while (fgets(lineBuff, 127, filePointer))
+		{
+			sLen	=	strlen(lineBuff);
+			if ((lineBuff[0] != '#') && (sLen > 10))
+			{
+				starNameStr[0]		=	0;
+				hippNumberStr[0]	=	0;
+				iii					=	0;
+				ccc					=	0;
+				//*	extract the star name
+				while ((lineBuff[iii] >= 0x20) && (iii < sLen))
+				{
+					starNameStr[ccc++]	=	lineBuff[iii];
+					starNameStr[ccc]	=	0;
+					iii++;
+				}
+				//*	now skip 1 or more tabs
+				while ((lineBuff[iii] == 0x09) && (iii < sLen))
+				{
+					iii++;
+				}
+				//*	extract the star number
+				ccc	=	0;
+				while ((lineBuff[iii] >= 0x20) && (iii < sLen))
+				{
+					hippNumberStr[ccc++]	=	lineBuff[iii];
+					hippNumberStr[ccc]	=	0;
+					iii++;
+				}
+//				CONSOLE_DEBUG_W_2STR("args=", starNameStr, hippNumberStr);
+
+				hippStarNumber	=	atol(hippNumberStr);
+
+				for (hhh = 0; hhh < hipStarCount; hhh++)
+				{
+					if (hippStarNumber == hipStarData[hhh].id)
+					{
+						strcpy(hipStarData[hhh].longName, starNameStr);
+						foundCount++;
+						break;
+					}
+				}
+			}
+		}
 		fclose(filePointer);
 	}
+	CONSOLE_DEBUG_W_NUM("foundCount=", foundCount);
 
-
-	return(1);
+	return(foundCount);
 }
 

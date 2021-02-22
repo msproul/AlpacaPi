@@ -12,6 +12,11 @@
 #ifndef _CONSTELLATION_DATA_H_
 #define	_CONSTELLATION_DATA_H_
 
+#ifndef _SKY_STRUCTS_
+	#include	"SkyStruc.h"
+#endif
+
+
 //*****************************************************************************
 typedef struct
 {
@@ -42,7 +47,7 @@ typedef struct
 	bool		foundFlag;
 	bool		moveFlag;
 	int			hippIdNumber;
-	double		rtAscension;		//*	these are the points for the center of the outline
+	double		rtAscension;
 	double		declination;
 
 } TYPE_HippStar;
@@ -67,6 +72,7 @@ typedef struct
 
 TYPE_ConstOutline	*ReadConstellationOutlines(const char *filePath, int *objectCount);
 TYPE_ConstVector	*ReadConstellationVectors(const char *directoryPath, int *objectCount);
+void				SetHipparcosDataPointers(TYPE_CelestData *theHippDataPtr, long theHippObjectCnt);
 
 
 #ifdef __cplusplus

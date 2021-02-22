@@ -294,15 +294,30 @@ ASI_ERROR_CODE		asiErrorCode;
 	{
 	char	asiImageTypeString[16];
 
-		cSupportedFormats[ii]	=	cAsiCameraInfo.SupportedVideoFormat[ii];
+		switch(cAsiCameraInfo.SupportedVideoFormat[ii])
+		{
+			case ASI_IMG_RAW8:
+				AddReadoutModeToList(kImageType_RAW8);
+				break;
 
-		Get_ASI_ImageTypeString((ASI_IMG_TYPE)cSupportedFormats[ii], asiImageTypeString);
+			case ASI_IMG_RGB24:
+				AddReadoutModeToList(kImageType_RGB24);
+				break;
 
-		SetImageTypeIndex(ii, asiImageTypeString);
+			case ASI_IMG_RAW16:
+				AddReadoutModeToList(kImageType_RAW16);
+				break;
 
+			case ASI_IMG_Y8:
+				AddReadoutModeToList(kImageType_Y8);
+				break;
+
+			default:
+				CONSOLE_DEBUG_W_NUM("Unknown image type", cAsiCameraInfo.SupportedVideoFormat[ii]);
+				break;
+		}
 		ii++;
 	}
-
 
 	asiErrorCode	=	ASIOpenCamera(cCameraID);
 	if (asiErrorCode == ASI_SUCCESS)
@@ -557,37 +572,6 @@ void	CameraDriverASI::CheckForClosedError(ASI_ERROR_CODE theAsiErrorCode)
 	}
 }
 
-
-//*****************************************************************************
-TYPE_ASCOM_STATUS	CameraDriverASI::Read_Readoutmodes(char *readOutModeString, bool includeQuotes)
-{
-TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
-int					ii;
-char				asiImageTypeString[32];
-
-	readOutModeString[0]	=	0;
-	ii						=	0;
-	while ((ii<8) && (cSupportedFormats[ii] != ASI_IMG_END))
-	{
-		Get_ASI_ImageTypeString((ASI_IMG_TYPE)cSupportedFormats[ii], asiImageTypeString);
-		if (includeQuotes)
-		{
-			strcat(readOutModeString, "\"");
-			strcat(readOutModeString, asiImageTypeString);
-			strcat(readOutModeString, "\"");
-		}
-		else
-		{
-			strcat(readOutModeString, asiImageTypeString);
-		}
-		if (cSupportedFormats[ii+1] != ASI_IMG_END)
-		{
-			strcat(readOutModeString, ", ");
-		}
-		ii++;
-	}
-	return(alpacaErrCode);
-}
 
 //*****************************************************************************
 bool	CameraDriverASI::IsCameraIDvalid(const int argCameraID)
@@ -1621,13 +1605,14 @@ TYPE_CameraDef	*theCamera;
 #pragma mark Virtual functions
 //*****************************************************************************
 //*	the camera must already be open when this is called
+//*	returns true if success
 //*****************************************************************************
-int	CameraDriverASI::GetImage_ROI_info(void)
+bool	CameraDriverASI::GetImage_ROI_info(void)
 {
 ASI_ERROR_CODE	asiErrorCode;
-int				returnCode;
+bool			returnFlag;
 
-	returnCode	=	-1;
+	returnFlag	=	false;
 
 	memset(&cROIinfo, 0, sizeof(TYPE_IMAGE_ROI_Info));
 	//*	get current stats of the camera
@@ -1638,7 +1623,7 @@ int				returnCode;
 										&cCurrentASIimageType);
 	if (asiErrorCode == ASI_SUCCESS)
 	{
-		returnCode	=	0;
+		returnFlag	=	true;
 		switch(cCurrentASIimageType)
 		{
 			case ASI_IMG_RAW8:	cROIinfo.currentROIimageType	=	kImageType_RAW8;	break;
@@ -1651,11 +1636,11 @@ int				returnCode;
 	}
 	else
 	{
-		returnCode	=	-1;
+	returnFlag	=	false;
 		CONSOLE_DEBUG_W_NUM("ASIGetROIFormat->asiErrorCode\t=",	asiErrorCode);
 	}
 
-	return(returnCode);
+	return(returnFlag);
 }
 
 //*****************************************************************************
@@ -1715,14 +1700,16 @@ TYPE_ASCOM_STATUS	CameraDriverASI::SetImageType(TYPE_IMAGE_TYPE newImageType)
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 ASI_ERROR_CODE		asiErrorCode;
 
+	CONSOLE_DEBUG("==========================================");
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG_W_NUM("newImageType\t=",			newImageType);
 
 	asiErrorCode	=	OpenASIcameraIfNeeded(cCameraID);
 	if (asiErrorCode == ASI_SUCCESS)
 	{
-		alpacaErrCode		=	SetImageTypeCameraOpen(newImageType);
-		cDesiredImageType	=	newImageType;
+		alpacaErrCode					=	SetImageTypeCameraOpen(newImageType);
+		cROIinfo.currentROIimageType	=	newImageType;
+		cDesiredImageType				=	newImageType;
 		CONSOLE_DEBUG_W_NUM("SUCESSS! - cDesiredImageType\t=",		cDesiredImageType);
 	}
 	else

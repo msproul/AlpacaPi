@@ -525,12 +525,12 @@ void	GetTelescopeSettingsByRefID(	const char			*refID,		//*	can be NULL
 int		telescopeIdx;
 int		ii;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	telescopeIdx	=	-1;	//*	set the default
 	if (refID != NULL)
 	{
-		CONSOLE_DEBUG_W_STR("refID\t\t=",	refID);
+//		CONSOLE_DEBUG_W_STR("refID\t\t=",	refID);
 		for (ii=0; ii<kMaxTelescopes; ii++)
 		{
 			if (strcasecmp(refID, gObseratorySettings.TS_info[ii].refID) == 0)
@@ -553,7 +553,7 @@ int		ii;
 	{
 		telescopeIdx	=	0;
 	}
-	CONSOLE_DEBUG_W_NUM("telescopeIdx\t=",	telescopeIdx);
+//	CONSOLE_DEBUG_W_NUM("telescopeIdx\t=",	telescopeIdx);
 
 	if (ts_info != NULL)
 	{

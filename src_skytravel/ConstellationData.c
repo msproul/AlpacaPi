@@ -8,6 +8,7 @@
 //*	Jan  7,	2021	<MLS> Created ConstellationData.c
 //*	Jan  7,	2021	<MLS> Downloaded much better constellation data
 //*	Jan  7,	2021	<MLS> From https://github.com/dcf21/constellation-stick-figures
+//*	Feb 18,	2021	<MLS> Constellation vectors now using proper Precessed RA/DEC values
 //*****************************************************************************
 
 
@@ -38,6 +39,14 @@
 static	TYPE_CelestData	*gHippData	=	NULL;
 static	long			gHippCount	=	0;
 static	int				gFailedToFindCnt	=	0;
+
+//************************************************************************
+void	SetHipparcosDataPointers(TYPE_CelestData *theHippDataPtr, long theHippObjectCnt)
+{
+	gHippData	=	theHippDataPtr;
+	gHippCount	=	theHippObjectCnt;
+}
+
 //************************************************************************
 static int	FindHipparcosIndexFromID(int hippId)
 {
@@ -72,8 +81,10 @@ int		hippIndex;
 		hippIndex	=	FindHipparcosIndexFromID(constellation->hippStars[iii].hippIdNumber);
 		if (hippIndex >= 0)
 		{
-			constellation->hippStars[iii].rtAscension	=	gHippData[hippIndex].org_ra;
-			constellation->hippStars[iii].declination	=	gHippData[hippIndex].org_decl;
+//			constellation->hippStars[iii].rtAscension	=	gHippData[hippIndex].org_ra;
+//			constellation->hippStars[iii].declination	=	gHippData[hippIndex].org_decl;
+			constellation->hippStars[iii].rtAscension	=	gHippData[hippIndex].ra;
+			constellation->hippStars[iii].declination	=	gHippData[hippIndex].decl;
 		}
 		else
 		{
@@ -89,18 +100,28 @@ int		hippIndex;
 static void	UpdateFromHipparcos(TYPE_ConstVector *constelVectors, int vectorCnt)
 {
 int		iii;
+bool	freeNeededFlag	=	false;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-	//*	first we have to read in the hipparcos catalog
-	gHippData	=	ReadHipparcosStarCatalog(&gHippCount);
+	//*	check to see if the data needs to be loaded
+	if (gHippData == NULL)
+	{
+		CONSOLE_DEBUG("Reading in Hipparcos data");
+		//*	first we have to read in the hipparcos catalog
+		gHippData		=	ReadHipparcosStarCatalog(&gHippCount);
+		freeNeededFlag	=	true;
+	}
 	if (gHippData != NULL)
 	{
 		for (iii=0; iii<vectorCnt; iii++)
 		{
 			UpdateOneConstellation(&constelVectors[iii]);
 		}
-		free(gHippData);
+		if (freeNeededFlag)
+		{
+			free(gHippData);
+		}
 	}
 //	CONSOLE_DEBUG_W_NUM("gFailedToFindCnt\t=", gFailedToFindCnt);
 }

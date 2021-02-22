@@ -94,7 +94,7 @@ class WindowTabPreview: public WindowTab
 				void	ToggleCooler(void);
 				void	SetTempartueDisplayEnable(bool enabled);
 				void	SetReceivedFileName(const char *newFileName);
-				void	UpdateCameraState(int newCameraState);
+				void	UpdateCameraState(TYPE_ALPACA_CAMERASTATE newCameraState);
 
 				void	StartExposure(void);
 				void	DownloadImage(void);
@@ -105,7 +105,7 @@ class WindowTabPreview: public WindowTab
 				IplImage		*cOpenCVdownLoadedImage;
 				char			cDownLoadedFileNameRoot[256];
 
-				int				cAlpacaCameraState;
+				TYPE_ALPACA_CAMERASTATE		cAlpacaCameraState;
 
 
 };

@@ -48,6 +48,7 @@
 #define	kWindowHeight	550
 
 #include	"windowtab_telescope.h"
+#include	"windowtab_capabilities.h"
 #include	"windowtab_drvrInfo.h"
 #include	"windowtab_about.h"
 
@@ -59,6 +60,7 @@
 enum
 {
 	kTab_Telescope	=	1,
+	kTab_Capabilities,
 	kTab_DriverInfo,
 	kTab_About,
 
@@ -117,9 +119,10 @@ void	ControllerTelescope::SetupWindowControls(void)
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	SetTabCount(kTab_Count);
-	SetTabText(kTab_Telescope,	"Telescope");
-	SetTabText(kTab_DriverInfo,	"Driver Info");
-	SetTabText(kTab_About,		"About");
+	SetTabText(kTab_Telescope,		"Telescope");
+	SetTabText(kTab_Capabilities,	"Capabilities");
+	SetTabText(kTab_DriverInfo,		"Driver Info");
+	SetTabText(kTab_About,			"About");
 
 
 	//--------------------------------------------
@@ -128,6 +131,14 @@ void	ControllerTelescope::SetupWindowControls(void)
 	{
 		SetTabWindow(kTab_Telescope,	cTelescopeTabObjPtr);
 		cTelescopeTabObjPtr->SetParentObjectPtr(this);
+	}
+
+	//--------------------------------------------
+	cCapabilitiesTabObjPtr		=	new WindowTabCapabilities(	cWidth, cHeight, cBackGrndColor, cWindowName);
+	if (cCapabilitiesTabObjPtr != NULL)
+	{
+		SetTabWindow(kTab_Capabilities,	cCapabilitiesTabObjPtr);
+		cCapabilitiesTabObjPtr->SetParentObjectPtr(this);
 	}
 
 	//--------------------------------------------
@@ -222,8 +233,6 @@ char	returnString[256];
 	}
 	else
 	{
-		validData	=	AlpacaGetStartupData_TelescopeOneAAT();
-
 		//========================================================
 		validData	=	AlpacaGetStringValue(	"telescope", "description",	NULL,	returnString);
 		if (validData)
@@ -231,6 +240,10 @@ char	returnString[256];
 			SetWidgetText(kTab_Telescope, kTelescope_AlpacaDrvrVersion, returnString);
 		}
 	}
+
+	validData	=	AlpacaGetStartupData_TelescopeOneAAT();
+
+
 	SetWidgetValid(kTab_Telescope,	kTelescope_Readall,		cHas_readall);
 	return(validData);
 }
@@ -248,11 +261,17 @@ void	ControllerTelescope::AlpacaProcessReadAll(	const char	*deviceType,
 													const char	*keywordString,
 													const char *valueString)
 {
+bool	dataWasHandled;
+
 //	CONSOLE_DEBUG_W_2STR("json=",	keywordString, valueString);
 	if (strcasecmp(deviceType, "Telescope") == 0)
 	{
-		AlpacaProcessReadAll_Telescope(deviceNum, keywordString, valueString);
-		if (strcasecmp(keywordString, "name") == 0)
+		dataWasHandled	=	AlpacaProcessReadAll_Telescope(deviceNum, keywordString, valueString);
+		if (dataWasHandled)
+		{
+			//*	we are done, skip the rest
+		}
+		else if (strcasecmp(keywordString, "name") == 0)
 		{
 			SetWidgetText(kTab_DriverInfo, kDriverInfo_Name, valueString);
 		}
@@ -379,6 +398,36 @@ char	hhmmssString[64];
 	FormatHHMMSS(cTelescopeProp.Declination, hhmmssString, true);
 	SetWidgetText(kTab_Telescope,	kTelescope_DEC_value,		hhmmssString);
 }
+
+
+//**************************************************************************************
+void	ControllerTelescope::UpdateCapabilityList(void)
+{
+int		boxID;
+int		iii;
+char	textString[80];
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	iii	=	0;
+	while (cCapabilitiesList[iii].capabilityName[0] != 0)
+	{
+		boxID	=	kCapabilities_TextBox1 + iii;
+		strcpy(textString,	cCapabilitiesList[iii].capabilityName);
+		strcat(textString,	":\t");
+		strcat(textString,	cCapabilitiesList[iii].capabilityValue);
+
+//		CONSOLE_DEBUG(textString);
+
+		if (boxID <= kCapabilities_TextBoxN)
+		{
+			SetWidgetText(kTab_Capabilities, boxID, textString);
+		}
+
+		iii++;
+	}
+}
+
 
 
 #define	_PARENT_IS_TELESCOPE_

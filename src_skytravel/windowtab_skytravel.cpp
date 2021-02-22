@@ -41,6 +41,10 @@
 //*	Jan 29,	2021	<MLS> Added auto time update option
 //*	Feb 15,	2021	<MLS> Added SyncTelescopeToCenter() & SlewTelescopeToCenter()
 //*	Feb 15,	2021	<MLS> Added separate flag for dome slit display
+//*	Feb 18,	2021	<MLS> Added display of Hipparcos numbers at high zoom level
+//*	Feb 18,	2021	<MLS> Added DrawCommonStarNames()
+//*	Feb 18,	2021	<MLS> Added SetView_Index()
+//*	Feb 20,	2021	<MLS> Added display of NGC/IC numbers at high zoom level
 //*****************************************************************************
 //*	TODO
 //*			star catalog lists
@@ -314,6 +318,7 @@ int		ii;
  	cDispOptions.dispConstOutlines	=	true;
  	cDispOptions.dispConstellations	=	true;
 	cDispOptions.dispHIP			=	false;
+	cDispOptions.dispCommonStarNames=	true;
 
 	cDispOptions.dispTelescope		=	false;
 	cDispOptions.dispDomeSlit		=	false;
@@ -329,11 +334,11 @@ int		ii;
 	cDecl0			=	0.0;
 
 
-	cView_index		=	6;			//* 70 degrees
+	SetView_Index(6);
+
 	cCsrx			=	cWind_x0;	//* center of field
 	cCsry			=	cWind_y0;
 
-	cView_angle		=	gView_table[cView_index];
 	wind_ulx		=	0;
 	wind_uly		=	0;
 	cWind_width		=	xSize;
@@ -387,19 +392,28 @@ int		ii;
 
 	cTSCmessierOjbectPtr	=	ReadTSCfile("skytravel_data/Messier.tsc", kDataSrc_TSC_Messier, &cTSCmessierOjbectCount);
 
-
-	cConstOutlinePtr	=	ReadConstellationOutlines("skytravel_data/constOutlines.txt", &cConstOutlineCount);
+	cConstOutlinePtr		=	ReadConstellationOutlines("skytravel_data/constOutlines.txt", &cConstOutlineCount);
 
 	CONSOLE_DEBUG(__FUNCTION__);
+
+	cHipObjectPtr		=	ReadHipparcosStarCatalog(&cHipObjectCount);
+	if (cHipObjectPtr != NULL)
+	{
+		ReadCommonStarNames(cHipObjectPtr, cHipObjectCount);
+	}
+
+
+	Precess();		//*	make sure all of the data bases are sorted properly
+
+	CONSOLE_DEBUG(__FUNCTION__);
+
+	SetHipparcosDataPointers(cHipObjectPtr, cHipObjectCount);
 	cConstVecotrPtr		=	ReadConstellationVectors(kSkyTravelDataDirectory, &cConstVectorCnt);
 	if (cConstVecotrPtr != NULL)
 	{
 		//*	if we successfully read in the good constellation lines, turn off the old ones
 		cDispOptions.dispLines			=	false;
 	}
-	CONSOLE_DEBUG(__FUNCTION__);
-
-	Precess();		//*	make sure all of the data bases are sorted properly
 
 
 	//--------------------------------------------------------------
@@ -506,6 +520,7 @@ int		buttonWidthGoto;
 	SetWidgetHelpText(	kSkyTravel_Btn_Chart,			"Toggle Chart mode");
 	SetWidgetHelpText(	kSkyTravel_Btn_DeepSky,			"Toggle Deep Sky Objects");
 	SetWidgetHelpText(	kSkyTravel_Btn_Names,			"Toggle Name display");
+	SetWidgetHelpText(	kSkyTravel_Btn_CommonStarNames,	"Toggle Common star names display");
 	SetWidgetHelpText(	kSkyTravel_Btn_Lines,			"Toggle Line display");
 	SetWidgetHelpText(	kSkyTravel_Btn_ConstOutline,	"Toggle Constellation outlines");
 	SetWidgetHelpText(	kSkyTravel_Btn_Constellations,	"Toggle Constellations");
@@ -536,6 +551,7 @@ int		buttonWidthGoto;
 	SetWidgetText(		kSkyTravel_Btn_Chart,			"c");
 	SetWidgetText(		kSkyTravel_Btn_DeepSky,			"D");
 	SetWidgetText(		kSkyTravel_Btn_Names,			"N");
+	SetWidgetText(		kSkyTravel_Btn_CommonStarNames,	"m");
 	SetWidgetText(		kSkyTravel_Btn_Lines,			"L");
 	SetWidgetText(		kSkyTravel_Btn_ConstOutline,	"O");
 	SetWidgetText(		kSkyTravel_Btn_Constellations,	"?");
@@ -715,6 +731,7 @@ void	WindowTabSkyTravel::UpdateButtonStatus(void)
 {
 	SetWidgetChecked(		kSkyTravel_Btn_DeepSky,			cDispOptions.dispDeep);
 	SetWidgetChecked(		kSkyTravel_Btn_Names,			cDispOptions.dispNames);
+	SetWidgetChecked(		kSkyTravel_Btn_CommonStarNames,	cDispOptions.dispCommonStarNames);
 	SetWidgetChecked(		kSkyTravel_Btn_Lines,			cDispOptions.dispLines);
 	SetWidgetChecked(		kSkyTravel_Btn_ConstOutline,	cDispOptions.dispConstOutlines);
 	SetWidgetChecked(		kSkyTravel_Btn_Constellations,	cDispOptions.dispConstellations);
@@ -877,6 +894,11 @@ bool			reDrawSky;
 			cDispOptions.dispMessier	=	!cDispOptions.dispMessier;
 			break;
 
+		case 'm':	//*	toggle common star names
+			cDispOptions.dispCommonStarNames	=	!cDispOptions.dispCommonStarNames;
+			break;
+
+
 		case 'N': 	//*	toggle NAMES
 			cDispOptions.dispNames	=	!cDispOptions.dispNames;
 			break;
@@ -957,23 +979,13 @@ bool			reDrawSky;
 //		case kPageDnKey:
 		case '>':	//*	zoom in
 		case '+':	//*	zoom in
-			cView_index--;
-			if (cView_index < 0)
-			{
-				cView_index	=	0;
-			}
-			cView_angle	=	gView_table[cView_index];
+			SetView_Index(cView_index - 1);
 			break;
 
 //		case kPageUpKey:
 		case '<':	//*	zoom out
 		case '-':	//*	zoom out
-			cView_index++;
-			if (cView_index > kMaxViewAngleIndex)
-			{
-				cView_index	=	kMaxViewAngleIndex;
-			}
-			cView_angle	=	gView_table[cView_index];
+			SetView_Index(cView_index + 1);
 			break;
 
 //		case '+':
@@ -1071,6 +1083,11 @@ char	searchText[128];
 			SetWidgetChecked(		kSkyTravel_Btn_Names,	cDispOptions.dispNames);
 			break;
 
+		case kSkyTravel_Btn_CommonStarNames:
+			cDispOptions.dispCommonStarNames	=	!cDispOptions.dispCommonStarNames;
+			SetWidgetChecked(		kSkyTravel_Btn_CommonStarNames,	cDispOptions.dispCommonStarNames);
+			break;
+
 		case kSkyTravel_Btn_Lines:
 			cDispOptions.dispLines	=	!cDispOptions.dispLines;
 			SetWidgetChecked(		kSkyTravel_Btn_Lines,	cDispOptions.dispLines);
@@ -1124,11 +1141,6 @@ char	searchText[128];
 		case kSkyTravel_Btn_Hipparcos:
 			cDispOptions.dispHIP	=	!cDispOptions.dispHIP;
 			SetWidgetChecked(		kSkyTravel_Btn_Hipparcos,	cDispOptions.dispHIP);
-
-			if (cDispOptions.dispHIP && (cHipObjectPtr == NULL))
-			{
-				cHipObjectPtr		=	ReadHipparcosStarCatalog(&cHipObjectCount);
-			}
 			break;
 
 		case kSkyTravel_Btn_NightMode:
@@ -1148,21 +1160,11 @@ char	searchText[128];
 
 
 		case kSkyTravel_Btn_Plus:		//*	zoom in
-			cView_index--;
-			if (cView_index < 0)
-			{
-				cView_index	=	0;
-			}
-			cView_angle	=	gView_table[cView_index];
+			SetView_Index(cView_index - 1);
 			break;
 
 		case kSkyTravel_Btn_Minus:	//*	zoom out
-			cView_index++;
-			if (cView_index > kMaxViewAngleIndex)
-			{
-				cView_index	=	kMaxViewAngleIndex;
-			}
-			cView_angle	=	gView_table[cView_index];
+			SetView_Index(cView_index + 1);
 			break;
 
 		case kSkyTravel_Search_Btn:
@@ -1950,27 +1952,39 @@ short		ii;
 	ConvertLatLonToRaDec(&cCurrLatLon, &cCurrentTime);
 
 //	DRAW HERE
+	//*--------------------------------------------------------------------------------
 	//*	if we are to much zoomed in, dont bother with the outlines
 	if (cDispOptions.dispConstOutlines && (cView_index > 4))
 	{
 		DrawConstellationOutLines();
 	}
+	//*--------------------------------------------------------------------------------
+	//*	this is my new constellation vectors, far better than the original ones
 	if (cDispOptions.dispConstellations)
 	{
 		DrawConstellationVectors();
 	}
 
+	//*--------------------------------------------------------------------------------
 	//*	draw the faint Hipparcos stuff first
 	if (cDispOptions.dispHIP && (cHipObjectPtr != NULL) && (cHipObjectCount > 0))
 	{
 		PlotObjectsByDataSource(cHipObjectPtr, cHipObjectCount);
 	}
+	//*--------------------------------------------------------------------------------
+	//*	common star names are added to the Hipparcos data, we plot it separately
+	if (cDispOptions.dispCommonStarNames)
+	{
+		DrawCommonStarNames();
+	}
 
 
+	//*--------------------------------------------------------------------------------
 	if (cDispOptions.dispLines && (cView_index > 3))
 	{
 		DrawConstellationLines();
 	}
+	//*--------------------------------------------------------------------------------
 	if ((cStarDataPtr != NULL) && (cStarCount > 0))
 	{
 		PlotObjectsByDataSource(cStarDataPtr, cStarCount);
@@ -1981,23 +1995,27 @@ short		ii;
 		CONSOLE_ABORT("cStarDataPtr is NULL")
 	}
 
+	//*--------------------------------------------------------------------------------
 	if (cDispOptions.dispYale && (cYaleStarDataPtr != NULL) && (cYaleStarCount > 0))
 	{
 		PlotObjectsByDataSource(cYaleStarDataPtr, cYaleStarCount);
 	}
 
+	//*--------------------------------------------------------------------------------
 	if (cDispOptions.dispNGC && (cNGCobjectPtr != NULL) && (cNGCobjectCount > 0))
 	{
 		PlotObjectsByDataSource(cNGCobjectPtr, cNGCobjectCount);
 	}
 
 
+	//*--------------------------------------------------------------------------------
 	if (gZodiacPtr != NULL)
 	{
 //		CONSOLE_DEBUG("Plotting zodiac");
 		PlotSkyObjects(gZodiacPtr, gZodiac_names, zodiac_shapes, kZodiacCount);
 	}
 
+	//*--------------------------------------------------------------------------------
 	if (cDispOptions.dispMessier && (cTSCmessierOjbectPtr != NULL) && (cTSCmessierOjbectCount > 0))
 	{
 //		CONSOLE_DEBUG("Plotting Messier objects");
@@ -2012,27 +2030,45 @@ short		ii;
 }
 
 //*****************************************************************************
+void	WindowTabSkyTravel::SetView_Index(const int newViewIndex)
+{
+	cView_index		=	newViewIndex;
+
+	if (cView_index < 0)
+	{
+		cView_index	=	0;
+	}
+	if (cView_index > kMaxViewAngleIndex)
+	{
+		cView_index	=	kMaxViewAngleIndex;
+	}
+	cView_angle	=	gView_table[cView_index];
+
+}
+
+//*****************************************************************************
 void	WindowTabSkyTravel::ResetView(void)
 {
-	cElev0							=	kHALFPI / 2;		//* 45 degrees
-	cAz0							=	0.0;				//* north
-	cRa0							=	0.0;
-	cDecl0							=	0.0;
-	cView_index						=	8;
-	cView_angle						=	gView_table[cView_index];
-	cDisplayedMagnitudeLimit		=	15.0;
+	SetView_Index(8);
 
-	cChart							=	false;
-	cDispOptions.dispDeep			=	true;
-	cDispOptions.dispEarth			=	true;
-	cDispOptions.dispHorizon_line	=	true;
-	cDispOptions.dispNames			=	true;
-	cDispOptions.dispNGC			=	false;
- 	cDispOptions.dispSymbols		=	true;
- 	cDispOptions.dispMessier		=	true;
- 	cDispOptions.dispConstOutlines	=	true;
- 	cDispOptions.dispConstellations	=	true;
-	cDispOptions.dispHIP			=	false;
+	cElev0								=	kHALFPI / 2;		//* 45 degrees
+	cAz0								=	0.0;				//* north
+	cRa0								=	0.0;
+	cDecl0								=	0.0;
+	cDisplayedMagnitudeLimit			=	15.0;
+
+	cChart								=	false;
+	cDispOptions.dispDeep				=	true;
+	cDispOptions.dispEarth				=	true;
+	cDispOptions.dispHorizon_line		=	true;
+	cDispOptions.dispNames				=	true;
+	cDispOptions.dispNGC				=	false;
+ 	cDispOptions.dispSymbols			=	true;
+ 	cDispOptions.dispMessier			=	true;
+ 	cDispOptions.dispConstOutlines		=	true;
+ 	cDispOptions.dispConstellations		=	true;
+	cDispOptions.dispHIP				=	false;
+	cDispOptions.dispCommonStarNames	=	true;
 
 	if (cConstVecotrPtr != NULL)
 	{
@@ -2044,7 +2080,6 @@ void	WindowTabSkyTravel::ResetView(void)
 	{
 		cDispOptions.dispLines			=	true;
 	}
-
 }
 
 //*****************************************************************************
@@ -2515,6 +2550,8 @@ int					nameLen;
 //int	gLongestVectorSeg[]	=	{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,};
 
 //**************************************************************************************
+//*	this is my new constellation vectors, far better than the original ones
+//**************************************************************************************
 void	WindowTabSkyTravel::DrawConstellationVectors(void)
 {
 int					iii;
@@ -2530,6 +2567,7 @@ int					ptsOnScreenCnt;
 short				deltaPixels;
 //int					longestDelta	=	0;
 //	CONSOLE_DEBUG(__FUNCTION__);
+
 	if (cConstVecotrPtr != NULL)
 	{
 		SetColor(PINK);
@@ -2551,8 +2589,8 @@ short				deltaPixels;
 
 			offScreenFlg	=	true;
 			hippStarCnt		=	myConstPtr->starCount;
-			prev_XX	=	-1;
-			prev_YY	=	-1;
+			prev_XX			=	-1;
+			prev_YY			=	-1;
 //			CONSOLE_DEBUG_W_NUM("hippStarCnt\t=",hippStarCnt);
 			for (jjj=0; jjj<hippStarCnt; jjj++)
 			{
@@ -2613,6 +2651,44 @@ short				deltaPixels;
 	else
 	{
 		CONSOLE_DEBUG("cConstVecotrPtr is null");
+	}
+}
+
+
+//**************************************************************************************
+void	WindowTabSkyTravel::DrawCommonStarNames(void)
+{
+int		iii;
+short	pt_XX, pt_YY;
+bool	ptInView;
+
+//	CONSOLE_DEBUG("-------------------------------------------------------");
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	if ((cHipObjectPtr != NULL) && (cHipObjectCount > 0))
+	{
+		SetColor(WHITE);
+		for (iii = 0; iii < cHipObjectCount; iii++)
+		{
+			//*	most of them don't have names, so check for that first
+			if (cHipObjectPtr[iii].longName[0] != 0)
+			{
+				ptInView		=	GetXYfromRA_Decl(	cHipObjectPtr[iii].ra,
+														cHipObjectPtr[iii].decl,
+														&pt_XX,
+														&pt_YY);
+				if (ptInView)
+				{
+					DrawStar_shape(pt_XX, pt_YY, 0);	//*	many of these stars are not drawn
+//					CONSOLE_DEBUG(cHipObjectPtr[iii].longName);
+					if (cDispOptions.dispHIP && (cView_index <= 3))
+					{
+						pt_YY	+=	12;
+					}
+					DrawCString(pt_XX + 10, pt_YY, cHipObjectPtr[iii].longName);
+				}
+			}
+		}
 	}
 }
 
@@ -3028,7 +3104,7 @@ double				sin_bside,cos_bside;
 double				xangle,yangle,rangle;
 unsigned int		myCount;
 short				dataSource;
-
+char				labelString[32];
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 //	CONSOLE_DEBUG_W_DBL("cDecl0\t\t=",		cDecl0);
@@ -3195,21 +3271,63 @@ short				dataSource;
 
 							DrawObjectByShape(xcoord, ycoord, shape, magn);
 
-							if (dataSource == kDataSrc_TSC_Messier)
+							switch(dataSource)
 							{
-								if (cNightMode)
-								{
-									SetColor(RED);
-								}
-								else
-								{
-									SetColor(CYAN);
-								}
-								DrawCString(xcoord, ycoord, objectptr[ii].shortName);
-								if (cView_index < 4)
-								{
-									DrawCString(xcoord + 45, ycoord, objectptr[ii].longName);
-								}
+							//*	draw Messier M numbers
+								case kDataSrc_TSC_Messier:
+									if (cNightMode)
+									{
+										SetColor(RED);
+									}
+									else
+									{
+										SetColor(CYAN);
+									}
+									DrawCString(xcoord, ycoord, objectptr[ii].shortName);
+									if (cView_index < 4)
+									{
+										DrawCString(xcoord + 45, ycoord, objectptr[ii].longName);
+									}
+									break;
+
+								case kDataSrc_Hipparcos:
+									//*	draw common H numbers and names if present
+									if (cDispOptions.dispNames && (cView_index <= 3))
+									{
+										sprintf(labelString, "H%ld", objectptr[ii].id);
+
+										if (objectptr[ii].longName[0] > 0x20)
+										{
+											sprintf(labelString, "H%ld-%s", objectptr[ii].id, objectptr[ii].longName);
+										}
+										SetColor(RED);
+										DrawCString(xcoord + 10, ycoord, labelString);
+									}
+									break;
+
+								case kDataSrc_NGC2000:
+								case kDataSrc_NGC2000IC:
+									if (cDispOptions.dispNames && (cView_index <= 4))
+									{
+										if (objectptr[ii].dataSrc == kDataSrc_NGC2000IC)
+										{
+											sprintf(labelString, "IC%ld", objectptr[ii].id);
+											SetColor(CYAN);
+										}
+										else
+										{
+											sprintf(labelString, "NGC%ld", objectptr[ii].id);
+											SetColor(YELLOW);
+										}
+
+										if (objectptr[ii].longName[0] > 0x20)
+										{
+											strcat(labelString, "-");
+											strcat(labelString, objectptr[ii].longName);
+										}
+										DrawCString(xcoord + 10, ycoord, labelString);
+									}
+									break;
 							}
 							myCount++;
 						}
@@ -4993,6 +5111,7 @@ char	database[32];
 char	msgString[256];
 int		objectIDnum;
 char	*argPtr;
+long	hippObjectId;
 
 //	CONSOLE_DEBUG("-----------------------------------------------------");
 //	CONSOLE_DEBUG(__FUNCTION__);
@@ -5114,6 +5233,45 @@ char	*argPtr;
 	}
 
 	//-------------------------------------------------------------------------------
+	//*	look for Hipparcos numbers
+	if ((foundSomething == false) && (cHipObjectPtr != NULL) && (cHipObjectCount > 0))
+	{
+		if ((firstChar == 'H') && isdigit(objectName[1]))
+		{
+			hippObjectId	=	atol(&objectName[1]);
+			CONSOLE_DEBUG_W_LONG("Searching Hipparcosfor ID\t=", hippObjectId);
+			//*	ok, lets look
+			iii	=	0;
+			while ((foundSomething == false) && (iii < cHipObjectCount))
+			{
+                if (hippObjectId == cHipObjectPtr[iii].id)
+                {
+					CONSOLE_DEBUG("found in Hipparcos");
+				//	newRA	=	cHipObjectPtr[iii].org_ra;
+				//	newDec	=	cHipObjectPtr[iii].org_decl;
+
+					newRA	=	cHipObjectPtr[iii].ra;
+					newDec	=	cHipObjectPtr[iii].decl;
+
+					strcpy(database, "Hipparcos catalog");
+					sprintf(foundName, "H%ld", cHipObjectPtr[iii].id);
+					if (cHipObjectPtr[iii].longName[0] > 0x20)
+					{
+						strcat(foundName, "-");
+						strcat(foundName, cHipObjectPtr[iii].longName);
+					}
+
+					cDispOptions.dispHIP	=	true;
+					SetView_Index(3);
+					foundSomething			=	true;
+                }
+                iii++;
+			}
+		}
+	}
+
+
+	//-------------------------------------------------------------------------------
 	if ((foundSomething == false) && cDispOptions.dispConstOutlines  &&
 		(cConstOutlinePtr != NULL) && (cConstOutlineCount > 0))
 	{
@@ -5137,7 +5295,7 @@ char	*argPtr;
 		iii	=	0;
 		while ((foundSomething == false) && (iii < cConstOutlineCount))
 		{
-			if (strcasecmp(objectName, cConstOutlinePtr[iii].shortName) == 0)
+			if (strncasecmp(objectName, cConstOutlinePtr[iii].shortName, searchStrLen) == 0)
 			{
 				CONSOLE_DEBUG_W_STR("Found", cConstOutlinePtr[iii].shortName);
 				newRA	=	cConstOutlinePtr[iii].rtAscension;
@@ -5152,9 +5310,33 @@ char	*argPtr;
 		//*	outlines dont get displayed unless we are greater than 4
 		if (foundSomething && (cView_index < 5))
 		{
-			cView_index	=	5;
+			SetView_Index(5);
 		}
 	}
+
+	//-------------------------------------------------------------------------------
+	//*	look for for common star names in the Hipparcos list
+	if ((foundSomething == false) && (cHipObjectPtr != NULL) && (cHipObjectCount > 0))
+	{
+		CONSOLE_DEBUG_W_STR("Searching Hipparcosfor \t=", objectName);
+
+		iii	=	0;
+		while ((foundSomething == false) && (iii < cHipObjectCount))
+		{
+			if (strncasecmp(objectName, cHipObjectPtr[iii].longName, searchStrLen) == 0)
+			{
+				CONSOLE_DEBUG_W_STR("Found", cHipObjectPtr[iii].longName);
+				newRA	=	cHipObjectPtr[iii].ra;
+				newDec	=	cHipObjectPtr[iii].decl;
+
+				strcpy(database, "Hipparcos catalog");
+				sprintf(foundName, "H%ld-%s", cHipObjectPtr[iii].id, cHipObjectPtr[iii].longName);
+				foundSomething	=	true;
+			}
+			iii++;
+		}
+	}
+
 
 
 	if (foundSomething)

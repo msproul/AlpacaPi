@@ -41,6 +41,7 @@
 //*	Sep  2,	2020	<MLS> Masamichi Nagone from Sony said to turn off RAW
 //*	Sep  8,	2020	<MLS> Confirmed, As per Masa
 //*	Sep  8,	2020	<MLS> 	If /sys/module/usbcore/parameters/usbfs_memory_mb = 64, Raw mode works
+//*	Feb 21,	2021	<MLS> Sony driver updated to use new Alpaca structures
 //*****************************************************************************
 
 
@@ -258,7 +259,7 @@ char		savePrefix[]	=	"SONY-";
 	versionMaj			=	(versionNumber >> 24) & 0x00ff;
 	versionMin			=	(versionNumber >> 16) & 0x00ff;
 	versionPatch		=	(versionNumber >> 8) & 0x00ff;
-	sprintf(cDriverversionStr, "%d.%d.%d", versionMaj, versionMin, versionPatch);
+	sprintf(cCommonProp.DriverVersion, "%d.%d.%d", versionMaj, versionMin, versionPatch);
 
 	ReadSONYcameraInfo();
 
@@ -721,26 +722,27 @@ CrInt32u			currentValueSize;
 			{
 				case CrAspectRatio_3_2:
 					strcpy(propertyDisplayStr, "CrAspectRatio_3_2");
-					cCameraXsize	=	9504;
-					cCameraYsize	=	6336;
+
+					cCameraProp.CameraXsize	=	9504;
+					cCameraProp.CameraYsize	=	6336;
 					break;
 
 				case CrAspectRatio_16_9:
 					strcpy(propertyDisplayStr, "CrAspectRatio_16_9");
-					cCameraXsize	=	9504;
-					cCameraYsize	=	5344;
+					cCameraProp.CameraXsize	=	9504;
+					cCameraProp.CameraYsize	=	5344;
 					break;
 
 				case CrAspectRatio_4_3:
 					strcpy(propertyDisplayStr, "CrAspectRatio_4_3");
-					cCameraXsize	=	8448;
-					cCameraYsize	=	6336;
+					cCameraProp.CameraXsize	=	8448;
+					cCameraProp.CameraYsize	=	6336;
 					break;
 
 				case CrAspectRatio_1_1:
 					strcpy(propertyDisplayStr, "CrAspectRatio_1_1");
-					cCameraXsize	=	6336;
-					cCameraYsize	=	6336;
+					cCameraProp.CameraXsize	=	6336;
+					cCameraProp.CameraYsize	=	6336;
 					break;
 
 				default:
@@ -1544,7 +1546,7 @@ TYPE_ASCOM_STATUS	CameraDriverSONY::Start_CameraExposure(int32_t exposureMicrose
 CrError				sonyErrCode;
 char				sonyErrorString[128];
 
-	gettimeofday(&cLastExposureStartTime, NULL);
+	gettimeofday(&cCameraProp.Lastexposure_StartTime, NULL);
 
 	CONSOLE_DEBUG(__FUNCTION__);
 	if (cSonyDeviceHandle != (CrDeviceHandle)NULL)
@@ -1692,7 +1694,7 @@ CrInt8u				*pdata;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
-	gettimeofday(&cLastExposureStartTime, NULL);
+	gettimeofday(&cCameraProp.Lastexposure_StartTime, NULL);
 
 	if (cSonyDeviceHandle != (CrDeviceHandle)NULL)
 	{
@@ -1774,7 +1776,7 @@ void	CameraDriverSONY::ReadSONYcameraInfo(void)
 	if (cSonyCamera_info != NULL)
 	{
 		strcpy(cSONYidString,		cSonyCamera_info->GetModel());
-		strcpy(cCommonProp.Name,			cSonyCamera_info->GetModel());
+		strcpy(cCommonProp.Name,	cSonyCamera_info->GetModel());
 
 		CONSOLE_DEBUG_W_STR("Conn type\t\t=",	cSONYidString);
 		CONSOLE_DEBUG_W_STR("Camera model\t=",	cCommonProp.Name);

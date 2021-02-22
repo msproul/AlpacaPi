@@ -86,13 +86,12 @@ class CameraDriverSONY: public CameraDriver
 //		virtual	TYPE_ASCOM_STATUS		Stop_Video(void);
 //		virtual	TYPE_ASCOM_STATUS		Take_Video(void);
 
-//		virtual	int		GetImage_ROI_info(void);
+//		virtual	bool					GetImage_ROI_info(void);
 
 //		virtual	TYPE_ASCOM_STATUS		Cooler_TurnOn(void);
 //		virtual	TYPE_ASCOM_STATUS		Cooler_TurnOff(void);
 //		virtual	TYPE_ASCOM_STATUS		Read_CoolerState(bool *coolerOnOff);
 //		virtual	TYPE_ASCOM_STATUS		Read_CoolerPowerLevel(void);
-//		virtual	TYPE_ASCOM_STATUS		Read_Readoutmodes(char *readOutModeString, bool includeQuotes=false);
 //		virtual	TYPE_ASCOM_STATUS		Read_Fastreadout(void);
 //		virtual	TYPE_ASCOM_STATUS		Read_SensorTemp(void);
 //		virtual	TYPE_ASCOM_STATUS		Read_ImageData(void);

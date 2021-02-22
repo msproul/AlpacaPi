@@ -10,6 +10,7 @@
 #endif
 
 TYPE_CelestData	*ReadHipparcosStarCatalog(long *starCount);
+int	ReadCommonStarNames(TYPE_CelestData	*hipStarData, long hipStarCount);
 
 
 

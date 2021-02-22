@@ -314,28 +314,30 @@ alpacapi		:	$(CPP_OBJECTS)				\
 #pragma mark make allcam
 #	this is primarily for development, all cameras are enabled
 allcam		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
+allcam		:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
 allcam		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
 allcam		:		DEFINEFLAGS		+=	-D_ENABLE_ATIK_
-allcam		:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
-allcam		:		DEFINEFLAGS		+=	-D_ENABLE_CALIBRATION_
+allcam		:		DEFINEFLAGS		+=	-D_ENABLE_FLIR_
+allcam		:		DEFINEFLAGS		+=	-D_ENABLE_QHY_
+#allcam		:		DEFINEFLAGS		+=	-D_ENABLE_SONY_
+allcam		:		DEFINEFLAGS		+=	-D_ENABLE_TOUP_
+#allcam		:		DEFINEFLAGS		+=	-D_ENABLE_CALIBRATION_
 allcam		:		DEFINEFLAGS		+=	-D_ENABLE_DISCOVERY_QUERRY_
 #allcam		:		DEFINEFLAGS		+=	-D_ENABLE_DOME_
 allcam		:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
-allcam		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_
-allcam		:		DEFINEFLAGS		+=	-D_ENABLE_FLIR_
-allcam		:		DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_
+#allcam		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_
+#allcam		:		DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_
 #allcam		:		DEFINEFLAGS		+=	-D_ENABLE_MULTICAM_
 #allcam		:		DEFINEFLAGS		+=	-D_ENABLE_OBSERVINGCONDITIONS_
-allcam		:		DEFINEFLAGS		+=	-D_ENABLE_QHY_
-allcam		:		DEFINEFLAGS		+=	-D_ENABLE_ROTATOR_
+#allcam		:		DEFINEFLAGS		+=	-D_ENABLE_ROTATOR_
 #allcam		:		DEFINEFLAGS		+=	-D_ENABLE_SAFETYMONITOR_
 #allcam		:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_
 #allcam		:		DEFINEFLAGS		+=	-D_ENABLE_SLIT_TRACKER_
 #allcam		:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
-allcam		:		DEFINEFLAGS		+=	-D_ENABLE_TOUP_
 allcam		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
 #allcam		:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
 #allcam		:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_LX200_
+#allcam		:		INCLUDES		+=	-I$(SONY_INCLUDE_DIR)
 allcam		:		$(CPP_OBJECTS)				\
 					$(ALPACA_OBJECTS)			\
 					$(SOCKET_OBJECTS)			\
@@ -804,6 +806,7 @@ SONY_OBJECTS=												\
 				$(OBJECT_DIR)cameradriver_SONY.o			\
 
 ######################################################################################
+#make sony
 sony		:		DEFINEFLAGS		+=	-D_ENABLE_SONY_
 sony		:		DEFINEFLAGS		+=	-D_INCLUDE_SONY_MAIN_
 sony		:		CPLUSFLAGS		+=	-fsigned-char
@@ -1370,6 +1373,7 @@ CONTROLLER_OBJECTS=												\
 				$(OBJECT_DIR)windowtab_auxmotor.o				\
 				$(OBJECT_DIR)windowtab_camera.o					\
 				$(OBJECT_DIR)windowtab_camsettings.o			\
+				$(OBJECT_DIR)windowtab_capabilities.o			\
 				$(OBJECT_DIR)windowtab_config.o					\
 				$(OBJECT_DIR)windowtab_dome.o					\
 				$(OBJECT_DIR)windowtab_drvrInfo.o				\
@@ -1405,20 +1409,25 @@ VIDEO_OBJECTS=													\
 				$(OBJECT_DIR)windowtab_about.o					\
 				$(OBJECT_DIR)windowtab_video.o					\
 				$(OBJECT_DIR)windowtab_preview.o				\
+				$(OBJECT_DIR)cpu_stats.o						\
 
 
 PREVIEW_OBJECTS=												\
+				$(OBJECT_DIR)commoncolor.o						\
 				$(OBJECT_DIR)controller.o						\
 				$(OBJECT_DIR)controllerAlpaca.o					\
+				$(OBJECT_DIR)controller_camera.o				\
+				$(OBJECT_DIR)controller_main.o					\
 				$(OBJECT_DIR)controller_preview.o				\
+				$(OBJECT_DIR)cpu_stats.o						\
+				$(OBJECT_DIR)discovery_lib.o					\
+				$(OBJECT_DIR)json_parse.o						\
+				$(OBJECT_DIR)sendrequest_lib.o					\
 				$(OBJECT_DIR)windowtab.o						\
 				$(OBJECT_DIR)windowtab_about.o					\
 				$(OBJECT_DIR)windowtab_preview.o				\
-				$(OBJECT_DIR)discovery_lib.o					\
-				$(OBJECT_DIR)json_parse.o						\
-				$(OBJECT_DIR)commoncolor.o						\
-				$(OBJECT_DIR)sendrequest_lib.o					\
 
+#				$(OBJECT_DIR)controller_cam_normal.o			\
 
 
 ######################################################################################
@@ -1514,6 +1523,7 @@ SKYTRAVEL_OBJECTS=											\
 				$(OBJECT_DIR)windowtab_auxmotor.o			\
 				$(OBJECT_DIR)windowtab_camera.o				\
 				$(OBJECT_DIR)windowtab_camsettings.o		\
+				$(OBJECT_DIR)windowtab_capabilities.o		\
 				$(OBJECT_DIR)windowtab_config.o				\
 				$(OBJECT_DIR)windowtab_covercalib.o			\
 				$(OBJECT_DIR)windowtab_deviceselect.o		\
@@ -1545,6 +1555,7 @@ sky		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_FOCUSERS_
 sky		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
 sky		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_SWITCHES_
 sky		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_TELESCOPE_
+#sky		:	DEFINEFLAGS		+=	-D_ENABLE_SLIT_TRACKER_
 sky		:	DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
 sky		:	INCLUDES		+=	-I$(SRC_SKYTRAVEL)
 
@@ -1563,8 +1574,11 @@ sky		:				$(SKYTRAVEL_OBJECTS)					\
 
 ######################################################################################
 #pragma mark camera-controller
+#make dome ctrl
 domectrl		:	DEFINEFLAGS		+=	-D_INCLUDE_CTRL_MAIN_
 domectrl		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_DOME_
+domectrl		:	DEFINEFLAGS		+=	-D_ENABLE_SLIT_TRACKER_
+
 
 domectrl		:			$(CONTROLLER_OBJECTS)
 
@@ -1638,8 +1652,10 @@ video			:			$(VIDEO_OBJECTS)
 
 ######################################################################################
 #pragma mark preview-controller
+#make preview
 preview			:	DEFINEFLAGS		+=	-D_INCLUDE_CTRL_MAIN_
 preview			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_PREVIEW_
+preview			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_CAMERA_
 
 preview			:			$(PREVIEW_OBJECTS)
 
@@ -2288,6 +2304,12 @@ $(OBJECT_DIR)windowtab_drvrInfo.o : 	$(SRC_DIR)windowtab_drvrInfo.cpp		\
 										$(SRC_DIR)controller.h
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)windowtab_drvrInfo.cpp -o$(OBJECT_DIR)windowtab_drvrInfo.o
 
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)windowtab_capabilities.o : $(SRC_DIR)windowtab_capabilities.cpp	\
+										$(SRC_DIR)windowtab_capabilities.h		\
+										$(SRC_DIR)windowtab.h					\
+										$(SRC_DIR)controller.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)windowtab_capabilities.cpp -o$(OBJECT_DIR)windowtab_capabilities.o
 
 
 #-------------------------------------------------------------------------------------

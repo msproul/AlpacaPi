@@ -20,6 +20,7 @@
 //*	Mar  3,	2020	<MLS> Added TYPE_SUPPORTED_IMG_TYPE
 //*	Nov 29,	2020	<MLS> Updated return values to TYPE_ASCOM_STATUS
 //*	Dec 11,	2020	<MLS> Updating class variable names to match ASCOM property names
+//*	Feb 21,	2021	<MLS> Deleted TYPE_SUPPORTED_IMG_TYPE
 //*****************************************************************************
 //#include	"cameradriver.h"
 
@@ -158,6 +159,7 @@ typedef enum
 typedef enum
 {
 	//*	these are NOT the same order as the ZWO values
+	//*	these are so we can work across multiple camera brands AND still work with Alpaca
 	kImageType_Invalid	=	-1,
 	kImageType_RAW8		=	0,
 	kImageType_RAW16,
@@ -177,16 +179,6 @@ typedef struct
 	int				currentROIbin;
 } TYPE_IMAGE_ROI_Info;
 
-//*****************************************************************************
-#define	kImgTypeStrMaxLen	16
-typedef struct
-{
-	bool				isValid;
-	char				imageTypeString[kImgTypeStrMaxLen];
-	TYPE_IMAGE_TYPE		internalImgageType;
-
-} TYPE_SUPPORTED_IMG_TYPE;
-#define		kMaxImageTypes	6
 
 //*****************************************************************************
 //*	this is for keeping track of other saved data for the FITS header
@@ -200,7 +192,7 @@ typedef struct
 } TYPE_FILENAME;
 
 
-#define	kNumSupportedFormats	8
+//#define	kNumSupportedFormats	8
 #define	kMaxCameraNameLen		64
 #define	kObjectNameMaxLen		31
 #define	kTelescopeNameMaxLen	80
@@ -379,6 +371,10 @@ class CameraDriver: public AlpacaDriver
 		TYPE_ASCOM_STATUS	Put_startX(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 		TYPE_ASCOM_STATUS	Put_startY(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 
+		TYPE_ASCOM_STATUS	Get_PercentCompleted(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+
+
+
 		TYPE_ASCOM_STATUS	Put_Pulseguide(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 
 		TYPE_ASCOM_STATUS	Get_Readoutmode(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
@@ -439,8 +435,6 @@ class CameraDriver: public AlpacaDriver
 				void	WriteFireCaptureTextFile(void);
 				void	GenerateFileNameRoot(void);
 
-				void	SetImageTypeIndex(const int alpacaImgTypeIdx, const char *imageTypeString);
-				TYPE_IMAGE_TYPE	XlateAlpacaImgIdxToIntImgType(const int alpacaImgTypeIdx);
 
 				void	Send_imagearray_rgb24(	const int		socketFD,
 												unsigned char	*pixelPtr,
@@ -494,6 +488,7 @@ class CameraDriver: public AlpacaDriver
 	public:
 	#ifdef _USE_OPENCV_
 		void			DisplayLiveImage(void);
+		void			CloseLiveImage(void);
 		void			DisplayLiveImage_wSideBar(void);
 		void			DrawSidebar(IplImage *imageDisplay);
 		int				CreateOpenCVImage(const unsigned char *imageDataPtr);
@@ -541,19 +536,21 @@ class CameraDriver: public AlpacaDriver
 
 
 
-		virtual	int		GetImage_ROI_info(void);
+		virtual	bool				GetImage_ROI_info(void);
 
 		virtual	TYPE_ASCOM_STATUS	Cooler_TurnOn(void);
 		virtual	TYPE_ASCOM_STATUS	Cooler_TurnOff(void);
 		virtual	TYPE_ASCOM_STATUS	Read_SensorTemp(void);
 		virtual	TYPE_ASCOM_STATUS	Read_CoolerState(bool *coolerOnOff);
 		virtual	TYPE_ASCOM_STATUS	Read_CoolerPowerLevel(void);
-		virtual	TYPE_ASCOM_STATUS	Read_Readoutmodes(char *readOutModeString, bool includeQuotes=false);
 		virtual	TYPE_ASCOM_STATUS	Read_Fastreadout(void);
 		virtual	TYPE_ASCOM_STATUS	Read_ImageData(void);
 		virtual bool				GetCmdNameFromMyCmdTable(const int cmdNumber, char *comandName, char *getPut);
 
 
+
+				TYPE_ASCOM_STATUS	Read_Readoutmodes(char *readOutModeString, bool includeQuotes=false);
+				void				AddReadoutModeToList(const TYPE_IMAGE_TYPE imageType, const char *imgTypeStr=NULL);
 
 	//*****************************************************************************
 public:
@@ -566,9 +563,6 @@ protected:
 
 
 	//*****************************************************************************
-//?	TYPE_CAMERA_STATE		cInternalCameraState;
-//?	TYPE_IMAGE_ROI_Info		cROIinfo;
-//?	TYPE_IMAGE_TYPE			cDesiredImageType;
 	TYPE_IMAGE_ROI_Info		cLastExposure_ROIinfo;
 
 	//=========================================================================================
@@ -607,8 +601,6 @@ protected:
 	bool			cSt4Port;
 	struct timeval	cPulseGuideStartTime;		//*	time pulse guiding was started
 
-	int			cSupportedFormats[kNumSupportedFormats];
-
 	long		cGain_default;
 
 
@@ -622,10 +614,6 @@ protected:
 
 
 	//*****************************************************************************
-	TYPE_SUPPORTED_IMG_TYPE	cSupportedImageTypes[kMaxImageTypes];
-	int						cCurrAlpacaImgTypeIdx;	//*	note: this is an index into the array
-													//*	of supported image types. IT DOES NOT MATCH TYPE_IMAGE_TYPE
-
 	bool				cNewImageReadyToDisplay;
 	long				cCameraDataBuffLen;
 	unsigned char		*cCameraDataBuffer;
@@ -664,15 +652,7 @@ protected:
 	bool				cVideoCreateTimeStampFile;
 	FILE				*cVideoTimeStampFilePtr;
 
-	//*	these items are stored on a per camera basis for the purpose of responding
-	//*	to some of the Alpaca requests
 
-	int					cAlpacaCameraState;			//*	0 = CameraIdle
-													//*	1 = CameraWaiting
-													//*	2 = CameraExposing
-													//*	3 = CameraReading
-													//*	4 = CameraDownload
-													//*	5 = CameraError
 	struct timeval		cDownloadStartTime;
 	struct timeval		cDownloadEndTime;
 

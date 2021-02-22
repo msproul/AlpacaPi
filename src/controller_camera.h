@@ -171,7 +171,6 @@ class ControllerCamera: public Controller
 				bool					cReadData8Bit;
 
 				char					cCameraName[48];
-				int						cAlpacaCameraState;
 				bool					cCameraState_imageready;
 
 				double					cExposure;

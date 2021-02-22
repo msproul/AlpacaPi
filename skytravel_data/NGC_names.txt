@@ -1,0 +1,250 @@
+######################################################
+#http://www.glyphweb.com/esky/ngc.html
+
+NGC 1 Spiral Galaxy
+NGC 253 Sculptor Galaxy
+NGC 628 Spiral Galaxy
+NGC 40 Bow-Tie Nebula
+NGC 276 Barred Spiral Galaxy
+NGC 650 Little Dumbbell Nebula
+NGC 55 Whale Galaxy in Sculptor
+NGC 292 Small Magellanic Cloud
+NGC 651 Little Dumbbell Nebula
+NGC 104 47 Tucanae
+NGC 300 Spiral Galaxy
+NGC 663 Open Cluster
+NGC 205 Elliptical Galaxy
+NGC 362 Globular Cluster
+NGC 752 Open Cluster
+NGC 221 Le Gentil
+NGC 457 Owl Cluster
+NGC 869 Double Cluster
+NGC 224 Andromeda Galaxy
+NGC 581 Open Cluster
+NGC 884 Double Cluster
+NGC 246 Skull Nebula
+NGC 598 Triangulum Galaxy
+NGC 891 Silver Sliver Galaxy
+NGC 247 Intermediate Spiral Galaxy
+NGC 1039 Open Cluster
+NGC 1851 Globular Cluster
+NGC 1973 Running Man Nebula
+NGC 1068 Cetus A
+NGC 1873 Open Cluster
+NGC 1975 Running Man Nebula
+NGC 1261 Globular Cluster
+NGC 1904 Globular Cluster
+NGC 1976 Orion Nebula
+NGC 1275 Perseus A
+NGC 1907 Open Cluster
+NGC 1977 Running Man Nebula
+NGC 1465 Spiral Galaxy
+NGC 1912 Starfish Cluster
+NGC 1981 Open Cluster
+NGC 1499 California Nebula
+NGC 1931 Fly Nebula
+NGC 1982 Reflection Nebula
+NGC 1705 Lenticular Galaxy
+NGC 1952 Crab Nebula
+NGC 1990 Epsilon Orionis Nebula
+NGC 1850 Open Cluster
+NGC 1960 Open Cluster
+NGC 2000 Open Cluster
+NGC 2237 Rosette Nebula
+NGC 2392 Eskimo Nebula
+NGC 2022 Planetary Nebula
+NGC 2238 Rosette Nebula
+NGC 2403 Intermediate Spiral Galaxy
+NGC 2023 Lump Star
+NGC 2239 Rosette Nebula
+NGC 2419 Intergalactic Wanderer
+NGC 2024 Flaming Tree Nebula
+NGC 2244 Rosette Cluster
+NGC 2421 Open Cluster
+NGC 2029 Dragon's Head Nebula
+NGC 2246 Rosette Nebula
+NGC 2422 Open Cluster
+NGC 2032 Dragon's Head Nebula
+NGC 2258 Lenticular Galaxy
+NGC 2423 Open Cluster
+NGC 2035 Dragon's Head Nebula
+NGC 2261 Hubble's Variable Nebula
+NGC 2437 Open Cluster
+NGC 2068 Emission Nebula
+NGC 2264 Cone Nebula
+NGC 2447 Open Cluster
+NGC 2070 Tarantula Nebula
+NGC 2281 Open Cluster
+NGC 2477 Open Cluster
+NGC 2099 Open Cluster
+NGC 2287 Open Cluster
+NGC 2516 Southern Beehive Cluster
+NGC 2126 Open Cluster
+NGC 2296 Emission Nebula
+NGC 2548 Open Cluster
+NGC 2168 Open Cluster
+NGC 2323 Open Cluster
+NGC 2632 Praesepe
+NGC 2174 Monkey Head Nebula
+NGC 2360 Caroline's Cluster
+NGC 2646 Spiral Galaxy
+NGC 2175 Monkey Head Nebula
+NGC 2362 Tau Canis Majoris Cluster
+NGC 2682 Open Cluster
+NGC 3031 Bode's Galaxy
+NGC 3324 Open Cluster
+NGC 3556 Spiral Galaxy
+NGC 3034 Irregular Galaxy
+NGC 3351 Barred Spiral Galaxy
+NGC 3587 Owl Nebula
+NGC 3115 Spindle Galaxy in Sextans
+NGC 3368 Barred Spiral Galaxy
+NGC 3623 Barred Spiral Galaxy
+NGC 3132 Eight-Burst Nebyla
+NGC 3372 Eta Carinae Nebula
+NGC 3627 Barred Spiral Galaxy
+NGC 3201 Globular Cluster
+NGC 3379 Elliptical Galaxy
+NGC 3766 Pearl Cluster
+NGC 3242 Ghost of Jupiter
+NGC 3481 Spiral Galaxy
+NGC 3992 Barred Spiral Galaxy
+NGC 3293 Gem Cluster
+NGC 3532 Wishing Well Cluster
+NGC 4006 Elliptical Galaxy
+NGC 4382 Elliptical Galaxy
+NGC 4590 Globular Cluster
+NGC 4147 Globular Cluster
+NGC 4406 Elliptical Galaxy
+NGC 4594 Sombrero Galaxy
+NGC 4192 Barred Spiral Galaxy
+NGC 4453 Spiral Galaxy
+NGC 4621 Elliptical Galaxy
+NGC 4236 Barred Spiral Galaxy
+NGC 4472 Elliptical Galaxy
+NGC 4631 Whale Galaxy in Canes Venatici
+NGC 4241 Spiral Galaxy
+NGC 4486 Virgo A
+NGC 4649 Elliptical Galaxy
+NGC 4244 Silver Needle Galaxy
+NGC 4501 Spiral Galaxy
+NGC 4736 Spiral Galaxy
+NGC 4254 Coma Pinwheel Galaxy
+NGC 4544 Barred Spiral Galaxy
+NGC 4755 Jewel Box
+NGC 4258 Spiral Galaxy
+NGC 4548 Barred Spiral Galaxy
+NGC 4826 Black Eye Galaxy
+NGC 4303 Barred Spiral Galaxy
+NGC 4552 Elliptical Galaxy
+NGC 4833 Globular Cluster
+NGC 4321 Spiral Galaxy
+NGC 4565 Needle Galaxy
+NGC 4884 Coma B
+NGC 4372 Globular Cluster
+NGC 4569 Spiral Galaxy
+NGC 4889 Coma B
+NGC 4374 Elliptical Galaxy
+NGC 4579 Barred Spiral Galaxy
+NGC 4945 Barred Spiral Galaxy
+NGC 5024 Globular Cluster
+NGC 5170 Spiral Galaxy
+NGC 5291 Seashell Galaxy
+NGC 5055 Sunflower Galaxy
+NGC 5194 Whirlpool Galaxy
+NGC 5457 Pinwheel Galaxy
+NGC 5128 Centaurus A
+NGC 5236 Southern Pinwheel Galaxy
+NGC 5815 Spiral Galaxy
+NGC 5139 Omega Centauri
+NGC 5272 Globular Cluster
+NGC 5866 Spindle Galaxy in Draco
+NGC 5146 Elliptical Galaxy
+NGC 5286 Globular Cluster
+NGC 5904 Globular Cluster
+NGC 6025 Open Cluster
+NGC 6494 Open Cluster
+NGC 6729 R Coronae Australis Nebula
+NGC 6067 Open Cluster
+NGC 6514 Trifid Nebula
+NGC 6741 Phantom Streak Nebula
+NGC 6087 S Normae Cluster
+NGC 6523 Lagoon Nebula
+NGC 6744 Spiral Galaxy
+NGC 6093 Globular Cluster
+NGC 6531 Open Cluster
+NGC 6752 Globular Cluster
+NGC 6121 Globular Cluster
+NGC 6535 Globular Cluster
+NGC 6765 Planetary Nebula
+NGC 6124 Open Cluster
+NGC 6539 Globular Cluster
+NGC 6779 Globular Cluster
+NGC 6167 Open Cluster
+NGC 6541 Globular Cluster
+NGC 6809 Summer Rose Star
+NGC 6171 Globular Cluster
+NGC 6543 Cat's Eye Nebula
+NGC 6822 Barnard's Galaxy
+NGC 6193 Open Cluster
+NGC 6549 Spiral Galaxy
+NGC 6826 Blinking Planetary Nebula
+NGC 6205 Hercules Cluster
+NGC 6587 Lenticular Galaxy
+NGC 6830 Open Cluster
+NGC 6218 Globular Cluster
+NGC 6611 Eagle Nebula
+NGC 6838 Globular Cluster
+NGC 6231 Open Cluster
+NGC 6618 Omega Nebula
+NGC 6853 Dumbbell Nebula
+NGC 6234 Elliptical Galaxy
+NGC 6626 Globular Cluster
+NGC 6864 Globular Cluster
+NGC 6254 Globular Cluster
+NGC 6631 Open Cluster
+NGC 6888 Crescent Nebula
+NGC 6266 Globular Cluster
+NGC 6633 Open Cluster
+NGC 6913 Open Cluster
+NGC 6273 Globular Cluster
+NGC 6637 Globular Cluster
+NGC 6946 Fireworks Galaxy
+NGC 6302 Bug Nebula
+NGC 6656 Globular Cluster
+NGC 6960 Western Veil Nebula
+NGC 6333 Globular Cluster
+NGC 6681 Globular Cluster
+NGC 6974 Supernova Remnant
+NGC 6341 Globular Cluster
+NGC 6694 Open Cluster
+NGC 6981 Globular Cluster
+NGC 6397 Globular Cluster
+NGC 6705 Wild Duck Cluster
+NGC 6992 Network Nebula
+NGC 6402 Globular Cluster
+NGC 6715 Globular Cluster
+NGC 6994 Asterism
+NGC 6405 Butterfly Cluster
+NGC 6720 Ring Nebula
+NGC 6995 Eastern Veil Nebula
+NGC 6475 Ptolemy's Cluster
+NGC 7000 North America Nebula
+NGC 7099 Globular Cluster
+NGC 7596 Lenticular Galaxy
+NGC 7009 Saturn Nebula
+NGC 7209 Open Cluster
+NGC 7635 Bubble Nebula
+NGC 7023 Iris Nebula
+NGC 7243 Open Cluster
+NGC 7654 Open Cluster
+NGC 7066 Spiral Galaxy
+NGC 7293 Helix Nebula
+NGC 7662 Blue Snowball Nebula
+NGC 7078 Great Pegasus Cluster
+NGC 7437 Spiral Galaxy
+NGC 7722 Spiral Galaxy
+NGC 7089 Open Cluster
+NGC 7563 Barred Spiral Galaxy
+NGC 7814 Little Sombrero Galaxy
+NGC 7092 Open Cluster

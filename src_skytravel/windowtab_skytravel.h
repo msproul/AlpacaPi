@@ -34,6 +34,7 @@ enum
 	//*	these are data controls
 	kSkyTravel_Btn_DeepSky,
 	kSkyTravel_Btn_Names,
+	kSkyTravel_Btn_CommonStarNames,
 	kSkyTravel_Btn_Lines,
 	kSkyTravel_Btn_ConstOutline,
 	kSkyTravel_Btn_Constellations,
@@ -129,6 +130,8 @@ class WindowTabSkyTravel: public WindowTab
 								bool			sortFlag,
 								bool			forcePrecession);
 				void	DrawSkyAll(void);
+
+				void	SetView_Index(const int newViewIndex);
 				void	ResetView(void);
 				short	Set_Skycolor(	planet_struct	*planptr,
 										sun_moon_struct	*sunmonptr,
@@ -165,6 +168,7 @@ class WindowTabSkyTravel: public WindowTab
 
 				void	DrawConstellationOutLines(void);
 				void	DrawConstellationVectors(void);
+				void	DrawCommonStarNames(void);
 
 				void	DrawFeet(void);
 				void	DrawTelescopeReticle(int screenXX, int screenYY);

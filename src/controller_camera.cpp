@@ -581,10 +581,10 @@ int				readOutModeIdx;
 				{
 					if (readOutModeIdx < kMaxReadOutModes)
 					{
-						strcpy(cCameraProp.ReadOutModes[readOutModeIdx].mode,
+						strcpy(cCameraProp.ReadOutModes[readOutModeIdx].modeStr,
 									jsonParser.dataList[jjj].valueString);
 
-//						CONSOLE_DEBUG(cCameraProp.ReadOutModes[readOutModeIdx].mode);
+//						CONSOLE_DEBUG(cCameraProp.ReadOutModes[readOutModeIdx].modeStr);
 						readOutModeIdx++;
 					}
 					jjj++;
@@ -833,7 +833,7 @@ void	ControllerCamera::AlpacaProcessReadAll(	const char	*deviceTypeStr,
 	{
 		//=================================================================================
 		//*	camerastate
-		cAlpacaCameraState	=	atof(valueString);
+		cCameraProp.CameraState	=	(TYPE_ALPACA_CAMERASTATE)atoi(valueString);
 		UpdateCameraState();
 	}
 	else if (strcasecmp(keywordString, "cameraxsize") == 0)
@@ -1007,7 +1007,7 @@ bool	ControllerCamera::AlpacaGetStatus_OneAAT(void)
 bool			validData;
 int				failedCnt;
 double			myExposureTime;
-
+int				argInt;
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 
 	failedCnt	=	0;
@@ -1028,9 +1028,10 @@ double			myExposureTime;
 
 	//=================================================================================
 	//*	camerastate
-	validData	=	AlpacaGetIntegerValue(	"camera", "camerastate", NULL,	&cAlpacaCameraState);
+	validData	=	AlpacaGetIntegerValue(	"camera", "camerastate", NULL,	&argInt);
 	if (validData)
 	{
+		cCameraProp.CameraState	=	(TYPE_ALPACA_CAMERASTATE)argInt;
 		UpdateCameraState();
 	}
 	else

@@ -34,6 +34,7 @@ typedef struct
 		bool				dispMessier;		//*	Messier on/off
 		bool				dispConstOutlines;	//*	Constellation outlines on/off
 		bool				dispConstellations;	//*	Constellation vectors on/off
+		bool				dispCommonStarNames;	//*	Common star names on/off
 } TYPE_SkyDispOptions;
 
 

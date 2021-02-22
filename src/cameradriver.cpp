@@ -129,6 +129,11 @@
 //*	Jan 20,	2021	<MLS> CONFORM-camera/zwo -> PASSED!!!!!!!!!!!!!!!!!!!!!
 //*	Jan 26,	2021	<MLS> Converted CameraDriver to use properties structure
 //*	Jan 29,	2021	<MLS> Finished Alpaca rgb image array support (Send_imagearray_rgb24())
+//*	Feb 20,	2021	<MLS> Added Get_PercentCompleted()
+//*	Feb 21,	2021	<MLS> Added AddReadoutModeToList()
+//*	Feb 21,	2021	<MLS> Read_Readoutmodes() no longer virtual
+//*	Feb 21,	2021	<MLS> Deleted SetImageTypeIndex() & XlateAlpacaImgIdxToIntImgType()
+//*	Feb 21,	2021	<MLS> All camera drivers now use the cCameraProp.ReadOutModes[]
 //*****************************************************************************
 //*	Jan  1,	2119	<TODO> ----------------------------------------
 //*	Jun 26,	2119	<TODO> Add support for sub frames
@@ -157,6 +162,7 @@
 	#include <wiringPi.h>
 #endif
 
+#define	_USE_ALPACA_READOUT_MODES_
 
 //#define _DEBUG_TIMING_
 #define _ENABLE_CONSOLE_DEBUG_
@@ -312,11 +318,17 @@ int	iii;
 	//*	set everything to false first
 	memset(&cCameraProp, 0, sizeof(TYPE_CameraProperties));
 
+	cCameraProp.BinX				=	1;
+	cCameraProp.BinY				=	1;
+	cCameraProp.ExposureResolution	=	1.0;
+	cCameraProp.ExposureMin_us		=	32;
+	cCameraProp.ExposureMax_us		=	2000 * 1000 *1000;
+	cCameraProp.ExposureMax_seconds	=	10000.0;
+	cCameraProp.CameraState			=	kALPACA_CameraState_Idle;
+	cCameraProp.PercentCompleted	=	-99;		//*	meaning invalid
 
 	//======================================================
 	cUpdateOtherDevices				=	true;
-	cCameraProp.BinX				=	1;
-	cCameraProp.BinY				=	1;
 	cTempReadSupported				=	false;
 	cCameraTemp_Dbl					=	0.0;
 	cCoolerPowerLevel				=	0;
@@ -332,29 +344,14 @@ int	iii;
 	cIsUSB3Host						=	false;
 	cIsUSB3Camera					=	false;
 	cIsTriggerCam					=	false;
-	cCameraProp.ExposureResolution	=	1.0;
 	cBitDepth						=	0;
-	for (iii=0; iii<kNumSupportedFormats; iii++)
-	{
-		cSupportedFormats[iii]		=	-1;
-	}
-	for (iii=0; iii<kMaxImageTypes; iii++)
-	{
-		memset(&cSupportedImageTypes[iii], 0, sizeof(TYPE_SUPPORTED_IMG_TYPE));
-		cSupportedImageTypes[iii].internalImgageType	=	kImageType_Invalid;
-	}
 
 	cGain_default					=	0;
-	cCameraProp.ExposureMin_us		=	32;
-	cCameraProp.ExposureMax_us		=	2000 * 1000 *1000;
-	cCameraProp.ExposureMax_seconds	=	10000.0;
 	cExposureDefault_us				=	0;
 	cCanRead8Bit					=	true;
 	cHighSpeedMode					=	0;
-	cAlpacaCameraState				=	kALPACA_CameraState_Idle;
 
 	cDesiredImageType				=	kImageType_RAW8;
-	cCurrAlpacaImgTypeIdx			=	0;
 	CONSOLE_DEBUG_W_NUM("cDesiredImageType\t=",		cDesiredImageType);
 
 	cNumFramesRequested				=	200;		//*	the number of frames requested
@@ -1011,6 +1008,7 @@ char				httpHeader[500];
 			break;
 
 		case kCmd_Camera_numY:					//*	Returns the current subframe height
+												//*	Sets the current subframe height
 			if (reqData->get_putIndicator == 'G')
 			{
 				alpacaErrCode	=	Get_numY(reqData, alpacaErrMsg, gValueString);
@@ -1021,10 +1019,8 @@ char				httpHeader[500];
 			}
 			break;
 
-												//*	Sets the current subframe height
 		case kCmd_Camera_percentcompleted:		//*	Indicates percentage completeness of the current operation
-			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Command not implemented");
-			alpacaErrCode	=	kASCOM_Err_NotImplemented;
+			alpacaErrCode	=	Get_PercentCompleted(reqData, alpacaErrMsg, gValueString);
 			break;
 
 		case kCmd_Camera_pixelsizeX:			//*	Width of CCD chip pixels (microns)
@@ -2290,6 +2286,36 @@ TYPE_ASCOM_STATUS	alpacaErrCode;
 	return(alpacaErrCode);
 }
 
+//*****************************************************************************
+TYPE_ASCOM_STATUS	CameraDriver::Get_PercentCompleted(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
+
+	if (cCameraProp.PercentCompleted >= 0)
+	{
+		if (cCameraProp.CameraState == kALPACA_CameraState_Idle)
+		{
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Camera is Idle");
+			alpacaErrCode	=	kASCOM_Err_InvalidOperation;
+		}
+		else
+		{
+			JsonResponse_Add_Int32(	reqData->socket,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									responseString,				//	"Value",
+									cCameraProp.PercentCompleted,
+									INCLUDE_COMMA);
+			alpacaErrCode	=	kASCOM_Err_Success;
+		}
+	}
+	else
+	{
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Command not implemented");
+		alpacaErrCode	=	kASCOM_Err_NotImplemented;
+	}
+	return(alpacaErrCode);
+}
 
 //*****************************************************************************
 TYPE_ASCOM_STATUS	CameraDriver::Put_Pulseguide(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
@@ -2353,41 +2379,48 @@ char				durationString[32];
 
 //*****************************************************************************
 TYPE_ASCOM_STATUS	CameraDriver::Get_Readoutmode(	TYPE_GetPutRequestData	*reqData,
-									char					*alpacaErrMsg,
-									const char				*responseString)
+													char					*alpacaErrMsg,
+													const char				*responseString)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 int					iii;
 char				currentImgTypeString[kImgTypeStrMaxLen];
+int					myAlpacaReadOutModeIdx;
 
 	//*	this is a little convoluted.
 	//*	the index that has to reported is based on the list of image types
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	currentImgTypeString[0]	=	0;
 
-	//*	update the current alpaca read out mode
-	for (iii=0; iii<kMaxImageTypes; iii++)
+//	CONSOLE_DEBUG_W_NUM("currentROIimageType\t=",	cROIinfo.currentROIimageType);
+	myAlpacaReadOutModeIdx	=	0;
+	for (iii = 0; iii < kMaxReadOutModes; iii++)
 	{
-		if (cDesiredImageType == cSupportedImageTypes[iii].internalImgageType)
+		if ((cCameraProp.ReadOutModes[iii].valid)
+			&& (cROIinfo.currentROIimageType == cCameraProp.ReadOutModes[iii].internalImageType))
 		{
-			cCurrAlpacaImgTypeIdx	=	iii;
-			strcpy(currentImgTypeString, cSupportedImageTypes[iii].imageTypeString);
+			myAlpacaReadOutModeIdx	=	iii;
+			strcpy(currentImgTypeString, cCameraProp.ReadOutModes[iii].modeStr);
 			break;
 		}
 	}
+//	CONSOLE_DEBUG_W_NUM("myAlpacaReadOutModeIdx\t=",	myAlpacaReadOutModeIdx);
+//	CONSOLE_DEBUG_W_STR("currentImgTypeString\t=",	currentImgTypeString);
+
 
 	JsonResponse_Add_Int32(	reqData->socket,
 							reqData->jsonTextBuffer,
 							kMaxJsonBuffLen,
 							responseString,				//	"Value",
-							cCurrAlpacaImgTypeIdx,
+							myAlpacaReadOutModeIdx,
 							INCLUDE_COMMA);
 
 
 	JsonResponse_Add_String(reqData->socket,
 							reqData->jsonTextBuffer,
 							kMaxJsonBuffLen,
-							"readoutmode-str",			//	"Value",
+							"readoutmode-str",
 							currentImgTypeString,
 							INCLUDE_COMMA);
 
@@ -2431,6 +2464,7 @@ int					sensortType;
 }
 
 
+
 //*****************************************************************************
 //	curl -X PUT "https://virtserver.swaggerhub.com/ASCOMInitiative/api/v1/camera/0/readoutmode"
 //			-H  "accept: application/json"
@@ -2444,7 +2478,7 @@ int					mySocketFD;
 bool				readOutFound;
 char				readOutModeString[32];
 int					alpacaReadOutModeIdx;
-TYPE_IMAGE_TYPE		newImageTypes;
+TYPE_IMAGE_TYPE		newImageType;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -2453,27 +2487,35 @@ TYPE_IMAGE_TYPE		newImageTypes;
 												readOutModeString,
 												(sizeof(readOutModeString) -1));
 
-//	CONSOLE_DEBUG_W_STR("readOutModeString\t=", readOutModeString);
+	CONSOLE_DEBUG_W_STR("readOutModeString\t=", readOutModeString);
 
 	if (readOutFound)
 	{
 		if (isdigit(readOutModeString[0]))
 		{
-//			CONSOLE_DEBUG("Processing digit");
+			CONSOLE_DEBUG("Processing digit");
 			alpacaReadOutModeIdx	=	(TYPE_IMAGE_TYPE)atoi(readOutModeString);
-			//*	now we have to translate this ALPACA image mode index to the native internal image mode
 
-			newImageTypes	=	XlateAlpacaImgIdxToIntImgType(alpacaReadOutModeIdx);
-//			CONSOLE_DEBUG_W_NUM("alpacaReadOutModeIdx\t=",	alpacaReadOutModeIdx);
-//			CONSOLE_DEBUG_W_NUM("newImageTypes\t\t=",	newImageTypes);
-
-			alpacaErrCode	=	SetImageType(newImageTypes);
+			if ((alpacaReadOutModeIdx >= 0) && (alpacaReadOutModeIdx < kMaxReadOutModes))
+			{
+				if (cCameraProp.ReadOutModes[alpacaReadOutModeIdx].valid)
+				{
+					newImageType	=	(TYPE_IMAGE_TYPE)cCameraProp.ReadOutModes[alpacaReadOutModeIdx].internalImageType;
+					alpacaErrCode	=	SetImageType(newImageType);
+				}
+			}
+			else
+			{
+				alpacaErrCode	=	kASCOM_Err_InvalidValue;
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Value out of range");
+			}
 		}
 		else
 		{
-//			CONSOLE_DEBUG("Processing string");
+			CONSOLE_DEBUG("Processing string");
 			alpacaErrCode	=	SetImageType(readOutModeString);
 		}
+
 		if (alpacaErrCode != kASCOM_Err_Success)
 		{
 			CONSOLE_DEBUG_W_NUM("alpacaErrCode\t=",		alpacaErrCode);
@@ -2639,11 +2681,12 @@ char				lightString[32];
 double				myExposureDuration_secs;
 double				myExposure_usecs;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG_W_NUM("currentROIimageType\t=",	cROIinfo.currentROIimageType);
 
 	if (reqData != NULL)
 	{
-		CONSOLE_DEBUG_W_STR("contentData\t=",	reqData->contentData);
+//		CONSOLE_DEBUG_W_STR("contentData\t=",	reqData->contentData);
 
 		//*	first we are going to check a bunch of stuff to make CONFORM happy
 		if ((cCameraProp.StartX >= 0) && (cCameraProp.StartX < cCameraProp.CameraXsize) &&
@@ -2654,15 +2697,15 @@ double				myExposure_usecs;
 			(cCameraProp.BinY >= 1) && (cCameraProp.BinY <= cCameraProp.MaxbinY))
 		{
 			ProcessExposureOptions(reqData);
-			durationFound		=	GetKeyWordArgument(	reqData->contentData,
-														"Duration",
-														duarationString,
-														(sizeof(duarationString) -1));
+			durationFound	=	GetKeyWordArgument(	reqData->contentData,
+													"Duration",
+													duarationString,
+													(sizeof(duarationString) -1));
 
 			lightFound		=	GetKeyWordArgument(	reqData->contentData,
-														"Light",
-														lightString,
-														(sizeof(lightString) -1));
+													"Light",
+													lightString,
+													(sizeof(lightString) -1));
 
 			if (durationFound)
 			{
@@ -2673,6 +2716,12 @@ double				myExposure_usecs;
 			{
 				myExposure_usecs		=	cCurrentExposure_us;
 			}
+
+			if (lightFound)
+			{
+				CONSOLE_DEBUG(lightString);
+			}
+
 			if ((myExposure_usecs > 0) && (myExposure_usecs >= cCameraProp.ExposureMin_us))
 			{
 				CONSOLE_DEBUG("cCameraProp.ImageReady set to FALSE!!!!!!!!!!!!!!");
@@ -2691,6 +2740,7 @@ double				myExposure_usecs;
 				gettimeofday(&cCameraProp.Lastexposure_StartTime, NULL);	//*	save the time we started the exposure
 																//*	this really belongs in Start_CameraExposure, but just in case
 				//======================================================================================
+
 
 				alpacaErrCode				=	Start_CameraExposure(cCurrentExposure_us);
 				GenerateFileNameRoot();
@@ -2957,15 +3007,18 @@ int					imgRank;
 
 	//========================================================================================
 	//*	record the sensor temp
-	tempErrCode	=	Read_SensorTemp();
-	if (tempErrCode == kASCOM_Err_Success)
+	if (cTempReadSupported)
 	{
-		JsonResponse_Add_Double(mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"ccdtemperature",
-								cCameraTemp_Dbl,
-								INCLUDE_COMMA);
+		tempErrCode	=	Read_SensorTemp();
+		if (tempErrCode == kASCOM_Err_Success)
+		{
+			JsonResponse_Add_Double(mySocket,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									"ccdtemperature",
+									cCameraTemp_Dbl,
+									INCLUDE_COMMA);
+		}
 	}
 
 
@@ -3187,6 +3240,10 @@ int				totalValuesWritten;
 			bytesWritten	=	write(socketFD, longBuffer, bufLen);
 			dataElementCnt	=	0;
 			longBuffer[0]	=	0;
+			if (bytesWritten <= 0)
+			{
+				CONSOLE_DEBUG("Write Error");
+			}
 		}
 		CONSOLE_DEBUG(__FUNCTION__);
 	}
@@ -3268,6 +3325,10 @@ int				totalValuesWritten;
 			strcat(longBuffer, lineBuff);
 			bufLen			=	strlen(longBuffer);
 			bytesWritten	=	write(socketFD, longBuffer, bufLen);
+			if (bytesWritten <= 0)
+			{
+				CONSOLE_DEBUG("Write Error");
+			}
 		}
 	}
 	CONSOLE_DEBUG_W_NUM("totalValuesWritten\t=", totalValuesWritten);
@@ -3346,6 +3407,10 @@ int				totalValuesWritten;
 			strcat(longBuffer, lineBuff);
 			bufLen			=	strlen(longBuffer);
 			bytesWritten	=	write(socketFD, longBuffer, bufLen);
+			if (bytesWritten <= 0)
+			{
+				CONSOLE_DEBUG("Write Error");
+			}
 		}
 	}
 	CONSOLE_DEBUG_W_NUM("totalValuesWritten\t=", totalValuesWritten);
@@ -3403,17 +3468,20 @@ TYPE_ASCOM_STATUS	tempSensorErr;
 
 	//========================================================================================
 	//*	record the sensor temp
-	tempSensorErr	=	Read_SensorTemp();
-	if (tempSensorErr == kASCOM_Err_Success)
+	if (cTempReadSupported)
 	{
-		JsonResponse_Add_Double(mySocket,
-								reqData->jsonTextBuffer,
-								kBuffSize_MaxSpeed,
-								"ccdtemperature",
-								cCameraTemp_Dbl,
-								INCLUDE_COMMA);
+		tempSensorErr	=	Read_SensorTemp();
+		if (tempSensorErr == kASCOM_Err_Success)
+		{
+			JsonResponse_Add_Double(mySocket,
+									reqData->jsonTextBuffer,
+									kBuffSize_MaxSpeed,
+									"ccdtemperature",
+									cCameraTemp_Dbl,
+									INCLUDE_COMMA);
 
 
+		}
 	}
 	//*	get the ROI information which has the current image type
 	GetImage_ROI_info();
@@ -3700,6 +3768,10 @@ int				dataElementCnt;
 		strcat(longBuffer, "\n");
 		bufLen			=	strlen(longBuffer);
 		bytesWritten	=	write(socketFD, longBuffer, bufLen);
+		if (bytesWritten <= 0)
+		{
+			CONSOLE_DEBUG("Write Error");
+		}
 		dataElementCnt	=	0;
 	}
 	else
@@ -3720,17 +3792,17 @@ char				stateString[16];
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-	mySocketFD			=	reqData->socket;
-//	cAlpacaCameraState	=	Check_Exposure(true);
-	cAlpacaCameraState	=	Read_AlapcaCameraState();
+	mySocketFD				=	reqData->socket;
+	cCameraProp.CameraState	=	Read_AlapcaCameraState();
+
 	JsonResponse_Add_Int32(	mySocketFD,
 							reqData->jsonTextBuffer,
 							kMaxJsonBuffLen,
 							responseString,
-							cAlpacaCameraState,
+							cCameraProp.CameraState,
 							INCLUDE_COMMA);
 
-	switch(cAlpacaCameraState)
+	switch(cCameraProp.CameraState)
 	{
 		case	kALPACA_CameraState_Idle:		strcpy(stateString,	"Idle");		break;
 		case	kALPACA_CameraState_Waiting:	strcpy(stateString,	"Waiting");		break;
@@ -3882,8 +3954,9 @@ TYPE_ASCOM_STATUS	CameraDriver::Put_LiveMode(TYPE_GetPutRequestData *reqData, ch
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
 bool				liveModeFound;
 char				livemodeString[64];
+bool				newLiveModeState;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 
 	if (reqData != NULL)
 	{
@@ -3894,7 +3967,10 @@ char				livemodeString[64];
 		if (liveModeFound)
 		{
 			alpacaErrCode	=	kASCOM_Err_Success;
-			if (strcasecmp(livemodeString, "true") == 0)
+
+			newLiveModeState	=	IsTrueFalse(livemodeString);
+
+			if (newLiveModeState)
 			{
 				cImageMode	=	kImageMode_Live;
 			}
@@ -3905,11 +3981,7 @@ char				livemodeString[64];
 
 			#ifdef _USE_OPENCV_
 				CONSOLE_DEBUG_W_STR("cvDestroyWindow\t=", cOpenCV_ImgWindowName);
-				cvDestroyWindow(cOpenCV_ImgWindowName);
-				cCreateOpenCVwindow		=	true;
-				cOpenCV_ImgWindowValid	=	false;
-
-//				CONSOLE_DEBUG("cvDestroyWindow");
+				CloseLiveImage();
 			#endif	//	_USE_OPENCV_
 			}
 		}
@@ -4739,7 +4811,9 @@ char	lineBuffer[512];
 #pragma mark -
 #pragma mark Virtual functions
 //*****************************************************************************
-int	CameraDriver::GetImage_ROI_info(void)
+//*	this should be over ridden
+//*****************************************************************************
+bool	CameraDriver::GetImage_ROI_info(void)
 {
 	memset(&cROIinfo, 0, sizeof(TYPE_IMAGE_ROI_Info));
 
@@ -4747,7 +4821,7 @@ int	CameraDriver::GetImage_ROI_info(void)
 	cROIinfo.currentROIwidth		=	cCameraProp.CameraXsize;
 	cROIinfo.currentROIheight		=	cCameraProp.CameraYsize;
 	cROIinfo.currentROIbin			=	1;
-	return(-1);
+	return(true);
 }
 
 //*****************************************************************************
@@ -4824,53 +4898,6 @@ TYPE_IMAGE_TYPE	myImageType;
 	CONSOLE_DEBUG_W_NUM("myImageType:", myImageType);
 
 	return(myImageType);
-}
-
-
-//*****************************************************************************
-//*	this routine takes an index and image type string and sets it up in the array
-//*	The array has the corresponding internal enum for that image type
-//*
-//*	Each sub class must call this for each supported image type so that the alpaca
-//*	image type commands work
-//*****************************************************************************
-void	CameraDriver::SetImageTypeIndex(const int alpacaImgTypeIdx, const char *imageTypeString)
-{
-//	CONSOLE_DEBUG(__FUNCTION__);
-
-	if ((alpacaImgTypeIdx >=0) && (alpacaImgTypeIdx < kMaxImageTypes))
-	{
-		strcpy(cSupportedImageTypes[alpacaImgTypeIdx].imageTypeString, imageTypeString);
-		cSupportedImageTypes[alpacaImgTypeIdx].internalImgageType	=	GetInternalImageType(imageTypeString);
-		cSupportedImageTypes[alpacaImgTypeIdx].isValid				=	true;
-
-		CONSOLE_DEBUG_W_NUM("alpacaImgTypeIdx\t=",	alpacaImgTypeIdx);
-		CONSOLE_DEBUG_W_NUM("internal\t=",			cSupportedImageTypes[alpacaImgTypeIdx].internalImgageType);
-		CONSOLE_DEBUG_W_STR("name\t\t=",			cSupportedImageTypes[alpacaImgTypeIdx].imageTypeString);
-	}
-	else
-	{
-		CONSOLE_DEBUG_W_NUM("alpacaImgTypeIdx is out of bounds\t=",	alpacaImgTypeIdx);
-		exit(0);
-	}
-}
-
-//*****************************************************************************
-//*	Translate Alpaca image index to internal image type index (TYPE_IMAGE_TYPE)
-//*****************************************************************************
-TYPE_IMAGE_TYPE	CameraDriver::XlateAlpacaImgIdxToIntImgType(const int alpacaImgTypeIdx)
-{
-TYPE_IMAGE_TYPE	internalImgType;
-
-	internalImgType	=	kImageType_Invalid;
-	if ((alpacaImgTypeIdx >=0) && (alpacaImgTypeIdx < kMaxImageTypes))
-	{
-		if (cSupportedImageTypes[alpacaImgTypeIdx].isValid)
-		{
-			internalImgType	=	cSupportedImageTypes[alpacaImgTypeIdx].internalImgageType;
-		}
-	}
-	return(internalImgType);
 }
 
 //*****************************************************************************
@@ -4990,24 +5017,101 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
 
 //*****************************************************************************
 TYPE_ASCOM_STATUS	CameraDriver::Read_Readoutmodes(char *readOutModeString, bool includeQuotes)
-
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
-int					ii;
+int					iii;
 
 	readOutModeString[0]	=	0;
-	ii						=	0;
-	while ((ii<kMaxImageTypes) && (cSupportedImageTypes[ii].isValid))
+	iii						=	0;
+	while ((iii < 8) && cCameraProp.ReadOutModes[iii].valid)
 	{
-		strcat(readOutModeString, cSupportedImageTypes[ii].imageTypeString);
-		if (cSupportedImageTypes[ii+1].isValid)
+		if (includeQuotes)
+		{
+			strcat(readOutModeString, "\"");
+			strcat(readOutModeString, cCameraProp.ReadOutModes[iii].modeStr);
+			strcat(readOutModeString, "\"");
+		}
+		else
+		{
+			strcat(readOutModeString, cCameraProp.ReadOutModes[iii].modeStr);
+		}
+		if (cCameraProp.ReadOutModes[iii + 1].valid)
 		{
 			strcat(readOutModeString, ", ");
 		}
-		ii++;
+		iii++;
 	}
 	return(alpacaErrCode);
 }
+
+//**************************************************************************
+//*	add a readout mode to the ALPACA list of readout modes
+//**************************************************************************
+void	CameraDriver::AddReadoutModeToList(const TYPE_IMAGE_TYPE imageType, const char *imgTypeStr)
+{
+int		iii;
+int		readOutModeIdx;
+char	myImageTypeStr[16];
+
+//	CONSOLE_DEBUG_W_NUM(__FUNCTION__, imageType);
+
+	//*	first see if this is already in the list
+	readOutModeIdx	=	-1;
+	for (iii=0; iii<kMaxReadOutModes; iii++)
+    {
+		if (imageType == cCameraProp.ReadOutModes[iii].internalImageType)
+		{
+			readOutModeIdx	=	iii;
+			break;
+		}
+    }
+	//*	if we did not find it, find the first available slot
+	if (readOutModeIdx < 0)
+	{
+		for (iii=0; iii<kMaxReadOutModes; iii++)
+		{
+			if (cCameraProp.ReadOutModes[iii].valid == false)
+			{
+				readOutModeIdx	=	iii;
+				break;
+			}
+		}
+	}
+
+	if ((readOutModeIdx >= 0) && (readOutModeIdx < kMaxReadOutModes))
+	{
+//		CONSOLE_DEBUG_W_NUM("readOutModeIdx\t=", readOutModeIdx);
+
+		cCameraProp.ReadOutModes[readOutModeIdx].valid				=	true;
+		cCameraProp.ReadOutModes[readOutModeIdx].internalImageType	=	imageType;
+		if (imgTypeStr != NULL)
+		{
+			strcpy(cCameraProp.ReadOutModes[readOutModeIdx].modeStr,	imgTypeStr);
+		}
+		else
+		{
+			switch(imageType)
+			{
+				case kImageType_RAW8:	strcpy(myImageTypeStr,	"RAW8");	break;
+				case kImageType_RAW16:	strcpy(myImageTypeStr,	"RAW16");	break;
+				case kImageType_RGB24:	strcpy(myImageTypeStr,	"RGB24");	break;
+				case kImageType_Y8:		strcpy(myImageTypeStr,	"Y8");	break;
+
+				case kImageType_Invalid:
+				case kImageType_last:
+					strcpy(myImageTypeStr,	"unknown");	break;
+					break;
+			}
+			CONSOLE_DEBUG_W_STR("myImageTypeStr\t=", myImageTypeStr);
+			strcpy(cCameraProp.ReadOutModes[readOutModeIdx].modeStr,	myImageTypeStr);
+		}
+	}
+	else
+	{
+		CONSOLE_ABORT(__FUNCTION__);
+	}
+}
+
 
 //**************************************************************************
 TYPE_ASCOM_STATUS	CameraDriver::Read_SensorTemp(void)
@@ -5170,8 +5274,10 @@ int	CameraDriver::RunStateMachine_TakingPicture(void)
 int					exposureState;
 TYPE_ASCOM_STATUS	alpacaErrCode;
 
+//	CONSOLE_DEBUG(__FUNCTION__);
+
 	exposureState	=	Check_Exposure(true);
-	CONSOLE_DEBUG_W_NUM("Taking picture: exposureState=", exposureState);
+//	CONSOLE_DEBUG_W_NUM("Taking picture: exposureState=", exposureState);
 	switch(exposureState)
 	{
 		case kExposure_Idle:
@@ -5199,51 +5305,54 @@ TYPE_ASCOM_STATUS	alpacaErrCode;
 			cFramesRead++;
 			if (gVerbose)
 			{
-				CONSOLE_DEBUG_W_LONG("Done Taking picture, frame#", cFramesRead);
+//				CONSOLE_DEBUG_W_LONG("Done Taking picture, frame#", cFramesRead);
 			}
 
 			cWorkingLoopCnt		=	0;
 			//*	Extract Image
-			alpacaErrCode	=	Read_ImageData();
-			if (alpacaErrCode != kASCOM_Err_Success)
+			alpacaErrCode		=	Read_ImageData();
+			if (alpacaErrCode == kASCOM_Err_Success)
 			{
-				CONSOLE_DEBUG_W_NUM("Read_ImageData returned error", alpacaErrCode);
-			}
-			//*	record the time the exposure ended
-			gettimeofday(&cCameraProp.Lastexposure_EndTime, NULL);
-			cNewImageReadyToDisplay		=	true;
-			cCameraProp.ImageReady		=	true;
-			CONSOLE_DEBUG("cCameraProp.ImageReady set to TRUE!!!!!!!!!!!!!!");
+				//*	record the time the exposure ended
+				gettimeofday(&cCameraProp.Lastexposure_EndTime, NULL);
+				cNewImageReadyToDisplay		=	true;
+				cCameraProp.ImageReady		=	true;
+//				CONSOLE_DEBUG("cCameraProp.ImageReady set to TRUE!!!!!!!!!!!!!!");
 
-			if (cImageMode == kImageMode_Live)
-			{
-			double	secondsOfExposure;
-
-				secondsOfExposure	=	millis() / 1000;
-				if (secondsOfExposure < 1.0)
+				if (cImageMode == kImageMode_Live)
 				{
-					secondsOfExposure	=	1.0;
-				}
-				cFrameRate	=	(cFramesRead * 1.0) / secondsOfExposure;
-			}
-		#ifdef _USE_OPENCV_
-			CreateOpenCVImage(cCameraDataBuffer);
-//			CONSOLE_DEBUG("Done with jpg and png");
-		#endif
+				double	secondsOfExposure;
 
-			if (cSaveNextImage || cSaveImages)
-			{
-				SaveImageData();
+					secondsOfExposure	=	millis() / 1000;
+					if (secondsOfExposure < 1.0)
+					{
+						secondsOfExposure	=	1.0;
+					}
+					cFrameRate	=	(cFramesRead * 1.0) / secondsOfExposure;
+				}
+			#ifdef _USE_OPENCV_
+				CreateOpenCVImage(cCameraDataBuffer);
+	//			CONSOLE_DEBUG("Done with jpg and png");
+			#endif
+
+				if (cSaveNextImage || cSaveImages)
+				{
+					SaveImageData();
+				}
+				else
+				{
+	//				CONSOLE_DEBUG("Image not saved");
+				}
+
+				//*	check to see if we are in auto exposure adjustment
+				if (cAutoAdjustExposure)
+				{
+					AutoAdjustExposure();
+				}
 			}
 			else
 			{
-//				CONSOLE_DEBUG("Image not saved");
-			}
-
-			//*	check to see if we are in auto exposure adjustment
-			if (cAutoAdjustExposure)
-			{
-				AutoAdjustExposure();
+				CONSOLE_DEBUG_W_NUM("Read_ImageData returned error", alpacaErrCode);
 			}
 
 			cInternalCameraState	=	kCameraState_Idle;
@@ -5275,7 +5384,7 @@ int32_t		delayMicroSecs;
 //	{
 //		CONSOLE_DEBUG_W_NUM("cInternalCameraState\t=",	cInternalCameraState);
 //	}
-	delayMicroSecs	=	99999999;
+	delayMicroSecs	=	(5 * 1000 * 100);
 
 	switch(cInternalCameraState)
 	{
@@ -5878,7 +5987,10 @@ char				exposureStateString[32];
 char				textBuffer[128];
 
 //	CONSOLE_DEBUG(__FUNCTION__);
-	alpacaErrCode	=	Read_SensorTemp();
+	if (cTempReadSupported)
+	{
+		alpacaErrCode	=	Read_SensorTemp();
+	}
 
 	switch(cInternalCameraState)
 	{
@@ -6031,6 +6143,7 @@ char				textBuffer[128];
 		Get_Lastexposurestarttime(	reqData,	alpacaErrMsg,	"lastexposurestarttime");
 		Get_numX(					reqData,	alpacaErrMsg,	"numx");
 		Get_numY(					reqData,	alpacaErrMsg,	"numy");
+		Get_PercentCompleted(		reqData,	alpacaErrMsg,	"percentcompleted");
 
 		//*	Width of CCD chip pixels (microns)
 		JsonResponse_Add_Double(mySocket,

@@ -194,8 +194,8 @@ quickSpin			quickSpinStruct;
 
 	quickSpinInit(cSpinCameraHandle, &quickSpinStruct);
 
-	CONSOLE_DEBUG_W_NUM("quickSpinStruct.Width", quickSpinStruct.Width);
-	CONSOLE_DEBUG_W_NUM("sizeof(quickSpin)", sizeof(quickSpin));
+	CONSOLE_DEBUG_W_LONG("quickSpinStruct.Width", (long)quickSpinStruct.Width);
+	CONSOLE_DEBUG_W_LONG("sizeof(quickSpin)", sizeof(quickSpin));
 
 
 
@@ -495,6 +495,11 @@ spinNodeType		featureType;
 					if (cDeviceModel[sLen - 1] == 'C')
 					{
 						cIsColorCam		=	true;
+						AddReadoutModeToList(kImageType_RGB24);
+					}
+					else
+					{
+						AddReadoutModeToList(kImageType_RAW8);
 					}
 				}
 				else if (strcasecmp(featureName, "DeviceVersion") == 0)
@@ -922,9 +927,8 @@ size_t					bufferLen;
 //*****************************************************************************
 int	CameraDriverFLIR::ExtractColorImage(void)
 {
-spinError				spinErr;
-bool					buffOk;
-size_t					bufferLen;
+spinError		spinErr;
+bool			buffOk;
 int				imageSize;
 
 	CONSOLE_DEBUG(__FUNCTION__);
@@ -983,7 +987,7 @@ int				imageSize;
 	{
 		CONSOLE_DEBUG("cSpinImageHandle is NULL");
 	}
-
+	return(0);
 }
 
 //*****************************************************************************
@@ -1141,36 +1145,13 @@ bool					buffOk;
 	return(0);
 }
 
-
-//*****************************************************************************
-TYPE_ASCOM_STATUS	CameraDriverFLIR::Read_Readoutmodes(char *readOutModeString, bool includeQuotes)
-{
-TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
-
-//	CONSOLE_DEBUG(__FUNCTION__);
-	readOutModeString[0]	=	0;
-	if (includeQuotes)
-	{
-		strcat(readOutModeString, "\"");
-		strcat(readOutModeString, "RGB24");
-		strcat(readOutModeString, "\"");
-	}
-	else
-	{
-		strcpy(readOutModeString, "RGB24");
-	}
-
-
-	return(alpacaErrCode);
-}
-
 //**************************************************************************
 //*	sets class variable to current temp
 //**************************************************************************
 TYPE_ASCOM_STATUS	CameraDriverFLIR::Read_SensorTemp(void)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
-double				cameraTemp_DegC;
+//double				cameraTemp_DegC;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 	if (cSpinCameraHandle != NULL)

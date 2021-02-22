@@ -12,47 +12,65 @@
 #endif // _ALPACA_DEFS_H_
 
 //#define	_ENABLE_EXTERNAL_SHUTTER_
-#define	_ENABLE_SLIT_TRACKER_
+//#define	_ENABLE_SLIT_TRACKER_
 
 
 #ifndef _DISCOVERY_LIB_H_
 	#include	"discovery_lib.h"
-#endif // _DISCOVERY_LIB_H_
+#endif
 
 #include	"controller.h"
 
 //===========================================
 #ifndef	_WINDOWTAB_DOME_H_
 	#include	"windowtab_dome.h"
-#endif // _WINDOWTAB_DOME_H_
-//===========================================
-#ifndef	_WINDOWTAB_SLIT_H_
-	#include	"windowtab_slit.h"
-#endif // _WINDOWTAB_SLIT_H_
+#endif
 
 
 //===========================================
-#ifndef	_WINDOWTAB_SLIT_GRAPH_H_
-	#include	"windowtab_slitgraph.h"
-#endif // _WINDOWTAB_SLIT_GRAPH_H_
+#ifndef	_WINDOWTAB_DRIVER_INFO_H_
+	#include	"windowtab_drvrInfo.h"
+#endif
 
 //===========================================
-#include	"windowtab_drvrInfo.h"
+#ifndef	_WINDOWTAB_CAPABILITIES_H_
+	#include	"windowtab_capabilities.h"
+#endif
 
 //===========================================
 #ifndef	_WINDOWTAB_ABOUT_H_
 	#include	"windowtab_about.h"
-#endif // _WINDOWTAB_ABOUT_H_
+#endif
 
 
-extern	bool	gUpdateSLitWindow;
+
+#ifdef _ENABLE_SLIT_TRACKER_
+	//===========================================
+	#ifndef	_WINDOWTAB_SLIT_H_
+		#include	"windowtab_slit.h"
+	#endif
+	//===========================================
+	#ifndef	_WINDOWTAB_SLIT_GRAPH_H_
+		#include	"windowtab_slitgraph.h"
+	#endif
+	extern	bool	gUpdateSLitWindow;
+#endif
+
+
+#define	kDomeWindowWidth	475
+#define	kDomeWindowHeight	720
+
 
 //**************************************************************************************
 enum
 {
 	kTab_Dome	=	1,
+#ifdef _ENABLE_SLIT_TRACKER_
 	kTab_SlitTracker,
 	kTab_SlitGraph,
+#endif
+	kTab_Capabilities,
+
 	kTab_DriverInfo,
 	kTab_About,
 
@@ -90,6 +108,8 @@ class ControllerDome: public Controller
 														const char	*valueString);
 
 		virtual	void	UpdateCommonProperties(void);
+		virtual	void	UpdateCapabilityList(void);
+
 				void	AlpacaProcessSupportedActions_Dome(const int deviveNum, const char *valueString);
 				void	AlpacaProcessReadAll_Dome(		const int	deviceNum,
 														const char	*keywordString,
@@ -126,6 +146,7 @@ class ControllerDome: public Controller
 
 				//*	tab information
 				WindowTabDome			*cDomeTabObjPtr;
+				WindowTabCapabilities	*cCapabilitiesTabObjPtr;
 				WindowTabDriverInfo		*cDriverInfoTabObjPtr;
 				WindowTabAbout			*cAboutBoxTabObjPtr;
 

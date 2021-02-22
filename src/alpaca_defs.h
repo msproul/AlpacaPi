@@ -39,7 +39,7 @@
 
 #define	kApplicationName	"AlpacaPi"
 #define	kVersionString		"V0.4.0-beta"
-#define	kBuildNumber		96
+#define	kBuildNumber		97
 
 
 #define kAlpacaDiscoveryPORT	32227
@@ -218,10 +218,15 @@ enum TYPE_SensorType
 #define	kMaxSensorNameLen		32
 #define	kMaxReadOutModes		5
 
+
+#define	kImgTypeStrMaxLen	64
 //**************************************************************************************
 typedef struct
 {
-	char	mode[64];
+	bool	valid;
+	int		internalImageType;		//*	this is my INTERNAL image mode, having nothing to do with Alpaca
+									//*	it uses TYPE_IMAGE_TYPE enums (see cameradriver.h)
+	char	modeStr[kImgTypeStrMaxLen];
 } READOUTMODE;
 
 
@@ -240,6 +245,8 @@ typedef struct
 
 
 //*****************************************************************************
+//*	these are the exact properties from ASCOM Camera V3
+//*****************************************************************************
 typedef struct
 {
 	//*	ASCOM variables (properties)
@@ -250,7 +257,7 @@ typedef struct
 	int						BinY;					//*	The binning factor for the Y axis.
 	int						CameraXsize;			//*	The width of the CCD camera chip.
 	int						CameraYsize;			//*	The height of the CCD camera chip.
-//+	TYPE_ALPACA_CAMERASTATE	CameraState;			//*	the camera operational state.
+	TYPE_ALPACA_CAMERASTATE	CameraState;			//*	the camera operational state.
 	int						CanAbortExposure;		//*	Indicates whether the camera can abort exposures.
 	bool					CanAsymmetricBin;		//*	Indicates whether the camera supports asymmetric binning
 	bool					CanFastReadout;			//*	Indicates whether the camera has a fast readout mode.
@@ -310,7 +317,7 @@ typedef struct
 //+	int						OffsetMax;				//*	Maximum offset value of that this camera supports
 //+	int						OffsetMin;				//*	Minimum offset value of that this camera supports
 //+	int						Offsets;				//*	List of offset names supported by the camera
-//+	int						PercentCompleted;		//*	Indicates percentage completeness of the current operation
+	int						PercentCompleted;		//*	Indicates percentage completeness of the current operation
 	double					PixelSizeX;				//*	the pixel size of the camera, unit is um. (microns) such as 5.6um
 	double					PixelSizeY;				//*	the pixel size of the camera, unit is um. (microns) such as 5.6um
 
@@ -319,8 +326,7 @@ typedef struct
 
 //	currently ReadoutMode is implemented at execution time
 	int						ReadOutMode;			//*	Indicates the canera's readout mode as an index into the array ReadoutModes
-//+	??						ReadOutModes;			//*	List of available readout modes
-	READOUTMODE				ReadOutModes[kMaxReadOutModes];
+	READOUTMODE				ReadOutModes[kMaxReadOutModes];	//*	List of available readout modes
 
 	char					SensorName[kMaxSensorNameLen];	//	Sensor name
 //+	TYPE_SensorType			SensorType;						//*	Type of information returned by the the camera sensor (monochrome or colour)

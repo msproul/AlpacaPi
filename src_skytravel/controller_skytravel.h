@@ -107,7 +107,7 @@ class ControllerSkytravel: public Controller
 				void	AlpacaProcessReadAll_Dome(		const int	deviceNum,
 														const char	*keywordString,
 														const char	*valueString);
-				void	AlpacaProcessReadAll_Telescope(	const int	deviceNum,
+				bool	AlpacaProcessReadAll_Telescope(	const int	deviceNum,
 														const char	*keywordString,
 														const char	*valueString);
 				bool	AlpacaGetStartupData_Dome(void);
@@ -115,6 +115,7 @@ class ControllerSkytravel: public Controller
 				bool	AlpacaGetStatus_DomeOneAAT(void);			//*	One At A Time
 				bool	AlpacaGetStatus_TelescopeOneAAT(void);		//*	One At A Time
 				bool	AlpacaGetStartupData_TelescopeOneAAT(void);	//*	One At A Time
+				void	ReadOneTelescopeCapability(const char *propertyStr, const char	*reportedStr, bool *booleanValue);
 
 		virtual	void	RefreshWindow(void);
 

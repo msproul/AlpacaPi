@@ -213,6 +213,7 @@ int		earthDisplayOption;
 //*****************************************************************************
 void	WindowTabSTsettings::UpdateSettings(void)
 {
+	CONSOLE_DEBUG(__FUNCTION__);
 	SetWidgetChecked(	kSkyT_Settings_EarthThin,		(gST_DispOptions.EarthDispMode == 0));
 	SetWidgetChecked(	kSkyT_Settings_EarthThick,		(gST_DispOptions.EarthDispMode == 1));
 	SetWidgetChecked(	kSkyT_Settings_EarthSolidBrn,	(gST_DispOptions.EarthDispMode == 2));

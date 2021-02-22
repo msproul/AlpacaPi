@@ -48,7 +48,7 @@ class CameraDriverATIK: public CameraDriver
 		virtual	TYPE_ASCOM_STATUS		Write_Gain(const int newGainValue);
 		virtual	TYPE_ASCOM_STATUS		Read_Gain(int *cameraGainValue);
 
-		virtual	int		GetImage_ROI_info(void);
+		virtual	bool					GetImage_ROI_info(void);
 
 		virtual	TYPE_ASCOM_STATUS		Cooler_TurnOn(void);
 		virtual	TYPE_ASCOM_STATUS		Cooler_TurnOff(void);

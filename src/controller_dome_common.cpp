@@ -169,7 +169,8 @@ double	argDouble;
 		//*	"version": "AlpacaPi - V0.2.2-beta build #32",
 		strcpy(cAlpacaVersionString, valueString);
 		SetWidgetText(kTab_Dome,		kDomeBox_AlpacaDrvrVersion,		cAlpacaVersionString);
-	#ifndef _ENABLE_SKYTRAVEL_
+
+	#if defined(_ENABLE_SLIT_TRACKER_) && !defined(_ENABLE_SKYTRAVEL_)
 		SetWidgetText(kTab_SlitTracker,	kSlitTracker_AlpacaDrvrVersion,	cAlpacaVersionString);
 		SetWidgetText(kTab_SlitGraph,	kSlitGraph_AlpacaDrvrVersion,	cAlpacaVersionString);
 	#endif

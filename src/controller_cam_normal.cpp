@@ -294,12 +294,12 @@ int		jjj;
 
 	for (jjj=0; jjj<kMaxReadOutModes; jjj++)
 	{
-		if (strlen(cCameraProp.ReadOutModes[jjj].mode) > 0)
+		if (strlen(cCameraProp.ReadOutModes[jjj].modeStr) > 0)
 		{
 			SetWidgetValid(	kTab_Camera, (kCameraBox_ReadMode0 + jjj), true);
 			SetWidgetText(	kTab_Camera,
 						(kCameraBox_ReadMode0 + jjj),
-						cCameraProp.ReadOutModes[jjj].mode);
+						cCameraProp.ReadOutModes[jjj].modeStr);
 		}
 	}
 }
@@ -360,7 +360,7 @@ char			linebuff[64];
 
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 
-	switch(cAlpacaCameraState)
+	switch(cCameraProp.CameraState)
 	{
 		case	kALPACA_CameraState_Idle:		strcpy(linebuff,	"Idle");		break;
 		case	kALPACA_CameraState_Waiting:	strcpy(linebuff,	"Waiting");		break;

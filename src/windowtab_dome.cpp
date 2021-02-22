@@ -85,9 +85,9 @@ int		domeGraphic_yLoc;
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	my_cWidth	=	cWidth;
-	if (cWidth > 450)
+	if (cWidth > kDomeWindowWidth)
 	{
-		my_cWidth	=	450;
+		my_cWidth	=	kDomeWindowWidth;
 		ComputeWidgetColumns(my_cWidth);
 	}
 

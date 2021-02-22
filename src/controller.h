@@ -64,6 +64,17 @@ extern CvFont		gTextFont[kFontCnt];
 		objectPtr	=	NULL;			\
 	}
 
+
+#define	kMaxCapabilities	50
+//*****************************************************************************
+typedef struct
+{
+	char	capabilityName[48];
+	char	capabilityValue[24];
+
+} TYPE_CAPABILITY;
+
+
 //*****************************************************************************
 class Controller
 {
@@ -330,6 +341,19 @@ class Controller
 		uint32_t			cLastDownload_Millisecs;
 		double				cLastDownload_MegaBytesPerSec;
 
+
+
+				//**********************************************
+				//*	this is a table of capabilities for the purpose of displaying what
+				//*	the driver is capable of doing.
+				TYPE_CAPABILITY		cCapabilitiesList[kMaxCapabilities];
+				void				ClearCapabilitiesList(void);
+				void				AddCapability(const char *capability, const char *value);
+		virtual	void				UpdateCapabilityList(void);
+				void				ReadOneDriverCapability(const char	*driverNameStr,
+															const char	*propertyStr,
+															const char	*reportedStr,
+															bool		*booleanValue);
 };
 
 #ifdef __cplusplus

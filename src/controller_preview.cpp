@@ -73,6 +73,7 @@ ControllerPreview::ControllerPreview(	const char			*argWindowName,
 
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 
+
 	cPrevProgessValue	=	0.0;
 	cProgressUpdates	=	0;
 	cProgressReDraws	=	0;
@@ -172,10 +173,10 @@ int		widgetIdx;
 	{
 //		CONSOLE_DEBUG(cReadOutModes[iii].mode);
 		widgetIdx	=	kPreviewBox_ReadMode0 + iii;
-		if (strlen(cReadOutModes[iii].mode) > 0)
+		if (strlen(cCameraProp.ReadOutModes[iii].mode) > 0)
 		{
 			SetWidgetValid(	kTab_Preview,	widgetIdx, true);
-			SetWidgetText(	kTab_Preview,	widgetIdx, cReadOutModes[iii].mode);
+			SetWidgetText(	kTab_Preview,	widgetIdx, cCameraProp.ReadOutModes[iii].mode);
 		}
 		else
 		{
@@ -188,11 +189,11 @@ int		widgetIdx;
 void	ControllerPreview::UpdateCurrReadoutMode(void)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
-	SetWidgetChecked(kTab_Preview, kPreviewBox_ReadMode0, (cReadOutMode == 0));
-	SetWidgetChecked(kTab_Preview, kPreviewBox_ReadMode1, (cReadOutMode == 1));
-	SetWidgetChecked(kTab_Preview, kPreviewBox_ReadMode2, (cReadOutMode == 2));
-	SetWidgetChecked(kTab_Preview, kPreviewBox_ReadMode3, (cReadOutMode == 3));
-	SetWidgetChecked(kTab_Preview, kPreviewBox_ReadMode4, (cReadOutMode == 4));
+	SetWidgetChecked(kTab_Preview, kPreviewBox_ReadMode0, (cCameraProp.ReadOutMode == 0));
+	SetWidgetChecked(kTab_Preview, kPreviewBox_ReadMode1, (cCameraProp.ReadOutMode == 1));
+	SetWidgetChecked(kTab_Preview, kPreviewBox_ReadMode2, (cCameraProp.ReadOutMode == 2));
+	SetWidgetChecked(kTab_Preview, kPreviewBox_ReadMode3, (cCameraProp.ReadOutMode == 3));
+	SetWidgetChecked(kTab_Preview, kPreviewBox_ReadMode4, (cCameraProp.ReadOutMode == 4));
 }
 
 
@@ -200,15 +201,16 @@ void	ControllerPreview::UpdateCurrReadoutMode(void)
 void	ControllerPreview::UpdateCameraGain(void)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
-	SetWidgetSliderLimits(	kTab_Preview, kPreviewBox_Gain_Slider, cGainMin, cGainMax);
-	SetWidgetSliderValue(	kTab_Preview, kPreviewBox_Gain_Slider,	cGain);
-	SetWidgetNumber(		kTab_Preview, kPreviewBox_Gain, cGain);
+	SetWidgetSliderLimits(	kTab_Preview, kPreviewBox_Gain_Slider,	cCameraProp.GainMin, cCameraProp.GainMax);
+	SetWidgetSliderValue(	kTab_Preview, kPreviewBox_Gain_Slider,	cCameraProp.Gain);
+	SetWidgetNumber(		kTab_Preview, kPreviewBox_Gain, cCameraProp.Gain);
 }
 //*****************************************************************************
 void	ControllerPreview::UpdateCameraExposure(void)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
-	SetWidgetSliderLimits(	kTab_Preview, kPreviewBox_Exposure_Slider,	cExposureMin, cExposureMax);
+	SetWidgetSliderLimits(	kTab_Preview, kPreviewBox_Exposure_Slider,	cCameraProp.ExposureMin_seconds,
+																		cCameraProp.ExposureMin_seconds);
 	SetWidgetSliderValue(	kTab_Preview, kPreviewBox_Exposure_Slider,	cExposure);
 	SetWidgetNumber(		kTab_Preview, kPreviewBox_Exposure,			cExposure);
 }
@@ -217,7 +219,7 @@ void	ControllerPreview::UpdateCameraSize(void)
 {
 char	textBuff[64];
 
-	sprintf(textBuff, "%d x %d", cCameraSizeX, cCameraSizeY);
+	sprintf(textBuff, "%d x %d", cCameraProp.CameraXsize, cCameraProp.CameraYsize);
 	SetWidgetText(kTab_Preview, kPreviewBox_Size, textBuff);
 }
 //*****************************************************************************
@@ -227,7 +229,7 @@ char			linebuff[32];
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-	switch(cAlpacaCameraState)
+	switch(cCameraProp.CameraState)
 	{
 		case	kALPACA_CameraState_Idle:		strcpy(linebuff,	"Idle");		break;
 		case	kALPACA_CameraState_Waiting:	strcpy(linebuff,	"Waiting");		break;
@@ -241,7 +243,7 @@ char			linebuff[32];
 	SetWidgetText(		kTab_Preview, kPreviewBox_State,	linebuff);
 	if (cPreviewTabObjPtr != NULL)
 	{
-		cPreviewTabObjPtr->UpdateCameraState(cAlpacaCameraState);
+		cPreviewTabObjPtr->UpdateCameraState(cCameraProp.CameraState);
 	}
 }
 

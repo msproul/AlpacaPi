@@ -38,11 +38,8 @@ class CameraDriver
 
 				int			cCameraID;						//*	this is used to control everything of the camera in other functions.Start from 0.
 				bool		cCameraIsOpen;					//*	flag to tell us the camera is open
-				int			cCameraXsize;					//*	max width of camera image
-				int			cCameraYsize;					//*	max width of camera image
-//				int			cBayerPattern;
-				double		cPixelSizeX;					//*	the pixel size of the camera, unit is um. (microns) such as 5.6um
-				double		cPixelSizeY;					//*	the pixel size of the camera, unit is um. (microns) such as 5.6um
+//-				double		cPixelSizeX;					//*	the pixel size of the camera, unit is um. (microns) such as 5.6um
+//-				double		cPixelSizeY;					//*	the pixel size of the camera, unit is um. (microns) such as 5.6um
 				bool		cIsColorCam;					//*	false= monochrome, true = color
 //				bool		cMechanicalShutter;
 //				bool		cIsCoolerCam;
@@ -56,6 +53,7 @@ class CameraDriver
 				char		cLastCameraErrMsg[256];
 
 				TYPE_CommonProperties	cCommonProp;
+				TYPE_CameraProperties	cCameraProp;
 };
 
 
@@ -90,8 +88,8 @@ class CameraDriverSONY: public CameraDriver
 
 				//===================================================================
 				//*	from cameradriver_SONY.h
-		virtual	void	AlpacaConnect(void);
-		virtual	void	AlpacaDisConnect(void);
+		virtual	bool	AlpacaConnect(void);
+		virtual	bool	AlpacaDisConnect(void);
 		virtual	void	RunStateMachine_Device(void);
 
 				void	ReadProperties(void);

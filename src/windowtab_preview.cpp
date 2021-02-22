@@ -421,11 +421,11 @@ IplImage	*logoImage;
 
 	cAlpacaDevInfo	=	*alpacaDevice;
 	CONSOLE_DEBUG_W_STR("hostName\t\t=",	alpacaDevice->hostName);
-	CONSOLE_DEBUG_W_STR("deviceType\t\t=",	alpacaDevice->deviceType);
-	CONSOLE_DEBUG_W_STR("deviceName\t\t=",	alpacaDevice->deviceName);
+	CONSOLE_DEBUG_W_STR("deviceType\t\t=",	alpacaDevice->deviceTypeStr);
+	CONSOLE_DEBUG_W_STR("deviceName\t\t=",	alpacaDevice->deviceNameStr);
 	CONSOLE_DEBUG_W_STR("versionString\t=",	alpacaDevice->versionString);
 
-	strcpy(cAlpacaDeviceName, alpacaDevice->deviceName);
+	strcpy(cAlpacaDeviceName, alpacaDevice->deviceNameStr);
 	logoImage	=	NULL;
 	CONSOLE_DEBUG_W_STR("cAlpacaDeviceName=", cAlpacaDeviceName);
 	if (strcasestr(cAlpacaDeviceName, "ZWO") != NULL)
@@ -652,7 +652,7 @@ int					openCVerr;
 
 
 //*****************************************************************************
-void	WindowTabPreview::UpdateCameraState(int newCameraState)
+void	WindowTabPreview::UpdateCameraState(TYPE_ALPACA_CAMERASTATE newCameraState)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
 	cAlpacaCameraState	=	newCameraState;
