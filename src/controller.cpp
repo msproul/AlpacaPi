@@ -60,6 +60,7 @@
 //*	Feb 19,	2021	<MLS> Added ClearCapabilitiesList() & AddCapability()
 //*	Feb 19,	2021	<MLS> Added UpdateCapabilityList()
 //*	Feb 20,	2021	<MLS> Added ReadOneDriverCapability()
+//*	Feb 27,	2021	<MLS> Added mouse event info to ProcessDoubleClick()
 //*****************************************************************************
 
 
@@ -712,17 +713,21 @@ void	Controller::ProcessButtonClick(const int buttonIdx)
 }
 
 //*****************************************************************************
-void	Controller::ProcessDoubleClick(const int buttonIdx)
+void	Controller::ProcessDoubleClick(	const int	widgetIdx,
+										const int	event,
+										const int	xxx,
+										const int	yyy,
+										const int	flags)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
 	if (cCurrentTabObjPtr != NULL)
 	{
-		cCurrentTabObjPtr->ProcessDoubleClick(buttonIdx);
+		cCurrentTabObjPtr->ProcessDoubleClick(widgetIdx,  event,  xxx,  yyy,  flags);
 	}
 	else
 	{
 		CONSOLE_DEBUG_W_NUM("Un-handled DOUBLE click, tab=\t",	cCurrentTabNum);
-		CONSOLE_DEBUG_W_NUM("buttonIdx=\t",	buttonIdx);
+		CONSOLE_DEBUG_W_NUM("widgetIdx=\t",	widgetIdx);
 	}
 }
 
@@ -913,7 +918,7 @@ bool	widgetIsButton;
 //				CONSOLE_DEBUG_W_NUM("Double click on widget#\t",	clickedBtn);
 				if (clickedBtn >= 0)
 				{
-					ProcessDoubleClick(clickedBtn);
+					ProcessDoubleClick(clickedBtn,  event,  xxx,  yyy,  flags);
 				}
 			}
 			break;
@@ -1998,7 +2003,7 @@ CvRect		widgetRect;
 		case kWidgetType_Image:
 			if (widgetPtr->openCVimagePtr != NULL)
 			{
-			CvRect		roiRect;
+//			CvRect		roiRect;
 			int			delta;
 			IplImage	*myImage;
 
@@ -2009,23 +2014,23 @@ CvRect		widgetRect;
 				widgetRect.width	=	widgetPtr->width;
 				widgetRect.height	=	widgetPtr->height;
 
-				roiRect				=	widgetRect;
+				widgetPtr->roiRect	=	widgetRect;
 				//*	we have to make sure the the destination rect is the same as the src rect
 				//*	if its smaller, then center it
 				if (myImage->width < widgetRect.width)
 				{
-					delta		=	widgetRect.width - myImage->width;
-					roiRect.x	=	widgetRect.x + (delta / 2);
+					delta					=	widgetRect.width - myImage->width;
+					widgetPtr->roiRect.x	=	widgetRect.x + (delta / 2);
 				}
 				if (myImage->height < widgetRect.height)
 				{
-					delta		=	widgetRect.height - myImage->height;
-					roiRect.y	=	widgetRect.y + (delta / 2);
+					delta					=	widgetRect.height - myImage->height;
+					widgetPtr->roiRect.y	=	widgetRect.y + (delta / 2);
 				}
-				roiRect.width	=	myImage->width;
-				roiRect.height	=	myImage->height;
+				widgetPtr->roiRect.width	=	myImage->width;
+				widgetPtr->roiRect.height	=	myImage->height;
 
-				cvSetImageROI(cOpenCV_Image,  roiRect);
+				cvSetImageROI(cOpenCV_Image,  widgetPtr->roiRect);
 				cvCopy(widgetPtr->openCVimagePtr, cOpenCV_Image);
 				cvResetImageROI(cOpenCV_Image);
 
@@ -2034,7 +2039,7 @@ CvRect		widgetRect;
 				{
 
 					cvRectangleR(	cOpenCV_Image,
-									roiRect,
+									widgetPtr->roiRect,
 									widgetPtr->borderColor,		//	CvScalar color,
 									1,							//	int thickness CV_DEFAULT(1),
 									8,							//	int line_type CV_DEFAULT(8),

@@ -136,7 +136,6 @@ int32_t	DomeDriverROR::RunStateMachine_ROR(void)
 {
 uint32_t	deltaMilliSecs;
 uint32_t	currentMilliSecs;
-bool		relayOK;
 int32_t		minDealy_microSecs;
 
 	minDealy_microSecs		=	1000;		//*	default to 1 millisecond
@@ -145,6 +144,7 @@ int32_t		minDealy_microSecs;
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 #ifdef _CHRIS_A_ROLL_OFF_ROOF_
+bool		relayOK;
 
 	currentMilliSecs	=	millis();
 	deltaMilliSecs		=	currentMilliSecs - cTimeOfLastOpenClose;
@@ -152,8 +152,10 @@ int32_t		minDealy_microSecs;
 	{
 		CONSOLE_DEBUG("Done with OPEN switch contact");
 		relayOK		=	RpiRelay_SetRelay(kRelay_RoofOpen, false);
-
-
+		if (relayOK == false)
+		{
+			CONSOLE_DEBUG("RpiRelay_SetRelay returned false");
+		}
 		cDomeProp.ShutterStatus	=	kShutterStatus_Open;
 		cDomeProp.Slewing		=	false;
 		cRORisOpening			=	false;
@@ -163,8 +165,10 @@ int32_t		minDealy_microSecs;
 	{
 		CONSOLE_DEBUG("Done with CLOSE switch contact");
 		relayOK		=	RpiRelay_SetRelay(kRelay_RoofClose, false);
-
-
+		if (relayOK == false)
+		{
+			CONSOLE_DEBUG("RpiRelay_SetRelay returned false");
+		}
 		cDomeProp.ShutterStatus	=	kShutterStatus_Closed;
 		cDomeProp.Slewing		=	false;
 		cRORisClosing			=	false;
@@ -180,7 +184,10 @@ TYPE_ASCOM_STATUS	DomeDriverROR::SetPower(bool onOffFlag)
 bool				relayOK;
 
 	relayOK		=	RpiRelay_SetRelay(kRelay_RoofPower, onOffFlag);
-
+	if (relayOK == false)
+	{
+		CONSOLE_DEBUG("RpiRelay_SetRelay returned false");
+	}
 	return(kASCOM_Err_Success);
 }
 
@@ -190,7 +197,10 @@ TYPE_ASCOM_STATUS	DomeDriverROR::SetAuxiliary(bool onOffFlag)
 bool				relayOK;
 
 	relayOK		=	RpiRelay_SetRelay(kRelay_FlatScren, onOffFlag);
-
+	if (relayOK == false)
+	{
+		CONSOLE_DEBUG("RpiRelay_SetRelay returned false");
+	}
 	return(kASCOM_Err_Success);
 }
 
@@ -209,6 +219,10 @@ bool				relayOK;
 //	relayOK					=	RpiRelay_SetRelay(kRelay_RoofPower,	true);
 	relayOK					=	RpiRelay_SetRelay(kRelay_RoofOpen,	true);
 	relayOK					=	RpiRelay_SetRelay(kRelay_RoofClose, false);
+	if (relayOK == false)
+	{
+		CONSOLE_DEBUG("RpiRelay_SetRelay returned false");
+	}
 	alpacaErrCode			=	kASCOM_Err_Success;
 	cTimeOfLastOpenClose	=	millis();
 	cRORisOpening			=	true;
@@ -237,6 +251,10 @@ bool				relayOK;
 //	relayOK					=	RpiRelay_SetRelay(kRelay_RoofPower,	true);
 	relayOK					=	RpiRelay_SetRelay(kRelay_RoofClose,	true);
 	relayOK					=	RpiRelay_SetRelay(kRelay_RoofOpen,	false);
+	if (relayOK == false)
+	{
+		CONSOLE_DEBUG("RpiRelay_SetRelay returned false");
+	}
 	alpacaErrCode			=	kASCOM_Err_Success;
 	cTimeOfLastOpenClose	=	millis();
 	cRORisClosing			=	true;
@@ -264,6 +282,10 @@ bool				relayOK;
 	relayOK					=	RpiRelay_SetRelay(kRelay_RoofOpen, false);
 	relayOK					=	RpiRelay_SetRelay(kRelay_RoofClose, false);
 //	relayOK					=	RpiRelay_SetRelay(kRelay_RoofPower, false);
+	if (relayOK == false)
+	{
+		CONSOLE_DEBUG("RpiRelay_SetRelay returned false");
+	}
 	cRORisOpening			=	false;
 	cRORisClosing			=	false;
 	cDomeProp.Slewing		=	false;

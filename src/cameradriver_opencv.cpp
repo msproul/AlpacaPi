@@ -269,9 +269,11 @@ int	iii;
 
 	if (cOpenCV_LiveDisplay != NULL)
 	{
+		CONSOLE_DEBUG("Calling cvReleaseImage(&cOpenCV_LiveDisplay)");
 		cvReleaseImage(&cOpenCV_LiveDisplay);
 		cOpenCV_LiveDisplay	=	NULL;
 	}
+	CONSOLE_DEBUG("Calling cvDestroyWindow(cOpenCV_ImgWindowName)");
 	cvDestroyWindow(cOpenCV_ImgWindowName);
 	cCreateOpenCVwindow		=	true;
 	cOpenCV_ImgWindowValid	=	false;

@@ -69,6 +69,7 @@
 //*	Jan 24,	2021	<MLS> Converted Domedriver to use properties struct
 //*	Jan 27,	2021	<MLS> Added Added Put_PowerOn(), Put_PowerOff() & SetPower()
 //*	Jan 27,	2021	<MLS> Added Added Put_AuxiliaryOn(), Put_AuxiliaryOff() & SetAuxiliary
+//*	Feb 25,	2021	<MLS> Added remote shutter support to Put_AbortSlew()
 //*****************************************************************************
 //*	cd /home/pi/dev-mark/alpaca
 //*	LOGFILE=logfile.txt
@@ -869,9 +870,12 @@ int32_t		minDealy_microSecs;
 int32_t	DomeDriver::RunStateMachine(void)
 {
 int32_t		minDealy_microSecs;
-uint32_t	currentMilliSecs;
-uint32_t	timeSinceLastWhatever;
 char		stateString[48];
+#if defined(_ENABLE_REMOTE_SHUTTER_) || defined(_ENABLE_SLIT_TRACKER_REMOTE_)
+	uint32_t	currentMilliSecs;
+	uint32_t	timeSinceLastWhatever;
+#endif
+
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -886,11 +890,11 @@ char		stateString[48];
 		minDealy_microSecs	=	RunStateMachine_ROR();
 	}
 
-	currentMilliSecs		=	millis();
 
 #ifdef _ENABLE_REMOTE_SHUTTER_
 	//====================================================================
 	//*	check to see if its time to update the shutter status
+	currentMilliSecs		=	millis();
 	timeSinceLastWhatever	=	currentMilliSecs - cTimeOfLastShutterUpdate;
 	if (timeSinceLastWhatever > (15 * 1000))
 	{
@@ -904,6 +908,7 @@ char		stateString[48];
 	//*	check to see if its time to update the slit tracker
 	if (cSlitTrackerInfoValid)
 	{
+		currentMilliSecs		=	millis();
 		timeSinceLastWhatever	=	currentMilliSecs - cTimeOfLastSlitTrackerUpdate;
 		if (timeSinceLastWhatever > (60 * 1000))
 		{
@@ -1379,8 +1384,6 @@ bool				newSlavedValue;
 	return(alpacaErrCode);
 }
 
-
-
 //*****************************************************************************
 TYPE_ASCOM_STATUS	DomeDriver::Put_AbortSlew(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
 {
@@ -1389,14 +1392,13 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 	CONSOLE_DEBUG(__FUNCTION__);
 	StopDomeMoving(kStopRightNow);
 
-	if (reqData != NULL)
+#ifdef _ENABLE_REMOTE_SHUTTER_
+	if (cShutterInfoValid)
 	{
+		alpacaErrCode	=	StopRemoteShutter(alpacaErrMsg);
+	}
+#endif // _ENABLE_REMOTE_SHUTTER_
 
-	}
-	else
-	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
-	}
 	return(alpacaErrCode);
 }
 
@@ -1407,6 +1409,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 double				deltaDegrees;
 int 				direction;
 
+	CONSOLE_DEBUG(__FUNCTION__);
 	if (reqData != NULL)
 	{
 		CheckSensors();
@@ -1465,6 +1468,7 @@ TYPE_ASCOM_STATUS	DomeDriver::Put_OpenShutter(	TYPE_GetPutRequestData *reqData, 
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
+	CONSOLE_DEBUG(__FUNCTION__);
 	alpacaErrCode			=	OpenShutter(alpacaErrMsg);
 
 	cDomeProp.ShutterStatus	=	kShutterStatus_Opening;
@@ -1478,6 +1482,7 @@ TYPE_ASCOM_STATUS	DomeDriver::Put_CloseShutter(	TYPE_GetPutRequestData *reqData,
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
+	CONSOLE_DEBUG(__FUNCTION__);
 	cDomeProp.ShutterStatus	=	kShutterStatus_Closing;
 
 	alpacaErrCode			=	CloseShutter(alpacaErrMsg);
@@ -2315,7 +2320,7 @@ int				clockValue;
 char			clockString[32];
 double			inchValue;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	SJP_Init(&jsonParser);
 	sprintf(alpacaString,	"/api/v1/%s/%d/%s", "slittracker", cSlitTrackerAlpacaDevNum, "readall");

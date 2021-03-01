@@ -35,6 +35,7 @@
 //*	Apr 29,	2020	<MLS> Added image processing
 //*	Feb 13,	2021	<MLS> Added ExtractColorImage()
 //*	Feb 13,	2021	<MLS> Working on FLIR color image support
+//*	Feb 25,	2021	<MLS> Added CheckUSBFS_memory()
 //*****************************************************************************
 
 #if defined(_ENABLE_CAMERA_) && defined(_ENABLE_FLIR_)
@@ -61,6 +62,8 @@ static	spinSystem			gSpinSystemHandle;
 static	spinLibraryVersion	gLibraryVersionHandle;
 static	spinCameraList		gCameraList;
 
+static	void	CheckUSBFS_memory(void);
+
 
 //**************************************************************************************
 void	CreateFLIR_CameraObjects(void)
@@ -74,6 +77,7 @@ spinError		spinErr;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
+	numCameras	=	0;
 
 	rulesFileOK	=	Check_udev_rulesFile(rulesFileName);
 	if (rulesFileOK)
@@ -121,7 +125,6 @@ spinError		spinErr;
 			{
 
 				// Retrieve number of cameras
-				numCameras	=	0;
 				spinErr		=	spinCameraListGetSize(gCameraList, &numCameras);
 				if (spinErr == SPINNAKER_ERR_SUCCESS)
 				{
@@ -161,7 +164,53 @@ spinError		spinErr;
 		printf("Unable to retrieve system instance. Aborting with error %d...\n\n", spinErr);
 	}
 
+	//------------------------------------------------------------
+	//*	if there were any cameras found, check the usbfs_memory_mb system parameter
+	if (numCameras > 0)
+	{
+		CheckUSBFS_memory();
+	}
+
+
 	CONSOLE_DEBUG(__FUNCTION__);
+}
+
+//**************************************************************************************
+//	cat /sys/module/usbcore/parameters/usbfs_memory_mb
+//**************************************************************************************
+static void	CheckUSBFS_memory(void)
+{
+FILE			*filePointer;
+char			lineBuff[256];
+int				slen;
+char			fileName[]	=	"/sys/module/usbcore/parameters/usbfs_memory_mb";
+int				usbfs_memory_mb;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	//*	check for the observatory settings file
+	filePointer	=	fopen(fileName, "r");
+	if (filePointer != NULL)
+	{
+		lineBuff[0]	=	0;
+		fgets(lineBuff, 200, filePointer);
+		slen	=	strlen(lineBuff);
+		if (slen > 0)
+		{
+			usbfs_memory_mb	=	atoi(lineBuff);
+//			CONSOLE_DEBUG_W_NUM("usbfs_memory_mb\t=", usbfs_memory_mb);
+			if (usbfs_memory_mb < 1000)
+			{
+				sprintf(lineBuff, "usbfs_memory_mb=%d", usbfs_memory_mb);
+				LogEvent(	"camera-FLIR",
+							lineBuff,
+							NULL,
+							kASCOM_Err_Success,
+							"Should be >= 1000");
+			}
+		}
+		fclose(filePointer);
+	}
 }
 
 
@@ -202,8 +251,13 @@ quickSpin			quickSpinStruct;
 	ReadFLIRcameraInfo();
 
 	strcpy(cCommonProp.Description, cDeviceManufacturer);
-	strcat(cCommonProp.Description, " - ");
-	strcat(cCommonProp.Description, cDeviceModel);
+	strcat(cCommonProp.Description, " driver using spinnaker api ");
+	strcat(cCommonProp.Description, "Version:");
+	strcat(cCommonProp.Description, gSpinakerVerString);
+
+	strcpy(cCommonProp.Name,	"FLIR");
+	strcat(cCommonProp.Name,	" - ");
+	strcat(cCommonProp.Name,	cDeviceModel);
 
 
 	// Initialize camera
@@ -454,7 +508,11 @@ spinNodeType		featureType;
 				featureType		=	UnknownNode;
 				lenFeatureName	=	MAX_BUFF_LEN;
 				spinErr			=	spinNodeGetName(hFeatureNode, featureName, &lenFeatureName);
-				if (spinErr != SPINNAKER_ERR_SUCCESS)
+				if (spinErr == SPINNAKER_ERR_SUCCESS)
+				{
+				//	CONSOLE_DEBUG_W_STR("featureName\t=", featureName);
+				}
+				else
 				{
 					strcpy(featureName, "Unknown name");
 				}
@@ -574,11 +632,12 @@ int64_t			acquisitionModeContinuous	=	0;
 		if (spinErr == SPINNAKER_ERR_SUCCESS)
 		{
 			CONSOLE_DEBUG("spinEnumerationEntryGetIntValue  SUCCESS!!!");
+			CONSOLE_DEBUG_W_LONG("acquisitionModeContinuous\t=", acquisitionModeContinuous);
 		}
 		else
 		{
 			CONSOLE_DEBUG_W_NUM("Unable to set acquisition mode to continuous (entry int value retrieval). Aborting with error=",
-			spinErr);
+					spinErr);
 			return spinErr;
 		}
 	}

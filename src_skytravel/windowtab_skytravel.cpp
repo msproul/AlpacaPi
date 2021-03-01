@@ -1285,13 +1285,17 @@ char				ipAddrStr[32];
 }
 
 //*****************************************************************************
-void	WindowTabSkyTravel::ProcessDoubleClick(const int buttonIdx)
+void	WindowTabSkyTravel::ProcessDoubleClick(	const int	widgetIdx,
+												const int	event,
+												const int	xxx,
+												const int	yyy,
+												const int	flags)
 {
 bool			reDrawSky;
 
 	reDrawSky	=	true;
 
-	switch(buttonIdx)
+	switch(widgetIdx)
 	{
 		//*	double click in the RA/DEC box from the Alpaca telescope device and makes it center on the current telescope position
 		case kSkyTravel_Telescope_RA_DEC:

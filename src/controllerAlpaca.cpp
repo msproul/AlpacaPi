@@ -31,6 +31,7 @@
 //*	Jan 30,	2021	<MLS> Added AlpacaGetImageArray()
 //*	Jan 31,	2021	<MLS> Finished debugging AlpacaGetImageArray()
 //*	Feb  9,	2021	<MLS> Added AlpacaGetCommonProperties()
+//*	Feb 13,	2021	<MLS> Added UpdateCommonProperties()
 //*****************************************************************************
 
 
@@ -41,9 +42,6 @@
 #include	<errno.h>
 
 
-//-#include "opencv/highgui.h"
-//-#include "opencv2/highgui/highgui_c.h"
-//-#include "opencv2/imgproc/imgproc_c.h"
 
 #include	"discovery_lib.h"
 #include	"sendrequest_lib.h"
@@ -133,12 +131,16 @@ bool			validData;
 char			alpacaString[128];
 int				jjj;
 
-//char			ipAddrStr[32];
-//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
-//	CONSOLE_DEBUG_W_STR(__FUNCTION__, deviceTypeStr);
+#if 0
+char			ipAddrStr[32];
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, deviceTypeStr);
 
-//	inet_ntop(AF_INET, &(deviceAddress->sin_addr), ipAddrStr, INET_ADDRSTRLEN);
-//	CONSOLE_DEBUG_W_STR("IP address=", ipAddrStr);
+	inet_ntop(AF_INET, &(deviceAddress->sin_addr), ipAddrStr, INET_ADDRSTRLEN);
+	CONSOLE_DEBUG_W_STR("IP address=", ipAddrStr);
+	CONSOLE_DEBUG_W_NUM("devicePort=", devicePort);
+	CONSOLE_DEBUG_W_NUM("deviceNum=", deviceNum);
+#endif // 0
 
 	//===============================================================
 	//*	get supportedactions
@@ -153,6 +155,7 @@ int				jjj;
 										&jsonParser);
 	if (validData)
 	{
+		CONSOLE_DEBUG("We have valid data");
 		cHas_readall	=	false;
 		jjj	=	0;
 		while (jjj<jsonParser.tokenCount_Data)
@@ -194,6 +197,7 @@ bool	Controller::AlpacaGetSupportedActions(const char *deviceTypeStr, const int 
 {
 bool			validData;
 
+	CONSOLE_DEBUG(__FUNCTION__);
 	validData	=	AlpacaGetSupportedActions(	&cDeviceAddress,
 												cPort,
 												deviceTypeStr,
@@ -335,7 +339,7 @@ int			dataStrLen;
 		cLastAlpacaErrNum	=	AlpacaCheckForErrors(jsonParser, cLastAlpacaErrStr, true);
 
 
-//?		cForceAlpacaUpdate	=	true;
+		cForceAlpacaUpdate	=	true;
 		gClientTransactionID++;
 
 		strcpy(cLastAlpacaCmdString, alpacaString);
@@ -364,7 +368,6 @@ bool			sucessFlag;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-#if 1
 	sucessFlag	=	AlpacaSendPutCmdwResponse(	&cDeviceAddress,
 												cPort,
 												alpacaDevice,
@@ -372,33 +375,6 @@ bool			sucessFlag;
 												alpacaCmd,
 												dataString,
 												jsonParser);
-#else
-char			alpacaString[128];
-char			myDataString[512];
-
-//	CONSOLE_DEBUG_W_STR(__FUNCTION__, alpacaCmd);
-
-	SJP_Init(jsonParser);
-
-	sprintf(alpacaString, "/api/v1/%s/%d/%s", alpacaDevice, cAlpacaDevNum, alpacaCmd);
-	sprintf(myDataString, "%s&ClientID=%d&ClientTransactionID=%d",
-											dataString,
-											gClientID,
-											gClientTransactionID);
-	sucessFlag	=	SendPutCommand(	&cDeviceAddress,
-									cPort,
-									alpacaString,
-									myDataString,
-									jsonParser);
-
-	cLastAlpacaErrNum	=	AlpacaCheckForErrors(jsonParser, cLastAlpacaErrStr, true);
-
-
-//?	cForceAlpacaUpdate	=	true;
-	gClientTransactionID++;
-
-	strcpy(cLastAlpacaCmdString, alpacaString);
-#endif
 	return(sucessFlag);
 }
 
@@ -875,7 +851,6 @@ int				progressUpdateCnt;
 uint32_t		tStartMillisecs;
 uint32_t		tCurrentMillisecs;
 uint32_t		tLastUpdateMillisecs;
-uint32_t		tDeltaMillisecs;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG_W_NUM("kReadBuffLen\t=", kReadBuffLen);

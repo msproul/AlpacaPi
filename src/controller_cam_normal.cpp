@@ -271,11 +271,11 @@ void	ControllerCamNormal::UpdateCameraName(void)
 {
 int		jjj;
 
-	SetWidgetText(kTab_Camera,		kCameraBox_Title,	cCameraName);
-	SetWidgetText(kTab_Settings,	kCamSet_Title,		cCameraName);
-	SetWidgetText(kTab_FileList,	kFileList_Title,	cCameraName);
+	SetWidgetText(kTab_Camera,		kCameraBox_Title,	cCommonProp.Name);
+	SetWidgetText(kTab_Settings,	kCamSet_Title,		cCommonProp.Name);
+	SetWidgetText(kTab_FileList,	kFileList_Title,	cCommonProp.Name);
 	//*	check for ATIK cameras, they do not support GAIN
-	if (strcasestr(cCameraName, "ATIK") != NULL)
+	if (strcasestr(cCommonProp.Name, "ATIK") != NULL)
 	{
 		for (jjj=kCameraBox_Gain_Label; jjj<=kCameraBox_Gain_Down; jjj++)
 		{

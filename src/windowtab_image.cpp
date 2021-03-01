@@ -20,6 +20,8 @@
 //*****************************************************************************
 //*	Dec 29,	2020	<MLS> Created windowtab_image.cpp
 //*	Feb  2,	2021	<MLS> Added the ability to zoom and scroll image by draging the mouse.
+//*	Feb 28,	2021	<MLS> Working on image scrolling/dragging
+//*	Feb 28,	2021	<MLS> Finally got image dragging to work properly
 //*****************************************************************************
 
 #ifdef _ENABLE_CTRL_IMAGE_
@@ -52,11 +54,11 @@ WindowTabImage::WindowTabImage(	const int	xSize,
 	cOpenCVdownLoadedImage	=	NULL;
 	cOpenCVdisplayedImage	=	NULL;
 	cImageZoomState			=	0;			//*	more state to be defined later
-	//*	save these for image dragging.
-	cZoomTopLeft.x			=	0;
-	cZoomTopLeft.y			=	0;
+
 	cMouseDragInProgress	=	false;
 
+	cImageCenterX			=	500;
+	cImageCenterY			=	500;
 
 	SetupWindowControls();
 
@@ -83,10 +85,8 @@ void	WindowTabImage::SetupWindowControls(void)
 {
 int			xLoc;
 int			yLoc;
-int			yLocSave;
 int			iii;
-
-
+int			imageBoxHeight;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -113,13 +113,73 @@ int			iii;
 	yLoc			+=	cTitleHeight;
 	yLoc			+=	2;
 
-
-	SetWidget(				kImageDisplay_ImageDisplay,	0,	yLoc,		cWidth,		((3 * cWidth) / 7));
+	imageBoxHeight	=	cHeight - yLoc;
+	SetWidget(				kImageDisplay_ImageDisplay,	0,	yLoc,		cWidth,		imageBoxHeight);
 	SetWidgetBGColor(		kImageDisplay_ImageDisplay,	CV_RGB(128,	128,	128));
 	SetWidgetBorderColor(	kImageDisplay_ImageDisplay,	CV_RGB(255,	255,	255));
 	SetWidgetBorder(		kImageDisplay_ImageDisplay,	true);
 }
 
+//*****************************************************************************
+void	WindowTabImage::HandleKeyDown(const int keyPressed)
+{
+bool	updateFlag;
+	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_HEX("keyPressed\t",	keyPressed);
+
+	updateFlag	=	true;
+	switch(keyPressed & 0x7f)
+	{
+		case '0':
+			ResetImage();
+			updateFlag	=	false;
+			break;
+
+		case '4':
+			cImageCenterX	-=	100;
+			break;
+
+		case '6':
+			cImageCenterX	+=	100;
+			break;
+
+		case '2':
+			cImageCenterY	+=	100;
+			break;
+
+		case '8':
+			cImageCenterY	-=	100;
+			break;
+
+		case '7':
+			cImageCenterX	-=	100;
+			cImageCenterY	-=	100;
+			break;
+
+		case '9':
+			cImageCenterX	+=	100;
+			cImageCenterY	-=	100;
+			break;
+
+		case '1':
+			cImageCenterX	-=	100;
+			cImageCenterY	+=	100;
+			break;
+
+		case '3':
+			cImageCenterX	+=	100;
+			cImageCenterY	+=	100;
+			break;
+
+		default:
+			updateFlag	=	false;
+			break;
+	}
+	if (updateFlag)
+	{
+		DrawFullScaleIamge(cImageCenterX, cImageCenterY);
+	}
+}
 
 //*****************************************************************************
 void	WindowTabImage::ProcessButtonClick(const int buttonIdx)
@@ -137,16 +197,20 @@ void	WindowTabImage::ProcessButtonClick(const int buttonIdx)
 }
 
 //*****************************************************************************
-void	WindowTabImage::ProcessDoubleClick(const int buttonIdx)
+void	WindowTabImage::ProcessDoubleClick(	const int	widgetIdx,
+											const int	event,
+											const int	xxx,
+											const int	yyy,
+											const int	flags)
 {
 int		iii;
 
 	CONSOLE_DEBUG(__FUNCTION__);
-	switch(buttonIdx)
+	switch(widgetIdx)
 	{
 		case kImageDisplay_ImageDisplay:
 			CONSOLE_DEBUG(__FUNCTION__);
-			ZoomImage();
+			ZoomImage(event, xxx, yyy, flags);
 			cMouseDragInProgress	=	false;
 			break;
 
@@ -167,7 +231,6 @@ int		iii;
 	}
 }
 
-
 //*****************************************************************************
 void	WindowTabImage::ProcessMouseLeftButtonDown(	const int	widgetIdx,
 													const int	event,
@@ -175,15 +238,28 @@ void	WindowTabImage::ProcessMouseLeftButtonDown(	const int	widgetIdx,
 													const int	yyy,
 													const int	flags)
 {
+int		cursorXXoffset;
+int		cursorYYoffset;
+
+	CONSOLE_DEBUG("--------------------------------------------------------------------");
+	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_NUM("xxx\t=", xxx);
+	CONSOLE_DEBUG_W_NUM("yyy\t=", yyy);
 
 	if (widgetIdx == kImageDisplay_ImageDisplay)
 	{
-		cSavedMouseClick_X	=	xxx;
-		cSavedMouseClick_Y	=	yyy;
+		cursorXXoffset	=	xxx - cWidgetList[widgetIdx].roiRect.x;
+		cursorYYoffset	=	yyy - cWidgetList[widgetIdx].roiRect.y;
+		CONSOLE_DEBUG_W_NUM("cursorXXoffset\t=", cursorXXoffset);
+		CONSOLE_DEBUG_W_NUM("cursorYYoffset\t=", cursorYYoffset);
 
+		cSavedMouseClick_X	=	cursorXXoffset;
+		cSavedMouseClick_Y	=	cursorYYoffset;
+
+		CONSOLE_DEBUG_W_NUM("cSavedMouseClick_X\t=", cSavedMouseClick_X);
+		CONSOLE_DEBUG_W_NUM("cSavedMouseClick_Y\t=", cSavedMouseClick_Y);
 	}
 }
-
 
 //*****************************************************************************
 void	WindowTabImage::ProcessMouseLeftButtonUp(	const int	widgetIdx,
@@ -196,8 +272,6 @@ void	WindowTabImage::ProcessMouseLeftButtonUp(	const int	widgetIdx,
 	cMouseDragInProgress	=	false;
 }
 
-
-
 //*****************************************************************************
 void	WindowTabImage::ProcessMouseLeftButtonDragged(	const int	widgetIdx,
 														const int	event,
@@ -205,14 +279,10 @@ void	WindowTabImage::ProcessMouseLeftButtonDragged(	const int	widgetIdx,
 														const int	yyy,
 														const int	flags)
 {
-double		deltaXX;
-double		deltaYY;
-double		moveAmount;
-CvRect		sourceImgROIrect;
-int			displayedWidth;
-int			displayedHeight;
-int			sourceImageWidth;
-int			sourceImageHeight;
+int		deltaXX;
+int		deltaYY;
+int		cursorXXoffset;
+int		cursorYYoffset;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -225,69 +295,30 @@ int			sourceImageHeight;
 //		if (widgetIdx == kImageDisplay_ImageDisplay)
 		{
 
-			deltaXX	=	xxx - cSavedMouseClick_X;
-			deltaYY	=	yyy - cSavedMouseClick_Y;
+			cursorXXoffset	=	xxx - cWidgetList[kImageDisplay_ImageDisplay].roiRect.x;
+			cursorYYoffset	=	yyy - cWidgetList[kImageDisplay_ImageDisplay].roiRect.y;
 
-			cZoomTopLeft.x	-=	deltaXX;
-			cZoomTopLeft.y	-=	deltaYY;
+			deltaXX			=	cursorXXoffset - cSavedMouseClick_X;
+			deltaYY			=	cursorYYoffset - cSavedMouseClick_Y;
 
+			CONSOLE_DEBUG_W_NUM("deltaXX\t=", deltaXX);
+			CONSOLE_DEBUG_W_NUM("deltaYY\t=", deltaYY);
 
-			//*	get the size of the destination image
-			displayedWidth			=	cOpenCVdisplayedImage->width;
-			displayedHeight			=	cOpenCVdisplayedImage->height;
+			cImageCenterX	-=	deltaXX;
+			cImageCenterY	-=	deltaYY;
 
-			//*	get the size of the source image
-			sourceImageWidth		=	cOpenCVdownLoadedImage->width;
-			sourceImageHeight		=	cOpenCVdownLoadedImage->height;
+			DrawFullScaleIamge(cImageCenterX, cImageCenterY);
 
-
-			//*	check the boundaries
-			if (cZoomTopLeft.x < 0)
-			{
-				CONSOLE_DEBUG("Too far left");
-				cZoomTopLeft.x	=	0;
-			}
-			if (cZoomTopLeft.y < 0)
-			{
-				CONSOLE_DEBUG("Too far up");
-				cZoomTopLeft.y	=	0;
-			}
-
-			if (cZoomTopLeft.x > (sourceImageWidth - displayedWidth))
-			{
-				CONSOLE_DEBUG("Too far right");
-				cZoomTopLeft.x	=	sourceImageWidth - displayedWidth;
-			}
-			if (cZoomTopLeft.y > (sourceImageHeight - displayedHeight))
-			{
-				CONSOLE_DEBUG("Too far down");
-				cZoomTopLeft.y	=	sourceImageHeight - displayedHeight;
-			}
-
-//			CONSOLE_DEBUG_W_NUM("cZoomTopLeft.x\t=", cZoomTopLeft.x);
-
-			sourceImgROIrect.x		=	cZoomTopLeft.x;
-			sourceImgROIrect.y		=	cZoomTopLeft.y;
-			sourceImgROIrect.width	=	cOpenCVdisplayedImage->width;
-			sourceImgROIrect.height	=	cOpenCVdisplayedImage->height;
-
-
-
-			cvSetImageROI(cOpenCVdownLoadedImage,  sourceImgROIrect);
-			cvCopy(cOpenCVdownLoadedImage, cOpenCVdisplayedImage);
-			cvResetImageROI(cOpenCVdownLoadedImage);
-
-
-			cSavedMouseClick_X	=	xxx;
-			cSavedMouseClick_Y	=	yyy;
+			cSavedMouseClick_X	=	cursorXXoffset;
+			cSavedMouseClick_Y	=	cursorYYoffset;
 
 			ForceUpdate();
+
 			cMouseDragInProgress	=	false;
 
 		}
 	}
 }
-
 
 
 //*****************************************************************************
@@ -298,12 +329,37 @@ void	WindowTabImage::SetImagePtrs(IplImage *originalImage, IplImage *displayedIm
 
 }
 
+//*****************************************************************************
+void	WindowTabImage::ResetImage(void)
+{
+	//*	Check to see if the original is color
+	if ((cOpenCVdownLoadedImage->nChannels == 3) && (cOpenCVdownLoadedImage->depth == 8))
+	{
+		cvResize(cOpenCVdownLoadedImage, cOpenCVdisplayedImage, CV_INTER_LINEAR);
+	}
+	else if ((cOpenCVdownLoadedImage->nChannels == 1) && (cOpenCVdownLoadedImage->depth == 8))
+	{
+		cvCvtColor(cOpenCVdownLoadedImage, cOpenCVdisplayedImage, CV_GRAY2RGB);
+	}
+	cImageZoomState	=	0;
+	ForceUpdate();
+}
 
 
 //*****************************************************************************
-void	WindowTabImage::ZoomImage(void)
+void	WindowTabImage::ZoomImage(const int	event,
+									const int	xxx,
+									const int	yyy,
+									const int	flags)
 {
-CvRect		displayedImgRect;
+int			displayedWidth;
+int			displayedHeight;
+int			sourceImageWidth;
+int			sourceImageHeight;
+int			cursorXXoffset;
+int			cursorYYoffset;
+int			imageCursorXX;
+int			imageCursorYY;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -312,35 +368,104 @@ CvRect		displayedImgRect;
 		if (cImageZoomState != 0)
 		{
 			//*	set it back to fit on the screen
-
-			//*	Check to see if the original is color
-			if ((cOpenCVdownLoadedImage->nChannels == 3) && (cOpenCVdownLoadedImage->depth == 8))
-			{
-				cvResize(cOpenCVdownLoadedImage, cOpenCVdisplayedImage, CV_INTER_LINEAR);
-			}
-			else if ((cOpenCVdownLoadedImage->nChannels == 1) && (cOpenCVdownLoadedImage->depth == 8))
-			{
-				cvCvtColor(cOpenCVdownLoadedImage, cOpenCVdisplayedImage, CV_GRAY2RGB);
-			}
-			cImageZoomState	=	0;
+			ResetImage();
 		}
 		else
 		{
-			//*	first get the size of the displayed image
-			displayedImgRect.x		=	0;
-			displayedImgRect.y		=	0;
-			displayedImgRect.width	=	cOpenCVdisplayedImage->width;
-			displayedImgRect.height	=	cOpenCVdisplayedImage->height;
+			cursorXXoffset		=	xxx - cWidgetList[kImageDisplay_ImageDisplay].roiRect.x;
+			cursorYYoffset		=	yyy - cWidgetList[kImageDisplay_ImageDisplay].roiRect.y;
 
-			cvSetImageROI(cOpenCVdownLoadedImage,  displayedImgRect);
-			cvCopy(cOpenCVdownLoadedImage, cOpenCVdisplayedImage);
-			cvResetImageROI(cOpenCVdownLoadedImage);
+			//*	get the size of the destination image
+			displayedWidth		=	cOpenCVdisplayedImage->width;
+			displayedHeight		=	cOpenCVdisplayedImage->height;
+
+			//*	get the size of the source image
+			sourceImageWidth	=	cOpenCVdownLoadedImage->width;
+			sourceImageHeight	=	cOpenCVdownLoadedImage->height;
+
+
+			//*	calculate the relative position of the cursor WRT the full image
+			imageCursorXX		=	sourceImageWidth * cursorXXoffset / displayedWidth;
+			imageCursorYY		=	sourceImageHeight * cursorYYoffset / displayedHeight;
+
+			DrawFullScaleIamge(imageCursorXX, imageCursorYY);
 
 			cImageZoomState	=	1;
-
 		}
 
 		ForceUpdate();
+	}
+}
+
+//*****************************************************************************
+//*	draw the image at full scale centered on these image coordinates
+//*****************************************************************************
+void	WindowTabImage::DrawFullScaleIamge(const int image_X, const int	image_Y)
+{
+CvRect		displayedImgRect;
+int			displayedWidth;
+int			displayedHeight;
+int			sourceImageWidth;
+int			sourceImageHeight;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_NUM("image_X\t=", image_X);
+	CONSOLE_DEBUG_W_NUM("image_Y\t=", image_Y);
+
+	if ((cOpenCVdownLoadedImage != NULL) && (cOpenCVdisplayedImage != NULL))
+	{
+		//*	get the size of the source image
+		sourceImageWidth		=	cOpenCVdownLoadedImage->width;
+		sourceImageHeight		=	cOpenCVdownLoadedImage->height;
+
+		//*	get the size of the destination image
+		displayedWidth			=	cOpenCVdisplayedImage->width;
+		displayedHeight			=	cOpenCVdisplayedImage->height;
+
+		displayedImgRect.width	=	displayedWidth;
+		displayedImgRect.height	=	displayedHeight;
+
+		//*	now set the top left of the image
+		displayedImgRect.x		=	image_X - (displayedWidth / 2);
+		displayedImgRect.y		=	image_Y - (displayedHeight / 2);
+		//*	check minimums
+		if (displayedImgRect.x < 0)
+		{
+			displayedImgRect.x	=	0;
+		}
+		if (displayedImgRect.y < 0)
+		{
+			displayedImgRect.y	=	0;
+		}
+
+		//*	check maximums
+		if (displayedImgRect.x > (sourceImageWidth - displayedWidth))
+		{
+			displayedImgRect.x	=	(sourceImageWidth - displayedWidth);
+		}
+
+		if (displayedImgRect.y > (sourceImageHeight - displayedHeight))
+		{
+			displayedImgRect.y	=	(sourceImageHeight - displayedHeight);
+		}
+		CONSOLE_DEBUG_W_NUM("displayedImgRect.x\t=", displayedImgRect.x);
+		CONSOLE_DEBUG_W_NUM("displayedImgRect.y\t=", displayedImgRect.y);
+
+		//*	set the area we want to look at
+		cvSetImageROI(cOpenCVdownLoadedImage,  displayedImgRect);
+		//*	copy that part from the original to the displayed view
+		cvCopy(cOpenCVdownLoadedImage, cOpenCVdisplayedImage);
+		cvResetImageROI(cOpenCVdownLoadedImage);				//*	reset ROI
+
+		//*	now update the CURRENT center of the displayed image
+		cImageCenterX	=	displayedImgRect.x + (displayedWidth / 2);
+		cImageCenterY	=	displayedImgRect.y + (displayedHeight / 2);
+
+		ForceUpdate();
+	}
+	else
+	{
+		CONSOLE_ABORT(__FUNCTION__);
 	}
 }
 

@@ -96,7 +96,11 @@ class WindowTabAlpacaList: public WindowTab
 
 		virtual	void	SetupWindowControls(void);
 		virtual	void	ProcessButtonClick(const int buttonIdx);
-		virtual	void	ProcessDoubleClick(const int buttonIdx);
+		virtual	void	ProcessDoubleClick(	const int	widgetIdx,
+											const int	event,
+											const int	xxx,
+											const int	yyy,
+											const int	flags);
 
 				void	ClearRemoteDeviceList(void);
 				void	UpdateRemoteDeviceList(void);

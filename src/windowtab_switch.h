@@ -78,6 +78,7 @@ enum
 	kSwitchBox_Description12,
 	kSwitchBox_State12,
 
+	//*	future expansion, not currently displayed
 	kSwitchBox_Switch13,
 	kSwitchBox_Name13,
 	kSwitchBox_Description13,
@@ -88,7 +89,6 @@ enum
 	kSwitchBox_Description14,
 	kSwitchBox_State14,
 
-	//*	future expansion, not currently displayed
 	kSwitchBox_Switch15,
 	kSwitchBox_Name15,
 	kSwitchBox_Description15,
@@ -98,6 +98,10 @@ enum
 	kSwitchBox_Name16,
 	kSwitchBox_Description16,
 	kSwitchBox_State16,
+
+
+	kSwitchBox_AllOff,
+
 
 	kSwitchBox_LastCmdString,
 	kSwitchBox_AlpacaLogo,
@@ -110,7 +114,7 @@ enum
 	kSwitchBox_last
 };
 
-#define	kMaxSwitchControlBoxes	14
+#define	kMaxSwitchControlBoxes	12
 
 //**************************************************************************************
 class WindowTabSwitch: public WindowTab
@@ -130,10 +134,13 @@ class WindowTabSwitch: public WindowTab
 		virtual	void	ProcessButtonClick(const int buttonIdx);
 
 				void	ToggleSwitchState(const int switchNum);
+				void	TurnAllSwitchesOff(void);
 
 				void	SetActiveSwitchCount(const int validSwitches);
 
 				bool	cFirstRead;
+
+				int		cValidSwitchCount;
 
 };
 

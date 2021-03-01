@@ -43,6 +43,15 @@ enum
 	kTelescope_DEC_label,
 	kTelescope_DEC_value,
 
+	//*	drive rates
+	kTelescope_TrackingRate_Title,
+	kTelescope_TrackingRate_Sidereal,	//*	Sidereal tracking rate (15.041 arcseconds per second).
+	kTelescope_TrackingRate_Lunar,		//*	Lunar tracking rate (14.685 arcseconds per second).
+	kTelescope_TrackingRate_Solar,		//*	Solar tracking rate (15.0 arcseconds per second).
+	kTelescope_TrackingRate_King,		//*	King tracking rate (15.0369 arcseconds per second).
+	kTelescope_TrackingRate_Outline,
+
+
 	kTelescope_ErrorMsg,
 	kTelescope_LastCmdString,
 	kTelescope_AlpacaLogo,

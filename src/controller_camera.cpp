@@ -518,7 +518,7 @@ int				readOutModeIdx;
 		CONSOLE_DEBUG("Read failure - supportedactions");
 		cReadFailureCnt++;
 	}
-	DEBUG_TIMING("supportedactions");
+	DEBUG_TIMING("Timing for supportedactions=");
 
 
 	//*	Start by getting info about the camera
@@ -526,8 +526,8 @@ int				readOutModeIdx;
 	//*	get the camera description
 	SJP_Init(&jsonParser);
 
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, "description");
 	sprintf(alpacaString,	"/api/v1/camera/%d/description", cAlpacaDevNum);
-//	sprintf(alpacaString,	"/ASCOMInitiative/api/v1/camera/%d/description", cAlpacaDevNum);
 	validData	=	GetJsonResponse(	&cDeviceAddress,
 										cPort,
 										alpacaString,
@@ -535,18 +535,25 @@ int				readOutModeIdx;
 										&jsonParser);
 	if (validData)
 	{
+		CONSOLE_DEBUG_W_STR(__FUNCTION__, "validData");
 		for (jjj=0; jjj<jsonParser.tokenCount_Data; jjj++)
 		{
 //			CONSOLE_DEBUG_W_2STR("json=",	jsonParser.dataList[jjj].keyword,
 //											jsonParser.dataList[jjj].valueString);
 
+			//*	this is an extra in AlpacaPi only
 			if (strcasecmp(jsonParser.dataList[jjj].keyword, "DEVICE") == 0)
 			{
-				strcpy(cCameraName,	jsonParser.dataList[jjj].valueString);
+				strcpy(cCommonProp.Name,	jsonParser.dataList[jjj].valueString);
 			}
+
 			if (strcasecmp(jsonParser.dataList[jjj].keyword, "VALUE") == 0)
 			{
-				strcpy(cCameraName,	jsonParser.dataList[jjj].valueString);
+				if (strlen(jsonParser.dataList[jjj].valueString) >= kCommonPropMaxStrLen)
+				{
+					jsonParser.dataList[jjj].valueString[kCommonPropMaxStrLen - 1]	=	0;
+				}
+				strcpy(cCommonProp.Description,	jsonParser.dataList[jjj].valueString);
 			}
 		}
 		UpdateCameraName();
@@ -556,10 +563,11 @@ int				readOutModeIdx;
 	{
 		cReadFailureCnt++;
 	}
-	DEBUG_TIMING("description");
+	CONSOLE_DEBUG_W_STR("cCommonProp.Name\t=", cCommonProp.Name);
 
 	//===============================================================
 	//*	get the readout modes
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, "readoutmodes");
 	SJP_Init(&jsonParser);
 	sprintf(alpacaString,	"/api/v1/camera/%d/readoutmodes", cAlpacaDevNum);
 	validData	=	GetJsonResponse(	&cDeviceAddress,
@@ -602,6 +610,7 @@ int				readOutModeIdx;
 	DEBUG_TIMING("readoutmodes");
 
 
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, "cameraxsize");
 	validData	=	AlpacaGetIntegerValue("camera", "cameraxsize",	NULL,	&cCameraProp.CameraXsize);
 	validData	=	AlpacaGetIntegerValue("camera", "cameraysize",	NULL,	&cCameraProp.CameraYsize);
 	UpdateCameraSize();

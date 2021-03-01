@@ -71,9 +71,8 @@ void	CreateTelescopeObjects(void)
 {
 	CONSOLE_DEBUG(__FUNCTION__);
 
-//	new TelescopeDriverComm(kDevCon_Ethernet, "192.168.1.104:49152");
-//	new TelescopeDriverSkyWatch(kDevCon_Serial, "/dev/ttyS0");
 	new TelescopeDriverLX200(kDevCon_Ethernet, "192.168.1.104:49152");
+	new TelescopeDriverSkyWatch(kDevCon_Serial, "/dev/ttyS0");
 }
 
 //**************************************************************************************
@@ -88,14 +87,19 @@ TelescopeDriverComm::TelescopeDriverComm(DeviceConnectionType connectionType, co
 char	*colonPtr;
 
 	CONSOLE_DEBUG(__FUNCTION__);
+	//*	set default conditions
+	strcpy(cDeviceIPaddress,	"0.0.0.0-Not set");
+	cIPaddrValid			=	false;
+	cThreadIsActive			=	false;
+	cKeepRunningFlag		=	false;
+
+
+
+	//*	set the parameters
 	strcpy(cCommonProp.Name,		"Telescope-Comm");
 	strcpy(cCommonProp.Description,	"Telescope control using ??? protocol");
-
-	strcpy(cDeviceIPaddress,	"0.0.0.0-Not set");
-	cIPaddrValid	=	false;
-
-	cDeviceConnType	=	connectionType;
-	strcpy(cDeviceConnPath,	devicePath);
+	cDeviceConnType			=	connectionType;
+	strcpy(cDeviceConnPath,		devicePath);
 
 	if (connectionType == kDevCon_Ethernet)
 	{
@@ -201,17 +205,10 @@ bool	connectionOKflag;
 
 		case kDevCon_Serial:
 			CONSOLE_DEBUG("kDevCon_Serial");
-			cDeviceConnFileDesc	=	open(cDeviceConnPath, O_RDWR);	//* connect to port
-			if (cDeviceConnFileDesc >= 0)
+			//*	check to make sure its a valid serial port
+			if (strncmp(cDeviceConnPath, "/dev/tty", 8) == 0)
 			{
-				CONSOLE_DEBUG_W_STR("Serial port opened OK", cDeviceConnPath);
 				connectionOKflag	=	true;
-				Set_Serial_attribs(cDeviceConnFileDesc, B9600, 0);	//*	set the baud rate
-			}
-			else
-			{
-				CONSOLE_DEBUG_W_STR("failed to open", cDeviceConnPath);
-				connectionOKflag	=	false;
 			}
 			break;
 	}
@@ -479,7 +476,19 @@ bool		sendOK;
 				break;
 
 			case kDevCon_Serial:
-				connectionOpen	=	true;
+				cDeviceConnFileDesc	=	open(cDeviceConnPath, O_RDWR);	//* connect to port
+				if (cDeviceConnFileDesc >= 0)
+				{
+					CONSOLE_DEBUG_W_STR("Serial port opened OK", cDeviceConnPath);
+					Set_Serial_attribs(cDeviceConnFileDesc, B9600, 0);	//*	set the baud rate
+
+					connectionOpen	=	true;
+				}
+				else
+				{
+					CONSOLE_DEBUG_W_STR("failed to open", cDeviceConnPath);
+					connectionOpen	=	false;
+				}
 				break;
 		}
 

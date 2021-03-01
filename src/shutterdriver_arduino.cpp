@@ -29,6 +29,7 @@
 //*	Feb 13,	2020	<MLS> Reading shutter status from Arduino
 //*	May  8,	2020	<MLS> Changed Arduino to continuous status output
 //*	May  8,	2020	<MLS> Updated Arduino communications code to handle new format
+//*	Feb 26,	2021	<MLS> Added logic to look for different USB ports ttyACM0 -> ttyACM4
 //*****************************************************************************
 
 #ifdef _ENABLE_SHUTTER_
@@ -41,6 +42,9 @@
 #include	<fcntl.h>
 #include	<termios.h>
 #include	<errno.h>
+#include	<sys/types.h>
+#include	<sys/stat.h>
+#include	<unistd.h>
 
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
@@ -290,17 +294,18 @@ int		charsRead;
 						}
 						else
 						{
-							CONSOLE_DEBUG_W_STR("Buffer overflow, current buf =", cArduinoLineBuf);
+							CONSOLE_DEBUG("Buffer overflow");
+						//	CONSOLE_DEBUG_W_STR("Buffer overflow, current buf =", cArduinoLineBuf);
 							cArduinoByteCnt		=	0;
 							cArduinoLineBuf[0]	=	0;
 						}
 					}
-					else if (theChar == 0x0d)
+					else if ((theChar == 0x0d) || (theChar == 0x0a))
 					{
 						cArduinoLineBuf[cArduinoByteCnt]	=	0;
-//						CONSOLE_DEBUG(cArduinoLineBuf);
-						if (strlen(cArduinoLineBuf) > 0)
+						if (strlen(cArduinoLineBuf) > 2)
 						{
+							CONSOLE_DEBUG_W_STR("Ard:", cArduinoLineBuf);
 							ProcessArduinoLine(cArduinoLineBuf);
 						}
 						cArduinoByteCnt		=	0;
@@ -454,10 +459,28 @@ bool	successFlag;
 //*****************************************************************************
 bool	ShutterArduino::OpenArduinoConnection(void)
 {
-bool	openOK;
-char	serialPortPath[48]	=	"/dev/ttyACM0";
-//char	serialPortPath[48]	=	"/dev/ttyUSB0";
+bool		openOK;
+char		serialPortPath[48]	=	"/dev/ttyACM0";
+//char		serialPortPath[48]	=	"/dev/ttyUSB0";
+struct stat	fileStatus;
+int			returnCode;
+int			usbPortNum;
 
+	//*	find the Arduino
+	usbPortNum	=	0;
+	returnCode	=	1;
+	while ((returnCode != 0) && (usbPortNum <= 4))
+	{
+		sprintf(serialPortPath, "/dev/ttyACM%d", usbPortNum);
+		CONSOLE_DEBUG_W_STR("Checking for", serialPortPath);
+		returnCode	=	stat(serialPortPath, &fileStatus);
+
+		usbPortNum++;
+	}
+	if (returnCode != 0)
+	{
+		CONSOLE_ABORT("Did not find the Arduino!!!!!!!")
+	}
 
 	CONSOLE_DEBUG_W_STR("port is", serialPortPath);
 

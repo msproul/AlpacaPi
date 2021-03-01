@@ -181,6 +181,7 @@ bool			validData;
 int				myFailureCount;
 double			argDouble;
 bool			argBoolean;
+int				argInt;
 //	CONSOLE_DEBUG(__FUNCTION__);
 #ifndef _PARENT_IS_TELESCOPE_
 //	CONSOLE_DEBUG("NOT   _PARENT_IS_TELESCOPE_");
@@ -228,6 +229,19 @@ bool			argBoolean;
 	if (validData)
 	{
 		cTelescopeProp.Tracking	=	argBoolean;
+	}
+	else
+	{
+		CONSOLE_DEBUG("Failed");
+		cReadFailureCnt++;
+		myFailureCount++;
+	}
+
+	//========================================================
+	validData	=	AlpacaGetIntegerValue(	"telescope", "trackingrate",	NULL,	&argInt);
+	if (validData)
+	{
+		cTelescopeProp.TrackingRate	=	(TYPE_DriveRates)argInt;
 	}
 	else
 	{

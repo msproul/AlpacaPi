@@ -817,7 +817,7 @@ Controller	*myControllerObj;
 	}
 	else
 	{
-		CONSOLE_DEBUG("cParentObjPtr is NULL");
+		CONSOLE_DEBUG_W_STR("cParentObjPtr is NULL, windowname=", cWindowName);
 	}
 }
 
@@ -833,7 +833,7 @@ Controller	*myControllerObj;
 	}
 	else
 	{
-		CONSOLE_DEBUG("cParentObjPtr is NULL");
+		CONSOLE_DEBUG_W_STR("cParentObjPtr is NULL, windowname=", cWindowName);
 	}
 }
 
@@ -937,7 +937,11 @@ void	WindowTab::ProcessButtonClick(const int buttonIdx)
 }
 
 //*****************************************************************************
-void	WindowTab::ProcessDoubleClick(const int buttonIdx)
+void	WindowTab::ProcessDoubleClick(	const int	widgetIdx,
+										const int	event,
+										const int	xxx,
+										const int	yyy,
+										const int	flags)
 {
 //	CONSOLE_DEBUG("this routine should be overloaded");
 	//*	this routine should be overloaded

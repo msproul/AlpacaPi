@@ -21,6 +21,7 @@
 //*	Jan 22,	2021	<MLS> Created windowtab_telescope.cpp
 //*	Jan 23,	2021	<MLS> Started on telescope commands, abort, tracking on/off
 //*	Jan 23,	2021	<MLS> Slewing working with ASCOM Telescope simulator
+//*	Feb 25,	2021	<MLS> Added tracking rate to telescope control window
 //*****************************************************************************
 
 #ifdef _ENABLE_CTRL_TELESCOPE_
@@ -72,20 +73,19 @@ int			xLoc;
 int			yLoc;
 int			yLocSave;
 int			iii;
-IplImage	*logoImage;
 
 //*	create our own set of column offsets
 int			myClm1_offset;
-int			myClm2_offset;
-int			myClm3_offset;
+//int			myClm2_offset;
+//int			myClm3_offset;
 int			myClm4_offset;
-int			myClm5_offset;
-int			myClm6_offset;
+//int			myClm5_offset;
+//int			myClm6_offset;
 int			myClm7_offset;
 //int		myClm8_offset;
 int			myClm9_offset;
-int			myClm10_offset;
-int			myClm11_offset;
+//int			myClm10_offset;
+//int			myClm11_offset;
 //int		myClm12_offset;
 int			myClmWidth;
 int			directionBtnWidth;
@@ -101,16 +101,16 @@ CvScalar	btnTXTcolor;
 	myClmWidth		=	cWidth / 12;
 	myClmWidth		-=	2;
 	myClm1_offset	=	3;
-	myClm2_offset	=	1 * myClmWidth;
-	myClm3_offset	=	2 * myClmWidth;
+//	myClm2_offset	=	1 * myClmWidth;
+//	myClm3_offset	=	2 * myClmWidth;
 	myClm4_offset	=	3 * myClmWidth;
-	myClm5_offset	=	4 * myClmWidth;
-	myClm6_offset	=	5 * myClmWidth;
+//	myClm5_offset	=	4 * myClmWidth;
+//	myClm6_offset	=	5 * myClmWidth;
 	myClm7_offset	=	6 * myClmWidth;
 //	myClm8_offset	=	7 * myClmWidth;
 	myClm9_offset	=	8 * myClmWidth;
-	myClm10_offset	=	9 * myClmWidth;
-	myClm11_offset	=	10 * myClmWidth;
+//	myClm10_offset	=	9 * myClmWidth;
+//	myClm11_offset	=	10 * myClmWidth;
 //	myClm12_offset	=	11 * myClmWidth;
 
 
@@ -284,6 +284,27 @@ CvScalar	btnTXTcolor;
 	yLoc			+=	2;
 
 
+	yLoc			+=	8;
+	//---------------------------------------------------------------------------------------
+	for (iii = kTelescope_TrackingRate_Title; iii <= kTelescope_TrackingRate_King; iii++)
+	{
+		SetWidget(			iii,	label_xLoc + 2,		yLoc,		(labelWidth + valueWidth),	cRadioBtnHt);
+		SetWidgetType(		iii,	kWidgetType_RadioButton);
+		SetWidgetFont(		iii,	kFont_RadioBtn);
+		yLoc			+=	cRadioBtnHt;
+		yLoc			+=	2;
+	}
+	SetWidgetType(		kTelescope_TrackingRate_Title,		kWidgetType_Text);
+	SetWidgetText(		kTelescope_TrackingRate_Title,		"Tracking Rate");
+
+	SetWidgetText(		kTelescope_TrackingRate_Sidereal,	"Sidereal");
+	SetWidgetText(		kTelescope_TrackingRate_Lunar,		"Lunar");
+	SetWidgetText(		kTelescope_TrackingRate_Solar,		"Solar");
+	SetWidgetText(		kTelescope_TrackingRate_King,		"King");
+	SetWidgetOutlineBox(kTelescope_TrackingRate_Outline, kTelescope_TrackingRate_Title, kTelescope_TrackingRate_King);
+
+
+
 
 	SetAlpacaLogo(kTelescope_AlpacaLogo, kTelescope_LastCmdString);
 
@@ -313,7 +334,8 @@ double	slewRate	=	2.51234;
 		default:							slewRate	=	2.0;	break;
 	}
 
-	update	=	true;
+	update		=	true;
+	validData	=	true;
 	switch(buttonIdx)
 	{
 		case kTelescope_BtnUp:
@@ -365,6 +387,11 @@ double	slewRate	=	2.51234;
 //			CONSOLE_DEBUG_W_NUM("buttonIdx\t",	buttonIdx);
 
 			break;
+
+	}
+	if (validData == false)
+	{
+		CONSOLE_DEBUG_W_NUM("Command failure, buttonIdx\t=", buttonIdx);
 
 	}
 	if (update)

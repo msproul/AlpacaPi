@@ -310,7 +310,6 @@ int		domeGraphic_yLoc;
 #ifdef _ENABLE_SKYTRAVEL_
 	if (cParentIsSkyTravel)
 	{
-	int	myBtnHeight;
 	int	domeBoxSize;
 	int	xLoc;
 	int	compassLetterBxSize	=	80;
@@ -486,7 +485,6 @@ CvScalar	domeOpeningColor;
 //*	dome specs, will make these prefs latter
 //*	all are in inches
 double		domeDiameter	=	15.0 * 12.0;	//*	 15 feet
-double		slitWidth		=	41.0;
 double		doorWidth		=	48.0;
 double		doorOpeningHalfAngle;
 double		doorEdgeAzimuth;
@@ -494,17 +492,13 @@ double		slitEdgeAzimuth;
 CvPoint		ptList[20];
 int			pointCntr;
 int			edgeRadius;
-bool		domeIsOpen;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	domeAzimuth_degrees	=	145.0;
-	domeIsOpen			=	false;
 	if (cDomePropPtr != NULL)
 	{
 		domeAzimuth_degrees	=	cDomePropPtr->Azimuth;
-		domeIsOpen			=	(cDomePropPtr->ShutterStatus == kShutterStatus_Open);
-	//	domeIsOpen			=	true;
 	}
 	//*	fill in the main circle
 	centerLoc.x		=	theWidget->left + (theWidget->height / 2);
@@ -700,6 +694,10 @@ bool	validData	=	false;
 												theCommand,
 												dataString,
 												jsonParser);
+
+			//*	force quick update
+			myControllerObj->cUpdateDelta	=	1;
+
 		}
 		else
 		{
@@ -716,8 +714,8 @@ bool	validData	=	false;
 }
 
 //*****************************************************************************
-//	curl -X PUT "http://dome:6800/api/v1/dome/0/slewtoazimuth" \
-//			-H  "accept: application/json" -H  "Content-Type: application/x-www-form-urlencoded" \
+//	curl -X PUT "http://dome:6800/api/v1/dome/0/slewtoazimuth"
+//			-H  "accept: application/json" -H  "Content-Type: application/x-www-form-urlencoded"
 //			-d "Azimuth=$1&ClientID=1&ClientTransactionID=223"
 //*****************************************************************************
 void	WindowTabDome::MoveDomeByAmount(const double moveAmount)
@@ -767,6 +765,10 @@ ControllerDome	*myDomeController;
 	CONSOLE_DEBUG_W_DBL("newAzimuthValue\t=", newAzimuthValue);
 	sprintf(dataString, "Azimuth=%f", newAzimuthValue);
 	validData	=	SendAlpacaCmdToDome("slewtoazimuth",	dataString,	NULL);
+	if (validData == false)
+	{
+		CONSOLE_DEBUG("failed command - slewtoazimuth");
+	}
 }
 
 //*****************************************************************************
@@ -860,11 +862,11 @@ SJP_Parser_t	jsonResponse;
 //*****************************************************************************
 void	WindowTabDome::SendShutterCommand(const char *shutterCmd)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, shutterCmd);
 
-#ifdef _ENABLE_EXTERNAL_SHUTTER_
+#if defined(_ENABLE_EXTERNAL_SHUTTER_) && !defined(_ENABLE_SKYTRAVEL_)
+	CONSOLE_DEBUG("_ENABLE_EXTERNAL_SHUTTER_");
 
-	#ifndef _ENABLE_SKYTRAVEL_
 	ControllerDome	*myDomeController;
 
 		CONSOLE_DEBUG(__FUNCTION__);
@@ -878,13 +880,16 @@ void	WindowTabDome::SendShutterCommand(const char *shutterCmd)
 		{
 			CONSOLE_DEBUG("myDomeController is NULL");
 		}
-	#endif
 #else
 bool			validData;
 SJP_Parser_t	jsonResponse;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 	validData	=	SendAlpacaCmdToDome(shutterCmd,	"",	&jsonResponse);
+	if (validData == false)
+	{
+		CONSOLE_DEBUG_W_STR("failed shutter command - ", shutterCmd);
+	}
 
 #endif
 

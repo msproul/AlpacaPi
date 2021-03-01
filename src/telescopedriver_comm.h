@@ -73,14 +73,10 @@ class TelescopeDriverComm: public TelescopeDriver
 		virtual	bool	SendCmdsPeriodic(void);
 
 
-		int		OpenSocket(struct sockaddr_in	*deviceAddress, const int port);
+		int		OpenSocket(struct sockaddr_in *deviceAddress, const int port);
 		int		OpenSocket(const char *ipAddress, const int port);
 
-
 				//*	device communications information
-//-				DeviceConnectionType	cDeviceConnType;
-//-				char					cDeviceConnPath[64];	//*	this may be an IP address or a /dev/tty... string
-
 				DeviceConnectionType	cDeviceConnType;
 				char					cDeviceConnPath[128];	//*	Ip addr, or device path
 				int						cDeviceConnFileDesc;	//*	port file descriptor

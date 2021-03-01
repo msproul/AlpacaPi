@@ -95,7 +95,6 @@ int				gSlitLogIdx;
 
 
 
-#define	kDefaultUpdateDelta	5
 
 //**************************************************************************************
 ControllerDome::ControllerDome(	const char			*argWindowName,
@@ -607,7 +606,7 @@ int				newShutterStatus;
 										&jsonParser);
 	if (validData)
 	{
-		cLastAlpacaErrNum	=	0;
+		cLastAlpacaErrNum	=	kASCOM_Err_Success;
 		for (jjj=0; jjj<jsonParser.tokenCount_Data; jjj++)
 		{
 //			CONSOLE_DEBUG_W_STR(	jsonParser.dataList[jjj].keyword,
@@ -642,7 +641,7 @@ int				newShutterStatus;
 		sprintf(alpacaString, "Failed to read data from shutter - %d", cShutterCommFailCnt);
 		SetWidgetText(kTab_Dome, kDomeBox_ErrorMsg, alpacaString);
 
-		cShutterStatus	=	kShutterStatus_Unknown;
+//?		cShutterStatus	=	kShutterStatus_Unknown;
 		SetWidgetText(kTab_Dome, kDomeBox_ShutterStatus, "Unknown");
 		SetWidgetTextColor(kTab_Dome,	kDomeBox_ShutterStatus,	CV_RGB(255,	0,	0));
 	}

@@ -209,6 +209,7 @@ class DomeDriver: public AlpacaDriver
 				void				GetRemoteShutterStatus(void);
 				TYPE_ASCOM_STATUS	OpenRemoteShutter(char *alpacaErrMsg);
 				TYPE_ASCOM_STATUS	CloseRemoteShutter(char *alpacaErrMsg);
+				TYPE_ASCOM_STATUS	StopRemoteShutter(char *alpacaErrMsg);
 
 				bool				cShutterInfoValid;
 				struct sockaddr_in	cShutterDeviceAddress;

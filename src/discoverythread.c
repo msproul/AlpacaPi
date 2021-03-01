@@ -234,22 +234,22 @@ static void	UpdateRemoteList(TYPE_REMOTE_DEV *newRemoteDevice)
 {
 int		iii;
 bool	newDevice;
-char	ipString[32];
-char	urlString[128];
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 	newDevice	=	true;
 
 //	if (newRemoteDevice->port != 6800)
-	{
+//	{
+//	char	ipString[32];
+//	char	urlString[128];
 //		inet_ntop(AF_INET, &newRemoteDevice->deviceAddress.sin_addr, ipString, INET_ADDRSTRLEN);
 //		sprintf(urlString, "%s:%d\t%s", ipString, newRemoteDevice->port, newRemoteDevice->deviceTypeStr);
 //		CONSOLE_DEBUG(urlString);
-
-	//	CONSOLE_DEBUG_W_STR("newRemoteDevice->deviceTypeStr\t=",	newRemoteDevice->deviceTypeStr);
-	//	CONSOLE_DEBUG_W_STR("newRemoteDevice->deviceNameStr\t=",	newRemoteDevice->deviceNameStr);
-	//	CONSOLE_DEBUG_W_NUM("newRemoteDevice->alpacaDeviceNum\t=",	newRemoteDevice->alpacaDeviceNum);
-	}
+//
+//		CONSOLE_DEBUG_W_STR("newRemoteDevice->deviceTypeStr\t=",	newRemoteDevice->deviceTypeStr);
+//		CONSOLE_DEBUG_W_STR("newRemoteDevice->deviceNameStr\t=",	newRemoteDevice->deviceNameStr);
+//		CONSOLE_DEBUG_W_NUM("newRemoteDevice->alpacaDeviceNum\t=",	newRemoteDevice->alpacaDeviceNum);
+//	}
 
 	//*	dont add myself to the list
 	if (newRemoteDevice->deviceAddress.sin_addr.s_addr == gMyIPaddress)
@@ -695,8 +695,6 @@ int				ii;
 	bool			domeInfo;
 	double			pressure_kPa;
 	double			humidity;
-	char			outputString[128];
-
 #endif // _ENABLE_CAMERA_
 
 //	CONSOLE_DEBUG(__FUNCTION__);

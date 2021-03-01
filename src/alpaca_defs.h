@@ -13,6 +13,7 @@
 //*	Jan 30,	2021	<MLS> Added TYPE_ImageArray structure
 //*	Feb  7,	2021	<MLS> Added TYPE_CommonProperties
 //*	Feb 12,	2021	<MLS> Added TYPE_CoverCalibrationProperties
+//*	Mar  1,	2021	<MLS> Added TYPE_ObsConditionProperties
 //*****************************************************************************
 //*	These are for my comment extraction program that sorts comments by date.
 //*	Jan  1,	2019	-----------------------------------------------------------
@@ -39,7 +40,7 @@
 
 #define	kApplicationName	"AlpacaPi"
 #define	kVersionString		"V0.4.0-beta"
-#define	kBuildNumber		97
+#define	kBuildNumber		98
 
 
 #define kAlpacaDiscoveryPORT	32227
@@ -231,14 +232,15 @@ typedef struct
 
 
 //*****************************************************************************
+#define	kCommonPropMaxStrLen	256
 typedef struct
 {
 	//*	ASCOM common properties
-	char	Description[256];
-	char	DriverInfo[256];
-	char	DriverVersion[256];
+	char	Description[kCommonPropMaxStrLen];
+	char	DriverInfo[kCommonPropMaxStrLen];
+	char	DriverVersion[kCommonPropMaxStrLen];
 	int		InterfaceVersion;
-	char	Name[256];
+	char	Name[kCommonPropMaxStrLen];
 
 } TYPE_CommonProperties;
 
@@ -460,6 +462,32 @@ typedef struct
 	double	StepSize;			//*	The minimum StepSize, in degrees.
 	double	TargetPosition;		//*	The destination position angle for Move() and MoveAbsolute().
 } TYPE_RotatorProperties;
+
+
+//*****************************************************************************
+typedef struct
+{
+	double	Averageperiod;			//*	Returns the time period over which observations will be averaged
+	double	Cloudcover;				//*	Returns the amount of sky obscured by cloud
+	double	Dewpoint;				//*	Returns the atmospheric dew point at the observatory
+	double	Humidity;				//*	Returns the atmospheric humidity at the observatory
+	double	Pressure_hPa;			//*	Returns the atmospheric pressure at the observatory.
+									//*	hectoPascals
+
+	double	RainRate;				//*	Returns the rain rate at the observatory.
+	double	SkyBrightness;			//*	Returns the sky brightness at the observatory
+	double	SkyQuality;				//*	Returns the sky quality at the observatory
+	double	SkyTemperature_DegC;	//*	Returns the sky temperature at the observatory
+	double	StarFWHM;				//*	Returns the seeing at the observatory
+	double	Temperature_DegC;		//*	Returns the temperature at the observatory
+	double	WindDirection;			//*	Returns the wind direction at the observatory
+	double	WindGust;				//*	Returns the peak 3 second wind gust at the observatory over the last 2 minutes
+	double	WindSpeed;				//*	Returns the wind speed at the observatory.
+
+//	double	sensordescription,		//*	Return a sensor description
+//	double	timesincelastupdate,	//*	Return the time since the sensor value was last updated
+
+} TYPE_ObsConditionProperties;
 
 
 #if 0

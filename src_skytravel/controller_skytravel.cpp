@@ -80,6 +80,7 @@ ControllerSkytravel::ControllerSkytravel(	const char *argWindowName)
 
 	cDomeAddressValid		=	false;
 	cTelescopeAddressValid	=	false;
+	cUpdateDelta			=	kDefaultUpdateDelta;
 
 	//*	dome specific stuff
 	//*	clear out all of the dome properties data
@@ -333,6 +334,11 @@ bool		foundSomething;
 		needToUpdate	=	true;
 	}
 
+	if (cFirstDataRead || (deltaSeconds >= cUpdateDelta))
+	{
+		needToUpdate	=	true;
+	}
+
 	if (foundSomething || needToUpdate)
 	{
 		cAlpacaListObjPtr->UpdateRemoteDeviceList();
@@ -342,6 +348,7 @@ bool		foundSomething;
 
 	if (needToUpdate)
 	{
+//		CONSOLE_DEBUG_W_NUM("Need to update", cDebugCounter++);
 		//*	here is where we query the devices for information
 
 		//----------------------------------------------------
@@ -483,6 +490,7 @@ bool	previousOnLineState;
 	previousOnLineState	=	cOnLine;
 	if (cDomeHas_readall)
 	{
+//		CONSOLE_DEBUG_W_STR(__FUNCTION__, "ReadAll");
 		validData	=	AlpacaGetStatus_ReadAll(&cDomeIpAddress, cDomeIpPort, "dome", cDomeAlpacaDeviceNum);
 	}
 	else
@@ -501,11 +509,11 @@ bool	previousOnLineState;
 		cOnLine	=	true;
 
 		//======================================================================
-//		cUpdateDelta	=	kDefaultUpdateDelta;
+		cUpdateDelta	=	kDefaultUpdateDelta;
 		if (cDomeProp.Slewing)
 		{
 			//*	if we slewing, we want to update more often
-//			cUpdateDelta	=	2;
+			cUpdateDelta	=	1;
 			SetWidgetText(kTab_ST_Dome, kDomeBox_CurPosition, "Slewing");
 		}
 		else if (cDomeProp.AtHome)
@@ -526,7 +534,7 @@ bool	previousOnLineState;
 		if ((cDomeProp.ShutterStatus == kShutterStatus_Opening) ||
 				(cDomeProp.ShutterStatus == kShutterStatus_Closing))
 		{
-//			cUpdateDelta	=	2;
+			cUpdateDelta	=	1;
 		}
 		SetWidgetBGColor(	kTab_SkyTravel,	kSkyTravel_DomeIndicator,	CV_RGB(64,	255,	64));
 	}

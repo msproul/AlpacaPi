@@ -292,8 +292,6 @@ ASI_ERROR_CODE		asiErrorCode;
 	ii	=	0;
 	while ((ii<8) && (cAsiCameraInfo.SupportedVideoFormat[ii] != ASI_IMG_END))
 	{
-	char	asiImageTypeString[16];
-
 		switch(cAsiCameraInfo.SupportedVideoFormat[ii])
 		{
 			case ASI_IMG_RAW8:

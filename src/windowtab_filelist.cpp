@@ -156,11 +156,15 @@ void	WindowTabFileList::ProcessButtonClick(const int buttonIdx)
 }
 
 //**************************************************************************************
-void	WindowTabFileList::ProcessDoubleClick(const int buttonIdx)
+void	WindowTabFileList::ProcessDoubleClick(	const int	widgetIdx,
+												const int	event,
+												const int	xxx,
+												const int	yyy,
+												const int	flags)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-	switch(buttonIdx)
+	switch(widgetIdx)
 	{
 		case kFileList_Refresh:
 		case kFileList_Title:
@@ -173,7 +177,7 @@ void	WindowTabFileList::ProcessDoubleClick(const int buttonIdx)
 			break;
 
 		default:
-			CONSOLE_DEBUG_W_NUM("double click on ", buttonIdx);
+			CONSOLE_DEBUG_W_NUM("double click on ", widgetIdx);
 			break;
 	}
 }

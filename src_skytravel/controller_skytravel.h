@@ -136,6 +136,7 @@ class ControllerSkytravel: public Controller
 				void				SetTelescopeIPaddress(TYPE_REMOTE_DEV *remoteDomeDevice);
 				bool				AlpacaGetDomeStatus(void);
 
+				uint32_t			cUpdateDelta;
 				bool				cDomeAddressValid;
 				sockaddr_in			cDomeIpAddress;
 				int					cDomeIpPort;
@@ -145,9 +146,9 @@ class ControllerSkytravel: public Controller
 
 				//----------------------------------------------------------
 				//*	these are copied direct from controller_dome
-				void			UpdateDomeAzimuth(const double newAzimuth);
-				void			UpdateShutterStatus(const int newShutterStatus);
-				void			UpdateShutterAltitude(const double newAltitude);
+				void				UpdateDomeAzimuth(const double newAzimuth);
+				void				UpdateShutterStatus(const int newShutterStatus);
+				void				UpdateShutterAltitude(const double newAltitude);
 
 
 
@@ -161,8 +162,8 @@ class ControllerSkytravel: public Controller
 				bool				cTelescopeHas_readall;
 
 				//----------------------------------------------------------
-				void			Update_TelescopeRtAscension(void);
-				void			Update_TelescopeDeclination(void);
+				void				Update_TelescopeRtAscension(void);
+				void				Update_TelescopeDeclination(void);
 
 				//-----------------------------------------------------
 				//*	ASCOM Dome properties

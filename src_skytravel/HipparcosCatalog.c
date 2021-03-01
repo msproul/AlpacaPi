@@ -367,7 +367,6 @@ size_t			bufferSize;
 int	ReadCommonStarNames(TYPE_CelestData	*hipStarData, long hipStarCount)
 {
 FILE	*filePointer;
-bool	validObject;
 char	lineBuff[512];
 char	filePath[128];
 int		iii;

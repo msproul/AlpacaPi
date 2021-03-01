@@ -30,6 +30,7 @@
 //*	May  8,	2020	<MLS> Added altitude processing
 //*	Dec  8,	2020	<MLS> Added OpenRemoteShutter() & CloseRemoteShutter()
 //*	Dec  8,	2020	<MLS> Remote Shutter open/close working
+//*	Feb 25,	2021	<MLS> Added StopRemoteShutter()
 //*****************************************************************************
 
 
@@ -147,6 +148,71 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 		CONSOLE_DEBUG("Using remote shutter info");
 		SJP_Init(&jsonParser);
 		sprintf(alpacaString,	"/api/v1/%s/%d/closeshutter", "shutter", 0);
+		validData	=	SendPutCommand(	&cShutterDeviceAddress,
+											cShutterPort,
+											alpacaString,
+											NULL,
+											&jsonParser);
+		if (validData)
+		{
+			jjj	=	0;
+			while (jjj<jsonParser.tokenCount_Data)
+			{
+				CONSOLE_DEBUG_W_STR(jsonParser.dataList[jjj].keyword, jsonParser.dataList[jjj].valueString);
+				if (strcasecmp(jsonParser.dataList[jjj].keyword, "ERRORNUMBER") == 0)
+				{
+					alpacaReturnCode	=	atoi(jsonParser.dataList[jjj].valueString);
+					if (alpacaReturnCode == 0)
+					{
+						alpacaErrCode	=	kASCOM_Err_Success;
+					}
+					else
+					{
+						alpacaErrCode	=	(TYPE_ASCOM_STATUS)alpacaReturnCode;
+					}
+				}
+				jjj++;
+			}
+		}
+		else
+		{
+			alpacaErrCode	=	kASCOM_Err_NotConnected;
+		}
+	}
+	else
+	{
+		alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Remote shutter not detected");
+	}
+#else
+
+	{
+		alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Remote shutter enabled");
+	}
+#endif	// _ENABLE_REMOTE_SHUTTER_
+
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	DomeDriver::StopRemoteShutter(char *alpacaErrMsg)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+#ifdef _ENABLE_REMOTE_SHUTTER_
+	if (cShutterInfoValid)
+	{
+	SJP_Parser_t		jsonParser;
+	bool				validData;
+	char				alpacaString[128];
+	int					jjj;
+	int					alpacaReturnCode;
+
+		CONSOLE_DEBUG("Using remote shutter info");
+		SJP_Init(&jsonParser);
+		sprintf(alpacaString,	"/api/v1/%s/%d/abortslew", "shutter", 0);
 		validData	=	SendPutCommand(	&cShutterDeviceAddress,
 											cShutterPort,
 											alpacaString,

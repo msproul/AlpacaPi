@@ -31,11 +31,13 @@
 //*	Jan  1,	2020	<MLS> Confirmed that atmosphere is in Hectopascals
 //*	Jan 24,	2020	<MLS> Fixed kiloPascals vs hectoPascals conversion issues
 //*	Apr 20,	2020	<MLS> Added Get_Readall()
-//*	Jun 27,	2020	<MLS> Fixed bug in Get_Timesincelastupdate()
+//*	Jun 27,	2020	<MLS> Fixed bug in Get_TimeSinceLastUpdate()
 //*	Jun 27,	2020	<MLS> Updated routine names to be more consistent
 //*	Sep  8,	2020	<MLS> Updated routines to return TYPE_ASCOM_STATUS
+//*	Mar  1,	2021	<MLS> Added GetSensorEnum() & GetSensorInfo()
+//*	Mar  1,	2021	<MLS> Added Put_AveragePeriod()
+//*	Mar  1,	2021	<MLS> CONFORM-observingconditions -> PASSED!!!!!!!!!!!!!!!!!!!!!
 //*****************************************************************************
-
 
 
 
@@ -151,15 +153,16 @@ int	ii;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
-	strcpy(cCommonProp.Name, "ObsConditionsDriver");
-	strcpy(cObsCondDescription, "outdoor conditions");
-	cCurrentPressure_kPa	=	0;		//*	kPa
-	cCurrentPressure_hPa	=	0;		//*	hPa
-	cCurrentTemp_DegC		=	0;		//*	degrees Centigrade
-	cCurrentHumidity		=	0;		//*	Percent (0 -> 100)
-	cSuccesfullReadCnt		=	0;		//*	used to know if we have active sensors
-	cTimeOfLastUpdate_secs	=	0;		//*	time in seconds
-	cObservCondState		=	kObservCondState_Startup;
+	strcpy(cCommonProp.Name,	"ObsConditionsDriver");
+//	strcpy(cObsCondDescription,	"outdoor conditions");
+
+	memset(&cObsConditionProp, 0, sizeof(TYPE_ObsConditionProperties));
+
+	cCurrentPressure_kPa			=	0;		//*	kPa
+	cSuccesfullReadCnt				=	0;		//*	used to know if we have active sensors
+	cTimeOfLastUpdate_secs			=	0;		//*	time in seconds
+	cObservCondState				=	kObservCondState_Startup;
+	cObsConditionProp.Averageperiod	=	(kAvgSampleCount * kSampleDetlaSecs * 1.0) / 60.0;
 
 	//*	the sub classes have to set this appropriately
 	cHasTempSensor			=	false;
@@ -258,23 +261,24 @@ double	humidityTotal;
 		temperatureTotal	+=	cTemperatureArray[ii];
 		humidityTotal		+=	cHumidityArray[ii];
 	}
-	cCurrentPressure_kPa	=	pressureTotal / kAvgSampleCount;
-	cCurrentPressure_hPa	=	cCurrentPressure_kPa * 10;
-	cCurrentTemp_DegC		=	temperatureTotal / kAvgSampleCount;
-	cCurrentHumidity		=	humidityTotal / kAvgSampleCount;
+	cCurrentPressure_kPa				=	pressureTotal / kAvgSampleCount;
+	cObsConditionProp.Pressure_hPa		=	cCurrentPressure_kPa * 10;
+	cObsConditionProp.Temperature_DegC	=	temperatureTotal / kAvgSampleCount;
+	cObsConditionProp.Humidity			=	humidityTotal / kAvgSampleCount;
+
 
 	//*	update the global copy
 
-	gEnvData.siteTemperature_degC	=	cCurrentTemp_DegC;
+	gEnvData.siteTemperature_degC	=	cObsConditionProp.Temperature_DegC;
 	gEnvData.sitePressure_kPa		=	cCurrentPressure_kPa;
-	gEnvData.siteHumidity			=	cCurrentHumidity;
+	gEnvData.siteHumidity			=	cObsConditionProp.Humidity;
 	gEnvData.siteDataValid			=	true;
 	gettimeofday(&gEnvData.siteLastUpdate, NULL);
 
 
-	gEnvData.domeTemperature_degC	=	cCurrentTemp_DegC;
+	gEnvData.domeTemperature_degC	=	cObsConditionProp.Temperature_DegC;
 	gEnvData.domePressure_kPa		=	cCurrentPressure_kPa;
-	gEnvData.domeHumidity			=	cCurrentHumidity;
+	gEnvData.domeHumidity			=	cObsConditionProp.Humidity;
 	gEnvData.domeDataValid			=	true;
 	gettimeofday(&gEnvData.domeLastUpdate, NULL);
 }
@@ -353,13 +357,11 @@ int					mySocket;
 											//*	Sets the time period over which observations will be averaged
 			if (reqData->get_putIndicator == 'G')
 			{
-				alpacaErrCode	=	Get_Averageperiod(reqData, alpacaErrMsg, gValueString);
+				alpacaErrCode	=	Get_AveragePeriod(reqData, alpacaErrMsg, gValueString);
 			}
 			else if (reqData->get_putIndicator == 'P')
 			{
-//+				alpacaErrCode	=	Put_averageperiod(reqData, alpacaErrMsg);
-				alpacaErrCode	=	kASCOM_Err_NotImplemented;
-				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not Implemented");
+				alpacaErrCode	=	Put_AveragePeriod(reqData, alpacaErrMsg);
 			}
 			break;
 
@@ -406,16 +408,27 @@ int					mySocket;
 			break;
 
 		case kCmd_ObservCond_winddirection:			//*	Returns the wind direction at the observatory
+			alpacaErrCode	=	Get_Winddirection(reqData, alpacaErrMsg, gValueString);
+			break;
+
 		case kCmd_ObservCond_windgust:				//*	Returns the peak 3 second wind gust at the observatory over the last 2 minutes
+			alpacaErrCode	=	Get_Windgust(reqData, alpacaErrMsg, gValueString);
+			break;
+
 		case kCmd_ObservCond_windspeed:				//*	Returns the wind speed at the observatory.
+			alpacaErrCode	=	Get_Windspeed(reqData, alpacaErrMsg, gValueString);
+			break;
+
 		case kCmd_ObservCond_refresh:				//*	Refreshes sensor values from hardware.
+			alpacaErrCode	=	Put_Refresh(reqData, alpacaErrMsg);
+			break;
+
 		case kCmd_ObservCond_sensordescription:		//*	Return a sensor description
-			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Command not implemented");
-			alpacaErrCode	=	kASCOM_Err_NotImplemented;
+			alpacaErrCode	=	Get_SensorDescription(reqData, alpacaErrMsg, gValueString);
 			break;
 
 		case kCmd_ObservCond_timesincelastupdate:	//*	Return the time since the sensor value was last updated
-			alpacaErrCode	=	Get_Timesincelastupdate(reqData, alpacaErrMsg, gValueString);
+			alpacaErrCode	=	Get_TimeSinceLastUpdate(reqData, alpacaErrMsg, gValueString);
 			break;
 
 		case kCmd_ObservCond_readall:
@@ -471,33 +484,68 @@ int					mySocket;
 }
 
 //*****************************************************************************
-TYPE_ASCOM_STATUS	ObsConditionsDriver::Get_Averageperiod(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
+TYPE_ASCOM_STATUS	ObsConditionsDriver::Get_AveragePeriod(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
-double				averagePeriod;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 	if (reqData != NULL)
 	{
-		averagePeriod	=	(kAvgSampleCount * kSampleDetlaSecs * 1.0) / 60.0;
 		JsonResponse_Add_Double(reqData->socket,
 								reqData->jsonTextBuffer,
 								kMaxJsonBuffLen,
 								responseString,
-								averagePeriod,
+								cObsConditionProp.Averageperiod,
 								INCLUDE_COMMA);
 
 		JsonResponse_Add_String(reqData->socket,
 								reqData->jsonTextBuffer,
 								kMaxJsonBuffLen,
-								"Units",
-								"Minutes",
+								"Units-period",
+								"Hours",
 								INCLUDE_COMMA);
 	}
 	else
 	{
 		alpacaErrCode	=	kASCOM_Err_InternalError;
 	}
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+//*	"AveragePeriod=0.15&ClientID=22&ClientTransactionID=33"
+//*****************************************************************************
+TYPE_ASCOM_STATUS	ObsConditionsDriver::Put_AveragePeriod(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
+bool					avgPeriodFound;
+char					avgPeriodString[32];
+double					avgPeriodValue;
+//	CONSOLE_DEBUG(__FUNCTION__);
+	avgPeriodFound	=	GetKeyWordArgument(	reqData->contentData,
+											"AveragePeriod",
+											avgPeriodString,
+											(sizeof(avgPeriodString) -1));
+	if (avgPeriodFound)
+	{
+		avgPeriodValue	=	atof(avgPeriodString);
+		if (avgPeriodValue >= 0.0)
+		{
+			cObsConditionProp.Averageperiod	=	avgPeriodValue;
+		}
+		else
+		{
+			alpacaErrCode	=	kASCOM_Err_InvalidValue;
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Average period out of range");
+		}
+	}
+	else
+	{
+		alpacaErrCode	=	kASCOM_Err_InvalidValue;
+	}
+	CONSOLE_DEBUG(__FUNCTION__);
+
+
 	return(alpacaErrCode);
 }
 
@@ -520,15 +568,31 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 }
 
 //*****************************************************************************
-TYPE_ASCOM_STATUS	ObsConditionsDriver::Get_Dewpoint(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
+TYPE_ASCOM_STATUS	ObsConditionsDriver::Get_Dewpoint(	TYPE_GetPutRequestData	*reqData,
+														char					*alpacaErrMsg,
+														const char				*responseString)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
+double				dewPointValue;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 	if (reqData != NULL)
 	{
-		alpacaErrCode	=	kASCOM_Err_NotImplemented;
-		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not Implemented");
+		if (cHasTempSensor && cHasHumidSensor)
+		{
+			dewPointValue	=	cObsConditionProp.Temperature_DegC - ((100.0 - cObsConditionProp.Humidity) / 5);
+			JsonResponse_Add_Double(reqData->socket,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									responseString,
+									dewPointValue,
+									INCLUDE_COMMA);
+		}
+		else
+		{
+			alpacaErrCode	=	kASCOM_Err_NotImplemented;
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not Implemented");
+		}
 	}
 	else
 	{
@@ -549,7 +613,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 								reqData->jsonTextBuffer,
 								kMaxJsonBuffLen,
 								responseString,
-								cCurrentHumidity,
+								cObsConditionProp.Humidity,
 								INCLUDE_COMMA);
 
 	#ifdef _ENABLE_PI_HAT_SESNSOR_BOARD_
@@ -584,13 +648,13 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 								reqData->jsonTextBuffer,
 								kMaxJsonBuffLen,
 								responseString,
-								cCurrentPressure_hPa,
+								cObsConditionProp.Pressure_hPa,
 								INCLUDE_COMMA);
 
 		JsonResponse_Add_String(reqData->socket,
 								reqData->jsonTextBuffer,
 								kMaxJsonBuffLen,
-								"Units",
+								"Units-pressure",
 								"hectoPascals",
 								INCLUDE_COMMA);
 	}
@@ -706,13 +770,13 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 									reqData->jsonTextBuffer,
 									kMaxJsonBuffLen,
 									responseString,
-									cCurrentTemp_DegC,
+									cObsConditionProp.Temperature_DegC,
 									INCLUDE_COMMA);
 
 			JsonResponse_Add_String(reqData->socket,
 									reqData->jsonTextBuffer,
 									kMaxJsonBuffLen,
-									"Units",
+									"Units-temperature",
 									"degrees C",
 									INCLUDE_COMMA);
 
@@ -739,16 +803,210 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 }
 
 
+
 //*****************************************************************************
-TYPE_ASCOM_STATUS	ObsConditionsDriver::Get_Timesincelastupdate(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
+TYPE_ASCOM_STATUS	ObsConditionsDriver::Get_Winddirection(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
-uint32_t			deltaTime_secs;
-time_t				currentTime_secs;
 
 	CONSOLE_DEBUG(__FUNCTION__);
-	if (reqData != NULL)
+	alpacaErrCode	=	kASCOM_Err_NotImplemented;
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	ObsConditionsDriver::Get_Windgust(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+	alpacaErrCode	=	kASCOM_Err_NotImplemented;
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	ObsConditionsDriver::Get_Windspeed(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+	alpacaErrCode	=	kASCOM_Err_NotImplemented;
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	ObsConditionsDriver::Put_Refresh(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+	alpacaErrCode	=	kASCOM_Err_NotImplemented;
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+typedef struct
+{
+	char					sensorName[16];
+	TYPE_ObsConSensorType	senrsorEnum;
+
+} TYPE_SENSOR_NAME;
+
+
+//*****************************************************************************
+const TYPE_SENSOR_NAME	gSensorNames[]	=
+{
+
+	{	"CloudCover",		kSensor_CloudCover		},
+	{	"DewPoint",			kSensor_DewPoint		},
+	{	"Humidity",			kSensor_Humidity		},
+	{	"Pressure",			kSensor_Pressure		},
+	{	"RainRate",			kSensor_RainRate		},
+	{	"SkyBrightness",	kSensor_SkyBrightness	},
+	{	"SkyQuality",		kSensor_SkyQuality		},
+	{	"StarFWHM",			kSensor_StarFWHM		},
+	{	"SkyTemperature",	kSensor_SkyTemperature	},
+	{	"Temperature",		kSensor_Temperature		},
+	{	"WindDirection",	kSensor_WindDirection	},
+	{	"WindGust",			kSensor_WindGust		},
+	{	"WindSpeed",		kSensor_WindSpeed		},
+	{	"",					kSensor_Invalid			}
+};
+
+
+//*****************************************************************************
+//*	returns the enum of the sensor name
+TYPE_ObsConSensorType		ObsConditionsDriver::GetSensorEnum(const char *sensorName)
+{
+TYPE_ObsConSensorType	mySensorType;
+int						iii;
+
+	mySensorType	=	kSensor_Invalid;
+	iii	=	0;
+	while ((mySensorType == kSensor_Invalid) && (gSensorNames[iii].senrsorEnum > kSensor_Invalid))
 	{
+		if (strcasecmp(sensorName, gSensorNames[iii].sensorName) == 0)
+		{
+			mySensorType	=	gSensorNames[iii].senrsorEnum;
+		}
+		iii++;
+	}
+
+	if (mySensorType == kSensor_Invalid)
+	{
+		CONSOLE_DEBUG_W_STR("Unknown sensor type=", sensorName);
+	}
+
+	return(mySensorType);
+}
+
+
+//*****************************************************************************
+//*	curl -X GET "https://virtserver.swaggerhub.com/ASCOMInitiative/api/v1/observingconditions/0/sensordescription?
+//*		SensorName=Pressure&ClientID=1&ClientTransactionID=1234"
+//*		-H "accept: application/json"
+//*
+//*****************************************************************************
+//*	CloudCover
+//*	DewPoint
+//*	Humidity
+//*	Pressure
+//*	RainRate
+//*	SkyBrightness
+//*	SkyQuality
+//*	StarFWHM
+//*	SkyTemperature
+//*	Temperature
+//*	WindDirection
+//*****************************************************************************
+TYPE_ASCOM_STATUS	ObsConditionsDriver::Get_SensorDescription(	TYPE_GetPutRequestData	*reqData,
+																char					*alpacaErrMsg,
+																const char				*responseString)
+{
+TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
+bool					sensorNameFound;
+char					sensorNameString[64];
+char					*spacePtr;
+char					theDescription[128];
+TYPE_ObsConSensorType	mySensorType;
+double					lastUpdateTime;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+	sensorNameFound	=	GetKeyWordArgument(	reqData->contentData,
+											"SensorName",
+											sensorNameString,
+											(sizeof(sensorNameString) -1));
+	if (sensorNameFound)
+	{
+		strcpy(theDescription,	"AlpacaPi - not implemented");
+
+		spacePtr	=	strchr(sensorNameString, 0x20);
+		if (spacePtr != NULL)
+		{
+			*spacePtr	=	0;
+		}
+		CONSOLE_DEBUG_W_STR("sensorNameString\t=", sensorNameString);
+		//*	translate sensor name to an enum
+		mySensorType	=	GetSensorEnum(sensorNameString);
+
+		alpacaErrCode	=	GetSensorInfo(mySensorType, theDescription, &lastUpdateTime);
+
+			JsonResponse_Add_String(reqData->socket,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									responseString,
+									theDescription,
+									INCLUDE_COMMA);
+	}
+	else
+	{
+		alpacaErrCode	=	kASCOM_Err_InvalidValue;
+	}
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	ObsConditionsDriver::Get_TimeSinceLastUpdate(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
+{
+TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
+uint32_t				deltaTime_secs;
+time_t					currentTime_secs;
+bool					sensorNameFound;
+char					sensorNameString[64];
+char					*spacePtr;
+char					theDescription[128];
+TYPE_ObsConSensorType	mySensorType;
+double					lastUpdateTime;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(reqData->contentData);
+	sensorNameFound	=	GetKeyWordArgument(	reqData->contentData,
+											"SensorName",
+											sensorNameString,
+											(sizeof(sensorNameString) -1));
+	if (sensorNameFound)
+	{
+		alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
+		strcpy(theDescription,	"AlpacaPi - not implemented");
+
+		spacePtr	=	strchr(sensorNameString, 0x20);
+		if (spacePtr != NULL)
+		{
+			*spacePtr	=	0;
+		}
+		CONSOLE_DEBUG_W_STR("sensorNameString\t=", sensorNameString);
+		//*	translate sensor name to an enum
+		mySensorType	=	GetSensorEnum(sensorNameString);
+
+		if (mySensorType > kSensor_Invalid)
+		{
+			alpacaErrCode	=	GetSensorInfo(mySensorType, theDescription, &lastUpdateTime);
+		}
+		else if (strlen(sensorNameString) == 0)
+		{
+			alpacaErrCode	=	kASCOM_Err_Success;
+		}
+
 		currentTime_secs	=	time(NULL);
 		deltaTime_secs		=	currentTime_secs - cTimeOfLastUpdate_secs;
 		JsonResponse_Add_Double(reqData->socket,
@@ -761,15 +1019,99 @@ time_t				currentTime_secs;
 		JsonResponse_Add_String(reqData->socket,
 								reqData->jsonTextBuffer,
 								kMaxJsonBuffLen,
-								"Units",
+								"Units-time",
 								"Minutes",
 								INCLUDE_COMMA);
 	}
 	else
 	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
+		CONSOLE_DEBUG(reqData->contentData);
+		alpacaErrCode	=	kASCOM_Err_InvalidValue;
 	}
 	return(alpacaErrCode);
+}
+
+
+//*****************************************************************************
+//*	this MUST be implemented by the sub class
+//*	change the ones that the sub class supports
+//*****************************************************************************
+TYPE_ASCOM_STATUS	ObsConditionsDriver::GetSensorInfo(	TYPE_ObsConSensorType sensorType,
+														char	*description,
+														double	*timeSinceLastUpdate)
+{
+TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
+
+	strcpy(description, "AlpacaPi: Not implemented");
+
+	switch(sensorType)
+	{
+		case kSensor_CloudCover:
+			alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
+			break;
+
+		case kSensor_DewPoint:
+			if (cHasTempSensor && cHasHumidSensor)
+			{
+				alpacaErrCode	=	kASCOM_Err_Success;
+				strcpy(description, "AlpacaPi: Calculated from temp/humidity");
+			}
+			else
+			{
+				alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
+			}
+			break;
+
+		case kSensor_Humidity:
+			alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
+			break;
+
+		case kSensor_Pressure:
+			alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
+			break;
+
+		case kSensor_RainRate:
+			alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
+			break;
+
+		case kSensor_SkyBrightness:
+			alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
+			break;
+
+		case kSensor_SkyQuality:
+			alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
+			break;
+
+		case kSensor_StarFWHM:
+			alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
+			break;
+
+		case kSensor_SkyTemperature:
+			alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
+			break;
+
+		case kSensor_Temperature:
+			alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
+			break;
+
+		case kSensor_WindDirection:
+			alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
+			break;
+
+		case kSensor_WindGust:
+			alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
+			break;
+
+		case kSensor_WindSpeed:
+			alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
+			break;
+
+		default:
+			alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
+			break;
+	}
+	return(alpacaErrCode);
+
 }
 
 //*****************************************************************************
@@ -784,7 +1126,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 		Get_Readall_Common(	reqData, alpacaErrMsg);
 
 
-		Get_Averageperiod(		reqData, alpacaErrMsg, "averageperiod");
+		Get_AveragePeriod(		reqData, alpacaErrMsg, "averageperiod");
 		Get_Cloudcover(			reqData, alpacaErrMsg, "cloudcover");
 		Get_Dewpoint(			reqData, alpacaErrMsg, "dewpoint");
 		Get_Humidity(			reqData, alpacaErrMsg, "humidity");
@@ -795,7 +1137,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 		Get_Skytemperature(		reqData, alpacaErrMsg, "skytemperature");
 		Get_Starfwhm(			reqData, alpacaErrMsg, "starfwhm");
 		Get_Temperature(		reqData, alpacaErrMsg, "temperature");
-		Get_Timesincelastupdate(reqData, alpacaErrMsg, "timesincelastupdate");
+//		Get_TimeSinceLastUpdate(reqData, alpacaErrMsg, "timesincelastupdate");
 
 
 		strcpy(alpacaErrMsg, "");
@@ -837,10 +1179,10 @@ double		pressure_PSI;
 			{
 				SocketWriteData(mySocketFD,	"<TR>\r\n");
 				SocketWriteData(mySocketFD,	"\t<TD>Temperature:</TD>");
-				sprintf(lineBuffer,	"\t<TD>%1.2f&deg;C</TD>",	cCurrentTemp_DegC);
+				sprintf(lineBuffer,	"\t<TD>%1.2f&deg;C</TD>",	cObsConditionProp.Temperature_DegC);
 				SocketWriteData(mySocketFD,	lineBuffer);
 
-				degreesF	=	(cCurrentTemp_DegC * 1.8) + 32.0;
+				degreesF	=	(cObsConditionProp.Temperature_DegC * 1.8) + 32.0;
 				sprintf(lineBuffer,	"\t<TD>%1.2f&deg;F</TD>",	degreesF);
 				SocketWriteData(mySocketFD,	lineBuffer);
 
@@ -866,7 +1208,7 @@ double		pressure_PSI;
 			{
 				SocketWriteData(mySocketFD,	"<TR>\r\n");
 				SocketWriteData(mySocketFD,	"\t<TD>Humidity:</TD>");
-				sprintf(lineBuffer,	"\t<TD>%1.1f %%</TD>",	cCurrentHumidity);
+				sprintf(lineBuffer,	"\t<TD>%1.1f %%</TD>",	cObsConditionProp.Humidity);
 				SocketWriteData(mySocketFD,	lineBuffer);
 				SocketWriteData(mySocketFD,	"</TR>\r\n");
 

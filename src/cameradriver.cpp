@@ -307,7 +307,6 @@ const TYPE_CmdEntry	gCameraCmdTable[]	=
 CameraDriver::CameraDriver(void)
 	:AlpacaDriver(kDeviceType_Camera)
 {
-int	iii;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 	//*	set all of the class data to known states
@@ -482,6 +481,7 @@ int	iii;
 	cFilterWheelInfoValid	=	false;
 
 #ifdef _ENABLE_FITS_
+int	iii;
 	//*	initialize the fits header data
 	for (iii = 0; iii < kMaxFitsRecords; iii++)
 	{

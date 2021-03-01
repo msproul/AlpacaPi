@@ -60,7 +60,6 @@ WindowTabDriverInfo::~WindowTabDriverInfo(void)
 void	WindowTabDriverInfo::SetupWindowControls(void)
 {
 int		yLoc;
-int		iii;
 int		textBoxHt;
 int		labelX;
 int		labelY;

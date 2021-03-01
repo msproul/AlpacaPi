@@ -199,7 +199,11 @@ class WindowTab
 //		virtual	void	DrawWindow(void);
 		virtual void	HandleKeyDown(const int keyPressed);
 		virtual	void	ProcessButtonClick(const int buttonIdx);
-		virtual	void	ProcessDoubleClick(const int buttonIdx);
+		virtual	void	ProcessDoubleClick(	const int	widgetIdx,
+											const int	event,
+											const int	xxx,
+											const int	yyy,
+											const int	flags);
 		virtual void	ProcessMouseEvent(const int widgetIdx, const int event, const int xxx, const int yyy, const int flags);
 		virtual void	ProcessMouseLeftButtonDown(const int widgetIdx, const int event, const int xxx, const int yyy, const int flags);
 		virtual void	ProcessMouseLeftButtonUp(const int widgetIdx, const int event, const int xxx, const int yyy, const int flags);

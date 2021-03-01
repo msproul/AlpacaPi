@@ -200,6 +200,10 @@ bool		validData;
 	if (deltaMilliSecs > 2000)
 	{
 		validData	=	AlpacaGetStatus();
+		if (validData == false)
+		{
+			CONSOLE_DEBUG("AlpacaGetStatus() fialed")
+		}
 		cLastUpdate_milliSecs	=	millis();
 	}
 }
@@ -367,6 +371,18 @@ bool	previousOnLineState;
 			SetWidgetBGColor(kTab_Telescope,	kTelescope_SlewingStatus,	CV_RGB(0,	0,	0));
 			SetWidgetTextColor(kTab_Telescope,	kTelescope_SlewingStatus,	CV_RGB(255,	0,	0));
 		}
+
+		SetWidgetChecked(kTab_Telescope,	kTelescope_TrackingRate_Sidereal,
+												(cTelescopeProp.TrackingRate == kDriveRate_driveSidereal));
+
+		SetWidgetChecked(kTab_Telescope,	kTelescope_TrackingRate_Lunar,
+												(cTelescopeProp.TrackingRate == kDriveRate_driveLunar));
+
+		SetWidgetChecked(kTab_Telescope,	kTelescope_TrackingRate_Solar,
+												(cTelescopeProp.TrackingRate == kDriveRate_driveSolar));
+
+		SetWidgetChecked(kTab_Telescope,	kTelescope_TrackingRate_King,
+												(cTelescopeProp.TrackingRate == kDriveRate_driveKing));
 	}
 	else
 	{

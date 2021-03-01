@@ -55,6 +55,7 @@ void			LoadAlpacaImage(void);
 void			AddLibraryVersion(const char *device, const char *manuf, const char *versionString);
 TYPE_DEVICETYPE	FindDeviceTypeByString(const char *deviceTypeStr);
 void			GetDeviceTypeFromEnum(const int deviceEnum, char *deviceTypeString);
+int				StartExtraListenThread(int exposureListenPort);
 
 extern	char		gWebTitle[];
 

@@ -102,7 +102,11 @@ class WindowTabCamSettings: public WindowTab
 		virtual	void	SetupWindowControls(void);
 //		virtual	void	DrawGraphWidget(IplImage *openCV_Image, const int widgetIdx);
 		virtual	void	ProcessButtonClick(const int buttonIdx);
-		virtual	void	ProcessDoubleClick(const int buttonIdx);
+		virtual	void	ProcessDoubleClick(	const int	widgetIdx,
+											const int	event,
+											const int	xxx,
+											const int	yyy,
+											const int	flags);
 
 				void	UpdateSettings_Object(const char *filePrefix);
 				void	SetObjectText(const int presetIndex);

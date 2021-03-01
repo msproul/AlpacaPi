@@ -51,6 +51,8 @@
 #define	kFontCnt	8
 #define	kButtonCnt	30
 
+#define	kDefaultUpdateDelta	5
+
 extern CvFont		gTextFont[kFontCnt];
 
 
@@ -176,7 +178,12 @@ class Controller
 				void	HandleKeyDownInTextWidget(const int tabNum, const int widgetIdx,const int keyPressed);
 
 		virtual	void	ProcessButtonClick(const int buttonIdx);
-		virtual	void	ProcessDoubleClick(const int buttonIdx);
+
+		virtual	void	ProcessDoubleClick(	const int	widgetIdx,
+											const int	event,
+											const int	xxx,
+											const int	yyy,
+											const int	flags);
 		virtual	void	RefreshWindow(void);
 
 				bool	AlpacaGetSupportedActions(		sockaddr_in	*deviceAddress,

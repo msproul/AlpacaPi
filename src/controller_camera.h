@@ -170,7 +170,6 @@ class ControllerCamera: public Controller
 				//*	download options
 				bool					cReadData8Bit;
 
-				char					cCameraName[48];
 				bool					cCameraState_imageready;
 
 				double					cExposure;

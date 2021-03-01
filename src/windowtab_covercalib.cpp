@@ -209,6 +209,10 @@ char	dataString[64];
 
 	sprintf(dataString, "Brightness=%d", newBrightnessValue);
 	validData	=	AlpacaSendPutCmd(	"covercalibrator", "calibratoron",	dataString);
+	if (validData == false)
+	{
+		CONSOLE_DEBUG("Command failure - calibratoron")
+	}
 }
 
 //*****************************************************************************

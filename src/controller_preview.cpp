@@ -159,7 +159,7 @@ void	ControllerPreview::UpdateRemoteAlpacaVersion(void)
 void	ControllerPreview::UpdateCameraName(void)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
-	SetWidgetText(kTab_Preview,		kPreviewBox_Title,	cCameraName);
+	SetWidgetText(kTab_Preview,		kPreviewBox_Title,	cCommonProp.Name);
 }
 
 //*****************************************************************************

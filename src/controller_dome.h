@@ -11,7 +11,7 @@
 	#include	"alpaca_defs.h"
 #endif // _ALPACA_DEFS_H_
 
-//#define	_ENABLE_EXTERNAL_SHUTTER_
+#define	_ENABLE_EXTERNAL_SHUTTER_
 //#define	_ENABLE_SLIT_TRACKER_
 
 

@@ -95,7 +95,6 @@ void	WindowTabAbout::SetupWindowControls(void)
 int		yLoc;
 int		availSpace;
 int		textBoxHt;
-int		logoHeight;
 int		iii;
 char	multiLineTextBuff[512];
 
@@ -119,13 +118,12 @@ char	multiLineTextBuff[512];
 	yLoc			+=	2;
 
 
-	logoHeight	=	SetAlpacaLogoBottomCorner(kAboutBox_AlpacaLogo);
+	SetAlpacaLogoBottomCorner(kAboutBox_AlpacaLogo);
 
 	availSpace		=	cHeight;
 	availSpace		-=	cTabVertOffset;
 	availSpace		-=	cTitleHeight + 2;
 	availSpace		-=	cTitleHeight + 2;
-//	availSpace		-=	logoHeight;
 	availSpace		-=	5;
 
 	textBoxHt		=	availSpace / 4;

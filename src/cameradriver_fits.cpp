@@ -2058,9 +2058,9 @@ char		moonPhaseStr[64];
 
 		// Additional returned values requiring conversion from UTC to local time zone
 		// on the Arduino.
-		time_t	moonQueryTime	=	mr.queryTime - utcOffset;
-		time_t	moonRiseTime	=	mr.riseTime - utcOffset;
-		time_t	moonSetTime		=	mr.setTime - utcOffset;
+//		time_t	moonQueryTime	=	mr.queryTime - utcOffset;
+//		time_t	moonRiseTime	=	mr.riseTime - utcOffset;
+//		time_t	moonSetTime		=	mr.setTime - utcOffset;
 
 		// Use the results as desired (use the utcOffset variables on the Arduino):
 //		printf("Moon rise/set nearest %.24s for latitude %.2f longitude %.2f:\n",

@@ -52,6 +52,10 @@ class ObsConditionsDriverRpi: public ObsConditionsDriver
 		virtual	double	ReadTemperature(void);
 		virtual	double	ReadHumidity(void);
 
+virtual	TYPE_ASCOM_STATUS	GetSensorInfo(			TYPE_ObsConSensorType sensorType,
+													char	*description,
+													double	*timeSinceLastUpdate);
+
 				void	ReadSenseHat_Pressure(void);
 				void	ReadSenseHat_Humidity(void);
 

@@ -191,7 +191,6 @@ int		clmnHdrWidth;
 	xLoc		+=	widgetWidth;
 	xLoc		+=	2;
 
-
 	yLoc			+=	cTitleHeight;
 	yLoc			+=	2;
 
@@ -206,8 +205,7 @@ int		clmnHdrWidth;
 //*****************************************************************************
 void	WindowTabAlpacaList::ProcessButtonClick(const int buttonIdx)
 {
-
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	switch(buttonIdx)
 	{
@@ -224,7 +222,7 @@ void	WindowTabAlpacaList::ProcessButtonClick(const int buttonIdx)
 		case kAlpacaList_ChkBx_IncManagment:
 			cIncludeManagment	=	!cIncludeManagment;
 			SetWidgetChecked(kAlpacaList_ChkBx_IncManagment, cIncludeManagment);
-		//*	fall through to force refresh
+			//*	fall through to force refresh
 
 		case kAlpacaList_Btn_Refresh:
 			ClearRemoteDeviceList();
@@ -238,18 +236,22 @@ void	WindowTabAlpacaList::ProcessButtonClick(const int buttonIdx)
 }
 
 //*****************************************************************************
-void	WindowTabAlpacaList::ProcessDoubleClick(const int buttonIdx)
+void	WindowTabAlpacaList::ProcessDoubleClick(	const int	widgetIdx,
+													const int	event,
+													const int	xxx,
+													const int	yyy,
+													const int	flags)
 {
 int		deviceIdx;
 char	windowName[64];
 char	myHostName[64];
 bool	windowExists;
 //	CONSOLE_DEBUG(__FUNCTION__);
-//	CONSOLE_DEBUG_W_NUM("buttonIdx\t=", buttonIdx);
+//	CONSOLE_DEBUG_W_NUM("widgetIdx\t=", widgetIdx);
 
-	if ((buttonIdx >= kAlpacaList_AlpacaDev_01) && (buttonIdx <= kAlpacaList_AlpacaDev_Last))
+	if ((widgetIdx >= kAlpacaList_AlpacaDev_01) && (widgetIdx <= kAlpacaList_AlpacaDev_Last))
 	{
-		deviceIdx	=	buttonIdx - kAlpacaList_AlpacaDev_01;
+		deviceIdx	=	widgetIdx - kAlpacaList_AlpacaDev_01;
 		if (deviceIdx >= 0)
 		{
 			if (strlen(cRemoteDeviceList[deviceIdx].hostName) > 0)
@@ -373,7 +375,7 @@ bool	windowExists;
 		}
 		else
 		{
-			CONSOLE_DEBUG_W_NUM("buttonIdx\t=", buttonIdx);
+			CONSOLE_DEBUG_W_NUM("widgetIdx\t=", widgetIdx);
 			CONSOLE_DEBUG_W_NUM("deviceIdx\t=", deviceIdx);
 			CONSOLE_ABORT(__FUNCTION__);
 		}

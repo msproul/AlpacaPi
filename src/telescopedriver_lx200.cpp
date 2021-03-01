@@ -85,7 +85,7 @@ TelescopeDriverLX200::TelescopeDriverLX200(DeviceConnectionType connectionType, 
 {
 
 	CONSOLE_DEBUG(__FUNCTION__);
-	strcpy(cCommonProp.Name,			"Telescope-LX200");
+	strcpy(cCommonProp.Name,		"Telescope-LX200");
 	strcpy(cCommonProp.Description,	"Telescope control using LX200 protocol");
 
 	//*	setup the options for this driver
@@ -94,18 +94,22 @@ TelescopeDriverLX200::TelescopeDriverLX200(DeviceConnectionType connectionType, 
 	cTelescopeProp.CanSync			=	true;
 	cTelescopeProp.CanSetTracking	=	true;
 	cTelescopeProp.CanMoveAxis		=	true;
+	cTelescopeProp.CanUnpark		=	true;
 
 
-	cTelescopeInfoValid			=	false;
-	cLX200_SocketErrCnt			=	0;
-	cLX200_OutOfBoundsCnt		=	0;
-	cTelescopeRA_String[0]		=	0;
-	cTelescopeDecl_String[0]	=	0;
+	cTelescopeInfoValid				=	false;
+	cLX200_SocketErrCnt				=	0;
+	cLX200_OutOfBoundsCnt			=	0;
+	cTelescopeRA_String[0]			=	0;
+	cTelescopeDecl_String[0]		=	0;
 
-	cQueuedCmdCnt	=	0;
+	cQueuedCmdCnt					=	0;
 
 
 	AlpacaConnect();
+
+	CONSOLE_DEBUG_W_NUM("cTelescopeProp.CanUnpark\t=", cTelescopeProp.CanUnpark);
+
 }
 
 //**************************************************************************************

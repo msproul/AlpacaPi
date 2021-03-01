@@ -279,6 +279,7 @@ TelescopeDriver::TelescopeDriver(void)
 	cTelescopeProp.SideOfPier		=	kPierSide_pierUnknown;
 	cTelescopeProp.TrackingRate		=	kDriveRate_driveSidereal;
 
+
 	cDeviceConnected				=	false;
 //+	cTrackingRates;
 //+	cUTCDate;
@@ -298,15 +299,7 @@ TelescopeDriver::TelescopeDriver(void)
 	cTelescopeProp.ApertureArea			=	M_PI * ((cTelescopeProp.ApertureDiameter/2) * (cTelescopeProp.ApertureDiameter/2));
 
 
-
-	//*	turn some of the features back on for CONFORM testing
-//	cCanSetTracking				=	true;
-//	cCanPark					=	true;
-//	cCanUnpark					=	true;
-//	cCanSync					=	true;
-//	cCanSlew					=	true;
-//	cCanSetRightAscensionRate	=	true;
-//	cCanSetDeclinationRate		=	true;
+	CONSOLE_DEBUG_W_NUM("cTelescopeProp.CanUnpark\t=", cTelescopeProp.CanUnpark);
 }
 
 //**************************************************************************************

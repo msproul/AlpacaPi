@@ -191,7 +191,6 @@ char	textString[64];
 //*****************************************************************************
 void	WindowTabSTsettings::ProcessButtonClick(const int buttonIdx)
 {
-int		earthDisplayOption;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 //	CONSOLE_DEBUG_W_NUM("buttonIdx\t=", buttonIdx);
@@ -208,7 +207,6 @@ int		earthDisplayOption;
 
 	}
 }
-
 
 //*****************************************************************************
 void	WindowTabSTsettings::UpdateSettings(void)

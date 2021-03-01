@@ -115,6 +115,7 @@ typedef struct
 	bool		includeBorder;
 	int			fontNum;
 	IplImage	*openCVimagePtr;
+	CvRect		roiRect;
 	bool		selected;			//*	radio buttons and check boxes
 	bool		highLiteEnabled;	//*	true if widget supports highlighting
 	double		sliderValue;		//*	uses for sliders, scroll bars, and progress bars

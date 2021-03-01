@@ -37,6 +37,9 @@
 //*	Jan 24,	2021	<PDB> Added Read_Gain()
 //*	Jan 25,	2021	<MLS> Upgraded to driver version 48.18081.20201206
 //*	Jan 25,	2021	<MLS> Integrating updates from <PDB>
+//*	Mar  1,	2021	<PDB> Changed to RAW8 for now
+//*	Mar  1,	2021	<PDB> Updated ToupTech code
+//*	Mar  1,	2021	<PDB> Camera working in 16bit mode, reading image properly
 //-----------------------------------------------------------------------------
 //*	Feb  4,	2120	<TODO> Add 16 bit readout to Toupcam
 //*	Feb 16,	2120	<TODO> Add gain setting to Toupcam
@@ -197,7 +200,7 @@ HRESULT			toupResult;
 		toupResult	=	Toupcam_StartPullModeWithCallback(cToupCamH, EventCallback, this);
 		if (FAILED(toupResult))
 		{
-
+			CONSOLE_DEBUG("FAILED PULLBACK");
 		}
 	}
 
@@ -592,7 +595,7 @@ bool	CameraDriverTOUP::GetImage_ROI_info(void)
 
 	memset(&cROIinfo, 0, sizeof(TYPE_IMAGE_ROI_Info));
 
-	cROIinfo.currentROIimageType	=	kImageType_RGB24;
+	cROIinfo.currentROIimageType	=	kImageType_RAW8; // PDB kImageType_RGB24;
 	cROIinfo.currentROIwidth		=	cCameraProp.CameraXsize;
 	cROIinfo.currentROIheight		=	cCameraProp.CameraYsize;
 	cROIinfo.currentROIbin			=	1;
@@ -607,14 +610,26 @@ bool	CameraDriverTOUP::GetImage_ROI_info(void)
 TYPE_ASCOM_STATUS	CameraDriverTOUP::Start_CameraExposure(int32_t exposureMicrosecs)
 {
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
+HRESULT					toupResult;
 
 	//*	this camera is a bit different, it is ALWAYS exposing,
-//*	istrigger
+	//*	istrigger
 
 	cInternalCameraState	=	kCameraState_TakingPicture;
 	alpacaErrCode			=	kASCOM_Err_Success;
 
 	gettimeofday(&cCameraProp.Lastexposure_StartTime, NULL);
+
+	// Still to add some error checking --PDB--
+	Toupcam_put_ExpoTime(cToupCamH, exposureMicrosecs);
+
+	// Trigger an exposure if triggercam
+
+	// Still to add some error checking --PDB--
+	if (cIsTriggerCam == true)
+	{
+		toupResult	=	Toupcam_Trigger(cToupCamH, 1);
+	}
 
 	return(alpacaErrCode);
 }
@@ -683,10 +698,7 @@ TYPE_ASCOM_STATUS	CameraDriverTOUP::SetImageType(TYPE_IMAGE_TYPE newImageType)
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
 int					bitDepth;
 HRESULT				toupResult;
-
-
-	CONSOLE_DEBUG(__FUNCTION__);
-	if (cToupCamH != NULL)
+if (cToupCamH != NULL)
 	{
 		bitDepth	=	-1;
 		toupResult	=	Toupcam_get_Option(cToupCamH, TOUPCAM_OPTION_BITDEPTH, &bitDepth);
@@ -914,48 +926,8 @@ HRESULT				toupResult;
 
 	if ((cToupCamH != NULL) && (cCameraDataBuffer != NULL))
 	{
-		//*	we do not want to read the image if an image save is in progress
-		toupResult	=	Toupcam_PullImageV2(cToupCamH, cCameraDataBuffer, 24, &toupFrameInfo);
-		if (SUCCEEDED(toupResult))
-		{
-			CONSOLE_DEBUG_W_HEX("toupFrameInfo.flag\t\t=",		toupFrameInfo.flag);
-			CONSOLE_DEBUG_W_NUM("toupFrameInfo.timestamp\t=",	toupFrameInfo.timestamp);
-			if (cCameraAutoExposure)
-			{
-				cCurrentExposure_us						=	cToupAutoExpTime_us;
-				cCameraProp.Lastexposure_duration_us	=	cToupAutoExpTime_us;
-			}
-
 			cNewImageReadyToDisplay	=	true;
-//			if (cInternalCameraState == kCameraState_TakingPicture)
-//			{
 				cToupPicReady	=	false;
-//			}
-			//*	get the frame rate: framerate (fps) = Frame * 1000.0 / nTime
-			// unsigned	nFrame;
-			// unsigned	nTime;
-			// unsigned	nTotalFrame;
-		//	double		myFrameRate;
-// 			toupResult	=	Toupcam_get_FrameRate(cToupCamH, &nFrame, &nTime, &nTotalFrame);
-// 			if (SUCCEEDED(toupResult))
-// 			{
-// 		//		myFrameRate	=	(nFrame * 1000.0) / nTime;
-// 			//	CONSOLE_DEBUG_W_NUM("nFrame\t=",		nFrame);
-// 			//	CONSOLE_DEBUG_W_NUM("nTime\t\t=",		nTime);
-// 			//	CONSOLE_DEBUG_W_NUM("nTotalFrame\t=",	nTotalFrame);
-// //						CONSOLE_DEBUG_W_DBL("myFrameRate\t=",	myFrameRate);
-// 			}
-		}
-		else
-		{
-			CONSOLE_DEBUG_W_HEX("failed to pull image, toupResult = ", toupResult);
-			switch(toupResult)
-			{
-				case E_FAIL:			CONSOLE_DEBUG("Unspecified failure");			break;
-				case E_ACCESSDENIED:	CONSOLE_DEBUG("General access denied error");	break;
-			}
-			alpacaErrCode	=	kASCOM_Err_FailedUnknown;
-		}
 	}
 	else
 	{
@@ -996,10 +968,19 @@ HRESULT				toupResult;
 
 		case TOUPCAM_EVENT_IMAGE:			//*	live image arrived, use Toupcam_PullImage to get this image
 //			CONSOLE_DEBUG("TOUPCAM_EVENT_IMAGE");
+// Think it is better move this code out of the call back function
+// Probable better place is read_imagedata function, but then some
+// indicator should be set here that read_imageda should handle the pull_image
+//
+// PDB
+
 			if ((cToupCamH != NULL) && (cCameraDataBuffer != NULL))
 			{
 				//*	we do not want to read the image if an image save is in progress
-				toupResult	=	Toupcam_PullImageV2(cToupCamH, cCameraDataBuffer, 24, &toupFrameInfo);
+
+				// Hardcoded 16bit for now. Must be changed to the proper value based on camerasetting
+				// To be done -PDB-
+				toupResult	=	Toupcam_PullImageV2(cToupCamH, cCameraDataBuffer, 16, &toupFrameInfo);
 				if (SUCCEEDED(toupResult))
 				{
 				//	CONSOLE_DEBUG_W_HEX("toupFrameInfo.flag\t\t=",		toupFrameInfo.flag);

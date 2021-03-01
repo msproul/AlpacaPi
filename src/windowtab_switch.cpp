@@ -19,6 +19,7 @@
 //*	Edit History
 //*****************************************************************************
 //*	Feb 29,	2020	<MLS> Created windowtab_switch.cpp
+//*	Feb 28,	2021	<MLS> Added TurnAllSwitchesOff()
 //*****************************************************************************
 
 #ifdef _ENABLE_CTRL_SWITCHES_
@@ -103,23 +104,23 @@ int		iii;
 	while (switchNumber <= kMaxSwitchControlBoxes)
 	{
 		//*	first the button number box
-		SetWidget(				(boxNumber + 0),	boxLeft,			yLoc,		numberWidth,	cBtnHeight);
+		SetWidget(				(boxNumber + 0),	boxLeft,		yLoc,		numberWidth,	cBtnHeight);
 		SetWidgetNumber(		(boxNumber + 0),	switchNumber);
 		SetWidgetFont(			(boxNumber + 0),	kFont_Medium);
 
 		//*	now the name
-		SetWidget(				(boxNumber + 1),	nameLeft,			yLoc,		nameWidth,		cBtnHeight);
+		SetWidget(				(boxNumber + 1),	nameLeft,		yLoc,		nameWidth,		cBtnHeight);
 		SetWidgetFont(			(boxNumber + 1),	kFont_Medium);
 		SetWidgetText(			(boxNumber + 1),	"-----");
 
 		//*	now the description
-		SetWidget(				(boxNumber + 2),	descLeft,	yLoc,		descWidth,		cBtnHeight);
+		SetWidget(				(boxNumber + 2),	descLeft,		yLoc,		descWidth,		cBtnHeight);
 		SetWidgetFont(			(boxNumber + 2),	kFont_Medium);
 		SetWidgetJustification(	(boxNumber + 2),	kJustification_Left);
 		SetWidgetText(			(boxNumber + 2),	"-----------");
 
 		//*	and the state
-		SetWidget(				(boxNumber + 3),	stateLeft,			yLoc,		btnWidth,		cBtnHeight);
+		SetWidget(				(boxNumber + 3),	stateLeft,		yLoc,		btnWidth,		cBtnHeight);
 		SetWidgetType(			(boxNumber + 3),	kWidgetType_Button);
 		SetWidgetFont(			(boxNumber + 3),	kFont_Medium);
 		SetWidgetText(			(boxNumber + 3),	"OFF");
@@ -137,6 +138,19 @@ int		iii;
 	{
 		SetWidgetValid(iii, false);
 	}
+
+	yLoc			+=	4;
+
+	CONSOLE_DEBUG_W_NUM("boxLeft\t",	boxLeft);
+	CONSOLE_DEBUG_W_NUM("yLoc\t",		yLoc);
+	SetWidget(			kSwitchBox_AllOff,	boxLeft,			yLoc,		descWidth,		cBtnHeight);
+	SetWidgetType(		kSwitchBox_AllOff,	kWidgetType_Button);
+	SetWidgetFont(		kSwitchBox_AllOff,	kFont_Medium);
+	SetWidgetText(		kSwitchBox_AllOff,	"ALL OFF");
+	SetWidgetBGColor(	kSwitchBox_AllOff,	CV_RGB(255, 255, 255));
+	SetWidgetValid(		kSwitchBox_AllOff, true);
+
+
 
 	cFirstRead	=	true;
 
@@ -212,6 +226,9 @@ void	WindowTabSwitch::ProcessButtonClick(const int buttonIdx)
 		case kSwitchBox_State14:	ToggleSwitchState(13);	break;
 		case kSwitchBox_State15:	ToggleSwitchState(14);	break;
 		case kSwitchBox_State16:	ToggleSwitchState(15);	break;
+
+		case kSwitchBox_AllOff:		TurnAllSwitchesOff();	break;
+
 	}
 	DisplayLastAlpacaCommand();
 }
@@ -235,10 +252,11 @@ void	WindowTabSwitch::SetActiveSwitchCount(const int validSwitches)
 int		iii;
 int		boxNum;
 
-	CONSOLE_DEBUG(__FUNCTION__);
-	CONSOLE_DEBUG_W_NUM("validSwitches\t=", validSwitches);
+//	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG_W_NUM("validSwitches\t=", validSwitches);
 
-	boxNum	=	kSwitchBox_Switch01;
+	cValidSwitchCount	=	validSwitches;
+	boxNum				=	kSwitchBox_Switch01;
 	for (iii=0; iii<validSwitches; iii++)
 	{
 		SetWidgetValid(boxNum++, true);
@@ -247,6 +265,24 @@ int		boxNum;
 		SetWidgetValid(boxNum++, true);
 	}
 	CONSOLE_DEBUG(__FUNCTION__);
+}
+
+//*****************************************************************************
+void	WindowTabSwitch::TurnAllSwitchesOff(void)
+{
+int		switchNum;
+bool	validData;
+char	dataString[128];
+bool	currentState;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	for (switchNum=0; switchNum<cValidSwitchCount; switchNum++)
+	{
+		sprintf(dataString,		"Id=%d&State=false", switchNum);
+//		CONSOLE_DEBUG_W_STR("dataString=", dataString);
+		validData	=	AlpacaSendPutCmd(	"switch",	"setswitch",		dataString);
+	}
 }
 
 

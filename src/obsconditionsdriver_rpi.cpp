@@ -77,7 +77,7 @@ ObsConditionsDriverRpi::ObsConditionsDriverRpi(const int argDevNum)
 
 
 #ifdef _ENABLE_RTIMULib_
-	strcpy(cObsCondDescription, "dome conditions");
+	strcpy(cCommonProp.Description, "R-Pi dome conditions");
 //	strcat(cCommonProp.Name, "-RTIMULib");
 
 	cHasTempSensor			=	true;
@@ -192,6 +192,86 @@ RTIMU_DATA	imuData;
 }
 
 
+//*****************************************************************************
+//*	this MUST be implemented by the sub class
+//*	change the ones that the sub class supports
+//*****************************************************************************
+TYPE_ASCOM_STATUS	ObsConditionsDriverRpi::GetSensorInfo(	TYPE_ObsConSensorType sensorType,
+														char	*description,
+														double	*timeSinceLastUpdate)
+{
+TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
+
+	strcpy(description, "AlpacaPi: Not implemented");
+
+	switch(sensorType)
+	{
+		case kSensor_CloudCover:
+			alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
+			break;
+
+		case kSensor_DewPoint:
+			alpacaErrCode	=	kASCOM_Err_Success;
+			strcpy(description, "AlpacaPi: Calculated from temp/humidity");
+			break;
+
+		case kSensor_Humidity:
+			alpacaErrCode	=	kASCOM_Err_Success;
+			strcpy(description, "AlpacaPi: Raspberry Pi sense-hat");
+			*timeSinceLastUpdate	=	1.234;
+			break;
+
+		case kSensor_Pressure:
+			alpacaErrCode	=	kASCOM_Err_Success;
+			strcpy(description, "AlpacaPi: Raspberry Pi sense-hat");
+			*timeSinceLastUpdate	=	1.234;
+			break;
+
+		case kSensor_RainRate:
+			alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
+			break;
+
+		case kSensor_SkyBrightness:
+			alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
+			break;
+
+		case kSensor_SkyQuality:
+			alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
+			break;
+
+		case kSensor_StarFWHM:
+			alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
+			break;
+
+		case kSensor_SkyTemperature:
+			alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
+			break;
+
+		case kSensor_Temperature:
+			alpacaErrCode	=	kASCOM_Err_Success;
+			strcpy(description, "AlpacaPi: Raspberry Pi sense-hat");
+			*timeSinceLastUpdate	=	1.234;
+			break;
+
+		case kSensor_WindDirection:
+			alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
+			break;
+
+		case kSensor_WindGust:
+			alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
+			break;
+
+		case kSensor_WindSpeed:
+			alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
+			break;
+
+		default:
+			alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
+			break;
+	}
+	return(alpacaErrCode);
+
+}
 
 
 #pragma mark -
@@ -301,10 +381,12 @@ int		loopCntr;
 
 
 					cCurrentPressure_kPa	=	pressure;
-					cCurrentTemp_DegC		=	temp_degC;
+					cObsConditionProp.Temperature_DegC		=	temp_degC;
 
 					//*	output
-					PrintValues("from press", cCurrentTemp_DegC, cCurrentPressure_kPa, cCurrentHumidity);
+					PrintValues("from press",	cObsConditionProp.Temperature_DegC,
+												cCurrentPressure_kPa,
+												cObsConditionProp.Humidity);
 
 					//*	Power down the device
 					i2c_smbus_write_byte_data(fd, CTRL_REG1, 0x00);
@@ -486,10 +568,12 @@ uint8_t	t_out_h;
 					//*	Calculate ambient humidity
 					double H_rH	=	(h_gradient_m * H_T_OUT) + h_intercept_c;
 
-					cCurrentTemp_DegC	=	temp_degC;
-					cCurrentHumidity	=	H_rH;
+					cObsConditionProp.Temperature_DegC	=	temp_degC;
+					cObsConditionProp.Humidity	=	H_rH;
 					//*	Output
-					PrintValues("from humid", cCurrentTemp_DegC, cCurrentPressure_kPa, cCurrentHumidity);
+					PrintValues("from humid",	cObsConditionProp.Temperature_DegC,
+												cCurrentPressure_kPa,
+												cObsConditionProp.Humidity);
 
 					//*	Power down the device
 					i2c_smbus_write_byte_data(fd, CTRL_REG1, 0x00);

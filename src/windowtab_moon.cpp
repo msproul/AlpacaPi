@@ -63,7 +63,6 @@ WindowTabMoon::~WindowTabMoon(void)
 void	WindowTabMoon::SetupWindowControls(void)
 {
 int		yLoc;
-int		xLoc;
 int		iii;
 int		saveYloc;
 int		moonXloc;
@@ -85,8 +84,9 @@ int		moonImageSize;
 	yLoc			+=	12;
 
 	iii	=	kMoon_AgeLbl;
-	while (iii < kMoon_AlpacaLogo)
+	while (iii < kMoon_Image)
 	{
+
 		SetWidget(				iii,	cClm1_offset,			yLoc,		cBtnWidth,		cBtnHeight);
 		SetWidgetType(			iii,	kWidgetType_Text);
 		SetWidgetJustification(	iii,	kJustification_Left);

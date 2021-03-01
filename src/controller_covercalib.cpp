@@ -210,14 +210,8 @@ bool		needToUpdate;
 //*	this should be over-ridden
 bool	ControllerCoverCalib::AlpacaGetStartupData(void)
 {
-SJP_Parser_t	jsonParser;
 bool			validData;
-char			alpacaString[128];
-char			dataString[128];
-int				jjj;
 int				integerValue;
-double			myDoubleValue;
-
 
 	CONSOLE_DEBUG(__FUNCTION__);
 	//===============================================================
@@ -234,6 +228,7 @@ double			myDoubleValue;
 		cReadFailureCnt++;
 	}
 
+	CONSOLE_DEBUG(__FUNCTION__);
 	//------------------------------------------------------------------
 	validData	=	AlpacaGetIntegerValue("covercalibrator", "coverstate",	NULL,	&integerValue);
 	if (validData)
@@ -248,7 +243,13 @@ double			myDoubleValue;
 			SetWidgetBGColor(	kTab_Cover,	kCoverCalib_Cover_Halt,		CV_RGB(100, 100, 100));
 		}
 	}
+	else
+	{
+		CONSOLE_DEBUG("Read failure - coverstate");
+		cReadFailureCnt++;
+	}
 
+	CONSOLE_DEBUG(__FUNCTION__);
 	//------------------------------------------------------------------
 	validData	=	AlpacaGetIntegerValue("covercalibrator", "calibratorstate",	NULL,	&integerValue);
 	if (validData)
@@ -269,11 +270,19 @@ double			myDoubleValue;
 			}
 		}
 	}
+	else
+	{
+		CONSOLE_DEBUG("Read failure - calibratorstate");
+		cReadFailureCnt++;
+	}
+	CONSOLE_DEBUG(__FUNCTION__);
+	return(validData);
 }
 
 //*****************************************************************************
 void	ControllerCoverCalib::UpdateCommonProperties(void)
 {
+	CONSOLE_DEBUG(__FUNCTION__);
 	SetWidgetText(	kTab_DriverInfo,	kDriverInfo_Name,				cCommonProp.Name);
 	SetWidgetText(	kTab_DriverInfo,	kDriverInfo_Description,		cCommonProp.Description);
 	SetWidgetText(	kTab_DriverInfo,	kDriverInfo_DriverInfo,			cCommonProp.DriverInfo);
@@ -284,6 +293,8 @@ void	ControllerCoverCalib::UpdateCommonProperties(void)
 //*****************************************************************************
 void	ControllerCoverCalib::UpdateSupportedActions(void)
 {
+	CONSOLE_DEBUG(__FUNCTION__);
+
 	SetWidgetValid(kTab_Cover,		kCoverCalib_Readall,		cHas_readall);
 	SetWidgetValid(kTab_DriverInfo,	kDriverInfo_Readall,		cHas_readall);
 
