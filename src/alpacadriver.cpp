@@ -2893,6 +2893,9 @@ int				cameraCnt;
 
 	//*********************************************************
 	StartDiscoveryListenThread(gAlpacaListenPort);
+#ifdef _JETSON_
+	StartExtraListenThread(4520);
+#endif
 
 	cameraCnt	=	CountDevicesByType(kDeviceType_Camera);
 	CONSOLE_DEBUG_W_NUM("cameraCnt=", cameraCnt);

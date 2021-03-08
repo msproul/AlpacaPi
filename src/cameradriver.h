@@ -336,6 +336,7 @@ class CameraDriver: public AlpacaDriver
 
 				void	SaveImageData(void);
 				void	SaveNextImage(void);
+				void	SetLastExposureInfo(void);
 	protected:
 		//*	Camera routines for all cameras
 		TYPE_ASCOM_STATUS	Get_binX(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
@@ -373,6 +374,8 @@ class CameraDriver: public AlpacaDriver
 
 		TYPE_ASCOM_STATUS	Get_PercentCompleted(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
 
+		TYPE_ASCOM_STATUS	Get_PixelSizeX(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+		TYPE_ASCOM_STATUS	Get_PixelSizeY(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
 
 
 		TYPE_ASCOM_STATUS	Put_Pulseguide(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
@@ -518,6 +521,7 @@ class CameraDriver: public AlpacaDriver
 		virtual	bool					IsCameraIDvalid(const int argCameraID);
 		virtual	void					ResetCamera(void);
 		virtual	TYPE_ASCOM_STATUS		Start_CameraExposure(int32_t exposureMicrosecs);
+				TYPE_ASCOM_STATUS		Start_CameraExposure(void);
 		virtual	TYPE_ASCOM_STATUS		Stop_Exposure(void);
 		virtual	TYPE_EXPOSURE_STATUS	Check_Exposure(bool verboseFlag = false);
 

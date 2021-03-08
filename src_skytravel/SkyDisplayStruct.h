@@ -23,18 +23,22 @@ typedef struct
 
 
 		//*	data
-		bool				dispLines;			//*	Constellation lines on/off
+		bool				dispLines;				//*	Constellation lines on/off
 		bool				dispNames;
-		bool				dispSymbols;		//*	Symbols on/off
-		bool				dispNGC;			//*	NGC objects on/off
-		bool				dispHIP;			//*	Hipparcos objects on/off
-		bool				dispDeep;			//*	Deep sky objects on/off
-		bool				dispYale;			//*	Deep Yale catalog on/off
+		bool				dispSymbols;			//*	Symbols on/off
+		bool				dispNGC;				//*	NGC objects on/off
+		bool				dispHIP;				//*	Hipparcos objects on/off
+		bool				dispDeep;				//*	Deep sky objects on/off
+		bool				dispYale;				//*	Deep Yale catalog on/off
 		//*	added by <MLS>
-		bool				dispMessier;		//*	Messier on/off
-		bool				dispConstOutlines;	//*	Constellation outlines on/off
-		bool				dispConstellations;	//*	Constellation vectors on/off
+		bool				dispMessier;			//*	Messier on/off
+		bool				dispConstOutlines;		//*	Constellation outlines on/off
+		bool				dispConstellations;		//*	Constellation vectors on/off
 		bool				dispCommonStarNames;	//*	Common star names on/off
+		bool				dispHYG_all;
+		bool				dispDraper;				//*	Henry Draper Catalog
+
+
 } TYPE_SkyDispOptions;
 
 

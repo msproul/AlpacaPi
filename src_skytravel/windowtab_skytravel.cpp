@@ -45,6 +45,8 @@
 //*	Feb 18,	2021	<MLS> Added DrawCommonStarNames()
 //*	Feb 18,	2021	<MLS> Added SetView_Index()
 //*	Feb 20,	2021	<MLS> Added display of NGC/IC numbers at high zoom level
+//*	Mar  2,	2021	<MLS> Fixed bug in SyncTelescopeToCenter()
+//*	Mar  4,	2021	<MLS> Added HYG data base which include HD stars (Henry Draper)
 //*****************************************************************************
 //*	TODO
 //*			star catalog lists
@@ -260,9 +262,19 @@ int		ii;
 	cYaleStarCount			=	0;
 
 
-	cTSCmessierOjbectPtr	=	NULL;
-	cTSCmessierOjbectCount	=	0;
+	cMessierOjbectPtr		=	NULL;
+	cMessierOjbectCount		=	0;
 
+	cDraperObjectPtr		=	NULL;
+	cDraperObjectCount		=	0;
+
+	cSpecialObjectPtr		=	NULL;
+	cSpecialObjectCount		=	0;
+
+#ifdef _ENABLE_HYG_
+	cHYGObjectPtr			=	NULL;
+	cHYGObjectCount			=	0;
+#endif // _ENABLE_HYG_
 
 	cMagmin					=	0;
 
@@ -319,6 +331,8 @@ int		ii;
  	cDispOptions.dispConstellations	=	true;
 	cDispOptions.dispHIP			=	false;
 	cDispOptions.dispCommonStarNames=	true;
+	cDispOptions.dispHYG_all		=	false;
+	cDispOptions.dispDraper			=	false;
 
 	cDispOptions.dispTelescope		=	false;
 	cDispOptions.dispDomeSlit		=	false;
@@ -388,19 +402,27 @@ int		ii;
 	CONSOLE_DEBUG_W_LONG("cNGCobjectCount\t=",	cNGCobjectCount);
 
 
-	cYaleStarDataPtr		=	ReadYaleStarCatalog(&cYaleStarCount);
+	cYaleStarDataPtr	=	ReadYaleStarCatalog(&cYaleStarCount);
 
-	cTSCmessierOjbectPtr	=	ReadTSCfile("skytravel_data/Messier.tsc", kDataSrc_TSC_Messier, &cTSCmessierOjbectCount);
+	cMessierOjbectPtr	=	ReadMessierData(		"skytravel_data/",	kDataSrc_Messier,	&cMessierOjbectCount);
+	cDraperObjectPtr	=	ReadHenryDraperCatalog(	"skytravel_data/",	kDataSrc_Draper,	&cDraperObjectCount);
+#ifdef _ENABLE_HYG_
+	cHYGObjectPtr		=	ReadHYGdata(			"skytravel_data/",	kDataSrc_HYG,		&cHYGObjectCount);
+#endif // _ENABLE_HYG_
 
-	cConstOutlinePtr		=	ReadConstellationOutlines("skytravel_data/constOutlines.txt", &cConstOutlineCount);
+	cConstOutlinePtr	=	ReadConstellationOutlines("skytravel_data/constOutlines.txt", &cConstOutlineCount);
 
-	CONSOLE_DEBUG(__FUNCTION__);
+
+
 
 	cHipObjectPtr		=	ReadHipparcosStarCatalog(&cHipObjectCount);
 	if (cHipObjectPtr != NULL)
 	{
 		ReadCommonStarNames(cHipObjectPtr, cHipObjectCount);
 	}
+
+
+	cSpecialObjectPtr	=	ReadSpecialData(kDataSrc_Special, &cSpecialObjectCount);
 
 
 	Precess();		//*	make sure all of the data bases are sorted properly
@@ -446,14 +468,25 @@ WindowTabSkyTravel::~WindowTabSkyTravel(void)
 		free(cYaleStarDataPtr);
 		cYaleStarDataPtr	=	NULL;
 	}
-	if (cTSCmessierOjbectPtr != NULL)
+	if (cMessierOjbectPtr != NULL)
 	{
-		free(cYaleStarDataPtr);
-		cYaleStarDataPtr	=	NULL;
+		free(cMessierOjbectPtr);
+		cMessierOjbectPtr	=	NULL;
+	}
+	if (cDraperObjectPtr != NULL)
+	{
+		free(cDraperObjectPtr);
+		cDraperObjectPtr	=	NULL;
 	}
 
+#ifdef _ENABLE_HYG_
+	if (cHYGObjectPtr != NULL)
+	{
+		free(cHYGObjectPtr);
+		cHYGObjectPtr	=	NULL;
+	}
+#endif // _ENABLE_HYG_
 }
-
 
 
 //**************************************************************************************
@@ -666,6 +699,7 @@ int		buttonWidthGoto;
 //-	cWorkSpaceTopOffset	=	yLoc;
 	skyBoxHeight		=	cHeight - yLoc;
 	CONSOLE_DEBUG_W_NUM("skyBoxHeight\t=", skyBoxHeight);
+	CONSOLE_DEBUG_W_NUM("cWorkSpaceTopOffset\t=", cWorkSpaceTopOffset);
 
 	SetWidget(				kSkyTravel_NightSky,	0,	yLoc,		cWidth,		skyBoxHeight);
 	SetWidgetType(			kSkyTravel_NightSky, 	kWidgetType_Graphic);
@@ -967,6 +1001,15 @@ bool			reDrawSky;
 			cAz0	=	kHALFPI - kEPSILON;
 			break;
 
+		case 'x':
+			cDispOptions.dispDraper		=	!cDispOptions.dispDraper;
+			break;
+
+		case 'y':
+			cDispOptions.dispHYG_all	=	!cDispOptions.dispHYG_all;
+			break;
+
+
 		case 'Y':	//*	Toggle Yale catalog
 			cDispOptions.dispYale		=	!cDispOptions.dispYale;
 			break;
@@ -1196,6 +1239,27 @@ char	searchText[128];
 	}
 }
 
+
+//*****************************************************************************
+//*	convert Right Ascension from radians to hours (0.0 -> 24.0)
+//*****************************************************************************
+static double	ConvertRightAscensionToHours(double rightAscen_radians)
+{
+double		myRightAscen_Hours;
+
+	//*	convert Right Ascension from radians to hours (0.0 -> 24.0)
+	myRightAscen_Hours	=	DEGREES(rightAscen_radians / 15.0);
+	while (myRightAscen_Hours < 0.0)
+	{
+		myRightAscen_Hours	+=	24.0;
+	}
+	while (myRightAscen_Hours >= 24.0)
+	{
+		myRightAscen_Hours	-=	24.0;
+	}
+	return(myRightAscen_Hours);
+}
+
 //*****************************************************************************
 //	RightAscension=12.123&Declination=34.123
 //*****************************************************************************
@@ -1204,8 +1268,11 @@ bool	WindowTabSkyTravel::SyncTelescopeToCenter(void)
 bool			validData;
 char			dataString[64];
 SJP_Parser_t	jsonParser;
+double			myRightAscen_Hours;
 
-	sprintf(dataString, "RightAscension=%f&Declination=%f", DEGREES(cRa0 / 15.0), DEGREES(cDecl0));
+	//*	convert Right Ascension from radians to hours (0.0 -> 24.0)
+	myRightAscen_Hours	=	ConvertRightAscensionToHours(cRa0);
+	sprintf(dataString, "RightAscension=%f&Declination=%f", myRightAscen_Hours, DEGREES(cDecl0));
 	CONSOLE_DEBUG_W_STR("Sending", dataString);
 
 	validData	=	SendAlpacaCmdToTelescope("synctocoordinates",	dataString, &jsonParser);
@@ -1221,24 +1288,15 @@ bool	WindowTabSkyTravel::SlewTelescopeToCenter(void)
 bool			validData;
 char			dataString[64];
 SJP_Parser_t	jsonParser;
-double			myRA_degrees;
+double			myRightAscen_Hours;
 
 
 //	CONSOLE_DEBUG_W_DBL("DEGREES(cRa0 / 15.0)\t=", DEGREES(cRa0 / 15.0));
 //	CONSOLE_DEBUG_W_DBL("DEGREES(cDecl0)\t\t=", DEGREES(cDecl0));
 
-	myRA_degrees	=	DEGREES(cRa0 / 15.0);
-	while (myRA_degrees < 0.0)
-	{
-		myRA_degrees	+=	24.0;
-	}
-	while (myRA_degrees >= 24.0)
-	{
-		myRA_degrees	-=	24.0;
-	}
-//	CONSOLE_DEBUG_W_DBL("myRA_degrees\t\t=", myRA_degrees);
+	myRightAscen_Hours	=	ConvertRightAscensionToHours(cRa0);
 
-	sprintf(dataString, "RightAscension=%f&Declination=%f", myRA_degrees, DEGREES(cDecl0));
+	sprintf(dataString, "RightAscension=%f&Declination=%f", myRightAscen_Hours, DEGREES(cDecl0));
 //	CONSOLE_DEBUG_W_STR("Sending", dataString);
 
 	validData	=	SendAlpacaCmdToTelescope("slewtocoordinatesasync",	dataString, &jsonParser);
@@ -1261,7 +1319,7 @@ char				ipAddrStr[32];
 	{
 		if (myControllerObj->cTelescopeAddressValid)
 		{
-			inet_ntop(AF_INET, &(myControllerObj->cDomeIpAddress.sin_addr), ipAddrStr, INET_ADDRSTRLEN);
+			inet_ntop(AF_INET, &(myControllerObj->cTelescopeIpAddress.sin_addr), ipAddrStr, INET_ADDRSTRLEN);
 			CONSOLE_DEBUG_W_STR("IP address=", ipAddrStr);
 
 			validData	=	AlpacaSendPutCmd(	&myControllerObj->cTelescopeIpAddress,
@@ -1320,6 +1378,7 @@ bool			reDrawSky;
 	{
 		ForceReDrawSky();
 
+		CONSOLE_DEBUG(__FUNCTION__);
 		printf("Center of screen=%07.4f:%07.4f\r\n", DEGREES(cRa0 / 15), DEGREES(cDecl0));
 
 	}
@@ -1333,9 +1392,12 @@ ControllerImage	*myControllerObj;
 
 	UpdateButtonStatus();
 
-	cCurrentTime.precflag	=	true;	//*	force precession
-	CalanendarTime(&cCurrentTime);
-	Precess();
+	if (cMouseDragInProgress == false)
+	{
+		cCurrentTime.precflag	=	true;	//*	force precession
+		CalanendarTime(&cCurrentTime);
+		Precess();
+	}
 
 	//*	now force the window to update
 	myControllerObj	=	(ControllerImage *)cParentObjPtr;
@@ -1499,10 +1561,15 @@ TYPE_SkyDispOptions	savedDispOptions;
 			}
 
 			//*	we cannot draw the hippacors database while dragging
-			savedDispOptions		=	cDispOptions;
-			cDispOptions.dispHIP	=	false;
-			cDispOptions.dispYale	=	false;
-			cDispOptions.dispNGC	=	false;
+			savedDispOptions			=	cDispOptions;
+			cDispOptions.dispHIP		=	false;
+			cDispOptions.dispYale		=	false;
+			cDispOptions.dispNGC		=	false;
+			if (cView_index > 3)
+			{
+				cDispOptions.dispHYG_all	=	false;
+				cDispOptions.dispDraper		=	false;
+			}
 
 			ForceReDrawSky();
 			//*	restore to original state
@@ -1956,6 +2023,28 @@ short		ii;
 	ConvertLatLonToRaDec(&cCurrLatLon, &cCurrentTime);
 
 //	DRAW HERE
+
+#ifdef _ENABLE_HYG_
+	//*	draw the dense stuff first so the other stuff is on top
+	//*--------------------------------------------------------------------------------
+	if (cDispOptions.dispHYG_all && (cHYGObjectPtr != NULL) && (cHYGObjectCount > 0))
+	{
+		PlotObjectsByDataSource(cHYGObjectPtr, cHYGObjectCount);
+	}
+#endif
+	//*--------------------------------------------------------------------------------
+	//*	draw the faint Hipparcos stuff first
+	if (cDispOptions.dispHIP && (cHipObjectPtr != NULL) && (cHipObjectCount > 0))
+	{
+		PlotObjectsByDataSource(cHipObjectPtr, cHipObjectCount);
+	}
+
+	if (cDispOptions.dispDraper && (cDraperObjectPtr != NULL) && (cDraperObjectCount > 0))
+	{
+		PlotObjectsByDataSource(cDraperObjectPtr, cDraperObjectCount);
+	}
+
+
 	//*--------------------------------------------------------------------------------
 	//*	if we are to much zoomed in, dont bother with the outlines
 	if (cDispOptions.dispConstOutlines && (cView_index > 4))
@@ -1969,12 +2058,6 @@ short		ii;
 		DrawConstellationVectors();
 	}
 
-	//*--------------------------------------------------------------------------------
-	//*	draw the faint Hipparcos stuff first
-	if (cDispOptions.dispHIP && (cHipObjectPtr != NULL) && (cHipObjectCount > 0))
-	{
-		PlotObjectsByDataSource(cHipObjectPtr, cHipObjectCount);
-	}
 	//*--------------------------------------------------------------------------------
 	//*	common star names are added to the Hipparcos data, we plot it separately
 	if (cDispOptions.dispCommonStarNames)
@@ -2020,10 +2103,17 @@ short		ii;
 	}
 
 	//*--------------------------------------------------------------------------------
-	if (cDispOptions.dispMessier && (cTSCmessierOjbectPtr != NULL) && (cTSCmessierOjbectCount > 0))
+	if (cDispOptions.dispMessier && (cMessierOjbectPtr != NULL) && (cMessierOjbectCount > 0))
 	{
 //		CONSOLE_DEBUG("Plotting Messier objects");
-		PlotObjectsByDataSource(cTSCmessierOjbectPtr, cTSCmessierOjbectCount);
+		PlotObjectsByDataSource(cMessierOjbectPtr, cMessierOjbectCount);
+	}
+
+
+	//*--------------------------------------------------------------------------------
+	if ((cSpecialObjectPtr != NULL) && (cSpecialObjectCount > 0))
+	{
+		PlotObjectsByDataSource(cSpecialObjectPtr, cSpecialObjectCount);
 	}
 
 
@@ -2073,6 +2163,8 @@ void	WindowTabSkyTravel::ResetView(void)
  	cDispOptions.dispConstellations		=	true;
 	cDispOptions.dispHIP				=	false;
 	cDispOptions.dispCommonStarNames	=	true;
+	cDispOptions.dispHYG_all			=	false;
+	cDispOptions.dispDraper				=	false;
 
 	if (cConstVecotrPtr != NULL)
 	{
@@ -2936,6 +3028,7 @@ bool			pressesOccurred;
 //unsigned long	startTicks, endTicks, elapsedTicks;
 //char			ticksMsg[64];
 
+	CONSOLE_DEBUG_W_NUM(__FUNCTION__, cDebugCounter++);
 
 //	startTicks		=	TickCount();
 	pressesOccurred	=	Precess(cStarDataPtr, cStarCount, kSortData, kPressionIfNeeded);
@@ -2945,25 +3038,47 @@ bool			pressesOccurred;
 	{
 //		CONSOLE_DEBUG("precess occurred");
 
+		//*	NGC objects
 		if ((cNGCobjectPtr != NULL) && (cNGCobjectCount > 0))
 		{
 			Precess(cNGCobjectPtr, cNGCobjectCount, kSortData, kForcePression);
-		//	Precess(cNGCobjectPtr, cNGCobjectCount, kDoNotSort, kForcePression);
 		}
 
+		//*	Yale start catalog
 		if ((cYaleStarDataPtr != NULL) && (cYaleStarCount > 0))
 		{
 			Precess(cYaleStarDataPtr, cYaleStarCount, kSortData, kForcePression);
 		}
 
+		//*	Hippacos database
 		if ((cHipObjectPtr != NULL) && (cHipObjectCount > 0))
 		{
 			Precess(cHipObjectPtr, cHipObjectCount, kSortData, kForcePression);
 		}
 
-		if ((cTSCmessierOjbectPtr != NULL) && (cTSCmessierOjbectCount > 0))
+		//*	Messier objects
+		if ((cMessierOjbectPtr != NULL) && (cMessierOjbectCount > 0))
 		{
-			Precess(cTSCmessierOjbectPtr, cTSCmessierOjbectCount, kSortData, kForcePression);
+			Precess(cMessierOjbectPtr, cMessierOjbectCount, kSortData, kForcePression);
+		}
+
+		//*	Henry Draper catalog
+		if ((cDraperObjectPtr != NULL) && (cDraperObjectCount > 0))
+		{
+			Precess(cDraperObjectPtr, cDraperObjectCount, kSortData, kForcePression);
+		}
+
+
+#ifdef _ENABLE_HYG_
+		if ((cHYGObjectPtr != NULL) && (cHYGObjectCount > 0))
+		{
+			Precess(cHYGObjectPtr, cHYGObjectCount, kSortData, kForcePression);
+		}
+#endif
+
+		if ((cSpecialObjectPtr != NULL) && (cSpecialObjectCount > 0))
+		{
+			Precess(cSpecialObjectPtr, cSpecialObjectCount, kSortData, kForcePression);
 		}
 
 
@@ -2971,6 +3086,8 @@ bool			pressesOccurred;
 		{
 			Precess(constStarPtr, constStarCount, kDoNotSort, kForcePression);
 		}
+
+
 
 
 //		endTicks		=	TickCount();
@@ -3099,7 +3216,8 @@ long	WindowTabSkyTravel::Search_and_plot(TYPE_CelestData	*objectptr,
 {
 bool				goflag;
 int			 		ii;
-int					magn, shape;
+int					magn;
+int					shape;
 int					xcoord;
 int					ycoord;
 double				temp,angle;
@@ -3109,6 +3227,7 @@ double				xangle,yangle,rangle;
 unsigned int		myCount;
 short				dataSource;
 char				labelString[32];
+bool				printLabel;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 //	CONSOLE_DEBUG_W_DBL("cDecl0\t\t=",		cDecl0);
@@ -3278,7 +3397,7 @@ char				labelString[32];
 							switch(dataSource)
 							{
 							//*	draw Messier M numbers
-								case kDataSrc_TSC_Messier:
+								case kDataSrc_Messier:
 									if (cNightMode)
 									{
 										SetColor(RED);
@@ -3331,6 +3450,49 @@ char				labelString[32];
 										}
 										DrawCString(xcoord + 10, ycoord, labelString);
 									}
+									break;
+
+								case kDataSrc_HYG:
+									if (cDispOptions.dispNames && (cView_index <= 3))
+									{
+										printLabel	=	false;
+										if ((objectptr[ii].id > 0) && (objectptr[ii].longName[0] > 0x20))
+										{
+											sprintf(labelString, "HD%ld-%s", objectptr[ii].id, objectptr[ii].longName);
+											printLabel	=	true;
+										}
+										else if (objectptr[ii].id > 0)
+										{
+											sprintf(labelString, "HD%ld", objectptr[ii].id);
+											printLabel	=	true;
+										}
+										else if (objectptr[ii].longName[0] > 0x20)
+										{
+											sprintf(labelString, "%s", objectptr[ii].longName);
+											printLabel	=	true;
+										}
+										if (printLabel)
+										{
+											SetColor(RED);
+											DrawCString(xcoord + 10, ycoord + 12, labelString);
+										//	CONSOLE_DEBUG_W_NUM("ii         \t=",	ii)
+										//	CONSOLE_DEBUG_W_NUM("id         \t=",	objectptr[ii].id)
+										//	CONSOLE_DEBUG_W_STR("longName   \t=",	objectptr[ii].longName)
+										//	CONSOLE_DEBUG_W_STR("labelString\t=",	labelString)
+										}
+									}
+									break;
+
+								case kDataSrc_Draper:
+									if (cDispOptions.dispNames && (cView_index <= 2))
+									{
+										SetColor(GREEN);
+										DrawCString(xcoord + 10, ycoord, objectptr[ii].longName);
+									}
+									break;
+
+								case kDataSrc_Special:
+									DrawCString(xcoord + 10, ycoord, objectptr[ii].longName);
 									break;
 							}
 							myCount++;
@@ -5211,22 +5373,22 @@ long	hippObjectId;
 
 	//-------------------------------------------------------------------------------
 	//*	look for messier objects
-	if ((foundSomething == false) && (cTSCmessierOjbectPtr != NULL) && (cTSCmessierOjbectCount > 0))
+	if ((foundSomething == false) && (cMessierOjbectPtr != NULL) && (cMessierOjbectCount > 0))
 	{
 		if ((firstChar == 'M') && isdigit(objectName[1]))
 		{
 			//*	ok, lets look
 			iii	=	0;
-			while ((foundSomething == false) && (iii < cTSCmessierOjbectCount))
+			while ((foundSomething == false) && (iii < cMessierOjbectCount))
 			{
-                if (strcasecmp(objectName, cTSCmessierOjbectPtr[iii].shortName) == 0)
+                if (strcasecmp(objectName, cMessierOjbectPtr[iii].shortName) == 0)
                 {
 					CONSOLE_DEBUG("found in messier");
-					newRA	=	cTSCmessierOjbectPtr[iii].org_ra;
-					newDec	=	cTSCmessierOjbectPtr[iii].org_decl;
+					newRA	=	cMessierOjbectPtr[iii].org_ra;
+					newDec	=	cMessierOjbectPtr[iii].org_decl;
 
 					strcpy(database, "Messier catalog");
-					strcpy(foundName, cTSCmessierOjbectPtr[iii].shortName);;
+					strcpy(foundName, cMessierOjbectPtr[iii].shortName);;
 
 					cDispOptions.dispMessier	=	true;
 					foundSomething				=	true;
@@ -5266,7 +5428,11 @@ long	hippObjectId;
 					}
 
 					cDispOptions.dispHIP	=	true;
-					SetView_Index(3);
+
+					if (cView_index > 3)
+					{
+						SetView_Index(3);
+					}
 					foundSomething			=	true;
                 }
                 iii++;
@@ -5341,6 +5507,76 @@ long	hippObjectId;
 		}
 	}
 
+	//-------------------------------------------------------------------------------
+	//*	check to see if they specified an Henry Draper lists
+	if (strncasecmp(objectName, "HD", 2) == 0)
+	{
+		CONSOLE_DEBUG("looking for henry draper objects");
+		if ((cDraperObjectPtr != NULL) && (cDraperObjectCount > 0))
+		{
+			argPtr	=	objectName;
+			argPtr	+=	2;
+			while (*argPtr == 0x20)
+			{
+				argPtr++;
+			}
+			objectIDnum	=	atoi(argPtr);
+			iii			=	0;
+			CONSOLE_DEBUG_W_NUM("looking for HD", objectIDnum);
+			while ((foundSomething == false) && (iii < cDraperObjectCount))
+			{
+				if ((objectIDnum == cDraperObjectPtr[iii].id))
+				{
+					newRA	=	cDraperObjectPtr[iii].org_ra;
+					newDec	=	cDraperObjectPtr[iii].org_decl;
+
+					strcpy(database, "HD");
+					sprintf(foundName, "HD-%d mag=%f2.1", objectIDnum, cDraperObjectPtr[iii].realMagnitude);;
+					cDispOptions.dispNGC	=	true;
+					foundSomething			=	true;
+			//		DumpCelestDataStruct(__FUNCTION__, &cDraperObjectPtr[iii]);
+				}
+				iii++;
+			}
+		}
+	}
+
+
+#ifdef _ENABLE_HYG_
+	//-------------------------------------------------------------------------------
+	//*	check to see if they specified an Henry Draper lists
+	if (strncasecmp(objectName, "HD", 2) == 0)
+	{
+		CONSOLE_DEBUG("looking for henry draper objects")
+		if ((cHYGObjectPtr != NULL) && (cHYGObjectCount > 0))
+		{
+			argPtr	=	objectName;
+			argPtr	+=	2;
+			while (*argPtr == 0x20)
+			{
+				argPtr++;
+			}
+			objectIDnum	=	atoi(argPtr);
+			iii			=	0;
+			while ((foundSomething == false) && (iii < cHYGObjectCount))
+			{
+			//	if ((objectIDnum == cHYGObjectPtr[iii].id) && (cHYGObjectPtr[iii].dataSrc == kDataSrc_NGC2000IC))
+				if ((objectIDnum == cHYGObjectPtr[iii].id))
+				{
+					newRA	=	cHYGObjectPtr[iii].org_ra;
+					newDec	=	cHYGObjectPtr[iii].org_decl;
+
+					strcpy(database, "IC");
+					sprintf(foundName, "IC-%d mag=%f2.1", objectIDnum, cHYGObjectPtr[iii].realMagnitude);;
+					cDispOptions.dispNGC	=	true;
+					foundSomething			=	true;
+			//		DumpCelestDataStruct(__FUNCTION__, &cHYGObjectPtr[iii]);
+				}
+				iii++;
+			}
+		}
+	}
+#endif // _ENABLE_HYG_
 
 
 	if (foundSomething)

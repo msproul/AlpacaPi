@@ -24,6 +24,11 @@ TYPE_CelestData		*GetDefaultStarData(long *objectCount, TYPE_Time *timePtr);
 long				GetFileSize(const char *filePath);
 
 TYPE_CelestData		*ReadTSCfile(const char *filePath, int dataSource, long *objectCount);
+TYPE_CelestData		*ReadMessierData(const char *filePath, int dataSource, long *objectCount);
+TYPE_CelestData		*ReadHYGdata(const char *folderPath, int dataSource, long *objectCount);
+TYPE_CelestData		*ReadHenryDraperCatalog(const char *folderPath, int dataSource, long *objectCount);
+TYPE_CelestData		*ReadSpecialData(int dataSource, long *objectCount);
+
 void				DumpCelestDataStruct(const char *functionName, TYPE_CelestData *objectStruct);
 
 

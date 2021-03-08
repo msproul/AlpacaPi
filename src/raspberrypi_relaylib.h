@@ -52,6 +52,7 @@
 
 #else	// _ENABLE_4REALY_BOARD
 
+	//	8 port relay on DIN rail 	5,	6,	13,	16,	19,	20,	21,	26
 	//==============================================================
 	#define	kR_Pi_SwitchCount	8
 

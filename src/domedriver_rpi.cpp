@@ -26,6 +26,8 @@
 //*	Oct 21,	2019	<MLS> R_Pi C++ version tested for first time on dome, working
 //*	Oct 25,	2019	<MLS> Dome Raspberry Pi C++ version fully working
 //*	Jan 10,	2021	<MLS> Added UpdateDomePosition() using time integration
+//*	Mar  5,	2021	<MLS> Started working on commutator power on/off
+//*	Mar  5,	2021	<MLS> Added _ENABLE_COMMUTATOR_POWER_
 //*****************************************************************************
 //*	cd /home/pi/dev-mark/alpaca
 //*	LOGFILE=logfile.txt
@@ -70,6 +72,8 @@
 
 #if defined(__arm__) && !defined(_ENABLE_PI_HAT_SESNSOR_BOARD_)
 	#define	_ENABLE_DOME_HARDWARE_
+	#define	_ENABLE_COMMUTATOR_POWER_
+
 	#include <wiringPi.h>
 #else
 	#define	LOW		0
@@ -83,12 +87,15 @@
 	#define	kHWpin_ButtonCCW	24
 	#define	kHWpin_Stop			25
 	//*	outputs
-	#define	kHWpin_PowerOnOff	17
 	#define	kHWpin_Direction	27
 	#define	kHWpin_PowerPWM		18
 
 	#define	kHWpin_HomeSensor	5
 	#define	kHWpin_ParkSensor	6
+
+//	#define	kHWpin_PowerOnOff		17
+	#define	kHWpin_CommutatorPwr	17
+
 
 #define	kMaxPWMvalue	1023
 
@@ -215,9 +222,16 @@ char	wiringPi_VerString[32];
 	pullUpDnControl(kHWpin_HomeSensor,	PUD_UP);
 	pullUpDnControl(kHWpin_ParkSensor,	PUD_UP);
 
+#ifdef _ENABLE_COMMUTATOR_POWER_
+	pinMode(kHWpin_CommutatorPwr,	OUTPUT);
+	digitalWrite(kHWpin_CommutatorPwr, LOW);
+#endif
+
 
 #endif	//	_ENABLE_DOME_HARDWARE_
 }
+
+
 
 //*****************************************************************************
 //*	returns true if at max or min
@@ -385,6 +399,12 @@ uint32_t	currentlTics;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
+#ifdef _ENABLE_COMMUTATOR_POWER_
+	//*	make sure the commutator power is off
+	digitalWrite(kHWpin_CommutatorPwr, LOW);
+#endif
+
+
 	//*	first set the direction
 	if (direction)
 	{
@@ -423,6 +443,7 @@ uint32_t	currentlTics;
 void	DomeDriverRPi::StopDomeMoving(bool rightNow)
 {
 int		iii;
+
 	CONSOLE_DEBUG(__FUNCTION__);
 
 	cAzimuth_Destination	=	-1;
@@ -486,6 +507,18 @@ int			sensorState;
 	{
 		cDomeProp.AtPark	=	false;
 	}
+#ifdef _ENABLE_COMMUTATOR_POWER_
+	//*	check to make sure we are parked and not moving
+	if ((cDomeProp.AtPark == true) && (cDomeProp.Slewing == false))
+	{
+		//*	turn on the relay to supply power to the commutator
+		digitalWrite(kHWpin_CommutatorPwr, HIGH);
+	}
+	else
+	{
+		digitalWrite(kHWpin_CommutatorPwr, LOW);
+	}
+#endif // _ENABLE_COMMUTATOR_POWER_
 }
 
 //*****************************************************************************

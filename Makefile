@@ -72,7 +72,6 @@ SRC_DIR				=	./src/
 SRC_IMGPROC			=	./src_imageproc/
 SRC_DISCOVERY		=	./src_discovery/
 SRC_MOONRISE		=	./src_MoonRise/
-SRC_SPECIAL			=	./src_special/
 #MLS_LIB_DIR		=	../MLS_Library/
 MLS_LIB_DIR			=	./src_mlsLib/
 OBJECT_DIR			=	./Objectfiles/
@@ -1218,6 +1217,10 @@ Debug			:		$(CPP_OBJECTS)				\
 
 
 
+######################################################################################
+#	Camera Objects
+JETSON_OBJECTS=												\
+				$(OBJECT_DIR)startextrathread.o				\
 
 
 ######################################################################################
@@ -1233,13 +1236,13 @@ jetson		:	DEFINEFLAGS		+=	-D_ENABLE_FLIR_
 jetson		:	DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_
 jetson		:	DEFINEFLAGS		+=	-D_USE_OPENCV_
 jetson		:	DEFINEFLAGS		+=	-D_PLATFORM_STRING_=\"Nvidia-jetson\"
-
 jetson		:	PLATFORM		=	armv8
 jetson		:	TOUP_LIB_DIR	=	$(TOUP_DIR)/linux/arm64
 jetson		:				$(ALPACA_OBJECTS)			\
 							$(SOCKET_OBJECTS)			\
 							$(CPP_OBJECTS)				\
 							$(IMAGEPROC_OBJECTS)		\
+							$(JETSON_OBJECTS)			\
 
 
 				$(LINK)  								\
@@ -1247,6 +1250,7 @@ jetson		:				$(ALPACA_OBJECTS)			\
 							$(SOCKET_OBJECTS)			\
 							$(CPP_OBJECTS)				\
 							$(IMAGEPROC_OBJECTS)		\
+							$(JETSON_OBJECTS)			\
 							$(OPENCV_LINK)				\
 							-lcfitsio					\
 							-lpthread					\
@@ -2235,12 +2239,6 @@ $(OBJECT_DIR)controller_usb.o : 		$(SRC_DIR)controller_usb.cpp		\
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)controller_usb.cpp -o$(OBJECT_DIR)controller_usb.o
 
 
-#-------------------------------------------------------------------------------------
-$(OBJECT_DIR)controller_video.o : 		$(SRC_SPECIAL)controller_video.cpp	\
-										$(SRC_SPECIAL)controller_video.h	\
-										$(SRC_DIR)windowtab_about.h			\
-										$(SRC_DIR)controller.h
-	$(COMPILEPLUS) $(INCLUDES) $(SRC_SPECIAL)controller_video.cpp -o$(OBJECT_DIR)controller_video.o
 
 
 #-------------------------------------------------------------------------------------
@@ -2403,12 +2401,6 @@ $(OBJECT_DIR)windowtab_usb.o : 			$(SRC_DIR)windowtab_usb.cpp			\
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)windowtab_usb.cpp -o$(OBJECT_DIR)windowtab_usb.o
 
 
-#-------------------------------------------------------------------------------------
-$(OBJECT_DIR)windowtab_video.o : 		$(SRC_SPECIAL)windowtab_video.cpp	\
-										$(SRC_SPECIAL)windowtab_video.h		\
-										$(SRC_DIR)windowtab.h				\
-										$(SRC_DIR)controller.h
-	$(COMPILEPLUS) $(INCLUDES) $(SRC_SPECIAL)windowtab_video.cpp -o$(OBJECT_DIR)windowtab_video.o
 
 
 
@@ -2558,3 +2550,24 @@ $(OBJECT_DIR)lx200_com.o :				$(SRC_DIR)lx200_com.c	\
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)lx200_com.c -o$(OBJECT_DIR)lx200_com.o
 
 
+
+SRC_SPECIAL			=	./src_special/
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)windowtab_video.o : 		$(SRC_SPECIAL)windowtab_video.cpp	\
+										$(SRC_SPECIAL)windowtab_video.h		\
+										$(SRC_DIR)windowtab.h				\
+										$(SRC_DIR)controller.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_SPECIAL)windowtab_video.cpp -o$(OBJECT_DIR)windowtab_video.o
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)controller_video.o : 		$(SRC_SPECIAL)controller_video.cpp	\
+										$(SRC_SPECIAL)controller_video.h	\
+										$(SRC_DIR)windowtab_about.h			\
+										$(SRC_DIR)controller.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_SPECIAL)controller_video.cpp -o$(OBJECT_DIR)controller_video.o
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)startextrathread.o : 		$(SRC_SPECIAL)startextrathread.cpp	\
+										$(SRC_DIR)alpacadriver_helper.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_SPECIAL)startextrathread.cpp -o$(OBJECT_DIR)startextrathread.o

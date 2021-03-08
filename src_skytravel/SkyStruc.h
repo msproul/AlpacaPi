@@ -59,7 +59,12 @@ enum
 	kDataSrc_HubbleGSC,
 	kDataSrc_Hipparcos,
 
-	kDataSrc_TSC_Messier,
+	kDataSrc_Messier,
+	kDataSrc_Draper,
+
+	kDataSrc_HYG,
+
+	kDataSrc_Special,
 
 	kDataSrc_Unkown,
 
@@ -83,7 +88,7 @@ typedef struct
 	double			decl;
 	double			org_ra;
 	double			org_decl;
-//	double			properMotion;
+//	double			properMotion;	//	https://en.wikipedia.org/wiki/Proper_motion
 	double			maxSizeArcMinutes;
 	double			parallax;
 	char			shortName[kShortNameMax];

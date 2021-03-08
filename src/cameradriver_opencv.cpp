@@ -587,7 +587,7 @@ CvRect		myCVrect;
 				}
 				else
 				{
-					CONSOLE_DEBUG_W_STR(__FUNCTION__, "default");
+//					CONSOLE_DEBUG_W_STR(__FUNCTION__, "default");
 					cvResize(cOpenCV_Image, cOpenCV_LiveDisplay, CV_INTER_LINEAR);
 				}
 				if (cDisplayCrossHairs || cDrawRectangle)

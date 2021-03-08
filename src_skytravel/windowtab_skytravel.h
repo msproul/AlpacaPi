@@ -21,6 +21,8 @@
 
 #include	"SkyDisplayStruct.h"
 
+#define	_ENABLE_HYG_
+
 
 //*****************************************************************************
 enum
@@ -202,9 +204,10 @@ class WindowTabSkyTravel: public WindowTab
 		//*	still need the offset for doing cursor calculations
 		int					cCursorOffsetY;
 
+//?-		bool				cPressEnable;		//*	defaults to true, turn off for dragging
 		bool				cAutoAdvanceTime;
 		bool				cNightMode;
-		unsigned short		cTrack;		//*	0=no tracking, 1=track cursor, 2,3 etc. means track planet
+		unsigned short		cTrack;				//*	0=no tracking, 1=track cursor, 2,3 etc. means track planet
 		TYPE_SkyDispOptions	cDispOptions;
 		bool				cChart;				//*	Chart on/off
 		bool				cFindFlag;
@@ -292,6 +295,7 @@ class WindowTabSkyTravel: public WindowTab
 
 		TYPE_Constelation	*constelations;
 		short				constelationCount;
+
 		TYPE_CelestData		*constStarPtr;
 		long				constStarCount;
 
@@ -303,9 +307,21 @@ class WindowTabSkyTravel: public WindowTab
 		long				cHipObjectCount;
 
 		//*	Hipparcos
-		TYPE_CelestData		*cTSCmessierOjbectPtr;
-		long				cTSCmessierOjbectCount;
+		TYPE_CelestData		*cMessierOjbectPtr;
+		long				cMessierOjbectCount;
 
+#ifdef _ENABLE_HYG_
+		//*	HYG
+		TYPE_CelestData		*cHYGObjectPtr;
+		long				cHYGObjectCount;
+#endif // _ENABLE_HYG_
+
+		//*	Henry Draper
+		TYPE_CelestData		*cDraperObjectPtr;
+		long				cDraperObjectCount;
+
+		TYPE_CelestData		*cSpecialObjectPtr;
+		long				cSpecialObjectCount;
 
 
 		sun_moon_struct		cSunMonStruct;

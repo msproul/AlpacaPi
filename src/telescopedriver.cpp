@@ -3089,7 +3089,9 @@ double				newDeclination;
 			{
 				alpacaErrCode	=	kASCOM_Err_InvalidValue;
 				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "values out of bounds");
-//				CONSOLE_DEBUG(alpacaErrMsg);
+				CONSOLE_DEBUG(alpacaErrMsg);
+				CONSOLE_DEBUG_W_DBL("newRightAscension\t=",	newRightAscension);
+				CONSOLE_DEBUG_W_DBL("newDeclination\t=",	newDeclination);
 			}
 		}
 		else

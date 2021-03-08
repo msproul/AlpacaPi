@@ -72,7 +72,7 @@ void	CreateTelescopeObjects(void)
 	CONSOLE_DEBUG(__FUNCTION__);
 
 	new TelescopeDriverLX200(kDevCon_Ethernet, "192.168.1.104:49152");
-	new TelescopeDriverSkyWatch(kDevCon_Serial, "/dev/ttyS0");
+//	new TelescopeDriverSkyWatch(kDevCon_Serial, "/dev/ttyS0");
 }
 
 //**************************************************************************************

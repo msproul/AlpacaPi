@@ -134,6 +134,8 @@
 //*	Feb 21,	2021	<MLS> Read_Readoutmodes() no longer virtual
 //*	Feb 21,	2021	<MLS> Deleted SetImageTypeIndex() & XlateAlpacaImgIdxToIntImgType()
 //*	Feb 21,	2021	<MLS> All camera drivers now use the cCameraProp.ReadOutModes[]
+//*	Mar  3,	2021	<MLS> Added SetLastExposureInfo()
+//*	Mar  7,	2021	<MLS> Added Get_PixelSizeX() & Get_PixelSizeY()
 //*****************************************************************************
 //*	Jan  1,	2119	<TODO> ----------------------------------------
 //*	Jun 26,	2119	<TODO> Add support for sub frames
@@ -1024,23 +1026,11 @@ char				httpHeader[500];
 			break;
 
 		case kCmd_Camera_pixelsizeX:			//*	Width of CCD chip pixels (microns)
-			JsonResponse_Add_Double(mySocket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									gValueString,
-									cCameraProp.PixelSizeX,
-									INCLUDE_COMMA);
-			alpacaErrCode	=	kASCOM_Err_Success;
+			alpacaErrCode	=	Get_PixelSizeX(reqData, alpacaErrMsg, gValueString);
 			break;
 
 		case kCmd_Camera_pixelsizeY:			//*	Height of CCD chip pixels (microns)
-			JsonResponse_Add_Double(mySocket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									gValueString,
-									cCameraProp.PixelSizeY,
-									INCLUDE_COMMA);
-			alpacaErrCode	=	kASCOM_Err_Success;
+			alpacaErrCode	=	Get_PixelSizeY(reqData, alpacaErrMsg, gValueString);
 			break;
 
 		case kCmd_Camera_readoutmode:			//*	Indicates the canera's readout mode as an index into the array ReadoutModes
@@ -2318,6 +2308,52 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
 }
 
 //*****************************************************************************
+TYPE_ASCOM_STATUS	CameraDriver::Get_PixelSizeX(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
+
+	if (reqData != NULL)
+	{
+		JsonResponse_Add_Double(reqData->socket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								responseString,
+								cCameraProp.PixelSizeX,
+								INCLUDE_COMMA);
+		alpacaErrCode	=	kASCOM_Err_Success;
+	}
+	else
+	{
+		alpacaErrCode	=	kASCOM_Err_InternalError;
+	}
+	return(alpacaErrCode);
+}
+
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	CameraDriver::Get_PixelSizeY(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
+
+	if (reqData != NULL)
+	{
+		JsonResponse_Add_Double(reqData->socket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								responseString,
+								cCameraProp.PixelSizeY,
+								INCLUDE_COMMA);
+		alpacaErrCode	=	kASCOM_Err_Success;
+	}
+	else
+	{
+		alpacaErrCode	=	kASCOM_Err_InternalError;
+	}
+	return(alpacaErrCode);
+}
+
+
+//*****************************************************************************
 TYPE_ASCOM_STATUS	CameraDriver::Put_Pulseguide(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
@@ -2664,6 +2700,17 @@ void	CameraDriver::ResetCamera(void)
 }
 
 
+//*****************************************************************************
+void	CameraDriver::SetLastExposureInfo(void)
+{
+	GetImage_ROI_info();
+	cLastExposure_ROIinfo		=	cROIinfo;
+
+	cCameraProp.Lastexposure_duration_us	=	cCurrentExposure_us;
+	gettimeofday(&cCameraProp.Lastexposure_StartTime, NULL);	//*	save the time we started the exposure
+}
+
+
 
 //*****************************************************************************
 //*	Start Exposure
@@ -2733,14 +2780,7 @@ double				myExposure_usecs;
 
 				//======================================================================================
 				//*	Save all of the info about this exposure for reference
-				GetImage_ROI_info();
-				cLastExposure_ROIinfo		=	cROIinfo;
-
-				cCameraProp.Lastexposure_duration_us	=	cCurrentExposure_us;
-				gettimeofday(&cCameraProp.Lastexposure_StartTime, NULL);	//*	save the time we started the exposure
-																//*	this really belongs in Start_CameraExposure, but just in case
-				//======================================================================================
-
+				SetLastExposureInfo();
 
 				alpacaErrCode				=	Start_CameraExposure(cCurrentExposure_us);
 				GenerateFileNameRoot();
@@ -4530,6 +4570,8 @@ TYPE_ASCOM_STATUS	CameraDriver::Set_ExposureTime(int32_t exposureMicrosecs)
 
 
 //*****************************************************************************
+//*	this routine must be over loaded
+//*****************************************************************************
 TYPE_ASCOM_STATUS		CameraDriver::Start_CameraExposure(int32_t exposureMicrosecs)
 {
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
@@ -4543,6 +4585,20 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 
 	return(alpacaErrCode);
 }
+
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS		CameraDriver::Start_CameraExposure(void)
+{
+TYPE_ASCOM_STATUS		alpacaErrCode;
+
+	SetLastExposureInfo();
+	alpacaErrCode	=	Start_CameraExposure(cCurrentExposure_us);
+
+	return(alpacaErrCode);
+}
+
+
 
 //*****************************************************************************
 TYPE_ASCOM_STATUS		CameraDriver::Stop_Exposure(void)
@@ -4693,7 +4749,7 @@ int					mySocketFD;
 	SocketWriteData(mySocketFD,	"<TR>\r\n");
 	SocketWriteData(mySocketFD,	"\t<TD></TD>\r\n");
 	SocketWriteData(mySocketFD,	"\t<TD>Pixel size</TD>\r\n");
-	sprintf(lineBuffer,	"\t<TD>%3.2f x %3.2f</TD>\r\n",	cCameraProp.PixelSizeX, cCameraProp.PixelSizeX);
+	sprintf(lineBuffer,	"\t<TD>%3.2f x %3.2f</TD>\r\n",	cCameraProp.PixelSizeX, cCameraProp.PixelSizeY);
 	SocketWriteData(mySocketFD,	lineBuffer);
 	SocketWriteData(mySocketFD,	"</TR>\r\n");
 
@@ -6146,24 +6202,11 @@ char				textBuffer[128];
 		Get_PercentCompleted(		reqData,	alpacaErrMsg,	"percentcompleted");
 
 		//*	Width of CCD chip pixels (microns)
-		JsonResponse_Add_Double(mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"pixelsizex",
-								cCameraProp.PixelSizeX,
-								INCLUDE_COMMA);
-
+		Get_PixelSizeX(				reqData,	 alpacaErrMsg, "pixelsizex");
 		//*	Height of CCD chip pixels (microns)
-		JsonResponse_Add_Double(mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"pixelsizey",
-								cCameraProp.PixelSizeY,
-								INCLUDE_COMMA);
-
-
-		Get_Readoutmode(	reqData, alpacaErrMsg, "readoutmode");
-		Get_Readoutmodes(	reqData, alpacaErrMsg, "readoutmodes");
+		Get_PixelSizeY(				reqData,	 alpacaErrMsg, "pixelsizey");
+		Get_Readoutmode(			reqData,	 alpacaErrMsg, "readoutmode");
+		Get_Readoutmodes(			reqData,	 alpacaErrMsg, "readoutmodes");
 
 		Read_Readoutmodes(textBuffer, false);
 		JsonResponse_Add_String(mySocket,

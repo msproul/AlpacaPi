@@ -920,7 +920,7 @@ size_t					bufferLen;
 				if (cSpinImageHandle != NULL)
 				{
 					CONSOLE_DEBUG("cSpinImageHandle GOOD!!!!!");
-					ExtractColorImage();
+				//	ExtractColorImage();
 				//	ConvertToMono();
 				}
 				else
@@ -948,7 +948,7 @@ size_t					bufferLen;
 				{
 					CONSOLE_DEBUG("cSpinImageHandle is NULL");
 				}
-			//	ConvertToMono();
+				ConvertToMono();
 			}
 			else
 			{

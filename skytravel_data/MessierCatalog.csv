@@ -1,0 +1,111 @@
+#M,NGC,TYPE,CONS,RA,DEC,MAG,SIZE,DIST (ly),VIEWING SEASON,VIEWING DIFFICULTY
+M1,NGC 1952 Crab Nebula,Supernova Remnant,Taurus,5h 34.5m,22°1,8.4,6.0x4.0,"6,300",Winter,Moderate
+M2,NGC 7089,Globular Cluster,Aquarius,21h 33.5m,-0°49,6.5,12.9,"37,500",Autumn,Easy
+M3,NGC 5272,Globular Cluster,Canes Venatici,13h 42.2m,28°23,6.2,16.2,"33,900",Spring,Easy
+M4,NGC 6121,Globular Cluster,Scorpius,16h 23.6m,-26°32,5.6,26.3,"7,200",Summer,Hard
+M5,NGC 5904,Globular Cluster,Serpens Caput,15h 18.6m,2°5,5.6,17.4,"24,500",Summer,Very Easy
+M6,NGC 6405 Butterfly Cluster,Open Cluster,Scorpius,17h 40.1m,-32°13,5.3,25,"2,000",Summer,Easy
+M7,NGC 6475 Ptolemy¬πs Cluster,Open Cluster,Scorpius,17h 53.9m,-34°49,4.1,80,800,Summer,Easy
+M8,NGC 6523 Lagoon Nebula,Diffuse Nebula,Sagittarius,18h 3.8m,-24°23,6,90x40,"5,200",Summer,Moderate
+M9,NGC 6333,Globular Cluster,Ophiucus,17h 19.2m,-18°31,7.7,9.3,"26,700",Summer,Moderate
+M10,NGC 6254,Globular Cluster,Ophiucus,16h 57.1m,-4°6,6.6,15.1,"14,400",Summer,Moderate
+M11,NGC 6705 Wild Duck Cluster,Open Cluster,Scutum,18h 51.1m,-6°16,6.3,14,"6,000",Summer,Very Easy
+M12,NGC 6218,Globular Cluster,Ophiucus,16h 47.2m,-1°57,6.7,14.5,"16,000",Summer,Moderate
+M13,NGC 6205 Hercules Globular Cluster,Globular Cluster,Hercules,16h 41.7m,36°28,5.8,16.6,"22,800",Summer,Very Easy
+M14,NGC 6402,Globular Cluster,Ophiucus,17h 37.6m,-3°15,7.6,11.7,"27,400",Summer,Moderate
+M15,NGC 7078,Globular Cluster,Pegasus,21h 30m,12°10,6.2,12.3,"33,600",Autumn,Easy
+M16,NGC 6611 Eagle Nebula Cluster,Open Cluster,Serpens Claudia,18h 18.8m,-13°47,6.4,7,"7,000",Summer,Easy
+M17,"NGC 6618 Omega, Swan, Horseshoe Nebula",Diffuse Nebula,Sagittarius,18h 20.8m,-16°11,7,11,"5,000",Summer,Easy
+M18,NGC 6613,Open Cluster,Sagittarius,18h 19.9m,-17°8,7.5,9,"4,900",Summer,Moderate
+M19,NGC 6273,Globular Cluster,Ophiucus,17h 2.6m,-26°16,6.8,13.5,"27,100",Summer,Moderate
+M20,NGC 6514 Trifid Nebula,Diffuse Nebula,Sagittarius,18h 2.3m,-23°2,9,28,"5,200",Summer,Very Hard
+M21,NGC 6531,Open Cluster,Sagittarius,18h 4.6m,-22°30,6.5,13,"4,250",Summer,Moderate
+M22,NGC 6656,Globular Cluster,Sagittarius,18h 36.4m,-23°54,5.1,24,"10,100",Summer,Very Easy
+M23,NGC 6494,Open Cluster,Sagittarius,17h 56.8m,-19°1,6.9,27,"2,150",Summer,Easy
+M24,NGC 6603 Milky Way Patch,Star Cloud,Sagittarius,18h 18.4m,-18°25,4.6,90,"10,000",Summer,Moderate
+M25,IC 4725,Open Cluster,Sagittarius,18h 31.7m,-19°14,6.5,40,"2,000",Summer,Easy
+M26,NGC 6694,Open Cluster,Scutum,18h 45.2m,-9°24,8,15,"5,000",Summer,Moderate
+M27,NGC 6853 Dumbbell Nebula,Planetary Nebula,Vulpecula,19h 59.6m,22°43,7.4,8.0x5.7,"1,250",Summer,Easy
+M28,NGC 6626,Globular Cluster,Sagittarius,18h 24.5m,-24°52,6.8,11.2,"17,900",Summer,Easy
+M29,NGC 6913,Open Cluster,Cygnus,20h 23.9m,38°32,7.1,7,"4,000",Summer,Easy
+M30,NGC 7099,Globular Cluster,Capricornus,21h 40.4m,-23°11,7.2,11,"24,800",Autumn,Easy
+M31,NGC 224 Andromeda Galaxy,Spiral Galaxy,Andromeda,0h 42.7m,41°16,3.4,178x63,"2,900,000",Autumn,Easy
+M32,NGC 221 Satellite of M31,Elliptical Galaxy,Andromeda,0h 42.7m,40°52,8.1,8x6,"2,900,000",Autumn,Easy
+M33,NGC 598 Triangulum/Pinwheel Galaxy,Spiral Galaxy,Triangulum,1h 33.9m,30°39,5.7,73x45,"3,000,000",Autumn,Hard
+M34,NGC 1039,Open Cluster,Perseus,2h 42m,42°47,5.5,35,"1,400",Autumn,Easy
+M35,NGC 2168,Open Cluster,Gemini,6h 8.9m,24°20,5.3,28,"2,800",Winter,Very Easy
+M36,NGC 1960,Open Cluster,Auriga,5h 36.1m,34°8,6.3,12,"4,100",Winter,Easy
+M37,NGC 2099,Open Cluster,Auriga,5h 52.4m,32°33,6.2,24,"4,400",Winter,Easy
+M38,NGC 1912,Open Cluster,Auriga,5h 28.7m,35°50,7.4,21,"4,200",Winter,Easy
+M39,NGC 7092,Open Cluster,Cygnus,21h 32.2m,48°26,5.2,32,825,Autumn,Easy
+M40,Winecke 4,Double Star,Ursa Major,12h 22.2m,58°5,9.3,49,510,Spring,Easy
+M41,NGC 2287,Open Cluster,Canis Major,6h 47m,-20°44,4.6,38,"2,300",Winter,Easy
+M42,NGC 1976 Great Orion Nebula,Diffuse Nebula,Orion,5h 35.4m,-5°27,4,85x60,"1,600",Winter,Very Easy
+M43,NGC 1982 de Mairan¬πs Nebula,Diffuse Nebula,Orion,5h 35.6m,-5°16,9,20x15,"1,600",Winter,Easy
+M44,NGC 2632 Beehive Cluster (Praesepe),Open Cluster,Cancer,8h 40.1m,19°59,3.7,95,577,Winter,Easy
+M45,"Pleiades, Subaru, Seven Sisters",Open Cluster,Taurus,3h 47m,24°7.2,1.6,110,380,Winter,Very Easy
+M46,NGC 2437,Open Cluster,Puppis,7h 41.8m,-14°49,6,27,"5,400",Winter,Easy
+M47,NGC 2422,Open Cluster,Puppis,7h 36.6m,-14°30,5.2,30,"1,600",Winter,Easy
+M48,NGC 2548,Open Cluster,Hydra,8h 13.8m,-5°48,5.5,54,"1,500",Winter,Easy
+M49,NGC 4472,Elliptical Galaxy,Virgo,12h 29.8m,8°0,8.4,9x7.5,"60,000,000",Spring,Moderate
+M50,NGC 2323,Open Cluster,Monocerus,7h 3.2m,-8°20,6.3,16,"3,000",Winter,Easy
+M51,NGC 5194 Whirlpool Galaxy,Spiral Galaxy,Canes Venatici,13h 29.9m,47°12,8.4,11x7,"37,000,000",Spring,Moderate
+M52,NGC 7654,Open Cluster,Cassiopeia,23h 24.2m,61°35,7.3,13,"5,000",Autumn,Easy
+M53,NGC 5024,Globular Cluster,Coma Berenices,13h 12.9m,18°10,7.6,12.6,"56,400",Spring,Easy
+M54,NGC 6715,Globular Cluster,Sagittarius,18h 55.1m,-30°29,7.6,9.1,"82,800",Summer,Moderate
+M55,NGC 6809,Globular Cluster,Sagittarius,19h 40m,-30°58,6.3,19,"16,600",Summer,Hard
+M56,NGC 6779,Globular Cluster,Lyra,19h 16.6m,30°11,8.3,7.1,"31,600",Summer,Moderate
+M57,NGC 6720 Ring Nebula,Planetary Nebula,Lyra,18h 53.6m,33°2,8.8,1.4x1,"4,100",Summer,Easy
+M58,NGC 4579,Spiral Galaxy,Virgo,12h 37.7m,11°49,9.7,5.5x4.5,"60,000,000",Spring,Moderate
+M59,NGC 4621,Elliptical Galaxy,Virgo,12h 42m,11°39,9.6,5x3.5,"60,000,000",Spring,Hard
+M60,NGC 4649,Elliptical Galaxy,Virgo,12h 43.7m,11°33,8.8,7x6,"60,000,000",Spring,Moderate
+M61,NGC 4303,Spiral Galaxy,Virgo,12h 21.9m,4°28,9.7,6x5.5,"60,000,000",Spring,Hard
+M62,NGC 6266,Globular Cluster,Ophiucus,17h 1.2m,-30°7,6.5,14.1,"21,500",Summer,Moderate
+M63,NGC 5055 Sunflower Galaxy,Spiral Galaxy,Canes Venatici,13h 15.8m,42°2,8.6,10x6,"37,000,000",Spring,Moderate
+M64,NGC 4826 Blackeye Galaxy,Spiral Galaxy,Coma Berenices,12h 56.7m,21°41,8.5,9.3x5.4,"19,000,000",Spring,Moderate
+M65,NGC 3623,Spiral Galaxy,Leo,11h 18.9m,13°5,9.3,8x1.5,"35,000,000",Spring,Moderate
+M66,NGC 3627,Spiral Galaxy,Leo,11h 20.2m,12°59,8.9,8x2.5,"35,000,000",Spring,Easy
+M67,NGC 2682,Open Cluster,Cancer,8h 50.4m,11°49,6.1,30,"2,700",Winter,Easy
+M68,NGC 4590,Globular Cluster,Hydra,12h 39.5m,-26°45,7.8,12,"33,300",Spring,Very Hard
+M69,NGC 6637,Globular Cluster,Sagittarius,18h 31.4m,-32°21,7.6,7.1,"26,700",Summer,Moderate
+M70,NGC 6681,Globular Cluster,Sagittarius,18h 43.2m,-32°18,7.9,7.8,"28,000",Summer,Moderate
+M71,NGC 6838,Globular Cluster,Sagitta,19h 53.8m,18°47,8.3,7.2,"11,700",Summer,Moderate
+M72,NGC 6981,Globular Cluster,Aquarius,20h 53.5m,-12°32,9.3,5.9,"52,800",Summer,Moderate
+M73,NGC 6994 Group of 4 stars,Group/Asterism,Aquarius,20h 59m,-12°38,9,2.8,"2,000",Summer,Hard
+M74,NGC 628,Spiral Galaxy,Pisces,1h 36.7m,15°47,9.4,10.2x9.5,"35,000,000",Autumn,Very Hard
+M75,NGC 6864,Globular Cluster,Sagittarius,20h 6.1m,-21°55,8.5,6,"57,700",Summer,Moderate
+M76,"NGC 650 Little Dumbell, Cork, Butterfly Nebula",Planetary Nebula,Perseus,1h 42.3m,51°34,10.1,2.7x1.8,"3,400",Autumn,Moderate
+M77,NGC 1068 Cetus A,Spiral Galaxy,Cetus,2h 42.7m,0°1,8.9,7x6,"60,000,000",Autumn,Moderate
+M78,NGC 2068,Diffuse Nebula,Orion,5h 46.7m,0°3,8.3,8x6,"1,600",Winter,Moderate
+M79,NGC 1904,Globular Cluster,Lepus,5h 24.5m,-24°33,7.7,8.7,"41,100",Winter,Moderate
+M80,NGC 6093,Globular Cluster,Scorpius,16h 17m,-22°59,7.3,8.9,"27,400",Summer,Easy
+M81,NGC 3031 Bode¬πs Galaxy,Spiral Galaxy,Ursa Major,9h 55.6m,69°4,6.9,21x10,"12,000,000",Spring,Easy
+M82,NGC 3034 Cigar Galaxy,Irregular Galaxy,Ursa Major,9h 55.8m,69°41,8.4,9.x4,"12,000,000",Spring,Easy
+M83,NGC 5236 Southern Pinwheel Galaxy,Spiral Galaxy,Hydra,13h 37m,-29°52,7.6,11x10,"15,000,000",Spring,Hard
+M84,NGC 4374,Lenticular (S0) Galaxy,Virgo,12h 25.1m,12°53,9.1,5,"60,000,000",Spring,Moderate
+M85,NGC 4382,Lenticular (S0) Galaxy,Coma Berenices,12h 25.4m,18°11,9.1,7.1x5.2,"60,000,000",Spring,Moderate
+M86,NGC 4406,Lenticular (S0) Galaxy,Virgo,12h 26.2m,12°57,8.9,7.5x5.5,"60,000,000",Spring,Moderate
+M87,NGC 4486 Virgo A,Elliptical Galaxy,Virgo,12h 30.8m,12°24,8.6,7,"60,000,000",Spring,Moderate
+M88,NGC 4501,Spiral Galaxy,Coma Berenices,12h 32m,14°25,9.6,7x4,"60,000,000",Spring,Moderate
+M89,NGC 4552,Elliptical Galaxy,Virgo,12h 35.7m,12°33,9.8,4,"60,000,000",Spring,Moderate
+M90,NGC 4569,Spiral Galaxy,Virgo,12h 36.8m,13°10,9.5,9.5x4.5,"60,000,000",Spring,Hard
+M91,NGC 4548,Spiral Galaxy,Coma Berenices,12h 35.4m,14°30,10.2,5.4x4.4,"60,000,000",Spring,Very Hard
+M92,NGC 6341,Globular Cluster,Hercules,17h 17.1m,43°8,6.4,11.2,"26,400",summer,Easy
+M93,NGC 2447,Open Cluster,Puppis,7h 44.6m,-23°52,6,22,"3,600",winter,Easy
+M94,NGC 4736,Spiral Galaxy,Canes Venatici,12h 50.9m,41°7,8.2,7x3,"14,500,000",Spring,Moderate
+M95,NGC 3351,Spiral Galaxy,Leo,10h 44m,11°42,9.7,4.4x3.3,"38,000,000",Spring,Hard
+M96,NGC 3368,Spiral Galaxy,Leo,10h 46.8m,11°49,9.2,6x4,"38,000,000",Spring,Moderate
+M97,NGC 3587 Owl Nebula,Planetary Nebula,Ursa Major,11h 14.8m,55°1,9.9,3.4x3.3,"2,600",Spring,Very Hard
+M98,NGC 4192,Spiral Galaxy,Coma Berenices,12h 13.8m,14°54,10.1,9.5x3.2,"60,000,000",Spring,Very Hard
+M99,NGC 4254,Spiral Galaxy,Coma Berenices,12h 18.8m,14°25,9.9,5.4x4.8,"60,000,000",Spring,Hard
+M100,NGC 4321,Spiral Galaxy,Coma Berenices,12h 22.9m,15°49,9.3,7x6,"60,000,000",Spring,Very Hard
+M101,NGC 5457 Pinwheel Galaxy,Spiral Galaxy,Ursa Major,14h 3.2m,54°21,7.9,22,"27,000,000",Spring,Very Hard
+M102,NGC 5866 Spindle Galaxy,Lenticular (S0) Galaxy,Draco,15h 6.5m,55°46,9.9,5.2x2.3,"40,000,000",Summer,Hard
+M103,NGC 581,Open Cluster,Cassiopeia,1h 33.2m,60°42,7.4,6,"8,000",Autumn,Easy
+M104,NGC 4594 Sombrero Galaxy,Spiral Galaxy,Virgo,12h 40m,-11°37,8,9x4,"50,000,000",Spring,Easy
+M105,NGC 3379,Elliptical Galaxy,Leo,10h 47.8m,12°35,9.3,2,"38,000,000",Spring,Moderate
+M106,NGC 4258,Spiral Galaxy,Canes Venatici,12h 19m,47°18,8.4,19x8,"25,000,000",Spring,Hard
+M107,NGC 6171,Globular Cluster,Ophiucus,16h 32.5m,-13°3,7.9,10,"19,600",Summer,Hard
+M108,NGC 3556,Spiral Galaxy,Ursa Major,11h 11.5m,55°40,10,8x1,"45,000,000",Spring,Hard
+M109,NGC 3992,Spiral Galaxy,Ursa Major,11h 57.6m,53°23,9.8,7x4,"55,000,000",Spring,Hard
+M110,NGC 205 Satellite of M31,Elliptical Galaxy,Andromeda,0h 40.4m,41°41,8.5,17x10,"2,900,000",Autumn,Hard
