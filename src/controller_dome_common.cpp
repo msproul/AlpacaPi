@@ -351,7 +351,8 @@ char	textString[32];
 
 #ifdef _ENABLE_SKYTRAVEL_
 	//*	skytravel is backwards from Alpaca
-	gDomeAzimuth_degrees	=	360.0 - newAzimuth;
+//	gDomeAzimuth_degrees	=	360.0 - newAzimuth;
+	gDomeAzimuth_degrees	=	newAzimuth;
 #endif
 }
 

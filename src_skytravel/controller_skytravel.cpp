@@ -13,6 +13,7 @@
 //*	Jan 26,	2021	<MLS> Added SetDomeIPaddress() & SetTelescopeIPaddress()
 //*	Jan 26,	2021	<MLS> SkyTravel can choose which dome/telescope to sync with
 //*	Feb  4,	2021	<MLS> Added MOON window tab for phase of the moon info
+//*	Mar 13,	2021	<MLS> Added AlpacaGetStartupData_Camera()
 //*****************************************************************************
 
 
@@ -41,13 +42,14 @@
 #define	kWindowHeight	820
 
 #include	"alpaca_defs.h"
-#include	"windowtab_skytravel.h"
-#include	"windowtab_dome.h"
-#include	"windowtab_alpacalist.h"
-#include	"windowtab_iplist.h"
-#include	"windowtab_deviceselect.h"
 #include	"windowtab_about.h"
+#include	"windowtab_alpacalist.h"
+#include	"windowtab_deviceselect.h"
+#include	"windowtab_dome.h"
+#include	"windowtab_fov.h"
+#include	"windowtab_iplist.h"
 #include	"windowtab_moon.h"
+#include	"windowtab_skytravel.h"
 
 
 #include	"controller.h"
@@ -77,6 +79,7 @@ ControllerSkytravel::ControllerSkytravel(	const char *argWindowName)
 	cAlpacaListObjPtr		=	NULL;
 	cIPaddrListObjPtr		=	NULL;
 	cAboutBoxTabObjPtr		=	NULL;
+	cFOVTabObjPtr			=	NULL;
 
 	cDomeAddressValid		=	false;
 	cTelescopeAddressValid	=	false;
@@ -110,6 +113,7 @@ ControllerSkytravel::~ControllerSkytravel(void)
 	DELETE_OBJ_IF_VALID(cIPaddrListObjPtr);
 	DELETE_OBJ_IF_VALID(cDeviceSelectObjPtr);
 	DELETE_OBJ_IF_VALID(cAboutBoxTabObjPtr);
+	DELETE_OBJ_IF_VALID(cFOVTabObjPtr);
 }
 
 
@@ -138,6 +142,28 @@ void	ControllerSkytravel::SetupWindowControls(void)
 		SetTabWindow(kTab_ST_Settings,	cSkySettingsTabObjPtr);
 		cSkySettingsTabObjPtr->SetParentObjectPtr(this);
 	}
+
+	//=============================================================
+	SetTabText(kTab_ST_FOV,	"F.O.V.");
+	cFOVTabObjPtr		=	new WindowTabFOV(	cWidth, cHeight, cBackGrndColor, cWindowName);
+	if (cFOVTabObjPtr != NULL)
+	{
+	TYPE_CameraFOV	*myFOVptr;
+
+		SetTabWindow(kTab_ST_FOV,	cFOVTabObjPtr);
+		cFOVTabObjPtr->SetParentObjectPtr(this);
+
+
+		//*	we want the SKYTRAVEL window to know about the CAMERA FOV array
+
+		myFOVptr	=	cFOVTabObjPtr->GetCameraFOVptr();
+		if (cSkyTravelTabOjbPtr != NULL)
+		{
+			cSkyTravelTabOjbPtr->SetCameraFOVptr(myFOVptr);
+		}
+	}
+
+
 
 	//=============================================================
 	SetTabText(kTab_Moon,	"Moon");
@@ -343,8 +369,24 @@ bool		foundSomething;
 	{
 		cAlpacaListObjPtr->UpdateRemoteDeviceList();
 		cDeviceSelectObjPtr->UpdateRemoteDeviceList();
+		cFOVTabObjPtr->UpdateRemoteDeviceList();
 		cIPaddrListObjPtr->UpdateIPaddrList();
 	}
+
+	if (cDomeProp.Slewing && (deltaSeconds >= 1))
+	{
+		needToUpdate	=	true;
+
+	}
+	if ((cDomeProp.ShutterStatus == kShutterStatus_Opening) ||
+				(cDomeProp.ShutterStatus == kShutterStatus_Closing))
+	{
+		if (deltaSeconds >= 1)
+		{
+			needToUpdate	=	true;
+		}
+	}
+
 
 	if (needToUpdate)
 	{
@@ -355,6 +397,7 @@ bool		foundSomething;
 		//*	is the DOME IP address valid
 		if (cDomeAddressValid)
 		{
+//			CONSOLE_DEBUG("Updating dome status");
 			validData	=	AlpacaGetDomeStatus();
 			if (validData == false)
 			{
@@ -384,6 +427,57 @@ bool		foundSomething;
 	{
 		cMoonTabObjPtr->RunBackgroundTasks();
 	}
+	if (cFOVTabObjPtr != NULL)
+	{
+		cFOVTabObjPtr->RunBackgroundTasks();
+	}
+}
+
+//*****************************************************************************
+bool	ControllerSkytravel::AlpacaGetStartupData_Camera(	TYPE_REMOTE_DEV			*remoteDevice,
+															TYPE_CameraProperties	*cameraProp)
+{
+bool			validData;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+	validData	=	AlpacaGetDoubleValue(	remoteDevice->deviceAddress,
+											remoteDevice->port,
+											remoteDevice->alpacaDeviceNum,
+											"camera",
+											"pixelsizex",
+											NULL,
+											&cameraProp->PixelSizeX);
+
+	validData	=	AlpacaGetDoubleValue(	remoteDevice->deviceAddress,
+											remoteDevice->port,
+											remoteDevice->alpacaDeviceNum,
+											"camera",
+											"pixelsizey",
+											NULL,
+											&cameraProp->PixelSizeY);
+
+	validData	=	AlpacaGetIntegerValue(	remoteDevice->deviceAddress,
+											remoteDevice->port,
+											remoteDevice->alpacaDeviceNum,
+											"camera",
+											"cameraxsize",
+											NULL,
+											&cameraProp->CameraXsize);
+
+
+	validData	=	AlpacaGetIntegerValue(	remoteDevice->deviceAddress,
+											remoteDevice->port,
+											remoteDevice->alpacaDeviceNum,
+											"camera",
+											"cameraysize",
+											NULL,
+											&cameraProp->CameraYsize);
+
+//	validData	=	AlpacaGetIntegerValue("camera", "cameraxsize",	NULL,	&cCameraProp.CameraXsize);
+//	validData	=	AlpacaGetIntegerValue("camera", "cameraysize",	NULL,	&cCameraProp.CameraYsize);
+
+
+	return(validData);
 }
 
 //*****************************************************************************
@@ -515,18 +609,22 @@ bool	previousOnLineState;
 			//*	if we slewing, we want to update more often
 			cUpdateDelta	=	1;
 			SetWidgetText(kTab_ST_Dome, kDomeBox_CurPosition, "Slewing");
+			cUpdateWindow	=	true;
 		}
 		else if (cDomeProp.AtHome)
 		{
 			SetWidgetText(kTab_ST_Dome, kDomeBox_CurPosition, "Home");
+			cUpdateWindow	=	true;
 		}
 		else if (cDomeProp.AtPark)
 		{
 			SetWidgetText(kTab_ST_Dome, kDomeBox_CurPosition, "Park");
+			cUpdateWindow	=	true;
 		}
 		else
 		{
 			SetWidgetText(kTab_ST_Dome, kDomeBox_CurPosition, "---");
+			cUpdateWindow	=	true;
 		}
 
 
@@ -618,8 +716,15 @@ void	ControllerSkytravel::AlpacaProcessReadAll(	const char	*deviceType,
 	}
 	else if (strcasecmp(deviceType, "Telescope") == 0)
 	{
-//		CONSOLE_DEBUG_W_2STR(__FUNCTION__, deviceType, keywordString);
 		AlpacaProcessReadAll_Telescope(deviceNum, keywordString, valueString);
+	}
+	else if (strcasecmp(deviceType, "Camera") == 0)
+	{
+	//	AlpacaProcessReadAll_Camera(deviceNum, keywordString, valueString);
+		if (cFOVTabObjPtr != NULL)
+		{
+			cFOVTabObjPtr->AlpacaProcessReadAll_Camera(deviceNum, keywordString, valueString);
+		}
 	}
 }
 
@@ -672,6 +777,7 @@ void	ControllerSkytravel::Update_TelescopeDeclination(void)
 //	CONSOLE_DEBUG_W_DBL("cTelescopeProp.Declination", cTelescopeProp.Declination);
 	gTelescopeDecl_Radians	=	RADIANS(cTelescopeProp.Declination);
 }
+
 
 
 #define	PARENT_CLASS	ControllerSkytravel

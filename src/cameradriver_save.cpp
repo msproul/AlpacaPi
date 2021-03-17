@@ -68,7 +68,7 @@ void	CameraDriver::SaveImageData(void)
 int	ii;
 
 	CONSOLE_DEBUG_W_NUM("cSaveNextImage\t=", cSaveNextImage);
-	CONSOLE_DEBUG_W_NUM("cSaveImages\t=", cSaveImages);
+	CONSOLE_DEBUG_W_NUM("cSaveAllImages\t=", cSaveAllImages);
 	cNumFramesSaved++;
 	cTotalFramesSaved++;
 	CONSOLE_DEBUG_W_NUM("cNumFramesSaved=", cNumFramesSaved);

@@ -46,5 +46,5 @@
 #define		PRECZ			6.10339506e-07
 
 #define		EARTH_RADIUS	6371.2213		//*	in kilometers (sphere of same volume)
-#define		MOON_RADIUS		1738.
+#define		MOON_RADIUS		1737.5			//*	was 1738
 #define		SUN_RADIUS		695300.

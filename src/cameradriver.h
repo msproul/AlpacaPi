@@ -293,6 +293,7 @@ enum
 	kCmd_Camera_rgbarray,
 	kCmd_Camera_settelescopeinfo,
 	kCmd_Camera_sidebar,
+	kCmd_Camera_saveallimages,
 	kCmd_Camera_savenextimage,
 	kCmd_Camera_startsequence,
 	kCmd_Camera_startvideo,
@@ -339,10 +340,15 @@ class CameraDriver: public AlpacaDriver
 				void	SetLastExposureInfo(void);
 	protected:
 		//*	Camera routines for all cameras
-		TYPE_ASCOM_STATUS	Get_binX(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
-		TYPE_ASCOM_STATUS	Get_binY(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
-		TYPE_ASCOM_STATUS	Put_binX(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
-		TYPE_ASCOM_STATUS	Put_binY(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
+
+		TYPE_ASCOM_STATUS	Get_BayerOffsetX(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+		TYPE_ASCOM_STATUS	Get_BayerOffsetY(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+
+
+		TYPE_ASCOM_STATUS	Get_BinX(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+		TYPE_ASCOM_STATUS	Get_BinY(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+		TYPE_ASCOM_STATUS	Put_BinX(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
+		TYPE_ASCOM_STATUS	Put_BinY(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 		TYPE_ASCOM_STATUS	Get_Camerastate(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
 
 				//*	the functions starting with "Get" and "Put" generate the JSON msg
@@ -351,6 +357,8 @@ class CameraDriver: public AlpacaDriver
 		TYPE_ASCOM_STATUS	Put_Cooleron(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 
 		TYPE_ASCOM_STATUS	Get_CoolerPowerLevel(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+
+		TYPE_ASCOM_STATUS	Get_ElectronsPerADU(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
 
 		TYPE_ASCOM_STATUS	Get_Exposuremax(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
 		TYPE_ASCOM_STATUS	Get_Exposuremin(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
@@ -361,16 +369,20 @@ class CameraDriver: public AlpacaDriver
 
 		TYPE_ASCOM_STATUS	Get_Gain(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
 		TYPE_ASCOM_STATUS	Put_Gain(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
+		TYPE_ASCOM_STATUS	Get_GainMax(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+		TYPE_ASCOM_STATUS	Get_GainMin(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
 
-		TYPE_ASCOM_STATUS	Get_numX(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
-		TYPE_ASCOM_STATUS	Get_numY(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
-		TYPE_ASCOM_STATUS	Put_numX(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
-		TYPE_ASCOM_STATUS	Put_numY(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
+		TYPE_ASCOM_STATUS	Get_Gains(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
 
-		TYPE_ASCOM_STATUS	Get_startX(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
-		TYPE_ASCOM_STATUS	Get_startY(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
-		TYPE_ASCOM_STATUS	Put_startX(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
-		TYPE_ASCOM_STATUS	Put_startY(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
+		TYPE_ASCOM_STATUS	Get_IsPulseGuiding(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+
+		TYPE_ASCOM_STATUS	Get_MaxADU(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+
+		TYPE_ASCOM_STATUS	Get_NumX(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+		TYPE_ASCOM_STATUS	Get_NumY(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+		TYPE_ASCOM_STATUS	Put_NumX(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
+		TYPE_ASCOM_STATUS	Put_NumY(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
+
 
 		TYPE_ASCOM_STATUS	Get_PercentCompleted(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
 
@@ -387,6 +399,11 @@ class CameraDriver: public AlpacaDriver
 
 		TYPE_ASCOM_STATUS	Get_SetCCDtemperature(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg,	const char *responseString);
 		TYPE_ASCOM_STATUS	Put_SetCCDtemperature(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
+
+		TYPE_ASCOM_STATUS	Get_StartX(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+		TYPE_ASCOM_STATUS	Get_StartY(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+		TYPE_ASCOM_STATUS	Put_StartX(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
+		TYPE_ASCOM_STATUS	Put_StartY(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 
 		TYPE_ASCOM_STATUS	Get_Lastexposureduration(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg,	const char *responseString);
 		TYPE_ASCOM_STATUS	Get_Lastexposurestarttime(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg,	const char *responseString);
@@ -411,6 +428,7 @@ class CameraDriver: public AlpacaDriver
 		TYPE_ASCOM_STATUS	Get_ExposureTime(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
 		TYPE_ASCOM_STATUS	Put_ExposureTime(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 
+		TYPE_ASCOM_STATUS	Put_SaveAllImages(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 
 		TYPE_ASCOM_STATUS	Put_SaveNextImage(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 		TYPE_ASCOM_STATUS	Put_StartSequence(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
@@ -523,6 +541,7 @@ class CameraDriver: public AlpacaDriver
 		virtual	TYPE_ASCOM_STATUS		Start_CameraExposure(int32_t exposureMicrosecs);
 				TYPE_ASCOM_STATUS		Start_CameraExposure(void);
 		virtual	TYPE_ASCOM_STATUS		Stop_Exposure(void);
+		virtual	TYPE_ASCOM_STATUS		Abort_Exposure(void);
 		virtual	TYPE_EXPOSURE_STATUS	Check_Exposure(bool verboseFlag = false);
 
 		virtual	TYPE_ASCOM_STATUS	SetImageTypeCameraOpen(TYPE_IMAGE_TYPE newImageType);
@@ -638,7 +657,7 @@ protected:
 	int					cImageSeqNumber;
 	bool				cDisplayImage;
 	bool				cSaveNextImage;				//*	this will get reset each time an image is taken
-	bool				cSaveImages;
+	bool				cSaveAllImages;
 	long				cWorkingLoopCnt;
 	long				cFramesRead;
 	double				cFrameRate;					//*	primarily used in live mode

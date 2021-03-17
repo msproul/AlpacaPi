@@ -48,6 +48,7 @@ enum
 	kCameraBox_SideBar,
 	kCameraBox_AutoExposure,
 	kCameraBox_DisplayImage,
+	kCameraBox_SaveAll,
 
 	kCameraBox_Filename,
 	kCameraBox_ErrorMsg,
@@ -124,6 +125,7 @@ class WindowTabCamera: public WindowTab
 				void	ToggleSideBar(void);
 				void	ToggleAutoExposure(void);
 				void	ToggleDisplayImage(void);
+				void	ToggleSaveAll(void);
 				void	ToggleCooler(void);
 				void	StartExposure(void);
 				void	SetTempartueDisplayEnable(bool enabled);

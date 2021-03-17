@@ -125,6 +125,7 @@ int		iii;
 //-	cCoolerOn				=	false;
 	cAutoExposure			=	false;
 	cDisplayImage			=	false;
+	cSaveAllImages			=	false;
 	cHas_FilterWheel		=	false;
 	cExposure				=	0.001;
 	cDarkExposure			=	false;
@@ -181,7 +182,7 @@ int		iii;
 
 	GetConfiguredDevices();
 
-//	CONSOLE_DEBUG_W_STR("exit", cWindowName);
+	CONSOLE_DEBUG_W_STR("exit", cWindowName);
 }
 
 //**************************************************************************************
@@ -673,6 +674,10 @@ void	ControllerCamera::AlpacaProcessSupportedActions(const char	*deviceTypeStr,
 	{
 		cHas_rgbarray	=	true;
 	}
+	else if (strcasecmp(valueString,	"saveallimages") == 0)
+	{
+		cHas_SaveAll	=	true;
+	}
 	else if (strcasecmp(valueString,	"sidebar") == 0)
 	{
 		cHas_sidebar	=	true;
@@ -945,6 +950,12 @@ void	ControllerCamera::AlpacaProcessReadAll(	const char	*deviceTypeStr,
 		//*	readoutmode
 		cCameraProp.ReadOutMode	=	atoi(valueString);
 		UpdateCurrReadoutMode();
+	}
+	else if (strcasecmp(keywordString, "saveallimages") == 0)
+	{
+		//=================================================================================
+		//*	save all images
+		cSaveAllImages	=	IsTrueFalse(valueString);
 	}
 	else if (strcasecmp(keywordString, "sidebar") == 0)
 	{
@@ -1543,6 +1554,21 @@ bool	validData;
 		CONSOLE_DEBUG_W_STR("Failed to get data, Req=", dataString)
 	}
 }
+
+//*****************************************************************************
+void	ControllerCamera::ToggleSaveAll(void)
+{
+char	dataString[48];
+bool	validData;
+
+	sprintf(dataString, "saveallimages=%s", (cSaveAllImages ? "false" : "true"));
+	validData	=	AlpacaSendPutCmd(	"camera", "saveallimages",	dataString);
+	if (validData == false)
+	{
+		CONSOLE_DEBUG_W_STR("Failed to get data, Req=", dataString)
+	}
+}
+
 
 
 //*****************************************************************************

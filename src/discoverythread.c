@@ -1,7 +1,6 @@
 //*****************************************************************************
 //*	Alpaca discovery thread
 //*
-//*	based on proposal by Daniel Van Noord
 //*****************************************************************************
 //*	Edit History
 //*****************************************************************************
@@ -19,6 +18,7 @@
 //*	Feb  4,	2021	<MLS> Rearranged close logic in GetJsonResponse()
 //*	Feb  7,	2021	<MLS> Added Discovery_ClearIPAddrList()
 //*	Feb  7,	2021	<MLS> Fixed bug that did not discover 2 listen ports on same IP addrr
+//*	Mar  9,	2021	<MLS> Moved FindDeviceInList() to discoverytjread.c
 //*****************************************************************************
 
 
@@ -383,6 +383,36 @@ char			myVersionString[64];
 	}
 }
 
+//*****************************************************************************
+static int	SetSocketTimeouts(int socket_desc, int timeOutSecs)
+{
+struct timeval		timeoutLength;
+int					setOptRetCode;
+
+	//*	set a timeout
+	timeoutLength.tv_sec	=	timeOutSecs;
+	timeoutLength.tv_usec	=	0;
+	setOptRetCode			=	setsockopt(	socket_desc,
+											SOL_SOCKET,
+											SO_RCVTIMEO,
+											&timeoutLength,
+											sizeof(timeoutLength));
+
+	if (setOptRetCode < 0)
+	{
+		perror("setsockopt(SO_RCVTIMEO) failed");
+	}
+	setOptRetCode			=	setsockopt(	socket_desc,
+											SOL_SOCKET,
+											SO_SNDTIMEO,
+											&timeoutLength,
+											sizeof(timeoutLength));
+	if (setOptRetCode < 0)
+	{
+		perror("setsockopt(SO_SNDTIMEO) failed");
+	}
+	return(setOptRetCode);
+}
 
 //*****************************************************************************
 static bool	GetJsonResponse(	struct sockaddr_in	*deviceAddress,
@@ -400,13 +430,18 @@ int					shutdownRetCode;
 int					recvByteCnt;
 char				returnedData[2000];
 char				xmitBuffer[2000];
+int					setOptRetCode;
 
-
+//*	Mar 13,	2021	<MLS> Added timeout to GetJsonResponse()
 //	CONSOLE_DEBUG(__FUNCTION__);
 	validData	=	false;
 	socket_desc	=	socket(AF_INET , SOCK_STREAM , 0);
 	if (socket_desc >= 0)
 	{
+		//*	set a timeout
+		setOptRetCode	=	SetSocketTimeouts(socket_desc, 3);
+
+
 		remoteDev.sin_addr.s_addr	=	deviceAddress->sin_addr.s_addr;
 		remoteDev.sin_family		=	AF_INET;
 		remoteDev.sin_port			=	htons(port);
@@ -864,7 +899,7 @@ struct timeval		timeoutLength;
 int					timeOutCntr;
 int					sockOptValue;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	gBroadcastSock	=	socket(AF_INET, SOCK_DGRAM, 0);
 	if (gBroadcastSock  < 0)
 	{
@@ -891,13 +926,7 @@ int					sockOptValue;
 	}
 
 	//*	set a timeout
-	timeoutLength.tv_sec	=	2;
-	timeoutLength.tv_usec	=	0;
-	setOptRetCode			=	setsockopt(	gBroadcastSock,
-											SOL_SOCKET,
-											SO_RCVTIMEO,
-											&timeoutLength,
-											sizeof(timeoutLength));
+	setOptRetCode	=	SetSocketTimeouts(gBroadcastSock, 3);
 
 
 	bindRetCode	=	bind(gBroadcastSock, (const struct sockaddr *)&cliaddr, sizeof(cliaddr));
@@ -1115,6 +1144,33 @@ uint32_t		ipAddress32;
 	}
 //	exit(0);
 }
+
+
+//**************************************************************************************
+int	FindDeviceInList(TYPE_REMOTE_DEV *theDevice, TYPE_REMOTE_DEV *theList, int maxDevices)
+{
+int		foundIndex;
+int		iii;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	foundIndex	=	-1;
+	iii			=	0;
+	while ((foundIndex < 0) && (iii < maxDevices))
+	{
+		if ((theDevice->deviceAddress.sin_addr.s_addr	==	theList[iii].deviceAddress.sin_addr.s_addr)
+			&&	(theDevice->port						==	theList[iii].port)
+			&&	(theDevice->alpacaDeviceNum				==	theList[iii].alpacaDeviceNum)
+			&&	(strcasecmp(theDevice->deviceTypeStr, theList[iii].deviceTypeStr) == 0)
+				)
+		{
+			foundIndex	=	iii;
+		}
+		iii++;
+	}
+	return(foundIndex);
+}
+
 
 //*****************************************************************************
 int StartDiscoveryListenThread(int alpacaListenPort)

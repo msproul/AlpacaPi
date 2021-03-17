@@ -22,6 +22,7 @@ uint32_t	CPUstats_GetUptime(void);
 uint32_t	CPUstats_GetTotalRam(void);
 uint32_t	CPUstats_GetFreeRam(void);
 uint32_t	CPUstats_GetFreeDiskSpace(const char* path);
+bool		ReadUSBfsMemorySetting(char *usbfsString);
 
 
 #ifdef __cplusplus

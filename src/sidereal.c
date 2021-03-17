@@ -110,7 +110,7 @@ double	utc;
 int		fullYear;
 int		g;
 int		leap;		// number of leap years since 2000
-int		nleap;		// number of non-leap years since 2000
+int		nonleap;	// number of non-leap years since 2000
 double	G;			// number of days
 int		numDays;
 double	GST;		// Greenwich Sidereal Time
@@ -130,9 +130,9 @@ int		dh,dm,ds;	// local sidereal time
 
 	// calculate G (based on extrapolation)
 	g		=	(fullYear - 2000);
-	leap	=	(g + 1.0) / 4.0;						// number of leap years since 2000
-	nleap	=	g - leap;								// number of non-leap years since 2000
-	G		=	kG2000 + (leap * kLC) + (nleap * kNC);	// number of days
+	leap	=	(g + 1.0) / 4.0;							// number of leap years since 2000
+	nonleap	=	g - leap;									// number of non-leap years since 2000
+	G		=	kG2000 + (leap * kLC) + (nonleap * kNC);	// number of days
 
 //	CONSOLE_DEBUG_W_DBL("G\t\t=",	G);
 
@@ -152,7 +152,7 @@ int		dh,dm,ds;	// local sidereal time
 //	CONSOLE_DEBUG_W_NUM("fullYear\t=", fullYear);
 //	CONSOLE_DEBUG_W_NUM("g\t\t=", g);
 //	CONSOLE_DEBUG_W_NUM("leap\t=", leap);
-//	CONSOLE_DEBUG_W_NUM("nleap\t=", nleap);
+//	CONSOLE_DEBUG_W_NUM("nonleap\t=", nonleap);
 
 //	CONSOLE_DEBUG_W_DBL("LST\t=", LST);
 //	CONSOLE_DEBUG_W_NUM("dh\t\t=", dh);

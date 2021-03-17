@@ -32,6 +32,9 @@
 //*	Jan 21,	2021	<MLS> Must use HTTP/1.0 to disable "Transfer-Encoding: chunked"
 //*	Jan 30,	2021	<MLS> Changed TCP socket timeout to 4 seconds
 //*	Feb  3,	2021	<MLS> Added checking for ERRNO=24 (EMFILE), too many files open
+//*	Mar 13,	2021	<MLS> Added timeout to GetJsonResponse()
+//*	Mar 13,	2021	<MLS> Added SetSocketTimeouts()
+//*	Mar 13,	2021	<MLS> Added send timeout
 //*****************************************************************************
 
 #include	<stdio.h>
@@ -63,6 +66,38 @@ int		gNumSocketConnOKcnt		=	0;
 int		gNumSocketConnErrCnt	=	0;
 bool	gReportError			=	true;
 
+
+//*****************************************************************************
+static int	SetSocketTimeouts(int socket_desc, int timeOutSecs)
+{
+struct timeval		timeoutLength;
+int					setOptRetCode;
+
+	//*	set a timeout
+	timeoutLength.tv_sec	=	timeOutSecs;
+	timeoutLength.tv_usec	=	0;
+	setOptRetCode			=	setsockopt(	socket_desc,
+											SOL_SOCKET,
+											SO_RCVTIMEO,
+											&timeoutLength,
+											sizeof(timeoutLength));
+
+	if (setOptRetCode < 0)
+	{
+		perror("setsockopt(SO_RCVTIMEO) failed");
+	}
+	setOptRetCode			=	setsockopt(	socket_desc,
+											SOL_SOCKET,
+											SO_SNDTIMEO,
+											&timeoutLength,
+											sizeof(timeoutLength));
+	if (setOptRetCode < 0)
+	{
+		perror("setsockopt(SO_SNDTIMEO) failed");
+	}
+	return(setOptRetCode);
+}
+
 //*****************************************************************************
 //*	returns a socket description
 //*****************************************************************************
@@ -80,29 +115,19 @@ char				xmitBuffer[kReadBuffLen];
 char				linebuf[100];
 int					dataStrLen;
 char				ipString[32];
-struct timeval		timeoutLength;
 int					setOptRetCode;
 int					so_oobinline;
 
-	CONSOLE_DEBUG(__FUNCTION__);
-	CONSOLE_DEBUG(sendData);
+//	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(sendData);
 	socket_desc	=	socket(AF_INET , SOCK_STREAM , 0);
 	if (socket_desc >= 0)
 	{
 		gNumSocketOpenOKcnt++;
 
 		//*	set a timeout
-		timeoutLength.tv_sec	=	kTimeOutLenSeconds;
-		timeoutLength.tv_usec	=	0;
-		setOptRetCode			=	setsockopt(	socket_desc,
-												SOL_SOCKET,
-												SO_RCVTIMEO,
-												&timeoutLength,
-												sizeof(timeoutLength));
-		if (setOptRetCode < 0)
-		{
-			perror("setsockopt(SO_RCVTIMEO) failed");
-		}
+		setOptRetCode	=	SetSocketTimeouts(socket_desc, kTimeOutLenSeconds);
+
 		//*	turn out of band off
 		so_oobinline	=	0;
 		setOptRetCode			=	setsockopt(	socket_desc,
@@ -178,7 +203,7 @@ int					so_oobinline;
 		CONSOLE_DEBUG_W_NUM("socket_desc\t=", socket_desc);
 		CONSOLE_DEBUG_W_NUM("errno\t\t=", errno);
 	}
-	CONSOLE_DEBUG("exit");
+//	CONSOLE_DEBUG("exit");
 	return(socket_desc);
 }
 
@@ -205,6 +230,8 @@ char				linebuf[100];
 int					dataStrLen;
 char				ipString[32];
 bool				keepReading;
+struct timeval		timeoutLength;
+int					setOptRetCode;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 //	CONSOLE_DEBUG(sendData);
@@ -212,6 +239,10 @@ bool				keepReading;
 	socket_desc	=	socket(AF_INET , SOCK_STREAM , 0);
 	if (socket_desc >= 0)
 	{
+//		CONSOLE_DEBUG("Setting Timeout");
+		//*	set a timeout
+		setOptRetCode	=	SetSocketTimeouts(socket_desc, kTimeOutLenSeconds);
+
 		gNumSocketOpenOKcnt++;
 		remoteDev.sin_addr.s_addr	=	deviceAddress->sin_addr.s_addr;
 		remoteDev.sin_family		=	AF_INET;
@@ -220,9 +251,10 @@ bool				keepReading;
 		connRetCode	=	connect(socket_desc , (struct sockaddr *)&remoteDev , sizeof(remoteDev));
 		if (connRetCode >= 0)
 		{
+//			CONSOLE_DEBUG("Connected");
+
 			gNumSocketConnOKcnt++;
 
-//			CONSOLE_DEBUG("Connected");
 			strcpy(xmitBuffer, "GET ");
 			strcat(xmitBuffer, sendData);
 			strcat(xmitBuffer, "\r\n");
@@ -245,7 +277,7 @@ bool				keepReading;
 			if (sendRetCode >= 0)
 			{
 
-//			CONSOLE_DEBUG("Request sent");
+//				CONSOLE_DEBUG("Request sent");
 				keepReading		=	true;
 				longBuffer[0]	=	0;
 				while (keepReading && ((strlen(longBuffer) + kReadBuffLen) < kLargeBufferSize))
@@ -316,6 +348,7 @@ bool				keepReading;
 		{
 			CONSOLE_DEBUG("Close error");
 		}
+//		CONSOLE_DEBUG(__FUNCTION__);
 	}
 	else
 	{
@@ -372,17 +405,7 @@ int					setOptRetCode;
 	if (socket_desc >= 0)
 	{
 		//*	set a timeout
-		timeoutLength.tv_sec	=	kTimeOutLenSeconds;
-		timeoutLength.tv_usec	=	0;
-		setOptRetCode			=	setsockopt(	socket_desc,
-												SOL_SOCKET,
-												SO_RCVTIMEO,
-												&timeoutLength,
-												sizeof(timeoutLength));
-		if (setOptRetCode < 0)
-		{
-			perror("setsockopt(SO_BROADCAST) failed");
-		}
+		setOptRetCode	=	SetSocketTimeouts(socket_desc, kTimeOutLenSeconds);
 
 		remoteDev.sin_addr.s_addr	=	deviceAddress->sin_addr.s_addr;
 		remoteDev.sin_family		=	AF_INET;

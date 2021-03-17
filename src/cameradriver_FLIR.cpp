@@ -185,6 +185,7 @@ char			lineBuff[256];
 int				slen;
 char			fileName[]	=	"/sys/module/usbcore/parameters/usbfs_memory_mb";
 int				usbfs_memory_mb;
+char			*charPtr;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -193,20 +194,23 @@ int				usbfs_memory_mb;
 	if (filePointer != NULL)
 	{
 		lineBuff[0]	=	0;
-		fgets(lineBuff, 200, filePointer);
-		slen	=	strlen(lineBuff);
-		if (slen > 0)
+		charPtr	=	fgets(lineBuff, 200, filePointer);
+		if (charPtr != NULL)
 		{
-			usbfs_memory_mb	=	atoi(lineBuff);
-//			CONSOLE_DEBUG_W_NUM("usbfs_memory_mb\t=", usbfs_memory_mb);
-			if (usbfs_memory_mb < 1000)
+			slen	=	strlen(lineBuff);
+			if (slen > 0)
 			{
-				sprintf(lineBuff, "usbfs_memory_mb=%d", usbfs_memory_mb);
-				LogEvent(	"camera-FLIR",
-							lineBuff,
-							NULL,
-							kASCOM_Err_Success,
-							"Should be >= 1000");
+				usbfs_memory_mb	=	atoi(lineBuff);
+	//			CONSOLE_DEBUG_W_NUM("usbfs_memory_mb\t=", usbfs_memory_mb);
+				if (usbfs_memory_mb < 1000)
+				{
+					sprintf(lineBuff, "usbfs_memory_mb=%d", usbfs_memory_mb);
+					LogEvent(	"camera-FLIR",
+								lineBuff,
+								NULL,
+								kASCOM_Err_Success,
+								"Should be >= 1000");
+				}
 			}
 		}
 		fclose(filePointer);
@@ -233,6 +237,8 @@ quickSpin			quickSpinStruct;
 	//*	we have to have something here
 	cCameraProp.CameraXsize	=	4240;
 	cCameraProp.CameraYsize	=	2824;
+	cCameraProp.PixelSizeX	=	3.1;		//*	https://www.flir.com/products/grasshopper3-usb3/?model=GS3-U3-120S6M-C
+	cCameraProp.PixelSizeY	=	3.1;
 	cCameraProp.NumX		=	cCameraProp.CameraXsize;
 	cCameraProp.NumY		=	cCameraProp.CameraYsize;
 

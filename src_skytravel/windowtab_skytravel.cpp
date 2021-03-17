@@ -47,6 +47,9 @@
 //*	Feb 20,	2021	<MLS> Added display of NGC/IC numbers at high zoom level
 //*	Mar  2,	2021	<MLS> Fixed bug in SyncTelescopeToCenter()
 //*	Mar  4,	2021	<MLS> Added HYG data base which include HD stars (Henry Draper)
+//*	Mar  9,	2021	<MLS> Added DrawTelescopeFOV()
+//*	Mar  9,	2021	<MLS> Camera Field Of View overlay on star map working
+//*	Mar 11,	2021	<MLS> Clif suggested a different way of drawing the FOV
 //*****************************************************************************
 //*	TODO
 //*			star catalog lists
@@ -87,6 +90,7 @@
 #include	"YaleStarCatalog.h"
 #include	"HipparcosCatalog.h"
 #include	"SkyTravelExternal.h"
+#include	"sidereal.h"
 
 #include	"windowtab.h"
 #include	"windowtab_skytravel.h"
@@ -246,6 +250,7 @@ int		ii;
 
 	cAutoAdvanceTime		=	true;
 	cLastUpdateTime_ms		=	0;
+	cLastClockUpdateTime_ms	=	0;
 	cNightMode				=	false;
 	cStarDataPtr			=	NULL;
 	cStarCount				=	0;
@@ -270,6 +275,8 @@ int		ii;
 
 	cSpecialObjectPtr		=	NULL;
 	cSpecialObjectCount		=	0;
+
+	cCameraFOVarrayPtr		=	NULL;
 
 #ifdef _ENABLE_HYG_
 	cHYGObjectPtr			=	NULL;
@@ -357,8 +364,6 @@ int		ii;
 	wind_uly		=	0;
 	cWind_width		=	xSize;
 	cWind_height	=	ySize - 75;
-
-
 
 
 	cStarDataPtr	=	GetDefaultStarData(&cStarCount, &cCurrentTime);
@@ -525,7 +530,7 @@ int		buttonWidthGoto;
 
 	yLoc			=	cTabVertOffset;
 
-	xLoc	=	labelWidth + 5;
+	xLoc			=	labelWidth + 5;
 	for (iii = kSkyTravel_Btn_DeepSky; iii < kSkyTravel_MsgTextBox; iii++)
 	{
 		if (iii == kSkyTravel_Btn_Reset)
@@ -535,10 +540,22 @@ int		buttonWidthGoto;
 			yLoc	+=	cTitleHeight;
 			yLoc	+=	2;
 		}
-		SetWidget(				iii,	xLoc,	yLoc,		cTitleHeight,		cTitleHeight);
-		SetWidgetType(			iii, 	kWidgetType_Button);
+		if (iii == kSkyTravel_UTCtime)
+		{
+			SetWidget(				iii,	xLoc,	yLoc,		labelWidth * 2,		cTitleHeight);
+			SetWidgetType(			iii, 	kWidgetType_Text);
+			SetWidgetFont(			iii,	kFont_Medium);
+			SetWidgetText(			iii, 	"UTC Time");
 
-		xLoc	+=	cTitleHeight;
+			xLoc	+=	labelWidth;
+		}
+		else
+		{
+			SetWidget(				iii,	xLoc,	yLoc,		cTitleHeight,		cTitleHeight);
+			SetWidgetType(			iii, 	kWidgetType_Button);
+			xLoc	+=	cTitleHeight;
+		}
+
 		xLoc	+=	2;
 	}
 
@@ -711,11 +728,50 @@ int		buttonWidthGoto;
 	UpdateButtonStatus();
 }
 
+
+//*****************************************************************************
+static void	FormatTimeString(struct timeval *tv, char *timeString)
+{
+struct tm	*linuxTime;
+
+	if ((tv != NULL) && (timeString != NULL))
+	{
+		linuxTime		=	gmtime(&tv->tv_sec);
+
+		sprintf(timeString, "%02d:%02d:%02d",
+								linuxTime->tm_hour,
+								linuxTime->tm_min,
+								linuxTime->tm_sec);
+
+	}
+}
+
+//*****************************************************************************
+static void	FormatTimeString_TM(struct tm *timeStruct, char *timeString)
+{
+
+	if ((timeStruct != NULL) && (timeString != NULL))
+	{
+
+		sprintf(timeString, "%02d:%02d:%02d",
+								timeStruct->tm_hour,
+								timeStruct->tm_min,
+								timeStruct->tm_sec);
+	}
+}
+
 //**************************************************************************************
 void WindowTabSkyTravel::RunBackgroundTasks(void)
 {
-uint32_t	currentMilliSecs;
-uint32_t	deltaMilliSecs;
+uint32_t			currentMilliSecs;
+uint32_t			deltaMilliSecs;
+struct timeval		currentTime;
+char				utcTimeString[32];
+char				siderialTimeString[32];
+char				textBuff[64];
+struct tm			utcTime;
+struct tm			siderealTime;
+
 
 	currentMilliSecs	=	millis();
 	deltaMilliSecs		=	currentMilliSecs - cLastUpdateTime_ms;
@@ -728,6 +784,26 @@ uint32_t	deltaMilliSecs;
 			ForceUpdate();
 		}
 		cLastUpdateTime_ms		=	millis();
+
+	}
+	deltaMilliSecs		=	currentMilliSecs - cLastClockUpdateTime_ms;
+	if (deltaMilliSecs >= 1000)
+	{
+		gettimeofday(&currentTime, NULL);
+		FormatTimeString(&currentTime, utcTimeString);
+
+		gmtime_r(&currentTime.tv_sec, &utcTime);
+		CalcSiderealTime(&utcTime, &siderealTime, gObseratorySettings.Longitude);
+		FormatTimeString_TM(&siderealTime, siderialTimeString);
+
+
+
+		sprintf(textBuff, "U%s / S%s", utcTimeString, siderialTimeString);
+		SetWidgetText(kSkyTravel_UTCtime, textBuff);
+
+
+
+		cLastClockUpdateTime_ms		=	millis();
 	}
 
 #if 0
@@ -1979,12 +2055,12 @@ short		ii;
 
 	//*	needed for crescent moon and sun graphics
 
-	phase_angle			=	cSunMonStruct.smdist;
-	position_angle		=	-cSunMonStruct.smang;
+	cPhase_angle			=	cSunMonStruct.smdist;
+	cPosition_angle			=	-cSunMonStruct.smang;
 
-	sun_radius			=	cPlanetStruct[SUN].radius;
-	moon_radius			=	cPlanetStruct[MON].radius;
-	earth_shadow_radius	=	cSunMonStruct.earth_shadow_radius;
+	cSun_radius				=	cPlanetStruct[SUN].radius;
+	cMoon_radius			=	cPlanetStruct[MON].radius;
+	cEarth_shadow_radius	=	cSunMonStruct.earth_shadow_radius;
 
 	if (cSunMonStruct.lunar_ecl_flag)
 	{
@@ -2060,7 +2136,7 @@ short		ii;
 
 	//*--------------------------------------------------------------------------------
 	//*	common star names are added to the Hipparcos data, we plot it separately
-	if (cDispOptions.dispCommonStarNames)
+	if (cDispOptions.dispCommonStarNames && (cView_index < 9))
 	{
 		DrawCommonStarNames();
 	}
@@ -2448,6 +2524,7 @@ bool			firstMove;
 		cWind_x0	=	wind_ulx + (cWind_width / 2);
 		cWind_y0	=	wind_uly + (cWind_height / 2);
 
+		//*	compute pixels per radian
 		cXfactor	=	cWind_width / cView_angle;
 		cYfactor	=	cXfactor;	//* 1:1 aspect ratio
 
@@ -3716,7 +3793,6 @@ int		color2;
 //*********************************************************************
 void	WindowTabSkyTravel::DrawWindowOverlays(void)
 {
-
 //	CONSOLE_DEBUG(__FUNCTION__);
 	//*	not sure what state the color is in, clear it
 	currentForeColor	=	-1;
@@ -3795,10 +3871,17 @@ void	WindowTabSkyTravel::DrawWindowOverlays(void)
 		//*	do we display the telescope cross hairs
 		if (telescopeIsInView)
 		{
+		int	fovCount;
+
 			telescopeXX	+=	cWorkSpaceTopOffset;
 			telescopeYY	+=	cWorkSpaceLeftOffset;
 
-			DrawTelescopeReticle(telescopeXX, telescopeYY);
+			fovCount	=	DrawTelescopeFOV();
+			if (fovCount == 0)
+			{
+				DrawTelescopeReticle(telescopeXX, telescopeYY);
+			}
+
 		}
 		else
 		{
@@ -3882,38 +3965,328 @@ void	WindowTabSkyTravel::DrawTelescopeReticle(int screenXX, int screenYY)
 	}
 }
 
+//**************************************************************************************
+void	WindowTabSkyTravel::SetCameraFOVptr(TYPE_CameraFOV	*cameraFOVarrayPtr)
+{
+	cCameraFOVarrayPtr	=	cameraFOVarrayPtr;
+}
+
+//*****************************************************************************
+bool	WindowTabSkyTravel::DrawTelescopeFOV(TYPE_CameraFOV *fovPtr, short	telescopeXX, short telescopeYY)
+{
+bool	fovWasDrawn;
+short	topLeft_XX;
+short	topLeft_YY;
+short	topRight_XX;
+short	topRight_YY;
+short	btmLeft_XX;
+short	btmLeft_YY;
+short	btmRight_XX;
+short	btmRight_YY;
+
+double	fovWidth_RAD;
+double	fovHeight_RAD;
+int		pixelsWide;
+int		pixelsTall;
+
+
+	SetColor(RED);
+//	SetColor(WHITE);
+	fovWasDrawn	=	false;
+	if (fovPtr->IsValid && fovPtr->FOVenabled)
+	{
+		fovWasDrawn	=	true;
+		//*	get FOV width and height in radians
+		fovWidth_RAD		=	RADIANS(fovPtr->FOV_X_arcSeconds / 3600.0);
+		fovHeight_RAD		=	RADIANS(fovPtr->FOV_Y_arcSeconds / 3600.0);
+
+		//	cXfactor is	pixels per radian
+		pixelsWide	=	fovWidth_RAD * cXfactor;
+		pixelsTall	=	fovHeight_RAD * cYfactor;
+
+		topLeft_XX	=	telescopeXX - (pixelsWide / 2);
+		topLeft_YY	=	telescopeYY + (pixelsTall / 2);
+
+		topRight_XX	=	telescopeXX + (pixelsWide / 2);
+		topRight_YY	=	telescopeYY + (pixelsTall / 2);
+
+		btmLeft_XX	=	telescopeXX - (pixelsWide / 2);
+		btmLeft_YY	=	telescopeYY - (pixelsTall / 2);
+
+		btmRight_XX	=	telescopeXX + (pixelsWide / 2);
+		btmRight_YY	=	telescopeYY - (pixelsTall / 2);
+
+		//-------------------------------------------------------------------------------------
+		//*	top line
+		//*	draw straight line
+		CMoveTo(topLeft_XX,		topLeft_YY);
+		CLineTo(topRight_XX,	topRight_YY);
+
+		//*	bottom line
+		CMoveTo(btmLeft_XX,		btmLeft_YY);
+		CLineTo(btmRight_XX,	btmRight_YY);
+
+		//*	left line
+		CMoveTo(topLeft_XX,		topLeft_YY);
+		CLineTo(btmLeft_XX,		btmLeft_YY);
+
+		//*	right line
+		CMoveTo(topRight_XX,	topRight_YY);
+		CLineTo(btmRight_XX,	btmRight_YY);
+
+		//*	now do the label
+		if ((btmLeft_XX > 0) && (btmLeft_YY > 0))
+		{
+			DrawCString(btmLeft_XX, btmLeft_YY, fovPtr->CameraName);
+		}
+		else if ((topLeft_XX > 0) && (topLeft_YY > 0))
+		{
+			DrawCString(topLeft_XX, topLeft_YY, fovPtr->CameraName);
+		}
+		else if ((topRight_XX > 0) && (topRight_YY > 0))
+		{
+			DrawCString(topRight_XX, topRight_YY, fovPtr->CameraName);
+		}
+		else if ((btmRight_XX > 0) && (btmRight_YY > 0))
+		{
+			DrawCString(btmRight_XX, btmRight_YY, fovPtr->CameraName);
+		}
+	}
+	return(fovWasDrawn);
+}
+
+//*****************************************************************************
+//*	returns the # of FOV's drawn
+//*****************************************************************************
+int	WindowTabSkyTravel::DrawTelescopeFOV(void)
+{
+int		fovCount;
+bool	fovWasDrawn;
+int		iii;
+bool	telescopeIsInView;
+short	telescopeXX, telescopeYY;
+
+//	CONSOLE_DEBUG_W_NUM(__FUNCTION__, cDebugCounter++);
+
+	fovCount	=	0;
+	SetColor(RED);
+//	SetColor(WHITE);
+	telescopeIsInView	=	GetXYfromRA_Decl(	gTelescopeRA_Radians,
+												gTelescopeDecl_Radians,
+												&telescopeXX,
+												&telescopeYY);
+	if (telescopeIsInView && (cCameraFOVarrayPtr != NULL))
+	{
+		for (iii=0; iii<kMaxCamaeraFOVcnt; iii++)
+		{
+			fovWasDrawn	=	DrawTelescopeFOV(&cCameraFOVarrayPtr[iii], 	telescopeXX,  telescopeYY);
+			if (fovWasDrawn)
+			{
+				fovCount++;
+			}
+		}
+	}
+	return(fovCount);
+}
+
+
+//*****************************************************************************
+//*	arguments in degrees
+static void		CovertAzEl_to_RA_DEC(	double	latitude,		//*	phi
+										double	azimuth,		//*	x
+										double	elev,			//*	y
+										double	*ra,			//*	P
+										double	*dec)			//	Q
+{
+double	sq;
+double	q;
+double	p;
+double	cp;
+double	x;
+double	y;
+double	phi;
+
+	CONSOLE_DEBUG_W_DBL("ra\t\t=",	*ra);
+
+
+#if 1
+	phi	=	RADIANS(latitude);
+	x	=	RADIANS(azimuth);
+	y	=	RADIANS(elev);
+
+	sq	=	(sin(y) * sin(phi)) + (cos(y) * cos(phi) * cos(x));
+	q	=	asin(sq);
+	cp	=	(sin(y) - (sin(phi) * sin(q))) / (cos(phi) * cos(q));
+	p	=	acos(cp);
+#else
+double	cosPhi;
+double	sinPhi;
+double	sinX;
+double	cosX;
+double	sinY;
+double	cosY;
+double	a;
+double	cq;
+
+#define	FNASN(W)	atan(W / (sqrt(1.0 - (W * W) + 1E-20)))
+#define	FNACS(W)	(M_PI / 2.0)-FNASN(W)
+	cosPhi	=	cos(RADIANS(latitude));
+	sinPhi	=	sin(RADIANS(latitude));
+
+	sinX	=	sin(RADIANS(azimuth));
+	cosX	=	cos(RADIANS(azimuth));
+
+	sinY	=	sin(RADIANS(elev));
+	cosY	=	cos(RADIANS(elev));
+
+	sq		=	(sinY * sinPhi) + (cosY * cosPhi * cosX);
+	q		=	FNASN(sq);
+	cq		=	cos(q);
+	a		=	cosPhi * cq;
+	if (a < 1E-20)
+	{
+		a	=	1E-20;
+	}
+	cp		=	(sinY - (sinPhi * sq)) / a;
+    p		=	FNACS(cp);
+#endif
+
+    *ra		=	(DEGREES(p))/ 15.0;
+    *dec	=	DEGREES(q);
+
+	CONSOLE_DEBUG_W_DBL("ra\t\t=",	*ra);
+	CONSOLE_DEBUG_W_DBL("dec\t=",	*dec);
+}
+
 
 //*****************************************************************************
 void	WindowTabSkyTravel::DrawDomeSlit(void)
 {
 double	slitWidth_Radians;
+double	slitHeight_Radians;
 double	slitLeft_Radians;
 double	slitRight_Radians;
+double	skyTravelDomeAsimuth;	//*	Skytravel is reversed coordinates
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	skyTravelDomeAsimuth	=	360.0 - gDomeAzimuth_degrees;
+
+	CONSOLE_DEBUG(__FUNCTION__);
 	SetColor(CYAN);
 
+
 	slitWidth_Radians	=	2.0 * atan2((gSlitWidth_inches / 2.0), (gDomeDiameter_inches / 2.0));
+	slitHeight_Radians	=	RADIANS(gSlitTop_degrees) - RADIANS(gSlitBottom_degrees);
 
 //	CONSOLE_DEBUG_W_DBL("slitHeight_Degrees\t\t=",	slitHeight_Degrees);
 //	CONSOLE_DEBUG_W_DBL("Slit width degrees\t\t=",	DEGREES(slitWidth_Radians));
 //	CONSOLE_DEBUG_W_DBL("Slit height degrees\t=",	DEGREES(slitHeight_Radians));
 
-	slitLeft_Radians	=	RADIANS(gDomeAzimuth_degrees) - (slitWidth_Radians / 2);
-	slitRight_Radians	=	RADIANS(gDomeAzimuth_degrees) + (slitWidth_Radians / 2);
+	slitLeft_Radians	=	RADIANS(skyTravelDomeAsimuth) - (slitWidth_Radians / 2);
+	slitRight_Radians	=	RADIANS(skyTravelDomeAsimuth) + (slitWidth_Radians / 2);
+#if 0
 
+
+	//	cXfactor is	pixels per radian
+	pixelsWide	=	slitWidth_Radians * cXfactor;
+	pixelsTall	=	slitHeight_Radians * cYfactor;
+
+	topLeft_XX	=	telescopeXX - (pixelsWide / 2);
+	topLeft_YY	=	telescopeYY + (pixelsTall / 2);
+
+	topRight_XX	=	telescopeXX + (pixelsWide / 2);
+	topRight_YY	=	telescopeYY + (pixelsTall / 2);
+
+	btmLeft_XX	=	telescopeXX - (pixelsWide / 2);
+	btmLeft_YY	=	telescopeYY - (pixelsTall / 2);
+
+	btmRight_XX	=	telescopeXX + (pixelsWide / 2);
+	btmRight_YY	=	telescopeYY - (pixelsTall / 2);
+
+	//-------------------------------------------------------------------------------------
+	//*	top line
+	//*	draw straight line
+	CMoveTo(topLeft_XX,		topLeft_YY);
+	CLineTo(topRight_XX,	topRight_YY);
+
+	//*	bottom line
+	CMoveTo(btmLeft_XX,		btmLeft_YY);
+	CLineTo(btmRight_XX,	btmRight_YY);
+
+	//*	left line
+	CMoveTo(topLeft_XX,		topLeft_YY);
+	CLineTo(btmLeft_XX,		btmLeft_YY);
+
+	//*	right line
+	CMoveTo(topRight_XX,	topRight_YY);
+	CLineTo(btmRight_XX,	btmRight_YY);
+#else
 	DrawHorizontalArc(RADIANS(gSlitBottom_degrees), slitLeft_Radians, slitRight_Radians);
 	DrawHorizontalArc(RADIANS(gSlitTop_degrees),	slitLeft_Radians, slitRight_Radians);
 
 	DrawVerticalArc(slitLeft_Radians, RADIANS(gSlitBottom_degrees), RADIANS(gSlitTop_degrees));
 	DrawVerticalArc(slitRight_Radians, RADIANS(gSlitBottom_degrees), RADIANS(gSlitTop_degrees));
+#endif
+
+#if 1
+double		slitBtm_RA_deg;
+double		slitBtm_Dec_deg;
+double		slitTop_RA_deg;
+double		slitTop_Dec_deg;
+short		x1, y1;
+short		x2, y2;
+bool		slitInView;
+//*	arguments in degrees
+
+
+	CONSOLE_DEBUG_W_DBL("gDomeAzimuth_degrees\t=",	gDomeAzimuth_degrees);
+	CONSOLE_DEBUG_W_DBL("skyTravelDomeAsimuth\t=",	skyTravelDomeAsimuth);
+
+
+
+	CovertAzEl_to_RA_DEC(	gObseratorySettings.Latitude,	//*	phi
+							skyTravelDomeAsimuth,			//*	az
+							gSlitTop_degrees,				//	el,				//*	y
+							&slitTop_RA_deg,				//*	P
+							&slitTop_Dec_deg);				//	Q
+
+	CovertAzEl_to_RA_DEC(	gObseratorySettings.Latitude,	//*	phi
+							skyTravelDomeAsimuth,			//*	az
+							gSlitBottom_degrees,			//	el,				//*	y
+							&slitBtm_RA_deg,				//*	P
+							&slitBtm_Dec_deg);				//	Q
+
+
+
+	slitTop_RA_deg	-=	-74.980333;
+	slitBtm_RA_deg	-=	-74.980333;
+
+
+	slitInView	=	GetXYfromRA_Decl(	RADIANS(slitTop_RA_deg),
+										RADIANS(slitTop_Dec_deg),
+										&x1,
+										&y1);
+
+	slitInView	=	GetXYfromRA_Decl(	RADIANS(slitBtm_RA_deg),
+										RADIANS(slitBtm_Dec_deg),
+										&x2,
+										&y2);
+	if (slitInView)
+	{
+		CMoveTo(x1,	y1);
+		CLineTo(x2,	y2);
+	}
+#endif
 
 }
 
 //*****************************************************************************
 void	WindowTabSkyTravel::CenterOnDomeSlit(void)
 {
-	cAz0	=	RADIANS(gDomeAzimuth_degrees);
+double	skyTravelDomeAsimuth;	//*	Skytravel is reversed coordinates
+
+	skyTravelDomeAsimuth	=	360.0 - gDomeAzimuth_degrees;
+
+	cAz0	=	RADIANS(skyTravelDomeAsimuth);
 	cElev0	=	RADIANS((gSlitBottom_degrees + gSlitTop_degrees) / 2);
 
 	cDispOptions.dispDomeSlit		=	true;
@@ -4016,6 +4389,26 @@ int			myColor;
 		SetColor(myColor);
 		DrawGreatCircle(RADIANS(degrees));
 		degrees	+=	10.0;
+	}
+
+	if (cView_index <= 5)
+	{
+		SetColor(myColor);
+		DrawGreatCircle(RADIANS(89.5));
+		SetColor(myColor);
+		DrawGreatCircle(RADIANS(89.7));
+	}
+
+	if (cView_index <= 3)
+	{
+		SetColor(myColor);
+		DrawGreatCircle(RADIANS(89.9));
+	}
+
+	if (cView_index <= 1)
+	{
+		SetColor(myColor);
+		DrawGreatCircle(RADIANS(89.95));
 	}
 
 	//-------------------------------------------------------------------------
@@ -4241,6 +4634,7 @@ double	angleDelta;
 //*****************************************************************************
 //*	draw a great circle at the specified dec angle
 //*	returns the number of points draw, 0 means nothing was drawn
+//*	declinationAngle is in radians
 //*****************************************************************************
 int	WindowTabSkyTravel::DrawGreatCircle(double declinationAngle, bool rainbow)
 {
@@ -4399,6 +4793,10 @@ char	numberStr[32];
 	if (declinationAngle == 0.0)
 	{
 		strcpy(numberStr, "EQ");
+	}
+	else if (declinationAngle > 1.553343)
+	{
+		sprintf(numberStr, "%1.1fN", DEGREES(declinationAngle));
 	}
 	else if (declinationAngle > 0.0)
 	{
@@ -4665,9 +5063,9 @@ int				myColor;
 //	CONSOLE_DEBUG_W_NUM("cWind_height\t=",	cWind_height);
 //	CONSOLE_DEBUG_W_NUM("wind_ulx\t=",		wind_ulx);
 //	CONSOLE_DEBUG_W_NUM("wind_uly\t=",		wind_uly);
-	rad0[0]			=	moon_radius;
-	rad0[1]			=	sun_radius;
-	rad0[2]			=	earth_shadow_radius;
+	rad0[0]			=	cMoon_radius;
+	rad0[1]			=	cSun_radius;
+	rad0[2]			=	cEarth_shadow_radius;
 
 	sphptr.bside	=	kHALFPI - cDecl0;	//* this remains constant throughout
 
@@ -4752,13 +5150,13 @@ int				myColor;
 							if (ii == 0)	//* Moon, filled crescent
 							{
 								minang	=	(cView_index + 1) * (7.0 * PI/180.0);	//* to avoid floodfill problems
-								phasang	=	phase_angle;
+								phasang	=	cPhase_angle;
 								if (phasang < 1.0e-2)
 								{
 									phasang	=	0.0;
 								}
-								posang	=	position_angle + cGamang;
-								if (phase_angle < 0.0)
+								posang	=	cPosition_angle + cGamang;
+								if (cPhase_angle < 0.0)
 								{
 									posang	=	posang + PI;
 								}
@@ -4808,7 +5206,7 @@ int				myColor;
 
 									//* fill the crescent part
 
-									if (fabs(phase_angle) > minang)
+									if (fabs(cPhase_angle) > minang)
 									{
 								//+		setfillstyle(SOLID_FILL,YELLOW);
 										theta	=	posang+PI/ 2.0;

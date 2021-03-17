@@ -255,6 +255,7 @@ void	ControllerCamNormal::UpdateSupportedActions(void)
 	SetWidgetValid(kTab_Camera,	kCameraBox_LiveMode,			cHas_livemode);
 	SetWidgetValid(kTab_Camera,	kCameraBox_SideBar,				cHas_sidebar);
 	SetWidgetValid(kTab_Camera,	kCameraBox_DownloadRGBarray,	cHas_rgbarray);
+	SetWidgetValid(kTab_Camera,	kCameraBox_SaveAll,				cHas_SaveAll);
 
 }
 
@@ -511,6 +512,9 @@ void	ControllerCamNormal::UpdateDisplayModes(void)
 	SetWidgetChecked(kTab_Camera, kCameraBox_SideBar,		cSideBar);
 	SetWidgetChecked(kTab_Camera, kCameraBox_AutoExposure,	cAutoExposure);
 	SetWidgetChecked(kTab_Camera, kCameraBox_DisplayImage,	cDisplayImage);
+	SetWidgetChecked(kTab_Camera, kCameraBox_SaveAll,		cSaveAllImages);
+
+
 }
 
 //*****************************************************************************

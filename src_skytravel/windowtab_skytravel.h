@@ -8,14 +8,19 @@
 
 #ifndef	_WINDOW_TAB_H_
 	#include	"windowtab.h"
-#endif // _CONTROLLER_H_
+#endif
 
 #ifndef _SKY_STRUCTS_H_
 	#include	"SkyStruc.h"
-#endif // _SKY_STRUCTS_H_
+#endif
+
 #ifndef _CONSTELLATION_DATA_H_
 	#include	"ConstellationData.h"
-#endif // _CONSTELLATION_DATA_H_
+#endif
+
+#ifndef _CAMERA_FOV_H_
+	#include	"cameraFOV.h"
+#endif
 
 #include	"commoncolor.h"
 
@@ -44,6 +49,9 @@ enum
 	kSkyTravel_Btn_Messier,
 	kSkyTravel_Btn_YaleCat,
 	kSkyTravel_Btn_Hipparcos,
+
+	kSkyTravel_UTCtime,
+
 
 	//*	these are display controls
 	kSkyTravel_Btn_Reset,
@@ -178,6 +186,8 @@ class WindowTabSkyTravel: public WindowTab
 
 				void	DrawFeet(void);
 				void	DrawTelescopeReticle(int screenXX, int screenYY);
+				int		DrawTelescopeFOV(void);
+				bool	DrawTelescopeFOV(TYPE_CameraFOV *fovPtr, short	telescopeXX, short telescopeYY);
 				void	DrawDomeSlit(void);
 				void	CenterOnDomeSlit(void);
 
@@ -196,6 +206,7 @@ class WindowTabSkyTravel: public WindowTab
 				void	MapTokens(TYPE_Time *timeptr, TYPE_LatLon *locptr);
 
 		uint32_t			cLastUpdateTime_ms;
+		uint32_t			cLastClockUpdateTime_ms;
 
 		//*	I am using openCV ROI for the drawing so these are always zero
 		int					cWorkSpaceLeftOffset;
@@ -204,7 +215,6 @@ class WindowTabSkyTravel: public WindowTab
 		//*	still need the offset for doing cursor calculations
 		int					cCursorOffsetY;
 
-//?-		bool				cPressEnable;		//*	defaults to true, turn off for dragging
 		bool				cAutoAdvanceTime;
 		bool				cNightMode;
 		unsigned short		cTrack;				//*	0=no tracking, 1=track cursor, 2,3 etc. means track planet
@@ -218,7 +228,7 @@ class WindowTabSkyTravel: public WindowTab
 		int					cMagmin;
 		int					cView_index;		//*	1,2,4,8,16,32,64
 		double				cView_angle;		//*	in radians
-		double				cXfactor;
+		double				cXfactor;			//*	pixels per radian
 		double				cYfactor;
 		double				cGamang;
 		double				cChart_gamma;
@@ -262,11 +272,11 @@ class WindowTabSkyTravel: public WindowTab
 		int					cWind_width;
 		int					cWind_height;
 
-		double				sun_radius;			//*	in radians
-		double				moon_radius;		//*	in radians
-		double				phase_angle;		//*	for crescent moon
-		double				position_angle;
-		double				earth_shadow_radius;
+		double				cSun_radius;		//*	in radians
+		double				cMoon_radius;		//*	in radians
+		double				cPhase_angle;		//*	for crescent moon
+		double				cPosition_angle;
+		double				cEarth_shadow_radius;
 
 		double				mon_geo_ra;
 		double				mon_geo_decl;
@@ -343,6 +353,11 @@ class WindowTabSkyTravel: public WindowTab
 		TYPE_TeleDispOptions	cTelescopeDisplayOptions;
 
 		int						cDebugCounter;
+
+		//--------------------------------------------------------------
+		//*	Camera FOV stuff
+		void			SetCameraFOVptr(TYPE_CameraFOV	*cameraFOVarrayPtr);
+		TYPE_CameraFOV	*cCameraFOVarrayPtr;
 };
 
 

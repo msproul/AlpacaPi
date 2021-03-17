@@ -6,6 +6,7 @@
 //*	Apr 27,	2020	<MLS> Added CPUstats_GetTotalRam() & CPUstats_GetFreeRam()
 //*	Jun 24,	2020	<MLS> Added CPUstats_GetFreeDiskSpace()
 //*	Jan 17,	2021	<MLS> Moved CPU info routines to this file, changed names
+//*	Mar  8,	2021	<MLS> Added ReadUSBfsMemorySetting()
 //*****************************************************************************
 
 #include	<stdlib.h>
@@ -15,6 +16,8 @@
 #include	<stdint.h>
 #include	<string.h>
 #include	<sys/statvfs.h>
+#include	<sys/types.h>
+#include	<sys/stat.h>
 
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
@@ -364,6 +367,47 @@ uint32_t		availableSpace;
 	return (availableSpace);
 }
 
+
+//*****************************************************************************
+//*	usbfs_memory_mb is important for the FLIR camera driver, it needs to be 1000 or greater
+//*****************************************************************************
+bool	ReadUSBfsMemorySetting(char *usbfsString)
+{
+FILE		*filePointer;
+char		lineBuff[256];
+struct stat	fileStatus;
+char		usbFSpath[]	=	"/sys/module/usbcore/parameters/usbfs_memory_mb";
+int			returnCode;
+bool		foundIt;
+int			iii;
+int			sLen;
+
+	foundIt		=	false;
+	returnCode	=	stat(usbFSpath, &fileStatus);
+	strcpy(lineBuff, "");
+	if (returnCode == 0)
+	{
+		filePointer	=	fopen(usbFSpath, "r");
+		if (filePointer != NULL)
+		{
+			foundIt		=	true;
+			fgets(lineBuff, 200, filePointer);
+			sLen	=	strlen(lineBuff);
+			//*	get rid of any trailing CR/LF
+			for (iii=0; iii<sLen; iii++)
+			{
+				if (lineBuff[iii] < 0x20)
+				{
+					lineBuff[iii]	=	0;
+					break;
+				}
+			}
+			strcpy(usbfsString, lineBuff);
+			fclose(filePointer);
+		}
+	}
+	return(foundIt);
+}
 
 
 #ifdef _INCLUDE_MAIN_CPU_STATS_

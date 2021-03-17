@@ -682,7 +682,7 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 }
 
 //*****************************************************************************
-TYPE_ASCOM_STATUS	AlpacaDriver::Get_Readall_Common(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
+TYPE_ASCOM_STATUS	AlpacaDriver::Get_Readall_Common(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
 	Get_Connected(			reqData, alpacaErrMsg, "connected");
@@ -697,7 +697,7 @@ TYPE_ASCOM_STATUS	AlpacaDriver::Get_Readall_Common(				TYPE_GetPutRequestData *r
 }
 
 //*****************************************************************************
-TYPE_ASCOM_STATUS	AlpacaDriver::Get_Readall_CPUstats(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
+TYPE_ASCOM_STATUS	AlpacaDriver::Get_Readall_CPUstats(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
 {
 double		cpuTemp_DegC;
 double		cpuTemp_DegF;
@@ -709,6 +709,7 @@ int			upTime_Hours;
 int			upTime_Days;
 int			ram_Megabytes;
 double		freeDiskSpace_Gigs;
+bool		hasUSBfs;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 	JsonResponse_Add_String(reqData->socket,
@@ -796,6 +797,17 @@ double		freeDiskSpace_Gigs;
 							"freeDisk_Gigabytes",
 							freeDiskSpace_Gigs,
 							INCLUDE_COMMA);
+
+	hasUSBfs	=	ReadUSBfsMemorySetting(textBuff);
+	if (hasUSBfs)
+	{
+		JsonResponse_Add_String(reqData->socket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								"usbfs_memory_mb",
+								textBuff,
+								INCLUDE_COMMA);
+	}
 
 	return(kASCOM_Err_Success);
 }

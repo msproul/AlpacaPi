@@ -78,6 +78,7 @@ typedef struct
 extern	TYPE_REMOTE_DEV	gAlpacaDiscoveredList[];
 extern	int				gAlpacaDiscoveredCnt;
 
+int		FindDeviceInList(TYPE_REMOTE_DEV *theDevice, TYPE_REMOTE_DEV *theList, int maxDevices);
 
 bool	SetupBroadcast(void);
 int		SendAlpacaQueryBroadcast(void);

@@ -31,6 +31,7 @@
 //*	Feb 14,	2021	<MLS> Added UpdateSliderValue() to windowtab_camera
 //*	Feb 14,	2021	<MLS> Slider now working for exposure
 //*	Feb 14,	2021	<MLS> Slider now working for gain
+//*	Mar 13,	2021	<MLS> Added support for savel all images ToggleSaveAll()
 //*****************************************************************************
 
 #ifdef _ENABLE_CTRL_CAMERA_
@@ -279,6 +280,18 @@ IplImage	*logoImage;
 	SetWidgetType(	kCameraBox_DisplayImage,	kWidgetType_CheckBox);
 	SetWidgetText(	kCameraBox_DisplayImage,	"Display Image");
 	SetWidgetFont(	kCameraBox_DisplayImage,	kFont_Medium);
+
+	yLocSave	+=	cRadioBtnHt;
+	yLocSave	+=	2;
+	//=======================================================
+	//*	Save All Images
+	SetWidget(		kCameraBox_SaveAll,	cClm4_offset,	yLocSave,	cWidth/4,		cRadioBtnHt	);
+	SetWidgetType(	kCameraBox_SaveAll,	kWidgetType_CheckBox);
+	SetWidgetText(	kCameraBox_SaveAll,	"Save All");
+	SetWidgetFont(	kCameraBox_SaveAll,	kFont_Medium);
+	yLocSave	+=	cRadioBtnHt;
+	yLocSave	+=	2;
+
 
 	//=======================================================
 	//*	Filename
@@ -539,6 +552,10 @@ int			fwPosition;
 			ToggleDisplayImage();
 			break;
 
+		case kCameraBox_SaveAll:
+			ToggleSaveAll();
+			break;
+
 		case kCameraBox_CoolerChkBox:
 			ToggleCooler();
 			break;
@@ -784,6 +801,23 @@ ControllerCamera	*myCameraController;
 }
 
 
+//*****************************************************************************
+void	WindowTabCamera::ToggleSaveAll(void)
+{
+ControllerCamera	*myCameraController;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+	myCameraController	=	(ControllerCamera *)cParentObjPtr;
+
+	if (myCameraController != NULL)
+	{
+		myCameraController->ToggleSaveAll();
+	}
+	else
+	{
+		CONSOLE_DEBUG("myCameraController is NULL");
+	}
+}
 
 
 //*****************************************************************************

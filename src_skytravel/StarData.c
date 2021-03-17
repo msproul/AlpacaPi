@@ -1241,6 +1241,7 @@ double	degreesValue;
 char	raString[64];
 char	decString[64];
 
+	CONSOLE_DEBUG(__FUNCTION__);
 
 	for (iii=0; iii<recordCount; iii++)
 	{
@@ -1286,7 +1287,6 @@ int				linesRead;
 
 		if (specialData != NULL)
 		{
-
 			memset(specialData, 0, bufferSize);
 			linesRead	=	0;
 			while (fgets(lineBuff, 200, filePointer) && (recordCount < specifiedLnCnt))
@@ -1298,16 +1298,6 @@ int				linesRead;
 					ParseOneLineJPLhorizons(lineBuff, &specialData[recordCount]);
 					specialData[recordCount].dataSrc	=	dataSource;
 
-					if (recordCount < 3)
-					{
-						DumpCelestDataStruct(__FUNCTION__, &specialData[recordCount]);
-						CONSOLE_DEBUG(lineBuff);
-					}
-					else
-					{
-					//	CONSOLE_ABORT(__FUNCTION__);
-					}
-
 					recordCount++;
 				}
 				else if ((lineBuff[0] != '#') && (recordCount < specifiedLnCnt))
@@ -1318,16 +1308,14 @@ int				linesRead;
 						specialData[recordCount].dataSrc	=	dataSource;
 
 					//	if (recordCount < 3)
-						{
-							DumpCelestDataStruct(__FUNCTION__, &specialData[recordCount]);
-							CONSOLE_DEBUG(lineBuff);
-						}
-
+					//	{
+					//		DumpCelestDataStruct(__FUNCTION__, &specialData[recordCount]);
+					//		CONSOLE_DEBUG(lineBuff);
+					//	}
 						recordCount++;
 					}
 				}
 			}
-
 			*objectCount	=	recordCount;
 		}
 		fclose(filePointer);
@@ -1336,8 +1324,7 @@ int				linesRead;
 	{
 		CONSOLE_DEBUG_W_STR("Failed to read:", myFilePath);
 	}
-	DumpCelestralDataArray(specialData, recordCount);
+//	DumpCelestralDataArray(specialData, recordCount);
 	CONSOLE_DEBUG_W_NUM("Special records read\t=", recordCount);
-//	CONSOLE_ABORT(__FUNCTION__);
 	return(specialData);
 }

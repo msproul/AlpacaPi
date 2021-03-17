@@ -40,7 +40,7 @@
 
 #define	kApplicationName	"AlpacaPi"
 #define	kVersionString		"V0.4.0-beta"
-#define	kBuildNumber		99
+#define	kBuildNumber		100
 
 
 #define kAlpacaDiscoveryPORT	32227
@@ -253,8 +253,8 @@ typedef struct
 {
 	//*	ASCOM variables (properties)
 	//*	the ones commented out with //+ need to be implemented.....
-//+	short					BayerOffsetX;			//*	The X offset of the Bayer matrix.
-//+	short					BayerOffsetY;			//*	The Y offset of the Bayer matrix.
+	short					BayerOffsetX;			//*	The X offset of the Bayer matrix.
+	short					BayerOffsetY;			//*	The Y offset of the Bayer matrix.
 	int						BinX;					//*	The binning factor for the X axis.
 	int						BinY;					//*	The binning factor for the Y axis.
 	int						CameraXsize;			//*	The width of the CCD camera chip.
@@ -278,7 +278,7 @@ typedef struct
 	double					ExposureResolution;		//*	The smallest increment in exposure time supported by StartExposure.
 
 //+	bool					FastReadout;			//*	Returns whether Fast Readout Mode is enabled.
-//+	double					FullWellCapacity;		//*	Reports the full well capacity of the camera
+	double					FullWellCapacity;		//*	Reports the full well capacity of the camera
 	int						Gain;					//*	Returns the camera's gain
 	int						GainMax;				//*	Maximum Gain value of that this camera supports
 	int						GainMin;				//*	Minimum Gain value of that this camera supports
@@ -301,7 +301,7 @@ typedef struct
 //+	TYPE_IMAGE_ROI_Info		LastExposure_ROIinfo;
 
 
-//+	???						MaxADU;						//*	Camera's maximum ADU value
+	int						MaxADU;						//*	Camera's maximum ADU value
 	int						MaxbinX;					//*	Maximum binning for the camera X axis
 	int						MaxbinY;					//*	Maximum binning for the camera Y axis
 

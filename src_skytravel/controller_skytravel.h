@@ -1,6 +1,9 @@
 //*****************************************************************************
 //#include	"controller_skytravel.h"
 
+#ifndef _CONTROLLER_SKYTRAVEL_H_
+#define _CONTROLLER_SKYTRAVEL_H_
+
 
 
 #ifndef	_ALPACA_DEFS_H_
@@ -43,6 +46,10 @@
 	#include	"windowtab_moon.h"
 #endif
 
+#ifndef	_WINDOWTAB_FOV_H_
+	#include	"windowtab_fov.h"
+#endif
+
 
 extern	double	gTelescopeRA_Hours;
 extern	double	gTelescopeRA_Radians;
@@ -64,6 +71,7 @@ enum
 {
 	kTab_SkyTravel	=	1,
 	kTab_ST_Settings,
+	kTab_ST_FOV,
 	kTab_Moon,
 	kTab_ST_Dome,
 	kTab_DeviceList,
@@ -74,7 +82,6 @@ enum
 	kTab_ST_Count
 
 };
-
 
 
 //**************************************************************************************
@@ -110,6 +117,8 @@ class ControllerSkytravel: public Controller
 				bool	AlpacaProcessReadAll_Telescope(	const int	deviceNum,
 														const char	*keywordString,
 														const char	*valueString);
+
+				bool	AlpacaGetStartupData_Camera(TYPE_REMOTE_DEV *remoteDevice, TYPE_CameraProperties *cameraProp);
 				bool	AlpacaGetStartupData_Dome(void);
 				bool	AlpacaGetStartupData_Telescope(void);
 				bool	AlpacaGetStatus_DomeOneAAT(void);			//*	One At A Time
@@ -129,6 +138,7 @@ class ControllerSkytravel: public Controller
 				WindowTabIPList			*cIPaddrListObjPtr;
 				WindowTabDeviceSelect	*cDeviceSelectObjPtr;
 				WindowTabAbout			*cAboutBoxTabObjPtr;
+				WindowTabFOV			*cFOVTabObjPtr;
 		//====================================================
 		//*	alpaca device information
 				bool				LookForIPaddress(void);
@@ -178,3 +188,4 @@ void		CloseAllExceptFirst(void);
 
 
 
+#endif // _CONTROLLER_SKYTRAVEL_H_

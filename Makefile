@@ -1518,6 +1518,7 @@ SKYTRAVEL_OBJECTS=											\
 				$(OBJECT_DIR)NGCcatalog.o					\
 				$(OBJECT_DIR)nitecrawler_image.o			\
 				$(OBJECT_DIR)observatory_settings.o			\
+				$(OBJECT_DIR)sidereal.o						\
 				$(OBJECT_DIR)StarCatalogHelper.o			\
 				$(OBJECT_DIR)skytravel_main.o				\
 				$(OBJECT_DIR)StarData.o						\
@@ -1534,6 +1535,7 @@ SKYTRAVEL_OBJECTS=											\
 				$(OBJECT_DIR)windowtab_dome.o				\
 				$(OBJECT_DIR)windowtab_drvrInfo.o			\
 				$(OBJECT_DIR)windowtab_filelist.o			\
+				$(OBJECT_DIR)windowtab_fov.o				\
 				$(OBJECT_DIR)windowtab_graphs.o				\
 				$(OBJECT_DIR)windowtab_iplist.o				\
 				$(OBJECT_DIR)windowtab_ml_single.o			\
@@ -2295,6 +2297,7 @@ $(OBJECT_DIR)windowtab_about.o : 		$(SRC_DIR)windowtab_about.cpp		\
 										$(SRC_DIR)controller.h
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)windowtab_about.cpp -o$(OBJECT_DIR)windowtab_about.o
 
+
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)windowtab_drvrInfo.o : 	$(SRC_DIR)windowtab_drvrInfo.cpp		\
 										$(SRC_DIR)windowtab_drvrInfo.h			\
@@ -2486,6 +2489,13 @@ $(OBJECT_DIR)controller_skytravel.o :	$(SRC_SKYTRAVEL)controller_skytravel.cpp	\
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYTRAVEL)controller_skytravel.cpp -o$(OBJECT_DIR)controller_skytravel.o
 
 
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)windowtab_fov.o : 			$(SRC_SKYTRAVEL)windowtab_fov.cpp			\
+										$(SRC_SKYTRAVEL)windowtab_fov.h				\
+										$(SRC_SKYTRAVEL)cameraFOV.h					\
+										$(SRC_DIR)windowtab.h						\
+										$(SRC_DIR)controller.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYTRAVEL)windowtab_fov.cpp -o$(OBJECT_DIR)windowtab_fov.o
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)StarData.o :				$(SRC_SKYTRAVEL)StarData.c	\

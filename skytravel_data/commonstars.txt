@@ -110,3 +110,34 @@ Mirzam			30324
 Atria			82273
 Peacock			100751
 
+######################################
+#	Ursa Minor	finished 3/11/2021
+Yildun					85822
+Pherkad					75097
+#Kocab					defined above
+Eta Ursae Minoris		79822
+Zeta Ursae Minoris		77055
+Epsilon Ursae Minoris	82080
+
+######################################
+#	Cassiopeiae	finished 3/11/2021
+Segin					8886
+Ruchbah					6686
+Gamma					4427
+Schedar					3179
+#Caph					defined above
+
+#	https://www.solarsystemquick.com/universe/cassiopeia-constellation
+
+######################################
+#	Draco
+Rastaban				85670
+Altais					94376
+Kaou Pih				83895
+Edasich					75458
+Grumium					87585
+
+
+######################################
+#	Perseus
+Atik					17448

@@ -148,6 +148,7 @@ class ControllerCamera: public Controller
 				void	ToggleSideBar(void);
 				void	ToggleAutoExposure(void);
 				void	ToggleDisplayImage(void);
+				void	ToggleSaveAll(void);
 				void	ToggleCooler(void);
 				void	StartExposure(void);
 				void	SetObjectText(const char *newObjectText, const char *newPrefixText);
@@ -178,6 +179,7 @@ class ControllerCamera: public Controller
 				bool					cSideBar;
 				bool					cAutoExposure;
 				bool					cDisplayImage;
+				bool					cSaveAllImages;
 				bool					cHasCooler;
 
 				bool					cHas_autoexposure;
@@ -188,6 +190,7 @@ class ControllerCamera: public Controller
 				bool					cHas_livemode;
 				bool					cHas_rgbarray;
 				bool					cHas_sidebar;
+				bool					cHas_SaveAll;
 
 				//==========================================================
 				//*	File name information

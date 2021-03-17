@@ -58,6 +58,7 @@ static int	gClientTransactionID	=	1;
 
 //*****************************************************************************
 //*	this should be over-ridden
+//*****************************************************************************
 bool	Controller::AlpacaGetStartupData(void)
 {
 	CONSOLE_ABORT(__FUNCTION__);
@@ -394,6 +395,66 @@ bool			sucessFlag;
 }
 
 //*****************************************************************************
+bool	Controller::AlpacaGetIntegerValue(	struct sockaddr_in	deviceAddress,
+											int					port,
+											int					alpacaDevNum,
+											const char			*alpacaDevice,
+											const char			*alpacaCmd,
+											const char			*dataString,
+											int					*returnValue,
+											bool				*rtnValidData)
+{
+SJP_Parser_t	jsonParser;
+bool			validData;
+char			alpacaString[128];
+int				jjj;
+int				myIntgerValue;
+
+	SJP_Init(&jsonParser);
+	sprintf(alpacaString,	"/api/v1/%s/%d/%s", alpacaDevice, alpacaDevNum, alpacaCmd);
+//	CONSOLE_DEBUG_W_STR("alpacaString\t=",	alpacaString);
+
+	validData	=	GetJsonResponse(	&deviceAddress,
+										port,
+										alpacaString,
+										dataString,
+										&jsonParser);
+//	CONSOLE_DEBUG(__FUNCTION__);
+	if (validData)
+	{
+		cLastAlpacaErrNum	=	kASCOM_Err_Success;
+		for (jjj=0; jjj<jsonParser.tokenCount_Data; jjj++)
+		{
+
+			if (strcasecmp(jsonParser.dataList[jjj].keyword, "VALUE") == 0)
+			{
+				myIntgerValue	=	atoi(jsonParser.dataList[jjj].valueString);
+				if (returnValue != NULL)
+				{
+					*returnValue	=	myIntgerValue;
+				}
+			}
+		}
+		cLastAlpacaErrNum	=	AlpacaCheckForErrors(&jsonParser, cLastAlpacaErrStr);
+		if (cLastAlpacaErrNum != kASCOM_Err_Success)
+		{
+			//*	does the calling routine want to know if the data was good
+			if (rtnValidData != NULL)
+			{
+				*rtnValidData	=	false;
+			}
+		}
+	}
+	else
+	{
+		cReadFailureCnt++;
+	}
+//	CONSOLE_DEBUG(__FUNCTION__);
+	return(validData);
+}
+
+
+//*****************************************************************************
 bool	Controller::AlpacaGetIntegerValue(	const char	*alpacaDevice,
 											const char	*alpacaCmd,
 											const char	*dataString,
@@ -483,6 +544,66 @@ int				jjj;
 	return(validData);
 }
 
+//*****************************************************************************
+bool	Controller::AlpacaGetDoubleValue(	struct sockaddr_in	deviceAddress,
+											int					port,
+											int					alpacaDevNum,
+											const char			*alpacaDevice,
+											const char			*alpacaCmd,
+											const char			*dataString,
+											double				*returnValue,
+											bool				*rtnValidData)
+{
+SJP_Parser_t	jsonParser;
+bool			validData;
+char			alpacaString[128];
+int				jjj;
+double			myDoubleValue;
+
+	SJP_Init(&jsonParser);
+	sprintf(alpacaString,	"/api/v1/%s/%d/%s", alpacaDevice, alpacaDevNum, alpacaCmd);
+//	CONSOLE_DEBUG_W_STR("alpacaString\t=",	alpacaString);
+
+	validData	=	GetJsonResponse(	&deviceAddress,
+										port,
+										alpacaString,
+										dataString,
+										&jsonParser);
+//	CONSOLE_DEBUG(__FUNCTION__);
+	if (validData)
+	{
+		cLastAlpacaErrNum	=	kASCOM_Err_Success;
+		for (jjj=0; jjj<jsonParser.tokenCount_Data; jjj++)
+		{
+
+			if (strcasecmp(jsonParser.dataList[jjj].keyword, "VALUE") == 0)
+			{
+				myDoubleValue	=	atof(jsonParser.dataList[jjj].valueString);
+				if (returnValue != NULL)
+				{
+					*returnValue	=	myDoubleValue;
+				}
+			}
+		}
+		cLastAlpacaErrNum	=	AlpacaCheckForErrors(&jsonParser, cLastAlpacaErrStr);
+		if (cLastAlpacaErrNum != kASCOM_Err_Success)
+		{
+			//*	does the calling routine want to know if the data was good
+			if (rtnValidData != NULL)
+			{
+				*rtnValidData	=	false;
+			}
+		}
+	}
+	else
+	{
+		cReadFailureCnt++;
+	}
+//	CONSOLE_DEBUG(__FUNCTION__);
+	return(validData);
+}
+
+
 
 //*****************************************************************************
 //*	return value is true if the message was sent and a response was received
@@ -494,8 +615,19 @@ bool	Controller::AlpacaGetDoubleValue(	const char	*alpacaDevice,
 											double		*returnValue,
 											bool		*rtnValidData)
 {
-SJP_Parser_t	jsonParser;
 bool			validData;
+#if 1
+	validData	=	AlpacaGetDoubleValue(	cDeviceAddress,
+											cPort,
+											cAlpacaDevNum,
+											alpacaDevice,
+											alpacaCmd,
+											dataString,
+											returnValue,
+											rtnValidData);
+#else
+
+SJP_Parser_t	jsonParser;
 char			alpacaString[128];
 int				jjj;
 double			myDoubleValue;
@@ -540,6 +672,8 @@ double			myDoubleValue;
 		cReadFailureCnt++;
 	}
 //	CONSOLE_DEBUG(__FUNCTION__);
+#endif
+
 	return(validData);
 }
 

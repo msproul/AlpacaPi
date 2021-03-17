@@ -164,8 +164,6 @@ bool	valueIsNegitive;
 //	CONSOLE_DEBUG_W_STR("latLonString\t=", latLonString);
 }
 
-
-
 //*****************************************************************************
 //	DATE-OBS	String - The UTC date and time at the start of the exposure in
 //	the ISO standard 8601 format: '2002-09-07T15:42:17.123' (CCYY-MM-
@@ -187,8 +185,6 @@ void	FormatTimeString_TM(struct tm *timeStruct, char *timeString)
 
 	}
 }
-
-
 
 //*****************************************************************************
 static void	GetFitsErrorString(int fitsRetCode, char *errorString)

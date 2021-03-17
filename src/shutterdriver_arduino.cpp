@@ -469,6 +469,7 @@ int			usbPortNum;
 	//*	find the Arduino
 	usbPortNum	=	0;
 	returnCode	=	1;
+	//*	fstat - check for existence of file
 	while ((returnCode != 0) && (usbPortNum <= 4))
 	{
 		sprintf(serialPortPath, "/dev/ttyACM%d", usbPortNum);

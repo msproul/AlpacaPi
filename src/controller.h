@@ -51,7 +51,7 @@
 #define	kFontCnt	8
 #define	kButtonCnt	30
 
-#define	kDefaultUpdateDelta	5
+#define	kDefaultUpdateDelta	4
 
 extern CvFont		gTextFont[kFontCnt];
 
@@ -195,8 +195,8 @@ class Controller
 														const int	deviveNum,
 														const char	*valueString);
 				TYPE_ASCOM_STATUS	AlpacaCheckForErrors(	SJP_Parser_t	*jsonParser,
-												char			*errorMsg,
-												bool			reportError=false);
+															char			*errorMsg,
+															bool			reportError=false);
 		virtual	void	AlpacaDisplayErrorMessage(const char *errorMsgString);
 
 
@@ -232,11 +232,30 @@ class Controller
 													const char		*dataString,
 													SJP_Parser_t	*jsonParser);
 
+				bool	AlpacaGetIntegerValue(		struct sockaddr_in	deviceAddress,
+													int					port,
+													int					alpacaDevNum,
+													const char			*alpacaDevice,
+													const char			*alpacaCmd,
+													const char			*dataString,
+													int					*returnValue,
+													bool				*rtnValidData = NULL);
+
 				bool	AlpacaGetIntegerValue(	const char	*alpacaDevice,
 												const char	*alpacaCmd,
 												const char	*dataString,
 												int			*returnValue,
 												bool		*rtnValidData = NULL);
+
+				bool	AlpacaGetDoubleValue(	struct sockaddr_in	deviceAddress,
+												int					port,
+												int					alpacaDevNum,
+												const char			*alpacaDevice,
+												const char			*alpacaCmd,
+												const char			*dataString,
+												double				*returnValue,
+												bool				*rtnValidData = NULL);
+
 
 				bool	AlpacaGetDoubleValue(	const char	*alpacaDevice,
 												const char	*alpacaCmd,

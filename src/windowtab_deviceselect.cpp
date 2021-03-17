@@ -252,30 +252,6 @@ ControllerSkytravel	*myControllerObj;
 }
 
 //**************************************************************************************
-static int	FindDeviceInList(TYPE_REMOTE_DEV *theDevice, TYPE_REMOTE_DEV *theList, int maxDevices)
-{
-	int		foundIndex;
-	int		iii;
-
-//	CONSOLE_DEBUG(__FUNCTION__);
-
-	foundIndex	=	-1;
-	iii			=	0;
-	while ((foundIndex < 0) && (iii < maxDevices))
-	{
-		if ((theDevice->deviceAddress.sin_addr.s_addr == theList[iii].deviceAddress.sin_addr.s_addr) &&
-				(theDevice->port == theList[iii].port) &&
-				(strcasecmp(theDevice->deviceTypeStr, theList[iii].deviceTypeStr) == 0) &&
-				(theDevice->alpacaDeviceNum == theList[iii].alpacaDeviceNum))
-		{
-			foundIndex	=	iii;
-		}
-		iii++;
-	}
-	return(foundIndex);
-}
-
-//**************************************************************************************
 void	WindowTabDeviceSelect::UpdateRemoteDeviceList(void)
 {
 int		iii;

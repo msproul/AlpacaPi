@@ -1,16 +1,19 @@
-//***************************************************************
+//*****************************************************************************
 //*	eph.c
 //*	uses Van Flandern paper on low-precision formula for
 //*	planetary positions - The Astrophysical Journal
 //*	Supplemental Series, 41:391-411, 1979 Nov
-//***************************************************************
+//*****************************************************************************
 //*	Edit history
-//***************************************************************
+//*****************************************************************************
 //*	Written by Frank Covets and Clif Ashcraft
 //*	May  2,	1996	<MLS> (Mark Sproul) Starting on Sky Travel for Frank and Cliff
 //*	Nov 20,	1999	<MLS> Minor formating cleanup to improve readability
 //*	Jan  2,	2021	<MLS> More formating cleanup
-//***************************************************************
+//*****************************************************************************
+//*	sas -> side.angle.side
+//*	sss -> side.side.side.
+//*****************************************************************************
 
 #include	<math.h>
 #include	<stdlib.h>
@@ -24,9 +27,10 @@
 static	void	pseries(double *primary_arg, double dte, int planet, planet_struct *planptr);
 
 
-//**************************************************************************
+//*****************************************************************************
 //* sphsas - given sides b,c and angle alpha, compute side c
 //*	sas -> side.angle.side
+//*****************************************************************************
 void	sphsas(TYPE_SpherTrig *sphptr)
 {
 	sphptr->aside	=	acos(	cos(sphptr->bside - sphptr->cside) -
@@ -36,6 +40,7 @@ void	sphsas(TYPE_SpherTrig *sphptr)
 //**************************************************************************
 //* sphsss - given sides a,b,c compute gamma (angle opp. side c)
 //*	sss -> side.side.side.
+//**************************************************************************
 void	sphsss(TYPE_SpherTrig *sphptr)
 {
 	if (sphptr->aside > kEPSILON)
@@ -56,31 +61,37 @@ void	sphsss(TYPE_SpherTrig *sphptr)
 
 
 
-//***************************************************************
+//*****************************************************************************
 //void eph(time_struct *timeptr,locn_struct *locptr,planet_struct **planptr,sun_moon_struct *sunmonptr)
+//*****************************************************************************
 void	eph(	TYPE_Time		*timeptr,
 				TYPE_LatLon		*locptr,
 				planet_struct	*planptr,
 				sun_moon_struct	*sunmonptr)
 {
 int				iii;
-double			dte,delta_dte;
-double			ra,decl,dist,delta_ra;
+double			dte;
+double			delta_dte;
+double			ra;
+double			decl;
+double			dist;
+double			delta_ra;
 double			emr0;					//* earth moon distance ratio
-double			dtemp,umbra_radius;
+double			dtemp;
+double			umbra_radius;
 double			primary_arg[33];		//* primary argument in radians
 TYPE_SpherTrig	sphptr;
 
 	dte		=	timeptr->daysTillEpoch2000;
 
-	for (iii=PLU;iii>=0;iii--)
+	for (iii=PLU; iii>=0; iii--)
 	{
 		delta_dte	=	dte - planptr[iii].dte0;
 		if (fabs(delta_dte)>planptr[iii].delta_dte)
 		{
-			//* compute the pseries for dte+delta dte
+			//* compute the pseries for dte + delta dte
 
-			pseries(primary_arg, dte+planptr[iii].delta_dte, iii, &planptr[iii]);	//* update series for t+delta t
+			pseries(primary_arg, dte + planptr[iii].delta_dte, iii, &planptr[iii]);	//* update series for t+delta t
 			ra		=	planptr[iii].ra;		//* hang on to the coords for t=t+delta t
 			decl	=	planptr[iii].decl;
 			dist	=	planptr[iii].dist;
@@ -147,14 +158,14 @@ TYPE_SpherTrig	sphptr;
 	sphsss(&sphptr);
 	sunmonptr->mon_geo_elev		=	kHALFPI - sphptr.aside;
 	sunmonptr->mon_geo_az		=	sphptr.gamma;
-	sunmonptr->mon_topo_dist	=	sqrt(1.+(emr0*emr0)-(2.*emr0*sin(sunmonptr->mon_geo_elev)));
+	sunmonptr->mon_topo_dist	=	sqrt(1.0 + (emr0 * emr0) - (2.0 * emr0 * sin(sunmonptr->mon_geo_elev)));
 
 	dtemp						=	asin(cos(sunmonptr->mon_geo_elev)/sunmonptr->mon_topo_dist);
 	sunmonptr->mon_topo_decl	=	planptr[MON].decl - (dtemp*cos(sphptr.gamma));
 	sunmonptr->mon_topo_ra		=	planptr[MON].ra - (dtemp*sin(sphptr.gamma)/sin(sphptr.bside));
 
-	planptr[MON].radius		=	asin(MOON_RADIUS/(EARTH_RADIUS*sunmonptr->mon_topo_dist));
-	planptr[SUN].radius		=	asin(SUN_RADIUS/(AU*planptr[SUN].dist));
+	planptr[MON].radius		=	asin(MOON_RADIUS / (EARTH_RADIUS * sunmonptr->mon_topo_dist));
+	planptr[SUN].radius		=	asin(SUN_RADIUS / (AU * planptr[SUN].dist));
 
 	//*	now do solar and lunar eclipse comps
 
@@ -214,8 +225,9 @@ TYPE_SpherTrig	sphptr;
 
 }
 
-//***************************************************************
+//*****************************************************************************
 //* the primary argument parameters from Van Flandern
+//**************************************************************************
 static	void	uparg(double *primary_arg,double dte)
 {
 double ipart;
@@ -325,8 +337,9 @@ int index;
 	}
 }
 
-//***************************************************************
+//*****************************************************************************
 //*	compute the vuw series for the Moon
+//**************************************************************************
 static	void	update_mon_series(double *primary_arg, double dte, planet_struct *planptr)
 {
 double			cent,sum,prod;
@@ -393,8 +406,9 @@ mon_series_struct *serptr;
 	planptr->w	=	vuw[2];
 }
 
-//***************************************************************
+//*****************************************************************************
 //* compute the vuw series for the Sun
+//**************************************************************************
 static	void	update_sun_series(double *primary_arg, double dte, planet_struct *planptr)
 {
 double	cent,sum,prod;
@@ -467,8 +481,9 @@ sun_series_struct *serptr;
 	planptr->w	=	vuw[2];
 }
 
-//***************************************************************
+//*****************************************************************************
 //* compute the vuw series for Mercury
+//**************************************************************************
 static	void	update_mer_series(double *primary_arg, double dte, planet_struct *planptr)
 {
 double	cent,sum,prod;
@@ -529,8 +544,9 @@ mer_series_struct *serptr;
 	planptr->w	=	vuw[2];
 }
 
-//***************************************************************
+//*****************************************************************************
 //* compute the vuw series for Venus
+//**************************************************************************
 static	void	update_ven_series(double *primary_arg, double dte, planet_struct *planptr)
 {
 double	cent,sum,prod;
@@ -591,8 +607,9 @@ ven_series_struct *serptr;
 	planptr->w=vuw[2];
 }
 
-//***************************************************************
+//*****************************************************************************
 //* compute the vuw series for Mars
+//**************************************************************************
 static	void	update_mar_series(double *primary_arg, double dte, planet_struct *planptr)
 {
 double	cent,sum,prod;
@@ -659,8 +676,9 @@ mar_series_struct *serptr;
 	planptr->w	=	vuw[2];
 }
 
-//***************************************************************
+//*****************************************************************************
 //* compute the vuw series for Jupiter
+//**************************************************************************
 static	void	update_jup_series(double *primary_arg, double dte, planet_struct *planptr)
 {
 double cent,sum,prod;
@@ -727,8 +745,9 @@ jup_series_struct *serptr;
 	planptr->w=vuw[2];
 }
 
-//***************************************************************
+//*****************************************************************************
 //* compute the vuw series for Saturn
+//**************************************************************************
 static	void	update_sat_series(double *primary_arg, double dte, planet_struct *planptr)
 {
 double cent,sum,prod;
@@ -791,8 +810,9 @@ sat_series_struct *serptr;
 	planptr->w=vuw[2];
 }
 
-//***************************************************************
+//*****************************************************************************
 //* compute the vuw series for Uranus
+//**************************************************************************
 static	void	update_ura_series(double *primary_arg, double dte, planet_struct *planptr)
 {
 double cent,sum,prod;
@@ -853,8 +873,9 @@ ura_series_struct *serptr;
 	planptr->w	=	vuw[2];
 }
 
-//***************************************************************
+//*****************************************************************************
 //* compute the vuw series for Neptune
+//**************************************************************************
 static	void	update_nep_series(double *primary_arg, double dte, planet_struct *planptr)
 {
 double	cent,sum,prod;
@@ -915,8 +936,9 @@ nep_series_struct *serptr;
 	planptr->w=vuw[2];
 }
 
-//***************************************************************
+//*****************************************************************************
 //* compute the vuw series for Pluto
+//**************************************************************************
 static	void	update_plu_series(double *primary_arg, double dte, planet_struct *planptr)
 {
 double	cent,sum,prod;
@@ -979,7 +1001,7 @@ plu_series_struct	*serptr;
 }
 
 #if 0
-//***************************************************************
+//*****************************************************************************
 void printra(double ra)
 {
 double	hr,min,sec;
@@ -997,8 +1019,9 @@ double	conv	=	12.0 / PI;	//* converts radians to hours
 }
 #endif
 
-//***************************************************************
+//*****************************************************************************
 //*	update series
+//**************************************************************************
 static	void	pseries(double *primary_arg, double dte, int planet, planet_struct *planptr)
 {
 //* scale factor for dist
