@@ -111,6 +111,7 @@
 #define	_DEBUG_TIMING_
 #include	"ConsoleDebug.h"
 
+#include	"linuxerrors.h"
 #include	"alpacadriver.h"
 #include	"alpacadriver_helper.h"
 #include	"cameradriver.h"
