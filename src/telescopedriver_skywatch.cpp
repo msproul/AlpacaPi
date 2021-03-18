@@ -126,7 +126,6 @@ bool	isValid;
 
 
 //*****************************************************************************
-//*	needs to be over-ridden
 TYPE_ASCOM_STATUS	TelescopeDriverSkyWatch::Telescope_AbortSlew(char *alpacaErrMsg)
 {
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
@@ -136,7 +135,6 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 }
 
 //*****************************************************************************
-//*	needs to be over-ridden
 TYPE_ASCOM_STATUS	TelescopeDriverSkyWatch::Telescope_MoveAxis(const int axisNum, const double moveRate_degPerSec, char *alpacaErrMsg)
 {
 	TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
@@ -169,7 +167,6 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
 }
 
 //*****************************************************************************
-//*	needs to be over-ridden
 TYPE_ASCOM_STATUS	TelescopeDriverSkyWatch::Telescope_TrackingOnOff(const bool newTrackingState, char *alpacaErrMsg)
 {
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;

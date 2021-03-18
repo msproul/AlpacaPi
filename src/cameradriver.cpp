@@ -139,9 +139,11 @@
 //*	Mar 13,	2021	<MLS> Added "saveallimages" command, logic was already in place
 //*	Mar 13,	2021	<MLS> Added Put_SaveAllImages()
 //*	Mar 16,	2021	<MLS> Added Get_BayerOffsetX() & Get_BayerOffsetY()
+//*	Mar 16,	2021	<DDB> Found that SharpCap complains if maxADU is not supported
 //*	Mar 16,	2021	<MLS> Thanks to testing from David, adding maxadu support
 //*	Mar 16,	2021	<MLS> Added Get_MaxADU() & Get_ElectronsPerADU()
 //*	Mar 16,	2021	<MLS> Added Abort_Exposure()
+//*	Mar 17,	2021	<MLS> Added Get_HeatSinkTemperature()
 //*****************************************************************************
 //*	Jan  1,	2119	<TODO> ----------------------------------------
 //*	Jun 26,	2119	<TODO> Add support for sub frames
@@ -199,6 +201,7 @@
 
 #include	"alpaca_defs.h"
 #include	"cpu_stats.h"
+#include	"linuxerrors.h"
 
 #include	"alpacadriver.h"
 #include	"alpacadriver_helper.h"
@@ -316,6 +319,7 @@ const TYPE_CmdEntry	gCameraCmdTable[]	=
 CameraDriver::CameraDriver(void)
 	:AlpacaDriver(kDeviceType_Camera)
 {
+int	mkdirErrCode;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 	//*	set all of the class data to known states
@@ -498,7 +502,22 @@ int	iii;
 	}
 #endif // _ENABLE_FITS_
 
-	mkdir(kImageDataDir, 0744);
+	mkdirErrCode	=	mkdir(kImageDataDir, 0744);
+	if (mkdirErrCode == 0)
+	{
+		CONSOLE_DEBUG_W_STR("Image directory created:", kImageDataDir);
+	}
+	else if (errno == EEXIST)
+	{
+		CONSOLE_DEBUG_W_STR("Image directory already exists:", kImageDataDir);
+	}
+	else
+	{
+	char	linexErrString[80];
+
+		GetLinuxErrorString(errno, linexErrString);
+		CONSOLE_DEBUG_W_STR("mkdir returned error:", linexErrString);
+	}
 
 	SendDiscoveryQuery();
 }
@@ -908,8 +927,7 @@ char				httpHeader[500];
 
 
 		case kCmd_Camera_heatsinktemperature:	//*	Returns the current heat sink temperature.
-			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Command not implemented (Heat sink temp)");
-			alpacaErrCode	=	kASCOM_Err_NotImplemented;
+			alpacaErrCode	=	Get_HeatSinkTemperature(reqData, alpacaErrMsg, gValueString);
 			break;
 
 		case kCmd_Camera_imagearray:			//*	Returns an array of integers containing the exposure pixel values
@@ -1097,13 +1115,14 @@ char				httpHeader[500];
 			break;
 
 		case kCmd_Camera_pulseguide:			//*	Pulse guide in the specified direction for the specified time.
-			if (reqData->get_putIndicator == 'G')
-			{
-				alpacaErrCode	=	kASCOM_Err_NotImplemented;
-			}
-			else if (reqData->get_putIndicator == 'P')
+			if (reqData->get_putIndicator == 'P')
 			{
 				alpacaErrCode	=	Put_Pulseguide(reqData, alpacaErrMsg);
+			}
+			else
+			{
+				CONSOLE_DEBUG("invalid request")
+				alpacaErrCode	=	kASCOM_Err_InvalidOperation;
 			}
 			break;
 
@@ -1115,6 +1134,7 @@ char				httpHeader[500];
 			else
 			{
 				CONSOLE_DEBUG("invalid request")
+				alpacaErrCode	=	kASCOM_Err_InvalidOperation;
 			}
 			break;
 
@@ -1156,10 +1176,6 @@ char				httpHeader[500];
 			else if (reqData->get_putIndicator == 'P')
 			{
 				alpacaErrCode	=	Put_LiveMode(reqData, alpacaErrMsg);
-			}
-			else
-			{
-				CONSOLE_DEBUG("invalid request")
 			}
 			break;
 
@@ -1217,7 +1233,15 @@ char				httpHeader[500];
 			break;
 
 		case kCmd_Camera_startvideo:
-			alpacaErrCode	=	Put_StartVideo(reqData, alpacaErrMsg);
+			if (reqData->get_putIndicator == 'P')
+			{
+				alpacaErrCode	=	Put_StartVideo(reqData, alpacaErrMsg);
+			}
+			else
+			{
+				CONSOLE_DEBUG("invalid request");
+				alpacaErrCode	=	kASCOM_Err_InvalidOperation;
+			}
 			break;
 
 		case kCmd_Camera_stopvideo:
@@ -1247,11 +1271,6 @@ char				httpHeader[500];
 			else if (reqData->get_putIndicator == 'P')
 			{
 				alpacaErrCode	=	Put_AutoExposure(reqData, alpacaErrMsg);
-			}
-			else
-			{
-				CONSOLE_DEBUG("invalid request")
-				alpacaErrCode	=	kASCOM_Err_InvalidOperation;
 			}
 			break;
 
@@ -2091,11 +2110,23 @@ TYPE_ASCOM_STATUS	CameraDriver::Get_Gains(TYPE_GetPutRequestData *reqData, char 
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
-	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Command not implemented (gains)");
+	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
 	alpacaErrCode	=	kASCOM_Err_NotImplemented;
 
 	return(alpacaErrCode);
 }
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	CameraDriver::Get_HeatSinkTemperature(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
+
+	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
+	alpacaErrCode	=	kASCOM_Err_NotImplemented;
+
+	return(alpacaErrCode);
+}
+
 
 //*****************************************************************************
 TYPE_ASCOM_STATUS	CameraDriver::Get_IsPulseGuiding(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
@@ -2122,7 +2153,9 @@ TYPE_ASCOM_STATUS	alpacaErrCode;
 
 	if (cCameraProp.MaxADU == 0)
 	{
-		cCameraProp.MaxADU	=	pow(2, cBitDepth);
+		//*	ASCOM developers group advised 65535 was what most camera drivers returned
+	//	cCameraProp.MaxADU	=	pow(2, cBitDepth);
+		cCameraProp.MaxADU	=	65535;
 	}
 
 	if (reqData != NULL)
@@ -2453,7 +2486,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
 	}
 	else
 	{
-		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Command not implemented (percent complete)");
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
 		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 	}
 	return(alpacaErrCode);

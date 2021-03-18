@@ -57,6 +57,7 @@
 
 
 //#define	_DEBUG_TIMING_
+#include	"linuxerrors.h"
 
 #include	"alpacadriver.h"
 #include	"alpacadriver_helper.h"
@@ -336,7 +337,7 @@ int			quality[3] = {16, 200, 0};
 			}
 			else
 			{
-				CONSOLE_DEBUG_W_NUM("cvSaveImage (jpg) returned\t=", openCVerr);
+				CONSOLE_DEBUG_W_NUM("cvSaveImage (jpg) failed, returned\t=", openCVerr);
 			}
 		}
 	#ifdef _ENABLE_PNG_

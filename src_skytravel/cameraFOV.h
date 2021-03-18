@@ -14,6 +14,7 @@ typedef struct
 {
 	bool					IsValid;
 	bool					FOVenabled;		//*	do we display the FOV
+	int						OutLineColor;
 	bool					PropertyDataValid;
 	bool					HasReadAll;
 	TYPE_CameraProperties	CameraProp;

@@ -174,6 +174,7 @@ CPP_OBJECTS=												\
 				$(OBJECT_DIR)eventlogging.o					\
 				$(OBJECT_DIR)HostNames.o					\
 				$(OBJECT_DIR)JsonResponse.o					\
+				$(OBJECT_DIR)linuxerrors.o					\
 				$(OBJECT_DIR)managementdriver.o				\
 				$(OBJECT_DIR)observatory_settings.o			\
 				$(OBJECT_DIR)sidereal.o						\
@@ -2559,6 +2560,10 @@ $(OBJECT_DIR)lx200_com.o :				$(SRC_DIR)lx200_com.c	\
 										$(SRC_DIR)lx200_com.h
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)lx200_com.c -o$(OBJECT_DIR)lx200_com.o
 
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)linuxerrors.o :			$(SRC_DIR)linuxerrors.c	\
+										$(SRC_DIR)linuxerrors.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)linuxerrors.c -o$(OBJECT_DIR)linuxerrors.o
 
 
 SRC_SPECIAL			=	./src_special/
@@ -2581,3 +2586,5 @@ $(OBJECT_DIR)controller_video.o : 		$(SRC_SPECIAL)controller_video.cpp	\
 $(OBJECT_DIR)startextrathread.o : 		$(SRC_SPECIAL)startextrathread.cpp	\
 										$(SRC_DIR)alpacadriver_helper.h
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_SPECIAL)startextrathread.cpp -o$(OBJECT_DIR)startextrathread.o
+
+

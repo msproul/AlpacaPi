@@ -2285,52 +2285,62 @@ TYPE_GetPutRequestData	reqData;
 //	CONSOLE_DEBUG_W_STR("Alpaca data=", parseChrPtr);
 #endif // _DEBUG_CONFORM_
 
+	//-------------------------------------------------------------------
 	//*	standard ALPACA api call
 	if (strncmp(parseChrPtr, "/api/", 5) == 0)
 	{
-//		CONSOLE_DEBUG(__FUNCTION__);
+		//*	if we are here, we are guaranteed to have either GET or PUT, so no need to check
 		alpacaErrCode	=	ProcessAlpacaAPIrequest(&reqData, parseChrPtr);
 	}
+	//-------------------------------------------------------------------
 	//*	standard ALPACA setup
 	else if (strncmp(parseChrPtr, "/setup", 6) == 0)
 	{
 		SendHtmlResponse(&reqData);
 	}
+	//-------------------------------------------------------------------
 	//*	standard ALPACA management
 	else if (strncmp(parseChrPtr, "/management", 11) == 0)
 	{
 		alpacaErrCode	=	ProcessManagementRequest(&reqData, parseChrPtr);
 	}
+	//-------------------------------------------------------------------
 	//*	extra web interface
 	else if (strncmp(parseChrPtr, "/web", 4) == 0)
 	{
 		SendHtmlResponse(&reqData);
 	}
+	//-------------------------------------------------------------------
 	//*	extra log interface
 	else if (strncmp(parseChrPtr, "/log", 4) == 0)
 	{
 		SendHtmlLog(socket);
 	}
+	//-------------------------------------------------------------------
 	//*	Stats interface
 	else if (strncmp(parseChrPtr, "/stats", 6) == 0)
 	{
 		SendHtmlStats(&reqData);
 	}
+	//-------------------------------------------------------------------
 	else if (strncmp(parseChrPtr, "/favicon.ico", 12) == 0)
 	{
 		//*	do nothing, this is my web browser sends this
 //		CONSOLE_DEBUG("Ignored");
 	}
+	//-------------------------------------------------------------------
 	else if (strncmp(parseChrPtr, "/image.jpg", 10) == 0)
 	{
 //		CONSOLE_DEBUG("image.jpg");
 		SendJpegResponse(socket, NULL);
 	}
+	//-------------------------------------------------------------------
 	else if (strstr(parseChrPtr, ".jpg") != NULL)
 	{
 //		CONSOLE_DEBUG(".....jpg");
 		SendJpegResponse(socket, parseChrPtr);
 	}
+	//-------------------------------------------------------------------
 	else if (strstr(parseChrPtr, ".png") != NULL)
 	{
 		SendJpegResponse(socket, parseChrPtr);
@@ -2368,6 +2378,7 @@ int		returnCode	=	-1;
 	else
 	{
 		CONSOLE_DEBUG_W_STR("Invalid HTML get/put command\t=",	htmlData);
+		CONSOLE_DEBUG_W_LONG("byteCount\t=",	byteCount);
 	}
 
 	gServerTransactionID++;	//*	we are the "server"
@@ -2725,6 +2736,9 @@ uint32_t		delayTime_microSecs;
 uint32_t		delayTimeForThisTask;
 int				ii;
 int				cameraCnt;
+int				ram_Megabytes;
+double			freeDiskSpace_Gigs;
+
 #if defined(_ENABLE_FITS_) || defined(_ENABLE_JPEGLIB_)
 	char			lineBuffer[64];
 #endif
@@ -2737,6 +2751,16 @@ int				cameraCnt;
 
 	AddLibraryVersion("software", "gcc", __VERSION__);
 	AddLibraryVersion("software", "libc", gnu_get_libc_version());
+
+	ram_Megabytes	=	CPUstats_GetTotalRam();
+	CONSOLE_DEBUG_W_NUM("totalRam_Megabytes\t=", ram_Megabytes);
+
+	ram_Megabytes	=	CPUstats_GetFreeRam();
+	CONSOLE_DEBUG_W_NUM("freeRam_Megabytes\t=", ram_Megabytes);
+
+	freeDiskSpace_Gigs	=	CPUstats_GetFreeDiskSpace("/") / 1024.0;
+	CONSOLE_DEBUG_W_DBL("freeDiskSpace_Gigs\t=", freeDiskSpace_Gigs);
+
 
 #ifdef _ENABLE_FITS_
 	//*	cfitsio version

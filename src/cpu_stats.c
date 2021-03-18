@@ -456,9 +456,9 @@ uint32_t		ram_megabytes;
 		printf("mem_unit\t=\t%ld\r\n",	mySysInfo.mem_unit);
 	}
 	ram_megabytes	=	mySysInfo.freehigh / (1024 * 1024);
-
-
 }
+
+
 //*****************************************************************************
 int main(int argc, char *argv[])
 {

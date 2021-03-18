@@ -32,6 +32,7 @@ enum
 	kFOVbox_ClmTitle5,
 	kFOVbox_ClmTitle6,
 	kFOVbox_ClmTitle7,
+	kFOVbox_ClmTitle8,
 
 
 	kFOVbox_CamChkBox1,
@@ -96,6 +97,8 @@ enum
 
 
 	kFOVbox_CamChkBox_Last	=	kFOVbox_CamInfo20,
+
+	kFOVbox_SaveButton,
 
 	kFOVbox_AlpacaLogo,
 

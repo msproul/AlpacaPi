@@ -22,6 +22,7 @@
 //*	Mar  9,	2021	<MLS> Field of View window fully working
 //*	Mar 16,	2021	<MLS> Added creation of "camerafov.txt" file
 //*	Mar 16,	2021	<MLS> Added ReadCameraFOVfile()
+//*	Mar 17,	2021	<MLS> Added RA and DEC offsets to cameraFOV data
 //*****************************************************************************
 
 
@@ -103,7 +104,7 @@ int		chkBoxWidth;
 int		textBoxOffsetX;
 int		iii;
 int		clmnHdrWidth;
-short	tabArray[kMaxTabStops]	=	{250, 400, 500, 650, 800, 950, 1199, 0};
+short	tabArray[kMaxTabStops]	=	{250, 400, 500, 610, 750, 900, 1000, 1199, 0};
 int		clmTitleID;
 char	textString[80];
 
@@ -122,8 +123,8 @@ char	textString[80];
 
 	//------------------------------------------
 	textBoxHt		=	cRadioBtnHt;
-	chkBoxWidth		=	textBoxHt + 5;
-	textBoxOffsetX	=	chkBoxWidth + 3;
+	chkBoxWidth		=	textBoxHt + 3;
+	textBoxOffsetX	=	chkBoxWidth + 1;
 
 	//------------------------------------------
 	SetWidget(		kFOVbox_FileInfo,	textBoxOffsetX,			yLoc,	(cWidth - textBoxOffsetX),		cRadioBtnHt);
@@ -138,7 +139,7 @@ char	textString[80];
 	//------------------------------------------
 	clmnHdr_xLoc	=	textBoxOffsetX;
 	iii				=	kFOVbox_ClmTitle1;
-	while(iii <= kFOVbox_ClmTitle7)
+	while(iii <= kFOVbox_ClmTitle8)
 	{
 		clmnHdrWidth	=	tabArray[iii - kFOVbox_ClmTitle1] - clmnHdr_xLoc;
 
@@ -167,6 +168,7 @@ char	textString[80];
 	SetWidgetText(		clmTitleID++,	"FOV (degrees)");
 	SetWidgetText(		clmTitleID++,	"FOV (minutes)");
 	SetWidgetText(		clmTitleID++,	"arcsec/pixel");
+	SetWidgetText(		clmTitleID++,	"offset");
 
 	yLoc			+=	cRadioBtnHt;
 	yLoc			+=	2;
@@ -202,6 +204,13 @@ char	textString[80];
 
 		boxNum++;
 	}
+
+
+	SetWidget(				kFOVbox_SaveButton,	0,				yLoc,		150,		cBtnHeight);
+	SetWidgetType(			kFOVbox_SaveButton,	kWidgetType_Button);
+	SetWidgetTextColor(		kFOVbox_SaveButton,	CV_RGB(0,	0,	0));
+	SetWidgetBGColor(		kFOVbox_SaveButton,	CV_RGB(255,	255,	255));
+	SetWidgetText(			kFOVbox_SaveButton,	"Save");
 
 	SetAlpacaLogoBottomCorner(kFOVbox_AlpacaLogo);
 }
@@ -255,6 +264,8 @@ char	hostName[64];
 char	alpacaNumStr[64];
 char	apertureStr[64];
 char	focalLenStr[64];
+char	raOffsetStr[64];
+char	decOffsetStr[64];
 int		sLen;
 int		ccc;
 int		iii;
@@ -267,11 +278,16 @@ bool	keepGoing;
 	strcpy(alpacaNumStr,	"0");
 	strcpy(apertureStr,		"0");
 	strcpy(focalLenStr,		"0");
+	strcpy(raOffsetStr,		"0");
+	strcpy(decOffsetStr,	"0");
+
 
 	filePointer	=	fopen(kCameraFOVfileName, "r");
 	if (filePointer != NULL)
 	{
 		//*	read the lines of the camera fov definition file
+		//*	we are looking for a name and alpaca number match.
+		//*	the alpaca device number is normally zero, but can be anything.
 		keepGoing	=	true;
 		while (fgets(lineBuff, 100, filePointer) && keepGoing)
 		{
@@ -297,39 +313,76 @@ bool	keepGoing;
 						alpacaNumStr[ccc++]	=	lineBuff[iii++];
 						alpacaNumStr[ccc]	=	0;
 					}
-					iii++;
-					ccc	=	0;
-					//*	arg 3 = aperture (mm)
-					while ((lineBuff[iii] >= 0x20) && (iii <= sLen))
-					{
-						apertureStr[ccc++]	=	lineBuff[iii++];
-						apertureStr[ccc]	=	0;
-					}
-					iii++;
-					ccc	=	0;
-					//*	arg 4 = focal length (mm)
-					while ((lineBuff[iii] >= 0x20) && (iii <= sLen))
-					{
-						focalLenStr[ccc++]	=	lineBuff[iii++];
-						focalLenStr[ccc]	=	0;
-					}
-				//	CONSOLE_DEBUG_W_STR("hostName    \t=",	hostName);
-				//	CONSOLE_DEBUG_W_STR("alpacaNumStr\t=",	alpacaNumStr);
-				//	CONSOLE_DEBUG_W_STR("apertureStr \t=",	apertureStr);
-				//	CONSOLE_DEBUG_W_STR("focalLenStr \t=",	focalLenStr);
-
 					alpacaDevNum	=	atoi(alpacaNumStr);
 					if (alpacaDevNum == remoteDevice->alpacaDeviceNum)
 					{
 						//*	we have the right one
 						keepGoing	=	false;
-						cameraDataPtr->FocalLen_mm	=   atof(focalLenStr);
-						cameraDataPtr->Aperture_mm	=	atof(apertureStr);
+						iii++;
+						ccc	=	0;
+						//*	arg 3 = aperture (mm)
+						while ((lineBuff[iii] >= 0x20) && (iii <= sLen))
+						{
+							apertureStr[ccc++]	=	lineBuff[iii++];
+							apertureStr[ccc]	=	0;
+						}
+						iii++;
+						ccc	=	0;
+						//*	arg 4 = focal length (mm)
+						while ((lineBuff[iii] >= 0x20) && (iii <= sLen))
+						{
+							focalLenStr[ccc++]	=	lineBuff[iii++];
+							focalLenStr[ccc]	=	0;
+						}
+
+						iii++;
+						ccc	=	0;
+						//	5th column is Right Ascension offset (decimal hours i.e. 0.123)
+						while ((lineBuff[iii] >= 0x20) && (iii <= sLen))
+						{
+							raOffsetStr[ccc++]	=	lineBuff[iii++];
+							raOffsetStr[ccc]	=	0;
+						}
+
+						iii++;
+						ccc	=	0;
+						//	6th column is Declination offset (decimal degrees i.e. 0.123)
+						while ((lineBuff[iii] >= 0x20) && (iii <= sLen))
+						{
+							decOffsetStr[ccc++]	=	lineBuff[iii++];
+							decOffsetStr[ccc]	=	0;
+						}
+
+
+					//	CONSOLE_DEBUG_W_STR("hostName    \t=",	hostName);
+					//	CONSOLE_DEBUG_W_STR("alpacaNumStr\t=",	alpacaNumStr);
+					//	CONSOLE_DEBUG_W_STR("apertureStr \t=",	apertureStr);
+					//	CONSOLE_DEBUG_W_STR("focalLenStr \t=",	focalLenStr);
+
+						cameraDataPtr->FocalLen_mm			=   atof(focalLenStr);
+						cameraDataPtr->Aperture_mm			=	atof(apertureStr);
+
+						cameraDataPtr->RighttAscen_Offset	=	atof(raOffsetStr);
+						cameraDataPtr->Declination_Offset	=	atof(decOffsetStr);
 					}
 				}
 			}
 		}
 		fclose(filePointer);
+	}
+
+	//*	set outline colors
+	if (strcmp(remoteDevice->hostName, "finder") == 0)
+	{
+		cameraDataPtr->OutLineColor	=	GREEN;
+	}
+	else if ((cameraDataPtr->RighttAscen_Offset != 0.0) || (cameraDataPtr->Declination_Offset != 0.0))
+	{
+		cameraDataPtr->OutLineColor	=	YELLOW;
+	}
+	else
+	{
+		cameraDataPtr->OutLineColor	=	RED;
 	}
 }
 
@@ -479,6 +532,10 @@ int		cameraIdx;
 			}
 			break;
 
+		case kFOVbox_SaveButton:
+			WriteCameraFOVfile();
+			break;
+
 		default:
 			forceUpdateFlg	=	false;
 			break;
@@ -581,6 +638,7 @@ int		textBoxId;
 int		iii;
 char	nameString[128];
 char	textString[128];
+char	offsetsString[64];
 //char	ipAddrStr[32];
 int		myDevCount;
 
@@ -629,7 +687,12 @@ int		myDevCount;
 					(cCameraData[iii].FOV_Y_arcSeconds / 60.0),
 					cCameraData[iii].PixelScale
 					);
+			if ((cCameraData[iii].RighttAscen_Offset != 0) || (cCameraData[iii].Declination_Offset != 0))
+			{
+				sprintf(offsetsString,	"\t%6.3f x %6.3f", cCameraData[iii].RighttAscen_Offset, cCameraData[iii].Declination_Offset);
+				strcat(textString, offsetsString);
 
+			}
 			SetWidgetText(textBoxId, textString);
 
 			myDevCount++;
@@ -723,9 +786,15 @@ int		iii;
 		fprintf(filePointer, "#	2nd column is Alpaca device number (normally 0)\n");
 		fprintf(filePointer, "#	3rd column is aperture in mm\n");
 		fprintf(filePointer, "#	4th column is focal length in mm\n");
+		fprintf(filePointer, "#	5th column is Right Ascension offset (decimal hours i.e. 0.123) \n");
+		fprintf(filePointer, "#	6th column is Declination offset (decimal degrees i.e. 0.123) \n");
+		fprintf(filePointer, "#	\n");
+		fprintf(filePointer, "#	The offset is for multiple telescopes/cameras on the same mount that may not be perfectly aligned\n");
+		fprintf(filePointer, "#	The main  or primary telescope should have offsets of zero\n");
+		fprintf(filePointer, "#	This is also used for camera arrays such as a project I am working on\n");
 		fprintf(filePointer, "%s",	separaterLine);
 		fprintf(filePointer, "#	Example (remove '#')\n");
-		fprintf(filePointer, "#newt16\t0\t406.40\t1689.00\n");
+		fprintf(filePointer, "#newt16\t0\t406.40\t1689.00\t0.000000\t0.000000\n");
 		fprintf(filePointer, "%s",	separaterLine);
 		for (iii=0; iii<kMaxCamaeraFOVcnt; iii++)
 		{
@@ -735,6 +804,12 @@ int		iii;
 				fprintf(filePointer, "%d\t",	cRemoteDeviceList[iii].alpacaDeviceNum);
 				fprintf(filePointer, "%3.2f\t",	cCameraData[iii].Aperture_mm);
 				fprintf(filePointer, "%3.2f\t",	cCameraData[iii].FocalLen_mm);
+
+				fprintf(filePointer, "%f\t",	cCameraData[iii].RighttAscen_Offset);
+				fprintf(filePointer, "%f",		cCameraData[iii].Declination_Offset);
+
+
+
 				fprintf(filePointer, "\n");
 			}
 		}

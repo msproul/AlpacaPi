@@ -695,11 +695,13 @@ int				iii;
 	}
 	else
 	{
-		CONSOLE_DEBUG_W_STR("Failed to create FITS file:", imageFileName);
+		CONSOLE_DEBUG_W_STR("Failed to save FITS image data:", imageFileName);
 		CONSOLE_DEBUG_W_NUM("fits_create_file returned:", fitsRetCode);
 		GetFitsErrorString(fitsRetCode, errorString);
 		CONSOLE_DEBUG_W_STR("fits_create_file returned:", errorString);
-		CONSOLE_DEBUG_W_NUM("errno\t=", errno);
+
+		GetLinuxErrorString(errno, errorString);
+		CONSOLE_DEBUG_W_STR("Linux errno:", errorString);
 
 	}
 

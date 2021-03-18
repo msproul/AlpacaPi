@@ -326,8 +326,10 @@ int		ii;
 
 	cCurrentSkyColor				=	BLUE;
 	cChart							=	false;
+#if 0
 	cDispOptions.dispDeep			=	true;
 	cDispOptions.dispEarth			=	true;
+	cDispOptions.dispGrid			=	true;
 	cDispOptions.dispHorizon_line	=	true;
 	cDispOptions.dispLines			=	true;
 	cDispOptions.dispNames			=	true;
@@ -343,6 +345,7 @@ int		ii;
 
 	cDispOptions.dispTelescope		=	false;
 	cDispOptions.dispDomeSlit		=	false;
+#endif
 
 	cDisplayedMagnitudeLimit		=	15.0;
 
@@ -2230,6 +2233,7 @@ void	WindowTabSkyTravel::ResetView(void)
 	cChart								=	false;
 	cDispOptions.dispDeep				=	true;
 	cDispOptions.dispEarth				=	true;
+	cDispOptions.dispGrid				=	true;
 	cDispOptions.dispHorizon_line		=	true;
 	cDispOptions.dispNames				=	true;
 	cDispOptions.dispNGC				=	false;
@@ -2252,6 +2256,7 @@ void	WindowTabSkyTravel::ResetView(void)
 	{
 		cDispOptions.dispLines			=	true;
 	}
+	UpdateButtonStatus();
 }
 
 //*****************************************************************************
@@ -3992,6 +3997,8 @@ int		pixelsTall;
 
 	SetColor(RED);
 //	SetColor(WHITE);
+	SetColor(fovPtr->OutLineColor);
+
 	fovWasDrawn	=	false;
 	if (fovPtr->IsValid && fovPtr->FOVenabled)
 	{
@@ -4016,6 +4023,21 @@ int		pixelsTall;
 		btmRight_XX	=	telescopeXX + (pixelsWide / 2);
 		btmRight_YY	=	telescopeYY - (pixelsTall / 2);
 
+		//*	check to see if this camera has an offset
+		if (fovPtr->RighttAscen_Offset != 0)
+		{
+			topLeft_XX	+=	RADIANS(fovPtr->RighttAscen_Offset) * cXfactor;
+			topRight_XX	+=	RADIANS(fovPtr->RighttAscen_Offset) * cXfactor;
+			btmLeft_XX	+=	RADIANS(fovPtr->RighttAscen_Offset) * cXfactor;
+			btmRight_XX	+=	RADIANS(fovPtr->RighttAscen_Offset) * cXfactor;
+		}
+		if (fovPtr->Declination_Offset != 0)
+		{
+			topLeft_YY	+=	RADIANS(fovPtr->Declination_Offset) * cXfactor;
+			topRight_YY	+=	RADIANS(fovPtr->Declination_Offset) * cXfactor;
+			btmLeft_YY	+=	RADIANS(fovPtr->Declination_Offset) * cXfactor;
+			btmRight_YY	+=	RADIANS(fovPtr->Declination_Offset) * cXfactor;
+		}
 		//-------------------------------------------------------------------------------------
 		//*	top line
 		//*	draw straight line
@@ -4080,6 +4102,7 @@ short	telescopeXX, telescopeYY;
 		for (iii=0; iii<kMaxCamaeraFOVcnt; iii++)
 		{
 			fovWasDrawn	=	DrawTelescopeFOV(&cCameraFOVarrayPtr[iii], 	telescopeXX,  telescopeYY);
+
 			if (fovWasDrawn)
 			{
 				fovCount++;
