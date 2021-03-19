@@ -63,6 +63,7 @@ These libraries are required for the following devices:
 	ZWO EFW Filter Wheel
 
 External libraries are NOT required for
+
 	MoonLite Focusers
 	LX200 Telescope mount (not finished)
 	SkyWatcher Telescope mount (not finished)
@@ -97,8 +98,6 @@ For example, touptec script is only finished for 32bit Arm as of 3/19/2021
 			QHY                     	Present
 			toupcamsdk              	Present
 		*********************************************
-		0
-		0
 		Running on intel x64 : true
 		Running on Arm 32 bit: false
 		Running on Arm 64 bit: false
