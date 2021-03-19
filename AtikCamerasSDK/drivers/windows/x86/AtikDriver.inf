@@ -1,0 +1,371 @@
+; ======== libusb 1.0 (WinUSB) device driver ==========
+;
+; To customize this inf file for your own device
+;
+; 1. Change "DeviceName" with the name you want your device to appear with 
+;    on your system.
+;
+; 2. Change "VendorID" and "ProductID" according to those of your device. 
+;    If your device is plugged in, you can retrieve these values through the 
+;    Device Manager (regardless of whether the driver is installed or not).
+;
+; 3. Change "DeviceGUID" to a value that is unique on your system. For more 
+;    information and tools to help you generate your own GUIDs, see 
+;    http://en.wikipedia.org/wiki/Universally_Unique_Identifier.
+;
+; 4. Change "DeviceClassGUID" to reflect your USB Device Class. 
+;    The following Device Classes are listed for reference:
+;    {745a17a0-74d3-11d0-b6fe-00a0c90f57da} : HID device
+;    {78a1c341-4539-11d3-b88d-00c04fad5171} : Generic WinUSB device
+;
+; 5. (Optional) Change the "Date" string.
+;
+; Note 1: if you need to create a matching cat file for this inf, you can use
+; the inf2cat utility from the WinDDK, with the the following command:
+; inf2cat /driver:"path_to_your inf" /os:7_X86,7_X64,Vista_X86,Vista_X64
+;
+; Note 2: The co-installers provided in these files are version 1.9.
+; Please refer to:
+; http://blogs.msdn.com/iliast/archive/2008/03/10/why-do-we-need-wdf-coinstallers.aspx and
+; http://blogs.msdn.com/iliast/archive/2009/08/13/wdf-logo-requirements-regarding-coinstallers.aspx
+; for more information about co-installers and their versioning
+
+; ===================== Strings =======================
+
+[Strings]
+
+; =====================================================
+; ========= START USER CONFIGURABLE SECTION ===========
+; =====================================================
+
+DeviceGUID = "{0ff1c03a-4b52-49fd-93d5-926b502d0316}"
+DeviceClassGUID = "{36FC9E60-C465-11CF-8056-444553540000}"
+Date = "08/20/2020"
+
+ID1 = "VID_20E7&PID_8613"
+DN1 = "Synoptics USB 2.0 HR Chemi Camera (A)"
+ID2 = "VID_04B4&PID_8613"
+DN2 = "Synoptics USB 2.0 HR Chemi Camera (A)"
+ID3 = "VID_04B4&PID_DF2C"
+DN3 = "Atik 314L"
+ID4 = "VID_04B4&PID_DF2D"
+DN4 = "Atik 314E"
+ID5 = "VID_04B4&PID_DF28"
+DN5 = "Atik Large Format Camera"
+ID6 = "VID_04B4&PID_DF2E"
+DN6 = "Atik Titan"
+ID7 = "VID_04B4&PID_DF30"
+DN7 = "Atik 320E"
+ID8 = "VID_04B4&PID_DF31"
+DN8 = "Atik 383L"
+ID9 = "VID_20E7&PID_DF2C"
+DN9 = "Atik 314L"
+ID10 = "VID_20E7&PID_DF2D"
+DN10 = "Atik 314E"
+ID11 = "VID_20E7&PID_DF28"
+DN11 = "Atik Large Format Camera"
+ID12 = "VID_20E7&PID_DF2E"
+DN12 = "Atik Titan"
+ID13 = "VID_20E7&PID_DF30"
+DN13 = "Atik 320E"
+ID14 = "VID_20E7&PID_DF31"
+DN14 = "Atik 383L"
+ID15 = "VID_20E7&PID_DF33"
+DN15 = "Atik 420"
+ID16 = "VID_20E7&PID_DF34"
+DN16 = "Atik 450"
+ID17 = "VID_20E7&PID_DF35"
+DN17 = "Atik 428ex"
+ID18 = "VID_20E7&PID_DF36"
+DN18 = "Atik 460ex"
+ID19 = "VID_20E7&PID_DF3A"
+DN19 = "Atik 490ex"
+ID20 = "VID_20E7&PID_DF3B"
+DN20 = "Atik T5"
+ID21 = "VID_20E7&PID_DF3C"
+DN21 = "Atik One"
+ID22 = "VID_20E7&PID_DF3D"
+DN22 = "Atik 414ex"
+ID23 = "VID_20E7&PID_DF3E"
+DN23 = "Atik 4120ex"
+ID24 = "VID_20E7&PID_DF3F"
+DN24 = "Atik Infinity"
+ID25 = "VID_20E7&PID_DF50"
+DN25 = "Atik 16200"
+ID26 = "VID_20E7&PID_DFA8"
+DN26 = "ArtemisCCD LF40/11000"
+ID27 = "VID_20E7&PID_DFAB"
+DN27 = "ArtemisCCD QS50"
+ID28 = "VID_20E7&PID_DFAC"
+DN28 = "ArtemisCCD TS14"
+ID29 = "VID_20E7&PID_DFAD"
+DN29 = "ArtemisCCD QS14"
+ID30 = "VID_20E7&PID_DFAE"
+DN30 = "ArtemisCCD QS03"
+ID31 = "VID_20E7&PID_DFB0"
+DN31 = "ArtemisCCD TS20"
+ID32 = "VID_20E7&PID_DFB3"
+DN32 = "ArtemisCCD FS20"
+ID33 = "VID_20E7&PID_DFB4"
+DN33 = "ArtemisCCD FS50"
+ID34 = "VID_20E7&PID_DFB5"
+DN34 = "ArtemisCCD FS28"
+ID35 = "VID_20E7&PID_DFB6"
+DN35 = "ArtemisCCD FS60"
+ID36 = "VID_20E7&PID_DFB7"
+DN36 = "ArtemisCCD KS11000p"
+ID37 = "VID_20E7&PID_DFB8"
+DN37 = "ArtemisCCD FS90"
+ID38 = "VID_20E7&PID_DFBB"
+DN38 = "ArtemisCCD VS"
+ID39 = "VID_20E7&PID_DFC0"
+DN39 = "Atik FX3 Blank"
+ID40 = "VID_20E7&PID_DFC1"
+DN40 = "Atik Horizon"
+ID41 = "VID_20E7&PID_DFC2"
+DN41 = "Atik ACIS 7.1"
+ID42 = "VID_20E7&PID_DFC3"
+DN42 = "Atik Horizon 2"
+ID43 = "VID_20E7&PID_DFC4"
+DN43 = "Atik ACIS 2.4"
+ID44 = "VID_20E7&PID_DFC5"
+DN44 = "Atik ACIS 12.3"
+ID45 = "VID_20E7&PID_DFC6"
+DN45 = "TOPBIO Camera"
+ID46 = "VID_20E7&PID_DFC7"
+DN46 = "Atik ACIS 7.1 EC"
+ID47 = "VID_20E7&PID_DFC8"
+DN47 = "Atik ACIS 61.0"
+ID48 = "VID_20E7&PID_DFC9"
+DN48 = "TOPBIO 12M"
+ID49 = "VID_20E7&PID_DFCA"
+DN49 = "Atik E2V"
+ID50 = "VID_20E7&PID_DFCB"
+DN50 = "Atik ACIS 2.4 F"
+ID51 = "VID_20E7&PID_DFCC"
+DN51 = "TOPBIO 7M"
+
+; =====================================================
+; ========== END USER CONFIGURABLE SECTION ============
+; =====================================================
+
+ProviderName = "libusb 1.0"
+WinUSB_SvcDesc = "WinUSB Driver Service"
+DiskName = "libusb (WinUSB) Device Install Disk"
+ClassName = "libusb (WinUSB) devices"
+
+; ====================== Version ======================
+
+[Version]
+DriverVer = 08/20/2020,4.1.0.001
+Signature = "$Windows NT$"
+Class = %ClassName%
+ClassGuid = %DeviceClassGUID%
+Provider = %ProviderName%
+CatalogFile = libusb_device.cat
+
+; =================== Class section ===================
+
+; Since the device is not a standard USB device, we define a new class for it.
+[ClassInstall32]
+Addreg = WinUSBDeviceClassReg
+
+[WinUSBDeviceClassReg]
+HKR,,,0,%ClassName%
+; -20 is for the USB icon
+HKR,,Icon,,-20
+
+; =========== Manufacturer/Models sections ============
+
+[Manufacturer]
+%ProviderName% = libusbDevice_WinUSB,NTamd64,NTx86
+
+[libusbDevice_WinUSB.NTamd64]
+%DN1%  = USB_Install, USB\%ID1%
+%DN2%  = USB_Install, USB\%ID2%
+%DN3%  = USB_Install, USB\%ID3%
+%DN4%  = USB_Install, USB\%ID4%
+%DN5%  = USB_Install, USB\%ID5%
+%DN6%  = USB_Install, USB\%ID6%
+%DN7%  = USB_Install, USB\%ID7%
+%DN8%  = USB_Install, USB\%ID8%
+%DN9%  = USB_Install, USB\%ID9%
+%DN10%  = USB_Install, USB\%ID10%
+%DN11%  = USB_Install, USB\%ID11%
+%DN12%  = USB_Install, USB\%ID12%
+%DN13%  = USB_Install, USB\%ID13%
+%DN14%  = USB_Install, USB\%ID14%
+%DN15%  = USB_Install, USB\%ID15%
+%DN16%  = USB_Install, USB\%ID16%
+%DN17%  = USB_Install, USB\%ID17%
+%DN18%  = USB_Install, USB\%ID18%
+%DN19%  = USB_Install, USB\%ID19%
+%DN20%  = USB_Install, USB\%ID20%
+%DN21%  = USB_Install, USB\%ID21%
+%DN22%  = USB_Install, USB\%ID22%
+%DN23%  = USB_Install, USB\%ID23%
+%DN24%  = USB_Install, USB\%ID24%
+%DN25%  = USB_Install, USB\%ID25%
+%DN26%  = USB_Install, USB\%ID26%
+%DN27%  = USB_Install, USB\%ID27%
+%DN28%  = USB_Install, USB\%ID28%
+%DN29%  = USB_Install, USB\%ID29%
+%DN30%  = USB_Install, USB\%ID30%
+%DN31%  = USB_Install, USB\%ID31%
+%DN32%  = USB_Install, USB\%ID32%
+%DN33%  = USB_Install, USB\%ID33%
+%DN34%  = USB_Install, USB\%ID34%
+%DN35%  = USB_Install, USB\%ID35%
+%DN36%  = USB_Install, USB\%ID36%
+%DN37%  = USB_Install, USB\%ID37%
+%DN38%  = USB_Install, USB\%ID38%
+%DN39%  = USB_Install, USB\%ID39%
+%DN40%  = USB_Install, USB\%ID40%
+%DN41%  = USB_Install, USB\%ID41%
+%DN42%  = USB_Install, USB\%ID42%
+%DN43%  = USB_Install, USB\%ID43%
+%DN44%  = USB_Install, USB\%ID44%
+%DN45%  = USB_Install, USB\%ID45%
+%DN46%  = USB_Install, USB\%ID46%
+%DN47%  = USB_Install, USB\%ID47%
+%DN48%  = USB_Install, USB\%ID48%
+%DN49%  = USB_Install, USB\%ID49%
+%DN50%  = USB_Install, USB\%ID50%
+%DN51%  = USB_Install, USB\%ID51%
+
+[libusbDevice_WinUSB.NTx86]
+%DN1%  = USB_Install, USB\%ID1%
+%DN2%  = USB_Install, USB\%ID2%
+%DN3%  = USB_Install, USB\%ID3%
+%DN4%  = USB_Install, USB\%ID4%
+%DN5%  = USB_Install, USB\%ID5%
+%DN6%  = USB_Install, USB\%ID6%
+%DN7%  = USB_Install, USB\%ID7%
+%DN8%  = USB_Install, USB\%ID8%
+%DN9%  = USB_Install, USB\%ID9%
+%DN10%  = USB_Install, USB\%ID10%
+%DN11%  = USB_Install, USB\%ID11%
+%DN12%  = USB_Install, USB\%ID12%
+%DN13%  = USB_Install, USB\%ID13%
+%DN14%  = USB_Install, USB\%ID14%
+%DN15%  = USB_Install, USB\%ID15%
+%DN16%  = USB_Install, USB\%ID16%
+%DN17%  = USB_Install, USB\%ID17%
+%DN18%  = USB_Install, USB\%ID18%
+%DN19%  = USB_Install, USB\%ID19%
+%DN20%  = USB_Install, USB\%ID20%
+%DN21%  = USB_Install, USB\%ID21%
+%DN22%  = USB_Install, USB\%ID22%
+%DN23%  = USB_Install, USB\%ID23%
+%DN24%  = USB_Install, USB\%ID24%
+%DN25%  = USB_Install, USB\%ID25%
+%DN26%  = USB_Install, USB\%ID26%
+%DN27%  = USB_Install, USB\%ID27%
+%DN28%  = USB_Install, USB\%ID28%
+%DN29%  = USB_Install, USB\%ID29%
+%DN30%  = USB_Install, USB\%ID30%
+%DN31%  = USB_Install, USB\%ID31%
+%DN32%  = USB_Install, USB\%ID32%
+%DN33%  = USB_Install, USB\%ID33%
+%DN34%  = USB_Install, USB\%ID34%
+%DN35%  = USB_Install, USB\%ID35%
+%DN36%  = USB_Install, USB\%ID36%
+%DN37%  = USB_Install, USB\%ID37%
+%DN38%  = USB_Install, USB\%ID38%
+%DN39%  = USB_Install, USB\%ID39%
+%DN40%  = USB_Install, USB\%ID40%
+%DN41%  = USB_Install, USB\%ID41%
+%DN42%  = USB_Install, USB\%ID42%
+%DN43%  = USB_Install, USB\%ID43%
+%DN44%  = USB_Install, USB\%ID44%
+%DN45%  = USB_Install, USB\%ID45%
+%DN46%  = USB_Install, USB\%ID46%
+%DN47%  = USB_Install, USB\%ID47%
+%DN48%  = USB_Install, USB\%ID48%
+%DN49%  = USB_Install, USB\%ID49%
+%DN50%  = USB_Install, USB\%ID50%
+%DN51%  = USB_Install, USB\%ID51%
+
+; ==================== Installation ===================
+
+; The Include and Needs directives in the USB_Install section are required for 
+; installing WinUSB on Windows Vista systems. Windows XP systems ignore these 
+; directives. These directives should not be modified.
+[USB_Install]
+Include=winusb.inf
+Needs=WINUSB.NT
+
+; The Include directive in the USB_Install.Services section includes the system-
+; supplied INF for WinUSB. This INF is installed by the WinUSB co-installer if 
+; it is not already on the target system. The AddService directive specifies 
+; WinUsb.sys as the device’s function driver. These directives should not be 
+; modified.
+[USB_Install.Services]
+Include=winusb.inf
+AddService=WinUSB,0x00000002,WinUSB_ServiceInstall
+
+; The WinUSB_ServiceInstall section contains the data for installing WinUsb.sys 
+; as a service. This section should not be modified.
+[WinUSB_ServiceInstall]
+DisplayName     = %WinUSB_SvcDesc%
+ServiceType     = 1
+StartType       = 3
+ErrorControl    = 1
+ServiceBinary   = %12%\WinUSB.sys
+
+; The KmdfService directive installs WinUsb.sys as a kernel-mode service. The 
+; referenced WinUSB_Install section specifies the KMDF library version. 
+; Usually, the version can be derived from the WdfCoInstallerxxyyy.dll with 
+; xx = major, yyy = minor
+[USB_Install.Wdf]
+KmdfService=WINUSB, WinUsb_Install
+
+[WinUSB_Install]
+KmdfLibraryVersion=1.9
+
+; USB_Install.HW is the key section in the INF. It specifies the device 
+; interface globally unique identifier (GUID) for your device. The AddReg 
+; directive puts the interface GUID in a standard registry value. When 
+; WinUsb.sys is loaded as the device’s function driver, it reads the registry
+; value and uses the specified GUID to represent the device interface. You 
+; should replace the GUID in this example with one that you create specifically
+; for your device. If the protocols for the device change, you should create a
+; new device interface GUID.
+[USB_Install.HW]
+AddReg=Dev_AddReg
+
+[Dev_AddReg]
+HKR,,DeviceInterfaceGUIDs,0x10000,%DeviceGUID%
+
+; The USB_Install.CoInstallers section, including the referenced AddReg and 
+; CopyFiles sections, contains data and instructions to install the WinUSB and 
+; KMDF co installers and associate them with the device. Most USB devices can 
+; use these sections and directives without modification.
+[USB_Install.CoInstallers]
+AddReg=CoInstallers_AddReg
+CopyFiles=CoInstallers_CopyFiles
+
+[CoInstallers_AddReg]
+HKR,,CoInstallers32,0x00010000,"WdfCoInstaller01009.dll,WdfCoInstaller","WinUSBCoInstaller2.dll"
+
+[CoInstallers_CopyFiles]
+WinUSBCoInstaller2.dll
+WdfCoInstaller01009.dll
+
+[DestinationDirs]
+CoInstallers_CopyFiles=11
+
+; =============== Source Media Section ================
+
+; The x86 and x64 versions of Windows have separate co installers. This example 
+; stores them on the installation disk in folders that are named x86 and amd64
+[SourceDisksNames]
+1 = %DiskName%,,,\x86
+2 = %DiskName%,,,\amd64
+
+[SourceDisksFiles.x86]
+WinUSBCoInstaller2.dll=1
+WdfCoInstaller01009.dll=1
+[SourceDisksFiles.amd64]
+WinUSBCoInstaller2.dll=2
+WdfCoInstaller01009.dll=2
