@@ -49,6 +49,68 @@ run that script
 
 ===================================================
 
+## 3rd Party Libraries:
+
+In most cases AlpacaPi relies on libraries supplied by the vendors to talk to the devices.
+These libraries are required for the following devices:
+
+	ATIK cameras
+	QHY Cameras
+	FLIR Cameras
+	SONY Cameras
+	ToupTek Cameras
+	ZWO ASI cameras
+	ZWO EFW Filter Wheel
+
+External libraries are NOT required for
+	MoonLite Focusers
+	LX200 Telescope mount (not finished)
+	SkyWatcher Telescope mount (not finished)
+	Calibration control of Flat panel
+
+
+There is a script for installing many of these libraries
+
+	./install_libraries.sh
+It will bring up this screen
+The "Present" indicator means that the folder is there and can be installed.
+It does NOT mean it is installed.  The script will ask you for each library
+that is present if you want to install it or not.
+As with everything, this script still has more work needed.
+For example, touptec script is only finished for 32bit Arm as of 3/19/2021
+
+
+		**********************************************
+		*        AlpacaPi library installation       *
+		*                                            *
+		* It is OK to run this script multiple times *
+		*                                            *
+		* Not all of these libraries are required    *
+		* For example, if you don't use QHY cameras  *
+		* then the QHY library is not needed         *
+		**********************************************
+
+			ASI_lib                 	Present
+			AtikCamerasSDK          	Present
+			EFW_linux_mac_SDK       	Present
+			FLIR-SDK                	Present
+			QHY                     	Present
+			toupcamsdk              	Present
+		*********************************************
+		0
+		0
+		Running on intel x64 : true
+		Running on Arm 32 bit: false
+		Running on Arm 64 bit: false
+		Installing libraries into /usr/lib
+		***************************************************************
+		AtikCamerasSDK SDK folder found
+		Would you like to install AtikCamerasSDK support [y/n]?
+
+
+
+===================================================
+
 ## Development:
 
 AlpacaPi is written in C and C++ to run on Linux operating systems.

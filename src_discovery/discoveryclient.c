@@ -206,7 +206,7 @@ char			myVersionString[64];
 
 
 //*****************************************************************************
-static void	SendGetRequest(TYPE_ALPACA_UNIT *theDevice, char *sendData)
+static void	SendGetRequest(TYPE_ALPACA_UNIT *theDevice, const char *sendData)
 {
 int					socket_desc;
 struct sockaddr_in	remoteDev;
@@ -236,7 +236,10 @@ int					setOptRetCode;
 												&timeoutLength,
 												sizeof(timeoutLength));
 
-
+		if (setOptRetCode != 0)
+		{
+			CONSOLE_DEBUG("setsockopt error");
+		}
 //		CONSOLE_DEBUG_W_NUM("Connecting to port ", theDevice->port);
 		remoteDev.sin_addr.s_addr	=	theDevice->deviceAddress.sin_addr.s_addr;
 		remoteDev.sin_family		=	AF_INET;
@@ -394,6 +397,7 @@ SJP_Parser_t		jsonParser;
 struct timeval		timeoutLength;
 int					timeOutCntr;
 int					argInt;
+int					bytesWritten;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 //	CONSOLE_DEBUG_W_NUM("argc\t=", argc);
@@ -481,10 +485,11 @@ int					argInt;
 
 				inet_ntop(AF_INET, &(from.sin_addr), str, INET_ADDRSTRLEN);
 
-				write(1, buf, rcvCnt);
-				write(1, " ", 1);
-				write(1, str, strlen(str));
-				write(1, "\n", 1);
+				bytesWritten	=	0;
+				bytesWritten	+=	write(1, buf, rcvCnt);
+				bytesWritten	+=	write(1, " ", 1);
+				bytesWritten	+=	write(1, str, strlen(str));
+				bytesWritten	+=	write(1, "\n", 1);
 			}
 			else if (rcvCnt == 0)
 			{
