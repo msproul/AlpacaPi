@@ -2748,6 +2748,9 @@ double			freeDiskSpace_Gigs;
 	printf("AlpacaPi driver\r\n");
 	sprintf(gFullVersionString, "%s - %s build #%d", kApplicationName, kVersionString, kBuildNumber);
 
+	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(gFullVersionString);
+
 
 	AddLibraryVersion("software", "gcc", __VERSION__);
 	AddLibraryVersion("software", "libc", gnu_get_libc_version());
@@ -2766,17 +2769,20 @@ double			freeDiskSpace_Gigs;
 	//*	cfitsio version
 	sprintf(lineBuffer,	"%d.%d", CFITSIO_MAJOR, CFITSIO_MINOR);
 	AddLibraryVersion("software", "cfitsio", lineBuffer);
+	CONSOLE_DEBUG_W_STR("cfitsio version\t=", lineBuffer);
 #endif // _ENABLE_FITS_
 
 #ifdef _USE_OPENCV_
 	//*	openCV version
 	AddLibraryVersion("software", "opencv", CV_VERSION);
+	CONSOLE_DEBUG_W_STR("opencv version\t=", CV_VERSION);
 #endif
 
 #ifdef _ENABLE_JPEGLIB_
 	//*	jpeg lib version
 	sprintf(lineBuffer,	"%d", JPEG_LIB_VERSION);
 	AddLibraryVersion("software", "libjpeg", lineBuffer);
+	CONSOLE_DEBUG_W_STR("libjpeg version\t=", lineBuffer);
 #endif
 
 	//*	check resoure limits
@@ -2792,6 +2798,11 @@ double			freeDiskSpace_Gigs;
 
 	CPUstats_ReadOSreleaseVersion();
 	CPUstats_ReadInfo();
+
+	CONSOLE_DEBUG_W_STR("CPU info  \t=",	gCpuInfoString);
+	CONSOLE_DEBUG_W_STR("OS Release\t=",	gOsReleaseString);
+	CONSOLE_DEBUG_W_STR("Platform  \t=",	gPlatformString);
+
 
 	InitObsConditionGloblas();
 	ProcessCmdLineArgs(argc, argv);

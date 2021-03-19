@@ -39,7 +39,7 @@
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
 
-#include	"alpacadriver_helper.h""
+#include	"alpacadriver_helper.h"
 
 #include	"SkyStruc.h"
 #include	"SkyTravelConstants.h"
@@ -135,43 +135,49 @@ int					bytesRead;
 			if (filePointer != NULL)
 			{
 				bytesRead	=	fread(myDiskObjectPtr, 1, fileSize, filePointer);
-
-//				CONSOLE_DEBUG_W_NUM("bytesRead\t=", bytesRead);
-
-				myDiskObjectCount	=	fileSize / sizeof(TYPE_CelestDataDisk);
-
-//				CONSOLE_DEBUG_W_LONG("TYPE_CelestDataDisk\t=", sizeof(TYPE_CelestDataDisk));
-//				CONSOLE_DEBUG_W_LONG("myDiskObjectCount\t=", myDiskObjectCount);
-
-			#ifdef _BIG_ENDIAN_
-				CONSOLE_DEBUG("_BIG_ENDIAN_");
-				for (ii=0; ii<myDiskObjectCount; ii++)
+				if (bytesRead > 0)
 				{
-					Swap4Bytes((long *)	&(myDiskObjectPtr[ii].decl));
-					Swap4Bytes((long *)	&(myDiskObjectPtr[ii].ra));
-					Swap2Bytes((short *)&(myDiskObjectPtr[ii].magn));
-					Swap2Bytes((short *)&(myDiskObjectPtr[ii].id));
-				}
-			#endif
+	//				CONSOLE_DEBUG_W_NUM("bytesRead\t=", bytesRead);
 
-				myObjectPtr	=	(TYPE_CelestData *)malloc((myDiskObjectCount + 10) * sizeof(TYPE_CelestData));
-				if (myObjectPtr != NULL)
-				{
+					myDiskObjectCount	=	fileSize / sizeof(TYPE_CelestDataDisk);
+
+	//				CONSOLE_DEBUG_W_LONG("TYPE_CelestDataDisk\t=", sizeof(TYPE_CelestDataDisk));
+	//				CONSOLE_DEBUG_W_LONG("myDiskObjectCount\t=", myDiskObjectCount);
+
+				#ifdef _BIG_ENDIAN_
+					CONSOLE_DEBUG("_BIG_ENDIAN_");
 					for (ii=0; ii<myDiskObjectCount; ii++)
 					{
-						myObjectPtr[ii].id			=	myDiskObjectPtr[ii].id;
-						myObjectPtr[ii].magn		=	myDiskObjectPtr[ii].magn;
-						myObjectPtr[ii].dataSrc		=	kDataSrc_Orginal;
-						myObjectPtr[ii].ra			=	myDiskObjectPtr[ii].ra;
-						myObjectPtr[ii].decl		=	myDiskObjectPtr[ii].decl;
-						myObjectPtr[ii].org_ra		=	myDiskObjectPtr[ii].ra;
-						myObjectPtr[ii].org_decl	=	myDiskObjectPtr[ii].decl;
-	//					CONSOLE_DEBUG_W_NUM("myObjectPtr[ii].magn\t=", myObjectPtr[ii].magn);
+						Swap4Bytes((long *)	&(myDiskObjectPtr[ii].decl));
+						Swap4Bytes((long *)	&(myDiskObjectPtr[ii].ra));
+						Swap2Bytes((short *)&(myDiskObjectPtr[ii].magn));
+						Swap2Bytes((short *)&(myDiskObjectPtr[ii].id));
 					}
-				}
+				#endif
 
-				*objectCount	=	myDiskObjectCount;
-				fclose(filePointer);
+					myObjectPtr	=	(TYPE_CelestData *)malloc((myDiskObjectCount + 10) * sizeof(TYPE_CelestData));
+					if (myObjectPtr != NULL)
+					{
+						for (ii=0; ii<myDiskObjectCount; ii++)
+						{
+							myObjectPtr[ii].id			=	myDiskObjectPtr[ii].id;
+							myObjectPtr[ii].magn		=	myDiskObjectPtr[ii].magn;
+							myObjectPtr[ii].dataSrc		=	kDataSrc_Orginal;
+							myObjectPtr[ii].ra			=	myDiskObjectPtr[ii].ra;
+							myObjectPtr[ii].decl		=	myDiskObjectPtr[ii].decl;
+							myObjectPtr[ii].org_ra		=	myDiskObjectPtr[ii].ra;
+							myObjectPtr[ii].org_decl	=	myDiskObjectPtr[ii].decl;
+		//					CONSOLE_DEBUG_W_NUM("myObjectPtr[ii].magn\t=", myObjectPtr[ii].magn);
+						}
+					}
+
+					*objectCount	=	myDiskObjectCount;
+					fclose(filePointer);
+				}
+				else
+				{
+					CONSOLE_DEBUG("Failed to read star data");
+				}
 			}
 			free(myDiskObjectPtr);
 		}
@@ -670,7 +676,6 @@ int		argNum;
 char	argString[64];
 char	theChar;
 int		ccc;
-char	*delimPtr;
 
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, lineBuff);
 
@@ -867,7 +872,6 @@ int				skippedCount;
 static void	ParseOneLineHenryDraperData(char *lineBuff, TYPE_CelestData *starRec)
 {
 int		sLen;
-int		argLen;
 double	raDegrees	=	0;
 double	raRadians	=	0;
 double	declDegrees	=	0;
@@ -877,7 +881,6 @@ int		argNum;
 char	argString[64];
 char	theChar;
 int		ccc;
-char	*delimPtr;
 
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, lineBuff);
 
@@ -890,7 +893,6 @@ char	*delimPtr;
 		theChar	=	lineBuff[ii];
 		if ((theChar == '|') || (theChar == 0))
 		{
-			argLen	=	strlen(argString);
 			//*	end of argument, do something with it
 			switch(argNum)
 			{
@@ -1164,7 +1166,6 @@ int		argLen;
 //************************************************************************
 static void	ParseOneLineJPLhorizons(char *lineBuff, TYPE_CelestData *starRec)
 {
-int		sLen;
 int		raHour		=	0;
 int		raMin		=	0;
 double	raSec		=	0;
@@ -1232,6 +1233,7 @@ double	declRadians	=	0;
 
 }
 
+#ifdef _DEBUG_STAR_DATA_
 //************************************************************************
 static void	DumpCelestralDataArray(TYPE_CelestData *starData, long recordCount)
 {
@@ -1254,8 +1256,8 @@ char	decString[64];
 									raString,
 									decString);
 	}
-
 }
+#endif // _DEBUG_STAR_DATA_
 
 //************************************************************************
 TYPE_CelestData	*ReadSpecialData(int dataSource, long *objectCount)

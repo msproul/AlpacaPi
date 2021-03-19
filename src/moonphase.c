@@ -193,7 +193,7 @@ double	CalcMoonIllumination(const int month, const int day, const int year)
 double	moonAge_Days;
 double	moonAge_Prct;
 double	phaseAngle_Rad;
-double	phaseAngle_Deg;
+//double	phaseAngle_Deg;
 double	illumination;
 double	daysSinceLastFullMoon;
 
@@ -211,7 +211,7 @@ double	daysSinceLastFullMoon;
 	}
 	moonAge_Prct			=	daysSinceLastFullMoon / kMoonPeriod;
 	phaseAngle_Rad			=	moonAge_Prct * 2 * M_PI;
-	phaseAngle_Deg			=	moonAge_Prct * 360.0;
+//	phaseAngle_Deg			=	moonAge_Prct * 360.0;
 
 	illumination			=	100 * 0.5 * ( 1 + cos(phaseAngle_Rad));
 

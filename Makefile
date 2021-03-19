@@ -31,6 +31,8 @@
 #++	Jul 16,	2020	<MLS> Added pi64 for 64 bit Raspberry Pi OS
 #++	Dec 12,	2020	<MLS> Moved _ENABLE_REMOTE_SHUTTER_ into Makefile
 #++	Jan 13,	2021	<MLS> Added build commands for touptech cameras
+#++	Mar 18,	2021	<MLS> Updating Makefile to use AtikCamerasSDK_2020_10_19
+#++	Mar 18,	2021	<MLS> Updating QHY camera support
 ######################################################################################
 
 #PLATFORM			=	x86
@@ -83,11 +85,15 @@ ASI_INCLUDE_DIR		=	./ASI_lib/include
 EFW_LIB_DIR			=	./EFW_linux_mac_SDK
 
 ############################################
+#	as of Mar 18, 2021, supporting the AtikCamerasSDK_2020_10_19 version of ATIK
 ATIK_DIR			=	./AtikCamerasSDK
 ATIK_LIB_MASTER_DIR	=	$(ATIK_DIR)/lib
-ATIK_INCLUDE_DIR	=	$(ATIK_DIR)/inc
-ATIK_LIB_DIR		=	$(ATIK_LIB_MASTER_DIR)/linux/x64/NoFlyCapture
-ATIK_LIB_DIR_V129	=	$(ATIK_LIB_MASTER_DIR)/ARM/pi/pi3/x86/NoFlyCapture
+ATIK_INCLUDE_DIR	=	$(ATIK_DIR)/include
+#ATIK_LIB_DIR		=	$(ATIK_LIB_MASTER_DIR)/linux/x64/NoFlyCapture
+ATIK_LIB_DIR		=	$(ATIK_LIB_MASTER_DIR)/linux/64/NoFlyCapture
+#ATIK_LIB_DIR_V129	=	$(ATIK_LIB_MASTER_DIR)/ARM/pi/pi3/x86/NoFlyCapture
+ATIK_LIB_DIR_ARM32	=	$(ATIK_LIB_MASTER_DIR)/ARM/32/NoFlyCapture
+ATIK_LIB_DIR_ARM64	=	$(ATIK_LIB_MASTER_DIR)/ARM/64/NoFlyCapture
 
 ############################################
 TOUP_DIR			=	./toupcamsdk
@@ -101,6 +107,10 @@ FLIR_INCLUDE_DIR	=	/usr/include/spinnaker
 ############################################
 SONY_INCLUDE_DIR	=	./SONY_SDK/CRSDK
 SONY_LIB_DIR		=	./SONY_SDK/lib
+
+############################################
+#	QHY support
+QHY_INCLUDE_DIR		=	./QHY/include
 
 #DEFINEFLAGS		=	-D_GENERATE_GRAPHICS_
 #DEFINEFLAGS		+=	-D_USE_WEB_GRAPH_
@@ -130,12 +140,13 @@ LINK			=	g++
 
 
 INCLUDES		=	-I$(SRC_DIR)			\
-					-I$(MLS_LIB_DIR)		\
-					-I$(ASI_INCLUDE_DIR)	\
 					-I$(EFW_LIB_DIR)		\
+					-I$(ASI_INCLUDE_DIR)	\
 					-I$(ATIK_INCLUDE_DIR)	\
 					-I$(TOUP_INCLUDE_DIR)	\
 					-I$(FLIR_INCLUDE_DIR)	\
+					-I$(MLS_LIB_DIR)		\
+					-I$(QHY_INCLUDE_DIR)	\
 					-I$(SRC_IMGPROC)		\
 
 
@@ -702,8 +713,7 @@ pi		:			$(CPP_OBJECTS)				\
 					$(CPP_OBJECTS)				\
 					$(ALPACA_OBJECTS)			\
 					$(OPENCV_LINK)				\
-					-L$(ATIK_LIB_DIR)/			\
-					-L$(ATIK_LIB_DIR_V129)/		\
+					-L$(ATIK_LIB_DIR_ARM32)/	\
 					$(ASI_CAMERA_OBJECTS)		\
 					$(ZWO_EFW_OBJECTS)			\
 					-latikcameras				\
@@ -712,6 +722,44 @@ pi		:			$(CPP_OBJECTS)				\
 					-ludev						\
 					-lwiringPi					\
 					-lpthread					\
+					-o alpacapi
+
+######################################################################################
+#pragma mark make piqhy
+#piqhy		:		DEFINEFLAGS		+=	-D_ENABLE_OBSERVINGCONDITIONS_
+piqhy		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
+#piqhy		:		DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_
+#piqhy		:		DEFINEFLAGS		+=	-D_ENABLE_ROTATOR_
+#piqhy		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_
+#piqhy		:		DEFINEFLAGS		+=	-D_ENABLE_SAFETYMONITOR_
+#piqhy		:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_
+#piqhy		:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
+piqhy		:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
+piqhy		:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
+#piqhy		:		DEFINEFLAGS		+=	-D_ENABLE_DISCOVERY_QUERRY_
+#piqhy		:		DEFINEFLAGS		+=	-D_ENABLE_MULTICAM_
+#piqhy		:		DEFINEFLAGS		+=	-D_ENABLE_DOME_
+#piqhy		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
+#piqhy		:		DEFINEFLAGS		+=	-D_ENABLE_ATIK_
+piqhy		:		DEFINEFLAGS		+=	-D_ENABLE_QHY_
+piqhy		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
+#piqhy		:		DEFINEFLAGS		+=	-D_ENABLE_TOUP_
+piqhy		:		PLATFORM		=	armv7
+piqhy		:		ATIK_LIB_DIR	=	$(ATIK_LIB_MASTER_DIR)/ARM/x86/NoFlyCapture
+piqhy		:		$(CPP_OBJECTS)				\
+					$(ALPACA_OBJECTS)			\
+					$(SOCKET_OBJECTS)			\
+
+		$(LINK)  								\
+					$(SOCKET_OBJECTS)			\
+					$(CPP_OBJECTS)				\
+					$(ALPACA_OBJECTS)			\
+					$(OPENCV_LINK)				\
+					-lcfitsio					\
+					-lusb-1.0					\
+					-ludev						\
+					-lpthread					\
+					-lqhyccd					\
 					-o alpacapi
 
 
@@ -861,7 +909,7 @@ pi64		:		$(CPP_OBJECTS)				\
 					$(OPENCV_LINK)				\
 					-L$(SONY_LIB_DIR)/			\
 					$(ASI_CAMERA_OBJECTS)		\
-					-L$(ATIK_LIB_DIR)/			\
+					-L$(ATIK_LIB_DIR_ARM64)/	\
 					-latikcameras				\
 					-lCr_Core					\
 					-lcfitsio					\
@@ -980,8 +1028,7 @@ newt16		:		$(CPP_OBJECTS)				\
 					$(CPP_OBJECTS)				\
 					$(ALPACA_OBJECTS)			\
 					$(OPENCV_LINK)				\
-					-L$(ATIK_LIB_DIR)/			\
-					-L$(ATIK_LIB_DIR_V129)/		\
+					-L$(ATIK_LIB_DIR_ARM32)/	\
 					$(ASI_CAMERA_OBJECTS)		\
 					$(ZWO_EFW_OBJECTS)			\
 					-latikcameras				\
@@ -1061,8 +1108,7 @@ piswitch		:	$(CPP_OBJECTS)				\
 					$(CPP_OBJECTS)				\
 					$(ALPACA_OBJECTS)			\
 					$(OPENCV_LINK)				\
-					-L$(ATIK_LIB_DIR)/			\
-					-L$(ATIK_LIB_DIR_V129)/		\
+					-L$(ATIK_LIB_DIR_ARM32)/	\
 					$(ASI_CAMERA_OBJECTS)		\
 					$(ZWO_EFW_OBJECTS)			\
 					-latikcameras				\
@@ -1515,6 +1561,7 @@ SKYTRAVEL_OBJECTS=											\
 				$(OBJECT_DIR)HipparcosCatalog.o				\
 				$(OBJECT_DIR)moonlite_com.o					\
 				$(OBJECT_DIR)julianTime.o					\
+				$(OBJECT_DIR)linuxerrors.o					\
 				$(OBJECT_DIR)moonphase.o					\
 				$(OBJECT_DIR)NGCcatalog.o					\
 				$(OBJECT_DIR)nitecrawler_image.o			\

@@ -85,7 +85,6 @@ enum
 	kDomeBox_last
 };
 
-#define	kMaxSwitchControlBoxes	14
 
 //**************************************************************************************
 class WindowTabDome: public WindowTab

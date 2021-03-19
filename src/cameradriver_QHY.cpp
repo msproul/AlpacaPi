@@ -69,7 +69,15 @@ bool			rulesFileOK;
 
 
 	rulesFileOK	=	Check_udev_rulesFile(rulesFileName);
-	if (rulesFileOK == false)
+	if (rulesFileOK)
+	{
+		LogEvent(	"camera",
+					"QHY rules OK",
+					NULL,
+					kASCOM_Err_Success,
+					rulesFileName);
+	}
+	else
 	{
 		LogEvent(	"camera",
 					"Problem with QHY rules",
@@ -79,7 +87,7 @@ bool			rulesFileOK;
 	}
 
 //	EnableQHYCCDMessage(false);
-	SetQHYCCDLogLevel(0);
+	SetQHYCCDLogLevel(1);
 
 	qhyRetCode	=	InitQHYCCDResource();
 	if (qhyRetCode == QHYCCD_SUCCESS)
@@ -950,14 +958,14 @@ unsigned int		bpp;
 unsigned int		channels = 0;
 unsigned char 		*imgDataPtr;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 
 	if (cQHYcamHandle != NULL)
 	{
 		imgDataLength	= GetQHYCCDMemLength(cQHYcamHandle);
 		if(imgDataLength > 0)
 		{
-//			CONSOLE_DEBUG_W_NUM("imgDataLength\t=", imgDataLength);
+			CONSOLE_DEBUG_W_NUM("imgDataLength\t=", imgDataLength);
 
 			imgDataPtr	=	(unsigned char *)malloc(imgDataLength * 2);
 			if (imgDataPtr != NULL)
@@ -981,6 +989,12 @@ unsigned char 		*imgDataPtr;
 
 					cCameraProp.ImageReady	=	true;
 					alpacaErrCode			=	kASCOM_Err_Success;
+				}
+				else
+				{
+				//	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "argument not specified");
+					CONSOLE_DEBUG_W_NUM("GetQHYCCDSingleFrame() failed with qhy return code:", qhyRetCode);
+					alpacaErrCode	=	kASCOM_Err_FailedToTakePicture;
 				}
 			}
 			else

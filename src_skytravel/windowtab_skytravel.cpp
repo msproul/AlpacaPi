@@ -4186,7 +4186,7 @@ double	cq;
 void	WindowTabSkyTravel::DrawDomeSlit(void)
 {
 double	slitWidth_Radians;
-double	slitHeight_Radians;
+//double	slitHeight_Radians;
 double	slitLeft_Radians;
 double	slitRight_Radians;
 double	skyTravelDomeAsimuth;	//*	Skytravel is reversed coordinates
@@ -4198,7 +4198,7 @@ double	skyTravelDomeAsimuth;	//*	Skytravel is reversed coordinates
 
 
 	slitWidth_Radians	=	2.0 * atan2((gSlitWidth_inches / 2.0), (gDomeDiameter_inches / 2.0));
-	slitHeight_Radians	=	RADIANS(gSlitTop_degrees) - RADIANS(gSlitBottom_degrees);
+//	slitHeight_Radians	=	RADIANS(gSlitTop_degrees) - RADIANS(gSlitBottom_degrees);
 
 //	CONSOLE_DEBUG_W_DBL("slitHeight_Degrees\t\t=",	slitHeight_Degrees);
 //	CONSOLE_DEBUG_W_DBL("Slit width degrees\t\t=",	DEGREES(slitWidth_Radians));

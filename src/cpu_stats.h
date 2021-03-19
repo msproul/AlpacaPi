@@ -4,6 +4,11 @@
 #ifndef _CPU_STATS_H
 #define	_CPU_STATS_H
 
+#ifndef _STDINT_H
+	#include	<stdint.h>
+#endif
+
+
 #ifdef __cplusplus
 	extern "C" {
 #endif

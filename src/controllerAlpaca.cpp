@@ -978,8 +978,8 @@ int				myIntegerValue;
 int				arrayIndex;
 int				totalBytesRead;
 double			downLoadSeconds;
-int				braceCnt;	//*	()
-int				bracktCnt;	//*	[]
+//int				braceCnt;	//*	()
+//int				bracktCnt;	//*	[]
 int				socketReadCnt;
 int				progressUpdateCnt;
 uint32_t		tStartMillisecs;
@@ -1015,8 +1015,8 @@ uint32_t		tLastUpdateMillisecs;
 		ccc					=	0;
 		linesProcessed		=	0;
 		totalBytesRead		=	0;
-		braceCnt			=	0;
-		bracktCnt			=	0;
+//		braceCnt			=	0;
+//		bracktCnt			=	0;
 		progressUpdateCnt	=	0;
 		socketReadCnt		=	0;
 		while (keepReading)

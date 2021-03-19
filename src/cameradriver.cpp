@@ -5655,7 +5655,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode;
 			}
 			else
 			{
-				CONSOLE_DEBUG_W_NUM("Read_ImageData returned error", alpacaErrCode);
+				CONSOLE_DEBUG_W_NUM("Read_ImageData returned Alpaca error#", alpacaErrCode);
 			}
 
 			cInternalCameraState	=	kCameraState_Idle;

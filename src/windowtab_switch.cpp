@@ -273,7 +273,6 @@ void	WindowTabSwitch::TurnAllSwitchesOff(void)
 int		switchNum;
 bool	validData;
 char	dataString[128];
-bool	currentState;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -282,6 +281,10 @@ bool	currentState;
 		sprintf(dataString,		"Id=%d&State=false", switchNum);
 //		CONSOLE_DEBUG_W_STR("dataString=", dataString);
 		validData	=	AlpacaSendPutCmd(	"switch",	"setswitch",		dataString);
+		if (validData == false)
+		{
+			CONSOLE_DEBUG("AlpacaSendPutCmd() failed");
+		}
 	}
 }
 

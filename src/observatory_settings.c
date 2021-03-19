@@ -35,8 +35,10 @@
 //*	Dec  9.	2019	<MLS> Added secondary diameter to telescope settings
 //*	Dec 16,	2019	<MLS> Added email to observatory settings
 //*	Dec 16,	2019	<MLS> Added ObservatorySettings_CreateTemplateFile()
+//*	Mar 18,	2021	<MLS> Added better error message if create template fails
 //*****************************************************************************
 
+#include	<errno.h>
 #include	<stdlib.h>
 #include	<stdio.h>
 #include	<string.h>
@@ -48,6 +50,7 @@
 #include	"ConsoleDebug.h"
 
 #include	"eventlogging.h"
+#include	"linuxerrors.h"
 
 #include	"alpacadriver_helper.h"
 #include	"observatory_settings.h"
@@ -153,7 +156,7 @@ const TYPE_SETTINGS_DEF	gSettingsList[]	=
 static int	gCurrTelescopeNum	=	0;
 static int	gCurrCommentIdx		=	0;
 
-int	FindKeywordFromTable(const char *theCmd, const TYPE_SETTINGS_DEF *theCmdTable);
+static int	FindKeywordFromTable(const char *theCmd, const TYPE_SETTINGS_DEF *theCmdTable);
 
 
 //*****************************************************************************
@@ -171,6 +174,7 @@ void	ObservatorySettings_CreateTemplateFile(void)
 int		ii;
 FILE	*filePointer;
 char	separaterLine[]	=	"###############################################################################\n";
+char	linuxErrStr[64];
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -215,7 +219,9 @@ char	separaterLine[]	=	"########################################################
 	}
 	else
 	{
-		CONSOLE_DEBUG("Failed to create template file");
+		//*	something went wrong, we failed to create the file
+		GetLinuxErrorString(errno, linuxErrStr);
+		CONSOLE_DEBUG_W_STR("Failed to create template file:", linuxErrStr);
 	}
 }
 
@@ -296,7 +302,6 @@ TYPE_TELESCOPE_INFO	*ts_infoPtr;
 		ii++;
 	}
 
-	keywordEnumVal	=	FindKeywordFromTable(keyword, gSettingsList);
 
 	//*	this is kind of redundant to do it EVERY time, but it is the easiest to insure
 	//*	the telescope index is not out of bounds
@@ -308,6 +313,10 @@ TYPE_TELESCOPE_INFO	*ts_infoPtr;
 	//*	this is for the telescope specific information
 	ts_infoPtr	=	&gObseratorySettings.TS_info[gCurrTelescopeNum];
 
+	//*	look up the keyword in the table
+	keywordEnumVal	=	FindKeywordFromTable(keyword, gSettingsList);
+
+	//*	use the keyword enum value to figure out what to do with the data
 	switch(keywordEnumVal)
 	{
 		case kObservatory_AAVSO_ObserverID:
@@ -437,7 +446,7 @@ TYPE_TELESCOPE_INFO	*ts_infoPtr;
 			}
 			else
 			{
-				gCurrTelescopeNum			=	atoi(valueString);
+				gCurrTelescopeNum		=	atoi(valueString);
 				gCurrTelescopeNum--;	//*	adjust for zero base
 			}
 			if (gCurrTelescopeNum < 0)
@@ -572,7 +581,7 @@ int		ii;
 
 
 //*****************************************************************************
-int	FindKeywordFromTable(const char *theCmd, const TYPE_SETTINGS_DEF *theCmdTable)
+static int	FindKeywordFromTable(const char *theCmd, const TYPE_SETTINGS_DEF *theCmdTable)
 {
 int		ii;
 int		keywordEnumValue;

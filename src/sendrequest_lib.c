@@ -127,6 +127,10 @@ int					so_oobinline;
 
 		//*	set a timeout
 		setOptRetCode	=	SetSocketTimeouts(socket_desc, kTimeOutLenSeconds);
+		if (setOptRetCode != 0)
+		{
+			CONSOLE_DEBUG("SetSocketTimeouts() failed");
+		}
 
 		//*	turn out of band off
 		so_oobinline	=	0;
@@ -230,7 +234,6 @@ char				linebuf[100];
 int					dataStrLen;
 char				ipString[32];
 bool				keepReading;
-struct timeval		timeoutLength;
 int					setOptRetCode;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
@@ -242,7 +245,10 @@ int					setOptRetCode;
 //		CONSOLE_DEBUG("Setting Timeout");
 		//*	set a timeout
 		setOptRetCode	=	SetSocketTimeouts(socket_desc, kTimeOutLenSeconds);
-
+		if (setOptRetCode != 0)
+		{
+			CONSOLE_DEBUG("SetSocketTimeouts() failed");
+		}
 		gNumSocketOpenOKcnt++;
 		remoteDev.sin_addr.s_addr	=	deviceAddress->sin_addr.s_addr;
 		remoteDev.sin_family		=	AF_INET;
@@ -394,7 +400,6 @@ char				xmitBuffer[kReadBuffLen];
 char				linebuf[128];
 int					dataStrLen;
 char				ipString[32];
-struct timeval		timeoutLength;
 int					setOptRetCode;
 
 //	CONSOLE_DEBUG_W_STR("putCommand\t=", putCommand);
@@ -406,6 +411,10 @@ int					setOptRetCode;
 	{
 		//*	set a timeout
 		setOptRetCode	=	SetSocketTimeouts(socket_desc, kTimeOutLenSeconds);
+		if (setOptRetCode != 0)
+		{
+			CONSOLE_DEBUG("SetSocketTimeouts() failed");
+		}
 
 		remoteDev.sin_addr.s_addr	=	deviceAddress->sin_addr.s_addr;
 		remoteDev.sin_family		=	AF_INET;

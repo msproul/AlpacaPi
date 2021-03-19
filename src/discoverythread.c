@@ -440,7 +440,10 @@ int					setOptRetCode;
 	{
 		//*	set a timeout
 		setOptRetCode	=	SetSocketTimeouts(socket_desc, 3);
-
+		if (setOptRetCode != 0)
+		{
+			CONSOLE_DEBUG("SetSocketTimeouts() returned error");
+		}
 
 		remoteDev.sin_addr.s_addr	=	deviceAddress->sin_addr.s_addr;
 		remoteDev.sin_family		=	AF_INET;
@@ -895,7 +898,6 @@ int					sendtoRetCode;
 char				buf[kReceiveBufferSize + 1];
 char				ipAddressStr[INET_ADDRSTRLEN];
 SJP_Parser_t		jsonParser;
-struct timeval		timeoutLength;
 int					timeOutCntr;
 int					sockOptValue;
 

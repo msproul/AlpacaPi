@@ -10,6 +10,11 @@
 #	Feb  9,	2021	<MLS> Added support for FLIR-SDK
 #############################################################
 
+#
+#		sudo apt-get install libudev-dev
+#		sudo apt-get install libopencv-dev
+#		sudo apt-get install libi2c-dev
+#		sudo apt-get install libjpeg-dev
 
 
 ###########################################################
@@ -313,6 +318,11 @@ InstallFits
 CheckForFLIR
 
 Checksystem
+
+echo "*************************************************************"
+echo "Installing libusb-1.0-0-dev"
+sudo apt-get install libusb-1.0-0-dev
+
 
 echo "MISSING_COUNT = $MISSING_COUNT"
 

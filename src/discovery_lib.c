@@ -239,7 +239,7 @@ char			myVersionString[64];
 }
 
 //*****************************************************************************
-static void	SendGetRequest(TYPE_ALPACA_UNIT *theUnit, char *sendData)
+static void	SendGetRequest(TYPE_ALPACA_UNIT *theUnit, const char *sendData)
 {
 int					socket_desc;
 struct sockaddr_in	remoteDev;
@@ -624,6 +624,7 @@ char				str[INET_ADDRSTRLEN];
 SJP_Parser_t		jsonParser;
 int					timeOutCntr;
 int					alpacaIPaddrCnt;
+int					bytesWritten;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -660,10 +661,11 @@ int					alpacaIPaddrCnt;
 
 			inet_ntop(AF_INET, &(from.sin_addr), str, INET_ADDRSTRLEN);
 
-			write(1, buf, rcvCnt);
-			write(1, " ", 1);
-			write(1, str, strlen(str));
-			write(1, "\n", 1);
+			bytesWritten	=	0;
+			bytesWritten	+=	write(1, buf, rcvCnt);
+			bytesWritten	+=	write(1, " ", 1);
+			bytesWritten	+=	write(1, str, strlen(str));
+			bytesWritten	+=	write(1, "\n", 1);
 		}
 		else if (rcvCnt == 0)
 		{
