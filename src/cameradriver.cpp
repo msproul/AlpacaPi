@@ -2928,6 +2928,9 @@ double				myExposure_usecs;
 			(cCameraProp.BinX >= 1) && (cCameraProp.BinX <= cCameraProp.MaxbinX) &&
 			(cCameraProp.BinY >= 1) && (cCameraProp.BinY <= cCameraProp.MaxbinY))
 		{
+			CONSOLE_DEBUG_W_NUM("cCurrentExposure_us\t=",	cCurrentExposure_us);
+
+
 			ProcessExposureOptions(reqData);
 			durationFound	=	GetKeyWordArgument(	reqData->contentData,
 													"Duration",
@@ -2943,15 +2946,22 @@ double				myExposure_usecs;
 			{
 				myExposureDuration_secs	=	atof(duarationString);
 				myExposure_usecs		=	myExposureDuration_secs * (1000.0 * 1000.0);
+
+				CONSOLE_DEBUG_W_STR("Specified Duration (str)  \t=",	duarationString);
+				CONSOLE_DEBUG_W_DBL("Specified Duration (dbl)  \t=",	myExposureDuration_secs);
+				CONSOLE_DEBUG_W_DBL("Specified Duration (usecs)\t=",	myExposure_usecs);
 			}
 			else
 			{
+				CONSOLE_DEBUG("Duration was not Specified!!!");
+				CONSOLE_DEBUG_W_STR("reqData->contentData\t=",	reqData->contentData);
 				myExposure_usecs		=	cCurrentExposure_us;
 			}
+			CONSOLE_DEBUG_W_DBL("Using Duration (u-secs)\t=",	myExposure_usecs);
 
 			if (lightFound)
 			{
-				CONSOLE_DEBUG(lightString);
+				CONSOLE_DEBUG_W_STR("Light\t=", lightString);
 			}
 
 			if ((myExposure_usecs > 0) && (myExposure_usecs >= cCameraProp.ExposureMin_us))
@@ -4408,7 +4418,6 @@ void	CameraDriver::SaveNextImage(void)
 TYPE_ASCOM_STATUS	CameraDriver::Put_SaveAllImages(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
-double				exposureDuration_secs;
 bool				saveAllFound;
 char				saveAllFoundString[32];
 

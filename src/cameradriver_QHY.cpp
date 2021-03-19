@@ -779,7 +779,8 @@ double				exposureDBL;
 //double				speed;
 //double				traffic;
 //double				bit;
-//	CONSOLE_DEBUG(__FUNCTION__);
+
+	CONSOLE_DEBUG(__FUNCTION__);
 //	CONSOLE_DEBUG_W_NUM("currentROIimageType\t=",	cROIinfo.currentROIimageType);
 
 	if (cQHYcamHandle != NULL)
@@ -787,13 +788,13 @@ double				exposureDBL;
 		exposureDBL	=	exposureMicrosecs;
 		qhyRetCode	=	SetQHYCCDParam(cQHYcamHandle,	CONTROL_EXPOSURE,	exposureDBL);
 
-//		CONSOLE_DEBUG_W_DBL("exposureDBL\t=",	exposureDBL);
-//		CONSOLE_DEBUG_W_NUM("qhyRetCode\t=",	qhyRetCode);
+		CONSOLE_DEBUG_W_DBL("exposureDBL\t=",	exposureDBL);
+		CONSOLE_DEBUG_W_NUM("qhyRetCode\t=",	qhyRetCode);
 
-//		qhyRetCode	=	SetQHYCCDParam(cQHYcamHandle,	CONTROL_GAIN,gain);
-//		qhyRetCode	=	SetQHYCCDParam(cQHYcamHandle,	CONTROL_OFFSET,offset);
-//		qhyRetCode	=	SetQHYCCDParam(cQHYcamHandle,	CONTROL_SPEED,speed);
-//		qhyRetCode	=	SetQHYCCDParam(cQHYcamHandle,	CONTROL_USBTRAFFIC,traffic);
+//		qhyRetCode	=	SetQHYCCDParam(cQHYcamHandle,	CONTROL_GAIN,		gain);
+//		qhyRetCode	=	SetQHYCCDParam(cQHYcamHandle,	CONTROL_OFFSET,		offset);
+//		qhyRetCode	=	SetQHYCCDParam(cQHYcamHandle,	CONTROL_SPEED,		speed);
+//		qhyRetCode	=	SetQHYCCDParam(cQHYcamHandle,	CONTROL_USBTRAFFIC,	traffic);
 //		qhyRetCode	=	SetQHYCCDParam(cQHYcamHandle,	CONTROL_TRANSFERBIT,bit);
 //		qhyRetCode	=	SetQHYCCDBinMode(cQHYcamHandle,	2,2);
 //		qhyRetCode	=	SetQHYCCDResolution(cQHYcamHandle,	0,0,imagew/2,imageh/2);

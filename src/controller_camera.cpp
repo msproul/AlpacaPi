@@ -1600,6 +1600,8 @@ char			parameterString[128];
 	UpdateReceivedFileName("unkown");
 	AlpacaDisplayErrorMessage("---");
 
+	//*	my drivers have extra commands, readall and live mode.
+	//*	if we are in live mode, just tell the driver to save the next frame
 	if (cHas_readall && cLiveMode)
 	{
 //		CONSOLE_DEBUG("savenextimage");
@@ -1615,10 +1617,11 @@ char			parameterString[128];
 	}
 	else
 	{
-
+		//********************************************************************
 		//*	OK, this is a normal alpaca driver without any of my extras.
 		//*	we need "Duration=0.123&Light=true&ClientID=22&ClientTransactionID=33"
 		//*	the "ClientID=22&ClientTransactionID=33" will be added by the next routine
+		//********************************************************************
 
 		sprintf(parameterString, "Duration=%f&Light=%s",	cExposure,
 															(cDarkExposure ? "false" : "true"));

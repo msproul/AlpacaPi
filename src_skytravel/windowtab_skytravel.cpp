@@ -778,7 +778,8 @@ struct tm			siderealTime;
 
 	currentMilliSecs	=	millis();
 	deltaMilliSecs		=	currentMilliSecs - cLastUpdateTime_ms;
-	if (deltaMilliSecs > 60000)
+//	if (deltaMilliSecs > 60000)
+	if ((deltaMilliSecs > 60000) || (cAutoAdvanceTime && (deltaMilliSecs > 250) && (cView_index <= 4)))
 	{
 		if (cAutoAdvanceTime)
 		{
@@ -1434,6 +1435,10 @@ bool			reDrawSky;
 
 	switch(widgetIdx)
 	{
+		case kSkyTravel_Btn_ZoomLevel:
+			SetView_Index(8);
+			break;
+
 		//*	double click in the RA/DEC box from the Alpaca telescope device and makes it center on the current telescope position
 		case kSkyTravel_Telescope_RA_DEC:
 			cDispOptions.dispTelescope	=	true;
