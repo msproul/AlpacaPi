@@ -1582,7 +1582,11 @@ bool				foundKeyWord;
 		if (reqData != NULL)
 		{
 			//*	look for Azimuth
-			foundKeyWord	=	GetKeyWordArgument(reqData->contentData, "Azimuth", argumentString, 31);
+			foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
+													"Azimuth",
+													argumentString,
+													(sizeof(argumentString) -1),
+													kArgumentIsNumeric);
 			if (foundKeyWord)
 			{
 				newAzimuthValue	=	atof(argumentString);
@@ -1656,7 +1660,11 @@ bool				foundKeyWord;
 		if (reqData != NULL)
 		{
 			//*	look for Azimuth
-			foundKeyWord	=	GetKeyWordArgument(reqData->contentData, "Azimuth", argumentString, 31);
+			foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
+													"Azimuth",
+													argumentString,
+													(sizeof(argumentString) -1),
+													kArgumentIsNumeric);
 			if (foundKeyWord)
 			{
 				newAzimuthValue	=	atof(argumentString);

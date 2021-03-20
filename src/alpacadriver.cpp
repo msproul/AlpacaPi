@@ -114,6 +114,7 @@
 //*	Dec 28,	2020	<MLS> Finished making all Alpaca error messages uniform
 //*	Jan 10,	2020	<MLS> Changed SendSupportedActions() to Get_SupportedActions()
 //*	Jan 10,	2020	<MLS> Pushed build 74 up to github
+//*	Mar 19,	2021	<MLS> Added coma checking in numeric string in GetKeyWordArgument()
 //*****************************************************************************
 
 #include	<stdio.h>
@@ -3189,8 +3190,16 @@ bool	trueFalseFlag;
 //*	a valid argument.
 //*	The method is a little slow but it insures non-ambiguity.
 //*	For example, "Duration=" and "Duration1="
+//*
+//*	argIsNumeric should be set to kArgumentIsNumeric/TRUE
+//*		IF the argument is a floating point number,
+//*		this allows for European strings with commas instead of periods
 //*****************************************************************************
-bool	GetKeyWordArgument(const char *dataSource, const char *keyword, char *argument, int maxArgLen)
+bool	GetKeyWordArgument(	const char	*dataSource,
+							const char	*keyword,
+							char		*argument,
+							const int	maxArgLen,
+							const bool	argIsNumeric)
 {
 int		dataSrcLen;
 int		iii;
@@ -3248,6 +3257,20 @@ char	theChar;
 				if (strcasecmp(myKeyWord, keyword) == 0)
 				{
 					foundKeyWord	=	true;
+					//*	in order to handle the coma char as a decimal point for Europe
+					if (argIsNumeric)
+					{
+						jjj	=	0;
+						while ((myArgString[jjj] > 0) && (jjj < maxArgLen))
+						{
+							//*	check for coma
+							if (myArgString[jjj] == ',')
+							{
+								myArgString[jjj]	=	'.';	//*	replace with period
+							}
+							jjj++;
+						}
+					}
 					strcpy(argument, myArgString);
 				}
 				ccc	=	0;
@@ -3260,6 +3283,7 @@ char	theChar;
 			}
 			iii++;
 		}
+
 	}
 	else
 	{

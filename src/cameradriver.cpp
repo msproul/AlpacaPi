@@ -1457,7 +1457,8 @@ double	myExposure_usecs;
 		durationFound		=	GetKeyWordArgument(	reqData->contentData,
 													"Duration",
 													duarationString,
-													(sizeof(duarationString) -1));
+													(sizeof(duarationString) -1),
+													kArgumentIsNumeric);
 
 		//*	if duration is NOT found, leave it alone
 		if (durationFound)
@@ -2562,8 +2563,9 @@ char				durationString[32];
 
 				durationFound	=	GetKeyWordArgument(	reqData->contentData,
 														"Duration",
-														directionString,
-														(sizeof(durationString) -1));
+														durationString,
+														(sizeof(durationString) -1),
+														kArgumentIsNumeric);
 				if (directionFound && durationFound)
 				{
 					alpacaErrCode				=	kASCOM_Err_Success;
@@ -2831,7 +2833,8 @@ double				newSetCCDvalue;
 		setCCDtempFound	=	GetKeyWordArgument(	reqData->contentData,
 												"SetCCDTemperature",
 												setCCDtempString,
-												(sizeof(setCCDtempString) -1));
+												(sizeof(setCCDtempString) -1),
+												kArgumentIsNumeric);
 		if (setCCDtempFound)
 		{
 			newSetCCDvalue	=	atof(setCCDtempString);
@@ -2935,7 +2938,8 @@ double				myExposure_usecs;
 			durationFound	=	GetKeyWordArgument(	reqData->contentData,
 													"Duration",
 													duarationString,
-													(sizeof(duarationString) -1));
+													(sizeof(duarationString) -1),
+													kArgumentIsNumeric);
 
 			lightFound		=	GetKeyWordArgument(	reqData->contentData,
 													"Light",
@@ -4374,9 +4378,10 @@ long				exposureDuration_us;	//*	micro seconds
 	if (reqData != NULL)
 	{
 		durationFound		=	GetKeyWordArgument(	reqData->contentData,
-														"Duration",
-														duarationString,
-														(sizeof(duarationString) -1));
+													"Duration",
+													duarationString,
+													(sizeof(duarationString) -1),
+													kArgumentIsNumeric);
 		if (durationFound)
 		{
 			exposureDuration_secs	=	atof(duarationString);
@@ -4522,14 +4527,16 @@ double				deltaExp_secs;
 														(sizeof(countString) -1));
 
 		delayFound			=	GetKeyWordArgument(	reqData->contentData,
-														"Delay",
-														delayString,
-														(sizeof(delayString) -1));
+													"Delay",
+													delayString,
+													(sizeof(delayString) -1),
+													kArgumentIsNumeric);
 
 		deltaDurationFound	=	GetKeyWordArgument(	reqData->contentData,
-														"DeltaDuration",
-														deltaDurationString,
-														(sizeof(deltaDurationString) -1));
+													"DeltaDuration",
+													deltaDurationString,
+													(sizeof(deltaDurationString) -1),
+													kArgumentIsNumeric);
 		//==============================================
 		if (sequenceCntFound)
 		{
@@ -4659,7 +4666,8 @@ bool				recTimeFound;
 		recTimeFound	=	GetKeyWordArgument(	reqData->contentData,
 												"recordtime",
 												recordTimeStr,
-												(sizeof(recordTimeStr) -1));
+												(sizeof(recordTimeStr) -1),
+												kArgumentIsNumeric);
 //		CONSOLE_DEBUG_W_NUM("cInternalCameraState\t=", cInternalCameraState);
 
 		switch(cInternalCameraState)

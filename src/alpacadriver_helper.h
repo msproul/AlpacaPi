@@ -33,6 +33,7 @@ typedef struct
 
 } TYPE_DeviceTable;
 
+
 #ifdef __cplusplus
 	extern "C" {
 #endif
@@ -40,12 +41,19 @@ typedef struct
 
 //*****************************************************************************
 //*	Helper functions
+#define	kArgumentIsNumeric	true
+bool			GetKeyWordArgument(	const char	*dataSource,
+									const char	*keyword,
+									char		*argument,
+									const int	maxArgLen,
+									const bool	argIsNumeric=false);
+
+
 void			FormatHHMMSS(const double argDegreeValue, char *timeString, bool includeSign);
 void			FormatTimeString(time_t *time, char *timeString);
 void			FormatTimeStringISO8601(struct timeval *tv, char *timeString);
 
 int				SocketWriteData(const int socket, const char *dataBuffer);
-bool			GetKeyWordArgument(const char *dataSource, const char *keyword, char *argument, int maxArgLen);
 bool			IsTrueFalse(const char *trueFalseString);
 void			ToLowerStr(char *theString);
 void			StripTrailingSpaces(char *theString);

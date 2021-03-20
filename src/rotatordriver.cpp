@@ -475,7 +475,8 @@ double				newPosition_degs;
 		foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
 												"Position",
 												argumentString,
-												31);
+												(sizeof(argumentString) -1),
+												kArgumentIsNumeric);
 		if (foundKeyWord)
 		{
 			newPositionOffset_deg	=	atof(argumentString);
@@ -529,7 +530,11 @@ double	newPosition_degs;
 
 	if (reqData != NULL)
 	{
-		foundKeyWord	=	GetKeyWordArgument(reqData->contentData, "Position", argumentString, 31);
+		foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
+												"Position",
+												argumentString,
+												(sizeof(argumentString) -1),
+												kArgumentIsNumeric);
 		if (foundKeyWord)
 		{
 			newPosition_degs		=	atof(argumentString);
@@ -584,7 +589,7 @@ int32_t				newPosition;
 		foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
 												"Position",
 												argumentString,
-												31);
+												(sizeof(argumentString) -1));
 		if (foundKeyWord)
 		{
 			//*	its a relative move so get the current position and add
@@ -622,7 +627,10 @@ int32_t				newPosition;
 
 	if (reqData != NULL)
 	{
-		foundKeyWord	=	GetKeyWordArgument(reqData->contentData, "Position", argumentString, 31);
+		foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
+												"Position",
+												argumentString,
+												(sizeof(argumentString) -1));
 		if (foundKeyWord)
 		{
 			newPosition		=	atoi(argumentString);

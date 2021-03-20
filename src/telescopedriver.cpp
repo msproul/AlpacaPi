@@ -1330,7 +1330,8 @@ double					newDecRate;
 		decRateFound		=	GetKeyWordArgument(	reqData->contentData,
 													"DeclinationRate",
 													decRateString,
-													(sizeof(decRateString) -1));
+													(sizeof(decRateString) -1),
+													kArgumentIsNumeric);
 		if (decRateFound)
 		{
 			newDecRate			=	atof(decRateString);
@@ -1496,10 +1497,11 @@ double				newGuideRateDeclination;
 
 	if (cTelescopeProp.CanSetGuideRates)
 	{
-		guideRateDeclinationFound		=	GetKeyWordArgument(	reqData->contentData,
-														"GuideRateDeclination",
-														guideRateDeclinationStr,
-														(sizeof(guideRateDeclinationStr) -1));
+		guideRateDeclinationFound	=	GetKeyWordArgument(	reqData->contentData,
+															"GuideRateDeclination",
+															guideRateDeclinationStr,
+															(sizeof(guideRateDeclinationStr) -1),
+															kArgumentIsNumeric);
 		if (guideRateDeclinationFound)
 		{
 			newGuideRateDeclination	=	atof(guideRateDeclinationStr);
@@ -1557,10 +1559,11 @@ double				newGuideRateRightAscension;
 
 	if (cTelescopeProp.CanSetGuideRates)
 	{
-		guideRateRightAscensionFound		=	GetKeyWordArgument(	reqData->contentData,
-														"GuideRateRightAscension",
-														guideRateRightAscensionStr,
-														(sizeof(guideRateRightAscensionStr) -1));
+		guideRateRightAscensionFound	=	GetKeyWordArgument(	reqData->contentData,
+																"GuideRateRightAscension",
+																guideRateRightAscensionStr,
+																(sizeof(guideRateRightAscensionStr) -1),
+																kArgumentIsNumeric);
 		if (guideRateRightAscensionFound)
 		{
 			newGuideRateRightAscension	=	atof(guideRateRightAscensionStr);
@@ -1664,7 +1667,8 @@ double				newrightAscenRate;
 		rightAscenRateFound		=	GetKeyWordArgument(	reqData->contentData,
 														"RightAscensionRate",
 														rightAscenRateString,
-														(sizeof(rightAscenRateString) -1));
+														(sizeof(rightAscenRateString) -1),
+														kArgumentIsNumeric);
 		if (rightAscenRateFound)
 		{
 			newrightAscenRate	=	atof(rightAscenRateString);
@@ -1785,7 +1789,8 @@ double				newElevation;
 	siteElevFound		=	GetKeyWordArgument(	reqData->contentData,
 												"SiteElevation",
 												siteElevString,
-												(sizeof(siteElevString) -1));
+												(sizeof(siteElevString) -1),
+												kArgumentIsNumeric);
 	if (siteElevFound)
 	{
 		newElevation	=	atof(siteElevString);
@@ -1848,7 +1853,8 @@ double				newLatitude;
 	siteLatFound		=	GetKeyWordArgument(	reqData->contentData,
 												"SiteLatitude",
 												siteLatString,
-												(sizeof(siteLatString) -1));
+												(sizeof(siteLatString) -1),
+												kArgumentIsNumeric);
 	if (siteLatFound)
 	{
 		newLatitude	=	atof(siteLatString);
@@ -1903,7 +1909,8 @@ double				newLongitude;
 	siteLonFound		=	GetKeyWordArgument(	reqData->contentData,
 												"SiteLongitude",
 												siteLonString,
-												(sizeof(siteLonString) -1));
+												(sizeof(siteLonString) -1),
+												kArgumentIsNumeric);
 	if (siteLonFound)
 	{
 		newLongitude	=	atof(siteLonString);
@@ -1979,9 +1986,9 @@ short				newSlewSettleTime;
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	slewSettleTimeFound		=	GetKeyWordArgument(	reqData->contentData,
-												"SlewSettleTime",
-												slewSettleTimeString,
-												(sizeof(slewSettleTimeString) -1));
+													"SlewSettleTime",
+													slewSettleTimeString,
+													(sizeof(slewSettleTimeString) -1));
 	if (slewSettleTimeFound)
 	{
 		newSlewSettleTime	=	atoi(slewSettleTimeString);
@@ -2050,10 +2057,11 @@ double				newTargetDeclination;
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG(reqData->contentData);
 
-	targetDeclinationFound		=	GetKeyWordArgument(	reqData->contentData,
+	targetDeclinationFound	=	GetKeyWordArgument(	reqData->contentData,
 													"TargetDeclination",
 													targetDeclinationString,
-													(sizeof(targetDeclinationString) -1));
+													(sizeof(targetDeclinationString) -1),
+													kArgumentIsNumeric);
 	if (targetDeclinationFound)
 	{
 		newTargetDeclination		=	atof(targetDeclinationString);
@@ -2123,10 +2131,11 @@ double				newTargetRightAscension;
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG(reqData->contentData);
 
-	targetRightAscensionFound		=	GetKeyWordArgument(	reqData->contentData,
-													"TargetRightAscension",
-													targetRightAscensionString,
-													(sizeof(targetRightAscensionString) -1));
+	targetRightAscensionFound	=	GetKeyWordArgument(	reqData->contentData,
+														"TargetRightAscension",
+														targetRightAscensionString,
+														(sizeof(targetRightAscensionString) -1),
+														kArgumentIsNumeric);
 	if (targetRightAscensionFound)
 	{
 		newTargetRightAscension		=	atof(targetRightAscensionString);
@@ -2423,9 +2432,9 @@ int						axisNumber;
 
 
 	axisFound		=	GetKeyWordArgument(	reqData->contentData,
-													"Axis",
-													axisString,
-													(sizeof(axisString) -1));
+											"Axis",
+											axisString,
+											(sizeof(axisString) -1));
 	if (axisFound)
 	{
 		axisNumber		=	atoi(axisString);
@@ -2499,9 +2508,9 @@ int						axisNumber;
 //	CONSOLE_DEBUG(reqData->contentData);
 
 	axisFound		=	GetKeyWordArgument(	reqData->contentData,
-													"Axis",
-													axisString,
-													(sizeof(axisString) -1));
+											"Axis",
+											axisString,
+											(sizeof(axisString) -1));
 	if (axisFound)
 	{
 		axisNumber		=	atoi(axisString);
@@ -2585,13 +2594,15 @@ double					newRate;
 	if (cTelescopeProp.CanMoveAxis)
 	{
 		axisFound		=	GetKeyWordArgument(	reqData->contentData,
-														"Axis",
-														axisString,
-														(sizeof(axisString) -1));
+												"Axis",
+												axisString,
+												(sizeof(axisString) -1));
+
 		rateFound		=	GetKeyWordArgument(	reqData->contentData,
-														"Rate",
-														rateString,
-														(sizeof(rateString) -1));
+												"Rate",
+												rateString,
+												(sizeof(rateString) -1),
+												kArgumentIsNumeric);
 
 		if (axisFound)
 		{
@@ -2664,10 +2675,12 @@ double					newRate;
 														"Axis",
 														axisString,
 														(sizeof(axisString) -1));
+
 		rateFound		=	GetKeyWordArgument(	reqData->contentData,
 														"Rate",
 														rateString,
-														(sizeof(rateString) -1));
+														(sizeof(rateString) -1),
+														kArgumentIsNumeric);
 
 		if (axisFound)
 		{
@@ -2825,12 +2838,14 @@ double				newDeclination;
 		rightAscensionFound		=	GetKeyWordArgument(	reqData->contentData,
 														"RightAscension",
 														rightAscensionStr,
-														(sizeof(rightAscensionStr) -1));
+														(sizeof(rightAscensionStr) -1),
+														kArgumentIsNumeric);
 
 		declinationFound		=	GetKeyWordArgument(	reqData->contentData,
 														"Declination",
 														declinationStr,
-														(sizeof(rightAscensionStr) -1));
+														(sizeof(rightAscensionStr) -1),
+														kArgumentIsNumeric);
 
 		if (rightAscensionFound && declinationFound)
 		{
@@ -2941,11 +2956,14 @@ double				newDeclination;
 		rightAscensionFound		=	GetKeyWordArgument(	reqData->contentData,
 														"RightAscension",
 														rightAscensionStr,
-														(sizeof(rightAscensionStr) -1));
+														(sizeof(rightAscensionStr) -1),
+														kArgumentIsNumeric);
+
 		declinationFound		=	GetKeyWordArgument(	reqData->contentData,
 														"Declination",
 														declinationStr,
-														(sizeof(declinationStr) -1));
+														(sizeof(declinationStr) -1),
+														kArgumentIsNumeric);
 		if (rightAscensionFound && declinationFound)
 		{
 			newRightAscension	=	atof(rightAscensionStr);
@@ -3060,11 +3078,14 @@ double				newDeclination;
 		rightAscensionFound		=	GetKeyWordArgument(	reqData->contentData,
 														"RightAscension",
 														rightAscensionStr,
-														(sizeof(rightAscensionStr) -1));
+														(sizeof(rightAscensionStr) -1),
+														kArgumentIsNumeric);
+
 		declinationFound		=	GetKeyWordArgument(	reqData->contentData,
 														"Declination",
 														declinationStr,
-														(sizeof(declinationStr) -1));
+														(sizeof(declinationStr) -1),
+														kArgumentIsNumeric);
 		if (rightAscensionFound && declinationFound)
 		{
 			newRightAscension	=	atof(rightAscensionStr);

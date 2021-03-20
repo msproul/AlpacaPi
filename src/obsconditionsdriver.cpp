@@ -525,7 +525,8 @@ double					avgPeriodValue;
 	avgPeriodFound	=	GetKeyWordArgument(	reqData->contentData,
 											"AveragePeriod",
 											avgPeriodString,
-											(sizeof(avgPeriodString) -1));
+											(sizeof(avgPeriodString) -1),
+											kArgumentIsNumeric);
 	if (avgPeriodFound)
 	{
 		avgPeriodValue	=	atof(avgPeriodString);

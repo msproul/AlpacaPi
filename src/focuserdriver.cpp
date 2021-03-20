@@ -478,19 +478,11 @@ char				argumentString[32];
 			foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
 													"TempComp",
 													argumentString,
-													31);
+													(sizeof(argumentString) -1));
 			if (foundKeyWord)
 			{
-				if (strcasecmp(argumentString, "true") == 0)
-				{
-					cFocuserProp.TempComp	=	true;
-				}
-				else
-				{
-					cFocuserProp.TempComp	=	false;
-				}
-
-				alpacaErrCode	=	kASCOM_Err_Success;
+				cFocuserProp.TempComp	=	IsTrueFalse(argumentString);;
+				alpacaErrCode			=	kASCOM_Err_Success;
 			}
 			else
 			{
@@ -588,7 +580,7 @@ int32_t				newPosition;
 		foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
 												"Position",
 												argumentString,
-												31);
+												(sizeof(argumentString) -1));
 		if (foundKeyWord)
 		{
 			newPosition		=	atoi(argumentString);
@@ -622,7 +614,7 @@ int32_t				newPosition;
 		foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
 												"Position",
 												argumentString,
-												31);
+												(sizeof(argumentString) -1));
 		if (foundKeyWord)
 		{
 			//*	new position is the current position plus the new offset
