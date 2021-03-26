@@ -369,7 +369,7 @@ int				newHeight;
 char			myMoonFilePath[128];
 
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 
 	SetWidgetImage(kMoon_Image, NULL);
 	if (cMoonImage != NULL)

@@ -19,6 +19,7 @@
 //*	Edit History
 //*****************************************************************************
 //*	Jan 26,	2021	<MLS> Created windowtab_deviceselect.cpp
+//*	Mar 26,	2021	<MLS> Fixed bug in count initialization
 //*****************************************************************************
 
 #include	"alpaca_defs.h"
@@ -45,9 +46,10 @@ WindowTabDeviceSelect::WindowTabDeviceSelect(	const int	xSize,
 {
 	CONSOLE_DEBUG(__FUNCTION__);
 
+	cDomeCnt				=	0;
 	cSelectedDomeIdx		=	0;
+	cTelescopeCnt			=	0;
 	cSelectedTelescopeIdx	=	0;
-
 
 	SetupWindowControls();
 }
@@ -79,7 +81,7 @@ int		textBoxHt;
 int		iii;
 int		myRadioBtnWidth;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	//------------------------------------------
 	yLoc			=	cTabVertOffset;
@@ -292,6 +294,7 @@ int		boxId;
 				}
 			}
 		}
+
 		//-----------------------------------------------------
 		//*	check for TELESCOPE devices
 		//*	first, see if this device is already in our list.
@@ -337,6 +340,7 @@ int		boxId;
 			SetWidgetValid(boxId, false);
 		}
 	}
+
 	if (telescopeListChanged)
 	{
 		//*	update the widget check box strings

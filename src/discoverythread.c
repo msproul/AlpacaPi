@@ -1087,9 +1087,11 @@ char				*colonPtr;
 		}
 		fclose(filePointer);
 	}
+	else
+	{
+		CONSOLE_DEBUG_W_STR("File Not found\t=",	fileName);
+	}
 }
-
-
 
 //*****************************************************************************
 int	GetMySubnetNumber(void)

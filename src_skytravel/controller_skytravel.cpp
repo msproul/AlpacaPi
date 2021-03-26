@@ -227,8 +227,6 @@ void	ControllerSkytravel::SetupWindowControls(void)
 bool	ControllerSkytravel::LookForIPaddress(void)
 {
 int		iii;
-//-char	ipString[32];
-//-char	lineBuff[64];
 bool	foundSomething;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
@@ -245,6 +243,7 @@ bool	foundSomething;
 				foundSomething			=	true;
 			}
 		}
+
 		if (cTelescopeAddressValid == false)
 		{
 			if (strcasecmp("Telescope", gRemoteList[iii].deviceTypeStr) == 0)
@@ -255,6 +254,7 @@ bool	foundSomething;
 			}
 		}
 	}
+//	CONSOLE_DEBUG(__FUNCTION__);
 	return(foundSomething);
 }
 
@@ -294,6 +294,8 @@ char	lineBuff[64];
 void	ControllerSkytravel::SetTelescopeIPaddress(TYPE_REMOTE_DEV *remoteDomeDevice)
 {
 char	ipAddrStr[32];
+
+	CONSOLE_DEBUG(__FUNCTION__);
 
 	cTelescopeIpAddress			=	remoteDomeDevice->deviceAddress;
 	cTelescopeIpPort			=	remoteDomeDevice->port;
@@ -344,11 +346,9 @@ bool		foundSomething;
 		foundSomething	=	LookForIPaddress();
 	}
 
-
 	needToUpdate	=	false;
 	currentMillis	=	millis();
 	deltaSeconds	=	(currentMillis - cLastUpdate_milliSecs) / 1000;
-
 
 	if (cForceAlpacaUpdate)
 	{
@@ -378,6 +378,7 @@ bool		foundSomething;
 		needToUpdate	=	true;
 
 	}
+
 	if ((cDomeProp.ShutterStatus == kShutterStatus_Opening) ||
 				(cDomeProp.ShutterStatus == kShutterStatus_Closing))
 	{
@@ -386,6 +387,7 @@ bool		foundSomething;
 			needToUpdate	=	true;
 		}
 	}
+
 
 
 	if (needToUpdate)
@@ -418,6 +420,7 @@ bool		foundSomething;
 		cLastUpdate_milliSecs	=	millis();
 	}
 
+
 	if (cSkyTravelTabOjbPtr != NULL)
 	{
 		cSkyTravelTabOjbPtr->RunBackgroundTasks();
@@ -427,10 +430,12 @@ bool		foundSomething;
 	{
 		cMoonTabObjPtr->RunBackgroundTasks();
 	}
+
 	if (cFOVTabObjPtr != NULL)
 	{
 		cFOVTabObjPtr->RunBackgroundTasks();
 	}
+
 }
 
 //*****************************************************************************
