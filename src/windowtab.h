@@ -139,6 +139,7 @@ class WindowTab
 		virtual	void	UpdateSliderValue(		const int widgetIdx, double newSliderValue);
 
 				void	SetWidgetText(			const int widgetIdx, const char *newText);
+				void	SetWidgetTextPtr(		const int widgetIdx, char *textPtr);
 				void	GetWidgetText(			const int widgetIdx, char *getText);
 				void	SetWidgetTabStops(		const int widgetIdx, const short *tabStopList);
 				void	SetWidgetNumber(		const int widgetIdx, const int number);

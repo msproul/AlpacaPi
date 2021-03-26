@@ -220,7 +220,6 @@ ASI_ERROR_CODE		asiErrorCode;
 	asiErrorCode	=	ASIGetCameraProperty(&cAsiCameraInfo, cCameraID);
 	if (asiErrorCode == ASI_SUCCESS)
 	{
-		strcpy(cCommonProp.Name, cAsiCameraInfo.Name);
 		LogEvent(	"camera",
 					"ZWO Camera detected",
 					NULL,
@@ -242,79 +241,93 @@ ASI_ERROR_CODE		asiErrorCode;
 			ii++;
 		}
 		printf("\r\n");
+
+		//*	check if we have a valid RefId
+		if (strlen(gObseratorySettings.RefID) > 0)
+		{
+			//*	ASCOM only displays the name, having more than 1 of the same camera
+			//*	it became confusing as to which camera to select from the ASCOM list.
+			//*	this helps figure out when using a strictly ASCOM app on Windows
+			strcpy(cCommonProp.Name, gObseratorySettings.RefID);
+			strcat(cCommonProp.Name, "-");
+			strcat(cCommonProp.Name, cAsiCameraInfo.Name);
+			CONSOLE_DEBUG_W_STR("cCommonProp.Name", cCommonProp.Name);
+		}
+		else
+		{
+			strcpy(cCommonProp.Name, cAsiCameraInfo.Name);
+		}
+
+		cCameraID						=	cAsiCameraInfo.CameraID;
+		cCameraProp.CameraXsize			=	cAsiCameraInfo.MaxWidth;
+		cCameraProp.CameraYsize			=	cAsiCameraInfo.MaxHeight;
+		cIsColorCam						=	cAsiCameraInfo.IsColorCam;
+		cBayerPattern					=	cAsiCameraInfo.BayerPattern;
+		cCameraProp.PixelSizeX			=	cAsiCameraInfo.PixelSize;
+		cCameraProp.PixelSizeY			=	cAsiCameraInfo.PixelSize;
+		cCameraProp.HasShutter			=	cAsiCameraInfo.MechanicalShutter;
+		cSt4Port						=	cAsiCameraInfo.ST4Port;
+		cIsCoolerCam					=	cAsiCameraInfo.IsCoolerCam;
+		cIsUSB3Host						=	cAsiCameraInfo.IsUSB3Host;
+		cIsUSB3Camera					=	cAsiCameraInfo.IsUSB3Camera;
+		cCameraProp.ElectronsPerADU		=	cAsiCameraInfo.ElecPerADU;
+		cBitDepth						=	cAsiCameraInfo.BitDepth;
+		cIsTriggerCam					=	cAsiCameraInfo.IsTriggerCam;
+		cCameraProp.ExposureResolution	=	0.000001;
+
+		cCameraProp.NumX		=	cCameraProp.CameraXsize;
+		cCameraProp.NumY		=	cCameraProp.CameraYsize;
+
+		Get_ASI_SensorName(cCommonProp.Name, cSensorName);
+
+	//	CONSOLE_DEBUG_W_NUM("cCameraID\t\t=", cCameraID);
+
+		//*	figure out max bin values
+		ii	=	0;
+		while ((cAsiCameraInfo.SupportedBins[ii] > 0) && (ii<16))
+		{
+			if (cAsiCameraInfo.SupportedBins[ii] > cCameraProp.MaxbinX)
+			{
+				//*	Maximum binning for the camera X axis
+				cCameraProp.MaxbinX	=	cAsiCameraInfo.SupportedBins[ii];
+				//*	Maximum binning for the camera Y axis
+				cCameraProp.MaxbinY	=	cAsiCameraInfo.SupportedBins[ii];
+			}
+			ii++;
+		}
+
+		//*	get the supported image formats
+		ii	=	0;
+		while ((ii<8) && (cAsiCameraInfo.SupportedVideoFormat[ii] != ASI_IMG_END))
+		{
+			switch(cAsiCameraInfo.SupportedVideoFormat[ii])
+			{
+				case ASI_IMG_RAW8:
+					AddReadoutModeToList(kImageType_RAW8);
+					break;
+
+				case ASI_IMG_RGB24:
+					AddReadoutModeToList(kImageType_RGB24);
+					break;
+
+				case ASI_IMG_RAW16:
+					AddReadoutModeToList(kImageType_RAW16);
+					break;
+
+				case ASI_IMG_Y8:
+					AddReadoutModeToList(kImageType_Y8);
+					break;
+
+				default:
+					CONSOLE_DEBUG_W_NUM("Unknown image type", cAsiCameraInfo.SupportedVideoFormat[ii]);
+					break;
+			}
+			ii++;
+		}
 	}
 	else
 	{
 		printf("ASIGetCameraProperty failed with return code %d\r\n", asiErrorCode);
-	}
-
-	strcpy(cCommonProp.Name,		cAsiCameraInfo.Name);
-
-	cCameraID						=	cAsiCameraInfo.CameraID;
-	cCameraProp.CameraXsize			=	cAsiCameraInfo.MaxWidth;
-	cCameraProp.CameraYsize			=	cAsiCameraInfo.MaxHeight;
-	cIsColorCam						=	cAsiCameraInfo.IsColorCam;
-	cBayerPattern					=	cAsiCameraInfo.BayerPattern;
-	cCameraProp.PixelSizeX			=	cAsiCameraInfo.PixelSize;
-	cCameraProp.PixelSizeY			=	cAsiCameraInfo.PixelSize;
-	cCameraProp.HasShutter			=	cAsiCameraInfo.MechanicalShutter;
-	cSt4Port						=	cAsiCameraInfo.ST4Port;
-	cIsCoolerCam					=	cAsiCameraInfo.IsCoolerCam;
-	cIsUSB3Host						=	cAsiCameraInfo.IsUSB3Host;
-	cIsUSB3Camera					=	cAsiCameraInfo.IsUSB3Camera;
-	cCameraProp.ElectronsPerADU		=	cAsiCameraInfo.ElecPerADU;
-	cBitDepth						=	cAsiCameraInfo.BitDepth;
-	cIsTriggerCam					=	cAsiCameraInfo.IsTriggerCam;
-	cCameraProp.ExposureResolution	=	0.000001;
-
-	cCameraProp.NumX		=	cCameraProp.CameraXsize;
-	cCameraProp.NumY		=	cCameraProp.CameraYsize;
-
-	Get_ASI_SensorName(cCommonProp.Name, cSensorName);
-
-//	CONSOLE_DEBUG_W_NUM("cCameraID\t\t=", cCameraID);
-
-	//*	figure out max bin values
-	ii	=	0;
-	while ((cAsiCameraInfo.SupportedBins[ii] > 0) && (ii<16))
-	{
-		if (cAsiCameraInfo.SupportedBins[ii] > cCameraProp.MaxbinX)
-		{
-			//*	Maximum binning for the camera X axis
-			cCameraProp.MaxbinX	=	cAsiCameraInfo.SupportedBins[ii];
-			//*	Maximum binning for the camera Y axis
-			cCameraProp.MaxbinY	=	cAsiCameraInfo.SupportedBins[ii];
-		}
-		ii++;
-	}
-
-	//*	get the supported image formats
-	ii	=	0;
-	while ((ii<8) && (cAsiCameraInfo.SupportedVideoFormat[ii] != ASI_IMG_END))
-	{
-		switch(cAsiCameraInfo.SupportedVideoFormat[ii])
-		{
-			case ASI_IMG_RAW8:
-				AddReadoutModeToList(kImageType_RAW8);
-				break;
-
-			case ASI_IMG_RGB24:
-				AddReadoutModeToList(kImageType_RGB24);
-				break;
-
-			case ASI_IMG_RAW16:
-				AddReadoutModeToList(kImageType_RAW16);
-				break;
-
-			case ASI_IMG_Y8:
-				AddReadoutModeToList(kImageType_Y8);
-				break;
-
-			default:
-				CONSOLE_DEBUG_W_NUM("Unknown image type", cAsiCameraInfo.SupportedVideoFormat[ii]);
-				break;
-		}
-		ii++;
 	}
 
 	asiErrorCode	=	ASIOpenCamera(cCameraID);

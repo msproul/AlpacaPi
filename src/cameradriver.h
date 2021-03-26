@@ -255,6 +255,11 @@ enum
 										//*	Sets the current subframe width
 	kCmd_Camera_numY,					//*	Returns the current subframe height
 										//*	Sets the current subframe height
+	kCmd_Camera_offset,					//*	Returns the camera's offset
+										//*	Sets the camera's offset.
+	kCmd_Camera_offsetmax,				//*	Returns the maximum value of offset.
+	kCmd_Camera_offsetmin,				//*	Returns the Minimum value of offset.
+	kCmd_Camera_offsets,				//*	Returns List of offset names supported by the camera
 	kCmd_Camera_percentcompleted,		//*	Indicates percentage completeness of the current operation
 	kCmd_Camera_pixelsizeX,				//*	Width of CCD chip pixels (microns)
 	kCmd_Camera_pixelsizeY,				//*	Height of CCD chip pixels (microns)
@@ -384,6 +389,8 @@ class CameraDriver: public AlpacaDriver
 		TYPE_ASCOM_STATUS	Put_NumX(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 		TYPE_ASCOM_STATUS	Put_NumY(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 
+		TYPE_ASCOM_STATUS	Get_Offset(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+		TYPE_ASCOM_STATUS	Put_Offset(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 
 		TYPE_ASCOM_STATUS	Get_PercentCompleted(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
 

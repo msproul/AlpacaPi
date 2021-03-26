@@ -23,7 +23,7 @@
 //*	Jan 17,	2021	<MLS> Added CPU info to about box
 //*****************************************************************************
 
-
+#include	<fitsio.h>
 
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
@@ -97,6 +97,7 @@ int		availSpace;
 int		textBoxHt;
 int		iii;
 char	multiLineTextBuff[512];
+char	lineBuffer[64];
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -164,9 +165,25 @@ char	multiLineTextBuff[512];
 
 #endif
 
+#ifdef _ENABLE_FITS_
+	//*	cfitsio version
+float	cfitsioVersion;
+
+//	sprintf(lineBuffer,	"FITS (cfitsio) V%d.%d\r", CFITSIO_MAJOR, CFITSIO_MINOR);
+//	strcat(multiLineTextBuff,	lineBuffer);
+
+	ffvers(&cfitsioVersion);
+	sprintf(lineBuffer,	"FITS (cfitsio) V%3.2f\r", cfitsioVersion);
+	strcat(multiLineTextBuff,	lineBuffer);
+
+#endif // _ENABLE_FITS_
+
+//#ifdef _USE_OPENCV_
+	sprintf(lineBuffer,	"OpenCV %s\r", CV_VERSION);
+	strcat(multiLineTextBuff,	lineBuffer);
+//#endif
+
 	SetWidgetText(kAboutBox_CPUinfo, multiLineTextBuff);
-
-
 }
 
 

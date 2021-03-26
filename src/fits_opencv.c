@@ -49,7 +49,7 @@ long			firstPixel;
 int				errorCnt;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
-	CONSOLE_DEBUG_W_STR("File:", fitsFileName);
+//	CONSOLE_DEBUG_W_STR("File:", fitsFileName);
 
 
 	openCvImgPtr	=	NULL;

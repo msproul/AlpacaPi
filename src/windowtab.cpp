@@ -49,6 +49,7 @@
 //*	Feb 13,	2021	<MLS> Added UpdateSliderValue()
 //*	Feb 13,	2021	<MLS> Dragging the slider now works
 //*	Feb 16,	2021	<MLS> Added SetHelpTextBoxColor()
+//*	Mar 25,	2021	<MLS> Added SetWidgetTextPtr()
 //*****************************************************************************
 
 
@@ -249,7 +250,6 @@ void	WindowTab::SetWidgetJustification(	const int widgetIdx, int justification)
 //**************************************************************************************
 void	WindowTab::SetWidgetText(const int widgetIdx, const char *newText)
 {
-
 	if ((widgetIdx >= 0) && (widgetIdx < kMaxWidgets))
 	{
 		if (strlen(newText) < kMaxWidgetStrLen)
@@ -268,6 +268,22 @@ void	WindowTab::SetWidgetText(const int widgetIdx, const char *newText)
 		CONSOLE_DEBUG_W_NUM("widgetIdx out of range\t=", widgetIdx);
 	}
 }
+
+//**************************************************************************************
+void	WindowTab::SetWidgetTextPtr(const int widgetIdx, char *textPtr)
+{
+	if ((widgetIdx >= 0) && (widgetIdx < kMaxWidgets))
+	{
+		//*	it is OK if the argument is NULL
+		cWidgetList[widgetIdx].textPtr		=	textPtr;
+		cWidgetList[widgetIdx].needsUpdated	=	true;
+	}
+	else
+	{
+		CONSOLE_DEBUG_W_NUM("widgetIdx out of range\t=", widgetIdx);
+	}
+}
+
 
 //**************************************************************************************
 void	WindowTab::GetWidgetText(const int widgetIdx, char *getText)

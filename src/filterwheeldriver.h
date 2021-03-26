@@ -24,23 +24,15 @@
 void	CreateFilterWheelObjects(void);
 
 
-#define	kMaxFilterPerWheels	10
-#define	kMaxDescLen			32
-//*****************************************************************************
-typedef struct
-{
-	char	filterDesciption[kMaxDescLen];
-	int		focusOffset;
-} TYPE_FilterDescription;
 
 //**************************************************************************************
-enum
+typedef enum
 {
 	kFilterWheelState_OK	=	0,
 	kFilterWheelState_Moving,
 
 	kFilterWheelState_last
-};
+} TYPE_FW_State;
 
 //**************************************************************************************
 class FilterwheelDriver: public AlpacaDriver
@@ -71,20 +63,21 @@ class FilterwheelDriver: public AlpacaDriver
 		virtual	TYPE_ASCOM_STATUS	Set_CurrentFilterPositon(const int newPosition);
 		virtual	bool				IsFilterwheelConnected(void);
 
-				bool			cFilterWheelConnected;
-				int				cFilterWheelDevNum;
-				int				cNumberOfPositions;
-				int				cFilterWheelCurrPos;
-				char			cFilterWheelCurrName[48];
+				bool				cFilterWheelConnected;
+				int					cFilterWheelDevNum;
+				int					cNumberOfPositions;
+				char				cFilterWheelCurrName[48];
 
-		TYPE_FilterDescription	cFilterDef[kMaxFilterPerWheels];
+				TYPE_FW_State				cFilterWheelState;
+				TYPE_FilterWheelProperties	cFilterWheelProp;
+
 
 				//*	this are primarily used for debugging
-				bool			cFilterWheelIsOpen;
-				int				cSuccesfullOpens;
-				int				cSuccesfullCloses;
-				int				cOpenFailures;
-				int				cCloseFailures;
+				bool				cFilterWheelIsOpen;
+				int					cSuccesfullOpens;
+				int					cSuccesfullCloses;
+				int					cOpenFailures;
+				int					cCloseFailures;
 
 };
 

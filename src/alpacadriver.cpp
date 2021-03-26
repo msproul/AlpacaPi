@@ -2376,7 +2376,7 @@ int		returnCode	=	-1;
 //		CONSOLE_DEBUG("ProcessGetPutRequest");
 		returnCode	=	ProcessGetPutRequest(socket, htmlData);
 	}
-	else
+	else if (byteCount > 0)
 	{
 		CONSOLE_DEBUG_W_STR("Invalid HTML get/put command\t=",	htmlData);
 		CONSOLE_DEBUG_W_LONG("byteCount\t=",	byteCount);

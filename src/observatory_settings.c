@@ -506,6 +506,14 @@ char			fileName[]	=	"observatorysettings.txt";
 
 		}
 		fclose(filePointer);
+
+		//*	set the current RefID
+		if (strlen(gObseratorySettings.TS_info[0].refID) > 0)
+		{
+			strcpy(gObseratorySettings.RefID, gObseratorySettings.TS_info[0].refID);
+			CONSOLE_DEBUG_W_STR("default RefID", gObseratorySettings.RefID);
+		}
+	//	CONSOLE_ABORT(__FUNCTION__);
 	}
 #ifndef __arm__
 	CONSOLE_DEBUG(__FUNCTION__);

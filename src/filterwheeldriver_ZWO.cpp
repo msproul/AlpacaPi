@@ -35,6 +35,7 @@
 //*	Apr 19,	2020	<MLS> ZWO Filterwheel keeps hanging in Read_CurrentFilterPositon
 //*	Apr 19,	2020	<MLS> Fixed close bug in ReadZWOfilterWheelInfo()
 //*	May  4,	2020	<MLS> Add EFW version number to log event
+//*	Mar 23,	2021	<MLS> Changed the way filter position is read, only read when changed
 //*****************************************************************************
 
 #ifdef _ENABLE_FILTERWHEEL_
@@ -116,6 +117,8 @@ bool	rulesFileOK;
 	CONSOLE_DEBUG(__FUNCTION__);
 	cFilterWheelDevNum	=	argDevNum;
 	cNumberOfPositions	=	0;
+	cForceReadPosition	=	true;
+	cActualPosReadCout	=	0;
 
 	strcpy(cCommonProp.Description, "ZWO EFW filterwheel");
 	strcpy(cDeviceVersion,	EFWGetSDKVersion());
@@ -152,11 +155,29 @@ EFW_ERROR_CODE	efwErrorCode;
 }
 
 //**************************************************************************************
+//*	this opens the connection
+bool	FilterwheelZWO::AlpacaConnect(void)
+{
+
+
+}
+
+
+//**************************************************************************************
 void	FilterwheelZWO::ReadZWOfilterWheelInfo(void)
 {
 EFW_ERROR_CODE	efwErrorCode;
 char			lineBuff[64];
 bool			rulesFileOK;
+
+	efwErrorCode	=	EFWGetID(cFilterWheelDevNum, &cFilterwheelInfo.ID);
+	CONSOLE_DEBUG_W_NUM("cFilterWheelDevNum\t=",	cFilterWheelDevNum);
+	CONSOLE_DEBUG_W_NUM("cFilterwheelInfo.ID\t=",	cFilterwheelInfo.ID);
+
+	if (cFilterwheelInfo.ID != cFilterWheelDevNum)
+	{
+		CONSOLE_ABORT(__FUNCTION__);
+	}
 
 
 	CONSOLE_DEBUG(__FUNCTION__);
@@ -246,38 +267,64 @@ TYPE_ASCOM_STATUS	FilterwheelZWO::Read_CurrentFilterPositon(int *rtnCurrentPosit
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 EFW_ERROR_CODE		efwErrorCode;
 int					myCurPosition;
+char				efwErrString[64];
 
 	CONSOLE_DEBUG(__FUNCTION__);
+
+	//*	is the filter wheel open
+
 	if (cFilterWheelIsOpen)
 	{
 		CONSOLE_DEBUG("Filter wheel is ALREADY OPEN!!!!!!!!!!!!!!!!!!!!");
 	}
-	myCurPosition	=	-99;
-	efwErrorCode	=	EFWOpen(cFilterWheelDevNum);
-	if (efwErrorCode == EFW_SUCCESS)
+	else if (cForceReadPosition || (cFilterWheelState == kFilterWheelState_Moving))
 	{
-		cSuccesfullOpens++;
-		efwErrorCode	=	EFWGetPosition(cFilterWheelDevNum, &myCurPosition);
+		efwErrorCode	=	EFWOpen(cFilterWheelDevNum);
 		if (efwErrorCode == EFW_SUCCESS)
 		{
 			cFilterWheelIsOpen	=	true;
+			cSuccesfullOpens++;
+		}
+		else
+		{
+			CONSOLE_DEBUG_W_NUM("EFWOpen() failed:efwErrorCode\t=", efwErrorCode);
+
+			cOpenFailures++;
+			alpacaErrCode	=	kASCOM_Err_NotConnected;
+		}
+		cForceReadPosition	=	false;
+	}
+	if (cFilterWheelIsOpen)
+	{
+		myCurPosition	=	-99;
+		efwErrorCode	=	EFWGetPosition(cFilterWheelDevNum, &myCurPosition);
+		if (efwErrorCode == EFW_SUCCESS)
+		{
+			CONSOLE_DEBUG_W_NUM("EFWGetPosition() position\t=", myCurPosition);
+
+			cActualPosReadCout++;
 			if (myCurPosition < 0)
 			{
 				CONSOLE_DEBUG("Filter wheel is moving");
-	//			strcpy(errorMsg, "Filter wheel is moving");
-				alpacaErrCode	=	kASCOM_Err_Success;
-				myCurPosition	=	-1;
+
+				cFilterWheelState	=	kFilterWheelState_Moving;
+				alpacaErrCode		=	kASCOM_Err_Success;
+				myCurPosition		=	-1;
 			}
 			else
 			{
+				cFilterWheelState	=	kFilterWheelState_OK;
 				//*	the EFW filter wheel numbering starts at ZERO,
-				cFilterWheelCurrPos	=	myCurPosition;
-				strcpy(cFilterWheelCurrName, cFilterDef[cFilterWheelCurrPos].filterDesciption);
+
+				cFilterWheelProp.Position	=	myCurPosition;
+				strcpy(cFilterWheelCurrName, cFilterWheelProp.Names[cFilterWheelProp.Position].FilterName);
 			}
 		}
 		else
 		{
 			CONSOLE_DEBUG_W_NUM("EFWGetPosition() Failed:efwErrorCode\t=", efwErrorCode);
+			GetEFW_ErrorMsgString(efwErrorCode, efwErrString);
+			CONSOLE_DEBUG_W_STR("efwErrString\t=", efwErrString);
 			alpacaErrCode	=	kASCOM_Err_NotConnected;
 		}
 		efwErrorCode	=	EFWClose(cFilterWheelDevNum);
@@ -292,18 +339,14 @@ int					myCurPosition;
 		}
 		cFilterWheelIsOpen	=	false;
 	}
-	else
-	{
-		CONSOLE_DEBUG_W_NUM("EFWOpen() failed:efwErrorCode\t=", efwErrorCode);
 
-		cOpenFailures++;
-		alpacaErrCode	=	kASCOM_Err_NotConnected;
-	}
+	//*	if the caller wants the value returned
 	if (rtnCurrentPosition != NULL)
 	{
-		*rtnCurrentPosition	=	myCurPosition;
+		*rtnCurrentPosition	=	cFilterWheelProp.Position;
 	}
 
+	CONSOLE_DEBUG_W_NUM("cActualPosReadCout\t=", cActualPosReadCout);
 	return(alpacaErrCode);
 }
 
@@ -314,6 +357,7 @@ TYPE_ASCOM_STATUS	FilterwheelZWO::Set_CurrentFilterPositon(const int newPosition
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 EFW_ERROR_CODE		efwErrorCode;
+char				efwErrString[64];
 
 	CONSOLE_DEBUG(__FUNCTION__);
 	//*	make sure the filter position is valid
@@ -325,17 +369,22 @@ EFW_ERROR_CODE		efwErrorCode;
 		efwErrorCode	=	EFWOpen(cFilterWheelDevNum);
 		if (efwErrorCode == EFW_SUCCESS)
 		{
+			cForceReadPosition	=	true;
+
 			cSuccesfullOpens++;
 			efwErrorCode	=	EFWSetPosition(cFilterWheelDevNum, newPosition);
 			if (efwErrorCode == EFW_SUCCESS)
 			{
 				//*	this is the version that is +1 from what ZWO deals with
-				cFilterWheelCurrPos	=	newPosition;
-				strcpy(cFilterWheelCurrName, cFilterDef[newPosition].filterDesciption);
+				cFilterWheelProp.Position	=	newPosition;
+			//	strcpy(cFilterWheelCurrName, cFilterDef[newPosition].filterDesciption);
+				strcpy(cFilterWheelCurrName, cFilterWheelProp.Names[newPosition].FilterName);
 			}
 			else
 			{
 				CONSOLE_DEBUG_W_NUM("EFWSetPosition->efwErrorCode\t=", efwErrorCode);
+				GetEFW_ErrorMsgString(efwErrorCode, efwErrString);
+				CONSOLE_DEBUG_W_STR("efwErrString\t=", efwErrString);
 			}
 
 			efwErrorCode	=	EFWClose(cFilterWheelDevNum);

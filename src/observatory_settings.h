@@ -49,6 +49,7 @@ typedef struct
 typedef struct
 {
 	bool				ValidInfo;
+	char				RefID[kMaxRefIDLen];
 	char				Name[64];
 	char				Location[48];
 	char				Website[64];

@@ -4,6 +4,9 @@
 //**************************************************************************
 //#include	"filterwheeldriver_ZWO.h"
 
+
+
+
 #ifndef EFW_FILTER_H
 	#include	"include/EFW_filter.h"
 #endif
@@ -22,6 +25,7 @@ class FilterwheelZWO: public FilterwheelDriver
 		//
 						FilterwheelZWO(const int argDevNum);
 		virtual			~FilterwheelZWO(void);
+		virtual	bool	AlpacaConnect(void);
 
 	protected:
 		void						ReadZWOfilterWheelInfo(void);
@@ -30,7 +34,9 @@ class FilterwheelZWO: public FilterwheelDriver
 		virtual	TYPE_ASCOM_STATUS	Read_CurrentFilterPositon(int *rtnCurrentPosition = NULL);
 		virtual	TYPE_ASCOM_STATUS	Set_CurrentFilterPositon(const int newPosition);
 
-		EFW_INFO		cFilterwheelInfo;
+		bool						cForceReadPosition;
+		int							cActualPosReadCout;
+		EFW_INFO					cFilterwheelInfo;
 
 
 };

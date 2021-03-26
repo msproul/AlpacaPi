@@ -4007,7 +4007,6 @@ int		pixelsTall;
 	fovWasDrawn	=	false;
 	if (fovPtr->IsValid && fovPtr->FOVenabled)
 	{
-		fovWasDrawn	=	true;
 		//*	get FOV width and height in radians
 		fovWidth_RAD		=	RADIANS(fovPtr->FOV_X_arcSeconds / 3600.0);
 		fovHeight_RAD		=	RADIANS(fovPtr->FOV_Y_arcSeconds / 3600.0);
@@ -4016,67 +4015,78 @@ int		pixelsTall;
 		pixelsWide	=	fovWidth_RAD * cXfactor;
 		pixelsTall	=	fovHeight_RAD * cYfactor;
 
-		topLeft_XX	=	telescopeXX - (pixelsWide / 2);
-		topLeft_YY	=	telescopeYY + (pixelsTall / 2);
-
-		topRight_XX	=	telescopeXX + (pixelsWide / 2);
-		topRight_YY	=	telescopeYY + (pixelsTall / 2);
-
-		btmLeft_XX	=	telescopeXX - (pixelsWide / 2);
-		btmLeft_YY	=	telescopeYY - (pixelsTall / 2);
-
-		btmRight_XX	=	telescopeXX + (pixelsWide / 2);
-		btmRight_YY	=	telescopeYY - (pixelsTall / 2);
-
-		//*	check to see if this camera has an offset
-		if (fovPtr->RighttAscen_Offset != 0)
+		//*	check the width of the box
+		//*	dont bother drawing it if its less than 10
+		if (pixelsWide >= 10)
 		{
-			topLeft_XX	+=	RADIANS(fovPtr->RighttAscen_Offset) * cXfactor;
-			topRight_XX	+=	RADIANS(fovPtr->RighttAscen_Offset) * cXfactor;
-			btmLeft_XX	+=	RADIANS(fovPtr->RighttAscen_Offset) * cXfactor;
-			btmRight_XX	+=	RADIANS(fovPtr->RighttAscen_Offset) * cXfactor;
-		}
-		if (fovPtr->Declination_Offset != 0)
-		{
-			topLeft_YY	+=	RADIANS(fovPtr->Declination_Offset) * cXfactor;
-			topRight_YY	+=	RADIANS(fovPtr->Declination_Offset) * cXfactor;
-			btmLeft_YY	+=	RADIANS(fovPtr->Declination_Offset) * cXfactor;
-			btmRight_YY	+=	RADIANS(fovPtr->Declination_Offset) * cXfactor;
-		}
-		//-------------------------------------------------------------------------------------
-		//*	top line
-		//*	draw straight line
-		CMoveTo(topLeft_XX,		topLeft_YY);
-		CLineTo(topRight_XX,	topRight_YY);
+			fovWasDrawn	=	true;
 
-		//*	bottom line
-		CMoveTo(btmLeft_XX,		btmLeft_YY);
-		CLineTo(btmRight_XX,	btmRight_YY);
+			topLeft_XX	=	telescopeXX - (pixelsWide / 2);
+			topLeft_YY	=	telescopeYY + (pixelsTall / 2);
 
-		//*	left line
-		CMoveTo(topLeft_XX,		topLeft_YY);
-		CLineTo(btmLeft_XX,		btmLeft_YY);
+			topRight_XX	=	telescopeXX + (pixelsWide / 2);
+			topRight_YY	=	telescopeYY + (pixelsTall / 2);
 
-		//*	right line
-		CMoveTo(topRight_XX,	topRight_YY);
-		CLineTo(btmRight_XX,	btmRight_YY);
+			btmLeft_XX	=	telescopeXX - (pixelsWide / 2);
+			btmLeft_YY	=	telescopeYY - (pixelsTall / 2);
 
-		//*	now do the label
-		if ((btmLeft_XX > 0) && (btmLeft_YY > 0))
-		{
-			DrawCString(btmLeft_XX, btmLeft_YY, fovPtr->CameraName);
-		}
-		else if ((topLeft_XX > 0) && (topLeft_YY > 0))
-		{
-			DrawCString(topLeft_XX, topLeft_YY, fovPtr->CameraName);
-		}
-		else if ((topRight_XX > 0) && (topRight_YY > 0))
-		{
-			DrawCString(topRight_XX, topRight_YY, fovPtr->CameraName);
-		}
-		else if ((btmRight_XX > 0) && (btmRight_YY > 0))
-		{
-			DrawCString(btmRight_XX, btmRight_YY, fovPtr->CameraName);
+			btmRight_XX	=	telescopeXX + (pixelsWide / 2);
+			btmRight_YY	=	telescopeYY - (pixelsTall / 2);
+
+			//*	check to see if this camera has an offset
+			if (fovPtr->RighttAscen_Offset != 0)
+			{
+				topLeft_XX	+=	RADIANS(fovPtr->RighttAscen_Offset) * cXfactor;
+				topRight_XX	+=	RADIANS(fovPtr->RighttAscen_Offset) * cXfactor;
+				btmLeft_XX	+=	RADIANS(fovPtr->RighttAscen_Offset) * cXfactor;
+				btmRight_XX	+=	RADIANS(fovPtr->RighttAscen_Offset) * cXfactor;
+			}
+			if (fovPtr->Declination_Offset != 0)
+			{
+				topLeft_YY	+=	RADIANS(fovPtr->Declination_Offset) * cXfactor;
+				topRight_YY	+=	RADIANS(fovPtr->Declination_Offset) * cXfactor;
+				btmLeft_YY	+=	RADIANS(fovPtr->Declination_Offset) * cXfactor;
+				btmRight_YY	+=	RADIANS(fovPtr->Declination_Offset) * cXfactor;
+			}
+			//-------------------------------------------------------------------------------------
+			//*	top line
+			//*	draw straight line
+			CMoveTo(topLeft_XX,		topLeft_YY);
+			CLineTo(topRight_XX,	topRight_YY);
+
+			//*	bottom line
+			CMoveTo(btmLeft_XX,		btmLeft_YY);
+			CLineTo(btmRight_XX,	btmRight_YY);
+
+			//*	left line
+			CMoveTo(topLeft_XX,		topLeft_YY);
+			CLineTo(btmLeft_XX,		btmLeft_YY);
+
+			//*	right line
+			CMoveTo(topRight_XX,	topRight_YY);
+			CLineTo(btmRight_XX,	btmRight_YY);
+
+			//*	check the width of the box, only draw the label if its is big enough
+			if (pixelsWide > 50)
+			{
+				//*	now do the label
+				if ((btmLeft_XX > 0) && (btmLeft_YY > 0))
+				{
+					DrawCString(btmLeft_XX, btmLeft_YY, fovPtr->CameraName);
+				}
+				else if ((topLeft_XX > 0) && (topLeft_YY > 0))
+				{
+					DrawCString(topLeft_XX, topLeft_YY, fovPtr->CameraName);
+				}
+				else if ((topRight_XX > 0) && (topRight_YY > 0))
+				{
+					DrawCString(topRight_XX, topRight_YY, fovPtr->CameraName);
+				}
+				else if ((btmRight_XX > 0) && (btmRight_YY > 0))
+				{
+					DrawCString(btmRight_XX, btmRight_YY, fovPtr->CameraName);
+				}
+			}
 		}
 	}
 	return(fovWasDrawn);

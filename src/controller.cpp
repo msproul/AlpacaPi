@@ -1214,6 +1214,7 @@ int			textOffsetX;
 bool		drawTextFlg;
 char		theChar;
 char		previousChar;
+char		*myStringPtr;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -1236,11 +1237,21 @@ char		previousChar;
 					8,							//	int line_type CV_DEFAULT(8),
 					0);							//	int shift CV_DEFAULT(0));
 
-	if (strlen(theWidget->textString) > 0)
+	if (theWidget->textPtr != NULL)
+	{
+//		CONSOLE_DEBUG("Using textPtr");
+		myStringPtr	=	theWidget->textPtr;
+	}
+	else
+	{
+		myStringPtr	=	theWidget->textString;
+	}
+
+	if (strlen(myStringPtr) > 0)
 	{
 		previousChar	=	0;
 		curFontNum		=	theWidget->fontNum,
-		cvGetTextSize(	theWidget->textString,
+		cvGetTextSize(	"test",
 						&gTextFont[curFontNum],
 						&textSize,
 						&baseLine);
@@ -1249,12 +1260,12 @@ char		previousChar;
 		textLoc.y	=	theWidget->top + textSize.height + baseLine;
 
 		ccc			=	0;
-		sLen		=	strlen(theWidget->textString);
+		sLen		=	strlen(myStringPtr);
 		drawTextFlg	=	false;
 		curFontNum	=	theWidget->fontNum;
 		for (iii=0; iii<=sLen; iii++)
 		{
-			theChar	=	theWidget->textString[iii];
+			theChar	=	myStringPtr[iii];
 			if (theChar > 0x20)
 			{
 				if (ccc < kMaxTextLineLen)
@@ -1267,7 +1278,7 @@ char		previousChar;
 			{
 				if (ccc < kMaxTextLineLen)
 				{
-					lineBuff[ccc++]	=	theWidget->textString[iii];
+					lineBuff[ccc++]	=	myStringPtr[iii];
 					lineBuff[ccc]	=	0;
 				}
 
@@ -1329,6 +1340,7 @@ char		previousChar;
 		}
 	}
 }
+
 
 //**************************************************************************************
 void	Controller::DrawWidgetRadioButton(TYPE_WIDGET *theWidget)
@@ -2003,7 +2015,6 @@ CvRect		widgetRect;
 		case kWidgetType_Image:
 			if (widgetPtr->openCVimagePtr != NULL)
 			{
-//			CvRect		roiRect;
 			int			delta;
 			IplImage	*myImage;
 
@@ -2013,6 +2024,12 @@ CvRect		widgetRect;
 				widgetRect.y		=	widgetPtr->top;
 				widgetRect.width	=	widgetPtr->width;
 				widgetRect.height	=	widgetPtr->height;
+
+				//*	check to see if the image is BIGGER than the widget rect
+				if (myImage->width > widgetRect.width)
+				{
+					CONSOLE_DEBUG_W_NUM("Image is too big", myImage->width);
+				}
 
 				widgetPtr->roiRect	=	widgetRect;
 				//*	we have to make sure the the destination rect is the same as the src rect

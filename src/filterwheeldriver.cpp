@@ -38,6 +38,7 @@
 //*	Apr  1,	2020	<MLS> Updated Get_Names() to deal with table starting at 0
 //*	Apr  1,	2020	<MLS> CONFORM-filterwheel -> PASSED!!!!!!!!!!!!!!!!!!!!!
 //*	May 22,	2020	<MLS> Fixed JSON formating error in filter wheel names output
+//*	Mar 21,	2021	<MLS> Working on FilterWheel driver to prevent ZWO EFW from hanging
 //*****************************************************************************
 
 #ifdef _ENABLE_FILTERWHEEL_
@@ -52,6 +53,7 @@
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
 
+#include	"alpaca_defs.h"
 #include	"alpacadriver.h"
 #include	"alpacadriver_helper.h"
 #include	"JsonResponse.h"
@@ -85,7 +87,6 @@ void	CreateFilterWheelObjects(void)
 FilterwheelDriver::FilterwheelDriver(const int argDevNum)
 	:AlpacaDriver(kDeviceType_Filterwheel)
 {
-int	ii;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -93,23 +94,21 @@ int	ii;
 	strcpy(cFilterWheelCurrName, "none");
 	strcpy(cCommonProp.Description,	"Generic filterwheel");
 
+	//*	initialize all of the filter wheel properties to 0
+	memset(&cFilterWheelProp, 0, sizeof(TYPE_FilterWheelProperties));
+
+	cFilterWheelState			=	kFilterWheelState_OK;
+
 	cFilterWheelConnected		=	false;
 	cNumberOfPositions			=	0;
-	cFilterWheelCurrPos			=	0;
+	cFilterWheelProp.Position	=	0;
 	cSuccesfullOpens			=	0;
 	cSuccesfullCloses			=	0;
 	cOpenFailures				=	0;
 	cCloseFailures				=	0;
 	cFilterWheelIsOpen			=	false;
 
-	//*	initialize the filter wheel table to empty values
-	for (ii=0; ii<kMaxFilterPerWheels; ii++)
-	{
-		memset(&cFilterDef[ii], 0, sizeof(TYPE_FilterDescription));
-	}
-
 	ReadFilterNamesTextFile();
-
 }
 
 //**************************************************************************************
@@ -146,7 +145,7 @@ int				slen;
 		//*	zero based indexing
 		filterIndex	=	0;
 
-		while ((fgets(lineBuff, 200, filePointer)) && (filterIndex < kMaxFilterPerWheels))
+		while ((fgets(lineBuff, 200, filePointer)) && (filterIndex < kMaxFiltersPerWheel))
 		{
 			if (lineBuff[0] != '#')
 			{
@@ -161,9 +160,13 @@ int				slen;
 					}
 				}
 				slen	=	slen;
-				if ((slen > 1) && (slen < kMaxDescLen))
+				if ((slen > 1) && (slen < kMaxFWnameLen))
 				{
-					strcpy(cFilterDef[filterIndex].filterDesciption, lineBuff);
+				//	strcpy(cFilterDef[filterIndex].filterDesciption, lineBuff);
+					strcpy(cFilterWheelProp.Names[filterIndex].FilterName, lineBuff);
+
+
+
 				}
 				filterIndex++;
 			}
@@ -332,7 +335,9 @@ char				lineBuffer[256];
 										"\r\n");
 			for (ii=0; ii<cNumberOfPositions; ii++)
 			{
-				sprintf(lineBuffer, "\t\t\t%d", cFilterDef[ii].focusOffset);
+			//	sprintf(lineBuffer, "\t\t\t%d", cFilterDef[ii].focusOffset);
+				sprintf(lineBuffer, "\t\t\t%d", cFilterWheelProp.FocusOffsets[ii]);
+
 				if (ii < (cNumberOfPositions - 1))
 				{
 					strcat(lineBuffer, ",");
@@ -394,7 +399,9 @@ char				lineBuffer[256];
 			for (ii=0; ii<cNumberOfPositions; ii++)
 			{
 				strcpy(lineBuffer, "\t\t\t\"");
-				strcat(lineBuffer, cFilterDef[ii].filterDesciption);
+			//	strcat(lineBuffer, cFilterDef[ii].filterDesciption);
+				strcat(lineBuffer, cFilterWheelProp.Names[ii].FilterName);
+
 				strcat(lineBuffer, "\"");
 				if (ii < (cNumberOfPositions - 1))
 				{
@@ -447,7 +454,7 @@ int					myFilterPosition;
 	else
 	{
 		alpacaErrCode		=	Read_CurrentFilterPositon();
-		myFilterPosition	=	cFilterWheelCurrPos;
+		myFilterPosition	=	cFilterWheelProp.Position;
 	}
 
 	//*	the positions are number 0 -> [4,7], same as the devices
@@ -465,7 +472,8 @@ int					myFilterPosition;
 								reqData->jsonTextBuffer,
 								kMaxJsonBuffLen,
 								"FilterName",
-								cFilterDef[myFilterPosition].filterDesciption,
+							//	cFilterDef[myFilterPosition].filterDesciption,
+								cFilterWheelProp.Names[myFilterPosition].FilterName,
 								INCLUDE_COMMA);
 	}
 
@@ -513,7 +521,7 @@ char				commentString[128];
 			alpacaErrCode	=	Set_CurrentFilterPositon(newPosition);
 			if (alpacaErrCode == 0)
 			{
-				cFilterWheelCurrPos	=	newPosition;
+				cFilterWheelProp.Position	=	newPosition;
 			}
 			else
 			{
@@ -523,7 +531,9 @@ char				commentString[128];
 			//*	NOTE: the cFilterDef slot 0 is not used.
 			sprintf(commentString, "#%d-%s",
 									newPosition,
-									cFilterDef[newPosition].filterDesciption);
+								//	cFilterDef[newPosition].filterDesciption
+									cFilterWheelProp.Names[newPosition].FilterName
+									);
 
 			JsonResponse_Add_String(reqData->socket,
 									reqData->jsonTextBuffer,
@@ -557,7 +567,7 @@ char				commentString[128];
 void	FilterwheelDriver::OutputHTML(TYPE_GetPutRequestData *reqData)
 {
 int			mySocketFD;
-int			ii;
+int			iii;
 char		lineBuffer[128];
 bool		isConnected;
 
@@ -585,7 +595,7 @@ bool		isConnected;
 			SocketWriteData(mySocketFD,	lineBuffer);
 
 			Read_CurrentFilterPositon();
-			sprintf(lineBuffer,	"\t<TD><CENTER>Current position=%d</TD>\r\n",	cFilterWheelCurrPos);
+			sprintf(lineBuffer,	"\t<TD><CENTER>Current position=%d</TD>\r\n",	cFilterWheelProp.Position);
 			SocketWriteData(mySocketFD,	lineBuffer);
 
 			SocketWriteData(mySocketFD,	"</TR>\r\n");
@@ -593,11 +603,12 @@ bool		isConnected;
 
 			//*******************************************************
 			//*	list out the filter names
-			for (ii=0; ii < cNumberOfPositions; ii++)
+			for (iii=0; iii < cNumberOfPositions; iii++)
 			{
 				SocketWriteData(mySocketFD,	"<TR>\r\n");
 
-				sprintf(lineBuffer,	"\t<TD>Slot#%d</TD><TD>%s</TD>\r\n",	ii, cFilterDef[ii].filterDesciption);
+			//	sprintf(lineBuffer,	"\t<TD>Slot#%d</TD><TD>%s</TD>\r\n",	iii, cFilterDef[iii].filterDesciption);
+				sprintf(lineBuffer,	"\t<TD>Slot#%d</TD><TD>%s</TD>\r\n",	iii, cFilterWheelProp.Names[iii].FilterName);
 				SocketWriteData(mySocketFD,	lineBuffer);
 
 				SocketWriteData(mySocketFD,	"</TR>\r\n");
@@ -645,13 +656,12 @@ bool	foundIt;
 //*****************************************************************************
 int	FilterwheelDriver::Read_CurrentFWstate(void)
 {
-
-	return(kFilterWheelState_OK);
+	//*	this routine should be overloaded
+	CONSOLE_DEBUG("This routine should be overloaded !!!!!!");
+	return(cFilterWheelState);
 }
 
 //*****************************************************************************
-//*	this returns a position starting with 1
-//*	if the specific device uses 0 as the starting location, this routine must adjust +1
 //*	return -1 if unable to determine position
 //*****************************************************************************
 TYPE_ASCOM_STATUS	FilterwheelDriver::Read_CurrentFilterPositon(int *rtnCurrentPosition)
@@ -669,9 +679,8 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
 	if (rtnCurrentName != NULL)
 	{
-		strcpy(rtnCurrentName, cFilterDef[cFilterWheelCurrPos].filterDesciption);
-
-		strcpy(cFilterWheelCurrName, cFilterDef[cFilterWheelCurrPos].filterDesciption);
+//?		strcpy(cFilterWheelCurrName, cFilterDef[cFilterWheelProp.Position].filterDesciption);
+		strcpy(rtnCurrentName, cFilterWheelCurrName);
 	}
 	else
 	{
@@ -680,7 +689,6 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
 	return(alpacaErrCode);
 }
-
 
 
 //*****************************************************************************

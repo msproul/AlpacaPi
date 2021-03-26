@@ -14,6 +14,7 @@
 //*	Feb  7,	2021	<MLS> Added TYPE_CommonProperties
 //*	Feb 12,	2021	<MLS> Added TYPE_CoverCalibrationProperties
 //*	Mar  1,	2021	<MLS> Added TYPE_ObsConditionProperties
+//*	Mar 21,	2021	<MLS> Added TYPE_FilterWheelProperties
 //*****************************************************************************
 //*	These are for my comment extraction program that sorts comments by date.
 //*	Jan  1,	2019	-----------------------------------------------------------
@@ -301,24 +302,22 @@ typedef struct
 //+	TYPE_IMAGE_ROI_Info		LastExposure_ROIinfo;
 
 
-	int						MaxADU;						//*	Camera's maximum ADU value
-	int						MaxbinX;					//*	Maximum binning for the camera X axis
-	int						MaxbinY;					//*	Maximum binning for the camera Y axis
+	int						MaxADU;					//*	Camera's maximum ADU value
+	int						MaxbinX;				//*	Maximum binning for the camera X axis
+	int						MaxbinY;				//*	Maximum binning for the camera Y axis
 
 	//===================================
 	//*	subframe information
-	int						NumX;						//*	The current subframe width
-	int						NumY;						//*	The current subframe height
-
+	int						NumX;					//*	The current subframe width
+	int						NumY;					//*	The current subframe height
 
 	int						StartX;					//*	The current subframe X axis start position
 	int						StartY;					//*	The current subframe Y axis start position
 
-
-//+	int						Offset;					//*	The camera's offset
-//+	int						OffsetMax;				//*	Maximum offset value of that this camera supports
-//+	int						OffsetMin;				//*	Minimum offset value of that this camera supports
-//+	int						Offsets;				//*	List of offset names supported by the camera
+	int						Offset;					//*	The camera's offset
+	int						OffsetMax;				//*	Maximum offset value of that this camera supports
+	int						OffsetMin;				//*	Minimum offset value of that this camera supports
+//?	int						Offsets;				//*	List of offset names supported by the camera
 	int						PercentCompleted;		//*	Indicates percentage completeness of the current operation
 	double					PixelSizeX;				//*	the pixel size of the camera, unit is um. (microns) such as 5.6um
 	double					PixelSizeY;				//*	the pixel size of the camera, unit is um. (microns) such as 5.6um
@@ -327,13 +326,38 @@ typedef struct
 	double					SetCCDTemperature;		//*	The current camera cooler setpoint in degrees Celsius.
 
 //	currently ReadoutMode is implemented at execution time
-	int						ReadOutMode;			//*	Indicates the canera's readout mode as an index into the array ReadoutModes
+	int						ReadOutMode;					//*	Indicates the canera's readout mode as an index into the array ReadoutModes
 	READOUTMODE				ReadOutModes[kMaxReadOutModes];	//*	List of available readout modes
 
 	char					SensorName[kMaxSensorNameLen];	//	Sensor name
 //+	TYPE_SensorType			SensorType;						//*	Type of information returned by the the camera sensor (monochrome or colour)
 
 } TYPE_CameraProperties;
+
+
+
+//*****************************************************************************
+//*****************************************************************************
+//*****************************************************************************
+//*****************************************************************************
+//*****************************************************************************
+//*	Filter wheel properties
+#define	kMaxFWnameLen	32
+//*****************************************************************************
+typedef struct
+{
+	char	FilterName[kMaxFWnameLen];
+} TYPE_FilterName;
+
+#define	kMaxFiltersPerWheel	10
+
+//*****************************************************************************
+typedef struct
+{
+	int				FocusOffsets[kMaxFiltersPerWheel];	//	Focus offset of each filter in the wheel
+	TYPE_FilterName	Names[kMaxFiltersPerWheel];		//	Name of each filter in the wheel
+	int				Position;							//	Sets or returns the current filter wheel position
+} TYPE_FilterWheelProperties;
 
 //*****************************************************************************
 typedef struct

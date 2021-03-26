@@ -166,15 +166,18 @@ verify the workings of my drivers.  Here my current results
 
 	Jan 12,	2021	<MLS> CONFORM-dome/ror -> PASSED!!!!!!!!!!!!!!!!!!!!!
 
+	Jan 20,	2021	<MLS> CONFORM-camera/zwo -> PASSED!!!!!!!!!!!!!!!!!!!!!
+
+	Mar  1,	2021	<MLS> CONFORM-observingconditions -> PASSED!!!!!!!!!!!!!!!!!!!!!
 
 
 ===================================================
 
 ## Documentation:
 
-Refer to the documentation folder.
-If you are looking at this online via github, then look at the PDF file.
-If you have downloaded AlpacaPi already, you can look at the HTML file or the PDF file.
+Documentation is available at https://msproul.github.io/AlpacaPi/
+
+When you download AlpacaPi, you get the full documentation in the "docs" folder
 
 ===================================================
 

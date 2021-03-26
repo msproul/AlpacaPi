@@ -204,7 +204,7 @@ char	wiringPi_VerString[32];
 
 	CONSOLE_DEBUG_W_NUM("wiringPi_rc", wiringPi_rc);
 
-	pinMode(kHWpin_PowerOnOff,	OUTPUT);
+	pinMode(kHWpin_CommutatorPwr,	OUTPUT);
 	pinMode(kHWpin_Direction,	OUTPUT);
 
 	pinMode(kHWpin_PowerPWM,	PWM_OUTPUT);

@@ -144,6 +144,7 @@
 //*	Mar 16,	2021	<MLS> Added Get_MaxADU() & Get_ElectronsPerADU()
 //*	Mar 16,	2021	<MLS> Added Abort_Exposure()
 //*	Mar 17,	2021	<MLS> Added Get_HeatSinkTemperature()
+//*	Mar 26,	2021	<MLS> Started working on "offset" support
 //*****************************************************************************
 //*	Jan  1,	2119	<TODO> ----------------------------------------
 //*	Jun 26,	2119	<TODO> Add support for sub frames
@@ -269,6 +270,10 @@ const TYPE_CmdEntry	gCameraCmdTable[]	=
 	{	"maxbiny",					kCmd_Camera_maxbinY,				kCmdType_GET	},
 	{	"numx",						kCmd_Camera_numX,					kCmdType_BOTH	},
 	{	"numy",						kCmd_Camera_numY,					kCmdType_BOTH	},
+	{	"offset",					kCmd_Camera_offset,					kCmdType_BOTH	},
+	{	"offsetmax",				kCmd_Camera_offsetmax,				kCmdType_GET	},
+	{	"offsetmin",				kCmd_Camera_offsetmin,				kCmdType_GET	},
+	{	"offsets",					kCmd_Camera_offsets,				kCmdType_GET	},
 	{	"percentcompleted",			kCmd_Camera_percentcompleted,		kCmdType_GET	},
 	{	"pixelsizex",				kCmd_Camera_pixelsizeX,				kCmdType_GET	},
 	{	"pixelsizey",				kCmd_Camera_pixelsizeY,				kCmdType_GET	},
@@ -1020,6 +1025,25 @@ char				httpHeader[500];
 				alpacaErrCode	=	Put_NumY(reqData, alpacaErrMsg);
 			}
 			break;
+
+		case kCmd_Camera_offset:				//*	Returns the camera's offset
+												//*	Sets the camera's offset.
+			if (reqData->get_putIndicator == 'G')
+			{
+				alpacaErrCode	=	Get_Offset(reqData, alpacaErrMsg, gValueString);
+			}
+			else if (reqData->get_putIndicator == 'P')
+			{
+				alpacaErrCode	=	Put_Offset(reqData, alpacaErrMsg);
+			}
+			break;
+
+		case kCmd_Camera_offsetmax:				//*	Returns the maximum value of offset.
+		case kCmd_Camera_offsetmin:				//*	Returns the Minimum value of offset.
+		case kCmd_Camera_offsets:				//*	Returns List of offset names supported by the camera
+			alpacaErrCode	=	kASCOM_Err_PropertyNotImplemented;
+			break;
+
 
 		case kCmd_Camera_percentcompleted:		//*	Indicates percentage completeness of the current operation
 			alpacaErrCode	=	Get_PercentCompleted(reqData, alpacaErrMsg, gValueString);
@@ -2316,6 +2340,25 @@ char				errorString[64];
 	return(alpacaErrCode);
 }
 
+//*****************************************************************************
+TYPE_ASCOM_STATUS	CameraDriver::Get_Offset(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
+
+	alpacaErrCode	=	kASCOM_Err_PropertyNotImplemented;
+
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	CameraDriver::Put_Offset(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
+
+	alpacaErrCode	=	kASCOM_Err_PropertyNotImplemented;
+
+	return(alpacaErrCode);
+}
 
 //*****************************************************************************
 TYPE_ASCOM_STATUS	CameraDriver::Get_StartX(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
@@ -5862,7 +5905,7 @@ char		fileNameDateString[64];
 
 		if (cConnectedFilterWheel != NULL)
 		{
-			cFilterWheelCurrPos			=	cConnectedFilterWheel->cFilterWheelCurrPos;
+			cFilterWheelCurrPos			=	cConnectedFilterWheel->cFilterWheelProp.Position;
 			strcpy(cFilterWheelCurrName,	cConnectedFilterWheel->cFilterWheelCurrName);
 		}
 

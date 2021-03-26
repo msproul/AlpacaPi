@@ -89,6 +89,7 @@ EFW_LIB_DIR			=	./EFW_linux_mac_SDK
 ATIK_DIR			=	./AtikCamerasSDK
 ATIK_LIB_MASTER_DIR	=	$(ATIK_DIR)/lib
 ATIK_INCLUDE_DIR	=	$(ATIK_DIR)/include
+ATIK_INCLUDE_DIR2	=	$(ATIK_DIR)/inc
 #ATIK_LIB_DIR		=	$(ATIK_LIB_MASTER_DIR)/linux/x64/NoFlyCapture
 ATIK_LIB_DIR		=	$(ATIK_LIB_MASTER_DIR)/linux/64/NoFlyCapture
 #ATIK_LIB_DIR_V129	=	$(ATIK_LIB_MASTER_DIR)/ARM/pi/pi3/x86/NoFlyCapture
@@ -143,6 +144,7 @@ INCLUDES		=	-I$(SRC_DIR)			\
 					-I$(EFW_LIB_DIR)		\
 					-I$(ASI_INCLUDE_DIR)	\
 					-I$(ATIK_INCLUDE_DIR)	\
+					-I$(ATIK_INCLUDE_DIR2)	\
 					-I$(TOUP_INCLUDE_DIR)	\
 					-I$(FLIR_INCLUDE_DIR)	\
 					-I$(MLS_LIB_DIR)		\
@@ -336,7 +338,7 @@ allcam		:		DEFINEFLAGS		+=	-D_ENABLE_TOUP_
 allcam		:		DEFINEFLAGS		+=	-D_ENABLE_DISCOVERY_QUERRY_
 #allcam		:		DEFINEFLAGS		+=	-D_ENABLE_DOME_
 allcam		:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
-#allcam		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_
+allcam		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_
 #allcam		:		DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_
 #allcam		:		DEFINEFLAGS		+=	-D_ENABLE_MULTICAM_
 #allcam		:		DEFINEFLAGS		+=	-D_ENABLE_OBSERVINGCONDITIONS_
@@ -1558,6 +1560,7 @@ SKYTRAVEL_OBJECTS=											\
 				$(OBJECT_DIR)controller_telescope.o			\
 				$(OBJECT_DIR)cpu_stats.o					\
 				$(OBJECT_DIR)eph.o							\
+				$(OBJECT_DIR)fits_opencv.o					\
 				$(OBJECT_DIR)HipparcosCatalog.o				\
 				$(OBJECT_DIR)moonlite_com.o					\
 				$(OBJECT_DIR)julianTime.o					\
@@ -1609,7 +1612,8 @@ sky		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_FOCUSERS_
 sky		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
 sky		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_SWITCHES_
 sky		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_TELESCOPE_
-#sky		:	DEFINEFLAGS		+=	-D_ENABLE_SLIT_TRACKER_
+sky		:	DEFINEFLAGS		+=	-D_ENABLE_FITS_
+#sky	:	DEFINEFLAGS		+=	-D_ENABLE_SLIT_TRACKER_
 sky		:	DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
 sky		:	INCLUDES		+=	-I$(SRC_SKYTRAVEL)
 
@@ -1622,6 +1626,7 @@ sky		:				$(SKYTRAVEL_OBJECTS)					\
 							$(CONTROLLER_BASE_OBJECTS)			\
 							$(OPENCV_LINK)						\
 							-lpthread							\
+							-lcfitsio							\
 							-o skytravel
 
 #							$(CONTROLLER_OBJECTS)				\
@@ -2472,6 +2477,10 @@ $(OBJECT_DIR)controller_main.o : 		$(SRC_DIR)controller_main.cpp		\
 										$(SRC_DIR)controller.h
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)controller_main.cpp -o$(OBJECT_DIR)controller_main.o
 
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)fits_opencv.o :			$(SRC_DIR)fits_opencv.c			\
+										$(SRC_DIR)fits_opencv.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)fits_opencv.c -o$(OBJECT_DIR)fits_opencv.o
 
 
 #-------------------------------------------------------------------------------------
@@ -2513,6 +2522,8 @@ $(OBJECT_DIR)julianTime.o :				$(SRC_DIR)julianTime.c	\
 $(OBJECT_DIR)raspberrypi_relaylib.o :	$(SRC_DIR)raspberrypi_relaylib.c	\
 										$(SRC_DIR)raspberrypi_relaylib.h
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)raspberrypi_relaylib.c -o$(OBJECT_DIR)raspberrypi_relaylib.o
+
+
 
 
 ######################################################################################
@@ -2599,7 +2610,6 @@ $(OBJECT_DIR)HipparcosCatalog.o :		$(SRC_SKYTRAVEL)HipparcosCatalog.c	\
 $(OBJECT_DIR)ConstellationData.o :		$(SRC_SKYTRAVEL)ConstellationData.c	\
 										$(SRC_SKYTRAVEL)ConstellationData.h
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYTRAVEL)ConstellationData.c -o$(OBJECT_DIR)ConstellationData.o
-
 
 
 #-------------------------------------------------------------------------------------
