@@ -2775,7 +2775,6 @@ int		foundIdx;
 	}
 }
 
-
 //**************************************************************************************
 //*	this is intended to get over ridden by a sub class
 void	Controller::UpdateCapabilityList(void)
@@ -2971,6 +2970,3 @@ void	LoadAlpacaLogo(void)
 		gAlpacaLogoPtr	=	cvLoadImage("logos/AlpacaLogo-vsmall.png", CV_LOAD_IMAGE_COLOR);
 	}
 }
-
-
-

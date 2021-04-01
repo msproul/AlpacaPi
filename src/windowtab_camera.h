@@ -35,6 +35,13 @@ enum
 	kCameraBox_Gain_Up,
 	kCameraBox_Gain_Down,
 
+	kCameraBox_Offset_Label,
+	kCameraBox_Offset_Slider,
+	kCameraBox_Offset,
+	kCameraBox_Offset_Up,
+	kCameraBox_Offset_Down,
+
+
 	kCameraBox_State,
 
 	kCameraBox_ReadMode0,
@@ -121,6 +128,7 @@ class WindowTabCamera: public WindowTab
 				void	ForceUpdate(void);
 				void	BumpGain(const int howMuch);
 				void	BumpExposure(const double howMuch);
+				void	BumpOffset(const int howMuch);
 				void	ToggleLiveMode(void);
 				void	ToggleSideBar(void);
 				void	ToggleAutoExposure(void);
@@ -142,6 +150,8 @@ class WindowTabCamera: public WindowTab
 
 				uint32_t	cLastExposureUpdate_Millis;
 				uint32_t	cLastGainUpdate_Millis;
+				uint32_t	cLastOffsetUpdate_Millis;
+
 
 };
 

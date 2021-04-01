@@ -75,6 +75,8 @@
 //*	Jun 11,	2020	<MLS> Added timestamp option to video output
 //*	Jun 16,	2020	<MLS> Added timestamp text (csv) file for video output
 //*	Aug 11,	2020	<MLS> Added auto exposure to video output
+//*	Mar 26,	2021	<MLS> Added Write_Offset() & Read_Offset()
+//*	Mar 26,	2021	<MLS> Offset value read/write working in ASI cameras
 //*****************************************************************************
 //*	Length: unspecified [text/plain]
 //*	Saving to: "imagearray.1"
@@ -455,7 +457,14 @@ ASI_CONTROL_CAPS	controlCaps;
 			case ASI_GAMMA:
 			case ASI_WB_R:
 			case ASI_WB_B:
+				break;
+
 			case ASI_OFFSET:
+				cCameraProp.Offset		=	controlCaps.DefaultValue;
+				cCameraProp.OffsetMin	=	controlCaps.MinValue;
+				cCameraProp.OffsetMax	=	controlCaps.MaxValue;
+				break;
+
 			case ASI_BANDWIDTHOVERLOAD:
 			case ASI_OVERCLOCK:
 				break;
@@ -673,7 +682,7 @@ bool				cameraIsBusy;
 		cCurrentExposure_us	=	exposureMicrosecs;
 		if (gVerbose)
 		{
-			CONSOLE_DEBUG_W_DBL("Current Exposure (secs)\t=",	(cCurrentExposure_us / 1000000.0));
+//			CONSOLE_DEBUG_W_DBL("Current Exposure (secs)\t=",	(cCurrentExposure_us / 1000000.0));
 		}
 
 //		asiErrorCode	=	ASIInitCamera(cCameraID);
@@ -1795,7 +1804,7 @@ ASI_BOOL			bAuto;
 		}
 		else
 		{
-			strcpy(cLastCameraErrMsg, "Failed to set gain");
+			strcpy(cLastCameraErrMsg, "Failed to read gain");
 			CONSOLE_DEBUG(cLastCameraErrMsg);
 			alpacaErrCode	=	kASCOM_Err_DataFailure;
 		}
@@ -1807,6 +1816,81 @@ ASI_BOOL			bAuto;
 	return(alpacaErrCode);
 }
 
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	CameraDriverASI::Write_Offset(const int newOffsetValue)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
+ASI_ERROR_CODE		asiErrorCode;
+long				myOffsetValue;
+ASI_BOOL			bAuto;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	asiErrorCode	=	OpenASIcameraIfNeeded(cCameraID);
+	if (asiErrorCode == ASI_SUCCESS)
+	{
+		bAuto			=	ASI_FALSE;
+		myOffsetValue	=	newOffsetValue;
+		asiErrorCode	=	ASISetControlValue(	cCameraID,
+												ASI_OFFSET,
+												myOffsetValue,
+												bAuto);
+		if (asiErrorCode == ASI_SUCCESS)
+		{
+			alpacaErrCode	=	kASCOM_Err_Success;
+		}
+		else
+		{
+			strcpy(cLastCameraErrMsg, "Failed to set offset");
+			CONSOLE_DEBUG(cLastCameraErrMsg);
+		}
+	}
+	else
+	{
+		alpacaErrCode	=	kASCOM_Err_NotConnected;
+		strcpy(cLastCameraErrMsg, "Failed to open connection to camera");
+		CONSOLE_DEBUG(cLastCameraErrMsg);
+	}
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	CameraDriverASI::Read_Offset(int *cameraOffsetValue)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
+ASI_ERROR_CODE		asiErrorCode;
+long				myOffsetValue;
+ASI_BOOL			bAuto;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	asiErrorCode	=	OpenASIcameraIfNeeded(cCameraID);
+	if (asiErrorCode == ASI_SUCCESS)
+	{
+		bAuto			=	ASI_FALSE;
+		asiErrorCode	=	ASIGetControlValue(	cCameraID,
+												ASI_OFFSET,
+												&myOffsetValue,
+												&bAuto);
+		if (asiErrorCode == ASI_SUCCESS)
+		{
+			alpacaErrCode		=	kASCOM_Err_Success;
+			*cameraOffsetValue	=	myOffsetValue;
+		}
+		else
+		{
+			strcpy(cLastCameraErrMsg, "Failed to read offset");
+			CONSOLE_DEBUG(cLastCameraErrMsg);
+			alpacaErrCode	=	kASCOM_Err_DataFailure;
+		}
+	}
+	else
+	{
+		alpacaErrCode	=	kASCOM_Err_NotConnected;
+	}
+	return(alpacaErrCode);
+}
 
 
 //*****************************************************************************

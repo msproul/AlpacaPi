@@ -70,9 +70,12 @@ static void	*Telescope_Comm_Thread(void *arg);
 void	CreateTelescopeObjects(void)
 {
 	CONSOLE_DEBUG(__FUNCTION__);
-
+#ifdef _ENABLE_TELESCOPE_LX200_
 	new TelescopeDriverLX200(kDevCon_Ethernet, "192.168.1.104:49152");
-//	new TelescopeDriverSkyWatch(kDevCon_Serial, "/dev/ttyS0");
+#endif
+#ifdef _ENABLE_TELESCOPE_SKYWATCH_
+	new TelescopeDriverSkyWatch(kDevCon_Serial, "/dev/ttyS0");
+#endif
 }
 
 //**************************************************************************************
@@ -127,7 +130,6 @@ char	*colonPtr;
 
 	cQueuedCmdCnt	=	0;
 
-//	AlpacaConnect();
 }
 
 //**************************************************************************************
@@ -418,6 +420,19 @@ int					socket_desc;
 }
 
 //*****************************************************************************
+//*	This can be overloaded but does not have to be
+//*****************************************************************************
+void	TelescopeDriverComm::AddCmdToQueue(const char *cmdString)
+{
+	CONSOLE_DEBUG_W_STR("cmdString\t\t=", cmdString);
+	if (cQueuedCmdCnt < kMaxTelescopeCmds)
+	{
+		strcpy(cCmdQueue[cQueuedCmdCnt].cmdString, cmdString);
+		cQueuedCmdCnt++;
+	}
+}
+
+//*****************************************************************************
 bool	TelescopeDriverComm::SendCmdsFromQueue(void)
 {
 	CONSOLE_DEBUG(__FUNCTION__);
@@ -458,7 +473,10 @@ bool		sendOK;
 
 	while (cKeepRunningFlag)
 	{
-		//########################################################
+		//--------------------------------------------------------
+		//*	this is inside of the while loop so that we can re-open the connection if it drops.
+
+		//--------------------------------------------------------
 		//*	open the connection
 		connectionOpen	=	false;
 		switch(cDeviceConnType)
@@ -480,7 +498,9 @@ bool		sendOK;
 				if (cDeviceConnFileDesc >= 0)
 				{
 					CONSOLE_DEBUG_W_STR("Serial port opened OK", cDeviceConnPath);
-					Set_Serial_attribs(cDeviceConnFileDesc, B9600, 0);	//*	set the baud rate
+
+					Serial_Set_Attribs(cDeviceConnFileDesc, B9600, 0);	//*	set the baud rate
+					Serial_Set_Blocking (cDeviceConnFileDesc, false);
 
 					connectionOpen	=	true;
 				}
@@ -492,7 +512,7 @@ bool		sendOK;
 				break;
 		}
 
-		//########################################################
+		//--------------------------------------------------------
 		//*	did we open the connection OK
 		if (connectionOpen)
 		{

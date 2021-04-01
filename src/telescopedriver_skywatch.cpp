@@ -101,6 +101,32 @@ TelescopeDriverSkyWatch::~TelescopeDriverSkyWatch(void)
 //**************************************************************************************
 bool	TelescopeDriverSkyWatch::SendCmdsFromQueue(void)
 {
+int		returnByteCNt;
+char	returnBuffer[500];
+int		iii;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+	while (cQueuedCmdCnt > 0)
+	{
+		CONSOLE_DEBUG_W_STR("Sending", cCmdQueue[0].cmdString);
+//		returnByteCNt	=	LX200_SendCommand(	cSocket_desc,
+//												cCmdQueue[0].cmdString,
+//												returnBuffer,
+//												400);
+		if (returnByteCNt > 0)
+		{
+			CONSOLE_DEBUG_W_STR("returnBuffer\t=", returnBuffer);
+		}
+		for (iii=0; iii<cQueuedCmdCnt; iii++)
+		{
+			cCmdQueue[iii]	=	cCmdQueue[iii + 1];
+		}
+		cQueuedCmdCnt--;
+		if (cQueuedCmdCnt > 0)
+		{
+			usleep(500);
+		}
+	}
 	return(false);
 }
 
@@ -111,14 +137,21 @@ bool	TelescopeDriverSkyWatch::SendCmdsFromQueue(void)
 bool	TelescopeDriverSkyWatch::SendCmdsPeriodic(void)
 {
 bool	isValid;
+char	receiveBuff[64];
 
 	CONSOLE_DEBUG(__FUNCTION__);
 	isValid	=	false;
 	//--------------------------------------------------------------------------
 	//*	Right Ascension
+	Serial_Send_Data(cDeviceConnFileDesc, ":j1\r", true);
+	Serial_Read_Data(cDeviceConnFileDesc, receiveBuff, 32);
+	CONSOLE_DEBUG_W_STR("receiveBuff\t=", receiveBuff);
 
 	//--------------------------------------------------------------------------
 	//*	Declination
+	Serial_Send_Data(cDeviceConnFileDesc, ":j2\r", true);
+	Serial_Read_Data(cDeviceConnFileDesc, receiveBuff, 32);
+	CONSOLE_DEBUG_W_STR("receiveBuff\t=", receiveBuff);
 
 
 	return(isValid);

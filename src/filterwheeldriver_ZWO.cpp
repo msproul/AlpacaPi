@@ -159,7 +159,7 @@ EFW_ERROR_CODE	efwErrorCode;
 bool	FilterwheelZWO::AlpacaConnect(void)
 {
 
-
+	return(false);
 }
 
 
@@ -269,7 +269,7 @@ EFW_ERROR_CODE		efwErrorCode;
 int					myCurPosition;
 char				efwErrString[64];
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	//*	is the filter wheel open
 
@@ -346,7 +346,7 @@ char				efwErrString[64];
 		*rtnCurrentPosition	=	cFilterWheelProp.Position;
 	}
 
-	CONSOLE_DEBUG_W_NUM("cActualPosReadCout\t=", cActualPosReadCout);
+//	CONSOLE_DEBUG_W_NUM("cActualPosReadCout\t=", cActualPosReadCout);
 	return(alpacaErrCode);
 }
 

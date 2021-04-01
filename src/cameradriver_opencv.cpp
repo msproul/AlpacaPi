@@ -113,6 +113,7 @@ int	deltaMouse;
 		case CV_EVENT_LBUTTONDOWN:
 			cLeftButtonDown	=	true;
 //			CONSOLE_DEBUG("CV_EVENT_LBUTTONDOWN");
+			//*	CONTROL and SHIFT turn the cross hair OFF
 			if ((flags & CV_EVENT_FLAG_CTRLKEY) && (flags & CV_EVENT_FLAG_SHIFTKEY))
 			{
 				cDisplayCrossHairs	=	false;
@@ -261,6 +262,38 @@ void	CameraDriver::SetOpenCVcallbackFunction(const char *windowName)
 }
 
 //*****************************************************************************
+void	CameraDriver::OpenLiveImage(void)
+{
+	if (cOpenCV_LiveDisplay == NULL)
+	{
+		switch(cROIinfo.currentROIimageType)
+		{
+			case kImageType_RAW8:
+			case kImageType_Y8:
+				CONSOLE_DEBUG("Creating cOpenCV_LiveDisplay - kImageType_RAW8")
+				cOpenCV_LiveDisplay	=	cvCreateImage(cvSize(cLiveDisplayWidth, cLiveDisplayHeight), IPL_DEPTH_8U, 1);
+				break;
+
+			case kImageType_RAW16:
+				CONSOLE_DEBUG("Creating cOpenCV_LiveDisplay - kImageType_RAW16")
+				cOpenCV_LiveDisplay	=	cvCreateImage(cvSize(cLiveDisplayWidth, cLiveDisplayHeight), IPL_DEPTH_16U, 1);
+				break;
+
+			case kImageType_RGB24:
+				CONSOLE_DEBUG("Creating cOpenCV_LiveDisplay - kImageType_RGB24")
+				cOpenCV_LiveDisplay	=	cvCreateImage(cvSize(cLiveDisplayWidth, cLiveDisplayHeight), IPL_DEPTH_8U, 3);
+				break;
+
+			default:
+				cOpenCV_LiveDisplay	=	NULL;
+				break;
+
+		}
+		SetOpenCVcolors(cOpenCV_LiveDisplay);
+	}
+}
+
+//*****************************************************************************
 void	CameraDriver::CloseLiveImage(void)
 {
 int	iii;
@@ -272,6 +305,10 @@ int	iii;
 		CONSOLE_DEBUG("Calling cvReleaseImage(&cOpenCV_LiveDisplay)");
 		cvReleaseImage(&cOpenCV_LiveDisplay);
 		cOpenCV_LiveDisplay	=	NULL;
+	}
+	else
+	{
+		CONSOLE_DEBUG("No window to close, (cOpenCV_LiveDispla NULL");
 	}
 	CONSOLE_DEBUG("Calling cvDestroyWindow(cOpenCV_ImgWindowName)");
 	cvDestroyWindow(cOpenCV_ImgWindowName);
@@ -339,14 +376,17 @@ int			keyPressed;
 			{
 				case kImageType_RAW8:
 				case kImageType_Y8:
+					CONSOLE_DEBUG("Creating cOpenCV_LiveDisplay - kImageType_RAW8")
 					cOpenCV_LiveDisplay	=	cvCreateImage(cvSize(cLiveDisplayWidth, cLiveDisplayHeight), IPL_DEPTH_8U, 1);
 					break;
 
 				case kImageType_RAW16:
+					CONSOLE_DEBUG("Creating cOpenCV_LiveDisplay - kImageType_RAW16")
 					cOpenCV_LiveDisplay	=	cvCreateImage(cvSize(cLiveDisplayWidth, cLiveDisplayHeight), IPL_DEPTH_16U, 1);
 					break;
 
 				case kImageType_RGB24:
+					CONSOLE_DEBUG("Creating cOpenCV_LiveDisplay - kImageType_RGB24")
 					cOpenCV_LiveDisplay	=	cvCreateImage(cvSize(cLiveDisplayWidth, cLiveDisplayHeight), IPL_DEPTH_8U, 3);
 					break;
 
@@ -440,6 +480,7 @@ CvRect		myCVrect;
 			//*	if the format of the image is changed (i.e. RAW8 -> RGB24
 			//*	while live image is being displayed, opencv aborts on resize
 			//*	Feb 18,	2020	<MLS> Fixed bug in live view when image format gets changed
+			//**************************************************************
 			if (cOpenCV_LiveDisplay != NULL)
 			{
 				if (cOpenCV_LiveDisplay->depth != cOpenCV_Image->depth)
@@ -448,7 +489,6 @@ CvRect		myCVrect;
 					cvReleaseImage(&cOpenCV_LiveDisplay);
 					cOpenCV_LiveDisplay	=	NULL;
 				}
-
 			}
 			//*	we have to create a liveDisp image to display
 			if (cOpenCV_LiveDisplay == NULL)
@@ -464,6 +504,7 @@ CvRect		myCVrect;
 				}
 				windowWidth		=	cLiveDisplayWidth;
 				windowHeight	=	cLiveDisplayHeight;
+
 				if (cDisplaySideBar)
 				{
 					//*	add the room for the side bar
@@ -473,10 +514,12 @@ CvRect		myCVrect;
 				switch (cOpenCV_Image->depth)
 				{
 					case 8:
+						CONSOLE_DEBUG("Creating cOpenCV_LiveDisplay - 8 bit")
 						cOpenCV_LiveDisplay	=	cvCreateImage(cvSize(windowWidth, windowHeight), IPL_DEPTH_8U, 3);
 						break;
 
 					case 16:
+						CONSOLE_DEBUG("Creating cOpenCV_LiveDisplay - 16 bit")
 						cOpenCV_LiveDisplay	=	cvCreateImage(cvSize(windowWidth, windowHeight), IPL_DEPTH_16U, 3);
 						break;
 
@@ -1114,19 +1157,19 @@ char		textStr3[32];
 //*****************************************************************************
 void	CameraDriver::SetOpenCVcolors(IplImage *imageDisplay)
 {
-RGBcolor	bgc;	//*	background color
-RGBcolor	txc;	//*	text color
+RGBcolor	backGround;		//*	background color
+RGBcolor	textColor;		//*	text color
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 //	CONSOLE_DEBUG(cTS_info.refID);
-	GetDefaultColors(0, cTS_info.refID, &bgc, &txc);
+	GetDefaultColors(0, cTS_info.refID, &backGround, &textColor);
 
 	if (imageDisplay != NULL)
 	{
 		if ((imageDisplay->depth == 8) && (imageDisplay->nChannels == 3))
 		{
-			cSideBarBGcolor		=	CV_RGB(bgc.red,	bgc.grn,	bgc.blu);
-			cSideBarTXTcolor	=	CV_RGB(txc.red,	txc.grn,	txc.blu);
+			cSideBarBGcolor		=	CV_RGB(backGround.red,	backGround.grn,	backGround.blu);
+			cSideBarTXTcolor	=	CV_RGB(textColor.red,	textColor.grn,	textColor.blu);
 			cSideBarBlk			=	CV_RGB(0,		0,		0);
 			cSideBarRed			=	CV_RGB(255,		0,		0);
 			cSideBarGrn			=	CV_RGB(0,		255,	0);
@@ -1138,8 +1181,8 @@ RGBcolor	txc;	//*	text color
 		}
 		else if ((imageDisplay->depth == 16) && (imageDisplay->nChannels == 3))
 		{
-			cSideBarBGcolor		=	CV_RGB((bgc.red<<8),	(bgc.grn<<8),	(bgc.blu<<8));
-			cSideBarTXTcolor	=	CV_RGB((txc.red<<8),	(txc.grn<<8),	(txc.blu<<8));
+			cSideBarBGcolor		=	CV_RGB((backGround.red<<8),	(backGround.grn<<8),	(backGround.blu<<8));
+			cSideBarTXTcolor	=	CV_RGB((textColor.red<<8),	(textColor.grn<<8),		(textColor.blu<<8));
 			cSideBarRed			=	CV_RGB(65535,	0,		0);
 			cSideBarGrn			=	CV_RGB(0,		65535,	0);
 			cSideBarBlu			=	CV_RGB(0,		0,		65535);
@@ -1149,8 +1192,8 @@ RGBcolor	txc;	//*	text color
 		}
 		else if (imageDisplay->depth == 16)
 		{
-			cSideBarBGcolor		=	CV_RGB((bgc.red<<8),	(bgc.grn<<8),	(bgc.blu<<8));
-			cSideBarTXTcolor	=	CV_RGB((txc.red<<8),	(txc.grn<<8),	(txc.blu<<8));
+			cSideBarBGcolor		=	CV_RGB((backGround.red<<8),	(backGround.grn<<8),	(backGround.blu<<8));
+			cSideBarTXTcolor	=	CV_RGB((textColor.red<<8),	(textColor.grn<<8),	(textColor.blu<<8));
 			cSideBarRed			=	CV_RGB(65535,	0,		0);
 			cSideBarGrn			=	CV_RGB(0,		65535,	0);
 			cSideBarBlu			=	CV_RGB(0,		0,		65535);
@@ -1160,8 +1203,8 @@ RGBcolor	txc;	//*	text color
 		}
 		else
 		{
-			cSideBarBGcolor		=	CV_RGB(bgc.red,	bgc.grn,	bgc.blu);
-			cSideBarTXTcolor	=	CV_RGB(txc.red,	txc.grn,	txc.blu);
+			cSideBarBGcolor		=	CV_RGB(backGround.red,	backGround.grn,	backGround.blu);
+			cSideBarTXTcolor	=	CV_RGB(textColor.red,	textColor.grn,	textColor.blu);
 			cSideBarBlk			=	CV_RGB(0,		0,		0);
 			cSideBarRed			=	CV_RGB(255,		0,		0);
 			cSideBarGrn			=	CV_RGB(0,		255,	0);
@@ -1176,8 +1219,8 @@ RGBcolor	txc;	//*	text color
 	{
 	//	CONSOLE_DEBUG("Image display is null, setting to RGB 8 bit values")
 		//*	defaults
-		cSideBarBGcolor		=	CV_RGB(bgc.red,	bgc.grn,	bgc.blu);
-		cSideBarTXTcolor	=	CV_RGB(txc.red,	txc.grn,	txc.blu);
+		cSideBarBGcolor		=	CV_RGB(backGround.red,	backGround.grn,	backGround.blu);
+		cSideBarTXTcolor	=	CV_RGB(textColor.red,	textColor.grn,	textColor.blu);
 		cSideBarBlk			=	CV_RGB(0,		0,		0);
 		cSideBarRed			=	CV_RGB(255,		0,		0);
 		cSideBarGrn			=	CV_RGB(0,		255,	0);

@@ -93,13 +93,6 @@ int		myRadioBtnWidth;
 	yLoc			+=	cTitleHeight;
 	yLoc			+=	2;
 
-//	SetWidget(		kDeviceSelect_ControllerVersion,	0,			yLoc,		cWidth,		cTitleHeight);
-//	SetWidgetFont(	kDeviceSelect_ControllerVersion,	kFont_Medium);
-//	SetWidgetText(	kDeviceSelect_ControllerVersion,	gFullVersionString);
-//	SetWidgetTextColor(kDeviceSelect_ControllerVersion,	CV_RGB(255,	255,	255));
-//	yLoc			+=	cTitleHeight;
-//	yLoc			+=	2;
-
 	textBoxHt		=	90;
 	SetWidget(				kDeviceSelect_TextBox1,	0,			yLoc,		cWidth,		textBoxHt);
 	SetWidgetType(			kDeviceSelect_TextBox1,	kWidgetType_MultiLineText);
@@ -109,7 +102,6 @@ int		myRadioBtnWidth;
 	SetWidgetText(			kDeviceSelect_TextBox1, gAlpacaPiTxt1);
 	yLoc			+=	textBoxHt;
 	yLoc			+=	2;
-
 
 	yLoc			+=	10;
 	save_yLoc		=	yLoc;

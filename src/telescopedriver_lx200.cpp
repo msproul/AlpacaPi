@@ -121,170 +121,6 @@ TelescopeDriverLX200::~TelescopeDriverLX200(void)
 	AlpacaDisConnect();
 }
 
-//*****************************************************************************
-TYPE_ASCOM_STATUS	TelescopeDriverLX200::Telescope_AbortSlew(char *alpacaErrMsg)
-{
-TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
-
-	//*	because this is ABORT, we are going to wipe out all pending commands
-	cQueuedCmdCnt	=	0;
-	AddCmdToLX200queue("Q");
-	cTelescopeProp.Slewing	=	false;
-
-	return(alpacaErrCode);
-
-}
-
-//*****************************************************************************
-TYPE_ASCOM_STATUS	TelescopeDriverLX200::Telescope_MoveAxis(const int axisNum, const double moveRate_degPerSec, char *alpacaErrMsg)
-{
-TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
-
-	switch(axisNum)
-	{
-		case 0:
-			if (moveRate_degPerSec > 0)
-			{
-				AddCmdToLX200queue("Mw");
-			}
-			else
-			{
-				AddCmdToLX200queue("Me");
-			}
-			cTelescopeProp.Slewing	=	true;
-			break;
-
-		case 1:
-			if (moveRate_degPerSec > 0)
-			{
-				AddCmdToLX200queue("Mn");
-			}
-			else
-			{
-				AddCmdToLX200queue("Ms");
-			}
-			cTelescopeProp.Slewing	=	true;
-			break;
-
-		default:
-			alpacaErrCode	=	kASCOM_Err_NotImplemented;
-			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
-			break;
-
-	}
-	return(alpacaErrCode);
-}
-
-//*****************************************************************************
-TYPE_ASCOM_STATUS	TelescopeDriverLX200::Telescope_SlewToRA_DEC(	const double	newRtAscen_Hours,
-																	const double	newDeclination_Degrees,
-																	char *alpacaErrMsg)
-{
-TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
-bool				successFlg;
-char				timeString[32];
-char				commandString[48];
-
-	CONSOLE_DEBUG(__FUNCTION__);
-	successFlg		=	false;
-
-	FormatHHMMSS(newRtAscen_Hours, timeString, false);
-
-	//*	create the LX200 command SrHH:MM:SS
-	strcpy(commandString, "Sr");
-	strcat(commandString, timeString);
-	AddCmdToLX200queue(commandString);
-
-	//-------------------------------------------------
-
-	FormatHHMMSS(newDeclination_Degrees, timeString, true);
-
-	//*	create the LX200 command SdsDD*MM
-	strcpy(commandString, "Sd");
-	strcat(commandString, timeString);
-	AddCmdToLX200queue(commandString);
-
-	//*	Slew command
-	//*	:MS# Slew to Target Object
-	//		Returns:
-	//		0				Slew is Possible
-	//		1<string>#		Object Below Horizon w/string message
-	//		2<string>#		Object Below Higher w/string message
-	AddCmdToLX200queue("MS");
-
-	return(alpacaErrCode);
-}
-
-//*****************************************************************************
-//*	:SrHH:MM.T#
-//*	:SrHH:MM:SS#
-//*	Set target object RA to HH:MM.T or HH:MM:SS depending on the current precision setting.
-//*	Returns:
-//*	0 – Invalid
-//*	1 - Valid
-//*
-//*	:SdsDD*MM#
-//*	Set target object declination to sDD*MM or sDD*MM:SS depending on the current precision setting
-//*	Returns:
-//*	1 - Dec Accepted
-//*	0 – Dec invalid
-//*
-//*	:CM#
-//*	Synchronizes the telescope's position with the currently selected database object's coordinates.
-//*	Returns:
-//*	LX200's - a "#" terminated string with the name of the object that was synced.
-//*****************************************************************************
-TYPE_ASCOM_STATUS	TelescopeDriverLX200::Telescope_SyncToRA_DEC(	const double	newRtAscen_Hours,
-																	const double	newDeclination_Degrees,
-																	char *alpacaErrMsg)
-{
-TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
-char				timeString[32];
-char				commandString[48];
-
-	FormatHHMMSS(newRtAscen_Hours, timeString, false);
-
-	//*	create the LX200 command SrHH:MM:SS
-	strcpy(commandString, "Sr");
-	strcat(commandString, timeString);
-	AddCmdToLX200queue(commandString);
-
-	//-------------------------------------------------
-
-	FormatHHMMSS(newDeclination_Degrees, timeString, true);
-
-	//*	create the LX200 command SdsDD*MM
-	strcpy(commandString, "Sd");
-	strcat(commandString, timeString);
-	AddCmdToLX200queue(commandString);
-
-	//*	syncCommand
-	//*	:CM# Synchronizes the telescope's position with the currently selected database object's coordinates
-	AddCmdToLX200queue("CM");
-
-
-	return(alpacaErrCode);
-}
-
-//*****************************************************************************
-TYPE_ASCOM_STATUS	TelescopeDriverLX200::Telescope_TrackingOnOff(const bool newTrackingState, char *alpacaErrMsg)
-{
-TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
-
-	if (newTrackingState)
-	{
-		AddCmdToLX200queue("TQ");
-		alpacaErrCode	=	kASCOM_Err_Success;
-	}
-	else
-	{
-		alpacaErrCode	=	kASCOM_Err_NotImplemented;
-		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
-
-	}
-	return(alpacaErrCode);
-}
-
 //**************************************************************************************
 bool	TelescopeDriverLX200::SendCmdsFromQueue(void)
 {
@@ -295,9 +131,9 @@ int		iii;
 //	CONSOLE_DEBUG(__FUNCTION__);
 	while (cQueuedCmdCnt > 0)
 	{
-		CONSOLE_DEBUG_W_STR("Sending", cLX200CmdQueue[0].cmdString);
+		CONSOLE_DEBUG_W_STR("Sending", cCmdQueue[0].cmdString);
 		returnByteCNt	=	LX200_SendCommand(	cSocket_desc,
-												cLX200CmdQueue[0].cmdString,
+												cCmdQueue[0].cmdString,
 												returnBuffer,
 												400);
 		if (returnByteCNt > 0)
@@ -306,7 +142,7 @@ int		iii;
 		}
 		for (iii=0; iii<cQueuedCmdCnt; iii++)
 		{
-			cLX200CmdQueue[iii]	=	cLX200CmdQueue[iii + 1];
+			cCmdQueue[iii]	=	cCmdQueue[iii + 1];
 		}
 		cQueuedCmdCnt--;
 		if (cQueuedCmdCnt > 0)
@@ -315,18 +151,6 @@ int		iii;
 		}
 	}
 	return(false);
-}
-
-
-//*****************************************************************************
-void	TelescopeDriverLX200::AddCmdToLX200queue(const char *cmdString)
-{
-	CONSOLE_DEBUG_W_STR("cmdString\t\t=", cmdString);
-	if (cQueuedCmdCnt < kMaxLX200Cmds)
-	{
-		strcpy(cLX200CmdQueue[cQueuedCmdCnt].cmdString, cmdString);
-		cQueuedCmdCnt++;
-	}
 }
 
 
@@ -411,6 +235,185 @@ bool	isValid;
 
 	return(isValid);
 }
+
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	TelescopeDriverLX200::Telescope_AbortSlew(char *alpacaErrMsg)
+{
+TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
+
+	//*	because this is ABORT, we are going to wipe out all pending commands
+	cQueuedCmdCnt	=	0;
+	AddCmdToQueue("Q");
+	cTelescopeProp.Slewing	=	false;
+
+	return(alpacaErrCode);
+
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	TelescopeDriverLX200::Telescope_MoveAxis(const int axisNum, const double moveRate_degPerSec, char *alpacaErrMsg)
+{
+TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
+
+	switch(axisNum)
+	{
+		case 0:
+			if (moveRate_degPerSec > 0)
+			{
+				AddCmdToQueue("Mw");
+			}
+			else
+			{
+				AddCmdToQueue("Me");
+			}
+			cTelescopeProp.Slewing	=	true;
+			break;
+
+		case 1:
+			if (moveRate_degPerSec > 0)
+			{
+				AddCmdToQueue("Mn");
+			}
+			else
+			{
+				AddCmdToQueue("Ms");
+			}
+			cTelescopeProp.Slewing	=	true;
+			break;
+
+		default:
+			alpacaErrCode	=	kASCOM_Err_NotImplemented;
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
+			break;
+
+	}
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	TelescopeDriverLX200::Telescope_SlewToRA_DEC(	const double	newRtAscen_Hours,
+																	const double	newDeclination_Degrees,
+																	char *alpacaErrMsg)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
+bool				successFlg;
+char				timeString[32];
+char				commandString[48];
+
+	CONSOLE_DEBUG(__FUNCTION__);
+	successFlg		=	false;
+
+	FormatHHMMSS(newRtAscen_Hours, timeString, false);
+
+	//*	create the LX200 command SrHH:MM:SS
+	strcpy(commandString, "Sr");
+	strcat(commandString, timeString);
+	AddCmdToQueue(commandString);
+
+	//-------------------------------------------------
+
+	FormatHHMMSS(newDeclination_Degrees, timeString, true);
+
+	//*	create the LX200 command SdsDD*MM
+	strcpy(commandString, "Sd");
+	strcat(commandString, timeString);
+	AddCmdToQueue(commandString);
+
+	//*	Slew command
+	//*	:MS# Slew to Target Object
+	//		Returns:
+	//		0				Slew is Possible
+	//		1<string>#		Object Below Horizon w/string message
+	//		2<string>#		Object Below Higher w/string message
+	AddCmdToQueue("MS");
+
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+//*	:SrHH:MM.T#
+//*	:SrHH:MM:SS#
+//*	Set target object RA to HH:MM.T or HH:MM:SS depending on the current precision setting.
+//*	Returns:
+//*	0 – Invalid
+//*	1 - Valid
+//*
+//*	:SdsDD*MM#
+//*	Set target object declination to sDD*MM or sDD*MM:SS depending on the current precision setting
+//*	Returns:
+//*	1 - Dec Accepted
+//*	0 – Dec invalid
+//*
+//*	:CM#
+//*	Synchronizes the telescope's position with the currently selected database object's coordinates.
+//*	Returns:
+//*	LX200's - a "#" terminated string with the name of the object that was synced.
+//*****************************************************************************
+TYPE_ASCOM_STATUS	TelescopeDriverLX200::Telescope_SyncToRA_DEC(	const double	newRtAscen_Hours,
+																	const double	newDeclination_Degrees,
+																	char *alpacaErrMsg)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
+char				timeString[32];
+char				commandString[48];
+
+	FormatHHMMSS(newRtAscen_Hours, timeString, false);
+
+	//*	create the LX200 command SrHH:MM:SS
+	strcpy(commandString, "Sr");
+	strcat(commandString, timeString);
+	AddCmdToQueue(commandString);
+
+	//-------------------------------------------------
+
+	FormatHHMMSS(newDeclination_Degrees, timeString, true);
+
+	//*	create the LX200 command SdsDD*MM
+	strcpy(commandString, "Sd");
+	strcat(commandString, timeString);
+	AddCmdToQueue(commandString);
+
+	//*	syncCommand
+	//*	:CM# Synchronizes the telescope's position with the currently selected database object's coordinates
+	AddCmdToQueue("CM");
+
+
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	TelescopeDriverLX200::Telescope_TrackingOnOff(const bool newTrackingState, char *alpacaErrMsg)
+{
+TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
+
+	if (newTrackingState)
+	{
+		AddCmdToQueue("TQ");
+		alpacaErrCode	=	kASCOM_Err_Success;
+	}
+	else
+	{
+		alpacaErrCode	=	kASCOM_Err_NotImplemented;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
+
+	}
+	return(alpacaErrCode);
+}
+
+#if 0
+//*****************************************************************************
+void	TelescopeDriverLX200::AddCmdToLX200queue(const char *cmdString)
+{
+	CONSOLE_DEBUG_W_STR("cmdString\t\t=", cmdString);
+	if (cQueuedCmdCnt < kMaxTelescopeCmds)
+	{
+		strcpy(cCmdQueue[cQueuedCmdCnt].cmdString, cmdString);
+		cQueuedCmdCnt++;
+	}
+}
+#endif // 0
+
 
 //*****************************************************************************
 static bool	CheckForValidResponse(const char *lx200ResponseString)

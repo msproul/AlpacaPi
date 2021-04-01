@@ -1,11 +1,15 @@
 //*****************************************************************************
 //*	Feb 11,	2020	<MLS> Created serialport.c
+//*	Mar 31,	2021	<MLS> Added Serial_Set_Blocking()
+//*	Mar 31,	2021	<MLS> Changed Set_Serial_attribs() to Serial_Set_Attribs()
+//*	Mar 31,	2021	<MLS> Added Serial_Send_Data()
 //*****************************************************************************
 
+#include	<errno.h>
 #include	<stdint.h>
 #include	<fcntl.h>
 #include	<termios.h>
-#include	<errno.h>
+#include	<stdbool.h>
 
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
@@ -17,7 +21,7 @@
 //*****************************************************************************
 //	https://stackoverflow.com/questions/6947413/how-to-open-read-and-write-from-serial-port-in-c
 //*****************************************************************************
-int	Set_Serial_attribs(int fd, int speed, int parity)
+int	Serial_Set_Attribs(int fd, int speed, int parity)
 {
 struct termios tty;
 int		tcReturnCode;
@@ -69,3 +73,54 @@ int		myReturnCode;
 	return(myReturnCode);
 }
 
+
+
+//*****************************************************************************
+void	Serial_Set_Blocking(int fd, int should_block)
+{
+struct termios tty;
+
+	memset (&tty, 0, sizeof tty);
+	if (tcgetattr (fd, &tty) != 0)
+	{
+		CONSOLE_DEBUG_W_NUM ("error %d from tggetattr", errno);
+		return;
+	}
+
+	tty.c_cc[VMIN]	=	should_block ? 1 : 0;
+//	tty.c_cc[VTIME]	=	5;            // 0.5 seconds read timeout
+	tty.c_cc[VTIME]	=	20;            // 0.5 seconds read timeout
+
+	if (tcsetattr(fd, TCSANOW, &tty) != 0)
+	{
+		CONSOLE_DEBUG_W_NUM ("error %d setting term attributes", errno);
+	}
+}
+
+//*****************************************************************************
+int	Serial_Send_Data(int fd, const char *xmitData, bool waitFlag)
+{
+ssize_t	bytesWritten;
+size_t	byteCount;
+
+	CONSOLE_DEBUG_W_STR("Sending\t=", xmitData);
+
+	byteCount		=	strlen(xmitData);
+	bytesWritten	=	write (fd, xmitData, byteCount);           // send 7 character greeting
+
+	if (waitFlag)
+	{
+		usleep (byteCount * 100);	// sleep enough to transmit the data, approx 100 uS per char transmit
+	}
+	return(bytesWritten);
+}
+
+//*****************************************************************************
+int	Serial_Read_Data(int fd, const char *recvData, size_t maxDataLen)
+{
+ssize_t	bytesRead;
+
+	bytesRead	=	read (fd, recvData, maxDataLen);
+
+	return(bytesRead);
+}

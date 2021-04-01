@@ -202,7 +202,6 @@ char		moonPhaseStr[64];
 
 	currentMilliSecs	=	millis();
 	deltaMilliSecs		=	currentMilliSecs - cLastUpdateTime_ms;
-//	if (cFirstRead || (deltaMilliSecs > 60000))
 	if (cFirstRead || (deltaMilliSecs > 5000))
 	{
 		GetCurrentMoonPhase(moonPhaseStr);
@@ -354,7 +353,7 @@ int			iii;
 	//strcat(cFitsHeaderBuffer, "END\r");		//* terminate listing with END
 	fits_close_file(fptr, &status);
 
-	CONSOLE_DEBUG_W_NUM("bufflen=", strlen(cFitsHeaderBuffer));
+	CONSOLE_DEBUG_W_LONG("bufflen=", strlen(cFitsHeaderBuffer));
 	CONSOLE_DEBUG(__FUNCTION__);
 }
 

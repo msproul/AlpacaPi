@@ -419,6 +419,7 @@ int					keyPressed;
 #endif // _ENABLE_NET_TEST_
 
 #ifdef _ENABLE_SKYTRAVEL_
+	#error "this probably can be deleted"
 	new ControllerImage("SkyTravel", NULL);
 	objectsCreated++;
 #endif // _ENABLE_SKYTRAVEL_
@@ -495,21 +496,4 @@ bool	windowExists;
 	}
 	return(windowExists);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

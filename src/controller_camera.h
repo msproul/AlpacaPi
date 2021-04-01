@@ -91,6 +91,7 @@ class ControllerCamera: public Controller
 
 		//*	this is a large list of update routines, they should be implemented in the subclass
 		virtual	void	UpdateCameraGain(const TYPE_ASCOM_STATUS lastAlpacaErr = kASCOM_Err_Success);
+		virtual	void	UpdateCameraOffset(const TYPE_ASCOM_STATUS lastAlpacaErr = kASCOM_Err_Success);
 		virtual	void	UpdateCameraExposure(void);
 		virtual	void	UpdateCameraName(void);
 		virtual	void	UpdateCameraSize(void);
@@ -143,6 +144,9 @@ class ControllerCamera: public Controller
 
 				void	BumpGain(const int howMuch);
 				void	SetGain(const int newGain);
+
+				void	BumpOffset(const int howMuch);
+				void	SetOffset(const int newOffset);
 
 				void	ToggleLiveMode(void);
 				void	ToggleSideBar(void);

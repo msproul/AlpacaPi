@@ -191,7 +191,7 @@ int		readCnt;
 
 	//*	set the baud rate to 57600
 	//*	also sets timeout
-	Set_Serial_attribs(moonliteCom->fileDesc, B57600, 0);
+	Serial_Set_Attribs(moonliteCom->fileDesc, B57600, 0);
 	tryCounter		=	0;
 	failureCnt		=	0;
 	isNiteCrawler	=	false;
@@ -305,7 +305,7 @@ int		readCnt;
 
 	//*	set the baud rate to 9600
 	//*	also sets timeout
-	Set_Serial_attribs(moonliteCom->fileDesc, B9600, 0);
+	Serial_Set_Attribs(moonliteCom->fileDesc, B9600, 0);
 
 	moonliteCom->model	=	kMoonLite_HighRes;
 
@@ -377,7 +377,7 @@ bool	isHighRes;
 		}
 		if (isNiteCrawler == false)
 		{
-			Set_Serial_attribs(moonliteCom->fileDesc, B9600, 0);
+			Serial_Set_Attribs(moonliteCom->fileDesc, B9600, 0);
 		//	sleep(5);
 			isHighRes	=	MoonLite_CheckIfHighRes(moonliteCom);
 			CONSOLE_DEBUG_W_STR("moonliteCom->deviceModelString\t=",	moonliteCom->deviceModelString);

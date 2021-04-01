@@ -32,6 +32,8 @@
 //*	Feb 14,	2021	<MLS> Slider now working for exposure
 //*	Feb 14,	2021	<MLS> Slider now working for gain
 //*	Mar 13,	2021	<MLS> Added support for savel all images ToggleSaveAll()
+//*	Mar 27,	2021	<MLS> Added BumpOffset()
+//*	Mar 27,	2021	<MLS> Offset slider fully working
 //*****************************************************************************
 
 #ifdef _ENABLE_CTRL_CAMERA_
@@ -71,6 +73,7 @@ WindowTabCamera::WindowTabCamera(	const int	xSize,
 
 	cLastExposureUpdate_Millis	=	0;
 	cLastGainUpdate_Millis		=	0;
+	cLastOffsetUpdate_Millis	=	0;
 
 	SetupWindowControls();
 }
@@ -214,6 +217,36 @@ IplImage	*logoImage;
 	SetWidgetText(	kCameraBox_Gain_Label,	"Gain");
 	yLoc			+=	cSmIconSize * 2;
 	yLoc			+=	5;
+
+
+	//=======================================================
+	//*	Offset with slider
+	SetWidget(			kCameraBox_Offset_Label,	cClm1_offset,	yLoc,		cClmWidth,		cRadioBtnHt	);
+	SetWidget(			kCameraBox_Offset_Slider,	cClm2_offset,	yLoc,		sliderWidth,	cRadioBtnHt	);
+	SetWidget(			kCameraBox_Offset,			valueXloc,		yLoc,		valueWidth,		cRadioBtnHt	);
+	SetWidget(			kCameraBox_Offset_Up,		updownXloc,	yLoc -2,			cSmIconSize,	cSmIconSize);
+	SetWidget(			kCameraBox_Offset_Down,		updownXloc,	yLoc + cSmIconSize,	cSmIconSize,	cSmIconSize);
+	SetWidgetBGColor(	kCameraBox_Offset_Up,		CV_RGB(255,	255,	255));
+	SetWidgetBGColor(	kCameraBox_Offset_Down,		CV_RGB(255,	255,	255));
+
+	SetWidgetBorderColor(kCameraBox_Offset_Up,		CV_RGB(0,	0,	0));
+	SetWidgetBorderColor(kCameraBox_Offset_Down,	CV_RGB(0,	0,	0));
+
+	SetWidgetIcon(		kCameraBox_Offset_Up,		kIcon_UpArrow);
+	SetWidgetIcon(		kCameraBox_Offset_Down,		kIcon_DownArrow);
+	SetWidgetTextColor(	kCameraBox_Offset_Up,		CV_RGB(255,	0,	0));
+	SetWidgetTextColor(	kCameraBox_Offset_Down,		CV_RGB(255,	0,	0));
+
+
+	SetWidgetType(		kCameraBox_Offset_Slider,	kWidgetType_Slider);
+	SetWidgetFont(		kCameraBox_Offset_Label,	kFont_Small);
+	SetWidgetFont(		kCameraBox_Offset_Slider,	kFont_Small);
+	SetWidgetFont(		kCameraBox_Offset,			kFont_Small);
+	SetWidgetText(		kCameraBox_Offset_Label,	"Offset");
+	yLoc			+=	cSmIconSize * 2;
+	yLoc			+=	5;
+
+
 
 	//=======================================================
 	//*	Camera state (idle, waiting, etc)
@@ -510,6 +543,14 @@ int			fwPosition;
 	SetWidgetText(kCameraBox_ErrorMsg, "");
 	switch(buttonIdx)
 	{
+		case kCameraBox_Exposure_Up:
+			BumpExposure(0.001);
+			break;
+
+		case kCameraBox_Exposure_Down:
+			BumpExposure(-0.001);
+			break;
+
 		case kCameraBox_Gain_Up:
 			BumpGain(1);
 			break;
@@ -518,13 +559,14 @@ int			fwPosition;
 			BumpGain(-1);
 			break;
 
-		case kCameraBox_Exposure_Up:
-			BumpExposure(0.001);
+		case kCameraBox_Offset_Up:
+			BumpOffset(1);
 			break;
 
-		case kCameraBox_Exposure_Down:
-			BumpExposure(-0.001);
+		case kCameraBox_Offset_Down:
+			BumpOffset(-1);
 			break;
+
 
 		case kCameraBox_ReadMode0:
 		case kCameraBox_ReadMode1:
@@ -664,6 +706,20 @@ int					newSliderValue_int;
 				cLastGainUpdate_Millis	=	millis();
 			}
 			break;
+
+		case kCameraBox_Offset_Slider:
+			deltaMilliSecs	=	currentMillis - cLastOffsetUpdate_Millis;
+			if (deltaMilliSecs > 4)
+			{
+				if (myCameraController != NULL)
+				{
+					newSliderValue_int	=	newSliderValue;
+					myCameraController->SetOffset(newSliderValue_int);
+				}
+				cLastOffsetUpdate_Millis	=	millis();
+			}
+			break;
+
 	}
 
 	ForceUpdate();
@@ -681,25 +737,6 @@ ControllerCamera	*myCameraController;
 	if (myCameraController != NULL)
 	{
 		myCameraController->cForceAlpacaUpdate	=	true;
-	}
-	else
-	{
-		CONSOLE_DEBUG("myCameraController is NULL");
-	}
-}
-
-
-//*****************************************************************************
-void	WindowTabCamera::BumpGain(const int howMuch)
-{
-ControllerCamera	*myCameraController;
-
-//	CONSOLE_DEBUG(__FUNCTION__);
-	myCameraController	=	(ControllerCamera *)cParentObjPtr;
-
-	if (myCameraController != NULL)
-	{
-		myCameraController->BumpGain(howMuch);
 	}
 	else
 	{
@@ -725,6 +762,41 @@ ControllerCamera	*myCameraController;
 	}
 }
 
+//*****************************************************************************
+void	WindowTabCamera::BumpGain(const int howMuch)
+{
+ControllerCamera	*myCameraController;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+	myCameraController	=	(ControllerCamera *)cParentObjPtr;
+
+	if (myCameraController != NULL)
+	{
+		myCameraController->BumpGain(howMuch);
+	}
+	else
+	{
+		CONSOLE_DEBUG("myCameraController is NULL");
+	}
+}
+
+//*****************************************************************************
+void	WindowTabCamera::BumpOffset(const int howMuch)
+{
+ControllerCamera	*myCameraController;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+	myCameraController	=	(ControllerCamera *)cParentObjPtr;
+
+	if (myCameraController != NULL)
+	{
+		myCameraController->BumpOffset(howMuch);
+	}
+	else
+	{
+		CONSOLE_DEBUG("myCameraController is NULL");
+	}
+}
 
 //*****************************************************************************
 void	WindowTabCamera::ToggleLiveMode(void)

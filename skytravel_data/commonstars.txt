@@ -141,3 +141,17 @@ Grumium					87585
 ######################################
 #	Perseus
 Atik					17448
+
+
+######################################
+#	Orion
+Meissa					26207
+X1-Ori					27913
+X2-Ori					28716
+
+
+######################################
+#	Bootes
+#	Alkalurops is a double star consisting of u1-Boo and u2-Boo,  using u1
+Alkalurops				75411
+

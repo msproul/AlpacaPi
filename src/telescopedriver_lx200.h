@@ -36,13 +36,7 @@
 #endif
 
 void	CreateTelescopeLX200Objects(void);
-//*****************************************************************************
-typedef struct
-{
-	char	cmdString[32];
-} TYPE_LX200CmdQue;
 
-#define	kMaxLX200Cmds	16
 
 //**************************************************************************************
 class TelescopeDriverLX200: public TelescopeDriverComm
@@ -82,7 +76,7 @@ class TelescopeDriverLX200: public TelescopeDriverComm
 															char *alpacaErrMsg);
 
 
-				void			AddCmdToLX200queue(const char *cmdString);
+//-				void			AddCmdToLX200queue(const char *cmdString);
 				bool			Process_GR_RtAsc(char *dataBuffer);
 				bool			Process_GD(char *dataBuffer);
 				bool			Process_GT(char *dataBuffer);
@@ -93,9 +87,6 @@ class TelescopeDriverLX200: public TelescopeDriverComm
 				char			cTelescopeRA_String[32];
 				char			cTelescopeDecl_String[32];
 
-
-
-				TYPE_LX200CmdQue	cLX200CmdQueue[kMaxLX200Cmds];
 
 
 };

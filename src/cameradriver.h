@@ -392,6 +392,11 @@ class CameraDriver: public AlpacaDriver
 		TYPE_ASCOM_STATUS	Get_Offset(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
 		TYPE_ASCOM_STATUS	Put_Offset(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 
+		TYPE_ASCOM_STATUS	Get_OffsetMax(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+		TYPE_ASCOM_STATUS	Get_OffsetMin(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+		TYPE_ASCOM_STATUS	Get_Offsets(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+
+
 		TYPE_ASCOM_STATUS	Get_PercentCompleted(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
 
 		TYPE_ASCOM_STATUS	Get_PixelSizeX(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
@@ -502,7 +507,7 @@ class CameraDriver: public AlpacaDriver
 				void	WriteFITS_MoonInfo(			fitsfile *fitsFilePtr);
 
 				TYPE_ASCOM_STATUS	Get_FitsHeader(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
-				int		ExtractFitsHeader(fitsfile *fitsFilePtr);
+				int					ExtractFitsHeader(fitsfile *fitsFilePtr);
 				TYPE_FITS_RECORD	cFitsHeader[kMaxFitsRecords];
 
 			#endif // _ENABLE_FITS_
@@ -516,8 +521,10 @@ class CameraDriver: public AlpacaDriver
 
 	public:
 	#ifdef _USE_OPENCV_
-		void			DisplayLiveImage(void);
+		void			OpenLiveImage(void);
 		void			CloseLiveImage(void);
+
+		void			DisplayLiveImage(void);
 		void			DisplayLiveImage_wSideBar(void);
 		void			DrawSidebar(IplImage *imageDisplay);
 		int				CreateOpenCVImage(const unsigned char *imageDataPtr);
@@ -558,6 +565,9 @@ class CameraDriver: public AlpacaDriver
 
 		virtual	TYPE_ASCOM_STATUS	Write_Gain(const int newGainValue);
 		virtual	TYPE_ASCOM_STATUS	Read_Gain(int *cameraGainValue);
+
+		virtual	TYPE_ASCOM_STATUS	Write_Offset(const int newOffsetValue);
+		virtual	TYPE_ASCOM_STATUS	Read_Offset(int *cameraOffsetValue);
 
 		virtual	TYPE_ASCOM_STATUS	Start_Video(void);
 		virtual	TYPE_ASCOM_STATUS	Stop_Video(void);

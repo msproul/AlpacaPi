@@ -50,6 +50,8 @@
 //*	Jan 29,	2021	<MLS> Added support for RANK=3 in DownloadImage_imagearray()
 //*	Feb 14,	2021	<MLS> Added SetExposure() and SetGain()
 //*	Feb 18,	2021	<MLS> Added Added AlpacaGetStatus_Gain() & AlpacaGetStatus_Exposure()
+//*	Mar 27,	2021	<MLS> Added UpdateCameraOffset()
+//*	Mar 27,	2021	<MLS> Added SetOffset() & BumpOffset()
 //*****************************************************************************
 //*	Jan  1,	2121	<TODO> control key for different step size.
 //*	Jan  1,	2121	<TODO> work on fits view to handle color fits images
@@ -395,6 +397,11 @@ void	ControllerCamera::UpdateCameraGain(const TYPE_ASCOM_STATUS lastAlpacaErr)
 	CONSOLE_DEBUG("this routine should be overloaded");
 }
 //*****************************************************************************
+void	ControllerCamera::UpdateCameraOffset(const TYPE_ASCOM_STATUS lastAlpacaErr)
+{
+	CONSOLE_DEBUG("this routine should be overloaded");
+}
+//*****************************************************************************
 void	ControllerCamera::UpdateCameraExposure(void)
 {
 	CONSOLE_DEBUG("this routine should be overloaded");
@@ -616,12 +623,23 @@ int				readOutModeIdx;
 	validData	=	AlpacaGetIntegerValue("camera", "cameraysize",	NULL,	&cCameraProp.CameraYsize);
 	UpdateCameraSize();
 
+	//-----------------------------------------------------------------
+	//*	deal with the GAIN information
 	validData	=	AlpacaGetIntegerValue("camera", "gain",			NULL,	&cCameraProp.Gain);
 	validData	=	AlpacaGetIntegerValue("camera", "gainmin",		NULL,	&cCameraProp.GainMin);
 	validData	=	AlpacaGetIntegerValue("camera", "gainmax",		NULL,	&cCameraProp.GainMax);
 //	CONSOLE_DEBUG_W_NUM("cLastAlpacaErrNum\t", cLastAlpacaErrNum);
 //	CONSOLE_DEBUG_W_STR("cLastAlpacaErrStr\t", cLastAlpacaErrStr);
 	UpdateCameraGain(cLastAlpacaErrNum);
+
+	//-----------------------------------------------------------------
+	//*	deal with the OFFSET information
+	validData	=	AlpacaGetIntegerValue("camera", "offset",			NULL,	&cCameraProp.Offset);
+	validData	=	AlpacaGetIntegerValue("camera", "offsetmin",		NULL,	&cCameraProp.OffsetMin);
+	validData	=	AlpacaGetIntegerValue("camera", "offsetmax",		NULL,	&cCameraProp.OffsetMax);
+	UpdateCameraOffset(cLastAlpacaErrNum);
+
+
 
 
 	validData	=	AlpacaGetDoubleValue("camera", "exposuremin",	NULL,	&cCameraProp.ExposureMin_seconds);
@@ -942,6 +960,13 @@ void	ControllerCamera::AlpacaProcessReadAll(	const char	*deviceTypeStr,
 		//=================================================================================
 		//*	livemode
 		cLiveMode	=	IsTrueFalse(valueString);
+	}
+	else if (strcasecmp(keywordString, "offset") == 0)
+	{
+		//=================================================================================
+		//*	offset
+		cCameraProp.Offset	=	atoi(valueString);
+		UpdateCameraOffset();
 	}
 	else if (strcasecmp(keywordString, "readoutmode") == 0)
 	{
@@ -1422,7 +1447,6 @@ bool	validData;
 
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 
-
 	sprintf(dataString, "Gain=%d", newGainValue);
 	validData		=	AlpacaSendPutCmd(	"camera",
 											"gain",
@@ -1431,9 +1455,7 @@ bool	validData;
 	{
 		CONSOLE_DEBUG_W_STR("Failed to get data, Req=", dataString)
 	}
-
 }
-
 
 //*****************************************************************************
 void	ControllerCamera::BumpGain(const int howMuch)
@@ -1446,6 +1468,36 @@ int		newGainValue;
 	newGainValue	=	cCameraProp.Gain + howMuch;
 	SetGain(newGainValue);
 }
+
+//*****************************************************************************
+void	ControllerCamera::SetOffset(const int newOffsetValue)
+{
+char	dataString[48];
+bool	validData;
+
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+
+	sprintf(dataString, "offset=%d", newOffsetValue);
+	validData		=	AlpacaSendPutCmd(	"camera",
+											"offset",
+											dataString);
+	if (validData == false)
+	{
+		CONSOLE_DEBUG_W_STR("Failed to get data, Req=", dataString)
+	}
+}
+
+//*****************************************************************************
+void	ControllerCamera::BumpOffset(const int howMuch)
+{
+int		newOffsetValue;
+
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+
+	newOffsetValue	=	cCameraProp.Offset + howMuch;
+	SetOffset(newOffsetValue);
+}
+
 
 //*****************************************************************************
 void	ControllerCamera::SetExposure(const double newExposure)

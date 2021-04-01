@@ -318,16 +318,16 @@ void	ControllerCamNormal::UpdateCurrReadoutMode(void)
 //*****************************************************************************
 void	ControllerCamNormal::UpdateCameraGain(const TYPE_ASCOM_STATUS lastAlpacaErr)
 {
-	if (lastAlpacaErr == kASCOM_Err_PropertyNotImplemented)
-	{
-		SetWidgetType(	kTab_Camera, kCameraBox_Gain_Slider, kWidgetType_Text);
-		SetWidgetText(	kTab_Camera, kCameraBox_Gain_Slider, "Gain not implemented");
-	}
-	else
+	if (lastAlpacaErr == kASCOM_Err_Success)
 	{
 		SetWidgetSliderLimits(	kTab_Camera, kCameraBox_Gain_Slider, cCameraProp.GainMin, cCameraProp.GainMax);
 		SetWidgetSliderValue(	kTab_Camera, kCameraBox_Gain_Slider, cCameraProp.Gain);
 		SetWidgetNumber(		kTab_Camera, kCameraBox_Gain, cCameraProp.Gain);
+	}
+	else
+	{
+		SetWidgetType(	kTab_Camera, kCameraBox_Gain_Slider, kWidgetType_Text);
+		SetWidgetText(	kTab_Camera, kCameraBox_Gain_Slider, "Gain not implemented");
 	}
 	cUpdateWindow	=	true;
 }
@@ -340,6 +340,26 @@ void	ControllerCamNormal::UpdateCameraExposure(void)
 	SetWidgetSliderValue(	kTab_Camera, kCameraBox_Exposure_Slider,	cExposure);
 	SetWidgetNumber(		kTab_Camera, kCameraBox_Exposure,			cExposure);
 
+	cUpdateWindow	=	true;
+}
+
+//*****************************************************************************
+void	ControllerCamNormal::UpdateCameraOffset(const TYPE_ASCOM_STATUS lastAlpacaErr)
+{
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+
+	if (lastAlpacaErr == kASCOM_Err_Success)
+	{
+		SetWidgetSliderLimits(	kTab_Camera, kCameraBox_Offset_Slider, cCameraProp.OffsetMin, cCameraProp.OffsetMax);
+		SetWidgetSliderValue(	kTab_Camera, kCameraBox_Offset_Slider, cCameraProp.Offset);
+		SetWidgetNumber(		kTab_Camera, kCameraBox_Offset, cCameraProp.Offset);
+	}
+	else
+	{
+		CONSOLE_DEBUG_W_NUM("lastAlpacaErr\t=", lastAlpacaErr);
+		SetWidgetType(	kTab_Camera, kCameraBox_Offset_Slider, kWidgetType_Text);
+		SetWidgetText(	kTab_Camera, kCameraBox_Offset_Slider, "Offset not implemented");
+	}
 	cUpdateWindow	=	true;
 }
 

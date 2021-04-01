@@ -81,6 +81,7 @@
 //*	Jan 20,	2021	<MLS> Added ExtractFitsHeader()
 //*	Feb  5,	2021	<MLS> Started working on NEON support for image processing
 //*	Feb  5,	2021	<MLS> Added NEON_Deinterleave_RGB()
+//*	Mar 27,	2021	<MLS> Added OFFSET value to FITS header
 //*****************************************************************************
 
 #if defined(_ENABLE_CAMERA_) && defined(_ENABLE_FITS_)
@@ -923,6 +924,7 @@ char	instrumentString[128];
 	fitsStatus	=	0;
 	fits_write_key(fitsFilePtr, TINT,		"YBINNING",	&cCameraProp.BinY,	NULL, &fitsStatus);
 
+	//*	record the Electrons per ADU, if present
 	if (cCameraProp.ElectronsPerADU > 0.0)
 	{
 		fitsStatus	=	0;
@@ -932,12 +934,29 @@ char	instrumentString[128];
 												&fitsStatus);
 	}
 
-	sprintf(stringBuf, "Camera gain [%d:%d]", cCameraProp.GainMin, cCameraProp.GainMax);
-	fitsStatus	=	0;
-	fits_write_key(fitsFilePtr,		TINT,		"GAIN",
-												&cCameraProp.Gain,
-												stringBuf,
-												&fitsStatus);
+	//*	record the camera gain, if present
+	if (cCameraProp.GainMax > 0)
+	{
+		sprintf(stringBuf, "Camera gain [%d:%d]", cCameraProp.GainMin, cCameraProp.GainMax);
+		fitsStatus	=	0;
+		fits_write_key(fitsFilePtr,		TINT,		"GAIN",
+													&cCameraProp.Gain,
+													stringBuf,
+													&fitsStatus);
+	}
+
+	//*	record the pixel offset, if present
+	if (cCameraProp.OffsetMax > 0)
+	{
+		sprintf(stringBuf, "Camera offset [%d:%d]", cCameraProp.OffsetMin, cCameraProp.OffsetMax);
+		fitsStatus	=	0;
+		fits_write_key(fitsFilePtr,		TINT,		"OFFSET",
+													&cCameraProp.Offset,
+													stringBuf,
+													&fitsStatus);
+	}
+
+
 
 	//*	ATIK dusk software uses this keyword
 	fitsStatus	=	0;
@@ -2209,42 +2228,45 @@ unsigned char	*bluBufPtr;
 				bluBufPtr[pp]	=	cCameraDataBuffer[ii++];
 			}
 			DEBUG_TIMING("Using CPU to Deinterleave");
+
+		#ifdef __ARM_NEON
+			//*	at the moment, we are duplicating the effort for testing
+			//*	then we are comparing the 2 buffers to make sure they are the same
+			unsigned char	*neonBFRbuffer;
+			int				diffCnt;
+
+				CONSOLE_DEBUG("NEON instructions set is available");
+
+				neonBFRbuffer	=		(unsigned char *)malloc(frameBufSize * 3);
+				if (neonBFRbuffer != NULL)
+				{
+					bluBufPtr	=	neonBFRbuffer;
+					grnBufPtr	=	neonBFRbuffer + frameBufSize;
+					redBufPtr	=	neonBFRbuffer + frameBufSize + frameBufSize;
+					NEON_Deinterleave_RGB(cCameraDataBuffer, redBufPtr, grnBufPtr, bluBufPtr, frameBufSize);
+					//*	now lets check to see if its the same
+					diffCnt	=	0;
+					for (ii=0; ii<(frameBufSize * 3); ii++)
+					{
+						if ((neonBFRbuffer[ii] & 0x00ff) != ((cCameraBGRbuffer[ii] & 0x00ff)))
+						{
+							diffCnt++;
+						}
+					}
+					CONSOLE_DEBUG_W_NUM("NEON diff count\t=", diffCnt);
+					free(neonBFRbuffer);
+				}
+				else
+				{
+					CONSOLE_DEBUG("Failed to allocate neonBFRbuffer");
+				}
+
+		#endif // __ARM_NEON
 		}
 		else
 		{
 			CONSOLE_DEBUG("Failed to allocated cCameraBGRbuffer");
 		}
-	#ifdef __ARM_NEON
-		unsigned char	*neonBFRbuffer;
-		int				diffCnt;
-
-			CONSOLE_DEBUG("NEON instructions set is available");
-
-			neonBFRbuffer	=		(unsigned char *)malloc(frameBufSize * 3);
-			if (neonBFRbuffer != NULL)
-			{
-				bluBufPtr	=	neonBFRbuffer;
-				grnBufPtr	=	neonBFRbuffer + frameBufSize;
-				redBufPtr	=	neonBFRbuffer + frameBufSize + frameBufSize;
-				NEON_Deinterleave_RGB(cCameraDataBuffer, redBufPtr, grnBufPtr, bluBufPtr, frameBufSize);
-				//*	now lets check to see if its the same
-				diffCnt	=	0;
-                for (ii=0; ii<(frameBufSize * 3); ii++)
-                {
-					if ((neonBFRbuffer[ii] & 0x00ff) != ((cCameraBGRbuffer[ii] & 0x00ff)))
-					{
-						diffCnt++;
-					}
-                }
-				CONSOLE_DEBUG_W_NUM("NEON diff count\t=", diffCnt);
-				free(neonBFRbuffer);
-			}
-			else
-			{
-				CONSOLE_DEBUG("Failed to allocate neonBFRbuffer");
-			}
-
-	#endif // __ARM_NEON
 
 	}
 	CONSOLE_DEBUG(__FUNCTION__);

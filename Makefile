@@ -404,7 +404,7 @@ tele		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
 tele	:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
 tele	:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_LX200_
 tele	:		DEFINEFLAGS		+=	-D_ENABLE_LX200_COM_
-tele	:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_SKYWATCH_
+#tele	:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_SKYWATCH_
 tele	:			$(CPP_OBJECTS)				\
 					$(ALPACA_OBJECTS)			\
 					$(SOCKET_OBJECTS)			\
@@ -420,6 +420,27 @@ tele	:			$(CPP_OBJECTS)				\
 					-lpthread					\
 					-o alpacapi-telescope
 
+######################################################################################
+#pragma mark make eq6
+eq6		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
+eq6		:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
+#eq6	:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_LX200_
+#eq6	:		DEFINEFLAGS		+=	-D_ENABLE_LX200_COM_
+eq6		:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_SKYWATCH_
+eq6		:			$(CPP_OBJECTS)				\
+					$(ALPACA_OBJECTS)			\
+					$(SOCKET_OBJECTS)			\
+
+
+		$(LINK)  								\
+					$(SOCKET_OBJECTS)			\
+					$(CPP_OBJECTS)				\
+					$(ALPACA_OBJECTS)			\
+					$(OPENCV_LINK)				\
+					-ludev						\
+					-lusb-1.0					\
+					-lpthread					\
+					-o alpacapi-eq6
 
 ######################################################################################
 #pragma mark make toup
@@ -999,11 +1020,12 @@ manag		:		$(CPP_OBJECTS)				\
 					-o alpacapi
 
 ######################################################################################
+#make newt16
 #pragma mark Newt 16 C++ Raspberry pi
 newt16		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
 newt16		:		DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_
 newt16		:		DEFINEFLAGS		+=	-D_ENABLE_ROTATOR_
-#newt16		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_
+newt16		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_
 #newt16		:		DEFINEFLAGS		+=	-D_ENABLE_SAFETYMONITOR_
 #newt16		:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_
 #newt16		:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_

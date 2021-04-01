@@ -53,6 +53,9 @@ class CameraDriverASI: public CameraDriver
 		virtual	TYPE_ASCOM_STATUS		Write_Gain(const int newGainValue);
 		virtual	TYPE_ASCOM_STATUS		Read_Gain(int *cameraGainValue);
 
+		virtual	TYPE_ASCOM_STATUS		Write_Offset(const int newOffsetValue);
+		virtual	TYPE_ASCOM_STATUS		Read_Offset(int *cameraOffsetValue);
+
 		virtual	TYPE_ASCOM_STATUS		Start_Video(void);
 		virtual	TYPE_ASCOM_STATUS		Stop_Video(void);
 		virtual	TYPE_ASCOM_STATUS		Take_Video(void);

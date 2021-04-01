@@ -16,6 +16,7 @@
 //*	<MLS>	=	Mark L Sproul
 //*****************************************************************************
 //*	Feb  7,	2021	<MLS> Created telescopedriver_comm.h
+//*	Mar 31,	2021	<MLS> Moved command queue struct into telescopedriver_comm class
 //*****************************************************************************
 //#include	"telescopedriver_comm.h"
 
@@ -29,6 +30,18 @@
 #endif
 
 void	CreateTelescopeObjects(void);
+
+
+//*****************************************************************************
+typedef struct
+{
+	int		cmdID;			//*	this is so the drive can keep track of what the command was
+							//*	so the response can be processed properly
+							//*	it is up to the subclass to define this value
+	char	cmdString[32];
+} TYPE_TelescopeCmdQue;
+#define	kMaxTelescopeCmds	16
+
 
 
 //**************************************************************************************
@@ -69,6 +82,7 @@ class TelescopeDriverComm: public TelescopeDriver
 		virtual	bool	StartThread(void);
 		virtual	void	StopThread(void);
 		virtual	void	*RunThread(void);
+		virtual	void	AddCmdToQueue(const char *cmdString);
 		virtual	bool	SendCmdsFromQueue(void);
 		virtual	bool	SendCmdsPeriodic(void);
 
@@ -94,6 +108,7 @@ class TelescopeDriverComm: public TelescopeDriver
 				//---------------------------------
 				//*	command queue
 				int						cQueuedCmdCnt;
+				TYPE_TelescopeCmdQue	cCmdQueue[kMaxTelescopeCmds];
 
 };
 

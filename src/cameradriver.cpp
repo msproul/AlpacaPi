@@ -145,6 +145,7 @@
 //*	Mar 16,	2021	<MLS> Added Abort_Exposure()
 //*	Mar 17,	2021	<MLS> Added Get_HeatSinkTemperature()
 //*	Mar 26,	2021	<MLS> Started working on "offset" support
+//*	Mar 26,	2021	<MLS> Added Get_OffsetMax(), Get_OffsetMin(), Get_Offsets()
 //*****************************************************************************
 //*	Jan  1,	2119	<TODO> ----------------------------------------
 //*	Jun 26,	2119	<TODO> Add support for sub frames
@@ -1039,11 +1040,16 @@ char				httpHeader[500];
 			break;
 
 		case kCmd_Camera_offsetmax:				//*	Returns the maximum value of offset.
-		case kCmd_Camera_offsetmin:				//*	Returns the Minimum value of offset.
-		case kCmd_Camera_offsets:				//*	Returns List of offset names supported by the camera
-			alpacaErrCode	=	kASCOM_Err_PropertyNotImplemented;
+			alpacaErrCode	=	Get_OffsetMax(reqData, alpacaErrMsg, gValueString);
 			break;
 
+		case kCmd_Camera_offsetmin:				//*	Returns the Minimum value of offset.
+			alpacaErrCode	=	Get_OffsetMin(reqData, alpacaErrMsg, gValueString);
+			break;
+
+		case kCmd_Camera_offsets:				//*	Returns List of offset names supported by the camera
+			alpacaErrCode	=	Get_Offsets(reqData, alpacaErrMsg, gValueString);
+			break;
 
 		case kCmd_Camera_percentcompleted:		//*	Indicates percentage completeness of the current operation
 			alpacaErrCode	=	Get_PercentCompleted(reqData, alpacaErrMsg, gValueString);
@@ -1636,7 +1642,7 @@ int					newBinValue;
 			if ((newBinValue >= 1) && (newBinValue <= cCameraProp.MaxbinX))
 			{
 				cCameraProp.BinX	=	newBinValue;
-				alpacaErrCode	=	kASCOM_Err_Success;
+				alpacaErrCode		=	kASCOM_Err_Success;
 			}
 			else
 			{
@@ -2268,6 +2274,7 @@ char				errorString[64];
 		if (foundKeyWord)
 		{
 			newValue	=	atoi(argumentString);
+			//*	ASCOM docs say to check these values ONLY at start exposure, how stupid
 		//	if ((newValue >= 1) && (newValue <= cCameraProp.CameraXsize))
 			if (1)
 			{
@@ -2314,6 +2321,7 @@ char				errorString[64];
 		if (foundKeyWord)
 		{
 			newValue	=	atoi(argumentString);
+			//*	ASCOM docs say to check these values ONLY at start exposure, how stupid
 //			if ((newValue >= 1) && (newValue <= cCameraYsize))
 			if (1)
 			{
@@ -2345,7 +2353,20 @@ TYPE_ASCOM_STATUS	CameraDriver::Get_Offset(TYPE_GetPutRequestData *reqData, char
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
 
-	alpacaErrCode	=	kASCOM_Err_PropertyNotImplemented;
+	if (reqData != NULL)
+	{
+		JsonResponse_Add_Int32(	reqData->socket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								responseString,		//gValueString,
+								cCameraProp.Offset,
+								INCLUDE_COMMA);
+		alpacaErrCode	=	kASCOM_Err_Success;
+	}
+	else
+	{
+		alpacaErrCode	=	kASCOM_Err_InternalError;
+	}
 
 	return(alpacaErrCode);
 }
@@ -2354,11 +2375,126 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
 TYPE_ASCOM_STATUS	CameraDriver::Put_Offset(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
+char				argumentString[32];
+bool				foundKeyWord;
+int					newValue;
 
+//	CONSOLE_DEBUG(__FUNCTION__);
+	if (reqData != NULL)
+	{
+		foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
+												"offset",
+												argumentString,
+												(sizeof(argumentString) -1));
+		if (foundKeyWord)
+		{
+			newValue		=	atoi(argumentString);
+			if ((newValue >= cCameraProp.OffsetMin) && (newValue <= cCameraProp.OffsetMax))
+			{
+				//*	we have a valid offset
+				alpacaErrCode	=	Write_Offset(newValue);
+				if (alpacaErrCode == kASCOM_Err_Success)
+				{
+					//*	save the new value
+					cCameraProp.Offset	=	newValue;
+				}
+				else
+				{
+					GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, cLastCameraErrMsg);
+					CONSOLE_DEBUG(alpacaErrMsg);
+				}
+
+			//*	debugging
+			//	if (1)
+			//	{
+			//	int	newOffsetValue;
+			//		alpacaErrCode	=	Read_Offset(&newOffsetValue);
+			//		CONSOLE_DEBUG_W_NUM("alpacaErrCode\t=",	alpacaErrCode);
+			//		CONSOLE_DEBUG_W_NUM("newOffsetValue\t=",	newOffsetValue);
+			//	}
+			}
+			else
+			{
+				alpacaErrCode	=	kASCOM_Err_InvalidValue;
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Offset value out of range");
+				CONSOLE_DEBUG(alpacaErrMsg);
+			}
+		}
+		else
+		{
+			//*	the keyword "offset" is missing
+			alpacaErrCode	=	kASCOM_Err_InvalidValue;
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Keyword 'offset' not found");
+			CONSOLE_DEBUG(alpacaErrMsg);
+		}
+	}
+	else
+	{
+		alpacaErrCode	=	kASCOM_Err_InternalError;
+	}
+
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	CameraDriver::Get_OffsetMax(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+	if (reqData != NULL)
+	{
+		JsonResponse_Add_Int32(	reqData->socket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								responseString,		//gValueString,
+								cCameraProp.OffsetMax,
+								INCLUDE_COMMA);
+		alpacaErrCode	=	kASCOM_Err_Success;
+	}
+	else
+	{
+		alpacaErrCode	=	kASCOM_Err_InternalError;
+	}
+
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	CameraDriver::Get_OffsetMin(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+	if (reqData != NULL)
+	{
+		JsonResponse_Add_Int32(	reqData->socket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								responseString,		//gValueString,
+								cCameraProp.OffsetMin,
+								INCLUDE_COMMA);
+		alpacaErrCode	=	kASCOM_Err_Success;
+	}
+	else
+	{
+		alpacaErrCode	=	kASCOM_Err_InternalError;
+	}
+
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	CameraDriver::Get_Offsets(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
 	alpacaErrCode	=	kASCOM_Err_PropertyNotImplemented;
 
 	return(alpacaErrCode);
 }
+
 
 //*****************************************************************************
 TYPE_ASCOM_STATUS	CameraDriver::Get_StartX(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
@@ -2427,6 +2563,7 @@ char				errorString[64];
 		if (foundKeyWord)
 		{
 			newValue	=	atoi(argumentString);
+			//*	ASCOM docs say to check these values ONLY at start exposure, how stupid
 //			if ((newValue >= 0) && (newValue < cCameraProp.CameraXsize))
 			if (1)
 			{
@@ -2475,6 +2612,7 @@ char				errorString[64];
 		if (foundKeyWord)
 		{
 			newValue	=	atoi(argumentString);
+			//*	ASCOM docs say to check these values ONLY at start exposure, how stupid
 //			if ((newValue >= 0) && (newValue < cCameraYsize))
 			if (1)
 			{
@@ -2882,7 +3020,6 @@ double				newSetCCDvalue;
 		{
 			newSetCCDvalue	=	atof(setCCDtempString);
 			CONSOLE_DEBUG_W_DBL("newSetCCDvalue\t=",	newSetCCDvalue);
-		//	if ((newSetCCDvalue > -273.15) && (newSetCCDvalue < 95.0))
 			if ((newSetCCDvalue > -273.15) && (newSetCCDvalue <= 100.0))
 			{
 				alpacaErrCode					=	kASCOM_Err_Success;
@@ -4273,8 +4410,8 @@ bool				newLiveModeState;
 				cImageMode	=	kImageMode_Single;
 
 			#ifdef _USE_OPENCV_
-				CONSOLE_DEBUG_W_STR("cvDestroyWindow\t=", cOpenCV_ImgWindowName);
-				CloseLiveImage();
+			//	CONSOLE_DEBUG_W_STR("cvDestroyWindow\t=", cOpenCV_ImgWindowName);
+			//	CloseLiveImage();
 			#endif	//	_USE_OPENCV_
 			}
 		}
@@ -4322,35 +4459,29 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
 bool				keywordFound;
 char				keywordString[64];
 
-	CONSOLE_DEBUG(__FUNCTION__);
-	CONSOLE_DEBUG_W_NUM("cDisplaySideBar\t=",		cDisplaySideBar);
+//	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG_W_NUM("cDisplaySideBar\t=",		cDisplaySideBar);
 
 	if (reqData != NULL)
 	{
-		CONSOLE_DEBUG_W_NUM("cDisplaySideBar\t=",		cDisplaySideBar);
 		keywordFound		=	GetKeyWordArgument(	reqData->contentData,
 													"Sidebar",
 													keywordString,
 													(sizeof(keywordString) -1));
 		if (keywordFound)
 		{
-			CONSOLE_DEBUG_W_NUM("cDisplaySideBar\t=",		cDisplaySideBar);
-			CONSOLE_DEBUG_W_STR("keywordString\t=",		keywordString);
 			alpacaErrCode	=	kASCOM_Err_Success;
 			if (strcasecmp(keywordString, "true") == 0)
 			{
 				cDisplaySideBar	=	kSideBar_Left;
-				CONSOLE_DEBUG_W_NUM("cDisplaySideBar\t=",		cDisplaySideBar);
 			}
 			else if (strcasecmp(keywordString, "left") == 0)
 			{
 				cDisplaySideBar	=	kSideBar_Left;
-				CONSOLE_DEBUG_W_NUM("cDisplaySideBar\t=",		cDisplaySideBar);
 			}
 			else if (strcasecmp(keywordString, "right") == 0)
 			{
 				cDisplaySideBar	=	kSideBar_Right;
-				CONSOLE_DEBUG_W_NUM("cDisplaySideBar\t=",		cDisplaySideBar);
 			}
 			else
 			{
@@ -5194,6 +5325,7 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
+	//*	this should be over ridden
 	strcpy(cLastCameraErrMsg, "AlpacaPi: Not implemented-");
 	strcat(cLastCameraErrMsg, __FILE__);
 	strcat(cLastCameraErrMsg, ":");
@@ -5209,6 +5341,7 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
+	//*	this should be over ridden
 	strcpy(cLastCameraErrMsg, "AlpacaPi: Not implemented-");
 	strcat(cLastCameraErrMsg, __FILE__);
 	strcat(cLastCameraErrMsg, ":");
@@ -5223,12 +5356,44 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
+	//*	this should be over ridden
 	strcpy(cLastCameraErrMsg, "AlpacaPi: Not implemented-");
 	strcat(cLastCameraErrMsg, __FILE__);
 	strcat(cLastCameraErrMsg, ":");
 	strcat(cLastCameraErrMsg, __FUNCTION__);
 	return(alpacaErrCode);
 }
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	CameraDriver::Write_Offset(const int newOffsetValue)
+{
+TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	//*	this should be over ridden
+	strcpy(cLastCameraErrMsg, "AlpacaPi: Not implemented-");
+//	strcat(cLastCameraErrMsg, __FILE__);
+//	strcat(cLastCameraErrMsg, ":");
+	strcat(cLastCameraErrMsg, __FUNCTION__);
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	CameraDriver::Read_Offset(int *cameraOffsetValue)
+{
+TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	//*	this should be over ridden
+	strcpy(cLastCameraErrMsg, "AlpacaPi: Not implemented-");
+	strcat(cLastCameraErrMsg, __FILE__);
+	strcat(cLastCameraErrMsg, ":");
+	strcat(cLastCameraErrMsg, __FUNCTION__);
+	return(alpacaErrCode);
+}
+
 
 //*****************************************************************************
 static TYPE_IMAGE_TYPE	GetInternalImageType(const char *imageTypeString)
@@ -5668,7 +5833,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode;
 			cFramesRead++;
 			if (gVerbose)
 			{
-//				CONSOLE_DEBUG_W_LONG("Done Taking picture, frame#", cFramesRead);
+				CONSOLE_DEBUG_W_LONG("Done Taking picture, frame#", cFramesRead);
 			}
 
 			cWorkingLoopCnt		=	0;
@@ -5790,6 +5955,11 @@ int32_t		delayMicroSecs;
 				{
 					DisplayLiveImage();
 				}
+			}
+			else if (cOpenCV_LiveDisplay != NULL)
+			{
+				CONSOLE_DEBUG("Calling CloseLiveImage()");
+				CloseLiveImage();
 			}
 		}
 		else if ((cImageMode == kImageMode_Live) || cDisplayImage)
@@ -6479,6 +6649,12 @@ char				textBuffer[128];
 		Get_MaxADU(					reqData,	alpacaErrMsg,	"maxadu");
 		Get_NumX(					reqData,	alpacaErrMsg,	"numx");
 		Get_NumY(					reqData,	alpacaErrMsg,	"numy");
+
+		Get_Offset(					reqData, 	alpacaErrMsg,	"offset");
+		Get_OffsetMax(				reqData, 	alpacaErrMsg, 	"offsetmax");
+		Get_OffsetMin(				reqData, 	alpacaErrMsg, 	"offsetmin");
+		Get_Offsets(				reqData, 	alpacaErrMsg, 	"offsets");
+
 		Get_PercentCompleted(		reqData,	alpacaErrMsg,	"percentcompleted");
 
 		//*	Width of CCD chip pixels (microns)
