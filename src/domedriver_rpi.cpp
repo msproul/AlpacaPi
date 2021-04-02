@@ -66,6 +66,7 @@
 
 #include	"alpacadriver.h"
 #include	"alpacadriver_helper.h"
+#include	"helper_functions.h"
 #include	"domedriver.h"
 #include	"domedriver_rpi.h"
 

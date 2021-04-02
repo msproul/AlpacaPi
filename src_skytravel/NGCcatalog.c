@@ -31,50 +31,51 @@
 
 
 
-/*
-Byte-by-byte Description of file: ngc2000.dat
---------------------------------------------------------------------------------
-   Bytes Format  Units   Label    Explanations
---------------------------------------------------------------------------------
-   1-  5  A5     ---     Name     NGC or IC designation (preceded by I)
-   7-  9  A3     ---     Type    *Object classification
-  11- 12  I2     h       RAh      Right Ascension 2000 (hours)
-  14- 17  F4.1   min     RAm      Right Ascension 2000 (minutes)
-      20  A1     ---     DE-      Declination 2000 (sign)
-  21- 22  I2     deg     DEd      Declination 2000 (degrees)
-  24- 25  I2     arcmin  DEm      Declination 2000 (minutes)
-      27  A1     ---     Source  *Source of entry
-  30- 32  A3     ---     Const    Constellation
-      33  A1     ---     l_size   [<] Limit on Size
-  34- 38  F5.1   arcmin  size     ? Largest dimension
-  41- 44  F4.1   mag     mag      ? Integrated magnitude, visual or photographic
-                                      (see n_mag)
-      45  A1     ---     n_mag    [p] 'p' if mag is photographic (blue)
-  47- 96  A50    ---     Desc    *Description of the object
---------------------------------------------------------------------------------
-Note on Type: the field is coded as follows:
-     Gx    Galaxy
-     OC    Open star cluster
-     Gb    Globular star cluster, usually in the Milky Way Galaxy
-     Nb    Bright emission or reflection nebula
-     Pl    Planetary nebula
-     C+N   Cluster associated with nebulosity
-     Ast   Asterism or group of a few stars
-     Kt    Knot  or  nebulous  region  in  an  external galaxy
-     ***   Triple star
-     D*    Double star
-     *     Single star
-     ?     Uncertain type or may not exist
-     blank Unidentified at the place given, or type unknown
-     -     Object called nonexistent in the RNGC (Sulentic and Tifft 1973)
-     PD    Photographic plate defect
+//************************************************************************
+//*	Byte-by-byte Description of file: ngc2000.dat
+//*	--------------------------------------------------------------------------------
+//*	   Bytes Format  Units   Label    Explanations
+//*	--------------------------------------------------------------------------------
+//*	   1-  5  A5     ---     Name     NGC or IC designation (preceded by I)
+//*	   7-  9  A3     ---     Type    *Object classification
+//*	  11- 12  I2     h       RAh      Right Ascension 2000 (hours)
+//*	  14- 17  F4.1   min     RAm      Right Ascension 2000 (minutes)
+//*	      20  A1     ---     DE-      Declination 2000 (sign)
+//*	  21- 22  I2     deg     DEd      Declination 2000 (degrees)
+//*	  24- 25  I2     arcmin  DEm      Declination 2000 (minutes)
+//*	      27  A1     ---     Source  *Source of entry
+//*	  30- 32  A3     ---     Const    Constellation
+//*	      33  A1     ---     l_size   [<] Limit on Size
+//*	  34- 38  F5.1   arcmin  size     ? Largest dimension
+//*	  41- 44  F4.1   mag     mag      ? Integrated magnitude, visual or photographic
+//*	                                      (see n_mag)
+//*	      45  A1     ---     n_mag    [p] 'p' if mag is photographic (blue)
+//*	  47- 96  A50    ---     Desc    *Description of the object
+//*	--------------------------------------------------------------------------------
+//*	Note on Type: the field is coded as follows:
+//*	     Gx    Galaxy
+//*	     OC    Open star cluster
+//*	     Gb    Globular star cluster, usually in the Milky Way Galaxy
+//*	     Nb    Bright emission or reflection nebula
+//*	     Pl    Planetary nebula
+//*	     C+N   Cluster associated with nebulosity
+//*	     Ast   Asterism or group of a few stars
+//*	     Kt    Knot  or  nebulous  region  in  an  external galaxy
+//*	     ***   Triple star
+//*	     D*    Double star
+//*	     *     Single star
+//*	     ?     Uncertain type or may not exist
+//*	     blank Unidentified at the place given, or type unknown
+//*	     -     Object called nonexistent in the RNGC (Sulentic and Tifft 1973)
+//*	     PD    Photographic plate defect
+//*
+//*
+//*	sample
+//*	I5370  Gx  0 00.1  +32 45 m  And   0.7  15. p pB, S, R, stell N
+//*
+//************************************************************************
 
 
-sample
-I5370  Gx  0 00.1  +32 45 m  And   0.7  15. p pB, S, R, stell N
-
-
-*/
 //************************************************************************
 static bool	ParseOneLineOfNGCStarCatalog(char *lineBuff, TYPE_CelestData *starRec)
 {
@@ -197,22 +198,20 @@ size_t			bufferSize;
 
 #pragma mark -
 
-/*
-Byte-by-byte Description of file: names.dat
---------------------------------------------------------------------------------
-   Bytes Format Units   Label     Explanations
---------------------------------------------------------------------------------
-   1- 35  A35   ---     Object    Common name (including Messier numbers)
-  37- 41  A5    ---     Name     *NGC or IC name, as in ngc2000.dat
-  43- 70  A28   ---     Comment   Text of comment, if any
---------------------------------------------------------------------------------
-Note on Name: this field may be blank for Messier objects without
-     NGC or IC counterparts.
-     when one object corresponds to several entries in ngc2000,
-     the Object is repeated (e.g. Copeland's Septet appears 7 times)
---------------------------------------------------------------------------------
-*/
-
+//************************************************************************
+//*	Byte-by-byte Description of file: names.dat
+//*	--------------------------------------------------------------------------------
+//*	   Bytes Format Units   Label     Explanations
+//*	--------------------------------------------------------------------------------
+//*	   1- 35  A35   ---     Object    Common name (including Messier numbers)
+//*	  37- 41  A5    ---     Name     *NGC or IC name, as in ngc2000.dat
+//*	  43- 70  A28   ---     Comment   Text of comment, if any
+//*	--------------------------------------------------------------------------------
+//*	Note on Name: this field may be blank for Messier objects without
+//*		NGC or IC counterparts.
+//*		when one object corresponds to several entries in ngc2000,
+//*		the Object is repeated (e.g. Copeland's Septet appears 7 times)
+//************************************************************************
 
 
 static	TYPE_ObjectInfo	*gNGCobjectInfo		=	NULL;

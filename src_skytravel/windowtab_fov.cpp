@@ -35,6 +35,7 @@
 
 #include	"alpaca_defs.h"
 #include	"discoverythread.h"
+#include	"helper_functions.h"
 
 #include	"cameraFOV.h"
 
@@ -374,15 +375,15 @@ bool	keepGoing;
 	//*	set outline colors
 	if (strcmp(remoteDevice->hostName, "finder") == 0)
 	{
-		cameraDataPtr->OutLineColor	=	GREEN;
+		cameraDataPtr->OutLineColor	=	W_GREEN;
 	}
 	else if ((cameraDataPtr->RighttAscen_Offset != 0.0) || (cameraDataPtr->Declination_Offset != 0.0))
 	{
-		cameraDataPtr->OutLineColor	=	YELLOW;
+		cameraDataPtr->OutLineColor	=	W_YELLOW;
 	}
 	else
 	{
-		cameraDataPtr->OutLineColor	=	RED;
+		cameraDataPtr->OutLineColor	=	W_RED;
 	}
 }
 

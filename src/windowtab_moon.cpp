@@ -35,6 +35,7 @@
 #include	"windowtab.h"
 #include	"windowtab_moon.h"
 #include	"controller.h"
+#include	"helper_functions.h"
 
 #include	"moonphase.h"
 #include	"fits_opencv.h"

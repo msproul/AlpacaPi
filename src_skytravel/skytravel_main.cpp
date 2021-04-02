@@ -51,7 +51,6 @@
 
 
 bool	gKeepRunning;
-char	gColorOverRide	=	0;
 char	gFullVersionString[128];
 char	gFirstArgString[256];
 

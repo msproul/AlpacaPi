@@ -49,6 +49,7 @@
 #define	kWindowHeight	700
 
 
+#include	"helper_functions.h"
 #include	"windowtab_covercalib.h"
 #include	"windowtab_drvrInfo.h"
 #include	"windowtab_about.h"

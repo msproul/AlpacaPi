@@ -29,14 +29,9 @@
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
 
-
-
+#include	"helper_functions.h"
 #include	"windowtab_graphs.h"
 #include	"alpacadriver_helper.h"
-
-
-
-
 
 
 //**************************************************************************************

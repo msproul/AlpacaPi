@@ -49,12 +49,10 @@ bool			GetKeyWordArgument(	const char	*dataSource,
 									const bool	argIsNumeric=false);
 
 
-void			FormatHHMMSS(const double argDegreeValue, char *timeString, bool includeSign);
 void			FormatTimeString(time_t *time, char *timeString);
 void			FormatTimeStringISO8601(struct timeval *tv, char *timeString);
 
 int				SocketWriteData(const int socket, const char *dataBuffer);
-bool			IsTrueFalse(const char *trueFalseString);
 void			ToLowerStr(char *theString);
 void			StripTrailingSpaces(char *theString);
 uint32_t		Calc_millisFromTimeStruct(struct timeval *theTimeStruct);
@@ -66,11 +64,6 @@ void			GetDeviceTypeFromEnum(const int deviceEnum, char *deviceTypeString);
 int				StartExtraListenThread(int exposureListenPort);
 
 extern	char		gWebTitle[];
-
-
-#if !defined(__arm__) || defined(_INCLUDE_MILLIS_)
-	uint32_t	millis(void);
-#endif	//	!defined(__arm__) || defined(_INCLUDE_MILLIS_)
 
 
 #define	DEGREES_F(x)	((x * (9.0/5.0) ) + 32.0)

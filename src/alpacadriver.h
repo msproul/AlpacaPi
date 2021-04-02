@@ -63,6 +63,14 @@
 	#include	"alpaca_defs.h"
 #endif // _ALPACA_DEFS_H_
 
+
+
+
+#ifndef	_CONTROLLER_H_
+	#include	"controller.h"
+#endif
+
+
 #if defined(__ARM_ARCH) && !defined(__arm__)
 	#define __arm__
 #endif // defined
@@ -95,6 +103,8 @@ enum
 	//*	Added by MLS 7/20/2020
 	kCmd_Common_exit,
 #endif // _INCLUDE_EXIT_COMMAND_
+
+	kCmd_Common_LiveWindow,
 
 	kCmd_Common_last
 };
@@ -188,6 +198,8 @@ class AlpacaDriver
 
 				TYPE_ASCOM_STATUS		Get_SupportedActions(TYPE_GetPutRequestData *reqData, const TYPE_CmdEntry *theCmdTable);
 
+				TYPE_ASCOM_STATUS		Put_LiveWindow(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
+
 				TYPE_ASCOM_STATUS		Get_Readall_Common(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 				TYPE_ASCOM_STATUS		Get_Readall_CPUstats(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 
@@ -256,6 +268,15 @@ class AlpacaDriver
 				pthread_t				cDiscoveryThreadID;
 				int						cBroadcastSocket;
 				int						cDiscoveryCount;		//*	how many times have we done the discovery request
+
+
+		//-------------------------------------------------------------------------
+		//*	live controller window
+		virtual	TYPE_ASCOM_STATUS		OpenLiveWindow(char *alpacaErrMsg);
+		virtual	TYPE_ASCOM_STATUS		CloseLiveWindow(char *alpacaErrMsg);
+				Controller				*cLiveController;
+
+
 };
 
 //**************************************************************************************

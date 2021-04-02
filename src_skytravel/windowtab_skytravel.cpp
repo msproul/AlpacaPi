@@ -79,6 +79,7 @@
 #include	"controller.h"
 #include	"controller_image.h"
 #include	"observatory_settings.h"
+#include	"helper_functions.h"
 
 
 #include	"SkyStruc.h"
@@ -324,7 +325,7 @@ int		ii;
 
 	memset(&cDispOptions, 0, sizeof(TYPE_SkyDispOptions));
 
-	cCurrentSkyColor				=	BLUE;
+	cCurrentSkyColor				=	W_BLUE;
 	cChart							=	false;
 #if 0
 	cDispOptions.dispDeep			=	true;
@@ -2203,8 +2204,7 @@ short		ii;
 
 	PlotSkyObjects(cPlanets, gPlanet_names, planet_shapes, kPlanetObjectCnt);	//* planets
 
-	SetColor(BLACK);
-
+	SetColor(W_BLACK);
 }
 
 //*****************************************************************************
@@ -2538,7 +2538,7 @@ bool			firstMove;
 		cXfactor	=	cWind_width / cView_angle;
 		cYfactor	=	cXfactor;	//* 1:1 aspect ratio
 
-		SetColor(RED);
+		SetColor(W_RED);
 		for (jj=0; jj<constelationCount; jj++)
 		{
 			if ((constelations[jj].indexIntoConstStarTable >= 0) && (constelations[jj].starsInConstelation > 0))
@@ -2605,7 +2605,7 @@ bool			firstMove;
 				}
 			}
 		}
-		SetColor(BLACK);
+		SetColor(W_BLACK);
 	}
 }
 
@@ -2629,11 +2629,11 @@ int					nameLen;
 //	CONSOLE_DEBUG(__FUNCTION__);
 	if (cNightMode)
 	{
-		SetColor(DARKRED);
+		SetColor(W_DARKRED);
 	}
 	else
 	{
-		SetColor(DARKGREEN);
+		SetColor(W_DARKGREEN);
 	}
 	if ((cConstOutlinePtr != NULL) && (cConstOutlineCount > 0))
 	{
@@ -2717,9 +2717,9 @@ int					nameLen;
 													&pt_YY);
 			if (ptInView)
 			{
-				SetColor(PINK);
+				SetColor(W_PINK);
 				DrawCString(pt_XX, pt_YY, myOutLineObj->shortName);
-				SetColor(DARKGREEN);
+				SetColor(W_DARKGREEN);
 			}
 		}
 	}
@@ -2753,7 +2753,7 @@ short				deltaPixels;
 
 	if (cConstVecotrPtr != NULL)
 	{
-		SetColor(PINK);
+		SetColor(W_PINK);
 		ptsOnScreenCnt	=	0;
 //		CONSOLE_DEBUG_W_NUM("cConstVectorCnt\t=",cConstVectorCnt);
 		for (iii=0; iii<cConstVectorCnt; iii++)
@@ -2763,11 +2763,11 @@ short				deltaPixels;
 
 		//	if (strncasecmp(myConstPtr->longName, "AND", 3) == 0)
 		//	{
-		//		SetColor(CYAN);
+		//		SetColor(W_CYAN);
 		//	}
 		//	else
 		//	{
-		//		SetColor(PINK);
+		//		SetColor(W_PINK);
 		//	}
 
 			offScreenFlg	=	true;
@@ -2850,7 +2850,7 @@ bool	ptInView;
 
 	if ((cHipObjectPtr != NULL) && (cHipObjectCount > 0))
 	{
-		SetColor(WHITE);
+		SetColor(W_WHITE);
 		for (iii = 0; iii < cHipObjectCount; iii++)
 		{
 			//*	most of them don't have names, so check for that first
@@ -2922,7 +2922,7 @@ CvScalar	myBackGroundColor;
 				DrawWindowOverlays();
 				cvResetImageROI(cOpenCV_Image);
 
-                //*	this has to be done AFTER roi is reset
+				//*	this has to be done AFTER roi is reset
 				Compute_cursor(&cCurrentTime, &cCurrLatLon);
 				DrawCursorLocationInfo();
 
@@ -3205,7 +3205,7 @@ char		symb[16];
 			constelNameIdx	=	magn - 0x0080;
 			if ((constelNameIdx >= 0) && (constelNameIdx < kMaxConstelNames))
 			{
-				SetColor(RED);
+				SetColor(W_RED);
 			//	strcpy(symb, gConstel_names[constelNameIdx]);
 			//	DrawCString(xcoord, ycoord, symb);
 				DrawCString(xcoord, ycoord, gConstel_LongNames[constelNameIdx]);
@@ -3219,17 +3219,17 @@ char		symb[16];
 		case ST_STAR:
 			if (cNightMode)
 			{
-				SetColor(RED);
+				SetColor(W_RED);
 			}
 		#ifdef _ENBABLE_WHITE_CHART_
 			else if (cChart)
 			{
-				SetColor(BLACK);
+				SetColor(W_BLACK);
 			}
 		#endif
 			else
 			{
-				SetColor(WHITE);
+				SetColor(W_WHITE);
 			}
 			DrawStar_shape(xcoord, ycoord, magn & 0x07);
 			break;
@@ -3240,31 +3240,31 @@ char		symb[16];
 				switch(magn & 0xf0)	//*	isolate hi 4 bits
 				{
 					case 0x10:	//*	globular
-						DrawVector(LIGHTGRAY, xcoord, ycoord, scale, globular_shapes[magn & 0x0f]);	//*	draw the object
+						DrawVector(W_LIGHTGRAY, xcoord, ycoord, scale, globular_shapes[magn & 0x0f]);	//*	draw the object
 						break;
 
 					case 0x20:	//*	elliptical
-						DrawVector(BLUE, xcoord, ycoord, scale, elliptical_shapes[magn & 0x0f]);		//*	draw the object
+						DrawVector(W_BLUE, xcoord, ycoord, scale, elliptical_shapes[magn & 0x0f]);		//*	draw the object
 						break;
 
 					case 0x30:	//*	spiral
-						DrawVector(GREEN, xcoord, ycoord, scale, spiral_shapes[magn & 0x0f]);	//*	draw the object
+						DrawVector(W_GREEN, xcoord, ycoord, scale, spiral_shapes[magn & 0x0f]);	//*	draw the object
 						break;
 
 					case 0x40:	//*	planetary
-						DrawVector(CYAN, xcoord, ycoord, scale, planetary_shapes[magn & 0x0f]);	//*	draw the object
+						DrawVector(W_CYAN, xcoord, ycoord, scale, planetary_shapes[magn & 0x0f]);	//*	draw the object
 						break;
 
 					case 0x50:	//	*bright diffuse
-						DrawVector(RED, xcoord, ycoord, scale, bdn_shapes[magn & 0x0f]);			//*	draw the object
+						DrawVector(W_RED, xcoord, ycoord, scale, bdn_shapes[magn & 0x0f]);			//*	draw the object
 						break;
 
 					case 0x60:	//*	open galactic
-						DrawVector(MAGENTA, xcoord, ycoord, scale, ogc_shapes[magn & 0x0f]);		//*	draw the object
+						DrawVector(W_MAGENTA, xcoord, ycoord, scale, ogc_shapes[magn & 0x0f]);		//*	draw the object
 						break;
 
 					case 0x70:	//*	smc/lmc outline
-						SetColor(GREEN);
+						SetColor(W_GREEN);
 						if (magn == 0x0070)
 						{
 							//*	Small Magellanic Cloud
@@ -3278,7 +3278,7 @@ char		symb[16];
 						else if (magn < 0x73)
 						{
 							strcpy(symb, ".");
-							SetColor(LIGHTGRAY);
+							SetColor(W_LIGHTGRAY);
 						}
 						else
 						{
@@ -3321,12 +3321,12 @@ bool				printLabel;
 #ifdef _ENBABLE_WHITE_CHART_
 	if (cChart)
 	{
-		SetColor(BLACK);
+		SetColor(W_BLACK);
 	}
 	else
 #endif // _ENBABLE_WHITE_CHART_
 	{
-		SetColor(WHITE);
+		SetColor(W_WHITE);
 	}
 
 	myCount			=	0;
@@ -3487,11 +3487,11 @@ bool				printLabel;
 								case kDataSrc_Messier:
 									if (cNightMode)
 									{
-										SetColor(RED);
+										SetColor(W_RED);
 									}
 									else
 									{
-										SetColor(CYAN);
+										SetColor(W_CYAN);
 									}
 									DrawCString(xcoord, ycoord, objectptr[ii].shortName);
 									if (cView_index < 4)
@@ -3510,7 +3510,7 @@ bool				printLabel;
 										{
 											sprintf(labelString, "H%ld-%s", objectptr[ii].id, objectptr[ii].longName);
 										}
-										SetColor(RED);
+										SetColor(W_RED);
 										DrawCString(xcoord + 10, ycoord, labelString);
 									}
 									break;
@@ -3522,12 +3522,12 @@ bool				printLabel;
 										if (objectptr[ii].dataSrc == kDataSrc_NGC2000IC)
 										{
 											sprintf(labelString, "IC%ld", objectptr[ii].id);
-											SetColor(CYAN);
+											SetColor(W_CYAN);
 										}
 										else
 										{
 											sprintf(labelString, "NGC%ld", objectptr[ii].id);
-											SetColor(YELLOW);
+											SetColor(W_YELLOW);
 										}
 
 										if (objectptr[ii].longName[0] > 0x20)
@@ -3560,7 +3560,7 @@ bool				printLabel;
 										}
 										if (printLabel)
 										{
-											SetColor(RED);
+											SetColor(W_RED);
 											DrawCString(xcoord + 10, ycoord + 12, labelString);
 										//	CONSOLE_DEBUG_W_NUM("ii         \t=",	ii)
 										//	CONSOLE_DEBUG_W_NUM("id         \t=",	objectptr[ii].id)
@@ -3573,7 +3573,7 @@ bool				printLabel;
 								case kDataSrc_Draper:
 									if (cDispOptions.dispNames && (cView_index <= 2))
 									{
-										SetColor(GREEN);
+										SetColor(W_GREEN);
 										DrawCString(xcoord + 10, ycoord, objectptr[ii].longName);
 									}
 									break;
@@ -3628,7 +3628,7 @@ short			myScale;
 
 	if (cNightMode)
 	{
-		SetColor(RED);
+		SetColor(W_RED);
 	}
 	else
 	{
@@ -3717,14 +3717,14 @@ int		color2;
 #ifdef _ENBABLE_WHITE_CHART_
 	if (cChart)
 	{
-		color1	=	BLACK;
-		color2	=	BLACK;
+		color1	=	W_BLACK;
+		color2	=	W_BLACK;
 	}
 	else
 #endif // _ENBABLE_WHITE_CHART_
 	{
-		color1	=	WHITE;
-		color2	=	LIGHTGRAY;
+		color1	=	W_WHITE;
+		color2	=	W_LIGHTGRAY;
 	}
 
 	switch(index)
@@ -3918,7 +3918,7 @@ void	WindowTabSkyTravel::DrawWindowOverlays(void)
 	{
 		if (fabs(cDecl0) < cView_angle)
 		{
-			SetColor(MAGENTA);
+			SetColor(W_MAGENTA);
 			DrawGreatCircle(0.0);
 		}
 	}
@@ -3941,7 +3941,7 @@ void	WindowTabSkyTravel::DrawTelescopeReticle(int screenXX, int screenYY)
 #define	kTlescopeRadius	15
 
 	//*	draw the finder scope
-	SetColor(BLUE);
+	SetColor(W_BLUE);
 	if (cTelescopeDisplayOptions.dispFindScopeOutline)
 	{
 		FrameEllipse(screenXX, screenYY, kFinderRadius, kFinderRadius);
@@ -3958,7 +3958,7 @@ void	WindowTabSkyTravel::DrawTelescopeReticle(int screenXX, int screenYY)
 
 	//*	now draw the actual telescope
 
-	SetColor(GREEN);
+	SetColor(W_GREEN);
 
 	if (cTelescopeDisplayOptions.dispTeleScopeOutline)
 	{
@@ -4000,8 +4000,8 @@ int		pixelsWide;
 int		pixelsTall;
 
 
-	SetColor(RED);
-//	SetColor(WHITE);
+	SetColor(W_RED);
+//	SetColor(W_WHITE);
 	SetColor(fovPtr->OutLineColor);
 
 	fovWasDrawn	=	false;
@@ -4106,8 +4106,8 @@ short	telescopeXX, telescopeYY;
 //	CONSOLE_DEBUG_W_NUM(__FUNCTION__, cDebugCounter++);
 
 	fovCount	=	0;
-	SetColor(RED);
-//	SetColor(WHITE);
+	SetColor(W_RED);
+//	SetColor(W_WHITE);
 	telescopeIsInView	=	GetXYfromRA_Decl(	gTelescopeRA_Radians,
 												gTelescopeDecl_Radians,
 												&telescopeXX,
@@ -4186,11 +4186,11 @@ double	cq;
 		a	=	1E-20;
 	}
 	cp		=	(sinY - (sinPhi * sq)) / a;
-    p		=	FNACS(cp);
+	p		=	FNACS(cp);
 #endif
 
-    *ra		=	(DEGREES(p))/ 15.0;
-    *dec	=	DEGREES(q);
+	*ra		=	(DEGREES(p))/ 15.0;
+	*dec	=	DEGREES(q);
 
 	CONSOLE_DEBUG_W_DBL("ra\t\t=",	*ra);
 	CONSOLE_DEBUG_W_DBL("dec\t=",	*dec);
@@ -4209,7 +4209,7 @@ double	skyTravelDomeAsimuth;	//*	Skytravel is reversed coordinates
 	skyTravelDomeAsimuth	=	360.0 - gDomeAzimuth_degrees;
 
 	CONSOLE_DEBUG(__FUNCTION__);
-	SetColor(CYAN);
+	SetColor(W_CYAN);
 
 
 	slitWidth_Radians	=	2.0 * atan2((gSlitWidth_inches / 2.0), (gDomeDiameter_inches / 2.0));
@@ -4352,7 +4352,7 @@ TYPE_SpherTrig	sphptr;
 
 	sphptr.bside	=	kHALFPI - cDecl0;	//* this stays constant
 
-	SetColor(BLUE);
+	SetColor(W_BLUE);
 	CPenSize(2);
 //	for (alpha = (cRa0 - cRamax); alpha < (cRa0 + cRamax); alpha += (cRamax / 10.0))
 	//*	<MLS> 1/4/2021, this allows the Ecliptic to be drawn at all zoom levels
@@ -4403,19 +4403,20 @@ void	WindowTabSkyTravel::DrawGrid(short theSkyColor)
 {
 double		degrees;
 int			myColor;
+
 //setlinestyle(USERBIT_LINE,0x0f0f,NORM_WIDTH);
 	if (cNightMode)
 	{
-		myColor	=	DARKRED;
+		myColor	=	W_DARKRED;
 	}
 	else if (theSkyColor > 60)
 	{
-	//	myColor	=	BLACK;	//*	was blue
-		myColor	=	DARKGRAY;
+	//	myColor	=	W_BLACK;	//*	was blue
+		myColor	=	W_DARKGRAY;
 	}
 	else
 	{
-		myColor	=	DARKGRAY;
+		myColor	=	W_DARKGRAY;
 	}
 	SetColor(myColor);
 
@@ -4479,7 +4480,7 @@ double	rtasc;
 double	codecl;
 int		xcoord,ycoord,ftflag	=	0;
 
-	SetColor(BROWN);	//* make horizon brown
+	SetColor(W_BROWN);	//* make horizon brown
 
 	gam			=	0.0;
 	codecl		=	kHALFPI - cElev0;
@@ -4504,7 +4505,7 @@ int		xcoord,ycoord,ftflag	=	0;
 			break;
 
 		case 3:
-			SetColor(DARKGREEN);
+			SetColor(W_DARKGREEN);
 			delta_ra	=	rtasc / 900.0;		//*increment
 			break;
 
@@ -4732,10 +4733,10 @@ char	numberStr[32];
 		{
 			if (rainbow)
 			{
-				theColor	=	(rtAscen1 / (2 * M_PI)) * COLOR_LAST;
-				if (theColor == BLACK)
+				theColor	=	(rtAscen1 / (2 * M_PI)) * W_COLOR_LAST;
+				if (theColor == W_BLACK)
 				{
-					theColor	=	WHITE;
+					theColor	=	W_WHITE;
 				}
 				SetColor(theColor);
 			}
@@ -4844,7 +4845,7 @@ char	numberStr[32];
 	{
 		sprintf(numberStr, "%1.0fS", -DEGREES(declinationAngle));
 	}
-	SetColor(DARKGREEN);
+	SetColor(W_DARKGREEN);
 	if (leftMost_X < 30)
 	{
 		DrawCString(3, leftMost_Y, numberStr);
@@ -5040,7 +5041,7 @@ int		ypos;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-	SetColor(YELLOW);
+	SetColor(W_YELLOW);
 	left_edge	=	-cAz0 - (cView_angle / 2.0);
 
 	while (left_edge < -kTWOPI)
@@ -5109,9 +5110,9 @@ int				myColor;
 
 	switch(objCnt)
 	{
-		case 10:			myColor	=	CYAN;			break;	//* planet names
-		case kZodiacCount:	myColor	=	LIGHTMAGENTA;	break;	//* zodiac sign names
-		default:			myColor	=	WHITE;			break;
+		case 10:			myColor	=	W_CYAN;			break;	//* planet names
+		case kZodiacCount:	myColor	=	W_LIGHTMAGENTA;	break;	//* zodiac sign names
+		default:			myColor	=	W_WHITE;		break;
 	}
 	SetColor(myColor);
 
@@ -5171,7 +5172,7 @@ int				myColor;
 						}
 						if ((objCnt == kPlanetObjectCnt) && (ii<2))	//* Moon(0) or Sun(1)
 						{
-							SetColor(WHITE);
+							SetColor(W_WHITE);
 						//	setfillstyle(SOLID_FILL,WHITE);
 							radius	=	rad0[ii];
 							if (ii == 1)	//* Sun, filled ellipse
@@ -5180,7 +5181,7 @@ int				myColor;
 								rady	=	radius * cYfactor;
 								if (radx < 3.0)	//* don't draw if too small
 								{
-									DrawVector(WHITE, xcoord, ycoord, 1, shapes[ii]);
+									DrawVector(W_WHITE, xcoord, ycoord, 1, shapes[ii]);
 									goto next1;
 								}
 								FillEllipse(xcoord, ycoord, radx, rady);
@@ -5203,15 +5204,15 @@ int				myColor;
 
 								if (radx < 3.0)	//* don't draw if too small
 								{
-									DrawVector(LIGHTGRAY, xcoord, ycoord, 1, shapes[ii]);
+									DrawVector(W_LIGHTGRAY, xcoord, ycoord, 1, shapes[ii]);
 									goto next1;
 								}
-								SetColor(DARKGRAY);	//* complete circle
+								SetColor(W_DARKGRAY);	//* complete circle
 								FillEllipse(xcoord,ycoord, radx, rady);
 
 								if (phasang != 0.0)
 								{
-									SetColor(YELLOW);	//* semi-ellipse
+									SetColor(W_YELLOW);	//* semi-ellipse
 									theta	=	posang;
 									for (jj=0; theta < (posang + PI); jj++)
 									{
@@ -5246,11 +5247,11 @@ int				myColor;
 
 									if (fabs(cPhase_angle) > minang)
 									{
-								//+		setfillstyle(SOLID_FILL,YELLOW);
+								//+		setfillstyle(SOLID_FILL, W_YELLOW);
 										theta	=	posang+PI/ 2.0;
 										xx		=	xcoord + ((radx - 1.5) * cos(theta));	//* make sure it is inside
 										yy		=	ycoord + ((rady - 1.5) * sin(theta));
-								//+		floodfill(x,y,YELLOW);
+								//+		floodfill(x,y, W_YELLOW);
 									}
 								}
 								if (cLunarEclipseFlag)	//* plot the anti-sun
@@ -5273,8 +5274,8 @@ int				myColor;
 									ycoord	=	cWind_y0 - (cYfactor * sphptr.aside * cos(angle));
 									radx	=	rad0[2] * cXfactor;
 									rady	=	rad0[2] * cYfactor;
-								//	SetColor(BLACK);
-									SetColor(WHITE);
+								//	SetColor(W_BLACK);
+									SetColor(W_WHITE);
 									FillEllipse(xcoord, ycoord, radx, rady);
 								}
 							}
@@ -5817,8 +5818,8 @@ long	hippObjectId;
 			iii	=	0;
 			while ((foundSomething == false) && (iii < cMessierOjbectCount))
 			{
-                if (strcasecmp(objectName, cMessierOjbectPtr[iii].shortName) == 0)
-                {
+				if (strcasecmp(objectName, cMessierOjbectPtr[iii].shortName) == 0)
+				{
 					CONSOLE_DEBUG("found in messier");
 					newRA	=	cMessierOjbectPtr[iii].org_ra;
 					newDec	=	cMessierOjbectPtr[iii].org_decl;
@@ -5828,8 +5829,8 @@ long	hippObjectId;
 
 					cDispOptions.dispMessier	=	true;
 					foundSomething				=	true;
-                }
-                iii++;
+				}
+				iii++;
 			}
 		}
 	}
@@ -5846,8 +5847,8 @@ long	hippObjectId;
 			iii	=	0;
 			while ((foundSomething == false) && (iii < cHipObjectCount))
 			{
-                if (hippObjectId == cHipObjectPtr[iii].id)
-                {
+				if (hippObjectId == cHipObjectPtr[iii].id)
+				{
 					CONSOLE_DEBUG("found in Hipparcos");
 				//	newRA	=	cHipObjectPtr[iii].org_ra;
 				//	newDec	=	cHipObjectPtr[iii].org_decl;
@@ -5870,8 +5871,8 @@ long	hippObjectId;
 						SetView_Index(3);
 					}
 					foundSomething			=	true;
-                }
-                iii++;
+				}
+				iii++;
 			}
 		}
 	}
@@ -6211,7 +6212,7 @@ char feet_shape[]=
 	yy		=	cWind_y0 + (yangle * cYfactor);
 	if ((yy >= wind_uly) && (yy <= wind_uly + cWind_height))
 	{
-		DrawVector(	BROWN,
+		DrawVector(	W_BROWN,
 					cWorkSpaceLeftOffset + cWind_x0,
 					cWorkSpaceTopOffset + yy,
 					1,
@@ -6261,7 +6262,7 @@ TYPE_SpherTrig	sphptr;
 			ycoord	=	cWind_y0 - (cYfactor * sphptr.aside * cos(sphptr.gamma));
 			if ((ycoord >= wind_uly) && (ycoord <= wind_uly + cWind_height))
 			{
-				DrawVector(	WHITE,
+				DrawVector(	W_WHITE,
 							cWorkSpaceLeftOffset + xcoord,
 							cWorkSpaceTopOffset + ycoord,
 							8 - cView_index,

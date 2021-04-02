@@ -464,6 +464,11 @@ class CameraDriver: public AlpacaDriver
 		TYPE_ASCOM_STATUS	Get_RGBarray(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 		TYPE_ASCOM_STATUS	Get_Readall(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 
+		//*	new live window as of 4/1/2021
+		virtual	TYPE_ASCOM_STATUS		OpenLiveWindow(char *alpacaErrMsg);
+		virtual	TYPE_ASCOM_STATUS		CloseLiveWindow(char *alpacaErrMsg);
+
+
 				bool	AllcateImageBuffer(long bufferSize);
 
 				void	WriteFireCaptureTextFile(void);

@@ -1,6 +1,9 @@
 //*****************************************************************************
 //#include	"controller.h"
 
+
+
+
 #ifndef	_CONTROLLER_H_
 #define	_CONTROLLER_H_
 
@@ -59,6 +62,7 @@ extern CvFont		gTextFont[kFontCnt];
 #define	RADIANS(degrees)	((degrees) * (M_PI / 180.0))
 #define	DEGREES(radians)	((radians) * (180.0 / M_PI))
 
+//*****************************************************************************
 #define	DELETE_OBJ_IF_VALID(objectPtr)	\
 	if (objectPtr != NULL)				\
 	{									\
@@ -159,13 +163,9 @@ class Controller
 				void	SetWidgetHighlighted(	const int tabNum, const int widgetIdx, bool highlighted);
 				void	SetWidgetProgress(		const int tabNum, const int widgetIdx, const int currPosition, const int totalValue);
 
-		virtual	void	UpdateSupportedActions(void);
 		virtual	void	UpdateWindowTabColors(void);
 
-				bool	AlpacaGetCommonProperties(const char *deviceTypeStr);
-		virtual	void	UpdateCommonProperties(void);
 
-		virtual	bool	AlpacaGetStartupData(void);
 		virtual	void	RunBackgroundTasks(void);
 		virtual	void	SetupWindowControls(void);
 				void	SetWindowIPaddrInfo(const char	*textString, const bool	onLine);
@@ -186,6 +186,82 @@ class Controller
 											const int	flags);
 		virtual	void	RefreshWindow(void);
 
+
+
+		uint32_t	cMagicCookie;		//*	an indicator so we know the object is valid
+		int			cDebugCounter;
+		bool		cKeepRunning;
+		bool		cUpdateProtect;
+
+		//*	Window tabs
+		int			cCurrentTabNum;
+		WindowTab	*cCurrentTabObjPtr;
+		WindowTab	*cWindowTabs[kMaxTabs];
+
+		CvScalar	cBackGrndColor;
+		TYPE_WIDGET	cTabList[kMaxTabs];
+		int			cTabCount;
+
+		bool		cUpdateWindow;
+		char		cWindowName[256];
+		int			cWidth;
+		int			cHeight;
+		IplImage	*cOpenCV_Image;
+		int			cValidFnts;
+
+		bool		cLeftButtonDown;
+		bool		cRightButtonDown;
+		int			cLastClicked_Btn;
+		int			cLastClicked_Tab;
+		int			cHighlightedBtn;
+		int			cLastLClickX;
+		int			cLastLClickY;
+
+		int			cCurTextInput_Widget;
+
+		int			cCurrentMouseX;
+		int			cCurrentMouseY;
+
+
+		//**********************************************
+		//*	Alpaca stuff
+		bool				cReadStartup;
+		bool				cOnLine;
+		bool				cHas_readall;
+		bool				cForceAlpacaUpdate;
+		TYPE_ASCOM_STATUS	cLastAlpacaErrNum;
+		char				cLastAlpacaErrStr[512];
+
+		TYPE_CommonProperties	cCommonProp;
+
+		char				cAlpacaVersionString[128];
+		char				cLastAlpacaCmdString[256];
+		char				cAlpacaDeviceTypeStr[48];
+		char				cAlpacaDeviceNameStr[64];
+		bool				cValidIPaddr;
+		struct sockaddr_in	cDeviceAddress;
+		int					cPort;
+		int					cAlpacaDevNum;
+		int					cReadFailureCnt;
+		bool				cFirstDataRead;
+		uint32_t			cLastUpdate_milliSecs;
+
+		//*	alpaca download stats
+		uint32_t			cLastDownload_Bytes;
+		uint32_t			cLastDownload_Millisecs;
+		double				cLastDownload_MegaBytesPerSec;
+
+
+#ifdef _CONTROLLER_USES_ALPACA_
+
+//------------------------------------------------------------
+		virtual	void	UpdateSupportedActions(void);
+
+				bool	AlpacaGetCommonProperties(const char *deviceTypeStr);
+		virtual	void	UpdateCommonProperties(void);
+
+
+		virtual	bool	AlpacaGetStartupData(void);
 				bool	AlpacaGetSupportedActions(		sockaddr_in	*deviceAddress,
 														int			devicePort,
 														const char	*deviceTypeStr,
@@ -304,71 +380,6 @@ class Controller
 												int				*actualValueCnt);
 
 
-		uint32_t	cMagicCookie;		//*	an indicator so we know the object is valid
-		int			cDebugCounter;
-		bool		cKeepRunning;
-		bool		cUpdateProtect;
-
-		//*	Window tabs
-		int			cCurrentTabNum;
-		WindowTab	*cCurrentTabObjPtr;
-		WindowTab	*cWindowTabs[kMaxTabs];
-
-		CvScalar	cBackGrndColor;
-		TYPE_WIDGET	cTabList[kMaxTabs];
-		int			cTabCount;
-
-		bool		cUpdateWindow;
-		char		cWindowName[256];
-		int			cWidth;
-		int			cHeight;
-		IplImage	*cOpenCV_Image;
-		int			cValidFnts;
-
-		bool		cLeftButtonDown;
-		bool		cRightButtonDown;
-		int			cLastClicked_Btn;
-		int			cLastClicked_Tab;
-		int			cHighlightedBtn;
-		int			cLastLClickX;
-		int			cLastLClickY;
-
-		int			cCurTextInput_Widget;
-
-		int			cCurrentMouseX;
-		int			cCurrentMouseY;
-
-
-		//**********************************************
-		//*	Alpaca stuff
-		bool				cReadStartup;
-		bool				cOnLine;
-		bool				cHas_readall;
-		bool				cForceAlpacaUpdate;
-		TYPE_ASCOM_STATUS	cLastAlpacaErrNum;
-		char				cLastAlpacaErrStr[512];
-
-		TYPE_CommonProperties	cCommonProp;
-
-		char				cAlpacaVersionString[128];
-		char				cLastAlpacaCmdString[256];
-		char				cAlpacaDeviceTypeStr[48];
-		char				cAlpacaDeviceNameStr[64];
-		bool				cValidIPaddr;
-		struct sockaddr_in	cDeviceAddress;
-		int					cPort;
-		int					cAlpacaDevNum;
-		int					cReadFailureCnt;
-		bool				cFirstDataRead;
-		uint32_t			cLastUpdate_milliSecs;
-
-		//*	alpaca download stats
-		uint32_t			cLastDownload_Bytes;
-		uint32_t			cLastDownload_Millisecs;
-		double				cLastDownload_MegaBytesPerSec;
-
-
-
 				//**********************************************
 				//*	this is a table of capabilities for the purpose of displaying what
 				//*	the driver is capable of doing.
@@ -380,19 +391,20 @@ class Controller
 															const char	*propertyStr,
 															const char	*reportedStr,
 															bool		*booleanValue);
+
+#endif // _CONTROLLER_USES_ALPACA_
+
+
 };
 
 #ifdef __cplusplus
 	extern "C" {
 #endif
 
-uint32_t	millis(void);
 CvScalar	Color16BitTo24Bit(const unsigned int color16);
 void		Controller_HandleKeyDown(const int keyPressed);
 void		LoadAlpacaLogo(void);
-bool		IsTrueFalse(const char *trueFalseString);
 bool		CheckForOpenWindowByName(const char *windowName);
-void		FormatHHMMSS(const double argDegreeValue, char *timeString, bool includeSign);
 
 #ifdef __cplusplus
 }

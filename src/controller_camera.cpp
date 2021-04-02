@@ -89,6 +89,7 @@
 #define	kCamWindowHeight	800
 
 
+#include	"helper_functions.h"
 #include	"windowtab_camera.h"
 #include	"windowtab_camgraph.h"
 #include	"windowtab_filelist.h"

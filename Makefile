@@ -200,8 +200,14 @@ CPP_OBJECTS=												\
 				$(OBJECT_DIR)telescopedriver_skywatch.o		\
 				$(OBJECT_DIR)cpu_stats.o					\
 				$(OBJECT_DIR)lx200_com.o					\
+				$(OBJECT_DIR)helper_functions.o				\
+
+LIVE_WINDOW_OBJECTS=										\
+				$(OBJECT_DIR)controller.o					\
+				$(OBJECT_DIR)windowtab.o					\
 
 
+#				$(OBJECT_DIR)controllerAlpaca.o				\
 
 ######################################################################################
 #	Camera Objects
@@ -212,6 +218,7 @@ ALPACA_OBJECTS=												\
 				$(OBJECT_DIR)cameradriver_save.o			\
 				$(OBJECT_DIR)cameradriver_opencv.o			\
 				$(OBJECT_DIR)cameradriver_jpeg.o			\
+				$(OBJECT_DIR)cameradriver_livewindow.o		\
 				$(OBJECT_DIR)cameradriver_png.o				\
 				$(OBJECT_DIR)cameradriver_ASI.o				\
 				$(OBJECT_DIR)cameradriver_ATIK.o			\
@@ -267,11 +274,13 @@ ROR_OBJECTS=												\
 				$(OBJECT_DIR)domedriver.o					\
 				$(OBJECT_DIR)domedriver_ror_rpi.o			\
 				$(OBJECT_DIR)eventlogging.o					\
+				$(OBJECT_DIR)helper_functions.o				\
+				$(OBJECT_DIR)HostNames.o					\
 				$(OBJECT_DIR)JsonResponse.o					\
+				$(OBJECT_DIR)linuxerrors.o					\
 				$(OBJECT_DIR)managementdriver.o				\
 				$(OBJECT_DIR)observatory_settings.o			\
 				$(OBJECT_DIR)raspberrypi_relaylib.o			\
-				$(OBJECT_DIR)HostNames.o					\
 
 
 ######################################################################################
@@ -354,12 +363,14 @@ allcam		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
 allcam		:		$(CPP_OBJECTS)				\
 					$(ALPACA_OBJECTS)			\
 					$(SOCKET_OBJECTS)			\
+					$(LIVE_WINDOW_OBJECTS)		\
 
 
 		$(LINK)  								\
 					$(SOCKET_OBJECTS)			\
 					$(CPP_OBJECTS)				\
 					$(ALPACA_OBJECTS)			\
+					$(LIVE_WINDOW_OBJECTS)		\
 					$(OPENCV_LINK)				\
 					-L$(ATIK_LIB_DIR)/			\
 					-L$(TOUP_LIB_DIR)/			\
@@ -684,8 +695,8 @@ ror		:					$(ROR_OBJECTS)				\
 							$(SOCKET_OBJECTS)			\
 
 				$(LINK)  								\
-							$(SOCKET_OBJECTS)			\
 							$(ROR_OBJECTS)				\
+							$(SOCKET_OBJECTS)			\
 							-lpthread					\
 							-o ror
 
@@ -1426,6 +1437,7 @@ CONTROLLER_BASE_OBJECTS=										\
 				$(OBJECT_DIR)windowtab_image.o					\
 
 #				$(OBJECT_DIR)controller_image.o					\
+#				$(OBJECT_DIR)controllerClient.o					\
 
 ######################################################################################
 CONTROLLER_OBJECTS=												\
@@ -1443,6 +1455,7 @@ CONTROLLER_OBJECTS=												\
 				$(OBJECT_DIR)controller_ml_nc.o					\
 				$(OBJECT_DIR)controller_ml_single.o				\
 				$(OBJECT_DIR)controller_usb.o					\
+				$(OBJECT_DIR)helper_functions.o					\
 				$(OBJECT_DIR)windowtab.o						\
 				$(OBJECT_DIR)windowtab_about.o					\
 				$(OBJECT_DIR)windowtab_auxmotor.o				\
@@ -1520,8 +1533,8 @@ mandelbrot	:			$(MANDELBROT_OBJECTS)
 #pragma mark focuser-controller
 focuser		:	DEFINEFLAGS		+=	-D_INCLUDE_CTRL_MAIN_
 focuser		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_FOCUSERS_
-#focuser		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_SWITCHES_
 focuser		:	DEFINEFLAGS		+=	-D_ENABLE_USB_FOCUSERS_
+focuser		:	DEFINEFLAGS		+=	-D_CONTROLLER_USES_ALPACA_
 
 focuser		:			$(CONTROLLER_OBJECTS)
 
@@ -1537,6 +1550,7 @@ switch		:	DEFINEFLAGS		+=	-D_INCLUDE_CTRL_MAIN_
 #switch		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_FOCUSERS_
 switch		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_SWITCHES_
 #switch		:	DEFINEFLAGS		+=	-D_ENABLE_USB_FOCUSERS_
+switch		:	DEFINEFLAGS		+=	-D_CONTROLLER_USES_ALPACA_
 
 switch		:			$(CONTROLLER_OBJECTS)
 
@@ -1552,6 +1566,7 @@ switch		:			$(CONTROLLER_OBJECTS)
 camera		:	DEFINEFLAGS		+=	-D_INCLUDE_CTRL_MAIN_
 camera		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_CAMERA_
 camera		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
+camera		:	DEFINEFLAGS		+=	-D_CONTROLLER_USES_ALPACA_
 camera		:			$(CONTROLLER_OBJECTS)					\
 
 				$(LINK)  										\
@@ -1583,6 +1598,7 @@ SKYTRAVEL_OBJECTS=											\
 				$(OBJECT_DIR)cpu_stats.o					\
 				$(OBJECT_DIR)eph.o							\
 				$(OBJECT_DIR)fits_opencv.o					\
+				$(OBJECT_DIR)helper_functions.o				\
 				$(OBJECT_DIR)HipparcosCatalog.o				\
 				$(OBJECT_DIR)moonlite_com.o					\
 				$(OBJECT_DIR)julianTime.o					\
@@ -1635,6 +1651,7 @@ sky		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
 sky		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_SWITCHES_
 sky		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_TELESCOPE_
 sky		:	DEFINEFLAGS		+=	-D_ENABLE_FITS_
+sky		:	DEFINEFLAGS		+=	-D_CONTROLLER_USES_ALPACA_
 #sky	:	DEFINEFLAGS		+=	-D_ENABLE_SLIT_TRACKER_
 sky		:	DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
 sky		:	INCLUDES		+=	-I$(SRC_SKYTRAVEL)
@@ -1655,10 +1672,11 @@ sky		:				$(SKYTRAVEL_OBJECTS)					\
 
 ######################################################################################
 #pragma mark camera-controller
-#make dome ctrl
+#	make domectrl
 domectrl		:	DEFINEFLAGS		+=	-D_INCLUDE_CTRL_MAIN_
 domectrl		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_DOME_
 domectrl		:	DEFINEFLAGS		+=	-D_ENABLE_SLIT_TRACKER_
+domectrl		:	DEFINEFLAGS		+=	-D_CONTROLLER_USES_ALPACA_
 
 
 domectrl		:			$(CONTROLLER_OBJECTS)
@@ -1861,6 +1879,16 @@ $(OBJECT_DIR)cameradriver_FLIR.o :		$(SRC_DIR)cameradriver_FLIR.cpp		\
 										$(SRC_DIR)alpacadriver.h			\
 										Makefile
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)cameradriver_FLIR.cpp -o$(OBJECT_DIR)cameradriver_FLIR.o
+
+
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)cameradriver_livewindow.o :$(SRC_DIR)cameradriver_livewindow.cpp	\
+									 	$(SRC_DIR)cameradriver.h				\
+										$(SRC_DIR)alpacadriver.h				\
+										Makefile
+	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)cameradriver_livewindow.cpp -o$(OBJECT_DIR)cameradriver_livewindow.o
+
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)cameradriver_save.o :		$(SRC_DIR)cameradriver_save.cpp		\
@@ -2130,6 +2158,12 @@ $(OBJECT_DIR)cpu_stats.o :				$(SRC_DIR)cpu_stats.c 			\
 										$(SRC_DIR)cpu_stats.h
 	$(COMPILE) $(INCLUDES) $(SRC_DIR)cpu_stats.c -o$(OBJECT_DIR)cpu_stats.o
 
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)helper_functions.o :		$(SRC_DIR)helper_functions.c 			\
+										$(SRC_DIR)helper_functions.h
+	$(COMPILE) $(INCLUDES) $(SRC_DIR)helper_functions.c -o$(OBJECT_DIR)helper_functions.o
+
+
 
 ######################################################################################
 # ATIK objects
@@ -2139,7 +2173,7 @@ $(OBJECT_DIR)camera_atik.o : $(SRC_DIR)camera_atik.c $(SRC_DIR)camera_atik.h
 
 
 ######################################################################################
-#	CLIENT_OBJECTS=
+#	CLIENT_OBJECTS
 $(OBJECT_DIR)json_parse.o : $(MLS_LIB_DIR)json_parse.c $(MLS_LIB_DIR)json_parse.h
 	$(COMPILE) $(INCLUDES) $(MLS_LIB_DIR)json_parse.c -o$(OBJECT_DIR)json_parse.o
 
@@ -2159,6 +2193,19 @@ $(OBJECT_DIR)mandelbrot.o : $(SRC_DIR)mandelbrot.c
 $(OBJECT_DIR)controller.o : $(SRC_DIR)controller.cpp $(SRC_DIR)controller.h
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)controller.cpp -o$(OBJECT_DIR)controller.o
 
+
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)controllerClient.o : 		$(SRC_DIR)controllerClient.cpp		\
+										$(SRC_DIR)controllerClient.h		\
+										$(SRC_DIR)controller.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)controllerClient.cpp -o$(OBJECT_DIR)controllerClient.o
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)controllerServer.o : 		$(SRC_DIR)controllerServer.cpp		\
+										$(SRC_DIR)controllerServer.h		\
+										$(SRC_DIR)controller.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)controllerServer.cpp -o$(OBJECT_DIR)controllerServer.o
 
 
 #-------------------------------------------------------------------------------------

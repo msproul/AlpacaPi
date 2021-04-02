@@ -107,6 +107,7 @@
 
 #include	"alpacadriver.h"
 #include	"alpacadriver_helper.h"
+#include	"helper_functions.h"
 #include	"domedriver.h"
 
 #include	"json_parse.h"
@@ -2234,7 +2235,7 @@ uint32_t	movingTime_seconds;
 	//*	check if we are slewing to a destination
 	if (cAzimuth_Destination >= 0.0)
 	{
-    double	deltaDegrees;
+	double	deltaDegrees;
 
 		deltaDegrees	=	fabs(cAzimuth_Destination - cDomeProp.Azimuth);
 

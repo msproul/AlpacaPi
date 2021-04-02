@@ -89,9 +89,9 @@
 #include	"controller.h"
 
 Controller	*gControllerList[kMaxControllers];
-int			gControllerCnt	=	-1;
 CvFont		gTextFont[kFontCnt];
-
+int			gControllerCnt			=	-1;
+char		gColorOverRide			=	0;
 Controller	*gCurrentActiveWindow	=	NULL;
 
 
@@ -197,7 +197,7 @@ Controller::Controller(	const char	*argWindowName,
 int			ii;
 int			objCntr;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, argWindowName);
 
 	memset(&cCommonProp, 0, sizeof(TYPE_CommonProperties));
 
@@ -222,7 +222,10 @@ int			objCntr;
 	cAlpacaDeviceTypeStr[0]		=	0;
 	cAlpacaDeviceNameStr[0]		=	0;
 
+#ifdef _CONTROLLER_USES_ALPACA_
 	ClearCapabilitiesList();
+#endif // _CONTROLLER_USES_ALPACA_
+
 
 	if (gControllerCnt < 0)
 	{
@@ -2715,11 +2718,6 @@ TYPE_WIDGET		*myWidgetPtr;
 	}
 }
 
-//*****************************************************************************
-void	Controller::UpdateSupportedActions(void)
-{
-	CONSOLE_DEBUG(__FUNCTION__);
-}
 
 
 //**************************************************************************************
@@ -2728,81 +2726,7 @@ void	Controller::UpdateWindowTabColors(void)
 	CONSOLE_DEBUG(__FUNCTION__);
 }
 
-//*****************************************************************************
-//*****************************************************************************
-//*****************************************************************************
-		TYPE_CAPABILITY		cCapabilitiesList[kMaxCapabilities];
-//**************************************************************************************
-void	Controller::ClearCapabilitiesList(void)
-{
-int	iii;
 
-	for (iii=0; iii<kMaxCapabilities; iii++)
-	{
-		memset(&cCapabilitiesList[iii], 0, sizeof(TYPE_CAPABILITY));
-	}
-}
-
-//**************************************************************************************
-void	Controller::AddCapability(const char *capability, const char *value)
-{
-int		iii;
-int		foundIdx;
-
-//	CONSOLE_DEBUG_W_2STR(__FUNCTION__, capability, value);
-
-	foundIdx	=	-1;
-	iii			=	0;
-
-	while ((foundIdx < 0) && (iii<kMaxCapabilities))
-	{
-		if (cCapabilitiesList[iii].capabilityName[0] == 0)
-		{
-			foundIdx	=	iii;
-			strcpy(cCapabilitiesList[iii].capabilityName, capability);
-		}
-		else if (strcasecmp(capability, cCapabilitiesList[iii].capabilityName) == 0)
-		{
-			foundIdx	=	iii;
-		}
-		iii++;
-	}
-	if ((foundIdx >= 0) && (foundIdx < kMaxCapabilities))
-	{
-		strcpy(cCapabilitiesList[foundIdx].capabilityValue, value);
-
-		UpdateCapabilityList();
-	}
-}
-
-//**************************************************************************************
-//*	this is intended to get over ridden by a sub class
-void	Controller::UpdateCapabilityList(void)
-{
-//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
-}
-
-//*****************************************************************************
-void	Controller::ReadOneDriverCapability(const char	*driverNameStr,
-											const char	*propertyStr,
-											const char	*reportedStr,
-											bool		*booleanValue)
-{
-bool			validData;
-bool			argBoolean;
-
-	validData	=	AlpacaGetBooleanValue(	driverNameStr, propertyStr,	NULL,	&argBoolean);
-	if (validData)
-	{
-		AddCapability(reportedStr, (argBoolean ? "\tTrue" : "False"));
-		*booleanValue	=	argBoolean;
-	}
-	else
-	{
-		CONSOLE_DEBUG("Failed");
-		cReadFailureCnt++;
-	}
-}
 
 #pragma mark -
 
@@ -2836,22 +2760,6 @@ bool	inRect;
 	return(inRect);
 }
 
-//*****************************************************************************
-bool	IsTrueFalse(const char *trueFalseString)
-{
-bool	trueFalseFlag;
-
-	if (strcasecmp(trueFalseString, "true") == 0)
-	{
-		trueFalseFlag	=	true;
-	}
-	else
-	{
-		trueFalseFlag	=	false;
-	}
-	return(trueFalseFlag);
-}
-
 
 //*****************************************************************************
 void	DumpWidget(TYPE_WIDGET *theWidget)
@@ -2867,62 +2775,7 @@ void	DumpWidget(TYPE_WIDGET *theWidget)
 	CONSOLE_DEBUG_W_NUM("theWidget->selected\t=",		theWidget->selected);
 }
 
-static uint32_t	gSystemStartSecs = 0;
 
-//*****************************************************************************
-uint32_t	millis(void)
-{
-uint32_t	elapsedSecs;
-uint32_t	milliSecs;
-struct timeval	currentTime;
-
-	gettimeofday(&currentTime, NULL);
-
-	if (gSystemStartSecs == 0)
-	{
-		gSystemStartSecs	=	currentTime.tv_sec;
-	}
-	elapsedSecs	=	currentTime.tv_sec - gSystemStartSecs;
-	milliSecs	=	(elapsedSecs * 1000) + (currentTime.tv_usec / 1000);
-	return(milliSecs);
-}
-
-
-//*****************************************************************************
-//*	Right Ascension is never negitive (0->24) and therefore does not need a sign
-//*****************************************************************************
-void	FormatHHMMSS(const double argDegreeValue, char *timeString, bool includeSign)
-{
-double	myDegreeValue;
-double	minutes_dbl;
-double	seconds_dbl;
-int		degrees;
-int		minutes;
-int		seconds;
-char	signChar;
-
-	signChar		=	'+';
-	myDegreeValue	=	argDegreeValue;
-	if (myDegreeValue < 0)
-	{
-		myDegreeValue	=	-argDegreeValue;
-		signChar		=	'-';
-	}
-	degrees		=	myDegreeValue;
-	minutes_dbl	=	myDegreeValue - (1.0 * degrees);
-	minutes		=	minutes_dbl * 60.0;
-	seconds_dbl	=	(minutes_dbl * 60) - (1.0 * minutes);
-	seconds		=	seconds_dbl * 60;;
-
-	if (includeSign)
-	{
-		sprintf(timeString, "%c%02d:%02d:%02d", signChar, degrees, minutes, seconds);
-	}
-	else
-	{
-		sprintf(timeString, "%02d:%02d:%02d", degrees, minutes, seconds);
-	}
-}
 
 
 //******************************************************************************
@@ -2970,3 +2823,94 @@ void	LoadAlpacaLogo(void)
 		gAlpacaLogoPtr	=	cvLoadImage("logos/AlpacaLogo-vsmall.png", CV_LOAD_IMAGE_COLOR);
 	}
 }
+
+
+
+
+#ifdef _CONTROLLER_USES_ALPACA_
+
+
+//*****************************************************************************
+//*****************************************************************************
+//*****************************************************************************
+TYPE_CAPABILITY		cCapabilitiesList[kMaxCapabilities];
+
+//**************************************************************************************
+void	Controller::ClearCapabilitiesList(void)
+{
+int	iii;
+
+	for (iii=0; iii<kMaxCapabilities; iii++)
+	{
+		memset(&cCapabilitiesList[iii], 0, sizeof(TYPE_CAPABILITY));
+	}
+}
+
+//**************************************************************************************
+void	Controller::AddCapability(const char *capability, const char *value)
+{
+int		iii;
+int		foundIdx;
+
+//	CONSOLE_DEBUG_W_2STR(__FUNCTION__, capability, value);
+
+	foundIdx	=	-1;
+	iii			=	0;
+
+	while ((foundIdx < 0) && (iii<kMaxCapabilities))
+	{
+		if (cCapabilitiesList[iii].capabilityName[0] == 0)
+		{
+			foundIdx	=	iii;
+			strcpy(cCapabilitiesList[iii].capabilityName, capability);
+		}
+		else if (strcasecmp(capability, cCapabilitiesList[iii].capabilityName) == 0)
+		{
+			foundIdx	=	iii;
+		}
+		iii++;
+	}
+	if ((foundIdx >= 0) && (foundIdx < kMaxCapabilities))
+	{
+		strcpy(cCapabilitiesList[foundIdx].capabilityValue, value);
+
+		UpdateCapabilityList();
+	}
+}
+
+//*****************************************************************************
+void	Controller::ReadOneDriverCapability(const char	*driverNameStr,
+											const char	*propertyStr,
+											const char	*reportedStr,
+											bool		*booleanValue)
+{
+bool			validData;
+bool			argBoolean;
+
+	validData	=	AlpacaGetBooleanValue(	driverNameStr, propertyStr,	NULL,	&argBoolean);
+	if (validData)
+	{
+		AddCapability(reportedStr, (argBoolean ? "\tTrue" : "False"));
+		*booleanValue	=	argBoolean;
+	}
+	else
+	{
+		CONSOLE_DEBUG("Failed");
+		cReadFailureCnt++;
+	}
+}
+
+//**************************************************************************************
+//*	this is intended to get over ridden by a sub class
+void	Controller::UpdateCapabilityList(void)
+{
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+}
+
+//*****************************************************************************
+void	Controller::UpdateSupportedActions(void)
+{
+	CONSOLE_DEBUG(__FUNCTION__);
+}
+
+#endif // _CONTROLLER_USES_ALPACA_

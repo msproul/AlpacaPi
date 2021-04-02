@@ -200,6 +200,7 @@
 
 #include	"JsonResponse.h"
 #include	"eventlogging.h"
+#include	"helper_functions.h"
 
 #include	"alpaca_defs.h"
 #include	"cpu_stats.h"
@@ -5586,13 +5587,13 @@ char	myImageTypeStr[16];
 	//*	first see if this is already in the list
 	readOutModeIdx	=	-1;
 	for (iii=0; iii<kMaxReadOutModes; iii++)
-    {
+	{
 		if (imageType == cCameraProp.ReadOutModes[iii].internalImageType)
 		{
 			readOutModeIdx	=	iii;
 			break;
 		}
-    }
+	}
 	//*	if we did not find it, find the first available slot
 	if (readOutModeIdx < 0)
 	{
@@ -6465,8 +6466,8 @@ int					fitsHdrIdx;
 								"\n");
 
 	fitsHdrIdx	=	0;
-    while (cFitsHeader[fitsHdrIdx].fitsRec[0] != 0)
-    {
+	while (cFitsHeader[fitsHdrIdx].fitsRec[0] != 0)
+	{
 		strcpy(lineBuff, "\"");
 		strcat(lineBuff, cFitsHeader[fitsHdrIdx].fitsRec);
 		strcat(lineBuff, "\",\n");
@@ -6476,7 +6477,7 @@ int					fitsHdrIdx;
 									kMaxJsonBuffLen,
 									lineBuff);
 		fitsHdrIdx++;
-    }
+	}
 	JsonResponse_Add_RawText(	mySocketFD,
 								reqData->jsonTextBuffer,
 								kMaxJsonBuffLen,

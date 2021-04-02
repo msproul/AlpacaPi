@@ -81,7 +81,6 @@ int		iii;
 int		myButtonHt;
 int		myPlusMinusBtnWidth;
 int		my_cWidth;
-int		domeGraphic_yLoc;
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	my_cWidth	=	cWidth;
@@ -101,7 +100,10 @@ int		domeGraphic_yLoc;
 	yLoc			+=	cTitleHeight;
 	yLoc			+=	2;
 
+#ifdef _ENABLE_SKYTRAVEL_
+int		domeGraphic_yLoc;
 	domeGraphic_yLoc	=	yLoc;
+#endif
 
 	btnWidth		=	(cClmWidth * 3);
 

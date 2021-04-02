@@ -865,42 +865,42 @@ char	errorMsg[128];
 #endif
 
 #if 0
-    LX200Commands.getDecl = QString("GD");
-    LX200Commands.getRA = QString("GR");
-    LX200Commands.getHiDef = QString("U");
-    LX200Commands.stopMotion = QString("Q");
-    LX200Commands.slewRA = QString("Sr");
-    LX200Commands.slewDecl = QString("Sd");
-    LX200Commands.slewPossible = QString("MS");
-    LX200Commands.syncCommand = QString("CM");
-    LX200Commands.moveEast = QString("Me");
-    LX200Commands.moveWest = QString("Mw");
-    LX200Commands.moveNorth = QString("Mn");
-    LX200Commands.moveSouth = QString("Ms");
-    LX200Commands.stopMoveEast = QString("Qe");
-    LX200Commands.stopMoveWest = QString("Qw");
-    LX200Commands.stopMoveNorth = QString("Qn");
-    LX200Commands.stopMoveSouth = QString("Qs");
-    LX200Commands.setCenterSpeed = QString("RC");
-    LX200Commands.setGuideSpeed = QString("RG");
-    LX200Commands.setFindSpeed = QString("RM");
-    LX200Commands.setGOTOSpeed = QString("RS");
-    LX200Commands.getCalendarFormat  = QString("Gc");
-    LX200Commands.getDate = QString("GC");
-    LX200Commands.getName = QString("GM");
-    LX200Commands.getTrackingRate = QString("GT");
-    LX200Commands.getLatitude = QString("Gt");
-    LX200Commands.getLongitude = QString("Gg");
-    LX200Commands.getUTCOffset = QString("GG");
-    LX200Commands.setUTCOffset = QString("SG");
-    LX200Commands.getLocalTime = QString("GL");
-    LX200Commands.setLocalTime = QString("SL");
-    LX200Commands.setLocalDate = QString("SC");
-    LX200Commands.setLongitude = QString("Sg");
-    LX200Commands.setLatitude = QString("St");
+	LX200Commands.getDecl = QString("GD");
+	LX200Commands.getRA = QString("GR");
+	LX200Commands.getHiDef = QString("U");
+	LX200Commands.stopMotion = QString("Q");
+	LX200Commands.slewRA = QString("Sr");
+	LX200Commands.slewDecl = QString("Sd");
+	LX200Commands.slewPossible = QString("MS");
+	LX200Commands.syncCommand = QString("CM");
+	LX200Commands.moveEast = QString("Me");
+	LX200Commands.moveWest = QString("Mw");
+	LX200Commands.moveNorth = QString("Mn");
+	LX200Commands.moveSouth = QString("Ms");
+	LX200Commands.stopMoveEast = QString("Qe");
+	LX200Commands.stopMoveWest = QString("Qw");
+	LX200Commands.stopMoveNorth = QString("Qn");
+	LX200Commands.stopMoveSouth = QString("Qs");
+	LX200Commands.setCenterSpeed = QString("RC");
+	LX200Commands.setGuideSpeed = QString("RG");
+	LX200Commands.setFindSpeed = QString("RM");
+	LX200Commands.setGOTOSpeed = QString("RS");
+	LX200Commands.getCalendarFormat  = QString("Gc");
+	LX200Commands.getDate = QString("GC");
+	LX200Commands.getName = QString("GM");
+	LX200Commands.getTrackingRate = QString("GT");
+	LX200Commands.getLatitude = QString("Gt");
+	LX200Commands.getLongitude = QString("Gg");
+	LX200Commands.getUTCOffset = QString("GG");
+	LX200Commands.setUTCOffset = QString("SG");
+	LX200Commands.getLocalTime = QString("GL");
+	LX200Commands.setLocalTime = QString("SL");
+	LX200Commands.setLocalDate = QString("SC");
+	LX200Commands.setLongitude = QString("Sg");
+	LX200Commands.setLatitude = QString("St");
 
 
-437 [LX200CommThread     ] LX200CommThread
+437 [LX200CommThread	 ] LX200CommThread
 178 [LX200_SendCommand   ] sending	= :GR#
 210 [LX200_SendCommand   ] dataBuffer	= 326:16:45#
 178 [LX200_SendCommand   ] sending	= :GD#

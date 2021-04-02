@@ -49,6 +49,7 @@
 
 #include	"discovery_lib.h"
 #include	"sendrequest_lib.h"
+#include	"helper_functions.h"
 
 
 #define _ENABLE_CONSOLE_DEBUG_

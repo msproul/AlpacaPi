@@ -31,6 +31,7 @@
 
 	#include	"alpaca_defs.h"
 	#include	"alpacadriver_helper.h"
+	#include	"helper_functions.h"
 	#include	"controller.h"
 
 

@@ -27,6 +27,7 @@
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
 
+#include	"helper_functions.h"
 #include	"windowtab.h"
 #include	"windowtab_STsettings.h"
 #include	"controller.h"

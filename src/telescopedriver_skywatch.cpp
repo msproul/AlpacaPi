@@ -33,6 +33,8 @@
 //*	<MLS>	=	Mark L Sproul
 //*****************************************************************************
 //*	Jan 30,	2021	<MLS> Created telescopedriver_skywatch.cpp
+//*	Mar 31,	2021	<MLS> A bunch of work on EQ6 support
+//*	Mar 31,	2021	<MLS> Added SendCmdsFromQueue()
 //*****************************************************************************
 
 

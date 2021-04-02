@@ -39,6 +39,7 @@
 #include	"windowtab.h"
 #include	"windowtab_covercalib.h"
 #include	"controller.h"
+#include	"helper_functions.h"
 
 
 #include	"controller_covercalib.h"

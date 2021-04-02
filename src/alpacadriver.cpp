@@ -115,6 +115,8 @@
 //*	Jan 10,	2020	<MLS> Changed SendSupportedActions() to Get_SupportedActions()
 //*	Jan 10,	2020	<MLS> Pushed build 74 up to github
 //*	Mar 19,	2021	<MLS> Added coma checking in numeric string in GetKeyWordArgument()
+//*	Apr  1,	2021	<MLS> LiveWindow mode will be available for all drivers
+//*	Apr  1,	2021	<MLS> Added Put_LiveWindow()
 //*****************************************************************************
 
 #include	<stdio.h>
@@ -146,6 +148,7 @@
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
 
+#include	"helper_functions.h"
 #include	"JsonResponse.h"
 #include	"alpacadriver.h"
 #include	"alpacadriver_helper.h"
@@ -300,6 +303,7 @@ const TYPE_CmdEntry	gCommonCmdTable[]	=
 	//*	to be used in the normal astronomy community
 	{	"exit",					kCmd_Common_exit,				kCmdType_GET	},
 #endif // _INCLUDE_EXIT_COMMAND_
+	{	"livewindow",			kCmd_Common_LiveWindow,			kCmdType_PUT	},
 
 	{	"",						-1,	0x00	}
 };
@@ -366,6 +370,11 @@ int		ii;
 	cDiscoveryThreadID			=	0;
 	cBroadcastSocket			=	-1;
 	cDiscoveryCount				=	0;
+
+	//========================================
+	//*	live window stuff
+	cLiveController				=	NULL;
+
 
 	//*	add the device to the list
 	cDeviceType	=	argDeviceType;
@@ -515,6 +524,11 @@ int					mySocket;
 			break;
 #endif // _INCLUDE_EXIT_COMMAND_
 
+		case kCmd_Common_LiveWindow:
+			alpacaErrCode	=	Put_LiveWindow(reqData, alpacaErrMsg);
+			break;
+
+
 		default:
 			alpacaErrCode	=	kASCOM_Err_InvalidOperation;
 			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Unrecognized command");
@@ -543,10 +557,10 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 //*****************************************************************************
 TYPE_ASCOM_STATUS	AlpacaDriver::Put_Connected(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
 {
-TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
-bool	foundKeyWord;
-bool	connectFlag;
-char	argumentString[32];
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
+bool				foundKeyWord;
+bool				connectFlag;
+char				argumentString[32];
 
 	foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
 											"Connected",
@@ -879,6 +893,53 @@ int		mySocketFD;
 	return(kASCOM_Err_Success);
 }
 
+//*****************************************************************************
+TYPE_ASCOM_STATUS	AlpacaDriver::Put_LiveWindow(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
+bool				foundKeyWord;
+char				argumentString[32];
+bool				liveWindowFlg;
+
+	foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
+											"Live",
+											argumentString,
+											(sizeof(argumentString) -1));
+	if (foundKeyWord)
+	{
+		liveWindowFlg	=	IsTrueFalse(argumentString);
+		if (liveWindowFlg)
+		{
+//			alpacaErrCode	=	OpenLiveWindow(alpacaErrMsg);
+		}
+		else
+		{
+//			alpacaErrCode	=	CloseLiveWindow(alpacaErrMsg);
+		}
+	}
+	else
+	{
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Keyword 'Live' not found");
+		alpacaErrCode	=	kASCOM_Err_InvalidValue;
+		CONSOLE_DEBUG(alpacaErrMsg);
+	}
+	return(alpacaErrCode);
+
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	AlpacaDriver::OpenLiveWindow(char *alpacaErrMsg)
+{
+	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "LiveWindow not implemented");
+	return(kASCOM_Err_MethodNotImplemented);
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	AlpacaDriver::CloseLiveWindow(char *alpacaErrMsg)
+{
+	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "LiveWindow not implemented");
+	return(kASCOM_Err_MethodNotImplemented);
+}
 
 //*****************************************************************************
 void	AlpacaDriver::OutputHTML(TYPE_GetPutRequestData *reqData)
@@ -2985,6 +3046,12 @@ double			freeDiskSpace_Gigs;
 					delayTime_microSecs	=	delayTimeForThisTask;
 				}
 
+				//==================================================================================
+				//*	live window
+				if (gAlpacaDeviceList[ii]->cLiveController != NULL)
+				{
+				//	gAlpacaDeviceList[ii]->cLiveController->HandleWindow();
+				}
 			}
 		}
 		if (delayTime_microSecs < 10)
@@ -2993,6 +3060,7 @@ double			freeDiskSpace_Gigs;
 		}
 //		CONSOLE_DEBUG_W_INT32("delayTime_microSecs\t=", delayTime_microSecs);
 		usleep(delayTime_microSecs);
+
 
 	}
 
@@ -3027,26 +3095,6 @@ uint32_t	milliSecs;
 	return(milliSecs);
 }
 
-#if !defined(__arm__) || defined(_INCLUDE_MILLIS_)
-
-//*****************************************************************************
-uint32_t	millis(void)
-{
-uint32_t	elapsedSecs;
-uint32_t	milliSecs;
-struct timeval	currentTime;
-
-	gettimeofday(&currentTime, NULL);
-
-	if (gSystemStartSecs == 0)
-	{
-		gSystemStartSecs	=	currentTime.tv_sec;
-	}
-	elapsedSecs	=	currentTime.tv_sec - gSystemStartSecs;
-	milliSecs	=	(elapsedSecs * 1000) + (currentTime.tv_usec / 1000);
-	return(milliSecs);
-}
-#endif	//	!defined(__arm__) || defined(_INCLUDE_MILLIS_)
 
 
 //*****************************************************************************
@@ -3105,42 +3153,6 @@ struct tm	*linuxTime;
 }
 
 //*****************************************************************************
-//*	Right Ascension is never negitive (0->24) and therefore does not need a sign
-//*****************************************************************************
-void	FormatHHMMSS(const double argDegreeValue, char *timeString, bool includeSign)
-{
-double	myDegreeValue;
-double	minutes_dbl;
-double	seconds_dbl;
-int		degrees;
-int		minutes;
-int		seconds;
-char	signChar;
-
-	signChar		=	'+';
-	myDegreeValue	=	argDegreeValue;
-	if (myDegreeValue < 0)
-	{
-		myDegreeValue	=	-argDegreeValue;
-		signChar		=	'-';
-	}
-	degrees		=	myDegreeValue;
-	minutes_dbl	=	myDegreeValue - (1.0 * degrees);
-	minutes		=	minutes_dbl * 60.0;
-	seconds_dbl	=	(minutes_dbl * 60) - (1.0 * minutes);
-	seconds		=	seconds_dbl * 60;;
-
-	if (includeSign)
-	{
-		sprintf(timeString, "%c%02d:%02d:%02d", signChar, degrees, minutes, seconds);
-	}
-	else
-	{
-		sprintf(timeString, "%02d:%02d:%02d", degrees, minutes, seconds);
-	}
-}
-
-//*****************************************************************************
 //	DATE-OBS	String - The UTC date and time at the start of the exposure in
 //	the ISO standard 8601 format: '2002-09-07T15:42:17.123' (CCYY-MM-
 //	DDTHH:MM:SS.SSS).
@@ -3167,21 +3179,6 @@ long		milliSecs;
 	}
 }
 
-//*****************************************************************************
-bool	IsTrueFalse(const char *trueFalseString)
-{
-bool	trueFalseFlag;
-
-	if (strcasecmp(trueFalseString, "true") == 0)
-	{
-		trueFalseFlag	=	true;
-	}
-	else
-	{
-		trueFalseFlag	=	false;
-	}
-	return(trueFalseFlag);
-}
 
 
 //*****************************************************************************

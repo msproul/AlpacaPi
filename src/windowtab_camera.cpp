@@ -42,6 +42,7 @@
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
 
+#include	"helper_functions.h"
 #include	"controller.h"
 #include	"controller_camera.h"
 #include	"windowtab.h"

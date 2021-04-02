@@ -52,6 +52,7 @@
 #include "opencv2/imgproc/imgproc_c.h"
 
 #include	"discovery_lib.h"
+#include	"helper_functions.h"
 
 
 #define _ENABLE_CONSOLE_DEBUG_

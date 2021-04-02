@@ -58,6 +58,7 @@
 #include "opencv2/imgproc/imgproc_c.h"
 
 #include	"alpaca_defs.h"
+#include	"helper_functions.h"
 
 #include	"discovery_lib.h"
 #include	"sendrequest_lib.h"

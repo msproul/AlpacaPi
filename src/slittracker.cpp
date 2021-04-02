@@ -428,7 +428,7 @@ void	SlitTrackerDriver::OpenSlitTrackerPort(void)
 	cSlitTrackerfileDesc	=	open(cUSBpath, O_RDWR);	//* connect to port
 	if (cSlitTrackerfileDesc >= 0)
 	{
-		Set_Serial_attribs(cSlitTrackerfileDesc, B9600, 0);
+		Serial_Set_Attribs(cSlitTrackerfileDesc, B9600, 0);
 	}
 	else
 	{

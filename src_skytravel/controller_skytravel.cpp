@@ -42,6 +42,7 @@
 #define	kWindowHeight	820
 
 #include	"alpaca_defs.h"
+#include	"helper_functions.h"
 #include	"windowtab_about.h"
 #include	"windowtab_alpacalist.h"
 #include	"windowtab_deviceselect.h"

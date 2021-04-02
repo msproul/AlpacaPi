@@ -1,5 +1,5 @@
 //**************************************************************************
-//*	Name:			telescopedriver_lx200.cpp
+//*	Name:			telescopedriver_comm.cpp
 //*
 //*	Author:			Mark Sproul (C) 2021
 //*
@@ -33,6 +33,7 @@
 //*****************************************************************************
 //*	Feb  7,	2021	<MLS> Created telescopedriver_comm.cpp
 //*	Feb  9,	2021	<MLS> Moved device comm variables from main class to comm class
+//*	Mar 31,	2021	<MLS> Moved command queue buffer to comm class
 //*****************************************************************************
 
 
@@ -185,7 +186,6 @@ int32_t	TelescopeDriverComm::RunStateMachine(void)
 //*****************************************************************************
 bool	TelescopeDriverComm::AlpacaConnect(void)
 {
-char	*colonPtr;
 bool	connectionOKflag;
 
 	CONSOLE_DEBUG(__FUNCTION__);
@@ -592,17 +592,9 @@ bool		sendOK;
 	return(NULL);
 }
 
-
-
 //*****************************************************************************
 static void	*Telescope_Comm_Thread(void *arg)
 {
-//int					socket_desc;
-int					returnByteCNt;
-//char				dataBuffer[500];
-//int					shutDownRetCode;
-//int					closeRetCode;
-//bool				isValid;
 TelescopeDriverComm	*telscopeCommPtr;
 void				*returnValue;
 
@@ -623,9 +615,6 @@ void				*returnValue;
 
 	return(returnValue);
 }
-
-
-
 
 
 #endif // _ENABLE_TELESCOPE_LX200_

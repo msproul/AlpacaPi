@@ -60,31 +60,34 @@ enum
 
 //*****************************************************************************
 //*	simple colors
+//*	4/1/2021	Had to add W_ prefix to avoid conflicts with FLIR
+//*				W_  for Window colors
+//*****************************************************************************
 enum
 {
-		WHITE	=	0,
-		BLACK,
+		W_WHITE	=	0,
+		W_BLACK,
 
-		RED,
-		GREEN,
-		BLUE,
+		W_RED,
+		W_GREEN,
+		W_BLUE,
 
-		CYAN,
-		MAGENTA,
-		YELLOW,
+		W_CYAN,
+		W_MAGENTA,
+		W_YELLOW,
 
-		DARKRED,
-		DARKGREEN,
-		DARKBLUE,
+		W_DARKRED,
+		W_DARKGREEN,
+		W_DARKBLUE,
 
-		LIGHTGRAY,
-		DARKGRAY,
+		W_LIGHTGRAY,
+		W_DARKGRAY,
 
-		LIGHTMAGENTA,
+		W_LIGHTMAGENTA,
 
-		BROWN,
-		PINK,
-		COLOR_LAST
+		W_BROWN,
+		W_PINK,
+		W_COLOR_LAST
 
 };
 
@@ -156,30 +159,7 @@ class WindowTab
 				bool	IsWidgetTextInput(const int widgetIdx);
 
 				void	SetParentObjectPtr(void *argParentObjPtr);
-				//------------------------------------------------------------
-				//*	Alpaca command stuff
-				bool	AlpacaSendPutCmd(	sockaddr_in		*deviceAddress,
-											int				devicePort,
-											const char		*alpacaDevice,
-											const int		alpacaDevNum,
-											const char		*alpacaCmd,
-											const char		*dataString,
-											SJP_Parser_t	*jsonParser);
 
-				bool	AlpacaSendPutCmd(	const char		*alpacaDevice,
-											const char		*alpacaCmd,
-											const char		*dataString,
-											SJP_Parser_t	*jsonParser = NULL);
-
-				bool	AlpacaGetIntegerValue(	const char	*alpacaDevice,
-												const char	*alpacaCmd,
-												const char	*dataString,
-												int			*returnValue);
-
-				int		AlpacaCheckForErrors(	SJP_Parser_t	*jsonParser,
-												char			*errorMsg,
-												bool			reportError=false);
-		virtual	void	AlpacaDisplayErrorMessage(const char *errorMsgString);
 
 
 				void	SetWindowTabColorScheme(const int colorScheme);
@@ -245,6 +225,36 @@ class WindowTab
 		int			cHeight;
 		void		*cParentObjPtr;
 //		Controller	*cParentObjPtr;
+
+#ifdef _CONTROLLER_USES_ALPACA_
+		//------------------------------------------------------------
+		//*	Alpaca command stuff
+		bool	AlpacaSendPutCmd(	sockaddr_in		*deviceAddress,
+									int				devicePort,
+									const char		*alpacaDevice,
+									const int		alpacaDevNum,
+									const char		*alpacaCmd,
+									const char		*dataString,
+									SJP_Parser_t	*jsonParser);
+
+		bool	AlpacaSendPutCmd(	const char		*alpacaDevice,
+									const char		*alpacaCmd,
+									const char		*dataString,
+									SJP_Parser_t	*jsonParser = NULL);
+
+		bool	AlpacaGetIntegerValue(	const char	*alpacaDevice,
+										const char	*alpacaCmd,
+										const char	*dataString,
+										int			*returnValue);
+
+		int		AlpacaCheckForErrors(	SJP_Parser_t	*jsonParser,
+										char			*errorMsg,
+										bool			reportError=false);
+virtual	void	AlpacaDisplayErrorMessage(const char *errorMsgString);
+#endif // _CONTROLLER_USES_ALPACA_
+
+
+
 
 	protected:
 		//*	these are for consistency between tab windows

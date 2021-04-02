@@ -56,7 +56,7 @@ static	long			gDefaultStarCatCount	=	0;
 long	GetFileSize(const char *filePath)
 {
 struct stat fileStatBuffer;
-int         status;
+int			status;
 long		myFileSize;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
@@ -81,7 +81,7 @@ int	myHexData;
 	CONSOLE_DEBUG_W_STR("Called from  \t=",	functionName);
 	CONSOLE_DEBUG_W_LONG("sizeof(obj) \t=",	sizeof(TYPE_CelestData));
 	CONSOLE_DEBUG_W_LONG("id          \t=",	objectStruct->id);
-	CONSOLE_DEBUG_W_NUM("magn        \t=",	objectStruct->magn);
+	CONSOLE_DEBUG_W_NUM("magn         \t=",	objectStruct->magn);
 	CONSOLE_DEBUG_W_NUM("dataSrc      \t=",	objectStruct->dataSrc);
 	myHexData	=	objectStruct->type;
 	CONSOLE_DEBUG_W_HEX("type         \t=",	myHexData);
@@ -953,10 +953,10 @@ int		linesRead;
 	linesRead	=	0;
 	while (fgets(lineBuff, 2000, filePointer))
 	{
-        if (strlen(lineBuff) > 0)
-        {
+		if (strlen(lineBuff) > 0)
+		{
 			linesRead++;
-        }
+		}
 	}
 	fseek(filePointer, 0, SEEK_SET);
 	return(linesRead);

@@ -10,6 +10,9 @@
 #include	<fcntl.h>
 #include	<termios.h>
 #include	<stdbool.h>
+#include	<string.h>
+#include	<unistd.h>
+
 
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
@@ -88,8 +91,8 @@ struct termios tty;
 	}
 
 	tty.c_cc[VMIN]	=	should_block ? 1 : 0;
-//	tty.c_cc[VTIME]	=	5;            // 0.5 seconds read timeout
-	tty.c_cc[VTIME]	=	20;            // 0.5 seconds read timeout
+//	tty.c_cc[VTIME]	=	5;			// 0.5 seconds read timeout
+	tty.c_cc[VTIME]	=	20;			// 0.5 seconds read timeout
 
 	if (tcsetattr(fd, TCSANOW, &tty) != 0)
 	{
@@ -106,7 +109,7 @@ size_t	byteCount;
 	CONSOLE_DEBUG_W_STR("Sending\t=", xmitData);
 
 	byteCount		=	strlen(xmitData);
-	bytesWritten	=	write (fd, xmitData, byteCount);           // send 7 character greeting
+	bytesWritten	=	write (fd, xmitData, byteCount);	// send 7 character greeting
 
 	if (waitFlag)
 	{
@@ -116,7 +119,7 @@ size_t	byteCount;
 }
 
 //*****************************************************************************
-int	Serial_Read_Data(int fd, const char *recvData, size_t maxDataLen)
+int	Serial_Read_Data(int fd, char *recvData, size_t maxDataLen)
 {
 ssize_t	bytesRead;
 

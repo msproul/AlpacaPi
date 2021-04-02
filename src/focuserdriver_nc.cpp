@@ -67,6 +67,7 @@
 
 #include	"alpacadriver.h"
 #include	"alpacadriver_helper.h"
+#include	"helper_functions.h"
 #include	"focuserdriver.h"
 #include	"focuserdriver_nc.h"
 #include	"eventlogging.h"
@@ -578,7 +579,7 @@ TYPE_SERIALPORTS	*entry2;
 }
 
 #ifndef _USE_MOONLITE_COM_
-
+#error "What are we doing here -- _USE_MOONLITE_COM_"
 //**************************************************************************************
 //*	open the /dev devices and see if there are moonlite focusers
 static int	CountMoonliteFocusers(void)
