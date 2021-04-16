@@ -2,8 +2,22 @@
 #	Target Tool script
 #	This script will download the latest list of AAVSO alerts via the TargetTool
 ###############################################################################
-
 clear
+
+
+# first make sure "replaceCRLF" is here
+if [ -f replaceCRLF ]
+then
+	echo "replaceCRLF is present"
+else
+	if [ -f replace.c ]
+	then
+		echo "Compiling replace.c"
+		gcc replace.c -o replaceCRLF
+	fi
+fi
+
+
 
 ###############################################################################
 #	Place your TargetTool key string in a file called "aavso_targettool_token.txt"
@@ -39,18 +53,23 @@ function Request
 ###############################################################################
 echo
 
-OUTPUTFILE="alerts_json.txt"
-Request	"https://filtergraph.com/aavso/api/v1/nighttime"	| ./replaceCRLF	> $OUTPUTFILE
-Request	"https://filtergraph.com/aavso/api/v1/telescope"	| ./replaceCRLF	>> $OUTPUTFILE
-Request	"https://filtergraph.com/aavso/api/v1/targets"		| ./replaceCRLF	>> $OUTPUTFILE
+if [ -f replaceCRLF ]
+then
 
-echo -n "Total lines in JSON response ="
-wc -l $OUTPUTFILE
-echo
+	OUTPUTFILE="alerts_json.txt"
+	Request	"https://filtergraph.com/aavso/api/v1/nighttime"	| ./replaceCRLF	> $OUTPUTFILE
+	Request	"https://filtergraph.com/aavso/api/v1/telescope"	| ./replaceCRLF	>> $OUTPUTFILE
+	Request	"https://filtergraph.com/aavso/api/v1/targets"		| ./replaceCRLF	>> $OUTPUTFILE
 
-echo -n "Total target entries ="
-grep star_name $OUTPUTFILE | wc -l
-echo
+	echo -n "Total lines in JSON response ="
+	wc -l $OUTPUTFILE
+	echo
 
+	echo -n "Total target entries ="
+	grep star_name $OUTPUTFILE | wc -l
+	echo
 
+else
+	echo "Failed to create replaceCRLF"
+fi
 
