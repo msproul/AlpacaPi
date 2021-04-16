@@ -22,6 +22,7 @@
 //*	Feb  2,	2021	<MLS> Added the ability to zoom and scroll image by draging the mouse.
 //*	Feb 28,	2021	<MLS> Working on image scrolling/dragging
 //*	Feb 28,	2021	<MLS> Finally got image dragging to work properly
+//*	Apr  5,	2021	<MLS> Zoomed in live view now working
 //*****************************************************************************
 
 #ifdef _ENABLE_CTRL_IMAGE_
@@ -85,9 +86,12 @@ void	WindowTabImage::SetupWindowControls(void)
 {
 int			xLoc;
 int			yLoc;
+int			save_yLoc;
 int			iii;
+int			imageBoxWidth;
 int			imageBoxHeight;
-
+int			labelWidth;
+int			dataWidth;
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	//------------------------------------------
@@ -112,20 +116,69 @@ int			imageBoxHeight;
 	}
 	yLoc			+=	cTitleHeight;
 	yLoc			+=	2;
+	save_yLoc		=	yLoc;
 
+	//------------------------------------------
+	xLoc		=	5;
+	labelWidth	=	150;
+	dataWidth	=	100;
+	iii		=	kImageDisplay_FrameCnt_Lbl;
+	while (iii < kImageDisplay_FramesSaved)
+	{
+		SetWidget(				iii,	xLoc,	yLoc,		labelWidth,		cSmallBtnHt);
+		SetWidgetType(			iii, 	kWidgetType_Text);
+		SetWidgetFont(			iii, 	kFont_TextList);
+		SetWidgetJustification(	iii, 	kJustification_Left);
+		iii++;
+
+		SetWidget(				iii,	(xLoc + labelWidth + 2),	yLoc,		dataWidth,		cSmallBtnHt);
+		SetWidgetType(			iii, 	kWidgetType_Text);
+		SetWidgetFont(			iii, 	kFont_TextList);
+		SetWidgetJustification(	iii, 	kJustification_Left);
+
+
+
+		yLoc	+=	cSmallBtnHt;
+		yLoc	+=	2;
+
+		iii++;
+	}
+	SetWidgetJustification(	kImageDisplay_FrameCnt, 	kJustification_Center);
+
+	SetWidgetText(kImageDisplay_FrameCnt_Lbl,		"Frames");
+	SetWidgetText(kImageDisplay_Exposure_Lbl,		"Exposure");
+	SetWidgetText(kImageDisplay_Gain_Lbl,			"Gain");
+	SetWidgetText(kImageDisplay_CameraTemp_Lbl,		"CameraTemp");
+	SetWidgetText(kImageDisplay_Filter_Lbl,			"Filter");
+	SetWidgetText(kImageDisplay_Object_Lbl,			"Object");
+	SetWidgetText(kImageDisplay_FramesSaved_Lbl,	"FramesSaved");
+
+
+	SetWidgetText(kImageDisplay_Histogram,		"Histogram");
+
+	yLoc			=	save_yLoc;
+	xLoc			+=	labelWidth + dataWidth;
+	xLoc			+=	2;
+	imageBoxWidth	=	cWidth - xLoc;
 	imageBoxHeight	=	cHeight - yLoc;
-	SetWidget(				kImageDisplay_ImageDisplay,	0,	yLoc,		cWidth,		imageBoxHeight);
+	imageBoxWidth	-=	2;
+	imageBoxHeight	-=	2;
+	SetWidget(				kImageDisplay_ImageDisplay,	xLoc,	yLoc,		imageBoxWidth,		imageBoxHeight);
 	SetWidgetBGColor(		kImageDisplay_ImageDisplay,	CV_RGB(128,	128,	128));
 	SetWidgetBorderColor(	kImageDisplay_ImageDisplay,	CV_RGB(255,	255,	255));
 	SetWidgetBorder(		kImageDisplay_ImageDisplay,	true);
+
+	CONSOLE_DEBUG_W_NUM("imageBoxWidth\t=",		imageBoxWidth);
+	CONSOLE_DEBUG_W_NUM("imageBoxHeight\t=",	imageBoxHeight);
+
 }
 
 //*****************************************************************************
 void	WindowTabImage::HandleKeyDown(const int keyPressed)
 {
 bool	updateFlag;
-	CONSOLE_DEBUG(__FUNCTION__);
-	CONSOLE_DEBUG_W_HEX("keyPressed\t",	keyPressed);
+//	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG_W_HEX("keyPressed\t",	keyPressed);
 
 	updateFlag	=	true;
 	switch(keyPressed & 0x7f)
@@ -209,12 +262,13 @@ int		iii;
 	switch(widgetIdx)
 	{
 		case kImageDisplay_ImageDisplay:
-			CONSOLE_DEBUG(__FUNCTION__);
+			CONSOLE_DEBUG("kImageDisplay_ImageDisplay");
 			ZoomImage(event, xxx, yyy, flags);
 			cMouseDragInProgress	=	false;
 			break;
 
 		default:
+			//*	this adjust the blue part of the image, just for testing.
 			if (cOpenCVdisplayedImage != NULL)
 			{
 				for (iii= 0; iii< cOpenCVdisplayedImage->imageSize; iii+=3)
@@ -241,23 +295,24 @@ void	WindowTabImage::ProcessMouseLeftButtonDown(	const int	widgetIdx,
 int		cursorXXoffset;
 int		cursorYYoffset;
 
-	CONSOLE_DEBUG("--------------------------------------------------------------------");
-	CONSOLE_DEBUG(__FUNCTION__);
-	CONSOLE_DEBUG_W_NUM("xxx\t=", xxx);
-	CONSOLE_DEBUG_W_NUM("yyy\t=", yyy);
+//	CONSOLE_DEBUG("--------------------------------------------------------------------");
+//	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG_W_NUM("xxx\t=", xxx);
+//	CONSOLE_DEBUG_W_NUM("yyy\t=", yyy);
 
 	if (widgetIdx == kImageDisplay_ImageDisplay)
 	{
-		cursorXXoffset	=	xxx - cWidgetList[widgetIdx].roiRect.x;
-		cursorYYoffset	=	yyy - cWidgetList[widgetIdx].roiRect.y;
-		CONSOLE_DEBUG_W_NUM("cursorXXoffset\t=", cursorXXoffset);
-		CONSOLE_DEBUG_W_NUM("cursorYYoffset\t=", cursorYYoffset);
+		cMouseDragInProgress	=	true;
+		cursorXXoffset			=	xxx - cWidgetList[widgetIdx].roiRect.x;
+		cursorYYoffset			=	yyy - cWidgetList[widgetIdx].roiRect.y;
+//		CONSOLE_DEBUG_W_NUM("cursorXXoffset\t=", cursorXXoffset);
+//		CONSOLE_DEBUG_W_NUM("cursorYYoffset\t=", cursorYYoffset);
 
-		cSavedMouseClick_X	=	cursorXXoffset;
-		cSavedMouseClick_Y	=	cursorYYoffset;
+		cSavedMouseClick_X		=	cursorXXoffset;
+		cSavedMouseClick_Y		=	cursorYYoffset;
 
-		CONSOLE_DEBUG_W_NUM("cSavedMouseClick_X\t=", cSavedMouseClick_X);
-		CONSOLE_DEBUG_W_NUM("cSavedMouseClick_Y\t=", cSavedMouseClick_Y);
+//		CONSOLE_DEBUG_W_NUM("cSavedMouseClick_X\t=", cSavedMouseClick_X);
+//		CONSOLE_DEBUG_W_NUM("cSavedMouseClick_Y\t=", cSavedMouseClick_Y);
 	}
 }
 
@@ -268,7 +323,7 @@ void	WindowTabImage::ProcessMouseLeftButtonUp(	const int	widgetIdx,
 													const int	yyy,
 													const int	flags)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	cMouseDragInProgress	=	false;
 }
 
@@ -284,13 +339,14 @@ int		deltaYY;
 int		cursorXXoffset;
 int		cursorYYoffset;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
-//	if (cMouseDragInProgress == false)
+	if (cMouseDragInProgress)
 	{
-		cMouseDragInProgress	=	true;
+		cImageZoomState			=	1;
+//-		cMouseDragInProgress	=	true;
 //		CONSOLE_DEBUG("--------------------------------------------------------");
-		CONSOLE_DEBUG_W_NUM(__FUNCTION__, xxx);
+//		CONSOLE_DEBUG_W_NUM(__FUNCTION__, xxx);
 
 //		if (widgetIdx == kImageDisplay_ImageDisplay)
 		{
@@ -301,8 +357,8 @@ int		cursorYYoffset;
 			deltaXX			=	cursorXXoffset - cSavedMouseClick_X;
 			deltaYY			=	cursorYYoffset - cSavedMouseClick_Y;
 
-			CONSOLE_DEBUG_W_NUM("deltaXX\t=", deltaXX);
-			CONSOLE_DEBUG_W_NUM("deltaYY\t=", deltaYY);
+//			CONSOLE_DEBUG_W_NUM("deltaXX\t=", deltaXX);
+//			CONSOLE_DEBUG_W_NUM("deltaYY\t=", deltaYY);
 
 			cImageCenterX	-=	deltaXX;
 			cImageCenterY	-=	deltaYY;
@@ -314,12 +370,11 @@ int		cursorYYoffset;
 
 			ForceUpdate();
 
-			cMouseDragInProgress	=	false;
+//-			cMouseDragInProgress	=	false;
 
 		}
 	}
 }
-
 
 //*****************************************************************************
 void	WindowTabImage::SetImagePtrs(IplImage *originalImage, IplImage *displayedImage)
@@ -332,6 +387,7 @@ void	WindowTabImage::SetImagePtrs(IplImage *originalImage, IplImage *displayedIm
 //*****************************************************************************
 void	WindowTabImage::ResetImage(void)
 {
+	CONSOLE_DEBUG(__FUNCTION__);
 	//*	Check to see if the original is color
 	if ((cOpenCVdownLoadedImage->nChannels == 3) && (cOpenCVdownLoadedImage->depth == 8))
 	{
@@ -347,7 +403,7 @@ void	WindowTabImage::ResetImage(void)
 
 
 //*****************************************************************************
-void	WindowTabImage::ZoomImage(const int	event,
+void	WindowTabImage::ZoomImage(	const int	event,
 									const int	xxx,
 									const int	yyy,
 									const int	flags)
@@ -368,6 +424,7 @@ int			imageCursorYY;
 		if (cImageZoomState != 0)
 		{
 			//*	set it back to fit on the screen
+			CONSOLE_DEBUG("Calling ResetImage()");
 			ResetImage();
 		}
 		else
@@ -393,9 +450,17 @@ int			imageCursorYY;
 			cImageZoomState	=	1;
 		}
 
-		ForceUpdate();
+		//ForceUpdate();
 	}
 }
+
+
+//*****************************************************************************
+void	WindowTabImage::DrawFullScaleIamge(void)
+{
+	DrawFullScaleIamge(cImageCenterX, cImageCenterY);
+}
+
 
 //*****************************************************************************
 //*	draw the image at full scale centered on these image coordinates
@@ -409,59 +474,75 @@ int			sourceImageWidth;
 int			sourceImageHeight;
 
 	CONSOLE_DEBUG(__FUNCTION__);
-	CONSOLE_DEBUG_W_NUM("image_X\t=", image_X);
-	CONSOLE_DEBUG_W_NUM("image_Y\t=", image_Y);
+//	CONSOLE_DEBUG_W_NUM("image_X\t=", image_X);
+//	CONSOLE_DEBUG_W_NUM("image_Y\t=", image_Y);
 
 	if ((cOpenCVdownLoadedImage != NULL) && (cOpenCVdisplayedImage != NULL))
 	{
 		//*	get the size of the source image
 		sourceImageWidth		=	cOpenCVdownLoadedImage->width;
 		sourceImageHeight		=	cOpenCVdownLoadedImage->height;
+//		CONSOLE_DEBUG_W_NUM("sourceImageWidth\t=", sourceImageWidth);
+//		CONSOLE_DEBUG_W_NUM("sourceImageHeight\t=", sourceImageHeight);
 
 		//*	get the size of the destination image
 		displayedWidth			=	cOpenCVdisplayedImage->width;
 		displayedHeight			=	cOpenCVdisplayedImage->height;
 
-		displayedImgRect.width	=	displayedWidth;
-		displayedImgRect.height	=	displayedHeight;
+//		CONSOLE_DEBUG_W_NUM("displayedWidth\t=", displayedWidth);
+//		CONSOLE_DEBUG_W_NUM("displayedHeight\t=", displayedHeight);
 
-		//*	now set the top left of the image
-		displayedImgRect.x		=	image_X - (displayedWidth / 2);
-		displayedImgRect.y		=	image_Y - (displayedHeight / 2);
-		//*	check minimums
-		if (displayedImgRect.x < 0)
+		if ((displayedWidth > 0) && (displayedWidth < 10000)
+			&& (displayedHeight > 0) && (displayedHeight < 10000))
 		{
-			displayedImgRect.x	=	0;
+			displayedImgRect.width	=	displayedWidth;
+			displayedImgRect.height	=	displayedHeight;
+
+			//*	now set the top left of the image
+			displayedImgRect.x		=	image_X - (displayedWidth / 2);
+			displayedImgRect.y		=	image_Y - (displayedHeight / 2);
+			//*	check minimums
+			if (displayedImgRect.x < 0)
+			{
+				displayedImgRect.x	=	0;
+			}
+			if (displayedImgRect.y < 0)
+			{
+				displayedImgRect.y	=	0;
+			}
+
+			//*	check maximums
+			if (displayedImgRect.x > (sourceImageWidth - displayedWidth))
+			{
+				displayedImgRect.x	=	(sourceImageWidth - displayedWidth);
+			}
+
+			if (displayedImgRect.y > (sourceImageHeight - displayedHeight))
+			{
+				displayedImgRect.y	=	(sourceImageHeight - displayedHeight);
+			}
+//			CONSOLE_DEBUG_W_NUM("displayedImgRect.x\t\t=", displayedImgRect.x);
+//			CONSOLE_DEBUG_W_NUM("displayedImgRect.y\t\t=", displayedImgRect.y);
+
+//			CONSOLE_DEBUG_W_NUM("displayedImgRect.width\t=", displayedImgRect.width);
+//			CONSOLE_DEBUG_W_NUM("displayedImgRect.height\t=", displayedImgRect.height);
+
+			//*	set the area we want to look at
+			cvSetImageROI(cOpenCVdownLoadedImage,  displayedImgRect);
+			//*	copy that part from the original to the displayed view
+			cvCopy(cOpenCVdownLoadedImage, cOpenCVdisplayedImage);
+			cvResetImageROI(cOpenCVdownLoadedImage);				//*	reset ROI
+
+			//*	now update the CURRENT center of the displayed image
+			cImageCenterX	=	displayedImgRect.x + (displayedWidth / 2);
+			cImageCenterY	=	displayedImgRect.y + (displayedHeight / 2);
+
+			ForceUpdate();
 		}
-		if (displayedImgRect.y < 0)
+		else
 		{
-			displayedImgRect.y	=	0;
+			CONSOLE_DEBUG("Somethings not right!!!!!!!!!!!!");
 		}
-
-		//*	check maximums
-		if (displayedImgRect.x > (sourceImageWidth - displayedWidth))
-		{
-			displayedImgRect.x	=	(sourceImageWidth - displayedWidth);
-		}
-
-		if (displayedImgRect.y > (sourceImageHeight - displayedHeight))
-		{
-			displayedImgRect.y	=	(sourceImageHeight - displayedHeight);
-		}
-		CONSOLE_DEBUG_W_NUM("displayedImgRect.x\t=", displayedImgRect.x);
-		CONSOLE_DEBUG_W_NUM("displayedImgRect.y\t=", displayedImgRect.y);
-
-		//*	set the area we want to look at
-		cvSetImageROI(cOpenCVdownLoadedImage,  displayedImgRect);
-		//*	copy that part from the original to the displayed view
-		cvCopy(cOpenCVdownLoadedImage, cOpenCVdisplayedImage);
-		cvResetImageROI(cOpenCVdownLoadedImage);				//*	reset ROI
-
-		//*	now update the CURRENT center of the displayed image
-		cImageCenterX	=	displayedImgRect.x + (displayedWidth / 2);
-		cImageCenterY	=	displayedImgRect.y + (displayedHeight / 2);
-
-		ForceUpdate();
 	}
 	else
 	{

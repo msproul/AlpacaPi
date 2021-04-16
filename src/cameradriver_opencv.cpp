@@ -735,7 +735,7 @@ const int	deltaY	=	16;
 	{
 		point1.y	=	yLoc;
 		point2.y	=	yLoc;
-		sprintf(textBuffer, "%2.1f C", cCameraTemp_Dbl);
+		sprintf(textBuffer, "%2.1f C", cCameraProp.CCDtemperature);
 		cvPutText(	imageDisplay,	"Camera Temp:",			point1,	&cTextFont,	cSideBarTXTcolor);
 		cvPutText(	imageDisplay,	textBuffer,				point2,	&cTextFont,	cSideBarTXTcolor);
 		yLoc	+=	deltaY;

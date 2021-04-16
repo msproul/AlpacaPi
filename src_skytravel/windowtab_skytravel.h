@@ -49,6 +49,7 @@ enum
 	kSkyTravel_Btn_Messier,
 	kSkyTravel_Btn_YaleCat,
 	kSkyTravel_Btn_Hipparcos,
+	kSkyTravel_Btn_AAVSOalerts,
 
 	kSkyTravel_UTCtime,
 
@@ -332,6 +333,12 @@ class WindowTabSkyTravel: public WindowTab
 
 		TYPE_CelestData		*cSpecialObjectPtr;
 		long				cSpecialObjectCount;
+
+		TYPE_CelestData		*cAAVSOalertsPtr;
+		long				cAAVSOalertsCnt;
+
+
+
 
 
 		sun_moon_struct		cSunMonStruct;

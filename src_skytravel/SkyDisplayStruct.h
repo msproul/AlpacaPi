@@ -37,7 +37,7 @@ typedef struct
 		bool				dispCommonStarNames;	//*	Common star names on/off
 		bool				dispHYG_all;
 		bool				dispDraper;				//*	Henry Draper Catalog
-
+		bool				dispAAVSOalerts;		//*	AAVSO TargetTool Alerts
 
 } TYPE_SkyDispOptions;
 

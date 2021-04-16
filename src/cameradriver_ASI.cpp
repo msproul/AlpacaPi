@@ -2141,9 +2141,9 @@ char				asiErrorMsgString[64];
 			switch (asiErrorCode)
 			{
 				case ASI_SUCCESS:
-					cCameraTemp_Dbl		=	cameraTemperature / 10.0;
+					cCameraProp.CCDtemperature		=	cameraTemperature / 10.0;
 //					CONSOLE_DEBUG_W_LONG("cameraTemperature\t=",	cameraTemperature);
-//					CONSOLE_DEBUG_W_DBL("cameraTempDbl\t=",			cCameraTemp_Dbl);
+//					CONSOLE_DEBUG_W_DBL("cameraTempDbl\t=",			cCameraProp.CCDtemperature);
 					alpacaErrCode	=	kASCOM_Err_Success;
 					break;
 

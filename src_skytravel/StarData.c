@@ -1066,7 +1066,7 @@ char	theChar;
 int		ccc;
 int		argLen;
 
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, lineBuff);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, lineBuff);
 
 	//*	step thru the line looking for commas.
 	sLen		=	strlen(lineBuff);
@@ -1077,7 +1077,7 @@ int		argLen;
 		theChar	=	lineBuff[ii];
 		if ((theChar == 0x09) || (theChar == 0))
 		{
-			CONSOLE_DEBUG_W_STR("argString=", argString);
+//			CONSOLE_DEBUG_W_STR("argString=", argString);
 
 			argLen	=	strlen(argString);
 			if (argLen > gMaxArgLen)
@@ -1219,7 +1219,7 @@ double	declRadians	=	0;
 	if (deSign == '-')
 	{
 		declDegrees		=	-declDegrees;
-		CONSOLE_DEBUG_W_DBL("declDegrees\t=", declDegrees);
+//		CONSOLE_DEBUG_W_DBL("declDegrees\t=", declDegrees);
 	}
 	declRadians	=	RADIANS(declDegrees);
 

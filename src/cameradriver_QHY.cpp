@@ -697,7 +697,7 @@ double				cameraTemp_DegC;
 			cameraTemp_DegC	=	GetQHYCCDParam(cQHYcamHandle, CONTROL_CURTEMP);
 //			CONSOLE_DEBUG_W_DBL("cameraTemp_DegC\t\t=", cameraTemp_DegC);
 
-			cCameraTemp_Dbl	=	cameraTemp_DegC;
+			cCameraProp.CCDtemperature	=	cameraTemp_DegC;
 		}
 		else
 		{

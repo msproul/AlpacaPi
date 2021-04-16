@@ -914,8 +914,8 @@ int					temperatureVal;
 				atikRetCode		=	ArtemisTemperatureSensorInfo(hAtikCameraHandle, 1, &temperatureVal);
 				if (atikRetCode == ARTEMIS_OK)
 				{
-					cCameraTemp_Dbl	=	(temperatureVal * 1.0) / 100.0;
-//					CONSOLE_DEBUG_W_DBL("cCameraTemp_Dbl\t=", cCameraTemp_Dbl);
+					cCameraProp.CCDtemperature	=	(temperatureVal * 1.0) / 100.0;
+//					CONSOLE_DEBUG_W_DBL("cCameraProp.CCDtemperature\t=", cCameraProp.CCDtemperature);
 					alpacaErrCode	=	kASCOM_Err_Success;
 				}
 				else

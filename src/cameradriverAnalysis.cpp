@@ -399,11 +399,11 @@ float			histogrmMaxPrct;
 float			histogramErr;
 long			exposureAdjustment_us;	//*	micro-seconds
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 
 	saturationPrct	=	CalculateSaturation();
 	histogrmMaxPrct	=	CalculateHistogramMax();
-//	CONSOLE_DEBUG_W_DBL("saturationPrct\t=",	saturationPrct);
+	CONSOLE_DEBUG_W_DBL("saturationPrct\t=",	saturationPrct);
 
 	if ((histogrmMaxPrct >= 90.0) && (histogrmMaxPrct < 100.0))
 	{

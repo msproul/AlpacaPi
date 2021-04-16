@@ -117,6 +117,8 @@
 //*	Mar 19,	2021	<MLS> Added coma checking in numeric string in GetKeyWordArgument()
 //*	Apr  1,	2021	<MLS> LiveWindow mode will be available for all drivers
 //*	Apr  1,	2021	<MLS> Added Put_LiveWindow()
+//*	Apr  1,	2021	<MLS> Added UpdateLiveWindow()
+//*	Apr  8,	2021	<MLS> Added GetMyHostName()
 //*****************************************************************************
 
 #include	<stdio.h>
@@ -170,6 +172,7 @@ uint32_t	gServerTransactionID		=	0;		//*	we are the server, we will increment th
 bool		gErrorLogging				=	false;	//*	write errors to log file if true
 bool		gConformLogging				=	false;	//*	log all commands to log file to match up with Conform
 bool		gImageDownloadInProgress	=	false;
+char		gHostName[48]				=	"";
 
 #if defined(_ENABLE_CAMERA_) && defined(_ENABLE_ASI_)
 	#include	"cameradriver_ASI.h"
@@ -260,14 +263,11 @@ bool				gVerbose					=	true;
 const char			gValueString[]				=	"Value";
 char				gDefaultTelescopeRefID[kDefaultRefIdMaxLen]	=	"";
 char				gWebTitle[80]				=	"AlpacaPi";
-#if 0
-char				gOsReleaseString[64]		=	"";
-char				gCpuInfoString[64]			=	"";
-char				gPlatformString[64]			=	"";
-double				gBogoMipsValue				=	0.0;
-#endif
 
 char				gFullVersionString[128];
+
+
+static void	HandleContollerWindow(AlpacaDriver *alpacaObjPtr);
 
 //*****************************************************************************
 static void	InitDeviceList(void)
@@ -910,11 +910,11 @@ bool				liveWindowFlg;
 		liveWindowFlg	=	IsTrueFalse(argumentString);
 		if (liveWindowFlg)
 		{
-//			alpacaErrCode	=	OpenLiveWindow(alpacaErrMsg);
+			alpacaErrCode	=	OpenLiveWindow(alpacaErrMsg);
 		}
 		else
 		{
-//			alpacaErrCode	=	CloseLiveWindow(alpacaErrMsg);
+			alpacaErrCode	=	CloseLiveWindow(alpacaErrMsg);
 		}
 	}
 	else
@@ -930,6 +930,7 @@ bool				liveWindowFlg;
 //*****************************************************************************
 TYPE_ASCOM_STATUS	AlpacaDriver::OpenLiveWindow(char *alpacaErrMsg)
 {
+	//*	this is intended to be over-ridden by the sub-class
 	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "LiveWindow not implemented");
 	return(kASCOM_Err_MethodNotImplemented);
 }
@@ -937,9 +938,22 @@ TYPE_ASCOM_STATUS	AlpacaDriver::OpenLiveWindow(char *alpacaErrMsg)
 //*****************************************************************************
 TYPE_ASCOM_STATUS	AlpacaDriver::CloseLiveWindow(char *alpacaErrMsg)
 {
-	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "LiveWindow not implemented");
-	return(kASCOM_Err_MethodNotImplemented);
+	CONSOLE_DEBUG(__FUNCTION__);
+	if (cLiveController != NULL)
+	{
+		cLiveController->cKeepRunning	=	false;
+	}
+
+	return(kASCOM_Err_Success);
 }
+
+//*****************************************************************************
+void	AlpacaDriver::UpdateLiveWindow(void)
+{
+	CONSOLE_DEBUG(__FUNCTION__);
+	//*	this is intended to be over-ridden by the sub-class
+}
+
 
 //*****************************************************************************
 void	AlpacaDriver::OutputHTML(TYPE_GetPutRequestData *reqData)
@@ -2788,6 +2802,41 @@ int		newListenPort;
 	}
 }
 
+
+
+//*****************************************************************************
+static void	GetMyHostName(void)
+{
+FILE		*filePointer;
+char		*strPtr;
+int			sLen;
+int			iii;
+
+	filePointer	=	fopen("hostname.txt", "r");
+	if (filePointer != NULL)
+	{
+		strPtr	=	fgets(gHostName, sizeof(gHostName), filePointer);
+		if (strPtr == NULL)
+		{
+			CONSOLE_DEBUG("fgets returned error");
+		}
+		sLen	=	strlen(gHostName);
+		if (sLen > 0)
+		{
+			for (iii=0; iii<sLen; iii++)
+			{
+				if (gHostName[iii] < 0x20)
+				{
+					gHostName[iii]	=	0;
+					break;
+				}
+			}
+		}
+
+		fclose(filePointer);
+	}
+}
+
 static	int32_t	gMainLoopCntr	=	0;
 //*****************************************************************************
 int	main(int argc, char **argv)
@@ -2813,6 +2862,7 @@ double			freeDiskSpace_Gigs;
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG(gFullVersionString);
 
+	GetMyHostName();
 
 	AddLibraryVersion("software", "gcc", __VERSION__);
 	AddLibraryVersion("software", "libc", gnu_get_libc_version());
@@ -3040,6 +3090,7 @@ double			freeDiskSpace_Gigs;
 			if (gAlpacaDeviceList[ii] != NULL)
 			{
 				delayTimeForThisTask	=	gAlpacaDeviceList[ii]->RunStateMachine();
+
 				//*	figure out what is the minimum delay time we have
 				if (delayTimeForThisTask < delayTime_microSecs)
 				{
@@ -3050,7 +3101,13 @@ double			freeDiskSpace_Gigs;
 				//*	live window
 				if (gAlpacaDeviceList[ii]->cLiveController != NULL)
 				{
-				//	gAlpacaDeviceList[ii]->cLiveController->HandleWindow();
+					HandleContollerWindow(gAlpacaDeviceList[ii]);
+
+					//*	if we have an active live window, we want to be able to give it more time
+					if (delayTime_microSecs > 5000)
+					{
+						delayTime_microSecs	=	5000;
+					}
 				}
 			}
 		}
@@ -3060,8 +3117,6 @@ double			freeDiskSpace_Gigs;
 		}
 //		CONSOLE_DEBUG_W_INT32("delayTime_microSecs\t=", delayTime_microSecs);
 		usleep(delayTime_microSecs);
-
-
 	}
 
 
@@ -3077,6 +3132,35 @@ double			freeDiskSpace_Gigs;
 
 	return(0);
 }
+
+
+//*****************************************************************************
+static	void HandleContollerWindow(AlpacaDriver *alpacaObjPtr)
+{
+Controller	*myController;
+
+#ifdef _USE_OPENCV_
+	myController	=	alpacaObjPtr->cLiveController;
+	if (myController != NULL)
+	{
+		myController->HandleWindow();
+		cvWaitKey(100);
+
+		if (myController->cKeepRunning == false)
+		{
+			CONSOLE_DEBUG(__FUNCTION__);
+			delete myController;
+
+
+			alpacaObjPtr->cLiveController	=	NULL;
+
+			CONSOLE_DEBUG(__FUNCTION__);
+		}
+	}
+#endif
+
+}
+
 
 #pragma mark -
 #pragma mark Helper functions

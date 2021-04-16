@@ -367,7 +367,7 @@ int				divideFactor;
 int				newWidth;
 int				newHeight;
 char			myMoonFilePath[128];
-
+char			errMsgString[128];
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -448,6 +448,8 @@ char			myMoonFilePath[128];
 			else
 			{
 				CONSOLE_DEBUG("DONT KNOW WHAT TO DO YET");
+				CONSOLE_DEBUG_W_NUM("nChannels\t=", myOpenCVimage->nChannels);
+				CONSOLE_DEBUG_W_NUM("depth    \t=", myOpenCVimage->depth);
 			}
 		}
 		else
@@ -466,7 +468,9 @@ char			myMoonFilePath[128];
 	else
 	{
 		CONSOLE_DEBUG("Failed to load new image");
-		SetWidgetText(kMoon_FileName,	"Failed to read fits file");
+		strcpy(errMsgString, "Failed to read fits file:");
+		strcat(errMsgString, moonFileName);
+		SetWidgetText(kMoon_FileName,	errMsgString);
 	}
 	ForceUpdate();
 }

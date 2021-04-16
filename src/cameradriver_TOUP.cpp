@@ -835,6 +835,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
 //**************************************************************************
 //*	returns error code,
 //*	sets class varible to current temp
+//**************************************************************************
 TYPE_ASCOM_STATUS	CameraDriverTOUP::Read_SensorTemp(void)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
@@ -847,7 +848,7 @@ HRESULT				toupResult;
 		toupResult	=	Toupcam_get_Temperature(cToupCamH, &temperature);
 		if (toupResult == S_OK)
 		{
-			cCameraTemp_Dbl	=	(temperature * 1.0) / 10.0;
+			cCameraProp.CCDtemperature	=	(temperature * 1.0) / 10.0;
 		}
 		else if ((unsigned int)toupResult == E_NOTIMPL)
 		{

@@ -32,6 +32,7 @@
 //*	Sep  1,	2020	<MLS> Created calibrationdriver.cpp
 //*	Oct 21,	2020	<MLS> Finished GetCmdNameFromMyCmdTable() for calibrationdriver
 //*	Feb 12,	2021	<MLS> Added GetCalibrationStateString()
+//*	Apr  6,	2021	<MLS> CONFORM-covercalibrator -> PASSED!!!!!!!!!!!!!!!!!!!!!
 //*****************************************************************************
 
 
@@ -434,6 +435,7 @@ int					brightnessValue;
 //			CONSOLE_DEBUG_W_NUM("brightnessValue\t=", brightnessValue);
 
 			alpacaErrCode	=	Calibrator_TurnOn(brightnessValue, alpacaErrMsg);
+			cCoverCalibrationProp.CalibratorState	=	kCalibrator_Ready;
 		}
 		else
 		{
@@ -458,6 +460,7 @@ TYPE_ASCOM_STATUS		alpacaErrCode;
 	}
 	else
 	{
+		cCoverCalibrationProp.CalibratorState	=	kCalibrator_Off;
 		alpacaErrCode	=	Calibrator_TurnOff(alpacaErrMsg);
 	}
 	return(alpacaErrCode);

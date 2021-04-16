@@ -50,6 +50,7 @@
 //*	Mar  9,	2021	<MLS> Added DrawTelescopeFOV()
 //*	Mar  9,	2021	<MLS> Camera Field Of View overlay on star map working
 //*	Mar 11,	2021	<MLS> Clif suggested a different way of drawing the FOV
+//*	Apr 10,	2021	<MLS> Added support for AAVSO Target Tool Alerts
 //*****************************************************************************
 //*	TODO
 //*			star catalog lists
@@ -92,6 +93,7 @@
 #include	"HipparcosCatalog.h"
 #include	"SkyTravelExternal.h"
 #include	"sidereal.h"
+#include	"aavso_data.h"
 
 #include	"windowtab.h"
 #include	"windowtab_skytravel.h"
@@ -267,6 +269,8 @@ int		ii;
 	cYaleStarDataPtr		=	NULL;
 	cYaleStarCount			=	0;
 
+	cAAVSOalertsPtr			=	NULL;
+	cAAVSOalertsCnt			=	0;
 
 	cMessierOjbectPtr		=	NULL;
 	cMessierOjbectCount		=	0;
@@ -421,8 +425,9 @@ int		ii;
 
 	cConstOutlinePtr	=	ReadConstellationOutlines("skytravel_data/constOutlines.txt", &cConstOutlineCount);
 
-
-
+	cAAVSOalertsPtr		=	ReadAAVSO_TargetData(&cAAVSOalertsCnt);
+	CONSOLE_DEBUG_W_LONG("cAAVSOalertsCnt\t=", cAAVSOalertsCnt);
+//	CONSOLE_ABORT(__FUNCTION__);
 
 	cHipObjectPtr		=	ReadHipparcosStarCatalog(&cHipObjectCount);
 	if (cHipObjectPtr != NULL)
@@ -585,6 +590,7 @@ int		buttonWidthGoto;
 	SetWidgetHelpText(	kSkyTravel_Btn_Ecliptic,		"Toggle Ecliptic display");
 	SetWidgetHelpText(	kSkyTravel_Btn_YaleCat,			"Toggle Yale display");
 	SetWidgetHelpText(	kSkyTravel_Btn_Messier,			"Toggle Missier display");
+	SetWidgetHelpText(	kSkyTravel_Btn_AAVSOalerts,		"Toggle AAVSO alerts");
 
 	SetWidgetHelpText(	kSkyTravel_Btn_Hipparcos,		"Toggle Hipparcos display");
 	SetWidgetHelpText(	kSkyTravel_Btn_NightMode,		"Toggle Night Mode");
@@ -603,6 +609,9 @@ int		buttonWidthGoto;
 	SetWidgetText(		kSkyTravel_Btn_AutoAdvTime,		"@");
 	SetWidgetText(		kSkyTravel_Btn_Reset,			"r");
 	SetWidgetText(		kSkyTravel_Btn_Chart,			"c");
+
+	SetWidgetText(		kSkyTravel_Btn_AAVSOalerts,		"a");
+
 	SetWidgetText(		kSkyTravel_Btn_DeepSky,			"D");
 	SetWidgetText(		kSkyTravel_Btn_Names,			"N");
 	SetWidgetText(		kSkyTravel_Btn_CommonStarNames,	"m");
@@ -854,6 +863,7 @@ void	WindowTabSkyTravel::UpdateButtonStatus(void)
 	SetWidgetChecked(		kSkyTravel_Btn_Messier,			cDispOptions.dispMessier);
 	SetWidgetChecked(		kSkyTravel_Btn_YaleCat,			cDispOptions.dispYale);
 	SetWidgetChecked(		kSkyTravel_Btn_Hipparcos,		cDispOptions.dispHIP);
+	SetWidgetChecked(		kSkyTravel_Btn_AAVSOalerts,		cDispOptions.dispAAVSOalerts);
 
 
 	SetWidgetChecked(		kSkyTravel_Btn_AutoAdvTime,		cAutoAdvanceTime);
@@ -944,6 +954,10 @@ bool			reDrawSky;
 
 		case '?':	//*	toggle Constellation lines (new stylle)
 			cDispOptions.dispConstellations	=	!cDispOptions.dispConstellations;
+			break;
+
+		case 'a':	//*	toggle AAVSO Alerts
+			cDispOptions.dispAAVSOalerts	=	!cDispOptions.dispAAVSOalerts;
 			break;
 
 		case 'C':	//*	toggle ECLIPTIC LINE
@@ -1200,6 +1214,11 @@ char	searchText[128];
 		case kSkyTravel_Btn_DeepSky:
 			cDispOptions.dispDeep	=	!cDispOptions.dispDeep;
 			SetWidgetChecked(		kSkyTravel_Btn_DeepSky,	cDispOptions.dispDeep);
+			break;
+
+		case kSkyTravel_Btn_AAVSOalerts:
+			cDispOptions.dispAAVSOalerts	=	!cDispOptions.dispAAVSOalerts;
+			SetWidgetChecked(		kSkyTravel_Btn_AAVSOalerts,		cDispOptions.dispAAVSOalerts);
 			break;
 
 		case kSkyTravel_Btn_Names:
@@ -1879,6 +1898,8 @@ struct tm		*linuxTime;
 	gettimeofday(&currentTimeVal, NULL);
 
 	linuxTime	=	gmtime(&currentTimeVal.tv_sec);
+//	CONSOLE_DEBUG_W_LONG("currentTimeVal.tv_sec=", currentTimeVal.tv_sec);
+
 
 	cCurrentTime.year	=	(1900 + linuxTime->tm_year);
 	cCurrentTime.month	=	(1 + linuxTime->tm_mon);
@@ -2201,6 +2222,13 @@ short		ii;
 		PlotObjectsByDataSource(cSpecialObjectPtr, cSpecialObjectCount);
 	}
 
+	//*--------------------------------------------------------------------------------
+	if (cDispOptions.dispAAVSOalerts && (cAAVSOalertsPtr != NULL) && (cAAVSOalertsCnt > 0))
+	{
+		PlotObjectsByDataSource(cAAVSOalertsPtr, cAAVSOalertsCnt);
+	}
+
+
 
 	PlotSkyObjects(cPlanets, gPlanet_names, planet_shapes, kPlanetObjectCnt);	//* planets
 
@@ -2250,6 +2278,7 @@ void	WindowTabSkyTravel::ResetView(void)
 	cDispOptions.dispCommonStarNames	=	true;
 	cDispOptions.dispHYG_all			=	false;
 	cDispOptions.dispDraper				=	false;
+	cDispOptions.dispAAVSOalerts		=	true;
 
 	if (cConstVecotrPtr != NULL)
 	{
@@ -3115,7 +3144,7 @@ bool			pressesOccurred;
 //unsigned long	startTicks, endTicks, elapsedTicks;
 //char			ticksMsg[64];
 
-	CONSOLE_DEBUG_W_NUM(__FUNCTION__, cDebugCounter++);
+//	CONSOLE_DEBUG_W_NUM(__FUNCTION__, cDebugCounter++);
 
 //	startTicks		=	TickCount();
 	pressesOccurred	=	Precess(cStarDataPtr, cStarCount, kSortData, kPressionIfNeeded);
@@ -3174,6 +3203,10 @@ bool			pressesOccurred;
 			Precess(constStarPtr, constStarCount, kDoNotSort, kForcePression);
 		}
 
+		if ((cAAVSOalertsPtr != NULL) && (cAAVSOalertsCnt > 0))
+		{
+			Precess(cAAVSOalertsPtr, cAAVSOalertsCnt, kSortData, kForcePression);
+		}
 
 
 
@@ -3579,7 +3612,20 @@ bool				printLabel;
 									break;
 
 								case kDataSrc_Special:
+									DrawCString(xcoord + 3, ycoord + 10, objectptr[ii].longName);
+									break;
+
+								case kDataSrc_AAVSOalert:
+									SetColor(W_YELLOW);
 									DrawCString(xcoord + 10, ycoord, objectptr[ii].longName);
+									if (cView_index <= 4)
+									{
+										if (objectptr[ii].id > 0)
+										{
+											sprintf(labelString, "Alert#%ld", objectptr[ii].id);
+											DrawCString(xcoord + 10, ycoord + 10, labelString);
+										}
+									}
 									break;
 							}
 							myCount++;
@@ -5925,7 +5971,7 @@ long	hippObjectId;
 	//*	look for for common star names in the Hipparcos list
 	if ((foundSomething == false) && (cHipObjectPtr != NULL) && (cHipObjectCount > 0))
 	{
-		CONSOLE_DEBUG_W_STR("Searching Hipparcosfor \t=", objectName);
+	//	CONSOLE_DEBUG_W_STR("Searching Hipparcosfor \t=", objectName);
 
 		iii	=	0;
 		while ((foundSomething == false) && (iii < cHipObjectCount))
@@ -5943,6 +5989,32 @@ long	hippObjectId;
 			iii++;
 		}
 	}
+
+	//-------------------------------------------------------------------------------
+	//*	look for for common star names in the AAVSO alert list
+	if ((foundSomething == false) && (cAAVSOalertsPtr != NULL) && (cAAVSOalertsCnt > 0))
+	{
+	//	CONSOLE_DEBUG_W_STR("Searching AAVSO alert \t=", objectName);
+	//	CONSOLE_DEBUG_W_LONG("cAAVSOalertsCnt \t=", cAAVSOalertsCnt);
+
+		iii	=	0;
+		while ((foundSomething == false) && (iii < cAAVSOalertsCnt))
+		{
+		//	CONSOLE_DEBUG_W_STR("Checking\t=", cAAVSOalertsPtr[iii].longName);
+			if (strncasecmp(objectName, cAAVSOalertsPtr[iii].longName, searchStrLen) == 0)
+			{
+		//		CONSOLE_DEBUG_W_STR("Found", cAAVSOalertsPtr[iii].longName);
+				newRA	=	cAAVSOalertsPtr[iii].ra;
+				newDec	=	cAAVSOalertsPtr[iii].decl;
+
+				strcpy(database, "AAVSO Alerts");
+				sprintf(foundName, "%s", cAAVSOalertsPtr[iii].longName);
+				foundSomething	=	true;
+			}
+			iii++;
+		}
+	}
+
 
 	//-------------------------------------------------------------------------------
 	//*	check to see if they specified an Henry Draper lists
@@ -6016,6 +6088,8 @@ long	hippObjectId;
 #endif // _ENABLE_HYG_
 
 
+
+
 	if (foundSomething)
 	{
 	char	raDecString[64];
@@ -6028,10 +6102,10 @@ long	hippObjectId;
 		FromatRa_Dec_toString(newRA, newDec, raDecString);
 		sprintf(msgString, "Found %s in %s at %s", foundName, database, raDecString);
 
-		CONSOLE_DEBUG_W_STR("Found      \t",	foundName);
-		CONSOLE_DEBUG_W_DBL("newRA(deg) \t=",	DEGREES(newRA / 15.0));
-		CONSOLE_DEBUG_W_DBL("newDec(deg)\t=",	DEGREES(newDec));
-		CONSOLE_DEBUG_W_STR("located at \t=",	raDecString);
+//		CONSOLE_DEBUG_W_STR("Found      \t",	foundName);
+//		CONSOLE_DEBUG_W_DBL("newRA(deg) \t=",	DEGREES(newRA / 15.0));
+//		CONSOLE_DEBUG_W_DBL("newDec(deg)\t=",	DEGREES(newDec));
+//		CONSOLE_DEBUG_W_STR("located at \t=",	raDecString);
 
 		cRa0		=	newRA;
 		cDecl0		=	newDec;
@@ -6042,7 +6116,7 @@ long	hippObjectId;
 	{
 		sprintf(msgString, "Nothing Found for %s", objectName);
 	}
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	SetWidgetTextColor(	kSkyTravel_MsgTextBox, CV_RGB(128,	128, 128));
 	SetWidgetText(		kSkyTravel_MsgTextBox, msgString);
 }

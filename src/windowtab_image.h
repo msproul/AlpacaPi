@@ -28,6 +28,25 @@ enum
 
 	kImageDisplay_Btn_N,
 
+	kImageDisplay_FrameCnt_Lbl,
+	kImageDisplay_FrameCnt,
+
+	kImageDisplay_Exposure_Lbl,
+	kImageDisplay_Exposure,
+	kImageDisplay_Gain_Lbl,
+	kImageDisplay_Gain,
+	kImageDisplay_CameraTemp_Lbl,
+	kImageDisplay_CameraTemp,
+	kImageDisplay_Filter_Lbl,
+	kImageDisplay_Filter,
+	kImageDisplay_Object_Lbl,
+	kImageDisplay_Object,
+	kImageDisplay_FramesSaved_Lbl,
+	kImageDisplay_FramesSaved,
+
+
+
+	kImageDisplay_Histogram,
 
 	kImageDisplay_ImageDisplay,
 
@@ -70,6 +89,7 @@ class WindowTabImage: public WindowTab
 									const int	xxx,
 									const int	yyy,
 									const int	flags);
+				void	DrawFullScaleIamge(void);
 				void	DrawFullScaleIamge(const int image_X, const int	image_Y);
 
 				IplImage	*cOpenCVdownLoadedImage;

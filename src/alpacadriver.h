@@ -274,6 +274,7 @@ class AlpacaDriver
 		//*	live controller window
 		virtual	TYPE_ASCOM_STATUS		OpenLiveWindow(char *alpacaErrMsg);
 		virtual	TYPE_ASCOM_STATUS		CloseLiveWindow(char *alpacaErrMsg);
+		virtual	void					UpdateLiveWindow(void);
 				Controller				*cLiveController;
 
 
@@ -306,6 +307,7 @@ extern	char			gDefaultTelescopeRefID[kDefaultRefIdMaxLen];
 extern	bool			gErrorLogging;		//*	write errors to log file if true
 extern	bool			gConformLogging;	//*	log all commands to log file to match up with Conform
 extern	char			gFullVersionString[];
+extern	char			gHostName[];
 
 #ifdef __cplusplus
 	extern "C" {

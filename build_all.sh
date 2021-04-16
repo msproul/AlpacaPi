@@ -74,7 +74,7 @@ else
 fi
 echo "$PLATFORM"
 
-
+echo "*************************************************** making client"
 make clean client
 
 ################################
@@ -82,10 +82,15 @@ make clean client
 if $OPENCV_OK
 then
 	echo "Building client apps" >> $LOGFILENAME
+	echo "*************************************************** making switch"	>/dev/stderr
 	make clean switch
+	echo "*************************************************** making sky"		>/dev/stderr
 	make clean sky
+	echo "*************************************************** making focuser"	>/dev/stderr
 	make clean focuser
+	echo "*************************************************** making domectrl"	>/dev/stderr
 	make clean domectrl
+	echo "*************************************************** making camera"	>/dev/stderr
 	make clean camera
 	if [ -f switch ]
 	then
@@ -115,14 +120,17 @@ fi
 if $PI64
 then
 	echo "Building alpacapi server for 64 bit Raspberry Pi" >> $LOGFILENAME
+	echo "*************************************************** making pi64" >/dev/stderr
 	make clean pi64
 elif $RASPPI
 then
 	echo "Building alpacapi server for 32 bit Raspberry Pi" >> $LOGFILENAME
+	echo "*************************************************** making pi" >/dev/stderr
 	make clean pi
 else
 	echo "Building alpacapi server on x86" >> $LOGFILENAME
 	make clean
+	echo "*************************************************** making default" >/dev/stderr
 	make
 fi
 if [ -f alpacapi ]

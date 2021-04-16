@@ -466,7 +466,8 @@ class CameraDriver: public AlpacaDriver
 
 		//*	new live window as of 4/1/2021
 		virtual	TYPE_ASCOM_STATUS		OpenLiveWindow(char *alpacaErrMsg);
-		virtual	TYPE_ASCOM_STATUS		CloseLiveWindow(char *alpacaErrMsg);
+//-		virtual	TYPE_ASCOM_STATUS		CloseLiveWindow(char *alpacaErrMsg);
+		virtual	void					UpdateLiveWindow(void);
 
 
 				bool	AllcateImageBuffer(long bufferSize);
@@ -621,12 +622,7 @@ protected:
 
 	bool		cUpdateOtherDevices;
 	//=========================================================================================
-	//*	Binning information
-//-	int			cCurrentBinX;
-//-	int			cCurrentBinY;
-
-	bool		cTempReadSupported;			//*	true if temperature can be read from device
-	double		cCameraTemp_Dbl;			//*	deg C
+	bool		cTempReadSupported;				//*	true if temperature can be read from device
 	long		cCoolerPowerLevel;
 	long		cCoolerState;
 	char		cLastCameraErrMsg[128];

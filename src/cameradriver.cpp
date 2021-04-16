@@ -146,6 +146,7 @@
 //*	Mar 17,	2021	<MLS> Added Get_HeatSinkTemperature()
 //*	Mar 26,	2021	<MLS> Started working on "offset" support
 //*	Mar 26,	2021	<MLS> Added Get_OffsetMax(), Get_OffsetMin(), Get_Offsets()
+//*	Apr  3,	2021	<MLS> Updated camera driver to use camera property ccd temp
 //*****************************************************************************
 //*	Jan  1,	2119	<TODO> ----------------------------------------
 //*	Jun 26,	2119	<TODO> Add support for sub frames
@@ -349,7 +350,6 @@ int	mkdirErrCode;
 	//======================================================
 	cUpdateOtherDevices				=	true;
 	cTempReadSupported				=	false;
-	cCameraTemp_Dbl					=	0.0;
 	cCoolerPowerLevel				=	0;
 	cLastCameraErrMsg[0]			=	0;
 	cSensorName[0]					=	0;
@@ -1724,7 +1724,7 @@ TYPE_ASCOM_STATUS		alpacaErrCode;
 										reqData->jsonTextBuffer,
 										kMaxJsonBuffLen,
 										responseString,
-										cCameraTemp_Dbl,
+										cCameraProp.CCDtemperature,
 										INCLUDE_COMMA);
 
 //				JsonResponse_Add_String(reqData->socket,
@@ -3447,7 +3447,7 @@ int					imgRank;
 									reqData->jsonTextBuffer,
 									kMaxJsonBuffLen,
 									"ccdtemperature",
-									cCameraTemp_Dbl,
+									cCameraProp.CCDtemperature,
 									INCLUDE_COMMA);
 		}
 	}
@@ -3908,7 +3908,7 @@ TYPE_ASCOM_STATUS	tempSensorErr;
 									reqData->jsonTextBuffer,
 									kBuffSize_MaxSpeed,
 									"ccdtemperature",
-									cCameraTemp_Dbl,
+									cCameraProp.CCDtemperature,
 									INCLUDE_COMMA);
 
 
@@ -5878,6 +5878,12 @@ TYPE_ASCOM_STATUS	alpacaErrCode;
 				{
 					AutoAdjustExposure();
 				}
+
+				//*	check for live window
+				if (cLiveController != NULL)
+				{
+					UpdateLiveWindow();
+				}
 			}
 			else
 			{
@@ -5950,12 +5956,14 @@ int32_t		delayMicroSecs;
 			{
 				if (cDisplaySideBar)
 				{
-					DisplayLiveImage_wSideBar();
+		//			DisplayLiveImage_wSideBar();
 				}
 				else
 				{
-					DisplayLiveImage();
+		//			DisplayLiveImage();
 				}
+
+
 			}
 			else if (cOpenCV_LiveDisplay != NULL)
 			{
@@ -6063,6 +6071,12 @@ char		fileNameDateString[64];
 		strcat(cFileNameRoot, "-");
 		strcat(cFileNameRoot, cTS_info.refID);
 	}
+	else if (strlen(gHostName) > 0)
+	{
+		strcat(cFileNameRoot, "-");
+		strcat(cFileNameRoot, gHostName);
+	}
+
 //	CONSOLE_DEBUG_W_STR("cFileNameRoot\t=", cFileNameRoot);
 
 #ifdef _ENABLE_FILTERWHEEL_

@@ -65,6 +65,7 @@ enum
 	kDataSrc_HYG,
 
 	kDataSrc_Special,
+	kDataSrc_AAVSOalert,
 
 	kDataSrc_Unkown,
 
@@ -72,7 +73,7 @@ enum
 };
 
 #define	kShortNameMax	8
-#define	kLongNameMax	24
+#define	kLongNameMax	32
 
 //*****************************************************************************
 typedef struct

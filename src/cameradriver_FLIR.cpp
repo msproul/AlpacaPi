@@ -36,16 +36,20 @@
 //*	Feb 13,	2021	<MLS> Added ExtractColorImage()
 //*	Feb 13,	2021	<MLS> Working on FLIR color image support
 //*	Feb 25,	2021	<MLS> Added CheckUSBFS_memory()
+//*	Apr 14,	2021	<MLS> Working on FLIR single frame mode
+//*	Apr 14,	2021	<MLS> Added _FLIR_SINGLE_FRAME_
 //*****************************************************************************
 
 #if defined(_ENABLE_CAMERA_) && defined(_ENABLE_FLIR_)
 #include	<stdio.h>
 #include	<string.h>
 
+#define	_FLIR_SINGLE_FRAME_
 
 #include	<spinnaker/spinc/SpinnakerC.h>
 //#include	<spinnaker/Camera.h>
 #include	<spinnaker/spinc/QuickSpinDefsC.h>
+#include	<spinnaker/spinc/CameraDefsC.h>
 
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
@@ -588,12 +592,13 @@ spinNodeType		featureType;
 
 
 //**************************************************************************
-spinError	CameraDriverFLIR::SetFlirAqcuistionMode(int mode)
+spinError	CameraDriverFLIR::SetFlirAqcuistionMode(int flirAcquistionMode)
 {
 spinError		spinErr;
 spinNodeHandle	hAcquisitionMode			=	NULL;
 spinNodeHandle	hAcquisitionModeContinuous	=	NULL;
 int64_t			acquisitionModeContinuous	=	0;
+int64_t			acquisitionModeSingleFrame	=	0;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -605,13 +610,26 @@ int64_t			acquisitionModeContinuous	=	0;
 	}
 	else
 	{
-		printf("Unable to set acquisition mode to continuous (node retrieval). Aborting with error %d...\n\n", spinErr);
+		printf("Unable to get acquisition mode Handle. Aborting with error %d...\n\n", spinErr);
 		return spinErr;
 	}
 
 	// Retrieve entry node from enumeration node
 	if (IsAvailableAndReadable(hAcquisitionMode, "AcquisitionMode"))
 	{
+#ifdef _FLIR_SINGLE_FRAME_
+		spinErr	=	spinEnumerationGetEntryByName(hAcquisitionMode, "SingleFrame", &hAcquisitionModeContinuous);
+		if (spinErr == SPINNAKER_ERR_SUCCESS)
+		{
+			CONSOLE_DEBUG("spinEnumerationGetEntryByName (SingleFrame)  SUCCESS!!!");
+		}
+		else
+		{
+			CONSOLE_DEBUG_W_NUM("Unable to set acquisition mode to SingleFrame (entry 'SingleFrame' retrieval). Aborting with error=",
+								spinErr);
+			return spinErr;
+		}
+#else
 		spinErr	=	spinEnumerationGetEntryByName(hAcquisitionMode, "Continuous", &hAcquisitionModeContinuous);
 		if (spinErr == SPINNAKER_ERR_SUCCESS)
 		{
@@ -623,13 +641,35 @@ int64_t			acquisitionModeContinuous	=	0;
 								spinErr);
 			return spinErr;
 		}
+#endif
 	}
 	else
 	{
 		PrintRetrieveNodeFailure("entry", "AcquisitionMode");
 		return SPINNAKER_ERR_ACCESS_DENIED;
 	}
-
+#ifdef _FLIR_SINGLE_FRAME_
+	if (IsAvailableAndReadable(hAcquisitionModeContinuous, "AcquisitionModeSingleFrame"))
+	{
+		spinErr	=	spinEnumerationEntryGetIntValue(hAcquisitionModeContinuous, &acquisitionModeSingleFrame);
+		if (spinErr == SPINNAKER_ERR_SUCCESS)
+		{
+			CONSOLE_DEBUG("spinEnumerationEntryGetIntValue  SUCCESS!!!");
+			CONSOLE_DEBUG_W_LONG("acquisitionModeContinuous\t=", acquisitionModeContinuous);
+		}
+		else
+		{
+			CONSOLE_DEBUG_W_NUM("Unable to set acquisition mode to continuous (entry int value retrieval). Aborting with error=",
+					spinErr);
+			return spinErr;
+		}
+	}
+	else
+	{
+		PrintRetrieveNodeFailure("entry", "AcquisitionMode 'Continuous'");
+		return SPINNAKER_ERR_ACCESS_DENIED;
+	}
+#endif
 	// Retrieve integer from entry node
 
 	if (IsAvailableAndReadable(hAcquisitionModeContinuous, "AcquisitionModeContinuous"))

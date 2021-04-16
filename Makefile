@@ -204,7 +204,10 @@ CPP_OBJECTS=												\
 
 LIVE_WINDOW_OBJECTS=										\
 				$(OBJECT_DIR)controller.o					\
+				$(OBJECT_DIR)controller_image.o				\
 				$(OBJECT_DIR)windowtab.o					\
+				$(OBJECT_DIR)windowtab_about.o				\
+				$(OBJECT_DIR)windowtab_image.o				\
 
 
 #				$(OBJECT_DIR)controllerAlpaca.o				\
@@ -308,15 +311,18 @@ alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_ROTATOR_
 alpacapi		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
 #alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
 #alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_LX200_
+alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
 alpacapi		:	$(CPP_OBJECTS)				\
 					$(ALPACA_OBJECTS)			\
 					$(SOCKET_OBJECTS)			\
+					$(LIVE_WINDOW_OBJECTS)		\
 
 
 		$(LINK)  								\
 					$(SOCKET_OBJECTS)			\
 					$(CPP_OBJECTS)				\
 					$(ALPACA_OBJECTS)			\
+					$(LIVE_WINDOW_OBJECTS)		\
 					$(OPENCV_LINK)				\
 					-L$(ATIK_LIB_DIR)/			\
 					-L$(TOUP_LIB_DIR)/			\
@@ -359,6 +365,7 @@ allcam		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_
 allcam		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
 #allcam		:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
 #allcam		:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_LX200_
+allcam		:		DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
 #allcam		:		INCLUDES		+=	-I$(SONY_INCLUDE_DIR)
 allcam		:		$(CPP_OBJECTS)				\
 					$(ALPACA_OBJECTS)			\
@@ -735,17 +742,20 @@ pi		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
 pi		:		DEFINEFLAGS		+=	-D_ENABLE_ATIK_
 pi		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
 #pi		:		DEFINEFLAGS		+=	-D_ENABLE_TOUP_
+pi		:		DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
 pi		:		PLATFORM		=	armv7
 pi		:		ATIK_LIB_DIR	=	$(ATIK_LIB_MASTER_DIR)/ARM/x86/NoFlyCapture
 pi		:			$(CPP_OBJECTS)				\
 					$(ALPACA_OBJECTS)			\
 					$(SOCKET_OBJECTS)			\
+					$(LIVE_WINDOW_OBJECTS)		\
 
 
 		$(LINK)  								\
 					$(SOCKET_OBJECTS)			\
 					$(CPP_OBJECTS)				\
 					$(ALPACA_OBJECTS)			\
+					$(LIVE_WINDOW_OBJECTS)		\
 					$(OPENCV_LINK)				\
 					-L$(ATIK_LIB_DIR_ARM32)/	\
 					$(ASI_CAMERA_OBJECTS)		\
@@ -818,17 +828,20 @@ calib		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
 calib		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
 #calib		:		DEFINEFLAGS		+=	-D_ENABLE_TOUP_
 #calib		:		DEFINEFLAGS		+=	-D_ENABLE_WIRING_PI_
+calib		:		DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
 calib		:		PLATFORM		=	armv7
 #calib		:		ATIK_LIB_DIR	=	$(ATIK_LIB_MASTER_DIR)/ARM/x86/NoFlyCapture
 calib		:		$(CPP_OBJECTS)				\
 					$(ALPACA_OBJECTS)			\
 					$(SOCKET_OBJECTS)			\
+					$(LIVE_WINDOW_OBJECTS)		\
 
 
 		$(LINK)  								\
 					$(SOCKET_OBJECTS)			\
 					$(CPP_OBJECTS)				\
 					$(ALPACA_OBJECTS)			\
+					$(LIVE_WINDOW_OBJECTS)		\
 					$(OPENCV_LINK)				\
 					$(ASI_CAMERA_OBJECTS)		\
 					-lwiringPi					\
@@ -1051,17 +1064,20 @@ newt16		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
 newt16		:		DEFINEFLAGS		+=	-D_ENABLE_JPEGLIB_
 #newt16		:		DEFINEFLAGS		+=	-D_ENABLE_TOUP_
 newt16		:		DEFINEFLAGS		+=	-D_ENABLE_SLIT_TRACKER_
+newt16		:		DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
 newt16		:		PLATFORM		=	armv7
 newt16		:		ATIK_LIB_DIR	=	$(ATIK_LIB_MASTER_DIR)/ARM/x86/NoFlyCapture
 newt16		:		$(CPP_OBJECTS)				\
 					$(ALPACA_OBJECTS)			\
 					$(SOCKET_OBJECTS)			\
+					$(LIVE_WINDOW_OBJECTS)		\
 
 
 		$(LINK)  								\
 					$(SOCKET_OBJECTS)			\
 					$(CPP_OBJECTS)				\
 					$(ALPACA_OBJECTS)			\
+					$(LIVE_WINDOW_OBJECTS)		\
 					$(OPENCV_LINK)				\
 					-L$(ATIK_LIB_DIR_ARM32)/	\
 					$(ASI_CAMERA_OBJECTS)		\
@@ -1130,18 +1146,21 @@ piswitch		:		DEFINEFLAGS		+=	-D_ENABLE_ATIK_
 piswitch		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
 piswitch		:		DEFINEFLAGS		+=	-D_INCLUDE_WIRINGPI_
 piswitch		:		DEFINEFLAGS		+=	-D_ENABLE_PWM_SWITCH_
+piswitch		:		DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
 piswitch		:		PLATFORM		=	armv7
 piswitch		:		ATIK_LIB_DIR	=	$(ATIK_LIB_MASTER_DIR)/ARM/x86/NoFlyCapture
 
 piswitch		:	$(CPP_OBJECTS)				\
 					$(ALPACA_OBJECTS)			\
 					$(SOCKET_OBJECTS)			\
+					$(LIVE_WINDOW_OBJECTS)		\
 
 
 		$(LINK)  								\
 					$(SOCKET_OBJECTS)			\
 					$(CPP_OBJECTS)				\
 					$(ALPACA_OBJECTS)			\
+					$(LIVE_WINDOW_OBJECTS)		\
 					$(OPENCV_LINK)				\
 					-L$(ATIK_LIB_DIR_ARM32)/	\
 					$(ASI_CAMERA_OBJECTS)		\
@@ -1317,6 +1336,7 @@ jetson		:	DEFINEFLAGS		+=	-D_ENABLE_FLIR_
 #jetson		:	DEFINEFLAGS		+=	-D_ENABLE_FITS_
 jetson		:	DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_
 jetson		:	DEFINEFLAGS		+=	-D_USE_OPENCV_
+jetson		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
 jetson		:	DEFINEFLAGS		+=	-D_PLATFORM_STRING_=\"Nvidia-jetson\"
 jetson		:	PLATFORM		=	armv8
 jetson		:	TOUP_LIB_DIR	=	$(TOUP_DIR)/linux/arm64
@@ -1325,6 +1345,7 @@ jetson		:				$(ALPACA_OBJECTS)			\
 							$(CPP_OBJECTS)				\
 							$(IMAGEPROC_OBJECTS)		\
 							$(JETSON_OBJECTS)			\
+							$(LIVE_WINDOW_OBJECTS)		\
 
 
 				$(LINK)  								\
@@ -1333,6 +1354,7 @@ jetson		:				$(ALPACA_OBJECTS)			\
 							$(CPP_OBJECTS)				\
 							$(IMAGEPROC_OBJECTS)		\
 							$(JETSON_OBJECTS)			\
+							$(LIVE_WINDOW_OBJECTS)		\
 							$(OPENCV_LINK)				\
 							-lcfitsio					\
 							-lpthread					\
@@ -1581,6 +1603,7 @@ camera		:			$(CONTROLLER_OBJECTS)					\
 
 SRC_SKYTRAVEL=./src_skytravel/
 SKYTRAVEL_OBJECTS=											\
+				$(OBJECT_DIR)aavso_data.o					\
 				$(OBJECT_DIR)ConstellationData.o			\
 				$(OBJECT_DIR)controller_camera.o			\
 				$(OBJECT_DIR)controller_cam_normal.o		\
@@ -2629,6 +2652,15 @@ $(OBJECT_DIR)windowtab_fov.o : 			$(SRC_SKYTRAVEL)windowtab_fov.cpp			\
 $(OBJECT_DIR)StarData.o :				$(SRC_SKYTRAVEL)StarData.c	\
 										$(SRC_SKYTRAVEL)StarData.h
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYTRAVEL)StarData.c -o$(OBJECT_DIR)StarData.o
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)aavso_data.o :				$(SRC_SKYTRAVEL)aavso_data.c	\
+										$(SRC_SKYTRAVEL)aavso_data.h	\
+										$(SRC_SKYTRAVEL)SkyStruc.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYTRAVEL)aavso_data.c -o$(OBJECT_DIR)aavso_data.o
+
+
+
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)windowtab_skytravel.o :	$(SRC_SKYTRAVEL)windowtab_skytravel.cpp	\

@@ -155,3 +155,7 @@ X2-Ori					28716
 #	Alkalurops is a double star consisting of u1-Boo and u2-Boo,  using u1
 Alkalurops				75411
 
+######################################
+#	Hercules
+Kornephoros				80816
+Sarin					84379

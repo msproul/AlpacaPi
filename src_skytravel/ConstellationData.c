@@ -9,6 +9,7 @@
 //*	Jan  7,	2021	<MLS> Downloaded much better constellation data
 //*	Jan  7,	2021	<MLS> From https://github.com/dcf21/constellation-stick-figures
 //*	Feb 18,	2021	<MLS> Constellation vectors now using proper Precessed RA/DEC values
+//*	Apr  3,	2021	<MLS> Fixed handling of spaces in ParseConstOutlineLongName()
 //*****************************************************************************
 
 
@@ -444,6 +445,9 @@ char	myLongName[64];
 //	CONSOLE_DEBUG_W_STR("lineBuff\t=", lineBuff);
 	if (lineBuff[0] == '+')
 	{
+		//	0123456789 123456789 123456789
+		//	+PSC=Pisces            3.62  3.70  4.03
+		//	+PSA=Piscis Austrinus   1.17  4.18  4.20
 		//*	truncate the line at column 22
 		lineBuff[22]	=	0;
 		ccc	=	21;
@@ -463,7 +467,7 @@ char	myLongName[64];
 		}
 		jjj++;	//*	increment past the '='
 		ccc	=	0;
-		while ((lineBuff[jjj] > 0x20) && (ccc < 32))
+		while ((lineBuff[jjj] >= 0x20) && (ccc < 32))
 		{
 			myLongName[ccc++]	=	lineBuff[jjj];
 			myLongName[ccc]	=	0;

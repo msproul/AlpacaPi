@@ -291,6 +291,7 @@ double dtemp;
 //*****************************************************************
 //* return the julian day from the gregorian calendar date
 //* using van flandern equation
+//*****************************************************************
 static	long	Gregorian(TYPE_Time *timeptr)
 {
 long	jd;
@@ -306,6 +307,7 @@ long	yr,mo,day;
 
 //*****************************************************************
 //* return the julian day from the julian calendar date
+//*****************************************************************
 static	long	Julian(TYPE_Time *timeptr)
 {
 int		a,b;

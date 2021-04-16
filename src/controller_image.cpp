@@ -7,6 +7,10 @@
 //*	Edit History
 //*****************************************************************************
 //*	Dec 27,	2020	<MLS> Created controller_image.cpp
+//*	Apr  2,	2021	<MLS> Added SetLiveWindowImage()
+//*	Apr  2,	2021	<MLS> Added UpdateLiveWindowImage()
+//*	Apr  3,	2021	<MLS> Added UpdateLiveWindowInfo()
+//*	Apr  8,	2021	<MLS> Added CopyImageToLiveImage()
 //*****************************************************************************
 
 
@@ -16,6 +20,7 @@
 #include	<stdio.h>
 #include	<stdlib.h>
 #include	<unistd.h>
+#include	<string.h>
 
 
 
@@ -68,77 +73,22 @@ enum
 ControllerImage::ControllerImage(	const char *argWindowName, IplImage *downloadedImage)
 	:Controller(argWindowName, kWindowWidth,  kWindowHeight)
 {
-int					liveDispalyWidth;
-int					liveDisplayHeight;
-int					reduceFactor;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
-	cDownLoadedImage	=	downloadedImage;
+	cDownLoadedImage	=	NULL;
 	cDisplayedImage		=	NULL;
+	cColorImage			=	NULL;
 
 	cImageTabObjPtr		=	NULL;
 	cAboutBoxTabObjPtr	=	NULL;
 
 	SetupWindowControls();
 
-
-//	SetWidgetImage(kTab_Image, kImageDisplay_ImageDisplay, cDownLoadedImage);
-
 	//*	the downloaded image needs to be copied and/or resized to the displayed image
-	if (cDownLoadedImage != NULL)
+	if (downloadedImage != NULL)
 	{
-//			CONSOLE_DEBUG("Creating small image");
-		reduceFactor		=	1;
-		liveDispalyWidth	=	cDownLoadedImage->width;
-		liveDisplayHeight	=	cDownLoadedImage->height;
-
-		CONSOLE_DEBUG_W_NUM("cDownLoadedImage->width\t=",	cDownLoadedImage->width);
-		CONSOLE_DEBUG_W_NUM("cDownLoadedImage->height\t=",	cDownLoadedImage->height);
-
-		CONSOLE_DEBUG_W_NUM("kWindowHeight\t=", kWindowHeight);
-		while ((liveDispalyWidth > kWindowWidth) || (liveDisplayHeight > (kWindowHeight - 50)))
-		{
-			CONSOLE_DEBUG_W_NUM("liveDisplayHeight\t=", liveDisplayHeight);
-			reduceFactor++;
-			liveDispalyWidth	=	cDownLoadedImage->width / reduceFactor;
-			liveDisplayHeight	=	cDownLoadedImage->height / reduceFactor;
-		}
-		CONSOLE_DEBUG_W_NUM("reduceFactor\t=", reduceFactor);
-		CONSOLE_DEBUG_W_NUM("liveDispalyWidth\t=", liveDispalyWidth);
-		CONSOLE_DEBUG_W_NUM("liveDisplayHeight\t=", liveDisplayHeight);
-
-		cDisplayedImage	=	cvCreateImage(cvSize(	liveDispalyWidth,
-													liveDisplayHeight),
-													IPL_DEPTH_8U,
-													3);
-		if (cDisplayedImage != NULL)
-		{
-			CONSOLE_DEBUG("Resizing image");
-
-			//*	Check to see if the original is color
-			if ((cOpenCV_Image->nChannels == 3) && (cOpenCV_Image->depth == 8))
-			{
-				CONSOLE_DEBUG("Original is 8 bit color");
-				cvResize(cDownLoadedImage, cDisplayedImage, CV_INTER_LINEAR);
-			}
-			else if ((cOpenCV_Image->nChannels == 1) && (cOpenCV_Image->depth == 8))
-			{
-				CONSOLE_DEBUG("Original is8 bit B/W");
-				cvCvtColor(cDownLoadedImage, cDisplayedImage, CV_GRAY2RGB);
-			}
-
-			SetWidgetImage(kTab_Image, kImageDisplay_ImageDisplay, cDisplayedImage);
-		}
-		else
-		{
-			CONSOLE_DEBUG("Failed to create new image");
-		}
-
-		if (cImageTabObjPtr != NULL)
-		{
-			cImageTabObjPtr->SetImagePtrs(cDownLoadedImage,	cDisplayedImage);
-		}
+		SetLiveWindowImage(downloadedImage);
 	}
 	else
 	{
@@ -157,13 +107,13 @@ ControllerImage::~ControllerImage(void)
 	//*	free up the image memory
 	if (cDownLoadedImage != NULL)
 	{
-		CONSOLE_DEBUG("destroy downloaded image");
+		CONSOLE_DEBUG_W_HEX("Release cDownLoadedImage", cDownLoadedImage);
 		cvReleaseImage(&cDownLoadedImage);
 		cDownLoadedImage	=	NULL;
 	}
 	if (cDisplayedImage != NULL)
 	{
-		CONSOLE_DEBUG("destroy display image");
+		CONSOLE_DEBUG_W_HEX("Release cDisplayedImage", cDisplayedImage);
 		cvReleaseImage(&cDisplayedImage);
 		cDisplayedImage	=	NULL;
 	}
@@ -191,7 +141,6 @@ void	ControllerImage::SetupWindowControls(void)
 		cImageTabObjPtr->SetParentObjectPtr(this);
 	}
 
-
 	SetTabText(kTab_About,		"About");
 	cAboutBoxTabObjPtr		=	new WindowTabAbout(	cWidth, cHeight, cBackGrndColor, cWindowName);
 	if (cAboutBoxTabObjPtr != NULL)
@@ -199,10 +148,6 @@ void	ControllerImage::SetupWindowControls(void)
 		SetTabWindow(kTab_About,	cAboutBoxTabObjPtr);
 		cAboutBoxTabObjPtr->SetParentObjectPtr(this);
 	}
-
-//	SetWidgetFont(kTab_Video,	kUSBselect_IPaddr, kFont_Medium);
-
-//	SetWidgetText(kTab_Video,	kUSBselect_IPaddr,	cUSBpath);
 }
 
 //**************************************************************************************
@@ -243,10 +188,7 @@ bool		needToUpdate;
 	{
 		cImageTabObjPtr->RunBackgroundTasks();
 	}
-
 }
-
-
 
 //**************************************************************************************
 void	ControllerImage::RefreshWindow(void)
@@ -255,5 +197,349 @@ void	ControllerImage::RefreshWindow(void)
 	cvWaitKey(100);
 }
 
+//**************************************************************************************
+void	ControllerImage::DrawWidgetImage(TYPE_WIDGET *theWidget)
+{
+	if (cImageTabObjPtr != NULL)
+	{
+		if (cImageTabObjPtr->cImageZoomState)
+		{
+			CONSOLE_DEBUG("Zoomed");
+			cImageTabObjPtr->DrawFullScaleIamge();
+			Controller::DrawWidgetImage(theWidget, cImageTabObjPtr->cOpenCVdisplayedImage);
+
+		}
+		else
+		{
+			CONSOLE_DEBUG("Normal");
+			Controller::DrawWidgetImage(theWidget);
+		}
+	}
+	else
+	{
+		CONSOLE_DEBUG("cImageTabObjPtr is NULL");
+	}
+}
+
+//**************************************************************************************
+void	ControllerImage::SetLiveWindowImage(IplImage *newOpenCVImage)
+{
+int		smallDispalyWidth;
+int		smallDisplayHeight;
+int		reduceFactor;
+int		newImgWidth;
+int		newImgHeight;
+int		newImgChannels;
+bool	validImg;
+size_t	byteCount;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+	if (cDownLoadedImage != NULL)
+	{
+		cvReleaseImage(&cDownLoadedImage);
+		cDownLoadedImage	=	NULL;
+	}
+	if (cDisplayedImage != NULL)
+	{
+		cvReleaseImage(&cDisplayedImage);
+		cDisplayedImage	=	NULL;
+	}
+
+	if (newOpenCVImage != NULL)
+	{
+		//*	ok, now its time to CREATE our own image, we are going to make it the same as the
+		//*	supplied image
+		newImgWidth			=	newOpenCVImage->width;
+		newImgHeight		=	newOpenCVImage->height;
+		newImgChannels		=	newOpenCVImage->nChannels;
+
+		validImg			=	true;
+		if ((newImgWidth < 100) || (newImgWidth > 10000))
+		{
+			validImg		=	false;
+		}
+		if ((newImgHeight < 100) || (newImgHeight > 10000))
+		{
+			validImg		=	false;
+		}
+		if ((newImgChannels != 1) && (newImgChannels != 3))
+		{
+			validImg		=	false;
+		}
+		if (validImg)
+		{
+			CONSOLE_DEBUG_W_NUM("newImgChannels\t=", newImgChannels);
+			newImgChannels		=	3;
+			cDownLoadedImage	=	cvCreateImage(cvSize(	newImgWidth,
+															newImgHeight),
+															IPL_DEPTH_8U,
+															newImgChannels);
+		}
+
+		//*	the downloaded image needs to be copied and/or resized to the displayed image
+		if (cDownLoadedImage != NULL)
+		{
+			//*	copy the image data to OUR image
+			byteCount	=	newOpenCVImage->height * newOpenCVImage->widthStep;
+			memcpy(cDownLoadedImage->imageData, newOpenCVImage->imageData, byteCount);
+
+
+//			CONSOLE_DEBUG("Creating small image");
+			reduceFactor		=	1;
+			smallDispalyWidth	=	cDownLoadedImage->width;
+			smallDisplayHeight	=	cDownLoadedImage->height;
+
+			CONSOLE_DEBUG_W_NUM("cDownLoadedImage->width\t=",	cDownLoadedImage->width);
+			CONSOLE_DEBUG_W_NUM("cDownLoadedImage->height\t=",	cDownLoadedImage->height);
+
+
+			int		maxWindowWidth	=	800;
+			int		maxWindowHeight	=	700;
+
+			while ((smallDispalyWidth > maxWindowWidth) || (smallDisplayHeight > (maxWindowHeight - 50)))
+			{
+				CONSOLE_DEBUG_W_NUM("smallDisplayHeight\t=", smallDisplayHeight);
+				reduceFactor++;
+				smallDispalyWidth	=	cDownLoadedImage->width / reduceFactor;
+				smallDisplayHeight	=	cDownLoadedImage->height / reduceFactor;
+			}
+			CONSOLE_DEBUG_W_NUM("reduceFactor\t=", reduceFactor);
+			CONSOLE_DEBUG_W_NUM("smallDispalyWidth\t=", smallDispalyWidth);
+			CONSOLE_DEBUG_W_NUM("smallDisplayHeight\t=", smallDisplayHeight);
+
+			cDisplayedImage	=	cvCreateImage(cvSize(	smallDispalyWidth,
+														smallDisplayHeight),
+														IPL_DEPTH_8U,
+														3);
+			if (cDisplayedImage != NULL)
+			{
+				CONSOLE_DEBUG("Resizing image");
+
+				//*	Check to see if the original is color
+				if ((cDownLoadedImage->nChannels == 3) && (cDownLoadedImage->depth == 8))
+				{
+					CONSOLE_DEBUG("Original is 8 bit color (3 channels)");
+					cvResize(cDownLoadedImage, cDisplayedImage, CV_INTER_LINEAR);
+				}
+				else if ((cDownLoadedImage->nChannels == 1) && (cDownLoadedImage->depth == 8))
+				{
+					CONSOLE_DEBUG("Original is 8 bit B/W");
+					cvCvtColor(cDownLoadedImage, cDisplayedImage, CV_GRAY2RGB);
+				}
+
+				SetWidgetImage(kTab_Image, kImageDisplay_ImageDisplay, cDisplayedImage);
+			}
+			else
+			{
+				CONSOLE_DEBUG("Failed to create new image");
+			}
+
+			if (cImageTabObjPtr != NULL)
+			{
+				cImageTabObjPtr->SetImagePtrs(cDownLoadedImage,	cDisplayedImage);
+			}
+		}
+		else
+		{
+
+		}
+	}
+}
+
+//**************************************************************************************
+void	ControllerImage::CopyImageToLiveImage(IplImage *newOpenCVImage)
+{
+size_t				byteCount_src;
+size_t				byteCount_dst;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+	//*	this is just an extra check, it was crashing on testing
+	if ((cDownLoadedImage != NULL) && (newOpenCVImage != NULL))
+	{
+		byteCount_src	=	newOpenCVImage->height * newOpenCVImage->widthStep;
+		byteCount_dst	=	cDownLoadedImage->height * cDownLoadedImage->widthStep;
+
+		if (byteCount_src == byteCount_dst)
+		{
+			//*	copy the new data to the existing buffer
+//			CONSOLE_DEBUG_W_NUM("Copying image:byteCount\t=",	byteCount_src);
+			if ((cDownLoadedImage->imageData != NULL) && (newOpenCVImage->imageData != NULL))
+			{
+				memcpy(cDownLoadedImage->imageData, newOpenCVImage->imageData, byteCount_src);
+
+				//*	double check the displayed image
+				if (cDisplayedImage != NULL)
+				{
+					//*	now make a small copy that will fit on the screen.
+
+//					CONSOLE_DEBUG("Resizing image");
+					//*	Check to see if the original is color
+					if ((cDownLoadedImage->nChannels == 3) && (cDownLoadedImage->depth == 8))
+					{
+//						CONSOLE_DEBUG("Original is 8 bit color (3 channels)");
+						cvResize(cDownLoadedImage, cDisplayedImage, CV_INTER_LINEAR);
+					}
+					else if ((cDownLoadedImage->nChannels == 1) && (cDownLoadedImage->depth == 8))
+					{
+//						CONSOLE_DEBUG("Original is 8 bit B/W");
+						cvCvtColor(cDownLoadedImage, cDisplayedImage, CV_GRAY2RGB);
+					}
+				}
+				else
+				{
+					CONSOLE_DEBUG("cDisplayedImage is NULL");
+				}
+			}
+			else
+			{
+				CONSOLE_DEBUG("Data ptr is NULL!!!!!!!!!!!!!!!!!!!!!!!!");
+			//	CONSOLE_ABORT(__FUNCTION__);
+			}
+		}
+		else
+		{
+			CONSOLE_DEBUG("Byte counts dont match");
+		}
+	}
+}
+
+
+//**************************************************************************************
+//*	this routine updates the existing image by copying the new image to the old image buffer
+//*	it checks to make sure they are compatible
+//**************************************************************************************
+void	ControllerImage::UpdateLiveWindowImage(IplImage *newOpenCVImage, const char *imageFileName)
+{
+bool				imagesAreTheSame;
+
+//	CONSOLE_DEBUG("-------------------Start");
+	CONSOLE_DEBUG(__FUNCTION__);
+	if (newOpenCVImage  != NULL)
+	{
+		if ((cDownLoadedImage == NULL) || (cDisplayedImage == NULL))
+		{
+//			CONSOLE_DEBUG("Setting image");
+			SetLiveWindowImage(newOpenCVImage);
+		}
+		else
+		{
+//			CONSOLE_DEBUG("Updating image");
+			imagesAreTheSame	=	true;
+			//*	check if width are the same
+			if (newOpenCVImage->width != cDownLoadedImage->width)
+			{
+				imagesAreTheSame	=	false;
+				CONSOLE_DEBUG("Failed on width");
+				CONSOLE_DEBUG_W_NUM("newOpenCVImage->width  \t=",		newOpenCVImage->width);
+				CONSOLE_DEBUG_W_NUM("cDownLoadedImage->width\t=",	cDownLoadedImage->width);
+
+			}
+			//*	check if height are the same
+			if (newOpenCVImage->height != cDownLoadedImage->height)
+			{
+				imagesAreTheSame	=	false;
+				CONSOLE_DEBUG("Failed on height");
+				CONSOLE_DEBUG_W_NUM("newOpenCVImage->height  \t=",	newOpenCVImage->height);
+				CONSOLE_DEBUG_W_NUM("cDownLoadedImage->height\t=",	cDownLoadedImage->height);
+			}
+			//*	check if nChannels are the same
+			if (newOpenCVImage->nChannels != cDownLoadedImage->nChannels)
+			{
+				imagesAreTheSame	=	false;
+				CONSOLE_DEBUG("Failed on nChannels");
+				CONSOLE_DEBUG_W_NUM("newOpenCVImage->nChannels  \t=",	newOpenCVImage->nChannels);
+				CONSOLE_DEBUG_W_NUM("cDownLoadedImage->nChannels\t=",	cDownLoadedImage->nChannels);
+			}
+			//*	check if depth are the same
+			if (newOpenCVImage->depth != cDownLoadedImage->depth)
+			{
+				imagesAreTheSame	=	false;
+				CONSOLE_DEBUG("Failed on depth");
+				CONSOLE_DEBUG_W_NUM("newOpenCVImage->depth  \t=",	newOpenCVImage->depth);
+				CONSOLE_DEBUG_W_NUM("cDownLoadedImage->depth\t=",	cDownLoadedImage->depth);
+			}
+			//*	check if widthStep are the same
+			if (newOpenCVImage->widthStep != cDownLoadedImage->widthStep)
+			{
+				imagesAreTheSame	=	false;
+				CONSOLE_DEBUG("Failed on widthStep");
+				CONSOLE_DEBUG_W_NUM("newOpenCVImage->widthStep  \t=",	newOpenCVImage->widthStep);
+				CONSOLE_DEBUG_W_NUM("cDownLoadedImage->widthStep\t=",	cDownLoadedImage->widthStep);
+			}
+
+			if (imagesAreTheSame)
+			{
+				CopyImageToLiveImage(newOpenCVImage);
+			}
+			else
+			{
+				CONSOLE_DEBUG("images are different !!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+				//*	check to see if our temporary image exists
+				if (cColorImage == NULL)
+				{
+				int		newImgWidth;
+				int		newImgHeight;
+
+					newImgWidth		=	newOpenCVImage->width;
+					newImgHeight	=	newOpenCVImage->height;
+					cColorImage		=	cvCreateImage(cvSize(	newImgWidth,
+																newImgHeight),
+																IPL_DEPTH_8U,
+																3);
+				}
+				if (cColorImage != NULL)
+				{
+					cvCvtColor(newOpenCVImage, cColorImage, CV_GRAY2RGB);
+					CopyImageToLiveImage(cColorImage);
+				}
+			}
+			cUpdateWindow	=	true;
+		}
+	}
+	else
+	{
+		CONSOLE_DEBUG("newOpenCVImage is NULL");
+	}
+
+	//*	was a file name supplied
+	if (imageFileName != NULL)
+	{
+		SetWidgetText(kTab_Image, kImageDisplay_Title, imageFileName);
+	}
+
+
+//	CONSOLE_DEBUG("-------------------exit");
+}
+
+//**************************************************************************************
+void	ControllerImage::UpdateLiveWindowInfo(	TYPE_CameraProperties	*cameraProp,
+												const int				framesRead,
+												const double			exposure_Secs,
+												const char				*filterName,
+												const char				*objectName
+												)
+{
+char	lineBuff[64];
+
+
+	SetWidgetNumber(kTab_Image, kImageDisplay_Gain,			cameraProp->Gain);
+
+	sprintf(lineBuff, "%1.1f F",			(cameraProp->CCDtemperature * 9.0/5.0) +32.0);
+	SetWidgetText(	kTab_Image, kImageDisplay_CameraTemp,	lineBuff);
+
+
+	SetWidgetNumber(kTab_Image, kImageDisplay_FrameCnt,		framesRead);
+	SetWidgetNumber(kTab_Image, kImageDisplay_Exposure,		exposure_Secs);
+	SetWidgetText(	kTab_Image, kImageDisplay_Object,		objectName);
+
+	if (filterName != NULL)
+	{
+		SetWidgetText(	kTab_Image, kImageDisplay_Filter,	filterName);
+	}
+
+//+	SetWidgetNumber(kTab_Image, kImageDisplay_FramesSaved,	framesSaved);
+
+
+}
 
 #endif // _ENABLE_CTRL_IMAGE_

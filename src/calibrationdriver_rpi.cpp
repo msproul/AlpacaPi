@@ -106,6 +106,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
+
 #ifdef _ENABLE_WIRING_PI_
 	//*	check to make sure the value is within the range of the R-Pi PWM
 	if ((brightnessValue >= 0) && (brightnessValue <= 1023))

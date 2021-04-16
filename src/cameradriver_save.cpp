@@ -520,7 +520,7 @@ int		gainPercent;
 		fprintf(filePointer, "Limit=%3.0f Seconds\r\n",			cVideoDuration_secs);	//	30 Seconds
 
 		Read_SensorTemp();
-		fprintf(filePointer, "Sensor temperature=%1.1f C\r\n",	cCameraTemp_Dbl);
+		fprintf(filePointer, "Sensor temperature=%1.1f C\r\n",	cCameraProp.CCDtemperature);
 
 		fprintf(filePointer, "Object=%s\r\n",					cObjectName);
 		if (strlen(cAuxTextTag) > 0)

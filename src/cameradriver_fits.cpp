@@ -902,7 +902,7 @@ char	instrumentString[128];
 	{
 		fitsStatus	=	0;
 		fits_write_key(fitsFilePtr, TDOUBLE,	"CCD-TEMP",
-												&cCameraTemp_Dbl,
+												&cCameraProp.CCDtemperature,
 												"Degrees C", &fitsStatus);
 	}
 
@@ -1053,7 +1053,9 @@ char	instrumentString[128];
 	//*	this was kept here so we dont have to read the CCD temperature twice
 	if (ccdTempErrCode == 0)
 	{
-		sprintf(stringBuf, "Image Sensor Temperature: %1.1f deg C, %1.1f deg F", cCameraTemp_Dbl, ((cCameraTemp_Dbl * 9.0/5.0) + 32.0));
+		sprintf(stringBuf, "Image Sensor Temperature: %1.1f deg C, %1.1f deg F",
+									cCameraProp.CCDtemperature,
+									((cCameraProp.CCDtemperature * 9.0/5.0) + 32.0));
 	}
 	else
 	{

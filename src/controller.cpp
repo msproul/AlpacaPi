@@ -61,6 +61,8 @@
 //*	Feb 19,	2021	<MLS> Added UpdateCapabilityList()
 //*	Feb 20,	2021	<MLS> Added ReadOneDriverCapability()
 //*	Feb 27,	2021	<MLS> Added mouse event info to ProcessDoubleClick()
+//*	Apr  2,	2021	<MLS> Added DrawWidgetImage()
+//*	Apr  5,	2021	<MLS> Added 2nd version DrawWidgetImage()
 //*****************************************************************************
 
 
@@ -345,17 +347,23 @@ int		iii;
 	//*	release the image
 	if (cOpenCV_Image != NULL)
 	{
+//		CONSOLE_DEBUG_W_HEX("Release cOpenCV_Image", (long)cOpenCV_Image);
 		cvReleaseImage(&cOpenCV_Image);
+		cOpenCV_Image	=	NULL;
 	}
+	CONSOLE_DEBUG(__FUNCTION__);
 	cvDestroyWindow(cWindowName);
 
+	CONSOLE_DEBUG(__FUNCTION__);
 	for (iii=0; iii<kMaxControllers; iii++)
 	{
 		if (gControllerList[iii] == this)
 		{
+			CONSOLE_DEBUG(__FUNCTION__);
 			gControllerList[iii]	=	NULL;
 		}
 	}
+	CONSOLE_DEBUG(__FUNCTION__);
 }
 
 
@@ -1924,7 +1932,87 @@ double		percentComplete;
 				);
 }
 
+//**************************************************************************************
+void	Controller::DrawWidgetImage(TYPE_WIDGET *theWidget, IplImage *theOpenCVimage)
+{
+int			delta;
+CvRect		widgetRect;
 
+	if (theOpenCVimage != NULL)
+	{
+
+	//	CONSOLE_DEBUG_W_NUM("Drawing image, widget#", widgetIdx);
+		widgetRect.x		=	theWidget->left;
+		widgetRect.y		=	theWidget->top;
+		widgetRect.width	=	theWidget->width;
+		widgetRect.height	=	theWidget->height;
+
+		//*	check to see if the image is BIGGER than the widget rect
+		if (theOpenCVimage->width > widgetRect.width)
+		{
+			CONSOLE_DEBUG_W_NUM("Image is too big", theOpenCVimage->width);
+		}
+
+		theWidget->roiRect	=	widgetRect;
+		//*	we have to make sure the the destination rect is the same as the src rect
+		//*	if its smaller, then center it
+		if (theOpenCVimage->width < widgetRect.width)
+		{
+			delta					=	widgetRect.width - theOpenCVimage->width;
+			theWidget->roiRect.x	=	widgetRect.x + (delta / 2);
+		}
+		if (theOpenCVimage->height < widgetRect.height)
+		{
+			delta					=	widgetRect.height - theOpenCVimage->height;
+			theWidget->roiRect.y	=	widgetRect.y + (delta / 2);
+		}
+		theWidget->roiRect.width	=	theOpenCVimage->width;
+		theWidget->roiRect.height	=	theOpenCVimage->height;
+
+		cvSetImageROI(cOpenCV_Image,  theWidget->roiRect);
+		cvCopy(theWidget->openCVimagePtr, cOpenCV_Image);
+		cvResetImageROI(cOpenCV_Image);
+
+		//*	draw the border if enabled
+		if (theWidget->includeBorder)
+		{
+
+			cvRectangleR(	cOpenCV_Image,
+							theWidget->roiRect,
+							theWidget->borderColor,		//	CvScalar color,
+							1,							//	int thickness CV_DEFAULT(1),
+							8,							//	int line_type CV_DEFAULT(8),
+							0);							//	int shift CV_DEFAULT(0));
+		}
+
+	}
+	else
+	{
+	//	CONSOLE_DEBUG("Image ptr is null");
+		if (theWidget->includeBorder)
+		{
+			widgetRect.x		=	theWidget->left;
+			widgetRect.y		=	theWidget->top;
+			widgetRect.width	=	theWidget->width;
+			widgetRect.height	=	theWidget->height;
+
+			cvRectangleR(	cOpenCV_Image,
+							widgetRect,
+							theWidget->borderColor,		//	CvScalar color,
+							1,							//	int thickness CV_DEFAULT(1),
+							8,							//	int line_type CV_DEFAULT(8),
+							0);							//	int shift CV_DEFAULT(0));
+		}
+	}
+}
+
+
+//**************************************************************************************
+void	Controller::DrawWidgetImage(TYPE_WIDGET *theWidget)
+{
+	DrawWidgetImage(theWidget, theWidget->openCVimagePtr);
+
+}
 
 //**************************************************************************************
 void	Controller::DrawWindowTabs(void)
@@ -2016,75 +2104,7 @@ CvRect		widgetRect;
 			break;
 
 		case kWidgetType_Image:
-			if (widgetPtr->openCVimagePtr != NULL)
-			{
-			int			delta;
-			IplImage	*myImage;
-
-			//	CONSOLE_DEBUG_W_NUM("Drawing image, widget#", widgetIdx);
-				myImage				=	widgetPtr->openCVimagePtr;
-				widgetRect.x		=	widgetPtr->left;
-				widgetRect.y		=	widgetPtr->top;
-				widgetRect.width	=	widgetPtr->width;
-				widgetRect.height	=	widgetPtr->height;
-
-				//*	check to see if the image is BIGGER than the widget rect
-				if (myImage->width > widgetRect.width)
-				{
-					CONSOLE_DEBUG_W_NUM("Image is too big", myImage->width);
-				}
-
-				widgetPtr->roiRect	=	widgetRect;
-				//*	we have to make sure the the destination rect is the same as the src rect
-				//*	if its smaller, then center it
-				if (myImage->width < widgetRect.width)
-				{
-					delta					=	widgetRect.width - myImage->width;
-					widgetPtr->roiRect.x	=	widgetRect.x + (delta / 2);
-				}
-				if (myImage->height < widgetRect.height)
-				{
-					delta					=	widgetRect.height - myImage->height;
-					widgetPtr->roiRect.y	=	widgetRect.y + (delta / 2);
-				}
-				widgetPtr->roiRect.width	=	myImage->width;
-				widgetPtr->roiRect.height	=	myImage->height;
-
-				cvSetImageROI(cOpenCV_Image,  widgetPtr->roiRect);
-				cvCopy(widgetPtr->openCVimagePtr, cOpenCV_Image);
-				cvResetImageROI(cOpenCV_Image);
-
-				//*	draw the border if enabled
-				if (widgetPtr->includeBorder)
-				{
-
-					cvRectangleR(	cOpenCV_Image,
-									widgetPtr->roiRect,
-									widgetPtr->borderColor,		//	CvScalar color,
-									1,							//	int thickness CV_DEFAULT(1),
-									8,							//	int line_type CV_DEFAULT(8),
-									0);							//	int shift CV_DEFAULT(0));
-				}
-
-			}
-			else
-			{
-			//	CONSOLE_DEBUG("Image ptr is null");
-				if (widgetPtr->includeBorder)
-				{
-					widgetRect.x		=	widgetPtr->left;
-					widgetRect.y		=	widgetPtr->top;
-					widgetRect.width	=	widgetPtr->width;
-					widgetRect.height	=	widgetPtr->height;
-
-					cvRectangleR(	cOpenCV_Image,
-									widgetRect,
-									widgetPtr->borderColor,		//	CvScalar color,
-									1,							//	int thickness CV_DEFAULT(1),
-									8,							//	int line_type CV_DEFAULT(8),
-									0);							//	int shift CV_DEFAULT(0));
-				}
-			}
+			DrawWidgetImage(widgetPtr);
 			break;
 
 		case kWidgetType_MultiLineText:

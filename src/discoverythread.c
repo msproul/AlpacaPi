@@ -1123,7 +1123,6 @@ uint32_t		ipAddress32;
 
 			ipAddress32	=	ntohl(*((uint32_t *)tmpAddrPtr));
 //			CONSOLE_DEBUG_W_HEX("ipAddress32\t=", ipAddress32);
-	//		if (ipAddress32 != 0x0100007f)
 			if (ipAddress32 != 0x7f000001)
 			{
 				gMyIPaddress	=	ipAddress32;

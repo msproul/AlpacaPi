@@ -115,17 +115,15 @@ class Controller
 				void	DrawWidgetCheckBox(TYPE_WIDGET *theWidget);
 				void	DrawWidgetGraph(TYPE_WIDGET *theWidget);
 				void	DrawWidgetIcon(TYPE_WIDGET *theWidget);
+				void	DrawWidgetImage(TYPE_WIDGET *theWidget, IplImage *theOpenCVimage);
+		virtual	void	DrawWidgetImage(TYPE_WIDGET *theWidget);
 				void	DrawWidgetMultiLineText(TYPE_WIDGET *theWidget);
 				void	DrawWidgetOutlineBox(TYPE_WIDGET *theWidget);
+				void	DrawWidgetProgressBar(TYPE_WIDGET *theWidget);
 				void	DrawWidgetRadioButton(TYPE_WIDGET *theWidget);
 				void	DrawWidgetSlider(TYPE_WIDGET *theWidget);
 				void	DrawWidgetText(TYPE_WIDGET *theWidget);
 				void	DrawWidgetTextWithTabs(TYPE_WIDGET *theWidget);
-				void	DrawWidgetProgressBar(TYPE_WIDGET *theWidget);
-
-
-				void	DrawWidgetPressBar(TYPE_WIDGET *theWidget);
-
 
 				void	DisplayButtonHelpText(const int buttonIdx);
 
