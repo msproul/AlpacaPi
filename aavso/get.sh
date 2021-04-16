@@ -5,6 +5,7 @@
 clear
 
 
+###############################################################################
 # first make sure "replaceCRLF" is here
 if [ -f replaceCRLF ]
 then
@@ -14,6 +15,8 @@ else
 	then
 		echo "Compiling replace.c"
 		gcc replace.c -o replaceCRLF
+	else
+		echo "The source code file 'replace.c' is missing, please re-check your download"
 	fi
 fi
 
@@ -71,5 +74,11 @@ then
 
 else
 	echo "Failed to create replaceCRLF"
+	if [ -f replace.c ]
+	then
+		echo "The source code file 'replace.c' was found. Check gcc"
+	else
+		echo "The source code file 'replace.c' is missing, please re-check your download"
+	fi
 fi
 

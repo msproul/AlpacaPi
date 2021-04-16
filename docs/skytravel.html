@@ -5,8 +5,27 @@
 </CENTER>
 <HR>
 SkyTravel is the part of the AlpacaPi suite of software. It allows full control of an Alpaca based
-observatory.
+observatory. Specifically you can control the dome, cameras, focusers, telescope mount, switches,
+all from the same program.  It does NOT REQUIRE that you use SkyTravel for all of these devices.
+Additionally, due to the nature of Alpaca, you can have SkyTravel running on multiple computers at the same time.
+Just be careful if you are trying to tell a device two different things at the same time.
 
+<P>
+Tabs
+<UL>
+	<LI>SkyTravel
+	<LI>Settings
+	<LI>F.O.V.
+	<LI>Moon
+	<LI>Dome
+	<LI>Device Selection
+	<LI>Alpaca List
+	<LI>IP List
+	<LI>About
+</UL>
+<P>
+<IMG SRC=images/SkyTravel-SkyTravel-screenshot.jpg width=99%>
+<BR>
 
 <HR>
 <H3>AAVSO Target Tool</H3>
@@ -18,69 +37,19 @@ the form of additional observations, many of which can be accomplished by amateu
 <P>
 In order to use the target tool, you must create an account.
 
-
+<CENTER>
+<IMG SRC=images/SkyTravel-SkyTravel-aavso1.jpg width=99%>
+<BR>
+The yellow text objects are the alerts from the target tool
+<P>
+<IMG SRC=images/SkyTravel-SkyTravel-aavso2.jpg width=99%>
+<BR>
+When zoomed in, the alert number appears as well.
+</CENTER>
 <UL>
 	<LI><A HREF="https://filtergraph.com/aavso/default/" TARGET=AAVSO">AAVSO Target Tool</A>
 
 	<LI><A HREF="https://filtergraph.com/aavso/api" TARGET=AAVSO">AAVSO Target Tool API</A>
 </UL>
 
-<HR>
-<PRE>
-###############################################################################
-#	Target Tool script
-#	This script will download the latest list of AAVSO alerts via the TargetTool
-###############################################################################
-
-clear
-
-###############################################################################
-#	Place your TargetTool key string in a file called "aavso_targettool_token.txt"
-#	Make sure it does NOT have a trailing CR/LF in the file
-TARGETTOOL_KEY=`cat aavso_targettool_token.txt`
-API_KEY="$TARGETTOOL_KEY:api_token"
-echo $API_KEY
-# it is important to have the -n (no NewLine) for the base64 operation
-BASE64=`echo -n $API_KEY | base64`
-AUTH_STRING="Basic $BASE64"
-echo $BASE64
-echo $AUTH_STRING
-
-
-###############################################################################
-function Request
-{
-	URL=$1
-
-	echo "#Getting $URL"
-	echo -n "#Data retrieved at:"
-	date
-	# add "-D headers.txt"  to save the received headers
-	curl -X GET "$URL" 							\
-			-H "Authorization: $AUTH_STRING"	\
-			-H "accept: application/json"   	\
-
-
-	echo
-}
-
-###############################################################################
-echo
-
-OUTPUTFILE="alerts_json.txt"
-Request	"https://filtergraph.com/aavso/api/v1/nighttime"	| ./replaceCRLF	> $OUTPUTFILE
-Request	"https://filtergraph.com/aavso/api/v1/telescope"	| ./replaceCRLF	>> $OUTPUTFILE
-Request	"https://filtergraph.com/aavso/api/v1/targets"		| ./replaceCRLF	>> $OUTPUTFILE
-
-echo -n "Total lines in JSON response ="
-wc -l $OUTPUTFILE
-echo
-
-echo -n "Total target entries ="
-grep star_name $OUTPUTFILE | wc -l
-echo
-
-
-
-</PRE>
 <HR>
