@@ -15,6 +15,7 @@
 //*	Mar  4,	2021	<MLS> Added ReadHYGdata() & ParseOneLineHYGdata()
 //*	Mar  5,	2021	<MLS> Added ReadHenryDraperCatalog() & ParseOneLineHenryDraperData()
 //*	Mar  7,	2021	<MLS> Added ReadSpecialData()
+//*	Apr 17,	2021	<MLS> Jim H. Found bug in ReadHYGdata(), short name overflow
 //*****************************************************************************
 //*	Messier data
 //	https://starlust.org/messier-catalog/
@@ -699,15 +700,33 @@ int		ccc;
 				case 3:
 					if (argLen > 0)
 					{
-						starRec->id	=	atoi(argString);
-						strcpy(starRec->shortName, "HD");
-						strcat(starRec->shortName, argString);
+						if (argLen < (kShortNameMax - 2))
+						{
+							starRec->id	=	atoi(argString);
+							strcpy(starRec->shortName, "HD");
+							strcat(starRec->shortName, argString);
+						}
+						else
+						{
+							CONSOLE_DEBUG_W_STR("Name too long:", argString);
+						//	CONSOLE_ABORT(__FUNCTION__);
+						}
 					}
 					break;
 
 				//*		8. proper: A common name for the star, such as "Barnard's Star" or "Sirius". I have taken these names primarily from the Hipparcos project's web site, which lists representative names for the 150 brightest stars and many of the 150 closest stars. I have added a few names to this list. Most of the additions are designations from catalogs mostly now forgotten (e.g., Lalande, Groombridge, and Gould ["G."]) except for certain nearby stars which are still best known by these designations.
 				case 7:	//*	long name
-					strcpy(starRec->longName, argString);
+					if (argLen < kLongNameMax)
+					{
+						strcat(starRec->longName, argString);
+					}
+					else
+					{
+						CONSOLE_DEBUG_W_STR("Name too long", argString);
+						strncpy(starRec->longName, argString, (kLongNameMax -1));
+						starRec->longName[kLongNameMax -1]	=	0;
+						CONSOLE_ABORT(__FUNCTION__);
+					}
 					break;
 
 
@@ -749,10 +768,15 @@ int		ccc;
 			if (ccc < 60)
 			{
 				argString[ccc++]	=	theChar;
-				argString[ccc]	=	0;
+				argString[ccc]		=	0;
+			}
+			else
+			{
+				CONSOLE_DEBUG_W_STR("Arg string overflow", argString);
 			}
 		}
 	}
+
 	//*	now we have all the data parsed, put it into the record
 	raRadians	=	RADIANS(raDegrees * 15.0);
 	declRadians	=	RADIANS(declDegrees);
@@ -793,12 +817,14 @@ int				skippedCount;
 	filePointer	=	fopen(myFilePath, "r");
 	if (filePointer != NULL)
 	{
+		CONSOLE_DEBUG("File Opened OK");
 		specifiedLnCnt	=	119650;
-		bufferSize		=	specifiedLnCnt * sizeof(TYPE_CelestData);
+		bufferSize		=	(specifiedLnCnt + 2) * sizeof(TYPE_CelestData);
 		hygData			=	(TYPE_CelestData *)malloc(bufferSize);
 
 		if (hygData != NULL)
 		{
+			CONSOLE_DEBUG("Memory allocated OK");
 			memset(hygData, 0, bufferSize);
 			linesRead	=	0;
 			while (fgets(lineBuff, 2000, filePointer) && (recordCount < specifiedLnCnt))
@@ -819,11 +845,18 @@ int				skippedCount;
 					if (hygData[recordCount].id > 0)
 					{
 						recordCount++;
+
+					//	if ((recordCount % 5000) == 0)
+					//	{
+					//		CONSOLE_DEBUG_W_NUM("HYG records read\t=", recordCount);
+					//	}
 					}
 					else
 					{
 						skippedCount++;
 					}
+
+
 				}
 			}
 
@@ -835,8 +868,9 @@ int				skippedCount;
 	{
 		CONSOLE_DEBUG_W_STR("Failed to read:", myFilePath);
 	}
-	CONSOLE_DEBUG_W_NUM("HGC records read\t=", recordCount);
+	CONSOLE_DEBUG_W_NUM("HYG records read\t=", recordCount);
 	CONSOLE_DEBUG_W_NUM("skippedCount\t=", skippedCount);
+	CONSOLE_DEBUG_W_NUM("Total lines \t=", (recordCount + skippedCount));
 //	CONSOLE_ABORT(__FUNCTION__);
 	return(hygData);
 }

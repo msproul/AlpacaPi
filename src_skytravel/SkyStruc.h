@@ -6,6 +6,7 @@
 //*	Edit History
 //*****************************************************************************
 //*	Dec 31,	2020	<MLS> had to change char to int8_t to keep Raspberry-Pi g++ compiler happy
+//*	Apr 17,	2021	<MLS> Increased short name length from 8 to 12
 //*****************************************************************************
 //#include	"SkyStruc.h"
 
@@ -72,7 +73,7 @@ enum
 	kDataSrc_last
 };
 
-#define	kShortNameMax	8
+#define	kShortNameMax	12
 #define	kLongNameMax	32
 
 //*****************************************************************************

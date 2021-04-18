@@ -16,6 +16,8 @@ FILE_SEP_NAME="xxxxxxxxxxxxxxx"
 
 LOGFILENAME="AlpacaPi_buildlog.txt"
 
+mkdir -p Objectfiles
+
 rm $LOGFILENAME
 
 touch $FILE_SEP_NAME

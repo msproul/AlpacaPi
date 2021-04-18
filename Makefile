@@ -325,11 +325,9 @@ alpacapi		:	$(CPP_OBJECTS)				\
 					$(LIVE_WINDOW_OBJECTS)		\
 					$(OPENCV_LINK)				\
 					-L$(ATIK_LIB_DIR)/			\
-					-L$(TOUP_LIB_DIR)/			\
 					$(ASI_CAMERA_OBJECTS)		\
 					$(ZWO_EFW_OBJECTS)			\
 					-latikcameras				\
-					-ltoupcam					\
 					-ludev						\
 					-lusb-1.0					\
 					-lpthread					\
