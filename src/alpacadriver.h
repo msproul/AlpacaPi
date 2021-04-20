@@ -169,7 +169,8 @@ enum DeviceConnectionType
 {
 	kDevCon_Ethernet,
 	kDevCon_USB,
-	kDevCon_Serial
+	kDevCon_Serial,
+	kDevCon_Custom
 
 };
 

@@ -171,13 +171,16 @@ class TelescopeDriver: public AlpacaDriver
 
 		//--------------------------------------------------------------------------------------------------
 		//*	extras added by MLS
-		TYPE_ASCOM_STATUS	Get_Readall(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
+		TYPE_ASCOM_STATUS	Get_Readall(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 
 
 		//--------------------------------------------------------------------------------------------------
 		//*	these routines should be implemented by the sub-classes
 		//*	all have to return an Alpaca Error code
-		virtual	TYPE_ASCOM_STATUS	Telescope_AbortSlew(char *alpacaErrMsg);
+
+		//*!!!!!!!!!!!!!! NOTE !!!!!!!!!!!!!!!!!!!
+		//*	There are a lot more to be added here
+		virtual	TYPE_ASCOM_STATUS	Telescope_AbortSlew(	char *alpacaErrMsg);
 		virtual	TYPE_ASCOM_STATUS	Telescope_MoveAxis(		const int axisNum,
 															const double moveRate_degPerSec,
 															char *alpacaErrMsg);

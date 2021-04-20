@@ -61,6 +61,7 @@
 
 #include	"alpacadriver.h"
 #include	"alpacadriver_helper.h"
+#include	"helper_functions.h"
 #include	"JsonResponse.h"
 #include	"sidereal.h"
 

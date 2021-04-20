@@ -3056,8 +3056,10 @@ double			freeDiskSpace_Gigs;
 	StartExtraListenThread(4520);
 #endif
 
+#ifdef _ENABLE_CAMERA_
 	cameraCnt	=	CountDevicesByType(kDeviceType_Camera);
 	CONSOLE_DEBUG_W_NUM("cameraCnt=", cameraCnt);
+#endif
 
 #if defined(_ENABLE_CAMERA_) && defined(_ENABLE_FITS_) && defined(_ENABLE_DISCOVERY_QUERRY_)
 	//*	for now, we dont need this on all devices

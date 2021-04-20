@@ -516,13 +516,13 @@ char			fileName[]	=	"observatorysettings.txt";
 	//	CONSOLE_ABORT(__FUNCTION__);
 	}
 #ifndef __arm__
-	CONSOLE_DEBUG(__FUNCTION__);
-	ii	=	0;
-	while ((strlen(gObseratorySettings.TS_info[ii].refID) > 0) && (ii < kMaxTelescopes))
-	{
-		printf("%2d\t%s\r\n",	(ii+1), gObseratorySettings.TS_info[ii].refID);
-		ii++;
-	}
+//	CONSOLE_DEBUG(__FUNCTION__);
+//	ii	=	0;
+//	while ((strlen(gObseratorySettings.TS_info[ii].refID) > 0) && (ii < kMaxTelescopes))
+//	{
+//		printf("%2d\t%s\r\n",	(ii+1), gObseratorySettings.TS_info[ii].refID);
+//		ii++;
+//	}
 #endif
 //	CONSOLE_DEBUG_W_STR("Observer\t\t=",		gObseratorySettings.Observer);
 //	CONSOLE_DEBUG_W_STR("AAVSO_ObserverID\t=",	gObseratorySettings.AAVSO_ObserverID);

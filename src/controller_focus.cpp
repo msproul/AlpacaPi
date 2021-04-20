@@ -27,7 +27,7 @@
 //*	Apr 26,	2020	<MLS> Added ReadNiteCrawlerColors()
 //*	Apr 26,	2020	<MLS> Added UpdateWindowTabs_SwitchState()
 //*	May  8,	2020	<MLS> Added UpdateWindowTabs_DesiredAuxPos()
-//*	Jun 19,	2020	<MLS> USB port now get closed by destructor
+//*	Jun 19,	2020	<MLS> USB port now gets closed by destructor
 //*	Dec 28,	2020	<MLS> Added ZeroMotorValues()
 //*	Jan 26,	2021	<MLS> Updated several routine names
 //*****************************************************************************

@@ -33,6 +33,7 @@
 #++	Jan 13,	2021	<MLS> Added build commands for touptech cameras
 #++	Mar 18,	2021	<MLS> Updating Makefile to use AtikCamerasSDK_2020_10_19
 #++	Mar 18,	2021	<MLS> Updating QHY camera support
+#++	Apr 20,	2021	<MLS> Added _ENABLE_TELESCOPE_RIGEL_
 ######################################################################################
 
 #PLATFORM			=	x86
@@ -197,6 +198,7 @@ CPP_OBJECTS=												\
 				$(OBJECT_DIR)telescopedriver.o				\
 				$(OBJECT_DIR)telescopedriver_comm.o			\
 				$(OBJECT_DIR)telescopedriver_lx200.o		\
+				$(OBJECT_DIR)telescopedriver_Rigel.o		\
 				$(OBJECT_DIR)telescopedriver_skywatch.o		\
 				$(OBJECT_DIR)cpu_stats.o					\
 				$(OBJECT_DIR)lx200_com.o					\
@@ -457,6 +459,27 @@ eq6		:			$(CPP_OBJECTS)				\
 					-lusb-1.0					\
 					-lpthread					\
 					-o alpacapi-eq6
+
+
+######################################################################################
+#pragma mark make rigel
+rigel		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
+rigel		:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
+rigel		:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_RIGEL_
+rigel		:		$(CPP_OBJECTS)				\
+					$(ALPACA_OBJECTS)			\
+					$(SOCKET_OBJECTS)			\
+
+
+		$(LINK)  								\
+					$(SOCKET_OBJECTS)			\
+					$(CPP_OBJECTS)				\
+					$(ALPACA_OBJECTS)			\
+					$(OPENCV_LINK)				\
+					-ludev						\
+					-lusb-1.0					\
+					-lpthread					\
+					-o alpacapi-rigel
 
 ######################################################################################
 #pragma mark make toup
@@ -2079,6 +2102,14 @@ $(OBJECT_DIR)telescopedriver_lx200.o :	$(SRC_DIR)telescopedriver_lx200.cpp	\
 										Makefile
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)telescopedriver_lx200.cpp -o$(OBJECT_DIR)telescopedriver_lx200.o
 
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)telescopedriver_Rigel.o :	$(SRC_DIR)telescopedriver_Rigel.cpp	\
+										$(SRC_DIR)telescopedriver_Rigel.h	\
+										$(SRC_DIR)telescopedriver_comm.h	\
+										$(SRC_DIR)telescopedriver.h			\
+										$(SRC_DIR)alpacadriver.h
+	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)telescopedriver_Rigel.cpp -o$(OBJECT_DIR)telescopedriver_Rigel.o
 
 
 #-------------------------------------------------------------------------------------

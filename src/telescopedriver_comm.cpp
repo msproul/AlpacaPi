@@ -62,8 +62,9 @@
 
 #include	"telescopedriver.h"
 #include	"telescopedriver_comm.h"
-#include	"telescopedriver_skywatch.h"
 #include	"telescopedriver_lx200.h"
+#include	"telescopedriver_Rigel.h"
+#include	"telescopedriver_skywatch.h"
 
 static void	*Telescope_Comm_Thread(void *arg);
 
@@ -77,6 +78,12 @@ void	CreateTelescopeObjects(void)
 #ifdef _ENABLE_TELESCOPE_SKYWATCH_
 	new TelescopeDriverSkyWatch(kDevCon_Serial, "/dev/ttyS0");
 #endif
+
+#ifdef _ENABLE_TELESCOPE_RIGEL_
+//	new TelescopeDriverRigel(kDevCon_Custom, "");
+	new TelescopeDriverRigel();
+#endif
+
 }
 
 //**************************************************************************************

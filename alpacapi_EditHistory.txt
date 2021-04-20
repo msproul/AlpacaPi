@@ -1,4 +1,4 @@
-History Comments found =1293 in 250 files
+History Comments found =1297 in 252 files
 eph.c:10                 	//*	May  2,	1996	<MLS> (Mark Sproul) Starting on Sky Travel for Frank and Cliff
 StarData.c:7             	//*	May  2,	1996	<MLS> (Mark Sproul) Starting on Sky Travel for Frank and Cliff
 StarData.c:8             	//*	Nov 18,	1999	<MLS> restarting efforts
@@ -73,7 +73,7 @@ cameradriver_ASI.cpp:42  	//*	May  2,	2019	<MLS> Added alpacaErrMsg to all opera
 alpacadriver.cpp:54      	//*	May  6,	2019	<MLS> Added threads
 alpacadriver.cpp:55      	//*	May  6,	2019	<MLS> Added _ENABLE_OBSERVINGCONDITIONS_
 alpacadriver.cpp:56      	//*	May  6,	2019	<MLS> Added _ENABLE_SAFETYMONITOR_
-domedriver.cpp:28        	//*	May  6,	2019	<MLS> Working on uniform implementation7
+domedriver.cpp:28        	//*	May  6,	2019	<MLS> Working on uniform implementation
 domedriver.cpp:29        	//*	May  6,	2019	<MLS> Added Init_Dome() & Dome_RunStateMachine()
 alpacadriver.cpp:57      	//*	May  7,	2019	<MLS> Added observingconditions parsing
 Makefile:19              	#++	May  7,	2019	<MLS> Added smate build option
@@ -766,7 +766,7 @@ cameradriver.cpp:113     	//*	Jun 15,	2020	<MLS> Workingon Start/StopVideo()
 controller_ml_single.cpp:25	//*	Jun 15,	2020	<MLS> Got ML Hi-Res Stepper and Mini Controller V2 from Cloudy Nights
 widget.h:6               	//*	Jun 15,	2020	<MLS> Increased kMaxWidgets from 125 to 150
 cameradriver_ASI.cpp:76  	//*	Jun 16,	2020	<MLS> Added timestamp text (csv) file for video output
-controller_focus.cpp:30  	//*	Jun 19,	2020	<MLS> USB port now get closed by destructor
+controller_focus.cpp:30  	//*	Jun 19,	2020	<MLS> USB port now gets closed by destructor
 controller_ml_single.cpp:26	//*	Jun 19,	2020	<MLS> Tested with Mini Controller V2
 windowtab_ml_single.cpp:25	//*	Jun 19,	2020	<MLS> Finished HOME button operation
 cameradriver.cpp:119     	//*	Jun 20,	2020	<MLS> Added cFN_includeRefID to include the refID in the file name
@@ -1278,6 +1278,10 @@ cameradriver_FLIR.cpp:39 	//*	Apr 14,	2021	<MLS> Working on FLIR single frame mo
 cameradriver_FLIR.cpp:40 	//*	Apr 14,	2021	<MLS> Added _FLIR_SINGLE_FRAME_
 SkyStruc.h:9             	//*	Apr 17,	2021	<MLS> Increased short name length from 8 to 12
 StarData.c:18            	//*	Apr 17,	2021	<MLS> Jim H. Found bug in ReadHYGdata(), short name overflow
+Makefile:36              	#++	Apr 20,	2021	<MLS> Added _ENABLE_TELESCOPE_RIGEL_
+telescopedriver_Rigel.cpp:35	//*	Apr 20,	2021	<MLS> Created telescopedriver_Rigel.cpp
+telescopedriver_Rigel.cpp:36	//*	Apr 20,	2021	<MLS> Rigel version is being created form Jim H <JMH>
+telescopedriver_Rigel.h:18	//*	Apr 20,	2021	<MLS> Created telescopedriver_Rigel.h
 cameradriver.cpp:151     	//*	Jan  1,	2119	<TODO> ----------------------------------------
 cameradriver.cpp:152     	//*	Jun 26,	2119	<TODO> Add support for sub frames
 cameradriver_png.cpp:33  	//*	Jan 31,	2120	<TODO> Add support for libpng
@@ -1292,19 +1296,19 @@ controller_camera.cpp:59 	//*	Jan  1,	2121	<TODO> save cross hair location
 controller_camera.cpp:60 	//*	Jan  1,	2121	<TODO> finish exposure step options
 controller_camera.cpp:61 	//*	Jan  1,	2121	<TODO> clear error msg
 controller_camera.cpp:62 	//*	Feb  6,	2121	<TODO> Move downloading of images to a separate thread
-History Comments found   = 1293 in 250 files
-Total lines              = 124104
-Total comment Lines      = 15591 (12.6%)
-Total comments           = 18211 (14.7%)
-Total history comments   = 1293 (1.0%)
+History Comments found   = 1297 in 252 files
+Total lines              = 124429
+Total comment Lines      = 15677 (12.6%)
+Total comments           = 18298 (14.7%)
+Total history comments   = 1297 (1.0%)
 Total C files            = 34
-Total C++ files          = 92
-Total H files            = 123
-Preprocssor cnt          = 3676
-Total SLOC               = 83355
-Total SLOC-Logical       = 64850
+Total C++ files          = 93
+Total H files            = 124
+Preprocssor cnt          = 3705
+Total SLOC               = 83494
+Total SLOC-Logical       = 64963
 Programmer comment summary
-MLS             = 1269
+MLS             = 1273
 TODO            =   14
 DDB             =    1
 PDB             =    6

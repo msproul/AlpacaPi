@@ -57,8 +57,7 @@
 
 #include	"alpacadriver.h"
 #include	"alpacadriver_helper.h"
-//#include	"JsonResponse.h"
-//#include	"sidereal.h"
+#include	"helper_functions.h"
 
 #include	"lx200_com.h"
 

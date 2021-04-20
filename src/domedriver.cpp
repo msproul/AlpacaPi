@@ -25,7 +25,7 @@
 //*	Apr 12,	2019	<MLS> Created domedriver.c
 //*	Apr 12,	2019	<MLS> Started on Dome control
 //*	Apr 14,	2019	<MLS> Moved dome specific code to separate file
-//*	May  6,	2019	<MLS> Working on uniform implementation7
+//*	May  6,	2019	<MLS> Working on uniform implementation
 //*	May  6,	2019	<MLS> Added Init_Dome() & Dome_RunStateMachine()
 //*	May  9,	2019	<MLS> Added Dome_OutputHTML()
 //*	May 16,	2019	<MLS> WiringPi PWM working
