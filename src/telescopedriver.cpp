@@ -42,6 +42,9 @@
 //*	Jan 23,	2021	<MLS> Added Telescope_TrackingOnOff()
 //*	Jan 24,	2021	<MLS> Converted TelescopeDriver to use properties struct
 //*	Feb 15,	2021	<MLS> Added Telescope_MoveAxis()
+//*	Apr 20,	2021	<MLS> Added Telescope_FindHome(), Telescope_SetPark()
+//*	Apr 20,	2021	<MLS> Added Telescope_SlewToAltAz(), Telescope_UnPark()
+//*	Apr 21,	2021	<MLS> Finished stubbing out the routines need in the subclass
 //*****************************************************************************
 
 
@@ -59,6 +62,7 @@
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
 
+#include	"alpaca_defs.h"
 #include	"alpacadriver.h"
 #include	"alpacadriver_helper.h"
 #include	"helper_functions.h"
@@ -2359,11 +2363,11 @@ TYPE_ASCOM_STATUS	TelescopeDriver::Get_UTCdate(	TYPE_GetPutRequestData *reqData,
 {
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 char					timeStampString[128];
-struct timeval			currentTIme;
+struct timeval			currentTime;
 
-	gettimeofday(&currentTIme, NULL);
+	gettimeofday(&currentTime, NULL);
 
-	FormatTimeStringISO8601(&currentTIme, timeStampString);
+	FormatTimeStringISO8601(&currentTime, timeStampString);
 	JsonResponse_Add_String(reqData->socket,
 							reqData->jsonTextBuffer,
 							kMaxJsonBuffLen,
@@ -2377,10 +2381,32 @@ struct timeval			currentTIme;
 //*****************************************************************************
 TYPE_ASCOM_STATUS	TelescopeDriver::Put_UTCdate(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
 {
-TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
+TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
+bool					utcDateFound;
+char					utcDateString[64];
+int						axisNumber;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG(reqData->contentData);
+
+
+	utcDateFound	=	GetKeyWordArgument(	reqData->contentData,
+											"UTCDate",
+											utcDateString,
+											(sizeof(utcDateString) -1));
+	if (utcDateFound)
+	{
+		//*	we have to parse the ISO8601 time string
+
+
+
+		alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
+	}
+	else
+	{
+		alpacaErrCode	=	kASCOM_Err_InvalidValue;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "UTCDate is missing");
+	}
 
 	return(alpacaErrCode);
 }
@@ -2565,7 +2591,7 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 
 	if (cTelescopeProp.CanFindHome)
 	{
-		alpacaErrCode	=	kASCOM_Err_Success;
+		alpacaErrCode	=	Telescope_FindHome(alpacaErrMsg);
 	}
 	else
 	{
@@ -2733,7 +2759,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
 	if (cTelescopeProp.CanSetPark)
 	{
-		alpacaErrCode	=	kASCOM_Err_Success;
+		alpacaErrCode	=	Telescope_SetPark(alpacaErrMsg);
 	}
 	else
 	{
@@ -2771,17 +2797,42 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 TYPE_ASCOM_STATUS	TelescopeDriver::Put_SlewToAltAzAsync(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
-//bool				rightAscensionFound;
-//char				rightAscensionStr[64];
-//bool				declinationFound;
-//char				declinationStr[64];
+bool				azimuthFound;
+bool				altitudeFound;
+char				azimuthString[64];
+char				altitudeString[64];
+double				newAlt_degrees;
+double				newAz_degrees;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG(reqData->contentData);
 
 	if (cTelescopeProp.CanSlewAltAzAsync)
 	{
-		alpacaErrCode	=	kASCOM_Err_Success;
+		altitudeFound	=	GetKeyWordArgument(	reqData->contentData,
+												"Altitude",
+												altitudeString,
+												(sizeof(altitudeString) -1),
+												kArgumentIsNumeric);
+
+		azimuthFound	=	GetKeyWordArgument(	reqData->contentData,
+												"Azimuth",
+												azimuthString,
+												(sizeof(azimuthString) -1),
+												kArgumentIsNumeric);
+
+		if (altitudeFound && azimuthFound)
+		{
+			newAlt_degrees	=	atof(altitudeString);
+			newAz_degrees	=	atof(azimuthString);
+			alpacaErrCode	=	Telescope_SlewToAltAz(newAlt_degrees, newAz_degrees, alpacaErrMsg);
+		}
+		else
+		{
+			CONSOLE_DEBUG("Azimuth or Altitude not found in command string");
+			alpacaErrCode	=	kASCOM_Err_InvalidValue;
+		}
+
 	}
 	else
 	{
@@ -2789,7 +2840,6 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "cCanSlewAltAzAsync is false");
 //		CONSOLE_DEBUG(alpacaErrMsg);
 	}
-
 	return(alpacaErrCode);
 }
 
@@ -2919,6 +2969,7 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 		cTelescopeProp.AtPark	=	false;
 		CONSOLE_DEBUG_W_DBL("cTargetRightAscension\t=",	cTelescopeProp.TargetRightAscension);
 		CONSOLE_DEBUG_W_DBL("cTargetDeclination\t=",	cTelescopeProp.TargetDeclination);
+
 	}
 	else
 	{
@@ -3013,9 +3064,11 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 
 	if (cTelescopeProp.CanPark)
 	{
-		alpacaErrCode	=	kASCOM_Err_Success;
-
-		cTelescopeProp.AtPark			=	true;
+		alpacaErrCode	=	Telescope_Park(alpacaErrMsg);
+		if (alpacaErrCode == kASCOM_Err_Success)
+		{
+			cTelescopeProp.AtPark			=	true;
+		}
 	}
 	else
 	{
@@ -3148,6 +3201,12 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 	}
 	else if (cTelescopeProp.CanSync)
 	{
+		cTelescopeProp.RightAscension		=	cTelescopeProp.TargetRightAscension;
+		cTelescopeProp.Declination			=	cTelescopeProp.TargetDeclination;
+
+		cTelescopeProp.TargetDec_HasBeenSet	=	true;
+		cTelescopeProp.TargetRA_HasBeenSet	=	true;
+
 		alpacaErrCode	=	kASCOM_Err_Success;
 	}
 	else
@@ -3323,9 +3382,82 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 
 //*****************************************************************************
 //*	needs to be over-ridden
+TYPE_ASCOM_STATUS	TelescopeDriver::Telescope_FindHome(char *alpacaErrMsg)
+{
+TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
+
+	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
+	return(alpacaErrCode);
+}
+
+
+//*****************************************************************************
+//*	needs to be over-ridden
 TYPE_ASCOM_STATUS	TelescopeDriver::Telescope_MoveAxis(const int axisNum, const double moveRate_degPerSec, char *alpacaErrMsg)
 {
-	TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
+TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+	switch(axisNum)
+	{
+		case 0:
+			if (moveRate_degPerSec > 0)
+			{
+
+			}
+			else
+			{
+
+			}
+			cTelescopeProp.Slewing	=	true;
+			break;
+
+		case 1:
+			if (moveRate_degPerSec > 0)
+			{
+
+			}
+			else
+			{
+
+			}
+			cTelescopeProp.Slewing	=	true;
+			break;
+
+		default:
+			alpacaErrCode	=	kASCOM_Err_NotImplemented;
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
+			break;
+
+	}
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+//*	needs to be over-ridden
+TYPE_ASCOM_STATUS	TelescopeDriver::Telescope_Park(char *alpacaErrMsg)
+{
+TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
+
+	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+//*	needs to be over-ridden
+TYPE_ASCOM_STATUS	TelescopeDriver::Telescope_SetPark(char *alpacaErrMsg)
+{
+TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
+
+	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+//*	needs to be over-ridden
+TYPE_ASCOM_STATUS	TelescopeDriver::Telescope_SlewToAltAz(const double newAlt_Degrees, const double newAz_Degrees, char *alpacaErrMsg)
+{
+TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 
 	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
 	return(alpacaErrCode);
@@ -3340,6 +3472,7 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
 	return(alpacaErrCode);
 }
+
 
 //*****************************************************************************
 //*	needs to be over-ridden
@@ -3357,9 +3490,34 @@ TYPE_ASCOM_STATUS	TelescopeDriver::Telescope_TrackingOnOff(const bool newTrackin
 {
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 
-	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
+	CONSOLE_DEBUG(__FUNCTION__);
+
+	if (newTrackingState)
+	{
+
+		alpacaErrCode	=	kASCOM_Err_NotImplemented;
+	}
+	else
+	{
+		alpacaErrCode	=	kASCOM_Err_NotImplemented;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
+
+	}
 	return(alpacaErrCode);
 }
+
+
+//*****************************************************************************
+//*	needs to be over-ridden
+TYPE_ASCOM_STATUS	TelescopeDriver::Telescope_UnPark(char *alpacaErrMsg)
+{
+TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
+
+	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
+	return(alpacaErrCode);
+
+}
+
 
 
 #endif	//	_ENABLE_TELESCOPE_

@@ -59,8 +59,6 @@
 #include	"telescopedriver.h"
 #include	"telescopedriver_Rigel.h"
 
-
-
 //**************************************************************************************
 TelescopeDriverRigel::TelescopeDriverRigel(void)
 	:TelescopeDriver()
@@ -78,11 +76,9 @@ TelescopeDriverRigel::TelescopeDriverRigel(void)
 	cTelescopeProp.CanMoveAxis		=	false;
 	cTelescopeProp.CanUnpark		=	false;
 
-
 	AlpacaConnect();
 
 	CONSOLE_DEBUG_W_NUM("cTelescopeProp.CanUnpark\t=", cTelescopeProp.CanUnpark);
-
 }
 
 //**************************************************************************************
@@ -94,16 +90,23 @@ TelescopeDriverRigel::~TelescopeDriverRigel(void)
 	AlpacaDisConnect();
 }
 
-
 //*****************************************************************************
 TYPE_ASCOM_STATUS	TelescopeDriverRigel::Telescope_AbortSlew(char *alpacaErrMsg)
 {
-TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
-	CONSOLE_DEBUG(__FUNCTION__);
+TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 
-
+	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
 	return(alpacaErrCode);
 
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	TelescopeDriverRigel::Telescope_FindHome(char *alpacaErrMsg)
+{
+TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
+
+	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
+	return(alpacaErrCode);
 }
 
 //*****************************************************************************
@@ -148,35 +151,48 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
 }
 
 //*****************************************************************************
-TYPE_ASCOM_STATUS	TelescopeDriverRigel::Telescope_SlewToRA_DEC(	const double	newRtAscen_Hours,
-																	const double	newDeclination_Degrees,
-																	char *alpacaErrMsg)
+TYPE_ASCOM_STATUS	TelescopeDriverRigel::Telescope_Park(char *alpacaErrMsg)
 {
-TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
-bool				successFlg;
-char				timeString[32];
-char				commandString[48];
+TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 
-	CONSOLE_DEBUG(__FUNCTION__);
-	successFlg		=	false;
-
-
+	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
 	return(alpacaErrCode);
 }
 
 //*****************************************************************************
-//*****************************************************************************
-TYPE_ASCOM_STATUS	TelescopeDriverRigel::Telescope_SyncToRA_DEC(	const double	newRtAscen_Hours,
-																	const double	newDeclination_Degrees,
-																	char *alpacaErrMsg)
+TYPE_ASCOM_STATUS	TelescopeDriverRigel::Telescope_SetPark(char *alpacaErrMsg)
 {
-TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
-char				timeString[32];
-char				commandString[48];
+TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	TelescopeDriverRigel::Telescope_SlewToAltAz(const double newAlt_Degrees, const double newAz_Degrees, char *alpacaErrMsg)
+{
+TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
+
+	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	TelescopeDriverRigel::Telescope_SlewToRA_DEC(const double newRA, const double newDec, char *alpacaErrMsg)
+{
+TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
+
+	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
+	return(alpacaErrCode);
+}
 
 
+//*****************************************************************************
+TYPE_ASCOM_STATUS	TelescopeDriverRigel::Telescope_SyncToRA_DEC(const double newRA, const double newDec, char *alpacaErrMsg)
+{
+TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
+
+	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
 	return(alpacaErrCode);
 }
 
@@ -200,6 +216,17 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 	}
 	return(alpacaErrCode);
 }
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	TelescopeDriverRigel::Telescope_UnPark(char *alpacaErrMsg)
+{
+TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
+
+	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
+	return(alpacaErrCode);
+
+}
+
 
 
 

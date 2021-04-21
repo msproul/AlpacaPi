@@ -1,4 +1,4 @@
-History Comments found =1297 in 252 files
+History Comments found =1300 in 252 files
 eph.c:10                 	//*	May  2,	1996	<MLS> (Mark Sproul) Starting on Sky Travel for Frank and Cliff
 StarData.c:7             	//*	May  2,	1996	<MLS> (Mark Sproul) Starting on Sky Travel for Frank and Cliff
 StarData.c:8             	//*	Nov 18,	1999	<MLS> restarting efforts
@@ -1279,9 +1279,12 @@ cameradriver_FLIR.cpp:40 	//*	Apr 14,	2021	<MLS> Added _FLIR_SINGLE_FRAME_
 SkyStruc.h:9             	//*	Apr 17,	2021	<MLS> Increased short name length from 8 to 12
 StarData.c:18            	//*	Apr 17,	2021	<MLS> Jim H. Found bug in ReadHYGdata(), short name overflow
 Makefile:36              	#++	Apr 20,	2021	<MLS> Added _ENABLE_TELESCOPE_RIGEL_
+telescopedriver.cpp:45   	//*	Apr 20,	2021	<MLS> Added Telescope_FindHome(), Telescope_SetPark()
+telescopedriver.cpp:46   	//*	Apr 20,	2021	<MLS> Added Telescope_SlewToAltAz(), Telescope_UnPark()
 telescopedriver_Rigel.cpp:35	//*	Apr 20,	2021	<MLS> Created telescopedriver_Rigel.cpp
 telescopedriver_Rigel.cpp:36	//*	Apr 20,	2021	<MLS> Rigel version is being created form Jim H <JMH>
 telescopedriver_Rigel.h:18	//*	Apr 20,	2021	<MLS> Created telescopedriver_Rigel.h
+telescopedriver.cpp:47   	//*	Apr 21,	2021	<MLS> Finished stubbing out the routines need in the subclass
 cameradriver.cpp:151     	//*	Jan  1,	2119	<TODO> ----------------------------------------
 cameradriver.cpp:152     	//*	Jun 26,	2119	<TODO> Add support for sub frames
 cameradriver_png.cpp:33  	//*	Jan 31,	2120	<TODO> Add support for libpng
@@ -1296,19 +1299,19 @@ controller_camera.cpp:59 	//*	Jan  1,	2121	<TODO> save cross hair location
 controller_camera.cpp:60 	//*	Jan  1,	2121	<TODO> finish exposure step options
 controller_camera.cpp:61 	//*	Jan  1,	2121	<TODO> clear error msg
 controller_camera.cpp:62 	//*	Feb  6,	2121	<TODO> Move downloading of images to a separate thread
-History Comments found   = 1297 in 252 files
-Total lines              = 124429
-Total comment Lines      = 15677 (12.6%)
-Total comments           = 18298 (14.7%)
-Total history comments   = 1297 (1.0%)
+History Comments found   = 1300 in 252 files
+Total lines              = 124646
+Total comment Lines      = 15697 (12.6%)
+Total comments           = 18318 (14.7%)
+Total history comments   = 1300 (1.0%)
 Total C files            = 34
 Total C++ files          = 93
 Total H files            = 124
-Preprocssor cnt          = 3705
-Total SLOC               = 83494
-Total SLOC-Logical       = 64963
+Preprocssor cnt          = 3706
+Total SLOC               = 83628
+Total SLOC-Logical       = 65053
 Programmer comment summary
-MLS             = 1273
+MLS             = 1276
 TODO            =   14
 DDB             =    1
 PDB             =    6
