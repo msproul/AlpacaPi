@@ -5,7 +5,9 @@
 #include	"controller.h"
 
 #include	"windowtab_switch.h"
-#include	"windowtab_drvrInfo.h"
+#ifndef	_WINDOWTAB_DRIVER_INFO_H_
+	#include	"windowtab_drvrInfo.h"
+#endif
 
 #ifndef	_WINDOWTAB_ABOUT_H_
 	#include	"windowtab_about.h"

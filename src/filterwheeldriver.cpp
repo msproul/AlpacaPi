@@ -39,6 +39,7 @@
 //*	Apr  1,	2020	<MLS> CONFORM-filterwheel -> PASSED!!!!!!!!!!!!!!!!!!!!!
 //*	May 22,	2020	<MLS> Fixed JSON formating error in filter wheel names output
 //*	Mar 21,	2021	<MLS> Working on FilterWheel driver to prevent ZWO EFW from hanging
+//*	Apr 30,	2021	<MLS> Added "Filter #" if name not specified to names list
 //*****************************************************************************
 
 #ifdef _ENABLE_FILTERWHEEL_
@@ -374,13 +375,13 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 int					ii;
 int					mySocketFD;
 char				lineBuffer[256];
+char				filterNameBuff[32];
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	if (reqData != NULL)
 	{
 		mySocketFD	=	reqData->socket;
-
 
 		if (cNumberOfPositions > 0)
 		{
@@ -400,7 +401,16 @@ char				lineBuffer[256];
 			{
 				strcpy(lineBuffer, "\t\t\t\"");
 			//	strcat(lineBuffer, cFilterDef[ii].filterDesciption);
-				strcat(lineBuffer, cFilterWheelProp.Names[ii].FilterName);
+
+				if (strlen(cFilterWheelProp.Names[ii].FilterName) > 0)
+				{
+					strcat(lineBuffer, cFilterWheelProp.Names[ii].FilterName);
+				}
+				else
+				{
+					sprintf(filterNameBuff, "Filter %d", (ii + 1));
+					strcat(lineBuffer, filterNameBuff);
+				}
 
 				strcat(lineBuffer, "\"");
 				if (ii < (cNumberOfPositions - 1))

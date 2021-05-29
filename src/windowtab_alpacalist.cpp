@@ -20,6 +20,7 @@
 //*****************************************************************************
 //*	Jan 13,	2021	<MLS> Created windowtab_alpacalist.cpp
 //*	Jan 21,	2021	<MLS> Added sortable columns
+//*	May 26,	2021	<MLS> Added support for FilterWheel controller window
 //*****************************************************************************
 
 #include	<stdlib.h>
@@ -37,6 +38,7 @@
 #include	"controller_cam_normal.h"
 #include	"controller_covercalib.h"
 #include	"controller_dome.h"
+#include	"controller_filterwheel.h"
 #include	"controller_focus.h"
 #include	"controller_switch.h"
 #include	"controller_telescope.h"
@@ -310,6 +312,15 @@ bool	windowExists;
 				break;
 
 			case kDeviceType_Filterwheel:
+				windowExists	=	CheckForOpenWindowByName(windowName);
+				if (windowExists)
+				{
+					CONSOLE_DEBUG_W_STR("Window already open:", windowName);
+				}
+				else
+				{
+					new ControllerFilterWheel(windowName, &cRemoteDeviceList[deviceIdx]);
+				}
 				break;
 
 			case kDeviceType_Focuser:
@@ -502,6 +513,10 @@ int		myDevCount;
 
 				case kDeviceType_Dome:
 					SetWidgetTextColor(		boxId,	CV_RGB(255,	0,		255));		//*	magenta
+					break;
+
+				case kDeviceType_Filterwheel:
+					SetWidgetTextColor(		boxId,	CV_RGB(255,	127,	0));		//*	orage
 					break;
 
 				case kDeviceType_Focuser:

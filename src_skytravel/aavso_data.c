@@ -331,7 +331,7 @@ int					linesForCurrEntry;
 						}
 						else
 						{
-							CONSOLE_DEBUG("Too early");
+							CONSOLE_DEBUG_W_STR("Too early:", lineBuff);
 						}
 
 						linesForCurrEntry	=	0;

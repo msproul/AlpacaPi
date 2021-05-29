@@ -3278,7 +3278,7 @@ TYPE_ALPACA_CAMERASTATE	CameraDriver::Read_AlapcaCameraState(void)
 TYPE_ALPACA_CAMERASTATE	alpacaCameraState;
 TYPE_EXPOSURE_STATUS	internalCameraState;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 	//*	set a default value
 	alpacaCameraState	=	kALPACA_CameraState_Idle;
 
@@ -4403,7 +4403,11 @@ bool				newLiveModeState;
 
 			if (newLiveModeState)
 			{
-				cImageMode	=	kImageMode_Live;
+				CONSOLE_DEBUG("Setting live mode to true");
+				cImageMode		=	kImageMode_Live;
+			#ifdef _ENABLE_CTRL_IMAGE_
+				alpacaErrCode	=	OpenLiveWindow(alpacaErrMsg);
+			#endif
 			}
 			else
 			{
@@ -5015,6 +5019,8 @@ TYPE_ASCOM_STATUS		CameraDriver::Start_CameraExposure(void)
 {
 TYPE_ASCOM_STATUS		alpacaErrCode;
 
+	cCameraProp.ImageReady		=	false;
+	cSaveNextImage				=	true;
 	SetLastExposureInfo();
 	alpacaErrCode	=	Start_CameraExposure(cCurrentExposure_us);
 
@@ -5956,11 +5962,11 @@ int32_t		delayMicroSecs;
 			{
 				if (cDisplaySideBar)
 				{
-		//			DisplayLiveImage_wSideBar();
+					DisplayLiveImage_wSideBar();
 				}
 				else
 				{
-		//			DisplayLiveImage();
+					DisplayLiveImage();
 				}
 
 
@@ -6519,7 +6525,7 @@ int					exposureState;
 char				exposureStateString[32];
 char				textBuffer[128];
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 	if (cTempReadSupported)
 	{
 		alpacaErrCode	=	Read_SensorTemp();
@@ -6544,15 +6550,15 @@ char				textBuffer[128];
 	}
 
 
-	exposureState	=	Check_Exposure(true);
-	switch(exposureState)
-	{
-		case kExposure_Idle:	strcpy(exposureStateString,	"Idle");		break;
-		case kExposure_Working:	strcpy(exposureStateString,	"Working");		break;
-		case kExposure_Success:	strcpy(exposureStateString,	"Success");		break;
-		case kExposure_Failed:	strcpy(exposureStateString,	"Failed");		break;
-		default:				strcpy(exposureStateString,	"UNKNOWN");		break;
-	}
+//	exposureState	=	Check_Exposure(true);
+//	switch(exposureState)
+//	{
+//		case kExposure_Idle:	strcpy(exposureStateString,	"Idle");		break;
+//		case kExposure_Working:	strcpy(exposureStateString,	"Working");		break;
+//		case kExposure_Success:	strcpy(exposureStateString,	"Success");		break;
+//		case kExposure_Failed:	strcpy(exposureStateString,	"Failed");		break;
+//		default:				strcpy(exposureStateString,	"UNKNOWN");		break;
+//	}
 
 
 	if (reqData != NULL)

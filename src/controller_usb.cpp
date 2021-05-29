@@ -87,7 +87,7 @@ ControllerUSB::~ControllerUSB(void)
 void	ControllerUSB::SetupWindowControls(void)
 {
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 
 	SetTabCount(kTab_Count);
 	SetTabText(kTab_USB,		"USB");

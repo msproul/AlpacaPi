@@ -42,13 +42,6 @@
 //**************************************************************************************
 typedef struct
 {
-	char	filterName[16];
-} FILTERWHEEL;
-
-
-//**************************************************************************************
-typedef struct
-{
 	char	filename[128];
 	bool	validData;
 	bool	localCopy;
@@ -60,7 +53,6 @@ typedef struct
 
 #define	kMaxRemoteFileCnt		200
 #define	kMaxTemperatureValues	(450)
-#define	kMaxFilters				8
 
 //**************************************************************************************
 class ControllerCamera: public Controller
@@ -133,6 +125,7 @@ class ControllerCamera: public Controller
 				bool	AlpacaGetStatus(void);
 				bool	AlpacaGetFileList(void);
 				bool	AlpacaGetFilterWheelStartup(void);
+				bool	AlpacaGetFilterWheelStatus(void);
 		virtual	void	AlpacaDisplayErrorMessage(const char *errorMsgString);
 		virtual	void	UpdateSettings_Object(const char *filePrefix);
 				void	SetFileNameOptions(const int fnOptionBtn);
@@ -205,11 +198,10 @@ class ControllerCamera: public Controller
 
 				//==========================================================
 				//*	filter wheel information
-				bool					cHas_FilterWheel;
-				char					cFilterWheelName[32];
-				FILTERWHEEL				cFilterNames[kMaxFilters];
-				int						cFilterWheelPosition;
-
+				bool						cHas_FilterWheel;
+				char						cFilterWheelName[32];
+				int							cPositionCount;
+				TYPE_FilterWheelProperties	cFilterWheelProp;
 
 				TYPE_REMOTE_FILE		cRemoteFiles[kMaxRemoteFileCnt];
 

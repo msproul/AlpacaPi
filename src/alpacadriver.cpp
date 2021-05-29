@@ -207,6 +207,7 @@ char		gHostName[48]				=	"";
 #ifdef _ENABLE_FILTERWHEEL_
 	#include	"filterwheeldriver.h"
 	#include	"filterwheeldriver_ZWO.h"
+	#include	"filterwheeldriver_ATIK.h"
 #endif
 
 #ifdef _ENABLE_FOCUSER_
@@ -298,12 +299,15 @@ const TYPE_CmdEntry	gCommonCmdTable[]	=
 	{	"name",					kCmd_Common_name,				kCmdType_GET	},
 	{	"supportedactions",		kCmd_Common_supportedactions,	kCmdType_GET	},
 
+	//*	extras added by MLS
+	{	"livewindow",			kCmd_Common_LiveWindow,			kCmdType_PUT	},
+
+
 #ifdef _INCLUDE_EXIT_COMMAND_
 	//*	the exit command was implemented for a special case application, it is not intended
 	//*	to be used in the normal astronomy community
 	{	"exit",					kCmd_Common_exit,				kCmdType_GET	},
 #endif // _INCLUDE_EXIT_COMMAND_
-	{	"livewindow",			kCmd_Common_LiveWindow,			kCmdType_PUT	},
 
 	{	"",						-1,	0x00	}
 };
@@ -2989,8 +2993,11 @@ double			freeDiskSpace_Gigs;
 
 //*********************************************************
 //*	Filter wheel
-#ifdef _ENABLE_FILTERWHEEL_
+#ifdef _ENABLE_FILTERWHEEL_ZWO_
 	CreateZWOFilterWheelObjects();
+#endif
+#ifdef _ENABLE_FILTERWHEEL_ATIK_
+	CreateATIKFilterWheelObjects();
 #endif
 
 

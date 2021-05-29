@@ -19,6 +19,7 @@
 //*	Edit History
 //*****************************************************************************
 //*	Apr 23,	2020	<MLS> Created windowtab_usb.cpp
+//*	Apr 21,	2021	<MLS> Fixed bug in button setup
 //*****************************************************************************
 
 #ifdef _ENABLE_USB_FOCUSERS_
@@ -61,7 +62,7 @@ WindowTabUSB::WindowTabUSB(	const int	xSize,
 //**************************************************************************************
 WindowTabUSB::~WindowTabUSB(void)
 {
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 }
 
 //**************************************************************************************
@@ -93,7 +94,8 @@ int		iii;
 	//*	create the buttons for each USB focuser type
 	for (iii=kUSBselect_BtnNiteCrawler; iii<=kUSBselect_LastOption; iii++)
 	{
-		SetWidget(			iii,		15,			yLoc,		cWidth-30,		cTitleHeight);
+		SetWidget(			iii,	15,			yLoc,		cWidth-30,		cTitleHeight);
+		SetWidgetType(		iii,	kWidgetType_Button);
 		SetWidgetBGColor(	iii,	CV_RGB(255, 255, 255));
 
 		yLoc			+=	cTitleHeight;
@@ -117,6 +119,7 @@ void	WindowTabUSB::ProcessButtonClick(const int buttonIdx)
 ControllerUSB	*parentController;
 char			usbPath[45];
 
+	CONSOLE_DEBUG(__FUNCTION__);
 	switch(buttonIdx)
 	{
 		case kUSBselect_BtnNiteCrawler:

@@ -326,9 +326,11 @@ int					setOptRetCode;
 		}
 		else if (errno == ECONNREFUSED)
 		{
+		char	portString[32];
 
 			PrintIPaddressToString(deviceAddress->sin_addr.s_addr, ipString);
-			CONSOLE_DEBUG_W_STR("connect refused", ipString);
+			sprintf(portString, ":%d", port);
+			CONSOLE_DEBUG_W_2STR("connect refused", ipString, portString);
 		}
 		else
 		{

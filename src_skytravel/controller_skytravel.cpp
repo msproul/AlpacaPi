@@ -366,6 +366,7 @@ bool		foundSomething;
 		needToUpdate	=	true;
 	}
 
+	//*	something new was found, update windows
 	if (foundSomething || needToUpdate)
 	{
 		cAlpacaListObjPtr->UpdateRemoteDeviceList();
@@ -409,7 +410,7 @@ bool		foundSomething;
 		}
 		//----------------------------------------------------
 		//*	is the TELESCOPE IP address valid
-		if (cTelescopeAddressValid)
+		if (cTelescopeAddressValid && (deltaSeconds >= 2))
 		{
 			validData	=	AlpacaGetTelescopeStatus();
 			if (validData == false)

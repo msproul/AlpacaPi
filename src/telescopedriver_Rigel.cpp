@@ -33,7 +33,7 @@
 //*	<MLS>	=	Mark L Sproul
 //*****************************************************************************
 //*	Apr 20,	2021	<MLS> Created telescopedriver_Rigel.cpp
-//*	Apr 20,	2021	<MLS> Rigel version is being created form Jim H <JMH>
+//*	Apr 20,	2021	<MLS> Rigel version is being created for Jim H <JMH>
 //*****************************************************************************
 
 

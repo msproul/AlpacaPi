@@ -557,7 +557,7 @@ char	hostsFileName[]	=	"/etc/hosts";
 						{
 							//*	they match, update the unit entry
 							strcpy(gAlpacaUnitList[iii].hostName, hostName);
-							CONSOLE_DEBUG_W_STR("gAlpacaUnitList[iii].hostName\t=", gAlpacaUnitList[iii].hostName);
+//							CONSOLE_DEBUG_W_STR("gAlpacaUnitList[iii].hostName\t=", gAlpacaUnitList[iii].hostName);
 							break;
 						}
 					}

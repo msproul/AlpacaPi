@@ -860,6 +860,7 @@ bool	widgetIsButton;
 			break;
 
 		case CV_EVENT_RBUTTONDOWN:
+			cRightButtonDown	=	true;
 			CONSOLE_DEBUG("CV_EVENT_RBUTTONDOWN");
 			break;
 
@@ -940,6 +941,10 @@ bool	widgetIsButton;
 
 		case CV_EVENT_MBUTTONDBLCLK:
 			CONSOLE_DEBUG("CV_EVENT_MBUTTONDBLCLK");
+			break;
+
+		default:
+			CONSOLE_DEBUG("UNKNOWN EVENT");
 			break;
 	}
 

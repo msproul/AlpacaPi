@@ -41,7 +41,7 @@
 
 #define	kApplicationName	"AlpacaPi"
 #define	kVersionString		"V0.4.1-beta"
-#define	kBuildNumber		106
+#define	kBuildNumber		109
 
 
 #define kAlpacaDiscoveryPORT	32227
@@ -355,7 +355,7 @@ typedef struct
 typedef struct
 {
 	int				FocusOffsets[kMaxFiltersPerWheel];	//	Focus offset of each filter in the wheel
-	TYPE_FilterName	Names[kMaxFiltersPerWheel];		//	Name of each filter in the wheel
+	TYPE_FilterName	Names[kMaxFiltersPerWheel];			//	Name of each filter in the wheel
 	int				Position;							//	Sets or returns the current filter wheel position
 } TYPE_FilterWheelProperties;
 

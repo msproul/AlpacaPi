@@ -38,7 +38,7 @@
 //*	Mar 23,	2021	<MLS> Changed the way filter position is read, only read when changed
 //*****************************************************************************
 
-#ifdef _ENABLE_FILTERWHEEL_
+#ifdef _ENABLE_FILTERWHEEL_ZWO_
 
 #include	<stdlib.h>
 #include	<stdio.h>
@@ -436,4 +436,4 @@ static	void	GetEFW_ErrorMsgString(EFW_ERROR_CODE errorCode, char *errorMsg)
 }
 
 
-#endif // _ENABLE_FILTERWHEEL_
+#endif // _ENABLE_FILTERWHEEL_ZWO_

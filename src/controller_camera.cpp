@@ -152,10 +152,12 @@ int		iii;
 		memset(&cCameraProp.ReadOutModes[iii], 0, sizeof(READOUTMODE));
 	}
 
+	//*	clear the filter wheel properties
+	memset(&cFilterWheelProp, 0, sizeof(TYPE_FilterWheelProperties));
 	//*	clear list of filterwheel names
-	for (iii=0; iii<kMaxFilters; iii++)
+	for (iii=0; iii<kMaxFiltersPerWheel; iii++)
 	{
-		memset(&cFilterNames[iii], 0, sizeof(FILTERWHEEL));
+//-		memset(&cFilterNames[iii], 0, sizeof(FILTERWHEEL));
 	}
 
 	//*	clear list of remote files
@@ -703,70 +705,6 @@ void	ControllerCamera::AlpacaProcessSupportedActions(const char	*deviceTypeStr,
 	}
 }
 
-//*****************************************************************************
-//http://newt16:6800/api/v1/filterwheel/0/names
-//*****************************************************************************
-bool	ControllerCamera::AlpacaGetFilterWheelStartup(void)
-{
-SJP_Parser_t	jsonParser;
-bool			validData;
-char			alpacaString[128];
-int				jjj;
-int				filterWheelIdx;
-
-//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
-
-	//*	Start by getting info about the camera
-	//===============================================================
-	//*	get the filter wheel names
-	SJP_Init(&jsonParser);
-	sprintf(alpacaString,	"/api/v1/filterwheel/%d/names", cAlpacaDevNum);
-	validData	=	GetJsonResponse(	&cDeviceAddress,
-										cPort,
-										alpacaString,
-										NULL,
-										&jsonParser);
-	if (validData)
-	{
-		jjj	=	0;
-		while (jjj<jsonParser.tokenCount_Data)
-		{
-			if (strcasecmp(jsonParser.dataList[jjj].keyword, "DEVICE") == 0)
-			{
-				strcpy(cFilterWheelName,	"Filterwheel: ");
-				strcat(cFilterWheelName,	jsonParser.dataList[jjj].valueString);
-			}
-			if (strcasecmp(jsonParser.dataList[jjj].keyword, "ARRAY") == 0)
-			{
-
-				filterWheelIdx	=	0;
-				jjj++;
-				while ((jjj<jsonParser.tokenCount_Data) &&
-						(jsonParser.dataList[jjj].keyword[0] != ']'))
-				{
-					if (filterWheelIdx < kMaxFilters)
-					{
-						//*	save the filter name
-						strcpy(cFilterNames[filterWheelIdx].filterName, jsonParser.dataList[jjj].valueString);
-
-//						CONSOLE_DEBUG(cFilterNames[filterWheelIdx].filterName);
-						filterWheelIdx++;
-					}
-					jjj++;
-				}
-			}
-			jjj++;
-		}
-		UpdateFilterWheelInfo();
-	}
-	else
-	{
-		CONSOLE_DEBUG("Read failure - filterwheel");
-		cReadFailureCnt++;
-	}
-	return(validData);
-}
-
 
 
 //*****************************************************************************
@@ -1281,12 +1219,15 @@ bool	previousOnLineState;
 	//*	get the filter wheel position
 	if (cHas_FilterWheel)
 	{
+	#if 1
+		AlpacaGetFilterWheelStatus();
+	#else
 		validData	=	AlpacaGetIntegerValue("filterwheel", "position",	NULL,	&cFilterWheelPosition);
 		if (validData)
 		{
 //			CONSOLE_DEBUG_W_NUM("rcvd cFilterWheelPosition\t=", cFilterWheelPosition);
 			//*	alpaca/ascom uses filter wheel positions from 0 -> N-1
-			if ((cFilterWheelPosition >= 0) && (cFilterWheelPosition < kMaxFilters))
+			if ((cFilterWheelPosition >= 0) && (cFilterWheelPosition < kMaxFiltersPerWheel))
 			{
 				UpdateFilterWheelPosition();
 			}
@@ -1295,6 +1236,7 @@ bool	previousOnLineState;
 		{
 			CONSOLE_DEBUG("Failed to get filter wheel position");
 		}
+	#endif
 	}
 
 	cLastUpdate_milliSecs	=	millis();
@@ -1994,6 +1936,83 @@ int		iii;
 	}
 }
 
+//*****************************************************************************
+//*****************************************************************************
+//*****************************************************************************
+//*****************************************************************************
+#define	_USE_FW_COMMMON_
+#ifdef _USE_FW_COMMMON_
+
+#define	PARENT_CLASS	ControllerCamera
+
+#include "controller_fw_common.cpp"
+
+#else
+//*****************************************************************************
+//http://newt16:6800/api/v1/filterwheel/0/names
+//*****************************************************************************
+bool	ControllerCamera::AlpacaGetFilterWheelStartup(void)
+{
+SJP_Parser_t	jsonParser;
+bool			validData;
+char			alpacaString[128];
+int				jjj;
+int				filterWheelIdx;
+
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+
+	//*	Start by getting info about the camera
+	//===============================================================
+	//*	get the filter wheel names
+	SJP_Init(&jsonParser);
+	sprintf(alpacaString,	"/api/v1/filterwheel/%d/names", cAlpacaDevNum);
+	validData	=	GetJsonResponse(	&cDeviceAddress,
+										cPort,
+										alpacaString,
+										NULL,
+										&jsonParser);
+	if (validData)
+	{
+		jjj	=	0;
+		while (jjj<jsonParser.tokenCount_Data)
+		{
+			if (strcasecmp(jsonParser.dataList[jjj].keyword, "DEVICE") == 0)
+			{
+				strcpy(cFilterWheelName,	"Filterwheel: ");
+				strcat(cFilterWheelName,	jsonParser.dataList[jjj].valueString);
+			}
+			if (strcasecmp(jsonParser.dataList[jjj].keyword, "ARRAY") == 0)
+			{
+
+				filterWheelIdx	=	0;
+				jjj++;
+				while ((jjj<jsonParser.tokenCount_Data) &&
+						(jsonParser.dataList[jjj].keyword[0] != ']'))
+				{
+					if (filterWheelIdx < kMaxFiltersPerWheel)
+					{
+						//*	save the filter name
+						strcpy(cFilterNames[filterWheelIdx].filterName, jsonParser.dataList[jjj].valueString);
+
+//						CONSOLE_DEBUG(cFilterNames[filterWheelIdx].filterName);
+						filterWheelIdx++;
+					}
+					jjj++;
+				}
+			}
+			jjj++;
+		}
+		UpdateFilterWheelInfo();
+	}
+	else
+	{
+		CONSOLE_DEBUG("Read failure - filterwheel");
+		cReadFailureCnt++;
+	}
+	return(validData);
+}
+
+#endif // _USE_FW_COMMMON_
 
 
 #endif // _ENABLE_CTRL_CAMERA_

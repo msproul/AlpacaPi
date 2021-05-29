@@ -572,12 +572,12 @@ CvRect		myCVrect;
 //				CONSOLE_DEBUG("Calling ProcessORB_Image!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 				SETUP_TIMING();
 
-				keyPointCnt	=	ProcessORB_Image(cOpenCV_Image);
+				keyPointCnt	=	ProcessORB_Image(cOpenCV_Image, NULL);
 
 				DEBUG_TIMING("Time to complete ORB");
 
 				CONSOLE_DEBUG_W_NUM("keyPointCnt\t=", keyPointCnt);
-			#endif // _JETSON_
+			#endif // _ENABLE_STAR_SEARCH_
 				//*	lets try to display gray scale on a color screen
 				if ((cOpenCV_Image->nChannels == 1) && (cOpenCV_Image->depth == 8))
 				{
@@ -594,11 +594,11 @@ CvRect		myCVrect;
 						CONSOLE_DEBUG("Calling ProcessORB_Image!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 						SETUP_TIMING();
 
-						ProcessORB_Image(smallImg);
+						ProcessORB_Image(smallImg, NULL);
 
 						DEBUG_TIMING("Time to complete ORB");
 						CONSOLE_DEBUG_W_NUM("Image width\t=", smallImg->width);
-					#endif // _JETSON_
+					#endif // _ENABLE_STAR_SEARCH_
 
 						cvCvtColor(smallImg, cOpenCV_LiveDisplay, CV_GRAY2RGB);
 						cvReleaseImage(&smallImg);

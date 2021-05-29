@@ -54,6 +54,9 @@ TYPE_ASCOM_STATUS	CameraDriver::OpenLiveWindow(char *alpacaErrMsg)
 TYPE_ASCOM_STATUS	alpacaErrCode;
 char				myWindowName[80];
 
+	alpacaErrCode	=	kASCOM_Err_Success;
+
+#ifdef _ENABLE_CTRL_IMAGE_
 	CONSOLE_DEBUG(__FUNCTION__);
 
 	if (strlen(gHostName) > 0)
@@ -66,37 +69,12 @@ char				myWindowName[80];
 	{
 		strcpy(myWindowName,	cCommonProp.Name);
 	}
-
 	cLiveController	=	new ControllerImage(myWindowName, NULL);
 	alpacaErrCode	=	kASCOM_Err_Success;
 
-
+#endif
 	return(alpacaErrCode);
 }
-
-#if 0
-//*****************************************************************************
-TYPE_ASCOM_STATUS	CameraDriver::CloseLiveWindow(char *alpacaErrMsg)
-{
-TYPE_ASCOM_STATUS	alpacaErrCode;
-
-	CONSOLE_DEBUG(__FUNCTION__);
-
-	if (cLiveController != NULL)
-	{
-		delete cLiveController;
-		cLiveController	=	NULL;
-		alpacaErrCode	=	kASCOM_Err_Success;
-	}
-	else
-	{
-		alpacaErrCode	=	kASCOM_Err_InvalidOperation;
-
-		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "LiveWindow not open");
-	}
-	return(alpacaErrCode);
-}
-#endif // 0
 
 
 //*****************************************************************************
@@ -105,6 +83,7 @@ void	CameraDriver::UpdateLiveWindow(void)
 ControllerImage	*myImageController;
 double			exposure_Secs;
 
+#ifdef _ENABLE_CTRL_IMAGE_
 	CONSOLE_DEBUG(__FUNCTION__);
 
 	myImageController	=	(ControllerImage *)cLiveController;
@@ -115,23 +94,19 @@ double			exposure_Secs;
 			myImageController->UpdateLiveWindowImage(cOpenCV_Image, cFileNameRoot);
 			exposure_Secs	=	1.0 * cCurrentExposure_us / 1000000.0;
 
-	#ifdef _ENABLE_FILTERWHEEL_
 			myImageController->UpdateLiveWindowInfo(&cCameraProp,
 													cFramesRead,
 													exposure_Secs,
+							#ifdef _ENABLE_FILTERWHEEL_
 													cFilterWheelCurrName,
-													cObjectName
-													);
-	#else
-			myImageController->UpdateLiveWindowInfo(&cCameraProp,
-													cFramesRead,
-													exposure_Secs,
+							#else
 													NULL,
+							#endif // _ENABLE_FILTERWHEEL_
 													cObjectName
 													);
-	#endif // _ENABLE_FILTERWHEEL_
 		}
 	}
+#endif	//	_ENABLE_CTRL_IMAGE_
 }
 
 #endif // _ENABLE_CAMERA_

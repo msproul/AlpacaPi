@@ -208,7 +208,6 @@ bool		needToUpdate;
 }
 
 //*****************************************************************************
-//*	this should be over-ridden
 bool	ControllerCoverCalib::AlpacaGetStartupData(void)
 {
 bool			validData;

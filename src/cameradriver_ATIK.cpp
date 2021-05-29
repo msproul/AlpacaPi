@@ -47,6 +47,7 @@
 //*	Dec 25,	2019	<MLS> Atik Titan camera working on Raspberry-Pi 4
 //*	Feb 16,	2020	<MLS> Added Read_Gain() & Write_Gain()
 //*	Mar 13,	2020	<MLS> Finished Read_CoolerState() for ATIK
+//*	Apr 25,	2021	<MLS> Added check for camera devices (ArtemisDeviceIsCamera())
 //*****************************************************************************
 
 #if defined(_ENABLE_CAMERA_) && defined(_ENABLE_ATIK_)
@@ -93,11 +94,12 @@
 void	CreateATIK_CameraObjects(void)
 {
 int		devNum;
-int		atikCameraCount;
+int		atikDeviceCount;
 bool	rulesOK;
 char	driverVersionString[64];
 int		atikVersionNum;
 char	rulesFileName[]	=	"99-atik.rules";
+bool	deviceIsCamera;
 
 	atikVersionNum	=	ArtemisAPIVersion();
 	sprintf(driverVersionString, "%d", atikVersionNum);
@@ -122,11 +124,15 @@ char	rulesFileName[]	=	"99-atik.rules";
 					rulesFileName);
 	}
 
-	atikCameraCount	=	ArtemisDeviceCount();
-	CONSOLE_DEBUG_W_NUM("atikCameraCount\t=", atikCameraCount);
-	for (devNum=0; devNum < atikCameraCount; devNum++)
+	atikDeviceCount	=	ArtemisDeviceCount();
+	CONSOLE_DEBUG_W_NUM("atikDeviceCount\t=", atikDeviceCount);
+	for (devNum=0; devNum < atikDeviceCount; devNum++)
 	{
-		new CameraDriverATIK(devNum);
+		deviceIsCamera	=	ArtemisDeviceIsCamera(devNum);
+		if (deviceIsCamera)
+		{
+			new CameraDriverATIK(devNum);
+		}
 	}
 }
 

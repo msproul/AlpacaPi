@@ -567,12 +567,13 @@ int		connBtnWidth;
 			//*	now setup the "Connect" button
 			connBtnWidth	=	cWidth - cClm5_offset - 2;
 			SetWidget(				connectBtnBox,	cClm5_offset + 1,	yLoc,	connBtnWidth,		cBtnHeight);
+			SetWidgetType(			connectBtnBox,	kWidgetType_Button);
 			SetWidgetFont(			connectBtnBox,	kFont_Medium);
 			SetWidgetText(			connectBtnBox,	"Connect");
 
-			SetWidgetBGColor(		connectBtnBox,		CV_RGB(255, 255, 255));
-			SetWidgetBorderColor(	connectBtnBox,		CV_RGB(0, 0, 0));
-			SetWidgetTextColor(		connectBtnBox,		CV_RGB(0, 0, 0));
+			SetWidgetBGColor(		connectBtnBox,	CV_RGB(255, 255, 255));
+			SetWidgetBorderColor(	connectBtnBox,	CV_RGB(0, 0, 0));
+			SetWidgetTextColor(		connectBtnBox,	CV_RGB(0, 0, 0));
 		}
 		else
 		{

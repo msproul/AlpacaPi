@@ -10,6 +10,9 @@
 #define	_FOCUSER_MOONLITE_H_
 //#include	"focuserdriver_nc.h"
 
+#ifndef _ALPACA_DRIVER_H_
+	#include	"alpacadriver.h"
+#endif
 #ifndef	_FOCUSER_DRIVER_H_
 	#include	"focuserdriver.h"
 #endif

@@ -6,6 +6,9 @@
 #ifndef	_WINDOWTAB_SLIT_GRAPH_H_
 #define	_WINDOWTAB_SLIT_GRAPH_H_
 
+#ifndef _WINDOW_TAB_H_
+	#include	"windowtab.h"
+#endif
 
 //*****************************************************************************
 enum

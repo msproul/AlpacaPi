@@ -782,72 +782,95 @@ spinError			spinErr;
 	return(alpacaErrCode);
 }
 
+
+static int	gFLIRcheckInProgress	=	0;
+
 //*****************************************************************************
 TYPE_EXPOSURE_STATUS	CameraDriverFLIR::Check_Exposure(bool verboseFlag)
 {
 TYPE_EXPOSURE_STATUS	exposureState;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG("-------------------------------------------------------------");
+	CONSOLE_DEBUG(__FUNCTION__);
 //	exposureState	=	kExposure_Working;
 //	exposureState	=	kExposure_Idle;
 	exposureState	=	kExposure_Success;
 //	exposureState	=	kExposure_Failed;
 //	exposureState	=	kExposure_Unknown;
 
-#if 1
-//*	experimenting 1/28/2021
-spinError				spinErr;
-bool8_t					isIncomplete	=	false;
-
-	if (cSpinCameraHandle != NULL)
+	if (gFLIRcheckInProgress == 0)
 	{
-		cSpinImageHandle	=	NULL;
-		spinErr	=	spinCameraGetNextImage(cSpinCameraHandle, &cSpinImageHandle);
-		if (spinErr == SPINNAKER_ERR_SUCCESS)
-		{
-			if (cSpinImageHandle != NULL)
-			{
-				// *** NOTES ***
-				// Images can easily be checked for completion. This should be done
-				// whenever a complete image is expected or required. Further, check
-				// image status for a little more insight into why an image is
-				// incomplete.
-				//
+		gFLIRcheckInProgress++;
+	#if 0
+	//*	experimenting 1/28/2021
+	spinError				spinErr;
+	bool8_t					isIncomplete	=	false;
 
-				spinErr	=	spinImageIsIncomplete(cSpinImageHandle, &isIncomplete);
-				if (spinErr == SPINNAKER_ERR_SUCCESS)
+		if (cSpinCameraHandle != NULL)
+		{
+			CONSOLE_DEBUG("cSpinCameraHandle is OK");
+			cSpinImageHandle	=	NULL;
+			spinErr	=	spinCameraGetNextImage(cSpinCameraHandle, &cSpinImageHandle);
+			if (spinErr == SPINNAKER_ERR_SUCCESS)
+			{
+				CONSOLE_DEBUG("spinCameraGetNextImage returned SPINNAKER_ERR_SUCCESS");
+				if (cSpinImageHandle != NULL)
 				{
-					CONSOLE_DEBUG("spinImageIsIncomplete");
-					if (isIncomplete)
+					// *** NOTES ***
+					// Images can easily be checked for completion. This should be done
+					// whenever a complete image is expected or required. Further, check
+					// image status for a little more insight into why an image is
+					// incomplete.
+					//
+
+					spinErr	=	spinImageIsIncomplete(cSpinImageHandle, &isIncomplete);
+					if (spinErr == SPINNAKER_ERR_SUCCESS)
 					{
-						CONSOLE_DEBUG("kExposure_Working");
-						exposureState	=	kExposure_Working;
+						CONSOLE_DEBUG("spinImageIsIncomplete");
+						if (isIncomplete)
+						{
+							CONSOLE_DEBUG("kExposure_Working");
+							exposureState	=	kExposure_Working;
+						}
+						else
+						{
+							CONSOLE_DEBUG("isIncomplete == FALSE");
+							exposureState	=	kExposure_Success;
+						}
 					}
 					else
 					{
-
+						CONSOLE_DEBUG_W_NUM("Unable to determine image completion. Non-fatal error=", spinErr);
 					}
+
+					spinErr				=	spinImageRelease(cSpinImageHandle);
+					cSpinImageHandle	=	NULL;
 				}
 				else
 				{
 					CONSOLE_DEBUG_W_NUM("Unable to determine image completion. Non-fatal error=", spinErr);
 				}
-
-				spinErr				=	spinImageRelease(cSpinImageHandle);
-				cSpinImageHandle	=	NULL;
 			}
 			else
 			{
-				CONSOLE_DEBUG_W_NUM("Unable to determine image completion. Non-fatal error=", spinErr);
+				CONSOLE_DEBUG("Failed to get cSpinImageHandle");
 			}
 		}
 		else
 		{
-//			CONSOLE_DEBUG("Failed to get cSpinImageHandle");
+			CONSOLE_DEBUG("cSpinCameraHandle is NULL!!!!");
 		}
-	}
-#endif
+	#endif
 
+		gFLIRcheckInProgress--;
+	}
+	else
+	{
+		exposureState	=	kExposure_Working;
+		CONSOLE_DEBUG("Check_Exposure already in progress");
+//		CONSOLE_ABORT(__FUNCTION__);
+	}
+	CONSOLE_DEBUG("EXIT---EXIT---EXIT---EXIT---EXIT---EXIT---EXIT---EXIT---EXIT---");
 
 	return(exposureState);
 }

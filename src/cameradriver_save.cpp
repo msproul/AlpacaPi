@@ -63,6 +63,11 @@
 #include	"alpacadriver_helper.h"
 #include	"cameradriver.h"
 
+#ifdef _ENABLE_STAR_SEARCH_
+	//*	this is totally experimental and is not part of the normal release
+	#include	"imageprocess_orb.h"
+#endif
+
 //*****************************************************************************
 void	CameraDriver::SaveImageData(void)
 {
@@ -366,6 +371,13 @@ int			quality[3] = {16, 200, 0};
 			}
 		}
 	#endif	//	_ENABLE_PNG_
+	#ifdef _ENABLE_STAR_SEARCH_
+		long	keyPointCnt;
+		//*	this is an attempt at finding the locations of all of the stars in an image.
+
+		keyPointCnt	=	ProcessORB_Image(cOpenCV_Image, cFileNameRoot);
+
+	#endif // _ENABLE_STAR_SEARCH_
 	}
 	return(0);
 }

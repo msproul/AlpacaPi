@@ -521,19 +521,22 @@ int		buttonWidthGoto;
 
 	labelWidth	=	cTitleHeight * 4;
 	//------------------------------------------
-	SetWidget(			kSkyTravel_Data,		0,			yLoc,		labelWidth,		cTitleHeight);
-	SetWidgetText(		kSkyTravel_Data, 		"Data control");
-	SetWidgetFont(		kSkyTravel_Data,		kFont_Small);
+	SetWidget(			kSkyTravel_Data,	0,			yLoc,		labelWidth,		cTitleHeight);
+	SetWidgetText(		kSkyTravel_Data, 	"Data control");
+	SetWidgetFont(		kSkyTravel_Data,	kFont_Small);
 	SetWidgetBGColor(	kSkyTravel_Data,	CV_RGB(128,	128,	128));
+	SetWidgetTextColor(	kSkyTravel_Data,	CV_RGB(0,	0,	0));
+
 	yLoc			+=	cTitleHeight;
 	yLoc			+=	2;
 
 
 	//------------------------------------------
-	SetWidget(			kSkyTravel_Display,		0,			yLoc,		labelWidth,		cTitleHeight);
-	SetWidgetText(		kSkyTravel_Display, 	"Display control");
-	SetWidgetFont(		kSkyTravel_Display,		kFont_Small);
+	SetWidget(			kSkyTravel_Display,	0,			yLoc,		labelWidth,		cTitleHeight);
+	SetWidgetText(		kSkyTravel_Display, "Display control");
+	SetWidgetFont(		kSkyTravel_Display,	kFont_Small);
 	SetWidgetBGColor(	kSkyTravel_Display,	CV_RGB(128,	128,	128));
+	SetWidgetTextColor(	kSkyTravel_Display,	CV_RGB(0,	0,	0));
 	yLoc			+=	cTitleHeight;
 	yLoc			+=	2;
 
@@ -2223,7 +2226,7 @@ short		ii;
 	}
 
 	//*--------------------------------------------------------------------------------
-	if (cDispOptions.dispAAVSOalerts && (cAAVSOalertsPtr != NULL) && (cAAVSOalertsCnt > 0))
+	if (cDispOptions.dispAAVSOalerts &&  (cView_index < 9) && (cAAVSOalertsPtr != NULL) && (cAAVSOalertsCnt > 0))
 	{
 		PlotObjectsByDataSource(cAAVSOalertsPtr, cAAVSOalertsCnt);
 	}

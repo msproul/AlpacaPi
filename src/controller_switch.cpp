@@ -61,6 +61,7 @@
 
 #include	"controller.h"
 #include	"controller_switch.h"
+#include	"windowtab_drvrInfo.h"
 #include	"windowtab_switch.h"
 
 //**************************************************************************************

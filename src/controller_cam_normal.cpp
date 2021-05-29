@@ -346,7 +346,7 @@ void	ControllerCamNormal::UpdateCameraExposure(void)
 //*****************************************************************************
 void	ControllerCamNormal::UpdateCameraOffset(const TYPE_ASCOM_STATUS lastAlpacaErr)
 {
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 
 	if (lastAlpacaErr == kASCOM_Err_Success)
 	{
@@ -427,21 +427,53 @@ char			linebuff[128];
 		}
 	}
 }
+
 //*****************************************************************************
 void	ControllerCamNormal::UpdateCoolerState(void)
 {
 	SetWidgetChecked(kTab_Camera, kCameraBox_CoolerChkBox, cCameraProp.CoolerOn);
 
 }
+
 //*****************************************************************************
 void	ControllerCamNormal::UpdateFilterWheelInfo(void)
 {
 int		iii;
 int		fwTabNumber;
 
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 	SetWidgetText(	kTab_Camera,	kCameraBox_FilterWheelName,	cFilterWheelName);
-	for (iii=0; iii<kMaxFilters; iii++)
+	for (iii=0; iii<kMaxFiltersPerWheel; iii++)
 	{
+	#if 1
+		if (strlen(cFilterWheelProp.Names[iii].FilterName) > 0)
+		{
+			//*	set the text in the window widget
+			fwTabNumber	=	kCameraBox_FilterWheel1 + iii;
+			SetWidgetValid(	kTab_Camera, fwTabNumber, true);
+			SetWidgetText(	kTab_Camera,
+							fwTabNumber,
+							cFilterWheelProp.Names[iii].FilterName);
+
+			if (strncasecmp(cFilterWheelProp.Names[iii].FilterName, "RED", 3) == 0)
+			{
+				SetWidgetTextColor(kTab_Camera, fwTabNumber, CV_RGB(255,	0,	0));
+			}
+			else if (strncasecmp(cFilterWheelProp.Names[iii].FilterName, "GREEN", 5) == 0)
+			{
+				SetWidgetTextColor(kTab_Camera, fwTabNumber, CV_RGB(0,	255,	0));
+			}
+			else if (strncasecmp(cFilterWheelProp.Names[iii].FilterName, "BLUE", 4) == 0)
+			{
+				SetWidgetTextColor(kTab_Camera, fwTabNumber, CV_RGB(0,	0,	255));
+			}
+			SetWidgetText(	kTab_Camera,
+							fwTabNumber,
+							cFilterWheelProp.Names[iii].FilterName);
+
+		}
+	#else
+
 		if (strlen(cFilterNames[iii].filterName) > 0)
 		{
 			//*	set the text in the window widget
@@ -464,6 +496,7 @@ int		fwTabNumber;
 				SetWidgetTextColor(kTab_Camera, fwTabNumber, CV_RGB(0,	0,	255));
 			}
 		}
+	#endif // 1
 	}
 }
 
@@ -476,7 +509,7 @@ int		jjj;
 	{
 		SetWidgetChecked(kTab_Camera, jjj, false);
 	}
-	SetWidgetChecked(kTab_Camera, (kCameraBox_FilterWheel1 + cFilterWheelPosition), true);
+	SetWidgetChecked(kTab_Camera, (kCameraBox_FilterWheel1 + cFilterWheelProp.Position), true);
 }
 
 //*****************************************************************************
