@@ -75,6 +75,7 @@ enum
 	kCameraBox_FilterWheel6,
 	kCameraBox_FilterWheel7,
 	kCameraBox_FilterWheel8,
+//+	kCameraBox_FilterWheel9,
 
 	kCameraBox_FilterOffset1,
 	kCameraBox_FilterOffset2,
@@ -84,6 +85,7 @@ enum
 	kCameraBox_FilterOffset6,
 	kCameraBox_FilterOffset7,
 	kCameraBox_FilterOffset8,
+//+	kCameraBox_FilterOffset9,
 
 	kCameraBox_FilterWheelOutline,
 

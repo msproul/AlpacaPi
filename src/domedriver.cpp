@@ -70,6 +70,8 @@
 //*	Jan 27,	2021	<MLS> Added Added Put_PowerOn(), Put_PowerOff() & SetPower()
 //*	Jan 27,	2021	<MLS> Added Added Put_AuxiliaryOn(), Put_AuxiliaryOff() & SetAuxiliary
 //*	Feb 25,	2021	<MLS> Added remote shutter support to Put_AbortSlew()
+//*	Jun 15,	2021	<MLS> Added powerStatus and auxiliaryStatus commands
+//*	Jun 15,	2021	<MLS> Added Get_PowerStatus() & Get_AuxiliaryStatus()
 //*****************************************************************************
 //*	cd /home/pi/dev-mark/alpaca
 //*	LOGFILE=logfile.txt
@@ -180,9 +182,11 @@ enum
 
 	kCmd_Dome_poweron,			//*	Turn dome power on
 	kCmd_Dome_poweroff,			//*	Turn dome power off
+	kCmd_Dome_powerstatus,		//*	Return power status
 
 	kCmd_Dome_auxiliaryon,		//*	Turn auxiliary   on
 	kCmd_Dome_auxiliaryoff,		//*	Turn auxiliary off
+	kCmd_Dome_auxiliarystatus,	//*	Return auxiliary status
 
 
 	kCmd_Dome_goleft,			//*	Move the dome left (CCW)
@@ -241,9 +245,11 @@ static TYPE_CmdEntry	gDomeCmdTable[]	=
 
 	{	"poweron",			kCmd_Dome_poweron,			kCmdType_PUT	},
 	{	"poweroff",			kCmd_Dome_poweroff,			kCmdType_PUT	},
+	{	"powerstatus",		kCmd_Dome_powerstatus,		kCmdType_GET	},
 
 	{	"auxiliaryon",		kCmd_Dome_auxiliaryon,		kCmdType_PUT	},
 	{	"auxiliaryoff",		kCmd_Dome_auxiliaryoff,		kCmdType_PUT	},
+	{	"auxiliarystatus",  kCmd_Dome_auxiliarystatus,	kCmdType_GET	},
 
 
 #ifndef _ENABLE_ROR_
@@ -598,6 +604,10 @@ int					mySocket;
 			}
 			break;
 
+		case kCmd_Dome_powerstatus:
+			alpacaErrCode	=	Get_PowerStatus(reqData, alpacaErrMsg, gValueString);
+			break;
+
 		case kCmd_Dome_auxiliaryon:
 			if (reqData->get_putIndicator == 'P')
 			{
@@ -622,6 +632,9 @@ int					mySocket;
 			}
 			break;
 
+		case kCmd_Dome_auxiliarystatus:
+			alpacaErrCode	=	Get_AuxiliaryStatus(reqData, alpacaErrMsg, gValueString);
+			break;
 
 		case kCmd_Dome_goleft:
 			if (reqData->get_putIndicator == 'P')
@@ -1850,6 +1863,41 @@ TYPE_ASCOM_STATUS	alpacaErrCode;
 }
 
 //*****************************************************************************
+TYPE_ASCOM_STATUS	DomeDriver::Get_PowerStatus(TYPE_GetPutRequestData *reqData,
+												char					*alpacaErrMsg,
+												const char				*responseString)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
+bool				powerState;
+
+	if (reqData != NULL)
+	{
+		powerState		=	false;
+		alpacaErrCode	=	GetPower(&powerState);
+		JsonResponse_Add_String(	reqData->socket,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									responseString,
+									(powerState ? "ON" : "OFF"),
+									INCLUDE_COMMA);
+
+		if (alpacaErrCode == kASCOM_Err_PropertyNotImplemented)
+		{
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Property Not Implemented");
+		}
+		else if (alpacaErrCode != kASCOM_Err_Success)
+		{
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Power state unknown");
+		}
+	}
+	else
+	{
+		alpacaErrCode	=	kASCOM_Err_InternalError;
+	}
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
 TYPE_ASCOM_STATUS	DomeDriver::Put_AuxiliaryOn(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode;
@@ -1864,6 +1912,42 @@ TYPE_ASCOM_STATUS	DomeDriver::Put_AuxiliaryOff(TYPE_GetPutRequestData *reqData, 
 TYPE_ASCOM_STATUS	alpacaErrCode;
 
 	alpacaErrCode	=	SetAuxiliary(false);
+	return(alpacaErrCode);
+}
+
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	DomeDriver::Get_AuxiliaryStatus(TYPE_GetPutRequestData *reqData,
+												char					*alpacaErrMsg,
+												const char				*responseString)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
+bool				auxiliaryState;
+
+	if (reqData != NULL)
+	{
+		auxiliaryState	=	false;
+		alpacaErrCode	=	GetAuxiliary(&auxiliaryState);
+		JsonResponse_Add_String(	reqData->socket,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									responseString,
+									(auxiliaryState ? "ON" : "OFF"),
+									INCLUDE_COMMA);
+
+		if (alpacaErrCode == kASCOM_Err_PropertyNotImplemented)
+		{
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Property Not Implemented");
+		}
+		else if (alpacaErrCode != kASCOM_Err_Success)
+		{
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Auxiliary state unknown");
+		}
+	}
+	else
+	{
+		alpacaErrCode	=	kASCOM_Err_InternalError;
+	}
 	return(alpacaErrCode);
 }
 
@@ -1894,6 +1978,8 @@ char				stateString[48];
 		Get_Shutterstatus(	reqData,	alpacaErrMsg,	"shutterstatus");
 		Get_Slaved(			reqData,	alpacaErrMsg,	"slaved");
 		Get_Slewing(		reqData,	alpacaErrMsg,	"slewing");
+		Get_PowerStatus(	reqData,	alpacaErrMsg,	"powerstatus");
+		Get_AuxiliaryStatus(reqData,	alpacaErrMsg,	"auxiliarystatus");
 
 		JsonResponse_Add_Int32(	reqData->socket,
 								reqData->jsonTextBuffer,
@@ -1933,17 +2019,30 @@ char				stateString[48];
 //*****************************************************************************
 TYPE_ASCOM_STATUS	DomeDriver::SetPower(bool onOffFlag)
 {
-	//*	this meant to be over-ridden
+	//*	this routine is meant to be over-ridden
+	return(kASCOM_Err_MethodNotImplemented);
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	DomeDriver::GetPower(bool *onOffFlag)
+{
+	//*	this routine is meant to be over-ridden
 	return(kASCOM_Err_MethodNotImplemented);
 }
 
 //*****************************************************************************
 TYPE_ASCOM_STATUS	DomeDriver::SetAuxiliary(bool onOffFlag)
 {
-	//*	this meant to be over-ridden
+	//*	this routine is meant to be over-ridden
 	return(kASCOM_Err_MethodNotImplemented);
 }
 
+//*****************************************************************************
+TYPE_ASCOM_STATUS	DomeDriver::GetAuxiliary(bool *onOffFlag)
+{
+	//*	this routine is meant to be over-ridden
+	return(kASCOM_Err_MethodNotImplemented);
+}
 
 //*****************************************************************************
 //*	this can be over ridden

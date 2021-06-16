@@ -25,6 +25,7 @@ enum
 
 
 
+	kFilterWheel_LastCmdString,
 	kFilterWheel_AlpacaLogo,
 	kFilterWheel_AlpacaDrvrVersion,
 	kFilterWheel_IPaddr,
@@ -67,6 +68,7 @@ class WindowTabFilterWheel: public WindowTab
 				void	DrawFilterWheel(IplImage *openCV_Image, TYPE_WIDGET *theWidget);
 
 				int		cPositionCount;
+				CvPoint	cFilterCirleCenterPt[kMaxFiltersPerWheel];
 
 				TYPE_FilterWheelProperties	*cFilterWheelPropPtr;
 };

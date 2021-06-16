@@ -26,6 +26,8 @@
 
 #if defined(_ENABLE_CTRL_FILTERWHEEL_)
 
+#include	<math.h>
+
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
 
@@ -34,6 +36,7 @@
 #include	"controller.h"
 
 
+#define	kFilterCirleRadius	40
 
 
 //**************************************************************************************
@@ -43,10 +46,16 @@ WindowTabFilterWheel::WindowTabFilterWheel(	const int	xSize,
 								const char	*windowName)
 	:WindowTab(xSize, ySize, backGrndColor, windowName)
 {
+int		iii;
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	cFilterWheelPropPtr	=	NULL;
 	cPositionCount		=	0;
+	for (iii=0; iii<kMaxFiltersPerWheel; iii++)
+	{
+		cFilterCirleCenterPt[iii].x	=	-10;
+		cFilterCirleCenterPt[iii].y	=	-10;
+	}
 
 	SetupWindowControls();
 
@@ -103,7 +112,7 @@ int		yLoc;
 	yLoc			+=	2;
 
 
-	SetAlpacaLogo(kFilterWheel_AlpacaLogo, -1);
+	SetAlpacaLogo(kFilterWheel_AlpacaLogo, kFilterWheel_LastCmdString);
 
 	//=======================================================
 	//*	IP address
@@ -114,7 +123,6 @@ int		yLoc;
 //*****************************************************************************
 void	WindowTabFilterWheel::ProcessButtonClick(const int buttonIdx)
 {
-int	previousDispMode;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG_W_NUM("buttonIdx\t=", buttonIdx);
@@ -132,15 +140,56 @@ void	WindowTabFilterWheel::ProcessDoubleClick(	const int	widgetIdx,
 													const int	flags)
 {
 int		iii;
+int		deltaPixels_X;
+int		deltaPixels_Y;
+int		deltaPixels_Dist;
+int		clickedFilter;
+int		fwPosition;
+char	dataString[128];
+bool	validData;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	switch(widgetIdx)
 	{
 		case kFilterWheel_FilterCircle:
 			//*	see if we can figure out which filter was double clicked
-			CONSOLE_DEBUG("kFilterWheel_FilterCircle");
-			CONSOLE_DEBUG_W_NUM("xxx\t=",	xxx);
-			CONSOLE_DEBUG_W_NUM("yyy\t=",	yyy);
+			clickedFilter	=	-1;
+			for (iii=0; iii < cPositionCount; iii++)
+			{
+				deltaPixels_X		=	xxx - cFilterCirleCenterPt[iii].x;
+				deltaPixels_Y		=	yyy - cFilterCirleCenterPt[iii].y;
+				deltaPixels_Dist	=	sqrt((deltaPixels_X * deltaPixels_X) + (deltaPixels_Y * deltaPixels_Y));
+				if (deltaPixels_Dist <= kFilterCirleRadius)
+				{
+					//*	we have a valid clicked filter position
+					CONSOLE_DEBUG_W_NUM("Clicked filter\t=",	iii);
+					clickedFilter	=	iii;
+				}
+			}
+			if (clickedFilter >= 0)
+			{
+				//*	we have a winner. Send the command to change to that filter
+				fwPosition	=	clickedFilter + cFilterWheelPropPtr->Position;
+				CONSOLE_DEBUG_W_NUM("fwPosition\t=",	fwPosition);
+				if (fwPosition >= cPositionCount)
+				{
+					fwPosition	-=	cPositionCount;
+				}
+				CONSOLE_DEBUG_W_NUM("fwPosition\t=",	fwPosition);
+				sprintf(dataString, "Position=%d", fwPosition);
+				CONSOLE_DEBUG_W_STR("dataString\t=",	dataString);
+				validData	=	AlpacaSendPutCmd(	"filterwheel", "position",	dataString);
+				if (validData)
+				{
+					cFilterWheelPropPtr->IsMoving	=	true;
+					ForceUpdate();
+				}
+				else
+				{
+					CONSOLE_DEBUG("Error setting filter wheel position");
+				}
+				DisplayLastAlpacaCommand();
+			}
 			break;
 	}
 }
@@ -167,7 +216,6 @@ void	WindowTabFilterWheel::DrawFilterWheel(IplImage *openCV_Image, TYPE_WIDGET *
 CvRect			myCVrect;
 CvPoint			myCVcenter;
 int				radius1;
-int				radius2;
 double			degrees;
 double			radians;
 CvPoint			pt1;
@@ -213,32 +261,33 @@ int				myFilterOffset;
 				8,									//	int line_type CV_DEFAULT(8),
 				0);									//	int shift CV_DEFAULT(0));
 
-	//*	draw a small circle in the center with the current position number
+	if (cFilterWheelPropPtr != NULL)
+	{
+		if (cFilterWheelPropPtr->IsMoving)
+		{
+			strcpy(textString, "Moving");
+		}
+		else
+		{
+			strcpy(textString, "Double click to change filter");
+		}
+		cvGetTextSize(	textString,
+						&gTextFont[kFont_Medium],
+						&textSize,
+						&baseLine);
 
-	radius1		=	45;
-	cvCircle(	openCV_Image,
-				myCVcenter,
-				radius1,							//*	radius
-				theWidget->borderColor,
-				1,									//	int thickness CV_DEFAULT(1),
-				8,									//	int line_type CV_DEFAULT(8),
-				0);									//	int shift CV_DEFAULT(0));
-
-	sprintf(textString, "%d", cFilterWheelPropPtr->Position + 1);
-	cvGetTextSize(	textString,
+		pt1.x		=	myCVcenter.x;
+		pt1.y		=	myCVcenter.y;
+		pt1.x		-=	(textSize.width / 2);
+		textColor	=	CV_RGB(255, 255, 255);
+		cvPutText(	openCV_Image,
+					textString,
+					pt1,
 					&gTextFont[kFont_Medium],
-					&textSize,
-					&baseLine);
+					textColor
+					);
+	}
 
-	pt1.x		=	myCVcenter.x;
-	pt1.y		=	myCVcenter.y;
-	textColor	=	CV_RGB(255, 255, 255);
-	cvPutText(	openCV_Image,
-				textString,
-				pt1,
-				&gTextFont[kFont_Medium],
-				textColor
-				);
 
 	//*	do we have a valid count??
 	if (cPositionCount > 0)
@@ -246,15 +295,15 @@ int				myFilterOffset;
 		//*	now draw a circle for each filter
 		deltaDegrees	=	360.0 / cPositionCount;
 		radius1			=	(myCVrect.width / 2) - 45;
-		radius2			=	(myCVrect.width / 2) - 100;
-		for (filterPosition=0; filterPosition<cPositionCount; filterPosition++)
+		for (filterPosition=0; filterPosition < cPositionCount; filterPosition++)
 		{
 			//*	default text color
 			textColor		=	CV_RGB(255, 255, 255);
+			myFilterOffset	=	0;
 			if (cFilterWheelPropPtr != NULL)
 			{
-				//*	figure out the index into the array for the one we are currently drawing
 				myFilterOffset	=	filterPosition + cFilterWheelPropPtr->Position;
+				//*	figure out the index into the array for the one we are currently drawing
 				if (myFilterOffset >= cPositionCount)
 				{
 					//*	handle wrap around
@@ -277,6 +326,21 @@ int				myFilterOffset;
 				{
 					fillColor		=	CV_RGB(0, 0, 255);
 				}
+				//	So, Sii=R, Ha=G, Oiii=B.
+				else if ((strncasecmp(myFilterName, "Sii", 3) == 0) || (strncasecmp(myFilterName, "S2", 2) == 0))
+				{
+					fillColor		=	CV_RGB(255,85,85);
+				}
+				else if (strncasecmp(myFilterName, "Ha", 2) == 0)
+				{
+					fillColor		=	CV_RGB(151,253,151);
+					textColor		=	CV_RGB(0, 0, 0);
+				}
+				else if (strncasecmp(myFilterName, "Oiii", 4) == 0)
+				{
+					fillColor		=	CV_RGB(127,216,250);
+					textColor		=	CV_RGB(0, 0, 0);
+				}
 
 			}
 			else
@@ -289,9 +353,14 @@ int				myFilterOffset;
 			radians	=	degrees * M_PI / 180.0;
 			pt1.x	=	myCVcenter.x + (cos(radians) * radius1);
 			pt1.y	=	myCVcenter.y + (sin(radians) * radius1);
+
+			//*	save the center of the filter circle
+			//*	this is for the double click routine
+			cFilterCirleCenterPt[filterPosition]	=	pt1;
+
 			cvCircle(	openCV_Image,
 						pt1,
-						40,									//*	radius
+						kFilterCirleRadius,						//*	radius
 						fillColor,
 						CV_FILLED,							//	int thickness CV_DEFAULT(1),
 						8,									//	int line_type CV_DEFAULT(8),
@@ -299,7 +368,7 @@ int				myFilterOffset;
 
 			cvCircle(	openCV_Image,
 						pt1,
-						40,
+						kFilterCirleRadius,
 						theWidget->borderColor,
 						1,									//	int thickness CV_DEFAULT(1),
 						8,									//	int line_type CV_DEFAULT(8),

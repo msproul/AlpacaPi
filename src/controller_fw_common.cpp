@@ -109,21 +109,26 @@ bool	validData;
 bool	previousOnLineState;
 int		newFilterWheelPosition;
 
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 
 	previousOnLineState	=	cOnLine;
 
 	validData	=	AlpacaGetIntegerValue("filterwheel", "position",	NULL,	&newFilterWheelPosition);
 	if (validData)
 	{
-		CONSOLE_DEBUG_W_NUM("rcvd newFilterWheelPosition\t=", newFilterWheelPosition);
+//		CONSOLE_DEBUG_W_NUM("rcvd newFilterWheelPosition\t=", newFilterWheelPosition);
 
 		//*	alpaca/ascom uses filter wheel positions from 0 -> N-1
 		if ((newFilterWheelPosition >= 0) && (newFilterWheelPosition < kMaxFiltersPerWheel))
 		{
 			cFilterWheelProp.Position	=	newFilterWheelPosition;
-			UpdateFilterWheelPosition();
+			cFilterWheelProp.IsMoving	=	false;
 		}
+		else if (newFilterWheelPosition == -1)
+		{
+			cFilterWheelProp.IsMoving	=	true;
+		}
+		UpdateFilterWheelPosition();
 	}
 	else
 	{

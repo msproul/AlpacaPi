@@ -60,7 +60,9 @@ static const int	gRelayControlPinNumbers[]	=
 
 
 #if defined(__arm__)
-	#define	_ENABLE_WIRING_PI_
+	#ifndef _ENABLE_WIRING_PI_
+		#define	_ENABLE_WIRING_PI_
+	#endif
 	#include <wiringPi.h>
 #else
 	#define	LOW		0

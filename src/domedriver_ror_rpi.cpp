@@ -19,6 +19,7 @@
 //*	Jan 12,	2021	<MLS> Started working on implementation for Chris A.
 //*	Jan 12,	2021	<MLS> Relay board working for open/close ROR
 //*	Jan 12,	2021	<MLS> CONFORM-dome/ror -> PASSED!!!!!!!!!!!!!!!!!!!!!
+//*	Jun 15,	2021	<MLS> Added GetPower() & GetAuxiliary()
 //*****************************************************************************
 
 #ifdef _ENABLE_ROR_
@@ -193,6 +194,14 @@ bool				relayOK;
 }
 
 //*****************************************************************************
+TYPE_ASCOM_STATUS	DomeDriverROR::GetPower(bool *onOffFlag)
+{
+
+	*onOffFlag	=	RpiRelay_GetRelay(kRelay_RoofPower);
+	return(kASCOM_Err_Success);
+}
+
+//*****************************************************************************
 TYPE_ASCOM_STATUS	DomeDriverROR::SetAuxiliary(bool onOffFlag)
 {
 bool				relayOK;
@@ -205,6 +214,13 @@ bool				relayOK;
 	return(kASCOM_Err_Success);
 }
 
+//*****************************************************************************
+TYPE_ASCOM_STATUS	DomeDriverROR::GetAuxiliary(bool *onOffFlag)
+{
+
+	*onOffFlag	=	RpiRelay_GetRelay(kRelay_FlatScren);
+	return(kASCOM_Err_Success);
+}
 
 //*****************************************************************************
 TYPE_ASCOM_STATUS	DomeDriverROR::OpenShutter(char *alpacaErrMsg)

@@ -41,7 +41,7 @@
 
 #define	kApplicationName	"AlpacaPi"
 #define	kVersionString		"V0.4.1-beta"
-#define	kBuildNumber		109
+#define	kBuildNumber		110
 
 
 #define kAlpacaDiscoveryPORT	32227
@@ -357,6 +357,9 @@ typedef struct
 	int				FocusOffsets[kMaxFiltersPerWheel];	//	Focus offset of each filter in the wheel
 	TYPE_FilterName	Names[kMaxFiltersPerWheel];			//	Name of each filter in the wheel
 	int				Position;							//	Sets or returns the current filter wheel position
+
+	//*	this is NOT a standard ASCOM/ALPACA property
+	bool			IsMoving;
 } TYPE_FilterWheelProperties;
 
 //*****************************************************************************

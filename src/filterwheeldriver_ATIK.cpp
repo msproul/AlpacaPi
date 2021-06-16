@@ -380,8 +380,14 @@ bool				isMoving;
 		{
 			CONSOLE_DEBUG_W_NUM("currentPos    \t=",	currentPos);
 			CONSOLE_DEBUG_W_NUM("isMoving      \t=",	isMoving);
-
-			cFilterWheelProp.Position	=	currentPos;
+			if (isMoving)
+			{
+				cFilterWheelProp.Position	=	-1;
+			}
+			else
+			{
+				cFilterWheelProp.Position	=	currentPos;
+			}
 		}
 		else
 		{

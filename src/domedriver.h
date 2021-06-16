@@ -122,8 +122,12 @@ class DomeDriver: public AlpacaDriver
 				//*	extras added by MLS
 				TYPE_ASCOM_STATUS	Put_PowerOn(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 				TYPE_ASCOM_STATUS	Put_PowerOff(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
+				TYPE_ASCOM_STATUS	Get_PowerStatus(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+
+
 				TYPE_ASCOM_STATUS	Put_AuxiliaryOn(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 				TYPE_ASCOM_STATUS	Put_AuxiliaryOff(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
+				TYPE_ASCOM_STATUS	Get_AuxiliaryStatus(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
 
 				TYPE_ASCOM_STATUS	Put_BumpMove(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, int direction);
 				TYPE_ASCOM_STATUS	Put_NormalMove(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, int direction);
@@ -142,7 +146,9 @@ class DomeDriver: public AlpacaDriver
 		virtual	void 				ProcessButtonPressed(const int pressedButton);
 
 		virtual	TYPE_ASCOM_STATUS	SetPower(bool onOffFlag);
+		virtual	TYPE_ASCOM_STATUS	GetPower(bool *onOffFlag);
 		virtual	TYPE_ASCOM_STATUS	SetAuxiliary(bool onOffFlag);
+		virtual	TYPE_ASCOM_STATUS	GetAuxiliary(bool *onOffFla);
 		virtual	TYPE_ASCOM_STATUS 	OpenShutter(char *alpacaErrMsg);
 		virtual	TYPE_ASCOM_STATUS 	CloseShutter(char *alpacaErrMsg);
 

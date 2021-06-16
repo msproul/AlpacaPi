@@ -748,6 +748,8 @@ ror		:					$(ROR_OBJECTS)				\
 #pragma mark rorpi
 #rorpi		:	DEFINEFLAGS		+=	-D_ENABLE_DOME_
 rorpi		:	DEFINEFLAGS		+=	-D_ENABLE_ROR_
+rorpi		:	DEFINEFLAGS		+=	-D_ENABLE_WIRING_PI_
+rorpi		:	DEFINEFLAGS		+=	-D_INCLUDE_WIRINGPI_
 rorpi		:	DEFINEFLAGS		+=	-D_ENABLE_4REALY_BOARD
 rorpi		:				$(ROR_OBJECTS)				\
 							$(SOCKET_OBJECTS)			\

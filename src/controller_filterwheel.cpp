@@ -19,6 +19,8 @@
 //*	Edit History
 //*****************************************************************************
 //*	May 26,	2021	<MLS> Created controller_filterwheel.cpp
+//*	May 29,	2021	<MLS> FilterWheel controller working
+//*	May 29,	2021	<MLS> Double Click on a filter circle moves to that filter
 //*****************************************************************************
 
 
@@ -202,8 +204,6 @@ long	delteaMillSecs;
 bool	ControllerFilterWheel::AlpacaGetStartupData(void)
 {
 bool			validData;
-int				jjj;
-int				boxNumber;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 	//===============================================================
@@ -245,7 +245,7 @@ int				boxNumber;
 //*****************************************************************************
 void	ControllerFilterWheel::UpdateCommonProperties(void)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	SetWidgetText(	kTab_DriverInfo,	kDriverInfo_Name,				cCommonProp.Name);
 	SetWidgetText(	kTab_DriverInfo,	kDriverInfo_Description,		cCommonProp.Description);
 	SetWidgetText(	kTab_DriverInfo,	kDriverInfo_DriverInfo,			cCommonProp.DriverInfo);
@@ -258,7 +258,7 @@ void	ControllerFilterWheel::UpdateCommonProperties(void)
 void	ControllerFilterWheel::UpdateFilterWheelInfo(void)
 {
 
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 	SetWidgetText(	kTab_FilterWheel,	kFilterWheel_Name,	cFilterWheelName);
 	cUpdateWindow	=	true;
 }
@@ -267,7 +267,7 @@ void	ControllerFilterWheel::UpdateFilterWheelInfo(void)
 void	ControllerFilterWheel::UpdateFilterWheelPosition(void)
 {
 
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 //+	SetWidgetText(	kTab_Camera,	kCameraBox_FilterWheelName,	cFilterWheelName);
 	cUpdateWindow	=	true;
 }

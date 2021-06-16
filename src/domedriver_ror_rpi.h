@@ -57,7 +57,10 @@ class DomeDriverROR: public DomeDriver
 		virtual	void	StopDomeMoving(bool rightNow);
 
 		virtual	TYPE_ASCOM_STATUS	SetPower(bool onOffFlag);
+		virtual	TYPE_ASCOM_STATUS	GetPower(bool *onOffFlag);
 		virtual	TYPE_ASCOM_STATUS	SetAuxiliary(bool onOffFlag);
+		virtual	TYPE_ASCOM_STATUS	GetAuxiliary(bool *onOffFla);
+
 		virtual	TYPE_ASCOM_STATUS 	OpenShutter(char *alpacaErrMsg);
 		virtual	TYPE_ASCOM_STATUS 	CloseShutter(char *alpacaErrMsg);
 

@@ -1561,7 +1561,7 @@ int		ii;
 		SocketWriteData(mySocketFD,	"</TR>\r\n");
 
 #if defined(_INCLUDE_WIRINGPI_) && defined(__arm__) && defined(__WIRING_PI_H__)
-			//*	wiringPi version
+		//*	wiringPi version
 		int		wiringPi_verMajor;
 		int		wiringPi_verMinor;
 		char	wiringPi_VerString[32];
@@ -1574,6 +1574,8 @@ int		ii;
 			sprintf(lineBuffer,	"<TD>%s</TD>\r\n", wiringPi_VerString);
 			SocketWriteData(mySocketFD,	lineBuffer);
 		SocketWriteData(mySocketFD,	"</TR>\r\n");
+#elif defined(_INCLUDE_WIRINGPI_) || defined(__WIRING_PI_H__)
+	#error "Somethings wrong"
 #endif
 
 
