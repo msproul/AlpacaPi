@@ -40,9 +40,10 @@
 //*	May 22,	2020	<MLS> Fixed JSON formating error in filter wheel names output
 //*	Mar 21,	2021	<MLS> Working on FilterWheel driver to prevent ZWO EFW from hanging
 //*	Apr 30,	2021	<MLS> Added "Filter #" if name not specified to names list
+//*	Jun 15,	2021	<MLS> Fixed filterwheel ifdefs
 //*****************************************************************************
 
-#ifdef _ENABLE_FILTERWHEEL_
+#if defined(_ENABLE_FILTERWHEEL_) || defined(_ENABLE_FILTERWHEEL_ZWO_) || defined(_ENABLE_FILTERWHEEL_ATIK_)
 
 #include	<stdlib.h>
 #include	<stdio.h>

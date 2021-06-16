@@ -204,9 +204,13 @@ char		gHostName[48]				=	"";
 #endif
 
 
-#ifdef _ENABLE_FILTERWHEEL_
+#if defined(_ENABLE_FILTERWHEEL_) || defined(_ENABLE_FILTERWHEEL_ZWO_)
 	#include	"filterwheeldriver.h"
 	#include	"filterwheeldriver_ZWO.h"
+#endif
+
+#ifdef _ENABLE_FILTERWHEEL_ATIK_
+	#include	"filterwheeldriver.h"
 	#include	"filterwheeldriver_ATIK.h"
 #endif
 
@@ -1404,7 +1408,7 @@ int		ii;
 		SocketWriteData(mySocketFD,	"ROR support is enabled<BR>\r\n");
 	#endif
 
-	#ifdef	_ENABLE_FILTERWHEEL_
+#if defined(_ENABLE_FILTERWHEEL_) || defined(_ENABLE_FILTERWHEEL_ZWO_) || defined(_ENABLE_FILTERWHEEL_ATIK_)
 		SocketWriteData(mySocketFD,	"Filterwheel support is enabled<BR>\r\n");
 	#endif
 
