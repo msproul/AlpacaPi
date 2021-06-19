@@ -297,6 +297,8 @@ extern	bool			gLiveView;
 extern	bool			gAutoExposure;
 extern	bool			gDisplayImage;
 extern	bool			gVerbose;
+extern	bool			gDebugDiscovery;
+
 extern	const char		gValueString[];
 extern	bool			gImageDownloadInProgress;
 

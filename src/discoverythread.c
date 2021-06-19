@@ -1139,6 +1139,10 @@ uint32_t		ipAddress32;
 //			inet_ntop(AF_INET6, tmpAddrPtr, addressBuffer, INET6_ADDRSTRLEN);
 //			printf("%s IPV6 Address %s\n", ifa->ifa_name, addressBuffer);
 //		}
+//+		if (gDebugDiscovery)
+		{
+			CONSOLE_DEBUG("Stepping to Next ip addr");
+		}
 		ifa	=	ifa->ifa_next;
 	}
 	if (ifAddrStruct != NULL)

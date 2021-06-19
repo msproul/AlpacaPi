@@ -265,6 +265,7 @@ bool				gLiveView					=	false;
 bool				gAutoExposure				=	false;
 bool				gDisplayImage				=	false;
 bool				gVerbose					=	true;
+bool				gDebugDiscovery				=	true;
 const char			gValueString[]				=	"Value";
 char				gDefaultTelescopeRefID[kDefaultRefIdMaxLen]	=	"";
 char				gWebTitle[80]				=	"AlpacaPi";
@@ -3069,12 +3070,9 @@ double			freeDiskSpace_Gigs;
 	StartExtraListenThread(4520);
 #endif
 
-#ifdef _ENABLE_CAMERA_
+#if defined(_ENABLE_CAMERA_) && defined(_ENABLE_FITS_) && defined(_ENABLE_DISCOVERY_QUERRY_)
 	cameraCnt	=	CountDevicesByType(kDeviceType_Camera);
 	CONSOLE_DEBUG_W_NUM("cameraCnt=", cameraCnt);
-#endif
-
-#if defined(_ENABLE_CAMERA_) && defined(_ENABLE_FITS_) && defined(_ENABLE_DISCOVERY_QUERRY_)
 	//*	for now, we dont need this on all devices
 	if (cameraCnt > 0)
 	{

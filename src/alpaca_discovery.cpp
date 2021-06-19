@@ -48,7 +48,7 @@ int					rcvCnt;
 unsigned int		fromlen;
 int					sendtoRetCode;
 char				buf[kReceiveBufferSize + 1];
-char				ipAddressStr[INET_ADDRSTRLEN];
+char				ipAddressStr[INET_ADDRSTRLEN + 32];
 SJP_Parser_t		jsonParser;
 int					timeOutCntr;
 int					iii;
@@ -67,6 +67,10 @@ int					closeRetCode;
 								sizeof(struct sockaddr_in));
 	if (sendtoRetCode >= 0)
 	{
+		if (gDebugDiscovery)
+		{
+			CONSOLE_DEBUG("sendto OK");
+		}
 		timeOutCntr	=	0;
 		fromlen		=	sizeof(struct sockaddr_in);
 		while (timeOutCntr < 2)
@@ -83,9 +87,9 @@ int					closeRetCode;
 				ipPortNumber	=	-1;
 				for (iii=0; iii<jsonParser.tokenCount_Data; iii++)
 				{
-					if (strcmp(jsonParser.dataList[iii].keyword, "ALPACAPORT") == 0)
+					if (strcasecmp(jsonParser.dataList[iii].keyword, "ALPACAPORT") == 0)
 					{
-						ipPortNumber=	atoi(jsonParser.dataList[iii].valueString);
+						ipPortNumber	=	atoi(jsonParser.dataList[iii].valueString);
 					}
 				}
 				if (ipPortNumber > 0)
@@ -93,8 +97,20 @@ int					closeRetCode;
 					QueryConfiguredDevices(&fromAddress, ipPortNumber);
 				}
 
+				//*	debugging discovery protocol
+				if (gDebugDiscovery)
+				{
+					CONSOLE_DEBUG(__FUNCTION__);
+				}
+
 
 				inet_ntop(AF_INET, &(fromAddress.sin_addr), ipAddressStr, INET_ADDRSTRLEN);
+
+				if (gDebugDiscovery)
+				{
+					CONSOLE_DEBUG(ipAddressStr);
+				}
+
 
 //				write(1, buf, rcvCnt);
 //				write(1, " ", 1);
@@ -130,6 +146,10 @@ int					closeRetCode;
 
 	cDiscoveryThreadActive	=	false;
 
+	if (gDebugDiscovery)
+	{
+		CONSOLE_DEBUG_W_STR(__FUNCTION__, "Exit");
+	}
 }
 
 //**************************************************************************************

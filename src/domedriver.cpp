@@ -302,7 +302,7 @@ DomeDriver::DomeDriver(const int argDevNum)
 	cDomeState					=	kDomeState_Idle;
 	cPreviousDomeState			=	kDomeState_Idle;
 
-	strcpy(cCommonProp.Name,			"Dome");
+	strcpy(cCommonProp.Name,		"Dome");
 	strcpy(cCommonProp.Description,	"Dome");
 
 	Init_Hardware();
