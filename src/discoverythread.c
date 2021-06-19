@@ -1108,7 +1108,7 @@ void			*tmpAddrPtr		=	NULL;
 char			addressBuffer[INET_ADDRSTRLEN * 3];
 uint32_t		ipAddress32;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 
 	getifaddrs(&ifAddrStruct);
 
@@ -1122,11 +1122,11 @@ uint32_t		ipAddress32;
 			tmpAddrPtr	=	&((struct sockaddr_in *)ifa->ifa_addr)->sin_addr;
 
 			ipAddress32	=	ntohl(*((uint32_t *)tmpAddrPtr));
-//			CONSOLE_DEBUG_W_HEX("ipAddress32\t=", ipAddress32);
+			CONSOLE_DEBUG_W_HEX("ipAddress32\t=", ipAddress32);
 			if (ipAddress32 != 0x7f000001)
 			{
 				gMyIPaddress	=	ipAddress32;
-//				CONSOLE_DEBUG_W_HEX("gMyIPaddress\t=", gMyIPaddress);
+				CONSOLE_DEBUG_W_HEX("gMyIPaddress\t=", gMyIPaddress);
 			}
 			inet_ntop(AF_INET, tmpAddrPtr, addressBuffer, INET_ADDRSTRLEN);
 //			printf("%s IPV4 Address %s\n", ifa->ifa_name, addressBuffer);
@@ -1179,6 +1179,8 @@ int		iii;
 int StartDiscoveryListenThread(int alpacaListenPort)
 {
 int			threadErr;
+
+	CONSOLE_DEBUG(__FUNCTION__);
 
 	GetMyAddress();
 	gAlpacaListenPort	=	alpacaListenPort;
