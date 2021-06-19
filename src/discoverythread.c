@@ -124,7 +124,7 @@ bool				validDiscoveryRequest;
 char				ipAddrSt[48];
 
 
-//	CONSOLE_DEBUG("Starting discovery listen thread");
+	CONSOLE_DEBUG("Starting discovery listen thread");
 
 	mySocket	=	socket(AF_INET, SOCK_DGRAM, 0);
 	if (mySocket >= 0)
@@ -1187,7 +1187,14 @@ int			threadErr;
 
 	CONSOLE_DEBUG_W_NUM("Staring discovery listen thread on port", gAlpacaListenPort);
 	threadErr			=	pthread_create(&gDiscoveryListenThreadID, NULL, &DiscoveryListenThread, NULL);
-
+	if (threadErr == 0)
+	{
+		CONSOLE_DEBUG("Listen thread created successfully");
+	}
+	else
+	{
+		CONSOLE_DEBUG_W_NUM("Error on thread creation, Error number:", threadErr);
+	}
 	return(threadErr);
 }
 
