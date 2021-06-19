@@ -70,6 +70,7 @@ class CameraDriverASI: public CameraDriver
 		virtual	TYPE_ASCOM_STATUS		Read_Fastreadout(void);
 		virtual	TYPE_ASCOM_STATUS		Read_SensorTemp(void);
 		virtual	TYPE_ASCOM_STATUS		Read_ImageData(void);
+		virtual	TYPE_ASCOM_STATUS		SetFlipMode(int newFlipMode);
 
 //		virtual	TYPE_ALPACA_CAMERASTATE		Read_AlapcaCameraState(void);
 

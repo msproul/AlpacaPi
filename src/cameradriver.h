@@ -293,6 +293,7 @@ enum
 #ifdef _ENABLE_FITS_
 	kCmd_Camera_fitsheader,
 #endif
+	kCmd_Camera_flip,
 	kCmd_Camera_framerate,
 	kCmd_Camera_livemode,
 	kCmd_Camera_rgbarray,
@@ -311,7 +312,16 @@ enum
 
 };
 
-
+//**************************************************************************************
+//*	image flip, this is the ZWO definition, we will adopt that
+//*	Flip: 0->None 1->Horiz 2->Vert 3->Both
+enum
+{
+	kFlip_None	=	0,
+	kFlip_Horiz,
+	kFlip_Vert,
+	kFlip_Both
+};
 
 //**************************************************************************************
 class CameraDriver: public AlpacaDriver
@@ -436,6 +446,8 @@ class CameraDriver: public AlpacaDriver
 		TYPE_ASCOM_STATUS	Put_Sidebar(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 
 
+		TYPE_ASCOM_STATUS	Get_Flip(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+		TYPE_ASCOM_STATUS	Put_Flip(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 
 
 		TYPE_ASCOM_STATUS	Get_ExposureTime(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
@@ -579,6 +591,8 @@ class CameraDriver: public AlpacaDriver
 		virtual	TYPE_ASCOM_STATUS	Stop_Video(void);
 		virtual	TYPE_ASCOM_STATUS	Take_Video(void);
 
+		virtual	TYPE_ASCOM_STATUS	SetFlipMode(int newFlipMode);
+
 		virtual	TYPE_ALPACA_CAMERASTATE		Read_AlapcaCameraState(void);
 
 
@@ -617,8 +631,10 @@ protected:
 	//=========================================================================================
 	//=========================================================================================
 	//*	non-alpaca stuff
-	long					cExposureDefault_us;	//*	micro-seconds
+	long		cExposureDefault_us;	//*	micro-seconds
 
+	bool		cCanFlipImage;
+	int			cFlipMode;
 
 	bool		cUpdateOtherDevices;
 	//=========================================================================================

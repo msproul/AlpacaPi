@@ -108,8 +108,12 @@ DomeDriverROR::DomeDriverROR(const int argDevNum)
 
 	Init_Hardware();
 
+	CONSOLE_DEBUG("Returned from Init_Hardware()");
+
 	strcpy(cCommonProp.Name,		"AlpacaPi-ROR");
 	strcpy(cCommonProp.Description,	"Roll Off Roof");
+
+	CONSOLE_DEBUG(__FUNCTION__);
 }
 
 //**************************************************************************************

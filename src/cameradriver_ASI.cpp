@@ -474,6 +474,9 @@ ASI_CONTROL_CAPS	controlCaps;
 				break;
 
 			case ASI_FLIP:
+				cCanFlipImage		=	true;
+				break;
+
 			case ASI_AUTO_MAX_GAIN:
 			case ASI_AUTO_MAX_EXP:				//micro second
 			case ASI_AUTO_TARGET_BRIGHTNESS:	//target brightness
@@ -2277,6 +2280,52 @@ char				asiErrorMsgString[64];
 		CONSOLE_DEBUG("Invalid device number");
 	}
 //	CONSOLE_DEBUG_W_NUM("alpacaErrCode\t=",	alpacaErrCode);
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	CameraDriverASI::SetFlipMode(int newFlipMode)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
+ASI_ERROR_CODE		asiErrorCode;
+long				myFlipValue;
+ASI_BOOL			bAuto;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+	if (cCanFlipImage)
+	{
+		asiErrorCode	=	OpenASIcameraIfNeeded(cCameraID);
+		if (asiErrorCode == ASI_SUCCESS)
+		{
+			bAuto			=	ASI_FALSE;
+			myFlipValue		=	newFlipMode;
+			asiErrorCode	=	ASISetControlValue(	cCameraID,
+													ASI_FLIP,
+													myFlipValue,
+													bAuto);
+			if (asiErrorCode == ASI_SUCCESS)
+			{
+				alpacaErrCode	=	kASCOM_Err_Success;
+			}
+			else
+			{
+				strcpy(cLastCameraErrMsg, "Failed to set flip mode");
+				CONSOLE_DEBUG(cLastCameraErrMsg);
+			}
+		}
+		else
+		{
+			alpacaErrCode	=	kASCOM_Err_NotConnected;
+			strcpy(cLastCameraErrMsg, "Failed to open connection to camera");
+			CONSOLE_DEBUG(cLastCameraErrMsg);
+		}
+	}
+	else
+	{
+		alpacaErrCode	=	kASCOM_Err_PropertyNotImplemented;
+		strcpy(cLastCameraErrMsg, "Camera does not support image flip");
+		CONSOLE_DEBUG(cLastCameraErrMsg);
+	}
 	return(alpacaErrCode);
 }
 

@@ -147,6 +147,8 @@
 //*	Mar 26,	2021	<MLS> Started working on "offset" support
 //*	Mar 26,	2021	<MLS> Added Get_OffsetMax(), Get_OffsetMin(), Get_Offsets()
 //*	Apr  3,	2021	<MLS> Updated camera driver to use camera property ccd temp
+//*	Jun 17,	2021	<MLS> Added Get_Flip() & Put_Flip()
+//*	Jun 17,	2021	<MLS> Flipping of image in camera now working
 //*****************************************************************************
 //*	Jan  1,	2119	<TODO> ----------------------------------------
 //*	Jun 26,	2119	<TODO> Add support for sub frames
@@ -303,6 +305,7 @@ const TYPE_CmdEntry	gCameraCmdTable[]	=
 #endif
 	{	"filelist",					kCmd_Camera_filelist,				kCmdType_GET	},
 	{	"filenameoptions",			kCmd_Camera_filenameoptions,		kCmdType_PUT	},
+	{	"flip",						kCmd_Camera_flip,				kCmdType_BOTH	},
 	{	"framerate",				kCmd_Camera_framerate,				kCmdType_GET	},
 	{	"livemode",					kCmd_Camera_livemode,				kCmdType_BOTH	},
 	{	"rgbarray",					kCmd_Camera_rgbarray,				kCmdType_GET	},
@@ -364,6 +367,8 @@ int	mkdirErrCode;
 	cIsUSB3Camera					=	false;
 	cIsTriggerCam					=	false;
 	cBitDepth						=	0;
+	cCanFlipImage					=	false;
+	cFlipMode						=	kFlip_None;
 
 	cGain_default					=	0;
 	cExposureDefault_us				=	0;
@@ -1284,6 +1289,17 @@ char				httpHeader[500];
 			{
 				CONSOLE_DEBUG("invalid request");
 				alpacaErrCode	=	kASCOM_Err_InvalidOperation;
+			}
+			break;
+
+		case kCmd_Camera_flip:
+			if (reqData->get_putIndicator == 'P')
+			{
+				alpacaErrCode	=	Put_Flip(reqData, alpacaErrMsg);
+			}
+			else
+			{
+				alpacaErrCode	=	Get_Flip(reqData, alpacaErrMsg, gValueString);
 			}
 			break;
 
@@ -6513,6 +6529,67 @@ int					fitsHdrIdx;
 
 #endif
 
+//*****************************************************************************
+TYPE_ASCOM_STATUS	CameraDriver::Get_Flip(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
+
+	if (reqData != NULL)
+	{
+		JsonResponse_Add_Int32(	reqData->socket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								responseString,
+								cFlipMode,
+								INCLUDE_COMMA);
+	}
+	return(alpacaErrCode);
+
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	CameraDriver::Put_Flip(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
+char				argumentString[32];
+bool				foundKeyWord;
+int					newFlipMode;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+	if (reqData != NULL)
+	{
+		//*	look for filter
+		foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
+												"flip",
+												argumentString,
+												(sizeof(argumentString) -1));
+		if (foundKeyWord)
+		{
+			newFlipMode	=	atoi(argumentString);
+			if ((newFlipMode >= kFlip_None) && (newFlipMode <= kFlip_Both))
+			{
+				alpacaErrCode	=	SetFlipMode(newFlipMode);
+			}
+			else
+			{
+				alpacaErrCode	=	kASCOM_Err_InvalidValue;
+			}
+		}
+	}
+	else
+	{
+		alpacaErrCode	=	kASCOM_Err_InternalError;
+	}
+	return(alpacaErrCode);
+
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	CameraDriver::SetFlipMode(int newFlipMode)
+{
+	//*	this routine needs to be over ridden if you want to enable flip mode
+	return(kASCOM_Err_NotImplemented);
+}
 
 //*****************************************************************************
 TYPE_ASCOM_STATUS	CameraDriver::Get_Readall(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
@@ -6550,15 +6627,15 @@ char				textBuffer[128];
 	}
 
 
-//	exposureState	=	Check_Exposure(true);
-//	switch(exposureState)
-//	{
-//		case kExposure_Idle:	strcpy(exposureStateString,	"Idle");		break;
-//		case kExposure_Working:	strcpy(exposureStateString,	"Working");		break;
-//		case kExposure_Success:	strcpy(exposureStateString,	"Success");		break;
-//		case kExposure_Failed:	strcpy(exposureStateString,	"Failed");		break;
-//		default:				strcpy(exposureStateString,	"UNKNOWN");		break;
-//	}
+	exposureState	=	Check_Exposure(true);
+	switch(exposureState)
+	{
+		case kExposure_Idle:	strcpy(exposureStateString,	"Idle");		break;
+		case kExposure_Working:	strcpy(exposureStateString,	"Working");		break;
+		case kExposure_Success:	strcpy(exposureStateString,	"Success");		break;
+		case kExposure_Failed:	strcpy(exposureStateString,	"Failed");		break;
+		default:				strcpy(exposureStateString,	"UNKNOWN");		break;
+	}
 
 
 	if (reqData != NULL)
@@ -6873,6 +6950,9 @@ char				textBuffer[128];
 								"videoframes",
 								cNumVideoFramesSaved,
 								INCLUDE_COMMA);
+
+		Get_Flip(reqData, alpacaErrMsg, "flip");
+
 
 		//*	figure out how much time is remaining on the video
  		if (cVideoDuration_secs > 0)
