@@ -77,7 +77,7 @@ fi
 echo "$PLATFORM"
 
 echo "*************************************************** making client"
-make clean client
+make clean client  >/dev/null
 
 ################################
 # if openCV is present, we can compile the clients
@@ -85,15 +85,17 @@ if $OPENCV_OK
 then
 	echo "Building client apps" >> $LOGFILENAME
 	echo "*************************************************** making switch"	>/dev/stderr
-	make clean switch
+	make clean switch >/dev/null
 	echo "*************************************************** making sky"		>/dev/stderr
-	make clean sky
+	make clean sky >/dev/null
 	echo "*************************************************** making focuser"	>/dev/stderr
-	make clean focuser
+	make clean focuser >/dev/null
 	echo "*************************************************** making domectrl"	>/dev/stderr
-	make clean domectrl
+	make clean domectrl >/dev/null
 	echo "*************************************************** making camera"	>/dev/stderr
-	make clean camera
+	make clean camera >/dev/null
+	echo "*************************************************** making ror"	>/dev/stderr
+	make clean ror >/dev/null
 	if [ -f switch ]
 	then
 		echo "client switch made OK" >> $LOGFILENAME
@@ -123,17 +125,17 @@ if $PI64
 then
 	echo "Building alpacapi server for 64 bit Raspberry Pi" >> $LOGFILENAME
 	echo "*************************************************** making pi64" >/dev/stderr
-	make clean pi64
+	make clean pi64 >/dev/null
 elif $RASPPI
 then
 	echo "Building alpacapi server for 32 bit Raspberry Pi" >> $LOGFILENAME
 	echo "*************************************************** making pi" >/dev/stderr
-	make clean pi
+	make clean pi >/dev/null
 else
 	echo "Building alpacapi server on x86" >> $LOGFILENAME
 	make clean
 	echo "*************************************************** making default" >/dev/stderr
-	make
+	make >/dev/null
 fi
 if [ -f alpacapi ]
 then
@@ -145,18 +147,16 @@ else
 	if $PI64
 	then
 		echo "Building alpacapi server for 64 bit Raspberry Pi"
-		make clean pi64 2>$ERRORLOGFILE
+		make clean pi64 >/dev/null 2>$ERRORLOGFILE
 	elif $RASPPI
 	then
 		echo "Building alpacapi server for 32 bit Raspberry Pi"
-		make clean pi  2>$ERRORLOGFILE
+		make clean pi  >/dev/null 2>$ERRORLOGFILE
 	else
 		echo "Building alpacapi server on x86"
-		make clean   2>$ERRORLOGFILE
-		make
+		make clean   >/dev/null 2>$ERRORLOGFILE
+		make >/dev/null
 	fi
-
-
 fi
 
 
@@ -164,7 +164,7 @@ if $RASPPI
 then
 	##################################
 	#this only compiles on Raspberry Pi (depends on wiringPi library)
-	make clean calib
+	make clean calib >/dev/null
 	if [ -f alpacapi-calib ]
 	then
 		echo "alpacapi-calib driver made successfully" >> $LOGFILENAME
@@ -172,9 +172,9 @@ then
 		echo "Failed to build alpacapi-calib driver !!!!!!!!!!!!!!!!!!!!!" >> $LOGFILENAME
 	fi
 	##################################
-	make clean rorpi
+	make clean rorpi >/dev/null
 else
-	make clean ror
+	make clean ror >/dev/null
 fi
 if [ -f ror ]
 then
@@ -200,7 +200,7 @@ then
 	#	lets try sky travel
 	if [ -d src_skytravel ]
 	then
-		make clean sky
+		make clean sky >/dev/null
 		if [ -f skytravel ]
 		then
 			echo "skytravel client made successfully" >> $LOGFILENAME

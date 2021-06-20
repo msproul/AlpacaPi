@@ -106,12 +106,10 @@ int				filterWheelIdx;
 bool	PARENT_CLASS::AlpacaGetFilterWheelStatus(void)
 {
 bool	validData;
-bool	previousOnLineState;
 int		newFilterWheelPosition;
 
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 
-	previousOnLineState	=	cOnLine;
 
 	validData	=	AlpacaGetIntegerValue("filterwheel", "position",	NULL,	&newFilterWheelPosition);
 	if (validData)

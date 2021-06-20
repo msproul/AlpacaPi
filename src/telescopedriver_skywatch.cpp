@@ -64,6 +64,8 @@
 
 #include	"telescopedriver.h"
 #include	"telescopedriver_skywatch.h"
+
+
 //**************************************************************************************
 void	CreateTelescopeObjects_SkyWatch(void)
 {
@@ -143,7 +145,8 @@ bool	isValid;
 char	receiveBuff[64];
 
 	CONSOLE_DEBUG(__FUNCTION__);
-	isValid	=	false;
+	isValid			=	false;
+	receiveBuff[0]	=	0;
 	//--------------------------------------------------------------------------
 	//*	Right Ascension
 	Serial_Send_Data(cDeviceConnFileDesc, ":j1\r", true);

@@ -328,8 +328,9 @@ int	iii;
 	cTimeOfLastShutterUpdate		=	0;
 #endif // _ENABLE_REMOTE_SHUTTER_
 
-
+#if defined(_ENABLE_SLIT_TRACKER_REMOTE_) || defined(_ENABLE_REMOTE_SHUTTER_) || defined(_TEST_DISCOVERQUERY_)
 	SendDiscoveryQuery();
+#endif
 }
 
 //**************************************************************************************

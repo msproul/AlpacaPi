@@ -1093,11 +1093,11 @@ char				*colonPtr;
 	}
 }
 
-//*****************************************************************************
-int	GetMySubnetNumber(void)
-{
-	return(gMyIPaddress & 0x00ff);
-}
+//	//*****************************************************************************
+//	int	GetMySubnetNumber(void)
+//	{
+//		return(gMyIPaddress & 0x00ff);
+//	}
 
 //*****************************************************************************
 static void GetMyAddress(void)
@@ -1105,51 +1105,66 @@ static void GetMyAddress(void)
 struct ifaddrs	*ifAddrStruct	=	NULL;
 struct ifaddrs	*ifa			=	NULL;
 void			*tmpAddrPtr		=	NULL;
-char			addressBuffer[INET_ADDRSTRLEN * 3];
+char			addressBuffer[256];
 uint32_t		ipAddress32;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
 	getifaddrs(&ifAddrStruct);
 
-	//*	step thru the linked list of ip addresses
-	ifa	=	ifAddrStruct;
-	while (ifa != NULL)
-	{
-		// Check if it is a valid IPv4 address
-		if (ifa ->ifa_addr->sa_family == AF_INET)
-		{
-			tmpAddrPtr	=	&((struct sockaddr_in *)ifa->ifa_addr)->sin_addr;
-
-			ipAddress32	=	ntohl(*((uint32_t *)tmpAddrPtr));
-			CONSOLE_DEBUG_W_HEX("ipAddress32\t=", ipAddress32);
-			if (ipAddress32 != 0x7f000001)
-			{
-				gMyIPaddress	=	ipAddress32;
-				CONSOLE_DEBUG_W_HEX("gMyIPaddress\t=", gMyIPaddress);
-			}
-			inet_ntop(AF_INET, tmpAddrPtr, addressBuffer, INET_ADDRSTRLEN);
-//			printf("%s IPV4 Address %s\n", ifa->ifa_name, addressBuffer);
-		}
-		// Check if it is a valid IPv6 address
-//		else if (ifa->ifa_addr->sa_family==AF_INET6)
-//		{
-//			tmpAddrPtr = &((struct sockaddr_in6 *)ifa->ifa_addr)->sin6_addr;
-//			char addressBuffer[INET6_ADDRSTRLEN];
-//			inet_ntop(AF_INET6, tmpAddrPtr, addressBuffer, INET6_ADDRSTRLEN);
-//			printf("%s IPV6 Address %s\n", ifa->ifa_name, addressBuffer);
-//		}
-//+		if (gDebugDiscovery)
-		{
-			CONSOLE_DEBUG("Stepping to Next ip addr");
-		}
-		ifa	=	ifa->ifa_next;
-	}
 	if (ifAddrStruct != NULL)
 	{
+		ifa	=	ifAddrStruct;
+		//*	step thru the linked list of ip addresses
+		while (ifa != NULL)
+		{
+			// Check if it is a valid IPv4 address
+			if (ifa ->ifa_addr->sa_family == AF_INET)
+			{
+				tmpAddrPtr	=	&((struct sockaddr_in *)ifa->ifa_addr)->sin_addr;
+
+				ipAddress32	=	ntohl(*((uint32_t *)tmpAddrPtr));
+				CONSOLE_DEBUG_W_HEX("ipAddress32\t=", ipAddress32);
+				if (ipAddress32 != 0x7f000001)
+				{
+					gMyIPaddress	=	ipAddress32;
+					CONSOLE_DEBUG_W_HEX("gMyIPaddress\t=", gMyIPaddress);
+				}
+				inet_ntop(AF_INET, tmpAddrPtr, addressBuffer, INET_ADDRSTRLEN);
+	//			printf("%s IPV4 Address %s\n", ifa->ifa_name, addressBuffer);
+				CONSOLE_DEBUG_W_STR("IPV4 Name   :", ifa->ifa_name);
+				CONSOLE_DEBUG_W_STR("IPV4 Address:", addressBuffer);
+			}
+			else if (ifa->ifa_addr->sa_family==AF_INET6)
+			{
+				// Check if it is a valid IPv6 address
+				tmpAddrPtr	=	&((struct sockaddr_in6 *)ifa->ifa_addr)->sin6_addr;
+				inet_ntop(AF_INET6, tmpAddrPtr, addressBuffer, INET6_ADDRSTRLEN);
+	//			printf("%s IPV6 Address %s\n", ifa->ifa_name, addressBuffer);
+
+				CONSOLE_DEBUG_W_STR("IPV6 Name   :", ifa->ifa_name);
+				CONSOLE_DEBUG_W_STR("IPV6 Address:", addressBuffer);
+			}
+			else
+			{
+				CONSOLE_DEBUG_W_STR("Unknow family Name   :", ifa->ifa_name);
+			}
+	//+		if (gDebugDiscovery)
+			{
+				CONSOLE_DEBUG("Stepping to Next ip address --------------------------------------");
+			}
+			ifa	=	ifa->ifa_next;
+		}
+
+
+		CONSOLE_DEBUG("Freeing ifAddrStruct");
 		freeifaddrs(ifAddrStruct);
 	}
-//	exit(0);
+	else
+	{
+		CONSOLE_DEBUG("getifaddrs() Failed!!!!!");
+	}
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, "EXIT");
 }
 
 

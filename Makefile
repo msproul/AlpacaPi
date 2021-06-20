@@ -761,6 +761,23 @@ rorpi		:				$(ROR_OBJECTS)				\
 							-lwiringPi					\
 							-o ror
 
+######################################################################################
+#pragma mark rorpi2
+#rorpi2		:	DEFINEFLAGS		+=	-D_ENABLE_DOME_
+rorpi2		:	DEFINEFLAGS		+=	-D_ENABLE_ROR_
+rorpi2		:	DEFINEFLAGS		+=	-D_ENABLE_WIRING_PI_
+rorpi2		:	DEFINEFLAGS		+=	-D_INCLUDE_WIRINGPI_
+rorpi2		:	DEFINEFLAGS		+=	-D_ENABLE_4REALY_BOARD
+rorpi2		:	DEFINEFLAGS		+=	-D_TEST_DISCOVERQUERY_
+rorpi2		:				$(ROR_OBJECTS)				\
+							$(SOCKET_OBJECTS)			\
+
+				$(LINK)  								\
+							$(SOCKET_OBJECTS)			\
+							$(ROR_OBJECTS)				\
+							-lpthread					\
+							-lwiringPi					\
+							-o ror2
 
 ######################################################################################
 #pragma mark make pi

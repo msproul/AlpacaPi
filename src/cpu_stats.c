@@ -138,6 +138,12 @@ char	*stringPtr;
 
 #if defined(__arm__) && !defined(_PLATFORM_STRING_)
 	strcpy(gPlatformString,	"Raspberry Pi - ");
+#elif defined(__i386__)
+	strcpy(gPlatformString,	"32 bit x86");
+#elif defined(__x86_64__)
+	strcpy(gPlatformString,	"64 bit x86");
+#else
+	strcpy(gPlatformString,	"Unknown platform");
 #endif
 
 
@@ -150,9 +156,13 @@ char	*stringPtr;
 	strcpy(gCpuInfoString,	"64 bit x86");
 #elif defined( __i386__)
 	strcpy(gCpuInfoString,	"32 bit x86");
+#elif defined(__x86_64__)
+	strcpy(gCpuInfoString,	"64 bit x86");
+#else
+	strcpy(gCpuInfoString,	"Unknown arch");
 #endif
 
-
+	//*	open up the cpuinfo file and get data from there
 	filePointer	=	fopen("/proc/cpuinfo", "r");
 	if (filePointer != NULL)
 	{
@@ -313,9 +323,9 @@ uint32_t		ram_megabytes;
 	myError	=	sysinfo(&mySysInfo);
 	if (myError != 0)
 	{
-		printf("code error = %d\n", myError);
+		CONSOLE_DEBUG_W_NUM("sysinfo returned error code:", myError);
 	}
-	ram_megabytes	=	mySysInfo.totalram / (1024 * 1024);
+	ram_megabytes	=	mySysInfo.totalram / (1024L * 1024L);
 
 	return(ram_megabytes);
 }
@@ -332,9 +342,9 @@ uint32_t		ram_megabytes;
 	myError	=	sysinfo(&mySysInfo);
 	if (myError != 0)
 	{
-		printf("code error = %d\n", myError);
+		CONSOLE_DEBUG_W_NUM("sysinfo returned error code:", myError);
 	}
-	ram_megabytes	=	mySysInfo.freeram / (1024 * 1024);
+	ram_megabytes	=	mySysInfo.freeram / (1024L * 1024L);
 
 	return(ram_megabytes);
 }
@@ -355,7 +365,7 @@ uint32_t		availableSpace;
 //		CONSOLE_DEBUG_W_INT32("stat.f_bavail\t=",	stat.f_bavail);
 		// the available size is f_bsize * f_bavail
 		//*	raspberry pi still uses 32 bit ints, make the math work
-		availableSpace	=	stat.f_bsize * (stat.f_bavail / 1024) / 1024;
+		availableSpace	=	stat.f_bsize * (stat.f_bavail / 1024L) / 1024L;
 	}
 	else
 	{

@@ -1324,16 +1324,16 @@ controller_camera.cpp:60 	//*	Jan  1,	2121	<TODO> finish exposure step options
 controller_camera.cpp:61 	//*	Jan  1,	2121	<TODO> clear error msg
 controller_camera.cpp:62 	//*	Feb  6,	2121	<TODO> Move downloading of images to a separate thread
 History Comments found   = 1324 in 260 files
-Total lines              = 126787
-Total comment Lines      = 16005
-Total comments           = 18747
+Total lines              = 126832
+Total comment Lines      = 16003
+Total comments           = 18745
 Total history comments   = 1324
 Total C files            = 35
 Total C++ files          = 97
 Total H files            = 127
-Preprocssor cnt          = 3800
-Total SLOC               = 85018
-Total SLOC-Logical       = 66116
+Preprocssor cnt          = 3810
+Total SLOC               = 85062
+Total SLOC-Logical       = 66156
 Programmer comment summary
 MLS             = 1300
 TODO            =   14

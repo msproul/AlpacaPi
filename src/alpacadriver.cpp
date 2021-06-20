@@ -1580,7 +1580,7 @@ int		ii;
 			SocketWriteData(mySocketFD,	lineBuffer);
 		SocketWriteData(mySocketFD,	"</TR>\r\n");
 #elif defined(_INCLUDE_WIRINGPI_) || defined(__WIRING_PI_H__)
-	#error "Somethings wrong"
+	#warning "Somethings wrong, wiringPi is enabled"
 #endif
 
 
@@ -2736,14 +2736,13 @@ int		newListenPort;
 
 				//	-c means Conform logging
 				case 'c':
-					gErrorLogging	=	true;	//*	write errors to log file if true
+					gConformLogging	=	true;	//*	log all commands to log file to match up with Conform
 					break;
 
 				//	-e means Error logging
 				case 'e':
-					gConformLogging	=	true;	//*	log all commands to log file to match up with Conform
+					gErrorLogging	=	true;	//*	write errors to log file if true
 					break;
-
 
 				//	"-d" means display image after download from camera
 				case 'd':
@@ -2823,6 +2822,8 @@ char		*strPtr;
 int			sLen;
 int			iii;
 
+	CONSOLE_DEBUG(__FUNCTION__);
+
 	filePointer	=	fopen("hostname.txt", "r");
 	if (filePointer != NULL)
 	{
@@ -2872,8 +2873,7 @@ double			freeDiskSpace_Gigs;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG(gFullVersionString);
-
-	GetMyHostName();
+	CONSOLE_DEBUG_W_STR("gcc version:", __VERSION__);
 
 	AddLibraryVersion("software", "gcc", __VERSION__);
 	AddLibraryVersion("software", "libc", gnu_get_libc_version());
@@ -2887,6 +2887,7 @@ double			freeDiskSpace_Gigs;
 	freeDiskSpace_Gigs	=	CPUstats_GetFreeDiskSpace("/") / 1024.0;
 	CONSOLE_DEBUG_W_DBL("freeDiskSpace_Gigs\t=", freeDiskSpace_Gigs);
 
+	GetMyHostName();
 
 #ifdef _ENABLE_FITS_
 	//*	cfitsio version
