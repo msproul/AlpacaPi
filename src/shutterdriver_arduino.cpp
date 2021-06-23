@@ -489,8 +489,7 @@ int			usbPortNum;
 	if (cArduinoFileDesc >= 0)
 	{
 		openOK	=	true;
-		Set_Serial_attribs(cArduinoFileDesc, B115200, 0);	//*	set the baud rate
-
+		Serial_Set_Attribs(cArduinoFileDesc, B115200, 0);	//*	set the baud rate
 	}
 	else
 	{

@@ -41,7 +41,7 @@
 
 #define	kApplicationName	"AlpacaPi"
 #define	kVersionString		"V0.4.1-beta"
-#define	kBuildNumber		115
+#define	kBuildNumber		116
 
 
 #define kAlpacaDiscoveryPORT	32227

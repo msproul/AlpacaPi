@@ -119,6 +119,7 @@
 //*	Apr  1,	2021	<MLS> Added Put_LiveWindow()
 //*	Apr  1,	2021	<MLS> Added UpdateLiveWindow()
 //*	Apr  8,	2021	<MLS> Added GetMyHostName()
+//*	Jun 19,	2021	<MLS> Added _ENABLE_LIVE_CONTROLLER_
 //*****************************************************************************
 
 #include	<stdio.h>
@@ -3111,6 +3112,7 @@ double			freeDiskSpace_Gigs;
 					delayTime_microSecs	=	delayTimeForThisTask;
 				}
 
+			#ifdef _ENABLE_LIVE_CONTROLLER_
 				//==================================================================================
 				//*	live window
 				if (gAlpacaDeviceList[ii]->cLiveController != NULL)
@@ -3123,6 +3125,7 @@ double			freeDiskSpace_Gigs;
 						delayTime_microSecs	=	5000;
 					}
 				}
+			#endif // _ENABLE_LIVE_CONTROLLER_
 			}
 		}
 		if (delayTime_microSecs < 10)
@@ -3148,6 +3151,7 @@ double			freeDiskSpace_Gigs;
 }
 
 
+#ifdef _ENABLE_LIVE_CONTROLLER_
 //*****************************************************************************
 static	void HandleContollerWindow(AlpacaDriver *alpacaObjPtr)
 {
@@ -3174,7 +3178,7 @@ Controller	*myController;
 #endif
 
 }
-
+#endif // _ENABLE_LIVE_CONTROLLER_
 
 #pragma mark -
 #pragma mark Helper functions

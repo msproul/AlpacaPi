@@ -313,6 +313,7 @@ alpacapi		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
 #alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
 #alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_LX200_
 alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
+alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_LIVE_CONTROLLER_
 alpacapi		:	$(CPP_OBJECTS)				\
 					$(ALPACA_OBJECTS)			\
 					$(SOCKET_OBJECTS)			\
@@ -366,6 +367,7 @@ allcam		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
 #allcam		:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_LX200_
 allcam		:		DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
 #allcam		:		INCLUDES		+=	-I$(SONY_INCLUDE_DIR)
+allcam		:		DEFINEFLAGS		+=	-D_ENABLE_LIVE_CONTROLLER_
 allcam		:		$(CPP_OBJECTS)				\
 					$(ALPACA_OBJECTS)			\
 					$(SOCKET_OBJECTS)			\
@@ -453,7 +455,6 @@ eq6		:			$(CPP_OBJECTS)				\
 					$(SOCKET_OBJECTS)			\
 					$(CPP_OBJECTS)				\
 					$(ALPACA_OBJECTS)			\
-					$(OPENCV_LINK)				\
 					-ludev						\
 					-lusb-1.0					\
 					-lpthread					\
@@ -799,6 +800,7 @@ pi		:		DEFINEFLAGS		+=	-D_ENABLE_ATIK_
 pi		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
 #pi		:		DEFINEFLAGS		+=	-D_ENABLE_TOUP_
 pi		:		DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
+pi		:		DEFINEFLAGS		+=	-D_ENABLE_LIVE_CONTROLLER_
 pi		:		PLATFORM		=	armv7
 pi		:		ATIK_LIB_DIR	=	$(ATIK_LIB_MASTER_DIR)/ARM/x86/NoFlyCapture
 pi		:			$(CPP_OBJECTS)				\
@@ -885,6 +887,7 @@ calib		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
 #calib		:		DEFINEFLAGS		+=	-D_ENABLE_TOUP_
 #calib		:		DEFINEFLAGS		+=	-D_ENABLE_WIRING_PI_
 calib		:		DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
+calib		:		DEFINEFLAGS		+=	-D_ENABLE_LIVE_CONTROLLER_
 calib		:		PLATFORM		=	armv7
 #calib		:		ATIK_LIB_DIR	=	$(ATIK_LIB_MASTER_DIR)/ARM/x86/NoFlyCapture
 calib		:		$(CPP_OBJECTS)				\
@@ -1122,6 +1125,7 @@ newt16		:		DEFINEFLAGS		+=	-D_ENABLE_JPEGLIB_
 #newt16		:		DEFINEFLAGS		+=	-D_ENABLE_TOUP_
 newt16		:		DEFINEFLAGS		+=	-D_ENABLE_SLIT_TRACKER_
 newt16		:		DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
+newt16		:		DEFINEFLAGS		+=	-D_ENABLE_LIVE_CONTROLLER_
 newt16		:		PLATFORM		=	armv7
 newt16		:		ATIK_LIB_DIR	=	$(ATIK_LIB_MASTER_DIR)/ARM/x86/NoFlyCapture
 newt16		:		$(CPP_OBJECTS)				\
@@ -1395,6 +1399,7 @@ jetson		:	DEFINEFLAGS		+=	-D_ENABLE_FLIR_
 jetson		:	DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_
 jetson		:	DEFINEFLAGS		+=	-D_USE_OPENCV_
 jetson		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
+jetson		:	DEFINEFLAGS		+=	-D_ENABLE_LIVE_CONTROLLER_
 jetson		:	DEFINEFLAGS		+=	-D_ENABLE_STAR_SEARCH_
 jetson		:	DEFINEFLAGS		+=	-D_PLATFORM_STRING_=\"Nvidia-jetson\"
 jetson		:	PLATFORM		=	armv8

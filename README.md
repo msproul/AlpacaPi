@@ -150,7 +150,7 @@ AlpacaPi has been tested on the following platforms
 
 For those familiar with ASCOM and ASCOM development, I use the CONFORM tool to
 verify the workings of my drivers.  Here my current results
-(as of Dec 13, 2020)
+(as of Jun 19, 2021)
 
 	Apr  1,	2020	<MLS> CONFORM-filterwheel -> PASSED!!!!!!!!!!!!!!!!!!!!!
 
@@ -170,6 +170,9 @@ verify the workings of my drivers.  Here my current results
 
 	Mar  1,	2021	<MLS> CONFORM-observingconditions -> PASSED!!!!!!!!!!!!!!!!!!!!!
 
+	Apr  6,	2021	<MLS> CONFORM-covercalibrator -> PASSED!!!!!!!!!!!!!!!!!!!!!
+
+	Apr 30,	2021	<MLS> CONFORM-filterwheel/atik -> PASSED!!!!!!!!!!!!!!!!!!!!!
 
 ===================================================
 

@@ -41,6 +41,7 @@
 //*	Mar 21,	2021	<MLS> Working on FilterWheel driver to prevent ZWO EFW from hanging
 //*	Apr 30,	2021	<MLS> Added "Filter #" if name not specified to names list
 //*	Jun 15,	2021	<MLS> Fixed filterwheel ifdefs
+//*	Jun 22,	2021	<MLS> Updated filtwheel driver cCommonProp.InterfaceVersion to 2
 //*****************************************************************************
 
 #if defined(_ENABLE_FILTERWHEEL_) || defined(_ENABLE_FILTERWHEEL_ZWO_) || defined(_ENABLE_FILTERWHEEL_ATIK_)
@@ -92,9 +93,11 @@ FilterwheelDriver::FilterwheelDriver(const int argDevNum)
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-	strcpy(cCommonProp.Name,			"Filterwheel");
-	strcpy(cFilterWheelCurrName, "none");
+	strcpy(cCommonProp.Name,		"Filterwheel");
 	strcpy(cCommonProp.Description,	"Generic filterwheel");
+	cCommonProp.InterfaceVersion	=	2;
+
+	strcpy(cFilterWheelCurrName, "none");
 
 	//*	initialize all of the filter wheel properties to 0
 	memset(&cFilterWheelProp, 0, sizeof(TYPE_FilterWheelProperties));

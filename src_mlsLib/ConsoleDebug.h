@@ -48,7 +48,7 @@
 	#define	CONSOLE_DEBUG_W_NUM(msg, num)				printf("%-40s:%4d [%-20s] %s %d\n", 		__FILE__, __LINE__, __FUNCTION__, msg, num);	fflush(stdout);
 	#define	CONSOLE_DEBUG_W_LONG(msg, num)				printf("%-40s:%4d [%-20s] %s %ld\n", 		__FILE__, __LINE__, __FUNCTION__, msg, num);	fflush(stdout);
 	#define	CONSOLE_DEBUG_W_DBL(msg, num)				printf("%-40s:%4d [%-20s] %s %3.15f\n", 	__FILE__, __LINE__, __FUNCTION__, msg, num);	fflush(stdout);
-	#define	CONSOLE_DEBUG_W_HEX(msg, num)				printf("%-40s:%4d [%-20s] %s 0x%02X\n", 	__FILE__, __LINE__, __FUNCTION__, msg, num);	fflush(stdout);
+	#define	CONSOLE_DEBUG_W_HEX(msg, num)				printf("%-40s:%4d [%-20s] %s 0x%02LX\n", 	__FILE__, __LINE__, __FUNCTION__, msg, num);	fflush(stdout);
 	#define	CONSOLE_DEBUG_W_STR(msg, str)				printf("%-40s:%4d [%-20s] %s %s\n", 		__FILE__, __LINE__, __FUNCTION__, msg, str);	fflush(stdout);
 	#define	CONSOLE_DEBUG_W_2STR(msg, str1, str2)		printf("%-40s:%4d [%-20s] %s %s, %s\n",		__FILE__, __LINE__, __FUNCTION__, msg, str1, str2);	fflush(stdout);
 	#define	CONSOLE_DEBUG_W_3STR(msg, str1, str2, str3)	printf("%-40s:%4d [%-20s] %s %s, %s %s\n",	__FILE__, __LINE__, __FUNCTION__, msg, str1, str2, str3);	fflush(stdout);

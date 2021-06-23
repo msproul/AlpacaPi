@@ -96,6 +96,7 @@ then
 	make clean camera >/dev/null
 	echo "*************************************************** making ror"	>/dev/stderr
 	make clean ror >/dev/null
+
 	if [ -f switch ]
 	then
 		echo "client switch made OK" >> $LOGFILENAME
@@ -133,7 +134,7 @@ then
 	make clean pi >/dev/null
 else
 	echo "Building alpacapi server on x86" >> $LOGFILENAME
-	make clean
+	make clean  >/dev/null
 	echo "*************************************************** making default" >/dev/stderr
 	make >/dev/null
 fi
