@@ -57,6 +57,7 @@ typedef struct
 	char				deviceNameStr[64];
 	char				versionString[64];
 	int					alpacaDeviceNum;
+	int					interfaceVersion;
 	int					notSeenCounter;
 
 	char				webPrefixString[64];

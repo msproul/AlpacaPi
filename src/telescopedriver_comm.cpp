@@ -57,6 +57,7 @@
 #include	"alpacadriver.h"
 #include	"alpacadriver_helper.h"
 #include	"serialport.h"
+#include	"linuxerrors.h"
 
 
 
@@ -349,6 +350,7 @@ int					connRetCode;
 char				ipString[32];
 struct timeval		timeoutLength;
 int					setOptRetCode;
+char				linuxErrorStr[256];
 
 	CONSOLE_DEBUG(__FUNCTION__);
 	socket_desc	=	socket(AF_INET , SOCK_STREAM , 0);
@@ -393,6 +395,8 @@ int					setOptRetCode;
 			sprintf(cTelescopeErrorString, "Connection error, ipaddress = %s", ipString);
 			CONSOLE_DEBUG(cTelescopeErrorString);
 			CONSOLE_DEBUG_W_NUM("errno\t\t\t=", errno);
+			GetLinuxErrorString(errno, linuxErrorStr);
+			CONSOLE_DEBUG(linuxErrorStr);
 //+			gTelescopeThreadKeepRunning	=	false;
 			cNewTelescopeDataAvailble			=	true;
 		}

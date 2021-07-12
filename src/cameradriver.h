@@ -21,6 +21,7 @@
 //*	Nov 29,	2020	<MLS> Updated return values to TYPE_ASCOM_STATUS
 //*	Dec 11,	2020	<MLS> Updating class variable names to match ASCOM property names
 //*	Feb 21,	2021	<MLS> Deleted TYPE_SUPPORTED_IMG_TYPE
+//*	Jun 23,	2021	<MLS> Added kCmd_Camera_subexposureduration
 //*****************************************************************************
 //#include	"cameradriver.h"
 
@@ -278,6 +279,7 @@ enum
 	kCmd_Camera_pulseguide,				//*	Pulse guide in the specified direction for the specified time.
 	kCmd_Camera_startexposure,			//*	Starts an exposure
 	kCmd_Camera_stopexposure,			//*	Stops the current exposure
+	kCmd_Camera_subexposureduration,	//*	Camera's sub-exposure interval
 
 //#ifdef _INCLUDE_ALPACA_EXTRAS_
 	//=================================================================
@@ -340,6 +342,8 @@ class CameraDriver: public AlpacaDriver
 				int32_t	RunStateMachine_Idle(void);
 				int		RunStateMachine_TakingPicture(void);
 		virtual	void	RunStateMachine_Device(void);
+		virtual	bool	AlpacaConnect(void);
+		virtual	bool	AlpacaDisConnect(void);
 
 				void	ProcessExposureOptions(TYPE_GetPutRequestData *reqData);
 

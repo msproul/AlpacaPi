@@ -264,7 +264,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 //*****************************************************************************
 void	DomeDriver::GetRemoteShutterStatus(void)
 {
-struct sockaddr_in	shtterAddr;
+struct sockaddr_in	shutterAddr;
 int					shutterPort;
 SJP_Parser_t		jsonParser;
 bool				validData;
@@ -272,50 +272,49 @@ char				alpacaString[128];
 int					jjj;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
-	memset(&shtterAddr, 0, sizeof(struct sockaddr_in));
+	memset(&shutterAddr, 0, sizeof(struct sockaddr_in));
 #ifdef _ENABLE_REMOTE_SHUTTER_
 	if (cShutterInfoValid)
 	{
 //		CONSOLE_DEBUG("Using remote shutter info");
-		shtterAddr	=	cShutterDeviceAddress;
+		shutterAddr	=	cShutterDeviceAddress;
 		shutterPort	=	cShutterPort;
-	}
-	else
-#endif
-	{
-		shtterAddr.sin_addr.s_addr	=	htonl((192 << 24) + (168 << 16) + (50 << 8) + 46);
-		shutterPort					=	6800;
-	}
 
-	//===============================================================
-	//*	get readall
-	SJP_Init(&jsonParser);
-	sprintf(alpacaString,	"/api/v1/%s/%d/readall", "shutter", 0);
-	validData	=	GetJsonResponse(	&shtterAddr,
-										shutterPort,
-										alpacaString,
-										NULL,
-										&jsonParser);
-	if (validData)
-	{
-		jjj	=	0;
-		while (jjj<jsonParser.tokenCount_Data)
+		//===============================================================
+		//*	get readall
+		SJP_Init(&jsonParser);
+		sprintf(alpacaString,	"/api/v1/%s/%d/readall", "shutter", 0);
+		validData	=	GetJsonResponse(	&shutterAddr,
+											shutterPort,
+											alpacaString,
+											NULL,
+											&jsonParser);
+		if (validData)
 		{
-			if (strcasecmp(jsonParser.dataList[jjj].keyword, "SHUTTERSTATUS") == 0)
+			jjj	=	0;
+			while (jjj<jsonParser.tokenCount_Data)
 			{
-				cDomeProp.ShutterStatus	=	atoi(jsonParser.dataList[jjj].valueString);
+				if (strcasecmp(jsonParser.dataList[jjj].keyword, "SHUTTERSTATUS") == 0)
+				{
+					cDomeProp.ShutterStatus	=	atoi(jsonParser.dataList[jjj].valueString);
+				}
+				else if (strcasecmp(jsonParser.dataList[jjj].keyword, "altitude") == 0)
+				{
+					cDomeProp.Altitude	=	atof(jsonParser.dataList[jjj].valueString);
+				}
+				jjj++;
 			}
-			else if (strcasecmp(jsonParser.dataList[jjj].keyword, "altitude") == 0)
-			{
-				cDomeProp.Altitude	=	atof(jsonParser.dataList[jjj].valueString);
-			}
-			jjj++;
+		}
+		else
+		{
+			CONSOLE_DEBUG("Read failure - readall");
 		}
 	}
 	else
 	{
-		CONSOLE_DEBUG("Read failure - readall");
+		CONSOLE_DEBUG("No shutter to talk to");
 	}
+#endif
 
 }
 

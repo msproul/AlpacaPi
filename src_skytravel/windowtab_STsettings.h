@@ -49,6 +49,29 @@ enum
 	kSkyT_Settings_EarthSolidGrn,
 	kSkyT_Settings_EarthOutline,
 
+	kSkyT_Settings_GridLable,
+	kSkyT_Settings_GridSolid,
+	kSkyT_Settings_GridDashed,
+	kSkyT_Settings_GridOutline,
+
+	kSkyT_Settings_DataTitle,
+
+	kSkyT_Settings_DataAAVSO_txt,
+	kSkyT_Settings_DataAAVSO_cnt,
+
+	kSkyT_Settings_DataDRAPER_txt,
+	kSkyT_Settings_DataDRAPER_cnt,
+
+	kSkyT_Settings_DataHipparcos_txt,
+	kSkyT_Settings_DataHipparcos_cnt,
+
+	kSkyT_Settings_DataNGC_txt,
+	kSkyT_Settings_DataNGC_cnt,
+
+	kSkyT_Settings_DataYALE_txt,
+	kSkyT_Settings_DataYALE_cnt,
+
+	kSkyT_Settings_DataOutLine,
 
 	kSkyT_Settings_AlpacaLogo,
 

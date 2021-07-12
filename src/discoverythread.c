@@ -367,6 +367,11 @@ char			myVersionString[64];
 		{
 			myRemoteDevice.alpacaDeviceNum	=	atoi(jsonParser->dataList[ii].valueString);
 		}
+//		else
+//		{
+//			CONSOLE_DEBUG_W_STR("keyword\t=",	jsonParser->dataList[ii].keyword);
+//			CONSOLE_DEBUG_W_STR("value  \t=",	jsonParser->dataList[ii].valueString);
+//		}
 
 		//------------------------------------
 		if (strcasecmp(jsonParser->dataList[ii].keyword, "ARRAY-NEXT") == 0)
@@ -375,6 +380,7 @@ char			myVersionString[64];
 			myRemoteDevice.port				=	theDevice->port;
 			strcpy(myRemoteDevice.hostName, theDevice->hostName);
 			strcpy(myRemoteDevice.versionString, myVersionString);
+
 			UpdateRemoteList(&myRemoteDevice);
 
 			memset(&myRemoteDevice, 0, sizeof(TYPE_REMOTE_DEV));
@@ -1069,10 +1075,10 @@ char				*colonPtr;
 					//*	set the default
 					strcpy(portNumStr, "6800");
 				}
-
-//---				from.sin_addr.s_addr	=	htonl((192 << 24) + (168 << 16) + (50 << 8) + 46);
+				//*	extract the IP address
 				inet_pton(AF_INET, lineBuff, &(from.sin_addr));
 
+				//*	this is just for debugging to make sure we got it right
 				inet_ntop(AF_INET, &(from.sin_addr), outputIPaddr, INET_ADDRSTRLEN);
 				CONSOLE_DEBUG_W_STR("outputIPaddr\t\t=",		outputIPaddr);
 

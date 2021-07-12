@@ -117,7 +117,6 @@ int		iii;
 	memset(&cCameraProp, 0, sizeof(TYPE_CameraProperties));
 
 
-//-	cAlpacaDevNum			=	deviceNum;
 	cFirstDataRead			=	true;
 	cLastUpdate_milliSecs	=	millis();
 
@@ -125,7 +124,6 @@ int		iii;
 	cReadStartup			=	true;
 	cHasCCDtemp				=	true;
 	cHasCooler				=	true;
-//-	cCoolerOn				=	false;
 	cAutoExposure			=	false;
 	cDisplayImage			=	false;
 	cSaveAllImages			=	false;

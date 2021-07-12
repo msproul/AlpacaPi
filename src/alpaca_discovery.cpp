@@ -251,7 +251,6 @@ int					ipPortNumber;
 			if ((slen > 6) && (lineBuff[0] != '#'))
 			{
 				SJP_Init(&jsonParser);
-		//		from.sin_addr.s_addr	=	htonl((192 << 24) + (168 << 16) + (50 << 8) + 46);
 				inet_pton(AF_INET, lineBuff, &(from.sin_addr));
 
 				inet_ntop(AF_INET, &(from.sin_addr), outputIPaddr, INET_ADDRSTRLEN);

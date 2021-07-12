@@ -390,8 +390,6 @@ bool		foundSomething;
 		}
 	}
 
-
-
 	if (needToUpdate)
 	{
 //		CONSOLE_DEBUG_W_NUM("Need to update", cDebugCounter++);
@@ -423,6 +421,7 @@ bool		foundSomething;
 	}
 
 
+	//*	window tab background tasks
 	if (cSkyTravelTabOjbPtr != NULL)
 	{
 		cSkyTravelTabOjbPtr->RunBackgroundTasks();
@@ -436,6 +435,11 @@ bool		foundSomething;
 	if (cFOVTabObjPtr != NULL)
 	{
 		cFOVTabObjPtr->RunBackgroundTasks();
+	}
+
+	if (cAlpacaListObjPtr != NULL)
+	{
+		cAlpacaListObjPtr->RunBackgroundTasks();
 	}
 
 }

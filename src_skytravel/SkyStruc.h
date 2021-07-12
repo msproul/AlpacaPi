@@ -7,6 +7,7 @@
 //*****************************************************************************
 //*	Dec 31,	2020	<MLS> had to change char to int8_t to keep Raspberry-Pi g++ compiler happy
 //*	Apr 17,	2021	<MLS> Increased short name length from 8 to 12
+//*	Jul  9,	2021	<MLS> Finished converting all start data to globals
 //*****************************************************************************
 //#include	"SkyStruc.h"
 
@@ -18,7 +19,6 @@
 	#include	<stdint.h>
 #endif // _STDINT_H
 
-#define	_USE_DOUBLES_
 
 
 
@@ -421,6 +421,49 @@ enum
 #endif
 
 long	ReadStarData(TYPE_CelestData **objptr,unsigned int *sort_index, TYPE_Time *timePtr);
+
+
+extern	TYPE_CelestData		*gStarDataPtr;
+extern	long				gStarCount;
+
+extern	TYPE_CelestData		*gYaleStarDataPtr;
+extern	long				gYaleStarCount;
+
+extern	TYPE_Constelation	*gConstelations;
+extern	short				gConstelationCount;
+
+extern	TYPE_CelestData		*gConstStarPtr;
+extern	long				gConstStarCount;
+
+extern	TYPE_CelestData		*gNGCobjectPtr;
+extern	long				gNGCobjectCount;
+
+//*	Hipparcos
+extern	TYPE_CelestData		*gHipObjectPtr;
+extern	long				gHipObjectCount;
+
+//*	Messier
+extern	TYPE_CelestData		*gMessierOjbectPtr;
+extern	long				gMessierOjbectCount;
+
+//*	HYG
+extern	TYPE_CelestData		*gHYGObjectPtr;
+extern	long				gHYGObjectCount;
+
+//*	Henry Draper
+extern	TYPE_CelestData		*gDraperObjectPtr;
+extern	long				gDraperObjectCount;
+
+//*	special objects for local use.
+extern	TYPE_CelestData		*gSpecialObjectPtr;
+extern	long				gSpecialObjectCount;
+
+	//*	AAVSO alert list
+extern	TYPE_CelestData		*gAAVSOalertsPtr;
+extern	long				gAAVSOalertsCnt;
+
+
+
 
 #ifdef __cplusplus
 }

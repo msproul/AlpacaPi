@@ -72,6 +72,7 @@
 //*	Feb 25,	2021	<MLS> Added remote shutter support to Put_AbortSlew()
 //*	Jun 15,	2021	<MLS> Added powerStatus and auxiliaryStatus commands
 //*	Jun 15,	2021	<MLS> Added Get_PowerStatus() & Get_AuxiliaryStatus()
+//*	Jun 23,	2021	<MLS> Updated dome driver cCommonProp.InterfaceVersion to 2
 //*****************************************************************************
 //*	cd /home/pi/dev-mark/alpaca
 //*	LOGFILE=logfile.txt
@@ -279,16 +280,21 @@ DomeDriver::DomeDriver(const int argDevNum)
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
-	cAzimuth_Destination		=	-1.0;		//*	must be >= to 0 to be valid
-	cParkAzimuth				=	0.0;
-	cHomeAzimuth				=	0.0;
-	cCurrentPWM					=	0;
-	cCurrentDirection			=	kRotateDome_CW;
-	cBumpSpeedAmount			=	1;
-	cTimeOfLastSpeedChange		=	0;
-	cTimeOfMovingStart			=	0;
+	strcpy(cCommonProp.Name,		"Dome");
+	strcpy(cCommonProp.Description,	"Generic Dome");
+	cCommonProp.InterfaceVersion	=	2;
 
-	cDomeConfig					=	kIsDome;
+
+	cAzimuth_Destination			=	-1.0;		//*	must be >= to 0 to be valid
+	cParkAzimuth					=	0.0;
+	cHomeAzimuth					=	0.0;
+	cCurrentPWM						=	0;
+	cCurrentDirection				=	kRotateDome_CW;
+	cBumpSpeedAmount				=	1;
+	cTimeOfLastSpeedChange			=	0;
+	cTimeOfMovingStart				=	0;
+
+	cDomeConfig						=	kIsDome;
 
 	//*	clear out all of the properties data
 	memset(&cDomeProp, 0, sizeof(TYPE_DomeProperties));
@@ -909,12 +915,15 @@ char		stateString[48];
 #ifdef _ENABLE_REMOTE_SHUTTER_
 	//====================================================================
 	//*	check to see if its time to update the shutter status
-	currentMilliSecs		=	millis();
-	timeSinceLastWhatever	=	currentMilliSecs - cTimeOfLastShutterUpdate;
-	if (timeSinceLastWhatever > (15 * 1000))
+	if (cShutterInfoValid)
 	{
-		GetRemoteShutterStatus();
-		cTimeOfLastShutterUpdate	=	millis();
+		currentMilliSecs		=	millis();
+		timeSinceLastWhatever	=	currentMilliSecs - cTimeOfLastShutterUpdate;
+		if (timeSinceLastWhatever > (15 * 1000))
+		{
+			GetRemoteShutterStatus();
+			cTimeOfLastShutterUpdate	=	millis();
+		}
 	}
 #endif // _ENABLE_REMOTE_SHUTTER_
 

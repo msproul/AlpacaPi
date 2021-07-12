@@ -149,6 +149,8 @@
 //*	Apr  3,	2021	<MLS> Updated camera driver to use camera property ccd temp
 //*	Jun 17,	2021	<MLS> Added Get_Flip() & Put_Flip()
 //*	Jun 17,	2021	<MLS> Flipping of image in camera now working
+//*	Jun 24,	2021	<MLS> Added AlpacaConnect() & AlpacaDisConnect() to cameradriver
+//*	Jun 24,	2021	<MLS> Reset a bunch of camera properies on DisConnect to make CONFORM happy
 //*****************************************************************************
 //*	Jan  1,	2119	<TODO> ----------------------------------------
 //*	Jun 26,	2119	<TODO> Add support for sub frames
@@ -293,6 +295,7 @@ const TYPE_CmdEntry	gCameraCmdTable[]	=
 	{	"pulseguide",				kCmd_Camera_pulseguide,				kCmdType_PUT	},
 	{	"startexposure",			kCmd_Camera_startexposure,			kCmdType_PUT	},
 	{	"stopexposure",				kCmd_Camera_stopexposure,			kCmdType_PUT	},
+	{	"subexposureduration",		kCmd_Camera_subexposureduration,	kCmdType_BOTH	},
 
 #ifdef _INCLUDE_ALPACA_EXTRAS_
 	//*	items added by MLS
@@ -338,6 +341,11 @@ int	mkdirErrCode;
 
 	//======================================================
 	//*	Start with the ASCOM properties
+
+	strcpy(cCommonProp.Name,		"CameraDriver");
+	strcpy(cCommonProp.Description,	"Camera");
+	cCommonProp.InterfaceVersion	=	3;
+
 	//*	set everything to false first
 	memset(&cCameraProp, 0, sizeof(TYPE_CameraProperties));
 
@@ -349,6 +357,7 @@ int	mkdirErrCode;
 	cCameraProp.ExposureMax_seconds	=	10000.0;
 	cCameraProp.CameraState			=	kALPACA_CameraState_Idle;
 	cCameraProp.PercentCompleted	=	-99;		//*	meaning invalid
+	cCameraProp.CanFastReadout		=	false;
 
 	//======================================================
 	cUpdateOtherDevices				=	true;
@@ -450,8 +459,6 @@ int	mkdirErrCode;
 	}
 
 
-	strcpy(cCommonProp.Name,		"CameraDriver");
-	strcpy(cCommonProp.Description,	"Camera");
 
 	strcpy(cDeviceManufAbrev,	"uknwn");
 	strcpy(cFileNamePrefix,		"TEST");
@@ -539,7 +546,29 @@ int	iii;
 //**************************************************************************************
 CameraDriver::~CameraDriver(void)
 {
+	//*	this really never gets called since we dont really have an exit command
 	CONSOLE_DEBUG(__FUNCTION__);
+	Cooler_TurnOff();
+}
+
+//*****************************************************************************
+bool	CameraDriver::AlpacaConnect(void)
+{
+//	CONSOLE_DEBUG(__FUNCTION__);
+	return(true);
+}
+
+
+//*****************************************************************************
+bool	CameraDriver::AlpacaDisConnect(void)
+{
+	//*	make CONFORM happy by "closing" out the image state
+	cCameraProp.ImageReady						=	false;
+	cCameraProp.Lastexposure_duration_us		=	0;
+	cCameraProp.Lastexposure_StartTime.tv_sec	=	0;
+	cCameraProp.StartX							=	0;
+	cCameraProp.StartY							=	0;
+	return(true);
 }
 
 
@@ -1177,6 +1206,11 @@ char				httpHeader[500];
 		case kCmd_Camera_stopexposure:			//*	Stops the current exposure
 			alpacaErrCode	=	Put_StopExposure(reqData, alpacaErrMsg);
 			break;
+
+		case kCmd_Camera_subexposureduration:
+			alpacaErrCode	=	kASCOM_Err_PropertyNotImplemented;
+			break;
+
 
 		//***********************************************************************************
 		//*	these are added and not part of the alpaca spec
@@ -2508,6 +2542,8 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 	alpacaErrCode	=	kASCOM_Err_PropertyNotImplemented;
+	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Property Not Implemented");
+//	CONSOLE_DEBUG(alpacaErrMsg);
 
 	return(alpacaErrCode);
 }
@@ -4275,29 +4311,73 @@ TYPE_ASCOM_STATUS	CameraDriver::Get_Fastreadout(TYPE_GetPutRequestData *reqData,
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
-	alpacaErrCode	=	Read_Fastreadout();
-	if (alpacaErrCode == 0)
+	if (reqData != NULL)
 	{
-		JsonResponse_Add_Bool(	reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								responseString,
-								cHighSpeedMode,
-								INCLUDE_COMMA);
+		if (cCameraProp.CanFastReadout)
+		{
+			alpacaErrCode	=	Read_Fastreadout();
+			if (alpacaErrCode == 0)
+			{
+				JsonResponse_Add_Bool(	reqData->socket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										responseString,
+										cHighSpeedMode,
+										INCLUDE_COMMA);
+			}
+			else
+			{
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Failed to read FastReadout:, camera-err=");
+				strcat(alpacaErrMsg, cLastCameraErrMsg);
+			}
+		}
+		else
+		{
+			alpacaErrCode	=	kASCOM_Err_PropertyNotImplemented;
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "FastReadOut not supported");
+		}
 	}
 	else
 	{
-		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Failed to read FastReadout:, camera-err=");
-		strcat(alpacaErrMsg, cLastCameraErrMsg);
+		alpacaErrCode	=	kASCOM_Err_InternalError;
 	}
-
 	return(alpacaErrCode);
 }
 
 //*****************************************************************************
 TYPE_ASCOM_STATUS	CameraDriver::Put_Fastreadout(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
 {
-TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
+bool				fastReadOutFound;
+char				myFastReadOut[32];
+bool				newFastReadOutState;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+	strcpy(myFastReadOut, "not specified");
+	if (reqData != NULL)
+	{
+		if (cCameraProp.CanFastReadout)
+		{
+			alpacaErrCode		=	kASCOM_Err_Success;
+			fastReadOutFound	=	GetKeyWordArgument(	reqData->contentData,
+													"FastReadout",
+													myFastReadOut,
+													(sizeof(myFastReadOut) -1));
+			if (fastReadOutFound)
+			{
+				newFastReadOutState	=	IsTrueFalse(myFastReadOut);
+				CONSOLE_DEBUG_W_NUM("newFastReadOutState\t=", newFastReadOutState);
+			}
+		}
+		else
+		{
+			alpacaErrCode	=	kASCOM_Err_PropertyNotImplemented;
+		}
+	}
+	else
+	{
+		alpacaErrCode	=	kASCOM_Err_InternalError;
+	}
 
 	return(alpacaErrCode);
 }

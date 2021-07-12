@@ -31,7 +31,9 @@
 
 #include	"alpaca_defs.h"
 #include	"discoverythread.h"
+#include	"sendrequest_lib.h"
 
+#include	"windowtab.h"
 #include	"windowtab_alpacalist.h"
 
 #include	"controller.h"
@@ -43,8 +45,6 @@
 #include	"controller_switch.h"
 #include	"controller_telescope.h"
 #include	"controller_skytravel.h"
-
-
 
 //**************************************************************************************
 WindowTabAlpacaList::WindowTabAlpacaList(	const int	xSize,
@@ -72,8 +72,6 @@ WindowTabAlpacaList::~WindowTabAlpacaList(void)
 {
 	CONSOLE_DEBUG(__FUNCTION__);
 }
-
-
 
 //**************************************************************************************
 void	WindowTabAlpacaList::SetupWindowControls(void)
@@ -126,7 +124,7 @@ int		clmnHdrWidth;
 	SetWidgetText(		kAlpacaList_ClmTitle2,	"/etc/hosts");
 	SetWidgetText(		kAlpacaList_ClmTitle3,	"type");
 	SetWidgetText(		kAlpacaList_ClmTitle4,	"name");
-	SetWidgetText(		kAlpacaList_ClmTitle5,	"TBD");
+	SetWidgetText(		kAlpacaList_ClmTitle5,	"InterfaceVersion");
 	yLoc			+=	cRadioBtnHt;
 	yLoc			+=	2;
 
@@ -202,6 +200,93 @@ int		clmnHdrWidth;
 	//*	IP address
 //	SetIPaddressBoxes(kAlpacaList_IPaddr, kAlpacaList_Readall, kAlpacaList_AlpacaDrvrVersion, -1);
 //	SetIPaddressBoxes(kAlpacaList_IPaddr, kAlpacaList_Readall, -1, -1);
+}
+
+//*****************************************************************************
+void	ToLowerStr(char *theString)
+{
+int		ii;
+
+	ii	=	0;
+	while (theString[ii] > 0)
+	{
+		theString[ii]	=	tolower(theString[ii]);
+		ii++;
+	}
+}
+
+//*****************************************************************************
+void	GetInterfaceVersion(TYPE_REMOTE_DEV *remoteDevice)
+{
+SJP_Parser_t	jsonParser;
+bool			validData;
+int				jjj;
+char			getFunctionString[256];
+int				alpacaErrorCode;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	SJP_Init(&jsonParser);
+	//	http://wo102:6800/api/v1/filterwheel/0/interfaceversion
+	sprintf(getFunctionString, "/api/v1/%s/%d/interfaceversion",	remoteDevice->deviceTypeStr,
+																	remoteDevice->alpacaDeviceNum);
+
+	ToLowerStr(getFunctionString);
+//	CONSOLE_DEBUG(getFunctionString);
+	validData	=	GetJsonResponse(	&remoteDevice->deviceAddress,
+										remoteDevice->port,
+										getFunctionString,
+										NULL,
+										&jsonParser);
+	if (validData)
+	{
+//		CONSOLE_DEBUG_W_NUM("tokenCount_Data", jsonParser.tokenCount_Data);
+		for (jjj=0; jjj<jsonParser.tokenCount_Data; jjj++)
+		{
+			if (strcasecmp(jsonParser.dataList[jjj].keyword, "Value") == 0)
+			{
+				remoteDevice->interfaceVersion	=	atoi(jsonParser.dataList[jjj].valueString);
+			}
+			else if (strcasecmp(jsonParser.dataList[jjj].keyword, "ErrorNumber") == 0)
+			{
+				alpacaErrorCode	=	atoi(jsonParser.dataList[jjj].valueString);
+				if (alpacaErrorCode != 0)
+				{
+					CONSOLE_DEBUG_W_NUM("Alpaca error code", alpacaErrorCode);
+					remoteDevice->interfaceVersion	=	-1;
+				}
+			}
+			else
+			{
+			//	CONSOLE_DEBUG(jsonParser.dataList[jjj].keyword);
+			//	CONSOLE_DEBUG(jsonParser.dataList[jjj].valueString);
+			}
+		}
+	}
+	else
+	{
+		CONSOLE_DEBUG("Data not valid");
+	}
+}
+
+
+//*****************************************************************************
+void	WindowTabAlpacaList::RunBackgroundTasks(void)
+{
+int		iii;
+
+
+	for (iii=0; iii<cAlpacaDevCnt; iii++)
+	{
+		if (cRemoteDeviceList[iii].validEntry)
+		{
+			if (cRemoteDeviceList[iii].interfaceVersion == 0)
+			{
+				GetInterfaceVersion(&cRemoteDeviceList[iii]);
+				break;
+			}
+		}
+	}
 }
 
 //*****************************************************************************
@@ -381,7 +466,6 @@ bool	windowExists;
 			case kDeviceType_undefined:
 			case kDeviceType_last:
 				break;
-
 			}
 		}
 		else
@@ -393,7 +477,6 @@ bool	windowExists;
 	}
 }
 
-
 //**************************************************************************************
 void	WindowTabAlpacaList::ClearRemoteDeviceList(void)
 {
@@ -403,7 +486,6 @@ int		iii;
 	{
 		SetWidgetTextColor(		iii,	CV_RGB(255,	255,	255));
 		SetWidgetText(			iii,	"");
-
 	}
 
 	for (iii=0; iii<kMaxDeviceCnt; iii++)
@@ -493,11 +575,15 @@ int		myDevCount;
 		{
 			inet_ntop(AF_INET, &(cRemoteDeviceList[iii].deviceAddress.sin_addr), ipAddrStr, INET_ADDRSTRLEN);
 
-			sprintf(textString, "%s:%d\t%s\t%s\t%s",	ipAddrStr,
-					cRemoteDeviceList[iii].port,
-					cRemoteDeviceList[iii].hostName,
-					cRemoteDeviceList[iii].deviceTypeStr,
-					cRemoteDeviceList[iii].deviceNameStr);
+			sprintf(textString, "%s:%d\t%s\t%s\t%s\t%d",
+									ipAddrStr,
+									cRemoteDeviceList[iii].port,
+									cRemoteDeviceList[iii].hostName,
+									cRemoteDeviceList[iii].deviceTypeStr,
+									cRemoteDeviceList[iii].deviceNameStr,
+									cRemoteDeviceList[iii].interfaceVersion);
+
+
 			SetWidgetText(boxId, textString);
 
 
@@ -601,6 +687,15 @@ static  int RemoteObjectQsortProc(const void *e1, const void *e2)
 		break;
 
 	case 4:
+		returnValue	=	obj1->interfaceVersion -obj2->interfaceVersion;
+		if (returnValue == 0)
+		{
+			returnValue	=	strcasecmp(obj1->deviceTypeStr, obj2->deviceTypeStr);
+			if (returnValue == 0)
+			{
+				returnValue	=	strcasecmp(obj1->deviceNameStr, obj2->deviceNameStr);
+			}
+		}
 		break;
 	}
 	//*	if they are the same, sort by address
@@ -648,9 +743,4 @@ void	WindowTabAlpacaList::UpdateSortOrder(void)
 	}
 
 }
-
-
-
-
-
 

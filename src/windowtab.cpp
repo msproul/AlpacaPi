@@ -163,14 +163,11 @@ void WindowTab::ComputeWidgetColumns(const int windowWitdh)
 	cFullWidthBtn	=	windowWitdh - cClm1_offset - 1;
 }
 
-
 //**************************************************************************************
 void WindowTab::RunBackgroundTasks(void)
 {
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 }
-
-
 
 //**************************************************************************************
 void	WindowTab::SetWidget(const int widgetIdx, int left, int top, int width, int height)
@@ -361,7 +358,6 @@ int		iii;
 	}
 }
 
-
 //**************************************************************************************
 void	WindowTab::SetWidgetNumber(const int widgetIdx, const int number)
 {
@@ -371,6 +367,14 @@ char	lineBuff[64];
 	SetWidgetText(widgetIdx, lineBuff);
 }
 
+//**************************************************************************************
+void	WindowTab::SetWidgetNumber(const int widgetIdx, const long number)
+{
+char	lineBuff[64];
+
+	sprintf(lineBuff, "%ld", number);
+	SetWidgetText(widgetIdx, lineBuff);
+}
 
 //**************************************************************************************
 void	WindowTab::SetWidgetNumber(const int widgetIdx, const double number)

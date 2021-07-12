@@ -14,11 +14,12 @@
 //*	that you agree that the author(s) have no warranty, obligations or liability.  You
 //*	must determine the suitability of this source code for your use.
 //*
-//*	Redistributions of this source code must retain this copyright notice.
+//*	Re-distributions of this source code must retain this copyright notice.
 //*****************************************************************************
 //*	Edit History
 //*****************************************************************************
 //*	Apr 21,	2020	<MLS> Created windowtab_STsettings.cpp
+//*	Jul  5,	2021	<MLS> Added star count table to settings tab
 //*****************************************************************************
 
 
@@ -34,6 +35,7 @@
 #include	"controller_skytravel.h"
 #include	"observatory_settings.h"
 
+#include	"SkyStruc.h"
 
 #define	kSkyT_SettingsHeight	100
 
@@ -145,6 +147,22 @@ char	textString[64];
 
 	SetWidgetOutlineBox(kSkyT_Settings_SiteInfoOutline, kSkyT_Settings_LatLonTitle, (kSkyT_Settings_SiteInfoOutline -1));
 
+	//-----------------------------------------------------
+	if (gObseratorySettings.ValidLatLon)
+	{
+		SetWidgetNumber(kSkyT_Settings_LatValue1, gObseratorySettings.Latitude);
+		SetWidgetNumber(kSkyT_Settings_LonValue1, gObseratorySettings.Longitude);
+
+		FormatHHMMSS(gObseratorySettings.Latitude, textString, true);
+		SetWidgetText(		kSkyT_Settings_LatValue2,	textString);
+
+		FormatHHMMSS(gObseratorySettings.Longitude, textString, true);
+		SetWidgetText(		kSkyT_Settings_LonValue2,	textString);
+
+		SetWidgetText(		kSkyT_Settings_TimeZoneTxt,	gObseratorySettings.TimeZone);
+		SetWidgetNumber(	kSkyT_Settings_UTCoffset,	gObseratorySettings.UTCoffset);
+
+	}
 
 	//-----------------------------------------------------
 	yLoc	+=	12;
@@ -169,21 +187,79 @@ char	textString[64];
 	SetWidgetOutlineBox(kSkyT_Settings_EarthOutline, kSkyT_Settings_EarthLable, (kSkyT_Settings_EarthOutline -1));
 
 
-	if (gObseratorySettings.ValidLatLon)
+	//-----------------------------------------------------
+	yLoc	+=	12;
+	xLoc	=	5;
+	iii		=	kSkyT_Settings_GridLable;
+	while (iii < kSkyT_Settings_GridOutline)
 	{
-		SetWidgetNumber(kSkyT_Settings_LatValue1, gObseratorySettings.Latitude);
-		SetWidgetNumber(kSkyT_Settings_LonValue1, gObseratorySettings.Longitude);
+		SetWidget(		iii,	xLoc,			yLoc,		labelWidth,		cRadioBtnHt);
+		SetWidgetFont(	iii,	kFont_RadioBtn);
+		SetWidgetType(	iii,	kWidgetType_RadioButton);
 
-		FormatHHMMSS(gObseratorySettings.Latitude, textString, true);
-		SetWidgetText(		kSkyT_Settings_LatValue2,	textString);
-
-		FormatHHMMSS(gObseratorySettings.Longitude, textString, true);
-		SetWidgetText(		kSkyT_Settings_LonValue2,	textString);
-
-		SetWidgetText(		kSkyT_Settings_TimeZoneTxt,	gObseratorySettings.TimeZone);
-		SetWidgetNumber(	kSkyT_Settings_UTCoffset,	gObseratorySettings.UTCoffset);
-
+		yLoc			+=	cRadioBtnHt;
+		yLoc			+=	2;
+		iii++;
 	}
+	SetWidgetType(		kSkyT_Settings_GridLable,	kWidgetType_Text);
+	SetWidgetText(		kSkyT_Settings_GridLable,	"Grid Lines");
+	SetWidgetText(		kSkyT_Settings_GridSolid,	"Solid Lines");
+	SetWidgetText(		kSkyT_Settings_GridDashed,	"Dashed Lines");
+	SetWidgetOutlineBox(kSkyT_Settings_GridOutline, kSkyT_Settings_GridLable, (kSkyT_Settings_GridOutline -1));
+
+
+
+	//-----------------------------------------------------
+	//*	data value settings
+	yLoc		=	cTabVertOffset;
+	yLoc		+=	cTitleHeight;
+	yLoc		+=	6;
+	xLoc		=	cWidth / 2;
+	labelWidth	=	200;
+
+	SetWidget(		kSkyT_Settings_DataTitle,	xLoc,		yLoc,	(labelWidth + 75),		cBoxHeight);
+	SetWidgetFont(	kSkyT_Settings_DataTitle,	kFont_Medium);
+	SetWidgetType(	kSkyT_Settings_DataTitle,	kWidgetType_Text);
+	SetWidgetText(	kSkyT_Settings_DataTitle,	"Star Data counts");
+	yLoc			+=	cBoxHeight;
+	yLoc			+=	2;
+
+	iii			=	kSkyT_Settings_DataAAVSO_txt;
+	while (iii < kSkyT_Settings_DataOutLine)
+	{
+		SetWidget(		iii,	xLoc,			yLoc,		labelWidth,		cBoxHeight);
+		SetWidgetFont(	iii,	kFont_Medium);
+		SetWidgetType(	iii,	kWidgetType_Text);
+		SetWidgetJustification(iii, kJustification_Left);
+		iii++;
+
+		SetWidget(		iii,	(xLoc + labelWidth),	yLoc,		75,		cBoxHeight);
+		SetWidgetFont(	iii,	kFont_Medium);
+		SetWidgetType(	iii,	kWidgetType_Text);
+		iii++;
+
+
+		yLoc			+=	cBoxHeight;
+		yLoc			+=	2;
+	}
+	SetWidgetOutlineBox(kSkyT_Settings_DataOutLine, kSkyT_Settings_DataTitle, (kSkyT_Settings_DataOutLine -1));
+
+	//*	set the star counts
+	SetWidgetText(		kSkyT_Settings_DataAAVSO_txt,		"AAVSO Data count");
+	SetWidgetNumber(	kSkyT_Settings_DataAAVSO_cnt,		gAAVSOalertsCnt);
+
+	SetWidgetText(		kSkyT_Settings_DataDRAPER_txt,		"DRAPER Data count");
+	SetWidgetNumber(	kSkyT_Settings_DataDRAPER_cnt,		gDraperObjectCount);
+
+	SetWidgetText(		kSkyT_Settings_DataHipparcos_txt,	"Hipparcos Data count");
+	SetWidgetNumber(	kSkyT_Settings_DataHipparcos_cnt,	gHipObjectCount);
+
+	SetWidgetText(		kSkyT_Settings_DataNGC_txt,			"NGC Data count");
+	SetWidgetNumber(	kSkyT_Settings_DataNGC_cnt,			gNGCobjectCount);
+
+	SetWidgetText(		kSkyT_Settings_DataYALE_txt,		"YALE Data count");
+	SetWidgetNumber(	kSkyT_Settings_DataYALE_cnt,		gYaleStarCount);
+
 
 	SetAlpacaLogoBottomCorner(kSkyT_Settings_AlpacaLogo);
 
@@ -206,6 +282,15 @@ void	WindowTabSTsettings::ProcessButtonClick(const int buttonIdx)
 			UpdateSettings();
 			break;
 
+		case kSkyT_Settings_GridSolid:
+			gDashedLines	=	false;
+			UpdateSettings();
+			break;
+
+		case kSkyT_Settings_GridDashed:
+			gDashedLines	=	true;
+			UpdateSettings();
+			break;
 	}
 }
 
@@ -217,6 +302,9 @@ void	WindowTabSTsettings::UpdateSettings(void)
 	SetWidgetChecked(	kSkyT_Settings_EarthThick,		(gST_DispOptions.EarthDispMode == 1));
 	SetWidgetChecked(	kSkyT_Settings_EarthSolidBrn,	(gST_DispOptions.EarthDispMode == 2));
 	SetWidgetChecked(	kSkyT_Settings_EarthSolidGrn,	(gST_DispOptions.EarthDispMode == 3));
+
+	SetWidgetChecked(	kSkyT_Settings_GridSolid,		(!gDashedLines));
+	SetWidgetChecked(	kSkyT_Settings_GridDashed,		(gDashedLines));
 
 	ForceUpdate();
 

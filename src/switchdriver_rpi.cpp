@@ -29,6 +29,7 @@
 //*	Apr 16,	2020	<MLS> Added ability to disable PWM analog switch via _ENABLE_PWM_SWITCH_
 //*	Dec  1,	2020	<MLS> Pins are reset to OFF on startup
 //*	Jan 11,	2021	<MLS> Added support for alternate high/low for relay on/off
+//*	Jun 24,	2021	<MLS> Updated SetSwitchValue() to handle on/off values
 //*****************************************************************************
 
 #ifdef _ENABLE_SWITCH_
@@ -302,7 +303,12 @@ void	SwitchDriverRPi::SetSwitchValue(const int switchNumber, double switchValue)
 			CONSOLE_DEBUG_W_NUM("Setting PWM value to ", pwmValueInt);
 			pwmWrite(kHWpin_PowerPWM,	pwmValueInt);
 		}
+		else
 #endif // _ENABLE_PWM_SWITCH_
+		{
+			//*	if its not an anlog switch, turn it on or off. 0=off anything else = on
+			SetSwitchState(switchNumber, (switchValue > 0.0));
+		}
 	}
 	else
 	{

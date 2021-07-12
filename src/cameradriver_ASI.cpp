@@ -484,7 +484,7 @@ ASI_CONTROL_CAPS	controlCaps;
 				break;
 
 			case ASI_HIGH_SPEED_MODE:
-				cCameraProp.CanFastReadout		=	true;
+			//	cCameraProp.CanFastReadout		=	true;
 				break;
 
 			case ASI_COOLER_POWER_PERC:

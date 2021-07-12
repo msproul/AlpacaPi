@@ -49,6 +49,7 @@ enum
 	kSkyTravel_Btn_Messier,
 	kSkyTravel_Btn_YaleCat,
 	kSkyTravel_Btn_Hipparcos,
+	kSkyTravel_Btn_Draper,
 	kSkyTravel_Btn_AAVSOalerts,
 
 	kSkyTravel_UTCtime,
@@ -171,7 +172,7 @@ class WindowTabSkyTravel: public WindowTab
 				void	DrawHorizon(void);
 				void	DrawHorizontalArc(double elevAngle, double startAz, double endAz);
 				void	DrawVerticalArc(double azimuthAngle, double startElev, double endElev);
-				int		DrawGreatCircle(double declinationAngle, bool rainbow=false);
+				int		DrawGreatCircle(double declinationAngle_rad, bool forceNumberDraw=false);
 				int		DrawNorthSouthLine(double rightAscen);
 
 				void	PlotSkyObjects(	TYPE_CelestData	*objectptr,
@@ -293,53 +294,7 @@ class WindowTabSkyTravel: public WindowTab
 		TYPE_Time			cCurrentTime;
 		TYPE_LatLon			cCurrLatLon;
 
-		//-----------------------------------------------------------
-		//*	star information
-
 		double				cDisplayedMagnitudeLimit;
-
-		TYPE_CelestData		*cStarDataPtr;
-		long				cStarCount;
-
-		TYPE_CelestData		*cYaleStarDataPtr;
-		long				cYaleStarCount;
-
-		TYPE_Constelation	*constelations;
-		short				constelationCount;
-
-		TYPE_CelestData		*constStarPtr;
-		long				constStarCount;
-
-		TYPE_CelestData		*cNGCobjectPtr;
-		long				cNGCobjectCount;
-
-		//*	Hipparcos
-		TYPE_CelestData		*cHipObjectPtr;
-		long				cHipObjectCount;
-
-		//*	Hipparcos
-		TYPE_CelestData		*cMessierOjbectPtr;
-		long				cMessierOjbectCount;
-
-#ifdef _ENABLE_HYG_
-		//*	HYG
-		TYPE_CelestData		*cHYGObjectPtr;
-		long				cHYGObjectCount;
-#endif // _ENABLE_HYG_
-
-		//*	Henry Draper
-		TYPE_CelestData		*cDraperObjectPtr;
-		long				cDraperObjectCount;
-
-		TYPE_CelestData		*cSpecialObjectPtr;
-		long				cSpecialObjectCount;
-
-		TYPE_CelestData		*cAAVSOalertsPtr;
-		long				cAAVSOalertsCnt;
-
-
-
-
 
 		sun_moon_struct		cSunMonStruct;
 		planet_struct		cPlanetStruct[kPlanetObjectCnt];

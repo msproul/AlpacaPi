@@ -84,7 +84,9 @@ RotatorDriver::RotatorDriver(const int argDevNum)
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
-	strcpy(cCommonProp.Name, "Rotator");
+	strcpy(cCommonProp.Name,		"Rotator");
+	strcpy(cCommonProp.Description,	"Generic Rotator");
+	cCommonProp.InterfaceVersion	=	2;
 
 	memset(&cRotatorProp, 0, sizeof(TYPE_RotatorProperties));
 

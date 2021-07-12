@@ -93,6 +93,7 @@ class WindowTabAlpacaList: public WindowTab
 								CvScalar	backGrndColor,
 								const char	*windowName);
 		virtual	~WindowTabAlpacaList(void);
+		virtual	void	RunBackgroundTasks(void);
 
 		virtual	void	SetupWindowControls(void);
 		virtual	void	ProcessButtonClick(const int buttonIdx);

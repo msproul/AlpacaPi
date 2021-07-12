@@ -121,6 +121,11 @@
 //*	Apr  8,	2021	<MLS> Added GetMyHostName()
 //*	Jun 19,	2021	<MLS> Added _ENABLE_LIVE_CONTROLLER_
 //*****************************************************************************
+//*	to install code blocks 20
+//*	Step 1: sudo add-apt-repository ppa:codeblocks-devs/release
+//*	Step 2: sudo apt-get update
+//*	Step 3: sudo apt-get install codeblocks codeblocks-contrib
+//*****************************************************************************
 
 #include	<stdio.h>
 #include	<stdlib.h>
@@ -582,10 +587,20 @@ char				argumentString[32];
 		if (connectFlag)
 		{
 			AlpacaConnect();
+			LogEvent(	reqData->deviceType,
+						"Connect",
+						NULL,
+						kASCOM_Err_Success,
+						"");
 		}
 		else
 		{
 			AlpacaDisConnect();
+			LogEvent(	reqData->deviceType,
+						"Dis-Connect",
+						NULL,
+						kASCOM_Err_Success,
+						"");
 		}
 	}
 
@@ -3256,8 +3271,8 @@ struct tm	*linuxTime;
 
 //*****************************************************************************
 //	DATE-OBS	String - The UTC date and time at the start of the exposure in
-//	the ISO standard 8601 format: '2002-09-07T15:42:17.123' (CCYY-MM-
-//	DDTHH:MM:SS.SSS).
+//	the ISO standard 8601 format: '2002-09-07T15:42:17.123'
+//	(CCYY-MM-DDTHH:MM:SS.SSS).
 //*****************************************************************************
 void	FormatTimeStringISO8601(struct timeval *tv, char *timeString)
 {

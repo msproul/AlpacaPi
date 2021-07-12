@@ -2251,6 +2251,7 @@ char		currentTabName[64]	=	"";
 				break;
 
 			//	ctrl-s   ^s
+			case 'd':
 			case 's':
 				CONSOLE_DEBUG("Save file");
 				GetCurrentTabName(currentTabName);
@@ -2280,9 +2281,7 @@ char		currentTabName[64]	=	"";
 //		CONSOLE_DEBUG(__FUNCTION__);
 		if (cCurTextInput_Widget >= 0)
 		{
-
 			HandleKeyDownInTextWidget(cCurrentTabNum, cCurTextInput_Widget, keyPressed);
-
 		}
 		else if (cCurrentTabObjPtr != NULL)
 		{

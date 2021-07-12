@@ -48,7 +48,7 @@
 #include	"SkyStruc.h"
 #include	"aavso_data.h"
 
-#define		kAAVSO_starCnt	300
+#define		kAAVSO_starCnt	1000
 
 #define	RADIANS(degrees)	((degrees) * (M_PI / 180.0))
 #define	DEGREES(radians)	((radians) * (180.0 / M_PI))
@@ -256,7 +256,7 @@ int					sLen;
 int					ccc;
 char				filePath[64];
 int					alertIdx;
-int					maxStarNameLen;
+//int					maxStarNameLen;
 TYPE_CelestData		currentStarEntry;
 int					linesForCurrEntry;
 
@@ -269,8 +269,9 @@ int					linesForCurrEntry;
 	targetData			=	NULL;
 	*objectCount		=	0;
 	filePointer			=	fopen(filePath, "r");
-	maxStarNameLen		=	0;
+//	maxStarNameLen		=	0;
 	linesForCurrEntry	=	0;
+	alertIdx			=	-1;
 	if (filePointer != NULL)
 	{
 		bufferSize	=	kAAVSO_starCnt * sizeof(TYPE_CelestData);
@@ -327,6 +328,7 @@ int					linesForCurrEntry;
 							else
 							{
 								CONSOLE_DEBUG("No room in table");
+							//	CONSOLE_ABORT(__FUNCTION__);
 							}
 						}
 						else
@@ -342,7 +344,6 @@ int					linesForCurrEntry;
 						ProcessOneLine(lineBuff, &currentStarEntry);
 						linesForCurrEntry++;
 					}
-
 				}
 			}
 			*objectCount	=	alertIdx;
@@ -354,8 +355,8 @@ int					linesForCurrEntry;
 		CONSOLE_DEBUG_W_STR("Failed to read:", filePath);
 	}
 	CONSOLE_DEBUG_W_NUM("linesRead		\t=",	linesRead);
-	CONSOLE_DEBUG_W_NUM("maxStarNameLen\t=",	maxStarNameLen);
-	CONSOLE_DEBUG_W_NUM("total alerts found\t=",	alertIdx);
+//	CONSOLE_DEBUG_W_NUM("maxStarNameLen\t=",	maxStarNameLen);
+	CONSOLE_DEBUG_W_NUM("total alerts found\t=",alertIdx);
 
 //	CONSOLE_ABORT(__FUNCTION__);
 

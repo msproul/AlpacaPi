@@ -37,6 +37,7 @@
 //*	Feb 29,	2020	<MLS> Added moonlite switch info to ReadAll
 //*	Apr  2,	2020	<MLS> CONFORM-focuser -> PASSED!!!!!!!!!!!!!!!!!!!!!
 //*	Jan 24,	2021	<MLS> Converted FocuserDriver to use properties struct
+//*	Jun 23,	2021	<MLS> Updated FocuserDriver cCommonProp.InterfaceVersion to 3
 //*****************************************************************************
 
 #ifdef _ENABLE_FOCUSER_
@@ -105,6 +106,8 @@ FocuserDriver::FocuserDriver(const int argDevNum)
 	CONSOLE_DEBUG(__FUNCTION__);
 
 	strcpy(cCommonProp.Name, "Focuser");
+	strcpy(cCommonProp.Description,	"Generic Focuser");
+	cCommonProp.InterfaceVersion	=	3;
 
 	memset(&cFocuserProp, 0, sizeof(TYPE_FocuserProperties));
 
@@ -115,9 +118,6 @@ FocuserDriver::FocuserDriver(const int argDevNum)
 
 	cPrevFocuserPosition		=	-1;
 	cNewFocuserPosition			=	-1;
-//-	cFocuserStepSize			=	0.0;
-//-	cHasTempComp				=	false;
-//-	cTempCompEnabled			=	false;
 
 	//*	all of the following is for support of Moonlite NiteCrawler
 	cIsNiteCrawler				=	false;

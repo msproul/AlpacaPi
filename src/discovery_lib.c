@@ -22,11 +22,9 @@
 //*	Jun  2,	2020	<MLS> Added timeout to SendGetRequest()
 //*	Aug 13,	2020	<MLS> Added ReadExternalIPlist()
 //*	Aug 13,	2020	<MLS> Added Added ability to read external IP address from text file
+//*	Jun 24,	2020	<MLS> Removed _INCLUDE_WIRELESS_SUBNET_
 //*****************************************************************************
 
-#ifndef _VIDEO_CONTROLLER_WORK_
-//	#define _INCLUDE_WIRELESS_SUBNET_
-#endif // _VIDEO_CONTROLLER_WORK_
 
 
 #include <stdio.h>
@@ -684,25 +682,6 @@ int					bytesWritten;
 
 	}
 
-#ifdef _INCLUDE_WIRELESS_SUBNET_
-#error "This should not be enabled"
-	//*	this is the address of the door controller on another subnet
-	from.sin_addr.s_addr	=	htonl((192 << 24) + (168 << 16) + (50 << 8) + 46);
-	inet_ntop(AF_INET, &(from.sin_addr), str, INET_ADDRSTRLEN);
-//				write(1, str, strlen(str));
-//				write(1, "\n", 1);
-//		CONSOLE_DEBUG_W_STR("str=", str);
-
-	strcpy(jsonParser.dataList[0].keyword, "ALPACAPORT");
-	strcpy(jsonParser.dataList[0].valueString, "6800");
-	AddUnitToList(&from, &jsonParser);
-
-	from.sin_addr.s_addr	=	htonl((192 << 24) + (168 << 16) + (50 << 8) + 77);
-	inet_ntop(AF_INET, &(from.sin_addr), str, INET_ADDRSTRLEN);
-	AddUnitToList(&from, &jsonParser);
-
-
-#endif // _INCLUDE_WIRELESS_SUBNET_
 	ReadExternalIPlist();
 
 	//*	find the names that go along with the addresses
@@ -752,7 +731,6 @@ struct sockaddr_in	from;
 			if ((slen > 6) && (lineBuff[0] != '#'))
 			{
 				SJP_Init(&jsonParser);
-				from.sin_addr.s_addr	=	htonl((192 << 24) + (168 << 16) + (50 << 8) + 46);
 				inet_pton(AF_INET, lineBuff, &(from.sin_addr));
 
 				inet_ntop(AF_INET, &(from.sin_addr), outputIPaddr, INET_ADDRSTRLEN);

@@ -15,6 +15,7 @@ int		replaceCnt;
 int		charCnt;
 int		brktCntInLine;
 
+	printf("\n");
 	printf("#JSON data reformatted by %s, written by Mark Sproul, msproul@skychariot.com\r\n", __FILE__);
 	printf("#The JSON data must be in this format to be understood by SkyTravel\n");
 

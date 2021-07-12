@@ -556,6 +556,7 @@ int				myRotatorDesiredPotion;
 				break;
 
 			case kNiteCrawlerTab_Zero:
+				//*	reset the motor values
 				focusController->ZeroMotorValues();
 				break;
 

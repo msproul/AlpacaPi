@@ -291,7 +291,7 @@ ROR_OBJECTS=												\
 #pragma mark make alpacapi  C++ linux-x86
 alpacapi		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
 alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
-alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_ATIK_
+#alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_ATIK_
 alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
 alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_CALIBRATION_
 alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_DISCOVERY_QUERRY_
@@ -344,7 +344,7 @@ alpacapi		:	$(CPP_OBJECTS)				\
 allcam		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
 allcam		:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
 allcam		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
-allcam		:		DEFINEFLAGS		+=	-D_ENABLE_ATIK_
+#allcam		:		DEFINEFLAGS		+=	-D_ENABLE_ATIK_
 allcam		:		DEFINEFLAGS		+=	-D_ENABLE_FLIR_
 allcam		:		DEFINEFLAGS		+=	-D_ENABLE_QHY_
 #allcam		:		DEFINEFLAGS		+=	-D_ENABLE_SONY_

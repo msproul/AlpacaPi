@@ -14,7 +14,7 @@
 //*	that you agree that the author(s) have no warranty, obligations or liability.  You
 //*	must determine the suitability of this source code for your use.
 //*
-//*	Redistributions of this source code must retain this copyright notice.
+//*	Re-distributions of this source code must retain this copyright notice.
 //*****************************************************************************
 //*	Edit History
 //*****************************************************************************
@@ -51,6 +51,9 @@
 //*	Mar  9,	2021	<MLS> Camera Field Of View overlay on star map working
 //*	Mar 11,	2021	<MLS> Clif suggested a different way of drawing the FOV
 //*	Apr 10,	2021	<MLS> Added support for AAVSO Target Tool Alerts
+//*	Jun 26,	2021	<MLS> Fixed bug in old style constelation drawing, only showed up in 32 bit
+//*	Jul  6,	2021	<MLS> Added forceNumber option to DrawGreatCircle()
+//*	Jul  6,	2021	<MLS> Added South Pole circles
 //*****************************************************************************
 //*	TODO
 //*			star catalog lists
@@ -124,7 +127,7 @@ double	gDomeAzimuth_degrees	=	90.0;
 SkyTravelDispOptions	gST_DispOptions;
 
 
-static bool		gDashedLines	=	false;
+bool		gDashedLines	=	false;
 static double	GetRA_DEC_detla(int viewIndex);
 
 
@@ -227,7 +230,15 @@ static const double	gDeltaPlanet[kPlanetObjectCnt]	=
 static	TYPE_CelestData	*gZodiacPtr	=	NULL;
 
 
-
+#define		CHECK_FOR_INIT(x, y)		\
+	if (x != NULL)						\
+	{									\
+		CONSOLE_ABORT("X is not NULL");	\
+	}									\
+	if (y != 0)						\
+	{									\
+		CONSOLE_ABORT("Y is not zero");	\
+	}									\
 
 //**************************************************************************************
 WindowTabSkyTravel::WindowTabSkyTravel(	const int	xSize,
@@ -255,37 +266,23 @@ int		ii;
 	cLastUpdateTime_ms		=	0;
 	cLastClockUpdateTime_ms	=	0;
 	cNightMode				=	false;
-	cStarDataPtr			=	NULL;
-	cStarCount				=	0;
-	constelations			=	NULL;
-	constelationCount		=	0;
-	constStarPtr			=	NULL;
-	constStarCount			=	0;
-	cNGCobjectPtr			=	NULL;
-	cNGCobjectCount			=	0;
-	cHipObjectPtr			=	NULL;
-	cHipObjectCount			=	0;
+	gStarDataPtr			=	NULL;
+	gStarCount				=	0;
 
-	cYaleStarDataPtr		=	NULL;
-	cYaleStarCount			=	0;
-
-	cAAVSOalertsPtr			=	NULL;
-	cAAVSOalertsCnt			=	0;
-
-	cMessierOjbectPtr		=	NULL;
-	cMessierOjbectCount		=	0;
-
-	cDraperObjectPtr		=	NULL;
-	cDraperObjectCount		=	0;
-
-	cSpecialObjectPtr		=	NULL;
-	cSpecialObjectCount		=	0;
+	CHECK_FOR_INIT(gConstStarPtr,		gConstStarCount);
+	CHECK_FOR_INIT(gNGCobjectPtr,		gNGCobjectCount);
+	CHECK_FOR_INIT(gHipObjectPtr,		gHipObjectCount);
+	CHECK_FOR_INIT(gYaleStarDataPtr,	gYaleStarCount);
+	CHECK_FOR_INIT(gAAVSOalertsPtr,		gAAVSOalertsCnt);
+	CHECK_FOR_INIT(gMessierOjbectPtr,	gMessierOjbectCount);
+	CHECK_FOR_INIT(gDraperObjectPtr,	gDraperObjectCount);
+	CHECK_FOR_INIT(gSpecialObjectPtr,	gSpecialObjectCount);
 
 	cCameraFOVarrayPtr		=	NULL;
 
 #ifdef _ENABLE_HYG_
-	cHYGObjectPtr			=	NULL;
-	cHYGObjectCount			=	0;
+	gHYGObjectPtr			=	NULL;
+	gHYGObjectCount			=	0;
 #endif // _ENABLE_HYG_
 
 	cMagmin					=	0;
@@ -374,8 +371,8 @@ int		ii;
 	cWind_height	=	ySize - 75;
 
 
-	cStarDataPtr	=	GetDefaultStarData(&cStarCount, &cCurrentTime);
-	CONSOLE_DEBUG_W_LONG("cStarCount\t=", cStarCount);
+	gStarDataPtr	=	GetDefaultStarData(&gStarCount, &cCurrentTime);
+	CONSOLE_DEBUG_W_LONG("gStarCount\t=", gStarCount);
 
 
 	for (ii=0;ii<10;ii++)
@@ -410,40 +407,40 @@ int		ii;
 	BuildConstellationData();
 
 
-	CONSOLE_DEBUG_W_LONG("cNGCobjectCount\t=",	cNGCobjectCount);
-	cNGCobjectPtr	=	ReadNGCStarCatalog(&cNGCobjectCount);
-	CONSOLE_DEBUG_W_LONG("cNGCobjectCount\t=",	cNGCobjectCount);
+	CONSOLE_DEBUG_W_LONG("gNGCobjectCount\t=",	gNGCobjectCount);
+	gNGCobjectPtr	=	ReadNGCStarCatalog(&gNGCobjectCount);
+	CONSOLE_DEBUG_W_LONG("gNGCobjectCount\t=",	gNGCobjectCount);
 
 
-	cYaleStarDataPtr	=	ReadYaleStarCatalog(&cYaleStarCount);
+	gYaleStarDataPtr	=	ReadYaleStarCatalog(&gYaleStarCount);
 
-	cMessierOjbectPtr	=	ReadMessierData(		"skytravel_data/",	kDataSrc_Messier,	&cMessierOjbectCount);
-	cDraperObjectPtr	=	ReadHenryDraperCatalog(	"skytravel_data/",	kDataSrc_Draper,	&cDraperObjectCount);
+	gMessierOjbectPtr	=	ReadMessierData(		"skytravel_data/",	kDataSrc_Messier,	&gMessierOjbectCount);
+	gDraperObjectPtr	=	ReadHenryDraperCatalog(	"skytravel_data/",	kDataSrc_Draper,	&gDraperObjectCount);
 #ifdef _ENABLE_HYG_
-	cHYGObjectPtr		=	ReadHYGdata(			"skytravel_data/",	kDataSrc_HYG,		&cHYGObjectCount);
+	gHYGObjectPtr		=	ReadHYGdata(			"skytravel_data/",	kDataSrc_HYG,		&gHYGObjectCount);
 #endif // _ENABLE_HYG_
 
 	cConstOutlinePtr	=	ReadConstellationOutlines("skytravel_data/constOutlines.txt", &cConstOutlineCount);
 
-	cAAVSOalertsPtr		=	ReadAAVSO_TargetData(&cAAVSOalertsCnt);
-	CONSOLE_DEBUG_W_LONG("cAAVSOalertsCnt\t=", cAAVSOalertsCnt);
+	gAAVSOalertsPtr		=	ReadAAVSO_TargetData(&gAAVSOalertsCnt);
+	CONSOLE_DEBUG_W_LONG("gAAVSOalertsCnt\t=", gAAVSOalertsCnt);
 //	CONSOLE_ABORT(__FUNCTION__);
 
-	cHipObjectPtr		=	ReadHipparcosStarCatalog(&cHipObjectCount);
-	if (cHipObjectPtr != NULL)
+	gHipObjectPtr		=	ReadHipparcosStarCatalog(&gHipObjectCount);
+	if (gHipObjectPtr != NULL)
 	{
-		ReadCommonStarNames(cHipObjectPtr, cHipObjectCount);
+		ReadCommonStarNames(gHipObjectPtr, gHipObjectCount);
 	}
 
 
-	cSpecialObjectPtr	=	ReadSpecialData(kDataSrc_Special, &cSpecialObjectCount);
+	gSpecialObjectPtr	=	ReadSpecialData(kDataSrc_Special, &gSpecialObjectCount);
 
 
 	Precess();		//*	make sure all of the data bases are sorted properly
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
-	SetHipparcosDataPointers(cHipObjectPtr, cHipObjectCount);
+	SetHipparcosDataPointers(gHipObjectPtr, gHipObjectCount);
 	cConstVecotrPtr		=	ReadConstellationVectors(kSkyTravelDataDirectory, &cConstVectorCnt);
 	if (cConstVecotrPtr != NULL)
 	{
@@ -472,32 +469,32 @@ WindowTabSkyTravel::~WindowTabSkyTravel(void)
 {
 	CONSOLE_DEBUG(__FUNCTION__);
 
-	if (cStarDataPtr != NULL)
+	if (gStarDataPtr != NULL)
 	{
-		free(cStarDataPtr);
-		cStarDataPtr	=	NULL;
+		free(gStarDataPtr);
+		gStarDataPtr	=	NULL;
 	}
-	if (cYaleStarDataPtr != NULL)
+	if (gYaleStarDataPtr != NULL)
 	{
-		free(cYaleStarDataPtr);
-		cYaleStarDataPtr	=	NULL;
+		free(gYaleStarDataPtr);
+		gYaleStarDataPtr	=	NULL;
 	}
-	if (cMessierOjbectPtr != NULL)
+	if (gMessierOjbectPtr != NULL)
 	{
-		free(cMessierOjbectPtr);
-		cMessierOjbectPtr	=	NULL;
+		free(gMessierOjbectPtr);
+		gMessierOjbectPtr	=	NULL;
 	}
-	if (cDraperObjectPtr != NULL)
+	if (gDraperObjectPtr != NULL)
 	{
-		free(cDraperObjectPtr);
-		cDraperObjectPtr	=	NULL;
+		free(gDraperObjectPtr);
+		gDraperObjectPtr	=	NULL;
 	}
 
 #ifdef _ENABLE_HYG_
-	if (cHYGObjectPtr != NULL)
+	if (gHYGObjectPtr != NULL)
 	{
-		free(cHYGObjectPtr);
-		cHYGObjectPtr	=	NULL;
+		free(gHYGObjectPtr);
+		gHYGObjectPtr	=	NULL;
 	}
 #endif // _ENABLE_HYG_
 }
@@ -599,6 +596,7 @@ int		buttonWidthGoto;
 	SetWidgetHelpText(	kSkyTravel_Btn_NightMode,		"Toggle Night Mode");
 	SetWidgetHelpText(	kSkyTravel_Btn_Symbols,			"Toggle Symbols for planets and zodiac");
 	SetWidgetHelpText(	kSkyTravel_Btn_TscopeDisp,		"Toggle telescope position display");
+	SetWidgetHelpText(	kSkyTravel_Btn_Draper,			"Toggle Draper display");
 
 
 	SetWidgetHelpText(	kSkyTravel_Btn_Plus,		"Zoom In");
@@ -616,6 +614,7 @@ int		buttonWidthGoto;
 	SetWidgetText(		kSkyTravel_Btn_AAVSOalerts,		"a");
 
 	SetWidgetText(		kSkyTravel_Btn_DeepSky,			"D");
+	SetWidgetText(		kSkyTravel_Btn_Draper,			"d");
 	SetWidgetText(		kSkyTravel_Btn_Names,			"N");
 	SetWidgetText(		kSkyTravel_Btn_CommonStarNames,	"m");
 	SetWidgetText(		kSkyTravel_Btn_Lines,			"L");
@@ -857,6 +856,7 @@ struct tm			siderealTime;
 void	WindowTabSkyTravel::UpdateButtonStatus(void)
 {
 	SetWidgetChecked(		kSkyTravel_Btn_DeepSky,			cDispOptions.dispDeep);
+	SetWidgetChecked(		kSkyTravel_Btn_Draper,			cDispOptions.dispDraper);
 	SetWidgetChecked(		kSkyTravel_Btn_Names,			cDispOptions.dispNames);
 	SetWidgetChecked(		kSkyTravel_Btn_CommonStarNames,	cDispOptions.dispCommonStarNames);
 	SetWidgetChecked(		kSkyTravel_Btn_Lines,			cDispOptions.dispLines);
@@ -975,8 +975,9 @@ bool			reDrawSky;
 			cDispOptions.dispDeep	=	!cDispOptions.dispDeep;
 			break;
 
+		//*	Toggle Draper data base
 		case 'd':
-			gDashedLines	=	!gDashedLines;
+			cDispOptions.dispDraper		=	!cDispOptions.dispDraper;
 			break;
 
 		case 'E':	//*	toggle EARTH
@@ -1099,10 +1100,6 @@ bool			reDrawSky;
 			cAz0	=	kHALFPI - kEPSILON;
 			break;
 
-		case 'x':
-			cDispOptions.dispDraper		=	!cDispOptions.dispDraper;
-			break;
-
 		case 'y':
 			cDispOptions.dispHYG_all	=	!cDispOptions.dispHYG_all;
 			break;
@@ -1153,8 +1150,8 @@ bool			reDrawSky;
 				for (ii=0; ii<20; ii++)
 				{
 					printf("%3d\t%10.10f\t%10.10f\r\n",	ii,
-														DEGREES(cStarDataPtr[ii].ra),
-														DEGREES(cStarDataPtr[ii].decl));
+														DEGREES(gStarDataPtr[ii].ra),
+														DEGREES(gStarDataPtr[ii].decl));
 				}
 			}
 			cDisplayedMagnitudeLimit		-=	0.5;
@@ -1287,6 +1284,11 @@ char	searchText[128];
 		case kSkyTravel_Btn_Hipparcos:
 			cDispOptions.dispHIP	=	!cDispOptions.dispHIP;
 			SetWidgetChecked(		kSkyTravel_Btn_Hipparcos,	cDispOptions.dispHIP);
+			break;
+
+		case kSkyTravel_Btn_Draper:
+			cDispOptions.dispDraper	=	!cDispOptions.dispDraper;
+			SetWidgetChecked(		kSkyTravel_Btn_Draper,	cDispOptions.dispDraper);
 			break;
 
 		case kSkyTravel_Btn_NightMode:
@@ -1539,7 +1541,7 @@ void	WindowTabSkyTravel::ProcessMouseEvent(	const int	widgetIdx,
 
 		Compute_cursor(&cCurrentTime, &cCurrLatLon);
 
-		if (cStarCount < 10000)
+		if (gStarCount < 10000)
 		{
 			FindObjectNearCursor();
 		}
@@ -2136,21 +2138,21 @@ short		ii;
 #ifdef _ENABLE_HYG_
 	//*	draw the dense stuff first so the other stuff is on top
 	//*--------------------------------------------------------------------------------
-	if (cDispOptions.dispHYG_all && (cHYGObjectPtr != NULL) && (cHYGObjectCount > 0))
+	if (cDispOptions.dispHYG_all && (gHYGObjectPtr != NULL) && (gHYGObjectCount > 0))
 	{
-		PlotObjectsByDataSource(cHYGObjectPtr, cHYGObjectCount);
+		PlotObjectsByDataSource(gHYGObjectPtr, gHYGObjectCount);
 	}
 #endif
 	//*--------------------------------------------------------------------------------
 	//*	draw the faint Hipparcos stuff first
-	if (cDispOptions.dispHIP && (cHipObjectPtr != NULL) && (cHipObjectCount > 0))
+	if (cDispOptions.dispHIP && (gHipObjectPtr != NULL) && (gHipObjectCount > 0))
 	{
-		PlotObjectsByDataSource(cHipObjectPtr, cHipObjectCount);
+		PlotObjectsByDataSource(gHipObjectPtr, gHipObjectCount);
 	}
 
-	if (cDispOptions.dispDraper && (cDraperObjectPtr != NULL) && (cDraperObjectCount > 0))
+	if (cDispOptions.dispDraper && (gDraperObjectPtr != NULL) && (gDraperObjectCount > 0))
 	{
-		PlotObjectsByDataSource(cDraperObjectPtr, cDraperObjectCount);
+		PlotObjectsByDataSource(gDraperObjectPtr, gDraperObjectCount);
 	}
 
 
@@ -2181,26 +2183,26 @@ short		ii;
 		DrawConstellationLines();
 	}
 	//*--------------------------------------------------------------------------------
-	if ((cStarDataPtr != NULL) && (cStarCount > 0))
+	if ((gStarDataPtr != NULL) && (gStarCount > 0))
 	{
-		PlotObjectsByDataSource(cStarDataPtr, cStarCount);
+		PlotObjectsByDataSource(gStarDataPtr, gStarCount);
 	}
 	else
 	{
-		CONSOLE_DEBUG("cStarDataPtr is NULL")
-		CONSOLE_ABORT("cStarDataPtr is NULL")
+		CONSOLE_DEBUG("gStarDataPtr is NULL")
+		CONSOLE_ABORT("gStarDataPtr is NULL")
 	}
 
 	//*--------------------------------------------------------------------------------
-	if (cDispOptions.dispYale && (cYaleStarDataPtr != NULL) && (cYaleStarCount > 0))
+	if (cDispOptions.dispYale && (gYaleStarDataPtr != NULL) && (gYaleStarCount > 0))
 	{
-		PlotObjectsByDataSource(cYaleStarDataPtr, cYaleStarCount);
+		PlotObjectsByDataSource(gYaleStarDataPtr, gYaleStarCount);
 	}
 
 	//*--------------------------------------------------------------------------------
-	if (cDispOptions.dispNGC && (cNGCobjectPtr != NULL) && (cNGCobjectCount > 0))
+	if (cDispOptions.dispNGC && (gNGCobjectPtr != NULL) && (gNGCobjectCount > 0))
 	{
-		PlotObjectsByDataSource(cNGCobjectPtr, cNGCobjectCount);
+		PlotObjectsByDataSource(gNGCobjectPtr, gNGCobjectCount);
 	}
 
 
@@ -2212,23 +2214,23 @@ short		ii;
 	}
 
 	//*--------------------------------------------------------------------------------
-	if (cDispOptions.dispMessier && (cMessierOjbectPtr != NULL) && (cMessierOjbectCount > 0))
+	if (cDispOptions.dispMessier && (gMessierOjbectPtr != NULL) && (gMessierOjbectCount > 0))
 	{
 //		CONSOLE_DEBUG("Plotting Messier objects");
-		PlotObjectsByDataSource(cMessierOjbectPtr, cMessierOjbectCount);
+		PlotObjectsByDataSource(gMessierOjbectPtr, gMessierOjbectCount);
 	}
 
 
 	//*--------------------------------------------------------------------------------
-	if ((cSpecialObjectPtr != NULL) && (cSpecialObjectCount > 0))
+	if ((gSpecialObjectPtr != NULL) && (gSpecialObjectCount > 0))
 	{
-		PlotObjectsByDataSource(cSpecialObjectPtr, cSpecialObjectCount);
+		PlotObjectsByDataSource(gSpecialObjectPtr, gSpecialObjectCount);
 	}
 
 	//*--------------------------------------------------------------------------------
-	if (cDispOptions.dispAAVSOalerts &&  (cView_index < 9) && (cAAVSOalertsPtr != NULL) && (cAAVSOalertsCnt > 0))
+	if (cDispOptions.dispAAVSOalerts &&  (cView_index < 9) && (gAAVSOalertsPtr != NULL) && (gAAVSOalertsCnt > 0))
 	{
-		PlotObjectsByDataSource(cAAVSOalertsPtr, cAAVSOalertsCnt);
+		PlotObjectsByDataSource(gAAVSOalertsPtr, gAAVSOalertsCnt);
 	}
 
 
@@ -2405,76 +2407,88 @@ double		frac;
 //*****************************************************************************
 void	WindowTabSkyTravel::BuildConstellationData(void)
 {
-long	ii;
-long	jj;
-long	kk;
-long	sCount;
-long	vectorTabIdex;
+int		ii;
+int		jj;
+int		kk;
+int		sCount;
+int		vectorTabIdex;
 long	totalStars;
 long	starID;
 long	ss;
 long	cc;
+int		maxVectorIdx;
 
-
-	ii			=	0;
+//	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG_W_NUM("sizeof(TYPE_Constelation)\t=",	sizeof(TYPE_Constelation));
+	maxVectorIdx	=	0;
+	ii				=	0;
 	while (gConstel_names[ii][0] != '-')
 	{
 		ii++;
 	}
-	constelationCount	=	ii;
+	gConstelationCount	=	ii;
 
-	if (constelationCount > 0)
+	if (gConstelationCount > 0)
 	{
 		totalStars		=	0;
-		constelations	=	(TYPE_Constelation *)malloc(constelationCount * sizeof(TYPE_Constelation));
-		if (constelations != NULL)
+		gConstelations	=	(TYPE_Constelation *)malloc(gConstelationCount * sizeof(TYPE_Constelation));
+		if (gConstelations != NULL)
 		{
-			for (ii=0; ii<constelationCount; ii++)
+			for (ii=0; ii < gConstelationCount; ii++)
 			{
 				sCount			=	0;
-				vectorTabIdex	=	gValid_name[ii] & 0xff;
+				vectorTabIdex	=	gValid_name[ii] & 0x0ff;
 
 				if (vectorTabIdex != 99)
 				{
+					if (vectorTabIdex > maxVectorIdx)
+					{
+						maxVectorIdx	=	vectorTabIdex;
+					}
+//					CONSOLE_DEBUG("=========================================================");
+//					CONSOLE_DEBUG_W_STR("gConstel_LongNames\t=",	gConstel_LongNames[ii]);
+//					CONSOLE_DEBUG_W_NUM("vectorTabIdex\t\t=",	vectorTabIdex);
+
 					//*	count the stars in the vector index
 					jj	=	0;
-					while (gConstellationVecor[vectorTabIdex][jj] != 0)
+					while ((gConstellationVecor[vectorTabIdex][jj] != 0) && (jj <= kConstVectCount))
 					{
 						jj++;
 					}
 					sCount		=	jj;
 					totalStars	+=	sCount;
+
 				}
 
-//				strcpy(constelations[ii].name,				gConstel_names[ii]);
-				strcpy(constelations[ii].name,				gConstel_LongNames[ii]);
+//				strcpy(gConstelations[ii].name,				gConstel_names[ii]);
+				strcpy(gConstelations[ii].name,				gConstel_LongNames[ii]);
 
-				strncpy(constelations[ii].shortName,		gConstel_names[ii], 3);
-				constelations[ii].shortName[4]				=	0;
-				constelations[ii].indexIntoConstStarTable	=	vectorTabIdex | 0x8000;
-				constelations[ii].starsInConstelation		=	sCount;
+				strncpy(gConstelations[ii].shortName,		gConstel_names[ii], 3);
+				gConstelations[ii].shortName[4]				=	0;
+				gConstelations[ii].indexIntoConstStarTable	=	vectorTabIdex | 0x8000;
+				gConstelations[ii].starsInConstelation		=	sCount;
 			}
 
-			if (cStarDataPtr != NULL)
+			if (gStarDataPtr != NULL)
 			{
 				//*	now allocate an array for the constellation stars and FIND them
-				constStarPtr	=	(TYPE_CelestData *)malloc((totalStars + 5) * sizeof(TYPE_CelestData));
-				if (constStarPtr != NULL)
+				gConstStarPtr	=	(TYPE_CelestData *)malloc((totalStars + 5) * sizeof(TYPE_CelestData));
+				if (gConstStarPtr != NULL)
 				{
-					constStarCount	=	totalStars;
+					gConstStarCount	=	totalStars;
 
 					kk	=	0;
 					for (ii=0; ii<kConstVectCount; ii++)
 					{
 						//*	find the constelation that points to this one
-						for (cc=0; cc<constelationCount; cc++)
+						for (cc=0; cc < gConstelationCount; cc++)
 						{
-							vectorTabIdex	=	constelations[cc].indexIntoConstStarTable;
+							vectorTabIdex	=	gConstelations[cc].indexIntoConstStarTable;
 							if (vectorTabIdex < 0)
 							{
 								if (ii == (vectorTabIdex & 0x7fff))
 								{
-									constelations[cc].indexIntoConstStarTable	=	kk;
+									gConstelations[cc].indexIntoConstStarTable	=	kk;
 									break;
 								}
 							}
@@ -2487,18 +2501,18 @@ long	cc;
 							{
 								if (kk < totalStars)
 								{
-									constStarPtr[kk].id	=	gConstellationVecor[ii][jj];
+									gConstStarPtr[kk].id	=	gConstellationVecor[ii][jj];
 									//*	now find this id in the master list
 									starID	=	gConstellationVecor[ii][jj] & 0x3fff;
-									for (ss=0; ss<cStarCount; ss++)
+									for (ss=0; ss<gStarCount; ss++)
 									{
-										if (starID == cStarDataPtr[ss].id)
+										if (starID == gStarDataPtr[ss].id)
 										{
 											//*	copy the entire star over
-											constStarPtr[kk]	=	cStarDataPtr[ss];
+											gConstStarPtr[kk]	=	gStarDataPtr[ss];
 
-											//*	but use the ID from the cector table
-											constStarPtr[kk].id	=	gConstellationVecor[ii][jj];
+											//*	but use the ID from the vector table
+											gConstStarPtr[kk].id	=	gConstellationVecor[ii][jj];
 											break;
 										}
 									}
@@ -2513,24 +2527,31 @@ long	cc;
 	}
 }
 
-
+//*****************************************************************************
+//*	this is the original SkyTravel constellation lines
+//*	there are much better lines and this is disabled by default if the better data is available
 //*****************************************************************************
 void	WindowTabSkyTravel::DrawConstellationLines(void)
 {
-short			ii;
-short			jj;
-short			kk;
+int				ii;
+int				jj;
+int				kk;
 double			xangle,yangle,rangle;
 double			temp,angle;
 double			alpha,aside,cside,gamma;
 double			sin_bside,cos_bside;
-short			xPos, yPos;
-short			firstStarInCurConstellation;
-short			starsInCurConstellation;
+double			sinRatio;
+int				xPos, yPos;
+int				firstStarInCurConstellation;
+int				starsInCurConstellation;
 unsigned int	idword;
 bool			firstMove;
+//int				linesDrawn;
 
-	if ((constelations != NULL) && (constStarPtr != NULL))
+//	CONSOLE_DEBUG(__FUNCTION__);
+//	linesDrawn	=	0;
+
+	if ((gConstelations != NULL) && (gConstStarPtr != NULL))
 	{
 		xangle		=	cView_angle / 2.0;
 		yangle		=	xangle * cWind_height / cWind_width;
@@ -2556,7 +2577,7 @@ bool			firstMove;
 		temp	=	kHALFPI - (cDecl0);
 		if (temp > rangle)
 		{
-		double	sinRatio;
+
 			sinRatio=	sin(rangle)/sin(temp);
 			if (sinRatio < 1.0)
 			{
@@ -2571,18 +2592,18 @@ bool			firstMove;
 		cYfactor	=	cXfactor;	//* 1:1 aspect ratio
 
 		SetColor(W_RED);
-		for (jj=0; jj<constelationCount; jj++)
+		for (jj=0; jj < gConstelationCount; jj++)
 		{
-			if ((constelations[jj].indexIntoConstStarTable >= 0) && (constelations[jj].starsInConstelation > 0))
+			if ((gConstelations[jj].indexIntoConstStarTable >= 0) && (gConstelations[jj].starsInConstelation > 0))
 			{
-				firstStarInCurConstellation	=	constelations[jj].indexIntoConstStarTable;
-				starsInCurConstellation		=	constelations[jj].starsInConstelation;
 
+				firstStarInCurConstellation	=	gConstelations[jj].indexIntoConstStarTable;
+				starsInCurConstellation		=	gConstelations[jj].starsInConstelation;
 				firstMove					=	true;
 				for (kk=0; kk<starsInCurConstellation; kk++)
 				{
 					ii		=	firstStarInCurConstellation + kk;
-			  		alpha	=	cRa0 - constStarPtr[ii].ra;
+			  		alpha	=	cRa0 - gConstStarPtr[ii].ra;
 			  		if (alpha > PI)
 			  		{
 			  			alpha	-=	kTWOPI;
@@ -2593,11 +2614,11 @@ bool			firstMove;
 					}
 			  		if ((cRamax == 0.0) || (fabs(alpha) <= cRamax))	//* in bounds for ra?
 			  		{
-			  			cside	=	kHALFPI - constStarPtr[ii].decl;
+			  			cside	=	kHALFPI - gConstStarPtr[ii].decl;
 			  			aside	=	acos((cos_bside * cos(cside)) + (sin_bside * sin(cside) * cos(alpha)));
 			  			if (aside < cRadmax)	//* within bounding circle?
 			  			{
-			  				if (aside>kEPSILON)
+			  				if (aside > kEPSILON)
 			  				{
 			  					gamma	=	asin(sin(cside)*sin(alpha)/sin(aside));
 			  				}
@@ -2605,19 +2626,19 @@ bool			firstMove;
 			  				{
 			  					gamma	=	0.0;
 			  				}
-			  				if (cos(cside)<(cos_bside*cos(aside)))
+			  				if (cos(cside) < (cos_bside * cos(aside)))
 			  				{
 			  					gamma	=	PI-gamma;	//* supplement gamma if cos(c)<cos(b)*cos(a)
 							}
 			  				angle	=	gamma + cGamang;
 
-							//*compute x and y coordinates
-							//* x	=	x0+cXfactor*aside*cos(angle)
-							//* y	=	y0-cYfactor*aside*sin(angle) (minus sign is because plus y is down)
+							//*	compute x and y coordinates
+							//* x	=	x0 + cXfactor * aside * cos(angle)
+							//* y	=	y0 - cYfactor * aside * sin(angle) (minus sign is because plus y is down)
 
 			  				xPos		=	cWind_x0 + (int)(cXfactor * aside*sin(angle));
 			  				yPos		=	cWind_y0 - (int)(cYfactor * aside*cos(angle));
-			  				idword		=	constStarPtr[ii].id;
+			  				idword		=	gConstStarPtr[ii].id;
 
 							if (firstMove || ((idword & 0x4000) == 0x4000))
 							{
@@ -2627,6 +2648,7 @@ bool			firstMove;
 							else
 							{
 								CLineTo(xPos, yPos);
+							//	linesDrawn++;
 							}
 						}
 						else
@@ -2639,6 +2661,8 @@ bool			firstMove;
 		}
 		SetColor(W_BLACK);
 	}
+//	CONSOLE_DEBUG_W_NUM("linesDrawn\t=",	linesDrawn);
+//	CONSOLE_DEBUG("=========================================================");
 }
 
 //*****************************************************************************
@@ -2880,27 +2904,27 @@ bool	ptInView;
 //	CONSOLE_DEBUG("-------------------------------------------------------");
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-	if ((cHipObjectPtr != NULL) && (cHipObjectCount > 0))
+	if ((gHipObjectPtr != NULL) && (gHipObjectCount > 0))
 	{
 		SetColor(W_WHITE);
-		for (iii = 0; iii < cHipObjectCount; iii++)
+		for (iii = 0; iii < gHipObjectCount; iii++)
 		{
 			//*	most of them don't have names, so check for that first
-			if (cHipObjectPtr[iii].longName[0] != 0)
+			if (gHipObjectPtr[iii].longName[0] != 0)
 			{
-				ptInView		=	GetXYfromRA_Decl(	cHipObjectPtr[iii].ra,
-														cHipObjectPtr[iii].decl,
+				ptInView		=	GetXYfromRA_Decl(	gHipObjectPtr[iii].ra,
+														gHipObjectPtr[iii].decl,
 														&pt_XX,
 														&pt_YY);
 				if (ptInView)
 				{
 					DrawStar_shape(pt_XX, pt_YY, 0);	//*	many of these stars are not drawn
-//					CONSOLE_DEBUG(cHipObjectPtr[iii].longName);
+//					CONSOLE_DEBUG(gHipObjectPtr[iii].longName);
 					if (cDispOptions.dispHIP && (cView_index <= 3))
 					{
 						pt_YY	+=	12;
 					}
-					DrawCString(pt_XX + 10, pt_YY, cHipObjectPtr[iii].longName);
+					DrawCString(pt_XX + 10, pt_YY, gHipObjectPtr[iii].longName);
 				}
 			}
 		}
@@ -3150,7 +3174,7 @@ bool			pressesOccurred;
 //	CONSOLE_DEBUG_W_NUM(__FUNCTION__, cDebugCounter++);
 
 //	startTicks		=	TickCount();
-	pressesOccurred	=	Precess(cStarDataPtr, cStarCount, kSortData, kPressionIfNeeded);
+	pressesOccurred	=	Precess(gStarDataPtr, gStarCount, kSortData, kPressionIfNeeded);
 
 	//*	if precess occurred for the stars, we want to force it for the constellations
 	if (pressesOccurred)
@@ -3158,57 +3182,56 @@ bool			pressesOccurred;
 //		CONSOLE_DEBUG("precess occurred");
 
 		//*	NGC objects
-		if ((cNGCobjectPtr != NULL) && (cNGCobjectCount > 0))
+		if ((gNGCobjectPtr != NULL) && (gNGCobjectCount > 0))
 		{
-			Precess(cNGCobjectPtr, cNGCobjectCount, kSortData, kForcePression);
+			Precess(gNGCobjectPtr, gNGCobjectCount, kSortData, kForcePression);
 		}
 
 		//*	Yale start catalog
-		if ((cYaleStarDataPtr != NULL) && (cYaleStarCount > 0))
+		if ((gYaleStarDataPtr != NULL) && (gYaleStarCount > 0))
 		{
-			Precess(cYaleStarDataPtr, cYaleStarCount, kSortData, kForcePression);
+			Precess(gYaleStarDataPtr, gYaleStarCount, kSortData, kForcePression);
 		}
 
 		//*	Hippacos database
-		if ((cHipObjectPtr != NULL) && (cHipObjectCount > 0))
+		if ((gHipObjectPtr != NULL) && (gHipObjectCount > 0))
 		{
-			Precess(cHipObjectPtr, cHipObjectCount, kSortData, kForcePression);
+			Precess(gHipObjectPtr, gHipObjectCount, kSortData, kForcePression);
 		}
 
 		//*	Messier objects
-		if ((cMessierOjbectPtr != NULL) && (cMessierOjbectCount > 0))
+		if ((gMessierOjbectPtr != NULL) && (gMessierOjbectCount > 0))
 		{
-			Precess(cMessierOjbectPtr, cMessierOjbectCount, kSortData, kForcePression);
+			Precess(gMessierOjbectPtr, gMessierOjbectCount, kSortData, kForcePression);
 		}
 
 		//*	Henry Draper catalog
-		if ((cDraperObjectPtr != NULL) && (cDraperObjectCount > 0))
+		if ((gDraperObjectPtr != NULL) && (gDraperObjectCount > 0))
 		{
-			Precess(cDraperObjectPtr, cDraperObjectCount, kSortData, kForcePression);
+			Precess(gDraperObjectPtr, gDraperObjectCount, kSortData, kForcePression);
 		}
 
 
 #ifdef _ENABLE_HYG_
-		if ((cHYGObjectPtr != NULL) && (cHYGObjectCount > 0))
+		if ((gHYGObjectPtr != NULL) && (gHYGObjectCount > 0))
 		{
-			Precess(cHYGObjectPtr, cHYGObjectCount, kSortData, kForcePression);
+			Precess(gHYGObjectPtr, gHYGObjectCount, kSortData, kForcePression);
 		}
 #endif
+//*	special objects should not be precessed
+//		if ((gSpecialObjectPtr != NULL) && (gSpecialObjectCount > 0))
+//		{
+//			Precess(gSpecialObjectPtr, gSpecialObjectCount, kSortData, kForcePression);
+//		}
 
-		if ((cSpecialObjectPtr != NULL) && (cSpecialObjectCount > 0))
+		if ((gConstStarPtr != NULL) && (gConstStarCount > 0))
 		{
-			Precess(cSpecialObjectPtr, cSpecialObjectCount, kSortData, kForcePression);
+			Precess(gConstStarPtr, gConstStarCount, kDoNotSort, kForcePression);
 		}
 
-
-		if ((constStarPtr != NULL) && (constStarCount > 0))
+		if ((gAAVSOalertsPtr != NULL) && (gAAVSOalertsCnt > 0))
 		{
-			Precess(constStarPtr, constStarCount, kDoNotSort, kForcePression);
-		}
-
-		if ((cAAVSOalertsPtr != NULL) && (cAAVSOalertsCnt > 0))
-		{
-			Precess(cAAVSOalertsPtr, cAAVSOalertsCnt, kSortData, kForcePression);
+			Precess(gAAVSOalertsPtr, gAAVSOalertsCnt, kSortData, kForcePression);
 		}
 
 
@@ -3880,15 +3903,11 @@ void	WindowTabSkyTravel::DrawWindowOverlays(void)
 		}
 	}
 
-
-
+	//*	are we supposed to draw the telescope F.O.V. information
 	if (cDispOptions.dispTelescope)
 	{
 	bool	telescopeIsInView;
 	short	telescopeXX, telescopeYY;
-
-		//*	this is for testing
-//		DrawGreatCircle(gTelescopeDecl_Radians, true);
 
 		telescopeIsInView	=	GetXYfromRA_Decl(	gTelescopeRA_Radians,
 													gTelescopeDecl_Radians,
@@ -4452,6 +4471,7 @@ void	WindowTabSkyTravel::DrawGrid(short theSkyColor)
 {
 double		degrees;
 int			myColor;
+bool		forceNumberDrawFlag	=	false;
 
 //setlinestyle(USERBIT_LINE,0x0f0f,NORM_WIDTH);
 	if (cNightMode)
@@ -4481,22 +4501,37 @@ int			myColor;
 
 	if (cView_index <= 5)
 	{
+		if (cView_index < 4)
+		{
+			forceNumberDrawFlag	=	true;
+		}
 		SetColor(myColor);
-		DrawGreatCircle(RADIANS(89.5));
-		SetColor(myColor);
-		DrawGreatCircle(RADIANS(89.7));
+		DrawGreatCircle(RADIANS(89.1), forceNumberDrawFlag);
+		DrawGreatCircle(RADIANS(89.3), forceNumberDrawFlag);
+		DrawGreatCircle(RADIANS(89.5), forceNumberDrawFlag);
+		DrawGreatCircle(RADIANS(89.7), forceNumberDrawFlag);
+
+		//*	now do the south pole
+		DrawGreatCircle(RADIANS(-89.1), forceNumberDrawFlag);
+		DrawGreatCircle(RADIANS(-89.3), forceNumberDrawFlag);
+		DrawGreatCircle(RADIANS(-89.5), forceNumberDrawFlag);
+		DrawGreatCircle(RADIANS(-89.7), forceNumberDrawFlag);
 	}
 
 	if (cView_index <= 3)
 	{
 		SetColor(myColor);
-		DrawGreatCircle(RADIANS(89.9));
+		DrawGreatCircle(RADIANS(89.9), true);
+
+		DrawGreatCircle(RADIANS(-89.9), true);
 	}
 
 	if (cView_index <= 1)
 	{
 		SetColor(myColor);
-		DrawGreatCircle(RADIANS(89.95));
+		DrawGreatCircle(RADIANS(89.95), true);
+
+		DrawGreatCircle(RADIANS(-89.95), true);
 	}
 
 	//-------------------------------------------------------------------------
@@ -4724,7 +4759,7 @@ double	angleDelta;
 //*	returns the number of points draw, 0 means nothing was drawn
 //*	declinationAngle is in radians
 //*****************************************************************************
-int	WindowTabSkyTravel::DrawGreatCircle(double declinationAngle, bool rainbow)
+int	WindowTabSkyTravel::DrawGreatCircle(double declinationAngle_rad, bool forceNumberDraw)
 {
 double	rtAscen1;
 double	rtAscen2;
@@ -4734,7 +4769,6 @@ bool	pt1inView;
 bool	pt2inView;
 short	pt1_XX, pt1_YY;
 short	pt2_XX, pt2_YY;
-int		theColor;
 int		segmentsDrnCnt;
 int		adjustmentCnt	=	0;	//*	for adjusting angle delta table in GetRA_DEC_detla()
 int		leftMost_X;
@@ -4746,6 +4780,7 @@ int		topMost_Y;
 int		btmMost_X;
 int		btmMost_Y;
 char	numberStr[32];
+bool	numberWasDrawn;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -4757,7 +4792,7 @@ char	numberStr[32];
 	rightMost_Y		=	0;
 	btmMost_X		=	0;
 	btmMost_Y		=	0;
-
+	numberWasDrawn	=	false;
 
 	segmentsDrnCnt	=	0;
 	minDeltaRA		=	GetRA_DEC_detla(0) / 10;
@@ -4770,26 +4805,16 @@ char	numberStr[32];
 		rtAscen2	=	rtAscen1 + rtAscenDelta;
 
 		pt1inView	=	GetXYfromRA_Decl(	rtAscen1,
-											declinationAngle,
+											declinationAngle_rad,
 											&pt1_XX, &pt1_YY);
 
 		pt2inView	=	GetXYfromRA_Decl(	rtAscen2,
-											declinationAngle,
+											declinationAngle_rad,
 											&pt2_XX, &pt2_YY);
 
 		//*	if both pints are on the screen, draw it
 		if (pt1inView && pt2inView)
 		{
-			if (rainbow)
-			{
-				theColor	=	(rtAscen1 / (2 * M_PI)) * W_COLOR_LAST;
-				if (theColor == W_BLACK)
-				{
-					theColor	=	W_WHITE;
-				}
-				SetColor(theColor);
-			}
-
 			//*	check the step size, we want to make sure nothing bigger than 20 pixels
 			//*	I tried to do this in a separate routine but it slowed down way too much
 			while (((abs(pt2_XX - pt1_XX) + abs(pt2_YY - pt1_YY)) > 20) && (rtAscenDelta > minDeltaRA))
@@ -4804,7 +4829,7 @@ char	numberStr[32];
 				//*	re-calculate point 2
 				rtAscen2	=	rtAscen1 + rtAscenDelta;
 				pt2inView	=	GetXYfromRA_Decl(	rtAscen2,
-													declinationAngle,
+													declinationAngle_rad,
 													&pt2_XX, &pt2_YY);
 				adjustmentCnt++;
 			}
@@ -4878,40 +4903,54 @@ char	numberStr[32];
 
 	//----------------------------------------------------
 	//*	draw numbers along the edges
-	if (declinationAngle == 0.0)
+	if (declinationAngle_rad == 0.0)
 	{
 		strcpy(numberStr, "EQ");
 	}
-	else if (declinationAngle > 1.553343)
+	else if (declinationAngle_rad > 1.553343)
 	{
-		sprintf(numberStr, "%1.1fN", DEGREES(declinationAngle));
+		sprintf(numberStr, "%1.2fN", DEGREES(declinationAngle_rad));
 	}
-	else if (declinationAngle > 0.0)
+	else if (declinationAngle_rad < -1.553343)
 	{
-		sprintf(numberStr, "%1.0fN", DEGREES(declinationAngle));
+		sprintf(numberStr, "%1.2fS", -DEGREES(declinationAngle_rad));
+	}
+	else if (declinationAngle_rad > 0.0)
+	{
+		sprintf(numberStr, "%1.0fN", DEGREES(declinationAngle_rad));
 	}
 	else
 	{
-		sprintf(numberStr, "%1.0fS", -DEGREES(declinationAngle));
+		sprintf(numberStr, "%1.0fS", -DEGREES(declinationAngle_rad));
 	}
 	SetColor(W_DARKGREEN);
 	if (leftMost_X < 30)
 	{
 		DrawCString(3, leftMost_Y, numberStr);
+		numberWasDrawn	=	true;
 	}
 	if (rightMost_X > (cWind_width - 30))
 	{
 		DrawCString((cWind_width - 30), rightMost_Y, numberStr);
+		numberWasDrawn	=	true;
 	}
 	if (topMost_Y < 15)
 	{
 		DrawCString(topMost_X, 15, numberStr);
+		numberWasDrawn	=	true;
 	}
 	if (btmMost_Y > (cWind_height - 15))
 	{
 		DrawCString(btmMost_X, (cWind_height - 4), numberStr);
+		numberWasDrawn	=	true;
 	}
 
+	//*	in some case we want the number anyway
+	if (forceNumberDraw && (numberWasDrawn == false))
+	{
+		DrawCString(topMost_X, topMost_Y, numberStr);
+
+	}
 
 //	CONSOLE_DEBUG_W_NUM("segmentsDrnCnt\t=", segmentsDrnCnt);
 	return(segmentsDrnCnt);
@@ -5542,10 +5581,10 @@ long			pixDist;
 
 	cloestDistance	=	9999;
 
-	if (cStarDataPtr != NULL)
+	if (gStarDataPtr != NULL)
 	{
-		pixDist	=	FindXX_YYinObjectList(	cStarDataPtr,
-											cStarCount,
+		pixDist	=	FindXX_YYinObjectList(	gStarDataPtr,
+											gStarCount,
 											cCsrx,				//*	current x location of cursor,
 											cCsry,				//*	current y location of cursor,
 											&foundObject);		//*	closestObject
@@ -5567,10 +5606,10 @@ long			pixDist;
 		cloestObject	=	foundObject;
 	}
 
-	if (cDispOptions.dispNGC && (cNGCobjectPtr != NULL) && (cNGCobjectCount > 0))
+	if (cDispOptions.dispNGC && (gNGCobjectPtr != NULL) && (gNGCobjectCount > 0))
 	{
-		pixDist	=	FindXX_YYinObjectList(	cNGCobjectPtr,
-											cNGCobjectCount,
+		pixDist	=	FindXX_YYinObjectList(	gNGCobjectPtr,
+											gNGCobjectCount,
 											cCsrx,				//*	current x location of cursor,
 											cCsry,				//*	current y location of cursor,
 											&foundObject);		//*	closestObject
@@ -5597,10 +5636,10 @@ long			pixDist;
 	}
 
 	//*	kDataSrc_YaleBrightStar
-	if (cDispOptions.dispYale && (cYaleStarDataPtr != NULL) && (cYaleStarCount > 0))
+	if (cDispOptions.dispYale && (gYaleStarDataPtr != NULL) && (gYaleStarCount > 0))
 	{
-		pixDist	=	FindXX_YYinObjectList(	cYaleStarDataPtr,
-											cYaleStarCount,
+		pixDist	=	FindXX_YYinObjectList(	gYaleStarDataPtr,
+											gYaleStarCount,
 											cCsrx,				//*	current x location of cursor,
 											cCsry,				//*	current y location of cursor,
 											&foundObject);		//*	closestObject
@@ -5613,10 +5652,10 @@ long			pixDist;
 
 
 	//*	kDataSrc_Hipparcos
-	if (cDispOptions.dispHIP && (cHipObjectPtr != NULL) && (cHipObjectCount > 0))
+	if (cDispOptions.dispHIP && (gHipObjectPtr != NULL) && (gHipObjectCount > 0))
 	{
-		pixDist	=	FindXX_YYinObjectList(	cHipObjectPtr,
-											cHipObjectCount,
+		pixDist	=	FindXX_YYinObjectList(	gHipObjectPtr,
+											gHipObjectCount,
 											cCsrx,				//*	current x location of cursor,
 											cCsry,				//*	current y location of cursor,
 											&foundObject);		//*	closestObject
@@ -5778,7 +5817,7 @@ long	hippObjectId;
 	//*	check to see if they specified an NGC object
 	if (strncasecmp(objectName, "NGC", 3) == 0)
 	{
-		if ((cNGCobjectPtr != NULL) && (cNGCobjectCount > 0))
+		if ((gNGCobjectPtr != NULL) && (gNGCobjectCount > 0))
 		{
 			argPtr	=	objectName;
 			argPtr	+=	3;
@@ -5788,18 +5827,18 @@ long	hippObjectId;
 			}
 			objectIDnum	=	atoi(argPtr);
 			iii	=	0;
-			while ((foundSomething == false) && (iii < cNGCobjectCount))
+			while ((foundSomething == false) && (iii < gNGCobjectCount))
 			{
-				if ((objectIDnum == cNGCobjectPtr[iii].id) && (cNGCobjectPtr[iii].dataSrc == kDataSrc_NGC2000))
+				if ((objectIDnum == gNGCobjectPtr[iii].id) && (gNGCobjectPtr[iii].dataSrc == kDataSrc_NGC2000))
 				{
-					newRA	=	cNGCobjectPtr[iii].org_ra;
-					newDec	=	cNGCobjectPtr[iii].org_decl;
+					newRA	=	gNGCobjectPtr[iii].org_ra;
+					newDec	=	gNGCobjectPtr[iii].org_decl;
 
 					strcpy(database, "NGC");
-					sprintf(foundName, "NGC-%d mag=%f2.1", objectIDnum, cNGCobjectPtr[iii].realMagnitude);;
+					sprintf(foundName, "NGC-%d mag=%f2.1", objectIDnum, gNGCobjectPtr[iii].realMagnitude);;
 					cDispOptions.dispNGC	=	true;
 					foundSomething			=	true;
-			//		DumpCelestDataStruct(__FUNCTION__, &cNGCobjectPtr[iii]);
+			//		DumpCelestDataStruct(__FUNCTION__, &gNGCobjectPtr[iii]);
 				}
 				iii++;
 			}
@@ -5810,7 +5849,7 @@ long	hippObjectId;
 	//*	check to see if they specified an IC object
 	if (strncasecmp(objectName, "IC", 2) == 0)
 	{
-		if ((cNGCobjectPtr != NULL) && (cNGCobjectCount > 0))
+		if ((gNGCobjectPtr != NULL) && (gNGCobjectCount > 0))
 		{
 			argPtr	=	objectName;
 			argPtr	+=	2;
@@ -5820,18 +5859,18 @@ long	hippObjectId;
 			}
 			objectIDnum	=	atoi(argPtr);
 			iii	=	0;
-			while ((foundSomething == false) && (iii < cNGCobjectCount))
+			while ((foundSomething == false) && (iii < gNGCobjectCount))
 			{
-				if ((objectIDnum == cNGCobjectPtr[iii].id) && (cNGCobjectPtr[iii].dataSrc == kDataSrc_NGC2000IC))
+				if ((objectIDnum == gNGCobjectPtr[iii].id) && (gNGCobjectPtr[iii].dataSrc == kDataSrc_NGC2000IC))
 				{
-					newRA	=	cNGCobjectPtr[iii].org_ra;
-					newDec	=	cNGCobjectPtr[iii].org_decl;
+					newRA	=	gNGCobjectPtr[iii].org_ra;
+					newDec	=	gNGCobjectPtr[iii].org_decl;
 
 					strcpy(database, "IC");
-					sprintf(foundName, "IC-%d mag=%f2.1", objectIDnum, cNGCobjectPtr[iii].realMagnitude);;
+					sprintf(foundName, "IC-%d mag=%f2.1", objectIDnum, gNGCobjectPtr[iii].realMagnitude);;
 					cDispOptions.dispNGC	=	true;
 					foundSomething			=	true;
-			//		DumpCelestDataStruct(__FUNCTION__, &cNGCobjectPtr[iii]);
+			//		DumpCelestDataStruct(__FUNCTION__, &gNGCobjectPtr[iii]);
 				}
 				iii++;
 			}
@@ -5859,22 +5898,22 @@ long	hippObjectId;
 
 	//-------------------------------------------------------------------------------
 	//*	look for messier objects
-	if ((foundSomething == false) && (cMessierOjbectPtr != NULL) && (cMessierOjbectCount > 0))
+	if ((foundSomething == false) && (gMessierOjbectPtr != NULL) && (gMessierOjbectCount > 0))
 	{
 		if ((firstChar == 'M') && isdigit(objectName[1]))
 		{
 			//*	ok, lets look
 			iii	=	0;
-			while ((foundSomething == false) && (iii < cMessierOjbectCount))
+			while ((foundSomething == false) && (iii < gMessierOjbectCount))
 			{
-				if (strcasecmp(objectName, cMessierOjbectPtr[iii].shortName) == 0)
+				if (strcasecmp(objectName, gMessierOjbectPtr[iii].shortName) == 0)
 				{
 					CONSOLE_DEBUG("found in messier");
-					newRA	=	cMessierOjbectPtr[iii].org_ra;
-					newDec	=	cMessierOjbectPtr[iii].org_decl;
+					newRA	=	gMessierOjbectPtr[iii].org_ra;
+					newDec	=	gMessierOjbectPtr[iii].org_decl;
 
 					strcpy(database, "Messier catalog");
-					strcpy(foundName, cMessierOjbectPtr[iii].shortName);;
+					strcpy(foundName, gMessierOjbectPtr[iii].shortName);;
 
 					cDispOptions.dispMessier	=	true;
 					foundSomething				=	true;
@@ -5886,7 +5925,7 @@ long	hippObjectId;
 
 	//-------------------------------------------------------------------------------
 	//*	look for Hipparcos numbers
-	if ((foundSomething == false) && (cHipObjectPtr != NULL) && (cHipObjectCount > 0))
+	if ((foundSomething == false) && (gHipObjectPtr != NULL) && (gHipObjectCount > 0))
 	{
 		if ((firstChar == 'H') && isdigit(objectName[1]))
 		{
@@ -5894,23 +5933,23 @@ long	hippObjectId;
 			CONSOLE_DEBUG_W_LONG("Searching Hipparcosfor ID\t=", hippObjectId);
 			//*	ok, lets look
 			iii	=	0;
-			while ((foundSomething == false) && (iii < cHipObjectCount))
+			while ((foundSomething == false) && (iii < gHipObjectCount))
 			{
-				if (hippObjectId == cHipObjectPtr[iii].id)
+				if (hippObjectId == gHipObjectPtr[iii].id)
 				{
 					CONSOLE_DEBUG("found in Hipparcos");
-				//	newRA	=	cHipObjectPtr[iii].org_ra;
-				//	newDec	=	cHipObjectPtr[iii].org_decl;
+				//	newRA	=	gHipObjectPtr[iii].org_ra;
+				//	newDec	=	gHipObjectPtr[iii].org_decl;
 
-					newRA	=	cHipObjectPtr[iii].ra;
-					newDec	=	cHipObjectPtr[iii].decl;
+					newRA	=	gHipObjectPtr[iii].ra;
+					newDec	=	gHipObjectPtr[iii].decl;
 
 					strcpy(database, "Hipparcos catalog");
-					sprintf(foundName, "H%ld", cHipObjectPtr[iii].id);
-					if (cHipObjectPtr[iii].longName[0] > 0x20)
+					sprintf(foundName, "H%ld", gHipObjectPtr[iii].id);
+					if (gHipObjectPtr[iii].longName[0] > 0x20)
 					{
 						strcat(foundName, "-");
-						strcat(foundName, cHipObjectPtr[iii].longName);
+						strcat(foundName, gHipObjectPtr[iii].longName);
 					}
 
 					cDispOptions.dispHIP	=	true;
@@ -5972,21 +6011,21 @@ long	hippObjectId;
 
 	//-------------------------------------------------------------------------------
 	//*	look for for common star names in the Hipparcos list
-	if ((foundSomething == false) && (cHipObjectPtr != NULL) && (cHipObjectCount > 0))
+	if ((foundSomething == false) && (gHipObjectPtr != NULL) && (gHipObjectCount > 0))
 	{
 	//	CONSOLE_DEBUG_W_STR("Searching Hipparcosfor \t=", objectName);
 
 		iii	=	0;
-		while ((foundSomething == false) && (iii < cHipObjectCount))
+		while ((foundSomething == false) && (iii < gHipObjectCount))
 		{
-			if (strncasecmp(objectName, cHipObjectPtr[iii].longName, searchStrLen) == 0)
+			if (strncasecmp(objectName, gHipObjectPtr[iii].longName, searchStrLen) == 0)
 			{
-				CONSOLE_DEBUG_W_STR("Found", cHipObjectPtr[iii].longName);
-				newRA	=	cHipObjectPtr[iii].ra;
-				newDec	=	cHipObjectPtr[iii].decl;
+				CONSOLE_DEBUG_W_STR("Found", gHipObjectPtr[iii].longName);
+				newRA	=	gHipObjectPtr[iii].ra;
+				newDec	=	gHipObjectPtr[iii].decl;
 
 				strcpy(database, "Hipparcos catalog");
-				sprintf(foundName, "H%ld-%s", cHipObjectPtr[iii].id, cHipObjectPtr[iii].longName);
+				sprintf(foundName, "H%ld-%s", gHipObjectPtr[iii].id, gHipObjectPtr[iii].longName);
 				foundSomething	=	true;
 			}
 			iii++;
@@ -5995,23 +6034,23 @@ long	hippObjectId;
 
 	//-------------------------------------------------------------------------------
 	//*	look for for common star names in the AAVSO alert list
-	if ((foundSomething == false) && (cAAVSOalertsPtr != NULL) && (cAAVSOalertsCnt > 0))
+	if ((foundSomething == false) && (gAAVSOalertsPtr != NULL) && (gAAVSOalertsCnt > 0))
 	{
 	//	CONSOLE_DEBUG_W_STR("Searching AAVSO alert \t=", objectName);
-	//	CONSOLE_DEBUG_W_LONG("cAAVSOalertsCnt \t=", cAAVSOalertsCnt);
+	//	CONSOLE_DEBUG_W_LONG("gAAVSOalertsCnt \t=", gAAVSOalertsCnt);
 
 		iii	=	0;
-		while ((foundSomething == false) && (iii < cAAVSOalertsCnt))
+		while ((foundSomething == false) && (iii < gAAVSOalertsCnt))
 		{
-		//	CONSOLE_DEBUG_W_STR("Checking\t=", cAAVSOalertsPtr[iii].longName);
-			if (strncasecmp(objectName, cAAVSOalertsPtr[iii].longName, searchStrLen) == 0)
+		//	CONSOLE_DEBUG_W_STR("Checking\t=", gAAVSOalertsPtr[iii].longName);
+			if (strncasecmp(objectName, gAAVSOalertsPtr[iii].longName, searchStrLen) == 0)
 			{
-		//		CONSOLE_DEBUG_W_STR("Found", cAAVSOalertsPtr[iii].longName);
-				newRA	=	cAAVSOalertsPtr[iii].ra;
-				newDec	=	cAAVSOalertsPtr[iii].decl;
+		//		CONSOLE_DEBUG_W_STR("Found", gAAVSOalertsPtr[iii].longName);
+				newRA	=	gAAVSOalertsPtr[iii].ra;
+				newDec	=	gAAVSOalertsPtr[iii].decl;
 
 				strcpy(database, "AAVSO Alerts");
-				sprintf(foundName, "%s", cAAVSOalertsPtr[iii].longName);
+				sprintf(foundName, "%s", gAAVSOalertsPtr[iii].longName);
 				foundSomething	=	true;
 			}
 			iii++;
@@ -6024,7 +6063,7 @@ long	hippObjectId;
 	if (strncasecmp(objectName, "HD", 2) == 0)
 	{
 		CONSOLE_DEBUG("looking for henry draper objects");
-		if ((cDraperObjectPtr != NULL) && (cDraperObjectCount > 0))
+		if ((gDraperObjectPtr != NULL) && (gDraperObjectCount > 0))
 		{
 			argPtr	=	objectName;
 			argPtr	+=	2;
@@ -6035,18 +6074,18 @@ long	hippObjectId;
 			objectIDnum	=	atoi(argPtr);
 			iii			=	0;
 			CONSOLE_DEBUG_W_NUM("looking for HD", objectIDnum);
-			while ((foundSomething == false) && (iii < cDraperObjectCount))
+			while ((foundSomething == false) && (iii < gDraperObjectCount))
 			{
-				if ((objectIDnum == cDraperObjectPtr[iii].id))
+				if ((objectIDnum == gDraperObjectPtr[iii].id))
 				{
-					newRA	=	cDraperObjectPtr[iii].org_ra;
-					newDec	=	cDraperObjectPtr[iii].org_decl;
+					newRA	=	gDraperObjectPtr[iii].org_ra;
+					newDec	=	gDraperObjectPtr[iii].org_decl;
 
 					strcpy(database, "HD");
-					sprintf(foundName, "HD-%d mag=%f2.1", objectIDnum, cDraperObjectPtr[iii].realMagnitude);;
+					sprintf(foundName, "HD-%d mag=%f2.1", objectIDnum, gDraperObjectPtr[iii].realMagnitude);;
 					cDispOptions.dispNGC	=	true;
 					foundSomething			=	true;
-			//		DumpCelestDataStruct(__FUNCTION__, &cDraperObjectPtr[iii]);
+			//		DumpCelestDataStruct(__FUNCTION__, &gDraperObjectPtr[iii]);
 				}
 				iii++;
 			}
@@ -6060,7 +6099,7 @@ long	hippObjectId;
 	if (strncasecmp(objectName, "HD", 2) == 0)
 	{
 		CONSOLE_DEBUG("looking for henry draper objects")
-		if ((cHYGObjectPtr != NULL) && (cHYGObjectCount > 0))
+		if ((gHYGObjectPtr != NULL) && (gHYGObjectCount > 0))
 		{
 			argPtr	=	objectName;
 			argPtr	+=	2;
@@ -6070,19 +6109,19 @@ long	hippObjectId;
 			}
 			objectIDnum	=	atoi(argPtr);
 			iii			=	0;
-			while ((foundSomething == false) && (iii < cHYGObjectCount))
+			while ((foundSomething == false) && (iii < gHYGObjectCount))
 			{
-			//	if ((objectIDnum == cHYGObjectPtr[iii].id) && (cHYGObjectPtr[iii].dataSrc == kDataSrc_NGC2000IC))
-				if ((objectIDnum == cHYGObjectPtr[iii].id))
+			//	if ((objectIDnum == gHYGObjectPtr[iii].id) && (gHYGObjectPtr[iii].dataSrc == kDataSrc_NGC2000IC))
+				if ((objectIDnum == gHYGObjectPtr[iii].id))
 				{
-					newRA	=	cHYGObjectPtr[iii].org_ra;
-					newDec	=	cHYGObjectPtr[iii].org_decl;
+					newRA	=	gHYGObjectPtr[iii].org_ra;
+					newDec	=	gHYGObjectPtr[iii].org_decl;
 
 					strcpy(database, "IC");
-					sprintf(foundName, "IC-%d mag=%f2.1", objectIDnum, cHYGObjectPtr[iii].realMagnitude);;
+					sprintf(foundName, "IC-%d mag=%f2.1", objectIDnum, gHYGObjectPtr[iii].realMagnitude);;
 					cDispOptions.dispNGC	=	true;
 					foundSomething			=	true;
-			//		DumpCelestDataStruct(__FUNCTION__, &cHYGObjectPtr[iii]);
+			//		DumpCelestDataStruct(__FUNCTION__, &gHYGObjectPtr[iii]);
 				}
 				iii++;
 			}
@@ -6090,7 +6129,26 @@ long	hippObjectId;
 	}
 #endif // _ENABLE_HYG_
 
+	//*	check the special list
 
+	if ((foundSomething == false) && (gSpecialObjectPtr != NULL) && (gSpecialObjectCount > 0))
+	{
+
+		iii	=	0;
+		while ((foundSomething == false) && (iii < gSpecialObjectCount))
+		{
+			if (strncasecmp(objectName, gSpecialObjectPtr[iii].longName, searchStrLen) == 0)
+			{
+				newRA	=	gSpecialObjectPtr[iii].org_ra;
+				newDec	=	gSpecialObjectPtr[iii].org_decl;
+
+				strcpy(database, "Special Objects");
+				sprintf(foundName, "%s", gSpecialObjectPtr[iii].longName);
+				foundSomething	=	true;
+			}
+			iii++;
+		}
+	}
 
 
 	if (foundSomething)

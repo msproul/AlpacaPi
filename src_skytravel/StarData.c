@@ -154,6 +154,7 @@ int					bytesRead;
 						Swap2Bytes((short *)&(myDiskObjectPtr[ii].magn));
 						Swap2Bytes((short *)&(myDiskObjectPtr[ii].id));
 					}
+					CONSOLE_ABORT("_BIG_ENDIAN_");
 				#endif
 
 					myObjectPtr	=	(TYPE_CelestData *)malloc((myDiskObjectCount + 10) * sizeof(TYPE_CelestData));

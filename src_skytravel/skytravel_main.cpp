@@ -41,6 +41,7 @@
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
 
+#include	"SkyStruc.h"
 
 #include	"alpaca_defs.h"
 #include	"discoverythread.h"
@@ -53,6 +54,47 @@
 bool	gKeepRunning;
 char	gFullVersionString[128];
 char	gFirstArgString[256];
+
+//-----------------------------------------------------------
+//*	star information
+TYPE_CelestData		*gStarDataPtr		=	NULL;
+long				gStarCount			=	0;
+
+TYPE_CelestData		*gYaleStarDataPtr	=	NULL;
+long				gYaleStarCount		=	0;
+
+TYPE_Constelation	*gConstelations		=	NULL;
+short				gConstelationCount	=	0;
+
+TYPE_CelestData		*gConstStarPtr		=	NULL;
+long				gConstStarCount		=	0;
+
+TYPE_CelestData		*gNGCobjectPtr		=	NULL;
+long				gNGCobjectCount		=	0;
+
+//*	Hipparcos
+TYPE_CelestData		*gHipObjectPtr		=	NULL;
+long				gHipObjectCount		=	0;
+
+//*	Messier
+TYPE_CelestData		*gMessierOjbectPtr	=	NULL;
+long				gMessierOjbectCount	=	0;
+
+//*	HYG
+TYPE_CelestData		*gHYGObjectPtr		=	NULL;
+long				gHYGObjectCount		=	0;
+
+//*	Henry Draper
+TYPE_CelestData		*gDraperObjectPtr	=	NULL;
+long				gDraperObjectCount	=	0;
+
+//*	special objects for local use.
+TYPE_CelestData		*gSpecialObjectPtr	=	NULL;
+long				gSpecialObjectCount	=	0;
+
+//*	AAVSO alert list
+TYPE_CelestData		*gAAVSOalertsPtr	=	NULL;
+long				gAAVSOalertsCnt		=	0;
 
 
 //*****************************************************************************
@@ -95,6 +137,7 @@ char	theChar;
 	}
 }
 
+#include <fitsio.h>
 
 //*****************************************************************************
 int main(int argc, char *argv[])
@@ -103,6 +146,14 @@ int					iii;
 int					objectsCreated;
 int					activeObjCnt;
 int					keyPressed;
+float				fitsVersionRet;
+float				fitsVersionVal;
+
+	fitsVersionRet	=	ffvers(&fitsVersionVal);
+	printf("cfitsio version %3.2f\r\n", CFITSIO_VERSION);
+	printf("cfitsio version %3.2f\r\n", fitsVersionRet);
+	printf("cfitsio version %3.2f\r\n", fitsVersionVal);
+//	exit(0);
 
 	objectsCreated	=	0;
 	gColorOverRide	=	0;
@@ -143,7 +194,7 @@ int					keyPressed;
 					activeObjCnt++;
 					gControllerList[iii]->HandleWindow();
 			//		usleep(100);
-					keyPressed	=	cvWaitKey(25);
+					keyPressed	=	cvWaitKey(50);
 					if (keyPressed > 0)
 					{
 						Controller_HandleKeyDown(keyPressed);

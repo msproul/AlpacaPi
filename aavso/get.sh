@@ -1,6 +1,7 @@
 ###############################################################################
 #	Target Tool script
 #	This script will download the latest list of AAVSO alerts via the TargetTool
+#**	Jul  2,	2021	<MLS> obs_section=all now working with curl command
 ###############################################################################
 clear
 
@@ -40,16 +41,30 @@ echo $AUTH_STRING
 function Request
 {
 	URL=$1
-
+	echo "##################################################################"
 	echo "#Getting $URL"
 	echo -n "#Data retrieved at:"
 	date
-	# add "-D headers.txt"  to save the received headers
-	curl -X GET "$URL" 							\
-			-H "Authorization: $AUTH_STRING"	\
-			-H "accept: application/json"   	\
 
+#	echo "Arg cnt=$#" >/dev/stderr
+	if [ $# -eq 2 ]
+	then
+		DATA=$2
+		# add "-D headers.txt"  to save the received headers
+		curl -X GET "$URL" 							\
+				-d "$DATA"							\
+				-H "Authorization: $AUTH_STRING"	\
+				-H "accept: application/json"   	\
+				-D	"returned_header.txt"
 
+		echo "Data string = $DATA" >/dev/stderr
+	else
+		# add "-D headers.txt"  to save the received headers
+		curl -X GET "$URL" 							\
+				-H "Authorization: $AUTH_STRING"	\
+				-H "accept: application/json"   	\
+
+	fi
 	echo
 }
 
@@ -58,11 +73,13 @@ echo
 
 if [ -f replaceCRLF ]
 then
-
 	OUTPUTFILE="alerts_json.txt"
 	Request	"https://filtergraph.com/aavso/api/v1/nighttime"	| ./replaceCRLF	> $OUTPUTFILE
 	Request	"https://filtergraph.com/aavso/api/v1/telescope"	| ./replaceCRLF	>> $OUTPUTFILE
+
 	Request	"https://filtergraph.com/aavso/api/v1/targets"		| ./replaceCRLF	>> $OUTPUTFILE
+#	Request	"https://filtergraph.com/aavso/api/v1/targets?obs_section=all"	\
+#																| ./replaceCRLF	>> $OUTPUTFILE
 
 	echo -n "Total lines in JSON response ="
 	wc -l $OUTPUTFILE
@@ -71,6 +88,8 @@ then
 	echo -n "Total target entries ="
 	grep star_name $OUTPUTFILE | wc -l
 	echo
+	echo -n "#Finished retrieved at:"	>> $OUTPUTFILE
+	date								>> $OUTPUTFILE
 
 else
 	echo "Failed to create replaceCRLF"

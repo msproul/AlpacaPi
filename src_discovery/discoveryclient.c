@@ -508,25 +508,6 @@ int					bytesWritten;
 
 		}
 
-		if ((argc >= 2) && (argv[1][0] == 'x'))
-		{
-			//*	this is for my custom network
-			from.sin_addr.s_addr	=	htonl((192 << 24) + (168 << 16) + (50 << 8) + 46);
-			inet_ntop(AF_INET, &(from.sin_addr), str, INET_ADDRSTRLEN);
-		//	CONSOLE_DEBUG_W_STR("str=", str);
-			AddDeviceToList(&from, &jsonParser, 6800);
-
-			from.sin_addr.s_addr	=	htonl((192 << 24) + (168 << 16) + (50 << 8) + 77);
-			inet_ntop(AF_INET, &(from.sin_addr), str, INET_ADDRSTRLEN);
-		//	CONSOLE_DEBUG_W_STR("str=", str);
-			AddDeviceToList(&from, &jsonParser, 6800);
-
-//			from.sin_addr.s_addr	=	htonl((192 << 24) + (168 << 16) + (1 << 8) + 157);
-//			inet_ntop(AF_INET, &(from.sin_addr), str, INET_ADDRSTRLEN);
-//		//	CONSOLE_DEBUG_W_STR("str=", str);
-//			AddDeviceToList(&from, &jsonParser, 11111);
-
-		}
 //		ReadExternalIPlist();
 
 		PollAllDevices();
