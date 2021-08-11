@@ -216,7 +216,7 @@ ICrCameraObjectInfo				*camera_info	=	NULL;
 			//>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 			sonyRetCode	=	SCRSDK::Release();
 			LogFunctionCall(__FUNCTION__, __LINE__,	"SCRSDK::Release", 	0, (sonyRetCode ? "OK" : "Failed"));
-		//	exit(0);
+		//	CONSOLE_ABORT(__FUNCTION__);
 		}
 	}
 	else

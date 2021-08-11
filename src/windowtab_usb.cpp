@@ -135,7 +135,7 @@ char			usbPath[45];
 			else
 			{
 				CONSOLE_DEBUG("parent ptr is NULL");
-				exit(0);
+				CONSOLE_ABORT(__FUNCTION__);
 			}
 			break;
 
@@ -152,7 +152,7 @@ char			usbPath[45];
 			else
 			{
 				CONSOLE_DEBUG("parent ptr is NULL");
-				exit(0);
+				CONSOLE_ABORT(__FUNCTION__);
 			}
 			break;
 

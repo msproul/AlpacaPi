@@ -16,6 +16,9 @@
 //*	Mar 13,	2021	<MLS> Added AlpacaGetStartupData_Camera()
 //*****************************************************************************
 
+#ifndef _ENABLE_SKYTRAVEL_
+	#define _ENABLE_SKYTRAVEL_
+#endif // _ENABLE_SKYTRAVEL_
 
 #ifdef _ENABLE_SKYTRAVEL_
 

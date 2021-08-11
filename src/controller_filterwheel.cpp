@@ -276,4 +276,4 @@ void	ControllerFilterWheel::UpdateFilterWheelPosition(void)
 
 #include "controller_fw_common.cpp"
 
-#endif // _ENABLE_USB_FOCUSERS_
+#endif // _ENABLE_FILTERWHEEL_CONTROLLER_

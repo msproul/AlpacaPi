@@ -153,7 +153,6 @@ float				fitsVersionVal;
 	printf("cfitsio version %3.2f\r\n", CFITSIO_VERSION);
 	printf("cfitsio version %3.2f\r\n", fitsVersionRet);
 	printf("cfitsio version %3.2f\r\n", fitsVersionVal);
-//	exit(0);
 
 	objectsCreated	=	0;
 	gColorOverRide	=	0;

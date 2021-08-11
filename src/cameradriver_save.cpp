@@ -264,7 +264,7 @@ int				bytesPerPixel2;	//*	calculated 2 different ways
 			{
 				CONSOLE_DEBUG("Houston, we have a problem");
 				CONSOLE_DEBUG("bytes per pixel is messed up");
-				exit(0);
+				CONSOLE_ABORT(__FUNCTION__);
 			}
 			if (openCVimageWidth == cOpenCV_Image->width)
 			{

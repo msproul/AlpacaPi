@@ -63,6 +63,8 @@
 //*	Feb 27,	2021	<MLS> Added mouse event info to ProcessDoubleClick()
 //*	Apr  2,	2021	<MLS> Added DrawWidgetImage()
 //*	Apr  5,	2021	<MLS> Added 2nd version DrawWidgetImage()
+//*	Jul 18,	2021	<MLS> Added DrawWidgetScrollBar()
+//*	Aug  9,	2021	<MLS> Used try/catch for the first time (in ~Controller())
 //*****************************************************************************
 
 
@@ -91,8 +93,8 @@
 #include	"controller.h"
 
 Controller	*gControllerList[kMaxControllers];
-CvFont		gTextFont[kFontCnt];
 int			gControllerCnt			=	-1;
+CvFont		gTextFont[kFontCnt];
 char		gColorOverRide			=	0;
 Controller	*gCurrentActiveWindow	=	NULL;
 
@@ -338,7 +340,9 @@ Controller::~Controller(void)
 {
 int		iii;
 
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+	CONSOLE_DEBUG_W_STR("Deleting window:\t", cWindowName);
+//	CONSOLE_DEBUG_W_NUM("gControllerCnt\t=:", gControllerCnt);
+
 	//*	if we are the active window, make sure we dont get any more key presses
 	if (gCurrentActiveWindow == this)
 	{
@@ -351,19 +355,33 @@ int		iii;
 		cvReleaseImage(&cOpenCV_Image);
 		cOpenCV_Image	=	NULL;
 	}
-	CONSOLE_DEBUG(__FUNCTION__);
-	cvDestroyWindow(cWindowName);
+	//---try------try------try------try------try------try---
+	try
+	{
+		cvDestroyWindow(cWindowName);
+	}
+	catch(cv::Exception& ex)
+	{
+		//*	we sometimes can open the same window twice, this shouldn't happen but sometimes does.
+		//*	this catch prevents opencv from crashing
+		CONSOLE_DEBUG("cvDestroyWindow() had an exception");
+		if (ex.code != CV_StsAssert)
+		{
+			CONSOLE_DEBUG_W_NUM("openCV error code\t=",	ex.code);
+		}
+	}
+	//---end------end------end------end------end------end---
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG("Removing from list");
 	for (iii=0; iii<kMaxControllers; iii++)
 	{
 		if (gControllerList[iii] == this)
 		{
-			CONSOLE_DEBUG(__FUNCTION__);
+//			CONSOLE_DEBUG("Found controller in controller list, setting to NULL");
 			gControllerList[iii]	=	NULL;
 		}
 	}
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG("Done");
 }
 
 
@@ -766,6 +784,7 @@ void	Controller::ProcessMouseEvent(int event, int xxx, int yyy, int flags)
 int		clickedBtn;
 int		myWidgitIdx;
 bool	widgetIsButton;
+int		wheelMovement;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 	myWidgitIdx	=	FindClickedWidget(xxx,  yyy);
@@ -943,8 +962,17 @@ bool	widgetIsButton;
 			CONSOLE_DEBUG("CV_EVENT_MBUTTONDBLCLK");
 			break;
 
+		case CV_EVENT_MOUSEWHEEL:
+			wheelMovement	=	flags & 0xffff0000;
+			wheelMovement	/=	65536;
+			if (cCurrentTabObjPtr != NULL)
+			{
+				cCurrentTabObjPtr->ProcessMouseWheelMoved(myWidgitIdx, event,  xxx,  yyy,  wheelMovement);
+			}
+			break;
+
 		default:
-			CONSOLE_DEBUG("UNKNOWN EVENT");
+			CONSOLE_DEBUG_W_NUM("UNKNOWN EVENT", event);
 			break;
 	}
 
@@ -1663,6 +1691,102 @@ int			sliderOffset;
 					0);							//	int shift CV_DEFAULT(0));
 }
 
+//**************************************************************************************
+void	Controller::DrawWidgetScrollBar(TYPE_WIDGET *theWidget)
+{
+CvRect		myCVrect;
+CvPoint		sliderLoc;
+//int			textOffsetY;
+//char		leftString[32];
+//char		rightString[32];
+int			vertCenter;
+int			radius;
+int			scrollBarOffset;
+bool		sliderIsVertical;
+
+
+	myCVrect.x		=	theWidget->left;
+	myCVrect.y		=	theWidget->top;
+	myCVrect.width	=	theWidget->width;
+	myCVrect.height	=	theWidget->height;
+
+	//*	figure out it if it is horizontal or veritcal
+	if (myCVrect.height > myCVrect.width)
+	{
+		sliderIsVertical	=	true;
+	}
+	else
+	{
+		sliderIsVertical	=	false;
+	}
+
+//-	sliderDelata	=	1.0;
+
+	cvRectangleR(	cOpenCV_Image,
+					myCVrect,
+					theWidget->bgColor,			//	CvScalar color,
+					CV_FILLED,					//	int thickness CV_DEFAULT(1),
+					8,							//	int line_type CV_DEFAULT(8),
+					0);							//	int shift CV_DEFAULT(0));
+
+	cvRectangleR(	cOpenCV_Image,
+					myCVrect,
+					theWidget->borderColor,		//	CvScalar color,
+					1,							//	int thickness CV_DEFAULT(1),
+					8,							//	int line_type CV_DEFAULT(8),
+					0);							//	int shift CV_DEFAULT(0));
+
+	//*	now draw the slider itself
+	vertCenter		=	theWidget->top + (theWidget->height / 2);
+	myCVrect.x		=	theWidget->left + 50;
+	myCVrect.y		=	vertCenter - 1;
+	myCVrect.width	=	theWidget->width - 100;
+	myCVrect.height	=	3;
+
+
+	cvRectangleR(	cOpenCV_Image,
+					myCVrect,
+					theWidget->textColor,		//	CvScalar color,
+				//	CV_FILLED,					//	int thickness CV_DEFAULT(1),
+					1,							//	int thickness CV_DEFAULT(1),
+					8,							//	int line_type CV_DEFAULT(8),
+					0);							//	int shift CV_DEFAULT(0));
+
+
+	//*	DEBUG
+	if (theWidget->scrollBarMax <= 0)
+	{
+		CONSOLE_DEBUG_W_NUM("theWidget->scrollBarMax\t=",	theWidget->scrollBarMax);
+		theWidget->scrollBarMax	=	1;
+	}
+
+	//*	draw the indicator
+	if (sliderIsVertical)
+	{
+		scrollBarOffset	=	(theWidget->scrollBarValue * myCVrect.height) / theWidget->scrollBarMax;
+		sliderLoc.x		=	myCVrect.x + (myCVrect.width / 2);
+		sliderLoc.y		=	myCVrect.y + scrollBarOffset;
+
+//		CONSOLE_DEBUG_W_NUM("theWidget->scrollBarValue\t=",	theWidget->scrollBarValue);
+//		CONSOLE_DEBUG_W_NUM("scrollBarOffset\t\t=",			scrollBarOffset);
+	}
+	else
+	{
+		scrollBarOffset	=	(theWidget->scrollBarValue * myCVrect.width) / theWidget->scrollBarMax;
+		sliderLoc.x		=	myCVrect.x + scrollBarOffset;
+		sliderLoc.y		=	vertCenter;
+		radius			=	4;
+	}
+
+	cvCircle(		cOpenCV_Image,
+					sliderLoc,					//	CvPoint center,
+					radius,						//	int radius,
+					theWidget->textColor,		//	CvScalar color, int thickness CV_DEFAULT(1),
+					CV_FILLED,					//	int thickness CV_DEFAULT(1),
+					8,							//	int line_type CV_DEFAULT(8),
+					0);							//	int shift CV_DEFAULT(0));
+}
+
 
 //**************************************************************************************
 void	Controller::DrawWidgetOutlineBox(TYPE_WIDGET *theWidget)
@@ -2128,8 +2252,11 @@ CvRect		widgetRect;
 			DrawWidgetSlider(widgetPtr);
 			break;
 
-		case kWidgetType_OutlineBox:
 		case kWidgetType_ScrollBar:
+			DrawWidgetScrollBar(widgetPtr);
+			break;
+
+		case kWidgetType_OutlineBox:
 			DrawWidgetOutlineBox(widgetPtr);
 			break;
 

@@ -20,6 +20,7 @@
 //*****************************************************************************
 //*	Apr 21,	2020	<MLS> Created windowtab_STsettings.cpp
 //*	Jul  5,	2021	<MLS> Added star count table to settings tab
+//*	Jul 17,	2021	<MLS> Added double click to SkyTravelSettings window
 //*****************************************************************************
 
 
@@ -34,6 +35,7 @@
 #include	"controller.h"
 #include	"controller_skytravel.h"
 #include	"observatory_settings.h"
+#include	"controller_aavso.h"
 
 #include	"SkyStruc.h"
 
@@ -293,6 +295,25 @@ void	WindowTabSTsettings::ProcessButtonClick(const int buttonIdx)
 			break;
 	}
 }
+
+//*****************************************************************************
+void	WindowTabSTsettings::ProcessDoubleClick(const int	widgetIdx,
+												const int	event,
+												const int	xxx,
+												const int	yyy,
+												const int	flags)
+{
+
+	switch(widgetIdx)
+	{
+		case kSkyT_Settings_DataAAVSO_txt:
+		case kSkyT_Settings_DataAAVSO_cnt:
+			CreateAAVSOlistWindow();
+			break;
+
+	}
+}
+
 
 //*****************************************************************************
 void	WindowTabSTsettings::UpdateSettings(void)

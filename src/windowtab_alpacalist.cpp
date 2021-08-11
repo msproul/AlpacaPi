@@ -666,37 +666,37 @@ static  int RemoteObjectQsortProc(const void *e1, const void *e2)
 	returnValue	=	0;
 	switch(gSortColumn)
 	{
-	case 0:
-		returnValue	=	0;	//*	let the default code below take care of this
-		break;
+		case 0:
+			returnValue	=	0;	//*	let the default code below take care of this
+			break;
 
-	case 1:
-		returnValue	=	strcasecmp(obj1->hostName, obj2->hostName);
-		break;
+		case 1:
+			returnValue	=	strcasecmp(obj1->hostName, obj2->hostName);
+			break;
 
-	case 2:
-		returnValue	=	strcasecmp(obj1->deviceTypeStr, obj2->deviceTypeStr);
-		if (returnValue == 0)
-		{
-			returnValue	=	strcasecmp(obj1->deviceNameStr, obj2->deviceNameStr);
-		}
-		break;
-
-	case 3:
-		returnValue	=	strcasecmp(obj1->deviceNameStr, obj2->deviceNameStr);
-		break;
-
-	case 4:
-		returnValue	=	obj1->interfaceVersion -obj2->interfaceVersion;
-		if (returnValue == 0)
-		{
+		case 2:
 			returnValue	=	strcasecmp(obj1->deviceTypeStr, obj2->deviceTypeStr);
 			if (returnValue == 0)
 			{
 				returnValue	=	strcasecmp(obj1->deviceNameStr, obj2->deviceNameStr);
 			}
-		}
-		break;
+			break;
+
+		case 3:
+			returnValue	=	strcasecmp(obj1->deviceNameStr, obj2->deviceNameStr);
+			break;
+
+		case 4:
+			returnValue	=	obj1->interfaceVersion -obj2->interfaceVersion;
+			if (returnValue == 0)
+			{
+				returnValue	=	strcasecmp(obj1->deviceTypeStr, obj2->deviceTypeStr);
+				if (returnValue == 0)
+				{
+					returnValue	=	strcasecmp(obj1->deviceNameStr, obj2->deviceNameStr);
+				}
+			}
+			break;
 	}
 	//*	if they are the same, sort by address
 	if (returnValue == 0)

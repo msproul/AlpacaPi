@@ -122,6 +122,12 @@ typedef struct
 	double		sliderMin;
 	double		sliderMax;
 
+	//*	the scroll bar value is between 0 and (max - 2)
+	int			scrollBarValue;
+	int			scrollBarMax;
+	int			scrollBarLines;
+
+
 	double		*graphArrayPtr;
 	int			graphArrayCnt;
 } TYPE_WIDGET;

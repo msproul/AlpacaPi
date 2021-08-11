@@ -7,6 +7,7 @@
 ###	Jan 21,	2021	<MLS> Adding skytravel to build process
 ###############################################################################
 
+date
 RASPPI=false
 PI64=false
 OPENCV_OK=false
@@ -74,7 +75,7 @@ then
 else
 	PLATFORM="unknown"
 fi
-echo "$PLATFORM"
+echo "Platform = $PLATFORM"
 
 echo "*************************************************** making client"
 make clean client  >/dev/null
@@ -251,3 +252,4 @@ date >> $LOGFILENAME
 cat  $LOGFILENAME
 
 echo "Log saved as $LOGFILENAME"
+date

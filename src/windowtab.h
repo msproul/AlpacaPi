@@ -138,6 +138,10 @@ class WindowTab
 
 				void	SetWidgetSliderLimits(	const int widgetIdx, double sliderMin, double sliderMax);
 				void	SetWidgetSliderValue(	const int widgetIdx, double sliderValue);
+
+				void	SetWidgetScrollBarLimits(const int widgetIdx, int scrollBarLines, int scrollBarMax);
+				void	SetWidgetScrollBarValue(const int widgetIdx, int scrollBarValue);
+
 		virtual	void	UpdateControls(void);
 		virtual	void	UpdateSliderValue(		const int widgetIdx, double newSliderValue);
 
@@ -190,6 +194,7 @@ class WindowTab
 		virtual void	ProcessMouseLeftButtonDown(const int widgetIdx, const int event, const int xxx, const int yyy, const int flags);
 		virtual void	ProcessMouseLeftButtonUp(const int widgetIdx, const int event, const int xxx, const int yyy, const int flags);
 		virtual void	ProcessMouseLeftButtonDragged(const int widgetIdx, const int event, const int xxx, const int yyy, const int flags);
+		virtual void	ProcessMouseWheelMoved(const int widgetIdx, const int event, const int xxx, const int yyy, const int wheelMovement);
 
 				void	SetHelpTextBoxNumber(const int buttonIdx);
 				void	SetHelpTextBoxColor(CvScalar newtextColor);

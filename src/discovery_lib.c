@@ -341,7 +341,7 @@ int					setOptRetCode;
 	else
 	{
 		CONSOLE_DEBUG("Cannot sent request to 0.0.0.0");
-		exit(0);
+		CONSOLE_ABORT(__FUNCTION__);
 	}
 }
 

@@ -208,11 +208,15 @@ char	lineBuff[64];
 //*****************************************************************************
 void	ControllerCamNormal::UpdateCommonProperties(void)
 {
+	CONSOLE_DEBUG(__FUNCTION__);
+
 	SetWidgetText(kTab_DriverInfo,		kDriverInfo_Name,				cCommonProp.Name);
 	SetWidgetText(kTab_DriverInfo,		kDriverInfo_Description,		cCommonProp.Description);
 	SetWidgetText(kTab_DriverInfo,		kDriverInfo_DriverInfo,			cCommonProp.DriverInfo);
 	SetWidgetText(kTab_DriverInfo,		kDriverInfo_DriverVersion,		cCommonProp.DriverVersion);
 	SetWidgetNumber(kTab_DriverInfo,	kDriverInfo_InterfaceVersion,	cCommonProp.InterfaceVersion);
+
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, "Exit");
 }
 
 //*****************************************************************************

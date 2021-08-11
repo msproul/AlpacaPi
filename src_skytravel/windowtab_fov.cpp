@@ -55,6 +55,7 @@ WindowTabFOV::WindowTabFOV(	const int	xSize,
 								const char	*windowName)
 	:WindowTab(xSize, ySize, backGrndColor, windowName)
 {
+int		iii;
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	cAlpacaDevCnt		=	0;
@@ -65,7 +66,11 @@ WindowTabFOV::WindowTabFOV(	const int	xSize,
 	cCurrentCamera		=	NULL;
 
 	memset(cCameraData, 0, (kMaxCamaeraFOVcnt * sizeof(TYPE_CameraFOV)));
-	cCameraData[0].FOVenabled	=	true;	//*	make the first one default to on
+	//*	default is all camera FOVs enabled
+	for (iii=0; iii<kMaxCamaeraFOVcnt; iii++)
+	{
+		cCameraData[iii].FOVenabled	=	true;
+	}
 
 	ClearRemoteDeviceList();
 

@@ -1584,6 +1584,7 @@ CONTROLLER_OBJECTS=												\
 				$(OBJECT_DIR)controller_ml_single.o				\
 				$(OBJECT_DIR)controller_usb.o					\
 				$(OBJECT_DIR)helper_functions.o					\
+				$(OBJECT_DIR)linuxerrors.o						\
 				$(OBJECT_DIR)windowtab.o						\
 				$(OBJECT_DIR)windowtab_about.o					\
 				$(OBJECT_DIR)windowtab_auxmotor.o				\
@@ -1713,6 +1714,7 @@ SRC_SKYTRAVEL=./src_skytravel/
 SKYTRAVEL_OBJECTS=											\
 				$(OBJECT_DIR)aavso_data.o					\
 				$(OBJECT_DIR)ConstellationData.o			\
+				$(OBJECT_DIR)controller_aavso.o				\
 				$(OBJECT_DIR)controller_camera.o			\
 				$(OBJECT_DIR)controller_cam_normal.o		\
 				$(OBJECT_DIR)controller_covercalib.o		\
@@ -1745,6 +1747,7 @@ SKYTRAVEL_OBJECTS=											\
 				$(OBJECT_DIR)StarData.o						\
 				$(OBJECT_DIR)SkyTravelTimeRoutines.o		\
 				$(OBJECT_DIR)serialport.o					\
+				$(OBJECT_DIR)windowtab_aavsolist.o			\
 				$(OBJECT_DIR)windowtab_alpacalist.o			\
 				$(OBJECT_DIR)windowtab_auxmotor.o			\
 				$(OBJECT_DIR)windowtab_camera.o				\
@@ -2856,6 +2859,20 @@ $(OBJECT_DIR)HipparcosCatalog.o :		$(SRC_SKYTRAVEL)HipparcosCatalog.c	\
 $(OBJECT_DIR)ConstellationData.o :		$(SRC_SKYTRAVEL)ConstellationData.c	\
 										$(SRC_SKYTRAVEL)ConstellationData.h
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYTRAVEL)ConstellationData.c -o$(OBJECT_DIR)ConstellationData.o
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)controller_aavso.o : 		$(SRC_SKYTRAVEL)controller_aavso.cpp	\
+										$(SRC_SKYTRAVEL)controller_aavso.h	\
+										$(SRC_DIR)windowtab_about.h			\
+										$(SRC_DIR)controller.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYTRAVEL)controller_aavso.cpp -o$(OBJECT_DIR)controller_aavso.o
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)windowtab_aavsolist.o : 	$(SRC_SKYTRAVEL)windowtab_aavsolist.cpp	\
+										$(SRC_SKYTRAVEL)windowtab_aavsolist.h	\
+										$(SRC_DIR)windowtab.h					\
+										$(SRC_DIR)controller.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYTRAVEL)windowtab_aavsolist.cpp -o$(OBJECT_DIR)windowtab_aavsolist.o
 
 
 #-------------------------------------------------------------------------------------

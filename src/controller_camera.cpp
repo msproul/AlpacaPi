@@ -311,6 +311,7 @@ uint32_t	deltaSeconds;
 bool		validData;
 bool		needToUpdate;
 
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 	if (cReadStartup)
 	{
 		CONSOLE_DEBUG_W_STR("cReadStartup", cWindowName);
@@ -325,8 +326,9 @@ bool		needToUpdate;
 		{
 			AlpacaGetFilterWheelStartup();
 		}
+//		CONSOLE_DEBUG("Calling AlpacaGetCommonProperties(camera)");
 		AlpacaGetCommonProperties("camera");
-
+//		CONSOLE_DEBUG("Retured from AlpacaGetCommonProperties(camera)");
 
 		cReadStartup	=	false;
 	}
@@ -334,7 +336,6 @@ bool		needToUpdate;
 	needToUpdate	=	false;
 	currentMillis	=	millis();
 	deltaSeconds	=	(currentMillis - cLastUpdate_milliSecs) / 1000;
-
 
 	if (cFirstDataRead)
 	{
@@ -365,6 +366,7 @@ bool		needToUpdate;
 			}
 		}
 	}
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, "Exit");
 }
 
 //*****************************************************************************
@@ -1251,7 +1253,7 @@ char			alpacaString[128];
 int				jjj;
 int				iii;
 
-//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 
 	//*	get the File list
 	SJP_Init(&jsonParser);

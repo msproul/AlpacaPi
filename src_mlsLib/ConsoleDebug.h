@@ -12,6 +12,7 @@
 //*	Dec 25,	2019	<MLS> Added checking for 8 byte longs
 //*	Jun 22,	2020	<MLS> Added debug timing to ConsoleDebug.h
 //*	Jun 30,	2020	<MLS> Added CONSOLE_ABORT()
+//*	Aug 10,	2021	<MLS> Added CONSOLE_DEBUG_W_LHEX()	long hex
 //***************************************************************************************
 //#include	"ConsoleDebug.h"
 
@@ -48,7 +49,8 @@
 	#define	CONSOLE_DEBUG_W_NUM(msg, num)				printf("%-40s:%4d [%-20s] %s %d\n", 		__FILE__, __LINE__, __FUNCTION__, msg, num);	fflush(stdout);
 	#define	CONSOLE_DEBUG_W_LONG(msg, num)				printf("%-40s:%4d [%-20s] %s %ld\n", 		__FILE__, __LINE__, __FUNCTION__, msg, num);	fflush(stdout);
 	#define	CONSOLE_DEBUG_W_DBL(msg, num)				printf("%-40s:%4d [%-20s] %s %3.15f\n", 	__FILE__, __LINE__, __FUNCTION__, msg, num);	fflush(stdout);
-	#define	CONSOLE_DEBUG_W_HEX(msg, num)				printf("%-40s:%4d [%-20s] %s 0x%02LX\n", 	__FILE__, __LINE__, __FUNCTION__, msg, num);	fflush(stdout);
+	#define	CONSOLE_DEBUG_W_HEX(msg, num)				printf("%-40s:%4d [%-20s] %s 0x%02X\n", 	__FILE__, __LINE__, __FUNCTION__, msg, num);	fflush(stdout);
+	#define	CONSOLE_DEBUG_W_LHEX(msg, num)				printf("%-40s:%4d [%-20s] %s 0x%02LX\n", 	__FILE__, __LINE__, __FUNCTION__, msg, num);	fflush(stdout);
 	#define	CONSOLE_DEBUG_W_STR(msg, str)				printf("%-40s:%4d [%-20s] %s %s\n", 		__FILE__, __LINE__, __FUNCTION__, msg, str);	fflush(stdout);
 	#define	CONSOLE_DEBUG_W_2STR(msg, str1, str2)		printf("%-40s:%4d [%-20s] %s %s, %s\n",		__FILE__, __LINE__, __FUNCTION__, msg, str1, str2);	fflush(stdout);
 	#define	CONSOLE_DEBUG_W_3STR(msg, str1, str2, str3)	printf("%-40s:%4d [%-20s] %s %s, %s %s\n",	__FILE__, __LINE__, __FUNCTION__, msg, str1, str2, str3);	fflush(stdout);

@@ -681,7 +681,7 @@ char				httpHeader[500];
 	cCameraProp.MaxbinX	=	1;
 	cCameraProp.MaxbinY	=	1;
 
-	alpacaErrCode	=	kASCOM_Err_PropertyNotImplemented;
+	alpacaErrCode		=	kASCOM_Err_PropertyNotImplemented;
 	strcpy(alpacaErrMsg, "");
 	strcpy(cLastCameraErrMsg, "");
 
@@ -1341,6 +1341,9 @@ char				httpHeader[500];
 			break;
 
 		case kCmd_Camera_filelist:
+			JsonResponse_FinishHeader(httpHeader, "");
+			JsonResponse_SendTextBuffer(mySocket, httpHeader);
+			httpHeaderSent	=	true;
 			alpacaErrCode	=	Get_Filelist(reqData, alpacaErrMsg);
 			break;
 
@@ -1569,7 +1572,7 @@ double	myExposure_usecs;
 	{
 		CONSOLE_DEBUG("Internal Error");
 	//	alpacaErrCode	=	kASCOM_Err_InternalError;
-		exit(0);
+		CONSOLE_ABORT("Internal Error");
 	}
 }
 
@@ -5011,7 +5014,7 @@ bool				recTimeFound;
 						cInternalCameraState	=	kCameraState_Idle;
 						alpacaErrCode			=	kASCOM_Err_FailedToTakePicture;
 						GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Failed to create video writer (openCv)");
-						exit(0);
+						CONSOLE_ABORT("");
 
 					}
 					//=============================================
@@ -6228,7 +6231,7 @@ char		fileNameDateString[64];
 #pragma mark -
 
 
-#define	_SORT_FILENAMES_
+//#define	_SORT_FILENAMES_
 #ifdef _SORT_FILENAMES_
 
 #define	kMaxFileCnt	200
@@ -6272,6 +6275,7 @@ int					ii;
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, kImageDataDir);
 
 	mySocketFD	=	reqData->socket;
+	CONSOLE_DEBUG_W_NUM("mySocketFD    \t=", mySocketFD);
 
 	directory	=	opendir(kImageDataDir);
 	if (directory != NULL)
@@ -6306,6 +6310,7 @@ int					ii;
 				}
 				else
 				{
+				//	CONSOLE_DEBUG(dir->d_name);
 				#ifdef _SORT_FILENAMES_
 					if (fileIdx < kMaxFileCnt)
 					{
@@ -6315,7 +6320,7 @@ int					ii;
 					else
 					{
 						CONSOLE_DEBUG("Exceeded file list max count!!!!!!");
-//+						keepGoing	=	false;
+						keepGoing	=	false;
 					}
 				#else
 				//	printf("%2d\t%s\r\n", dir->d_type, dir->d_name);
@@ -6331,23 +6336,34 @@ int					ii;
 					strcat(lineBuff, dir->d_name);
 					strcat(lineBuff, "\",");
 					strcat(lineBuff, "\r\n");
+				//	CONSOLE_DEBUG_W_NUM("len of jsonTextBuffer\t=", strlen(reqData->jsonTextBuffer));
 					JsonResponse_Add_RawText(	mySocketFD,
 												reqData->jsonTextBuffer,
 												kMaxJsonBuffLen,
 												lineBuff);
+				//	CONSOLE_DEBUG_W_NUM("len of jsonTextBuffer\t=", strlen(reqData->jsonTextBuffer));
+				//	CONSOLE_DEBUG_W_NUM("kMaxJsonBuffLen\t=", kMaxJsonBuffLen);
+					if (strlen(reqData->jsonTextBuffer) >= kMaxJsonBuffLen)
+					{
+						CONSOLE_DEBUG("Houston, we have a problem!!!");
+					}
 				#endif // _SORT_FILENAMES_
 				}
 			}
 			else
 			{
+				CONSOLE_DEBUG("End of directory entries");
 				keepGoing	=	false;
 			}
 		}
 CONSOLE_DEBUG(__FUNCTION__);
 	#ifdef _SORT_FILENAMES_
 CONSOLE_DEBUG("sorting");
+CONSOLE_DEBUG_W_NUM("kMaxFileCnt\t=", kMaxFileCnt);
+CONSOLE_DEBUG_W_NUM("fileIdx    \t=", fileIdx);
+
 		qsort(files, fileIdx, sizeof(TYPE_FILE_ENTRY), DirSort);
-		for (ii=0; ii<fileIdx; ii++)
+		for (ii=0; ii < fileIdx; ii++)
 		{
 			lineBuff[0]	=	0;
 			if (firstLine)
@@ -6359,27 +6375,31 @@ CONSOLE_DEBUG("sorting");
 			strcat(lineBuff, files[ii].filename);
 			strcat(lineBuff, "\",");
 			strcat(lineBuff, "\r\n");
+//			CONSOLE_DEBUG_W_NUM("len of lineBuff\t=", strlen(lineBuff));
 			JsonResponse_Add_RawText(	mySocketFD,
 										reqData->jsonTextBuffer,
 										kMaxJsonBuffLen,
 										lineBuff);
 		}
+	#endif // _SORT_FILENAMES_
+CONSOLE_DEBUG_W_NUM("len of jsonTextBuffer\t=", strlen(reqData->jsonTextBuffer));
 		JsonResponse_Add_RawText(	mySocketFD,
 									reqData->jsonTextBuffer,
 									kMaxJsonBuffLen,
 									"\t\t\t\"END\"\r\n");
-	#endif // _SORT_FILENAMES_
-CONSOLE_DEBUG(__FUNCTION__);
+CONSOLE_DEBUG_W_NUM("len of jsonTextBuffer\t=", strlen(reqData->jsonTextBuffer));
 		JsonResponse_Add_ArrayEnd(	mySocketFD,
 									reqData->jsonTextBuffer,
 									kMaxJsonBuffLen,
 									INCLUDE_COMMA);
+CONSOLE_DEBUG_W_NUM("len of jsonTextBuffer\t=", strlen(reqData->jsonTextBuffer));
 		errorCode	=	closedir(directory);
 		if (errorCode != 0)
 		{
 			CONSOLE_DEBUG_W_NUM("closedir errorCode\t=", errorCode);
 			CONSOLE_DEBUG_W_NUM("errno\t=", errno);
 		}
+CONSOLE_DEBUG(__FUNCTION__);
 	}
 	else
 	{
@@ -6391,6 +6411,7 @@ CONSOLE_DEBUG(__FUNCTION__);
 					kASCOM_Err_Success,
 					"Failed to open image data directory");
 	}
+CONSOLE_DEBUG(__FUNCTION__);
 
 	return(alpacaErrCode);
 }

@@ -40,6 +40,7 @@
 //*	Jun 24,	2020	<MLS> Removed return value from JsonResponse_Add functions for speed
 //*	Jun 24,	2020	<MLS> Removed some of the safety checks to increase speed
 //*	Dec  7,	2020	<MLS> Fixed comma bug in JsonResponse_Add_Double()
+//*	Jul 18,	2021	<MLS> Added _DEBUG_JSON_RESPONSE_
 //*****************************************************************************
 
 
@@ -68,7 +69,7 @@
 	#include	<netinet/in.h>
 #endif		//	__IAR_SYSTEMS_ICC__
 
-
+//#define	_DEBUG_JSON_RESPONSE_
 
 //#define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
@@ -77,6 +78,7 @@
 //*	if enabled, tabs are added to make the json easy to visually read.
 #define	_MAKE_JSON_PRETTY_
 
+#include 	"JsonDefs.h"
 #include	"JsonResponse.h"
 
 
@@ -131,23 +133,33 @@ static void	JsonRespnse_XmitIfFull(	const int	socketFD,
 									const int	maxLen,
 									const int	payloadLen)
 {
-int		bufLen;
+size_t	bufLen;
 int		bytesWritten;
 
-//	if (jsonTextBuffer != NULL)
-//	{
+	if (jsonTextBuffer != NULL)
+	{
 		bufLen	=	strlen(jsonTextBuffer);
 		if ((bufLen + payloadLen) >=  maxLen)
 		{
+		//	CONSOLE_DEBUG("Sending Data because xmit buffer is full");
+		//	CONSOLE_DEBUG_W_NUM("maxLen\t\t\t=", maxLen);
+		//	CONSOLE_DEBUG_W_NUM("len of jsonTextBuffer\t=", strlen(jsonTextBuffer));
 			//*	transmit the packet and reset
 			bytesWritten	=	write(socketFD, jsonTextBuffer, bufLen);
+		//	CONSOLE_DEBUG(__FUNCTION__);
 			if (bytesWritten < 0)
 			{
 				CONSOLE_DEBUG("Error writing to socket");
 			}
+		//	CONSOLE_DEBUG(__FUNCTION__);
 			jsonTextBuffer[0]	=	0;	//*	reset the buffer
+		//	CONSOLE_DEBUG_W_NUM("len of jsonTextBuffer\t=", strlen(jsonTextBuffer));
 		}
-//	}
+	}
+	else
+	{
+		CONSOLE_DEBUG("jsonTextBuffer is NULL");
+	}
 }
 
 
@@ -475,37 +487,56 @@ void	JsonResponse_Add_RawText(	const int		socketFD,
 {
 int		payloadLen;
 
-//	if ((jsonTextBuffer != NULL) && (rawTextBuffer != NULL))
-//	{
+#ifdef _DEBUG_JSON_RESPONSE_
+	if ((jsonTextBuffer != NULL) && (rawTextBuffer != NULL))
+	{
+
 		//*	calculate the length of what we are adding to the buffer
 		payloadLen	=	strlen(rawTextBuffer);
+		CONSOLE_DEBUG_W_NUM("len of jsonTextBuffer\t=", strlen(jsonTextBuffer));
+		CONSOLE_DEBUG_W_NUM("payloadLen            \t=", payloadLen);
 
 		JsonRespnse_XmitIfFull(socketFD, jsonTextBuffer, maxLen, payloadLen);
+		CONSOLE_DEBUG_W_NUM("len of jsonTextBuffer\t=", strlen(jsonTextBuffer));
 
 		strcat(jsonTextBuffer, rawTextBuffer);
-//	}
-//	else
-//	{
-//		CONSOLE_DEBUG("Internal error");
-//	}
+		CONSOLE_DEBUG(__FUNCTION__);
+	}
+	else
+	{
+		CONSOLE_DEBUG("Internal error");
+	}
+#else
+	//*	calculate the length of what we are adding to the buffer
+	payloadLen	=	strlen(rawTextBuffer);
+
+	JsonRespnse_XmitIfFull(socketFD, jsonTextBuffer, maxLen, payloadLen);
+
+	strcat(jsonTextBuffer, rawTextBuffer);
+#endif // _DEBUG_JSON_RESPONSE_
 }
 
 //*****************************************************************************
 //*	returns bytes written
 //*****************************************************************************
 void		JsonResponse_Add_Finish(const int		socketFD,
-								char			*jsonTextBuffer,
-								const int		maxLen,
-								bool			includeHeader)
+									char			*jsonTextBuffer,
+									const int		maxLen,
+									bool			includeHeader)
 {
-//int		bytesWritten	=	0;
-char	fullDataBuffer[10000];
+char	fullDataBuffer[kMaxJsonBuffLen];
 
+	CONSOLE_DEBUG(__FUNCTION__);
 
 	if (jsonTextBuffer != NULL)
 	{
 		strcat(jsonTextBuffer, "}");
 		strcat(jsonTextBuffer, "\r\n");
+
+		if (strlen(jsonTextBuffer) >= sizeof(fullDataBuffer))
+		{
+			CONSOLE_ABORT("Buffer overflow!!!!!!!!!!!");
+		}
 
 		if (includeHeader)
 		{
@@ -529,12 +560,11 @@ char	fullDataBuffer[10000];
 	}
 }
 
-
 //*****************************************************************************
 int	JsonResponse_SendTextBuffer(const int socketFD, char *jsonTextBuffer)
 {
 int		bytesWritten;
-int		bufLen;
+size_t	bufLen;
 int		tryCount;
 bool	keepTrying;
 

@@ -53,7 +53,7 @@ void abort_(const char *errorString)
 {
 	fprintf(stderr, "%s\n", errorString);
 	fflush(stderr);
-	exit(0);
+	CONSOLE_ABORT(__FUNCTION__);
 }
 
 

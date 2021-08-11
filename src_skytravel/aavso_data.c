@@ -29,6 +29,7 @@
 //*	Apr 10,	2021	<MLS> Created aavso_data.c
 //*	Apr 10,	2021	<MLS> AAVSO TargetTool objects displayed
 //*	Apr 11,	2021	<MLS> Working on AAVSO TargetTool read logic
+//*	Aug  9,	2021	<MLS> Fixed bug in alert count
 //*****************************************************************************
 
 #include	<string.h>
@@ -192,7 +193,7 @@ char		keyWordStr[128];
 char		valueStr[128];
 double		ra_Degrees;
 double		dec_Degrees;
-char		*noticePtr;
+char		*alertNoticePtr;
 int			alertID;
 
 	ParseOneLineOfJson(lineBuff, keyWordStr, valueStr);
@@ -218,10 +219,14 @@ int			alertID;
 	{
 		currentStarEntry->realMagnitude	=		atof(valueStr);
 	}
+#if 1
 	else if (strcasecmp(keyWordStr, "other_info") == 0)
 	{
-	//	CONSOLE_DEBUG_W_STR(keyWordStr, valueStr);
-	//	printf("other_info=%s\r\n", valueStr);
+		char		*noticePtr;
+	//	"other_info": "[[Alert Notice 614 https://www.aavso.org/aavso-alert-notice-614]]",
+
+//		CONSOLE_DEBUG_W_STR(keyWordStr, valueStr);
+//		printf("other_info=%s\r\n", valueStr);
 		noticePtr	=	strstr(valueStr, "notice-");
 		if (noticePtr != NULL)
 		{
@@ -235,6 +240,53 @@ int			alertID;
 				alertID	=	atoi(noticePtr);
 //				CONSOLE_DEBUG_W_NUM("alertID\t=", alertID);
 				if (alertID > currentStarEntry->id)
+				{
+					currentStarEntry->id	=	alertID;
+				}
+			}
+		}
+		else
+		{
+			//*	data does not have what we are looking for
+		//	CONSOLE_DEBUG_W_STR("valueStr does not containt 'notice-'", valueStr);
+		}
+	}
+#endif // 0
+	else
+	{
+	//	not active - [[Alert Notice 721 https://www.aavso.org/aavso-alert-notice-721]]
+	//				 [[Alert notice 648 https://www.aavso.org/aavso-alert-notice-648]]",
+
+//-		if (strcmp(currentStarEntry->longName, "ASASSN-V J195442.95+172212.6") == 0)
+//-		{
+//-			CONSOLE_DEBUG_W_STR("lineBuff=", lineBuff);
+//-		//	CONSOLE_ABORT(__FUNCTION__);
+//-
+//-		}
+
+		alertNoticePtr	=	strcasestr(lineBuff, "Alert Notice");
+		if (alertNoticePtr != NULL)
+		{
+			alertNoticePtr	+=	13;
+			alertID	=	atoi(alertNoticePtr);
+			if (alertID > currentStarEntry->id)
+			{
+				currentStarEntry->id	=	alertID;
+			}
+		}
+
+	//	"other_info": "[[Special Notice #293 https://www.aavso.org/aavso-special-notice-293]]",
+		alertNoticePtr	=	strcasestr(lineBuff, "Special Notice");
+		if (alertNoticePtr != NULL)
+		{
+			alertNoticePtr	+=	14;
+			while ((*alertNoticePtr == 0x20) || (*alertNoticePtr == '#'))
+			{
+				alertNoticePtr++;
+			}
+			alertID	=	atoi(alertNoticePtr);
+			if (alertID > currentStarEntry->id)
+			{
 				currentStarEntry->id	=	alertID;
 			}
 		}
@@ -247,8 +299,8 @@ TYPE_CelestData	*ReadAAVSO_TargetData(long *objectCount)
 {
 FILE				*filePointer;
 TYPE_CelestData		*targetData;
-char				readBuff[128];
-char				lineBuff[128];
+char				readBuff[256];
+char				lineBuff[256];
 size_t				bufferSize;
 int					lineLength;
 int					linesRead;
@@ -256,7 +308,7 @@ int					sLen;
 int					ccc;
 char				filePath[64];
 int					alertIdx;
-//int					maxStarNameLen;
+int					iii;
 TYPE_CelestData		currentStarEntry;
 int					linesForCurrEntry;
 
@@ -308,17 +360,20 @@ int					linesForCurrEntry;
 						lineBuff[sLen -1]	=	0;
 						sLen--;
 					}
+//					CONSOLE_DEBUG(lineBuff);
 
 					if (lineBuff[0] == '#')
 					{
 						//*	its a comment, ignore it
 					}
-					else if (lineBuff[0] == '{')
+					else if (lineBuff[0] == '}')
 					{
+					//	CONSOLE_DEBUG("End of entry...........................");
 						//*	we have the start of a new entry, take care of the old one
 						if (linesForCurrEntry > 10)
 						{
 							alertIdx	=	FindStarEntry(targetData, currentStarEntry.longName, kAAVSO_starCnt);
+					//		CONSOLE_DEBUG_W_NUM("alertIdx\t=", alertIdx);
 							if (alertIdx >= 0)
 							{
 								//*	copy the data to our array
@@ -330,20 +385,37 @@ int					linesForCurrEntry;
 								CONSOLE_DEBUG("No room in table");
 							//	CONSOLE_ABORT(__FUNCTION__);
 							}
+							//*	debug alert-752
+							if (strcasecmp(currentStarEntry.longName, "RS Oph") == 0)
+							{
+								CONSOLE_DEBUG_W_NUM("alertIdx\t=", alertIdx);
+								CONSOLE_DEBUG_W_STR("longName\t=", currentStarEntry.longName);
+							//	CONSOLE_ABORT(__FUNCTION__);
+							}
 						}
 						else
 						{
 							CONSOLE_DEBUG_W_STR("Too early:", lineBuff);
 						}
-
 						linesForCurrEntry	=	0;
 						memset(&currentStarEntry, 0, sizeof(TYPE_CelestData));
+
 					}
 					else
 					{
 						ProcessOneLine(lineBuff, &currentStarEntry);
 						linesForCurrEntry++;
 					}
+				}
+			}
+
+			//*	now count the number of valid entries
+			alertIdx	=	0;
+			for (iii=0; iii<kAAVSO_starCnt; iii++)
+			{
+				if (targetData[alertIdx].dataSrc == kDataSrc_AAVSOalert)
+				{
+					alertIdx++;
 				}
 			}
 			*objectCount	=	alertIdx;

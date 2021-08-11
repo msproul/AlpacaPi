@@ -50,6 +50,9 @@
 //*	Feb 13,	2021	<MLS> Dragging the slider now works
 //*	Feb 16,	2021	<MLS> Added SetHelpTextBoxColor()
 //*	Mar 25,	2021	<MLS> Added SetWidgetTextPtr()
+//*	Jul 18,	2021	<MLS> Added SetWidgetScrollBarLimits()
+//*	Jul 18,	2021	<MLS> Added SetWidgetScrollBarValue()
+//*	Aug  9,	2021	<MLS> Added ProcessMouseWheelMoved()
 //*****************************************************************************
 
 
@@ -781,6 +784,29 @@ void	WindowTab::SetWidgetSliderLimits(const int widgetIdx, double sliderMin, dou
 }
 
 //**************************************************************************************
+void	WindowTab::SetWidgetScrollBarLimits(const int widgetIdx, int scrollBarLines, int scrollBarMax)
+{
+//	CONSOLE_DEBUG(__FUNCTION__);
+	if ((widgetIdx >= 0) && (widgetIdx < kMaxWidgets))
+	{
+		cWidgetList[widgetIdx].scrollBarLines	=	scrollBarLines;
+		cWidgetList[widgetIdx].scrollBarMax		=	scrollBarMax;
+		cWidgetList[widgetIdx].needsUpdated		=	true;
+	}
+}
+
+//**************************************************************************************
+void	WindowTab::SetWidgetScrollBarValue(const int widgetIdx, int scrollBarValue)
+{
+//	CONSOLE_DEBUG(__FUNCTION__);
+	if ((widgetIdx >= 0) && (widgetIdx < kMaxWidgets))
+	{
+		cWidgetList[widgetIdx].scrollBarValue	=	scrollBarValue;
+		cWidgetList[widgetIdx].needsUpdated		=	true;
+	}
+}
+
+//**************************************************************************************
 void	WindowTab::SetWidgetSliderValue(const int widgetIdx, double sliderValue)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
@@ -1078,6 +1104,12 @@ double	newSliderValue;
 	{
 	//	CONSOLE_DEBUG_W_NUM(__FUNCTION__, xxx);
 	}
+}
+
+//*****************************************************************************
+void	WindowTab::ProcessMouseWheelMoved(const int widgetIdx, const int event, const int xxx, const int yyy, const int wheelMovement)
+{
+	CONSOLE_DEBUG_W_NUM(__FUNCTION__, wheelMovement);
 }
 
 //*****************************************************************************

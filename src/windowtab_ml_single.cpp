@@ -294,7 +294,7 @@ char	numberString[32];
 
 		default:
 			CONSOLE_DEBUG_W_NUM("cComMode not set=", cComMode);
-			exit(0);
+			CONSOLE_ABORT(__FUNCTION__);
 			break;
 	}
 
@@ -395,7 +395,7 @@ int				setPointIdx;
 				else
 				{
 					CONSOLE_DEBUG("out of bounds");
-					exit(0);
+					CONSOLE_ABORT(__FUNCTION__);
 				}
 				break;
 

@@ -526,7 +526,7 @@ CvRect		myCVrect;
 					default:
 						CONSOLE_DEBUG("UNKNOWN PIXEL DEPTH!!!!!!!!!!!!!");
 						cOpenCV_LiveDisplay	=	NULL;
-						exit(0);
+						CONSOLE_ABORT(__FUNCTION__);
 						break;
 
 				}
@@ -653,7 +653,7 @@ CvRect		myCVrect;
 		else
 		{
 			CONSOLE_DEBUG("cOpenCV_Image is null");
-			exit(0);
+			CONSOLE_ABORT(__FUNCTION__);
 		}
 		cNewImageReadyToDisplay	=	false;
 //		CONSOLE_DEBUG_W_STR(__FUNCTION__, "--------exit-----------");

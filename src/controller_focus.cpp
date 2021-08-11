@@ -349,7 +349,7 @@ void	ControllerFocus::UpdateFromFirstRead(void)
 void	ControllerFocus::UpdateWindowTabs_Everything(void)
 {
 	CONSOLE_DEBUG(__FUNCTION__);
-//	exit(0);
+
 	//*	This function should be overloaded
 //-	SetWidgetNumber(kTab_Focuser,	kFocusTab_rotDesired,		cRotatorDesiredPos);
 //-	SetWidgetNumber(kTab_Focuser,	kFocusTab_focDesired,		cFocuserDesiredPos);
@@ -361,7 +361,6 @@ void	ControllerFocus::UpdateWindowTabs_SwitchBits(unsigned char switchBits)
 {
 	//*	This function should be overloaded
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, "This function should be overloaded");
-//	exit(0);
 
 }
 
@@ -378,7 +377,7 @@ void	ControllerFocus::UpdateWindowTabs_Version(const char *versionString)
 {
 	//*	This function should be overloaded
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, "This function should be overloaded");
-	exit(0);
+	CONSOLE_ABORT(__FUNCTION__);
 
 }
 
@@ -451,7 +450,7 @@ void	ControllerFocus::UpdateWindowTabs_ReadAll(bool hasReadAll)
 {
 	//*	This function should be overloaded
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, "This function should be overloaded");
-//	exit(0);
+//	CONSOLE_ABORT(__FUNCTION__);
 }
 
 

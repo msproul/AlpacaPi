@@ -47,6 +47,7 @@ WindowTabFileList::WindowTabFileList(	const int	xSize,
 
 	:WindowTab(xSize, ySize, backGrndColor, windowName)
 {
+	CONSOLE_DEBUG(__FUNCTION__);
 	SetupWindowControls();
 
 }
@@ -86,11 +87,11 @@ int		scrollBarYLoc;
 	yLoc			+=	2;
 
 	//------------------------------------------
-	SetWidget(		kFileList_Refresh,		0,			yLoc,		cWidth/3,	cBtnHeight);
-	SetWidgetType(	kFileList_Refresh, kWidgetType_Text);
-	SetWidgetFont(	kFileList_Refresh, kFont_Medium);
-	SetWidgetBGColor(kFileList_Refresh,	CV_RGB(255,	255,	255));
-	SetWidgetText(	kFileList_Refresh, "REFRESH");
+	SetWidget(			kFileList_Refresh,		0,			yLoc,		cWidth/3,	cBtnHeight);
+	SetWidgetType(		kFileList_Refresh,	kWidgetType_Button);
+	SetWidgetFont(		kFileList_Refresh,	kFont_Medium);
+	SetWidgetBGColor(	kFileList_Refresh,	CV_RGB(255,	255,	255));
+	SetWidgetText(		kFileList_Refresh,	"REFRESH");
 
 	//------------------------------------------
 	SetWidget(		kFileList_CountText,	cWidth/2,	yLoc,		cWidth/3,	cBtnHeight);
@@ -137,7 +138,7 @@ int		scrollBarYLoc;
 //**************************************************************************************
 void	WindowTabFileList::ProcessButtonClick(const int buttonIdx)
 {
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 	switch(buttonIdx)
 	{
 		case kFileList_Refresh:
@@ -162,7 +163,7 @@ void	WindowTabFileList::ProcessDoubleClick(	const int	widgetIdx,
 												const int	yyy,
 												const int	flags)
 {
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 
 	switch(widgetIdx)
 	{

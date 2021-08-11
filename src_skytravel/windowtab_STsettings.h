@@ -12,12 +12,6 @@
 #endif
 
 
-
-
-#ifndef _WINDOW_TAB_H_
-	#include	"windowtab.h"
-#endif // _WINDOW_TAB_H
-
 //*****************************************************************************
 enum
 {
@@ -95,6 +89,11 @@ class WindowTabSTsettings: public WindowTab
 
 		virtual	void	SetupWindowControls(void);
 		virtual	void	ProcessButtonClick(const int buttonIdx);
+		virtual	void	ProcessDoubleClick(	const int	widgetIdx,
+											const int	event,
+											const int	xxx,
+											const int	yyy,
+											const int	flags);
 
 				void	UpdateSettings(void);
 

@@ -124,6 +124,7 @@ class WindowTabSkyTravel: public WindowTab
 		virtual void	ProcessMouseLeftButtonDown(const int widgetIdx, const int event, const int xxx, const int yyy, const int flags);
 		virtual void	ProcessMouseLeftButtonUp(const int widgetIdx, const int event, const int xxx, const int yyy, const int flags);
 		virtual void	ProcessMouseLeftButtonDragged(const int widgetIdx, const int event, const int xxx, const int yyy, const int flags);
+		virtual void	ProcessMouseWheelMoved(const int widgetIdx, const int event, const int xxx, const int yyy, const int wheelMovement);
 
 				void	UpdateButtonStatus(void);
 
@@ -153,7 +154,7 @@ class WindowTabSkyTravel: public WindowTab
 										sun_moon_struct	*sunmonptr,
 										bool			earthFlag);
 				void	PlotObjectsByDataSource(TYPE_CelestData	*objectptr, long maxObjects);
-				long	Search_and_plot(TYPE_CelestData	*objectptr, long maxObjects);
+				long	Search_and_plot(TYPE_CelestData	*objectptr, long maxObjects, bool dataIsSorted=true);
 				void	DrawObjectByShape(int xcoord, int ycoord, int shape, int magn);
 
 				void 	DrawStar_shape(short xcoord, short ycoord, short index);
@@ -203,6 +204,7 @@ class WindowTabSkyTravel: public WindowTab
 				void	ForceReDrawSky(void);
 
 				void	SearchSkyObjects(char *objectName);
+				void	Goto_RA_DEC(double argRA_radians, double argDecl_radians);
 
 				//*	this routine draws cute little easter eggs along the horizon,
 				void	MapTokens(TYPE_Time *timeptr, TYPE_LatLon *locptr);
@@ -224,7 +226,7 @@ class WindowTabSkyTravel: public WindowTab
 		bool				cChart;				//*	Chart on/off
 		bool				cFindFlag;
 //-		bool				inform;
-		bool				cLunarEclipseFlag;			//*	Lunar Eclipse flag
+		bool				cLunarEclipseFlag;	//*	Lunar Eclipse flag
 //-		bool				updflag;
 
 		int					cMagmin;

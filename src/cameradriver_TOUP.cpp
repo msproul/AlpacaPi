@@ -147,7 +147,7 @@ char			driverVersionString[64];
 		{
 			new CameraDriverTOUP(ii);
 		}
-//		exit(0);
+//		CONSOLE_ABORT(__FUNCTION__);
 	}
 }
 
@@ -1020,7 +1020,7 @@ HRESULT				toupResult;
 			else
 			{
 				CONSOLE_DEBUG("Internal error");
-				exit(0);
+				CONSOLE_ABORT(__FUNCTION__);
 			}
 			break;
 

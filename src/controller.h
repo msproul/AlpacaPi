@@ -122,6 +122,7 @@ class Controller
 				void	DrawWidgetProgressBar(TYPE_WIDGET *theWidget);
 				void	DrawWidgetRadioButton(TYPE_WIDGET *theWidget);
 				void	DrawWidgetSlider(TYPE_WIDGET *theWidget);
+				void	DrawWidgetScrollBar(TYPE_WIDGET *theWidget);
 				void	DrawWidgetText(TYPE_WIDGET *theWidget);
 				void	DrawWidgetTextWithTabs(TYPE_WIDGET *theWidget);
 
@@ -157,6 +158,8 @@ class Controller
 
 				void	SetWidgetSliderLimits(	const int tabNum, const int widgetIdx, double sliderMin, double sliderMax);
 				void	SetWidgetSliderValue(	const int tabNum, const int widgetIdx, double sliderValue);
+
+				void	SetWidgetScrollBarLimits(const int widgetIdx, int scrollBarLines, int scrollBarMax);
 
 				void	SetWidgetHighlighted(	const int tabNum, const int widgetIdx, bool highlighted);
 				void	SetWidgetProgress(		const int tabNum, const int widgetIdx, const int currPosition, const int totalValue);

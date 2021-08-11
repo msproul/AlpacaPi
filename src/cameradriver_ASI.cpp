@@ -1088,7 +1088,7 @@ int				deltaSecs;
 			else
 			{
 				CONSOLE_DEBUG("cOpenCV_videoWriter is NULL");
-//				exit(0);
+//				CONSOLE_ABORT(__FUNCTION__);
 			}
 		}
 		else
@@ -1101,7 +1101,7 @@ int				deltaSecs;
 	{
 		CONSOLE_DEBUG("cOpenCV_Image == NULL");
 		cInternalCameraState	=	kCameraState_Idle;
-		exit(0);
+		CONSOLE_ABORT(__FUNCTION__);
 	}
 	if ((cNumVideoFramesSaved % 100) == 0)
 	{

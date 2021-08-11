@@ -24,6 +24,10 @@
 	#include	"alpaca_defs.h"
 #endif // _ALPACA_DEFS_H_
 
+#ifndef _JSON_DEFS_H_
+	#include 	"JsonDefs.h"
+#endif // _JSON_DEFS_H_
+
 //*****************************************************************************
 //*	the TYPE_GetPutRequestData simplifies parsing and passing of the
 //*	parsed data to subroutines
@@ -32,8 +36,6 @@
 #define	kMaxCommandLen		64
 #define	kHTMLbufLen			4096
 
-#define	kMaxJsonHdrLen		512
-#define	kMaxJsonBuffLen		(10 * 1024)
 //*****************************************************************************
 typedef struct
 {

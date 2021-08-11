@@ -380,7 +380,7 @@ int					threadErr;
 	//	CONSOLE_DEBUG("Sleeping");
 	//	sleep(5);
 		CONSOLE_DEBUG_W_NUM("DONE-------------------------------------- #", cDiscoveryCount);
-	//	exit(0);
+	//	CONSOLE_ABORT(__FUNCTION__);
 	}
 	else
 	{

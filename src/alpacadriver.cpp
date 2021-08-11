@@ -279,7 +279,9 @@ char				gWebTitle[80]				=	"AlpacaPi";
 char				gFullVersionString[128];
 
 
-static void	HandleContollerWindow(AlpacaDriver *alpacaObjPtr);
+#ifdef _ENABLE_LIVE_CONTROLLER_
+	static void	HandleContollerWindow(AlpacaDriver *alpacaObjPtr);
+#endif // _ENABLE_LIVE_CONTROLLER_
 
 //*****************************************************************************
 static void	InitDeviceList(void)
@@ -998,7 +1000,7 @@ bool	AlpacaDriver::GetCmdNameFromMyCmdTable(const int cmdNumber, char *comandNam
 	CONSOLE_DEBUG("This function should be over-ridden");
 //	GetCmdNameFromMyCmdTable(cmdNumber, cmdName, gCommonCmdTable, getPut);
 	strcpy(comandName, "----");
-	exit(0);
+	CONSOLE_ABORT(__FUNCTION__);
 	return(false);
 
 }
@@ -2768,7 +2770,7 @@ int		newListenPort;
 				//	"-h" means print help
 				case 'h':
 					PrintHelp(argv[0]);
-					exit(0);
+					exit(0);	//*	help message
 					break;
 
 				//	"-l" means live view

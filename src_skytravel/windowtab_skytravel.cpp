@@ -54,6 +54,10 @@
 //*	Jun 26,	2021	<MLS> Fixed bug in old style constelation drawing, only showed up in 32 bit
 //*	Jul  6,	2021	<MLS> Added forceNumber option to DrawGreatCircle()
 //*	Jul  6,	2021	<MLS> Added South Pole circles
+//*	Aug  9,	2021	<MLS> Added ProcessMouseWheelMoved(), adjusts view level
+//*	Aug  9,	2021	<MLS> Updated Search_and_plot() to handle unsorted data
+//*	Aug 10,	2021	<MLS> Changed most of the cView_index checks to cView_angle
+//*	Aug 10,	2021	<MLS> Added Goto_RA_DEC()
 //*****************************************************************************
 //*	TODO
 //*			star catalog lists
@@ -63,8 +67,9 @@
 //*		https://github.com/dcf21/constellation-stick-figures
 //*****************************************************************************
 
-
-
+#ifndef _ENABLE_SKYTRAVEL_
+	#define _ENABLE_SKYTRAVEL_
+#endif // _ENABLE_SKYTRAVEL_
 
 #ifdef _ENABLE_SKYTRAVEL_
 
@@ -128,7 +133,7 @@ SkyTravelDispOptions	gST_DispOptions;
 
 
 bool		gDashedLines	=	false;
-static double	GetRA_DEC_detla(int viewIndex);
+static double	GetRA_DEC_delta(int viewIndex);
 
 
 //*****************************************************************************
@@ -155,15 +160,27 @@ static const char *gCompass_text[]	=
 //*****************************************************************************
 static const double gView_table[]	=
 {
-	1.0	* PI / 180.0,
-	2.0	* PI / 180.0,
-	5.0	* PI / 180.0,
-	10.0* PI / 180.0,
-	20.0* PI / 180.0,
-	40.0* PI / 180.0,
-	70.0* PI / 180.0,
-	100.0* PI / 180.0,
-	150.0* PI / 180.0,
+							//*	old index value
+	1.0	* PI / 180.0,		//*		0
+	2.0	* PI / 180.0,		//*		1
+	3.0	* PI / 180.0,
+	4.0	* PI / 180.0,
+	5.0	* PI / 180.0,		//*		2
+	6.0	* PI / 180.0,
+	7.0	* PI / 180.0,
+	8.0	* PI / 180.0,
+	9.0	* PI / 180.0,
+	10.0* PI / 180.0,		//*		3
+	20.0* PI / 180.0,		//*		4
+	30.0* PI / 180.0,
+	40.0* PI / 180.0,		//*		5
+	50.0* PI / 180.0,
+	60.0* PI / 180.0,
+	70.0* PI / 180.0,		//*		6
+	80.0* PI / 180.0,
+	90.0* PI / 180.0,
+	100.0* PI / 180.0,		//*		7
+	150.0* PI / 180.0,		//*		8
 	170.0* PI / 180.0,		//*	Added by <MLS>, these gets a bit tricky
 	200.0* PI / 180.0,
 	250.0* PI / 180.0,
@@ -173,10 +190,23 @@ static const double gView_table[]	=
 	500.0* PI / 180.0,
 	600.0* PI / 180.0,
 	700.0* PI / 180.0,
-	800.0* PI / 180.0
-};
-#define	kMaxViewAngleIndex	18
+	800.0* PI / 180.0,
 
+	-1					//*	last entry indicator
+};
+static int	gMaxViewAngleIndex	=	18;
+
+static	WindowTabSkyTravel	*gSkyTravelWindow;
+
+#define		kView_old3				9
+#define		kView_old4				10
+#define		kView_old5				12
+
+#define		kView_Default			19
+
+
+//-#define		kView_DisplayPoleCircles	kView_old5
+//-#define		kView_DisplayPoleCircles2	kView_old3
 //*****************************************************************************
 static	const char *gZodiac_names[]	=
 {
@@ -251,9 +281,20 @@ int		ii;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
+	gSkyTravelWindow		=	this;
 	cDebugCounter			=	0;
 	cWorkSpaceTopOffset		=	0;
 	cWorkSpaceLeftOffset	=	0;
+
+	//*	determine how many entries in the view table
+	ii	=	0;
+	while ((gView_table[ii] > 0.0) && (ii < 50))
+	{
+		printf("idx=%2d\tvalue=%f\r\n", ii, gView_table[ii]);
+		ii++;
+	}
+	gMaxViewAngleIndex	=	ii - 1;
+	CONSOLE_DEBUG_W_NUM("gMaxViewAngleIndex\t=", gMaxViewAngleIndex);
 
 
 //	CONSOLE_DEBUG_W_NUM("sizeof(TYPE_Time)\t=",	sizeof(TYPE_Time));
@@ -468,6 +509,7 @@ int		ii;
 WindowTabSkyTravel::~WindowTabSkyTravel(void)
 {
 	CONSOLE_DEBUG(__FUNCTION__);
+	gSkyTravelWindow		=	NULL;
 
 	if (gStarDataPtr != NULL)
 	{
@@ -789,19 +831,8 @@ struct tm			siderealTime;
 
 
 	currentMilliSecs	=	millis();
-	deltaMilliSecs		=	currentMilliSecs - cLastUpdateTime_ms;
-//	if (deltaMilliSecs > 60000)
-	if ((deltaMilliSecs > 60000) || (cAutoAdvanceTime && (deltaMilliSecs > 250) && (cView_index <= 4)))
-	{
-		if (cAutoAdvanceTime)
-		{
-			//*	this makes it real time.
-			SetCurrentTime();
-			ForceUpdate();
-		}
-		cLastUpdateTime_ms		=	millis();
 
-	}
+	//*	do the clock first so that it doesnt update twice
 	deltaMilliSecs		=	currentMilliSecs - cLastClockUpdateTime_ms;
 	if (deltaMilliSecs >= 1000)
 	{
@@ -812,14 +843,26 @@ struct tm			siderealTime;
 		CalcSiderealTime(&utcTime, &siderealTime, gObseratorySettings.Longitude);
 		FormatTimeString_TM(&siderealTime, siderialTimeString);
 
-
-
 		sprintf(textBuff, "U%s / S%s", utcTimeString, siderialTimeString);
 		SetWidgetText(kSkyTravel_UTCtime, textBuff);
 
-
-
 		cLastClockUpdateTime_ms		=	millis();
+	}
+
+
+	deltaMilliSecs		=	currentMilliSecs - cLastUpdateTime_ms;
+//	if (deltaMilliSecs > 60000)
+//	if ((deltaMilliSecs > 60000) || (cAutoAdvanceTime && (deltaMilliSecs > 250) && (cView_index <= 4)))
+	if (cAutoAdvanceTime)
+	{
+		if ((deltaMilliSecs > 60000) || ((deltaMilliSecs > 15000) && (cView_angle <= 0.4)))	//*	view angle in radians
+		{
+			//*	this makes it real time.
+			SetCurrentTime();
+			ForceUpdate();
+			cLastUpdateTime_ms		=	millis();
+			CONSOLE_DEBUG_W_NUM("deltaMilliSecs\t=", deltaMilliSecs);
+		}
 	}
 
 #if 0
@@ -1039,13 +1082,6 @@ bool			reDrawSky;
 		case 'n':					//	go NORTH
 			cTrack	=	false;
 			cAz0	=	-kEPSILON;
-			if (cView_index >= 14)
-			{
-				//*	attempt to make it center on the north pole.....
-			//	CONSOLE_DEBUG_W_DBL("cElev0\t=", cElev0);
-			//	cElev0	=	(kHALFPI / 2) - cCurrLatLon.latitude;
-			//	cElev0	=	-cCurrLatLon.latitude;
-			}
 			break;
 
 		case 'O':
@@ -1461,7 +1497,7 @@ bool			reDrawSky;
 	switch(widgetIdx)
 	{
 		case kSkyTravel_Btn_ZoomLevel:
-			SetView_Index(8);
+			SetView_Index(kView_Default);
 			break;
 
 		//*	double click in the RA/DEC box from the Alpaca telescope device and makes it center on the current telescope position
@@ -1601,6 +1637,7 @@ void	WindowTabSkyTravel::ProcessMouseLeftButtonUp(	const int	widgetIdx,
 	}
 }
 
+
 //*****************************************************************************
 void	WindowTabSkyTravel::ProcessMouseLeftButtonDragged(	const int	widgetIdx,
 															const int	event,
@@ -1628,24 +1665,10 @@ TYPE_SkyDispOptions	savedDispOptions;
 			cSavedMouseClick_X	=	xxx;
 			cSavedMouseClick_Y	=	yyy;
 
-		//	CONSOLE_DEBUG_W_NUM("cView_index\t=", cView_index);
-			switch (cView_index )
-			{
-				//*	these values were determined by good old fashion trial and error
-				case 0:		moveAmount	=	0.00002;	break;
-				case 1:		moveAmount	=	0.00002;	break;
-				case 2:		moveAmount	=	0.00003;	break;
-				case 3:		moveAmount	=	0.00005;	break;
-				case 4:		moveAmount	=	0.00008;	break;
-				case 5:		moveAmount	=	0.00015;	break;
-				case 6:		moveAmount	=	0.00020;	break;
-				case 7:		moveAmount	=	0.00022;	break;
-				default:	moveAmount	=	0.00030;	break;
-			}
-		//	moveAmount	=	cView_angle / cWind_width;
-		//	CONSOLE_DEBUG_W_DBL("moveAmount\t=", moveAmount);
+			moveAmount	=	cView_angle / cWind_width;
+//			CONSOLE_DEBUG_W_DBL("moveAmount\t=", moveAmount);
 			//--------------------------------------
-			cAz0	+=	(deltaXX * moveAmount *  (cView_index + 1));
+			cAz0	+=	(deltaXX * moveAmount);
 			if (cAz0 > kTWOPI)
 			{
 				CONSOLE_DEBUG(" > kTWOPI");
@@ -1657,7 +1680,7 @@ TYPE_SkyDispOptions	savedDispOptions;
 				cAz0	+=	kTWOPI;
 			}
 			//--------------------------------------
-			cElev0	+=	(deltaYY * moveAmount * (cView_index + 1));
+			cElev0	+=	(deltaYY * moveAmount);
 			if (cElev0 >= kHALFPI)
 			{
 //				CONSOLE_DEBUG(" > kHALFPI");
@@ -1674,7 +1697,8 @@ TYPE_SkyDispOptions	savedDispOptions;
 			cDispOptions.dispHIP		=	false;
 			cDispOptions.dispYale		=	false;
 			cDispOptions.dispNGC		=	false;
-			if (cView_index > 3)
+//			if (cView_index > 3)
+			if (cView_angle < 0.2)
 			{
 				cDispOptions.dispHYG_all	=	false;
 				cDispOptions.dispDraper		=	false;
@@ -1696,6 +1720,15 @@ TYPE_SkyDispOptions	savedDispOptions;
 	}
 }
 
+//*****************************************************************************
+void	WindowTabSkyTravel::ProcessMouseWheelMoved(const int widgetIdx, const int event, const int xxx, const int yyy, const int wheelMovement)
+{
+//	CONSOLE_DEBUG_W_NUM(__FUNCTION__, wheelMovement);
+	SetView_Index(cView_index + wheelMovement);
+	cMouseDragInProgress	=	true;
+	ForceReDrawSky();
+	cMouseDragInProgress	=	false;
+}
 
 //*****************************************************************************
 //* compute cursor elev, az, ra, decl
@@ -1998,6 +2031,10 @@ short	dataSource;
 //				}
 				break;
 
+			case kDataSrc_AAVSOalert:
+				Search_and_plot(objectptr, maxObjects, false);	//*	data is NOT sorted
+				break;
+
 			case kDataSrc_Orginal:			//*	Frank and Cliffs original data file
 			default:
 				Search_and_plot(objectptr, maxObjects);
@@ -2158,7 +2195,8 @@ short		ii;
 
 	//*--------------------------------------------------------------------------------
 	//*	if we are to much zoomed in, dont bother with the outlines
-	if (cDispOptions.dispConstOutlines && (cView_index > 4))
+//	if (cDispOptions.dispConstOutlines && (cView_index > 4))
+	if (cDispOptions.dispConstOutlines && (cView_angle > 0.15))
 	{
 		DrawConstellationOutLines();
 	}
@@ -2171,14 +2209,16 @@ short		ii;
 
 	//*--------------------------------------------------------------------------------
 	//*	common star names are added to the Hipparcos data, we plot it separately
-	if (cDispOptions.dispCommonStarNames && (cView_index < 9))
+//	if (cDispOptions.dispCommonStarNames && (cView_index < 9))
+	if (cDispOptions.dispCommonStarNames && (cView_angle < 3.0))
 	{
 		DrawCommonStarNames();
 	}
 
 
 	//*--------------------------------------------------------------------------------
-	if (cDispOptions.dispLines && (cView_index > 3))
+//	if (cDispOptions.dispLines && (cView_index > 3))
+	if (cDispOptions.dispLines && (cView_angle > 0.15))
 	{
 		DrawConstellationLines();
 	}
@@ -2228,7 +2268,8 @@ short		ii;
 	}
 
 	//*--------------------------------------------------------------------------------
-	if (cDispOptions.dispAAVSOalerts &&  (cView_index < 9) && (gAAVSOalertsPtr != NULL) && (gAAVSOalertsCnt > 0))
+//	if (cDispOptions.dispAAVSOalerts &&  (cView_index < 9) && (gAAVSOalertsPtr != NULL) && (gAAVSOalertsCnt > 0))
+	if (cDispOptions.dispAAVSOalerts &&  (cView_angle < 3.0) && (gAAVSOalertsPtr != NULL) && (gAAVSOalertsCnt > 0))
 	{
 		PlotObjectsByDataSource(gAAVSOalertsPtr, gAAVSOalertsCnt);
 	}
@@ -2249,9 +2290,9 @@ void	WindowTabSkyTravel::SetView_Index(const int newViewIndex)
 	{
 		cView_index	=	0;
 	}
-	if (cView_index > kMaxViewAngleIndex)
+	if (cView_index > gMaxViewAngleIndex)
 	{
-		cView_index	=	kMaxViewAngleIndex;
+		cView_index	=	gMaxViewAngleIndex;
 	}
 	cView_angle	=	gView_table[cView_index];
 
@@ -2260,7 +2301,7 @@ void	WindowTabSkyTravel::SetView_Index(const int newViewIndex)
 //*****************************************************************************
 void	WindowTabSkyTravel::ResetView(void)
 {
-	SetView_Index(8);
+	SetView_Index(kView_Default);
 
 	cElev0								=	kHALFPI / 2;		//* 45 degrees
 	cAz0								=	0.0;				//* north
@@ -2840,7 +2881,8 @@ short				deltaPixels;
 														&pt_YY);
 				if (ptInView)
 				{
-					if ((cView_index > 8) && (prev_XX >= 0))
+				//	if ((cView_index > 8) && (prev_XX >= 0))
+					if ((cView_angle > 2.6) && (prev_XX >= 0))
 					{
 						//*	check for distorted line
 						deltaPixels	=	abs(pt_XX - prev_XX) + abs(pt_YY - prev_YY);
@@ -2882,7 +2924,7 @@ short				deltaPixels;
 	//	{
 	//		gLongestVectorSeg[cView_index]	=	longestDelta;
 	//	}
-	//	for (iii=0; iii<kMaxViewAngleIndex; iii++)
+	//	for (iii=0; iii<gMaxViewAngleIndex; iii++)
 	//	{
 	//		CONSOLE_DEBUG_W_NUM("gLongestVectorSeg\t=", gLongestVectorSeg[iii]);
 	//	}
@@ -2920,7 +2962,8 @@ bool	ptInView;
 				{
 					DrawStar_shape(pt_XX, pt_YY, 0);	//*	many of these stars are not drawn
 //					CONSOLE_DEBUG(gHipObjectPtr[iii].longName);
-					if (cDispOptions.dispHIP && (cView_index <= 3))
+				//	if (cDispOptions.dispHIP && (cView_index <= 3))
+					if (cDispOptions.dispHIP && (cView_angle <= 0.2))
 					{
 						pt_YY	+=	12;
 					}
@@ -3003,6 +3046,7 @@ static void	SysBeep(int x)
 
 //***********************************************************************
 //*	QSortProc proc for sorting files
+//***********************************************************************
 static  int CelestObjDeclinationQsortProc(const void *e1, const void *e2)
 {
 TYPE_CelestData	*obj1, *obj2;
@@ -3231,7 +3275,7 @@ bool			pressesOccurred;
 
 		if ((gAAVSOalertsPtr != NULL) && (gAAVSOalertsCnt > 0))
 		{
-			Precess(gAAVSOalertsPtr, gAAVSOalertsCnt, kSortData, kForcePression);
+			Precess(gAAVSOalertsPtr, gAAVSOalertsCnt, kDoNotSort, kForcePression);
 		}
 
 
@@ -3295,6 +3339,7 @@ char		symb[16];
 
 		case ST_DEEP:
 			{
+				#warning "This scale value needs new calculations"
 				scale	=	1 + ((7 - cView_index) / 2);
 				switch(magn & 0xf0)	//*	isolate hi 4 bits
 				{
@@ -3358,10 +3403,11 @@ char		symb[16];
 
 //*****************************************************************************
 long	WindowTabSkyTravel::Search_and_plot(TYPE_CelestData	*objectptr,
-											long			maxObjects)
+											long			maxObjects,
+											bool			dataIsSorted)
 {
 bool				goflag;
-int			 		ii;
+int			 		iii;
 int					magn;
 int					shape;
 int					xcoord;
@@ -3426,28 +3472,30 @@ bool				printLabel;
 	//*	skip quickly until we find the first star within our current display
 
 	//* continue scan until decl<decmin
-	ii		=	0;
-	while ((objectptr[ii].decl > cDecmax) && (ii < maxObjects))	//* skip down to where decl < cDecmax
+	iii		=	0;
+	if (dataIsSorted)
 	{
-		objectptr[ii].curXX	=	-100;
-		objectptr[ii].curYY	=	-100;
-		ii++;
+		while ((objectptr[iii].decl > cDecmax) && (iii < maxObjects))	//* skip down to where decl < cDecmax
+		{
+			objectptr[iii].curXX	=	-100;
+			objectptr[iii].curYY	=	-100;
+			iii++;
+		}
 	}
 	//*	debuging code
-	if (ii >= maxObjects)
+	if (iii > maxObjects)
 	{
-		SysBeep(1);
+		CONSOLE_DEBUG_W_LONG("maxObjects\t=", maxObjects);
 	}
 
-//	CONSOLE_DEBUG_W_LONG("maxObjects\t=", maxObjects);
 
-	while (ii < maxObjects)
+	while (iii < maxObjects)
 	{
-	//	CONSOLE_DEBUG_W_NUM("ii\t=", ii);
-		objectptr[ii].curXX	=	-100;
-		objectptr[ii].curYY	=	-100;
+	//	CONSOLE_DEBUG_W_NUM("iii\t=", iii);
+		objectptr[iii].curXX	=	-100;
+		objectptr[iii].curYY	=	-100;
 
-		magn	=	objectptr[ii].magn & 0x00ff;
+		magn	=	objectptr[iii].magn & 0x00ff;
 
 		if (magn < 0x0010)
 		{
@@ -3480,7 +3528,7 @@ bool				printLabel;
 		//*	check for displayed magnitude limits
 		if (dataSource == kDataSrc_Hipparcos)
 		{
-			if (objectptr[ii].realMagnitude > cDisplayedMagnitudeLimit)
+			if (objectptr[iii].realMagnitude > cDisplayedMagnitudeLimit)
 			{
 				goflag	=	false;
 			}
@@ -3489,7 +3537,7 @@ bool				printLabel;
 		if (goflag)	//* try to plot it
 		{
 //			CONSOLE_DEBUG(__FUNCTION__);
-			alpha	=	cRa0 - objectptr[ii].ra;
+			alpha	=	cRa0 - objectptr[iii].ra;
 			if (alpha > PI)
 			{
 				alpha	-=	kTWOPI;
@@ -3500,7 +3548,7 @@ bool				printLabel;
 			}
 			if ((cRamax == 0.0) || (fabs(alpha) <= cRamax))		//* in bounds for ra?
 			{
-				cside	=	kHALFPI - objectptr[ii].decl;
+				cside	=	kHALFPI - objectptr[iii].decl;
 
 				//* here we use inline code for sphsas and sphsss because bside is constant
 				//* so we avoid repeated invocations of sin(bside) and cos(bside)
@@ -3532,11 +3580,11 @@ bool				printLabel;
 
 					if ((xcoord >= wind_ulx) && (xcoord <= wind_ulx + cWind_width))
 					{
-						objectptr[ii].curXX	=	xcoord;
-						ycoord				=	cWind_y0 - (cYfactor * aside * cos(angle));
+						objectptr[iii].curXX	=	xcoord;
+						ycoord					=	cWind_y0 - (cYfactor * aside * cos(angle));
 						if ((ycoord >= wind_uly) && (ycoord <= wind_uly + cWind_height))
 						{
-							objectptr[ii].curYY	=	ycoord;
+							objectptr[iii].curYY	=	ycoord;
 
 							DrawObjectByShape(xcoord, ycoord, shape, magn);
 
@@ -3552,22 +3600,24 @@ bool				printLabel;
 									{
 										SetColor(W_CYAN);
 									}
-									DrawCString(xcoord, ycoord, objectptr[ii].shortName);
-									if (cView_index < 4)
+									DrawCString(xcoord, ycoord, objectptr[iii].shortName);
+							//		if (cView_index < 4)
+									if (cView_angle < 0.4)
 									{
-										DrawCString(xcoord + 45, ycoord, objectptr[ii].longName);
+										DrawCString(xcoord + 45, ycoord, objectptr[iii].longName);
 									}
 									break;
 
 								case kDataSrc_Hipparcos:
 									//*	draw common H numbers and names if present
-									if (cDispOptions.dispNames && (cView_index <= 3))
+								//	if (cDispOptions.dispNames && (cView_index <= 3))
+									if (cDispOptions.dispNames && (cView_angle < 0.2))
 									{
-										sprintf(labelString, "H%ld", objectptr[ii].id);
+										sprintf(labelString, "H%ld", objectptr[iii].id);
 
-										if (objectptr[ii].longName[0] > 0x20)
+										if (objectptr[iii].longName[0] > 0x20)
 										{
-											sprintf(labelString, "H%ld-%s", objectptr[ii].id, objectptr[ii].longName);
+											sprintf(labelString, "H%ld-%s", objectptr[iii].id, objectptr[iii].longName);
 										}
 										SetColor(W_RED);
 										DrawCString(xcoord + 10, ycoord, labelString);
@@ -3576,79 +3626,83 @@ bool				printLabel;
 
 								case kDataSrc_NGC2000:
 								case kDataSrc_NGC2000IC:
-									if (cDispOptions.dispNames && (cView_index <= 4))
+								//	if (cDispOptions.dispNames && (cView_index <= 4))
+									if (cDispOptions.dispNames && (cView_angle < 0.4))
 									{
-										if (objectptr[ii].dataSrc == kDataSrc_NGC2000IC)
+										if (objectptr[iii].dataSrc == kDataSrc_NGC2000IC)
 										{
-											sprintf(labelString, "IC%ld", objectptr[ii].id);
+											sprintf(labelString, "IC%ld", objectptr[iii].id);
 											SetColor(W_CYAN);
 										}
 										else
 										{
-											sprintf(labelString, "NGC%ld", objectptr[ii].id);
+											sprintf(labelString, "NGC%ld", objectptr[iii].id);
 											SetColor(W_YELLOW);
 										}
 
-										if (objectptr[ii].longName[0] > 0x20)
+										if (objectptr[iii].longName[0] > 0x20)
 										{
 											strcat(labelString, "-");
-											strcat(labelString, objectptr[ii].longName);
+											strcat(labelString, objectptr[iii].longName);
 										}
 										DrawCString(xcoord + 10, ycoord, labelString);
 									}
 									break;
 
 								case kDataSrc_HYG:
-									if (cDispOptions.dispNames && (cView_index <= 3))
+								//	if (cDispOptions.dispNames && (cView_index <= 3))
+									if (cDispOptions.dispNames && (cView_angle < 0.2))
 									{
 										printLabel	=	false;
-										if ((objectptr[ii].id > 0) && (objectptr[ii].longName[0] > 0x20))
+										if ((objectptr[iii].id > 0) && (objectptr[iii].longName[0] > 0x20))
 										{
-											sprintf(labelString, "HD%ld-%s", objectptr[ii].id, objectptr[ii].longName);
+											sprintf(labelString, "HD%ld-%s", objectptr[iii].id, objectptr[iii].longName);
 											printLabel	=	true;
 										}
-										else if (objectptr[ii].id > 0)
+										else if (objectptr[iii].id > 0)
 										{
-											sprintf(labelString, "HD%ld", objectptr[ii].id);
+											sprintf(labelString, "HD%ld", objectptr[iii].id);
 											printLabel	=	true;
 										}
-										else if (objectptr[ii].longName[0] > 0x20)
+										else if (objectptr[iii].longName[0] > 0x20)
 										{
-											sprintf(labelString, "%s", objectptr[ii].longName);
+											sprintf(labelString, "%s", objectptr[iii].longName);
 											printLabel	=	true;
 										}
 										if (printLabel)
 										{
 											SetColor(W_RED);
 											DrawCString(xcoord + 10, ycoord + 12, labelString);
-										//	CONSOLE_DEBUG_W_NUM("ii         \t=",	ii)
-										//	CONSOLE_DEBUG_W_NUM("id         \t=",	objectptr[ii].id)
-										//	CONSOLE_DEBUG_W_STR("longName   \t=",	objectptr[ii].longName)
+										//	CONSOLE_DEBUG_W_NUM("iii         \t=",	iii)
+										//	CONSOLE_DEBUG_W_NUM("id         \t=",	objectptr[iii].id)
+										//	CONSOLE_DEBUG_W_STR("longName   \t=",	objectptr[iii].longName)
 										//	CONSOLE_DEBUG_W_STR("labelString\t=",	labelString)
 										}
 									}
 									break;
 
 								case kDataSrc_Draper:
-									if (cDispOptions.dispNames && (cView_index <= 2))
+								//	if (cDispOptions.dispNames && (cView_index <= 2))
+									if (cDispOptions.dispNames && (cView_angle < 0.1))
 									{
 										SetColor(W_GREEN);
-										DrawCString(xcoord + 10, ycoord, objectptr[ii].longName);
+										DrawCString(xcoord + 10, ycoord, objectptr[iii].longName);
 									}
 									break;
 
 								case kDataSrc_Special:
-									DrawCString(xcoord + 3, ycoord + 10, objectptr[ii].longName);
+									DrawCString(xcoord + 3, ycoord + 10, objectptr[iii].longName);
 									break;
 
 								case kDataSrc_AAVSOalert:
 									SetColor(W_YELLOW);
-									DrawCString(xcoord + 10, ycoord, objectptr[ii].longName);
-									if (cView_index <= 4)
+									DrawCString(xcoord + 10, ycoord, objectptr[iii].longName);
+								//	if (cView_index <= 4)
+									if (cView_angle < 0.4)
 									{
-										if (objectptr[ii].id > 0)
+										if (objectptr[iii].id > 0)
 										{
-											sprintf(labelString, "Alert#%ld", objectptr[ii].id);
+											sprintf(labelString, "Alert#%ld", objectptr[iii].id);
 											DrawCString(xcoord + 10, ycoord + 10, labelString);
 										}
 									}
@@ -3660,20 +3714,20 @@ bool				printLabel;
 				}
 			}
 		}
-		ii++;
+		iii++;
 
-		if (objectptr[ii].decl < cDecmin)
+		if (dataIsSorted && (objectptr[iii].decl < cDecmin))
 		{
 			break;
 		}
 	}
 
 	//*	make sure any remaining stars are set back to not on screen
-	while (ii < maxObjects)
+	while (iii < maxObjects)
 	{
-		objectptr[ii].curXX	=	-100;
-		objectptr[ii].curYY	=	-100;
-		ii++;
+		objectptr[iii].curXX	=	-100;
+		objectptr[iii].curYY	=	-100;
+		iii++;
 	}
 
 //	CONSOLE_DEBUG_W_NUM("myCount\t\t=",		myCount);
@@ -4425,7 +4479,8 @@ TYPE_SpherTrig	sphptr;
 //	for (alpha = (cRa0 - cRamax); alpha < (cRa0 + cRamax); alpha += (cRamax / 10.0))
 	//*	<MLS> 1/4/2021, this allows the Ecliptic to be drawn at all zoom levels
 	myRamax		=	cRamax;
-	if ((cView_index >= 7) || (myRamax < 0.1))
+//	if ((cView_index >= 7) || (myRamax < 0.1))
+	if ((cView_angle >= 1.7) || (myRamax < 0.1))
 	{
 		myRamax	=	(M_PI / 2);
 	}
@@ -4470,67 +4525,77 @@ TYPE_SpherTrig	sphptr;
 void	WindowTabSkyTravel::DrawGrid(short theSkyColor)
 {
 double		degrees;
-int			myColor;
+int			northColor;
+int			southColor;
 bool		forceNumberDrawFlag	=	false;
 
 //setlinestyle(USERBIT_LINE,0x0f0f,NORM_WIDTH);
 	if (cNightMode)
 	{
-		myColor	=	W_DARKRED;
+		northColor	=	W_DARKRED;
+		southColor	=	W_DARKRED;
 	}
 	else if (theSkyColor > 60)
 	{
-	//	myColor	=	W_BLACK;	//*	was blue
-		myColor	=	W_DARKGRAY;
+		northColor	=	W_DARKGRAY;
+		southColor	=	W_DARKBLUE;
 	}
 	else
 	{
-		myColor	=	W_DARKGRAY;
+		northColor	=	W_DARKGRAY;
+		southColor	=	W_DARKBLUE;
 	}
-	SetColor(myColor);
+	SetColor(northColor);
 
 	//-------------------------------------------------------------------------
 	//*	draw the great circles
 	degrees	=	-80.0;
 	while (degrees < 81.0)
 	{
-		SetColor(myColor);
+		SetColor((degrees >= 0.0) ? northColor : southColor);
 		DrawGreatCircle(RADIANS(degrees));
 		degrees	+=	10.0;
 	}
 
-	if (cView_index <= 5)
+//	if (cView_index <= kView_DisplayPoleCircles)
+	if (cView_angle <= 0.7)
 	{
-		if (cView_index < 4)
+	//	if (cView_index < (kView_DisplayPoleCircles - 1))
+		if (cView_angle < 0.4)
 		{
 			forceNumberDrawFlag	=	true;
 		}
-		SetColor(myColor);
+		SetColor(northColor);
 		DrawGreatCircle(RADIANS(89.1), forceNumberDrawFlag);
 		DrawGreatCircle(RADIANS(89.3), forceNumberDrawFlag);
 		DrawGreatCircle(RADIANS(89.5), forceNumberDrawFlag);
 		DrawGreatCircle(RADIANS(89.7), forceNumberDrawFlag);
 
 		//*	now do the south pole
+		SetColor(southColor);
 		DrawGreatCircle(RADIANS(-89.1), forceNumberDrawFlag);
 		DrawGreatCircle(RADIANS(-89.3), forceNumberDrawFlag);
 		DrawGreatCircle(RADIANS(-89.5), forceNumberDrawFlag);
 		DrawGreatCircle(RADIANS(-89.7), forceNumberDrawFlag);
 	}
 
-	if (cView_index <= 3)
+//	if (cView_index <= kView_DisplayPoleCircles2)
+	if (cView_angle < 0.18)
 	{
-		SetColor(myColor);
+		SetColor(northColor);
 		DrawGreatCircle(RADIANS(89.9), true);
 
+		SetColor(southColor);
 		DrawGreatCircle(RADIANS(-89.9), true);
 	}
 
-	if (cView_index <= 1)
+//	if (cView_index <= 1)
+	if (cView_angle < 0.04)
 	{
-		SetColor(myColor);
+		SetColor(northColor);
 		DrawGreatCircle(RADIANS(89.95), true);
 
+		SetColor(southColor);
 		DrawGreatCircle(RADIANS(-89.95), true);
 	}
 
@@ -4539,11 +4604,12 @@ bool		forceNumberDrawFlag	=	false;
 	degrees	=	0.0;
 	while (degrees < 360.0)
 	{
-		SetColor(myColor);
+		SetColor(northColor);
 		DrawNorthSouthLine(RADIANS(degrees));
 		degrees	+=	15.0;
 //		degrees	+=	15.0;	//*	put it in twice to match K-Stars
 	}
+//	CONSOLE_DEBUG_W_NUM(__FUNCTION__, cDebugCounter++);
 }
 
 
@@ -4656,7 +4722,7 @@ short	pt2_XX, pt2_YY;
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	myAZvalue1	=	startAz;
-	azDelta		=	GetRA_DEC_detla(cView_index);
+	azDelta		=	GetRA_DEC_delta(cView_index);
 
 	while (myAZvalue1 < (endAz - azDelta))
 	{
@@ -4699,7 +4765,7 @@ short	pt2_XX, pt2_YY;
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	myELEVvalue1	=	startElev;
-	elevDelta		=	GetRA_DEC_detla(cView_index);
+	elevDelta		=	GetRA_DEC_delta(cView_index);
 
 //	while (myELEVvalue1 < (endElev - elevDelta))
 	while (myELEVvalue1 < endElev)
@@ -4729,7 +4795,7 @@ short	pt2_XX, pt2_YY;
 }
 
 //*****************************************************************************
-static double	GetRA_DEC_detla(int viewIndex)
+static double	GetRA_DEC_delta(int viewIndex)
 {
 double	angleDelta;
 
@@ -4750,7 +4816,7 @@ double	angleDelta;
 
 		default:angleDelta	=	M_PI / 100.0;	break;
 	}
-	return(angleDelta);
+	return(angleDelta * 10);
 }
 
 
@@ -4763,14 +4829,14 @@ int	WindowTabSkyTravel::DrawGreatCircle(double declinationAngle_rad, bool forceN
 {
 double	rtAscen1;
 double	rtAscen2;
-double	rtAscenDelta;
+double	rtAscenDelta_Radians;
 double	minDeltaRA;
 bool	pt1inView;
 bool	pt2inView;
 short	pt1_XX, pt1_YY;
 short	pt2_XX, pt2_YY;
 int		segmentsDrnCnt;
-int		adjustmentCnt	=	0;	//*	for adjusting angle delta table in GetRA_DEC_detla()
+int		adjustmentCnt	=	0;	//*	for adjusting angle delta table in GetRA_DEC_delta()
 int		leftMost_X;
 int		leftMost_Y;
 int		rightMost_X;
@@ -4784,6 +4850,11 @@ bool	numberWasDrawn;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
+//	if (declinationAngle_rad < -1.0)
+//	{
+//		SetColor(W_RED);
+//	}
+
 	leftMost_X		=	10000;
 	leftMost_Y		=	10000;
 	topMost_X		=	10000;
@@ -4794,15 +4865,17 @@ bool	numberWasDrawn;
 	btmMost_Y		=	0;
 	numberWasDrawn	=	false;
 
-	segmentsDrnCnt	=	0;
-	minDeltaRA		=	GetRA_DEC_detla(0) / 10;
-	rtAscenDelta	=	GetRA_DEC_detla(cView_index);
+	segmentsDrnCnt			=	0;
+	minDeltaRA				=	GetRA_DEC_delta(0) / 10;
+	rtAscenDelta_Radians	=	GetRA_DEC_delta(cView_index);
+//	CONSOLE_DEBUG_W_DBL("rtAscenDelta (radians)\t=", rtAscenDelta_Radians);
+//	CONSOLE_DEBUG_W_DBL("rtAscenDelta (degrees)\t=", DEGREES(rtAscenDelta_Radians));
 	rtAscen1		=	0.0;
-	while (rtAscen1 < ((2 * M_PI) - rtAscenDelta))
+	while (rtAscen1 <= ((2 * M_PI) - rtAscenDelta_Radians))
 	{
 		//*	we are going draw a line between 2 points
 		//*	calculate the 2nd pt
-		rtAscen2	=	rtAscen1 + rtAscenDelta;
+		rtAscen2	=	rtAscen1 + rtAscenDelta_Radians;
 
 		pt1inView	=	GetXYfromRA_Decl(	rtAscen1,
 											declinationAngle_rad,
@@ -4817,17 +4890,17 @@ bool	numberWasDrawn;
 		{
 			//*	check the step size, we want to make sure nothing bigger than 20 pixels
 			//*	I tried to do this in a separate routine but it slowed down way too much
-			while (((abs(pt2_XX - pt1_XX) + abs(pt2_YY - pt1_YY)) > 20) && (rtAscenDelta > minDeltaRA))
+			while (((abs(pt2_XX - pt1_XX) + abs(pt2_YY - pt1_YY)) > 20) && (rtAscenDelta_Radians > minDeltaRA))
 			{
-				rtAscenDelta	-=	0.001;
+				rtAscenDelta_Radians	-=	0.001;
 				//*	check to make sure we didnt go too far
-				if (rtAscenDelta < minDeltaRA)
+				if (rtAscenDelta_Radians < minDeltaRA)
 				{
-					rtAscenDelta	=	minDeltaRA;
+					rtAscenDelta_Radians	=	minDeltaRA;
 				}
 
 				//*	re-calculate point 2
-				rtAscen2	=	rtAscen1 + rtAscenDelta;
+				rtAscen2	=	rtAscen1 + rtAscenDelta_Radians;
 				pt2inView	=	GetXYfromRA_Decl(	rtAscen2,
 													declinationAngle_rad,
 													&pt2_XX, &pt2_YY);
@@ -4840,10 +4913,10 @@ bool	numberWasDrawn;
 
 
 		}
-		rtAscen1	+=	rtAscenDelta;
+		rtAscen1	+=	rtAscenDelta_Radians;
 		if (gDashedLines)
 		{
-			rtAscen1	+=	rtAscenDelta;
+			rtAscen1	+=	rtAscenDelta_Radians;
 		}
 
 		//*	this is to calculate where to draw the numbers along the edges of the screen
@@ -4982,8 +5055,8 @@ int		btmMost_X;
 int		btmMost_Y;
 
 	segmentsDrnCnt	=	0;
-	minDeltaDec		=	GetRA_DEC_detla(0) / 10.0;
-	declDelta		=	GetRA_DEC_detla(cView_index);
+	minDeltaDec		=	GetRA_DEC_delta(0) / 10.0;
+	declDelta		=	GetRA_DEC_delta(cView_index);
 //	declDelta		=	declDelta / 2.0;
 
 	leftMost_X		=	10000;
@@ -5375,11 +5448,13 @@ int				myColor;
 							{
 							short	planetScale;
 						//		CONSOLE_DEBUG_W_NUM("cView_index\t=", cView_index);
-								if (cView_index <= 2)
+						//		if (cView_index <= 2)
+								if (cView_angle <= 0.1)
 								{
 									planetScale	=	3;
 								}
-								else if (cView_index <= 5)
+						//		else if (cView_index <= 5)
+								else if (cView_index <= 0.7)
 								{
 									planetScale	=	2;
 								}
@@ -5389,7 +5464,8 @@ int				myColor;
 								}
 								DrawVector(myColor, xcoord, ycoord, planetScale, shapes[ii]);
 
-								if (cView_index <= 4)
+							//-	if (cView_index <= 4)
+								if (cView_angle < 0.4)
 								{
 									//*	if we are this far zoomed in, show the name as well
 									DrawCString(xcoord + 18, ycoord, name[ii]);
@@ -5789,6 +5865,7 @@ long			pixDist;
 
 //*****************************************************************************
 //*	returns true if on current screen
+//*****************************************************************************
 void	WindowTabSkyTravel::SearchSkyObjects(char *objectName)
 {
 bool	foundSomething;
@@ -6003,9 +6080,10 @@ long	hippObjectId;
 		}
 
 		//*	outlines dont get displayed unless we are greater than 4
-		if (foundSomething && (cView_index < 5))
+//		if (foundSomething && (cView_index < 5))
+		if (foundSomething && (cView_angle < 0.7))
 		{
-			SetView_Index(5);
+			SetView_Index(kView_old5);
 		}
 	}
 
@@ -6052,6 +6130,9 @@ long	hippObjectId;
 				strcpy(database, "AAVSO Alerts");
 				sprintf(foundName, "%s", gAAVSOalertsPtr[iii].longName);
 				foundSomething	=	true;
+
+				//*	make sure the AAVSO alerts are displayed
+				cDispOptions.dispAAVSOalerts	=	true;
 			}
 			iii++;
 		}
@@ -6309,6 +6390,31 @@ bool				inCurrentWindow;
 	}
 	return(inCurrentWindow);
 }
+
+//*****************************************************************************
+//*	center the map on the specified RA/DEC
+//*****************************************************************************
+void	WindowTabSkyTravel::Goto_RA_DEC(double argRA_radians, double argDecl_radians)
+{
+	CONSOLE_DEBUG(__FUNCTION__);
+	cRa0		=	argRA_radians;
+	cDecl0		=	argDecl_radians;
+	cFindFlag	=	true;
+	ForceUpdate();
+
+}
+
+//*****************************************************************************
+void	Goto_RA_DEC(double argRA_radians, double argDecl_radians)
+{
+	CONSOLE_DEBUG(__FUNCTION__);
+	if (gSkyTravelWindow != NULL)
+	{
+		gSkyTravelWindow->Goto_RA_DEC(argRA_radians, argDecl_radians);
+	}
+}
+
+
 
 //*****************************************************************************
 //* draw picture of feet

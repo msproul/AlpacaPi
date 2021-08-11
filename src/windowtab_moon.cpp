@@ -257,7 +257,7 @@ int					errorCode;
 bool				keepGoing;
 int					fileIdx;
 
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, kMoonImageDir);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, kMoonImageDir);
 
 
 	directory	=	opendir(kMoonImageDir);
@@ -285,14 +285,14 @@ int					fileIdx;
 						//*	make sure its a FITS file
 						if (strstr(dir->d_name, ".fits") != NULL)
 						{
-							CONSOLE_DEBUG(dir->d_name);
+//							CONSOLE_DEBUG(dir->d_name);
 							strcpy(cMoonFileList[fileIdx].fitsFileName, dir->d_name);
 
 							fileIdx++;
 						}
 						else
 						{
-							CONSOLE_DEBUG_W_STR("Ignoring", dir->d_name);
+//							CONSOLE_DEBUG_W_STR("Ignoring", dir->d_name);
 						}
 					}
 					else

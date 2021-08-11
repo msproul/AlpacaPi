@@ -69,47 +69,56 @@ bool	Controller::AlpacaGetCommonProperties(const char *deviceTypeStr)
 {
 char	returnString[256];
 bool	validData;
-
+int		validCnt;
 
 	CONSOLE_DEBUG(__FUNCTION__);
+	validCnt	=	0;
 	//-----------------------------------------------------------------------------------------
 	validData	=	AlpacaGetStringValue(	deviceTypeStr, "description",	NULL,	returnString);
 	if (validData)
 	{
 		strcpy(cCommonProp.Description,	returnString);
+		validCnt++;
 	}
 	//-----------------------------------------------------------------------------------------
 	validData	=	AlpacaGetStringValue(	deviceTypeStr, "driverinfo",	NULL,	returnString);
 	if (validData)
 	{
 		strcpy(cCommonProp.DriverInfo,	returnString);
+		validCnt++;
 	}
 	//-----------------------------------------------------------------------------------------
 	validData	=	AlpacaGetStringValue(	deviceTypeStr, "driverinfo",	NULL,	returnString);
 	if (validData)
 	{
 		strcpy(cCommonProp.DriverInfo,	returnString);
+		validCnt++;
 	}
 	//-----------------------------------------------------------------------------------------
 	validData	=	AlpacaGetStringValue(	deviceTypeStr, "interfaceversion",	NULL,	returnString);
 	if (validData)
 	{
 		cCommonProp.InterfaceVersion	=	atoi(returnString);
+		validCnt++;
 	}
 	//-----------------------------------------------------------------------------------------
 	validData	=	AlpacaGetStringValue(	deviceTypeStr, "driverversion",	NULL,	returnString);
 	if (validData)
 	{
 		strcpy(cCommonProp.DriverVersion,	returnString);
+		validCnt++;
 	}
 	//-----------------------------------------------------------------------------------------
 	validData	=	AlpacaGetStringValue(	deviceTypeStr, "name",	NULL,	returnString);
 	if (validData)
 	{
 		strcpy(cCommonProp.Name,	returnString);
+		validCnt++;
 	}
+	CONSOLE_DEBUG_W_NUM("validCnt\t=", validCnt);
 
 	UpdateCommonProperties();
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, "Exit");
 	return(validData);
 }
 
@@ -117,6 +126,7 @@ bool	validData;
 //*****************************************************************************
 void	Controller::UpdateCommonProperties(void)
 {
+	CONSOLE_DEBUG(__FUNCTION__);
 	//*	needs to be overloaded
 }
 
