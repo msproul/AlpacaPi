@@ -28,6 +28,7 @@
 //*	Dec  5,	2020	<MLS> Added cDriverVersion so that different drivers can have different versions
 //*	Dec 11,	2020	<MLS> Added GENERATE_ALPACAPI_ERRMSG() macro to make error messages consistent
 //*	Feb 11,	2021	<MLS> Deleted cDriverVersion, use cCommonProp.InterfaceVersion
+//*	Sep  2,	2021	<MLS> Added _ENABLE_BANDWIDTH_LOGGING_
 //*****************************************************************************
 //#include	"alpacadriver.h"
 
@@ -78,6 +79,8 @@
 #define	kMaxDevices			20
 
 //#define _DEBUG_CONFORM_
+#define		_ENABLE_BANDWIDTH_LOGGING_
+
 
 //*****************************************************************************
 //*	common commands
@@ -103,7 +106,7 @@ enum
 	//*	Added by MLS 7/20/2020
 	kCmd_Common_exit,
 #endif // _INCLUDE_EXIT_COMMAND_
-
+	kCmd_Common_Extras,
 	kCmd_Common_LiveWindow,
 
 	kCmd_Common_last
@@ -145,7 +148,7 @@ typedef struct
 } TYPE_UniqueID;
 
 //*****************************************************************************
-#define	kCommonCmdCnt	12
+#define	kCommonCmdCnt	13
 #define	kDeviceCmdCnt	100
 typedef struct
 {
@@ -239,17 +242,30 @@ class AlpacaDriver
 				TYPE_UniqueID		cUniqueID;
 
 
-				int					cTotalCmdsProcessed;
-				int					cTotalCmdErrors;
+				//=========================================================
+				//*	bandwidth statistics
+				unsigned long		cTotalBytesRcvd;
+				unsigned long		cTotalBytesSent;
+
+#ifdef _ENABLE_BANDWIDTH_LOGGING_
+				void			BandWidthStatsInit(void);
+	//	#define	kSecsPerHour			(60 * 60)
+		#define	kMaxBandWidthSamples	(60 * 1)
+				int					cBW_CmdsReceived[kMaxBandWidthSamples];
+				int					cBW_BytesReceived[kMaxBandWidthSamples];
+				int					cBW_BytesSent[kMaxBandWidthSamples];
+#endif // _ENABLE_BANDWIDTH_LOGGING_
 
 				//=========================================================
 				//*	command statistics
+				int					cTotalCmdsProcessed;
+				int					cTotalCmdErrors;
 				void				RecordCmdStats(int cmdNum, char getput, TYPE_ASCOM_STATUS alpacaErrCode);
 		virtual bool				GetCmdNameFromMyCmdTable(const int cmdNumber, char *comandName, char *getPut);
 
 				bool				cDeviceConnected;		//*	normally always true
-				TYPE_CMD_STATS		cCommonCMdStats[kCommonCmdCnt];
-				TYPE_CMD_STATS		cDeviceCMdStats[kDeviceCmdCnt];
+				TYPE_CMD_STATS		cCommonCmdStats[kCommonCmdCnt];
+				TYPE_CMD_STATS		cDeviceCmdStats[kDeviceCmdCnt];
 
 				//=========================================================
 				//*	discovery routines, allow a device to look for other devices

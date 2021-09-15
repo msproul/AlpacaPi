@@ -123,6 +123,10 @@ CvScalar	btnTXTcolor;
 	SetWidget(kTelescope_Title,		0,			yLoc,		cWidth,		cTitleHeight);
 	SetWidgetText(kTelescope_Title, "AlpacaPi project");
 	SetBGcolorFromWindowName(kTelescope_Title);
+
+	//*	setup the connected indicator
+   	SetUpConnectedIndicator(kTelescope_Connected, yLoc);
+
 	yLoc			+=	cTitleHeight;
 	yLoc			+=	2;
 	yLocSave		=	yLoc;

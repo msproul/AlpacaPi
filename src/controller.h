@@ -45,6 +45,9 @@
 	#define	kMagicCookieValue	0x55AA7777
 #endif
 
+#ifdef _ENABLE_SKYTRAVEL_
+	#define	_USE_BACKGROUND_THREAD_
+#endif // _ENABLE_SKYTRAVEL_
 
 
 #define	kMaxControllers	16
@@ -81,6 +84,9 @@ typedef struct
 } TYPE_CAPABILITY;
 
 
+#define		kStartBackgroundTask	true
+#define		kNoBackgroundTask		false
+
 //*****************************************************************************
 class Controller
 {
@@ -91,7 +97,8 @@ class Controller
 		//
 				Controller(	const char	*argWindowName,
 							const int	xSize,
-							const int	ySize);
+							const int	ySize,
+							const bool	startBackGroundThread = true);
 		virtual	~Controller(void);
 
 
@@ -106,6 +113,7 @@ class Controller
 				int		FindClickedTab(const int xxx, const int yyy);
 				void	ProcessTabClick(const int tabIdx);
 
+				void	SetCurrentTab(const int tabIdx);
 
 
 				void	DrawOneWidget(const int widgetIdx);
@@ -236,6 +244,7 @@ class Controller
 		TYPE_CommonProperties	cCommonProp;
 
 		char				cAlpacaVersionString[128];
+
 		char				cLastAlpacaCmdString[256];
 		char				cAlpacaDeviceTypeStr[48];
 		char				cAlpacaDeviceNameStr[64];
@@ -256,9 +265,11 @@ class Controller
 #ifdef _CONTROLLER_USES_ALPACA_
 
 //------------------------------------------------------------
+				bool	AlpacaSetConnected(const char *deviceTypeStr, const bool newConnectedState=true);
 		virtual	void	UpdateSupportedActions(void);
 
-				bool	AlpacaGetCommonProperties(const char *deviceTypeStr);
+				bool	AlpacaGetCommonProperties_OneAAT(const char *deviceTypeStr);
+				bool	AlpacaGetCommonConnectedState(const char *deviceTypeStr);
 		virtual	void	UpdateCommonProperties(void);
 
 
@@ -277,20 +288,26 @@ class Controller
 		virtual	void	AlpacaDisplayErrorMessage(const char *errorMsgString);
 
 
+				bool	AlpacaGetStatus_ReadAll(	const char	*deviceTypeStr, const int deviceNum);
+
 				bool	AlpacaGetStatus_ReadAll(	sockaddr_in	*deviceAddress,
-													int			port,
+													int			devicePort,
 													const char	*deviceTypeStr,
 													const int	deviceNum);
 
-				bool	AlpacaGetStatus_ReadAll(const char	*deviceTypeStr, const int deviceNum);
-		virtual	void	AlpacaProcessReadAll(	const char	*deviceTypeStr,
-												const int	deviceNum,
-												const char	*keywordString,
-												const char	*valueString);
 
+		virtual	void	AlpacaProcessReadAll(		const char	*deviceTypeStr,
+													const int	deviceNum,
+													const char	*keywordString,
+													const char	*valueString);
+
+				void	AlpacaProcessReadAll_Common(const char	*deviceTypeStr,
+													const int	deviceNum,
+													const char	*keywordString,
+													const char	*valueString);
 		virtual	void	UpdateDownloadProgress(const int unitsRead, const int totalUnits);
 
-
+				void	UpdateConnectedIndicator(const int tabNum, const int widgetNum);
 
 				bool	AlpacaSendPutCmd(			const char	*alpacaDevice,
 													const char	*alpacaCmd,
@@ -344,7 +361,8 @@ class Controller
 												const char	*alpacaCmd,
 												const char	*dataString,
 												bool		*returnValue,
-												bool		*rtnValidData = NULL);
+												bool		*rtnValidData = NULL,
+												bool		printDebug=false);
 				bool	AlpacaGetStringValue(	const char	*alpacaDevice,
 												const char	*alpacaCmd,
 												const char	*dataString,
@@ -394,6 +412,13 @@ class Controller
 															bool		*booleanValue);
 
 #endif // _CONTROLLER_USES_ALPACA_
+
+//------------------------------------------------------------
+//*	background thread stuff
+		int			StartBackgroundThread(void);
+		pthread_t	cBackgroundThreadID;
+		bool		cButtonClickInProgress;
+		bool		cBackgroundTaskActive;
 
 
 };

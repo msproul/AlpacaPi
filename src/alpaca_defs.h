@@ -15,6 +15,7 @@
 //*	Feb 12,	2021	<MLS> Added TYPE_CoverCalibrationProperties
 //*	Mar  1,	2021	<MLS> Added TYPE_ObsConditionProperties
 //*	Mar 21,	2021	<MLS> Added TYPE_FilterWheelProperties
+//*	Sep 15,	2021	<MLS> Version V0.4.2-beta
 //*****************************************************************************
 //*	These are for my comment extraction program that sorts comments by date.
 //*	Jan  1,	2019	-----------------------------------------------------------
@@ -40,8 +41,8 @@
 #endif
 
 #define	kApplicationName	"AlpacaPi"
-#define	kVersionString		"V0.4.1-beta"
-#define	kBuildNumber		118
+#define	kVersionString		"V0.4.2-beta"
+#define	kBuildNumber		119
 
 
 #define kAlpacaDiscoveryPORT	32227
@@ -237,6 +238,7 @@ typedef struct
 typedef struct
 {
 	//*	ASCOM common properties
+	bool	Connected;
 	char	Description[kCommonPropMaxStrLen];
 	char	DriverInfo[kCommonPropMaxStrLen];
 	char	DriverVersion[kCommonPropMaxStrLen];

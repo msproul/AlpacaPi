@@ -212,7 +212,7 @@ char	numberString[32];
 
 		btnIdx++;
 	}
-	CONSOLE_DEBUG_W_NUM("btnIdx\t",	btnIdx);
+//	CONSOLE_DEBUG_W_NUM("btnIdx\t",	btnIdx);
 
 	SetWidgetOutlineBox(kMLsingle_GOTO_outline, kMLsingle_focValue, kMLsingle_Foc_m5000);
 
@@ -263,7 +263,7 @@ char	numberString[32];
 	yloc2			+=	cBtnHeight;
 	yloc2			+=	2;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 
 	//*	set default text strings

@@ -82,12 +82,17 @@ int		myButtonHt;
 	//------------------------------------------
 	yLoc			=	cTabVertOffset;
 
-	//------------------------------------------
+	//=======================================================
 	SetWidget(kCoverCalib_Title,		0,			yLoc,		cWidth,		cTitleHeight);
 	SetWidgetText(kCoverCalib_Title, "Cover Calibration");
 	SetBGcolorFromWindowName(kCoverCalib_Title);
+	//=======================================================
+	//*	setup the connected indicator
+   	SetUpConnectedIndicator(kCoverCalib_Connected, yLoc);
+
 	yLoc			+=	cTitleHeight;
 	yLoc			+=	20;
+
 
 	//=======================================================
 	xLoc		=	cClm2_offset;

@@ -1672,6 +1672,7 @@ focuser		:			$(CONTROLLER_OBJECTS)
 				$(LINK)  										\
 							$(CONTROLLER_OBJECTS)				\
 							$(OPENCV_LINK)						\
+							-lpthread							\
 							-o focuser
 
 ######################################################################################
@@ -1688,6 +1689,7 @@ switch		:			$(CONTROLLER_OBJECTS)
 				$(LINK)  										\
 							$(CONTROLLER_OBJECTS)				\
 							$(OPENCV_LINK)						\
+							-lpthread							\
 							-o switch
 
 
@@ -1703,6 +1705,7 @@ camera		:			$(CONTROLLER_OBJECTS)					\
 				$(LINK)  										\
 							$(CONTROLLER_OBJECTS)				\
 							$(OPENCV_LINK)						\
+							-lpthread							\
 							-o camera
 
 
@@ -1714,7 +1717,6 @@ SRC_SKYTRAVEL=./src_skytravel/
 SKYTRAVEL_OBJECTS=											\
 				$(OBJECT_DIR)aavso_data.o					\
 				$(OBJECT_DIR)ConstellationData.o			\
-				$(OBJECT_DIR)controller_aavso.o				\
 				$(OBJECT_DIR)controller_camera.o			\
 				$(OBJECT_DIR)controller_cam_normal.o		\
 				$(OBJECT_DIR)controller_covercalib.o		\
@@ -1728,6 +1730,7 @@ SKYTRAVEL_OBJECTS=											\
 				$(OBJECT_DIR)controller_ml_single.o			\
 				$(OBJECT_DIR)controller_skytravel.o			\
 				$(OBJECT_DIR)controller_switch.o			\
+				$(OBJECT_DIR)controller_starlist.o			\
 				$(OBJECT_DIR)controller_telescope.o			\
 				$(OBJECT_DIR)cpu_stats.o					\
 				$(OBJECT_DIR)eph.o							\
@@ -1741,13 +1744,13 @@ SKYTRAVEL_OBJECTS=											\
 				$(OBJECT_DIR)NGCcatalog.o					\
 				$(OBJECT_DIR)nitecrawler_image.o			\
 				$(OBJECT_DIR)observatory_settings.o			\
+				$(OBJECT_DIR)polaralign.o					\
 				$(OBJECT_DIR)sidereal.o						\
 				$(OBJECT_DIR)StarCatalogHelper.o			\
 				$(OBJECT_DIR)skytravel_main.o				\
 				$(OBJECT_DIR)StarData.o						\
 				$(OBJECT_DIR)SkyTravelTimeRoutines.o		\
 				$(OBJECT_DIR)serialport.o					\
-				$(OBJECT_DIR)windowtab_aavsolist.o			\
 				$(OBJECT_DIR)windowtab_alpacalist.o			\
 				$(OBJECT_DIR)windowtab_auxmotor.o			\
 				$(OBJECT_DIR)windowtab_camera.o				\
@@ -1769,6 +1772,7 @@ SKYTRAVEL_OBJECTS=											\
 				$(OBJECT_DIR)windowtab_slit.o				\
 				$(OBJECT_DIR)windowtab_slitgraph.o			\
 				$(OBJECT_DIR)windowtab_skytravel.o			\
+				$(OBJECT_DIR)windowtab_starlist.o			\
 				$(OBJECT_DIR)windowtab_STsettings.o			\
 				$(OBJECT_DIR)windowtab_switch.o				\
 				$(OBJECT_DIR)windowtab_telescope.o			\
@@ -1821,6 +1825,7 @@ domectrl		:			$(CONTROLLER_OBJECTS)
 				$(LINK)  										\
 							$(CONTROLLER_OBJECTS)				\
 							$(OPENCV_LINK)						\
+							-lpthread							\
 							-o domectrl
 
 ######################################################################################
@@ -2808,7 +2813,11 @@ $(OBJECT_DIR)aavso_data.o :				$(SRC_SKYTRAVEL)aavso_data.c	\
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYTRAVEL)aavso_data.c -o$(OBJECT_DIR)aavso_data.o
 
 
-
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)polaralign.o :				$(SRC_SKYTRAVEL)polaralign.cpp	\
+										$(SRC_SKYTRAVEL)polaralign.h	\
+										$(SRC_SKYTRAVEL)SkyStruc.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYTRAVEL)polaralign.cpp -o$(OBJECT_DIR)polaralign.o
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)windowtab_skytravel.o :	$(SRC_SKYTRAVEL)windowtab_skytravel.cpp	\
@@ -2860,20 +2869,21 @@ $(OBJECT_DIR)ConstellationData.o :		$(SRC_SKYTRAVEL)ConstellationData.c	\
 										$(SRC_SKYTRAVEL)ConstellationData.h
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYTRAVEL)ConstellationData.c -o$(OBJECT_DIR)ConstellationData.o
 
-#-------------------------------------------------------------------------------------
-$(OBJECT_DIR)controller_aavso.o : 		$(SRC_SKYTRAVEL)controller_aavso.cpp	\
-										$(SRC_SKYTRAVEL)controller_aavso.h	\
-										$(SRC_DIR)windowtab_about.h			\
-										$(SRC_DIR)controller.h
-	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYTRAVEL)controller_aavso.cpp -o$(OBJECT_DIR)controller_aavso.o
 
 #-------------------------------------------------------------------------------------
-$(OBJECT_DIR)windowtab_aavsolist.o : 	$(SRC_SKYTRAVEL)windowtab_aavsolist.cpp	\
-										$(SRC_SKYTRAVEL)windowtab_aavsolist.h	\
+$(OBJECT_DIR)controller_starlist.o : 	$(SRC_SKYTRAVEL)controller_starlist.cpp	\
+										$(SRC_SKYTRAVEL)controller_starlist.h	\
+										$(SRC_DIR)windowtab_about.h				\
+										$(SRC_DIR)controller.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYTRAVEL)controller_starlist.cpp -o$(OBJECT_DIR)controller_starlist.o
+
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)windowtab_starlist.o : 	$(SRC_SKYTRAVEL)windowtab_starlist.cpp	\
+										$(SRC_SKYTRAVEL)windowtab_starlist.h	\
 										$(SRC_DIR)windowtab.h					\
 										$(SRC_DIR)controller.h
-	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYTRAVEL)windowtab_aavsolist.cpp -o$(OBJECT_DIR)windowtab_aavsolist.o
-
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYTRAVEL)windowtab_starlist.cpp -o$(OBJECT_DIR)windowtab_starlist.o
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)lx200_com.o :				$(SRC_DIR)lx200_com.c	\

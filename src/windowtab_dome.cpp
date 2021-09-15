@@ -97,6 +97,10 @@ int		my_cWidth;
 	SetWidget(kDomeBox_Title,		0,			yLoc,		cWidth,		cTitleHeight);
 	SetWidgetText(kDomeBox_Title, "AlpacaPi Dome");
 	SetBGcolorFromWindowName(kDomeBox_Title);
+
+	//*	setup the connected indicator
+	SetUpConnectedIndicator(kDomeBox_Connected, yLoc);
+
 	yLoc			+=	cTitleHeight;
 	yLoc			+=	2;
 
@@ -860,6 +864,26 @@ SJP_Parser_t	jsonResponse;
 	DisplayLastAlpacaCommand();
 }
 
+//*****************************************************************************
+void	WindowTabDome::ProcessDoubleClick(	const int	widgetIdx,
+											const int	event,
+											const int	xxx,
+											const int	yyy,
+											const int	flags)
+{
+	CONSOLE_DEBUG(__FUNCTION__);
+	switch(widgetIdx)
+	{
+		case kDomeBox_Title:
+		case kDomeBox_Connected:
+			AlpacaSetConnected("dome");
+			break;
+
+		default:
+			CONSOLE_DEBUG_W_NUM("widgetIdx\t=", widgetIdx);
+			break;
+	}
+}
 
 //*****************************************************************************
 void	WindowTabDome::SendShutterCommand(const char *shutterCmd)

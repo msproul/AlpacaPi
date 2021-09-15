@@ -386,16 +386,16 @@ int					linesForCurrEntry;
 							//	CONSOLE_ABORT(__FUNCTION__);
 							}
 							//*	debug alert-752
-							if (strcasecmp(currentStarEntry.longName, "RS Oph") == 0)
-							{
-								CONSOLE_DEBUG_W_NUM("alertIdx\t=", alertIdx);
-								CONSOLE_DEBUG_W_STR("longName\t=", currentStarEntry.longName);
-							//	CONSOLE_ABORT(__FUNCTION__);
-							}
+					//		if (strcasecmp(currentStarEntry.longName, "RS Oph") == 0)
+					//		{
+					//			CONSOLE_DEBUG_W_NUM("alertIdx\t=", alertIdx);
+					//			CONSOLE_DEBUG_W_STR("longName\t=", currentStarEntry.longName);
+					//		//	CONSOLE_ABORT(__FUNCTION__);
+					//		}
 						}
 						else
 						{
-							CONSOLE_DEBUG_W_STR("Too early:", lineBuff);
+//							CONSOLE_DEBUG_W_STR("Too early:", lineBuff);
 						}
 						linesForCurrEntry	=	0;
 						memset(&currentStarEntry, 0, sizeof(TYPE_CelestData));

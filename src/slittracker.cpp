@@ -109,7 +109,7 @@ int	iii;
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	strcpy(cCommonProp.Name,		"SlitTracker");
-	strcpy(cCommonProp.Description,	"Slit tracking  for dome slaving");
+	strcpy(cCommonProp.Description,	"Slit tracking for dome slaving");
 	if (devicePath != NULL)
 	{
 		strcpy(cUSBpath, devicePath);

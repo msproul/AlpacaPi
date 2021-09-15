@@ -19,6 +19,9 @@
 //*	Feb  7,	2021	<MLS> Added Discovery_ClearIPAddrList()
 //*	Feb  7,	2021	<MLS> Fixed bug that did not discover 2 listen ports on same IP addrr
 //*	Mar  9,	2021	<MLS> Moved FindDeviceInList() to discoverytjread.c
+//*	Aug 20,	2021	<MLS> Added debugging code for new universal CONFORM program from Peter
+//*	Aug 23,	2021	<MLS> Changed discovery response string from "alpacaport" to "AlpacaPort"
+//*	Aug 23,	2021	<MLS> Added AlpacaUnitQsortProc(), ip addr list is now sorted
 //*****************************************************************************
 
 
@@ -51,6 +54,7 @@
 #include	"discoverythread.h"
 #include	"discovery_lib.h"
 #include	"sendrequest_lib.h"
+#include	"linuxerrors.h"
 
 #include	"obsconditions_globals.h"
 #include	"HostNames.h"
@@ -162,7 +166,9 @@ char				ipAddrSt[48];
 			if (bytesRead >= 0)
 			{
 				readBuf[bytesRead]	=	0;
-//				printf("%s\r\n", readBuf);
+				inet_ntop(AF_INET, &(fromAddress.sin_addr), ipAddrSt, INET_ADDRSTRLEN);
+				sprintf(responseBuff, "Request from:%s, %s", ipAddrSt, readBuf);
+				CONSOLE_DEBUG(responseBuff);
 
 				validDiscoveryRequest	=	false;
 				//*	this was the original discovery query
@@ -171,7 +177,6 @@ char				ipAddrSt[48];
 					validDiscoveryRequest	=	true;
 
 					CONSOLE_DEBUG_W_STR("Old style discovery request\t=", readBuf);
-					inet_ntop(AF_INET, &(fromAddress.sin_addr), ipAddrSt, INET_ADDRSTRLEN);
 					CONSOLE_DEBUG_W_STR("From\t=", ipAddrSt);
 				}
 				if (strncasecmp(readBuf,	"alpacadiscovery",  15) == 0)
@@ -189,7 +194,7 @@ char				ipAddrSt[48];
 				}
 				if (validDiscoveryRequest)
 				{
-					sprintf(responseBuff, "{\"alpacaport\": %d}", gAlpacaListenPort);
+					sprintf(responseBuff, "{\"AlpacaPort\": %d}", gAlpacaListenPort);
 
 					bytesSent	=	sendto(mySocket, responseBuff, strlen(responseBuff), 0, (struct sockaddr *)&fromAddress, fromlen);
 					if (bytesSent < 0)
@@ -438,12 +443,13 @@ char				returnedData[2000];
 char				xmitBuffer[2000];
 int					setOptRetCode;
 
-//*	Mar 13,	2021	<MLS> Added timeout to GetJsonResponse()
 //	CONSOLE_DEBUG(__FUNCTION__);
+
 	validData	=	false;
 	socket_desc	=	socket(AF_INET , SOCK_STREAM , 0);
 	if (socket_desc >= 0)
 	{
+		//*	Mar 13,	2021	<MLS> Added timeout to GetJsonResponse()
 		//*	set a timeout
 		setOptRetCode	=	SetSocketTimeouts(socket_desc, 3);
 		if (setOptRetCode != 0)
@@ -461,7 +467,7 @@ int					setOptRetCode;
 			strcpy(xmitBuffer, "GET ");
 			strcat(xmitBuffer, sendData);
 
-			strcat(xmitBuffer, " HTTP/1.1\r\n");
+			strcat(xmitBuffer, " HTTP/1.0\r\n");
 			strcat(xmitBuffer, "Host: 127.0.0.1:6800\r\n");
 			strcat(xmitBuffer, "User-Agent: AlpacaPi\r\n");
 			strcat(xmitBuffer, "Accept: text/html,application/json\r\n");
@@ -481,10 +487,14 @@ int					setOptRetCode;
 //					SJP_DumpJsonData(jsonParser);
 				}
 			}
+			else
+			{
+				CONSOLE_DEBUG_W_NUM("send() error", errno);
+			}
 			shutdownRetCode	=	shutdown(socket_desc, SHUT_RDWR);
 			if (shutdownRetCode != 0)
 			{
-				CONSOLE_DEBUG("shutdown error");
+				CONSOLE_DEBUG_W_NUM("shutdown() error", errno);
 			}
 		}
 		else if (errno == ECONNREFUSED)
@@ -496,8 +506,12 @@ int					setOptRetCode;
 		}
 		else
 		{
-			CONSOLE_DEBUG("connect error");
-			CONSOLE_DEBUG_W_NUM("errno\t=", errno);
+		char	errorString[64];
+
+		//	CONSOLE_DEBUG("connect error");
+		//	CONSOLE_DEBUG_W_NUM("errno\t=", errno);
+			GetLinuxErrorString(errno, errorString);
+			CONSOLE_DEBUG_W_STR("Connect error: Error message\t\t=",	errorString);
 		}
 		//*	Moved 2/4/2021
 		closeRetCode	=	close(socket_desc);
@@ -627,6 +641,41 @@ struct timeval	currentTime;		//*	time exposure or video was started for frame ra
 #endif // LOG_DISCOVERED_IP_ADDRS
 
 
+//**************************************************************************************
+static  int AlpacaUnitQsortProc(const void *e1, const void *e2)
+{
+TYPE_ALPACA_UNIT	*obj1, *obj2;
+int					returnValue;
+uint32_t			ipAddr1;
+uint32_t			ipAddr2;
+
+
+	obj1		=	(TYPE_ALPACA_UNIT *)e1;
+	obj2		=	(TYPE_ALPACA_UNIT *)e2;
+
+	ipAddr1	=	(obj1->deviceAddress.sin_addr.s_addr & 0x000000ff) << 24;
+	ipAddr1	+=	(obj1->deviceAddress.sin_addr.s_addr & 0x0000ff00) << 8;
+	ipAddr1	+=	(obj1->deviceAddress.sin_addr.s_addr & 0x00ff0000) >> 8;
+	ipAddr1	+=	(obj1->deviceAddress.sin_addr.s_addr & 0xff000000) >> 24;
+
+	ipAddr2	=	(obj2->deviceAddress.sin_addr.s_addr & 0x000000ff) << 24;
+	ipAddr2	+=	(obj2->deviceAddress.sin_addr.s_addr & 0x0000ff00) << 8;
+	ipAddr2	+=	(obj2->deviceAddress.sin_addr.s_addr & 0x00ff0000) >> 8;
+	ipAddr2	+=	(obj2->deviceAddress.sin_addr.s_addr & 0xff000000) >> 24;
+
+	returnValue	=	0;
+	if (ipAddr1 < ipAddr2)
+	{
+		returnValue	=	-1;
+	}
+	else if (ipAddr1 > ipAddr2)
+	{
+		returnValue	=	1;
+	}
+
+	return(returnValue);
+
+}
 
 //*****************************************************************************
 static void	AddIPaddressToList(struct sockaddr_in *deviceAddress, SJP_Parser_t *jsonParser)
@@ -680,6 +729,10 @@ int		alpacaListenPort;
 				strcpy(gAlpacaUnitList[gAlpacaUnitCnt].hostName, myHostNameStr);
 			}
 			gAlpacaUnitCnt++;
+
+			//*	sort by IP address
+			qsort(gAlpacaUnitList, gAlpacaUnitCnt, sizeof(TYPE_ALPACA_UNIT), AlpacaUnitQsortProc);
+
 		}
 		else
 		{
@@ -1201,16 +1254,17 @@ int		iii;
 
 
 //*****************************************************************************
-int StartDiscoveryListenThread(int alpacaListenPort)
+int StartDiscoveryListenThread(const int alpacaListenPort)
 {
 int			threadErr;
 
+	//*	yes, we have a separate copy of it here
+	gAlpacaListenPort	=	alpacaListenPort;
 	CONSOLE_DEBUG(__FUNCTION__);
 
 	GetMyAddress();
-	gAlpacaListenPort	=	alpacaListenPort;
 
-	CONSOLE_DEBUG_W_NUM("Staring discovery listen thread on port", gAlpacaListenPort);
+	CONSOLE_DEBUG("Staring discovery listen thread on port");
 	threadErr			=	pthread_create(&gDiscoveryListenThreadID, NULL, &DiscoveryListenThread, NULL);
 	if (threadErr == 0)
 	{

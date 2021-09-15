@@ -109,7 +109,9 @@ bool	validData;
 int		newFilterWheelPosition;
 
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
-
+#ifdef _PARENT_IS_FILTERWHEEL_
+	validData	=	AlpacaGetCommonConnectedState("filterwheel");
+#endif
 
 	validData	=	AlpacaGetIntegerValue("filterwheel", "position",	NULL,	&newFilterWheelPosition);
 	if (validData)

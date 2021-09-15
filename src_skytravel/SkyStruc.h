@@ -27,6 +27,10 @@
 #elif __INTEL__
 	#pragma options align=reset
 #endif
+void	ConvertRadiansToDegMinSec(	double	radianValue,
+									short	*argDegrees,
+									short	*argMinutes,
+									double	*argSeconds);
 
 //*****************************************************************************
 //*	this is the on-disk format for Clif and Franks object database
@@ -66,6 +70,7 @@ enum
 	kDataSrc_HYG,
 
 	kDataSrc_Special,
+	kDataSrc_PolarAlignCenter,
 	kDataSrc_AAVSOalert,
 
 	kDataSrc_Unkown,
@@ -458,11 +463,17 @@ extern	long				gDraperObjectCount;
 extern	TYPE_CelestData		*gSpecialObjectPtr;
 extern	long				gSpecialObjectCount;
 
-	//*	AAVSO alert list
+//*	Polar Alignment center points
+extern	TYPE_CelestData		*gPolarAlignObjectPtr;
+extern	long				gPolarAlignObjectCount;
+
+//*	AAVSO alert list
 extern	TYPE_CelestData		*gAAVSOalertsPtr;
 extern	long				gAAVSOalertsCnt;
 
 
+void		Center_RA_DEC(double argRA_radians, double argDecl_radians);
+void		Center_CelestralObject(TYPE_CelestData *starObject);
 
 
 #ifdef __cplusplus

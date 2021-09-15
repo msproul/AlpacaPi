@@ -74,7 +74,7 @@ ControllerTelescope::ControllerTelescope(	const char			*argWindowName,
 											struct sockaddr_in	*deviceAddress,
 											const int			port,
 											const int			deviceNum)
-	:Controller(argWindowName, kWindowWidth,  kWindowHeight)
+	:Controller(argWindowName, kWindowWidth,  kWindowHeight, kNoBackgroundTask)
 {
 
 	//*	zero out all of the Telescope ASCOM properties
@@ -94,9 +94,16 @@ ControllerTelescope::ControllerTelescope(	const char			*argWindowName,
 		cDeviceAddress	=	*deviceAddress;
 		cPort			=	port;
 		cValidIPaddr	=	true;
+
+		AlpacaSetConnected("telescope", true);
 	}
 	cLastUpdate_milliSecs	=	0;
 	SetupWindowControls();
+
+#ifdef _USE_BACKGROUND_THREAD_
+	StartBackgroundThread();
+#endif // _USE_BACKGROUND_THREAD_
+
 }
 
 //**************************************************************************************
@@ -185,7 +192,7 @@ bool		validData;
 	if (cReadStartup)
 	{
 		AlpacaGetStartupData();
-		AlpacaGetCommonProperties("telescope");
+		AlpacaGetCommonProperties_OneAAT("telescope");
 
 		SetWidgetText(kTab_DriverInfo,		kDriverInfo_Name,				cCommonProp.Name);
 		SetWidgetText(kTab_DriverInfo,		kDriverInfo_Description,		cCommonProp.Description);
@@ -206,6 +213,8 @@ bool		validData;
 			CONSOLE_DEBUG("AlpacaGetStatus() fialed")
 		}
 		cLastUpdate_milliSecs	=	millis();
+
+		UpdateConnectedIndicator(kTab_Telescope,		kTelescope_Connected);
 	}
 }
 
@@ -261,7 +270,7 @@ void	ControllerTelescope::AlpacaDisplayErrorMessage(const char *errorMsgString)
 }
 
 //*****************************************************************************
-void	ControllerTelescope::AlpacaProcessReadAll(	const char	*deviceType,
+void	ControllerTelescope::AlpacaProcessReadAll(	const char	*deviceTypeStr,
 													const int	deviceNum,
 													const char	*keywordString,
 													const char *valueString)
@@ -269,37 +278,45 @@ void	ControllerTelescope::AlpacaProcessReadAll(	const char	*deviceType,
 bool	dataWasHandled;
 
 //	CONSOLE_DEBUG_W_2STR("json=",	keywordString, valueString);
-	if (strcasecmp(deviceType, "Telescope") == 0)
+	if (strcasecmp(deviceTypeStr, "Telescope") == 0)
 	{
 		dataWasHandled	=	AlpacaProcessReadAll_Telescope(deviceNum, keywordString, valueString);
 		if (dataWasHandled)
 		{
 			//*	we are done, skip the rest
 		}
-		else if (strcasecmp(keywordString, "name") == 0)
+		else
 		{
-			SetWidgetText(kTab_DriverInfo, kDriverInfo_Name, valueString);
+			AlpacaProcessReadAll_Common(	deviceTypeStr,
+											deviceNum,
+											keywordString,
+											valueString);
+
 		}
-		else if (strcasecmp(keywordString, "driverinfo") == 0)
-		{
-			SetWidgetText(kTab_DriverInfo, kDriverInfo_DriverInfo, valueString);
-		}
-		else if (strcasecmp(keywordString, "description") == 0)
-		{
-			SetWidgetText(kTab_DriverInfo, kDriverInfo_Description, valueString);
-		}
-		else if (strcasecmp(keywordString, "driverversion") == 0)
-		{
-			SetWidgetText(kTab_DriverInfo, kDriverInfo_DriverVersion, valueString);
-		}
-		else if (strcasecmp(keywordString, "interfaceversion") == 0)
-		{
-			SetWidgetText(kTab_DriverInfo, kDriverInfo_InterfaceVersion, valueString);
-		}
+//		else if (strcasecmp(keywordString, "name") == 0)
+//		{
+//			SetWidgetText(kTab_DriverInfo, kDriverInfo_Name, valueString);
+//		}
+//		else if (strcasecmp(keywordString, "driverinfo") == 0)
+//		{
+//			SetWidgetText(kTab_DriverInfo, kDriverInfo_DriverInfo, valueString);
+//		}
+//		else if (strcasecmp(keywordString, "description") == 0)
+//		{
+//			SetWidgetText(kTab_DriverInfo, kDriverInfo_Description, valueString);
+//		}
+//		else if (strcasecmp(keywordString, "driverversion") == 0)
+//		{
+//			SetWidgetText(kTab_DriverInfo, kDriverInfo_DriverVersion, valueString);
+//		}
+//		else if (strcasecmp(keywordString, "interfaceversion") == 0)
+//		{
+//			SetWidgetText(kTab_DriverInfo, kDriverInfo_InterfaceVersion, valueString);
+//		}
 
 	}
 #ifdef _ENABLE_SKYTRAVEL_
-	else if (strcasecmp(valueString, "Telescope") == 0)
+	else if (strcasecmp(deviceTypeStr, "somthingelse") == 0)
 	{
 		//*	you get the idea
 	}
@@ -334,6 +351,7 @@ bool	previousOnLineState;
 	else
 	{
 		validData	=	AlpacaGetStatus_TelescopeOneAAT();
+		validData	=	AlpacaGetCommonConnectedState("telescope");
 	}
 
 	if (validData)

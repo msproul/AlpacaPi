@@ -38,6 +38,7 @@
 
 #ifdef _ENABLE_CTRL_CAMERA_
 
+#include	<unistd.h>
 
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
@@ -62,6 +63,8 @@ WindowTabCamera::WindowTabCamera(	const int	xSize,
 	:WindowTab(xSize, ySize, backGrndColor, windowName)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
+
+	CONSOLE_DEBUG(hasFilterWheel ? "Has FilterWheel" : "No Filterwheel");
 
 	strcpy(cAlpacaDeviceName, "");
  //	memset(&cAlpacaDevInfo, 0, sizeof(TYPE_REMOTE_DEV));
@@ -117,6 +120,10 @@ IplImage	*logoImage;
 	//------------------------------------------
 	SetWidget(		kCameraBox_Title,		0,			yLoc,		cFullWidthBtn,	cTitleHeight);
 	SetWidgetFont(	kCameraBox_Title, kFont_Medium);
+
+	//*	setup the connected indicator
+   	SetUpConnectedIndicator(kCameraBox_Connected, yLoc);
+
 	yLoc			+=	cTitleHeight;
 	yLoc			+=	2;
 
@@ -404,6 +411,8 @@ IplImage	*logoImage;
 	int		fnWidgetNum;	//*	filter name
 	int		foWidgetNum;	//*	filter offset
 
+		CONSOLE_DEBUG("Setting up filterwheel!!!!!!!!!!!!!!!!!!!!!!!");
+
 		filterWhlWidth	=	(cClmWidth * 3) - 6;
 		SetWidget(		kCameraBox_FilterWheelName,	cClm1_offset,	yLoc,	filterWhlWidth,		cRadioBtnHt	);
 		SetWidgetFont(	kCameraBox_FilterWheelName,	kFont_RadioBtn);
@@ -540,6 +549,23 @@ void	WindowTabCamera::ProcessButtonClick(const int buttonIdx)
 bool		validData;
 char		dataString[64];
 int			fwPosition;
+bool		weHadToWait;
+ControllerCamera	*myCameraController;
+
+
+
+	myCameraController	=	(ControllerCamera *)cParentObjPtr;
+	weHadToWait	=	false;
+	while (myCameraController->cBackgroundTaskActive)
+	{
+		weHadToWait	=	true;
+		CONSOLE_DEBUG("Waiting for background task");
+		usleep(2000);
+	}
+	if (weHadToWait)
+	{
+		CONSOLE_DEBUG("DONE Waiting!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+	}
 
 	SetWidgetText(kCameraBox_ErrorMsg, "");
 	switch(buttonIdx)

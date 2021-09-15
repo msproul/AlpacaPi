@@ -14,7 +14,7 @@
 //*	that you agree that the author(s) have no warranty, obligations or liability.  You
 //*	must determine the suitability of this source code for your use.
 //*
-//*	Re-distributions of this source code must retain this copyright notice.
+//*	Redistribution of this source code must retain this copyright notice.
 //*****************************************************************************
 //*	Edit History
 //*****************************************************************************
@@ -51,13 +51,19 @@
 //*	Mar  9,	2021	<MLS> Camera Field Of View overlay on star map working
 //*	Mar 11,	2021	<MLS> Clif suggested a different way of drawing the FOV
 //*	Apr 10,	2021	<MLS> Added support for AAVSO Target Tool Alerts
-//*	Jun 26,	2021	<MLS> Fixed bug in old style constelation drawing, only showed up in 32 bit
+//*	Jun 26,	2021	<MLS> Fixed bug in old style constellation drawing, only showed up in 32 bit
 //*	Jul  6,	2021	<MLS> Added forceNumber option to DrawGreatCircle()
 //*	Jul  6,	2021	<MLS> Added South Pole circles
 //*	Aug  9,	2021	<MLS> Added ProcessMouseWheelMoved(), adjusts view level
 //*	Aug  9,	2021	<MLS> Updated Search_and_plot() to handle unsorted data
 //*	Aug 10,	2021	<MLS> Changed most of the cView_index checks to cView_angle
-//*	Aug 10,	2021	<MLS> Added Goto_RA_DEC()
+//*	Aug 10,	2021	<MLS> Added Center_RA_DEC()
+//*	Aug 11,	2021	<MLS> Added Center_CelestralObject()
+//*	Aug 12,	2021	<MLS> Added SetAAVSOdisplayFlag()
+//*	Sep  1,	2021	<MLS> Changed '<' / '>' to be +/- for changing hour
+//*	Sep  1,	2021	<MLS> Changed '[' / ']' to be +/- for changing day
+//*	Sep  9,	2021	<MLS> Changed '{' / '}' to be +/- for changing month
+//*	Sep 12,	2021	<MLS> Can change line widths of grids, constellations and constellations outlines
 //*****************************************************************************
 //*	TODO
 //*			star catalog lists
@@ -106,10 +112,12 @@
 #include	"windowtab.h"
 #include	"windowtab_skytravel.h"
 #include	"controller_skytravel.h"
+#include	"polaralign.h"
 
 #include	"SHAPES.DTA"
 #include	"DEEP.DTA"
 #include	"CONSTEL.DTA"
+
 
 //#define	kMinInformDist	10
 #define	kMinInformDist	50
@@ -127,12 +135,14 @@ double	gSlitWidth_inches		=	41.0;
 double	gSlitBottom_degrees		=	25.0;
 double	gSlitTop_degrees		=	100.0;
 double	gDomeAzimuth_degrees	=	90.0;
+bool	gDashedLines			=	false;
+int		gLineWidth_Constellations	=	1;
+int		gLineWidth_ConstOutlines	=	1;
+int		gLineWidth_GridLines		=	1;
 
 
 SkyTravelDispOptions	gST_DispOptions;
 
-
-bool		gDashedLines	=	false;
 static double	GetRA_DEC_delta(int viewIndex);
 
 
@@ -157,10 +167,18 @@ static const char *gCompass_text[]	=
 	"NNW"
 };
 
+
+
+
+
+
 //*****************************************************************************
 static const double gView_table[]	=
 {
 							//*	old index value
+	0.4	* PI / 180.0,
+	0.6	* PI / 180.0,
+	0.8	* PI / 180.0,
 	1.0	* PI / 180.0,		//*		0
 	2.0	* PI / 180.0,		//*		1
 	3.0	* PI / 180.0,
@@ -171,42 +189,73 @@ static const double gView_table[]	=
 	8.0	* PI / 180.0,
 	9.0	* PI / 180.0,
 	10.0* PI / 180.0,		//*		3
+	15.0* PI / 180.0,
 	20.0* PI / 180.0,		//*		4
+	25.0* PI / 180.0,
 	30.0* PI / 180.0,
+	35.0* PI / 180.0,
 	40.0* PI / 180.0,		//*		5
+	45.0* PI / 180.0,
 	50.0* PI / 180.0,
+	55.0* PI / 180.0,
 	60.0* PI / 180.0,
+	65.0* PI / 180.0,
 	70.0* PI / 180.0,		//*		6
+	75.0* PI / 180.0,
 	80.0* PI / 180.0,
+	85.0* PI / 180.0,
 	90.0* PI / 180.0,
 	100.0* PI / 180.0,		//*		7
+	110.0* PI / 180.0,
+	120.0* PI / 180.0,
+	130.0* PI / 180.0,
+	140.0* PI / 180.0,
 	150.0* PI / 180.0,		//*		8
+	160.0* PI / 180.0,
 	170.0* PI / 180.0,		//*	Added by <MLS>, these gets a bit tricky
+	180.0* PI / 180.0,
+	190.0* PI / 180.0,
 	200.0* PI / 180.0,
+	225.0* PI / 180.0,
 	250.0* PI / 180.0,
+	275.0* PI / 180.0,
 	300.0* PI / 180.0,
+	325.0* PI / 180.0,
 	350.0* PI / 180.0,
+	375.0* PI / 180.0,
 	400.0* PI / 180.0,
+	425.0* PI / 180.0,
+	450.0* PI / 180.0,
+	475.0* PI / 180.0,
 	500.0* PI / 180.0,
+	525.0* PI / 180.0,
+	550.0* PI / 180.0,
+	575.0* PI / 180.0,
 	600.0* PI / 180.0,
+	625.0* PI / 180.0,
+	650.0* PI / 180.0,
+	675.0* PI / 180.0,
 	700.0* PI / 180.0,
+	725.0* PI / 180.0,
+	750.0* PI / 180.0,
+	775.0* PI / 180.0,
 	800.0* PI / 180.0,
 
 	-1					//*	last entry indicator
 };
-static int	gMaxViewAngleIndex	=	18;
+static	int		gMaxViewAngleIndex	=	18;	//*	this gets updated on startup.
+static	double	gAAVSO_maxViewAngle	=	3.0;
+#define	kAAVSO_ViewAngle			36
 
-static	WindowTabSkyTravel	*gSkyTravelWindow;
+static	WindowTabSkyTravel	*gSkyTravelWindow	=	NULL;
 
-#define		kView_old3				9
-#define		kView_old4				10
-#define		kView_old5				12
+#define		kView_old3				12
+#define		kView_old4				14
+#define		kView_old5				18
 
-#define		kView_Default			19
+#define		kView_Default			34		//*	old 8
 
 
-//-#define		kView_DisplayPoleCircles	kView_old5
-//-#define		kView_DisplayPoleCircles2	kView_old3
 //*****************************************************************************
 static	const char *gZodiac_names[]	=
 {
@@ -270,6 +319,7 @@ static	TYPE_CelestData	*gZodiacPtr	=	NULL;
 		CONSOLE_ABORT("Y is not zero");	\
 	}									\
 
+
 //**************************************************************************************
 WindowTabSkyTravel::WindowTabSkyTravel(	const int	xSize,
 										const int	ySize,
@@ -288,14 +338,14 @@ int		ii;
 
 	//*	determine how many entries in the view table
 	ii	=	0;
-	while ((gView_table[ii] > 0.0) && (ii < 50))
+	while ((gView_table[ii] > 0.0) && (ii < 100))
 	{
-		printf("idx=%2d\tvalue=%f\r\n", ii, gView_table[ii]);
+		printf("gView_table[%2d]=\t%f\r\n", ii, gView_table[ii]);
 		ii++;
 	}
 	gMaxViewAngleIndex	=	ii - 1;
 	CONSOLE_DEBUG_W_NUM("gMaxViewAngleIndex\t=", gMaxViewAngleIndex);
-
+//	CONSOLE_ABORT(__FUNCTION__);
 
 //	CONSOLE_DEBUG_W_NUM("sizeof(TYPE_Time)\t=",	sizeof(TYPE_Time));
 
@@ -369,26 +419,6 @@ int		ii;
 
 	cCurrentSkyColor				=	W_BLUE;
 	cChart							=	false;
-#if 0
-	cDispOptions.dispDeep			=	true;
-	cDispOptions.dispEarth			=	true;
-	cDispOptions.dispGrid			=	true;
-	cDispOptions.dispHorizon_line	=	true;
-	cDispOptions.dispLines			=	true;
-	cDispOptions.dispNames			=	true;
-	cDispOptions.dispNGC			=	false;
- 	cDispOptions.dispSymbols		=	true;
- 	cDispOptions.dispMessier		=	true;
- 	cDispOptions.dispConstOutlines	=	true;
- 	cDispOptions.dispConstellations	=	true;
-	cDispOptions.dispHIP			=	false;
-	cDispOptions.dispCommonStarNames=	true;
-	cDispOptions.dispHYG_all		=	false;
-	cDispOptions.dispDraper			=	false;
-
-	cDispOptions.dispTelescope		=	false;
-	cDispOptions.dispDomeSlit		=	false;
-#endif
 
 	cDisplayedMagnitudeLimit		=	15.0;
 
@@ -473,9 +503,56 @@ int		ii;
 		ReadCommonStarNames(gHipObjectPtr, gHipObjectCount);
 	}
 
-
+	//*	read the special.txt file
 	gSpecialObjectPtr	=	ReadSpecialData(kDataSrc_Special, &gSpecialObjectCount);
+	if (gSpecialObjectPtr != NULL)
+	{
+	char			theFirstChar;
+	int				polarStarCnt;
+	size_t			bufferSize;
+	int				qqq;
 
+		CONSOLE_DEBUG("Creating Alignment object array");
+#define	kMaxPolarAlignCenterPts		200
+
+		bufferSize				=	kMaxPolarAlignCenterPts * sizeof(TYPE_CelestData);
+		gPolarAlignObjectPtr	=	(TYPE_CelestData *)malloc(bufferSize);
+
+		if (gPolarAlignObjectPtr != NULL)
+		{
+			memset(gPolarAlignObjectPtr, 0, bufferSize);
+			theFirstChar	=	'A';
+			while (theFirstChar <= 'Z')
+			{
+				polarStarCnt	=	ComputeCenterFromStarList(	gSpecialObjectPtr,
+																gSpecialObjectCount,
+																theFirstChar,
+																gPolarAlignObjectPtr,
+																kMaxPolarAlignCenterPts);
+
+				if (polarStarCnt > 3)
+				{
+				//	CONSOLE_DEBUG_W_HEX("theFirstChar\t=", theFirstChar);
+				}
+				theFirstChar++;
+			}
+			//*	figure out how many we actually have
+			qqq	=	0;
+			while (qqq < kMaxPolarAlignCenterPts)
+			{
+				if (gPolarAlignObjectPtr[qqq].dataSrc == 0)
+				{
+					break;
+				}
+				qqq++;
+			}
+
+			gPolarAlignObjectCount	=	qqq;
+			CONSOLE_DEBUG_W_LONG("gPolarAlignObjectCount\t=", gPolarAlignObjectCount);
+
+//			CONSOLE_ABORT(__FUNCTION__);
+		}
+	}
 
 	Precess();		//*	make sure all of the data bases are sorted properly
 
@@ -593,7 +670,7 @@ int		buttonWidthGoto;
 		}
 		if (iii == kSkyTravel_UTCtime)
 		{
-			SetWidget(				iii,	xLoc,	yLoc,		labelWidth * 2,		cTitleHeight);
+			SetWidget(				iii,	xLoc,	yLoc,		labelWidth * 3,		cTitleHeight);
 			SetWidgetType(			iii, 	kWidgetType_Text);
 			SetWidgetFont(			iii,	kFont_Medium);
 			SetWidgetText(			iii, 	"UTC Time");
@@ -829,21 +906,31 @@ char				textBuff[64];
 struct tm			utcTime;
 struct tm			siderealTime;
 
-
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 	currentMilliSecs	=	millis();
 
 	//*	do the clock first so that it doesnt update twice
 	deltaMilliSecs		=	currentMilliSecs - cLastClockUpdateTime_ms;
 	if (deltaMilliSecs >= 1000)
 	{
-		gettimeofday(&currentTime, NULL);
-		FormatTimeString(&currentTime, utcTimeString);
 
-		gmtime_r(&currentTime.tv_sec, &utcTime);
-		CalcSiderealTime(&utcTime, &siderealTime, gObseratorySettings.Longitude);
-		FormatTimeString_TM(&siderealTime, siderialTimeString);
+		if (cAutoAdvanceTime)
+		{
+			gettimeofday(&currentTime, NULL);
+			FormatTimeString(&currentTime, utcTimeString);
 
-		sprintf(textBuff, "U%s / S%s", utcTimeString, siderialTimeString);
+			gmtime_r(&currentTime.tv_sec, &utcTime);
+			CalcSiderealTime(&utcTime, &siderealTime, gObseratorySettings.Longitude);
+			FormatTimeString_TM(&siderealTime, siderialTimeString);
+			sprintf(textBuff, "U%s / S%s", utcTimeString, siderialTimeString);
+		}
+		else
+		{
+			sprintf(textBuff, "%02d/%02d/%02d U%02d:%02d:%02d - L%02d",
+							cCurrentTime.year, cCurrentTime.month, cCurrentTime.day,
+							cCurrentTime.hour, cCurrentTime.min, cCurrentTime.sec,
+							cCurrentTime.local_hour);
+		}
 		SetWidgetText(kSkyTravel_UTCtime, textBuff);
 
 		cLastClockUpdateTime_ms		=	millis();
@@ -861,7 +948,7 @@ struct tm			siderealTime;
 			SetCurrentTime();
 			ForceUpdate();
 			cLastUpdateTime_ms		=	millis();
-			CONSOLE_DEBUG_W_NUM("deltaMilliSecs\t=", deltaMilliSecs);
+//			CONSOLE_DEBUG_W_NUM("deltaMilliSecs\t=", deltaMilliSecs);
 		}
 	}
 
@@ -956,6 +1043,52 @@ bool			reDrawSky;
 			}
 			break;
 
+		case '<':	//*	Back one hour
+			cAutoAdvanceTime	=	false;
+			Sub_hour(&cCurrentTime);
+			cLastClockUpdateTime_ms	=	0;		//*	force clock on screen to update
+			ForceUpdate();
+			break;
+
+		case '>':	//*	Forward one hour
+			cAutoAdvanceTime	=	false;
+			Add_hour(&cCurrentTime);
+			cLastClockUpdateTime_ms	=	0;		//*	force clock on screen to update
+			ForceUpdate();
+			break;
+
+		case '[':	//*	Back one day
+			CONSOLE_DEBUG("Back one day");
+			cAutoAdvanceTime	=	false;
+			Sub_day(&cCurrentTime);
+			DumpTimeStruct(&cCurrentTime, "Back one day");
+			cLastClockUpdateTime_ms	=	0;		//*	force clock on screen to update
+			ForceUpdate();
+			break;
+
+		case ']':	//*	Forward one day
+			cAutoAdvanceTime	=	false;
+			Add_day(&cCurrentTime);
+			cLastClockUpdateTime_ms	=	0;		//*	force clock on screen to update
+			ForceUpdate();
+			break;
+
+		case '{':	//*	Back one month
+			CONSOLE_DEBUG("Back one month");
+			cAutoAdvanceTime	=	false;
+			Sub_month(&cCurrentTime);
+			cLastClockUpdateTime_ms	=	0;		//*	force clock on screen to update
+			ForceUpdate();
+			break;
+
+		case '}':	//*	Forward one month
+			cAutoAdvanceTime	=	false;
+			Add_month(&cCurrentTime);
+			cLastClockUpdateTime_ms	=	0;		//*	force clock on screen to update
+			ForceUpdate();
+			break;
+
+
 	//	case kRightArrowKey:
 		case '2':
 		case 0x0f53:
@@ -992,6 +1125,7 @@ bool			reDrawSky;
 			{
 				SetCurrentTime();
 			}
+			cLastClockUpdateTime_ms	=	0;		//*	force clock on screen to update
 			break;
 
 		case '#':	//*	toggle GRID
@@ -1003,7 +1137,7 @@ bool			reDrawSky;
 			break;
 
 		case 'a':	//*	toggle AAVSO Alerts
-			cDispOptions.dispAAVSOalerts	=	!cDispOptions.dispAAVSOalerts;
+			SetAAVSOdisplayFlag(!cDispOptions.dispAAVSOalerts);
 			break;
 
 		case 'C':	//*	toggle ECLIPTIC LINE
@@ -1049,8 +1183,7 @@ bool			reDrawSky;
 
 		case 'g':
 			SetCurrentTime();
-//-			cCurrLatLon.latitude		=	RADIANS(41.361090);
-//-			cCurrLatLon.longitude		=	RADIANS(-74.980333);
+			cLastClockUpdateTime_ms	=	0;		//*	force clock on screen to update
 			break;
 
 		case 'H':	//*	toggle HORIZON LINE
@@ -1102,6 +1235,10 @@ bool			reDrawSky;
 			cElev0	=	-cElev0;
 			break;
 
+		case 'p':
+			cDispOptions.dispSpecialObjects	=	! 	cDispOptions.dispSpecialObjects;
+			break;
+
 		case 'Q':	//*	toggle EQUATOR LINE
 			cDispOptions.dispEquator_line	=	!cDispOptions.dispEquator_line;
 			break;
@@ -1150,16 +1287,20 @@ bool			reDrawSky;
 			cElev0	=	kHALFPI - kEPSILON;
 			break;
 
+
+
 //		case kPageDnKey:
-		case '>':	//*	zoom in
 		case '+':	//*	zoom in
+			cMouseDragInProgress	=	true;
 			SetView_Index(cView_index - 1);
+			cMouseDragInProgress	=	false;
 			break;
 
 //		case kPageUpKey:
-		case '<':	//*	zoom out
 		case '-':	//*	zoom out
+			cMouseDragInProgress	=	true;
 			SetView_Index(cView_index + 1);
+			cMouseDragInProgress	=	false;
 			break;
 
 //		case '+':
@@ -1253,8 +1394,7 @@ char	searchText[128];
 			break;
 
 		case kSkyTravel_Btn_AAVSOalerts:
-			cDispOptions.dispAAVSOalerts	=	!cDispOptions.dispAAVSOalerts;
-			SetWidgetChecked(		kSkyTravel_Btn_AAVSOalerts,		cDispOptions.dispAAVSOalerts);
+			SetAAVSOdisplayFlag(!cDispOptions.dispAAVSOalerts);
 			break;
 
 		case kSkyTravel_Btn_Names:
@@ -2031,7 +2171,10 @@ short	dataSource;
 //				}
 				break;
 
+			case kDataSrc_Special:
+			case kDataSrc_PolarAlignCenter:
 			case kDataSrc_AAVSOalert:
+			case kDataSrc_Messier:
 				Search_and_plot(objectptr, maxObjects, false);	//*	data is NOT sorted
 				break;
 
@@ -2198,13 +2341,17 @@ short		ii;
 //	if (cDispOptions.dispConstOutlines && (cView_index > 4))
 	if (cDispOptions.dispConstOutlines && (cView_angle > 0.15))
 	{
+		CPenSize(gLineWidth_ConstOutlines);
 		DrawConstellationOutLines();
+		CPenSize(1);
 	}
 	//*--------------------------------------------------------------------------------
 	//*	this is my new constellation vectors, far better than the original ones
 	if (cDispOptions.dispConstellations)
 	{
+		CPenSize(gLineWidth_Constellations);
 		DrawConstellationVectors();
+		CPenSize(1);
 	}
 
 	//*--------------------------------------------------------------------------------
@@ -2262,14 +2409,28 @@ short		ii;
 
 
 	//*--------------------------------------------------------------------------------
-	if ((gSpecialObjectPtr != NULL) && (gSpecialObjectCount > 0))
+	if (cDispOptions.dispSpecialObjects && (gSpecialObjectPtr != NULL) && (gSpecialObjectCount > 0))
 	{
 		PlotObjectsByDataSource(gSpecialObjectPtr, gSpecialObjectCount);
 	}
+	//*--------------------------------------------------------------------------------
+	//*	only display the alignment objects if we are zoomed
+	if (cDispOptions.dispSpecialObjects && (cView_angle < 0.6) &&
+		(gPolarAlignObjectPtr != NULL) && (gPolarAlignObjectCount > 0))
+	{
+		PlotObjectsByDataSource(gPolarAlignObjectPtr, gPolarAlignObjectCount);
+
+		CPenSize(gLineWidth_ConstOutlines);
+		DrawPolarAlignmentCircles(gSpecialObjectPtr, gSpecialObjectCount);
+
+		//*	Draw a line connecting the centers
+		SetColor(W_YELLOW);
+		DrawPolarAlignmentCenterVector(gPolarAlignObjectPtr, gPolarAlignObjectCount);
+		CPenSize(1);
+	}
 
 	//*--------------------------------------------------------------------------------
-//	if (cDispOptions.dispAAVSOalerts &&  (cView_index < 9) && (gAAVSOalertsPtr != NULL) && (gAAVSOalertsCnt > 0))
-	if (cDispOptions.dispAAVSOalerts &&  (cView_angle < 3.0) && (gAAVSOalertsPtr != NULL) && (gAAVSOalertsCnt > 0))
+	if (cDispOptions.dispAAVSOalerts &&  (cView_angle < gAAVSO_maxViewAngle) && (gAAVSOalertsPtr != NULL) && (gAAVSOalertsCnt > 0))
 	{
 		PlotObjectsByDataSource(gAAVSOalertsPtr, gAAVSOalertsCnt);
 	}
@@ -2296,6 +2457,8 @@ void	WindowTabSkyTravel::SetView_Index(const int newViewIndex)
 	}
 	cView_angle	=	gView_table[cView_index];
 
+	SetWidgetNumber(kSkyTravel_Btn_ZoomLevel,	cView_index);
+
 }
 
 //*****************************************************************************
@@ -2308,6 +2471,12 @@ void	WindowTabSkyTravel::ResetView(void)
 	cRa0								=	0.0;
 	cDecl0								=	0.0;
 	cDisplayedMagnitudeLimit			=	15.0;
+
+	//*	set auto advance time to on
+	cAutoAdvanceTime					=	true;
+	SetCurrentTime();
+	cLastClockUpdateTime_ms				=	0;		//*	force clock on screen to update
+
 
 	cChart								=	false;
 	cDispOptions.dispDeep				=	true;
@@ -2325,6 +2494,7 @@ void	WindowTabSkyTravel::ResetView(void)
 	cDispOptions.dispHYG_all			=	false;
 	cDispOptions.dispDraper				=	false;
 	cDispOptions.dispAAVSOalerts		=	true;
+	cDispOptions.dispSpecialObjects		=	true;
 
 	if (cConstVecotrPtr != NULL)
 	{
@@ -3246,7 +3416,7 @@ bool			pressesOccurred;
 		//*	Messier objects
 		if ((gMessierOjbectPtr != NULL) && (gMessierOjbectCount > 0))
 		{
-			Precess(gMessierOjbectPtr, gMessierOjbectCount, kSortData, kForcePression);
+			Precess(gMessierOjbectPtr, gMessierOjbectCount, kDoNotSort, kForcePression);
 		}
 
 		//*	Henry Draper catalog
@@ -3340,7 +3510,8 @@ char		symb[16];
 		case ST_DEEP:
 			{
 				#warning "This scale value needs new calculations"
-				scale	=	1 + ((7 - cView_index) / 2);
+			//	scale	=	1 + ((7 - cView_index) / 2);
+				scale	=	1 + ((7 - (cView_index / 4)) / 2);
 				switch(magn & 0xf0)	//*	isolate hi 4 bits
 				{
 					case 0x10:	//*	globular
@@ -3627,7 +3798,7 @@ bool				printLabel;
 								case kDataSrc_NGC2000:
 								case kDataSrc_NGC2000IC:
 								//	if (cDispOptions.dispNames && (cView_index <= 4))
-									if (cDispOptions.dispNames && (cView_angle < 0.4))
+									if (cDispOptions.dispNames && (cView_angle < 0.35))
 									{
 										if (objectptr[iii].dataSrc == kDataSrc_NGC2000IC)
 										{
@@ -3691,6 +3862,35 @@ bool				printLabel;
 									break;
 
 								case kDataSrc_Special:
+									int	myFontIdx;
+
+									if (cView_angle < 0.2)
+									{
+										myFontIdx	=	kFont_Large;
+									}
+									else if (cView_angle < 0.7)
+									{
+										myFontIdx	=	kFont_Medium;
+									}
+									else
+									{
+										myFontIdx	=	1;
+									}
+									DrawCString(xcoord + 3, ycoord + 10, objectptr[iii].longName, myFontIdx);
+									break;
+
+								case kDataSrc_PolarAlignCenter:
+									switch(objectptr[iii].longName[0])
+									{
+										case 'C':	SetColor(W_CYAN);		break;
+										case 'D':	SetColor(W_RED);		break;
+										case 'E':	SetColor(W_BLUE);		break;
+										case 'F':	SetColor(W_PINK);		break;
+										case 'G':	SetColor(W_GREEN);		break;
+										case 'H':	SetColor(W_YELLOW);		break;
+
+										default:	SetColor(W_MAGENTA);	break;
+									}
 									DrawCString(xcoord + 3, ycoord + 10, objectptr[iii].longName);
 									break;
 
@@ -3944,12 +4144,13 @@ void	WindowTabSkyTravel::DrawWindowOverlays(void)
 
 	if (!cChart && (cDispOptions.dispEarth || cDispOptions.dispHorizon_line))	//* horizon line or earth
 	{
-		if (fabs(cElev0) < (cView_angle / 2.0))			//* is horizon in field?
+		//* are we zoomed in enough and is horizon in field?
+		if ((cView_angle < 5.5) && (fabs(cElev0) < (cView_angle / 2.0)))
 		{
 			DrawHorizon();								//* plot the horizon
-#ifdef _DISPLAY_MAP_TOKENS_
+		#ifdef _DISPLAY_MAP_TOKENS_
 			MapTokens(&cCurrentTime, &cCurrLatLon);		//* look for map tokens
-#endif // _DISPLAY_MAP_TOKENS_
+		#endif // _DISPLAY_MAP_TOKENS_
 		}
 		else if (cDispOptions.dispEarth && (cElev0 < 0.0))
 		{
@@ -4529,6 +4730,8 @@ int			northColor;
 int			southColor;
 bool		forceNumberDrawFlag	=	false;
 
+	CPenSize(gLineWidth_GridLines);
+
 //setlinestyle(USERBIT_LINE,0x0f0f,NORM_WIDTH);
 	if (cNightMode)
 	{
@@ -4557,19 +4760,24 @@ bool		forceNumberDrawFlag	=	false;
 		degrees	+=	10.0;
 	}
 
-//	if (cView_index <= kView_DisplayPoleCircles)
 	if (cView_angle <= 0.7)
 	{
-	//	if (cView_index < (kView_DisplayPoleCircles - 1))
 		if (cView_angle < 0.4)
 		{
 			forceNumberDrawFlag	=	true;
 		}
 		SetColor(northColor);
+
+		DrawGreatCircle(RADIANS(87.0), forceNumberDrawFlag);
+		DrawGreatCircle(RADIANS(88.0), forceNumberDrawFlag);
+		DrawGreatCircle(RADIANS(89.0), forceNumberDrawFlag);
+
 		DrawGreatCircle(RADIANS(89.1), forceNumberDrawFlag);
 		DrawGreatCircle(RADIANS(89.3), forceNumberDrawFlag);
 		DrawGreatCircle(RADIANS(89.5), forceNumberDrawFlag);
 		DrawGreatCircle(RADIANS(89.7), forceNumberDrawFlag);
+
+
 
 		//*	now do the south pole
 		SetColor(southColor);
@@ -4579,7 +4787,6 @@ bool		forceNumberDrawFlag	=	false;
 		DrawGreatCircle(RADIANS(-89.7), forceNumberDrawFlag);
 	}
 
-//	if (cView_index <= kView_DisplayPoleCircles2)
 	if (cView_angle < 0.18)
 	{
 		SetColor(northColor);
@@ -4609,6 +4816,8 @@ bool		forceNumberDrawFlag	=	false;
 		degrees	+=	15.0;
 //		degrees	+=	15.0;	//*	put it in twice to match K-Stars
 	}
+	CPenSize(1);
+
 //	CONSOLE_DEBUG_W_NUM(__FUNCTION__, cDebugCounter++);
 }
 
@@ -4871,7 +5080,7 @@ bool	numberWasDrawn;
 //	CONSOLE_DEBUG_W_DBL("rtAscenDelta (radians)\t=", rtAscenDelta_Radians);
 //	CONSOLE_DEBUG_W_DBL("rtAscenDelta (degrees)\t=", DEGREES(rtAscenDelta_Radians));
 	rtAscen1		=	0.0;
-	while (rtAscen1 <= ((2 * M_PI) - rtAscenDelta_Radians))
+	while (rtAscen1 < ((2 * M_PI)))
 	{
 		//*	we are going draw a line between 2 points
 		//*	calculate the 2nd pt
@@ -4988,6 +5197,10 @@ bool	numberWasDrawn;
 	{
 		sprintf(numberStr, "%1.2fS", -DEGREES(declinationAngle_rad));
 	}
+	else if (declinationAngle_rad > 1.51)
+	{
+		sprintf(numberStr, "%1.1fN", DEGREES(declinationAngle_rad));
+	}
 	else if (declinationAngle_rad > 0.0)
 	{
 		sprintf(numberStr, "%1.0fN", DEGREES(declinationAngle_rad));
@@ -5057,7 +5270,7 @@ int		btmMost_Y;
 	segmentsDrnCnt	=	0;
 	minDeltaDec		=	GetRA_DEC_delta(0) / 10.0;
 	declDelta		=	GetRA_DEC_delta(cView_index);
-//	declDelta		=	declDelta / 2.0;
+	declDelta		=	declDelta / 15.0;
 
 	leftMost_X		=	10000;
 	leftMost_Y		=	10000;
@@ -6104,7 +6317,8 @@ long	hippObjectId;
 
 				strcpy(database, "Hipparcos catalog");
 				sprintf(foundName, "H%ld-%s", gHipObjectPtr[iii].id, gHipObjectPtr[iii].longName);
-				foundSomething	=	true;
+				foundSomething				=	true;
+				cDispOptions.dispHYG_all	=	true;
 			}
 			iii++;
 		}
@@ -6132,7 +6346,7 @@ long	hippObjectId;
 				foundSomething	=	true;
 
 				//*	make sure the AAVSO alerts are displayed
-				cDispOptions.dispAAVSOalerts	=	true;
+				SetAAVSOdisplayFlag(true);
 			}
 			iii++;
 		}
@@ -6143,7 +6357,7 @@ long	hippObjectId;
 	//*	check to see if they specified an Henry Draper lists
 	if (strncasecmp(objectName, "HD", 2) == 0)
 	{
-		CONSOLE_DEBUG("looking for henry draper objects");
+		CONSOLE_DEBUG("looking for Henry draper objects");
 		if ((gDraperObjectPtr != NULL) && (gDraperObjectCount > 0))
 		{
 			argPtr	=	objectName;
@@ -6164,7 +6378,7 @@ long	hippObjectId;
 
 					strcpy(database, "HD");
 					sprintf(foundName, "HD-%d mag=%f2.1", objectIDnum, gDraperObjectPtr[iii].realMagnitude);;
-					cDispOptions.dispNGC	=	true;
+					cDispOptions.dispDraper	=	true;
 					foundSomething			=	true;
 			//		DumpCelestDataStruct(__FUNCTION__, &gDraperObjectPtr[iii]);
 				}
@@ -6179,7 +6393,7 @@ long	hippObjectId;
 	//*	check to see if they specified an Henry Draper lists
 	if (strncasecmp(objectName, "HD", 2) == 0)
 	{
-		CONSOLE_DEBUG("looking for henry draper objects")
+		CONSOLE_DEBUG("looking for Henry draper objects")
 		if ((gHYGObjectPtr != NULL) && (gHYGObjectCount > 0))
 		{
 			argPtr	=	objectName;
@@ -6200,8 +6414,8 @@ long	hippObjectId;
 
 					strcpy(database, "IC");
 					sprintf(foundName, "IC-%d mag=%f2.1", objectIDnum, gHYGObjectPtr[iii].realMagnitude);;
-					cDispOptions.dispNGC	=	true;
-					foundSomething			=	true;
+					cDispOptions.dispHYG_all	=	true;
+					foundSomething				=	true;
 			//		DumpCelestDataStruct(__FUNCTION__, &gHYGObjectPtr[iii]);
 				}
 				iii++;
@@ -6225,7 +6439,8 @@ long	hippObjectId;
 
 				strcpy(database, "Special Objects");
 				sprintf(foundName, "%s", gSpecialObjectPtr[iii].longName);
-				foundSomething	=	true;
+				foundSomething					=	true;
+				cDispOptions.dispSpecialObjects	=	true;
 			}
 			iii++;
 		}
@@ -6394,7 +6609,7 @@ bool				inCurrentWindow;
 //*****************************************************************************
 //*	center the map on the specified RA/DEC
 //*****************************************************************************
-void	WindowTabSkyTravel::Goto_RA_DEC(double argRA_radians, double argDecl_radians)
+void	WindowTabSkyTravel::Center_RA_DEC(double argRA_radians, double argDecl_radians)
 {
 	CONSOLE_DEBUG(__FUNCTION__);
 	cRa0		=	argRA_radians;
@@ -6405,15 +6620,67 @@ void	WindowTabSkyTravel::Goto_RA_DEC(double argRA_radians, double argDecl_radian
 }
 
 //*****************************************************************************
-void	Goto_RA_DEC(double argRA_radians, double argDecl_radians)
+//*	center the map on the specified RA/DEC
+//*****************************************************************************
+void	WindowTabSkyTravel::Center_CelestralObject(TYPE_CelestData *starObject)
+{
+	CONSOLE_DEBUG(__FUNCTION__);
+	if (starObject != NULL)
+	{
+		cRa0		=	starObject->ra;
+		cDecl0		=	starObject->decl;
+		cFindFlag	=	true;
+
+		switch(starObject->dataSrc)
+		{
+
+			case kDataSrc_AAVSOalert:
+				//*	make sure AAVSO alerts are enabled
+				SetAAVSOdisplayFlag(true);
+				break;
+		}
+		SetCurrentTab(kTab_SkyTravel);
+		ForceUpdate();
+	}
+}
+
+//*****************************************************************************
+//*	put it in a separate routine so that all of the zoom settings can be consistent
+//*****************************************************************************
+void	WindowTabSkyTravel::SetAAVSOdisplayFlag(const bool newAAVSOdisplayState)
+{
+	cDispOptions.dispAAVSOalerts	=	newAAVSOdisplayState;
+	SetWidgetChecked(kSkyTravel_Btn_AAVSOalerts, cDispOptions.dispAAVSOalerts);
+
+	if (cDispOptions.dispAAVSOalerts)
+	{
+		if (cView_angle >= gAAVSO_maxViewAngle)
+		{
+			//*	make sure that we are zoomed in enough to allow the display of the AAVSO alerts
+			SetView_Index(kAAVSO_ViewAngle);
+		}
+	}
+}
+
+//*****************************************************************************
+void	Center_RA_DEC(double argRA_radians, double argDecl_radians)
 {
 	CONSOLE_DEBUG(__FUNCTION__);
 	if (gSkyTravelWindow != NULL)
 	{
-		gSkyTravelWindow->Goto_RA_DEC(argRA_radians, argDecl_radians);
+		gSkyTravelWindow->Center_RA_DEC(argRA_radians, argDecl_radians);
 	}
 }
 
+//*****************************************************************************
+void	Center_CelestralObject(TYPE_CelestData *starObject)
+{
+	CONSOLE_DEBUG(__FUNCTION__);
+	if (gSkyTravelWindow != NULL)
+	{
+		gSkyTravelWindow->Center_CelestralObject(starObject);
+	}
+}
 
 
 //*****************************************************************************
@@ -6461,7 +6728,138 @@ char feet_shape[]=
 	}
 }
 
+//******************************************************
+void	WindowTabSkyTravel::DrawPolarAlignmentCircles(TYPE_CelestData *polarAlignCenters, long polarAlignCnt)
+{
+bool	pt1inView;
+bool	pt2inView;
+short	pt1_XX, pt1_YY;
+short	pt2_XX, pt2_YY;
+int		iii;
+TYPE_CelestData	point1;
+TYPE_CelestData	point2;
+bool	pt1Valid;
+char	theChar;
 
+//	CONSOLE_DEBUG_W_NUM(__FUNCTION__, polarAlignCnt);
+
+//	for (iii=0; iii<polarAlignCnt; iii++)
+//	{
+//		printf("%2d\t%s\r\n", iii, polarAlignCenters[iii].longName);
+//	}
+
+	for (theChar = 'A'; theChar <= 'Z'; theChar++)
+	{
+		switch(theChar)
+		{
+			case 'C':	SetColor(W_CYAN);		break;
+			case 'D':	SetColor(W_RED);		break;
+			case 'E':	SetColor(W_BLUE);		break;
+			case 'F':	SetColor(W_PINK);		break;
+			case 'G':	SetColor(W_GREEN);		break;
+			case 'H':	SetColor(W_YELLOW);		break;
+
+			default:	SetColor(W_MAGENTA);	break;
+		}
+
+		//*	find the first CENTER
+		pt1Valid	=	false;
+		iii			=	0;
+		while ((pt1Valid == false) && (iii < polarAlignCnt))
+		{
+			if ((polarAlignCenters[iii].longName[0] == theChar) && (polarAlignCenters[iii].longName[1] == '-'))
+			{
+//				CONSOLE_DEBUG_W_HEX("Found first point", theChar);
+//				CONSOLE_DEBUG_W_NUM("Index           =", iii);
+				point1		=	polarAlignCenters[iii];
+				pt1Valid	=	true;
+			}
+			iii++;
+		}
+		//*	now find the next one
+		while ((pt1Valid == true) && (iii < polarAlignCnt))
+		{
+			if ((polarAlignCenters[iii].longName[0] == theChar) && (polarAlignCenters[iii].longName[1] == '-'))
+			{
+//				CONSOLE_DEBUG_W_NUM("Found 2nd point at", iii);
+				point2		=	polarAlignCenters[iii];
+
+				//*	we have to points, lets see if we can plot them
+				pt1inView	=	GetXYfromRA_Decl(	point1.ra,
+													point1.decl,
+													&pt1_XX, &pt1_YY);
+
+				pt2inView	=	GetXYfromRA_Decl(	point2.ra,
+													point2.decl,
+													&pt2_XX, &pt2_YY);
+				//*	if both pints are on the screen, draw it
+				if (pt1inView && pt2inView)
+				{
+					CMoveTo(pt1_XX,	pt1_YY);
+					CLineTo(pt2_XX,	pt2_YY);
+				}
+				//*	set the end point to the new start point
+				point1	=	point2;
+			}
+			iii++;
+		}
+	}
+}
+
+
+//******************************************************
+void	WindowTabSkyTravel::DrawPolarAlignmentCenterVector(TYPE_CelestData *polarAlignCenters, long polarAlignCnt)
+{
+bool	pt1inView;
+bool	pt2inView;
+short	pt1_XX, pt1_YY;
+short	pt2_XX, pt2_YY;
+int		iii;
+TYPE_CelestData	point1;
+TYPE_CelestData	point2;
+bool	pt1Valid;
+
+	//*	find the first CENTER
+	pt1Valid	=	false;
+	iii	=	0;
+	while ((pt1Valid == false) && (iii < polarAlignCnt))
+	{
+		if (strstr(polarAlignCenters[iii].longName, "center") != NULL)
+		{
+			point1		=	polarAlignCenters[iii];
+			pt1Valid	=	true;
+		}
+		iii++;
+	}
+	//*	now find the next one
+	while ((pt1Valid == true) && (iii < polarAlignCnt))
+	{
+		if (strstr(polarAlignCenters[iii].longName, "center") != NULL)
+		{
+			point2		=	polarAlignCenters[iii];
+			pt1Valid	=	true;
+
+			//*	we have to points, lets see if we can plot them
+			pt1inView	=	GetXYfromRA_Decl(	point1.ra,
+												point1.decl,
+												&pt1_XX, &pt1_YY);
+
+			pt2inView	=	GetXYfromRA_Decl(	point2.ra,
+												point2.decl,
+												&pt2_XX, &pt2_YY);
+			//*	if both pints are on the screen, draw it
+			if (pt1inView && pt2inView)
+			{
+				CMoveTo(pt1_XX,	pt1_YY);
+				CLineTo(pt2_XX,	pt2_YY);
+			}
+			//*	set the end point to the new start point
+			point1	=	point2;
+		}
+		iii++;
+	}
+
+}
 
 #ifdef _DISPLAY_MAP_TOKENS_
 

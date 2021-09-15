@@ -41,6 +41,7 @@
 //*	Jun 24,	2020	<MLS> Removed some of the safety checks to increase speed
 //*	Dec  7,	2020	<MLS> Fixed comma bug in JsonResponse_Add_Double()
 //*	Jul 18,	2021	<MLS> Added _DEBUG_JSON_RESPONSE_
+//*	Sep  5,	2021	<MLS> Added enableDebug arg to JsonRespnse_XmitIfFull()
 //*****************************************************************************
 
 
@@ -52,6 +53,7 @@
 #include	<stdint.h>
 #include	<ctype.h>
 #include	<stdint.h>
+
 
 #ifdef __IAR_SYSTEMS_ICC__
 	#include	<stdint.h>
@@ -106,7 +108,7 @@ char	lineBuff[64];
 		contentLen	=	strlen(jsonTextBuffer);
 #ifdef _INCLUDE_HTTP_HEADER_
 		jsonHdrBUffer[0]	=	0;
-		strcat(jsonHdrBUffer,	"HTTP/1.0 200 200 OK\r\n");
+		strcat(jsonHdrBUffer,	"HTTP/1.0 200 OK\r\n");
 		if (contentLen > 0)
 		{
 			sprintf(lineBuff,		"Content-Length: %d\r\n", contentLen);
@@ -128,22 +130,26 @@ char	lineBuff[64];
 }
 
 //*****************************************************************************
-static void	JsonRespnse_XmitIfFull(	const int	socketFD,
+static int	JsonRespnse_XmitIfFull(	const int	socketFD,
 									char		*jsonTextBuffer,
 									const int	maxLen,
-									const int	payloadLen)
+									const int	payloadLen,
+									const bool	enableDebug)
 {
 size_t	bufLen;
-int		bytesWritten;
+int		bytesWritten	=	0;
 
 	if (jsonTextBuffer != NULL)
 	{
 		bufLen	=	strlen(jsonTextBuffer);
 		if ((bufLen + payloadLen) >=  maxLen)
 		{
-		//	CONSOLE_DEBUG("Sending Data because xmit buffer is full");
-		//	CONSOLE_DEBUG_W_NUM("maxLen\t\t\t=", maxLen);
-		//	CONSOLE_DEBUG_W_NUM("len of jsonTextBuffer\t=", strlen(jsonTextBuffer));
+			if (enableDebug)
+			{
+				CONSOLE_DEBUG("Sending Data because xmit buffer is full");
+				CONSOLE_DEBUG_W_NUM("maxLen\t\t\t=", maxLen);
+				CONSOLE_DEBUG_W_NUM("len of jsonTextBuffer\t=", strlen(jsonTextBuffer));
+			}
 			//*	transmit the packet and reset
 			bytesWritten	=	write(socketFD, jsonTextBuffer, bufLen);
 		//	CONSOLE_DEBUG(__FUNCTION__);
@@ -160,6 +166,7 @@ int		bytesWritten;
 	{
 		CONSOLE_DEBUG("jsonTextBuffer is NULL");
 	}
+	return(bytesWritten);
 }
 
 
@@ -192,7 +199,7 @@ int		payloadLen;
 	{
 
 		payloadLen	=	20;
-		JsonRespnse_XmitIfFull(socketFD, jsonTextBuffer, maxLen, payloadLen);
+		JsonRespnse_XmitIfFull(socketFD, jsonTextBuffer, maxLen, payloadLen, false);
 
 		if ((maxLen - strlen(jsonTextBuffer)) > 20)
 		{
@@ -235,7 +242,7 @@ int		payloadLen;
 		payloadLen	+=	20;
 
 
-		JsonRespnse_XmitIfFull(socketFD, jsonTextBuffer, maxLen, payloadLen);
+		JsonRespnse_XmitIfFull(socketFD, jsonTextBuffer, maxLen, payloadLen, false);
 
 	#ifdef _MAKE_JSON_PRETTY_
 		strcat(jsonTextBuffer, "\t\t\"");
@@ -285,7 +292,7 @@ char	numberString[64];
 
 		payloadLen	+=	20;
 
-		JsonRespnse_XmitIfFull(socketFD, jsonTextBuffer, maxLen, payloadLen);
+		JsonRespnse_XmitIfFull(socketFD, jsonTextBuffer, maxLen, payloadLen, false);
 
 	#ifdef _MAKE_JSON_PRETTY_
 		strcat(jsonTextBuffer,	"\t\t\"");
@@ -328,7 +335,7 @@ char	numberString[64];
 
 		payloadLen	+=	20;
 
-		JsonRespnse_XmitIfFull(socketFD, jsonTextBuffer, maxLen, payloadLen);
+		JsonRespnse_XmitIfFull(socketFD, jsonTextBuffer, maxLen, payloadLen, false);
 
 	#ifdef _MAKE_JSON_PRETTY_
 		strcat(jsonTextBuffer,	"\t\t\"");
@@ -368,7 +375,7 @@ int		payloadLen;
 
 		payloadLen	+=	20;
 
-		JsonRespnse_XmitIfFull(socketFD, jsonTextBuffer, maxLen, payloadLen);
+		JsonRespnse_XmitIfFull(socketFD, jsonTextBuffer, maxLen, payloadLen, false);
 
 	#ifdef _MAKE_JSON_PRETTY_
 		strcat(jsonTextBuffer, "\t\t\"");
@@ -409,7 +416,7 @@ int		payloadLen;
 
 		payloadLen	+=	20;
 
-		JsonRespnse_XmitIfFull(socketFD, jsonTextBuffer, maxLen, payloadLen);
+		JsonRespnse_XmitIfFull(socketFD, jsonTextBuffer, maxLen, payloadLen, false);
 
 	#ifdef _MAKE_JSON_PRETTY_
 		strcat(jsonTextBuffer, "\t\t\"");
@@ -436,7 +443,7 @@ int		payloadLen;
 		//*	calculate the length of what we are adding to the buffer
 		payloadLen	=	10;
 
-		JsonRespnse_XmitIfFull(socketFD, jsonTextBuffer, maxLen, payloadLen);
+		JsonRespnse_XmitIfFull(socketFD, jsonTextBuffer, maxLen, payloadLen, false);
 
 		strcat(jsonTextBuffer, "]");
 		if (includeTrailingComma)
@@ -463,7 +470,7 @@ int		payloadLen;
 		//*	calculate the length of what we are adding to the buffer
 		payloadLen	=	8;
 
-		JsonRespnse_XmitIfFull(socketFD, jsonTextBuffer, maxLen, payloadLen);
+		JsonRespnse_XmitIfFull(socketFD, jsonTextBuffer, maxLen, payloadLen, false);
 
 	#ifdef _MAKE_JSON_PRETTY_
 		strcat(jsonTextBuffer, "\t}");
@@ -510,7 +517,7 @@ int		payloadLen;
 	//*	calculate the length of what we are adding to the buffer
 	payloadLen	=	strlen(rawTextBuffer);
 
-	JsonRespnse_XmitIfFull(socketFD, jsonTextBuffer, maxLen, payloadLen);
+	JsonRespnse_XmitIfFull(socketFD, jsonTextBuffer, maxLen, payloadLen, false);
 
 	strcat(jsonTextBuffer, rawTextBuffer);
 #endif // _DEBUG_JSON_RESPONSE_
@@ -526,18 +533,26 @@ void		JsonResponse_Add_Finish(const int		socketFD,
 {
 char	fullDataBuffer[kMaxJsonBuffLen];
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG_W_NUM("len of jsonTextBuffer\t=", strlen(jsonTextBuffer));
+//	CONSOLE_DEBUG_W_NUM("kMaxJsonBuffLen      \t=", kMaxJsonBuffLen);
+
+	fullDataBuffer[0]	=	0;
 
 	if (jsonTextBuffer != NULL)
 	{
-		strcat(jsonTextBuffer, "}");
-		strcat(jsonTextBuffer, "\r\n");
+//CONSOLE_DEBUG(__FUNCTION__);
+		fullDataBuffer[0]	=	0;
+		strcat(jsonTextBuffer, "}\r\n");
+//CONSOLE_DEBUG_W_NUM("len of jsonTextBuffer\t=", strlen(jsonTextBuffer));
 
 		if (strlen(jsonTextBuffer) >= sizeof(fullDataBuffer))
 		{
+			CONSOLE_DEBUG("Buffer overflow!!!!!!!!!!!");
 			CONSOLE_ABORT("Buffer overflow!!!!!!!!!!!");
 		}
 
+CONSOLE_DEBUG_W_NUM("len of jsonTextBuffer\t=", strlen(jsonTextBuffer));
 		if (includeHeader)
 		{
 			JsonResponse_FinishHeader(	fullDataBuffer, jsonTextBuffer);
@@ -546,12 +561,18 @@ char	fullDataBuffer[kMaxJsonBuffLen];
 		{
 			fullDataBuffer[0]	=	0;
 		}
+CONSOLE_DEBUG_W_NUM("len of jsonTextBuffer\t=", strlen(jsonTextBuffer));
+CONSOLE_DEBUG_W_NUM("len of fullDataBuffer\t=", strlen(fullDataBuffer));
 		strcat(fullDataBuffer, jsonTextBuffer);
+CONSOLE_DEBUG_W_NUM("len of jsonTextBuffer\t=", strlen(jsonTextBuffer));
+CONSOLE_DEBUG_W_NUM("len of fullDataBuffer\t=", strlen(fullDataBuffer));
+
+//		CONSOLE_DEBUG_W_STR("jsonTextBuffer=", jsonTextBuffer);
+//		CONSOLE_DEBUG_W_STR("Full json message=\r\n", fullDataBuffer);
 
 		JsonResponse_SendTextBuffer(socketFD, fullDataBuffer);
 //		bytesWritten	=	JsonResponse_SendTextBuffer(socketFD, jsonTextBuffer);
-
-		CONSOLE_DEBUG_W_STR("Full json message\r\n", fullDataBuffer);
+		jsonTextBuffer[0]	=	0;
 
 	}
 	else
@@ -563,21 +584,25 @@ char	fullDataBuffer[kMaxJsonBuffLen];
 //*****************************************************************************
 int	JsonResponse_SendTextBuffer(const int socketFD, char *jsonTextBuffer)
 {
-int		bytesWritten;
+int		bytesWritten	=	0;
 size_t	bufLen;
 int		tryCount;
 bool	keepTrying;
 
-	bytesWritten	=	-1;
 	if (jsonTextBuffer != NULL)
 	{
+CONSOLE_DEBUG_W_NUM("len of jsonTextBuffer\t=", strlen(jsonTextBuffer));
 //		CONSOLE_DEBUG_W_STR("jsonTextBuffer\t=", jsonTextBuffer);
 		bufLen			=	strlen(jsonTextBuffer);
 		tryCount		=	0;
 		keepTrying		=	true;
 		while (keepTrying && (tryCount < 10))
 		{
+//CONSOLE_DEBUG_W_NUM("SSIZE_MAX\t=", SSIZE_MAX);
+CONSOLE_DEBUG_W_NUM("bufLen   \t=", bufLen);
+CONSOLE_DEBUG_W_NUM("Calling write with socketFD=", socketFD);
 			bytesWritten	=	write(socketFD, jsonTextBuffer, bufLen);
+CONSOLE_DEBUG_W_NUM("bytesWritten=", bytesWritten);
 			if (bytesWritten > 0)
 			{
 				keepTrying			=	false;
@@ -592,7 +617,10 @@ bool	keepTrying;
 			}
 			tryCount++;
 		}
-
+	}
+	else
+	{
+		CONSOLE_DEBUG("jsonTextBuffer was NULL");
 	}
 	return(bytesWritten);
 }

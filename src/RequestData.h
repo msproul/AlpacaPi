@@ -14,7 +14,8 @@
 //*****************************************************************************
 //*	<MLS>	=	Mark L Sproul
 //*****************************************************************************
-
+//*	Sep  5,	2021	<MLS> Added httpCmdString to TYPE_GetPutRequestData struct
+//*****************************************************************************
 //#include	"RequestData.h"
 
 #ifndef _REQUESTDATA_H_
@@ -35,6 +36,7 @@
 #define	kDevStrLen			2048
 #define	kMaxCommandLen		64
 #define	kHTMLbufLen			4096
+#define	kHTTPbufLen			512
 
 //*****************************************************************************
 typedef struct
@@ -44,6 +46,7 @@ typedef struct
 	char				get_putIndicator;
 	int					contentLength;
 	char				htmlData[kHTMLbufLen];
+	char				httpCmdString[kHTTPbufLen];
 	char				deviceType[kDeviceTypeMaxLen];
 	char				cmdBuffer[kDevStrLen];
 	char				deviceCommand[kMaxCommandLen];

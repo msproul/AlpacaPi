@@ -17,17 +17,26 @@ enum
 
 	kDriverInfo_SubTitle,
 
-	kDriverInfo_Name,
+	//*	label, name, & outline for each item
 	kDriverInfo_Name_Lbl,
-	kDriverInfo_Description,
-	kDriverInfo_Description_Lbl,
-	kDriverInfo_DriverInfo,
-	kDriverInfo_DriverInfo_Lbl,
-	kDriverInfo_DriverVersion,
-	kDriverInfo_DriverVersion_Lbl,
+	kDriverInfo_Name,
+	kDriverInfo_Name_Outline,
 
-	kDriverInfo_InterfaceVersion,
+	kDriverInfo_Description_Lbl,
+	kDriverInfo_Description,
+	kDriverInfo_Description_Outline,
+
+	kDriverInfo_DriverInfo_Lbl,
+	kDriverInfo_DriverInfo,
+	kDriverInfo_DriverInfo_Outline,
+
+	kDriverInfo_DriverVersion_Lbl,
+	kDriverInfo_DriverVersion,
+	kDriverInfo_DriverVersion_Outline,
+
 	kDriverInfo_InterfaceVersion_Lbl,
+	kDriverInfo_InterfaceVersion,
+	kDriverInfo_InterfaceVersion_Outline,
 
 	kDriverInfo_AlpacaLogo,
 	kDriverInfo_AlpacaDrvrVersion,
@@ -42,8 +51,8 @@ enum
 	kDriverInfo_last
 };
 
-#define	kFirstBoxID	kDriverInfo_Name
-#define	kLastBoxID	kDriverInfo_InterfaceVersion
+#define	kFirstBoxID	kDriverInfo_Name_Lbl
+#define	kLastBoxID	kDriverInfo_InterfaceVersion_Lbl
 
 //**************************************************************************************
 class WindowTabDriverInfo: public WindowTab

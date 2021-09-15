@@ -112,14 +112,17 @@
 //*	Dec  3,	2020	<MLS> First release of source code to outside
 //*	Dec 12,	2020	<MLS> Started github repository https://github.com/msproul/AlpacaPi
 //*	Dec 28,	2020	<MLS> Finished making all Alpaca error messages uniform
-//*	Jan 10,	2020	<MLS> Changed SendSupportedActions() to Get_SupportedActions()
-//*	Jan 10,	2020	<MLS> Pushed build 74 up to github
+//*	Jan 10,	2021	<MLS> Changed SendSupportedActions() to Get_SupportedActions()
+//*	Jan 10,	2021	<MLS> Pushed build 74 up to github
 //*	Mar 19,	2021	<MLS> Added coma checking in numeric string in GetKeyWordArgument()
 //*	Apr  1,	2021	<MLS> LiveWindow mode will be available for all drivers
 //*	Apr  1,	2021	<MLS> Added Put_LiveWindow()
 //*	Apr  1,	2021	<MLS> Added UpdateLiveWindow()
 //*	Apr  8,	2021	<MLS> Added GetMyHostName()
 //*	Jun 19,	2021	<MLS> Added _ENABLE_LIVE_CONTROLLER_
+//*	Aug 20,	2021	<MLS> Started testing with Peter's cross platform CONFORM
+//*	Sep  2,	2021	<MLS> Started adding bandwidth statistics
+//*	Sep  2,	2021	<MLS> Added BandWidthStatsInit()
 //*****************************************************************************
 //*	to install code blocks 20
 //*	Step 1: sudo add-apt-repository ppa:codeblocks-devs/release
@@ -133,6 +136,7 @@
 #include	<string.h>
 #include	<sys/time.h>
 #include	<sys/resource.h>
+#include	<time.h>
 #include	<gnu/libc-version.h>
 
 #ifdef _USE_OPENCV_
@@ -156,6 +160,7 @@
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
 
+#include	"alpaca_defs.h"
 #include	"helper_functions.h"
 #include	"JsonResponse.h"
 #include	"alpacadriver.h"
@@ -278,6 +283,9 @@ char				gWebTitle[80]				=	"AlpacaPi";
 
 char				gFullVersionString[128];
 
+#ifdef _ENABLE_BANDWIDTH_LOGGING_
+	int				gTimeUnitsSinceTopOfHour	=	0;
+#endif // _ENABLE_BANDWIDTH_LOGGING_
 
 #ifdef _ENABLE_LIVE_CONTROLLER_
 	static void	HandleContollerWindow(AlpacaDriver *alpacaObjPtr);
@@ -313,8 +321,10 @@ const TYPE_CmdEntry	gCommonCmdTable[]	=
 	{	"supportedactions",		kCmd_Common_supportedactions,	kCmdType_GET	},
 
 	//*	extras added by MLS
+	{	"--extras",				kCmd_Common_Extras,				kCmdType_GET	},
 	{	"livewindow",			kCmd_Common_LiveWindow,			kCmdType_PUT	},
 
+	//*	make sure to update kCommonCmdCnt if any commands are added
 
 #ifdef _INCLUDE_EXIT_COMMAND_
 	//*	the exit command was implemented for a special case application, it is not intended
@@ -354,7 +364,7 @@ bool	foundIt;
 AlpacaDriver::AlpacaDriver(TYPE_DEVICETYPE argDeviceType)
 {
 int		alpacaDeviceNum;
-int		ii;
+int		iii;
 
 //	CONSOLE_DEBUG("---------------------------------------");
 //	CONSOLE_DEBUG_W_NUM(__FUNCTION__, argDeviceType);
@@ -374,6 +384,9 @@ int		ii;
 	cDeviceFirmwareVersStr[0]	=	0;
 	cTotalCmdsProcessed			=	0;
 	cTotalCmdErrors				=	0;
+
+	cTotalBytesRcvd				=	0;
+	cTotalBytesSent				=	0;
 
 	cUniqueID.part1				=	'ALPA';				//*	4 byte manufacturer code
 	cUniqueID.part2				=	kBuildNumber;		//*	software version number
@@ -397,10 +410,10 @@ int		ii;
 	cDeviceType	=	argDeviceType;
 	//*	we have to figure out which index this devices is for this device type
 	alpacaDeviceNum	=	0;
-	for (ii=0; ii<gDeviceCnt; ii++)
+	for (iii=0; iii<gDeviceCnt; iii++)
 	{
 		//*	check to see if there are any other devices of this type
-		if (argDeviceType == gAlpacaDeviceList[ii]->cDeviceType)
+		if (argDeviceType == gAlpacaDeviceList[iii]->cDeviceType)
 		{
 			alpacaDeviceNum++;
 		}
@@ -416,13 +429,13 @@ int		ii;
 	}
 
 	//*	command statistics
-	for (ii=0; ii<kCommonCmdCnt; ii++)
+	for (iii=0; iii<kCommonCmdCnt; iii++)
 	{
-		memset(&cCommonCMdStats[ii], 0, sizeof(TYPE_CMD_STATS));
+		memset(&cCommonCmdStats[iii], 0, sizeof(TYPE_CMD_STATS));
 	}
-	for (ii=0; ii<kDeviceCmdCnt; ii++)
+	for (iii=0; iii<kDeviceCmdCnt; iii++)
 	{
-		memset(&cDeviceCMdStats[ii], 0, sizeof(TYPE_CMD_STATS));
+		memset(&cDeviceCmdStats[iii], 0, sizeof(TYPE_CMD_STATS));
 	}
 	GetAlpacaName(argDeviceType, cAlpacaName);
 	LogEvent(	cAlpacaName,
@@ -430,6 +443,11 @@ int		ii;
 				NULL,
 				kASCOM_Err_Success,
 				"");
+
+#ifdef _ENABLE_BANDWIDTH_LOGGING_
+	BandWidthStatsInit();
+
+#endif // _ENABLE_BANDWIDTH_LOGGING_
 }
 
 //**************************************************************************************
@@ -1126,22 +1144,23 @@ char	getPutIndicator;
 		{
 			GenerateCmdStatsEntry(	cmdName,
 									getPutIndicator,
-									cCommonCMdStats[iii].connCnt,
-									cCommonCMdStats[iii].getCnt,
-									cCommonCMdStats[iii].putCnt,
-									cCommonCMdStats[iii].errorCnt,
+									cCommonCmdStats[iii].connCnt,
+									cCommonCmdStats[iii].getCnt,
+									cCommonCmdStats[iii].putCnt,
+									cCommonCmdStats[iii].errorCnt,
 									lineBuffer);
 
 			SocketWriteData(mySocketFD,	lineBuffer);
 
-			total_Conn		+=	cCommonCMdStats[iii].connCnt;
-			total_Get		+=	cCommonCMdStats[iii].getCnt;
-			total_Put		+=	cCommonCMdStats[iii].putCnt;
-			total_Errors	+=	cCommonCMdStats[iii].errorCnt;
+			total_Conn		+=	cCommonCmdStats[iii].connCnt;
+			total_Get		+=	cCommonCmdStats[iii].getCnt;
+			total_Put		+=	cCommonCmdStats[iii].putCnt;
+			total_Errors	+=	cCommonCmdStats[iii].errorCnt;
 		}
 	}
 
 	SocketWriteData(mySocketFD,	"<TR><TD COLSPAN=5><HR></TD></TR>\r\n");
+	SocketWriteData(mySocketFD,	"<TR><TD COLSPAN=5><CENTER><B>Device Specific Commands</TD></TR>\r\n");
 
 	//===============================================================
 	//*	now do the commands for this device
@@ -1153,18 +1172,18 @@ char	getPutIndicator;
 		{
 			GenerateCmdStatsEntry(	cmdName,
 									getPutIndicator,
-									cDeviceCMdStats[iii].connCnt,
-									cDeviceCMdStats[iii].getCnt,
-									cDeviceCMdStats[iii].putCnt,
-									cDeviceCMdStats[iii].errorCnt,
+									cDeviceCmdStats[iii].connCnt,
+									cDeviceCmdStats[iii].getCnt,
+									cDeviceCmdStats[iii].putCnt,
+									cDeviceCmdStats[iii].errorCnt,
 									lineBuffer);
 
 			SocketWriteData(mySocketFD,	lineBuffer);
 
-			total_Conn		+=	cDeviceCMdStats[iii].connCnt;
-			total_Get		+=	cDeviceCMdStats[iii].getCnt;
-			total_Put		+=	cDeviceCMdStats[iii].putCnt;
-			total_Errors	+=	cDeviceCMdStats[iii].errorCnt;
+			total_Conn		+=	cDeviceCmdStats[iii].connCnt;
+			total_Get		+=	cDeviceCmdStats[iii].getCnt;
+			total_Put		+=	cDeviceCmdStats[iii].putCnt;
+			total_Errors	+=	cDeviceCmdStats[iii].errorCnt;
 		}
 	}
 	SocketWriteData(mySocketFD,	"<TR><TD COLSPAN=5><HR></TD></TR>\r\n");
@@ -1180,6 +1199,44 @@ char	getPutIndicator;
 	SocketWriteData(mySocketFD,	"</TABLE>\r\n");
 	SocketWriteData(mySocketFD,	"</CENTER>\r\n");
 	SocketWriteData(mySocketFD,	"<P>\r\n");
+
+
+#ifdef _ENABLE_BANDWIDTH_LOGGING_
+	//----------------------------------------------------------------------------------
+	//*	BandWidth Statistics
+	SocketWriteData(mySocketFD,	"<CENTER>\r\n");
+	SocketWriteData(mySocketFD,	"<H2>Band width statistics</H2>\r\n");
+	SocketWriteData(mySocketFD,	"<TABLE BORDER=1>\r\n");
+
+	sprintf(lineBuffer,	"<TR><TH>%s</TH><TH>%s</TH><TH>%s</TH><TH>%s</TH><TH>%s</TH></TR>\r\n",
+							"Time Unit",
+							"Cmds Rcvd",
+							"Bytes Rcvd",
+							"Bytes Sent",
+							"tbd");
+	SocketWriteData(mySocketFD,	lineBuffer);
+	for (iii=0; iii<kMaxBandWidthSamples; iii++)
+	{
+
+		sprintf(lineBuffer,	"<TR><TD>%d</TD>\r\n", iii);
+		SocketWriteData(mySocketFD,	lineBuffer);
+
+		sprintf(lineBuffer,	"<TD>%d</TD><TD>%d</TD><TD>%d</TD><TD>%d</TD>\r\n",
+								cBW_CmdsReceived[iii],
+								cBW_BytesReceived[iii],
+								cBW_BytesSent[iii],
+								0);
+		SocketWriteData(mySocketFD,	lineBuffer);
+
+		SocketWriteData(mySocketFD,	"</TR>\r\n");
+	}
+
+
+
+	SocketWriteData(mySocketFD,	"</TABLE>\r\n");
+	SocketWriteData(mySocketFD,	"</CENTER>\r\n");
+	SocketWriteData(mySocketFD,	"<P>\r\n");
+#endif // _ENABLE_BANDWIDTH_LOGGING_
 
 }
 
@@ -1214,37 +1271,37 @@ int		tblIdx;
 		tblIdx	=	cmdNum - kCmd_Common_action;
 		if ((tblIdx >= 0) && (tblIdx < kCommonCmdCnt))
 		{
-			cCommonCMdStats[tblIdx].connCnt++;
+			cCommonCmdStats[tblIdx].connCnt++;
 			if (getput == 'G')
 			{
-				cCommonCMdStats[tblIdx].getCnt++;
+				cCommonCmdStats[tblIdx].getCnt++;
 			}
 			else if (getput == 'P')
 			{
-				cCommonCMdStats[tblIdx].putCnt++;
+				cCommonCmdStats[tblIdx].putCnt++;
 			}
 
 			if (alpacaErrCode != 0)
 			{
-				cCommonCMdStats[tblIdx].errorCnt++;
+				cCommonCmdStats[tblIdx].errorCnt++;
 			}
 		}
 	}
 	else if ((cmdNum >= 0) && (cmdNum < kDeviceCmdCnt))
 	{
-		cDeviceCMdStats[cmdNum].connCnt++;
+		cDeviceCmdStats[cmdNum].connCnt++;
 		if (getput == 'G')
 		{
-			cDeviceCMdStats[cmdNum].getCnt++;
+			cDeviceCmdStats[cmdNum].getCnt++;
 		}
 		else if (getput == 'P')
 		{
-			cDeviceCMdStats[cmdNum].putCnt++;
+			cDeviceCmdStats[cmdNum].putCnt++;
 		}
 
 		if (alpacaErrCode != 0)
 		{
-			cDeviceCMdStats[cmdNum].errorCnt++;
+			cDeviceCmdStats[cmdNum].errorCnt++;
 		}
 	}
 	else
@@ -1253,6 +1310,24 @@ int		tblIdx;
 	}
 }
 
+#pragma mark -
+
+#ifdef _ENABLE_BANDWIDTH_LOGGING_
+//*****************************************************************************
+void	AlpacaDriver::BandWidthStatsInit(void)
+{
+int	iii;
+
+	for (iii=0; iii<kMaxBandWidthSamples; iii++)
+	{
+		cBW_CmdsReceived[iii]	=	0;
+		cBW_BytesReceived[iii]	=	0;
+		cBW_BytesSent[iii]		=	0;
+	}
+	gTimeUnitsSinceTopOfHour	=	0;
+}
+
+#endif // _ENABLE_BANDWIDTH_LOGGING_
 
 #pragma mark -
 
@@ -1898,7 +1973,8 @@ char			*myFilenamePtr;
 
 //*****************************************************************************
 static TYPE_ASCOM_STATUS	ProcessAlpacaAPIrequest(TYPE_GetPutRequestData	*reqData,
-													char					*parseChrPtr)
+													char					*parseChrPtr,
+													long					byteCount)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
 //int				alpacaVerNum;
@@ -2076,21 +2152,34 @@ bool				foundKeyWord;
 				{
 					deviceFound		=	true;
 					alpacaErrCode	=	gAlpacaDeviceList[ii]->ProcessCommand(reqData);
-					gAlpacaDeviceList[ii]->cTotalCmdsProcessed++;
 					if (alpacaErrCode!= kASCOM_Err_Success)
 					{
 						gAlpacaDeviceList[ii]->cTotalCmdErrors++;
 					}
+					gAlpacaDeviceList[ii]->cTotalCmdsProcessed++;
+					gAlpacaDeviceList[ii]->cTotalBytesRcvd	+=	byteCount;
 
 					reqData->alpacaErrCode	=	alpacaErrCode;
+					//*	are we conform logging
 					if (gConformLogging)
 					{
 						LogToDisk(kLog_Conform, reqData);
 					}
+					//*	are we error loggin
 					if ((alpacaErrCode != 0) && gErrorLogging)
 					{
 						LogToDisk(kLog_Error, reqData);
 					}
+#ifdef _ENABLE_BANDWIDTH_LOGGING_
+					//*	this is for network stats
+					if (gTimeUnitsSinceTopOfHour < kMaxBandWidthSamples)
+					{
+						gAlpacaDeviceList[ii]->cBW_CmdsReceived[gTimeUnitsSinceTopOfHour]	+=	1;
+						gAlpacaDeviceList[ii]->cBW_BytesReceived[gTimeUnitsSinceTopOfHour]	+=	byteCount;
+			//-			gAlpacaDeviceList[ii]->cBW_BytesSent[gTimeUnitsSinceTopOfHour];
+					}
+#endif // _ENABLE_BANDWIDTH_LOGGING_
+
 					break;
 				}
 			}
@@ -2142,7 +2231,8 @@ bool				foundKeyWord;
 
 //*****************************************************************************
 static TYPE_ASCOM_STATUS	ProcessManagementRequest(TYPE_GetPutRequestData	*reqData,
-													char					*parseChrPtr)
+													char					*parseChrPtr,
+													long					byteCount)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
 int					ii;
@@ -2200,6 +2290,15 @@ int					cmdStrLen;
 				{
 					gAlpacaDeviceList[ii]->cTotalCmdErrors++;
 				}
+#ifdef _ENABLE_BANDWIDTH_LOGGING_
+				//*	this is for network stats
+				if (gTimeUnitsSinceTopOfHour < kMaxBandWidthSamples)
+				{
+					gAlpacaDeviceList[ii]->cBW_CmdsReceived[gTimeUnitsSinceTopOfHour]	+=	1;
+					gAlpacaDeviceList[ii]->cBW_BytesReceived[gTimeUnitsSinceTopOfHour]	+=	byteCount;
+		//-			gAlpacaDeviceList[ii]->cBW_BytesSent[gTimeUnitsSinceTopOfHour];
+				}
+#endif // _ENABLE_BANDWIDTH_LOGGING_
 				break;
 			}
 		}
@@ -2252,6 +2351,16 @@ char			*queMrkPtr;
 			CONSOLE_DEBUG("GET/PUT NOT SPECIFIED!!!!!!!");
 			reqData->get_putIndicator	=	'?';
 		}
+
+		//*	extract the HTTP command
+		ccc	=	0;
+		while ((htmlData[ccc] >= 0x20) && (ccc < (kHTTPbufLen - 2)))
+		{
+			reqData->httpCmdString[ccc]	=	htmlData[ccc];
+			ccc++;
+		}
+		reqData->httpCmdString[ccc]	=	0;
+
 		sLen		=	strlen(htmlData);
 //		CONSOLE_DEBUG_W_NUM("htmlData length\t=", sLen);
 //		CONSOLE_DEBUG_W_NUM("sizeof(lineBuff)\t=", sizeof(lineBuff));
@@ -2358,7 +2467,7 @@ char			*queMrkPtr;
 }
 
 //*****************************************************************************
-static int	ProcessGetPutRequest(const int socket, char *htmlData)
+static int	ProcessGetPutRequest(const int socket, char *htmlData, long byteCount)
 {
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_InternalError;
 char					*parseChrPtr;
@@ -2370,6 +2479,28 @@ TYPE_GetPutRequestData	reqData;
 	CONSOLE_DEBUG_W_STR("htmlData\t=", htmlData);
 #endif // _DEBUG_CONFORM_
 
+#ifdef _ENABLE_BANDWIDTH_LOGGING_
+int	previousUnitsSinceTopOfHour;
+int	iii;
+
+	previousUnitsSinceTopOfHour	=	gTimeUnitsSinceTopOfHour;
+	gTimeUnitsSinceTopOfHour	=	(time(NULL) / 60) % kMaxBandWidthSamples;
+//	CONSOLE_DEBUG_W_NUM("gTimeUnitsSinceTopOfHour\t=", gTimeUnitsSinceTopOfHour);
+	//*	check to see if it changed
+	if (gTimeUnitsSinceTopOfHour != previousUnitsSinceTopOfHour)
+	{
+		//*	reset all of the counters to zero
+		for (iii=0; iii<gDeviceCnt; iii++)
+		{
+			if (gAlpacaDeviceList[iii] != NULL)
+			{
+				gAlpacaDeviceList[iii]->cBW_CmdsReceived[gTimeUnitsSinceTopOfHour]	=	0;
+				gAlpacaDeviceList[iii]->cBW_BytesReceived[gTimeUnitsSinceTopOfHour]	=	0;
+				gAlpacaDeviceList[iii]->cBW_BytesSent[gTimeUnitsSinceTopOfHour]		=	0;
+			}
+		}
+	}
+#endif // _ENABLE_BANDWIDTH_LOGGING_
 	memset(&reqData, 0, sizeof(TYPE_GetPutRequestData));
 	//*	the TYPE_GetPutRequestData simplifies parsing and passing of the
 	//*	parsed data to subroutines
@@ -2378,7 +2509,11 @@ TYPE_GetPutRequestData	reqData;
 //	DumpRequestStructure(__FUNCTION__, &reqData);
 
 	ParseHTMLdataIntoReqStruct(htmlData, &reqData);
-
+	CONSOLE_DEBUG(reqData.httpCmdString);
+	if (strstr(htmlData, "connected") != NULL)
+	{
+		CONSOLE_DEBUG(htmlData);
+	}
 	parseChrPtr			=	(char *)htmlData;
 	parseChrPtr			+=	3;
 	while (*parseChrPtr == 0x20)
@@ -2395,7 +2530,7 @@ TYPE_GetPutRequestData	reqData;
 	if (strncmp(parseChrPtr, "/api/", 5) == 0)
 	{
 		//*	if we are here, we are guaranteed to have either GET or PUT, so no need to check
-		alpacaErrCode	=	ProcessAlpacaAPIrequest(&reqData, parseChrPtr);
+		alpacaErrCode	=	ProcessAlpacaAPIrequest(&reqData, parseChrPtr, byteCount);
 	}
 	//-------------------------------------------------------------------
 	//*	standard ALPACA setup
@@ -2407,7 +2542,7 @@ TYPE_GetPutRequestData	reqData;
 	//*	standard ALPACA management
 	else if (strncmp(parseChrPtr, "/management", 11) == 0)
 	{
-		alpacaErrCode	=	ProcessManagementRequest(&reqData, parseChrPtr);
+		alpacaErrCode	=	ProcessManagementRequest(&reqData, parseChrPtr, byteCount);
 	}
 	//-------------------------------------------------------------------
 	//*	extra web interface
@@ -2478,7 +2613,7 @@ int		returnCode	=	-1;
 	else if ((strncmp(htmlData, "GET", 3) == 0) || (strncmp(htmlData, "PUT", 3) == 0))
 	{
 //		CONSOLE_DEBUG("ProcessGetPutRequest");
-		returnCode	=	ProcessGetPutRequest(socket, htmlData);
+		returnCode	=	ProcessGetPutRequest(socket, htmlData, byteCount);
 	}
 	else if (byteCount > 0)
 	{
@@ -3075,8 +3210,6 @@ double			freeDiskSpace_Gigs;
 #ifdef _ENABLE_SLIT_TRACKER_
 	CreateSlitTrackerObjects();
 #endif // _ENABLE_SLIT_TRACKER_
-
-
 
 
 	//*********************************************************

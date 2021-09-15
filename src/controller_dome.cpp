@@ -100,7 +100,7 @@ int				gSlitLogIdx;
 //**************************************************************************************
 ControllerDome::ControllerDome(	const char			*argWindowName,
 								TYPE_REMOTE_DEV		*alpacaDevice)
-	:Controller(argWindowName, kDomeWindowWidth,  kDomeWindowHeight)
+	:Controller(argWindowName, kDomeWindowWidth,  kDomeWindowHeight, kNoBackgroundTask)
 {
 int		iii;
 char	ipAddrStr[32];
@@ -173,6 +173,10 @@ char	ipAddrStr[32];
 	OpenSlitTrackerPort();
 #endif // _SLIT_TRACKER_DIRECT_
 
+	AlpacaSetConnected("dome", true);
+#ifdef _USE_BACKGROUND_THREAD_
+	StartBackgroundThread();
+#endif // _USE_BACKGROUND_THREAD_
 }
 
 //**************************************************************************************
@@ -347,7 +351,7 @@ bool		needToUpdate;
 	if (cReadStartup)
 	{
 		CONSOLE_DEBUG(__FUNCTION__);
-		AlpacaGetCommonProperties("dome");
+		AlpacaGetCommonProperties_OneAAT("dome");
 		AlpacaGetStartupData();
 		cReadStartup	=	false;
 		cDomeTabObjPtr->UpdateControls();
@@ -378,6 +382,7 @@ bool		needToUpdate;
 			{
 				CONSOLE_DEBUG("Failed to get data")
 			}
+			UpdateConnectedIndicator(kTab_Dome,		kDomeBox_Connected);
 		}
 	}
 #ifdef _SLIT_TRACKER_DIRECT_
@@ -456,6 +461,7 @@ bool	previousOnLineState;
 	else
 	{
 		validData	=	AlpacaGetStatus_DomeOneAAT();
+		validData	=	AlpacaGetCommonConnectedState("dome");
 	}
 #ifdef _ENABLE_EXTERNAL_SHUTTER_
 	//=================================================
@@ -499,7 +505,7 @@ bool	previousOnLineState;
 		}
 		else
 		{
-			SetWidgetText(kTab_Dome, kDomeBox_CurPosition, "---");
+			SetWidgetText(kTab_Dome, kDomeBox_CurPosition, "Stopped");
 		}
 
 		//*	if we shutter is opening or closing, we want to update more often

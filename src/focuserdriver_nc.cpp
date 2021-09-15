@@ -146,6 +146,7 @@ FocuserNiteCrawler::FocuserNiteCrawler(const int argDevNum, const char *devicePa
 	{
 		case kMoonLite_NiteCrawler:
 			strcpy(cCommonProp.Name,		"NiteCrawler Focuser");
+			strcpy(cCommonProp.Description,	"Moonlite NiteCrawler Focuser");
 			cIsNiteCrawler				=	true;
 			cFocuserSupportsRotation	=	true;
 			cFocuserSupportsAux			=	true;
@@ -155,6 +156,7 @@ FocuserNiteCrawler::FocuserNiteCrawler(const int argDevNum, const char *devicePa
 
 		case kMoonLite_HighRes:
 			strcpy(cCommonProp.Name,		"Moonlite");
+			strcpy(cCommonProp.Description,	"Moonlite HiRes Focuser");
 			cFocuserHasTemperature		=	true;
 			break;
 

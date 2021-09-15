@@ -224,7 +224,10 @@ bool	connectionOKflag;
 	}
 	if (connectionOKflag)
 	{
-		StartThread();
+		if (cThreadIsActive == false)
+		{
+			StartThread();
+		}
 	}
 	else
 	{

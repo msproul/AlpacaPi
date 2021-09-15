@@ -92,6 +92,10 @@ long				gDraperObjectCount	=	0;
 TYPE_CelestData		*gSpecialObjectPtr	=	NULL;
 long				gSpecialObjectCount	=	0;
 
+//*	Polar Alignment center points
+TYPE_CelestData		*gPolarAlignObjectPtr	=	NULL;
+long				gPolarAlignObjectCount	=	0;
+
 //*	AAVSO alert list
 TYPE_CelestData		*gAAVSOalertsPtr	=	NULL;
 long				gAAVSOalertsCnt		=	0;

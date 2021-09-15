@@ -324,7 +324,7 @@ const TYPE_CmdEntry	gCameraCmdTable[]	=
 	{	"readall",					kCmd_Camera_readall,				kCmdType_GET	},
 #endif // _INCLUDE_ALPACA_EXTRAS_
 
-	{	"",						-1,	0x00	}
+	{	"",							-1,									0x00			}
 };
 
 
@@ -670,11 +670,16 @@ char				httpHeader[500];
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 //#ifndef _JETSON_
-	if ((strcmp(reqData->deviceCommand, "readall") != 0) && (strcmp(reqData->deviceCommand, "setccdtemperature") != 0))
-	{
-		CONSOLE_DEBUG_W_STR("deviceCommand\t=",	reqData->deviceCommand);
-	}
+//	if ((strcmp(reqData->deviceCommand, "readall") != 0) && (strcmp(reqData->deviceCommand, "setccdtemperature") != 0))
+//	{
+//		CONSOLE_DEBUG_W_STR("deviceCommand\t=",	reqData->deviceCommand);
+//	}
 //#endif // _JETSON_
+	if (strcmp(reqData->deviceCommand, "supportedactions") == 0)
+	{
+		CONSOLE_DEBUG_W_STR("htmlData   \t=",	reqData->htmlData);
+		CONSOLE_DEBUG_W_STR("contentData\t=",	reqData->contentData);
+	}
 
 
 //*	delete this when not testing
@@ -1344,7 +1349,9 @@ char				httpHeader[500];
 			JsonResponse_FinishHeader(httpHeader, "");
 			JsonResponse_SendTextBuffer(mySocket, httpHeader);
 			httpHeaderSent	=	true;
+CONSOLE_DEBUG(__FUNCTION__);
 			alpacaErrCode	=	Get_Filelist(reqData, alpacaErrMsg);
+CONSOLE_DEBUG(__FUNCTION__);
 			break;
 
 		case kCmd_Camera_autoexposure:
@@ -1433,7 +1440,9 @@ char				httpHeader[500];
 			break;
 
 	}
+//CONSOLE_DEBUG(__FUNCTION__);
 	RecordCmdStats(cmdEnumValue, reqData->get_putIndicator, alpacaErrCode);
+//CONSOLE_DEBUG(__FUNCTION__);
 
 	//*	send the response information
 	JsonResponse_Add_Int32(		mySocket,
@@ -1443,6 +1452,7 @@ char				httpHeader[500];
 								gClientTransactionID,
 								INCLUDE_COMMA);
 
+//CONSOLE_DEBUG(__FUNCTION__);
 	JsonResponse_Add_Int32(		mySocket,
 								reqData->jsonTextBuffer,
 								kMaxJsonBuffLen,
@@ -1450,6 +1460,7 @@ char				httpHeader[500];
 								gServerTransactionID,
 								INCLUDE_COMMA);
 
+//CONSOLE_DEBUG(__FUNCTION__);
 	JsonResponse_Add_Int32(		mySocket,
 								reqData->jsonTextBuffer,
 								kMaxJsonBuffLen,
@@ -1457,6 +1468,7 @@ char				httpHeader[500];
 								alpacaErrCode,
 								INCLUDE_COMMA);
 
+//CONSOLE_DEBUG(__FUNCTION__);
 	JsonResponse_Add_String(	mySocket,
 								reqData->jsonTextBuffer,
 								kMaxJsonBuffLen,
@@ -1464,19 +1476,24 @@ char				httpHeader[500];
 								alpacaErrMsg,
 								NO_COMMA);
 
+//CONSOLE_DEBUG(__FUNCTION__);
+//CONSOLE_DEBUG_W_NUM("len of jsonTextBuffer\t=", strlen(reqData->jsonTextBuffer));
 	JsonResponse_Add_Finish(	mySocket,
 								reqData->jsonTextBuffer,
 								kMaxJsonBuffLen,
 								(httpHeaderSent == false));
 
+//CONSOLE_DEBUG(__FUNCTION__);
 	if (cmdEnumValue != kCmd_Camera_imagearray)
 	{
 //		CONSOLE_DEBUG_W_STR("JSON=", reqData->jsonTextBuffer);
 	}
 	//*	this is for the logging function
+//CONSOLE_DEBUG(__FUNCTION__);
 	strcpy(reqData->alpacaErrMsg, alpacaErrMsg);
 
 
+//CONSOLE_DEBUG(__FUNCTION__);
 	return(alpacaErrCode);
 }
 
@@ -3333,7 +3350,7 @@ TYPE_ALPACA_CAMERASTATE	CameraDriver::Read_AlapcaCameraState(void)
 TYPE_ALPACA_CAMERASTATE	alpacaCameraState;
 TYPE_EXPOSURE_STATUS	internalCameraState;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	//*	set a default value
 	alpacaCameraState	=	kALPACA_CameraState_Idle;
 
@@ -6266,13 +6283,15 @@ bool				keepGoing;
 bool				firstLine;
 int					mySocketFD;
 char				lineBuff[512];
+int					fileCount	=	0;
 #ifdef _SORT_FILENAMES_
 TYPE_FILE_ENTRY		files[kMaxFileCnt];
-int					fileIdx	=	0;
-int					ii;
+int					fileIdx		=	0;
+int					iii;
 #endif // _SORT_FILENAMES_
 
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, kImageDataDir);
+	DumpRequestStructure(__FUNCTION__, reqData);
 
 	mySocketFD	=	reqData->socket;
 	CONSOLE_DEBUG_W_NUM("mySocketFD    \t=", mySocketFD);
@@ -6294,7 +6313,7 @@ int					ii;
 		alpacaErrCode	=	kASCOM_Err_Success;
 		keepGoing		=	true;
 		firstLine		=	true;
-		while (keepGoing)
+		while (keepGoing && (fileCount < 100))
 		{
 			dir	=	readdir(directory);
 			if (dir != NULL)
@@ -6348,6 +6367,12 @@ int					ii;
 						CONSOLE_DEBUG("Houston, we have a problem!!!");
 					}
 				#endif // _SORT_FILENAMES_
+					fileCount++;
+					if ((fileCount % 25) == 0)
+					{
+						CONSOLE_DEBUG_W_NUM("Delay, fileCount\t=", fileCount);
+						usleep(5000);
+					}
 				}
 			}
 			else
@@ -6363,7 +6388,7 @@ CONSOLE_DEBUG_W_NUM("kMaxFileCnt\t=", kMaxFileCnt);
 CONSOLE_DEBUG_W_NUM("fileIdx    \t=", fileIdx);
 
 		qsort(files, fileIdx, sizeof(TYPE_FILE_ENTRY), DirSort);
-		for (ii=0; ii < fileIdx; ii++)
+		for (iii=0; iii < fileIdx; iii++)
 		{
 			lineBuff[0]	=	0;
 			if (firstLine)
@@ -6372,7 +6397,7 @@ CONSOLE_DEBUG_W_NUM("fileIdx    \t=", fileIdx);
 				firstLine	=	false;
 			}
 			strcat(lineBuff, "\t\t\t\"");
-			strcat(lineBuff, files[ii].filename);
+			strcat(lineBuff, files[iii].filename);
 			strcat(lineBuff, "\",");
 			strcat(lineBuff, "\r\n");
 //			CONSOLE_DEBUG_W_NUM("len of lineBuff\t=", strlen(lineBuff));
@@ -6382,17 +6407,19 @@ CONSOLE_DEBUG_W_NUM("fileIdx    \t=", fileIdx);
 										lineBuff);
 		}
 	#endif // _SORT_FILENAMES_
-CONSOLE_DEBUG_W_NUM("len of jsonTextBuffer\t=", strlen(reqData->jsonTextBuffer));
+
+CONSOLE_DEBUG_W_NUM("kMaxJsonBuffLen      \t=", kMaxJsonBuffLen);
+CONSOLE_DEBUG_W_LONG("len of jsonTextBuffer\t=", strlen(reqData->jsonTextBuffer));
 		JsonResponse_Add_RawText(	mySocketFD,
 									reqData->jsonTextBuffer,
 									kMaxJsonBuffLen,
 									"\t\t\t\"END\"\r\n");
-CONSOLE_DEBUG_W_NUM("len of jsonTextBuffer\t=", strlen(reqData->jsonTextBuffer));
+CONSOLE_DEBUG_W_LONG("len of jsonTextBuffer\t=", strlen(reqData->jsonTextBuffer));
 		JsonResponse_Add_ArrayEnd(	mySocketFD,
 									reqData->jsonTextBuffer,
 									kMaxJsonBuffLen,
 									INCLUDE_COMMA);
-CONSOLE_DEBUG_W_NUM("len of jsonTextBuffer\t=", strlen(reqData->jsonTextBuffer));
+CONSOLE_DEBUG_W_LONG("len of jsonTextBuffer\t=", strlen(reqData->jsonTextBuffer));
 		errorCode	=	closedir(directory);
 		if (errorCode != 0)
 		{
@@ -6703,7 +6730,7 @@ int					exposureState;
 char				exposureStateString[32];
 char				textBuffer[128];
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	if (cTempReadSupported)
 	{
 		alpacaErrCode	=	Read_SensorTemp();

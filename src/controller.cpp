@@ -65,6 +65,14 @@
 //*	Apr  5,	2021	<MLS> Added 2nd version DrawWidgetImage()
 //*	Jul 18,	2021	<MLS> Added DrawWidgetScrollBar()
 //*	Aug  9,	2021	<MLS> Used try/catch for the first time (in ~Controller())
+//*	Aug 11,	2021	<MLS> Added SetCurrentTab()
+//*	Aug 28,	2021	<MLS> R-Pi == CV_EVENT_MOUSEHWHEEL instead of CV_EVENT_MOUSEWHEEL
+//*	Sep  5,	2021	<MLS> Started on separate thread for background tasks
+//*	Sep  5,	2021	<MLS> Added _USE_BACKGROUND_THREAD_
+//*	Sep  5,	2021	<MLS> Added StartBackgroundThread()
+//*	Sep  8,	2021	<MLS> Added startBackGroundThread option to constructor
+//*	Sep  8,	2021	<MLS> Added AlpacaProcessReadAll_Common()
+//*	Sep 14,	2021	<MLS> Added InitFonts()
 //*****************************************************************************
 
 
@@ -92,12 +100,51 @@
 #include	"widget.h"
 #include	"controller.h"
 
+#ifdef _ENABLE_SKYTRAVEL_
+	#define	_USE_BACKGROUND_THREAD_
+#endif // _ENABLE_SKYTRAVEL_
+
 Controller	*gControllerList[kMaxControllers];
 int			gControllerCnt			=	-1;
 CvFont		gTextFont[kFontCnt];
+bool		gFontsNeedInit			=	true;
 char		gColorOverRide			=	0;
 Controller	*gCurrentActiveWindow	=	NULL;
 
+//*****************************************************************************
+static void	InitFonts(void)
+{
+int		iii;
+double	myFontDX;
+
+	gTextFont[kFont_Small]		=	cvFont(0.7, 1);
+	gTextFont[kFont_RadioBtn]	=	cvFont(0.8, 1);
+	gTextFont[kFont_TextList]	=	cvFont(0.9, 1);
+	gTextFont[kFont_Medium]		=	cvFont(1.0, 1);
+	gTextFont[kFont_Large]		=	cvFont(1.7, 1);
+//	gTextFont[kFont_Simplex]	=	cvFont(1.7, 1);
+
+//	cvInitFont( &gTextFont[kFont_MonoSpace], CV_FONT_HERSHEY_SIMPLEX, 0.3, 0.3, 0, 1, CV_AA );
+	cvInitFont( &gTextFont[kFont_MonoSpace], CV_FONT_HERSHEY_PLAIN, 1.0, 1.0, 0, 1, CV_AA );
+	gTextFont[kFont_MonoSpace].dx	=	1.5;
+
+
+//	cvInitFont( &gTextFont[kFont_Simplex], CV_FONT_HERSHEY_COMPLEX, 0.5, 0.5, 0, 1, CV_AA );
+
+	cvInitFont( &gTextFont[kFont_ScriptLarge], CV_FONT_HERSHEY_SCRIPT_COMPLEX, 2.0, 2.0, 0, 1, CV_AA );
+
+	for (iii=0; iii<kFont_last; iii++)
+	{
+		myFontDX	=	gTextFont[iii].dx;
+		CONSOLE_DEBUG_W_DBL("Font dx\t=",	myFontDX);
+//		CONSOLE_DEBUG_W_HEX("Font dx\t=",	gTextFont[iii].dx);
+//		CONSOLE_DEBUG_W_NUM("font_face\t=",	gTextFont[iii].font_face);
+
+	}
+//	CONSOLE_ABORT(__FUNCTION__);
+	gFontsNeedInit	=	false;
+
+}
 
 //*****************************************************************************
 static void	InitControllerList(void)
@@ -196,7 +243,8 @@ void	Controller_HandleKeyDown(const int keyPressed)
 //*****************************************************************************
 Controller::Controller(	const char	*argWindowName,
 						const int	xSize,
-						const int	ySize)
+						const int	ySize,
+						const bool	startBackGroundThread)
 {
 int			ii;
 int			objCntr;
@@ -218,6 +266,12 @@ int			objCntr;
 	cLastClicked_Tab			=	-1;
 	cHighlightedBtn				=	-1;
 	cCurTextInput_Widget		=	-1;
+
+	//*	thread stuff
+	cButtonClickInProgress		=	false;
+	cBackgroundTaskActive		=	false;
+	cBackgroundThreadID			=	-1;
+
 
 	cOnLine						=	true;		//*	assume its online, if it wasnt, we wouldnt be here
 	cAlpacaVersionString[0]		=	0;
@@ -295,17 +349,10 @@ int			objCntr;
 
 
 
-	gTextFont[kFont_Small]		=	cvFont(0.7, 1);
-	gTextFont[kFont_RadioBtn]	=	cvFont(0.8, 1);
-	gTextFont[kFont_TextList]	=	cvFont(0.9, 1);
-	gTextFont[kFont_Medium]		=	cvFont(1.0, 1);
-	gTextFont[kFont_Large]		=	cvFont(1.7, 1);
-//	gTextFont[kFont_Simplex]	=	cvFont(1.7, 1);
-
-//	cvInitFont( &gTextFont[kFont_Simplex], CV_FONT_HERSHEY_COMPLEX, 0.5, 0.5, 0, 1, CV_AA );
-
-	cvInitFont( &gTextFont[kFont_ScriptLarge], CV_FONT_HERSHEY_SCRIPT_COMPLEX, 2.0, 2.0, 0, 1, CV_AA );
-
+	if (gFontsNeedInit)
+	{
+		InitFonts();
+	}
 
 
 
@@ -330,6 +377,13 @@ int			objCntr;
 	SetupWindowControls();
 
 	gCurrentActiveWindow	=	this;
+
+#ifdef _USE_BACKGROUND_THREAD_
+	if (startBackGroundThread)
+	{
+		StartBackgroundThread();
+	}
+#endif // _USE_BACKGROUND_THREAD_
 }
 
 
@@ -342,6 +396,22 @@ int		iii;
 
 	CONSOLE_DEBUG_W_STR("Deleting window:\t", cWindowName);
 //	CONSOLE_DEBUG_W_NUM("gControllerCnt\t=:", gControllerCnt);
+
+#ifdef _USE_BACKGROUND_THREAD_
+	//*	we have to kill the background thread
+	int		threadCancelErr;
+
+		CONSOLE_DEBUG("Canceling background thread");
+		threadCancelErr	=	pthread_cancel(cBackgroundThreadID);
+		if (threadCancelErr == 0)
+		{
+			CONSOLE_DEBUG_W_STR("Thread canceled OK:\t", cWindowName);
+		}
+		else
+		{
+			CONSOLE_DEBUG_W_NUM("Thread canceled failed, errno\t=", errno);
+		}
+#endif // _USE_BACKGROUND_THREAD_
 
 	//*	if we are the active window, make sure we dont get any more key presses
 	if (gCurrentActiveWindow == this)
@@ -398,7 +468,7 @@ void	Controller::SetWindowIPaddrInfo(	const char	*textString,
 {
 int		iii;
 
-//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+	CONSOLE_DEBUG_W_2STR(__FUNCTION__, cWindowName, (onLine ? "online" : "OFFLINE"));
 
 	for (iii=0; iii<kMaxTabs; iii++)
 	{
@@ -421,7 +491,11 @@ void	Controller::RunBackgroundTasks(void)
 void	Controller::HandleWindow(void)
 {
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+
+#ifndef _USE_BACKGROUND_THREAD_
 	RunBackgroundTasks();
+#endif
+
 
 	if (cUpdateWindow)
 	{
@@ -640,7 +714,16 @@ void	Controller::GetCurrentTabName(char *currentTabName)
 	}
 }
 
-
+//*****************************************************************************
+void	Controller::SetCurrentTab(const int tabIdx)
+{
+	if ((tabIdx >= 1) && (tabIdx < cTabCount))
+	{
+		cCurrentTabNum		=	tabIdx;
+		cUpdateWindow		=	true;
+		cCurrentTabObjPtr	=	cWindowTabs[cCurrentTabNum];
+	}
+}
 
 //*****************************************************************************
 void	Controller::ProcessTabClick(const int tabIdx)
@@ -787,6 +870,7 @@ bool	widgetIsButton;
 int		wheelMovement;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG_W_NUM("EVENT=", event);
 	myWidgitIdx	=	FindClickedWidget(xxx,  yyy);
 	switch(event)
 	{
@@ -962,7 +1046,9 @@ int		wheelMovement;
 			CONSOLE_DEBUG("CV_EVENT_MBUTTONDBLCLK");
 			break;
 
+#if (CV_MAJOR_VERSION >= 3)
 		case CV_EVENT_MOUSEWHEEL:
+		case CV_EVENT_MOUSEHWHEEL:
 			wheelMovement	=	flags & 0xffff0000;
 			wheelMovement	/=	65536;
 			if (cCurrentTabObjPtr != NULL)
@@ -970,7 +1056,9 @@ int		wheelMovement;
 				cCurrentTabObjPtr->ProcessMouseWheelMoved(myWidgitIdx, event,  xxx,  yyy,  wheelMovement);
 			}
 			break;
-
+#else
+	#warning "Mouse wheel events not supported, "
+#endif
 		default:
 			CONSOLE_DEBUG_W_NUM("UNKNOWN EVENT", event);
 			break;
@@ -1274,13 +1362,15 @@ char		*myStringPtr;
 					8,							//	int line_type CV_DEFAULT(8),
 					0);							//	int shift CV_DEFAULT(0));
 
-	cvRectangleR(	cOpenCV_Image,
-					myCVrect,
-					theWidget->borderColor,		//	CvScalar color,
-					1,							//	int thickness CV_DEFAULT(1),
-					8,							//	int line_type CV_DEFAULT(8),
-					0);							//	int shift CV_DEFAULT(0));
-
+	if (theWidget->includeBorder)
+	{
+		cvRectangleR(	cOpenCV_Image,
+						myCVrect,
+						theWidget->borderColor,		//	CvScalar color,
+						1,							//	int thickness CV_DEFAULT(1),
+						8,							//	int line_type CV_DEFAULT(8),
+						0);							//	int shift CV_DEFAULT(0));
+	}
 	if (theWidget->textPtr != NULL)
 	{
 //		CONSOLE_DEBUG("Using textPtr");
@@ -2869,15 +2959,11 @@ TYPE_WIDGET		*myWidgetPtr;
 	}
 }
 
-
-
 //**************************************************************************************
 void	Controller::UpdateWindowTabColors(void)
 {
 	CONSOLE_DEBUG(__FUNCTION__);
 }
-
-
 
 #pragma mark -
 
@@ -3065,3 +3151,49 @@ void	Controller::UpdateSupportedActions(void)
 }
 
 #endif // _CONTROLLER_USES_ALPACA_
+
+//*****************************************************************************
+//*	the arg is pointer to "this"
+//*****************************************************************************
+static void	*ControllerBackgroundThread(void *arg)
+{
+Controller	*myControllerPtr;
+
+	CONSOLE_DEBUG("***************************************************************");
+	CONSOLE_DEBUG(__FUNCTION__);
+	myControllerPtr	=	(Controller *)arg;
+	if (myControllerPtr != NULL)
+	{
+		CONSOLE_DEBUG("Valid Controller ptr");
+		while(myControllerPtr->cMagicCookie == kMagicCookieValue)
+		{
+			myControllerPtr->cBackgroundTaskActive	=	true;
+			myControllerPtr->RunBackgroundTasks();
+			myControllerPtr->cBackgroundTaskActive	=	false;
+			usleep(100000);
+		}
+		CONSOLE_ABORT("Magic cookie is stale")
+	}
+	else
+	{
+		CONSOLE_ABORT("pointer to controller object was NULL")
+	}
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, "Exit thread!!!!!!!!!!!!!!!!!!!");
+	return(NULL);
+}
+
+//**************************************************************************************
+//*	returns thread error
+//**************************************************************************************
+int	Controller::StartBackgroundThread(void)
+{
+int			threadErr;
+
+	CONSOLE_DEBUG("***************************************************************");
+	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_STR("Starting background thread for window:",	cWindowName);
+	threadErr			=	pthread_create(&cBackgroundThreadID, NULL, &ControllerBackgroundThread, this);
+
+	return(threadErr);
+}
+

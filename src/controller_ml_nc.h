@@ -1,6 +1,8 @@
 //*****************************************************************************
 //#include	"controller_ml_nc.h"
 
+//#define		_ENABLE_CONFIG_TAB_
+
 
 #include	"controller.h"
 #ifndef _WINDOW_TAB_H
@@ -23,6 +25,10 @@
 #ifndef _WINDOWTAB_CONFIG_H_
 	#include	"windowtab_config.h"
 #endif // _WINDOWTAB_CONFIG_H_
+
+#ifndef	_WINDOWTAB_DRIVER_INFO_H_
+	#include	"windowtab_drvrInfo.h"
+#endif // _WINDOWTAB_DRIVER_INFO_H_
 
 #ifndef	_WINDOWTAB_ABOUT_H_
 	#include	"windowtab_about.h"
@@ -55,6 +61,7 @@ class ControllerNiteCrawler: public ControllerFocus
 
 		//*	sub class specific routines
 
+		virtual void	UpdateCommonProperties(void);
 		virtual	void	UpdateFocuserPosition(const int newFocuserPosition);
 		virtual	void	UpdateRotatorPosition(const int newRotatorPosition);
 		virtual	void	UpdateAuxMotorPosition(const int newAuxMotorPosition);
@@ -78,8 +85,11 @@ class ControllerNiteCrawler: public ControllerFocus
 
 				WindowTabNitecrawler	*cNiteCrawlerTabObjPtr;
 				WindowTabAuxMotor		*cAuxTabObjPtr;
+		#ifdef _ENABLE_CONFIG_TAB_
 				WindowTabConfig			*cConfigTabObjPtr;
+		#endif // _ENABLE_CONFIG_TAB_
 				WindowTabGraph			*cGraphTabObjPtr;
+				WindowTabDriverInfo		*cDriverInfoTabObjPtr;
 				WindowTabAbout			*cAboutBoxTabObjPtr;
 
 

@@ -49,6 +49,7 @@ typedef struct
 typedef struct
 {
 	bool				validEntry;
+	bool				onLine;
 	struct sockaddr_in	deviceAddress;
 	int					port;
 	char				hostName[64];
@@ -60,7 +61,7 @@ typedef struct
 	int					interfaceVersion;
 	int					notSeenCounter;
 
-	char				webPrefixString[64];
+//	char				webPrefixString[64];
 
 
 } TYPE_REMOTE_DEV;

@@ -101,6 +101,8 @@ ControllerFocus::ControllerFocus(	const char			*argWindowName,
 		cValidIPaddr	=	true;
 	}
 	SetupWindowControls();
+
+	AlpacaSetConnected("focuser", true);
 }
 
 //**************************************************************************************
@@ -441,6 +443,8 @@ bool			validData;
 		CONSOLE_DEBUG("Read failure - supportedactions");
 		cReadFailureCnt++;
 	}
+	AlpacaGetCommonProperties_OneAAT("focuser");
+
 	return(validData);
 }
 

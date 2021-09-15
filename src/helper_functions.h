@@ -16,7 +16,6 @@
 bool		IsTrueFalse(const char *trueFalseString);
 void		FormatHHMMSS(const double argDegreeValue, char *timeString, bool includeSign);
 uint32_t	millis(void);
-void		Goto_RA_DEC(double argRA_radians, double argDecl_radians);
 
 
 #ifdef __cplusplus

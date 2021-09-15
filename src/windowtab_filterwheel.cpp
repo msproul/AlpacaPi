@@ -85,6 +85,10 @@ int		yLoc;
 	SetWidget(					kFilterWheel_Title,		0,			yLoc,		cWidth,		cTitleHeight);
 	SetBGcolorFromWindowName(	kFilterWheel_Title);
 	SetWidgetText(				kFilterWheel_Title, "AlpacaPi Filter Wheel");
+
+	//*	setup the connected indicator
+   	SetUpConnectedIndicator(kFilterWheel_Connected, yLoc);
+
 	yLoc			+=	cTitleHeight;
 	yLoc			+=	2;
 	yLoc			+=	2;

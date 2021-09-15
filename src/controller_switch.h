@@ -16,8 +16,9 @@
 //**************************************************************************************
 typedef struct
 {
-	char	switchName[32];
-	char	switchDescription[128];
+	char	switchName[64];
+	char	switchDescription[256];
+	bool	canWrite;
 	bool	switchState;
 	double	minswitchvalue;
 	double	maxswitchvalue;
@@ -50,10 +51,10 @@ class ControllerSwitch: public Controller
 		virtual	bool	AlpacaGetStartupData(void);
 				bool	AlpacaGetStartupData_OneAAT(void);
 				bool	AlpacaGetStatus(void);
-		virtual	void	AlpacaProcessSupportedActions(	const char	*deviceType,
+		virtual	void	AlpacaProcessSupportedActions(	const char	*deviceTypeStr,
 														const int	deviveNum,
 														const char	*valueString);
-		virtual	void	AlpacaProcessReadAll(	const char	*deviceType,
+		virtual	void	AlpacaProcessReadAll(	const char	*deviceTypeStr,
 												const int	deviceNum,
 												const char	*keywordString,
 												const char	*valueString);

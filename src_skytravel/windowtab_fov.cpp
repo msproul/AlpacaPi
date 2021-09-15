@@ -432,7 +432,7 @@ int					iii;
 bool				validData;
 ControllerSkytravel	*skyTravelController;
 bool				dataWasUpdated;
-
+char				ipAddrStr[32];
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	dataWasUpdated		=	false;
@@ -452,21 +452,36 @@ bool				dataWasUpdated;
 				if (skyTravelController != NULL)
 				{
 				//	CONSOLE_DEBUG("=================================================");
-				//	CONSOLE_DEBUG(cCameraData[iii].CameraName);
+					inet_ntop(AF_INET, &(cRemoteDeviceList[iii].deviceAddress.sin_addr), ipAddrStr, INET_ADDRSTRLEN);
+				//	CONSOLE_DEBUG_W_STR(ipAddrStr, cCameraData[iii].CameraName);
 					cCameraData[iii].HasReadAll	=	false;
 					cCurrentCamera	=	&cCameraData[iii];
-					validData		=	skyTravelController->AlpacaGetStatus_ReadAll(
+
+					validData		=	skyTravelController->AlpacaGetSupportedActions(
 															&cRemoteDeviceList[iii].deviceAddress,
 															cRemoteDeviceList[iii].port,
 															"camera",
 															cRemoteDeviceList[iii].alpacaDeviceNum);
 
-					if (cCameraData[iii].HasReadAll == false)
+					if (cCameraData[iii].HasReadAll)
 					{
-						//*	if read all failed, do it the one at a time way
+					//	CONSOLE_DEBUG("Camera has READALL!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+						inet_ntop(AF_INET, &(cRemoteDeviceList[iii].deviceAddress.sin_addr), ipAddrStr, INET_ADDRSTRLEN);
+					//	CONSOLE_DEBUG_W_STR(ipAddrStr, cCameraData[iii].CameraName);
+						validData		=	skyTravelController->AlpacaGetStatus_ReadAll(
+																	&cRemoteDeviceList[iii].deviceAddress,
+																	cRemoteDeviceList[iii].port,
+																	"camera",
+																	cRemoteDeviceList[iii].alpacaDeviceNum);
+
+					}
+					else
+					{
+					//	CONSOLE_DEBUG("Camera has does NOT have readall---------------------");
+						//*	if readall failed, do it the one at a time way
 						validData	=	skyTravelController->AlpacaGetStartupData_Camera(
-												&cRemoteDeviceList[iii],
-												&cCameraData[iii].CameraProp);
+																&cRemoteDeviceList[iii],
+																&cCameraData[iii].CameraProp);
 
 					}
 
@@ -479,8 +494,8 @@ bool				dataWasUpdated;
 				cCameraData[iii].PropertyDataValid	=	true;
 				break;
 			}
+			cCurrentCamera		=	NULL;
 		}
-		cCurrentCamera		=	NULL;
 
 		cLastUpdateTime_ms	=	currentMilliSecs;
 		if (dataWasUpdated)
@@ -755,8 +770,6 @@ bool	dataWasHandled;
 		{
 			cCurrentCamera->CameraProp.PixelSizeY	=	atof(valueString);
 		}
-
-
 	}
 	else
 	{

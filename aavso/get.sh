@@ -2,9 +2,11 @@
 #	Target Tool script
 #	This script will download the latest list of AAVSO alerts via the TargetTool
 #**	Jul  2,	2021	<MLS> obs_section=all now working with curl command
+#**	Aug 12,	2021	<MLS> Added checking for token file, abort if not present
 ###############################################################################
 clear
 
+AAVSO_TOKEN_FILE="aavso_targettool_token.txt"
 
 ###############################################################################
 # first make sure "replaceCRLF" is here
@@ -18,16 +20,31 @@ else
 		gcc replace.c -o replaceCRLF
 	else
 		echo "The source code file 'replace.c' is missing, please re-check your download"
+#		exit
 	fi
 fi
 
+###############################################################################
+if [ -f $AAVSO_TOKEN_FILE ]
+then
+	echo "$AAVSO_TOKEN_FILE is present"
+else
+	if [ -f $AAVSO_TOKEN_FILE ]
+	then
+		echo "$AAVSO_TOKEN_FILE is present, proceeding"
+	else
+		echo "You must create an account and put the aavso login token in a file called $AAVSO_TOKEN_FILE"
+		echo "Refer to https://filtergraph.com/aavso/api/index# for how to create an account."
+		exit
+	fi
+fi
 
 
 ###############################################################################
 #	Place your TargetTool key string in a file called "aavso_targettool_token.txt"
 #	Make sure it does NOT have a trailing CR/LF in the file
 ###############################################################################
-TARGETTOOL_KEY=`cat aavso_targettool_token.txt`
+TARGETTOOL_KEY=`cat $AAVSO_TOKEN_FILE`
 API_KEY="$TARGETTOOL_KEY:api_token"
 echo $API_KEY
 # it is important to have the -n (no NewLine) for the base64 operation

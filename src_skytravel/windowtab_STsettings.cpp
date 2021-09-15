@@ -21,6 +21,8 @@
 //*	Apr 21,	2020	<MLS> Created windowtab_STsettings.cpp
 //*	Jul  5,	2021	<MLS> Added star count table to settings tab
 //*	Jul 17,	2021	<MLS> Added double click to SkyTravelSettings window
+//*	Sep 12,	2021	<MLS> Added settings for line widths
+//*	Sep 12,	2021	<MLS> Added reset-to-default button
 //*****************************************************************************
 
 
@@ -29,13 +31,15 @@
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
 
+#include	"alpaca_defs.h"
 #include	"helper_functions.h"
+#include	"alpaca_defs.h"
 #include	"windowtab.h"
 #include	"windowtab_STsettings.h"
 #include	"controller.h"
 #include	"controller_skytravel.h"
 #include	"observatory_settings.h"
-#include	"controller_aavso.h"
+#include	"controller_starlist.h"
 
 #include	"SkyStruc.h"
 
@@ -71,6 +75,7 @@ void	WindowTabSTsettings::SetupWindowControls(void)
 {
 int		yLoc;
 int		xLoc;
+int		xLoc2;
 int		labelWidth;
 int		valueWitdth1;
 int		valueWitdth2;
@@ -209,6 +214,65 @@ char	textString[64];
 	SetWidgetText(		kSkyT_Settings_GridDashed,	"Dashed Lines");
 	SetWidgetOutlineBox(kSkyT_Settings_GridOutline, kSkyT_Settings_GridLable, (kSkyT_Settings_GridOutline -1));
 
+	yLoc			+=	cRadioBtnHt;
+	yLoc			+=	2;
+	yLoc			+=	2;
+
+	//-----------------------------------------------------
+	//*	Line Width settings
+	labelWidth	=	225;
+	SetWidget(		kSkyT_Settings_LineWidthTitle,	xLoc,		yLoc,	labelWidth + (4 * cRadioBtnHt),	cBoxHeight);
+	SetWidgetFont(	kSkyT_Settings_LineWidthTitle,	kFont_Medium);
+	SetWidgetType(	kSkyT_Settings_LineWidthTitle,	kWidgetType_Text);
+	SetWidgetText(	kSkyT_Settings_LineWidthTitle,	"Line Widths");
+	yLoc			+=	cBoxHeight;
+	yLoc			+=	2;
+
+	iii			=	kSkyT_Settings_LineW_Const;
+	while (iii < kSkyT_Settings_LineW_BoxOutline)
+	{
+		xLoc2	=	xLoc;
+		SetWidget(		iii,	xLoc2,			yLoc,		labelWidth,		cRadioBtnHt);
+		SetWidgetFont(	iii,	kFont_Medium);
+		SetWidgetType(	iii,	kWidgetType_Text);
+		SetWidgetJustification(iii, kJustification_Left);
+
+		xLoc2	+=	labelWidth;
+		iii++;
+
+		SetWidget(		iii,	xLoc2,			yLoc,		cRadioBtnHt * 2,		cRadioBtnHt);
+		SetWidgetFont(	iii,	kFont_Medium);
+		SetWidgetType(	iii,	kWidgetType_RadioButton);
+		SetWidgetText(	iii,	"1");
+		xLoc2	+=	cRadioBtnHt * 2;
+		iii++;
+
+		SetWidget(		iii,	xLoc2,			yLoc,		cRadioBtnHt * 2,		cRadioBtnHt);
+		SetWidgetFont(	iii,	kFont_Medium);
+		SetWidgetType(	iii,	kWidgetType_RadioButton);
+		SetWidgetText(	iii,	"2");
+		iii++;
+
+		yLoc			+=	cRadioBtnHt;
+		yLoc			+=	2;
+	}
+	SetWidgetOutlineBox(	kSkyT_Settings_LineW_BoxOutline,
+							kSkyT_Settings_LineWidthTitle,
+							(kSkyT_Settings_LineW_BoxOutline -1));
+	SetWidgetText(	kSkyT_Settings_LineW_Const,			"Constellations");
+	SetWidgetText(	kSkyT_Settings_LineW_ConstOutlines,	"Constellation Outlines");
+	SetWidgetText(	kSkyT_Settings_LineW_Grid,			"Grid Lines");
+
+//	yLoc			+=	cBoxHeight;
+	yLoc			+=	2;
+
+
+	SetWidget(			kSkyT_Settings_ResetToDefault,	xLoc,		yLoc,	labelWidth + (4 * cRadioBtnHt),	cBoxHeight);
+	SetWidgetFont(		kSkyT_Settings_ResetToDefault,	kFont_Medium);
+	SetWidgetType(		kSkyT_Settings_ResetToDefault,	kWidgetType_Button);
+	SetWidgetBGColor(	kSkyT_Settings_ResetToDefault,	CV_RGB(255,	255,	255));
+	SetWidgetText(		kSkyT_Settings_ResetToDefault,	"Reset to default");
+
 
 
 	//-----------------------------------------------------
@@ -256,6 +320,9 @@ char	textString[64];
 	SetWidgetText(		kSkyT_Settings_DataHipparcos_txt,	"Hipparcos Data count");
 	SetWidgetNumber(	kSkyT_Settings_DataHipparcos_cnt,	gHipObjectCount);
 
+	SetWidgetText(		kSkyT_Settings_DataMessier_txt,		"Messier Data count");
+	SetWidgetNumber(	kSkyT_Settings_DataMessier_cnt,		gMessierOjbectCount);
+
 	SetWidgetText(		kSkyT_Settings_DataNGC_txt,			"NGC Data count");
 	SetWidgetNumber(	kSkyT_Settings_DataNGC_cnt,			gNGCobjectCount);
 
@@ -281,19 +348,50 @@ void	WindowTabSTsettings::ProcessButtonClick(const int buttonIdx)
 		case kSkyT_Settings_EarthSolidBrn:
 		case kSkyT_Settings_EarthSolidGrn:
 			gST_DispOptions.EarthDispMode	=	buttonIdx - kSkyT_Settings_EarthThin;
-			UpdateSettings();
 			break;
 
 		case kSkyT_Settings_GridSolid:
 			gDashedLines	=	false;
-			UpdateSettings();
 			break;
 
 		case kSkyT_Settings_GridDashed:
 			gDashedLines	=	true;
-			UpdateSettings();
 			break;
+
+		case kSkyT_Settings_LineW_Const1:
+			gLineWidth_Constellations	=	1;
+			break;
+
+		case kSkyT_Settings_LineW_Const2:
+			gLineWidth_Constellations	=	2;
+			break;
+
+		case kSkyT_Settings_LineW_ConstOutlines1:
+			gLineWidth_ConstOutlines	=	1;
+			break;
+
+		case kSkyT_Settings_LineW_ConstOutlines2:
+			gLineWidth_ConstOutlines	=	2;
+			break;
+
+		case kSkyT_Settings_LineW_Grid1:
+			gLineWidth_GridLines	=	1;
+			break;
+
+		case kSkyT_Settings_LineW_Grid2:
+			gLineWidth_GridLines	=	2;
+			break;
+
+		case kSkyT_Settings_ResetToDefault:
+			gST_DispOptions.EarthDispMode	=	0;
+			gDashedLines					=	false;
+			gLineWidth_Constellations		=	1;
+			gLineWidth_ConstOutlines		=	1;
+			gLineWidth_GridLines			=	1;
+			break;
+
 	}
+	UpdateSettings();
 }
 
 //*****************************************************************************
@@ -308,13 +406,44 @@ void	WindowTabSTsettings::ProcessDoubleClick(const int	widgetIdx,
 	{
 		case kSkyT_Settings_DataAAVSO_txt:
 		case kSkyT_Settings_DataAAVSO_cnt:
-			CreateAAVSOlistWindow();
+		//	CreateAAVSOlistWindow();
+			if ((gAAVSOalertsPtr != NULL) && (gAAVSOalertsCnt > 0))
+			{
+				CreateStarlistWindow("AAVSO List", gAAVSOalertsPtr, gAAVSOalertsCnt);
+			}
+			break;
+
+		case kSkyT_Settings_DataMessier_txt:
+		case kSkyT_Settings_DataMessier_cnt:
+			if ((gMessierOjbectPtr != NULL) && (gMessierOjbectCount > 0))
+			{
+				CreateStarlistWindow("Messier List", gMessierOjbectPtr, gMessierOjbectCount);
+			}
+			break;
+
+		case kSkyT_Settings_DataNGC_txt:
+		case kSkyT_Settings_DataNGC_cnt:
+			if ((gNGCobjectPtr != NULL) && (gNGCobjectCount > 0))
+			{
+				CreateStarlistWindow("NGC List", gNGCobjectPtr, gNGCobjectCount);
+			}
+			break;
+
+
+		case kSkyT_Settings_DataYALE_txt:
+		case kSkyT_Settings_DataYALE_cnt:
+			if ((gYaleStarDataPtr != NULL) && (gYaleStarCount > 0))
+			{
+//				CreateStarlistWindow("Yale Star Catalog", gYaleStarDataPtr, gYaleStarCount);
+			}
 			break;
 
 	}
 }
 
 
+//*****************************************************************************
+//*	update the various settings check boxes etc
 //*****************************************************************************
 void	WindowTabSTsettings::UpdateSettings(void)
 {
@@ -327,8 +456,16 @@ void	WindowTabSTsettings::UpdateSettings(void)
 	SetWidgetChecked(	kSkyT_Settings_GridSolid,		(!gDashedLines));
 	SetWidgetChecked(	kSkyT_Settings_GridDashed,		(gDashedLines));
 
-	ForceUpdate();
+	SetWidgetChecked(	kSkyT_Settings_LineW_Const1,			(gLineWidth_Constellations == 1));
+	SetWidgetChecked(	kSkyT_Settings_LineW_Const2,			(gLineWidth_Constellations == 2));
 
+	SetWidgetChecked(	kSkyT_Settings_LineW_ConstOutlines1,	(gLineWidth_ConstOutlines == 1));
+	SetWidgetChecked(	kSkyT_Settings_LineW_ConstOutlines2,	(gLineWidth_ConstOutlines == 2));
+
+	SetWidgetChecked(	kSkyT_Settings_LineW_Grid1,				(gLineWidth_GridLines == 1));
+	SetWidgetChecked(	kSkyT_Settings_LineW_Grid2,				(gLineWidth_GridLines == 2));
+
+	ForceUpdate();
 }
 
 

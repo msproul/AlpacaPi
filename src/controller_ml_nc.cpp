@@ -93,8 +93,11 @@ enum
 {
 	kTab_Focuser	=	1,
 	kTab_AuxMotor,
+#ifdef _ENABLE_CONFIG_TAB_
 	kTab_Config,
+#endif // _ENABLE_CONFIG_TAB_
 	kTab_Graphs,
+	kTab_DriverInfo,
 	kTab_About,
 
 	kTab_Count
@@ -209,7 +212,9 @@ ControllerNiteCrawler::~ControllerNiteCrawler(void)
 	//*	delete the windowtab objects
 	DELETE_OBJ_IF_VALID(cNiteCrawlerTabObjPtr);
 	DELETE_OBJ_IF_VALID(cAuxTabObjPtr);
+#ifdef _ENABLE_CONFIG_TAB_
 	DELETE_OBJ_IF_VALID(cConfigTabObjPtr);
+#endif // _ENABLE_CONFIG_TAB_
 	DELETE_OBJ_IF_VALID(cGraphTabObjPtr);
 	DELETE_OBJ_IF_VALID(cAboutBoxTabObjPtr);
 }
@@ -221,7 +226,9 @@ void	ControllerNiteCrawler::CreateWindowTabs(void)
 
 	cNiteCrawlerTabObjPtr	=	NULL;
 	cAuxTabObjPtr			=	NULL;
+#ifdef _ENABLE_CONFIG_TAB_
 	cConfigTabObjPtr		=	NULL;
+#endif // _ENABLE_CONFIG_TAB_
 	cGraphTabObjPtr			=	NULL;
 	cAboutBoxTabObjPtr		=	NULL;
 
@@ -229,41 +236,34 @@ void	ControllerNiteCrawler::CreateWindowTabs(void)
 	SetTabCount(kTab_Count);
 	SetTabText(kTab_Focuser,	"Focuser");
 	SetTabText(kTab_AuxMotor,	"Aux Motor");
+#ifdef _ENABLE_CONFIG_TAB_
 	SetTabText(kTab_Config,		"Config");
+#endif // _ENABLE_CONFIG_TAB_
 	SetTabText(kTab_Graphs,		"Graphs");
+	SetTabText(kTab_DriverInfo,	"Drv Info");
 	SetTabText(kTab_About,		"About");
 
+	//================================================================
 	cNiteCrawlerTabObjPtr	=	new WindowTabNitecrawler(	cWidth,
 															cHeight,
 															cBackGrndColor,
 															cCommMode,
 															cWindowName);
-
-	cAuxTabObjPtr			=	new WindowTabAuxMotor(	cWidth,
-														cHeight,
-														cBackGrndColor);
-	//*	set the ptrs for the tab objects
-	SetTabWindow(kTab_Focuser,	cNiteCrawlerTabObjPtr);
-	SetTabWindow(kTab_AuxMotor,	cAuxTabObjPtr);
-
-
-	cConfigTabObjPtr	=	new WindowTabConfig(	cWidth, cHeight, cBackGrndColor);
-	if (cConfigTabObjPtr != NULL)
-	{
-		SetTabWindow(kTab_Config,	cConfigTabObjPtr);
-		cConfigTabObjPtr->SetParentObjectPtr(this);
-	}
-
-	//*	set the ptrs for the tab objects
-
 	//*	tell the objects who there daddy is
 	if (cNiteCrawlerTabObjPtr != NULL)
 	{
+		//*	set the ptrs for the tab objects
+		SetTabWindow(kTab_Focuser,	cNiteCrawlerTabObjPtr);
 		cNiteCrawlerTabObjPtr->SetParentObjectPtr(this);
 	}
 
+	//================================================================
+	cAuxTabObjPtr			=	new WindowTabAuxMotor(	cWidth,
+														cHeight,
+														cBackGrndColor);
 	if (cAuxTabObjPtr != NULL)
 	{
+		SetTabWindow(kTab_AuxMotor,	cAuxTabObjPtr);
 		cAuxTabObjPtr->SetParentObjectPtr(this);
 		if (cCommMode == kComMode_Alpaca)
 		{
@@ -271,13 +271,36 @@ void	ControllerNiteCrawler::CreateWindowTabs(void)
 		}
 	}
 
+
+
+#ifdef _ENABLE_CONFIG_TAB_
+	//================================================================
+	cConfigTabObjPtr	=	new WindowTabConfig(	cWidth, cHeight, cBackGrndColor);
+	if (cConfigTabObjPtr != NULL)
+	{
+		SetTabWindow(kTab_Config,	cConfigTabObjPtr);
+		cConfigTabObjPtr->SetParentObjectPtr(this);
+	}
+#endif // _ENABLE_CONFIG_TAB_
+
+
+	//================================================================
 	cGraphTabObjPtr		=	new WindowTabGraph(cWidth, cHeight, cBackGrndColor);
-	SetTabWindow(kTab_Graphs,	cGraphTabObjPtr);
 	if (cGraphTabObjPtr != NULL)
 	{
+		SetTabWindow(kTab_Graphs,	cGraphTabObjPtr);
 		cGraphTabObjPtr->SetParentObjectPtr(this);
 	}
 
+	//================================================================
+	cDriverInfoTabObjPtr		=	new WindowTabDriverInfo(	cWidth, cHeight, cBackGrndColor, cWindowName);
+	if (cDriverInfoTabObjPtr != NULL)
+	{
+		SetTabWindow(kTab_DriverInfo,	cDriverInfoTabObjPtr);
+		cDriverInfoTabObjPtr->SetParentObjectPtr(this);
+	}
+
+	//================================================================
 	cAboutBoxTabObjPtr		=	new WindowTabAbout(	cWidth, cHeight, cBackGrndColor, cWindowName);
 	if (cAboutBoxTabObjPtr != NULL)
 	{
@@ -297,6 +320,19 @@ void	ControllerNiteCrawler::CreateWindowTabs(void)
 	}
 }
 
+//*****************************************************************************
+void	ControllerNiteCrawler::UpdateCommonProperties(void)
+{
+	CONSOLE_DEBUG(__FUNCTION__);
+
+	SetWidgetText(kTab_DriverInfo,		kDriverInfo_Name,				cCommonProp.Name);
+	SetWidgetText(kTab_DriverInfo,		kDriverInfo_Description,		cCommonProp.Description);
+	SetWidgetText(kTab_DriverInfo,		kDriverInfo_DriverInfo,			cCommonProp.DriverInfo);
+	SetWidgetText(kTab_DriverInfo,		kDriverInfo_DriverVersion,		cCommonProp.DriverVersion);
+	SetWidgetNumber(kTab_DriverInfo,	kDriverInfo_InterfaceVersion,	cCommonProp.InterfaceVersion);
+
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, "Exit");
+}
 
 
 //*****************************************************************************
@@ -399,7 +435,10 @@ void	ControllerNiteCrawler::UpdateWindowTabs_ReadAll(bool hasReadAll)
 //	CONSOLE_DEBUG(__FUNCTION__);
 	SetWidgetValid(kTab_Focuser,	kNiteCrawlerTab_Readall,	hasReadAll);
 	SetWidgetValid(kTab_AuxMotor,	kAuxMotorBox_Readall,		hasReadAll);
+#ifdef _ENABLE_CONFIG_TAB_
 	SetWidgetValid(kTab_Config,		kCongfigBox_Readall,		hasReadAll);
+#endif
+
 	SetWidgetValid(kTab_Graphs,		kGraphBox_Readall,			hasReadAll);
 }
 
@@ -472,7 +511,10 @@ void	ControllerNiteCrawler::UpdateWindowTabs_Version(const char *versionString)
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	SetWidgetText(kTab_AuxMotor,	kAuxMotorBox_AlpacaDrvrVersion,	cAlpacaVersionString);
+#ifdef _ENABLE_CONFIG_TAB_
 	SetWidgetText(kTab_Config,		kCongfigBox_AlpacaDrvrVersion,	cAlpacaVersionString);
+#endif
+
 	SetWidgetText(kTab_Graphs,		kGraphBox_AlpacaDrvrVersion,	cAlpacaVersionString);
 }
 

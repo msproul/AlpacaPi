@@ -32,6 +32,7 @@
 //*	Jan 14,	2021	<MLS> Added AlpacaProcessSupportedActions()
 //*	Jan 14,	2021	<MLS> Switch controller working with ASCOM Remote Server Console/simulator
 //*	Feb 12,	2021	<MLS> Added driver info display to switch controller
+//*	Sep  8,	2021	<MLS> Working on supporting "canWrite" property
 //*****************************************************************************
 
 
@@ -56,9 +57,10 @@
 #include	"ConsoleDebug.h"
 
 
-#define	kWindowWidth	450
+#define	kWindowWidth	535
 #define	kWindowHeight	700
 
+#include	"alpaca_defs.h"
 #include	"controller.h"
 #include	"controller_switch.h"
 #include	"windowtab_drvrInfo.h"
@@ -80,7 +82,7 @@ ControllerSwitch::ControllerSwitch(	const char			*argWindowName,
 									struct sockaddr_in	*deviceAddress,
 									const int			port,
 									const int			deviceNum)
-	:Controller(argWindowName, kWindowWidth,  kWindowHeight)
+	:Controller(argWindowName, kWindowWidth,  kWindowHeight, false)
 {
 int		iii;
 
@@ -89,6 +91,7 @@ int		iii;
 	cFirstDataRead			=	true;
 	cLastUpdate_milliSecs	=	millis();
 
+	//*	set the default values for the switch info
 	for (iii=0; iii<kMaxSwitches; iii++)
 	{
 		memset(&cSwitchInfo[iii], 0, sizeof(TYPE_SWITCH_INFO));
@@ -96,6 +99,7 @@ int		iii;
 		cSwitchInfo[iii].minswitchvalue	=	0.0;
 		cSwitchInfo[iii].maxswitchvalue	=	1.0;
 		cSwitchInfo[iii].switchvalue	=	0.0;
+		cSwitchInfo[iii].canWrite		=	true;
 	}
 
 
@@ -116,11 +120,14 @@ int		iii;
 		PrintIPaddressToString(cDeviceAddress.sin_addr.s_addr, ipString);
 		sprintf(lineBuff, "%s:%d/%d", ipString, cPort, cAlpacaDevNum);
 		SetWindowIPaddrInfo(lineBuff, true);
+
+		AlpacaSetConnected("switch", true);
 	}
+
+#ifdef _USE_BACKGROUND_THREAD_
+	StartBackgroundThread();
+#endif // _USE_BACKGROUND_THREAD_
 }
-
-
-
 
 //**************************************************************************************
 // Destructor
@@ -192,7 +199,7 @@ bool		needToUpdate;
 	if (cReadStartup)
 	{
 		AlpacaGetStartupData();
-		AlpacaGetCommonProperties("switch");
+		AlpacaGetCommonProperties_OneAAT("switch");
 		cReadStartup	=	false;
 	}
 
@@ -219,14 +226,16 @@ bool		needToUpdate;
 			validData	=	AlpacaGetStatus();
 			if (validData == false)
 			{
-				CONSOLE_DEBUG("Failed to get data")
+				CONSOLE_DEBUG("Failed to get data");
 			}
+
+			UpdateConnectedIndicator(kTab_Switch,		kSwitchBox_Connected);
 		}
 	}
 }
 
 //*****************************************************************************
-void	ControllerSwitch::AlpacaProcessSupportedActions(const char	*deviceType,
+void	ControllerSwitch::AlpacaProcessSupportedActions(const char	*deviceTypeStr,
 														const int	deviveNum,
 														const char	*valueString)
 {
@@ -253,6 +262,7 @@ char			dataString[128];
 int				jjj;
 int				switchNum;
 double			myDoubleValue;
+bool			myCanWriteFlag;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -274,14 +284,13 @@ double			myDoubleValue;
 		SetWidgetText(kTab_Switch, kSwitchBox_AlpacaDrvrVersion, alpacaString);
 	}
 
-
-
 	//*	Start by getting the switch names and descriptions
 	switchNum	=	0;
+	CONSOLE_DEBUG_W_NUM("cMaxSwitch\t=",	cMaxSwitch);
 	while (switchNum < cMaxSwitch)
 	{
 //		CONSOLE_DEBUG(__FUNCTION__);
-		//-------------------------------------------------------------------------------
+		//===============================================================================
 		//*	get the switch name
 		SJP_Init(&jsonParser);
 		sprintf(alpacaString,	"/api/v1/switch/%d/getswitchname?Id=%d", cAlpacaDevNum, switchNum);
@@ -311,11 +320,11 @@ double			myDoubleValue;
 		//*	get the switch description
 		SJP_Init(&jsonParser);
 		sprintf(alpacaString,	"/api/v1/switch/%d/getswitchdescription?Id=%d", cAlpacaDevNum, switchNum);
-		sprintf(dataString,		"Id=%d", switchNum);
+//		sprintf(dataString,		"Id=%d", switchNum);
 		validData	=	GetJsonResponse(	&cDeviceAddress,
 											cPort,
 											alpacaString,
-											dataString,
+											NULL,
 											&jsonParser);
 		if (validData)
 		{
@@ -333,6 +342,7 @@ double			myDoubleValue;
 		}
 
 		//===============================================================================
+		//*	Get the minimum switch value
 		sprintf(dataString,		"Id=%d", switchNum);
 		validData	=	AlpacaGetDoubleValue(	"switch", "minswitchvalue",	dataString,	&myDoubleValue);
 		if (validData)
@@ -341,6 +351,7 @@ double			myDoubleValue;
 		}
 
 		//===============================================================================
+		//*	Get the maximum switch value
 		sprintf(dataString,		"Id=%d", switchNum);
 		validData	=	AlpacaGetDoubleValue(	"switch", "maxswitchvalue",	dataString,	&myDoubleValue);
 		if (validData)
@@ -348,8 +359,21 @@ double			myDoubleValue;
 			cSwitchInfo[switchNum].maxswitchvalue	=	myDoubleValue;
 		}
 
+		//===============================================================================
+		//*	Get the canwrite value
+		sprintf(alpacaString,	"canwrite?Id=%d", switchNum);
+		validData	=	AlpacaGetBooleanValue(	"switch", alpacaString,	NULL,	&myCanWriteFlag);
+		if (validData)
+		{
+			cSwitchInfo[switchNum].canWrite	=	myCanWriteFlag;
+		//	CONSOLE_DEBUG_W_NUM("switchNum\t\t=",		switchNum);
+			CONSOLE_DEBUG_W_NUM("myCanWriteFlag\t=",	myCanWriteFlag);
+		}
+
 		switchNum++;
 	}
+
+//	CONSOLE_ABORT(__FUNCTION__);
 	return(validData);
 }
 
@@ -377,6 +401,7 @@ int				boxNumber;
 
 	if (cHas_readall)
 	{
+		//*	use readall to get the startup data
 		validData	=	AlpacaGetStatus_ReadAll("switch", cAlpacaDevNum);
 	}
 	else
@@ -413,6 +438,10 @@ int				boxNumber;
 									cSwitchInfo[jjj].minswitchvalue,
 									cSwitchInfo[jjj].maxswitchvalue);
 		}
+
+		//*	check to see if we can write to the switch
+		boxNumber	=	kSwitchBox_State01 + (kBoxesPerSwitch * jjj);
+		SetWidgetValid(kTab_Switch, boxNumber++, cSwitchInfo[jjj].canWrite);
 	}
 	cLastUpdate_milliSecs	=	millis();
 
@@ -431,14 +460,17 @@ int				jjj;
 int				switchNum;
 int				boxNumber;
 int				myFailureCount;
+int				switchValue;
 
 	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_NUM("cMaxSwitch\t=", cMaxSwitch);
 
 	//*	Get switch status
 	myFailureCount	=	0;
 	switchNum		=	0;
 	while ((switchNum < kMaxSwitches) && (switchNum < cMaxSwitch))
 	{
+		CONSOLE_DEBUG_W_NUM("working on switch #", switchNum);
 		//-------------------------------------------------------------------------------
 		//*	get the switch state
 		SJP_Init(&jsonParser);
@@ -482,6 +514,41 @@ int				myFailureCount;
 			myFailureCount++;
 		}
 
+		//-------------------------------------------------------------------------------
+		//*	get the switch value
+		SJP_Init(&jsonParser);
+		sprintf(alpacaString,	"/api/v1/switch/%d/getswitchvalue?Id=%d", cAlpacaDevNum, switchNum);
+		validData	=	GetJsonResponse(	&cDeviceAddress,
+											cPort,
+											alpacaString,
+											NULL,
+											&jsonParser);
+		if (validData)
+		{
+			for (jjj=0; jjj<jsonParser.tokenCount_Data; jjj++)
+			{
+				if (strcasecmp(jsonParser.dataList[jjj].keyword, "VALUE") == 0)
+				{
+					boxNumber	=	kSwitchBox_Value01 + (kBoxesPerSwitch * switchNum);
+
+					if (boxNumber >= kSwitchBox_LastCmdString)
+					{
+						CONSOLE_DEBUG_W_NUM("switchNum\t=", switchNum);
+						CONSOLE_DEBUG_W_NUM("boxNumber\t=", boxNumber);
+						CONSOLE_ABORT(__FUNCTION__);
+					}
+					switchValue	=	atoi(jsonParser.dataList[jjj].valueString);
+					SetWidgetNumber(kTab_Switch, boxNumber, switchValue);
+				}
+			}
+		}
+		else
+		{
+			CONSOLE_DEBUG("Error from GetJsonResponse");
+			cReadFailureCnt++;
+			myFailureCount++;
+		}
+
 		switchNum++;
 	}
 	if (myFailureCount < 2)
@@ -492,6 +559,7 @@ int				myFailureCount;
 	{
 		validData	=	false;
 	}
+	CONSOLE_DEBUG(__FUNCTION__);
 	return(validData);
 }
 
@@ -500,7 +568,7 @@ bool	ControllerSwitch::AlpacaGetStatus(void)
 {
 bool			validData;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	if (cHas_readall)
 	{
 		validData	=	AlpacaGetStatus_ReadAll("switch", cAlpacaDevNum);
@@ -508,6 +576,9 @@ bool			validData;
 	else
 	{
 		validData	=	AlpacaGetStatus_OneAAT();
+//		CONSOLE_DEBUG(__FUNCTION__);
+		validData	=	AlpacaGetCommonConnectedState("switch");
+//		CONSOLE_DEBUG(__FUNCTION__);
 	}
 
 	if (validData)
@@ -535,18 +606,23 @@ bool			validData;
 }
 
 //*****************************************************************************
-void	ControllerSwitch::AlpacaProcessReadAll(	const char	*deviceType,
+void	ControllerSwitch::AlpacaProcessReadAll(	const char	*deviceTypeStr,
 												const int	deviceNum,
 												const char	*keywordString,
 												const char	*valueString)
 {
 int			switchNum;
 int			boxNumber;
-double		switchValue;
+double		switchValueDbl;
+int			switchValueInt;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 //	CONSOLE_DEBUG_W_STR(keywordString, valueString);
-	if (strcasecmp(keywordString, "version") == 0)
+	if (strcasecmp(keywordString, "connected") == 0)
+	{
+		cCommonProp.Connected	=  IsTrueFalse(valueString);
+	}
+	else if (strcasecmp(keywordString, "version") == 0)
 	{
 		//*	"version": "AlpacaPi - V0.2.2-beta build #32",
 		strcpy(cAlpacaVersionString, valueString);
@@ -606,9 +682,13 @@ double		switchValue;
 		switchNum	=	atoi(&keywordString[15]);
 		if ((switchNum >= 0) && (switchNum < kMaxSwitches))
 		{
-			boxNumber	=	kSwitchBox_Description01 + (kBoxesPerSwitch * switchNum);
-			switchValue	=	atof(valueString);
-			SetWidgetSliderValue(kTab_Switch, boxNumber, switchValue);
+			boxNumber		=	kSwitchBox_Value01 + (kBoxesPerSwitch * switchNum);
+			switchValueInt	=	atoi(valueString);
+			switchValueDbl	=	atof(valueString);
+			SetWidgetNumber(kTab_Switch, boxNumber, switchValueInt);
+
+			boxNumber		=	kSwitchBox_Description01 + (kBoxesPerSwitch * switchNum);
+			SetWidgetSliderValue(kTab_Switch, boxNumber, switchValueDbl);
 		}
 		else
 		{
@@ -626,6 +706,16 @@ double		switchValue;
 		{
 			CONSOLE_DEBUG_W_NUM("Switch number out of range\t=", switchNum);
 		}
+	}
+	else if (strncasecmp(keywordString, "canwrite", 8) == 0)
+	{
+	}
+	else
+	{
+		AlpacaProcessReadAll_Common(	deviceTypeStr,
+										deviceNum,
+										keywordString,
+										valueString);
 	}
 }
 

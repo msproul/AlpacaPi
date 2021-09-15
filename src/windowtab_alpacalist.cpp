@@ -216,7 +216,7 @@ int		ii;
 }
 
 //*****************************************************************************
-void	GetInterfaceVersion(TYPE_REMOTE_DEV *remoteDevice)
+bool	GetInterfaceVersion(TYPE_REMOTE_DEV *remoteDevice)
 {
 SJP_Parser_t	jsonParser;
 bool			validData;
@@ -267,6 +267,7 @@ int				alpacaErrorCode;
 	{
 		CONSOLE_DEBUG("Data not valid");
 	}
+	return(validData);
 }
 
 
@@ -274,15 +275,40 @@ int				alpacaErrorCode;
 void	WindowTabAlpacaList::RunBackgroundTasks(void)
 {
 int		iii;
+bool	interfaceVersOK;
 
+//	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_ABORT(__FUNCTION__);
 
+	//*	step through all of the devices and see if they needed updating
+	//*	only do one each time we get called so we dont use up all the CPU
 	for (iii=0; iii<cAlpacaDevCnt; iii++)
 	{
 		if (cRemoteDeviceList[iii].validEntry)
 		{
+//			CONSOLE_DEBUG("Valid Entry");
 			if (cRemoteDeviceList[iii].interfaceVersion == 0)
 			{
-				GetInterfaceVersion(&cRemoteDeviceList[iii]);
+//				CONSOLE_DEBUG("interfaceVersion == 0");
+				if (cRemoteDeviceList[iii].onLine)
+				{
+//					CONSOLE_DEBUG("onLine");
+					//*	get the interface version number
+					interfaceVersOK	=	GetInterfaceVersion(&cRemoteDeviceList[iii]);
+					if (interfaceVersOK)
+					{
+						//*	all OK
+						cRemoteDeviceList[iii].notSeenCounter	=	0;
+						cRemoteDeviceList[iii].onLine			=	true;
+					}
+					else
+					{
+						//*	failed
+						CONSOLE_DEBUG("failed to get interface version");
+						cRemoteDeviceList[iii].notSeenCounter++;
+						cRemoteDeviceList[iii].onLine			=	false;
+					}
+				}
 				break;
 			}
 		}
@@ -537,6 +563,7 @@ int		foundIndex;
 				{
 					cRemoteDeviceList[cAlpacaDevCnt]			=	gRemoteList[iii];
 					cRemoteDeviceList[cAlpacaDevCnt].validEntry	=	true;
+					cRemoteDeviceList[cAlpacaDevCnt].onLine		=	true;
 
 					cAlpacaDevCnt++;
 				}

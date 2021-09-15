@@ -30,8 +30,9 @@
 //*	Jan 12,	2021	<MLS> Added AlpacaGetStringValue()
 //*	Jan 30,	2021	<MLS> Added AlpacaGetImageArray()
 //*	Jan 31,	2021	<MLS> Finished debugging AlpacaGetImageArray()
-//*	Feb  9,	2021	<MLS> Added AlpacaGetCommonProperties()
+//*	Feb  9,	2021	<MLS> Added AlpacaGetCommonProperties_OneAAT()
 //*	Feb 13,	2021	<MLS> Added UpdateCommonProperties()
+//*	Sep  8,	2021	<MLS> Added AlpacaSetConnected()
 //*****************************************************************************
 
 
@@ -50,11 +51,51 @@
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
 
+#include	"alpaca_defs.h"
+#include	"helper_functions.h"
 #include	"widget.h"
 #include	"controller.h"
 
 static int	gClientID				=	1;
 static int	gClientTransactionID	=	1;
+
+
+//*****************************************************************************
+//curl -X PUT "https://virtserver.swaggerhub.com/ASCOMInitiative/api/v1/telescope/0/connected"
+//		-H  "accept: application/json"
+//		-H  "Content-Type: application/x-www-form-urlencoded"
+//		-d "Connected=true&ClientID=11&ClientTransactionID=22"
+//*****************************************************************************
+bool	Controller::AlpacaSetConnected(const char *deviceTypeStr, const bool newConnectedState)
+{
+bool			validData;
+char			dataString[128];
+SJP_Parser_t	jsonParser;
+
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, alpacaCmd);
+
+
+	CONSOLE_DEBUG(__FUNCTION__);
+	sprintf(dataString,		"Connected=%s", (newConnectedState ? "true" : "false"));
+	CONSOLE_DEBUG_W_STR("deviceTypeStr\t=", deviceTypeStr);
+	CONSOLE_DEBUG_W_STR("dataString\t=", dataString);
+	validData	=	AlpacaSendPutCmdwResponse(	deviceTypeStr,
+												"connected",
+												dataString,
+												&jsonParser);
+
+	if (validData == false)
+	{
+		CONSOLE_DEBUG("CONNECT failed");
+	}
+//	SJP_DumpJsonData(&jsonParser);
+//	CONSOLE_ABORT(__FUNCTION__);
+
+	return(validData);
+}
+
+
+
 
 //*****************************************************************************
 //*	this should be over-ridden
@@ -64,56 +105,183 @@ bool	Controller::AlpacaGetStartupData(void)
 	CONSOLE_ABORT(__FUNCTION__);
 }
 
+
 //*****************************************************************************
-bool	Controller::AlpacaGetCommonProperties(const char *deviceTypeStr)
+bool	Controller::AlpacaGetCommonConnectedState(const char *deviceTypeStr)
+{
+bool	validData;
+bool	myConnectedFlag;
+bool	prevConnectedState;
+bool	returnedValid;
+
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, deviceTypeStr);
+	validData		=	false;
+
+	//-----------------------------------------------------------------------------------------
+//	CONSOLE_DEBUG_W_STR("deviceTypeStr=", deviceTypeStr);
+	validData	=	AlpacaGetBooleanValue(	deviceTypeStr,
+											"connected",
+											NULL,
+											&myConnectedFlag,
+											&returnedValid,
+											true);
+	if (validData)
+	{
+	//	CONSOLE_DEBUG(__FUNCTION__);
+		//*	keep track of the previous state
+		prevConnectedState		=	cCommonProp.Connected;
+		cCommonProp.Connected	=	myConnectedFlag;
+		CONSOLE_DEBUG_W_NUM("cCommonProp.Connected\t=", cCommonProp.Connected);
+		if (cCommonProp.Connected && (prevConnectedState == false))
+		{
+			//*	if we are going from un-connected to connected, read the start up data
+			cReadStartup	=	true;
+		}
+	}
+	else
+	{
+		CONSOLE_DEBUG("Failed to get connected status");
+	}
+//	CONSOLE_DEBUG(__FUNCTION__);
+	return(validData);
+}
+
+//*****************************************************************************
+void	Controller::UpdateConnectedIndicator(const int tabNum, const int widgetNum)
+{
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+	if (cCommonProp.Connected)
+	{
+		SetWidgetText(		tabNum,	widgetNum,	"C");
+		SetWidgetTextColor(	tabNum,	widgetNum,	CV_RGB(0,	255,	0));
+	}
+	else
+	{
+		SetWidgetText(		tabNum,	widgetNum,	"NC");
+		SetWidgetTextColor(	tabNum,	widgetNum,	CV_RGB(255,	0,	0));
+	}
+}
+
+//*****************************************************************************
+bool	Controller::AlpacaGetCommonProperties_OneAAT(const char *deviceTypeStr)
 {
 char	returnString[256];
 bool	validData;
+bool	myOnLineFlag;
+bool	myConnectedFlag;
 int		validCnt;
 
 	CONSOLE_DEBUG(__FUNCTION__);
-	validCnt	=	0;
+	validCnt		=	0;
+	myOnLineFlag	=	true;	//*	assume it is on line
+	validData		=	false;
+
 	//-----------------------------------------------------------------------------------------
-	validData	=	AlpacaGetStringValue(	deviceTypeStr, "description",	NULL,	returnString);
-	if (validData)
+	if (myOnLineFlag)
 	{
-		strcpy(cCommonProp.Description,	returnString);
-		validCnt++;
+		CONSOLE_DEBUG_W_STR("deviceTypeStr=", deviceTypeStr);
+		validData	=	AlpacaGetBooleanValue(	deviceTypeStr, "connected",	NULL,	&myConnectedFlag);
+		if (validData)
+		{
+			cCommonProp.Connected	=	myConnectedFlag;
+			validCnt++;
+			CONSOLE_DEBUG_W_NUM("cCommonProp.Connected\t=", cCommonProp.Connected);
+		}
+		else
+		{
+			CONSOLE_ABORT(__FUNCTION__);
+			myOnLineFlag	=	false;
+		}
 	}
+
 	//-----------------------------------------------------------------------------------------
-	validData	=	AlpacaGetStringValue(	deviceTypeStr, "driverinfo",	NULL,	returnString);
-	if (validData)
+	if (myOnLineFlag)
 	{
-		strcpy(cCommonProp.DriverInfo,	returnString);
-		validCnt++;
+		validData	=	AlpacaGetStringValue(	deviceTypeStr, "description",	NULL,	returnString);
+		if (validData)
+		{
+			strcpy(cCommonProp.Description,	returnString);
+			validCnt++;
+		}
+		else
+		{
+			myOnLineFlag	=	false;
+		}
 	}
+
 	//-----------------------------------------------------------------------------------------
-	validData	=	AlpacaGetStringValue(	deviceTypeStr, "driverinfo",	NULL,	returnString);
-	if (validData)
+	if (myOnLineFlag)
 	{
-		strcpy(cCommonProp.DriverInfo,	returnString);
-		validCnt++;
+		validData	=	AlpacaGetStringValue(	deviceTypeStr, "driverinfo",	NULL,	returnString);
+		if (validData)
+		{
+			strcpy(cCommonProp.DriverInfo,	returnString);
+			validCnt++;
+		}
+		else
+		{
+			myOnLineFlag	=	false;
+		}
 	}
+
 	//-----------------------------------------------------------------------------------------
-	validData	=	AlpacaGetStringValue(	deviceTypeStr, "interfaceversion",	NULL,	returnString);
-	if (validData)
+	if (myOnLineFlag)
 	{
-		cCommonProp.InterfaceVersion	=	atoi(returnString);
-		validCnt++;
+		validData	=	AlpacaGetStringValue(	deviceTypeStr, "driverinfo",	NULL,	returnString);
+		if (validData)
+		{
+			strcpy(cCommonProp.DriverInfo,	returnString);
+			validCnt++;
+		}
+		else
+		{
+			myOnLineFlag	=	false;
+		}
 	}
+
 	//-----------------------------------------------------------------------------------------
-	validData	=	AlpacaGetStringValue(	deviceTypeStr, "driverversion",	NULL,	returnString);
-	if (validData)
+	if (myOnLineFlag)
 	{
-		strcpy(cCommonProp.DriverVersion,	returnString);
-		validCnt++;
+		validData	=	AlpacaGetStringValue(	deviceTypeStr, "interfaceversion",	NULL,	returnString);
+		if (validData)
+		{
+			cCommonProp.InterfaceVersion	=	atoi(returnString);
+			validCnt++;
+		}
+		else
+		{
+			myOnLineFlag	=	false;
+		}
 	}
+
 	//-----------------------------------------------------------------------------------------
-	validData	=	AlpacaGetStringValue(	deviceTypeStr, "name",	NULL,	returnString);
-	if (validData)
+	if (myOnLineFlag)
 	{
-		strcpy(cCommonProp.Name,	returnString);
-		validCnt++;
+		validData	=	AlpacaGetStringValue(	deviceTypeStr, "driverversion",	NULL,	returnString);
+		if (validData)
+		{
+			strcpy(cCommonProp.DriverVersion,	returnString);
+			validCnt++;
+		}
+		else
+		{
+			myOnLineFlag	=	false;
+		}
+	}
+
+	//-----------------------------------------------------------------------------------------
+	if (myOnLineFlag)
+	{
+		validData	=	AlpacaGetStringValue(	deviceTypeStr, "name",	NULL,	returnString);
+		if (validData)
+		{
+			strcpy(cCommonProp.Name,	returnString);
+			validCnt++;
+		}
+		else
+		{
+			myOnLineFlag	=	false;
+		}
 	}
 	CONSOLE_DEBUG_W_NUM("validCnt\t=", validCnt);
 
@@ -142,7 +310,7 @@ bool			validData;
 char			alpacaString[128];
 int				jjj;
 
-#if 0
+#if 1
 char			ipAddrStr[32];
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, deviceTypeStr);
@@ -156,24 +324,37 @@ char			ipAddrStr[32];
 	//===============================================================
 	//*	get supportedactions
 	SJP_Init(&jsonParser);
+//	CONSOLE_DEBUG("Dumping EMPTY Json parser");
+//	SJP_DumpJsonData(&jsonParser);
 //	CONSOLE_DEBUG_W_NUM("tokenCount_Data\t=", jsonParser.tokenCount_Data);
 	sprintf(alpacaString,	"/api/v1/%s/%d/supportedactions", deviceTypeStr, deviceNum);
-//	CONSOLE_DEBUG_W_STR("alpacaString\t=", alpacaString);
+//	CONSOLE_DEBUG_W_STR("Calling GetJsonResponse() with:", alpacaString);
 	validData	=	GetJsonResponse(	deviceAddress,
 										devicePort,
 										alpacaString,
 										NULL,
 										&jsonParser);
+//	CONSOLE_DEBUG("Returned from GetJsonResponse");
 	if (validData)
 	{
-		CONSOLE_DEBUG("We have valid data");
+//		CONSOLE_DEBUG("We have valid data");
+//		CONSOLE_DEBUG_W_NUM("tokenCount_Data\t=", jsonParser.tokenCount_Data);
+//		if (jsonParser.tokenCount_Data > 90)
+//		{
+//			CONSOLE_DEBUG("Dumping FULL Json parser");
+//		}
+//		CONSOLE_DEBUG("Dumping FULL Json parser");
+//		SJP_DumpJsonData(&jsonParser);
 		cHas_readall	=	false;
 		jjj	=	0;
-		while (jjj<jsonParser.tokenCount_Data)
+		while (jjj < jsonParser.tokenCount_Data)
 		{
-//			CONSOLE_DEBUG_W_NUM("jjj\t=", jjj);
-//			CONSOLE_DEBUG_W_2STR("kw:val=", jsonParser.dataList[jjj].keyword,
-//											jsonParser.dataList[jjj].valueString);
+//			if (strcmp(deviceTypeStr, "dome") == 0)
+//			{
+//				CONSOLE_DEBUG_W_NUM("jjj\t=", jjj);
+//				CONSOLE_DEBUG_W_2STR("kw:val=", jsonParser.dataList[jjj].keyword,
+//												jsonParser.dataList[jjj].valueString);
+//			}
 			if (strcasecmp(jsonParser.dataList[jjj].keyword, "ARRAY") == 0)
 			{
 				jjj++;	//*	skip over the ARRAY entry
@@ -248,6 +429,7 @@ char			alpacaString[128];
 int				jjj;
 
 //	CONSOLE_DEBUG(cWindowName);
+	CONSOLE_DEBUG_W_STR("Requesting 'readall' for", deviceTypeStr);
 
 	SJP_Init(&jsonParser);
 	sprintf(alpacaString,	"/api/v1/%s/%d/%s", deviceTypeStr, deviceNum, "readall");
@@ -299,6 +481,47 @@ void	Controller::AlpacaProcessReadAll(	const char	*deviceTypeStr,
 }
 
 //*****************************************************************************
+void	Controller::AlpacaProcessReadAll_Common(const char	*deviceTypeStr,
+												const int	deviceNum,
+												const char	*keywordString,
+												const char	*valueString)
+{
+//	CONSOLE_DEBUG(cWindowName);
+//	CONSOLE_DEBUG_W_2STR("json=",	keywordString, valueString);
+	//=================================================================================
+	if (strcasecmp(keywordString, "connected") == 0)
+	{
+		cCommonProp.Connected	=	IsTrueFalse(valueString);
+	}
+	//=================================================================================
+	else if (strcasecmp(keywordString, "description") == 0)
+	{
+		strcpy(cCommonProp.Description,	valueString);
+	}
+	//=================================================================================
+	else if (strcasecmp(keywordString, "driverinfo") == 0)
+	{
+		strcpy(cCommonProp.DriverInfo,	valueString);
+	}
+	//=================================================================================
+	else if (strcasecmp(keywordString, "driverversion") == 0)
+	{
+		strcpy(cCommonProp.DriverVersion,	valueString);
+	}
+	//=================================================================================
+	else if (strcasecmp(keywordString, "interfaceversion") == 0)
+	{
+		cCommonProp.InterfaceVersion	=	atoi(valueString);
+	}
+	//=================================================================================
+	else if (strcasecmp(keywordString, "name") == 0)
+	{
+		strcpy(cCommonProp.Name,	valueString);
+	}
+}
+
+
+//*****************************************************************************
 bool	Controller::AlpacaSendPutCmdwResponse(	sockaddr_in		*deviceAddress,
 												int				devicePort,
 												const char		*alpacaDevice,
@@ -346,7 +569,11 @@ int			dataStrLen;
 										alpacaString,
 										myDataString,
 										jsonParser);
-
+		if (sucessFlag == false)
+		{
+			CONSOLE_DEBUG_W_STR("SendPutCommand Failed!!!", alpacaString);
+			CONSOLE_DEBUG_W_STR("cLastAlpacaErrStr\t=", cLastAlpacaErrStr);
+		}
 		cLastAlpacaErrNum	=	AlpacaCheckForErrors(jsonParser, cLastAlpacaErrStr, true);
 
 
@@ -759,7 +986,8 @@ bool	Controller::AlpacaGetBooleanValue(	const char	*alpacaDevice,
 											const char	*alpacaCmd,
 											const char	*dataString,
 											bool		*returnValue,
-											bool		*rtnValidData)
+											bool		*rtnValidData,
+											bool		printDebug)
 {
 SJP_Parser_t	jsonParser;
 bool			validData;
@@ -767,10 +995,19 @@ char			alpacaString[128];
 int				jjj;
 bool			myBooleanValue;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	if (printDebug)
+	{
+		CONSOLE_DEBUG_W_2STR(__FUNCTION__, alpacaDevice, alpacaCmd);
+	}
 
 	SJP_Init(&jsonParser);
 	sprintf(alpacaString,	"/api/v1/%s/%d/%s", alpacaDevice, cAlpacaDevNum, alpacaCmd);
+
+//	if (strcmp(alpacaDevice, "switch") == 0)
+//	{
+//		CONSOLE_DEBUG_W_2STR("alpacaString\t=", alpacaString, dataString);
+//	}
+
 	validData	=	GetJsonResponse(	&cDeviceAddress,
 										cPort,
 										alpacaString,
@@ -780,8 +1017,12 @@ bool			myBooleanValue;
 	{
 		for (jjj=0; jjj<jsonParser.tokenCount_Data; jjj++)
 		{
-//			CONSOLE_DEBUG_W_2STR("json=",	jsonParser.dataList[jjj].keyword,
-//											jsonParser.dataList[jjj].valueString);
+			//*	is debugging enabled
+			if (printDebug)
+			{
+				CONSOLE_DEBUG_W_2STR("json=",	jsonParser.dataList[jjj].keyword,
+												jsonParser.dataList[jjj].valueString);
+			}
 
 			if (strcasecmp(jsonParser.dataList[jjj].keyword, "VALUE") == 0)
 			{
@@ -804,6 +1045,7 @@ bool			myBooleanValue;
 	}
 	else
 	{
+		CONSOLE_DEBUG_W_2STR("Failed", alpacaString, dataString);
 		cReadFailureCnt++;
 	}
 	return(validData);

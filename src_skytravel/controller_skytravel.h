@@ -56,6 +56,9 @@ extern	double	gTelescopeRA_Radians;
 extern	double	gTelescopeDecl_Degrees;
 extern	double	gTelescopeDecl_Radians;
 extern	bool	gDashedLines;
+extern	int		gLineWidth_Constellations;
+extern	int		gLineWidth_ConstOutlines;
+extern	int		gLineWidth_GridLines;
 
 //**************************************************************************************
 typedef struct
@@ -110,7 +113,8 @@ class ControllerSkytravel: public Controller
 														const int	deviveNum,
 														const char	*valueString);
 
-				void	AlpacaProcessSupportedActions_Dome(const int deviveNum, const char *valueString);
+				void	AlpacaProcessSupportedActions_Camera(	const int deviveNum, const char *valueString);
+				void	AlpacaProcessSupportedActions_Dome(		const int deviveNum, const char *valueString);
 				void	AlpacaProcessSupportedActions_Telescope(const int deviveNum, const char *valueString);
 				void	AlpacaProcessReadAll_Dome(		const int	deviceNum,
 														const char	*keywordString,
@@ -145,7 +149,7 @@ class ControllerSkytravel: public Controller
 				bool				LookForIPaddress(void);
 				void				SetDomeIPaddress(TYPE_REMOTE_DEV *remoteDomeDevice);
 				void				SetTelescopeIPaddress(TYPE_REMOTE_DEV *remoteDomeDevice);
-				bool				AlpacaGetDomeStatus(void);
+				bool				AlpacaGetStatus_Dome(void);
 
 				uint32_t			cUpdateDelta;
 				bool				cDomeAddressValid;

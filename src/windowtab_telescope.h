@@ -15,7 +15,7 @@ enum
 {
 	kTelescope_Title	=	0,
 
-//	kTelescope_Logo,
+	kTelescope_Connected,
 
 	kTelescope_BtnUp,
 	kTelescope_BtnDown,

@@ -20,6 +20,8 @@
 enum
 {
 	kCameraBox_Title	=	0,
+	kCameraBox_Connected,
+
 	kCameraBox_Size,
 	kCameraBox_Logo,
 

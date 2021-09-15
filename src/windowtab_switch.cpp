@@ -29,6 +29,7 @@
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
 
+#include	"windowtab.h"
 #include	"windowtab_switch.h"
 #include	"controller_switch.h"
 
@@ -69,6 +70,8 @@ int		nameLeft;
 int		nameWidth;
 int		descLeft;
 int		descWidth;
+int		valueLeft;
+int		valueWidth;
 int		stateLeft;
 int		iii;
 
@@ -81,6 +84,10 @@ int		iii;
 	SetWidget(kSwitchBox_Title,		0,			yLoc,		cWidth,		cTitleHeight);
 	SetWidgetText(kSwitchBox_Title, "AlpacaPi Switches");
 	SetBGcolorFromWindowName(kSwitchBox_Title);
+
+	//*	setup the connected indicator
+	SetUpConnectedIndicator(kSwitchBox_Connected, yLoc);
+
 	yLoc			+=	cTitleHeight;
 	yLoc			+=	2;
 
@@ -94,9 +101,11 @@ int		iii;
 	nameLeft		=	boxLeft + numberWidth + 2;
 
 	descLeft		=	nameLeft + nameWidth + 2;
-	descWidth		=	250;
+	descWidth		=	265;
 
-	stateLeft		=	descLeft + descWidth  + 2;
+	valueLeft		=	descLeft + descWidth  + 2;
+	valueWidth		=	btnWidth * 2;
+	stateLeft		=	valueLeft + valueWidth  + 2;
 
 
 	switchNumber	=	1;
@@ -115,16 +124,25 @@ int		iii;
 
 		//*	now the description
 		SetWidget(				(boxNumber + 2),	descLeft,		yLoc,		descWidth,		cBtnHeight);
-		SetWidgetFont(			(boxNumber + 2),	kFont_Medium);
+//		SetWidgetType(			(boxNumber + 3),	kWidgetType_MultiLineText);
+		SetWidgetFont(			(boxNumber + 2),	kFont_Small);
 		SetWidgetJustification(	(boxNumber + 2),	kJustification_Left);
 		SetWidgetText(			(boxNumber + 2),	"-----------");
 
-		//*	and the state
-		SetWidget(				(boxNumber + 3),	stateLeft,		yLoc,		btnWidth,		cBtnHeight);
-		SetWidgetType(			(boxNumber + 3),	kWidgetType_Button);
+		//*	and the Value
+		SetWidget(				(boxNumber + 3),	valueLeft,		yLoc,		valueWidth,		cBtnHeight);
+		SetWidgetType(			(boxNumber + 3),	kWidgetType_Text);
 		SetWidgetFont(			(boxNumber + 3),	kFont_Medium);
-		SetWidgetText(			(boxNumber + 3),	"OFF");
-		SetWidgetBGColor(		(boxNumber + 3),	CV_RGB(255, 255, 255));
+		SetWidgetText(			(boxNumber + 3),	"--");
+//		SetWidgetBGColor(		(boxNumber + 3),	CV_RGB(255, 255, 255));
+
+
+		//*	and the state
+		SetWidget(				(boxNumber + 4),	stateLeft,		yLoc,		btnWidth,		cBtnHeight);
+		SetWidgetType(			(boxNumber + 4),	kWidgetType_Button);
+		SetWidgetFont(			(boxNumber + 4),	kFont_Medium);
+		SetWidgetText(			(boxNumber + 4),	"OFF");
+		SetWidgetBGColor(		(boxNumber + 4),	CV_RGB(255, 255, 255));
 
 		boxNumber		+=	kBoxesPerSwitch;
 		yLoc			+=	cBtnHeight;
@@ -149,8 +167,6 @@ int		iii;
 	SetWidgetText(		kSwitchBox_AllOff,	"ALL OFF");
 	SetWidgetBGColor(	kSwitchBox_AllOff,	CV_RGB(255, 255, 255));
 	SetWidgetValid(		kSwitchBox_AllOff, true);
-
-
 
 	cFirstRead	=	true;
 
@@ -250,6 +266,7 @@ ControllerSwitch	*myControllerSwitch;
 void	WindowTabSwitch::SetActiveSwitchCount(const int validSwitches)
 {
 int		iii;
+int		jjj;
 int		boxNum;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
@@ -259,10 +276,10 @@ int		boxNum;
 	boxNum				=	kSwitchBox_Switch01;
 	for (iii=0; iii<validSwitches; iii++)
 	{
-		SetWidgetValid(boxNum++, true);
-		SetWidgetValid(boxNum++, true);
-		SetWidgetValid(boxNum++, true);
-		SetWidgetValid(boxNum++, true);
+		for (jjj=0; jjj<kBoxesPerSwitch; jjj++)
+		{
+			SetWidgetValid(boxNum++, true);
+		}
 	}
 	CONSOLE_DEBUG(__FUNCTION__);
 }

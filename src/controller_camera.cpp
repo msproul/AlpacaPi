@@ -52,6 +52,7 @@
 //*	Feb 18,	2021	<MLS> Added Added AlpacaGetStatus_Gain() & AlpacaGetStatus_Exposure()
 //*	Mar 27,	2021	<MLS> Added UpdateCameraOffset()
 //*	Mar 27,	2021	<MLS> Added SetOffset() & BumpOffset()
+//*	Sep  4,	2021	<MLS> Added AlpacaGetStartupData_OneAAT()
 //*****************************************************************************
 //*	Jan  1,	2121	<TODO> control key for different step size.
 //*	Jan  1,	2121	<TODO> work on fits view to handle color fits images
@@ -108,7 +109,7 @@ ControllerCamera::ControllerCamera(	const char			*argWindowName,
 									const int			xSize,
 									const int			ySize)
 
-	:Controller(argWindowName, xSize,  ySize)
+	:Controller(argWindowName, xSize,  ySize, kNoBackgroundTask)
 {
 int		iii;
 
@@ -181,11 +182,20 @@ int		iii;
 
 		strcpy(cAlpacaDeviceTypeStr,	alpacaDevice->deviceTypeStr);
 		strcpy(cAlpacaDeviceNameStr,	alpacaDevice->deviceNameStr);
+
+		AlpacaSetConnected("camera", true);
+		GetConfiguredDevices();
+	}
+	else
+	{
+		CONSOLE_ABORT(__FUNCTION__);
 	}
 
-	GetConfiguredDevices();
+#ifdef _USE_BACKGROUND_THREAD_
+	StartBackgroundThread();
+#endif // _USE_BACKGROUND_THREAD_
 
-	CONSOLE_DEBUG_W_STR("exit", cWindowName);
+//	CONSOLE_DEBUG_W_STR("exit", cWindowName);
 }
 
 //**************************************************************************************
@@ -310,27 +320,34 @@ uint32_t	currentMillis;
 uint32_t	deltaSeconds;
 bool		validData;
 bool		needToUpdate;
+bool		readStartUpOK;
 
+	if (cButtonClickInProgress)
+	{
+		return;
+	}
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 	if (cReadStartup)
 	{
-		CONSOLE_DEBUG_W_STR("cReadStartup", cWindowName);
+		CONSOLE_DEBUG_W_STR("cReadStartup == true", cWindowName);
 		//*	so the window shows up
 		HandleWindowUpdate();
 		cvWaitKey(60);
 
+
 		GetConfiguredDevices();
 
-		AlpacaGetStartupData();
-		if (cHas_FilterWheel)
+		readStartUpOK	=	AlpacaGetStartupData();
+		if (readStartUpOK)
 		{
-			AlpacaGetFilterWheelStartup();
+			cReadStartup	=	false;
+			if (cHas_FilterWheel)
+			{
+				AlpacaSetConnected("filterwheel", true);
+				AlpacaGetFilterWheelStartup();
+			}
 		}
-//		CONSOLE_DEBUG("Calling AlpacaGetCommonProperties(camera)");
-		AlpacaGetCommonProperties("camera");
-//		CONSOLE_DEBUG("Retured from AlpacaGetCommonProperties(camera)");
 
-		cReadStartup	=	false;
 	}
 
 	needToUpdate	=	false;
@@ -364,6 +381,7 @@ bool		needToUpdate;
 			{
 			//	CONSOLE_DEBUG("Failed to get data")
 			}
+			UpdateConnectedStatusIndicator();
 		}
 	}
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, "Exit");
@@ -489,11 +507,17 @@ int				jjj;
 			{
 				if (strcasecmp(jsonParser.dataList[jjj].valueString, "Filterwheel") == 0)
 				{
-				//	CONSOLE_DEBUG("FilterWheel - !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+					CONSOLE_DEBUG("FilterWheel - !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 					cHas_FilterWheel	=	true;
 				}
 			}
 		}
+	}
+	else
+	{
+		cReadFailureCnt++;
+		cOnLine	=	false;
+		SetWindowIPaddrInfo(NULL, cOnLine);
 	}
 }
 
@@ -501,9 +525,7 @@ int				jjj;
 
 
 //*****************************************************************************
-//*	this routine gets called one time to get the info on the camera that does not change
-//*****************************************************************************
-bool	ControllerCamera::AlpacaGetStartupData(void)
+bool	ControllerCamera::AlpacaGetStartupData_OneAAT(void)
 {
 SJP_Parser_t	jsonParser;
 bool			validData;
@@ -512,9 +534,144 @@ int				jjj;
 int				readOutModeIdx;
 
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+	validData	=	false;
 
-	CONSOLE_DEBUG("Timing Start----------------------");
-	SETUP_TIMING();
+	//*	get the camera description
+	if (cOnLine)
+	{
+		SJP_Init(&jsonParser);
+
+		CONSOLE_DEBUG_W_STR(__FUNCTION__, "description");
+		sprintf(alpacaString,	"/api/v1/camera/%d/description", cAlpacaDevNum);
+		validData	=	GetJsonResponse(	&cDeviceAddress,
+											cPort,
+											alpacaString,
+											NULL,
+											&jsonParser);
+		if (validData)
+		{
+			CONSOLE_DEBUG_W_STR(__FUNCTION__, "validData");
+			for (jjj=0; jjj<jsonParser.tokenCount_Data; jjj++)
+			{
+	//			CONSOLE_DEBUG_W_2STR("json=",	jsonParser.dataList[jjj].keyword,
+	//											jsonParser.dataList[jjj].valueString);
+
+				//*	this is an extra in AlpacaPi only
+				if (strcasecmp(jsonParser.dataList[jjj].keyword, "DEVICE") == 0)
+				{
+					strcpy(cCommonProp.Name,	jsonParser.dataList[jjj].valueString);
+				}
+
+				if (strcasecmp(jsonParser.dataList[jjj].keyword, "VALUE") == 0)
+				{
+					if (strlen(jsonParser.dataList[jjj].valueString) >= kCommonPropMaxStrLen)
+					{
+						jsonParser.dataList[jjj].valueString[kCommonPropMaxStrLen - 1]	=	0;
+					}
+					strcpy(cCommonProp.Description,	jsonParser.dataList[jjj].valueString);
+				}
+			}
+			UpdateCameraName();
+
+		}
+		else
+		{
+			cReadFailureCnt++;
+			cOnLine	=	false;
+		}
+		CONSOLE_DEBUG_W_STR("cCommonProp.Name\t=", cCommonProp.Name);
+	}
+
+	//===============================================================
+	//*	get the readout modes
+	if (cOnLine)
+	{
+		CONSOLE_DEBUG_W_STR(__FUNCTION__, "readoutmodes");
+		SJP_Init(&jsonParser);
+		sprintf(alpacaString,	"/api/v1/camera/%d/readoutmodes", cAlpacaDevNum);
+		validData	=	GetJsonResponse(	&cDeviceAddress,
+											cPort,
+											alpacaString,
+											NULL,
+											&jsonParser);
+		if (validData)
+		{
+			jjj	=	0;
+			while (jjj<jsonParser.tokenCount_Data)
+			{
+				if (strcasecmp(jsonParser.dataList[jjj].keyword, "ARRAY") == 0)
+				{
+					readOutModeIdx	=	0;
+					jjj++;
+					while ((jjj<jsonParser.tokenCount_Data) &&
+							(jsonParser.dataList[jjj].keyword[0] != ']'))
+					{
+						if (readOutModeIdx < kMaxReadOutModes)
+						{
+							strcpy(cCameraProp.ReadOutModes[readOutModeIdx].modeStr,
+										jsonParser.dataList[jjj].valueString);
+
+	//						CONSOLE_DEBUG(cCameraProp.ReadOutModes[readOutModeIdx].modeStr);
+							readOutModeIdx++;
+						}
+						jjj++;
+					}
+					UpdateReadoutModes();
+				}
+				jjj++;
+			}
+		}
+		else
+		{
+			CONSOLE_DEBUG("Read failure - readoutmodes");
+			cReadFailureCnt++;
+			cOnLine	=	false;
+		}
+	//	DEBUG_TIMING("readoutmodes");
+	}
+
+	if (cOnLine)
+	{
+		CONSOLE_DEBUG_W_STR(__FUNCTION__, "cameraxsize");
+		validData	=	AlpacaGetIntegerValue("camera", "cameraxsize",	NULL,	&cCameraProp.CameraXsize);
+		validData	=	AlpacaGetIntegerValue("camera", "cameraysize",	NULL,	&cCameraProp.CameraYsize);
+		UpdateCameraSize();
+
+		//-----------------------------------------------------------------
+		//*	deal with the GAIN information
+		validData	=	AlpacaGetIntegerValue("camera", "gain",			NULL,	&cCameraProp.Gain);
+		validData	=	AlpacaGetIntegerValue("camera", "gainmin",		NULL,	&cCameraProp.GainMin);
+		validData	=	AlpacaGetIntegerValue("camera", "gainmax",		NULL,	&cCameraProp.GainMax);
+	//	CONSOLE_DEBUG_W_NUM("cLastAlpacaErrNum\t", cLastAlpacaErrNum);
+	//	CONSOLE_DEBUG_W_STR("cLastAlpacaErrStr\t", cLastAlpacaErrStr);
+		UpdateCameraGain(cLastAlpacaErrNum);
+
+		//-----------------------------------------------------------------
+		//*	deal with the OFFSET information
+		validData	=	AlpacaGetIntegerValue("camera", "offset",			NULL,	&cCameraProp.Offset);
+		validData	=	AlpacaGetIntegerValue("camera", "offsetmin",		NULL,	&cCameraProp.OffsetMin);
+		validData	=	AlpacaGetIntegerValue("camera", "offsetmax",		NULL,	&cCameraProp.OffsetMax);
+		UpdateCameraOffset(cLastAlpacaErrNum);
+
+		validData	=	AlpacaGetDoubleValue("camera", "exposuremin",	NULL,	&cCameraProp.ExposureMin_seconds);
+		validData	=	AlpacaGetDoubleValue("camera", "exposuremax",	NULL,	&cCameraProp.ExposureMax_seconds);
+		UpdateCameraExposure();
+	}
+	return(validData);
+
+}
+
+//*****************************************************************************
+//*	this routine gets called one time to get the info on the camera that does not change
+//*****************************************************************************
+bool	ControllerCamera::AlpacaGetStartupData(void)
+{
+bool			validData;
+
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+
+//	CONSOLE_DEBUG("Timing Start----------------------");
+//	SETUP_TIMING();
 
 	//===============================================================
 	//*	get supportedactions
@@ -528,131 +685,29 @@ int				readOutModeIdx;
 	{
 		CONSOLE_DEBUG("Read failure - supportedactions");
 		cReadFailureCnt++;
+		cOnLine	=	false;
 	}
-	DEBUG_TIMING("Timing for supportedactions=");
+//	DEBUG_TIMING("Timing for supportedactions=");
 
+	AlpacaGetCommonProperties_OneAAT("camera");
 
+	//===============================================================
 	//*	Start by getting info about the camera
-	//===============================================================
-	//*	get the camera description
-	SJP_Init(&jsonParser);
-
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, "description");
-	sprintf(alpacaString,	"/api/v1/camera/%d/description", cAlpacaDevNum);
-	validData	=	GetJsonResponse(	&cDeviceAddress,
-										cPort,
-										alpacaString,
-										NULL,
-										&jsonParser);
-	if (validData)
+	if (cHas_readall)
 	{
-		CONSOLE_DEBUG_W_STR(__FUNCTION__, "validData");
-		for (jjj=0; jjj<jsonParser.tokenCount_Data; jjj++)
-		{
-//			CONSOLE_DEBUG_W_2STR("json=",	jsonParser.dataList[jjj].keyword,
-//											jsonParser.dataList[jjj].valueString);
-
-			//*	this is an extra in AlpacaPi only
-			if (strcasecmp(jsonParser.dataList[jjj].keyword, "DEVICE") == 0)
-			{
-				strcpy(cCommonProp.Name,	jsonParser.dataList[jjj].valueString);
-			}
-
-			if (strcasecmp(jsonParser.dataList[jjj].keyword, "VALUE") == 0)
-			{
-				if (strlen(jsonParser.dataList[jjj].valueString) >= kCommonPropMaxStrLen)
-				{
-					jsonParser.dataList[jjj].valueString[kCommonPropMaxStrLen - 1]	=	0;
-				}
-				strcpy(cCommonProp.Description,	jsonParser.dataList[jjj].valueString);
-			}
-		}
-		UpdateCameraName();
-
+		validData	=	AlpacaGetStatus_ReadAll("camera", cAlpacaDevNum);
 	}
-	else
+//	else
 	{
-		cReadFailureCnt++;
+		validData	=	AlpacaGetStartupData_OneAAT();
 	}
-	CONSOLE_DEBUG_W_STR("cCommonProp.Name\t=", cCommonProp.Name);
-
-	//===============================================================
-	//*	get the readout modes
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, "readoutmodes");
-	SJP_Init(&jsonParser);
-	sprintf(alpacaString,	"/api/v1/camera/%d/readoutmodes", cAlpacaDevNum);
-	validData	=	GetJsonResponse(	&cDeviceAddress,
-										cPort,
-										alpacaString,
-										NULL,
-										&jsonParser);
-	if (validData)
-	{
-		jjj	=	0;
-		while (jjj<jsonParser.tokenCount_Data)
-		{
-			if (strcasecmp(jsonParser.dataList[jjj].keyword, "ARRAY") == 0)
-			{
-				readOutModeIdx	=	0;
-				jjj++;
-				while ((jjj<jsonParser.tokenCount_Data) &&
-						(jsonParser.dataList[jjj].keyword[0] != ']'))
-				{
-					if (readOutModeIdx < kMaxReadOutModes)
-					{
-						strcpy(cCameraProp.ReadOutModes[readOutModeIdx].modeStr,
-									jsonParser.dataList[jjj].valueString);
-
-//						CONSOLE_DEBUG(cCameraProp.ReadOutModes[readOutModeIdx].modeStr);
-						readOutModeIdx++;
-					}
-					jjj++;
-				}
-				UpdateReadoutModes();
-			}
-			jjj++;
-		}
-	}
-	else
-	{
-		CONSOLE_DEBUG("Read failure - readoutmodes");
-		cReadFailureCnt++;
-	}
-	DEBUG_TIMING("readoutmodes");
-
-
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, "cameraxsize");
-	validData	=	AlpacaGetIntegerValue("camera", "cameraxsize",	NULL,	&cCameraProp.CameraXsize);
-	validData	=	AlpacaGetIntegerValue("camera", "cameraysize",	NULL,	&cCameraProp.CameraYsize);
-	UpdateCameraSize();
-
-	//-----------------------------------------------------------------
-	//*	deal with the GAIN information
-	validData	=	AlpacaGetIntegerValue("camera", "gain",			NULL,	&cCameraProp.Gain);
-	validData	=	AlpacaGetIntegerValue("camera", "gainmin",		NULL,	&cCameraProp.GainMin);
-	validData	=	AlpacaGetIntegerValue("camera", "gainmax",		NULL,	&cCameraProp.GainMax);
-//	CONSOLE_DEBUG_W_NUM("cLastAlpacaErrNum\t", cLastAlpacaErrNum);
-//	CONSOLE_DEBUG_W_STR("cLastAlpacaErrStr\t", cLastAlpacaErrStr);
-	UpdateCameraGain(cLastAlpacaErrNum);
-
-	//-----------------------------------------------------------------
-	//*	deal with the OFFSET information
-	validData	=	AlpacaGetIntegerValue("camera", "offset",			NULL,	&cCameraProp.Offset);
-	validData	=	AlpacaGetIntegerValue("camera", "offsetmin",		NULL,	&cCameraProp.OffsetMin);
-	validData	=	AlpacaGetIntegerValue("camera", "offsetmax",		NULL,	&cCameraProp.OffsetMax);
-	UpdateCameraOffset(cLastAlpacaErrNum);
-
-
-
-
-	validData	=	AlpacaGetDoubleValue("camera", "exposuremin",	NULL,	&cCameraProp.ExposureMin_seconds);
-	validData	=	AlpacaGetDoubleValue("camera", "exposuremax",	NULL,	&cCameraProp.ExposureMax_seconds);
-	UpdateCameraExposure();
 
 
 	cLastUpdate_milliSecs	=	millis();
 
-	DEBUG_TIMING("camera specs");
+//	DEBUG_TIMING("camera specs");
+
+	SetWindowIPaddrInfo(NULL, cOnLine);
 
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, "EXIT");
 	return(validData);
@@ -950,6 +1005,10 @@ bool			validData;
 	{
 		UpdateCameraGain();
 	}
+	else
+	{
+		cReadFailureCnt++;
+	}
 	return(validData);
 }
 
@@ -970,6 +1029,7 @@ double			myExposureTime;
 		}
 		else
 		{
+			cReadFailureCnt++;
 			CONSOLE_DEBUG("AlpacaGetDoubleValue failed");
 		}
 	}
@@ -992,10 +1052,10 @@ bool			validData;
 int				failedCnt;
 double			myExposureTime;
 int				argInt;
+
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 
-	failedCnt	=	0;
-
+	failedCnt			=	0;
 
 	//=================================================================================
 	//*	gain
@@ -1003,154 +1063,197 @@ int				argInt;
 	validData	=	AlpacaGetStatus_Gain();
 	if (validData)
 	{
+		cOnLine	=	true;
 	}
 	else
 	{
 		failedCnt++;
+		cOnLine	=	false;
 	}
 
 
 	//=================================================================================
 	//*	camerastate
-	validData	=	AlpacaGetIntegerValue(	"camera", "camerastate", NULL,	&argInt);
-	if (validData)
+	if (cOnLine)
 	{
-		cCameraProp.CameraState	=	(TYPE_ALPACA_CAMERASTATE)argInt;
-		UpdateCameraState();
-	}
-	else
-	{
-		failedCnt++;
+		validData	=	AlpacaGetIntegerValue(	"camera", "camerastate", NULL,	&argInt);
+		if (validData)
+		{
+			cCameraProp.CameraState	=	(TYPE_ALPACA_CAMERASTATE)argInt;
+			UpdateCameraState();
+		}
+		else
+		{
+			failedCnt++;
+			cOnLine	=	false;
+		}
 	}
 
-	validData	=	AlpacaGetBooleanValue(	"camera", "imageready",	NULL,	&cCameraState_imageready);
-	if (validData)
+	//=================================================================================
+	//*	imageready
+	if (cOnLine)
 	{
-		UpdateCameraState();
-	}
-	else
-	{
-		failedCnt++;
+		validData	=	AlpacaGetBooleanValue(	"camera", "imageready",	NULL,	&cCameraState_imageready);
+		if (validData)
+		{
+			UpdateCameraState();
+		}
+		else
+		{
+			failedCnt++;
+			cOnLine	=	false;
+		}
 	}
 
 	//=================================================================================
 	//*	ccdtemperature
-	if (cHasCCDtemp)
+	if (cOnLine)
 	{
-	bool	tempDataValid;
+		if (cHasCCDtemp)
+		{
+		bool	tempDataValid;
 
-		tempDataValid	=	true;
-		validData	=	AlpacaGetDoubleValue(	"camera",
-												"ccdtemperature",
-												NULL,
-												&cCameraProp.CCDtemperature,
-												&tempDataValid);
-		if (cLastAlpacaErrNum != 0)
-		{
-			CONSOLE_DEBUG_W_NUM("cLastAlpacaErrNum\t", cLastAlpacaErrNum);
-		}
-
-		if (validData && tempDataValid)
-		{
-			UpdateCameraTemperature();
-			LogCameraTemp(cCameraProp.CCDtemperature);
-		}
-		else
-		{
-			CONSOLE_DEBUG_W_NUM("cLastAlpacaErrNum\t", cLastAlpacaErrNum);
-//			CONSOLE_DEBUG("Failed to read ccdtemperature");
-			if (cLastAlpacaErrNum == kASCOM_Err_NotImplemented)
+			tempDataValid	=	true;
+			validData	=	AlpacaGetDoubleValue(	"camera",
+													"ccdtemperature",
+													NULL,
+													&cCameraProp.CCDtemperature,
+													&tempDataValid);
+			if (cLastAlpacaErrNum != 0)
 			{
-				CONSOLE_DEBUG("Disabling ccd temp read, not implmented");
-				cHasCCDtemp	=	false;
-				UpdateCameraTemperature();
+				CONSOLE_DEBUG_W_NUM("cLastAlpacaErrNum\t", cLastAlpacaErrNum);
 			}
-			failedCnt++;
+
+			if (validData)
+			{
+				if (tempDataValid)
+				{
+					UpdateCameraTemperature();
+					LogCameraTemp(cCameraProp.CCDtemperature);
+				}
+				else
+				{
+					CONSOLE_DEBUG_W_NUM("cLastAlpacaErrNum\t", cLastAlpacaErrNum);
+		//			CONSOLE_DEBUG("Failed to read ccdtemperature");
+					if (cLastAlpacaErrNum == kASCOM_Err_NotImplemented)
+					{
+						CONSOLE_DEBUG("Disabling ccd temp read, not implemented");
+						cHasCCDtemp	=	false;
+						UpdateCameraTemperature();
+					}
+				}
+			}
+			else
+			{
+				failedCnt++;
+				cOnLine	=	false;
+			}
 		}
 	}
 
 	//=================================================================================
 	//*	cooler state
-	if (cHasCooler)
+	if (cOnLine)
 	{
-		validData	=	AlpacaGetBooleanValue(	"camera", "cooleron",	NULL,	&cCameraProp.CoolerOn);
-		if (validData)
+		if (cHasCooler)
 		{
-			if (cLastAlpacaErrNum != 0)
+			validData	=	AlpacaGetBooleanValue(	"camera", "cooleron",	NULL,	&cCameraProp.CoolerOn);
+			if (validData)
 			{
-				CONSOLE_DEBUG_W_NUM("cLastAlpacaErrNum\t", cLastAlpacaErrNum);
+				if (cLastAlpacaErrNum != 0)
+				{
+					CONSOLE_DEBUG_W_NUM("cLastAlpacaErrNum\t", cLastAlpacaErrNum);
+				}
+				if (cLastAlpacaErrNum == kASCOM_Err_NotImplemented)
+				{
+					CONSOLE_DEBUG("Disabling cooler checking, not implemented");
+					cHasCooler	=	false;
+				}
+				UpdateCoolerState();
 			}
-			if (cLastAlpacaErrNum == kASCOM_Err_NotImplemented)
+			else
 			{
-				CONSOLE_DEBUG("Disabling cooler checking, not implemented");
-				cHasCooler	=	false;
+				failedCnt++;
+				cOnLine	=	false;
 			}
-			UpdateCoolerState();
-		}
-		else
-		{
-			failedCnt++;
 		}
 	}
 
 	//=================================================================================
 	//*	readoutmode
-	validData	=	AlpacaGetIntegerValue(	"camera", "readoutmode",	NULL,	&cCameraProp.ReadOutMode);
-	if (validData)
+	if (cOnLine)
 	{
-		UpdateCurrReadoutMode();
-	}
-	else
-	{
-		failedCnt++;
-	}
-
-	if (cHas_exposuretime)
-	{
-		//=================================================================================
-		//*	exposure
-		validData	=	AlpacaGetDoubleValue(	"camera", "exposuretime",			NULL,	&myExposureTime);
+		validData	=	AlpacaGetIntegerValue(	"camera", "readoutmode",	NULL,	&cCameraProp.ReadOutMode);
 		if (validData)
 		{
-			cExposure	=	myExposureTime;
-			UpdateCameraExposure();
+			UpdateCurrReadoutMode();
 		}
 		else
 		{
 			failedCnt++;
+			cOnLine	=	false;
 		}
 	}
 
-	if (cHas_livemode)
+	//=================================================================================
+	//*	exposure
+	if (cOnLine)
 	{
-		//=================================================================================
-		//*	livemode
-		validData	=	AlpacaGetBooleanValue(	"camera", "livemode",	NULL,	&cLiveMode);
-		if (validData)
+		if (cHas_exposuretime)
 		{
-		}
-		else
-		{
-			failedCnt++;
+			validData	=	AlpacaGetDoubleValue(	"camera", "exposuretime",			NULL,	&myExposureTime);
+			if (validData)
+			{
+				cExposure	=	myExposureTime;
+				UpdateCameraExposure();
+			}
+			else
+			{
+				failedCnt++;
+				cOnLine	=	false;
+			}
 		}
 	}
 
-	if (cHas_autoexposure)
+
+	//=================================================================================
+	//*	livemode
+	if (cOnLine)
 	{
-		//=================================================================================
-		//*	auto exposure
-		validData	=	AlpacaGetBooleanValue(	"camera", "autoexposure",	NULL,	&cAutoExposure);
-		if (validData)
+		if (cHas_livemode)
 		{
+			validData	=	AlpacaGetBooleanValue(	"camera", "livemode",	NULL,	&cLiveMode);
+			if (validData)
+			{
+			}
+			else
+			{
+				failedCnt++;
+				cOnLine	=	false;
+			}
 		}
-		else
+	}
+
+	//=================================================================================
+	//*	auto exposure
+	if (cOnLine)
+	{
+		if (cHas_autoexposure)
 		{
-			failedCnt++;
+			validData	=	AlpacaGetBooleanValue(	"camera", "autoexposure",	NULL,	&cAutoExposure);
+			if (validData)
+			{
+			}
+			else
+			{
+				failedCnt++;
+				cOnLine	=	false;
+			}
 		}
 	}
 
 
-	if (failedCnt > 2)
+	if (failedCnt > 0)
 	{
 		CONSOLE_DEBUG("Data failure, probably off line");
 //-		SetWidgetBGColor(kTab_Camera,	kCameraBox_IPaddr,	CV_RGB(255,	0,	0));
@@ -1181,8 +1284,13 @@ bool	previousOnLineState;
 	}
 	else
 	{
+		CONSOLE_DEBUG("Calling AlpacaGetCommonConnectedState()");
+		validData	=	AlpacaGetCommonConnectedState("camera");
+
+		CONSOLE_DEBUG("Calling AlpacaGetStatus_OneAAT()");
 		validData	=	AlpacaGetStatus_OneAAT();	//*	One At A Time
 	}
+//	CONSOLE_DEBUG_W_STR("ValidData", (validData ? "True" : "FALSE"));
 
 	if (validData)
 	{
@@ -1190,7 +1298,7 @@ bool	previousOnLineState;
 		UpdateFileNameOptions();
 
 
-		//*	check to see if we were one line before
+		//*	check to see if we were online before
 		if (cOnLine == false)
 		{
 			//*	if we go from offline back to online, re-do the startup info
@@ -1219,24 +1327,8 @@ bool	previousOnLineState;
 	//*	get the filter wheel position
 	if (cHas_FilterWheel)
 	{
-	#if 1
+		//*	this routine is in controller_fw_common.cpp
 		AlpacaGetFilterWheelStatus();
-	#else
-		validData	=	AlpacaGetIntegerValue("filterwheel", "position",	NULL,	&cFilterWheelPosition);
-		if (validData)
-		{
-//			CONSOLE_DEBUG_W_NUM("rcvd cFilterWheelPosition\t=", cFilterWheelPosition);
-			//*	alpaca/ascom uses filter wheel positions from 0 -> N-1
-			if ((cFilterWheelPosition >= 0) && (cFilterWheelPosition < kMaxFiltersPerWheel))
-			{
-				UpdateFilterWheelPosition();
-			}
-		}
-		else
-		{
-			CONSOLE_DEBUG("Failed to get filter wheel position");
-		}
-	#endif
 	}
 
 	cLastUpdate_milliSecs	=	millis();
@@ -1642,6 +1734,7 @@ char			parameterString[128];
 	}
 	else
 	{
+		cReadFailureCnt++;
 		CONSOLE_DEBUG("validData is false");
 	}
 }
@@ -1936,83 +2029,20 @@ int		iii;
 	}
 }
 
-//*****************************************************************************
-//*****************************************************************************
-//*****************************************************************************
-//*****************************************************************************
-#define	_USE_FW_COMMMON_
-#ifdef _USE_FW_COMMMON_
+//**************************************************************************************
+void	ControllerCamera::UpdateConnectedStatusIndicator(void)
+{
+	//*	this doesnt do anything, it should be overridden
+}
 
+//*****************************************************************************
+//*****************************************************************************
+//*****************************************************************************
+//*****************************************************************************
 #define	PARENT_CLASS	ControllerCamera
 
 #include "controller_fw_common.cpp"
 
-#else
-//*****************************************************************************
-//http://newt16:6800/api/v1/filterwheel/0/names
-//*****************************************************************************
-bool	ControllerCamera::AlpacaGetFilterWheelStartup(void)
-{
-SJP_Parser_t	jsonParser;
-bool			validData;
-char			alpacaString[128];
-int				jjj;
-int				filterWheelIdx;
-
-//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
-
-	//*	Start by getting info about the camera
-	//===============================================================
-	//*	get the filter wheel names
-	SJP_Init(&jsonParser);
-	sprintf(alpacaString,	"/api/v1/filterwheel/%d/names", cAlpacaDevNum);
-	validData	=	GetJsonResponse(	&cDeviceAddress,
-										cPort,
-										alpacaString,
-										NULL,
-										&jsonParser);
-	if (validData)
-	{
-		jjj	=	0;
-		while (jjj<jsonParser.tokenCount_Data)
-		{
-			if (strcasecmp(jsonParser.dataList[jjj].keyword, "DEVICE") == 0)
-			{
-				strcpy(cFilterWheelName,	"Filterwheel: ");
-				strcat(cFilterWheelName,	jsonParser.dataList[jjj].valueString);
-			}
-			if (strcasecmp(jsonParser.dataList[jjj].keyword, "ARRAY") == 0)
-			{
-
-				filterWheelIdx	=	0;
-				jjj++;
-				while ((jjj<jsonParser.tokenCount_Data) &&
-						(jsonParser.dataList[jjj].keyword[0] != ']'))
-				{
-					if (filterWheelIdx < kMaxFiltersPerWheel)
-					{
-						//*	save the filter name
-						strcpy(cFilterNames[filterWheelIdx].filterName, jsonParser.dataList[jjj].valueString);
-
-//						CONSOLE_DEBUG(cFilterNames[filterWheelIdx].filterName);
-						filterWheelIdx++;
-					}
-					jjj++;
-				}
-			}
-			jjj++;
-		}
-		UpdateFilterWheelInfo();
-	}
-	else
-	{
-		CONSOLE_DEBUG("Read failure - filterwheel");
-		cReadFailureCnt++;
-	}
-	return(validData);
-}
-
-#endif // _USE_FW_COMMMON_
 
 
 #endif // _ENABLE_CTRL_CAMERA_

@@ -53,6 +53,10 @@
 //*	Jul 18,	2021	<MLS> Added SetWidgetScrollBarLimits()
 //*	Jul 18,	2021	<MLS> Added SetWidgetScrollBarValue()
 //*	Aug  9,	2021	<MLS> Added ProcessMouseWheelMoved()
+//*	Aug 11,	2021	<MLS> Added SetCurrentTab()
+//*	Aug 31,	2021	<MLS> Added fontIndex arg to DrawCString()
+//*	Sep  8,	2021	<MLS> Added AlpacaSetConnected()
+//*	Sep  9,	2021	<MLS> Added SetUpConnectedIndicator()
 //*****************************************************************************
 
 
@@ -169,7 +173,7 @@ void WindowTab::ComputeWidgetColumns(const int windowWitdh)
 //**************************************************************************************
 void WindowTab::RunBackgroundTasks(void)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 }
 
 //**************************************************************************************
@@ -836,6 +840,23 @@ void	WindowTab::SetWidgetProgress(const int widgetIdx, const int currPosition, c
 	}
 }
 
+//**************************************************************************************
+void	WindowTab::SetCurrentTab(const int tabIdx)
+{
+Controller	*myControllerObj;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	myControllerObj	=	(Controller *)cParentObjPtr;
+	if (myControllerObj != NULL)
+	{
+		myControllerObj->SetCurrentTab(tabIdx);
+	}
+	else
+	{
+		CONSOLE_DEBUG_W_STR("cParentObjPtr is NULL, windowname=", cWindowName);
+	}
+}
 
 //**************************************************************************************
 void	WindowTab::SetupWindowControls(void)
@@ -1109,7 +1130,8 @@ double	newSliderValue;
 //*****************************************************************************
 void	WindowTab::ProcessMouseWheelMoved(const int widgetIdx, const int event, const int xxx, const int yyy, const int wheelMovement)
 {
-	CONSOLE_DEBUG_W_NUM(__FUNCTION__, wheelMovement);
+	//*	this is a virtual function and should be overridden if you need to do anything with it.
+//	CONSOLE_DEBUG_W_NUM(__FUNCTION__, wheelMovement);
 }
 
 //*****************************************************************************
@@ -1419,12 +1441,22 @@ CvPoint		pt2;
 }
 
 //*****************************************************************************
-void	WindowTab::DrawCString(const int xx, const int yy, const char *theString)
+void	WindowTab::DrawCString(const int xx, const int yy, const char *theString, int fontIndex)
 {
 CvPoint		textLoc;
+int			myFontIdx;
+
 
 //	CONSOLE_DEBUG(theString);
-
+	myFontIdx	=	1;
+	if ((fontIndex >= 0) && (fontIndex < kFont_last))
+	{
+		myFontIdx	=	fontIndex;
+	}
+	else
+	{
+		myFontIdx	=	1;
+	}
 	if (cOpenCV_Image != NULL)
 	{
 		textLoc.x	=	xx;
@@ -1432,7 +1464,7 @@ CvPoint		textLoc;
 		cvPutText(	cOpenCV_Image,
 					theString,
 					textLoc,
-					&gTextFont[1],
+					&gTextFont[myFontIdx],
 					cCurrentColor
 				);
 
@@ -1461,13 +1493,14 @@ CvScalar	gColorTable[]	=
 	CV_RGB(255,	255,	000),	//*	YELLOW
 
 	CV_RGB(96,	000,	000),	//*	DARKRED
-	CV_RGB(000,	 64,	000),	//*	DARKGREEN
+//	CV_RGB(000,	 64,	000),	//*	DARKGREEN
+	CV_RGB(000,	 110,	000),	//*	DARKGREEN
 	CV_RGB(000,	000,	150),	//*	DARKBLUE
 
 
 
 	CV_RGB(192,	192,	192),	//*	LIGHTGRAY
-	CV_RGB(64,	 64,	 64),	//*	DARKGRAY
+	CV_RGB(90,	 90,	 90),	//*	DARKGRAY
 
 	CV_RGB(255,	128,	255),	//*	LIGHTMAGENTA
 
@@ -1827,5 +1860,38 @@ void	WindowTab::AlpacaDisplayErrorMessage(const char *errorMsgString)
 	//*	this should be overloaded
 	CONSOLE_DEBUG_W_STR("Json err:", errorMsgString);
 }
+
+//*****************************************************************************
+bool	WindowTab::AlpacaSetConnected(const char *deviceTypeStr, const bool newConnectedState)
+{
+bool		okFlag;
+Controller	*myControllerObj;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	myControllerObj	=	(Controller *)cParentObjPtr;
+	okFlag			=	false;
+	if (myControllerObj != NULL)
+	{
+		okFlag	=	myControllerObj->AlpacaSetConnected(deviceTypeStr, newConnectedState);
+	}
+	else
+	{
+		CONSOLE_DEBUG_W_STR("cParentObjPtr is NULL, windowname=", cWindowName);
+	}
+	return(okFlag);
+}
+
+//*****************************************************************************
+void	WindowTab::SetUpConnectedIndicator(const int buttonIdx, const int yLoc)
+{
+	SetWidget(buttonIdx,		5,	(yLoc + 2),	(cTitleHeight - 4),	(cTitleHeight - 4));
+	SetWidgetText(				buttonIdx,	"?");
+	SetWidgetTextColor(			buttonIdx,	CV_RGB(255,	255,	0));
+	SetWidgetFont(				buttonIdx,	kFont_Medium);
+	SetBGcolorFromWindowName(	buttonIdx);
+	SetWidgetBorder(			buttonIdx,	false);
+}
+
 #endif	//	_CONTROLLER_USES_ALPACA_
 

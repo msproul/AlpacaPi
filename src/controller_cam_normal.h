@@ -74,6 +74,7 @@ class ControllerCamNormal: public ControllerCamera
 		virtual	void	UpdateReceivedFileName(const char *newFileName);
 		virtual	void	UpdateRemoteFileList(void);
 		virtual	void	UpdateDownloadProgress(const int unitsRead, const int totalUnits);
+		virtual	void	UpdateConnectedStatusIndicator(void);
 
 		virtual	void	UpdateBackgroundColor(const int redValue, const int grnValue, const int bluValue);
 

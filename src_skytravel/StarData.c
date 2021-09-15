@@ -470,14 +470,21 @@ char	*delimPtr;
 
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, lineBuff);
 
+	if (strncasecmp(lineBuff, "M45", 3) == 0)
+	{
+		CONSOLE_DEBUG_W_STR(__FUNCTION__, lineBuff);
+//		CONSOLE_ABORT(__FUNCTION__);
+	}
+
 	//*	step thru the line looking for TABS.
-	sLen		=	strlen(lineBuff);
-	argNum		=	0;
-	ccc			=	0;
+	argString[0]	=	0;
+	sLen			=	strlen(lineBuff);
+	argNum			=	0;
+	ccc				=	0;
 	for (ii=0; ii <= sLen; ii++)
 	{
 		theChar	=	lineBuff[ii];
-		if ((theChar == 0x09) || (theChar == 0))
+		if ((theChar == 0x09) || (theChar == ',') || (theChar == 0))
 		{
 
 			//*	end of argument, do something with it
@@ -616,9 +623,10 @@ TYPE_CelestData	*ReadMessierData(const char *folderPath, int dataSource, long *o
 TYPE_CelestData	*messierData;
 char			myFilePath[256];
 
-//	CONSOLE_DEBUG_W_STR(__FUNCTION__, folderPath);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, folderPath);
 
 	strcpy(myFilePath, folderPath);
+//	strcat(myFilePath, "MessierCatalog.csv");
 	strcat(myFilePath, "MessierCatalog.tab");
 
 	messierData	=	ReadMessierCatalog(myFilePath, dataSource, objectCount);
@@ -813,19 +821,19 @@ int				skippedCount;
 	strcpy(myFilePath, folderPath);
 	strcat(myFilePath, "hygdata_v3.csv");
 
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, myFilePath);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, myFilePath);
 
 	filePointer	=	fopen(myFilePath, "r");
 	if (filePointer != NULL)
 	{
-		CONSOLE_DEBUG("File Opened OK");
+//		CONSOLE_DEBUG("File Opened OK");
 		specifiedLnCnt	=	119650;
 		bufferSize		=	(specifiedLnCnt + 2) * sizeof(TYPE_CelestData);
 		hygData			=	(TYPE_CelestData *)malloc(bufferSize);
 
 		if (hygData != NULL)
 		{
-			CONSOLE_DEBUG("Memory allocated OK");
+//			CONSOLE_DEBUG("Memory allocated OK");
 			memset(hygData, 0, bufferSize);
 			linesRead	=	0;
 			while (fgets(lineBuff, 2000, filePointer) && (recordCount < specifiedLnCnt))
@@ -1016,13 +1024,13 @@ int				headerLineCnt;
 	strcpy(myFilePath, folderPath);
 	strcat(myFilePath, "heasarc_hd.tdat");
 
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, myFilePath);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, myFilePath);
 
 	filePointer	=	fopen(myFilePath, "r");
 	if (filePointer != NULL)
 	{
 		specifiedLnCnt	=	CountLinesInFile(filePointer);
-		CONSOLE_DEBUG_W_NUM("Lines in file", specifiedLnCnt);
+//		CONSOLE_DEBUG_W_NUM("Lines in file", specifiedLnCnt);
 
 		bufferSize		=	specifiedLnCnt * sizeof(TYPE_CelestData);
 		draperData		=	(TYPE_CelestData *)malloc(bufferSize);
@@ -1039,7 +1047,7 @@ int				headerLineCnt;
 					break;
 				}
 			}
-			CONSOLE_DEBUG_W_NUM("headerLineCnt", headerLineCnt);
+//			CONSOLE_DEBUG_W_NUM("headerLineCnt", headerLineCnt);
 
 			memset(draperData, 0, bufferSize);
 			linesRead	=	0;
@@ -1069,7 +1077,7 @@ int				headerLineCnt;
 	{
 		CONSOLE_DEBUG_W_STR("Failed to read:", myFilePath);
 	}
-	CONSOLE_DEBUG_W_NUM("HGC records read\t=", recordCount);
+//	CONSOLE_DEBUG_W_NUM("HGC records read\t=", recordCount);
 	return(draperData);
 }
 
@@ -1195,6 +1203,18 @@ int		argLen;
 
 	starRec->magn		=	ST_STAR;
 
+#if 0
+	CONSOLE_DEBUG_W_STR("Name  \t=", starRec->longName);
+	CONSOLE_DEBUG_W_NUM("raHour\t=", raHour);
+	CONSOLE_DEBUG_W_NUM("raMin \t=", raMin);
+	CONSOLE_DEBUG_W_DBL("raSec \t=", raSec);
+
+	CONSOLE_DEBUG_W_HEX("deSign\t=", deSign);
+
+	CONSOLE_DEBUG_W_NUM("deDeg \t=", deDeg);
+	CONSOLE_DEBUG_W_NUM("deMin \t=", deMin);
+	CONSOLE_DEBUG_W_DBL("deSec \t=", deSec);
+#endif
 }
 
 
@@ -1329,7 +1349,11 @@ int				linesRead;
 			while (fgets(lineBuff, 200, filePointer) && (recordCount < specifiedLnCnt))
 			{
 				linesRead++;
-				if ((strlen(lineBuff) > 50) && (lineBuff[0] == 0x20))
+				if (strncasecmp(lineBuff, "!EXIT", 5) == 0)
+				{
+					break;
+				}
+				else if ((strlen(lineBuff) > 50) && (lineBuff[0] == 0x20))
 				{
 					CONSOLE_DEBUG_W_STR("lineBuff\t=", lineBuff);
 					ParseOneLineJPLhorizons(lineBuff, &specialData[recordCount]);
@@ -1337,7 +1361,8 @@ int				linesRead;
 
 					recordCount++;
 				}
-				else if ((lineBuff[0] != '#') && (recordCount < specifiedLnCnt))
+				else if ((lineBuff[0] != '#') && (lineBuff[0] != 0x09)
+						&& (recordCount < specifiedLnCnt))
 				{
 					if (strlen(lineBuff) > 20)
 					{
@@ -1362,6 +1387,8 @@ int				linesRead;
 		CONSOLE_DEBUG_W_STR("Failed to read:", myFilePath);
 	}
 //	DumpCelestralDataArray(specialData, recordCount);
-	CONSOLE_DEBUG_W_NUM("Special records read\t=", recordCount);
+//	CONSOLE_DEBUG_W_NUM("Special records read\t=", recordCount);
+//	CONSOLE_ABORT(__FUNCTION__);
+
 	return(specialData);
 }

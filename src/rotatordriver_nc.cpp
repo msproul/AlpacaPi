@@ -51,7 +51,8 @@ RotatorDriver_NiteCrawler::RotatorDriver_NiteCrawler(const int argDevNum, Focuse
 	//*	save the object pointer to the focuser
 	cFocuserObject		=	focuserObject;
 
-	strcpy(cCommonProp.Name, "NiteCrawler Rotator");
+	strcpy(cCommonProp.Name,		"NiteCrawler Rotator");
+	strcpy(cCommonProp.Description,	"Moonlite NiteCrawler Rotator");
 	strcpy(cRotatorManufacturer,	"Moonlite");
 
 	cRotatorProp.CanReverse	=	false;

@@ -35,6 +35,8 @@
 //*	Mar 13,	2021	<MLS> Added timeout to GetJsonResponse()
 //*	Mar 13,	2021	<MLS> Added SetSocketTimeouts()
 //*	Mar 13,	2021	<MLS> Added send timeout
+//*	Sep  4,	2021	<MLS> Added microsecs arg to SetSocketTimeouts()
+//*	Sep  8,	2021	<MLS> Added "Connection: close" as per suggestion from Patrick Chevalley
 //*****************************************************************************
 
 #include	<stdio.h>
@@ -49,7 +51,8 @@
 #include	<errno.h>
 #include	<ctype.h>
 
-#define _ENABLE_CONSOLE_DEBUG_
+//#define _ENABLE_CONSOLE_DEBUG_
+//#define _DEBUG_TIMING_
 #include	"ConsoleDebug.h"
 
 #include	"json_parse.h"
@@ -58,7 +61,8 @@
 #include	"sendrequest_lib.h"
 #include	"linuxerrors.h"
 
-#define		kTimeOutLenSeconds	4
+#define		kTimeOutLenSeconds	5
+//#define		kTimeOutLenSeconds	1
 
 
 int		gNumSocketOpenOKcnt		=	0;
@@ -69,14 +73,14 @@ bool	gReportError			=	true;
 
 
 //*****************************************************************************
-static int	SetSocketTimeouts(int socket_desc, int timeOutSecs)
+static int	SetSocketTimeouts(int socket_desc, int timeOut_Secs, int timeOut_microSecs)
 {
 struct timeval		timeoutLength;
 int					setOptRetCode;
 
 	//*	set a timeout
-	timeoutLength.tv_sec	=	timeOutSecs;
-	timeoutLength.tv_usec	=	0;
+	timeoutLength.tv_sec	=	timeOut_Secs;
+	timeoutLength.tv_usec	=	timeOut_microSecs;
 	setOptRetCode			=	setsockopt(	socket_desc,
 											SOL_SOCKET,
 											SO_RCVTIMEO,
@@ -121,13 +125,16 @@ int					so_oobinline;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 //	CONSOLE_DEBUG(sendData);
+	inet_ntop(AF_INET, &deviceAddress->sin_addr.s_addr, ipString, INET_ADDRSTRLEN);
+
 	socket_desc	=	socket(AF_INET , SOCK_STREAM , 0);
 	if (socket_desc >= 0)
 	{
 		gNumSocketOpenOKcnt++;
 
 		//*	set a timeout
-		setOptRetCode	=	SetSocketTimeouts(socket_desc, kTimeOutLenSeconds);
+		setOptRetCode	=	SetSocketTimeouts(socket_desc, kTimeOutLenSeconds, 0);
+//		setOptRetCode	=	SetSocketTimeouts(socket_desc, 0, 25000);
 		if (setOptRetCode != 0)
 		{
 			CONSOLE_DEBUG("SetSocketTimeouts() failed");
@@ -135,11 +142,11 @@ int					so_oobinline;
 
 		//*	turn out of band off
 		so_oobinline	=	0;
-		setOptRetCode			=	setsockopt(	socket_desc,
-												SOL_SOCKET,
-												SO_OOBINLINE,
-												&so_oobinline,
-												sizeof(so_oobinline));
+		setOptRetCode	=	setsockopt(	socket_desc,
+										SOL_SOCKET,
+										SO_OOBINLINE,
+										&so_oobinline,
+										sizeof(so_oobinline));
 		if (setOptRetCode != 0)
 		{
 			CONSOLE_DEBUG_W_NUM("setsockopt() returned", setOptRetCode);
@@ -154,27 +161,33 @@ int					so_oobinline;
 		if (connRetCode >= 0)
 		{
 			gNumSocketConnOKcnt++;
-
 			//*	Must be HTTP/1.0 to disable "Transfer-Encoding: chunked"
-			strcpy(xmitBuffer, "GET ");
-			strcat(xmitBuffer, sendData);
-			strcat(xmitBuffer, " HTTP/1.0\n");
-			strcat(xmitBuffer, "Accept: application/json\n");
-//			strcat(xmitBuffer, "Accept: application/json, text/json, text/x-json, text/javascript, application/xml, text/xml\n");
-			strcat(xmitBuffer, "User-Agent: AlpacaPi\n");
-//			strcat(xmitBuffer, "Host: 192.168.1.161:6800\n");
-			strcat(xmitBuffer, "Connection: Keep-Alive\n");
+			strcpy(xmitBuffer,	"GET ");
+			strcat(xmitBuffer,	sendData);
+			strcat(xmitBuffer,	" HTTP/1.0\r\n");
+//			strcat(xmitBuffer,	"Host: 127.0.0.1:6800");
+			sprintf(linebuf,	"Host: %s:%d\r\n", ipString, port);
+			strcat(xmitBuffer,	linebuf);
+			strcat(xmitBuffer,	"User-Agent: AlpacaPi\r\n");
+			strcat(xmitBuffer,	"Accept: text/html,application/json\r\n");
+			strcat(xmitBuffer,	"Connection: close\r\n");
+//			strcat(xmitBuffer,	"Accept: application/json, text/json, text/x-json, text/javascript, application/xml, text/xml\r\n");
+//			strcat(xmitBuffer,	"Accept-Language: en-US,en;q=0.5\r\n");
+
+			strcat(xmitBuffer, "\r\n");
 //
 			if (dataString != NULL)
 			{
 				dataStrLen	=	strlen(dataString);
-				sprintf(linebuf, "Content-Length: %d\n", dataStrLen);
+				sprintf(linebuf, "Content-Length: %d\r\n", dataStrLen);
 				strcat(xmitBuffer, linebuf);
-				strcat(xmitBuffer, "\n");
+				strcat(xmitBuffer, "\r\n");
 
 				strcat(xmitBuffer, dataString);
-				strcat(xmitBuffer, "\n");
+				strcat(xmitBuffer, "\r\n");
 			}
+			//*	this EXTRA CR/LF is VERY important for Alpaca Remote Server
+			strcat(xmitBuffer, "\r\n");
 
 //			CONSOLE_DEBUG(xmitBuffer);
 
@@ -191,13 +204,10 @@ int					so_oobinline;
 		}
 		else if (errno == ECONNREFUSED)
 		{
-
-			PrintIPaddressToString(deviceAddress->sin_addr.s_addr, ipString);
 			CONSOLE_DEBUG_W_STR("connect refused", ipString);
 		}
 		else
 		{
-			PrintIPaddressToString(deviceAddress->sin_addr.s_addr, ipString);
 			CONSOLE_DEBUG_W_STR("connect error, ipaddress\t=",	ipString);
 			CONSOLE_DEBUG_W_STR("connect error, send data\t=",	sendData);
 			CONSOLE_DEBUG_W_NUM("errno\t\t\t=", errno);
@@ -236,16 +246,24 @@ int					dataStrLen;
 char				ipString[32];
 bool				keepReading;
 int					setOptRetCode;
+int					readLoopCnt;		//*	for debugging
+int					readSuccessCnt;		//*	for debugging
 
-//	CONSOLE_DEBUG(__FUNCTION__);
-//	CONSOLE_DEBUG(sendData);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, "------start-------");
+	CONSOLE_DEBUG(sendData);
+//	CONSOLE_ABORT(__FUNCTION__);
+	inet_ntop(AF_INET, &deviceAddress->sin_addr.s_addr, ipString, INET_ADDRSTRLEN);
+
+	SETUP_TIMING();
+
 	validData	=	false;
 	socket_desc	=	socket(AF_INET , SOCK_STREAM , 0);
 	if (socket_desc >= 0)
 	{
 //		CONSOLE_DEBUG("Setting Timeout");
 		//*	set a timeout
-		setOptRetCode	=	SetSocketTimeouts(socket_desc, kTimeOutLenSeconds);
+		setOptRetCode	=	SetSocketTimeouts(socket_desc, kTimeOutLenSeconds, 0);
+	//	setOptRetCode	=	SetSocketTimeouts(socket_desc, 0, 25000);
 		if (setOptRetCode != 0)
 		{
 			CONSOLE_DEBUG("SetSocketTimeouts() failed");
@@ -254,6 +272,7 @@ int					setOptRetCode;
 		remoteDev.sin_addr.s_addr	=	deviceAddress->sin_addr.s_addr;
 		remoteDev.sin_family		=	AF_INET;
 		remoteDev.sin_port			=	htons(port);
+
 		//*	Connect to remote device
 		connRetCode	=	connect(socket_desc , (struct sockaddr *)&remoteDev , sizeof(remoteDev));
 		if (connRetCode >= 0)
@@ -261,14 +280,44 @@ int					setOptRetCode;
 //			CONSOLE_DEBUG("Connected");
 
 			gNumSocketConnOKcnt++;
+//	GET /api/v1/camera/0/supportedactions HTTP/1.1
+//	Host: newt16:6800
+//	User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:71.0) Gecko/20100101 Firefox/71.0
+//	Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+//	Accept-Language: en-US,en;q=0.5
+//	Accept-Encoding: gzip, deflate
+//	Connection: keep-alive
+//	Upgrade-Insecure-Requests: 1
+//	Cache-Control: max-age=0
 
-			strcpy(xmitBuffer, "GET ");
-			strcat(xmitBuffer, sendData);
-			strcat(xmitBuffer, "\r\n");
-			strcat(xmitBuffer, "User-Agent: Alpaca\r\n");
-			strcat(xmitBuffer, "accept: application/json\r\n");
+//	GET /api/v1/camera/0/supportedactions HTTP/1.1
+//	Host: ascom:11111
+//	User-Agent: AlpacaPi
+//	Accept: text/html,application/json
+//	Accept-Language: en-US,en;q=0.5
+//	Connection: keep-alive
+
+
+//			CONSOLE_DEBUG("Building xmitBuffer");
+			strcpy(xmitBuffer,	"GET ");
+			strcat(xmitBuffer,	sendData);
+			strcat(xmitBuffer,	" HTTP/1.0\r\n");
+//			strcat(xmitBuffer,	"Host: ascom:11111\r\n");
+			sprintf(linebuf,	"Host: %s:%d\r\n", ipString, port);
+			strcat(xmitBuffer,	linebuf);
+			strcat(xmitBuffer,	"User-Agent: AlpacaPi\r\n");
+			strcat(xmitBuffer,	"Accept: text/html,application/json\r\n");
+			strcat(xmitBuffer,	"Accept-Language: en-US,en;q=0.5\r\n");
+			strcat(xmitBuffer,	"Connection: close\r\n");
+
+//			if (strstr(sendData, "switch") !=  NULL)
+//			{
+//				CONSOLE_DEBUG_W_STR("xmitBuffer\t=", xmitBuffer);
+//			}
+
 			if (dataString != NULL)
 			{
+//				CONSOLE_DEBUG_W_STR("dataString\t=", dataString);
 				dataStrLen	=	strlen(dataString);
 				sprintf(linebuf, "Content-Length: %d\r\n", dataStrLen);
 				strcat(xmitBuffer, linebuf);
@@ -277,37 +326,49 @@ int					setOptRetCode;
 				strcat(xmitBuffer, dataString);
 				strcat(xmitBuffer, "\r\n");
 			}
+			//*	this EXTRA CR/LF is VERY important for Alpaca Remote Server
+			strcat(xmitBuffer, "\r\n");
 
 //			CONSOLE_DEBUG(xmitBuffer);
 
 			sendRetCode	=	send(socket_desc , xmitBuffer , strlen(xmitBuffer) , MSG_NOSIGNAL);
 			if (sendRetCode >= 0)
 			{
-
 //				CONSOLE_DEBUG("Request sent");
 				keepReading		=	true;
 				longBuffer[0]	=	0;
+				readLoopCnt		=	0;
+				readSuccessCnt	=	0;
 				while (keepReading && ((strlen(longBuffer) + kReadBuffLen) < kLargeBufferSize))
 				{
-				//	MSG_NOSIGNAL
-				//	recvByteCnt	=	recv(socket_desc, returnedData , kReadBuffLen , 0);
-					recvByteCnt	=	recv(socket_desc, returnedData , kReadBuffLen , MSG_NOSIGNAL);
+					readLoopCnt++;
+				//	recvByteCnt	=	recv(socket_desc, returnedData, kReadBuffLen, 0);
+					recvByteCnt	=	recv(socket_desc, returnedData, kReadBuffLen, MSG_NOSIGNAL);
+//					CONSOLE_DEBUG_W_NUM("errno   \t=",	errno);
+//					CONSOLE_DEBUG_W_NUM("recvByteCnt\t=",	recvByteCnt);
 					if (recvByteCnt > 0)
 					{
-//						CONSOLE_DEBUG_W_NUM("recvByteCnt\t=",	recvByteCnt);
-						validData	=	true;
+						readSuccessCnt++;
 						returnedData[recvByteCnt]	=	0;
+//						CONSOLE_DEBUG_W_NUM("recvByteCnt\t=",	recvByteCnt);
+//						if (strstr(sendData, "switch") !=  NULL)
+//						{
+//							CONSOLE_DEBUG_W_STR("returnedData\t=", returnedData);
+//						}
+						validData	=	true;
 
 //						CONSOLE_DEBUG_W_STR("returnedData\t=",	returnedData);
 
 						strcat(longBuffer, returnedData);
-//						CONSOLE_DEBUG_W_STR("longBuffer\t=",	longBuffer);
 					}
 					else
 					{
 						keepReading		=	false;
 					}
 				}
+//				CONSOLE_DEBUG_W_STR("longBuffer\t=",	longBuffer);
+//				CONSOLE_DEBUG_W_NUM("readLoopCnt   \t=",	readLoopCnt);
+//				CONSOLE_DEBUG_W_NUM("readSuccessCnt\t=",	readSuccessCnt);
 //				CONSOLE_DEBUG_W_STR("longBuffer\t=",	longBuffer);
 				SJP_Init(jsonParser);
 				SJP_ParseData(jsonParser, longBuffer);
@@ -329,7 +390,6 @@ int					setOptRetCode;
 		{
 		char	portString[32];
 
-			PrintIPaddressToString(deviceAddress->sin_addr.s_addr, ipString);
 			sprintf(portString, ":%d", port);
 			CONSOLE_DEBUG_W_2STR("connect refused", ipString, portString);
 		}
@@ -337,10 +397,9 @@ int					setOptRetCode;
 		{
 		char	errorString[64];
 
-			PrintIPaddressToString(deviceAddress->sin_addr.s_addr, ipString);
 			CONSOLE_DEBUG_W_STR("connect error, ipaddress\t=",	ipString);
 			CONSOLE_DEBUG_W_STR("connect error, send data\t=",	sendData);
-			CONSOLE_DEBUG_W_NUM("errno\t\t\t=", errno);
+		//	CONSOLE_DEBUG_W_NUM("errno\t\t\t=", errno);
 
 			GetLinuxErrorString(errno, errorString);
 
@@ -366,6 +425,7 @@ int					setOptRetCode;
 		}
 	}
 //	CONSOLE_DEBUG(__FUNCTION__);
+	DEBUG_TIMING("Delta time for GetJsonResponse()=");
 	return(validData);
 }
 
@@ -401,13 +461,17 @@ int					setOptRetCode;
 
 //	CONSOLE_DEBUG_W_STR("putCommand\t=", putCommand);
 //	CONSOLE_DEBUG_W_STR("dataString\t=", dataString);
+//	CONSOLE_ABORT(__FUNCTION__);
+
+	inet_ntop(AF_INET, &deviceAddress->sin_addr.s_addr, ipString, INET_ADDRSTRLEN);
 
 	validData	=	false;
 	socket_desc	=	socket(AF_INET , SOCK_STREAM , 0);
 	if (socket_desc >= 0)
 	{
 		//*	set a timeout
-		setOptRetCode	=	SetSocketTimeouts(socket_desc, kTimeOutLenSeconds);
+		setOptRetCode	=	SetSocketTimeouts(socket_desc, kTimeOutLenSeconds, 0);
+	//	setOptRetCode	=	SetSocketTimeouts(socket_desc, 0, 25000);
 		if (setOptRetCode != 0)
 		{
 			CONSOLE_DEBUG("SetSocketTimeouts() failed");
@@ -420,8 +484,7 @@ int					setOptRetCode;
 		connRetCode	=	connect(socket_desc , (struct sockaddr *)&remoteDev , sizeof(remoteDev));
 		if (connRetCode >= 0)
 		{
-			PrintIPaddressToString(deviceAddress->sin_addr.s_addr, ipString);
-//			CONSOLE_DEBUG_W_STR("connect open", ipString);
+			CONSOLE_DEBUG_W_STR("connect open", ipString);
 
 //	PUT /api/v1/dome/0/openshutter HTTP/1.1
 //	Host: test:6800
@@ -433,14 +496,41 @@ int					setOptRetCode;
 //	ClientID=2&ClientTransactionID=4
 
 
-			strcpy(xmitBuffer, "PUT ");
-			strcat(xmitBuffer, putCommand);
+//PUT /api/v1/camera/0/connected HTTP/1.1
+//Host: newt16:6800
+//User-Agent: curl/7.58.0
+//accept: application/json
+//Content-Length: 14
+//Content-Type: application/x-www-form-urlencoded
+//
+//Connected=true
 
-			strcat(xmitBuffer, " HTTP/1.1\r\n");
-			strcat(xmitBuffer, "Host: 127.0.0.1:6800\r\n");
-			strcat(xmitBuffer, "User-Agent: AlpacaPi\r\n");
-	//		strcat(xmitBuffer, "Connection: keep-alive\r\n");
-			strcat(xmitBuffer, "Accept: text/html,application/json\r\n");
+//PUT /api/v1/camera/0/connected HTTP/1.0
+//Host: 127.0.0.1:6800
+//User-Agent: AlpacaPi
+//Accept: text/html,application/json
+//Content-Length: 47
+//
+//Connected=true&ClientID=1&ClientTransactionID=1
+
+//PUT /api/v1/camera/0/connected HTTP/1.0
+//Host: 127.0.0.1:32323
+//User-Agent: AlpacaPi
+//Accept: text/html,application/json
+//Content-Length: 47
+//
+//Connected=true&ClientID=1&ClientTransactionID=1
+
+			strcpy(xmitBuffer,	"PUT ");
+			strcat(xmitBuffer,	putCommand);
+			strcat(xmitBuffer,	" HTTP/1.0\r\n");
+//			strcat(xmitBuffer,	"Host: 192.168.1.156:32323\r\n");
+			sprintf(linebuf,	"Host: %s:%d\r\n", ipString, port);
+			strcat(xmitBuffer,	linebuf);
+			strcat(xmitBuffer,	"User-Agent: AlpacaPi\r\n");
+			strcat(xmitBuffer,	"Connection: close\r\n");
+			strcat(xmitBuffer,	"Accept: text/html,application/json\r\n");
+			strcat(xmitBuffer,	"Content-Type: application/x-www-form-urlencoded\r\n");
 
 			if (dataString != NULL)
 			{
@@ -454,9 +544,11 @@ int					setOptRetCode;
 			}
 			else
 			{
+				//*	this EXTRA CR/LF is VERY important for Alpaca Remote Server
 				strcat(xmitBuffer, "\r\n");
 			}
-//			CONSOLE_DEBUG_W_STR("Sending:", xmitBuffer);
+			strcat(xmitBuffer, "\r\n");
+			CONSOLE_DEBUG_W_STR("Sending:", xmitBuffer);
 
 			sendRetCode	=	send(socket_desc , xmitBuffer , strlen(xmitBuffer) , MSG_NOSIGNAL);
 			if (sendRetCode >= 0)
@@ -464,6 +556,7 @@ int					setOptRetCode;
 				recvByteCnt	=	recv(socket_desc, returnedData , kReadBuffLen , MSG_NOSIGNAL);
 				if (recvByteCnt >= 0)
 				{
+					CONSOLE_DEBUG("Setting validData to true");
 					validData	=	true;
 					returnedData[recvByteCnt]	=	0;
 					SJP_Init(jsonParser);
@@ -484,8 +577,6 @@ int					setOptRetCode;
 		}
 		else if (errno == ECONNREFUSED)
 		{
-
-			PrintIPaddressToString(deviceAddress->sin_addr.s_addr, ipString);
 			CONSOLE_DEBUG_W_STR("connect refused", ipString);
 		}
 		else
@@ -506,7 +597,7 @@ int					setOptRetCode;
 			CONSOLE_DEBUG_W_NUM("errno\t\t=", errno);
 		}
 	}
-//	CONSOLE_DEBUG_W_STR(__FUNCTION__, "Exit");
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, (validData ? "Valid Data" : "Not Valid"));
 	return(validData);
 }
 
@@ -518,3 +609,4 @@ void	PrintIPaddressToString(const long ipAddress, char *ipString)
 	inet_ntop(AF_INET, &ipAddress, ipString, INET_ADDRSTRLEN);
 
 }
+

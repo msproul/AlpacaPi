@@ -1,27 +1,37 @@
 //*****************************************************************************
-//#include	"controller_aavso.h"
+//#include	"controller_starlist.h"
 
 
 #include	"controller.h"
 
-#include	"windowtab_aavsolist.h"
+#ifndef _SKY_STRUCTS_H_
+	#include	"SkyStruc.h"
+#endif // _SKY_STRUCTS_H_
+
+
+
+#include	"windowtab_starlist.h"
 #ifndef	_WINDOWTAB_ABOUT_H_
 	#include	"windowtab_about.h"
 #endif // _WINDOWTAB_ABOUT_H_
 
-void	CreateAAVSOlistWindow(void);
+
+
+void	CreateStarlistWindow(const char *windowName, TYPE_CelestData *starListPtr, int starListCount);
 
 //**************************************************************************************
-class ControllerAAVSOlist: public Controller
+class ControllerStarlist: public Controller
 {
 	public:
 		//
 		// Construction
 		//
-				ControllerAAVSOlist(	const char			*argWindowName);
+				ControllerStarlist(	const char		*argWindowName,
+									TYPE_CelestData	*argStarList,
+									int				argStarListCount);
 
 
-		virtual	~ControllerAAVSOlist(void);
+		virtual	~ControllerStarlist(void);
 
 
 		virtual	void	SetupWindowControls(void);
@@ -31,7 +41,10 @@ class ControllerAAVSOlist: public Controller
 		virtual	void	UpdateCommonProperties(void);
 
 				//*	tab information
-				WindowTabAAVSOlist		*cAAVSOlistTabObjPtr;
+				WindowTabStarList		*cStarListTabObjPtr;
 				WindowTabAbout			*cAboutBoxTabObjPtr;
+
+				TYPE_CelestData	*starListPtr;
+				int				starListCount;
 };
 

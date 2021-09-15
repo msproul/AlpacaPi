@@ -1,5 +1,5 @@
 //*****************************************************************************
-//*		controller_aavso.cpp		(c) 2021 by Mark Sproul
+//*		controller_starlist.cpp		(c) 2021 by Mark Sproul
 //*
 //*
 //*
@@ -18,13 +18,14 @@
 //*****************************************************************************
 //*	Edit History
 //*****************************************************************************
-//*	Jul 17,	2021	<MLS> Created controller_aavso.cpp
+//*	Sep  6,	2021	<MLS> Created controller_starlist.cpp
+//*	Sep 12,	2021	<MLS> Combined AAVSO list with starlist
 //*****************************************************************************
 
 
-#define _ENABLE_AAVSO_
+#define _ENABLE_STARLIST_
 
-#ifdef _ENABLE_AAVSO_
+#ifdef _ENABLE_STARLIST_
 
 
 #include	<stdio.h>
@@ -46,17 +47,17 @@
 #define	kWindowWidth	999
 #define	kWindowHeight	700
 
-#include	"windowtab_aavsolist.h"
+#include	"windowtab_starlist.h"
 #include	"windowtab_about.h"
 #include	"helper_functions.h"
 
 #include	"controller.h"
-#include	"controller_aavso.h"
+#include	"controller_starlist.h"
 
 //**************************************************************************************
 enum
 {
-	kTab_AAVSO_list	=	1,
+	kTab_Star_list	=	1,
 	kTab_About,
 
 	kTab_Count
@@ -64,59 +65,68 @@ enum
 };
 
 //**************************************************************************************
-void	CreateAAVSOlistWindow(void)
+void	CreateStarlistWindow(const char *windowName, TYPE_CelestData *starListPtr, int starListCount)
 {
-	new ControllerAAVSOlist("AAVSO List");
+	new ControllerStarlist(windowName, starListPtr,  starListCount);
 }
 
 //**************************************************************************************
-ControllerAAVSOlist::ControllerAAVSOlist(	const char			*argWindowName)
+ControllerStarlist::ControllerStarlist(	const char		*argWindowName,
+										TYPE_CelestData	*argStarList,
+										int				argStarListCount)
 	:Controller(argWindowName, kWindowWidth,  kWindowHeight)
 {
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG_W_NUM("kWindowWidth\t=", kWindowWidth);
 	CONSOLE_DEBUG_W_NUM("kWindowHeight\t=", kWindowHeight);
 
-	cAAVSOlistTabObjPtr		=	NULL;
+	cStarListTabObjPtr		=	NULL;
 	cAboutBoxTabObjPtr		=	NULL;
 
+	CONSOLE_DEBUG_W_NUM("argStarListCount\t=", argStarListCount);
 
 
 	SetupWindowControls();
 
-//	SetWidgetText(kTab_FilterWheel,		kFilterWheel_AlpacaDrvrVersion,		cAlpacaVersionString);
+
+	if (cStarListTabObjPtr != NULL)
+	{
+		cStarListTabObjPtr->SetStarDataPointers(argStarList, argStarListCount);
+	}
+	else
+	{
+		CONSOLE_ABORT(__FUNCTION__);
+	}
 }
 
 //**************************************************************************************
 // Destructor
 //**************************************************************************************
-ControllerAAVSOlist::~ControllerAAVSOlist(void)
+ControllerStarlist::~ControllerStarlist(void)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
-	DELETE_OBJ_IF_VALID(cAAVSOlistTabObjPtr);
+	DELETE_OBJ_IF_VALID(cStarListTabObjPtr);
 	DELETE_OBJ_IF_VALID(cAboutBoxTabObjPtr);
 }
 
 
 //**************************************************************************************
-void	ControllerAAVSOlist::SetupWindowControls(void)
+void	ControllerStarlist::SetupWindowControls(void)
 {
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
 	SetTabCount(kTab_Count);
-	SetTabText(kTab_AAVSO_list,		"AAVSO Object List");
+	SetTabText(kTab_Star_list,		"Star Object List");
 	SetTabText(kTab_About,			"About");
 
-
 	//--------------------------------------------
-	cAAVSOlistTabObjPtr	=	new WindowTabAAVSOlist(cWidth, cHeight, cBackGrndColor, cWindowName);
-	if (cAAVSOlistTabObjPtr != NULL)
+	cStarListTabObjPtr	=	new WindowTabStarList(cWidth, cHeight, cBackGrndColor, cWindowName);
+	if (cStarListTabObjPtr != NULL)
 	{
-		SetTabWindow(kTab_AAVSO_list,	cAAVSOlistTabObjPtr);
-		cAAVSOlistTabObjPtr->SetParentObjectPtr(this);
+		SetTabWindow(kTab_Star_list,	cStarListTabObjPtr);
+		cStarListTabObjPtr->SetParentObjectPtr(this);
 	}
-
 
 	//--------------------------------------------
 	cAboutBoxTabObjPtr		=	new WindowTabAbout(	cWidth, cHeight, cBackGrndColor, cWindowName);
@@ -129,7 +139,7 @@ void	ControllerAAVSOlist::SetupWindowControls(void)
 }
 
 //**************************************************************************************
-void	ControllerAAVSOlist::RunBackgroundTasks(void)
+void	ControllerStarlist::RunBackgroundTasks(void)
 {
 long	delteaMillSecs;
 
@@ -156,7 +166,7 @@ long	delteaMillSecs;
 }
 
 //*****************************************************************************
-bool	ControllerAAVSOlist::AlpacaGetStartupData(void)
+bool	ControllerStarlist::AlpacaGetStartupData(void)
 {
 bool			validData;
 
@@ -167,7 +177,7 @@ bool			validData;
 }
 
 //*****************************************************************************
-void	ControllerAAVSOlist::UpdateCommonProperties(void)
+void	ControllerStarlist::UpdateCommonProperties(void)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
 //	SetWidgetText(	kTab_DriverInfo,	kDriverInfo_Name,				cCommonProp.Name);

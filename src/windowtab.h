@@ -120,6 +120,8 @@ class WindowTab
 				void	SetWidgetProgress(		const int widgetIdx, const int currPosition, const int totalValue);
 				void	DumpWidgetList(			const int startIdx, const int stopIdx);
 
+				void	SetCurrentTab(			const int tabIdx);
+
 				//*	special purpose routines
 				void	SetBGcolorFromWindowName(	const int	widgetIdx);
 				void	SetIPaddressBoxes(			const int	ipaddrBox,
@@ -196,6 +198,8 @@ class WindowTab
 		virtual void	ProcessMouseLeftButtonDragged(const int widgetIdx, const int event, const int xxx, const int yyy, const int flags);
 		virtual void	ProcessMouseWheelMoved(const int widgetIdx, const int event, const int xxx, const int yyy, const int wheelMovement);
 
+				void	SetUpConnectedIndicator(const int buttonIdx, const int yLoc);
+
 				void	SetHelpTextBoxNumber(const int buttonIdx);
 				void	SetHelpTextBoxColor(CvScalar newtextColor);
 				bool	DisplayButtonHelpText(const int buttonIdx);
@@ -210,7 +214,7 @@ class WindowTab
 		void		CPenSize(const int newLineWidth);
 		void		CMoveTo(const int xx, const int yy);
 		void		CLineTo(const int xx, const int yy);
-		void		DrawCString(const int xx, const int yy, const char *theString);
+		void		DrawCString(const int xx, const int yy, const char *theString, int fontIndex=1);
 		void		SetColor(const int theColor);
 
 		void		Putpixel(const int xx, const int yy, const int theColor);
@@ -257,6 +261,7 @@ class WindowTab
 										char			*errorMsg,
 										bool			reportError=false);
 virtual	void	AlpacaDisplayErrorMessage(const char *errorMsgString);
+		bool	AlpacaSetConnected(const char *deviceTypeStr, const bool newConnectedState=true);
 #endif // _CONTROLLER_USES_ALPACA_
 
 

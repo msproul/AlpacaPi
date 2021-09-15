@@ -61,11 +61,10 @@ void	WindowTabDriverInfo::SetupWindowControls(void)
 {
 int		yLoc;
 int		textBoxHt;
-int		labelX;
-int		labelY;
-int		labelWidth;
+int		boxWidth;
 int		boxID;
-
+int		firstItemID;
+int		lastItemID;
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	//------------------------------------------
@@ -84,32 +83,45 @@ int		boxID;
 	SetWidgetTextColor(kDriverInfo_SubTitle,	CV_RGB(255,	255,	0));
 	yLoc			+=	cTitleHeight;
 	yLoc			+=	2;
+	yLoc			+=	2;
+	yLoc			+=	2;
 
 
 	textBoxHt	=	cTitleHeight * 2;
-	labelWidth	=	135;
-	labelX		=	cWidth - labelWidth - 5;
+//	textBoxHt	+=	cTitleHeight / 2;
+	boxWidth	=	135;
+	boxWidth	=	cWidth - 6;
 	boxID		=	kFirstBoxID;
-	while (boxID<=kLastBoxID)
+	while (boxID <= kLastBoxID)
 	{
-		SetWidget(				boxID,	0,			yLoc,		cWidth,		textBoxHt);
-		SetWidgetType(			boxID,	kWidgetType_MultiLineText);
-		SetWidgetJustification(	boxID,	kJustification_Left);
-		SetWidgetFont(			boxID,	kFont_TextList);
-		SetWidgetTextColor(		boxID,	CV_RGB(255,	255,	255));
-
-		boxID++;
-		labelY	=	yLoc + textBoxHt - cSmallBtnHt - 2;
-		SetWidget(				boxID,	labelX,			labelY,		labelWidth,		cSmallBtnHt);
+		//*	setup the label
+		firstItemID	=	boxID;
+		SetWidget(				boxID,	0,			yLoc,		boxWidth,		cSmallBtnHt);
 		SetWidgetType(			boxID,	kWidgetType_Text);
-		SetWidgetJustification(	boxID,	kJustification_Left);
+		SetWidgetJustification(	boxID,	kJustification_Center);
 		SetWidgetFont(			boxID,	kFont_TextList);
 		SetWidgetTextColor(		boxID,	CV_RGB(255,	0,	0));
 		SetWidgetBorder(		boxID, false);
+		yLoc			+=	cSmallBtnHt;
+		yLoc			+=	2;
 
-
-
+		boxID++;
+		//*	setup the text area
+		lastItemID	=	boxID;
+		SetWidget(				boxID,	0,			yLoc,		boxWidth,		textBoxHt);
+		SetWidgetType(			boxID,	kWidgetType_MultiLineText);
+		SetWidgetJustification(	boxID,	kJustification_Left);
+		SetWidgetFont(			boxID,	kFont_TextList);
+		SetWidgetTextColor(		boxID,	CV_RGB(255,	255, 255));
+		SetWidgetBorderColor(	boxID,	CV_RGB(255,	255,	0));
+		SetWidgetBorder(		boxID, false);
 		yLoc			+=	textBoxHt;
+		yLoc			+=	2;
+
+		boxID++;
+		//*	setup the outline
+		SetWidgetOutlineBox(boxID, firstItemID, lastItemID);
+		yLoc			+=	2;
 		yLoc			+=	2;
 
 		boxID++;

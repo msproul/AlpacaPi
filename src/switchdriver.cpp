@@ -921,7 +921,7 @@ bool				switchState;
 										INCLUDE_COMMA);
 
 
-			if (cSwitchType[iii] == kSwitchType_Analog)
+	//		if (cSwitchType[iii] == kSwitchType_Analog)
 			{
 				sprintf(textBuffer, "getswitchvalue-%d", iii);
 				JsonResponse_Add_Double(reqData->socket,

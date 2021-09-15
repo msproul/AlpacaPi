@@ -39,6 +39,9 @@ typedef struct
 		bool				dispDraper;				//*	Henry Draper Catalog
 		bool				dispAAVSOalerts;		//*	AAVSO TargetTool Alerts
 
+
+		bool				dispSpecialObjects;		//*	Special.txt objectss
+
 } TYPE_SkyDispOptions;
 
 

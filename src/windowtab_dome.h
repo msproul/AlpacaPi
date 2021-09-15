@@ -16,6 +16,8 @@ enum
 {
 	kDomeBox_Title	=	0,
 
+	kDomeBox_Connected,
+
 	kDomeBox_CurPosLabel,
 	kDomeBox_CurPosition,
 
@@ -103,6 +105,11 @@ class WindowTabDome: public WindowTab
 		virtual	void	SetupWindowControls(void);
 		virtual	void	DrawGraphWidget(IplImage *openCV_Image, const int widgetIdx);
 		virtual	void	ProcessButtonClick(const int buttonIdx);
+		virtual	void	ProcessDoubleClick(	const int	widgetIdx,
+											const int	event,
+											const int	xxx,
+											const int	yyy,
+											const int	flags);
 		virtual	void	AlpacaDisplayErrorMessage(const char *errorMsgString);
 		virtual	void	UpdateControls(void);
 

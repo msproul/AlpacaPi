@@ -58,6 +58,8 @@ enum
 	kFont_Medium,
 	kFont_Large,
 
+	kFont_MonoSpace,
+
 //	kFont_Simplex,
 	kFont_ScriptLarge,
 

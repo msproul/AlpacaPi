@@ -6,6 +6,9 @@
 	#include	"windowtab_ml_single.h"
 #endif // _WINDOWTAB_MOONLITE_SINGLE_H_
 
+#ifndef	_WINDOWTAB_DRIVER_INFO_H_
+	#include	"windowtab_drvrInfo.h"
+#endif
 
 //**************************************************************************************
 class ControllerFocusGeneric: public ControllerFocus
@@ -26,6 +29,7 @@ class ControllerFocusGeneric: public ControllerFocus
 		virtual	void	CreateWindowTabs(void);
 
 
+		virtual	void	UpdateCommonProperties(void);
 		virtual	void	UpdateFocuserPosition(	const int newFocuserPosition);
 		virtual	void	UpdateTemperature(		const double newTemperature);
 //		virtual	void	UpdateVoltage(			const double newVoltage);
@@ -43,7 +47,7 @@ class ControllerFocusGeneric: public ControllerFocus
 
 				//*	tab information
 				WindowTabMLsingle		*cMLsingleTabObjPtr;
-//				WindowTabConfig			*cConfigTabObjPtr;
+				WindowTabDriverInfo		*cDriverInfoTabObjPtr;
 				WindowTabAbout			*cAboutBoxTabObjPtr;
 
 };

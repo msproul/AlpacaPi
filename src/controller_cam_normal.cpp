@@ -90,9 +90,7 @@ ControllerCamNormal::ControllerCamNormal(	const char			*argWindowName,
 											TYPE_REMOTE_DEV		*alpacaDevice)
 	:ControllerCamera(argWindowName, alpacaDevice, kCamWindowWidth,  kCamWindowHeight)
 {
-
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
-
 
 	SetupWindowControls();
 
@@ -623,6 +621,11 @@ double	newProgressValue;
 	}
 }
 
+//*****************************************************************************
+void	ControllerCamNormal::UpdateConnectedStatusIndicator(void)
+{
+	UpdateConnectedIndicator(kTab_Camera,		kCameraBox_Connected);
+}
 
 #endif // _ENABLE_CTRL_CAMERA_
 

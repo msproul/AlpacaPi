@@ -18,12 +18,10 @@
 enum
 {
 	kFilterWheel_Title	=	0,
+	kFilterWheel_Connected,
 
 	kFilterWheel_Name,
 	kFilterWheel_FilterCircle,
-
-
-
 
 	kFilterWheel_LastCmdString,
 	kFilterWheel_AlpacaLogo,

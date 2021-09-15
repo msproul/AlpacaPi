@@ -48,6 +48,21 @@ enum
 	kSkyT_Settings_GridDashed,
 	kSkyT_Settings_GridOutline,
 
+	kSkyT_Settings_LineWidthTitle,
+	kSkyT_Settings_LineW_Const,
+	kSkyT_Settings_LineW_Const1,
+	kSkyT_Settings_LineW_Const2,
+	kSkyT_Settings_LineW_ConstOutlines,
+	kSkyT_Settings_LineW_ConstOutlines1,
+	kSkyT_Settings_LineW_ConstOutlines2,
+	kSkyT_Settings_LineW_Grid,
+	kSkyT_Settings_LineW_Grid1,
+	kSkyT_Settings_LineW_Grid2,
+	kSkyT_Settings_LineW_BoxOutline,
+
+	kSkyT_Settings_ResetToDefault,
+
+
 	kSkyT_Settings_DataTitle,
 
 	kSkyT_Settings_DataAAVSO_txt,
@@ -58,6 +73,9 @@ enum
 
 	kSkyT_Settings_DataHipparcos_txt,
 	kSkyT_Settings_DataHipparcos_cnt,
+
+	kSkyT_Settings_DataMessier_txt,
+	kSkyT_Settings_DataMessier_cnt,
 
 	kSkyT_Settings_DataNGC_txt,
 	kSkyT_Settings_DataNGC_cnt,

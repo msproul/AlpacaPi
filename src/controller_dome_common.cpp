@@ -265,6 +265,14 @@ double	argDouble;
 			UpdateShutterStatus(newShutterStatus);
 		}
 	}
+	else
+	{
+		//*	process the common stuff
+		AlpacaProcessReadAll_Common(	"dome",
+										deviceNum,
+										keywordString,
+										valueString);
+	}
 }
 
 

@@ -64,17 +64,17 @@ short		ii;
 		theParserDataStruct->tokenCount_Errs	=	0;
 
 		//*	set all the strings to null
-		for (ii=0; ii<kSJP_MaxTokens_Hdr; ii++)
+		for (ii=0; ii < kSJP_MaxTokens_Hdr; ii++)
 		{
 			memset(&theParserDataStruct->headerList[ii], 0, sizeof(SJP_token_t));
 		}
 
-		for (ii=0; ii<kSJP_MaxTokens_Data; ii++)
+		for (ii=0; ii < kSJP_MaxTokens_Data; ii++)
 		{
 			memset(&theParserDataStruct->dataList[ii], 0, sizeof(SJP_token_t));
 		}
 
-		for (ii=0; ii<kSJP_MaxTokens_Errs; ii++)
+		for (ii=0; ii < kSJP_MaxTokens_Errs; ii++)
 		{
 			memset(&theParserDataStruct->errorList[ii], 0, sizeof(SJP_token_t));
 		}
@@ -326,6 +326,8 @@ bool		masterArrayFlag;
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG_W_STR("jsonDataPtr\t=", jsonDataPtr);
 
+
+
 	returnCode		=	0;
 	headerFound		=	false;
 	arrayInProcess	=	false;
@@ -338,6 +340,16 @@ bool		masterArrayFlag;
 
 	if ((theParser != NULL) && (jsonDataPtr != NULL))
 	{
+//		//*	debug first line of json data
+//		int	iii;
+//		iii	=	0;
+//		while (jsonDataPtr[iii] >= 0x20)
+//		{
+//			fprintf(stderr, "%c", jsonDataPtr[iii]);
+//			iii++;
+//		}
+//		fprintf(stderr, "\r\n");
+
 		memset(myKeywordString,	0,	kSJP_MaxValueLen);
 		memset(myValueString,	0,	kSJP_MaxValueLen);
 
@@ -740,16 +752,17 @@ short		ii;
 
 	if (theParser != NULL)
 	{
-		printf("*********************************************\r\n");
+		printf("*Start*********************************************\r\n");
+		printf("Dumping JSON parser data\r\n");
 		for (ii=0; ii<theParser->tokenCount_Data; ii++)
 		{
-			if (strlen(theParser->dataList[ii].keyword) > 0)
+			if ((strlen(theParser->dataList[ii].keyword) > 0) || (strlen(theParser->dataList[ii].valueString) > 0))
 			{
 				printf("%2d=%-20s\t%-20s\t\r\n",	ii,	theParser->dataList[ii].keyword,
 														theParser->dataList[ii].valueString);
 			}
 		}
-		printf("---------------------------------------------\r\n");
+		printf("-End--------------------------------------------\r\n");
 	}
 }
 

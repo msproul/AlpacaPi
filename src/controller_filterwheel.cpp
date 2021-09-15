@@ -70,7 +70,7 @@ enum
 //**************************************************************************************
 ControllerFilterWheel::ControllerFilterWheel(	const char			*argWindowName,
 												TYPE_REMOTE_DEV		*alpacaDevice)
-	:Controller(argWindowName, kWindowWidth,  kWindowHeight)
+	:Controller(argWindowName, kWindowWidth,  kWindowHeight, kNoBackgroundTask)
 {
 	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -102,6 +102,11 @@ ControllerFilterWheel::ControllerFilterWheel(	const char			*argWindowName,
 	SetupWindowControls();
 
 	SetWidgetText(kTab_FilterWheel,		kFilterWheel_AlpacaDrvrVersion,		cAlpacaVersionString);
+
+	AlpacaSetConnected("filterwheel", true);
+#ifdef _USE_BACKGROUND_THREAD_
+	StartBackgroundThread();
+#endif // _USE_BACKGROUND_THREAD_
 }
 
 //**************************************************************************************
@@ -184,9 +189,11 @@ long	delteaMillSecs;
 		HandleWindowUpdate();
 		cvWaitKey(60);
 
-		AlpacaGetCommonProperties("filterwheel");
+		AlpacaGetCommonProperties_OneAAT("filterwheel");
 		AlpacaGetStartupData();
 
+		AlpacaGetCommonConnectedState("filterwheel");
+		UpdateConnectedIndicator(kTab_FilterWheel,		kFilterWheel_Connected);
 
 		cReadStartup	=	false;
 	}
@@ -196,8 +203,8 @@ long	delteaMillSecs;
 	{
 		AlpacaGetFilterWheelStatus();
 		cLastUpdate_milliSecs	=	millis();
+		UpdateConnectedIndicator(kTab_FilterWheel,		kFilterWheel_Connected);
 	}
-
 }
 
 //*****************************************************************************
@@ -273,7 +280,7 @@ void	ControllerFilterWheel::UpdateFilterWheelPosition(void)
 }
 
 #define	PARENT_CLASS	ControllerFilterWheel
-
+#define	_PARENT_IS_FILTERWHEEL_
 #include "controller_fw_common.cpp"
 
 #endif // _ENABLE_FILTERWHEEL_CONTROLLER_

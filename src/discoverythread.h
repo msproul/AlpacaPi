@@ -31,7 +31,7 @@ extern bool					gDiscoveryThreadKeepRunning;
 #endif
 
 
-int		StartDiscoveryListenThread(int alpacaListenPort);
+int		StartDiscoveryListenThread(const int alpacaListenPort);
 int		StartDiscoveryQuerryThread(void);
 void	Discovery_ClearIPAddrList(void);
 

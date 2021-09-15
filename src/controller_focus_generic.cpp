@@ -58,6 +58,7 @@
 enum
 {
 	kTab_Focuser	=	1,
+	kTab_DriverInfo,
 	kTab_About,
 
 	kTab_Count
@@ -117,6 +118,7 @@ void	ControllerFocusGeneric::CreateWindowTabs(void)
 	SetTabCount(kTab_Count);
 
 	SetTabText(kTab_Focuser,	"Focuser");
+	SetTabText(kTab_DriverInfo,	"Drv Info");
 	SetTabText(kTab_About,		"About");
 
 	//================================================================
@@ -132,6 +134,15 @@ void	ControllerFocusGeneric::CreateWindowTabs(void)
 	}
 
 	//================================================================
+	cDriverInfoTabObjPtr		=	new WindowTabDriverInfo(	cWidth, cHeight, cBackGrndColor, cWindowName);
+	if (cDriverInfoTabObjPtr != NULL)
+	{
+		SetTabWindow(kTab_DriverInfo,	cDriverInfoTabObjPtr);
+		cDriverInfoTabObjPtr->SetParentObjectPtr(this);
+	}
+
+
+	//================================================================
 	cAboutBoxTabObjPtr		=	new WindowTabAbout(	cWidth, cHeight, cBackGrndColor, cWindowName);
 	if (cAboutBoxTabObjPtr != NULL)
 	{
@@ -145,13 +156,26 @@ void	ControllerFocusGeneric::CreateWindowTabs(void)
 	char	ipString[32];
 	char	lineBuff[64];
 
-		CONSOLE_DEBUG(__FUNCTION__);
+//		CONSOLE_DEBUG(__FUNCTION__);
 		PrintIPaddressToString(cDeviceAddress.sin_addr.s_addr, ipString);
 		sprintf(lineBuff, "%s:%d/%d", ipString, cPort, cAlpacaDevNum);
 		SetWindowIPaddrInfo(lineBuff, true);
 	}
 }
 
+//*****************************************************************************
+void	ControllerFocusGeneric::UpdateCommonProperties(void)
+{
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	SetWidgetText(kTab_DriverInfo,		kDriverInfo_Name,				cCommonProp.Name);
+	SetWidgetText(kTab_DriverInfo,		kDriverInfo_Description,		cCommonProp.Description);
+	SetWidgetText(kTab_DriverInfo,		kDriverInfo_DriverInfo,			cCommonProp.DriverInfo);
+	SetWidgetText(kTab_DriverInfo,		kDriverInfo_DriverVersion,		cCommonProp.DriverVersion);
+	SetWidgetNumber(kTab_DriverInfo,	kDriverInfo_InterfaceVersion,	cCommonProp.InterfaceVersion);
+
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, "Exit");
+}
 
 //**************************************************************************************
 void	ControllerFocusGeneric::UpdateFocuserPosition(const int newFocuserPosition)

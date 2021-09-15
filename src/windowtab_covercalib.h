@@ -19,7 +19,7 @@
 enum
 {
 	kCoverCalib_Title	=	0,
-
+	kCoverCalib_Connected,
 
 	kCoverCalib_Instructions,
 

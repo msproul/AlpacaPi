@@ -65,6 +65,7 @@ enum
 {
 	kTab_MLsingle	=	1,
 	kTab_Config,
+	kTab_DriverInfo,
 	kTab_About,
 
 	kTab_Count
@@ -138,6 +139,7 @@ ControllerMLsingle::~ControllerMLsingle(void)
 	//*	delete the windowtab objects
 	DELETE_OBJ_IF_VALID(cMLsingleTabObjPtr);
 	DELETE_OBJ_IF_VALID(cConfigTabObjPtr);
+	DELETE_OBJ_IF_VALID(cDriverInfoTabObjPtr);
 	DELETE_OBJ_IF_VALID(cAboutBoxTabObjPtr);
 }
 
@@ -150,6 +152,7 @@ void	ControllerMLsingle::CreateWindowTabs(void)
 
 	SetTabText(kTab_MLsingle,	"Focuser");
 	SetTabText(kTab_Config,		"Config");
+	SetTabText(kTab_DriverInfo,	"Drv Info");
 	SetTabText(kTab_About,		"About");
 
 	//================================================================
@@ -173,6 +176,15 @@ void	ControllerMLsingle::CreateWindowTabs(void)
 	}
 
 	//================================================================
+	cDriverInfoTabObjPtr		=	new WindowTabDriverInfo(	cWidth, cHeight, cBackGrndColor, cWindowName);
+	if (cDriverInfoTabObjPtr != NULL)
+	{
+		SetTabWindow(kTab_DriverInfo,	cDriverInfoTabObjPtr);
+		cDriverInfoTabObjPtr->SetParentObjectPtr(this);
+	}
+
+
+	//================================================================
 	cAboutBoxTabObjPtr		=	new WindowTabAbout(	cWidth, cHeight, cBackGrndColor, cWindowName);
 	if (cAboutBoxTabObjPtr != NULL)
 	{
@@ -192,6 +204,19 @@ void	ControllerMLsingle::CreateWindowTabs(void)
 	}
 }
 
+//*****************************************************************************
+void	ControllerMLsingle::UpdateCommonProperties(void)
+{
+	CONSOLE_DEBUG(__FUNCTION__);
+
+	SetWidgetText(kTab_DriverInfo,		kDriverInfo_Name,				cCommonProp.Name);
+	SetWidgetText(kTab_DriverInfo,		kDriverInfo_Description,		cCommonProp.Description);
+	SetWidgetText(kTab_DriverInfo,		kDriverInfo_DriverInfo,			cCommonProp.DriverInfo);
+	SetWidgetText(kTab_DriverInfo,		kDriverInfo_DriverVersion,		cCommonProp.DriverVersion);
+	SetWidgetNumber(kTab_DriverInfo,	kDriverInfo_InterfaceVersion,	cCommonProp.InterfaceVersion);
+
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, "Exit");
+}
 
 //**************************************************************************************
 void	ControllerMLsingle::UpdateFocuserPosition(const int newFocuserPosition)

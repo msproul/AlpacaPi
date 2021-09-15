@@ -293,6 +293,7 @@ TYPE_ASCOM_STATUS		alpacaErrCode;
 
 	if (reqData != NULL)
 	{
+//		CONSOLE_DEBUG_W_NUM("cCoverCalibrationProp.Brightness\t=",	cCoverCalibrationProp.Brightness);
 		JsonResponse_Add_Int32(	reqData->socket,
 								reqData->jsonTextBuffer,
 								kMaxJsonBuffLen,
@@ -427,12 +428,13 @@ int					brightnessValue;
 		brightnessFound		=	GetKeyWordArgument(	reqData->contentData,
 													"Brightness",
 													brightnessString,
-													(sizeof(brightnessString) -1));
+													(sizeof(brightnessString) -1),
+													kArgumentIsNumeric);
 
 		if (brightnessFound)
 		{
 			brightnessValue	=	atoi(brightnessString);
-//			CONSOLE_DEBUG_W_NUM("brightnessValue\t=", brightnessValue);
+//			CONSOLE_DEBUG_W_NUM("new brightnessValue\t=", brightnessValue);
 
 			alpacaErrCode	=	Calibrator_TurnOn(brightnessValue, alpacaErrMsg);
 			cCoverCalibrationProp.CalibratorState	=	kCalibrator_Ready;

@@ -104,8 +104,7 @@ class ControllerCamera: public Controller
 		virtual	void	UpdateDownloadProgress(const int unitsRead, const int totalUnits);
 		virtual	void	UpdateBackgroundColor(const int redValue, const int grnValue, const int bluValue);
 		virtual	void	UpdateFreeDiskSpace(const double gigabytesFree);
-
-
+		virtual	void	UpdateConnectedStatusIndicator(void);
 
 		//*	sub class specific routines
 		virtual	void	AlpacaProcessSupportedActions(	const char	*deviceTypeStr,
@@ -115,6 +114,7 @@ class ControllerCamera: public Controller
 				void	SetErrorTextString(const char	*errorString);
 				void	GetConfiguredDevices(void);
 		virtual	bool	AlpacaGetStartupData(void);
+				bool	AlpacaGetStartupData_OneAAT(void);
 		virtual	void	AlpacaProcessReadAll(	const char	*deviceTypeStr,
 												const int	deviceNum,
 												const char	*keywordString,

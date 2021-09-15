@@ -288,16 +288,16 @@ int					setOptRetCode;
 				strcpy(xmitBuffer, "GET ");
 				strcat(xmitBuffer, sendData);
 
-			strcat(xmitBuffer, " HTTP/1.1");
-			strcat(xmitBuffer, "\r\n");
-			strcat(xmitBuffer, "Host: 127.0.0.1:6800");
-			strcat(xmitBuffer, "\r\n");
-			strcat(xmitBuffer, "Connection: keep-alive");
-			strcat(xmitBuffer, "\r\n");
-			strcat(xmitBuffer, "Accept: text/html,application/json");
-			strcat(xmitBuffer, "User-Agent: AlpacaPi");
-			strcat(xmitBuffer, "\r\n");
-			strcat(xmitBuffer, "\r\n");
+				strcat(xmitBuffer, " HTTP/1.1");
+				strcat(xmitBuffer, "\r\n");
+				strcat(xmitBuffer, "Host: 127.0.0.1:6800");
+				strcat(xmitBuffer, "\r\n");
+				strcat(xmitBuffer, "Connection: keep-alive");
+				strcat(xmitBuffer, "\r\n");
+				strcat(xmitBuffer, "Accept: text/html,application/json");
+				strcat(xmitBuffer, "User-Agent: AlpacaPi");
+				strcat(xmitBuffer, "\r\n");
+				strcat(xmitBuffer, "\r\n");
 
 				sendRetCode	=	send(socket_desc , xmitBuffer , strlen(xmitBuffer) , 0);
 				if (sendRetCode >= 0)
@@ -356,6 +356,7 @@ int		ii;
 	{
 	//	SendGetRequest(&gAlpacaUnitList[ii], "/api/v1/management/0/configureddevices");
 		SendGetRequest(&gAlpacaUnitList[ii], "/management/v1/configureddevices");
+	//	usleep(100);
 	}
 }
 

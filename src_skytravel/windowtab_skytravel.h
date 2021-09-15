@@ -204,8 +204,12 @@ class WindowTabSkyTravel: public WindowTab
 				void	ForceReDrawSky(void);
 
 				void	SearchSkyObjects(char *objectName);
-				void	Goto_RA_DEC(double argRA_radians, double argDecl_radians);
+				void	Center_RA_DEC(double argRA_radians, double argDecl_radians);
+				void	Center_CelestralObject(TYPE_CelestData *starObject);
+				void	SetAAVSOdisplayFlag(const bool newAAVSOdisplayState);
 
+				void	DrawPolarAlignmentCircles(TYPE_CelestData *polarAlignCenters, long polarAlignCnt);
+				void	DrawPolarAlignmentCenterVector(TYPE_CelestData *polarAlignCenters, long polarAlignCnt);
 				//*	this routine draws cute little easter eggs along the horizon,
 				void	MapTokens(TYPE_Time *timeptr, TYPE_LatLon *locptr);
 

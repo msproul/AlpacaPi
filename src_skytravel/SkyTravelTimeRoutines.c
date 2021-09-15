@@ -1,6 +1,9 @@
 //**********************************************************************
 //	various functions to update time/date
 //**********************************************************************
+//*	Sep  1,	2021	<MLS> Added DumpTimeStruct()
+//**********************************************************************
+
 
 #include	<math.h>
 #include	<stdlib.h>
@@ -16,13 +19,18 @@
 
 //* return the last day of the current month
 //**********************************************************************
-unsigned char Lastday(TYPE_Time *timeptr)
+int Lastday(TYPE_Time *timeptr)
 {
-unsigned char	lastd[12]	= {31,28,31,30,31,30,31,31,30,31,31,31};
-int				yr,flg		=	0;	//* flg=0 means default gregorian
+//						J	F	M	A	M	J	J	A	S	O	N	D
+int		lastd[12]	= {	31,	28,	31,	30,	31,	30,	31,	31,	30,	31,	30,	31};
+int		yr;
+int		flg			=	0;	//* flg=0 means default gregorian
+int		numDays;
 
-	yr	=	timeptr->year;
+	yr		=	timeptr->year;
+	numDays	=	lastd[timeptr->month - 1];
 
+	//*	Is it February
 	if (timeptr->month==2)	//* Feb. check
 	{
 		if (timeptr->calflag==1)
@@ -50,14 +58,17 @@ int				yr,flg		=	0;	//* flg=0 means default gregorian
 
 		if (!flg && (((!(yr&3)) && (!(yr%100)) && ((yr%400)!=0))))
 		{
-			lastd[1]	=	29;	//* leap year test
+		//	lastd[1]	=	29;	//* leap year test
+			numDays		=	29;
 		}
 		else if (!(yr&3))
 		{
-			lastd[1]	=	29;
+		//	lastd[1]	=	29;
+			numDays		=	29;
 		}
 	}
-	return(lastd[timeptr->month-1]);
+//	return(lastd[timeptr->month-1]);
+	return(numDays);
 }
 
 //**********************************************************************
@@ -74,10 +85,10 @@ void Add_year(TYPE_Time *timeptr,int delta)
 void Add_month(TYPE_Time *timeptr)
 {
 	timeptr->month++;
-	if (timeptr->month>12)
+	if (timeptr->month > 12)
 	{
 		timeptr->month	=	1;
-		Add_year(timeptr,1);
+		Add_year(timeptr, 1);
 	}
 	else if (timeptr->day > Lastday(timeptr))
 	{
@@ -100,8 +111,9 @@ void Add_day(TYPE_Time *timeptr)
 void Add_hour(TYPE_Time *timeptr)
 {
 	timeptr->hour++;
-	if (timeptr->hour>23)
+	if (timeptr->hour > 23)
 	{
+		CONSOLE_DEBUG("Adding a day");
 		timeptr->hour	-=	24;
 		Add_day(timeptr);
 	}
@@ -111,7 +123,7 @@ void Add_hour(TYPE_Time *timeptr)
 void Add_min(TYPE_Time *timeptr)
 {
 timeptr->min++;
-	if (timeptr->min>59)
+	if (timeptr->min > 59)
 	{
 		timeptr->min	-=	60;
 		Add_hour(timeptr);
@@ -122,7 +134,7 @@ timeptr->min++;
 void Add_sec(TYPE_Time *timeptr)
 {
 	timeptr->sec++;
-	if (timeptr->sec>59)
+	if (timeptr->sec > 59)
 	{
 		timeptr->sec	-=	60;
 		Add_min(timeptr);
@@ -158,11 +170,18 @@ void Sub_month(TYPE_Time *timeptr)
 //**********************************************************************
 void Sub_day(TYPE_Time *timeptr)
 {
+	CONSOLE_DEBUG(__FUNCTION__);
+
 	timeptr->day--;
-	if (timeptr->day<1)
+	if (timeptr->day < 1)
 	{
+		CONSOLE_DEBUG_W_NUM("day\t\t=", timeptr->day);
+
 		Sub_month(timeptr);
+		CONSOLE_DEBUG_W_NUM("month\t\t=", timeptr->month);
+		CONSOLE_DEBUG_W_NUM("day\t\t=", timeptr->day);
 		timeptr->day	=	Lastday(timeptr);
+		CONSOLE_DEBUG_W_NUM("day\t\t=", timeptr->day);
 	}
 }
 
@@ -253,11 +272,16 @@ void Sub_local_month(TYPE_Time *timeptr)
 //**********************************************************************
 void Sub_local_day(TYPE_Time *timeptr)
 {
+
 	timeptr->local_day--;
-	if (timeptr->local_day<1)
+	if (timeptr->local_day < 1)
 	{
 		Sub_local_month(timeptr);
+		CONSOLE_DEBUG_W_NUM("month    \t=", timeptr->month);
+		CONSOLE_DEBUG_W_NUM("local_day\t=", timeptr->local_day);
+		CONSOLE_DEBUG_W_NUM("day      \t=", timeptr->day);
 		timeptr->local_day	=	Lastday(timeptr);
+		CONSOLE_DEBUG_W_NUM("local_day\t=", timeptr->local_day);
 	}
 }
 
@@ -335,9 +359,11 @@ int		yr,mo;
 //*****************************************************************************
 void	CalanendarTime(TYPE_Time *timeptr)	//* compute dte and cent
 {
-int		flg	=	0;	//* 0 = gregorian calendar default, >0 = julian calendar
+int		julianFlag	=	0;	//* 0 = gregorian calendar default, >0 = julian calendar
 double	dtemp; 		//* floating point accumulator
-double	hr,min,sec;
+double	hr;
+double	min;
+double	sec;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -347,40 +373,40 @@ double	hr,min,sec;
 
 	timeptr->fgmt	=	(hr + (min + (sec/60.))/60.)/24.;
 
-	//* note that if calflag>1 gregorian is used since flg remains 0
+	//* note that if calflag > 1 gregorian is used since julianFlag remains 0
 	if (timeptr->calflag == 1)
 	{
-		flg++;	//* force julian
+		julianFlag++;	//* force julian
 	}
-	if (timeptr->calflag==0)	//* auto, ergo decide on gregorian vs. julian
+	if (timeptr->calflag == 0)	//* auto, ergo decide on gregorian vs. julian
 	{
-		if (timeptr->year<1582)
+		if (timeptr->year < 1582)
 		{
-			flg++;	//* jul
+			julianFlag++;	//* jul
 		}
 		if (timeptr->year == 1582)
 		{
-			if (timeptr->month<10)
+			if (timeptr->month < 10)
 			{
-				flg++;	//*	jul
+				julianFlag++;	//*	jul
 			}
 			if (timeptr->month == 10)
 			{
-				if (timeptr->day<15)
+				if (timeptr->day < 15)
 				{
-					flg++;	//* jul
+					julianFlag++;	//* jul
 				}
 			}
 		}
 	}
 
-	if (!flg)
+	if (!julianFlag)
 	{
-		timeptr->fJulianDay	=	Gregorian(timeptr) - .5 + timeptr->fgmt;
+		timeptr->fJulianDay	=	Gregorian(timeptr) - 0.5 + timeptr->fgmt;
 	}
 	else
 	{
-		timeptr->fJulianDay	=	Julian(timeptr) - .5 + timeptr->fgmt;
+		timeptr->fJulianDay	=	Julian(timeptr) - 0.5 + timeptr->fgmt;
 	}
 
 	timeptr->daysTillEpoch2000	=	timeptr->fJulianDay - F2000;				//*	days to epoch 2000
@@ -407,6 +433,8 @@ double	hr,min,sec;
 //**********************************************************************
 void Local_Time(TYPE_Time *timeptr)
 {
+//	CONSOLE_DEBUG(__FUNCTION__);
+//	DumpTimeStruct(timeptr, "BEFORE");
 	timeptr->local_year		=	timeptr->year;
 	timeptr->local_month	=	timeptr->month;
 	timeptr->local_day		=	timeptr->day;
@@ -445,4 +473,28 @@ void Local_Time(TYPE_Time *timeptr)
 		timeptr->dday	=	timeptr->local_day;
 		timeptr->dhour	=	timeptr->local_hour;
 	}
+
+//	DumpTimeStruct(timeptr, __FUNCTION__);
+}
+
+//**********************************************************************
+void	DumpTimeStruct(TYPE_Time *timeptr, const char *callingFunctionName)
+{
+	printf("-----------------------------%s\r\n", callingFunctionName);
+//	CONSOLE_ABORT(__FUNCTION__);
+//	printf("year \t\t=%d\r\n",		timeptr->year);
+	printf("month\t\t=%d\r\n",		timeptr->month);
+	printf("day  \t\t=%d\r\n",		timeptr->day);
+	printf("hour \t\t=%d\r\n",		timeptr->hour);
+
+//	printf("local_year \t=%d\r\n",	timeptr->local_year);
+	printf("local_month\t=%d\r\n",	timeptr->local_month);
+	printf("local_day  \t=%d\r\n",	timeptr->local_day);
+	printf("local_hour \t=%d\r\n",	timeptr->local_hour);
+
+//	printf("dyear \t\t=%d\r\n",		timeptr->dyear);
+	printf("dmonth\t\t=%d\r\n",		timeptr->dmonth);
+	printf("dday  \t\t=%d\r\n",		timeptr->dday);
+	printf("dhour \t\t=%d\r\n",		timeptr->dhour);
+
 }

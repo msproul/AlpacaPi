@@ -14,6 +14,7 @@
 //*	Jan 26,	2021	<MLS> SkyTravel can choose which dome/telescope to sync with
 //*	Feb  4,	2021	<MLS> Added MOON window tab for phase of the moon info
 //*	Mar 13,	2021	<MLS> Added AlpacaGetStartupData_Camera()
+//*	Sep  5,	2021	<MLS> Added AlpacaProcessSupportedActions_Camera()
 //*****************************************************************************
 
 #ifndef _ENABLE_SKYTRAVEL_
@@ -381,7 +382,6 @@ bool		foundSomething;
 	if (cDomeProp.Slewing && (deltaSeconds >= 1))
 	{
 		needToUpdate	=	true;
-
 	}
 
 	if ((cDomeProp.ShutterStatus == kShutterStatus_Opening) ||
@@ -403,10 +403,10 @@ bool		foundSomething;
 		if (cDomeAddressValid)
 		{
 //			CONSOLE_DEBUG("Updating dome status");
-			validData	=	AlpacaGetDomeStatus();
+			validData	=	AlpacaGetStatus_Dome();
 			if (validData == false)
 			{
-				CONSOLE_DEBUG("AlpacaGetDomeStatus failed");
+				CONSOLE_DEBUG("AlpacaGetStatus_Dome failed");
 			}
 		}
 		//----------------------------------------------------
@@ -588,7 +588,7 @@ char			ipAddrStr[128];
 
 
 //*****************************************************************************
-bool	ControllerSkytravel::AlpacaGetDomeStatus(void)
+bool	ControllerSkytravel::AlpacaGetStatus_Dome(void)
 {
 bool	validData;
 bool	previousOnLineState;
@@ -604,6 +604,12 @@ bool	previousOnLineState;
 	else
 	{
 		validData	=	AlpacaGetStatus_DomeOneAAT();
+	#ifdef _ENABLE_SKYTRAVEL_
+		cDeviceAddress	=	cDomeIpAddress;
+		cPort			=	cDomeIpPort;
+		cAlpacaDevNum	=	cDomeAlpacaDeviceNum;
+	#endif // _ENABLE_SKYTRAVEL_
+		validData	=	AlpacaGetCommonConnectedState("dome");
 	}
 
 	if (validData)
@@ -637,7 +643,7 @@ bool	previousOnLineState;
 		}
 		else
 		{
-			SetWidgetText(kTab_ST_Dome, kDomeBox_CurPosition, "---");
+			SetWidgetText(kTab_ST_Dome, kDomeBox_CurPosition, "Stopped");
 			cUpdateWindow	=	true;
 		}
 
@@ -649,6 +655,9 @@ bool	previousOnLineState;
 			cUpdateDelta	=	1;
 		}
 		SetWidgetBGColor(	kTab_SkyTravel,	kSkyTravel_DomeIndicator,	CV_RGB(64,	255,	64));
+
+		UpdateConnectedIndicator(kTab_ST_Dome,		kDomeBox_Connected);
+
 	}
 	else
 	{
@@ -759,12 +768,34 @@ void	ControllerSkytravel::AlpacaProcessSupportedActions(	const char	*deviceType,
 	{
 		AlpacaProcessSupportedActions_Telescope(deviveNum, valueString);
 	}
+	else if (strcasecmp(deviceType, "Camera") == 0)
+	{
+		AlpacaProcessSupportedActions_Camera(deviveNum, valueString);
+	}
 	else
 	{
 		CONSOLE_ABORT(__FUNCTION__);
 	}
 }
 
+//*****************************************************************************
+void	ControllerSkytravel::AlpacaProcessSupportedActions_Camera(	const int	deviveNum,
+																	const char	*valueString)
+{
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, valueString);
+
+	if (strcasecmp(valueString, "readall") == 0)
+	{
+		//*	make sure the FOV tab ptr is valid
+		if (cFOVTabObjPtr != NULL)
+		{
+			if (cFOVTabObjPtr->cCurrentCamera != NULL)
+			{
+				cFOVTabObjPtr->cCurrentCamera->HasReadAll	=	true;
+			}
+		}
+	}
+}
 
 //**************************************************************************************
 void	ControllerSkytravel::RefreshWindow(void)

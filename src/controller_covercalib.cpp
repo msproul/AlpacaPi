@@ -49,6 +49,7 @@
 #define	kWindowHeight	700
 
 
+#include	"alpaca_defs.h"
 #include	"helper_functions.h"
 #include	"windowtab_covercalib.h"
 #include	"windowtab_drvrInfo.h"
@@ -73,7 +74,7 @@ ControllerCoverCalib::ControllerCoverCalib(	const char			*argWindowName,
 											struct sockaddr_in	*deviceAddress,
 											const int			port,
 											const int			deviceNum)
-	:Controller(argWindowName, kWindowWidth,  kWindowHeight)
+	:Controller(argWindowName, kWindowWidth,  kWindowHeight, kNoBackgroundTask)
 {
 	memset(&cCoverCalibrationProp, 0, sizeof(TYPE_CoverCalibrationProperties));
 
@@ -97,6 +98,12 @@ ControllerCoverCalib::ControllerCoverCalib(	const char			*argWindowName,
 	}
 
 	SetWidgetText(kTab_Cover,		kCoverCalib_AlpacaDrvrVersion,		gFullVersionString);
+
+	AlpacaSetConnected("covercalibrator", true);
+#ifdef _USE_BACKGROUND_THREAD_
+	StartBackgroundThread();
+#endif // _USE_BACKGROUND_THREAD_
+
 }
 
 //**************************************************************************************
@@ -173,7 +180,7 @@ bool		needToUpdate;
 	if (cReadStartup)
 	{
 		CONSOLE_DEBUG_W_STR("Reading startup information for", cWindowName);
-		AlpacaGetCommonProperties("covercalibrator");
+		AlpacaGetCommonProperties_OneAAT("covercalibrator");
 		AlpacaGetStartupData();
 		cReadStartup	=	false;
 	}
@@ -203,6 +210,7 @@ bool		needToUpdate;
 			{
 			//	CONSOLE_DEBUG("Failed to get data")
 			}
+			UpdateConnectedIndicator(kTab_Cover,		kCoverCalib_Connected);
 		}
 	}
 }
@@ -311,6 +319,8 @@ char	stateString[32];
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 
 	previousOnLineState	=	cOnLine;
+
+	validData	=	AlpacaGetCommonConnectedState("covercalibrator");
 	validData	=	AlpacaGetIntegerValue("covercalibrator", "brightness",	NULL,	&integerValue);
 	if (validData)
 	{
@@ -333,7 +343,8 @@ char	stateString[32];
 		cOnLine	=	false;
 	}
 
-	if (cCoverCalibrationProp.CoverState != kCover_NotPresent)
+	//*	dont bother checking if we determined its off line above
+	if (cOnLine && (cCoverCalibrationProp.CoverState != kCover_NotPresent))
 	{
 		validData	=	AlpacaGetIntegerValue("covercalibrator", "coverstate",	NULL,	&integerValue);
 		if (validData)

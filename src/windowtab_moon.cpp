@@ -132,6 +132,7 @@ int		myButtonWidth;
 	SetWidgetType(			kMoon_FitsHeader,	kWidgetType_MultiLineText);
 	SetWidgetJustification(	kMoon_FitsHeader,	kJustification_Left);
 	SetWidgetFont(			kMoon_FitsHeader,	kFont_Small);
+//	SetWidgetFont(			kMoon_FitsHeader,	kFont_MonoSpace);
 	SetWidgetTextPtr(		kMoon_FitsHeader,	cFitsHeaderBuffer);
 
 	//-------------------------------------------------------------------
