@@ -77,23 +77,33 @@ int		hippIndex;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-	for (iii=0; iii<constellation->starCount; iii++)
+	if (constellation != NULL)
 	{
-		hippIndex	=	FindHipparcosIndexFromID(constellation->hippStars[iii].hippIdNumber);
-		if (hippIndex >= 0)
+//		CONSOLE_DEBUG_W_STR(__FUNCTION__, constellation->longName);
+//		CONSOLE_DEBUG_W_NUM("starCount\t=", constellation->starCount);
+		for (iii=0; iii<constellation->starCount; iii++)
 		{
-//			constellation->hippStars[iii].rtAscension	=	gHippData[hippIndex].org_ra;
-//			constellation->hippStars[iii].declination	=	gHippData[hippIndex].org_decl;
-			constellation->hippStars[iii].rtAscension	=	gHippData[hippIndex].ra;
-			constellation->hippStars[iii].declination	=	gHippData[hippIndex].decl;
+			hippIndex	=	FindHipparcosIndexFromID(constellation->hippStars[iii].hippIdNumber);
+			if (hippIndex >= 0)
+			{
+	//			constellation->hippStars[iii].rtAscension	=	gHippData[hippIndex].org_ra;
+	//			constellation->hippStars[iii].declination	=	gHippData[hippIndex].org_decl;
+				constellation->hippStars[iii].rtAscension	=	gHippData[hippIndex].ra;
+				constellation->hippStars[iii].declination	=	gHippData[hippIndex].decl;
+			}
+			else
+			{
+				//*	since we couldnt find the star, make it a move
+				constellation->hippStars[iii].moveFlag	=	true;
+				gFailedToFindCnt++;
+				CONSOLE_DEBUG_W_STR("-----", constellation->longName);
+			}
 		}
-		else
-		{
-			//*	since we couldnt find the star, make it a move
-			constellation->hippStars[iii].moveFlag	=	true;
-			gFailedToFindCnt++;
-			CONSOLE_DEBUG_W_STR("-----", constellation->longName);
-		}
+	}
+	else
+	{
+		CONSOLE_DEBUG("constellation is NULL");
+		CONSOLE_ABORT(__FUNCTION__);
 	}
 }
 
@@ -104,27 +114,34 @@ int		iii;
 bool	freeNeededFlag	=	false;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
-
-	//*	check to see if the data needs to be loaded
-	if (gHippData == NULL)
+	if (constelVectors != NULL)
 	{
-		CONSOLE_DEBUG("Reading in Hipparcos data");
-		//*	first we have to read in the hipparcos catalog
-		gHippData		=	ReadHipparcosStarCatalog(&gHippCount);
-		freeNeededFlag	=	true;
+		//*	check to see if the data needs to be loaded
+		if (gHippData == NULL)
+		{
+			CONSOLE_DEBUG("Reading in Hipparcos data");
+			//*	first we have to read in the hipparcos catalog
+			gHippData		=	ReadHipparcosStarCatalog(&gHippCount);
+			freeNeededFlag	=	true;
+		}
+		if (gHippData != NULL)
+		{
+			for (iii=0; iii<vectorCnt; iii++)
+			{
+				UpdateOneConstellation(&constelVectors[iii]);
+			}
+			if (freeNeededFlag)
+			{
+				free(gHippData);
+			}
+		}
+		CONSOLE_DEBUG_W_NUM("gFailedToFindCnt\t=", gFailedToFindCnt);
 	}
-	if (gHippData != NULL)
+	else
 	{
-		for (iii=0; iii<vectorCnt; iii++)
-		{
-			UpdateOneConstellation(&constelVectors[iii]);
-		}
-		if (freeNeededFlag)
-		{
-			free(gHippData);
-		}
+		CONSOLE_DEBUG("constelVectors is NULL");
+		CONSOLE_ABORT(__FUNCTION__);
 	}
-//	CONSOLE_DEBUG_W_NUM("gFailedToFindCnt\t=", gFailedToFindCnt);
 }
 
 
@@ -195,15 +212,18 @@ bool				moveFlag;
 	CONSOLE_DEBUG_W_STR("Reading:", filePath);
 
 	constelVectorData	=	NULL;
+	linesRead			=	0;
 	*objectCount		=	0;
 	filePointer			=	fopen(filePath, "r");
 	if (filePointer != NULL)
 	{
+//		CONSOLE_DEBUG("File Open");
 		bufferSize			=	kConstOutlineCnt * sizeof(TYPE_ConstVector);
 		constelVectorData	=	(TYPE_ConstVector *)malloc(bufferSize);
 
 		if (constelVectorData != NULL)
 		{
+//			CONSOLE_DEBUG("constelVectorData allocated");
 			memset(constelVectorData, 0, bufferSize);
 			strcpy(currentName, "");
 

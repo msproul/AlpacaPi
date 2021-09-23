@@ -149,7 +149,7 @@ bool	returnedValid;
 //*****************************************************************************
 void	Controller::UpdateConnectedIndicator(const int tabNum, const int widgetNum)
 {
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 	if (cCommonProp.Connected)
 	{
 		SetWidgetText(		tabNum,	widgetNum,	"C");

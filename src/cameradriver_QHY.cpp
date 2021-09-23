@@ -33,6 +33,8 @@
 //*	Feb 20,	2021	<MLS> Getting image from QHy5L-IIC camera
 //*	Feb 20,	2021	<MLS> QHY Color image working
 //*	Feb 21,	2021	<MLS> Set ReadoutMode working for QHY
+//*	Sep 18,	2021	<MLS> Trying to use QHY camera for guide scope
+//*	Sep 18,	2021	<MLS> Fixed memory leak in CameraDriverQHY::Read_ImageData()
 //*****************************************************************************
 
 #if defined(_ENABLE_CAMERA_) && defined(_ENABLE_QHY_)
@@ -48,6 +50,7 @@
 #include	"eventlogging.h"
 #include	"cameradriver.h"
 #include	"cameradriver_QHY.h"
+#include	"linuxerrors.h"
 
 
 //**************************************************************************************
@@ -780,7 +783,7 @@ double				exposureDBL;
 //double				traffic;
 //double				bit;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 //	CONSOLE_DEBUG_W_NUM("currentROIimageType\t=",	cROIinfo.currentROIimageType);
 
 	if (cQHYcamHandle != NULL)
@@ -788,8 +791,8 @@ double				exposureDBL;
 		exposureDBL	=	exposureMicrosecs;
 		qhyRetCode	=	SetQHYCCDParam(cQHYcamHandle,	CONTROL_EXPOSURE,	exposureDBL);
 
-		CONSOLE_DEBUG_W_DBL("exposureDBL\t=",	exposureDBL);
-		CONSOLE_DEBUG_W_NUM("qhyRetCode\t=",	qhyRetCode);
+//		CONSOLE_DEBUG_W_DBL("exposureDBL\t=",	exposureDBL);
+//		CONSOLE_DEBUG_W_NUM("qhyRetCode\t=",	qhyRetCode);
 
 //		qhyRetCode	=	SetQHYCCDParam(cQHYcamHandle,	CONTROL_GAIN,		gain);
 //		qhyRetCode	=	SetQHYCCDParam(cQHYcamHandle,	CONTROL_OFFSET,		offset);
@@ -957,28 +960,29 @@ unsigned int		imgWidth;
 unsigned int		imgHeight;
 unsigned int		bpp;
 unsigned int		channels = 0;
-unsigned char 		*imgDataPtr;
+//unsigned char 		*imgDataPtr;
+bool				imageDataBuffOK;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	if (cQHYcamHandle != NULL)
 	{
 		imgDataLength	= GetQHYCCDMemLength(cQHYcamHandle);
 		if(imgDataLength > 0)
 		{
-			CONSOLE_DEBUG_W_NUM("imgDataLength\t=", imgDataLength);
+//			CONSOLE_DEBUG_W_NUM("imgDataLength\t=", imgDataLength);
 
-			imgDataPtr	=	(unsigned char *)malloc(imgDataLength * 2);
-			if (imgDataPtr != NULL)
+			imageDataBuffOK	=	AllcateImageBuffer(imgDataLength * 2);
+			if ((imageDataBuffOK) && (cCameraDataBuffer != NULL))
 			{
-				memset(imgDataPtr, 0, imgDataLength);
+				memset(cCameraDataBuffer, 0, imgDataLength);
 
 				qhyRetCode	=	GetQHYCCDSingleFrame(	cQHYcamHandle,
 														&imgWidth,
 														&imgHeight,
 														&bpp,
 														&channels,
-														imgDataPtr);
+														cCameraDataBuffer);
 				if (qhyRetCode == QHYCCD_SUCCESS)
 				{
 	//				CONSOLE_DEBUG_W_NUM("imgWidth\t=", imgWidth);
@@ -986,21 +990,24 @@ unsigned char 		*imgDataPtr;
 	//				CONSOLE_DEBUG_W_NUM("bpp\t=", bpp);
 	//				CONSOLE_DEBUG_W_NUM("channels\t=", channels);
 
-					cCameraDataBuffer	=	imgDataPtr;
+					cCameraDataBuffer		=	cCameraDataBuffer;
 
 					cCameraProp.ImageReady	=	true;
 					alpacaErrCode			=	kASCOM_Err_Success;
 				}
 				else
 				{
-				//	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "argument not specified");
-					CONSOLE_DEBUG_W_NUM("GetQHYCCDSingleFrame() failed with qhy return code:", qhyRetCode);
+					sprintf(cLastCameraErrMsg, "GetQHYCCDSingleFrame() failed with qhy return code:", qhyRetCode);
+					CONSOLE_DEBUG(cLastCameraErrMsg);
 					alpacaErrCode	=	kASCOM_Err_FailedToTakePicture;
 				}
 			}
 			else
 			{
+			char	errorString[256];
 				CONSOLE_DEBUG("Failed to allocate image data buffer");
+				GetLinuxErrorString(errno, errorString);
+				CONSOLE_DEBUG(errorString);
 			}
 		}
 		else

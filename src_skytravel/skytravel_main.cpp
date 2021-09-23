@@ -154,7 +154,12 @@ float				fitsVersionRet;
 float				fitsVersionVal;
 
 	fitsVersionRet	=	ffvers(&fitsVersionVal);
-	printf("cfitsio version %3.2f\r\n", CFITSIO_VERSION);
+#ifdef CFITSIO_MAJOR
+	#if (CFITSIO_MAJOR >= 4)
+	#else
+		printf("cfitsio version %3.2f\r\n", CFITSIO_VERSION);
+	#endif
+#endif
 	printf("cfitsio version %3.2f\r\n", fitsVersionRet);
 	printf("cfitsio version %3.2f\r\n", fitsVersionVal);
 

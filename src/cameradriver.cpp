@@ -707,19 +707,19 @@ char				httpHeader[500];
 	JsonResponse_CreateHeader(reqData->jsonTextBuffer, kMaxJsonBuffLen);
 
 	//*	this is not part of the protocol, I am using it for testing
-	JsonResponse_Add_String(	mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"Device",
-								cCommonProp.Name,
-								INCLUDE_COMMA);
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(	mySocket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										"Device",
+										cCommonProp.Name,
+										INCLUDE_COMMA);
 
-	JsonResponse_Add_String(	mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"Command",
-								reqData->deviceCommand,
-								INCLUDE_COMMA);
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(	mySocket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										"Command",
+										reqData->deviceCommand,
+										INCLUDE_COMMA);
 
 
 	//*	look up the command
@@ -778,92 +778,92 @@ char				httpHeader[500];
 			break;
 
 		case kCmd_Camera_cameraxsize:			//*	Returns the width of the CCD camera chip.
-			JsonResponse_Add_Int32(	mySocket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									gValueString,
-									cCameraProp.CameraXsize,
-									INCLUDE_COMMA);
+			cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	mySocket,
+											reqData->jsonTextBuffer,
+											kMaxJsonBuffLen,
+											gValueString,
+											cCameraProp.CameraXsize,
+											INCLUDE_COMMA);
 			alpacaErrCode	=	kASCOM_Err_Success;
 			break;
 
 		case kCmd_Camera_cameraysize:			//*	Returns the height of the CCD camera chip.
-			JsonResponse_Add_Int32(	mySocket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									gValueString,
-									cCameraProp.CameraYsize,
-									INCLUDE_COMMA);
+			cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	mySocket,
+											reqData->jsonTextBuffer,
+											kMaxJsonBuffLen,
+											gValueString,
+											cCameraProp.CameraYsize,
+											INCLUDE_COMMA);
 			alpacaErrCode	=	kASCOM_Err_Success;
 			break;
 
 		case kCmd_Camera_canabortexposure:		//*	Indicates whether the camera can abort exposures.
-			JsonResponse_Add_Bool(	mySocket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									gValueString,
-									cCameraProp.CanAbortExposure,
-									INCLUDE_COMMA);
+			cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	mySocket,
+											reqData->jsonTextBuffer,
+											kMaxJsonBuffLen,
+											gValueString,
+											cCameraProp.CanAbortExposure,
+											INCLUDE_COMMA);
 			alpacaErrCode	=	kASCOM_Err_Success;
 			break;
 
 		case kCmd_Camera_canasymmetricbin:		//*	Indicates whether the camera supports asymmetric binning
-			JsonResponse_Add_Bool(	mySocket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									gValueString,
-									cCameraProp.CanAsymmetricBin,
-									INCLUDE_COMMA);
+			cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	mySocket,
+											reqData->jsonTextBuffer,
+											kMaxJsonBuffLen,
+											gValueString,
+											cCameraProp.CanAsymmetricBin,
+											INCLUDE_COMMA);
 			alpacaErrCode	=	kASCOM_Err_Success;
 			break;
 
 		case kCmd_Camera_canfastreadout:		//*	Indicates whether the camera has a fast readout mode.
-			JsonResponse_Add_Bool(	mySocket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									gValueString,
-									cCameraProp.CanFastReadout,
-									INCLUDE_COMMA);
+			cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	mySocket,
+											reqData->jsonTextBuffer,
+											kMaxJsonBuffLen,
+											gValueString,
+											cCameraProp.CanFastReadout,
+											INCLUDE_COMMA);
 			alpacaErrCode	=	kASCOM_Err_Success;
 			break;
 
 		case kCmd_Camera_cangetcoolerpower:		//*	Indicates whether the camera's cooler power setting can be read.
-			JsonResponse_Add_Bool(	mySocket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									gValueString,
-									cCameraProp.CanGetCoolerPower,
-									INCLUDE_COMMA);
+			cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	mySocket,
+											reqData->jsonTextBuffer,
+											kMaxJsonBuffLen,
+											gValueString,
+											cCameraProp.CanGetCoolerPower,
+											INCLUDE_COMMA);
 			alpacaErrCode	=	kASCOM_Err_Success;
 			break;
 
 		case kCmd_Camera_canpulseguide:			//*	Returns a flag indicating whether this camera supports pulse guiding
-			JsonResponse_Add_Bool(	mySocket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									gValueString,
-									cCameraProp.CanPulseGuide,
-									INCLUDE_COMMA);
+			cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	mySocket,
+											reqData->jsonTextBuffer,
+											kMaxJsonBuffLen,
+											gValueString,
+											cCameraProp.CanPulseGuide,
+											INCLUDE_COMMA);
 			alpacaErrCode	=	kASCOM_Err_Success;
 			break;
 
 		case kCmd_Camera_cansetccdtemperature:	//*	Returns a flag indicating whether this camera supports setting the CCD temperature
-			JsonResponse_Add_Bool(	mySocket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									gValueString,
-									cCameraProp.Cansetccdtemperature,
-									INCLUDE_COMMA);
+			cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	mySocket,
+											reqData->jsonTextBuffer,
+											kMaxJsonBuffLen,
+											gValueString,
+											cCameraProp.Cansetccdtemperature,
+											INCLUDE_COMMA);
 			alpacaErrCode	=	kASCOM_Err_Success;
 			break;
 
 		case kCmd_Camera_canstopexposure:		//*	Returns a flag indicating whether this camera can stop an exposure that is in progress
-			JsonResponse_Add_Bool(	mySocket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									gValueString,
-									cCameraProp.CanStopExposure,
-									INCLUDE_COMMA);
+			cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	mySocket,
+											reqData->jsonTextBuffer,
+											kMaxJsonBuffLen,
+											gValueString,
+											cCameraProp.CanStopExposure,
+											INCLUDE_COMMA);
 			alpacaErrCode	=	kASCOM_Err_Success;
 			break;
 
@@ -900,18 +900,18 @@ char				httpHeader[500];
 			break;
 
 		case kCmd_Camera_exposureresolution:	//*	Returns the smallest increment in exposure time supported by StartExposure.
-			JsonResponse_Add_Double(	mySocket,
-										reqData->jsonTextBuffer,
-										kMaxJsonBuffLen,
-										gValueString,
-										cCameraProp.ExposureResolution,
-										INCLUDE_COMMA);
-			JsonResponse_Add_String(mySocket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									"Units",
-									"Seconds",
-									INCLUDE_COMMA);
+			cBytesWrittenForThisCmd	+=	JsonResponse_Add_Double(	mySocket,
+												reqData->jsonTextBuffer,
+												kMaxJsonBuffLen,
+												gValueString,
+												cCameraProp.ExposureResolution,
+												INCLUDE_COMMA);
+			cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(mySocket,
+											reqData->jsonTextBuffer,
+											kMaxJsonBuffLen,
+											"Units",
+											"Seconds",
+											INCLUDE_COMMA);
 			alpacaErrCode	=	kASCOM_Err_Success;
 			break;
 
@@ -962,12 +962,12 @@ char				httpHeader[500];
 			break;
 
 		case kCmd_Camera_hasshutter:			//*	Indicates whether the camera has a mechanical shutter
-			JsonResponse_Add_Bool(	mySocket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									gValueString,
-									cCameraProp.HasShutter,
-									INCLUDE_COMMA);
+			cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	mySocket,
+											reqData->jsonTextBuffer,
+											kMaxJsonBuffLen,
+											gValueString,
+											cCameraProp.HasShutter,
+											INCLUDE_COMMA);
 			alpacaErrCode	=	kASCOM_Err_Success;
 			break;
 
@@ -1023,22 +1023,22 @@ char				httpHeader[500];
 			break;
 
 		case kCmd_Camera_maxbinX:				//*	Maximum binning for the camera X axis
-			JsonResponse_Add_Int32(	mySocket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									gValueString,
-									cCameraProp.MaxbinX,
-									INCLUDE_COMMA);
+			cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	mySocket,
+											reqData->jsonTextBuffer,
+											kMaxJsonBuffLen,
+											gValueString,
+											cCameraProp.MaxbinX,
+											INCLUDE_COMMA);
 			alpacaErrCode	=	kASCOM_Err_Success;
 			break;
 
 		case kCmd_Camera_maxbinY:				//*	Maximum binning for the camera Y axis
-			JsonResponse_Add_Int32(	mySocket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									gValueString,
-									cCameraProp.MaxbinY,
-									INCLUDE_COMMA);
+			cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	mySocket,
+											reqData->jsonTextBuffer,
+											kMaxJsonBuffLen,
+											gValueString,
+											cCameraProp.MaxbinY,
+											INCLUDE_COMMA);
 			alpacaErrCode	=	kASCOM_Err_Success;
 			break;
 
@@ -1124,12 +1124,12 @@ char				httpHeader[500];
 			break;
 
 		case kCmd_Camera_sensorname:			//*	Sensor name
-			JsonResponse_Add_String(mySocket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									gValueString,
-									cSensorName,
-									INCLUDE_COMMA);
+			cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(mySocket,
+											reqData->jsonTextBuffer,
+											kMaxJsonBuffLen,
+											gValueString,
+											cSensorName,
+											INCLUDE_COMMA);
 			alpacaErrCode	=	kASCOM_Err_Success;
 			break;
 
@@ -1445,43 +1445,43 @@ CONSOLE_DEBUG(__FUNCTION__);
 //CONSOLE_DEBUG(__FUNCTION__);
 
 	//*	send the response information
-	JsonResponse_Add_Int32(		mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"ClientTransactionID",
-								gClientTransactionID,
-								INCLUDE_COMMA);
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(		mySocket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										"ClientTransactionID",
+										gClientTransactionID,
+										INCLUDE_COMMA);
 
 //CONSOLE_DEBUG(__FUNCTION__);
-	JsonResponse_Add_Int32(		mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"ServerTransactionID",
-								gServerTransactionID,
-								INCLUDE_COMMA);
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(		mySocket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										"ServerTransactionID",
+										gServerTransactionID,
+										INCLUDE_COMMA);
 
 //CONSOLE_DEBUG(__FUNCTION__);
-	JsonResponse_Add_Int32(		mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"ErrorNumber",
-								alpacaErrCode,
-								INCLUDE_COMMA);
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(		mySocket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										"ErrorNumber",
+										alpacaErrCode,
+										INCLUDE_COMMA);
 
 //CONSOLE_DEBUG(__FUNCTION__);
-	JsonResponse_Add_String(	mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"ErrorMessage",
-								alpacaErrMsg,
-								NO_COMMA);
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(	mySocket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										"ErrorMessage",
+										alpacaErrMsg,
+										NO_COMMA);
 
 //CONSOLE_DEBUG(__FUNCTION__);
 //CONSOLE_DEBUG_W_NUM("len of jsonTextBuffer\t=", strlen(reqData->jsonTextBuffer));
-	JsonResponse_Add_Finish(	mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								(httpHeaderSent == false));
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Finish(	mySocket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										(httpHeaderSent == false));
 
 //CONSOLE_DEBUG(__FUNCTION__);
 	if (cmdEnumValue != kCmd_Camera_imagearray)
@@ -1605,12 +1605,12 @@ TYPE_ASCOM_STATUS	alpacaErrCode;
 
 	if (reqData != NULL)
 	{
-		JsonResponse_Add_Int32(	reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								responseString,
-								cCameraProp.BayerOffsetX,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	reqData->socket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										responseString,
+										cCameraProp.BayerOffsetX,
+										INCLUDE_COMMA);
 
 		alpacaErrCode	=	kASCOM_Err_Success;
 	}
@@ -1629,12 +1629,12 @@ TYPE_ASCOM_STATUS	alpacaErrCode;
 
 	if (reqData != NULL)
 	{
-		JsonResponse_Add_Int32(	reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								responseString,		//gValueString,
-								cCameraProp.BayerOffsetY,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	reqData->socket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										responseString,		//gValueString,
+										cCameraProp.BayerOffsetY,
+										INCLUDE_COMMA);
 
 		alpacaErrCode	=	kASCOM_Err_Success;
 	}
@@ -1653,12 +1653,12 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
 	if (reqData != NULL)
 	{
-		JsonResponse_Add_Int32(	reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								responseString,		//gValueString,
-								cCameraProp.BinX,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	reqData->socket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										responseString,		//gValueString,
+										cCameraProp.BinX,
+										INCLUDE_COMMA);
 
 	}
 	else
@@ -1676,12 +1676,12 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
 	if (reqData != NULL)
 	{
-		JsonResponse_Add_Int32(	reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								responseString,		//gValueString,
-								cCameraProp.BinY,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	reqData->socket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										responseString,		//gValueString,
+										cCameraProp.BinY,
+										INCLUDE_COMMA);
 
 	}
 	else
@@ -1790,19 +1790,19 @@ TYPE_ASCOM_STATUS		alpacaErrCode;
 			alpacaErrCode	=	Read_SensorTemp();
 			if (alpacaErrCode == 0)
 			{
-				JsonResponse_Add_Double(reqData->socket,
-										reqData->jsonTextBuffer,
-										kMaxJsonBuffLen,
-										responseString,
-										cCameraProp.CCDtemperature,
-										INCLUDE_COMMA);
+				cBytesWrittenForThisCmd	+=	JsonResponse_Add_Double(reqData->socket,
+												reqData->jsonTextBuffer,
+												kMaxJsonBuffLen,
+												responseString,
+												cCameraProp.CCDtemperature,
+												INCLUDE_COMMA);
 
-//				JsonResponse_Add_String(reqData->socket,
-//										reqData->jsonTextBuffer,
-//										kMaxJsonBuffLen,
-//										"Comment",
-//										"Deg C",
-//										INCLUDE_COMMA);
+//				cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(reqData->socket,
+//												reqData->jsonTextBuffer,
+//												kMaxJsonBuffLen,
+//												"Comment",
+//												"Deg C",
+//												INCLUDE_COMMA);
 
 			}
 			else
@@ -1857,12 +1857,12 @@ bool				coolerState;
 				strcat(alpacaErrMsg, cLastCameraErrMsg);
 		//		CONSOLE_DEBUG(alpacaErrMsg);
 			}
-			JsonResponse_Add_Bool(	reqData->socket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									responseString,			//	"Value",
-									coolerState,
-									INCLUDE_COMMA);
+			cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	reqData->socket,
+											reqData->jsonTextBuffer,
+											kMaxJsonBuffLen,
+											responseString,			//	"Value",
+											coolerState,
+											INCLUDE_COMMA);
 		}
 		else
 		{
@@ -1946,12 +1946,12 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
 			alpacaErrCode		=	Read_CoolerPowerLevel();
 			if (alpacaErrCode == 0)
 			{
-				JsonResponse_Add_Int32(	reqData->socket,
-										reqData->jsonTextBuffer,
-										kMaxJsonBuffLen,
-										responseString,
-										cCoolerPowerLevel,
-										INCLUDE_COMMA);
+				cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	reqData->socket,
+												reqData->jsonTextBuffer,
+												kMaxJsonBuffLen,
+												responseString,
+												cCoolerPowerLevel,
+												INCLUDE_COMMA);
 			}
 			else
 			{
@@ -1980,12 +1980,12 @@ TYPE_ASCOM_STATUS	alpacaErrCode;
 
 	if (reqData != NULL)
 	{
-		JsonResponse_Add_Double(reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								gValueString,
-								cCameraProp.ElectronsPerADU,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Double(reqData->socket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										gValueString,
+										cCameraProp.ElectronsPerADU,
+										INCLUDE_COMMA);
 		alpacaErrCode	=	kASCOM_Err_Success;
 	}
 	else
@@ -2005,12 +2005,12 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
 	if (reqData != NULL)
 	{
 		cCameraProp.ExposureMax_seconds	=	(1.0 * cCameraProp.ExposureMax_us) / 1000000.0;
-		JsonResponse_Add_Double(	reqData->socket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									responseString,
-									cCameraProp.ExposureMax_seconds,
-									INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Double(	reqData->socket,
+											reqData->jsonTextBuffer,
+											kMaxJsonBuffLen,
+											responseString,
+											cCameraProp.ExposureMax_seconds,
+											INCLUDE_COMMA);
 
 		alpacaErrCode	=	kASCOM_Err_Success;
 	}
@@ -2029,12 +2029,12 @@ TYPE_ASCOM_STATUS	alpacaErrCode;
 	if (reqData != NULL)
 	{
 		cCameraProp.ExposureMin_seconds	=	(1.0 * cCameraProp.ExposureMin_us) / 1000000.0;
-		JsonResponse_Add_Double(	reqData->socket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									responseString,
-									cCameraProp.ExposureMin_seconds,
-									INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Double(	reqData->socket,
+											reqData->jsonTextBuffer,
+											kMaxJsonBuffLen,
+											responseString,
+											cCameraProp.ExposureMin_seconds,
+											INCLUDE_COMMA);
 
 		alpacaErrCode	=	kASCOM_Err_Success;
 	}
@@ -2055,19 +2055,19 @@ int					maxPixelValue;
 	{
 		maxPixelValue					=	pow(2, cBitDepth);
 		cCameraProp.FullWellCapacity	=	maxPixelValue * cCameraProp.ElectronsPerADU;
-		JsonResponse_Add_Double(reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								responseString,
-								cCameraProp.FullWellCapacity,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Double(reqData->socket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										responseString,
+										cCameraProp.FullWellCapacity,
+										INCLUDE_COMMA);
 
-		JsonResponse_Add_String(reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"comment-fullwell",
-								"Callulated value = (2^bitdepth) * cCameraProp.ElectronsPerADU",
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(reqData->socket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										"comment-fullwell",
+										"Callulated value = (2^bitdepth) * cCameraProp.ElectronsPerADU",
+										INCLUDE_COMMA);
 	}
 	else
 	{
@@ -2102,12 +2102,12 @@ int					cameraGainValue;
 //			CONSOLE_DEBUG_W_NUM("cameraGainValue\t=",	cameraGainValue);
 //			CONSOLE_DEBUG_W_NUM("Gain\t=",				cCameraProp.Gain);
 		}
-		JsonResponse_Add_Int32(	reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								responseString,			//	gValueString,
-								cCameraProp.Gain,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	reqData->socket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										responseString,			//	gValueString,
+										cCameraProp.Gain,
+										INCLUDE_COMMA);
 
 	}
 	else
@@ -2162,12 +2162,12 @@ char				gainString[32];
 			alpacaErrCode	=	kASCOM_Err_InvalidValue;
 			CONSOLE_DEBUG(alpacaErrMsg);
 		}
-		JsonResponse_Add_Int32(	reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								gValueString,
-								cCameraProp.Gain,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	reqData->socket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										gValueString,
+										cCameraProp.Gain,
+										INCLUDE_COMMA);
 	}
 	else
 	{
@@ -2182,12 +2182,12 @@ TYPE_ASCOM_STATUS	CameraDriver::Get_GainMax(TYPE_GetPutRequestData *reqData, cha
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
-	JsonResponse_Add_Int32(	reqData->socket,
-							reqData->jsonTextBuffer,
-							kMaxJsonBuffLen,
-							responseString,
-							cCameraProp.GainMax,
-							INCLUDE_COMMA);
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	reqData->socket,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									responseString,
+									cCameraProp.GainMax,
+									INCLUDE_COMMA);
 
 	return(alpacaErrCode);
 }
@@ -2197,12 +2197,12 @@ TYPE_ASCOM_STATUS	CameraDriver::Get_GainMin(TYPE_GetPutRequestData *reqData, cha
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
-	JsonResponse_Add_Int32(	reqData->socket,
-							reqData->jsonTextBuffer,
-							kMaxJsonBuffLen,
-							responseString,
-							cCameraProp.GainMin,
-							INCLUDE_COMMA);
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	reqData->socket,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									responseString,
+									cCameraProp.GainMin,
+									INCLUDE_COMMA);
 
 	return(alpacaErrCode);
 }
@@ -2236,12 +2236,12 @@ TYPE_ASCOM_STATUS	CameraDriver::Get_IsPulseGuiding(TYPE_GetPutRequestData *reqDa
 TYPE_ASCOM_STATUS	alpacaErrCode;
 
 	//*	needs to be updated when we implement pulse guiding
-	JsonResponse_Add_Bool(	reqData->socket,
-							reqData->jsonTextBuffer,
-							kMaxJsonBuffLen,
-							gValueString,
-							cCameraProp.IsPulseGuiding,
-							INCLUDE_COMMA);
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	reqData->socket,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									gValueString,
+									cCameraProp.IsPulseGuiding,
+									INCLUDE_COMMA);
 	alpacaErrCode	=	kASCOM_Err_Success;
 
 	return(alpacaErrCode);
@@ -2262,12 +2262,12 @@ TYPE_ASCOM_STATUS	alpacaErrCode;
 
 	if (reqData != NULL)
 	{
-		JsonResponse_Add_Int32(	reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								responseString,
-								cCameraProp.MaxADU,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	reqData->socket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										responseString,
+										cCameraProp.MaxADU,
+										INCLUDE_COMMA);
 
 		alpacaErrCode	=	kASCOM_Err_Success;
 	}
@@ -2286,12 +2286,12 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 //	CONSOLE_DEBUG(__FUNCTION__);
 	if (reqData != NULL)
 	{
-		JsonResponse_Add_Int32(	reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								responseString,		//gValueString,
-								cCameraProp.NumX,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	reqData->socket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										responseString,		//gValueString,
+										cCameraProp.NumX,
+										INCLUDE_COMMA);
 
 	}
 	else
@@ -2310,12 +2310,12 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
 	if (reqData != NULL)
 	{
-		JsonResponse_Add_Int32(	reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								responseString,		//gValueString,
-								cCameraProp.NumY,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	reqData->socket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										responseString,		//gValueString,
+										cCameraProp.NumY,
+										INCLUDE_COMMA);
 
 	}
 	else
@@ -2426,12 +2426,12 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
 
 	if (reqData != NULL)
 	{
-		JsonResponse_Add_Int32(	reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								responseString,		//gValueString,
-								cCameraProp.Offset,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	reqData->socket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										responseString,		//gValueString,
+										cCameraProp.Offset,
+										INCLUDE_COMMA);
 		alpacaErrCode	=	kASCOM_Err_Success;
 	}
 	else
@@ -2515,12 +2515,12 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
 //	CONSOLE_DEBUG(__FUNCTION__);
 	if (reqData != NULL)
 	{
-		JsonResponse_Add_Int32(	reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								responseString,		//gValueString,
-								cCameraProp.OffsetMax,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	reqData->socket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										responseString,		//gValueString,
+										cCameraProp.OffsetMax,
+										INCLUDE_COMMA);
 		alpacaErrCode	=	kASCOM_Err_Success;
 	}
 	else
@@ -2539,12 +2539,12 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
 //	CONSOLE_DEBUG(__FUNCTION__);
 	if (reqData != NULL)
 	{
-		JsonResponse_Add_Int32(	reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								responseString,		//gValueString,
-								cCameraProp.OffsetMin,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	reqData->socket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										responseString,		//gValueString,
+										cCameraProp.OffsetMin,
+										INCLUDE_COMMA);
 		alpacaErrCode	=	kASCOM_Err_Success;
 	}
 	else
@@ -2577,12 +2577,12 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
 //	CONSOLE_DEBUG(__FUNCTION__);
 	if (reqData != NULL)
 	{
-		JsonResponse_Add_Int32(	reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								responseString,		//gValueString,
-								cCameraProp.StartX,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	reqData->socket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										responseString,		//gValueString,
+										cCameraProp.StartX,
+										INCLUDE_COMMA);
 		alpacaErrCode	=	kASCOM_Err_Success;
 	}
 	else
@@ -2601,12 +2601,12 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
 
 	if (reqData != NULL)
 	{
-		JsonResponse_Add_Int32(	reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								responseString,		//gValueString,
-								cCameraProp.StartY,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	reqData->socket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										responseString,		//gValueString,
+										cCameraProp.StartY,
+										INCLUDE_COMMA);
 
 		alpacaErrCode	=	kASCOM_Err_Success;
 	}
@@ -2730,12 +2730,12 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
 		}
 		else
 		{
-			JsonResponse_Add_Int32(	reqData->socket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									responseString,				//	"Value",
-									cCameraProp.PercentCompleted,
-									INCLUDE_COMMA);
+			cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	reqData->socket,
+											reqData->jsonTextBuffer,
+											kMaxJsonBuffLen,
+											responseString,				//	"Value",
+											cCameraProp.PercentCompleted,
+											INCLUDE_COMMA);
 			alpacaErrCode	=	kASCOM_Err_Success;
 		}
 	}
@@ -2754,12 +2754,12 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
 	if (reqData != NULL)
 	{
-		JsonResponse_Add_Double(reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								responseString,
-								cCameraProp.PixelSizeX,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Double(reqData->socket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										responseString,
+										cCameraProp.PixelSizeX,
+										INCLUDE_COMMA);
 		alpacaErrCode	=	kASCOM_Err_Success;
 	}
 	else
@@ -2777,7 +2777,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
 	if (reqData != NULL)
 	{
-		JsonResponse_Add_Double(reqData->socket,
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Double(reqData->socket,
 								reqData->jsonTextBuffer,
 								kMaxJsonBuffLen,
 								responseString,
@@ -2886,20 +2886,20 @@ int					myAlpacaReadOutModeIdx;
 //	CONSOLE_DEBUG_W_STR("currentImgTypeString\t=",	currentImgTypeString);
 
 
-	JsonResponse_Add_Int32(	reqData->socket,
-							reqData->jsonTextBuffer,
-							kMaxJsonBuffLen,
-							responseString,				//	"Value",
-							myAlpacaReadOutModeIdx,
-							INCLUDE_COMMA);
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	reqData->socket,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									responseString,				//	"Value",
+									myAlpacaReadOutModeIdx,
+									INCLUDE_COMMA);
 
 
-	JsonResponse_Add_String(reqData->socket,
-							reqData->jsonTextBuffer,
-							kMaxJsonBuffLen,
-							"readoutmode-str",
-							currentImgTypeString,
-							INCLUDE_COMMA);
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(reqData->socket,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									"readoutmode-str",
+									currentImgTypeString,
+									INCLUDE_COMMA);
 
 	return(alpacaErrCode);
 }
@@ -2931,12 +2931,12 @@ int					sensortType;
 	}
 
 
-	JsonResponse_Add_Int32(	reqData->socket,
-							reqData->jsonTextBuffer,
-							kMaxJsonBuffLen,
-							responseString,				//	"Value",
-							sensortType,
-							INCLUDE_COMMA);
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	reqData->socket,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									responseString,				//	"Value",
+									sensortType,
+									INCLUDE_COMMA);
 	return(alpacaErrCode);
 }
 
@@ -3007,12 +3007,12 @@ TYPE_IMAGE_TYPE		newImageType;
 	}
 	mySocketFD	=	reqData->socket;
 
-	JsonResponse_Add_Int32(	mySocketFD,
-							reqData->jsonTextBuffer,
-							kMaxJsonBuffLen,
-							"Value",
-							0,
-							INCLUDE_COMMA);
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	mySocketFD,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									"Value",
+									0,
+									INCLUDE_COMMA);
 	return(alpacaErrCode);
 }
 
@@ -3028,20 +3028,20 @@ char				lineBuff[128];
 	lineBuff[0]	=	0;
 	Read_Readoutmodes(lineBuff, true);
 
-	JsonResponse_Add_ArrayStart(mySocketFD,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								responseString);
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_ArrayStart(mySocketFD,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										responseString);
 
-	JsonResponse_Add_RawText(	mySocketFD,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								lineBuff);
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_RawText(	mySocketFD,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										lineBuff);
 
-	JsonResponse_Add_ArrayEnd(	mySocketFD,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								INCLUDE_COMMA);
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_ArrayEnd(	mySocketFD,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										INCLUDE_COMMA);
 	return(alpacaErrCode);
 }
 
@@ -3052,12 +3052,12 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
 
 	if (cCameraProp.Cansetccdtemperature)
 	{
-		JsonResponse_Add_Double(reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								gValueString,
-								cCameraProp.SetCCDTemperature,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Double(reqData->socket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										gValueString,
+										cCameraProp.SetCCDTemperature,
+										INCLUDE_COMMA);
 
 		alpacaErrCode	=	kASCOM_Err_Success;
 	}
@@ -3239,20 +3239,20 @@ double				myExposure_usecs;
 
 				if (alpacaErrCode == 0)
 				{
-					JsonResponse_Add_String(reqData->socket,
-											reqData->jsonTextBuffer,
-											kMaxJsonBuffLen,
-											"filenameroot",
-											cFileNameRoot,
-											INCLUDE_COMMA);
+					cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(reqData->socket,
+													reqData->jsonTextBuffer,
+													kMaxJsonBuffLen,
+													"filenameroot",
+													cFileNameRoot,
+													INCLUDE_COMMA);
 
 					currExposure_secs	=	(1.0 * cCurrentExposure_us) / 1000000.0;
-					JsonResponse_Add_Double(reqData->socket,
-											reqData->jsonTextBuffer,
-											kMaxJsonBuffLen,
-											"exposure",
-											currExposure_secs,
-											INCLUDE_COMMA);
+					cBytesWrittenForThisCmd	+=	JsonResponse_Add_Double(reqData->socket,
+													reqData->jsonTextBuffer,
+													kMaxJsonBuffLen,
+													"exposure",
+													currExposure_secs,
+													INCLUDE_COMMA);
 				}
 				else
 				{
@@ -3394,12 +3394,12 @@ double				exposureTimeSecs;
 	{
 		exposureTimeSecs	=	(cCameraProp.Lastexposure_duration_us * 1.0) / 1000000.0;
 
-		JsonResponse_Add_Double(reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								responseString,
-								exposureTimeSecs,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Double(reqData->socket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										responseString,
+										exposureTimeSecs,
+										INCLUDE_COMMA);
 		alpacaErrCode	=	kASCOM_Err_Success;
 	}
 	else
@@ -3428,12 +3428,12 @@ char				timeString[64];
 									timeString);
 
 	//	CONSOLE_DEBUG(timeString);
-		JsonResponse_Add_String(reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								responseString,
-								timeString,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(reqData->socket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										responseString,
+										timeString,
+										INCLUDE_COMMA);
 		alpacaErrCode	=	kASCOM_Err_Success;
 	}
 	else
@@ -3454,12 +3454,12 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
 //	CONSOLE_DEBUG(__FUNCTION__);
 	if (reqData != NULL)
 	{
-		JsonResponse_Add_Bool(	reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								responseString,
-								cCameraProp.ImageReady,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	reqData->socket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										responseString,
+										cCameraProp.ImageReady,
+										INCLUDE_COMMA);
 		alpacaErrCode	=	kASCOM_Err_Success;
 	}
 	else
@@ -3490,23 +3490,23 @@ int					imgRank;
 	//========================================================================================
 	//*	record the time the image was taken
 	FormatTimeString(&cCameraProp.Lastexposure_StartTime.tv_sec, imageTimeString);
-	JsonResponse_Add_String(mySocket,
-							reqData->jsonTextBuffer,
-							kMaxJsonBuffLen,
-							"ImageTime",
-							imageTimeString,
-							INCLUDE_COMMA);
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(mySocket,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									"ImageTime",
+									imageTimeString,
+									INCLUDE_COMMA);
 
 	//========================================================================================
 	//*	record the exposure time
 	exposureTimeSecs	=	(cCameraProp.Lastexposure_duration_us * 1.0) /
 							1000000.0;
-	JsonResponse_Add_Double(mySocket,
-							reqData->jsonTextBuffer,
-							kMaxJsonBuffLen,
-							"Exposure",
-							exposureTimeSecs,
-							INCLUDE_COMMA);
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Double(mySocket,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									"Exposure",
+									exposureTimeSecs,
+									INCLUDE_COMMA);
 
 	//========================================================================================
 	//*	record the sensor temp
@@ -3515,12 +3515,12 @@ int					imgRank;
 		tempErrCode	=	Read_SensorTemp();
 		if (tempErrCode == kASCOM_Err_Success)
 		{
-			JsonResponse_Add_Double(mySocket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									"ccdtemperature",
-									cCameraProp.CCDtemperature,
-									INCLUDE_COMMA);
+			cBytesWrittenForThisCmd	+=	JsonResponse_Add_Double(mySocket,
+											reqData->jsonTextBuffer,
+											kMaxJsonBuffLen,
+											"ccdtemperature",
+											cCameraProp.CCDtemperature,
+											INCLUDE_COMMA);
 		}
 	}
 
@@ -3540,35 +3540,35 @@ int					imgRank;
 		//========================================================================================
 		//*	record the image type
 //+			Read_ImageTypeString(cLastExposure_ROIinfo.currentROIimageType, asiImageTypeString);
-//+			JsonResponse_Add_String(mySocket,
+//+			cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(mySocket,
 //+									reqData->jsonTextBuffer,
 //+									kMaxJsonBuffLen,
 //+									"ImageType",
 //+									asiImageTypeString,
 //+									INCLUDE_COMMA);
 		//*	record the image size
-		JsonResponse_Add_Int32(mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"xsize",
-								cLastExposure_ROIinfo.currentROIwidth,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(mySocket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										"xsize",
+										cLastExposure_ROIinfo.currentROIwidth,
+										INCLUDE_COMMA);
 
-		JsonResponse_Add_Int32(mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"ysize",
-								cLastExposure_ROIinfo.currentROIheight,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(mySocket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										"ysize",
+										cLastExposure_ROIinfo.currentROIheight,
+										INCLUDE_COMMA);
 
 //		CONSOLE_DEBUG(__FUNCTION__);
 		//*	Type = 2  >> 32 bit interger
-		JsonResponse_Add_Int32(	mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"Type",
-								2,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	mySocket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										"Type",
+										2,
+										INCLUDE_COMMA);
 
 		//*	determine the RANK of the image we are about to send.
 		switch(cLastExposure_ROIinfo.currentROIimageType)
@@ -3584,14 +3584,14 @@ int					imgRank;
 				imgRank	=	2;
 				break;
 		}
-		JsonResponse_Add_Int32(	mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"Rank",
-								imgRank,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	mySocket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										"Rank",
+										imgRank,
+										INCLUDE_COMMA);
 
-		JsonResponse_Add_ArrayStart(	mySocket,
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_ArrayStart(	mySocket,
 										reqData->jsonTextBuffer,
 										kMaxJsonBuffLen,
 										gValueString);
@@ -3637,10 +3637,10 @@ int					imgRank;
 		}
 
 
-		JsonResponse_Add_ArrayEnd(	mySocket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_ArrayEnd(	mySocket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										INCLUDE_COMMA);
 		CONSOLE_DEBUG_W_NUM("pixelCount\t=", pixelCount);
 	}
 	else
@@ -3951,23 +3951,23 @@ TYPE_ASCOM_STATUS	tempSensorErr;
 	//========================================================================================
 	//*	record the time the image was taken
 	FormatTimeString(&cCameraProp.Lastexposure_StartTime.tv_sec, imageTimeString);
-	JsonResponse_Add_String(mySocket,
-							reqData->jsonTextBuffer,
-							kBuffSize_MaxSpeed,
-							"ImageTime",
-							imageTimeString,
-							INCLUDE_COMMA);
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(mySocket,
+									reqData->jsonTextBuffer,
+									kBuffSize_MaxSpeed,
+									"ImageTime",
+									imageTimeString,
+									INCLUDE_COMMA);
 
 	//========================================================================================
 	//*	record the exposure time
 	exposureTimeSecs	=	(cCameraProp.Lastexposure_duration_us * 1.0) /
 							1000000.0;
-	JsonResponse_Add_Double(mySocket,
-							reqData->jsonTextBuffer,
-							kBuffSize_MaxSpeed,
-							"Exposure",
-							exposureTimeSecs,
-							INCLUDE_COMMA);
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Double(mySocket,
+									reqData->jsonTextBuffer,
+									kBuffSize_MaxSpeed,
+									"Exposure",
+									exposureTimeSecs,
+									INCLUDE_COMMA);
 
 	//========================================================================================
 	//*	record the sensor temp
@@ -3976,12 +3976,12 @@ TYPE_ASCOM_STATUS	tempSensorErr;
 		tempSensorErr	=	Read_SensorTemp();
 		if (tempSensorErr == kASCOM_Err_Success)
 		{
-			JsonResponse_Add_Double(mySocket,
-									reqData->jsonTextBuffer,
-									kBuffSize_MaxSpeed,
-									"ccdtemperature",
-									cCameraProp.CCDtemperature,
-									INCLUDE_COMMA);
+			cBytesWrittenForThisCmd	+=	JsonResponse_Add_Double(mySocket,
+											reqData->jsonTextBuffer,
+											kBuffSize_MaxSpeed,
+											"ccdtemperature",
+											cCameraProp.CCDtemperature,
+											INCLUDE_COMMA);
 
 
 		}
@@ -3997,44 +3997,44 @@ TYPE_ASCOM_STATUS	tempSensorErr;
 		//========================================================================================
 		//*	record the image type
 //+			Read_ImageTypeString(cROIinfo.currentROIimageType, asiImageTypeString);
-//+			JsonResponse_Add_String(mySocket,
+//+			cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(mySocket,
 //+									reqData->jsonTextBuffer,
 //+									kBuffSize_MaxSpeed,
 //+									"ImageType",
 //+									asiImageTypeString,
 //+									INCLUDE_COMMA);
 		//*	record the image size
-		JsonResponse_Add_Int32(mySocket,
-								reqData->jsonTextBuffer,
-								kBuffSize_MaxSpeed,
-								"xsize",
-								cROIinfo.currentROIwidth,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(mySocket,
+										reqData->jsonTextBuffer,
+										kBuffSize_MaxSpeed,
+										"xsize",
+										cROIinfo.currentROIwidth,
+										INCLUDE_COMMA);
 
-		JsonResponse_Add_Int32(mySocket,
-								reqData->jsonTextBuffer,
-								kBuffSize_MaxSpeed,
-								"ysize",
-								cROIinfo.currentROIheight,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(mySocket,
+										reqData->jsonTextBuffer,
+										kBuffSize_MaxSpeed,
+										"ysize",
+										cROIinfo.currentROIheight,
+										INCLUDE_COMMA);
 
 //		CONSOLE_DEBUG(__FUNCTION__);
 		//*	Type = 2  >> 32 bit interger
-		JsonResponse_Add_Int32(	mySocket,
-								reqData->jsonTextBuffer,
-								kBuffSize_MaxSpeed,
-								"Type",
-								2,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	mySocket,
+										reqData->jsonTextBuffer,
+										kBuffSize_MaxSpeed,
+										"Type",
+										2,
+										INCLUDE_COMMA);
 
-		JsonResponse_Add_Int32(	mySocket,
-								reqData->jsonTextBuffer,
-								kBuffSize_MaxSpeed,
-								"Rank",
-								2,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	mySocket,
+										reqData->jsonTextBuffer,
+										kBuffSize_MaxSpeed,
+										"Rank",
+										2,
+										INCLUDE_COMMA);
 
-		JsonResponse_Add_ArrayStart(	mySocket,
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_ArrayStart(	mySocket,
 										reqData->jsonTextBuffer,
 										kBuffSize_MaxSpeed,
 										gValueString);
@@ -4071,10 +4071,10 @@ TYPE_ASCOM_STATUS	tempSensorErr;
 					pixelValue		=	pixelValue * 0x010101;
 					pixelPtr		+=	2;
 					sprintf(lineBuff, "%d,\n", pixelValue);
-					JsonResponse_Add_RawText(	mySocket,
-												reqData->jsonTextBuffer,
-												kBuffSize_MaxSpeed,
-												lineBuff);
+					cBytesWrittenForThisCmd	+=	JsonResponse_Add_RawText(	mySocket,
+													reqData->jsonTextBuffer,
+													kBuffSize_MaxSpeed,
+													lineBuff);
 					iii++;
 				}
 				//*	now do the last one WITHOUT the comma
@@ -4082,10 +4082,10 @@ TYPE_ASCOM_STATUS	tempSensorErr;
 				pixelValue		=	pixelValue * 0x010101;
 				pixelPtr		+=	2;
 				sprintf(lineBuff, "%d\n", pixelValue);
-				JsonResponse_Add_RawText(	mySocket,
-											reqData->jsonTextBuffer,
-											kBuffSize_MaxSpeed,
-											lineBuff);
+				cBytesWrittenForThisCmd	+=	JsonResponse_Add_RawText(	mySocket,
+												reqData->jsonTextBuffer,
+												kBuffSize_MaxSpeed,
+												lineBuff);
 				break;
 
 			//====================================================================
@@ -4099,10 +4099,10 @@ TYPE_ASCOM_STATUS	tempSensorErr;
 					pixelValue		=	pixelValue * 0x010101;
 					pixelPtr		+=	1;
 					sprintf(lineBuff, "%d,\n", pixelValue);
-					JsonResponse_Add_RawText(	mySocket,
-												reqData->jsonTextBuffer,
-												kBuffSize_MaxSpeed,
-												lineBuff);
+					cBytesWrittenForThisCmd	+=	JsonResponse_Add_RawText(	mySocket,
+													reqData->jsonTextBuffer,
+													kBuffSize_MaxSpeed,
+													lineBuff);
 					iii++;
 				}
 				//*	now do the last one WITHOUT the comma
@@ -4110,10 +4110,10 @@ TYPE_ASCOM_STATUS	tempSensorErr;
 				pixelValue		=	pixelValue * 0x010101;
 				pixelPtr		+=	1;
 				sprintf(lineBuff, "%d\n", pixelValue);
-				JsonResponse_Add_RawText(	mySocket,
-											reqData->jsonTextBuffer,
-											kBuffSize_MaxSpeed,
-											lineBuff);
+				cBytesWrittenForThisCmd	+=	JsonResponse_Add_RawText(	mySocket,
+												reqData->jsonTextBuffer,
+												kBuffSize_MaxSpeed,
+												lineBuff);
 				break;
 
 			//====================================================================
@@ -4124,10 +4124,10 @@ TYPE_ASCOM_STATUS	tempSensorErr;
 		}
 
 
-		JsonResponse_Add_ArrayEnd(	mySocket,
-									reqData->jsonTextBuffer,
-									kBuffSize_MaxSpeed,
-									INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_ArrayEnd(	mySocket,
+										reqData->jsonTextBuffer,
+										kBuffSize_MaxSpeed,
+										INCLUDE_COMMA);
 		CONSOLE_DEBUG_W_NUM("pixelCount\t=", pixelCount);
 	}
 	else
@@ -4298,12 +4298,12 @@ char				stateString[16];
 	mySocketFD				=	reqData->socket;
 	cCameraProp.CameraState	=	Read_AlapcaCameraState();
 
-	JsonResponse_Add_Int32(	mySocketFD,
-							reqData->jsonTextBuffer,
-							kMaxJsonBuffLen,
-							responseString,
-							cCameraProp.CameraState,
-							INCLUDE_COMMA);
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	mySocketFD,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									responseString,
+									cCameraProp.CameraState,
+									INCLUDE_COMMA);
 
 	switch(cCameraProp.CameraState)
 	{
@@ -4316,12 +4316,12 @@ char				stateString[16];
 
 		default:								strcpy(stateString,	"unknown");		break;
 	}
-	JsonResponse_Add_String(	mySocketFD,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"camerastate-string",
-								stateString,
-								INCLUDE_COMMA);
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(	mySocketFD,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									"camerastate-string",
+									stateString,
+									INCLUDE_COMMA);
 	return(alpacaErrCode);
 }
 
@@ -4338,12 +4338,12 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 			alpacaErrCode	=	Read_Fastreadout();
 			if (alpacaErrCode == 0)
 			{
-				JsonResponse_Add_Bool(	reqData->socket,
-										reqData->jsonTextBuffer,
-										kMaxJsonBuffLen,
-										responseString,
-										cHighSpeedMode,
-										INCLUDE_COMMA);
+				cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	reqData->socket,
+												reqData->jsonTextBuffer,
+												kMaxJsonBuffLen,
+												responseString,
+												cHighSpeedMode,
+												INCLUDE_COMMA);
 			}
 			else
 			{
@@ -4465,12 +4465,12 @@ char				myRefID[32];
 
 //		CONSOLE_DEBUG_W_STR("cTS_info.instrument\t=",	cTS_info.instrument);
 
-		JsonResponse_Add_String(	reqData->socket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									gValueString,
-									myRefID,
-									INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(	reqData->socket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										gValueString,
+										myRefID,
+										INCLUDE_COMMA);
 	}
 	else
 	{
@@ -4484,12 +4484,12 @@ TYPE_ASCOM_STATUS	CameraDriver::Get_LiveMode(TYPE_GetPutRequestData *reqData, ch
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
-	JsonResponse_Add_Bool(	reqData->socket,
-							reqData->jsonTextBuffer,
-							kMaxJsonBuffLen,
-							responseString,
-							(cImageMode == kImageMode_Live),
-							INCLUDE_COMMA);
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	reqData->socket,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									responseString,
+									(cImageMode == kImageMode_Live),
+									INCLUDE_COMMA);
 
 	return(alpacaErrCode);
 }
@@ -4542,12 +4542,12 @@ bool				newLiveModeState;
 			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "'Livemode' argument not found");
 			CONSOLE_DEBUG(alpacaErrMsg);
 		}
-		JsonResponse_Add_Bool(	reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								gValueString,
-								(cImageMode == kImageMode_Live),
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	reqData->socket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										gValueString,
+										(cImageMode == kImageMode_Live),
+										INCLUDE_COMMA);
 	}
 	else
 	{
@@ -4563,12 +4563,12 @@ TYPE_ASCOM_STATUS	CameraDriver::Get_Sidebar(TYPE_GetPutRequestData *reqData, cha
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
 //	CONSOLE_DEBUG_W_NUM("cDisplaySideBar\t=",		cDisplaySideBar);
-	JsonResponse_Add_Bool(	reqData->socket,
-							reqData->jsonTextBuffer,
-							kMaxJsonBuffLen,
-							responseString,
-							cDisplaySideBar,
-							INCLUDE_COMMA);
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	reqData->socket,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									responseString,
+									cDisplaySideBar,
+									INCLUDE_COMMA);
 
 	return(alpacaErrCode);
 }
@@ -4615,12 +4615,12 @@ char				keywordString[64];
 			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "'Sidebar' argument not found");
 			CONSOLE_DEBUG(alpacaErrMsg);
 		}
-		JsonResponse_Add_Bool(	reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								gValueString,
-								cDisplaySideBar,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	reqData->socket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										gValueString,
+										cDisplaySideBar,
+										INCLUDE_COMMA);
 	}
 	else
 	{
@@ -4644,12 +4644,12 @@ double				exposureTimeSecs;
 		exposureTimeSecs	=	(cCurrentExposure_us * 1.0) /
 								1000000.0;
 
-		JsonResponse_Add_Double(reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								responseString,			//gValueString,
-								exposureTimeSecs,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Double(reqData->socket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										responseString,			//gValueString,
+										exposureTimeSecs,
+										INCLUDE_COMMA);
 		alpacaErrCode	=	kASCOM_Err_Success;
 	}
 	else
@@ -4762,12 +4762,12 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
 		CONSOLE_DEBUG_W_STR("cFileNameRoot before\t=",	cFileNameRoot);
 		GenerateFileNameRoot();
 		CONSOLE_DEBUG_W_STR("cFileNameRoot after \t=",	cFileNameRoot);
-		JsonResponse_Add_String(reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"filenameroot",
-								cFileNameRoot,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(reqData->socket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										"filenameroot",
+										cFileNameRoot,
+										INCLUDE_COMMA);
 
 		alpacaErrCode		=	kASCOM_Err_Success;
 	}
@@ -4890,6 +4890,7 @@ bool			successFlag;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
+	successFlag			=	false;
 	if ((cCameraDataBuffer != NULL) && (bufferSize <= cCameraDataBuffLen))
 	{
 		//*	everything is OK
@@ -6010,6 +6011,8 @@ TYPE_ASCOM_STATUS	alpacaErrCode;
 			else
 			{
 				CONSOLE_DEBUG_W_NUM("Read_ImageData returned Alpaca error#", alpacaErrCode);
+				CONSOLE_DEBUG("Resetting to single image mode");
+				cImageMode				=	kImageMode_Single;
 			}
 
 			cInternalCameraState	=	kCameraState_Idle;
@@ -6299,14 +6302,14 @@ int					iii;
 	directory	=	opendir(kImageDataDir);
 	if (directory != NULL)
 	{
-		JsonResponse_Add_String(mySocketFD,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"Directory",
-								kImageDataDir,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(mySocketFD,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										"Directory",
+										kImageDataDir,
+										INCLUDE_COMMA);
 
-		JsonResponse_Add_ArrayStart(	mySocketFD,
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_ArrayStart(	mySocketFD,
 										reqData->jsonTextBuffer,
 										kMaxJsonBuffLen,
 										gValueString);
@@ -6356,10 +6359,10 @@ int					iii;
 					strcat(lineBuff, "\",");
 					strcat(lineBuff, "\r\n");
 				//	CONSOLE_DEBUG_W_NUM("len of jsonTextBuffer\t=", strlen(reqData->jsonTextBuffer));
-					JsonResponse_Add_RawText(	mySocketFD,
-												reqData->jsonTextBuffer,
-												kMaxJsonBuffLen,
-												lineBuff);
+					cBytesWrittenForThisCmd	+=	JsonResponse_Add_RawText(	mySocketFD,
+													reqData->jsonTextBuffer,
+													kMaxJsonBuffLen,
+													lineBuff);
 				//	CONSOLE_DEBUG_W_NUM("len of jsonTextBuffer\t=", strlen(reqData->jsonTextBuffer));
 				//	CONSOLE_DEBUG_W_NUM("kMaxJsonBuffLen\t=", kMaxJsonBuffLen);
 					if (strlen(reqData->jsonTextBuffer) >= kMaxJsonBuffLen)
@@ -6401,24 +6404,24 @@ CONSOLE_DEBUG_W_NUM("fileIdx    \t=", fileIdx);
 			strcat(lineBuff, "\",");
 			strcat(lineBuff, "\r\n");
 //			CONSOLE_DEBUG_W_NUM("len of lineBuff\t=", strlen(lineBuff));
-			JsonResponse_Add_RawText(	mySocketFD,
-										reqData->jsonTextBuffer,
-										kMaxJsonBuffLen,
-										lineBuff);
+			cBytesWrittenForThisCmd	+=	JsonResponse_Add_RawText(	mySocketFD,
+											reqData->jsonTextBuffer,
+											kMaxJsonBuffLen,
+											lineBuff);
 		}
 	#endif // _SORT_FILENAMES_
 
 CONSOLE_DEBUG_W_NUM("kMaxJsonBuffLen      \t=", kMaxJsonBuffLen);
 CONSOLE_DEBUG_W_LONG("len of jsonTextBuffer\t=", strlen(reqData->jsonTextBuffer));
-		JsonResponse_Add_RawText(	mySocketFD,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									"\t\t\t\"END\"\r\n");
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_RawText(	mySocketFD,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										"\t\t\t\"END\"\r\n");
 CONSOLE_DEBUG_W_LONG("len of jsonTextBuffer\t=", strlen(reqData->jsonTextBuffer));
-		JsonResponse_Add_ArrayEnd(	mySocketFD,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_ArrayEnd(	mySocketFD,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										INCLUDE_COMMA);
 CONSOLE_DEBUG_W_LONG("len of jsonTextBuffer\t=", strlen(reqData->jsonTextBuffer));
 		errorCode	=	closedir(directory);
 		if (errorCode != 0)
@@ -6451,19 +6454,19 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
 	if (reqData != NULL)
 	{
-		JsonResponse_Add_Bool(	reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								responseString,
-								cAutoAdjustExposure,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	reqData->socket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										responseString,
+										cAutoAdjustExposure,
+										INCLUDE_COMMA);
 
-		JsonResponse_Add_Int32(	reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"stepsize",
-								cAutoAdjustStepSz_us,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	reqData->socket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										"stepsize",
+										cAutoAdjustStepSz_us,
+										INCLUDE_COMMA);
 	}
 	return(alpacaErrCode);
 }
@@ -6508,12 +6511,12 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
 	if (reqData != NULL)
 	{
-		JsonResponse_Add_Bool(	reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								responseString,
-								cDisplayImage,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	reqData->socket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										responseString,
+										cDisplayImage,
+										INCLUDE_COMMA);
 
 	}
 	return(alpacaErrCode);
@@ -6619,15 +6622,15 @@ int					fitsHdrIdx;
 
 	mySocketFD	=	reqData->socket;
 
-	JsonResponse_Add_ArrayStart(mySocketFD,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								gValueString);
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_ArrayStart(mySocketFD,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									gValueString);
 
-	JsonResponse_Add_RawText(	mySocketFD,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"\n");
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_RawText(	mySocketFD,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									"\n");
 
 	fitsHdrIdx	=	0;
 	while (cFitsHeader[fitsHdrIdx].fitsRec[0] != 0)
@@ -6636,21 +6639,21 @@ int					fitsHdrIdx;
 		strcat(lineBuff, cFitsHeader[fitsHdrIdx].fitsRec);
 		strcat(lineBuff, "\",\n");
 
-		JsonResponse_Add_RawText(	mySocketFD,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									lineBuff);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_RawText(	mySocketFD,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										lineBuff);
 		fitsHdrIdx++;
 	}
-	JsonResponse_Add_RawText(	mySocketFD,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"\"----------\"\n");
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_RawText(	mySocketFD,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									"\"----------\"\n");
 
-	JsonResponse_Add_ArrayEnd(	mySocketFD,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								INCLUDE_COMMA);
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_ArrayEnd(	mySocketFD,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									INCLUDE_COMMA);
 	return(alpacaErrCode);
 
 }
@@ -6664,12 +6667,12 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
 	if (reqData != NULL)
 	{
-		JsonResponse_Add_Int32(	reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								responseString,
-								cFlipMode,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	reqData->socket,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									responseString,
+									cFlipMode,
+									INCLUDE_COMMA);
 	}
 	return(alpacaErrCode);
 
@@ -6783,84 +6786,84 @@ char				textBuffer[128];
 		//*	make local copies of the data structure to make the code easier to read
 		mySocket	=	reqData->socket;
 
-		JsonResponse_Add_Int32(	mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"cameraxsize",
-								cCameraProp.CameraXsize,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	mySocket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										"cameraxsize",
+										cCameraProp.CameraXsize,
+										INCLUDE_COMMA);
 
-		JsonResponse_Add_Int32(	mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"cameraysize",
-								cCameraProp.CameraYsize,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	mySocket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										"cameraysize",
+										cCameraProp.CameraYsize,
+										INCLUDE_COMMA);
 
 
 		//*	Indicates whether the camera can abort exposures.
-		JsonResponse_Add_Bool(	mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"canabortexposure",
-								cCameraProp.CanAbortExposure,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	mySocket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										"canabortexposure",
+										cCameraProp.CanAbortExposure,
+										INCLUDE_COMMA);
 
 		//*	Indicates whether the camera supports asymmetric binning
-		JsonResponse_Add_Bool(	mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"canasymmetricbin",
-								cCameraProp.CanAsymmetricBin,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	mySocket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										"canasymmetricbin",
+										cCameraProp.CanAsymmetricBin,
+										INCLUDE_COMMA);
 
 		//*	Indicates whether the camera has a fast readout mode.
-		JsonResponse_Add_Bool(	mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"canfastreadout",
-								cCameraProp.CanFastReadout,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	mySocket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										"canfastreadout",
+										cCameraProp.CanFastReadout,
+										INCLUDE_COMMA);
 
 		//*	Indicates whether the camera's cooler power setting can be read.
-		JsonResponse_Add_Bool(	mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"cangetcoolerpower",
-								cCameraProp.CanGetCoolerPower,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	mySocket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										"cangetcoolerpower",
+										cCameraProp.CanGetCoolerPower,
+										INCLUDE_COMMA);
 
 		//*	Returns a flag indicating whether this camera supports pulse guiding
-		JsonResponse_Add_Bool(	mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"canpulseguide",
-								cCameraProp.CanPulseGuide,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	mySocket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										"canpulseguide",
+										cCameraProp.CanPulseGuide,
+										INCLUDE_COMMA);
 
 		//*	Returns a flag indicating whether this camera supports setting the CCD temperature
-		JsonResponse_Add_Bool(	mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"cansetccdtemperature",
-								cCameraProp.Cansetccdtemperature,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	mySocket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										"cansetccdtemperature",
+										cCameraProp.Cansetccdtemperature,
+										INCLUDE_COMMA);
 
 		//*	Returns a flag indicating whether this camera can stop an exposure that is in progress
-		JsonResponse_Add_Bool(	mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"canstopexposure",
-								true,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	mySocket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										"canstopexposure",
+										true,
+										INCLUDE_COMMA);
 
 
-		JsonResponse_Add_Double(mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"electronsperadu",
-								cCameraProp.ElectronsPerADU,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Double(mySocket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										"electronsperadu",
+										cCameraProp.ElectronsPerADU,
+										INCLUDE_COMMA);
 
 		Get_Exposuremax(			reqData,	alpacaErrMsg,	"exposuremax");
 		Get_Exposuremin(			reqData,	alpacaErrMsg,	"exposuremin");
@@ -6891,20 +6894,20 @@ char				textBuffer[128];
 		Get_Readoutmodes(			reqData,	 alpacaErrMsg, "readoutmodes");
 
 		Read_Readoutmodes(textBuffer, false);
-		JsonResponse_Add_String(mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"readoutmodes-str",
-								textBuffer,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(mySocket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										"readoutmodes-str",
+										textBuffer,
+										INCLUDE_COMMA);
 
 		//*	Sensor name
-		JsonResponse_Add_String(mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"sensorname",
-								cSensorName,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(mySocket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										"sensorname",
+										cSensorName,
+										INCLUDE_COMMA);
 
 		Get_Sensortype(	reqData,	alpacaErrMsg,	"sensortype");
 
@@ -6912,114 +6915,114 @@ char				textBuffer[128];
 		Get_StartY(					reqData,	alpacaErrMsg,	"starty");
 
 		//===============================================================
-		JsonResponse_Add_String(reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"comment-cmds",
-								"Non-standard alpaca commands follow",
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(reqData->socket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										"comment-cmds",
+										"Non-standard alpaca commands follow",
+										INCLUDE_COMMA);
 
-		JsonResponse_Add_String(mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"version",
-								gFullVersionString,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(mySocket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										"version",
+										gFullVersionString,
+										INCLUDE_COMMA);
 
 
 		Get_ExposureTime(	reqData, alpacaErrMsg, "exposuretime");
 
-		JsonResponse_Add_String(mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"exposureState",
-								exposureStateString,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(mySocket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										"exposureState",
+										exposureStateString,
+										INCLUDE_COMMA);
 
 
-		JsonResponse_Add_Bool(	mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"saveNextImage",
-								cSaveNextImage,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	mySocket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										"saveNextImage",
+										cSaveNextImage,
+										INCLUDE_COMMA);
 
-		JsonResponse_Add_Bool(	mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"saveAllImages",
-								cSaveAllImages,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	mySocket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										"saveAllImages",
+										cSaveAllImages,
+										INCLUDE_COMMA);
 
-		JsonResponse_Add_Bool(	mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"autoexposure",
-								cAutoAdjustExposure,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	mySocket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										"autoexposure",
+										cAutoAdjustExposure,
+										INCLUDE_COMMA);
 
-		JsonResponse_Add_Int32(	mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"stepsize",
-								cAutoAdjustStepSz_us,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	mySocket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										"stepsize",
+										cAutoAdjustStepSz_us,
+										INCLUDE_COMMA);
 
-		JsonResponse_Add_Int32(	mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"frames-read",
-								cFramesRead,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	mySocket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										"frames-read",
+										cFramesRead,
+										INCLUDE_COMMA);
 
-		JsonResponse_Add_Bool(	mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"focuserInfoValid",
-								cFocuserInfoValid,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	mySocket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										"focuserInfoValid",
+										cFocuserInfoValid,
+										INCLUDE_COMMA);
 
-		JsonResponse_Add_Bool(	mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"rotatorInfoValid",
-								cRotatorInfoValid,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	mySocket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										"rotatorInfoValid",
+										cRotatorInfoValid,
+										INCLUDE_COMMA);
 
-		JsonResponse_Add_Bool(	mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"filterWheelInfoValid",
-								cFilterWheelInfoValid,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	mySocket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										"filterWheelInfoValid",
+										cFilterWheelInfoValid,
+										INCLUDE_COMMA);
 
-		JsonResponse_Add_String(mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"fileNamePrefix",
-								cFileNamePrefix,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(mySocket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										"fileNamePrefix",
+										cFileNamePrefix,
+										INCLUDE_COMMA);
 
-		JsonResponse_Add_String(mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"fileNameSuffix",
-								cFileNameSuffix,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(mySocket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										"fileNameSuffix",
+										cFileNameSuffix,
+										INCLUDE_COMMA);
 
-		JsonResponse_Add_String(mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"filenameroot",
-								cFileNameRoot,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(mySocket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										"filenameroot",
+										cFileNameRoot,
+										INCLUDE_COMMA);
 
-		JsonResponse_Add_String(mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"object",
-								cObjectName,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(mySocket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										"object",
+										cObjectName,
+										INCLUDE_COMMA);
 
 		//===============================================================
 		Get_LiveMode(		reqData,	alpacaErrMsg,	"livemode");
@@ -7029,55 +7032,55 @@ char				textBuffer[128];
 
 		Get_DisplayImage(	reqData,	alpacaErrMsg,	"displayImage");
 
-		JsonResponse_Add_Bool(	mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"filenameincludefilter",
-								cFN_includeFilter,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	mySocket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										"filenameincludefilter",
+										cFN_includeFilter,
+										INCLUDE_COMMA);
 
-		JsonResponse_Add_Bool(	mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"filenameincludecamera",
-								cFN_includeManuf,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	mySocket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										"filenameincludecamera",
+										cFN_includeManuf,
+										INCLUDE_COMMA);
 
-		JsonResponse_Add_Bool(	mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"filenameincludeserialnum",
-								cFN_includeSerialNum,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	mySocket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										"filenameincludeserialnum",
+										cFN_includeSerialNum,
+										INCLUDE_COMMA);
 
-		JsonResponse_Add_Bool(	mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"filenameincluderefid",
-								cFN_includeRefID,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	mySocket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										"filenameincluderefid",
+										cFN_includeRefID,
+										INCLUDE_COMMA);
 
-		JsonResponse_Add_String(mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"refid",
-								cTS_info.refID,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(mySocket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										"refid",
+										cTS_info.refID,
+										INCLUDE_COMMA);
 		if (strlen(cAuxTextTag) > 0)
 		{
-			JsonResponse_Add_String(mySocket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									"auxtext",
-									cAuxTextTag,
-									INCLUDE_COMMA);
+			cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(mySocket,
+											reqData->jsonTextBuffer,
+											kMaxJsonBuffLen,
+											"auxtext",
+											cAuxTextTag,
+											INCLUDE_COMMA);
 		}
-		JsonResponse_Add_Int32(	mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"videoframes",
-								cNumVideoFramesSaved,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	mySocket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										"videoframes",
+										cNumVideoFramesSaved,
+										INCLUDE_COMMA);
 
 		Get_Flip(reqData, alpacaErrMsg, "flip");
 
@@ -7105,45 +7108,45 @@ char				textBuffer[128];
 				CONSOLE_DEBUG_W_LONG("cCameraProp.Lastexposure_StartTime.tv_sec\t=",	cCameraProp.Lastexposure_StartTime.tv_sec);
 
 			}
-			JsonResponse_Add_Int32(	mySocket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									"remainingseconds",
-									timeRemaining,
-									INCLUDE_COMMA);
+			cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	mySocket,
+											reqData->jsonTextBuffer,
+											kMaxJsonBuffLen,
+											"remainingseconds",
+											timeRemaining,
+											INCLUDE_COMMA);
 		}
 
 		//===============================================================
 		//*	all of the debugging stuff last
-		JsonResponse_Add_String(mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"image-mode",
-								imageModeString,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(mySocket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										"image-mode",
+										imageModeString,
+										INCLUDE_COMMA);
 
-		JsonResponse_Add_String(mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"internalCameraState",
-								cameraStateString,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(mySocket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										"internalCameraState",
+										cameraStateString,
+										INCLUDE_COMMA);
 
 		//*	write errors to log file if true
-		JsonResponse_Add_Bool(	mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"errorLogging",
-								gErrorLogging,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	mySocket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										"errorLogging",
+										gErrorLogging,
+										INCLUDE_COMMA);
 
 		//*	log all commands to log file to match up with Conform
-		JsonResponse_Add_Bool(	mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"conformLogging",
-								gConformLogging,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	mySocket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										"conformLogging",
+										gConformLogging,
+										INCLUDE_COMMA);
 
 		//*	color information
 	#ifdef _USE_OPENCV_
@@ -7162,12 +7165,12 @@ char				textBuffer[128];
 			sprintf(textBuffer, "#%02X%02X%02X", myRed, myGrn, myBlu);
 
 //			CONSOLE_DEBUG_W_STR("Background\t=", textBuffer);
-			JsonResponse_Add_String(mySocket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									"backgroundcolor",
-									textBuffer,
-									INCLUDE_COMMA);
+			cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(mySocket,
+											reqData->jsonTextBuffer,
+											kMaxJsonBuffLen,
+											"backgroundcolor",
+											textBuffer,
+											INCLUDE_COMMA);
 		}
 		else
 		{

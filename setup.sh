@@ -8,6 +8,7 @@
 #	Dec 14, 2020	<MLS> Working on FITS install
 #	Dec 16, 2020	<MLS> FITS install working
 #	Feb  9,	2021	<MLS> Added support for FLIR-SDK
+#	Sep 22,	2021	<MLS> Updated to support cfitsio Version 4.0.0
 #############################################################
 
 #
@@ -156,6 +157,12 @@ function CheckFITSversion
 		FITS_FOLDER="cfitsio-3.50"
 	fi
 
+	#	Version 4.0.0 - Sep 2021
+	if [ -d cfitsio-4.0.0 ]
+	then
+		CFITSIO_PRESENT=true
+		FITS_FOLDER="cfitsio-4.0.0"
+	fi
 }
 
 ###########################################################

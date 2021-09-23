@@ -254,6 +254,7 @@ class AlpacaDriver
 				int					cBW_CmdsReceived[kMaxBandWidthSamples];
 				int					cBW_BytesReceived[kMaxBandWidthSamples];
 				int					cBW_BytesSent[kMaxBandWidthSamples];
+				int					cBytesWrittenForThisCmd;
 #endif // _ENABLE_BANDWIDTH_LOGGING_
 
 				//=========================================================

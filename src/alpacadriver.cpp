@@ -1206,14 +1206,15 @@ char	getPutIndicator;
 	//*	BandWidth Statistics
 	SocketWriteData(mySocketFD,	"<CENTER>\r\n");
 	SocketWriteData(mySocketFD,	"<H2>Band width statistics</H2>\r\n");
+	SocketWriteData(mySocketFD,	"<BR><B>Per minute, over the last hour</B>\r\n");
+	SocketWriteData(mySocketFD,	"<BR>\r\n");
 	SocketWriteData(mySocketFD,	"<TABLE BORDER=1>\r\n");
 
-	sprintf(lineBuffer,	"<TR><TH>%s</TH><TH>%s</TH><TH>%s</TH><TH>%s</TH><TH>%s</TH></TR>\r\n",
+	sprintf(lineBuffer,	"<TR><TH>%s</TH><TH>%s</TH><TH>%s</TH><TH>%s</TH></TR>\r\n",
 							"Time Unit",
 							"Cmds Rcvd",
 							"Bytes Rcvd",
-							"Bytes Sent",
-							"tbd");
+							"Bytes Sent");
 	SocketWriteData(mySocketFD,	lineBuffer);
 	for (iii=0; iii<kMaxBandWidthSamples; iii++)
 	{
@@ -1221,11 +1222,10 @@ char	getPutIndicator;
 		sprintf(lineBuffer,	"<TR><TD>%d</TD>\r\n", iii);
 		SocketWriteData(mySocketFD,	lineBuffer);
 
-		sprintf(lineBuffer,	"<TD>%d</TD><TD>%d</TD><TD>%d</TD><TD>%d</TD>\r\n",
+		sprintf(lineBuffer,	"<TD>%d</TD><TD>%d</TD><TD>%d</TD>\r\n",
 								cBW_CmdsReceived[iii],
 								cBW_BytesReceived[iii],
-								cBW_BytesSent[iii],
-								0);
+								cBW_BytesSent[iii]);
 		SocketWriteData(mySocketFD,	lineBuffer);
 
 		SocketWriteData(mySocketFD,	"</TR>\r\n");
@@ -2151,6 +2151,8 @@ bool				foundKeyWord;
 					(gAlpacaDeviceList[ii]->cDeviceNum == reqData->deviceNumber))
 				{
 					deviceFound		=	true;
+
+					gAlpacaDeviceList[ii]->cBytesWrittenForThisCmd	=	0;
 					alpacaErrCode	=	gAlpacaDeviceList[ii]->ProcessCommand(reqData);
 					if (alpacaErrCode!= kASCOM_Err_Success)
 					{
@@ -2176,7 +2178,7 @@ bool				foundKeyWord;
 					{
 						gAlpacaDeviceList[ii]->cBW_CmdsReceived[gTimeUnitsSinceTopOfHour]	+=	1;
 						gAlpacaDeviceList[ii]->cBW_BytesReceived[gTimeUnitsSinceTopOfHour]	+=	byteCount;
-			//-			gAlpacaDeviceList[ii]->cBW_BytesSent[gTimeUnitsSinceTopOfHour];
+						gAlpacaDeviceList[ii]->cBW_BytesSent[gTimeUnitsSinceTopOfHour]		+=	gAlpacaDeviceList[ii]->cBytesWrittenForThisCmd;
 					}
 #endif // _ENABLE_BANDWIDTH_LOGGING_
 
@@ -2187,8 +2189,7 @@ bool				foundKeyWord;
 
 		if (deviceFound == false)
 		{
-			CONSOLE_DEBUG("Device not found");
-			CONSOLE_DEBUG_W_STR("Looking for device type\t=", reqData->deviceType);
+			CONSOLE_DEBUG_W_STR("Device not found: Device type\t=", reqData->deviceType);
 			SocketWriteData(reqData->socket,	gBadResponse400);
 			alpacaErrCode	=	kASCOM_Err_NotImplemented;
 		}

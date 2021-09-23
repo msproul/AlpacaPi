@@ -93,7 +93,7 @@ class ControllerDome: public Controller
 
 
 		virtual	void	SetupWindowControls(void);
-		virtual	void	RunBackgroundTasks(void);
+		virtual	void	RunBackgroundTasks(bool enableDebug=false);
 	//	virtual	void	DrawGraphWidget(const int widgetIdx);
 		virtual	bool	AlpacaGetStartupData(void);
 				bool	AlpacaGetStatus(void);

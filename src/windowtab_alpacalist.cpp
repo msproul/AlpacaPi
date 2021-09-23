@@ -705,7 +705,8 @@ static  int RemoteObjectQsortProc(const void *e1, const void *e2)
 			returnValue	=	strcasecmp(obj1->deviceTypeStr, obj2->deviceTypeStr);
 			if (returnValue == 0)
 			{
-				returnValue	=	strcasecmp(obj1->deviceNameStr, obj2->deviceNameStr);
+				returnValue	=	strcasecmp(obj1->hostName, obj2->hostName);
+//				returnValue	=	strcasecmp(obj1->deviceNameStr, obj2->deviceNameStr);
 			}
 			break;
 

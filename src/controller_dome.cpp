@@ -341,7 +341,7 @@ char	lineBuff[128];
 
 
 //**************************************************************************************
-void	ControllerDome::RunBackgroundTasks(void)
+void	ControllerDome::RunBackgroundTasks(bool enableDebug)
 {
 uint32_t	currentMillis;
 uint32_t	deltaSeconds;

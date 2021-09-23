@@ -176,7 +176,7 @@ void	ControllerFilterWheel::SetupWindowControls(void)
 }
 
 //**************************************************************************************
-void	ControllerFilterWheel::RunBackgroundTasks(void)
+void	ControllerFilterWheel::RunBackgroundTasks(bool enableDebug)
 {
 long	delteaMillSecs;
 

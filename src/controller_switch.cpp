@@ -189,7 +189,7 @@ char	ipString[32];
 }
 
 //**************************************************************************************
-void	ControllerSwitch::RunBackgroundTasks(void)
+void	ControllerSwitch::RunBackgroundTasks(bool enableDebug)
 {
 uint32_t	currentMillis;
 uint32_t	deltaSeconds;

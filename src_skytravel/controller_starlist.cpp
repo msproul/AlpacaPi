@@ -139,7 +139,7 @@ void	ControllerStarlist::SetupWindowControls(void)
 }
 
 //**************************************************************************************
-void	ControllerStarlist::RunBackgroundTasks(void)
+void	ControllerStarlist::RunBackgroundTasks(bool enableDebug)
 {
 long	delteaMillSecs;
 

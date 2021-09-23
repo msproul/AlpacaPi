@@ -720,6 +720,7 @@ int		alpacaListenPort;
 		{
 			gAlpacaUnitList[gAlpacaUnitCnt].deviceAddress	=	*deviceAddress;
 			gAlpacaUnitList[gAlpacaUnitCnt].port			=	alpacaListenPort;
+			gAlpacaUnitList[gAlpacaUnitCnt].currentlyActive	=	false;
 
 			//*	and lookup the host name
 			foundHostName	=	LookupNameFromIPaddr(deviceAddress->sin_addr.s_addr, myHostNameStr);

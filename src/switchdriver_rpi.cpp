@@ -38,6 +38,7 @@
 #include	<unistd.h>
 
 
+#include	"alpaca_defs.h"
 #include	"alpacadriver.h"
 #include	"alpacadriver_helper.h"
 #include	"switchdriver.h"

@@ -32,7 +32,7 @@ class ControllerImage: public Controller
 
 		virtual	void	SetupWindowControls(void);
 //		virtual	void	ProcessButtonClick(const int buttonIdx);
-		virtual	void	RunBackgroundTasks(void);
+		virtual	void	RunBackgroundTasks(bool enableDebug=false);
 //		virtual	void	AlpacaProcessReadAll(const char *deviceType, const char *keywordString, const char *valueString);
 		virtual	void	RefreshWindow(void);
 

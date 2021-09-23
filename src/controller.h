@@ -175,7 +175,7 @@ class Controller
 		virtual	void	UpdateWindowTabColors(void);
 
 
-		virtual	void	RunBackgroundTasks(void);
+		virtual	void	RunBackgroundTasks(bool enableDebug=false);
 		virtual	void	SetupWindowControls(void);
 				void	SetWindowIPaddrInfo(const char	*textString, const bool	onLine);
 				void	DrawWindowTabs(void);

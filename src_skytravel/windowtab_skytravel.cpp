@@ -63,7 +63,7 @@
 //*	Sep  1,	2021	<MLS> Changed '<' / '>' to be +/- for changing hour
 //*	Sep  1,	2021	<MLS> Changed '[' / ']' to be +/- for changing day
 //*	Sep  9,	2021	<MLS> Changed '{' / '}' to be +/- for changing month
-//*	Sep 12,	2021	<MLS> Can change line widths of grids, constellations and constellations outlines
+//*	Sep 12,	2021	<MLS> Added variable line widths of grids, constellations / outlines
 //*****************************************************************************
 //*	TODO
 //*			star catalog lists
@@ -340,7 +340,7 @@ int		ii;
 	ii	=	0;
 	while ((gView_table[ii] > 0.0) && (ii < 100))
 	{
-		printf("gView_table[%2d]=\t%f\r\n", ii, gView_table[ii]);
+//		printf("gView_table[%2d]=\t%f\r\n", ii, gView_table[ii]);
 		ii++;
 	}
 	gMaxViewAngleIndex	=	ii - 1;

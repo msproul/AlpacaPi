@@ -28,6 +28,11 @@ enum
 	kSkyT_Settings_LonValue1,
 	kSkyT_Settings_LonValue2,
 
+	kSkyT_Settings_ElevLable,
+	kSkyT_Settings_ElevValueMeters,
+	kSkyT_Settings_ElevValueFeet,
+
+
 	kSkyT_Settings_TimeZoneLbl,
 	kSkyT_Settings_UTCoffset,
 	kSkyT_Settings_TimeZoneTxt,

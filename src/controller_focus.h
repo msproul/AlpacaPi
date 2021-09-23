@@ -90,7 +90,7 @@ class ControllerFocus: public Controller
 		virtual	void	CreateWindowTabs(void);
 
 //		virtual	void	ProcessButtonClick(const int buttonIdx);
-		virtual	void	RunBackgroundTasks(void);
+		virtual	void	RunBackgroundTasks(bool enableDebug=false);
 
 		//*	sub class specific routines
 

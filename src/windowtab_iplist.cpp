@@ -314,6 +314,10 @@ char	ipAddrStr[32];
 				SetWidgetTextColor(		boxId,	CV_RGB(255,	0,	0));
 				strcat(textString, "\tOff-line");
 			}
+			else
+			{
+				SetWidgetTextColor(		boxId,	CV_RGB(255,	255,	255));
+			}
 			SetWidgetText(boxId, textString);
 
 		}

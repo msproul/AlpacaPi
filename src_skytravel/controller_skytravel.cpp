@@ -72,7 +72,10 @@ double	gTelescopeDecl_Radians	=	0.0;
 
 //**************************************************************************************
 ControllerSkytravel::ControllerSkytravel(	const char *argWindowName)
-	:Controller(argWindowName, kWindowWidth,  kWindowHeight)
+				:Controller(	argWindowName,
+								kWindowWidth,
+								kWindowHeight,
+								kNoBackgroundTask)
 {
 
 	CONSOLE_DEBUG(__FUNCTION__);
@@ -101,6 +104,9 @@ ControllerSkytravel::ControllerSkytravel(	const char *argWindowName)
 
 	SetupWindowControls();
 
+#ifdef _USE_BACKGROUND_THREAD_
+	StartBackgroundThread();
+#endif // _USE_BACKGROUND_THREAD_
 }
 
 
@@ -319,8 +325,10 @@ char	ipAddrStr[32];
 
 }
 
+int		gSkyTravelBGcnt	=	0;
+
 //**************************************************************************************
-void	ControllerSkytravel::RunBackgroundTasks(void)
+void	ControllerSkytravel::RunBackgroundTasks(bool enableDebug)
 {
 uint32_t	currentMillis;
 uint32_t	deltaSeconds;
@@ -329,26 +337,39 @@ bool		needToUpdate;
 bool		validData;
 bool		foundSomething;
 
-//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+//	if (enableDebug)
+//	{
+//		CONSOLE_DEBUG_W_NUM("gSkyTravelBGcnt\t\t=",			gSkyTravelBGcnt);
+//		CONSOLE_DEBUG_W_NUM("cDomeAddressValid\t\t=",		cDomeAddressValid);
+//		CONSOLE_DEBUG_W_NUM("cReadStartup_Dome\t\t=",		cReadStartup_Dome);
+//		CONSOLE_DEBUG_W_NUM("cTelescopeAddressValid\t=",	cTelescopeAddressValid);
+//		CONSOLE_DEBUG_W_NUM("cReadStartup_Telescope\t=",	cReadStartup_Telescope);
+//		CONSOLE_DEBUG_W_NUM("cFirstDataRead\t\t=",			cFirstDataRead);
+//		gSkyTravelBGcnt++;
+//	}
+
+	foundSomething	=	false;
 
 	if (cDomeAddressValid && cReadStartup_Dome)
 	{
+		CONSOLE_DEBUG("Calling AlpacaGetStartupData_Dome()");
 		AlpacaGetStartupData_Dome();
 		cReadStartup_Dome	=	false;
 	}
-
-	if (cTelescopeAddressValid && cReadStartup_Telescope)
+	else if (cTelescopeAddressValid && cReadStartup_Telescope)
 	{
+		CONSOLE_DEBUG("Calling AlpacaGetStartupData_Telescope()");
 		AlpacaGetStartupData_Telescope();
 
 		cReadStartup_Telescope	=	false;
 	}
-
-	//*	check for valid IP addresses
-	foundSomething	=	false;
-	if ((cDomeAddressValid == false) || (cTelescopeAddressValid == false))
+	else
 	{
-		foundSomething	=	LookForIPaddress();
+		//*	check for valid IP addresses
+		if ((cDomeAddressValid == false) || (cTelescopeAddressValid == false))
+		{
+			foundSomething	=	LookForIPaddress();
+		}
 	}
 
 	needToUpdate	=	false;

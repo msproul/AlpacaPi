@@ -182,7 +182,7 @@ void	ControllerTelescope::SetupWindowControls(void)
 }
 
 //**************************************************************************************
-void	ControllerTelescope::RunBackgroundTasks(void)
+void	ControllerTelescope::RunBackgroundTasks(bool enableDebug)
 {
 uint32_t	currentMilliSecs;
 uint32_t	deltaMilliSecs;

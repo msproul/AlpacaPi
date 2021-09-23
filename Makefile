@@ -132,6 +132,7 @@ CFLAGS			+=	-g
 #CFLAGS			+=	-mx32
 
 CPLUSFLAGS		=	-Wall -Wno-multichar -Wno-unknown-pragmas
+#CPLUSFLAGS		+=	-Wno-class-memaccess
 CPLUSFLAGS		+=	-O2
 #CPLUSFLAGS		+=	-trigraphs
 CPLUSFLAGS		+=	-g
@@ -1236,6 +1237,57 @@ finder		:	$(CPP_OBJECTS)				\
 					-o alpacapi
 
 
+
+######################################################################################
+#pragma mark Switch - C++ Raspberry pi
+#	make finder
+#findqhy		:		DEFINEFLAGS		+=	-D_ENABLE_OBSERVINGCONDITIONS_
+findqhy		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
+#findqhy		:		DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_
+#findqhy		:		DEFINEFLAGS		+=	-D_ENABLE_ROTATOR_
+findqhy		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_ZWO_
+#findqhy		:		DEFINEFLAGS		+=	-D_ENABLE_SAFETYMONITOR_
+findqhy		:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_
+#findqhy		:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
+findqhy		:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
+findqhy		:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
+findqhy		:		DEFINEFLAGS		+=	-D_ENABLE_MULTICAM_
+#findqhy		:		DEFINEFLAGS		+=	-D_ENABLE_DOME_
+findqhy		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
+findqhy		:		DEFINEFLAGS		+=	-D_ENABLE_ATIK_
+findqhy		:		DEFINEFLAGS		+=	-D_ENABLE_QHY_
+findqhy		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
+findqhy		:		DEFINEFLAGS		+=	-D_INCLUDE_WIRINGPI_
+findqhy		:		DEFINEFLAGS		+=	-D_ENABLE_PWM_SWITCH_
+#findqhy		:		DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
+findqhy		:		PLATFORM		=	armv7
+findqhy		:		ATIK_LIB_DIR	=	$(ATIK_LIB_MASTER_DIR)/ARM/x86/NoFlyCapture
+
+findqhy		:	$(CPP_OBJECTS)				\
+					$(ALPACA_OBJECTS)			\
+					$(SOCKET_OBJECTS)			\
+					$(LIVE_WINDOW_OBJECTS)		\
+
+
+		$(LINK)  								\
+					$(SOCKET_OBJECTS)			\
+					$(CPP_OBJECTS)				\
+					$(ALPACA_OBJECTS)			\
+					$(LIVE_WINDOW_OBJECTS)		\
+					$(OPENCV_LINK)				\
+					-L$(ATIK_LIB_DIR_ARM32)/	\
+					$(ASI_CAMERA_OBJECTS)		\
+					$(ZWO_EFW_OBJECTS)			\
+					-latikcameras				\
+					-lcfitsio					\
+					-lqhyccd					\
+					-lusb-1.0					\
+					-ludev						\
+					-lwiringPi					\
+					-lpthread					\
+					-o alpacapi
+
+
 ######################################################################################
 #pragma mark Switch - C++ Raspberry pi64
 piswitch64		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
@@ -1429,9 +1481,10 @@ jetson		:				$(ALPACA_OBJECTS)			\
 
 ######################################################################################
 #pragma mark wx
+#make wx
 #wx			:	DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
 #wx			:	DEFINEFLAGS		+=	-D_ENABLE_DOME_
-#wx			:	DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_
+wx			:	DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_
 wx			:	DEFINEFLAGS		+=	-D_ENABLE_OBSERVINGCONDITIONS_
 wx			:	DEFINEFLAGS		+=	-D_ENABLE_PI_HAT_SESNSOR_BOARD_
 wx			:	PLATFORM		=	armv7
@@ -1677,7 +1730,8 @@ focuser		:			$(CONTROLLER_OBJECTS)
 
 ######################################################################################
 #make switch
-#pragma mark focuser-controller
+#pragma mark switch-controller
+switch		:	DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
 switch		:	DEFINEFLAGS		+=	-D_INCLUDE_CTRL_MAIN_
 #switch		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_FOCUSERS_
 switch		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_SWITCHES_
@@ -1696,7 +1750,7 @@ switch		:			$(CONTROLLER_OBJECTS)
 ######################################################################################
 #make camera
 #pragma mark camera-controller
-camera		:	DEFINEFLAGS		+=	-D_INCLUDE_CTRL_MAIN_
+camera		:	DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
 camera		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_CAMERA_
 camera		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
 camera		:	DEFINEFLAGS		+=	-D_CONTROLLER_USES_ALPACA_
@@ -1814,6 +1868,7 @@ sky		:				$(SKYTRAVEL_OBJECTS)					\
 ######################################################################################
 #pragma mark camera-controller
 #	make domectrl
+domectrl		:	DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
 domectrl		:	DEFINEFLAGS		+=	-D_INCLUDE_CTRL_MAIN_
 domectrl		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_DOME_
 domectrl		:	DEFINEFLAGS		+=	-D_ENABLE_SLIT_TRACKER_

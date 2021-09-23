@@ -73,6 +73,7 @@
 //*	Sep  8,	2021	<MLS> Added startBackGroundThread option to constructor
 //*	Sep  8,	2021	<MLS> Added AlpacaProcessReadAll_Common()
 //*	Sep 14,	2021	<MLS> Added InitFonts()
+//*	Sep 22,	2021	<MLS> Added enableDebug arg to RunBackgroundTasks()
 //*****************************************************************************
 
 
@@ -100,22 +101,20 @@
 #include	"widget.h"
 #include	"controller.h"
 
-#ifdef _ENABLE_SKYTRAVEL_
-	#define	_USE_BACKGROUND_THREAD_
-#endif // _ENABLE_SKYTRAVEL_
-
 Controller	*gControllerList[kMaxControllers];
 int			gControllerCnt			=	-1;
 CvFont		gTextFont[kFontCnt];
 bool		gFontsNeedInit			=	true;
 char		gColorOverRide			=	0;
 Controller	*gCurrentActiveWindow	=	NULL;
+bool		gDebugBackgroundThread	=	false;
+
 
 //*****************************************************************************
 static void	InitFonts(void)
 {
-int		iii;
-double	myFontDX;
+//int		iii;
+//double	myFontDX;
 
 	gTextFont[kFont_Small]		=	cvFont(0.7, 1);
 	gTextFont[kFont_RadioBtn]	=	cvFont(0.8, 1);
@@ -133,14 +132,14 @@ double	myFontDX;
 
 	cvInitFont( &gTextFont[kFont_ScriptLarge], CV_FONT_HERSHEY_SCRIPT_COMPLEX, 2.0, 2.0, 0, 1, CV_AA );
 
-	for (iii=0; iii<kFont_last; iii++)
-	{
-		myFontDX	=	gTextFont[iii].dx;
-		CONSOLE_DEBUG_W_DBL("Font dx\t=",	myFontDX);
+//	for (iii=0; iii<kFont_last; iii++)
+//	{
+//		myFontDX	=	gTextFont[iii].dx;
+//		CONSOLE_DEBUG_W_DBL("Font dx\t=",	myFontDX);
 //		CONSOLE_DEBUG_W_HEX("Font dx\t=",	gTextFont[iii].dx);
 //		CONSOLE_DEBUG_W_NUM("font_face\t=",	gTextFont[iii].font_face);
-
-	}
+//
+//	}
 //	CONSOLE_ABORT(__FUNCTION__);
 	gFontsNeedInit	=	false;
 
@@ -157,6 +156,10 @@ int		ii;
 		gControllerList[ii]	=	NULL;
 	}
 	gControllerCnt	=	0;
+
+#ifdef __arm__
+//	gDebugBackgroundThread	=	true;
+#endif // __arm__
 }
 
 
@@ -482,7 +485,7 @@ int		iii;
 
 
 //**************************************************************************************
-void	Controller::RunBackgroundTasks(void)
+void	Controller::RunBackgroundTasks(bool enableDebug)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
 }
@@ -3154,6 +3157,7 @@ void	Controller::UpdateSupportedActions(void)
 
 //*****************************************************************************
 //*	the arg is pointer to "this"
+//	_USE_BACKGROUND_THREAD_
 //*****************************************************************************
 static void	*ControllerBackgroundThread(void *arg)
 {
@@ -3167,8 +3171,12 @@ Controller	*myControllerPtr;
 		CONSOLE_DEBUG("Valid Controller ptr");
 		while(myControllerPtr->cMagicCookie == kMagicCookieValue)
 		{
+			if (gDebugBackgroundThread)
+			{
+				CONSOLE_DEBUG_W_STR("Calling RunBackgroundTasks() for", myControllerPtr->cWindowName);
+			}
 			myControllerPtr->cBackgroundTaskActive	=	true;
-			myControllerPtr->RunBackgroundTasks();
+			myControllerPtr->RunBackgroundTasks(gDebugBackgroundThread);
 			myControllerPtr->cBackgroundTaskActive	=	false;
 			usleep(100000);
 		}

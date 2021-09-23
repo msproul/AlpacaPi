@@ -26,7 +26,7 @@ class ControllerUSB: public Controller
 
 		virtual	void	SetupWindowControls(void);
 //		virtual	void	ProcessButtonClick(const int buttonIdx);
-		virtual	void	RunBackgroundTasks(void);
+		virtual	void	RunBackgroundTasks(bool enableDebug=false);
 
 				char				cUSBpath[48];
 

@@ -114,7 +114,7 @@ void	ControllerUSB::SetupWindowControls(void)
 }
 
 //**************************************************************************************
-void	ControllerUSB::RunBackgroundTasks(void)
+void	ControllerUSB::RunBackgroundTasks(bool enableDebug)
 {
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 

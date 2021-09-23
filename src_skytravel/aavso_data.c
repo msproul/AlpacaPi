@@ -319,6 +319,7 @@ int					linesForCurrEntry;
 	CONSOLE_DEBUG_W_STR("Reading:", filePath);
 
 	targetData			=	NULL;
+	linesRead			=	0;
 	*objectCount		=	0;
 	filePointer			=	fopen(filePath, "r");
 //	maxStarNameLen		=	0;

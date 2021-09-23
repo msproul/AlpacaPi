@@ -314,7 +314,7 @@ char		fileTypeStr[8];
 
 
 //**************************************************************************************
-void	ControllerCamera::RunBackgroundTasks(void)
+void	ControllerCamera::RunBackgroundTasks(bool enableDebug)
 {
 uint32_t	currentMillis;
 uint32_t	deltaSeconds;

@@ -169,7 +169,7 @@ void	ControllerCoverCalib::SetupWindowControls(void)
 }
 
 //**************************************************************************************
-void	ControllerCoverCalib::RunBackgroundTasks(void)
+void	ControllerCoverCalib::RunBackgroundTasks(bool enableDebug)
 {
 uint32_t	currentMillis;
 uint32_t	deltaSeconds;

@@ -151,7 +151,7 @@ void	ControllerImage::SetupWindowControls(void)
 }
 
 //**************************************************************************************
-void	ControllerImage::RunBackgroundTasks(void)
+void	ControllerImage::RunBackgroundTasks(bool enableDebug)
 {
 uint32_t	currentMillis;
 uint32_t	deltaSeconds;

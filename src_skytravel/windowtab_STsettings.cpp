@@ -139,6 +139,7 @@ char	textString[64];
 	}
 	SetWidgetText(		kSkyT_Settings_LatLable,	"Latitude");
 	SetWidgetText(		kSkyT_Settings_LonLable,	"Longitude");
+	SetWidgetText(		kSkyT_Settings_ElevLable,	"Elevation");
 	SetWidgetText(		kSkyT_Settings_TimeZoneLbl,	"UTC/Time Zone");
 
 
@@ -169,6 +170,11 @@ char	textString[64];
 		SetWidgetText(		kSkyT_Settings_TimeZoneTxt,	gObseratorySettings.TimeZone);
 		SetWidgetNumber(	kSkyT_Settings_UTCoffset,	gObseratorySettings.UTCoffset);
 
+		sprintf(textString, "%1.1f m", gObseratorySettings.Elevation_m);
+		SetWidgetText(		kSkyT_Settings_ElevValueMeters,	textString);
+
+		sprintf(textString, "%1.0f ft", gObseratorySettings.Elevation_ft);
+		SetWidgetText(		kSkyT_Settings_ElevValueFeet,	textString);
 	}
 
 	//-----------------------------------------------------
