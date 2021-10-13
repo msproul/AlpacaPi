@@ -133,11 +133,12 @@ int		lastItemID;
 	SetWidgetText(	kDriverInfo_DriverVersion_Lbl,		"DriverVersion");
 	SetWidgetText(	kDriverInfo_InterfaceVersion_Lbl,	"InterfaceVersion");
 
-	SetAlpacaLogo(kDriverInfo_AlpacaLogo, -1);
+//	SetAlpacaLogo(kDriverInfo_AlpacaLogo, -1);
 
 	//=======================================================
 	//*	IP address
-	SetIPaddressBoxes(kDriverInfo_IPaddr, kDriverInfo_Readall, kDriverInfo_AlpacaDrvrVersion, -1);
+//	SetIPaddressBoxes(kDriverInfo_IPaddr, kDriverInfo_Readall, kDriverInfo_AlpacaDrvrVersion, -1);
+	SetIPaddressBoxes(kDriverInfo_IPaddr, kDriverInfo_Readall, -1, -1);
 }
 
 

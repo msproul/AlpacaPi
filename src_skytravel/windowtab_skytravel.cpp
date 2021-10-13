@@ -176,6 +176,8 @@ static const char *gCompass_text[]	=
 static const double gView_table[]	=
 {
 							//*	old index value
+	0.2	* PI / 180.0,
+	0.3	* PI / 180.0,
 	0.4	* PI / 180.0,
 	0.6	* PI / 180.0,
 	0.8	* PI / 180.0,
@@ -1236,7 +1238,11 @@ bool			reDrawSky;
 			break;
 
 		case 'p':
-			cDispOptions.dispSpecialObjects	=	! 	cDispOptions.dispSpecialObjects;
+			cDispOptions.dispSpecialObjects++;
+			if (cDispOptions.dispSpecialObjects >= kSpecialDisp_Last)
+			{
+				cDispOptions.dispSpecialObjects	=	kSpecialDisp_Off;
+			}
 			break;
 
 		case 'Q':	//*	toggle EQUATOR LINE
@@ -1828,7 +1834,7 @@ TYPE_SkyDispOptions	savedDispOptions;
 			}
 			if (cElev0 <= -kHALFPI)
 			{
-				CONSOLE_DEBUG(" < kHALFPI");
+//				CONSOLE_DEBUG(" < kHALFPI");
 				cElev0	=	-(kHALFPI + kEPSILON);
 			}
 
@@ -2420,13 +2426,24 @@ short		ii;
 	{
 		PlotObjectsByDataSource(gPolarAlignObjectPtr, gPolarAlignObjectCount);
 
-		CPenSize(gLineWidth_ConstOutlines);
-		DrawPolarAlignmentCircles(gSpecialObjectPtr, gSpecialObjectCount);
+		//*	figure out which display option we are doing.
+		switch(cDispOptions.dispSpecialObjects)
+		{
+			case kSpecialDisp_All:
+			case kSpecialDisp_Arcs_w_CentVect:
+			case kSpecialDisp_Arcs_noLabels:
+				//*	Draw a line connecting the centers
+				CPenSize(gLineWidth_ConstOutlines);
+				SetColor(W_YELLOW);
+				DrawPolarAlignmentCenterVector(gPolarAlignObjectPtr, gPolarAlignObjectCount);
+				CPenSize(1);
+				//*	FALL THROUGH
 
-		//*	Draw a line connecting the centers
-		SetColor(W_YELLOW);
-		DrawPolarAlignmentCenterVector(gPolarAlignObjectPtr, gPolarAlignObjectCount);
-		CPenSize(1);
+			case kSpecialDisp_ArcsOnly:
+				CPenSize(gLineWidth_ConstOutlines);
+				DrawPolarAlignmentCircles(gSpecialObjectPtr, gSpecialObjectCount);
+				break;
+		}
 	}
 
 	//*--------------------------------------------------------------------------------
@@ -2494,7 +2511,7 @@ void	WindowTabSkyTravel::ResetView(void)
 	cDispOptions.dispHYG_all			=	false;
 	cDispOptions.dispDraper				=	false;
 	cDispOptions.dispAAVSOalerts		=	true;
-	cDispOptions.dispSpecialObjects		=	true;
+	cDispOptions.dispSpecialObjects		=	kSpecialDisp_All;
 
 	if (cConstVecotrPtr != NULL)
 	{
@@ -3573,6 +3590,28 @@ char		symb[16];
 }
 
 //*****************************************************************************
+static int	GetColorFromChar(const char theChar)
+{
+int	theColor;
+
+	switch(theChar)
+	{
+		case 'C':	theColor	=	W_CYAN;		break;
+		case 'D':	theColor	=	W_RED;		break;
+		case 'E':	theColor	=	W_BLUE;		break;
+		case 'F':	theColor	=	W_GREEN;	break;
+		case 'G':	theColor	=	W_GREEN;	break;
+		case 'H':	theColor	=	W_MAGENTA;		break;
+		case 'I':	theColor	=	W_MAGENTA;		break;
+		case 'J':	theColor	=	W_RED;		break;
+		case 'K':	theColor	=	W_RED;		break;
+
+		default:	theColor	=	W_WHITE;	break;
+	}
+	return(theColor);
+}
+
+//*****************************************************************************
 long	WindowTabSkyTravel::Search_and_plot(TYPE_CelestData	*objectptr,
 											long			maxObjects,
 											bool			dataIsSorted)
@@ -3591,6 +3630,7 @@ unsigned int		myCount;
 short				dataSource;
 char				labelString[32];
 bool				printLabel;
+int					myFontIdx;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 //	CONSOLE_DEBUG_W_DBL("cDecl0\t\t=",		cDecl0);
@@ -3862,8 +3902,6 @@ bool				printLabel;
 									break;
 
 								case kDataSrc_Special:
-									int	myFontIdx;
-
 									if (cView_angle < 0.2)
 									{
 										myFontIdx	=	kFont_Large;
@@ -3876,28 +3914,43 @@ bool				printLabel;
 									{
 										myFontIdx	=	1;
 									}
-									DrawCString(xcoord + 3, ycoord + 10, objectptr[iii].longName, myFontIdx);
+									switch(cDispOptions.dispSpecialObjects)
+									{
+										case kSpecialDisp_All:
+											DrawCString(xcoord + 3, ycoord + 10, objectptr[iii].longName, myFontIdx);
+											break;
+									}
 									break;
 
 								case kDataSrc_PolarAlignCenter:
-									switch(objectptr[iii].longName[0])
-									{
-										case 'C':	SetColor(W_CYAN);		break;
-										case 'D':	SetColor(W_RED);		break;
-										case 'E':	SetColor(W_BLUE);		break;
-										case 'F':	SetColor(W_PINK);		break;
-										case 'G':	SetColor(W_GREEN);		break;
-										case 'H':	SetColor(W_YELLOW);		break;
+									int	myColor;
 
-										default:	SetColor(W_MAGENTA);	break;
+									myColor	=	GetColorFromChar(objectptr[iii].longName[0]);
+									SetColor(myColor);
+									if (cView_angle < 0.1)
+									{
+										myFontIdx	=	kFont_Large;
 									}
-									DrawCString(xcoord + 3, ycoord + 10, objectptr[iii].longName);
+									else if (cView_angle < 0.4)
+									{
+										myFontIdx	=	kFont_Medium;
+									}
+									else
+									{
+										myFontIdx	=	1;
+									}
+									switch(cDispOptions.dispSpecialObjects)
+									{
+										case kSpecialDisp_All:
+										case kSpecialDisp_Arcs_w_CentVect:
+											DrawCString(xcoord + 3, ycoord + 10, objectptr[iii].longName, myFontIdx);
+											break;
+									}
 									break;
 
 								case kDataSrc_AAVSOalert:
 									SetColor(W_YELLOW);
 									DrawCString(xcoord + 10, ycoord, objectptr[iii].longName);
-								//	if (cView_index <= 4)
 									if (cView_angle < 0.4)
 									{
 										if (objectptr[iii].id > 0)
@@ -6440,7 +6493,7 @@ long	hippObjectId;
 				strcpy(database, "Special Objects");
 				sprintf(foundName, "%s", gSpecialObjectPtr[iii].longName);
 				foundSomething					=	true;
-				cDispOptions.dispSpecialObjects	=	true;
+				cDispOptions.dispSpecialObjects	=	kSpecialDisp_All;
 			}
 			iii++;
 		}
@@ -6740,6 +6793,7 @@ TYPE_CelestData	point1;
 TYPE_CelestData	point2;
 bool	pt1Valid;
 char	theChar;
+int		myColor;
 
 //	CONSOLE_DEBUG_W_NUM(__FUNCTION__, polarAlignCnt);
 
@@ -6750,17 +6804,8 @@ char	theChar;
 
 	for (theChar = 'A'; theChar <= 'Z'; theChar++)
 	{
-		switch(theChar)
-		{
-			case 'C':	SetColor(W_CYAN);		break;
-			case 'D':	SetColor(W_RED);		break;
-			case 'E':	SetColor(W_BLUE);		break;
-			case 'F':	SetColor(W_PINK);		break;
-			case 'G':	SetColor(W_GREEN);		break;
-			case 'H':	SetColor(W_YELLOW);		break;
-
-			default:	SetColor(W_MAGENTA);	break;
-		}
+		myColor	=	GetColorFromChar(theChar);
+		SetColor(myColor);
 
 		//*	find the first CENTER
 		pt1Valid	=	false;

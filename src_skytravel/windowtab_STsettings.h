@@ -88,6 +88,8 @@ enum
 	kSkyT_Settings_DataYALE_txt,
 	kSkyT_Settings_DataYALE_cnt,
 
+	kSkyT_Settings_DataHelpText,
+
 	kSkyT_Settings_DataOutLine,
 
 	kSkyT_Settings_AlpacaLogo,

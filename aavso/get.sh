@@ -1,12 +1,19 @@
+#!/bin/bash
 ###############################################################################
 #	Target Tool script
 #	This script will download the latest list of AAVSO alerts via the TargetTool
 #**	Jul  2,	2021	<MLS> obs_section=all now working with curl command
 #**	Aug 12,	2021	<MLS> Added checking for token file, abort if not present
+#**	Sep 26,	2021	<MLS> Added logging to text file
 ###############################################################################
 clear
 
+#echo $0
+#echo $SHELL
 AAVSO_TOKEN_FILE="aavso_targettool_token.txt"
+
+LOG_FILE="aavso_retrevial_log.txt"
+
 
 ###############################################################################
 # first make sure "replaceCRLF" is here
@@ -23,6 +30,8 @@ else
 #		exit
 	fi
 fi
+
+
 
 ###############################################################################
 if [ -f $AAVSO_TOKEN_FILE ]
@@ -52,6 +61,7 @@ BASE64=`echo -n $API_KEY | base64`
 AUTH_STRING="Basic $BASE64"
 echo $BASE64
 echo $AUTH_STRING
+
 
 
 ###############################################################################
@@ -107,6 +117,12 @@ then
 	echo
 	echo -n "#Finished retrieved at:"	>> $OUTPUTFILE
 	date								>> $OUTPUTFILE
+
+	ALERT_CNT=`grep star_name $OUTPUTFILE | wc -l`
+
+	CURRENT_DATE=`date`
+	echo -n $CURRENT_DATE >> $LOG_FILE
+	echo  "   Alert count = $ALERT_CNT" >> $LOG_FILE
 
 else
 	echo "Failed to create replaceCRLF"

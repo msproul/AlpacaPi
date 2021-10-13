@@ -71,15 +71,22 @@
 
 #include	"controller.h"
 #include	"windowtab_dome.h"
-#include	"windowtab_slit.h"
-#include	"windowtab_slitgraph.h"
 #include	"windowtab_about.h"
 #include	"controller_dome.h"
 
+#ifdef _ENABLE_SLIT_TRACKER_
+	#include	"windowtab_slit.h"
+	#include	"windowtab_slitgraph.h"
+	#include	"slittracker_data.h"
 
-TYPE_SLITCLOCK	gSlitDistance[kSensorValueCnt];		//*	current reading
-TYPE_SLIT_LOG	gSlitLog[kSlitLogCount];			//*	log of readings
-int				gSlitLogIdx;
+	#ifndef _ENABLE_SKYTRAVEL_
+	TYPE_SLITCLOCK	gSlitDistance[kSensorValueCnt];		//*	current reading
+	TYPE_SLIT_LOG	gSlitLog[kSlitLogCount];			//*	log of readings
+	int				gSlitLogIdx;
+	bool			gUpdateSLitWindow	=	true;
+	#endif // _ENABLE_SKYTRAVEL_
+
+#endif // _ENABLE_SLIT_TRACKER_
 
 //#define	_SLIT_TRACKER_DIRECT_
 
@@ -92,7 +99,6 @@ int				gSlitLogIdx;
 	void	GetSLitTrackerData(void);
 	void	SendSlitTrackerCmd(const char *cmdBuffer);
 #endif // _SLIT_TRACKER_DIRECT_
-	bool	gUpdateSLitWindow	=	true;
 
 
 
@@ -100,9 +106,8 @@ int				gSlitLogIdx;
 //**************************************************************************************
 ControllerDome::ControllerDome(	const char			*argWindowName,
 								TYPE_REMOTE_DEV		*alpacaDevice)
-	:Controller(argWindowName, kDomeWindowWidth,  kDomeWindowHeight, kNoBackgroundTask)
+	:Controller(argWindowName, kDomeWindowWidth,  kDomeWindowHeight)
 {
-int		iii;
 char	ipAddrStr[32];
 
 	CONSOLE_DEBUG(__FUNCTION__);
@@ -152,6 +157,9 @@ char	ipAddrStr[32];
 	inet_ntop(AF_INET, &(cDeviceAddress.sin_addr), ipAddrStr, INET_ADDRSTRLEN);
 	CONSOLE_DEBUG_W_STR("IP address=", ipAddrStr);
 
+#ifdef _ENABLE_SLIT_TRACKER_
+int		iii;
+
 	//*	initialize the slit distance detector
 	for (iii=0; iii<kSensorValueCnt; iii++)
 	{
@@ -166,6 +174,8 @@ char	ipAddrStr[32];
 		memset(&gSlitLog[iii], 0, sizeof(TYPE_SLIT_LOG));
 	}
 	gSlitLogIdx	=	0;
+#endif // _ENABLE_SLIT_TRACKER_
+
 
 	SetupWindowControls();
 
@@ -388,11 +398,13 @@ bool		needToUpdate;
 #ifdef _SLIT_TRACKER_DIRECT_
 	GetSLitTrackerData();
 #endif // _SLIT_TRACKER_DIRECT_
+#ifdef _ENABLE_SLIT_TRACKER_
 	if (gUpdateSLitWindow)
 	{
 		cUpdateWindow		=	true;
 		gUpdateSLitWindow	=	false;
 	}
+#endif // _ENABLE_SLIT_TRACKER_
 }
 
 

@@ -297,7 +297,7 @@ char	textString[64];
 	yLoc			+=	2;
 
 	iii			=	kSkyT_Settings_DataAAVSO_txt;
-	while (iii < kSkyT_Settings_DataOutLine)
+	while (iii < kSkyT_Settings_DataHelpText)
 	{
 		SetWidget(		iii,	xLoc,			yLoc,		labelWidth,		cBoxHeight);
 		SetWidgetFont(	iii,	kFont_Medium);
@@ -314,7 +314,18 @@ char	textString[64];
 		yLoc			+=	cBoxHeight;
 		yLoc			+=	2;
 	}
-	SetWidgetOutlineBox(kSkyT_Settings_DataOutLine, kSkyT_Settings_DataTitle, (kSkyT_Settings_DataOutLine -1));
+	SetWidget(		kSkyT_Settings_DataHelpText,	xLoc,			yLoc,		labelWidth + 75,		cBoxHeight);
+	SetWidgetFont(	kSkyT_Settings_DataHelpText,	kFont_Medium);
+	SetWidgetType(	kSkyT_Settings_DataHelpText,	kWidgetType_Text);
+	SetWidgetJustification(kSkyT_Settings_DataHelpText, kJustification_Center);
+	SetWidgetText(			kSkyT_Settings_DataHelpText,	"Double click on green");
+	SetWidgetTextColor(		kSkyT_Settings_DataHelpText,	CV_RGB(0,	255,	0));
+
+
+
+	SetWidgetOutlineBox(	kSkyT_Settings_DataOutLine,
+							kSkyT_Settings_DataTitle,
+							(kSkyT_Settings_DataOutLine -1));
 
 	//*	set the star counts
 	SetWidgetText(		kSkyT_Settings_DataAAVSO_txt,		"AAVSO Data count");
@@ -334,6 +345,14 @@ char	textString[64];
 
 	SetWidgetText(		kSkyT_Settings_DataYALE_txt,		"YALE Data count");
 	SetWidgetNumber(	kSkyT_Settings_DataYALE_cnt,		gYaleStarCount);
+
+	//*	set the ones we can double click to green
+	SetWidgetTextColor(	kSkyT_Settings_DataAAVSO_txt,	CV_RGB(0,	255,	0));
+	SetWidgetTextColor(	kSkyT_Settings_DataAAVSO_cnt,	CV_RGB(0,	255,	0));
+	SetWidgetTextColor(	kSkyT_Settings_DataMessier_txt,	CV_RGB(0,	255,	0));
+	SetWidgetTextColor(	kSkyT_Settings_DataMessier_cnt,	CV_RGB(0,	255,	0));
+	SetWidgetTextColor(	kSkyT_Settings_DataNGC_txt,		CV_RGB(0,	255,	0));
+	SetWidgetTextColor(	kSkyT_Settings_DataNGC_cnt,		CV_RGB(0,	255,	0));
 
 
 	SetAlpacaLogoBottomCorner(kSkyT_Settings_AlpacaLogo);

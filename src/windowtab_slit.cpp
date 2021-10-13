@@ -25,15 +25,22 @@
 //*****************************************************************************
 
 
-#if defined(_ENABLE_CTRL_DOME_) && defined(_ENABLE_SLIT_TRACKER_)
-#include	"controller.h"
+//#if defined(_ENABLE_CTRL_DOME_) && defined(_ENABLE_SLIT_TRACKER_)
+#if defined (_ENABLE_SLIT_TRACKER_)
 
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
 
 #include	"windowtab_slit.h"
 #include	"controller.h"
-#include	"controller_dome.h"
+
+#ifdef _ENABLE_SKYTRAVEL_
+	#include	"controller_slit.h"
+#else
+	#include	"controller_dome.h"
+#endif
+
+#include	"slittracker_data.h"
 
 
 
@@ -78,6 +85,10 @@ int		yLoc;
 	SetWidget(kSlitTracker_Title,		0,			yLoc,		cWidth,		cTitleHeight);
 	SetWidgetText(kSlitTracker_Title, "AlpacaPi Slit Tracker");
 	SetBGcolorFromWindowName(kSlitTracker_Title);
+
+	//*	setup the connected indicator
+   	SetUpConnectedIndicator(kSlitTracker_Connected, yLoc);
+
 	yLoc			+=	cTitleHeight;
 	yLoc			+=	2;
 
@@ -99,11 +110,12 @@ int		yLoc;
 
 	yLoc			+=	2;
 
+#ifndef _ENABLE_SKYTRAVEL_
 	//==========================================
 	SetWidget(		kSlitTracker_RemoteAddress,	cClm3_offset+ 8,		yLoc,		(cClmWidth * 4),	cBtnHeight);
 	SetWidgetText(	kSlitTracker_RemoteAddress,	"Slit tracker not available");
 	SetWidgetFont(	kSlitTracker_RemoteAddress,	kFont_Medium);
-
+#endif // _ENABLE_SKYTRAVEL_
 
 	//==========================================
 	SetWidget(		kSlitTracker_RadioBtnSlit,	0,		yLoc,		(cWidth / 3),	cRadioBtnHt);
@@ -203,7 +215,11 @@ void	WindowTabSlitTracker::DrawGraphWidget(IplImage *openCV_Image, const int wid
 //**************************************************************************************
 void	WindowTabSlitTracker::DrawClockFace(IplImage *openCV_Image, TYPE_WIDGET *theWidget)
 {
-ControllerDome	*myDomeControllerObj;
+#ifdef _ENABLE_SKYTRAVEL_
+	ControllerSlit	*myControllerObj;
+#else
+	ControllerDome	*myControllerObj;
+#endif // _ENABLE_SKYTRAVEL_
 CvRect			myCVrect;
 CvPoint			myCVcenter;
 int				radius1;
@@ -355,16 +371,20 @@ int				baseLine;
 
 	//============================================================
 	//*	draw the UP vector
-	myDomeControllerObj	=	(ControllerDome *)cParentObjPtr;
-	if (myDomeControllerObj != NULL)
+#ifdef _ENABLE_SKYTRAVEL_
+	myControllerObj	=	(ControllerSlit *)cParentObjPtr;
+#else
+	myControllerObj	=	(ControllerDome *)cParentObjPtr;
+#endif // _ENABLE_SKYTRAVEL_
+	if (myControllerObj != NULL)
 	{
 	double	upDegrees;
 	double	upRadians;
 	int		upAngleRadius	=	30;
 
-		if (myDomeControllerObj->cValidGravity)
+		if (myControllerObj->cValidGravity)
 		{
-			upDegrees	=	myDomeControllerObj->cUpAngle_Deg;
+			upDegrees	=	myControllerObj->cUpAngle_Deg;
 			upDegrees	=	360.0 - upDegrees;
 
 			//*	the -90 is to make 0 degrees straight up
@@ -413,58 +433,90 @@ int				baseLine;
 						);
 		}
 	}
+	else
+	{
+		CONSOLE_DEBUG("myControllerObj is NULL");
+		CONSOLE_ABORT(__FUNCTION__);
+	}
 }
 
 
 //**************************************************************************************
 void	WindowTabSlitTracker::UpdateClockRadioBtns(void)
 {
-ControllerDome	*myDomeControllerObj;
+#ifdef _ENABLE_SKYTRAVEL_
+	ControllerSlit	*myControllerObj;
+#else
+	ControllerDome	*myControllerObj;
+#endif // _ENABLE_SKYTRAVEL_
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+
+	CONSOLE_DEBUG(__FUNCTION__);
 
 	SetWidgetChecked(kSlitTracker_RadioBtnSlit,		(cClockDisplayMode == kClockDisplay_Slit));
 	SetWidgetChecked(kSlitTracker_RadioBtnCalib,	(cClockDisplayMode == kClockDisplay_Calib));
 
 
-	myDomeControllerObj	=	(ControllerDome *)cParentObjPtr;
-	if (myDomeControllerObj != NULL)
+#ifdef _ENABLE_SKYTRAVEL_
+	myControllerObj	=	(ControllerSlit *)cParentObjPtr;
+#else
+	myControllerObj	=	(ControllerDome *)cParentObjPtr;
+#endif // _ENABLE_SKYTRAVEL_
+	if (myControllerObj != NULL)
 	{
-		myDomeControllerObj->cUpdateWindow		=	true;
+		myControllerObj->cUpdateWindow		=	true;
+	}
+	else
+	{
+		CONSOLE_DEBUG("myControllerObj is NULL");
+		CONSOLE_DEBUG_W_HEX("cParentObjPtr\t=", cParentObjPtr);
+//		CONSOLE_ABORT(__FUNCTION__);
 	}
 }
 
 //**************************************************************************************
 void	WindowTabSlitTracker::ToggleLogData(void)
 {
-ControllerDome	*myDomeControllerObj;
 bool			currentLogState;
+#ifdef _ENABLE_SKYTRAVEL_
+	ControllerSlit	*myControllerObj;
+#else
+	ControllerDome	*myControllerObj;
+#endif // _ENABLE_SKYTRAVEL_
 
-//	CONSOLE_DEBUG(__FUNCTION__);
 
-	myDomeControllerObj	=	(ControllerDome *)cParentObjPtr;
-	if (myDomeControllerObj != NULL)
+	CONSOLE_DEBUG(__FUNCTION__);
+
+#ifdef _ENABLE_SKYTRAVEL_
+	myControllerObj	=	(ControllerSlit *)cParentObjPtr;
+#else
+	myControllerObj	=	(ControllerDome *)cParentObjPtr;
+#endif // _ENABLE_SKYTRAVEL_
+	if (myControllerObj != NULL)
 	{
-		currentLogState	=	myDomeControllerObj->cLogSlitData;
+		currentLogState	=	myControllerObj->cLogSlitData;
 		if (currentLogState)
 		{
+			CONSOLE_DEBUG("Turning slit track logging OFF");
 			//*	its on, stop the logging
-			myDomeControllerObj->CloseSlitTrackerDataFile();
+			myControllerObj->CloseSlitTrackerDataFile();
 		}
 		else
 		{
 			//*	its off, so turn it on
-			myDomeControllerObj->cLogSlitData	=	true;
+			CONSOLE_DEBUG("Turning slit track logging ON");
+			myControllerObj->cLogSlitData	=	true;
 		}
-		SetWidgetChecked(kSlitTracker_LogDataCheckBox,	myDomeControllerObj->cLogSlitData);
+		SetWidgetChecked(kSlitTracker_LogDataCheckBox,	myControllerObj->cLogSlitData);
 
-		myDomeControllerObj->cUpdateWindow		=	true;
+		myControllerObj->cUpdateWindow		=	true;
 	}
 	else
 	{
-		CONSOLE_DEBUG("myDomeControllerObj is NULL");
+		CONSOLE_DEBUG("myControllerObj is NULL");
+		CONSOLE_ABORT(__FUNCTION__);
 	}
 }
 
 
-#endif // _ENABLE_CTRL_DOME_
+#endif // _ENABLE_SLIT_TRACKER_

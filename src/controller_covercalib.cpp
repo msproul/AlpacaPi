@@ -74,7 +74,7 @@ ControllerCoverCalib::ControllerCoverCalib(	const char			*argWindowName,
 											struct sockaddr_in	*deviceAddress,
 											const int			port,
 											const int			deviceNum)
-	:Controller(argWindowName, kWindowWidth,  kWindowHeight, kNoBackgroundTask)
+	:Controller(argWindowName, kWindowWidth,  kWindowHeight)
 {
 	memset(&cCoverCalibrationProp, 0, sizeof(TYPE_CoverCalibrationProperties));
 

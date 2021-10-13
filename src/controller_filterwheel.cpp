@@ -70,7 +70,7 @@ enum
 //**************************************************************************************
 ControllerFilterWheel::ControllerFilterWheel(	const char			*argWindowName,
 												TYPE_REMOTE_DEV		*alpacaDevice)
-	:Controller(argWindowName, kWindowWidth,  kWindowHeight, kNoBackgroundTask)
+	:Controller(argWindowName, kWindowWidth,  kWindowHeight)
 {
 	CONSOLE_DEBUG(__FUNCTION__);
 

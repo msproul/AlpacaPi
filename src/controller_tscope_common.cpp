@@ -81,7 +81,7 @@ bool	dataWasHandled;
 		//*	"version": "AlpacaPi - V0.2.2-beta build #32",
 		strcpy(cAlpacaVersionString, valueString);
 		SetWidgetText(kTab_Telescope,	kTelescope_AlpacaDrvrVersion,		cAlpacaVersionString);
-		SetWidgetText(kTab_DriverInfo,	kDriverInfo_AlpacaDrvrVersion,		cAlpacaVersionString);
+//--		SetWidgetText(kTab_DriverInfo,	kDriverInfo_AlpacaDrvrVersion,		cAlpacaVersionString);
 		dataWasHandled	=	true;
 	}
 #endif // _PARENT_IS_TELESCOPE_

@@ -74,6 +74,9 @@
 //*	Sep  8,	2021	<MLS> Added AlpacaProcessReadAll_Common()
 //*	Sep 14,	2021	<MLS> Added InitFonts()
 //*	Sep 22,	2021	<MLS> Added enableDebug arg to RunBackgroundTasks()
+//*	Sep 24,	2021	<MLS> Changed default behavior to NOT start background task
+//*	Sep 24,	2021	<MLS> Added DumpControllerBackGroundTaskStatus() for debugging
+//*	Oct  7,	2021	<MLS> Removed startBackGroundThread option from constructor
 //*****************************************************************************
 
 
@@ -108,6 +111,7 @@ bool		gFontsNeedInit			=	true;
 char		gColorOverRide			=	0;
 Controller	*gCurrentActiveWindow	=	NULL;
 bool		gDebugBackgroundThread	=	false;
+bool		gVerbose				=	false;
 
 
 //*****************************************************************************
@@ -246,8 +250,7 @@ void	Controller_HandleKeyDown(const int keyPressed)
 //*****************************************************************************
 Controller::Controller(	const char	*argWindowName,
 						const int	xSize,
-						const int	ySize,
-						const bool	startBackGroundThread)
+						const int	ySize)
 {
 int			ii;
 int			objCntr;
@@ -273,8 +276,8 @@ int			objCntr;
 	//*	thread stuff
 	cButtonClickInProgress		=	false;
 	cBackgroundTaskActive		=	false;
+	cBackGroundThreadCreated	=	false;
 	cBackgroundThreadID			=	-1;
-
 
 	cOnLine						=	true;		//*	assume its online, if it wasnt, we wouldnt be here
 	cAlpacaVersionString[0]		=	0;
@@ -381,12 +384,6 @@ int			objCntr;
 
 	gCurrentActiveWindow	=	this;
 
-#ifdef _USE_BACKGROUND_THREAD_
-	if (startBackGroundThread)
-	{
-		StartBackgroundThread();
-	}
-#endif // _USE_BACKGROUND_THREAD_
 }
 
 
@@ -403,16 +400,18 @@ int		iii;
 #ifdef _USE_BACKGROUND_THREAD_
 	//*	we have to kill the background thread
 	int		threadCancelErr;
-
-		CONSOLE_DEBUG("Canceling background thread");
-		threadCancelErr	=	pthread_cancel(cBackgroundThreadID);
-		if (threadCancelErr == 0)
+		if (cBackGroundThreadCreated)
 		{
-			CONSOLE_DEBUG_W_STR("Thread canceled OK:\t", cWindowName);
-		}
-		else
-		{
-			CONSOLE_DEBUG_W_NUM("Thread canceled failed, errno\t=", errno);
+			CONSOLE_DEBUG("Canceling background thread");
+			threadCancelErr	=	pthread_cancel(cBackgroundThreadID);
+			if (threadCancelErr == 0)
+			{
+				CONSOLE_DEBUG_W_STR("Thread canceled OK:\t", cWindowName);
+			}
+			else
+			{
+				CONSOLE_DEBUG_W_NUM("Thread canceled failed, errno\t=", errno);
+			}
 		}
 #endif // _USE_BACKGROUND_THREAD_
 
@@ -3201,7 +3200,31 @@ int			threadErr;
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG_W_STR("Starting background thread for window:",	cWindowName);
 	threadErr			=	pthread_create(&cBackgroundThreadID, NULL, &ControllerBackgroundThread, this);
-
+	if (threadErr == 0)
+	{
+		cBackGroundThreadCreated	=	true;
+	}
 	return(threadErr);
 }
 
+
+//**************************************************************************************
+void	DumpControllerBackGroundTaskStatus(void)
+{
+int	iii;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+	printf("--------------------------------------------------------------\r\n");
+
+	for (iii=0; iii<kMaxControllers; iii++)
+	{
+		if (gControllerList[iii] != NULL)
+		{
+			printf("%d\t",		iii);
+			printf("%-25s\t",	gControllerList[iii]->cWindowName);
+			printf("%20s\t",	gControllerList[iii]->cBackGroundThreadCreated ? "Created" : "Not Created");
+
+			printf("\r\n");
+		}
+	}
+}

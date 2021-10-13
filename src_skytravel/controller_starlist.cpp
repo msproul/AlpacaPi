@@ -76,9 +76,9 @@ ControllerStarlist::ControllerStarlist(	const char		*argWindowName,
 										int				argStarListCount)
 	:Controller(argWindowName, kWindowWidth,  kWindowHeight)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
-	CONSOLE_DEBUG_W_NUM("kWindowWidth\t=", kWindowWidth);
-	CONSOLE_DEBUG_W_NUM("kWindowHeight\t=", kWindowHeight);
+//	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG_W_NUM("kWindowWidth\t=", kWindowWidth);
+//	CONSOLE_DEBUG_W_NUM("kWindowHeight\t=", kWindowHeight);
 
 	cStarListTabObjPtr		=	NULL;
 	cAboutBoxTabObjPtr		=	NULL;

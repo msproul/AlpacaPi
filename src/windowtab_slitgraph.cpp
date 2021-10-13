@@ -30,6 +30,7 @@
 #include	"windowtab_slitgraph.h"
 #include	"controller.h"
 #include	"controller_dome.h"
+#include	"slittracker_data.h"
 
 
 

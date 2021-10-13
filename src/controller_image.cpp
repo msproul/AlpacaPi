@@ -71,7 +71,9 @@ enum
 
 //**************************************************************************************
 ControllerImage::ControllerImage(	const char *argWindowName, IplImage *downloadedImage)
-	:Controller(argWindowName, kWindowWidth,  kWindowHeight)
+			:Controller(	argWindowName,
+							kWindowWidth,
+							kWindowHeight)
 {
 
 	CONSOLE_DEBUG(__FUNCTION__);

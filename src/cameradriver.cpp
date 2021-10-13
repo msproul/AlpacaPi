@@ -151,6 +151,7 @@
 //*	Jun 17,	2021	<MLS> Flipping of image in camera now working
 //*	Jun 24,	2021	<MLS> Added AlpacaConnect() & AlpacaDisConnect() to cameradriver
 //*	Jun 24,	2021	<MLS> Reset a bunch of camera properies on DisConnect to make CONFORM happy
+//*	Oct 13,	2021	<MLS> Removed binx/biny limits used for testing
 //*****************************************************************************
 //*	Jan  1,	2119	<TODO> ----------------------------------------
 //*	Jun 26,	2119	<TODO> Add support for sub frames
@@ -680,11 +681,6 @@ char				httpHeader[500];
 		CONSOLE_DEBUG_W_STR("htmlData   \t=",	reqData->htmlData);
 		CONSOLE_DEBUG_W_STR("contentData\t=",	reqData->contentData);
 	}
-
-
-//*	delete this when not testing
-	cCameraProp.MaxbinX	=	1;
-	cCameraProp.MaxbinY	=	1;
 
 	alpacaErrCode		=	kASCOM_Err_PropertyNotImplemented;
 	strcpy(alpacaErrMsg, "");

@@ -74,7 +74,7 @@ ControllerTelescope::ControllerTelescope(	const char			*argWindowName,
 											struct sockaddr_in	*deviceAddress,
 											const int			port,
 											const int			deviceNum)
-	:Controller(argWindowName, kWindowWidth,  kWindowHeight, kNoBackgroundTask)
+	:Controller(argWindowName, kWindowWidth,  kWindowHeight)
 {
 
 	//*	zero out all of the Telescope ASCOM properties

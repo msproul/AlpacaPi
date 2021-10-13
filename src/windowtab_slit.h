@@ -6,11 +6,16 @@
 #ifndef	_WINDOWTAB_SLIT_H_
 #define	_WINDOWTAB_SLIT_H_
 
+#ifndef	_WINDOW_TAB_H_
+	#include	"windowtab.h"
+#endif
+
 
 //*****************************************************************************
 enum
 {
 	kSlitTracker_Title	=	0,
+	kSlitTracker_Connected,
 
 	kSlitTracker_SlitClockFace,
 	kSlitTracker_LastUpdate,

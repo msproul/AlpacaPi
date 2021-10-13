@@ -6,6 +6,19 @@
 #define	_SKY_DISPLAY_H_
 
 //*********************************************************************
+typedef enum
+{
+	kSpecialDisp_Off,
+	kSpecialDisp_All,
+	kSpecialDisp_Arcs_w_CentVect,
+	kSpecialDisp_Arcs_noLabels,
+	kSpecialDisp_ArcsOnly,
+
+	kSpecialDisp_Last
+
+} TYPE_SPECIAL_DISP;
+
+//*********************************************************************
 //*	these variables are a separate structure so that the entire thing
 //*	can be passed to various routines without having to pass the entire window object
 typedef struct
@@ -40,7 +53,7 @@ typedef struct
 		bool				dispAAVSOalerts;		//*	AAVSO TargetTool Alerts
 
 
-		bool				dispSpecialObjects;		//*	Special.txt objectss
+		unsigned char		dispSpecialObjects;		//*	Special.txt objects, this is an enum
 
 } TYPE_SkyDispOptions;
 

@@ -85,7 +85,9 @@ ControllerFocus::ControllerFocus(	const char			*argWindowName,
 									const int			port,
 									const int			deviceNum,
 									const int			focuserType)
-	:Controller(argWindowName, kFocuserBoxWidth,  kFocuserBoxHeight)
+	:Controller(	argWindowName,
+					kFocuserBoxWidth,
+					kFocuserBoxHeight)
 {
 
 
@@ -103,6 +105,10 @@ ControllerFocus::ControllerFocus(	const char			*argWindowName,
 	SetupWindowControls();
 
 	AlpacaSetConnected("focuser", true);
+
+#ifdef _USE_BACKGROUND_THREAD_
+	StartBackgroundThread();
+#endif // _USE_BACKGROUND_THREAD_
 }
 
 //**************************************************************************************

@@ -21,6 +21,7 @@
 //*	Jan 13,	2021	<MLS> Created windowtab_alpacalist.cpp
 //*	Jan 21,	2021	<MLS> Added sortable columns
 //*	May 26,	2021	<MLS> Added support for FilterWheel controller window
+//*	Oct  6,	2021	<MLS> Added support for Slittracker controller window
 //*****************************************************************************
 
 #include	<stdlib.h>
@@ -45,6 +46,7 @@
 #include	"controller_switch.h"
 #include	"controller_telescope.h"
 #include	"controller_skytravel.h"
+#include	"controller_slit.h"
 
 //**************************************************************************************
 WindowTabAlpacaList::WindowTabAlpacaList(	const int	xSize,
@@ -486,9 +488,20 @@ bool	windowExists;
 				break;
 
 			//*	extras defined by MLS
+			case kDeviceType_SlitTracker:
+				windowExists	=	CheckForOpenWindowByName(windowName);
+				if (windowExists)
+				{
+					CONSOLE_DEBUG_W_STR("Window already open:", windowName);
+				}
+				else
+				{
+					new ControllerSlit(windowName, &cRemoteDeviceList[deviceIdx]);
+				}
+				break;
+
 			case kDeviceType_Multicam:
 			case kDeviceType_Shutter:
-			case kDeviceType_SlitTracker:
 			case kDeviceType_undefined:
 			case kDeviceType_last:
 				break;
@@ -629,7 +642,7 @@ int		myDevCount;
 					break;
 
 				case kDeviceType_Filterwheel:
-					SetWidgetTextColor(		boxId,	CV_RGB(255,	127,	0));		//*	orage
+					SetWidgetTextColor(		boxId,	CV_RGB(255,	127,	0));		//*	orange
 					break;
 
 				case kDeviceType_Focuser:
@@ -644,6 +657,12 @@ int		myDevCount;
 					SetWidgetTextColor(		boxId,	CV_RGB(100,	100,	255));		//*	blue
 					break;
 
+				case kDeviceType_SlitTracker:
+					SetWidgetTextColor(		boxId,	CV_RGB(0x91,	0x30,	0xFA));		//* purple
+					break;
+
+				case kDeviceType_Multicam:
+				case kDeviceType_Shutter:
 				default:
 					SetWidgetTextColor(		boxId,	CV_RGB(255,	255,	255));
 					break;

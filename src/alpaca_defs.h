@@ -16,6 +16,7 @@
 //*	Mar  1,	2021	<MLS> Added TYPE_ObsConditionProperties
 //*	Mar 21,	2021	<MLS> Added TYPE_FilterWheelProperties
 //*	Sep 15,	2021	<MLS> Version V0.4.2-beta
+//*	Oct 13,	2021	<MLS> Build 121
 //*****************************************************************************
 //*	These are for my comment extraction program that sorts comments by date.
 //*	Jan  1,	2019	-----------------------------------------------------------
@@ -42,7 +43,7 @@
 
 #define	kApplicationName	"AlpacaPi"
 #define	kVersionString		"V0.4.2-beta"
-#define	kBuildNumber		120
+#define	kBuildNumber		121
 
 
 #define kAlpacaDiscoveryPORT	32227

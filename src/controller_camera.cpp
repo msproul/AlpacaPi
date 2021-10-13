@@ -109,7 +109,7 @@ ControllerCamera::ControllerCamera(	const char			*argWindowName,
 									const int			xSize,
 									const int			ySize)
 
-	:Controller(argWindowName, xSize,  ySize, kNoBackgroundTask)
+	:Controller(argWindowName, xSize,  ySize)
 {
 int		iii;
 

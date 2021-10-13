@@ -24,7 +24,7 @@
 //*	Sep  7,	2021	<MLS> Created windowtab_starlist.cpp
 //*	Sep  7,	2021	<MLS> Star list working for Messier objects
 //*	Sep 12,	2021	<MLS> Merged aavso list with starlist
-//*	Sep 14,	2021	<MLS> Added export to CSV file
+//*	Sep 14,	2021	<MLS> Added export to CSV file (not finished)
 //*****************************************************************************
 
 #include	<stdlib.h>

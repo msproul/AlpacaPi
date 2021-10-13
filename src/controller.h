@@ -59,8 +59,8 @@
 
 #define	kDefaultUpdateDelta	4
 
-extern CvFont		gTextFont[kFontCnt];
-
+extern	CvFont	gTextFont[kFontCnt];
+extern	bool	gVerbose;
 
 #define	RADIANS(degrees)	((degrees) * (M_PI / 180.0))
 #define	DEGREES(radians)	((radians) * (180.0 / M_PI))
@@ -84,9 +84,6 @@ typedef struct
 } TYPE_CAPABILITY;
 
 
-#define		kStartBackgroundTask	true
-#define		kNoBackgroundTask		false
-
 //*****************************************************************************
 class Controller
 {
@@ -97,8 +94,7 @@ class Controller
 		//
 				Controller(	const char	*argWindowName,
 							const int	xSize,
-							const int	ySize,
-							const bool	startBackGroundThread = true);
+							const int	ySize);
 		virtual	~Controller(void);
 
 
@@ -417,6 +413,7 @@ class Controller
 //*	background thread stuff
 		int			StartBackgroundThread(void);
 		pthread_t	cBackgroundThreadID;
+		bool		cBackGroundThreadCreated;
 		bool		cButtonClickInProgress;
 		bool		cBackgroundTaskActive;
 
@@ -431,6 +428,7 @@ CvScalar	Color16BitTo24Bit(const unsigned int color16);
 void		Controller_HandleKeyDown(const int keyPressed);
 void		LoadAlpacaLogo(void);
 bool		CheckForOpenWindowByName(const char *windowName);
+void		DumpControllerBackGroundTaskStatus(void);
 
 #ifdef __cplusplus
 }

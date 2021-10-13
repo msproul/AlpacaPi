@@ -1205,6 +1205,7 @@ finder		:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
 finder		:		DEFINEFLAGS		+=	-D_ENABLE_MULTICAM_
 #finder		:		DEFINEFLAGS		+=	-D_ENABLE_DOME_
 finder		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
+finder		:		DEFINEFLAGS		+=	-D_ENABLE_QHY_
 finder		:		DEFINEFLAGS		+=	-D_ENABLE_ATIK_
 finder		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
 finder		:		DEFINEFLAGS		+=	-D_INCLUDE_WIRINGPI_
@@ -1229,63 +1230,14 @@ finder		:	$(CPP_OBJECTS)				\
 					$(ASI_CAMERA_OBJECTS)		\
 					$(ZWO_EFW_OBJECTS)			\
 					-latikcameras				\
-					-lcfitsio					\
-					-lusb-1.0					\
-					-ludev						\
-					-lwiringPi					\
-					-lpthread					\
-					-o alpacapi
-
-
-
-######################################################################################
-#pragma mark Switch - C++ Raspberry pi
-#	make finder
-#findqhy		:		DEFINEFLAGS		+=	-D_ENABLE_OBSERVINGCONDITIONS_
-findqhy		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
-#findqhy		:		DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_
-#findqhy		:		DEFINEFLAGS		+=	-D_ENABLE_ROTATOR_
-findqhy		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_ZWO_
-#findqhy		:		DEFINEFLAGS		+=	-D_ENABLE_SAFETYMONITOR_
-findqhy		:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_
-#findqhy		:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
-findqhy		:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
-findqhy		:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
-findqhy		:		DEFINEFLAGS		+=	-D_ENABLE_MULTICAM_
-#findqhy		:		DEFINEFLAGS		+=	-D_ENABLE_DOME_
-findqhy		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
-findqhy		:		DEFINEFLAGS		+=	-D_ENABLE_ATIK_
-findqhy		:		DEFINEFLAGS		+=	-D_ENABLE_QHY_
-findqhy		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
-findqhy		:		DEFINEFLAGS		+=	-D_INCLUDE_WIRINGPI_
-findqhy		:		DEFINEFLAGS		+=	-D_ENABLE_PWM_SWITCH_
-#findqhy		:		DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
-findqhy		:		PLATFORM		=	armv7
-findqhy		:		ATIK_LIB_DIR	=	$(ATIK_LIB_MASTER_DIR)/ARM/x86/NoFlyCapture
-
-findqhy		:	$(CPP_OBJECTS)				\
-					$(ALPACA_OBJECTS)			\
-					$(SOCKET_OBJECTS)			\
-					$(LIVE_WINDOW_OBJECTS)		\
-
-
-		$(LINK)  								\
-					$(SOCKET_OBJECTS)			\
-					$(CPP_OBJECTS)				\
-					$(ALPACA_OBJECTS)			\
-					$(LIVE_WINDOW_OBJECTS)		\
-					$(OPENCV_LINK)				\
-					-L$(ATIK_LIB_DIR_ARM32)/	\
-					$(ASI_CAMERA_OBJECTS)		\
-					$(ZWO_EFW_OBJECTS)			\
-					-latikcameras				\
-					-lcfitsio					\
 					-lqhyccd					\
+					-lcfitsio					\
 					-lusb-1.0					\
 					-ludev						\
 					-lwiringPi					\
 					-lpthread					\
 					-o alpacapi
+
 
 
 ######################################################################################
@@ -1783,6 +1735,7 @@ SKYTRAVEL_OBJECTS=											\
 				$(OBJECT_DIR)controller_ml_nc.o				\
 				$(OBJECT_DIR)controller_ml_single.o			\
 				$(OBJECT_DIR)controller_skytravel.o			\
+				$(OBJECT_DIR)controller_slit.o				\
 				$(OBJECT_DIR)controller_switch.o			\
 				$(OBJECT_DIR)controller_starlist.o			\
 				$(OBJECT_DIR)controller_telescope.o			\
@@ -1847,7 +1800,7 @@ sky		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_TELESCOPE_
 sky		:	DEFINEFLAGS		+=	-D_ENABLE_FITS_
 sky		:	DEFINEFLAGS		+=	-D_CONTROLLER_USES_ALPACA_
 sky		:	DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_CONTROLLER_
-#sky	:	DEFINEFLAGS		+=	-D_ENABLE_SLIT_TRACKER_
+sky		:	DEFINEFLAGS		+=	-D_ENABLE_SLIT_TRACKER_
 sky		:	DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
 sky		:	INCLUDES		+=	-I$(SRC_SKYTRAVEL)
 
@@ -1871,7 +1824,7 @@ sky		:				$(SKYTRAVEL_OBJECTS)					\
 domectrl		:	DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
 domectrl		:	DEFINEFLAGS		+=	-D_INCLUDE_CTRL_MAIN_
 domectrl		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_DOME_
-domectrl		:	DEFINEFLAGS		+=	-D_ENABLE_SLIT_TRACKER_
+#domectrl		:	DEFINEFLAGS		+=	-D_ENABLE_SLIT_TRACKER_
 domectrl		:	DEFINEFLAGS		+=	-D_CONTROLLER_USES_ALPACA_
 
 
@@ -2515,6 +2468,15 @@ $(OBJECT_DIR)controller_dome.o : 		$(SRC_DIR)controller_dome.cpp		\
 										$(SRC_DIR)windowtab_about.h			\
 										$(SRC_DIR)controller.h
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)controller_dome.cpp -o$(OBJECT_DIR)controller_dome.o
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)controller_slit.o : 		$(SRC_DIR)controller_slit.cpp		\
+										$(SRC_DIR)controller_slit.h			\
+										$(SRC_DIR)windowtab_slit.h			\
+										$(SRC_DIR)windowtab_about.h			\
+										$(SRC_DIR)controller.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)controller_slit.cpp -o$(OBJECT_DIR)controller_slit.o
+
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)controller_dome_common.o : $(SRC_DIR)controller_dome_common.cpp	\

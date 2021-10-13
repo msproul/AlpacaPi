@@ -82,7 +82,9 @@ ControllerSwitch::ControllerSwitch(	const char			*argWindowName,
 									struct sockaddr_in	*deviceAddress,
 									const int			port,
 									const int			deviceNum)
-	:Controller(argWindowName, kWindowWidth,  kWindowHeight, false)
+	:Controller(	argWindowName,
+					kWindowWidth,
+					kWindowHeight)
 {
 int		iii;
 

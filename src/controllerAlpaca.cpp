@@ -114,7 +114,7 @@ bool	myConnectedFlag;
 bool	prevConnectedState;
 bool	returnedValid;
 
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, deviceTypeStr);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, deviceTypeStr);
 	validData		=	false;
 
 	//-----------------------------------------------------------------------------------------
@@ -124,14 +124,14 @@ bool	returnedValid;
 											NULL,
 											&myConnectedFlag,
 											&returnedValid,
-											true);
+											false);
 	if (validData)
 	{
 	//	CONSOLE_DEBUG(__FUNCTION__);
 		//*	keep track of the previous state
 		prevConnectedState		=	cCommonProp.Connected;
 		cCommonProp.Connected	=	myConnectedFlag;
-		CONSOLE_DEBUG_W_NUM("cCommonProp.Connected\t=", cCommonProp.Connected);
+//		CONSOLE_DEBUG_W_NUM("cCommonProp.Connected\t=", cCommonProp.Connected);
 		if (cCommonProp.Connected && (prevConnectedState == false))
 		{
 			//*	if we are going from un-connected to connected, read the start up data
@@ -189,7 +189,6 @@ int		validCnt;
 		}
 		else
 		{
-			CONSOLE_ABORT(__FUNCTION__);
 			myOnLineFlag	=	false;
 		}
 	}
@@ -310,16 +309,17 @@ bool			validData;
 char			alpacaString[128];
 int				jjj;
 
-#if 1
-char			ipAddrStr[32];
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, deviceTypeStr);
+	if (gVerbose)
+	{
+	char			ipAddrStr[32];
+		CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+		CONSOLE_DEBUG_W_STR(__FUNCTION__, deviceTypeStr);
 
-	inet_ntop(AF_INET, &(deviceAddress->sin_addr), ipAddrStr, INET_ADDRSTRLEN);
-	CONSOLE_DEBUG_W_STR("IP address=", ipAddrStr);
-	CONSOLE_DEBUG_W_NUM("devicePort=", devicePort);
-	CONSOLE_DEBUG_W_NUM("deviceNum=", deviceNum);
-#endif // 0
+		inet_ntop(AF_INET, &(deviceAddress->sin_addr), ipAddrStr, INET_ADDRSTRLEN);
+		CONSOLE_DEBUG_W_STR("IP address=", ipAddrStr);
+		CONSOLE_DEBUG_W_NUM("devicePort=", devicePort);
+		CONSOLE_DEBUG_W_NUM("deviceNum=", deviceNum);
+	}
 
 	//===============================================================
 	//*	get supportedactions
@@ -1542,7 +1542,7 @@ socklen_t		sockOptLen;
 			{
 				CONSOLE_DEBUG_W_NUM("MSG_ERRQUEUE recvByteCnt\t=", recvByteCnt);
 				CONSOLE_DEBUG_W_STR("errorBuff\t=", errorBuff);
-				CONSOLE_ABORT(__FUNCTION__)
+			//	CONSOLE_ABORT(__FUNCTION__)
 			}
 
 			recvByteCnt	=	recv(socket_desc, returnedData , kReadBuffLen , 0);

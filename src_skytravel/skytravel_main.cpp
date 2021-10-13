@@ -21,6 +21,7 @@
 //*****************************************************************************
 //*	Jan  9,	2021	<MLS> Created skytravel_main.cpp
 //*	Feb 12,	2021	<MLS> Added CloseAllExceptFirst()
+//*	Sep 28,	2021	<MLS> Added -v = gVerbose command line option
 //*****************************************************************************
 
 
@@ -33,10 +34,12 @@
 #include "opencv2/highgui/highgui_c.h"
 #include "opencv2/imgproc/imgproc_c.h"
 
+#include <fitsio.h>
 
 
 #include	"discovery_lib.h"
 #include	"cpu_stats.h"
+#include	"helper_functions.h"
 
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
@@ -131,6 +134,15 @@ char	theChar;
 				case 'i':
 					break;
 
+				//	"-q" means quiet
+				case 'q':
+					gVerbose	=	false;
+					break;
+
+				//	"-v" means verbose
+				case 'v':
+					gVerbose	=	true;
+					break;
 			}
 		}
 		else
@@ -141,7 +153,8 @@ char	theChar;
 	}
 }
 
-#include <fitsio.h>
+
+
 
 //*****************************************************************************
 int main(int argc, char *argv[])
@@ -152,8 +165,14 @@ int					activeObjCnt;
 int					keyPressed;
 float				fitsVersionRet;
 float				fitsVersionVal;
+unsigned int		currentMillis;
+unsigned int		lastDebugMillis;
+unsigned int		deltaSecs;
 
-	fitsVersionRet	=	ffvers(&fitsVersionVal);
+	lastDebugMillis		=	millis();
+
+
+	fitsVersionRet		=	ffvers(&fitsVersionVal);
 #ifdef CFITSIO_MAJOR
 	#if (CFITSIO_MAJOR >= 4)
 	#else
@@ -168,6 +187,7 @@ float				fitsVersionVal;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
+	//*	deal with any options from the command line
 	ProcessCmdLineArgs(argc, argv);
 
 	sprintf(gFullVersionString, "%s - %s build #%d", kApplicationName, kVersionString, kBuildNumber);
@@ -218,6 +238,16 @@ float				fitsVersionVal;
 							CONSOLE_DEBUG_W_STR("Delete had a problem", gControllerList[iii]->cWindowName);
 						}
 					}
+				}
+			}
+			if (gVerbose)
+			{
+				currentMillis	=	millis();
+				deltaSecs		=	(currentMillis - lastDebugMillis) / 1000;
+				if (deltaSecs > 15)
+				{
+					DumpControllerBackGroundTaskStatus();
+					lastDebugMillis	=	millis();
 				}
 			}
 		}

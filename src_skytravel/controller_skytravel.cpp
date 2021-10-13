@@ -74,8 +74,7 @@ double	gTelescopeDecl_Radians	=	0.0;
 ControllerSkytravel::ControllerSkytravel(	const char *argWindowName)
 				:Controller(	argWindowName,
 								kWindowWidth,
-								kWindowHeight,
-								kNoBackgroundTask)
+								kWindowHeight)
 {
 
 	CONSOLE_DEBUG(__FUNCTION__);
