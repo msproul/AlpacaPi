@@ -90,6 +90,7 @@ ControllerFocus::ControllerFocus(	const char			*argWindowName,
 					kFocuserBoxHeight)
 {
 
+	strcpy(cAlpacaDeviceTypeStr,	"focuser");
 
 	//*	moved all init stuff to separate routine so we can have multiple constructors
 	ControllerFocusInit(kComMode_Alpaca, focuserType);
@@ -101,10 +102,11 @@ ControllerFocus::ControllerFocus(	const char			*argWindowName,
 		cDeviceAddress	=	*deviceAddress;
 		cPort			=	port;
 		cValidIPaddr	=	true;
+
+		CheckConnectedState();		//*	check connected and connect if not already connected
 	}
 	SetupWindowControls();
 
-	AlpacaSetConnected("focuser", true);
 
 #ifdef _USE_BACKGROUND_THREAD_
 	StartBackgroundThread();
@@ -214,6 +216,7 @@ uint32_t	updateDelta;
 			AlpacaGetStartupData();
 		}
 		cReadStartup	=	false;
+
 	}
 
 	needToUpdate	=	false;

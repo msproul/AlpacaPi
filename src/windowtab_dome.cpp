@@ -341,7 +341,7 @@ int		domeGraphic_yLoc;
 		SetWidgetType(		kDomeBox_North,	kWidgetType_Text);
 		SetWidgetBGColor(	kDomeBox_North,	CV_RGB(128,	128,	128));
 		SetWidgetTextColor(	kDomeBox_North,	CV_RGB(255,	255,	0));
-		SetWidgetFont(		kDomeBox_North,	kFont_ScriptLarge);
+		SetWidgetFont(		kDomeBox_North,	kFont_Script_Large);
 		SetWidgetText(		kDomeBox_North, 	"N");
 		SetWidgetBorder(	kDomeBox_North, 	false);
 
@@ -352,7 +352,7 @@ int		domeGraphic_yLoc;
 		SetWidgetType(		kDomeBox_South,	kWidgetType_Text);
 		SetWidgetBGColor(	kDomeBox_South,	CV_RGB(128,	128,	128));
 		SetWidgetTextColor(	kDomeBox_South,	CV_RGB(255,	255,	0));
-		SetWidgetFont(		kDomeBox_South,	kFont_ScriptLarge);
+		SetWidgetFont(		kDomeBox_South,	kFont_Script_Large);
 		SetWidgetText(		kDomeBox_South, 	"S");
 		SetWidgetBorder(	kDomeBox_South, 	false);
 
@@ -363,7 +363,7 @@ int		domeGraphic_yLoc;
 		SetWidgetType(		kDomeBox_West,	kWidgetType_Text);
 		SetWidgetBGColor(	kDomeBox_West,	CV_RGB(128,	128,	128));
 		SetWidgetTextColor(	kDomeBox_West,	CV_RGB(255,	255,	0));
-		SetWidgetFont(		kDomeBox_West,	kFont_ScriptLarge);
+		SetWidgetFont(		kDomeBox_West,	kFont_Script_Large);
 		SetWidgetText(		kDomeBox_West, 	"W");
 		SetWidgetBorder(	kDomeBox_West, 	false);
 
@@ -373,7 +373,7 @@ int		domeGraphic_yLoc;
 		SetWidgetType(		kDomeBox_East,	kWidgetType_Text);
 		SetWidgetBGColor(	kDomeBox_East,	CV_RGB(128,	128,	128));
 		SetWidgetTextColor(	kDomeBox_East,	CV_RGB(255,	255,	0));
-		SetWidgetFont(		kDomeBox_East,	kFont_ScriptLarge);
+		SetWidgetFont(		kDomeBox_East,	kFont_Script_Large);
 		SetWidgetText(		kDomeBox_East, 	"E");
 		SetWidgetBorder(	kDomeBox_East, 	false);
 	}
@@ -431,6 +431,7 @@ void	WindowTabDome::UpdateControls(void)
 	SetWidgetValid(		kDomeBox_BumpLeft,	cDomePropPtr->CanSetAzimuth);
 	SetWidgetValid(		kDomeBox_BumpRight,	cDomePropPtr->CanSetAzimuth);
 
+	CONSOLE_DEBUG("exit");
 }
 
 
@@ -876,7 +877,6 @@ void	WindowTabDome::ProcessDoubleClick(	const int	widgetIdx,
 	{
 		case kDomeBox_Title:
 		case kDomeBox_Connected:
-			AlpacaSetConnected("dome");
 			break;
 
 		default:

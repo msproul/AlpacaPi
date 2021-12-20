@@ -77,6 +77,11 @@
 //*	Sep 24,	2021	<MLS> Changed default behavior to NOT start background task
 //*	Sep 24,	2021	<MLS> Added DumpControllerBackGroundTaskStatus() for debugging
 //*	Oct  7,	2021	<MLS> Removed startBackGroundThread option from constructor
+//*	Oct 25,	2021	<MLS> Added ActivateWindow()
+//*	Nov 13,	2021	<MLS> Added ProcessDoubleClick_RtBtn()
+//*	Dec 14,	2021	<MLS> Changed how "connected" is handled,
+//*	Dec 14,	2021	<MLS> 			only connect if not already connected
+//*	Dec 14,	2021	<MLS> Added CheckConnectedState()
 //*****************************************************************************
 
 
@@ -106,12 +111,11 @@
 
 Controller	*gControllerList[kMaxControllers];
 int			gControllerCnt			=	-1;
-CvFont		gTextFont[kFontCnt];
+CvFont		gTextFont[kFont_last];
 bool		gFontsNeedInit			=	true;
 char		gColorOverRide			=	0;
 Controller	*gCurrentActiveWindow	=	NULL;
 bool		gDebugBackgroundThread	=	false;
-bool		gVerbose				=	false;
 
 
 //*****************************************************************************
@@ -134,7 +138,10 @@ static void	InitFonts(void)
 
 //	cvInitFont( &gTextFont[kFont_Simplex], CV_FONT_HERSHEY_COMPLEX, 0.5, 0.5, 0, 1, CV_AA );
 
-	cvInitFont( &gTextFont[kFont_ScriptLarge], CV_FONT_HERSHEY_SCRIPT_COMPLEX, 2.0, 2.0, 0, 1, CV_AA );
+
+	cvInitFont( &gTextFont[kFont_Triplex_Small],	CV_FONT_HERSHEY_TRIPLEX, 0.5, 0.5, 0, 1, CV_AA );
+	cvInitFont( &gTextFont[kFont_Triplex_Large],	CV_FONT_HERSHEY_TRIPLEX, 0.75, 0.75, 0, 1, CV_AA );
+	cvInitFont( &gTextFont[kFont_Script_Large],		CV_FONT_HERSHEY_SCRIPT_COMPLEX, 2.00, 2.00, 0, 1, CV_AA );
 
 //	for (iii=0; iii<kFont_last; iii++)
 //	{
@@ -252,7 +259,7 @@ Controller::Controller(	const char	*argWindowName,
 						const int	xSize,
 						const int	ySize)
 {
-int			ii;
+int			iii;
 int			objCntr;
 
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, argWindowName);
@@ -297,20 +304,20 @@ int			objCntr;
 	}
 
 	//*	find the first empty slot in the list
-	for (ii=0; ii<kMaxControllers; ii++)
+	for (iii=0; iii < kMaxControllers; iii++)
 	{
-		if (gControllerList[ii] == NULL)
+		if (gControllerList[iii] == NULL)
 		{
 //			CONSOLE_DEBUG_W_STR("Controller added to list", argWindowName);
-			gControllerList[ii]	=	this;
+			gControllerList[iii]	=	this;
 			break;
 		}
 	}
 	//*	now go thru and see how many are in the list
 	objCntr	=	0;
-	for (ii=0; ii<kMaxControllers; ii++)
+	for (iii=0; iii < kMaxControllers; iii++)
 	{
-		if (gControllerList[ii] != NULL)
+		if (gControllerList[iii] != NULL)
 		{
 			objCntr++;
 		}
@@ -367,15 +374,15 @@ int			objCntr;
 //	CONSOLE_DEBUG_W_DBL("font dx=", gTextFont[kFont_Simplex].dx);
 
 	//*	set defaults for the tabs
-	for (ii=0; ii<kMaxTabs; ii++)
+	for (iii=0; iii < kMaxTabs; iii++)
 	{
-		memset(&cTabList[ii], 0, sizeof(TYPE_WIDGET));
-		cTabList[ii].bgColor			=	CV_RGB(128,	128,	128);
-		cTabList[ii].textColor			=	CV_RGB(0,	0,		255);
-		cTabList[ii].borderColor		=	CV_RGB(255,	255,	255);
-		cTabList[ii].fontNum			=	kFont_Medium;
-		cTabList[ii].justification		=	kJustification_Center;
-		cTabList[ii].widgetType			=	kWidgetType_Button;
+		memset(&cTabList[iii], 0, sizeof(TYPE_WIDGET));
+		cTabList[iii].bgColor			=	CV_RGB(128,	128,	128);
+		cTabList[iii].textColor			=	CV_RGB(0,	0,		255);
+		cTabList[iii].borderColor		=	CV_RGB(255,	255,	255);
+		cTabList[iii].fontNum			=	kFont_Medium;
+		cTabList[iii].justification		=	kJustification_Center;
+		cTabList[iii].widgetType		=	kWidgetType_Button;
 	}
 	cTabCount		=	0;
 	cCurrentTabNum	=	0;
@@ -434,7 +441,7 @@ int		iii;
 	}
 	catch(cv::Exception& ex)
 	{
-		//*	we sometimes can open the same window twice, this shouldn't happen but sometimes does.
+		//*	we sometimes can open the same window twice, this should not happen but sometimes does.
 		//*	this catch prevents opencv from crashing
 		CONSOLE_DEBUG("cvDestroyWindow() had an exception");
 		if (ex.code != CV_StsAssert)
@@ -456,6 +463,31 @@ int		iii;
 //	CONSOLE_DEBUG("Done");
 }
 
+//**************************************************************************************
+void	Controller::CheckConnectedState(void)
+{
+bool		validData;
+
+#ifdef _CONTROLLER_USES_ALPACA_
+	CONSOLE_DEBUG(__FUNCTION__);
+	if (strlen(cAlpacaDeviceTypeStr) > 0)
+	{
+		//*	see if its connected
+		validData	=	AlpacaGetCommonConnectedState(cAlpacaDeviceTypeStr);
+		CONSOLE_DEBUG_W_NUM("cCommonProp.Connected\t=", cCommonProp.Connected);
+
+		//*	if its not connected, send the connect command
+		if (cCommonProp.Connected == false)
+		{
+			AlpacaSetConnected(cAlpacaDeviceTypeStr, true);
+		}
+	}
+	else
+	{
+		CONSOLE_ABORT(__FUNCTION__);
+	}
+#endif // _CONTROLLER_USES_ALPACA_
+}
 
 
 //**************************************************************************************
@@ -743,6 +775,11 @@ void	Controller::ProcessTabClick(const int tabIdx)
 			cCurrentTabNum		=	tabIdx;
 			cUpdateWindow		=	true;
 			cCurrentTabObjPtr	=	cWindowTabs[cCurrentTabNum];
+
+			if (cCurrentTabObjPtr != NULL)
+			{
+				cCurrentTabObjPtr->ActivateWindow();
+			}
 		}
 		else
 		{
@@ -833,7 +870,7 @@ void	Controller::ProcessDoubleClick(	const int	widgetIdx,
 										const int	yyy,
 										const int	flags)
 {
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 	if (cCurrentTabObjPtr != NULL)
 	{
 		cCurrentTabObjPtr->ProcessDoubleClick(widgetIdx,  event,  xxx,  yyy,  flags);
@@ -844,6 +881,26 @@ void	Controller::ProcessDoubleClick(	const int	widgetIdx,
 		CONSOLE_DEBUG_W_NUM("widgetIdx=\t",	widgetIdx);
 	}
 }
+
+//*****************************************************************************
+void	Controller::ProcessDoubleClick_RtBtn(	const int	widgetIdx,
+												const int	event,
+												const int	xxx,
+												const int	yyy,
+												const int	flags)
+{
+//	CONSOLE_DEBUG(__FUNCTION__);
+	if (cCurrentTabObjPtr != NULL)
+	{
+		cCurrentTabObjPtr->ProcessDoubleClick_RtBtn(widgetIdx,  event,  xxx,  yyy,  flags);
+	}
+	else
+	{
+		CONSOLE_DEBUG_W_NUM("Un-handled DOUBLE click, tab=\t",	cCurrentTabNum);
+		CONSOLE_DEBUG_W_NUM("widgetIdx=\t",	widgetIdx);
+	}
+}
+
 
 //*****************************************************************************
 void	Controller::DisplayButtonHelpText(const int buttonIdx)
@@ -1042,6 +1099,23 @@ int		wheelMovement;
 
 		case CV_EVENT_RBUTTONDBLCLK:
 			CONSOLE_DEBUG("CV_EVENT_RBUTTONDBLCLK");
+			clickedBtn		=	FindClickedTab(xxx,  yyy);
+			if (clickedBtn >= 0)
+			{
+				CONSOLE_DEBUG("CV_EVENT_RBUTTONDBLCLK");
+				//*	we have a double click in the tab bar
+				cvResizeWindow(cWindowName, cWidth, cHeight);
+			}
+			else
+			{
+				CONSOLE_DEBUG("CV_EVENT_RBUTTONDBLCLK");
+				clickedBtn		=	FindClickedWidget(xxx,  yyy);
+//				CONSOLE_DEBUG_W_NUM("Double click on widget#\t",	clickedBtn);
+				if (clickedBtn >= 0)
+				{
+					ProcessDoubleClick_RtBtn(clickedBtn,  event,  xxx,  yyy,  flags);
+				}
+			}
 			break;
 
 		case CV_EVENT_MBUTTONDBLCLK:
@@ -2960,6 +3034,8 @@ TYPE_WIDGET		*myWidgetPtr;
 		}
 	}
 }
+
+
 
 //**************************************************************************************
 void	Controller::UpdateWindowTabColors(void)

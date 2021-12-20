@@ -68,7 +68,6 @@
 pthread_t	gDiscoveryListenThreadID;
 pthread_t	gDiscoveryFindThreadID;
 
-//#define	kMaxDeviceListCnt	32
 
 //*	this is a list of IP addresses
 TYPE_ALPACA_UNIT	gAlpacaUnitList[kMaxAlpacaIPaddrCnt];
@@ -76,7 +75,7 @@ int					gAlpacaUnitCnt	=	0;
 
 
 //*	this is a list of alpaca devices, can be more than one per IP address
-TYPE_REMOTE_DEV		gRemoteList[kMaxDeviceListCnt];
+TYPE_REMOTE_DEV		gRemoteList[kMaxAlpacaDeviceCnt];
 int					gRemoteCnt		=	0;
 
 bool				gDiscoveryThreadIsRunning	=	false;
@@ -104,7 +103,7 @@ int	iii;
 		memset(&gAlpacaUnitList[iii], 0, sizeof(TYPE_ALPACA_UNIT));
 	}
 
-	for (iii=0; iii<kMaxDeviceListCnt; iii++)
+	for (iii=0; iii<kMaxAlpacaDeviceCnt; iii++)
 	{
 		memset(&gRemoteList[iii], 0, sizeof(TYPE_REMOTE_DEV));
 	}
@@ -168,7 +167,7 @@ char				ipAddrSt[48];
 				readBuf[bytesRead]	=	0;
 				inet_ntop(AF_INET, &(fromAddress.sin_addr), ipAddrSt, INET_ADDRSTRLEN);
 				sprintf(responseBuff, "Request from:%s, %s", ipAddrSt, readBuf);
-				CONSOLE_DEBUG(responseBuff);
+//				CONSOLE_DEBUG(responseBuff);
 
 				validDiscoveryRequest	=	false;
 				//*	this was the original discovery query
@@ -285,7 +284,7 @@ bool	newDevice;
 
 	if (newDevice)
 	{
-		if (gRemoteCnt < kMaxDeviceListCnt)
+		if (gRemoteCnt < kMaxAlpacaDeviceCnt)
 		{
 			gRemoteList[gRemoteCnt]					=	*newRemoteDevice;
 			gRemoteList[gRemoteCnt].notSeenCounter	=	0;

@@ -99,6 +99,8 @@ ControllerMLsingle::ControllerMLsingle(	const char			*argWindowName,
 		cDeviceAddress	=	*deviceAddress;
 		cPort			=	port;
 		cValidIPaddr	=	true;
+
+		CheckConnectedState();		//*	check connected and connect if not already connected
 	}
 
 	CreateWindowTabs();
@@ -257,6 +259,9 @@ void	ControllerMLsingle::UpdateWindowTabs_Everything(void)
 
 	SetWidgetNumber(kTab_MLsingle,	kMLsingle_focValue,		cFocuserPosition);
 	SetWidgetNumber(kTab_MLsingle,	kMLsingle_focDesired,	cFocuserDesiredPos);
+
+	UpdateConnectedIndicator(kTab_MLsingle,		kMLsingle_Connected);
+
 }
 
 //*****************************************************************************

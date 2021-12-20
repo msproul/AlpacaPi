@@ -16,7 +16,7 @@
 //*	that you agree that the author(s) have no warranty, obligations or liability.  You
 //*	must determine the suitability of this source code for your use.
 //*
-//*	Redistributions of this source code must retain this copyright notice.
+//*	Re-distributions of this source code must retain this copyright notice.
 //*****************************************************************************
 //*
 //*	Usage notes:	This driver does not implement any actual device,
@@ -33,6 +33,7 @@
 //*	Oct 21,	2020	<MLS> Finished GetCmdNameFromMyCmdTable() for calibrationdriver
 //*	Feb 12,	2021	<MLS> Added GetCalibrationStateString()
 //*	Apr  6,	2021	<MLS> CONFORM-covercalibrator -> PASSED!!!!!!!!!!!!!!!!!!!!!
+//*	Dec 16,	2021	<MLS> Added WatchDog_TimeOut() to calibrationdriver
 //*****************************************************************************
 
 
@@ -52,7 +53,9 @@
 #include	"alpacadriver.h"
 #include	"alpacadriver_helper.h"
 #include	"JsonResponse.h"
+#include	"eventlogging.h"
 
+#include	"alpacadriver.h"
 #include	"calibrationdriver.h"
 
 
@@ -283,6 +286,22 @@ bool	foundIt;
 	foundIt	=	GetCmdNameFromTable(cmdNumber, comandName, gCalibrationCmdTable, getPut);
 	return(foundIt);
 }
+
+//*****************************************************************************
+void	CalibrationDriver::WatchDog_TimeOut(void)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
+char				alpacaErrMsg[64];
+
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cCommonProp.Name);
+
+	if (cCoverCalibrationProp.Brightness > 0)
+	{
+		LogEvent("CalibratorStatus",	"Turning off due to Timeout",	NULL,	kASCOM_Err_Success,	"");
+		alpacaErrCode	=	Calibrator_TurnOff(alpacaErrMsg);
+	}
+}
+
 
 //*****************************************************************************
 TYPE_ASCOM_STATUS	CalibrationDriver::Get_Brightness(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)

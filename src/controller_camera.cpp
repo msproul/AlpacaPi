@@ -53,9 +53,13 @@
 //*	Mar 27,	2021	<MLS> Added UpdateCameraOffset()
 //*	Mar 27,	2021	<MLS> Added SetOffset() & BumpOffset()
 //*	Sep  4,	2021	<MLS> Added AlpacaGetStartupData_OneAAT()
+//*	Nov 16,	2021	<MLS> fitsview now handles color fits images (8 bit)
+//*	Dec 12, 2021	<MLS> ImageArray now has RGB correct
+//*	Dec 16,	2021	<MLS> Added support for percentcompleted
+//*	Dec 16,	2021	<MLS> Added UpdatePercentCompleted()
+//*	Dec 17,	2021	<MLS> Added support for canstopexposure
 //*****************************************************************************
 //*	Jan  1,	2121	<TODO> control key for different step size.
-//*	Jan  1,	2121	<TODO> work on fits view to handle color fits images
 //*	Jan  1,	2121	<TODO> add error list window
 //*	Jan  1,	2121	<TODO> save cross hair location
 //*	Jan  1,	2121	<TODO> finish exposure step options
@@ -116,6 +120,7 @@ int		iii;
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 
 	memset(&cCameraProp, 0, sizeof(TYPE_CameraProperties));
+	strcpy(cAlpacaDeviceTypeStr,	"camera");
 
 
 	cFirstDataRead			=	true;
@@ -137,11 +142,19 @@ int		iii;
 	cSideBar				=	false;
 
 	cHas_autoexposure		=	false;
+	cHas_displayimage		=	false;
 	cHas_exposuretime		=	false;
 	cHas_filelist			=	false;
+	cHas_filenameoptions	=	false;
 	cHas_livemode			=	false;
 	cHas_rgbarray			=	false;
 	cHas_sidebar			=	false;
+	cHas_SaveAll			=	false;
+
+	//*	download status stuff
+	cPrevProgessValue		=	0.0;
+	cProgressUpdates		=	0;
+	cProgressReDraws		=	0;
 
 	cReadData8Bit			=	false;
 
@@ -180,10 +193,11 @@ int		iii;
 		cDeviceAddress	=	alpacaDevice->deviceAddress;
 		cPort			=	alpacaDevice->port;
 
-		strcpy(cAlpacaDeviceTypeStr,	alpacaDevice->deviceTypeStr);
 		strcpy(cAlpacaDeviceNameStr,	alpacaDevice->deviceNameStr);
 
-		AlpacaSetConnected("camera", true);
+
+		CheckConnectedState();		//*	check connected and connect if not already connected
+
 		GetConfiguredDevices();
 	}
 	else
@@ -443,6 +457,11 @@ void	ControllerCamera::UpdateCameraTemperature(void)
 //	CONSOLE_DEBUG("this routine should be overloaded");
 }
 //*****************************************************************************
+void	ControllerCamera::UpdatePercentCompleted(void)
+{
+//	CONSOLE_DEBUG("this routine should be overloaded");
+}
+//*****************************************************************************
 void	ControllerCamera::UpdateCoolerState(void)
 {
 //	CONSOLE_DEBUG("this routine should be overloaded");
@@ -656,7 +675,11 @@ int				readOutModeIdx;
 		validData	=	AlpacaGetDoubleValue("camera", "exposuremin",	NULL,	&cCameraProp.ExposureMin_seconds);
 		validData	=	AlpacaGetDoubleValue("camera", "exposuremax",	NULL,	&cCameraProp.ExposureMax_seconds);
 		UpdateCameraExposure();
+
+		validData	=	AlpacaGetBooleanValue(	"camera", "canstopexposure",	NULL,	&cCameraProp.CanStopExposure);
+		UpdateCameraState();
 	}
+
 	return(validData);
 
 }
@@ -871,6 +894,11 @@ void	ControllerCamera::AlpacaProcessReadAll(	const char	*deviceTypeStr,
 		cCameraProp.CameraYsize	=	atoi(valueString);
 		UpdateCameraSize();
 	}
+	else if (strcasecmp(keywordString, "canstopexposure") == 0)
+	{
+		cCameraProp.CanStopExposure	=	IsTrueFalse(valueString);
+		UpdateCommonProperties();
+	}
 	else if (strcasecmp(keywordString, "ccdtemperature") == 0)
 	{
 //		CONSOLE_DEBUG("ccdtemperature");
@@ -962,6 +990,11 @@ void	ControllerCamera::AlpacaProcessReadAll(	const char	*deviceTypeStr,
 		cCameraProp.Offset	=	atoi(valueString);
 		UpdateCameraOffset();
 	}
+	else if (strcasecmp(keywordString, "percentcompleted") == 0)
+	{
+		//=================================================================================
+		//*	percentcompleted
+	}
 	else if (strcasecmp(keywordString, "readoutmode") == 0)
 	{
 //		CONSOLE_DEBUG("readoutmode");
@@ -989,6 +1022,8 @@ void	ControllerCamera::AlpacaProcessReadAll(	const char	*deviceTypeStr,
 		UpdateRemoteAlpacaVersion();
 
 	}
+
+
 }
 
 //*****************************************************************************
@@ -996,7 +1031,7 @@ bool	ControllerCamera::AlpacaGetStatus_Gain(void)
 {
 bool			validData;
 
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 
 	//=================================================================================
 	//*	gain
@@ -1119,10 +1154,10 @@ int				argInt;
 													NULL,
 													&cCameraProp.CCDtemperature,
 													&tempDataValid);
-			if (cLastAlpacaErrNum != 0)
-			{
-				CONSOLE_DEBUG_W_NUM("cLastAlpacaErrNum\t", cLastAlpacaErrNum);
-			}
+//			if (cLastAlpacaErrNum != 0)
+//			{
+//				CONSOLE_DEBUG_W_NUM("cLastAlpacaErrNum\t", cLastAlpacaErrNum);
+//			}
 
 			if (validData)
 			{
@@ -1133,7 +1168,7 @@ int				argInt;
 				}
 				else
 				{
-					CONSOLE_DEBUG_W_NUM("cLastAlpacaErrNum\t", cLastAlpacaErrNum);
+//					CONSOLE_DEBUG_W_NUM("cLastAlpacaErrNum\t", cLastAlpacaErrNum);
 		//			CONSOLE_DEBUG("Failed to read ccdtemperature");
 					if (cLastAlpacaErrNum == kASCOM_Err_NotImplemented)
 					{
@@ -1160,10 +1195,10 @@ int				argInt;
 			validData	=	AlpacaGetBooleanValue(	"camera", "cooleron",	NULL,	&cCameraProp.CoolerOn);
 			if (validData)
 			{
-				if (cLastAlpacaErrNum != 0)
-				{
-					CONSOLE_DEBUG_W_NUM("cLastAlpacaErrNum\t", cLastAlpacaErrNum);
-				}
+//				if (cLastAlpacaErrNum != 0)
+//				{
+//					CONSOLE_DEBUG_W_NUM("cLastAlpacaErrNum\t", cLastAlpacaErrNum);
+//				}
 				if (cLastAlpacaErrNum == kASCOM_Err_NotImplemented)
 				{
 					CONSOLE_DEBUG("Disabling cooler checking, not implemented");
@@ -1187,6 +1222,22 @@ int				argInt;
 		if (validData)
 		{
 			UpdateCurrReadoutMode();
+		}
+		else
+		{
+			failedCnt++;
+			cOnLine	=	false;
+		}
+	}
+
+	//=================================================================================
+	//*	percentcompleted
+	if (cOnLine)
+	{
+		validData	=	AlpacaGetIntegerValue(	"camera", "percentcompleted",	NULL,	&cCameraProp.PercentCompleted);
+		if (validData)
+		{
+			UpdatePercentCompleted();
 		}
 		else
 		{
@@ -1284,10 +1335,10 @@ bool	previousOnLineState;
 	}
 	else
 	{
-		CONSOLE_DEBUG("Calling AlpacaGetCommonConnectedState()");
+//		CONSOLE_DEBUG("Calling AlpacaGetCommonConnectedState()");
 		validData	=	AlpacaGetCommonConnectedState("camera");
 
-		CONSOLE_DEBUG("Calling AlpacaGetStatus_OneAAT()");
+//		CONSOLE_DEBUG("Calling AlpacaGetStatus_OneAAT()");
 		validData	=	AlpacaGetStatus_OneAAT();	//*	One At A Time
 	}
 //	CONSOLE_DEBUG_W_STR("ValidData", (validData ? "True" : "FALSE"));
@@ -1684,7 +1735,7 @@ char			parameterString[128];
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
-	UpdateReceivedFileName("unkown");
+	UpdateReceivedFileName("unknown");
 	AlpacaDisplayErrorMessage("---");
 
 	//*	my drivers have extra commands, readall and live mode.
@@ -1827,7 +1878,7 @@ int			pixIdx;
 }
 
 //*****************************************************************************
-IplImage	*ControllerCamera::DownloadImage_imagearray(const bool force8BitRead)
+IplImage	*ControllerCamera::DownloadImage_imagearray(const bool force8BitRead, const bool allowBinary)
 {
 IplImage		*myOpenCVimage	=	NULL;
 int				pixelCount;
@@ -1845,6 +1896,8 @@ int				buffSize;
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG_W_NUM("cCameraProp.CameraXsize\t=",	cCameraProp.CameraXsize);
 	CONSOLE_DEBUG_W_NUM("cCameraProp.CameraYsize\t=",	cCameraProp.CameraYsize);
+	CONSOLE_DEBUG_W_NUM("force8BitRead\t\t=",	force8BitRead);
+	CONSOLE_DEBUG_W_NUM("allowBinary\t\t=",		allowBinary);
 
 	imageArray		=	NULL;
 	pixelCount		=	cCameraProp.CameraXsize * cCameraProp.CameraYsize;
@@ -1864,6 +1917,7 @@ int				buffSize;
 												cAlpacaDevNum,
 												"imagearray",
 												"",
+												allowBinary,
 												imageArray,
 												pixelCount,
 												&valuesRead);
@@ -1890,11 +1944,11 @@ int				buffSize;
 					START_TIMING();
 					iii	=	0;
 					//*	stepping ACROSS the field
-					for (xxx=0; xxx<myOpenCVimage->width; xxx++)
+					for (xxx=0; xxx < myOpenCVimage->width; xxx++)
 					{
 						pixIdxRowStart	=	0;
 						//*	stepping DOWN the column
-						for (yyy=0; yyy<myOpenCVimage->height; yyy++)
+						for (yyy=0; yyy < myOpenCVimage->height; yyy++)
 						{
 							pixIdx	=	pixIdxRowStart + (xxx * 3);
 
@@ -1923,6 +1977,10 @@ int				buffSize;
 					CONSOLE_DEBUG_W_NUM("iii\t\t=",		iii);
 				}
 			}
+			else
+			{
+				CONSOLE_DEBUG("imgRank is invalid");
+			}
 			free(imageArray);
 		}
 		else
@@ -1938,11 +1996,11 @@ int				buffSize;
 }
 
 //*****************************************************************************
-IplImage	*ControllerCamera::DownloadImage(const bool force8BitRead)
+IplImage	*ControllerCamera::DownloadImage(const bool force8BitRead,  const bool allowBinary)
 {
 IplImage	*myOpenCVimage	=	NULL;
 
-	myOpenCVimage	=	DownloadImage_imagearray(force8BitRead);
+	myOpenCVimage	=	DownloadImage_imagearray(force8BitRead, allowBinary);
 
 	return(myOpenCVimage);
 }

@@ -12,7 +12,7 @@
 	extern "C" {
 #endif
 
-#define		kReadBuffLen		2000
+#define		kReadBuffLen		5000
 #define		kLargeBufferSize	12000
 
 
@@ -28,12 +28,14 @@ bool	SendPutCommand(		struct sockaddr_in	*deviceAddress,
 							const char			*dataString,
 							SJP_Parser_t		*jsonParser);
 
-
+#define	READ_BINARY_IMAGE		true
+#define	READ_JSON_IMAGE			false
 int		OpenSocketAndSendRequest(	struct sockaddr_in	*deviceAddress,
 									const int			port,
 									const char			*get_put_string,	//*	must be either GET or PUT
 									const char			*sendData,
-									const char			*dataString);
+									const char			*dataString,
+									const bool			includeImageBinary);
 
 #ifdef __cplusplus
 }

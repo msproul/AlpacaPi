@@ -98,6 +98,7 @@ char	ipAddrStr[32];
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
+	strcpy(cAlpacaDeviceTypeStr,	"slittracker");
 
 	cLogSlitData			=	false;
 	cSlitDataLogFilePtr		=	NULL;
@@ -129,6 +130,7 @@ char	ipAddrStr[32];
 	//	cDomeAlpacaDeviceNum	=	cPort;
 	#endif
 
+		CheckConnectedState();		//*	check connected and connect if not already connected
 	}
 
 	inet_ntop(AF_INET, &(cDeviceAddress.sin_addr), ipAddrStr, INET_ADDRSTRLEN);
@@ -155,7 +157,6 @@ char	ipAddrStr[32];
 	OpenSlitTrackerPort();
 #endif // _SLIT_TRACKER_DIRECT_
 
-	AlpacaSetConnected("slittracker", true);
 #ifdef _USE_BACKGROUND_THREAD_
 	StartBackgroundThread();
 #endif // _USE_BACKGROUND_THREAD_

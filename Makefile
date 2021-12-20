@@ -1580,6 +1580,7 @@ CONTROLLER_OBJECTS=												\
 				$(OBJECT_DIR)controller_focus_generic.o			\
 				$(OBJECT_DIR)controller_switch.o				\
 				$(OBJECT_DIR)controller_camera.o				\
+				$(OBJECT_DIR)controllerImageArray.o				\
 				$(OBJECT_DIR)controller_cam_normal.o			\
 				$(OBJECT_DIR)controller_dome.o					\
 				$(OBJECT_DIR)controller_dome_common.o			\
@@ -1724,7 +1725,9 @@ SKYTRAVEL_OBJECTS=											\
 				$(OBJECT_DIR)aavso_data.o					\
 				$(OBJECT_DIR)ConstellationData.o			\
 				$(OBJECT_DIR)controller_camera.o			\
+				$(OBJECT_DIR)controllerImageArray.o			\
 				$(OBJECT_DIR)controller_cam_normal.o		\
+				$(OBJECT_DIR)controller_constList.o			\
 				$(OBJECT_DIR)controller_covercalib.o		\
 				$(OBJECT_DIR)controller_dome.o				\
 				$(OBJECT_DIR)controller_dome_common.o		\
@@ -1742,6 +1745,7 @@ SKYTRAVEL_OBJECTS=											\
 				$(OBJECT_DIR)cpu_stats.o					\
 				$(OBJECT_DIR)eph.o							\
 				$(OBJECT_DIR)fits_opencv.o					\
+				$(OBJECT_DIR)GaiaData.o						\
 				$(OBJECT_DIR)helper_functions.o				\
 				$(OBJECT_DIR)HipparcosCatalog.o				\
 				$(OBJECT_DIR)moonlite_com.o					\
@@ -1752,6 +1756,7 @@ SKYTRAVEL_OBJECTS=											\
 				$(OBJECT_DIR)nitecrawler_image.o			\
 				$(OBJECT_DIR)observatory_settings.o			\
 				$(OBJECT_DIR)polaralign.o					\
+				$(OBJECT_DIR)RemoteImage.o					\
 				$(OBJECT_DIR)sidereal.o						\
 				$(OBJECT_DIR)StarCatalogHelper.o			\
 				$(OBJECT_DIR)skytravel_main.o				\
@@ -1764,6 +1769,7 @@ SKYTRAVEL_OBJECTS=											\
 				$(OBJECT_DIR)windowtab_camsettings.o		\
 				$(OBJECT_DIR)windowtab_capabilities.o		\
 				$(OBJECT_DIR)windowtab_config.o				\
+				$(OBJECT_DIR)windowtab_constList.o			\
 				$(OBJECT_DIR)windowtab_covercalib.o			\
 				$(OBJECT_DIR)windowtab_deviceselect.o		\
 				$(OBJECT_DIR)windowtab_dome.o				\
@@ -1776,6 +1782,7 @@ SKYTRAVEL_OBJECTS=											\
 				$(OBJECT_DIR)windowtab_ml_single.o			\
 				$(OBJECT_DIR)windowtab_moon.o				\
 				$(OBJECT_DIR)windowtab_nitecrawler.o		\
+				$(OBJECT_DIR)windowtab_RemoteData.o			\
 				$(OBJECT_DIR)windowtab_slit.o				\
 				$(OBJECT_DIR)windowtab_slitgraph.o			\
 				$(OBJECT_DIR)windowtab_skytravel.o			\
@@ -2443,6 +2450,16 @@ $(OBJECT_DIR)controller_camera.o : 		$(SRC_DIR)controller_camera.cpp		\
 										$(SRC_DIR)controller.h
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)controller_camera.cpp -o$(OBJECT_DIR)controller_camera.o
 
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)controllerImageArray.o : 	$(SRC_DIR)controllerImageArray.cpp	\
+										$(SRC_DIR)controller_fw_common.cpp	\
+										$(SRC_DIR)controller_camera.h		\
+										$(SRC_DIR)windowtab_camera.h		\
+										$(SRC_DIR)windowtab_about.h			\
+										$(SRC_DIR)controller.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)controllerImageArray.cpp -o$(OBJECT_DIR)controllerImageArray.o
+
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)controller_cam_normal.o : 	$(SRC_DIR)controller_cam_normal.cpp		\
 										$(SRC_DIR)controller_cam_normal.h		\
@@ -2850,6 +2867,12 @@ $(OBJECT_DIR)windowtab_STsettings.o :	$(SRC_SKYTRAVEL)windowtab_STsettings.cpp	\
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYTRAVEL)windowtab_STsettings.cpp -o$(OBJECT_DIR)windowtab_STsettings.o
 
 #-------------------------------------------------------------------------------------
+$(OBJECT_DIR)windowtab_RemoteData.o :	$(SRC_SKYTRAVEL)windowtab_RemoteData.cpp	\
+										$(SRC_SKYTRAVEL)windowtab_RemoteData.h		\
+										$(SRC_SKYTRAVEL)RemoteImage.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYTRAVEL)windowtab_RemoteData.cpp -o$(OBJECT_DIR)windowtab_RemoteData.o
+
+#-------------------------------------------------------------------------------------
 $(OBJECT_DIR)eph.o :					$(SRC_SKYTRAVEL)eph.c	\
 										$(SRC_SKYTRAVEL)eph.h
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYTRAVEL)eph.c -o$(OBJECT_DIR)eph.o
@@ -2886,6 +2909,12 @@ $(OBJECT_DIR)ConstellationData.o :		$(SRC_SKYTRAVEL)ConstellationData.c	\
 										$(SRC_SKYTRAVEL)ConstellationData.h
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYTRAVEL)ConstellationData.c -o$(OBJECT_DIR)ConstellationData.o
 
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)GaiaData.o :				$(SRC_SKYTRAVEL)GaiaData.c	\
+										$(SRC_SKYTRAVEL)GaiaData.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYTRAVEL)GaiaData.c -o$(OBJECT_DIR)GaiaData.o
+
+
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)controller_starlist.o : 	$(SRC_SKYTRAVEL)controller_starlist.cpp	\
@@ -2901,6 +2930,27 @@ $(OBJECT_DIR)windowtab_starlist.o : 	$(SRC_SKYTRAVEL)windowtab_starlist.cpp	\
 										$(SRC_DIR)windowtab.h					\
 										$(SRC_DIR)controller.h
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYTRAVEL)windowtab_starlist.cpp -o$(OBJECT_DIR)windowtab_starlist.o
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)windowtab_constList.o :	$(SRC_SKYTRAVEL)windowtab_constList.cpp	\
+												$(SRC_SKYTRAVEL)windowtab_constList.h	\
+												$(SRC_DIR)windowtab.h					\
+												$(SRC_DIR)controller.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYTRAVEL)windowtab_constList.cpp -o$(OBJECT_DIR)windowtab_constList.o
+
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)controller_constList.o : 	$(SRC_SKYTRAVEL)controller_constList.cpp			\
+												$(SRC_SKYTRAVEL)controller_constList.h		\
+												$(SRC_DIR)windowtab_about.h					\
+												$(SRC_DIR)controller.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYTRAVEL)controller_constList.cpp -o$(OBJECT_DIR)controller_constList.o
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)RemoteImage.o : 			$(SRC_SKYTRAVEL)RemoteImage.cpp	\
+										$(SRC_SKYTRAVEL)RemoteImage.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYTRAVEL)RemoteImage.cpp -o$(OBJECT_DIR)RemoteImage.o
+
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)lx200_com.o :				$(SRC_DIR)lx200_com.c	\

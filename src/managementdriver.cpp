@@ -565,3 +565,9 @@ bool	foundIt;
 	foundIt	=	GetCmdNameFromTable(cmdNumber, comandName, gManagementCmdTable, getPut);
 	return(foundIt);
 }
+
+//*****************************************************************************
+void	ManagementDriver::WatchDog_TimeOut(void)
+{
+	//*	easiest way to make sure management driver doesnt do anything
+}

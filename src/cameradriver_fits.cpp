@@ -646,15 +646,15 @@ int				iii;
 			fits_write_key(fitsFilePtr, TSTRING,	"COMMENT",
 													(char *)"This FITS file does not contain any data, header only",
 													NULL, &fitsStatus);
-			if (cAVIfourcc != 0)
+			if (cAVIfourCC != 0)
 			{
 			char	aviString[8];
 			char	commentString[80];
 
-				aviString[0]	=	(cAVIfourcc & 0x00ff);
-				aviString[1]	=	((cAVIfourcc >> 8) & 0x00ff);
-				aviString[2]	=	((cAVIfourcc >> 16) & 0x00ff);
-				aviString[3]	=	((cAVIfourcc >> 24) & 0x00ff);
+				aviString[0]	=	(cAVIfourCC & 0x00ff);
+				aviString[1]	=	((cAVIfourCC >> 8) & 0x00ff);
+				aviString[2]	=	((cAVIfourCC >> 16) & 0x00ff);
+				aviString[3]	=	((cAVIfourCC >> 24) & 0x00ff);
 				aviString[4]	=	0;
 				sprintf(commentString, "AVI format (codec): %s", aviString);
 				fits_write_key(fitsFilePtr, TSTRING,	"COMMENT",

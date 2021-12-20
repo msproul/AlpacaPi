@@ -22,6 +22,8 @@
 //*	Jan 21,	2021	<MLS> Added sortable columns
 //*	May 26,	2021	<MLS> Added support for FilterWheel controller window
 //*	Oct  6,	2021	<MLS> Added support for Slittracker controller window
+//*	Dec  6,	2021	<MLS> Added scrolling to alpaca device list
+//*	Dec 18,	2021	<MLS> Added inverted sort order to alpaca device list
 //*****************************************************************************
 
 #include	<stdlib.h>
@@ -61,6 +63,7 @@ WindowTabAlpacaList::WindowTabAlpacaList(	const int	xSize,
 	cPrevAlpacaDevCnt	=	0;
 	cIncludeManagment	=	false;
 	cSortColumn			=	-1;
+	cFirstLineIdx		=	0;
 
 	ClearRemoteDeviceList();
 
@@ -80,6 +83,7 @@ void	WindowTabAlpacaList::SetupWindowControls(void)
 {
 int		xLoc;
 int		yLoc;
+int		yLoc2;
 int		textBoxHt;
 int		textBoxWd;
 int		widgetWidth;
@@ -195,6 +199,18 @@ int		clmnHdrWidth;
 
 	yLoc			+=	cTitleHeight;
 	yLoc			+=	2;
+
+	//---------------------------------------------------------------------
+	//*	set up the vertical scroll bar
+	xLoc			=	5;
+	yLoc2			=	cTabVertOffset;
+	yLoc2			+=	cTitleHeight;
+	yLoc2			+=	2;
+	SetWidget(					kAlpacaList_ScrollBar,	(cWidth - 20),		yLoc2,		15,		600);
+	SetWidgetType(				kAlpacaList_ScrollBar,	kWidgetType_ScrollBar);
+	SetWidgetFont(				kAlpacaList_ScrollBar,	kFont_Small);
+	SetWidgetScrollBarLimits(	kAlpacaList_ScrollBar, (kAlpacaList_AlpacaDev_Last - kAlpacaList_AlpacaDev_01), 100);
+	SetWidgetScrollBarValue(	kAlpacaList_ScrollBar, 50);
 
 	SetAlpacaLogoBottomCorner(kAlpacaList_AlpacaLogo);
 
@@ -317,9 +333,14 @@ bool	interfaceVersOK;
 	}
 }
 
+static int	gSortColumn;
+static bool	gInvertSort_StarList	=	false;
+
 //*****************************************************************************
 void	WindowTabAlpacaList::ProcessButtonClick(const int buttonIdx)
 {
+int	newSortColumn;
+
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	switch(buttonIdx)
@@ -329,7 +350,16 @@ void	WindowTabAlpacaList::ProcessButtonClick(const int buttonIdx)
 		case kAlpacaList_ClmTitle3:
 		case kAlpacaList_ClmTitle4:
 		case kAlpacaList_ClmTitle5:
-			cSortColumn	=	buttonIdx - kAlpacaList_ClmTitle1;
+			newSortColumn	=	buttonIdx - kAlpacaList_ClmTitle1;
+			if (newSortColumn == cSortColumn)
+			{
+				gInvertSort_StarList	=	!gInvertSort_StarList;
+			}
+			else
+			{
+				gInvertSort_StarList	=	false;
+			}
+			cSortColumn		=	newSortColumn;
 			UpdateSortOrder();
 			ForceUpdate();
 			break;
@@ -367,6 +397,8 @@ bool	windowExists;
 	if ((widgetIdx >= kAlpacaList_AlpacaDev_01) && (widgetIdx <= kAlpacaList_AlpacaDev_Last))
 	{
 		deviceIdx	=	widgetIdx - kAlpacaList_AlpacaDev_01;
+		deviceIdx	+=	cFirstLineIdx;	//*	adjust for the scrolling
+
 		if (deviceIdx >= 0)
 		{
 			if (strlen(cRemoteDeviceList[deviceIdx].hostName) > 0)
@@ -516,6 +548,36 @@ bool	windowExists;
 	}
 }
 
+//*****************************************************************************
+void	WindowTabAlpacaList::ProcessMouseWheelMoved(const int widgetIdx, const int event, const int xxx, const int yyy, const int wheelMovement)
+{
+//	CONSOLE_DEBUG_W_NUM(__FUNCTION__, wheelMovement);
+
+	cFirstLineIdx	+=	wheelMovement;
+	if (cFirstLineIdx < 0)
+	{
+		cFirstLineIdx	=	0;
+	}
+	UpdateOnScreenWidgetList();
+	ForceUpdate();
+}
+
+//*****************************************************************************
+void	WindowTabAlpacaList::UpdateSliderValue(const int	widgetIdx, double newSliderValue)
+{
+
+	CONSOLE_DEBUG(__FUNCTION__);
+
+	switch(widgetIdx)
+	{
+		case kAlpacaList_ScrollBar:
+			break;
+
+	}
+
+	ForceUpdate();
+}
+
 //**************************************************************************************
 void	WindowTabAlpacaList::ClearRemoteDeviceList(void)
 {
@@ -527,7 +589,7 @@ int		iii;
 		SetWidgetText(			iii,	"");
 	}
 
-	for (iii=0; iii<kMaxDeviceCnt; iii++)
+	for (iii=0; iii<kMaxAlpacaDeviceCnt; iii++)
 	{
 		memset(&cRemoteDeviceList[iii], 0, sizeof(TYPE_REMOTE_DEV));
 	}
@@ -551,20 +613,18 @@ bool	includeDevice;
 int		foundIndex;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
-//	CONSOLE_DEBUG_W_NUM("gRemoteCnt\t=", gRemoteCnt);
+//	CONSOLE_DEBUG_W_NUM("gRemoteCnt\t\t=", gRemoteCnt);
+//	CONSOLE_DEBUG_W_NUM("kMaxAlpacaDeviceCnt\t=", kMaxAlpacaDeviceCnt);
 
 	for (iii=0; iii<gRemoteCnt; iii++)
 	{
 		//*	first, see if this device is already in our list.
-		foundIndex		=	FindDeviceInList(&gRemoteList[iii], cRemoteDeviceList, kMaxDeviceCnt);
-		if (foundIndex >= 0)
-		{
-			//*	its already in the list
-		}
-		else
+		foundIndex		=	FindDeviceInList(&gRemoteList[iii], cRemoteDeviceList, kMaxAlpacaDeviceCnt);
+		if (foundIndex < 0)
 		{
 			includeDevice	=	true;
 
+			//*	normally we do not want to display the management devices
 			//		CONSOLE_DEBUG_W_STR("deviceTypeStr\t=", gRemoteList[iii].deviceTypeStr);
 			if ((cIncludeManagment == false) && (strcasecmp(gRemoteList[iii].deviceTypeStr, "management") == 0))
 			{
@@ -572,17 +632,30 @@ int		foundIndex;
 			}
 			if (includeDevice)
 			{
-				if (cAlpacaDevCnt < kMaxDeviceCnt)
+				if (cAlpacaDevCnt < kMaxAlpacaDeviceCnt)
 				{
 					cRemoteDeviceList[cAlpacaDevCnt]			=	gRemoteList[iii];
 					cRemoteDeviceList[cAlpacaDevCnt].validEntry	=	true;
 					cRemoteDeviceList[cAlpacaDevCnt].onLine		=	true;
 
 					cAlpacaDevCnt++;
+//					CONSOLE_DEBUG_W_NUM("cAlpacaDevCnt\t=", cAlpacaDevCnt);
+				}
+				else
+				{
+					CONSOLE_DEBUG_W_NUM("cAlpacaDevCnt exceeded max count\t=", kMaxAlpacaDeviceCnt);
+					CONSOLE_ABORT(__FUNCTION__);
 				}
 			}
 		}
+	//	else
+	//	{
+	//		//*	its already in the list
+	//	}
 	}
+
+//	CONSOLE_DEBUG_W_NUM("gRemoteCnt\t\t=", gRemoteCnt);
+//	CONSOLE_DEBUG_W_NUM("cAlpacaDevCnt\t\t=", cAlpacaDevCnt);
 
 	//*	now update the widget text
 	UpdateOnScreenWidgetList();
@@ -601,33 +674,37 @@ int		boxId;
 int		iii;
 char	textString[128];
 char	ipAddrStr[32];
-int		myDevCount;
+int		deviceIdx;
+int		linesOnScreen;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG_W_NUM("kMaxAlpacaDeviceCnt\t=", kMaxAlpacaDeviceCnt);
 
-	iii			=	0;
-	myDevCount	=	0;
-	boxId		=	0;
-	while ((iii < kMaxDeviceCnt))
+	iii				=	0;
+	boxId			=	0;
+	linesOnScreen	=	(kAlpacaList_AlpacaDev_Last - kAlpacaList_AlpacaDev_01) + 1;
+//	CONSOLE_DEBUG_W_NUM("linesOnScreen\t=", linesOnScreen);
+	while (iii < linesOnScreen)
 	{
-		boxId	=	iii + kAlpacaList_AlpacaDev_01;
-		if ((boxId <= kAlpacaList_AlpacaDev_Last) && (cRemoteDeviceList[iii].validEntry))
+		boxId		=	iii + kAlpacaList_AlpacaDev_01;
+		deviceIdx	=	cFirstLineIdx + iii;
+		if ((boxId <= kAlpacaList_AlpacaDev_Last) && (deviceIdx < gRemoteCnt) && (cRemoteDeviceList[deviceIdx].validEntry))
 		{
-			inet_ntop(AF_INET, &(cRemoteDeviceList[iii].deviceAddress.sin_addr), ipAddrStr, INET_ADDRSTRLEN);
+			inet_ntop(AF_INET, &(cRemoteDeviceList[deviceIdx].deviceAddress.sin_addr), ipAddrStr, INET_ADDRSTRLEN);
 
 			sprintf(textString, "%s:%d\t%s\t%s\t%s\t%d",
 									ipAddrStr,
-									cRemoteDeviceList[iii].port,
-									cRemoteDeviceList[iii].hostName,
-									cRemoteDeviceList[iii].deviceTypeStr,
-									cRemoteDeviceList[iii].deviceNameStr,
-									cRemoteDeviceList[iii].interfaceVersion);
+									cRemoteDeviceList[deviceIdx].port,
+									cRemoteDeviceList[deviceIdx].hostName,
+									cRemoteDeviceList[deviceIdx].deviceTypeStr,
+									cRemoteDeviceList[deviceIdx].deviceNameStr,
+									cRemoteDeviceList[deviceIdx].interfaceVersion);
 
 
 			SetWidgetText(boxId, textString);
 
 
-			switch(cRemoteDeviceList[iii].deviceTypeEnum)
+			switch(cRemoteDeviceList[deviceIdx].deviceTypeEnum)
 			{
 				case kDeviceType_Camera:
 					SetWidgetTextColor(		boxId,	CV_RGB(255,	255,	0));		//*	yellow
@@ -667,8 +744,6 @@ int		myDevCount;
 					SetWidgetTextColor(		boxId,	CV_RGB(255,	255,	255));
 					break;
 			}
-
-			myDevCount++;
 		}
 		else if (boxId <= kAlpacaList_AlpacaDev_Last)
 		{
@@ -677,14 +752,15 @@ int		myDevCount;
 		}
 		else
 		{
-		//	CONSOLE_DEBUG_W_NUM("iii\t=", iii);
+			CONSOLE_DEBUG_W_NUM("iii\t=", iii);
 			break;
 		}
 		iii++;
 	}
+//	CONSOLE_DEBUG_W_NUM("gRemoteCnt\t\t=", gRemoteCnt);
 
 
-	sprintf(textString, "Total Alpaca Devices found=%d", myDevCount);
+	sprintf(textString, "Total Alpaca Devices found=%d", gRemoteCnt);
 	SetWidgetText(kAlpacaList_AlpacaDev_Total, textString);
 
 	SetWidgetBGColor(kAlpacaList_ClmTitle1,	((cSortColumn == 0) ? CV_RGB(255,	255,	255) : CV_RGB(128,	128,	128)));
@@ -695,7 +771,6 @@ int		myDevCount;
 
 }
 
-static int	gSortColumn;
 
 //**************************************************************************************
 static  int RemoteObjectQsortProc(const void *e1, const void *e2)
@@ -766,20 +841,36 @@ static  int RemoteObjectQsortProc(const void *e1, const void *e2)
 		{
 			returnValue	=	1;
 		}
+
+		if (returnValue == 0)
+		{
+			//*	if they are still the same, check port number
+			if (obj1->port < obj2->port)
+			{
+				returnValue	=	-1;
+			}
+			else if (obj1->port > obj2->port)
+			{
+				returnValue	=	1;
+			}
+		}
 	}
 
 //	CONSOLE_DEBUG_W_NUM("returnValue\t=", returnValue);
+	if (gInvertSort_StarList)
+	{
+		returnValue	=	-returnValue;
+	}
 
 	return(returnValue);
-
 }
 
 
 //**************************************************************************************
 void	WindowTabAlpacaList::UpdateSortOrder(void)
 {
-//	CONSOLE_DEBUG(__FUNCTION__);
-//	CONSOLE_DEBUG_W_NUM("cAlpacaDevCnt\t=", cAlpacaDevCnt);
+	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_NUM("cAlpacaDevCnt\t=", cAlpacaDevCnt);
 
 	if (cSortColumn >= 0)
 	{

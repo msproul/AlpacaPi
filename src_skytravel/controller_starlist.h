@@ -17,7 +17,10 @@
 
 
 
-void	CreateStarlistWindow(const char *windowName, TYPE_CelestData *starListPtr, int starListCount);
+void	CreateStarlistWindow(	const char		*windowName,
+								TYPE_CelestData	*starListPtr,
+								const int		starListCount,
+								const char		*clmOneTitle = NULL);
 
 //**************************************************************************************
 class ControllerStarlist: public Controller
@@ -28,7 +31,8 @@ class ControllerStarlist: public Controller
 		//
 				ControllerStarlist(	const char		*argWindowName,
 									TYPE_CelestData	*argStarList,
-									int				argStarListCount);
+									int				argStarListCountt,
+									const char		*clmOneTitle = NULL);
 
 
 		virtual	~ControllerStarlist(void);

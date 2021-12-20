@@ -294,7 +294,7 @@ int				newCenterPtCnt;
 					myCenterPoint.dataSrc			=	kDataSrc_PolarAlignCenter;
 					strcpy(myCenterPoint.shortName,	centerPtName);
 					strcpy(myCenterPoint.longName,	centerPtName);
-					myCenterPoint.realMagnitude		=	1;
+					myCenterPoint.realMagnitude		=	0;
 					myCenterPoint.magn				=	ST_STAR;
 
 //					CONSOLE_DEBUG_W_STR("longName\t=", myCenterPoint.longName);
@@ -358,7 +358,7 @@ int				newCenterPtCnt;
 			myCenterPoint.dataSrc			=	kDataSrc_PolarAlignCenter;
 			strcpy(myCenterPoint.shortName,	centerPtName);
 			strcpy(myCenterPoint.longName,	centerPtName);
-			myCenterPoint.realMagnitude		=	1;
+			myCenterPoint.realMagnitude		=	0;
 			myCenterPoint.magn				=	ST_STAR;
 
 			//*	now find a place in the array to put the new entry

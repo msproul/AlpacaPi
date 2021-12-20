@@ -559,10 +559,8 @@ int		bytesWritten	=	0;
 
 	if (jsonTextBuffer != NULL)
 	{
-//CONSOLE_DEBUG(__FUNCTION__);
 		fullDataBuffer[0]	=	0;
 		strcat(jsonTextBuffer, "}\r\n");
-//CONSOLE_DEBUG_W_NUM("len of jsonTextBuffer\t=", strlen(jsonTextBuffer));
 
 		if (strlen(jsonTextBuffer) >= sizeof(fullDataBuffer))
 		{
@@ -570,7 +568,7 @@ int		bytesWritten	=	0;
 			CONSOLE_ABORT("Buffer overflow!!!!!!!!!!!");
 		}
 
-CONSOLE_DEBUG_W_NUM("len of jsonTextBuffer\t=", strlen(jsonTextBuffer));
+		//CONSOLE_DEBUG_W_NUM("len of jsonTextBuffer\t=", strlen(jsonTextBuffer));
 		if (includeHeader)
 		{
 			JsonResponse_FinishHeader(	fullDataBuffer, jsonTextBuffer);

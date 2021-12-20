@@ -37,6 +37,7 @@ class ShutterArduino: public ShutterDriver
 		virtual	bool	OpenShutter(void);
 		virtual	bool	CloseShutter(void);
 		virtual	bool	StopShutter(void);
+		virtual	void	WatchDog_TimeOut(void);
 
 //				void	GetArduinoLog(void);
 

@@ -113,17 +113,35 @@ char	ipAddrStr[32];
 	CONSOLE_DEBUG(__FUNCTION__);
 
 	memset(&cDomeProp, 0, sizeof(TYPE_DomeProperties));
+	strcpy(cAlpacaDeviceTypeStr,	"dome");
 	cDomeProp.ShutterStatus	=	-1;
 
 #ifdef _ENABLE_EXTERNAL_SHUTTER_
 	cShutterInfoValid		=	false;
 #endif // _ENABLE_EXTERNAL_SHUTTER_
 #ifdef _ENABLE_SLIT_TRACKER_
+int		iii;
+
 	cSlitTrackerTabObjPtr	=	NULL;
 	cSlitTrackerInfoValid	=	false;
 	cLogSlitData			=	false;
 	cSlitDataLogFilePtr		=	NULL;
 	cValidGravity			=	false;
+
+	//*	initialize the slit distance detector
+	for (iii=0; iii<kSensorValueCnt; iii++)
+	{
+		gSlitDistance[iii].validData		=	false;
+		gSlitDistance[iii].distanceInches	=	0.0;
+		gSlitDistance[iii].readCount		=	0;
+	}
+
+	//*	initialize the slit distance log
+	for (iii=0; iii<kSlitLogCount; iii++)
+	{
+		memset(&gSlitLog[iii], 0, sizeof(TYPE_SLIT_LOG));
+	}
+	gSlitLogIdx	=	0;
 #endif // _ENABLE_SLIT_TRACKER_
 
 	//*	window object ptrs
@@ -152,29 +170,11 @@ char	ipAddrStr[32];
 	//	cDomeAlpacaDeviceNum	=	cPort;
 	#endif
 
+		CheckConnectedState();		//*	check connected and connect if not already connected
 	}
 
 	inet_ntop(AF_INET, &(cDeviceAddress.sin_addr), ipAddrStr, INET_ADDRSTRLEN);
 	CONSOLE_DEBUG_W_STR("IP address=", ipAddrStr);
-
-#ifdef _ENABLE_SLIT_TRACKER_
-int		iii;
-
-	//*	initialize the slit distance detector
-	for (iii=0; iii<kSensorValueCnt; iii++)
-	{
-		gSlitDistance[iii].validData		=	false;
-		gSlitDistance[iii].distanceInches	=	0.0;
-		gSlitDistance[iii].readCount		=	0;
-	}
-
-	//*	initialize the slit distance log
-	for (iii=0; iii<kSlitLogCount; iii++)
-	{
-		memset(&gSlitLog[iii], 0, sizeof(TYPE_SLIT_LOG));
-	}
-	gSlitLogIdx	=	0;
-#endif // _ENABLE_SLIT_TRACKER_
 
 
 	SetupWindowControls();
@@ -183,7 +183,6 @@ int		iii;
 	OpenSlitTrackerPort();
 #endif // _SLIT_TRACKER_DIRECT_
 
-	AlpacaSetConnected("dome", true);
 #ifdef _USE_BACKGROUND_THREAD_
 	StartBackgroundThread();
 #endif // _USE_BACKGROUND_THREAD_

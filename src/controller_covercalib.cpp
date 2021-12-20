@@ -77,6 +77,7 @@ ControllerCoverCalib::ControllerCoverCalib(	const char			*argWindowName,
 	:Controller(argWindowName, kWindowWidth,  kWindowHeight)
 {
 	memset(&cCoverCalibrationProp, 0, sizeof(TYPE_CoverCalibrationProperties));
+	strcpy(cAlpacaDeviceTypeStr,	"covercalibrator");
 
 	cCoverCalibTabObjPtr	=	NULL;
 	cDriverInfoTabObjPtr	=	NULL;
@@ -88,6 +89,7 @@ ControllerCoverCalib::ControllerCoverCalib(	const char			*argWindowName,
 		cDeviceAddress	=	*deviceAddress;
 		cPort			=	port;
 		cValidIPaddr	=	true;
+		CheckConnectedState();		//*	check connected and connect if not already connected
 	}
 
 	SetupWindowControls();
@@ -99,7 +101,6 @@ ControllerCoverCalib::ControllerCoverCalib(	const char			*argWindowName,
 
 	SetWidgetText(kTab_Cover,		kCoverCalib_AlpacaDrvrVersion,		gFullVersionString);
 
-	AlpacaSetConnected("covercalibrator", true);
 #ifdef _USE_BACKGROUND_THREAD_
 	StartBackgroundThread();
 #endif // _USE_BACKGROUND_THREAD_

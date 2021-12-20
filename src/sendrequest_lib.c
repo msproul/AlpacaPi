@@ -37,6 +37,7 @@
 //*	Mar 13,	2021	<MLS> Added send timeout
 //*	Sep  4,	2021	<MLS> Added microsecs arg to SetSocketTimeouts()
 //*	Sep  8,	2021	<MLS> Added "Connection: close" as per suggestion from Patrick Chevalley
+//*	Dec 14,	2021	<MLS> Added imagebytes option to OpenSocketAndSendRequest()
 //*****************************************************************************
 
 #include	<stdio.h>
@@ -110,7 +111,8 @@ int	OpenSocketAndSendRequest(	struct sockaddr_in	*deviceAddress,
 								const int			port,
 								const char			*get_put_string,	//*	must be either GET or PUT
 								const char			*sendData,
-								const char			*dataString)
+								const char			*dataString,
+								const bool			includeImageBinary)
 {
 int					socket_desc;
 struct sockaddr_in	remoteDev;
@@ -123,7 +125,8 @@ char				ipString[32];
 int					setOptRetCode;
 int					so_oobinline;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_NUM("includeImageBinary\t=", includeImageBinary);
 //	CONSOLE_DEBUG(sendData);
 	inet_ntop(AF_INET, &deviceAddress->sin_addr.s_addr, ipString, INET_ADDRSTRLEN);
 
@@ -169,7 +172,14 @@ int					so_oobinline;
 			sprintf(linebuf,	"Host: %s:%d\r\n", ipString, port);
 			strcat(xmitBuffer,	linebuf);
 			strcat(xmitBuffer,	"User-Agent: AlpacaPi\r\n");
-			strcat(xmitBuffer,	"Accept: text/html,application/json\r\n");
+
+			strcat(xmitBuffer,	"Accept: text/html,application/json");
+			if (includeImageBinary)
+			{
+				strcat(xmitBuffer,	",application/imagebytes");
+			}
+			strcat(xmitBuffer,	"\r\n");
+
 			strcat(xmitBuffer,	"Connection: close\r\n");
 //			strcat(xmitBuffer,	"Accept: application/json, text/json, text/x-json, text/javascript, application/xml, text/xml\r\n");
 //			strcat(xmitBuffer,	"Accept-Language: en-US,en;q=0.5\r\n");
@@ -307,6 +317,7 @@ int					readSuccessCnt;		//*	for debugging
 			strcat(xmitBuffer,	linebuf);
 			strcat(xmitBuffer,	"User-Agent: AlpacaPi\r\n");
 			strcat(xmitBuffer,	"Accept: text/html,application/json\r\n");
+
 			strcat(xmitBuffer,	"Accept-Language: en-US,en;q=0.5\r\n");
 			strcat(xmitBuffer,	"Connection: close\r\n");
 

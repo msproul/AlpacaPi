@@ -1,7 +1,7 @@
 //**************************************************************************
 //*	Name:			aavso_data.c
 //*
-//*	Author:			Mark Sproul (C) 20201
+//*	Author:			Mark Sproul (C) 2021
 //*					msproul@skychariot.com
 //*
 //*	Description:	Read AAVSO Target Tool data file
@@ -36,6 +36,7 @@
 
 #include	<string.h>
 #include	<stdlib.h>
+#include	<stdio.h>
 #include	<sys/types.h>
 #include	<sys/stat.h>
 #include	<fcntl.h>
@@ -44,7 +45,7 @@
 #include	<ctype.h>
 
 //*	MLS Libraries
-#define _ENABLE_CONSOLE_DEBUG_
+//#define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
 
 

@@ -11,6 +11,10 @@
 //*
 //*	Redistributions of this source code must retain this copyright notice.
 //*****************************************************************************
+//*	Edit History
+//*****************************************************************************
+//*	Nov 16,	2021	<MLS> ReadFITSimageIntoOpenCVimage() now handles 8 bit RGB fits files
+//*****************************************************************************
 
 #include	<string.h>
 #include	<stdio.h>
@@ -25,6 +29,7 @@
 #include	"ConsoleDebug.h"
 
 
+#include	"alpaca_defs.h"
 #include	"fits_opencv.h"
 
 //*****************************************************************************
@@ -40,8 +45,10 @@ long			bitpix;
 int				width;
 int				height;
 char			*pixelPtr;
-int				ii;
-//int				jj;
+char			*pixelBuffer;
+int				ccc;
+int				iii;
+int				jjj;
 //unsigned short	*uShortPtr;
 //short			nullval;
 long			firstPixel;
@@ -65,22 +72,69 @@ int				errorCnt;
 		//* read the NAXIS key words
 		status		=	0;
 		fitsRetCode	=	fits_read_keys_lng(fptr, "NAXIS", 1, 3, naxes, &nfound, &status);
-//		CONSOLE_DEBUG_W_NUM("nfound\t=",	nfound);
-//		CONSOLE_DEBUG_W_INT32("naxes[0]\t=",	naxes[0]);
-//		CONSOLE_DEBUG_W_INT32("naxes[1]\t=",	naxes[1]);
-//		CONSOLE_DEBUG_W_INT32("naxes[2]\t=",	naxes[2]);
+		CONSOLE_DEBUG_W_NUM("nfound\t=",	nfound);
+		CONSOLE_DEBUG_W_INT32("naxes[0]\t=",	naxes[0]);
+		CONSOLE_DEBUG_W_INT32("naxes[1]\t=",	naxes[1]);
+		CONSOLE_DEBUG_W_INT32("naxes[2]\t=",	naxes[2]);
 //		CONSOLE_DEBUG_W_NUM("TSHORT\t=", TSHORT);
 //		CONSOLE_DEBUG_W_NUM("TUSHORT\t=", TUSHORT);
 
 		status		=	0;
 		bitpix		=	0;	//*	set a default
 		fitsRetCode	=	fits_read_key_lng(fptr, "BITPIX", &bitpix, NULL, &status);
-//		CONSOLE_DEBUG_W_INT32("bitpix\t=",	bitpix);
+		CONSOLE_DEBUG_W_INT32("bitpix\t=",	bitpix);
 
 		switch(bitpix)
 		{
 			case 8:
-		//		if (nfound == 2)
+				//*	is it color?
+				if (nfound == 3)
+				{
+					//*	we have an 8 bit Color image
+					width			=	naxes[0];
+					height			=	naxes[1];
+					firstPixel		=	1;
+					openCvImgPtr	=	cvCreateImage(cvSize(width, height), IPL_DEPTH_8U, 3);
+					if (openCvImgPtr != NULL)
+					{
+						pixelBuffer	=	(char *)malloc(width);
+						if (pixelBuffer != NULL)
+						{
+							for (ccc=0; ccc<3; ccc++)
+							{
+								pixelPtr	=	openCvImgPtr->imageData;
+								for (iii=0; iii<height; iii++)
+								{
+									//*	now we are going to read in the image a row at a time
+									status		=	0;
+									//nullval		=	0;
+									fitsRetCode	=	fits_read_img(	fptr,
+																	TBYTE,
+																	firstPixel,			//*	first pixel
+																	width,
+																	NULL,				//*	nullval,
+																	pixelBuffer,
+																	NULL,
+																	&status);
+									if (fitsRetCode != 0)
+									{
+										errorCnt++;
+										CONSOLE_DEBUG_W_NUM("fitsRetCode\t=",	fitsRetCode);
+									}
+									for (jjj=0; jjj<width; jjj++)
+									{
+										pixelPtr[(jjj * 3) + ccc]	=	pixelBuffer[jjj];
+									}
+
+									pixelPtr	+=	openCvImgPtr->widthStep;
+									firstPixel	+=	width;
+								}
+							}
+							free(pixelBuffer);
+						}
+					}
+				}
+				else if (nfound == 2)
 				{
 					//*	we have an 8 bit B/W image
 					width			=	naxes[0];
@@ -90,7 +144,7 @@ int				errorCnt;
 					if (openCvImgPtr != NULL)
 					{
 						pixelPtr	=	openCvImgPtr->imageData;
-						for (ii=0; ii<height; ii++)
+						for (iii=0; iii<height; iii++)
 						{
 							//*	now we are going to read in the image a row at a time
 							status		=	0;
@@ -113,6 +167,10 @@ int				errorCnt;
 						}
 					}
 				}
+				else
+				{
+					CONSOLE_DEBUG_W_NUM("Invalid format; nfound\t=",	nfound);
+				}
 				break;
 
 			case 16:
@@ -127,7 +185,7 @@ int				errorCnt;
 					if (openCvImgPtr != NULL)
 					{
 						pixelPtr	=	openCvImgPtr->imageData;
-						for (ii=0; ii<height; ii++)
+						for (iii=0; iii<height; iii++)
 						{
 							//*	now we are going to read in the image a row at a time
 							status		=	0;
@@ -180,6 +238,68 @@ int				errorCnt;
 	return(openCvImgPtr);
 }
 
+
+//*****************************************************************************
+IplImage	*ReadAlpacaBinaryIntoOpenCVimage(const char *binaryFileName)
+{
+IplImage			*openCvImgPtr;
+TYPE_BinaryImageHdr	binaryImageHdr;
+FILE				*filePointer;
+int					numRead;
+size_t				dataByteCount;
+unsigned char		*pixelPtr;
+int					quality[3] = {16, 200, 0};
+int					openCVerr;
+char				jpegFileName[64];
+
+	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_STR("File:", binaryFileName);
+
+
+	openCvImgPtr	=	NULL;
+
+	filePointer		=	fopen(binaryFileName, "r");
+	if (filePointer != NULL)
+	{
+		numRead	=	fread(&binaryImageHdr, sizeof(TYPE_BinaryImageHdr), 1, filePointer);
+		CONSOLE_DEBUG_W_NUM("MetadataVersion\t\t=",			binaryImageHdr.MetadataVersion);
+		CONSOLE_DEBUG_W_NUM("ErrorNumber\t\t=",				binaryImageHdr.ErrorNumber);
+		CONSOLE_DEBUG_W_NUM("ClientTransactionID\t=",		binaryImageHdr.ClientTransactionID);
+		CONSOLE_DEBUG_W_NUM("ServerTransactionID\t=",		binaryImageHdr.ServerTransactionID);
+		CONSOLE_DEBUG_W_NUM("DataStart\t\t=",				binaryImageHdr.DataStart);
+		CONSOLE_DEBUG_W_NUM("ImageElementType\t=",			binaryImageHdr.ImageElementType);
+		CONSOLE_DEBUG_W_NUM("TransmissionElementType\t=",	binaryImageHdr.TransmissionElementType);
+		CONSOLE_DEBUG_W_NUM("Rank\t\t\t=",					binaryImageHdr.Rank);
+		CONSOLE_DEBUG_W_NUM("Dimension1\t\t=",				binaryImageHdr.Dimension1);
+		CONSOLE_DEBUG_W_NUM("Dimension2\t\t=",				binaryImageHdr.Dimension2);
+		CONSOLE_DEBUG_W_NUM("Dimension3\t\t=",				binaryImageHdr.Dimension3);
+
+//		openCvImgPtr	=	cvCreateImage(cvSize(	binaryImageHdr.Dimension1, binaryImageHdr.Dimension2),
+//													IPL_DEPTH_16U, 1);
+//
+		openCvImgPtr	=	cvCreateImage(cvSize(	binaryImageHdr.Dimension2, binaryImageHdr.Dimension1),
+													IPL_DEPTH_16U, 1);
+		if (openCvImgPtr != NULL)
+		{
+			CONSOLE_DEBUG_W_NUM("openCvImgPtr->width\t=",				openCvImgPtr->width);
+			CONSOLE_DEBUG_W_NUM("openCvImgPtr->height\t=",				openCvImgPtr->height);
+			CONSOLE_DEBUG_W_NUM("openCvImgPtr->depth\t=",				openCvImgPtr->depth);
+			CONSOLE_DEBUG_W_NUM("openCvImgPtr->widthStep\t=",			openCvImgPtr->widthStep);
+
+			dataByteCount	=	binaryImageHdr.Dimension1 * binaryImageHdr.Dimension2 * 2;
+			pixelPtr		=	(unsigned char*)openCvImgPtr->imageData;
+			numRead			=	fread(pixelPtr, dataByteCount, 1, filePointer);
+
+			sprintf(jpegFileName, "image%dx%d.png", openCvImgPtr->width, openCvImgPtr->height);
+			openCVerr	=	cvSaveImage(jpegFileName, openCvImgPtr, quality);
+		}
+		fclose(filePointer);
+	}
+
+	return(openCvImgPtr);
+}
+
+
 //*****************************************************************************
 //*	Function:	Reads an image into opencv data structure.
 //*				uses the extension to determine how to read it
@@ -195,20 +315,26 @@ char		extension[8];
 	openCvImgPtr	=	NULL;
 	fnameLen		=	strlen(imageFileName);
 	strcpy(extension, &imageFileName[fnameLen - 4]);
-//	CONSOLE_DEBUG_W_STR("extension\t=", extension);
+	CONSOLE_DEBUG_W_STR("extension\t=", extension);
 	if ((strcmp(extension, "fits") == 0) ||
 		(strcmp(extension, ".fit") == 0))
 	{
 		openCvImgPtr	=	ReadFITSimageIntoOpenCVimage(imageFileName);
 	}
-	else if (strcmp(extension, "csv") == 0)
+	else if ((strcmp(extension, "csv") == 0) ||
+			(strcmp(extension, ".csv") == 0))
 	{
 		openCvImgPtr	=	NULL;
+	}
+	else if (strcmp(extension, ".bin") == 0)
+	{
+		openCvImgPtr	=	ReadAlpacaBinaryIntoOpenCVimage(imageFileName);
 	}
 	else
 	{
 		CONSOLE_DEBUG_W_STR("imageFileName\t=", imageFileName);
 		openCvImgPtr	=	cvLoadImage(imageFileName, CV_LOAD_IMAGE_COLOR);
 	}
+	CONSOLE_DEBUG_W_HEX("openCvImgPtr\t=", openCvImgPtr);
 	return(openCvImgPtr);
 }

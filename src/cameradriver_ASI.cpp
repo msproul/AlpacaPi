@@ -77,6 +77,7 @@
 //*	Aug 11,	2020	<MLS> Added auto exposure to video output
 //*	Mar 26,	2021	<MLS> Added Write_Offset() & Read_Offset()
 //*	Mar 26,	2021	<MLS> Offset value read/write working in ASI cameras
+//*	Oct 13,	2021	<MLS> Added Write_BinX() & Write_BinY() to ASI driver
 //*****************************************************************************
 //*	Length: unspecified [text/plain]
 //*	Saving to: "imagearray.1"
@@ -400,8 +401,8 @@ ASI_CONTROL_CAPS	controlCaps;
 													controlCaps.Description,
 													controlCaps.ControlType,
 													controlCaps.MinValue,
-													controlCaps.MaxValue
-														);
+													controlCaps.MaxValue);
+
 		//******************************************************************************************************************
 		//	- 0 ZWO ASI120MC			1280	960	1	3.750000
 		//	- Gain					 	Gain															0	0	100
@@ -499,7 +500,7 @@ ASI_CONTROL_CAPS	controlCaps;
 				break;
 
 			case ASI_COOLER_ON:
-			case ASI_MONO_BIN:					//leads to less grid at software bin mode for color camera
+			case ASI_MONO_BIN:				//leads to less grid at software bin mode for color camera
 			case ASI_FAN_ON:
 			case ASI_PATTERN_ADJUST:
 			case ASI_ANTI_DEW_HEATER:
@@ -517,7 +518,8 @@ ASI_CONTROL_CAPS	controlCaps;
 //*****************************************************************************
 ASI_ERROR_CODE	CameraDriverASI::OpenASIcameraIfNeeded(int foo)
 {
-ASI_ERROR_CODE	asiErrorCode;
+ASI_ERROR_CODE		asiErrorCode;
+TYPE_ASCOM_STATUS	alpacaErrCode;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 //	CONSOLE_DEBUG_W_NUM("cCameraID\t=", cCameraID);
@@ -538,7 +540,7 @@ ASI_ERROR_CODE	asiErrorCode;
 			if (asiErrorCode == ASI_SUCCESS)
 			{
 				//*	set the image type
-				SetImageTypeCameraOpen(cDesiredImageType);
+				alpacaErrCode	=	SetImageTypeCameraOpen(cDesiredImageType);
 			//	CONSOLE_DEBUG_W_NUM("cDesiredImageType\t=",		cDesiredImageType);
 			}
 			else
@@ -719,8 +721,9 @@ bool				cameraIsBusy;
 					else
 					{
 //						CONSOLE_DEBUG_W_NUM("exposureStatatus\t=",	exposureStatatus);
-						cCameraProp.Lastexposure_duration_us	=	exposureMicrosecs;
-						gettimeofday(&cCameraProp.Lastexposure_StartTime, NULL);
+						SetLastExposureInfo();
+//-						cCameraProp.Lastexposure_duration_us	=	exposureMicrosecs;
+//-						gettimeofday(&cCameraProp.Lastexposure_StartTime, NULL);
 						asiErrorCode	=	ASIStartExposure(cCameraID, ASI_FALSE);
 						if (asiErrorCode == ASI_SUCCESS)
 						{
@@ -1646,6 +1649,9 @@ bool			returnFlag;
 										&cCurrentASIimageType);
 	if (asiErrorCode == ASI_SUCCESS)
 	{
+//		CONSOLE_DEBUG_W_NUM("cROIinfo.currentROIwidth\t=",	cROIinfo.currentROIwidth);
+//		CONSOLE_DEBUG_W_NUM("cROIinfo.currentROIheight\t=",	cROIinfo.currentROIheight);
+//		CONSOLE_DEBUG_W_NUM("cROIinfo.currentROIbin\t=",	cROIinfo.currentROIbin);
 		returnFlag	=	true;
 		switch(cCurrentASIimageType)
 		{
@@ -1659,7 +1665,7 @@ bool			returnFlag;
 	}
 	else
 	{
-	returnFlag	=	false;
+		returnFlag	=	false;
 		CONSOLE_DEBUG_W_NUM("ASIGetROIFormat->asiErrorCode\t=",	asiErrorCode);
 	}
 
@@ -1676,6 +1682,7 @@ int					currentROIheight;
 int					currentROIbin;
 ASI_IMG_TYPE		currentASIimageType;
 
+	CONSOLE_DEBUG("---------------------------------------------------------------");
 	CONSOLE_DEBUG(__FUNCTION__);
 
 	asiErrorCode	=	ASIGetROIFormat(cCameraID,
@@ -2184,6 +2191,120 @@ char				asiErrorMsgString[64];
 	}
 	return(alpacaErrCode);
 }
+
+
+
+//*****************************************************************************
+//*	this routine gets called by BOTH Write_BinX() & Write_BinY()
+//*****************************************************************************
+TYPE_ASCOM_STATUS	CameraDriverASI::Write_BinXY(const int newBinXvalue)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
+ASI_ERROR_CODE		asiErrorCode;
+int					currentROIwidth;
+int					currentROIheight;
+int					currentROIbin;
+ASI_IMG_TYPE		currentASI_ROIimageType;
+char				asiErrorMsgString[64];
+
+	CONSOLE_DEBUG(__FUNCTION__);
+
+	asiErrorCode	=	OpenASIcameraIfNeeded(cCameraID);
+	if (asiErrorCode == ASI_SUCCESS)
+	{
+		asiErrorCode	=	ASIGetROIFormat(cCameraID,
+											&currentROIwidth,
+											&currentROIheight,
+											&currentROIbin,
+											&currentASI_ROIimageType);
+		if (asiErrorCode == ASI_SUCCESS)
+		{
+			CONSOLE_DEBUG_W_NUM("currentROIbin\t=", currentROIbin);
+			CONSOLE_DEBUG_W_NUM("currentROIwidth\t=", currentROIwidth);
+			CONSOLE_DEBUG_W_NUM("currentROIheight\t=", currentROIheight);
+		}
+		else
+		{
+			CONSOLE_DEBUG("ASIGetROIFormat failed-------------------------");
+			CONSOLE_DEBUG_W_NUM("asiErrorCode\t=", asiErrorCode);
+		}
+
+		currentROIbin		=	newBinXvalue;
+		currentROIwidth		=   cCameraProp.CameraXsize / newBinXvalue;
+		currentROIheight	=   cCameraProp.CameraYsize / newBinXvalue;
+		asiErrorCode		=	ASISetROIFormat(cCameraID,
+											currentROIwidth,
+											currentROIheight,
+											currentROIbin,
+											currentASI_ROIimageType);
+		if (asiErrorCode == ASI_SUCCESS)
+		{
+			alpacaErrCode	=	kASCOM_Err_Success;
+		}
+		else
+		{
+			CONSOLE_DEBUG("ASISetROIFormat failed-------------------------");
+			CONSOLE_DEBUG_W_NUM("asiErrorCode\t=", asiErrorCode);
+			Get_ASI_ErrorMsg(asiErrorCode, asiErrorMsgString);
+
+			strcpy(cLastCameraErrMsg, "AlpacaPi: ASISetROIFormat failed-");
+			strcat(cLastCameraErrMsg, asiErrorMsgString);
+			strcat(cLastCameraErrMsg, ":");
+			strcat(cLastCameraErrMsg, __FUNCTION__);
+		}
+
+
+		asiErrorCode	=	ASIGetROIFormat(cCameraID,
+											&currentROIwidth,
+											&currentROIheight,
+											&currentROIbin,
+											&currentASI_ROIimageType);
+		if (asiErrorCode == ASI_SUCCESS)
+		{
+			CONSOLE_DEBUG_W_NUM("currentROIbin\t=", currentROIbin);
+			CONSOLE_DEBUG_W_NUM("currentROIwidth\t=", currentROIwidth);
+			CONSOLE_DEBUG_W_NUM("currentROIheight\t=", currentROIheight);
+		}
+		else
+		{
+			CONSOLE_DEBUG_W_NUM("asiErrorCode\t=", asiErrorCode);
+		}
+	}
+	else
+	{
+		CheckForClosedError(asiErrorCode);
+		CONSOLE_DEBUG_W_NUM("ASIOpenCamera->asiErrorCode\t=",	asiErrorCode);
+		Get_ASI_ErrorMsg(asiErrorCode, asiErrorMsgString);
+		strcpy(cLastCameraErrMsg, "Failed to open ASI camera:, asiErr=");
+		strcat(cLastCameraErrMsg, asiErrorMsgString);
+		alpacaErrCode	=	kASCOM_Err_FailedUnknown;
+	}
+
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	CameraDriverASI::Write_BinX(const int newBinXvalue)
+{
+TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	alpacaErrCode	=	Write_BinXY(newBinXvalue);
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	CameraDriverASI::Write_BinY(const int newBinYvalue)
+{
+TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	alpacaErrCode	=	Write_BinXY(newBinYvalue);
+	return(alpacaErrCode);
+}
+
 
 #pragma mark -
 #pragma mark Image data commands

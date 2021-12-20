@@ -72,6 +72,12 @@ char				myWindowName[80];
 	cLiveController	=	new ControllerImage(myWindowName, NULL);
 	alpacaErrCode	=	kASCOM_Err_Success;
 
+	CONSOLE_DEBUG("-----------------------------");
+	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_NUM("gControllerCnt\t=",	gControllerCnt);
+	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG("-----------------------------");
+
 #endif
 	return(alpacaErrCode);
 }

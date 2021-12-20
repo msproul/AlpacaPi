@@ -34,6 +34,7 @@
 //*	Mar 13,	2021	<MLS> Added support for savel all images ToggleSaveAll()
 //*	Mar 27,	2021	<MLS> Added BumpOffset()
 //*	Mar 27,	2021	<MLS> Offset slider fully working
+//*	Dec 18,	2021	<MLS> Double click in the title bar causes connect to be sent
 //*****************************************************************************
 
 #ifdef _ENABLE_CTRL_CAMERA_
@@ -69,8 +70,9 @@ WindowTabCamera::WindowTabCamera(	const int	xSize,
 	strcpy(cAlpacaDeviceName, "");
  //	memset(&cAlpacaDevInfo, 0, sizeof(TYPE_REMOTE_DEV));
 
-	cForce8BitRead	=	false;
-	cHasFilterWheel	=	hasFilterWheel;
+	cForce8BitRead			=	false;
+	cAllowBinaryDownload	=	true;
+	cHasFilterWheel			=	hasFilterWheel;
 	strcpy(cAlpacaDeviceName, deviceName);
 
 	strcpy(cDownLoadedFileNameRoot, "unknown");
@@ -80,6 +82,7 @@ WindowTabCamera::WindowTabCamera(	const int	xSize,
 	cLastOffsetUpdate_Millis	=	0;
 
 	SetupWindowControls();
+	ForceUpdate();
 }
 
 //**************************************************************************************
@@ -96,6 +99,8 @@ void	WindowTabCamera::SetupWindowControls(void)
 int			yLoc;
 int			yLocSave;
 int			yLocClm4;
+int			yLocRest;
+int			yLocExposure;
 int			iii;
 int			valueXloc;
 int			updownXloc;
@@ -204,8 +209,8 @@ IplImage	*logoImage;
 	SetWidget(		kCameraBox_Gain_Label,	cClm1_offset,	yLoc,		cClmWidth,		cRadioBtnHt	);
 	SetWidget(		kCameraBox_Gain_Slider,	cClm2_offset,	yLoc,		sliderWidth,	cRadioBtnHt	);
 	SetWidget(		kCameraBox_Gain,		valueXloc,		yLoc,		valueWidth,		cRadioBtnHt	);
-	SetWidget(		kCameraBox_Gain_Up,		updownXloc,	yLoc -2,			cSmIconSize,	cSmIconSize);
-	SetWidget(		kCameraBox_Gain_Down,	updownXloc,	yLoc + cSmIconSize,	cSmIconSize,	cSmIconSize);
+	SetWidget(		kCameraBox_Gain_Up,		updownXloc,		yLoc -2,			cSmIconSize,	cSmIconSize);
+	SetWidget(		kCameraBox_Gain_Down,	updownXloc,		yLoc + cSmIconSize,	cSmIconSize,	cSmIconSize);
 	SetWidgetBGColor(kCameraBox_Gain_Up,	CV_RGB(255,	255,	255));
 	SetWidgetBGColor(kCameraBox_Gain_Down,	CV_RGB(255,	255,	255));
 
@@ -261,10 +266,18 @@ IplImage	*logoImage;
 	SetWidget(					kCameraBox_State,	cClm1_offset,	yLoc,		cClmWidth * 2,		cRadioBtnHt	);
 	SetWidgetFont(				kCameraBox_State,	kFont_Small);
 	SetWidgetJustification  (	kCameraBox_State,	kJustification_Left);
+
+	SetWidget(					kCameraBox_PercentCompleted,	cClm3_offset + 5,	yLoc,	cClmWidth * 2,		cRadioBtnHt	);
+	SetWidgetFont(				kCameraBox_PercentCompleted,	kFont_Small);
+	SetWidgetJustification  (	kCameraBox_PercentCompleted,	kJustification_Center);
+	SetWidgetText(				kCameraBox_PercentCompleted,	"Percent complete");
+
+
+
 	yLoc			+=	cRadioBtnHt;
 	yLoc			+=	5;
 
-
+	yLocRest	=	yLoc;
 	//=======================================================
 	//*	Readout modes
 	yLocSave	=	yLoc;
@@ -333,6 +346,14 @@ IplImage	*logoImage;
 	yLocSave	+=	cRadioBtnHt;
 	yLocSave	+=	2;
 
+	//=======================================================
+	SetWidget(			kCameraBox_Reset,			cClm6_offset,	yLocRest,	cLrgBtnWidth,	cLrgBtnHeight);
+	SetWidgetType(		kCameraBox_Reset,			kWidgetType_Button);
+	SetWidgetText(		kCameraBox_Reset,			"Reset");
+	SetWidgetFont(		kCameraBox_Reset,			kFont_Medium);
+	SetWidgetBGColor(	kCameraBox_Reset,			CV_RGB(255,	255,	255));
+	SetWidgetTextColor(	kCameraBox_Reset,			CV_RGB(255,	0,	0));
+	yLoc			+=	10;
 
 	//=======================================================
 	//*	Filename
@@ -354,22 +375,28 @@ IplImage	*logoImage;
 	yLoc			+=	2;
 
 
+//	kCameraBox_StartExposure,
+//	kCameraBox_Rank2,
+//	kCameraBox_Rank3,
+//
+//	kCameraBox_DownloadImage,
+//	kCameraBox_Btn_8Bit,
+//	kCameraBox_DownloadRGBarray,
+//
+//	kCameraBox_SaveOutline,
+//
 
-	yLoc			+=	10;
 
-	SetWidget(			kCameraBox_Reset,			cClm1_offset,	yLoc,	cLrgBtnWidth,	cLrgBtnHeight);
-	SetWidgetType(		kCameraBox_Reset,			kWidgetType_Button);
-	SetWidgetText(		kCameraBox_Reset,			"Reset");
-	SetWidgetFont(		kCameraBox_Reset,			kFont_Medium);
-	SetWidgetBGColor(	kCameraBox_Reset,			CV_RGB(255,	255,	255));
-	SetWidgetTextColor(	kCameraBox_Reset,			CV_RGB(255,	0,	0));
-
-	SetWidget(			kCameraBox_StartExposure,	cClm3_offset,	yLoc,	((cClmWidth * 2) -4),	cLrgBtnHeight);
+	//=======================================================
+	yLocExposure	=	yLoc;
+	SetWidget(			kCameraBox_StartExposure,	cClm1_offset,	yLoc,	((cClmWidth * 2) -4),	cLrgBtnHeight);
 	SetWidgetType(		kCameraBox_StartExposure,	kWidgetType_Button);
 	SetWidgetText(		kCameraBox_StartExposure,	"Start Exposure");
 	SetWidgetFont(		kCameraBox_StartExposure,	kFont_Medium);
 	SetWidgetBGColor(	kCameraBox_StartExposure,	CV_RGB(255,	255,	255));
 	SetWidgetTextColor(	kCameraBox_StartExposure,	CV_RGB(255,	0,	0));
+
+
 
 	SetWidget(			kCameraBox_DownloadImage,	cClm5_offset,	yLoc,	((cClmWidth * 2) -4),	cLrgBtnHeight);
 	SetWidgetType(		kCameraBox_DownloadImage,	kWidgetType_Button);
@@ -381,13 +408,12 @@ IplImage	*logoImage;
 	yLoc			+=	cLrgBtnHeight;
 	yLoc			+=	4;
 
-	//=======================================================
-	SetWidget(			kCameraBox_Btn_8Bit,	cClm3_offset,	yLoc,	((cClmWidth * 2) -4),	cRadioBtnHt);
-	SetWidgetType(		kCameraBox_Btn_8Bit,	kWidgetType_CheckBox);
-	SetWidgetText(		kCameraBox_Btn_8Bit,	"Force 8 Bit");
-	SetWidgetFont(		kCameraBox_Btn_8Bit,	kFont_RadioBtn);
-//	SetWidgetBGColor(	kCameraBox_Btn_8Bit,	CV_RGB(255,	255,	255));
-//	SetWidgetTextColor(	kCameraBox_Btn_8Bit,	CV_RGB(255,	0,	0));
+	SetWidget(			kCameraBox_StopExposure,	cClm1_offset,	yLoc,	((cClmWidth * 2) -4),	cLrgBtnHeight);
+	SetWidgetType(		kCameraBox_StopExposure,	kWidgetType_Button);
+	SetWidgetText(		kCameraBox_StopExposure,	"Stop Exposure");
+	SetWidgetFont(		kCameraBox_StopExposure,	kFont_Medium);
+	SetWidgetBGColor(	kCameraBox_StopExposure,	CV_RGB(255,	255,	255));
+	SetWidgetTextColor(	kCameraBox_StopExposure,	CV_RGB(255,	0,	0));
 
 
 	SetWidget(			kCameraBox_DownloadRGBarray,	cClm5_offset,	yLoc,	((cClmWidth * 2) -4),	cLrgBtnHeight);
@@ -399,8 +425,45 @@ IplImage	*logoImage;
 
 	yLoc			+=	cLrgBtnHeight;
 	yLoc			+=	4;
+	yLocSave		=	yLoc;
+	//=======================================================
+	yLoc			=	yLocExposure;
+	SetWidget(			kCameraBox_Rank2,	cClm3_offset,	yLoc,	((cClmWidth) -4),	cRadioBtnHt);
+	SetWidgetType(		kCameraBox_Rank2,	kWidgetType_RadioButton);
+	SetWidgetFont(		kCameraBox_Rank2,	kFont_RadioBtn);
+	SetWidgetText(		kCameraBox_Rank2,	"R2");
+
+	SetWidget(			kCameraBox_Rank3,	cClm4_offset,	yLoc,	((cClmWidth) -4),	cRadioBtnHt);
+	SetWidgetType(		kCameraBox_Rank3,	kWidgetType_RadioButton);
+	SetWidgetFont(		kCameraBox_Rank3,	kFont_RadioBtn);
+	SetWidgetText(		kCameraBox_Rank3,	"R3");
+	yLoc			+=	cRadioBtnHt;
+	yLoc			+=	4;
+
+	SetWidget(			kCameraBox_EnableBinary,	cClm3_offset,	yLoc,	((cClmWidth * 2) -4),	cRadioBtnHt);
+	SetWidgetType(		kCameraBox_EnableBinary,	kWidgetType_CheckBox);
+	SetWidgetFont(		kCameraBox_EnableBinary,	kFont_RadioBtn);
+	SetWidgetText(		kCameraBox_EnableBinary,	"Allow Binary");
+	yLoc			+=	cRadioBtnHt;
+	yLoc			+=	4;
 
 
+	//=======================================================
+	SetWidget(			kCameraBox_Btn_8Bit,	cClm3_offset,	yLoc,	((cClmWidth * 2) -4),	cRadioBtnHt);
+	SetWidgetType(		kCameraBox_Btn_8Bit,	kWidgetType_CheckBox);
+	SetWidgetText(		kCameraBox_Btn_8Bit,	"Force 8 Bit");
+	SetWidgetFont(		kCameraBox_Btn_8Bit,	kFont_RadioBtn);
+//	SetWidgetBGColor(	kCameraBox_Btn_8Bit,	CV_RGB(255,	255,	255));
+//	SetWidgetTextColor(	kCameraBox_Btn_8Bit,	CV_RGB(255,	0,	0));
+
+	SetWidgetOutlineBox(	kCameraBox_SaveOutline,
+							kCameraBox_StartExposure,
+							(kCameraBox_SaveOutline - 1));
+
+	yLoc			+=	cRadioBtnHt;
+	yLoc			+=	4;
+
+	yLoc			=	yLocSave;
 	yLocClm4		=	yLoc;
 	//=======================================================
 	//*	Filter wheel (if present)
@@ -642,19 +705,29 @@ ControllerCamera	*myCameraController;
 			StartExposure();
 			break;
 
-		case kCameraBox_DownloadImage:
-			DownloadImage(false);	//*	false -> imageArray
+		case kCameraBox_StopExposure:
+//++			StopExposure();
 			break;
 
 		case kCameraBox_Btn_8Bit:
 			cForce8BitRead	=	!cForce8BitRead;
-			SetWidgetChecked(kCameraBox_Btn_8Bit, cForce8BitRead);
 			ForceUpdate();
+			break;
+
+		case kCameraBox_EnableBinary:
+			cAllowBinaryDownload	=	!cAllowBinaryDownload;
+			ForceUpdate();
+			break;
+
+		case kCameraBox_DownloadImage:
+			DownloadImage(false);	//*	false -> imageArray
 			break;
 
 		case kCameraBox_DownloadRGBarray:
 			DownloadImage(true);	//*	true -> Use RGBarray
 			break;
+
+
 
 		case kCameraBox_FilterWheel1:
 		case kCameraBox_FilterWheel2:
@@ -690,6 +763,26 @@ ControllerCamera	*myCameraController;
 	DisplayLastAlpacaCommand();
 }
 
+//*****************************************************************************
+void	WindowTabCamera::ProcessDoubleClick(const int	widgetIdx,
+											const int	event,
+											const int	xxx,
+											const int	yyy,
+											const int	flags)
+{
+	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_NUM("widgetIdx\t=", widgetIdx);
+
+
+	switch(widgetIdx)
+	{
+		case kCameraBox_Title:
+		case kCameraBox_Connected:
+			AlpacaSetConnected("camera", true);
+			break;
+
+	}
+}
 
 //*****************************************************************************
 void	WindowTabCamera::UpdateSliderValue(const int	widgetIdx, double newSliderValue)
@@ -759,6 +852,10 @@ void	WindowTabCamera::ForceUpdate(void)
 ControllerCamera	*myCameraController;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
+	SetWidgetChecked(kCameraBox_Btn_8Bit,		cForce8BitRead);
+	SetWidgetChecked(kCameraBox_EnableBinary,	cAllowBinaryDownload);
+
+
 	myCameraController	=	(ControllerCamera *)cParentObjPtr;
 
 	if (myCameraController != NULL)
@@ -986,7 +1083,7 @@ int					openCVerr;
 		}
 		else
 		{
-			myDownLoadedImage	=	myCameraController->DownloadImage(cForce8BitRead);
+			myDownLoadedImage	=	myCameraController->DownloadImage(cForce8BitRead, cAllowBinaryDownload);
 		}
 		if (myDownLoadedImage != NULL)
 		{

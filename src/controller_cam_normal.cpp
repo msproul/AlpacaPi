@@ -206,7 +206,7 @@ char	lineBuff[64];
 //*****************************************************************************
 void	ControllerCamNormal::UpdateCommonProperties(void)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	SetWidgetText(kTab_DriverInfo,		kDriverInfo_Name,				cCommonProp.Name);
 	SetWidgetText(kTab_DriverInfo,		kDriverInfo_Description,		cCommonProp.Description);
@@ -214,7 +214,7 @@ void	ControllerCamNormal::UpdateCommonProperties(void)
 	SetWidgetText(kTab_DriverInfo,		kDriverInfo_DriverVersion,		cCommonProp.DriverVersion);
 	SetWidgetNumber(kTab_DriverInfo,	kDriverInfo_InterfaceVersion,	cCommonProp.InterfaceVersion);
 
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, "Exit");
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, "Exit");
 }
 
 //*****************************************************************************
@@ -407,6 +407,16 @@ char			linebuff[64];
 		SetWidgetBGColor(kTab_Camera, kCameraBox_DownloadImage, CV_RGB(100, 100, 100));
 		SetWidgetBGColor(kTab_Camera, kCameraBox_DownloadRGBarray, CV_RGB(100, 100, 100));
 	}
+
+
+	if (cCameraProp.CanStopExposure)
+	{
+		SetWidgetBGColor(kTab_Camera,	kCameraBox_StopExposure,	CV_RGB(255,	255,	255));
+	}
+	else
+	{
+		SetWidgetBGColor(kTab_Camera,	kCameraBox_StopExposure,	CV_RGB(128,	128,	128));
+	}
 	cUpdateWindow	=	true;
 }
 
@@ -428,6 +438,14 @@ char			linebuff[128];
 			cCameraTabObjPtr->SetTempartueDisplayEnable(false);
 		}
 	}
+}
+//*****************************************************************************
+void	ControllerCamNormal::UpdatePercentCompleted(void)
+{
+char			linebuff[128];
+
+	sprintf(linebuff, "%d %% ", cCameraProp.PercentCompleted);
+	SetWidgetText(kTab_Camera, kCameraBox_PercentCompleted, linebuff);
 }
 
 //*****************************************************************************

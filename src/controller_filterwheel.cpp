@@ -79,6 +79,7 @@ ControllerFilterWheel::ControllerFilterWheel(	const char			*argWindowName,
 	cAboutBoxTabObjPtr		=	NULL;
 
 	memset(&cFilterWheelProp, 0, sizeof(TYPE_FilterWheelProperties));
+	strcpy(cAlpacaDeviceTypeStr,	"filterwheel");
 	cPositionCount			=	9;
 
 	//*	copy the device address info
@@ -93,6 +94,8 @@ ControllerFilterWheel::ControllerFilterWheel(	const char			*argWindowName,
 		strcpy(cAlpacaDeviceTypeStr,	alpacaDevice->deviceTypeStr);
 		strcpy(cAlpacaDeviceNameStr,	alpacaDevice->deviceNameStr);
 		strcpy(cAlpacaVersionString,	alpacaDevice->versionString);
+
+		CheckConnectedState();		//*	check connected and connect if not already connected
 	}
 	else
 	{
@@ -103,7 +106,6 @@ ControllerFilterWheel::ControllerFilterWheel(	const char			*argWindowName,
 
 	SetWidgetText(kTab_FilterWheel,		kFilterWheel_AlpacaDrvrVersion,		cAlpacaVersionString);
 
-	AlpacaSetConnected("filterwheel", true);
 #ifdef _USE_BACKGROUND_THREAD_
 	StartBackgroundThread();
 #endif // _USE_BACKGROUND_THREAD_

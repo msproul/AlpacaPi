@@ -197,6 +197,12 @@ class DomeDriver: public AlpacaDriver
 																const int			ipPortNumber,
 																const char			*deviceType,
 																const int			deviceNumber);
+
+		//-------------------------------------------------------------------------
+		//*	Watchdog timer stuff
+		virtual	void					WatchDog_TimeOut(void);
+
+
 #ifdef _ENABLE_SLIT_TRACKER_REMOTE_
 				//*	Slit tracker device info
 				void				GetSlitTrackerData(void);

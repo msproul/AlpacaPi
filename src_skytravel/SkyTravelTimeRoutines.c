@@ -170,18 +170,18 @@ void Sub_month(TYPE_Time *timeptr)
 //**********************************************************************
 void Sub_day(TYPE_Time *timeptr)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	timeptr->day--;
 	if (timeptr->day < 1)
 	{
-		CONSOLE_DEBUG_W_NUM("day\t\t=", timeptr->day);
+//		CONSOLE_DEBUG_W_NUM("day\t\t=", timeptr->day);
 
 		Sub_month(timeptr);
-		CONSOLE_DEBUG_W_NUM("month\t\t=", timeptr->month);
-		CONSOLE_DEBUG_W_NUM("day\t\t=", timeptr->day);
+//		CONSOLE_DEBUG_W_NUM("month\t\t=", timeptr->month);
+//		CONSOLE_DEBUG_W_NUM("day\t\t=", timeptr->day);
 		timeptr->day	=	Lastday(timeptr);
-		CONSOLE_DEBUG_W_NUM("day\t\t=", timeptr->day);
+//		CONSOLE_DEBUG_W_NUM("day\t\t=", timeptr->day);
 	}
 }
 

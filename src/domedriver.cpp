@@ -73,6 +73,7 @@
 //*	Jun 15,	2021	<MLS> Added powerStatus and auxiliaryStatus commands
 //*	Jun 15,	2021	<MLS> Added Get_PowerStatus() & Get_AuxiliaryStatus()
 //*	Jun 23,	2021	<MLS> Updated dome driver cCommonProp.InterfaceVersion to 2
+//*	Dec 13,	2021	<MLS> Added WatchDog_TimeOut() to domedriver
 //*****************************************************************************
 //*	cd /home/pi/dev-mark/alpaca
 //*	LOGFILE=logfile.txt
@@ -928,11 +929,11 @@ char		stateString[48];
 #endif // _ENABLE_REMOTE_SHUTTER_
 
 #ifdef _ENABLE_SLIT_TRACKER_REMOTE_
+	currentMilliSecs		=	millis();
 	//====================================================================
 	//*	check to see if its time to update the slit tracker
 	if (cSlitTrackerInfoValid)
 	{
-		currentMilliSecs		=	millis();
 		timeSinceLastWhatever	=	currentMilliSecs - cTimeOfLastSlitTrackerUpdate;
 		if (timeSinceLastWhatever > (60 * 1000))
 		{
@@ -2084,7 +2085,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 }
 
 //*****************************************************************************
-//*	this should be over ridden
+//*	this can be over ridden
 TYPE_ASCOM_STATUS	DomeDriver::CloseShutter(char *alpacaErrMsg)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
@@ -2414,7 +2415,6 @@ uint32_t	movingTime_seconds;
 		}
 	}
 
-
 	//****************************************************
 	//*	as a last resort, if the dome has been moving for 2 minutes and 10 seconds, STOP
 	//*	it takes about 2 minutes 4 seconds do a complete revolution
@@ -2425,6 +2425,27 @@ uint32_t	movingTime_seconds;
 		StopDomeMoving(kStopNormal);
 	}
 }
+
+//*****************************************************************************
+void	DomeDriver::WatchDog_TimeOut(void)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
+char				alpacaErrMsg[64];
+
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cCommonProp.Name);
+
+	if (cDomeProp.ShutterStatus != kShutterStatus_Closed)
+	{
+		LogEvent("dome",	"Closing due to Timeout",	NULL,	kASCOM_Err_Success,	"");
+		cDomeProp.ShutterStatus	=	kShutterStatus_Closing;
+		alpacaErrCode			=	CloseShutter(alpacaErrMsg);
+		if (alpacaErrCode != kASCOM_Err_Success)
+		{
+			LogEvent("dome", "Error closing dome",	NULL, alpacaErrCode,	alpacaErrMsg);
+		}
+	}
+}
+
 
 #ifdef _ENABLE_SLIT_TRACKER_REMOTE_
 //*****************************************************************************

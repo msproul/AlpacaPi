@@ -63,23 +63,23 @@ enum
 	kAlpacaList_AlpacaDev_38,
 	kAlpacaList_AlpacaDev_39,
 	kAlpacaList_AlpacaDev_40,
-	kAlpacaList_AlpacaDev_41,
-	kAlpacaList_AlpacaDev_42,
+//	kAlpacaList_AlpacaDev_41,
+//	kAlpacaList_AlpacaDev_42,
 
-	kAlpacaList_AlpacaDev_Last	=	kAlpacaList_AlpacaDev_42,
+	kAlpacaList_AlpacaDev_Last	=	kAlpacaList_AlpacaDev_40,
 
 
 	kAlpacaList_AlpacaDev_Total,
 	kAlpacaList_ChkBx_IncManagment,
 	kAlpacaList_Btn_Refresh,
 	kAlpacaList_Btn_CloseAll,
+	kAlpacaList_ScrollBar,
 
 	kAlpacaList_AlpacaLogo,
 
 	kAlpacaList_last
 };
 
-#define	kMaxDeviceCnt	50
 
 //**************************************************************************************
 class WindowTabAlpacaList: public WindowTab
@@ -103,15 +103,19 @@ class WindowTabAlpacaList: public WindowTab
 											const int	yyy,
 											const int	flags);
 
+		virtual void	ProcessMouseWheelMoved(const int widgetIdx, const int event, const int xxx, const int yyy, const int wheelMovement);
+		virtual	void	UpdateSliderValue(	const int widgetIdx, double newSliderValue);
+
 				void	ClearRemoteDeviceList(void);
 				void	UpdateRemoteDeviceList(void);
 				void	UpdateOnScreenWidgetList(void);
 				void	UpdateSortOrder(void);
 
-				TYPE_REMOTE_DEV	cRemoteDeviceList[kMaxDeviceCnt];
+				TYPE_REMOTE_DEV	cRemoteDeviceList[kMaxAlpacaDeviceCnt];
 				int				cAlpacaDevCnt;
 				int				cPrevAlpacaDevCnt;
 				int				cSortColumn;
+				int				cFirstLineIdx;
 
 				bool			cIncludeManagment;
 

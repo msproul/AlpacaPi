@@ -427,6 +427,9 @@ void	ControllerNiteCrawler::UpdateWindowTabs_Everything(void)
 	SetWidgetNumber(kTab_Focuser,	kNiteCrawlerTab_rotDesired,		cRotatorDesiredPos);
 	SetWidgetNumber(kTab_Focuser,	kNiteCrawlerTab_focDesired,		cFocuserDesiredPos);
 	SetWidgetNumber(kTab_AuxMotor,	kAuxMotorBox_DesiredPos,		cAuxMotorDesiredPos);
+
+	UpdateConnectedIndicator(kTab_Focuser,		kNiteCrawlerTab_Connected);
+
 }
 
 //*****************************************************************************

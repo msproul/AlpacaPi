@@ -71,10 +71,13 @@
 //*
 //*
 //*	sample
+//*			  1	        2         3         4
+//*	123456789 123456789 123456789 123456789 123456789 123456789 123456789
 //*	I5370  Gx  0 00.1  +32 45 m  And   0.7  15. p pB, S, R, stell N
 //*
 //************************************************************************
 
+static	int	gICcount	=	0;
 
 //************************************************************************
 static bool	ParseOneLineOfNGCStarCatalog(char *lineBuff, TYPE_CelestData *starRec)
@@ -88,9 +91,13 @@ double		raDegrees;
 long		deDeg;
 long		deMin;
 double		declDegrees;
-double		raRadians, declRadians;
+double		raRadians;
+double		declRadians;
 short		deSign;
 char		icSourceDesignator;
+double		magnitude;
+
+	memset(starRec, 0, sizeof(TYPE_CelestData));
 
 	validObject					=	true;
 	icSourceDesignator			=	lineBuff[0];
@@ -98,6 +105,7 @@ char		icSourceDesignator;
 	starRec->type				=	ParseCharValueFromString(lineBuff,	 7-1, 3);
 	raHour						=	ParseLongFromString(lineBuff,		11-1, 2);
 	raMin						=	ParseFloatFromString(lineBuff,		14-1, 4);
+	magnitude					=	ParseFloatFromString(lineBuff,		41-1, 4);
 
 	deSign						=	lineBuff[20-1];
 	deDeg						=	ParseLongFromString(lineBuff,		21-1, 2);
@@ -124,18 +132,31 @@ char		icSourceDesignator;
 		declRadians	=	-declRadians;
 	}
 
-	starRec->ra			=	raRadians;
-	starRec->decl		=	declRadians;
-	starRec->org_ra		=	raRadians;
-	starRec->org_decl	=	declRadians;
+	if (magnitude == 0.0)
+	{
+		magnitude	=	17.77;
+	}
+
+	starRec->ra				=	raRadians;
+	starRec->decl			=	declRadians;
+	starRec->org_ra			=	raRadians;
+	starRec->org_decl		=	declRadians;
+	starRec->realMagnitude	=	magnitude;
+
+//	CONSOLE_DEBUG_W_DBL("magnitude\t=", magnitude);
+
 	if (icSourceDesignator == 'I')
 	{
+		gICcount++;
 		starRec->dataSrc	=	kDataSrc_NGC2000IC;
+		sprintf(starRec->longName, "IC%ld", starRec->id);
 	}
 	else
 	{
 		starRec->dataSrc	=	kDataSrc_NGC2000;
+		sprintf(starRec->longName, "NGC%ld", starRec->id);
 	}
+//	CONSOLE_DEBUG_W_STR("longName\t=", starRec->longName);
 	if (starRec->type == '  PD')
 	{
 		validObject	=	false;
@@ -191,6 +212,8 @@ size_t			bufferSize;
 		fclose(filePointer);
 	}
 
+	CONSOLE_DEBUG_W_NUM("gICcount\t=", gICcount);
+//	CONSOLE_ABORT(__FUNCTION__);
 	return(ngcStarData);
 }
 

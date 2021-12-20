@@ -92,6 +92,7 @@ int		iii;
 	cAlpacaDevNum			=	deviceNum;
 	cFirstDataRead			=	true;
 	cLastUpdate_milliSecs	=	millis();
+	strcpy(cAlpacaDeviceTypeStr,	"switch");
 
 	//*	set the default values for the switch info
 	for (iii=0; iii<kMaxSwitches; iii++)
@@ -123,7 +124,7 @@ int		iii;
 		sprintf(lineBuff, "%s:%d/%d", ipString, cPort, cAlpacaDevNum);
 		SetWindowIPaddrInfo(lineBuff, true);
 
-		AlpacaSetConnected("switch", true);
+		CheckConnectedState();		//*	check connected and connect if not already connected
 	}
 
 #ifdef _USE_BACKGROUND_THREAD_

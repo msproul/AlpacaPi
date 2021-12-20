@@ -1,5 +1,5 @@
 //*****************************************************************************
-//#include	"windowtab_about.h"
+//#include	"windowtab_STsettings.h"
 
 #ifndef	_WINDOWTAB_ST_SETTINGS_H_
 #define	_WINDOWTAB_ST_SETTINGS_H_
@@ -46,6 +46,9 @@ enum
 	kSkyT_Settings_EarthThick,
 	kSkyT_Settings_EarthSolidBrn,
 	kSkyT_Settings_EarthSolidGrn,
+
+	kSkyT_Settings_DayNightSky,
+
 	kSkyT_Settings_EarthOutline,
 
 	kSkyT_Settings_GridLable,
@@ -88,9 +91,36 @@ enum
 	kSkyT_Settings_DataYALE_txt,
 	kSkyT_Settings_DataYALE_cnt,
 
+	kSkyT_Settings_Constellations_txt,
+	kSkyT_Settings_Constellations_cnt,
+
+	kSkyT_Settings_ConstOutLines_txt,
+	kSkyT_Settings_ConstOutLines_cnt,
+
+	kSkyT_Settings_Gaia_txt,
+	kSkyT_Settings_Gaia_cnt,
+
 	kSkyT_Settings_DataHelpText,
 
 	kSkyT_Settings_DataOutLine,
+
+	//*	star settings
+	kSkyT_Settings_OBAFGKM,
+	kSkyT_Settings_DispMag,
+	kSkyT_Settings_DispSpectral,
+
+	kSkyT_Settings_DispDynMagnitude,
+	kSkyT_Settings_DispSpecifiedMagnitude,
+	kSkyT_Settings_DispAllMagnitude,
+
+	kSkyT_Settings_MagnitudeLimit,
+//	kSkyT_Settings_MagUpArrow,
+//	kSkyT_Settings_MagDownArrow,
+
+	kSkyT_Settings_StarOutLine,
+
+	kSkyT_Settings_RunStartup,
+	kSkyT_Settings_RunShutdown,
 
 	kSkyT_Settings_AlpacaLogo,
 
@@ -113,12 +143,15 @@ class WindowTabSTsettings: public WindowTab
 		virtual	~WindowTabSTsettings(void);
 
 		virtual	void	SetupWindowControls(void);
+		virtual	void	ActivateWindow(void);
 		virtual	void	ProcessButtonClick(const int buttonIdx);
 		virtual	void	ProcessDoubleClick(	const int	widgetIdx,
 											const int	event,
 											const int	xxx,
 											const int	yyy,
 											const int	flags);
+		virtual	void	DrawGraphWidget(IplImage *openCV_Image, const int widgetIdx);
+				void	DrawOBAFGKM(IplImage *openCV_Image, TYPE_WIDGET *theWidget);
 
 				void	UpdateSettings(void);
 

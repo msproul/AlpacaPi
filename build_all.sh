@@ -84,19 +84,25 @@ make clean client  >/dev/null
 # if openCV is present, we can compile the clients
 if $OPENCV_OK
 then
+	rm camera
+	rm domectrl
+	rm focuser
+	rm ror
+	rm skyshariot
+	rm switch
 	echo "Building client apps" >> $LOGFILENAME
 	echo "*************************************************** making switch"	>/dev/stderr
-	make clean switch >/dev/null
-	echo "*************************************************** making sky"		>/dev/stderr
-	make clean sky >/dev/null
+	make clean switch | grep -v Wall
+	echo "*************************************************** making skyshariot"		>/dev/stderr
+	make clean sky | grep -v Wall
 	echo "*************************************************** making focuser"	>/dev/stderr
-	make clean focuser >/dev/null
+	make clean focuser | grep -v Wall
 	echo "*************************************************** making domectrl"	>/dev/stderr
-	make clean domectrl >/dev/null
+	make clean domectrl | grep -v Wall
 	echo "*************************************************** making camera"	>/dev/stderr
-	make clean camera >/dev/null
+	make clean camera | grep -v Wall
 	echo "*************************************************** making ror"	>/dev/stderr
-	make clean ror >/dev/null
+	make clean ror | grep -v Wall
 
 	if [ -f switch ]
 	then

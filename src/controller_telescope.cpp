@@ -79,6 +79,7 @@ ControllerTelescope::ControllerTelescope(	const char			*argWindowName,
 
 	//*	zero out all of the Telescope ASCOM properties
 	memset(&cTelescopeProp, 0, sizeof(TYPE_TelescopeProperties));
+	strcpy(cAlpacaDeviceTypeStr,	"telescope");
 
 
 	cAlpacaDevNum			=	deviceNum;
@@ -95,7 +96,7 @@ ControllerTelescope::ControllerTelescope(	const char			*argWindowName,
 		cPort			=	port;
 		cValidIPaddr	=	true;
 
-		AlpacaSetConnected("telescope", true);
+		CheckConnectedState();		//*	check connected and connect if not already connected
 	}
 	cLastUpdate_milliSecs	=	0;
 	SetupWindowControls();

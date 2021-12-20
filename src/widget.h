@@ -61,7 +61,9 @@ enum
 	kFont_MonoSpace,
 
 //	kFont_Simplex,
-	kFont_ScriptLarge,
+	kFont_Triplex_Small,
+	kFont_Triplex_Large,
+	kFont_Script_Large,
 
 	kFont_last
 

@@ -277,6 +277,7 @@ int		ccc;
 int		iii;
 int		alpacaDevNum;
 bool	keepGoing;
+bool	disableFOVdisplay;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -287,6 +288,7 @@ bool	keepGoing;
 	strcpy(raOffsetStr,		"0");
 	strcpy(decOffsetStr,	"0");
 
+	disableFOVdisplay	=	false;
 
 	filePointer	=	fopen(kCameraFOVfileName, "r");
 	if (filePointer != NULL)
@@ -302,6 +304,13 @@ bool	keepGoing;
 			{
 				iii	=	0;
 				ccc	=	0;
+
+				if (lineBuff[iii] == '-')
+				{
+					disableFOVdisplay	=	true;
+					iii++;
+				}
+
 				//*	extract arg 1, host name
 				while ((lineBuff[iii] >= 0x20) && (iii <= sLen))
 				{
@@ -370,6 +379,11 @@ bool	keepGoing;
 
 						cameraDataPtr->RighttAscen_Offset	=	atof(raOffsetStr);
 						cameraDataPtr->Declination_Offset	=	atof(decOffsetStr);
+
+						if (disableFOVdisplay)
+						{
+							cameraDataPtr->FOVenabled	=	false;
+						}
 					}
 				}
 			}
@@ -658,7 +672,7 @@ int		checkBoxId;
 int		textBoxId;
 int		iii;
 char	nameString[128];
-char	textString[128];
+char	textString[512];
 char	offsetsString[64];
 //char	ipAddrStr[32];
 int		myDevCount;

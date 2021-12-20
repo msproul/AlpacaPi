@@ -8,6 +8,8 @@
 //*	Jan 28,	2020	<MLS> fitsview displaying RGB images
 //*	Jan 31,	2020	<MLS> (CV_WINDOW_NORMAL | CV_WINDOW_KEEPRATIO | CV_GUI_EXPANDED)
 //*	Jan 31,	2020	<MLS> 	works correctly on Ubunto 16.04LTS
+//*	Nov 13,	2021	<MLS> Added cmd 'a' to toggle between automatic and manual advance
+//*	Nov 13,	2021	<MLS> Added -t title option
 //*****************************************************************************
 
 #include	<string.h>
@@ -76,6 +78,8 @@ int	gHistogram16bit[1 << 16];
 
 char	gNormalWindowName[]	=	"Normalized";
 bool	gCreateNormalWindow	=	true;
+bool	gAutomatic			=	false;
+
 
 //*****************************************************************************
 void	NormalizeImage(IplImage *openCV_Image)
@@ -248,6 +252,76 @@ int				iii;
 }
 
 //*****************************************************************************
+void	WriteOutColumnOne(IplImage *openCV_Image)
+{
+int		xxx;
+int		yyy;
+char	*pixelPtr;
+int		pixelIdx;
+int		jjj;
+int		quality[3] = {16, 200, 0};
+int		openCVerr;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_NUM("openCV_Image->widthStep\t=", openCV_Image->widthStep);
+	if (openCV_Image != NULL)
+	{
+		//*	set every 50th line to white
+		pixelPtr	=	openCV_Image->imageData;
+		yyy			=	50;
+		while (yyy < openCV_Image->height)
+		{
+			CONSOLE_DEBUG_W_NUM("yyy\t=", yyy);
+			pixelIdx	=	yyy * openCV_Image->widthStep;
+			for (jjj=0; jjj<openCV_Image->width; jjj++)
+			{
+				pixelPtr[pixelIdx + jjj]	=	0x00ff;
+			}
+
+			yyy	+=	50;
+		}
+
+
+		xxx	=	0;
+		while (xxx < 100)
+		{
+
+			printf("%4d\t", xxx);
+			for (jjj=0; jjj<16; jjj++)
+			{
+				printf("%02X-", pixelPtr[xxx] & 0x00ff);
+				if ((jjj % 2) == 1)
+				{
+					printf("  ");
+				}
+				xxx++;
+			}
+
+			printf("\r\n");
+		}
+
+//		for (yyy=0; yyy<101; yyy++)
+//		{
+//			pixelIdx	=	yyy * openCV_Image->widthStep;
+//
+//			printf("%4d", yyy);
+//			printf("\t%02X", pixelPtr[pixelIdx] & 0x00ff);
+//			printf("-%02X",  pixelPtr[pixelIdx + 1] & 0x00ff);
+//
+//			printf("\t\t%02X", pixelPtr[pixelIdx + 2] & 0x00ff);
+//			printf("-%02X",  pixelPtr[pixelIdx + 3] & 0x00ff);
+//
+//			printf("\t\t%02X", pixelPtr[pixelIdx + 4] & 0x00ff);
+//			printf("-%02X",  pixelPtr[pixelIdx + 5] & 0x00ff);
+//
+//			printf("\r\n");
+//
+//		}
+		openCVerr	=	cvSaveImage("striped.png", openCV_Image, quality);
+	}
+}
+
+//*****************************************************************************
 int	HandleKeyDownEvents(const char *fileName, const char *windowName, IplImage *openCV_Image)
 {
 CvScalar		mean;
@@ -283,6 +357,10 @@ IplImage		*normalized_Image;
 		keyPressed	=	cvWaitKey(0);
 		switch(keyPressed & 0x07f)
 		{
+			case 'a':
+				keepGoing	=	false;
+				break;
+
 			case 'd':
 				DeleteFiles(fileName);
 				keepGoing	=	false;
@@ -295,6 +373,12 @@ IplImage		*normalized_Image;
 				break;
 
 			case 'n':
+				break;
+
+			case 'z':
+				//*	write out the first vertical column
+				WriteOutColumnOne(openCV_Image);
+				cvShowImage(windowName, openCV_Image);
 				break;
 
 		}
@@ -317,13 +401,13 @@ bool			keepGoing;
 char			firstChar;
 char			argChar;
 bool			keepLooping;
-bool			automatic;
 bool			fileIsFits;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG_W_LONG("sizeof(gTranslationMap)\t=", sizeof(gTranslationMap));
 
-	automatic	=	false;
+	strcpy(myWindowName, "fits file");
+	gAutomatic	=	false;
 	keepLooping	=	false;
 	//*	check for cmd line parameters
 	for (ii=1; ii<argc; ii++)
@@ -335,17 +419,21 @@ bool			fileIsFits;
 			switch(argChar)
 			{
 				case 'a':
-					automatic	=	true;
+					gAutomatic	=	true;
 					break;
 
 				case 'l':
 					keepLooping	=	true;
 					break;
 
+				case 't':
+					strcpy(myWindowName, argv[ii+1]);
+					ii++;
+					break;
+
 			}
 		}
 	}
-	strcpy(myWindowName, "fits file");
 	createWindow	=	true;
 	keepGoing		=	true;
 	fileIdx		=	1;
@@ -364,7 +452,7 @@ bool			fileIsFits;
 		if (openCV_Image != NULL)
 		{
 
-			CONSOLE_DEBUG(__FUNCTION__);
+//			CONSOLE_DEBUG(__FUNCTION__);
 			if (createWindow)
 			{
 				CONSOLE_DEBUG("Create Window");
@@ -384,9 +472,9 @@ bool			fileIsFits;
 			if (fileIsFits && (openCV_Image->depth == 16))
 			{
 				CONSOLE_DEBUG("Calling Adjust16bitImge()");
-				Adjust16bitImge(openCV_Image);
+			//	Adjust16bitImge(openCV_Image);
 			}
-			CONSOLE_DEBUG(__FUNCTION__);
+//			CONSOLE_DEBUG(__FUNCTION__);
 
 			if (openCV_Image->width > 2000)
 			{
@@ -419,9 +507,9 @@ bool			fileIsFits;
 			{
 				cvShowImage(myWindowName, openCV_Image);
 			}
-			CONSOLE_DEBUG(__FUNCTION__);
+//			CONSOLE_DEBUG(__FUNCTION__);
 
-			if (automatic)
+			if (gAutomatic)
 			{
 				keyPressed	=	cvWaitKey(3000);
 			}
@@ -435,6 +523,14 @@ bool			fileIsFits;
 			{
 				switch(keyPressed & 0x07f)
 				{
+					case 'a':
+						gAutomatic		=	!gAutomatic;
+						if (gAutomatic == false)
+						{
+							fileIdx	-=	1;
+						}
+						break;
+
 					case 'q':
 						keepGoing	=	false;
 						break;

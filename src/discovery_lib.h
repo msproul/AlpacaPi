@@ -1,4 +1,6 @@
 //*****************************************************************************
+//*	Dec  6,	2021	<MLS> Increased max alpaca device count to 75
+//*****************************************************************************
 //#include	"discovery_lib.h"
 
 #ifndef _DISCOVERY_LIB_H_
@@ -66,14 +68,12 @@ typedef struct
 
 } TYPE_REMOTE_DEV;
 
+//*	this is a list of IP addresses
 #define	kMaxAlpacaIPaddrCnt	32
 
-#define	kMaxDeviceListCnt	64
+#define	kMaxAlpacaDeviceCnt	100
 
 
-//*	this is a list of IP addresses
-//extern	TYPE_ALPACA_UNIT	gAlpacaUnitList[kMaxAlpacaIPaddrCnt];
-//extern	int					gAlpacaUnitCnt	=	0;
 
 
 //*	this is a list of alpaca devices, can be more than one per IP address

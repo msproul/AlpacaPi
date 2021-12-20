@@ -84,7 +84,6 @@ enum
 	kIPaddrList_last
 };
 
-#define	kMaxDeviceCnt	50
 
 //**************************************************************************************
 class WindowTabIPList: public WindowTab

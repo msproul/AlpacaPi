@@ -44,6 +44,11 @@ class ManagementDriver: public AlpacaDriver
 		virtual	void				OutputHTML(TYPE_GetPutRequestData *reqData);
 		virtual bool				GetCmdNameFromMyCmdTable(const int cmdNumber, char *comandName, char *getPut);
 
+		//-------------------------------------------------------------------------
+		//*	Watchdog timer stuff
+		virtual	void					WatchDog_TimeOut(void);
+
+
 	protected:
 
 			TYPE_ASCOM_STATUS		Get_Apiversions(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);

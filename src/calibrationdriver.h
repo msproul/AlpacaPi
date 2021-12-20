@@ -59,6 +59,9 @@ class CalibrationDriver: public AlpacaDriver
 
 		TYPE_ASCOM_STATUS	Get_Readall(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 
+		//-------------------------------------------------------------------------
+		//*	Watchdog timer stuff
+		virtual	void					WatchDog_TimeOut(void);
 
 				//*	these routines should be implemented by the sub-classes
 				//*	all have to return an Alpaca Error code
@@ -71,10 +74,6 @@ class CalibrationDriver: public AlpacaDriver
 
 				TYPE_CoverCalibrationProperties	cCoverCalibrationProp;
 
-//				int					cCalibratorBrightness;
-//				CalibratorStatus	cCalibratorStatus;
-//				CoverStatus			cCoverStatus;
-//				int					cMaxBrightness;
 };
 
 

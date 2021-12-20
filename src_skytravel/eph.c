@@ -7,9 +7,9 @@
 //*	Edit history
 //*****************************************************************************
 //*	Written by Frank Covets and Clif Ashcraft
-//*	May  2,	1996	<MLS> (Mark Sproul) Starting on Sky Travel for Frank and Cliff
-//*	Nov 20,	1999	<MLS> Minor formating cleanup to improve readability
-//*	Jan  2,	2021	<MLS> More formating cleanup
+//*	May  2,	1996	<MLS> (Mark Sproul) Starting on Sky Travel for Frank and Clif
+//*	Nov 20,	1999	<MLS> Minor formatting cleanup to improve readability
+//*	Jan  2,	2021	<MLS> More formatting cleanup
 //*****************************************************************************
 //*	sas -> side.angle.side
 //*	sss -> side.side.side.

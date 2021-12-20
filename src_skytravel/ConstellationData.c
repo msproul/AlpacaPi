@@ -10,6 +10,7 @@
 //*	Jan  7,	2021	<MLS> From https://github.com/dcf21/constellation-stick-figures
 //*	Feb 18,	2021	<MLS> Constellation vectors now using proper Precessed RA/DEC values
 //*	Apr  3,	2021	<MLS> Fixed handling of spaces in ParseConstOutlineLongName()
+//*	Oct 27,	2021	<MLS> Fixed bug in constellation center calcs caused by negative RA values
 //*****************************************************************************
 
 
@@ -31,14 +32,18 @@
 #include	"ConstellationData.h"
 #include	"HipparcosCatalog.h"
 
+TYPE_ConstVector	*gConstVecotrPtr	=	NULL;
+int					gConstVectorCnt		=	0;
+TYPE_ConstOutline	*gConstOutlinePtr	=	NULL;
+int					gConstOutlineCount	=	0;
 
 #define	RADIANS(degrees)	(degrees * M_PI / 180.0)
 #define	DEGREES(radians)	(radians * 180.0 / M_PI)
 
 
 
-static	TYPE_CelestData	*gHippData	=	NULL;
-static	long			gHippCount	=	0;
+static	TYPE_CelestData	*gHippData			=	NULL;
+static	long			gHippCount			=	0;
 static	int				gFailedToFindCnt	=	0;
 
 //************************************************************************
@@ -69,6 +74,9 @@ int		iii;
 	return(hippIndex);
 }
 
+
+
+int		gNegRAcount	=	0;
 //************************************************************************
 static void	UpdateOneConstellation(TYPE_ConstVector *constellation)
 {
@@ -79,7 +87,7 @@ int		hippIndex;
 
 	if (constellation != NULL)
 	{
-//		CONSOLE_DEBUG_W_STR(__FUNCTION__, constellation->longName);
+//		CONSOLE_DEBUG_W_STR(__FUNCTION__, constellation->constellationName);
 //		CONSOLE_DEBUG_W_NUM("starCount\t=", constellation->starCount);
 		for (iii=0; iii<constellation->starCount; iii++)
 		{
@@ -90,13 +98,21 @@ int		hippIndex;
 	//			constellation->hippStars[iii].declination	=	gHippData[hippIndex].org_decl;
 				constellation->hippStars[iii].rtAscension	=	gHippData[hippIndex].ra;
 				constellation->hippStars[iii].declination	=	gHippData[hippIndex].decl;
+
+				//*	Many of the hippacos stars have negitive RA, if the constellation has
+				//*	both positive and negative RA values, it messes up the center calculations
+				//*	It does NOT affect the drawing of the vectors
+				if (constellation->hippStars[iii].rtAscension < 0.0)
+				{
+					constellation->hippStars[iii].rtAscension	+=	2 * M_PI;
+				}
 			}
 			else
 			{
 				//*	since we couldnt find the star, make it a move
 				constellation->hippStars[iii].moveFlag	=	true;
 				gFailedToFindCnt++;
-				CONSOLE_DEBUG_W_STR("-----", constellation->longName);
+				CONSOLE_DEBUG_W_STR("-----", constellation->constellationName);
 			}
 		}
 	}
@@ -262,7 +278,7 @@ bool				moveFlag;
 					//*	put the data into the array
 					if (constelIdx < kConstOutlineCnt)
 					{
-						strcpy(constelVectorData[constelIdx].longName, currentName);
+						strcpy(constelVectorData[constelIdx].constellationName, currentName);
 					}
 				}
 				else if (lineBuff[0] == '[')
@@ -284,7 +300,8 @@ bool				moveFlag;
 							else
 							{
 								CONSOLE_DEBUG_W_NUM("Exceeded star limit\t=", starIdx);
-							//	CONSOLE_ABORT(__FUNCTION__);
+								CONSOLE_DEBUG_W_STR("Exceeded star limit\t=", currentName);
+								CONSOLE_ABORT(__FUNCTION__);
 							}
 							constelVectorData[constelIdx].starCount	=	starIdx;
 							moveFlag	=	false;
@@ -318,7 +335,7 @@ int		iii;
 	iii			=	0;
 	while ((foundIdx < 0) && (iii < objectCount))
 	{
-		if (strcasecmp(searchName, vectorList[iii].longName) == 0)
+		if (strcasecmp(searchName, vectorList[iii].constellationName) == 0)
 		{
 			foundIdx	=	iii;
 		}
@@ -349,6 +366,85 @@ int		substituteCnt;
 	}
 	return(substituteCnt);
 }
+
+
+//************************************************************************
+static void	FindConstellationCenter(TYPE_ConstVector *constelObj)
+{
+int		iii;
+double	min_rtAscn;
+double	max_rtAscn;
+double	min_decl;
+double	max_decl;
+
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, constelObj->constellationName);
+
+	min_rtAscn	=	99.0;
+	max_rtAscn	=	-99.0;
+	min_decl	=	99.0;
+	max_decl	=	-99.0;
+	iii			=	0;
+	while (iii < constelObj->starCount)
+	{
+		if (fabs(constelObj->hippStars[iii].rtAscension) > 0.0)
+		{
+			if (constelObj->hippStars[iii].rtAscension < min_rtAscn)
+			{
+				min_rtAscn	=	constelObj->hippStars[iii].rtAscension;
+			}
+			if (constelObj->hippStars[iii].rtAscension > max_rtAscn)
+			{
+				max_rtAscn	=	constelObj->hippStars[iii].rtAscension;
+			}
+			if (constelObj->hippStars[iii].declination < min_decl)
+			{
+				min_decl	=	constelObj->hippStars[iii].declination;
+			}
+			if (constelObj->hippStars[iii].declination > max_decl)
+			{
+				max_decl	=	constelObj->hippStars[iii].declination;
+			}
+		}
+		iii++;
+	}
+
+	if (iii >= 1)
+	{
+		constelObj->rtAscension	=	min_rtAscn + ((max_rtAscn - min_rtAscn) / 2.0);
+		constelObj->declination	=	min_decl + ((max_decl - min_decl) / 2.0);
+	}
+	else
+	{
+		CONSOLE_DEBUG_W_STR("name       \t=", constelObj->constellationName);
+		CONSOLE_DEBUG_W_DBL("rtAscension\t=", constelObj->rtAscension);
+		CONSOLE_DEBUG_W_DBL("declination\t=", constelObj->declination);
+	}
+
+	if (strncasecmp(constelObj->constellationName, "Her", 3) == 0)
+	{
+		CONSOLE_DEBUG_W_STR("name       \t=", constelObj->constellationName);
+		CONSOLE_DEBUG_W_DBL("rtAscension\t=", DEGREES(constelObj->rtAscension) / 15.0);
+		CONSOLE_DEBUG_W_DBL("declination\t=", DEGREES(constelObj->declination));
+
+		CONSOLE_DEBUG_W_DBL("min_rtAscn\t=", DEGREES(min_rtAscn) / 15.0);
+		CONSOLE_DEBUG_W_DBL("max_rtAscn\t=", DEGREES(max_rtAscn) / 15.0);
+		CONSOLE_DEBUG_W_DBL("min_decl\t=", DEGREES(min_decl));
+		CONSOLE_DEBUG_W_DBL("max_decl\t=", DEGREES(max_decl));
+
+//		iii			=	0;
+//		while (iii < constelObj->starCount)
+//		{
+//			CONSOLE_DEBUG_W_DBL("rtAscension\t=", DEGREES(constelObj->hippStars[iii].rtAscension) / 15.0);
+//			iii++;
+//		}
+
+//		CONSOLE_ABORT(__FUNCTION__);
+
+	}
+}
+
+
+
 //************************************************************************
 //*	we are going to read the simplified list,
 //*	then read the full list and replace some of the definitions from one to the other
@@ -365,6 +461,7 @@ int					objectCount_simp;
 int					objectCount_rey;
 int					objectCount_return;
 int					subCnt;
+int					iii;
 
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, directoryPath);
 
@@ -398,6 +495,8 @@ int					subCnt;
 		subCnt	+=	ReplaceVectorDef(constVectors_simp, objectCount_simp, constVectors_rey, objectCount_rey, "Perseus");
 		subCnt	+=	ReplaceVectorDef(constVectors_simp, objectCount_simp, constVectors_rey, objectCount_rey, "Vela");
 
+		subCnt	+=	ReplaceVectorDef(constVectors_simp, objectCount_simp, constVectors_rey, objectCount_rey, "Centaurus");
+
 //		CONSOLE_DEBUG_W_NUM("Definitions substituted\t=", subCnt);
 		free(constVectors_rey);
 		constVectors_rey	=	NULL;
@@ -426,12 +525,20 @@ int					subCnt;
 		CONSOLE_DEBUG("out of luck..............");
 	}
 
+
+	//*	find centers
+	if (constVectors_return != NULL)
+	{
+		for (iii=0; iii<objectCount_return; iii++)
+		{
+			FindConstellationCenter(&constVectors_return[iii]);
+		}
+	//	CONSOLE_ABORT(__FUNCTION__);
+	}
+
 	DEBUG_TIMING("Elapsed millisconds=");
 	return(constVectors_return);
-
 }
-
-
 
 
 //************************************************************************
@@ -498,7 +605,7 @@ char	myLongName[64];
 		//*	did we find it?
 		if (recordIdx >= 0)
 		{
-			strcpy(constelOutlineData[recordIdx].longName, myLongName);
+			strcpy(constelOutlineData[recordIdx].constOutlineName, myLongName);
 		}
 	}
 	else
@@ -564,7 +671,7 @@ double	myDegrees;
 
 
 //************************************************************************
-static void	FindCostellationCenter(TYPE_ConstOutline *constelObj)
+static void	FindOutlineCenter(TYPE_ConstOutline *constelObj)
 {
 int		iii;
 double	min_rtAscn;
@@ -634,7 +741,7 @@ char				currentName[32];
 TYPE_RaDec			linePoint;
 
 
-//	CONSOLE_DEBUG_W_STR(__FUNCTION__, filePath);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, filePath);
 
 	constelOutlineData	=	NULL;
 	*objectCount		=	0;
@@ -735,17 +842,14 @@ TYPE_RaDec			linePoint;
 			//*	find centers
 			for (iii=0; iii<recordIdx; iii++)
 			{
-				//*	check to see if its already det
+				//*	check to see if its already set
 				if (constelOutlineData[iii].rtAscension == 0.0)
 				{
-				//	CONSOLE_DEBUG_W_STR("FindCostellationCenter\t=", constelOutlineData[iii].shortName);
-					FindCostellationCenter(&constelOutlineData[iii]);
+					FindOutlineCenter(&constelOutlineData[iii]);
 				}
 			}
 		}
 		fclose(filePointer);
-
-
 	}
 	else
 	{
@@ -755,3 +859,24 @@ TYPE_RaDec			linePoint;
 	return(constelOutlineData);
 }
 
+
+//************************************************************************
+static void	DumpConstellationData(TYPE_ConstVector *constelObj)
+{
+int	iii;
+
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, constelObj->constellationName);
+	CONSOLE_DEBUG_W_NUM(__FUNCTION__, constelObj->starCount);
+
+	for (iii=0; iii<constelObj->starCount; iii++)
+	{
+		printf("%2d\t%5d\t%3.2f\t%3.2f\r\n",
+							iii,
+							constelObj->hippStars[iii].hippIdNumber,
+							constelObj->hippStars[iii].rtAscension,
+							constelObj->hippStars[iii].declination);
+	}
+	CONSOLE_DEBUG_W_STR("name       \t=", constelObj->constellationName);
+	CONSOLE_DEBUG_W_DBL("rtAscension\t=", constelObj->rtAscension);
+	CONSOLE_DEBUG_W_DBL("declination\t=", constelObj->declination);
+}

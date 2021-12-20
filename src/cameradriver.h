@@ -236,8 +236,8 @@ enum
 	kCmd_Camera_fastreadout,			//*	Returns whether Fast Readout Mode is enabled.
 										//*	Sets whether Fast Readout Mode is enabled.
 	kCmd_Camera_fullwellcapacity,		//*	Reports the full well capacity of the camera
-	kCmd_Camera_gain,					//*	Returns an index into the Gains array
-										//*	Sets the binning factor for the X axis.
+	kCmd_Camera_gain,					//*	Returns the camera's gain
+										//*	Sets the camera's gain.
 	kCmd_Camera_gainmax,				//*	Maximum value of Gain
 	kCmd_Camera_gainmin,				//*	Minimum value of Gain
 	kCmd_Camera_gains,					//*	Gains supported by the camera
@@ -441,6 +441,11 @@ class CameraDriver: public AlpacaDriver
 		TYPE_ASCOM_STATUS	Put_StopExposure(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 		TYPE_ASCOM_STATUS	Put_AbortExposure(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 
+		TYPE_ASCOM_STATUS	Get_Imagearray_JSON(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
+		TYPE_ASCOM_STATUS	Get_Imagearray_Binary(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
+		int					BuildBinaryImage_Raw8(	unsigned char *binaryDataBuffer, int startOffset, int bufferSize);
+		int					BuildBinaryImage_Raw16(	unsigned char *binaryDataBuffer, int startOffset, int bufferSize);
+		int					BuildBinaryImage_RGB24(	unsigned char *binaryDataBuffer, int startOffset, int bufferSize);
 
 		//-------------------------------------------------------------------------------------------------
 		//*	Added by MLS
@@ -581,21 +586,25 @@ class CameraDriver: public AlpacaDriver
 		virtual	TYPE_ASCOM_STATUS		Abort_Exposure(void);
 		virtual	TYPE_EXPOSURE_STATUS	Check_Exposure(bool verboseFlag = false);
 
-		virtual	TYPE_ASCOM_STATUS	SetImageTypeCameraOpen(TYPE_IMAGE_TYPE newImageType);
-		virtual	TYPE_ASCOM_STATUS	SetImageType(TYPE_IMAGE_TYPE newImageType);
-		virtual	TYPE_ASCOM_STATUS	SetImageType(char *newImageTypeString);
+		virtual	TYPE_ASCOM_STATUS		SetImageTypeCameraOpen(TYPE_IMAGE_TYPE newImageType);
+		virtual	TYPE_ASCOM_STATUS		SetImageType(TYPE_IMAGE_TYPE newImageType);
+		virtual	TYPE_ASCOM_STATUS		SetImageType(char *newImageTypeString);
 
-		virtual	TYPE_ASCOM_STATUS	Write_Gain(const int newGainValue);
-		virtual	TYPE_ASCOM_STATUS	Read_Gain(int *cameraGainValue);
+		virtual	TYPE_ASCOM_STATUS		Write_BinX(const int newBinXvalue);
+		virtual	TYPE_ASCOM_STATUS		Write_BinY(const int newBinYvalue);
 
-		virtual	TYPE_ASCOM_STATUS	Write_Offset(const int newOffsetValue);
-		virtual	TYPE_ASCOM_STATUS	Read_Offset(int *cameraOffsetValue);
 
-		virtual	TYPE_ASCOM_STATUS	Start_Video(void);
-		virtual	TYPE_ASCOM_STATUS	Stop_Video(void);
-		virtual	TYPE_ASCOM_STATUS	Take_Video(void);
+		virtual	TYPE_ASCOM_STATUS		Write_Gain(const int newGainValue);
+		virtual	TYPE_ASCOM_STATUS		Read_Gain(int *cameraGainValue);
 
-		virtual	TYPE_ASCOM_STATUS	SetFlipMode(int newFlipMode);
+		virtual	TYPE_ASCOM_STATUS		Write_Offset(const int newOffsetValue);
+		virtual	TYPE_ASCOM_STATUS		Read_Offset(int *cameraOffsetValue);
+
+		virtual	TYPE_ASCOM_STATUS		Start_Video(void);
+		virtual	TYPE_ASCOM_STATUS		Stop_Video(void);
+		virtual	TYPE_ASCOM_STATUS		Take_Video(void);
+
+		virtual	TYPE_ASCOM_STATUS		SetFlipMode(int newFlipMode);
 
 		virtual	TYPE_ALPACA_CAMERASTATE		Read_AlapcaCameraState(void);
 
@@ -626,6 +635,7 @@ protected:
 	//*	ASCOM camera properties
 	TYPE_CameraProperties	cCameraProp;
 
+	bool				cResponseIsJSON;		//*	this is for the binary option in imageArray
 
 	//*****************************************************************************
 	TYPE_IMAGE_ROI_Info		cLastExposure_ROIinfo;
@@ -681,7 +691,7 @@ protected:
 	unsigned char		*cCameraDataBuffer;
 	unsigned char		*cCameraBGRbuffer;			//*	Blue, Green, Red, for FITS
 
-	int					cAVIfourcc;					//*	the fourCC mode used in the avi file
+	int					cAVIfourCC;					//*	the fourCC mode used in the avi file
 
 	bool				cCameraAutoExposure;		//*	true if the camera is doing the auto exposure
 	int32_t				cCurrentExposure_us;		//*	micro seconds

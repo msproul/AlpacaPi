@@ -8,6 +8,7 @@
 //*	Dec 31,	2020	<MLS> had to change char to int8_t to keep Raspberry-Pi g++ compiler happy
 //*	Apr 17,	2021	<MLS> Increased short name length from 8 to 12
 //*	Jul  9,	2021	<MLS> Finished converting all start data to globals
+//*	Oct 23,	2021	<MLS> Added spectralClass to star structure (O,B,A,F,G,K,M)
 //*****************************************************************************
 //#include	"SkyStruc.h"
 
@@ -55,7 +56,7 @@ typedef struct
 //*****************************************************************************
 enum
 {
-	kDataSrc_Orginal	=	0,	//*	Frank and Cliffs orginal data file
+	kDataSrc_Orginal	=	0,	//*	Frank and Clif's orginal data file
 	kDataSrc_Planets,
 	kDataSrc_Zodiac,
 	kDataSrc_YaleBrightStar,
@@ -73,7 +74,8 @@ enum
 	kDataSrc_PolarAlignCenter,
 	kDataSrc_AAVSOalert,
 
-	kDataSrc_Unkown,
+	kDataSrc_GAIA_gedr3,
+	kDataSrc_Unknown,
 
 	kDataSrc_last
 };
@@ -81,12 +83,15 @@ enum
 #define	kShortNameMax	12
 #define	kLongNameMax	32
 
+
 //*****************************************************************************
 typedef struct
 {
 	long			id;
 	unsigned short	magn;
 	char			dataSrc;		//*	see enum table above
+	char			spectralClass;	//*	O,B,A,F,G,K,M
+	char			variability;	//*	Variability Flag: 0=not variable, 1=variable, 2=uncertain
 	long			type;			//*	NGC = 3 char field
 	short			curXX;			//*	current plot location on the screen
 	short			curYY;			//*	this is used for finding the object the cursor is pointing to
@@ -471,6 +476,9 @@ extern	long				gPolarAlignObjectCount;
 extern	TYPE_CelestData		*gAAVSOalertsPtr;
 extern	long				gAAVSOalertsCnt;
 
+//*	Gaia star catalog
+extern	TYPE_CelestData		*gGaiaObjectPtr;
+extern	long				gGaiaObjectCnt;
 
 void		Center_RA_DEC(double argRA_radians, double argDecl_radians);
 void		Center_CelestralObject(TYPE_CelestData *starObject);

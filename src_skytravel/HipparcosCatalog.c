@@ -227,6 +227,7 @@ short		deSign;
 char		icSourceDesignator;
 char		raString[32];
 char		deString[32];
+char		spectralClass;
 
 //	CONSOLE_DEBUG(lineBuff);
 
@@ -274,6 +275,8 @@ char		deString[32];
 		g99Count++;
 	}
 
+	spectralClass				=	lineBuff[436-1];
+
 //  80- 86  F7.2  mas     Plx       ? Trigonometric parallax                 (H11)
 //	starRec->parallax			=	ParseFloatFromString(lineBuff,		80-1, 7);
 
@@ -290,11 +293,12 @@ char		deString[32];
 		declRadians	=	-declRadians;
 	}
 
-	starRec->ra			=	raRadians;
-	starRec->decl		=	declRadians;
-	starRec->org_ra		=	raRadians;
-	starRec->org_decl	=	declRadians;
-	starRec->dataSrc	=	kDataSrc_Hipparcos;
+	starRec->ra				=	raRadians;
+	starRec->decl			=	declRadians;
+	starRec->org_ra			=	raRadians;
+	starRec->org_decl		=	declRadians;
+	starRec->dataSrc		=	kDataSrc_Hipparcos;
+	starRec->spectralClass	=	spectralClass;
 
 	return(validObject);
 }

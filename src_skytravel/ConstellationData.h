@@ -24,23 +24,6 @@ typedef struct
 	double	declination;
 }	TYPE_RaDec;
 
-#define	kMaxConstPointCnt	55
-
-//*****************************************************************************
-typedef struct
-{
-	char		shortName[8];
-	char		longName[32];
-	double		rtAscension;		//*	these are the points for the center of the outline
-	double		declination;
-	TYPE_RaDec	path[kMaxConstPointCnt];
-
-} TYPE_ConstOutline;
-
-#define	kConstOutlineCnt	92
-#define	kMaxConstVecotrPts	40
-
-
 //*****************************************************************************
 typedef struct
 {
@@ -53,10 +36,31 @@ typedef struct
 } TYPE_HippStar;
 
 
+#define	kMaxConstPointCnt	55
+
 //*****************************************************************************
 typedef struct
 {
-	char			longName[32];
+	char		shortName[8];
+//	char		longName[32];
+	char		constOutlineName[32];
+	double		rtAscension;		//*	these are the points for the center of the outline
+	double		declination;
+	TYPE_RaDec	path[kMaxConstPointCnt];
+
+} TYPE_ConstOutline;
+
+#define	kConstOutlineCnt	92
+#define	kMaxConstVecotrPts	36
+
+
+
+
+//*****************************************************************************
+//*	Constellation
+typedef struct
+{
+	char			constellationName[32];
 	double			rtAscension;		//*	these are the points for the center of the outline
 	double			declination;
 	TYPE_HippStar	hippStars[kMaxConstVecotrPts];
@@ -74,6 +78,10 @@ TYPE_ConstOutline	*ReadConstellationOutlines(const char *filePath, int *objectCo
 TYPE_ConstVector	*ReadConstellationVectors(const char *directoryPath, int *objectCount);
 void				SetHipparcosDataPointers(TYPE_CelestData *theHippDataPtr, long theHippObjectCnt);
 
+extern	TYPE_ConstVector	*gConstVecotrPtr;
+extern	int					gConstVectorCnt;
+extern	TYPE_ConstOutline	*gConstOutlinePtr;
+extern	int					gConstOutlineCount;
 
 #ifdef __cplusplus
 }

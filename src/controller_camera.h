@@ -36,6 +36,10 @@
 	#include	"windowtab_about.h"
 #endif
 
+#ifndef _SENDREQUEST_LIB_H
+	#include	"sendrequest_lib.h"
+#endif
+
 
 
 
@@ -50,6 +54,18 @@ typedef struct
 	bool	hasCSV;
 	bool	hasPNG;
 } TYPE_REMOTE_FILE;
+
+//*****************************************************************************
+typedef struct
+{
+	char	ContentTypeStr[128];
+	char	ContentLengthStr[128];
+	bool	dataIsBinary;
+	bool	dataIsJson;
+	int		contentLength;
+
+} TYPE_HTTPheader;
+
 
 #define	kMaxRemoteFileCnt		200
 #define	kMaxTemperatureValues	(450)
@@ -89,6 +105,7 @@ class ControllerCamera: public Controller
 		virtual	void	UpdateCameraSize(void);
 		virtual	void	UpdateCameraState(void);
 		virtual	void	UpdateCameraTemperature(void);
+		virtual	void	UpdatePercentCompleted(void);
 
 		virtual	void	UpdateSupportedActions(void);
 		virtual	void	UpdateRemoteAlpacaVersion(void);
@@ -152,9 +169,9 @@ class ControllerCamera: public Controller
 				void	LogCameraTemp(const double cameraTemp);
 
 
-				IplImage	*DownloadImage(const bool force8BitRead = false);
+				IplImage	*DownloadImage(const bool force8BitRead,  const bool allowBinary);
 				IplImage	*DownloadImage_rgbarray(void);
-				IplImage	*DownloadImage_imagearray(const bool force8BitRead = false);
+				IplImage	*DownloadImage_imagearray(const bool force8BitRead, const bool allowBinary);
 
 
 
@@ -188,6 +205,56 @@ class ControllerCamera: public Controller
 				bool					cHas_rgbarray;
 				bool					cHas_sidebar;
 				bool					cHas_SaveAll;
+
+				//==========================================================
+				//*	Image array downloading routines
+				int		AlpacaGetIntegerArrayShortLines(	const char	*alpacaDevice,
+												const int	alpacaDevNum,
+												const char	*alpacaCmd,
+												const char	*dataString,
+												int			*uint32array,
+												int			arrayLength,
+												int			*actualValueCnt);
+
+				int		AlpacaGetImageArray(	const char		*alpacaDevice,
+												const int		alpacaDevNum,
+												const char		*alpacaCmd,
+												const char		*dataString,
+												const bool		allowBinary,
+												TYPE_ImageArray	*imageArray,
+												int				arrayLength,
+												int				*actualValueCnt);
+				int		AlpacaGetImageArray_Binary(	TYPE_ImageArray	*imageArray,
+													int				arrayLength,
+													int				*actualValueCnt);
+				int		AlpacaGetImageArray_JSON(	TYPE_ImageArray	*imageArray,
+													int				arrayLength,
+													int				*actualValueCnt);
+				void	UpdateImageProgressBar(int maxArrayLength);
+
+				//*	these variables are ONLY for image download
+				TYPE_HTTPheader 		cHttpHdrStruct;
+				TYPE_BinaryImageHdr		cBinaryImageHdr;
+				bool					cKeepReading;
+				bool					cReadBinaryHeader;
+				bool					cValueFoundFlag;
+				int						cRanOutOfRoomCnt;
+				int						cRecvdByteCnt;
+				int						cSocketReadCnt;
+				int						cSocket_desc;
+				int						cTotalBytesRead;
+				int						cLinesProcessed;
+				int						cImageArrayIndex;
+				int						cFirstCharNotDigitCnt;
+				int						cData_iii;
+				int						cImgArrayType;
+				char					cReturnedData[kReadBuffLen + 10];
+
+				uint32_t				tStartMillisecs;
+				uint32_t				tCurrentMillisecs;
+				uint32_t				tLastUpdateMillisecs;
+				uint32_t				tDeltaMillisecs;
+				uint32_t				tStopMillisecs;
 
 				//==========================================================
 				//*	File name information

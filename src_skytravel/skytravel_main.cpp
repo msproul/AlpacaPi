@@ -57,6 +57,7 @@
 bool	gKeepRunning;
 char	gFullVersionString[128];
 char	gFirstArgString[256];
+bool	gVerbose		=	false;
 
 //-----------------------------------------------------------
 //*	star information
@@ -103,6 +104,9 @@ long				gPolarAlignObjectCount	=	0;
 TYPE_CelestData		*gAAVSOalertsPtr	=	NULL;
 long				gAAVSOalertsCnt		=	0;
 
+//*	Gaia star catalog
+TYPE_CelestData		*gGaiaObjectPtr		=	NULL;
+long				gGaiaObjectCnt		=	0;
 
 //*****************************************************************************
 static void	ProcessCmdLineArgs(int argc, char **argv)

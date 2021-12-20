@@ -1288,6 +1288,7 @@ TYPE_ASCOM_STATUS	TelescopeDriver::Get_Declination(	TYPE_GetPutRequestData *reqD
 														const char *responseString)
 {
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
+char					declinationStr[48];
 
 	JsonResponse_Add_Double(reqData->socket,
 							reqData->jsonTextBuffer,
@@ -1295,6 +1296,24 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 							responseString,
 							cTelescopeProp.Declination,
 							INCLUDE_COMMA);
+
+	//*	extra... add the string value
+	FormatHHMMSSdd(cTelescopeProp.Declination, declinationStr, false);
+	JsonResponse_Add_String(	reqData->socket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								"Declination-str",
+								declinationStr,
+								INCLUDE_COMMA);
+
+	FormatHHMMSS(cTelescopeProp.Declination, declinationStr, false);
+	JsonResponse_Add_String(	reqData->socket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								"Declination-str2",
+								declinationStr,
+								INCLUDE_COMMA);
+
 	return(alpacaErrCode);
 }
 
@@ -1629,6 +1648,7 @@ TYPE_ASCOM_STATUS	TelescopeDriver::Get_RightAscension(TYPE_GetPutRequestData	*re
 														const char				*responseString)
 {
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
+char					rightAscString[48];
 
 	JsonResponse_Add_Double(reqData->socket,
 							reqData->jsonTextBuffer,
@@ -1636,6 +1656,23 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 							responseString,
 							cTelescopeProp.RightAscension,
 							INCLUDE_COMMA);
+
+	//*	extra... add the string value
+	FormatHHMMSSdd(cTelescopeProp.RightAscension, rightAscString, true);
+	JsonResponse_Add_String(	reqData->socket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								"RightAscension-str",
+								rightAscString,
+								INCLUDE_COMMA);
+
+	FormatHHMMSS(cTelescopeProp.RightAscension, rightAscString, true);
+	JsonResponse_Add_String(	reqData->socket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								"RightAscension-str2",
+								rightAscString,
+								INCLUDE_COMMA);
 	return(alpacaErrCode);
 }
 

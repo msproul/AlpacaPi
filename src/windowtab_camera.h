@@ -45,6 +45,7 @@ enum
 
 
 	kCameraBox_State,
+	kCameraBox_PercentCompleted,
 
 	kCameraBox_ReadMode0,
 	kCameraBox_ReadMode1,
@@ -59,14 +60,24 @@ enum
 	kCameraBox_DisplayImage,
 	kCameraBox_SaveAll,
 
+	kCameraBox_Reset,
+
 	kCameraBox_Filename,
 	kCameraBox_ErrorMsg,
 
-	kCameraBox_Reset,
 	kCameraBox_StartExposure,
-	kCameraBox_DownloadImage,
+	kCameraBox_StopExposure,
+	kCameraBox_Rank2,
+	kCameraBox_Rank3,
+
+	kCameraBox_EnableBinary,
 	kCameraBox_Btn_8Bit,
+
+	kCameraBox_DownloadImage,
 	kCameraBox_DownloadRGBarray,
+
+	kCameraBox_SaveOutline,
+
 
 	kCameraBox_FilterWheelName,
 	kCameraBox_FilterWheel1,
@@ -127,6 +138,11 @@ class WindowTabCamera: public WindowTab
 		virtual	void	SetupWindowControls(void);
 		virtual	void	DrawGraphWidget(IplImage *openCV_Image, const int widgetIdx);
 		virtual	void	ProcessButtonClick(const int buttonIdx);
+		virtual	void	ProcessDoubleClick(	const int	widgetIdx,
+											const int	event,
+											const int	xxx,
+											const int	yyy,
+											const int	flags);
 		virtual	void	UpdateSliderValue(const int widgetIdx, double newSliderValue);
 
 				void	ForceUpdate(void);
@@ -145,6 +161,7 @@ class WindowTabCamera: public WindowTab
 				void	DownloadImage(const bool useRGBarray);
 
 				bool	cForce8BitRead;
+				bool	cAllowBinaryDownload;
 
 //				void	DrawGraph(IplImage *openCV_Image, TYPE_WIDGET *graphWidget, double *arrayData, int arrayCount);
 

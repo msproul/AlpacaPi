@@ -31,20 +31,13 @@
 #define	kReceiveBufferSize	1550
 
 
-
-
-
-//#define	kMaxDeviceListCnt	32
-
-TYPE_ALPACA_UNIT	gAlpacaUnitList[kMaxDeviceListCnt];
+TYPE_ALPACA_UNIT	gAlpacaUnitList[kMaxAlpacaDeviceCnt];
 int					gAlpacaUnitCnt	=	0;
 
-//TYPE_REMOTE_DEV		gAlpacaDiscoveredList[kMaxDeviceListCnt];
-//int					gAlpacaDiscoveredCnt	=	0;
-TYPE_REMOTE_DEV		gAlpacaDiscoveredList[kMaxDeviceListCnt];
+TYPE_REMOTE_DEV		gAlpacaDiscoveredList[kMaxAlpacaDeviceCnt];
 int					gAlpacaDiscoveredCnt	=	0;;
 
-static	int		gBroadcastSock;
+static	int			gBroadcastSock;
 
 //*****************************************************************************
 static void	UpdateRemoteList(TYPE_REMOTE_DEV *newRemoteDevice)
@@ -56,7 +49,7 @@ bool	newDevice;
 //	CONSOLE_DEBUG(__FUNCTION__);
 	//*	look to see if it is already in the list
 	newDevice	=	true;
-	for (ii=0; ii<gAlpacaDiscoveredCnt; ii++)
+	for (ii=0; ii < gAlpacaDiscoveredCnt; ii++)
 	{
 		if (	(newRemoteDevice->deviceAddress.sin_addr.s_addr	==	gAlpacaDiscoveredList[ii].deviceAddress.sin_addr.s_addr)
 			&&	(newRemoteDevice->port							==	gAlpacaDiscoveredList[ii].port)
@@ -71,7 +64,7 @@ bool	newDevice;
 	}
 	if (newDevice)
 	{
-		if (gAlpacaDiscoveredCnt < kMaxDeviceListCnt)
+		if (gAlpacaDiscoveredCnt < kMaxAlpacaDeviceCnt)
 		{
 			gAlpacaDiscoveredList[gAlpacaDiscoveredCnt]	=	*newRemoteDevice;
 			gAlpacaDiscoveredCnt++;
@@ -363,7 +356,7 @@ int		alpacaListenPort;
 	{
 		//*	add the new devices to our list
 //		CONSOLE_DEBUG("We have a new devices")
-		if (gAlpacaUnitCnt < kMaxDeviceListCnt)
+		if (gAlpacaUnitCnt < kMaxAlpacaDeviceCnt)
 		{
 			gAlpacaUnitList[gAlpacaUnitCnt].deviceAddress	=	*deviceAddress;
 			gAlpacaUnitList[gAlpacaUnitCnt].port			=	alpacaListenPort;
@@ -372,7 +365,7 @@ int		alpacaListenPort;
 		}
 	}
 
-	if ((deviceIdx >= 0) && (deviceIdx < kMaxDeviceListCnt))
+	if ((deviceIdx >= 0) && (deviceIdx < kMaxAlpacaDeviceCnt))
 	{
 		//*	set the last time we heard from it
 	}

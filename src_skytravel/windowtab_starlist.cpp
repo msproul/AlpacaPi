@@ -25,6 +25,8 @@
 //*	Sep  7,	2021	<MLS> Star list working for Messier objects
 //*	Sep 12,	2021	<MLS> Merged aavso list with starlist
 //*	Sep 14,	2021	<MLS> Added export to CSV file (not finished)
+//*	Oct 23,	2021	<MLS> Added SetColumnOneTitle()
+//*	Oct 26,	2021	<MLS> Added magnitude to star list display
 //*****************************************************************************
 
 #include	<stdlib.h>
@@ -80,7 +82,7 @@ int		textBoxHt;
 int		textBoxWd;
 int		widgetWidth;
 int		iii;
-short	tabArray[kMaxTabStops]	=	{100, 400, 600, 700, 900, 0};
+short	tabArray[kMaxTabStops]	=	{100, 400, 600, 700, 900, 950, 0, 0};
 int		clmnHdr_xLoc;
 int		clmnHdrWidth;
 
@@ -98,7 +100,7 @@ int		clmnHdrWidth;
 
 	clmnHdr_xLoc	=	1;
 	iii				=	kStarList_ClmTitle1;
-	while(iii <= kStarList_ClmTitle5)
+	while (iii <= kStarList_ClmTitle6)
 	{
 		clmnHdrWidth	=	tabArray[iii - kStarList_ClmTitle1] - clmnHdr_xLoc;
 
@@ -123,6 +125,7 @@ int		clmnHdrWidth;
 	SetWidgetText(		kStarList_ClmTitle3,	"Right Ascension");
 	SetWidgetText(		kStarList_ClmTitle4,	"Declination");
 	SetWidgetText(		kStarList_ClmTitle5,	"Org RA/DEC");
+	SetWidgetText(		kStarList_ClmTitle6,	"Mag");
 	yLoc			+=	cRadioBtnHt;
 	yLoc			+=	2;
 
@@ -202,6 +205,7 @@ int	newSortColumn;
 		case kStarList_ClmTitle3:
 		case kStarList_ClmTitle4:
 		case kStarList_ClmTitle5:
+		case kStarList_ClmTitle6:
 			newSortColumn	=	buttonIdx - kStarList_ClmTitle1;
 			if (newSortColumn == cSortColumn)
 			{
@@ -311,7 +315,7 @@ void	WindowTabStarList::UpdateOnScreenWidgetList(void)
 {
 int		boxId;
 int		iii;
-char	textString[128];
+char	textString[256];
 char	formatString[64];
 int		myDevCount;
 int		starDataIdx;
@@ -337,15 +341,8 @@ double	declSecs;
 			boxId	=	iii + kStarList_Obj_01;
 			switch(cStarListPtr[starDataIdx].dataSrc)
 			{
-
 				case kDataSrc_NGC2000:
-					sprintf(textString, "NGC-%ld\t",	cStarListPtr[starDataIdx].id);
-					break;
-
 				case kDataSrc_NGC2000IC:
-					sprintf(textString, "IC-%ld\t",	cStarListPtr[starDataIdx].id);
-					break;
-
 				case kDataSrc_AAVSOalert:
 					sprintf(textString, "%ld\t%s",	cStarListPtr[starDataIdx].id,
 													cStarListPtr[starDataIdx].longName);
@@ -400,7 +397,9 @@ double	declSecs;
 
 			strcat(textString, formatString);
 //			CONSOLE_DEBUG(textString);
-
+			//*	add the magnitude
+			sprintf(formatString, "\t%1.1f", cStarListPtr[starDataIdx].realMagnitude);
+			strcat(textString, formatString);
 
 			SetWidgetText(boxId, textString);
 
@@ -432,6 +431,7 @@ double	declSecs;
 	SetWidgetBGColor(kStarList_ClmTitle3,	((cSortColumn == 2) ? CV_RGB(255,	255,	255) : CV_RGB(128,	128,	128)));
 	SetWidgetBGColor(kStarList_ClmTitle4,	((cSortColumn == 3) ? CV_RGB(255,	255,	255) : CV_RGB(128,	128,	128)));
 	SetWidgetBGColor(kStarList_ClmTitle5,	((cSortColumn == 4) ? CV_RGB(255,	255,	255) : CV_RGB(128,	128,	128)));
+	SetWidgetBGColor(kStarList_ClmTitle6,	((cSortColumn == 5) ? CV_RGB(255,	255,	255) : CV_RGB(128,	128,	128)));
 
 }
 
@@ -447,6 +447,16 @@ void	WindowTabStarList::SetStarDataPointers(TYPE_CelestData *argStarList, int ar
 		cDataSource	=	cStarListPtr[0].dataSrc;
 	}
 	UpdateOnScreenWidgetList();
+}
+
+//**************************************************************************************
+void	WindowTabStarList::SetColumnOneTitle(const char *clmOneTitle)
+{
+	CONSOLE_DEBUG(__FUNCTION__);
+	if (clmOneTitle != NULL)
+	{
+		SetWidgetText(		kStarList_ClmTitle1,	clmOneTitle);
+	}
 }
 
 //**************************************************************************************
@@ -486,6 +496,17 @@ int				returnValue;
 				returnValue	=	-1;
 			}
 			else if (obj2->decl < obj1->decl)
+			{
+				returnValue	=	1;
+			}
+			break;
+
+		case 5:
+			if (obj2->realMagnitude > obj1->realMagnitude)
+			{
+				returnValue	=	-1;
+			}
+			else if (obj2->realMagnitude < obj1->realMagnitude)
 			{
 				returnValue	=	1;
 			}

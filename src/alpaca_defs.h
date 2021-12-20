@@ -17,6 +17,11 @@
 //*	Mar 21,	2021	<MLS> Added TYPE_FilterWheelProperties
 //*	Sep 15,	2021	<MLS> Version V0.4.2-beta
 //*	Oct 13,	2021	<MLS> Build 121
+//*	Dec  6,	2021	<MLS> Build 122
+//*	Dec 11,	2021	<MLS> Build 123
+//*	Dec 14,	2021	<MLS> Started on binary image stuff, added header structure
+//*	Dec 16,	2021	<MLS> Version V0.4.3-beta
+//*	Dec 16,	2021	<MLS> Build 124
 //*****************************************************************************
 //*	These are for my comment extraction program that sorts comments by date.
 //*	Jan  1,	2019	-----------------------------------------------------------
@@ -28,6 +33,8 @@
 
 #ifndef	_ALPACA_DEFS_H_
 #define	_ALPACA_DEFS_H_
+
+#include	<stdint.h>
 
 #ifndef _SYS_TIME_H
 	#include	<sys/time.h>
@@ -42,8 +49,8 @@
 #endif
 
 #define	kApplicationName	"AlpacaPi"
-#define	kVersionString		"V0.4.2-beta"
-#define	kBuildNumber		121
+#define	kVersionString		"V0.4.3-beta"
+#define	kBuildNumber		124
 
 
 #define kAlpacaDiscoveryPORT	32227
@@ -55,6 +62,7 @@
 
 //*****************************************************************************
 //*	enum for the various driver types
+//*	ordered alphabetically, no particular order required
 //*****************************************************************************
 typedef enum
 {
@@ -521,7 +529,7 @@ typedef struct
 
 
 #if 0
-//*	not finished, havent started using this yet
+//*	not finished, haven't started using this yet
 #define	kMaxSwitchNameLen		32
 #define	kMaxSwitchDescLen		64
 //*****************************************************************************
@@ -553,6 +561,48 @@ typedef struct
 
 } TYPE_ImageArray;
 
+
+#define	kMaxAlpacaDeviceCnt	100
+
+
+//*****************************************************************************
+//*****************************************************************************
+//*****************************************************************************
+//*	Proposed binary image structure
+//	Version 0.3 5-December 2021
+//*****************************************************************************
+//*****************************************************************************
+typedef struct
+{
+	//Metadata Structure
+	//The following structure describes the returned data
+	int			MetadataVersion;			// Bytes 0..3 - Metadata version = 1
+	int			ErrorNumber;				// Bytes 4..7 - Alpaca error number or zero for success
+	uint32_t	ClientTransactionID;		// Bytes 8..11 - Client's transaction ID
+	uint32_t	ServerTransactionID;		// Bytes 12..15 - Device's transaction ID
+	int			DataStart;					// Bytes 16..19 - Offset of the start of the data bytes = 36 for version 1
+	int			ImageElementType;			// Bytes 20..23 - Element type of the source image array
+	int			TransmissionElementType;	// Bytes 24..27 - Element type as sent over the network
+	int			Rank;						// Bytes 28..31 - Image array rank
+	int			Dimension1;					// Bytes 32..35 - Length of image array first dimension
+	int			Dimension2;					// Bytes 36..39 - Length of image array second dimension
+	int			Dimension3;					// Bytes 40..43 - Length of image array third dimension (0 for 2D array)
+
+} TYPE_BinaryImageHdr;
+
+//*****************************************************************************
+enum
+{
+	kAlpacaImageData_Unknown	=	0, // 0 to 3 are the values already used in the Alpaca standard
+	kAlpacaImageData_Int16		=	1,
+	kAlpacaImageData_Int32		=	2,
+	kAlpacaImageData_Double		=	3,
+	kAlpacaImageData_Single		=	4,	// 4 to 9 are an extension to include other numeric types
+	kAlpacaImageData_Decimal	=	5,
+	kAlpacaImageData_Byte		=	6,
+	kAlpacaImageData_Int64		=	7,
+	kAlpacaImageData_UInt16		=	8
+};
 
 #endif // _ALPACA_DEFS_H_
 

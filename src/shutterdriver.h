@@ -68,6 +68,7 @@ class ShutterDriver: public AlpacaDriver
 		virtual	bool	OpenShutter(void);
 		virtual	bool	CloseShutter(void);
 		virtual	bool	StopShutter(void);
+		virtual	void	WatchDog_TimeOut(void);
 
 				int32_t		cShutterStatus;
 				int32_t		cPreviousShutterStatus;

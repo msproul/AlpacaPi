@@ -6,6 +6,10 @@
 #ifndef	_WINDOWTAB_DOME_H_
 #define	_WINDOWTAB_DOME_H_
 
+#ifndef _WINDOW_TAB_H_
+	#include	"windowtab.h"
+#endif // _WINDOW_TAB_H_
+
 #ifndef	_CONTROLLER_H_
 	#include	"controller.h"
 #endif // _CONTROLLER_H_

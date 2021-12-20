@@ -1,4 +1,9 @@
 //************************************************************************
+//*	Edit History
+//************************************************************************
+//*	Oct 24,	2021	<MLS> Now parsing spectral class from Yale Catalog
+//************************************************************************
+
 /*
 
 V/50           Bright Star Catalogue, 5th Revised Ed.     (Hoffleit+, 1991)
@@ -231,6 +236,55 @@ Historical Notes:
 
 #include	"YaleStarCatalog.h"
 
+//************************************************************************
+static void	StripLeadingSpaces(char *theString)
+{
+int		iii;
+int		ccc;
+
+	ccc		=	0;
+	iii		=	0;
+	while (theString[iii] != 0)
+	{
+		if ((ccc == 0) && (theString[iii] == 0x20))
+		{
+			//*	do nothing
+		}
+		else
+		{
+			theString[ccc++]	=	theString[iii];
+		}
+		iii++;
+	}
+	theString[ccc]	=	0;
+}
+
+//************************************************************************
+static void	StripMultipleSpaces(char *theString)
+{
+int		iii;
+int		ccc;
+char	prevChar;
+
+	ccc			=	0;
+	iii			=	0;
+	prevChar	=	0;
+	while (theString[iii] != 0)
+	{
+		if ((theString[iii] == 0x20) && (prevChar == 0x20))
+		{
+			//*	do nothing, git rid of multiple spaces
+		}
+		else
+		{
+			theString[ccc++]	=	theString[iii];
+		}
+		prevChar	=	theString[iii];
+
+		iii++;
+	}
+	theString[ccc]	=	0;
+}
 
 
 //************************************************************************
@@ -245,6 +299,8 @@ long	deDeg, deMin, deSec;
 double	declDegrees;
 double	raRadians, declRadians;
 short	deSign;
+char	starName[16];
+char	spectralClassName[32];
 
 //         1         2         3         4         5         6         7         8         9         0         1         2         3         4         5         6         7         8         9         0
 //123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789
@@ -262,6 +318,25 @@ short	deSign;
 	deSec					=	ParseLongFromString(lineBuff,	89-1, 2);
 	starRec->realMagnitude	=	ParseFloatFromString(lineBuff,	103-1, 5);
 	starRec->parallax		=	ParseFloatFromString(lineBuff,	162-1, 5);
+
+
+	//*	extract the name
+	strncpy(starName, &lineBuff[5-1], 10);
+	starName[10]	=	0;
+	StripLeadingSpaces(starName);
+	StripMultipleSpaces(starName);
+
+	strcpy(starRec->longName, starName);
+//	CONSOLE_DEBUG(starName);
+
+	//*	extract the spectral class
+	strncpy(spectralClassName, &lineBuff[128-1], 20);
+	spectralClassName[20]	=	0;
+	StripLeadingSpaces(spectralClassName);
+
+//	CONSOLE_DEBUG(spectralClassName);
+	starRec->spectralClass	=	spectralClassName[0];
+
 
 	raHours			=	raHour + (raMin / 60.0) + (raSec / 3600.0);
 	raDegrees		=	raHours * 15;
@@ -315,6 +390,11 @@ size_t			bufferSize;
 			{
 				ParseOneLineOfYaleStarCatalog(lineBuff, &yaleStarData[recordCount]);
 
+//				if (yaleStarData[recordCount].realMagnitude == 0.0)
+//				{
+//					CONSOLE_DEBUG_W_DBL("Magnitude\t=", yaleStarData[recordCount].realMagnitude);
+//				}
+
 				recordCount++;
 			}
 
@@ -326,6 +406,8 @@ size_t			bufferSize;
 	{
 		CONSOLE_DEBUG_W_STR("Failed to read:", filePath);
 	}
+
+//	CONSOLE_ABORT(__FUNCTION__);
 	return(yaleStarData);
 }
 

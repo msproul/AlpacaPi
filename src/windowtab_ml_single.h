@@ -13,6 +13,7 @@ enum
 {
 	kMLsingle_logo	=	0,
 	kMLsingle_Model,
+	kMLsingle_Connected,
 
 	kMLsingle_Temperature,
 

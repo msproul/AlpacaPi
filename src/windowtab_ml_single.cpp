@@ -141,6 +141,9 @@ char	numberString[32];
 	//==========================================
 	SetWidget(		kMLsingle_Model,			0,				yLoc,		cWidth,	cBtnHeight);
 	SetWidgetFont(	kMLsingle_Model, kFont_Medium);
+
+   	SetUpConnectedIndicator(kMLsingle_Connected, yLoc);
+
 	yLoc	+=	cBtnHeight;
 	yLoc	+=	2;
 

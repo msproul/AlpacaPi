@@ -3,9 +3,10 @@
 #define		kSkyTravelDataDirectory	"skytravel_data"
 
 
+
 #define		PI				3.14159265358979323846
 #define		kTWOPI			6.28318530717958647692
-//#define		kCO				1.57079632679489661923	//*	pi/2
+//#define	kCO				1.57079632679489661923	//*	pi/2
 #define		kHALFPI			1.57079632679489661923	//*	pi/2
 #define		ECLIPTIC_ANGLE	0.40913					//*	23d 27m
 

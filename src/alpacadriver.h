@@ -248,7 +248,7 @@ class AlpacaDriver
 				unsigned long		cTotalBytesSent;
 
 #ifdef _ENABLE_BANDWIDTH_LOGGING_
-				void			BandWidthStatsInit(void);
+				void				BandWidthStatsInit(void);
 	//	#define	kSecsPerHour			(60 * 60)
 		#define	kMaxBandWidthSamples	(60 * 1)
 				int					cBW_CmdsReceived[kMaxBandWidthSamples];
@@ -287,6 +287,13 @@ class AlpacaDriver
 				int						cBroadcastSocket;
 				int						cDiscoveryCount;		//*	how many times have we done the discovery request
 
+		//-------------------------------------------------------------------------
+		//*	Watchdog timer stuff
+				void					CheckWatchDogTimeout(void);
+		virtual	void					WatchDog_TimeOut(void);
+				time_t					cTimeOfLastValidCmd;
+				time_t					cTimeOfLastWatchDogCheck;
+				int						cWatchDogTimeOut_Minutes;
 
 		//-------------------------------------------------------------------------
 		//*	live controller window
@@ -356,3 +363,4 @@ void			GetAlpacaName(TYPE_DEVICETYPE deviceType, char *alpacaName);
 
 
 #endif	//	_ALPACA_DRIVER_H_
+

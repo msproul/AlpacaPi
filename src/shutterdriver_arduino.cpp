@@ -30,6 +30,7 @@
 //*	May  8,	2020	<MLS> Changed Arduino to continuous status output
 //*	May  8,	2020	<MLS> Updated Arduino communications code to handle new format
 //*	Feb 26,	2021	<MLS> Added logic to look for different USB ports ttyACM0 -> ttyACM4
+//*	Dec 13,	2021	<MLS> Added WatchDog_TimeOut() to shutterdriver_arduino
 //*****************************************************************************
 
 #ifdef _ENABLE_SHUTTER_
@@ -529,5 +530,23 @@ bool	sentOK;
 }
 
 
+//*****************************************************************************
+void	ShutterArduino::WatchDog_TimeOut(void)
+{
+bool	closeStatus;
+
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cCommonProp.Name);
+
+	if (cShutterStatus != kShutterStatus_Closed)
+	{
+		LogEvent("shutter",	"Closing due to Timeout",	NULL,	kASCOM_Err_Success,	"");
+		cShutterStatus		=	kShutterStatus_Closing;
+		closeStatus			=	CloseShutter();
+		if (closeStatus == false)
+		{
+			LogEvent("shutter", "Error closing shutter",	NULL, kASCOM_Err_Unknown,	"");
+		}
+	}
+}
 
 #endif		//	_ENABLE_SHUTTER_

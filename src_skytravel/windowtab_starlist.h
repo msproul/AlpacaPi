@@ -23,6 +23,7 @@ enum
 	kStarList_ClmTitle3,
 	kStarList_ClmTitle4,
 	kStarList_ClmTitle5,
+	kStarList_ClmTitle6,
 
 	kStarList_Obj_01,
 	kStarList_Obj_02,
@@ -97,6 +98,7 @@ class WindowTabStarList: public WindowTab
 				void	UpdateSortOrder(void);
 
 				void	SetStarDataPointers(TYPE_CelestData *argStarList, int argStarListCount);
+				void	SetColumnOneTitle(const char *clmOneTitle);
 
 				int				cSortColumn;
 				int				cFirstLineIdx;
@@ -107,5 +109,5 @@ class WindowTabStarList: public WindowTab
 };
 
 
-#endif // _WINDOWTAB_AAVSO_LIST_H_
+#endif // _WINDOWTAB_STAR_LIST_H_
 

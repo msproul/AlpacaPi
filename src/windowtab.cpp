@@ -57,12 +57,15 @@
 //*	Aug 31,	2021	<MLS> Added fontIndex arg to DrawCString()
 //*	Sep  8,	2021	<MLS> Added AlpacaSetConnected()
 //*	Sep  9,	2021	<MLS> Added SetUpConnectedIndicator()
+//*	Oct 29,	2021	<MLS> Added FloodFill()
+//*	Nov 13,	2021	<MLS> Added ProcessDoubleClick_RtBtn()
 //*****************************************************************************
 
 
 
 #include	<stdio.h>
 #include	<stdlib.h>
+#include	<stdbool.h>
 #include	<unistd.h>
 #include	<sys/time.h>
 
@@ -70,7 +73,7 @@
 #include "opencv/highgui.h"
 #include "opencv2/highgui/highgui_c.h"
 #include "opencv2/imgproc/imgproc_c.h"
-
+#include "opencv2/core/version.hpp"
 
 
 #define _ENABLE_CONSOLE_DEBUG_
@@ -107,11 +110,12 @@ int		iii;
 
 	ComputeWidgetColumns(cWidth);
 
-	cIpAddrTextBox		=	-1;
-	cLastCmdTextBox		=	-1;
-	cHelpTextBoxNumber	=	-1;
-	cHelpTextBoxColor	=	CV_RGB(255,	255,	255);
-	cPervDisplayedHelpBox	=	-1;
+	cIpAddrTextBox				=	-1;
+	cLastCmdTextBox				=	-1;
+	cHelpTextBoxNumber			=	-1;
+	cConnectedStateBoxNumber	=	-1;
+	cHelpTextBoxColor			=	CV_RGB(255,	255,	255);
+	cPrevDisplayedHelpBox		=	-1;
 
 	cOpenCV_Image		=	NULL;
 	cCurrentXloc		=	0;
@@ -264,7 +268,7 @@ void	WindowTab::SetWidgetText(const int widgetIdx, const char *newText)
 		else
 		{
 			CONSOLE_DEBUG_W_STR("String to long\t=", newText);
-			CONSOLE_ABORT(__FUNCTION__);
+		//	CONSOLE_ABORT(__FUNCTION__);
 		}
 	}
 	else
@@ -1005,11 +1009,24 @@ void	WindowTab::ProcessButtonClick(const int buttonIdx)
 }
 
 //*****************************************************************************
+//*	this routine can be overloaded
 void	WindowTab::ProcessDoubleClick(	const int	widgetIdx,
 										const int	event,
 										const int	xxx,
 										const int	yyy,
 										const int	flags)
+{
+	CONSOLE_DEBUG("this routine should be overloaded");
+//	CONSOLE_ABORT(__FUNCTION__);
+	//*	this routine should be overloaded
+}
+
+//*****************************************************************************
+void	WindowTab::ProcessDoubleClick_RtBtn(	const int	widgetIdx,
+												const int	event,
+												const int	xxx,
+												const int	yyy,
+												const int	flags)
 {
 //	CONSOLE_DEBUG("this routine should be overloaded");
 	//*	this routine should be overloaded
@@ -1046,6 +1063,14 @@ void	WindowTab::ProcessMouseLeftButtonUp(const int	widgetIdx,
 {
 //	CONSOLE_DEBUG_W_NUM(__FUNCTION__, xxx);
 	//*	this routine can be overloaded
+}
+
+//**************************************************************************************
+//*	gets called when the window tab changes
+//**************************************************************************************
+void	WindowTab::ActivateWindow(void)
+{
+	//*	dont do anything, this is supposed to be over-ridden if needed
 }
 
 //*****************************************************************************
@@ -1162,13 +1187,13 @@ bool	updateOccured;
 		if (strlen(cWidgetList[buttonIdx].helpText) > 0)
 		{
 			//*	dont update the text if it has already been updated
-			if (buttonIdx != cPervDisplayedHelpBox)
+			if (buttonIdx != cPrevDisplayedHelpBox)
 			{
 				SetWidgetTextColor(	cHelpTextBoxNumber, cHelpTextBoxColor);
 				SetWidgetText(		cHelpTextBoxNumber, cWidgetList[buttonIdx].helpText);
 				updateOccured			=	true;
 				//*	keep track of which button we did
-				cPervDisplayedHelpBox	=	buttonIdx;
+				cPrevDisplayedHelpBox	=	buttonIdx;
 			}
 		}
 	}
@@ -1179,9 +1204,9 @@ bool	updateOccured;
 //*****************************************************************************
 void	WindowTab::SetParentObjectPtr(void *argParentObjPtr)
 {
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 	cParentObjPtr	=	argParentObjPtr;
-	CONSOLE_DEBUG_W_HEX("cParentObjPtr\t=", cParentObjPtr);
+//	CONSOLE_DEBUG_W_HEX("cParentObjPtr\t=", cParentObjPtr);
 }
 
 //*****************************************************************************
@@ -1443,7 +1468,10 @@ CvPoint		pt2;
 }
 
 //*****************************************************************************
-void	WindowTab::DrawCString(const int xx, const int yy, const char *theString, int fontIndex)
+void	WindowTab::DrawCString(	const int	xx,
+								const int	yy,
+								const char	*theString,
+								const int	fontIndex)
 {
 CvPoint		textLoc;
 int			myFontIdx;
@@ -1479,6 +1507,8 @@ int			myFontIdx;
 
 
 //*****************************************************************************
+//*	W_WHITE
+//*	W_BLACK
 CvScalar	gColorTable[]	=
 {
 	//	https://www.htmlcolor-picker.com/
@@ -1508,6 +1538,16 @@ CvScalar	gColorTable[]	=
 
 	CV_RGB(0x66, 0x3d,	0x14),	//*	BROWN
 	CV_RGB(231,	  5,	254),	//*	PINK
+
+	CV_RGB(255,	  100,	0),		//*	W_ORANGE,
+
+	CV_RGB(0,	  113,	193),	//*	W_STAR_O,
+	CV_RGB(152,	  205,	255),	//*	W_STAR_B,
+	CV_RGB(255,	  255,	255),	//*	W_STAR_A,
+	CV_RGB(254,	  255,	153),	//*	W_STAR_F,
+	CV_RGB(255,	  255,	0),		//*	W_STAR_G,
+	CV_RGB(255,	  102,	00),	//*	W_STAR_K,
+	CV_RGB(254,	  0,	0),		//*	W_STAR_M,
 
 };
 
@@ -1588,18 +1628,14 @@ CvPoint	center;
 CvSize	axes;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
-//	CONSOLE_DEBUG_W_NUM("xCenter\t=", xCenter);
-//	CONSOLE_DEBUG_W_NUM("yCenter\t=", yCenter);
-//	CONSOLE_DEBUG_W_NUM("xRadius\t=", xRadius);
-//	CONSOLE_DEBUG_W_NUM("yRadius\t=", yRadius);
 	if (cOpenCV_Image != NULL)
 	{
 		if ((xRadius > 0) && (yRadius > 0))
 		{
 			center.x	=	xCenter;
 			center.y	=	yCenter;
-			axes.width	=	2 * xRadius;
-			axes.height	=	2 * yRadius;
+			axes.width	=	1 * xRadius;
+			axes.height	=	1 * yRadius;
 
 			cvEllipse(	cOpenCV_Image,
 						center,
@@ -1614,6 +1650,10 @@ CvSize	axes;
 		}
 		else
 		{
+			CONSOLE_DEBUG_W_NUM("xCenter\t=", xCenter);
+			CONSOLE_DEBUG_W_NUM("yCenter\t=", yCenter);
+			CONSOLE_DEBUG_W_NUM("xRadius\t=", xRadius);
+			CONSOLE_DEBUG_W_NUM("yRadius\t=", yRadius);
 			CONSOLE_ABORT("Invalid arguments");
 		}
 	}
@@ -1666,6 +1706,45 @@ CvSize	axes;
 }
 
 //*********************************************************************
+void	WindowTab::FloodFill(const int xxx, const int yyy, const int color)
+{
+CvPoint		center;
+CvScalar	newColor;
+CvScalar	cvScalarAll;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+	center.x	=	xxx;
+	center.y	=	yyy;
+
+	newColor	=	gColorTable[color];
+
+	if (cOpenCV_Image != NULL)
+	{
+		cvScalarAll	=	cvRealScalar(0.0);
+		//---try------try------try------try------try------try---
+		try
+		{
+			cvFloodFill(cOpenCV_Image, 				//	CvArr* image,
+						center, 					//	CvPoint seed_point,
+						newColor,					//	CvScalar new_val,
+						cvScalarAll,				//	CvScalar lo_diff CV_DEFAULT(cvScalarAll(0)),
+						cvScalarAll,				//	CvScalar up_diff CV_DEFAULT(cvScalarAll(0)),
+						NULL,						//	CvConnectedComp* comp CV_DEFAULT(NULL),
+						4,							//	int flags CV_DEFAULT(4),
+						NULL						//	CvArr* mask CV_DEFAULT(NULL));
+						);
+		}
+		catch(cv::Exception& ex)
+		{
+			//*	this catch prevents opencv from crashing
+			CONSOLE_DEBUG("cvFloodFill() had an exception");
+			CONSOLE_DEBUG_W_NUM("openCV error code\t=",	ex.code);
+		//	CONSOLE_ABORT(__FUNCTION__);
+		}
+	}
+}
+
+//*********************************************************************
 void	SetRect(CvRect *theRect, const int top, const int left, const int bottom, const int right)
 {
 	theRect->x		=	left;
@@ -1683,6 +1762,8 @@ void	InsetRect(CvRect *theRect, const int xInset, const int yInset)
 	theRect->width	-=	xInset * 2;
 	theRect->height	-=	yInset * 2;
 }
+
+
 
 #ifdef _CONTROLLER_USES_ALPACA_
 
@@ -1887,6 +1968,7 @@ Controller	*myControllerObj;
 //*****************************************************************************
 void	WindowTab::SetUpConnectedIndicator(const int buttonIdx, const int yLoc)
 {
+	cConnectedStateBoxNumber	=	buttonIdx;
 	SetWidget(buttonIdx,		5,	(yLoc + 2),	(cTitleHeight - 4),	(cTitleHeight - 4));
 	SetWidgetText(				buttonIdx,	"?");
 	SetWidgetTextColor(			buttonIdx,	CV_RGB(255,	255,	0));

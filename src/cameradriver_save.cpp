@@ -455,12 +455,12 @@ int		gainPercent;
 		gainPercent	=	0;
 	}
 
-	codecString[0]	=	(cAVIfourcc) & 0x007f;
-	codecString[1]	=	(cAVIfourcc >> 8) & 0x007f;
-	codecString[2]	=	(cAVIfourcc >> 16) & 0x007f;
-	codecString[3]	=	(cAVIfourcc >> 24) & 0x007f;
+	codecString[0]	=	(cAVIfourCC) & 0x007f;
+	codecString[1]	=	(cAVIfourCC >> 8) & 0x007f;
+	codecString[2]	=	(cAVIfourCC >> 16) & 0x007f;
+	codecString[3]	=	(cAVIfourCC >> 24) & 0x007f;
 	codecString[4]	=	0;
-	CONSOLE_DEBUG_W_HEX("cAVIfourcc\t=", cAVIfourcc);
+	CONSOLE_DEBUG_W_HEX("cAVIfourCC\t=", cAVIfourCC);
 	CONSOLE_DEBUG_W_STR("codecString\t=", codecString);
 
 	GenerateFileNameRoot();

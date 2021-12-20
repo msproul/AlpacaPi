@@ -55,6 +55,8 @@
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
 
+#include	"helper_functions.h"
+
 #include	"lx200_com.h"
 
 
@@ -663,42 +665,6 @@ static 	void	AddCmdToLX200queue(const char *cmdString)
 	{
 		strcpy(gLX200CmdQueue[gLX200CmdQueCnt].cmdString, cmdString);
 		gLX200CmdQueCnt++;
-	}
-}
-
-//*****************************************************************************
-//*	Right Ascension is never negitive (0->24) and therefore does not need a sign
-//*****************************************************************************
-static void	FormatHHMMSS(const double argDegreeValue, char *timeString, bool includeSign)
-{
-double	myDegreeValue;
-double	minutes_dbl;
-double	seconds_dbl;
-int		degrees;
-int		minutes;
-int		seconds;
-char	signChar;
-
-	signChar		=	'+';
-	myDegreeValue	=	argDegreeValue;
-	if (myDegreeValue < 0)
-	{
-		myDegreeValue	=	-argDegreeValue;
-		signChar		=	'-';
-	}
-	degrees		=	myDegreeValue;
-	minutes_dbl	=	myDegreeValue - (1.0 * degrees);
-	minutes		=	minutes_dbl * 60.0;
-	seconds_dbl	=	(minutes_dbl * 60) - (1.0 * minutes);
-	seconds		=	seconds_dbl * 60;;
-
-	if (includeSign)
-	{
-		sprintf(timeString, "%c%02d:%02d:%02d", signChar, degrees, minutes, seconds);
-	}
-	else
-	{
-		sprintf(timeString, "%02d:%02d:%02d", degrees, minutes, seconds);
 	}
 }
 

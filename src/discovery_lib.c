@@ -48,19 +48,19 @@
 
 #define	kReceiveBufferSize	1550
 
+#include	"alpaca_defs.h"
 #include	"discovery_lib.h"
 #include	"sendrequest_lib.h"
 
 
 #define		kMaxUnitCount	32
 
+//*	this is IP addresses:ports
 TYPE_ALPACA_UNIT	gAlpacaUnitList[kMaxUnitCount];
 int					gAlpacaUnitCnt	=	0;
 
-//TYPE_REMOTE_DEV		gAlpacaIPaddrList[kMaxDeviceListCnt];
-//int					gAlpacaDeviceCnt	=	0;
-
-TYPE_REMOTE_DEV		gAlpacaDiscoveredList[kMaxDeviceListCnt];
+//*	this is alpaca devices
+TYPE_REMOTE_DEV		gAlpacaDiscoveredList[kMaxAlpacaDeviceCnt];
 int					gAlpacaDiscoveredCnt	=	0;;
 
 static	int					gBroadcastSock;
@@ -72,11 +72,13 @@ static void	InitArrays(void)
 {
 int		iii;
 
+	CONSOLE_DEBUG_W_NUM("kMaxUnitCount\t=", kMaxUnitCount);
+	CONSOLE_DEBUG_W_NUM("kMaxAlpacaDeviceCnt\t=", kMaxAlpacaDeviceCnt);
 	for (iii=0; iii<kMaxUnitCount; iii++)
 	{
 		memset(&gAlpacaUnitList[iii], 0, sizeof(TYPE_ALPACA_UNIT));
 	}
-	for (iii=0; iii<kMaxDeviceListCnt; iii++)
+	for (iii=0; iii<kMaxAlpacaDeviceCnt; iii++)
 	{
 		memset(&gAlpacaDiscoveredList[iii], 0, sizeof(TYPE_REMOTE_DEV));
 	}
@@ -151,19 +153,19 @@ int				argValue;
 //*****************************************************************************
 static void	UpdateRemoteList(TYPE_REMOTE_DEV *newRemoteDevice)
 {
-int		ii;
+int		iii;
 bool	newDevice;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 	//*	look to see if it is already in the list
 	newDevice	=	true;
-	for (ii=0; ii<gAlpacaDiscoveredCnt; ii++)
+	for (iii=0; iii<gAlpacaDiscoveredCnt; iii++)
 	{
 		//*	check to see if it is already in the list
-		if ((newRemoteDevice->deviceAddress.sin_addr.s_addr == gAlpacaDiscoveredList[ii].deviceAddress.sin_addr.s_addr)
-			&& (strcmp(newRemoteDevice->deviceTypeStr,	gAlpacaDiscoveredList[ii].deviceTypeStr) == 0)
-			&& (strcmp(newRemoteDevice->deviceNameStr,	gAlpacaDiscoveredList[ii].deviceNameStr) == 0)
-			&& (newRemoteDevice->alpacaDeviceNum == gAlpacaDiscoveredList[ii].alpacaDeviceNum)
+		if ((newRemoteDevice->deviceAddress.sin_addr.s_addr == gAlpacaDiscoveredList[iii].deviceAddress.sin_addr.s_addr)
+			&& (strcmp(newRemoteDevice->deviceTypeStr,	gAlpacaDiscoveredList[iii].deviceTypeStr) == 0)
+			&& (strcmp(newRemoteDevice->deviceNameStr,	gAlpacaDiscoveredList[iii].deviceNameStr) == 0)
+			&& (newRemoteDevice->alpacaDeviceNum == gAlpacaDiscoveredList[iii].alpacaDeviceNum)
 			)
 		{
 			//*	yep, its already here, dont bother
@@ -181,11 +183,10 @@ bool	newDevice;
 	if (newDevice)
 	{
 		//*	we have a new devices, add it in (if there's room)
-		if (gAlpacaDiscoveredCnt < kMaxDeviceListCnt)
+		if (gAlpacaDiscoveredCnt < kMaxAlpacaDeviceCnt)
 		{
 			gAlpacaDiscoveredList[gAlpacaDiscoveredCnt]	=	*newRemoteDevice;
 			gAlpacaDiscoveredCnt++;
-
 		}
 	}
 }

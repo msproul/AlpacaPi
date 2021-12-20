@@ -77,6 +77,7 @@
 bool	gKeepRunning;
 char	gFullVersionString[128];
 char	gFirstArgString[256];
+bool	gVerbose		=	false;
 
 
 

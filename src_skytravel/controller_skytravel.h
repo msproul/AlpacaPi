@@ -50,24 +50,48 @@
 	#include	"windowtab_fov.h"
 #endif
 
+#ifndef	_WINDOWTAB_REMOTE_DATA_H_
+	#include	"windowtab_RemoteData.h"
+#endif
+
+
 
 extern	double	gTelescopeRA_Hours;
 extern	double	gTelescopeRA_Radians;
 extern	double	gTelescopeDecl_Degrees;
 extern	double	gTelescopeDecl_Radians;
-extern	bool	gDashedLines;
 extern	int		gLineWidth_Constellations;
 extern	int		gLineWidth_ConstOutlines;
 extern	int		gLineWidth_GridLines;
 
 //**************************************************************************************
+enum
+{
+	kMagnitudeMode_Dynamic	=	0,
+	kMagnitudeMode_Specified,
+	kMagnitudeMode_All
+};
+
+//**************************************************************************************
 typedef struct
 {
 	int		EarthDispMode;
+	bool	DashedLines;
+	int		LineWidth_Constellations;
+	int		LineWidth_ConstOutlines;
+	int		LineWidth_GridLines;
+	bool	DispMagnitude;			//*	display magnitude of stars if zoomed in
+	bool	DispSpectralType;		//*	display spectral type as a letter if zoomed in
+
+	bool	DayNightSkyColor;		//*	if true, enables changing the sky color based on time of day
+
+	int		MagnitudeMode;
+	double	DisplayedMagnitudeLimit;
 
 } SkyTravelDispOptions;
 
-
+//	gST_DispOptions.DashedLines
+//	gST_DispOptions.DispSpectralType
 extern	SkyTravelDispOptions	gST_DispOptions;
 
 //**************************************************************************************
@@ -76,12 +100,14 @@ enum
 	kTab_SkyTravel	=	1,
 	kTab_ST_Settings,
 	kTab_ST_FOV,
+	kTab_ST_RemoteData,
 	kTab_Moon,
 	kTab_ST_Dome,
 	kTab_DeviceList,
 	kTab_AlpacaList,
 	kTab_IPList,
 	kTab_ST_About,
+
 
 	kTab_ST_Count
 
@@ -144,6 +170,8 @@ class ControllerSkytravel: public Controller
 				WindowTabDeviceSelect	*cDeviceSelectObjPtr;
 				WindowTabAbout			*cAboutBoxTabObjPtr;
 				WindowTabFOV			*cFOVTabObjPtr;
+
+				WindowTabRemoteData		*cRemoteDataObjPtr;
 		//====================================================
 		//*	alpaca device information
 				bool				LookForIPaddress(void);

@@ -1,3 +1,7 @@
+//*********************************************************************
+//*	Oct 23,	2021	<MLS> Added .dispMagnitude option
+//*********************************************************************
+
 //#include	"SkyDisplayStruct.h"
 
 
@@ -8,7 +12,7 @@
 //*********************************************************************
 typedef enum
 {
-	kSpecialDisp_Off,
+	kSpecialDisp_Off	=	0,
 	kSpecialDisp_All,
 	kSpecialDisp_Arcs_w_CentVect,
 	kSpecialDisp_Arcs_noLabels,
@@ -36,6 +40,7 @@ typedef struct
 
 
 		//*	data
+		bool				dispDefaultData;		//*	this is the original data file
 		bool				dispLines;				//*	Constellation lines on/off
 		bool				dispNames;
 		bool				dispSymbols;			//*	Symbols on/off
@@ -52,6 +57,7 @@ typedef struct
 		bool				dispDraper;				//*	Henry Draper Catalog
 		bool				dispAAVSOalerts;		//*	AAVSO TargetTool Alerts
 
+		bool				dispGaia;				//*	Gaia Catalog
 
 		unsigned char		dispSpecialObjects;		//*	Special.txt objects, this is an enum
 

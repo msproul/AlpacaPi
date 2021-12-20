@@ -4,9 +4,9 @@
 //*	Edit History
 //*****************************************************************************
 //*	??				Original Written by Frank Covits
-//*	May  2,	1996	<MLS> (Mark Sproul) Starting on Sky Travel for Frank and Cliff
+//*	May  2,	1996	<MLS> (Mark Sproul) Starting on Sky Travel for Frank and Clif
 //*	Nov 18,	1999	<MLS> restarting efforts
-//*	Nov 20,	1999	<MLS> major re-writing and re-orginization
+//*	Nov 20,	1999	<MLS> major re-writing and re-organization
 //*	Dec 29,	2020	<MLS> Starting to integrate SkyTravel into AlpacaPi
 //*	Jan  3,	2021	<MLS> Added ReadTSCfile() & ParseOneLineOfTSCdata()
 //*	Jan  6,	2021	<MLS> Added DumpCelestDataStruct() for debugging
@@ -16,6 +16,8 @@
 //*	Mar  5,	2021	<MLS> Added ReadHenryDraperCatalog() & ParseOneLineHenryDraperData()
 //*	Mar  7,	2021	<MLS> Added ReadSpecialData()
 //*	Apr 17,	2021	<MLS> Jim H. Found bug in ReadHYGdata(), short name overflow
+//*	Oct 23,	2021	<MLS> Added magnitude processing to ParseOneLineHYGdata()
+//*	Oct 24,	2021	<MLS> Added parsing of spectral class to Henry Draper catalog
 //*****************************************************************************
 //*	Messier data
 //	https://starlust.org/messier-catalog/
@@ -41,6 +43,7 @@
 #include	"ConsoleDebug.h"
 
 #include	"alpacadriver_helper.h"
+#include	"helper_functions.h"
 
 #include	"SkyStruc.h"
 #include	"SkyTravelConstants.h"
@@ -197,7 +200,7 @@ int					bytesRead;
 //*	returns number of objects
 //*	each window needs its own copy, so this routine creates a new copy of the data
 //**************************************************************************
-TYPE_CelestData	*GetDefaultStarData(long *objectCount, TYPE_Time *timePtr)
+TYPE_CelestData	*ReadDefaultStarData(long *objectCount, TYPE_Time *timePtr)
 {
 long			ii;
 TYPE_CelestData	*myObjectPtr;
@@ -371,7 +374,7 @@ int		argLen;
 	starRec->decl		=	declRadians;
 	starRec->org_ra		=	raRadians;
 	starRec->org_decl	=	declRadians;
-	starRec->dataSrc	=	kDataSrc_Unkown;
+	starRec->dataSrc	=	kDataSrc_Unknown;
 
 	starRec->magn		=	0x34;
 
@@ -555,7 +558,7 @@ char	*delimPtr;
 	starRec->decl		=	declRadians;
 	starRec->org_ra		=	raRadians;
 	starRec->org_decl	=	declRadians;
-	starRec->dataSrc	=	kDataSrc_Unkown;
+	starRec->dataSrc	=	kDataSrc_Unknown;
 
 	starRec->magn		=	0x34;
 }
@@ -677,14 +680,16 @@ static void	ParseOneLineHYGdata(char *lineBuff, TYPE_CelestData *starRec)
 {
 int		sLen;
 int		argLen;
-double	raDegrees	=	0;
-double	raRadians	=	0;
-double	declDegrees	=	0;
-double	declRadians	=	0;
+double	raDegrees	=	0.0;
+double	raRadians	=	0.0;
+double	declDegrees	=	0.0;
+double	declRadians	=	0.0;
+double	magnitude	=	0.0;
 int		ii;
 int		argNum;
 char	argString[64];
 char	theChar;
+char	spectralClass	=	0;
 int		ccc;
 
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, lineBuff);
@@ -744,10 +749,17 @@ int		ccc;
 					raDegrees		=	atof(argString);
 					break;
 
-				case 9:	//*	declination
+				case 9:		//*	declination
 					declDegrees		=	atof(argString);
 					break;
 
+				case 14:	//*	magnitude
+					magnitude		=	atof(argString);
+					break;
+
+				case 16:
+					spectralClass	=	argString[0];
+					break;
 
 				//*		9. dist: The star's distance in parsecs, the most common unit in astrometry. To convert parsecs to light years, multiply by 3.262. A value >= 100000 indicates missing or dubious (e.g., negative) parallax data in Hipparcos.
 				//*		10. pmra, pmdec:  The star's proper motion in right ascension and declination, in milliarcseconds per year.
@@ -791,15 +803,23 @@ int		ccc;
 	declRadians	=	RADIANS(declDegrees);
 
 
-	starRec->ra			=	raRadians;
-	starRec->decl		=	declRadians;
-	starRec->org_ra		=	raRadians;
-	starRec->org_decl	=	declRadians;
-	starRec->dataSrc	=	kDataSrc_Unkown;
+	starRec->ra				=	raRadians;
+	starRec->decl			=	declRadians;
+	starRec->org_ra			=	raRadians;
+	starRec->org_decl		=	declRadians;
+	starRec->realMagnitude	=	magnitude;
+	starRec->spectralClass	=	spectralClass;
 
-	starRec->magn		=	ST_STAR;
+	starRec->dataSrc		=	kDataSrc_Unknown;
+
+	starRec->magn			=	ST_STAR;
+
+	if (magnitude > 30.0)
+	{
+		CONSOLE_DEBUG_W_DBL("magnitude", magnitude);
+		fprintf(stderr, "%s\r\n", lineBuff);
+	}
 }
-
 
 //************************************************************************
 TYPE_CelestData	*ReadHYGdata(const char *folderPath, int dataSource, long *objectCount)
@@ -813,11 +833,16 @@ size_t			bufferSize;
 char			myFilePath[256];
 int				linesRead;
 int				skippedCount;
+int				validMagCount;
+int				zeroMagCount;
+double			hightestMagValue;
 
-
-	hygData			=	NULL;
-	recordCount		=	0;
-	skippedCount	=	0;
+	hygData				=	NULL;
+	recordCount			=	0;
+	skippedCount		=	0;
+	validMagCount		=	0;
+	zeroMagCount		=	0;
+	hightestMagValue	=	0.0;
 	strcpy(myFilePath, folderPath);
 	strcat(myFilePath, "hygdata_v3.csv");
 
@@ -844,6 +869,20 @@ int				skippedCount;
 				{
 					ParseOneLineHYGdata(lineBuff, &hygData[recordCount]);
 					hygData[recordCount].dataSrc	=	dataSource;
+					if (hygData[recordCount].realMagnitude > hightestMagValue)
+					{
+						hightestMagValue	=	hygData[recordCount].realMagnitude;
+//						CONSOLE_DEBUG_W_NUM("New high value at recordCount\t=", recordCount);
+//						CONSOLE_DEBUG_W_DBL("hightestMagValue\t\t=", hightestMagValue);
+					}
+					if (hygData[recordCount].realMagnitude > 0.0)
+					{
+						validMagCount++;
+					}
+					else
+					{
+						zeroMagCount++;
+					}
 
 				//	if (recordCount < 3)
 				//	{
@@ -877,14 +916,19 @@ int				skippedCount;
 	{
 		CONSOLE_DEBUG_W_STR("Failed to read:", myFilePath);
 	}
-	CONSOLE_DEBUG_W_NUM("HYG records read\t=", recordCount);
-	CONSOLE_DEBUG_W_NUM("skippedCount\t=", skippedCount);
-	CONSOLE_DEBUG_W_NUM("Total lines \t=", (recordCount + skippedCount));
+//	CONSOLE_DEBUG_W_NUM("HYG records read\t=", recordCount);
+//	CONSOLE_DEBUG_W_NUM("skippedCount    \t=", skippedCount);
+//	CONSOLE_DEBUG_W_NUM("Total lines     \t=", (recordCount + skippedCount));
+//	CONSOLE_DEBUG_W_NUM("validMagCount   \t=", validMagCount);
+//	CONSOLE_DEBUG_W_NUM("zeroMagCount    \t=", zeroMagCount);
+//	CONSOLE_DEBUG_W_DBL("hightestMagValue\t=", hightestMagValue);
+
 //	CONSOLE_ABORT(__FUNCTION__);
 	return(hygData);
 }
 
-
+static int	gPhotMagSubsitutionCnt	=	0;
+static int	gHDstarsWithoutMag		=	0;
 
 //************************************************************************
 //*	#
@@ -911,6 +955,9 @@ int				skippedCount;
 //	-27.0404|2606|-89.833011026304|0|0|0|98784|302.772|0|HD98784|9.7|134.582368152346|K 0|0|8.7|
 //	-26.9715|2306|-89.7836787384847|0|0|0|99685|302.765|0|HD99685|7.6|149.273661887492|A 0|0|7.6|
 //	-26.9227|2706|-89.7713071321891|0|0|0|110994|303.044|0|HD110994|8.6|218.823086521289|M A|0|6.56|
+//	22.0649|2656|77.0904069280486|0|0|0|193467|109.86|0|HD193467|-99.9|303.103701319968|K 5|0|-99.9|
+//	19.0907|2556|81.9622539153399|0|0|0|4499|122.885|0|HD4499|-99.9|12.542015537301|G 5|1|-99.9|
+//	photo_Magnitude	= -899136720
 //************************************************************************
 static void	ParseOneLineHenryDraperData(char *lineBuff, TYPE_CelestData *starRec)
 {
@@ -924,10 +971,14 @@ int		argNum;
 char	argString[64];
 char	theChar;
 int		ccc;
+char	spectralClass;
+double	photo_Magnitude;
 
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, lineBuff);
 
-	//*	step thru the line looking for TABS.
+	spectralClass	=	0;
+	photo_Magnitude	=	0.0;
+	//*	step thru the line looking for "|" separator char.
 	sLen		=	strlen(lineBuff);
 	argNum		=	0;
 	ccc			=	0;
@@ -939,23 +990,35 @@ int		ccc;
 			//*	end of argument, do something with it
 			switch(argNum)
 			{
-				case 2:	//*	declination
+				case 2:				//*	declination
 					declDegrees		=	atof(argString);
 					break;
 
-				case 6:	//*	ID number
+				case 6:				// HD Catalog Number
 					starRec->id		=	atoi(argString);
 					break;
 
-				case 9:
+				case 9:				// Object Designation
 					strcpy(starRec->longName, argString);
 					break;
 
-				case 11:	//*	right ascension
+				case 10:			// Photographic Magnitude
+					photo_Magnitude		=	atof(argString);
+					break;
+
+				case 11:			//*	right ascension
 					raDegrees		=	atof(argString);
 					break;
 
-				case 14:	//*	V Magnitude
+				case 12:			//*	Spectral class
+					spectralClass	=	argString[0];
+					break;
+
+				case 13:			// Variability Flag: 0=not variable, 1=variable, 2=uncertain
+					starRec->variability		=	atoi(argString);
+					break;
+
+				case 14:			//*	V Magnitude
 					starRec->realMagnitude		=	atof(argString);
 					break;
 
@@ -969,44 +1032,46 @@ int		ccc;
 			if (ccc < 60)
 			{
 				argString[ccc++]	=	theChar;
-				argString[ccc]	=	0;
+				argString[ccc]		=	0;
 			}
 		}
 	}
 	//*	now we have all the data parsed, put it into the record
-	raRadians			=	RADIANS(raDegrees);
-	declRadians			=	RADIANS(declDegrees);
+	raRadians				=	RADIANS(raDegrees);
+	declRadians				=	RADIANS(declDegrees);
 
-	starRec->ra			=	raRadians;
-	starRec->decl		=	declRadians;
-	starRec->org_ra		=	raRadians;
-	starRec->org_decl	=	declRadians;
-	starRec->dataSrc	=	kDataSrc_Unkown;
+	starRec->ra				=	raRadians;
+	starRec->decl			=	declRadians;
+	starRec->org_ra			=	raRadians;
+	starRec->org_decl		=	declRadians;
+	starRec->dataSrc		=	kDataSrc_Unknown;
+	starRec->spectralClass	=	spectralClass;
 
-	starRec->magn		=	ST_STAR;
-}
+	starRec->magn			=	ST_STAR;
 
 
-//************************************************************************
-static int	CountLinesInFile(FILE *filePointer)
-{
-char	lineBuff[2048];
-int		linesRead;
-
-	linesRead	=	0;
-	while (fgets(lineBuff, 2000, filePointer))
+	if ((starRec->realMagnitude < 0.0001) && (photo_Magnitude > 0.0))
 	{
-		if (strlen(lineBuff) > 0)
-		{
-			linesRead++;
-		}
+		starRec->realMagnitude	=	photo_Magnitude;
+		gPhotMagSubsitutionCnt++;
 	}
-	fseek(filePointer, 0, SEEK_SET);
-	return(linesRead);
+	//*	debugging
+	if (starRec->realMagnitude < 0.001)
+	{
+		starRec->realMagnitude	=	17.777;
+
+//		CONSOLE_DEBUG(lineBuff);
+//		CONSOLE_DEBUG_W_DBL("photo_Magnitude\t=", photo_Magnitude);
+		gHDstarsWithoutMag++;
+	}
 }
 
+
+
 //************************************************************************
-TYPE_CelestData	*ReadHenryDraperCatalog(const char *folderPath, int dataSource, long *objectCount)
+TYPE_CelestData	*ReadHenryDraperCatalog(	const char	*folderPath,
+											int			dataSource,
+											long		*objectCount)
 {
 TYPE_CelestData	*draperData;
 FILE			*filePointer;
@@ -1077,7 +1142,12 @@ int				headerLineCnt;
 	{
 		CONSOLE_DEBUG_W_STR("Failed to read:", myFilePath);
 	}
-//	CONSOLE_DEBUG_W_NUM("HGC records read\t=", recordCount);
+	CONSOLE_DEBUG_W_NUM("HGC records read\t\t=", recordCount);
+	CONSOLE_DEBUG_W_NUM("gPhotMagSubsitutionCnt\t=", gPhotMagSubsitutionCnt);
+	CONSOLE_DEBUG_W_DBL("percent substitutions\t=", (gPhotMagSubsitutionCnt * 100.0) / recordCount);
+	CONSOLE_DEBUG_W_DBL("percent without mag\t=", (gHDstarsWithoutMag * 100.0) / recordCount);
+
+//	CONSOLE_ABORT(__FUNCTION__);
 	return(draperData);
 }
 
@@ -1195,13 +1265,15 @@ int		argLen;
 		declRadians		=	-declRadians;
 	}
 
-	starRec->ra			=	raRadians;
-	starRec->decl		=	declRadians;
-	starRec->org_ra		=	raRadians;
-	starRec->org_decl	=	declRadians;
-	starRec->dataSrc	=	kDataSrc_Unkown;
+	starRec->ra				=	raRadians;
+	starRec->decl			=	declRadians;
+	starRec->org_ra			=	raRadians;
+	starRec->org_decl		=	declRadians;
+	starRec->dataSrc		=	kDataSrc_Unknown;
+	starRec->realMagnitude	=	0.0;
+	starRec->spectralClass	=	0;
 
-	starRec->magn		=	ST_STAR;
+	starRec->magn			=	ST_STAR;
 
 #if 0
 	CONSOLE_DEBUG_W_STR("Name  \t=", starRec->longName);
@@ -1282,7 +1354,7 @@ double	declRadians	=	0;
 	starRec->decl		=	declRadians;
 	starRec->org_ra		=	raRadians;
 	starRec->org_decl	=	declRadians;
-	starRec->dataSrc	=	kDataSrc_Unkown;
+	starRec->dataSrc	=	kDataSrc_Unknown;
 
 	starRec->magn		=	ST_STAR;
 

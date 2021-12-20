@@ -53,13 +53,13 @@
 #define	kMaxControllers	16
 
 
-#define	kMaxTabs	10
-#define	kFontCnt	8
+#define	kMaxTabs	15
 #define	kButtonCnt	30
 
 #define	kDefaultUpdateDelta	4
+#define	kLineBufSize		512
 
-extern	CvFont	gTextFont[kFontCnt];
+extern	CvFont	gTextFont[];
 extern	bool	gVerbose;
 
 #define	RADIANS(degrees)	((degrees) * (M_PI / 180.0))
@@ -96,6 +96,7 @@ class Controller
 							const int	xSize,
 							const int	ySize);
 		virtual	~Controller(void);
+				void	CheckConnectedState(void);
 
 
 				void	HandleWindow(void);
@@ -189,6 +190,14 @@ class Controller
 											const int	xxx,
 											const int	yyy,
 											const int	flags);
+
+		virtual	void	ProcessDoubleClick_RtBtn(	const int	widgetIdx,
+											const int	event,
+											const int	xxx,
+											const int	yyy,
+											const int	flags);
+
+
 		virtual	void	RefreshWindow(void);
 
 
@@ -378,22 +387,6 @@ class Controller
 												int			*uint32array,
 												int			arrayLength,
 												int			*actualValueCnt);
-				int		AlpacaGetIntegerArrayShortLines(	const char	*alpacaDevice,
-												const int	alpacaDevNum,
-												const char	*alpacaCmd,
-												const char	*dataString,
-												int			*uint32array,
-												int			arrayLength,
-												int			*actualValueCnt);
-
-				int		AlpacaGetImageArray(	const char		*alpacaDevice,
-												const int		alpacaDevNum,
-												const char		*alpacaCmd,
-												const char		*dataString,
-												TYPE_ImageArray	*imageArray,
-												int				arrayLength,
-												int				*actualValueCnt);
-
 
 				//**********************************************
 				//*	this is a table of capabilities for the purpose of displaying what

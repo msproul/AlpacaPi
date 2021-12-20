@@ -14,6 +14,8 @@ enum
 	kNiteCrawlerTab_logo	=	0,
 	kNiteCrawlerTab_Model,
 
+	kNiteCrawlerTab_Connected,
+
 	kNiteCrawlerTab_focValue,
 	kNiteCrawlerTab_rotValue,
 

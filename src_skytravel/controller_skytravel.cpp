@@ -15,6 +15,7 @@
 //*	Feb  4,	2021	<MLS> Added MOON window tab for phase of the moon info
 //*	Mar 13,	2021	<MLS> Added AlpacaGetStartupData_Camera()
 //*	Sep  5,	2021	<MLS> Added AlpacaProcessSupportedActions_Camera()
+//*	Nov 14,	2021	<MLS> Added remote data window tab
 //*****************************************************************************
 
 #ifndef _ENABLE_SKYTRAVEL_
@@ -43,7 +44,8 @@
 
 
 #define	kWindowWidth	1200
-#define	kWindowHeight	820
+//#define	kWindowHeight	820
+#define	kWindowHeight	800
 
 #include	"alpaca_defs.h"
 #include	"helper_functions.h"
@@ -54,6 +56,7 @@
 #include	"windowtab_fov.h"
 #include	"windowtab_iplist.h"
 #include	"windowtab_moon.h"
+#include	"windowtab_RemoteData.h"
 #include	"windowtab_skytravel.h"
 
 
@@ -173,6 +176,15 @@ void	ControllerSkytravel::SetupWindowControls(void)
 		}
 	}
 
+	//=============================================================
+	SetTabText(kTab_ST_RemoteData,	"Remote Data");
+	cRemoteDataObjPtr		=	new WindowTabRemoteData(	cWidth, cHeight, cBackGrndColor, cWindowName);
+	if (cRemoteDataObjPtr != NULL)
+	{
+
+		SetTabWindow(kTab_ST_RemoteData,	cRemoteDataObjPtr);
+		cRemoteDataObjPtr->SetParentObjectPtr(this);
+	}
 
 
 	//=============================================================
@@ -443,28 +455,40 @@ bool		foundSomething;
 		cLastUpdate_milliSecs	=	millis();
 	}
 
-
+	//--------------------------------------------------------
 	//*	window tab background tasks
+	//*	skytravel
 	if (cSkyTravelTabOjbPtr != NULL)
 	{
 		cSkyTravelTabOjbPtr->RunBackgroundTasks();
 	}
 
-	if (cMoonTabObjPtr != NULL)
+	if (deltaSeconds >= 2)
 	{
-		cMoonTabObjPtr->RunBackgroundTasks();
-	}
+		//*	moon window
+		if (cMoonTabObjPtr != NULL)
+		{
+			cMoonTabObjPtr->RunBackgroundTasks();
+		}
 
-	if (cFOVTabObjPtr != NULL)
-	{
-		cFOVTabObjPtr->RunBackgroundTasks();
-	}
+		//*	Field Of View window
+		if (cFOVTabObjPtr != NULL)
+		{
+			cFOVTabObjPtr->RunBackgroundTasks();
+		}
 
-	if (cAlpacaListObjPtr != NULL)
-	{
-		cAlpacaListObjPtr->RunBackgroundTasks();
-	}
+		//*	alpaca list window
+		if (cAlpacaListObjPtr != NULL)
+		{
+			cAlpacaListObjPtr->RunBackgroundTasks();
+		}
 
+		//*	Remote data window
+		if (cRemoteDataObjPtr != NULL)
+		{
+			cRemoteDataObjPtr->RunBackgroundTasks();
+		}
+	}
 }
 
 //*****************************************************************************

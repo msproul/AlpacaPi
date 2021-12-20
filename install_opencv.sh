@@ -195,7 +195,7 @@ then
 		echo -n "Hit return to continue"
 		read WAITINPUT
 		echo "Running cmake"  >> $LOGFILENAME
-		time cmake $OPENCV_DIR
+		time cmake -DBUILD_opencv_cudacodec=OFF $OPENCV_DIR
 	fi
 
 

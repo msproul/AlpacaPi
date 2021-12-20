@@ -61,6 +61,7 @@ class ControllerCamNormal: public ControllerCamera
 		virtual	void	UpdateCameraSize(void);
 		virtual	void	UpdateCameraState(void);
 		virtual	void	UpdateCameraTemperature(void);
+		virtual	void	UpdatePercentCompleted(void);
 
 
 		virtual	void	UpdateSupportedActions(void);

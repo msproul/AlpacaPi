@@ -37,7 +37,6 @@
 #include "opencv2/highgui/highgui_c.h"
 #include "opencv2/imgproc/imgproc_c.h"
 
-#include	"discovery_lib.h"
 
 
 #define _ENABLE_CONSOLE_DEBUG_
@@ -65,15 +64,19 @@ enum
 };
 
 //**************************************************************************************
-void	CreateStarlistWindow(const char *windowName, TYPE_CelestData *starListPtr, int starListCount)
+void	CreateStarlistWindow(	const char		*windowName,
+								TYPE_CelestData	*starListPtr,
+								const int		starListCount,
+								const char		*clmOneTitle)
 {
-	new ControllerStarlist(windowName, starListPtr,  starListCount);
+	new ControllerStarlist(windowName, starListPtr,  starListCount, clmOneTitle);
 }
 
 //**************************************************************************************
 ControllerStarlist::ControllerStarlist(	const char		*argWindowName,
 										TYPE_CelestData	*argStarList,
-										int				argStarListCount)
+										int				argStarListCount,
+										const char		*clmOneTitle)
 	:Controller(argWindowName, kWindowWidth,  kWindowHeight)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
@@ -92,6 +95,7 @@ ControllerStarlist::ControllerStarlist(	const char		*argWindowName,
 	if (cStarListTabObjPtr != NULL)
 	{
 		cStarListTabObjPtr->SetStarDataPointers(argStarList, argStarListCount);
+		cStarListTabObjPtr->SetColumnOneTitle(clmOneTitle);
 	}
 	else
 	{
@@ -184,8 +188,4 @@ void	ControllerStarlist::UpdateCommonProperties(void)
 
 }
 
-
-
-
-
-#endif // _ENABLE_AAVSO_
+#endif // _ENABLE_STARLIST_

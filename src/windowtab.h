@@ -87,6 +87,15 @@ enum
 
 		W_BROWN,
 		W_PINK,
+		W_ORANGE,
+
+		W_STAR_O,
+		W_STAR_B,
+		W_STAR_A,
+		W_STAR_F,
+		W_STAR_G,
+		W_STAR_K,
+		W_STAR_M,
 		W_COLOR_LAST
 
 };
@@ -144,6 +153,7 @@ class WindowTab
 				void	SetWidgetScrollBarLimits(const int widgetIdx, int scrollBarLines, int scrollBarMax);
 				void	SetWidgetScrollBarValue(const int widgetIdx, int scrollBarValue);
 
+		virtual	void	ActivateWindow(void);
 		virtual	void	UpdateControls(void);
 		virtual	void	UpdateSliderValue(		const int widgetIdx, double newSliderValue);
 
@@ -192,12 +202,20 @@ class WindowTab
 											const int	xxx,
 											const int	yyy,
 											const int	flags);
+
+		virtual	void	ProcessDoubleClick_RtBtn(	const int	widgetIdx,
+													const int	event,
+													const int	xxx,
+													const int	yyy,
+													const int	flags);
+
 		virtual void	ProcessMouseEvent(const int widgetIdx, const int event, const int xxx, const int yyy, const int flags);
 		virtual void	ProcessMouseLeftButtonDown(const int widgetIdx, const int event, const int xxx, const int yyy, const int flags);
 		virtual void	ProcessMouseLeftButtonUp(const int widgetIdx, const int event, const int xxx, const int yyy, const int flags);
 		virtual void	ProcessMouseLeftButtonDragged(const int widgetIdx, const int event, const int xxx, const int yyy, const int flags);
 		virtual void	ProcessMouseWheelMoved(const int widgetIdx, const int event, const int xxx, const int yyy, const int wheelMovement);
 
+				bool	AlpacaSetConnected(const char *deviceTypeStr, const bool newConnectedState);
 				void	SetUpConnectedIndicator(const int buttonIdx, const int yLoc);
 
 				void	SetHelpTextBoxNumber(const int buttonIdx);
@@ -214,12 +232,13 @@ class WindowTab
 		void		CPenSize(const int newLineWidth);
 		void		CMoveTo(const int xx, const int yy);
 		void		CLineTo(const int xx, const int yy);
-		void		DrawCString(const int xx, const int yy, const char *theString, int fontIndex=1);
+		void		DrawCString(const int xx, const int yy, const char *theString, const int fontIndex=1);
 		void		SetColor(const int theColor);
 
 		void		Putpixel(const int xx, const int yy, const int theColor);
 		void		FillEllipse(int xCenter, int yCenter, int xRadius, int yRadius);
 		void		FrameEllipse(int xCenter, int yCenter, int xRadius, int yRadius);
+		void		FloodFill(const int xxx, const int yyy, const int color);
 
 		IplImage	*cOpenCV_Image;
 		int			cCurrentXloc;
@@ -261,7 +280,6 @@ class WindowTab
 										char			*errorMsg,
 										bool			reportError=false);
 virtual	void	AlpacaDisplayErrorMessage(const char *errorMsgString);
-		bool	AlpacaSetConnected(const char *deviceTypeStr, const bool newConnectedState=true);
 #endif // _CONTROLLER_USES_ALPACA_
 
 
@@ -298,7 +316,9 @@ virtual	void	AlpacaDisplayErrorMessage(const char *errorMsgString);
 
 		int					cHelpTextBoxNumber;	//*	index of the box for help text (-1 is not set)
 		CvScalar 			cHelpTextBoxColor;
-		int					cPervDisplayedHelpBox;
+		int					cPrevDisplayedHelpBox;
+		int					cConnectedStateBoxNumber;
+
 
 		//*	alpaca stuff duplicated from controller class
 		int					cLastAlpacaErrNum;

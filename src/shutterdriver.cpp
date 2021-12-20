@@ -25,6 +25,7 @@
 //*	Feb 10,	2020	<MLS> Created shutterdriver.cpp
 //*	Feb 10,	2020	<MLS> Started on Shutter control
 //*	Apr 22,	2020	<MLS> Added readall to shutter driver
+//*	Dec 13,	2021	<MLS> Added WatchDog_TimeOut() to shutterdriver
 //*****************************************************************************
 
 #ifdef _ENABLE_SHUTTER_
@@ -120,9 +121,10 @@ ShutterDriver::ShutterDriver(const int argDevNum)
 {
 	CONSOLE_DEBUG(__FUNCTION__);
 
-	cAltitude_Dbl			=	0.0;
-	cShutterStatus			=	kShutterStatus_Unknown;
-	cPreviousShutterStatus	=	kShutterStatus_Unknown;
+	cAltitude_Dbl				=	0.0;
+	cShutterStatus				=	kShutterStatus_Unknown;
+	cPreviousShutterStatus		=	kShutterStatus_Unknown;
+	cWatchDogTimeOut_Minutes	=	7;
 
 	strcpy(cCommonProp.Name, "shutter");
 	strcpy(gWebTitle, "shutter");
@@ -669,6 +671,13 @@ bool	foundIt;
 	foundIt	=	GetCmdNameFromTable(cmdNumber, comandName, gShutterCmdTable, getPut);
 	return(foundIt);
 }
+
+//*****************************************************************************
+void	ShutterDriver::WatchDog_TimeOut(void)
+{
+	//*	do nothing, this should be overridden
+}
+
 
 #pragma mark -
 

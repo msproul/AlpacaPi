@@ -124,6 +124,9 @@ int		homeBtnWidth;
 	//==========================================
 	SetWidget(		kNiteCrawlerTab_Model,	0,	yLoc,		cWidth,	cBtnHeight);
 	SetWidgetFont(	kNiteCrawlerTab_Model, kFont_Medium);
+
+   	SetUpConnectedIndicator(kNiteCrawlerTab_Connected, yLoc);
+
 	yLoc	+=	cBtnHeight;
 	yLoc	+=	2;
 

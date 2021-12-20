@@ -71,9 +71,9 @@ enum
 
 //**************************************************************************************
 ControllerFocusGeneric::ControllerFocusGeneric(	const char			*argWindowName,
-										struct sockaddr_in	*deviceAddress,
-										const int			port,
-										const int			deviceNum)
+												struct sockaddr_in	*deviceAddress,
+												const int			port,
+												const int			deviceNum)
 	:ControllerFocus(	argWindowName,
 						deviceAddress,
 						port,
@@ -92,6 +92,8 @@ ControllerFocusGeneric::ControllerFocusGeneric(	const char			*argWindowName,
 		cDeviceAddress	=	*deviceAddress;
 		cPort			=	port;
 		cValidIPaddr	=	true;
+
+		CheckConnectedState();		//*	check connected and connect if not already connected
 	}
 
 	CreateWindowTabs();
@@ -207,6 +209,8 @@ void	ControllerFocusGeneric::UpdateWindowTabs_Everything(void)
 
 	SetWidgetNumber(kTab_Focuser,	kMLsingle_focValue,		cFocuserPosition);
 	SetWidgetNumber(kTab_Focuser,	kMLsingle_focDesired,	cFocuserDesiredPos);
+
+	UpdateConnectedIndicator(kTab_Focuser,		kMLsingle_Connected);
 }
 
 //*****************************************************************************

@@ -123,6 +123,9 @@
 //*	Aug 20,	2021	<MLS> Started testing with Peter's cross platform CONFORM
 //*	Sep  2,	2021	<MLS> Started adding bandwidth statistics
 //*	Sep  2,	2021	<MLS> Added BandWidthStatsInit()
+//*	Dec 13,	2021	<MLS> Started working on watchdog time out processing
+//*	Dec 13,	2021	<MLS> Added CheckWatchDogTimeout() & WatchDog_TimeOut()
+//*	Dec 18,	2021	<MLS> Started using pmccabe to check routine complexity
 //*****************************************************************************
 //*	to install code blocks 20
 //*	Step 1: sudo add-apt-repository ppa:codeblocks-devs/release
@@ -275,7 +278,7 @@ int					gDeviceCnt					=	0;
 bool				gLiveView					=	false;
 bool				gAutoExposure				=	false;
 bool				gDisplayImage				=	false;
-//bool				gVerbose					=	true;
+bool				gVerbose					=	true;
 bool				gDebugDiscovery				=	true;
 const char			gValueString[]				=	"Value";
 char				gDefaultTelescopeRefID[kDefaultRefIdMaxLen]	=	"";
@@ -405,7 +408,13 @@ int		iii;
 	//*	live window stuff
 	cLiveController				=	NULL;
 
+	//========================================
+	//*	Watchdog timer stuff
+	cTimeOfLastValidCmd			=	time(NULL);		//*	these need to be set or it will do a shutdown before it even starts
+	cTimeOfLastWatchDogCheck	=	time(NULL);
+	cWatchDogTimeOut_Minutes	=	5;				//*	default timeout, can be overridden
 
+	//========================================
 	//*	add the device to the list
 	cDeviceType	=	argDeviceType;
 	//*	we have to figure out which index this devices is for this device type
@@ -1310,6 +1319,8 @@ int		tblIdx;
 	}
 }
 
+
+
 #pragma mark -
 
 #ifdef _ENABLE_BANDWIDTH_LOGGING_
@@ -1980,7 +1991,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
 //int				alpacaVerNum;
 int					deviceTypeEnum;
 int					cc;
-int					ii;
+int					iii;
 int					slen;
 int					cmdBuffLen;
 char				deviceStringBuffer[kDevStrLen];
@@ -2070,11 +2081,11 @@ bool				foundKeyWord;
 
 			//*	check the command string make sure its terminated properly
 			slen	=	strlen(reqData->cmdBuffer);
-			for (ii=0; ii<slen; ii++)
+			for (iii=0; iii<slen; iii++)
 			{
-				if ((reqData->cmdBuffer[ii] == '%') || (reqData->cmdBuffer[ii] == '"'))
+				if ((reqData->cmdBuffer[iii] == '%') || (reqData->cmdBuffer[iii] == '"'))
 				{
-					reqData->cmdBuffer[ii]	=	0;
+					reqData->cmdBuffer[iii]	=	0;
 					break;
 				}
 			}
@@ -2138,28 +2149,34 @@ bool				foundKeyWord;
 		//*	now do something with the data
 		deviceTypeEnum	=	FindDeviceTypeByString(reqData->deviceType);
 		deviceFound	=	false;
-		for (ii=0; ii<gDeviceCnt; ii++)
+		for (iii=0; iii<gDeviceCnt; iii++)
 		{
-			if (gAlpacaDeviceList[ii] != NULL)
+			if (gAlpacaDeviceList[iii] != NULL)
 			{
 			#ifdef _DEBUG_CONFORM_
-			//	CONSOLE_DEBUG_W_NUM("gAlpacaDeviceList[ii]->cDeviceType\t=", gAlpacaDeviceList[ii]->cDeviceType);
-			//	CONSOLE_DEBUG_W_NUM("gAlpacaDeviceList[ii]->cDeviceNum\t=", gAlpacaDeviceList[ii]->cDeviceNum);
+			//	CONSOLE_DEBUG_W_NUM("gAlpacaDeviceList[iii]->cDeviceType\t=", gAlpacaDeviceList[iii]->cDeviceType);
+			//	CONSOLE_DEBUG_W_NUM("gAlpacaDeviceList[iii]->cDeviceNum\t=", gAlpacaDeviceList[iii]->cDeviceNum);
 			#endif // _DEBUG_CONFORM_
 
-				if ((gAlpacaDeviceList[ii]->cDeviceType == deviceTypeEnum) &&
-					(gAlpacaDeviceList[ii]->cDeviceNum == reqData->deviceNumber))
+				if ((gAlpacaDeviceList[iii]->cDeviceType == deviceTypeEnum) &&
+					(gAlpacaDeviceList[iii]->cDeviceNum == reqData->deviceNumber))
 				{
 					deviceFound		=	true;
 
-					gAlpacaDeviceList[ii]->cBytesWrittenForThisCmd	=	0;
-					alpacaErrCode	=	gAlpacaDeviceList[ii]->ProcessCommand(reqData);
-					if (alpacaErrCode!= kASCOM_Err_Success)
+					gAlpacaDeviceList[iii]->cBytesWrittenForThisCmd	=	0;
+					alpacaErrCode	=	gAlpacaDeviceList[iii]->ProcessCommand(reqData);
+					if (alpacaErrCode == kASCOM_Err_Success)
 					{
-						gAlpacaDeviceList[ii]->cTotalCmdErrors++;
+						//*	record the time of the last successful command
+						//*	this is for watch dog timing
+						gAlpacaDeviceList[iii]->cTimeOfLastValidCmd	=	time(NULL);
 					}
-					gAlpacaDeviceList[ii]->cTotalCmdsProcessed++;
-					gAlpacaDeviceList[ii]->cTotalBytesRcvd	+=	byteCount;
+					else
+					{
+						gAlpacaDeviceList[iii]->cTotalCmdErrors++;
+					}
+					gAlpacaDeviceList[iii]->cTotalCmdsProcessed++;
+					gAlpacaDeviceList[iii]->cTotalBytesRcvd	+=	byteCount;
 
 					reqData->alpacaErrCode	=	alpacaErrCode;
 					//*	are we conform logging
@@ -2176,9 +2193,9 @@ bool				foundKeyWord;
 					//*	this is for network stats
 					if (gTimeUnitsSinceTopOfHour < kMaxBandWidthSamples)
 					{
-						gAlpacaDeviceList[ii]->cBW_CmdsReceived[gTimeUnitsSinceTopOfHour]	+=	1;
-						gAlpacaDeviceList[ii]->cBW_BytesReceived[gTimeUnitsSinceTopOfHour]	+=	byteCount;
-						gAlpacaDeviceList[ii]->cBW_BytesSent[gTimeUnitsSinceTopOfHour]		+=	gAlpacaDeviceList[ii]->cBytesWrittenForThisCmd;
+						gAlpacaDeviceList[iii]->cBW_CmdsReceived[gTimeUnitsSinceTopOfHour]	+=	1;
+						gAlpacaDeviceList[iii]->cBW_BytesReceived[gTimeUnitsSinceTopOfHour]	+=	byteCount;
+						gAlpacaDeviceList[iii]->cBW_BytesSent[gTimeUnitsSinceTopOfHour]		+=	gAlpacaDeviceList[iii]->cBytesWrittenForThisCmd;
 					}
 #endif // _ENABLE_BANDWIDTH_LOGGING_
 
@@ -2236,7 +2253,7 @@ static TYPE_ASCOM_STATUS	ProcessManagementRequest(TYPE_GetPutRequestData	*reqDat
 													long					byteCount)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
-int					ii;
+int					iii;
 int					parseDataLen;
 int					cmdStrLen;
 
@@ -2261,10 +2278,10 @@ int					cmdStrLen;
 
 		parseDataLen	=	strlen(parseChrPtr);
 		cmdStrLen		=	0;
-		for (ii=0; ii<parseDataLen; ii++)
+		for (iii=0; iii<parseDataLen; iii++)
 		{
 			cmdStrLen++;
-			if (parseChrPtr[ii] <= 0x20)
+			if (parseChrPtr[iii] <= 0x20)
 			{
 				break;
 			}
@@ -2279,25 +2296,25 @@ int					cmdStrLen;
 //		CONSOLE_DEBUG_W_NUM("cmdStrLent=", cmdStrLen);
 	}
 
-	for (ii=0; ii<gDeviceCnt; ii++)
+	for (iii=0; iii<gDeviceCnt; iii++)
 	{
-		if (gAlpacaDeviceList[ii] != NULL)
+		if (gAlpacaDeviceList[iii] != NULL)
 		{
-			if (gAlpacaDeviceList[ii]->cDeviceType == kDeviceType_Management)
+			if (gAlpacaDeviceList[iii]->cDeviceType == kDeviceType_Management)
 			{
-				alpacaErrCode	=	gAlpacaDeviceList[ii]->ProcessCommand(reqData);
-				gAlpacaDeviceList[ii]->cTotalCmdsProcessed++;
+				alpacaErrCode	=	gAlpacaDeviceList[iii]->ProcessCommand(reqData);
+				gAlpacaDeviceList[iii]->cTotalCmdsProcessed++;
 				if (alpacaErrCode!= kASCOM_Err_Success)
 				{
-					gAlpacaDeviceList[ii]->cTotalCmdErrors++;
+					gAlpacaDeviceList[iii]->cTotalCmdErrors++;
 				}
 #ifdef _ENABLE_BANDWIDTH_LOGGING_
 				//*	this is for network stats
 				if (gTimeUnitsSinceTopOfHour < kMaxBandWidthSamples)
 				{
-					gAlpacaDeviceList[ii]->cBW_CmdsReceived[gTimeUnitsSinceTopOfHour]	+=	1;
-					gAlpacaDeviceList[ii]->cBW_BytesReceived[gTimeUnitsSinceTopOfHour]	+=	byteCount;
-		//-			gAlpacaDeviceList[ii]->cBW_BytesSent[gTimeUnitsSinceTopOfHour];
+					gAlpacaDeviceList[iii]->cBW_CmdsReceived[gTimeUnitsSinceTopOfHour]	+=	1;
+					gAlpacaDeviceList[iii]->cBW_BytesReceived[gTimeUnitsSinceTopOfHour]	+=	byteCount;
+		//-			gAlpacaDeviceList[iii]->cBW_BytesSent[gTimeUnitsSinceTopOfHour];
 				}
 #endif // _ENABLE_BANDWIDTH_LOGGING_
 				break;
@@ -2510,7 +2527,7 @@ int	iii;
 //	DumpRequestStructure(__FUNCTION__, &reqData);
 
 	ParseHTMLdataIntoReqStruct(htmlData, &reqData);
-	CONSOLE_DEBUG(reqData.httpCmdString);
+//	CONSOLE_DEBUG(reqData.httpCmdString);
 	if (strstr(htmlData, "connected") != NULL)
 	{
 		CONSOLE_DEBUG(htmlData);
@@ -2646,212 +2663,6 @@ static void	*ListenThread(void *arg)
 	return(NULL);
 }
 
-#if 0
-
-//**************************************************************************
-//*	examples
-//*		PRETTY_NAME="Mendel GNU/Linux 4 (Day)"
-//*		PRETTY_NAME="Ubuntu 16.04 LTS"
-//*		Model		: Raspberry Pi 3 Model B Plus Rev 1.3
-//*
-//*	returns true on successful extraction
-//**************************************************************************
-static bool	ExtractArgValue(char *string, char delimChar, char *valueString)
-{
-int		slen;
-char	*delimPtr;
-bool	successFlag;
-
-	successFlag	=	false;
-	delimPtr	=	strchr(string, delimChar);
-	if (delimPtr != NULL)
-	{
-		//*	skip the delim char
-		delimPtr++;
-		while ((*delimPtr == ' ') || (*delimPtr == '"'))
-		{
-			delimPtr++;
-		}
-		strcpy(valueString, delimPtr);
-		slen	=	strlen(valueString);
-		while (((valueString[slen] < 0x20) || (valueString[slen] == '"')) && (slen > 0))
-		{
-			valueString[slen]	=	0;
-			slen--;
-		}
-		successFlag	=	true;
-	}
-	return(successFlag);
-}
-
-
-//**************************************************************************
-static void	Read_OSreleaseVersion(void)
-{
-FILE	*filePointer;
-char	lineBuff[256];
-int		slen;
-char	codeName[64];
-bool	codeNameFound;
-
-	filePointer	=	fopen("/etc/os-release", "r");
-	if (filePointer != NULL)
-	{
-		codeName[0]		=	0;
-		codeNameFound	=	false;
-		while (fgets(lineBuff, 200, filePointer))
-		{
-			slen	=	strlen(lineBuff);
-			if (slen > 1)
-			{
-				if (strncmp(lineBuff, "PRETTY_NAME", 11) == 0)
-				{
-					ExtractArgValue(lineBuff, '=', gOsReleaseString);
-				}
-				else if (strncmp(lineBuff, "UBUNTU_CODENAME", 15) == 0)
-				{
-					//*	this was added for the case of the nvidia jetson board.
-					codeNameFound	=	ExtractArgValue(lineBuff, '=', codeName);
-				}
-			}
-		}
-		fclose(filePointer);
-
-		if (codeNameFound)
-		{
-			//*	check to see if the code name is in the release string
-			if (strstr(gOsReleaseString, codeName) == NULL)
-			{
-				//*	it is NOT there, put it in
-				strcat(gOsReleaseString, " (");
-				strcat(gOsReleaseString, codeName);
-				strcat(gOsReleaseString, ")");
-			}
-		}
-	}
-	else
-	{
-		CONSOLE_DEBUG("/etc/os-release not found");
-	}
-}
-
-//**************************************************************************
-static void	Read_CpuInfo(void)
-{
-FILE	*filePointer;
-char	lineBuff[256];
-int		slen;
-bool	stillNeedModel;
-char	argValueString[64];
-char	*stringPtr;
-
-	//*	set the default value in case we fail to read /proc/cpuinfo
-	strcpy(gPlatformString,	"");
-	strcpy(gCpuInfoString,	"");
-	stillNeedModel	=	true;
-
-#if defined(__arm__) && !defined(_PLATFORM_STRING_)
-	strcpy(gPlatformString,	"Raspberry Pi - ");
-#endif
-
-
-
-#if defined(__arm__)
-	strcpy(gCpuInfoString,	"Arm");
-#elif defined( __ARM_ARCH)
-	strcpy(gCpuInfoString,	"Arm");
-#elif defined( __x86_64)
-	strcpy(gCpuInfoString,	"64 bit x86");
-#elif defined( __i386__)
-	strcpy(gCpuInfoString,	"32 bit x86");
-#endif
-
-
-	filePointer	=	fopen("/proc/cpuinfo", "r");
-	if (filePointer != NULL)
-	{
-		while (fgets(lineBuff, 200, filePointer))
-		{
-			slen	=	strlen(lineBuff);
-			if (slen > 1)
-			{
-				if (strncmp(lineBuff, "model name", 10) == 0)
-				{
-					ExtractArgValue(lineBuff, ':', gCpuInfoString);
-				}
-				else if (strncmp(lineBuff, "Model", 5) == 0)
-				{
-					//*	so far I have only found this is only on Raspberry Pi
-					ExtractArgValue(lineBuff, ':', gPlatformString);
-					stillNeedModel	=	false;
-				}
-				else if (strncmp(lineBuff, "Revision", 8) == 0)
-				{
-					if (stillNeedModel)
-					{
-						ExtractArgValue(lineBuff, ':', argValueString);
-						if (strcmp(argValueString, "a020d3") == 0)
-						{
-							strcpy(gPlatformString,	"Raspberry Pi 3");
-						}
-						else
-						{
-							strcat(gPlatformString,	argValueString);
-						}
-					}
-				}
-				else if (strncasecmp(lineBuff, "bogomips", 8) == 0)
-				{
-					ExtractArgValue(lineBuff, ':', argValueString);
-					gBogoMipsValue	=	atof(argValueString);
-				}
-			}
-		}
-		fclose(filePointer);
-	}
-	else
-	{
-		CONSOLE_DEBUG("failed to open /proc/cpuinfo");
-	}
-
-	//=======================================================================
-	filePointer	=	fopen("/sys/firmware/devicetree/base/model", "r");
-	if (filePointer != NULL)
-	{
-		lineBuff[0]	=	0;
-		stringPtr	=	fgets(lineBuff, 200, filePointer);
-		if (stringPtr != NULL)
-		{
-			if (strlen(lineBuff) > 5)
-			{
-				strcpy(gPlatformString, lineBuff);
-			}
-		}
-		else
-		{
-			CONSOLE_DEBUG("Error reading /sys/firmware/devicetree/base/model");
-		}
-		fclose(filePointer);
-	}
-
-	//*	check to see if we have a valid platform string
-	if (strlen(gPlatformString) == 0)
-	{
-	#ifdef _PLATFORM_STRING_
-		//*	_PLATFORM_STRING_ can be defined in the make file
-		//	exmple, note the back slashes
-		//	jetson		:	DEFINEFLAGS		+=	-D_PLATFORM_STRING_=\"Nvidia-jetson\"
-		strcpy(gPlatformString, _PLATFORM_STRING_);
-	#endif
-
-	}
-#if (__SIZEOF_POINTER__ == 8)
-	strcat(gPlatformString, " (64 bit)");
-#elif (__SIZEOF_POINTER__ == 4)
-//	strcat(gPlatformString, " (32 bit)");
-#endif
-}
-#endif // 0
 
 //*****************************************************************************
 static void	PrintHelp(const char *appName)
@@ -3003,6 +2814,50 @@ int			iii;
 	}
 }
 
+//*****************************************************************************
+//*	this should be over-ridden if needed
+//*****************************************************************************
+void	AlpacaDriver::WatchDog_TimeOut(void)
+{
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cCommonProp.Name);
+}
+
+
+//*****************************************************************************
+//*	this checks to see how long ago a VALID command was sent to the driver
+//*	if the time is greater than the specified time (in Minutes),
+//*	then WatchDog_TimeOut() will be called.
+//*	It is up to WatchDog_TimeOut() to do what is needed to shut this device down.
+//*
+//*	For example:
+//*		Dome:		Close the shutter
+//*		Telescope:	Stop tracking
+//*****************************************************************************
+void	AlpacaDriver::CheckWatchDogTimeout(void)
+{
+time_t		currentTimeEpoch;
+time_t		deltaSeconds;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+	//*	we only want to check this once a minute
+	currentTimeEpoch	=	time(NULL);
+	deltaSeconds		=	currentTimeEpoch - cTimeOfLastWatchDogCheck;
+
+	if (deltaSeconds >= 60)
+	{
+		//*	now check to see how long it has been since a valid command
+		deltaSeconds		=	currentTimeEpoch - cTimeOfLastValidCmd;
+		if (deltaSeconds > (cWatchDogTimeOut_Minutes * 60))
+		{
+			WatchDog_TimeOut();
+		}
+
+		cTimeOfLastWatchDogCheck	=	time(NULL);
+	}
+}
+
+
+
 static	int32_t	gMainLoopCntr	=	0;
 //*****************************************************************************
 int	main(int argc, char **argv)
@@ -3011,10 +2866,11 @@ pthread_t		threadID;
 int				threadErr;
 uint32_t		delayTime_microSecs;
 uint32_t		delayTimeForThisTask;
-int				ii;
+int				iii;
 int				cameraCnt;
 int				ram_Megabytes;
 double			freeDiskSpace_Gigs;
+
 
 #if defined(_ENABLE_FITS_) || defined(_ENABLE_JPEGLIB_)
 	char			lineBuffer[64];
@@ -3246,16 +3102,15 @@ double			freeDiskSpace_Gigs;
 	while (gKeepRunning)
 	{
 		gMainLoopCntr++;
-
 		delayTime_microSecs	=	(1000000 / 2);		//*	default to 1/2 second
-		for (ii=0; ii<gDeviceCnt; ii++)
+		for (iii=0; iii<gDeviceCnt; iii++)
 		{
 			//==================================================================================
 			//*	Run state machines for enabled device.
 			//*	Not all devices have state machines to run
-			if (gAlpacaDeviceList[ii] != NULL)
+			if (gAlpacaDeviceList[iii] != NULL)
 			{
-				delayTimeForThisTask	=	gAlpacaDeviceList[ii]->RunStateMachine();
+				delayTimeForThisTask	=	gAlpacaDeviceList[iii]->RunStateMachine();
 
 				//*	figure out what is the minimum delay time we have
 				if (delayTimeForThisTask < delayTime_microSecs)
@@ -3266,9 +3121,9 @@ double			freeDiskSpace_Gigs;
 			#ifdef _ENABLE_LIVE_CONTROLLER_
 				//==================================================================================
 				//*	live window
-				if (gAlpacaDeviceList[ii]->cLiveController != NULL)
+				if (gAlpacaDeviceList[iii]->cLiveController != NULL)
 				{
-					HandleContollerWindow(gAlpacaDeviceList[ii]);
+					HandleContollerWindow(gAlpacaDeviceList[iii]);
 
 					//*	if we have an active live window, we want to be able to give it more time
 					if (delayTime_microSecs > 5000)
@@ -3277,6 +3132,8 @@ double			freeDiskSpace_Gigs;
 					}
 				}
 			#endif // _ENABLE_LIVE_CONTROLLER_
+
+				gAlpacaDeviceList[iii]->CheckWatchDogTimeout();
 			}
 		}
 		if (delayTime_microSecs < 10)
@@ -3289,12 +3146,12 @@ double			freeDiskSpace_Gigs;
 
 
 	//*	the program has been told to quit, go through and delete the objects
-	for (ii=0; ii<kMaxDevices; ii++)
+	for (iii=0; iii<kMaxDevices; iii++)
 	{
-		if (gAlpacaDeviceList[ii] != NULL)
+		if (gAlpacaDeviceList[iii] != NULL)
 		{
-			CONSOLE_DEBUG_W_STR("Deleting ", gAlpacaDeviceList[ii]->cCommonProp.Name);
-			delete gAlpacaDeviceList[ii];
+			CONSOLE_DEBUG_W_STR("Deleting ", gAlpacaDeviceList[iii]->cCommonProp.Name);
+			delete gAlpacaDeviceList[iii];
 		}
 	}
 

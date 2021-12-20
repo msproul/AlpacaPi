@@ -9,6 +9,7 @@
 //*	Nov 29,	2020	<MLS> Added CalcDaysSinceNewMoon()
 //*	Nov 29,	2020	<MLS> Added CalcMoonIllumination()
 //*	Dec  1,	2020	<MLS> Added GetMoonPhase(), GetCurrentMoonPhase()
+//*	Oct 31,	2021	<MLS> Added GetMoonPhaseForSpecifiedTime()
 //*****************************************************************************
 
 #include	<stdlib.h>
@@ -295,6 +296,25 @@ int		moonAge_int;
 	}
 }
 
+//**************************************************************************************
+void	GetMoonPhaseForSpecifiedTime(struct tm	*linuxTime, char *moonPhaseStr)
+{
+double		illumination;
+double		moonAge_Days;
+time_t		currentTime;
+
+	if (linuxTime != NULL)
+	{
+		illumination	=	CalcMoonIllumination(	(1 + linuxTime->tm_mon),
+													linuxTime->tm_mday,
+													(1900 + linuxTime->tm_year));
+
+		moonAge_Days	=	CalcDaysSinceNewMoon(	(1 + linuxTime->tm_mon),
+													linuxTime->tm_mday,
+													(1900 + linuxTime->tm_year));
+		GetMoonPhase(illumination, moonAge_Days, moonPhaseStr);
+	}
+}
 
 //**************************************************************************************
 void	GetCurrentMoonPhase(char *moonPhaseStr)
@@ -309,6 +329,9 @@ struct tm	*linuxTime;
 	if (currentTime != -1)
 	{
 		linuxTime		=	gmtime(&currentTime);
+	#if 1
+		GetMoonPhaseForSpecifiedTime(linuxTime, moonPhaseStr);
+	#else
 		illumination	=	CalcMoonIllumination(	(1 + linuxTime->tm_mon),
 													linuxTime->tm_mday,
 													(1900 + linuxTime->tm_year));
@@ -317,12 +340,14 @@ struct tm	*linuxTime;
 													linuxTime->tm_mday,
 													(1900 + linuxTime->tm_year));
 		GetMoonPhase(illumination, moonAge_Days, moonPhaseStr);
+	#endif
 	}
 	else
 	{
 		strcpy(moonPhaseStr, "Error");
 	}
 }
+
 
 #ifndef _ALPACA_PI_
 
