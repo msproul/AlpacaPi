@@ -36,6 +36,7 @@
 
 #include	"discovery_lib.h"
 #include	"sendrequest_lib.h"
+#include	"eventlogging.h"
 
 #define	_DEBUG_TIMING_
 #define _ENABLE_CONSOLE_DEBUG_
@@ -524,6 +525,63 @@ void	ControllerCamera::UpdateImageProgressBar(int maxArrayLength)
 }
 
 //*****************************************************************************
+void	ControllerCamera::AlpacaGetImageArray_Binary_Byte(	TYPE_ImageArray	*imageArray,
+															int				arrayLength)
+{
+int				binaryDataValue;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG_W_NUM("cBinaryImageHdr.Rank\t=", cBinaryImageHdr.Rank);
+
+	if (cBinaryImageHdr.Rank == 3)
+	{
+		while ((cData_iii < cRecvdByteCnt))
+		{
+			binaryDataValue	=	(cReturnedData[cData_iii] & 0x00ff) << 8;
+		//	CONSOLE_DEBUG_W_HEX("binaryDataValue\t=", binaryDataValue);
+			if (cImageArrayIndex < arrayLength)
+			{
+				//*	deal with the individual R,G,B values
+				switch(cRGBidx)
+				{
+					case 0:
+						imageArray[cImageArrayIndex].RedValue	=	binaryDataValue & 0x00ffff;
+						break;
+
+					case 1:
+						imageArray[cImageArrayIndex].GrnValue	=	binaryDataValue & 0x00ffff;
+						break;
+
+					case 2:
+						imageArray[cImageArrayIndex].BluValue	=	binaryDataValue & 0x00ffff;
+						cImageArrayIndex++;
+						break;
+				}
+				cRGBidx++;
+				if (cRGBidx >= 3)
+				{
+					cRGBidx	=	0;
+				}
+			}
+			cData_iii++;
+		}
+	}
+	else if (cBinaryImageHdr.Rank == 2)
+	{
+		while ((cData_iii < cRecvdByteCnt))
+		{
+			binaryDataValue	=	(cReturnedData[cData_iii] & 0x00ff) << 8;
+			imageArray[cImageArrayIndex].RedValue	=	binaryDataValue;
+			imageArray[cImageArrayIndex].GrnValue	=	binaryDataValue;
+			imageArray[cImageArrayIndex].BluValue	=	binaryDataValue;
+			cImageArrayIndex++;
+			cData_iii++;
+		}
+	}
+}
+
+
+//*****************************************************************************
 int	ControllerCamera::AlpacaGetImageArray_Binary(	TYPE_ImageArray	*imageArray,
 													int				arrayLength,
 													int				*actualValueCnt)
@@ -532,14 +590,14 @@ unsigned char	*binaryImgHdrPtr;
 int				imgRank;
 int				jjj;
 int				binaryDataValue;
-int				rgbIdx;
 int				dataByteIdx;
 
 	CONSOLE_DEBUG("------------------------------------------------------------------");
 	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_NUM("arrayLength        \t=",	arrayLength);
 
 	imgRank		=	0;
-	rgbIdx		=	0;
+	cRGBidx		=	0;
 	dataByteIdx	=	0;
 	while (cKeepReading)
 	{
@@ -588,12 +646,22 @@ int				dataByteIdx;
 		//*	put the data into a long word based on the TransmissionElementType
 		switch(cBinaryImageHdr.TransmissionElementType)
 		{
-		//	case kAlpacaImageData_Unknown:
-		//	case kAlpacaImageData_Int32:
-		//	case kAlpacaImageData_Double:
-		//	case kAlpacaImageData_Single:
-		//	case kAlpacaImageData_Decimal:
-		//	case kAlpacaImageData_Byte:
+			case kAlpacaImageData_Unknown:
+			case kAlpacaImageData_Int32:
+			case kAlpacaImageData_Double:
+			case kAlpacaImageData_Single:
+			case kAlpacaImageData_Decimal:
+//				LogEvent(	"camera",
+//							"Binary Download",
+//							NULL,
+//							kASCOM_Err_Success,
+//							"Mode not not supported yet");
+				break;
+
+			case kAlpacaImageData_Byte:
+				AlpacaGetImageArray_Binary_Byte(imageArray, arrayLength);
+				break;
+
 		//	case kAlpacaImageData_Int64:
 				break;
 
@@ -648,7 +716,7 @@ int				dataByteIdx;
 								if (cImageArrayIndex < arrayLength)
 								{
 									//*	deal with the individual R,G,B values
-									switch(rgbIdx)
+									switch(cRGBidx)
 									{
 										case 0:
 											imageArray[cImageArrayIndex].RedValue	=	binaryDataValue & 0x00ffff;
@@ -674,10 +742,10 @@ int				dataByteIdx;
 											cImageArrayIndex++;
 											break;
 									}
-									rgbIdx++;
-									if (rgbIdx >= 3)
+									cRGBidx++;
+									if (cRGBidx >= 3)
 									{
-										rgbIdx	=	0;
+										cRGBidx	=	0;
 									}
 								}
 								else
@@ -693,13 +761,21 @@ int				dataByteIdx;
 				}
 				else
 				{
-					CONSOLE_ABORT(__FUNCTION__);
+//					LogEvent(	"camera",
+//								"Binary Download",
+//								NULL,
+//								kASCOM_Err_Success,
+//								"Invalid RANK value");
 				}
 				break;
 
 			default:
 				CONSOLE_DEBUG_W_NUM("TransmissionElementType not supported yet:", cBinaryImageHdr.TransmissionElementType);
-				CONSOLE_ABORT(__FUNCTION__);
+//				LogEvent(	"camera",
+//							"Binary Download",
+//							NULL,
+//							kASCOM_Err_Success,
+//							"Mode not not supported yet");
 				break;
 		}
 
@@ -717,6 +793,8 @@ int				dataByteIdx;
 			cKeepReading		=	false;
 		}
 	}
+	CONSOLE_DEBUG_W_NUM("imgRank\t=", imgRank);
+	CONSOLE_DEBUG_W_NUM("cImageArrayIndex=", cImageArrayIndex);
 	return(imgRank);
 }
 
@@ -726,7 +804,6 @@ int	ControllerCamera::AlpacaGetImageArray_JSON(	TYPE_ImageArray	*imageArray,
 												int				*actualValueCnt)
 {
 int				imgRank;
-int				rgbIdx;
 char			theChar;
 int				ccc;
 int				braceCnt;	//*	{}
@@ -747,7 +824,7 @@ int				myIntegerValue;
 //	crCnt			=	0;
 //	lfCnt			=	0;
 	imgRank			=	3;		//*	default to color
-	rgbIdx			=	0;
+	cRGBidx			=	0;
 	ccc				=	0;
 	while (cKeepReading)
 	{
@@ -794,7 +871,7 @@ int				myIntegerValue;
 						if (imgRank == 3)
 						{
 							//*	deal with the individual R,G,B values
-							switch(rgbIdx)
+							switch(cRGBidx)
 							{
 								case 0:
 									imageArray[cImageArrayIndex].RedValue	=	myIntegerValue;
@@ -810,7 +887,7 @@ int				myIntegerValue;
 //											CONSOLE_DEBUG_W_STR("linebuf=", linebuf);
 									break;
 							}
-							rgbIdx++;
+							cRGBidx++;
 							if (theChar == ']')
 							{
 								//*	debugging
@@ -821,7 +898,7 @@ int				myIntegerValue;
 //																			imageArray[cImageArrayIndex].GrnValue,
 //																			imageArray[cImageArrayIndex].BluValue);
 //										}
-								rgbIdx	=	0;
+								cRGBidx	=	0;
 								cImageArrayIndex++;
 							}
 						}
@@ -1007,6 +1084,7 @@ int				ccc;
 	strcpy(cLastAlpacaCmdString, alpacaString);
 	CONSOLE_DEBUG_W_STR("alpacaString\t=",	alpacaString);
 
+	START_TIMING();
 	cSocket_desc	=	OpenSocketAndSendRequest(	&cDeviceAddress,
 												cPort,
 												"GET",	//*	must be either GET or PUT
@@ -1015,8 +1093,9 @@ int				ccc;
 												allowBinary);
 	if (cSocket_desc >= 0)
 	{
+		DEBUG_TIMING("---------------Time to send request (ms)");
+
 		CONSOLE_DEBUG("Success: Connection open and data sent");
-		START_TIMING();
 		cValueFoundFlag		=	false;
 		cKeepReading		=	true;
 		readingHttpHeader	=	true;
@@ -1039,6 +1118,7 @@ int				ccc;
 
 				CONSOLE_DEBUG_W_NUM("cRecvdByteCnt=", cRecvdByteCnt);
 
+				DEBUG_TIMING("---------------Processing header (ms)");
 				//----------------------------------------------------------------
 				//*	this part reads and processes the HTTP header
 				while (readingHttpHeader && (cData_iii < cRecvdByteCnt))
@@ -1088,7 +1168,7 @@ int				ccc;
 				//*	check to see if we have binary data
 				if (cHttpHdrStruct.dataIsBinary)
 				{
-					CONSOLE_DEBUG("Data is binary");
+					DEBUG_TIMING("---------------Data is binary");
 					imgRank	=	AlpacaGetImageArray_Binary(imageArray, arrayLength, actualValueCnt);
 				}
 				else
@@ -1109,6 +1189,7 @@ int				ccc;
 		UpdateDownloadProgress(cImageArrayIndex, arrayLength);
 
 		*actualValueCnt	=	cImageArrayIndex;
+		CONSOLE_DEBUG_W_NUM("actualValueCnt\t=", *actualValueCnt);
 
 		DEBUG_TIMING("Time to download image (ms)");
 		CONSOLE_DEBUG_W_NUM("cSocketReadCnt\t=", cSocketReadCnt);

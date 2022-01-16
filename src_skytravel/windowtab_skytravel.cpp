@@ -85,7 +85,8 @@
 //*	Dec 18,	2021	<MLS> Added SearchSkyObjectsDataListByNumber()
 //*	Dec 19,	2021	<MLS> Added SearchSkyObjectsDataListByShortName()
 //*	Dec 19,	2021	<MLS> Added SearchSkyObjectsDataListByLongName()
-//*	Dec 19,	2021	<MLS> Added SearchSkyObjects_Constellations()
+//*	Dec 19,	2021	<MLS> Added SearchSkyObjectsConstellations()
+//*	Dec 19,	2021	<MLS> Added SearchSkyObjectsConstOutlines()
 //*****************************************************************************
 //*	TODO
 //*			star catalog lists
@@ -7301,7 +7302,7 @@ bool	foundIt;
 }
 
 //*****************************************************************************
-bool	WindowTabSkyTravel::SearchSkyObjects_Constellations(const char *searchString)
+bool	WindowTabSkyTravel::SearchSkyObjectsConstellations(const char *searchString)
 {
 int		iii;
 int		searchStrLen;
@@ -7333,7 +7334,7 @@ bool	foundIt;
 
 //
 //*****************************************************************************
-bool	WindowTabSkyTravel::SearchSkyObjects_ConstOutlines(const char *searchString)
+bool	WindowTabSkyTravel::SearchSkyObjectsConstOutlines(const char *searchString)
 {
 int		iii;
 int		searchStrLen;
@@ -7424,10 +7425,10 @@ bool	foundIt;
 	if (strncasecmp(objectName, "IC", 2) == 0)
 	{
 		foundIt	=	SearchSkyObjectsDataListByNumber(	gNGCobjectPtr,
-													gNGCobjectCount,
-													kDataSrc_NGC2000IC,
-													"IC",
-													objectName);
+														gNGCobjectCount,
+														kDataSrc_NGC2000IC,
+														"IC",
+														objectName);
 		if (foundIt)
 		{
 			cDispOptions.dispNGC	=	true;
@@ -7441,14 +7442,13 @@ bool	foundIt;
 	{
 		CONSOLE_DEBUG_W_STR("Looking in planets for", objectName);
 		foundIt	=	SearchSkyObjectsDataListByShortName(	cPlanets,
-															10,
+															kPlanetObjectCnt,
 															kDataSrc_Planets,
 															objectName);
 		if (foundIt)
 		{
 			strcpy(cFoundDatabase, "Planets");
 		}
-
 	}
 
 	//-------------------------------------------------------------------------------
@@ -7523,7 +7523,7 @@ bool	foundIt;
 	//*	look for constellations
 	if ((cFoundSomething == false) && cDispOptions.dispConstellations)
 	{
-		foundIt	=	SearchSkyObjects_Constellations(objectName);
+		foundIt	=	SearchSkyObjectsConstellations(objectName);
 		if (foundIt)
 		{
 			SetMinimumViewAngle(0.7);
@@ -7534,7 +7534,7 @@ bool	foundIt;
 	//*	look for constellation outlines
 	if ((cFoundSomething == false) && cDispOptions.dispConstOutlines)
 	{
-		foundIt	=	SearchSkyObjects_ConstOutlines(objectName);
+		foundIt	=	SearchSkyObjectsConstOutlines(objectName);
 		//*	outlines dont get displayed unless we the view angle is at least 0.7
 		if (foundIt)
 		{

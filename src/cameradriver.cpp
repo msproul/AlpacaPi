@@ -158,8 +158,10 @@
 //*	Nov 12,	2021	<MLS> Fixed bug in live mode that image start time did not get set properly
 //*	Dec 16,	2021	<MLS> Added Get_Imagearray_JSON() & Get_Imagearray_Binary()
 //*	Dec 17,	2021	<MLS> Figured out that the image data needs to be COLUMN order
-//*	Dec 20,	2021	<MLS> Added BuildBinaryImage_Raw8() BuildBinaryImage_Raw16()
-//*	Dec 20,	2021	<MLS> Added BuildBinaryImage_RGB24()
+//*	Dec 20,	2021	<MLS> Added BuildBinaryImage_Raw8() -- working
+//*	Dec 20,	2021	<MLS> Added BuildBinaryImage_Raw16() -- working
+//*	Dec 20,	2021	<MLS> Added BuildBinaryImage_RGB24() -- working
+//*	Dec 20,	2021	<MLS> Added BuildBinaryImage_RGB24x16() -- working
 //*****************************************************************************
 //*	Jan  1,	2119	<TODO> ----------------------------------------
 //*	Jun 26,	2119	<TODO> Add support for sub frames
@@ -318,7 +320,7 @@ const TYPE_CmdEntry	gCameraCmdTable[]	=
 #endif
 	{	"filelist",					kCmd_Camera_filelist,				kCmdType_GET	},
 	{	"filenameoptions",			kCmd_Camera_filenameoptions,		kCmdType_PUT	},
-	{	"flip",						kCmd_Camera_flip,				kCmdType_BOTH	},
+	{	"flip",						kCmd_Camera_flip,					kCmdType_BOTH	},
 	{	"framerate",				kCmd_Camera_framerate,				kCmdType_GET	},
 	{	"livemode",					kCmd_Camera_livemode,				kCmdType_BOTH	},
 	{	"rgbarray",					kCmd_Camera_rgbarray,				kCmdType_GET	},
@@ -361,6 +363,8 @@ int	mkdirErrCode;
 
 	cCameraProp.BinX				=	1;
 	cCameraProp.BinY				=	1;
+	cCameraProp.MaxbinX				=	1;
+	cCameraProp.MaxbinY				=	1;
 	cCameraProp.ExposureResolution	=	1.0;
 	cCameraProp.ExposureMin_us		=	32;
 	cCameraProp.ExposureMax_us		=	2000 * 1000 *1000;
@@ -3298,15 +3302,16 @@ double				myExposure_usecs;
 		}
 		else
 		{
-			CONSOLE_DEBUG_W_NUM("cCameraProp.StartX\t\t=",	cCameraProp.StartX);
-			CONSOLE_DEBUG_W_NUM("cCameraProp.StartY\t\t=",	cCameraProp.StartY);
+			CONSOLE_DEBUG_W_NUM("cCameraProp.StartX\t\t=",		cCameraProp.StartX);
+			CONSOLE_DEBUG_W_NUM("cCameraProp.StartY\t\t=",		cCameraProp.StartY);
 			CONSOLE_DEBUG_W_NUM("cCameraProp.CameraXsize\t=",	cCameraProp.CameraXsize);
 			CONSOLE_DEBUG_W_NUM("cCameraProp.CameraYsize\t=",	cCameraProp.CameraYsize);
-			CONSOLE_DEBUG_W_NUM("cCameraProp.NumX\t\t=",	cCameraProp.NumX);
-			CONSOLE_DEBUG_W_NUM("cCameraProp.NumY\t\t=",	cCameraProp.NumY);
-			CONSOLE_DEBUG_W_NUM("cCameraProp.BinX\t=",		cCameraProp.BinX);
-			CONSOLE_DEBUG_W_NUM("cCameraProp.BinY\t=",		cCameraProp.BinY);
-
+			CONSOLE_DEBUG_W_NUM("cCameraProp.NumX\t\t=",		cCameraProp.NumX);
+			CONSOLE_DEBUG_W_NUM("cCameraProp.NumY\t\t=",		cCameraProp.NumY);
+			CONSOLE_DEBUG_W_NUM("cCameraProp.BinX\t=",			cCameraProp.BinX);
+			CONSOLE_DEBUG_W_NUM("cCameraProp.BinY\t=",			cCameraProp.BinY);
+			CONSOLE_DEBUG_W_NUM("cCameraProp.MaxbinX\t=",		cCameraProp.MaxbinX);
+			CONSOLE_DEBUG_W_NUM("cCameraProp.MaxbinY\t=",		cCameraProp.MaxbinY);
 
 			alpacaErrCode	=	kASCOM_Err_InvalidValue;
 			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "num, start,or bin is out of range");
@@ -3523,7 +3528,6 @@ int		pixelIndex;
 				binaryDataBuffer[ccc++]	=	(cCameraDataBuffer[pixelIndex] & 0x00ff);
 			}
 			pixelIndex	+=	cLastExposure_ROIinfo.currentROIwidth;
-			pixelIndex++;
 		}
 	}
 	return(ccc);
@@ -3599,20 +3603,67 @@ int		pixelIndex;
 	ccc	=	startOffset;
 	for (xxx=0; xxx<cLastExposure_ROIinfo.currentROIwidth; xxx++)
 	{
-		pixelIndex	=	xxx;
+		pixelIndex	=	xxx * 3;
 		for (yyy=0; yyy < cLastExposure_ROIinfo.currentROIheight; yyy++)
 		{
 			if (ccc < bufferSize)
 			{
+				//*	red data
+				binaryDataBuffer[ccc++]	=	(cCameraDataBuffer[pixelIndex + 2] & 0x00ff);
+
+				//*	green data
+				binaryDataBuffer[ccc++]	=	(cCameraDataBuffer[pixelIndex + 1] & 0x00ff);
+
+				//*	blue data
 				binaryDataBuffer[ccc++]	=	(cCameraDataBuffer[pixelIndex] & 0x00ff);
 			}
-			pixelIndex	+=	cLastExposure_ROIinfo.currentROIwidth;
-			pixelIndex++;
+			pixelIndex	+=	cLastExposure_ROIinfo.currentROIwidth * 3;
 		}
 	}
 	return(ccc);
 }
 
+
+//*****************************************************************************
+//*	returns byte count
+//*****************************************************************************
+int	CameraDriver::BuildBinaryImage_RGBx16(	unsigned char 	*binaryDataBuffer,
+											int				startOffset,
+											int				bufferSize)
+{
+int		xxx;
+int		yyy;
+int		ccc;
+int		pixelIndex;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+
+	ccc	=	startOffset;
+	for (xxx=0; xxx<cLastExposure_ROIinfo.currentROIwidth; xxx++)
+	{
+		pixelIndex	=	xxx * 3;
+		for (yyy=0; yyy < cLastExposure_ROIinfo.currentROIheight; yyy++)
+		{
+			if (ccc < bufferSize)
+			{
+				//*	output data is 16 bit, little endian, we have RGB 24 bit (3 bytes)
+				//*	red data
+				binaryDataBuffer[ccc++]	=	0;
+				binaryDataBuffer[ccc++]	=	(cCameraDataBuffer[pixelIndex + 2] & 0x00ff);
+
+				//*	green data
+				binaryDataBuffer[ccc++]	=	0;
+				binaryDataBuffer[ccc++]	=	(cCameraDataBuffer[pixelIndex + 1] & 0x00ff);
+
+				//*	blue data
+				binaryDataBuffer[ccc++]	=	0;
+				binaryDataBuffer[ccc++]	=	(cCameraDataBuffer[pixelIndex] & 0x00ff);
+			}
+			pixelIndex	+=	cLastExposure_ROIinfo.currentROIwidth * 3;
+		}
+	}
+	return(ccc);
+}
 
 //*****************************************************************************
 TYPE_ASCOM_STATUS	CameraDriver::Get_Imagearray_Binary(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
@@ -3661,8 +3712,10 @@ int					returnedDataLen;
 		case kImageType_RAW8:
 		case kImageType_Y8:
 			CONSOLE_DEBUG("kImageType_RAW8");
-
-			bytesPerPixel	=	2;
+			bytesPerPixel							=	1;
+			binaryImageHdr.ImageElementType			=	kAlpacaImageData_Byte;		//	Element type of the source image array
+			binaryImageHdr.Dimension3				=	0;							//	(0 for 2D array)
+			binaryImageHdr.TransmissionElementType	=	kAlpacaImageData_Byte;		//	Element type as sent over the network
 			break;
 
 		case kImageType_RAW16:
@@ -3672,9 +3725,10 @@ int					returnedDataLen;
 
 		case kImageType_RGB24:
 			CONSOLE_DEBUG("kImageType_RGB24");
-			binaryImageHdr.Rank				=	3;	//	Image array rank
-			binaryImageHdr.Dimension3		=	3;	//	Length of image array third dimension (0 for 2D array)
-			bytesPerPixel	=	6;
+			binaryImageHdr.Rank						=	3;	//	Image array rank
+			binaryImageHdr.Dimension3				=	3;	//	Length of image array third dimension (0 for 2D array)
+			binaryImageHdr.TransmissionElementType	=	kAlpacaImageData_Byte;		//	Element type as sent over the network
+			bytesPerPixel	=	3;
 			break;
 
 		default:
@@ -3740,8 +3794,8 @@ int					returnedDataLen;
 				case kImageType_RAW8:
 				case kImageType_Y8:
 					CONSOLE_DEBUG("kImageType_RAW8");
-				//	returnedDataLen	=	BuildBinaryImage_Raw8(binaryDataBuffer, ccc, bufferSize);
-					returnedDataLen	=	BuildBinaryImage_Raw16(binaryDataBuffer, ccc, bufferSize);
+					returnedDataLen	=	BuildBinaryImage_Raw8(binaryDataBuffer, ccc, bufferSize);
+				//	returnedDataLen	=	BuildBinaryImage_Raw16(binaryDataBuffer, ccc, bufferSize);
 					CONSOLE_DEBUG_W_NUM("bufferSize     \t=",	bufferSize);
 					CONSOLE_DEBUG_W_NUM("returnedDataLen\t=",	returnedDataLen);
 					break;
@@ -3754,6 +3808,7 @@ int					returnedDataLen;
 				case kImageType_RGB24:
 					CONSOLE_DEBUG("kImageType_RGB24");
 					returnedDataLen	=	BuildBinaryImage_RGB24(binaryDataBuffer, ccc, bufferSize);
+
 					break;
 
 				default:
@@ -7090,6 +7145,9 @@ int					newFlipMode;
 TYPE_ASCOM_STATUS	CameraDriver::SetFlipMode(int newFlipMode)
 {
 	//*	this routine needs to be over ridden if you want to enable flip mode
+	//*	IT IS THE RESPONSIBILITY OF THIS ROUTINE TO ACTUALLY SET cFlipMode
+	//*	it should only set the flip mode value if it was successful
+
 	return(kASCOM_Err_NotImplemented);
 }
 

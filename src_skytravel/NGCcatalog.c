@@ -3,6 +3,8 @@
 //************************************************************************
 //*	Dec 31,	2020	<MLS> Migrating NGCcatalog.c for using in AlpacaPi
 //************************************************************************
+//*	https://heasarc.gsfc.nasa.gov/W3Browse/all/ngc2000.html
+//************************************************************************
 
 #include	<stdlib.h>
 #include	<string.h>
@@ -23,14 +25,13 @@
 #include	"NGCcatalog.h"
 
 
-//-#include	"StarCatalog.h"
-//-#include	"SkyWindowHlpr.h"
 
 //	 1492  Gx  3 58.1  -35 27 r  Eri              vF, vS, R
 //	I1492  Gx 23 30.7  -03 02 m  Psc   0.8  14. p eF, S, R, sp of 2
 
 
-
+//************************************************************************
+//*	http://cdsarc.u-strasbg.fr/ftp/cats/VII/118/ReadMe
 //************************************************************************
 //*	Byte-by-byte Description of file: ngc2000.dat
 //*	--------------------------------------------------------------------------------

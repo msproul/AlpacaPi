@@ -2426,6 +2426,7 @@ ASI_BOOL			bAuto;
 													bAuto);
 			if (asiErrorCode == ASI_SUCCESS)
 			{
+				cFlipMode		=	newFlipMode;
 				alpacaErrCode	=	kASCOM_Err_Success;
 			}
 			else

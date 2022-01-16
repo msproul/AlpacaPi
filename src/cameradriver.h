@@ -446,6 +446,7 @@ class CameraDriver: public AlpacaDriver
 		int					BuildBinaryImage_Raw8(	unsigned char *binaryDataBuffer, int startOffset, int bufferSize);
 		int					BuildBinaryImage_Raw16(	unsigned char *binaryDataBuffer, int startOffset, int bufferSize);
 		int					BuildBinaryImage_RGB24(	unsigned char *binaryDataBuffer, int startOffset, int bufferSize);
+		int					BuildBinaryImage_RGBx16(unsigned char *binaryDataBuffer, int startOffset, int bufferSize);
 
 		//-------------------------------------------------------------------------------------------------
 		//*	Added by MLS

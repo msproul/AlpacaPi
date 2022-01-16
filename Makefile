@@ -713,7 +713,7 @@ nousb		:		$(CPP_OBJECTS)				\
 dome		:	DEFINEFLAGS		+=	-D_ENABLE_DOME_
 dome		:	DEFINEFLAGS		+=	-D_ENABLE_SLIT_TRACKER_REMOTE_
 dome		:	DEFINEFLAGS		+=	-D_ENABLE_REMOTE_SHUTTER_
-dome		:	DEFINEFLAGS		+=	-D_INCLUDE_WIRINGPI_
+dome		:	DEFINEFLAGS		+=	-D_ENABLE_WIRING_PI_
 #dome		:	DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
 #dome		:	DEFINEFLAGS		+=	-D_ENABLE_ASI_
 dome		:	PLATFORM		=	armv7
@@ -734,10 +734,10 @@ dome		:				$(CPP_OBJECTS)				\
 
 ######################################################################################
 #pragma mark ROR
-#make ror
-#ror		:	DEFINEFLAGS		+=	-D_ENABLE_DOME_
-ror		:	DEFINEFLAGS		+=	-D_ENABLE_ROR_
-ror		:					$(ROR_OBJECTS)				\
+#make rortest
+#rortest	:	DEFINEFLAGS		+=	-D_ENABLE_DOME_
+rortest		:	DEFINEFLAGS		+=	-D_ENABLE_ROR_
+rortest		:					$(ROR_OBJECTS)				\
 							$(SOCKET_OBJECTS)			\
 
 				$(LINK)  								\
@@ -751,7 +751,6 @@ ror		:					$(ROR_OBJECTS)				\
 #rorpi		:	DEFINEFLAGS		+=	-D_ENABLE_DOME_
 rorpi		:	DEFINEFLAGS		+=	-D_ENABLE_ROR_
 rorpi		:	DEFINEFLAGS		+=	-D_ENABLE_WIRING_PI_
-rorpi		:	DEFINEFLAGS		+=	-D_INCLUDE_WIRINGPI_
 rorpi		:	DEFINEFLAGS		+=	-D_ENABLE_4REALY_BOARD
 rorpi		:				$(ROR_OBJECTS)				\
 							$(SOCKET_OBJECTS)			\
@@ -768,7 +767,6 @@ rorpi		:				$(ROR_OBJECTS)				\
 #rorpi2		:	DEFINEFLAGS		+=	-D_ENABLE_DOME_
 rorpi2		:	DEFINEFLAGS		+=	-D_ENABLE_ROR_
 rorpi2		:	DEFINEFLAGS		+=	-D_ENABLE_WIRING_PI_
-rorpi2		:	DEFINEFLAGS		+=	-D_INCLUDE_WIRINGPI_
 rorpi2		:	DEFINEFLAGS		+=	-D_ENABLE_4REALY_BOARD
 rorpi2		:	DEFINEFLAGS		+=	-D_TEST_DISCOVERQUERY_
 rorpi2		:				$(ROR_OBJECTS)				\
@@ -1208,7 +1206,7 @@ finder		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
 finder		:		DEFINEFLAGS		+=	-D_ENABLE_QHY_
 finder		:		DEFINEFLAGS		+=	-D_ENABLE_ATIK_
 finder		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
-finder		:		DEFINEFLAGS		+=	-D_INCLUDE_WIRINGPI_
+finder		:		DEFINEFLAGS		+=	-D_ENABLE_WIRING_PI_
 finder		:		DEFINEFLAGS		+=	-D_ENABLE_PWM_SWITCH_
 #finder		:		DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
 finder		:		PLATFORM		=	armv7
@@ -1251,7 +1249,7 @@ piswitch64		:		DEFINEFLAGS		+=	-D_ENABLE_MULTICAM_
 piswitch64		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
 #piswitch64		:		DEFINEFLAGS		+=	-D_ENABLE_ATIK_
 piswitch64		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
-piswitch64		:		DEFINEFLAGS		+=	-D_INCLUDE_WIRINGPI_
+piswitch64		:		DEFINEFLAGS		+=	-D_ENABLE_WIRING_PI_
 #piswitch64		:		DEFINEFLAGS		+=	-D_ENABLE_PWM_SWITCH_
 piswitch64		:		DEFINEFLAGS		+=	-D_ENABLE_4REALY_BOARD
 piswitch64		:		CPLUSFLAGS		+=	-std=gnu++17
@@ -1295,7 +1293,7 @@ shutter		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
 shutter		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
 shutter		:		DEFINEFLAGS		+=	-D_ENABLE_SHUTTER_
 #shutter		:		DEFINEFLAGS		+=	-D_ENABLE_PWM_SWITCH_
-shutter		:		DEFINEFLAGS		+=	-D_INCLUDE_WIRINGPI_
+shutter		:		DEFINEFLAGS		+=	-D_ENABLE_WIRING_PI_
 shutter		:		PLATFORM		=	armv7
 #shutter		:		ATIK_LIB_DIR	=	$(ATIK_LIB_MASTER_DIR)/ARM/x86/NoFlyCapture
 

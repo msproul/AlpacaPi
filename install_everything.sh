@@ -30,12 +30,12 @@ sudo apt-get install libi2c-dev
 #ASI_TAR_FILE="ASI_linux_mac_SDK_V1.14.1108.tar.bz2"
 #ASI_TAR_FILE="ASI_linux_mac_SDK_V1.14.1119.tar.bz2"
 #ASI_TAR_FILE="ASI_linux_mac_SDK_V1.14.1227.tar.bz2"
-ASI_TAR_FILE="ASI_linux_mac_SDK_V1.16.3.tar.bz2""
+ASI_TAR_FILE="ASI_linux_mac_SDK_V1.16.3.tar.bz2"
 
 #EFW_TAR_FILE="EFW_linux_mac_SDK_V0.3.1205.tar"
 #EFW_TAR_FILE="EFW_linux_mac_SDK_V0.4.1022.tar.bz2"
 #EFW_TAR_FILE="EFW_linux_mac_SDK_V1.5.0615.tar.bz2"
-EFW_TAR_FILE="EFW_linux_mac_SDK_V1.5.0615.tar.bz2""
+EFW_TAR_FILE="EFW_linux_mac_SDK_V1.5.0615.tar.bz2"
 
 
 EFW_LIB_DIR="EFW_linux_mac_SDK"

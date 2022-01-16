@@ -2,6 +2,7 @@
 //*	GaiaData.c
 //*		https://gea.esac.esa.int/archive/
 //*		https://gea.esac.esa.int/archive/documentation/GEDR3/Gaia_archive/chap_datamodel/sec_dm_main_tables/ssec_dm_gaia_source.html
+//*		https://www.gaia.ac.uk/data/gaia-data-release-2
 //*****************************************************************************
 //*	Edit History
 //*****************************************************************************

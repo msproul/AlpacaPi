@@ -102,7 +102,7 @@
 //*	May  2,	2020	<MLS> Added Slit Tracker device
 //*	May 19,	2020	<MLS> Added bogomips to cpustats
 //*	Jun 15,	2020	<MLS> Added DumpRequestStructure()  (it got lost somewhere along the way)
-//*	Jul  7,	2020	<MLS> Added compile flag _INCLUDE_WIRINGPI_
+//*	Jul  7,	2020	<MLS> Added compile flag _ENABLE_WIRING_PI_
 //*	Jul 16,	2020	<MLS> Compiling and running on 64bit Raspberry Pi OS
 //*	Jul 20,	2020	<MLS> Fixed bug in GetKeyWordArgument(), returned garbage if no argument
 //*	Jul 20,	2020	<MLS> Added Put_Connected(), AlpacaConnect() and AlpacaDisConnect()
@@ -268,7 +268,7 @@ char		gHostName[48]				=	"";
 
 #include	"managementdriver.h"
 
-#if defined(__arm__) && defined(_INCLUDE_WIRINGPI_)
+#if defined(__arm__) && defined(_ENABLE_WIRING_PI_)
 	#include <wiringPi.h>
 #endif
 
@@ -1669,7 +1669,7 @@ int		ii;
 			SocketWriteData(mySocketFD,	lineBuffer);
 		SocketWriteData(mySocketFD,	"</TR>\r\n");
 
-#if defined(_INCLUDE_WIRINGPI_) && defined(__arm__) && defined(__WIRING_PI_H__)
+#if defined(_ENABLE_WIRING_PI_) && defined(__arm__) && defined(__WIRING_PI_H__)
 		//*	wiringPi version
 		int		wiringPi_verMajor;
 		int		wiringPi_verMinor;
@@ -1683,7 +1683,7 @@ int		ii;
 			sprintf(lineBuffer,	"<TD>%s</TD>\r\n", wiringPi_VerString);
 			SocketWriteData(mySocketFD,	lineBuffer);
 		SocketWriteData(mySocketFD,	"</TR>\r\n");
-#elif defined(_INCLUDE_WIRINGPI_) || defined(__WIRING_PI_H__)
+#elif defined(_ENABLE_WIRING_PI_) || defined(__WIRING_PI_H__)
 	#warning "Somethings wrong, wiringPi is enabled"
 #endif
 

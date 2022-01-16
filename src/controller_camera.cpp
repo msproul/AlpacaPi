@@ -1923,8 +1923,8 @@ int				buffSize;
 												&valuesRead);
 
 			DEBUG_TIMING("Image downloading (ms)");
-			CONSOLE_DEBUG_W_NUM("valuesRead\t\t=",	valuesRead);
 			CONSOLE_DEBUG_W_NUM("imgRank\t\t=",		imgRank);
+			CONSOLE_DEBUG_W_NUM("valuesRead\t\t=",	valuesRead);
 			if ((imgRank > 0) && (valuesRead > 10))
 			{
 				myOpenCVimage	=	cvCreateImage(cvSize(	cCameraProp.CameraXsize, cCameraProp.CameraYsize),

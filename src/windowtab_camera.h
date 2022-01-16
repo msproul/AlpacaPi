@@ -61,6 +61,10 @@ enum
 	kCameraBox_SaveAll,
 
 	kCameraBox_Reset,
+	kCameraBox_FlipText,
+	kCameraBox_FlipValue,
+	kCameraBox_FlipHorzCheckBox,
+	kCameraBox_FlipVertCheckBox,
 
 	kCameraBox_Filename,
 	kCameraBox_ErrorMsg,

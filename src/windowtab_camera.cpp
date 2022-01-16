@@ -353,8 +353,39 @@ IplImage	*logoImage;
 	SetWidgetFont(		kCameraBox_Reset,			kFont_Medium);
 	SetWidgetBGColor(	kCameraBox_Reset,			CV_RGB(255,	255,	255));
 	SetWidgetTextColor(	kCameraBox_Reset,			CV_RGB(255,	0,	0));
-	yLoc			+=	10;
+	yLocRest	+=	cLrgBtnHeight;
+	yLocRest	+=	2;
 
+	//=======================================================
+	//*	Flip stuff
+	SetWidget(			kCameraBox_FlipText,		cClm6_offset,	yLocRest,	40,	cRadioBtnHt);
+	SetWidgetType(		kCameraBox_FlipText,		kWidgetType_Text);
+	SetWidgetFont(		kCameraBox_FlipText,		kFont_RadioBtn);
+	SetWidgetText(		kCameraBox_FlipText,		"Flip");
+
+	SetWidget(			kCameraBox_FlipValue,		cClm6_offset + 42,	yLocRest,	40,	cRadioBtnHt);
+	SetWidgetType(		kCameraBox_FlipValue,		kWidgetType_Text);
+	SetWidgetFont(		kCameraBox_FlipValue,		kFont_RadioBtn);
+	SetWidgetNumber(	kCameraBox_FlipValue,		0);
+	SetWidgetJustification(	kCameraBox_FlipValue,	kJustification_Center);
+	yLocRest	+=	cRadioBtnHt;
+	yLocRest	+=	2;
+
+	SetWidget(		kCameraBox_FlipHorzCheckBox,	cClm6_offset,	yLocRest,	cLrgBtnWidth,	cRadioBtnHt);
+	SetWidgetType(	kCameraBox_FlipHorzCheckBox,	kWidgetType_CheckBox);
+	SetWidgetFont(	kCameraBox_FlipHorzCheckBox,	kFont_RadioBtn);
+	SetWidgetText(	kCameraBox_FlipHorzCheckBox,	"Flip Hor");
+
+	yLocRest	+=	cRadioBtnHt;
+	yLocRest	+=	2;
+
+	SetWidget(		kCameraBox_FlipVertCheckBox,	cClm6_offset,	yLocRest,	cLrgBtnWidth,	cRadioBtnHt);
+	SetWidgetType(	kCameraBox_FlipVertCheckBox,	kWidgetType_CheckBox);
+	SetWidgetFont(	kCameraBox_FlipVertCheckBox,	kFont_RadioBtn);
+	SetWidgetText(	kCameraBox_FlipVertCheckBox,	"Flip Ver");
+
+
+	yLoc			+=	10;
 	//=======================================================
 	//*	Filename
 	SetWidget(		kCameraBox_Filename,	cClm1_offset,	yLoc,		cFullWidthBtn,		cRadioBtnHt	);

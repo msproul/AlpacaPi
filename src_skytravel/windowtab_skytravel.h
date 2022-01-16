@@ -271,8 +271,8 @@ class WindowTabSkyTravel: public WindowTab
 															long			starCount,
 															int				dataSource,
 															char			*searchString);
-				bool	SearchSkyObjects_Constellations(const char *searchString);
-				bool	SearchSkyObjects_ConstOutlines(const char *searchString);
+				bool	SearchSkyObjectsConstellations(const char *searchString);
+				bool	SearchSkyObjectsConstOutlines(const char *searchString);
 
 				bool	cFoundSomething;
 				double	cFound_newRA;

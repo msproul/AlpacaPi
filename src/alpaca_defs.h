@@ -22,6 +22,7 @@
 //*	Dec 14,	2021	<MLS> Started on binary image stuff, added header structure
 //*	Dec 16,	2021	<MLS> Version V0.4.3-beta
 //*	Dec 16,	2021	<MLS> Build 124
+//*	Dec 20,	2021	<MLS> Build 125
 //*****************************************************************************
 //*	These are for my comment extraction program that sorts comments by date.
 //*	Jan  1,	2019	-----------------------------------------------------------
@@ -50,7 +51,7 @@
 
 #define	kApplicationName	"AlpacaPi"
 #define	kVersionString		"V0.4.3-beta"
-#define	kBuildNumber		124
+#define	kBuildNumber		125
 
 
 #define kAlpacaDiscoveryPORT	32227

@@ -230,6 +230,9 @@ class ControllerCamera: public Controller
 				int		AlpacaGetImageArray_JSON(	TYPE_ImageArray	*imageArray,
 													int				arrayLength,
 													int				*actualValueCnt);
+				void	AlpacaGetImageArray_Binary_Byte(TYPE_ImageArray	*imageArray,
+														int				arrayLength);
+
 				void	UpdateImageProgressBar(int maxArrayLength);
 
 				//*	these variables are ONLY for image download
@@ -248,6 +251,7 @@ class ControllerCamera: public Controller
 				int						cFirstCharNotDigitCnt;
 				int						cData_iii;
 				int						cImgArrayType;
+				int						cRGBidx;
 				char					cReturnedData[kReadBuffLen + 10];
 
 				uint32_t				tStartMillisecs;
