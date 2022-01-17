@@ -120,7 +120,7 @@ int					bytesRead;
 int					bytesSent;
 struct sockaddr_in	serverAddress, fromAddress;
 char				readBuf[1024];
-char				responseBuff[128];
+char				responseBuff[256];
 int					socketOption;
 int					setSocketRtnCde;
 bool				validDiscoveryRequest;
@@ -155,6 +155,7 @@ char				ipAddrSt[48];
 		}
 		while (1)
 		{
+//			CONSOLE_DEBUG(__FUNCTION__);
 			fromlen		=	sizeof(struct sockaddr_in);
 			bytesRead	=	recvfrom(	mySocket,
 										readBuf,
@@ -217,6 +218,7 @@ char				ipAddrSt[48];
 	{
 		perror("Opening socket");
 	}
+//	CONSOLE_DEBUG("exit");
 	return(NULL);
 }
 

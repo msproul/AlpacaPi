@@ -82,6 +82,8 @@
 //*	Feb  5,	2021	<MLS> Started working on NEON support for image processing
 //*	Feb  5,	2021	<MLS> Added NEON_Deinterleave_RGB()
 //*	Mar 27,	2021	<MLS> Added OFFSET value to FITS header
+//*	Dec 23,	2021	<MLS> Added local time to FITS header
+//*	Jan 15,	2022	<MLS> Fixed bug in FITS header filter wheel name
 //*****************************************************************************
 
 #if defined(_ENABLE_CAMERA_) && defined(_ENABLE_FITS_)
@@ -171,22 +173,22 @@ bool	valueIsNegitive;
 //	the ISO standard 8601 format: '2002-09-07T15:42:17.123' (CCYY-MM-
 //	DDTHH:MM:SS.SSS).
 //*****************************************************************************
-void	FormatTimeString_TM(struct tm *timeStruct, char *timeString)
-{
-
-	if ((timeStruct != NULL) && (timeString != NULL))
-	{
-
-		sprintf(timeString, "%d-%02d-%02dT%02d:%02d:%02d.000",
-								(1900 + timeStruct->tm_year),
-								(1 + timeStruct->tm_mon),
-								timeStruct->tm_mday,
-								timeStruct->tm_hour,
-								timeStruct->tm_min,
-								timeStruct->tm_sec);
-
-	}
-}
+//void	FormatTimeString_TM(struct tm *timeStruct, char *timeString)
+//{
+//
+//	if ((timeStruct != NULL) && (timeString != NULL))
+//	{
+//
+//		sprintf(timeString, "%d-%02d-%02dT%02d:%02d:%02d.000",
+//								(1900 + timeStruct->tm_year),
+//								(1 + timeStruct->tm_mon),
+//								timeStruct->tm_mday,
+//								timeStruct->tm_hour,
+//								timeStruct->tm_min,
+//								timeStruct->tm_sec);
+//
+//	}
+//}
 
 //*****************************************************************************
 static void	GetFitsErrorString(int fitsRetCode, char *errorString)
@@ -281,7 +283,7 @@ double	fov_arcSeconds;
 }
 
 
-#ifdef _ENABLE_FILTERWHEEL_
+#if defined(_ENABLE_FILTERWHEEL_) || defined(_ENABLE_FILTERWHEEL_ZWO_) || defined(_ENABLE_FILTERWHEEL_ATIK_)
 //*****************************************************************************
 void	CameraDriver::UpdateFilterwheelLink(void)
 {
@@ -1213,15 +1215,8 @@ int		fitsStatus;
 	{
 		WriteFITS_Seperator(fitsFilePtr, "Filter wheel Info");
 
-		if (strlen(cTS_info.filterwheel) > 0)
-		{
-			fitsStatus	=	0;
-			fits_write_key(fitsFilePtr, TSTRING,	"FILTWHL",
-													cTS_info.filterwheel,
-													"Filter wheel used", &fitsStatus);
-		}
 	#ifdef _ENABLE_FILTERWHEEL_
-		if (cConnectedFilterWheel != NULL)
+		if (cFilterWheelInfoValid && (cConnectedFilterWheel != NULL))
 		{
 		int		fwAlpacaErr;		//*	filter wheel alpaca error code
 		int		filterPosition;
@@ -1229,6 +1224,30 @@ int		fitsStatus;
 
 			CONSOLE_DEBUG("We have valid filterwheel info");
 			CONSOLE_DEBUG("Calling Read_CurrentFilterPositon");
+//			CONSOLE_DEBUG_W_STR("cAlpacaName           \t=", cConnectedFilterWheel->cAlpacaName);
+//			CONSOLE_DEBUG_W_STR("cDeviceModel          \t=", cConnectedFilterWheel->cDeviceModel);
+//			CONSOLE_DEBUG_W_STR("cDeviceManufAbrev     \t=", cConnectedFilterWheel->cDeviceManufAbrev);
+//			CONSOLE_DEBUG_W_STR("cDeviceManufAbrev     \t=", cConnectedFilterWheel->cDeviceManufAbrev);
+//			CONSOLE_DEBUG_W_STR("cDeviceSerialNum      \t=", cConnectedFilterWheel->cDeviceSerialNum);
+//			CONSOLE_DEBUG_W_STR("cDeviceVersion        \t=", cConnectedFilterWheel->cDeviceVersion);
+//			CONSOLE_DEBUG_W_STR("cDeviceFirmwareVersStr\t=", cConnectedFilterWheel->cDeviceFirmwareVersStr);
+//			CONSOLE_DEBUG_W_STR("cCommonProp.Name      \t=", cConnectedFilterWheel->cCommonProp.Name);
+
+			if (strlen(cConnectedFilterWheel->cCommonProp.Name) > 0)
+			{
+				fitsStatus	=	0;
+				fits_write_key(fitsFilePtr, TSTRING,	"FILTWHL",
+														cConnectedFilterWheel->cCommonProp.Name,
+														"Filter wheel used", &fitsStatus);
+			}
+			else if (strlen(cTS_info.filterwheel) > 0)
+			{
+				fitsStatus	=	0;
+				fits_write_key(fitsFilePtr, TSTRING,	"FILTWHL",
+														cTS_info.filterwheel,
+														"Filter wheel used", &fitsStatus);
+			}
+
 
 			fwAlpacaErr	=	cConnectedFilterWheel->Read_CurrentFilterPositon(&filterPosition);
 			if (fwAlpacaErr == kASCOM_Err_Success)
@@ -1260,6 +1279,13 @@ int		fitsStatus;
 		else
 	#endif // _ENABLE_FILTERWHEEL_
 		{
+			if (strlen(cTS_info.filterwheel) > 0)
+			{
+				fitsStatus	=	0;
+				fits_write_key(fitsFilePtr, TSTRING,	"FILTWHL",
+														cTS_info.filterwheel,
+														"Filter wheel used", &fitsStatus);
+			}
 			//*	only do this if there is NOT an attached filter wheel
 			if (strlen(cTS_info.filterName) > 0)
 			{
@@ -1535,6 +1561,7 @@ unsigned long	minmaxPixelValue;
 int				staurationValue;
 float			saturationPrcnt;
 double			modifiedJulianDate;
+struct tm		*localTime;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -1580,7 +1607,25 @@ double			modifiedJulianDate;
 												&modifiedJulianDate,
 												"MJD at end of exposure", &fitsStatus);
 	}
+	//*	put the local time as a comment
+	localTime		=	localtime(&cCameraProp.Lastexposure_StartTime.tv_sec);
+	FormatTimeString_TM(localTime, stringBuf);
 
+//	sprintf(stringBuf, "Local time=%d/%d/%d %02d:%02d:%02d\t",
+//							(1 + linuxTime->tm_mon),
+//							linuxTime->tm_mday,
+//							(1900 + linuxTime->tm_year),
+//							linuxTime->tm_hour,
+//							linuxTime->tm_min,
+//							linuxTime->tm_sec);
+	fitsStatus	=	0;
+	fits_write_key(fitsFilePtr, TSTRING,	"COMMENT",
+											stringBuf,
+											"Local Time",
+											&fitsStatus);
+
+
+	//==============================================================
 	fitsStatus	=	0;
 	exposureTime_Secs	=	(cCameraProp.Lastexposure_duration_us * 1.0) / 1000000.0;
 	fits_write_key(fitsFilePtr, TDOUBLE,	"EXPTIME",

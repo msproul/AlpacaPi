@@ -123,10 +123,10 @@ double	minutes_dbl;
 double	seconds_dbl;
 int		degrees_int;
 int		minutes_int;
-int		seconds_int;
+//int		seconds_int;
 char	signChar;
 
-	CONSOLE_DEBUG("--------------------------");
+//	CONSOLE_DEBUG("--------------------------");
 	signChar		=	'+';
 	myDegreeValue	=	argDegreeValue;
 	if (myDegreeValue < 0.0)
@@ -152,11 +152,11 @@ char	signChar;
 
 	if (includeSign)
 	{
-		sprintf(timeString, "%c%02d:%02d:%02.2f", signChar, degrees_int, minutes_int, seconds_dbl);
+		sprintf(timeString, "%c%02d:%02d:%05.2f", signChar, degrees_int, minutes_int, seconds_dbl);
 	}
 	else
 	{
-		sprintf(timeString, "%02d:%02d:%02.2f", degrees_int, minutes_int, seconds_dbl);
+		sprintf(timeString, "%02d:%02d:%05.2f", degrees_int, minutes_int, seconds_dbl);
 	}
 //	CONSOLE_DEBUG(timeString);
 //	CONSOLE_ABORT(__FUNCTION__);

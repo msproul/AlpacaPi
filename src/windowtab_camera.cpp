@@ -35,6 +35,7 @@
 //*	Mar 27,	2021	<MLS> Added BumpOffset()
 //*	Mar 27,	2021	<MLS> Offset slider fully working
 //*	Dec 18,	2021	<MLS> Double click in the title bar causes connect to be sent
+//*	Dec 22,	2021	<MLS> Added support for flipmode
 //*****************************************************************************
 
 #ifdef _ENABLE_CTRL_CAMERA_
@@ -784,6 +785,15 @@ ControllerCamera	*myCameraController;
 			}
 			break;
 
+
+		case kCameraBox_FlipHorzCheckBox:
+			ToggleFlipMode(true, false);
+			break;
+
+		case kCameraBox_FlipVertCheckBox:
+			ToggleFlipMode(false, true);
+			break;
+
 		default:
 			CONSOLE_DEBUG(__FUNCTION__);
 			CONSOLE_DEBUG_W_NUM("buttonIdx\t",	buttonIdx);
@@ -1065,6 +1075,23 @@ ControllerCamera	*myCameraController;
 	}
 }
 
+//*****************************************************************************
+void	WindowTabCamera::ToggleFlipMode(bool toggleHorz, bool toggleVert)
+{
+ControllerCamera	*myCameraController;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+	myCameraController	=	(ControllerCamera *)cParentObjPtr;
+
+	if (myCameraController != NULL)
+	{
+		myCameraController->ToggleFlipMode(toggleHorz, toggleVert);
+	}
+	else
+	{
+		CONSOLE_DEBUG("myCameraController is NULL");
+	}
+}
 
 //*****************************************************************************
 void	WindowTabCamera::StartExposure(void)

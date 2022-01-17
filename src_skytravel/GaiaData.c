@@ -224,6 +224,8 @@ double	bp_rp;
 	argNum		=	0;
 	ccc			=	0;
 	magnitude	=	99;
+	rightAscen	=	0.0;
+	declination	=	0.0;
 	strcpy(designation, "GAIA-unknown");
 	for (iii=0; iii <= sLen; iii++)
 	{

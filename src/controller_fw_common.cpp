@@ -117,6 +117,7 @@ int		newFilterWheelPosition;
 	if (validData)
 	{
 //		CONSOLE_DEBUG_W_NUM("rcvd newFilterWheelPosition\t=", newFilterWheelPosition);
+		cOnLine	=	true;
 
 		//*	alpaca/ascom uses filter wheel positions from 0 -> N-1
 		if ((newFilterWheelPosition >= 0) && (newFilterWheelPosition < kMaxFiltersPerWheel))
@@ -133,6 +134,8 @@ int		newFilterWheelPosition;
 	else
 	{
 		CONSOLE_DEBUG("Failed to get filter wheel position");
+		cOnLine	=	false;
 	}
+	SetWindowIPaddrInfo(NULL, cOnLine);
 	return(validData);
 }

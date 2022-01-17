@@ -1,6 +1,8 @@
 //*****************************************************************************
-
 //#include	"raspberrypi_relaylib.h"
+
+#ifndef _RPI_RELAYLIB_H_
+#define _RPI_RELAYLIB_H_
 
 #ifndef _STDBOOL_H
 	#include	<stdbool.h>
@@ -27,12 +29,13 @@
 	//	Pin 13-> Relay 2
 	//	Pin 15-> Relay 1
 	//	Connectivity using the stack method:
-	//	GPIO 4, GPIO 17, GPIO 27 and GPIO 22 are used for controlling Relay. But the user can remove Relay Jumper and select custom GPIO pin.
+	//	GPIO 4, GPIO 17, GPIO 27 and GPIO 22 are used for controlling Relay.
+	//	But the user can remove Relay Jumper and select custom GPIO pin.
 	//	Relay pins - COM, NO (Normally Open), and NC (Normally Closed) are available for each relay.
 	//	Comes with development resources, including examples in python.
 
 
-	#define	kR_Pi_SwitchCount	4
+	#define	kR_Pi_RelayCount	4
 
 
 	#define	kHWpin_Channel1	22
@@ -54,7 +57,7 @@
 
 	//	8 port relay on DIN rail 	5,	6,	13,	16,	19,	20,	21,	26
 	//==============================================================
-	#define	kR_Pi_SwitchCount	8
+	#define	kR_Pi_RelayCount	8
 
 	//*	using BCM pin numbers
 	#define	kHWpin_Channel1	5
@@ -89,3 +92,6 @@ bool	RpiRelay_GetRelay(const int relayNumber);
 }
 #endif
 
+
+
+#endif // _RPI_RELAYLIB_H_

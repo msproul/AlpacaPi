@@ -39,6 +39,7 @@ class DomeDriverRPi: public DomeDriver
 		//
 						DomeDriverRPi(const int argDevNum);
 		virtual			~DomeDriverRPi(void);
+		virtual	void	OutputHTML_Part2(TYPE_GetPutRequestData *reqData);
 		virtual	void	Init_Hardware(void);
 
 	protected:

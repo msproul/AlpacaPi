@@ -22,6 +22,7 @@
 //*	Jan  9,	2021	<MLS> Created skytravel_main.cpp
 //*	Feb 12,	2021	<MLS> Added CloseAllExceptFirst()
 //*	Sep 28,	2021	<MLS> Added -v = gVerbose command line option
+//*	Jan  8,	2022	<MLS> Added support for remote Gaia SQL access
 //*****************************************************************************
 
 
@@ -45,6 +46,7 @@
 #include	"ConsoleDebug.h"
 
 #include	"SkyStruc.h"
+#include	"AsteroidData.h"
 
 #include	"alpaca_defs.h"
 #include	"discoverythread.h"
@@ -53,6 +55,9 @@
 #include	"controller.h"
 #include	"controller_skytravel.h"
 
+#ifdef _ENABLE_REMOTE_GAIA_
+	#include	"GaiaSQL.h"
+#endif
 
 bool	gKeepRunning;
 char	gFullVersionString[128];
@@ -107,6 +112,12 @@ long				gAAVSOalertsCnt		=	0;
 //*	Gaia star catalog
 TYPE_CelestData		*gGaiaObjectPtr		=	NULL;
 long				gGaiaObjectCnt		=	0;
+
+
+//*	Lowell asteroid database
+TYPE_Asteroid		*gAsteroidPtr		=	NULL;
+long				gAsteroidCnt		=	0;
+char				gAsteroidDatbase[32]	=	"";
 
 //*****************************************************************************
 static void	ProcessCmdLineArgs(int argc, char **argv)
@@ -186,10 +197,12 @@ unsigned int		deltaSecs;
 	printf("cfitsio version %3.2f\r\n", fitsVersionRet);
 	printf("cfitsio version %3.2f\r\n", fitsVersionVal);
 
+
 	objectsCreated	=	0;
 	gColorOverRide	=	0;
 
 	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG_W_NUM("sizeof(TYPE_CelestData)", sizeof(TYPE_CelestData));
 
 	//*	deal with any options from the command line
 	ProcessCmdLineArgs(argc, argv);
@@ -204,6 +217,10 @@ unsigned int		deltaSecs;
 	ObservatorySettings_Init();
 	ObservatorySettings_ReadFile();
 
+#ifdef _ENABLE_REMOTE_GAIA_
+	GaiaSQLinit();
+	StartGaiaSQLthread();
+#endif
 
 	new ControllerSkytravel("SkyTravel");
 	objectsCreated++;

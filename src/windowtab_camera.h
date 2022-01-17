@@ -159,6 +159,7 @@ class WindowTabCamera: public WindowTab
 				void	ToggleDisplayImage(void);
 				void	ToggleSaveAll(void);
 				void	ToggleCooler(void);
+				void	ToggleFlipMode(bool toggleHorz, bool toggleVert);
 				void	StartExposure(void);
 				void	SetTempartueDisplayEnable(bool enabled);
 				void	SetReceivedFileName(const char *newFileName);
@@ -176,7 +177,6 @@ class WindowTabCamera: public WindowTab
 				uint32_t	cLastExposureUpdate_Millis;
 				uint32_t	cLastGainUpdate_Millis;
 				uint32_t	cLastOffsetUpdate_Millis;
-
 
 };
 

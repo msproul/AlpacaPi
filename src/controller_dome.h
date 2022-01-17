@@ -153,7 +153,7 @@ class ControllerDome: public Controller
 				TYPE_DomeProperties	cDomeProp;
 
 
-				uint32_t			cUpdateDelta;
+				uint32_t			cDomeUpdateDelta;
 
 			#ifdef _ENABLE_EXTERNAL_SHUTTER_
 				//*	shutter device info

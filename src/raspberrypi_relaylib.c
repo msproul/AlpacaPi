@@ -25,6 +25,9 @@
 //*	Jan 12,	2021	<MLS> Relay library working on 4 relay R-Pi hat
 //*	Jan 15,	2021	<MLS> Raspberry Pi 64 bit gcc/g++ does not define __arm__
 //*****************************************************************************
+//*	for raspberry pi 4
+//wget https://project-downloads.drogon.net/wiringpi-latest.deb
+//sudo dpkg -i wiringpi-latest.deb
 
 #include	<stdio.h>
 #include	<stdbool.h>

@@ -113,6 +113,7 @@ class ControllerCamera: public Controller
 		virtual	void	UpdateCurrReadoutMode(void);
 		virtual	void	UpdateCoolerState(void);
 		virtual	void	UpdateDisplayModes(void);
+		virtual	void	UpdateFlipMode(void);
 		virtual	void	UpdateFilterWheelInfo(void);
 		virtual	void	UpdateFilterWheelPosition(void);
 		virtual	void	UpdateFileNameOptions(void);
@@ -146,6 +147,7 @@ class ControllerCamera: public Controller
 		virtual	void	AlpacaDisplayErrorMessage(const char *errorMsgString);
 		virtual	void	UpdateSettings_Object(const char *filePrefix);
 				void	SetFileNameOptions(const int fnOptionBtn);
+				void	SetFlipMode(const int newFlipMode);
 
 				void	AddFileToRemoteList(const char *fileName);
 
@@ -164,6 +166,7 @@ class ControllerCamera: public Controller
 				void	ToggleDisplayImage(void);
 				void	ToggleSaveAll(void);
 				void	ToggleCooler(void);
+				void	ToggleFlipMode(bool toggleHorz, bool toggleVert);
 				void	StartExposure(void);
 				void	SetObjectText(const char *newObjectText, const char *newPrefixText);
 				void	LogCameraTemp(const double cameraTemp);
@@ -205,6 +208,7 @@ class ControllerCamera: public Controller
 				bool					cHas_rgbarray;
 				bool					cHas_sidebar;
 				bool					cHas_SaveAll;
+				bool					cHas_Flip;
 
 				//==========================================================
 				//*	Image array downloading routines

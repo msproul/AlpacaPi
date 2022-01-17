@@ -20,6 +20,7 @@
 //*	Jan 12,	2021	<MLS> Relay board working for open/close ROR
 //*	Jan 12,	2021	<MLS> CONFORM-dome/ror -> PASSED!!!!!!!!!!!!!!!!!!!!!
 //*	Jun 15,	2021	<MLS> Added GetPower() & GetAuxiliary()
+//*	Dec 23,	2021	<MLS> Added OutputHTML_Part2() to output hardware configuration
 //*****************************************************************************
 
 #ifdef _ENABLE_ROR_
@@ -122,6 +123,67 @@ DomeDriverROR::DomeDriverROR(const int argDevNum)
 DomeDriverROR::~DomeDriverROR( void )
 {
 }
+
+
+//*****************************************************************************
+void	DomeDriverROR::OutputHTML_Part2(TYPE_GetPutRequestData *reqData)
+{
+char				lineBuffer[256];
+int					mySocketFD;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	mySocketFD	=	reqData->socket;
+
+	SocketWriteData(mySocketFD,	"<P>\r\n");
+
+	SocketWriteData(mySocketFD,	"<CENTER>\r\n");
+	SocketWriteData(mySocketFD,	"<H2>Raspberry-Pi Roll Off Roof Driver</H2>\r\n");
+	//===============================================================
+	SocketWriteData(mySocketFD,	"<TABLE BORDER=1>\r\n");
+	SocketWriteData(mySocketFD,	"<TR>\r\n");
+	SocketWriteData(mySocketFD,	"<TH COLSPAN=3>Raspberry-Pi Roll Off Roof Driver</TH>\r\n");
+	SocketWriteData(mySocketFD,	"</TR>\r\n<TR>\r\n");
+	SocketWriteData(mySocketFD,	"<TH COLSPAN=3>Hardware configuration</TH>\r\n");
+	SocketWriteData(mySocketFD,	"</TR>\r\n<TR>\r\n");
+
+#ifdef _USE_BCM_PIN_NUMBERS_
+	SocketWriteData(mySocketFD,	"<TD COLSPAN=3><CENTER>Using BCM Pin numbering</TH>\r\n");
+	SocketWriteData(mySocketFD,	"</TR>\r\n<TR>\r\n");
+
+#endif // _USE_BCM_PIN_NUMBERS_
+
+#ifdef _ENABLE_4REALY_BOARD
+	SocketWriteData(mySocketFD,	"<TD COLSPAN=3><CENTER>Using Raspberry Pi 4 Relay board</TH>\r\n");
+	SocketWriteData(mySocketFD,	"</TR>\r\n<TR>\r\n");
+
+#endif // _USE_BCM_PIN_NUMBERS_
+
+
+	sprintf(lineBuffer,	"\t<TD>Relay #1 pin</TD><TD>%d</TD><TD>Input</TD>\r\n", kHWpin_Channel1);
+	SocketWriteData(mySocketFD,	lineBuffer);
+	SocketWriteData(mySocketFD,	"</TR>\r\n<TR>\r\n");
+
+	sprintf(lineBuffer,	"\t<TD>Relay #2 pin</TD><TD>%d</TD><TD>Input</TD>\r\n", kHWpin_Channel2);
+	SocketWriteData(mySocketFD,	lineBuffer);
+	SocketWriteData(mySocketFD,	"</TR>\r\n<TR>\r\n");
+
+	sprintf(lineBuffer,	"\t<TD>Relay #3 pin</TD><TD>%d</TD><TD>Input</TD>\r\n", kHWpin_Channel3);
+	SocketWriteData(mySocketFD,	lineBuffer);
+	SocketWriteData(mySocketFD,	"</TR>\r\n<TR>\r\n");
+
+	sprintf(lineBuffer,	"\t<TD>Relay #4 pin</TD><TD>%d</TD><TD>Input</TD>\r\n", kHWpin_Channel4);
+	SocketWriteData(mySocketFD,	lineBuffer);
+	SocketWriteData(mySocketFD,	"</TR>\r\n<TR>\r\n");
+
+
+
+	SocketWriteData(reqData->socket,	"</TABLE>\r\n");
+	SocketWriteData(reqData->socket,	"</CENTER>\r\n");
+	SocketWriteData(reqData->socket,	"<P>\r\n");
+
+}
+
 
 //*****************************************************************************
 void	DomeDriverROR::Init_Hardware(void)

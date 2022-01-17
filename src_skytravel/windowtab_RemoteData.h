@@ -33,6 +33,25 @@ enum
 
 	kRemoteData_StatusMsg,
 
+#ifdef 	_ENABLE_REMOTE_GAIA_
+
+	kRemoteData_EnableRemoteGAIA,
+	kRemoteData_SQLserverTxt,
+	kRemoteData_SQLserverValue,
+
+	kRemoteData_SQLportTxt,
+	kRemoteData_SQLportValue,
+
+	kRemoteData_SQLusernameTxt,
+	kRemoteData_SQLusernameValue,
+
+	kRemoteData_OpenSQLWindowBtn,
+
+	kRemoteData_GAIAoutline,
+
+#endif // _ENABLE_REMOTE_GAIA_
+
+
 	kRemoteData_AlpacaLogo,
 
 

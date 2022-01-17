@@ -58,6 +58,7 @@ typedef struct
 		bool				dispAAVSOalerts;		//*	AAVSO TargetTool Alerts
 
 		bool				dispGaia;				//*	Gaia Catalog
+		bool				dispAsteroids;			//*	Lowell Asteroid catalog
 
 		unsigned char		dispSpecialObjects;		//*	Special.txt objects, this is an enum
 

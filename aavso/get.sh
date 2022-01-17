@@ -96,10 +96,8 @@ function Request
 }
 
 ###############################################################################
-echo
-
-if [ -f replaceCRLF ]
-then
+function GetAlertList
+{
 	OUTPUTFILE="alerts_json.txt"
 	Request	"https://filtergraph.com/aavso/api/v1/nighttime"	| ./replaceCRLF	> $OUTPUTFILE
 	Request	"https://filtergraph.com/aavso/api/v1/telescope"	| ./replaceCRLF	>> $OUTPUTFILE
@@ -118,7 +116,26 @@ then
 	echo -n "#Finished retrieved at:"	>> $OUTPUTFILE
 	date								>> $OUTPUTFILE
 
+}
+
+###############################################################################
+echo
+
+if [ -f replaceCRLF ]
+then
+
+	GetAlertList
+
 	ALERT_CNT=`grep star_name $OUTPUTFILE | wc -l`
+
+	# check for failure and try again if it failed
+	if [ $ALERT_CNT -eq 0 ]
+	then
+		echo "Trying again"
+		GetAlertList
+
+		ALERT_CNT=`grep star_name $OUTPUTFILE | wc -l`
+	fi
 
 	CURRENT_DATE=`date`
 	echo -n $CURRENT_DATE >> $LOG_FILE

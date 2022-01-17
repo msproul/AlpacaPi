@@ -277,11 +277,11 @@ void Sub_local_day(TYPE_Time *timeptr)
 	if (timeptr->local_day < 1)
 	{
 		Sub_local_month(timeptr);
-		CONSOLE_DEBUG_W_NUM("month    \t=", timeptr->month);
-		CONSOLE_DEBUG_W_NUM("local_day\t=", timeptr->local_day);
-		CONSOLE_DEBUG_W_NUM("day      \t=", timeptr->day);
+//		CONSOLE_DEBUG_W_NUM("month    \t=", timeptr->month);
+//		CONSOLE_DEBUG_W_NUM("local_day\t=", timeptr->local_day);
+//		CONSOLE_DEBUG_W_NUM("day      \t=", timeptr->day);
 		timeptr->local_day	=	Lastday(timeptr);
-		CONSOLE_DEBUG_W_NUM("local_day\t=", timeptr->local_day);
+//		CONSOLE_DEBUG_W_NUM("local_day\t=", timeptr->local_day);
 	}
 }
 

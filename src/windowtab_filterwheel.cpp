@@ -94,7 +94,6 @@ int		yLoc;
 	yLoc			+=	2;
 	yLoc			+=	2;
 
-
 	//------------------------------------------
 	SetWidget(					kFilterWheel_Name,		0,			yLoc,		cWidth,		cTitleHeight);
 //	SetBGcolorFromWindowName(	kFilterWheel_Name);
@@ -103,25 +102,18 @@ int		yLoc;
 	yLoc			+=	2;
 	yLoc			+=	2;
 
-
 	//==========================================
 	//*	create the filter wheel
 	SetWidget(		kFilterWheel_FilterCircle,	0,		yLoc,		(cWidth),	(cWidth + 8));
 	SetWidgetType(	kFilterWheel_FilterCircle, kWidgetType_Graphic);
 	yLoc			+=	cWidth;
-
-
-
-
 	yLoc			+=	2;
-
 
 	SetAlpacaLogo(kFilterWheel_AlpacaLogo, kFilterWheel_LastCmdString);
 
 	//=======================================================
 	//*	IP address
 	SetIPaddressBoxes(kFilterWheel_IPaddr, kFilterWheel_Readall, kFilterWheel_AlpacaDrvrVersion, -1);
-
 }
 
 //*****************************************************************************

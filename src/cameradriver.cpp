@@ -162,6 +162,7 @@
 //*	Dec 20,	2021	<MLS> Added BuildBinaryImage_Raw16() -- working
 //*	Dec 20,	2021	<MLS> Added BuildBinaryImage_RGB24() -- working
 //*	Dec 20,	2021	<MLS> Added BuildBinaryImage_RGB24x16() -- working
+//*	Dec 28,	2021	<MLS> Added GetPrecentCompleted() determines the status of the current exposure
 //*****************************************************************************
 //*	Jan  1,	2119	<TODO> ----------------------------------------
 //*	Jun 26,	2119	<TODO> Add support for sub frames
@@ -191,6 +192,13 @@
 #endif
 
 #define	_USE_ALPACA_READOUT_MODES_
+
+#if defined(_ENABLE_FILTERWHEEL_ZWO_) || defined(_ENABLE_FILTERWHEEL_ATIK_)
+	#ifndef _ENABLE_FILTERWHEEL_
+		#define	_ENABLE_FILTERWHEEL_
+	#endif
+#endif
+
 
 //#define _DEBUG_TIMING_
 #define _ENABLE_CONSOLE_DEBUG_
@@ -691,11 +699,11 @@ char				httpHeader[500];
 //		CONSOLE_DEBUG_W_STR("deviceCommand\t=",	reqData->deviceCommand);
 //	}
 //#endif // _JETSON_
-	if (strcmp(reqData->deviceCommand, "supportedactions") == 0)
-	{
-		CONSOLE_DEBUG_W_STR("htmlData   \t=",	reqData->htmlData);
-		CONSOLE_DEBUG_W_STR("contentData\t=",	reqData->contentData);
-	}
+//	if (strcmp(reqData->deviceCommand, "supportedactions") == 0)
+//	{
+//		CONSOLE_DEBUG_W_STR("htmlData   \t=",	reqData->htmlData);
+//		CONSOLE_DEBUG_W_STR("contentData\t=",	reqData->contentData);
+//	}
 
 	alpacaErrCode		=	kASCOM_Err_PropertyNotImplemented;
 	strcpy(alpacaErrMsg, "");
@@ -2738,35 +2746,67 @@ char				errorString[64];
 	return(alpacaErrCode);
 }
 
+//*****************************************************************************
+int	CameraDriver::GetPrecentCompleted(void)
+{
+int		percentComplete;
+int		deltaTimeSeconds;
+int		exposureTimeSeconds;
+struct timeval	currentTime;
 
+//	CONSOLE_DEBUG(__FUNCTION__);
+	//*	this routine can be over-ridden and should be if the camera supports it
+	percentComplete	=	-99;
+	if (cCameraProp.CameraState == kALPACA_CameraState_Idle)
+	{
+		percentComplete	=	100;
+	}
+	else
+	{
+		gettimeofday(&currentTime, NULL);
+		deltaTimeSeconds	=	currentTime.tv_sec - cCameraProp.Lastexposure_StartTime.tv_sec;
+		exposureTimeSeconds	=	cCameraProp.Lastexposure_duration_us / 1000000;
+		if (deltaTimeSeconds > exposureTimeSeconds)
+		{
+			percentComplete	=	100;
+		}
+		else if (exposureTimeSeconds > 0)
+		{
+			percentComplete	=	(deltaTimeSeconds * 100) / exposureTimeSeconds;
+			if (percentComplete > 100)
+			{
+			CONSOLE_DEBUG_W_NUM("percentComplete\t=", percentComplete);
+				percentComplete	=	100;
+			}
+		}
+	}
+	return(percentComplete);
+}
 
 //*****************************************************************************
-TYPE_ASCOM_STATUS	CameraDriver::Get_PercentCompleted(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
+TYPE_ASCOM_STATUS	CameraDriver::Get_PercentCompleted(	TYPE_GetPutRequestData	*reqData,
+														char					*alpacaErrMsg,
+														const char				*responseString)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
 
+	cCameraProp.PercentCompleted	=	GetPrecentCompleted();
+//	CONSOLE_DEBUG_W_NUM("PercentCompleted\t=", cCameraProp.PercentCompleted);
 	if (cCameraProp.PercentCompleted >= 0)
 	{
-		if (cCameraProp.CameraState == kALPACA_CameraState_Idle)
-		{
-			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Camera is Idle");
-			alpacaErrCode	=	kASCOM_Err_InvalidOperation;
-		}
-		else
-		{
-			cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	reqData->socket,
-											reqData->jsonTextBuffer,
-											kMaxJsonBuffLen,
-											responseString,				//	"Value",
-											cCameraProp.PercentCompleted,
-											INCLUDE_COMMA);
-			alpacaErrCode	=	kASCOM_Err_Success;
-		}
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	reqData->socket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										responseString,				//	"Value",
+										cCameraProp.PercentCompleted,
+										INCLUDE_COMMA);
+		alpacaErrCode	=	kASCOM_Err_Success;
 	}
 	else
 	{
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
 		alpacaErrCode	=	kASCOM_Err_NotImplemented;
+//		CONSOLE_DEBUG(alpacaErrMsg);
 	}
 	return(alpacaErrCode);
 }
@@ -6637,7 +6677,7 @@ char		fileNameDateString[64];
 	char	fileName1stChar[4];
 	bool	addFilterName;
 
-//		CONSOLE_DEBUG("cFN_includeFilter");
+		CONSOLE_DEBUG("cFN_includeFilter");
 
 		if (cConnectedFilterWheel != NULL)
 		{
@@ -6647,7 +6687,7 @@ char		fileNameDateString[64];
 
 		if ((cFilterWheelCurrPos >= 0) && (strlen(cFilterWheelCurrName) > 0))
 		{
-//			CONSOLE_DEBUG_W_NUM("cFilterWheelCurrPos\t=", cFilterWheelCurrPos);
+			CONSOLE_DEBUG_W_NUM("cFilterWheelCurrPos\t=", cFilterWheelCurrPos);
 			addFilterName	=	true;
 			if (strncasecmp(cFilterWheelCurrName, "None", 4) == 0)
 			{
@@ -6666,7 +6706,7 @@ char		fileNameDateString[64];
 			}
 		}
 	}
-//	CONSOLE_DEBUG_W_STR("cFileNameRoot\t=", cFileNameRoot);
+	CONSOLE_DEBUG_W_STR("cFileNameRoot\t=", cFileNameRoot);
 #endif // _ENABLE_FILTERWHEEL_
 
 //	CONSOLE_DEBUG_W_STR("cFileNameRoot\t=", cFileNameRoot);
@@ -7112,7 +7152,8 @@ char				argumentString[32];
 bool				foundKeyWord;
 int					newFlipMode;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(reqData->contentData);
 	if (reqData != NULL)
 	{
 		//*	look for filter

@@ -10,6 +10,7 @@
 //*****************************************************************************
 //*	Dec 26,	2019	<MLS> Created switchdriver.h
 //*	Nov 28,	2020	<MLS> Updated return values to TYPE_ASCOM_STATUS
+//*	Jan  1,	2022	<MLS> Added kSwitchType_Status
 //*****************************************************************************
 
 //#include	"switchdriver.h"
@@ -52,8 +53,10 @@ enum
 //*****************************************************************************
 enum
 {
-	kSwitchType_Bool	=	0,
-	kSwitchType_Analog
+	kSwitchType_Relay	=	0,
+	kSwitchType_Analog,
+	kSwitchType_Status
+
 };
 
 
@@ -65,8 +68,11 @@ void	CreateSwitchObjects(void);
 //*****************************************************************************
 typedef struct
 {
+	int		switchType;
 	char	switchName[kMaxSwitchNameLen];
 	char	switchDesciption[kMaxSwitchDescLen];
+	int		hwPinNumber;							//*	hardware pin number
+	int		valueForTrue;
 } TYPE_SwitchDescription;
 
 
@@ -107,15 +113,25 @@ class SwitchDriver: public AlpacaDriver
 				void	ReadSwitchDataFile(void);
 				void	WriteSwitchDataFile(void);
 
+
 		virtual	bool	GetSwitchState(const int switchNumber);
 		virtual	void	SetSwitchState(const int switchNumber, bool on_off);
+
 		virtual	void	SetSwitchValue(const int switchNumber, double switchValue);
+		virtual	double	GetSwitchValue(const int switchNumber);
+
+
+
+				void	ConfigureSwitch(	const int	switchNumber,
+											const int	switchType,
+											const int	hardWarePinNumber,
+											const int	trueValue=1);
 
 				int		cNumSwitches;
 				TYPE_SwitchDescription	cSwitchTable[kMaxSwitchCnt];
 
 				//*	min max values as doubles
-				int		cSwitchType[kMaxSwitchCnt];
+//-				int		cSwitchType[kMaxSwitchCnt];
 				double	cMinSwitchValue[kMaxSwitchCnt];
 				double	cMaxSwitchValue[kMaxSwitchCnt];
 				double	cCurSwitchValue[kMaxSwitchCnt];

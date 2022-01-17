@@ -159,6 +159,7 @@ int		dh,dm,ds;	// local sidereal time
 //	CONSOLE_DEBUG_W_NUM("dm\t\t=", dm);
 //	CONSOLE_DEBUG_W_NUM("ds\t\t=", ds);
 
+	//*	copy all of the UTC stuff over, then change what needs to be changed
 	*siderealTimePtr			=	*utcTime;
 	siderealTimePtr->tm_year	=	fullYear - 1900;
 	siderealTimePtr->tm_hour	=	dh;

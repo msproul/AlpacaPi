@@ -82,6 +82,9 @@ enum
 	kSkyT_Settings_DataHipparcos_txt,
 	kSkyT_Settings_DataHipparcos_cnt,
 
+	kSkyT_Settings_DataHYG_txt,
+	kSkyT_Settings_DataHYG_cnt,
+
 	kSkyT_Settings_DataMessier_txt,
 	kSkyT_Settings_DataMessier_cnt,
 
@@ -99,6 +102,9 @@ enum
 
 	kSkyT_Settings_Gaia_txt,
 	kSkyT_Settings_Gaia_cnt,
+
+	kSkyT_Settings_Asteroids_txt,
+	kSkyT_Settings_Asteroids_cnt,
 
 	kSkyT_Settings_DataHelpText,
 
@@ -121,6 +127,7 @@ enum
 
 	kSkyT_Settings_RunStartup,
 	kSkyT_Settings_RunShutdown,
+
 
 	kSkyT_Settings_AlpacaLogo,
 

@@ -37,6 +37,9 @@
 //*	Jun 23,	2021	<MLS> Updated Switchdriver cCommonProp.InterfaceVersion to 2
 //*	Jun 23,	2021	<MLS> Added switch number range testing to several methods
 //*	Jun 24,	2021	<MLS> CONFORM-switch -> PASSED!!!!!!!!!!!!!!!!!!!!!
+//*	Jan  1,	2022	<MLS> Added GetSwitchValue()
+//*	Jan  2,	2022	<MLS> Read-only switches did not pass CONFORM the first try
+//*	Jan  2,	2022	<MLS> CONFORM-switch -> PASSED!!!!!!!!!!!!!!!!!!!!!
 //*****************************************************************************
 
 #ifdef _ENABLE_SWITCH_
@@ -60,7 +63,7 @@
 #include	"JsonResponse.h"
 #include	"switchdriver.h"
 
-#define _DEBUG_CONFORM_
+//#define _DEBUG_CONFORM_
 
 //*****************************************************************************
 const TYPE_CmdEntry	gSwitchCmdTable[]	=
@@ -116,10 +119,10 @@ int		iii;
 		sprintf(cSwitchTable[iii].switchName, "Switch#%d", iii);
 		strcpy(cSwitchTable[iii].switchDesciption, "Not defined");
 
-		cSwitchType[iii]		=	kSwitchType_Bool;
-		cMinSwitchValue[iii]	=	0.0;
-		cMaxSwitchValue[iii]	=	1.0;
-		cCurSwitchValue[iii]	=	0.0;
+		cSwitchTable[iii].switchType	=	kSwitchType_Relay;
+		cMinSwitchValue[iii]			=	0.0;
+		cMaxSwitchValue[iii]			=	1.0;
+		cCurSwitchValue[iii]			=	0.0;
 	}
 
 	ReadSwitchDataFile();
@@ -147,7 +150,7 @@ int					mySocket;
 #ifdef _DEBUG_CONFORM_
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG_W_STR("contentData\t=", reqData->contentData);
-#endif // _DEBUG_CONFORM_
+#endif
 
 	//*	make local copies of the data structure to make the code easier to read
 	mySocket	=	reqData->socket;
@@ -235,8 +238,6 @@ int					mySocket;
 			alpacaErrCode	=	Get_Switchstep(reqData, alpacaErrMsg, gValueString);
 			break;
 
-
-
 		case kCmd_Switch_readall:
 			alpacaErrCode	=	Get_Readall(reqData, alpacaErrMsg);
 			break;
@@ -307,6 +308,11 @@ int		switchNum;
 	{
 		switchNum	=	atoi(idString);
 	}
+	else
+	{
+		CONSOLE_DEBUG_W_STR("contentData\t=", reqData->contentData);
+		CONSOLE_DEBUG_W_STR("htmlData\t=", reqData->htmlData);
+	}
 	return(switchNum);
 }
 
@@ -343,27 +349,33 @@ TYPE_ASCOM_STATUS	SwitchDriver::Get_Canwrite(TYPE_GetPutRequestData *reqData, ch
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 int					switchNum;
-
+bool				canWriteSwitch;
 #ifdef _DEBUG_CONFORM_
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG_W_STR("contentData\t=", reqData->contentData);
-#endif // _DEBUG_CONFORM_
+#endif
 
 	if (reqData != NULL)
 	{
 		switchNum	=	GetSwitchID(reqData);
 		if ((switchNum >= 0) && (switchNum < cNumSwitches))
 		{
+			canWriteSwitch	=	true;
+			if (cSwitchTable[switchNum].switchType == kSwitchType_Status)
+			{
+				canWriteSwitch	=	false;
+			}
 			JsonResponse_Add_Bool(	reqData->socket,
 									reqData->jsonTextBuffer,
 									kMaxJsonBuffLen,
 									responseString,
-									true,
+									canWriteSwitch,
 									INCLUDE_COMMA);
 		}
 		else
 		{
 			CONSOLE_DEBUG_W_NUM("Switch number out of range\t=", switchNum);
+			CONSOLE_DEBUG_W_NUM("Max switch number is\t=", cNumSwitches);
 			alpacaErrCode	=	kASCOM_Err_InvalidValue;
 			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Switch number out of range");
 		}
@@ -388,7 +400,7 @@ bool				switchState;
 #ifdef _DEBUG_CONFORM_
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG_W_STR("contentData\t=", reqData->contentData);
-#endif // _DEBUG_CONFORM_
+#endif
 
 	if (reqData != NULL)
 	{
@@ -439,7 +451,7 @@ int					switchNum;
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG_W_NUM("cNumSwitches\t=", cNumSwitches);
 	CONSOLE_DEBUG_W_STR("contentData\t=", reqData->contentData);
-#endif // _DEBUG_CONFORM_
+#endif
 
 	if (reqData != NULL)
 	{
@@ -481,7 +493,7 @@ int					switchNum;
 #ifdef _DEBUG_CONFORM_
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG_W_STR("contentData\t=", reqData->contentData);
-#endif // _DEBUG_CONFORM_
+#endif
 
 	if (reqData != NULL)
 	{
@@ -523,7 +535,7 @@ int					switchNum;
 #ifdef _DEBUG_CONFORM_
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG_W_STR("contentData\t=", reqData->contentData);
-#endif // _DEBUG_CONFORM_
+#endif
 
 	if (reqData != NULL)
 	{
@@ -566,7 +578,7 @@ int					switchNum;
 #ifdef _DEBUG_CONFORM_
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG_W_STR("contentData\t=", reqData->contentData);
-#endif // _DEBUG_CONFORM_
+#endif
 
 	if (reqData != NULL)
 	{
@@ -606,13 +618,13 @@ int					switchNum;
 #ifdef _DEBUG_CONFORM_
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG_W_STR("contentData\t=", reqData->contentData);
-#endif // _DEBUG_CONFORM_
+#endif
 
 	if (reqData != NULL)
 	{
 		switchNum	=	GetSwitchID(reqData);
-		CONSOLE_DEBUG_W_NUM("switchNum\t\t=",		switchNum);
-		CONSOLE_DEBUG_W_DBL("cMaxSwitchValue\t=",	cMaxSwitchValue[switchNum]);
+//		CONSOLE_DEBUG_W_NUM("switchNum\t\t=",		switchNum);
+//		CONSOLE_DEBUG_W_DBL("cMaxSwitchValue\t=",	cMaxSwitchValue[switchNum]);
 
 		if ((switchNum >= 0) && (switchNum < cNumSwitches))
 		{
@@ -655,7 +667,7 @@ int					switchNum;
 #ifdef _DEBUG_CONFORM_
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG_W_STR("contentData\t=", reqData->contentData);
-#endif // _DEBUG_CONFORM_
+#endif
 
 	if (reqData != NULL)
 	{
@@ -663,38 +675,49 @@ int					switchNum;
 
 		if ((switchNum >= 0) && (switchNum < cNumSwitches))
 		{
-			foundState	=	GetKeyWordArgument(	reqData->contentData,
-												"State",
-												stateString,
-												31);
-			if (foundState)
+			//*	make sure it is a switch and not a status
+			if (cSwitchTable[switchNum].switchType != kSwitchType_Status)
 			{
-				if (strcasecmp(stateString, "true") == 0)
+				foundState	=	GetKeyWordArgument(	reqData->contentData,
+													"State",
+													stateString,
+													31);
+				if (foundState)
 				{
-					//*	turn the relay ON
-					SetSwitchState(switchNum, true);
+					if (strcasecmp(stateString, "true") == 0)
+					{
+						//*	turn the relay ON
+						SetSwitchState(switchNum, true);
 
-					cCurSwitchValue[switchNum]	=	cMaxSwitchValue[switchNum];
+						cCurSwitchValue[switchNum]	=	cMaxSwitchValue[switchNum];
+					}
+					else
+					{
+						//*	turn the relay OFF
+						SetSwitchState(switchNum, false);
+						cCurSwitchValue[switchNum]	=	cMinSwitchValue[switchNum];
+					}
+					alpacaErrCode	=	kASCOM_Err_Success;
 				}
 				else
 				{
-					//*	turn the relay OFF
-					SetSwitchState(switchNum, false);
-					cCurSwitchValue[switchNum]	=	cMinSwitchValue[switchNum];
+					alpacaErrCode	=	kASCOM_Err_InvalidValue;
+					GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "State not specified");
+					CONSOLE_DEBUG(alpacaErrMsg);
 				}
-				alpacaErrCode	=	kASCOM_Err_Success;
 			}
 			else
 			{
-				alpacaErrCode	=	kASCOM_Err_InvalidValue;
-				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "State not specified");
+				CONSOLE_DEBUG("Trying to write to a read-only switch");
+				alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "CanWrite is false");
 				CONSOLE_DEBUG(alpacaErrMsg);
 			}
 		}
 		else
 		{
 			alpacaErrCode	=	kASCOM_Err_InvalidValue;
-			sprintf(alpacaErrMsg, "Switch number (Id) not specified %s", __FUNCTION__);
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Switch number (Id) not specified");
 			CONSOLE_DEBUG(alpacaErrMsg);
 		}
 	}
@@ -718,7 +741,7 @@ int					switchNum;
 #ifdef _DEBUG_CONFORM_
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG_W_STR("contentData\t=", reqData->contentData);
-#endif // _DEBUG_CONFORM_
+#endif
 
 	if (reqData != NULL)
 	{
@@ -752,7 +775,7 @@ int					switchNum;
 		else
 		{
 			alpacaErrCode	=	kASCOM_Err_InvalidValue;
-			sprintf(alpacaErrMsg, "Switch number (Id) not specified %s", __FUNCTION__);
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Switch number (Id) not specified");
 		}
 	}
 	else
@@ -776,38 +799,47 @@ double				newSwitchValue;
 #ifdef _DEBUG_CONFORM_
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG_W_STR("contentData\t=", reqData->contentData);
-#endif // _DEBUG_CONFORM_
+#endif
 
 	if (reqData != NULL)
 	{
 		switchNum	=	GetSwitchID(reqData);
 		if ((switchNum >= 0) && (switchNum < cNumSwitches))
 		{
-			foundValue	=	GetKeyWordArgument(	reqData->contentData,
-												"Value",
-												valueString,
-												(sizeof(valueString) - 1));
-			if (foundValue)
+			//*	make sure it is a switch and not a status
+			if (cSwitchTable[switchNum].switchType != kSwitchType_Status)
 			{
-				newSwitchValue				=	atof(valueString);
-				if ((newSwitchValue >= cMinSwitchValue[switchNum]) &&
-					(newSwitchValue <= cMaxSwitchValue[switchNum]))
+				foundValue	=	GetKeyWordArgument(	reqData->contentData,
+													"Value",
+													valueString,
+													(sizeof(valueString) - 1));
+				if (foundValue)
 				{
-					SetSwitchValue(switchNum, newSwitchValue);
-					cCurSwitchValue[switchNum]	=	atof(valueString);
-					alpacaErrCode				=	kASCOM_Err_Success;
+					newSwitchValue				=	atof(valueString);
+					if ((newSwitchValue >= cMinSwitchValue[switchNum]) &&
+						(newSwitchValue <= cMaxSwitchValue[switchNum]))
+					{
+						SetSwitchValue(switchNum, newSwitchValue);
+						cCurSwitchValue[switchNum]	=	atof(valueString);
+						alpacaErrCode				=	kASCOM_Err_Success;
+					}
+					else
+					{
+						alpacaErrCode	=	kASCOM_Err_InvalidValue;
+						GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Value out of range");
+					}
 				}
-				else
-				{
-					alpacaErrCode	=	kASCOM_Err_InvalidValue;
-					sprintf(alpacaErrMsg, "Value out of range %s", __FUNCTION__);
-				}
+			}
+			else
+			{
+				alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "CanWrite is false");
 			}
 		}
 		else
 		{
 			alpacaErrCode	=	kASCOM_Err_InvalidValue;
-			sprintf(alpacaErrMsg, "Switch number (Id) not specified %s", __FUNCTION__);
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Switch number (Id) not specified");
 		}
 	}
 	else
@@ -864,7 +896,7 @@ bool				switchState;
 #ifdef _DEBUG_CONFORM_
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG_W_STR("contentData\t=", reqData->contentData);
-#endif // _DEBUG_CONFORM_
+#endif
 
 	if (reqData != NULL)
 	{
@@ -875,10 +907,11 @@ bool				switchState;
 		mySocket	=	reqData->socket;
 
 		Get_Maxswitch(	reqData, alpacaErrMsg, "maxswitch");	//*	The number of switch devices managed by this driver
-		Get_Canwrite(	reqData, alpacaErrMsg, "canwrite");		//*	Indicates whether the specified switch device can be written to
 
 		for (iii=0; iii<cNumSwitches; iii++)
 		{
+			GetSwitchValue(iii);
+
 			sprintf(textBuffer, "getswitchname-%d", iii);
 			JsonResponse_Add_String(	mySocket,
 										reqData->jsonTextBuffer,
@@ -1032,6 +1065,26 @@ bool	foundIt;
 	return(foundIt);
 }
 
+//*****************************************************************************
+void	SwitchDriver::ConfigureSwitch(	const int	switchNumber,
+										const int	switchType,
+										const int	hardWarePinNumber,
+										const int	trueValue)		//*	default is 1, for inverted logic pass 0
+{
+	if (switchNumber < kMaxSwitchCnt)
+	{
+		cSwitchTable[switchNumber].switchType	=	switchType;
+		cSwitchTable[switchNumber].hwPinNumber	=	hardWarePinNumber;
+		cSwitchTable[switchNumber].valueForTrue	=	trueValue;
+
+		if (switchNumber >= cNumSwitches)
+		{
+			cNumSwitches	=	switchNumber + 1;
+		}
+		CONSOLE_DEBUG_W_NUM("cNumSwitches\t=", cNumSwitches);
+	}
+}
+
 
 #define	kSwitchDataFileName	"switchdescription.txt"
 
@@ -1177,6 +1230,35 @@ void	SwitchDriver::SetSwitchState(const int switchNumber, bool on_off)
 void	SwitchDriver::SetSwitchValue(const int switchNumber, double switchValue)
 {
 	//*	this function meant to be overloaded
+}
+
+//*****************************************************************************
+double	SwitchDriver::GetSwitchValue(const int switchNumber)
+{
+double	switchValue;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+	switchValue	=	0.0;
+	if ((switchNumber >= 0) && (switchNumber < cNumSwitches))
+	{
+		switch(cSwitchTable[switchNumber].switchType)
+		{
+			case kSwitchType_Relay:
+			case kSwitchType_Status:
+				switchValue	=	GetSwitchState(switchNumber);
+				cCurSwitchValue[switchNumber]	=	switchValue;
+				break;
+
+			case kSwitchType_Analog:
+				break;
+
+		}
+	}
+	else
+	{
+		CONSOLE_DEBUG_W_NUM("Switch number out of bounds:", switchNumber);
+	}
+	return(switchValue);
 }
 
 

@@ -33,6 +33,7 @@
 //*	Jan 14,	2021	<MLS> Switch controller working with ASCOM Remote Server Console/simulator
 //*	Feb 12,	2021	<MLS> Added driver info display to switch controller
 //*	Sep  8,	2021	<MLS> Working on supporting "canWrite" property
+//*	Jan  2,	2022	<MLS> Moved TurnAllSwitchesOff() from window tab to controller
 //*****************************************************************************
 
 
@@ -102,7 +103,7 @@ int		iii;
 		cSwitchInfo[iii].minswitchvalue	=	0.0;
 		cSwitchInfo[iii].maxswitchvalue	=	1.0;
 		cSwitchInfo[iii].switchvalue	=	0.0;
-		cSwitchInfo[iii].canWrite		=	true;
+		cSwitchInfo[iii].canWrite		=	false;
 	}
 
 
@@ -407,7 +408,7 @@ int				boxNumber;
 		//*	use readall to get the startup data
 		validData	=	AlpacaGetStatus_ReadAll("switch", cAlpacaDevNum);
 	}
-	else
+//-	else
 	{
 		validData	=	AlpacaGetStartupData_OneAAT();
 	}
@@ -444,7 +445,7 @@ int				boxNumber;
 
 		//*	check to see if we can write to the switch
 		boxNumber	=	kSwitchBox_State01 + (kBoxesPerSwitch * jjj);
-		SetWidgetValid(kTab_Switch, boxNumber++, cSwitchInfo[jjj].canWrite);
+		SetWidgetValid(kTab_Switch, boxNumber, cSwitchInfo[jjj].canWrite);
 	}
 	cLastUpdate_milliSecs	=	millis();
 
@@ -661,6 +662,7 @@ int			switchValueInt;
 	else if (strncasecmp(keywordString, "getswitch-", 10) == 0)
 	{
 		switchNum	=	atoi(&keywordString[10]);
+//		CONSOLE_DEBUG_W_NUM("switchNum\t=", switchNum);
 		if ((switchNum >= 0) && (switchNum < kMaxSwitches))
 		{
 			boxNumber	=	kSwitchBox_State01 + (kBoxesPerSwitch * switchNum);
@@ -767,4 +769,33 @@ char			newStateString[16];
 	}
 }
 
+
+//*****************************************************************************
+void	ControllerSwitch::TurnAllSwitchesOff(void)
+{
+int		switchNum;
+bool	validData;
+char	dataString[128];
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	for (switchNum=0; switchNum < cMaxSwitch; switchNum++)
+	{
+//		CONSOLE_DEBUG_W_NUM("Switch #", switchNum);
+		if (cSwitchInfo[switchNum].canWrite)
+		{
+			sprintf(dataString,		"Id=%d&State=false", switchNum);
+//			CONSOLE_DEBUG_W_STR("dataString=", dataString);
+			validData	=	AlpacaSendPutCmd(	"switch",	"setswitch",		dataString);
+			if (validData == false)
+			{
+				CONSOLE_DEBUG("AlpacaSendPutCmd() failed");
+			}
+		}
+		else
+		{
+//			CONSOLE_DEBUG_W_NUM("Switch is read only", switchNum);
+		}
+	}
+}
 #endif // _ENABLE_CTRL_SWITCHES_

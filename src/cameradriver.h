@@ -35,12 +35,6 @@
 #include	<time.h>
 
 
-#ifndef	_ALPACA_DEFS_H_
-	#include	"alpaca_defs.h"
-#endif
-
-
-
 
 //*	moved to make file
 //	#define		_ENABLE_FITS_
@@ -75,9 +69,9 @@
 	#endif
 #endif
 
-#ifdef _ENABLE_FILTERWHEEL_
+#if defined(_ENABLE_FILTERWHEEL_) || defined(_ENABLE_FILTERWHEEL_ZWO_) || defined(_ENABLE_FILTERWHEEL_ATIK_)
 	#include	"filterwheeldriver.h"
-#endif // _ENABLE_FILTERWHEEL_
+#endif
 
 #ifdef _ENABLE_FOCUSER_
 	#include	"focuserdriver.h"
@@ -90,7 +84,9 @@
 
 
 #include	"observatory_settings.h"
-#include	"alpaca_defs.h"
+#ifndef	_ALPACA_DEFS_H_
+	#include	"alpaca_defs.h"
+#endif
 
 #define	kImageDataDir	"imagedata"
 
@@ -546,6 +542,7 @@ class CameraDriver: public AlpacaDriver
 
 				void	AutoAdjustExposure(void);
 				void	CheckPulseGuiding(void);
+				int		GetPrecentCompleted(void);
 
 	public:
 	#ifdef _USE_OPENCV_
@@ -636,7 +633,7 @@ protected:
 	//*	ASCOM camera properties
 	TYPE_CameraProperties	cCameraProp;
 
-	bool				cResponseIsJSON;		//*	this is for the binary option in imageArray
+	bool					cResponseIsJSON;		//*	this is for the binary option in imageArray
 
 	//*****************************************************************************
 	TYPE_IMAGE_ROI_Info		cLastExposure_ROIinfo;
@@ -674,11 +671,11 @@ protected:
 	bool			cSt4Port;
 	struct timeval	cPulseGuideStartTime;		//*	time pulse guiding was started
 
-	long		cGain_default;
+	long			cGain_default;
 
 
-	bool		cCanRead8Bit;
-	long		cHighSpeedMode;
+	bool			cCanRead8Bit;
+	long			cHighSpeedMode;
 
 	//*****************************************************************************
 	TYPE_CAMERA_STATE		cInternalCameraState;
@@ -804,12 +801,12 @@ protected:
 #endif // _USE_THREADS_FOR_ASI_CAMERA_
 
 
-#ifdef _ENABLE_FILTERWHEEL_
+#if defined(_ENABLE_FILTERWHEEL_) || defined(_ENABLE_FILTERWHEEL_ZWO_) || defined(_ENABLE_FILTERWHEEL_ATIK_)
 	void				UpdateFilterwheelLink(void);
 	FilterwheelDriver	*cConnectedFilterWheel;
 	int					cFilterWheelCurrPos;
 	char				cFilterWheelCurrName[48];
-#endif // _ENABLE_FILTERWHEEL_
+#endif
 
 
 #ifdef _ENABLE_FOCUSER_

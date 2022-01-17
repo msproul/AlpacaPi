@@ -59,6 +59,8 @@
 //*	Sep  9,	2021	<MLS> Added SetUpConnectedIndicator()
 //*	Oct 29,	2021	<MLS> Added FloodFill()
 //*	Nov 13,	2021	<MLS> Added ProcessDoubleClick_RtBtn()
+//*	Jan 10,	2022	<MLS> Moved FormatTimeString() && FormatTimeString_TM() to windowtab
+//*	Jan 10,	2022	<MLS> Added FormatTimeString_Local()
 //*****************************************************************************
 
 
@@ -333,7 +335,7 @@ void	WindowTab::SetWidgetHelpText(const int widgetIdx, const char *newText)
 		}
 		else
 		{
-			CONSOLE_DEBUG("Help text is to long");
+			CONSOLE_DEBUG_W_NUM("Help text is to long, length=", strlen(newText));
 			CONSOLE_DEBUG(newText);
 			CONSOLE_ABORT(__FUNCTION__);
 		}
@@ -403,6 +405,14 @@ char	lineBuff[64];
 	SetWidgetText(widgetIdx, lineBuff);
 }
 
+//**************************************************************************************
+void	WindowTab::SetWidgetNumber6F(const int widgetIdx, const double number)
+{
+char	lineBuff[64];
+
+	sprintf(lineBuff, "%0.6f", number);
+	SetWidgetText(widgetIdx, lineBuff);
+}
 
 //**************************************************************************************
 void	WindowTab::SetWidgetTextColor(const int widgetIdx, CvScalar newtextColor)
@@ -1979,3 +1989,51 @@ void	WindowTab::SetUpConnectedIndicator(const int buttonIdx, const int yLoc)
 
 #endif	//	_CONTROLLER_USES_ALPACA_
 
+
+//*****************************************************************************
+void	FormatTimeString(struct timeval *tv, char *timeString)
+{
+struct tm	*linuxTime;
+
+	if ((tv != NULL) && (timeString != NULL))
+	{
+		linuxTime		=	gmtime(&tv->tv_sec);
+
+		sprintf(timeString, "%02d:%02d:%02d",
+								linuxTime->tm_hour,
+								linuxTime->tm_min,
+								linuxTime->tm_sec);
+
+	}
+}
+
+//*****************************************************************************
+void	FormatTimeString_Local(struct timeval *tv, char *timeString)
+{
+struct tm	*linuxTime;
+
+	if ((tv != NULL) && (timeString != NULL))
+	{
+		linuxTime		=	localtime(&tv->tv_sec);
+
+		sprintf(timeString, "%02d:%02d:%02d",
+								linuxTime->tm_hour,
+								linuxTime->tm_min,
+								linuxTime->tm_sec);
+
+	}
+}
+
+//*****************************************************************************
+void	FormatTimeString_TM(struct tm *timeStruct, char *timeString)
+{
+
+	if ((timeStruct != NULL) && (timeString != NULL))
+	{
+
+		sprintf(timeString, "%02d:%02d:%02d",
+								timeStruct->tm_hour,
+								timeStruct->tm_min,
+								timeStruct->tm_sec);
+	}
+}

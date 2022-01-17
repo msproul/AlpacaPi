@@ -101,6 +101,7 @@
 #endif
 
 #include	"discovery_lib.h"
+#include	"helper_functions.h"
 
 
 #define _ENABLE_CONSOLE_DEBUG_
@@ -210,39 +211,39 @@ void	Controller_HandleKeyDown(const int keyPressed)
 	if (gCurrentActiveWindow != NULL)
 	{
 	#if 0
-	//*	this should cycle through the windows, but it does not work.
-		nextCtrlIdx	=	-1;
-		if ((keyPressed & 0x0ff) == 0x09)
-		{
-		int		iii;
-		int		nextCtrlIdx;
-
-			CONSOLE_DEBUG("TAB");
-			for (iii=0; iii<gControllerCnt; iii++)
-			{
-				if (gCurrentActiveWindow == gControllerList[iii])
-				{
-					nextCtrlIdx	=	iii+1;
-				}
-			}
-			if ((nextCtrlIdx < 0) || (nextCtrlIdx >= gControllerCnt))
-			{
-				nextCtrlIdx	=	0;
-			}
-			gCurrentActiveWindow	=	gControllerList[nextCtrlIdx];
-
-			if (gCurrentActiveWindow != NULL)
-			{
-				CONSOLE_DEBUG(gCurrentActiveWindow->cWindowName);
-
-				gCurrentActiveWindow->HandleWindowUpdate();
-			}
-			else
-			{
-				CONSOLE_DEBUG("gCurrentActiveWindow is NULL");
-			}
-		}
-		else
+//	//*	this should cycle through the windows, but it does not work.
+//		nextCtrlIdx	=	-1;
+//		if ((keyPressed & 0x0ff) == 0x09)
+//		{
+//		int		iii;
+//		int		nextCtrlIdx;
+//
+//			CONSOLE_DEBUG("TAB");
+//			for (iii=0; iii<gControllerCnt; iii++)
+//			{
+//				if (gCurrentActiveWindow == gControllerList[iii])
+//				{
+//					nextCtrlIdx	=	iii+1;
+//				}
+//			}
+//			if ((nextCtrlIdx < 0) || (nextCtrlIdx >= gControllerCnt))
+//			{
+//				nextCtrlIdx	=	0;
+//			}
+//			gCurrentActiveWindow	=	gControllerList[nextCtrlIdx];
+//
+//			if (gCurrentActiveWindow != NULL)
+//			{
+//				CONSOLE_DEBUG(gCurrentActiveWindow->cWindowName);
+//
+//				gCurrentActiveWindow->HandleWindowUpdate();
+//			}
+//			else
+//			{
+//				CONSOLE_DEBUG("gCurrentActiveWindow is NULL");
+//			}
+//		}
+//		else
 	#endif
 		{
 			gCurrentActiveWindow->HandleKeyDown(keyPressed);
@@ -292,6 +293,7 @@ int			objCntr;
 	cLastAlpacaErrStr[0]		=	0;
 	cAlpacaDeviceTypeStr[0]		=	0;
 	cAlpacaDeviceNameStr[0]		=	0;
+	cLastUpdate_milliSecs		=	millis();
 
 #ifdef _CONTROLLER_USES_ALPACA_
 	ClearCapabilitiesList();
@@ -854,7 +856,6 @@ void	Controller::ProcessButtonClick(const int buttonIdx)
 	if (cCurrentTabObjPtr != NULL)
 	{
 		cCurrentTabObjPtr->ProcessButtonClick(buttonIdx);
-	//	cUpdateWindow	=	true;
 	}
 	else
 	{
@@ -913,7 +914,6 @@ bool	updateOccurred;
 		updateOccurred	=	cCurrentTabObjPtr->DisplayButtonHelpText(buttonIdx);
 		if (updateOccurred)
 		{
-		//	cUpdateWindow	=	true;
 			UpdateWindowAsNeeded();
 		}
 	}
@@ -2363,6 +2363,7 @@ void	Controller::DrawOneWidget(TYPE_WIDGET *widgetPtr, const int widgetIdx)
 {
 CvRect		widgetRect;
 
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 	widgetPtr->needsUpdated	=	false;	//*	record the fact that this widget has been updated
 	switch(widgetPtr->widgetType)
 	{
@@ -2461,6 +2462,7 @@ void	Controller::DrawWindowWidgets(void)
 int				iii;
 TYPE_WIDGET		*myWidgetPtr;
 
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 
 	if (cCurrentTabObjPtr != NULL)
 	{
@@ -2496,7 +2498,7 @@ void	Controller::DrawWindow(void)
 {
 CvRect		myCVrect;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 	if (cOpenCV_Image != NULL)
 	{
 		myCVrect.x		=	0;
@@ -3253,7 +3255,7 @@ Controller	*myControllerPtr;
 			myControllerPtr->cBackgroundTaskActive	=	true;
 			myControllerPtr->RunBackgroundTasks(gDebugBackgroundThread);
 			myControllerPtr->cBackgroundTaskActive	=	false;
-			usleep(100000);
+			usleep(200 * 1000);	//*	200 milliseconds
 		}
 		CONSOLE_ABORT("Magic cookie is stale")
 	}

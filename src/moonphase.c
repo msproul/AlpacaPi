@@ -301,7 +301,6 @@ void	GetMoonPhaseForSpecifiedTime(struct tm	*linuxTime, char *moonPhaseStr)
 {
 double		illumination;
 double		moonAge_Days;
-time_t		currentTime;
 
 	if (linuxTime != NULL)
 	{
@@ -319,8 +318,6 @@ time_t		currentTime;
 //**************************************************************************************
 void	GetCurrentMoonPhase(char *moonPhaseStr)
 {
-double		illumination;
-double		moonAge_Days;
 time_t		currentTime;
 struct tm	*linuxTime;
 
@@ -329,18 +326,7 @@ struct tm	*linuxTime;
 	if (currentTime != -1)
 	{
 		linuxTime		=	gmtime(&currentTime);
-	#if 1
 		GetMoonPhaseForSpecifiedTime(linuxTime, moonPhaseStr);
-	#else
-		illumination	=	CalcMoonIllumination(	(1 + linuxTime->tm_mon),
-													linuxTime->tm_mday,
-													(1900 + linuxTime->tm_year));
-
-		moonAge_Days	=	CalcDaysSinceNewMoon(	(1 + linuxTime->tm_mon),
-													linuxTime->tm_mday,
-													(1900 + linuxTime->tm_year));
-		GetMoonPhase(illumination, moonAge_Days, moonPhaseStr);
-	#endif
 	}
 	else
 	{

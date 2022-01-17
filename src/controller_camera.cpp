@@ -58,6 +58,8 @@
 //*	Dec 16,	2021	<MLS> Added support for percentcompleted
 //*	Dec 16,	2021	<MLS> Added UpdatePercentCompleted()
 //*	Dec 17,	2021	<MLS> Added support for canstopexposure
+//*	Dec 23,	2021	<MLS> Added UpdateFlipMode() & SetFlipMode()
+//*	Dec 26,	2021	<MLS> Update timeout is now 1 second if camera is anything but idle
 //*****************************************************************************
 //*	Jan  1,	2121	<TODO> control key for different step size.
 //*	Jan  1,	2121	<TODO> add error list window
@@ -150,6 +152,7 @@ int		iii;
 	cHas_rgbarray			=	false;
 	cHas_sidebar			=	false;
 	cHas_SaveAll			=	false;
+	cHas_Flip				=	false;
 
 	//*	download status stuff
 	cPrevProgessValue		=	0.0;
@@ -374,18 +377,27 @@ bool		readStartUpOK;
 		needToUpdate	=	true;
 	}
 
-	if (deltaSeconds >= 5)
+	//*	if we are anything other than idle, we want to update more often
+	if ((cCameraProp.CameraState != kALPACA_CameraState_Idle) && (deltaSeconds >= 1))
 	{
 		needToUpdate	=	true;
 	}
+	else if (deltaSeconds >= 5)
+	{
+		needToUpdate	=	true;
+	}
+
 	if (cForceAlpacaUpdate)	//*	force update is set when a switch is clicked
 	{
 		needToUpdate		=	true;
 		cForceAlpacaUpdate	=	false;
 	}
 
+
+
 	if (needToUpdate)
 	{
+		CONSOLE_DEBUG_W_STR("Updating....", cWindowName);
 		//*	is the IP address valid
 		if (cValidIPaddr)
 		{
@@ -491,11 +503,13 @@ void	ControllerCamera::UpdateRemoteFileList(void)
 {
 	CONSOLE_DEBUG("this routine should be overloaded");
 }
-
-
-
 //*****************************************************************************
 void	ControllerCamera::UpdateDisplayModes(void)
+{
+//	CONSOLE_DEBUG("this routine should be overloaded");
+}
+//*****************************************************************************
+void	ControllerCamera::UpdateFlipMode(void)
 {
 //	CONSOLE_DEBUG("this routine should be overloaded");
 }
@@ -781,7 +795,12 @@ void	ControllerCamera::AlpacaProcessSupportedActions(const char	*deviceTypeStr,
 	{
 		cHas_sidebar	=	true;
 	}
+	else if (strcasecmp(valueString,	"flip") == 0)
+	{
+		cHas_Flip	=	true;
+	}
 }
+
 
 
 
@@ -963,6 +982,13 @@ void	ControllerCamera::AlpacaProcessReadAll(	const char	*deviceTypeStr,
 		gigabytesFree	=	atof(valueString);
 		UpdateFreeDiskSpace(gigabytesFree);
 	}
+	else if (strcasecmp(keywordString, "flip") == 0)
+	{
+		//=================================================================================
+		//*	flip mode
+		cCameraProp.FlipMode	=	atoi(valueString);
+		UpdateFlipMode();
+	}
 	else if (strcasecmp(keywordString, "gain") == 0)
 	{
 		//=================================================================================
@@ -994,6 +1020,9 @@ void	ControllerCamera::AlpacaProcessReadAll(	const char	*deviceTypeStr,
 	{
 		//=================================================================================
 		//*	percentcompleted
+		CONSOLE_DEBUG("percentcompleted");
+		cCameraProp.PercentCompleted	=	atoi(valueString);
+		UpdatePercentCompleted();
 	}
 	else if (strcasecmp(keywordString, "readoutmode") == 0)
 	{
@@ -1707,8 +1736,6 @@ bool	validData;
 	}
 }
 
-
-
 //*****************************************************************************
 void	ControllerCamera::ToggleCooler(void)
 {
@@ -1723,7 +1750,6 @@ bool	validData;
 		CONSOLE_DEBUG_W_STR("Failed to get data, Req=", dataString)
 	}
 }
-
 
 //*****************************************************************************
 void	ControllerCamera::StartExposure(void)
@@ -2056,6 +2082,42 @@ bool	validData;
 	}
 }
 
+//*****************************************************************************
+void	ControllerCamera::SetFlipMode(const int newFlipMode)
+{
+char	dataString[48];
+bool	validData;
+
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+
+	sprintf(dataString, "flip=%d", newFlipMode);
+	validData		=	AlpacaSendPutCmd(	"camera",
+											"flip",
+											dataString);
+	if (validData == false)
+	{
+		CONSOLE_DEBUG_W_STR("Failed to send data, Req=", dataString);
+	}
+	cForceAlpacaUpdate	=	true;
+}
+
+//*****************************************************************************
+void	ControllerCamera::ToggleFlipMode(bool toggleHorz, bool toggleVert)
+{
+int		newFlipMode;
+
+	newFlipMode	=	cCameraProp.FlipMode;
+	if (toggleHorz)
+	{
+		newFlipMode	=	newFlipMode ^ 0x01;
+	}
+	if (toggleVert)
+	{
+		newFlipMode	=	newFlipMode ^ 0x02;
+	}
+
+	SetFlipMode(newFlipMode);
+}
 
 //**************************************************************************************
 void	ControllerCamera::LogCameraTemp(const double cameraTemp)

@@ -61,6 +61,7 @@ class ControllerSwitch: public Controller
 		virtual	void	UpdateCommonProperties(void);
 				bool	AlpacaGetStatus_OneAAT(void);	//*	One At A Time
 				void	ToggleSwitchState(const int switchNum);
+				void	TurnAllSwitchesOff(void);
 
 			//*	tab information
 				WindowTabSwitch		*cSwitchTabObjPtr;

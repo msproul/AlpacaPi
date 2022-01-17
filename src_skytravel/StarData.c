@@ -4,7 +4,7 @@
 //*	Edit History
 //*****************************************************************************
 //*	??				Original Written by Frank Covits
-//*	May  2,	1996	<MLS> (Mark Sproul) Starting on Sky Travel for Frank and Clif
+//*	May  2,	1996	<MLS> (Mark Sproul) Starting on SkyTravel for Frank and Clif
 //*	Nov 18,	1999	<MLS> restarting efforts
 //*	Nov 20,	1999	<MLS> major re-writing and re-organization
 //*	Dec 29,	2020	<MLS> Starting to integrate SkyTravel into AlpacaPi
@@ -407,6 +407,7 @@ size_t			bufferSize;
 			specifiedLnCnt	=	atoi(lineBuff);
 			if (specifiedLnCnt > 10)
 			{
+				specifiedLnCnt	+=	3;	//*	leave some extra room
 //				CONSOLE_DEBUG_W_NUM("specifiedLnCnt\t=", specifiedLnCnt);
 
 				//*	get the dataset year
@@ -649,32 +650,86 @@ char			myFilePath[256];
 //	15693409775347223,0.01900678824815125,-0.000000025210311388888885,-0.000000009114497,,,Psc,1,1,,9.638290236239703,,,
 //************************************************************************
 //*
-//*		1. id: The database primary key.
-//*		2. hip: The star's ID in the Hipparcos catalog, if known.
-//*		3. hd: The star's ID in the Henry Draper catalog, if known.
-//*		4. hr: The star's ID in the Harvard Revised catalog, which is the same as its number in the Yale Bright Star Catalog.
-//*		5. gl: The star's ID in the third edition of the Gliese Catalog of Nearby Stars.
-//*		6. bf: The Bayer / Flamsteed designation, primarily from the Fifth Edition of the Yale Bright Star Catalog. This is a combination of the two designations. The Flamsteed number, if present, is given first; then a three-letter abbreviation for the Bayer Greek letter; the Bayer superscript number, if present; and finally, the three-letter constellation abbreviation. Thus Alpha Andromedae has the field value "21Alp And", and Kappa1 Sculptoris (no Flamsteed number) has "Kap1Scl".
-//*		7. ra, dec: The star's right ascension and declination, for epoch and equinox 2000.0.
-//*		8. proper: A common name for the star, such as "Barnard's Star" or "Sirius". I have taken these names primarily from the Hipparcos project's web site, which lists representative names for the 150 brightest stars and many of the 150 closest stars. I have added a few names to this list. Most of the additions are designations from catalogs mostly now forgotten (e.g., Lalande, Groombridge, and Gould ["G."]) except for certain nearby stars which are still best known by these designations.
-//*		9. dist: The star's distance in parsecs, the most common unit in astrometry. To convert parsecs to light years, multiply by 3.262. A value >= 100000 indicates missing or dubious (e.g., negative) parallax data in Hipparcos.
-//*		10. pmra, pmdec:  The star's proper motion in right ascension and declination, in milliarcseconds per year.
-//*		11. rv:  The star's radial velocity in km/sec, where known.
-//*		12. mag: The star's apparent visual magnitude.
-//*		13. absmag: The star's absolute visual magnitude (its apparent magnitude from a distance of 10 parsecs).
-//*		14. spect: The star's spectral type, if known.
-//*		15. ci: The star's color index (blue magnitude - visual magnitude), where known.
-//*		16. x,y,z: The Cartesian coordinates of the star, in a system based on the equatorial coordinates as seen from Earth. +X is in the direction of the vernal equinox (at epoch 2000), +Z towards the north celestial pole, and +Y in the direction of R.A. 6 hours, declination 0 degrees.
-//*		17. vx,vy,vz: The Cartesian velocity components of the star, in the same coordinate system described immediately above. They are determined from the proper motion and the radial velocity (when known). The velocity unit is parsecs per year; these are small values (around 1 millionth of a parsec per year), but they enormously simplify calculations using parsecs as base units for celestial mapping.
-//*		18. rarad, decrad, pmrarad, prdecrad:  The positions in radians, and proper motions in radians per year.
-//*		19. bayer:  The Bayer designation as a distinct value
-//*		20. flam:  The Flamsteed number as a distinct value
-//*		21. con:  The standard constellation abbreviation
-//*		22. comp, comp\_primary, base:  Identifies a star in a multiple star system.  comp = ID of companion star, comp\_primary = ID of primary star for this component, and base = catalog ID or name for this multi-star system.  Currently only used for Gliese stars.
-//*		23. lum:  Star's luminosity as a multiple of Solar luminosity.
-//*		24. var:  Star's standard variable star designation, when known.
-//*		25. var\_min, var\_max:  Star's approximate magnitude range, for variables.  This value is based on the Hp magnitudes for the range in the original Hipparcos catalog, adjusted to the V magnitude scale to match the "mag" field.
+//*	1. id: The database primary key.
+//*	2. hip: The star's ID in the Hipparcos catalog, if known.
+//*	3. hd: The star's ID in the Henry Draper catalog, if known.
+//*	4. hr: The star's ID in the Harvard Revised catalog, which is the same as its number in the Yale Bright Star Catalog.
+//*	5. gl: The star's ID in the third edition of the Gliese Catalog of Nearby Stars.
+//*	6. bf: The Bayer / Flamsteed designation, primarily from the Fifth Edition of the Yale Bright Star Catalog. This is a combination of the two designations. The Flamsteed number, if present, is given first; then a three-letter abbreviation for the Bayer Greek letter; the Bayer superscript number, if present; and finally, the three-letter constellation abbreviation. Thus Alpha Andromedae has the field value "21Alp And", and Kappa1 Sculptoris (no Flamsteed number) has "Kap1Scl".
+//*	7. ra, dec: The star's right ascension and declination, for epoch and equinox 2000.0.
+//*	8. proper: A common name for the star, such as "Barnard's Star" or "Sirius". I have taken these names primarily from the Hipparcos project's web site, which lists representative names for the 150 brightest stars and many of the 150 closest stars. I have added a few names to this list. Most of the additions are designations from catalogs mostly now forgotten (e.g., Lalande, Groombridge, and Gould ["G."]) except for certain nearby stars which are still best known by these designations.
+//*	9. dist: The star's distance in parsecs, the most common unit in astrometry. To convert parsecs to light years, multiply by 3.262. A value >= 100000 indicates missing or dubious (e.g., negative) parallax data in Hipparcos.
+//*	10. pmra, pmdec:  The star's proper motion in right ascension and declination, in milliarcseconds per year.
+//*	11. rv:  The star's radial velocity in km/sec, where known.
+//*	12. mag: The star's apparent visual magnitude.
+//*	13. absmag: The star's absolute visual magnitude (its apparent magnitude from a distance of 10 parsecs).
+//*	14. spect: The star's spectral type, if known.
+//*	15. ci: The star's color index (blue magnitude - visual magnitude), where known.
+//*	16. x,y,z: The Cartesian coordinates of the star, in a system based on the equatorial coordinates as seen from Earth. +X is in the direction of the vernal equinox (at epoch 2000), +Z towards the north celestial pole, and +Y in the direction of R.A. 6 hours, declination 0 degrees.
+//*	17. vx,vy,vz: The Cartesian velocity components of the star, in the same coordinate system described immediately above. They are determined from the proper motion and the radial velocity (when known). The velocity unit is parsecs per year; these are small values (around 1 millionth of a parsec per year), but they enormously simplify calculations using parsecs as base units for celestial mapping.
+//*	18. rarad, decrad, pmrarad, prdecrad:  The positions in radians, and proper motions in radians per year.
+//*	19. bayer:  The Bayer designation as a distinct value
+//*	20. flam:  The Flamsteed number as a distinct value
+//*	21. con:  The standard constellation abbreviation
+//*	22. comp, comp\_primary, base:  Identifies a star in a multiple star system.  comp = ID of companion star, comp\_primary = ID of primary star for this component, and base = catalog ID or name for this multi-star system.  Currently only used for Gliese stars.
+//*	23. lum:  Star's luminosity as a multiple of Solar luminosity.
+//*	24. var:  Star's standard variable star designation, when known.
+//*	25. var\_min, var\_max:  Star's approximate magnitude range, for variables.  This value is based on the Hp magnitudes for the range in the original Hipparcos catalog, adjusted to the V magnitude scale to match the "mag" field.
 //*
+//************************************************************************
+enum
+{
+	//*	note, this does not match the description above, in the data, PROPER is before RA.
+
+	kHYG_id		=	1,	// The database primary key.
+	kHYG_hip,			//*	The star's ID in the Hipparcos catalog, if known.
+	kHYG_hd,			//*	The star's ID in the Henry Draper catalog, if known.
+	kHYG_hr,			//*	The star's ID in the Harvard Revised catalog, which is the same as its number in the Yale Bright Star Catalog.
+	kHYG_gl,			//*	The star's ID in the third edition of the Gliese Catalog of Nearby Stars.
+	kHYG_bf,			//*	The Bayer / Flamsteed designation, primarily from the Fifth Edition of the Yale Bright Star Catalog. This is a combination of the two designations. The Flamsteed number, if present, is given first; then a three-letter abbreviation for the Bayer Greek letter; the Bayer superscript number, if present; and finally, the three-letter constellation abbreviation. Thus Alpha Andromedae has the field value "21Alp And", and Kappa1 Sculptoris (no Flamsteed number) has "Kap1Scl".
+	kHYG_proper,		//*	A common name for the star, such as "Barnard's Star" or "Sirius". I have taken these names primarily from the Hipparcos project's web site, which lists representative names for the 150 brightest stars and many of the 150 closest stars. I have added a few names to this list. Most of the additions are designations from catalogs mostly now forgotten (e.g., Lalande, Groombridge, and Gould ["G."]) except for certain nearby stars which are still best known by these designations.
+
+	kHYG_ra,
+	kHYG_dec,			//*	The star's right ascension and declination, for epoch and equinox 2000.0.
+	kHYG_dist,			//*	The star's distance in parsecs, the most common unit in astrometry. To convert parsecs to light years, multiply by 3.262. A value >= 100000 indicates missing or dubious (e.g., negative) parallax data in Hipparcos.
+
+	kHYG_pmra,
+	kHYG_pmdec,			//*	The star's proper motion in right ascension and declination, in milliarcseconds per year.
+	kHYG_rv,			//*	The star's radial velocity in km/sec, where known.
+	kHYG_mag,			//*	The star's apparent visual magnitude.
+	kHYG_absmag,		//*	The star's absolute visual magnitude (its apparent magnitude from a distance of 10 parsecs).
+	kHYG_spect,			//*	The star's spectral type, if known.
+	kHYG_ci,			//*	The star's color index (blue magnitude - visual magnitude), where known.
+
+	kHYG_x,
+	kHYG_y,
+	kHYG_z,				//*	The Cartesian coordinates of the star, in a system based on the equatorial coordinates as seen from Earth. +X is in the direction of the vernal equinox (at epoch 2000), +Z towards the north celestial pole, and +Y in the direction of R.A. 6 hours, declination 0 degrees.
+
+	kHYG_vx,
+	kHYG_vy,
+	kHYG_vz,			//*	The Cartesian velocity components of the star, in the same coordinate system described immediately above. They are determined from the proper motion and the radial velocity (when known). The velocity unit is parsecs per year; these are small values (around 1 millionth of a parsec per year), but they enormously simplify calculations using parsecs as base units for celestial mapping.
+
+	kHYG_rarad,
+	kHYG_decrad,
+	kHYG_pmrarad,
+	kHYG_prdecrad,		//*	The positions in radians, and proper motions in radians per year.
+	kHYG_bayer,			//*	The Bayer designation as a distinct value
+	kHYG_flam,			//*	The Flamsteed number as a distinct value
+	kHYG_con,			//*	The standard constellation abbreviation
+
+	kHYG_comp,
+	kHYG_comp_primary,
+	kHYG_base,			//*	Identifies a star in a multiple star system.  comp = ID of companion star, comp\_primary = ID of primary star for this component, and base = catalog ID or name for this multi-star system.  Currently only used for Gliese stars.
+	kHYG_lum,			//*	Star's luminosity as a multiple of Solar luminosity.
+	kHYG_var,			//*	Star's standard variable star designation, when known.
+
+	kHYG_var_min,
+	kHYG_var_max,		//*	Star's approximate magnitude range, for variables.  This value is based on the Hp magnitudes for the range in the original Hipparcos catalog, adjusted to the V magnitude scale to match the "mag" field.
+
+
+	kHYG_Last
+};
+
 //************************************************************************
 static void	ParseOneLineHYGdata(char *lineBuff, TYPE_CelestData *starRec)
 {
@@ -707,11 +762,24 @@ int		ccc;
 			//*	end of argument, do something with it
 			switch(argNum)
 			{
-				//*		1. id: The database primary key.
-				//*		2. hip: The star's ID in the Hipparcos catalog, if known.
+				case kHYG_id:	//*		1. id: The database primary key.
+					starRec->id	=	atoi(argString);
+					strcpy(starRec->shortName, "HYG");
+					strcat(starRec->shortName, argString);
+					break;
+
+				case kHYG_hip:		//*		2. hip: The star's ID in the Hipparcos catalog, if known.
+					if (argLen > 0)
+					{
+						starRec->id	=	atoi(argString);
+						strcpy(starRec->shortName, "HIP");
+						strcat(starRec->shortName, argString);
+					}
+					break;
 
 				//*		3. hd: The star's ID in the Henry Draper catalog, if known.
-				case 3:
+				case kHYG_hd:
+//					CONSOLE_DEBUG_W_NUM("kHYG_hd: argNum=", argNum);
 					if (argLen > 0)
 					{
 						if (argLen < (kShortNameMax - 2))
@@ -729,10 +797,14 @@ int		ccc;
 					break;
 
 				//*		8. proper: A common name for the star, such as "Barnard's Star" or "Sirius". I have taken these names primarily from the Hipparcos project's web site, which lists representative names for the 150 brightest stars and many of the 150 closest stars. I have added a few names to this list. Most of the additions are designations from catalogs mostly now forgotten (e.g., Lalande, Groombridge, and Gould ["G."]) except for certain nearby stars which are still best known by these designations.
-				case 7:	//*	long name
+				case kHYG_proper:
 					if (argLen < kLongNameMax)
 					{
 						strcat(starRec->longName, argString);
+//						if (argLen > 0)
+//						{
+//							CONSOLE_DEBUG_W_STR("longName", argString);
+//						}
 					}
 					else
 					{
@@ -744,20 +816,21 @@ int		ccc;
 					break;
 
 
-				//*		7. ra, dec: The star's right ascension and declination, for epoch and equinox 2000.0.
-				case 8:	//*	right ascension
+				//*	The star's right ascension and declination, for epoch and equinox 2000.0.
+				case kHYG_ra:	//*	right ascension
 					raDegrees		=	atof(argString);
 					break;
 
-				case 9:		//*	declination
+				case kHYG_dec:		//*	declination
 					declDegrees		=	atof(argString);
 					break;
 
-				case 14:	//*	magnitude
+				case kHYG_mag:	//*	magnitude
 					magnitude		=	atof(argString);
 					break;
 
-				case 16:
+				case kHYG_spect:
+//					CONSOLE_DEBUG_W_NUM("kHYG_spect: argNum=", argNum);
 					spectralClass	=	argString[0];
 					break;
 
@@ -819,6 +892,7 @@ int		ccc;
 		CONSOLE_DEBUG_W_DBL("magnitude", magnitude);
 		fprintf(stderr, "%s\r\n", lineBuff);
 	}
+//	CONSOLE_ABORT(__FUNCTION__);
 }
 
 //************************************************************************
@@ -847,6 +921,7 @@ double			hightestMagValue;
 	strcat(myFilePath, "hygdata_v3.csv");
 
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, myFilePath);
+	CONSOLE_DEBUG_W_NUM("kHYG_Last\t=", kHYG_Last);
 
 	filePointer	=	fopen(myFilePath, "r");
 	if (filePointer != NULL)
@@ -901,13 +976,11 @@ double			hightestMagValue;
 					}
 					else
 					{
+						DumpCelestDataStruct(__FUNCTION__, &hygData[recordCount]);
 						skippedCount++;
 					}
-
-
 				}
 			}
-
 			*objectCount	=	recordCount;
 		}
 		fclose(filePointer);
@@ -916,12 +989,12 @@ double			hightestMagValue;
 	{
 		CONSOLE_DEBUG_W_STR("Failed to read:", myFilePath);
 	}
-//	CONSOLE_DEBUG_W_NUM("HYG records read\t=", recordCount);
-//	CONSOLE_DEBUG_W_NUM("skippedCount    \t=", skippedCount);
-//	CONSOLE_DEBUG_W_NUM("Total lines     \t=", (recordCount + skippedCount));
-//	CONSOLE_DEBUG_W_NUM("validMagCount   \t=", validMagCount);
-//	CONSOLE_DEBUG_W_NUM("zeroMagCount    \t=", zeroMagCount);
-//	CONSOLE_DEBUG_W_DBL("hightestMagValue\t=", hightestMagValue);
+	CONSOLE_DEBUG_W_NUM("HYG records read\t=", recordCount);
+	CONSOLE_DEBUG_W_NUM("skippedCount    \t=", skippedCount);
+	CONSOLE_DEBUG_W_NUM("Total lines     \t=", (recordCount + skippedCount));
+	CONSOLE_DEBUG_W_NUM("validMagCount   \t=", validMagCount);
+	CONSOLE_DEBUG_W_NUM("zeroMagCount    \t=", zeroMagCount);
+	CONSOLE_DEBUG_W_DBL("hightestMagValue\t=", hightestMagValue);
 
 //	CONSOLE_ABORT(__FUNCTION__);
 	return(hygData);

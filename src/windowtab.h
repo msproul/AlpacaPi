@@ -164,6 +164,8 @@ class WindowTab
 				void	SetWidgetNumber(		const int widgetIdx, const int number);
 				void	SetWidgetNumber(		const int widgetIdx, const long number);
 				void	SetWidgetNumber(		const int widgetIdx, const double number);
+				void	SetWidgetNumber6F(		const int widgetIdx, const double number);
+
 				void	SetWidgetIcon(			const int widgetIdx, const int iconNumber);
 
 				void	SetWidgetHelpText(		const int widgetIdx, const char *newText);
@@ -327,5 +329,8 @@ virtual	void	AlpacaDisplayErrorMessage(const char *errorMsgString);
 
 void	SetRect(CvRect *theRect, const int top, const int left, const int bottom, const int right);
 void	InsetRect(CvRect *theRect, const int xInset, const int yInset);
+void	FormatTimeString(struct timeval *tv, char *timeString);
+void	FormatTimeString_Local(struct timeval *tv, char *timeString);
+void	FormatTimeString_TM(struct tm *timeStruct, char *timeString);
 
 #endif // _WINDOW_TAB_H_

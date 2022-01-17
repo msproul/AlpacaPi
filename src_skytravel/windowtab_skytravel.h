@@ -54,6 +54,7 @@ enum
 	kSkyTravel_Btn_Hipparcos,
 	kSkyTravel_Btn_Draper,
 	kSkyTravel_Btn_AAVSOalerts,
+	kSkyTravel_Btn_Asteroids,
 	kSkyTravel_Btn_Gaia,
 
 	kSkyTravel_Btn_MagnitudeDisp,
@@ -78,7 +79,7 @@ enum
 	kSkyTravel_Btn_Plus,
 	kSkyTravel_Btn_Minus,
 	kSkyTravel_Btn_ZoomLevel,
-	kSkyTravel_Telescope_ViewAngle,
+	kSkyTravel_Screen_ViewAngle,
 	kSkyTravel_DisplayedStarCnt,
 
 	kSkyTravel_DomeIndicator,
@@ -179,6 +180,8 @@ class WindowTabSkyTravel: public WindowTab
 				void	PlotObjectsByDataSource(bool			enabled,
 												TYPE_CelestData	*objectptr,
 												long			maxObjects);
+
+				int		SetStarTextColorAndViewAngle(int dataSource);
 				long	Search_and_plot(TYPE_CelestData	*objectptr, long maxObjects, bool dataIsSorted=true);
 				void	DrawObjectByShape(int xcoord, int ycoord, int shape, int magn);
 
@@ -188,6 +191,21 @@ class WindowTabSkyTravel: public WindowTab
 										int				textColor,
 										double			viewAngle_LabelDisplay,
 										double			viewAngle_InfoDisplay);
+				void	DrawAsteroidFancy(	const int		xcoord,
+											const int		ycoord,
+											TYPE_CelestData	*theStar,
+											int				textColor,
+											double			viewAngle_LabelDisplay,
+											double			viewAngle_InfoDisplay);
+
+
+				void	DrawStarFancy_Label(	const int		xcoord,
+												const int		ycoord,
+												const int		starRadiusPixels,
+												TYPE_CelestData	*theStar,
+												int				textColor,
+												double			viewAngle_LabelDisplay,
+												double			viewAngle_InfoDisplay);
 				void 	DrawStar_shape(short xcoord, short ycoord, short index);
 				void	DrawVector(	short	color,
 									short	xx,
@@ -204,7 +222,9 @@ class WindowTabSkyTravel: public WindowTab
 				void	DrawHorizon(void);
 				void	DrawHorizontalArc(double elevAngle, double startAz, double endAz);
 				void	DrawVerticalArc(double azimuthAngle, double startElev, double endElev);
-				int		DrawGreatCircle(const double declinationAngle_rad, const bool forceNumberDraw=false);
+				int		DrawGreatCircle(	const double	declinationAngle_rad,
+											const bool		useDashedLines,
+											const bool		forceNumberDraw=false);
 				int		DrawNorthSouthLine(double rightAscen);
 				void	DrawScale(void);
 
@@ -234,6 +254,11 @@ class WindowTabSkyTravel: public WindowTab
 				void	DrawTelescopeReticle(int screenXX, int screenYY);
 				int		DrawTelescopeFOV(void);
 				bool	DrawTelescopeFOV(TYPE_CameraFOV *fovPtr, short	telescopeXX, short telescopeYY);
+				void	CovertAzEl_to_RA_DEC(	double	latitude_rad,
+												double	azimuth_rad,
+												double	elev_rad,
+												double	*ra,
+												double	*dec);
 				void	DrawDomeSlit(void);
 				void	CenterOnDomeSlit(void);
 
@@ -252,6 +277,9 @@ class WindowTabSkyTravel: public WindowTab
 
 				void	DrawPolarAlignmentCircles(TYPE_CelestData *polarAlignCenters, long polarAlignCnt);
 				void	DrawPolarAlignmentCenterVector(TYPE_CelestData *polarAlignCenters, long polarAlignCnt);
+
+				int		DrawAsteroids(void);
+
 				//*	this routine draws cute little easter eggs along the horizon,
 				void	MapTokens(TYPE_Time *timeptr, TYPE_LatLon *locptr);
 
@@ -261,7 +289,7 @@ class WindowTabSkyTravel: public WindowTab
 				bool	SearchSkyObjectsDataListByNumber(	TYPE_CelestData *starDataPtr,
 															long			starCount,
 															int				dataSource,
-															char			*namePrefix,
+															const char		*namePrefix,
 															char			*searchString);
 				bool	SearchSkyObjectsDataListByShortName(TYPE_CelestData *starDataPtr,
 															long			starCount,
@@ -273,6 +301,7 @@ class WindowTabSkyTravel: public WindowTab
 															char			*searchString);
 				bool	SearchSkyObjectsConstellations(const char *searchString);
 				bool	SearchSkyObjectsConstOutlines(const char *searchString);
+				bool	SearchAsteroids(const char *searchString);
 
 				bool	cFoundSomething;
 				double	cFound_newRA;
@@ -280,6 +309,8 @@ class WindowTabSkyTravel: public WindowTab
 				char	cFoundName[64];
 				char	cFoundDatabase[64];
 
+				double	cViewAngle_LabelDisplay;
+				double	cViewAngle_InfoDisplay;
 
 
 		uint32_t			cLastUpdateTime_ms;

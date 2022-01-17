@@ -26,6 +26,7 @@
 //*	Oct 28,	2021	<MLS> Added day/night sky option, blue sky during the day
 //*	Dec 13,	2021	<MLS> Added buttons to run Startup and Shutdown scripts
 //*	Dec 13,	2021	<MLS> Added RunShellScript_Thead() and RunShellScript()
+//*	Dec 31,	2021	<MLS> Added Asteroid count display to settings window
 //*****************************************************************************
 
 #include	<pthread.h>
@@ -45,8 +46,10 @@
 #include	"observatory_settings.h"
 #include	"controller_starlist.h"
 #include	"controller_constList.h"
+#include	"controller_GaiaRemote.h"
 
 #include	"SkyStruc.h"
+#include	"AsteroidData.h"
 
 #define	kSkyT_SettingsHeight	100
 
@@ -171,8 +174,8 @@ int		radioBtnWidth;
 	//-----------------------------------------------------
 	if (gObseratorySettings.ValidLatLon)
 	{
-		SetWidgetNumber(kSkyT_Settings_LatValue1, gObseratorySettings.Latitude);
-		SetWidgetNumber(kSkyT_Settings_LonValue1, gObseratorySettings.Longitude);
+		SetWidgetNumber6F(kSkyT_Settings_LatValue1, gObseratorySettings.Latitude);
+		SetWidgetNumber6F(kSkyT_Settings_LonValue1, gObseratorySettings.Longitude);
 
 		FormatHHMMSS(gObseratorySettings.Latitude, textString, true);
 		SetWidgetText(		kSkyT_Settings_LatValue2,	textString);
@@ -366,6 +369,9 @@ int		radioBtnWidth;
 	SetWidgetText(		kSkyT_Settings_DataHipparcos_txt,	"Hipparcos Data count");
 	SetWidgetNumber(	kSkyT_Settings_DataHipparcos_cnt,	gHipObjectCount);
 
+	SetWidgetText(		kSkyT_Settings_DataHYG_txt,			"HYG Data count");
+	SetWidgetNumber(	kSkyT_Settings_DataHYG_cnt,			gHYGObjectCount);
+
 	SetWidgetText(		kSkyT_Settings_DataMessier_txt,		"Messier Data count");
 	SetWidgetNumber(	kSkyT_Settings_DataMessier_cnt,		gMessierOjbectCount);
 
@@ -384,21 +390,40 @@ int		radioBtnWidth;
 	SetWidgetText(		kSkyT_Settings_Gaia_txt,			"Gaia Data count");
 	SetWidgetNumber(	kSkyT_Settings_Gaia_cnt,			gGaiaObjectCnt);
 
+#ifdef _ENABLE_ASTERIODS_
+	strcpy(textString, "Asteroids");
+	if (strlen(gAsteroidDatbase) > 0)
+	{
+		strcat(textString, " (");
+		strcat(textString, gAsteroidDatbase);
+		strcat(textString, ")");
+	}
+#else
+	strcpy(textString, "Asteroids disabled");
+#endif
+	SetWidgetText(		kSkyT_Settings_Asteroids_txt,		textString);
+	SetWidgetNumber(	kSkyT_Settings_Asteroids_cnt,		gAsteroidCnt);
+
 
 
 	//*	set the ones we can double click to green
-	SetWidgetTextColor(	kSkyT_Settings_DataAAVSO_txt,	CV_RGB(0,	255,	0));
-	SetWidgetTextColor(	kSkyT_Settings_DataAAVSO_cnt,	CV_RGB(0,	255,	0));
-	SetWidgetTextColor(	kSkyT_Settings_DataMessier_txt,	CV_RGB(0,	255,	0));
-	SetWidgetTextColor(	kSkyT_Settings_DataMessier_cnt,	CV_RGB(0,	255,	0));
-	SetWidgetTextColor(	kSkyT_Settings_DataNGC_txt,		CV_RGB(0,	255,	0));
-	SetWidgetTextColor(	kSkyT_Settings_DataNGC_cnt,		CV_RGB(0,	255,	0));
+	SetWidgetTextColor(	kSkyT_Settings_DataAAVSO_txt,		CV_RGB(0,	255,	0));
+	SetWidgetTextColor(	kSkyT_Settings_DataAAVSO_cnt,		CV_RGB(0,	255,	0));
+	SetWidgetTextColor(	kSkyT_Settings_DataMessier_txt,		CV_RGB(0,	255,	0));
+	SetWidgetTextColor(	kSkyT_Settings_DataMessier_cnt,		CV_RGB(0,	255,	0));
+	SetWidgetTextColor(	kSkyT_Settings_DataNGC_txt,			CV_RGB(0,	255,	0));
+	SetWidgetTextColor(	kSkyT_Settings_DataNGC_cnt,			CV_RGB(0,	255,	0));
 
 	SetWidgetTextColor(	kSkyT_Settings_DataYALE_txt,		CV_RGB(0,	255,	0));
 	SetWidgetTextColor(	kSkyT_Settings_DataYALE_cnt,		CV_RGB(0,	255,	0));
 
-	SetWidgetTextColor(	kSkyT_Settings_Constellations_txt,		CV_RGB(0,	255,	0));
-	SetWidgetTextColor(	kSkyT_Settings_Constellations_cnt,		CV_RGB(0,	255,	0));
+	SetWidgetTextColor(	kSkyT_Settings_Constellations_txt,	CV_RGB(0,	255,	0));
+	SetWidgetTextColor(	kSkyT_Settings_Constellations_cnt,	CV_RGB(0,	255,	0));
+
+#ifdef _ENABLE_REMOTE_GAIA_
+	SetWidgetTextColor(	kSkyT_Settings_Gaia_txt,			CV_RGB(0,	255,	0));
+	SetWidgetTextColor(	kSkyT_Settings_Gaia_cnt,			CV_RGB(0,	255,	0));
+#endif // _ENABLE_REMOTE_GAIA_
 
 	//-------------------------------------------------------------------------
 	yLoc		=	cTabVertOffset;
@@ -813,6 +838,13 @@ void	WindowTabSTsettings::ProcessDoubleClick(const int	widgetIdx,
 				CreateConstellationListWindow(gConstVecotrPtr, gConstVectorCnt);
 			}
 			break;
+
+	#ifdef _ENABLE_REMOTE_GAIA_
+		case kSkyT_Settings_Gaia_txt:
+		case kSkyT_Settings_Gaia_cnt:
+			CreateGaiaRemoteListWindow();
+			break;
+	#endif // _ENABLE_REMOTE_GAIA_
 
 	}
 }

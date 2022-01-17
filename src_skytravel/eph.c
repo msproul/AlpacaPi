@@ -7,7 +7,7 @@
 //*	Edit history
 //*****************************************************************************
 //*	Written by Frank Covets and Clif Ashcraft
-//*	May  2,	1996	<MLS> (Mark Sproul) Starting on Sky Travel for Frank and Clif
+//*	May  2,	1996	<MLS> (Mark Sproul) Starting on SkyTravel for Frank and Clif
 //*	Nov 20,	1999	<MLS> Minor formatting cleanup to improve readability
 //*	Jan  2,	2021	<MLS> More formatting cleanup
 //*****************************************************************************
@@ -230,7 +230,8 @@ TYPE_SpherTrig	sphptr;
 //**************************************************************************
 static	void	uparg(double *primary_arg,double dte)
 {
-double ipart;
+double	ipart;
+int		index;
 //*	note args 6 and 30 are blank
 double	intercept_arg[33]=
 	{
@@ -283,53 +284,52 @@ double	intercept_arg[33]=
 //*	note args 6 and 30 are blank
 double	slope_arg[33]=
 	{
-	.03660110129,	//*0(01)Moon	Lm
-	.03629164709,	//*1(02)		Gm
-	.03674819520,	//*2(03)		Fm
-	.03386319198,	//*3(04)		D
-	-.00014709391,	//*4(05)		Wm
+	0.03660110129,	//*0(01)Moon	Lm
+	0.03629164709,	//*1(02)		Gm
+	0.03674819520,	//*2(03)		Fm
+	0.03386319198,	//*3(04)		D
+	-0.00014709391,	//*4(05)		Wm
 
-	.000000,		//*(06)
+	0.000000,		//*(06)
 
-	.00273790931,	//*5(07)Sun	Ls
-	.00273777850,	//*6(08)	Gs
+	0.00273790931,	//*5(07)Sun	Ls
+	0.00273777850,	//*6(08)	Gs
 
-	.01136771400,	//*7(09)Mer	L1
-	.01136759566,	//*8(10)	G1
-	.01136762384,	//*9(11)	F1
+	0.01136771400,	//*7(09)Mer	L1
+	0.01136759566,	//*8(10)	G1
+	0.01136762384,	//*9(11)	F1
 
-	.00445046867,	//*10(12)Ven	L2
-	.00445036173,	//*11(13)		G2
-	.00445040017,	//*12(14)		F2
+	0.00445046867,	//*10(12)Ven	L2
+	0.00445036173,	//*11(13)		G2
+	0.00445040017,	//*12(14)		F2
 
-	.00145575328,	//*13(15)Mar	L4
-	.00145561327,	//*14(16)		G4
-	.00145569465,	//*15(17)		F4
+	0.00145575328,	//*13(15)Mar	L4
+	0.00145561327,	//*14(16)		G4
+	0.00145569465,	//*15(17)		F4
 
-	.00023080893,	//*16(18)Jup	L5
-	.00023080893,	//*17(19)		G5
-	.00023080893,	//*18(20)		F5
+	0.00023080893,	//*16(18)Jup	L5
+	0.00023080893,	//*17(19)		G5
+	0.00023080893,	//*18(20)		F5
 
-	.00009294371,	//*19(21)Sat	L6
-	.00009294371,	//*20(22)		G6
-	.00009294371,	//*21(23)		F6
+	0.00009294371,	//*19(21)Sat	L6
+	0.00009294371,	//*20(22)		G6
+	0.00009294371,	//*21(23)		F6
 
-	.00003269438,	//*22(24)Ura	L7
-	.00003269438,	//*23(25)		G7
-	.00003265562,	//*24(26)		F7
+	0.00003269438,	//*22(24)Ura	L7
+	0.00003269438,	//*23(25)		G7
+	0.00003265562,	//*24(26)		F7
 
-	.00001672092,	//*25(27)Nep	L8
-	.00001672092,	//*26(28)		G8
-	.00001663715,	//*27(29)		F8
+	0.00001672092,	//*25(27)Nep	L8
+	0.00001672092,	//*26(28)		G8
+	0.00001663715,	//*27(29)		F8
 
-	.000000,	//*(30)
+	0.000000,	//*(30)
 
-	.00001115482,	//*28(31)Plu	L9
-	.00001104864,	//*29(32)		G9
-	.00001104864	//*30(33)		F9
+	0.00001115482,	//*28(31)Plu	L9
+	0.00001104864,	//*29(32)		G9
+	0.00001104864	//*30(33)		F9
 	};
 
-int index;
 
 	for	(index=0;index<33;index++)	//* !! note - in radians !!
 	{
@@ -437,9 +437,9 @@ sun_series_struct *serptr;
 
 		switch(l)
 		{
-			case 0: serptr	=	&sun_v_data[ii];break;
-			case 1: serptr	=	&sun_u_data[ii];break;
-			case 2: serptr	=	&sun_w_data[ii];break;
+			case 0: serptr	=	&sun_v_data[ii];	break;
+			case 1: serptr	=	&sun_u_data[ii];	break;
+			case 2: serptr	=	&sun_w_data[ii];	break;
 		}
 		do
 		{
@@ -509,9 +509,9 @@ mer_series_struct *serptr;
 
 		switch(l)
 		{
-			case 0: serptr	=	&mer_v_data[i];break;
-			case 1: serptr	=	&mer_u_data[i];break;
-			case 2: serptr	=	&mer_w_data[i];break;
+			case 0: serptr	=	&mer_v_data[i];	break;
+			case 1: serptr	=	&mer_u_data[i];	break;
+			case 2: serptr	=	&mer_w_data[i];	break;
 		}
 
 		do
@@ -520,13 +520,26 @@ mer_series_struct *serptr;
 			for(j=0;j<MERN;j++)
 			{
 				k	=	serptr->trig_arg[j];
-				if (k!=0) sum+=k*primary_arg[mer_prim_arg_index[j]];
+				if (k != 0)
+				{
+					sum	+=	k*primary_arg[mer_prim_arg_index[j]];
+				}
 			}
-			if (serptr->sin_cos=='s') sum	=	sin(sum);
-				else sum	=	cos(sum);
+			if (serptr->sin_cos=='s')
+			{
+				sum	=	sin(sum);
+			}
+			else
+			{
+				sum	=	cos(sum);
+			}
 			prod	=	sum;
 			k		=	serptr->pwr_of_t;
-			while (k--!=0) prod	*=	cent;	//* the time power
+			while (k-- != 0)
+			{
+				prod	*=	cent;	//* the time power
+			}
+
 			prod	*=	serptr->coeff;
 			vuw[l]	+=	prod;
 			i++;
@@ -564,17 +577,19 @@ ven_series_struct *serptr;
 
 	//* compute the vuw-series
 
-	for(l=0;l<3;l++) vuw[l]=0.;
-
+	for(l=0;l<3;l++)
+	{
+		vuw[l]=0.;
+	}
 	for(l=0;l<3;l++)
 	{
 		i=0;
 
 		switch(l)
 		{
-			case 0: serptr=&ven_v_data[i];break;
-			case 1: serptr=&ven_u_data[i];break;
-			case 2: serptr=&ven_w_data[i];break;
+			case 0: serptr=&ven_v_data[i];	break;
+			case 1: serptr=&ven_u_data[i];	break;
+			case 2: serptr=&ven_w_data[i];	break;
 		}
 
 		do
@@ -589,10 +604,15 @@ ven_series_struct *serptr;
 				else sum=cos(sum);
 			prod	=	sum;
 			k		=	serptr->pwr_of_t;
-			while (k--!=0) prod*=cent;		//* the time power
+
+			while (k-- != 0)
+			{
+				prod*=cent;		//* the time power
+			}
 			prod	*=	serptr->coeff;
 			vuw[l]	+=	prod;
 			i++;
+
 			switch(l)
 			{
 				case 0: serptr=&ven_v_data[i];break;
@@ -602,9 +622,9 @@ ven_series_struct *serptr;
 		} while (serptr->coeff!=0);
 	}
 
-	planptr->v=vuw[0];
-	planptr->u=vuw[1];
-	planptr->w=vuw[2];
+	planptr->v	=	vuw[0];
+	planptr->u	=	vuw[1];
+	planptr->w	=	vuw[2];
 }
 
 //*****************************************************************************
@@ -642,7 +662,7 @@ mar_series_struct *serptr;
 
 		do
 		{
-			sum=0.;
+			sum	=	0.;
 			for(j=0;j<MARN;j++)
 			{
 				k	=	serptr->trig_arg[j];
@@ -1021,7 +1041,8 @@ double	conv	=	12.0 / PI;	//* converts radians to hours
 
 //*****************************************************************************
 //*	update series
-//**************************************************************************
+//*****************************************************************************
+//*	https://adsabs.harvard.edu/full/1979ApJS...41..391V
 static	void	pseries(double *primary_arg, double dte, int planet, planet_struct *planptr)
 {
 //* scale factor for dist
@@ -1047,16 +1068,16 @@ double scale_factor[10]=
 
 	switch(planet)
 	{
-		case MON:update_mon_series(primary_arg,dte,planptr);break;
-		case SUN:update_sun_series(primary_arg,dte,planptr);break;
-		case MER:update_mer_series(primary_arg,dte,planptr);break;
-		case VEN:update_ven_series(primary_arg,dte,planptr);break;
-		case MAR:update_mar_series(primary_arg,dte,planptr);break;
-		case JUP:update_jup_series(primary_arg,dte,planptr);break;
-		case SAT:update_sat_series(primary_arg,dte,planptr);break;
-		case URA:update_ura_series(primary_arg,dte,planptr);break;
-		case NEP:update_nep_series(primary_arg,dte,planptr);break;
-		case PLU:update_plu_series(primary_arg,dte,planptr);break;
+		case MON:	update_mon_series(primary_arg,dte,planptr);	break;
+		case SUN:	update_sun_series(primary_arg,dte,planptr);	break;
+		case MER:	update_mer_series(primary_arg,dte,planptr);	break;
+		case VEN:	update_ven_series(primary_arg,dte,planptr);	break;
+		case MAR:	update_mar_series(primary_arg,dte,planptr);	break;
+		case JUP:	update_jup_series(primary_arg,dte,planptr);	break;
+		case SAT:	update_sat_series(primary_arg,dte,planptr);	break;
+		case URA:	update_ura_series(primary_arg,dte,planptr);	break;
+		case NEP:	update_nep_series(primary_arg,dte,planptr);	break;
+		case PLU:	update_plu_series(primary_arg,dte,planptr);	break;
 		default: break;
 	}
 	planptr->ra		=	primary_arg[argindex[planet]]+asin(planptr->w/sqrt(planptr->u-(planptr->v*planptr->v)));	//* right ascension

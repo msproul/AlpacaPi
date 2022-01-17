@@ -36,6 +36,8 @@
 #++	Apr 20,	2021	<MLS> Added _ENABLE_TELESCOPE_RIGEL_
 #++	Apr 26,	2021	<MLS> Added _ENABLE_FILTERWHEEL_ZWO_
 #++	Apr 26,	2021	<MLS> Added _ENABLE_FILTERWHEEL_ATIK_
+#++	Jan  6,	2022	<MLS> Added _ENABLE_REMOTE_SQL_  & _ENABLE_REMOTE_GAIA_
+#++	Jan 13,	2022	<MLS> Added _ENABLE_ASTERIODS_
 ######################################################################################
 
 #PLATFORM			=	x86
@@ -737,8 +739,8 @@ dome		:				$(CPP_OBJECTS)				\
 #make rortest
 #rortest	:	DEFINEFLAGS		+=	-D_ENABLE_DOME_
 rortest		:	DEFINEFLAGS		+=	-D_ENABLE_ROR_
-rortest		:					$(ROR_OBJECTS)				\
-							$(SOCKET_OBJECTS)			\
+rortest		:					$(ROR_OBJECTS)			\
+								$(SOCKET_OBJECTS)		\
 
 				$(LINK)  								\
 							$(ROR_OBJECTS)				\
@@ -785,6 +787,7 @@ rorpi2		:				$(ROR_OBJECTS)				\
 pi		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
 pi		:		DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_
 pi		:		DEFINEFLAGS		+=	-D_ENABLE_ROTATOR_
+pi		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_
 pi		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_ZWO_
 #pi		:		DEFINEFLAGS		+=	-D_ENABLE_SAFETYMONITOR_
 #pi		:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_
@@ -1194,7 +1197,8 @@ zwo		:		$(CPP_OBJECTS)				\
 finder		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
 #finder		:		DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_
 #finder		:		DEFINEFLAGS		+=	-D_ENABLE_ROTATOR_
-finder		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_ZWO_
+#finder		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_
+#finder		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_ZWO_
 #finder		:		DEFINEFLAGS		+=	-D_ENABLE_SAFETYMONITOR_
 finder		:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_
 #finder		:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
@@ -1207,7 +1211,7 @@ finder		:		DEFINEFLAGS		+=	-D_ENABLE_QHY_
 finder		:		DEFINEFLAGS		+=	-D_ENABLE_ATIK_
 finder		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
 finder		:		DEFINEFLAGS		+=	-D_ENABLE_WIRING_PI_
-finder		:		DEFINEFLAGS		+=	-D_ENABLE_PWM_SWITCH_
+#finder		:		DEFINEFLAGS		+=	-D_ENABLE_PWM_SWITCH_
 #finder		:		DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
 finder		:		PLATFORM		=	armv7
 finder		:		ATIK_LIB_DIR	=	$(ATIK_LIB_MASTER_DIR)/ARM/x86/NoFlyCapture
@@ -1293,6 +1297,7 @@ shutter		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
 shutter		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
 shutter		:		DEFINEFLAGS		+=	-D_ENABLE_SHUTTER_
 #shutter		:		DEFINEFLAGS		+=	-D_ENABLE_PWM_SWITCH_
+shutter		:		DEFINEFLAGS		+=	-D_ENABLE_STATUS_SWITCH_
 shutter		:		DEFINEFLAGS		+=	-D_ENABLE_WIRING_PI_
 shutter		:		PLATFORM		=	armv7
 #shutter		:		ATIK_LIB_DIR	=	$(ATIK_LIB_MASTER_DIR)/ARM/x86/NoFlyCapture
@@ -1721,6 +1726,7 @@ camera		:			$(CONTROLLER_OBJECTS)					\
 SRC_SKYTRAVEL=./src_skytravel/
 SKYTRAVEL_OBJECTS=											\
 				$(OBJECT_DIR)aavso_data.o					\
+				$(OBJECT_DIR)AsteroidData.o					\
 				$(OBJECT_DIR)ConstellationData.o			\
 				$(OBJECT_DIR)controller_camera.o			\
 				$(OBJECT_DIR)controllerImageArray.o			\
@@ -1791,6 +1797,14 @@ SKYTRAVEL_OBJECTS=											\
 				$(OBJECT_DIR)YaleStarCatalog.o				\
 
 
+
+######################################################################################
+GAIA_SQL_OBJECTS=											\
+				$(OBJECT_DIR)GaiaSQL.o						\
+				$(OBJECT_DIR)controller_GaiaRemote.o		\
+				$(OBJECT_DIR)windowtab_GaiaRemote.o			\
+
+
 ######################################################################################
 #make skytravel
 #pragma mark camera-controller
@@ -1807,6 +1821,10 @@ sky		:	DEFINEFLAGS		+=	-D_CONTROLLER_USES_ALPACA_
 sky		:	DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_CONTROLLER_
 sky		:	DEFINEFLAGS		+=	-D_ENABLE_SLIT_TRACKER_
 sky		:	DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
+sky		:	DEFINEFLAGS		+=	-D_ENABLE_GAIA_
+sky		:	DEFINEFLAGS		+=	-D_ENABLE_ASTERIODS_
+#sky		:	DEFINEFLAGS		+=	-D_ENABLE_REMOTE_SQL_
+#sky		:	DEFINEFLAGS		+=	-D_ENABLE_REMOTE_GAIA_
 sky		:	INCLUDES		+=	-I$(SRC_SKYTRAVEL)
 
 sky		:				$(SKYTRAVEL_OBJECTS)					\
@@ -1822,6 +1840,47 @@ sky		:				$(SKYTRAVEL_OBJECTS)					\
 							-o skytravel
 
 #							$(CONTROLLER_OBJECTS)				\
+
+
+######################################################################################
+#make sql
+#pragma mark camera-controller
+sql		:	DEFINEFLAGS		+=	-D_INCLUDE_CTRL_MAIN_
+sql		:	DEFINEFLAGS		+=	-D_ENABLE_SKYTRAVEL_
+sql		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_CAMERA_
+sql		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_DOME_
+sql		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_FOCUSERS_
+sql		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
+sql		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_SWITCHES_
+sql		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_TELESCOPE_
+sql		:	DEFINEFLAGS		+=	-D_ENABLE_FITS_
+sql		:	DEFINEFLAGS		+=	-D_CONTROLLER_USES_ALPACA_
+sql		:	DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_CONTROLLER_
+sql		:	DEFINEFLAGS		+=	-D_ENABLE_SLIT_TRACKER_
+sql		:	DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
+sql		:	DEFINEFLAGS		+=	-D_ENABLE_ASTERIODS_
+sql		:	DEFINEFLAGS		+=	-D_ENABLE_REMOTE_SQL_
+sql		:	DEFINEFLAGS		+=	-D_ENABLE_REMOTE_GAIA_
+sql		:	INCLUDES		+=	-I$(SRC_SKYTRAVEL)
+
+sql		:				$(SKYTRAVEL_OBJECTS)				\
+						$(GAIA_SQL_OBJECTS)					\
+						$(CONTROLLER_BASE_OBJECTS)			\
+
+
+				$(LINK)  									\
+						$(SKYTRAVEL_OBJECTS)				\
+						$(GAIA_SQL_OBJECTS)					\
+						$(CONTROLLER_BASE_OBJECTS)			\
+						$(OPENCV_LINK)						\
+						-lpthread							\
+						-lmysqlclient						\
+						-lcfitsio							\
+						-o skytravel
+
+#						$(CONTROLLER_OBJECTS)				\
+
+
 
 ######################################################################################
 #pragma mark camera-controller
@@ -2855,6 +2914,9 @@ $(OBJECT_DIR)polaralign.o :				$(SRC_SKYTRAVEL)polaralign.cpp	\
 $(OBJECT_DIR)windowtab_skytravel.o :	$(SRC_SKYTRAVEL)windowtab_skytravel.cpp	\
 										$(SRC_SKYTRAVEL)windowtab_skytravel.h	\
 										$(SRC_DIR)windowtab.h					\
+										$(SRC_SKYTRAVEL)AsteroidData.h			\
+										$(SRC_SKYTRAVEL)aavso_data.h			\
+										$(SRC_SKYTRAVEL)StarData.h				\
 										$(SRC_SKYTRAVEL)SkyStruc.h
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYTRAVEL)windowtab_skytravel.cpp -o$(OBJECT_DIR)windowtab_skytravel.o
 
@@ -2911,6 +2973,27 @@ $(OBJECT_DIR)ConstellationData.o :		$(SRC_SKYTRAVEL)ConstellationData.c	\
 $(OBJECT_DIR)GaiaData.o :				$(SRC_SKYTRAVEL)GaiaData.c	\
 										$(SRC_SKYTRAVEL)GaiaData.h
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYTRAVEL)GaiaData.c -o$(OBJECT_DIR)GaiaData.o
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)GaiaSQL.o :				$(SRC_SKYTRAVEL)GaiaSQL.cpp	\
+										$(SRC_SKYTRAVEL)GaiaSQL.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYTRAVEL)GaiaSQL.cpp -o$(OBJECT_DIR)GaiaSQL.o
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)controller_GaiaRemote.o :	$(SRC_SKYTRAVEL)controller_GaiaRemote.cpp	\
+										$(SRC_SKYTRAVEL)controller_GaiaRemote.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYTRAVEL)controller_GaiaRemote.cpp -o$(OBJECT_DIR)controller_GaiaRemote.o
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)windowtab_GaiaRemote.o :	$(SRC_SKYTRAVEL)windowtab_GaiaRemote.cpp	\
+										$(SRC_SKYTRAVEL)windowtab_GaiaRemote.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYTRAVEL)windowtab_GaiaRemote.cpp -o$(OBJECT_DIR)windowtab_GaiaRemote.o
+
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)AsteroidData.o :			$(SRC_SKYTRAVEL)AsteroidData.c	\
+										$(SRC_SKYTRAVEL)AsteroidData.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYTRAVEL)AsteroidData.c -o$(OBJECT_DIR)AsteroidData.o
 
 
 

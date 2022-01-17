@@ -144,6 +144,8 @@ int		iii;
 		SetWidgetText(			(boxNumber + 4),	"OFF");
 		SetWidgetBGColor(		(boxNumber + 4),	CV_RGB(255, 255, 255));
 
+
+
 		boxNumber		+=	kBoxesPerSwitch;
 		yLoc			+=	cBtnHeight;
 		yLoc			+=	4;
@@ -287,21 +289,13 @@ int		boxNum;
 //*****************************************************************************
 void	WindowTabSwitch::TurnAllSwitchesOff(void)
 {
-int		switchNum;
-bool	validData;
-char	dataString[128];
+ControllerSwitch	*myControllerSwitch;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
-
-	for (switchNum=0; switchNum<cValidSwitchCount; switchNum++)
+	if (cParentObjPtr != NULL)
 	{
-		sprintf(dataString,		"Id=%d&State=false", switchNum);
-//		CONSOLE_DEBUG_W_STR("dataString=", dataString);
-		validData	=	AlpacaSendPutCmd(	"switch",	"setswitch",		dataString);
-		if (validData == false)
-		{
-			CONSOLE_DEBUG("AlpacaSendPutCmd() failed");
-		}
+		myControllerSwitch		=	(ControllerSwitch *)cParentObjPtr;
+		myControllerSwitch->TurnAllSwitchesOff();
 	}
 }
 

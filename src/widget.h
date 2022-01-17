@@ -92,7 +92,7 @@ enum
 };
 
 #define	kMaxWidgetStrLen	512
-#define	kMaxHelpTextStrLen	64
+#define	kMaxHelpTextStrLen	96
 #define	kMaxTabStops		10
 //*****************************************************************************
 typedef struct

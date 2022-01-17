@@ -185,9 +185,6 @@ char	lineBuff[64];
 		cAboutBoxTabObjPtr->SetParentObjectPtr(this);
 	}
 
-
-
-
 	//*	display the IPaddres/port
 	if (cValidIPaddr)
 	{
@@ -199,7 +196,6 @@ char	lineBuff[64];
 		SetWindowIPaddrInfo(lineBuff, true);
 	}
 }
-
 
 #pragma mark -
 
@@ -239,10 +235,18 @@ void	ControllerCamNormal::AlpacaDisplayErrorMessage(const char *errorMsgString)
 //*****************************************************************************
 void	ControllerCamNormal::UpdateSupportedActions(void)
 {
-	SetWidgetValid(kTab_Camera,		kCameraBox_Readall,		cHas_readall);
+	SetWidgetValid(kTab_Camera,		kCameraBox_Readall,				cHas_readall);
+	SetWidgetValid(kTab_Camera,		kCameraBox_FlipText,			cHas_Flip);
+	SetWidgetValid(kTab_Camera,		kCameraBox_FlipValue,			cHas_Flip);
+	SetWidgetValid(kTab_Camera,		kCameraBox_FlipHorzCheckBox,	cHas_Flip);
+	SetWidgetValid(kTab_Camera,		kCameraBox_FlipVertCheckBox,	cHas_Flip);
+
+
 	SetWidgetValid(kTab_Settings,	kCamSet_Readall,		cHas_readall);
 //	SetWidgetValid(kTab_Graphs,		kHistogram_Readall,		cHas_readall);
 	SetWidgetValid(kTab_FileList,	kFileList_Readall,		cHas_readall);
+
+
 
 	if (cHas_readall == false)
 	{
@@ -444,6 +448,8 @@ void	ControllerCamNormal::UpdatePercentCompleted(void)
 {
 char			linebuff[128];
 
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+
 	sprintf(linebuff, "%d %% ", cCameraProp.PercentCompleted);
 	SetWidgetText(kTab_Camera, kCameraBox_PercentCompleted, linebuff);
 }
@@ -588,6 +594,14 @@ void	ControllerCamNormal::UpdateDisplayModes(void)
 	SetWidgetChecked(kTab_Camera, kCameraBox_SaveAll,		cSaveAllImages);
 
 
+}
+
+//*****************************************************************************
+void	ControllerCamNormal::UpdateFlipMode(void)
+{
+	SetWidgetNumber(kTab_Camera,	kCameraBox_FlipValue,			cCameraProp.FlipMode);
+	SetWidgetChecked(kTab_Camera,	kCameraBox_FlipHorzCheckBox,	(cCameraProp.FlipMode & 0x01));
+	SetWidgetChecked(kTab_Camera,	kCameraBox_FlipVertCheckBox,	(cCameraProp.FlipMode & 0x02));
 }
 
 //*****************************************************************************

@@ -1,4 +1,6 @@
 //*****************************************************************************
+//*	Jan  6,	2022	<MLS> Added RemoteGAIAenabled to skytravel options
+//*****************************************************************************
 //#include	"controller_skytravel.h"
 
 #ifndef _CONTROLLER_SKYTRAVEL_H_
@@ -87,6 +89,9 @@ typedef struct
 
 	int		MagnitudeMode;
 	double	DisplayedMagnitudeLimit;
+
+	//*	remote SQL stuf
+	bool	RemoteGAIAenabled;
 
 } SkyTravelDispOptions;
 

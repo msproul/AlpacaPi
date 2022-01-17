@@ -75,6 +75,7 @@ enum
 	kDataSrc_AAVSOalert,
 
 	kDataSrc_GAIA_gedr3,
+	kDataSrc_Asteroids,
 	kDataSrc_Unknown,
 
 	kDataSrc_last
@@ -185,7 +186,7 @@ typedef struct
 
 	double			fgmt;				//*	floating point form of gmt
 	double			fSiderealTime;		//*	sidereal time
-	double			fJulianDay;				//*	the floating point form of the julian day
+	double			fJulianDay;			//*	the floating point form of the julian day
 	double			daysTillEpoch2000;	//*	days til epoch 2000
 	double			cdte;				//*	(corrected) days til epoch 2000
 	double			cent;				//*	centuries from epoch 1900

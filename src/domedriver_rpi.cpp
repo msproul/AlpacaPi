@@ -28,6 +28,7 @@
 //*	Jan 10,	2021	<MLS> Added UpdateDomePosition() using time integration
 //*	Mar  5,	2021	<MLS> Started working on commutator power on/off
 //*	Mar  5,	2021	<MLS> Added _ENABLE_COMMUTATOR_POWER_
+//*	Dec 23,	2021	<MLS> Added OutputHTML_Part2() to output hardware configuration
 //*****************************************************************************
 //*	cd /home/pi/dev-mark/alpaca
 //*	LOGFILE=logfile.txt
@@ -180,6 +181,69 @@ DomeDriverRPi::DomeDriverRPi(const int argDevNum)
 //**************************************************************************************
 DomeDriverRPi::~DomeDriverRPi( void )
 {
+}
+
+
+//*****************************************************************************
+void	DomeDriverRPi::OutputHTML_Part2(TYPE_GetPutRequestData *reqData)
+{
+char				lineBuffer[256];
+int					mySocketFD;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	mySocketFD	=	reqData->socket;
+
+	SocketWriteData(mySocketFD,	"<P>\r\n");
+
+	SocketWriteData(mySocketFD,	"<CENTER>\r\n");
+	SocketWriteData(mySocketFD,	"<H2>Raspberry-Pi Dome Driver</H2>\r\n");
+	//===============================================================
+	SocketWriteData(mySocketFD,	"<TABLE BORDER=1>\r\n");
+	SocketWriteData(mySocketFD,	"<TR>\r\n");
+	SocketWriteData(mySocketFD,	"<TH COLSPAN=3>Raspberry-Pi Dome Driver</TH>\r\n");
+	SocketWriteData(mySocketFD,	"</TR>\r\n<TR>\r\n");
+	SocketWriteData(mySocketFD,	"<TH COLSPAN=3>Hardware configuration</TH>\r\n");
+	SocketWriteData(mySocketFD,	"</TR>\r\n<TR>\r\n");
+
+#ifdef _USE_BCM_PIN_NUMBERS_
+	SocketWriteData(mySocketFD,	"<TD COLSPAN=3><CENTER>Using BCM Pin numbering</TH>\r\n");
+	SocketWriteData(mySocketFD,	"</TR>\r\n<TR>\r\n");
+
+#endif // _USE_BCM_PIN_NUMBERS_
+	sprintf(lineBuffer,	"\t<TD>Clockwise button pin</TD><TD>%d</TD><TD>Input</TD>\r\n", kHWpin_ButtonCW);
+	SocketWriteData(mySocketFD,	lineBuffer);
+	SocketWriteData(mySocketFD,	"</TR>\r\n<TR>\r\n");
+
+	sprintf(lineBuffer,	"\t<TD>Counter Clockwise button pin</TD><TD>%d</TD><TD>Input</TD>\r\n", kHWpin_ButtonCCW);
+	SocketWriteData(mySocketFD,	lineBuffer);
+	SocketWriteData(mySocketFD,	"</TR>\r\n<TR>\r\n");
+
+	sprintf(lineBuffer,	"\t<TD>Stop button pin</TD><TD>%d</TD><TD>Input</TD>\r\n",	kHWpin_Stop);
+	SocketWriteData(mySocketFD,	lineBuffer);
+	SocketWriteData(mySocketFD,	"</TR>\r\n<TR>\r\n");
+
+	sprintf(lineBuffer,	"\t<TD>Direction Control pin</TD><TD>%d</TD><TD>Output</TD>\r\n", kHWpin_Direction);
+	SocketWriteData(mySocketFD,	lineBuffer);
+	SocketWriteData(mySocketFD,	"</TR>\r\n<TR>\r\n");
+
+	sprintf(lineBuffer,	"\t<TD>Power PWM pin</TD><TD>%d</TD><TD>Output</TD>\r\n",		kHWpin_PowerPWM);
+	SocketWriteData(mySocketFD,	lineBuffer);
+	SocketWriteData(mySocketFD,	"</TR>\r\n<TR>\r\n");
+
+	sprintf(lineBuffer,	"\t<TD>Home Sensor pin</TD><TD>%d</TD><TD>Input</TD>\r\n",	kHWpin_HomeSensor);
+	SocketWriteData(mySocketFD,	lineBuffer);
+	SocketWriteData(mySocketFD,	"</TR>\r\n<TR>\r\n");
+
+	sprintf(lineBuffer,	"\t<TD>Park Sensor pin</TD><TD>%d</TD><TD>Input</TD>\r\n",	kHWpin_ParkSensor);
+	SocketWriteData(mySocketFD,	lineBuffer);
+	SocketWriteData(mySocketFD,	"</TR>\r\n<TR>\r\n");
+
+
+	SocketWriteData(reqData->socket,	"</TABLE>\r\n");
+	SocketWriteData(reqData->socket,	"</CENTER>\r\n");
+	SocketWriteData(reqData->socket,	"<P>\r\n");
+
 }
 
 //*****************************************************************************

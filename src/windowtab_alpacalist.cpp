@@ -445,6 +445,7 @@ bool	windowExists;
 				break;
 
 			case kDeviceType_Dome:
+			case kDeviceType_Shutter:
 				windowExists	=	CheckForOpenWindowByName(windowName);
 				if (windowExists)
 				{
@@ -533,7 +534,7 @@ bool	windowExists;
 				break;
 
 			case kDeviceType_Multicam:
-			case kDeviceType_Shutter:
+//			case kDeviceType_Shutter:
 			case kDeviceType_undefined:
 			case kDeviceType_last:
 				break;

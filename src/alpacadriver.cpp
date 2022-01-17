@@ -126,6 +126,7 @@
 //*	Dec 13,	2021	<MLS> Started working on watchdog time out processing
 //*	Dec 13,	2021	<MLS> Added CheckWatchDogTimeout() & WatchDog_TimeOut()
 //*	Dec 18,	2021	<MLS> Started using pmccabe to check routine complexity
+//*	Dec 29,	2021	<MLS> Fixed argument buffer overflow bug in GetKeyWordArgument()
 //*****************************************************************************
 //*	to install code blocks 20
 //*	Step 1: sudo add-apt-repository ppa:codeblocks-devs/release
@@ -2528,10 +2529,10 @@ int	iii;
 
 	ParseHTMLdataIntoReqStruct(htmlData, &reqData);
 //	CONSOLE_DEBUG(reqData.httpCmdString);
-	if (strstr(htmlData, "connected") != NULL)
-	{
-		CONSOLE_DEBUG(htmlData);
-	}
+//	if (strstr(htmlData, "connected") != NULL)
+//	{
+//		CONSOLE_DEBUG(htmlData);
+//	}
 	parseChrPtr			=	(char *)htmlData;
 	parseChrPtr			+=	3;
 	while (*parseChrPtr == 0x20)
@@ -3289,8 +3290,6 @@ long		milliSecs;
 	}
 }
 
-
-
 //*****************************************************************************
 //*	This finds the unique keyword in the data string.
 //*	the keyword must be terminated with a "=" in order to return
@@ -3314,6 +3313,7 @@ int		jjj;
 bool	foundKeyWord;
 char	myKeyWord[256];
 char	myArgString[256];
+int		myArgLength;
 int		ccc;
 char	theChar;
 
@@ -3349,7 +3349,7 @@ char	theChar;
 				}
 				jjj				=	0;
 				myArgString[0]	=	0;
-				while ((dataSource[iii] >= 0x20) && (dataSource[iii] != '&') && (ccc < maxArgLen))
+				while ((dataSource[iii] >= 0x20) && (dataSource[iii] != '&') && (jjj < (maxArgLen - 1)))
 				{
 					myArgString[jjj]	=	dataSource[iii];
 					myArgString[jjj+1]	=	0;
@@ -3364,20 +3364,23 @@ char	theChar;
 				if (strcasecmp(myKeyWord, keyword) == 0)
 				{
 					foundKeyWord	=	true;
-					//*	in order to handle the coma char as a decimal point for Europe
+					//==================================================================
+					//*	in order to handle the comma char as a decimal point for Europe
 					if (argIsNumeric)
 					{
-						jjj	=	0;
-						while ((myArgString[jjj] > 0) && (jjj < maxArgLen))
+						myArgLength	=	strlen(myArgString);
+						for (jjj=0; jjj<myArgLength; jjj++)
 						{
-							//*	check for coma
+							//*	check for comma
 							if (myArgString[jjj] == ',')
 							{
 								myArgString[jjj]	=	'.';	//*	replace with period
 							}
-							jjj++;
 						}
 					}
+					//==================================================================
+//					CONSOLE_DEBUG_W_NUM("maxArgLen\t=", maxArgLen);
+//					CONSOLE_DEBUG_W_STR("myArgString\t=", myArgString);
 					strcpy(argument, myArgString);
 				}
 				ccc	=	0;

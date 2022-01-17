@@ -997,7 +997,7 @@ bool				imageDataBuffOK;
 				}
 				else
 				{
-					sprintf(cLastCameraErrMsg, "GetQHYCCDSingleFrame() failed with qhy return code:", qhyRetCode);
+					sprintf(cLastCameraErrMsg, "GetQHYCCDSingleFrame() failed with qhy return code:%d", qhyRetCode);
 					CONSOLE_DEBUG(cLastCameraErrMsg);
 					alpacaErrCode	=	kASCOM_Err_FailedToTakePicture;
 				}

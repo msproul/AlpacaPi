@@ -3,6 +3,7 @@
 //*	Sep  8,	2020	<MLS> Added TYPE_ASCOM_STATUS to ASCOM error return codes
 //*	Dec  6,	2020	<MLS> Version V0.3.8-beta
 //*	Dec 10,	2020	<MLS> Version V0.3.9-beta
+//*	Jan  1,	2021	-----------------------------------------------------------
 //*	Jan 24,	2021	<MLS> Major improvement in ASCOM property definition
 //*	Jan 24,	2021	<MLS> Added TYPE_TelescopeProperties structure
 //*	Jan 24,	2021	<MLS> Added TYPE_DomeProperties structure
@@ -23,11 +24,14 @@
 //*	Dec 16,	2021	<MLS> Version V0.4.3-beta
 //*	Dec 16,	2021	<MLS> Build 124
 //*	Dec 20,	2021	<MLS> Build 125
+//*	Jan  1,	2022	-----------------------------------------------------------
+//*	Jan  1,	2022	<MLS> Version V0.4.4-beta
+//*	Jan  1,	2022	<MLS> Build 126
+//*	Jan 17,	2022	<MLS> Build 127
 //*****************************************************************************
 //*	These are for my comment extraction program that sorts comments by date.
 //*	Jan  1,	2019	-----------------------------------------------------------
 //*	Jan  1,	2020	-----------------------------------------------------------
-//*	Jan  1,	2021	-----------------------------------------------------------
 //*****************************************************************************
 //#include	"alpaca_defs.h"
 
@@ -50,8 +54,8 @@
 #endif
 
 #define	kApplicationName	"AlpacaPi"
-#define	kVersionString		"V0.4.3-beta"
-#define	kBuildNumber		125
+#define	kVersionString		"V0.4.4-beta"
+#define	kBuildNumber		127
 
 
 #define kAlpacaDiscoveryPORT	32227
@@ -343,6 +347,11 @@ typedef struct
 
 	char					SensorName[kMaxSensorNameLen];	//	Sensor name
 //+	TYPE_SensorType			SensorType;						//*	Type of information returned by the the camera sensor (monochrome or colour)
+
+	//=======================================================================
+	//=======================================================================
+	//*	Extra stuff, not defined by Alpaca standard
+	int						FlipMode;
 
 } TYPE_CameraProperties;
 

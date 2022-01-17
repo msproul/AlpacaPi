@@ -30,6 +30,14 @@
 //*	Dec  1,	2020	<MLS> Pins are reset to OFF on startup
 //*	Jan 11,	2021	<MLS> Added support for alternate high/low for relay on/off
 //*	Jun 24,	2021	<MLS> Updated SetSwitchValue() to handle on/off values
+//*	Jan  1,	2022	<MLS> Upgraded Raspberry-Pi 4 to wiringPi 2.5.2
+//*	Jan  1,	2022	<MLS> Added _ENABLE_STATUS_SWITCH_, specified in Makefile
+//*	Jan  1,	2022	<MLS> Status Read Only switches now supported.
+//*	Jan  1,	2022	<MLS> Able to use Commutator power relay to read AC power status on dome
+//*****************************************************************************
+//*	WiringPi for raspberry pi 4
+//	wget https://project-downloads.drogon.net/wiringpi-latest.deb
+//	sudo dpkg -i wiringpi-latest.deb
 //*****************************************************************************
 
 #ifdef _ENABLE_SWITCH_
@@ -43,6 +51,7 @@
 #include	"alpacadriver_helper.h"
 #include	"switchdriver.h"
 #include	"switchdriver_rpi.h"
+#include	"eventlogging.h"
 
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
@@ -52,6 +61,11 @@
 	#define	kHWpin_PowerPWM		18
 #endif // _ENABLE_PWM_SWITCH_
 
+#ifdef _ENABLE_STATUS_SWITCH_
+	#define		kStatusPin1	23
+	#define		kStatusPin2	24
+	#define		kStatusPin3	25
+#endif // _ENABLE_STATUS_SWITCH_
 
 //*****************************************************************************
 const int	gRelayControlPinNumbers[]	=
@@ -67,8 +81,29 @@ const int	gRelayControlPinNumbers[]	=
 		kHWpin_Channel5,
 		kHWpin_Channel6,
 		kHWpin_Channel7,
-		kHWpin_Channel8
+		kHWpin_Channel8,
+	#ifdef _ENABLE_PWM_SWITCH_
+		kHWpin_PowerPWM,
+	#endif
 
+	#ifdef _ENABLE_STATUS_SWITCH_
+		kStatusPin1,
+		kStatusPin2,
+		kStatusPin3,
+	#endif
+		-1,
+		-1,
+		-1,
+		-1,
+		-1,
+		-1,
+		-1,
+		-1,
+		-1,
+		-1,
+		-1,
+		-1,
+		-1
 };
 
 
@@ -76,6 +111,8 @@ const int	gRelayControlPinNumbers[]	=
 	#define	_ENABLE_WIRING_PI_
 	#include <wiringPi.h>
 #else
+	//*****************************************************************************
+	//*	this is for simulation on non raspberry Pi
 	#define	LOW		0
 	#define	HIGH	1
 	#define	OUTPUT	1
@@ -113,6 +150,8 @@ void	CreateSwitchObjectsRPi(void)
 SwitchDriverRPi::SwitchDriverRPi(void)
 	:SwitchDriver()
 {
+	CONSOLE_DEBUG(__FUNCTION__);
+
 	strcpy(cCommonProp.Name, "Switch-Raspberry-Pi");
 #ifdef _ENABLE_4REALY_BOARD
 	strcpy(cCommonProp.Description,	"Switch utilizing R-Pi 4 channel relay board");
@@ -120,13 +159,16 @@ SwitchDriverRPi::SwitchDriverRPi(void)
 	strcpy(cCommonProp.Description,	"Switch utilizing R-Pi 8 channel relay board");
 #endif
 
-	cNumSwitches	=	kR_Pi_SwitchCount;
+	cNumSwitches	=	kR_Pi_RelayCount;
 
 #ifdef _ENABLE_PWM_SWITCH_
 	cNumSwitches	+=	1;
 #endif // _ENABLE_PWM_SWITCH_
 
+
+
 	Init_Hardware();
+	CONSOLE_DEBUG("exit");
 }
 
 //**************************************************************************************
@@ -137,7 +179,7 @@ SwitchDriverRPi::~SwitchDriverRPi( void )
 //*****************************************************************************
 void	SwitchDriverRPi::Init_Hardware(void)
 {
-int		ii;
+int		iii;
 char	debugString[64];
 int		pinNumber;
 int		pinState;
@@ -146,7 +188,7 @@ int		wiringPi_rc;
 int		wiringPi_verMajor;
 int		wiringPi_verMinor;
 char	wiringPi_VerString[32];
-int		pinValue;
+
 
 	wiringPiVersion(&wiringPi_verMajor, &wiringPi_verMinor);
 	sprintf(wiringPi_VerString, "%d.%d", wiringPi_verMajor, wiringPi_verMinor);
@@ -155,16 +197,22 @@ int		pinValue;
 	wiringPi_rc	=	wiringPiSetupGpio();
 
 	CONSOLE_DEBUG_W_NUM("wiringPi_rc\t=", wiringPi_rc);
+	LogEvent(	cAlpacaName,
+				"WiringPi",
+				NULL,
+				kASCOM_Err_Success,
+				wiringPi_VerString);
 #endif	//	_ENABLE_WIRING_PI_
 
-	pinState	=	0;
+	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG("Setting up hardware io pins");
 	//*	step through the pin list and set them all to outputs
-	for (ii=0; ii<kR_Pi_SwitchCount; ii++)
+	for (iii=0; iii<kR_Pi_RelayCount; iii++)
 	{
-		pinNumber		=	gRelayControlPinNumbers[ii];
+		pinNumber		=	gRelayControlPinNumbers[iii];
 		if ((pinNumber >= 0) && (pinNumber < 50))
 		{
+			ConfigureSwitch(iii, kSwitchType_Relay, pinNumber, TURN_PIN_ON);
 			//*	set to output
 			pinMode(pinNumber,		OUTPUT);
 
@@ -172,7 +220,7 @@ int		pinValue;
 			digitalWrite(pinNumber,	TURN_PIN_OFF);
 
 			pinState	=	digitalRead(pinNumber);
-			sprintf(debugString, "Switch#%d is pin#%2d state=%d", ii+1, pinNumber, pinState);
+			sprintf(debugString, "Switch#%d is pin#%2d state=%d", iii+1, pinNumber, pinState);
 			CONSOLE_DEBUG(debugString);
 		}
 		else
@@ -181,21 +229,50 @@ int		pinValue;
 		}
 	}
 
-
-
 #ifdef _ENABLE_PWM_SWITCH_
-	cSwitchType[kAnalogSwitch1]		=	kSwitchType_Analog;
-	cMinSwitchValue[kAnalogSwitch1]	=	0;
-	cMaxSwitchValue[kAnalogSwitch1]	=	1023;
-	cCurSwitchValue[kAnalogSwitch1]	=	0;
+	CONSOLE_DEBUG("_ENABLE_PWM_SWITCH_");
+
+	ConfigureSwitch(kAnalogSwitch1, kSwitchType_Analog, kHWpin_PowerPWM);
+
+	cMinSwitchValue[kAnalogSwitch1]		=	0;
+	cMaxSwitchValue[kAnalogSwitch1]		=	1023;
+	cCurSwitchValue[kAnalogSwitch1]		=	0;
 
 
 	pinMode(kHWpin_PowerPWM,	PWM_OUTPUT);
 	pwmWrite(kHWpin_PowerPWM,	0);
-
-//	pwmWrite(kHWpin_PowerPWM,	512);
-
 #endif // _ENABLE_PWM_SWITCH_
+
+#ifdef _ENABLE_STATUS_SWITCH_
+	CONSOLE_DEBUG("_ENABLE_STATUS_SWITCH_");
+
+	ConfigureSwitch(cNumSwitches, kSwitchType_Status, kStatusPin1);
+	ConfigureSwitch(cNumSwitches, kSwitchType_Status, kStatusPin2);
+	ConfigureSwitch(cNumSwitches, kSwitchType_Status, kStatusPin3);
+
+	for (iii=kR_Pi_RelayCount; iii<kMaxSwitchCnt; iii++)
+	{
+		pinNumber		=	gRelayControlPinNumbers[iii];
+		if ((pinNumber >= 0) && (pinNumber < 50))
+		{
+			if (cSwitchTable[iii].switchType == kSwitchType_Status)
+			{
+				//*	set to output
+				pinMode(pinNumber,		INPUT);
+
+				pinState	=	digitalRead(pinNumber);
+				sprintf(debugString, "Switch#%d is pin#%2d state=%d", iii+1, pinNumber, pinState);
+				CONSOLE_DEBUG(debugString);
+			}
+		}
+		else
+		{
+			CONSOLE_DEBUG_W_NUM("Invalid pin number\t=", pinNumber);
+		}
+	}
+#endif // _ENABLE_STATUS_SWITCH_
+
+	CONSOLE_DEBUG("exit");
 
 }
 
@@ -204,7 +281,7 @@ int		SwitchDriverRPi::TranslateSwitchToPin(const int switchNumber)
 {
 int		pinNumber;
 
-	if (switchNumber < kR_Pi_SwitchCount)
+	if (switchNumber < kMaxSwitchCnt)
 	{
 		pinNumber	=	gRelayControlPinNumbers[switchNumber];
 	}
@@ -225,7 +302,8 @@ bool	switchState;
 //	CONSOLE_DEBUG(__FUNCTION__);
 	switchState	=	false;
 	pinNumber	=	TranslateSwitchToPin(switchNumber);
-//	CONSOLE_DEBUG_W_NUM("switchNumber\t=", switchNumber);
+//	CONSOLE_DEBUG_W_NUM("switchNumber\t=",	switchNumber);
+//	CONSOLE_DEBUG_W_NUM("pinNumber\t=",		pinNumber);
 
 	if (pinNumber > 0)
 	{
@@ -316,6 +394,7 @@ void	SwitchDriverRPi::SetSwitchValue(const int switchNumber, double switchValue)
 		CONSOLE_DEBUG_W_NUM("Switch number out of bounds:", switchNumber);
 	}
 }
+
 
 
 #endif // _ENABLE_SWITCH_

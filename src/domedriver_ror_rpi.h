@@ -43,6 +43,7 @@ class DomeDriverROR: public DomeDriver
 		//
 						DomeDriverROR(const int argDevNum);
 		virtual			~DomeDriverROR(void);
+		virtual	void	OutputHTML_Part2(TYPE_GetPutRequestData *reqData);
 		virtual	void	Init_Hardware(void);
 		virtual	int32_t	RunStateMachine_ROR(void);
 

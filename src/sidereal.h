@@ -12,8 +12,8 @@
 #endif
 
 void	CalcSiderealTime(	struct tm	*utcTime,
-							struct tm	*siderialTime,
-							double argLongitude);
+							struct tm	*siderealTime,
+							double		argLongitude);
 
 
 double	CalcSiderealTime_dbl(struct tm	*utcTime, double argLongitude);

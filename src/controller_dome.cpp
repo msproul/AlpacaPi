@@ -151,7 +151,7 @@ int		iii;
 
 	cFirstDataRead			=	true;
 	cLastUpdate_milliSecs	=	millis();
-	cUpdateDelta			=	kDefaultUpdateDelta;
+	cDomeUpdateDelta		=	kDefaultUpdateDelta;
 
 	if (alpacaDevice != NULL)
 	{
@@ -357,6 +357,8 @@ uint32_t	deltaSeconds;
 bool		validData;
 bool		needToUpdate;
 
+//	CONSOLE_DEBUG(__FUNCTION__);
+
 	if (cReadStartup)
 	{
 		CONSOLE_DEBUG(__FUNCTION__);
@@ -366,12 +368,13 @@ bool		needToUpdate;
 		cDomeTabObjPtr->UpdateControls();
 	}
 
+//	CONSOLE_DEBUG_W_NUM("cDomeUpdateDelta\t=", cDomeUpdateDelta);
 
 	needToUpdate	=	false;
 	currentMillis	=	millis();
 	deltaSeconds	=	(currentMillis - cLastUpdate_milliSecs) / 1000;
 
-	if (cFirstDataRead || (deltaSeconds >= cUpdateDelta))
+	if (cFirstDataRead || (deltaSeconds >= cDomeUpdateDelta))
 	{
 		needToUpdate	=	true;
 	}
@@ -383,6 +386,7 @@ bool		needToUpdate;
 
 	if (needToUpdate)
 	{
+	//	CONSOLE_DEBUG_W_NUM("Updating Dome info: cDomeUpdateDelta\t=", cDomeUpdateDelta);
 		//*	is the IP address valid
 		if (cValidIPaddr)
 		{
@@ -462,7 +466,7 @@ bool	ControllerDome::AlpacaGetStatus(void)
 bool	validData;
 bool	previousOnLineState;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG_W_NUM(__FUNCTION__, cDebugCounter++);
 
 	previousOnLineState	=	cOnLine;
 	if (cHas_readall)
@@ -499,11 +503,11 @@ bool	previousOnLineState;
 		cOnLine	=	true;
 
 		//======================================================================
-		cUpdateDelta	=	kDefaultUpdateDelta;
+		cDomeUpdateDelta	=	kDefaultUpdateDelta;
 		if (cDomeProp.Slewing)
 		{
 			//*	if we slewing, we want to update more often
-			cUpdateDelta	=	2;
+			cDomeUpdateDelta	=	1;
 			SetWidgetText(kTab_Dome, kDomeBox_CurPosition, "Slewing");
 		}
 		else if (cDomeProp.AtHome)
@@ -522,7 +526,7 @@ bool	previousOnLineState;
 		//*	if we shutter is opening or closing, we want to update more often
 		if ((cDomeProp.ShutterStatus == kShutterStatus_Opening) || (cDomeProp.ShutterStatus == kShutterStatus_Closing))
 		{
-			cUpdateDelta	=	2;
+			cDomeUpdateDelta	=	1;
 		}
 	}
 	else
@@ -993,7 +997,7 @@ void	ControllerDome::SendShutterCommand(const char *shutterCmd)
 		}
 
 		//*	any time we send a command to the shutter, increase the update rate
-		cUpdateDelta	=	2;
+		cDomeUpdateDelta	=	2;
 	}
 	else
 	{
