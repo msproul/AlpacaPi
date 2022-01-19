@@ -249,7 +249,7 @@ int		mySourceID;
 
 	if (mySourceID == kRemoteSrc_stsci_fits)
 	{
-		strcat(curlCmdLine, ";fitsview ");
+		strcat(curlCmdLine, ";./fitsview ");
 		strcat(curlCmdLine, fileName);
 		strcat(curlCmdLine, " >/dev/null &");
 	}

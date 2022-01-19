@@ -24,6 +24,7 @@
 //*	Jan  8,	2022	<MLS> Dynamic purge of SQL data working
 //*	Jan 12,	2022	<MLS> Added CalcRA_DEC_Distance_Deg()
 //*	Jan 16,	2022	<MLS> Now sorting Gaia remote data to speed up drawing
+//*	Jan	19,	2022	<MLS> Added SQL logging
 //*****************************************************************************
 //*	sudo apt-get install libmysqlclient-dev		<<<< Use this one
 //*	sudo apt-get install libmariadb-dev
@@ -67,6 +68,8 @@ char	gGaiaSQLsever_Database[32]	=	"";
 
 int		gGaiaSQLerror_Count			=	0;
 
+bool	gEnableSQLloggng			=	true;
+
 
 static		pthread_t	gGaiaSQL_ThreadID			=	-1;
 static		bool		gGaiaSQL_ThreadIsRunning	=	false;
@@ -78,11 +81,14 @@ static			bool	gGaiaDataListNeedsInit		=	true;
 static			bool	gSkyTravelUpdateOccured		=	false;
 static			int		gGaiaSQLsequenceNum			=	0;
 
+//-void	LogSqlTransaction(char *sqlCommand, char *results);
+void	LogSqlTransaction(const char *sqlCommand, const char *results);
+
+
 //*****************************************************************************
 static	void ProcessSQLserverLine(char *lineBuff)
 {
 char	keyword[32];
-char	value[32];
 int		iii;
 int		ccc;
 int		slen;
@@ -344,12 +350,15 @@ int				mag10_int;				//	Largest Magnitude desired, will look for data LESS than 
 int				num_fields;
 int				num_rows;
 double			bp_rp;
+unsigned int	startMilliSecs;
+unsigned int	endMilliSecs;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	recNum		=	0;
 	gaiaData	=	NULL;
 
+	startMilliSecs	=	millis();
 
 	mySQLConnection	=	mysql_init(NULL);
 
@@ -381,7 +390,7 @@ double			bp_rp;
 			}
 			else
 			{
-				sprintf(mySQLCmd,"call GetGaiaStarData(%d,%d,%d);", ra_int, dec_int, mag10_int);
+				sprintf(mySQLCmd,"call GetGaiaStarData(%d,%d);", ra_int, dec_int);
 	//			sprintf(mySQLCmd,"select source_id,ra,decl,phot_g_mean_mag from Gaia where raI = %d and dec_int = %d and  mag10 < %d;",
 	//								raI,
 	//								dec_int,
@@ -468,10 +477,33 @@ double			bp_rp;
 				{
 					CONSOLE_DEBUG("NO RESULTS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 				}
-//				CONSOLE_DEBUG("Calling mysql_free_result()");
+				CONSOLE_DEBUG("Calling mysql_free_result()");
 				mysql_free_result(mySQLresult);
+
+				endMilliSecs	=	millis();
+
+				if (gEnableSQLloggng)
+				{
+				char	textBuff[128];
+
+					sprintf(textBuff, "Records rcvd=%d\tQuery time=%d", recNum, (endMilliSecs - startMilliSecs));
+					LogSqlTransaction(mySQLCmd, textBuff);
+				}
 			}
+			else
+			{
+				LogSqlTransaction("num_fields <= 0", "");
+			}
+			CONSOLE_DEBUG("Done");
 		}
+		else
+		{
+			LogSqlTransaction("mysql_real_connect() failed", "");
+		}
+	}
+	else
+	{
+		LogSqlTransaction("mysql_init() failed", "");
 	}
 	mysql_close(mySQLConnection);
 	mysql_library_end();
@@ -547,8 +579,6 @@ static int	PurgeFartherestEntry(double ra_Degrees, double dec_Degrees)
 {
 int		iii;
 int		freeSlot;
-double	deltaRA;
-double	deltaDEC;
 double	distance_Deg;
 double	maxDist_Deg;
 
@@ -565,25 +595,6 @@ double	maxDist_Deg;
 													dec_Degrees,
 													gGaiaDataList[iii].centerRA_deg,
 													gGaiaDataList[iii].centerDEC_deg);
-//			//*	because of the converging nature of RA at the poles, we have to account for the
-//			//*	declination angle in the RA calculation
-//			middleDecl_deg	=	(dec_Degrees + gGaiaDataList[iii].centerDEC_deg) / 2.0;
-//			middleDecl_rad	=	RADIANS(middleDecl_deg);
-////			CONSOLE_DEBUG_W_DBL("ra_Degrees\t=", ra_Degrees);
-////			CONSOLE_DEBUG_W_DBL("centerRA_deg\t=", gGaiaDataList[iii].centerRA_deg);
-////			CONSOLE_DEBUG_W_DBL("middleDecl_deg\t=", middleDecl_deg);
-//
-//			//*	compute the distance from the CURRENT RA/DEC to the ones in the table
-//			deltaRA			=	cos(middleDecl_rad) * (ra_Degrees - gGaiaDataList[iii].centerRA_deg);
-//			deltaDEC		=	dec_Degrees - gGaiaDataList[iii].centerDEC_deg;
-//			distanceSqrd	=	(deltaRA * deltaRA) + (deltaDEC * deltaDEC);
-//
-////			CONSOLE_DEBUG_W_DBL("deltaRA     \t=", deltaRA);
-////			CONSOLE_DEBUG_W_DBL("deltaDEC    \t=", deltaDEC);
-////			CONSOLE_DEBUG_W_DBL("distanceSqrd\t=", distanceSqrd);
-////			CONSOLE_DEBUG_W_DBL("maxDistSqrd \t=", maxDistSqrd);
-
-
 			if (distance_Deg > maxDist_Deg)
 			{
 				maxDist_Deg	=	distance_Deg;
@@ -796,15 +807,18 @@ bool			requestOccured;
 
 						endMilliSecs	=	millis();
 						requestOccured	=	true;
-//						CONSOLE_DEBUG_W_LONG("gaiaDataCount\t=", gaiaDataCount);
+						CONSOLE_DEBUG_W_LONG("gaiaDataCount\t=", gaiaDataCount);
 
-						if (gaiaData != NULL)
+						//*	make sure we got some valid data
+						if ((gaiaData != NULL) && (gaiaDataCount > 0))
 						{
 							//*	sort the data to speed up drawing
 							if (gaiaDataCount > 1)
 							{
+								CONSOLE_DEBUG("Sorting");
 								qsort(gaiaData, gaiaDataCount, sizeof(TYPE_CelestData), CelestObjDeclinationQsortProc);
 							}
+							CONSOLE_DEBUG_W_NUM("assigning gaia data, iii=", iii);
 
 							gGaiaDataList[iii].gaiaData			=	gaiaData;
 							gGaiaDataList[iii].gaiaDataCnt		=	gaiaDataCount;
@@ -821,6 +835,7 @@ bool			requestOccured;
 
 							gGaiaSQLerror_Count++;
 						}
+						CONSOLE_DEBUG("Sleeping");
 
 						//*	sleep for 100 millseconds
 						usleep(100 * 1000);
@@ -898,6 +913,29 @@ void	StopGaiaSQLthread(void)
 
 }
 
+//*****************************************************************************
+void	LogSqlTransaction(const char *sqlCommand, const char *results)
+{
+FILE			*filePointer;
+struct timeval	timeStamp;
+char			formatString[48];
+
+	CONSOLE_DEBUG(__FUNCTION__);
+
+	filePointer	=	fopen("SQL_log.txt", "a");
+	if (filePointer != NULL)
+	{
+		gettimeofday(&timeStamp, NULL);
+		FormatDateTimeString_Local(&timeStamp, formatString);
+
+		fprintf(filePointer, "%s\t%s\t%s\n",	formatString, sqlCommand, results);
+		fclose(filePointer);
+	}
+	else
+	{
+		CONSOLE_DEBUG("Failed to create sql log file");
+	}
+}
 
 #ifdef _INCLUDE_GAIA_MAIN_
 //*****************************************************************************

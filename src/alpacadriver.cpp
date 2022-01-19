@@ -3243,52 +3243,7 @@ int		cmdEnumValue;
 	return(cmdEnumValue);
 }
 
-//*****************************************************************************
-void	FormatTimeString(time_t *time, char *timeString)
-{
-struct tm	*linuxTime;
 
-	if ((time != NULL) && (timeString != NULL))
-	{
-		linuxTime		=	gmtime(time);
-
-		sprintf(timeString, "%d/%d/%d %02d:%02d:%02d",
-								(1 + linuxTime->tm_mon),
-								linuxTime->tm_mday,
-								(1900 + linuxTime->tm_year),
-								linuxTime->tm_hour,
-								linuxTime->tm_min,
-								linuxTime->tm_sec);
-
-	}
-}
-
-//*****************************************************************************
-//	DATE-OBS	String - The UTC date and time at the start of the exposure in
-//	the ISO standard 8601 format: '2002-09-07T15:42:17.123'
-//	(CCYY-MM-DDTHH:MM:SS.SSS).
-//*****************************************************************************
-void	FormatTimeStringISO8601(struct timeval *tv, char *timeString)
-{
-struct tm	*linuxTime;
-long		milliSecs;
-
-	if ((tv != NULL) && (timeString != NULL))
-	{
-		linuxTime		=	gmtime(&tv->tv_sec);
-		milliSecs		=	tv->tv_usec / 1000;
-
-		sprintf(timeString, "%d-%02d-%02dT%02d:%02d:%02d.%03ld",
-								(1900 + linuxTime->tm_year),
-								(1 + linuxTime->tm_mon),
-								linuxTime->tm_mday,
-								linuxTime->tm_hour,
-								linuxTime->tm_min,
-								linuxTime->tm_sec,
-								milliSecs);
-
-	}
-}
 
 //*****************************************************************************
 //*	This finds the unique keyword in the data string.

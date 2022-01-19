@@ -3902,7 +3902,7 @@ char				httpHeader[500];
 
 	//========================================================================================
 	//*	record the time the image was taken
-	FormatTimeString(&cCameraProp.Lastexposure_StartTime.tv_sec, imageTimeString);
+	FormatTimeString_time_t(&cCameraProp.Lastexposure_StartTime.tv_sec, imageTimeString);
 	cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(mySocket,
 									reqData->jsonTextBuffer,
 									kMaxJsonBuffLen,
@@ -4382,7 +4382,7 @@ TYPE_ASCOM_STATUS	tempSensorErr;
 
 	//========================================================================================
 	//*	record the time the image was taken
-	FormatTimeString(&cCameraProp.Lastexposure_StartTime.tv_sec, imageTimeString);
+	FormatTimeString_time_t(&cCameraProp.Lastexposure_StartTime.tv_sec, imageTimeString);
 	cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(mySocket,
 									reqData->jsonTextBuffer,
 									kBuffSize_MaxSpeed,

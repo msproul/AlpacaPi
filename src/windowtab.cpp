@@ -59,8 +59,6 @@
 //*	Sep  9,	2021	<MLS> Added SetUpConnectedIndicator()
 //*	Oct 29,	2021	<MLS> Added FloodFill()
 //*	Nov 13,	2021	<MLS> Added ProcessDoubleClick_RtBtn()
-//*	Jan 10,	2022	<MLS> Moved FormatTimeString() && FormatTimeString_TM() to windowtab
-//*	Jan 10,	2022	<MLS> Added FormatTimeString_Local()
 //*****************************************************************************
 
 
@@ -1990,50 +1988,3 @@ void	WindowTab::SetUpConnectedIndicator(const int buttonIdx, const int yLoc)
 #endif	//	_CONTROLLER_USES_ALPACA_
 
 
-//*****************************************************************************
-void	FormatTimeString(struct timeval *tv, char *timeString)
-{
-struct tm	*linuxTime;
-
-	if ((tv != NULL) && (timeString != NULL))
-	{
-		linuxTime		=	gmtime(&tv->tv_sec);
-
-		sprintf(timeString, "%02d:%02d:%02d",
-								linuxTime->tm_hour,
-								linuxTime->tm_min,
-								linuxTime->tm_sec);
-
-	}
-}
-
-//*****************************************************************************
-void	FormatTimeString_Local(struct timeval *tv, char *timeString)
-{
-struct tm	*linuxTime;
-
-	if ((tv != NULL) && (timeString != NULL))
-	{
-		linuxTime		=	localtime(&tv->tv_sec);
-
-		sprintf(timeString, "%02d:%02d:%02d",
-								linuxTime->tm_hour,
-								linuxTime->tm_min,
-								linuxTime->tm_sec);
-
-	}
-}
-
-//*****************************************************************************
-void	FormatTimeString_TM(struct tm *timeStruct, char *timeString)
-{
-
-	if ((timeStruct != NULL) && (timeString != NULL))
-	{
-
-		sprintf(timeString, "%02d:%02d:%02d",
-								timeStruct->tm_hour,
-								timeStruct->tm_min,
-								timeStruct->tm_sec);
-	}
-}

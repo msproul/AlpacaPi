@@ -117,6 +117,7 @@
 #include	"linuxerrors.h"
 #include	"alpacadriver.h"
 #include	"alpacadriver_helper.h"
+#include	"helper_functions.h"
 #include	"cameradriver.h"
 #include	"observatory_settings.h"
 #include	"sidereal.h"

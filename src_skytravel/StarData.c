@@ -1261,7 +1261,7 @@ int		argLen;
 	for (ii=0; ii <= sLen; ii++)
 	{
 		theChar	=	lineBuff[ii];
-		if ((theChar == 0x09) || (theChar == 0))
+		if ((theChar == 0x09) || (theChar == 0x20) || (theChar == 0))
 		{
 //			CONSOLE_DEBUG_W_STR("argString=", argString);
 

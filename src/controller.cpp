@@ -3204,6 +3204,10 @@ void	Controller::ReadOneDriverCapability(const char	*driverNameStr,
 bool			validData;
 bool			argBoolean;
 
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+//	CONSOLE_DEBUG_W_2STR(driverNameStr, propertyStr, reportedStr);
+
+	argBoolean	=	false;
 	validData	=	AlpacaGetBooleanValue(	driverNameStr, propertyStr,	NULL,	&argBoolean);
 	if (validData)
 	{

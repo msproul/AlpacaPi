@@ -38,6 +38,7 @@
 #++	Apr 26,	2021	<MLS> Added _ENABLE_FILTERWHEEL_ATIK_
 #++	Jan  6,	2022	<MLS> Added _ENABLE_REMOTE_SQL_  & _ENABLE_REMOTE_GAIA_
 #++	Jan 13,	2022	<MLS> Added _ENABLE_ASTERIODS_
+#++	Jan 18,	2022	<MLS> Added fitsview to makefile
 ######################################################################################
 
 #PLATFORM			=	x86
@@ -1917,6 +1918,24 @@ NETTEST_OBJECTS=												\
 
 
 ######################################################################################
+FITSVIEW_OBJECTS=												\
+				$(OBJECT_DIR)fitsview.o							\
+				$(OBJECT_DIR)fits_opencv.o						\
+
+######################################################################################
+#pragma mark fitsview
+fitsview	:		$(FITSVIEW_OBJECTS)
+
+
+				$(LINK)  										\
+							$(FITSVIEW_OBJECTS)					\
+							$(OPENCV_LINK)						\
+							-lcfitsio							\
+							-lm									\
+							-o fitsview
+
+
+######################################################################################
 #pragma mark make net
 SRC_NETTEST=./src_nettest/
 
@@ -2817,6 +2836,10 @@ $(OBJECT_DIR)controller_main.o : 		$(SRC_DIR)controller_main.cpp		\
 $(OBJECT_DIR)fits_opencv.o :			$(SRC_DIR)fits_opencv.c			\
 										$(SRC_DIR)fits_opencv.h
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)fits_opencv.c -o$(OBJECT_DIR)fits_opencv.o
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)fitsview.o :				$(SRC_DIR)fitsview.c
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)fitsview.c -o$(OBJECT_DIR)fitsview.o
 
 
 #-------------------------------------------------------------------------------------

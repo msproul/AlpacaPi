@@ -26,6 +26,7 @@
 //*	Feb 10,	2020	<MLS> Started on Shutter control
 //*	Apr 22,	2020	<MLS> Added readall to shutter driver
 //*	Dec 13,	2021	<MLS> Added WatchDog_TimeOut() to shutterdriver
+//*	Jan 18,	2022	<MLS> Changing shutter to be more like dome
 //*****************************************************************************
 
 #ifdef _ENABLE_SHUTTER_
@@ -73,22 +74,39 @@ void	CreateShutterObjects(void)
 //*	shutter commands
 enum
 {
-	kCmd_Shutter_altitude	=	0,	//*	The dome altitude
-	kCmd_Shutter_cansetaltitude,	//*	Indicates whether the dome altitude can be set
-	kCmd_Shutter_cansetshutter,		//*	Indicates whether the dome shutter can be opened
-	kCmd_Shutter_shutterstatus,		//*	Status of the dome shutter or roll-off roof
-	kCmd_Shutter_slewing,			//*	Indicates whether the any part of the dome is moving
-	kCmd_Shutter_abortslew,			//*	Immediately cancel current dome operation.
-	kCmd_Shutter_closeshutter,		//*	Close the shutter or otherwise shield telescope from the sky.
-	kCmd_Shutter_openshutter,		//*	Open shutter or otherwise expose telescope to the sky.
-	kCmd_Shutter_slewtoaltitude,	//*	Slew the dome to the given altitude position.
+	kCmd_Dome_altitude	=	0,	//*	The dome altitude
+	kCmd_Dome_athome,			//*	Indicates whether the dome is in the home position.
+	kCmd_Dome_atpark,			//*	Indicates whether the telescope is at the park position
+	kCmd_Dome_azimuth,			//*	The dome azimuth
+	kCmd_Dome_canfindhome,		//*	Indicates whether the dome can find the home position.
+	kCmd_Dome_canpark,			//*	Indicates whether the dome can be parked.
+	kCmd_Dome_cansetaltitude,	//*	Indicates whether the dome altitude can be set
+	kCmd_Dome_cansetazimuth,	//*	Indicates whether the dome azimuth can be set
+	kCmd_Dome_cansetpark,		//*	Indicates whether the dome park position can be set
+	kCmd_Dome_cansetshutter,	//*	Indicates whether the dome shutter can be opened
+	kCmd_Dome_canslave,			//*	Indicates whether the dome supports slaving to a telescope
+	kCmd_Dome_cansyncazimuth,	//*	Indicates whether the dome azimuth position can be synched
+	kCmd_Dome_shutterstatus,	//*	Status of the dome shutter or roll-off roof
+	kCmd_Dome_slaved,			//*	GET--Indicates whether the dome is slaved to the telescope
+								//*	SET--Sets whether the dome is slaved to the telescope
+	kCmd_Dome_slewing,			//*	Indicates whether the any part of the dome is moving
+	kCmd_Dome_abortslew,		//*	Immediately cancel current dome operation.
+	kCmd_Dome_closeshutter,		//*	Close the shutter or otherwise shield telescope from the sky.
+	kCmd_Dome_findhome,			//*	Start operation to search for the dome home position.
+	kCmd_Dome_openshutter,		//*	Open shutter or otherwise expose telescope to the sky.
+	kCmd_Dome_park,				//*	Rotate dome in azimuth to park position.
+	kCmd_Dome_setpark,			//*	Set the current azimuth, altitude position of dome to be the park position
+	kCmd_Dome_slewtoaltitude,	//*	Slew the dome to the given altitude position.
+	kCmd_Dome_slewtoazimuth,	//*	Slew the dome to the given azimuth position.
+	kCmd_Dome_synctoazimuth,	//*	Synchronize the current position of the dome to the given azimuth.
+
 
 	//*	commands added by MLS
-	kCmd_Shutter_Extras,
-	kCmd_Shutter_stopshutter,
-	kCmd_Shutter_readall,
+	kCmd_Dome_Extras,
+	kCmd_Dome_stopshutter,
+	kCmd_Dome_readall,
 
-	kCmd_Shutter_last
+	kCmd_Dome_last
 };
 
 
@@ -97,18 +115,18 @@ enum
 static TYPE_CmdEntry	gShutterCmdTable[]	=
 {
 
-	{	"altitude",			kCmd_Shutter_altitude,			kCmdType_GET	},
-	{	"cansetaltitude",	kCmd_Shutter_cansetaltitude,	kCmdType_GET	},
-	{	"cansetshutter",	kCmd_Shutter_cansetshutter,		kCmdType_GET	},
-	{	"shutterstatus",	kCmd_Shutter_shutterstatus,		kCmdType_GET	},
-	{	"abortslew",		kCmd_Shutter_abortslew,			kCmdType_PUT	},
-	{	"closeshutter",		kCmd_Shutter_closeshutter,		kCmdType_PUT	},
-	{	"openshutter",		kCmd_Shutter_openshutter,		kCmdType_PUT	},
-	{	"slewtoaltitude",	kCmd_Shutter_slewtoaltitude,	kCmdType_PUT	},
+	{	"altitude",			kCmd_Dome_altitude,			kCmdType_GET	},
+	{	"cansetaltitude",	kCmd_Dome_cansetaltitude,	kCmdType_GET	},
+	{	"cansetshutter",	kCmd_Dome_cansetshutter,		kCmdType_GET	},
+	{	"shutterstatus",	kCmd_Dome_shutterstatus,		kCmdType_GET	},
+	{	"abortslew",		kCmd_Dome_abortslew,			kCmdType_PUT	},
+	{	"closeshutter",		kCmd_Dome_closeshutter,		kCmdType_PUT	},
+	{	"openshutter",		kCmd_Dome_openshutter,		kCmdType_PUT	},
+	{	"slewtoaltitude",	kCmd_Dome_slewtoaltitude,	kCmdType_PUT	},
 
-	{	"--extras",			kCmd_Shutter_Extras,			kCmdType_GET	},
-	{	"stop",				kCmd_Shutter_stopshutter,		kCmdType_PUT	},
-	{	"readall",			kCmd_Shutter_readall,			kCmdType_GET	},
+	{	"--extras",			kCmd_Dome_Extras,			kCmdType_GET	},
+	{	"stop",				kCmd_Dome_stopshutter,		kCmdType_PUT	},
+	{	"readall",			kCmd_Dome_readall,			kCmdType_GET	},
 
 
 
@@ -251,41 +269,41 @@ int				mySocket;
 		//========================================================================================
 		//*	shutter specific commands
 		//========================================================================================
-		case kCmd_Shutter_altitude:			//*	The dome altitude
+		case kCmd_Dome_altitude:			//*	The dome altitude
 			alpacaErrCode	=	Get_Altitude(reqData, alpacaErrMsg, gValueString);
 			break;
 
 
-		case kCmd_Shutter_cansetaltitude:		//*	Indicates whether the dome altitude can be set
+		case kCmd_Dome_cansetaltitude:		//*	Indicates whether the dome altitude can be set
 			alpacaErrCode	=	Get_Cansetaltitude(reqData, alpacaErrMsg, gValueString);
 			break;
 
 
-		case kCmd_Shutter_cansetshutter:		//*	Indicates whether the dome shutter can be opened
+		case kCmd_Dome_cansetshutter:		//*	Indicates whether the dome shutter can be opened
 			alpacaErrCode	=	Get_Cansetshutter(reqData, alpacaErrMsg, gValueString);
 			break;
 
 
 		//*	Returns the status of the dome shutter or roll-off roof. 0 = Open, 1 = Closed, 2 = Opening, 3 = Closing, 4 = Shutter status error
-		case kCmd_Shutter_shutterstatus:		//*	Status of the dome shutter or roll-off roof
+		case kCmd_Dome_shutterstatus:		//*	Status of the dome shutter or roll-off roof
 			alpacaErrCode	=	Get_Shutterstatus(reqData, alpacaErrMsg, gValueString);
 			break;
 
-		case kCmd_Shutter_abortslew:
+		case kCmd_Dome_abortslew:
 		//	if (reqData->get_putIndicator == 'P')
 			{
 				alpacaErrCode	=	Put_StopShutter(reqData, alpacaErrMsg);
 			}
 			break;
 
-		case kCmd_Shutter_closeshutter:			//*	Close the shutter or otherwise shield telescope from the sky.
+		case kCmd_Dome_closeshutter:			//*	Close the shutter or otherwise shield telescope from the sky.
 		//	if (reqData->get_putIndicator == 'P')
 			{
 				alpacaErrCode	=	Put_CloseShutter(reqData, alpacaErrMsg);
 			}
 			break;
 
-		case kCmd_Shutter_openshutter:			//*	Open shutter or otherwise expose telescope to the sky.
+		case kCmd_Dome_openshutter:			//*	Open shutter or otherwise expose telescope to the sky.
 			if (reqData->get_putIndicator == 'P')
 			{
 				alpacaErrCode	=	Put_OpenShutter(reqData, alpacaErrMsg);
@@ -296,16 +314,16 @@ int				mySocket;
 			}
 			break;
 
-		case kCmd_Shutter_slewtoaltitude:		//*	Slew the dome to the given altitude position.
+		case kCmd_Dome_slewtoaltitude:		//*	Slew the dome to the given altitude position.
 			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Command not implemented");
 			alpacaErrCode	=	kASCOM_Err_NotImplemented;
 			break;
 
-		case kCmd_Shutter_stopshutter:			//*	Stop shutter movement
+		case kCmd_Dome_stopshutter:			//*	Stop shutter movement
 			alpacaErrCode	=	Put_StopShutter(reqData, alpacaErrMsg);
 			break;
 
-		case kCmd_Shutter_readall:
+		case kCmd_Dome_readall:
 			alpacaErrCode	=	Get_Readall(reqData, alpacaErrMsg);
 			break;
 

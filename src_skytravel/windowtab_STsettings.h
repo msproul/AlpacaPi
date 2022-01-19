@@ -120,8 +120,8 @@ enum
 	kSkyT_Settings_DispAllMagnitude,
 
 	kSkyT_Settings_MagnitudeLimit,
-//	kSkyT_Settings_MagUpArrow,
-//	kSkyT_Settings_MagDownArrow,
+	kSkyT_Settings_MagUpArrow,
+	kSkyT_Settings_MagDownArrow,
 
 	kSkyT_Settings_StarOutLine,
 

@@ -113,6 +113,7 @@ char	ipAddrStr[32];
 	CONSOLE_DEBUG(__FUNCTION__);
 
 	memset(&cDomeProp, 0, sizeof(TYPE_DomeProperties));
+
 	strcpy(cAlpacaDeviceTypeStr,	"dome");
 	cDomeProp.ShutterStatus	=	-1;
 
@@ -163,6 +164,13 @@ int		iii;
 
 		strcpy(cAlpacaDeviceTypeStr,	alpacaDevice->deviceTypeStr);
 		strcpy(cAlpacaDeviceNameStr,	alpacaDevice->deviceNameStr);
+
+		CONSOLE_DEBUG_W_NUM("deviceTypeEnum\t=", alpacaDevice->deviceTypeEnum);
+		if (alpacaDevice->deviceTypeEnum == kDeviceType_Shutter)
+		{
+			CONSOLE_DEBUG("Switching to SHUTTER!!!!!!!!!!!!!!!!");
+			strcpy(cAlpacaDeviceTypeStr,	"shutter");
+		}
 	#ifdef _ENABLE_SKYTRAVEL_
 		//*	make a 2nd copy if we are in SKYTRAVEL
 	//	cDomeIpAddress			=	cDeviceAddress;
@@ -362,7 +370,7 @@ bool		needToUpdate;
 	if (cReadStartup)
 	{
 		CONSOLE_DEBUG(__FUNCTION__);
-		AlpacaGetCommonProperties_OneAAT("dome");
+		AlpacaGetCommonProperties_OneAAT(cAlpacaDeviceTypeStr);
 		AlpacaGetStartupData();
 		cReadStartup	=	false;
 		cDomeTabObjPtr->UpdateControls();
@@ -422,7 +430,7 @@ char			returnString[128];
 	CONSOLE_DEBUG(__FUNCTION__);
 	//===============================================================
 	//*	get supportedactions
-	validData	=	AlpacaGetSupportedActions("dome", cAlpacaDevNum);
+	validData	=	AlpacaGetSupportedActions(cAlpacaDeviceTypeStr, cAlpacaDevNum);
 	if (validData)
 	{
 		SetWidgetValid(kTab_Dome,			kDomeBox_Readall,		cHas_readall);
@@ -432,21 +440,24 @@ char			returnString[128];
 #endif // _ENABLE_SLIT_TRACKER_
 		if (cHas_readall == false)
 		{
-			validData	=	AlpacaGetStringValue(	"dome", "driverversion",	NULL,	returnString);
+			validData	=	AlpacaGetStringValue(	cAlpacaDeviceTypeStr, "driverversion",	NULL,	returnString);
 			if (validData)
 			{
 				strcpy(cAlpacaVersionString, returnString);
 				SetWidgetText(kTab_Dome,		kDomeBox_AlpacaDrvrVersion,		cAlpacaVersionString);
 			}
 		}
-		ReadOneDriverCapability("dome",	"canfindhome",		"CanFindHome",		&cDomeProp.CanFindHome);
-		ReadOneDriverCapability("dome",	"canpark",			"CanPark",			&cDomeProp.CanPark);
-		ReadOneDriverCapability("dome",	"cansetaltitude",	"CanSetAltitude",	&cDomeProp.CanSetAltitude);
-		ReadOneDriverCapability("dome",	"cansetazimuth",	"CanSetAzimuth",	&cDomeProp.CanSetAzimuth);
-		ReadOneDriverCapability("dome",	"cansetpark",		"CanSetPark",		&cDomeProp.CanSetPark);
-		ReadOneDriverCapability("dome",	"cansetshutter",	"CanSetShutter",	&cDomeProp.CanSetShutter);
-		ReadOneDriverCapability("dome",	"canslave",			"CanSlave",			&cDomeProp.CanSlave);
-		ReadOneDriverCapability("dome",	"cansyncazimuth",	"CanSyncAzimuth",	&cDomeProp.CanSyncAzimuth);
+		CONSOLE_DEBUG_W_NUM("cDomeProp.CanSyncAzimuth\t=",	cDomeProp.CanSyncAzimuth);
+		ReadOneDriverCapability(cAlpacaDeviceTypeStr,	"canfindhome",		"CanFindHome",		&cDomeProp.CanFindHome);
+		ReadOneDriverCapability(cAlpacaDeviceTypeStr,	"canpark",			"CanPark",			&cDomeProp.CanPark);
+		ReadOneDriverCapability(cAlpacaDeviceTypeStr,	"cansetaltitude",	"CanSetAltitude",	&cDomeProp.CanSetAltitude);
+		ReadOneDriverCapability(cAlpacaDeviceTypeStr,	"cansetazimuth",	"CanSetAzimuth",	&cDomeProp.CanSetAzimuth);
+		ReadOneDriverCapability(cAlpacaDeviceTypeStr,	"cansetpark",		"CanSetPark",		&cDomeProp.CanSetPark);
+		ReadOneDriverCapability(cAlpacaDeviceTypeStr,	"cansetshutter",	"CanSetShutter",	&cDomeProp.CanSetShutter);
+		ReadOneDriverCapability(cAlpacaDeviceTypeStr,	"canslave",			"CanSlave",			&cDomeProp.CanSlave);
+		ReadOneDriverCapability(cAlpacaDeviceTypeStr,	"cansyncazimuth",	"CanSyncAzimuth",	&cDomeProp.CanSyncAzimuth);
+		CONSOLE_DEBUG_W_NUM("cDomeProp.CanSyncAzimuth\t=",	cDomeProp.CanSyncAzimuth);
+//		CONSOLE_ABORT(__FUNCTION__);
 
 	}
 	else
@@ -471,12 +482,12 @@ bool	previousOnLineState;
 	previousOnLineState	=	cOnLine;
 	if (cHas_readall)
 	{
-		validData	=	AlpacaGetStatus_ReadAll("dome", cAlpacaDevNum);
+		validData	=	AlpacaGetStatus_ReadAll(cAlpacaDeviceTypeStr, cAlpacaDevNum);
 	}
 	else
 	{
 		validData	=	AlpacaGetStatus_DomeOneAAT();
-		validData	=	AlpacaGetCommonConnectedState("dome");
+		validData	=	AlpacaGetCommonConnectedState(cAlpacaDeviceTypeStr);
 	}
 #ifdef _ENABLE_EXTERNAL_SHUTTER_
 	//=================================================
@@ -550,7 +561,7 @@ void	ControllerDome::AlpacaProcessReadAll(	const char	*deviceType,
 											const char *valueString)
 {
 //	CONSOLE_DEBUG_W_2STR("json=",	keywordString, valueString);
-	if (strcasecmp(deviceType, "Dome") == 0)
+	if (strcasecmp(deviceType, cAlpacaDeviceTypeStr) == 0)
 	{
 		AlpacaProcessReadAll_Dome(deviceNum, keywordString, valueString);
 	}
@@ -567,7 +578,7 @@ void	ControllerDome::AlpacaProcessSupportedActions(const char *deviceType, const
 {
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, deviceType);
 
-	if (strcasecmp(deviceType, "Dome") == 0)
+	if (strcasecmp(deviceType, cAlpacaDeviceTypeStr) == 0)
 	{
 		AlpacaProcessSupportedActions_Dome(deviveNum, valueString);
 	}

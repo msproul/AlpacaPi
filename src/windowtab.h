@@ -329,8 +329,5 @@ virtual	void	AlpacaDisplayErrorMessage(const char *errorMsgString);
 
 void	SetRect(CvRect *theRect, const int top, const int left, const int bottom, const int right);
 void	InsetRect(CvRect *theRect, const int xInset, const int yInset);
-void	FormatTimeString(struct timeval *tv, char *timeString);
-void	FormatTimeString_Local(struct timeval *tv, char *timeString);
-void	FormatTimeString_TM(struct tm *timeStruct, char *timeString);
 
 #endif // _WINDOW_TAB_H_

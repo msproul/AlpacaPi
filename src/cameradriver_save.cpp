@@ -58,6 +58,7 @@
 
 //#define	_DEBUG_TIMING_
 #include	"linuxerrors.h"
+#include	"helper_functions.h"
 
 #include	"alpacadriver.h"
 #include	"alpacadriver_helper.h"

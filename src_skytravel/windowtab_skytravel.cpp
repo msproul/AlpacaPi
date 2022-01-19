@@ -93,6 +93,7 @@
 //*	Dec 31,	2021	<MLS> Added SearchAsteroids()
 //*	Jan  9,	2022	<MLS> Changed minimum view angle to 0.01 degrees
 //*	Jan 16,	2022	<MLS> Sorting of Gaia remote data made big difference in zoom in/out speed
+//*	Jan 18,	2022	<MLS> Changed star drawing order so the dense catalogs are on the bottom
 //*****************************************************************************
 //*	TODO
 //*			star catalog lists
@@ -179,9 +180,8 @@
 
 
 //*	for the moment, these are hard coded
-double	gDomeDiameter_inches	=	(15.0 * 12.0);
-double	gSlitWidth_inches		=	41.0;
-
+double	gDomeDiameter_inches		=	(15.0 * 12.0);
+double	gSlitWidth_inches			=	41.0;
 double	gSlitBottom_degrees			=	25.0;
 double	gSlitTop_degrees			=	100.0;
 double	gDomeAzimuth_degrees		=	90.0;
@@ -2036,12 +2036,11 @@ void	WindowTabSkyTravel::ProcessMouseLeftButtonUp(	const int	widgetIdx,
 														const int	yyy,
 														const int	flags)
 {
+//	CONSOLE_DEBUG(__FUNCTION__);
 	if (widgetIdx == kSkyTravel_NightSky)
 	{
-//		if (cDispOptions.dispHIP)
-		{
-			ForceReDrawSky();
-		}
+//		CONSOLE_DEBUG(__FUNCTION__);
+		ForceReDrawSky();
 	}
 }
 
@@ -2056,7 +2055,6 @@ void	WindowTabSkyTravel::ProcessMouseLeftButtonDragged(	const int	widgetIdx,
 double				deltaXX;
 double				deltaYY;
 double				moveAmount;
-TYPE_SkyDispOptions	savedDispOptions;
 
 	if (cMouseDragInProgress == false)
 	{
@@ -2101,22 +2099,8 @@ TYPE_SkyDispOptions	savedDispOptions;
 			}
 
 			//*	we cannot draw the large databases while dragging
-			savedDispOptions			=	cDispOptions;
-			cDispOptions.dispHIP		=	false;
-//			cDispOptions.dispYale		=	false;
-			cDispOptions.dispNGC		=	false;
-			cDispOptions.dispDraper		=	false;
-			cDispOptions.dispAsteroids	=	false;
-			cDispOptions.dispGaia		=	false;
 
-			if (cView_angle < 0.2)
-			{
-				cDispOptions.dispHYG_all	=	false;
-				cDispOptions.dispDraper		=	false;
-			}
 			ForceReDrawSky();
-			//*	restore to original state
-			cDispOptions			=	savedDispOptions;
 		}
 		else
 		{
@@ -2585,24 +2569,93 @@ short		iii;
 
 //	DRAW HERE
 
-#ifdef _ENABLE_HYG_
-	//*	draw the dense stuff first so the other stuff is on top
 	//*--------------------------------------------------------------------------------
-	PlotObjectsByDataSource(cDispOptions.dispHYG_all,	gHYGObjectPtr, gHYGObjectCount);
-#endif
 	//*--------------------------------------------------------------------------------
-	//*	draw the faint Hipparcos stuff first
-	PlotObjectsByDataSource(cDispOptions.dispHIP,		gHipObjectPtr, gHipObjectCount);
-	PlotObjectsByDataSource(cDispOptions.dispDraper,	gDraperObjectPtr, gDraperObjectCount);
-
 	//*--------------------------------------------------------------------------------
-	//*	check to see if the asteroids are loaded
-	if (cDispOptions.dispAsteroids &&
-		((cView_angle < 1.0) || (gST_DispOptions.MagnitudeMode == kMagnitudeMode_All)))
+	//*	the first group of things should NOT be drawn we we are mouse dragging
+	if (cMouseDragInProgress == false)
 	{
-		DrawAsteroids();
-	}
+	#ifdef _ENABLE_REMOTE_GAIA_
+		if (cDispOptions.dispGaia)
+		{
+		double		distance_Deg;
+		int			drawnCnt;
+		int			notDrawnCnt;
+		bool		foundValid;
 
+			SETUP_TIMING();
+
+			drawnCnt	=	0;
+			notDrawnCnt	=	0;
+			foundValid	=	false;
+			//*	step through the array of remote GAIA data and plot what ever is there.
+	//		CONSOLE_DEBUG("Checking remote GAIA data");
+			for (iii=0; iii<kMaxGaiaDataSets; iii++)
+			{
+				//*	check to see if this entry is valid
+				if (gGaiaDataList[iii].validData && (gGaiaDataList[iii].gaiaDataCnt > 0))
+				{
+					foundValid	=	true;
+				//*	we are going to check to see if any of the region is on the screen
+					//*	to help speed up drawing
+	//				CONSOLE_DEBUG("--------------------------------------------------------------");
+					distance_Deg	=   CalcRA_DEC_Distance_Deg(DEGREES(cRa0),
+																DEGREES(cDecl0),
+																gGaiaDataList[iii].block_RA_deg,
+																gGaiaDataList[iii].block_DEC_deg);
+					if ((distance_Deg <= (DEGREES(cView_angle) * 0.75)) ||
+						(distance_Deg < 2.0))
+					{
+	//					CONSOLE_DEBUG("Drawn:YES");
+						drawnCnt++;
+						PlotObjectsByDataSource(	cDispOptions.dispGaia,
+													gGaiaDataList[iii].gaiaData,
+													gGaiaDataList[iii].gaiaDataCnt);
+					}
+					else
+					{
+	//					CONSOLE_DEBUG("Drawn:No");
+						notDrawnCnt++;
+					}
+	//				CONSOLE_DEBUG_W_NUM("iii\t\t\t=", iii);
+	//				CONSOLE_DEBUG_W_DBL("distance_Deg\t\t=", distance_Deg);
+	//				CONSOLE_DEBUG_W_DBL("DEGREES(cView_angle)\t=", DEGREES(cView_angle));
+				}
+			}
+			if (foundValid)
+			{
+		//		CONSOLE_DEBUG("GAIA Done");
+		//		CONSOLE_DEBUG_W_NUM("drawnCnt   \t=", drawnCnt);
+		//		CONSOLE_DEBUG_W_NUM("notDrawnCnt\t=", notDrawnCnt);
+		//		DEBUG_TIMING("Time to draw remote GAIA:");
+			}
+		}
+	#endif // _ENABLE_REMOTE_GAIA_
+
+	#ifdef _ENABLE_HYG_
+		//*	draw the dense stuff first so the other stuff is on top
+		//*--------------------------------------------------------------------------------
+		PlotObjectsByDataSource(cDispOptions.dispHYG_all,	gHYGObjectPtr, gHYGObjectCount);
+	#endif
+		//*--------------------------------------------------------------------------------
+		//*	draw the faint Hipparcos stuff first
+		PlotObjectsByDataSource(cDispOptions.dispHIP,		gHipObjectPtr, gHipObjectCount);
+		PlotObjectsByDataSource(cDispOptions.dispDraper,	gDraperObjectPtr, gDraperObjectCount);
+
+
+	#ifdef _ENABLE_GAIA_
+		PlotObjectsByDataSource(cDispOptions.dispGaia,			gGaiaObjectPtr, gGaiaObjectCnt);
+	#endif // _ENABLE_GAIA_
+		//*--------------------------------------------------------------------------------
+		//*	check to see if the asteroids are loaded
+		if (cDispOptions.dispAsteroids &&
+			((cView_angle < 1.0) || (gST_DispOptions.MagnitudeMode == kMagnitudeMode_All)))
+		{
+			DrawAsteroids();
+		}
+
+		PlotObjectsByDataSource(cDispOptions.dispNGC,				gNGCobjectPtr,		gNGCobjectCount);
+	}
 
 
 	//*--------------------------------------------------------------------------------
@@ -2636,70 +2689,10 @@ short		iii;
 		DrawConstellationLines();
 	}
 
-#ifdef _ENABLE_GAIA_
-	PlotObjectsByDataSource(cDispOptions.dispGaia,			gGaiaObjectPtr, gGaiaObjectCnt);
-#endif // _ENABLE_GAIA_
-#ifdef _ENABLE_REMOTE_GAIA_
-	if (cDispOptions.dispGaia)
-	{
-	double		distance_Deg;
-	int			drawnCnt;
-	int			notDrawnCnt;
-	bool		foundValid;
-
-		SETUP_TIMING();
-
-		drawnCnt	=	0;
-		notDrawnCnt	=	0;
-		foundValid	=	false;
-		//*	step through the array of remote GAIA data and plot what ever is there.
-//		CONSOLE_DEBUG("Checking remote GAIA data");
-		for (iii=0; iii<kMaxGaiaDataSets; iii++)
-		{
-			//*	check to see if this entry is valid
-			if (gGaiaDataList[iii].validData && (gGaiaDataList[iii].gaiaDataCnt > 0))
-			{
-				foundValid	=	true;
-			//*	we are going to check to see if any of the region is on the screen
-				//*	to help speed up drawing
-//				CONSOLE_DEBUG("--------------------------------------------------------------");
-				distance_Deg	=   CalcRA_DEC_Distance_Deg(DEGREES(cRa0),
-															DEGREES(cDecl0),
-															gGaiaDataList[iii].block_RA_deg,
-															gGaiaDataList[iii].block_DEC_deg);
-				if ((distance_Deg <= (DEGREES(cView_angle) * 0.75)) ||
-					(distance_Deg < 2.0))
-				{
-//					CONSOLE_DEBUG("Drawn:YES");
-					drawnCnt++;
-					PlotObjectsByDataSource(	cDispOptions.dispGaia,
-												gGaiaDataList[iii].gaiaData,
-												gGaiaDataList[iii].gaiaDataCnt);
-				}
-				else
-				{
-//					CONSOLE_DEBUG("Drawn:No");
-					notDrawnCnt++;
-				}
-//				CONSOLE_DEBUG_W_NUM("iii\t\t\t=", iii);
-//				CONSOLE_DEBUG_W_DBL("distance_Deg\t\t=", distance_Deg);
-//				CONSOLE_DEBUG_W_DBL("DEGREES(cView_angle)\t=", DEGREES(cView_angle));
-			}
-		}
-		if (foundValid)
-		{
-	//		CONSOLE_DEBUG("GAIA Done");
-			CONSOLE_DEBUG_W_NUM("drawnCnt   \t=", drawnCnt);
-			CONSOLE_DEBUG_W_NUM("notDrawnCnt\t=", notDrawnCnt);
-			DEBUG_TIMING("Time to draw remote GAIA:");
-		}
-	}
-#endif // _ENABLE_REMOTE_GAIA_
 
 	//*--------------------------------------------------------------------------------
 	PlotObjectsByDataSource(cDispOptions.dispDefaultData,		gStarDataPtr,		gStarCount);
 	PlotObjectsByDataSource(cDispOptions.dispYale,				gYaleStarDataPtr,	gYaleStarCount);
-	PlotObjectsByDataSource(cDispOptions.dispNGC,				gNGCobjectPtr,		gNGCobjectCount);
 	PlotObjectsByDataSource(cDispOptions.dispMessier,			gMessierOjbectPtr,	gMessierOjbectCount);
 	PlotObjectsByDataSource(cDispOptions.dispSpecialObjects,	gSpecialObjectPtr,	gSpecialObjectCount);
 
@@ -2881,25 +2874,26 @@ void	WindowTabSkyTravel::ResetView(void)
 
 	cChartMode							=	false;
 
-	cDispOptions.dispDefaultData		=	true;
-	cDispOptions.dispDeep				=	true;
-	cDispOptions.dispEarth				=	true;
-	cDispOptions.dispGrid				=	true;
-	cDispOptions.dispHorizon_line		=	true;
-	cDispOptions.dispNames				=	true;
-	cDispOptions.dispNGC				=	false;
- 	cDispOptions.dispSymbols			=	true;
- 	cDispOptions.dispMessier			=	true;
+	cDispOptions.dispAAVSOalerts		=	true;
+	cDispOptions.dispAsteroids			=	false;
+	cDispOptions.dispCommonStarNames	=	true;
  	cDispOptions.dispConstOutlines		=	true;
  	cDispOptions.dispConstellations		=	true;
-	cDispOptions.dispHIP				=	false;
-	cDispOptions.dispCommonStarNames	=	true;
-	cDispOptions.dispHYG_all			=	false;
+	cDispOptions.dispDeep				=	true;
+	cDispOptions.dispDefaultData		=	true;
 	cDispOptions.dispDraper				=	false;
-	cDispOptions.dispAAVSOalerts		=	true;
-	cDispOptions.dispSpecialObjects		=	kSpecialDisp_All;
+	cDispOptions.dispEarth				=	true;
 	cDispOptions.dispGaia				=	true;
-	cDispOptions.dispAsteroids			=	false;
+	cDispOptions.dispGrid				=	true;
+	cDispOptions.dispHIP				=	false;
+	cDispOptions.dispHYG_all			=	false;
+	cDispOptions.dispHorizon_line		=	true;
+ 	cDispOptions.dispMessier			=	true;
+	cDispOptions.dispNames				=	true;
+	cDispOptions.dispNGC				=	false;
+	cDispOptions.dispSpecialObjects		=	kSpecialDisp_All;
+ 	cDispOptions.dispSymbols			=	true;
+	cDispOptions.dispYale				=	false;
 
 	gST_DispOptions.DispMagnitude		=	true;
 	gST_DispOptions.DispSpectralType	=	true;

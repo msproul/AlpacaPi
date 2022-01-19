@@ -712,33 +712,6 @@ int				iii;
 	}
 }
 
-//*****************************************************************************
-//	DATE-OBS	String - The UTC date and time at the start of the exposure in
-//	the ISO standard 8601 format: '2002-09-07T15:42:17.123'
-//	(CCYY-MM-DDTHH:MM:SS.SSS).
-//*****************************************************************************
-static void	FormatTimeStringISO8601(struct timeval *tv, char *timeString)
-{
-struct tm	*linuxTime;
-long		milliSecs;
-
-	if ((tv != NULL) && (timeString != NULL))
-	{
-		linuxTime		=	gmtime(&tv->tv_sec);
-		milliSecs		=	tv->tv_usec / 1000;
-
-		sprintf(timeString, "%d-%02d-%02dT%02d:%02d:%02d.%03ld",
-								(1900 + linuxTime->tm_year),
-								(1 + linuxTime->tm_mon),
-								linuxTime->tm_mday,
-								linuxTime->tm_hour,
-								linuxTime->tm_min,
-								linuxTime->tm_sec,
-								milliSecs);
-
-	}
-}
-
 //**************************************************************************
 static void	DumpAsteroidData(TYPE_Asteroid *asteroidData)
 {

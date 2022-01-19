@@ -1030,14 +1030,7 @@ bool			myBooleanValue;
 
 			if (strcasecmp(jsonParser.dataList[jjj].keyword, "VALUE") == 0)
 			{
-				if (strcasecmp(jsonParser.dataList[jjj].valueString, "true") == 0)
-				{
-					myBooleanValue	=	true;
-				}
-				else
-				{
-					myBooleanValue	=	false;
-				}
+				myBooleanValue	=	IsTrueFalse(jsonParser.dataList[jjj].valueString);
 
 				if (returnValue != NULL)
 				{

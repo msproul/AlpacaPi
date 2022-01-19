@@ -215,9 +215,12 @@ double	rightAscen;
 double	declination;
 char	designation[64];
 bool	foundOccultation	=	false;
-int		magnitudeBinValue;
 int		designation_sLen;
 double	bp_rp;
+#ifdef _INCLUDE_GAIA_MAIN_
+	int		magnitudeBinValue;
+#endif // _INCLUDE_GAIA_MAIN_
+
 
 	validData	=	false;
 	sLen		=	strlen(lineBuff);
@@ -463,7 +466,6 @@ TYPE_CelestData	*gaiaDataPtr;
 char			gaiaFilePath[]	=	"Gaia_data/Gaia.csv";
 FILE			*filePointer;
 int				linesInFile;
-size_t			bufferSize;
 long			myGaiaObjCnt;
 double			magnitudeLimit;
 
@@ -477,8 +479,6 @@ double			magnitudeLimit;
 		if (linesInFile > 0)
 		{
 			CONSOLE_DEBUG_W_NUM("linesInFile", linesInFile);
-			bufferSize		=	(linesInFile + 10) * sizeof(TYPE_CelestData);
-		//	gaiaDataPtr		=	(TYPE_CelestData *)malloc(bufferSize);
 			gaiaDataPtr		=	(TYPE_CelestData *)calloc((linesInFile + 10), sizeof(TYPE_CelestData));
 			if (gaiaDataPtr != NULL)
 			{

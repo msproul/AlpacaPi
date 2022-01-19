@@ -114,6 +114,7 @@
 
 #include	"JsonResponse.h"
 #include	"eventlogging.h"
+#include	"helper_functions.h"
 
 
 #include	"alpacadriver.h"

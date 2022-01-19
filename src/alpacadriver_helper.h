@@ -49,8 +49,6 @@ bool			GetKeyWordArgument(	const char	*dataSource,
 									const bool	argIsNumeric=false);
 
 
-void			FormatTimeString(time_t *time, char *timeString);
-void			FormatTimeStringISO8601(struct timeval *tv, char *timeString);
 
 int				SocketWriteData(const int socket, const char *dataBuffer);
 void			ToLowerStr(char *theString);

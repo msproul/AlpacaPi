@@ -420,27 +420,27 @@ double	max_decl;
 		CONSOLE_DEBUG_W_DBL("declination\t=", constelObj->declination);
 	}
 
-	if (strncasecmp(constelObj->constellationName, "Her", 3) == 0)
-	{
-		CONSOLE_DEBUG_W_STR("name       \t=", constelObj->constellationName);
-		CONSOLE_DEBUG_W_DBL("rtAscension\t=", DEGREES(constelObj->rtAscension) / 15.0);
-		CONSOLE_DEBUG_W_DBL("declination\t=", DEGREES(constelObj->declination));
-
-		CONSOLE_DEBUG_W_DBL("min_rtAscn\t=", DEGREES(min_rtAscn) / 15.0);
-		CONSOLE_DEBUG_W_DBL("max_rtAscn\t=", DEGREES(max_rtAscn) / 15.0);
-		CONSOLE_DEBUG_W_DBL("min_decl\t=", DEGREES(min_decl));
-		CONSOLE_DEBUG_W_DBL("max_decl\t=", DEGREES(max_decl));
-
-//		iii			=	0;
-//		while (iii < constelObj->starCount)
-//		{
-//			CONSOLE_DEBUG_W_DBL("rtAscension\t=", DEGREES(constelObj->hippStars[iii].rtAscension) / 15.0);
-//			iii++;
-//		}
-
-//		CONSOLE_ABORT(__FUNCTION__);
-
-	}
+//	if (strncasecmp(constelObj->constellationName, "Her", 3) == 0)
+//	{
+//		CONSOLE_DEBUG_W_STR("name       \t=", constelObj->constellationName);
+//		CONSOLE_DEBUG_W_DBL("rtAscension\t=", DEGREES(constelObj->rtAscension) / 15.0);
+//		CONSOLE_DEBUG_W_DBL("declination\t=", DEGREES(constelObj->declination));
+//
+//		CONSOLE_DEBUG_W_DBL("min_rtAscn\t=", DEGREES(min_rtAscn) / 15.0);
+//		CONSOLE_DEBUG_W_DBL("max_rtAscn\t=", DEGREES(max_rtAscn) / 15.0);
+//		CONSOLE_DEBUG_W_DBL("min_decl\t=", DEGREES(min_decl));
+//		CONSOLE_DEBUG_W_DBL("max_decl\t=", DEGREES(max_decl));
+//
+////		iii			=	0;
+////		while (iii < constelObj->starCount)
+////		{
+////			CONSOLE_DEBUG_W_DBL("rtAscension\t=", DEGREES(constelObj->hippStars[iii].rtAscension) / 15.0);
+////			iii++;
+////		}
+//
+////		CONSOLE_ABORT(__FUNCTION__);
+//
+//	}
 }
 
 

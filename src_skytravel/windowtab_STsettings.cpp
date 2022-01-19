@@ -84,6 +84,7 @@ void	WindowTabSTsettings::SetupWindowControls(void)
 int		yLoc;
 int		xLoc;
 int		xLoc2;
+int		yLoc2;
 int		saveXloc;
 int		saveYloc;
 int		labelWidth;
@@ -485,9 +486,20 @@ int		radioBtnWidth;
 	SetWidgetType(		kSkyT_Settings_MagnitudeLimit,	kWidgetType_Text);
 	SetWidgetFont(		kSkyT_Settings_MagnitudeLimit,	kFont_Medium);
 
-//	kSkyT_Settings_MagUpArrow,
-//	kSkyT_Settings_MagDownArrow,
+	xLoc2		=	xLoc + radioBtnWidth + 100;
+	xLoc2		+=	2;
+	yLoc2		=	saveYloc - (cSmallBtnHt / 2);
 
+	SetWidget(			kSkyT_Settings_MagUpArrow,		xLoc2,	yLoc2,	cSmallBtnHt,	cSmallBtnHt);
+	yLoc2		+=	cSmallBtnHt;
+	SetWidget(			kSkyT_Settings_MagDownArrow,	xLoc2,	yLoc2,	cSmallBtnHt,	cSmallBtnHt);
+
+	SetWidgetBorder(	kSkyT_Settings_MagUpArrow, true);
+
+	SetWidgetIcon(kSkyT_Settings_MagUpArrow,	kIcon_UpArrow);
+	SetWidgetIcon(kSkyT_Settings_MagDownArrow,	kIcon_DownArrow);
+	SetWidgetBorder(	kSkyT_Settings_MagUpArrow, true);
+	SetWidgetBorder(	kSkyT_Settings_MagDownArrow, true);
 
 
 	SetWidgetOutlineBox(	kSkyT_Settings_StarOutLine,
@@ -772,6 +784,22 @@ int		systemRetCode;
 
 		case kSkyT_Settings_DispAllMagnitude:
 			gST_DispOptions.MagnitudeMode	=	kMagnitudeMode_All;
+			break;
+
+		case kSkyT_Settings_MagUpArrow:
+			gST_DispOptions.DisplayedMagnitudeLimit++;
+			if (gST_DispOptions.DisplayedMagnitudeLimit > 25)
+			{
+				gST_DispOptions.DisplayedMagnitudeLimit	=	25;
+			}
+			break;
+
+		case kSkyT_Settings_MagDownArrow:
+			gST_DispOptions.DisplayedMagnitudeLimit--;
+			if (gST_DispOptions.DisplayedMagnitudeLimit < 0)
+			{
+				gST_DispOptions.DisplayedMagnitudeLimit	=	0;
+			}
 			break;
 
 		case kSkyT_Settings_RunStartup:
