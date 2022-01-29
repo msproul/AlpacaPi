@@ -36,7 +36,7 @@ void	ConvertRadiansToDegMinSec(	double	radianValue,
 //*****************************************************************************
 //*	this is the on-disk format for Clif and Franks object database
 //*	fortunately the FLOAT format is the same for PPC/68K as for intel.
-//*	The bytes have to be swaped for big endian machines
+//*	The bytes have to be swapped for big endian machines
 //*****************************************************************************
 typedef struct
 {
@@ -454,8 +454,8 @@ extern	TYPE_CelestData		*gHipObjectPtr;
 extern	long				gHipObjectCount;
 
 //*	Messier
-extern	TYPE_CelestData		*gMessierOjbectPtr;
-extern	long				gMessierOjbectCount;
+extern	TYPE_CelestData		*gMessierObjectPtr;
+extern	long				gMessierObjectCount;
 
 //*	HYG
 extern	TYPE_CelestData		*gHYGObjectPtr;

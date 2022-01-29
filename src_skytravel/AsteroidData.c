@@ -17,6 +17,7 @@
 //*	Jan  1,	2022	<MLS> Added ReadAsteroidDataMPC()
 //*	Jan  1,	2022	<MLS> Added support for Minor Planet Center asteroid data
 //*	Jan  3,	2022	<MLS> Tested asteroid display on Raspberry-Pi, works, but slow
+//*	Jan 24,	2022	<MLS> Asteroids without magnitude now default to 10
 //*****************************************************************************
 
 #ifdef _ENABLE_ASTERIODS_
@@ -119,7 +120,10 @@ int		ccc;
 
 
 
-
+//************************************************************************
+//*			The Asteroid Orbital Elements Database
+//*				Lowell Minor Planet Services
+//*		https://asteroid.lowell.edu/main/astorb/
 //************************************************************************
 //(1)    (2)                (3)             (4)    (5)  (6)  (7)   (8)
 //     1 Ceres              E. Bowell        3.34  0.12 0.72 913.0 G?
@@ -177,10 +181,6 @@ int		ccc;
 //
 //************************************************************************
 
-//07482   16.56  0.15 K221L 337.27014   47.47662  117.87792   33.47909  0.3296520  0.62915877   1.3488466  0 MPO656989   735  16 1974-2021 0.73 M-v 3Ek Pan        9803   (7482) 1994 PC1           20211014
-//         0         0         1         1         1         1         1
-//         8         9         0         1         2         3         4
-//123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
 
 //**************************************************************************
 //*	The equations used in this code came from the formulas described in chapter 7
@@ -523,7 +523,14 @@ char	argString[64];
 		//(3) 	Orbit computer.
 		//(4) 	Absolute magnitude H, mag [see E. Bowell et al., pp. 549-554, in "Asteroids II", R. P. Binzel et al. (eds.), The University of Arizona Press, Tucson, 1989 and more recent Minor Planet Circulars]. Note that H may be given to 2 decimal places (e.g., 13.41), 1 decimal place (13.4) or as an integer (13), depending on its estimated accuracy. H is given to two decimal places for all unnumbered asteroids, even though it may be very poorly known.
 		ExtractTextField(lineBuff,	(43 - 1),	5,	argString, true);
-		asteroidData->AbsoluteMagnitude	=	atof(argString);
+		if (strlen(argString) > 0)
+		{
+			asteroidData->AbsoluteMagnitude	=	atof(argString);
+		}
+		else
+		{
+			asteroidData->AbsoluteMagnitude	=	10;
+		}
 
 		//(5) 	Slope parameter G ( ibid.).
 		ExtractTextField(lineBuff,	(50 - 1),	5,	argString, true);
@@ -954,6 +961,12 @@ int				outputLimit;
 //                      orbit solution (YYYYMMDD format)
 //
 
+//**************************************************************************
+//07482   16.56  0.15 K221L 337.27014   47.47662  117.87792   33.47909  0.3296520  0.62915877   1.3488466  0 MPO656989   735  16 1974-2021 0.73 M-v 3Ek Pan        9803   (7482) 1994 PC1           20211014
+//         0         0         0         0         0         0         0         0         0         1         1         1         1         1         1         1         1         1         1         2         2         2
+//         1         2         3         4         5         6         7         8         9         0         1         2         3         4         5         6         7         8         9         0
+//123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
+//**************************************************************************
 
 //**************************************************************************
 //*	https://www.minorplanetcenter.net/iau/info/PackedDates.html
@@ -1035,8 +1048,10 @@ char	yearString[8];
 	{
 		month	+=	9;
 	}
+	//*	the data is hexidecimal
 	if (isdigit(packedstr[4]))
 	{
+
 		day	=	packedstr[4] & 0x0f;
 	}
 	else
@@ -1052,7 +1067,6 @@ static bool	ParseOneLineMPCasteroidData(const char *lineBuff, TYPE_Asteroid *ast
 bool	validData;
 char	argString[64];
 char	unpackedString[64];
-char	*namePtr;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 //	CONSOLE_DEBUG(lineBuff);
@@ -1071,7 +1085,19 @@ char	*namePtr;
 
 		//    9 -  13  f5.2   Absolute magnitude, H
 		ExtractTextField(lineBuff,	(9 - 1),	5,	argString, true);
-		asteroidData->AbsoluteMagnitude	=	atof(argString);
+		if (strlen(argString) > 0)
+		{
+			asteroidData->AbsoluteMagnitude	=	atof(argString);
+		}
+		else
+		{
+			asteroidData->AbsoluteMagnitude	=	10;
+		}
+//		if (asteroidData->AbsoluteMagnitude < 1)
+//		{
+//			CONSOLE_DEBUG_W_STR("AbsoluteMagnitude\t=",	argString);
+//			CONSOLE_DEBUG_W_DBL("AbsoluteMagnitude\t=",	asteroidData->AbsoluteMagnitude);
+//		}
 
 		//   15 -  19  f5.2   Slope parameter, G
 		ExtractTextField(lineBuff,	(15 - 1),	5,	argString, true);
@@ -1196,20 +1222,21 @@ char	*namePtr;
 //
 		//  167 - 194  a      Readable designation
 		ExtractTextField(lineBuff,	(167-1),	28,	argString, true);
-		if (argString[0] == '(')
-		{
-			namePtr	=	strchr(argString, 0x20);
-			if (namePtr != NULL)
-			{
-				namePtr++;
-				strcpy(asteroidData->AsteroidName, namePtr);
-			}
-			else
-			{
-				strcpy(asteroidData->AsteroidName, argString);
-			}
-		}
-		else
+//		if (argString[0] == '(')
+//		{
+//		char	*namePtr;
+//			namePtr	=	strchr(argString, 0x20);
+//			if (namePtr != NULL)
+//			{
+//				namePtr++;
+//				strcpy(asteroidData->AsteroidName, namePtr);
+//			}
+//			else
+//			{
+//				strcpy(asteroidData->AsteroidName, argString);
+//			}
+//		}
+//		else
 		{
 			strcpy(asteroidData->AsteroidName, argString);
 		}

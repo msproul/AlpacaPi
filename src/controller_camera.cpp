@@ -54,7 +54,7 @@
 //*	Mar 27,	2021	<MLS> Added SetOffset() & BumpOffset()
 //*	Sep  4,	2021	<MLS> Added AlpacaGetStartupData_OneAAT()
 //*	Nov 16,	2021	<MLS> fitsview now handles color fits images (8 bit)
-//*	Dec 12, 2021	<MLS> ImageArray now has RGB correct
+//*	Dec 12,	2021	<MLS> ImageArray now has RGB correct
 //*	Dec 16,	2021	<MLS> Added support for percentcompleted
 //*	Dec 16,	2021	<MLS> Added UpdatePercentCompleted()
 //*	Dec 17,	2021	<MLS> Added support for canstopexposure
@@ -397,7 +397,7 @@ bool		readStartUpOK;
 
 	if (needToUpdate)
 	{
-		CONSOLE_DEBUG_W_STR("Updating....", cWindowName);
+//		CONSOLE_DEBUG_W_STR("Updating....", cWindowName);
 		//*	is the IP address valid
 		if (cValidIPaddr)
 		{
@@ -1020,7 +1020,7 @@ void	ControllerCamera::AlpacaProcessReadAll(	const char	*deviceTypeStr,
 	{
 		//=================================================================================
 		//*	percentcompleted
-		CONSOLE_DEBUG("percentcompleted");
+//		CONSOLE_DEBUG("percentcompleted");
 		cCameraProp.PercentCompleted	=	atoi(valueString);
 		UpdatePercentCompleted();
 	}

@@ -45,7 +45,7 @@ typedef struct
 		bool				dispNames;
 		bool				dispSymbols;			//*	Symbols on/off
 		bool				dispNGC;				//*	NGC objects on/off
-		bool				dispHIP;				//*	Hipparcos objects on/off
+		bool				dispHipparcos;			//*	Hipparcos objects on/off
 		bool				dispDeep;				//*	Deep sky objects on/off
 		bool				dispYale;				//*	Deep Yale catalog on/off
 		//*	added by <MLS>

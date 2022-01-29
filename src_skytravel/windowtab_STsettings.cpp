@@ -327,7 +327,7 @@ int		radioBtnWidth;
 	saveXloc		=	xLoc + (labelWidth + 75);
 	saveXloc		+=	15;
 
-	iii			=	kSkyT_Settings_DataAAVSO_txt;
+	iii			=	kSkyT_Settings_OriginalData_txt;
 	while (iii < kSkyT_Settings_DataHelpText)
 	{
 		SetWidget(		iii,	xLoc,			yLoc,		labelWidth,		cBoxHeight);
@@ -361,7 +361,11 @@ int		radioBtnWidth;
 							(kSkyT_Settings_DataOutLine -1));
 
 	//*	set the star counts
-	SetWidgetText(		kSkyT_Settings_DataAAVSO_txt,		"AAVSO Data count");
+	SetWidgetText(		kSkyT_Settings_OriginalData_txt,	"OrigDB star count");
+	SetWidgetNumber(	kSkyT_Settings_OriginalData_cnt,	gStarCount);
+
+
+	SetWidgetText(		kSkyT_Settings_DataAAVSO_txt,		"AAVSO Alert count");
 	SetWidgetNumber(	kSkyT_Settings_DataAAVSO_cnt,		gAAVSOalertsCnt);
 
 	SetWidgetText(		kSkyT_Settings_DataDRAPER_txt,		"DRAPER Data count");
@@ -374,7 +378,7 @@ int		radioBtnWidth;
 	SetWidgetNumber(	kSkyT_Settings_DataHYG_cnt,			gHYGObjectCount);
 
 	SetWidgetText(		kSkyT_Settings_DataMessier_txt,		"Messier Data count");
-	SetWidgetNumber(	kSkyT_Settings_DataMessier_cnt,		gMessierOjbectCount);
+	SetWidgetNumber(	kSkyT_Settings_DataMessier_cnt,		gMessierObjectCount);
 
 	SetWidgetText(		kSkyT_Settings_DataNGC_txt,			"NGC Data count");
 	SetWidgetNumber(	kSkyT_Settings_DataNGC_cnt,			gNGCobjectCount);
@@ -408,10 +412,16 @@ int		radioBtnWidth;
 
 
 	//*	set the ones we can double click to green
+
+	SetWidgetTextColor(	kSkyT_Settings_OriginalData_txt,	CV_RGB(0,	255,	0));
+	SetWidgetTextColor(	kSkyT_Settings_OriginalData_cnt,	CV_RGB(0,	255,	0));
+
 	SetWidgetTextColor(	kSkyT_Settings_DataAAVSO_txt,		CV_RGB(0,	255,	0));
 	SetWidgetTextColor(	kSkyT_Settings_DataAAVSO_cnt,		CV_RGB(0,	255,	0));
+
 	SetWidgetTextColor(	kSkyT_Settings_DataMessier_txt,		CV_RGB(0,	255,	0));
 	SetWidgetTextColor(	kSkyT_Settings_DataMessier_cnt,		CV_RGB(0,	255,	0));
+
 	SetWidgetTextColor(	kSkyT_Settings_DataNGC_txt,			CV_RGB(0,	255,	0));
 	SetWidgetTextColor(	kSkyT_Settings_DataNGC_cnt,			CV_RGB(0,	255,	0));
 
@@ -825,6 +835,14 @@ void	WindowTabSTsettings::ProcessDoubleClick(const int	widgetIdx,
 
 	switch(widgetIdx)
 	{
+		case kSkyT_Settings_OriginalData_txt:
+		case kSkyT_Settings_OriginalData_cnt:
+			if ((gStarDataPtr != NULL) && (gStarCount > 0))
+			{
+				CreateStarlistWindow("Original Database", gStarDataPtr, gStarCount);
+			}
+			break;
+
 		case kSkyT_Settings_DataAAVSO_txt:
 		case kSkyT_Settings_DataAAVSO_cnt:
 		//	CreateAAVSOlistWindow();
@@ -836,9 +854,9 @@ void	WindowTabSTsettings::ProcessDoubleClick(const int	widgetIdx,
 
 		case kSkyT_Settings_DataMessier_txt:
 		case kSkyT_Settings_DataMessier_cnt:
-			if ((gMessierOjbectPtr != NULL) && (gMessierOjbectCount > 0))
+			if ((gMessierObjectPtr != NULL) && (gMessierObjectCount > 0))
 			{
-				CreateStarlistWindow("Messier List", gMessierOjbectPtr, gMessierOjbectCount, "M#");
+				CreateStarlistWindow("Messier List", gMessierObjectPtr, gMessierObjectCount, "M#");
 			}
 			break;
 

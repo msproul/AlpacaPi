@@ -251,7 +251,12 @@ int		iii;
 }
 
 //*****************************************************************************
-void	WindowTabConstellationList::ProcessMouseWheelMoved(const int widgetIdx, const int event, const int xxx, const int yyy, const int wheelMovement)
+void	WindowTabConstellationList::ProcessMouseWheelMoved(	const int	widgetIdx,
+															const int	event,
+															const int	xxx,
+															const int	yyy,
+															const int	wheelMovement,
+															const int	flags)
 {
 //	CONSOLE_DEBUG_W_NUM(__FUNCTION__, wheelMovement);
 

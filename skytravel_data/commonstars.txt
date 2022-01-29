@@ -2,7 +2,7 @@
 #	List of common star names
 #	https://www.cosmos.esa.int/web/hipparcos/common-star-names
 ###############################################################################
-#Name			HIP number
+#Name			HIP number (Hipparcos)
 ###############################################################################
 Acamar			13847
 Achernar		7588
@@ -168,3 +168,25 @@ Maia			17573
 Merope			17608
 Electra			17499
 Taygeta			17531
+
+
+######################################
+#	Auriga
+
+#	Capella
+#	Menkalinan
+Mahasim			28380
+Hassaleh		23015
+Almaaz			23416
+Haedus			23767
+Saclateni		23453
+#Delta-Aurigae
+#Nu-Aurigae
+#Pi-Aurigae
+
+Kabdhilinan
+
+Haedus II
+Sadatoni
+
+Elnath

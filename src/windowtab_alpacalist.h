@@ -103,7 +103,12 @@ class WindowTabAlpacaList: public WindowTab
 											const int	yyy,
 											const int	flags);
 
-		virtual void	ProcessMouseWheelMoved(const int widgetIdx, const int event, const int xxx, const int yyy, const int wheelMovement);
+		virtual void	ProcessMouseWheelMoved(	const int	widgetIdx,
+												const int	event,
+												const int	xxx,
+												const int	yyy,
+												const int	wheelMovement,
+												const int	flags);
 		virtual	void	UpdateSliderValue(	const int widgetIdx, double newSliderValue);
 
 				void	ClearRemoteDeviceList(void);

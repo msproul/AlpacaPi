@@ -504,7 +504,7 @@ void	Controller::SetWindowIPaddrInfo(	const char	*textString,
 {
 int		iii;
 
-	CONSOLE_DEBUG_W_2STR(__FUNCTION__, cWindowName, (onLine ? "online" : "OFFLINE"));
+//	CONSOLE_DEBUG_W_2STR(__FUNCTION__, cWindowName, (onLine ? "online" : "OFFLINE"));
 
 	for (iii=0; iii<kMaxTabs; iii++)
 	{
@@ -1125,11 +1125,17 @@ int		wheelMovement;
 #if (CV_MAJOR_VERSION >= 3)
 		case CV_EVENT_MOUSEWHEEL:
 		case CV_EVENT_MOUSEHWHEEL:
+//			CONSOLE_DEBUG_W_HEX("flags\t=", flags);
 			wheelMovement	=	flags & 0xffff0000;
 			wheelMovement	/=	65536;
 			if (cCurrentTabObjPtr != NULL)
 			{
-				cCurrentTabObjPtr->ProcessMouseWheelMoved(myWidgitIdx, event,  xxx,  yyy,  wheelMovement);
+				cCurrentTabObjPtr->ProcessMouseWheelMoved(	myWidgitIdx,
+															event,
+															xxx,
+															yyy,
+															wheelMovement,
+															flags);
 			}
 			break;
 #else
@@ -1922,7 +1928,7 @@ bool		sliderIsVertical;
 	//*	DEBUG
 	if (theWidget->scrollBarMax <= 0)
 	{
-		CONSOLE_DEBUG_W_NUM("theWidget->scrollBarMax\t=",	theWidget->scrollBarMax);
+//		CONSOLE_DEBUG_W_NUM("theWidget->scrollBarMax\t=",	theWidget->scrollBarMax);
 		theWidget->scrollBarMax	=	1;
 	}
 

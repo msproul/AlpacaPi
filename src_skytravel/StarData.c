@@ -172,7 +172,8 @@ int					bytesRead;
 							myObjectPtr[ii].decl		=	myDiskObjectPtr[ii].decl;
 							myObjectPtr[ii].org_ra		=	myDiskObjectPtr[ii].ra;
 							myObjectPtr[ii].org_decl	=	myDiskObjectPtr[ii].decl;
-		//					CONSOLE_DEBUG_W_NUM("myObjectPtr[ii].magn\t=", myObjectPtr[ii].magn);
+						//	CONSOLE_DEBUG_W_NUM("myObjectPtr[ii].magn\t=", myObjectPtr[ii].magn);
+//							CONSOLE_DEBUG_W_HEX("myObjectPtr[ii].magn\t=", myObjectPtr[ii].magn);
 						}
 					}
 
@@ -629,12 +630,12 @@ char			myFilePath[256];
 
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, folderPath);
 
-	strcpy(myFilePath, folderPath);
-//	strcat(myFilePath, "MessierCatalog.csv");
-	strcat(myFilePath, "MessierCatalog.tab");
-
-	messierData	=	ReadMessierCatalog(myFilePath, dataSource, objectCount);
-	if (messierData == NULL)
+//	strcpy(myFilePath, folderPath);
+////	strcat(myFilePath, "MessierCatalog.csv");
+//	strcat(myFilePath, "MessierCatalog.tab");
+//
+//	messierData	=	ReadMessierCatalog(myFilePath, dataSource, objectCount);
+//	if (messierData == NULL)
 	{
 		CONSOLE_DEBUG("ReadMessierCatalog() failed, trying TSC file");
 		//*	failed, try the TSC version
@@ -642,8 +643,17 @@ char			myFilePath[256];
 		strcat(myFilePath, "Messier.tsc");
 		messierData	=	ReadTSCfile(myFilePath, dataSource, objectCount);
 	}
+	CONSOLE_DEBUG_W_NUM("Messier object count\t=", *objectCount);
+//	CONSOLE_ABORT(__FUNCTION__);
 	return(messierData);
 }
+
+
+//*****************************************************************************
+//*		HYG DATA
+//*****************************************************************************
+
+
 
 //************************************************************************
 //	1,1,224700,,,,,0.000060,1.089009,219.7802,-5.20,-1.88,0.0,9.100,2.390,F5,0.482,219.740502,0.003449,4.177065,0.00000004,-0.00000554,-0.00000200,0.0000

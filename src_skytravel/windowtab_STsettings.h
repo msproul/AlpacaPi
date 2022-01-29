@@ -73,6 +73,9 @@ enum
 
 	kSkyT_Settings_DataTitle,
 
+	kSkyT_Settings_OriginalData_txt,
+	kSkyT_Settings_OriginalData_cnt,
+
 	kSkyT_Settings_DataAAVSO_txt,
 	kSkyT_Settings_DataAAVSO_cnt,
 

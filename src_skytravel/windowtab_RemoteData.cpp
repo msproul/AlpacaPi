@@ -20,6 +20,7 @@
 //*****************************************************************************
 //*	Nov 14,	2021	<MLS> Created windowtab_RemoteData.cpp
 //*	Jan  6,	2022	<MLS> Started working on Remote GAIA sql server interface
+//*	Jan 19,	2022	<MLS> Added SQL logging enable/disable
 //*****************************************************************************
 
 
@@ -39,6 +40,7 @@
 #include	"RemoteImage.h"
 
 #ifdef 	_ENABLE_REMOTE_GAIA_
+	#include	"GaiaSQL.h"
 	#include	"RemoteGaia.h"
 	#include	"controller_GaiaRemote.h"
 #endif
@@ -165,7 +167,7 @@ int		iii;
 	yLoc			+=	2;
 
 	iii	=	kRemoteData_SQLserverTxt;
-	while (iii < kRemoteData_OpenSQLWindowBtn)
+	while (iii < kRemoteData_EnableSQLlogging)
 	{
 
 		SetWidget(				iii,	xLoc,	yLoc,	valueWitdth1,		cSmallBtnHt);
@@ -183,13 +185,21 @@ int		iii;
 		yLoc			+=	cSmallBtnHt;
 		yLoc			+=	2;
 	}
-	SetWidgetText(	kRemoteData_SQLserverTxt,		"SQL Server");
-	SetWidgetText(	kRemoteData_SQLportTxt,			"Port");
-	SetWidgetText(	kRemoteData_SQLusernameTxt,		"username");
+	SetWidgetText(		kRemoteData_SQLserverTxt,		"SQL Server");
+	SetWidgetText(		kRemoteData_SQLportTxt,			"Port");
+	SetWidgetText(		kRemoteData_SQLusernameTxt,		"username");
 
 	SetWidgetText(		kRemoteData_SQLserverValue,		gGaiaSQLsever_IPaddr);
 	SetWidgetNumber(	kRemoteData_SQLportValue,		gGaiaSQLsever_Port);
 	SetWidgetText(		kRemoteData_SQLusernameValue,	gGaiaSQLsever_UserName);
+
+	SetWidget(			kRemoteData_EnableSQLlogging,	xLoc,	yLoc,	(valueWitdth1 + valueWitdth2),		cSmallBtnHt);
+	SetWidgetType(		kRemoteData_EnableSQLlogging,	kWidgetType_CheckBox);
+	SetWidgetFont(		kRemoteData_EnableSQLlogging,	kFont_Medium);
+	SetWidgetText(		kRemoteData_EnableSQLlogging,	"Enable SQL Logging");
+	yLoc			+=	cSmallBtnHt;
+	yLoc			+=	2;
+
 
 
 	SetWidget(				kRemoteData_OpenSQLWindowBtn,	xLoc,	yLoc,	(valueWitdth1 + valueWitdth2),		cSmallBtnHt);
@@ -264,6 +274,15 @@ void	WindowTabRemoteData::ProcessButtonClick(const int buttonIdx)
 	#ifdef 	_ENABLE_REMOTE_GAIA_
 		case kRemoteData_EnableRemoteGAIA:
 			gST_DispOptions.RemoteGAIAenabled	=	!gST_DispOptions.RemoteGAIAenabled;
+			if (gST_DispOptions.RemoteGAIAenabled)
+			{
+				//*	this will start the thread if it is not already running
+				StartGaiaSQLthread();
+			}
+			break;
+
+		case kRemoteData_EnableSQLlogging:
+			gEnableSQLloggng	=	!gEnableSQLloggng;
 			break;
 
 		case kRemoteData_OpenSQLWindowBtn:
@@ -311,6 +330,7 @@ void	WindowTabRemoteData::UpdateSettings(void)
 
 #ifdef 	_ENABLE_REMOTE_GAIA_
 	SetWidgetChecked(	kRemoteData_EnableRemoteGAIA,	gST_DispOptions.RemoteGAIAenabled);
+	SetWidgetChecked(	kRemoteData_EnableSQLlogging, gEnableSQLloggng);
 #endif
 
 	ForceUpdate();

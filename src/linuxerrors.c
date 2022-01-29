@@ -160,7 +160,7 @@ void	GetLinuxErrorString(const int errNum, char *errorString)
 //define	EKEYREVOKED	128	/* Key has been revoked */
 //define	EKEYREJECTED	129	/* Key was rejected by service */
 
-/* for robust mutexes */
+//* for robust mutexes
 //define	EOWNERDEAD	130	/* Owner died */
 //define	ENOTRECOVERABLE	131	/* State not recoverable */
 

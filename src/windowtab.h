@@ -215,7 +215,12 @@ class WindowTab
 		virtual void	ProcessMouseLeftButtonDown(const int widgetIdx, const int event, const int xxx, const int yyy, const int flags);
 		virtual void	ProcessMouseLeftButtonUp(const int widgetIdx, const int event, const int xxx, const int yyy, const int flags);
 		virtual void	ProcessMouseLeftButtonDragged(const int widgetIdx, const int event, const int xxx, const int yyy, const int flags);
-		virtual void	ProcessMouseWheelMoved(const int widgetIdx, const int event, const int xxx, const int yyy, const int wheelMovement);
+		virtual void	ProcessMouseWheelMoved(	const int	widgetIdx,
+												const int	event,
+												const int	xxx,
+												const int	yyy,
+												const int	wheelMovement,
+												const int	flags);
 
 				bool	AlpacaSetConnected(const char *deviceTypeStr, const bool newConnectedState);
 				void	SetUpConnectedIndicator(const int buttonIdx, const int yLoc);

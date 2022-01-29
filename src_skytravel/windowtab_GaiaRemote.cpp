@@ -133,7 +133,7 @@ int		boxID;
 	textBoxHt	=	14;
 	textBoxWd	=	cWidth - (xLoc + 3);
 	textBoxWd	-=	20;			//*	leave room for the scroll bar
-	for (iii = kGaiaRemoteList_Obj_01; iii <= kGaiaRemoteList_Obj_Last; iii++)
+	for (iii = kGaiaRemoteList_Obj_01; iii <= kGaiaRemoteList_Average; iii++)
 	{
 		SetWidget(				iii,	xLoc,			yLoc,		textBoxWd,		textBoxHt);
 		SetWidgetJustification(	iii,	kJustification_Left);
@@ -157,8 +157,19 @@ int		boxID;
 	SetWidgetFont(	kGaiaRemoteList_ScrollBar,	kFont_Small);
 //	CONSOLE_DEBUG_W_NUM("kGaiaRemoteList_ScrollBar\t=", kGaiaRemoteList_ScrollBar);
 
-	//---------------------------------------------------------------------
 	xLoc		=	0;
+	//---------------------------------------------------------------------
+	//*	set up the text message box
+	widgetWidth	=			(3 * ((cWidth / 4) + 20)) + 12;
+	SetWidget(				kGaiaRemoteList_MsgBox,	xLoc,	yLoc,	widgetWidth,	cSmallBtnHt);
+	SetWidgetFont(			kGaiaRemoteList_MsgBox,	kFont_Medium);
+	SetWidgetText(			kGaiaRemoteList_MsgBox,	"------------------");
+	SetWidgetJustification(	kGaiaRemoteList_MsgBox,	kJustification_Left);
+	SetWidgetTextColor(		kGaiaRemoteList_MsgBox,	CV_RGB(255,	255,	255));
+	yLoc			+=	cSmallBtnHt;
+	yLoc			+=	3;
+
+	//---------------------------------------------------------------------
 	widgetWidth	=	(cWidth / 4) + 20;
 	SetWidget(				kGaiaRemoteList_Obj_Total,	xLoc,	yLoc,	widgetWidth,	cSmallBtnHt);
 	SetWidgetFont(			kGaiaRemoteList_Obj_Total,	kFont_Medium);
@@ -259,7 +270,13 @@ int		starDataIdx;
 }
 
 //*****************************************************************************
-void	WindowTabGaiaRemote::ProcessMouseWheelMoved(const int widgetIdx, const int event, const int xxx, const int yyy, const int wheelMovement)
+void	WindowTabGaiaRemote::ProcessMouseWheelMoved(	const int	widgetIdx,
+														const int	event,
+														const int	xxx,
+														const int	yyy,
+														const int	wheelMovement,
+														const int	flags)
+
 {
 //	CONSOLE_DEBUG_W_NUM(__FUNCTION__, wheelMovement);
 
@@ -303,6 +320,10 @@ char	formatString[64];
 int		myDevCount;
 int		gaiaIdx;
 int		totalStarCnt;
+int		validEntryCnt;
+int		totalMilliSecs;
+int		avgMilliSecs;
+int		avgStarCnt;
 int		ra_hours;
 int		ra_minutes;
 
@@ -373,12 +394,32 @@ int		ra_minutes;
 		iii++;
 	}
 
+	//*	count up the total
 	totalStarCnt	=	0;
+	validEntryCnt	=	0;
+	totalMilliSecs	=	0;
+	avgMilliSecs	=	0;
+	avgStarCnt		=	0;
 	for (iii=0; iii<kMaxGaiaDataSets; iii++)
 	{
 		totalStarCnt	+=	gGaiaDataList[iii].gaiaDataCnt;
-	}
+		totalMilliSecs	+=	gGaiaDataList[iii].elapsedMilliSecs;
 
+		if (gGaiaDataList[iii].validData && (gGaiaDataList[iii].gaiaDataCnt > 0))
+		if (gGaiaDataList[iii].gaiaDataCnt > 0)
+		{
+			validEntryCnt++;
+		}
+	}
+	if (validEntryCnt > 0)
+	{
+		avgMilliSecs	=	totalMilliSecs / validEntryCnt;
+		avgStarCnt		=	totalStarCnt / validEntryCnt;
+	}
+	sprintf(textString, "avg\t\t\t\t\t%d\t%d", avgStarCnt, avgMilliSecs);
+	SetWidgetText(kGaiaRemoteList_Average, textString);
+
+	//------------------------------------------
 	sprintf(textString, "Total stars =%d", totalStarCnt);
 	if (totalStarCnt > 1000000)
 	{
@@ -389,7 +430,11 @@ int		ra_minutes;
 
 	sprintf(textString, "SQL Error count=%d", gGaiaSQLerror_Count);
 	SetWidgetText(	kGaiaRemoteList_ErrorCnt,	textString);
-
+	if (gGaiaSQLsever_MsgUpdated)
+	{
+		SetWidgetText(	kGaiaRemoteList_MsgBox,	gGaiaSQLsever_StatusMsg);
+		gGaiaSQLsever_MsgUpdated	=	false;
+	}
 //
 //	SetWidgetScrollBarLimits(	kGaiaRemoteList_ScrollBar, (kGaiaRemoteList_Obj_Last - kGaiaRemoteList_Obj_01), cStarListCount);
 //	SetWidgetScrollBarValue(	kGaiaRemoteList_ScrollBar, 100);

@@ -141,7 +141,12 @@ class WindowTabSkyTravel: public WindowTab
 		virtual void	ProcessMouseLeftButtonDown(const int widgetIdx, const int event, const int xxx, const int yyy, const int flags);
 		virtual void	ProcessMouseLeftButtonUp(const int widgetIdx, const int event, const int xxx, const int yyy, const int flags);
 		virtual void	ProcessMouseLeftButtonDragged(const int widgetIdx, const int event, const int xxx, const int yyy, const int flags);
-		virtual void	ProcessMouseWheelMoved(const int widgetIdx, const int event, const int xxx, const int yyy, const int wheelMovement);
+		virtual void	ProcessMouseWheelMoved(	const int	widgetIdx,
+												const int	event,
+												const int	xxx,
+												const int	yyy,
+												const int	wheelMovement,
+												const int	flags);
 
 				bool	ProcessSingleCharCmd(const int cmdChar);
 				void	UpdateButtonStatus(void);
@@ -185,6 +190,7 @@ class WindowTabSkyTravel: public WindowTab
 				long	Search_and_plot(TYPE_CelestData	*objectptr, long maxObjects, bool dataIsSorted=true);
 				void	DrawObjectByShape(int xcoord, int ycoord, int shape, int magn);
 
+				void	AdjustFaintLimit(const double adjustmentAmount);
 				void	DrawStarFancy(	const int		xcoord,
 										const int		ycoord,
 										TYPE_CelestData	*theStar,
@@ -224,7 +230,9 @@ class WindowTabSkyTravel: public WindowTab
 				void	DrawVerticalArc(double azimuthAngle, double startElev, double endElev);
 				int		DrawGreatCircle(	const double	declinationAngle_rad,
 											const bool		useDashedLines,
-											const bool		forceNumberDraw=false);
+											const bool		enableNumbers,
+											const bool		forceNumberDraw);
+
 				int		DrawNorthSouthLine(double rightAscen);
 				void	DrawScale(void);
 
@@ -306,6 +314,7 @@ class WindowTabSkyTravel: public WindowTab
 				bool	cFoundSomething;
 				double	cFound_newRA;
 				double	cFound_newDec;
+				double	cFoundMagnitude;
 				char	cFoundName[64];
 				char	cFoundDatabase[64];
 
@@ -313,115 +322,126 @@ class WindowTabSkyTravel: public WindowTab
 				double	cViewAngle_InfoDisplay;
 
 
-		uint32_t			cLastUpdateTime_ms;
-		uint32_t			cLastClockUpdateTime_ms;
+			uint32_t			cLastUpdateTime_ms;
+			uint32_t			cLastClockUpdateTime_ms;
+			uint32_t			cLastRedrawTime_ms;
 
-		uint32_t			cLastRemoteImageUpdate_ms;
+			uint32_t			cLastRemoteImageUpdate_ms;
 
-		//*	I am using openCV ROI for the drawing so these are always zero
-		int					cWorkSpaceLeftOffset;
-		int					cWorkSpaceTopOffset;
+			//*	I am using openCV ROI for the drawing so these are always zero
+			int					cWorkSpaceLeftOffset;
+			int					cWorkSpaceTopOffset;
 
-		//*	still need the offset for doing cursor calculations
-		int					cCursorOffsetY;
+			//*	still need the offset for doing cursor calculations
+			int					cCursorOffsetY;
 
-		bool				cAutoAdvanceTime;
-		bool				cNightMode;
-		unsigned short		cTrack;				//*	0=no tracking, 1=track cursor, 2,3 etc. means track planet
-		TYPE_SkyDispOptions	cDispOptions;
-		bool				cChartMode;				//*	Chart on/off
-		bool				cFindFlag;
-//-		bool				inform;
-		bool				cLunarEclipseFlag;	//*	Lunar Eclipse flag
-//-		bool				updflag;
+			bool				cAutoAdvanceTime;
+			bool				cNightMode;
+			unsigned short		cTrack;				//*	0=no tracking, 1=track cursor, 2,3 etc. means track planet
+			TYPE_SkyDispOptions	cDispOptions;
+			bool				cChartMode;				//*	Chart on/off
+			bool				cFindFlag;
+	//-		bool				inform;
+			bool				cLunarEclipseFlag;	//*	Lunar Eclipse flag
+	//-		bool				updflag;
 
-		int					cDisplayedStarCount;	//*	number of currently displayed stars
+			int					cDisplayedStarCount;	//*	number of currently displayed stars
 
-		int					cMagmin;
-		int					cView_index;		//*	1,2,4,8,16,32,64
-		double				cView_angle;		//*	in radians
-		double				cXfactor;			//*	pixels per radian
-		double				cYfactor;
-		double				cGamang;
-		double				cChart_gamma;
-		double				cRadmax;
+			int					cMagmin;
+			int					cView_index;		//*	used in original program, only used as display indicator
+			double				cView_angle;		//*	in radians
 
-		double				cElev0;				//*	values for current center of screen
-		double				cAz0;
-		double				cRa0;
-		double				cDecl0;
+			//*	these are used for the drawing of stars
+			double				cLN_view_angle;		//*	natural log of view angle, speed up drawing
+			double				cFaintLimit_B;		//*	defaults to (4.5224)
+			double				cMaxRadius_D;		//*	defaults to 20
 
-		double				cElev;				//*	only used for Find
-		double				cAz;				//*	only used for Find
-		double				cRa;
-		double				cDecl;
+			double				cXfactor;			//*	pixels per radian
+			double				cYfactor;
+			double				cGamang;
+			double				cChart_gamma;
+			double				cRadmax;
 
-		//*	current cursor values (where is the user cursor pointing)
-//-		bool				csr_valid;
-		double				cCursor_elev;
-		double				cCursor_az;
-		double				cCursor_ra;
-		double				cCursor_decl;
+			double				cElev0;				//*	values for current center of screen
+			double				cAz0;
+			double				cRa0;
+			double				cDecl0;
 
-		int					cCsrx;
-		int					cCsry;
-		int					cSavedMouseClick_X;	//*	these are for left mouse drag operation
-		int					cSavedMouseClick_Y;
-		bool				cMouseDragInProgress;
+			double				cElev;				//*	only used for Find
+			double				cAz;				//*	only used for Find
+			double				cRa;
+			double				cDecl;
 
-		long				cInform_dist;
-		long				cInform_id;
-		char				cInform_name[256];
+			//*	current cursor values (where is the user cursor pointing)
+	//-		bool				csr_valid;
+			double				cCursor_elev;
+			double				cCursor_az;
+			double				cCursor_ra;
+			double				cCursor_decl;
 
-		double				cRamax;				//*	max delta ra for search
-		double				cDecmax;
-		double				cDecmin;
+			int					cCsrx;
+			int					cCsry;
+			int					cSavedMouseClick_X;	//*	these are for left mouse drag operation
+			int					cSavedMouseClick_Y;
+			bool				cMouseDragInProgress;
 
-		int					cWind_x0;			//*	center of field in pixels, relative to wind_ulx,_uly
-		int					cWind_y0;
-		int					wind_ulx;
-		int					wind_uly;
-		int					cWind_width;
-		int					cWind_height;
+			long				cInform_dist;
+			long				cInform_id;
+			char				cInform_name[256];
 
-		double				cSun_radius;		//*	in radians
-		double				cMoon_radius;		//*	in radians
-		double				cPhase_angle;		//*	for crescent moon
-		double				cPosition_angle;
-		double				cEarth_shadow_radius;
+			double				cRamax;				//*	max delta ra for search
+			double				cDecmax;
+			double				cDecmin;
 
-		double				mon_geo_ra;
-		double				mon_geo_decl;
+			int					cWind_x0;			//*	center of field in pixels, relative to wind_ulx,_uly
+			int					cWind_y0;
+			int					wind_ulx;
+			int					wind_uly;
+			int					cWind_width;
+			int					cWind_height;
 
-		//*	end view_struct
-		short				cCurrentSkyColor;
-		RGBcolor			cSkyRGBvalue;
+			double				cSun_radius;		//*	in radians
+			double				cMoon_radius;		//*	in radians
+			double				cPhase_angle;		//*	for crescent moon
+			double				cPosition_angle;
+			double				cEarth_shadow_radius;
+
+			double				mon_geo_ra;
+			double				mon_geo_decl;
+
+			//*	end view_struct
+			short				cCurrentSkyColor;
+			RGBcolor			cSkyRGBvalue;
 
 
 
-		short				currentForeColor;
+			short				currentForeColor;
 
-		TYPE_Time			cCurrentTime;
-		TYPE_LatLon			cCurrLatLon;
+			TYPE_Time			cCurrentTime;
+			TYPE_LatLon			cCurrLatLon;
 
-//-		double				cDisplayedMagnitudeLimit;
+	//-		double				cDisplayedMagnitudeLimit;
 
-		sun_moon_struct		cSunMonStruct;
-		planet_struct		cPlanetStruct[kPlanetObjectCnt];
-		TYPE_CelestData		cPlanets[kPlanetObjectCnt];
+			sun_moon_struct		cSunMonStruct;
+			planet_struct		cPlanetStruct[kPlanetObjectCnt];
+			TYPE_CelestData		cPlanets[kPlanetObjectCnt];
 
-		//--------------------------------------------------------------
-		//*	Telescope tracking stuff
-		bool					cTrackTelescope;
-		TYPE_TeleDispOptions	cTelescopeDisplayOptions;
+			//--------------------------------------------------------------
+			//*	Telescope tracking stuff
+			bool					cTrackTelescope;
+			TYPE_TeleDispOptions	cTelescopeDisplayOptions;
 
-		int						cDebugCounter;
+			int						cDebugCounter;
 
-		//--------------------------------------------------------------
-		//*	Camera FOV stuff
-		void			SetCameraFOVptr(TYPE_CameraFOV	*cameraFOVarrayPtr);
-		TYPE_CameraFOV	*cCameraFOVarrayPtr;
+			//--------------------------------------------------------------
+			//*	Camera FOV stuff
+			void			SetCameraFOVptr(TYPE_CameraFOV	*cameraFOVarrayPtr);
+			TYPE_CameraFOV	*cCameraFOVarrayPtr;
 };
+
+
+#define	kEnableGreatCircleNumbers	TRUE
+#define	kDisableGreatCircleNumbers	FALSE
 
 
 #endif // _WINDOWTAB_SKYTRAVEL_H_

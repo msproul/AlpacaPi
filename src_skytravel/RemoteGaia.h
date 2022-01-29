@@ -8,3 +8,5 @@ extern	char	gGaiaSQLsever_UserName[];
 extern	char	gGaiaSQLsever_Password[];
 extern	char	gGaiaSQLsever_Database[];
 extern	int		gGaiaSQLerror_Count;
+extern	char	gGaiaSQLsever_StatusMsg[];
+extern	bool	gGaiaSQLsever_MsgUpdated;

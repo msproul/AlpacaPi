@@ -11,7 +11,7 @@ void	GaiaSQLinit(void);
 int		StartGaiaSQLthread(void);
 
 //*	returns 1 if new request was started, 0 if not
-int		UpdateSkyTravelView(double ra_Radians, double dec_Radians, double viewAngle_Radians);
+int		UpdateSkyTravelView(double ra_Degrees, double dec_Degrees, double viewAngle_Degrees);
 void	ClearAllSQLdata(void);
 double	CalcRA_DEC_Distance_Deg(const double	ra1_Deg,
 								const double	dec1_Deg,
@@ -37,3 +37,4 @@ typedef struct
 #define	JD2016				(2457388.5)
 
 extern TYPE_GAIA_REMOTE_DATA	gGaiaDataList[];
+extern bool	gEnableSQLloggng;

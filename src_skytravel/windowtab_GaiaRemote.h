@@ -59,14 +59,15 @@ enum
 	kGaiaRemoteList_Obj_29,
 	kGaiaRemoteList_Obj_30,
 	kGaiaRemoteList_Obj_31,
-	kGaiaRemoteList_Obj_32,
-	kGaiaRemoteList_Obj_33,
-	kGaiaRemoteList_Obj_34,
+//	kGaiaRemoteList_Obj_32,
+//	kGaiaRemoteList_Obj_33,
 
-	kGaiaRemoteList_Obj_Last	=	kGaiaRemoteList_Obj_34,
+	kGaiaRemoteList_Obj_Last	=	kGaiaRemoteList_Obj_31,
+	kGaiaRemoteList_Average,
 
 	kGaiaRemoteList_ScrollBar,
 
+	kGaiaRemoteList_MsgBox,
 	kGaiaRemoteList_Obj_Total,
 	kGaiaRemoteList_ErrorCnt,
 
@@ -97,7 +98,12 @@ class WindowTabGaiaRemote: public WindowTab
 											const int	xxx,
 											const int	yyy,
 											const int	flags);
-		virtual void	ProcessMouseWheelMoved(const int widgetIdx, const int event, const int xxx, const int yyy, const int wheelMovement);
+		virtual void	ProcessMouseWheelMoved(	const int	widgetIdx,
+												const int	event,
+												const int	xxx,
+												const int	yyy,
+												const int	wheelMovement,
+												const int	flags);
 		virtual	void	UpdateSliderValue(	const int widgetIdx, double newSliderValue);
 
 				void	UpdateSettings(void);

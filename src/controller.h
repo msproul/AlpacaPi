@@ -1,9 +1,6 @@
 //*****************************************************************************
 //#include	"controller.h"
 
-
-
-
 #ifndef	_CONTROLLER_H_
 #define	_CONTROLLER_H_
 

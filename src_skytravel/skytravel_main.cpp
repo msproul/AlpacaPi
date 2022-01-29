@@ -86,8 +86,8 @@ TYPE_CelestData		*gHipObjectPtr		=	NULL;
 long				gHipObjectCount		=	0;
 
 //*	Messier
-TYPE_CelestData		*gMessierOjbectPtr	=	NULL;
-long				gMessierOjbectCount	=	0;
+TYPE_CelestData		*gMessierObjectPtr	=	NULL;
+long				gMessierObjectCount	=	0;
 
 //*	HYG
 TYPE_CelestData		*gHYGObjectPtr		=	NULL;
@@ -219,7 +219,10 @@ unsigned int		deltaSecs;
 
 #ifdef _ENABLE_REMOTE_GAIA_
 	GaiaSQLinit();
-	StartGaiaSQLthread();
+	if (gST_DispOptions.RemoteGAIAenabled)
+	{
+		StartGaiaSQLthread();
+	}
 #endif
 
 	new ControllerSkytravel("SkyTravel");

@@ -304,43 +304,42 @@ bool	newDevice;
 }
 
 
-/*
-{"Value":[{	"DeviceName":"ASCOM Simulator SafetyMonitor Driver",
-			"DeviceType":"SafetyMonitor",
-			"DeviceNumber":0,
-			"UniqueID":"7B79C9E6-6338-41E5-89DE-4B85EAB47953"},
-			{
-			"DeviceName":"ASCOM Observing Conditions Hub (OCH)",
-			"DeviceType":"ObservingConditions",
-			"DeviceNumber":0,
-			"UniqueID":"4BDFE843-5E27-4983-816A-45FF3F92914C"},
-			{
-			"DeviceName":"Dome Simulator .NET",
-			"DeviceType":"Dome",
-			"DeviceNumber":0,
-			"UniqueID":"BEAD123F-518A-472F-BEBD-17CABA2994A8"},
-			{
-			"DeviceName":"Simulator",
-			"DeviceType":"Telescope",
-			"DeviceNumber":0,
-			"UniqueID":"8CBF0B5B-63EB-4B79-AF6D-A05FD7805A98"},
-			{
-			"DeviceName":"ASCOM Simulator Focuser Driver",
-			"DeviceType":"Focuser",
-			"DeviceNumber":0,
-			"UniqueID":"596C180F-8049-47ED-8D03-2D59237A6198"},
-			{
-			"DeviceName":"Camera V2 simulator",
-			"DeviceType":"Camera",
-			"DeviceNumber":0,
-			"UniqueID":"AE6042D5-161F-4DF3-B9C8-85D37E0CAEB0"}
-			],
-			"ClientTransactionID":0,
-			"ServerTransactionID":105682,
-			"ErrorNumber":0,
-			"ErrorMessage":""}
+//{"Value":[{	"DeviceName":"ASCOM Simulator SafetyMonitor Driver",
+//			"DeviceType":"SafetyMonitor",
+//			"DeviceNumber":0,
+//			"UniqueID":"7B79C9E6-6338-41E5-89DE-4B85EAB47953"},
+//			{
+//			"DeviceName":"ASCOM Observing Conditions Hub (OCH)",
+//			"DeviceType":"ObservingConditions",
+//			"DeviceNumber":0,
+//			"UniqueID":"4BDFE843-5E27-4983-816A-45FF3F92914C"},
+//			{
+//			"DeviceName":"Dome Simulator .NET",
+//			"DeviceType":"Dome",
+//			"DeviceNumber":0,
+//			"UniqueID":"BEAD123F-518A-472F-BEBD-17CABA2994A8"},
+//			{
+//			"DeviceName":"Simulator",
+//			"DeviceType":"Telescope",
+//			"DeviceNumber":0,
+//			"UniqueID":"8CBF0B5B-63EB-4B79-AF6D-A05FD7805A98"},
+//			{
+//			"DeviceName":"ASCOM Simulator Focuser Driver",
+//			"DeviceType":"Focuser",
+//			"DeviceNumber":0,
+//			"UniqueID":"596C180F-8049-47ED-8D03-2D59237A6198"},
+//			{
+//			"DeviceName":"Camera V2 simulator",
+//			"DeviceType":"Camera",
+//			"DeviceNumber":0,
+//			"UniqueID":"AE6042D5-161F-4DF3-B9C8-85D37E0CAEB0"}
+//			],
+//			"ClientTransactionID":0,
+//			"ServerTransactionID":105682,
+//			"ErrorNumber":0,
+//			"ErrorMessage":""}
+//
 
-*/
 
 
 //*****************************************************************************

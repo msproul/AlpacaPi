@@ -249,6 +249,25 @@ void	WindowTabIPList::ProcessDoubleClick(const int buttonIdx)
 //	CONSOLE_DEBUG_W_NUM("buttonIdx\t=", buttonIdx);
 }
 
+//*****************************************************************************
+void	WindowTabIPList::ProcessMouseWheelMoved(const int	widgetIdx,
+													const int	event,
+													const int	xxx,
+													const int	yyy,
+													const int	wheelMovement,
+													const int	flags)
+{
+//	CONSOLE_DEBUG_W_NUM(__FUNCTION__, wheelMovement);
+
+//	cFirstLineIdx	+=	wheelMovement;
+//	if (cFirstLineIdx < 0)
+//	{
+//		cFirstLineIdx	=	0;
+//	}
+//	UpdateOnScreenWidgetList();
+//	ForceUpdate();
+}
+
 //**************************************************************************************
 void	WindowTabIPList::ClearIPaddrList(void)
 {

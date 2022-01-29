@@ -163,7 +163,7 @@ void	PARENT_CLASS::AlpacaProcessReadAll_Dome(const int	deviceNum,
 double	argDouble;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
-	CONSOLE_DEBUG_W_STR(keywordString, valueString);
+//	CONSOLE_DEBUG_W_STR(keywordString, valueString);
 
 	if (strcasecmp(keywordString, "version") == 0)
 	{
@@ -215,7 +215,7 @@ double	argDouble;
 	}
 	else if (strcasecmp(keywordString, "cansyncazimuth") == 0)
 	{
-		CONSOLE_DEBUG_W_STR(keywordString, valueString);
+//		CONSOLE_DEBUG_W_STR(keywordString, valueString);
 		cDomeProp.CanSyncAzimuth	=	IsTrueFalse(valueString);
 	}
 	else if (strcasecmp(keywordString, "slaved") == 0)

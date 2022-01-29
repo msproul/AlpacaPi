@@ -216,10 +216,12 @@ class ControllerSkytravel: public Controller
 				//-----------------------------------------------------
 				//*	ASCOM Dome properties
 				TYPE_DomeProperties			cDomeProp;
+				uint32_t					cLastDomeUpdate_milliSecs;
+
 				//----------------------------------------------------------
 				//*	ASCOM Telescope properties
 				TYPE_TelescopeProperties	cTelescopeProp;
-
+				uint32_t					cLastTelescopeUpdate_milliSecs;
 };
 
 void		CloseAllExceptFirst(void);

@@ -448,7 +448,7 @@ void	ControllerCamNormal::UpdatePercentCompleted(void)
 {
 char			linebuff[128];
 
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 
 	sprintf(linebuff, "%d %% ", cCameraProp.PercentCompleted);
 	SetWidgetText(kTab_Camera, kCameraBox_PercentCompleted, linebuff);

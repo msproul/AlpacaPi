@@ -1000,7 +1000,7 @@ int				myIntegerValue;
 			{
 				if (ccc < kImageArrayBuffSize)
 				{
-					//*	Dec 12, 2021	<MLS> Fixed bug in AlpacaGetImageArray() processing "]"
+					//*	Dec 12,	2021	<MLS> Fixed bug in AlpacaGetImageArray() processing "]"
 					if ((theChar != '[') && (theChar != ']') && (theChar > 0x20))
 					{
 						linebuf[ccc++]	=	theChar;

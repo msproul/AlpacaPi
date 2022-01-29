@@ -94,6 +94,8 @@ ControllerSkytravel::ControllerSkytravel(	const char *argWindowName)
 	cDomeAddressValid		=	false;
 	cTelescopeAddressValid	=	false;
 	cUpdateDelta			=	kDefaultUpdateDelta;
+	cLastDomeUpdate_milliSecs		=	0;
+	cLastTelescopeUpdate_milliSecs	=	0;
 
 	//*	dome specific stuff
 	//*	clear out all of the dome properties data
@@ -343,24 +345,27 @@ void	ControllerSkytravel::RunBackgroundTasks(bool enableDebug)
 {
 uint32_t	currentMillis;
 uint32_t	deltaSeconds;
+uint32_t	telescope_deltaSeconds;
 //uint32_t	secsSinceLastListUpdate;
 bool		needToUpdate;
+bool		needToUpdateDome;
 bool		validData;
 bool		foundSomething;
 
-//	if (enableDebug)
-//	{
-//		CONSOLE_DEBUG_W_NUM("gSkyTravelBGcnt\t\t=",			gSkyTravelBGcnt);
-//		CONSOLE_DEBUG_W_NUM("cDomeAddressValid\t\t=",		cDomeAddressValid);
-//		CONSOLE_DEBUG_W_NUM("cReadStartup_Dome\t\t=",		cReadStartup_Dome);
-//		CONSOLE_DEBUG_W_NUM("cTelescopeAddressValid\t=",	cTelescopeAddressValid);
-//		CONSOLE_DEBUG_W_NUM("cReadStartup_Telescope\t=",	cReadStartup_Telescope);
-//		CONSOLE_DEBUG_W_NUM("cFirstDataRead\t\t=",			cFirstDataRead);
-//		gSkyTravelBGcnt++;
-//	}
+	if (enableDebug)
+	{
+		CONSOLE_DEBUG_W_NUM("gSkyTravelBGcnt\t\t=",			gSkyTravelBGcnt);
+		CONSOLE_DEBUG_W_NUM("cDomeAddressValid\t\t=",		cDomeAddressValid);
+		CONSOLE_DEBUG_W_NUM("cReadStartup_Dome\t\t=",		cReadStartup_Dome);
+		CONSOLE_DEBUG_W_NUM("cTelescopeAddressValid\t=",	cTelescopeAddressValid);
+		CONSOLE_DEBUG_W_NUM("cReadStartup_Telescope\t=",	cReadStartup_Telescope);
+		CONSOLE_DEBUG_W_NUM("cFirstDataRead\t\t=",			cFirstDataRead);
+		gSkyTravelBGcnt++;
+	}
 
 	foundSomething	=	false;
 
+	//*	dont want to do all of this on the same pass
 	if (cDomeAddressValid && cReadStartup_Dome)
 	{
 		CONSOLE_DEBUG("Calling AlpacaGetStartupData_Dome()");
@@ -383,9 +388,12 @@ bool		foundSomething;
 		}
 	}
 
-	needToUpdate	=	false;
-	currentMillis	=	millis();
-	deltaSeconds	=	(currentMillis - cLastUpdate_milliSecs) / 1000;
+	needToUpdate		=	false;
+	needToUpdateDome	=	false;
+	currentMillis		=	millis();
+	deltaSeconds		=	(currentMillis - cLastUpdate_milliSecs) / 1000;
+
+//	CONSOLE_DEBUG_W_NUM("deltaSeconds\t\t=",			deltaSeconds);
 
 	if (cForceAlpacaUpdate)
 	{
@@ -411,26 +419,22 @@ bool		foundSomething;
 		cIPaddrListObjPtr->UpdateIPaddrList();
 	}
 
-	if (cDomeProp.Slewing && (deltaSeconds >= 1))
-	{
-		needToUpdate	=	true;
-	}
-
-	if ((cDomeProp.ShutterStatus == kShutterStatus_Opening) ||
-				(cDomeProp.ShutterStatus == kShutterStatus_Closing))
+	//-----------------------------------------------------------------------------
+	//*	if the dome is opening or closing, or slewing
+	//*	check every second
+	if (cDomeProp.Slewing ||
+		(cDomeProp.ShutterStatus == kShutterStatus_Opening) ||
+		(cDomeProp.ShutterStatus == kShutterStatus_Closing))
 	{
 		if (deltaSeconds >= 1)
 		{
-			needToUpdate	=	true;
+			needToUpdateDome	=	true;
 		}
 	}
 
-	if (needToUpdate)
+	//-----------------------------------------------------------------------------
+	if (needToUpdate || needToUpdateDome)
 	{
-//		CONSOLE_DEBUG_W_NUM("Need to update", cDebugCounter++);
-		//*	here is where we query the devices for information
-
-		//----------------------------------------------------
 		//*	is the DOME IP address valid
 		if (cDomeAddressValid)
 		{
@@ -441,14 +445,28 @@ bool		foundSomething;
 				CONSOLE_DEBUG("AlpacaGetStatus_Dome failed");
 			}
 		}
+	}
+
+	//-----------------------------------------------------------------------------
+	if (needToUpdate)
+	{
+//		CONSOLE_DEBUG_W_NUM("Need to update", cDebugCounter++);
+		//*	here is where we query the devices for information
+
 		//----------------------------------------------------
 		//*	is the TELESCOPE IP address valid
-		if (cTelescopeAddressValid && (deltaSeconds >= 2))
+		if (cTelescopeAddressValid)
 		{
-			validData	=	AlpacaGetTelescopeStatus();
-			if (validData == false)
+			telescope_deltaSeconds	=	(currentMillis - cLastTelescopeUpdate_milliSecs) / 1000;
+			if (telescope_deltaSeconds >= 2)
 			{
-				CONSOLE_DEBUG("AlpacaGetTelescopeStatus failed");
+//				CONSOLE_DEBUG("Updating TELESCOPE status");
+				validData	=	AlpacaGetTelescopeStatus();
+				if (validData == false)
+				{
+					CONSOLE_DEBUG("AlpacaGetTelescopeStatus failed");
+				}
+				cLastTelescopeUpdate_milliSecs	=	millis();
 			}
 		}
 
@@ -740,7 +758,7 @@ char	textBuff[64];
 	}
 	else
 	{
-//		CONSOLE_DEBUG("AlpacaGetStatus_TelescopeOneAAT");
+		CONSOLE_DEBUG("AlpacaGetStatus_TelescopeOneAAT");
 		validData	=	AlpacaGetStatus_TelescopeOneAAT();
 	}
 

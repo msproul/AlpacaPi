@@ -51,6 +51,7 @@ int			CelestObjDeclinationQsortProc(const void *e1, const void *e2);
 }
 #endif
 
+//**************************************************************************************
 #define	DISPOSEPTR_IF_INUSE(thePtr)	\
 	if (thePtr != NULL)				\
 	{								\

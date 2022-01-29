@@ -94,6 +94,9 @@
 //*	Jan  9,	2022	<MLS> Changed minimum view angle to 0.01 degrees
 //*	Jan 16,	2022	<MLS> Sorting of Gaia remote data made big difference in zoom in/out speed
 //*	Jan 18,	2022	<MLS> Changed star drawing order so the dense catalogs are on the bottom
+//*	Jan 22,	2022	<MLS> Fixed bug when drawing stars with negative magnitudes
+//*	Jan 23,	2022	<MLS> Added user settable parameters for star size calculations (cFaintLimit_B)
+//*	Jan 23,	2022	<MLS> Control and mouse wheel adjust Faint Limit (cFaintLimit_B)
 //*****************************************************************************
 //*	TODO
 //*			star catalog lists
@@ -294,6 +297,7 @@ static const double	gDeltaPlanet[kPlanetObjectCnt]	=
 static	TYPE_CelestData	*gZodiacPtr	=	NULL;
 
 
+//*****************************************************************************
 #define		CHECK_FOR_INIT(x, y)		\
 	if (x != NULL)						\
 	{									\
@@ -329,17 +333,23 @@ int		iii;
 	cAutoAdvanceTime			=	true;
 	cLastUpdateTime_ms			=	0;
 	cLastClockUpdateTime_ms		=	0;
+	cLastRedrawTime_ms			=	0;
 	cLastRemoteImageUpdate_ms	=	0;
 	cNightMode					=	false;
 	gStarDataPtr				=	NULL;
 	gStarCount					=	0;
+
+	//*	for computing size of stars to draw
+	cFaintLimit_B				=	4.5224;
+	cMaxRadius_D				=	20;
+
 
 	CHECK_FOR_INIT(gConstStarPtr,		gConstStarCount);
 	CHECK_FOR_INIT(gNGCobjectPtr,		gNGCobjectCount);
 	CHECK_FOR_INIT(gHipObjectPtr,		gHipObjectCount);
 	CHECK_FOR_INIT(gYaleStarDataPtr,	gYaleStarCount);
 	CHECK_FOR_INIT(gAAVSOalertsPtr,		gAAVSOalertsCnt);
-	CHECK_FOR_INIT(gMessierOjbectPtr,	gMessierOjbectCount);
+	CHECK_FOR_INIT(gMessierObjectPtr,	gMessierObjectCount);
 	CHECK_FOR_INIT(gDraperObjectPtr,	gDraperObjectCount);
 	CHECK_FOR_INIT(gSpecialObjectPtr,	gSpecialObjectCount);
 
@@ -396,7 +406,7 @@ int		iii;
 
 	gST_DispOptions.DisplayedMagnitudeLimit		=	15.0;
 	gST_DispOptions.EarthDispMode				=	0;
-	gST_DispOptions.RemoteGAIAenabled			=	true;
+	gST_DispOptions.RemoteGAIAenabled			=	false;
 
 
 	cElev0			=	kHALFPI / 2;		//* 45 degrees
@@ -458,7 +468,7 @@ int		iii;
 
 	gYaleStarDataPtr	=	ReadYaleStarCatalog(&gYaleStarCount);
 
-	gMessierOjbectPtr	=	ReadMessierData(		"skytravel_data/",	kDataSrc_Messier,	&gMessierOjbectCount);
+	gMessierObjectPtr	=	ReadMessierData(		"skytravel_data/",	kDataSrc_Messier,	&gMessierObjectCount);
 	gDraperObjectPtr	=	ReadHenryDraperCatalog(	"skytravel_data/",	kDataSrc_Draper,	&gDraperObjectCount);
 #ifdef _ENABLE_HYG_
 	gHYGObjectPtr		=	ReadHYGdata(			"skytravel_data/",	kDataSrc_HYG,		&gHYGObjectCount);
@@ -592,10 +602,10 @@ WindowTabSkyTravel::~WindowTabSkyTravel(void)
 		free(gYaleStarDataPtr);
 		gYaleStarDataPtr	=	NULL;
 	}
-	if (gMessierOjbectPtr != NULL)
+	if (gMessierObjectPtr != NULL)
 	{
-		free(gMessierOjbectPtr);
-		gMessierOjbectPtr	=	NULL;
+		free(gMessierObjectPtr);
+		gMessierObjectPtr	=	NULL;
 	}
 	if (gDraperObjectPtr != NULL)
 	{
@@ -920,7 +930,7 @@ uint32_t			deltaMilliSecs;
 struct timeval		currentTime;
 char				utcTimeString[32];
 char				siderealTimeString[32];
-char				textBuff[64];
+char				textBuff[128];
 struct tm			utcTime;
 struct tm			siderealTime;
 
@@ -963,43 +973,57 @@ struct tm			siderealTime;
 			(cDispOptions.dispGaia) &&
 			(cMouseDragInProgress == false))
 		{
-		bool    requestStarted;
-		double	request_RA_Radians;
+		bool	requestStarted;
+		double	request_RA_Degrees;
+		double	request_Dec_Degrees;
 		int		numRequests;
 		int		iii;
 			//*	we are going to request 1, 3, or 5 blocks.
 			//*		Only 1 if above the polar limit
 			//*		5 if between the polar limit and 80 degrees Declination
 			//*		3 otherwised
-			request_RA_Radians	=	cRa0;
+			request_RA_Degrees	=	DEGREES(cRa0);
+			request_Dec_Degrees	=	DEGREES(cDecl0);
 			numRequests			=	1;
-			if (cDecl0 >= kPolarDeclinationLimit)
+
+
+			if (request_RA_Degrees < 0.0)
 			{
-				request_RA_Radians	=	cRa0;
+				request_RA_Degrees	+=	360.0;
+			}
+
+			if (fabs(request_Dec_Degrees) >= kPolarDeclinationLimit)
+			{
 				numRequests			=	1;
 			}
-			else if (cDecl0 >= RADIANS(80))
+			else if ((request_Dec_Degrees >= 80) || (request_Dec_Degrees <= -80))
 			{
-				request_RA_Radians	=	cRa0 - RADIANS(2.0);
+				request_RA_Degrees	=	request_RA_Degrees - 2.0;
 				numRequests			=	5;
 			}
 			else
 			{
-				request_RA_Radians	=	cRa0 - RADIANS(1.0);
+				request_RA_Degrees	=	request_RA_Degrees - 1.0;
 				numRequests			=	3;
 			}
 			requestStarted	=	0;
 			for (iii=0; iii<numRequests; iii++)
 			{
-				requestStarted		+=	UpdateSkyTravelView(request_RA_Radians, cDecl0, cView_angle);
-				request_RA_Radians	+=	RADIANS(1.0);
+				requestStarted		+=	UpdateSkyTravelView(request_RA_Degrees,
+															request_Dec_Degrees,
+															DEGREES(cView_angle));
+				request_RA_Degrees	+=	1.0;
+				if (request_RA_Degrees >= 360.0)
+				{
+					request_RA_Degrees	=	0.0;
+				}
 			}
 			if (requestStarted > 0)
 			{
-				sprintf(textBuff, "GAIA SQL request started for %1.0f(%1.0fH) %1.0f",
-									floor(DEGREES(cRa0)),
-									floor(DEGREES(cRa0)) / 15,
-									floor(DEGREES(cDecl0)));
+				sprintf(textBuff, "GAIA SQL request started for RA=%1.0fD(%1.1fH) DEC=%1.0f",
+									floor(request_RA_Degrees),
+									floor(request_RA_Degrees) / 15,
+									floor(request_Dec_Degrees));
 
 				SetWidgetTextColor(	kSkyTravel_MsgTextBox, CV_RGB(0, 255, 0));
 				SetWidgetText(kSkyTravel_MsgTextBox, textBuff);
@@ -1092,7 +1116,7 @@ void	WindowTabSkyTravel::UpdateButtonStatus(void)
 	SetWidgetChecked(		kSkyTravel_Btn_Gaia,			cDispOptions.dispGaia);
 	SetWidgetChecked(		kSkyTravel_Btn_Asteroids,		cDispOptions.dispAsteroids);
 
-	SetWidgetChecked(		kSkyTravel_Btn_Hipparcos,		cDispOptions.dispHIP);
+	SetWidgetChecked(		kSkyTravel_Btn_Hipparcos,		cDispOptions.dispHipparcos);
 	SetWidgetChecked(		kSkyTravel_Btn_AAVSOalerts,		cDispOptions.dispAAVSOalerts);
 
 	SetWidgetChecked(		kSkyTravel_Btn_MagnitudeDisp,	gST_DispOptions.DispMagnitude);
@@ -1146,43 +1170,66 @@ char	textString[64];
 bool	WindowTabSkyTravel::ProcessSingleCharCmd(const int cmdChar)
 {
 bool	charWasProcessed;
+bool	controlKeyDown;
 
+//	CONSOLE_DEBUG_W_HEX("keyPressed\t=", cmdChar);
+	controlKeyDown	=	false;
+	if (cmdChar & 0x040000)
+	{
+		controlKeyDown	=	true;
+	}
 	charWasProcessed	=	true;
-	switch(cmdChar)
+	switch(cmdChar  & 0x0fff)
 	{
 		case '~':
-			cDispOptions.dispDefaultData		=	false;
-			cDispOptions.dispDeep				=	false;
-			cDispOptions.dispEarth				=	false;
-		//	cDispOptions.dispGrid				=	false;
-			cDispOptions.dispHorizon_line		=	false;
-			cDispOptions.dispNames				=	false;
-			cDispOptions.dispNGC				=	false;
-			cDispOptions.dispSymbols			=	false;
-			cDispOptions.dispMessier			=	false;
+			ResetView();
+			cDispOptions.dispAAVSOalerts		=	false;
+			cDispOptions.dispAsteroids			=	false;
+			cDispOptions.dispCommonStarNames	=	false;
 			cDispOptions.dispConstOutlines		=	false;
 			cDispOptions.dispConstellations		=	false;
-			cDispOptions.dispHIP				=	false;
-			cDispOptions.dispCommonStarNames	=	false;
-			cDispOptions.dispHYG_all			=	false;
+			cDispOptions.dispDeep				=	false;
+			cDispOptions.dispDefaultData		=	false;
 			cDispOptions.dispDraper				=	false;
-			cDispOptions.dispAAVSOalerts		=	false;
-			cDispOptions.dispSpecialObjects		=	kSpecialDisp_Off;
+			cDispOptions.dispEarth				=	false;
 			cDispOptions.dispGaia				=	false;
-			cDispOptions.dispAsteroids			=	false;
+		//	cDispOptions.dispGrid				=	false;
+			cDispOptions.dispHipparcos			=	false;
+			cDispOptions.dispHorizon_line		=	false;
+			cDispOptions.dispHYG_all			=	false;
+			cDispOptions.dispMessier			=	false;
+			cDispOptions.dispNames				=	false;
+			cDispOptions.dispNGC				=	false;
+			cDispOptions.dispSpecialObjects		=	kSpecialDisp_Off;
+			cDispOptions.dispSymbols			=	false;
+			cDispOptions.dispYale				=	false;
+
 			gST_DispOptions.DispMagnitude		=	false;
 			gST_DispOptions.DispSpectralType	=	false;
 			gST_DispOptions.DashedLines			=	false;
 			gST_DispOptions.MagnitudeMode		=	kMagnitudeMode_Dynamic;
+			UpdateButtonStatus();
 			break;
 
 		case '`':
 			gST_DispOptions.MagnitudeMode		=	kMagnitudeMode_Specified;
-			gST_DispOptions.DisplayedMagnitudeLimit++;
-			if (gST_DispOptions.DisplayedMagnitudeLimit > 25)
+			if (controlKeyDown)
 			{
-				gST_DispOptions.DisplayedMagnitudeLimit	=	5;
+				gST_DispOptions.DisplayedMagnitudeLimit	-=	1.0;
 			}
+			else
+			{
+				gST_DispOptions.DisplayedMagnitudeLimit	+=	1.0;
+			}
+			if (gST_DispOptions.DisplayedMagnitudeLimit > 25.0)
+			{
+				gST_DispOptions.DisplayedMagnitudeLimit	=	25.0;
+			}
+			if (gST_DispOptions.DisplayedMagnitudeLimit < 5.0)
+			{
+				gST_DispOptions.DisplayedMagnitudeLimit	=	5.0;
+			}
+			CONSOLE_DEBUG_W_DBL("DisplayedMagnitudeLimit\t=", gST_DispOptions.DisplayedMagnitudeLimit);
 			break;
 
 		case '!':	//*	toggle night mode
@@ -1580,6 +1627,10 @@ bool	charWasProcessed;
 
 		case '/':
 			CenterOnDomeSlit();
+			charWasProcessed			=	false;
+			break;
+
+		case 0x10FFE3:	//*	the control key, ignore it
 			break;
 
 		default:
@@ -1602,7 +1653,9 @@ bool			reDrawSky;
 
 	gRecursiveCounter++;
 
-	reDrawSky	=	ProcessSingleCharCmd(keyPressed & 0x0fff);
+//	CONSOLE_DEBUG_W_HEX("keyPressed\t=", keyPressed);
+//	reDrawSky	=	ProcessSingleCharCmd(keyPressed & 0x0fff);
+	reDrawSky	=	ProcessSingleCharCmd(keyPressed);
 
 	if (reDrawSky)
 	{
@@ -1654,8 +1707,8 @@ char	searchText[128];
 		case kSkyTravel_Btn_YaleCat:			ProcessSingleCharCmd('Y');	break;
 
 		case kSkyTravel_Btn_Hipparcos:
-			cDispOptions.dispHIP	=	!cDispOptions.dispHIP;
-			SetWidgetChecked(		kSkyTravel_Btn_Hipparcos,	cDispOptions.dispHIP);
+			cDispOptions.dispHipparcos	=	!cDispOptions.dispHipparcos;
+			SetWidgetChecked(		kSkyTravel_Btn_Hipparcos,	cDispOptions.dispHipparcos);
 			break;
 
 		case kSkyTravel_Search_Btn:
@@ -1960,6 +2013,8 @@ ControllerImage	*myControllerObj;
 		myControllerObj->HandleWindowUpdate();
 		myControllerObj->cUpdateWindow		=	false;
 		cvWaitKey(20);
+
+		cLastRedrawTime_ms	=	millis();
 	}
 }
 
@@ -2115,14 +2170,35 @@ double				moveAmount;
 }
 
 //*****************************************************************************
-void	WindowTabSkyTravel::ProcessMouseWheelMoved(const int widgetIdx, const int event, const int xxx, const int yyy, const int wheelMovement)
+void	WindowTabSkyTravel::ProcessMouseWheelMoved(	const int	widgetIdx,
+													const int	event,
+													const int	xxx,
+													const int	yyy,
+													const int	wheelMovement,
+													const int	flags)
 {
-//	CONSOLE_DEBUG_W_NUM(__FUNCTION__, wheelMovement);
+uint32_t	timeSinceLastRedraw;
 
-	ZoomViewAngle(wheelMovement);
-	cMouseDragInProgress	=	true;
-	ForceReDrawSky();
-	cMouseDragInProgress	=	false;
+//	CONSOLE_DEBUG_W_NUM(__FUNCTION__, wheelMovement);
+//	CONSOLE_DEBUG_W_HEX("flags\t=", flags);
+
+	//*	check to see if the control key is down
+	if (flags & 0x08)
+	{
+		AdjustFaintLimit(-wheelMovement * 0.25);
+	}
+	else
+	{
+		ZoomViewAngle(wheelMovement);
+		timeSinceLastRedraw	=	millis() - cLastRedrawTime_ms;
+		if (timeSinceLastRedraw > 200)
+		{
+			cMouseDragInProgress	=	true;
+			ForceReDrawSky();
+			cMouseDragInProgress	=	false;
+		}
+	}
+	ForceUpdate();
 }
 
 //*****************************************************************************
@@ -2583,7 +2659,7 @@ short		iii;
 		int			notDrawnCnt;
 		bool		foundValid;
 
-			SETUP_TIMING();
+//			SETUP_TIMING();
 
 			drawnCnt	=	0;
 			notDrawnCnt	=	0;
@@ -2639,7 +2715,7 @@ short		iii;
 	#endif
 		//*--------------------------------------------------------------------------------
 		//*	draw the faint Hipparcos stuff first
-		PlotObjectsByDataSource(cDispOptions.dispHIP,		gHipObjectPtr, gHipObjectCount);
+		PlotObjectsByDataSource(cDispOptions.dispHipparcos,	gHipObjectPtr, gHipObjectCount);
 		PlotObjectsByDataSource(cDispOptions.dispDraper,	gDraperObjectPtr, gDraperObjectCount);
 
 
@@ -2648,8 +2724,8 @@ short		iii;
 	#endif // _ENABLE_GAIA_
 		//*--------------------------------------------------------------------------------
 		//*	check to see if the asteroids are loaded
-		if (cDispOptions.dispAsteroids &&
-			((cView_angle < 1.0) || (gST_DispOptions.MagnitudeMode == kMagnitudeMode_All)))
+//		if (cDispOptions.dispAsteroids && ((cView_angle < 1.0) || (gST_DispOptions.MagnitudeMode == kMagnitudeMode_All)))
+		if (cDispOptions.dispAsteroids)
 		{
 			DrawAsteroids();
 		}
@@ -2693,7 +2769,7 @@ short		iii;
 	//*--------------------------------------------------------------------------------
 	PlotObjectsByDataSource(cDispOptions.dispDefaultData,		gStarDataPtr,		gStarCount);
 	PlotObjectsByDataSource(cDispOptions.dispYale,				gYaleStarDataPtr,	gYaleStarCount);
-	PlotObjectsByDataSource(cDispOptions.dispMessier,			gMessierOjbectPtr,	gMessierOjbectCount);
+	PlotObjectsByDataSource(cDispOptions.dispMessier,			gMessierObjectPtr,	gMessierObjectCount);
 	PlotObjectsByDataSource(cDispOptions.dispSpecialObjects,	gSpecialObjectPtr,	gSpecialObjectCount);
 
 	//*--------------------------------------------------------------------------------
@@ -2763,9 +2839,10 @@ void	WindowTabSkyTravel::SetView_Angle(const double newViewAngle_radians)
 double	myViewAngle;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
-	cView_angle	=	newViewAngle_radians;
-	cView_index	=	0;
-	myViewAngle	=	RADIANS(kMinViewAngle_Degrees);
+	cView_angle		=	newViewAngle_radians;
+	cLN_view_angle	=	log(cView_angle);		//*	this is to speed up drawing
+	cView_index		=	0;
+	myViewAngle	=		RADIANS(kMinViewAngle_Degrees);
 	while (myViewAngle < cView_angle)
 	{
 		cView_index++;
@@ -2863,8 +2940,6 @@ void	WindowTabSkyTravel::ResetView(void)
 	cAz0									=	0.0;				//* north
 	cRa0									=	0.0;
 	cDecl0									=	0.0;
-	gST_DispOptions.DisplayedMagnitudeLimit	=	10.0;
-	gST_DispOptions.DayNightSkyColor		=	false;
 
 	//*	set auto advance time to on
 	cAutoAdvanceTime					=	true;
@@ -2885,7 +2960,7 @@ void	WindowTabSkyTravel::ResetView(void)
 	cDispOptions.dispEarth				=	true;
 	cDispOptions.dispGaia				=	true;
 	cDispOptions.dispGrid				=	true;
-	cDispOptions.dispHIP				=	false;
+	cDispOptions.dispHipparcos			=	false;
 	cDispOptions.dispHYG_all			=	false;
 	cDispOptions.dispHorizon_line		=	true;
  	cDispOptions.dispMessier			=	true;
@@ -2895,10 +2970,15 @@ void	WindowTabSkyTravel::ResetView(void)
  	cDispOptions.dispSymbols			=	true;
 	cDispOptions.dispYale				=	false;
 
-	gST_DispOptions.DispMagnitude		=	true;
-	gST_DispOptions.DispSpectralType	=	true;
-	gST_DispOptions.DashedLines			=	false;
-	gST_DispOptions.MagnitudeMode		=	kMagnitudeMode_Dynamic;
+	gST_DispOptions.DayNightSkyColor		=	false;
+	gST_DispOptions.DispMagnitude			=	true;
+	gST_DispOptions.DispSpectralType		=	true;
+	gST_DispOptions.DashedLines				=	false;
+	gST_DispOptions.MagnitudeMode			=	kMagnitudeMode_Dynamic;
+	gST_DispOptions.DisplayedMagnitudeLimit	=	15.0;
+
+	cFaintLimit_B							=	4.5;
+	cMaxRadius_D							=	20;
 
 	if (gConstVecotrPtr != NULL)
 	{
@@ -3594,7 +3674,7 @@ bool	ptInView;
 				{
 					DrawStar_shape(pt_XX, pt_YY, 0);	//*	many of these stars are not drawn
 //					CONSOLE_DEBUG(gHipObjectPtr[iii].longName);
-					if (cDispOptions.dispHIP && (cView_angle <= 0.2))
+					if (cDispOptions.dispHipparcos && (cView_angle <= 0.2))
 					{
 						pt_YY	+=	12;
 					}
@@ -3876,11 +3956,13 @@ bool			pressesOccurred;
 			Precess(gHipObjectPtr, gHipObjectCount, kSortData, kForcePression);
 		}
 
-		//*	Messier objects
-		if ((gMessierOjbectPtr != NULL) && (gMessierOjbectCount > 0))
-		{
-			Precess(gMessierOjbectPtr, gMessierOjbectCount, kDoNotSort, kForcePression);
-		}
+//*	It appears that the Messier objects do not need to be precessed.
+//*	Jan 23,	2022	<MLS> No longer precessing Messier objects data
+//		//*	Messier objects
+//		if ((gMessierObjectPtr != NULL) && (gMessierObjectCount > 0))
+//		{
+//			Precess(gMessierObjectPtr, gMessierObjectCount, kDoNotSort, kForcePression);
+//		}
 
 		//*	Henry Draper catalog
 		if ((gDraperObjectPtr != NULL) && (gDraperObjectCount > 0))
@@ -4263,6 +4345,25 @@ static char	gOBAFGKM_colorTable[128]	=
 		W_WHITE
 };
 
+
+//*****************************************************************************
+void	WindowTabSkyTravel::AdjustFaintLimit(const double adjustmentAmount)
+{
+char	statusMsg[128];
+
+	cFaintLimit_B	+=	adjustmentAmount;
+	if (cFaintLimit_B < 4.0)
+	{
+		cFaintLimit_B	=	4.0;
+	}
+	if (cFaintLimit_B > 13.5)
+	{
+		cFaintLimit_B	=	13.5;
+	}
+	sprintf(statusMsg, "Faint limit set to %2.2f", cFaintLimit_B);
+	SetWidgetText(		kSkyTravel_MsgTextBox, statusMsg);
+}
+
 #define	kLineSpacingPixels	11
 
 //*****************************************************************************
@@ -4299,25 +4400,60 @@ bool	starWasDrawn;
 	starWasDrawn		=	false;
 
 
-	if (theStar->realMagnitude > 0)	//*	check for valid magnitude
+	if (theStar->realMagnitude > -10.0)	//*	check for valid magnitude
 	{
-		starRadiusPixels	=	20 * (-1.93 * log(cView_angle) + 4.5224 - theStar->realMagnitude) / 8.1993;
+	#define		kSlope_A				(-1.93)
+	#define		kBrightLimit_C		(-3.6769)
+	double		b_minus_c;
+
+
+		//*	from Clif 1/23/2022
+		//*		starRadius = D * (A * LN(field) + B - mag) / (B - C)
+		//*		A	=	Slope		=	-1.93
+		//*		B	=	FaintLimit	=	13.60708
+		//*		C	=	BrightLimit	=	-3.6769
+		//*		D	=	MaxRadius	=	20
+
+		//*	cView_angle is in radians
+		//*	20 is the limiting value (max size)
+		b_minus_c	=	(cFaintLimit_B - kBrightLimit_C);
+
+		//*	cLN_view_angle is the natural log of view angle, it is updated whenever cView_angle is changed
+		//*	It is done this way so we dont have to compute log(cView_angle) for every star
+		//*		see SetView_Angle()
+		if (theStar->dataSrc == kDataSrc_Messier)
+		{
+			starRadiusPixels	=	cMaxRadius_D * (-1.93 * cLN_view_angle + 4.5224 - theStar->realMagnitude) / 8.1993;
+		}
+		else
+		{
+			//*		starRadius = D * (A * LN(field) + B - mag) / (B - C)
+			starRadiusPixels	=	cMaxRadius_D * ((kSlope_A * cLN_view_angle) + cFaintLimit_B - theStar->realMagnitude) /
+									(b_minus_c);
+		}
 	}
 	if (starRadiusPixels > 0)
 	{
-		FillEllipse(xcoord, ycoord, starRadiusPixels, starRadiusPixels);
+		if (theStar->dataSrc == kDataSrc_Messier)
+		{
+		//	FillEllipse(xcoord, ycoord, starRadiusPixels, starRadiusPixels);
+			SetColor(textColor);
+			FrameEllipse(xcoord, ycoord, starRadiusPixels, starRadiusPixels);
+		}
+		else
+		{
+			FillEllipse(xcoord, ycoord, starRadiusPixels, starRadiusPixels);
+		}
 		starWasDrawn	=	true;
 	}
 	else if (starRadiusPixels == 0)
 	{
 		Putpixel(xcoord,	ycoord,		theStarColor);
-//		Putpixel(xcoord+1,	ycoord,		theStarColor);
-//		Putpixel(xcoord+1,	ycoord+1,	theStarColor);
-//		Putpixel(xcoord,	ycoord+1,	theStarColor);
 		starWasDrawn	=	true;
 	}
 	else
 	{
+		//*	figure out what to do based on the display mode
 		switch (gST_DispOptions.MagnitudeMode)
 		{
 			case kMagnitudeMode_Dynamic:
@@ -4327,26 +4463,15 @@ bool	starWasDrawn;
 			case kMagnitudeMode_Specified:
 				if (theStar->realMagnitude <= gST_DispOptions.DisplayedMagnitudeLimit)
 				{
+					//*	Clif ???????????????????????????????????????????????
 					Putpixel(xcoord,	ycoord,		theStarColor);
 					starWasDrawn	=	true;
 				}
 				break;
 
 			case kMagnitudeMode_All:
-				if (starRadiusPixels == 0)
-				{
-					//*	make the above star a bit bigger
-					Putpixel(xcoord,	ycoord,		theStarColor);
-					Putpixel(xcoord+1,	ycoord,		theStarColor);
-					Putpixel(xcoord+1,	ycoord+1,	theStarColor);
-					Putpixel(xcoord,	ycoord+1,	theStarColor);
-					starWasDrawn	=	true;
-				}
-				else
-				{
-					Putpixel(xcoord,	ycoord,		theStarColor);
-					starWasDrawn	=	true;
-				}
+				Putpixel(xcoord,	ycoord,		theStarColor);
+				starWasDrawn	=	true;
 				break;
 		}
 	}
@@ -4400,9 +4525,9 @@ bool	starWasDrawn;
 	starWasDrawn		=	false;
 
 
-	if (theStar->realMagnitude > 0)	//*	check for valid magnitude
+	if (theStar->realMagnitude > -10)	//*	check for valid magnitude
 	{
-		starRadiusPixels	=	20 * (-1.93 * log(cView_angle) + 4.5224 - theStar->realMagnitude) / 8.1993;
+		starRadiusPixels	=	20 * (-1.93 * cLN_view_angle + 4.5224 - theStar->realMagnitude) / 8.1993;
 	}
 	if (starRadiusPixels > 0)
 	{
@@ -4491,14 +4616,21 @@ void	WindowTabSkyTravel::DrawStarFancy_Label(	const int		xcoord,
 char	labelString[32];
 int		myXcoord;
 int		myYcoord;
+bool	starHasMag_and_Spectral;
 
 	myXcoord	=	xcoord;
 	myYcoord	=	ycoord;
-
+	starHasMag_and_Spectral	=	true;
 	if (starRadiusPixels > 0)
 	{
 		myXcoord	+=	starRadiusPixels;
 	}
+
+	if (theStar->dataSrc == kDataSrc_Messier)
+	{
+		starHasMag_and_Spectral	=	false;
+	}
+
 	//------------------------------------------------------
 	//*	draw the name if needed
 	if (cDispOptions.dispNames && (cView_angle < viewAngle_LabelDisplay))
@@ -4570,13 +4702,13 @@ int		myYcoord;
 
 	//------------------------------------------------------
 	//*	check for magnitude and spectral type
-	if (cView_angle < viewAngle_InfoDisplay)
+	if (starHasMag_and_Spectral && (cView_angle < viewAngle_InfoDisplay))
 	{
 		SetColor(textColor);
 		//*	Are we are drawing the magnitude of the star
 		if (gST_DispOptions.DispMagnitude)
 		{
-			if (theStar->realMagnitude > 0.0)
+			if (theStar->realMagnitude > -10.0)
 			{
 				sprintf(labelString, "%3.1f", theStar->realMagnitude);
 				DrawCString(myXcoord + 10, myYcoord, labelString);
@@ -4605,6 +4737,8 @@ int		myYcoord;
 //		DrawCString(myXcoord + 10, myYcoord, labelString);
 //	}
 }
+
+
 //*****************************************************************************
 int	WindowTabSkyTravel::SetStarTextColorAndViewAngle(int dataSource)
 {
@@ -4797,32 +4931,34 @@ int					myColor;
 	//*	main loop through the stars
 	while (iii < maxObjects)
 	{
+		goflag	=	true;
 		objectptr[iii].curXX	=	-100;
 		objectptr[iii].curYY	=	-100;
 
-		magn	=	objectptr[iii].magn & 0x00ff;
-
-		//*	this is part of the original database processing
-		if (magn < 0x0010)
-		{
-			shape	=	ST_STAR;
-		}
-		else if (magn < 0x0073)
-		{
-			shape	=	ST_DEEP;
-		}
-		else if (magn < 0x00db)
-		{
-			shape	=	ST_NAME;
-		}
-		else
-		{
-			shape	=	ST_ALWAYS;
-		}
-
-		goflag	=	true;
+		magn		=	0;
+		shape		=	ST_ALWAYS;
 		if (dataSource == kDataSrc_Orginal)
 		{
+			magn	=	objectptr[iii].magn & 0x00ff;
+
+			//*	this is part of the original database processing
+			if (magn < 0x0010)
+			{
+				shape	=	ST_STAR;
+			}
+			else if (magn < 0x0073)
+			{
+				shape	=	ST_DEEP;
+			}
+			else if (magn < 0x00db)
+			{
+				shape	=	ST_NAME;
+			}
+			else
+			{
+				shape	=	ST_ALWAYS;
+			}
+
 			switch(shape)
 			{
 				case ST_NAME: if (!cDispOptions.dispNames)	goflag	=	false; break;
@@ -4831,12 +4967,12 @@ int					myColor;
 			}
 		}
 
-//		//*	check for displayed magnitude limits
-//		if (objectptr[iii].realMagnitude > gST_DispOptions.DisplayedMagnitudeLimit)
+		//*	check for displayed magnitude limits
+//		if ((gST_DispOptions.MagnitudeMode != kMagnitudeMode_All) &&
+//			(objectptr[iii].realMagnitude > gST_DispOptions.DisplayedMagnitudeLimit))
 //		{
 //			goflag	=	false;
 //		}
-
 
 
 		if (goflag)	//* try to plot it
@@ -4978,7 +5114,7 @@ int					myColor;
 //	CONSOLE_DEBUG_W_NUM("myCount\t\t=",		myCount);
 	return(myCount);
 }
-
+//magn
 
 //*****************************************************************************
 //* draw an object described by vectors at position x,y and color
@@ -5287,7 +5423,7 @@ void	WindowTabSkyTravel::DrawWindowOverlays(void)
 		if (fabs(cDecl0) < cView_angle)
 		{
 			SetColor(W_MAGENTA);
-			DrawGreatCircle(0.0, gST_DispOptions.DashedLines);
+			DrawGreatCircle(0.0, gST_DispOptions.DashedLines, kEnableGreatCircleNumbers, false);
 		}
 	}
 	if (cDispOptions.dispEarth && ((cElev0 - (-kHALFPI)) < cRadmax))
@@ -5839,11 +5975,21 @@ bool		forceNumberDrawFlag	=	false;
 	//*	draw 1 degree grid lines
 	if ((cView_angle <= 1.0) && (cDispOptions.dispGaia))
 	{
+	bool	enableGreatCircleNumbers;
+
+		if (cView_angle < 0.2)
+		{
+			enableGreatCircleNumbers	=	kEnableGreatCircleNumbers;
+		}
+		else
+		{
+			enableGreatCircleNumbers	=	kDisableGreatCircleNumbers;
+		}
 		degrees	=	-80.0;
 		while (degrees < 81.0)
 		{
 			SetColor(W_DARKRED);
-			DrawGreatCircle(RADIANS(degrees), true, false);
+			DrawGreatCircle(RADIANS(degrees), true, enableGreatCircleNumbers, false);
 			degrees	+=	1.0;
 		}
 	}
@@ -5856,7 +6002,7 @@ bool		forceNumberDrawFlag	=	false;
 	while (degrees < 81.0)
 	{
 		SetColor((degrees >= 0.0) ? northColor : southColor);
-		DrawGreatCircle(RADIANS(degrees), gST_DispOptions.DashedLines);
+		DrawGreatCircle(RADIANS(degrees), gST_DispOptions.DashedLines, true, true);
 		degrees	+=	10.0;
 	}
 
@@ -5869,41 +6015,41 @@ bool		forceNumberDrawFlag	=	false;
 		}
 		SetColor(northColor);
 
-		DrawGreatCircle(RADIANS(87.0), gST_DispOptions.DashedLines, forceNumberDrawFlag);
-		DrawGreatCircle(RADIANS(88.0), gST_DispOptions.DashedLines, forceNumberDrawFlag);
-		DrawGreatCircle(RADIANS(89.0), gST_DispOptions.DashedLines, forceNumberDrawFlag);
+		DrawGreatCircle(RADIANS(87.0), gST_DispOptions.DashedLines, kEnableGreatCircleNumbers, forceNumberDrawFlag);
+		DrawGreatCircle(RADIANS(88.0), gST_DispOptions.DashedLines, kEnableGreatCircleNumbers, forceNumberDrawFlag);
+		DrawGreatCircle(RADIANS(89.0), gST_DispOptions.DashedLines, kEnableGreatCircleNumbers, forceNumberDrawFlag);
 
-		DrawGreatCircle(RADIANS(89.1), gST_DispOptions.DashedLines, forceNumberDrawFlag);
-		DrawGreatCircle(RADIANS(89.3), gST_DispOptions.DashedLines, forceNumberDrawFlag);
-		DrawGreatCircle(RADIANS(89.5), gST_DispOptions.DashedLines, forceNumberDrawFlag);
-		DrawGreatCircle(RADIANS(89.7), gST_DispOptions.DashedLines, forceNumberDrawFlag);
+		DrawGreatCircle(RADIANS(89.1), gST_DispOptions.DashedLines, kEnableGreatCircleNumbers, forceNumberDrawFlag);
+		DrawGreatCircle(RADIANS(89.3), gST_DispOptions.DashedLines, kEnableGreatCircleNumbers, forceNumberDrawFlag);
+		DrawGreatCircle(RADIANS(89.5), gST_DispOptions.DashedLines, kEnableGreatCircleNumbers, forceNumberDrawFlag);
+		DrawGreatCircle(RADIANS(89.7), gST_DispOptions.DashedLines, kEnableGreatCircleNumbers, forceNumberDrawFlag);
 
 
 
 		//*	now do the south pole
 		SetColor(southColor);
-		DrawGreatCircle(RADIANS(-89.1), gST_DispOptions.DashedLines, forceNumberDrawFlag);
-		DrawGreatCircle(RADIANS(-89.3), gST_DispOptions.DashedLines, forceNumberDrawFlag);
-		DrawGreatCircle(RADIANS(-89.5), gST_DispOptions.DashedLines, forceNumberDrawFlag);
-		DrawGreatCircle(RADIANS(-89.7), gST_DispOptions.DashedLines, forceNumberDrawFlag);
+		DrawGreatCircle(RADIANS(-89.1), gST_DispOptions.DashedLines, kEnableGreatCircleNumbers, forceNumberDrawFlag);
+		DrawGreatCircle(RADIANS(-89.3), gST_DispOptions.DashedLines, kEnableGreatCircleNumbers, forceNumberDrawFlag);
+		DrawGreatCircle(RADIANS(-89.5), gST_DispOptions.DashedLines, kEnableGreatCircleNumbers, forceNumberDrawFlag);
+		DrawGreatCircle(RADIANS(-89.7), gST_DispOptions.DashedLines, kEnableGreatCircleNumbers, forceNumberDrawFlag);
 	}
 
 	if (cView_angle < 0.18)
 	{
 		SetColor(northColor);
-		DrawGreatCircle(RADIANS(89.9), gST_DispOptions.DashedLines, true);
+		DrawGreatCircle(RADIANS(89.9), gST_DispOptions.DashedLines, kEnableGreatCircleNumbers, true);
 
 		SetColor(southColor);
-		DrawGreatCircle(RADIANS(-89.9), gST_DispOptions.DashedLines, true);
+		DrawGreatCircle(RADIANS(-89.9), gST_DispOptions.DashedLines, kEnableGreatCircleNumbers, true);
 	}
 
 	if (cView_angle < 0.04)
 	{
 		SetColor(northColor);
-		DrawGreatCircle(RADIANS(89.95), gST_DispOptions.DashedLines, true);
+		DrawGreatCircle(RADIANS(89.95), gST_DispOptions.DashedLines, kEnableGreatCircleNumbers, true);
 
 		SetColor(southColor);
-		DrawGreatCircle(RADIANS(-89.95), gST_DispOptions.DashedLines, true);
+		DrawGreatCircle(RADIANS(-89.95), gST_DispOptions.DashedLines, kEnableGreatCircleNumbers, true);
 	}
 
 
@@ -6145,6 +6291,7 @@ double	angleDelta;
 //*****************************************************************************
 int	WindowTabSkyTravel::DrawGreatCircle(	const double	declinationAngle_rad,
 											const bool		useDashedLines,
+											const bool		enableNumbers,
 											const bool		forceNumberDraw)
 {
 double	rtAscen1;
@@ -6327,58 +6474,61 @@ int		maxSegLength;
 		}
 	}
 
-	//----------------------------------------------------
-	//*	draw numbers along the edges
-	if (declinationAngle_rad == 0.0)
+	if (enableNumbers)
 	{
-		strcpy(numberStr, "EQ");
-	}
-	else if (declinationAngle_rad > 1.553343)
-	{
-		sprintf(numberStr, "%1.2fN", DEGREES(declinationAngle_rad));
-	}
-	else if (declinationAngle_rad < -1.553343)
-	{
-		sprintf(numberStr, "%1.2fS", -DEGREES(declinationAngle_rad));
-	}
-	else if (declinationAngle_rad > 1.51)
-	{
-		sprintf(numberStr, "%1.1fN", DEGREES(declinationAngle_rad));
-	}
-	else if (declinationAngle_rad > 0.0)
-	{
-		sprintf(numberStr, "%1.0fN", DEGREES(declinationAngle_rad));
-	}
-	else
-	{
-		sprintf(numberStr, "%1.0fS", -DEGREES(declinationAngle_rad));
-	}
-	SetColor(W_DARKGREEN);
-	if (leftMost_X < 30)
-	{
-		DrawCString(3, leftMost_Y, numberStr);
-		numberWasDrawn	=	true;
-	}
-	else if (rightMost_X > (cWind_width - 30))
-	{
-		DrawCString((cWind_width - 30), rightMost_Y, numberStr);
-		numberWasDrawn	=	true;
-	}
-	else if (topMost_Y < 15)
-	{
-		DrawCString(topMost_X, 15, numberStr);
-		numberWasDrawn	=	true;
-	}
-	else if (btmMost_Y > (cWind_height - 15))
-	{
-		DrawCString(btmMost_X, (cWind_height - 4), numberStr);
-		numberWasDrawn	=	true;
-	}
+		//----------------------------------------------------
+		//*	draw numbers along the edges
+		if (declinationAngle_rad == 0.0)
+		{
+			strcpy(numberStr, "EQ");
+		}
+		else if (declinationAngle_rad > 1.553343)
+		{
+			sprintf(numberStr, "%1.2fN", DEGREES(declinationAngle_rad));
+		}
+		else if (declinationAngle_rad < -1.553343)
+		{
+			sprintf(numberStr, "%1.2fS", -DEGREES(declinationAngle_rad));
+		}
+		else if (declinationAngle_rad > 1.51)
+		{
+			sprintf(numberStr, "%1.1fN", DEGREES(declinationAngle_rad));
+		}
+		else if (declinationAngle_rad > 0.0)
+		{
+			sprintf(numberStr, "%1.0fN", DEGREES(declinationAngle_rad));
+		}
+		else
+		{
+			sprintf(numberStr, "%1.0fS", -DEGREES(declinationAngle_rad));
+		}
+		SetColor(W_DARKGREEN);
+		if (leftMost_X < 30)
+		{
+			DrawCString(3, leftMost_Y, numberStr);
+			numberWasDrawn	=	true;
+		}
+		else if (rightMost_X > (cWind_width - 30))
+		{
+			DrawCString((cWind_width - 30), rightMost_Y, numberStr);
+			numberWasDrawn	=	true;
+		}
+		else if (topMost_Y < 15)
+		{
+			DrawCString(topMost_X, 15, numberStr);
+			numberWasDrawn	=	true;
+		}
+		else if (btmMost_Y > (cWind_height - 15))
+		{
+			DrawCString(btmMost_X, (cWind_height - 4), numberStr);
+			numberWasDrawn	=	true;
+		}
 
-	//*	in some case we want the number anyway
-	if (forceNumberDraw && (numberWasDrawn == false))
-	{
-		DrawCString(topMost_X, topMost_Y, numberStr);
+		//*	in some case we want the number anyway
+		if (forceNumberDraw && (numberWasDrawn == false))
+		{
+			DrawCString(topMost_X, topMost_Y, numberStr);
+		}
 	}
 
 //	DEBUG_TIMING(__FUNCTION__);
@@ -7059,6 +7209,7 @@ int				myColor;
 						{
 							DrawStar_shape(xcoord, ycoord, objectptr[iii].magn);
 						}
+
 						if ((objCnt == kPlanetObjectCnt) && (iii < 2))	//* Moon(0) or Sun(1)
 						{
 							if (iii == 1)	//* Sun, filled ellipse
@@ -7367,7 +7518,7 @@ long			pixDist;
 
 
 	//*	kDataSrc_Hipparcos
-	if (cDispOptions.dispHIP && (gHipObjectPtr != NULL) && (gHipObjectCount > 0))
+	if (cDispOptions.dispHipparcos && (gHipObjectPtr != NULL) && (gHipObjectCount > 0))
 	{
 		pixDist	=	FindXX_YYinObjectList(	gHipObjectPtr,
 											gHipObjectCount,
@@ -7575,7 +7726,7 @@ bool	foundIt;
 				cFound_newRA	=	starDataPtr[iii].ra;
 				cFound_newDec	=	starDataPtr[iii].decl;
 
-				sprintf(cFoundName, "%s- mag=%f2.1", starDataPtr[iii].shortName, starDataPtr[iii].realMagnitude);;
+				sprintf(cFoundName, "%s mag=%f2.1", starDataPtr[iii].shortName, starDataPtr[iii].realMagnitude);;
 				cFoundSomething		=	true;
 				foundIt				=	true;
 			}
@@ -7597,22 +7748,24 @@ bool	WindowTabSkyTravel::SearchSkyObjectsDataListByLongName(TYPE_CelestData *sta
 {
 int		iii;
 bool	foundIt;
+int		searchStrLen;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 //	CONSOLE_DEBUG_W_STR("Looking for:", searchString);
 
-	foundIt	=	false;
+	searchStrLen	=	strlen(searchString);
+	foundIt			=	false;
 	if ((starDataPtr != NULL) && (starCount > 0))
 	{
 		iii			=	0;
 		while ((cFoundSomething == false) && (iii < starCount))
 		{
-			if (strcasecmp(searchString, starDataPtr[iii].longName) == 0)
+			if (strncasecmp(searchString, starDataPtr[iii].longName, searchStrLen) == 0)
 			{
 				cFound_newRA	=	starDataPtr[iii].ra;
 				cFound_newDec	=	starDataPtr[iii].decl;
 
-				sprintf(cFoundName, "%s- mag=%f2.1", starDataPtr[iii].shortName, starDataPtr[iii].realMagnitude);;
+				sprintf(cFoundName, "%s mag=%f2.1", starDataPtr[iii].longName, starDataPtr[iii].realMagnitude);;
 				cFoundSomething		=	true;
 				foundIt				=	true;
 			}
@@ -7711,22 +7864,25 @@ bool	foundIt;
 bool	WindowTabSkyTravel::SearchAsteroids(const char *searchString)
 {
 int		iii;
-int		searchStrLen;
 bool	foundIt;
+char	*stringPtr;
 
 	foundIt			=	false;
 	if ((gAsteroidPtr != NULL) && (gAsteroidCnt > 0))
 	{
-		searchStrLen	=	strlen(searchString);
 		//*	lets look through all of the long names first
 		iii	=	0;
 		while ((cFoundSomething == false) && (iii < gAsteroidCnt))
 		{
-			if (strncasecmp(searchString, gAsteroidPtr[iii].AsteroidName, searchStrLen) == 0)
+			stringPtr	=	strstr(gAsteroidPtr[iii].AsteroidName, searchString);
+
+		//	if (strncasecmp(searchString, gAsteroidPtr[iii].AsteroidName, searchStrLen) == 0)
+			if (stringPtr != NULL)
 			{
 				CONSOLE_DEBUG_W_STR("Found", gAsteroidPtr[iii].AsteroidName);
 				cFound_newRA	=	gAsteroidPtr[iii].StarData.ra;
 				cFound_newDec	=	gAsteroidPtr[iii].StarData.decl;
+				cFoundMagnitude	=	gAsteroidPtr[iii].AbsoluteMagnitude;
 				strcpy(cFoundDatabase, "Asteroids");
 				strcpy(cFoundName, gAsteroidPtr[iii].AsteroidName);
 				cFoundSomething	=	true;
@@ -7753,6 +7909,8 @@ bool	foundIt;
 //	CONSOLE_DEBUG_W_STR("Searching for", objectName);
 
 	cFoundSomething	=	false;
+	cFoundMagnitude	=	-99.9;
+
 	firstChar		=	toupper(objectName[0]);
 	strcpy(cFoundDatabase, "");
 	strcpy(cFoundName, "");
@@ -7808,8 +7966,8 @@ bool	foundIt;
 	if ((firstChar == 'M') && isdigit(objectName[1]))
 	{
 	//	CONSOLE_DEBUG("Looking for messier objects");
-		foundIt	=	SearchSkyObjectsDataListByShortName(	gMessierOjbectPtr,
-															gMessierOjbectCount,
+		foundIt	=	SearchSkyObjectsDataListByShortName(	gMessierObjectPtr,
+															gMessierObjectCount,
 															kDataSrc_Messier,
 															objectName);
 		if (foundIt)
@@ -7830,7 +7988,7 @@ bool	foundIt;
 														objectName);
 		if (foundIt)
 		{
-			cDispOptions.dispHIP	=	true;
+			cDispOptions.dispHipparcos	=	true;
 			strcpy(cFoundDatabase, "Hipparcos catalog");
 			//*	make sure we can see the data base
 			SetMaximumViewAngle(0.03);
@@ -7862,7 +8020,7 @@ bool	foundIt;
 //					}
 //
 //					cFoundSomething			=	true;
-//					cDispOptions.dispHIP	=	true;
+//					cDispOptions.dispHipparcos	=	true;
 //					//*	make sure we can see the data base
 //					SetMaximumViewAngle(0.03);
 //				}
@@ -7870,6 +8028,23 @@ bool	foundIt;
 //			}
 //		}
 //	}
+
+	//-------------------------------------------------------------------------------
+	//*	look in the yale catalog
+	if (cFoundSomething == false)
+	{
+		foundIt	=	SearchSkyObjectsDataListByLongName(	gYaleStarDataPtr,
+														gYaleStarCount,
+														kDataSrc_YaleBrightStar,
+														objectName);
+		if (foundIt)
+		{
+			cDispOptions.dispYale	=	true;
+			strcpy(cFoundDatabase, "Yale catalog");
+		}
+
+	}
+
 
 	//-------------------------------------------------------------------------------
 	//*	look for constellations
@@ -7899,14 +8074,13 @@ bool	foundIt;
 	//*	look for for common star names in the Hipparcos list
 	if (cFoundSomething == false)
 	{
-
 		foundIt	=	SearchSkyObjectsDataListByLongName(	gHipObjectPtr,
 														gHipObjectCount,
 														kDataSrc_Hipparcos,
 														objectName);
 		if (foundIt)
 		{
-			cDispOptions.dispHIP	=	true;
+			cDispOptions.dispHipparcos	=	true;
 			strcpy(cFoundDatabase, "Hipparcos catalog");
 		}
 	}
@@ -8307,7 +8481,7 @@ void	WindowTabSkyTravel::Center_CelestralObject(TYPE_CelestData *starObject)
 				break;
 
 			case kDataSrc_Hipparcos:
-				cDispOptions.dispHIP	=	true;
+				cDispOptions.dispHipparcos	=	true;
 				break;
 
 			case kDataSrc_Messier:

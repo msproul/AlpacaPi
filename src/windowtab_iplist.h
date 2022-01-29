@@ -101,6 +101,12 @@ class WindowTabIPList: public WindowTab
 		virtual	void	SetupWindowControls(void);
 		virtual	void	ProcessButtonClick(const int buttonIdx);
 		virtual	void	ProcessDoubleClick(const int buttonIdx);
+		virtual void	ProcessMouseWheelMoved(	const int	widgetIdx,
+												const int	event,
+												const int	xxx,
+												const int	yyy,
+												const int	wheelMovement,
+												const int	flags);
 
 				void	UpdateIPaddrList(void);
 				void	ClearIPaddrList(void);

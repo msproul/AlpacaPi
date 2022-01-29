@@ -59,6 +59,7 @@
 //*	Sep  9,	2021	<MLS> Added SetUpConnectedIndicator()
 //*	Oct 29,	2021	<MLS> Added FloodFill()
 //*	Nov 13,	2021	<MLS> Added ProcessDoubleClick_RtBtn()
+//*	Jan 24,	2022	<MLS> Added flags argument to ProcessMouseWheelMoved()
 //*****************************************************************************
 
 
@@ -1161,10 +1162,16 @@ double	newSliderValue;
 }
 
 //*****************************************************************************
-void	WindowTab::ProcessMouseWheelMoved(const int widgetIdx, const int event, const int xxx, const int yyy, const int wheelMovement)
+void	WindowTab::ProcessMouseWheelMoved(	const int	widgetIdx,
+											const int	event,
+											const int	xxx,
+											const int	yyy,
+											const int	wheelMovement,
+											const int	flags)
 {
 	//*	this is a virtual function and should be overridden if you need to do anything with it.
 //	CONSOLE_DEBUG_W_NUM(__FUNCTION__, wheelMovement);
+//	CONSOLE_ABORT(__FUNCTION__);
 }
 
 //*****************************************************************************
@@ -1688,8 +1695,8 @@ CvSize	axes;
 		{
 			center.x	=	xCenter;
 			center.y	=	yCenter;
-			axes.width	=	2 * xRadius;
-			axes.height	=	2 * yRadius;
+			axes.width	=	1 * xRadius;
+			axes.height	=	1 * yRadius;
 
 			cvEllipse(	cOpenCV_Image,
 						center,

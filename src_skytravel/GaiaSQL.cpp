@@ -24,7 +24,9 @@
 //*	Jan  8,	2022	<MLS> Dynamic purge of SQL data working
 //*	Jan 12,	2022	<MLS> Added CalcRA_DEC_Distance_Deg()
 //*	Jan 16,	2022	<MLS> Now sorting Gaia remote data to speed up drawing
-//*	Jan	19,	2022	<MLS> Added SQL logging
+//*	Jan 19,	2022	<MLS> Added SQL logging
+//*	Jan 25,	2022	<MLS> Changed UpdateSkyTravelView() to use degrees
+//*	Jan 25,	2022	<MLS> Fixed 0 <-> 360 boundary bug in CalcRA_DEC_Distance_Deg()
 //*****************************************************************************
 //*	sudo apt-get install libmysqlclient-dev		<<<< Use this one
 //*	sudo apt-get install libmariadb-dev
@@ -53,6 +55,7 @@
 #include	"helper_functions.h"
 #include	"SkyStruc.h"
 #include	"RemoteImage.h"
+#include	"observatory_settings.h"
 
 #include	"GaiaSQL.h"
 #include	"RemoteGaia.h"
@@ -67,6 +70,8 @@ char	gGaiaSQLsever_Password[32]	=	"";
 char	gGaiaSQLsever_Database[32]	=	"";
 
 int		gGaiaSQLerror_Count			=	0;
+char	gGaiaSQLsever_StatusMsg[128]=	"";
+bool	gGaiaSQLsever_MsgUpdated	=	false;
 
 bool	gEnableSQLloggng			=	true;
 
@@ -206,8 +211,99 @@ int		iii;
 			memset(&gGaiaDataList[iii], 0, sizeof(TYPE_GAIA_REMOTE_DATA));
 		}
 	}
-
+	gGaiaSQLerror_Count	=	0;
 }
+
+//*****************************************************************************
+static	int	LogSQLuser(void)
+{
+MYSQL 			*mySQLConnection = NULL;
+char			mySQLCmd[256];
+int				returnCode;
+char			userString[64];
+
+	CONSOLE_DEBUG(__FUNCTION__);
+
+	returnCode		=	-1;
+
+	if (strlen(gObseratorySettings.Observer) > 0)
+	{
+		strcpy(userString, gObseratorySettings.Observer);
+	}
+	else if (strlen(gObseratorySettings.Owner) > 0)
+	{
+		strcpy(userString, gObseratorySettings.Owner);
+	}
+	else if (strlen(gObseratorySettings.Name) > 0)
+	{
+		strcpy(userString, gObseratorySettings.Name);
+	}
+	else
+	{
+		strcpy(userString, "Unknown");
+	}
+
+	if (strlen(userString) >= 32)
+	{
+		userString[31]	=	0;
+	}
+
+	sprintf(mySQLCmd, "call SetGaiaLogComment('%s');", userString);
+	CONSOLE_DEBUG_W_STR("mySQLCmd\t=", mySQLCmd);
+
+	mySQLConnection	=	mysql_init(NULL);
+	if (mySQLConnection != NULL)
+	{
+		CONSOLE_DEBUG(__FUNCTION__);
+
+		//*	establish connection to the database
+		if (mysql_real_connect(	mySQLConnection,
+								gGaiaSQLsever_IPaddr,
+								gGaiaSQLsever_UserName,
+								gGaiaSQLsever_Password,
+								gGaiaSQLsever_Database, 0, NULL, 0) != NULL)
+		{
+			CONSOLE_DEBUG_W_STR("Successfully connected to", gGaiaSQLsever_IPaddr);
+
+
+			returnCode	=	mysql_select_db(mySQLConnection, gGaiaSQLsever_Database);
+			if (returnCode == 0)
+			{
+				CONSOLE_DEBUG("mysql_select_db -- OK");
+				returnCode	=	mysql_query(mySQLConnection, mySQLCmd);
+				if (returnCode == 0)
+				{
+					CONSOLE_DEBUG("mysql_query -- OK");
+				}
+				else
+				{
+					CONSOLE_DEBUG_W_NUM("mysql_query returnCode\t=", returnCode);
+				}
+			}
+			else
+			{
+				CONSOLE_DEBUG_W_NUM("mysql_select_db returnCode\t=", returnCode);
+			}
+
+		}
+		else
+		{
+			CONSOLE_DEBUG("mysql_real_connect() failed");
+			LogSqlTransaction("mysql_real_connect() failed", "");
+		}
+	}
+	else
+	{
+		CONSOLE_DEBUG("mysql_init() failed");
+		LogSqlTransaction("mysql_init() failed", "");
+	}
+	mysql_close(mySQLConnection);
+	mysql_library_end();
+
+	return(returnCode);
+}
+
+
 
 //*****************************************************************************
 static int Querry_mySQL_cmd(	MYSQL		*myCon,
@@ -219,11 +315,11 @@ int		num_fields;
 int		returnCode;
 
 
-//	CONSOLE_DEBUG_W_STR(myDataBase,		mySQLCmd);
+	CONSOLE_DEBUG_W_STR(myDataBase,		mySQLCmd);
 	num_fields	=	-1;
 	mysql_select_db(myCon, myDataBase);
 	returnCode	=	mysql_query(myCon, mySQLCmd);
-//	CONSOLE_DEBUG_W_NUM("returnCode", returnCode);
+	CONSOLE_DEBUG_W_NUM("returnCode", returnCode);
 	if (returnCode == 0)
 	{
 		*mySQLresult	=	mysql_store_result(myCon);
@@ -346,7 +442,6 @@ MYSQL_ROW		row;
 MYSQL_RES		*mySQLresult;
 int				ra_int;
 int				dec_int;			//	Integers for Right Ascension and Declination
-int				mag10_int;				//	Largest Magnitude desired, will look for data LESS than this number
 int				num_fields;
 int				num_rows;
 double			bp_rp;
@@ -362,15 +457,16 @@ unsigned int	endMilliSecs;
 
 	mySQLConnection	=	mysql_init(NULL);
 
-//	CONSOLE_DEBUG(__FUNCTION__);
 	if (mySQLConnection != NULL)
 	{
+		CONSOLE_DEBUG(__FUNCTION__);
 
 //		CONSOLE_DEBUG("Trying to establish connection to the database");
 //		CONSOLE_DEBUG_W_STR("gGaiaSQLsever_IPaddr\t=",		gGaiaSQLsever_IPaddr);
 //		CONSOLE_DEBUG_W_STR("gGaiaSQLsever_UserName\t=",	gGaiaSQLsever_UserName);
 //		CONSOLE_DEBUG_W_STR("gGaiaSQLsever_Password\t=",	gGaiaSQLsever_Password);
 //		CONSOLE_DEBUG_W_STR("gGaiaSQLsever_Database\t=",	gGaiaSQLsever_Database);
+
 		//*	establish connection to the database
 		if (mysql_real_connect(	mySQLConnection,
 								gGaiaSQLsever_IPaddr,
@@ -381,38 +477,31 @@ unsigned int	endMilliSecs;
 			CONSOLE_DEBUG_W_STR("Successfully connected to", gGaiaSQLsever_IPaddr);
 			ra_int		=	floor(ra_Degrees);
 			dec_int		=	floor(dec_Degrees);
-			mag10_int	=	175;		//*	This is actually 17.5
-			mag10_int	=	200;		//*	This is actually 20.0
 
 			if (fabs(dec_Degrees) >= kPolarDeclinationLimit)
 			{
-				sprintf(mySQLCmd,"call GetGaiaDeclination(%d,%d);", dec_int, mag10_int);
+				sprintf(mySQLCmd,"call GetGaiaDeclination(%d);", dec_int);
 			}
 			else
 			{
-				sprintf(mySQLCmd,"call GetGaiaStarData(%d,%d);", ra_int, dec_int);
-	//			sprintf(mySQLCmd,"select source_id,ra,decl,phot_g_mean_mag from Gaia where raI = %d and dec_int = %d and  mag10 < %d;",
-	//								raI,
-	//								dec_int,
-	//								magI * 10);
+				sprintf(mySQLCmd,"call GetGaiaRaDec(%d,%d);", ra_int, dec_int);
 			}
 
-
-
-//			CONSOLE_DEBUG(mySQLCmd);
+			CONSOLE_DEBUG(mySQLCmd);
+			CONSOLE_DEBUG("Calling Querry_mySQL_cmd()");
 
 			mySQLresult	=	NULL;
 			num_fields	=	Querry_mySQL_cmd(	mySQLConnection,
 												&mySQLresult,
 												gGaiaSQLsever_Database,
 												mySQLCmd);
+			CONSOLE_DEBUG_W_NUM("num_fields", num_fields);
 			if (num_fields > 0)
 			{
 				num_rows	=	mysql_num_rows(mySQLresult);
-	//			CONSOLE_DEBUG_W_NUM("num_rows", num_rows);
-	//			CONSOLE_DEBUG_W_NUM("num_fields", num_fields);
+				CONSOLE_DEBUG_W_NUM("num_rows", num_rows);
 
-				if ((num_rows > 0) && (num_fields > 0))
+				if ((num_rows > 0) && (num_fields >= 3))
 				{
 					gaiaData		=	(TYPE_CelestData *)calloc(num_rows, sizeof(TYPE_CelestData));
 					if (gaiaData != NULL)
@@ -476,6 +565,8 @@ unsigned int	endMilliSecs;
 				else
 				{
 					CONSOLE_DEBUG("NO RESULTS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+					CONSOLE_DEBUG_W_NUM("num_fields", num_fields);
+					CONSOLE_DEBUG_W_NUM("num_rows", num_rows);
 				}
 				CONSOLE_DEBUG("Calling mysql_free_result()");
 				mysql_free_result(mySQLresult);
@@ -526,27 +617,65 @@ double	middleDecl_deg;
 double	middleDecl_rad;
 double	distance_Deg;
 double	my_ra1_Deg;
+double	my_dec1_Deg;
 double	my_ra2_Deg;
+double	my_dec2_Deg;
+double	tempValue_RA;
+double	tempValue_DEC;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG_W_DBL("ra1_Deg  \t=", ra1_Deg);
+//	CONSOLE_DEBUG_W_DBL("ra2_Deg  \t=", ra2_Deg);
+
+	//*	this gets complicated if we are across the 360 to 0 degree boundry
+	//*	to solve that issue, we are going to
+	//*		put them in order,
+	//*		add 360 if needed
 
 	my_ra1_Deg	=	ra1_Deg;
+	my_dec1_Deg	=	dec1_Deg;
+	my_ra2_Deg	=	ra2_Deg;
+	my_dec2_Deg	=	dec2_Deg;
 	if (my_ra1_Deg < 0.0)
 	{
 		my_ra1_Deg	+=	360.0;
 	}
-	my_ra2_Deg	=	ra2_Deg;
 	if (my_ra2_Deg < 0.0)
 	{
 		my_ra2_Deg	+=	360.0;
 	}
+//	CONSOLE_DEBUG_W_DBL("my_ra1_Deg  \t=", my_ra1_Deg);
+//	CONSOLE_DEBUG_W_DBL("my_ra2_Deg  \t=", my_ra2_Deg);
+
+	if (my_ra2_Deg <= my_ra1_Deg)
+	{
+		//*	ok, swap them
+		tempValue_RA	=	my_ra1_Deg;
+		tempValue_DEC	=	my_dec1_Deg;
+
+		my_ra1_Deg		=	my_ra2_Deg;
+		my_dec1_Deg		=	my_dec2_Deg;
+
+		my_ra2_Deg		=	tempValue_RA;
+		my_dec2_Deg		=	tempValue_DEC;
+	}
+
+
+	if ((my_ra2_Deg - my_ra1_Deg) > 180)
+	{
+		my_ra1_Deg	+=	360;
+		CONSOLE_DEBUG_W_DBL("delta > 180: my_ra1_Deg\t=", my_ra1_Deg);
+	}
+
 
 	//*	because of the converging nature of RA at the poles, we have to account for the
 	//*	declination angle in the RA calculation
-	middleDecl_deg	=	(dec1_Deg + dec2_Deg) / 2.0;
+	middleDecl_deg	=	(my_dec1_Deg + my_dec2_Deg) / 2.0;
 	middleDecl_rad	=	RADIANS(middleDecl_deg);
 
 
 	//*	if we are above the point where we ignore RA, then set it to zero
-	if (middleDecl_deg >= kPolarDeclinationLimit)
+	if (fabs(middleDecl_deg) >= kPolarDeclinationLimit)
 	{
 		deltaRA			=	0;
 	}
@@ -555,22 +684,24 @@ double	my_ra2_Deg;
 		deltaRA			=	cos(middleDecl_rad) * (my_ra2_Deg - my_ra1_Deg);
 	}
 
-	deltaDEC		=	dec2_Deg - dec1_Deg;
+	deltaDEC		=	my_dec2_Deg - my_dec1_Deg;
 	distanceSqrd	=	(deltaRA * deltaRA) + (deltaDEC * deltaDEC);
 
 	distance_Deg	=	sqrt(distanceSqrd);
 
-//	if (dec1_Deg > 80.0)
+//	if ((my_ra2_Deg - my_ra1_Deg) > 180)
 //	{
 //		CONSOLE_DEBUG_W_DBL("distance_Deg\t=", distance_Deg);
+//		CONSOLE_DEBUG_W_DBL("distance_Deg\t=", (my_ra2_Deg - my_ra1_Deg) );
 //		CONSOLE_DEBUG_W_DBL("my_ra1_Deg  \t=", my_ra1_Deg);
-//		CONSOLE_DEBUG_W_DBL("dec1_Deg    \t=", dec1_Deg);
+//		CONSOLE_DEBUG_W_DBL("my_dec1_Deg \t=", my_dec1_Deg);
 //		CONSOLE_DEBUG_W_DBL("my_ra2_Deg  \t=", my_ra2_Deg);
-//		CONSOLE_DEBUG_W_DBL("dec2_Deg    \t=", dec2_Deg);
+//		CONSOLE_DEBUG_W_DBL("my_dec2_Deg \t=", my_dec2_Deg);
 //
 //		CONSOLE_DEBUG_W_DBL("middleDecl_deg    \t=", middleDecl_deg);
-//		CONSOLE_DEBUG_W_DBL("cos(middleDecl)    \t=", cos(middleDecl_rad));
+//		CONSOLE_DEBUG_W_DBL("cos(middleDecl)   \t=", cos(middleDecl_rad));
 //	}
+//	CONSOLE_DEBUG_W_DBL("distance_Deg    \t=", distance_Deg);
 	return(distance_Deg);
 }
 
@@ -647,11 +778,8 @@ int		iii;
 //*	returns 1 if new request was started, 0 if not
 //*		using int so the calling routine can count how many
 //*****************************************************************************
-int	UpdateSkyTravelView(double ra_Radians, double dec_Radians, double viewAngle_Radians)
+int	UpdateSkyTravelView(double ra_Degrees, double dec_Degrees, double viewAngle_Degrees)
 {
-double	ra_Degrees;
-double	dec_Degrees;
-double	viewAngle_Degrees;
 int		ra_deg_int;
 int		dec_deg_int;
 int		slotIdx;
@@ -659,9 +787,6 @@ bool	dataNeesToBeLoaded;
 int		iii;
 int		requestStarted;
 
-	ra_Degrees			=	DEGREES(ra_Radians);
-	dec_Degrees			=	DEGREES(dec_Radians);
-	viewAngle_Degrees	=	DEGREES(viewAngle_Radians);
 	requestStarted		=	0;
 
 	if (viewAngle_Degrees < 5.0)
@@ -766,6 +891,7 @@ int		requestStarted;
 }
 
 
+#ifndef _INCLUDE_GAIA_MAIN_
 
 //*****************************************************************************
 static void	*GaiaSQL_Thead(void *arg)
@@ -780,7 +906,6 @@ bool			requestOccured;
 	gGaiaSQL_ThreadIsRunning	=	true;
 	while (gGaiaSQL_KeepRunning)
 	{
-#ifndef _INCLUDE_GAIA_MAIN_
 		//*
 		if (gST_DispOptions.RemoteGAIAenabled && gSkyTravelUpdateOccured)
 		{
@@ -826,19 +951,32 @@ bool			requestOccured;
 							gGaiaDataList[iii].sequenceNum		=	gGaiaSQLsequenceNum;
 							gGaiaSQLsequenceNum++;
 
+							strcpy(gGaiaSQLsever_StatusMsg, "SQL success");
+							gGaiaSQLsever_MsgUpdated	=	true;
 						}
 						else
 						{
 							CONSOLE_DEBUG("Failed to get GAIA data!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+							strcpy(gGaiaSQLsever_StatusMsg, "SQL failed!!!");
+							gGaiaSQLsever_MsgUpdated	=	true;
+
 							gGaiaDataList[iii].validData	=	false;
 							memset(&gGaiaDataList[iii], 0, sizeof(TYPE_GAIA_REMOTE_DATA));
 
 							gGaiaSQLerror_Count++;
+							if (gGaiaSQLerror_Count > 10)
+							{
+								strcpy(gGaiaSQLsever_StatusMsg, "Too many SQL errors, sleeping for 5 minutes");
+								gGaiaSQLsever_MsgUpdated	=	true;
+								CONSOLE_DEBUG(gGaiaSQLsever_StatusMsg);
+								sleep(5 * 60);
+							}
 						}
-						CONSOLE_DEBUG("Sleeping");
+						CONSOLE_DEBUG("Quick nap between requests");
 
 						//*	sleep for 100 millseconds
 						usleep(100 * 1000);
+						CONSOLE_DEBUG("Awake");
 
 					//	DumpGaiaRemoteTable(__FUNCTION__);
 					}
@@ -846,12 +984,14 @@ bool			requestOccured;
 			}
 			gSkyTravelUpdateOccured	=	false;
 
+
 		}
 		else
 		{
-			sleep(1);
+			CONSOLE_DEBUG("Nothing to do... Sleeping");
+			sleep(5);
+			CONSOLE_DEBUG("Awake");
 		}
-#endif
 	}
 	gGaiaSQL_ThreadIsRunning	=	false;
 	return(NULL);
@@ -881,6 +1021,8 @@ int		threadErr;
 
 	if (gGaiaSQL_ThreadIsRunning == false)
 	{
+		LogSQLuser();
+
 		CONSOLE_DEBUG("Staring Gaia SQL Thread");
 		gGaiaSQL_KeepRunning	=	true;
 		threadErr	=	pthread_create(	&gGaiaSQL_ThreadID,
@@ -912,6 +1054,7 @@ void	StopGaiaSQLthread(void)
 	gGaiaSQL_KeepRunning	=	false;
 
 }
+#endif // _INCLUDE_GAIA_MAIN_
 
 //*****************************************************************************
 void	LogSqlTransaction(const char *sqlCommand, const char *results)
