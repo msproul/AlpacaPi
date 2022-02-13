@@ -1601,15 +1601,15 @@ controller_camera.cpp:68 	//*	Jan  1,	2121	<TODO> clear error msg
 controller_camera.cpp:69 	//*	Feb  6,	2121	<TODO> Move downloading of images to a separate thread
 History Comments found   = 1600 in 293 files
 Total lines              = 145507
-Total comment Lines      = 20389 (14.0%)
-Total comments           = 23437 (16.1%)
+Total comment Lines      = 20393 (14.0%)
+Total comments           = 23441 (16.1%)
 Total history comments   = 1600 (1.1%)
 Total C files            = 39
 Total C++ files          = 109
 Total H files            = 144
 Preprocssor cnt          = 4367
-Total SLOC               = 95607
-Total SLOC-Logical       = 74193
+Total SLOC               = 95603
+Total SLOC-Logical       = 74189
 Programmer comment summary
 MLS             = 1575
 TODO            =   13

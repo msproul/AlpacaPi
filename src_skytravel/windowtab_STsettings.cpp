@@ -921,12 +921,12 @@ void	WindowTabSTsettings::ProcessDoubleClick(const int	widgetIdx,
 			}
 			break;
 
-	#ifdef _ENABLE_REMOTE_GAIA_
-		case kSkyT_Settings_Gaia_txt:
-		case kSkyT_Settings_Gaia_cnt:
-			CreateGaiaRemoteListWindow();
-			break;
-	#endif // _ENABLE_REMOTE_GAIA_
+	#ifdef _ENABLE_GAIA_
+//		case kSkyT_Settings_Gaia_txt:
+//		case kSkyT_Settings_Gaia_cnt:
+//			CreateGaiaRemoteListWindow();
+//			break;
+	#endif // _ENABLE_GAIA_
 
 		case kSkyT_Settings_Special_txt:
 		case kSkyT_Settings_Special_cnt:
