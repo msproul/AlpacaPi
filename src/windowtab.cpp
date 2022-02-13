@@ -1528,31 +1528,32 @@ CvScalar	gColorTable[]	=
 {
 	//	https://www.htmlcolor-picker.com/
 	//*	these MUST be in the same order as the enums
-	CV_RGB(255,	255,	255),	//*	WHITE
-	CV_RGB(000,	000,	000),	//*	BLACK
+	CV_RGB(255,	255,	255),	//*	W_WHITE
+	CV_RGB(000,	000,	000),	//*	W_BLACK
 
-	CV_RGB(255,	000,	000),	//*	RED
-	CV_RGB(000,	255,	000),	//*	GREEN
-	CV_RGB(000,	000,	255),	//*	BLUE
+	CV_RGB(255,	000,	000),	//*	W_RED
+	CV_RGB(000,	255,	000),	//*	W_GREEN
+	CV_RGB(000,	000,	255),	//*	W_BLUE
 
-	CV_RGB(000,	255,	255),	//*	CYAN
-	CV_RGB(255,	000,	255),	//*	MAGENTA
-	CV_RGB(255,	255,	000),	//*	YELLOW
+	CV_RGB(000,	255,	255),	//*	W_CYAN
+	CV_RGB(255,	000,	255),	//*	W_MAGENTA
+	CV_RGB(255,	255,	000),	//*	W_YELLOW
 
-	CV_RGB(96,	000,	000),	//*	DARKRED
-//	CV_RGB(000,	 64,	000),	//*	DARKGREEN
-	CV_RGB(000,	 110,	000),	//*	DARKGREEN
-	CV_RGB(000,	000,	150),	//*	DARKBLUE
+	CV_RGB(96,	000,	000),	//*	W_DARKRED
+//	CV_RGB(000,	 64,	000),	//*	W_DARKGREEN
+	CV_RGB(000,	 110,	000),	//*	W_DARKGREEN
+	CV_RGB(000,	000,	150),	//*	W_DARKBLUE
 
 
 
-	CV_RGB(192,	192,	192),	//*	LIGHTGRAY
-	CV_RGB(90,	 90,	 90),	//*	DARKGRAY
+	CV_RGB(192,	192,	192),	//*	W_LIGHTGRAY
+	CV_RGB(90,	 90,	 90),	//*	W_DARKGRAY
+	CV_RGB(45,	 45,	 45),	//*	W_VDARKGRAY
 
-	CV_RGB(255,	128,	255),	//*	LIGHTMAGENTA
+	CV_RGB(255,	128,	255),	//*	W_LIGHTMAGENTA
 
-	CV_RGB(0x66, 0x3d,	0x14),	//*	BROWN
-	CV_RGB(231,	  5,	254),	//*	PINK
+	CV_RGB(0x66, 0x3d,	0x14),	//*	W_BROWN
+	CV_RGB(231,	  5,	254),	//*	W_PINK
 
 	CV_RGB(255,	  100,	0),		//*	W_ORANGE,
 

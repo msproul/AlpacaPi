@@ -27,6 +27,7 @@ enum
 	kGaiaRemoteList_ClmTitle7,
 	kGaiaRemoteList_ClmTitle8,
 	kGaiaRemoteList_ClmTitle9,
+	kGaiaRemoteList_ClmTitle10,
 
 	kGaiaRemoteList_Obj_01,
 	kGaiaRemoteList_Obj_02,

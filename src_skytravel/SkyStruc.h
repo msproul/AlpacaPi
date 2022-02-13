@@ -21,8 +21,6 @@
 #endif // _STDINT_H
 
 
-
-
 #if PRAGMA_ALIGN_SUPPORTED
 	#pragma options align=mac68k
 #elif __INTEL__
@@ -76,6 +74,8 @@ enum
 
 	kDataSrc_GAIA_gedr3,
 	kDataSrc_Asteroids,
+	kDataSrc_OpenNGC,
+
 	kDataSrc_Unknown,
 
 	kDataSrc_last
@@ -446,9 +446,6 @@ extern	short				gConstelationCount;
 extern	TYPE_CelestData		*gConstStarPtr;
 extern	long				gConstStarCount;
 
-extern	TYPE_CelestData		*gNGCobjectPtr;
-extern	long				gNGCobjectCount;
-
 //*	Hipparcos
 extern	TYPE_CelestData		*gHipObjectPtr;
 extern	long				gHipObjectCount;
@@ -480,6 +477,12 @@ extern	long				gAAVSOalertsCnt;
 //*	Gaia star catalog
 extern	TYPE_CelestData		*gGaiaObjectPtr;
 extern	long				gGaiaObjectCnt;
+
+extern	TYPE_CelestData		*gNGCobjectPtr;
+extern	long				gNGCobjectCount;
+
+extern	char				gNGCDatbase[];
+
 
 void		Center_RA_DEC(double argRA_radians, double argDecl_radians);
 void		Center_CelestralObject(TYPE_CelestData *starObject);

@@ -1760,6 +1760,7 @@ SKYTRAVEL_OBJECTS=											\
 				$(OBJECT_DIR)NGCcatalog.o					\
 				$(OBJECT_DIR)nitecrawler_image.o			\
 				$(OBJECT_DIR)observatory_settings.o			\
+				$(OBJECT_DIR)OpenNGC.o						\
 				$(OBJECT_DIR)polaralign.o					\
 				$(OBJECT_DIR)RemoteImage.o					\
 				$(OBJECT_DIR)sidereal.o						\
@@ -2971,6 +2972,12 @@ $(OBJECT_DIR)SkyTravelTimeRoutines.o :	$(SRC_SKYTRAVEL)SkyTravelTimeRoutines.c	\
 $(OBJECT_DIR)NGCcatalog.o :				$(SRC_SKYTRAVEL)NGCcatalog.c	\
 										$(SRC_SKYTRAVEL)NGCcatalog.h
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYTRAVEL)NGCcatalog.c -o$(OBJECT_DIR)NGCcatalog.o
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)OpenNGC.o :				$(SRC_SKYTRAVEL)OpenNGC.c	\
+										$(SRC_SKYTRAVEL)OpenNGC.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYTRAVEL)OpenNGC.c -o$(OBJECT_DIR)OpenNGC.o
+
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)StarCatalogHelper.o :		$(SRC_SKYTRAVEL)StarCatalogHelper.c	\

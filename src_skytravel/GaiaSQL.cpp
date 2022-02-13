@@ -27,6 +27,8 @@
 //*	Jan 19,	2022	<MLS> Added SQL logging
 //*	Jan 25,	2022	<MLS> Changed UpdateSkyTravelView() to use degrees
 //*	Jan 25,	2022	<MLS> Fixed 0 <-> 360 boundary bug in CalcRA_DEC_Distance_Deg()
+//*	Feb 11,	2022	<MLS> Added CheckSQLconfiguration()
+//*	Feb 12,	2022	<MLS> Added GetGAIAdataFromIDnumber()
 //*****************************************************************************
 //*	sudo apt-get install libmysqlclient-dev		<<<< Use this one
 //*	sudo apt-get install libmariadb-dev
@@ -45,7 +47,6 @@
 
 //#include	<mariadb/mysql.h>		//	<KAS>	For SQL Functions
 #include	<mysql/mysql.h>		//	<KAS>	For SQL Functions
-#include	<math.h>		//	<KAS>	For FLOOR Function
 
 
 #define _ENABLE_CONSOLE_DEBUG_
@@ -61,7 +62,7 @@
 #include	"RemoteGaia.h"
 
 
-//#define	_XREF_AAVSO_
+#define	_XREF_AAVSO_
 
 char	gGaiaSQLsever_IPaddr[32]	=	"";
 int		gGaiaSQLsever_Port			=	0;
@@ -80,11 +81,11 @@ static		pthread_t	gGaiaSQL_ThreadID			=	-1;
 static		bool		gGaiaSQL_ThreadIsRunning	=	false;
 static		bool		gGaiaSQL_KeepRunning		=	false;
 
-
 TYPE_GAIA_REMOTE_DATA	gGaiaDataList[kMaxGaiaDataSets];
 static			bool	gGaiaDataListNeedsInit		=	true;
 static			bool	gSkyTravelUpdateOccured		=	false;
 static			int		gGaiaSQLsequenceNum			=	0;
+static			int		gGaiaStartThreadCnt			=	0;
 
 //-void	LogSqlTransaction(char *sqlCommand, char *results);
 void	LogSqlTransaction(const char *sqlCommand, const char *results);
@@ -142,18 +143,49 @@ char	*valueStrPtr;
 	}
 }
 
+//*****************************************************************************
+static bool	CheckSQLconfiguration(void)
+{
+bool			configOK;
+
+	//*	check to see if we have all the information
+	configOK	=	true;
+	if (strlen(gGaiaSQLsever_IPaddr) == 0)
+	{
+		configOK	=	false;
+	}
+	if (strlen(gGaiaSQLsever_UserName) == 0)
+	{
+		configOK	=	false;
+	}
+	if (strlen(gGaiaSQLsever_Password) == 0)
+	{
+		configOK	=	false;
+	}
+	if (strlen(gGaiaSQLsever_Database) == 0)
+	{
+		configOK	=	false;
+	}
+	if (gGaiaSQLsever_Port == 0)
+	{
+		configOK	=	false;
+	}
+	return(configOK);
+}
+
 
 //*****************************************************************************
-static void	ReadSQLconfigFile(void)
+static bool	ReadSQLconfigFile(void)
 {
 FILE			*filePointer;
 char			lineBuff[256];
 int				iii;
 int				slen;
 char			fileName[]	=	"sqlserver.txt";
+bool			configOK;
 
 	CONSOLE_DEBUG(__FUNCTION__);
-
+	configOK	=	false;
 	//*	check for the observatory settings file
 	filePointer	=	fopen(fileName, "r");
 	if (filePointer != NULL)
@@ -177,22 +209,29 @@ char			fileName[]	=	"sqlserver.txt";
 			}
 
 		}
+		//*	check the configuration, makes sure that all the required parameters were specified
+		configOK	=	CheckSQLconfiguration();
 	}
-		fclose(filePointer);
+	fclose(filePointer);
+
+	return(configOK);
 }
 
 //*****************************************************************************
-void	GaiaSQLinit(void)
+//*	returns true if valid config file
+bool	GaiaSQLinit(void)
 {
 int		iii;
+bool	configOK;
 
 	CONSOLE_DEBUG(__FUNCTION__);
-	ReadSQLconfigFile();
+	configOK	=	ReadSQLconfigFile();
 	for (iii=0; iii<kMaxGaiaDataSets; iii++)
 	{
 		memset(&gGaiaDataList[iii], 0, sizeof(TYPE_GAIA_REMOTE_DATA));
 	}
 	gGaiaDataListNeedsInit	=	false;
+	return(configOK);
 }
 
 //*****************************************************************************
@@ -265,7 +304,6 @@ char			userString[64];
 		{
 			CONSOLE_DEBUG_W_STR("Successfully connected to", gGaiaSQLsever_IPaddr);
 
-
 			returnCode	=	mysql_select_db(mySQLConnection, gGaiaSQLsever_Database);
 			if (returnCode == 0)
 			{
@@ -304,8 +342,8 @@ char			userString[64];
 }
 
 
-
 //*****************************************************************************
+//*	returns # of fields
 static int Querry_mySQL_cmd(	MYSQL		*myCon,
 								MYSQL_RES	**mySQLresult,
 								char		*myDataBase,
@@ -317,26 +355,38 @@ int		returnCode;
 
 	CONSOLE_DEBUG_W_STR(myDataBase,		mySQLCmd);
 	num_fields	=	-1;
-	mysql_select_db(myCon, myDataBase);
-	returnCode	=	mysql_query(myCon, mySQLCmd);
-	CONSOLE_DEBUG_W_NUM("returnCode", returnCode);
+
+	returnCode	=	mysql_select_db(myCon, myDataBase);
 	if (returnCode == 0)
 	{
-		*mySQLresult	=	mysql_store_result(myCon);
+		CONSOLE_DEBUG_W_NUM("mysql_select_db returnCode\t=", returnCode);
 
-		if (*mySQLresult != NULL)
+		CONSOLE_DEBUG_W_STR("Calling mysql_query() with\t=", mySQLCmd);
+		returnCode	=	mysql_query(myCon, mySQLCmd);
+		CONSOLE_DEBUG_W_NUM("mysql_query returnCode\t=", returnCode);
+		if (returnCode == 0)
 		{
-			num_fields	=	mysql_num_fields(*mySQLresult);
-		//	CONSOLE_DEBUG_W_NUM("num_fields", num_fields);
+			CONSOLE_DEBUG("calling mysql_store_result()");
+			*mySQLresult	=	mysql_store_result(myCon);
+
+			if (*mySQLresult != NULL)
+			{
+				num_fields	=	mysql_num_fields(*mySQLresult);
+				CONSOLE_DEBUG_W_NUM("num_fields\t=", num_fields);
+			}
+			else
+			{
+				CONSOLE_DEBUG("Error on Querry_mySQL_cmd mysql_store_result");
+			}
 		}
 		else
 		{
-			CONSOLE_DEBUG("Error on Querry_mySQL_cmd mysql_store_result");
+			CONSOLE_DEBUG_W_NUM("mysql_query failed with returnCode\t=", returnCode);
 		}
 	}
 	else
 	{
-		CONSOLE_DEBUG_W_NUM("mysql_query returnCode\t=", returnCode);
+		CONSOLE_DEBUG_W_NUM("mysql_select_db failed with returnCode\t=", returnCode);
 	}
 
 	return(num_fields);
@@ -383,7 +433,7 @@ double	bpLimits[]	=	{0.435,	0.870, 1.304, 1.729, 2.174, 2.609 };
 #ifdef _XREF_AAVSO_
 
 //*****************************************************************************
-char	*gAAVSO_alertStars[]	=
+const char	*gAAVSO_alertStars[]	=
 {
 	"4048168377818693632",
 	"4111779763989583232",
@@ -503,7 +553,7 @@ unsigned int	endMilliSecs;
 
 				if ((num_rows > 0) && (num_fields >= 3))
 				{
-					gaiaData		=	(TYPE_CelestData *)calloc(num_rows, sizeof(TYPE_CelestData));
+					gaiaData		=	(TYPE_CelestData *)calloc((num_rows + 10), sizeof(TYPE_CelestData));
 					if (gaiaData != NULL)
 					{
 						//	Loop through the Rows
@@ -605,6 +655,159 @@ unsigned int	endMilliSecs;
 
 
 //*****************************************************************************
+//*****************************************************************************
+bool	GetGAIAdataFromIDnumber(const char *gaiaIDnumberStr, TYPE_CelestData *gaiaData)
+{
+int				recNum;
+TYPE_CelestData	localStarData;
+//*	mySWQL Variables
+MYSQL 			*mySQLConnection = NULL;
+char			mySQLCmd[256];
+MYSQL_ROW		row;
+MYSQL_RES		*mySQLresult;
+int				num_fields;
+int				num_rows;
+double			bp_rp;
+unsigned int	startMilliSecs;
+unsigned int	endMilliSecs;
+bool			validFlag;
+
+	CONSOLE_DEBUG("-------------------------------------------------------------");
+	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_STR("Searching GAIA for", gaiaIDnumberStr);
+
+	recNum		=	0;
+
+	startMilliSecs	=	millis();
+
+	mySQLConnection	=	mysql_init(NULL);
+	validFlag		=	false;
+	if (mySQLConnection != NULL)
+	{
+		CONSOLE_DEBUG(__FUNCTION__);
+
+		CONSOLE_DEBUG("Trying to establish connection to the database");
+		CONSOLE_DEBUG_W_STR("gGaiaSQLsever_IPaddr\t=",		gGaiaSQLsever_IPaddr);
+		CONSOLE_DEBUG_W_STR("gGaiaSQLsever_UserName\t=",	gGaiaSQLsever_UserName);
+		CONSOLE_DEBUG_W_STR("gGaiaSQLsever_Password\t=",	gGaiaSQLsever_Password);
+		CONSOLE_DEBUG_W_STR("gGaiaSQLsever_Database\t=",	gGaiaSQLsever_Database);
+
+		//*	establish connection to the database
+		if (mysql_real_connect(	mySQLConnection,
+								gGaiaSQLsever_IPaddr,
+								gGaiaSQLsever_UserName,
+								gGaiaSQLsever_Password,
+								gGaiaSQLsever_Database, 0, NULL, 0) != NULL)
+		{
+			CONSOLE_DEBUG_W_STR("Successfully connected to", gGaiaSQLsever_IPaddr);
+			sprintf(mySQLCmd,"call GetGaiaSourceID(%s);", gaiaIDnumberStr);
+			CONSOLE_DEBUG(mySQLCmd);
+			CONSOLE_DEBUG("Calling Querry_mySQL_cmd()");
+
+			mySQLresult	=	NULL;
+			num_fields	=	Querry_mySQL_cmd(	mySQLConnection,
+												&mySQLresult,
+												gGaiaSQLsever_Database,
+												mySQLCmd);
+			CONSOLE_DEBUG_W_NUM("num_fields", num_fields);
+			if (num_fields > 0)
+			{
+				num_rows	=	mysql_num_rows(mySQLresult);
+				CONSOLE_DEBUG_W_NUM("num_rows", num_rows);
+
+				if ((num_rows > 0) && (num_fields >= 3))
+				{
+					CONSOLE_DEBUG(__FUNCTION__);
+					row	=	mysql_fetch_row(mySQLresult);
+
+					validFlag	=	true;
+					//*	Get the name
+					CONSOLE_DEBUG_W_STR("row[0]\t=",	row[0]);
+					strcpy(localStarData.longName, row[0]);
+					CONSOLE_DEBUG_W_STR("longName\t=",	localStarData.longName);
+
+					//*	Get the RA
+					localStarData.ra		=	RADIANS(atof(row[1]));
+					localStarData.org_ra	=	localStarData.ra;
+
+					//*	Get the DEC
+					localStarData.decl		=	RADIANS(atof(row[2]));
+					localStarData.org_decl	=	localStarData.decl;
+
+					//*	Get the Magnitude
+					if (row[3] != NULL)
+					{
+						localStarData.realMagnitude		=	atof(row[3]);
+						if (localStarData.realMagnitude > 21.0)
+						{
+							CONSOLE_DEBUG_W_STR("longName     \t=",	localStarData.longName);
+							CONSOLE_DEBUG_W_DBL("realMagnitude\t=",	localStarData.realMagnitude);
+							CONSOLE_DEBUG_W_STR("row[3]       \t=",	row[3]);
+						}
+					}
+					else
+					{
+						localStarData.realMagnitude		=	15;
+					}
+
+					//*	Get the spectral class
+					if (row[4] != NULL)
+					{
+						bp_rp		=	atof(row[4]);
+						localStarData.spectralClass		=	CalcSpectralClassFrom_BP_RP(bp_rp);
+					}
+					else
+					{
+						localStarData.spectralClass		=	0;
+					}
+
+					localStarData.dataSrc	=	kDataSrc_GAIA_gedr3;
+				}
+				else
+				{
+					CONSOLE_DEBUG("NO RESULTS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+					CONSOLE_DEBUG_W_NUM("num_fields", num_fields);
+					CONSOLE_DEBUG_W_NUM("num_rows", num_rows);
+				}
+				CONSOLE_DEBUG("Calling mysql_free_result()");
+				mysql_free_result(mySQLresult);
+
+				endMilliSecs	=	millis();
+
+				if (gEnableSQLloggng)
+				{
+				char	textBuff[128];
+
+					sprintf(textBuff, "Records rcvd=%d\tQuery time=%d", recNum, (endMilliSecs - startMilliSecs));
+					LogSqlTransaction(mySQLCmd, textBuff);
+				}
+			}
+			else
+			{
+				LogSqlTransaction("num_fields <= 0", "");
+			}
+			CONSOLE_DEBUG("Done");
+		}
+		else
+		{
+			LogSqlTransaction("mysql_real_connect() failed", "");
+		}
+	}
+	else
+	{
+		LogSqlTransaction("mysql_init() failed", "");
+	}
+	mysql_close(mySQLConnection);
+	mysql_library_end();
+
+	*gaiaData	=	localStarData;
+	CONSOLE_DEBUG(__FUNCTION__);
+
+	return(validFlag);
+}
+
+
+//*****************************************************************************
 double	CalcRA_DEC_Distance_Deg(const double	ra1_Deg,
 								const double	dec1_Deg,
 								const double	ra2_Deg,
@@ -664,7 +867,7 @@ double	tempValue_DEC;
 	if ((my_ra2_Deg - my_ra1_Deg) > 180)
 	{
 		my_ra1_Deg	+=	360;
-		CONSOLE_DEBUG_W_DBL("delta > 180: my_ra1_Deg\t=", my_ra1_Deg);
+//		CONSOLE_DEBUG_W_DBL("delta > 180: my_ra1_Deg\t=", my_ra1_Deg);
 	}
 
 
@@ -726,6 +929,7 @@ double	maxDist_Deg;
 													dec_Degrees,
 													gGaiaDataList[iii].centerRA_deg,
 													gGaiaDataList[iii].centerDEC_deg);
+			gGaiaDataList[iii].distanceCtrScrn	=	distance_Deg;
 			if (distance_Deg > maxDist_Deg)
 			{
 				maxDist_Deg	=	distance_Deg;
@@ -791,10 +995,11 @@ int		requestStarted;
 
 	if (viewAngle_Degrees < 5.0)
 	{
-		//*	temporary fix to fix Keith's floor()
-		if (dec_Degrees < 0)
+		if (gST_DispOptions.RemoteGAIAenabled && (gGaiaSQL_ThreadIsRunning == false))
 		{
-			dec_Degrees	+=	1.0;
+			CONSOLE_DEBUG("**************************************************************");
+			CONSOLE_DEBUG("Calling StartGaiaSQLthread()");
+			StartGaiaSQLthread();
 		}
 
 		if (ra_Degrees < 0.0)
@@ -972,11 +1177,11 @@ bool			requestOccured;
 								sleep(5 * 60);
 							}
 						}
-						CONSOLE_DEBUG("Quick nap between requests");
+					//	CONSOLE_DEBUG("Quick nap between requests");
 
 						//*	sleep for 100 millseconds
 						usleep(100 * 1000);
-						CONSOLE_DEBUG("Awake");
+					//	CONSOLE_DEBUG("Awake");
 
 					//	DumpGaiaRemoteTable(__FUNCTION__);
 					}
@@ -988,9 +1193,9 @@ bool			requestOccured;
 		}
 		else
 		{
-			CONSOLE_DEBUG("Nothing to do... Sleeping");
+		//	CONSOLE_DEBUG("Nothing to do... Sleeping");
 			sleep(5);
-			CONSOLE_DEBUG("Awake");
+		//	CONSOLE_DEBUG("Awake");
 		}
 	}
 	gGaiaSQL_ThreadIsRunning	=	false;
@@ -1009,8 +1214,13 @@ int	StartGaiaSQLthread(void)
 {
 int		threadStatus;
 int		threadErr;
+int		loopCnt;
+bool	configOK;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+
+	CONSOLE_DEBUG("**************************************************************");
+	CONSOLE_DEBUG_W_NUM(__FUNCTION__, gGaiaStartThreadCnt);
+	gGaiaStartThreadCnt++;
 
 	//*	do we need to initialize the data array
 	if (gGaiaDataListNeedsInit)
@@ -1018,31 +1228,51 @@ int		threadErr;
 		GaiaSQLinit();
 	}
 
-
-	if (gGaiaSQL_ThreadIsRunning == false)
+	configOK	=	CheckSQLconfiguration();
+	if (configOK)
 	{
-		LogSQLuser();
-
-		CONSOLE_DEBUG("Staring Gaia SQL Thread");
-		gGaiaSQL_KeepRunning	=	true;
-		threadErr	=	pthread_create(	&gGaiaSQL_ThreadID,
-										NULL,
-										&GaiaSQL_Thead,
-										NULL);
-		if (threadErr == 0)
+		if (gGaiaSQL_ThreadIsRunning == false)
 		{
-			CONSOLE_DEBUG("GAIA SQL thread created successfully");
-			threadStatus	=	0;
+			LogSQLuser();
+
+			CONSOLE_DEBUG("Staring Gaia SQL Thread");
+			gGaiaSQL_KeepRunning	=	true;
+			threadErr	=	pthread_create(	&gGaiaSQL_ThreadID,
+											NULL,
+											&GaiaSQL_Thead,
+											NULL);
+			if (threadErr == 0)
+			{
+				CONSOLE_DEBUG("GAIA SQL thread created successfully");
+				threadStatus	=	0;
+
+				//*	sleep a little so the thread has a chance to get running
+				while ((gGaiaSQL_ThreadIsRunning == false) && (loopCnt < 200))
+				{
+					usleep(5000);
+					loopCnt++;
+				}
+				CONSOLE_DEBUG_W_NUM("gGaiaSQL_ThreadIsRunning\t=", gGaiaSQL_ThreadIsRunning);
+				CONSOLE_DEBUG_W_NUM("loopCnt\t\t\t=", loopCnt);
+
+			}
+			else
+			{
+				CONSOLE_DEBUG_W_NUM("Error on thread creation, Error number:", threadErr);
+				threadStatus	=	-1;
+			}
 		}
 		else
 		{
-			CONSOLE_DEBUG_W_NUM("Error on thread creation, Error number:", threadErr);
-			threadStatus	=	-1;
+			CONSOLE_DEBUG("-------------------------------------------------------------");
+			CONSOLE_DEBUG("Thread already running");
+			threadStatus	=	1;
 		}
 	}
 	else
 	{
-		threadStatus	=	1;
+		CONSOLE_DEBUG("SQL not configured properly");
+		threadStatus	=	-1;
 	}
 	return(threadStatus);
 }

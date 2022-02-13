@@ -63,6 +63,11 @@ enum
 	kSkyT_Settings_LineW_ConstOutlines,
 	kSkyT_Settings_LineW_ConstOutlines1,
 	kSkyT_Settings_LineW_ConstOutlines2,
+
+	kSkyT_Settings_LineW_NGCoutlines,
+	kSkyT_Settings_LineW_NGCoutlines1,
+	kSkyT_Settings_LineW_NGCoutlines2,
+
 	kSkyT_Settings_LineW_Grid,
 	kSkyT_Settings_LineW_Grid1,
 	kSkyT_Settings_LineW_Grid2,
@@ -103,11 +108,16 @@ enum
 	kSkyT_Settings_ConstOutLines_txt,
 	kSkyT_Settings_ConstOutLines_cnt,
 
+#ifdef _ENABLE_GAIA_
 	kSkyT_Settings_Gaia_txt,
 	kSkyT_Settings_Gaia_cnt,
+#endif // _ENABLE_GAIA_
 
 	kSkyT_Settings_Asteroids_txt,
 	kSkyT_Settings_Asteroids_cnt,
+
+	kSkyT_Settings_Special_txt,
+	kSkyT_Settings_Special_cnt,
 
 	kSkyT_Settings_DataHelpText,
 

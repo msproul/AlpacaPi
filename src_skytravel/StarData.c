@@ -408,7 +408,6 @@ size_t			bufferSize;
 			specifiedLnCnt	=	atoi(lineBuff);
 			if (specifiedLnCnt > 10)
 			{
-				specifiedLnCnt	+=	3;	//*	leave some extra room
 //				CONSOLE_DEBUG_W_NUM("specifiedLnCnt\t=", specifiedLnCnt);
 
 				//*	get the dataset year
@@ -417,7 +416,7 @@ size_t			bufferSize;
 
 				}
 
-				bufferSize	=	specifiedLnCnt * sizeof(TYPE_CelestData);
+				bufferSize	=	(specifiedLnCnt + 2) * sizeof(TYPE_CelestData);
 				tscStarData	=	(TYPE_CelestData *)malloc(bufferSize);
 
 				if (tscStarData != NULL)
@@ -589,7 +588,7 @@ size_t			bufferSize;
 	if (filePointer != NULL)
 	{
 		specifiedLnCnt	=	120;
-		bufferSize		=	specifiedLnCnt * sizeof(TYPE_CelestData);
+		bufferSize		=	(specifiedLnCnt + 2) * sizeof(TYPE_CelestData);
 		messierData		=	(TYPE_CelestData *)malloc(bufferSize);
 
 		if (messierData != NULL)
@@ -1180,7 +1179,7 @@ int				headerLineCnt;
 		specifiedLnCnt	=	CountLinesInFile(filePointer);
 //		CONSOLE_DEBUG_W_NUM("Lines in file", specifiedLnCnt);
 
-		bufferSize		=	specifiedLnCnt * sizeof(TYPE_CelestData);
+		bufferSize		=	(specifiedLnCnt + 2) * sizeof(TYPE_CelestData);
 		draperData		=	(TYPE_CelestData *)malloc(bufferSize);
 
 		if (draperData != NULL)
@@ -1264,7 +1263,7 @@ int		argLen;
 
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, lineBuff);
 
-	//*	step thru the line looking for commas.
+	//*	step thru the line looking for tabs or spaces.
 	sLen		=	strlen(lineBuff);
 	argNum		=	0;
 	ccc			=	0;
@@ -1494,7 +1493,7 @@ int				linesRead;
 		specifiedLnCnt	=	CountLinesInFile(filePointer);
 		CONSOLE_DEBUG_W_NUM("Lines in file", specifiedLnCnt);
 
-		bufferSize		=	specifiedLnCnt * sizeof(TYPE_CelestData);
+		bufferSize		=	(specifiedLnCnt + 2) * sizeof(TYPE_CelestData);
 		specialData		=	(TYPE_CelestData *)malloc(bufferSize);
 
 		if (specialData != NULL)

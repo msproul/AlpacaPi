@@ -287,6 +287,7 @@ class WindowTabSkyTravel: public WindowTab
 				void	DrawPolarAlignmentCenterVector(TYPE_CelestData *polarAlignCenters, long polarAlignCnt);
 
 				int		DrawAsteroids(void);
+				int		DrawOpenNGC_Outlines(void);
 
 				//*	this routine draws cute little easter eggs along the horizon,
 				void	MapTokens(TYPE_Time *timeptr, TYPE_LatLon *locptr);

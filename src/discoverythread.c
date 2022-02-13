@@ -442,6 +442,7 @@ int					recvByteCnt;
 char				returnedData[2000];
 char				xmitBuffer[2000];
 int					setOptRetCode;
+char				errorString[64];
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -494,7 +495,9 @@ int					setOptRetCode;
 			shutdownRetCode	=	shutdown(socket_desc, SHUT_RDWR);
 			if (shutdownRetCode != 0)
 			{
-				CONSOLE_DEBUG_W_NUM("shutdown() error", errno);
+			//	CONSOLE_DEBUG_W_NUM("shutdown() error", errno);
+				GetLinuxErrorString(errno, errorString);
+				CONSOLE_DEBUG_W_STR("shutdown() error: Error message\t\t=",	errorString);
 			}
 		}
 		else if (errno == ECONNREFUSED)
@@ -506,7 +509,6 @@ int					setOptRetCode;
 		}
 		else
 		{
-		char	errorString[64];
 
 		//	CONSOLE_DEBUG("connect error");
 		//	CONSOLE_DEBUG_W_NUM("errno\t=", errno);

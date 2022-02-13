@@ -73,7 +73,7 @@ int		textBoxHt;
 int		textBoxWd;
 int		widgetWidth;
 int		iii;
-short	tabArray[kMaxTabStops]	=	{50, 100, 200, 300, 400, 500, 600, 700, 800, 900};
+short	tabArray[kMaxTabStops]	=	{50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000};
 int		clmnHdr_xLoc;
 int		clmnHdrWidth;
 int		boxID;
@@ -92,7 +92,7 @@ int		boxID;
 
 	clmnHdr_xLoc	=	1;
 	iii				=	kGaiaRemoteList_ClmTitle1;
-	while (iii <= kGaiaRemoteList_ClmTitle9)
+	while (iii <= kGaiaRemoteList_ClmTitle10)
 	{
 		clmnHdrWidth	=	tabArray[iii - kGaiaRemoteList_ClmTitle1] - clmnHdr_xLoc;
 
@@ -123,6 +123,7 @@ int		boxID;
 	SetWidgetText(		boxID++,	"time (ms)");
 	SetWidgetText(		boxID++,	"Seq#");
 	SetWidgetText(		boxID++,	"TimeStamp");
+	SetWidgetText(		boxID++,	"Distance");
 
 	yLoc			+=	cRadioBtnHt;
 	yLoc			+=	2;
@@ -201,6 +202,7 @@ int		boxID;
 	xLoc		+=	widgetWidth;
 	xLoc		+=	2;
 
+	SetWidgetTextColor(	kGaiaRemoteList_Average,	CV_RGB(0,	255,	0));
 
 //	SetAlpacaLogoBottomCorner(kGaiaRemoteList_AlpacaLogo);
 
@@ -216,7 +218,6 @@ int		boxID;
 //*****************************************************************************
 void	WindowTabGaiaRemote::ProcessButtonClick(const int buttonIdx)
 {
-int	newSortColumn;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -365,6 +366,8 @@ int		ra_minutes;
 		FormatTimeString_Local(&gGaiaDataList[iii].timeStamp, formatString);
 			strcat(textString, formatString);
 
+		sprintf(formatString, "\t%3.2f\t",		gGaiaDataList[gaiaIdx].distanceCtrScrn);
+			strcat(textString, formatString);
 
 		SetWidgetText(boxId, textString);
 

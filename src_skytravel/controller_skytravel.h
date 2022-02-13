@@ -1,5 +1,6 @@
 //*****************************************************************************
 //*	Jan  6,	2022	<MLS> Added RemoteGAIAenabled to skytravel options
+//*	Feb 10,	2022	<MLS> Added GaiaRequestMode
 //*****************************************************************************
 //#include	"controller_skytravel.h"
 
@@ -62,9 +63,6 @@ extern	double	gTelescopeRA_Hours;
 extern	double	gTelescopeRA_Radians;
 extern	double	gTelescopeDecl_Degrees;
 extern	double	gTelescopeDecl_Radians;
-extern	int		gLineWidth_Constellations;
-extern	int		gLineWidth_ConstOutlines;
-extern	int		gLineWidth_GridLines;
 
 //**************************************************************************************
 enum
@@ -75,6 +73,15 @@ enum
 };
 
 //**************************************************************************************
+enum
+{
+	kGaiaRequestMode_1x1	=	0,
+	kGaiaRequestMode_3x1,
+	kGaiaRequestMode_3x3
+};
+
+
+//**************************************************************************************
 typedef struct
 {
 	int		EarthDispMode;
@@ -82,6 +89,7 @@ typedef struct
 	int		LineWidth_Constellations;
 	int		LineWidth_ConstOutlines;
 	int		LineWidth_GridLines;
+	int		LineWidth_NGCoutlines;
 	bool	DispMagnitude;			//*	display magnitude of stars if zoomed in
 	bool	DispSpectralType;		//*	display spectral type as a letter if zoomed in
 
@@ -92,6 +100,9 @@ typedef struct
 
 	//*	remote SQL stuf
 	bool	RemoteGAIAenabled;
+	int		GaiaRequestMode;
+
+
 
 } SkyTravelDispOptions;
 

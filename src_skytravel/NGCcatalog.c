@@ -177,7 +177,7 @@ TYPE_CelestData	starObject;
 bool			validObject;
 char			lineBuff[512];
 char			filePath[128];
-size_t			bufferSize;
+//size_t			bufferSize;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -191,11 +191,10 @@ size_t			bufferSize;
 	{
 		ngcLineCount	=	13300;
 
-		bufferSize	=	ngcLineCount * sizeof(TYPE_CelestData);
-		ngcStarData	=	(TYPE_CelestData *)malloc(bufferSize);
+//		bufferSize	=	(ngcLineCount + 2) * sizeof(TYPE_CelestData);
+		ngcStarData	=	(TYPE_CelestData *)calloc((ngcLineCount + 2), sizeof(TYPE_CelestData));
 		if (ngcStarData != NULL)
 		{
-			memset(ngcStarData, 0, bufferSize);
 
 			recordCount	=	0;
 			while (fgets(lineBuff, 500, filePointer) && (recordCount < ngcLineCount))
@@ -299,7 +298,7 @@ TYPE_ObjectInfo	nameObject;
 bool			validObject;
 char			lineBuff[512];
 char			filePath[128];
-size_t			bufferSize;
+//size_t			bufferSize;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -313,11 +312,10 @@ size_t			bufferSize;
 	{
 		ngcLineCount	=	230;
 
-		bufferSize	=	ngcLineCount * sizeof(TYPE_ObjectInfo);
-		ngcNameData	=	(TYPE_ObjectInfo *)malloc(bufferSize);
+//		bufferSize	=	ngcLineCount * sizeof(TYPE_ObjectInfo);
+		ngcNameData	=	(TYPE_ObjectInfo *)calloc((ngcLineCount + 2), sizeof(TYPE_ObjectInfo));
 		if (ngcNameData != NULL)
 		{
-			memset(ngcNameData, 0, bufferSize);
 			recordCount	=	0;
 			while (fgets(lineBuff, 500, filePointer) && (recordCount < ngcLineCount))
 			{
@@ -335,7 +333,7 @@ size_t			bufferSize;
 	else
 	{
 		CONSOLE_DEBUG_W_STR("Failed to read", filePath);
-		CONSOLE_ABORT(__FUNCTION__);
+//		CONSOLE_ABORT(__FUNCTION__);
 	}
 	return(ngcNameData);
 }

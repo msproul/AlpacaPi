@@ -54,6 +54,7 @@
 
 #include	"controller.h"
 #include	"controller_skytravel.h"
+#include	"OpenNGC.h"
 
 #ifdef _ENABLE_REMOTE_GAIA_
 	#include	"GaiaSQL.h"
@@ -80,6 +81,10 @@ long				gConstStarCount		=	0;
 
 TYPE_CelestData		*gNGCobjectPtr		=	NULL;
 long				gNGCobjectCount		=	0;
+
+TYPE_OpenNGCoutline	*gOpenNGC_outlines	=	NULL;
+long				gOpenNGC_outlineCnt	=	0;
+
 
 //*	Hipparcos
 TYPE_CelestData		*gHipObjectPtr		=	NULL;
@@ -115,9 +120,13 @@ long				gGaiaObjectCnt		=	0;
 
 
 //*	Lowell asteroid database
-TYPE_Asteroid		*gAsteroidPtr		=	NULL;
-long				gAsteroidCnt		=	0;
+TYPE_Asteroid		*gAsteroidPtr			=	NULL;
+long				gAsteroidCnt			=	0;
 char				gAsteroidDatbase[32]	=	"";
+
+
+char				gNGCDatbase[32]			=	"";
+
 
 //*****************************************************************************
 static void	ProcessCmdLineArgs(int argc, char **argv)
@@ -184,6 +193,9 @@ unsigned int		currentMillis;
 unsigned int		lastDebugMillis;
 unsigned int		deltaSecs;
 
+	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG_W_NUM("sizeof(TYPE_CelestData)", sizeof(TYPE_CelestData));
+
 	lastDebugMillis		=	millis();
 
 
@@ -197,12 +209,11 @@ unsigned int		deltaSecs;
 	printf("cfitsio version %3.2f\r\n", fitsVersionRet);
 	printf("cfitsio version %3.2f\r\n", fitsVersionVal);
 
+	memset(&gST_DispOptions,	0, sizeof(SkyTravelDispOptions));
 
 	objectsCreated	=	0;
 	gColorOverRide	=	0;
 
-	CONSOLE_DEBUG(__FUNCTION__);
-//	CONSOLE_DEBUG_W_NUM("sizeof(TYPE_CelestData)", sizeof(TYPE_CelestData));
 
 	//*	deal with any options from the command line
 	ProcessCmdLineArgs(argc, argv);
@@ -218,12 +229,18 @@ unsigned int		deltaSecs;
 	ObservatorySettings_ReadFile();
 
 #ifdef _ENABLE_REMOTE_GAIA_
-	GaiaSQLinit();
+	//*	returns true if valid config file
+	gST_DispOptions.RemoteGAIAenabled		=	GaiaSQLinit();
+	gST_DispOptions.GaiaRequestMode			=	kGaiaRequestMode_3x1;
+
 	if (gST_DispOptions.RemoteGAIAenabled)
 	{
 		StartGaiaSQLthread();
 	}
-#endif
+#else
+	gST_DispOptions.RemoteGAIAenabled			=	false;
+#endif // _ENABLE_REMOTE_GAIA_
+	CONSOLE_DEBUG_W_STR("RemoteGAIAenabled is", (gST_DispOptions.RemoteGAIAenabled ? "enabled" : "disabled"));
 
 	new ControllerSkytravel("SkyTravel");
 	objectsCreated++;

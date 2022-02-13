@@ -7,7 +7,7 @@
 
 #define	kPolarDeclinationLimit	(84.0)
 
-void	GaiaSQLinit(void);
+bool	GaiaSQLinit(void);		//*	returns true if valid config file
 int		StartGaiaSQLthread(void);
 
 //*	returns 1 if new request was started, 0 if not
@@ -17,6 +17,7 @@ double	CalcRA_DEC_Distance_Deg(const double	ra1_Deg,
 								const double	dec1_Deg,
 								const double	ra2_Deg,
 								const double	dec2Deg);
+bool	GetGAIAdataFromIDnumber(const char *gaiaIDnumberStr, TYPE_CelestData *gaiaData);
 
 //*****************************************************************************
 typedef struct
@@ -31,6 +32,7 @@ typedef struct
 	unsigned int	elapsedMilliSecs;
 	int				sequenceNum;
 	struct timeval	timeStamp;
+	double			distanceCtrScrn;	//*	the distance to the center of the screen
 } TYPE_GAIA_REMOTE_DATA;
 
 #define	kMaxGaiaDataSets	30

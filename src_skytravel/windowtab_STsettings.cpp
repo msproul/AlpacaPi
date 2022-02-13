@@ -27,6 +27,7 @@
 //*	Dec 13,	2021	<MLS> Added buttons to run Startup and Shutdown scripts
 //*	Dec 13,	2021	<MLS> Added RunShellScript_Thead() and RunShellScript()
 //*	Dec 31,	2021	<MLS> Added Asteroid count display to settings window
+//*	Jan 29,	2022	<MLS> Added special list count display to settings window
 //*****************************************************************************
 
 #include	<pthread.h>
@@ -294,6 +295,7 @@ int		radioBtnWidth;
 							(kSkyT_Settings_LineW_BoxOutline -1));
 	SetWidgetText(	kSkyT_Settings_LineW_Const,			"Constellations");
 	SetWidgetText(	kSkyT_Settings_LineW_ConstOutlines,	"Constellation Outlines");
+	SetWidgetText(	kSkyT_Settings_LineW_NGCoutlines,	"NGC Outlines");
 	SetWidgetText(	kSkyT_Settings_LineW_Grid,			"Grid Lines");
 
 //	yLoc			+=	cBoxHeight;
@@ -368,22 +370,31 @@ int		radioBtnWidth;
 	SetWidgetText(		kSkyT_Settings_DataAAVSO_txt,		"AAVSO Alert count");
 	SetWidgetNumber(	kSkyT_Settings_DataAAVSO_cnt,		gAAVSOalertsCnt);
 
-	SetWidgetText(		kSkyT_Settings_DataDRAPER_txt,		"DRAPER Data count");
+	SetWidgetText(		kSkyT_Settings_DataDRAPER_txt,		"Henry Draper count");
 	SetWidgetNumber(	kSkyT_Settings_DataDRAPER_cnt,		gDraperObjectCount);
 
-	SetWidgetText(		kSkyT_Settings_DataHipparcos_txt,	"Hipparcos Data count");
+	SetWidgetText(		kSkyT_Settings_DataHipparcos_txt,	"Hipparcos count");
 	SetWidgetNumber(	kSkyT_Settings_DataHipparcos_cnt,	gHipObjectCount);
 
-	SetWidgetText(		kSkyT_Settings_DataHYG_txt,			"HYG Data count");
+	SetWidgetText(		kSkyT_Settings_DataHYG_txt,			"HYG count");
 	SetWidgetNumber(	kSkyT_Settings_DataHYG_cnt,			gHYGObjectCount);
 
-	SetWidgetText(		kSkyT_Settings_DataMessier_txt,		"Messier Data count");
+	SetWidgetText(		kSkyT_Settings_DataMessier_txt,		"Messier count");
 	SetWidgetNumber(	kSkyT_Settings_DataMessier_cnt,		gMessierObjectCount);
 
-	SetWidgetText(		kSkyT_Settings_DataNGC_txt,			"NGC Data count");
+	SetWidgetText(		kSkyT_Settings_DataNGC_txt,			"NGC count");
 	SetWidgetNumber(	kSkyT_Settings_DataNGC_cnt,			gNGCobjectCount);
 
-	SetWidgetText(		kSkyT_Settings_DataYALE_txt,		"YALE Data count");
+	if (strlen(gNGCDatbase) > 0)
+	{
+		strcpy(textString, "NGC count (");
+		strcat(textString, gNGCDatbase);
+		strcat(textString, ")");
+		SetWidgetText(		kSkyT_Settings_DataNGC_txt,		textString);
+	}
+
+
+	SetWidgetText(		kSkyT_Settings_DataYALE_txt,		"YALE count");
 	SetWidgetNumber(	kSkyT_Settings_DataYALE_cnt,		gYaleStarCount);
 
 	SetWidgetText(		kSkyT_Settings_Constellations_txt,	"Constellations");
@@ -392,8 +403,10 @@ int		radioBtnWidth;
 	SetWidgetText(		kSkyT_Settings_ConstOutLines_txt,	"Outlines");
 	SetWidgetNumber(	kSkyT_Settings_ConstOutLines_cnt,	gConstOutlineCount);
 
+#ifdef _ENABLE_GAIA_
 	SetWidgetText(		kSkyT_Settings_Gaia_txt,			"Gaia Data count");
 	SetWidgetNumber(	kSkyT_Settings_Gaia_cnt,			gGaiaObjectCnt);
+#endif // _ENABLE_GAIA_
 
 #ifdef _ENABLE_ASTERIODS_
 	strcpy(textString, "Asteroids");
@@ -409,6 +422,8 @@ int		radioBtnWidth;
 	SetWidgetText(		kSkyT_Settings_Asteroids_txt,		textString);
 	SetWidgetNumber(	kSkyT_Settings_Asteroids_cnt,		gAsteroidCnt);
 
+	SetWidgetText(		kSkyT_Settings_Special_txt,			"Special Data count");
+	SetWidgetNumber(	kSkyT_Settings_Special_cnt,			gSpecialObjectCount);
 
 
 	//*	set the ones we can double click to green
@@ -431,10 +446,19 @@ int		radioBtnWidth;
 	SetWidgetTextColor(	kSkyT_Settings_Constellations_txt,	CV_RGB(0,	255,	0));
 	SetWidgetTextColor(	kSkyT_Settings_Constellations_cnt,	CV_RGB(0,	255,	0));
 
-#ifdef _ENABLE_REMOTE_GAIA_
-	SetWidgetTextColor(	kSkyT_Settings_Gaia_txt,			CV_RGB(0,	255,	0));
-	SetWidgetTextColor(	kSkyT_Settings_Gaia_cnt,			CV_RGB(0,	255,	0));
-#endif // _ENABLE_REMOTE_GAIA_
+#ifdef _ENABLE_GAIA_
+	if (gGaiaObjectCnt > 0)
+	{
+		SetWidgetTextColor(	kSkyT_Settings_Gaia_txt,			CV_RGB(0,	255,	0));
+		SetWidgetTextColor(	kSkyT_Settings_Gaia_cnt,			CV_RGB(0,	255,	0));
+	}
+#endif // _ENABLE_GAIA_
+
+	if (gSpecialObjectCount > 0)
+	{
+		SetWidgetTextColor(	kSkyT_Settings_Special_txt,		CV_RGB(0,	255,	0));
+		SetWidgetTextColor(	kSkyT_Settings_Special_cnt,		CV_RGB(0,	255,	0));
+	}
 
 	//-------------------------------------------------------------------------
 	yLoc		=	cTabVertOffset;
@@ -743,37 +767,49 @@ int		systemRetCode;
 			gST_DispOptions.DashedLines	=	true;
 			break;
 
+		//*	Constellastions
 		case kSkyT_Settings_LineW_Const1:
-			gLineWidth_Constellations	=	1;
+			gST_DispOptions.LineWidth_Constellations	=	1;
 			break;
 
 		case kSkyT_Settings_LineW_Const2:
-			gLineWidth_Constellations	=	2;
+			gST_DispOptions.LineWidth_Constellations	=	2;
 			break;
 
+		//*	Constellation outlines
 		case kSkyT_Settings_LineW_ConstOutlines1:
-			gLineWidth_ConstOutlines	=	1;
+			gST_DispOptions.LineWidth_ConstOutlines	=	1;
 			break;
 
 		case kSkyT_Settings_LineW_ConstOutlines2:
-			gLineWidth_ConstOutlines	=	2;
+			gST_DispOptions.LineWidth_ConstOutlines	=	2;
+			break;
+
+		//*	NGC Outlines
+		case kSkyT_Settings_LineW_NGCoutlines1:
+			gST_DispOptions.LineWidth_NGCoutlines	=	1;
+			break;
+
+		case kSkyT_Settings_LineW_NGCoutlines2:
+			gST_DispOptions.LineWidth_NGCoutlines	=	2;
 			break;
 
 		case kSkyT_Settings_LineW_Grid1:
-			gLineWidth_GridLines	=	1;
+			gST_DispOptions.LineWidth_GridLines		=	1;
 			break;
 
 		case kSkyT_Settings_LineW_Grid2:
-			gLineWidth_GridLines	=	2;
+			gST_DispOptions.LineWidth_GridLines		=	2;
 			break;
 
 		case kSkyT_Settings_ResetToDefault:
-			gST_DispOptions.EarthDispMode		=	0;
-			gST_DispOptions.DashedLines			=	false;
-			gST_DispOptions.DayNightSkyColor	=	false;
-			gLineWidth_Constellations			=	1;
-			gLineWidth_ConstOutlines			=	1;
-			gLineWidth_GridLines				=	1;
+			gST_DispOptions.EarthDispMode				=	0;
+			gST_DispOptions.DashedLines					=	false;
+			gST_DispOptions.DayNightSkyColor			=	false;
+			gST_DispOptions.LineWidth_Constellations	=	1;
+			gST_DispOptions.LineWidth_ConstOutlines		=	1;
+			gST_DispOptions.LineWidth_GridLines			=	1;
+			gST_DispOptions.LineWidth_NGCoutlines		=	1;
 			break;
 
 		case kSkyT_Settings_DispMag:
@@ -892,6 +928,15 @@ void	WindowTabSTsettings::ProcessDoubleClick(const int	widgetIdx,
 			break;
 	#endif // _ENABLE_REMOTE_GAIA_
 
+		case kSkyT_Settings_Special_txt:
+		case kSkyT_Settings_Special_cnt:
+			if ((gSpecialObjectPtr != NULL) && (gSpecialObjectCount > 0))
+			{
+				CreateStarlistWindow("special.txt list", gSpecialObjectPtr, gSpecialObjectCount, "--");
+			}
+			break;
+
+
 	}
 }
 
@@ -904,27 +949,30 @@ void	WindowTabSTsettings::UpdateSettings(void)
 char	textString[32];
 
 //	CONSOLE_DEBUG(__FUNCTION__);
-	SetWidgetChecked(	kSkyT_Settings_EarthThin,		(gST_DispOptions.EarthDispMode == 0));
-	SetWidgetChecked(	kSkyT_Settings_EarthThick,		(gST_DispOptions.EarthDispMode == 1));
-	SetWidgetChecked(	kSkyT_Settings_EarthSolidBrn,	(gST_DispOptions.EarthDispMode == 2));
-	SetWidgetChecked(	kSkyT_Settings_EarthSolidGrn,	(gST_DispOptions.EarthDispMode == 3));
+	SetWidgetChecked(	kSkyT_Settings_EarthThin,				(gST_DispOptions.EarthDispMode == 0));
+	SetWidgetChecked(	kSkyT_Settings_EarthThick,				(gST_DispOptions.EarthDispMode == 1));
+	SetWidgetChecked(	kSkyT_Settings_EarthSolidBrn,			(gST_DispOptions.EarthDispMode == 2));
+	SetWidgetChecked(	kSkyT_Settings_EarthSolidGrn,			(gST_DispOptions.EarthDispMode == 3));
 
-	SetWidgetChecked(	kSkyT_Settings_DayNightSky,		gST_DispOptions.DayNightSkyColor);
+	SetWidgetChecked(	kSkyT_Settings_DayNightSky,				gST_DispOptions.DayNightSkyColor);
 
 	SetWidgetChecked(	kSkyT_Settings_GridSolid,				(!gST_DispOptions.DashedLines));
 	SetWidgetChecked(	kSkyT_Settings_GridDashed,				(gST_DispOptions.DashedLines));
 
-	SetWidgetChecked(	kSkyT_Settings_LineW_Const1,			(gLineWidth_Constellations == 1));
-	SetWidgetChecked(	kSkyT_Settings_LineW_Const2,			(gLineWidth_Constellations == 2));
+	SetWidgetChecked(	kSkyT_Settings_LineW_Const1,			(gST_DispOptions.LineWidth_Constellations == 1));
+	SetWidgetChecked(	kSkyT_Settings_LineW_Const2,			(gST_DispOptions.LineWidth_Constellations == 2));
 
-	SetWidgetChecked(	kSkyT_Settings_LineW_ConstOutlines1,	(gLineWidth_ConstOutlines == 1));
-	SetWidgetChecked(	kSkyT_Settings_LineW_ConstOutlines2,	(gLineWidth_ConstOutlines == 2));
+	SetWidgetChecked(	kSkyT_Settings_LineW_ConstOutlines1,	(gST_DispOptions.LineWidth_ConstOutlines == 1));
+	SetWidgetChecked(	kSkyT_Settings_LineW_ConstOutlines2,	(gST_DispOptions.LineWidth_ConstOutlines == 2));
 
-	SetWidgetChecked(	kSkyT_Settings_LineW_Grid1,				(gLineWidth_GridLines == 1));
-	SetWidgetChecked(	kSkyT_Settings_LineW_Grid2,				(gLineWidth_GridLines == 2));
+	SetWidgetChecked(	kSkyT_Settings_LineW_NGCoutlines1,		(gST_DispOptions.LineWidth_NGCoutlines == 1));
+	SetWidgetChecked(	kSkyT_Settings_LineW_NGCoutlines2,		(gST_DispOptions.LineWidth_NGCoutlines == 2));
 
-	SetWidgetChecked(	kSkyT_Settings_DispMag,				gST_DispOptions.DispMagnitude);
-	SetWidgetChecked(	kSkyT_Settings_DispSpectral,		gST_DispOptions.DispSpectralType);
+	SetWidgetChecked(	kSkyT_Settings_LineW_Grid1,				(gST_DispOptions.LineWidth_GridLines == 1));
+	SetWidgetChecked(	kSkyT_Settings_LineW_Grid2,				(gST_DispOptions.LineWidth_GridLines == 2));
+
+	SetWidgetChecked(	kSkyT_Settings_DispMag,					gST_DispOptions.DispMagnitude);
+	SetWidgetChecked(	kSkyT_Settings_DispSpectral,			gST_DispOptions.DispSpectralType);
 
 
 	SetWidgetChecked(	kSkyT_Settings_DispDynMagnitude,

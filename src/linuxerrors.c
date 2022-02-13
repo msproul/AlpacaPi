@@ -126,17 +126,17 @@ void	GetLinuxErrorString(const int errNum, char *errorString)
 //define	EOPNOTSUPP	95	/* Operation not supported on transport endpoint */
 //define	EPFNOSUPPORT	96	/* Protocol family not supported */
 //define	EAFNOSUPPORT	97	/* Address family not supported by protocol */
-	case	EADDRINUSE:		strcpy(errorString, "(98) Address already in use");				break;
-	case	EADDRNOTAVAIL:	strcpy(errorString, "(99) Cannot assign requested address");	break;
-	case	ENETDOWN:		strcpy(errorString, "(100) Network is down");					break;
-	case	ENETUNREACH:	strcpy(errorString, "(101) Network is unreachable");			break;
+	case	EADDRINUSE:		strcpy(errorString, "(98) Address already in use");						break;
+	case	EADDRNOTAVAIL:	strcpy(errorString, "(99) Cannot assign requested address");			break;
+	case	ENETDOWN:		strcpy(errorString, "(100) Network is down");							break;
+	case	ENETUNREACH:	strcpy(errorString, "(101) Network is unreachable");					break;
 	case	ENETRESET:		strcpy(errorString, "(102) Network dropped connection because of reset");	break;
-	case	ECONNABORTED:	strcpy(errorString, "(103) Software caused connection abort");	break;
-	case	ECONNRESET:		strcpy(errorString, "(104) Connection reset by peer");			break;
-	case	ENOBUFS:		strcpy(errorString, "(105) No buffer space available");			break;
-//define	EISCONN		106	/* Transport endpoint is already connected */
-//define	ENOTCONN	107	/* Transport endpoint is not connected */
-//define	ESHUTDOWN	108	/* Cannot send after transport endpoint shutdown */
+	case	ECONNABORTED:	strcpy(errorString, "(103) Software caused connection abort");			break;
+	case	ECONNRESET:		strcpy(errorString, "(104) Connection reset by peer");					break;
+	case	ENOBUFS:		strcpy(errorString, "(105) No buffer space available");						break;
+	case	EISCONN:		strcpy(errorString, "(106) Transport endpoint is already connected");		break;
+	case	ENOTCONN:		strcpy(errorString, "(107) Transport endpoint is not connected");			break;
+	case	ESHUTDOWN:		strcpy(errorString, "(108) Cannot send after transport endpoint shutdown");	break;
 //define	ETOOMANYREFS	109	/* Too many references: cannot splice */
 	case	ETIMEDOUT:		strcpy(errorString, "(110) Connection timed out");			break;
 	case	ECONNREFUSED:	strcpy(errorString, "(111) Connection refused");			break;

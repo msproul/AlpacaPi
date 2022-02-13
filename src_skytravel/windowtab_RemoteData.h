@@ -45,8 +45,22 @@ enum
 	kRemoteData_SQLusernameTxt,
 	kRemoteData_SQLusernameValue,
 
+
+
+
+
 	kRemoteData_EnableSQLlogging,
+
+	kRemoteData_GaiaReqMode,
+	kRemoteData_GaiaReqMode1x1,
+	kRemoteData_GaiaReqMode3x1,
+	kRemoteData_GaiaReqMode3x3,
+	kRemoteData_GaiaReqModeOutLine,
+
 	kRemoteData_OpenSQLWindowBtn,
+
+	kRemoteData_GaiaSearchField,
+	kRemoteData_GaiaSearchBtn,
 
 	kRemoteData_GAIAoutline,
 

@@ -347,9 +347,10 @@ double	declSecs;
 			boxId	=	iii + kStarList_Obj_01;
 			switch(cStarListPtr[starDataIdx].dataSrc)
 			{
+				case kDataSrc_AAVSOalert:
 				case kDataSrc_NGC2000:
 				case kDataSrc_NGC2000IC:
-				case kDataSrc_AAVSOalert:
+				case kDataSrc_OpenNGC:
 					sprintf(textString, "%ld\t%s",	cStarListPtr[starDataIdx].id,
 													cStarListPtr[starDataIdx].longName);
 					break;
