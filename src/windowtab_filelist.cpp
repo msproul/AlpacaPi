@@ -32,17 +32,13 @@
 
 
 #include	"windowtab_filelist.h"
-
-
 #include	"controller_camera.h"
-
-
 
 
 //**************************************************************************************
 WindowTabFileList::WindowTabFileList(	const int	xSize,
 										const int	ySize,
-										CvScalar	backGrndColor,
+										cv::Scalar	backGrndColor,
 										const char	*windowName)
 
 	:WindowTab(xSize, ySize, backGrndColor, windowName)
@@ -95,7 +91,7 @@ int		scrollBarYLoc;
 
 	//------------------------------------------
 	SetWidget(		kFileList_CountText,	cWidth/2,	yLoc,		cWidth/3,	cBtnHeight);
-	SetWidgetType(	kFileList_CountText, kWidgetType_Text);
+	SetWidgetType(	kFileList_CountText, kWidgetType_TextBox);
 	SetWidgetFont(	kFileList_CountText, kFont_Medium);
 	SetWidgetText(	kFileList_CountText, "Count=");
 
@@ -107,7 +103,7 @@ int		scrollBarYLoc;
 	for (iii=kFileList_FistEntry; iii<=kFileList_LastEntry; iii++)
 	{
 		SetWidget(				iii,	2,		yLoc,		textAreaWidth,		lineHeight);
-		SetWidgetType(			iii,	kWidgetType_Text);
+		SetWidgetType(			iii,	kWidgetType_TextBox);
 		SetWidgetFont(			iii,	kFont_Medium);
 		SetWidgetJustification(	iii,	kJustification_Left);
 		SetWidgetNumber(		iii,	iii);

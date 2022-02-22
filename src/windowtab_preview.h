@@ -72,7 +72,7 @@ class WindowTabPreview: public WindowTab
 		//
 				WindowTabPreview(	const int	xSize,
 									const int	ySize,
-									CvScalar	backGrndColor,
+									cv::Scalar	backGrndColor,
 									const char	*windowName);
 		virtual	~WindowTabPreview(void);
 

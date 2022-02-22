@@ -87,9 +87,9 @@ class WindowTabGaiaRemote: public WindowTab
 		// Construction
 		//
 				WindowTabGaiaRemote(	const int	xSize,
-									const int	ySize,
-									CvScalar	backGrndColor,
-									const char	*windowName);
+										const int	ySize,
+										cv::Scalar	backGrndColor,
+										const char	*windowName);
 		virtual	~WindowTabGaiaRemote(void);
 
 		virtual	void	SetupWindowControls(const char *argWindowName);

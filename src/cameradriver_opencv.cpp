@@ -46,9 +46,14 @@
 #include	<string.h>
 
 
-#include "opencv/highgui.h"
-#include "opencv2/highgui/highgui_c.h"
-#include "opencv2/imgproc/imgproc_c.h"
+#ifdef _USE_OPENCV_CPP_
+	#include	<opencv2/opencv.hpp>
+#else
+	#include "opencv/highgui.h"
+	#include "opencv2/highgui/highgui_c.h"
+	#include "opencv2/imgproc/imgproc_c.h"
+	#include "opencv2/core/version.hpp"
+#endif // _USE_OPENCV_CPP_
 
 #ifdef _ENABLE_STAR_SEARCH_
 	#include	"imageprocess_orb.h"
@@ -229,10 +234,10 @@ CvPoint			point2;
 			cvRectangle(	cOpenCV_LiveDisplay,
 							point1,
 							point2,
-							cCrossHairColor,	//	CvScalar color,
-							1,				//	int thickness CV_DEFAULT(1),
-							8,				//	int line_type CV_DEFAULT(8),
-							0);				//	int shift CV_DEFAULT(0));
+							cCrossHairColor,	//	color,
+							1,					//	int thickness CV_DEFAULT(1),
+							8,					//	int line_type CV_DEFAULT(8),
+							0);					//	int shift CV_DEFAULT(0));
 
 		}
 	}
@@ -548,7 +553,7 @@ CvRect		myCVrect;
 
 					cvRectangleR(	cOpenCV_LiveDisplay,
 									myCVrect,
-									cSideBarBGcolor,			//	CvScalar color,
+									cSideBarBGcolor,			//	color,
 									CV_FILLED,					//	int thickness CV_DEFAULT(1),
 									8,							//	int line_type CV_DEFAULT(8),
 									0);							//	int shift CV_DEFAULT(0));
@@ -797,7 +802,7 @@ const int	deltaY	=	16;
 	//*	put a boarder around it
 	cvRectangleR(	imageDisplay,
 					roiRect,
-					cSideBarTXTcolor,	//	CvScalar color,
+					cSideBarTXTcolor,	//	color,
 					1,					//	int thickness CV_DEFAULT(1),
 					8,					//	int line_type CV_DEFAULT(8),
 					0);					//	int shift CV_DEFAULT(0));
@@ -841,7 +846,7 @@ static void	DrawGraph256(	IplImage	*theImage,
 							int			graphHeight,
 							int			yDivideFactor,
 							int			graphType,
-							CvScalar	lineColor)
+							cv::Scalar	lineColor)
 {
 int			iii;
 int32_t		histYvalue;
@@ -935,7 +940,7 @@ static void	DrawHorizBar256(	IplImage	*theImage,
 								int			xStart,
 								int			yLoc,
 								int			maxValue,
-								CvScalar	lineColor)
+								cv::Scalar	lineColor)
 {
 CvPoint		point1;
 CvPoint		point2;
@@ -1062,7 +1067,7 @@ char		textStr3[32];
 
 		cvRectangleR(	imageDisplay,
 						myCVrect,
-						cSideBarBlk,				//	CvScalar color,
+						cSideBarBlk,				//	color,
 						CV_FILLED,					//	int thickness CV_DEFAULT(1),
 						8,							//	int line_type CV_DEFAULT(8),
 						0);							//	int shift CV_DEFAULT(0));

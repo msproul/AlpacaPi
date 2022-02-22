@@ -46,7 +46,7 @@ class WindowTabFileList: public WindowTab
 		//
 				WindowTabFileList(	const int	xSize,
 									const int	ySize,
-									CvScalar	backGrndColor,
+									cv::Scalar	backGrndColor,
 									const char	*windowName);
 		virtual	~WindowTabFileList(void);
 

@@ -44,10 +44,14 @@
 #include	<stdlib.h>
 #include	<unistd.h>
 
-
-#include "opencv/highgui.h"
-#include "opencv2/highgui/highgui_c.h"
-#include "opencv2/imgproc/imgproc_c.h"
+#ifdef _USE_OPENCV_CPP_
+	#include	<opencv2/opencv.hpp>
+#else
+	#include "opencv/highgui.h"
+	#include "opencv2/highgui/highgui_c.h"
+	#include "opencv2/imgproc/imgproc_c.h"
+	#include "opencv2/core/version.hpp"
+#endif // _USE_OPENCV_CPP_
 
 #include	"discovery_lib.h"
 #include	"sendrequest_lib.h"
@@ -193,7 +197,7 @@ char	ipString[32];
 }
 
 //**************************************************************************************
-void	ControllerSwitch::RunBackgroundTasks(bool enableDebug)
+void	ControllerSwitch::RunBackgroundTasks(const char *callingFunction, bool enableDebug)
 {
 uint32_t	currentMillis;
 uint32_t	deltaSeconds;

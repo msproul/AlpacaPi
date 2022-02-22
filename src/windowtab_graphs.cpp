@@ -35,7 +35,9 @@
 
 
 //**************************************************************************************
-WindowTabGraph::WindowTabGraph(const int xSize, const int ySize, CvScalar backGrndColor)
+WindowTabGraph::WindowTabGraph(	const int	xSize,
+								const int	ySize,
+								cv::Scalar	backGrndColor)
 	:WindowTab(xSize, ySize, backGrndColor)
 {
 int		iii;
@@ -89,8 +91,10 @@ int		yLoc;
 	yLoc			+=	kLabelHeight;
 	yLoc			+=	2;
 
-	SetWidgetType(kGraphBox_TempGraph,		kWidgetType_Graphic);
-	SetWidgetType(kGraphBox_VoltageGraph,	kWidgetType_Graphic);
+	SetWidgetType(kGraphBox_TempGraph,		kWidgetType_CustomGraphic);
+	SetWidgetType(kGraphBox_VoltageGraph,	kWidgetType_CustomGraphic);
+	SetWidgetBorder(kGraphBox_TempGraph,	false);
+	SetWidgetBorder(kGraphBox_VoltageGraph,	false);
 
 	SetWidgetText(kGraphBox_TempLabel,		"Temperature Log");
 	SetWidgetFont(kGraphBox_TempLabel,		kFont_Medium);
@@ -104,39 +108,24 @@ int		yLoc;
 
 }
 
+#ifdef _USE_OPENCV_CPP_
 //**************************************************************************************
-void	WindowTabGraph::DrawGraphWidget(IplImage *openCV_Image, const int widgetIdx)
+void	WindowTabGraph::DrawWidgetCustomGraphic(cv::Mat *openCV_Image, const int widgetIdx)
+#else
+//**************************************************************************************
+void	WindowTabGraph::DrawWidgetCustomGraphic(IplImage *openCV_Image, const int widgetIdx)
+#endif // _USE_OPENCV_CPP_
 {
-CvRect		myCVrect;
 
-	myCVrect.x		=	cWidgetList[widgetIdx].left;
-	myCVrect.y		=	cWidgetList[widgetIdx].top;
-	myCVrect.width	=	cWidgetList[widgetIdx].width;
-	myCVrect.height	=	cWidgetList[widgetIdx].height;
-
-
-	cvRectangleR(	openCV_Image,
-					myCVrect,
-					cWidgetList[widgetIdx].bgColor,			//	CvScalar color,
-					CV_FILLED,								//	int thickness CV_DEFAULT(1),
-					8,										//	int line_type CV_DEFAULT(8),
-					0);										//	int shift CV_DEFAULT(0));
-
-//	cvRectangleR(	openCV_Image,
-//					myCVrect,
-//					cWidgetList[widgetIdx].boarderColor,	//	CvScalar color,
-//					1,										//	int thickness CV_DEFAULT(1),
-//					8,										//	int line_type CV_DEFAULT(8),
-//					0);										//	int shift CV_DEFAULT(0));
-
+	cOpenCV_Image	=	openCV_Image;
 	switch(widgetIdx)
 	{
 		case kGraphBox_TempGraph:
-			DrawGraph(openCV_Image, &cWidgetList[widgetIdx], cTemperatureLog, kMaxLogEnries);
+			DrawGraph(&cWidgetList[widgetIdx], cTemperatureLog, kMaxLogEnries);
 			break;
 
 		case kGraphBox_VoltageGraph:
-			DrawGraph(openCV_Image, &cWidgetList[widgetIdx], cVoltageLog, kMaxLogEnries);
+			DrawGraph(&cWidgetList[widgetIdx], cVoltageLog, kMaxLogEnries);
 			break;
 
 		default:
@@ -146,33 +135,28 @@ CvRect		myCVrect;
 }
 
 //**************************************************************************************
-void	WindowTabGraph::DrawGraph(	IplImage	*openCV_Image,
-									TYPE_WIDGET	*graphWidget,
+void	WindowTabGraph::DrawGraph(	TYPE_WIDGET	*graphWidget,
 									double		*arrayData,
 									int			arrayCount)
 {
-CvPoint	pt1;
-CvPoint	pt2;
+int		pt1_X;
+int		pt1_Y;
+int		pt2_X;
+int		pt2_Y;
 int		iii;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
-//	CONSOLE_DEBUG_W_NUM("arrayCount\t=", arrayCount);
-
+	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_NUM("arrayCount\t=", arrayCount);
+	SetColor(W_RED);
 	for (iii=0; iii<arrayCount; iii++)
 	{
-		pt1.x	=	iii;
-		pt1.y	=	graphWidget->top + graphWidget->height;
+		pt1_X	=	iii;
+		pt1_Y	=	graphWidget->top + graphWidget->height;
 
-		pt2.x	=	iii;
-		pt2.y	=	pt1.y - arrayData[iii];
-		cvLine(	openCV_Image,
-				pt1,
-				pt2,
-				CV_RGB(255,	0,	0),	//	CvScalar color,
-				1,							//	int thickness CV_DEFAULT(1),
-				8,							//	int line_type CV_DEFAULT(8),
-				0);							//	int shift CV_DEFAULT(0));
-
+		pt2_X	=	iii;
+		pt2_Y	=	pt1_Y - arrayData[iii];
+		LLD_MoveTo(pt1_X, pt1_Y);
+		LLD_LineTo(pt2_X, pt2_Y);
 	}
 }
 

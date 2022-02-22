@@ -156,10 +156,10 @@ class WindowTabSTsettings: public WindowTab
 		//
 		// Construction
 		//
-				WindowTabSTsettings(	const int	xSize,
-								const int	ySize,
-								CvScalar	backGrndColor,
-								const char	*windowName);
+				WindowTabSTsettings(const int	xSize,
+									const int	ySize,
+									cv::Scalar	backGrndColor,
+									const char	*windowName);
 		virtual	~WindowTabSTsettings(void);
 
 		virtual	void	SetupWindowControls(void);
@@ -170,9 +170,13 @@ class WindowTabSTsettings: public WindowTab
 											const int	xxx,
 											const int	yyy,
 											const int	flags);
-		virtual	void	DrawGraphWidget(IplImage *openCV_Image, const int widgetIdx);
+#ifdef _USE_OPENCV_CPP_
+		virtual	void	DrawWidgetCustomGraphic(cv::Mat *openCV_Image, const int widgetIdx);
+				void	DrawOBAFGKM(	cv::Mat *openCV_Image, TYPE_WIDGET *theWidget);
+#else
+		virtual	void	DrawWidgetCustomGraphic(IplImage *openCV_Image, const int widgetIdx);
 				void	DrawOBAFGKM(IplImage *openCV_Image, TYPE_WIDGET *theWidget);
-
+#endif // _USE_OPENCV_CPP_
 				void	UpdateSettings(void);
 
 };

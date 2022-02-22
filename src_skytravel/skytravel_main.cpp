@@ -232,17 +232,16 @@ unsigned int		deltaSecs;
 	//*	returns true if valid config file
 	gST_DispOptions.RemoteGAIAenabled		=	GaiaSQLinit();
 	gST_DispOptions.GaiaRequestMode			=	kGaiaRequestMode_3x1;
-
-	if (gST_DispOptions.RemoteGAIAenabled)
-	{
-		StartGaiaSQLthread();
-	}
 #else
 	gST_DispOptions.RemoteGAIAenabled			=	false;
 #endif // _ENABLE_REMOTE_GAIA_
 	CONSOLE_DEBUG_W_STR("RemoteGAIAenabled is", (gST_DispOptions.RemoteGAIAenabled ? "enabled" : "disabled"));
 
+#ifdef _USE_OPENCV_CPP_
+	new ControllerSkytravel("SkyTravel++");
+#else
 	new ControllerSkytravel("SkyTravel");
+#endif
 	objectsCreated++;
 
 	StartDiscoveryQuerryThread();
@@ -326,28 +325,5 @@ int		iii;
 			gControllerList[iii]->cKeepRunning	=	false;
 		}
 	}
-}
-
-//*****************************************************************************
-//*	this steps through the Controller Object List to see if there is a window by this name
-//*****************************************************************************
-bool	CheckForOpenWindowByName(const char *windowName)
-{
-int		iii;
-bool	windowExists;
-
-	windowExists	=	false;
-	for (iii=0; iii<kMaxControllers; iii++)
-	{
-		if (gControllerList[iii] != NULL)
-		{
-			if (strcmp(gControllerList[iii]->cWindowName, windowName) == 0)
-			{
-				windowExists	=	true;
-				break;
-			}
-		}
-	}
-	return(windowExists);
 }
 

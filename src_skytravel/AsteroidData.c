@@ -719,6 +719,7 @@ int				iii;
 	}
 }
 
+#ifdef _INCLUDE_ASTEROID_MAIN_
 //**************************************************************************
 static void	DumpAsteroidData(TYPE_Asteroid *asteroidData)
 {
@@ -766,7 +767,7 @@ struct timeval 	timeStruct;
 	CONSOLE_DEBUG_W_STR("epochJulian\t=",		timeString);
 
 }
-
+#endif // _INCLUDE_ASTEROID_MAIN_
 
 
 static int	gDebugCounter	=	0;

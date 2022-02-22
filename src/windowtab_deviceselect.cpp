@@ -39,9 +39,9 @@
 
 //**************************************************************************************
 WindowTabDeviceSelect::WindowTabDeviceSelect(	const int	xSize,
-								const int	ySize,
-								CvScalar	backGrndColor,
-								const char	*windowName)
+												const int	ySize,
+												cv::Scalar	backGrndColor,
+												const char	*windowName)
 	:WindowTab(xSize, ySize, backGrndColor, windowName)
 {
 	CONSOLE_DEBUG(__FUNCTION__);

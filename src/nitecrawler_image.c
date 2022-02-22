@@ -4,24 +4,94 @@
 //*	Mar 12,	2020	<MLS> Modified GetNiteCrawlerImage() to only load one copy
 //*	Mar 12,	2020	<MLS> Added WriteOutImageFileAsCode()
 //*	Mar 13,	2020	<MLS> Added GetMoonLiteImage()
+//*	Feb 19,	2022	<MLS> Moonlite logos working with C++ version of openCV
 //*****************************************************************************
 
-#include "opencv/highgui.h"
-#include "opencv2/highgui/highgui_c.h"
-#include "opencv2/imgproc/imgproc_c.h"
+#ifdef _USE_OPENCV_CPP_
+	#include	<opencv2/opencv.hpp>
+#else
+	#include "opencv/highgui.h"
+	#include "opencv2/highgui/highgui_c.h"
+	#include "opencv2/imgproc/imgproc_c.h"
+#endif // _USE_OPENCV_CPP_
 
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
 
 #include	"nitecrawler_image.h"
 
-#define	kImgWidth	300
-#define	kImgHeight	120
+#define	kNightCrawlerImgWidth	300
+#define	kNightCrawlerImgHeight	120
 
 
 
 extern unsigned char	gNiteCrawlerImgData[];
+#ifdef _USE_OPENCV_CPP_
+cv::Mat	*gNiteCrawlerImgPtr	=	NULL;
 
+cv::Mat	gMoonLiteImg;
+cv::Mat	*gMoonLiteImgPtr	=	NULL;
+
+
+//	cv::namedWindow("Logo");			//Declaring an window to show ROI//
+//	cv::imshow("Logo", gAlpacaLogo);	//Showing actual image//
+
+//*****************************************************************************
+cv::Mat	*GetNiteCrawlerImage(void)
+{
+size_t	imageSize;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+	if (gNiteCrawlerImgPtr == NULL)
+	{
+		gNiteCrawlerImgPtr	=	new cv::Mat(kNightCrawlerImgHeight,
+											kNightCrawlerImgWidth,
+											CV_8UC3);
+		if (gNiteCrawlerImgPtr != NULL)
+		{
+			if (gNiteCrawlerImgPtr->data != NULL)
+			{
+//				CONSOLE_DEBUG("Copy data");
+				imageSize	=	kNightCrawlerImgWidth * kNightCrawlerImgHeight * 3;
+				memcpy(gNiteCrawlerImgPtr->data, gNiteCrawlerImgData, imageSize);
+
+			}
+			else
+			{
+//				CONSOLE_DEBUG("assignment data");
+				gNiteCrawlerImgPtr->data	=	gNiteCrawlerImgData;
+			}
+
+//			cv::namedWindow("NightCrawler");			//Declaring an window to show ROI//
+//			cv::imshow("NightCrawler", *gNiteCrawlerImgPtr);	//Showing actual image//
+
+		}
+	}
+	return(gNiteCrawlerImgPtr);
+}
+
+
+//*****************************************************************************
+cv::Mat	*GetMoonLiteImage(void)
+{
+	CONSOLE_DEBUG(__FUNCTION__);
+
+	if (gMoonLiteImgPtr == NULL)
+	{
+		gMoonLiteImg	=	cv::imread("logos/Moonlite-logo.png", CV_LOAD_IMAGE_COLOR);
+		gMoonLiteImgPtr	=	&gMoonLiteImg;
+		if (gMoonLiteImgPtr == NULL)
+		{
+			CONSOLE_DEBUG("failed to load Moonlite-logo.png");
+		}
+//		cv::namedWindow("Moonlite");			//Declaring an window to show ROI//
+//		cv::imshow("Moonlite", gMoonLiteImg);	//Showing actual image//
+	}
+
+	return(gMoonLiteImgPtr);
+}
+
+#else
 IplImage	*gNiteCrawlerImgPtr	=	NULL;
 
 
@@ -33,10 +103,11 @@ size_t		imageSize;
 
 	if (gNiteCrawlerImgPtr == NULL)
 	{
-		gNiteCrawlerImgPtr	=	cvCreateImage(cvSize(kImgWidth, kImgHeight), IPL_DEPTH_8U, 3);
+		gNiteCrawlerImgPtr	=	cvCreateImage(	cvSize(kNightCrawlerImgWidth, kNightCrawlerImgHeight),
+												IPL_DEPTH_8U, 3);
 		if (gNiteCrawlerImgPtr != NULL)
 		{
-			imageSize	=	kImgWidth * kImgHeight * 3;
+			imageSize	=	kNightCrawlerImgWidth * kNightCrawlerImgHeight * 3;
 			memcpy(gNiteCrawlerImgPtr->imageData, gNiteCrawlerImgData, imageSize);
 		}
 	}
@@ -59,7 +130,7 @@ IplImage	*myImage;
 
 	return(myImage);
 }
-
+#endif // _USE_OPENCV_CPP_
 
 
 #if 0

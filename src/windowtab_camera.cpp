@@ -36,6 +36,7 @@
 //*	Mar 27,	2021	<MLS> Offset slider fully working
 //*	Dec 18,	2021	<MLS> Double click in the title bar causes connect to be sent
 //*	Dec 22,	2021	<MLS> Added support for flipmode
+//*	Feb 18,	2022	<MLS> Added SetCameraLogo()
 //*****************************************************************************
 
 #ifdef _ENABLE_CTRL_CAMERA_
@@ -58,7 +59,7 @@
 //**************************************************************************************
 WindowTabCamera::WindowTabCamera(	const int	xSize,
 									const int	ySize,
-									CvScalar	backGrndColor,
+									cv::Scalar	backGrndColor,
 									const char	*windowName,
 									const char	*deviceName,
 									const bool	hasFilterWheel)
@@ -108,7 +109,6 @@ int			updownXloc;
 int			sliderWidth;
 int			valueWidth;
 char		textBuff[32];
-IplImage	*logoImage;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -145,26 +145,9 @@ IplImage	*logoImage;
 	//*	the logo goes the same vertical placement as the size button
 	SetWidget(		kCameraBox_Logo,	(cWidth - cLogoWidth),	yLoc,	cLogoWidth,	cLogoHeight	);
 	SetWidgetType(	kCameraBox_Logo,	kWidgetType_Image);
+
 	//*	now figure out which logo belongs
-	logoImage	=	NULL;
-	CONSOLE_DEBUG_W_STR("cAlpacaDeviceName=", cAlpacaDeviceName);
-	if (strcasestr(cAlpacaDeviceName, "ZWO") != NULL)
-	{
-		logoImage		=	cvLoadImage("logos/zwo-logo.png",		CV_LOAD_IMAGE_COLOR);
-	}
-	else if (strcasestr(cAlpacaDeviceName, "Atik") != NULL)
-	{
-		logoImage		=	cvLoadImage("logos/atik-logo.png",	CV_LOAD_IMAGE_COLOR);
-	}
-	else if ((strcasestr(cAlpacaDeviceName, "toup") != NULL) || (strcasestr(cAlpacaDeviceName, "GCMOS") != NULL))
-	{
-		logoImage		=	cvLoadImage("logos/touptek-logo.png",	CV_LOAD_IMAGE_COLOR);
-	}
-	else if (strcasestr(cAlpacaDeviceName, "QHY") != NULL)
-	{
-		logoImage		=	cvLoadImage("logos/qhy-logo.png",		CV_LOAD_IMAGE_COLOR);
-	}
-	SetWidgetImage(kCameraBox_Logo, logoImage);
+	SetCameraLogo();
 
 	yLoc			+=	cLogoHeight;
 	yLoc			+=	2;
@@ -360,12 +343,12 @@ IplImage	*logoImage;
 	//=======================================================
 	//*	Flip stuff
 	SetWidget(			kCameraBox_FlipText,		cClm6_offset,	yLocRest,	40,	cRadioBtnHt);
-	SetWidgetType(		kCameraBox_FlipText,		kWidgetType_Text);
+	SetWidgetType(		kCameraBox_FlipText,		kWidgetType_TextBox);
 	SetWidgetFont(		kCameraBox_FlipText,		kFont_RadioBtn);
 	SetWidgetText(		kCameraBox_FlipText,		"Flip");
 
 	SetWidget(			kCameraBox_FlipValue,		cClm6_offset + 42,	yLocRest,	40,	cRadioBtnHt);
-	SetWidgetType(		kCameraBox_FlipValue,		kWidgetType_Text);
+	SetWidgetType(		kCameraBox_FlipValue,		kWidgetType_TextBox);
 	SetWidgetFont(		kCameraBox_FlipValue,		kFont_RadioBtn);
 	SetWidgetNumber(	kCameraBox_FlipValue,		0);
 	SetWidgetJustification(	kCameraBox_FlipValue,	kJustification_Center);
@@ -589,6 +572,36 @@ IplImage	*logoImage;
 }
 
 //**************************************************************************************
+void	WindowTabCamera::SetCameraLogo(void)
+{
+#ifdef _USE_OPENCV_CPP_
+
+#else
+IplImage	*logoImage;
+
+	logoImage	=	NULL;
+	CONSOLE_DEBUG_W_STR("cAlpacaDeviceName=", cAlpacaDeviceName);
+	if (strcasestr(cAlpacaDeviceName, "ZWO") != NULL)
+	{
+		logoImage		=	cvLoadImage("logos/zwo-logo.png",		CV_LOAD_IMAGE_COLOR);
+	}
+	else if (strcasestr(cAlpacaDeviceName, "Atik") != NULL)
+	{
+		logoImage		=	cvLoadImage("logos/atik-logo.png",	CV_LOAD_IMAGE_COLOR);
+	}
+	else if ((strcasestr(cAlpacaDeviceName, "toup") != NULL) || (strcasestr(cAlpacaDeviceName, "GCMOS") != NULL))
+	{
+		logoImage		=	cvLoadImage("logos/touptek-logo.png",	CV_LOAD_IMAGE_COLOR);
+	}
+	else if (strcasestr(cAlpacaDeviceName, "QHY") != NULL)
+	{
+		logoImage		=	cvLoadImage("logos/qhy-logo.png",		CV_LOAD_IMAGE_COLOR);
+	}
+	SetWidgetImage(kCameraBox_Logo, logoImage);
+#endif // _USE_OPENCV_CPP_
+}
+
+//**************************************************************************************
 void	WindowTabCamera::SetTempartueDisplayEnable(bool enabled)
 {
 
@@ -600,43 +613,6 @@ void	WindowTabCamera::SetTempartueDisplayEnable(bool enabled)
 	SetWidgetValid(kCameraBox_TempOutline,	enabled);
 #endif // _TEMP_GRAPH_
 }
-
-
-//******************************************************************************
-void	WindowTabCamera::DrawGraphWidget(IplImage *openCV_Image, const int widgetIdx)
-{
-CvRect		myCVrect;
-
-	myCVrect.x		=	cWidgetList[widgetIdx].left;
-	myCVrect.y		=	cWidgetList[widgetIdx].top;
-	myCVrect.width	=	cWidgetList[widgetIdx].width;
-	myCVrect.height	=	cWidgetList[widgetIdx].height;
-
-
-	cvRectangleR(	openCV_Image,
-					myCVrect,
-					cWidgetList[widgetIdx].bgColor,			//	CvScalar color,
-					CV_FILLED,								//	int thickness CV_DEFAULT(1),
-					8,										//	int line_type CV_DEFAULT(8),
-					0);										//	int shift CV_DEFAULT(0));
-
-//	cvRectangleR(	openCV_Image,
-//					myCVrect,
-//					cWidgetList[widgetIdx].boarderColor,	//	CvScalar color,
-//					1,										//	int thickness CV_DEFAULT(1),
-//					8,										//	int line_type CV_DEFAULT(8),
-//					0);										//	int shift CV_DEFAULT(0));
-
-	switch(widgetIdx)
-	{
-
-		default:
-			CONSOLE_DEBUG_W_NUM("widgetIdx\t",	widgetIdx);
-			break;
-	}
-}
-
-
 
 //*****************************************************************************
 void	WindowTabCamera::ProcessButtonClick(const int buttonIdx)
@@ -1169,7 +1145,11 @@ int					openCVerr;
 			}
 #ifdef _ENABLE_CTRL_IMAGE_
 			//*	this will open a new window with the image displayed
+		#ifdef _USE_OPENCV_CPP_
+			#warning "OpenCV++ not finished"
+		#else
 			new ControllerImage(cDownLoadedFileNameRoot, myDownLoadedImage);
+		#endif // _USE_OPENCV_CPP_
 #else
 			cvReleaseImage(&myDownLoadedImage);
 #endif // _ENABLE_CTRL_IMAGE_
@@ -1186,12 +1166,12 @@ int					openCVerr;
 								);
 
 
-			SetWidgetType(kCameraBox_ErrorMsg, kWidgetType_Text);
+			SetWidgetType(kCameraBox_ErrorMsg, kWidgetType_TextBox);
 			SetWidgetText(kCameraBox_ErrorMsg, textBuf);
 		}
 		else
 		{
-			SetWidgetType(kCameraBox_ErrorMsg, kWidgetType_Text);
+			SetWidgetType(kCameraBox_ErrorMsg, kWidgetType_TextBox);
 			SetWidgetText(kCameraBox_ErrorMsg, "Failed to download image, no image exists");
 			CONSOLE_DEBUG("Failed to download image");
 		}

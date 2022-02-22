@@ -41,7 +41,7 @@ class WindowTabUSB: public WindowTab
 		//
 				WindowTabUSB(	const int	xSize,
 								const int	ySize,
-								CvScalar	backGrndColor,
+								cv::Scalar	backGrndColor,
 								const char	*windowName);
 		virtual	~WindowTabUSB(void);
 

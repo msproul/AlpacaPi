@@ -46,7 +46,7 @@
 //**************************************************************************************
 WindowTabMoon::WindowTabMoon(	const int	xSize,
 								const int	ySize,
-								CvScalar	backGrndColor,
+								cv::Scalar	backGrndColor,
 								const char	*windowName)
 	:WindowTab(xSize, ySize, backGrndColor, windowName)
 {
@@ -105,14 +105,14 @@ int		myButtonWidth;
 	{
 
 		SetWidget(				iii,	cClm1_offset,			yLoc,		cBtnWidth,		cBtnHeight);
-		SetWidgetType(			iii,	kWidgetType_Text);
+		SetWidgetType(			iii,	kWidgetType_TextBox);
 		SetWidgetJustification(	iii,	kJustification_Left);
 		SetWidgetFont(			iii,	kFont_Medium);
 		SetWidgetTextColor(		iii,	CV_RGB(255,	255,	255));
 		iii++;
 
 		SetWidget(				iii,	cClm2_offset,			yLoc,		cBtnWidth,		cBtnHeight);
-		SetWidgetType(			iii,	kWidgetType_Text);
+		SetWidgetType(			iii,	kWidgetType_TextBox);
 		SetWidgetJustification(	iii,	kJustification_Left);
 		SetWidgetFont(			iii,	kFont_Medium);
 		SetWidgetTextColor(		iii,	CV_RGB(255,	255,	255));
@@ -170,24 +170,28 @@ int		myButtonWidth;
 	yLoc			+=	5;
 
 	SetWidget(				kMoon_Image,	moonXloc,		yLoc,	cMaxMoonImgSize,		cMaxMoonImgSize);
-	SetWidgetType(			kMoon_Image,	kWidgetType_Text);
+	SetWidgetType(			kMoon_Image,	kWidgetType_TextBox);
 	SetWidgetText(			kMoon_Image,	"Moon image goes here");
 	SetWidgetBorder(		kMoon_Image,	false);
 //	SetWidgetBorderColor(	kMoon_Image,	CV_RGB(0,	0,	255));
 	SetWidgetOutlineBox(	kMoon_MoonImgOutline, kMoon_Image, kMoon_Image);
 
+#ifdef _USE_OPENCV_CPP_
+	#warning "OpenCV++ not finished"
+#else
 	cMoonImage	=	cvLoadImage("moon_fits/moon.jpg", CV_LOAD_IMAGE_COLOR);
 	if (cMoonImage != NULL)
 	{
 		SetWidgetImage(kMoon_Image, cMoonImage);
 	}
+#endif // _USE_OPENCV_CPP_
 	yLoc	+=	cMaxMoonImgSize;
 	yLoc	+=	2;
 
 	//-------------------------------------------------------------------
 	//*	space for the File name
 	SetWidget(		kMoon_FileName,	moonXloc,		yLoc,	cMaxMoonImgSize,cBtnHeight);
-	SetWidgetType(	kMoon_FileName,	kWidgetType_Text);
+	SetWidgetType(	kMoon_FileName,	kWidgetType_TextBox);
 	SetWidgetFont(	kMoon_FileName,	kFont_Medium);
 }
 
@@ -460,6 +464,9 @@ char			errMsgString[128];
 
 		ReadFitsHeader(myMoonFilePath);
 	}
+#ifdef _USE_OPENCV_CPP_
+	#warning "OpenCV++ not finished"
+#else
 	if (cMoonImage != NULL)
 	{
 	//	CONSOLE_DEBUG("fits image  OK");
@@ -473,6 +480,7 @@ char			errMsgString[128];
 		strcat(errMsgString, moonFileName);
 		SetWidgetText(kMoon_FileName,	errMsgString);
 	}
+#endif // _USE_OPENCV_CPP_
 	ForceUpdate();
 }
 

@@ -186,7 +186,7 @@ bool			configOK;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 	configOK	=	false;
-	//*	check for the observatory settings file
+	//*	check for the sql server settings file
 	filePointer	=	fopen(fileName, "r");
 	if (filePointer != NULL)
 	{
@@ -718,9 +718,10 @@ bool			validFlag;
 				if ((num_rows > 0) && (num_fields >= 3))
 				{
 					CONSOLE_DEBUG(__FUNCTION__);
-					row	=	mysql_fetch_row(mySQLresult);
+					row			=	mysql_fetch_row(mySQLresult);
 
 					validFlag	=	true;
+					recNum		=	1;
 					//*	Get the name
 					CONSOLE_DEBUG_W_STR("row[0]\t=",	row[0]);
 					strcpy(localStarData.longName, row[0]);
@@ -993,7 +994,7 @@ int		requestStarted;
 
 	requestStarted		=	0;
 
-	if (viewAngle_Degrees < 5.0)
+	if ((viewAngle_Degrees < 5.0) && (dec_Degrees < 90.0) && (dec_Degrees >= -90.0))
 	{
 		if (gST_DispOptions.RemoteGAIAenabled && (gGaiaSQL_ThreadIsRunning == false))
 		{
@@ -1247,6 +1248,7 @@ bool	configOK;
 				threadStatus	=	0;
 
 				//*	sleep a little so the thread has a chance to get running
+				loopCnt	=	0;
 				while ((gGaiaSQL_ThreadIsRunning == false) && (loopCnt < 200))
 				{
 					usleep(5000);

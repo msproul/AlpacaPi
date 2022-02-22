@@ -39,7 +39,7 @@ class WindowTabAbout: public WindowTab
 		//
 				WindowTabAbout(	const int	xSize,
 								const int	ySize,
-								CvScalar	backGrndColor,
+								cv::Scalar	backGrndColor,
 								const char	*windowName);
 		virtual	~WindowTabAbout(void);
 

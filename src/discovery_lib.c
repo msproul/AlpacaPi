@@ -94,7 +94,10 @@ int				bindRetCode;
 struct timeval	timeoutLength;
 bool			success	=	true;
 int				argValue;
-//	CONSOLE_DEBUG(__FUNCTION__);
+char			ipAddressStr[INET_ADDRSTRLEN];
+
+	CONSOLE_DEBUG("*********************************************************");
+	CONSOLE_DEBUG(__FUNCTION__);
 	InitArrays();
 
 	gBroadcastSock	=	socket(AF_INET, SOCK_DGRAM, 0);
@@ -114,11 +117,11 @@ int				argValue;
 	gClient_addr.sin_addr.s_addr	=	htonl(INADDR_ANY);
 	gClient_addr.sin_port			=	htons(0);
 
-//	inet_ntop(AF_INET, &(gServer_addr.sin_addr), str, INET_ADDRSTRLEN);
-//	CONSOLE_DEBUG_W_STR("gServer_addr.sin_addr", str);
+	inet_ntop(AF_INET, &(gServer_addr.sin_addr), ipAddressStr, INET_ADDRSTRLEN);
+	CONSOLE_DEBUG_W_STR("gServer_addr.sin_addr", ipAddressStr);
 
-//	inet_ntop(AF_INET, &(gClient_addr.sin_addr), str, INET_ADDRSTRLEN);
-//	CONSOLE_DEBUG_W_STR("gClient_addr.sin_addr", str);
+	inet_ntop(AF_INET, &(gClient_addr.sin_addr), ipAddressStr, INET_ADDRSTRLEN);
+	CONSOLE_DEBUG_W_STR("gClient_addr.sin_addr", ipAddressStr);
 
 	argValue		=	1;
 	setOptRetCode	=	setsockopt(gBroadcastSock, SOL_SOCKET, (SO_BROADCAST), &argValue, sizeof(int));

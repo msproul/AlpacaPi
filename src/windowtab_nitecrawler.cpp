@@ -25,6 +25,7 @@
 //*	Apr  4,	2020	<MLS> Added compass indicator to where we WANT to be
 //*	Apr 17,	2020	<MLS> Added Alpaca Logo to NiteCrawler screen
 //*	Dec 28,	2020	<MLS> Added ZERO button to zero Rotator and Aux values
+//*	Feb 19,	2022	<MLS> Added DrawRotatorCompass()
 //*****************************************************************************
 
 #ifdef _ENABLE_CTRL_FOCUSERS_
@@ -50,7 +51,7 @@
 //**************************************************************************************
 WindowTabNitecrawler::WindowTabNitecrawler(	const int	xSize,
 											const int	ySize,
-											CvScalar	backGrndColor,
+											cv::Scalar	backGrndColor,
 											const int	comMode,
 											const char	*windowName)
 	:WindowTab(xSize, ySize, backGrndColor, windowName)
@@ -90,12 +91,15 @@ WindowTabNitecrawler::~WindowTabNitecrawler(void)
 void	WindowTabNitecrawler::SetupWindowControls(void)
 {
 int		iii;
+int		xLoc;
 int		yLoc;
 int		yloc2;
 int		buttonNumValues[5]	=	{1, 10, 100, 1000, 5000};
 int		btnIdx;
 char	textBuff[32];
 int		homeBtnWidth;
+int		logoWidth;
+int		logoHeight;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -105,11 +109,21 @@ int		homeBtnWidth;
 	//==========================================
 	if (gNiteCrawlerImgPtr != NULL)
 	{
-		SetWidget(kNiteCrawlerTab_logo,		0,			yLoc,
-									gNiteCrawlerImgPtr->width,
-									gNiteCrawlerImgPtr->height);
+	#ifdef _USE_OPENCV_CPP_
+		#warning "OpenCV++ not finished"
+		logoWidth	=	gNiteCrawlerImgPtr->cols;
+		logoHeight	=	gNiteCrawlerImgPtr->rows;
+	#else
+		logoWidth	=	gNiteCrawlerImgPtr->width;
+		logoHeight	=	gNiteCrawlerImgPtr->height;
+	#endif // _USE_OPENCV_CPP_
+		SetWidget(	kNiteCrawlerTab_logo,
+					0,
+					yLoc,
+					logoWidth,
+					logoHeight);
 
-		yLoc			+=	gNiteCrawlerImgPtr->height;
+		yLoc		+=	logoHeight;
 
 		SetWidgetImage(kNiteCrawlerTab_logo, gNiteCrawlerImgPtr);
 	}
@@ -163,7 +177,7 @@ int		homeBtnWidth;
 	//==========================================
 	//*	create the compass wheel
 	SetWidget(kNiteCrawlerTab_RotatorCompass,	0,			yLoc,		(cWidth/2),	(cWidth/2));
-	SetWidgetType(kNiteCrawlerTab_RotatorCompass, kWidgetType_Graphic);
+	SetWidgetType(kNiteCrawlerTab_RotatorCompass, kWidgetType_CustomGraphic);
 
 	//==========================================
 	yloc2	=	yLoc;
@@ -318,20 +332,25 @@ int		homeBtnWidth;
 		LoadAlpacaLogo();
 		if (gAlpacaLogoPtr != NULL)
 		{
-		int	logoWidth;
-		int	logoHeight;
-		int	xLoc;
 
+		#ifdef _USE_OPENCV_CPP_
+			logoWidth	=	gAlpacaLogoPtr->cols;
+			logoHeight	=	gAlpacaLogoPtr->rows;
+		#else
 			logoWidth	=	gAlpacaLogoPtr->width;
 			logoHeight	=	gAlpacaLogoPtr->height;
-
+		#endif
 			xLoc		=	((cWidth/2) - (logoWidth/2));
 			xLoc		-=	6;
-			yLoc		=	cHeight - (1 *cBtnHeight);
+			yLoc		=	cHeight - (1 * cBtnHeight);
 			yLoc		-=	logoHeight;
 
 			SetWidget(		kNiteCrawlerTab_AlpacaLogo,	xLoc,	yLoc,	logoWidth,	logoHeight);
 			SetWidgetImage(	kNiteCrawlerTab_AlpacaLogo, gAlpacaLogoPtr);
+		}
+		else
+		{
+			CONSOLE_ABORT(__FUNCTION__);
 		}
 	}
 
@@ -348,7 +367,106 @@ int		homeBtnWidth;
 }
 
 //**************************************************************************************
-void	WindowTabNitecrawler::DrawGraphWidget(IplImage *openCV_Image, const int widgetIdx)
+void	WindowTabNitecrawler::DrawRotatorCompass(TYPE_WIDGET *theWidget)
+{
+int			radius1;
+int			radius2;
+double		degrees;
+double		radians;
+int			center_X;
+int			center_Y;
+int			pt1_X;
+int			pt1_Y;
+int			pt2_X;
+int			pt2_Y;
+char		lineBuff[32];
+
+	center_X	=	theWidget->left + (theWidget->width / 2);
+	center_Y	=	theWidget->top + (theWidget->height / 2);
+	radius1		=	theWidget->width / 5;
+
+	SetColor(W_WHITE);
+	LLD_FrameEllipse(center_X, center_Y, radius1, radius1);
+
+	//*	now draw the tick marks every 10 degrees
+	radius1	=	(theWidget->width / 2) - 8;
+	radius2	=	(theWidget->width / 2) - 16;
+	degrees	=	0;
+	while (degrees < 360)
+	{
+		radians	=	degrees * M_PI / 180.0;
+		pt1_X	=	center_X + (cos(radians) * radius1);
+		pt1_Y	=	center_Y + (sin(radians) * radius1);
+
+		pt2_X	=	center_X + (cos(radians) * radius2);
+		pt2_Y	=	center_Y + (sin(radians) * radius2);
+
+		LLD_MoveTo(pt1_X, pt1_Y);
+		LLD_LineTo(pt2_X, pt2_Y);
+
+		degrees	+=	10.0;
+	}
+	//*	now figure out where it is pointing
+	degrees	=	(cRotatorPosition * 360.0) / cStepsPerRev;
+	sprintf(lineBuff, "%1.1f", degrees);
+	CONSOLE_DEBUG_W_DBL("degrees\t=", degrees);
+	CONSOLE_DEBUG(lineBuff);
+
+	//*	draw the numeric degrees in the center
+	pt1_X	=	center_X - 18;
+	pt1_Y	=	center_Y + 5;
+	if (abs(degrees) < 10.0)
+	{
+		pt1_X	+=	5;
+	}
+	LLD_DrawCString(pt1_X, pt1_Y, lineBuff, kFont_Medium);
+
+
+	degrees	-=	90;
+	radians	=	degrees * M_PI / 180.0;
+	radius1	=	(theWidget->width / 5) + 3;
+	radius2	=	(theWidget->width / 2) - 20;
+
+	pt1_X	=	center_X + (cos(radians) * radius1);
+	pt1_Y	=	center_Y + (sin(radians) * radius1);
+
+	pt2_X	=	center_X + (cos(radians) * radius2);
+	pt2_Y	=	center_Y + (sin(radians) * radius2);
+
+	LLD_PenSize(2);
+	SetColor(W_RED);
+	LLD_MoveTo(pt1_X, pt1_Y);
+	LLD_LineTo(pt2_X, pt2_Y);
+
+	//*	now draw a small green line where we WANT to be
+	degrees	=	(cRotatorDesiredPos * 360.0) / cStepsPerRev;
+	degrees	-=	90;
+	radians	=	degrees * M_PI / 180.0;
+	radius1	=	(theWidget->width / 2) - 20;
+	radius2	=	(theWidget->width / 2);
+
+	pt1_X	=	center_X + (cos(radians) * radius1);
+	pt1_Y	=	center_Y + (sin(radians) * radius1);
+
+	pt2_X	=	center_X + (cos(radians) * radius2);
+	pt2_Y	=	center_Y + (sin(radians) * radius2);
+	SetColor(W_GREEN);
+	LLD_MoveTo(pt1_X, pt1_Y);
+	LLD_LineTo(pt2_X, pt2_Y);
+
+	//*	reset back to normal
+	LLD_PenSize(1);
+}
+
+#ifdef _USE_OPENCV_CPP_
+//**************************************************************************************
+void	WindowTabNitecrawler::DrawWidgetCustomGraphic(	cv::Mat		*openCV_Image,
+														const int	widgetIdx)
+#else
+//**************************************************************************************
+void	WindowTabNitecrawler::DrawWidgetCustomGraphic(	IplImage	*openCV_Image,
+														const int	widgetIdx)
+#endif // _USE_OPENCV_CPP_
 {
 CvRect		myCVrect;
 CvPoint		myCVcenter;
@@ -360,142 +478,13 @@ CvPoint		pt1;
 CvPoint		pt2;
 char		lineBuff[32];
 
-	myCVrect.x		=	cWidgetList[widgetIdx].left;
-	myCVrect.y		=	cWidgetList[widgetIdx].top;
-	myCVrect.width	=	cWidgetList[widgetIdx].width;
-	myCVrect.height	=	cWidgetList[widgetIdx].height;
-
-
-	cvRectangleR(	openCV_Image,
-					myCVrect,
-					cWidgetList[widgetIdx].bgColor,			//	CvScalar color,
-					CV_FILLED,								//	int thickness CV_DEFAULT(1),
-					8,										//	int line_type CV_DEFAULT(8),
-					0);										//	int shift CV_DEFAULT(0));
-
-//	cvRectangleR(	openCV_Image,
-//					myCVrect,
-//					cWidgetList[widgetIdx].borderColor,	//	CvScalar color,
-//					1,										//	int thickness CV_DEFAULT(1),
-//					8,										//	int line_type CV_DEFAULT(8),
-//					0);										//	int shift CV_DEFAULT(0));
+	CONSOLE_DEBUG(__FUNCTION__);
+	cOpenCV_Image	=	openCV_Image;
 
 	switch(widgetIdx)
 	{
 		case kNiteCrawlerTab_RotatorCompass:
-			myCVcenter.x	=	myCVrect.x + (myCVrect.width / 2);
-			myCVcenter.y	=	myCVrect.y + (myCVrect.height / 2);
-			radius1			=	myCVrect.width / 5;
-			cvCircle(	openCV_Image,
-						myCVcenter,
-						radius1,
-						cWidgetList[widgetIdx].borderColor,
-						1,									//	int thickness CV_DEFAULT(1),
-						8,									//	int line_type CV_DEFAULT(8),
-						0);									//	int shift CV_DEFAULT(0));
-			//*	now draw the tick marks every 10 degrees
-			radius1	=	(myCVrect.width / 2) - 8;
-			radius2	=	(myCVrect.width / 2) - 16;
-			degrees	=	0;
-			while (degrees < 360)
-			{
-				radians	=	degrees * M_PI / 180.0;
-				pt1.x	=	myCVcenter.x + (cos(radians) * radius1);
-				pt1.y	=	myCVcenter.y + (sin(radians) * radius1);
-
-				pt2.x	=	myCVcenter.x + (cos(radians) * radius2);
-				pt2.y	=	myCVcenter.y + (sin(radians) * radius2);
-				cvLine(	openCV_Image,
-						pt1,
-						pt2,
-						cWidgetList[widgetIdx].borderColor,		//	CvScalar color,
-						1,										//	int thickness CV_DEFAULT(1),
-						8,										//	int line_type CV_DEFAULT(8),
-						0);										//	int shift CV_DEFAULT(0));
-
-				degrees	+=	10.0;
-			}
-			degrees	=	0;
-			radius1	=	(myCVrect.width / 2) - 8;
-			radius2	=	(myCVrect.width / 2) - 20;
-			while (degrees < 360)
-			{
-				radians	=	degrees * M_PI / 180.0;
-				pt1.x	=	myCVcenter.x + (cos(radians) * radius1);
-				pt1.y	=	myCVcenter.y + (sin(radians) * radius1);
-
-				pt2.x	=	myCVcenter.x + (cos(radians) * radius2);
-				pt2.y	=	myCVcenter.y + (sin(radians) * radius2);
-				cvLine(	openCV_Image,
-						pt1,
-						pt2,
-						cWidgetList[widgetIdx].borderColor,		//	CvScalar color,
-						2,										//	int thickness CV_DEFAULT(1),
-						8,										//	int line_type CV_DEFAULT(8),
-						0);										//	int shift CV_DEFAULT(0));
-
-				degrees	+=	90.0;
-			}
-			//*	now figure out where it is pointing
-			degrees	=	(cRotatorPosition * 360.0) / cStepsPerRev;
-			sprintf(lineBuff, "%1.1f", degrees);
-			//*	draw the numeric degrees in the center
-			pt1.x	=	myCVcenter.x - 18;
-			pt1.y	=	myCVcenter.y + 5;
-			if (abs(degrees) < 10.0)
-			{
-				pt1.x	+=	5;
-			}
-			cvPutText(	openCV_Image,
-						lineBuff,
-						pt1,
-						&gTextFont[kFont_Medium],
-						cWidgetList[widgetIdx].borderColor
-						);
-
-
-			degrees	-=	90;
-			radians	=	degrees * M_PI / 180.0;
-			radius1	=	(myCVrect.width / 5) + 3;
-			radius2	=	(myCVrect.width / 2) - 20;
-
-			pt1.x	=	myCVcenter.x + (cos(radians) * radius1);
-			pt1.y	=	myCVcenter.y + (sin(radians) * radius1);
-
-			pt2.x	=	myCVcenter.x + (cos(radians) * radius2);
-			pt2.y	=	myCVcenter.y + (sin(radians) * radius2);
-			cvLine(	openCV_Image,
-					pt1,
-					pt2,
-					CV_RGB(255, 0, 0),	//	CvScalar color,
-					2,					//	int thickness CV_DEFAULT(1),
-					8,					//	int line_type CV_DEFAULT(8),
-					0);						//	int shift CV_DEFAULT(0));
-
-			//*	now draw a small green line where we WANT to be
-			degrees	=	(cRotatorDesiredPos * 360.0) / cStepsPerRev;
-			degrees	-=	90;
-			radians	=	degrees * M_PI / 180.0;
-			radius1	=	(myCVrect.width / 2) - 20;
-			radius2	=	(myCVrect.width / 2);
-
-			pt1.x	=	myCVcenter.x + (cos(radians) * radius1);
-			pt1.y	=	myCVcenter.y + (sin(radians) * radius1);
-
-			pt2.x	=	myCVcenter.x + (cos(radians) * radius2);
-			pt2.y	=	myCVcenter.y + (sin(radians) * radius2);
-			cvLine(	openCV_Image,
-					pt1,
-					pt2,
-					CV_RGB(0, 255, 0),	//	CvScalar color,
-					2,					//	int thickness CV_DEFAULT(1),
-					8,					//	int line_type CV_DEFAULT(8),
-					0);					//	int shift CV_DEFAULT(0));
-
-			break;
-
-		default:
-			CONSOLE_DEBUG_W_NUM("widgetIdx\t",	widgetIdx);
+			DrawRotatorCompass(&cWidgetList[widgetIdx]);
 			break;
 	}
 }

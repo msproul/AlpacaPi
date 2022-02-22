@@ -110,7 +110,7 @@ double	b_mag	=	99.0;
 double	v_mag	=	99.0;
 double	j_mag	=	99.0;
 double	h_mag	=	99.0;
-double	k_mag	=	99.0;
+//double	k_mag	=	99.0;
 double	parallax;
 double	rightAscen_Deg;
 char	decl_Sign;
@@ -213,12 +213,12 @@ char	*idPtr;
 						h_mag	=	atof(argString);
 					}
 					break;
-				case kOpenNGC_K_Mag:
-					if (strlen(argString) > 0)
-					{
-						k_mag	=	atof(argString);
-					}
-					break;
+//				case kOpenNGC_K_Mag:
+//					if (strlen(argString) > 0)
+//					{
+//						k_mag	=	atof(argString);
+//					}
+//					break;
 
 
 //				case kOpenNGC_SurfBr:
@@ -327,6 +327,7 @@ TYPE_CelestData	starObject;
 bool			validObject;
 char			lineBuff[512];
 char			filePath[128];
+char			*firstLinePtr;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -344,8 +345,11 @@ char			filePath[128];
 		if (ngcStarData != NULL)
 		{
 			//*	read the first line to get rid of it
-			fgets(lineBuff, 500, filePointer);
-
+			firstLinePtr	=	fgets(lineBuff, 500, filePointer);
+			if (firstLinePtr == NULL)
+			{
+				CONSOLE_DEBUG("Error reading file");
+			}
 			recordCount	=	0;
 			while (fgets(lineBuff, 500, filePointer) && (recordCount < ngcLineCount))
 			{

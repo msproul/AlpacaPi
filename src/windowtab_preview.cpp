@@ -45,7 +45,7 @@
 //**************************************************************************************
 WindowTabPreview::WindowTabPreview(	const int	xSize,
 									const int	ySize,
-									CvScalar	backGrndColor,
+									cv::Scalar	backGrndColor,
 									const char	*windowName)
 	:WindowTab(xSize, ySize, backGrndColor, windowName)
 {
@@ -398,7 +398,7 @@ char		dataString[64];
 			}
 			else
 			{
-				SetWidgetType(kPreviewBox_ProgressBar, kWidgetType_Text);
+				SetWidgetType(kPreviewBox_ProgressBar, kWidgetType_TextBox);
 				SetWidgetText(kPreviewBox_ProgressBar, "Camera is busy");
 			}
 			break;
@@ -638,12 +638,12 @@ int					openCVerr;
 								);
 
 
-			SetWidgetType(kPreviewBox_ProgressBar, kWidgetType_Text);
+			SetWidgetType(kPreviewBox_ProgressBar, kWidgetType_TextBox);
 			SetWidgetText(kPreviewBox_ProgressBar, textBuf);
 		}
 		else
 		{
-			SetWidgetType(kPreviewBox_ProgressBar, kWidgetType_Text);
+			SetWidgetType(kPreviewBox_ProgressBar, kWidgetType_TextBox);
 			SetWidgetText(kPreviewBox_ProgressBar, "Failed to download image, no image exists");
 			CONSOLE_DEBUG("Failed to download image");
 		}

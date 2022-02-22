@@ -93,7 +93,7 @@ class WindowTabCamSettings: public WindowTab
 		//
 				WindowTabCamSettings(	const int	xSize,
 										const int	ySize,
-										CvScalar	backGrndColor,
+										cv::Scalar	backGrndColor,
 										const char	*windowName,
 										const char	*deviceName,
 										const bool	hasFilterWheel = false);

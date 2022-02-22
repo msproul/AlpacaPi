@@ -79,9 +79,9 @@ class WindowTabConstellationList: public WindowTab
 		// Construction
 		//
 				WindowTabConstellationList(	const int	xSize,
-									const int	ySize,
-									CvScalar	backGrndColor,
-									const char	*windowName);
+											const int	ySize,
+											cv::Scalar	backGrndColor,
+											const char	*windowName);
 		virtual	~WindowTabConstellationList(void);
 
 		virtual	void	SetupWindowControls(const char *argWindowName);

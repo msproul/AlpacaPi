@@ -61,10 +61,10 @@ class WindowTabDriverInfo: public WindowTab
 		//
 		// Construction
 		//
-				WindowTabDriverInfo(	const int	xSize,
-								const int	ySize,
-								CvScalar	backGrndColor,
-								const char	*windowName);
+				WindowTabDriverInfo(const int	xSize,
+									const int	ySize,
+									cv::Scalar	backGrndColor,
+									const char	*windowName);
 		virtual	~WindowTabDriverInfo(void);
 
 		virtual	void	SetupWindowControls(void);

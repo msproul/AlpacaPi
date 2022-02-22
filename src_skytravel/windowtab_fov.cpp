@@ -50,9 +50,9 @@
 
 //**************************************************************************************
 WindowTabFOV::WindowTabFOV(	const int	xSize,
-								const int	ySize,
-								CvScalar	backGrndColor,
-								const char	*windowName)
+							const int	ySize,
+							cv::Scalar	backGrndColor,
+							const char	*windowName)
 	:WindowTab(xSize, ySize, backGrndColor, windowName)
 {
 int		iii;
@@ -134,7 +134,7 @@ char	textString[80];
 
 	//------------------------------------------
 	SetWidget(		kFOVbox_FileInfo,	textBoxOffsetX,			yLoc,	(cWidth - textBoxOffsetX),		cRadioBtnHt);
-	SetWidgetType(	kFOVbox_FileInfo,	kWidgetType_Text);
+	SetWidgetType(	kFOVbox_FileInfo,	kWidgetType_TextBox);
 	SetWidgetFont(	kFOVbox_FileInfo,	kFont_TextList);
 	sprintf(textString, "Modify file '%s' to change these values", kCameraFOVfileName);
 	SetWidgetText(		kFOVbox_FileInfo,	textString);
@@ -194,7 +194,7 @@ char	textString[80];
 		//*	setup the text info
 		boxNum++;
 		SetWidget(				boxNum,	textBoxOffsetX,	yLoc,		cClmWidth * 5,		textBoxHt);
-		SetWidgetType(			boxNum,	kWidgetType_Text);
+		SetWidgetType(			boxNum,	kWidgetType_TextBox);
 		SetWidgetJustification(	boxNum,	kJustification_Left);
 		SetWidgetFont(			boxNum,	kFont_TextList);
 		SetWidgetTextColor(		boxNum,	CV_RGB(255,	255,	255));

@@ -324,8 +324,8 @@ int		openCVerr;
 //*****************************************************************************
 int	HandleKeyDownEvents(const char *fileName, const char *windowName, IplImage *openCV_Image)
 {
-CvScalar		mean;
-CvScalar		std_dev;
+cv::Scalar		mean;
+cv::Scalar		std_dev;
 int				keyPressed;
 bool			keepGoing;
 int				ii;

@@ -35,9 +35,9 @@
 
 //**************************************************************************************
 WindowTabDriverInfo::WindowTabDriverInfo(	const int	xSize,
-								const int	ySize,
-								CvScalar	backGrndColor,
-								const char	*windowName)
+											const int	ySize,
+											cv::Scalar	backGrndColor,
+											const char	*windowName)
 	:WindowTab(xSize, ySize, backGrndColor, windowName)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
@@ -97,7 +97,7 @@ int		lastItemID;
 		//*	setup the label
 		firstItemID	=	boxID;
 		SetWidget(				boxID,	0,			yLoc,		boxWidth,		cSmallBtnHt);
-		SetWidgetType(			boxID,	kWidgetType_Text);
+		SetWidgetType(			boxID,	kWidgetType_TextBox);
 		SetWidgetJustification(	boxID,	kJustification_Center);
 		SetWidgetFont(			boxID,	kFont_TextList);
 		SetWidgetTextColor(		boxID,	CV_RGB(255,	0,	0));

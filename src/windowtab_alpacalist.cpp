@@ -53,7 +53,7 @@
 //**************************************************************************************
 WindowTabAlpacaList::WindowTabAlpacaList(	const int	xSize,
 											const int	ySize,
-											CvScalar	backGrndColor,
+											cv::Scalar	backGrndColor,
 											const char	*windowName)
 										:WindowTab(xSize, ySize, backGrndColor, windowName)
 {
@@ -401,143 +401,146 @@ bool	windowExists;
 
 		if (deviceIdx >= 0)
 		{
-			if (strlen(cRemoteDeviceList[deviceIdx].hostName) > 0)
+			if (cRemoteDeviceList[deviceIdx].validEntry)
 			{
-				strcpy(myHostName, cRemoteDeviceList[deviceIdx].hostName);
-			}
-			else
-			{
-				inet_ntop(AF_INET, &(cRemoteDeviceList[deviceIdx].deviceAddress.sin_addr), myHostName, INET_ADDRSTRLEN);
-			}
-			//*	generate the window name
-			sprintf(windowName, "%s-%s-%d",	cRemoteDeviceList[deviceIdx].deviceTypeStr,
-											myHostName,
-											cRemoteDeviceList[deviceIdx].alpacaDeviceNum);
-
-			switch(cRemoteDeviceList[deviceIdx].deviceTypeEnum)
-			{
-
-			case kDeviceType_Camera:
-				windowExists	=	CheckForOpenWindowByName(windowName);
-				if (windowExists)
+				if (strlen(cRemoteDeviceList[deviceIdx].hostName) > 0)
 				{
-					CONSOLE_DEBUG_W_STR("Window already open:", windowName);
+					strcpy(myHostName, cRemoteDeviceList[deviceIdx].hostName);
 				}
 				else
 				{
-					new ControllerCamNormal(windowName, &cRemoteDeviceList[deviceIdx]);
+					inet_ntop(AF_INET, &(cRemoteDeviceList[deviceIdx].deviceAddress.sin_addr), myHostName, INET_ADDRSTRLEN);
 				}
-				break;
+				//*	generate the window name
+				sprintf(windowName, "%s-%s-%d",	cRemoteDeviceList[deviceIdx].deviceTypeStr,
+												myHostName,
+												cRemoteDeviceList[deviceIdx].alpacaDeviceNum);
 
-			case kDeviceType_CoverCalibrator:
-				windowExists	=	CheckForOpenWindowByName(windowName);
-				if (windowExists)
+				switch(cRemoteDeviceList[deviceIdx].deviceTypeEnum)
 				{
-					CONSOLE_DEBUG_W_STR("Window already open:", windowName);
-				}
-				else
-				{
-					new ControllerCoverCalib(	windowName,
+
+				case kDeviceType_Camera:
+					windowExists	=	CheckForOpenWindowByName(windowName);
+					if (windowExists)
+					{
+						CONSOLE_DEBUG_W_STR("Window already open:", windowName);
+					}
+					else
+					{
+						new ControllerCamNormal(windowName, &cRemoteDeviceList[deviceIdx]);
+					}
+					break;
+
+				case kDeviceType_CoverCalibrator:
+					windowExists	=	CheckForOpenWindowByName(windowName);
+					if (windowExists)
+					{
+						CONSOLE_DEBUG_W_STR("Window already open:", windowName);
+					}
+					else
+					{
+						new ControllerCoverCalib(	windowName,
+													&cRemoteDeviceList[deviceIdx].deviceAddress,
+													cRemoteDeviceList[deviceIdx].port,
+													cRemoteDeviceList[deviceIdx].alpacaDeviceNum);
+					}
+					break;
+
+				case kDeviceType_Dome:
+				case kDeviceType_Shutter:
+					windowExists	=	CheckForOpenWindowByName(windowName);
+					if (windowExists)
+					{
+						CONSOLE_DEBUG_W_STR("Window already open:", windowName);
+					}
+					else
+					{
+						new ControllerDome(windowName, &cRemoteDeviceList[deviceIdx]);
+					}
+					break;
+
+				case kDeviceType_Filterwheel:
+					windowExists	=	CheckForOpenWindowByName(windowName);
+					if (windowExists)
+					{
+						CONSOLE_DEBUG_W_STR("Window already open:", windowName);
+					}
+					else
+					{
+						new ControllerFilterWheel(windowName, &cRemoteDeviceList[deviceIdx]);
+					}
+					break;
+
+				case kDeviceType_Focuser:
+					GenerateFocuserWindowName(&cRemoteDeviceList[deviceIdx], 1, windowName);
+					windowExists	=	CheckForOpenWindowByName(windowName);
+					if (windowExists)
+					{
+						CONSOLE_DEBUG_W_STR("Window already open:", windowName);
+					}
+					else
+					{
+						CheckForFocuser(&cRemoteDeviceList[deviceIdx]);
+					}
+					break;
+
+				case kDeviceType_Management:
+				case kDeviceType_Observingconditions:
+				case kDeviceType_Rotator:
+					break;
+
+				case kDeviceType_Telescope:
+					windowExists	=	CheckForOpenWindowByName(windowName);
+					if (windowExists)
+					{
+						CONSOLE_DEBUG_W_STR("Window already open:", windowName);
+					}
+					else
+					{
+						new ControllerTelescope(	windowName,
+													&cRemoteDeviceList[deviceIdx].deviceAddress,
+													cRemoteDeviceList[deviceIdx].port,
+													cRemoteDeviceList[deviceIdx].alpacaDeviceNum);
+					}
+					break;
+
+				case kDeviceType_SafetyMonitor:
+					break;
+
+				case kDeviceType_Switch:
+					windowExists	=	CheckForOpenWindowByName(windowName);
+					if (windowExists)
+					{
+						CONSOLE_DEBUG_W_STR("Window already open:", windowName);
+					}
+					else
+					{
+						new ControllerSwitch(	windowName,
 												&cRemoteDeviceList[deviceIdx].deviceAddress,
 												cRemoteDeviceList[deviceIdx].port,
 												cRemoteDeviceList[deviceIdx].alpacaDeviceNum);
-				}
-				break;
+					}
+					break;
 
-			case kDeviceType_Dome:
-			case kDeviceType_Shutter:
-				windowExists	=	CheckForOpenWindowByName(windowName);
-				if (windowExists)
-				{
-					CONSOLE_DEBUG_W_STR("Window already open:", windowName);
-				}
-				else
-				{
-					new ControllerDome(windowName, &cRemoteDeviceList[deviceIdx]);
-				}
-				break;
+				//*	extras defined by MLS
+				case kDeviceType_SlitTracker:
+					windowExists	=	CheckForOpenWindowByName(windowName);
+					if (windowExists)
+					{
+						CONSOLE_DEBUG_W_STR("Window already open:", windowName);
+					}
+					else
+					{
+						new ControllerSlit(windowName, &cRemoteDeviceList[deviceIdx]);
+					}
+					break;
 
-			case kDeviceType_Filterwheel:
-				windowExists	=	CheckForOpenWindowByName(windowName);
-				if (windowExists)
-				{
-					CONSOLE_DEBUG_W_STR("Window already open:", windowName);
+				case kDeviceType_Multicam:
+	//			case kDeviceType_Shutter:
+				case kDeviceType_undefined:
+				case kDeviceType_last:
+					break;
 				}
-				else
-				{
-					new ControllerFilterWheel(windowName, &cRemoteDeviceList[deviceIdx]);
-				}
-				break;
-
-			case kDeviceType_Focuser:
-				GenerateFocuserWindowName(&cRemoteDeviceList[deviceIdx], 1, windowName);
-				windowExists	=	CheckForOpenWindowByName(windowName);
-				if (windowExists)
-				{
-					CONSOLE_DEBUG_W_STR("Window already open:", windowName);
-				}
-				else
-				{
-					CheckForFocuser(&cRemoteDeviceList[deviceIdx]);
-				}
-				break;
-
-			case kDeviceType_Management:
-			case kDeviceType_Observingconditions:
-			case kDeviceType_Rotator:
-				break;
-
-			case kDeviceType_Telescope:
-				windowExists	=	CheckForOpenWindowByName(windowName);
-				if (windowExists)
-				{
-					CONSOLE_DEBUG_W_STR("Window already open:", windowName);
-				}
-				else
-				{
-					new ControllerTelescope(	windowName,
-												&cRemoteDeviceList[deviceIdx].deviceAddress,
-												cRemoteDeviceList[deviceIdx].port,
-												cRemoteDeviceList[deviceIdx].alpacaDeviceNum);
-				}
-				break;
-
-			case kDeviceType_SafetyMonitor:
-				break;
-
-			case kDeviceType_Switch:
-				windowExists	=	CheckForOpenWindowByName(windowName);
-				if (windowExists)
-				{
-					CONSOLE_DEBUG_W_STR("Window already open:", windowName);
-				}
-				else
-				{
-					new ControllerSwitch(	windowName,
-											&cRemoteDeviceList[deviceIdx].deviceAddress,
-											cRemoteDeviceList[deviceIdx].port,
-											cRemoteDeviceList[deviceIdx].alpacaDeviceNum);
-				}
-				break;
-
-			//*	extras defined by MLS
-			case kDeviceType_SlitTracker:
-				windowExists	=	CheckForOpenWindowByName(windowName);
-				if (windowExists)
-				{
-					CONSOLE_DEBUG_W_STR("Window already open:", windowName);
-				}
-				else
-				{
-					new ControllerSlit(windowName, &cRemoteDeviceList[deviceIdx]);
-				}
-				break;
-
-			case kDeviceType_Multicam:
-//			case kDeviceType_Shutter:
-			case kDeviceType_undefined:
-			case kDeviceType_last:
-				break;
 			}
 		}
 		else
@@ -621,6 +624,7 @@ int		foundIndex;
 //	CONSOLE_DEBUG(__FUNCTION__);
 //	CONSOLE_DEBUG_W_NUM("gRemoteCnt\t\t=", gRemoteCnt);
 //	CONSOLE_DEBUG_W_NUM("kMaxAlpacaDeviceCnt\t=", kMaxAlpacaDeviceCnt);
+//	CONSOLE_ABORT(__FUNCTION__);
 
 	for (iii=0; iii<gRemoteCnt; iii++)
 	{
@@ -685,6 +689,7 @@ int		linesOnScreen;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 //	CONSOLE_DEBUG_W_NUM("kMaxAlpacaDeviceCnt\t=", kMaxAlpacaDeviceCnt);
+//	CONSOLE_ABORT(__FUNCTION__);
 
 	iii				=	0;
 	boxId			=	0;

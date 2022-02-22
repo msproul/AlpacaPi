@@ -142,12 +142,11 @@ class WindowTabSwitch: public WindowTab
 		//
 				WindowTabSwitch(	const int	xSize,
 									const int	ySize,
-									CvScalar	backGrndColor,
+									cv::Scalar	backGrndColor,
 									const char	*windowName);
 		virtual	~WindowTabSwitch(void);
 
 		virtual	void	SetupWindowControls(void);
-		virtual	void	DrawGraphWidget(IplImage *openCV_Image, const int widgetIdx);
 		virtual	void	ProcessButtonClick(const int buttonIdx);
 
 				void	ToggleSwitchState(const int switchNum);

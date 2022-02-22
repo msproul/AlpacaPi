@@ -144,20 +144,20 @@ bool	TelescopeDriverSkyWatch::SendCmdsPeriodic(void)
 bool	isValid;
 char	receiveBuff[64];
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	isValid			=	false;
 	receiveBuff[0]	=	0;
 	//--------------------------------------------------------------------------
 	//*	Right Ascension
 	Serial_Send_Data(cDeviceConnFileDesc, ":j1\r", true);
 	Serial_Read_Data(cDeviceConnFileDesc, receiveBuff, 32);
-	CONSOLE_DEBUG_W_STR("receiveBuff\t=", receiveBuff);
+//	CONSOLE_DEBUG_W_STR("receiveBuff\t=", receiveBuff);
 
 	//--------------------------------------------------------------------------
 	//*	Declination
 	Serial_Send_Data(cDeviceConnFileDesc, ":j2\r", true);
 	Serial_Read_Data(cDeviceConnFileDesc, receiveBuff, 32);
-	CONSOLE_DEBUG_W_STR("receiveBuff\t=", receiveBuff);
+//	CONSOLE_DEBUG_W_STR("receiveBuff\t=", receiveBuff);
 
 
 	return(isValid);

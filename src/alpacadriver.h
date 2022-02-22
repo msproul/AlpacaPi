@@ -66,9 +66,10 @@
 
 
 
-
-#ifndef	_CONTROLLER_H_
-	#include	"controller.h"
+#ifdef _USE_OPENCV_
+	#ifndef	_CONTROLLER_H_
+		#include	"controller.h"
+	#endif
 #endif
 
 
@@ -295,13 +296,14 @@ class AlpacaDriver
 				time_t					cTimeOfLastWatchDogCheck;
 				int						cWatchDogTimeOut_Minutes;
 
+	#ifdef _USE_OPENCV_
 		//-------------------------------------------------------------------------
 		//*	live controller window
 		virtual	TYPE_ASCOM_STATUS		OpenLiveWindow(char *alpacaErrMsg);
 		virtual	TYPE_ASCOM_STATUS		CloseLiveWindow(char *alpacaErrMsg);
 		virtual	void					UpdateLiveWindow(void);
 				Controller				*cLiveController;
-
+	#endif // _USE_OPENCV_
 
 };
 

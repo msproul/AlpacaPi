@@ -106,8 +106,14 @@
 
 
 #ifdef _USE_OPENCV_
-	#include "opencv/highgui.h"
-	#include "opencv2/highgui/highgui_c.h"
+	#ifdef _USE_OPENCV_CPP_
+		#include	<opencv2/opencv.hpp>
+	#else
+		#include "opencv/highgui.h"
+		#include "opencv2/highgui/highgui_c.h"
+		#include "opencv2/imgproc/imgproc_c.h"
+		#include "opencv2/core/version.hpp"
+	#endif // _USE_OPENCV_CPP_
 #endif
 
 #include	"ASICamera2.h"
@@ -1047,7 +1053,7 @@ int				deltaSecs;
 					myCVrect.height	=	kTextBoxHeight;
 					cvRectangleR(	cOpenCV_Image,
 									myCVrect,
-									cSideBarBlk,				//	CvScalar color,
+									cSideBarBlk,				//	color,
 									CV_FILLED,					//	int thickness CV_DEFAULT(1),
 									8,							//	int line_type CV_DEFAULT(8),
 									0);							//	int shift CV_DEFAULT(0));

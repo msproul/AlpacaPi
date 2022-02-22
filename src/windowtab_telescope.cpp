@@ -43,7 +43,7 @@
 //**************************************************************************************
 WindowTabTelescope::WindowTabTelescope(	const int	xSize,
 										const int	ySize,
-										CvScalar	backGrndColor,
+										cv::Scalar	backGrndColor,
 										const char	*windowName)
 	:WindowTab(xSize, ySize, backGrndColor, windowName)
 {
@@ -95,8 +95,8 @@ int			labelWidth;
 int			valueWidth;
 int			label_xLoc;
 int			value_xLoc;
-CvScalar	btnBGcolor;
-CvScalar	btnTXTcolor;
+cv::Scalar	btnBGcolor;
+cv::Scalar	btnTXTcolor;
 
 	myClmWidth		=	cWidth / 12;
 	myClmWidth		-=	2;
@@ -237,8 +237,8 @@ CvScalar	btnTXTcolor;
 	}
 
 
-	SetWidgetType(		kTelescope_SlewRate_Title,	kWidgetType_Text);
-	SetWidgetType(		kTelescope_SlewingStatus,	kWidgetType_Text);
+	SetWidgetType(		kTelescope_SlewRate_Title,	kWidgetType_TextBox);
+	SetWidgetType(		kTelescope_SlewingStatus,	kWidgetType_TextBox);
 	SetWidgetText(		kTelescope_SlewingStatus,	"Slewing ???");
 
 	SetWidgetText(		kTelescope_SlewRate_Title,		"Slew Rate");
@@ -298,7 +298,7 @@ CvScalar	btnTXTcolor;
 		yLoc			+=	cRadioBtnHt;
 		yLoc			+=	2;
 	}
-	SetWidgetType(		kTelescope_TrackingRate_Title,		kWidgetType_Text);
+	SetWidgetType(		kTelescope_TrackingRate_Title,		kWidgetType_TextBox);
 	SetWidgetText(		kTelescope_TrackingRate_Title,		"Tracking Rate");
 
 	SetWidgetText(		kTelescope_TrackingRate_Sidereal,	"Sidereal");

@@ -82,6 +82,10 @@
 //*	Dec 14,	2021	<MLS> Changed how "connected" is handled,
 //*	Dec 14,	2021	<MLS> 			only connect if not already connected
 //*	Dec 14,	2021	<MLS> Added CheckConnectedState()
+//*	Feb 17,	2022	<MLS> Started working on opencv C++ support
+//*	Feb 17,	2022	<MLS> Added SetFontInfo() and TYPE_FontInfo
+//*	Feb 18,	2022	<MLS> Added DrawWidgetBackground()
+//*	Feb 20,	2022	<MLS> Added a bunch of Low Level Drawing commands LLD_....
 //*****************************************************************************
 
 
@@ -91,14 +95,19 @@
 #include	<sys/time.h>
 
 
-#include "opencv/highgui.h"
-#include "opencv2/highgui/highgui_c.h"
-#include "opencv2/imgproc/imgproc_c.h"
-#include "opencv2/core/version.hpp"
+#include	<opencv2/opencv.hpp>
+#include	<opencv2/core.hpp>
+#ifdef _USE_OPENCV_CPP_
+#else
+	#include "opencv/highgui.h"
+	#include "opencv2/highgui/highgui_c.h"
+	#include "opencv2/imgproc/imgproc_c.h"
+	#include "opencv2/core/version.hpp"
 
-#if (CV_MAJOR_VERSION >= 3)
-	#include "opencv2/imgproc/imgproc.hpp"
-#endif
+	#if (CV_MAJOR_VERSION >= 3)
+		#include "opencv2/imgproc/imgproc.hpp"
+	#endif
+#endif // _USE_OPENCV_CPP_
 
 #include	"discovery_lib.h"
 #include	"helper_functions.h"
@@ -110,14 +119,28 @@
 #include	"widget.h"
 #include	"controller.h"
 
+
+#ifdef _ENABLE_CVFONT_
+	CvFont		gTextFont[kFont_last];
+#endif
+
 Controller	*gControllerList[kMaxControllers];
 int			gControllerCnt			=	-1;
-CvFont		gTextFont[kFont_last];
 bool		gFontsNeedInit			=	true;
 char		gColorOverRide			=	0;
 Controller	*gCurrentActiveWindow	=	NULL;
 bool		gDebugBackgroundThread	=	false;
 
+
+TYPE_FontInfo	gFontInfo[kFont_last];
+
+//*****************************************************************************
+static void	SetFontInfo(TYPE_FontInfo *fontInfo, int fontID, double scale, int thickness)
+{
+	fontInfo->fontID	=	fontID;
+	fontInfo->thickness	=	thickness;
+	fontInfo->scale		=	scale;
+}
 
 //*****************************************************************************
 static void	InitFonts(void)
@@ -125,6 +148,19 @@ static void	InitFonts(void)
 //int		iii;
 //double	myFontDX;
 
+
+	SetFontInfo(&gFontInfo[kFont_Small],			cv::FONT_HERSHEY_PLAIN,	0.7, 1);
+	SetFontInfo(&gFontInfo[kFont_RadioBtn],			cv::FONT_HERSHEY_PLAIN,	0.8, 1);
+	SetFontInfo(&gFontInfo[kFont_TextList],			cv::FONT_HERSHEY_PLAIN,	0.9, 1);
+	SetFontInfo(&gFontInfo[kFont_Medium],			cv::FONT_HERSHEY_PLAIN,	1.0, 1);
+	SetFontInfo(&gFontInfo[kFont_Large],			cv::FONT_HERSHEY_PLAIN,	1.7, 1);
+	SetFontInfo(&gFontInfo[kFont_MonoSpace],		cv::FONT_HERSHEY_PLAIN,	0.7, 1);
+	SetFontInfo(&gFontInfo[kFont_Triplex_Small],	cv::FONT_HERSHEY_TRIPLEX,	0.5, 1);
+	SetFontInfo(&gFontInfo[kFont_Triplex_Large],	cv::FONT_HERSHEY_TRIPLEX,	0.75, 1);
+	SetFontInfo(&gFontInfo[kFont_Script_Large],		cv::FONT_HERSHEY_SCRIPT_COMPLEX,	2.00, 1);
+
+
+#ifdef _ENABLE_CVFONT_
 	gTextFont[kFont_Small]		=	cvFont(0.7, 1);
 	gTextFont[kFont_RadioBtn]	=	cvFont(0.8, 1);
 	gTextFont[kFont_TextList]	=	cvFont(0.9, 1);
@@ -153,6 +189,8 @@ static void	InitFonts(void)
 //
 //	}
 //	CONSOLE_ABORT(__FUNCTION__);
+#endif // _ENABLE_CVFONT_
+
 	gFontsNeedInit	=	false;
 
 }
@@ -295,6 +333,9 @@ int			objCntr;
 	cAlpacaDeviceNameStr[0]		=	0;
 	cLastUpdate_milliSecs		=	millis();
 
+	//*	low level drawing stuff
+	cCurrentLineWidth	=	1;
+
 #ifdef _CONTROLLER_USES_ALPACA_
 	ClearCapabilitiesList();
 #endif // _CONTROLLER_USES_ALPACA_
@@ -337,10 +378,16 @@ int			objCntr;
 	cUpdateWindow		=	true;
 	cLastAlpacaErrNum	=	kASCOM_Err_Success;
 
-	cBackGrndColor		=	CV_RGB(0,	0,	0);					//	CvScalar color,
+	cBackGrndColor		=	CV_RGB(0,	0,	0);
 
+#ifdef _USE_OPENCV_CPP_
+	CONSOLE_DEBUG("OpenCV++");
+	cOpenCV_matImage	=	new cv::Mat(cHeight, cWidth, CV_8UC3);
+#else
 	cOpenCV_Image		=	cvCreateImage(cvSize(cWidth, cHeight), IPL_DEPTH_8U, 3);
+#endif // _USE_OPENCV_CPP_
 
+	CONSOLE_DEBUG("OpenCV++");
 	cvNamedWindow(	cWindowName,
 				//	(CV_WINDOW_NORMAL)
 					(CV_WINDOW_NORMAL | CV_WINDOW_KEEPRATIO | CV_GUI_NORMAL)
@@ -378,7 +425,7 @@ int			objCntr;
 	//*	set defaults for the tabs
 	for (iii=0; iii < kMaxTabs; iii++)
 	{
-		memset(&cTabList[iii], 0, sizeof(TYPE_WIDGET));
+		memset((void *)&cTabList[iii], 0, sizeof(TYPE_WIDGET));
 		cTabList[iii].bgColor			=	CV_RGB(128,	128,	128);
 		cTabList[iii].textColor			=	CV_RGB(0,	0,		255);
 		cTabList[iii].borderColor		=	CV_RGB(255,	255,	255);
@@ -429,6 +476,31 @@ int		iii;
 	{
 		gCurrentActiveWindow	=	NULL;
 	}
+#ifdef _USE_OPENCV_CPP_
+	if (cOpenCV_matImage != NULL)
+	{
+//		cv::(&cOpenCV_matImage);
+//		cOpenCV_matImage	=	NULL;
+		delete cOpenCV_matImage;
+	}
+	//---try------try------try------try------try------try---
+	try
+	{
+		cv::destroyWindow(cWindowName);
+	}
+	catch(cv::Exception& ex)
+	{
+		//*	we sometimes can open the same window twice, this should not happen but sometimes does.
+		//*	this catch prevents opencv from crashing
+		CONSOLE_DEBUG("cvDestroyWindow() had an exception");
+		if (ex.code != CV_StsAssert)
+		{
+			CONSOLE_DEBUG_W_NUM("openCV error code\t=",	ex.code);
+		}
+	}
+	//---end------end------end------end------end------end---
+
+#else
 	//*	release the image
 	if (cOpenCV_Image != NULL)
 	{
@@ -452,6 +524,7 @@ int		iii;
 		}
 	}
 	//---end------end------end------end------end------end---
+#endif // _USE_OPENCV_CPP_
 
 //	CONSOLE_DEBUG("Removing from list");
 	for (iii=0; iii<kMaxControllers; iii++)
@@ -476,6 +549,10 @@ bool		validData;
 	{
 		//*	see if its connected
 		validData	=	AlpacaGetCommonConnectedState(cAlpacaDeviceTypeStr);
+		if (validData == false)
+		{
+			CONSOLE_DEBUG("No valid data from AlpacaGetCommonConnectedState()");
+		}
 		CONSOLE_DEBUG_W_NUM("cCommonProp.Connected\t=", cCommonProp.Connected);
 
 		//*	if its not connected, send the connect command
@@ -518,7 +595,7 @@ int		iii;
 
 
 //**************************************************************************************
-void	Controller::RunBackgroundTasks(bool enableDebug)
+void	Controller::RunBackgroundTasks(const char *callingFunction, bool enableDebug)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
 }
@@ -529,7 +606,7 @@ void	Controller::HandleWindow(void)
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 
 #ifndef _USE_BACKGROUND_THREAD_
-	RunBackgroundTasks();
+	RunBackgroundTasks(__FUNCTION__, false);
 #endif
 
 
@@ -545,6 +622,21 @@ void	Controller::HandleWindow(void)
 void	Controller::HandleWindowUpdate(void)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
+#ifdef _USE_OPENCV_CPP_
+//	CONSOLE_DEBUG("OpenCV++");
+	if (cOpenCV_matImage != NULL)
+	{
+		//*	Do drawing
+		DrawWindow();
+
+		cv::imshow(cWindowName, *cOpenCV_matImage);
+//		cvUpdateWindow(cWindowName);//
+	}
+	else
+	{
+		CONSOLE_DEBUG("cOpenCV_matImage is NULL");
+	}
+#else
 	if (cOpenCV_Image != NULL)
 	{
 		//*	Do drawing
@@ -557,6 +649,7 @@ void	Controller::HandleWindowUpdate(void)
 	{
 		CONSOLE_DEBUG("cOpenCV_Image is NULL");
 	}
+#endif // _USE_OPENCV_CPP_
 }
 
 //*****************************************************************************
@@ -574,7 +667,11 @@ TYPE_WIDGET		*myWidgetPtr;
 	}
 	cUpdateProtect	=	true;
 //	CONSOLE_DEBUG_W_NUM(__FUNCTION__, cDebugCounter++);
+#ifdef _USE_OPENCV_CPP_
+	if (cOpenCV_matImage != NULL)
+#else
 	if (cOpenCV_Image != NULL)
+#endif
 	{
 		if (cCurrentTabObjPtr != NULL)
 		{
@@ -603,8 +700,12 @@ TYPE_WIDGET		*myWidgetPtr;
 					updatedCnt++;
 				}
 			}
+		#ifdef _USE_OPENCV_CPP_
+			cv::imshow(cWindowName, *cOpenCV_matImage);
+		#else
 			cvShowImage(cWindowName, cOpenCV_Image);
-			cvWaitKey(15);
+		#endif
+			cv::waitKey(15);
 //			CONSOLE_DEBUG_W_NUM("updatedCnt\t=", updatedCnt);
 		}
 		else
@@ -674,7 +775,7 @@ int		tabLeft;
 	//*	first go through and initialize all of the tab data
 	for (iii=0; iii<cTabCount; iii++)
 	{
-		memset(&cTabList[iii], 0, sizeof(TYPE_WIDGET));
+		memset((void *)&cTabList[iii], 0, sizeof(TYPE_WIDGET));
 	}
 
 	if (newTabCount <= kMaxTabs)
@@ -710,7 +811,7 @@ int		tabLeft;
 	for (iii=1; iii<cTabCount; iii++)
 	{
 		cTabList[iii].valid			=	true;
-//		cTabList[iii].widgetType	=	kWidgetType_Text;
+//		cTabList[iii].widgetType	=	kWidgetType_TextBox;
 		cTabList[iii].widgetType	=	kWidgetType_Button;
 		cTabList[iii].left			=	tabLeft;
 		cTabList[iii].top			=	0;
@@ -986,7 +1087,11 @@ int		wheelMovement;
 //				CONSOLE_DEBUG_W_NUM("cLastClicked_Tab\t=", cLastClicked_Tab);
 				cTabList[cLastClicked_Tab].highLighted	=	true;
 				DrawWidgetButton(&cTabList[cLastClicked_Tab]);
+			#ifdef _USE_OPENCV_CPP_
+				cv::imshow(cWindowName, *cOpenCV_matImage);
+			#else
 				cvShowImage(cWindowName, cOpenCV_Image);
+			#endif // _USE_OPENCV_CPP_
 				cTabList[cLastClicked_Tab].highLighted	=	false;
 			}
 
@@ -1157,25 +1262,32 @@ int		wheelMovement;
 //	}
 }
 
+//**************************************************************************************
+void	Controller::DrawWidgetBackground(TYPE_WIDGET *theWidget)
+{
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, theWidget->textString);
+	cCurrentColor	=	theWidget->bgColor;
+	LLD_FillRect(theWidget->left,	theWidget->top,	theWidget->width,	theWidget->height);
+
+
+	if (theWidget->includeBorder)
+	{
+		cCurrentColor	=	theWidget->borderColor;
+		LLD_FrameRect(theWidget->left,	theWidget->top,	theWidget->width,	theWidget->height);
+	}
+}
 
 //**************************************************************************************
 void	Controller::DrawWidgetButton(TYPE_WIDGET *theWidget)
 {
-CvRect		myCVrect;
-CvPoint		textLoc;
-CvSize		textSize;
-int			baseLine;
-int			textOffsetX;
-int			textOffsetY;
-int			curFontNum;
-CvScalar	myGBcolor;
 
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, theWidget->textString);
-	myCVrect.x		=	theWidget->left;
-	myCVrect.y		=	theWidget->top;
-	myCVrect.width	=	theWidget->width;
-	myCVrect.height	=	theWidget->height;
-
+#ifdef _USE_OPENCV_CPP_
+	cv::Scalar	myGBcolor;
+#else
+	cv::Scalar	myGBcolor;
+#endif // _USE_OPENCV_CPP_
+	DrawWidgetBackground(theWidget);
 
 	myGBcolor	=	theWidget->bgColor;
 	if (theWidget->highLighted)
@@ -1185,87 +1297,29 @@ CvScalar	myGBcolor;
 		myGBcolor.val[1]	*=	0.75;
 		myGBcolor.val[2]	*=	0.75;
 		myGBcolor.val[3]	*=	0.75;
-	}
-	cvRectangleR(	cOpenCV_Image,
-					myCVrect,
-					myGBcolor,					//	CvScalar color,
-					CV_FILLED,					//	int thickness CV_DEFAULT(1),
-					8,							//	int line_type CV_DEFAULT(8),
-					0);							//	int shift CV_DEFAULT(0));
-
-	if (theWidget->includeBorder)
-	{
-		cvRectangleR(	cOpenCV_Image,
-						myCVrect,
-						theWidget->borderColor,	//	CvScalar color,
-						1,							//	int thickness CV_DEFAULT(1),
-						8,							//	int line_type CV_DEFAULT(8),
-						0);							//	int shift CV_DEFAULT(0));
-
-
+		cCurrentColor	=	myGBcolor;
+		LLD_FillRect(theWidget->left,	theWidget->top,	theWidget->width,	theWidget->height);
 	}
 	if (theWidget->selected)
 	{
-		myCVrect.x		+=	3;
-		myCVrect.y		+=	3;
-		myCVrect.width	-=	6;
-		myCVrect.height	-=	6;
-		cvRectangleR(	cOpenCV_Image,
-						myCVrect,
-						theWidget->borderColor,	//	CvScalar color,
-						CV_FILLED,						//	int thickness CV_DEFAULT(1),
-						8,							//	int line_type CV_DEFAULT(8),
-						0);							//	int shift CV_DEFAULT(0));
+		cCurrentColor	=	theWidget->borderColor;
+		LLD_FillRect(	theWidget->left		+ 3,
+						theWidget->top		+ 3,
+						theWidget->width	- 6,
+						theWidget->height	- 6);
 	}
-	if (strlen(theWidget->textString) > 0)
+
+	if (theWidget->includeBorder)
 	{
-		curFontNum	=	theWidget->fontNum,
-		cvGetTextSize(	theWidget->textString,
-						&gTextFont[curFontNum],
-						&textSize,
-						&baseLine);
-
-		switch (theWidget->justification)
-		{
-			case kJustification_Left:
-				textLoc.x	=	theWidget->left + 7;
-				textOffsetY	=	(theWidget->height / 2) - (textSize.height / 2) + baseLine + 5;
-				textLoc.y	=	theWidget->top + textOffsetY;
-				break;
-
-			case kJustification_Center:
-			case kJustification_Right:
-			default:
-				textOffsetX	=	(theWidget->width / 2) - (textSize.width / 2);
-				textOffsetY	=	(theWidget->height / 2) - (textSize.height / 2) + baseLine + 5;
-
-				textLoc.x	=	theWidget->left + textOffsetX;
-				textLoc.y	=	theWidget->top + textOffsetY;
-				break;
-
-		}
-		if (theWidget->highLighted)
-		{
-			textLoc.x	+=	2;
-			textLoc.y	+=	2;
-		}
-
-		cvPutText(	cOpenCV_Image,
-					theWidget->textString,
-					textLoc,
-					&gTextFont[curFontNum],
-					theWidget->textColor
-					);
+		cCurrentColor	=	theWidget->borderColor;
+		LLD_FrameRect(theWidget->left,	theWidget->top,	theWidget->width,	theWidget->height);
 	}
+	DrawWidgetText(theWidget);
 }
 
 //**************************************************************************************
 void	Controller::DrawWidgetTextWithTabs(TYPE_WIDGET *theWidget)
 {
-CvRect		myCVrect;
-CvPoint		textLoc;
-CvSize		textSize;
-int			baseLine;
 int			textOffsetY;
 int			curFontNum;
 char		textBuffer[kMaxWidgetStrLen];
@@ -1274,62 +1328,39 @@ int			iii;
 char		theChar;
 int			sLen;
 int			currentTabStop;
+int			textLoc_X;
+int			textLoc_Y;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-	myCVrect.x		=	theWidget->left;
-	myCVrect.y		=	theWidget->top;
-	myCVrect.width	=	theWidget->width;
-	myCVrect.height	=	theWidget->height;
+	DrawWidgetBackground(theWidget);
 
-
-	cvRectangleR(	cOpenCV_Image,
-					myCVrect,
-					theWidget->bgColor,			//	CvScalar color,
-					CV_FILLED,					//	int thickness CV_DEFAULT(1),
-					8,							//	int line_type CV_DEFAULT(8),
-					0);							//	int shift CV_DEFAULT(0));
-
-	if (theWidget->includeBorder)
-	{
-		cvRectangleR(	cOpenCV_Image,
-						myCVrect,
-						theWidget->borderColor,		//	CvScalar color,
-						1,							//	int thickness CV_DEFAULT(1),
-						8,							//	int line_type CV_DEFAULT(8),
-						0);							//	int shift CV_DEFAULT(0));
-	}
 	sLen	=	strlen(theWidget->textString);
 	if (sLen > 0)
 	{
-		curFontNum	=	theWidget->fontNum,
-		cvGetTextSize(	theWidget->textString,
-						&gTextFont[curFontNum],
-						&textSize,
-						&baseLine);
-		textLoc.x	=	theWidget->left + 7;
-		textOffsetY	=	(theWidget->height / 2) - (textSize.height / 2) + baseLine + 5;
-		textLoc.y	=	theWidget->top + textOffsetY;
+		LLD_GetTextSize("test", theWidget->fontNum);
+		curFontNum		=	theWidget->fontNum;
+
+		textLoc_X	=	theWidget->left + 7;
+		textOffsetY	=	(theWidget->height / 2) - (cCurrentFontHeight / 2) + cCurrentFontBaseLine + 5;
+		textLoc_Y	=	theWidget->top + textOffsetY;
 
 		ccc				=	0;
 		currentTabStop	=	-1;
+		cCurrentColor	=	theWidget->textColor;
 		for (iii=0; iii<=sLen; iii++)
 		{
 			theChar	=	theWidget->textString[iii];
 			if ((theChar == 0x09) || (theChar == 0))
 			{
 				textBuffer[ccc]	=	0;
-				textLoc.x		=	theWidget->left + 7;
+				textLoc_X		=	theWidget->left + 7;
 				if (currentTabStop >= 0)
 				{
-					textLoc.x	+=	theWidget->tabStops[currentTabStop];
+					textLoc_X	+=	theWidget->tabStops[currentTabStop];
 				}
-				cvPutText(	cOpenCV_Image,
-							textBuffer,
-							textLoc,
-							&gTextFont[curFontNum],
-							theWidget->textColor
-							);
+				LLD_DrawCString(textLoc_X, textLoc_Y, textBuffer, curFontNum);
+
 				currentTabStop++;
 				ccc			=	0;
 			}
@@ -1342,84 +1373,66 @@ int			currentTabStop;
 	}
 }
 
-
 //**************************************************************************************
-void	Controller::DrawWidgetText(TYPE_WIDGET *theWidget)
+//*	this routine ONLY draws the text,
+//**************************************************************************************
+void	Controller::DrawWidgetText(TYPE_WIDGET *theWidget, int horzOffset, int vertOffset)
+
 {
-CvRect		myCVrect;
-CvPoint		textLoc;
-CvSize		textSize;
-int			baseLine;
+//CvSize		textSize;
+int			textWidthPixels;
+int			textLoc_X;
+int			textLoc_Y;
 int			textOffsetX;
 int			textOffsetY;
-int			curFontNum;
 
-	myCVrect.x		=	theWidget->left;
-	myCVrect.y		=	theWidget->top;
-	myCVrect.width	=	theWidget->width;
-	myCVrect.height	=	theWidget->height;
-
-
-	cvRectangleR(	cOpenCV_Image,
-					myCVrect,
-					theWidget->bgColor,			//	CvScalar color,
-					CV_FILLED,					//	int thickness CV_DEFAULT(1),
-					8,							//	int line_type CV_DEFAULT(8),
-					0);							//	int shift CV_DEFAULT(0));
-
-	if (theWidget->includeBorder)
-	{
-		cvRectangleR(	cOpenCV_Image,
-						myCVrect,
-						theWidget->borderColor,		//	CvScalar color,
-						1,							//	int thickness CV_DEFAULT(1),
-						8,							//	int line_type CV_DEFAULT(8),
-						0);							//	int shift CV_DEFAULT(0));
-	}
+//	CONSOLE_DEBUG(__FUNCTION__);
 	if (strlen(theWidget->textString) > 0)
 	{
-		curFontNum	=	theWidget->fontNum,
-		cvGetTextSize(	theWidget->textString,
-						&gTextFont[curFontNum],
-						&textSize,
-						&baseLine);
+		textWidthPixels		=	LLD_GetTextSize(theWidget->textString, theWidget->fontNum);
 		switch (theWidget->justification)
 		{
 			case kJustification_Left:
-				textLoc.x	=	theWidget->left + 7;
-				textOffsetY	=	(theWidget->height / 2) - (textSize.height / 2) + baseLine + 5;
-				textLoc.y	=	theWidget->top + textOffsetY;
+				textLoc_X	=	theWidget->left + 7;
 				break;
 
 			case kJustification_Center:
 			case kJustification_Right:
 			default:
-				textOffsetX	=	(theWidget->width / 2) - (textSize.width / 2);
-				textOffsetY	=	(theWidget->height / 2) - (textSize.height / 2) + baseLine + 5;
-
-				textLoc.x	=	theWidget->left + textOffsetX;
-				textLoc.y	=	theWidget->top + textOffsetY;
+				textOffsetX	=	(theWidget->width / 2) - (textWidthPixels / 2);
+				textLoc_X	=	theWidget->left + textOffsetX;
 				break;
 
 		}
-		cvPutText(	cOpenCV_Image,
-					theWidget->textString,
-					textLoc,
-					&gTextFont[curFontNum],
-					theWidget->textColor
-					);
+		textOffsetY	=	(theWidget->height / 2) - (cCurrentFontHeight / 2) + cCurrentFontBaseLine + 5;
+		textLoc_Y	=	theWidget->top + textOffsetY;
+
+		//*	add in the offsets passed in
+		textLoc_X	+=	horzOffset;
+		textLoc_Y	+=	vertOffset;
+
+		if (theWidget->highLighted)
+		{
+			textLoc_X	+=	2;
+			textLoc_Y	+=	2;
+		}
+		cCurrentColor	=	theWidget->textColor;
+
+		LLD_DrawCString(textLoc_X, textLoc_Y, theWidget->textString, theWidget->fontNum);
 	}
+}
+
+//**************************************************************************************
+void	Controller::DrawWidgetTextBox(TYPE_WIDGET *theWidget)
+{
+	DrawWidgetBackground(theWidget);
+	DrawWidgetText(theWidget);
 }
 
 #define	kMaxTextLineLen	512
 //**************************************************************************************
 void	Controller::DrawWidgetMultiLineText(TYPE_WIDGET *theWidget)
 {
-CvRect		myCVrect;
-CvPoint		textLoc;
-CvSize		textSize;
-int			baseLine;
-int			curFontNum;
 char		lineBuff[kMaxTextLineLen];
 int			iii;
 int			ccc;
@@ -1429,33 +1442,14 @@ bool		drawTextFlg;
 char		theChar;
 char		previousChar;
 char		*myStringPtr;
+int			textWidthPixels;
+int			textLoc_X;
+int			textLoc_Y;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
-
-	myCVrect.x		=	theWidget->left;
-	myCVrect.y		=	theWidget->top;
-	myCVrect.width	=	theWidget->width;
-	myCVrect.height	=	theWidget->height;
-
-	cvRectangleR(	cOpenCV_Image,
-					myCVrect,
-					theWidget->bgColor,			//	CvScalar color,
-					CV_FILLED,					//	int thickness CV_DEFAULT(1),
-					8,							//	int line_type CV_DEFAULT(8),
-					0);							//	int shift CV_DEFAULT(0));
-
-	if (theWidget->includeBorder)
-	{
-		cvRectangleR(	cOpenCV_Image,
-						myCVrect,
-						theWidget->borderColor,		//	CvScalar color,
-						1,							//	int thickness CV_DEFAULT(1),
-						8,							//	int line_type CV_DEFAULT(8),
-						0);							//	int shift CV_DEFAULT(0));
-	}
+	DrawWidgetBackground(theWidget);
 	if (theWidget->textPtr != NULL)
 	{
-//		CONSOLE_DEBUG("Using textPtr");
 		myStringPtr	=	theWidget->textPtr;
 	}
 	else
@@ -1466,19 +1460,14 @@ char		*myStringPtr;
 	if (strlen(myStringPtr) > 0)
 	{
 		previousChar	=	0;
-		curFontNum		=	theWidget->fontNum,
-		cvGetTextSize(	"test",
-						&gTextFont[curFontNum],
-						&textSize,
-						&baseLine);
+		textWidthPixels	=	LLD_GetTextSize("test", theWidget->fontNum);
 
-		textLoc.x	=	theWidget->left + 10;
-		textLoc.y	=	theWidget->top + textSize.height + baseLine;
+		textLoc_X	=	theWidget->left + 10;
+		textLoc_Y	=	theWidget->top + cCurrentFontHeight + cCurrentFontBaseLine;
 
 		ccc			=	0;
 		sLen		=	strlen(myStringPtr);
 		drawTextFlg	=	false;
-		curFontNum	=	theWidget->fontNum;
 		for (iii=0; iii<=sLen; iii++)
 		{
 			theChar	=	myStringPtr[iii];
@@ -1494,16 +1483,13 @@ char		*myStringPtr;
 			{
 				if (ccc < kMaxTextLineLen)
 				{
-					lineBuff[ccc++]	=	myStringPtr[iii];
+					lineBuff[ccc++]	=	theChar;
 					lineBuff[ccc]	=	0;
 				}
 
 				//*	check the width of the line to make sure its going to fit
-				cvGetTextSize(	lineBuff,
-								&gTextFont[curFontNum],
-								&textSize,
-								&baseLine);
-				if (textSize.width > (theWidget->width - 150))
+				textWidthPixels	=	LLD_GetTextSize(lineBuff, theWidget->fontNum);
+				if (textWidthPixels > (theWidget->width - 150))
 				{
 					drawTextFlg	=	true;
 				}
@@ -1520,251 +1506,119 @@ char		*myStringPtr;
 
 			if (drawTextFlg)
 			{
-				cvGetTextSize(	lineBuff,
-								&gTextFont[curFontNum],
-								&textSize,
-								&baseLine);
+				textWidthPixels	=	LLD_GetTextSize(lineBuff, theWidget->fontNum);
+
 				//*	this allows for blank lines
 				if (strlen(lineBuff) > 0)
 				{
 					switch (theWidget->justification)
 					{
 						case kJustification_Left:
-							textLoc.x	=	theWidget->left + 7;
+							textLoc_X	=	theWidget->left + 7;
 							break;
 
 						case kJustification_Center:
 						case kJustification_Right:
 						default:
-							textOffsetX	=	(theWidget->width / 2) - (textSize.width / 2);
-							textLoc.x	=	theWidget->left + textOffsetX;
+							textOffsetX	=	(theWidget->width / 2) - (textWidthPixels / 2);
+							textLoc_X	=	theWidget->left + textOffsetX;
 							break;
 
 					}
-					cvPutText(	cOpenCV_Image,
-								lineBuff,
-								textLoc,
-								&gTextFont[curFontNum],
-								theWidget->textColor);
+					cCurrentColor	=	theWidget->textColor;
+					LLD_DrawCString(textLoc_X, textLoc_Y, lineBuff, theWidget->fontNum);
 				}
 				ccc				=	0;
 				lineBuff[ccc]	=	0;
-				textLoc.y		+=	textSize.height;
-				textLoc.y		+=	baseLine;
+				textLoc_Y		+=	cCurrentFontHeight;
+				textLoc_Y		+=	cCurrentFontBaseLine;
 				drawTextFlg		=	false;
 			}
 		}
 	}
 }
 
-
 //**************************************************************************************
 void	Controller::DrawWidgetRadioButton(TYPE_WIDGET *theWidget)
 {
-CvRect		myCVrect;
-CvPoint		pointLoc;
-CvPoint		textLoc;
-CvSize		textSize;
-int			baseLine;
-int			textOffsetY;
-int			curFontNum;
 int			radius;
+int			pt1_X;
+int			pt1_Y;
 
-	myCVrect.x		=	theWidget->left;
-	myCVrect.y		=	theWidget->top;
-	myCVrect.width	=	theWidget->width;
-	myCVrect.height	=	theWidget->height;
+	//*	Radio button calculations
+	pt1_X		=	theWidget->left + (theWidget->height / 2);
+	pt1_Y		=	theWidget->top + (theWidget->height / 2);
+	radius		=	theWidget->height / 3;
 
-
-	cvRectangleR(	cOpenCV_Image,
-					myCVrect,
-					theWidget->bgColor,			//	CvScalar color,
-					CV_FILLED,					//	int thickness CV_DEFAULT(1),
-					8,							//	int line_type CV_DEFAULT(8),
-					0);							//	int shift CV_DEFAULT(0));
-
-	if (theWidget->includeBorder)
-	{
-		cvRectangleR(	cOpenCV_Image,
-						myCVrect,
-						theWidget->borderColor,		//	CvScalar color,
-						1,							//	int thickness CV_DEFAULT(1),
-						8,							//	int line_type CV_DEFAULT(8),
-						0);							//	int shift CV_DEFAULT(0));
-
-	}
+	DrawWidgetBackground(theWidget);
 	//*	draw the radio button
-	pointLoc.x		=	theWidget->left + (theWidget->height / 2);
-	pointLoc.y		=	theWidget->top + (theWidget->height / 2);
-	radius			=	theWidget->height / 3;
-	cvCircle(		cOpenCV_Image,
-					pointLoc,					//	CvPoint center,
-					radius,						//	int radius,
-//					CV_RGB(255, 255, 255),		//	CvScalar color, int thickness CV_DEFAULT(1),
-					theWidget->borderColor,		//	CvScalar color,
-					1,							//	int thickness
-					8,							//	int line_type CV_DEFAULT(8),
-					0);							//	int shift CV_DEFAULT(0));
+	cCurrentColor	=	theWidget->borderColor;
+	LLD_FrameEllipse(pt1_X, pt1_Y, radius, radius);
 	//*	check to see if its selected
 	if (theWidget->selected)
 	{
-		cvCircle(		cOpenCV_Image,
-						pointLoc,					//	CvPoint center,
-						radius - 2,					//	int radius,
-//						CV_RGB(255, 255, 255),		//	CvScalar color, int thickness CV_DEFAULT(1),
-						theWidget->borderColor,		//	CvScalar color,
-						CV_FILLED,					//	int thickness
-						8,							//	int line_type CV_DEFAULT(8),
-						0);							//	int shift CV_DEFAULT(0));
+		cCurrentColor	=	theWidget->borderColor;
+		LLD_FillEllipse(pt1_X, pt1_Y, radius - 2, radius - 2);
 	}
 
-	if (strlen(theWidget->textString) > 0)
-	{
-		curFontNum	=	theWidget->fontNum,
-		cvGetTextSize(	theWidget->textString,
-						&gTextFont[curFontNum],
-						&textSize,
-						&baseLine);
-		textLoc.x	=	theWidget->left + (2 * radius) + 8;
-		textOffsetY	=	(theWidget->height / 2) - (textSize.height / 2) + baseLine + 5;
-		textLoc.y	=	theWidget->top + textOffsetY;
-
-		cvPutText(	cOpenCV_Image,
-					theWidget->textString,
-					textLoc,
-					&gTextFont[curFontNum],
-					theWidget->textColor
-					);
-	}
+	DrawWidgetText(theWidget, ((2 * radius) + 8));
 }
 
 //**************************************************************************************
 void	Controller::DrawWidgetCheckBox(TYPE_WIDGET *theWidget)
 {
-CvRect		myCVrect;
-CvRect		checkBoxRect;
-CvPoint		textLoc;
-CvPoint		pt1;
-CvPoint		pt2;
-CvSize		textSize;
-int			baseLine;
-int			textOffsetY;
-int			curFontNum;
+int			pt1_X;
+int			pt1_Y;
+int			pt2_X;
+int			pt2_Y;
 
-	myCVrect.x		=	theWidget->left;
-	myCVrect.y		=	theWidget->top;
-	myCVrect.width	=	theWidget->width;
-	myCVrect.height	=	theWidget->height;
+#define	kInset	2
 
-
-	cvRectangleR(	cOpenCV_Image,
-					myCVrect,
-					theWidget->bgColor,			//	CvScalar color,
-					CV_FILLED,					//	int thickness CV_DEFAULT(1),
-					8,							//	int line_type CV_DEFAULT(8),
-					0);							//	int shift CV_DEFAULT(0));
-
-	if (theWidget->includeBorder)
-	{
-//		CONSOLE_DEBUG("includeBorder");
-		cvRectangleR(	cOpenCV_Image,
-						myCVrect,
-						theWidget->borderColor,		//	CvScalar color,
-						1,							//	int thickness CV_DEFAULT(1),
-						8,							//	int line_type CV_DEFAULT(8),
-						0);							//	int shift CV_DEFAULT(0));
-
-	}
+	DrawWidgetBackground(theWidget);
 	//*	draw the Check box
-	checkBoxRect.x		=	theWidget->left;
-	checkBoxRect.y		=	theWidget->top;
-	checkBoxRect.width	=	theWidget->height;
-	checkBoxRect.height	=	theWidget->height;
 
-	cvRectangleR(	cOpenCV_Image,
-					checkBoxRect,
-					CV_RGB(128, 128, 128),
-					CV_FILLED,					//	int thickness CV_DEFAULT(1),
-					8,							//	int line_type CV_DEFAULT(8),
-					0);							//	int shift CV_DEFAULT(0));
-
-
+	cCurrentColor	=	CV_RGB(128, 128, 128);
+	LLD_FillRect(theWidget->left,	theWidget->top,	theWidget->height,	theWidget->height);
 
 	//*	check to see if its selected
 	if (theWidget->selected)
 	{
-	#define	kInset	2
-		pt1.x	=	checkBoxRect.x + kInset;
-		pt1.y	=	checkBoxRect.y + kInset;
+		pt1_X	=	theWidget->left + kInset;
+		pt1_Y	=	theWidget->top + kInset;
 
-		pt2.x	=	checkBoxRect.x + checkBoxRect.width		- kInset;
-		pt2.y	=	checkBoxRect.y + checkBoxRect.height	- kInset;
-		cvLine(	cOpenCV_Image,
-				pt1,
-				pt2,
-				theWidget->borderColor,		//	CvScalar color,
-			//	CV_RGB(255, 0, 0),
-				2,							//	int thickness CV_DEFAULT(1),
-				8,							//	int line_type CV_DEFAULT(8),
-				0);							//	int shift CV_DEFAULT(0));
+		pt2_X	=	theWidget->left + theWidget->height - kInset;
+		pt2_Y	=	theWidget->top + theWidget->height - kInset;
+		cCurrentColor	=	theWidget->borderColor;
+		LLD_MoveTo(pt1_X, pt1_Y);
+		LLD_LineTo(pt2_X, pt2_Y);
 
-		pt1.x	=	checkBoxRect.x + checkBoxRect.width	- kInset;
-		pt1.y	=	checkBoxRect.y 						+ kInset;
+		pt1_X	=	theWidget->left + theWidget->height - kInset;
+		pt1_Y	=	theWidget->top + kInset;
 
-		pt2.x	=	checkBoxRect.x			 				+ kInset;
-		pt2.y	=	checkBoxRect.y + checkBoxRect.height	- kInset;
-		cvLine(	cOpenCV_Image,
-				pt1,
-				pt2,
-				theWidget->borderColor,		//	CvScalar color,
-			//	CV_RGB(255, 0, 0),
-				2,							//	int thickness CV_DEFAULT(1),
-				8,							//	int line_type CV_DEFAULT(8),
-				0);							//	int shift CV_DEFAULT(0));
+		pt2_X	=	theWidget->left + kInset;
+		pt2_Y	=	theWidget->top + theWidget->height - kInset;
+		LLD_MoveTo(pt1_X, pt1_Y);
+		LLD_LineTo(pt2_X, pt2_Y);
+
 	}
-	//*	draw the border AFTER the X mark
-	cvRectangleR(	cOpenCV_Image,
-					checkBoxRect,
-					theWidget->borderColor,		//	CvScalar color,
-					1,							//	int thickness CV_DEFAULT(1),
-					8,							//	int line_type CV_DEFAULT(8),
-					0);							//	int shift CV_DEFAULT(0));
-
-	if (strlen(theWidget->textString) > 0)
-	{
-		curFontNum	=	theWidget->fontNum,
-		cvGetTextSize(	theWidget->textString,
-						&gTextFont[curFontNum],
-						&textSize,
-						&baseLine);
-		textLoc.x	=	theWidget->left + theWidget->height + 8;
-		textOffsetY	=	(theWidget->height / 2) - (textSize.height / 2) + baseLine + 5;
-		textLoc.y	=	theWidget->top + textOffsetY;
-
-		cvPutText(	cOpenCV_Image,
-					theWidget->textString,
-					textLoc,
-					&gTextFont[curFontNum],
-					theWidget->textColor
-					);
-	}
+	DrawWidgetText(theWidget, (theWidget->height + 8), 0);
 }
 
 //**************************************************************************************
 void	Controller::DrawWidgetSlider(TYPE_WIDGET *theWidget)
 {
-CvRect		myCVrect;
-CvPoint		textLoc;
-CvSize		textSize;
-int			baseLine;
 int			textOffsetY;
-int			curFontNum;
 double		sliderDelata;
 char		leftString[32];
 char		rightString[32];
 int			vertCenter;
 int			radius;
 int			sliderOffset;
+int			textLoc_X;
+int			textLoc_Y;
+int			textWidthPixels;
+int			sliderLeft;
+int			sliderWidth;
 
 	sliderDelata	=	theWidget->sliderMax - theWidget->sliderMin;
 	if (sliderDelata >= 10)
@@ -1782,85 +1636,42 @@ int			sliderOffset;
 		sprintf(leftString,		"%1.3f",	theWidget->sliderMin);
 		sprintf(rightString,	"%1.3f",	theWidget->sliderMax);
 	}
-	myCVrect.x		=	theWidget->left;
-	myCVrect.y		=	theWidget->top;
-	myCVrect.width	=	theWidget->width;
-	myCVrect.height	=	theWidget->height;
+
+	DrawWidgetBackground(theWidget);
+
+	textWidthPixels		=	LLD_GetTextSize(rightString, theWidget->fontNum);
+
+	//*	calculate location for left string
+	textLoc_X	=	theWidget->left + 7;
+	textOffsetY	=	(theWidget->height / 2) - (cCurrentFontHeight / 2) + cCurrentFontBaseLine + 5;
+	textLoc_Y	=	theWidget->top + textOffsetY;
 
 
-	cvRectangleR(	cOpenCV_Image,
-					myCVrect,
-					theWidget->bgColor,			//	CvScalar color,
-					CV_FILLED,					//	int thickness CV_DEFAULT(1),
-					8,							//	int line_type CV_DEFAULT(8),
-					0);							//	int shift CV_DEFAULT(0));
-	if (theWidget->includeBorder)
-	{
-		cvRectangleR(	cOpenCV_Image,
-						myCVrect,
-						theWidget->borderColor,		//	CvScalar color,
-						1,							//	int thickness CV_DEFAULT(1),
-						8,							//	int line_type CV_DEFAULT(8),
-						0);							//	int shift CV_DEFAULT(0));
-	}
-	curFontNum	=	theWidget->fontNum,
-	cvGetTextSize(	rightString,
-					&gTextFont[curFontNum],
-					&textSize,
-					&baseLine);
+	LLD_DrawCString(textLoc_X, textLoc_Y, leftString, theWidget->fontNum);
 
-	textLoc.x	=	theWidget->left + 7;
-	textOffsetY	=	(theWidget->height / 2) - (textSize.height / 2) + baseLine + 5;
-	textLoc.y	=	theWidget->top + textOffsetY;
-
-	cvPutText(	cOpenCV_Image,
-				leftString,
-				textLoc,
-				&gTextFont[curFontNum],
-				theWidget->textColor
-				);
-
-	textOffsetY	=	(theWidget->height / 2) - (textSize.height / 2) + baseLine + 5;
-
-	textLoc.x	=	(theWidget->left + theWidget->width)- textSize.width;
-	textLoc.x	-=	5;
-	textLoc.y	=	theWidget->top + textOffsetY;
-
-	cvPutText(	cOpenCV_Image,
-				rightString,
-				textLoc,
-				&gTextFont[curFontNum],
-				theWidget->textColor
-				);
+	//*	calculate location for right string
+	textLoc_X	=	(theWidget->left + theWidget->width)- textWidthPixels;
+	textLoc_X	-=	5;
+	LLD_DrawCString(textLoc_X, textLoc_Y, rightString, theWidget->fontNum);
 
 	//*	now draw the slider itself
 	vertCenter		=	theWidget->top + (theWidget->height / 2);
-	myCVrect.x		=	theWidget->left + 50;
-	myCVrect.y		=	vertCenter - 1;
-	myCVrect.width	=	theWidget->width - 100;
-	myCVrect.height	=	3;
+	sliderLeft		=	theWidget->left + 50;
+	sliderWidth		=	theWidget->width - 100;
+	LLD_FrameRect(	sliderLeft,
+					vertCenter - 1,
+					sliderWidth,
+					3);
 
-
-	cvRectangleR(	cOpenCV_Image,
-					myCVrect,
-					theWidget->textColor,		//	CvScalar color,
-				//	CV_FILLED,					//	int thickness CV_DEFAULT(1),
-					1,							//	int thickness CV_DEFAULT(1),
-					8,							//	int line_type CV_DEFAULT(8),
-					0);							//	int shift CV_DEFAULT(0));
 	//*	draw the indicator
-	sliderOffset	=	(theWidget->sliderValue / sliderDelata) * myCVrect.width;
-	textLoc.x		=	myCVrect.x + sliderOffset;
-	textLoc.y		=	vertCenter;
+	sliderOffset	=	(theWidget->sliderValue / sliderDelata) * sliderWidth;
+	textLoc_X		=	sliderLeft + sliderOffset;
+	textLoc_Y		=	vertCenter;
 	radius			=	4;
 
-	cvCircle(		cOpenCV_Image,
-					textLoc,					//	CvPoint center,
-					radius,						//	int radius,
-					theWidget->textColor,		//	CvScalar color, int thickness CV_DEFAULT(1),
-					CV_FILLED,					//	int thickness CV_DEFAULT(1),
-					8,							//	int line_type CV_DEFAULT(8),
-					0);							//	int shift CV_DEFAULT(0));
+//		cCurrentColor	=	theWidget->textColor;
+	cCurrentColor	=	CV_RGB(255, 0, 0);
+	LLD_FillEllipse(textLoc_X, textLoc_Y, radius, radius);
 }
 
 //**************************************************************************************
@@ -1872,169 +1683,124 @@ CvPoint		sliderLoc;
 //char		leftString[32];
 //char		rightString[32];
 int			vertCenter;
-int			radius;
-int			scrollBarOffset;
-bool		sliderIsVertical;
+bool		scrollBarIsVertical;
+int			scrollBar_left;
+int			scrollBar_top;
+int			scrollBar_width;
+int			scrollBar_height;
+int			scrollBar_Travel;
 
-
-	myCVrect.x		=	theWidget->left;
-	myCVrect.y		=	theWidget->top;
-	myCVrect.width	=	theWidget->width;
-	myCVrect.height	=	theWidget->height;
+	DrawWidgetBackground(theWidget);
 
 	//*	figure out it if it is horizontal or veritcal
-	if (myCVrect.height > myCVrect.width)
+	if (theWidget->height > theWidget->width)
 	{
-		sliderIsVertical	=	true;
+		scrollBarIsVertical	=	true;
 	}
 	else
 	{
-		sliderIsVertical	=	false;
+		scrollBarIsVertical	=	false;
 	}
-
-//-	sliderDelata	=	1.0;
-
-	cvRectangleR(	cOpenCV_Image,
-					myCVrect,
-					theWidget->bgColor,			//	CvScalar color,
-					CV_FILLED,					//	int thickness CV_DEFAULT(1),
-					8,							//	int line_type CV_DEFAULT(8),
-					0);							//	int shift CV_DEFAULT(0));
-
-	cvRectangleR(	cOpenCV_Image,
-					myCVrect,
-					theWidget->borderColor,		//	CvScalar color,
-					1,							//	int thickness CV_DEFAULT(1),
-					8,							//	int line_type CV_DEFAULT(8),
-					0);							//	int shift CV_DEFAULT(0));
 
 	//*	now draw the slider itself
-	vertCenter		=	theWidget->top + (theWidget->height / 2);
-	myCVrect.x		=	theWidget->left + 50;
-	myCVrect.y		=	vertCenter - 1;
-	myCVrect.width	=	theWidget->width - 100;
-	myCVrect.height	=	3;
-
-
-	cvRectangleR(	cOpenCV_Image,
-					myCVrect,
-					theWidget->textColor,		//	CvScalar color,
-				//	CV_FILLED,					//	int thickness CV_DEFAULT(1),
-					1,							//	int thickness CV_DEFAULT(1),
-					8,							//	int line_type CV_DEFAULT(8),
-					0);							//	int shift CV_DEFAULT(0));
-
-
-	//*	DEBUG
-	if (theWidget->scrollBarMax <= 0)
+	if (scrollBarIsVertical)
 	{
-//		CONSOLE_DEBUG_W_NUM("theWidget->scrollBarMax\t=",	theWidget->scrollBarMax);
-		theWidget->scrollBarMax	=	1;
-	}
+		scrollBar_left		=	theWidget->left + 1;
+		scrollBar_width		=	theWidget->width - 2;
+		scrollBar_Travel	=	theWidget->height;
 
-	//*	draw the indicator
-	if (sliderIsVertical)
-	{
-		scrollBarOffset	=	(theWidget->scrollBarValue * myCVrect.height) / theWidget->scrollBarMax;
-		sliderLoc.x		=	myCVrect.x + (myCVrect.width / 2);
-		sliderLoc.y		=	myCVrect.y + scrollBarOffset;
-
-//		CONSOLE_DEBUG_W_NUM("theWidget->scrollBarValue\t=",	theWidget->scrollBarValue);
-//		CONSOLE_DEBUG_W_NUM("scrollBarOffset\t\t=",			scrollBarOffset);
+		if (theWidget->scrollBarMax > 0)
+		{
+			scrollBar_top		=	(theWidget->scrollBarValue * scrollBar_Travel) / theWidget->scrollBarMax;
+		}
+		else
+		{
+			scrollBar_top		=	theWidget->top + 1;
+		}
+		scrollBar_height	=	20;
 	}
 	else
 	{
-		scrollBarOffset	=	(theWidget->scrollBarValue * myCVrect.width) / theWidget->scrollBarMax;
-		sliderLoc.x		=	myCVrect.x + scrollBarOffset;
-		sliderLoc.y		=	vertCenter;
-		radius			=	4;
+		vertCenter			=	theWidget->top + (theWidget->height / 2);
+		scrollBar_left		=	theWidget->left + 50;
+		scrollBar_top		=	vertCenter - 1;
+		scrollBar_width		=	theWidget->width - 100;
+		scrollBar_height	=	3;
 	}
+//		cCurrentColor	=	theWidget->textColor;
+	cCurrentColor	=	CV_RGB(0, 255, 255);
 
-	cvCircle(		cOpenCV_Image,
-					sliderLoc,					//	CvPoint center,
-					radius,						//	int radius,
-					theWidget->textColor,		//	CvScalar color, int thickness CV_DEFAULT(1),
-					CV_FILLED,					//	int thickness CV_DEFAULT(1),
-					8,							//	int line_type CV_DEFAULT(8),
-					0);							//	int shift CV_DEFAULT(0));
+	LLD_FillRect(scrollBar_left,	scrollBar_top,	scrollBar_width,	scrollBar_height);
 }
 
 
 //**************************************************************************************
 void	Controller::DrawWidgetOutlineBox(TYPE_WIDGET *theWidget)
 {
-CvRect		myCVrect;
+int			pt1_X;
+int			pt1_Y;
+int			pt2_X;
+int			pt2_Y;
 
-	myCVrect.x		=	theWidget->left;
-	myCVrect.y		=	theWidget->top;
-	myCVrect.width	=	theWidget->width;
-	myCVrect.height	=	theWidget->height;
+//	CONSOLE_DEBUG(__FUNCTION__);
 
-
-
-	cvRectangleR(	cOpenCV_Image,
-					myCVrect,
-					theWidget->borderColor,		//	CvScalar color,
-					1,							//	int thickness CV_DEFAULT(1),
-					8,							//	int line_type CV_DEFAULT(8),
-					0);							//	int shift CV_DEFAULT(0));
+	cCurrentColor	=	theWidget->borderColor;
+	LLD_FrameRect(theWidget->left,	theWidget->top,	theWidget->width,	theWidget->height);
 
 	if (theWidget->crossedOut)
 	{
-	CvPoint	pt1;
-	CvPoint	pt2;
+		pt1_X	=	theWidget->left;
+		pt1_Y	=	theWidget->top;
 
-		pt1.x	=	theWidget->left;
-		pt1.y	=	theWidget->top;
+		pt2_X	=	theWidget->left + theWidget->width;
+		pt2_Y	=	theWidget->top + theWidget->height;
+		cCurrentColor		=	CV_RGB(255, 0, 0);
+		cCurrentLineWidth	=	2;
 
-		pt2.x	=	theWidget->left + theWidget->width;
-		pt2.y	=	theWidget->top + theWidget->height;
-		cvLine(	cOpenCV_Image,
-				pt1,
-				pt2,
-				CV_RGB(255,	0,	0),	//	CvScalar color,
-				2,					//	int thickness CV_DEFAULT(1),
-				8,					//	int line_type CV_DEFAULT(8),
-				0);					//	int shift CV_DEFAULT(0));
+		LLD_MoveTo(pt1_X, pt1_Y);
+		LLD_LineTo(pt2_X, pt2_Y);
 
-		pt1.x	=	theWidget->left + theWidget->width;
-		pt1.y	=	theWidget->top;
 
-		pt2.x	=	theWidget->left;
-		pt2.y	=	theWidget->top + theWidget->height;
-		cvLine(	cOpenCV_Image,
-				pt1,
-				pt2,
-				CV_RGB(255,	0,	0),	//	CvScalar color,
-				2,					//	int thickness CV_DEFAULT(1),
-				8,					//	int line_type CV_DEFAULT(8),
-				0);					//	int shift CV_DEFAULT(0));
+		pt1_X	=	theWidget->left + theWidget->width;
+		pt1_Y	=	theWidget->top;
+
+		pt2_X	=	theWidget->left;
+		pt2_Y	=	theWidget->top + theWidget->height;
+		LLD_MoveTo(pt1_X, pt1_Y);
+		LLD_LineTo(pt2_X, pt2_Y);
+		cCurrentLineWidth	=	1;
 	}
 }
 
 //**************************************************************************************
 void	Controller::DrawWidgetGraph(TYPE_WIDGET *theWidget)
 {
-CvPoint	pt1;
-CvPoint	pt2;
 int		iii;
+int		pt1_X;
+int		pt1_Y;
+int		pt2_X;
+int		pt2_Y;
 
+	DrawWidgetBackground(theWidget);
 	if (theWidget->graphArrayPtr != NULL)
 	{
+		cCurrentColor	=	CV_RGB(255,	0,	0);
 		for (iii=0; iii<theWidget->graphArrayCnt; iii++)
 		{
-			pt1.x	=	iii + 3;
-			pt1.y	=	theWidget->top + theWidget->height;
+			pt1_X	=	iii + 3;
+			pt1_Y	=	theWidget->top + theWidget->height;
 
-			pt2.x	=	iii + 3;
-			pt2.y	=	pt1.y - (theWidget->graphArrayPtr[iii] * 3);
-			cvLine(	cOpenCV_Image,
-					pt1,
-					pt2,
-					CV_RGB(255,	0,	0),	//	CvScalar color,
-					1,					//	int thickness CV_DEFAULT(1),
-					8,					//	int line_type CV_DEFAULT(8),
-					0);					//	int shift CV_DEFAULT(0));
+			pt2_X	=	iii + 3;
+			pt2_Y	=	pt1_Y - (theWidget->graphArrayPtr[iii] * 3);
+			LLD_MoveTo(pt1_X, pt1_Y);
+			LLD_LineTo(pt2_X, pt2_Y);
+//				cvLine(	cOpenCV_Image,
+//						pt1,
+//						pt2,
+//						CV_RGB(255,	0,	0),	//	color,
+//						1,					//	int thickness CV_DEFAULT(1),
+//						8,					//	int line_type CV_DEFAULT(8),
+//						0);					//	int shift CV_DEFAULT(0));
 
 		}
 	}
@@ -2045,274 +1811,265 @@ int		iii;
 //**************************************************************************************
 void	Controller::DrawWidgetIcon(TYPE_WIDGET *theWidget)
 {
-CvPoint		pt1;
-CvPoint		pt2;
-CvRect		myCVrect;
+int			pt1_X;
+int			pt1_Y;
+int			pt2_X;
+int			pt2_Y;
 
-	myCVrect.x		=	theWidget->left;
-	myCVrect.y		=	theWidget->top;
-	myCVrect.width	=	theWidget->width;
-	myCVrect.height	=	theWidget->height;
-
-
-	cvRectangleR(	cOpenCV_Image,
-					myCVrect,
-					theWidget->bgColor,			//	CvScalar color,
-					CV_FILLED,					//	int thickness CV_DEFAULT(1),
-					8,							//	int line_type CV_DEFAULT(8),
-					0);							//	int shift CV_DEFAULT(0));
-
-//	if (theWidget->includeBorder)
-//	{
-//		cvRectangleR(	cOpenCV_Image,
-//						myCVrect,
-//						theWidget->borderColor,		//	CvScalar color,
-//						1,							//	int thickness CV_DEFAULT(1),
-//						8,							//	int line_type CV_DEFAULT(8),
-//						0);							//	int shift CV_DEFAULT(0));
-//	}
-
-
-
+	DrawWidgetBackground(theWidget);
+	cCurrentColor	=	theWidget->textColor;
 	switch(theWidget->iconNum)
 	{
 		case kIcon_UpArrow:
-			pt1.x	=	theWidget->left + (theWidget->width / 2);
-			pt1.y	=	theWidget->top + 1;
+			pt1_X	=	theWidget->left + (theWidget->width / 2);
+			pt1_Y	=	theWidget->top + 1;
 
-			pt2.x	=	theWidget->left + (theWidget->width / 2);
-			pt2.y	=	theWidget->top + theWidget->height;
-			cvLine(	cOpenCV_Image,
-					pt1,
-					pt2,
-					theWidget->textColor,	//	CvScalar color,
-					2,						//	int thickness CV_DEFAULT(1),
-					8,						//	int line_type CV_DEFAULT(8),
-					0);						//	int shift CV_DEFAULT(0));
+			pt2_X	=	theWidget->left + (theWidget->width / 2);
+			pt2_Y	=	theWidget->top + theWidget->height;
+			LLD_MoveTo(pt1_X, pt1_Y);
+			LLD_LineTo(pt2_X, pt2_Y);
 
+			pt2_X	=	theWidget->left;
+			pt2_Y	=	theWidget->top + (theWidget->width / 2);
+			LLD_MoveTo(pt1_X, pt1_Y);
+			LLD_LineTo(pt2_X, pt2_Y);
 
-			pt2.x	=	theWidget->left;
-			pt2.y	=	theWidget->top + (theWidget->width / 2);
-			cvLine(	cOpenCV_Image,
-					pt1,
-					pt2,
-					theWidget->textColor,	//	CvScalar color,
-					1,						//	int thickness CV_DEFAULT(1),
-					8,						//	int line_type CV_DEFAULT(8),
-					0);						//	int shift CV_DEFAULT(0));
-
-			pt2.x	=	theWidget->left + theWidget->width;
-			pt2.y	=	theWidget->top + (theWidget->width / 2);
-			cvLine(	cOpenCV_Image,
-					pt1,
-					pt2,
-					theWidget->textColor,	//	CvScalar color,
-					1,						//	int thickness CV_DEFAULT(1),
-					8,						//	int line_type CV_DEFAULT(8),
-					0);						//	int shift CV_DEFAULT(0));
-
+			pt2_X	=	theWidget->left + theWidget->width;
+			pt2_Y	=	theWidget->top + (theWidget->width / 2);
+			LLD_MoveTo(pt1_X, pt1_Y);
+			LLD_LineTo(pt2_X, pt2_Y);
 			break;
 
 		case kIcon_DownArrow:
-			pt1.x	=	theWidget->left + (theWidget->width / 2);
-			pt1.y	=	theWidget->top +1;
+			pt1_X	=	theWidget->left + (theWidget->width / 2);
+			pt1_Y	=	theWidget->top +1;
 
-			pt2.x	=	theWidget->left + (theWidget->width / 2);
-			pt2.y	=	theWidget->top + theWidget->height - 1;
-			cvLine(	cOpenCV_Image,
-					pt1,
-					pt2,
-					theWidget->textColor,	//	CvScalar color,
-					2,						//	int thickness CV_DEFAULT(1),
-					8,						//	int line_type CV_DEFAULT(8),
-					0);						//	int shift CV_DEFAULT(0));
+			pt2_X	=	theWidget->left + (theWidget->width / 2);
+			pt2_Y	=	theWidget->top + theWidget->height - 1;
+			LLD_MoveTo(pt1_X, pt1_Y);
+			LLD_LineTo(pt2_X, pt2_Y);
 
 
-			pt1.x	=	theWidget->left + (theWidget->width / 2);
-			pt1.y	=	theWidget->top + theWidget->height - 2;
+			pt1_X	=	theWidget->left + (theWidget->width / 2);
+			pt1_Y	=	theWidget->top + theWidget->height - 2;
 
-			pt2.x	=	theWidget->left;
-			pt2.y	=	theWidget->top + (theWidget->width / 2);
-			cvLine(	cOpenCV_Image,
-					pt1,
-					pt2,
-					theWidget->textColor,	//	CvScalar color,
-					1,						//	int thickness CV_DEFAULT(1),
-					8,						//	int line_type CV_DEFAULT(8),
-					0);						//	int shift CV_DEFAULT(0));
+			pt2_X	=	theWidget->left;
+			pt2_Y	=	theWidget->top + (theWidget->width / 2);
+			LLD_MoveTo(pt1_X, pt1_Y);
+			LLD_LineTo(pt2_X, pt2_Y);
 
-			pt2.x	=	theWidget->left + theWidget->width;
-			pt2.y	=	theWidget->top + (theWidget->width / 2);
-			cvLine(	cOpenCV_Image,
-					pt1,
-					pt2,
-					theWidget->textColor,	//	CvScalar color,
-					1,						//	int thickness CV_DEFAULT(1),
-					8,						//	int line_type CV_DEFAULT(8),
-					0);						//	int shift CV_DEFAULT(0));
-
+			pt2_X	=	theWidget->left + theWidget->width;
+			pt2_Y	=	theWidget->top + (theWidget->width / 2);
+			LLD_MoveTo(pt1_X, pt1_Y);
+			LLD_LineTo(pt2_X, pt2_Y);
 			break;
-
 	}
-}
-
-//**************************************************************************************
-void	Controller::DrawWidgetCustom(TYPE_WIDGET *theWidget)
-{
-	CONSOLE_DEBUG("this routine should be overloaded");
-	//*	this routine should be overloaded
 }
 
 //**************************************************************************************
 void	Controller::DrawWidgetProgressBar(TYPE_WIDGET *theWidget)
 {
-CvRect		myCVrect;
-CvPoint		textLoc;
-CvSize		textSize;
-int			baseLine;
-int			textOffsetX;
-int			textOffsetY;
-int			curFontNum;
-char		testString[64];
-double		percentComplete;
+double	percentComplete;
+char	textString[64];
+int		newWidth;
+int		textLoc_X;
+int		textLoc_Y;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+	percentComplete	=	theWidget->sliderValue / theWidget->sliderMax;
+	sprintf(textString, "Downloading - %3.1f%% complete", (percentComplete * 100.0));
+
+	DrawWidgetBackground(theWidget);
+
+	cCurrentColor	=	theWidget->bgColor;
+	LLD_FillRect(theWidget->left,	theWidget->top,	theWidget->width,	theWidget->height);
+
+	newWidth		=	theWidget->width * percentComplete;
+	cCurrentColor	=	theWidget->textColor;
+	LLD_FillRect(theWidget->left,	theWidget->top,	newWidth,	theWidget->height);
+
+	cCurrentColor	=	theWidget->borderColor;
+	LLD_FrameRect(theWidget->left,	theWidget->top,	theWidget->width,	theWidget->height);
+
+	textLoc_X	=	theWidget->left + 10;
+	textLoc_Y	=	theWidget->top + (theWidget->height / 2) + 5;
+	LLD_DrawCString(textLoc_X, textLoc_Y, textString, kFont_Medium);
+}
+
+#ifdef _USE_OPENCV_CPP_
+//**************************************************************************************
+void	Controller::DrawWidgetImage(TYPE_WIDGET *theWidget, cv::Mat *theOpenCVimage)
+{
+int			delta;
+cv::Rect	widgetRoiRect;
+cv::Mat		image_roi;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-	//*	fill in with background color
-	myCVrect.x		=	theWidget->left;
-	myCVrect.y		=	theWidget->top;
-	myCVrect.width	=	theWidget->width;
-	myCVrect.height	=	theWidget->height;
-	cvRectangleR(	cOpenCV_Image,
-					myCVrect,
-					theWidget->bgColor,			//	CvScalar color,
-					CV_FILLED,					//	int thickness CV_DEFAULT(1),
-					8,							//	int line_type CV_DEFAULT(8),
-					0);							//	int shift CV_DEFAULT(0));
+	if (cOpenCV_matImage != NULL)
+	{
+		if (theOpenCVimage != NULL)
+		{
+
+		//	CONSOLE_DEBUG_W_NUM("Drawing image, widget#", widgetIdx);
+			widgetRoiRect.x			=	theWidget->left;
+			widgetRoiRect.y			=	theWidget->top;
+			widgetRoiRect.width		=	theWidget->width;
+			widgetRoiRect.height	=	theWidget->height;
+
+			//*	check to see if the image is BIGGER than the widget rect
+			if (theOpenCVimage->cols > widgetRoiRect.width)
+			{
+				CONSOLE_DEBUG_W_NUM("Image is too big", theOpenCVimage->cols);
+			}
+
+			theWidget->roiRect	=	widgetRoiRect;
+			//*	we have to make sure the the destination rect is the same as the src rect
+			//*	if its smaller, then center it
+			if (theOpenCVimage->cols < widgetRoiRect.width)
+			{
+				delta					=	widgetRoiRect.width - theOpenCVimage->cols;
+				theWidget->roiRect.x	=	widgetRoiRect.x + (delta / 2);
+			}
+			if (theOpenCVimage->rows < widgetRoiRect.height)
+			{
+				delta					=	widgetRoiRect.height - theOpenCVimage->rows;
+				theWidget->roiRect.y	=	widgetRoiRect.y + (delta / 2);
+			}
+			theWidget->roiRect.width	=	theOpenCVimage->cols;
+			theWidget->roiRect.height	=	theOpenCVimage->rows;
+
+			image_roi		=	cv::Mat(*cOpenCV_matImage, theWidget->roiRect);
+
+//			cvSetImageROI(cOpenCV_matImage,  theWidget->roiRect);
+//			cvCopy(theWidget->openCVimagePtr, cOpenCV_matImage);
+//			cvResetImageROI(cOpenCV_matImage);
+
+	//		cOpenCV_matImage->copyTo(*theOpenCVimage);
+			theOpenCVimage->copyTo(image_roi);
 
 
-	percentComplete	=	theWidget->sliderValue / theWidget->sliderMax;
-	myCVrect.width	=	theWidget->width * percentComplete;
-	cvRectangleR(	cOpenCV_Image,
-					myCVrect,
-					theWidget->textColor,		//	CvScalar color,
-					CV_FILLED,					//	int thickness CV_DEFAULT(1),
-					8,							//	int line_type CV_DEFAULT(8),
-					0);							//	int shift CV_DEFAULT(0));
+			//*	draw the border if enabled
+			if (theWidget->includeBorder)
+			{
+				cv::rectangle(	*cOpenCV_matImage,
+								theWidget->roiRect,
+								theWidget->borderColor,		//	color,
+								1,							//	int thickness CV_DEFAULT(1),
+								8,							//	int line_type CV_DEFAULT(8),
+								0);							//	int shift CV_DEFAULT(0));
+			}
+		}
+		else
+		{
+			CONSOLE_DEBUG("Image ptr is null");
+			if (theWidget->includeBorder)
+			{
+				widgetRoiRect.x			=	theWidget->left;
+				widgetRoiRect.y			=	theWidget->top;
+				widgetRoiRect.width		=	theWidget->width;
+				widgetRoiRect.height	=	theWidget->height;
 
-	//*	draw the outline
-	myCVrect.width	=	theWidget->width;
-	cvRectangleR(	cOpenCV_Image,
-					myCVrect,
-					theWidget->borderColor,		//	CvScalar color,
-					1,							//	int thickness CV_DEFAULT(1),
-					8,							//	int line_type CV_DEFAULT(8),
-					0);							//	int shift CV_DEFAULT(0));
-
-	sprintf(testString, "Downloading - %3.1f%% complete", (percentComplete * 100.0));
-
-	curFontNum	=	theWidget->fontNum,
-	cvGetTextSize(	testString,
-					&gTextFont[curFontNum],
-					&textSize,
-					&baseLine);
-
-
-	textOffsetX	=	(theWidget->width / 2) - (textSize.width / 2);
-	textOffsetY	=	(theWidget->height / 2) - (textSize.height / 2) + baseLine + 5;
-
-	textLoc.x	=	theWidget->left + textOffsetX;
-	textLoc.y	=	theWidget->top + textOffsetY;
-
-	cvPutText(	cOpenCV_Image,
-				testString,
-				textLoc,
-				&gTextFont[curFontNum],
-			//	CV_RGB(255,	0,		255)
-				CV_RGB(255,	255,	255)
-				);
+				cv::rectangle(	*cOpenCV_matImage,
+								widgetRoiRect,
+								theWidget->borderColor,		//	color,
+								1,							//	int thickness CV_DEFAULT(1),
+								8,							//	int line_type CV_DEFAULT(8),
+								0);							//	int shift CV_DEFAULT(0));
+			}
+		}
+	}
+	else
+	{
+		CONSOLE_DEBUG("cOpenCV_Image is NULL");
+	}
 }
 
+#else
 //**************************************************************************************
 void	Controller::DrawWidgetImage(TYPE_WIDGET *theWidget, IplImage *theOpenCVimage)
 {
 int			delta;
 CvRect		widgetRect;
 
-	if (theOpenCVimage != NULL)
+	if (cOpenCV_Image != NULL)
 	{
-
-	//	CONSOLE_DEBUG_W_NUM("Drawing image, widget#", widgetIdx);
-		widgetRect.x		=	theWidget->left;
-		widgetRect.y		=	theWidget->top;
-		widgetRect.width	=	theWidget->width;
-		widgetRect.height	=	theWidget->height;
-
-		//*	check to see if the image is BIGGER than the widget rect
-		if (theOpenCVimage->width > widgetRect.width)
-		{
-			CONSOLE_DEBUG_W_NUM("Image is too big", theOpenCVimage->width);
-		}
-
-		theWidget->roiRect	=	widgetRect;
-		//*	we have to make sure the the destination rect is the same as the src rect
-		//*	if its smaller, then center it
-		if (theOpenCVimage->width < widgetRect.width)
-		{
-			delta					=	widgetRect.width - theOpenCVimage->width;
-			theWidget->roiRect.x	=	widgetRect.x + (delta / 2);
-		}
-		if (theOpenCVimage->height < widgetRect.height)
-		{
-			delta					=	widgetRect.height - theOpenCVimage->height;
-			theWidget->roiRect.y	=	widgetRect.y + (delta / 2);
-		}
-		theWidget->roiRect.width	=	theOpenCVimage->width;
-		theWidget->roiRect.height	=	theOpenCVimage->height;
-
-		cvSetImageROI(cOpenCV_Image,  theWidget->roiRect);
-		cvCopy(theWidget->openCVimagePtr, cOpenCV_Image);
-		cvResetImageROI(cOpenCV_Image);
-
-		//*	draw the border if enabled
-		if (theWidget->includeBorder)
+		if (theOpenCVimage != NULL)
 		{
 
-			cvRectangleR(	cOpenCV_Image,
-							theWidget->roiRect,
-							theWidget->borderColor,		//	CvScalar color,
-							1,							//	int thickness CV_DEFAULT(1),
-							8,							//	int line_type CV_DEFAULT(8),
-							0);							//	int shift CV_DEFAULT(0));
-		}
-
-	}
-	else
-	{
-	//	CONSOLE_DEBUG("Image ptr is null");
-		if (theWidget->includeBorder)
-		{
+		//	CONSOLE_DEBUG_W_NUM("Drawing image, widget#", widgetIdx);
 			widgetRect.x		=	theWidget->left;
 			widgetRect.y		=	theWidget->top;
 			widgetRect.width	=	theWidget->width;
 			widgetRect.height	=	theWidget->height;
 
-			cvRectangleR(	cOpenCV_Image,
-							widgetRect,
-							theWidget->borderColor,		//	CvScalar color,
-							1,							//	int thickness CV_DEFAULT(1),
-							8,							//	int line_type CV_DEFAULT(8),
-							0);							//	int shift CV_DEFAULT(0));
+			//*	check to see if the image is BIGGER than the widget rect
+			if (theOpenCVimage->width > widgetRect.width)
+			{
+				CONSOLE_DEBUG_W_NUM("Image is too big", theOpenCVimage->width);
+			}
+
+			theWidget->roiRect	=	widgetRect;
+			//*	we have to make sure the the destination rect is the same as the src rect
+			//*	if its smaller, then center it
+			if (theOpenCVimage->width < widgetRect.width)
+			{
+				delta					=	widgetRect.width - theOpenCVimage->width;
+				theWidget->roiRect.x	=	widgetRect.x + (delta / 2);
+			}
+			if (theOpenCVimage->height < widgetRect.height)
+			{
+				delta					=	widgetRect.height - theOpenCVimage->height;
+				theWidget->roiRect.y	=	widgetRect.y + (delta / 2);
+			}
+			theWidget->roiRect.width	=	theOpenCVimage->width;
+			theWidget->roiRect.height	=	theOpenCVimage->height;
+
+			cvSetImageROI(cOpenCV_Image,  theWidget->roiRect);
+			cvCopy(theWidget->openCVimagePtr, cOpenCV_Image);
+			cvResetImageROI(cOpenCV_Image);
+
+			//*	draw the border if enabled
+			if (theWidget->includeBorder)
+			{
+
+				cvRectangleR(	cOpenCV_Image,
+								theWidget->roiRect,
+								theWidget->borderColor,		//	color,
+								1,							//	int thickness CV_DEFAULT(1),
+								8,							//	int line_type CV_DEFAULT(8),
+								0);							//	int shift CV_DEFAULT(0));
+			}
+
+		}
+		else
+		{
+		//	CONSOLE_DEBUG("Image ptr is null");
+			if (theWidget->includeBorder)
+			{
+				widgetRect.x		=	theWidget->left;
+				widgetRect.y		=	theWidget->top;
+				widgetRect.width	=	theWidget->width;
+				widgetRect.height	=	theWidget->height;
+
+				cvRectangleR(	cOpenCV_Image,
+								widgetRect,
+								theWidget->borderColor,		//	color,
+								1,							//	int thickness CV_DEFAULT(1),
+								8,							//	int line_type CV_DEFAULT(8),
+								0);							//	int shift CV_DEFAULT(0));
+			}
 		}
 	}
 }
+#endif // _USE_OPENCV_CPP_
 
 
 //**************************************************************************************
 void	Controller::DrawWidgetImage(TYPE_WIDGET *theWidget)
 {
+//	CONSOLE_DEBUG_W_HEX("Widget\t=", theWidget);
 	DrawWidgetImage(theWidget, theWidget->openCVimagePtr);
-
 }
 
 //**************************************************************************************
@@ -2341,7 +2098,7 @@ int				iii;
 		{
 			if (cTabList[iii].valid)
 			{
-				DrawWidgetText(&cTabList[iii]);
+				DrawWidgetTextBox(&cTabList[iii]);
 			}
 		}
 	}
@@ -2353,51 +2110,66 @@ void	Controller::DrawOneWidget(const int widgetIdx)
 {
 TYPE_WIDGET		*myWidgetPtr;
 
-	if (cCurrentTabObjPtr != NULL)
+#ifdef _USE_OPENCV_CPP_
+	if (cOpenCV_matImage != NULL)
 	{
-		myWidgetPtr	=	cCurrentTabObjPtr->cWidgetList;
-		if (myWidgetPtr != NULL)
+		if (cCurrentTabObjPtr != NULL)
 		{
-			DrawOneWidget(&myWidgetPtr[widgetIdx], widgetIdx);
-			cvShowImage(cWindowName, cOpenCV_Image);
+			myWidgetPtr	=	cCurrentTabObjPtr->cWidgetList;
+			if (myWidgetPtr != NULL)
+			{
+				DrawOneWidget(&myWidgetPtr[widgetIdx], widgetIdx);
+				cv::imshow(cWindowName, *cOpenCV_matImage);
+			}
 		}
 	}
+#else
+	if (cOpenCV_Image != NULL)
+	{
+		if (cCurrentTabObjPtr != NULL)
+		{
+			myWidgetPtr	=	cCurrentTabObjPtr->cWidgetList;
+			if (myWidgetPtr != NULL)
+			{
+				DrawOneWidget(&myWidgetPtr[widgetIdx], widgetIdx);
+				cvShowImage(cWindowName, cOpenCV_Image);
+			}
+		}
+	}
+#endif
 }
 
 //**************************************************************************************
-void	Controller::DrawOneWidget(TYPE_WIDGET *widgetPtr, const int widgetIdx)
+void	Controller::DrawOneWidget(TYPE_WIDGET *theWidget, const int widgetIdx)
 {
 CvRect		widgetRect;
 
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
-	widgetPtr->needsUpdated	=	false;	//*	record the fact that this widget has been updated
-	switch(widgetPtr->widgetType)
+	theWidget->needsUpdated	=	false;	//*	record the fact that this widget has been updated
+	switch(theWidget->widgetType)
 	{
 		case kWidgetType_Button:
-			DrawWidgetButton(widgetPtr);
+			DrawWidgetButton(theWidget);
 			break;
 
 		case kWidgetType_Graph:
-			DrawWidgetGraph(widgetPtr);
-			if (widgetPtr->includeBorder)
+			DrawWidgetGraph(theWidget);
+			if (theWidget->includeBorder)
 			{
-				widgetRect.x		=	widgetPtr->left;
-				widgetRect.y		=	widgetPtr->top;
-				widgetRect.width	=	widgetPtr->width;
-				widgetRect.height	=	widgetPtr->height;
-				cvRectangleR(	cOpenCV_Image,
-								widgetRect,
-								widgetPtr->borderColor,		//	CvScalar color,
-								1,							//	int thickness CV_DEFAULT(1),
-								8,							//	int line_type CV_DEFAULT(8),
-								0);							//	int shift CV_DEFAULT(0));
+				cCurrentColor	=	theWidget->borderColor;
+				LLD_FrameRect(theWidget->left,	theWidget->top,	theWidget->width,	theWidget->height);
 			}
 			break;
 
-		case kWidgetType_Graphic:
+		case kWidgetType_CustomGraphic:
 			if (cCurrentTabObjPtr != NULL)
 			{
-				cCurrentTabObjPtr->DrawGraphWidget(cOpenCV_Image, widgetIdx);
+				DrawWidgetBackground(theWidget);
+			#ifdef _USE_OPENCV_CPP_
+				cCurrentTabObjPtr->DrawWidgetCustomGraphic(cOpenCV_matImage, widgetIdx);
+			#else
+				cCurrentTabObjPtr->DrawWidgetCustomGraphic(cOpenCV_Image, widgetIdx);
+			#endif
 			}
 			else
 			{
@@ -2406,56 +2178,50 @@ CvRect		widgetRect;
 			break;
 
 		case kWidgetType_Image:
-			DrawWidgetImage(widgetPtr);
+			DrawWidgetImage(theWidget);
 			break;
 
 		case kWidgetType_MultiLineText:
-			DrawWidgetMultiLineText(widgetPtr);
+			DrawWidgetMultiLineText(theWidget);
 			break;
 
 		case kWidgetType_RadioButton:
-			DrawWidgetRadioButton(widgetPtr);
+			DrawWidgetRadioButton(theWidget);
 			break;
 
 		case kWidgetType_CheckBox:
-			DrawWidgetCheckBox(widgetPtr);
+			DrawWidgetCheckBox(theWidget);
 			break;
 
 		case kWidgetType_Slider:
-			DrawWidgetSlider(widgetPtr);
+			DrawWidgetSlider(theWidget);
 			break;
 
 		case kWidgetType_ScrollBar:
-			DrawWidgetScrollBar(widgetPtr);
+			DrawWidgetScrollBar(theWidget);
 			break;
 
 		case kWidgetType_OutlineBox:
-			DrawWidgetOutlineBox(widgetPtr);
+			DrawWidgetOutlineBox(theWidget);
 			break;
-
-		case kWidgetType_Custom:
-//			CONSOLE_DEBUG("kWidgetType_Custom");
-			DrawWidgetCustom(widgetPtr);
-			break;
-
 
 		case kWidgetType_Icon:
-			DrawWidgetIcon(widgetPtr);
+			DrawWidgetIcon(theWidget);
 			break;
 
 		case kWidgetType_ProessBar:
-			DrawWidgetProgressBar(widgetPtr);
+			DrawWidgetProgressBar(theWidget);
 			break;
 
-		case kWidgetType_Text:
+		case kWidgetType_TextBox:
 		default:
-			if (widgetPtr->hasTabs)
+			if (theWidget->hasTabs)
 			{
-				DrawWidgetTextWithTabs(widgetPtr);
+				DrawWidgetTextWithTabs(theWidget);
 			}
 			else
 			{
-				DrawWidgetText(widgetPtr);
+				DrawWidgetTextBox(theWidget);
 			}
 			break;
 	}
@@ -2502,18 +2268,42 @@ TYPE_WIDGET		*myWidgetPtr;
 //**************************************************************************************
 void	Controller::DrawWindow(void)
 {
-CvRect		myCVrect;
 
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+#ifdef _USE_OPENCV_CPP_
+	if (cOpenCV_matImage != NULL)
+	{
+	cv::Rect	myCVrect;
+		myCVrect.x		=	0;
+		myCVrect.y		=	0;
+		myCVrect.width	=	cWidth;
+		myCVrect.height	=	cHeight;
+
+		cv::rectangle(	*cOpenCV_matImage,
+						myCVrect,
+						cBackGrndColor,			//	color,
+						CV_FILLED);
+
+		DrawWindowTabs();
+
+		//*	draw the widgets
+		DrawWindowWidgets();
+	}
+	else
+	{
+		CONSOLE_ABORT(__FUNCTION__);
+	}
+#else
 	if (cOpenCV_Image != NULL)
 	{
+	CvRect		myCVrect;
 		myCVrect.x		=	0;
 		myCVrect.y		=	0;
 		myCVrect.width	=	cWidth;
 		myCVrect.height	=	cHeight;
 		cvRectangleR(	cOpenCV_Image,
 						myCVrect,
-						cBackGrndColor,			//	CvScalar color,
+						cBackGrndColor,			//	color,
 						CV_FILLED,				//	int thickness CV_DEFAULT(1),
 						8,						//	int line_type CV_DEFAULT(8),
 						0);						//	int shift CV_DEFAULT(0));
@@ -2523,6 +2313,7 @@ CvRect		myCVrect;
 		//*	draw the widgets
 		DrawWindowWidgets();
 	}
+#endif // _USE_OPENCV_CPP_
 }
 
 
@@ -2531,7 +2322,9 @@ void	Controller::HandleKeyDown(const int keyPressed)
 {
 int			openCVerr;
 char		imageFileName[512];
+#ifndef _USE_OPENCV_CPP_
 int			quality[3] = {16, 200, 0};
+#endif
 bool		stillNeedsHandled;
 char		currentTabName[64]	=	"";
 //	CONSOLE_DEBUG_W_HEX("keyPressed\t=", keyPressed);
@@ -2557,7 +2350,12 @@ char		currentTabName[64]	=	"";
 				CONSOLE_DEBUG("Save file");
 				GetCurrentTabName(currentTabName);
 				sprintf(imageFileName, "%s-%s-screenshot.jpg", cWindowName, currentTabName);
+			#ifdef _USE_OPENCV_CPP_
+			//	openCVerr	=	cv::imwrite(imageFileName, *cOpenCV_matImage, quality);
+				openCVerr	=	cv::imwrite(imageFileName, *cOpenCV_matImage);
+			#else
 				openCVerr	=	cvSaveImage(imageFileName, cOpenCV_Image, quality);
+			#endif
 				CONSOLE_DEBUG_W_NUM("openCVerr\t=", openCVerr);
 				break;
 
@@ -2832,9 +2630,15 @@ void	Controller::SetWidgetFont(const int tabNum, const int widgetIdx, int fontNu
 	}
 }
 
+#ifdef _USE_OPENCV_CPP_
 //**************************************************************************************
-void	Controller::SetWidgetTextColor(		const int tabNum, const int widgetIdx, CvScalar newtextColor)
+void	Controller::SetWidgetTextColor(		const int tabNum, const int widgetIdx, cv::Scalar newtextColor)
+#else
+//**************************************************************************************
+void	Controller::SetWidgetTextColor(		const int tabNum, const int widgetIdx, cv::Scalar newtextColor)
+#endif
 {
+//	CONSOLE_DEBUG("OpenCV++");
 	if ((tabNum >= 0)  && (tabNum < kMaxTabs))
 	{
 		if (cWindowTabs[tabNum] != NULL)
@@ -2851,9 +2655,15 @@ void	Controller::SetWidgetTextColor(		const int tabNum, const int widgetIdx, CvS
 	}
 }
 
+#ifdef _USE_OPENCV_CPP_
 //**************************************************************************************
-void	Controller::SetWidgetBGColor(const int tabNum, const int widgetIdx, CvScalar newBGcolor)
+void	Controller::SetWidgetBGColor(const int tabNum, const int widgetIdx, cv::Scalar newBGcolor)
+#else
+//**************************************************************************************
+void	Controller::SetWidgetBGColor(const int tabNum, const int widgetIdx, cv::Scalar newBGcolor)
+#endif
 {
+//	CONSOLE_DEBUG("OpenCV++");
 	if ((tabNum >= 0)  && (tabNum < kMaxTabs))
 	{
 		if (cWindowTabs[tabNum] != NULL)
@@ -2871,9 +2681,15 @@ void	Controller::SetWidgetBGColor(const int tabNum, const int widgetIdx, CvScala
 	}
 }
 
+#ifdef _USE_OPENCV_CPP_
 //**************************************************************************************
-void	Controller::SetWidgetBorderColor(	const int tabNum, const int widgetIdx, CvScalar newBorderColor)
+void	Controller::SetWidgetBorderColor(	const int tabNum, const int widgetIdx, cv::Scalar newBorderColor)
+#else
+//**************************************************************************************
+void	Controller::SetWidgetBorderColor(	const int tabNum, const int widgetIdx, cv::Scalar newBorderColor)
+#endif
 {
+//	CONSOLE_DEBUG("OpenCV++");
 	if ((tabNum >= 0)  && (tabNum < kMaxTabs))
 	{
 		if (cWindowTabs[tabNum] != NULL)
@@ -2890,10 +2706,15 @@ void	Controller::SetWidgetBorderColor(	const int tabNum, const int widgetIdx, Cv
 	}
 }
 
-
+#ifdef _USE_OPENCV_CPP_
 //**************************************************************************************
-void	Controller::SetWidgetImage(			const int tabNum, const int widgetIdx, IplImage *argImagePtr)
+void	Controller::SetWidgetImage(	const int tabNum, const int widgetIdx, cv::Mat *argImagePtr)
+#else
+//**************************************************************************************
+void	Controller::SetWidgetImage(	const int tabNum, const int widgetIdx, IplImage *argImagePtr)
+#endif
 {
+//	CONSOLE_DEBUG("OpenCV++");
 	if ((tabNum >= 0)  && (tabNum < kMaxTabs))
 	{
 		if (cWindowTabs[tabNum] != NULL)
@@ -3033,7 +2854,11 @@ TYPE_WIDGET		*myWidgetPtr;
 				if (myWidgetPtr != NULL)
 				{
 					DrawOneWidget(&myWidgetPtr[widgetIdx], widgetIdx);
+				#ifdef _USE_OPENCV_CPP_
+					cv::imshow(cWindowName, *cOpenCV_matImage);
+				#else
 					cvShowImage(cWindowName, cOpenCV_Image);
+				#endif // _USE_OPENCV_CPP_
 				}
 			}
 		}
@@ -3116,12 +2941,22 @@ void	DumpWidget(TYPE_WIDGET *theWidget)
 //*	<C 11# >000f
 //*	<C 13# >f800
 //******************************************************************************
-CvScalar	Color16BitTo24Bit(const unsigned int color16)
+#ifdef _USE_OPENCV_CPP_
+//******************************************************************************
+cv::Scalar	Color16BitTo24Bit(const unsigned int color16)
+#else
+//******************************************************************************
+cv::Scalar	Color16BitTo24Bit(const unsigned int color16)
+#endif
 {
 int			redValue;
 int			grnValue;
 int			bluValue;
-CvScalar	rgbValue;
+#ifdef _USE_OPENCV_CPP_
+	cv::Scalar	rgbValue;
+#else
+	cv::Scalar	rgbValue;
+#endif // _USE_OPENCV_CPP_
 
 	redValue	=	((color16 & 0x0ffff) >> 8)	& 0x00f8;
 	grnValue	=	((color16 & 0x0ffff) >> 3)	& 0x00fC;
@@ -3136,15 +2971,53 @@ CvScalar	rgbValue;
 	return(rgbValue);
 }
 
-IplImage	*gAlpacaLogoPtr	=	NULL;
-
+#ifdef _USE_OPENCV_CPP_
+	cv::Mat		*gAlpacaLogoPtr	=	NULL;
+	cv::Mat		gAlpacaLogo;
+#else
+	IplImage	*gAlpacaLogoPtr	=	NULL;
+#endif
 //*****************************************************************************
 void	LoadAlpacaLogo(void)
 {
+#ifdef _USE_OPENCV_CPP_
+//	gAlpacaLogoPtr	=	new cv::imread("logos/AlpacaLogo-vsmall.png", CV_LOAD_IMAGE_COLOR);
+//	gAlpacaLogoPtr	=	new cv::Mat("logos/AlpacaLogo-vsmall.png");
+	gAlpacaLogo		=	cv::imread("logos/AlpacaLogo-vsmall.png", CV_LOAD_IMAGE_COLOR);
+	gAlpacaLogoPtr	=	&gAlpacaLogo;
+
+//	cv::namedWindow("Logo");			//Declaring an window to show ROI//
+//	cv::imshow("Logo", gAlpacaLogo);	//Showing actual image//
+
+#else
 	if (gAlpacaLogoPtr == NULL)
 	{
 		gAlpacaLogoPtr	=	cvLoadImage("logos/AlpacaLogo-vsmall.png", CV_LOAD_IMAGE_COLOR);
 	}
+	#endif
+}
+
+//*****************************************************************************
+//*	this steps through the Controller Object List to see if there is a window by this name
+//*****************************************************************************
+bool	CheckForOpenWindowByName(const char *windowName)
+{
+int		iii;
+bool	windowExists;
+
+	windowExists	=	false;
+	for (iii=0; iii<kMaxControllers; iii++)
+	{
+		if (gControllerList[iii] != NULL)
+		{
+			if (strcmp(gControllerList[iii]->cWindowName, windowName) == 0)
+			{
+				windowExists	=	true;
+				break;
+			}
+		}
+	}
+	return(windowExists);
 }
 
 
@@ -3263,7 +3136,7 @@ Controller	*myControllerPtr;
 				CONSOLE_DEBUG_W_STR("Calling RunBackgroundTasks() for", myControllerPtr->cWindowName);
 			}
 			myControllerPtr->cBackgroundTaskActive	=	true;
-			myControllerPtr->RunBackgroundTasks(gDebugBackgroundThread);
+			myControllerPtr->RunBackgroundTasks(__FUNCTION__, gDebugBackgroundThread);
 			myControllerPtr->cBackgroundTaskActive	=	false;
 			usleep(200 * 1000);	//*	200 milliseconds
 		}
@@ -3293,6 +3166,408 @@ int			threadErr;
 		cBackGroundThreadCreated	=	true;
 	}
 	return(threadErr);
+}
+
+//**************************************************************************************
+//*	Low level drawing routines
+//**************************************************************************************
+void	Controller::LLD_MoveTo(const int xx, const int yy)
+{
+	cCurrentXloc	=	xx;
+	cCurrentYloc	=	yy;
+
+}
+
+//**************************************************************************************
+void	Controller::LLD_LineTo(const int xx, const int yy)
+{
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+#ifdef _USE_OPENCV_CPP_
+//	CONSOLE_DEBUG("OpenCV++");
+
+
+	if (cOpenCV_matImage != NULL)
+	{
+	cv::Point		pt1;
+	cv::Point		pt2;
+		pt1.x	=	cCurrentXloc;
+		pt1.y	=	cCurrentYloc;
+
+		pt2.x	=	xx;
+		pt2.y	=	yy;
+		cv::line(	*cOpenCV_matImage,
+				pt1,
+				pt2,
+				cCurrentColor,		//	color,
+				cCurrentLineWidth,	//	int thickness CV_DEFAULT(1),
+				8,					//	int line_type CV_DEFAULT(8),
+				0);					//	int shift CV_DEFAULT(0));
+
+		cCurrentXloc	=	xx;
+		cCurrentYloc	=	yy;
+	}
+	else
+	{
+		CONSOLE_DEBUG("cOpenCV_matImage is NULL");
+	}
+
+#else
+	if (cOpenCV_Image != NULL)
+	{
+	CvPoint		pt1;
+	CvPoint		pt2;
+		pt1.x	=	cCurrentXloc;
+		pt1.y	=	cCurrentYloc;
+
+		pt2.x	=	xx;
+		pt2.y	=	yy;
+		cvLine(	cOpenCV_Image,
+				pt1,
+				pt2,
+				cCurrentColor,		//	color,
+				cCurrentLineWidth,	//	int thickness CV_DEFAULT(1),
+				8,					//	int line_type CV_DEFAULT(8),
+				0);					//	int shift CV_DEFAULT(0));
+
+		cCurrentXloc	=	xx;
+		cCurrentYloc	=	yy;
+	}
+	else
+	{
+		CONSOLE_DEBUG("cOpenCV_Image is NULL");
+	}
+#endif // _USE_OPENCV_CPP_
+
+}
+
+
+//**************************************************************************************
+//*	Low Level FrameRect
+//**************************************************************************************
+void	Controller::LLD_FrameRect(int left, int top, int width, int height, int lineWidth)
+{
+
+	if ((width <= 0) || (height <= 0))
+	{
+		CONSOLE_DEBUG_W_NUM("width\t=", width);
+		CONSOLE_DEBUG_W_NUM("height\t=", height);
+		CONSOLE_ABORT(__FUNCTION__);
+	}
+#ifdef _USE_OPENCV_CPP_
+//	CONSOLE_DEBUG("OpenCV++");
+	if (cOpenCV_matImage != NULL)
+	{
+	cv::Rect	myCVrect;
+
+		myCVrect.x		=	left;
+		myCVrect.y		=	top;
+		myCVrect.width	=	width;
+		myCVrect.height	=	height;
+
+		cv::rectangle(	*cOpenCV_matImage,
+						myCVrect,
+						cCurrentColor,
+						lineWidth);
+
+	}
+#else
+	if (cOpenCV_Image != NULL)
+	{
+	CvRect		myCVrect;
+		myCVrect.x		=	left;
+		myCVrect.y		=	top;
+		myCVrect.width	=	width;
+		myCVrect.height	=	height;
+
+		cvRectangleR(	cOpenCV_Image,
+						myCVrect,
+						cCurrentColor,				//	color,
+						lineWidth,					//	int thickness CV_DEFAULT(1),
+						8,							//	int line_type CV_DEFAULT(8),
+						0);							//	int shift CV_DEFAULT(0));
+
+	}
+#endif // _USE_OPENCV_CPP_
+}
+
+//**************************************************************************************
+//*	Low Level FrameRect
+//**************************************************************************************
+void	Controller::LLD_FillRect(int left, int top, int width, int height)
+{
+#ifdef _USE_OPENCV_CPP_
+//	CONSOLE_DEBUG("OpenCV++");
+	if (cOpenCV_matImage != NULL)
+	{
+	cv::Rect	myCVrect;
+
+		myCVrect.x		=	left;
+		myCVrect.y		=	top;
+		myCVrect.width	=	width;
+		myCVrect.height	=	height;
+
+		cv::rectangle(	*cOpenCV_matImage,
+						myCVrect,
+						cCurrentColor,
+						CV_FILLED);
+
+	}
+#else
+	if (cOpenCV_Image != NULL)
+	{
+	CvRect		myCVrect;
+
+		myCVrect.x		=	left;
+		myCVrect.y		=	top;
+		myCVrect.width	=	width;
+		myCVrect.height	=	height;
+
+		cvRectangleR(	cOpenCV_Image,
+						myCVrect,
+						cCurrentColor,				//	color,
+						CV_FILLED,					//	int thickness CV_DEFAULT(1),
+						8,							//	int line_type CV_DEFAULT(8),
+						0);							//	int shift CV_DEFAULT(0));
+	}
+#endif // _USE_OPENCV_CPP_
+}
+
+//**************************************************************************************
+//*	Low Level FrameRect
+//**************************************************************************************
+void	Controller::LLD_DrawCString(int xx, int yy, char *textString, int fontIndex)
+{
+
+	if (strlen(textString) > 0)
+	{
+#ifdef _USE_OPENCV_CPP_
+//	CONSOLE_DEBUG("OpenCV++");
+		if (cOpenCV_matImage != NULL)
+		{
+		cv::Point		textLoc;
+			textLoc.x	=	xx;
+			textLoc.y	=	yy;
+
+			cv::putText(	*cOpenCV_matImage,
+							textString,
+							textLoc,
+							gFontInfo[fontIndex].fontID,
+							gFontInfo[fontIndex].scale,
+							cCurrentColor,
+							gFontInfo[fontIndex].thickness
+							);
+		}
+#else
+//		CONSOLE_DEBUG(textString);
+		if (cOpenCV_Image != NULL)
+		{
+		CvPoint		textLoc;
+
+			textLoc.x	=	xx;
+			textLoc.y	=	yy;
+
+			cvPutText(	cOpenCV_Image,
+						textString,
+						textLoc,
+						&gTextFont[fontIndex],
+						cCurrentColor
+						);
+		}
+		else
+		{
+			CONSOLE_ABORT(__FUNCTION__);
+		}
+#endif // _USE_OPENCV_CPP_
+	}
+}
+
+//**************************************************************************************
+void	Controller::LLD_FrameEllipse(	int xCenter, int yCenter, int xRadius, int yRadius)
+{
+#ifdef _USE_OPENCV_CPP_
+	if (cOpenCV_matImage != NULL)
+	{
+	cv::Point	center;
+	cv::Size	axes;
+
+		if ((xRadius > 0) && (yRadius > 0))
+		{
+			center.x	=	xCenter;
+			center.y	=	yCenter;
+			axes.width	=	1 * xRadius;
+			axes.height	=	1 * yRadius;
+
+			cv::ellipse(	*cOpenCV_matImage,
+							center,
+							axes,
+							0.0,				//*	angle
+							0.0,				//*	start_angle
+							360.0,				//*	end_angle
+							cCurrentColor,		//	color,
+							cCurrentLineWidth,	//	int thickness CV_DEFAULT(1),
+							8,					//	int line_type CV_DEFAULT(8),
+							0);					//	int shift CV_DEFAULT(0));
+		}
+		else
+		{
+			CONSOLE_ABORT("Invalid arguments");
+			CONSOLE_DEBUG_W_NUM("xCenter\t=", xCenter);
+			CONSOLE_DEBUG_W_NUM("yCenter\t=", yCenter);
+			CONSOLE_DEBUG_W_NUM("xRadius\t=", xRadius);
+			CONSOLE_DEBUG_W_NUM("yRadius\t=", yRadius);
+		}
+	}
+	else
+	{
+		CONSOLE_DEBUG("cOpenCV_Image is NULL");
+		CONSOLE_ABORT("cOpenCV_Image is NULL");
+	}
+#else
+	if (cOpenCV_Image != NULL)
+	{
+	CvPoint	center;
+	CvSize	axes;
+		if ((xRadius > 0) && (yRadius > 0))
+		{
+			center.x	=	xCenter;
+			center.y	=	yCenter;
+			axes.width	=	1 * xRadius;
+			axes.height	=	1 * yRadius;
+
+			cvEllipse(	cOpenCV_Image,
+						center,
+						axes,
+						0.0,				//*	angle
+						0.0,				//*	start_angle
+						360.0,				//*	end_angle
+						cCurrentColor,		//	color,
+						cCurrentLineWidth,	//	int thickness CV_DEFAULT(1),
+						8,					//	int line_type CV_DEFAULT(8),
+						0);					//	int shift CV_DEFAULT(0));
+		}
+		else
+		{
+			CONSOLE_ABORT("Invalid arguments");
+		}
+	}
+	else
+	{
+		CONSOLE_DEBUG("cOpenCV_Image is NULL");
+	}
+#endif // _USE_OPENCV_CPP_
+
+}
+
+//**************************************************************************************
+void	Controller::LLD_FillEllipse(	int xCenter, int yCenter, int xRadius, int yRadius)
+{
+
+#ifdef _USE_OPENCV_CPP_
+	if (cOpenCV_matImage != NULL)
+	{
+	cv::Point	center;
+	cv::Size	axes;
+
+		if ((xRadius > 0) && (yRadius > 0))
+		{
+			center.x	=	xCenter;
+			center.y	=	yCenter;
+			axes.width	=	1 * xRadius;
+			axes.height	=	1 * yRadius;
+
+			cv::ellipse(	*cOpenCV_matImage,
+							center,
+							axes,
+							0.0,			//*	angle
+							0.0,			//*	start_angle
+							360.0,			//*	end_angle
+							cCurrentColor,	//	color,
+							CV_FILLED);		//	int thickness CV_DEFAULT(1),
+		}
+		else
+		{
+			CONSOLE_DEBUG_W_NUM("xCenter\t=", xCenter);
+			CONSOLE_DEBUG_W_NUM("yCenter\t=", yCenter);
+			CONSOLE_DEBUG_W_NUM("xRadius\t=", xRadius);
+			CONSOLE_DEBUG_W_NUM("yRadius\t=", yRadius);
+			CONSOLE_ABORT("Invalid arguments");
+		}
+
+	}
+	else
+	{
+		CONSOLE_DEBUG("cOpenCV_matImage is NULL");
+	}
+
+#else
+//	CONSOLE_DEBUG(__FUNCTION__);
+	if (cOpenCV_Image != NULL)
+	{
+	CvPoint	center;
+	CvSize	axes;
+
+		if ((xRadius > 0) && (yRadius > 0))
+		{
+			center.x	=	xCenter;
+			center.y	=	yCenter;
+			axes.width	=	1 * xRadius;
+			axes.height	=	1 * yRadius;
+
+			cvEllipse(	cOpenCV_Image,
+						center,
+						axes,
+						0.0,			//*	angle
+						0.0,			//*	start_angle
+						360.0,			//*	end_angle
+						cCurrentColor,	//	color,
+						CV_FILLED,		//	int thickness CV_DEFAULT(1),
+						8,				//	int line_type CV_DEFAULT(8),
+						0);				//	int shift CV_DEFAULT(0));
+		}
+		else
+		{
+			CONSOLE_DEBUG_W_NUM("xCenter\t=", xCenter);
+			CONSOLE_DEBUG_W_NUM("yCenter\t=", yCenter);
+			CONSOLE_DEBUG_W_NUM("xRadius\t=", xRadius);
+			CONSOLE_DEBUG_W_NUM("yRadius\t=", yRadius);
+			CONSOLE_ABORT("Invalid arguments");
+		}
+	}
+	else
+	{
+		CONSOLE_DEBUG("cOpenCV_Image is NULL");
+	}
+#endif // _USE_OPENCV_CPP_
+
+}
+
+//*****************************************************************************
+int	Controller::LLD_GetTextSize(const char *textString, const int fontIndex)
+{
+int		textWidthPixels;
+
+#ifdef _USE_OPENCV_CPP_
+cv::Size		textSize;
+	textSize	=	cv::getTextSize(textString,
+									gFontInfo[fontIndex].fontID,
+									gFontInfo[fontIndex].scale,
+									gFontInfo[fontIndex].thickness,
+									&cCurrentFontBaseLine);
+	textWidthPixels		=	textSize.width;
+	cCurrentFontHeight	=	textSize.height;
+#else
+
+CvSize		textSize;
+	cvGetTextSize(	textString,
+					&gTextFont[fontIndex],
+					&textSize,
+					&cCurrentFontBaseLine);
+	textWidthPixels		=	textSize.width;
+	cCurrentFontHeight	=	textSize.height;
+#endif
+
+	return(textWidthPixels);
 }
 
 

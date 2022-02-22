@@ -32,10 +32,14 @@
 #include	<unistd.h>
 #include	<sys/time.h>
 
-#include "opencv/highgui.h"
-#include "opencv2/highgui/highgui_c.h"
-#include "opencv2/imgproc/imgproc_c.h"
-
+#ifdef _USE_OPENCV_CPP_
+	#include	<opencv2/opencv.hpp>
+#else
+	#include "opencv/highgui.h"
+	#include "opencv2/highgui/highgui_c.h"
+	#include "opencv2/imgproc/imgproc_c.h"
+	#include "opencv2/core/version.hpp"
+#endif // _USE_OPENCV_CPP_
 
 #ifndef _ENABLE_NET_TEST_
 	#define	_ENABLE_ALPACA_QUERY_
@@ -473,7 +477,7 @@ int					keyPressed;
 	}
 }
 
-
+#if 0
 //*****************************************************************************
 //*	this steps through the Controller Object List to see if there is a window by this name
 //*****************************************************************************
@@ -496,4 +500,4 @@ bool	windowExists;
 	}
 	return(windowExists);
 }
-
+#endif // 0

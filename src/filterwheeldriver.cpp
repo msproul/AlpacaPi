@@ -446,8 +446,6 @@ char				filterNameBuff[32];
 	return(alpacaErrCode);
 }
 
-
-
 //*****************************************************************************
 TYPE_ASCOM_STATUS	FilterwheelDriver::Get_Position(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
 {

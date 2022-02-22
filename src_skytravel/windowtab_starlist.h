@@ -79,7 +79,7 @@ class WindowTabStarList: public WindowTab
 		//
 				WindowTabStarList(	const int	xSize,
 									const int	ySize,
-									CvScalar	backGrndColor,
+									cv::Scalar	backGrndColor,
 									const char	*windowName);
 		virtual	~WindowTabStarList(void);
 

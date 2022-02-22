@@ -144,8 +144,14 @@
 #include	<gnu/libc-version.h>
 
 #ifdef _USE_OPENCV_
-	#include "opencv/highgui.h"
-	#include "opencv2/highgui/highgui_c.h"
+	#ifdef _USE_OPENCV_CPP_
+		#include	<opencv2/opencv.hpp>
+	#else
+		#include "opencv/highgui.h"
+		#include "opencv2/highgui/highgui_c.h"
+		#include "opencv2/imgproc/imgproc_c.h"
+		#include "opencv2/core/version.hpp"
+	#endif // _USE_OPENCV_CPP_
 #endif
 
 #ifdef _ENABLE_FITS_
@@ -405,10 +411,11 @@ int		iii;
 	cBroadcastSocket			=	-1;
 	cDiscoveryCount				=	0;
 
+#ifdef _USE_OPENCV_
 	//========================================
 	//*	live window stuff
 	cLiveController				=	NULL;
-
+#endif // _USE_OPENCV_
 	//========================================
 	//*	Watchdog timer stuff
 	cTimeOfLastValidCmd			=	time(NULL);		//*	these need to be set or it will do a shutdown before it even starts
@@ -952,6 +959,7 @@ int		mySocketFD;
 TYPE_ASCOM_STATUS	AlpacaDriver::Put_LiveWindow(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
+#ifdef _USE_OPENCV_
 bool				foundKeyWord;
 char				argumentString[32];
 bool				liveWindowFlg;
@@ -978,10 +986,12 @@ bool				liveWindowFlg;
 		alpacaErrCode	=	kASCOM_Err_InvalidValue;
 		CONSOLE_DEBUG(alpacaErrMsg);
 	}
+#endif // _USE_OPENCV_
 	return(alpacaErrCode);
 
 }
 
+#ifdef _USE_OPENCV_
 //*****************************************************************************
 TYPE_ASCOM_STATUS	AlpacaDriver::OpenLiveWindow(char *alpacaErrMsg)
 {
@@ -998,7 +1008,7 @@ TYPE_ASCOM_STATUS	AlpacaDriver::CloseLiveWindow(char *alpacaErrMsg)
 	{
 		cLiveController->cKeepRunning	=	false;
 	}
-
+	cLiveController	=	NULL;	//*	added 2/14/2022
 	return(kASCOM_Err_Success);
 }
 
@@ -1008,6 +1018,7 @@ void	AlpacaDriver::UpdateLiveWindow(void)
 	CONSOLE_DEBUG(__FUNCTION__);
 	//*	this is intended to be over-ridden by the sub-class
 }
+#endif // _USE_OPENCV_
 
 
 //*****************************************************************************
@@ -3171,7 +3182,7 @@ Controller	*myController;
 	if (myController != NULL)
 	{
 		myController->HandleWindow();
-		cvWaitKey(100);
+		cv::waitKey(100);
 
 		if (myController->cKeepRunning == false)
 		{
@@ -3522,22 +3533,24 @@ void			GetAlpacaName(TYPE_DEVICETYPE deviceType, char *alpacaName)
 {
 	switch(deviceType)
 	{
-
-		case kDeviceType_Management:			strcpy(alpacaName, "Management");		break;
 		case kDeviceType_Camera:				strcpy(alpacaName, "Camera");			break;
+		case kDeviceType_CoverCalibrator:		strcpy(alpacaName, "CoverCalibrator");	break;
 		case kDeviceType_Dome:					strcpy(alpacaName, "Dome");				break;
 		case kDeviceType_Filterwheel:			strcpy(alpacaName, "Filterwheel");		break;
 		case kDeviceType_Focuser:				strcpy(alpacaName, "Focuser");			break;
-		case kDeviceType_Rotator:				strcpy(alpacaName, "Rotator");			break;
-		case kDeviceType_Telescope:				strcpy(alpacaName, "Telescope");		break;
+		case kDeviceType_Management:			strcpy(alpacaName, "Management");		break;
 		case kDeviceType_Observingconditions:	strcpy(alpacaName, "Observingconditions");	break;
+		case kDeviceType_Rotator:				strcpy(alpacaName, "Rotator");			break;
 		case kDeviceType_SafetyMonitor:			strcpy(alpacaName, "SafetyMonitor");	break;
-		case kDeviceType_Shutter:				strcpy(alpacaName, "Shutter");			break;
 		case kDeviceType_Switch:				strcpy(alpacaName, "Switch");			break;
+		case kDeviceType_Telescope:				strcpy(alpacaName, "Telescope");		break;
+
+		//*	extras - non Alpaca standard
 		case kDeviceType_Multicam:				strcpy(alpacaName, "Multicam");			break;
+//		case kDeviceType_RemoteDiscovery:		strcpy(alpacaName, "RemoteDiscovery");	break;
+		case kDeviceType_Shutter:				strcpy(alpacaName, "Shutter");			break;
 		case kDeviceType_SlitTracker:			strcpy(alpacaName, "SlitTracker");		break;
-		case kDeviceType_CoverCalibrator:		strcpy(alpacaName, "CoverCalibrator");	break;
-		default:								strcpy(alpacaName, "unknown");		break;
+		default:								strcpy(alpacaName, "unknown");			break;
 	}
 }
 

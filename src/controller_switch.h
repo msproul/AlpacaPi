@@ -46,8 +46,8 @@ class ControllerSwitch: public Controller
 
 		virtual	void	SetupWindowControls(void);
 	//	virtual	void	ProcessButtonClick(const int buttonIdx);
-		virtual	void	RunBackgroundTasks(bool enableDebug=false);
-	//	virtual	void	DrawGraphWidget(const int widgetIdx);
+		virtual	void	RunBackgroundTasks(const char *callingFunction=NULL, bool enableDebug=false);
+	//	virtual	void	DrawWidgetCustomGraphic(const int widgetIdx);
 		virtual	bool	AlpacaGetStartupData(void);
 				bool	AlpacaGetStartupData_OneAAT(void);
 				bool	AlpacaGetStatus(void);

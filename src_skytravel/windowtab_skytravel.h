@@ -116,12 +116,16 @@ class WindowTabSkyTravel: public WindowTab
 		//
 				WindowTabSkyTravel(	const int	xSize,
 									const int	ySize,
-									CvScalar	backGrndColor,
+									cv::Scalar	backGrndColor,
 									const char	*windowName);
 		virtual	~WindowTabSkyTravel(void);
 
 		virtual	void	RunBackgroundTasks(void);
-		virtual	void	DrawGraphWidget(IplImage *openCV_Image, const int widgetIdx);
+#ifdef _USE_OPENCV_CPP_
+		virtual void	DrawWidgetCustomGraphic(cv::Mat *openCV_Image, const int widgetIdx);
+#else
+		virtual	void	DrawWidgetCustomGraphic(IplImage *openCV_Image, const int widgetIdx);
+#endif // _USE_OPENCV_CPP_
 		virtual	void	SetupWindowControls(void);
 //		virtual	void	DrawWindow(void);
 		virtual void	HandleKeyDown(const int keyPressed);

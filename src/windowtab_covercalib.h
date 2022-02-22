@@ -76,7 +76,7 @@ class WindowTabCoverCalib: public WindowTab
 		//
 				WindowTabCoverCalib(	const int	xSize,
 										const int	ySize,
-										CvScalar	backGrndColor,
+										cv::Scalar	backGrndColor,
 										const char	*windowName);
 		virtual	~WindowTabCoverCalib(void);
 

@@ -25,7 +25,7 @@
 //*	Apr 14,	2019	<MLS> Created cameradriver_livewindow.c
 //*****************************************************************************
 
-#ifdef _ENABLE_CAMERA_
+#if defined(_ENABLE_CAMERA_) && defined(_USE_OPENCV_)
 
 //#define _DEBUG_TIMING_
 #define _ENABLE_CONSOLE_DEBUG_
@@ -34,9 +34,14 @@
 
 
 #ifdef _USE_OPENCV_
-	#include "opencv/highgui.h"
-	#include "opencv2/highgui/highgui_c.h"
-	#include "opencv2/imgproc/imgproc_c.h"
+	#ifdef _USE_OPENCV_CPP_
+		#include	<opencv2/opencv.hpp>
+	#else
+		#include "opencv/highgui.h"
+		#include "opencv2/highgui/highgui_c.h"
+		#include "opencv2/imgproc/imgproc_c.h"
+		#include "opencv2/core/version.hpp"
+	#endif // _USE_OPENCV_CPP_
 #endif
 
 
@@ -53,6 +58,7 @@ TYPE_ASCOM_STATUS	CameraDriver::OpenLiveWindow(char *alpacaErrMsg)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode;
 char				myWindowName[80];
+bool				windowExists;
 
 	alpacaErrCode	=	kASCOM_Err_Success;
 
@@ -69,7 +75,17 @@ char				myWindowName[80];
 	{
 		strcpy(myWindowName,	cCommonProp.Name);
 	}
-	cLiveController	=	new ControllerImage(myWindowName, NULL);
+	CONSOLE_DEBUG_W_STR("New Window:", myWindowName);
+	windowExists	=	CheckForOpenWindowByName(myWindowName);
+	if (windowExists)
+	{
+		CONSOLE_DEBUG_W_STR("Window already open:", myWindowName);
+	}
+	else
+	{
+		CONSOLE_DEBUG_W_STR("Creating new window:", myWindowName);
+		cLiveController	=	new ControllerImage(myWindowName, NULL);
+	}
 	alpacaErrCode	=	kASCOM_Err_Success;
 
 	CONSOLE_DEBUG("-----------------------------");

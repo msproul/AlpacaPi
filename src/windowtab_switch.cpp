@@ -39,7 +39,7 @@
 //**************************************************************************************
 WindowTabSwitch::WindowTabSwitch(	const int	xSize,
 									const int	ySize,
-									CvScalar	backGrndColor,
+									cv::Scalar	backGrndColor,
 									const char	*windowName)
 	:WindowTab(xSize, ySize, backGrndColor, windowName)
 {
@@ -131,7 +131,7 @@ int		iii;
 
 		//*	and the Value
 		SetWidget(				(boxNumber + 3),	valueLeft,		yLoc,		valueWidth,		cBtnHeight);
-		SetWidgetType(			(boxNumber + 3),	kWidgetType_Text);
+		SetWidgetType(			(boxNumber + 3),	kWidgetType_TextBox);
 		SetWidgetFont(			(boxNumber + 3),	kFont_Medium);
 		SetWidgetText(			(boxNumber + 3),	"--");
 //		SetWidgetBGColor(		(boxNumber + 3),	CV_RGB(255, 255, 255));
@@ -178,45 +178,6 @@ int		iii;
 	//*	IP address
 	SetIPaddressBoxes(kSwitchBox_IPaddr, kSwitchBox_Readall, kSwitchBox_AlpacaDrvrVersion, -1);
 }
-
-//******************************************************************************
-void	WindowTabSwitch::DrawGraphWidget(IplImage *openCV_Image, const int widgetIdx)
-{
-CvRect		myCVrect;
-
-	myCVrect.x		=	cWidgetList[widgetIdx].left;
-	myCVrect.y		=	cWidgetList[widgetIdx].top;
-	myCVrect.width	=	cWidgetList[widgetIdx].width;
-	myCVrect.height	=	cWidgetList[widgetIdx].height;
-
-
-	cvRectangleR(	openCV_Image,
-					myCVrect,
-					cWidgetList[widgetIdx].bgColor,			//	CvScalar color,
-					CV_FILLED,								//	int thickness CV_DEFAULT(1),
-					8,										//	int line_type CV_DEFAULT(8),
-					0);										//	int shift CV_DEFAULT(0));
-
-//	cvRectangleR(	openCV_Image,
-//					myCVrect,
-//					cWidgetList[widgetIdx].boarderColor,	//	CvScalar color,
-//					1,										//	int thickness CV_DEFAULT(1),
-//					8,										//	int line_type CV_DEFAULT(8),
-//					0);										//	int shift CV_DEFAULT(0));
-
-	switch(widgetIdx)
-	{
-		case kSwitchBox_Switch01:
-		case kSwitchBox_Switch02:
-		case kSwitchBox_Switch03:
-			break;
-
-		default:
-			CONSOLE_DEBUG_W_NUM("widgetIdx\t",	widgetIdx);
-			break;
-	}
-}
-
 
 //*****************************************************************************
 void	WindowTabSwitch::ProcessButtonClick(const int buttonIdx)

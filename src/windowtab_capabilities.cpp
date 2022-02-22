@@ -36,7 +36,7 @@
 //**************************************************************************************
 WindowTabCapabilities::WindowTabCapabilities(	const int	xSize,
 												const int	ySize,
-												CvScalar	backGrndColor,
+												cv::Scalar	backGrndColor,
 												const char	*windowName)
 	:WindowTab(xSize, ySize, backGrndColor, windowName)
 {
@@ -78,7 +78,7 @@ short	tabStopList[]	=	{250, 300, 350, 400, 0 };
 	for (iii=kCapabilities_TextBox1; iii<=kCapabilities_TextBoxN; iii++)
 	{
 		SetWidget(				iii,	0,			yLoc,		cWidth,		cRadioBtnHt);
-		SetWidgetType(			iii,	kWidgetType_Text);
+		SetWidgetType(			iii,	kWidgetType_TextBox);
 		SetWidgetTabStops(		iii,	tabStopList);
 		SetWidgetBorder(		iii,	false);
 		SetWidgetJustification(	iii,	kJustification_Left);

@@ -22,11 +22,15 @@
 #include	<unistd.h>
 #include	<string.h>
 
+#ifdef _USE_OPENCV_CPP_
+	#include	<opencv2/opencv.hpp>
+#else
+	#include "opencv/highgui.h"
+	#include "opencv2/highgui/highgui_c.h"
+	#include "opencv2/imgproc/imgproc_c.h"
+#endif // _USE_OPENCV_CPP_
 
 
-#include "opencv/highgui.h"
-#include "opencv2/highgui/highgui_c.h"
-#include "opencv2/imgproc/imgproc_c.h"
 
 #include	"discovery_lib.h"
 #include	"sendrequest_lib.h"
@@ -68,12 +72,19 @@ enum
 };
 
 
-
+#ifdef _USE_OPENCV_CPP_
+//**************************************************************************************
+ControllerImage::ControllerImage(const char	*argWindowName, cv::Mat *downloadedImage)
+			:Controller(	argWindowName,
+							kWindowWidth,
+							kWindowHeight)
+#else
 //**************************************************************************************
 ControllerImage::ControllerImage(	const char *argWindowName, IplImage *downloadedImage)
 			:Controller(	argWindowName,
 							kWindowWidth,
 							kWindowHeight)
+#endif // _USE_OPENCV_CPP_
 {
 
 	CONSOLE_DEBUG(__FUNCTION__);
@@ -105,6 +116,9 @@ ControllerImage::~ControllerImage(void)
 {
 	CONSOLE_DEBUG(__FUNCTION__);
 	SetWidgetImage(kTab_Image, kImageDisplay_ImageDisplay, NULL);
+#ifdef _USE_OPENCV_CPP_
+	#warning "OpenCV++ not finished"
+#else
 	//--------------------------------------------
 	//*	free up the image memory
 	if (cDownLoadedImage != NULL)
@@ -119,6 +133,7 @@ ControllerImage::~ControllerImage(void)
 		cvReleaseImage(&cDisplayedImage);
 		cDisplayedImage	=	NULL;
 	}
+#endif // _USE_OPENCV_CPP_
 
 	//--------------------------------------------
 	//*	delete the window tab objects
@@ -153,13 +168,14 @@ void	ControllerImage::SetupWindowControls(void)
 }
 
 //**************************************************************************************
-void	ControllerImage::RunBackgroundTasks(bool enableDebug)
+void	ControllerImage::RunBackgroundTasks(const char *callingFunction, bool enableDebug)
 {
 uint32_t	currentMillis;
 uint32_t	deltaSeconds;
 bool		needToUpdate;
 
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+//	CONSOLE_DEBUG_W_STR("Called from:", callingFunction);
 	if (cReadStartup)
 	{
 //		AlpacaGetStartupData();
@@ -223,6 +239,27 @@ void	ControllerImage::DrawWidgetImage(TYPE_WIDGET *theWidget)
 	}
 }
 
+#ifdef _USE_OPENCV_CPP_
+	#warning "OpenCV++ not finished"
+//**************************************************************************************
+void	ControllerImage::SetLiveWindowImage(cv::Mat *newOpenCVImage)
+{
+}
+
+//**************************************************************************************
+void	ControllerImage::CopyImageToLiveImage(cv::Mat *newOpenCVImage)
+{
+}
+
+
+//**************************************************************************************
+//*	this routine updates the existing image by copying the new image to the old image buffer
+//*	it checks to make sure they are compatible
+//**************************************************************************************
+void	ControllerImage::UpdateLiveWindowImage(cv::Mat *newOpenCVImage, const char *imageFileName)
+{
+}
+#else
 //**************************************************************************************
 void	ControllerImage::SetLiveWindowImage(IplImage *newOpenCVImage)
 {
@@ -412,7 +449,7 @@ size_t				byteCount_dst;
 //**************************************************************************************
 void	ControllerImage::UpdateLiveWindowImage(IplImage *newOpenCVImage, const char *imageFileName)
 {
-bool				imagesAreTheSame;
+bool	imagesAreTheSame;
 
 //	CONSOLE_DEBUG("-------------------Start");
 	CONSOLE_DEBUG(__FUNCTION__);
@@ -512,6 +549,7 @@ bool				imagesAreTheSame;
 
 //	CONSOLE_DEBUG("-------------------exit");
 }
+#endif // _USE_OPENCV_CPP_
 
 //**************************************************************************************
 void	ControllerImage::UpdateLiveWindowInfo(	TYPE_CameraProperties	*cameraProp,

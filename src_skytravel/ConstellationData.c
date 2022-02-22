@@ -859,7 +859,7 @@ TYPE_RaDec			linePoint;
 	return(constelOutlineData);
 }
 
-
+#if 0
 //************************************************************************
 static void	DumpConstellationData(TYPE_ConstVector *constelObj)
 {
@@ -880,3 +880,4 @@ int	iii;
 	CONSOLE_DEBUG_W_DBL("rtAscension\t=", constelObj->rtAscension);
 	CONSOLE_DEBUG_W_DBL("declination\t=", constelObj->declination);
 }
+#endif

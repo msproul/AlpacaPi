@@ -31,9 +31,9 @@ class WindowTabCapabilities: public WindowTab
 		// Construction
 		//
 				WindowTabCapabilities(	const int	xSize,
-								const int	ySize,
-								CvScalar	backGrndColor,
-								const char	*windowName);
+										const int	ySize,
+										cv::Scalar	backGrndColor,
+										const char	*windowName);
 		virtual	~WindowTabCapabilities(void);
 
 		virtual	void	SetupWindowControls(void);

@@ -38,6 +38,7 @@
 //*	Dec 16,	2021	<MLS> AlpacaGetImageArray() binary working with 16 bit Color (RGB)
 //*****************************************************************************
 
+#ifdef _CONTROLLER_USES_ALPACA_
 
 #include	<string.h>
 #include	<stdio.h>
@@ -1124,4 +1125,5 @@ void	Controller::AlpacaDisplayErrorMessage(const char *errorMsgString)
 {
 	//*	this should be overloaded
 }
+#endif // _CONTROLLER_USES_ALPACA_
 

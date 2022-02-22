@@ -46,9 +46,9 @@
 
 //**************************************************************************************
 WindowTabSlitTracker::WindowTabSlitTracker(	const int	xSize,
-								const int	ySize,
-								CvScalar	backGrndColor,
-								const char	*windowName)
+											const int	ySize,
+											cv::Scalar	backGrndColor,
+											const char	*windowName)
 	:WindowTab(xSize, ySize, backGrndColor, windowName)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
@@ -96,7 +96,7 @@ int		yLoc;
 	//==========================================
 	//*	create the clock face
 	SetWidget(		kSlitTracker_SlitClockFace,	0,		yLoc,		(cWidth),	(cWidth));
-	SetWidgetType(	kSlitTracker_SlitClockFace, kWidgetType_Graphic);
+	SetWidgetType(	kSlitTracker_SlitClockFace, kWidgetType_CustomGraphic);
 	yLoc			+=	cWidth;
 
 	SetWidget(				kSlitTracker_LastUpdate,	2,		yLoc - cRadioBtnHt -2,	(cWidth / 4),	cRadioBtnHt);
@@ -195,14 +195,19 @@ int	previousDispMode;
 }
 
 
-
+#ifdef _USE_OPENCV_CPP_
 //**************************************************************************************
-void	WindowTabSlitTracker::DrawGraphWidget(IplImage *openCV_Image, const int widgetIdx)
+void	WindowTabSlitTracker::DrawWidgetCustomGraphic(cv::Mat *openCV_Image, const int widgetIdx)
+#else
+//**************************************************************************************
+void	WindowTabSlitTracker::DrawWidgetCustomGraphic(IplImage *openCV_Image, const int widgetIdx)
+#endif // _USE_OPENCV_CPP_
 {
+	cOpenCV_Image	=	openCV_Image;
 	switch(widgetIdx)
 	{
 		case kSlitTracker_SlitClockFace:
-			DrawClockFace(openCV_Image, &cWidgetList[widgetIdx]);
+			DrawClockFace(&cWidgetList[widgetIdx]);
 			break;
 
 		default:
@@ -213,57 +218,38 @@ void	WindowTabSlitTracker::DrawGraphWidget(IplImage *openCV_Image, const int wid
 
 
 //**************************************************************************************
-void	WindowTabSlitTracker::DrawClockFace(IplImage *openCV_Image, TYPE_WIDGET *theWidget)
+void	WindowTabSlitTracker::DrawClockFace(TYPE_WIDGET *theWidget)
 {
 #ifdef _ENABLE_SKYTRAVEL_
 	ControllerSlit	*myControllerObj;
 #else
 	ControllerDome	*myControllerObj;
 #endif // _ENABLE_SKYTRAVEL_
-CvRect			myCVrect;
-CvPoint			myCVcenter;
+
+int				center_X;
+int				center_Y;
 int				radius1;
 int				radius2;
 double			degrees;
 double			radians;
-CvPoint			pt1;
-CvPoint			pt2;
+int				pt1_X;
+int				pt1_Y;
+int				pt2_X;
+int				pt2_Y;
 char			textString[32];
 int				clockPosition;		//*	0	= 12 o'clock
 double			distanceInches;
-CvScalar		fillColor;
-CvSize			textSize;
-int				baseLine;
+int				fillColor_Wnum;
+int				textWidthPixels;
 
 
-	myCVrect.x		=	theWidget->left;
-	myCVrect.y		=	theWidget->top;
-	myCVrect.width	=	theWidget->width;
-	myCVrect.height	=	theWidget->height;
-
-
-	cvRectangleR(	openCV_Image,
-					myCVrect,
-					theWidget->bgColor,			//	CvScalar color,
-					CV_FILLED,					//	int thickness CV_DEFAULT(1),
-					8,							//	int line_type CV_DEFAULT(8),
-					0);							//	int shift CV_DEFAULT(0));
-
-
-	cvRectangleR(	openCV_Image,
-					myCVrect,
-					theWidget->borderColor,		//	CvScalar color,
-					1,							//	int thickness CV_DEFAULT(1),
-					8,							//	int line_type CV_DEFAULT(8),
-					0);							//	int shift CV_DEFAULT(0));
-
-	myCVcenter.x	=	myCVrect.x + (myCVrect.width / 2);
-	myCVcenter.y	=	myCVrect.y + (myCVrect.height / 2);
+	center_X	=	theWidget->left + (theWidget->width / 2);
+	center_Y	=	theWidget->top + (theWidget->height / 2);
 
 
 	//*	now draw a circle at each clock position
-	radius1	=	(myCVrect.width / 2) - 45;
-	radius2	=	(myCVrect.width / 2) - 100;
+	radius1	=	(theWidget->width / 2) - 45;
+	radius2	=	(theWidget->width / 2) - 100;
 	for (clockPosition=0; clockPosition<12; clockPosition++)
 	{
 		if (gSlitDistance[clockPosition].validData)
@@ -271,15 +257,15 @@ int				baseLine;
 			distanceInches	=	gSlitDistance[clockPosition].distanceInches;
 			if (distanceInches < 30.0)
 			{
-				fillColor	=	CV_RGB(255, 0, 0);
+				fillColor_Wnum	=	W_RED;
 			}
 			else if (distanceInches < 60.0)
 			{
-				fillColor	=	CV_RGB(255, 255, 0);
+				fillColor_Wnum	=	W_YELLOW;
 			}
 			else
 			{
-				fillColor	=	CV_RGB(0, 255, 0);
+				fillColor_Wnum	=	W_GREEN;
 			}
 
 			switch(cClockDisplayMode)
@@ -296,72 +282,51 @@ int				baseLine;
 					break;
 
 				case kClockDisplay_Calib:
-				//	fillColor	=	CV_RGB(128, 0, 255);
-					fillColor	=	CV_RGB(255, 255, 255);
+					fillColor_Wnum	=	W_WHITE;
+
 					sprintf(textString, "%1.2f", distanceInches);
 					break;
 			}
 		}
 		else
 		{
-			fillColor	=	CV_RGB(128, 128, 128);
+			fillColor_Wnum	=	W_LIGHTGRAY;
 			strcpy(textString, "---");
 		}
-		cvGetTextSize(	textString,
-						&gTextFont[kFont_Medium],
-						&textSize,
-						&baseLine);
 
 		degrees	=	-90.0 + (clockPosition * 30.0);
 		radians	=	degrees * M_PI / 180.0;
-		pt1.x	=	myCVcenter.x + (cos(radians) * radius1);
-		pt1.y	=	myCVcenter.y + (sin(radians) * radius1);
-		pt2.x	=	myCVcenter.x + (cos(radians) * radius2);
-		pt2.y	=	myCVcenter.y + (sin(radians) * radius2);
-		cvCircle(	openCV_Image,
-					pt1,
-					40,
-					fillColor,
-					CV_FILLED,							//	int thickness CV_DEFAULT(1),
-					8,									//	int line_type CV_DEFAULT(8),
-					0);									//	int shift CV_DEFAULT(0));
+		pt1_X	=	center_X + (cos(radians) * radius1);
+		pt1_Y	=	center_Y + (sin(radians) * radius1);
+		pt2_X	=	center_X + (cos(radians) * radius2);
+		pt2_Y	=	center_Y + (sin(radians) * radius2);
 
-		cvCircle(	openCV_Image,
-					pt1,
-					40,
-					theWidget->borderColor,
-					1,									//	int thickness CV_DEFAULT(1),
-					8,									//	int line_type CV_DEFAULT(8),
-					0);									//	int shift CV_DEFAULT(0));
+#define	kRadius1	40
+		SetColor(fillColor_Wnum);
+		LLD_FillEllipse(pt1_X, pt1_Y, kRadius1, kRadius1);
+		SetColor(W_WHITE);
+		LLD_FrameEllipse(pt1_X, pt1_Y, kRadius1, kRadius1);
 
-		pt1.x	-=	(textSize.width / 2);
-		pt1.y	+=	5;
-		cvPutText(	openCV_Image,
-					textString,
-					pt1,
-					&gTextFont[kFont_Medium],
-					CV_RGB(0, 0, 0)
-					);
+		textWidthPixels	=   GetTextSize_Width(textString);
+		pt1_X	-=	(textWidthPixels / 2);
+		pt1_Y	+=	5;
+		SetColor(W_BLACK);
+		LLD_DrawCString(pt1_X, pt1_Y, textString, kFont_Medium);
+
 
 		//*	this puts a little dot to indicate it recently got updated
 		if (gSlitDistance[clockPosition].updated)
 		{
+			SetColor(cUpdateColorIdx);
+			LLD_FillEllipse(pt2_X, pt2_Y, 5, 5);
 
-
-			cvCircle(	openCV_Image,
-						pt2,
-						5,
-						cDotColor[cUpdateColorIdx],
-						CV_FILLED,							//	int thickness CV_DEFAULT(1),
-						8,									//	int line_type CV_DEFAULT(8),
-						0);									//	int shift CV_DEFAULT(0));
 			gSlitDistance[clockPosition].updated	=	false;
 		}
 
 		degrees	+=	30.0;
 	}
 	cUpdateColorIdx++;
-	if (cUpdateColorIdx >= kMaxDotColors)
+	if (cUpdateColorIdx >= W_COLOR_LAST)
 	{
 		cUpdateColorIdx	=	0;
 	}
@@ -390,47 +355,30 @@ int				baseLine;
 			//*	the -90 is to make 0 degrees straight up
 			upRadians	=	(upDegrees -90.0) * M_PI / 180.0;
 
-			pt1.x	=	myCVcenter.x + (cos(upRadians) * upAngleRadius);
-			pt1.y	=	myCVcenter.y + (sin(upRadians) * upAngleRadius);
-			pt2.x	=	myCVcenter.x + (cos(upRadians) * radius2);
-			pt2.y	=	myCVcenter.y + (sin(upRadians) * radius2);
+			pt1_X	=	center_X + (cos(upRadians) * upAngleRadius);
+			pt1_Y	=	center_Y + (sin(upRadians) * upAngleRadius);
+			pt2_X	=	center_X + (cos(upRadians) * radius2);
+			pt2_Y	=	center_Y + (sin(upRadians) * radius2);
+			SetColor(W_RED);
+			LLD_MoveTo(pt1_X, pt1_Y);
+			LLD_LineTo(pt2_X, pt2_Y);
 
-			cvLine(	openCV_Image,
-					pt1,
-					pt2,
-					CV_RGB(255, 0, 0),		//	CvScalar color,
-					2,						//	int thickness CV_DEFAULT(1),
-					8,						//	int line_type CV_DEFAULT(8),
-					0);						//	int shift CV_DEFAULT(0));
+			pt1_X	=	center_X;
+			pt1_Y	=	center_Y;
 
-			pt1.x	=	myCVcenter.x;
-			pt1.y	=	myCVcenter.y;
-
-			cvCircle(	openCV_Image,
-						pt1,
-						upAngleRadius,
-						CV_RGB(255, 255, 255),
-						1,									//	int thickness CV_DEFAULT(1),
-						8,									//	int line_type CV_DEFAULT(8),
-						0);									//	int shift CV_DEFAULT(0));
+			SetColor(W_WHITE);
+			LLD_FrameEllipse(pt1_X, pt1_Y, upAngleRadius, upAngleRadius);
 
 			while (upDegrees > 360.0)
 			{
 				upDegrees	-=	360.0;
 			}
 			sprintf(textString, "%1.1f", upDegrees);
-			cvGetTextSize(	textString,
-							&gTextFont[kFont_Medium],
-							&textSize,
-							&baseLine);
-			pt1.x	-=	(textSize.width / 2);
-			pt1.y	+=	5;
-			cvPutText(	openCV_Image,
-						textString,
-						pt1,
-						&gTextFont[kFont_Medium],
-						CV_RGB(255, 255, 255)
-						);
+			textWidthPixels	=   GetTextSize_Width(textString);
+			pt1_X	-=	(textWidthPixels / 2);
+			pt1_Y	+=	5;
+			SetColor(W_WHITE);
+			LLD_DrawCString(pt1_X, pt1_Y, textString, kFont_Medium);
 		}
 	}
 	else
@@ -469,7 +417,7 @@ void	WindowTabSlitTracker::UpdateClockRadioBtns(void)
 	else
 	{
 		CONSOLE_DEBUG("myControllerObj is NULL");
-		CONSOLE_DEBUG_W_HEX("cParentObjPtr\t=", cParentObjPtr);
+//		CONSOLE_DEBUG_W_HEX("cParentObjPtr\t=", cParentObjPtr);
 //		CONSOLE_ABORT(__FUNCTION__);
 	}
 }

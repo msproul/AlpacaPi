@@ -24,18 +24,20 @@
 //*	Jan 24,	2021	<MLS> Converted TelescopeControler to use properties struct
 //*****************************************************************************
 
-
 #ifdef _ENABLE_CTRL_TELESCOPE_
-
 
 #include	<stdio.h>
 #include	<stdlib.h>
 #include	<unistd.h>
 
-
-#include "opencv/highgui.h"
-#include "opencv2/highgui/highgui_c.h"
-#include "opencv2/imgproc/imgproc_c.h"
+#ifdef _USE_OPENCV_CPP_
+	#include	<opencv2/opencv.hpp>
+#else
+	#include "opencv/highgui.h"
+	#include "opencv2/highgui/highgui_c.h"
+	#include "opencv2/imgproc/imgproc_c.h"
+	#include "opencv2/core/version.hpp"
+#endif // _USE_OPENCV_CPP_
 
 #include	"discovery_lib.h"
 #include	"helper_functions.h"
@@ -183,7 +185,7 @@ void	ControllerTelescope::SetupWindowControls(void)
 }
 
 //**************************************************************************************
-void	ControllerTelescope::RunBackgroundTasks(bool enableDebug)
+void	ControllerTelescope::RunBackgroundTasks(const char *callingFunction, bool enableDebug)
 {
 uint32_t	currentMilliSecs;
 uint32_t	deltaMilliSecs;

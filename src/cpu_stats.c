@@ -30,7 +30,7 @@ char				gOsReleaseString[64]		=	"";
 char				gCpuInfoString[64]			=	"";
 char				gPlatformString[64]			=	"";
 double				gBogoMipsValue				=	0.0;
-char				gFullVersionString[128];
+//char				gFullVersionString[128];
 
 
 

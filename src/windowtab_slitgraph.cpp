@@ -20,6 +20,7 @@
 //*****************************************************************************
 //*	May 10,	2020	<MLS> Created windowtab_slitgraph.cpp
 //*	May 10,	2020	<MLS> Added graph of slit distance values
+//*	Feb 20,	2022	<MLS> Slitgraph working with OpenCV++
 //*****************************************************************************
 
 #if defined(_ENABLE_CTRL_DOME_) && defined(_ENABLE_SLIT_TRACKER_)
@@ -36,9 +37,9 @@
 
 //**************************************************************************************
 WindowTabSlitGraph::WindowTabSlitGraph(	const int	xSize,
-								const int	ySize,
-								CvScalar	backGrndColor,
-								const char	*windowName)
+										const int	ySize,
+										cv::Scalar	backGrndColor,
+										const char	*windowName)
 	:WindowTab(xSize, ySize, backGrndColor, windowName)
 {
 int		iii;
@@ -104,7 +105,7 @@ int		graphHeight;
 
 	graphHeight		=	350;
 	SetWidget(		kSlitGraph_Graph,		0,			yLoc,		cWidth,		graphHeight);
-	SetWidgetType(	kSlitGraph_Graph, kWidgetType_Graphic);
+	SetWidgetType(	kSlitGraph_Graph, kWidgetType_CustomGraphic);
 	yLoc			+=	graphHeight;
 	yLoc			+=	2;
 
@@ -180,15 +181,20 @@ int		graphHeight;
 
 }
 
-
-
+#ifdef _USE_OPENCV_CPP_
 //**************************************************************************************
-void	WindowTabSlitGraph::DrawGraphWidget(IplImage *openCV_Image, const int widgetIdx)
+void	WindowTabSlitGraph::DrawWidgetCustomGraphic(cv::Mat *openCV_Image, const int widgetIdx)
+#else
+//**************************************************************************************
+void	WindowTabSlitGraph::DrawWidgetCustomGraphic(IplImage *openCV_Image, const int widgetIdx)
+#endif // _USE_OPENCV_CPP_
+//**************************************************************************************
 {
+	cOpenCV_Image	=	openCV_Image;
 	switch(widgetIdx)
 	{
 		case kSlitGraph_Graph:
-			DrawSlitGraph(openCV_Image, &cWidgetList[widgetIdx]);
+			DrawSlitGraph(&cWidgetList[widgetIdx]);
 			break;
 
 		default:
@@ -200,72 +206,60 @@ void	WindowTabSlitGraph::DrawGraphWidget(IplImage *openCV_Image, const int widge
 #define	TRANSLATE_Y(rect, yyy)	((rect->y + rect->height - 4) - yyy)
 
 //**************************************************************************************
-void	WindowTabSlitGraph::DrawTickLine(IplImage *openCV_Image, CvRect *widgetRect, int yLoc)
+void	WindowTabSlitGraph::DrawTickLine(CvRect *widgetRect, int yLoc)
 {
-CvPoint		pt1;
-CvPoint		pt2;
 char		tickLable[16];
-CvScalar	lineColor;
+cv::Scalar	lineColor;
 int			xx;
 int			maxXX;
+int			pt1_X;
+int			pt1_Y;
+int			pt2_X;
+int			pt2_Y;
 
 	if (yLoc < 50)
 	{
-		lineColor	=	CV_RGB(0, 255, 0);
+		cCurrentColor	=	CV_RGB(0, 255, 0);
 	}
 	else
 	{
-		lineColor	=	CV_RGB(255, 255, 255);
+		cCurrentColor	=	CV_RGB(255, 255, 255);
 	}
 #define _DASHED_LINES_
 #ifdef _DASHED_LINES_
 #define	kDashWidth	4
 	xx		=	5;
 	maxXX	=	widgetRect->width - 40;
-	pt1.y	=	TRANSLATE_Y(widgetRect, yLoc);
-	pt2.y	=	TRANSLATE_Y(widgetRect, yLoc);
+	pt1_X	=	xx;
+	pt1_Y	=	TRANSLATE_Y(widgetRect, yLoc);
+	pt2_X	=	xx;
+	pt2_Y	=	TRANSLATE_Y(widgetRect, yLoc);
 	while (xx < maxXX)
 	{
-		pt1.x	=	xx;
-		pt2.x	=	xx + kDashWidth;
+		pt1_X	=	xx;
+		pt2_X	=	xx + kDashWidth;
+		LLD_MoveTo(pt1_X, pt1_Y);
+		LLD_LineTo(pt2_X, pt2_Y);
 
-		cvLine(	openCV_Image,
-				pt1,
-				pt2,
-				lineColor,				//	CvScalar color,
-				1,						//	int thickness CV_DEFAULT(1),
-				8,						//	int line_type CV_DEFAULT(8),
-				0);						//	int shift CV_DEFAULT(0));
 		xx	+=	(5 * kDashWidth);
 	}
 #else
-	pt1.x	=	5;
-	pt1.y	=	TRANSLATE_Y(widgetRect, yLoc);
-	pt2.x	=	widgetRect->width - 40;
-	pt2.y	=	TRANSLATE_Y(widgetRect, yLoc);
-
-	cvLine(	openCV_Image,
-			pt1,
-			pt2,
-			lineColor,				//	CvScalar color,
-			1,						//	int thickness CV_DEFAULT(1),
-			8,						//	int line_type CV_DEFAULT(8),
-			0);						//	int shift CV_DEFAULT(0));
+	pt1_X	=	5;
+	pt1_Y	=	TRANSLATE_Y(widgetRect, yLoc);
+	pt2_X	=	widgetRect->width - 40;
+	pt2_Y	=	TRANSLATE_Y(widgetRect, yLoc);
+	LLD_MoveTo(pt1_X, pt1_Y);
+	LLD_LineTo(pt2_X, pt2_Y);
 
 #endif // _DASHED_LINES_
-	pt2.x	+=	2;
-	pt2.y	+=	5;
+	pt2_X	+=	2;
+	pt2_Y	+=	5;
 	sprintf(tickLable, "%3d", yLoc);
-	cvPutText(	openCV_Image,
-				tickLable,
-				pt2,
-				&gTextFont[kFont_Medium],
-				lineColor);
-
+	LLD_DrawCString(pt2_X, pt2_Y, tickLable, kFont_Medium);
 }
 
 //**************************************************************************************
-void	WindowTabSlitGraph::DrawSlitGraph(IplImage *openCV_Image, TYPE_WIDGET *theWidget)
+void	WindowTabSlitGraph::DrawSlitGraph(TYPE_WIDGET *theWidget)
 {
 CvRect		myCVrect;
 CvPoint		pt1;
@@ -277,6 +271,10 @@ int			iii;
 int			previousX;
 int			yLoc;
 int			clockIdx;
+int			pt1_X;
+int			pt1_Y;
+int			pt2_X;
+int			pt2_Y;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -285,32 +283,16 @@ int			clockIdx;
 	myCVrect.width	=	theWidget->width;
 	myCVrect.height	=	theWidget->height;
 
-
-	cvRectangleR(	openCV_Image,
-					myCVrect,
-					theWidget->bgColor,			//	CvScalar color,
-					CV_FILLED,					//	int thickness CV_DEFAULT(1),
-					8,							//	int line_type CV_DEFAULT(8),
-					0);							//	int shift CV_DEFAULT(0));
-
-
-	cvRectangleR(	openCV_Image,
-					myCVrect,
-					theWidget->borderColor,		//	CvScalar color,
-					1,							//	int thickness CV_DEFAULT(1),
-					8,							//	int line_type CV_DEFAULT(8),
-					0);							//	int shift CV_DEFAULT(0));
-
 	//=========================================================
 	//*	draw tick mark lines
 	yLoc	=	50;
 	while (yLoc < 325)
 	{
-		DrawTickLine(openCV_Image, &myCVrect, yLoc);
+		DrawTickLine(&myCVrect, yLoc);
 		yLoc	+=	50;
 	}
 	//*	draw a special one at 30
-	DrawTickLine(openCV_Image, &myCVrect, 30);
+	DrawTickLine(&myCVrect, 30);
 
 	//=========================================================
 	for (clockIdx=0; clockIdx<kSensorValueCnt; clockIdx++)
@@ -328,18 +310,15 @@ int			clockIdx;
 					if (gSlitLog[iii].validData)
 					{
 						distanceInches	=	gSlitLog[iii].distanceInches[clockIdx];
-						pt1.x			=	previousX;
-						pt1.y			=	TRANSLATE_Y((&myCVrect), previousDistance);
-						pt2.x			=	previousX + 1;
-						pt2.y			=	TRANSLATE_Y((&myCVrect), distanceInches);
 
-						cvLine(	openCV_Image,
-								pt1,
-								pt2,
-								cSLitTrackColors[clockIdx],	//	CvScalar color,
-								1,							//	int thickness CV_DEFAULT(1),
-								8,							//	int line_type CV_DEFAULT(8),
-								0);							//	int shift CV_DEFAULT(0));
+						pt1_X			=	previousX;
+						pt1_Y			=	TRANSLATE_Y((&myCVrect), previousDistance);
+						pt2_X			=	previousX + 1;
+						pt2_Y			=	TRANSLATE_Y((&myCVrect), distanceInches);
+						cCurrentColor	=	cSLitTrackColors[clockIdx];
+						LLD_MoveTo(pt1_X, pt1_Y);
+						LLD_LineTo(pt2_X, pt2_Y);
+
 						previousX			=	pt2.x;
 						previousDistance	=	distanceInches;
 					}
@@ -347,7 +326,7 @@ int			clockIdx;
 			}
 			if (cDisplayAvgData)
 			{
-			CvScalar	avgColor;
+			cv::Scalar	avgColor;
 
 				if (cDisplayRawData)
 				{
@@ -367,18 +346,15 @@ int			clockIdx;
 					if (gSlitLog[iii].validData)
 					{
 						distanceInches	=	gSlitLog[iii].average20pt[clockIdx];
-						pt1.x			=	previousX;
-						pt1.y			=	TRANSLATE_Y((&myCVrect), previousDistance);
-						pt2.x			=	previousX + 1;
-						pt2.y			=	TRANSLATE_Y((&myCVrect), distanceInches);
 
-						cvLine(	openCV_Image,
-								pt1,
-								pt2,
-								avgColor,
-								1,							//	int thickness CV_DEFAULT(1),
-								8,							//	int line_type CV_DEFAULT(8),
-								0);							//	int shift CV_DEFAULT(0));
+						pt1_X			=	previousX;
+						pt1_Y			=	TRANSLATE_Y((&myCVrect), previousDistance);
+						pt2_X			=	previousX + 1;
+						pt2_Y			=	TRANSLATE_Y((&myCVrect), distanceInches);
+						cCurrentColor	=	cSLitTrackColors[clockIdx];
+						LLD_MoveTo(pt1_X, pt1_Y);
+						LLD_LineTo(pt2_X, pt2_Y);
+
 						previousX			=	pt2.x;
 						previousDistance	=	distanceInches;
 					}
@@ -388,15 +364,13 @@ int			clockIdx;
 	}
 	//======================================================
 	//*	put the number of samples in the bottom right corner
-	pt1.x	=	myCVrect.width - 100;
-	pt1.y	=	myCVrect.y + myCVrect.height - 10;
 	sprintf(textStr, "samples=%d", gSlitLogIdx);
-	cvPutText(	openCV_Image,
-				textStr,
-				pt1,
-				&gTextFont[kFont_Small],
-				CV_RGB(255, 255, 255));
 
+	cCurrentColor	=	CV_RGB(255, 255, 255);
+	pt1_X	=	myCVrect.width - 100;
+	pt1_Y	=	myCVrect.y + myCVrect.height - 10;
+
+	LLD_DrawCString(pt1_X, pt1_Y, textStr, kFont_Small);
 }
 
 

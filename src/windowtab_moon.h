@@ -62,7 +62,7 @@ class WindowTabMoon: public WindowTab
 		//
 				WindowTabMoon(	const int	xSize,
 								const int	ySize,
-								CvScalar	backGrndColor,
+								cv::Scalar	backGrndColor,
 								const char	*windowName);
 		virtual	~WindowTabMoon(void);
 		virtual	void	RunBackgroundTasks(void);

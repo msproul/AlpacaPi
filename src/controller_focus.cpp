@@ -47,9 +47,13 @@
 #include	<unistd.h>
 
 
-#include "opencv/highgui.h"
-#include "opencv2/highgui/highgui_c.h"
-#include "opencv2/imgproc/imgproc_c.h"
+#ifdef _USE_OPENCV_CPP_
+	#include	<opencv2/opencv.hpp>
+#else
+	#include "opencv/highgui.h"
+	#include "opencv2/highgui/highgui_c.h"
+	#include "opencv2/imgproc/imgproc_c.h"
+#endif // _USE_OPENCV_CPP_
 
 #include	"discovery_lib.h"
 #include	"helper_functions.h"
@@ -199,7 +203,7 @@ void	ControllerFocus::CreateWindowTabs(void)
 
 
 //**************************************************************************************
-void	ControllerFocus::RunBackgroundTasks(bool enableDebug)
+void	ControllerFocus::RunBackgroundTasks(const char *callingFunction, bool enableDebug)
 {
 uint32_t	currentMillis;
 uint32_t	deltaSeconds;

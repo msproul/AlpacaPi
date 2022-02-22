@@ -51,7 +51,7 @@
 //**************************************************************************************
 WindowTabDome::WindowTabDome(	const int	xSize,
 								const int	ySize,
-								CvScalar	backGrndColor,
+								cv::Scalar	backGrndColor,
 								const char	*windowName,
 								const bool	parentIsSkyTravel)
 	:WindowTab(xSize, ySize, backGrndColor, windowName)
@@ -331,14 +331,14 @@ int		domeGraphic_yLoc;
 		domeBoxSize	-=	20;
 
 		SetWidget(			kDomeBox_DomeGraphic,	xLoc,	yLoc,	domeBoxSize,	domeBoxSize);
-		SetWidgetType(		kDomeBox_DomeGraphic,	kWidgetType_Graphic);
+		SetWidgetType(		kDomeBox_DomeGraphic,	kWidgetType_CustomGraphic);
 		SetWidgetBGColor(	kDomeBox_DomeGraphic,	CV_RGB(128,	128,	128));
 
 		compassBox_xloc	=	xLoc + (domeBoxSize / 2) - (compassLetterBxSize / 2) - 10;
 		compassBox_yLoc	=	yLoc;
 
 		SetWidget(			kDomeBox_North,	compassBox_xloc,	compassBox_yLoc,	compassLetterBxSize,	compassLetterBxSize);
-		SetWidgetType(		kDomeBox_North,	kWidgetType_Text);
+		SetWidgetType(		kDomeBox_North,	kWidgetType_TextBox);
 		SetWidgetBGColor(	kDomeBox_North,	CV_RGB(128,	128,	128));
 		SetWidgetTextColor(	kDomeBox_North,	CV_RGB(255,	255,	0));
 		SetWidgetFont(		kDomeBox_North,	kFont_Script_Large);
@@ -349,7 +349,7 @@ int		domeGraphic_yLoc;
 		compassBox_yLoc	=	yLoc + domeBoxSize - compassLetterBxSize;
 
 		SetWidget(			kDomeBox_South,	compassBox_xloc,	compassBox_yLoc,	compassLetterBxSize,	compassLetterBxSize);
-		SetWidgetType(		kDomeBox_South,	kWidgetType_Text);
+		SetWidgetType(		kDomeBox_South,	kWidgetType_TextBox);
 		SetWidgetBGColor(	kDomeBox_South,	CV_RGB(128,	128,	128));
 		SetWidgetTextColor(	kDomeBox_South,	CV_RGB(255,	255,	0));
 		SetWidgetFont(		kDomeBox_South,	kFont_Script_Large);
@@ -360,7 +360,7 @@ int		domeGraphic_yLoc;
 		compassBox_yLoc	=	yLoc + (domeBoxSize / 2) - (compassLetterBxSize / 2) - 10;
 
 		SetWidget(			kDomeBox_West,	compassBox_xloc,	compassBox_yLoc,	compassLetterBxSize,	compassLetterBxSize);
-		SetWidgetType(		kDomeBox_West,	kWidgetType_Text);
+		SetWidgetType(		kDomeBox_West,	kWidgetType_TextBox);
 		SetWidgetBGColor(	kDomeBox_West,	CV_RGB(128,	128,	128));
 		SetWidgetTextColor(	kDomeBox_West,	CV_RGB(255,	255,	0));
 		SetWidgetFont(		kDomeBox_West,	kFont_Script_Large);
@@ -370,7 +370,7 @@ int		domeGraphic_yLoc;
 		compassBox_xloc	=	xLoc + domeBoxSize - compassLetterBxSize;
 
 		SetWidget(			kDomeBox_East,	compassBox_xloc,	compassBox_yLoc,	compassLetterBxSize,	compassLetterBxSize);
-		SetWidgetType(		kDomeBox_East,	kWidgetType_Text);
+		SetWidgetType(		kDomeBox_East,	kWidgetType_TextBox);
 		SetWidgetBGColor(	kDomeBox_East,	CV_RGB(128,	128,	128));
 		SetWidgetTextColor(	kDomeBox_East,	CV_RGB(255,	255,	0));
 		SetWidgetFont(		kDomeBox_East,	kFont_Script_Large);
@@ -434,33 +434,20 @@ void	WindowTabDome::UpdateControls(void)
 	CONSOLE_DEBUG("exit");
 }
 
-
+#ifdef _USE_OPENCV_CPP_
+//**************************************************************************************
+void	WindowTabDome::DrawWidgetCustomGraphic(cv::Mat *openCV_Image, const int widgetIdx)
+#else
+//**************************************************************************************
+void	WindowTabDome::DrawWidgetCustomGraphic(IplImage *openCV_Image, const int widgetIdx)
+#endif // _USE_OPENCV_CPP_
 //******************************************************************************
-void	WindowTabDome::DrawGraphWidget(IplImage *openCV_Image, const int widgetIdx)
 {
-CvRect		myCVrect;
+cv::Rect	myCVrect;
 
 //	CONSOLE_DEBUG_W_NUM(__FUNCTION__, widgetIdx);
 
-	myCVrect.x		=	cWidgetList[widgetIdx].left;
-	myCVrect.y		=	cWidgetList[widgetIdx].top;
-	myCVrect.width	=	cWidgetList[widgetIdx].width;
-	myCVrect.height	=	cWidgetList[widgetIdx].height;
-
-
-	cvRectangleR(	openCV_Image,
-					myCVrect,
-					cWidgetList[widgetIdx].bgColor,			//	CvScalar color,
-					CV_FILLED,								//	int thickness CV_DEFAULT(1),
-					8,										//	int line_type CV_DEFAULT(8),
-					0);										//	int shift CV_DEFAULT(0));
-
-//	cvRectangleR(	openCV_Image,
-//					myCVrect,
-//					cWidgetList[widgetIdx].boarderColor,	//	CvScalar color,
-//					1,										//	int thickness CV_DEFAULT(1),
-//					8,										//	int line_type CV_DEFAULT(8),
-//					0);										//	int shift CV_DEFAULT(0));
+	cOpenCV_Image	=	openCV_Image;
 
 	switch(widgetIdx)
 	{
@@ -476,19 +463,18 @@ CvRect		myCVrect;
 	}
 }
 
+#ifdef _USE_OPENCV_CPP_
+//*****************************************************************************
+void	WindowTabDome::DrawDomeGraphic(cv::Mat *openCV_Image, TYPE_WIDGET *theWidget)
+#else
 //*****************************************************************************
 void	WindowTabDome::DrawDomeGraphic(IplImage *openCV_Image, TYPE_WIDGET *theWidget)
+#endif // _USE_OPENCV_CPP_
 {
 CvPoint		pointLoc;
-CvPoint		pt1;
-CvPoint		pt2;
-CvPoint		centerLoc;
 int			radius;
 double		domeAzimuth_radians;
 double		domeAzimuth_degrees;
-CvScalar	bgColor;
-CvScalar	borderColor;
-CvScalar	domeOpeningColor;
 //*	dome specs, will make these prefs latter
 //*	all are in inches
 double		domeDiameter	=	15.0 * 12.0;	//*	 15 feet
@@ -499,8 +485,20 @@ double		slitEdgeAzimuth;
 CvPoint		ptList[20];
 int			pointCntr;
 int			edgeRadius;
+int			centerX;
+int			centerY;
+int			pt1_X;
+int			pt1_Y;
+int			pt2_X;
+int			pt2_Y;
+CvPoint		centerLoc;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
+
+	centerLoc.x		=	theWidget->left + (theWidget->height / 2);
+	centerLoc.y		=	theWidget->top + (theWidget->height / 2);
+
+	CONSOLE_DEBUG(__FUNCTION__);
 
 	domeAzimuth_degrees	=	145.0;
 	if (cDomePropPtr != NULL)
@@ -508,164 +506,200 @@ int			edgeRadius;
 		domeAzimuth_degrees	=	cDomePropPtr->Azimuth;
 	}
 	//*	fill in the main circle
-	centerLoc.x		=	theWidget->left + (theWidget->height / 2);
-	centerLoc.y		=	theWidget->top + (theWidget->height / 2);
-	radius			=	theWidget->height / 3;
-	cvCircle(		openCV_Image,
-					centerLoc,					//	CvPoint center,
-					radius,						//	int radius,
-					CV_RGB(255, 255, 255),		//	CvScalar color, int thickness CV_DEFAULT(1),
-					CV_FILLED,					//	int thickness
-					8,							//	int line_type CV_DEFAULT(8),
-					0);							//	int shift CV_DEFAULT(0));
-
-
-#if 0
-double		ribAngleDegrees;
-double		ribAngleRadians;
-	ribAngleDegrees	=	0.0;
-	while (ribAngleDegrees < 360.0)
+	if (openCV_Image != NULL)
 	{
-		ribAngleRadians	=	RADIANS(ribAngleDegrees - 90.0);
-		pointLoc.x		=	centerLoc.x + (cos(ribAngleRadians) * radius);
-		pointLoc.y		=	centerLoc.y + (sin(ribAngleRadians) * radius);
+		cOpenCV_Image	=	openCV_Image;
+		SetColor(W_WHITE);
+		centerX		=	theWidget->left + (theWidget->height / 2);
+		centerY		=	theWidget->top + (theWidget->height / 2);
+		radius		=	theWidget->height / 3;
+		LLD_FillEllipse(centerX, centerY, radius, radius);
 
-		cvLine(	openCV_Image,
-				centerLoc,
-				pointLoc,
-			//	theWidget->borderColor,		//	CvScalar color,
-				CV_RGB(197, 197, 197),
-				2,							//	int thickness CV_DEFAULT(1),
-				8,							//	int line_type CV_DEFAULT(8),
-				0);							//	int shift CV_DEFAULT(0));
-		ribAngleDegrees	+=	15.0;
+		domeAzimuth_radians	=	RADIANS(domeAzimuth_degrees - 90.0);
+
+//		bgColor			=	CV_RGB(64, 64, 64);
+//		borderColor		=	CV_RGB(64, 64, 64);
+
+		doorOpeningHalfAngle	=	asin((doorWidth / 2.0) / (domeDiameter / 2.0));
+
+		doorEdgeAzimuth			=	domeAzimuth_radians + doorOpeningHalfAngle;
+		pt1_X					=	centerLoc.x + (cos(doorEdgeAzimuth) * radius);
+		pt1_Y					=	centerLoc.y + (sin(doorEdgeAzimuth) * radius);
+
+
+		doorEdgeAzimuth			=	domeAzimuth_radians - doorOpeningHalfAngle;
+		pt2_X					=	centerLoc.x + (cos(doorEdgeAzimuth + M_PI) * radius);
+		pt2_Y					=	centerLoc.y + (sin(doorEdgeAzimuth + M_PI) * radius);
+
+		LLD_PenSize(2);
+		LLD_MoveTo(pt1_X, pt1_Y);
+		SetColor(W_DARKGRAY);
+		LLD_LineTo(pt2_X, pt2_Y);
+
+
+		doorEdgeAzimuth			=	domeAzimuth_radians - doorOpeningHalfAngle;
+		pt1_X					=	centerLoc.x + (cos(doorEdgeAzimuth) * radius);
+		pt1_Y					=	centerLoc.y + (sin(doorEdgeAzimuth) * radius);
+
+
+		doorEdgeAzimuth			=	domeAzimuth_radians + doorOpeningHalfAngle;
+		pt2_X					=	centerLoc.x + (cos(doorEdgeAzimuth + M_PI) * radius);
+		pt2_Y					=	centerLoc.y + (sin(doorEdgeAzimuth + M_PI) * radius);
+
+		LLD_PenSize(3);
+		LLD_MoveTo(pt1_X, pt1_Y);
+		SetColor(W_DARKGRAY);
+		LLD_LineTo(pt2_X, pt2_Y);
+
+		//*	build the point list for the opening
+		pointCntr				=	0;
+
+	#ifdef _USE_OPENCV_CPP_
+	cv::Point		pt1;
+	cv::Point		ptList[20];
+	cv::Scalar		domeOpeningColor;
+		//-------------------
+		doorEdgeAzimuth			=	domeAzimuth_radians + doorOpeningHalfAngle;
+		pt1.x					=	centerLoc.x + (cos(doorEdgeAzimuth) * radius);
+		pt1.y					=	centerLoc.y + (sin(doorEdgeAzimuth) * radius);
+
+		ptList[pointCntr++]		=	pt1;
+		pointLoc.x		=	centerLoc.x + (cos(domeAzimuth_radians) * radius);
+		pointLoc.y		=	centerLoc.y + (sin(domeAzimuth_radians) * radius);
+		ptList[pointCntr++]		=	pointLoc;	//*	this is the middle of the outer edge of the dome opening
+
+		//-------------------
+		doorEdgeAzimuth			=	domeAzimuth_radians - doorOpeningHalfAngle;
+		pt1.x					=	centerLoc.x + (cos(doorEdgeAzimuth) * radius);
+		pt1.y					=	centerLoc.y + (sin(doorEdgeAzimuth) * radius);
+
+		ptList[pointCntr++]	=	pt1;
+
+		//-------------------
+		slitEdgeAzimuth			=	domeAzimuth_radians - RADIANS(90.0);
+		edgeRadius				=	((doorWidth / 2.0) / (domeDiameter / 2.0)) * radius;
+
+		pt1.x					=	centerLoc.x + (cos(slitEdgeAzimuth) * edgeRadius);
+		pt1.y					=	centerLoc.y + (sin(slitEdgeAzimuth) * edgeRadius);
+		ptList[pointCntr++]	=	pt1;
+
+		//-------------------
+		slitEdgeAzimuth			=	domeAzimuth_radians + RADIANS(90.0);
+		edgeRadius				=	((doorWidth / 2.0) / (domeDiameter / 2.0)) * radius;
+
+		pt1.x					=	centerLoc.x + (cos(slitEdgeAzimuth) * edgeRadius);
+		pt1.y					=	centerLoc.y + (sin(slitEdgeAzimuth) * edgeRadius);
+		ptList[pointCntr++]	=	pt1;
+
+		//*	determine a color for the dome door
+		switch(cDomePropPtr->ShutterStatus)
+		{
+			case kShutterStatus_Open:
+				domeOpeningColor	=	CV_RGB(0, 0, 0);
+				break;
+
+			case kShutterStatus_Closed:
+				domeOpeningColor	=	CV_RGB(200, 200, 200);
+				break;
+
+			case kShutterStatus_Opening:
+				domeOpeningColor	=	CV_RGB(0, 200, 0);
+				break;
+
+			case kShutterStatus_Closing:
+				domeOpeningColor	=	CV_RGB(200, 0, 0);
+				break;
+
+			case kShutterStatus_Error:
+			default:
+				domeOpeningColor	=	CV_RGB(200, 200, 0);
+				break;
+
+		}
+
+		cv::fillConvexPoly(	*openCV_Image,
+							ptList,						//	const CvPoint* pts,
+							pointCntr,					//	pointCntrint npts,
+							domeOpeningColor,			//	color
+							8,							//	int line_type CV_DEFAULT(8),
+							0);							//	int shift CV_DEFAULT(0));
+	#else
+	CvPoint		pt1;
+	cv::Scalar	domeOpeningColor;
+
+		//-------------------
+		doorEdgeAzimuth			=	domeAzimuth_radians + doorOpeningHalfAngle;
+		pt1.x					=	centerLoc.x + (cos(doorEdgeAzimuth) * radius);
+		pt1.y					=	centerLoc.y + (sin(doorEdgeAzimuth) * radius);
+
+		ptList[pointCntr++]		=	pt1;
+		pointLoc.x		=	centerLoc.x + (cos(domeAzimuth_radians) * radius);
+		pointLoc.y		=	centerLoc.y + (sin(domeAzimuth_radians) * radius);
+		ptList[pointCntr++]		=	pointLoc;	//*	this is the middle of the outer edge of the dome opening
+
+		//-------------------
+		doorEdgeAzimuth			=	domeAzimuth_radians - doorOpeningHalfAngle;
+		pt1.x					=	centerLoc.x + (cos(doorEdgeAzimuth) * radius);
+		pt1.y					=	centerLoc.y + (sin(doorEdgeAzimuth) * radius);
+
+		ptList[pointCntr++]	=	pt1;
+
+		//-------------------
+		slitEdgeAzimuth			=	domeAzimuth_radians - RADIANS(90.0);
+		edgeRadius				=	((doorWidth / 2.0) / (domeDiameter / 2.0)) * radius;
+
+		pt1.x					=	centerLoc.x + (cos(slitEdgeAzimuth) * edgeRadius);
+		pt1.y					=	centerLoc.y + (sin(slitEdgeAzimuth) * edgeRadius);
+		ptList[pointCntr++]	=	pt1;
+
+		//-------------------
+		slitEdgeAzimuth			=	domeAzimuth_radians + RADIANS(90.0);
+		edgeRadius				=	((doorWidth / 2.0) / (domeDiameter / 2.0)) * radius;
+
+		pt1.x					=	centerLoc.x + (cos(slitEdgeAzimuth) * edgeRadius);
+		pt1.y					=	centerLoc.y + (sin(slitEdgeAzimuth) * edgeRadius);
+		ptList[pointCntr++]	=	pt1;
+
+		//*	determine a color for the dome door
+		switch(cDomePropPtr->ShutterStatus)
+		{
+			case kShutterStatus_Open:
+				domeOpeningColor	=	CV_RGB(0, 0, 0);
+				break;
+
+			case kShutterStatus_Closed:
+				domeOpeningColor	=	CV_RGB(200, 200, 200);
+				break;
+
+			case kShutterStatus_Opening:
+				domeOpeningColor	=	CV_RGB(0, 200, 0);
+				break;
+
+			case kShutterStatus_Closing:
+				domeOpeningColor	=	CV_RGB(200, 0, 0);
+				break;
+
+			case kShutterStatus_Error:
+			default:
+				domeOpeningColor	=	CV_RGB(200, 200, 0);
+				break;
+
+		}
+
+	//	ptList[pointCntr++]	=	centerLoc;
+		cvFillConvexPoly(openCV_Image,
+						ptList,						//	const CvPoint* pts,
+						pointCntr,					//	pointCntrint npts,
+						domeOpeningColor,			//	color
+						8,							//	int line_type CV_DEFAULT(8),
+						0);							//	int shift CV_DEFAULT(0));
+	#endif // _USE_OPENCV_CPP_
+		//*	put the dark border around the dome
+		LLD_PenSize(5);
+		SetColor(W_DARKGRAY);
+		LLD_FrameEllipse(centerX, centerY, radius, radius);
+		LLD_PenSize(1);
 	}
-#endif // 0
-
-	domeAzimuth_radians	=	RADIANS(domeAzimuth_degrees - 90.0);
-
-	bgColor			=	CV_RGB(64, 64, 64);
-	borderColor		=	CV_RGB(64, 64, 64);
-
-	doorOpeningHalfAngle	=	asin((doorWidth / 2.0) / (domeDiameter / 2.0));
-
-	doorEdgeAzimuth			=	domeAzimuth_radians + doorOpeningHalfAngle;
-	pt1.x					=	centerLoc.x + (cos(doorEdgeAzimuth) * radius);
-	pt1.y					=	centerLoc.y + (sin(doorEdgeAzimuth) * radius);
-
-
-	doorEdgeAzimuth			=	domeAzimuth_radians - doorOpeningHalfAngle;
-	pt2.x					=	centerLoc.x + (cos(doorEdgeAzimuth + M_PI) * radius);
-	pt2.y					=	centerLoc.y + (sin(doorEdgeAzimuth + M_PI) * radius);
-
-	cvLine(	openCV_Image,
-			pt1,
-			pt2,
-			borderColor,
-			3,							//	int thickness CV_DEFAULT(1),
-			8,							//	int line_type CV_DEFAULT(8),
-			0);							//	int shift CV_DEFAULT(0));
-
-	doorEdgeAzimuth			=	domeAzimuth_radians - doorOpeningHalfAngle;
-	pt1.x					=	centerLoc.x + (cos(doorEdgeAzimuth) * radius);
-	pt1.y					=	centerLoc.y + (sin(doorEdgeAzimuth) * radius);
-
-
-	doorEdgeAzimuth			=	domeAzimuth_radians + doorOpeningHalfAngle;
-	pt2.x					=	centerLoc.x + (cos(doorEdgeAzimuth + M_PI) * radius);
-	pt2.y					=	centerLoc.y + (sin(doorEdgeAzimuth + M_PI) * radius);
-
-	cvLine(	openCV_Image,
-			pt1,
-			pt2,
-		//	theWidget->borderColor,		//	CvScalar color,
-			borderColor,
-			3,							//	int thickness CV_DEFAULT(1),
-			8,							//	int line_type CV_DEFAULT(8),
-			0);							//	int shift CV_DEFAULT(0));
-
-
-	//*	build the point list for the opening
-	pointCntr				=	0;
-//	ptList[pointCntr++]		=	centerLoc;
-
-	//-------------------
-	doorEdgeAzimuth			=	domeAzimuth_radians + doorOpeningHalfAngle;
-	pt1.x					=	centerLoc.x + (cos(doorEdgeAzimuth) * radius);
-	pt1.y					=	centerLoc.y + (sin(doorEdgeAzimuth) * radius);
-
-	ptList[pointCntr++]		=	pt1;
-	pointLoc.x		=	centerLoc.x + (cos(domeAzimuth_radians) * radius);
-	pointLoc.y		=	centerLoc.y + (sin(domeAzimuth_radians) * radius);
-	ptList[pointCntr++]		=	pointLoc;	//*	this is the middle of the outer edge of the dome opening
-
-	//-------------------
-	doorEdgeAzimuth			=	domeAzimuth_radians - doorOpeningHalfAngle;
-	pt1.x					=	centerLoc.x + (cos(doorEdgeAzimuth) * radius);
-	pt1.y					=	centerLoc.y + (sin(doorEdgeAzimuth) * radius);
-
-	ptList[pointCntr++]	=	pt1;
-
-	//-------------------
-	slitEdgeAzimuth			=	domeAzimuth_radians - RADIANS(90.0);
-	edgeRadius				=	((doorWidth / 2.0) / (domeDiameter / 2.0)) * radius;
-
-	pt1.x					=	centerLoc.x + (cos(slitEdgeAzimuth) * edgeRadius);
-	pt1.y					=	centerLoc.y + (sin(slitEdgeAzimuth) * edgeRadius);
-	ptList[pointCntr++]	=	pt1;
-
-	//-------------------
-	slitEdgeAzimuth			=	domeAzimuth_radians + RADIANS(90.0);
-	edgeRadius				=	((doorWidth / 2.0) / (domeDiameter / 2.0)) * radius;
-
-	pt1.x					=	centerLoc.x + (cos(slitEdgeAzimuth) * edgeRadius);
-	pt1.y					=	centerLoc.y + (sin(slitEdgeAzimuth) * edgeRadius);
-	ptList[pointCntr++]	=	pt1;
-
-	//*	determine a color for the dome door
-	switch(cDomePropPtr->ShutterStatus)
-	{
-		case kShutterStatus_Open:
-			domeOpeningColor	=	CV_RGB(0, 0, 0);
-			break;
-
-		case kShutterStatus_Closed:
-			domeOpeningColor	=	CV_RGB(200, 200, 200);
-			break;
-
-		case kShutterStatus_Opening:
-			domeOpeningColor	=	CV_RGB(0, 200, 0);
-			break;
-
-		case kShutterStatus_Closing:
-			domeOpeningColor	=	CV_RGB(200, 0, 0);
-			break;
-
-		case kShutterStatus_Error:
-		default:
-			domeOpeningColor	=	CV_RGB(200, 200, 0);
-			break;
-
-	}
-
-
-//	ptList[pointCntr++]	=	centerLoc;
-	cvFillConvexPoly(openCV_Image,
-					ptList,						//	const CvPoint* pts,
-					pointCntr,					//	pointCntrint npts,
-					domeOpeningColor,			//	CvScalar color, int thickness CV_DEFAULT(1),
-					8,							//	int line_type CV_DEFAULT(8),
-					0);							//	int shift CV_DEFAULT(0));
-
-
-	//*	put the dark border around the dome
-	cvCircle(		openCV_Image,
-					centerLoc,					//	CvPoint center,
-					radius,						//	int radius,
-					borderColor,				//	CvScalar color, int thickness CV_DEFAULT(1),
-					5,							//	int thickness
-					8,							//	int line_type CV_DEFAULT(8),
-					0);							//	int shift CV_DEFAULT(0));
 
 }
 

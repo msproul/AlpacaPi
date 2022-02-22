@@ -11,13 +11,19 @@
 	extern "C" {
 #endif
 
-IplImage	*GetNiteCrawlerImage(void);
-IplImage	*GetMoonLiteImage(void);
+#ifdef _USE_OPENCV_CPP_
+	cv::Mat			*GetNiteCrawlerImage(void);
+	cv::Mat			*GetMoonLiteImage(void);
+	extern	cv::Mat	*gNiteCrawlerImgPtr;
+#else
+	IplImage		*GetNiteCrawlerImage(void);
+	IplImage		*GetMoonLiteImage(void);
+	extern IplImage	*gNiteCrawlerImgPtr;
 
+#endif
 void		WriteOutImageAsCode(IplImage *theImage, const char *codeFileName);
 void		WriteOutImageFileAsCode(const char *fileName);
 
-extern	IplImage	*gNiteCrawlerImgPtr;
 
 #ifdef __cplusplus
 }

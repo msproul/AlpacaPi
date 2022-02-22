@@ -37,7 +37,9 @@
 
 
 //**************************************************************************************
-WindowTabAuxMotor::WindowTabAuxMotor(const int xSize, const int ySize, CvScalar backGrndColor)
+WindowTabAuxMotor::WindowTabAuxMotor(	const int	xSize,
+										const int	ySize,
+										cv::Scalar backGrndColor)
 	:WindowTab(xSize, ySize, backGrndColor)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
@@ -139,40 +141,6 @@ int		iii;
 	//*	IP address
 	SetIPaddressBoxes(kAuxMotorBox_IPaddr, kAuxMotorBox_Readall, kAuxMotorBox_AlpacaDrvrVersion, -1);
 
-}
-
-//**************************************************************************************
-void	WindowTabAuxMotor::DrawGraphWidget(IplImage *openCV_Image, const int widgetIdx)
-{
-CvRect		myCVrect;
-
-	myCVrect.x		=	cWidgetList[widgetIdx].left;
-	myCVrect.y		=	cWidgetList[widgetIdx].top;
-	myCVrect.width	=	cWidgetList[widgetIdx].width;
-	myCVrect.height	=	cWidgetList[widgetIdx].height;
-
-
-	cvRectangleR(	openCV_Image,
-					myCVrect,
-					cWidgetList[widgetIdx].bgColor,			//	CvScalar color,
-					CV_FILLED,								//	int thickness CV_DEFAULT(1),
-					8,										//	int line_type CV_DEFAULT(8),
-					0);										//	int shift CV_DEFAULT(0));
-
-//	cvRectangleR(	openCV_Image,
-//					myCVrect,
-//					cWidgetList[widgetIdx].borderColor,		//	CvScalar color,
-//					1,										//	int thickness CV_DEFAULT(1),
-//					8,										//	int line_type CV_DEFAULT(8),
-//					0);										//	int shift CV_DEFAULT(0));
-
-	switch(widgetIdx)
-	{
-
-		default:
-			CONSOLE_DEBUG_W_NUM("widgetIdx\t",	widgetIdx);
-			break;
-	}
 }
 
 //*****************************************************************************

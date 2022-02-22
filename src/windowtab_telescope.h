@@ -73,7 +73,7 @@ class WindowTabTelescope: public WindowTab
 		//
 				WindowTabTelescope(	const int	xSize,
 								const int	ySize,
-								CvScalar	backGrndColor,
+								cv::Scalar	backGrndColor,
 								const char	*windowName);
 		virtual	~WindowTabTelescope(void);
 

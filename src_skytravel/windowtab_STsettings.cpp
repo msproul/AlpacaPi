@@ -56,9 +56,9 @@
 
 //**************************************************************************************
 WindowTabSTsettings::WindowTabSTsettings(	const int	xSize,
-								const int	ySize,
-								CvScalar	backGrndColor,
-								const char	*windowName)
+											const int	ySize,
+											cv::Scalar	backGrndColor,
+											const char	*windowName)
 	:WindowTab(xSize, ySize, backGrndColor, windowName)
 {
 	CONSOLE_DEBUG(__FUNCTION__);
@@ -214,7 +214,7 @@ int		radioBtnWidth;
 		yLoc			+=	2;
 		iii++;
 	}
-	SetWidgetType(		kSkyT_Settings_EarthLable,	kWidgetType_Text);
+	SetWidgetType(		kSkyT_Settings_EarthLable,		kWidgetType_TextBox);
 	SetWidgetText(		kSkyT_Settings_EarthLable,		"Earth Display");
 	SetWidgetText(		kSkyT_Settings_EarthThin,		"Thin Lines");
 	SetWidgetText(		kSkyT_Settings_EarthThick,		"Thick Lines");
@@ -242,7 +242,7 @@ int		radioBtnWidth;
 		yLoc			+=	2;
 		iii++;
 	}
-	SetWidgetType(		kSkyT_Settings_GridLable,	kWidgetType_Text);
+	SetWidgetType(		kSkyT_Settings_GridLable,	kWidgetType_TextBox);
 	SetWidgetText(		kSkyT_Settings_GridLable,	"Grid Lines");
 	SetWidgetText(		kSkyT_Settings_GridSolid,	"Solid Lines");
 	SetWidgetText(		kSkyT_Settings_GridDashed,	"Dashed Lines");
@@ -257,7 +257,7 @@ int		radioBtnWidth;
 	labelWidth	=	225;
 	SetWidget(		kSkyT_Settings_LineWidthTitle,	xLoc,		yLoc,	labelWidth + (4 * cRadioBtnHt),	cBoxHeight);
 	SetWidgetFont(	kSkyT_Settings_LineWidthTitle,	kFont_Medium);
-	SetWidgetType(	kSkyT_Settings_LineWidthTitle,	kWidgetType_Text);
+	SetWidgetType(	kSkyT_Settings_LineWidthTitle,	kWidgetType_TextBox);
 	SetWidgetText(	kSkyT_Settings_LineWidthTitle,	"Line Widths");
 	yLoc			+=	cBoxHeight;
 	yLoc			+=	2;
@@ -268,7 +268,7 @@ int		radioBtnWidth;
 		xLoc2	=	xLoc;
 		SetWidget(		iii,	xLoc2,			yLoc,		labelWidth,		cRadioBtnHt);
 		SetWidgetFont(	iii,	kFont_Medium);
-		SetWidgetType(	iii,	kWidgetType_Text);
+		SetWidgetType(	iii,	kWidgetType_TextBox);
 		SetWidgetJustification(iii, kJustification_Left);
 
 		xLoc2	+=	labelWidth;
@@ -321,7 +321,7 @@ int		radioBtnWidth;
 
 	SetWidget(		kSkyT_Settings_DataTitle,	xLoc,		yLoc,	(labelWidth + 75),		cBoxHeight);
 	SetWidgetFont(	kSkyT_Settings_DataTitle,	kFont_Medium);
-	SetWidgetType(	kSkyT_Settings_DataTitle,	kWidgetType_Text);
+	SetWidgetType(	kSkyT_Settings_DataTitle,	kWidgetType_TextBox);
 	SetWidgetText(	kSkyT_Settings_DataTitle,	"Star Data counts");
 	yLoc			+=	cBoxHeight;
 	yLoc			+=	2;
@@ -334,13 +334,13 @@ int		radioBtnWidth;
 	{
 		SetWidget(		iii,	xLoc,			yLoc,		labelWidth,		cBoxHeight);
 		SetWidgetFont(	iii,	kFont_Medium);
-		SetWidgetType(	iii,	kWidgetType_Text);
+		SetWidgetType(	iii,	kWidgetType_TextBox);
 		SetWidgetJustification(iii, kJustification_Left);
 		iii++;
 
 		SetWidget(		iii,	(xLoc + labelWidth),	yLoc,		75,		cBoxHeight);
 		SetWidgetFont(	iii,	kFont_Medium);
-		SetWidgetType(	iii,	kWidgetType_Text);
+		SetWidgetType(	iii,	kWidgetType_TextBox);
 		iii++;
 
 
@@ -349,7 +349,7 @@ int		radioBtnWidth;
 	}
 	SetWidget(		kSkyT_Settings_DataHelpText,	xLoc,			yLoc,		labelWidth + 75,	cBoxHeight);
 	SetWidgetFont(	kSkyT_Settings_DataHelpText,	kFont_Medium);
-	SetWidgetType(	kSkyT_Settings_DataHelpText,	kWidgetType_Text);
+	SetWidgetType(	kSkyT_Settings_DataHelpText,	kWidgetType_TextBox);
 	SetWidgetJustification(kSkyT_Settings_DataHelpText, kJustification_Center);
 	SetWidgetText(			kSkyT_Settings_DataHelpText,	"Double click on green");
 	SetWidgetTextColor(		kSkyT_Settings_DataHelpText,	CV_RGB(0,	255,	0));
@@ -471,7 +471,7 @@ int		radioBtnWidth;
 //	xLoc			=	5;
 	myBoxHeight		=	75;
 	SetWidget(			kSkyT_Settings_OBAFGKM,	xLoc,	yLoc,	450,	myBoxHeight);
-	SetWidgetType(		kSkyT_Settings_OBAFGKM,	kWidgetType_Graphic);
+	SetWidgetType(		kSkyT_Settings_OBAFGKM,	kWidgetType_CustomGraphic);
 	SetWidgetTextColor(	kSkyT_Settings_OBAFGKM,		CV_RGB(0,	0,	0));
 
 	yLoc			+=	myBoxHeight;
@@ -517,7 +517,7 @@ int		radioBtnWidth;
 
 	SetWidget(			kSkyT_Settings_MagnitudeLimit,	(xLoc + radioBtnWidth),
 														saveYloc,	100,	cSmallBtnHt);
-	SetWidgetType(		kSkyT_Settings_MagnitudeLimit,	kWidgetType_Text);
+	SetWidgetType(		kSkyT_Settings_MagnitudeLimit,	kWidgetType_TextBox);
 	SetWidgetFont(		kSkyT_Settings_MagnitudeLimit,	kFont_Medium);
 
 	xLoc2		=	xLoc + radioBtnWidth + 100;
@@ -573,87 +573,72 @@ void	WindowTabSTsettings::ActivateWindow(void)
 }
 
 //**************************************************************************************
+#ifdef _USE_OPENCV_CPP_
+void	WindowTabSTsettings::DrawOBAFGKM(cv::Mat *openCV_Image, TYPE_WIDGET *theWidget)
+#else
+//**************************************************************************************
 void	WindowTabSTsettings::DrawOBAFGKM(IplImage *openCV_Image, TYPE_WIDGET *theWidget)
+#endif // _USE_OPENCV_CPP_
 {
-CvRect			myCVrect;
-CvPoint			myCVcenter;
 int				radius1;
-CvPoint			pt1;
 int				iii;
 char			textString[64];
 char			obafkgmLetters[]	=	"OBAFGKM";
 int				colourNum;
+int				center_X;
+int				center_Y;
+int				pt1_X;
+int				pt1_Y;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-	myCVrect.x		=	theWidget->left;
-	myCVrect.y		=	theWidget->top;
-	myCVrect.width	=	theWidget->width;
-	myCVrect.height	=	theWidget->height;
-
 	cOpenCV_Image	=	openCV_Image;
 
-	cvRectangleR(	openCV_Image,
-					myCVrect,
-					theWidget->bgColor,			//	CvScalar color,
-					CV_FILLED,					//	int thickness CV_DEFAULT(1),
-					8,							//	int line_type CV_DEFAULT(8),
-					0);							//	int shift CV_DEFAULT(0));
+//	//*	Erase the rectangle
+//	cCurrentColor	=	theWidget->bgColor;
+//	LLD_FillRect(theWidget->left,	theWidget->top,	theWidget->width,	theWidget->height);
+//
+//
+//	//*	draw the boarder
+//	cCurrentColor	=	theWidget->borderColor;
+//	LLD_FrameRect(theWidget->left,	theWidget->top,	theWidget->width,	theWidget->height);
 
+	center_X		=	theWidget->left + (theWidget->height / 2);
+	center_Y		=	theWidget->top + (theWidget->height / 2);
 
-	cvRectangleR(	openCV_Image,
-					myCVrect,
-					theWidget->borderColor,		//	CvScalar color,
-					1,							//	int thickness CV_DEFAULT(1),
-					8,							//	int line_type CV_DEFAULT(8),
-					0);							//	int shift CV_DEFAULT(0));
-
-	myCVcenter.x	=	myCVrect.x + (myCVrect.height / 2);
-	myCVcenter.y	=	myCVrect.y + (myCVrect.height / 2);
-	radius1			=	(myCVrect.height - 25) / 2;
+	radius1			=	(theWidget->height - 25) / 2;
 	iii				=	0;
 	colourNum		=	W_STAR_O;
 
-//	CONSOLE_DEBUG_W_NUM("height\t=", myCVrect.height);
-//	CONSOLE_DEBUG_W_NUM("radius1\t=", radius1);
-
 	while (obafkgmLetters[iii] > 0)
 	{
-//		cvCircle(	openCV_Image,
-//					myCVcenter,
-//					radius1,				//*	radius
-//					theWidget->textColor,
-//					1,						//	int thickness CV_DEFAULT(1),
-//					8,						//	int line_type CV_DEFAULT(8),
-//					0);						//	int shift CV_DEFAULT(0));
-
 		SetColor(colourNum);
-		FillEllipse(myCVcenter.x, myCVcenter.y, radius1, radius1);
+		LLD_FillEllipse(center_X, center_Y, radius1, radius1);
 
 		textString[0]	=	obafkgmLetters[iii];
 		textString[1]	=	0;
-		pt1				=	myCVcenter;
-		pt1.x			-=	10;
-		pt1.y			+=	7;
-		cvPutText(	openCV_Image,
-					textString,
-					pt1,
-					&gTextFont[kFont_Triplex_Large],
-					theWidget->textColor
-					);
+		pt1_X			=	center_X - 10;
+		pt1_Y			=	center_Y + 7;
 
-		myCVcenter.x	+=	2 * radius1;
-		myCVcenter.x	+=	10;
+		cCurrentColor	=	theWidget->textColor;
+		LLD_DrawCString(pt1_X, pt1_Y, textString, kFont_Triplex_Large);
+
+		center_X		+=	2 * radius1;
+		center_X		+=	10;
 
 		colourNum++;
 		iii++;
 	}
-
 }
 
 
 //**************************************************************************************
-void	WindowTabSTsettings::DrawGraphWidget(IplImage *openCV_Image, const int widgetIdx)
+#ifdef _USE_OPENCV_CPP_
+void	WindowTabSTsettings::DrawWidgetCustomGraphic(cv::Mat *openCV_Image, const int widgetIdx)
+#else
+//**************************************************************************************
+void	WindowTabSTsettings::DrawWidgetCustomGraphic(IplImage *openCV_Image, const int widgetIdx)
+#endif
 {
 	switch(widgetIdx)
 	{

@@ -163,6 +163,7 @@
 //*	Dec 20,	2021	<MLS> Added BuildBinaryImage_RGB24() -- working
 //*	Dec 20,	2021	<MLS> Added BuildBinaryImage_RGB24x16() -- working
 //*	Dec 28,	2021	<MLS> Added GetPrecentCompleted() determines the status of the current exposure
+//*	Feb 14,	2022	<MLS> Fixed crash bug when creating LiveWindow
 //*****************************************************************************
 //*	Jan  1,	2119	<TODO> ----------------------------------------
 //*	Jun 26,	2119	<TODO> Add support for sub frames
@@ -208,10 +209,17 @@
 #define	_USE_COLUMN_ORDER_
 
 #ifdef _USE_OPENCV_
-	#include "opencv/highgui.h"
-	#include "opencv2/highgui/highgui_c.h"
-	#include "opencv2/imgproc/imgproc_c.h"
+	#ifdef _USE_OPENCV_CPP_
+		#include	<opencv2/opencv.hpp>
+	#else
+		#include "opencv/highgui.h"
+		#include "opencv2/highgui/highgui_c.h"
+		#include "opencv2/imgproc/imgproc_c.h"
+		#include "opencv2/core/version.hpp"
+		#include <opencv2/videoio.hpp>
+	#endif // _USE_OPENCV_CPP_
 #endif
+		#include <opencv2/videoio.hpp>
 
 #ifdef _ENABLE_FITS_
 	#ifndef _FITSIO_H
@@ -456,15 +464,18 @@ int	mkdirErrCode;
 	cLastLClickY					=	0;
 	cCurrentMouseX					=	0;
 	cCurrentMouseY					=	0;
+#if defined(_USE_OPENCV_CPP_) &&  (CV_MAJOR_VERSION >= 4)
+#else
 	cTextFont						=	cvFont(1.0, 1);
 	cOverlayTextFont				=	cvFont(2.0, 1);
+	cSideBarBGcolor					=	cvScalarAll(0);
+#endif
 	cVideoOverlayColor				=	CV_RGB(255,	0,	0);
 	cSideBarBlk						=	CV_RGB(0,	0,	0);
 
 	cVideoCreateTimeStampFile		=	true;
 	cVideoTimeStampFilePtr			=	NULL;
 	cDisplaySideBar					=	kSideBar_Left;
-	cSideBarBGcolor					=	cvScalarAll(0);
 
 	LoadAlpacaImage();
 #endif // _USE_OPENCV_
@@ -3309,6 +3320,7 @@ double				myExposure_usecs;
 				SetLastExposureInfo();
 
 				alpacaErrCode				=	Start_CameraExposure(cCurrentExposure_us);
+CONSOLE_DEBUG(__FUNCTION__);
 				GenerateFileNameRoot();
 
 				if (alpacaErrCode == 0)
@@ -4951,11 +4963,14 @@ bool				newLiveModeState;
 
 			if (newLiveModeState)
 			{
-				CONSOLE_DEBUG("Setting live mode to true");
-				cImageMode		=	kImageMode_Live;
 			#ifdef _ENABLE_CTRL_IMAGE_
+				CONSOLE_DEBUG("Creating LiveWindow");
 				alpacaErrCode	=	OpenLiveWindow(alpacaErrMsg);
 			#endif
+				CONSOLE_DEBUG("Setting live mode to true");
+				//*	this MUST be set AFTER the live window is created
+				//*	Feb 14,	2022	<MLS> Fixed crash bug when creating LiveWindow
+				cImageMode		=	kImageMode_Live;
 			}
 			else
 			{
@@ -5193,6 +5208,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
 	{
 		SaveNextImage();
 		CONSOLE_DEBUG_W_STR("cFileNameRoot before\t=",	cFileNameRoot);
+CONSOLE_DEBUG(__FUNCTION__);
 		GenerateFileNameRoot();
 		CONSOLE_DEBUG_W_STR("cFileNameRoot after \t=",	cFileNameRoot);
 		cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(reqData->socket,
@@ -5425,6 +5441,7 @@ bool				recTimeFound;
 				{
 			#ifdef _USE_OPENCV_
 					videoIsColor		=	1;
+CONSOLE_DEBUG(__FUNCTION__);
 					GenerateFileNameRoot();
 					strcpy(filePath, kImageDataDir);
 					strcat(filePath, "/");
@@ -5439,28 +5456,34 @@ bool				recTimeFound;
 						//	CV_FOURCC('M', 'J', 'L', 'S'),
 						//	CV_FOURCC('M', 'J', 'P', 'G'),		//*	MJPG -> motion jpeg
 						//	CV_FOURCC('P', 'I', 'M', '1'),		//*	MPEG-1
-						//
-						//	-1,									//*	user selectable dialog box
-							fourCC	=	CV_FOURCC('R', 'G', 'B', 'T');
 						//	fourCC	=	CV_FOURCC('R', 'G', 'B', '8');
 						//	fourCC	=	CV_FOURCC('M', 'P', '4', '2');		//*	MP42 -> MPEG-4  WORKS!!
+						//
+						//	-1,									//*	user selectable dialog box
+						//	fourCC	=	CV_FOURCC('R', 'G', 'B', 'T');
+							fourCC	=	cv::VideoWriter::fourcc('R', 'G', 'B', 'T');
 							videoIsColor		=	1;
 							break;
 
 						default:
 						//	fourCC	=	CV_FOURCC('Y', '8', '0', '0');		//*	writes, but cant be read
-							fourCC	=	CV_FOURCC('Y', '8', ' ', ' ');		//*	writes, but cant be read
+						//	fourCC	=	CV_FOURCC('Y', '8', ' ', ' ');		//*	writes, but cant be read
+							fourCC	=	cv::VideoWriter::fourcc('Y', '8', ' ', ' ');		//*	writes, but cant be read
 							videoIsColor		=	0;
 							break;
 					}
 				//	fourCC	=	-1;
 					CONSOLE_DEBUG_W_HEX("fourCC\t=", fourCC);
 					cAVIfourCC			=	fourCC;
+				#if defined(_USE_OPENCV_CPP_) &&  (CV_MAJOR_VERSION >= 4)
+					cOpenCV_videoWriter	=	NULL;
+				#else
 					cOpenCV_videoWriter	=	cvCreateVideoWriter(	filePath,
 																	fourCC,
 																	30.0,
 																	cvSize(cCameraProp.CameraXsize, cCameraProp.CameraYsize),
 																	videoIsColor);
+				#endif
 					if (cOpenCV_videoWriter == NULL)
 					{
 						CONSOLE_DEBUG("Failed to create video writer");
@@ -5473,6 +5496,7 @@ bool				recTimeFound;
 					//=============================================
 					if (cVideoCreateTimeStampFile)
 					{
+CONSOLE_DEBUG(__FUNCTION__);
 						GenerateFileNameRoot();
 						strcpy(filePath, kImageDataDir);
 						strcat(filePath, "/");
@@ -6344,6 +6368,7 @@ uint32_t			elapsedMilliSecs;
 					cCurrentExposure_us	+=	cSeqDeltaExposure_us;
 					SaveNextImage();
 					alpacaErrCode		=	Start_CameraExposure(cCurrentExposure_us);
+CONSOLE_DEBUG(__FUNCTION__);
 					GenerateFileNameRoot();
 					cImageSeqNumber++;
 					cNumFramesToSave--;
@@ -6361,6 +6386,7 @@ uint32_t			elapsedMilliSecs;
 			{
 				SetLastExposureInfo();
 				alpacaErrCode	=	Start_CameraExposure(cCurrentExposure_us);
+CONSOLE_DEBUG(__FUNCTION__);
 				GenerateFileNameRoot();
 				if (alpacaErrCode != 0)
 				{
@@ -6468,11 +6494,13 @@ TYPE_ASCOM_STATUS	alpacaErrCode;
 					AutoAdjustExposure();
 				}
 
+			#ifdef _USE_OPENCV_
 				//*	check for live window
 				if (cLiveController != NULL)
 				{
 					UpdateLiveWindow();
 				}
+			#endif
 			}
 			else
 			{
@@ -6674,7 +6702,7 @@ char		fileNameDateString[64];
 	//*	are we suppose to include the filter name
 	if (cFN_includeFilter)
 	{
-	char	fileName1stChar[4];
+	char	filterName1stChar[8];
 	bool	addFilterName;
 
 		CONSOLE_DEBUG("cFN_includeFilter");
@@ -6699,10 +6727,10 @@ char		fileNameDateString[64];
 			}
 			if (addFilterName)
 			{
-				fileName1stChar[0]	=	cFilterWheelCurrName[0];
-				fileName1stChar[1]	=	0;
-				strcat(cFileNameRoot, "-");
-				strcat(cFileNameRoot, fileName1stChar);
+				filterName1stChar[0]	=	'-';
+				filterName1stChar[1]	=	cFilterWheelCurrName[0];
+				filterName1stChar[2]	=	0;
+				strcat(cFileNameRoot, filterName1stChar);
 			}
 		}
 	}

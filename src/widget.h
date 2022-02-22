@@ -7,6 +7,8 @@
 //*	Jan 15,	2021	<MLS> Added Tab stops to widget definition
 //*	Jan 16,	2021	<MLS> Added font size kFont_TextList
 //*	Jan 17,	2021	<MLS> Added textPtr to widget
+//*	Feb 21,	2022	<MLS> Changed kWidgetType_Graphic to kWidgetType_CustomGraphic
+//*	Feb 21,	2022	<MLS> Deleted kWidgetType_Custom
 //*****************************************************************************
 
 //#include	"widget.h"
@@ -14,12 +16,19 @@
 #ifndef	_WIDGET_H_
 #define	_WIDGET_H_
 
-#ifndef __OPENCV_OLD_HIGHGUI_H__
+//#ifndef __OPENCV_OLD_HIGHGUI_H__
+//	#include "opencv/highgui.h"
+//#endif
+//#ifndef __OPENCV_HIGHGUI_H__
+//	#include "opencv2/highgui/highgui_c.h"
+//#endif
+#ifdef _USE_OPENCV_CPP_
+	#include	<opencv2/opencv.hpp>
+#else
 	#include "opencv/highgui.h"
-#endif
-#ifndef __OPENCV_HIGHGUI_H__
 	#include "opencv2/highgui/highgui_c.h"
-#endif
+	#include "opencv2/imgproc/imgproc_c.h"
+#endif // _USE_OPENCV_CPP_
 
 
 #define	kMaxWidgets	150
@@ -32,9 +41,8 @@ enum
 
 	kWidgetType_Button,
 	kWidgetType_CheckBox,
-	kWidgetType_Custom,
 	kWidgetType_Graph,
-	kWidgetType_Graphic,
+	kWidgetType_CustomGraphic,
 	kWidgetType_Icon,
 	kWidgetType_Image,
 	kWidgetType_MultiLineText,
@@ -43,7 +51,7 @@ enum
 	kWidgetType_ProessBar,
 	kWidgetType_ScrollBar,
 	kWidgetType_Slider,
-	kWidgetType_Text,
+	kWidgetType_TextBox,
 	kWidgetType_TextInput,
 
 	kWidgetType_Last
@@ -113,13 +121,18 @@ typedef struct
 	char		textString[kMaxWidgetStrLen];
 	char		helpText[kMaxHelpTextStrLen];
 	char		*textPtr;			//*	this is for large external text
-	CvScalar	bgColor;
-	CvScalar	textColor;
-	CvScalar	borderColor;
-	bool		includeBorder;
-	int			fontNum;
+#ifdef _USE_OPENCV_CPP_
+	cv::Mat		*openCVimagePtr;
+	cv::Rect	roiRect;
+#else
 	IplImage	*openCVimagePtr;
 	CvRect		roiRect;
+#endif // _USE_OPENCV_CPP_
+	cv::Scalar	bgColor;
+	cv::Scalar	textColor;
+	cv::Scalar	borderColor;
+	bool		includeBorder;
+	int			fontNum;
 	bool		selected;			//*	radio buttons and check boxes
 	bool		highLiteEnabled;	//*	true if widget supports highlighting
 	double		sliderValue;		//*	uses for sliders, scroll bars, and progress bars

@@ -133,15 +133,14 @@ class WindowTabCamera: public WindowTab
 		//
 				WindowTabCamera(	const int	xSize,
 									const int	ySize,
-									CvScalar	backGrndColor,
+									cv::Scalar	backGrndColor,
 									const char	*windowName,
 									const char	*deviceName,
 									const bool	hasFilterWheel = false);
 		virtual	~WindowTabCamera(void);
 
 		virtual	void	SetupWindowControls(void);
-		virtual	void	DrawGraphWidget(IplImage *openCV_Image, const int widgetIdx);
-		virtual	void	ProcessButtonClick(const int buttonIdx);
+		virtual	void	ProcessButtonClick(	const int	buttonIdx);
 		virtual	void	ProcessDoubleClick(	const int	widgetIdx,
 											const int	event,
 											const int	xxx,
@@ -149,6 +148,7 @@ class WindowTabCamera: public WindowTab
 											const int	flags);
 		virtual	void	UpdateSliderValue(const int widgetIdx, double newSliderValue);
 
+				void	SetCameraLogo(void);
 				void	ForceUpdate(void);
 				void	BumpGain(const int howMuch);
 				void	BumpExposure(const double howMuch);
@@ -168,7 +168,6 @@ class WindowTabCamera: public WindowTab
 				bool	cForce8BitRead;
 				bool	cAllowBinaryDownload;
 
-//				void	DrawGraph(IplImage *openCV_Image, TYPE_WIDGET *graphWidget, double *arrayData, int arrayCount);
 
 				char		cAlpacaDeviceName[64];
 				bool		cHasFilterWheel;

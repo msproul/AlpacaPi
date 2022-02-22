@@ -86,7 +86,7 @@ class WindowTabMLsingle: public WindowTab
 		//
 				WindowTabMLsingle(	const int	xSize,
 									const int	ySize,
-									CvScalar	backGrndColor,
+									cv::Scalar	backGrndColor,
 									const int	comMode,
 									const char	*windowName=NULL);
 		virtual	~WindowTabMLsingle(void);

@@ -1,5 +1,6 @@
 //*****************************************************************************
 //#include	"controller.h"
+//https://docs.opencv.org/3.4/examples.html
 
 #ifndef	_CONTROLLER_H_
 #define	_CONTROLLER_H_
@@ -10,12 +11,18 @@
 	#include	<arpa/inet.h>
 #endif // _ARPA_INET_H
 
-#ifndef __OPENCV_OLD_HIGHGUI_H__
-	#include "opencv/highgui.h"
-#endif
-#ifndef __OPENCV_HIGHGUI_H__
-	#include "opencv2/highgui/highgui_c.h"
-#endif
+
+//=============================================================================
+#include	<opencv2/opencv.hpp>
+#ifdef _USE_OPENCV_CPP_
+#else
+	#ifndef __OPENCV_OLD_HIGHGUI_H__
+		#include "opencv/highgui.h"
+	#endif
+	#ifndef __OPENCV_HIGHGUI_H__
+		#include "opencv2/highgui/highgui_c.h"
+	#endif
+#endif // _USE_OPENCV_CPP_
 
 
 #include	"json_parse.h"
@@ -24,7 +31,6 @@
 #ifndef	_ALPACA_DEFS_H_
 	#include	"alpaca_defs.h"
 #endif
-
 
 
 
@@ -56,7 +62,22 @@
 #define	kDefaultUpdateDelta	4
 #define	kLineBufSize		512
 
-extern	CvFont	gTextFont[];
+//*****************************************************************************
+typedef struct
+{
+	int		fontID;
+	int		thickness;
+	double	scale;
+
+} TYPE_FontInfo;
+
+extern TYPE_FontInfo	gFontInfo[];
+
+
+#ifdef _ENABLE_CVFONT_
+	extern	CvFont	gTextFont[];
+#endif // _ENABLE_CVFONT_
+
 extern	bool	gVerbose;
 
 #define	RADIANS(degrees)	((degrees) * (M_PI / 180.0))
@@ -113,11 +134,16 @@ class Controller
 				void	DrawOneWidget(const int widgetIdx);
 				void	DrawOneWidget(TYPE_WIDGET *widgetPtr, const int widgetIdx);
 				//*	alphabetic order
+				void	DrawWidgetBackground(TYPE_WIDGET *theWidget);
 				void	DrawWidgetButton(TYPE_WIDGET *theWidget);
 				void	DrawWidgetCheckBox(TYPE_WIDGET *theWidget);
 				void	DrawWidgetGraph(TYPE_WIDGET *theWidget);
 				void	DrawWidgetIcon(TYPE_WIDGET *theWidget);
+			#ifdef _USE_OPENCV_CPP_
+				void	DrawWidgetImage(TYPE_WIDGET *theWidget, cv::Mat *theOpenCVimage);
+			#else
 				void	DrawWidgetImage(TYPE_WIDGET *theWidget, IplImage *theOpenCVimage);
+			#endif // _USE_OPENCV_CPP_
 		virtual	void	DrawWidgetImage(TYPE_WIDGET *theWidget);
 				void	DrawWidgetMultiLineText(TYPE_WIDGET *theWidget);
 				void	DrawWidgetOutlineBox(TYPE_WIDGET *theWidget);
@@ -125,13 +151,11 @@ class Controller
 				void	DrawWidgetRadioButton(TYPE_WIDGET *theWidget);
 				void	DrawWidgetSlider(TYPE_WIDGET *theWidget);
 				void	DrawWidgetScrollBar(TYPE_WIDGET *theWidget);
-				void	DrawWidgetText(TYPE_WIDGET *theWidget);
+				void	DrawWidgetText(TYPE_WIDGET *theWidget, int horzOffset=0, int vertOffset=0);
+				void	DrawWidgetTextBox(TYPE_WIDGET *theWidget);
 				void	DrawWidgetTextWithTabs(TYPE_WIDGET *theWidget);
 
 				void	DisplayButtonHelpText(const int buttonIdx);
-
-
-		virtual	void	DrawWidgetCustom(TYPE_WIDGET *theWidget);
 
 				int		FindClickedWidget(const int xxx, const int yyy);
 				bool	IsWidgetButton(const int widgetIdx);
@@ -149,11 +173,17 @@ class Controller
 
 				void	SetWidgetType(			const int tabNum, const int widgetIdx, const int widetType);
 				void	SetWidgetFont(			const int tabNum, const int widgetIdx, int fontNum);
-				void	SetWidgetTextColor(		const int tabNum, const int widgetIdx, CvScalar newtextColor);
-				void	SetWidgetBGColor(		const int tabNum, const int widgetIdx, CvScalar newBGcolor);
-				void	SetWidgetBorderColor(	const int tabNum, const int widgetIdx, CvScalar newBoarderColor);
+			#ifdef _USE_OPENCV_CPP_
+				void	SetWidgetTextColor(		const int tabNum, const int widgetIdx, cv::Scalar newtextColor);
+				void	SetWidgetBGColor(		const int tabNum, const int widgetIdx, cv::Scalar newBGcolor);
+				void	SetWidgetBorderColor(	const int tabNum, const int widgetIdx, cv::Scalar newBoarderColor);
+				void	SetWidgetImage(			const int tabNum, const int widgetIdx, cv::Mat *argImagePtr);
+			#else
+				void	SetWidgetTextColor(		const int tabNum, const int widgetIdx, cv::Scalar newtextColor);
+				void	SetWidgetBGColor(		const int tabNum, const int widgetIdx, cv::Scalar newBGcolor);
+				void	SetWidgetBorderColor(	const int tabNum, const int widgetIdx, cv::Scalar newBoarderColor);
 				void	SetWidgetImage(			const int tabNum, const int widgetIdx, IplImage *argImagePtr);
-
+			#endif
 				void	SetWidgetValid(			const int tabNum, const int widgetIdx, bool valid);
 				void	SetWidgetChecked(		const int tabNum, const int widgetIdx, bool checked);
 				void	SetWidgetCrossedout(	const int tabNum, const int widgetIdx, bool crossedout);
@@ -169,7 +199,7 @@ class Controller
 		virtual	void	UpdateWindowTabColors(void);
 
 
-		virtual	void	RunBackgroundTasks(bool enableDebug=false);
+		virtual	void	RunBackgroundTasks(const char *callingFunction=NULL, bool enableDebug=false);
 		virtual	void	SetupWindowControls(void);
 				void	SetWindowIPaddrInfo(const char	*textString, const bool	onLine);
 				void	DrawWindowTabs(void);
@@ -196,7 +226,31 @@ class Controller
 
 
 		virtual	void	RefreshWindow(void);
+		//======================================================================
+		//*	Low Level draw routines
+		void		LLD_MoveTo(const int xx, const int yy);
+		void		LLD_LineTo(const int xx, const int yy);
+		void		LLD_FrameRect(	int left, int top, int width, int height, int lineWidth=1);
+		void		LLD_FillRect(	int left, int top, int width, int height);
+		void		LLD_FillEllipse(	int xCenter, int yCenter, int xRadius, int yRadius);
+		void		LLD_FrameEllipse(	int xCenter, int yCenter, int xRadius, int yRadius);
+		void		LLD_DrawCString(int xx, int yy, char *textString, int fontIndex=1);
+		int			LLD_GetTextSize(const char *textString, const int fontIndex);
 
+#ifdef _USE_OPENCV_CPP_
+		cv::Mat		*cOpenCV_matImage;
+		cv::Scalar	cBackGrndColor;
+		cv::Scalar	cCurrentColor;
+#else
+		IplImage	*cOpenCV_Image;
+		cv::Scalar	cBackGrndColor;
+		cv::Scalar	cCurrentColor;
+#endif
+		int			cCurrentXloc;
+		int			cCurrentYloc;
+		int			cCurrentLineWidth;
+		int			cCurrentFontHeight;
+		int			cCurrentFontBaseLine;
 
 
 		uint32_t	cMagicCookie;		//*	an indicator so we know the object is valid
@@ -209,7 +263,6 @@ class Controller
 		WindowTab	*cCurrentTabObjPtr;
 		WindowTab	*cWindowTabs[kMaxTabs];
 
-		CvScalar	cBackGrndColor;
 		TYPE_WIDGET	cTabList[kMaxTabs];
 		int			cTabCount;
 
@@ -217,7 +270,6 @@ class Controller
 		char		cWindowName[256];
 		int			cWidth;
 		int			cHeight;
-		IplImage	*cOpenCV_Image;
 		int			cValidFnts;
 
 		bool		cLeftButtonDown;
@@ -414,7 +466,12 @@ class Controller
 	extern "C" {
 #endif
 
-CvScalar	Color16BitTo24Bit(const unsigned int color16);
+#ifdef _USE_OPENCV_CPP_
+	cv::Scalar	Color16BitTo24Bit(const unsigned int color16);
+#else
+	cv::Scalar	Color16BitTo24Bit(const unsigned int color16);
+#endif
+
 void		Controller_HandleKeyDown(const int keyPressed);
 void		LoadAlpacaLogo(void);
 bool		CheckForOpenWindowByName(const char *windowName);
@@ -429,10 +486,14 @@ extern	Controller	*gControllerList[kMaxControllers];
 extern	int			gControllerCnt;
 extern	bool		gKeepRunning;
 extern	char		gColorOverRide;
-extern	IplImage	*gAlpacaLogoPtr;
 extern	char		gFullVersionString[];	//*	this is version of the controller software
 											//*	which may be different from the remote software
 extern	char		gFirstArgString[];
+#ifdef _USE_OPENCV_CPP_
+	extern	cv::Mat		*gAlpacaLogoPtr;
+#else
+	extern	IplImage	*gAlpacaLogoPtr;
+#endif
 
 
 

@@ -52,7 +52,7 @@
 //**************************************************************************************
 WindowTabRemoteData::WindowTabRemoteData(	const int	xSize,
 											const int	ySize,
-											CvScalar	backGrndColor,
+											cv::Scalar	backGrndColor,
 											const char	*windowName)
 	:WindowTab(xSize, ySize, backGrndColor, windowName)
 {
@@ -149,7 +149,7 @@ int		iii;
 
 
 	SetWidget(				kRemoteData_StatusMsg,	xLoc,	yLoc,	550,		cTitleHeight);
-	SetWidgetType(			kRemoteData_StatusMsg,	kWidgetType_Text);
+	SetWidgetType(			kRemoteData_StatusMsg,	kWidgetType_TextBox);
 	SetWidgetFont(			kRemoteData_StatusMsg,	kFont_TextList);
 	SetWidgetJustification(	kRemoteData_StatusMsg,	kJustification_Left);
 	yLoc			+=	cTitleHeight;
@@ -177,13 +177,13 @@ int		iii;
 	{
 
 		SetWidget(				iii,	xLoc,	yLoc,	valueWitdth1,		cSmallBtnHt);
-		SetWidgetType(			iii,	kWidgetType_Text);
+		SetWidgetType(			iii,	kWidgetType_TextBox);
 		SetWidgetFont(			iii,	kFont_Medium);
 		SetWidgetJustification(	iii,	kJustification_Left);
 		iii++;
 
 		SetWidget(				iii,	xLoc2,	yLoc,	valueWitdth2,		cSmallBtnHt);
-		SetWidgetType(			iii,	kWidgetType_Text);
+		SetWidgetType(			iii,	kWidgetType_TextBox);
 		SetWidgetFont(			iii,	kFont_Medium);
 		SetWidgetJustification(	iii,	kJustification_Left);
 		iii++;
@@ -222,7 +222,7 @@ int		iii;
 		xLoc2			+=	valueWitdth4;
 		xLoc2			+=	2;
 	}
-	SetWidgetType(			kRemoteData_GaiaReqMode,	kWidgetType_Text);
+	SetWidgetType(			kRemoteData_GaiaReqMode,	kWidgetType_TextBox);
 	SetWidgetText(			kRemoteData_GaiaReqMode,	"Request Mode");
 	SetWidgetText(			kRemoteData_GaiaReqMode1x1,	"1 x 1");
 	SetWidgetText(			kRemoteData_GaiaReqMode3x1,	"3 x 1");

@@ -39,7 +39,7 @@
 //*	Jan  4,	2021	<MLS> Added ForceUpdate()
 //*	Jan  4,	2021	<MLS> Added ProcessMouseLeftButtonDown() & ProcessMouseLeftButtonDragged()
 //*	Jan  5,	2021	<MLS> Added RunBackgroundTasks()
-//*	Jan  5,	2021	<MLS> Added CPenSize()
+//*	Jan  5,	2021	<MLS> Added LLD_PenSize()
 //*	Jan  6,	2021	<MLS> Added GetWidgetText()
 //*	Jan 10,	2021	<MLS> Added new version of AlpacaSendPutCmd()
 //*	Jan 15,	2021	<MLS> Added SetWidgetTabStops()
@@ -60,6 +60,8 @@
 //*	Oct 29,	2021	<MLS> Added FloodFill()
 //*	Nov 13,	2021	<MLS> Added ProcessDoubleClick_RtBtn()
 //*	Jan 24,	2022	<MLS> Added flags argument to ProcessMouseWheelMoved()
+//*	Feb 19,	2022	<MLS> Added GetTextSize_Width()
+//*	Feb 21,	2022	<MLS> Changed all references of CvScalar to cv::Scalar
 //*****************************************************************************
 
 
@@ -71,10 +73,19 @@
 #include	<sys/time.h>
 
 
-#include "opencv/highgui.h"
-#include "opencv2/highgui/highgui_c.h"
-#include "opencv2/imgproc/imgproc_c.h"
-#include "opencv2/core/version.hpp"
+#ifdef _USE_OPENCV_CPP_
+	#include	<opencv2/opencv.hpp>
+	#include	<opencv2/core.hpp>
+#else
+	#include "opencv/highgui.h"
+	#include "opencv2/highgui/highgui_c.h"
+	#include "opencv2/imgproc/imgproc_c.h"
+	#include "opencv2/core/version.hpp"
+
+	#if (CV_MAJOR_VERSION >= 3)
+		#include "opencv2/imgproc/imgproc.hpp"
+	#endif
+#endif // _USE_OPENCV_CPP_
 
 
 #define _ENABLE_CONSOLE_DEBUG_
@@ -97,7 +108,7 @@ int	gCurrWindowTabColorScheme	=	0;
 //**************************************************************************************
 WindowTab::WindowTab(	const int	xSize,
 						const int	ySize,
-						CvScalar	backGrndColor,
+						cv::Scalar	backGrndColor,
 						const char	*windowName)
 {
 int		iii;
@@ -133,7 +144,7 @@ int		iii;
 	//*	set defaults for the widgets
 	for (iii=0; iii<kMaxWidgets; iii++)
 	{
-		memset(&cWidgetList[iii], 0, sizeof(TYPE_WIDGET));
+		memset((void *)&cWidgetList[iii], 0, sizeof(TYPE_WIDGET));
 
 		cWidgetList[iii].widgetType		=	kWidgetType_Default;
 		cWidgetList[iii].fontNum		=	kFont_Large;
@@ -211,14 +222,20 @@ void	WindowTab::SetWidgetType(const int widgetIdx, const int widetType)
 	{
 		cWidgetList[widgetIdx].widgetType	=	widetType;
 		cWidgetList[widgetIdx].needsUpdated	=	true;
-		if ((widetType == kWidgetType_RadioButton) || (widetType == kWidgetType_CheckBox))
-		{
-			cWidgetList[widgetIdx].includeBorder	=	false;
-		}
 
-		if (widetType == kWidgetType_TextInput)
+		//*	special processing for some of the widget types
+		switch(widetType)
 		{
-			strcpy(cWidgetList[widgetIdx].textString, "_");
+			case kWidgetType_RadioButton:
+			case kWidgetType_CheckBox:
+				cWidgetList[widgetIdx].includeBorder	=	false;
+				cWidgetList[widgetIdx].justification	=	kJustification_Left;
+				break;
+
+			case kWidgetType_TextInput:
+				strcpy(cWidgetList[widgetIdx].textString, "_");
+				cWidgetList[widgetIdx].justification	=	kJustification_Left;
+				break;
 		}
 	}
 }
@@ -413,8 +430,9 @@ char	lineBuff[64];
 	SetWidgetText(widgetIdx, lineBuff);
 }
 
+#ifdef _USE_OPENCV_CPP_
 //**************************************************************************************
-void	WindowTab::SetWidgetTextColor(const int widgetIdx, CvScalar newtextColor)
+void	WindowTab::SetWidgetTextColor(const int widgetIdx, cv::Scalar newtextColor)
 {
 	if ((widgetIdx >= 0) && (widgetIdx < kMaxWidgets))
 	{
@@ -424,7 +442,7 @@ void	WindowTab::SetWidgetTextColor(const int widgetIdx, CvScalar newtextColor)
 }
 
 //**************************************************************************************
-void	WindowTab::SetWidgetBGColor(const int widgetIdx, CvScalar newtextColor)
+void	WindowTab::SetWidgetBGColor(const int widgetIdx, cv::Scalar newtextColor)
 {
 	if ((widgetIdx >= 0) && (widgetIdx < kMaxWidgets))
 	{
@@ -434,7 +452,7 @@ void	WindowTab::SetWidgetBGColor(const int widgetIdx, CvScalar newtextColor)
 }
 
 //**************************************************************************************
-void	WindowTab::SetWidgetBorderColor(const int widgetIdx, CvScalar newtextColor)
+void	WindowTab::SetWidgetBorderColor(const int widgetIdx, cv::Scalar newtextColor)
 {
 	if ((widgetIdx >= 0) && (widgetIdx < kMaxWidgets))
 	{
@@ -444,7 +462,7 @@ void	WindowTab::SetWidgetBorderColor(const int widgetIdx, CvScalar newtextColor)
 }
 
 //**************************************************************************************
-void	WindowTab::SetWidgetImage(			const int widgetIdx, IplImage *argImagePtr)
+void	WindowTab::SetWidgetImage(const int widgetIdx, cv::Mat *argImagePtr)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
 	if ((widgetIdx >= 0) && (widgetIdx < kMaxWidgets))
@@ -454,6 +472,51 @@ void	WindowTab::SetWidgetImage(			const int widgetIdx, IplImage *argImagePtr)
 		cWidgetList[widgetIdx].needsUpdated		=	true;
 	}
 }
+
+#else
+//**************************************************************************************
+void	WindowTab::SetWidgetTextColor(const int widgetIdx, cv::Scalar newtextColor)
+{
+	if ((widgetIdx >= 0) && (widgetIdx < kMaxWidgets))
+	{
+		cWidgetList[widgetIdx].textColor	=	newtextColor;
+		cWidgetList[widgetIdx].needsUpdated	=	true;
+	}
+}
+
+//**************************************************************************************
+void	WindowTab::SetWidgetBGColor(const int widgetIdx, cv::Scalar newtextColor)
+{
+	if ((widgetIdx >= 0) && (widgetIdx < kMaxWidgets))
+	{
+		cWidgetList[widgetIdx].bgColor	=	newtextColor;
+		cWidgetList[widgetIdx].needsUpdated	=	true;
+	}
+}
+
+//**************************************************************************************
+void	WindowTab::SetWidgetBorderColor(const int widgetIdx, cv::Scalar newtextColor)
+{
+	if ((widgetIdx >= 0) && (widgetIdx < kMaxWidgets))
+	{
+		cWidgetList[widgetIdx].borderColor	=	newtextColor;
+		cWidgetList[widgetIdx].needsUpdated	=	true;
+	}
+}
+
+//**************************************************************************************
+void	WindowTab::SetWidgetImage(const int widgetIdx, IplImage *argImagePtr)
+{
+//	CONSOLE_DEBUG(__FUNCTION__);
+	if ((widgetIdx >= 0) && (widgetIdx < kMaxWidgets))
+	{
+		cWidgetList[widgetIdx].openCVimagePtr	=	argImagePtr;
+		cWidgetList[widgetIdx].widgetType		=	kWidgetType_Image;
+		cWidgetList[widgetIdx].needsUpdated		=	true;
+	}
+}
+#endif // _USE_OPENCV_CPP_
+
 
 //**************************************************************************************
 void	WindowTab::SetWidgetOutlineBox(const int widgetIdx, const int firstItem, const int lastItem)
@@ -653,9 +716,13 @@ int	yLoc;
 		LoadAlpacaLogo();
 		if (gAlpacaLogoPtr != NULL)
 		{
+		#ifdef _USE_OPENCV_CPP_
+			logoWidth	=	gAlpacaLogoPtr->cols;
+			logoHeight	=	gAlpacaLogoPtr->rows;
+		#else
 			logoWidth	=	gAlpacaLogoPtr->width;
 			logoHeight	=	gAlpacaLogoPtr->height;
-
+		#endif // _USE_OPENCV_CPP_
 			xLoc		=	cWidth - logoWidth;
 			yLoc		-=	logoHeight;
 
@@ -681,9 +748,15 @@ int	yLoc;
 		LoadAlpacaLogo();
 		if (gAlpacaLogoPtr != NULL)
 		{
+		#ifdef _USE_OPENCV_CPP_
+			#warning "OpenCV++ not finished"
+			logoWidth	=	gAlpacaLogoPtr->cols;
+			logoHeight	=	gAlpacaLogoPtr->rows;
+		#else
 			logoWidth	=	gAlpacaLogoPtr->width;
 			logoHeight	=	gAlpacaLogoPtr->height;
 
+		#endif // _USE_OPENCV_CPP_
 			xLoc		=	cWidth - logoWidth;
 			yLoc		=	cHeight - logoHeight;
 
@@ -877,12 +950,20 @@ void	WindowTab::SetupWindowControls(void)
 
 }
 
+#ifdef _USE_OPENCV_CPP_
 //**************************************************************************************
-void	WindowTab::DrawGraphWidget(IplImage *openCV_Image, const int widgetIdx)
+void	WindowTab::DrawWidgetCustomGraphic(cv::Mat *openCV_Image, const int widgetIdx)
+{
+	//*	this routine should be overloaded
+	CONSOLE_ABORT(__FUNCTION__);
+}
+#else
+//**************************************************************************************
+void	WindowTab::DrawWidgetCustomGraphic(IplImage *openCV_Image, const int widgetIdx)
 {
 	//*	this routine should be overloaded
 }
-
+#endif // _USE_OPENCV_CPP_
 
 //**************************************************************************************
 void	WindowTab::ForceUpdate(void)
@@ -959,16 +1040,15 @@ bool	widgetIsButton;
 				widgetIsButton	=	true;
 				break;
 
-			case kWidgetType_Custom:
 			case kWidgetType_Graph:
-			case kWidgetType_Graphic:
+			case kWidgetType_CustomGraphic:
 			case kWidgetType_Image:
 			case kWidgetType_MultiLineText:
 			case kWidgetType_OutlineBox:
 			case kWidgetType_ProessBar:
 			case kWidgetType_ScrollBar:
 			case kWidgetType_Slider:
-			case kWidgetType_Text:
+			case kWidgetType_TextBox:
 			case kWidgetType_TextInput:
 			default:
 				widgetIsButton	=	false;
@@ -1181,9 +1261,16 @@ void	WindowTab::SetHelpTextBoxNumber(const int buttonIdx)
 	cHelpTextBoxNumber	=	buttonIdx;
 }
 
+
 //*****************************************************************************
 //*	this is so that the box can be used for error messages that might set to red
-void	WindowTab::SetHelpTextBoxColor(CvScalar newtextColor)
+#ifdef _USE_OPENCV_CPP_
+//*****************************************************************************
+void	WindowTab::SetHelpTextBoxColor(cv::Scalar newtextColor)
+#else
+//*****************************************************************************
+void	WindowTab::SetHelpTextBoxColor(cv::Scalar newtextColor)
+#endif // _USE_OPENCV_CPP_
 {
 	cHelpTextBoxColor	=	newtextColor;
 }
@@ -1405,7 +1492,7 @@ int		iii;
 			case	kWidgetType_ProessBar:
 			case	kWidgetType_ScrollBar:
 			case	kWidgetType_Slider:
-			case	kWidgetType_Text:
+			case	kWidgetType_TextBox:
 				SetWidgetBGColor(		iii,	gWT_ColorScheme.bgColor);
 				SetWidgetTextColor(		iii,	gWT_ColorScheme.fontColor);
 				SetWidgetBorderColor(	iii,	gWT_ColorScheme.borderColor);
@@ -1418,15 +1505,12 @@ int		iii;
 				SetWidgetBorderColor(	iii,	gWT_ColorScheme.btnBorderColor);
 				break;
 
-
-			case	kWidgetType_Custom:
 			case	kWidgetType_Graph:
-			case	kWidgetType_Graphic:
+			case	kWidgetType_CustomGraphic:
 			case	kWidgetType_Icon:
 			case	kWidgetType_Image:
+			default:
 				break;
-
-
 		}
 	}
 }
@@ -1445,30 +1529,33 @@ void	WindowTab::BumpColorScheme(void)
 
 
 //*****************************************************************************
-void	WindowTab::CMoveTo(const int xx, const int yy)
+void	WindowTab::LLD_MoveTo(const int xx, const int yy)
 {
 	cCurrentXloc	=	xx;
 	cCurrentYloc	=	yy;
 }
 
 //*****************************************************************************
-void	WindowTab::CLineTo(const int xx, const int yy)
+void	WindowTab::LLD_LineTo(const int xx, const int yy)
 {
-CvPoint		pt1;
-CvPoint		pt2;
-
 //	CONSOLE_DEBUG(__FUNCTION__);
+
+#ifdef _USE_OPENCV_CPP_
+//	CONSOLE_DEBUG("OpenCV++");
 	if (cOpenCV_Image != NULL)
 	{
+	cv::Point		pt1;
+	cv::Point		pt2;
+
 		pt1.x	=	cCurrentXloc;
 		pt1.y	=	cCurrentYloc;
 
 		pt2.x	=	xx;
 		pt2.y	=	yy;
-		cvLine(	cOpenCV_Image,
+		cv::line(	*cOpenCV_Image,
 				pt1,
 				pt2,
-				cCurrentColor,		//	CvScalar color,
+				cCurrentColor,		//	cv::Scalar color,
 				cCurrentLineWidth,	//	int thickness CV_DEFAULT(1),
 				8,					//	int line_type CV_DEFAULT(8),
 				0);					//	int shift CV_DEFAULT(0));
@@ -1478,32 +1565,86 @@ CvPoint		pt2;
 	}
 	else
 	{
-		CONSOLE_ABORT("cOpenCV_Image is NULL");
+		CONSOLE_DEBUG("cOpenCV_Image is NULL");
 	}
-}
 
-//*****************************************************************************
-void	WindowTab::DrawCString(	const int	xx,
-								const int	yy,
-								const char	*theString,
-								const int	fontIndex)
-{
-CvPoint		textLoc;
-int			myFontIdx;
-
-
-//	CONSOLE_DEBUG(theString);
-	myFontIdx	=	1;
-	if ((fontIndex >= 0) && (fontIndex < kFont_last))
+#else
+	if (cOpenCV_Image != NULL)
 	{
-		myFontIdx	=	fontIndex;
+	CvPoint		pt1;
+	CvPoint		pt2;
+		pt1.x	=	cCurrentXloc;
+		pt1.y	=	cCurrentYloc;
+
+		pt2.x	=	xx;
+		pt2.y	=	yy;
+		cvLine(	cOpenCV_Image,
+				pt1,
+				pt2,
+				cCurrentColor,		//	cv::Scalar color,
+				cCurrentLineWidth,	//	int thickness CV_DEFAULT(1),
+				8,					//	int line_type CV_DEFAULT(8),
+				0);					//	int shift CV_DEFAULT(0));
+
+		cCurrentXloc	=	xx;
+		cCurrentYloc	=	yy;
 	}
 	else
 	{
-		myFontIdx	=	1;
+		CONSOLE_DEBUG("cOpenCV_Image is NULL");
 	}
+#endif // _USE_OPENCV_CPP_
+}
+
+//*****************************************************************************
+void	WindowTab::LLD_DrawCString(	const int	xx,
+									const int	yy,
+									const char	*theString,
+									const int	fontIndex)
+{
+#ifdef _USE_OPENCV_CPP_
+//	CONSOLE_DEBUG("OpenCV++");
 	if (cOpenCV_Image != NULL)
 	{
+	cv::Point		textLoc;
+	int				curFontNum;
+		curFontNum	=	1;
+		if ((curFontNum >= 0) && (curFontNum < kFont_last))
+		{
+			curFontNum	=	fontIndex;
+		}
+
+		textLoc.x	=	xx;
+		textLoc.y	=	yy;
+		cv::putText(	*cOpenCV_Image,
+						theString,
+						textLoc,
+						gFontInfo[curFontNum].fontID,
+						gFontInfo[curFontNum].scale,
+						cCurrentColor,
+						gFontInfo[curFontNum].thickness
+						);
+
+	}
+	else
+	{
+		CONSOLE_ABORT("cOpenCV_Image is NULL");
+	}
+#else
+//	CONSOLE_DEBUG(theString);
+	if (cOpenCV_Image != NULL)
+	{
+	CvPoint		textLoc;
+	int			myFontIdx;
+		myFontIdx	=	1;
+		if ((fontIndex >= 0) && (fontIndex < kFont_last))
+		{
+			myFontIdx	=	fontIndex;
+		}
+		else
+		{
+			myFontIdx	=	1;
+		}
 		textLoc.x	=	xx;
 		textLoc.y	=	yy;
 		cvPutText(	cOpenCV_Image,
@@ -1518,13 +1659,22 @@ int			myFontIdx;
 	{
 		CONSOLE_ABORT("cOpenCV_Image is NULL");
 	}
+#endif // _USE_OPENCV_CPP_
 }
 
+//*****************************************************************************
+int	WindowTab::GetTextSize_Width(const char *textString, const int fontIndex)
+{
+int	textWidthPixels;
+#warning "GetTextSize_Width() needs to be finished"
+	textWidthPixels	=	strlen(textString) * 8;
+	return(textWidthPixels);
+}
 
 //*****************************************************************************
 //*	W_WHITE
 //*	W_BLACK
-CvScalar	gColorTable[]	=
+cv::Scalar	gColorTable[]	=
 {
 	//	https://www.htmlcolor-picker.com/
 	//*	these MUST be in the same order as the enums
@@ -1553,17 +1703,21 @@ CvScalar	gColorTable[]	=
 	CV_RGB(255,	128,	255),	//*	W_LIGHTMAGENTA
 
 	CV_RGB(0x66, 0x3d,	0x14),	//*	W_BROWN
-	CV_RGB(231,	  5,	254),	//*	W_PINK
+	CV_RGB(231,		5,	254),	//*	W_PINK
 
-	CV_RGB(255,	  100,	0),		//*	W_ORANGE,
+	CV_RGB(255,	100,	0),		//*	W_ORANGE,
 
-	CV_RGB(0,	  113,	193),	//*	W_STAR_O,
-	CV_RGB(152,	  205,	255),	//*	W_STAR_B,
-	CV_RGB(255,	  255,	255),	//*	W_STAR_A,
-	CV_RGB(254,	  255,	153),	//*	W_STAR_F,
-	CV_RGB(255,	  255,	0),		//*	W_STAR_G,
-	CV_RGB(255,	  102,	00),	//*	W_STAR_K,
-	CV_RGB(254,	  0,	0),		//*	W_STAR_M,
+	CV_RGB(0,	113,	193),	//*	W_STAR_O,
+	CV_RGB(152,	205,	255),	//*	W_STAR_B,
+	CV_RGB(255,	255,	255),	//*	W_STAR_A,
+	CV_RGB(254,	255,	153),	//*	W_STAR_F,
+	CV_RGB(255,	255,	0),		//*	W_STAR_G,
+	CV_RGB(255,	102,	00),	//*	W_STAR_K,
+	CV_RGB(254,	0,		0),		//*	W_STAR_M,
+	CV_RGB(127,	216,	250),	//*	W_FILTER_OIII,	//*	these are for filter colors
+	CV_RGB(151,	253,	151),	//*	W_FILTER_HA,
+	CV_RGB(255,	85,		85),	//*	W_FILTER_SII,
+
 
 };
 
@@ -1580,7 +1734,7 @@ void	WindowTab::SetColor(const int theColor)
 	}
 }
 //*****************************************************************************
-void	WindowTab::CPenSize(const int newLineWidth)
+void	WindowTab::LLD_PenSize(const int newLineWidth)
 {
 	if ((newLineWidth >= 0) && (newLineWidth < 10))
 	{
@@ -1594,14 +1748,53 @@ void	WindowTab::CPenSize(const int newLineWidth)
 
 
 //*****************************************************************************
-void	WindowTab::Putpixel(const int xx, const int yy, const int theColor)
+void	WindowTab::LLD_Putpixel(const int xx, const int yy, const int theColor)
 {
-CvPoint		pt1;
-CvPoint		pt2;
-
 //	CONSOLE_DEBUG(__FUNCTION__);
+#ifdef _USE_OPENCV_CPP_
 	if (cOpenCV_Image != NULL)
 	{
+	cv::Point		pt1;
+	cv::Point		pt2;
+
+		pt1.x	=	xx;
+		pt1.y	=	yy;
+
+		pt2.x	=	xx;
+		pt2.y	=	yy;
+		if ((theColor >= 0) && (theColor < W_COLOR_LAST))
+		{
+			cv::line(	*cOpenCV_Image,
+						pt1,
+						pt2,
+						gColorTable[theColor],	//	cv::Scalar color,
+						1,						//	int thickness CV_DEFAULT(1),
+						8,						//	int line_type CV_DEFAULT(8),
+						0);						//	int shift CV_DEFAULT(0));
+		}
+		else
+		{
+			cv::line(	*cOpenCV_Image,
+						pt1,
+						pt2,
+						cCurrentColor,		//	cv::Scalar color,
+						1,					//	int thickness CV_DEFAULT(1),
+						8,					//	int line_type CV_DEFAULT(8),
+						0);					//	int shift CV_DEFAULT(0));
+		}
+
+		cCurrentXloc	=	xx;
+		cCurrentYloc	=	yy;
+	}
+	else
+	{
+		CONSOLE_ABORT("cOpenCV_Image is NULL");
+	}
+#else
+	if (cOpenCV_Image != NULL)
+	{
+	CvPoint		pt1;
+	CvPoint		pt2;
 		pt1.x	=	xx;
 		pt1.y	=	yy;
 
@@ -1612,7 +1805,7 @@ CvPoint		pt2;
 			cvLine(	cOpenCV_Image,
 					pt1,
 					pt2,
-					gColorTable[theColor],	//	CvScalar color,
+					gColorTable[theColor],	//	cv::Scalar color,
 					1,						//	int thickness CV_DEFAULT(1),
 					8,						//	int line_type CV_DEFAULT(8),
 					0);						//	int shift CV_DEFAULT(0));
@@ -1622,7 +1815,7 @@ CvPoint		pt2;
 			cvLine(	cOpenCV_Image,
 					pt1,
 					pt2,
-					cCurrentColor,		//	CvScalar color,
+					cCurrentColor,		//	cv::Scalar color,
 					1,					//	int thickness CV_DEFAULT(1),
 					8,					//	int line_type CV_DEFAULT(8),
 					0);					//	int shift CV_DEFAULT(0));
@@ -1635,17 +1828,147 @@ CvPoint		pt2;
 	{
 		CONSOLE_ABORT("cOpenCV_Image is NULL");
 	}
+#endif // _USE_OPENCV_CPP_
+}
+//**************************************************************************************
+//*	Low Level FrameRect
+//**************************************************************************************
+void	WindowTab::LLD_FrameRect(int left, int top, int width, int height, int lineWidth)
+{
+
+	if ((width <= 0) || (height <= 0))
+	{
+		CONSOLE_DEBUG_W_NUM("width\t=", width);
+		CONSOLE_DEBUG_W_NUM("height\t=", height);
+		CONSOLE_ABORT(__FUNCTION__);
+	}
+#ifdef _USE_OPENCV_CPP_
+//	CONSOLE_DEBUG("OpenCV++");
+	if (cOpenCV_Image != NULL)
+	{
+	cv::Rect	myCVrect;
+
+		myCVrect.x		=	left;
+		myCVrect.y		=	top;
+		myCVrect.width	=	width;
+		myCVrect.height	=	height;
+
+		cv::rectangle(	*cOpenCV_Image,
+						myCVrect,
+						cCurrentColor,
+						lineWidth);
+
+	}
+#else
+	if (cOpenCV_Image != NULL)
+	{
+	CvRect		myCVrect;
+		myCVrect.x		=	left;
+		myCVrect.y		=	top;
+		myCVrect.width	=	width;
+		myCVrect.height	=	height;
+
+		cvRectangleR(	cOpenCV_Image,
+						myCVrect,
+						cCurrentColor,				//	cv::Scalar color,
+						lineWidth,					//	int thickness CV_DEFAULT(1),
+						8,							//	int line_type CV_DEFAULT(8),
+						0);							//	int shift CV_DEFAULT(0));
+
+	}
+#endif // _USE_OPENCV_CPP_
+}
+
+//**************************************************************************************
+//*	Low Level FrameRect
+//**************************************************************************************
+void	WindowTab::LLD_FillRect(int left, int top, int width, int height)
+{
+#ifdef _USE_OPENCV_CPP_
+//	CONSOLE_DEBUG("OpenCV++");
+	if (cOpenCV_Image != NULL)
+	{
+	cv::Rect	myCVrect;
+
+		myCVrect.x		=	left;
+		myCVrect.y		=	top;
+		myCVrect.width	=	width;
+		myCVrect.height	=	height;
+
+		cv::rectangle(	*cOpenCV_Image,
+						myCVrect,
+						cCurrentColor,
+						CV_FILLED);
+
+	}
+#else
+	if (cOpenCV_Image != NULL)
+	{
+	CvRect		myCVrect;
+
+		myCVrect.x		=	left;
+		myCVrect.y		=	top;
+		myCVrect.width	=	width;
+		myCVrect.height	=	height;
+
+		cvRectangleR(	cOpenCV_Image,
+						myCVrect,
+						cCurrentColor,				//	cv::Scalar color,
+						CV_FILLED,					//	int thickness CV_DEFAULT(1),
+						8,							//	int line_type CV_DEFAULT(8),
+						0);							//	int shift CV_DEFAULT(0));
+	}
+#endif // _USE_OPENCV_CPP_
 }
 
 //*********************************************************************
-void	WindowTab::FillEllipse(int xCenter, int yCenter, int xRadius, int yRadius)
+void	WindowTab::LLD_FillEllipse(int xCenter, int yCenter, int xRadius, int yRadius)
 {
-CvPoint	center;
-CvSize	axes;
 
+#ifdef _USE_OPENCV_CPP_
+	if (cOpenCV_Image != NULL)
+	{
+	cv::Point	center;
+	cv::Size	axes;
+
+		if ((xRadius > 0) && (yRadius > 0))
+		{
+			center.x	=	xCenter;
+			center.y	=	yCenter;
+			axes.width	=	1 * xRadius;
+			axes.height	=	1 * yRadius;
+
+			cv::ellipse(	*cOpenCV_Image,
+							center,
+							axes,
+							0.0,			//*	angle
+							0.0,			//*	start_angle
+							360.0,			//*	end_angle
+							cCurrentColor,	//	cv::Scalar color,
+							CV_FILLED);		//	int thickness CV_DEFAULT(1),
+		}
+		else
+		{
+			CONSOLE_DEBUG_W_NUM("xCenter\t=", xCenter);
+			CONSOLE_DEBUG_W_NUM("yCenter\t=", yCenter);
+			CONSOLE_DEBUG_W_NUM("xRadius\t=", xRadius);
+			CONSOLE_DEBUG_W_NUM("yRadius\t=", yRadius);
+			CONSOLE_ABORT("Invalid arguments");
+		}
+
+	}
+	else
+	{
+		CONSOLE_DEBUG("cOpenCV_matImage is NULL");
+	}
+
+#else
 //	CONSOLE_DEBUG(__FUNCTION__);
 	if (cOpenCV_Image != NULL)
 	{
+	CvPoint	center;
+	CvSize	axes;
+
 		if ((xRadius > 0) && (yRadius > 0))
 		{
 			center.x	=	xCenter;
@@ -1659,7 +1982,7 @@ CvSize	axes;
 						0.0,			//*	angle
 						0.0,			//*	start_angle
 						360.0,			//*	end_angle
-						cCurrentColor,	//	CvScalar color,
+						cCurrentColor,	//	cv::Scalar color,
 						CV_FILLED,		//	int thickness CV_DEFAULT(1),
 						8,				//	int line_type CV_DEFAULT(8),
 						0);				//	int shift CV_DEFAULT(0));
@@ -1675,23 +1998,59 @@ CvSize	axes;
 	}
 	else
 	{
-		CONSOLE_ABORT("cOpenCV_Image is NULL");
+		CONSOLE_DEBUG("cOpenCV_Image is NULL");
 	}
+#endif // _USE_OPENCV_CPP_
 }
 
 //*********************************************************************
-void	WindowTab::FrameEllipse(int xCenter, int yCenter, int xRadius, int yRadius)
+void	WindowTab::LLD_FrameEllipse(int xCenter, int yCenter, int xRadius, int yRadius)
 {
-CvPoint	center;
-CvSize	axes;
-
 //	CONSOLE_DEBUG(__FUNCTION__);
-//	CONSOLE_DEBUG_W_NUM("xCenter\t=", xCenter);
-//	CONSOLE_DEBUG_W_NUM("yCenter\t=", yCenter);
-//	CONSOLE_DEBUG_W_NUM("xRadius\t=", xRadius);
-//	CONSOLE_DEBUG_W_NUM("yRadius\t=", yRadius);
+
+#ifdef _USE_OPENCV_CPP_
 	if (cOpenCV_Image != NULL)
 	{
+	cv::Point	center;
+	cv::Size	axes;
+
+		if ((xRadius > 0) && (yRadius > 0))
+		{
+			center.x	=	xCenter;
+			center.y	=	yCenter;
+			axes.width	=	1 * xRadius;
+			axes.height	=	1 * yRadius;
+
+			cv::ellipse(	*cOpenCV_Image,
+							center,
+							axes,
+							0.0,				//*	angle
+							0.0,				//*	start_angle
+							360.0,				//*	end_angle
+							cCurrentColor,		//	cv::Scalar color,
+							cCurrentLineWidth,	//	int thickness CV_DEFAULT(1),
+							8,					//	int line_type CV_DEFAULT(8),
+							0);					//	int shift CV_DEFAULT(0));
+		}
+		else
+		{
+			CONSOLE_ABORT("Invalid arguments");
+			CONSOLE_DEBUG_W_NUM("xCenter\t=", xCenter);
+			CONSOLE_DEBUG_W_NUM("yCenter\t=", yCenter);
+			CONSOLE_DEBUG_W_NUM("xRadius\t=", xRadius);
+			CONSOLE_DEBUG_W_NUM("yRadius\t=", yRadius);
+		}
+	}
+	else
+	{
+		CONSOLE_DEBUG("cOpenCV_Image is NULL");
+		CONSOLE_ABORT("cOpenCV_Image is NULL");
+	}
+#else
+	if (cOpenCV_Image != NULL)
+	{
+	CvPoint	center;
+	CvSize	axes;
 		if ((xRadius > 0) && (yRadius > 0))
 		{
 			center.x	=	xCenter;
@@ -1702,13 +2061,13 @@ CvSize	axes;
 			cvEllipse(	cOpenCV_Image,
 						center,
 						axes,
-						0.0,			//*	angle
-						0.0,			//*	start_angle
-						360.0,			//*	end_angle
-						cCurrentColor,	//	CvScalar color,
-						1,				//	int thickness CV_DEFAULT(1),
-						8,				//	int line_type CV_DEFAULT(8),
-						0);				//	int shift CV_DEFAULT(0));
+						0.0,				//*	angle
+						0.0,				//*	start_angle
+						360.0,				//*	end_angle
+						cCurrentColor,		//	cv::Scalar color,
+						cCurrentLineWidth,	//	int thickness CV_DEFAULT(1),
+						8,					//	int line_type CV_DEFAULT(8),
+						0);					//	int shift CV_DEFAULT(0));
 		}
 		else
 		{
@@ -1717,16 +2076,19 @@ CvSize	axes;
 	}
 	else
 	{
-		CONSOLE_ABORT("cOpenCV_Image is NULL");
+		CONSOLE_DEBUG("cOpenCV_Image is NULL");
 	}
+#endif // _USE_OPENCV_CPP_
 }
 
+
+
 //*********************************************************************
-void	WindowTab::FloodFill(const int xxx, const int yyy, const int color)
+void	WindowTab::LLD_FloodFill(const int xxx, const int yyy, const int color)
 {
 CvPoint		center;
-CvScalar	newColor;
-CvScalar	cvScalarAll;
+cv::Scalar	newColor;
+cv::Scalar	cvScalarAll;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 	center.x	=	xxx;
@@ -1742,9 +2104,9 @@ CvScalar	cvScalarAll;
 		{
 			cvFloodFill(cOpenCV_Image, 				//	CvArr* image,
 						center, 					//	CvPoint seed_point,
-						newColor,					//	CvScalar new_val,
-						cvScalarAll,				//	CvScalar lo_diff CV_DEFAULT(cvScalarAll(0)),
-						cvScalarAll,				//	CvScalar up_diff CV_DEFAULT(cvScalarAll(0)),
+						newColor,					//	cv::Scalar new_val,
+						cvScalarAll,				//	cv::Scalar lo_diff CV_DEFAULT(cvScalarAll(0)),
+						cvScalarAll,				//	cv::Scalar up_diff CV_DEFAULT(cvScalarAll(0)),
 						NULL,						//	CvConnectedComp* comp CV_DEFAULT(NULL),
 						4,							//	int flags CV_DEFAULT(4),
 						NULL						//	CvArr* mask CV_DEFAULT(NULL));
@@ -1760,8 +2122,14 @@ CvScalar	cvScalarAll;
 	}
 }
 
+
+#ifdef _USE_OPENCV_CPP_
+//*********************************************************************
+void	SetRect(cv::Rect *theRect, const int top, const int left, const int bottom, const int right)
+#else
 //*********************************************************************
 void	SetRect(CvRect *theRect, const int top, const int left, const int bottom, const int right)
+#endif
 {
 	theRect->x		=	left;
 	theRect->y		=	top;
@@ -1770,8 +2138,13 @@ void	SetRect(CvRect *theRect, const int top, const int left, const int bottom, c
 }
 
 
+#ifdef _USE_OPENCV_CPP_
+//*********************************************************************
+void	InsetRect(cv::Rect *theRect, const int xInset, const int yInset)
+#else
 //*********************************************************************
 void	InsetRect(CvRect *theRect, const int xInset, const int yInset)
+#endif
 {
 	theRect->x		+=	xInset;
 	theRect->y		+=	yInset;

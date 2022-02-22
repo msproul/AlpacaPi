@@ -20,6 +20,7 @@
 //*****************************************************************************
 //*	May 27,	2021	<MLS> Created windowtab_filterwheel.cpp
 //*	May 29,	2021	<MLS> Filterwheel display working correctly
+//*	Feb 20,	2022	<MLS> FilterWheel display working under opencv++
 //*****************************************************************************
 
 #define _ENABLE_CTRL_FILTERWHEEL_
@@ -41,9 +42,9 @@
 
 //**************************************************************************************
 WindowTabFilterWheel::WindowTabFilterWheel(	const int	xSize,
-								const int	ySize,
-								CvScalar	backGrndColor,
-								const char	*windowName)
+											const int	ySize,
+											cv::Scalar	backGrndColor,
+											const char	*windowName)
 	:WindowTab(xSize, ySize, backGrndColor, windowName)
 {
 int		iii;
@@ -105,7 +106,7 @@ int		yLoc;
 	//==========================================
 	//*	create the filter wheel
 	SetWidget(		kFilterWheel_FilterCircle,	0,		yLoc,		(cWidth),	(cWidth + 8));
-	SetWidgetType(	kFilterWheel_FilterCircle, kWidgetType_Graphic);
+	SetWidgetType(	kFilterWheel_FilterCircle, kWidgetType_CustomGraphic);
 	yLoc			+=	cWidth;
 	yLoc			+=	2;
 
@@ -190,13 +191,20 @@ bool	validData;
 	}
 }
 
+#ifdef _USE_OPENCV_CPP_
 //**************************************************************************************
-void	WindowTabFilterWheel::DrawGraphWidget(IplImage *openCV_Image, const int widgetIdx)
+void	WindowTabFilterWheel::DrawWidgetCustomGraphic(cv::Mat *openCV_Image, const int widgetIdx)
+#else
+//**************************************************************************************
+void	WindowTabFilterWheel::DrawWidgetCustomGraphic(IplImage *openCV_Image, const int widgetIdx)
+#endif // _USE_OPENCV_CPP_
 {
+	cOpenCV_Image	=	openCV_Image;
+
 	switch(widgetIdx)
 	{
 		case kFilterWheel_FilterCircle:
-			DrawFilterWheel(openCV_Image, &cWidgetList[widgetIdx]);
+			DrawFilterWheel(&cWidgetList[widgetIdx]);
 			break;
 
 		default:
@@ -207,55 +215,35 @@ void	WindowTabFilterWheel::DrawGraphWidget(IplImage *openCV_Image, const int wid
 
 
 //**************************************************************************************
-void	WindowTabFilterWheel::DrawFilterWheel(IplImage *openCV_Image, TYPE_WIDGET *theWidget)
+void	WindowTabFilterWheel::DrawFilterWheel(TYPE_WIDGET *theWidget)
 {
-CvRect			myCVrect;
-CvPoint			myCVcenter;
-int				radius1;
+int			center_X;
+int			center_Y;
+int			pt1_X;
+int			pt1_Y;
+int			pt2_X;
+int			pt2_Y;
+int			radius1;
+
 double			degrees;
 double			radians;
 CvPoint			pt1;
 char			textString[64];
 char			myFilterName[32];
 int				filterPosition;		//*	0	= 12 o'clock
-CvScalar		fillColor;
-CvScalar		textColor;
-CvSize			textSize;
-int				baseLine;
+int				fillColor_Wnum;
+int				textColor_Wnum;
 double			deltaDegrees;
 int				myFilterOffset;
-
-	myCVrect.x		=	theWidget->left;
-	myCVrect.y		=	theWidget->top;
-	myCVrect.width	=	theWidget->width;
-	myCVrect.height	=	theWidget->height;
+int				textWidthPixels;
 
 
-	cvRectangleR(	openCV_Image,
-					myCVrect,
-					theWidget->bgColor,			//	CvScalar color,
-					CV_FILLED,					//	int thickness CV_DEFAULT(1),
-					8,							//	int line_type CV_DEFAULT(8),
-					0);							//	int shift CV_DEFAULT(0));
+	center_X	=	theWidget->left + (theWidget->width / 2);
+	center_Y	=	theWidget->top + (theWidget->height / 2);
+	radius1		=	((theWidget->width / 2) -2);
 
-
-	cvRectangleR(	openCV_Image,
-					myCVrect,
-					theWidget->borderColor,		//	CvScalar color,
-					1,							//	int thickness CV_DEFAULT(1),
-					8,							//	int line_type CV_DEFAULT(8),
-					0);							//	int shift CV_DEFAULT(0));
-
-	myCVcenter.x	=	myCVrect.x + (myCVrect.width / 2);
-	myCVcenter.y	=	myCVrect.y + (myCVrect.height / 2);
-
-	cvCircle(	openCV_Image,
-				myCVcenter,
-				((myCVrect.width / 2) -2),			//*	radius
-				theWidget->borderColor,
-				1,									//	int thickness CV_DEFAULT(1),
-				8,									//	int line_type CV_DEFAULT(8),
-				0);									//	int shift CV_DEFAULT(0));
+	SetColor(W_WHITE);
+	LLD_FrameEllipse(center_X, center_Y, radius1, radius1);
 
 	if (cFilterWheelPropPtr != NULL)
 	{
@@ -267,21 +255,12 @@ int				myFilterOffset;
 		{
 			strcpy(textString, "Double click to change filter");
 		}
-		cvGetTextSize(	textString,
-						&gTextFont[kFont_Medium],
-						&textSize,
-						&baseLine);
 
-		pt1.x		=	myCVcenter.x;
-		pt1.y		=	myCVcenter.y;
-		pt1.x		-=	(textSize.width / 2);
-		textColor	=	CV_RGB(255, 255, 255);
-		cvPutText(	openCV_Image,
-					textString,
-					pt1,
-					&gTextFont[kFont_Medium],
-					textColor
-					);
+		textWidthPixels	=   GetTextSize_Width(textString);
+		pt1_X			=	center_X;
+		pt1_X			-=	textWidthPixels / 2;
+		pt1_Y			=	center_Y;
+		LLD_DrawCString(pt1_X, pt1_Y, textString, kFont_Medium);
 	}
 
 
@@ -290,11 +269,10 @@ int				myFilterOffset;
 	{
 		//*	now draw a circle for each filter
 		deltaDegrees	=	360.0 / cPositionCount;
-		radius1			=	(myCVrect.width / 2) - 45;
+		radius1			=	(theWidget->width / 2) - 45;
+		radius1			=	(theWidget->width / 2) - 45;
 		for (filterPosition=0; filterPosition < cPositionCount; filterPosition++)
 		{
-			//*	default text color
-			textColor		=	CV_RGB(255, 255, 255);
 			myFilterOffset	=	0;
 			if (cFilterWheelPropPtr != NULL)
 			{
@@ -308,113 +286,85 @@ int				myFilterOffset;
 				strcpy(myFilterName, cFilterWheelPropPtr->Names[myFilterOffset].FilterName);
 
 				//*	figure out what color to make the background
-				fillColor		=	CV_RGB(0, 0, 0);
+				fillColor_Wnum	=	W_BLACK;
+				textColor_Wnum	=	W_WHITE;		//*	default text color
+
 				if (strncasecmp(myFilterName, "red", 3) == 0)
 				{
-					fillColor		=	CV_RGB(255, 0, 0);
+					fillColor_Wnum	=	W_RED;
 				}
 				else if (strncasecmp(myFilterName, "green", 5) == 0)
 				{
-					fillColor		=	CV_RGB(0, 255, 0);
-					textColor		=	CV_RGB(0, 0, 0);
+					fillColor_Wnum	=	W_GREEN;
+					textColor_Wnum	=	W_BLACK;
 				}
 				else if (strncasecmp(myFilterName, "blue", 4) == 0)
 				{
-					fillColor		=	CV_RGB(0, 0, 255);
+					fillColor_Wnum	=	W_BLUE;
 				}
-				//	So, Sii=R, Ha=G, Oiii=B.
+				//	Sii=R, Ha=G, Oiii=B.
 				else if ((strncasecmp(myFilterName, "Sii", 3) == 0) || (strncasecmp(myFilterName, "S2", 2) == 0))
 				{
-					fillColor		=	CV_RGB(255,85,85);
+					fillColor_Wnum	=	W_FILTER_SII;
 				}
 				else if (strncasecmp(myFilterName, "Ha", 2) == 0)
 				{
-					fillColor		=	CV_RGB(151,253,151);
-					textColor		=	CV_RGB(0, 0, 0);
+					fillColor_Wnum	=	W_FILTER_HA;
+					textColor_Wnum	=	W_BLACK;
 				}
 				else if (strncasecmp(myFilterName, "Oiii", 4) == 0)
 				{
-					fillColor		=	CV_RGB(127,216,250);
-					textColor		=	CV_RGB(0, 0, 0);
+					fillColor_Wnum	=	W_FILTER_OIII;
+					textColor_Wnum	=	W_BLACK;
 				}
-
 			}
 			else
 			{
-				fillColor	=	CV_RGB(128, 128, 128);
+				fillColor_Wnum	=	W_LIGHTGRAY;
+				textColor_Wnum	=	W_BLACK;		//*	default text color
 				sprintf(myFilterName, "-%d-", (myFilterOffset + 1));
 			}
 
 			degrees	=	-90.0 + (filterPosition * deltaDegrees);
 			radians	=	degrees * M_PI / 180.0;
-			pt1.x	=	myCVcenter.x + (cos(radians) * radius1);
-			pt1.y	=	myCVcenter.y + (sin(radians) * radius1);
+
+			pt1_X	=	center_X + (cos(radians) * radius1);
+			pt1_Y	=	center_Y + (sin(radians) * radius1);
 
 			//*	save the center of the filter circle
 			//*	this is for the double click routine
-			cFilterCirleCenterPt[filterPosition]	=	pt1;
+			cFilterCirleCenterPt[filterPosition].x	=	pt1_X;
+			cFilterCirleCenterPt[filterPosition].y	=	pt1_Y;
 
-			cvCircle(	openCV_Image,
-						pt1,
-						kFilterCirleRadius,						//*	radius
-						fillColor,
-						CV_FILLED,							//	int thickness CV_DEFAULT(1),
-						8,									//	int line_type CV_DEFAULT(8),
-						0);									//	int shift CV_DEFAULT(0));
+			SetColor(fillColor_Wnum);
+			LLD_FillEllipse(pt1_X, pt1_Y, kFilterCirleRadius, kFilterCirleRadius);
 
-			cvCircle(	openCV_Image,
-						pt1,
-						kFilterCirleRadius,
-						theWidget->borderColor,
-						1,									//	int thickness CV_DEFAULT(1),
-						8,									//	int line_type CV_DEFAULT(8),
-						0);									//	int shift CV_DEFAULT(0));
+			SetColor(W_WHITE);
+			LLD_FrameEllipse(pt1_X, pt1_Y, kFilterCirleRadius, kFilterCirleRadius);
 
 			//*	make position zero distinct
 			if (filterPosition == 0)
 			{
-				cvCircle(	openCV_Image,
-							pt1,
-							44,
-							theWidget->borderColor,
-							4,									//	int thickness CV_DEFAULT(1),
-							8,									//	int line_type CV_DEFAULT(8),
-							0);									//	int shift CV_DEFAULT(0));
+				LLD_PenSize(4);
+				LLD_FrameEllipse(pt1_X, pt1_Y, kFilterCirleRadius, kFilterCirleRadius);
+				LLD_PenSize(1);
 			}
-			//*	print the name of the filter in the circle
-			cvGetTextSize(	myFilterName,
-							&gTextFont[kFont_Medium],
-							&textSize,
-							&baseLine);
 
-
-			pt1.x	-=	(textSize.width / 2);
-			pt1.y	+=	5;
-			cvPutText(	openCV_Image,
-						myFilterName,
-						pt1,
-						&gTextFont[kFont_Medium],
-						textColor
-						);
+			//*	now work on the names and numbers
+			textWidthPixels	=   GetTextSize_Width(myFilterName);
+			pt2_X			=	pt1_X - (textWidthPixels / 2);
+			pt2_Y			=	pt1_Y + 5;
+			SetColor(textColor_Wnum);
+			LLD_DrawCString(pt2_X, pt2_Y, myFilterName, kFont_Medium);
 
 			//*	now print the number of the filter above the name
 			sprintf(textString, "-%d-", (myFilterOffset + 1));
-			cvGetTextSize(	textString,
-							&gTextFont[kFont_Medium],
-							&textSize,
-							&baseLine);
 
+			textWidthPixels	=   GetTextSize_Width(myFilterName);
+			pt2_X			=	pt1_X - (textWidthPixels / 2);
+			pt2_Y			-=	15;
 
-			pt1.x	=	myCVcenter.x + (cos(radians) * radius1);
-			pt1.y	=	myCVcenter.y + (sin(radians) * radius1);
-			pt1.x	-=	(textSize.width / 2);
-			pt1.y	-=	15;
-			cvPutText(	openCV_Image,
-						textString,
-						pt1,
-						&gTextFont[kFont_Medium],
-						textColor
-						);
+			LLD_DrawCString(pt2_X, pt2_Y, textString, kFont_Medium);
 
 			degrees	+=	deltaDegrees;
 		}

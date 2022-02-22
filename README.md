@@ -1,7 +1,7 @@
 # AlpacaPi
 Astronomy control software using Alpaca protocol on the Raspberry Pi
 
-(C) 2019-2021 by Mark Sproul msproul@skychariot.com
+(C) 2019-2022 by Mark Sproul msproul@skychariot.com
 
 AlpacaPi is an open source project written in C/C++
 
@@ -61,6 +61,7 @@ These libraries are required for the following devices:
 	ToupTek Cameras
 	ZWO ASI cameras
 	ZWO EFW Filter Wheel
+	ATIK Filter wheel
 
 External libraries are NOT required for
 

@@ -63,7 +63,7 @@ class WindowTabImage: public WindowTab
 		//
 				WindowTabImage(	const int	xSize,
 								const int	ySize,
-								CvScalar	backGrndColor,
+								cv::Scalar	backGrndColor,
 								const char	*windowName);
 		virtual	~WindowTabImage(void);
 
@@ -82,7 +82,6 @@ class WindowTabImage: public WindowTab
 		virtual void	ProcessMouseLeftButtonUp(const int widgetIdx, const int event, const int xxx, const int yyy, const int flags);
 		virtual void	ProcessMouseLeftButtonDragged(const int widgetIdx, const int event, const int xxx, const int yyy, const int flags);
 
-				void	SetImagePtrs(IplImage *originalImage, IplImage *displayedImage);
 
 				void	ResetImage(void);
 				void	ZoomImage(	const int	event,
@@ -92,8 +91,15 @@ class WindowTabImage: public WindowTab
 				void	DrawFullScaleIamge(void);
 				void	DrawFullScaleIamge(const int image_X, const int	image_Y);
 
+			#ifdef _USE_OPENCV_CPP_
+				void		SetImagePtrs(cv::Mat *originalImage, cv::Mat *displayedImage);
+				cv::Mat		*cOpenCVdownLoadedImage;
+				cv::Mat		*cOpenCVdisplayedImage;
+			#else
+				void		SetImagePtrs(IplImage *originalImage, IplImage *displayedImage);
 				IplImage	*cOpenCVdownLoadedImage;
 				IplImage	*cOpenCVdisplayedImage;
+			#endif // _USE_OPENCV_CPP_
 
 				int			cImageCenterX;
 				int			cImageCenterY;

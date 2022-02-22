@@ -42,7 +42,7 @@ class ControllerPreview: public ControllerCamera
 
 		virtual	void	SetupWindowControls(void);
 	//	virtual	void	ProcessButtonClick(const int buttonIdx);
-	//	virtual	void	RunBackgroundTasks(bool enableDebug=false);
+	//	virtual	void	RunBackgroundTasks(const char *callingFunction=NULL, bool enableDebug=false);
 
 		//*	this is a large list of update routines, they should be implemented in the subclass
 		virtual	void	UpdateCameraExposure(void);

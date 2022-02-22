@@ -45,7 +45,7 @@ class ControllerCamNormal: public ControllerCamera
 
 		virtual	void	SetupWindowControls(void);
 	//	virtual	void	ProcessButtonClick(const int buttonIdx);
-	//	virtual	void	RunBackgroundTasks(bool enableDebug=false);
+	//	virtual	void	RunBackgroundTasks(const char *callingFunction=NULL, bool enableDebug=false);
 
 
 		virtual	void	AlpacaDisplayErrorMessage(const char *errorMsgString);

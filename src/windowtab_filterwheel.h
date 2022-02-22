@@ -38,6 +38,13 @@ enum
 	#define		kSensorValueCnt	12
 #endif // kSensorValueCnt
 
+//**************************************************************************************
+typedef struct
+{
+	int		x;
+	int		y;
+} Point;
+
 
 //**************************************************************************************
 class WindowTabFilterWheel: public WindowTab
@@ -48,12 +55,16 @@ class WindowTabFilterWheel: public WindowTab
 		//
 				WindowTabFilterWheel(	const int	xSize,
 										const int	ySize,
-										CvScalar	backGrndColor,
+										cv::Scalar	backGrndColor,
 										const char	*windowName);
 		virtual	~WindowTabFilterWheel(void);
 
 		virtual	void	SetupWindowControls(void);
-		virtual	void	DrawGraphWidget(IplImage *openCV_Image, const int widgetIdx);
+#ifdef _USE_OPENCV_CPP_
+		virtual	void	DrawWidgetCustomGraphic(cv::Mat *openCV_Image, const int widgetIdx);
+#else
+		virtual	void	DrawWidgetCustomGraphic(IplImage *openCV_Image, const int widgetIdx);
+#endif // _USE_OPENCV_CPP_
 		virtual	void	ProcessButtonClick(const int buttonIdx);
 		virtual	void	ProcessDoubleClick(	const int	widgetIdx,
 											const int	event,
@@ -61,12 +72,12 @@ class WindowTabFilterWheel: public WindowTab
 											const int	yyy,
 											const int	flags);
 
+				void	DrawFilterWheel(TYPE_WIDGET *theWidget);
 				void	SetFilterWheelPropPtr(TYPE_FilterWheelProperties *fwProperties);
 				void	SetPositonCount(int positionCount);
-				void	DrawFilterWheel(IplImage *openCV_Image, TYPE_WIDGET *theWidget);
 
 				int		cPositionCount;
-				CvPoint	cFilterCirleCenterPt[kMaxFiltersPerWheel];
+				Point	cFilterCirleCenterPt[kMaxFiltersPerWheel];
 
 				TYPE_FilterWheelProperties	*cFilterWheelPropPtr;
 };

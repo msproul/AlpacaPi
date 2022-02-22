@@ -60,19 +60,23 @@ class WindowTabSlitGraph: public WindowTab
 		//
 				WindowTabSlitGraph(	const int	xSize,
 										const int	ySize,
-										CvScalar	backGrndColor,
+										cv::Scalar	backGrndColor,
 										const char	*windowName);
 		virtual	~WindowTabSlitGraph(void);
 
 		virtual	void	SetupWindowControls(void);
-		virtual	void	DrawGraphWidget(IplImage *openCV_Image, const int widgetIdx);
 		virtual	void	ProcessButtonClick(const int buttonIdx);
+#ifdef _USE_OPENCV_CPP_
+		virtual void	DrawWidgetCustomGraphic(cv::Mat *openCV_Image, const int widgetIdx);
+#else
+		virtual	void	DrawWidgetCustomGraphic(IplImage *openCV_Image, const int widgetIdx);
+#endif // _USE_OPENCV_CPP_
 
-				void	DrawSlitGraph(IplImage *openCV_Image, TYPE_WIDGET *theWidget);
-				void	DrawTickLine(IplImage *openCV_Image, CvRect *widgetRect, int yLoc);
+				void	DrawSlitGraph(TYPE_WIDGET *theWidget);
+				void	DrawTickLine(CvRect *widgetRect, int yLoc);
 
 				bool		cDisplayClockData[kSensorValueCnt];
-				CvScalar	cSLitTrackColors[kSensorValueCnt];
+				cv::Scalar	cSLitTrackColors[kSensorValueCnt];
 
 				bool		cDisplayRawData;
 				bool		cDisplayAvgData;

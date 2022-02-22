@@ -21,19 +21,20 @@
 //*****************************************************************************
 
 
-
-
-
 #include	<math.h>
 #include	<stdio.h>
 #include	<stdlib.h>
 #include	<unistd.h>
 #include	<sys/time.h>
 
-
-#include "opencv/highgui.h"
-#include "opencv2/highgui/highgui_c.h"
-#include "opencv2/imgproc/imgproc_c.h"
+#ifdef _USE_OPENCV_CPP_
+	#include	<opencv2/opencv.hpp>
+#else
+	#include "opencv/highgui.h"
+	#include "opencv2/highgui/highgui_c.h"
+	#include "opencv2/imgproc/imgproc_c.h"
+	#include "opencv2/core/version.hpp"
+#endif // _USE_OPENCV_CPP_
 
 #include	"alpaca_defs.h"
 #include	"helper_functions.h"
@@ -300,7 +301,7 @@ void	ControllerSlit::UpdateCommonProperties(void)
 
 
 //**************************************************************************************
-void	ControllerSlit::RunBackgroundTasks(bool enableDebug)
+void	ControllerSlit::RunBackgroundTasks(const char *callingFunction, bool enableDebug)
 {
 uint32_t	currentMillis;
 uint32_t	deltaSeconds;

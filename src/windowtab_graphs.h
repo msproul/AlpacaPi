@@ -36,13 +36,20 @@ class WindowTabGraph: public WindowTab
 		//
 		// Construction
 		//
-				WindowTabGraph(const int xSize, const int ySize, CvScalar backGrndColor);
+				WindowTabGraph(	const int	xSize,
+								const int	ySize,
+								cv::Scalar	backGrndColor);
 		virtual	~WindowTabGraph(void);
 
 		virtual	void	SetupWindowControls(void);
-		virtual	void	DrawGraphWidget(IplImage *openCV_Image, const int widgetIdx);
+//-		virtual	void	DrawGraphWidget(IplImage *openCV_Image, const int widgetIdx);
+#ifdef _USE_OPENCV_CPP_
+		virtual	void	DrawWidgetCustomGraphic(cv::Mat *openCV_Image, const int widgetIdx);
+#else
+		virtual	void	DrawWidgetCustomGraphic(IplImage *openCV_Image, const int widgetIdx);
+#endif // _USE_OPENCV_CPP_
 
-				void	DrawGraph(IplImage *openCV_Image, TYPE_WIDGET *graphWidget, double *arrayData, int arrayCount);
+				void	DrawGraph(TYPE_WIDGET *graphWidget, double *arrayData, int arrayCount);
 				void	LogVoltage(double voltageValue);
 				void	LogTemperature(double temp_degC);
 

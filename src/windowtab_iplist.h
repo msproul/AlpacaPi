@@ -92,9 +92,9 @@ class WindowTabIPList: public WindowTab
 		//
 		// Construction
 		//
-				WindowTabIPList(	const int	xSize,
+				WindowTabIPList(const int	xSize,
 								const int	ySize,
-								CvScalar	backGrndColor,
+								cv::Scalar	backGrndColor,
 								const char	*windowName);
 		virtual	~WindowTabIPList(void);
 

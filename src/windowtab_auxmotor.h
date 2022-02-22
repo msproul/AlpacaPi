@@ -52,11 +52,10 @@ class WindowTabAuxMotor: public WindowTab
 		//
 		// Construction
 		//
-				WindowTabAuxMotor(const int xSize, const int ySize, CvScalar backGrndColor);
+				WindowTabAuxMotor(const int xSize, const int ySize, cv::Scalar backGrndColor);
 		virtual	~WindowTabAuxMotor(void);
 
 		virtual	void	SetupWindowControls(void);
-		virtual	void	DrawGraphWidget(IplImage *openCV_Image, const int widgetIdx);
 		virtual	void	ProcessButtonClick(const int buttonIdx);
 				void	DisableAuxMotorButons(void);
 

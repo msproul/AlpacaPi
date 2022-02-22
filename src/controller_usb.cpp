@@ -24,15 +24,18 @@
 
 #ifdef _ENABLE_USB_FOCUSERS_
 
-
 #include	<stdio.h>
 #include	<stdlib.h>
 #include	<unistd.h>
 
-
-#include "opencv/highgui.h"
-#include "opencv2/highgui/highgui_c.h"
-#include "opencv2/imgproc/imgproc_c.h"
+#ifdef _USE_OPENCV_CPP_
+	#include	<opencv2/opencv.hpp>
+#else
+	#include "opencv/highgui.h"
+	#include "opencv2/highgui/highgui_c.h"
+	#include "opencv2/imgproc/imgproc_c.h"
+	#include "opencv2/core/version.hpp"
+#endif // _USE_OPENCV_CPP_
 
 #include	"discovery_lib.h"
 
@@ -114,7 +117,7 @@ void	ControllerUSB::SetupWindowControls(void)
 }
 
 //**************************************************************************************
-void	ControllerUSB::RunBackgroundTasks(bool enableDebug)
+void	ControllerUSB::RunBackgroundTasks(const char *callingFunction, bool enableDebug)
 {
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 

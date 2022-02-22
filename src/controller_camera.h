@@ -93,9 +93,8 @@ class ControllerCamera: public Controller
 
 		virtual	void	SetupWindowControls(void);
 	//	virtual	void	ProcessButtonClick(const int buttonIdx);
-		virtual	void	RunBackgroundTasks(bool enableDebug=false);
-	//	virtual	void	DrawGraphWidget(const int widgetIdx);
-		virtual	void	DrawWidgetCustom(TYPE_WIDGET *theWidget);
+		virtual	void	RunBackgroundTasks(const char *callingFunction=NULL, bool enableDebug=false);
+	//	virtual	void	DrawWidgetCustomGraphic(const int widgetIdx);
 
 		//*	this is a large list of update routines, they should be implemented in the subclass
 		virtual	void	UpdateCameraGain(const TYPE_ASCOM_STATUS lastAlpacaErr = kASCOM_Err_Success);
@@ -172,10 +171,16 @@ class ControllerCamera: public Controller
 				void	LogCameraTemp(const double cameraTemp);
 
 
-				IplImage	*DownloadImage(const bool force8BitRead,  const bool allowBinary);
+			#if defined(_USE_OPENCV_CPP_) &&  (CV_MAJOR_VERSION >= 4)
+				#warning "CV_MAJOR_VERSION >= 4"
+				cv::Mat		*DownloadImage_rgbarray(void);
+				cv::Mat		*DownloadImage_imagearray(const bool force8BitRead, const bool allowBinary);
+				cv::Mat		*DownloadImage(const bool force8BitRead,  const bool allowBinary);
+			#else
 				IplImage	*DownloadImage_rgbarray(void);
 				IplImage	*DownloadImage_imagearray(const bool force8BitRead, const bool allowBinary);
-
+				IplImage	*DownloadImage(const bool force8BitRead,  const bool allowBinary);
+			#endif
 
 
 				TYPE_CameraProperties	cCameraProp;

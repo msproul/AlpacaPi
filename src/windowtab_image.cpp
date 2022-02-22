@@ -46,7 +46,7 @@
 //**************************************************************************************
 WindowTabImage::WindowTabImage(	const int	xSize,
 								const int	ySize,
-								CvScalar	backGrndColor,
+								cv::Scalar	backGrndColor,
 								const char	*windowName)
 	:WindowTab(xSize, ySize, backGrndColor, windowName)
 {
@@ -126,13 +126,13 @@ int			dataWidth;
 	while (iii < kImageDisplay_FramesSaved)
 	{
 		SetWidget(				iii,	xLoc,	yLoc,		labelWidth,		cSmallBtnHt);
-		SetWidgetType(			iii, 	kWidgetType_Text);
+		SetWidgetType(			iii, 	kWidgetType_TextBox);
 		SetWidgetFont(			iii, 	kFont_TextList);
 		SetWidgetJustification(	iii, 	kJustification_Left);
 		iii++;
 
 		SetWidget(				iii,	(xLoc + labelWidth + 2),	yLoc,		dataWidth,		cSmallBtnHt);
-		SetWidgetType(			iii, 	kWidgetType_Text);
+		SetWidgetType(			iii, 	kWidgetType_TextBox);
 		SetWidgetFont(			iii, 	kFont_TextList);
 		SetWidgetJustification(	iii, 	kJustification_Left);
 
@@ -168,8 +168,8 @@ int			dataWidth;
 	SetWidgetBorderColor(	kImageDisplay_ImageDisplay,	CV_RGB(255,	255,	255));
 	SetWidgetBorder(		kImageDisplay_ImageDisplay,	true);
 
-	CONSOLE_DEBUG_W_NUM("imageBoxWidth\t=",		imageBoxWidth);
-	CONSOLE_DEBUG_W_NUM("imageBoxHeight\t=",	imageBoxHeight);
+//	CONSOLE_DEBUG_W_NUM("imageBoxWidth\t=",		imageBoxWidth);
+//	CONSOLE_DEBUG_W_NUM("imageBoxHeight\t=",	imageBoxHeight);
 
 }
 
@@ -268,13 +268,17 @@ int		iii;
 			break;
 
 		default:
-			//*	this adjust the blue part of the image, just for testing.
+			//*	this adjusts the blue part of the image, just for testing.
 			if (cOpenCVdisplayedImage != NULL)
 			{
+		#ifdef _USE_OPENCV_CPP_
+			#warning "OpenCV++ not finished"
+		#else
 				for (iii= 0; iii< cOpenCVdisplayedImage->imageSize; iii+=3)
 				{
 					cOpenCVdisplayedImage->imageData[iii]	+=	75;
 				}
+		#endif // _USE_OPENCV_CPP_
 				ForceUpdate();
 			}
 			else
@@ -376,18 +380,29 @@ int		cursorYYoffset;
 	}
 }
 
+#ifdef _USE_OPENCV_CPP_
+//*****************************************************************************
+void	WindowTabImage::SetImagePtrs(cv::Mat *originalImage, cv::Mat *displayedImage)
+{
+	cOpenCVdownLoadedImage	=	originalImage;
+	cOpenCVdisplayedImage	=	displayedImage;
+}
+#else
 //*****************************************************************************
 void	WindowTabImage::SetImagePtrs(IplImage *originalImage, IplImage *displayedImage)
 {
 	cOpenCVdownLoadedImage	=	originalImage;
 	cOpenCVdisplayedImage	=	displayedImage;
-
 }
+#endif // _USE_OPENCV_CPP_
 
 //*****************************************************************************
 void	WindowTabImage::ResetImage(void)
 {
 	CONSOLE_DEBUG(__FUNCTION__);
+#ifdef _USE_OPENCV_CPP_
+	#warning "OpenCV++ not finished"
+#else
 	//*	Check to see if the original is color
 	if ((cOpenCVdownLoadedImage->nChannels == 3) && (cOpenCVdownLoadedImage->depth == 8))
 	{
@@ -397,6 +412,7 @@ void	WindowTabImage::ResetImage(void)
 	{
 		cvCvtColor(cOpenCVdownLoadedImage, cOpenCVdisplayedImage, CV_GRAY2RGB);
 	}
+#endif // _USE_OPENCV_CPP_
 	cImageZoomState	=	0;
 	ForceUpdate();
 }
@@ -432,6 +448,9 @@ int			imageCursorYY;
 			cursorXXoffset		=	xxx - cWidgetList[kImageDisplay_ImageDisplay].roiRect.x;
 			cursorYYoffset		=	yyy - cWidgetList[kImageDisplay_ImageDisplay].roiRect.y;
 
+		#ifdef _USE_OPENCV_CPP_
+			#warning "OpenCV++ not finished"
+		#else
 			//*	get the size of the destination image
 			displayedWidth		=	cOpenCVdisplayedImage->width;
 			displayedHeight		=	cOpenCVdisplayedImage->height;
@@ -446,6 +465,7 @@ int			imageCursorYY;
 			imageCursorYY		=	sourceImageHeight * cursorYYoffset / displayedHeight;
 
 			DrawFullScaleIamge(imageCursorXX, imageCursorYY);
+		#endif // _USE_OPENCV_CPP_
 
 			cImageZoomState	=	1;
 		}
@@ -479,6 +499,9 @@ int			sourceImageHeight;
 
 	if ((cOpenCVdownLoadedImage != NULL) && (cOpenCVdisplayedImage != NULL))
 	{
+	#ifdef _USE_OPENCV_CPP_
+		#warning "OpenCV++ not finished"
+	#else
 		//*	get the size of the source image
 		sourceImageWidth		=	cOpenCVdownLoadedImage->width;
 		sourceImageHeight		=	cOpenCVdownLoadedImage->height;
@@ -536,13 +559,13 @@ int			sourceImageHeight;
 			//*	now update the CURRENT center of the displayed image
 			cImageCenterX	=	displayedImgRect.x + (displayedWidth / 2);
 			cImageCenterY	=	displayedImgRect.y + (displayedHeight / 2);
-
 			ForceUpdate();
 		}
 		else
 		{
 			CONSOLE_DEBUG("Somethings not right!!!!!!!!!!!!");
 		}
+	#endif // _USE_OPENCV_CPP_
 	}
 	else
 	{

@@ -36,7 +36,9 @@
 #define	kAboutBoxHeight	100
 
 //**************************************************************************************
-WindowTabConfig::WindowTabConfig(const int xSize, const int ySize, CvScalar backGrndColor)
+WindowTabConfig::WindowTabConfig(	const int	xSize,
+									const int	ySize,
+									cv::Scalar backGrndColor)
 	:WindowTab(xSize, ySize, backGrndColor)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
@@ -154,42 +156,30 @@ int		textBoxNum;
 
 }
 
+#ifdef _USE_OPENCV_CPP_
+//**************************************************************************************
+void	WindowTabConfig::DrawWidgetCustomGraphic(cv::Mat *openCV_Image, const int widgetIdx)
+#else
+//**************************************************************************************
+void	WindowTabConfig::DrawWidgetCustomGraphic(IplImage *openCV_Image, const int widgetIdx)
+#endif // _USE_OPENCV_CPP_
 //******************************************************************************
-void	WindowTabConfig::DrawGraphWidget(IplImage *openCV_Image, const int widgetIdx)
 {
-CvRect		myCVrect;
 
-	myCVrect.x		=	cWidgetList[widgetIdx].left;
-	myCVrect.y		=	cWidgetList[widgetIdx].top;
-	myCVrect.width	=	cWidgetList[widgetIdx].width;
-	myCVrect.height	=	cWidgetList[widgetIdx].height;
+	cOpenCV_Image	=	openCV_Image;
 
 
-	cvRectangleR(	openCV_Image,
-					myCVrect,
-					cWidgetList[widgetIdx].bgColor,			//	CvScalar color,
-					CV_FILLED,								//	int thickness CV_DEFAULT(1),
-					8,										//	int line_type CV_DEFAULT(8),
-					0);										//	int shift CV_DEFAULT(0));
-
-//	cvRectangleR(	openCV_Image,
-//					myCVrect,
-//					cWidgetList[widgetIdx].borderColor,		//	CvScalar color,
-//					1,										//	int thickness CV_DEFAULT(1),
-//					8,										//	int line_type CV_DEFAULT(8),
-//					0);										//	int shift CV_DEFAULT(0));
-
-	switch(widgetIdx)
-	{
-		case kCongfigBox_Config1:
-		case kCongfigBox_Config2:
-		case kCongfigBox_Config3:
-			break;
-
-		default:
-			CONSOLE_DEBUG_W_NUM("widgetIdx\t",	widgetIdx);
-			break;
-	}
+//	switch(widgetIdx)
+//	{
+//		case kCongfigBox_Config1:
+//		case kCongfigBox_Config2:
+//		case kCongfigBox_Config3:
+//			break;
+//
+//		default:
+//			CONSOLE_DEBUG_W_NUM("widgetIdx\t",	widgetIdx);
+//			break;
+//	}
 }
 
 

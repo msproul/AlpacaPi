@@ -39,7 +39,7 @@ class ControllerCoverCalib: public Controller
 
 		virtual	void	SetupWindowControls(void);
 //		virtual	void	ProcessButtonClick(const int buttonIdx);
-		virtual	void	RunBackgroundTasks(bool enableDebug=false);
+		virtual	void	RunBackgroundTasks(const char *callingFunction=NULL, bool enableDebug=false);
 		virtual	void	UpdateCommonProperties(void);
 		virtual	bool	AlpacaGetStartupData(void);
 		virtual	void	UpdateSupportedActions(void);

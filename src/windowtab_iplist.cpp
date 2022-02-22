@@ -40,7 +40,7 @@
 //**************************************************************************************
 WindowTabIPList::WindowTabIPList(	const int	xSize,
 									const int	ySize,
-									CvScalar	backGrndColor,
+									cv::Scalar	backGrndColor,
 									const char	*windowName)
 	:WindowTab(xSize, ySize, backGrndColor, windowName)
 {
@@ -76,6 +76,7 @@ int		clmnHdr_xLoc;
 int		clmnHdrWidth;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_ABORT(__FUNCTION__);
 
 	//------------------------------------------
 	yLoc			=	cTabVertOffset;
@@ -90,7 +91,7 @@ int		clmnHdrWidth;
 	//------------------------------------------
 	xLoc	=	5;
 	SetWidget(		kIPaddrList_DiscoveryThrdStatus,	xLoc,		yLoc,		cBtnWidth * 2,	cTitleHeight);
-	SetWidgetType(	kIPaddrList_DiscoveryThrdStatus,	kWidgetType_Text);
+	SetWidgetType(	kIPaddrList_DiscoveryThrdStatus,	kWidgetType_TextBox);
 	SetWidgetFont(	kIPaddrList_DiscoveryThrdStatus,	kFont_Medium);
 	SetWidgetText(	kIPaddrList_DiscoveryThrdStatus,	"Status");
 	xLoc	+=	cBtnWidth * 2;
@@ -128,7 +129,7 @@ int		clmnHdrWidth;
 	//------------------------------------------
 	xLoc	=	5;
 	SetWidget(				kIPaddrList_ErrorMsg,	xLoc,		yLoc,		tabArray[5],		cTitleHeight);
-	SetWidgetType(			kIPaddrList_ErrorMsg,	kWidgetType_Text);
+	SetWidgetType(			kIPaddrList_ErrorMsg,	kWidgetType_TextBox);
 	SetWidgetJustification(	kIPaddrList_ErrorMsg,	kJustification_Left);
 	SetWidgetFont(			kIPaddrList_ErrorMsg,	kFont_Medium);
 	yLoc			+=	cTitleHeight;
@@ -144,7 +145,7 @@ int		clmnHdrWidth;
 
 
 		SetWidget(				iii,	clmnHdr_xLoc,			yLoc,		clmnHdrWidth,		cRadioBtnHt);
-		SetWidgetType(			iii,	kWidgetType_Text);
+		SetWidgetType(			iii,	kWidgetType_TextBox);
 		SetWidgetFont(			iii,	kFont_RadioBtn);
 		SetWidgetBGColor(		iii,	CV_RGB(192,	192,	192));
 		SetWidgetTextColor(		iii,	CV_RGB(0,	0,		0));
@@ -289,6 +290,7 @@ char	textString[128];
 char	ipAddrStr[32];
 
 //	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_ABORT(__FUNCTION__);
 
 	if (gDiscoveryThreadIsRunning)
 	{

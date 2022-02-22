@@ -88,7 +88,7 @@ then
 	rm domectrl
 	rm focuser
 	rm ror
-	rm skyshariot
+	rm skytravel
 	rm switch
 	echo "Building client apps" >> $LOGFILENAME
 	echo "*************************************************** making switch"	>/dev/stderr

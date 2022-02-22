@@ -61,12 +61,20 @@
 #endif
 
 #ifdef _USE_OPENCV_
-	#ifndef __OPENCV_OLD_HIGHGUI_H__
-		#include "opencv/highgui.h"
-	#endif
-	#ifndef __OPENCV_HIGHGUI_H__
-		#include "opencv2/highgui/highgui_c.h"
-	#endif
+	#ifdef _USE_OPENCV_CPP_
+		#include	<opencv2/opencv.hpp>
+	#else
+//		#include "opencv/highgui.h"
+//		#include "opencv2/highgui/highgui_c.h"
+//		#include "opencv2/imgproc/imgproc_c.h"
+//		#include "opencv2/core/version.hpp"
+		#ifndef __OPENCV_OLD_HIGHGUI_H__
+			#include "opencv/highgui.h"
+		#endif
+		#ifndef __OPENCV_HIGHGUI_H__
+			#include "opencv2/highgui/highgui_c.h"
+		#endif
+	#endif // _USE_OPENCV_CPP_
 #endif
 
 #if defined(_ENABLE_FILTERWHEEL_) || defined(_ENABLE_FILTERWHEEL_ZWO_) || defined(_ENABLE_FILTERWHEEL_ATIK_)
@@ -482,11 +490,6 @@ class CameraDriver: public AlpacaDriver
 		TYPE_ASCOM_STATUS	Get_RGBarray(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 		TYPE_ASCOM_STATUS	Get_Readall(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 
-		//*	new live window as of 4/1/2021
-		virtual	TYPE_ASCOM_STATUS		OpenLiveWindow(char *alpacaErrMsg);
-//-		virtual	TYPE_ASCOM_STATUS		CloseLiveWindow(char *alpacaErrMsg);
-		virtual	void					UpdateLiveWindow(void);
-
 
 				bool	AllcateImageBuffer(long bufferSize);
 
@@ -546,20 +549,33 @@ class CameraDriver: public AlpacaDriver
 
 	public:
 	#ifdef _USE_OPENCV_
+		//*	new live window as of 4/1/2021
+		virtual	TYPE_ASCOM_STATUS		OpenLiveWindow(char *alpacaErrMsg);
+//-		virtual	TYPE_ASCOM_STATUS		CloseLiveWindow(char *alpacaErrMsg);
+		virtual	void					UpdateLiveWindow(void);
+
 		void			OpenLiveImage(void);
 		void			CloseLiveImage(void);
 
 		void			DisplayLiveImage(void);
 		void			DisplayLiveImage_wSideBar(void);
-		void			DrawSidebar(IplImage *imageDisplay);
 		int				CreateOpenCVImage(const unsigned char *imageDataPtr);
 		int				SaveOpenCVImage(void);
 		void			SetOpenCVcallbackFunction(const char *windowName);
 		void			ProcessMouseEvent(int event, int xxx, int yyy, int flags);
 		void			DrawOpenCVoverlay(void);
-		void			CreateHistogramGraph(IplImage *imageDisplay);
-		void			SetOpenCVcolors(IplImage *imageDisplay);
-		void			Draw3TextStrings(IplImage *theImage, const char *textStr1, const char *textStr2, const char *textStr3);
+
+	#ifdef _USE_OPENCV_CPP_
+		void			DrawSidebar(			cv::Mat *imageDisplay);
+		void			CreateHistogramGraph(	cv::Mat *imageDisplay);
+		void			SetOpenCVcolors(		cv::Mat *imageDisplay);
+		void			Draw3TextStrings(		cv::Mat *theImage, const char *textStr1, const char *textStr2, const char *textStr3);
+	#else
+		void			DrawSidebar(			IplImage *imageDisplay);
+		void			CreateHistogramGraph(	IplImage *imageDisplay);
+		void			SetOpenCVcolors(		IplImage *imageDisplay);
+		void			Draw3TextStrings(		IplImage *theImage, const char *textStr1, const char *textStr2, const char *textStr3);
+	#endif // _USE_OPENCV_CPP_
 
 	#endif	//	_USE_OPENCV_
 		//*****************************************************************************
@@ -749,14 +765,22 @@ protected:
 #ifdef _USE_OPENCV_
 	//==========================================================
 	bool				cCreateOpenCVwindow;
+#ifdef _USE_OPENCV_CPP_
+	cv::Mat				*cOpenCV_Image;
+	cv::Mat				*cOpenCV_LiveDisplay;
+	cv::Mat				*cOpenCV_Histogram;
+#else
 	IplImage			*cOpenCV_Image;
 	IplImage			*cOpenCV_LiveDisplay;
 	IplImage			*cOpenCV_Histogram;
-	bool				cCreateHistogramWindow;
-	CvVideoWriter		*cOpenCV_videoWriter;
+#endif // _USE_OPENCV_CPP_
+#ifdef _ENABLE_CVFONT_
 	CvFont				cTextFont;
 	CvFont				cOverlayTextFont;
-	CvScalar			cVideoOverlayColor;
+#endif // _ENABLE_CVFONT_
+	bool				cCreateHistogramWindow;
+	CvVideoWriter		*cOpenCV_videoWriter;
+	cv::Scalar			cVideoOverlayColor;
 
 	char				cOpenCV_ImgWindowName[128];
 	bool				cOpenCV_ImgWindowValid;
@@ -780,15 +804,15 @@ protected:
 
 	bool				cDrawRectangle;
 
-	CvScalar			cSideBarBGcolor;
-	CvScalar			cSideBarTXTcolor;
-	CvScalar			cSideBarBlk;
-	CvScalar			cSideBarRed;
-	CvScalar			cSideBarGrn;
-	CvScalar			cSideBarBlu;
-	CvScalar			cSideBarGry;
-	CvScalar			cSideBarFCblue;
-	CvScalar			cCrossHairColor;
+	cv::Scalar			cSideBarBGcolor;
+	cv::Scalar			cSideBarTXTcolor;
+	cv::Scalar			cSideBarBlk;
+	cv::Scalar			cSideBarRed;
+	cv::Scalar			cSideBarGrn;
+	cv::Scalar			cSideBarBlu;
+	cv::Scalar			cSideBarGry;
+	cv::Scalar			cSideBarFCblue;
+	cv::Scalar			cCrossHairColor;
 
 
 #endif // _USE_OPENCV_

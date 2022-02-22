@@ -40,10 +40,14 @@
 #include	<stdlib.h>
 #include	<unistd.h>
 
+#ifdef _USE_OPENCV_CPP_
+	#include	<opencv2/opencv.hpp>
+#else
+	#include "opencv/highgui.h"
+	#include "opencv2/highgui/highgui_c.h"
+	#include "opencv2/imgproc/imgproc_c.h"
+#endif // _USE_OPENCV_CPP_
 
-#include "opencv/highgui.h"
-#include "opencv2/highgui/highgui_c.h"
-#include "opencv2/imgproc/imgproc_c.h"
 
 #include	"discovery_lib.h"
 #include	"sendrequest_lib.h"
@@ -162,7 +166,7 @@ char	lineBuff[64];
 	}
 
 	//--------------------------------------------
-	cFileListTabObjPtr		=	new WindowTabFileList(	cWidth, cHeight, cBackGrndColor, cWindowName);
+	cFileListTabObjPtr		=	new WindowTabFileList(	cWidth, cHeight, (cv::Scalar)cBackGrndColor, cWindowName);
 	if (cFileListTabObjPtr != NULL)
 	{
 		SetTabWindow(kTab_FileList,	cFileListTabObjPtr);
@@ -288,7 +292,7 @@ int		jjj;
 		{
 			SetWidgetValid(kTab_Camera, jjj, false);
 		}
-		SetWidgetType(	kTab_Camera, kCameraBox_Gain_Slider, kWidgetType_Text);
+		SetWidgetType(	kTab_Camera, kCameraBox_Gain_Slider, kWidgetType_TextBox);
 		SetWidgetText(	kTab_Camera, kCameraBox_Gain_Slider, "Gain not supported");
 		SetWidgetValid(	kTab_Camera, kCameraBox_Gain_Slider, true);
 	}
@@ -332,7 +336,7 @@ void	ControllerCamNormal::UpdateCameraGain(const TYPE_ASCOM_STATUS lastAlpacaErr
 	}
 	else
 	{
-		SetWidgetType(	kTab_Camera, kCameraBox_Gain_Slider, kWidgetType_Text);
+		SetWidgetType(	kTab_Camera, kCameraBox_Gain_Slider, kWidgetType_TextBox);
 		SetWidgetText(	kTab_Camera, kCameraBox_Gain_Slider, "Gain not implemented");
 	}
 	cUpdateWindow	=	true;
@@ -363,7 +367,7 @@ void	ControllerCamNormal::UpdateCameraOffset(const TYPE_ASCOM_STATUS lastAlpacaE
 	else
 	{
 		CONSOLE_DEBUG_W_NUM("lastAlpacaErr\t=", lastAlpacaErr);
-		SetWidgetType(	kTab_Camera, kCameraBox_Offset_Slider, kWidgetType_Text);
+		SetWidgetType(	kTab_Camera, kCameraBox_Offset_Slider, kWidgetType_TextBox);
 		SetWidgetText(	kTab_Camera, kCameraBox_Offset_Slider, "Offset not implemented");
 	}
 	cUpdateWindow	=	true;
@@ -638,8 +642,11 @@ double	newProgressValue;
 	{
 		SetWidgetProgress(kTab_Camera, kCameraBox_ErrorMsg, unitsRead, totalUnits);
 		cUpdateWindow	=	true;
+	#ifdef _USE_OPENCV_CPP_
+		cv::waitKey(1);
+	#else
 		cvWaitKey(1);
-
+	#endif
 		cProgressReDraws++;
 
 		cPrevProgessValue	=	newProgressValue;

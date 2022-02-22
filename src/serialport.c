@@ -106,7 +106,7 @@ int	Serial_Send_Data(int fd, const char *xmitData, bool waitFlag)
 ssize_t	bytesWritten;
 size_t	byteCount;
 
-	CONSOLE_DEBUG_W_STR("Sending\t=", xmitData);
+//	CONSOLE_DEBUG_W_STR("Sending\t=", xmitData);
 
 	byteCount		=	strlen(xmitData);
 	bytesWritten	=	write (fd, xmitData, byteCount);	// send 7 character greeting

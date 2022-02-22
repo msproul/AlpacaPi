@@ -77,10 +77,12 @@ TYPE_PRESETS	gPresets[]		=
 
 int	gCurrentPresetExp	=	0;
 
+
+
 //**************************************************************************************
 WindowTabCamSettings::WindowTabCamSettings(	const int	xSize,
 											const int	ySize,
-											CvScalar	backGrndColor,
+											cv::Scalar	backGrndColor,
 											const char	*windowName,
 											const char	*deviceName,
 											const bool	hasFilterWheel)

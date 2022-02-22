@@ -326,7 +326,7 @@ int					cmdType;
 int					mySocket;
 
 //	CONSOLE_DEBUG_W_STR("htmlData\t=", reqData->htmlData);
-	if (strcmp(reqData->deviceCommand, "readall") != 0)
+//	if (strcmp(reqData->deviceCommand, "readall") != 0)
 	{
 		CONSOLE_DEBUG_W_STR("deviceCommand\t=",	reqData->deviceCommand);
 	}

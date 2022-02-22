@@ -30,6 +30,8 @@
 //*	Jan 17,	2022	<MLS> Build 127
 //*	Jan 28,	2022	<MLS> Build 128
 //*	Feb 12,	2022	<MLS> Build 129
+//*	Feb 18,	2022	<MLS> Version V0.5.0-beta
+//*	Feb 18,	2022	<MLS> Build 130
 //*****************************************************************************
 //*	These are for my comment extraction program that sorts comments by date.
 //*	Jan  1,	2019	-----------------------------------------------------------
@@ -40,6 +42,7 @@
 
 #ifndef	_ALPACA_DEFS_H_
 #define	_ALPACA_DEFS_H_
+
 
 #include	<stdint.h>
 
@@ -56,14 +59,20 @@
 #endif
 
 #define	kApplicationName	"AlpacaPi"
-#define	kVersionString		"V0.4.4-beta"
-#define	kBuildNumber		129
+#define	kVersionString		"V0.5.0-beta"
+#define	kBuildNumber		130
 
 
 #define kAlpacaDiscoveryPORT	32227
 
 #if defined(__ARM_ARCH) && !defined(__arm__)
 	#define __arm__
+#endif
+
+#if defined(_USE_OPENCV_CPP_) && !defined(__arm__)
+	#define _ENABLE_CVFONT_
+#elif defined(_USE_OPENCV_) && !defined(_USE_OPENCV_CPP_)
+	#define _ENABLE_CVFONT_
 #endif
 
 

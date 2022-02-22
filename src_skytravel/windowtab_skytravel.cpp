@@ -99,6 +99,7 @@
 //*	Jan 23,	2022	<MLS> Control and mouse wheel adjust Faint Limit (cFaintLimit_B)
 //*	Feb  3,	2022	<MLS> Added support for OpenNGC catalog
 //*	Feb  4,	2022	<MLS> Added DrawOpenNGC_Outlines()
+//*	Feb 18,	2022	<MLS> SkyTravel working with OpenCV-C++
 //*****************************************************************************
 //*	TODO
 //*			star catalog lists
@@ -122,6 +123,7 @@
 #include	<sys/time.h>
 #include	<unistd.h>
 #include	<math.h>
+//#include	<opencv2/opencv.hpp>
 
 #define	_DEBUG_TIMING_
 #define _ENABLE_CONSOLE_DEBUG_
@@ -199,6 +201,7 @@ SkyTravelDispOptions	gST_DispOptions;
 //static double	GetRA_DEC_delta(int viewIndex);
 //static double	GetRA_DEC_delta(int viewIndex, double viewAngle);
 static double	GetRA_DEC_delta(const double viewAngle);
+
 #define	kMinViewAngle		0.003
 
 //*****************************************************************************
@@ -229,7 +232,7 @@ static const char *gCompass_text[]	=
 
 
 #define	kMaxViewAngleIndex		RADIANS(800)
-#define	kMinViewAngle_Degrees	(0.01)
+#define	kMinViewAngle_Degrees	(0.002777778)		//*	10 arc seconds
 #define	kMaxViewAngle_Degrees	(800)
 
 static	double	gAAVSO_maxViewAngle	=	3.0;
@@ -313,7 +316,7 @@ static	TYPE_CelestData	*gZodiacPtr	=	NULL;
 //**************************************************************************************
 WindowTabSkyTravel::WindowTabSkyTravel(	const int	xSize,
 										const int	ySize,
-										CvScalar	backGrndColor,
+										cv::Scalar	backGrndColor,
 										const char	*windowName)
 	:WindowTab(xSize, ySize, backGrndColor, windowName)
 {
@@ -321,6 +324,13 @@ int		iii;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG_W_STR("RemoteGAIAenabled is", (gST_DispOptions.RemoteGAIAenabled ? "enabled" : "disabled"));
+
+	CONSOLE_DEBUG_W_NUM("sizeof(CvScalar)  \t=",	sizeof(CvScalar));
+	CONSOLE_DEBUG_W_NUM("sizeof(cv::Scalar)\t=",	sizeof(cv::Scalar));
+
+	CONSOLE_DEBUG_W_NUM("sizeof(CvFont)  \t=",	sizeof(CvFont));
+
+//	CONSOLE_ABORT(__FUNCTION__);
 
 	gSkyTravelWindow		=	this;
 	cDebugCounter			=	0;
@@ -441,7 +451,7 @@ int		iii;
 		cPlanets[iii].id				=	0x076c + iii;	//*fill in the id field
 
 		strcpy(cPlanets[iii].shortName,  gPlanet_names[iii]);
-		CONSOLE_DEBUG_W_STR("cPlanets[iii].shortName\t=", cPlanets[iii].shortName);
+//		CONSOLE_DEBUG_W_STR("cPlanets[iii].shortName\t=", cPlanets[iii].shortName);
 
 
 		memset(&cPlanetStruct[iii], 0, sizeof(planet_struct));
@@ -694,7 +704,7 @@ int		buttonBoxWidth;
 		{
 			case kSkyTravel_UTCtime:
 				SetWidget(			iii,	xLoc,	yLoc,		labelWidth * 3,		cTitleHeight);
-				SetWidgetType(		iii, 	kWidgetType_Text);
+				SetWidgetType(		iii, 	kWidgetType_TextBox);
 				SetWidgetFont(		iii,	kFont_Medium);
 				SetWidgetTextColor(	iii,	CV_RGB(255,	255,	255));
 				SetWidgetText(		iii, 	"UTC Time");
@@ -707,7 +717,7 @@ int		buttonBoxWidth;
 				SetWidgetText(		iii,	"---");
 				SetWidgetFont(		iii,	kFont_Medium);
 				SetWidgetTextColor(	iii,	CV_RGB(255,	255,	255));
-				SetWidgetType(		iii,	kWidgetType_Text);
+				SetWidgetType(		iii,	kWidgetType_TextBox);
 				xLoc	+=	customButtonWidth;
 				break;
 
@@ -717,7 +727,7 @@ int		buttonBoxWidth;
 				SetWidgetText(		iii,	"---");
 				SetWidgetFont(		iii,	kFont_Medium);
 				SetWidgetTextColor(	iii,	CV_RGB(255,	255,	255));
-				SetWidgetType(		iii,	kWidgetType_Text);
+				SetWidgetType(		iii,	kWidgetType_TextBox);
 				xLoc	+=	customButtonWidth;
 				break;
 
@@ -730,7 +740,7 @@ int		buttonBoxWidth;
 		xLoc	+=	2;
 	}
 
-	SetWidgetType(		kSkyTravel_Btn_ZoomLevel, 		kWidgetType_Text);
+	SetWidgetType(		kSkyTravel_Btn_ZoomLevel, 		kWidgetType_TextBox);
 	SetWidgetFont(		kSkyTravel_Btn_ZoomLevel, 		kFont_Medium);
 	SetWidgetTextColor(	kSkyTravel_Btn_ZoomLevel, 		CV_RGB(255,	255,	255));
 
@@ -828,13 +838,13 @@ int		buttonBoxWidth;
 	SetWidgetTextColor(	kSkyTravel_DomeIndicator,		CV_RGB(0,	0, 0));
 	SetWidgetBGColor(	kSkyTravel_DomeIndicator,		CV_RGB(255,	0,	0));
 	SetWidgetHelpText(	kSkyTravel_DomeIndicator,		"Indicates if Dome is OnLine (Grn=yes/Red=no)");
-	SetWidgetType(		kSkyTravel_DomeIndicator, 		kWidgetType_Text);
+	SetWidgetType(		kSkyTravel_DomeIndicator, 		kWidgetType_TextBox);
 
 	SetWidgetText(		kSkyTravel_TelescopeIndicator,	"T");
 	SetWidgetTextColor(	kSkyTravel_TelescopeIndicator,	CV_RGB(0,	0, 0));
 	SetWidgetBGColor(	kSkyTravel_TelescopeIndicator,	CV_RGB(255,	0,	0));
 	SetWidgetHelpText(	kSkyTravel_TelescopeIndicator,	"Indicates if Telescope is OnLine (Grn=yes/Red=no)");
-	SetWidgetType(		kSkyTravel_TelescopeIndicator, 	kWidgetType_Text);
+	SetWidgetType(		kSkyTravel_TelescopeIndicator, 	kWidgetType_TextBox);
 
 
 	SetWidget(			kSkyTravel_Telescope_RA_DEC,	xLoc,	yLoc, cBtnWidth,	cTitleHeight);
@@ -876,7 +886,7 @@ int		buttonBoxWidth;
 
 	//-----------------------------------------------
 	SetWidget(				kSkyTravel_MsgTextBox,	1,		yLoc,	(cWidth - 2),		cTitleHeight);
-	SetWidgetType(			kSkyTravel_MsgTextBox, kWidgetType_Text);
+	SetWidgetType(			kSkyTravel_MsgTextBox, kWidgetType_TextBox);
 	SetWidgetFont(			kSkyTravel_MsgTextBox,	kFont_Medium);
 	SetWidgetTextColor(		kSkyTravel_MsgTextBox, CV_RGB(128,	128, 128));
 	SetWidgetText(			kSkyTravel_MsgTextBox,	"message text box");
@@ -889,7 +899,7 @@ int		buttonBoxWidth;
 
 	//-----------------------------------------------
 	SetWidget(				kSkyTravel_CursorInfoTextBox,	1,		yLoc,	(cWidth - 2),		cTitleHeight);
-	SetWidgetType(			kSkyTravel_CursorInfoTextBox,	kWidgetType_Text);
+	SetWidgetType(			kSkyTravel_CursorInfoTextBox,	kWidgetType_TextBox);
 	SetWidgetFont(			kSkyTravel_CursorInfoTextBox,	kFont_Medium);
 	SetWidgetTextColor(		kSkyTravel_CursorInfoTextBox,	CV_RGB(128, 128, 128));
 	SetWidgetText(			kSkyTravel_CursorInfoTextBox,	"Help text box");
@@ -923,7 +933,7 @@ int		buttonBoxWidth;
 	CONSOLE_DEBUG_W_NUM("cWorkSpaceTopOffset\t=", cWorkSpaceTopOffset);
 
 	SetWidget(				kSkyTravel_NightSky,	0,	yLoc,		cWidth,		skyBoxHeight);
-	SetWidgetType(			kSkyTravel_NightSky, 	kWidgetType_Graphic);
+	SetWidgetType(			kSkyTravel_NightSky, 	kWidgetType_CustomGraphic);
 	SetWidgetBGColor(		kSkyTravel_NightSky,	CV_RGB(128,	128,	128));
 	SetWidgetBorderColor(	kSkyTravel_NightSky,	CV_RGB(255,	255,	255));
 	SetWidgetBorder(		kSkyTravel_NightSky,	true);
@@ -1940,8 +1950,8 @@ bool			reDrawSky;
 	{
 		ForceReDrawSky();
 
-		CONSOLE_DEBUG(__FUNCTION__);
-		printf("Center of screen=%07.4f:%07.4f\r\n", DEGREES(cRa0 / 15), DEGREES(cDecl0));
+	//	CONSOLE_DEBUG(__FUNCTION__);
+	//	printf("Center of screen=%07.4f:%07.4f\r\n", DEGREES(cRa0 / 15), DEGREES(cDecl0));
 
 	}
 }
@@ -2024,8 +2034,8 @@ char		remoteThreadStatusMsg[64];
 	{
 		ForceReDrawSky();
 
-		CONSOLE_DEBUG(__FUNCTION__);
-		printf("Center of screen=%07.4f:%07.4f\r\n", DEGREES(cRa0 / 15), DEGREES(cDecl0));
+//		CONSOLE_DEBUG(__FUNCTION__);
+//		printf("Center of screen=%07.4f:%07.4f\r\n", DEGREES(cRa0 / 15), DEGREES(cDecl0));
 
 	}
 }
@@ -2051,7 +2061,7 @@ ControllerImage	*myControllerObj;
 		myControllerObj->cUpdateWindow		=	true;
 		myControllerObj->HandleWindowUpdate();
 		myControllerObj->cUpdateWindow		=	false;
-		cvWaitKey(20);
+		cv::waitKey(20);
 
 		cLastRedrawTime_ms	=	millis();
 	}
@@ -2782,17 +2792,17 @@ short		iii;
 	//*	if we are to much zoomed in, dont bother with the outlines
 	if (cDispOptions.dispConstOutlines && (cView_angle > 0.15))
 	{
-		CPenSize(gST_DispOptions.LineWidth_ConstOutlines);
+		LLD_PenSize(gST_DispOptions.LineWidth_ConstOutlines);
 		DrawConstellationOutLines();
-		CPenSize(1);
+		LLD_PenSize(1);
 	}
 	//*--------------------------------------------------------------------------------
 	//*	this is my new constellation vectors, far better than the original ones
 	if (cDispOptions.dispConstellations)
 	{
-		CPenSize(gST_DispOptions.LineWidth_Constellations);
+		LLD_PenSize(gST_DispOptions.LineWidth_Constellations);
 		DrawConstellationVectors();
-		CPenSize(1);
+		LLD_PenSize(1);
 	}
 
 	//*--------------------------------------------------------------------------------
@@ -2841,14 +2851,14 @@ short		iii;
 			case kSpecialDisp_Arcs_w_CentVect:
 			case kSpecialDisp_Arcs_noLabels:
 				//*	Draw a line connecting the centers
-				CPenSize(gST_DispOptions.LineWidth_ConstOutlines);
+				LLD_PenSize(gST_DispOptions.LineWidth_ConstOutlines);
 				SetColor(W_YELLOW);
 				DrawPolarAlignmentCenterVector(gPolarAlignObjectPtr, gPolarAlignObjectCount);
-				CPenSize(1);
+				LLD_PenSize(1);
 				//*	FALL THROUGH
 
 			case kSpecialDisp_ArcsOnly:
-				CPenSize(gST_DispOptions.LineWidth_ConstOutlines);
+				LLD_PenSize(gST_DispOptions.LineWidth_ConstOutlines);
 				DrawPolarAlignmentCircles(gSpecialObjectPtr, gSpecialObjectCount);
 				break;
 		}
@@ -3388,12 +3398,12 @@ bool			firstMove;
 
 							if (firstMove || ((idword & 0x4000) == 0x4000))
 							{
-								CMoveTo(xPos, yPos);
+								LLD_MoveTo(xPos, yPos);
 								firstMove	=	false;
 							}
 							else
 							{
-								CLineTo(xPos, yPos);
+								LLD_LineTo(xPos, yPos);
 							//	linesDrawn++;
 							}
 						}
@@ -3464,11 +3474,11 @@ int					nameLen;
 					pointsDrawnCnt++;
 					if (drawFlag)
 					{
-						CLineTo(pt_XX, pt_YY);
+						LLD_LineTo(pt_XX, pt_YY);
 					}
 					else
 					{
-						CMoveTo(pt_XX, pt_YY);
+						LLD_MoveTo(pt_XX, pt_YY);
 						drawFlag		=	true;
 					}
 
@@ -3513,7 +3523,7 @@ int					nameLen;
 					}
 					else
 					{
-						DrawCString(pt_XX, pt_YY, myOutLineObj->shortName);
+						LLD_DrawCString(pt_XX, pt_YY, myOutLineObj->shortName);
 					}
 				}
 			}
@@ -3524,7 +3534,7 @@ int					nameLen;
 			if (ptInView)
 			{
 				SetColor(W_PINK);
-				DrawCString(pt_XX, pt_YY, myOutLineObj->shortName);
+				LLD_DrawCString(pt_XX, pt_YY, myOutLineObj->shortName);
 				SetColor(W_DARKGREEN);
 			}
 		}
@@ -3542,21 +3552,21 @@ void	WindowTabSkyTravel::DrawConstellationNameByViewAngle(	const int pt_XX,
 {
 	if (cView_angle < 2.5)
 	{
-		DrawCString(	pt_XX,
-						pt_YY,
-						theString,
-						kFont_Triplex_Large);
+		LLD_DrawCString(	pt_XX,
+							pt_YY,
+							theString,
+							kFont_Triplex_Large);
 	}
 	else if (cView_angle < 9.0)
 	{
-		DrawCString(	pt_XX,
-						pt_YY,
-						theString,
-						kFont_Triplex_Small);
+		LLD_DrawCString(	pt_XX,
+							pt_YY,
+							theString,
+							kFont_Triplex_Small);
 	}
 	else  if (cView_angle < 10.5)
 	{
-		DrawCString(	pt_XX,
+		LLD_DrawCString(	pt_XX,
 						pt_YY,
 						theString,
 						kFont_Medium);
@@ -3636,11 +3646,11 @@ short				deltaPixels;
 					}
 					if (moveFlag || offScreenFlg)
 					{
-						CMoveTo(pt_XX, pt_YY);
+						LLD_MoveTo(pt_XX, pt_YY);
 					}
 					else
 					{
-						CLineTo(pt_XX, pt_YY);
+						LLD_LineTo(pt_XX, pt_YY);
 					}
 
 					prev_XX	=	pt_XX;
@@ -3729,65 +3739,67 @@ bool	ptInView;
 					{
 						pt_YY	+=	12;
 					}
-					DrawCString(pt_XX + 10, pt_YY, gHipObjectPtr[iii].longName);
+					LLD_DrawCString(pt_XX + 10, pt_YY, gHipObjectPtr[iii].longName);
 				}
 			}
 		}
 	}
 }
 
+#ifdef _USE_OPENCV_CPP_
 //**************************************************************************************
-void	WindowTabSkyTravel::DrawGraphWidget(IplImage *openCV_Image, const int widgetIdx)
+void	WindowTabSkyTravel::DrawWidgetCustomGraphic(cv::Mat *openCV_Image, const int widgetIdx)
+#else
+//**************************************************************************************
+void	WindowTabSkyTravel::DrawWidgetCustomGraphic(IplImage *openCV_Image, const int widgetIdx)
+#endif // _USE_OPENCV_CPP_
 {
-CvRect		myCVrect;
-CvScalar	myBackGroundColor;
+#ifdef _USE_OPENCV_CPP_
+	cv::Rect	myCVrect;
+	cv::Mat		image_roi;
+#else
+	CvRect		myCVrect;
+#endif // _USE_OPENCV_CPP_
+TYPE_WIDGET	*theWidget;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-
-	myCVrect.x		=	cWidgetList[widgetIdx].left;
-	myCVrect.y		=	cWidgetList[widgetIdx].top;
-	myCVrect.width	=	cWidgetList[widgetIdx].width;
-	myCVrect.height	=	cWidgetList[widgetIdx].height;
-
 	cOpenCV_Image	=	openCV_Image;
-	cCursorOffsetY	=	cWidgetList[widgetIdx].top;
+	theWidget		=	&cWidgetList[widgetIdx];
+
+	myCVrect.x		=	theWidget->left;
+	myCVrect.y		=	theWidget->top;
+	myCVrect.width	=	theWidget->width;
+	myCVrect.height	=	theWidget->height;
+
+	cCursorOffsetY	=	theWidget->top;
 
 	switch(widgetIdx)
 	{
 		case kSkyTravel_NightSky:
-//			CONSOLE_DEBUG_W_NUM("myCVrect.x\t=",	myCVrect.x);
-//			CONSOLE_DEBUG_W_NUM("myCVrect.y\t=",	myCVrect.y);
-//			CONSOLE_DEBUG_W_NUM("myCVrect.width\t=",	myCVrect.width);
-//			CONSOLE_DEBUG_W_NUM("myCVrect.height\t=",	myCVrect.height);
 			if (cOpenCV_Image != NULL)
 			{
-				if (0)
-				{
-					myBackGroundColor	=	CV_RGB(	0,0,0);
-				}
-				else
-				{
-					myBackGroundColor	=	CV_RGB(	cSkyRGBvalue.red,
-													cSkyRGBvalue.grn,
-													cSkyRGBvalue.blu);
-				}
-				cvRectangleR(	cOpenCV_Image,
-								myCVrect,
-								myBackGroundColor,		//	CvScalar color,
-								CV_FILLED,				//	int thickness CV_DEFAULT(1),
-								8,						//	int line_type CV_DEFAULT(8),
-								0);						//	int shift CV_DEFAULT(0));
+				cCurrentColor	=	CV_RGB(	cSkyRGBvalue.red,
+												cSkyRGBvalue.grn,
+												cSkyRGBvalue.blu);
+				LLD_FillRect(theWidget->left, theWidget->top, theWidget->width, theWidget->height);
 
+			#ifdef _USE_OPENCV_CPP_
+				image_roi		=	cv::Mat(*cOpenCV_Image, myCVrect);
+				cOpenCV_Image	=	&image_roi;
+				DrawSkyAll();
+				DrawWindowOverlays();
+				cOpenCV_Image	=	openCV_Image;
+			#else
 				cvSetImageROI(cOpenCV_Image,  myCVrect);
 				DrawSkyAll();
 				DrawWindowOverlays();
 				cvResetImageROI(cOpenCV_Image);
+			#endif // _USE_OPENCV_CPP_
 
 				//*	this has to be done AFTER roi is reset
 				Compute_cursor(&cCurrentTime, &cCurrLatLon);
 				DrawCursorLocationInfo();
-
 			}
 			break;
 
@@ -3797,9 +3809,7 @@ CvScalar	myBackGroundColor;
 //			CONSOLE_ABORT("We shouldnt be here");
 			break;
 	}
-//	CONSOLE_DEBUG(__FUNCTION__);
 }
-
 
 
 
@@ -3836,7 +3846,6 @@ int				returnValue;
 
 	return(returnValue);
 }
-
 
 //********************************************************************
 //* precess if necessary, re-load objall if necessary
@@ -3878,8 +3887,6 @@ bool			pressesOccurred;
 				return(false);	//* return if precession not needed
 			}
 		}
-
-//		DisplayHelpMessage("Precessing");
 
 		cCurrentTime.precflag			=	false;			//*	force off
 		cCurrentTime.strflag			=	false;			//*	say year 2000 data not present
@@ -4131,8 +4138,8 @@ char		symb[16];
 			{
 				SetColor(W_RED);
 			//	strcpy(symb, gConstel_names[constelNameIdx]);
-			//	DrawCString(xcoord, ycoord, symb);
-				DrawCString(xcoord, ycoord, gConstel_LongNames[constelNameIdx]);
+			//	LLD_DrawCString(xcoord, ycoord, symb);
+				LLD_DrawCString(xcoord, ycoord, gConstel_LongNames[constelNameIdx]);
 			}
 			else
 			{
@@ -4209,7 +4216,7 @@ char		symb[16];
 						{
 							CONSOLE_ABORT("Magellanic Cloud");
 						}
-						DrawCString(xcoord, ycoord, symb);
+						LLD_DrawCString(xcoord, ycoord, symb);
 						break;
 				}
 			}
@@ -4487,19 +4494,19 @@ bool	starWasDrawn;
 	{
 		if (theStar->dataSrc == kDataSrc_Messier)
 		{
-		//	FillEllipse(xcoord, ycoord, starRadiusPixels, starRadiusPixels);
+		//	LLD_FillEllipse(xcoord, ycoord, starRadiusPixels, starRadiusPixels);
 			SetColor(textColor);
-			FrameEllipse(xcoord, ycoord, starRadiusPixels, starRadiusPixels);
+			LLD_FrameEllipse(xcoord, ycoord, starRadiusPixels, starRadiusPixels);
 		}
 		else
 		{
-			FillEllipse(xcoord, ycoord, starRadiusPixels, starRadiusPixels);
+			LLD_FillEllipse(xcoord, ycoord, starRadiusPixels, starRadiusPixels);
 		}
 		starWasDrawn	=	true;
 	}
 	else if (starRadiusPixels == 0)
 	{
-		Putpixel(xcoord,	ycoord,		theStarColor);
+		LLD_Putpixel(xcoord,	ycoord,		theStarColor);
 		starWasDrawn	=	true;
 	}
 	else
@@ -4515,13 +4522,13 @@ bool	starWasDrawn;
 				if (theStar->realMagnitude <= gST_DispOptions.DisplayedMagnitudeLimit)
 				{
 					//*	Clif ???????????????????????????????????????????????
-					Putpixel(xcoord,	ycoord,		theStarColor);
+					LLD_Putpixel(xcoord,	ycoord,		theStarColor);
 					starWasDrawn	=	true;
 				}
 				break;
 
 			case kMagnitudeMode_All:
-				Putpixel(xcoord,	ycoord,		theStarColor);
+				LLD_Putpixel(xcoord,	ycoord,		theStarColor);
 				starWasDrawn	=	true;
 				break;
 		}
@@ -4588,16 +4595,16 @@ bool	starWasDrawn;
 		{
 			asteroidHt	=	1;
 		}
-		FillEllipse(xcoord, ycoord, asteroidWd, asteroidHt);
+		LLD_FillEllipse(xcoord, ycoord, asteroidWd, asteroidHt);
 		starWasDrawn	=	true;
 	}
 	else if (starRadiusPixels == 0)
 	{
-		Putpixel(xcoord,	ycoord,		theStarColor);
-		Putpixel(xcoord+1,	ycoord,		theStarColor);
-		Putpixel(xcoord-1,	ycoord,		theStarColor);
-		Putpixel(xcoord+2,	ycoord,		theStarColor);
-		Putpixel(xcoord-2,	ycoord,		theStarColor);
+		LLD_Putpixel(xcoord,	ycoord,		theStarColor);
+		LLD_Putpixel(xcoord+1,	ycoord,		theStarColor);
+		LLD_Putpixel(xcoord-1,	ycoord,		theStarColor);
+		LLD_Putpixel(xcoord+2,	ycoord,		theStarColor);
+		LLD_Putpixel(xcoord-2,	ycoord,		theStarColor);
 		starWasDrawn	=	true;
 	}
 	else
@@ -4611,7 +4618,7 @@ bool	starWasDrawn;
 			case kMagnitudeMode_Specified:
 				if (theStar->realMagnitude <= gST_DispOptions.DisplayedMagnitudeLimit)
 				{
-					Putpixel(xcoord,	ycoord,		theStarColor);
+					LLD_Putpixel(xcoord,	ycoord,		theStarColor);
 					starWasDrawn	=	true;
 				}
 				break;
@@ -4620,18 +4627,18 @@ bool	starWasDrawn;
 				if (starRadiusPixels == 0)
 				{
 					//*	make the above star a bit bigger
-					Putpixel(xcoord,	ycoord,		theStarColor);
-					Putpixel(xcoord+1,	ycoord,		theStarColor);
-					Putpixel(xcoord-1,	ycoord,		theStarColor);
-					Putpixel(xcoord+2,	ycoord,		theStarColor);
-					Putpixel(xcoord-2,	ycoord,		theStarColor);
+					LLD_Putpixel(xcoord,	ycoord,		theStarColor);
+					LLD_Putpixel(xcoord+1,	ycoord,		theStarColor);
+					LLD_Putpixel(xcoord-1,	ycoord,		theStarColor);
+					LLD_Putpixel(xcoord+2,	ycoord,		theStarColor);
+					LLD_Putpixel(xcoord-2,	ycoord,		theStarColor);
 					starWasDrawn	=	true;
 				}
 				else
 				{
-					Putpixel(xcoord,	ycoord,		theStarColor);
-					Putpixel(xcoord+1,	ycoord,		theStarColor);
-					Putpixel(xcoord-1,	ycoord,		theStarColor);
+					LLD_Putpixel(xcoord,	ycoord,		theStarColor);
+					LLD_Putpixel(xcoord+1,	ycoord,		theStarColor);
+					LLD_Putpixel(xcoord-1,	ycoord,		theStarColor);
 					starWasDrawn	=	true;
 				}
 				break;
@@ -4725,12 +4732,12 @@ bool	starHasMag_and_Spectral;
 		SetColor(textColor);
 		if (labelString[0] > 0x20)
 		{
-			DrawCString(myXcoord + 10, myYcoord, labelString);
+			LLD_DrawCString(myXcoord + 10, myYcoord, labelString);
 			myYcoord	+=	kLineSpacingPixels;
 		}
 		else if (theStar->shortName[0] > 0x20)
 		{
-			DrawCString(myXcoord + 10, myYcoord, theStar->shortName);
+			LLD_DrawCString(myXcoord + 10, myYcoord, theStar->shortName);
 			myYcoord	+=	kLineSpacingPixels;
 		}
 
@@ -4744,7 +4751,7 @@ bool	starHasMag_and_Spectral;
 				if (theStar->id > 0)
 				{
 					sprintf(labelString, "Alert#%ld", theStar->id);
-					DrawCString(myXcoord + 10, myYcoord, labelString);
+					LLD_DrawCString(myXcoord + 10, myYcoord, labelString);
 					myYcoord	+=	kLineSpacingPixels;
 				}
 			}
@@ -4762,7 +4769,7 @@ bool	starHasMag_and_Spectral;
 			if (theStar->realMagnitude > -10.0)
 			{
 				sprintf(labelString, "%3.1f", theStar->realMagnitude);
-				DrawCString(myXcoord + 10, myYcoord, labelString);
+				LLD_DrawCString(myXcoord + 10, myYcoord, labelString);
 				myYcoord	+=	kLineSpacingPixels;
 			}
 		}
@@ -4775,7 +4782,7 @@ bool	starHasMag_and_Spectral;
 			{
 				labelString[0]	=	theStar->spectralClass;
 				labelString[1]	=	0;
-				DrawCString(myXcoord + 10, myYcoord, labelString);
+				LLD_DrawCString(myXcoord + 10, myYcoord, labelString);
 				myYcoord		+=	kLineSpacingPixels;
 			}
 		}
@@ -4785,7 +4792,7 @@ bool	starHasMag_and_Spectral;
 //	if ((gST_DispOptions.DispMagnitude == false) && (gST_DispOptions.DispSpectralType == false))
 //	{
 //		sprintf(labelString, "%d", cDisplayedStarCount);
-//		DrawCString(myXcoord + 10, myYcoord, labelString);
+//		LLD_DrawCString(myXcoord + 10, myYcoord, labelString);
 //	}
 }
 
@@ -5115,7 +5122,7 @@ int					myColor;
 									switch(cDispOptions.dispSpecialObjects)
 									{
 										case kSpecialDisp_All:
-											DrawCString(xcoord + 3, ycoord + 10, objectptr[iii].longName, myFontIdx);
+											LLD_DrawCString(xcoord + 3, ycoord + 10, objectptr[iii].longName, myFontIdx);
 											break;
 									}
 									break;
@@ -5139,7 +5146,7 @@ int					myColor;
 									{
 										case kSpecialDisp_All:
 										case kSpecialDisp_Arcs_w_CentVect:
-											DrawCString(xcoord + 3, ycoord + 10, objectptr[iii].longName, myFontIdx);
+											LLD_DrawCString(xcoord + 3, ycoord + 10, objectptr[iii].longName, myFontIdx);
 											break;
 									}
 									break;
@@ -5203,7 +5210,7 @@ short			myScale;
 	{
 		myScale	=	1;
 	}
-	CMoveTo(xx, yy);
+	LLD_MoveTo(xx, yy);
 
 	nn	=	0;
 	while((movedata = shape_data[nn++]) != 0)	//* loop until a zero byte is reached
@@ -5258,11 +5265,11 @@ short			myScale;
 		}
 		if (movetype & 0x01)
 		{
-			CMoveTo(xx, yy);
+			LLD_MoveTo(xx, yy);
 		}
 		else
 		{
-			CLineTo(xx, yy);
+			LLD_LineTo(xx, yy);
 		}
 	}
 }
@@ -5293,72 +5300,72 @@ int		color2;
 	switch(index)
 	{
 		case 0:
-	//		Putpixel(xcoord,	ycoord,		color2);
-			Putpixel(xcoord,	ycoord,		color1);
+	//		LLD_Putpixel(xcoord,	ycoord,		color2);
+			LLD_Putpixel(xcoord,	ycoord,		color1);
 			break;
 
 		case 1:
-			Putpixel(xcoord,	ycoord,		color1);
+			LLD_Putpixel(xcoord,	ycoord,		color1);
 			break;
 
 		case 2:
-			Putpixel(xcoord,	ycoord,		color1);
-			Putpixel(xcoord +1,	ycoord,		color2);
-			Putpixel(xcoord-1,	ycoord,		color2);
-			Putpixel(xcoord,	ycoord+1,	color2);
-			Putpixel(xcoord,	ycoord-1,	color2);
+			LLD_Putpixel(xcoord,	ycoord,		color1);
+			LLD_Putpixel(xcoord +1,	ycoord,		color2);
+			LLD_Putpixel(xcoord-1,	ycoord,		color2);
+			LLD_Putpixel(xcoord,	ycoord+1,	color2);
+			LLD_Putpixel(xcoord,	ycoord-1,	color2);
 			break;
 
 		case 3:
-			Putpixel(xcoord+1,	ycoord,		color1);
-			Putpixel(xcoord-1,	ycoord,		color1);
-			Putpixel(xcoord,	ycoord,		color1);
-			Putpixel(xcoord,	ycoord+1,	color1);
-			Putpixel(xcoord,	ycoord-1,	color1);
+			LLD_Putpixel(xcoord+1,	ycoord,		color1);
+			LLD_Putpixel(xcoord-1,	ycoord,		color1);
+			LLD_Putpixel(xcoord,	ycoord,		color1);
+			LLD_Putpixel(xcoord,	ycoord+1,	color1);
+			LLD_Putpixel(xcoord,	ycoord-1,	color1);
 			break;
 
 		case 4:
-			Putpixel(xcoord-2,	ycoord,		color2);
+			LLD_Putpixel(xcoord-2,	ycoord,		color2);
 
-			Putpixel(xcoord-1,	ycoord,		color1);
-			Putpixel(xcoord,	ycoord,		color1);
-			Putpixel(xcoord+1,	ycoord,		color1);
+			LLD_Putpixel(xcoord-1,	ycoord,		color1);
+			LLD_Putpixel(xcoord,	ycoord,		color1);
+			LLD_Putpixel(xcoord+1,	ycoord,		color1);
 
-			Putpixel(xcoord+2,	ycoord,		color1);
+			LLD_Putpixel(xcoord+2,	ycoord,		color1);
 
-			Putpixel(xcoord-1,	ycoord+1,	color1);
-			Putpixel(xcoord,	ycoord+1,	color1);
-			Putpixel(xcoord+1,	ycoord+1,	color1);
-			Putpixel(xcoord-1,	ycoord-1,	color1);
-			Putpixel(xcoord,	ycoord-1,	color1);
-			Putpixel(xcoord+1,	ycoord-1,	color1);
+			LLD_Putpixel(xcoord-1,	ycoord+1,	color1);
+			LLD_Putpixel(xcoord,	ycoord+1,	color1);
+			LLD_Putpixel(xcoord+1,	ycoord+1,	color1);
+			LLD_Putpixel(xcoord-1,	ycoord-1,	color1);
+			LLD_Putpixel(xcoord,	ycoord-1,	color1);
+			LLD_Putpixel(xcoord+1,	ycoord-1,	color1);
 
-			Putpixel(xcoord,	ycoord-2,	color2);
+			LLD_Putpixel(xcoord,	ycoord-2,	color2);
 			break;
 
 		case 5:
 			for (ii = -1; ii < 2; ii++)
 			{
-				Putpixel(xcoord-2,	ycoord+ii,	color1);
-				Putpixel(xcoord-1,	ycoord+ii,	color1);
-				Putpixel(xcoord,	ycoord+ii,	color1);
-				Putpixel(xcoord+1,	ycoord+ii,	color1);
-				Putpixel(xcoord+2,	ycoord+ii,	color1);
+				LLD_Putpixel(xcoord-2,	ycoord+ii,	color1);
+				LLD_Putpixel(xcoord-1,	ycoord+ii,	color1);
+				LLD_Putpixel(xcoord,	ycoord+ii,	color1);
+				LLD_Putpixel(xcoord+1,	ycoord+ii,	color1);
+				LLD_Putpixel(xcoord+2,	ycoord+ii,	color1);
 			}
 
-			Putpixel(xcoord-1,	ycoord+2,	color1);
-			Putpixel(xcoord,	ycoord+2,	color1);
-			Putpixel(xcoord+1,	ycoord+2,	color1);
+			LLD_Putpixel(xcoord-1,	ycoord+2,	color1);
+			LLD_Putpixel(xcoord,	ycoord+2,	color1);
+			LLD_Putpixel(xcoord+1,	ycoord+2,	color1);
 
-			Putpixel(xcoord-1,	ycoord-2,	color1);
-			Putpixel(xcoord,	ycoord-2,	color1);
-			Putpixel(xcoord+1,	ycoord-2,	color1);
+			LLD_Putpixel(xcoord-1,	ycoord-2,	color1);
+			LLD_Putpixel(xcoord,	ycoord-2,	color1);
+			LLD_Putpixel(xcoord+1,	ycoord-2,	color1);
 
 			break;
 
 		case 6:
 			SetColor(color1);
-			DrawCString(xcoord,	ycoord,	"*");
+			LLD_DrawCString(xcoord,	ycoord,	"*");
 			break;
 	}
 }
@@ -5504,16 +5511,16 @@ void	WindowTabSkyTravel::DrawTelescopeReticle(int screenXX, int screenYY)
 	SetColor(W_BLUE);
 	if (cTelescopeDisplayOptions.dispFindScopeOutline)
 	{
-		FrameEllipse(screenXX, screenYY, kFinderRadius, kFinderRadius);
+		LLD_FrameEllipse(screenXX, screenYY, kFinderRadius, kFinderRadius);
 	}
 
 	if (cTelescopeDisplayOptions.dispFindScopeCrossHairs)
 	{
-		CMoveTo(screenXX - kFinderRadius, screenYY - kFinderRadius);
-		CLineTo(screenXX + kFinderRadius, screenYY + kFinderRadius);
+		LLD_MoveTo(screenXX - kFinderRadius, screenYY - kFinderRadius);
+		LLD_LineTo(screenXX + kFinderRadius, screenYY + kFinderRadius);
 
-		CMoveTo(screenXX + kFinderRadius, screenYY - kFinderRadius);
-		CLineTo(screenXX - kFinderRadius, screenYY + kFinderRadius);
+		LLD_MoveTo(screenXX + kFinderRadius, screenYY - kFinderRadius);
+		LLD_LineTo(screenXX - kFinderRadius, screenYY + kFinderRadius);
 	}
 
 	//*	now draw the actual telescope
@@ -5522,16 +5529,16 @@ void	WindowTabSkyTravel::DrawTelescopeReticle(int screenXX, int screenYY)
 
 	if (cTelescopeDisplayOptions.dispTeleScopeOutline)
 	{
-		FrameEllipse(screenXX, screenYY, kTlescopeRadius, kTlescopeRadius);
+		LLD_FrameEllipse(screenXX, screenYY, kTlescopeRadius, kTlescopeRadius);
 	}
 
 	if (cTelescopeDisplayOptions.dispTeleScopeCrossHairs)
 	{
-		CMoveTo(screenXX - kTlescopeRadius, screenYY - kTlescopeRadius);
-		CLineTo(screenXX + kTlescopeRadius, screenYY + kTlescopeRadius);
+		LLD_MoveTo(screenXX - kTlescopeRadius, screenYY - kTlescopeRadius);
+		LLD_LineTo(screenXX + kTlescopeRadius, screenYY + kTlescopeRadius);
 
-		CMoveTo(screenXX + kTlescopeRadius, screenYY - kTlescopeRadius);
-		CLineTo(screenXX - kTlescopeRadius, screenYY + kTlescopeRadius);
+		LLD_MoveTo(screenXX + kTlescopeRadius, screenYY - kTlescopeRadius);
+		LLD_LineTo(screenXX - kTlescopeRadius, screenYY + kTlescopeRadius);
 	}
 }
 
@@ -5611,20 +5618,20 @@ int		pixelsTall;
 			//-------------------------------------------------------------------------------------
 			//*	top line
 			//*	draw straight line
-			CMoveTo(topLeft_XX,		topLeft_YY);
-			CLineTo(topRight_XX,	topRight_YY);
+			LLD_MoveTo(topLeft_XX,		topLeft_YY);
+			LLD_LineTo(topRight_XX,	topRight_YY);
 
 			//*	bottom line
-			CMoveTo(btmLeft_XX,		btmLeft_YY);
-			CLineTo(btmRight_XX,	btmRight_YY);
+			LLD_MoveTo(btmLeft_XX,		btmLeft_YY);
+			LLD_LineTo(btmRight_XX,	btmRight_YY);
 
 			//*	left line
-			CMoveTo(topLeft_XX,		topLeft_YY);
-			CLineTo(btmLeft_XX,		btmLeft_YY);
+			LLD_MoveTo(topLeft_XX,		topLeft_YY);
+			LLD_LineTo(btmLeft_XX,		btmLeft_YY);
 
 			//*	right line
-			CMoveTo(topRight_XX,	topRight_YY);
-			CLineTo(btmRight_XX,	btmRight_YY);
+			LLD_MoveTo(topRight_XX,	topRight_YY);
+			LLD_LineTo(btmRight_XX,	btmRight_YY);
 
 			//*	check the width of the box, only draw the label if its is big enough
 			if (pixelsWide > 50)
@@ -5632,19 +5639,19 @@ int		pixelsTall;
 				//*	now do the label
 				if ((btmLeft_XX > 0) && (btmLeft_YY > 0))
 				{
-					DrawCString(btmLeft_XX, btmLeft_YY, fovPtr->CameraName);
+					LLD_DrawCString(btmLeft_XX, btmLeft_YY, fovPtr->CameraName);
 				}
 				else if ((topLeft_XX > 0) && (topLeft_YY > 0))
 				{
-					DrawCString(topLeft_XX, topLeft_YY, fovPtr->CameraName);
+					LLD_DrawCString(topLeft_XX, topLeft_YY, fovPtr->CameraName);
 				}
 				else if ((topRight_XX > 0) && (topRight_YY > 0))
 				{
-					DrawCString(topRight_XX, topRight_YY, fovPtr->CameraName);
+					LLD_DrawCString(topRight_XX, topRight_YY, fovPtr->CameraName);
 				}
 				else if ((btmRight_XX > 0) && (btmRight_YY > 0))
 				{
-					DrawCString(btmRight_XX, btmRight_YY, fovPtr->CameraName);
+					LLD_DrawCString(btmRight_XX, btmRight_YY, fovPtr->CameraName);
 				}
 			}
 		}
@@ -5871,8 +5878,8 @@ bool		pt2InView;
 	if (pt1InView && pt2InView)
 	{
 		SetColor(W_GREEN);
-		CMoveTo(x1,	y1);
-		CLineTo(x2,	y2);
+		LLD_MoveTo(x1,	y1);
+		LLD_LineTo(x2,	y2);
 
 	}
 	else
@@ -5906,8 +5913,8 @@ bool		pt2InView;
 	if (pt1InView && pt2InView)
 	{
 		SetColor(W_PINK);
-		CMoveTo(x1,	y1);
-		CLineTo(x2,	y2);
+		LLD_MoveTo(x1,	y1);
+		LLD_LineTo(x2,	y2);
 
 	}
 	else
@@ -5955,7 +5962,7 @@ TYPE_SpherTrig	sphptr;
 	sphptr.bside	=	kHALFPI - cDecl0;	//* this stays constant
 
 	SetColor(W_BLUE);
-	CPenSize(2);
+	LLD_PenSize(2);
 //	for (alpha = (cRa0 - cRamax); alpha < (cRa0 + cRamax); alpha += (cRamax / 10.0))
 	//*	<MLS> 1/4/2021, this allows the Ecliptic to be drawn at all zoom levels
 	myRamax		=	cRamax;
@@ -5989,15 +5996,15 @@ TYPE_SpherTrig	sphptr;
 
 		if (drawLineFlag)
 		{
-			CLineTo(cWorkSpaceLeftOffset + xcoord, cWorkSpaceTopOffset + ycoord);
+			LLD_LineTo(cWorkSpaceLeftOffset + xcoord, cWorkSpaceTopOffset + ycoord);
 		}
 		else
 		{
-			CMoveTo(cWorkSpaceLeftOffset + xcoord, cWorkSpaceTopOffset + ycoord);
+			LLD_MoveTo(cWorkSpaceLeftOffset + xcoord, cWorkSpaceTopOffset + ycoord);
 			drawLineFlag	=	true;
 		}
 	}
-	CPenSize(1);
+	LLD_PenSize(1);
 }
 
 //*********************************************************************
@@ -6008,7 +6015,7 @@ int			northColor;
 int			southColor;
 bool		forceNumberDrawFlag	=	false;
 
-	CPenSize(gST_DispOptions.LineWidth_GridLines);
+	LLD_PenSize(gST_DispOptions.LineWidth_GridLines);
 
 //setlinestyle(USERBIT_LINE,0x0f0f,NORM_WIDTH);
 	if (cNightMode)
@@ -6120,7 +6127,7 @@ bool		forceNumberDrawFlag	=	false;
 		degrees	+=	15.0;
 //		degrees	+=	15.0;	//*	put it in twice to match K-Stars
 	}
-	CPenSize(1);
+	LLD_PenSize(1);
 
 //	CONSOLE_DEBUG_W_NUM(__FUNCTION__, cDebugCounter++);
 }
@@ -6160,7 +6167,7 @@ int		xcoord,ycoord,ftflag	=	0;
 
 		case 1:
 			delta_ra	=	rtasc / 20.0;		//*increment
-			CPenSize(2);
+			LLD_PenSize(2);
 			break;
 
 		case 2:
@@ -6199,22 +6206,22 @@ int		xcoord,ycoord,ftflag	=	0;
 		ycoord	=	cWind_y0	+	(cYfactor * aside * cos(gamma - gam));
 		if (ftflag)
 		{
-			CLineTo(cWorkSpaceLeftOffset + xcoord, cWorkSpaceTopOffset + ycoord);
+			LLD_LineTo(cWorkSpaceLeftOffset + xcoord, cWorkSpaceTopOffset + ycoord);
 		}
 		else
 		{
-			CMoveTo(cWorkSpaceLeftOffset + xcoord, cWorkSpaceTopOffset + ycoord);
+			LLD_MoveTo(cWorkSpaceLeftOffset + xcoord, cWorkSpaceTopOffset + ycoord);
 			ftflag++;
 		}
 
 		if (cDispOptions.dispEarth)
 		{
 			//*	this fills with earth
-			CLineTo(cWorkSpaceLeftOffset + xcoord, cWorkSpaceTopOffset + wind_uly + cWind_height);
-			CMoveTo(cWorkSpaceLeftOffset + xcoord, cWorkSpaceTopOffset + ycoord);
+			LLD_LineTo(cWorkSpaceLeftOffset + xcoord, cWorkSpaceTopOffset + wind_uly + cWind_height);
+			LLD_MoveTo(cWorkSpaceLeftOffset + xcoord, cWorkSpaceTopOffset + ycoord);
 		}
 	}
-	CPenSize(1);
+	LLD_PenSize(1);
 }
 
 
@@ -6257,8 +6264,8 @@ short	pt2_XX, pt2_YY;
 //			CONSOLE_DEBUG_W_NUM("pt1_YY\t=", pt1_YY);
 //			CONSOLE_DEBUG_W_NUM("pt2_XX\t=", pt2_XX);
 //			CONSOLE_DEBUG_W_NUM("pt2_YY\t=", pt2_YY);
-			CMoveTo(pt1_XX,	pt1_YY);
-			CLineTo(pt2_XX,	pt2_YY);
+			LLD_MoveTo(pt1_XX,	pt1_YY);
+			LLD_LineTo(pt2_XX,	pt2_YY);
 		}
 		myAZvalue1	+=	azDelta;
 	}
@@ -6300,8 +6307,8 @@ short	pt2_XX, pt2_YY;
 		//*	if both pints are on the screen, draw it
 		if (pt1inView && pt2inView)
 		{
-			CMoveTo(pt1_XX,	pt1_YY);
-			CLineTo(pt2_XX,	pt2_YY);
+			LLD_MoveTo(pt1_XX,	pt1_YY);
+			LLD_LineTo(pt2_XX,	pt2_YY);
 		}
 		myELEVvalue1	+=	elevDelta;
 	}
@@ -6453,8 +6460,8 @@ int		maxSegLength;
 				adjustmentCnt++;
 			}
 			//*	now we can go ahead and draw the line
-			CMoveTo(pt1_XX,	pt1_YY);
-			CLineTo(pt2_XX,	pt2_YY);
+			LLD_MoveTo(pt1_XX,	pt1_YY);
+			LLD_LineTo(pt2_XX,	pt2_YY);
 			segmentsDrnCnt++;
 
 
@@ -6561,29 +6568,29 @@ int		maxSegLength;
 		SetColor(W_DARKGREEN);
 		if (leftMost_X < 30)
 		{
-			DrawCString(3, leftMost_Y, numberStr);
+			LLD_DrawCString(3, leftMost_Y, numberStr);
 			numberWasDrawn	=	true;
 		}
 		else if (rightMost_X > (cWind_width - 30))
 		{
-			DrawCString((cWind_width - 30), rightMost_Y, numberStr);
+			LLD_DrawCString((cWind_width - 30), rightMost_Y, numberStr);
 			numberWasDrawn	=	true;
 		}
 		else if (topMost_Y < 15)
 		{
-			DrawCString(topMost_X, 15, numberStr);
+			LLD_DrawCString(topMost_X, 15, numberStr);
 			numberWasDrawn	=	true;
 		}
 		else if (btmMost_Y > (cWind_height - 15))
 		{
-			DrawCString(btmMost_X, (cWind_height - 4), numberStr);
+			LLD_DrawCString(btmMost_X, (cWind_height - 4), numberStr);
 			numberWasDrawn	=	true;
 		}
 
 		//*	in some case we want the number anyway
 		if (forceNumberDraw && (numberWasDrawn == false))
 		{
-			DrawCString(topMost_X, topMost_Y, numberStr);
+			LLD_DrawCString(topMost_X, topMost_Y, numberStr);
 		}
 	}
 
@@ -6684,8 +6691,8 @@ int		btmMost_Y;
 			}
 
 
-			CMoveTo(pt1_XX,	pt1_YY);
-			CLineTo(pt2_XX,	pt2_YY);
+			LLD_MoveTo(pt1_XX,	pt1_YY);
+			LLD_LineTo(pt2_XX,	pt2_YY);
 			segmentsDrnCnt++;
 		}
 
@@ -6747,19 +6754,19 @@ int		btmMost_Y;
 	sprintf(numberStr, "%1.0fh", DEGREES(rightAscen_Rad / 15.0));
 	if (leftMost_X < 30)
 	{
-		DrawCString(3, leftMost_Y, numberStr);
+		LLD_DrawCString(3, leftMost_Y, numberStr);
 	}
 	if (rightMost_X > (cWind_width - 30))
 	{
-		DrawCString((cWind_width - 30), rightMost_Y, numberStr);
+		LLD_DrawCString((cWind_width - 30), rightMost_Y, numberStr);
 	}
 	if (topMost_Y < 15)
 	{
-		DrawCString(topMost_X, 15, numberStr);
+		LLD_DrawCString(topMost_X, 15, numberStr);
 	}
 	if (btmMost_Y > (cWind_height - 15))
 	{
-		DrawCString(btmMost_X, (cWind_height - 4), numberStr);
+		LLD_DrawCString(btmMost_X, (cWind_height - 4), numberStr);
 	}
 
 
@@ -6869,11 +6876,11 @@ void	WindowTabSkyTravel::DrawScale(void)
 //	if (pt1inView && pt2inView)
 //	{
 //		SetColor(W_ORANGE);
-//		CMoveTo(pt1_XX,	pt1_YY);
-//		CLineTo(pt2_XX,	pt2_YY);
+//		LLD_MoveTo(pt1_XX,	pt1_YY);
+//		LLD_LineTo(pt2_XX,	pt2_YY);
 //
-//		CMoveTo(pt1_XX,	pt1_YY+1);
-//		CLineTo(pt2_XX,	pt2_YY+1);
+//		LLD_MoveTo(pt1_XX,	pt1_YY+1);
+//		LLD_LineTo(pt2_XX,	pt2_YY+1);
 //	}
 //	else
 //	{
@@ -6916,7 +6923,7 @@ int		ypos;
 			{
 				xpos	=	wind_ulx + (dtemp * (1.0 * cWind_width) / cView_angle);
 				ypos	=	wind_uly + cWind_height - (THGT / 2);
-				DrawCString(cWorkSpaceTopOffset + xpos,
+				LLD_DrawCString(cWorkSpaceTopOffset + xpos,
 							cWorkSpaceLeftOffset  + ypos, gCompass_text[ii & 0x0f]);
 			}
 		}
@@ -7003,7 +7010,7 @@ bool			drawInFillFlag;
 	else
 	{
 		SetColor(W_DARKGRAY);	//* complete circle
-		FillEllipse(xcoord,ycoord, radx, rady);
+		LLD_FillEllipse(xcoord,ycoord, radx, rady);
 
 //		CONSOLE_DEBUG_W_DBL("phasang-rad\t=",		phasang);
 //		CONSOLE_DEBUG_W_DBL("phasang-deg\t=",		DEGREES(phasang));
@@ -7020,11 +7027,11 @@ bool			drawInFillFlag;
 				yyy	=	ycoord + ((rady - 0.3) * sin(theta));
 				if (jjj)
 				{
-					CLineTo(xxx, yyy);
+					LLD_LineTo(xxx, yyy);
 				}
 				else
 				{
-					CMoveTo(xxx, yyy);
+					LLD_MoveTo(xxx, yyy);
 				}
 				theta	+=	PI / 64.0;
 			}
@@ -7042,7 +7049,7 @@ bool			drawInFillFlag;
 				yyy	=	ycoord + ((dx * cos(posang)) + (dy * sin(posang)));
 				xxx	=	xcoord + ((dy * cos(posang)) - (dx * sin(posang)));
 
-				CLineTo(xxx, yyy);
+				LLD_LineTo(xxx, yyy);
 				jjj++;
 				theta	+=	PI / 64.0;
 			}
@@ -7121,21 +7128,21 @@ bool			drawInFillFlag;
 //						moonColor	=	W_YELLOW;
 //						break;
 //				}
-//				FloodFill(xxx, yyy, moonColor);
-				FloodFill(xxx, yyy, W_YELLOW);
+//				LLD_FloodFill(xxx, yyy, moonColor);
+				LLD_FloodFill(xxx, yyy, W_YELLOW);
 				//*	debug code
 //			#define		kCrossSize	25
 //				for (jjj=-kCrossSize; jjj<kCrossSize; jjj++)
 //				{
-//					Putpixel(xxx + jjj, yyy, W_GREEN);
+//					LLD_Putpixel(xxx + jjj, yyy, W_GREEN);
 //
-//					Putpixel(xxx, yyy+jjj, W_GREEN);
+//					LLD_Putpixel(xxx, yyy+jjj, W_GREEN);
 //				}
 //				for (jjj=-kCrossSize; jjj<kCrossSize; jjj++)
 //				{
-//					Putpixel(xcoord + jjj, ycoord, W_RED);
+//					LLD_Putpixel(xcoord + jjj, ycoord, W_RED);
 //
-//					Putpixel(xcoord, ycoord + jjj, W_RED);
+//					LLD_Putpixel(xcoord, ycoord + jjj, W_RED);
 //				}
 			}
 		}
@@ -7162,7 +7169,7 @@ bool			drawInFillFlag;
 			radx	=	cEarth_shadow_radius * cXfactor;
 			rady	=	cEarth_shadow_radius * cYfactor;
 			SetColor(W_BLACK);
-			FillEllipse(xcoord, ycoord, radx, rady);
+			LLD_FillEllipse(xcoord, ycoord, radx, rady);
 		}
 	}
 }
@@ -7281,7 +7288,7 @@ int				myColor;
 								}
 								else
 								{
-									FillEllipse(xcoord, ycoord, radx, rady);
+									LLD_FillEllipse(xcoord, ycoord, radx, rady);
 								}
 							}
 							//-------------------------------------------------
@@ -7317,13 +7324,13 @@ int				myColor;
 								if (cView_angle < 0.4)
 								{
 									//*	if we are this far zoomed in, show the name as well
-									DrawCString(xcoord + 18, ycoord, name[iii]);
+									LLD_DrawCString(xcoord + 18, ycoord, name[iii]);
 								}
 
 							}
 							else if (cDispOptions.dispNames)	//* names except if moon or sun
 							{
-								DrawCString(xcoord, ycoord, name[iii]);
+								LLD_DrawCString(xcoord, ycoord, name[iii]);
 							}
 						}
 					}
@@ -8778,8 +8785,8 @@ int		myColor;
 				//*	if both pints are on the screen, draw it
 				if (pt1inView && pt2inView)
 				{
-					CMoveTo(pt1_XX,	pt1_YY);
-					CLineTo(pt2_XX,	pt2_YY);
+					LLD_MoveTo(pt1_XX,	pt1_YY);
+					LLD_LineTo(pt2_XX,	pt2_YY);
 				}
 				//*	set the end point to the new start point
 				point1	=	point2;
@@ -8833,8 +8840,8 @@ bool	pt1Valid;
 			//*	if both pints are on the screen, draw it
 			if (pt1inView && pt2inView)
 			{
-				CMoveTo(pt1_XX,	pt1_YY);
-				CLineTo(pt2_XX,	pt2_YY);
+				LLD_MoveTo(pt1_XX,	pt1_YY);
+				LLD_LineTo(pt2_XX,	pt2_YY);
 			}
 			//*	set the end point to the new start point
 			point1	=	point2;
@@ -8908,7 +8915,7 @@ bool	ptInView;
 			SetColor(W_VDARKGRAY);
 		//	SetColor(W_PINK);
 		}
-		CPenSize(gST_DispOptions.LineWidth_NGCoutlines);
+		LLD_PenSize(gST_DispOptions.LineWidth_NGCoutlines);
 		drawFlag	=	false;
 		for (iii=0; iii<gOpenNGC_outlineCnt; iii++)
 		{
@@ -8925,11 +8932,11 @@ bool	ptInView;
 			{
 				if (drawFlag)
 				{
-					CLineTo(pt_XX, pt_YY);
+					LLD_LineTo(pt_XX, pt_YY);
 				}
 				else
 				{
-					CMoveTo(pt_XX, pt_YY);
+					LLD_MoveTo(pt_XX, pt_YY);
 					drawFlag	=	true;
 				}
 				numDrawn++;
@@ -8939,7 +8946,7 @@ bool	ptInView;
 				drawFlag	=	false;
 			}
 		}
-		CPenSize(1);
+		LLD_PenSize(1);
 	}
 	else
 	{

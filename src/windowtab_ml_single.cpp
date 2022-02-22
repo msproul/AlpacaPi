@@ -28,6 +28,7 @@
 #ifdef _ENABLE_CTRL_FOCUSERS_
 
 
+
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
 
@@ -43,13 +44,16 @@
 #include	"focuser_common.h"
 
 
-IplImage	*gMoonLiteImage	=	NULL;
-
+#ifdef _USE_OPENCV_CPP_
+	cv::Mat	*gMoonLiteImage	=	NULL;
+#else
+	IplImage	*gMoonLiteImage	=	NULL;
+#endif // _USE_OPENCV_CPP_
 
 //*******************************************7*******************************************
 WindowTabMLsingle::WindowTabMLsingle(	const int	xSize,
 										const int	ySize,
-										CvScalar	backGrndColor,
+										cv::Scalar	backGrndColor,
 										const int	comMode,
 										const char	*windowName)
 	:WindowTab(xSize, ySize, backGrndColor, windowName)
@@ -59,14 +63,19 @@ int		iii;
 
 	if (gMoonLiteImage == NULL)
 	{
-	//	gNiteCrawlerImgPtr	=	GetNiteCrawlerImage();
 		gMoonLiteImage		=	GetMoonLiteImage();
 
-		if (gNiteCrawlerImgPtr != NULL)
+		if (gMoonLiteImage != NULL)
 		{
-		//	WriteOutImageAsCode(gNiteCrawlerImgPtr);
-		//	CONSOLE_DEBUG_W_NUM("nc image width\t=", gNiteCrawlerImgPtr->width);
-		//	CONSOLE_DEBUG_W_NUM("nc image height\t=", gNiteCrawlerImgPtr->height);
+			CONSOLE_DEBUG("GetMoonLiteImage() OK");
+		#ifdef _USE_OPENCV_CPP_
+			CONSOLE_DEBUG_W_NUM("Rows  \t=", gMoonLiteImage->rows);
+			CONSOLE_DEBUG_W_NUM("Cols  \t=", gMoonLiteImage->cols);
+		#endif // _USE_OPENCV_CPP_
+		}
+		else
+		{
+			CONSOLE_ABORT(__FUNCTION__);
 		}
 	}
 
@@ -112,20 +121,29 @@ int		rightSideWidth;
 int		myButtonX;
 int		myButtonWidth;
 char	numberString[32];
+int		logoWidth;
+int		logoHeight;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
 	//------------------------------------------
 	yLoc			=	cTabVertOffset;
 
-	//------------------------------------------
 	if (gMoonLiteImage != NULL)
 	{
-		SetWidget(kMLsingle_logo,		0,			yLoc,
-									gMoonLiteImage->width,
-									gMoonLiteImage->height);
+	#ifdef _USE_OPENCV_CPP_
+		logoWidth	=	gMoonLiteImage->cols;
+		logoHeight	=	gMoonLiteImage->rows;
+	#else
+		logoWidth	=	gMoonLiteImage->width;
+		logoHeight	=	gMoonLiteImage->height;
+	#endif // _USE_OPENCV_CPP_
+		SetWidget(	kMLsingle_logo,
+					0,
+					yLoc,
+					logoWidth,
+					logoHeight);
 
-//		yLoc			+=	gMoonLiteImage->height;
 
 		SetWidgetImage(kMLsingle_logo, gMoonLiteImage);
 	}

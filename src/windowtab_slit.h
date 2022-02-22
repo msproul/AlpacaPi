@@ -55,15 +55,20 @@ class WindowTabSlitTracker: public WindowTab
 		//
 				WindowTabSlitTracker(	const int	xSize,
 										const int	ySize,
-										CvScalar	backGrndColor,
+										cv::Scalar	backGrndColor,
 										const char	*windowName);
 		virtual	~WindowTabSlitTracker(void);
 
 		virtual	void	SetupWindowControls(void);
-		virtual	void	DrawGraphWidget(IplImage *openCV_Image, const int widgetIdx);
+//		virtual	void	DrawGraphWidget(IplImage *openCV_Image, const int widgetIdx);
 		virtual	void	ProcessButtonClick(const int buttonIdx);
+#ifdef _USE_OPENCV_CPP_
+		virtual	void	DrawWidgetCustomGraphic(cv::Mat *openCV_Image, const int widgetIdx);
+#else
+		virtual	void	DrawWidgetCustomGraphic(IplImage *openCV_Image, const int widgetIdx);
+#endif // _USE_OPENCV_CPP_
 
-				void	DrawClockFace(IplImage *openCV_Image, TYPE_WIDGET *theWidget);
+				void	DrawClockFace(TYPE_WIDGET *theWidget);
 				void	UpdateClockRadioBtns(void);
 				void	ToggleLogData(void);
 
@@ -71,7 +76,7 @@ class WindowTabSlitTracker: public WindowTab
 				int		cClockDisplayMode;
 
 				int			cUpdateColorIdx;
-				CvScalar	cDotColor[kMaxDotColors];
+				cv::Scalar	cDotColor[kMaxDotColors];
 
 };
 

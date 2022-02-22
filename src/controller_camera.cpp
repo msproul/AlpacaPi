@@ -76,11 +76,16 @@
 #include	<stdio.h>
 #include	<stdlib.h>
 #include	<unistd.h>
+	#include	<opencv2/opencv.hpp>
 
+#ifdef _USE_OPENCV_CPP_
+	#include	<opencv2/opencv.hpp>
+#else
+	#include "opencv/highgui.h"
+	#include "opencv2/highgui/highgui_c.h"
+	#include "opencv2/imgproc/imgproc_c.h"
+#endif // _USE_OPENCV_CPP_
 
-#include "opencv/highgui.h"
-#include "opencv2/highgui/highgui_c.h"
-#include "opencv2/imgproc/imgproc_c.h"
 
 #include	"discovery_lib.h"
 #include	"sendrequest_lib.h"
@@ -238,100 +243,7 @@ void	ControllerCamera::SetupWindowControls(void)
 }
 
 //**************************************************************************************
-void	ControllerCamera::DrawWidgetCustom(TYPE_WIDGET *theWidget)
-{
-CvRect		myCVrect;
-CvPoint		textLoc;
-CvPoint		textLoc2;
-CvSize		textSize;
-int			baseLine;
-int			lineSpacing;
-int			curFontNum;
-int			iii;
-char		fileTypeStr[8];
-
-//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
-	if (theWidget != NULL)
-	{
-		myCVrect.x		=	theWidget->left;
-		myCVrect.y		=	theWidget->top;
-		myCVrect.width	=	theWidget->width;
-		myCVrect.height	=	theWidget->height;
-
-
-		cvRectangleR(	cOpenCV_Image,
-						myCVrect,
-						theWidget->bgColor,			//	CvScalar color,
-						CV_FILLED,					//	int thickness CV_DEFAULT(1),
-						8,							//	int line_type CV_DEFAULT(8),
-						0);							//	int shift CV_DEFAULT(0));
-
-		cvRectangleR(	cOpenCV_Image,
-						myCVrect,
-						theWidget->borderColor,		//	CvScalar color,
-						1,							//	int thickness CV_DEFAULT(1),
-						8,							//	int line_type CV_DEFAULT(8),
-						0);							//	int shift CV_DEFAULT(0));
-
-		//*	draw the file list
-//		curFontNum	=	kFont_Small,
-		curFontNum	=	kFont_Medium,
-		cvGetTextSize(	"foo",
-						&gTextFont[curFontNum],
-						&textSize,
-						&baseLine);
-		lineSpacing	=	textSize.height + baseLine + 3;
-		textLoc.x	=	theWidget->left + 10;
-		textLoc.y	=	theWidget->top + lineSpacing;
-		iii			=	0;
-		while ((iii<kMaxRemoteFileCnt) && (textLoc.y < cHeight))
-		{
-			if (cRemoteFiles[iii].validData)
-			{
-				cvPutText(	cOpenCV_Image,
-							cRemoteFiles[iii].filename,
-							textLoc,
-							&gTextFont[curFontNum],
-							theWidget->textColor
-							);
-
-				strcpy(fileTypeStr, "       ");
-				if (cRemoteFiles[iii].hasCSV)
-				{
-					fileTypeStr[0]	=	'C';
-				}
-				if (cRemoteFiles[iii].hasFTS)
-				{
-					fileTypeStr[1]	=	'F';
-				}
-				if (cRemoteFiles[iii].hasJPG)
-				{
-					fileTypeStr[2]	=	'J';
-				}
-				if (cRemoteFiles[iii].hasPNG)
-				{
-					fileTypeStr[3]	=	'P';
-				}
-				fileTypeStr[4]	=	0;
-				textLoc2		=	textLoc;
-				textLoc2.x		=	cWidth - 80;
-				cvPutText(	cOpenCV_Image,
-							fileTypeStr,
-							textLoc2,
-							&gTextFont[curFontNum],
-							theWidget->textColor
-							);
-
-				textLoc.y	+=	lineSpacing;
-			}
-			iii++;
-		}
-	}
-}
-
-
-//**************************************************************************************
-void	ControllerCamera::RunBackgroundTasks(bool enableDebug)
+void	ControllerCamera::RunBackgroundTasks(const char *callingFunction, bool enableDebug)
 {
 uint32_t	currentMillis;
 uint32_t	deltaSeconds;
@@ -349,7 +261,7 @@ bool		readStartUpOK;
 		CONSOLE_DEBUG_W_STR("cReadStartup == true", cWindowName);
 		//*	so the window shows up
 		HandleWindowUpdate();
-		cvWaitKey(60);
+		cv::waitKey(60);
 
 
 		GetConfiguredDevices();
@@ -1833,6 +1745,13 @@ void	ControllerCamera::UpdateFreeDiskSpace(const double gigabytesFree)
 	//*	this is to be over loaded if needed
 }
 
+#if defined(_USE_OPENCV_CPP_) &&  (CV_MAJOR_VERSION >= 4)
+//*****************************************************************************
+cv::Mat	*ControllerCamera::DownloadImage_rgbarray(void)
+{
+	return(NULL);
+}
+#else
 //*****************************************************************************
 IplImage	*ControllerCamera::DownloadImage_rgbarray(void)
 {
@@ -1902,7 +1821,15 @@ int			pixIdx;
 	}
 	return(myOpenCVimage);
 }
+#endif // _USE_OPENCV_CPP_
 
+#if defined(_USE_OPENCV_CPP_) &&  (CV_MAJOR_VERSION >= 4)
+//*****************************************************************************
+cv::Mat	*ControllerCamera::DownloadImage_imagearray(const bool force8BitRead, const bool allowBinary)
+{
+	return(NULL);
+}
+#else
 //*****************************************************************************
 IplImage	*ControllerCamera::DownloadImage_imagearray(const bool force8BitRead, const bool allowBinary)
 {
@@ -2020,7 +1947,15 @@ int				buffSize;
 	}
 	return(myOpenCVimage);
 }
+#endif // _USE_OPENCV_CPP_
 
+#if defined(_USE_OPENCV_CPP_) &&  (CV_MAJOR_VERSION >= 4)
+//*****************************************************************************
+cv::Mat	*ControllerCamera::DownloadImage(const bool force8BitRead,  const bool allowBinary)
+{
+	return(NULL);
+}
+#else
 //*****************************************************************************
 IplImage	*ControllerCamera::DownloadImage(const bool force8BitRead,  const bool allowBinary)
 {
@@ -2030,6 +1965,7 @@ IplImage	*myOpenCVimage	=	NULL;
 
 	return(myOpenCVimage);
 }
+#endif // _USE_OPENCV_CPP_
 
 
 //**************************************************************************************

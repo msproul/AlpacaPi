@@ -187,14 +187,17 @@ CPP_OBJECTS=												\
 				$(OBJECT_DIR)alpacadriver_helper.o			\
 				$(OBJECT_DIR)alpaca_discovery.o				\
 				$(OBJECT_DIR)alpacadriverLogging.o			\
+				$(OBJECT_DIR)cpu_stats.o					\
 				$(OBJECT_DIR)discoverythread.o				\
 				$(OBJECT_DIR)domedriver.o					\
 				$(OBJECT_DIR)domeshutter.o					\
 				$(OBJECT_DIR)domedriver_rpi.o				\
 				$(OBJECT_DIR)eventlogging.o					\
+				$(OBJECT_DIR)helper_functions.o				\
 				$(OBJECT_DIR)HostNames.o					\
 				$(OBJECT_DIR)JsonResponse.o					\
 				$(OBJECT_DIR)linuxerrors.o					\
+				$(OBJECT_DIR)lx200_com.o					\
 				$(OBJECT_DIR)managementdriver.o				\
 				$(OBJECT_DIR)observatory_settings.o			\
 				$(OBJECT_DIR)sidereal.o						\
@@ -206,9 +209,6 @@ CPP_OBJECTS=												\
 				$(OBJECT_DIR)telescopedriver_lx200.o		\
 				$(OBJECT_DIR)telescopedriver_Rigel.o		\
 				$(OBJECT_DIR)telescopedriver_skywatch.o		\
-				$(OBJECT_DIR)cpu_stats.o					\
-				$(OBJECT_DIR)lx200_com.o					\
-				$(OBJECT_DIR)helper_functions.o				\
 
 LIVE_WINDOW_OBJECTS=										\
 				$(OBJECT_DIR)controller.o					\
@@ -223,6 +223,8 @@ LIVE_WINDOW_OBJECTS=										\
 ######################################################################################
 #	Camera Objects
 ALPACA_OBJECTS=												\
+				$(OBJECT_DIR)calibrationdriver.o			\
+				$(OBJECT_DIR)calibrationdriver_rpi.o		\
 				$(OBJECT_DIR)cameradriver.o					\
 				$(OBJECT_DIR)cameradriverAnalysis.o			\
 				$(OBJECT_DIR)cameradriver_fits.o			\
@@ -237,26 +239,24 @@ ALPACA_OBJECTS=												\
 				$(OBJECT_DIR)cameradriver_SONY.o			\
 				$(OBJECT_DIR)cameradriver_QHY.o				\
 				$(OBJECT_DIR)cameradriver_FLIR.o			\
+				$(OBJECT_DIR)commoncolor.o					\
 				$(OBJECT_DIR)filterwheeldriver.o			\
 				$(OBJECT_DIR)filterwheeldriver_ATIK.o		\
 				$(OBJECT_DIR)filterwheeldriver_ZWO.o		\
 				$(OBJECT_DIR)focuserdriver.o				\
 				$(OBJECT_DIR)focuserdriver_nc.o				\
+				$(OBJECT_DIR)julianTime.o					\
+				$(OBJECT_DIR)moonlite_com.o					\
 				$(OBJECT_DIR)multicam.o						\
+				$(OBJECT_DIR)moonphase.o					\
+				$(OBJECT_DIR)MoonRise.o						\
+				$(OBJECT_DIR)obsconditionsdriver.o			\
+				$(OBJECT_DIR)obsconditionsdriver_rpi.o		\
 				$(OBJECT_DIR)rotatordriver.o				\
 				$(OBJECT_DIR)rotatordriver_nc.o				\
 				$(OBJECT_DIR)slittracker.o					\
 				$(OBJECT_DIR)switchdriver.o					\
 				$(OBJECT_DIR)switchdriver_rpi.o				\
-				$(OBJECT_DIR)obsconditionsdriver.o			\
-				$(OBJECT_DIR)obsconditionsdriver_rpi.o		\
-				$(OBJECT_DIR)moonlite_com.o					\
-				$(OBJECT_DIR)commoncolor.o					\
-				$(OBJECT_DIR)calibrationdriver.o			\
-				$(OBJECT_DIR)calibrationdriver_rpi.o		\
-				$(OBJECT_DIR)moonphase.o					\
-				$(OBJECT_DIR)MoonRise.o						\
-				$(OBJECT_DIR)julianTime.o					\
 
 ######################################################################################
 #	Camera Objects
@@ -268,6 +268,8 @@ CLIENT_OBJECTS=												\
 				$(OBJECT_DIR)json_parse.o					\
 				$(OBJECT_DIR)discoveryclient.o				\
 
+HELPER_OBJECTS=												\
+				$(OBJECT_DIR)helper_functions.o				\
 
 
 ######################################################################################
@@ -830,6 +832,54 @@ pi		:			$(CPP_OBJECTS)				\
 					-o alpacapi
 
 ######################################################################################
+#pragma mark make picv4
+#picv4		:		DEFINEFLAGS		+=	-D_ENABLE_OBSERVINGCONDITIONS_
+picv4		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
+picv4		:		DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_
+picv4		:		DEFINEFLAGS		+=	-D_ENABLE_ROTATOR_
+picv4		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_
+picv4		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_ZWO_
+#picv4		:		DEFINEFLAGS		+=	-D_ENABLE_SAFETYMONITOR_
+#picv4		:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_
+#picv4		:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
+picv4		:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
+picv4		:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
+picv4		:		DEFINEFLAGS		+=	-D_ENABLE_DISCOVERY_QUERRY_
+#picv4		:		DEFINEFLAGS		+=	-D_ENABLE_MULTICAM_
+#picv4		:		DEFINEFLAGS		+=	-D_ENABLE_DOME_
+picv4		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
+picv4		:		DEFINEFLAGS		+=	-D_ENABLE_ATIK_
+picv4		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
+picv4		:		DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
+#picv4		:		DEFINEFLAGS		+=	-D_ENABLE_TOUP_
+picv4		:		DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
+picv4		:		DEFINEFLAGS		+=	-D_ENABLE_LIVE_CONTROLLER_
+picv4		:		PLATFORM		=	armv7
+picv4		:		ATIK_LIB_DIR	=	$(ATIK_LIB_MASTER_DIR)/ARM/x86/NoFlyCapture
+picv4		:			$(CPP_OBJECTS)				\
+					$(ALPACA_OBJECTS)			\
+					$(SOCKET_OBJECTS)			\
+					$(LIVE_WINDOW_OBJECTS)		\
+
+
+		$(LINK)  								\
+					$(SOCKET_OBJECTS)			\
+					$(CPP_OBJECTS)				\
+					$(ALPACA_OBJECTS)			\
+					$(LIVE_WINDOW_OBJECTS)		\
+					$(OPENCV_LINK)				\
+					-L$(ATIK_LIB_DIR_ARM32)/	\
+					$(ASI_CAMERA_OBJECTS)		\
+					$(ZWO_EFW_OBJECTS)			\
+					-latikcameras				\
+					-lcfitsio					\
+					-lusb-1.0					\
+					-ludev						\
+					-lwiringPi					\
+					-lpthread					\
+					-o alpacapi
+
+######################################################################################
 #pragma mark make piqhy
 #piqhy		:		DEFINEFLAGS		+=	-D_ENABLE_OBSERVINGCONDITIONS_
 piqhy		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
@@ -1326,6 +1376,7 @@ shutter		:		$(CPP_OBJECTS)				\
 
 ######################################################################################
 #pragma mark linux-x86 - No opencv
+#make noopencv
 #noopencv		:		DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_
 noopencv		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_ZWO_
 #noopencv		:		DEFINEFLAGS		+=	-D_ENABLE_ROTATOR_
@@ -1337,8 +1388,10 @@ noopencv		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
 #noopencv		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
 noopencv		:		DEFINEFLAGS		+=	-D_ENABLE_JPEGLIB_
 noopencv		:		$(ALPACA_OBJECTS)			\
-						$(SOCKET_OBJECTS)			\
 						$(CPP_OBJECTS)				\
+						$(SOCKET_OBJECTS)			\
+						$(ASI_CAMERA_OBJECTS)		\
+						$(ZWO_EFW_OBJECTS)			\
 
 		$(LINK)  									\
 						$(ALPACA_OBJECTS)			\
@@ -1353,6 +1406,41 @@ noopencv		:		$(ALPACA_OBJECTS)			\
 						-ljpeg						\
 						-o alpacapi
 
+######################################################################################
+#pragma mark linux-x86 - No opencv
+#make noopencvpi
+#noopencvpi		:		DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_
+noopencvpi		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_ZWO_
+#noopencvpi		:		DEFINEFLAGS		+=	-D_ENABLE_ROTATOR_
+#noopencvpi		:		DEFINEFLAGS		+=	-D_ENABLE_SAFETYMONITOR_
+#noopencvpi		:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_
+#noopencvpi		:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
+noopencvpi		:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
+noopencvpi		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
+#noopencvpi		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
+noopencvpi		:		DEFINEFLAGS		+=	-D_ENABLE_JPEGLIB_
+noopencvpi		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
+noopencvpi		:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
+noopencvpi		:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_SKYWATCH_
+noopencvpi		:		PLATFORM		=	armv7
+noopencvpi		:		$(ALPACA_OBJECTS)			\
+						$(CPP_OBJECTS)				\
+						$(SOCKET_OBJECTS)			\
+						$(ASI_CAMERA_OBJECTS)		\
+						$(ZWO_EFW_OBJECTS)			\
+
+		$(LINK)  									\
+						$(ALPACA_OBJECTS)			\
+						$(CPP_OBJECTS)				\
+						$(SOCKET_OBJECTS)			\
+						$(ASI_CAMERA_OBJECTS)		\
+						$(ZWO_EFW_OBJECTS)			\
+						-lcfitsio					\
+						-ludev						\
+						-lpthread					\
+						-lusb-1.0					\
+						-ljpeg						\
+						-o alpacapi
 
 
 ######################################################################################
@@ -1668,6 +1756,44 @@ mandelbrot	:			$(MANDELBROT_OBJECTS)
 							-o mandlebrot;
 
 
+
+######################################################################################
+#make camera
+#pragma mark camera-controller
+camera		:	DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
+camera		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_CAMERA_
+camera		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
+camera		:	DEFINEFLAGS		+=	-D_CONTROLLER_USES_ALPACA_
+camera		:	DEFINEFLAGS		+=	-D_USE_OPENCV_
+camera		:			$(CONTROLLER_OBJECTS)					\
+
+				$(LINK)  										\
+							$(CONTROLLER_OBJECTS)				\
+							$(OPENCV_LINK)						\
+							-lpthread							\
+							-o camera
+
+
+######################################################################################
+#pragma mark dome-controller
+#	make domectrl
+domectrl		:	DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
+domectrl		:	DEFINEFLAGS		+=	-D_INCLUDE_CTRL_MAIN_
+domectrl		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_DOME_
+#domectrl		:	DEFINEFLAGS		+=	-D_ENABLE_SLIT_TRACKER_
+domectrl		:	DEFINEFLAGS		+=	-D_CONTROLLER_USES_ALPACA_
+domectrl		:	DEFINEFLAGS		+=	-D_USE_OPENCV_
+
+
+domectrl		:			$(CONTROLLER_OBJECTS)
+
+				$(LINK)  										\
+							$(CONTROLLER_OBJECTS)				\
+							$(OPENCV_LINK)						\
+							-lpthread							\
+							-o domectrl
+
+
 ######################################################################################
 #pragma mark focuser-controller
 #	make focuser
@@ -1676,6 +1802,7 @@ focuser		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_FOCUSERS_
 focuser		:	DEFINEFLAGS		+=	-D_ENABLE_USB_FOCUSERS_
 focuser		:	DEFINEFLAGS		+=	-D_CONTROLLER_USES_ALPACA_
 focuser		:	DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
+focuser		:	DEFINEFLAGS		+=	-D_USE_OPENCV_
 
 focuser		:			$(CONTROLLER_OBJECTS)
 
@@ -1690,10 +1817,9 @@ focuser		:			$(CONTROLLER_OBJECTS)
 #pragma mark switch-controller
 switch		:	DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
 switch		:	DEFINEFLAGS		+=	-D_INCLUDE_CTRL_MAIN_
-#switch		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_FOCUSERS_
 switch		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_SWITCHES_
-#switch		:	DEFINEFLAGS		+=	-D_ENABLE_USB_FOCUSERS_
 switch		:	DEFINEFLAGS		+=	-D_CONTROLLER_USES_ALPACA_
+switch		:	DEFINEFLAGS		+=	-D_USE_OPENCV_
 
 switch		:			$(CONTROLLER_OBJECTS)
 
@@ -1702,23 +1828,6 @@ switch		:			$(CONTROLLER_OBJECTS)
 							$(OPENCV_LINK)						\
 							-lpthread							\
 							-o switch
-
-
-######################################################################################
-#make camera
-#pragma mark camera-controller
-camera		:	DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
-camera		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_CAMERA_
-camera		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
-camera		:	DEFINEFLAGS		+=	-D_CONTROLLER_USES_ALPACA_
-camera		:			$(CONTROLLER_OBJECTS)					\
-
-				$(LINK)  										\
-							$(CONTROLLER_OBJECTS)				\
-							$(OPENCV_LINK)						\
-							-lpthread							\
-							-o camera
-
 
 
 ######################################################################################
@@ -1809,7 +1918,8 @@ GAIA_SQL_OBJECTS=											\
 
 ######################################################################################
 #make skytravel
-#pragma mark camera-controller
+#pragma mark skytravel
+sky		:	DEFINEFLAGS		+=	-D_USE_OPENCV_
 sky		:	DEFINEFLAGS		+=	-D_INCLUDE_CTRL_MAIN_
 sky		:	DEFINEFLAGS		+=	-D_ENABLE_SKYTRAVEL_
 sky		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_CAMERA_
@@ -1841,12 +1951,49 @@ sky		:				$(SKYTRAVEL_OBJECTS)					\
 							-lcfitsio							\
 							-o skytravel
 
-#							$(CONTROLLER_OBJECTS)				\
+######################################################################################
+#make opencvpp
+#pragma mark skytravel
+opencvpp		:	DEFINEFLAGS		+=	-D_INCLUDE_CTRL_MAIN_
+opencvpp		:	DEFINEFLAGS		+=	-D_ENABLE_SKYTRAVEL_
+opencvpp		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_CAMERA_
+opencvpp		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_DOME_
+opencvpp		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_FOCUSERS_
+opencvpp		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
+opencvpp		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_SWITCHES_
+opencvpp		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_TELESCOPE_
+opencvpp		:	DEFINEFLAGS		+=	-D_ENABLE_FITS_
+opencvpp		:	DEFINEFLAGS		+=	-D_CONTROLLER_USES_ALPACA_
+opencvpp		:	DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_CONTROLLER_
+opencvpp		:	DEFINEFLAGS		+=	-D_ENABLE_SLIT_TRACKER_
+opencvpp		:	DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
+opencvpp		:	DEFINEFLAGS		+=	-D_ENABLE_GAIA_
+opencvpp		:	DEFINEFLAGS		+=	-D_ENABLE_ASTERIODS_
+opencvpp		:	DEFINEFLAGS		+=	-D_ENABLE_REMOTE_SQL_
+opencvpp		:	DEFINEFLAGS		+=	-D_ENABLE_REMOTE_GAIA_
+opencvpp		:	DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
+opencvpp		:	INCLUDES		+=	-I$(SRC_SKYTRAVEL)
+
+opencvpp		:		$(SKYTRAVEL_OBJECTS)					\
+						$(GAIA_SQL_OBJECTS)						\
+						$(CONTROLLER_BASE_OBJECTS)				\
+
+
+				$(LINK)  										\
+							$(SKYTRAVEL_OBJECTS)				\
+							$(GAIA_SQL_OBJECTS)					\
+							$(CONTROLLER_BASE_OBJECTS)			\
+							$(OPENCV_LINK)						\
+							-lpthread							\
+							-lmysqlclient						\
+							-lcfitsio							\
+							-o skytravel
 
 
 ######################################################################################
 #make sql
 #pragma mark camera-controller
+sql		:	DEFINEFLAGS		+=	-D_USE_OPENCV_
 sql		:	DEFINEFLAGS		+=	-D_INCLUDE_CTRL_MAIN_
 sql		:	DEFINEFLAGS		+=	-D_ENABLE_SKYTRAVEL_
 sql		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_CAMERA_
@@ -1884,38 +2031,23 @@ sql		:				$(SKYTRAVEL_OBJECTS)				\
 
 
 
-######################################################################################
-#pragma mark camera-controller
-#	make domectrl
-domectrl		:	DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
-domectrl		:	DEFINEFLAGS		+=	-D_INCLUDE_CTRL_MAIN_
-domectrl		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_DOME_
-#domectrl		:	DEFINEFLAGS		+=	-D_ENABLE_SLIT_TRACKER_
-domectrl		:	DEFINEFLAGS		+=	-D_CONTROLLER_USES_ALPACA_
-
-
-domectrl		:			$(CONTROLLER_OBJECTS)
-
-				$(LINK)  										\
-							$(CONTROLLER_OBJECTS)				\
-							$(OPENCV_LINK)						\
-							-lpthread							\
-							-o domectrl
 
 ######################################################################################
 NETTEST_OBJECTS=												\
+				$(OBJECT_DIR)cpu_stats.o						\
+				$(OBJECT_DIR)commoncolor.o						\
 				$(OBJECT_DIR)controller_main.o					\
 				$(OBJECT_DIR)controller.o						\
 				$(OBJECT_DIR)controller_nettest.o				\
 				$(OBJECT_DIR)controllerAlpaca.o					\
+				$(OBJECT_DIR)discovery_lib.o					\
+				$(OBJECT_DIR)helper_functions.o					\
+				$(OBJECT_DIR)json_parse.o						\
+				$(OBJECT_DIR)linuxerrors.o						\
+				$(OBJECT_DIR)sendrequest_lib.o					\
 				$(OBJECT_DIR)windowtab.o						\
 				$(OBJECT_DIR)windowtab_about.o					\
 				$(OBJECT_DIR)windowtab_nettest.o				\
-				$(OBJECT_DIR)discovery_lib.o					\
-				$(OBJECT_DIR)json_parse.o						\
-				$(OBJECT_DIR)commoncolor.o						\
-				$(OBJECT_DIR)sendrequest_lib.o					\
-				$(OBJECT_DIR)cpu_stats.o						\
 
 
 ######################################################################################

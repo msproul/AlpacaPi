@@ -34,6 +34,8 @@ extern bool					gDiscoveryThreadKeepRunning;
 int		StartDiscoveryListenThread(const int alpacaListenPort);
 int		StartDiscoveryQuerryThread(void);
 void	Discovery_ClearIPAddrList(void);
+void	ResetExternalIPaddress(void);
+
 
 int	GetMySubnetNumber(void);
 

@@ -100,14 +100,21 @@ class WindowTabDome: public WindowTab
 		// Construction
 		//
 				WindowTabDome(	const int	xSize,
-									const int	ySize,
-									CvScalar	backGrndColor,
-									const char	*windowName,
-									const bool	parentIsSkyTravel = false);
+								const int	ySize,
+								cv::Scalar	backGrndColor,
+								const char	*windowName,
+								const bool	parentIsSkyTravel = false);
 		virtual	~WindowTabDome(void);
 
 		virtual	void	SetupWindowControls(void);
-		virtual	void	DrawGraphWidget(IplImage *openCV_Image, const int widgetIdx);
+	#ifdef _USE_OPENCV_CPP_
+		virtual	void	DrawWidgetCustomGraphic(cv::Mat *openCV_Image, const int widgetIdx);
+				void	DrawDomeGraphic(cv::Mat *openCV_Image, TYPE_WIDGET *theWidget);
+	#else
+		virtual	void	DrawWidgetCustomGraphic(IplImage *openCV_Image, const int widgetIdx);
+				void	DrawDomeGraphic(IplImage *openCV_Image, TYPE_WIDGET *theWidget);
+	#endif // _USE_OPENCV_CPP_
+
 		virtual	void	ProcessButtonClick(const int buttonIdx);
 		virtual	void	ProcessDoubleClick(	const int	widgetIdx,
 											const int	event,
@@ -120,7 +127,6 @@ class WindowTabDome: public WindowTab
 				void	SetDomePropertiesPtr(TYPE_DomeProperties *domePropPtr);
 
 				void	UpdateDomeAzimuth(const double newAzimuth);
-				void	DrawDomeGraphic(IplImage *openCV_Image, TYPE_WIDGET *theWidget);
 
 				void	ResetKnownCommands(void);
 				bool	SendAlpacaCmdToDome(	const char		*theCommand,

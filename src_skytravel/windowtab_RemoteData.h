@@ -82,9 +82,9 @@ class WindowTabRemoteData: public WindowTab
 		// Construction
 		//
 				WindowTabRemoteData(	const int	xSize,
-								const int	ySize,
-								CvScalar	backGrndColor,
-								const char	*windowName);
+										const int	ySize,
+										cv::Scalar	backGrndColor,
+										const char	*windowName);
 		virtual	~WindowTabRemoteData(void);
 
 		virtual	void	RunBackgroundTasks(void);

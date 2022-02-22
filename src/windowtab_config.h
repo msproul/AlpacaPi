@@ -61,11 +61,15 @@ class WindowTabConfig: public WindowTab
 		//
 		// Construction
 		//
-				WindowTabConfig(const int xSize, const int ySize, CvScalar backGrndColor);
+				WindowTabConfig(const int xSize, const int ySize, cv::Scalar backGrndColor);
 		virtual	~WindowTabConfig(void);
 
 		virtual	void	SetupWindowControls(void);
-		virtual	void	DrawGraphWidget(IplImage *openCV_Image, const int widgetIdx);
+	#ifdef _USE_OPENCV_CPP_
+		virtual	void	DrawWidgetCustomGraphic(cv::Mat *openCV_Image, const int widgetIdx);
+	#else
+		virtual	void	DrawWidgetCustomGraphic(IplImage *openCV_Image, const int widgetIdx);
+	#endif // _USE_OPENCV_CPP_
 
 
 };

@@ -292,6 +292,10 @@ char				jpegFileName[64];
 
 			sprintf(jpegFileName, "image%dx%d.png", openCvImgPtr->width, openCvImgPtr->height);
 			openCVerr	=	cvSaveImage(jpegFileName, openCvImgPtr, quality);
+			if (openCVerr != 1)
+			{
+				CONSOLE_DEBUG_W_NUM("cvSaveImage returned", openCVerr);
+			}
 		}
 		fclose(filePointer);
 	}
@@ -335,6 +339,6 @@ char		extension[8];
 		CONSOLE_DEBUG_W_STR("imageFileName\t=", imageFileName);
 		openCvImgPtr	=	cvLoadImage(imageFileName, CV_LOAD_IMAGE_COLOR);
 	}
-	CONSOLE_DEBUG_W_HEX("openCvImgPtr\t=", openCvImgPtr);
+//	CONSOLE_DEBUG_W_HEX("openCvImgPtr\t=", openCvImgPtr);
 	return(openCvImgPtr);
 }

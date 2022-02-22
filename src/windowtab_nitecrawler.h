@@ -104,14 +104,19 @@ class WindowTabNitecrawler: public WindowTab
 		//
 		//		WindowTabNitecrawler(const int xSize, const int ySize);
 				WindowTabNitecrawler(	const int	xSize,
-									const int	ySize,
-									CvScalar	backGrndColor,
-									const int	comMode,
-									const char	*windowName=NULL);
+										const int	ySize,
+										cv::Scalar	backGrndColor,
+										const int	comMode,
+										const char	*windowName=NULL);
 		virtual	~WindowTabNitecrawler(void);
 
 		virtual	void	SetupWindowControls(void);
-		virtual	void	DrawGraphWidget(IplImage *openCV_Image, const int widgetIdx);
+	#ifdef _USE_OPENCV_CPP_
+		virtual	void	DrawWidgetCustomGraphic(cv::Mat *openCV_Image, const int widgetIdx);
+	#else
+		virtual	void	DrawWidgetCustomGraphic(IplImage *openCV_Image, const int widgetIdx);
+	#endif // _USE_OPENCV_CPP_
+				void	DrawRotatorCompass(TYPE_WIDGET *theWidget);
 		virtual	void	ProcessButtonClick(const int buttonIdx);
 		virtual	void	ProcessDoubleClick(const int buttonIdx);
 

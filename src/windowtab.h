@@ -9,9 +9,13 @@
 #endif // _ARPA_INET_H
 
 
-#include "opencv/highgui.h"
-#include "opencv2/highgui/highgui_c.h"
-#include "opencv2/imgproc/imgproc_c.h"
+#ifdef _USE_OPENCV_CPP_
+	#include	<opencv2/opencv.hpp>
+#else
+	#include "opencv/highgui.h"
+	#include "opencv2/highgui/highgui_c.h"
+	#include "opencv2/imgproc/imgproc_c.h"
+#endif // _USE_OPENCV_CPP_
 
 #ifndef _JSON_PARSE_H_
 	#include	"json_parse.h"
@@ -21,18 +25,16 @@
 	#include	"widget.h"
 #endif // _WIDGET_H_
 
-
 //*****************************************************************************
 typedef struct
 {
-	CvScalar	bgColor;
-	CvScalar	fontColor;
-	CvScalar	borderColor;
+	cv::Scalar	bgColor;
+	cv::Scalar	fontColor;
+	cv::Scalar	borderColor;
 
-	CvScalar	btnColor;
-	CvScalar	btnFontColor;
-	CvScalar	btnBorderColor;
-
+	cv::Scalar	btnColor;
+	cv::Scalar	btnFontColor;
+	cv::Scalar	btnBorderColor;
 
 } TYPE_WINDOWTAB_COLORSCHEME;
 
@@ -97,6 +99,12 @@ enum
 		W_STAR_G,
 		W_STAR_K,
 		W_STAR_M,
+
+		W_FILTER_OIII,	//*	these are for filter colors
+		W_FILTER_HA,
+		W_FILTER_SII,
+
+
 		W_COLOR_LAST
 
 };
@@ -109,10 +117,17 @@ class WindowTab
 		//
 		// Construction
 		//
+			#ifdef _USE_OPENCV_CPP_
 				WindowTab(	const int	xSize,
 							const int	ySize,
-							CvScalar	backGrndColor,
+							cv::Scalar	backGrndColor,
 							const char	*windowName=NULL);
+			#else
+				WindowTab(	const int	xSize,
+							const int	ySize,
+							cv::Scalar	backGrndColor,
+							const char	*windowName=NULL);
+			#endif // _USE_OPENCV_CPP_
 		virtual	~WindowTab(void);
 
 				//*	set up functions
@@ -122,10 +137,18 @@ class WindowTab
 				void	SetWidgetType(			const int widgetIdx, const int widetType);
 				void	SetWidgetFont(			const int widgetIdx, int fontNum);
 				void	SetWidgetJustification(	const int widgetIdx, int justification);
-				void	SetWidgetTextColor(		const int widgetIdx, CvScalar newtextColor);
-				void	SetWidgetBGColor(		const int widgetIdx, CvScalar newtextColor);
-				void	SetWidgetBorderColor(	const int widgetIdx, CvScalar newtextColor);
+			#ifdef _USE_OPENCV_CPP_
+				void	SetWidgetTextColor(		const int widgetIdx, cv::Scalar newtextColor);
+				void	SetWidgetBGColor(		const int widgetIdx, cv::Scalar newtextColor);
+				void	SetWidgetBorderColor(	const int widgetIdx, cv::Scalar newtextColor);
+				void	SetWidgetImage(			const int widgetIdx, cv::Mat *argImagePtr);
+			#else
+				void	SetWidgetTextColor(		const int widgetIdx, cv::Scalar newtextColor);
+				void	SetWidgetBGColor(		const int widgetIdx, cv::Scalar newtextColor);
+				void	SetWidgetBorderColor(	const int widgetIdx, cv::Scalar newtextColor);
 				void	SetWidgetImage(			const int widgetIdx, IplImage *argImagePtr);
+			#endif // _USE_OPENCV_CPP_
+
 				void	SetWidgetOutlineBox(	const int widgetIdx, const int firstItem, const int lastItem);
 				void	SetWidgetProgress(		const int widgetIdx, const int currPosition, const int totalValue);
 				void	DumpWidgetList(			const int startIdx, const int stopIdx);
@@ -190,7 +213,13 @@ class WindowTab
 		virtual	void	UpdateColors(void);
 
 
-		virtual	void	DrawGraphWidget(IplImage *openCV_Image, const int widgetIdx);
+#ifdef _USE_OPENCV_CPP_
+		virtual	void	DrawWidgetCustomGraphic(cv::Mat *openCV_Image, const int widgetIdx);
+				void	SetHelpTextBoxColor(cv::Scalar newtextColor);
+#else
+		virtual	void	DrawWidgetCustomGraphic(IplImage *openCV_Image, const int widgetIdx);
+				void	SetHelpTextBoxColor(cv::Scalar newtextColor);
+#endif // _USE_OPENCV_CPP_
 
 		virtual	void	SetWindowIPaddrInfo(const char	*textString = NULL,
 											const bool	onLine = true);
@@ -227,7 +256,6 @@ class WindowTab
 				void	SetUpConnectedIndicator(const int buttonIdx, const int yLoc);
 
 				void	SetHelpTextBoxNumber(const int buttonIdx);
-				void	SetHelpTextBoxColor(CvScalar newtextColor);
 				bool	DisplayButtonHelpText(const int buttonIdx);
 
 
@@ -237,22 +265,32 @@ class WindowTab
 		//*	switch graphic environments later. Also they make it easier to
 		//*	incorporate some older code
 		//=============================================================
-		void		CPenSize(const int newLineWidth);
-		void		CMoveTo(const int xx, const int yy);
-		void		CLineTo(const int xx, const int yy);
-		void		DrawCString(const int xx, const int yy, const char *theString, const int fontIndex=1);
+//		void		DrawCString(const int xx, const int yy, const char *theString, const int fontIndex=1);
+		int			GetTextSize_Width(const char *textString, const int fontIndex=1);
 		void		SetColor(const int theColor);
 
-		void		Putpixel(const int xx, const int yy, const int theColor);
-		void		FillEllipse(int xCenter, int yCenter, int xRadius, int yRadius);
-		void		FrameEllipse(int xCenter, int yCenter, int xRadius, int yRadius);
-		void		FloodFill(const int xxx, const int yyy, const int color);
-
+		void		LLD_DrawCString(	const int xx, const int yy, const char *textString, const int fontIndex=1);
+		void		LLD_FrameEllipse(	int xCenter, int yCenter, int xRadius, int yRadius);
+		void		LLD_FrameRect(		int left, int top, int width, int height, int lineWidth=1);
+		void		LLD_FillEllipse(	int xCenter, int yCenter, int xRadius, int yRadius);
+		void		LLD_FillRect(		int left, int top, int width, int height);
+		void		LLD_FloodFill(		const int xxx, const int yyy, const int color);
+		int			LLD_GetTextSize(	const char *textString, const int fontIndex);
+		void		LLD_LineTo(			const int xx, const int yy);
+		void		LLD_MoveTo(			const int xx, const int yy);
+		void		LLD_PenSize(		const int newLineWidth);
+		void		LLD_Putpixel(	const int xx, const int yy, const int theColor);
+#ifdef _USE_OPENCV_CPP_
+		cv::Mat		*cOpenCV_Image;
+#else
 		IplImage	*cOpenCV_Image;
+#endif // _USE_OPENCV_CPP_
+		cv::Scalar	cCurrentColor;
+
 		int			cCurrentXloc;
 		int			cCurrentYloc;
-		CvScalar	cCurrentColor;
 		int			cCurrentLineWidth;
+
 
 		TYPE_WIDGET	cWidgetList[kMaxWidgets];
 		int			cWidgetCnt;
@@ -323,7 +361,7 @@ virtual	void	AlpacaDisplayErrorMessage(const char *errorMsgString);
 //-		char				cLastAlpacaCmdString[256];
 
 		int					cHelpTextBoxNumber;	//*	index of the box for help text (-1 is not set)
-		CvScalar 			cHelpTextBoxColor;
+		cv::Scalar			cHelpTextBoxColor;
 		int					cPrevDisplayedHelpBox;
 		int					cConnectedStateBoxNumber;
 
@@ -333,7 +371,12 @@ virtual	void	AlpacaDisplayErrorMessage(const char *errorMsgString);
 		char				cLastAlpacaErrStr[512];
 };
 
-void	SetRect(CvRect *theRect, const int top, const int left, const int bottom, const int right);
-void	InsetRect(CvRect *theRect, const int xInset, const int yInset);
+#ifdef _USE_OPENCV_CPP_
+	void	SetRect(cv::Rect *theRect, const int top, const int left, const int bottom, const int right);
+	void	InsetRect(cv::Rect *theRect, const int xInset, const int yInset);
+#else
+	void	SetRect(CvRect *theRect, const int top, const int left, const int bottom, const int right);
+	void	InsetRect(CvRect *theRect, const int xInset, const int yInset);
+#endif // _USE_OPENCV_CPP_
 
 #endif // _WINDOW_TAB_H_

@@ -1,10 +1,10 @@
-History Comments found =1600 in 293 files
+History Comments found =1618 in 293 files
 eph.c:10                 	//*	May  2,	1996	<MLS> (Mark Sproul) Starting on SkyTravel for Frank and Clif
 StarData.c:7             	//*	May  2,	1996	<MLS> (Mark Sproul) Starting on SkyTravel for Frank and Clif
 StarData.c:8             	//*	Nov 18,	1999	<MLS> restarting efforts
 eph.c:11                 	//*	Nov 20,	1999	<MLS> Minor formatting cleanup to improve readability
 StarData.c:9             	//*	Nov 20,	1999	<MLS> major re-writing and re-organization
-alpaca_defs.h:35         	//*	Jan  1,	2019	-----------------------------------------------------------
+alpaca_defs.h:37         	//*	Jan  1,	2019	-----------------------------------------------------------
 socket_listen.c:17       	//*	Feb 14,	2019	<MLS> Started on socket_listen.c
 socket_listen.h:11       	//*	Feb 14,	2019	<MLS> Started on socket_listen.h
 alpacadriver.cpp:34      	//*	Apr  5,	2019	<MLS> Attended lecture by Bob Denny introducing Alpaca protocol
@@ -333,7 +333,7 @@ obsconditionsdriver_rpi.cpp:22	//*	Dec 31,	2019	<MLS> Working with RTIMULib on R
 obsconditionsdriver_rpi.cpp:23	//*	Dec 31,	2019	<MLS> The Temperature value on the R-Pi is not valid for use
 alpacadriver.cpp:79      	//*	Jan  1,	2020	<MLS> Added ability to set title for web page,
 alpacadriver.cpp:80      	//*	Jan  1,	2020	<MLS> Moved OutputHTMLrowData() to base class
-alpaca_defs.h:36         	//*	Jan  1,	2020	-----------------------------------------------------------
+alpaca_defs.h:38         	//*	Jan  1,	2020	-----------------------------------------------------------
 filterwheeldriver.cpp:34 	//*	Jan  1,	2020	<MLS> Filterwheel description list was not being initialized
 focuserdriver_nc.cpp:41  	//*	Jan  1,	2020	<MLS> Added OpenFocuserConnection() to separate functionality
 focuserdriver_nc.cpp:42  	//*	Jan  1,	2020	<MLS> Successfully tested 2 NiteCrawlers attached to the same R-Pi
@@ -422,7 +422,7 @@ cameradriver_ASI.cpp:73  	//*	Feb 16,	2020	<MLS> Added Read_Gain() & Write_Gain(
 cameradriver_ATIK.cpp:48 	//*	Feb 16,	2020	<MLS> Added Read_Gain() & Write_Gain()
 alpacadriver.cpp:88      	//*	Feb 18,	2020	<MLS> Added -q (quiet) -v (verbose default) options to command line
 cameradriver.cpp:88      	//*	Feb 18,	2020	<MLS> Fixed bug in live view when image format gets changed
-cameradriver_opencv.cpp:352	//*	Feb 18,	2020	<MLS> Fixed bug in live view when image format gets changed
+cameradriver_opencv.cpp:357	//*	Feb 18,	2020	<MLS> Fixed bug in live view when image format gets changed
 cameradriver_opencv.cpp:30	//*	Feb 19,	2020	<MLS> Started opencv mouse handling in image window
 cameradriver_opencv.cpp:31	//*	Feb 19,	2020	<MLS> Added SetOpenCVcallbackFunction()
 cameradriver_opencv.cpp:32	//*	Feb 19,	2020	<MLS> Added ProcessMouseEvent() & DrawCrossHairs()
@@ -929,7 +929,7 @@ eph.c:12                 	//*	Jan  2,	2021	<MLS> More formatting cleanup
 lx200_com.c:23           	//*	Jan  2,	2021	<MLS> Fixed 0->24 hour bug in handling of Right Ascension
 windowtab_skytravel.cpp:23	//*	Jan  2,	2021	<MLS> Double click centers display
 windowtab_skytravel.cpp:24	//*	Jan  2,	2021	<MLS> Double click in LX200 RA/DEC box centers on scope
-windowtab_skytravel.cpp:2319	//*	Jan  2,	2021	<MLS> Added fix to displayed cursor RA to make sure its > 0
+windowtab_skytravel.cpp:2329	//*	Jan  2,	2021	<MLS> Added fix to displayed cursor RA to make sure its > 0
 lx200_com.c:24           	//*	Jan  3,	2021	<MLS> Added error msg to LX200_StartThread()
 lx200_com.c:25           	//*	Jan  3,	2021	<MLS> Added bounds checking to RA/DEC values rcvd from LX200
 lx200_com.c:26           	//*	Jan  3,	2021	<MLS> Added LX200_SyncScope()
@@ -948,7 +948,7 @@ ConstellationData.c:6    	//*	Jan  5,	2021	<MLS> Added ReadConstellationOutlines
 ConstellationData.c:7    	//*	Jan  5,	2021	<MLS> Reading data from https://www.iau.org/public/themes/constellations/
 ConstellationData.h:8    	//*	Jan  5,	2021	<MLS> Created ConstellationData.h
 windowtab.cpp:41         	//*	Jan  5,	2021	<MLS> Added RunBackgroundTasks()
-windowtab.cpp:42         	//*	Jan  5,	2021	<MLS> Added CPenSize()
+windowtab.cpp:42         	//*	Jan  5,	2021	<MLS> Added LLD_PenSize()
 windowtab_skytravel.cpp:32	//*	Jan  5,	2021	<MLS> Added DrawConstellationOutLines()
 windowtab_skytravel.cpp:33	//*	Jan  5,	2021	<MLS> Added another zoom level
 controller.cpp:51        	//*	Jan  6,	2021	<MLS> Started on text input field
@@ -1210,7 +1210,7 @@ windowtab_skytravel.cpp:52	//*	Mar 11,	2021	<MLS> Clif suggested a different way
 cameradriver.cpp:139     	//*	Mar 13,	2021	<MLS> Added "saveallimages" command, logic was already in place
 cameradriver.cpp:140     	//*	Mar 13,	2021	<MLS> Added Put_SaveAllImages()
 controller_skytravel.cpp:16	//*	Mar 13,	2021	<MLS> Added AlpacaGetStartupData_Camera()
-discoverythread.c:453    	//*	Mar 13,	2021	<MLS> Added timeout to GetJsonResponse()
+discoverythread.c:455    	//*	Mar 13,	2021	<MLS> Added timeout to GetJsonResponse()
 sendrequest_lib.c:35     	//*	Mar 13,	2021	<MLS> Added timeout to GetJsonResponse()
 sendrequest_lib.c:36     	//*	Mar 13,	2021	<MLS> Added SetSocketTimeouts()
 sendrequest_lib.c:37     	//*	Mar 13,	2021	<MLS> Added send timeout
@@ -1569,7 +1569,7 @@ windowtab_skytravel.cpp:97	//*	Jan 22,	2022	<MLS> Fixed bug when drawing stars w
 YaleStarCatalog.c:5      	//*	Jan 22,	2022	<MLS> Getting rid of leading digits in Yale star name
 windowtab_skytravel.cpp:98	//*	Jan 23,	2022	<MLS> Added user settable parameters for star size calculations (cFaintLimit_B)
 windowtab_skytravel.cpp:99	//*	Jan 23,	2022	<MLS> Control and mouse wheel adjust Faint Limit (cFaintLimit_B)
-windowtab_skytravel.cpp:4011	//*	Jan 23,	2022	<MLS> No longer precessing Messier objects data
+windowtab_skytravel.cpp:4018	//*	Jan 23,	2022	<MLS> No longer precessing Messier objects data
 AsteroidData.c:20        	//*	Jan 24,	2022	<MLS> Asteroids without magnitude now default to 10
 windowtab.cpp:62         	//*	Jan 24,	2022	<MLS> Added flags argument to ProcessMouseWheelMoved()
 GaiaSQL.cpp:28           	//*	Jan 25,	2022	<MLS> Changed UpdateSkyTravelView() to use degrees
@@ -1586,32 +1586,50 @@ windowtab_RemoteData.cpp:24	//*	Feb 10,	2022	<MLS> Added 1x1, 3x1, and 3x3 gaia 
 GaiaSQL.cpp:30           	//*	Feb 11,	2022	<MLS> Added CheckSQLconfiguration()
 alpaca_defs.h:32         	//*	Feb 12,	2022	<MLS> Build 129
 GaiaSQL.cpp:31           	//*	Feb 12,	2022	<MLS> Added GetGAIAdataFromIDnumber()
-cameradriver.cpp:167     	//*	Jan  1,	2119	<TODO> ----------------------------------------
-cameradriver.cpp:168     	//*	Jun 26,	2119	<TODO> Add support for sub frames
+cameradriver.cpp:166     	//*	Feb 14,	2022	<MLS> Fixed crash bug when creating LiveWindow
+controller.cpp:85        	//*	Feb 17,	2022	<MLS> Started working on opencv C++ support
+controller.cpp:86        	//*	Feb 17,	2022	<MLS> Added SetFontInfo() and TYPE_FontInfo
+alpaca_defs.h:33         	//*	Feb 18,	2022	<MLS> Version V0.5.0-beta
+alpaca_defs.h:34         	//*	Feb 18,	2022	<MLS> Build 130
+controller.cpp:87        	//*	Feb 18,	2022	<MLS> Added DrawWidgetBackground()
+windowtab_camera.cpp:39  	//*	Feb 18,	2022	<MLS> Added SetCameraLogo()
+windowtab_skytravel.cpp:102	//*	Feb 18,	2022	<MLS> SkyTravel working with OpenCV-C++
+nitecrawler_image.c:7    	//*	Feb 19,	2022	<MLS> Moonlite logos working with C++ version of openCV
+windowtab.cpp:63         	//*	Feb 19,	2022	<MLS> Added GetTextSize_Width()
+windowtab_nitecrawler.cpp:28	//*	Feb 19,	2022	<MLS> Added DrawRotatorCompass()
+controller.cpp:88        	//*	Feb 20,	2022	<MLS> Added a bunch of Low Level Drawing commands LLD_....
+windowtab_filterwheel.cpp:23	//*	Feb 20,	2022	<MLS> FilterWheel display working under opencv++
+windowtab_slitgraph.cpp:23	//*	Feb 20,	2022	<MLS> Slitgraph working with OpenCV++
+discoverythread.c:25     	//*	Feb 21,	2022	<MLS> Added ResetExternalIPaddress()
+widget.h:10              	//*	Feb 21,	2022	<MLS> Changed kWidgetType_Graphic to kWidgetType_CustomGraphic
+widget.h:11              	//*	Feb 21,	2022	<MLS> Deleted kWidgetType_Custom
+windowtab.cpp:64         	//*	Feb 21,	2022	<MLS> Changed all references of CvScalar to cv::Scalar
+cameradriver.cpp:168     	//*	Jan  1,	2119	<TODO> ----------------------------------------
+cameradriver.cpp:169     	//*	Jun 26,	2119	<TODO> Add support for sub frames
 cameradriver_png.cpp:33  	//*	Jan 31,	2120	<TODO> Add support for libpng
 cameradriver_TOUP.cpp:44 	//*	Feb  4,	2120	<TODO> Add 16 bit readout to Toupcam
 cameradriver_TOUP.cpp:45 	//*	Feb 16,	2120	<TODO> Add gain setting to Toupcam
 multicam.cpp:22          	//*	Mar 29,	2120	<TODO> Change multicam commands to match updated camera commands
-cameradriver_ASI.cpp:1034	//*	Jun 29,	2120	<TODO> Change video timestamp to an option
+cameradriver_ASI.cpp:1040	//*	Jun 29,	2120	<TODO> Change video timestamp to an option
 controller_camera.cpp:64 	//*	Jan  1,	2121	<TODO> control key for different step size.
 controller_camera.cpp:65 	//*	Jan  1,	2121	<TODO> add error list window
 controller_camera.cpp:66 	//*	Jan  1,	2121	<TODO> save cross hair location
 controller_camera.cpp:67 	//*	Jan  1,	2121	<TODO> finish exposure step options
 controller_camera.cpp:68 	//*	Jan  1,	2121	<TODO> clear error msg
 controller_camera.cpp:69 	//*	Feb  6,	2121	<TODO> Move downloading of images to a separate thread
-History Comments found   = 1600 in 293 files
-Total lines              = 145507
-Total comment Lines      = 20393 (14.0%)
-Total comments           = 23441 (16.1%)
-Total history comments   = 1600 (1.1%)
+History Comments found   = 1618 in 293 files
+Total lines              = 146591
+Total comment Lines      = 20532 (14.0%)
+Total comments           = 23464 (16.0%)
+Total history comments   = 1618 (1.1%)
 Total C files            = 39
 Total C++ files          = 109
 Total H files            = 144
-Preprocssor cnt          = 4367
-Total SLOC               = 95603
-Total SLOC-Logical       = 74189
+Preprocssor cnt          = 4810
+Total SLOC               = 96331
+Total SLOC-Logical       = 74721
 Programmer comment summary
-MLS             = 1575
+MLS             = 1593
 TODO            =   13
 DDB             =    1
 PDB             =    6
