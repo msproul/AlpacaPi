@@ -548,7 +548,12 @@ TYPE_ASCOM_STATUS	alpacaErrCode;
 			{
 				//*	set the image type
 				alpacaErrCode	=	SetImageTypeCameraOpen(cDesiredImageType);
-			//	CONSOLE_DEBUG_W_NUM("cDesiredImageType\t=",		cDesiredImageType);
+				if (alpacaErrCode != kASCOM_Err_Success)
+				{
+					CONSOLE_DEBUG("Error setting desired image type");
+					CONSOLE_DEBUG_W_NUM("cDesiredImageType\t=",		cDesiredImageType);
+
+				}
 			}
 			else
 			{
@@ -991,27 +996,33 @@ char				asiErrorMsgString[64];
 TYPE_ASCOM_STATUS	CameraDriverASI::Take_Video(void)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
-bool				timeToStop;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 #ifdef _USE_OPENCV_
+
+#ifdef _USE_OPENCV_CPP_
+#warning "OpenCV++ not finished"
+	alpacaErrCode	=		kASCOM_Err_MethodNotImplemented;
+#else
 ASI_ERROR_CODE	asiErrorCode;
 int				deltaSecs;
+bool			timeToStop;
 
 	deltaSecs	=	0;
-	if (cOpenCV_Image != NULL)
+	if (cOpenCV_ImagePtr != NULL)
 	{
 	int		videoWriteRC;
 
-		memset(cOpenCV_Image->imageData, 0, cOpenCV_Image->imageSize);
+		memset(cOpenCV_ImagePtr->imageData, 0, cOpenCV_ImagePtr->imageSize);
 
 		asiErrorCode	=	ASIGetVideoData(cCameraID,
-											(unsigned char*)cOpenCV_Image->imageData,
-											cOpenCV_Image->imageSize,
+											(unsigned char*)cOpenCV_ImagePtr->imageData,
+											cOpenCV_ImagePtr->imageSize,
 											-1);
 		if (asiErrorCode == ASI_SUCCESS)
 		{
+
 			cNumVideoFramesSaved++;
 //#define _DEBUG_VIDEO_
 		#ifdef _DEBUG_VIDEO_
@@ -1021,7 +1032,7 @@ int				deltaSecs;
 
 			sprintf(imageFilePath, "%s/DEBUG_IMG%03d.jpg", kImageDataDir, cNumVideoFramesSaved);
 			CONSOLE_DEBUG(imageFilePath);
-			openCVerr	=	cvSaveImage(imageFilePath, cOpenCV_Image, quality);
+			openCVerr	=	cvSaveImage(imageFilePath, cOpenCV_ImagePtr, quality);
 
 			CONSOLE_DEBUG_W_NUM("openCVerr\t=", openCVerr);
 		#endif // _DEBUG_VIDEO_
@@ -1048,10 +1059,10 @@ int				deltaSecs;
 					#define	kTextBoxHeight	35
 					//*	first erase the text area
 					myCVrect.x		=	0;
-					myCVrect.y		=	cOpenCV_Image->height - kTextBoxHeight;
-					myCVrect.width	=	cOpenCV_Image->width;
+					myCVrect.y		=	cOpenCV_ImagePtr->height - kTextBoxHeight;
+					myCVrect.width	=	cOpenCV_ImagePtr->width;
 					myCVrect.height	=	kTextBoxHeight;
-					cvRectangleR(	cOpenCV_Image,
+					cvRectangleR(	cOpenCV_ImagePtr,
 									myCVrect,
 									cSideBarBlk,				//	color,
 									CV_FILLED,					//	int thickness CV_DEFAULT(1),
@@ -1060,12 +1071,12 @@ int				deltaSecs;
 
 					FormatTimeStringISO8601(&cCameraProp.Lastexposure_EndTime, timeStampString);
 					point1.x	=	5;
-					point1.y	=	cOpenCV_Image->height - 10;
-					cvPutText(	cOpenCV_Image,	timeStampString,	point1,	&cOverlayTextFont,	cVideoOverlayColor);
+					point1.y	=	cOpenCV_ImagePtr->height - 10;
+					cvPutText(	cOpenCV_ImagePtr,	timeStampString,	point1,	&cOverlayTextFont,	cVideoOverlayColor);
 
-					point1.x	=	cOpenCV_Image->width / 2;
+					point1.x	=	cOpenCV_ImagePtr->width / 2;
 					sprintf(testDataString, "S-%s,%s", cObjectName, cAuxTextTag);
-					cvPutText(	cOpenCV_Image,	testDataString,	point1,	&cOverlayTextFont,	cVideoOverlayColor);
+					cvPutText(	cOpenCV_ImagePtr,	testDataString,	point1,	&cOverlayTextFont,	cVideoOverlayColor);
 
 					if (cVideoTimeStampFilePtr != NULL)
 					{
@@ -1079,7 +1090,7 @@ int				deltaSecs;
 																			lastExposureTimeSecs);
 					}
 				}
-				videoWriteRC	=	cvWriteFrame(cOpenCV_videoWriter, cOpenCV_Image);
+				videoWriteRC	=	cvWriteFrame(cOpenCV_videoWriter, cOpenCV_ImagePtr);
 				if (videoWriteRC != 1)
 				{
 					CONSOLE_DEBUG_W_NUM("videoWriteRC\t=", videoWriteRC);
@@ -1109,7 +1120,7 @@ int				deltaSecs;
 	}
 	else
 	{
-		CONSOLE_DEBUG("cOpenCV_Image == NULL");
+		CONSOLE_DEBUG("cOpenCV_ImagePtr == NULL");
 		cInternalCameraState	=	kCameraState_Idle;
 		CONSOLE_ABORT(__FUNCTION__);
 	}
@@ -1161,6 +1172,8 @@ int				deltaSecs;
 
 		WriteFireCaptureTextFile();
 	}
+#endif // _USE_OPENCV_CPP_
+
 #endif	//	_USE_OPENCV_
 	return(alpacaErrCode);
 }
@@ -1528,7 +1541,7 @@ long			ltemp		=	0;
 												-1);
 		//	cvShowImage(theCamera->cameraName, myOpenCVimgPtr);
 			cvShowImage("camera", myOpenCVimgPtr);
-			cvWaitKey(1);
+			cv::waitKey(1);
 			if (asiErrorCode == ASI_SUCCESS)
 			{
 				// Read current camera parameters

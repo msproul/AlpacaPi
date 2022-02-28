@@ -228,24 +228,29 @@ class Controller
 		virtual	void	RefreshWindow(void);
 		//======================================================================
 		//*	Low Level draw routines
-		void		LLD_MoveTo(const int xx, const int yy);
-		void		LLD_LineTo(const int xx, const int yy);
-		void		LLD_FrameRect(	int left, int top, int width, int height, int lineWidth=1);
-		void		LLD_FillRect(	int left, int top, int width, int height);
-		void		LLD_FillEllipse(	int xCenter, int yCenter, int xRadius, int yRadius);
-		void		LLD_FrameEllipse(	int xCenter, int yCenter, int xRadius, int yRadius);
-		void		LLD_DrawCString(int xx, int yy, char *textString, int fontIndex=1);
-		int			LLD_GetTextSize(const char *textString, const int fontIndex);
+		void		LLD_DrawCString(	const int xx, const int yy, const char *textString, const int fontIndex=1);
+		void		LLD_FrameEllipse(	const int xCenter, int yCenter, int xRadius, int yRadius);
+		void		LLD_FrameRect(		const int left, const int top, const int width, const int height, const int lineWidth=1);
+		void		LLD_FrameRect(		cv::Rect *theRect);
+		void		LLD_FillRect(		const int left, const int top, const int width, const int height);
+		void		LLD_FillRect(		cv::Rect *theRect);
+
+		void		LLD_FillEllipse(	const int xCenter, const int yCenter, const int xRadius, int const yRadius);
+		void		LLD_FloodFill(		const int xxx, const int yyy, const int color);
+		int			LLD_GetTextSize(	const char *textString, const int fontIndex);
+		void		LLD_LineTo(			const int xx, const int yy);
+		void		LLD_MoveTo(			const int xx, const int yy);
+		void		LLD_PenSize(		const int newLineWidth);
+//+		void		LLD_Putpixel(		const int xx, const int yy, const int theColor);
+//+		void		LLD_SetColor(		const int theColor);
 
 #ifdef _USE_OPENCV_CPP_
 		cv::Mat		*cOpenCV_matImage;
-		cv::Scalar	cBackGrndColor;
-		cv::Scalar	cCurrentColor;
 #else
 		IplImage	*cOpenCV_Image;
+#endif
 		cv::Scalar	cBackGrndColor;
 		cv::Scalar	cCurrentColor;
-#endif
 		int			cCurrentXloc;
 		int			cCurrentYloc;
 		int			cCurrentLineWidth;

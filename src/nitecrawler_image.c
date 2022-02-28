@@ -78,7 +78,8 @@ cv::Mat	*GetMoonLiteImage(void)
 
 	if (gMoonLiteImgPtr == NULL)
 	{
-		gMoonLiteImg	=	cv::imread("logos/Moonlite-logo.png", CV_LOAD_IMAGE_COLOR);
+	//	gMoonLiteImg	=	cv::imread("logos/Moonlite-logo.png", CV_LOAD_IMAGE_COLOR);
+		gMoonLiteImg	=	cv::imread("logos/Moonlite-logo.png");
 		gMoonLiteImgPtr	=	&gMoonLiteImg;
 		if (gMoonLiteImgPtr == NULL)
 		{

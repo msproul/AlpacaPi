@@ -73,7 +73,8 @@ class WindowTabSlitGraph: public WindowTab
 #endif // _USE_OPENCV_CPP_
 
 				void	DrawSlitGraph(TYPE_WIDGET *theWidget);
-				void	DrawTickLine(CvRect *widgetRect, int yLoc);
+		//		void	DrawTickLine(CvRect *widgetRect, int yLoc);
+				void	DrawTickLine(cv::Rect *widgetRect, int yLoc);
 
 				bool		cDisplayClockData[kSensorValueCnt];
 				cv::Scalar	cSLitTrackColors[kSensorValueCnt];

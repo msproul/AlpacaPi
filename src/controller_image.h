@@ -49,26 +49,33 @@ class ControllerImage: public Controller
 												const char				*objectName
 												);
 			#ifdef _USE_OPENCV_CPP_
-				void	SetLiveWindowImage(cv::Mat *newOpenCVImage);
-				void	UpdateLiveWindowImage(cv::Mat *newOpenCVImage, const char *imageFileName=NULL);
-				void	CopyImageToLiveImage(cv::Mat *newOpenCVImage);
+				void	SetLiveWindowImage(		cv::Mat *newOpenCVImage);
+				void	UpdateLiveWindowImage(	cv::Mat *newOpenCVImage, const char *imageFileName=NULL);
+				void	CopyImageToLiveImage(	cv::Mat *newOpenCVImage);
 
 				cv::Mat *cDownLoadedImage;
 				cv::Mat *cDisplayedImage;
 				cv::Mat *cColorImage;
 			#else
-				void	SetLiveWindowImage(IplImage *newOpenCVImage);
-				void	UpdateLiveWindowImage(IplImage *newOpenCVImage, const char *imageFileName=NULL);
-				void	CopyImageToLiveImage(IplImage *newOpenCVImage);
+				void	SetLiveWindowImage(		IplImage *newOpenCVImage);
+				void	UpdateLiveWindowImage(	IplImage *newOpenCVImage, const char *imageFileName=NULL);
+				void	CopyImageToLiveImage(	IplImage *newOpenCVImage);
 
 				IplImage *cDownLoadedImage;
 				IplImage *cDisplayedImage;
 				IplImage *cColorImage;
 			#endif // _USE_OPENCV_CPP_
 
-		//*	tab information
+				//*	tab information
 				WindowTabImage		*cImageTabObjPtr;
 				WindowTabAbout		*cAboutBoxTabObjPtr;
+
+				//----------------------------------------------------
+				//*	image information
+				TYPE_CameraProperties	cCameraProp;
+//				TYPE_IMAGE_ROI_Info		cROIinfo;
+
+
 };
 
 

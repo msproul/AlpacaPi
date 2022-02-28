@@ -171,8 +171,8 @@ class ControllerCamera: public Controller
 				void	LogCameraTemp(const double cameraTemp);
 
 
-			#if defined(_USE_OPENCV_CPP_) &&  (CV_MAJOR_VERSION >= 4)
-				#warning "CV_MAJOR_VERSION >= 4"
+//			#if defined(_USE_OPENCV_CPP_) &&  (CV_MAJOR_VERSION >= 4)
+			#if defined(_USE_OPENCV_CPP_)
 				cv::Mat		*DownloadImage_rgbarray(void);
 				cv::Mat		*DownloadImage_imagearray(const bool force8BitRead, const bool allowBinary);
 				cv::Mat		*DownloadImage(const bool force8BitRead,  const bool allowBinary);

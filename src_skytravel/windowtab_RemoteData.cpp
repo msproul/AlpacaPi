@@ -81,12 +81,9 @@ void	WindowTabRemoteData::SetupWindowControls(void)
 {
 int		yLoc;
 int		xLoc;
-int		xLoc2;
 int		valueWitdth1;
 int		valueWitdth2;
 int		valueWitdth3;
-int		valueWitdth4;
-int		fullBoxWidth;
 int		iii;
 
 	CONSOLE_DEBUG(__FUNCTION__);
@@ -157,6 +154,10 @@ int		iii;
 
 
 #ifdef 	_ENABLE_REMOTE_GAIA_
+int		xLoc2;
+int		valueWitdth4;
+int		fullBoxWidth;
+
 	yLoc			+=	20;
 	valueWitdth1	=	200;
 	valueWitdth2	=	350;
@@ -306,9 +307,12 @@ uint32_t			deltaMilliSecs;
 //*****************************************************************************
 void	WindowTabRemoteData::ProcessButtonClick(const int buttonIdx)
 {
-char				searchText[64];
-TYPE_CelestData		gaiaStarData;
-bool				validGaiaData;
+#ifdef 	_ENABLE_REMOTE_GAIA_
+	char				searchText[64];
+	TYPE_CelestData		gaiaStarData;
+	bool				validGaiaData;
+#endif
+
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 //	CONSOLE_DEBUG_W_NUM("buttonIdx\t=", buttonIdx);

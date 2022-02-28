@@ -452,7 +452,7 @@ int				jjj;
 			{
 				if (strcasecmp(jsonParser.dataList[jjj].valueString, "Filterwheel") == 0)
 				{
-					CONSOLE_DEBUG("FilterWheel - !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+//					CONSOLE_DEBUG("FilterWheel - !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 					cHas_FilterWheel	=	true;
 				}
 			}
@@ -1745,10 +1745,11 @@ void	ControllerCamera::UpdateFreeDiskSpace(const double gigabytesFree)
 	//*	this is to be over loaded if needed
 }
 
-#if defined(_USE_OPENCV_CPP_) &&  (CV_MAJOR_VERSION >= 4)
+#if defined(_USE_OPENCV_CPP_)
 //*****************************************************************************
 cv::Mat	*ControllerCamera::DownloadImage_rgbarray(void)
 {
+	CONSOLE_DEBUG("OpenCV++ not finished!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 	return(NULL);
 }
 #else
@@ -1823,11 +1824,130 @@ int			pixIdx;
 }
 #endif // _USE_OPENCV_CPP_
 
-#if defined(_USE_OPENCV_CPP_) &&  (CV_MAJOR_VERSION >= 4)
+#if defined(_USE_OPENCV_CPP_)
 //*****************************************************************************
 cv::Mat	*ControllerCamera::DownloadImage_imagearray(const bool force8BitRead, const bool allowBinary)
 {
-	return(NULL);
+cv::Mat			*myOpenCVimage	=	NULL;
+int				pixelCount;
+int				valuesRead;
+int				iii;
+int				xxx;
+int				yyy;
+int				pixIdx;
+int				pixIdxRowStart;
+int				imgRank;
+TYPE_ImageArray	*imageArray;
+int				buffSize;
+int				imageDataLen;
+int				imageWidthStep;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_NUM("cCameraProp.CameraXsize\t=",	cCameraProp.CameraXsize);
+	CONSOLE_DEBUG_W_NUM("cCameraProp.CameraYsize\t=",	cCameraProp.CameraYsize);
+	CONSOLE_DEBUG_W_NUM("force8BitRead\t\t=",	force8BitRead);
+	CONSOLE_DEBUG_W_NUM("allowBinary\t\t=",		allowBinary);
+
+	imageArray		=	NULL;
+	pixelCount		=	cCameraProp.CameraXsize * cCameraProp.CameraYsize;
+	if (pixelCount > 0)
+	{
+		CONSOLE_DEBUG_W_NUM("pixelCount\t=", pixelCount);
+		buffSize	=	(pixelCount + 100) * sizeof(TYPE_ImageArray);
+		CONSOLE_DEBUG_W_NUM("buffSize\t=", buffSize);
+		imageArray	=	(TYPE_ImageArray *)malloc(buffSize);
+		if (imageArray!= NULL)
+		{
+			memset(imageArray, 0, buffSize);
+			valuesRead	=	0;
+			CONSOLE_DEBUG("Calling AlpacaGetImageArray()");
+			SETUP_TIMING();
+			imgRank	=	AlpacaGetImageArray(	"camera",
+												cAlpacaDevNum,
+												"imagearray",
+												"",
+												allowBinary,
+												imageArray,
+												pixelCount,
+												&valuesRead);
+
+			DEBUG_TIMING("Image downloading (ms)");
+			CONSOLE_DEBUG_W_NUM("imgRank\t\t=",		imgRank);
+			CONSOLE_DEBUG_W_NUM("valuesRead\t\t=",	valuesRead);
+			if ((imgRank > 0) && (valuesRead > 10))
+			{
+				myOpenCVimage	=	new cv::Mat(	cCameraProp.CameraYsize,	//*	Note, Height is FIRST
+													cCameraProp.CameraXsize,
+													CV_8UC3);
+
+//				myOpenCVimage	=	cvCreateImage(cvSize(	cCameraProp.CameraXsize, cCameraProp.CameraYsize),
+//															IPL_DEPTH_8U,
+//															3);
+				if (myOpenCVimage != NULL)
+				{
+					imageWidthStep	=	myOpenCVimage->step[0];
+					imageDataLen	=	myOpenCVimage->rows * imageWidthStep;
+					if (myOpenCVimage->data != NULL)
+					{
+						memset(myOpenCVimage->data, 128, imageDataLen);
+					}
+					CONSOLE_DEBUG_W_NUM("width \t\t=",	myOpenCVimage->cols);
+					CONSOLE_DEBUG_W_NUM("height\t\t=",	myOpenCVimage->rows);
+					CONSOLE_DEBUG_W_LONG("widthStep\t=",	myOpenCVimage->step[0]);
+
+					//*	move the image data into the openCV image structure
+					START_TIMING();
+					iii	=	0;
+					//*	stepping ACROSS the field
+					for (xxx=0; xxx < myOpenCVimage->cols; xxx++)
+					{
+						pixIdxRowStart	=	0;
+						//*	stepping DOWN the column
+						for (yyy=0; yyy < myOpenCVimage->rows; yyy++)
+						{
+							pixIdx	=	pixIdxRowStart + (xxx * 3);
+
+							//*	openCV uses BGR instead of RGB
+							//*	https://docs.opencv.org/master/df/d24/tutorial_js_image_display.html
+
+							if (force8BitRead)
+							{
+								myOpenCVimage->data[pixIdx++]	=	(imageArray[iii].BluValue) & 0x00ff;
+								myOpenCVimage->data[pixIdx++]	=	(imageArray[iii].GrnValue) & 0x00ff;
+								myOpenCVimage->data[pixIdx++]	=	(imageArray[iii].RedValue) & 0x00ff;
+							}
+							else
+							{
+								myOpenCVimage->data[pixIdx++]	=	(imageArray[iii].BluValue >> 8) & 0x00ff;
+								myOpenCVimage->data[pixIdx++]	=	(imageArray[iii].GrnValue >> 8) & 0x00ff;
+								myOpenCVimage->data[pixIdx++]	=	(imageArray[iii].RedValue >> 8) & 0x00ff;
+							}
+
+							iii++;
+							//*	advance to the next row
+							pixIdxRowStart	+=	imageWidthStep;
+						}
+					}
+					DEBUG_TIMING("Image stuffing (ms)");
+					CONSOLE_DEBUG_W_NUM("iii\t\t=",		iii);
+				}
+			}
+			else
+			{
+				CONSOLE_DEBUG("imgRank is invalid");
+			}
+			free(imageArray);
+		}
+		else
+		{
+			CONSOLE_DEBUG("Failed to allocate image buffer");
+		}
+	}
+	else
+	{
+		CONSOLE_DEBUG("Image size is not known");
+	}
+	return(myOpenCVimage);
 }
 #else
 //*****************************************************************************
@@ -1949,11 +2069,15 @@ int				buffSize;
 }
 #endif // _USE_OPENCV_CPP_
 
-#if defined(_USE_OPENCV_CPP_) &&  (CV_MAJOR_VERSION >= 4)
+#if defined(_USE_OPENCV_CPP_)
 //*****************************************************************************
 cv::Mat	*ControllerCamera::DownloadImage(const bool force8BitRead,  const bool allowBinary)
 {
-	return(NULL);
+cv::Mat	*myOpenCVimage	=	NULL;
+
+	myOpenCVimage	=	DownloadImage_imagearray(force8BitRead, allowBinary);
+
+	return(myOpenCVimage);
 }
 #else
 //*****************************************************************************

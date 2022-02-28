@@ -446,6 +446,7 @@ size_t			bufferSize;
 	return(tscStarData);
 }
 
+#ifdef _USE_ORIGNIAL_MESSIER_CATALOG_
 
 //************************************************************************
 //	#M	NGC	TYPE	CONS	RA	DEC	MAG	SIZE	DIST (ly)	VIEWING SEASON	VIEWING DIFFICULTY
@@ -618,6 +619,7 @@ size_t			bufferSize;
 
 	return(messierData);
 }
+#endif // _USE_ORIGNIAL_MESSIER_CATALOG_
 
 
 
@@ -629,20 +631,22 @@ char			myFilePath[256];
 
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, folderPath);
 
+#ifdef _USE_ORIGNIAL_MESSIER_CATALOG_
 //	strcpy(myFilePath, folderPath);
 ////	strcat(myFilePath, "MessierCatalog.csv");
 //	strcat(myFilePath, "MessierCatalog.tab");
 //
 //	messierData	=	ReadMessierCatalog(myFilePath, dataSource, objectCount);
 //	if (messierData == NULL)
+#endif
 	{
-		CONSOLE_DEBUG("ReadMessierCatalog() failed, trying TSC file");
+	//	CONSOLE_DEBUG("ReadMessierCatalog() failed, trying TSC file");
 		//*	failed, try the TSC version
 		strcpy(myFilePath, folderPath);
 		strcat(myFilePath, "Messier.tsc");
 		messierData	=	ReadTSCfile(myFilePath, dataSource, objectCount);
 	}
-	CONSOLE_DEBUG_W_NUM("Messier object count\t=", *objectCount);
+	CONSOLE_DEBUG_W_LONG("Messier object count\t=", *objectCount);
 //	CONSOLE_ABORT(__FUNCTION__);
 	return(messierData);
 }

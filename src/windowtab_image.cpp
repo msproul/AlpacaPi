@@ -23,6 +23,7 @@
 //*	Feb 28,	2021	<MLS> Working on image scrolling/dragging
 //*	Feb 28,	2021	<MLS> Finally got image dragging to work properly
 //*	Apr  5,	2021	<MLS> Zoomed in live view now working
+//*	Feb 26,	2022	<MLS> Image zooming working under opencv C++
 //*****************************************************************************
 
 #ifdef _ENABLE_CTRL_IMAGE_
@@ -92,6 +93,9 @@ int			imageBoxWidth;
 int			imageBoxHeight;
 int			labelWidth;
 int			dataWidth;
+int			boxWidth;
+int			boxHeight;
+
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	//------------------------------------------
@@ -120,8 +124,8 @@ int			dataWidth;
 
 	//------------------------------------------
 	xLoc		=	5;
-	labelWidth	=	150;
-	dataWidth	=	100;
+	labelWidth	=	155;
+	dataWidth	=	110;
 	iii		=	kImageDisplay_FrameCnt_Lbl;
 	while (iii < kImageDisplay_FramesSaved)
 	{
@@ -153,12 +157,22 @@ int			dataWidth;
 	SetWidgetText(kImageDisplay_Object_Lbl,			"Object");
 	SetWidgetText(kImageDisplay_FramesSaved_Lbl,	"FramesSaved");
 
+	//-------------------------------------------------------------------------
+	//*	set up the histogram
+	boxWidth	=	labelWidth + dataWidth + 2;
+	boxHeight	=	cSmallBtnHt * 5;
+	SetWidget(		kImageDisplay_Histogram,	xLoc,	yLoc,		boxWidth,		boxHeight);
+	SetWidgetType(	kImageDisplay_Histogram, 	kWidgetType_CustomGraphic);
+	SetWidgetText(	kImageDisplay_Histogram,	"Histogram");
+	CONSOLE_DEBUG_W_NUM("boxWidth\t=",	boxWidth);
+	CONSOLE_DEBUG_W_NUM("boxHeight\t=",	boxHeight);
+//	CONSOLE_ABORT(__FUNCTION__);
 
-	SetWidgetText(kImageDisplay_Histogram,		"Histogram");
-
-	yLoc			=	save_yLoc;
+	//-------------------------------------------------------------------------
+	//*	set up the image display area
 	xLoc			+=	labelWidth + dataWidth;
 	xLoc			+=	2;
+	yLoc			=	save_yLoc;
 	imageBoxWidth	=	cWidth - xLoc;
 	imageBoxHeight	=	cHeight - yLoc;
 	imageBoxWidth	-=	2;
@@ -256,7 +270,6 @@ void	WindowTabImage::ProcessDoubleClick(	const int	widgetIdx,
 											const int	yyy,
 											const int	flags)
 {
-int		iii;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 	switch(widgetIdx)
@@ -273,7 +286,9 @@ int		iii;
 			{
 		#ifdef _USE_OPENCV_CPP_
 			#warning "OpenCV++ not finished"
+			CONSOLE_DEBUG("OpenCV++ not finished!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 		#else
+			int		iii;
 				for (iii= 0; iii< cOpenCVdisplayedImage->imageSize; iii+=3)
 				{
 					cOpenCVdisplayedImage->imageData[iii]	+=	75;
@@ -348,7 +363,6 @@ int		cursorYYoffset;
 	if (cMouseDragInProgress)
 	{
 		cImageZoomState			=	1;
-//-		cMouseDragInProgress	=	true;
 //		CONSOLE_DEBUG("--------------------------------------------------------");
 //		CONSOLE_DEBUG_W_NUM(__FUNCTION__, xxx);
 
@@ -373,17 +387,34 @@ int		cursorYYoffset;
 			cSavedMouseClick_Y	=	cursorYYoffset;
 
 			ForceUpdate();
-
-//-			cMouseDragInProgress	=	false;
-
 		}
 	}
 }
 
 #ifdef _USE_OPENCV_CPP_
+//**************************************************************************************
+void	WindowTabImage::DrawWidgetCustomGraphic(cv::Mat *openCV_Image, const int widgetIdx)
+{
+	if (cROIinfo.currentROIimageType == kImageType_RGB24)
+	{
+
+
+	}
+}
+#else
+//**************************************************************************************
+void	WindowTabImage::DrawWidgetCustomGraphic(IplImage *openCV_Image, const int widgetIdx)
+{
+	//*	this routine should be overloaded
+}
+#endif // _USE_OPENCV_CPP_
+
+
+#ifdef _USE_OPENCV_CPP_
 //*****************************************************************************
 void	WindowTabImage::SetImagePtrs(cv::Mat *originalImage, cv::Mat *displayedImage)
 {
+	CONSOLE_DEBUG(__FUNCTION__);
 	cOpenCVdownLoadedImage	=	originalImage;
 	cOpenCVdisplayedImage	=	displayedImage;
 }
@@ -402,6 +433,24 @@ void	WindowTabImage::ResetImage(void)
 	CONSOLE_DEBUG(__FUNCTION__);
 #ifdef _USE_OPENCV_CPP_
 	#warning "OpenCV++ not finished"
+	//*	Check to see if the original is color
+//	if ((cOpenCVdownLoadedImage->nChannels == 3) && (cOpenCVdownLoadedImage->depth == 8))
+	if ((cOpenCVdownLoadedImage->step[1] == 3))
+	{
+	//	cvResize(cOpenCVdownLoadedImage, cOpenCVdisplayedImage, CV_INTER_LINEAR);
+		cv::resize(	*cOpenCVdownLoadedImage,
+					*cOpenCVdisplayedImage,
+					cOpenCVdisplayedImage->size(),
+					0,
+					0,
+					cv::INTER_LINEAR);
+	}
+//	else if ((cOpenCVdownLoadedImage->nChannels == 1) && (cOpenCVdownLoadedImage->depth == 8))
+	else if ((cOpenCVdownLoadedImage->step[1] == 1))
+	{
+		CONSOLE_DEBUG("OpenCV++ not finished!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+//		cvCvtColor(cOpenCVdownLoadedImage, cOpenCVdisplayedImage, CV_GRAY2RGB);
+	}
 #else
 	//*	Check to see if the original is color
 	if ((cOpenCVdownLoadedImage->nChannels == 3) && (cOpenCVdownLoadedImage->depth == 8))
@@ -424,12 +473,12 @@ void	WindowTabImage::ZoomImage(	const int	event,
 									const int	yyy,
 									const int	flags)
 {
+int			cursorXXoffset;
+int			cursorYYoffset;
 int			displayedWidth;
 int			displayedHeight;
 int			sourceImageWidth;
-int			sourceImageHeight;
-int			cursorXXoffset;
-int			cursorYYoffset;
+int			sourceImageHeight;			//*	get the size of the destination image
 int			imageCursorXX;
 int			imageCursorYY;
 
@@ -449,15 +498,22 @@ int			imageCursorYY;
 			cursorYYoffset		=	yyy - cWidgetList[kImageDisplay_ImageDisplay].roiRect.y;
 
 		#ifdef _USE_OPENCV_CPP_
-			#warning "OpenCV++ not finished"
+			//*	get the size of the displayed image
+			displayedWidth		=	cOpenCVdisplayedImage->cols;
+			displayedHeight		=	cOpenCVdisplayedImage->rows;
+
+			//*	get the size of the source image
+			sourceImageWidth	=	cOpenCVdownLoadedImage->cols;
+			sourceImageHeight	=	cOpenCVdownLoadedImage->rows;
 		#else
-			//*	get the size of the destination image
+			//*	get the size of the displayed image
 			displayedWidth		=	cOpenCVdisplayedImage->width;
 			displayedHeight		=	cOpenCVdisplayedImage->height;
 
 			//*	get the size of the source image
 			sourceImageWidth	=	cOpenCVdownLoadedImage->width;
 			sourceImageHeight	=	cOpenCVdownLoadedImage->height;
+		#endif // _USE_OPENCV_CPP_
 
 
 			//*	calculate the relative position of the cursor WRT the full image
@@ -465,7 +521,6 @@ int			imageCursorYY;
 			imageCursorYY		=	sourceImageHeight * cursorYYoffset / displayedHeight;
 
 			DrawFullScaleIamge(imageCursorXX, imageCursorYY);
-		#endif // _USE_OPENCV_CPP_
 
 			cImageZoomState	=	1;
 		}
@@ -487,33 +542,42 @@ void	WindowTabImage::DrawFullScaleIamge(void)
 //*****************************************************************************
 void	WindowTabImage::DrawFullScaleIamge(const int image_X, const int	image_Y)
 {
-CvRect		displayedImgRect;
+cv::Rect	displayedImgRect;
 int			displayedWidth;
 int			displayedHeight;
 int			sourceImageWidth;
 int			sourceImageHeight;
 
+	CONSOLE_DEBUG("--------------------------------------------------------------------");
 	CONSOLE_DEBUG(__FUNCTION__);
-//	CONSOLE_DEBUG_W_NUM("image_X\t=", image_X);
-//	CONSOLE_DEBUG_W_NUM("image_Y\t=", image_Y);
+	CONSOLE_DEBUG_W_NUM("image_X\t=", image_X);
+	CONSOLE_DEBUG_W_NUM("image_Y\t=", image_Y);
 
 	if ((cOpenCVdownLoadedImage != NULL) && (cOpenCVdisplayedImage != NULL))
 	{
 	#ifdef _USE_OPENCV_CPP_
-		#warning "OpenCV++ not finished"
+
+		//*	get the size of the source image
+		sourceImageWidth		=	cOpenCVdownLoadedImage->cols;
+		sourceImageHeight		=	cOpenCVdownLoadedImage->rows;
+
+		//*	get the size of the destination image
+		displayedWidth			=	cOpenCVdisplayedImage->cols;
+		displayedHeight			=	cOpenCVdisplayedImage->rows;
 	#else
 		//*	get the size of the source image
 		sourceImageWidth		=	cOpenCVdownLoadedImage->width;
 		sourceImageHeight		=	cOpenCVdownLoadedImage->height;
-//		CONSOLE_DEBUG_W_NUM("sourceImageWidth\t=", sourceImageWidth);
-//		CONSOLE_DEBUG_W_NUM("sourceImageHeight\t=", sourceImageHeight);
 
 		//*	get the size of the destination image
 		displayedWidth			=	cOpenCVdisplayedImage->width;
 		displayedHeight			=	cOpenCVdisplayedImage->height;
+	#endif // _USE_OPENCV_CPP_
 
-//		CONSOLE_DEBUG_W_NUM("displayedWidth\t=", displayedWidth);
-//		CONSOLE_DEBUG_W_NUM("displayedHeight\t=", displayedHeight);
+		CONSOLE_DEBUG_W_NUM("sourceImageWidth\t=",	sourceImageWidth);
+		CONSOLE_DEBUG_W_NUM("sourceImageHeight\t=",	sourceImageHeight);
+		CONSOLE_DEBUG_W_NUM("displayedWidth\t=",	displayedWidth);
+		CONSOLE_DEBUG_W_NUM("displayedHeight\t=",	displayedHeight);
 
 		if ((displayedWidth > 0) && (displayedWidth < 10000)
 			&& (displayedHeight > 0) && (displayedHeight < 10000))
@@ -524,6 +588,11 @@ int			sourceImageHeight;
 			//*	now set the top left of the image
 			displayedImgRect.x		=	image_X - (displayedWidth / 2);
 			displayedImgRect.y		=	image_Y - (displayedHeight / 2);
+
+			CONSOLE_DEBUG("First pass");
+			CONSOLE_DEBUG_W_NUM("displayedImgRect.x\t\t=",		displayedImgRect.x);
+			CONSOLE_DEBUG_W_NUM("displayedImgRect.y\t\t=",		displayedImgRect.y);
+
 			//*	check minimums
 			if (displayedImgRect.x < 0)
 			{
@@ -544,18 +613,45 @@ int			sourceImageHeight;
 			{
 				displayedImgRect.y	=	(sourceImageHeight - displayedHeight);
 			}
-//			CONSOLE_DEBUG_W_NUM("displayedImgRect.x\t\t=", displayedImgRect.x);
-//			CONSOLE_DEBUG_W_NUM("displayedImgRect.y\t\t=", displayedImgRect.y);
+			CONSOLE_DEBUG("Adjusted");
+			CONSOLE_DEBUG_W_NUM("displayedImgRect.x\t\t=",		displayedImgRect.x);
+			CONSOLE_DEBUG_W_NUM("displayedImgRect.y\t\t=",		displayedImgRect.y);
 
-//			CONSOLE_DEBUG_W_NUM("displayedImgRect.width\t=", displayedImgRect.width);
-//			CONSOLE_DEBUG_W_NUM("displayedImgRect.height\t=", displayedImgRect.height);
+			CONSOLE_DEBUG_W_NUM("displayedImgRect.width\t=",	displayedImgRect.width);
+			CONSOLE_DEBUG_W_NUM("displayedImgRect.height\t=",	displayedImgRect.height);
 
+		#ifdef _USE_OPENCV_CPP_
+cv::Mat		image_roi;
+			CONSOLE_DEBUG("OpenCV++ not finished!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+
+			image_roi	=	cv::Mat(*cOpenCVdownLoadedImage, displayedImgRect);
+
+//			cvSetImageROI(cOpenCVdownLoadedImage,  theWidget->roiRect);
+//			cvCopy(theWidget->openCVimagePtr, cOpenCVdownLoadedImage);
+//			cvResetImageROI(cOpenCVdownLoadedImage);
+
+			//---try------try------try------try------try------try---
+			try
+			{
+				image_roi.copyTo(*cOpenCVdisplayedImage);
+//				cv::waitKey(100);
+			}
+			catch(cv::Exception& ex)
+			{
+				//*	this catch prevents opencv from crashing
+				CONSOLE_DEBUG("????????????????????????????????????????????????????");
+				CONSOLE_DEBUG("copyTo() had an exception");
+				CONSOLE_DEBUG_W_NUM("openCV error code\t=",	ex.code);
+			//	CONSOLE_ABORT(__FUNCTION__);
+			}
+
+		#else
 			//*	set the area we want to look at
 			cvSetImageROI(cOpenCVdownLoadedImage,  displayedImgRect);
 			//*	copy that part from the original to the displayed view
 			cvCopy(cOpenCVdownLoadedImage, cOpenCVdisplayedImage);
 			cvResetImageROI(cOpenCVdownLoadedImage);				//*	reset ROI
-
+		#endif
 			//*	now update the CURRENT center of the displayed image
 			cImageCenterX	=	displayedImgRect.x + (displayedWidth / 2);
 			cImageCenterY	=	displayedImgRect.y + (displayedHeight / 2);
@@ -565,10 +661,11 @@ int			sourceImageHeight;
 		{
 			CONSOLE_DEBUG("Somethings not right!!!!!!!!!!!!");
 		}
-	#endif // _USE_OPENCV_CPP_
 	}
 	else
 	{
+//		CONSOLE_DEBUG_W_HEX("cOpenCVdownLoadedImage\t=", cOpenCVdownLoadedImage);
+//		CONSOLE_DEBUG_W_HEX("cOpenCVdisplayedImage\t=", cOpenCVdisplayedImage);
 		CONSOLE_ABORT(__FUNCTION__);
 	}
 }

@@ -612,7 +612,7 @@ int				pt1_Y;
 
 	while (obafkgmLetters[iii] > 0)
 	{
-		SetColor(colourNum);
+		LLD_SetColor(colourNum);
 		LLD_FillEllipse(center_X, center_Y, radius1, radius1);
 
 		textString[0]	=	obafkgmLetters[iii];
@@ -667,7 +667,7 @@ int		systemRetCode;
 	if (arg != NULL)
 	{
 
-		CONSOLE_DEBUG(arg);
+		CONSOLE_DEBUG((char *)arg);
 
 		CONSOLE_DEBUG_W_STR("cmdLine\t=",	(char *)arg);
 		systemRetCode	=	system((char *)arg);
@@ -692,7 +692,6 @@ int		systemRetCode;
 //*****************************************************************************
 void	RunShellScript(const char *commandLine)
 {
-int		threadStatus;
 int		threadErr;
 
 	CONSOLE_DEBUG(__FUNCTION__);
@@ -709,7 +708,6 @@ int		threadErr;
 		if (threadErr == 0)
 		{
 			CONSOLE_DEBUG("Shell script thread created successfully");
-			threadStatus	=	0;
 		}
 		else
 		{
@@ -726,7 +724,6 @@ int		threadErr;
 //*****************************************************************************
 void	WindowTabSTsettings::ProcessButtonClick(const int buttonIdx)
 {
-int		systemRetCode;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 //	CONSOLE_DEBUG_W_NUM("buttonIdx\t=", buttonIdx);

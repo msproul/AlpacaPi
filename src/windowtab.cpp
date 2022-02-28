@@ -60,8 +60,8 @@
 //*	Oct 29,	2021	<MLS> Added FloodFill()
 //*	Nov 13,	2021	<MLS> Added ProcessDoubleClick_RtBtn()
 //*	Jan 24,	2022	<MLS> Added flags argument to ProcessMouseWheelMoved()
-//*	Feb 19,	2022	<MLS> Added GetTextSize_Width()
 //*	Feb 21,	2022	<MLS> Changed all references of CvScalar to cv::Scalar
+//*	Feb 26,	2022	<MLS> floodfill working under opencv C++
 //*****************************************************************************
 
 
@@ -351,7 +351,7 @@ void	WindowTab::SetWidgetHelpText(const int widgetIdx, const char *newText)
 		}
 		else
 		{
-			CONSOLE_DEBUG_W_NUM("Help text is to long, length=", strlen(newText));
+			CONSOLE_DEBUG_W_LONG("Help text is to long, length=", strlen(newText));
 			CONSOLE_DEBUG(newText);
 			CONSOLE_ABORT(__FUNCTION__);
 		}
@@ -431,79 +431,26 @@ char	lineBuff[64];
 }
 
 #ifdef _USE_OPENCV_CPP_
-//**************************************************************************************
-void	WindowTab::SetWidgetTextColor(const int widgetIdx, cv::Scalar newtextColor)
-{
-	if ((widgetIdx >= 0) && (widgetIdx < kMaxWidgets))
-	{
-		cWidgetList[widgetIdx].textColor	=	newtextColor;
-		cWidgetList[widgetIdx].needsUpdated	=	true;
-	}
-}
-
-//**************************************************************************************
-void	WindowTab::SetWidgetBGColor(const int widgetIdx, cv::Scalar newtextColor)
-{
-	if ((widgetIdx >= 0) && (widgetIdx < kMaxWidgets))
-	{
-		cWidgetList[widgetIdx].bgColor	=	newtextColor;
-		cWidgetList[widgetIdx].needsUpdated	=	true;
-	}
-}
-
-//**************************************************************************************
-void	WindowTab::SetWidgetBorderColor(const int widgetIdx, cv::Scalar newtextColor)
-{
-	if ((widgetIdx >= 0) && (widgetIdx < kMaxWidgets))
-	{
-		cWidgetList[widgetIdx].borderColor	=	newtextColor;
-		cWidgetList[widgetIdx].needsUpdated	=	true;
-	}
-}
 
 //**************************************************************************************
 void	WindowTab::SetWidgetImage(const int widgetIdx, cv::Mat *argImagePtr)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_NUM("widgetIdx  \t=",	widgetIdx);
+	CONSOLE_DEBUG_W_HEX("argImagePtr\t=",	argImagePtr);
 	if ((widgetIdx >= 0) && (widgetIdx < kMaxWidgets))
 	{
 		cWidgetList[widgetIdx].openCVimagePtr	=	argImagePtr;
 		cWidgetList[widgetIdx].widgetType		=	kWidgetType_Image;
 		cWidgetList[widgetIdx].needsUpdated		=	true;
 	}
+	if (argImagePtr == NULL)
+	{
+		CONSOLE_DEBUG("argImagePtr is NULL!!!!!!!!!!!!!!!!!!!");
+//		CONSOLE_ABORT(__FUNCTION__);
+	}
 }
-
 #else
-//**************************************************************************************
-void	WindowTab::SetWidgetTextColor(const int widgetIdx, cv::Scalar newtextColor)
-{
-	if ((widgetIdx >= 0) && (widgetIdx < kMaxWidgets))
-	{
-		cWidgetList[widgetIdx].textColor	=	newtextColor;
-		cWidgetList[widgetIdx].needsUpdated	=	true;
-	}
-}
-
-//**************************************************************************************
-void	WindowTab::SetWidgetBGColor(const int widgetIdx, cv::Scalar newtextColor)
-{
-	if ((widgetIdx >= 0) && (widgetIdx < kMaxWidgets))
-	{
-		cWidgetList[widgetIdx].bgColor	=	newtextColor;
-		cWidgetList[widgetIdx].needsUpdated	=	true;
-	}
-}
-
-//**************************************************************************************
-void	WindowTab::SetWidgetBorderColor(const int widgetIdx, cv::Scalar newtextColor)
-{
-	if ((widgetIdx >= 0) && (widgetIdx < kMaxWidgets))
-	{
-		cWidgetList[widgetIdx].borderColor	=	newtextColor;
-		cWidgetList[widgetIdx].needsUpdated	=	true;
-	}
-}
-
 //**************************************************************************************
 void	WindowTab::SetWidgetImage(const int widgetIdx, IplImage *argImagePtr)
 {
@@ -517,6 +464,35 @@ void	WindowTab::SetWidgetImage(const int widgetIdx, IplImage *argImagePtr)
 }
 #endif // _USE_OPENCV_CPP_
 
+//**************************************************************************************
+void	WindowTab::SetWidgetTextColor(const int widgetIdx, cv::Scalar newtextColor)
+{
+	if ((widgetIdx >= 0) && (widgetIdx < kMaxWidgets))
+	{
+		cWidgetList[widgetIdx].textColor	=	newtextColor;
+		cWidgetList[widgetIdx].needsUpdated	=	true;
+	}
+}
+
+//**************************************************************************************
+void	WindowTab::SetWidgetBGColor(const int widgetIdx, cv::Scalar newtextColor)
+{
+	if ((widgetIdx >= 0) && (widgetIdx < kMaxWidgets))
+	{
+		cWidgetList[widgetIdx].bgColor	=	newtextColor;
+		cWidgetList[widgetIdx].needsUpdated	=	true;
+	}
+}
+
+//**************************************************************************************
+void	WindowTab::SetWidgetBorderColor(const int widgetIdx, cv::Scalar newtextColor)
+{
+	if ((widgetIdx >= 0) && (widgetIdx < kMaxWidgets))
+	{
+		cWidgetList[widgetIdx].borderColor	=	newtextColor;
+		cWidgetList[widgetIdx].needsUpdated	=	true;
+	}
+}
 
 //**************************************************************************************
 void	WindowTab::SetWidgetOutlineBox(const int widgetIdx, const int firstItem, const int lastItem)
@@ -749,7 +725,6 @@ int	yLoc;
 		if (gAlpacaLogoPtr != NULL)
 		{
 		#ifdef _USE_OPENCV_CPP_
-			#warning "OpenCV++ not finished"
 			logoWidth	=	gAlpacaLogoPtr->cols;
 			logoHeight	=	gAlpacaLogoPtr->rows;
 		#else
@@ -1541,7 +1516,6 @@ void	WindowTab::LLD_LineTo(const int xx, const int yy)
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 #ifdef _USE_OPENCV_CPP_
-//	CONSOLE_DEBUG("OpenCV++");
 	if (cOpenCV_Image != NULL)
 	{
 	cv::Point		pt1;
@@ -1603,7 +1577,6 @@ void	WindowTab::LLD_DrawCString(	const int	xx,
 									const int	fontIndex)
 {
 #ifdef _USE_OPENCV_CPP_
-//	CONSOLE_DEBUG("OpenCV++");
 	if (cOpenCV_Image != NULL)
 	{
 	cv::Point		textLoc;
@@ -1663,12 +1636,42 @@ void	WindowTab::LLD_DrawCString(	const int	xx,
 }
 
 //*****************************************************************************
-int	WindowTab::GetTextSize_Width(const char *textString, const int fontIndex)
+int	WindowTab::LLD_GetTextSize(const char *textString, const int fontIndex)
 {
 int	textWidthPixels;
-#warning "GetTextSize_Width() needs to be finished"
-	textWidthPixels	=	strlen(textString) * 8;
+
+#ifdef _USE_OPENCV_CPP_
+cv::Size		textSize;
+	textSize	=	cv::getTextSize(textString,
+									gFontInfo[fontIndex].fontID,
+									gFontInfo[fontIndex].scale,
+									gFontInfo[fontIndex].thickness,
+									&cCurrentFontBaseLine);
+	textWidthPixels		=	textSize.width;
+	cCurrentFontHeight	=	textSize.height;
+#else
+CvSize		textSize;
+	cvGetTextSize(	textString,
+					&gTextFont[fontIndex],
+					&textSize,
+					&cCurrentFontBaseLine);
+	textWidthPixels		=	textSize.width;
+	cCurrentFontHeight	=	textSize.height;
+#endif
 	return(textWidthPixels);
+}
+
+//*****************************************************************************
+void	WindowTab::LLD_PenSize(const int newLineWidth)
+{
+	if ((newLineWidth >= 0) && (newLineWidth < 10))
+	{
+		cCurrentLineWidth	=	newLineWidth;
+	}
+	else
+	{
+		cCurrentLineWidth	=	1;
+	}
 }
 
 //*****************************************************************************
@@ -1717,12 +1720,10 @@ cv::Scalar	gColorTable[]	=
 	CV_RGB(127,	216,	250),	//*	W_FILTER_OIII,	//*	these are for filter colors
 	CV_RGB(151,	253,	151),	//*	W_FILTER_HA,
 	CV_RGB(255,	85,		85),	//*	W_FILTER_SII,
-
-
 };
 
 //*****************************************************************************
-void	WindowTab::SetColor(const int theColor)
+void	WindowTab::LLD_SetColor(const int theColor)
 {
 	if ((theColor >= 0) && (theColor < W_COLOR_LAST))
 	{
@@ -1733,19 +1734,6 @@ void	WindowTab::SetColor(const int theColor)
 		cCurrentColor	=	CV_RGB(255,	255,	255);
 	}
 }
-//*****************************************************************************
-void	WindowTab::LLD_PenSize(const int newLineWidth)
-{
-	if ((newLineWidth >= 0) && (newLineWidth < 10))
-	{
-		cCurrentLineWidth	=	newLineWidth;
-	}
-	else
-	{
-		cCurrentLineWidth	=	1;
-	}
-}
-
 
 //*****************************************************************************
 void	WindowTab::LLD_Putpixel(const int xx, const int yy, const int theColor)
@@ -1843,7 +1831,6 @@ void	WindowTab::LLD_FrameRect(int left, int top, int width, int height, int line
 		CONSOLE_ABORT(__FUNCTION__);
 	}
 #ifdef _USE_OPENCV_CPP_
-//	CONSOLE_DEBUG("OpenCV++");
 	if (cOpenCV_Image != NULL)
 	{
 	cv::Rect	myCVrect;
@@ -1885,7 +1872,6 @@ void	WindowTab::LLD_FrameRect(int left, int top, int width, int height, int line
 void	WindowTab::LLD_FillRect(int left, int top, int width, int height)
 {
 #ifdef _USE_OPENCV_CPP_
-//	CONSOLE_DEBUG("OpenCV++");
 	if (cOpenCV_Image != NULL)
 	{
 	cv::Rect	myCVrect;
@@ -1898,7 +1884,7 @@ void	WindowTab::LLD_FillRect(int left, int top, int width, int height)
 		cv::rectangle(	*cOpenCV_Image,
 						myCVrect,
 						cCurrentColor,
-						CV_FILLED);
+						cv::FILLED);
 
 	}
 #else
@@ -1945,7 +1931,7 @@ void	WindowTab::LLD_FillEllipse(int xCenter, int yCenter, int xRadius, int yRadi
 							0.0,			//*	start_angle
 							360.0,			//*	end_angle
 							cCurrentColor,	//	cv::Scalar color,
-							CV_FILLED);		//	int thickness CV_DEFAULT(1),
+							cv::FILLED);		//	int thickness CV_DEFAULT(1),
 		}
 		else
 		{
@@ -2086,7 +2072,7 @@ void	WindowTab::LLD_FrameEllipse(int xCenter, int yCenter, int xRadius, int yRad
 //*********************************************************************
 void	WindowTab::LLD_FloodFill(const int xxx, const int yyy, const int color)
 {
-CvPoint		center;
+cv::Point	center;
 cv::Scalar	newColor;
 cv::Scalar	cvScalarAll;
 
@@ -2098,6 +2084,20 @@ cv::Scalar	cvScalarAll;
 
 	if (cOpenCV_Image != NULL)
 	{
+#ifdef _USE_OPENCV_CPP_
+		cvScalarAll.all(0.0);
+		//---try------try------try------try------try------try---
+		try
+		{
+			cv::floodFill(	*cOpenCV_Image,
+							center, 					//	CvPoint seed_point,
+							newColor,					//	cv::Scalar new_val,
+							NULL,
+							cvScalarAll,				//	cv::Scalar lo_diff CV_DEFAULT(cvScalarAll(0)),
+							cvScalarAll);				//	cv::Scalar up_diff CV_DEFAULT(cvScalarAll(0)),
+
+		}
+#else
 		cvScalarAll	=	cvRealScalar(0.0);
 		//---try------try------try------try------try------try---
 		try
@@ -2112,16 +2112,16 @@ cv::Scalar	cvScalarAll;
 						NULL						//	CvArr* mask CV_DEFAULT(NULL));
 						);
 		}
+#endif // _USE_OPENCV_CPP_
 		catch(cv::Exception& ex)
 		{
 			//*	this catch prevents opencv from crashing
+			CONSOLE_DEBUG("????????????????????????????????????????????????????");
 			CONSOLE_DEBUG("cvFloodFill() had an exception");
 			CONSOLE_DEBUG_W_NUM("openCV error code\t=",	ex.code);
-		//	CONSOLE_ABORT(__FUNCTION__);
 		}
 	}
 }
-
 
 #ifdef _USE_OPENCV_CPP_
 //*********************************************************************

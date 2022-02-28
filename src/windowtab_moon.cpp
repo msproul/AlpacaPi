@@ -359,20 +359,24 @@ int			iii;
 	//strcat(cFitsHeaderBuffer, "END\r");		//* terminate listing with END
 	fits_close_file(fptr, &status);
 
-	CONSOLE_DEBUG_W_LONG("bufflen=", strlen(cFitsHeaderBuffer));
+	CONSOLE_DEBUG_W_LONG("bufflen=", (long int)strlen(cFitsHeaderBuffer));
 	CONSOLE_DEBUG(__FUNCTION__);
 }
 
 //**************************************************************************************
 void WindowTabMoon::ReadMoonImage(const char *moonFileName)
 {
-IplImage		*myOpenCVimage;
-IplImage		*smallImg;
+#if defined(_USE_OPENCV_CPP_) &&  (CV_MAJOR_VERSION >= 4)
+	#warning "OpenCV++ not finished"
+//	cv::Mat		*myOpenCVimage;
+//	cv::Mat		*smallImg;
+#else
+	IplImage	*myOpenCVimage;
+	IplImage	*smallImg;
 int				divideFactor;
 int				newWidth;
 int				newHeight;
 char			myMoonFilePath[128];
-char			errMsgString[128];
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -464,17 +468,19 @@ char			errMsgString[128];
 
 		ReadFitsHeader(myMoonFilePath);
 	}
-#ifdef _USE_OPENCV_CPP_
-	#warning "OpenCV++ not finished"
-#else
+
 	if (cMoonImage != NULL)
 	{
 	//	CONSOLE_DEBUG("fits image  OK");
+#if defined(_USE_OPENCV_CPP_)
+#else
 		SetWidgetImage(kMoon_Image, cMoonImage);
+#endif // defined
 		SetWidgetText(kMoon_FileName,	moonFileName);
 	}
 	else
 	{
+	char	errMsgString[128];
 		CONSOLE_DEBUG("Failed to load new image");
 		strcpy(errMsgString, "Failed to read fits file:");
 		strcat(errMsgString, moonFileName);

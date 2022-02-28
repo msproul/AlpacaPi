@@ -290,7 +290,7 @@ double	newProgressValue;
 	{
 		SetWidgetProgress(kTab_Preview, kPreviewBox_ProgressBar, unitsRead, totalUnits);
 		cUpdateWindow	=	true;
-		cvWaitKey(1);
+		cv::waitKey(1);
 
 		cProgressReDraws++;
 

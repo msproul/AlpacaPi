@@ -22,7 +22,7 @@
 //*	Feb  3,	2022	<MLS> OpenNGC star data working
 //*	Feb  4,	2022	<MLS> Added Read_OpenNGC_Outline_catgen()
 //*****************************************************************************
-//*	https://github.com/mattiaverga/OpenNGC
+//*	git clone https://github.com/mattiaverga/OpenNGC
 //*****************************************************************************
 
 

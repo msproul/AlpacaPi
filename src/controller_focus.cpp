@@ -1293,7 +1293,7 @@ int				myFocuserType;
 		{
 			//*	force window update
 			myController->HandleWindowUpdate();
-			cvWaitKey(100);
+			cv::waitKey(100);
 		}
 
 		gFocuserNum++;

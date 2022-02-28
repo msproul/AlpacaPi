@@ -111,22 +111,20 @@ double			exposure_Secs;
 	myImageController	=	(ControllerImage *)cLiveController;
 	if (myImageController != NULL)
 	{
-		if (cOpenCV_Image != NULL)
-		{
-			myImageController->UpdateLiveWindowImage(cOpenCV_Image, cFileNameRoot);
-			exposure_Secs	=	1.0 * cCurrentExposure_us / 1000000.0;
+		myImageController->UpdateLiveWindowImage(cOpenCV_ImagePtr, cFileNameRoot);
 
-			myImageController->UpdateLiveWindowInfo(&cCameraProp,
-													cFramesRead,
-													exposure_Secs,
-							#ifdef _ENABLE_FILTERWHEEL_
-													cFilterWheelCurrName,
-							#else
-													NULL,
-							#endif // _ENABLE_FILTERWHEEL_
-													cObjectName
-													);
-		}
+		exposure_Secs	=	1.0 * cCurrentExposure_us / 1000000.0;
+
+		myImageController->UpdateLiveWindowInfo(&cCameraProp,
+												cFramesRead,
+												exposure_Secs,
+						#ifdef _ENABLE_FILTERWHEEL_
+												cFilterWheelCurrName,
+						#else
+												NULL,
+						#endif // _ENABLE_FILTERWHEEL_
+												cObjectName
+												);
 	}
 #endif	//	_ENABLE_CTRL_IMAGE_
 }

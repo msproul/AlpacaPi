@@ -471,18 +471,18 @@ void	WindowTabDome::DrawDomeGraphic(cv::Mat *openCV_Image, TYPE_WIDGET *theWidge
 void	WindowTabDome::DrawDomeGraphic(IplImage *openCV_Image, TYPE_WIDGET *theWidget)
 #endif // _USE_OPENCV_CPP_
 {
-CvPoint		pointLoc;
+cv::Point	pointLoc;
+cv::Point	centerLoc;
 int			radius;
 double		domeAzimuth_radians;
 double		domeAzimuth_degrees;
-//*	dome specs, will make these prefs latter
+//*	dome specs, will make these prefs later
 //*	all are in inches
 double		domeDiameter	=	15.0 * 12.0;	//*	 15 feet
 double		doorWidth		=	48.0;
 double		doorOpeningHalfAngle;
 double		doorEdgeAzimuth;
 double		slitEdgeAzimuth;
-CvPoint		ptList[20];
 int			pointCntr;
 int			edgeRadius;
 int			centerX;
@@ -491,7 +491,6 @@ int			pt1_X;
 int			pt1_Y;
 int			pt2_X;
 int			pt2_Y;
-CvPoint		centerLoc;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -509,7 +508,7 @@ CvPoint		centerLoc;
 	if (openCV_Image != NULL)
 	{
 		cOpenCV_Image	=	openCV_Image;
-		SetColor(W_WHITE);
+		LLD_SetColor(W_WHITE);
 		centerX		=	theWidget->left + (theWidget->height / 2);
 		centerY		=	theWidget->top + (theWidget->height / 2);
 		radius		=	theWidget->height / 3;
@@ -533,7 +532,7 @@ CvPoint		centerLoc;
 
 		LLD_PenSize(2);
 		LLD_MoveTo(pt1_X, pt1_Y);
-		SetColor(W_DARKGRAY);
+		LLD_SetColor(W_DARKGRAY);
 		LLD_LineTo(pt2_X, pt2_Y);
 
 
@@ -548,7 +547,7 @@ CvPoint		centerLoc;
 
 		LLD_PenSize(3);
 		LLD_MoveTo(pt1_X, pt1_Y);
-		SetColor(W_DARKGRAY);
+		LLD_SetColor(W_DARKGRAY);
 		LLD_LineTo(pt2_X, pt2_Y);
 
 		//*	build the point list for the opening
@@ -625,6 +624,7 @@ CvPoint		centerLoc;
 							0);							//	int shift CV_DEFAULT(0));
 	#else
 	CvPoint		pt1;
+	CvPoint		ptList[20];
 	cv::Scalar	domeOpeningColor;
 
 		//-------------------
@@ -696,7 +696,7 @@ CvPoint		centerLoc;
 	#endif // _USE_OPENCV_CPP_
 		//*	put the dark border around the dome
 		LLD_PenSize(5);
-		SetColor(W_DARKGRAY);
+		LLD_SetColor(W_DARKGRAY);
 		LLD_FrameEllipse(centerX, centerY, radius, radius);
 		LLD_PenSize(1);
 	}

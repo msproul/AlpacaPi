@@ -302,22 +302,22 @@ int				textWidthPixels;
 		pt2_Y	=	center_Y + (sin(radians) * radius2);
 
 #define	kRadius1	40
-		SetColor(fillColor_Wnum);
+		LLD_SetColor(fillColor_Wnum);
 		LLD_FillEllipse(pt1_X, pt1_Y, kRadius1, kRadius1);
-		SetColor(W_WHITE);
+		LLD_SetColor(W_WHITE);
 		LLD_FrameEllipse(pt1_X, pt1_Y, kRadius1, kRadius1);
 
-		textWidthPixels	=   GetTextSize_Width(textString);
+		textWidthPixels	=   LLD_GetTextSize(textString, kFont_Medium);
 		pt1_X	-=	(textWidthPixels / 2);
 		pt1_Y	+=	5;
-		SetColor(W_BLACK);
+		LLD_SetColor(W_BLACK);
 		LLD_DrawCString(pt1_X, pt1_Y, textString, kFont_Medium);
 
 
 		//*	this puts a little dot to indicate it recently got updated
 		if (gSlitDistance[clockPosition].updated)
 		{
-			SetColor(cUpdateColorIdx);
+			LLD_SetColor(cUpdateColorIdx);
 			LLD_FillEllipse(pt2_X, pt2_Y, 5, 5);
 
 			gSlitDistance[clockPosition].updated	=	false;
@@ -359,14 +359,14 @@ int				textWidthPixels;
 			pt1_Y	=	center_Y + (sin(upRadians) * upAngleRadius);
 			pt2_X	=	center_X + (cos(upRadians) * radius2);
 			pt2_Y	=	center_Y + (sin(upRadians) * radius2);
-			SetColor(W_RED);
+			LLD_SetColor(W_RED);
 			LLD_MoveTo(pt1_X, pt1_Y);
 			LLD_LineTo(pt2_X, pt2_Y);
 
 			pt1_X	=	center_X;
 			pt1_Y	=	center_Y;
 
-			SetColor(W_WHITE);
+			LLD_SetColor(W_WHITE);
 			LLD_FrameEllipse(pt1_X, pt1_Y, upAngleRadius, upAngleRadius);
 
 			while (upDegrees > 360.0)
@@ -374,10 +374,10 @@ int				textWidthPixels;
 				upDegrees	-=	360.0;
 			}
 			sprintf(textString, "%1.1f", upDegrees);
-			textWidthPixels	=   GetTextSize_Width(textString);
+			textWidthPixels	=   LLD_GetTextSize(textString, kFont_Medium);
 			pt1_X	-=	(textWidthPixels / 2);
 			pt1_Y	+=	5;
-			SetColor(W_WHITE);
+			LLD_SetColor(W_WHITE);
 			LLD_DrawCString(pt1_X, pt1_Y, textString, kFont_Medium);
 		}
 	}

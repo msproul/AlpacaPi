@@ -37,6 +37,7 @@
 //*	Dec 18,	2021	<MLS> Double click in the title bar causes connect to be sent
 //*	Dec 22,	2021	<MLS> Added support for flipmode
 //*	Feb 18,	2022	<MLS> Added SetCameraLogo()
+//*	Feb 25,	2022	<MLS> Downloading and saving image working with C++ opencv
 //*****************************************************************************
 
 #ifdef _ENABLE_CTRL_CAMERA_
@@ -489,7 +490,7 @@ char		textBuff[32];
 	int		fnWidgetNum;	//*	filter name
 	int		foWidgetNum;	//*	filter offset
 
-		CONSOLE_DEBUG("Setting up filterwheel!!!!!!!!!!!!!!!!!!!!!!!");
+//		CONSOLE_DEBUG("Setting up filterwheel!!!!!!!!!!!!!!!!!!!!!!!");
 
 		filterWhlWidth	=	(cClmWidth * 3) - 6;
 		SetWidget(		kCameraBox_FilterWheelName,	cClm1_offset,	yLoc,	filterWhlWidth,		cRadioBtnHt	);
@@ -571,34 +572,66 @@ char		textBuff[32];
 	SetIPaddressBoxes(kCameraBox_IPaddr, kCameraBox_Readall, kCameraBox_AlpacaDrvrVersion, -1);
 }
 
+#ifdef _USE_OPENCV_CPP_
+#define	kCameraLogoCount	4
+	cv::Mat		gCameraLogoImage[kCameraLogoCount];
+#endif
+
+
 //**************************************************************************************
 void	WindowTabCamera::SetCameraLogo(void)
 {
+char	logoImagePath[32];
+int		camLogoIdx;
 #ifdef _USE_OPENCV_CPP_
-
+	cv::Mat		*logoImagePtr;
 #else
-IplImage	*logoImage;
+	IplImage	*logoImagePtr;
+#endif // _USE_OPENCV_CPP_
 
-	logoImage	=	NULL;
 	CONSOLE_DEBUG_W_STR("cAlpacaDeviceName=", cAlpacaDeviceName);
+	camLogoIdx		=	-1;
+	logoImagePtr	=	NULL;
+
+	strcpy(logoImagePath, "logos/");
 	if (strcasestr(cAlpacaDeviceName, "ZWO") != NULL)
 	{
-		logoImage		=	cvLoadImage("logos/zwo-logo.png",		CV_LOAD_IMAGE_COLOR);
+		strcat(logoImagePath, "zwo-logo.png");
+		camLogoIdx	=	0;
 	}
 	else if (strcasestr(cAlpacaDeviceName, "Atik") != NULL)
 	{
-		logoImage		=	cvLoadImage("logos/atik-logo.png",	CV_LOAD_IMAGE_COLOR);
+		strcat(logoImagePath, "atik-logo.png");
+		camLogoIdx	=	1;
 	}
 	else if ((strcasestr(cAlpacaDeviceName, "toup") != NULL) || (strcasestr(cAlpacaDeviceName, "GCMOS") != NULL))
 	{
-		logoImage		=	cvLoadImage("logos/touptek-logo.png",	CV_LOAD_IMAGE_COLOR);
+		strcat(logoImagePath, "touptek-logo.png");
+		camLogoIdx	=	2;
 	}
 	else if (strcasestr(cAlpacaDeviceName, "QHY") != NULL)
 	{
-		logoImage		=	cvLoadImage("logos/qhy-logo.png",		CV_LOAD_IMAGE_COLOR);
+		strcat(logoImagePath, "qhy-logo.png");
+		camLogoIdx	=	3;
 	}
-	SetWidgetImage(kCameraBox_Logo, logoImage);
+//	CONSOLE_DEBUG_W_NUM("camLogoIdx   \t=",	camLogoIdx);
+//	CONSOLE_DEBUG_W_STR("logoImagePath\t=",	logoImagePath);
+
+#ifdef _USE_OPENCV_CPP_
+	if ((camLogoIdx >= 0) && (camLogoIdx < kCameraLogoCount))
+	{
+		gCameraLogoImage[camLogoIdx]	=	cv::imread(logoImagePath);
+		logoImagePtr	=	&gCameraLogoImage[camLogoIdx];
+	}
+#else
+	logoImagePtr	=	cvLoadImage(logoImagePath,		CV_LOAD_IMAGE_COLOR);
 #endif // _USE_OPENCV_CPP_
+
+//	CONSOLE_DEBUG_W_HEX("Calling SetWidgetImage() with logoImagePtr=", logoImagePtr);
+	if (logoImagePtr != NULL)
+	{
+		SetWidgetImage(kCameraBox_Logo, logoImagePtr);
+	}
 }
 
 //**************************************************************************************
@@ -1094,23 +1127,27 @@ ControllerCamera	*myCameraController;
 void	WindowTabCamera::DownloadImage(const bool useRGBarray)
 {
 ControllerCamera	*myCameraController;
-IplImage			*myDownLoadedImage;
+#ifdef _USE_OPENCV_CPP_
+	cv::Mat			*myDownLoadedImage;
+#else
+	IplImage		*myDownLoadedImage;
+	int				quality[3] = {16, 200, 0};
+	int				openCVerr;
+#endif
 char				textBuf[128];
 double				download_MBytes;
 double				download_MB_per_sec;
 double				download_seconds;
 char				fileName[256];
-int					quality[3] = {16, 200, 0};
-int					openCVerr;
 
 	CONSOLE_DEBUG(__FUNCTION__);
-
 
 	myDownLoadedImage	=	NULL;
 	myCameraController	=	(ControllerCamera *)cParentObjPtr;
 	if (myCameraController != NULL)
 	{
 //		CONSOLE_DEBUG("Starting download");
+		myDownLoadedImage	=	NULL;
 		if (useRGBarray)
 		{
 			myDownLoadedImage	=	myCameraController->DownloadImage_rgbarray();
@@ -1119,18 +1156,34 @@ int					openCVerr;
 		{
 			myDownLoadedImage	=	myCameraController->DownloadImage(cForce8BitRead, cAllowBinaryDownload);
 		}
+
 		if (myDownLoadedImage != NULL)
 		{
 			CONSOLE_DEBUG("Download complete");
+#ifdef _USE_OPENCV_CPP_
+			CONSOLE_DEBUG_W_NUM("myDownLoadedImage->cols\t=",	myDownLoadedImage->cols);
+			CONSOLE_DEBUG_W_NUM("myDownLoadedImage->rows\t=",	myDownLoadedImage->rows);
+#else
 			CONSOLE_DEBUG_W_NUM("myDownLoadedImage->width\t=",	myDownLoadedImage->width);
 			CONSOLE_DEBUG_W_NUM("myDownLoadedImage->height\t=",	myDownLoadedImage->height);
-
+#endif // _USE_OPENCV_CPP_
 			//======================================
 			//*	save the image
 			strcpy(fileName, cDownLoadedFileNameRoot);
 			strcat(fileName, ".jpg");
 
 			CONSOLE_DEBUG_W_STR("Saving image as", fileName);
+#ifdef _USE_OPENCV_CPP_
+			try
+			{
+//				cv::imwrite(fileName, *myDownLoadedImage);
+			}
+			catch (cv::Exception& ex)
+			{
+				CONSOLE_DEBUG_W_STR("Exception writing jpg image", ex.what());
+			}
+#else
+
 			openCVerr	=	cvSaveImage(fileName, myDownLoadedImage, quality);
 			if (openCVerr == 0)
 			{
@@ -1143,13 +1196,12 @@ int					openCVerr;
 				errorMsgPtr	=	(char *)cvErrorStr(openCVerrorCode);
 				CONSOLE_DEBUG_W_STR("errorMsgPtr\t=", errorMsgPtr);
 			}
+#endif // _USE_OPENCV_CPP_
+
+
 #ifdef _ENABLE_CTRL_IMAGE_
 			//*	this will open a new window with the image displayed
-		#ifdef _USE_OPENCV_CPP_
-			#warning "OpenCV++ not finished"
-		#else
 			new ControllerImage(cDownLoadedFileNameRoot, myDownLoadedImage);
-		#endif // _USE_OPENCV_CPP_
 #else
 			cvReleaseImage(&myDownLoadedImage);
 #endif // _ENABLE_CTRL_IMAGE_

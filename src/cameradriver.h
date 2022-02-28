@@ -22,6 +22,7 @@
 //*	Dec 11,	2020	<MLS> Updating class variable names to match ASCOM property names
 //*	Feb 21,	2021	<MLS> Deleted TYPE_SUPPORTED_IMG_TYPE
 //*	Jun 23,	2021	<MLS> Added kCmd_Camera_subexposureduration
+//*	Feb 27,	2022	<MLS> Changed cOpenCV_Image to cOpenCV_ImagePtr
 //*****************************************************************************
 //#include	"cameradriver.h"
 
@@ -766,12 +767,12 @@ protected:
 	//==========================================================
 	bool				cCreateOpenCVwindow;
 #ifdef _USE_OPENCV_CPP_
-	cv::Mat				*cOpenCV_Image;
-	cv::Mat				*cOpenCV_LiveDisplay;
+	cv::Mat				*cOpenCV_ImagePtr;
+	cv::Mat				*cOpenCV_LiveDisplayPtr;
 	cv::Mat				*cOpenCV_Histogram;
 #else
-	IplImage			*cOpenCV_Image;
-	IplImage			*cOpenCV_LiveDisplay;
+	IplImage			*cOpenCV_ImagePtr;
+	IplImage			*cOpenCV_LiveDisplayPtr;
 	IplImage			*cOpenCV_Histogram;
 #endif // _USE_OPENCV_CPP_
 #ifdef _ENABLE_CVFONT_

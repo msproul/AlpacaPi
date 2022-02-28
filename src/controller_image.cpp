@@ -11,6 +11,7 @@
 //*	Apr  2,	2021	<MLS> Added UpdateLiveWindowImage()
 //*	Apr  3,	2021	<MLS> Added UpdateLiveWindowInfo()
 //*	Apr  8,	2021	<MLS> Added CopyImageToLiveImage()
+//*	Feb 25,	2022	<MLS> SetLiveWindowImage() working under C++ opencv
 //*****************************************************************************
 
 
@@ -73,6 +74,7 @@ enum
 
 
 #ifdef _USE_OPENCV_CPP_
+#warning "OpenCV++ not finished"
 //**************************************************************************************
 ControllerImage::ControllerImage(const char	*argWindowName, cv::Mat *downloadedImage)
 			:Controller(	argWindowName,
@@ -105,7 +107,7 @@ ControllerImage::ControllerImage(	const char *argWindowName, IplImage *downloade
 	}
 	else
 	{
-
+		CONSOLE_DEBUG("No image was specfified");
 	}
 }
 
@@ -118,6 +120,7 @@ ControllerImage::~ControllerImage(void)
 	SetWidgetImage(kTab_Image, kImageDisplay_ImageDisplay, NULL);
 #ifdef _USE_OPENCV_CPP_
 	#warning "OpenCV++ not finished"
+	CONSOLE_DEBUG("OpenCV++ not finished!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 #else
 	//--------------------------------------------
 	//*	free up the image memory
@@ -212,7 +215,7 @@ bool		needToUpdate;
 void	ControllerImage::RefreshWindow(void)
 {
 	HandleWindowUpdate();
-	cvWaitKey(100);
+	cv::waitKey(100);
 }
 
 //**************************************************************************************
@@ -240,24 +243,157 @@ void	ControllerImage::DrawWidgetImage(TYPE_WIDGET *theWidget)
 }
 
 #ifdef _USE_OPENCV_CPP_
-	#warning "OpenCV++ not finished"
 //**************************************************************************************
 void	ControllerImage::SetLiveWindowImage(cv::Mat *newOpenCVImage)
 {
-}
+int		smallDispalyWidth;
+int		smallDisplayHeight;
+int		reduceFactor;
+int		newImgWidth;
+int		newImgHeight;
+int		newImgChannels;
+int		newImgRowStepSize;
+bool	validImg;
+size_t	byteCount;
 
-//**************************************************************************************
-void	ControllerImage::CopyImageToLiveImage(cv::Mat *newOpenCVImage)
-{
-}
+	CONSOLE_DEBUG(__FUNCTION__);
+
+	if (cDownLoadedImage != NULL)
+	{
+	//	cvReleaseImage(&cDownLoadedImage);
+		delete cDownLoadedImage;
+		cDownLoadedImage	=	NULL;
+	}
+	if (cDisplayedImage != NULL)
+	{
+	//	cvReleaseImage(&cDisplayedImage);
+		delete cDisplayedImage;
+		cDisplayedImage	=	NULL;
+	}
+
+	if (newOpenCVImage != NULL)
+	{
+		//*	ok, now its time to CREATE our own image, we are going to make it the same as the
+		//*	supplied image
+		//	https://docs.opencv.org/3.4/d3/d63/classcv_1_1Mat.html
+		newImgWidth			=	newOpenCVImage->cols;
+		newImgHeight		=	newOpenCVImage->rows;
+		newImgRowStepSize	=	newOpenCVImage->step[0];
+		newImgChannels		=	newOpenCVImage->step[1];
+		validImg			=	true;
+		if ((newImgWidth < 100) || (newImgWidth > 10000))
+		{
+			validImg		=	false;
+		}
+		if ((newImgHeight < 100) || (newImgHeight > 10000))
+		{
+			validImg		=	false;
+		}
+		if ((newImgChannels != 1) && (newImgChannels != 3))
+		{
+			validImg		=	false;
+		}
+		if (validImg)
+		{
+			CONSOLE_DEBUG_W_NUM("newImgChannels\t=", newImgChannels);
+			newImgChannels		=	3;
+			cDownLoadedImage	=	new cv::Mat(cv::Size(	newImgWidth,
+															newImgHeight),
+															CV_8UC3);
+		}
+		else
+		{
+			CONSOLE_DEBUG("Image parameters invalid !!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+			CONSOLE_DEBUG_W_NUM("newImgWidth   \t=",	newImgWidth);
+			CONSOLE_DEBUG_W_NUM("newImgHeight  \t=",	newImgHeight);
+			CONSOLE_DEBUG_W_NUM("newImgChannels\t=",	newImgChannels);
+			CONSOLE_ABORT(__FUNCTION__);
+		}
+
+		//*	the downloaded image needs to be copied and/or resized to the displayed image
+		if (cDownLoadedImage != NULL)
+		{
+			//*	copy the image data to OUR image
+			byteCount	=	newOpenCVImage->rows * newImgRowStepSize;
+			if ((cDownLoadedImage->data != NULL) && (newOpenCVImage->data != NULL))
+			{
+				memcpy(cDownLoadedImage->data, newOpenCVImage->data, byteCount);
+			}
+			CONSOLE_DEBUG("Creating small image");
+			reduceFactor		=	1;
+			smallDispalyWidth	=	cDownLoadedImage->cols;
+			smallDisplayHeight	=	cDownLoadedImage->rows;
+
+			CONSOLE_DEBUG_W_NUM("cDownLoadedImage->cols\t=",	cDownLoadedImage->cols);
+			CONSOLE_DEBUG_W_NUM("cDownLoadedImage->rows\t=",	cDownLoadedImage->rows);
 
 
-//**************************************************************************************
-//*	this routine updates the existing image by copying the new image to the old image buffer
-//*	it checks to make sure they are compatible
-//**************************************************************************************
-void	ControllerImage::UpdateLiveWindowImage(cv::Mat *newOpenCVImage, const char *imageFileName)
-{
+			int		maxWindowWidth	=	800;
+			int		maxWindowHeight	=	700;
+
+			while ((smallDispalyWidth > maxWindowWidth) || (smallDisplayHeight > (maxWindowHeight - 50)))
+			{
+				CONSOLE_DEBUG_W_NUM("smallDisplayHeight\t=", smallDisplayHeight);
+				reduceFactor++;
+				smallDispalyWidth	=	cDownLoadedImage->cols / reduceFactor;
+				smallDisplayHeight	=	cDownLoadedImage->rows / reduceFactor;
+			}
+			CONSOLE_DEBUG_W_NUM("reduceFactor\t=", reduceFactor);
+			CONSOLE_DEBUG_W_NUM("smallDispalyWidth\t=", smallDispalyWidth);
+			CONSOLE_DEBUG_W_NUM("smallDisplayHeight\t=", smallDisplayHeight);
+
+			cDisplayedImage	=	new cv::Mat(cv::Size(	smallDispalyWidth,
+														smallDisplayHeight),
+														CV_8UC3);
+
+// 300 [DumpCVMatStruct     ] theImageMat->cols		= 1200
+// 301 [DumpCVMatStruct     ] theImageMat->rows		= 800
+// 302 [DumpCVMatStruct     ] theImageMat->dims		= 2
+// 303 [DumpCVMatStruct     ] theImageMat->step[0]	= 3600
+// 304 [DumpCVMatStruct     ] theImageMat->step[1]	= 3
+// 305 [DumpCVMatStruct     ] theImageMat->step[2]	= 0
+
+			if (cDisplayedImage != NULL)
+			{
+				CONSOLE_DEBUG("Resizing image");
+
+				//*	Check to see if the original is color
+				if ((cDownLoadedImage->step[1] == 3))
+				{
+					CONSOLE_DEBUG("Original is 8 bit color (3 channels)");
+//					cvResize(cDownLoadedImage, cDisplayedImage, CV_INTER_LINEAR);
+					cv::resize(	*cDownLoadedImage,
+								*cDisplayedImage,
+								cDisplayedImage->size(),
+								0,
+								0,
+								cv::INTER_LINEAR);
+				}
+//				else if ((cDownLoadedImage->nChannels == 1) && (cDownLoadedImage->depth == 8))
+				else if ((cDownLoadedImage->step[1] == 1))
+				{
+					CONSOLE_DEBUG("Original is 8 bit B/W");
+					CONSOLE_DEBUG("OpenCV++ not finished!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+//					cvCvtColor(cDownLoadedImage, cDisplayedImage, CV_GRAY2RGB);
+				}
+//
+				SetWidgetImage(kTab_Image, kImageDisplay_ImageDisplay, cDisplayedImage);
+			}
+			else
+			{
+				CONSOLE_DEBUG("Failed to create new image");
+			}
+
+			if (cImageTabObjPtr != NULL)
+			{
+				cImageTabObjPtr->SetImagePtrs(cDownLoadedImage,	cDisplayedImage);
+			}
+		}
+		else
+		{
+			CONSOLE_DEBUG("Error creating image (new cv::Mat)");
+		}
+	}
 }
 #else
 //**************************************************************************************
@@ -384,7 +520,17 @@ size_t	byteCount;
 		}
 	}
 }
+#endif // _USE_OPENCV_CPP_
 
+
+#ifdef _USE_OPENCV_CPP_
+#warning "OpenCV++ not finished"
+//**************************************************************************************
+void	ControllerImage::CopyImageToLiveImage(cv::Mat *newOpenCVImage)
+{
+	CONSOLE_DEBUG("OpenCV++ not finished!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+}
+#else
 //**************************************************************************************
 void	ControllerImage::CopyImageToLiveImage(IplImage *newOpenCVImage)
 {
@@ -441,13 +587,19 @@ size_t				byteCount_dst;
 		}
 	}
 }
+#endif // _USE_OPENCV_CPP_
 
 
+
+#ifdef _USE_OPENCV_CPP_
 //**************************************************************************************
 //*	this routine updates the existing image by copying the new image to the old image buffer
 //*	it checks to make sure they are compatible
 //**************************************************************************************
+void	ControllerImage::UpdateLiveWindowImage(cv::Mat *newOpenCVImage, const char *imageFileName)
+#else
 void	ControllerImage::UpdateLiveWindowImage(IplImage *newOpenCVImage, const char *imageFileName)
+#endif // _USE_OPENCV_CPP_
 {
 bool	imagesAreTheSame;
 
@@ -463,8 +615,12 @@ bool	imagesAreTheSame;
 		else
 		{
 //			CONSOLE_DEBUG("Updating image");
-			imagesAreTheSame	=	true;
+#ifdef _USE_OPENCV_CPP_
+#warning "OpenCV++ not finished"
+
+#else
 			//*	check if width are the same
+			imagesAreTheSame	=	true;
 			if (newOpenCVImage->width != cDownLoadedImage->width)
 			{
 				imagesAreTheSame	=	false;
@@ -532,6 +688,7 @@ bool	imagesAreTheSame;
 					CopyImageToLiveImage(cColorImage);
 				}
 			}
+#endif // _USE_OPENCV_CPP_
 			cUpdateWindow	=	true;
 		}
 	}
@@ -549,7 +706,6 @@ bool	imagesAreTheSame;
 
 //	CONSOLE_DEBUG("-------------------exit");
 }
-#endif // _USE_OPENCV_CPP_
 
 //**************************************************************************************
 void	ControllerImage::UpdateLiveWindowInfo(	TYPE_CameraProperties	*cameraProp,
@@ -561,6 +717,7 @@ void	ControllerImage::UpdateLiveWindowInfo(	TYPE_CameraProperties	*cameraProp,
 {
 char	lineBuff[64];
 
+	CONSOLE_DEBUG(__FUNCTION__);
 
 	SetWidgetNumber(kTab_Image, kImageDisplay_Gain,			cameraProp->Gain);
 
@@ -577,9 +734,9 @@ char	lineBuff[64];
 		SetWidgetText(	kTab_Image, kImageDisplay_Filter,	filterName);
 	}
 
-//+	SetWidgetNumber(kTab_Image, kImageDisplay_FramesSaved,	framesSaved);
+	SetWidgetNumber(kTab_Image, kImageDisplay_FramesSaved,	0);
 
-
+	cUpdateWindow	=	true;
 }
 
 #endif // _ENABLE_CTRL_IMAGE_

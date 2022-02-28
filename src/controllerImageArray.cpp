@@ -51,7 +51,6 @@
 #define		kImageArrayBuffSize	15000
 
 
-#define	_USE_SPLIT_OUT_ROUTINES_
 
 //*****************************************************************************
 void	JSON_ExtractKeyword_Value(const char *linebuf, char *keywordStr, char *valueStr)
@@ -592,9 +591,9 @@ int				jjj;
 int				binaryDataValue;
 int				dataByteIdx;
 
-	CONSOLE_DEBUG("------------------------------------------------------------------");
+	CONSOLE_DEBUG("-----------------------------------------------------------");
 	CONSOLE_DEBUG(__FUNCTION__);
-	CONSOLE_DEBUG_W_NUM("arrayLength        \t=",	arrayLength);
+	CONSOLE_DEBUG_W_NUM("arrayLength\t\t\t=",	arrayLength);
 
 	imgRank		=	0;
 	cRGBidx		=	0;
@@ -604,14 +603,14 @@ int				dataByteIdx;
 		if (cReadBinaryHeader)
 		{
 			CONSOLE_DEBUG_W_NUM("contentLength\t\t=",			cHttpHdrStruct.contentLength);
-			CONSOLE_DEBUG_W_NUM("cRecvdByteCnt=", cRecvdByteCnt);
+			CONSOLE_DEBUG_W_NUM("cRecvdByteCnt\t\t=", cRecvdByteCnt);
 	//		DumpHex(cReturnedData, 40);
 
 			//*	process the binary header
 			memset(&cBinaryImageHdr, 0, sizeof(TYPE_BinaryImageHdr));
 			binaryImgHdrPtr	=	(unsigned char *)&cBinaryImageHdr;
 
-			CONSOLE_DEBUG_W_NUM("cData_iii=", cData_iii);
+			CONSOLE_DEBUG_W_NUM("cData_iii\t\t\t=", cData_iii);
 			for (jjj=0; jjj < (int)sizeof(TYPE_BinaryImageHdr); jjj++)
 			{
 				binaryImgHdrPtr[jjj]	=	cReturnedData[cData_iii];
@@ -793,8 +792,8 @@ int				dataByteIdx;
 			cKeepReading		=	false;
 		}
 	}
-	CONSOLE_DEBUG_W_NUM("imgRank\t=", imgRank);
-	CONSOLE_DEBUG_W_NUM("cImageArrayIndex=", cImageArrayIndex);
+	CONSOLE_DEBUG_W_NUM("imgRank\t\t\t=", imgRank);
+	CONSOLE_DEBUG_W_NUM("cImageArrayIndex\t=", cImageArrayIndex);
 	return(imgRank);
 }
 

@@ -39,6 +39,7 @@
 //*	Apr 16,	2020	<MLS> Switched to using commoncolor for background color selection
 //*	Apr 19,	2020	<MLS> Fixed cross hair location when using sidebar
 //*	Feb 21,	2021	<MLS> Added CloseLiveImage(), live window now closes properly
+//*	Feb 23,	2022	<MLS> Working on converting C++ versions of opencv
 //*****************************************************************************
 
 #if defined(_ENABLE_CAMERA_) && defined(_USE_OPENCV_)
@@ -72,7 +73,13 @@
 
 #define	FC_BLUE()	CV_RGB(0x64, 0x8c, 0xff)
 
-
+#ifdef _USE_OPENCV_CPP_
+#warning "OpenCV++ not finished"
+//*****************************************************************************
+void	LoadAlpacaImage(void)
+{
+}
+#else
 IplImage	*gAlpacaImgPtr	=	NULL;
 
 //*****************************************************************************
@@ -83,7 +90,7 @@ void	LoadAlpacaImage(void)
 		gAlpacaImgPtr	=	cvLoadImage("logos/AlpacaLogo-small.png", CV_LOAD_IMAGE_COLOR);
 	}
 }
-
+#endif // _USE_OPENCV_CPP_
 
 //*****************************************************************************
 void	CameraDriver::ProcessMouseEvent(int event, int xxx, int yyy, int flags)
@@ -94,8 +101,8 @@ int	deltaMouse;
 
 	switch(event)
 	{
-		case CV_EVENT_MOUSEMOVE:
-		//	CONSOLE_DEBUG("CV_EVENT_MOUSEMOVE");
+		case cv::EVENT_MOUSEMOVE:
+		//	CONSOLE_DEBUG("cv::EVENT_MOUSEMOVE");
 			cCurrentMouseX	=	xxx;
 			cCurrentMouseY	=	yyy;
 			if (cLeftButtonDown)
@@ -115,15 +122,15 @@ int	deltaMouse;
 			}
 			break;
 
-		case CV_EVENT_LBUTTONDOWN:
+		case cv::EVENT_LBUTTONDOWN:
 			cLeftButtonDown	=	true;
-//			CONSOLE_DEBUG("CV_EVENT_LBUTTONDOWN");
+//			CONSOLE_DEBUG("cv::EVENT_LBUTTONDOWN");
 			//*	CONTROL and SHIFT turn the cross hair OFF
-			if ((flags & CV_EVENT_FLAG_CTRLKEY) && (flags & CV_EVENT_FLAG_SHIFTKEY))
+			if ((flags & cv::EVENT_FLAG_CTRLKEY) && (flags & cv::EVENT_FLAG_SHIFTKEY))
 			{
 				cDisplayCrossHairs	=	false;
 			}
-			else if (flags & CV_EVENT_FLAG_CTRLKEY)
+			else if (flags & cv::EVENT_FLAG_CTRLKEY)
 			{
 				cDisplayCrossHairs	=	true;
 				cCrossHairX			=	xxx;
@@ -143,39 +150,39 @@ int	deltaMouse;
 			}
 			break;
 
-		case CV_EVENT_RBUTTONDOWN:
-			CONSOLE_DEBUG("CV_EVENT_RBUTTONDOWN");
+		case cv::EVENT_RBUTTONDOWN:
+			CONSOLE_DEBUG("cv::EVENT_RBUTTONDOWN");
 			break;
 
-		case CV_EVENT_MBUTTONDOWN:
-			CONSOLE_DEBUG("CV_EVENT_MBUTTONDOWN");
+		case cv::EVENT_MBUTTONDOWN:
+			CONSOLE_DEBUG("cv::EVENT_MBUTTONDOWN");
 			break;
 
-		case CV_EVENT_LBUTTONUP:
+		case cv::EVENT_LBUTTONUP:
 			cLeftButtonDown	=	false;
 			cDrawRectangle	=	false;
-			CONSOLE_DEBUG("CV_EVENT_LBUTTONUP");
+			CONSOLE_DEBUG("cv::EVENT_LBUTTONUP");
 			break;
 
-		case CV_EVENT_RBUTTONUP:
+		case cv::EVENT_RBUTTONUP:
 			cRightButtonDown	=	false;
-			CONSOLE_DEBUG("CV_EVENT_RBUTTONUP");
+			CONSOLE_DEBUG("cv::EVENT_RBUTTONUP");
 			break;
 
-		case CV_EVENT_MBUTTONUP:
-			CONSOLE_DEBUG("CV_EVENT_MBUTTONUP");
+		case cv::EVENT_MBUTTONUP:
+			CONSOLE_DEBUG("cv::EVENT_MBUTTONUP");
 			break;
 
-		case CV_EVENT_LBUTTONDBLCLK:
-			CONSOLE_DEBUG("CV_EVENT_LBUTTONDBLCLK");
+		case cv::EVENT_LBUTTONDBLCLK:
+			CONSOLE_DEBUG("cv::EVENT_LBUTTONDBLCLK");
 			break;
 
-		case CV_EVENT_RBUTTONDBLCLK:
-			CONSOLE_DEBUG("CV_EVENT_RBUTTONDBLCLK");
+		case cv::EVENT_RBUTTONDBLCLK:
+			CONSOLE_DEBUG("cv::EVENT_RBUTTONDBLCLK");
 			break;
 
-		case CV_EVENT_MBUTTONDBLCLK:
-			CONSOLE_DEBUG("CV_EVENT_MBUTTONDBLCLK");
+		case cv::EVENT_MBUTTONDBLCLK:
+			CONSOLE_DEBUG("cv::EVENT_MBUTTONDBLCLK");
 			break;
 	}
 }
@@ -183,12 +190,15 @@ int	deltaMouse;
 //*****************************************************************************
 void	CameraDriver::DrawOpenCVoverlay(void)
 {
-CvPoint			point1;
-CvPoint			point2;
+cv::Point			point1;
+cv::Point			point2;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-	if (cOpenCV_LiveDisplay != NULL)
+#if defined(_USE_OPENCV_CPP_) &&  (CV_MAJOR_VERSION >= 4)
+#warning "OpenCV++ not finished"
+#else
+	if (cOpenCV_LiveDisplayPtr != NULL)
 	{
 		if (cDisplayCrossHairs)
 		{
@@ -198,7 +208,7 @@ CvPoint			point2;
 			point2.x		=	1024;
 			point2.y		=	cCrossHairY;
 
-			cvLine(	cOpenCV_LiveDisplay,
+			cvLine(	cOpenCV_LiveDisplayPtr,
 					point1,
 					point2,
 					cCrossHairColor,
@@ -213,7 +223,7 @@ CvPoint			point2;
 			point2.x	=	cCrossHairX;
 			point2.y	=	1024;
 
-			cvLine(	cOpenCV_LiveDisplay,
+			cvLine(	cOpenCV_LiveDisplayPtr,
 					point1,
 					point2,
 					cCrossHairColor,
@@ -231,7 +241,7 @@ CvPoint			point2;
 			point2.y	=	cCurrentMouseY;
 
 
-			cvRectangle(	cOpenCV_LiveDisplay,
+			cvRectangle(	cOpenCV_LiveDisplayPtr,
 							point1,
 							point2,
 							cCrossHairColor,	//	color,
@@ -241,6 +251,7 @@ CvPoint			point2;
 
 		}
 	}
+#endif // _USE_OPENCV_CPP_
 }
 
 
@@ -260,42 +271,50 @@ CameraDriver	*myCameraDriver;
 //*****************************************************************************
 void	CameraDriver::SetOpenCVcallbackFunction(const char *windowName)
 {
+#ifdef _USE_OPENCV_CPP_
+#warning "OpenCV++ not finished"
+#else
 	cvSetMouseCallback( windowName,
 						LiveWindowMouseCallbac,
 						(void *)this);
 
+#endif // _USE_OPENCV_CPP_
 }
 
 //*****************************************************************************
 void	CameraDriver::OpenLiveImage(void)
 {
-	if (cOpenCV_LiveDisplay == NULL)
+#ifdef _USE_OPENCV_CPP_
+#warning "OpenCV++ not finished"
+#else
+	if (cOpenCV_LiveDisplayPtr == NULL)
 	{
 		switch(cROIinfo.currentROIimageType)
 		{
 			case kImageType_RAW8:
 			case kImageType_Y8:
-				CONSOLE_DEBUG("Creating cOpenCV_LiveDisplay - kImageType_RAW8")
-				cOpenCV_LiveDisplay	=	cvCreateImage(cvSize(cLiveDisplayWidth, cLiveDisplayHeight), IPL_DEPTH_8U, 1);
+				CONSOLE_DEBUG("Creating cOpenCV_LiveDisplayPtr - kImageType_RAW8")
+				cOpenCV_LiveDisplayPtr	=	cvCreateImage(cvSize(cLiveDisplayWidth, cLiveDisplayHeight), IPL_DEPTH_8U, 1);
 				break;
 
 			case kImageType_RAW16:
-				CONSOLE_DEBUG("Creating cOpenCV_LiveDisplay - kImageType_RAW16")
-				cOpenCV_LiveDisplay	=	cvCreateImage(cvSize(cLiveDisplayWidth, cLiveDisplayHeight), IPL_DEPTH_16U, 1);
+				CONSOLE_DEBUG("Creating cOpenCV_LiveDisplayPtr - kImageType_RAW16")
+				cOpenCV_LiveDisplayPtr	=	cvCreateImage(cvSize(cLiveDisplayWidth, cLiveDisplayHeight), IPL_DEPTH_16U, 1);
 				break;
 
 			case kImageType_RGB24:
-				CONSOLE_DEBUG("Creating cOpenCV_LiveDisplay - kImageType_RGB24")
-				cOpenCV_LiveDisplay	=	cvCreateImage(cvSize(cLiveDisplayWidth, cLiveDisplayHeight), IPL_DEPTH_8U, 3);
+				CONSOLE_DEBUG("Creating cOpenCV_LiveDisplayPtr - kImageType_RGB24")
+				cOpenCV_LiveDisplayPtr	=	cvCreateImage(cvSize(cLiveDisplayWidth, cLiveDisplayHeight), IPL_DEPTH_8U, 3);
 				break;
 
 			default:
-				cOpenCV_LiveDisplay	=	NULL;
+				cOpenCV_LiveDisplayPtr	=	NULL;
 				break;
 
 		}
-		SetOpenCVcolors(cOpenCV_LiveDisplay);
+		SetOpenCVcolors(cOpenCV_LiveDisplayPtr);
 	}
+#endif // _USE_OPENCV_CPP_
 }
 
 //*****************************************************************************
@@ -305,11 +324,14 @@ int	iii;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
-	if (cOpenCV_LiveDisplay != NULL)
+#ifdef _USE_OPENCV_CPP_
+#warning "OpenCV++ not finished"
+#else
+	if (cOpenCV_LiveDisplayPtr != NULL)
 	{
-		CONSOLE_DEBUG("Calling cvReleaseImage(&cOpenCV_LiveDisplay)");
-		cvReleaseImage(&cOpenCV_LiveDisplay);
-		cOpenCV_LiveDisplay	=	NULL;
+		CONSOLE_DEBUG("Calling cvReleaseImage(&cOpenCV_LiveDisplayPtr)");
+		cvReleaseImage(&cOpenCV_LiveDisplayPtr);
+		cOpenCV_LiveDisplayPtr	=	NULL;
 	}
 	else
 	{
@@ -317,17 +339,26 @@ int	iii;
 	}
 	CONSOLE_DEBUG("Calling cvDestroyWindow(cOpenCV_ImgWindowName)");
 	cvDestroyWindow(cOpenCV_ImgWindowName);
+#endif // _USE_OPENCV_CPP_
 	cCreateOpenCVwindow		=	true;
 	cOpenCV_ImgWindowValid	=	false;
 
-	//*	the key to closing the window properly is calling cvWaitKey
+	//*	the key to closing the window properly is calling cv::waitKey
 	for (iii=0; iii<20; iii++)
 	{
-		cvWaitKey(20);
+		cv::waitKey(20);
 	}
 	CONSOLE_DEBUG(__FUNCTION__);
 }
 
+#ifdef _USE_OPENCV_CPP_
+#warning "OpenCV++ not finished"
+//*****************************************************************************
+void	CameraDriver::DisplayLiveImage(void)
+{
+
+}
+#else
 //*****************************************************************************
 void	CameraDriver::DisplayLiveImage(void)
 {
@@ -355,23 +386,23 @@ int			keyPressed;
 		//*	if the format of the image is changed (i.e. RAW8 -> RGB24
 		//*	while live image is being displayed, opencv aborts on resize
 		//*	Feb 18,	2020	<MLS> Fixed bug in live view when image format gets changed
-		if (cOpenCV_LiveDisplay != NULL)
+		if (cOpenCV_LiveDisplayPtr != NULL)
 		{
-			if ((cOpenCV_LiveDisplay->nChannels != cOpenCV_Image->nChannels) ||
-				(cOpenCV_LiveDisplay->depth != cOpenCV_Image->depth))
+			if ((cOpenCV_LiveDisplayPtr->nChannels != cOpenCV_ImagePtr->nChannels) ||
+				(cOpenCV_LiveDisplayPtr->depth != cOpenCV_ImagePtr->depth))
 			{
 				CONSOLE_DEBUG("Image format has changed!!! re-creating live view image");
-				cvReleaseImage(&cOpenCV_LiveDisplay);
-				cOpenCV_LiveDisplay	=	NULL;
+				cvReleaseImage(&cOpenCV_LiveDisplayPtr);
+				cOpenCV_LiveDisplayPtr	=	NULL;
 			}
 
 		}
 		//*	we have to create a liveDisp image to display
-		if (cOpenCV_LiveDisplay == NULL)
+		if (cOpenCV_LiveDisplayPtr == NULL)
 		{
 			//*	create the display image (reduced size)
-			cLiveDisplayWidth	=	cOpenCV_Image->width;
-			cLiveDisplayHeight	=	cOpenCV_Image->height;
+			cLiveDisplayWidth	=	cOpenCV_ImagePtr->width;
+			cLiveDisplayHeight	=	cOpenCV_ImagePtr->height;
 			while (cLiveDisplayWidth > kLimitWidth)
 			{
 				cLiveDisplayWidth	=	cLiveDisplayWidth / 2;
@@ -381,33 +412,33 @@ int			keyPressed;
 			{
 				case kImageType_RAW8:
 				case kImageType_Y8:
-					CONSOLE_DEBUG("Creating cOpenCV_LiveDisplay - kImageType_RAW8")
-					cOpenCV_LiveDisplay	=	cvCreateImage(cvSize(cLiveDisplayWidth, cLiveDisplayHeight), IPL_DEPTH_8U, 1);
+					CONSOLE_DEBUG("Creating cOpenCV_LiveDisplayPtr - kImageType_RAW8")
+					cOpenCV_LiveDisplayPtr	=	cvCreateImage(cvSize(cLiveDisplayWidth, cLiveDisplayHeight), IPL_DEPTH_8U, 1);
 					break;
 
 				case kImageType_RAW16:
-					CONSOLE_DEBUG("Creating cOpenCV_LiveDisplay - kImageType_RAW16")
-					cOpenCV_LiveDisplay	=	cvCreateImage(cvSize(cLiveDisplayWidth, cLiveDisplayHeight), IPL_DEPTH_16U, 1);
+					CONSOLE_DEBUG("Creating cOpenCV_LiveDisplayPtr - kImageType_RAW16")
+					cOpenCV_LiveDisplayPtr	=	cvCreateImage(cvSize(cLiveDisplayWidth, cLiveDisplayHeight), IPL_DEPTH_16U, 1);
 					break;
 
 				case kImageType_RGB24:
-					CONSOLE_DEBUG("Creating cOpenCV_LiveDisplay - kImageType_RGB24")
-					cOpenCV_LiveDisplay	=	cvCreateImage(cvSize(cLiveDisplayWidth, cLiveDisplayHeight), IPL_DEPTH_8U, 3);
+					CONSOLE_DEBUG("Creating cOpenCV_LiveDisplayPtr - kImageType_RGB24")
+					cOpenCV_LiveDisplayPtr	=	cvCreateImage(cvSize(cLiveDisplayWidth, cLiveDisplayHeight), IPL_DEPTH_8U, 3);
 					break;
 
 				default:
-					cOpenCV_LiveDisplay	=	NULL;
+					cOpenCV_LiveDisplayPtr	=	NULL;
 					break;
 
 			}
-			SetOpenCVcolors(cOpenCV_LiveDisplay);
+			SetOpenCVcolors(cOpenCV_LiveDisplayPtr);
 		}
-		if (cOpenCV_LiveDisplay != NULL)
+		if (cOpenCV_LiveDisplayPtr != NULL)
 		{
 		CvPoint			point1;
 		char			imageNumBuff[32];
 
-			cvResize(cOpenCV_Image, cOpenCV_LiveDisplay, CV_INTER_LINEAR);
+			cvResize(cOpenCV_ImagePtr, cOpenCV_LiveDisplayPtr, CV_INTER_LINEAR);
 			if (cDisplayCrossHairs || cDrawRectangle)
 			{
 				DrawOpenCVoverlay();
@@ -417,23 +448,23 @@ int			keyPressed;
 			point1.y	=	20;
 			sprintf(imageNumBuff, "#%ld %d-bit, EXP=%f",
 											cFramesRead,
-											cOpenCV_LiveDisplay->depth,
+											cOpenCV_LiveDisplayPtr->depth,
 											(cCurrentExposure_us / 1000000.0));
 //				CONSOLE_DEBUG_W_STR("imageNumBuff\t=", imageNumBuff);
-			cvPutText(	cOpenCV_LiveDisplay,
+			cvPutText(	cOpenCV_LiveDisplayPtr,
 						imageNumBuff,
 						point1,
 						&cTextFont,
 						cSideBarTXTcolor
 						);
 
-			cvShowImage(cOpenCV_ImgWindowName, cOpenCV_LiveDisplay);
+			cvShowImage(cOpenCV_ImgWindowName, cOpenCV_LiveDisplayPtr);
 		}
 
 		cNewImageReadyToDisplay	=	false;
 	}
 
-	keyPressed	=	cvWaitKey(10);	//*	required to allow opencv to update the window
+	keyPressed	=	cv::waitKey(10);	//*	required to allow opencv to update the window
 	if (keyPressed > 0)
 	{
 	//	CONSOLE_DEBUG_W_HEX("Key pressed =", keyPressed);
@@ -443,13 +474,22 @@ int			keyPressed;
 				CONSOLE_DEBUG_W_STR("Reseting window:", cOpenCV_ImgWindowName);
 				cvMoveWindow(cOpenCV_ImgWindowName, 25, 100);
 				cvResizeWindow(cOpenCV_ImgWindowName, 500, 500);
-				keyPressed	=	cvWaitKey(5000);
+				keyPressed	=	cv::waitKey(5000);
 				break;
 
 		}
 	}
 }
+#endif // _USE_OPENCV_CPP_
 
+#ifdef _USE_OPENCV_CPP_
+#warning "OpenCV++ not finished"
+//*****************************************************************************
+void	CameraDriver::DisplayLiveImage_wSideBar(void)
+{
+
+}
+#else
 //*****************************************************************************
 void	CameraDriver::DisplayLiveImage_wSideBar(void)
 {
@@ -478,7 +518,7 @@ CvRect		myCVrect;
 		}
 #define	kLimitWidth	1000
 
-		if (cOpenCV_Image != NULL)
+		if (cOpenCV_ImagePtr != NULL)
 		{
 			//**************************************************************
 			//*	make sure the existing live display is compatible
@@ -486,22 +526,22 @@ CvRect		myCVrect;
 			//*	while live image is being displayed, opencv aborts on resize
 			//*	Feb 18,	2020	<MLS> Fixed bug in live view when image format gets changed
 			//**************************************************************
-			if (cOpenCV_LiveDisplay != NULL)
+			if (cOpenCV_LiveDisplayPtr != NULL)
 			{
-				if (cOpenCV_LiveDisplay->depth != cOpenCV_Image->depth)
+				if (cOpenCV_LiveDisplayPtr->depth != cOpenCV_ImagePtr->depth)
 				{
 					CONSOLE_DEBUG("Image format has changed!!! re-creating live view image");
-					cvReleaseImage(&cOpenCV_LiveDisplay);
-					cOpenCV_LiveDisplay	=	NULL;
+					cvReleaseImage(&cOpenCV_LiveDisplayPtr);
+					cOpenCV_LiveDisplayPtr	=	NULL;
 				}
 			}
 			//*	we have to create a liveDisp image to display
-			if (cOpenCV_LiveDisplay == NULL)
+			if (cOpenCV_LiveDisplayPtr == NULL)
 			{
 				CONSOLE_DEBUG("Creating new Live Display image");
 				//*	create the display image (reduced size)
-				cLiveDisplayWidth	=	cOpenCV_Image->width;
-				cLiveDisplayHeight	=	cOpenCV_Image->height;
+				cLiveDisplayWidth	=	cOpenCV_ImagePtr->width;
+				cLiveDisplayHeight	=	cOpenCV_ImagePtr->height;
 				while (cLiveDisplayWidth > kLimitWidth)
 				{
 					cLiveDisplayWidth	=	cLiveDisplayWidth / 2;
@@ -516,42 +556,42 @@ CvRect		myCVrect;
 					windowWidth		+=	cSideBarWidth + (2 * cSideFrameWidth);
 					windowHeight	+=	(2 * cSideFrameWidth);
 				}
-				switch (cOpenCV_Image->depth)
+				switch (cOpenCV_ImagePtr->depth)
 				{
 					case 8:
-						CONSOLE_DEBUG("Creating cOpenCV_LiveDisplay - 8 bit")
-						cOpenCV_LiveDisplay	=	cvCreateImage(cvSize(windowWidth, windowHeight), IPL_DEPTH_8U, 3);
+						CONSOLE_DEBUG("Creating cOpenCV_LiveDisplayPtr - 8 bit")
+						cOpenCV_LiveDisplayPtr	=	cvCreateImage(cvSize(windowWidth, windowHeight), IPL_DEPTH_8U, 3);
 						break;
 
 					case 16:
-						CONSOLE_DEBUG("Creating cOpenCV_LiveDisplay - 16 bit")
-						cOpenCV_LiveDisplay	=	cvCreateImage(cvSize(windowWidth, windowHeight), IPL_DEPTH_16U, 3);
+						CONSOLE_DEBUG("Creating cOpenCV_LiveDisplayPtr - 16 bit")
+						cOpenCV_LiveDisplayPtr	=	cvCreateImage(cvSize(windowWidth, windowHeight), IPL_DEPTH_16U, 3);
 						break;
 
 					default:
 						CONSOLE_DEBUG("UNKNOWN PIXEL DEPTH!!!!!!!!!!!!!");
-						cOpenCV_LiveDisplay	=	NULL;
+						cOpenCV_LiveDisplayPtr	=	NULL;
 						CONSOLE_ABORT(__FUNCTION__);
 						break;
 
 				}
 				CONSOLE_DEBUG("New display image created");
-				SetOpenCVcolors(cOpenCV_LiveDisplay);
+				SetOpenCVcolors(cOpenCV_LiveDisplayPtr);
 			}
 
-			if (cOpenCV_LiveDisplay != NULL)
+			if (cOpenCV_LiveDisplayPtr != NULL)
 			{
 				//*	check to see if the image sizes are different
-				if ((cLiveDisplayWidth != cOpenCV_LiveDisplay->width ) ||
-					(cLiveDisplayHeight != cOpenCV_LiveDisplay->height ))
+				if ((cLiveDisplayWidth != cOpenCV_LiveDisplayPtr->width ) ||
+					(cLiveDisplayHeight != cOpenCV_LiveDisplayPtr->height ))
 				{
 					//*	set the entire background color
 					myCVrect.x		=	0;
 					myCVrect.y		=	0;
-					myCVrect.width	=	cOpenCV_LiveDisplay->width;
-					myCVrect.height	=	cOpenCV_LiveDisplay->height;
+					myCVrect.width	=	cOpenCV_LiveDisplayPtr->width;
+					myCVrect.height	=	cOpenCV_LiveDisplayPtr->height;
 
-					cvRectangleR(	cOpenCV_LiveDisplay,
+					cvRectangleR(	cOpenCV_LiveDisplayPtr,
 									myCVrect,
 									cSideBarBGcolor,			//	color,
 									CV_FILLED,					//	int thickness CV_DEFAULT(1),
@@ -564,7 +604,7 @@ CvRect		myCVrect;
 					roiRect.y		=	cSideFrameWidth;
 					roiRect.width	=	cLiveDisplayWidth;
 					roiRect.height	=	cLiveDisplayHeight;
-					cvSetImageROI(cOpenCV_LiveDisplay,  roiRect);
+					cvSetImageROI(cOpenCV_LiveDisplayPtr,  roiRect);
 				}
 				else
 				{
@@ -577,14 +617,14 @@ CvRect		myCVrect;
 //				CONSOLE_DEBUG("Calling ProcessORB_Image!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 				SETUP_TIMING();
 
-				keyPointCnt	=	ProcessORB_Image(cOpenCV_Image, NULL);
+				keyPointCnt	=	ProcessORB_Image(cOpenCV_ImagePtr, NULL);
 
 				DEBUG_TIMING("Time to complete ORB");
 
 				CONSOLE_DEBUG_W_NUM("keyPointCnt\t=", keyPointCnt);
 			#endif // _ENABLE_STAR_SEARCH_
 				//*	lets try to display gray scale on a color screen
-				if ((cOpenCV_Image->nChannels == 1) && (cOpenCV_Image->depth == 8))
+				if ((cOpenCV_ImagePtr->nChannels == 1) && (cOpenCV_ImagePtr->depth == 8))
 				{
 				IplImage	*smallImg;
 
@@ -594,7 +634,7 @@ CvRect		myCVrect;
 					smallImg	=	cvCreateImage(cvSize(cLiveDisplayWidth, cLiveDisplayHeight), IPL_DEPTH_8U, 1);
 					if (smallImg != NULL)
 					{
-						cvResize(cOpenCV_Image, smallImg, CV_INTER_LINEAR);
+						cvResize(cOpenCV_ImagePtr, smallImg, CV_INTER_LINEAR);
 					#ifdef _ENABLE_STAR_SEARCH_
 						CONSOLE_DEBUG("Calling ProcessORB_Image!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 						SETUP_TIMING();
@@ -605,7 +645,7 @@ CvRect		myCVrect;
 						CONSOLE_DEBUG_W_NUM("Image width\t=", smallImg->width);
 					#endif // _ENABLE_STAR_SEARCH_
 
-						cvCvtColor(smallImg, cOpenCV_LiveDisplay, CV_GRAY2RGB);
+						cvCvtColor(smallImg, cOpenCV_LiveDisplayPtr, CV_GRAY2RGB);
 						cvReleaseImage(&smallImg);
 					}
 					else
@@ -613,7 +653,7 @@ CvRect		myCVrect;
 						CONSOLE_DEBUG("Failed to create small image");
 					}
 				}
-				else if ((cOpenCV_Image->nChannels == 1) && (cOpenCV_Image->depth == 16))
+				else if ((cOpenCV_ImagePtr->nChannels == 1) && (cOpenCV_ImagePtr->depth == 16))
 				{
 				IplImage	*smallImg;
 
@@ -623,9 +663,9 @@ CvRect		myCVrect;
 					smallImg	=	cvCreateImage(cvSize(cLiveDisplayWidth, cLiveDisplayHeight), IPL_DEPTH_16U, 1);
 					if (smallImg != NULL)
 					{
-						cvResize(cOpenCV_Image, smallImg, CV_INTER_LINEAR);
+						cvResize(cOpenCV_ImagePtr, smallImg, CV_INTER_LINEAR);
 
-						cvCvtColor(smallImg, cOpenCV_LiveDisplay, CV_GRAY2RGB);
+						cvCvtColor(smallImg, cOpenCV_LiveDisplayPtr, CV_GRAY2RGB);
 						cvReleaseImage(&smallImg);
 					}
 					else
@@ -636,19 +676,19 @@ CvRect		myCVrect;
 				else
 				{
 //					CONSOLE_DEBUG_W_STR(__FUNCTION__, "default");
-					cvResize(cOpenCV_Image, cOpenCV_LiveDisplay, CV_INTER_LINEAR);
+					cvResize(cOpenCV_ImagePtr, cOpenCV_LiveDisplayPtr, CV_INTER_LINEAR);
 				}
 				if (cDisplayCrossHairs || cDrawRectangle)
 				{
 					DrawOpenCVoverlay();
 				}
-				cvResetImageROI(cOpenCV_LiveDisplay);
+				cvResetImageROI(cOpenCV_LiveDisplayPtr);
 
 				//************************************************************
 				//*	we are now going to start drawing the sidebar
-				DrawSidebar(cOpenCV_LiveDisplay);
+				DrawSidebar(cOpenCV_LiveDisplayPtr);
 
-				cvShowImage(cOpenCV_ImgWindowName, cOpenCV_LiveDisplay);
+				cvShowImage(cOpenCV_ImgWindowName, cOpenCV_LiveDisplayPtr);
 			}
 			else
 			{
@@ -657,7 +697,7 @@ CvRect		myCVrect;
 		}
 		else
 		{
-			CONSOLE_DEBUG("cOpenCV_Image is null");
+			CONSOLE_DEBUG("cOpenCV_ImagePtr is null");
 			CONSOLE_ABORT(__FUNCTION__);
 		}
 		cNewImageReadyToDisplay	=	false;
@@ -668,7 +708,7 @@ CvRect		myCVrect;
 	//	CONSOLE_DEBUG("Nothing to display");
 	}
 
-	keyPressed	=	cvWaitKey(10);	//*	required to allow opencv to update the window
+	keyPressed	=	cv::waitKey(10);	//*	required to allow opencv to update the window
 	if (keyPressed > 0)
 	{
 	//	CONSOLE_DEBUG_W_HEX("Key pressed =", keyPressed);
@@ -678,12 +718,22 @@ CvRect		myCVrect;
 				CONSOLE_DEBUG_W_STR("Reseting window:", cOpenCV_ImgWindowName);
 				cvMoveWindow(cOpenCV_ImgWindowName, 25, 100);
 				cvResizeWindow(cOpenCV_ImgWindowName, 500, 500);
-				keyPressed	=	cvWaitKey(5000);
+				keyPressed	=	cv::waitKey(5000);
 				break;
 
 		}
 	}
 }
+#endif // _USE_OPENCV_CPP_
+
+#ifdef _USE_OPENCV_CPP_
+#warning "OpenCV++ not finished"
+//*****************************************************************************
+void	CameraDriver::DrawSidebar(cv::Mat *imageDisplay)
+{
+
+}
+#else
 
 //*****************************************************************************
 void	CameraDriver::DrawSidebar(IplImage *imageDisplay)
@@ -710,7 +760,7 @@ const int	deltaY	=	16;
 	point1.y	=	yLoc;
 	point2.x	=	cSideFrameWidth + (cSideBarWidth/2);
 	point2.y	=	yLoc;
-	sprintf(textBuffer, "#%ld %d-bit", cFramesRead, cOpenCV_LiveDisplay->depth);
+	sprintf(textBuffer, "#%ld %d-bit", cFramesRead, cOpenCV_LiveDisplayPtr->depth);
 	cvPutText(	imageDisplay,	textBuffer,				point1,	&cTextFont,	cSideBarTXTcolor);
 	yLoc	+=	deltaY;
 
@@ -828,6 +878,8 @@ const int	deltaY	=	16;
 		cvPutText(	imageDisplay,	"Compatible with:",		point1,	&cTextFont,	cSideBarTXTcolor);
 	}
 }
+#endif // _USE_OPENCV_CPP_
+
 
 
 //*****************************************************************************
@@ -838,6 +890,11 @@ enum
 	kGraphTYpe_Log,
 };
 
+#ifdef _USE_OPENCV_CPP_
+#warning "OpenCV++ not finished"
+
+
+#else
 //*****************************************************************************
 static void	DrawGraph256(	IplImage	*theImage,
 							int32_t		*theArray,
@@ -1028,8 +1085,17 @@ int			baseLine;
 					cSideBarFCblue);
 	}
 }
+#endif // _USE_OPENCV_CPP_
 
 
+#ifdef _USE_OPENCV_CPP_
+#warning "OpenCV++ not finished"
+//*****************************************************************************
+void	CameraDriver::CreateHistogramGraph(cv::Mat *imageDisplay)
+{
+
+}
+#else
 //*****************************************************************************
 void	CameraDriver::CreateHistogramGraph(IplImage *imageDisplay)
 {
@@ -1157,10 +1223,17 @@ char		textStr3[32];
 		CONSOLE_DEBUG("imageDisplay is NULL");
 	}
 }
+#endif // _USE_OPENCV_CPP_
 
 
+#ifdef _USE_OPENCV_CPP_
+#warning "OpenCV++ not finished"
+//*****************************************************************************
+void	CameraDriver::SetOpenCVcolors(cv::Mat *imageDisplay)
+#else
 //*****************************************************************************
 void	CameraDriver::SetOpenCVcolors(IplImage *imageDisplay)
+#endif // _USE_OPENCV_CPP_
 {
 RGBcolor	backGround;		//*	background color
 RGBcolor	textColor;		//*	text color
@@ -1171,7 +1244,11 @@ RGBcolor	textColor;		//*	text color
 
 	if (imageDisplay != NULL)
 	{
+	#ifdef _USE_OPENCV_CPP_
+		if ((imageDisplay->size[1] == 3))
+	#else
 		if ((imageDisplay->depth == 8) && (imageDisplay->nChannels == 3))
+	#endif
 		{
 			cSideBarBGcolor		=	CV_RGB(backGround.red,	backGround.grn,	backGround.blu);
 			cSideBarTXTcolor	=	CV_RGB(textColor.red,	textColor.grn,	textColor.blu);
@@ -1184,6 +1261,8 @@ RGBcolor	textColor;		//*	text color
 			cSideBarGry			=	CV_RGB(128,		128,	128);
 			cCrossHairColor		=	CV_RGB(255,		0,		0);
 		}
+	#ifdef _USE_OPENCV_CPP_
+	#else
 		else if ((imageDisplay->depth == 16) && (imageDisplay->nChannels == 3))
 		{
 			cSideBarBGcolor		=	CV_RGB((backGround.red<<8),	(backGround.grn<<8),	(backGround.blu<<8));
@@ -1206,6 +1285,7 @@ RGBcolor	textColor;		//*	text color
 			cSideBarGry			=	CV_RGB(32000,	32000,	32000);
 			cCrossHairColor		=	CV_RGB(65535,	65535,	65535);
 		}
+	#endif
 		else
 		{
 			cSideBarBGcolor		=	CV_RGB(backGround.red,	backGround.grn,	backGround.blu);
@@ -1239,3 +1319,5 @@ RGBcolor	textColor;		//*	text color
 }
 
 #endif	//	defined(_ENABLE_CAMERA_) && defined(_USE_OPENCV_)
+
+

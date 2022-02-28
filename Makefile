@@ -54,40 +54,17 @@ LIB_BASE			=	/usr/lib/
 OPENCV_COMPILE		=	$(shell pkg-config --cflags opencv)
 OPENCV_LINK			=	$(shell pkg-config --libs opencv)
 
-#OPENCV_V331			=	-L/usr/local/lib/i386-linux-gnu
-#OPENCV_V331			+=	-lopencv_viz
-
-OPENCV_V331			+=	-lopencv_calib3d
-OPENCV_V331			+=	-lopencv_core
-OPENCV_V331			+=	-lopencv_dnn
-OPENCV_V331			+=	-lopencv_features2d
-OPENCV_V331			+=	-lopencv_flann
-OPENCV_V331			+=	-lopencv_highgui
-OPENCV_V331			+=	-lopencv_imgcodecs
-OPENCV_V331			+=	-lopencv_imgproc
-OPENCV_V331			+=	-lopencv_ml
-OPENCV_V331			+=	-lopencv_objdetect
-OPENCV_V331			+=	-lopencv_photo
-OPENCV_V331			+=	-lopencv_shape
-OPENCV_V331			+=	-lopencv_stitching
-OPENCV_V331			+=	-lopencv_superres
-OPENCV_V331			+=	-lopencv_video
-OPENCV_V331			+=	-lopencv_videoio
-OPENCV_V331			+=	-lopencv_videostab
-
 
 SRC_DIR				=	./src/
 SRC_IMGPROC			=	./src_imageproc/
 SRC_DISCOVERY		=	./src_discovery/
 SRC_MOONRISE		=	./src_MoonRise/
-#MLS_LIB_DIR		=	../MLS_Library/
 MLS_LIB_DIR			=	./src_mlsLib/
 OBJECT_DIR			=	./Objectfiles/
 
 GD_DIR				=	../gd/
 ASI_LIB_DIR			=	./ASI_lib
 ASI_INCLUDE_DIR		=	./ASI_lib/include
-#ASI_LIB_DIR			=	./ASI_lib_V1.14.0227
 EFW_LIB_DIR			=	./EFW_linux_mac_SDK
 
 ############################################
@@ -140,7 +117,7 @@ CPLUSFLAGS		+=	-O2
 #CPLUSFLAGS		+=	-trigraphs
 CPLUSFLAGS		+=	-g
 #CPLUSFLAGS		+=	-Wno-unused-but-set-variable
-
+CPLUSFLAGS		+=	-Wno-format-overflow
 
 COMPILE			=	gcc -c $(CFLAGS) $(DEFINEFLAGS) $(OPENCV_COMPILE)
 COMPILEPLUS		=	g++ -c $(CPLUSFLAGS) $(DEFINEFLAGS)
@@ -350,8 +327,8 @@ alpacapi		:	$(CPP_OBJECTS)				\
 allcam		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
 allcam		:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
 allcam		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
-#allcam		:		DEFINEFLAGS		+=	-D_ENABLE_ATIK_
-allcam		:		DEFINEFLAGS		+=	-D_ENABLE_FLIR_
+allcam		:		DEFINEFLAGS		+=	-D_ENABLE_ATIK_
+#allcam		:		DEFINEFLAGS		+=	-D_ENABLE_FLIR_
 allcam		:		DEFINEFLAGS		+=	-D_ENABLE_QHY_
 #allcam		:		DEFINEFLAGS		+=	-D_ENABLE_SONY_
 allcam		:		DEFINEFLAGS		+=	-D_ENABLE_TOUP_
@@ -1967,25 +1944,24 @@ opencvpp		:	DEFINEFLAGS		+=	-D_CONTROLLER_USES_ALPACA_
 opencvpp		:	DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_CONTROLLER_
 opencvpp		:	DEFINEFLAGS		+=	-D_ENABLE_SLIT_TRACKER_
 opencvpp		:	DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
-opencvpp		:	DEFINEFLAGS		+=	-D_ENABLE_GAIA_
 opencvpp		:	DEFINEFLAGS		+=	-D_ENABLE_ASTERIODS_
-opencvpp		:	DEFINEFLAGS		+=	-D_ENABLE_REMOTE_SQL_
-opencvpp		:	DEFINEFLAGS		+=	-D_ENABLE_REMOTE_GAIA_
+#opencvpp		:	DEFINEFLAGS		+=	-D_ENABLE_GAIA_
+#opencvpp		:	DEFINEFLAGS		+=	-D_ENABLE_REMOTE_SQL_
+#opencvpp		:	DEFINEFLAGS		+=	-D_ENABLE_REMOTE_GAIA_
+opencvpp		:	DEFINEFLAGS		+=	-D_USE_OPENCV_
 opencvpp		:	DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
 opencvpp		:	INCLUDES		+=	-I$(SRC_SKYTRAVEL)
 
 opencvpp		:		$(SKYTRAVEL_OBJECTS)					\
-						$(GAIA_SQL_OBJECTS)						\
 						$(CONTROLLER_BASE_OBJECTS)				\
 
 
 				$(LINK)  										\
 							$(SKYTRAVEL_OBJECTS)				\
-							$(GAIA_SQL_OBJECTS)					\
 							$(CONTROLLER_BASE_OBJECTS)			\
+							-L/usr/local/lib					\
 							$(OPENCV_LINK)						\
 							-lpthread							\
-							-lmysqlclient						\
 							-lcfitsio							\
 							-o skytravel
 
@@ -2094,7 +2070,8 @@ $(OBJECT_DIR)controller_nettest.o :		$(SRC_NETTEST)controller_nettest.cpp		\
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)windowtab_nettest.o :		$(SRC_NETTEST)windowtab_nettest.cpp		\
-										$(SRC_NETTEST)windowtab_nettest.h			\
+										$(SRC_NETTEST)windowtab_nettest.h		\
+										$(SRC_DIR)windowtab.h
 										Makefile
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_NETTEST)windowtab_nettest.cpp -o$(OBJECT_DIR)windowtab_nettest.o
 
@@ -2787,7 +2764,6 @@ $(OBJECT_DIR)controller_preview.o : 	$(SRC_DIR)controller_preview.cpp	\
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)windowtab.o : 				$(SRC_DIR)windowtab.cpp				\
 										$(SRC_DIR)windowtab.h				\
-										$(SRC_DIR)windowtab_ml_single.h		\
 										$(SRC_DIR)controller.h
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)windowtab.cpp -o$(OBJECT_DIR)windowtab.o
 
@@ -2924,8 +2900,9 @@ $(OBJECT_DIR)windowtab_slit.o : 		$(SRC_DIR)windowtab_slit.cpp		\
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)windowtab_slit.cpp -o$(OBJECT_DIR)windowtab_slit.o
 
 #-------------------------------------------------------------------------------------
-$(OBJECT_DIR)windowtab_slitgraph.o : 	$(SRC_DIR)windowtab_slitgraph.cpp		\
-										$(SRC_DIR)windowtab_slitgraph.h			\
+$(OBJECT_DIR)windowtab_slitgraph.o : 	$(SRC_DIR)windowtab_slitgraph.cpp	\
+										$(SRC_DIR)windowtab_slitgraph.h		\
+										$(SRC_DIR)windowtab.h				\
 										$(SRC_DIR)controller.h
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)windowtab_slitgraph.cpp -o$(OBJECT_DIR)windowtab_slitgraph.o
 
@@ -3079,12 +3056,14 @@ $(OBJECT_DIR)windowtab_skytravel.o :	$(SRC_SKYTRAVEL)windowtab_skytravel.cpp	\
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)windowtab_STsettings.o :	$(SRC_SKYTRAVEL)windowtab_STsettings.cpp	\
-										$(SRC_SKYTRAVEL)windowtab_STsettings.h
+										$(SRC_SKYTRAVEL)windowtab_STsettings.h		\
+										$(SRC_DIR)windowtab.h
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYTRAVEL)windowtab_STsettings.cpp -o$(OBJECT_DIR)windowtab_STsettings.o
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)windowtab_RemoteData.o :	$(SRC_SKYTRAVEL)windowtab_RemoteData.cpp	\
 										$(SRC_SKYTRAVEL)windowtab_RemoteData.h		\
+										$(SRC_DIR)windowtab.h						\
 										$(SRC_SKYTRAVEL)RemoteImage.h
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYTRAVEL)windowtab_RemoteData.cpp -o$(OBJECT_DIR)windowtab_RemoteData.o
 
@@ -3148,6 +3127,7 @@ $(OBJECT_DIR)controller_GaiaRemote.o :	$(SRC_SKYTRAVEL)controller_GaiaRemote.cpp
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)windowtab_GaiaRemote.o :	$(SRC_SKYTRAVEL)windowtab_GaiaRemote.cpp	\
+										$(SRC_DIR)windowtab.h						\
 										$(SRC_SKYTRAVEL)windowtab_GaiaRemote.h
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYTRAVEL)windowtab_GaiaRemote.cpp -o$(OBJECT_DIR)windowtab_GaiaRemote.o
 
@@ -3176,9 +3156,9 @@ $(OBJECT_DIR)windowtab_starlist.o : 	$(SRC_SKYTRAVEL)windowtab_starlist.cpp	\
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)windowtab_constList.o :	$(SRC_SKYTRAVEL)windowtab_constList.cpp	\
-												$(SRC_SKYTRAVEL)windowtab_constList.h	\
-												$(SRC_DIR)windowtab.h					\
-												$(SRC_DIR)controller.h
+										$(SRC_SKYTRAVEL)windowtab_constList.h	\
+										$(SRC_DIR)windowtab.h					\
+										$(SRC_DIR)controller.h
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYTRAVEL)windowtab_constList.cpp -o$(OBJECT_DIR)windowtab_constList.o
 
 

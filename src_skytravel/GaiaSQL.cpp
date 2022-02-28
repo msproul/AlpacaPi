@@ -29,6 +29,7 @@
 //*	Jan 25,	2022	<MLS> Fixed 0 <-> 360 boundary bug in CalcRA_DEC_Distance_Deg()
 //*	Feb 11,	2022	<MLS> Added CheckSQLconfiguration()
 //*	Feb 12,	2022	<MLS> Added GetGAIAdataFromIDnumber()
+//*	Feb 22,	2022	<KAS> Fixed dangling result that caused the server to log an error
 //*****************************************************************************
 //*	sudo apt-get install libmysqlclient-dev		<<<< Use this one
 //*	sudo apt-get install libmariadb-dev
@@ -211,8 +212,8 @@ bool			configOK;
 		}
 		//*	check the configuration, makes sure that all the required parameters were specified
 		configOK	=	CheckSQLconfiguration();
+		fclose(filePointer);
 	}
-	fclose(filePointer);
 
 	return(configOK);
 }
@@ -265,6 +266,7 @@ char			userString[64];
 
 	returnCode		=	-1;
 
+	//*	figure out which user name to use
 	if (strlen(gObseratorySettings.Observer) > 0)
 	{
 		strcpy(userString, gObseratorySettings.Observer);
@@ -279,6 +281,7 @@ char			userString[64];
 	}
 	else
 	{
+		//*	last resrot
 		strcpy(userString, "Unknown");
 	}
 
@@ -494,6 +497,7 @@ int				ra_int;
 int				dec_int;			//	Integers for Right Ascension and Declination
 int				num_fields;
 int				num_rows;
+int				nextResultRetCode;
 double			bp_rp;
 unsigned int	startMilliSecs;
 unsigned int	endMilliSecs;
@@ -518,11 +522,15 @@ unsigned int	endMilliSecs;
 //		CONSOLE_DEBUG_W_STR("gGaiaSQLsever_Database\t=",	gGaiaSQLsever_Database);
 
 		//*	establish connection to the database
+		//*	updated <KAS> 2/22/2022
 		if (mysql_real_connect(	mySQLConnection,
-								gGaiaSQLsever_IPaddr,
-								gGaiaSQLsever_UserName,
-								gGaiaSQLsever_Password,
-								gGaiaSQLsever_Database, 0, NULL, 0) != NULL)
+									gGaiaSQLsever_IPaddr,
+									gGaiaSQLsever_UserName,
+									gGaiaSQLsever_Password,
+									gGaiaSQLsever_Database,
+									0,
+									NULL,
+									CLIENT_MULTI_RESULTS) != NULL)
 		{
 			CONSOLE_DEBUG_W_STR("Successfully connected to", gGaiaSQLsever_IPaddr);
 			ra_int		=	floor(ra_Degrees);
@@ -620,6 +628,13 @@ unsigned int	endMilliSecs;
 				}
 				CONSOLE_DEBUG("Calling mysql_free_result()");
 				mysql_free_result(mySQLresult);
+
+				//*	Feb 22,	2022	<KAS> Fixed dangling result Bug
+				nextResultRetCode	=	mysql_next_result(mySQLConnection);
+				if (nextResultRetCode != 0)
+				{
+					CONSOLE_DEBUG_W_NUM("mysql_next_result", nextResultRetCode);
+				}
 
 				endMilliSecs	=	millis();
 

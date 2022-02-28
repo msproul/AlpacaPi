@@ -325,12 +325,20 @@ int		iii;
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG_W_STR("RemoteGAIAenabled is", (gST_DispOptions.RemoteGAIAenabled ? "enabled" : "disabled"));
 
-	CONSOLE_DEBUG_W_NUM("sizeof(CvScalar)  \t=",	sizeof(CvScalar));
-	CONSOLE_DEBUG_W_NUM("sizeof(cv::Scalar)\t=",	sizeof(cv::Scalar));
+#if defined(_USE_OPENCV_CPP_) &&  (CV_MAJOR_VERSION < 4)
+	CONSOLE_DEBUG_W_LONG("sizeof(CvScalar)  \t=",	sizeof(CvScalar));
+	CONSOLE_DEBUG_W_LONG("sizeof(cv::Scalar)\t=",	sizeof(cv::Scalar));
 
-	CONSOLE_DEBUG_W_NUM("sizeof(CvFont)  \t=",	sizeof(CvFont));
+	CONSOLE_DEBUG_W_LONG("sizeof(CvFont)  \t=",	sizeof(CvFont));
+
+	CONSOLE_DEBUG_W_LONG("sizeof(CvRect)  \t=",	sizeof(CvRect));
+	CONSOLE_DEBUG_W_LONG("sizeof(cv::rect)\t=",	sizeof(cv::Rect));
+
+	CONSOLE_DEBUG_W_LONG("sizeof(CvPoint) \t=",	sizeof(CvPoint));
+	CONSOLE_DEBUG_W_LONG("sizeof(cv::point)\t=",	sizeof(cv::Point));
 
 //	CONSOLE_ABORT(__FUNCTION__);
+#endif // defined
 
 	gSkyTravelWindow		=	this;
 	cDebugCounter			=	0;
@@ -767,9 +775,12 @@ int		buttonBoxWidth;
 	SetWidgetHelpText(	kSkyTravel_Btn_Messier,			"Toggle Missier display");
 	SetWidgetHelpText(	kSkyTravel_Btn_AAVSOalerts,		"Toggle AAVSO alerts");
 
+#if defined(_ENABLE_GAIA_) || defined(_ENABLE_REMOTE_GAIA_)
 	SetWidgetHelpText(	kSkyTravel_Btn_Gaia,			"Toggle GAIA display");
+#endif
+#ifdef _ENABLE_ASTERIODS_
 	SetWidgetHelpText(	kSkyTravel_Btn_Asteroids,		"Toggle Asteroid display");
-
+#endif
 
 	SetWidgetHelpText(	kSkyTravel_Btn_MagnitudeDisp,	"Toggle Magnitude display");
 
@@ -808,9 +819,12 @@ int		buttonBoxWidth;
 	SetWidgetText(		kSkyTravel_Btn_ConstOutline,	"O");
 	SetWidgetText(		kSkyTravel_Btn_Constellations,	"?");
 	SetWidgetText(		kSkyTravel_Btn_NGC,				"G");
+#if defined(_ENABLE_GAIA_) || defined(_ENABLE_REMOTE_GAIA_)
 	SetWidgetText(		kSkyTravel_Btn_Gaia,			"g");
+#endif
+#ifdef _ENABLE_ASTERIODS_
 	SetWidgetText(		kSkyTravel_Btn_Asteroids,		",");
-
+#endif
 	SetWidgetText(		kSkyTravel_Btn_Earth,			"E");
 	SetWidgetText(		kSkyTravel_Btn_Grid,			"#");
 	SetWidgetText(		kSkyTravel_Btn_Equator,			"Q");
@@ -1158,8 +1172,12 @@ void	WindowTabSkyTravel::UpdateButtonStatus(void)
 	SetWidgetChecked(		kSkyTravel_Btn_NGC,				cDispOptions.dispNGC);
 	SetWidgetChecked(		kSkyTravel_Btn_Messier,			cDispOptions.dispMessier);
 	SetWidgetChecked(		kSkyTravel_Btn_YaleCat,			cDispOptions.dispYale);
-	SetWidgetChecked(		kSkyTravel_Btn_Gaia,			cDispOptions.dispGaia);
+#ifdef _ENABLE_ASTERIODS_
 	SetWidgetChecked(		kSkyTravel_Btn_Asteroids,		cDispOptions.dispAsteroids);
+#endif // _ENABLE_ASTERIODS_
+#if defined(_ENABLE_GAIA_) || defined(_ENABLE_REMOTE_GAIA_)
+	SetWidgetChecked(		kSkyTravel_Btn_Gaia,			cDispOptions.dispGaia);
+#endif
 
 	SetWidgetChecked(		kSkyTravel_Btn_Hipparcos,		cDispOptions.dispHipparcos);
 	SetWidgetChecked(		kSkyTravel_Btn_AAVSOalerts,		cDispOptions.dispAAVSOalerts);
@@ -1366,10 +1384,13 @@ bool	controlKeyDown;
 			SetWidgetChecked(		kSkyTravel_Btn_MagnitudeDisp,	gST_DispOptions.DispMagnitude);
 			break;
 
+#ifdef _ENABLE_ASTERIODS_
 		case ',':
 			cDispOptions.dispAsteroids		=	!cDispOptions.dispAsteroids;
 			SetWidgetChecked(		kSkyTravel_Btn_Asteroids,	cDispOptions.dispAsteroids);
 			break;
+#endif // _ENABLE_ASTERIODS_
+
 
 	//	case kLeftArrowKey:	//change azimuth
 		case '1':	//change azimuth
@@ -1722,10 +1743,13 @@ char	searchText[128];
 	reDrawSky	=	true;
 	switch(buttonIdx)
 	{
+		//*	these are in command char order for ease of finding them
 		case kSkyTravel_Btn_NightMode:			ProcessSingleCharCmd('!');	break;
 		case kSkyTravel_Btn_OrigDatabase:		ProcessSingleCharCmd('$');	break;
 		case kSkyTravel_Btn_MagnitudeDisp:		ProcessSingleCharCmd('.');	break;
+#ifdef _ENABLE_ASTERIODS_
 		case kSkyTravel_Btn_Asteroids:			ProcessSingleCharCmd(',');	break;
+#endif
 		case kSkyTravel_Btn_Grid:				ProcessSingleCharCmd('#');	break;
 		case kSkyTravel_Btn_Plus:				ProcessSingleCharCmd('+');	break;	//*	zoom in
 		case kSkyTravel_Btn_Minus:				ProcessSingleCharCmd('-');	break;	//*	zoom out
@@ -1737,7 +1761,9 @@ char	searchText[128];
 		case kSkyTravel_Btn_DeepSky:			ProcessSingleCharCmd('D');	break;
 		case kSkyTravel_Btn_Draper:				ProcessSingleCharCmd('d');	break;
 		case kSkyTravel_Btn_Earth:				ProcessSingleCharCmd('E');	break;
+#if defined(_ENABLE_GAIA_) || defined(_ENABLE_REMOTE_GAIA_)
 		case kSkyTravel_Btn_Gaia:				ProcessSingleCharCmd('g');	break;
+#endif
 		case kSkyTravel_Btn_NGC:				ProcessSingleCharCmd('G');	break;
 		case kSkyTravel_Btn_Lines:				ProcessSingleCharCmd('L');	break;
 		case kSkyTravel_Btn_Messier:			ProcessSingleCharCmd('M');	break;
@@ -1904,7 +1930,8 @@ bool			reDrawSky;
 //    CV_EVENT_FLAG_ALTKEY    =32
 //};
 
-	if (flags & CV_EVENT_FLAG_CTRLKEY)
+//	if (flags & CV_EVENT_FLAG_CTRLKEY)
+	if (flags & cv::EVENT_FLAG_CTRLKEY)
 	{
 		ProcessDoubleClick_RtBtn(widgetIdx,
 									event,
@@ -1938,10 +1965,11 @@ bool			reDrawSky;
 			cElev0	=	cCursor_elev;
 			break;
 
+#if defined(_ENABLE_GAIA_) || defined(_ENABLE_REMOTE_GAIA_)
 		case kSkyTravel_Btn_Gaia:
 			SetView_Angle(RADIANS(4.9999));
 			break;
-
+#endif
 		default:
 			reDrawSky	=	false;
 			break;
@@ -2852,7 +2880,7 @@ short		iii;
 			case kSpecialDisp_Arcs_noLabels:
 				//*	Draw a line connecting the centers
 				LLD_PenSize(gST_DispOptions.LineWidth_ConstOutlines);
-				SetColor(W_YELLOW);
+				LLD_SetColor(W_YELLOW);
 				DrawPolarAlignmentCenterVector(gPolarAlignObjectPtr, gPolarAlignObjectCount);
 				LLD_PenSize(1);
 				//*	FALL THROUGH
@@ -2874,7 +2902,7 @@ short		iii;
 
 	PlotSkyObjects(cPlanets, gPlanet_names, planet_shapes, kPlanetObjectCnt);	//* planets
 
-	SetColor(W_BLACK);
+	LLD_SetColor(W_BLACK);
 //	CONSOLE_DEBUG(__FUNCTION__);
 //	CONSOLE_DEBUG_W_NUM("cDisplayedStarCount\t=", cDisplayedStarCount);
 
@@ -3347,7 +3375,7 @@ bool			firstMove;
 		cXfactor	=	cWind_width / cView_angle;
 		cYfactor	=	cXfactor;	//* 1:1 aspect ratio
 
-		SetColor(W_RED);
+		LLD_SetColor(W_RED);
 		for (jj=0; jj < gConstelationCount; jj++)
 		{
 			if ((gConstelations[jj].indexIntoConstStarTable >= 0) && (gConstelations[jj].starsInConstelation > 0))
@@ -3415,7 +3443,7 @@ bool			firstMove;
 				}
 			}
 		}
-		SetColor(W_BLACK);
+		LLD_SetColor(W_BLACK);
 	}
 //	CONSOLE_DEBUG_W_NUM("linesDrawn\t=",	linesDrawn);
 //	CONSOLE_DEBUG("=========================================================");
@@ -3441,11 +3469,11 @@ int					nameLen;
 //	CONSOLE_DEBUG(__FUNCTION__);
 	if (cNightMode)
 	{
-		SetColor(W_DARKRED);
+		LLD_SetColor(W_DARKRED);
 	}
 	else
 	{
-		SetColor(W_DARKGREEN);
+		LLD_SetColor(W_DARKGREEN);
 	}
 	if ((gConstOutlinePtr != NULL) && (gConstOutlineCount > 0))
 	{
@@ -3533,9 +3561,9 @@ int					nameLen;
 													&pt_YY);
 			if (ptInView)
 			{
-				SetColor(W_PINK);
+				LLD_SetColor(W_PINK);
 				LLD_DrawCString(pt_XX, pt_YY, myOutLineObj->shortName);
-				SetColor(W_DARKGREEN);
+				LLD_SetColor(W_DARKGREEN);
 			}
 		}
 	}
@@ -3597,11 +3625,11 @@ short				deltaPixels;
 	{
 		if (cNightMode)
 		{
-			SetColor(W_RED);
+			LLD_SetColor(W_RED);
 		}
 		else
 		{
-			SetColor(W_PINK);
+			LLD_SetColor(W_PINK);
 		}
 		ptsOnScreenCnt	=	0;
 //		CONSOLE_DEBUG_W_NUM("gConstVectorCnt\t=",gConstVectorCnt);
@@ -3610,10 +3638,10 @@ short				deltaPixels;
 
 			myConstPtr		=	&gConstVecotrPtr[iii];
 
-			SetColor(W_PINK);
+			LLD_SetColor(W_PINK);
 //			if (strncasecmp(myConstPtr->constellationName, "CEN", 3) == 0)
 //			{
-//				SetColor(W_CYAN);
+//				LLD_SetColor(W_CYAN);
 //			}
 
 			offScreenFlg	=	true;
@@ -3716,11 +3744,11 @@ bool	ptInView;
 	{
 		if (cNightMode)
 		{
-			SetColor(W_RED);
+			LLD_SetColor(W_RED);
 		}
 		else
 		{
-			SetColor(W_WHITE);
+			LLD_SetColor(W_WHITE);
 		}
 		for (iii = 0; iii < gHipObjectCount; iii++)
 		{
@@ -3755,11 +3783,9 @@ void	WindowTabSkyTravel::DrawWidgetCustomGraphic(IplImage *openCV_Image, const i
 #endif // _USE_OPENCV_CPP_
 {
 #ifdef _USE_OPENCV_CPP_
-	cv::Rect	myCVrect;
 	cv::Mat		image_roi;
-#else
-	CvRect		myCVrect;
 #endif // _USE_OPENCV_CPP_
+cv::Rect	myCVrect;
 TYPE_WIDGET	*theWidget;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
@@ -4136,7 +4162,7 @@ char		symb[16];
 			constelNameIdx	=	magn - 0x0080;
 			if ((constelNameIdx >= 0) && (constelNameIdx < kMaxConstelNames))
 			{
-				SetColor(W_RED);
+				LLD_SetColor(W_RED);
 			//	strcpy(symb, gConstel_names[constelNameIdx]);
 			//	LLD_DrawCString(xcoord, ycoord, symb);
 				LLD_DrawCString(xcoord, ycoord, gConstel_LongNames[constelNameIdx]);
@@ -4150,17 +4176,17 @@ char		symb[16];
 		case ST_STAR:
 			if (cNightMode)
 			{
-				SetColor(W_RED);
+				LLD_SetColor(W_RED);
 			}
 		#ifdef _ENBABLE_WHITE_CHART_
 			else if (cChartMode)
 			{
-				SetColor(W_BLACK);
+				LLD_SetColor(W_BLACK);
 			}
 		#endif
 			else
 			{
-				SetColor(W_WHITE);
+				LLD_SetColor(W_WHITE);
 			}
 			DrawStar_shape(xcoord, ycoord, magn & 0x07);
 			break;
@@ -4196,7 +4222,7 @@ char		symb[16];
 						break;
 
 					case 0x70:	//*	smc/lmc outline
-						SetColor(W_GREEN);
+						LLD_SetColor(W_GREEN);
 						if (magn == 0x0070)
 						{
 							//*	Small Magellanic Cloud
@@ -4210,7 +4236,7 @@ char		symb[16];
 						else if (magn < 0x73)
 						{
 							strcpy(symb, ".");
-							SetColor(W_LIGHTGRAY);
+							LLD_SetColor(W_LIGHTGRAY);
 						}
 						else
 						{
@@ -4452,7 +4478,7 @@ bool	starWasDrawn;
 		theStarColor	=	gOBAFGKM_colorTable[theStar->spectralClass & 0x6F];
 		restoreColor	=	W_WHITE;
 	}
-	SetColor(theStarColor);
+	LLD_SetColor(theStarColor);
 
 	starRadiusPixels	=	0;
 	starWasDrawn		=	false;
@@ -4495,7 +4521,7 @@ bool	starWasDrawn;
 		if (theStar->dataSrc == kDataSrc_Messier)
 		{
 		//	LLD_FillEllipse(xcoord, ycoord, starRadiusPixels, starRadiusPixels);
-			SetColor(textColor);
+			LLD_SetColor(textColor);
 			LLD_FrameEllipse(xcoord, ycoord, starRadiusPixels, starRadiusPixels);
 		}
 		else
@@ -4534,7 +4560,7 @@ bool	starWasDrawn;
 		}
 	}
 
-	SetColor(restoreColor);
+	LLD_SetColor(restoreColor);
 
 
 	if (starWasDrawn)
@@ -4576,7 +4602,7 @@ bool	starWasDrawn;
 		theStarColor	=	W_CYAN;
 		restoreColor	=	W_WHITE;
 	}
-	SetColor(theStarColor);
+	LLD_SetColor(theStarColor);
 
 	starRadiusPixels	=	0;
 	asteroidWd			=	0;
@@ -4645,7 +4671,7 @@ bool	starWasDrawn;
 		}
 	}
 
-	SetColor(restoreColor);
+	LLD_SetColor(restoreColor);
 
 
 	if (starWasDrawn)
@@ -4729,7 +4755,7 @@ bool	starHasMag_and_Spectral;
 				strcpy(labelString, theStar->longName);
 				break;
 		}
-		SetColor(textColor);
+		LLD_SetColor(textColor);
 		if (labelString[0] > 0x20)
 		{
 			LLD_DrawCString(myXcoord + 10, myYcoord, labelString);
@@ -4762,7 +4788,7 @@ bool	starHasMag_and_Spectral;
 	//*	check for magnitude and spectral type
 	if (starHasMag_and_Spectral && (cView_angle < viewAngle_InfoDisplay))
 	{
-		SetColor(textColor);
+		LLD_SetColor(textColor);
 		//*	Are we are drawing the magnitude of the star
 		if (gST_DispOptions.DispMagnitude)
 		{
@@ -4918,12 +4944,12 @@ int					myColor;
 #ifdef _ENBABLE_WHITE_CHART_
 	if (cChartMode)
 	{
-		SetColor(W_BLACK);
+		LLD_SetColor(W_BLACK);
 	}
 	else
 #endif // _ENBABLE_WHITE_CHART_
 	{
-		SetColor(W_WHITE);
+		LLD_SetColor(W_WHITE);
 	}
 
 	myCount			=	0;
@@ -5129,7 +5155,7 @@ int					myColor;
 
 								case kDataSrc_PolarAlignCenter:
 									myColor	=	GetColorFromChar(objectptr[iii].longName[0]);
-									SetColor(myColor);
+									LLD_SetColor(myColor);
 									if (cView_angle < 0.1)
 									{
 										myFontIdx	=	kFont_Large;
@@ -5198,11 +5224,11 @@ short			myScale;
 
 	if (cNightMode)
 	{
-		SetColor(W_RED);
+		LLD_SetColor(W_RED);
 	}
 	else
 	{
-		SetColor(color);
+		LLD_SetColor(color);
 	}
 
 	myScale	=	scale;
@@ -5364,7 +5390,7 @@ int		color2;
 			break;
 
 		case 6:
-			SetColor(color1);
+			LLD_SetColor(color1);
 			LLD_DrawCString(xcoord,	ycoord,	"*");
 			break;
 	}
@@ -5417,7 +5443,7 @@ void	WindowTabSkyTravel::DrawWindowOverlays(void)
 		//*	are we keeping the display centered on the telescope position
 		if (cTrackTelescope)
 		{
-		CvRect	centerRect;
+		cv::Rect	centerRect;
 //		Point	telescopePt;
 
 			SetRect(&centerRect, 0, 0, cWind_width, cWind_height);
@@ -5485,7 +5511,7 @@ void	WindowTabSkyTravel::DrawWindowOverlays(void)
 	{
 		if (fabs(cDecl0) < cView_angle)
 		{
-			SetColor(W_MAGENTA);
+			LLD_SetColor(W_MAGENTA);
 			DrawGreatCircle(0.0, gST_DispOptions.DashedLines, kEnableGreatCircleNumbers, false);
 		}
 	}
@@ -5508,7 +5534,7 @@ void	WindowTabSkyTravel::DrawTelescopeReticle(int screenXX, int screenYY)
 #define	kTlescopeRadius	15
 
 	//*	draw the finder scope
-	SetColor(W_BLUE);
+	LLD_SetColor(W_BLUE);
 	if (cTelescopeDisplayOptions.dispFindScopeOutline)
 	{
 		LLD_FrameEllipse(screenXX, screenYY, kFinderRadius, kFinderRadius);
@@ -5525,7 +5551,7 @@ void	WindowTabSkyTravel::DrawTelescopeReticle(int screenXX, int screenYY)
 
 	//*	now draw the actual telescope
 
-	SetColor(W_GREEN);
+	LLD_SetColor(W_GREEN);
 
 	if (cTelescopeDisplayOptions.dispTeleScopeOutline)
 	{
@@ -5567,9 +5593,9 @@ int		pixelsWide;
 int		pixelsTall;
 
 
-	SetColor(W_RED);
-//	SetColor(W_WHITE);
-	SetColor(fovPtr->OutLineColor);
+	LLD_SetColor(W_RED);
+//	LLD_SetColor(W_WHITE);
+	LLD_SetColor(fovPtr->OutLineColor);
 
 	fovWasDrawn	=	false;
 	if (fovPtr->IsValid && fovPtr->FOVenabled)
@@ -5673,8 +5699,8 @@ short	telescopeXX, telescopeYY;
 //	CONSOLE_DEBUG_W_NUM(__FUNCTION__, cDebugCounter++);
 
 	fovCount	=	0;
-	SetColor(W_RED);
-//	SetColor(W_WHITE);
+	LLD_SetColor(W_RED);
+//	LLD_SetColor(W_WHITE);
 	telescopeIsInView	=	GetXYfromRA_Decl(	gTelescopeRA_Radians,
 												gTelescopeDecl_Radians,
 												&telescopeXX,
@@ -5810,7 +5836,7 @@ double	obsLatitude_rad;
 
 	CONSOLE_DEBUG("------------------------------------------------------------------");
 	CONSOLE_DEBUG(__FUNCTION__);
-	SetColor(W_CYAN);
+	LLD_SetColor(W_CYAN);
 
 	obsLatitude_rad		=	RADIANS(gObseratorySettings.Latitude);
 	slitWidth_Radians	=	2.0 * atan2((gSlitWidth_inches / 2.0), (gDomeDiameter_inches / 2.0));
@@ -5877,7 +5903,7 @@ bool		pt2InView;
 										&y2);
 	if (pt1InView && pt2InView)
 	{
-		SetColor(W_GREEN);
+		LLD_SetColor(W_GREEN);
 		LLD_MoveTo(x1,	y1);
 		LLD_LineTo(x2,	y2);
 
@@ -5912,7 +5938,7 @@ bool		pt2InView;
 										&y2);
 	if (pt1InView && pt2InView)
 	{
-		SetColor(W_PINK);
+		LLD_SetColor(W_PINK);
 		LLD_MoveTo(x1,	y1);
 		LLD_LineTo(x2,	y2);
 
@@ -5961,7 +5987,7 @@ TYPE_SpherTrig	sphptr;
 
 	sphptr.bside	=	kHALFPI - cDecl0;	//* this stays constant
 
-	SetColor(W_BLUE);
+	LLD_SetColor(W_BLUE);
 	LLD_PenSize(2);
 //	for (alpha = (cRa0 - cRamax); alpha < (cRa0 + cRamax); alpha += (cRamax / 10.0))
 	//*	<MLS> 1/4/2021, this allows the Ecliptic to be drawn at all zoom levels
@@ -6051,20 +6077,20 @@ bool		forceNumberDrawFlag	=	false;
 		degrees	=	-80.0;
 		while (degrees < 81.0)
 		{
-			SetColor(W_DARKRED);
+			LLD_SetColor(W_DARKRED);
 			DrawGreatCircle(RADIANS(degrees), true, enableGreatCircleNumbers, false);
 			degrees	+=	1.0;
 		}
 	}
 
-	SetColor(northColor);
+	LLD_SetColor(northColor);
 
 	//-------------------------------------------------------------------------
 	//*	draw the great circles
 	degrees	=	-80.0;
 	while (degrees < 81.0)
 	{
-		SetColor((degrees >= 0.0) ? northColor : southColor);
+		LLD_SetColor((degrees >= 0.0) ? northColor : southColor);
 		DrawGreatCircle(RADIANS(degrees), gST_DispOptions.DashedLines, true, true);
 		degrees	+=	10.0;
 	}
@@ -6076,7 +6102,7 @@ bool		forceNumberDrawFlag	=	false;
 		{
 			forceNumberDrawFlag	=	true;
 		}
-		SetColor(northColor);
+		LLD_SetColor(northColor);
 
 		DrawGreatCircle(RADIANS(87.0), gST_DispOptions.DashedLines, kEnableGreatCircleNumbers, forceNumberDrawFlag);
 		DrawGreatCircle(RADIANS(88.0), gST_DispOptions.DashedLines, kEnableGreatCircleNumbers, forceNumberDrawFlag);
@@ -6090,7 +6116,7 @@ bool		forceNumberDrawFlag	=	false;
 
 
 		//*	now do the south pole
-		SetColor(southColor);
+		LLD_SetColor(southColor);
 		DrawGreatCircle(RADIANS(-89.1), gST_DispOptions.DashedLines, kEnableGreatCircleNumbers, forceNumberDrawFlag);
 		DrawGreatCircle(RADIANS(-89.3), gST_DispOptions.DashedLines, kEnableGreatCircleNumbers, forceNumberDrawFlag);
 		DrawGreatCircle(RADIANS(-89.5), gST_DispOptions.DashedLines, kEnableGreatCircleNumbers, forceNumberDrawFlag);
@@ -6099,19 +6125,19 @@ bool		forceNumberDrawFlag	=	false;
 
 	if (cView_angle < 0.18)
 	{
-		SetColor(northColor);
+		LLD_SetColor(northColor);
 		DrawGreatCircle(RADIANS(89.9), gST_DispOptions.DashedLines, kEnableGreatCircleNumbers, true);
 
-		SetColor(southColor);
+		LLD_SetColor(southColor);
 		DrawGreatCircle(RADIANS(-89.9), gST_DispOptions.DashedLines, kEnableGreatCircleNumbers, true);
 	}
 
 	if (cView_angle < 0.04)
 	{
-		SetColor(northColor);
+		LLD_SetColor(northColor);
 		DrawGreatCircle(RADIANS(89.95), gST_DispOptions.DashedLines, kEnableGreatCircleNumbers, true);
 
-		SetColor(southColor);
+		LLD_SetColor(southColor);
 		DrawGreatCircle(RADIANS(-89.95), gST_DispOptions.DashedLines, kEnableGreatCircleNumbers, true);
 	}
 
@@ -6122,7 +6148,7 @@ bool		forceNumberDrawFlag	=	false;
 	degrees	=	0.0;
 	while (degrees < 360.0)
 	{
-		SetColor(northColor);
+		LLD_SetColor(northColor);
 		DrawNorthSouthLine(RADIANS(degrees));
 		degrees	+=	15.0;
 //		degrees	+=	15.0;	//*	put it in twice to match K-Stars
@@ -6150,7 +6176,7 @@ double	rtasc;
 double	codecl;
 int		xcoord,ycoord,ftflag	=	0;
 
-	SetColor(W_BROWN);	//* make horizon brown
+	LLD_SetColor(W_BROWN);	//* make horizon brown
 
 	gam			=	0.0;
 	codecl		=	kHALFPI - cElev0;
@@ -6175,7 +6201,7 @@ int		xcoord,ycoord,ftflag	=	0;
 			break;
 
 		case 3:
-			SetColor(W_DARKGREEN);
+			LLD_SetColor(W_DARKGREEN);
 			delta_ra	=	rtasc / 900.0;		//*increment
 			break;
 
@@ -6389,7 +6415,7 @@ int		maxSegLength;
 
 //	if (declinationAngle_rad < -1.0)
 //	{
-//		SetColor(W_RED);
+//		LLD_SetColor(W_RED);
 //	}
 
 	leftMost_X		=	10000;
@@ -6419,11 +6445,11 @@ int		maxSegLength;
 	{
 //		if ((segmentsDrnCnt % 2) == 1)
 //		{
-//			SetColor(W_RED);
+//			LLD_SetColor(W_RED);
 //		}
 //		else
 //		{
-//			SetColor(W_WHITE);
+//			LLD_SetColor(W_WHITE);
 //		}
 
 		//*	we are going draw a line between 2 points
@@ -6565,7 +6591,7 @@ int		maxSegLength;
 		{
 			sprintf(numberStr, "%1.0fS", -DEGREES(declinationAngle_rad));
 		}
-		SetColor(W_DARKGREEN);
+		LLD_SetColor(W_DARKGREEN);
 		if (leftMost_X < 30)
 		{
 			LLD_DrawCString(3, leftMost_Y, numberStr);
@@ -6875,7 +6901,7 @@ void	WindowTabSkyTravel::DrawScale(void)
 //	//*	if both pints are on the screen, draw it
 //	if (pt1inView && pt2inView)
 //	{
-//		SetColor(W_ORANGE);
+//		LLD_SetColor(W_ORANGE);
 //		LLD_MoveTo(pt1_XX,	pt1_YY);
 //		LLD_LineTo(pt2_XX,	pt2_YY);
 //
@@ -6900,7 +6926,7 @@ int		ypos;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-	SetColor(W_YELLOW);
+	LLD_SetColor(W_YELLOW);
 	left_edge	=	-cAz0 - (cView_angle / 2.0);
 
 	while (left_edge < -kTWOPI)
@@ -7009,14 +7035,14 @@ bool			drawInFillFlag;
 	}
 	else
 	{
-		SetColor(W_DARKGRAY);	//* complete circle
+		LLD_SetColor(W_DARKGRAY);	//* complete circle
 		LLD_FillEllipse(xcoord,ycoord, radx, rady);
 
 //		CONSOLE_DEBUG_W_DBL("phasang-rad\t=",		phasang);
 //		CONSOLE_DEBUG_W_DBL("phasang-deg\t=",		DEGREES(phasang));
 		if (phasang != 0.0)
 		{
-			SetColor(W_YELLOW);	//* semi-ellipse
+			LLD_SetColor(W_YELLOW);	//* semi-ellipse
 			theta	=	posang;
 			for (jjj=0; theta < (posang + PI); jjj++)
 			{
@@ -7168,7 +7194,7 @@ bool			drawInFillFlag;
 			ycoord	=	cWind_y0 - (cYfactor * sphptr.aside * cos(angle));
 			radx	=	cEarth_shadow_radius * cXfactor;
 			rady	=	cEarth_shadow_radius * cYfactor;
-			SetColor(W_BLACK);
+			LLD_SetColor(W_BLACK);
 			LLD_FillEllipse(xcoord, ycoord, radx, rady);
 		}
 	}
@@ -7224,7 +7250,7 @@ int				myColor;
 		case kZodiacCount:	myColor	=	W_LIGHTMAGENTA;	break;	//* zodiac sign names
 		default:			myColor	=	W_WHITE;		break;
 	}
-	SetColor(myColor);
+	LLD_SetColor(myColor);
 
 	for (iii=objCnt-1; iii>=0; iii--)
 	{
@@ -7277,7 +7303,7 @@ int				myColor;
 						{
 							if (iii == 1)	//* Sun, filled ellipse
 							{
-								SetColor(W_WHITE);
+								LLD_SetColor(W_WHITE);
 								radius	=	rad0[iii];
 								radx	=	radius * cXfactor;
 								rady	=	radius * cYfactor;
@@ -8750,7 +8776,7 @@ int		myColor;
 	for (theChar = 'A'; theChar <= 'Z'; theChar++)
 	{
 		myColor	=	GetColorFromChar(theChar);
-		SetColor(myColor);
+		LLD_SetColor(myColor);
 
 		//*	find the first CENTER
 		pt1Valid	=	false;
@@ -8908,12 +8934,12 @@ bool	ptInView;
 	{
 		if (cNightMode)
 		{
-			SetColor(W_DARKRED);
+			LLD_SetColor(W_DARKRED);
 		}
 		else
 		{
-			SetColor(W_VDARKGRAY);
-		//	SetColor(W_PINK);
+			LLD_SetColor(W_VDARKGRAY);
+		//	LLD_SetColor(W_PINK);
 		}
 		LLD_PenSize(gST_DispOptions.LineWidth_NGCoutlines);
 		drawFlag	=	false;

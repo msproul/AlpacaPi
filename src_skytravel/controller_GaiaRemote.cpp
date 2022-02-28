@@ -140,7 +140,7 @@ long	delteaMillSecs;
 
 		//*	so the window shows up
 		HandleWindowUpdate();
-		cvWaitKey(60);
+		cv::waitKey(60);
 
 
 

@@ -31,11 +31,18 @@
 #include	<unistd.h>
 #include	<sys/time.h>
 
-#include "opencv/highgui.h"
-#include "opencv2/highgui/highgui_c.h"
-#include "opencv2/imgproc/imgproc_c.h"
+#include	<fitsio.h>
 
-#include <fitsio.h>
+#ifdef _USE_OPENCV_CPP_
+	#include	<opencv2/opencv.hpp>
+	#include	<opencv2/core.hpp>
+#else
+	#include "opencv/highgui.h"
+	#include "opencv2/highgui/highgui_c.h"
+	#include "opencv2/imgproc/imgproc_c.h"
+	#include "opencv2/core/version.hpp"
+#endif // _USE_OPENCV_CPP_
+
 
 
 #include	"discovery_lib.h"
@@ -261,8 +268,9 @@ unsigned int		deltaSecs;
 				{
 					activeObjCnt++;
 					gControllerList[iii]->HandleWindow();
-			//		usleep(100);
-					keyPressed	=	cvWaitKey(50);
+
+					keyPressed	=	cv::waitKeyEx(5);
+
 					if (keyPressed > 0)
 					{
 						Controller_HandleKeyDown(keyPressed);
@@ -298,7 +306,7 @@ unsigned int		deltaSecs;
 			{
 				CONSOLE_DEBUG_W_STR("Deleting window", gControllerList[iii]->cWindowName);
 				delete gControllerList[iii];
-				cvWaitKey(10);
+				cv::waitKey(10);
 			//	sleep(2);
 			}
 		}

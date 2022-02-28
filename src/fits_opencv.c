@@ -21,9 +21,15 @@
 #include	<fitsio.h>
 #include	<stdbool.h>
 
-#include "opencv/highgui.h"
-#include "opencv2/highgui/highgui_c.h"
-#include "opencv2/imgproc/imgproc_c.h"
+#ifdef _USE_OPENCV_CPP_
+	#include	<opencv2/opencv.hpp>
+	#include	<opencv2/core.hpp>
+#else
+	#include "opencv/highgui.h"
+	#include "opencv2/highgui/highgui_c.h"
+	#include "opencv2/imgproc/imgproc_c.h"
+	#include "opencv2/core/version.hpp"
+#endif // _USE_OPENCV_CPP_
 
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
@@ -32,6 +38,9 @@
 #include	"alpaca_defs.h"
 #include	"fits_opencv.h"
 
+#if defined(_USE_OPENCV_CPP_) &&  (CV_MAJOR_VERSION >= 4)
+
+#else
 //*****************************************************************************
 IplImage	*ReadFITSimageIntoOpenCVimage(const char *fitsFileName)
 {
@@ -73,16 +82,16 @@ int				errorCnt;
 		status		=	0;
 		fitsRetCode	=	fits_read_keys_lng(fptr, "NAXIS", 1, 3, naxes, &nfound, &status);
 		CONSOLE_DEBUG_W_NUM("nfound\t=",	nfound);
-		CONSOLE_DEBUG_W_INT32("naxes[0]\t=",	naxes[0]);
-		CONSOLE_DEBUG_W_INT32("naxes[1]\t=",	naxes[1]);
-		CONSOLE_DEBUG_W_INT32("naxes[2]\t=",	naxes[2]);
+		CONSOLE_DEBUG_W_LONG("naxes[0]\t=",	naxes[0]);
+		CONSOLE_DEBUG_W_LONG("naxes[1]\t=",	naxes[1]);
+		CONSOLE_DEBUG_W_LONG("naxes[2]\t=",	naxes[2]);
 //		CONSOLE_DEBUG_W_NUM("TSHORT\t=", TSHORT);
 //		CONSOLE_DEBUG_W_NUM("TUSHORT\t=", TUSHORT);
 
 		status		=	0;
 		bitpix		=	0;	//*	set a default
 		fitsRetCode	=	fits_read_key_lng(fptr, "BITPIX", &bitpix, NULL, &status);
-		CONSOLE_DEBUG_W_INT32("bitpix\t=",	bitpix);
+		CONSOLE_DEBUG_W_LONG("bitpix\t=",	bitpix);
 
 		switch(bitpix)
 		{
@@ -262,17 +271,20 @@ char				jpegFileName[64];
 	if (filePointer != NULL)
 	{
 		numRead	=	fread(&binaryImageHdr, sizeof(TYPE_BinaryImageHdr), 1, filePointer);
-		CONSOLE_DEBUG_W_NUM("MetadataVersion\t\t=",			binaryImageHdr.MetadataVersion);
-		CONSOLE_DEBUG_W_NUM("ErrorNumber\t\t=",				binaryImageHdr.ErrorNumber);
-		CONSOLE_DEBUG_W_NUM("ClientTransactionID\t=",		binaryImageHdr.ClientTransactionID);
-		CONSOLE_DEBUG_W_NUM("ServerTransactionID\t=",		binaryImageHdr.ServerTransactionID);
-		CONSOLE_DEBUG_W_NUM("DataStart\t\t=",				binaryImageHdr.DataStart);
-		CONSOLE_DEBUG_W_NUM("ImageElementType\t=",			binaryImageHdr.ImageElementType);
-		CONSOLE_DEBUG_W_NUM("TransmissionElementType\t=",	binaryImageHdr.TransmissionElementType);
-		CONSOLE_DEBUG_W_NUM("Rank\t\t\t=",					binaryImageHdr.Rank);
-		CONSOLE_DEBUG_W_NUM("Dimension1\t\t=",				binaryImageHdr.Dimension1);
-		CONSOLE_DEBUG_W_NUM("Dimension2\t\t=",				binaryImageHdr.Dimension2);
-		CONSOLE_DEBUG_W_NUM("Dimension3\t\t=",				binaryImageHdr.Dimension3);
+		if (numRead > 0)
+		{
+			CONSOLE_DEBUG_W_NUM("MetadataVersion\t\t=",			binaryImageHdr.MetadataVersion);
+			CONSOLE_DEBUG_W_NUM("ErrorNumber\t\t=",				binaryImageHdr.ErrorNumber);
+			CONSOLE_DEBUG_W_NUM("ClientTransactionID\t=",		binaryImageHdr.ClientTransactionID);
+			CONSOLE_DEBUG_W_NUM("ServerTransactionID\t=",		binaryImageHdr.ServerTransactionID);
+			CONSOLE_DEBUG_W_NUM("DataStart\t\t=",				binaryImageHdr.DataStart);
+			CONSOLE_DEBUG_W_NUM("ImageElementType\t=",			binaryImageHdr.ImageElementType);
+			CONSOLE_DEBUG_W_NUM("TransmissionElementType\t=",	binaryImageHdr.TransmissionElementType);
+			CONSOLE_DEBUG_W_NUM("Rank\t\t\t=",					binaryImageHdr.Rank);
+			CONSOLE_DEBUG_W_NUM("Dimension1\t\t=",				binaryImageHdr.Dimension1);
+			CONSOLE_DEBUG_W_NUM("Dimension2\t\t=",				binaryImageHdr.Dimension2);
+			CONSOLE_DEBUG_W_NUM("Dimension3\t\t=",				binaryImageHdr.Dimension3);
+		}
 
 //		openCvImgPtr	=	cvCreateImage(cvSize(	binaryImageHdr.Dimension1, binaryImageHdr.Dimension2),
 //													IPL_DEPTH_16U, 1);
@@ -342,3 +354,6 @@ char		extension[8];
 //	CONSOLE_DEBUG_W_HEX("openCvImgPtr\t=", openCvImgPtr);
 	return(openCvImgPtr);
 }
+
+
+#endif // _USE_OPENCV_CPP_ && CV_MAJOR_VERSION

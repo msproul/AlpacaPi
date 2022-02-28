@@ -174,9 +174,8 @@ ControllerUSB		*myController;
 			{
 				//*	force window update
 				myController->HandleWindowUpdate();
-				cvWaitKey(100);
+				cv::waitKey(100);
 			}
-
 			objectsCreated++;
 		}
 	}
@@ -205,7 +204,7 @@ Controller	*myController;
 		{
 			//*	force window update
 			myController->HandleWindowUpdate();
-			cvWaitKey(100);
+			cv::waitKey(100);
 		}
 
 		gSwitchNum++;
@@ -237,7 +236,7 @@ int			objectsCreated;
 		{
 			//*	force window update
 			myController->HandleWindowUpdate();
-			cvWaitKey(100);
+			cv::waitKey(100);
 		}
 		gCameraNum++;
 		objectsCreated++;
@@ -275,7 +274,7 @@ int				iii;
 		{
 			//*	force window update
 			myDomeController->HandleWindowUpdate();
-			cvWaitKey(100);
+			cv::waitKey(100);
 
 			//*	now lets look thru the lsit and see if there is a shutter
 			for (iii=0; iii<gAlpacaDiscoveredCnt; iii++)
@@ -443,7 +442,7 @@ int					keyPressed;
 					activeObjCnt++;
 					gControllerList[iii]->HandleWindow();
 				//	usleep(10);
-					keyPressed	=	cvWaitKey(50);
+					keyPressed	=	cv::waitKeyEx(50);
 					if (keyPressed > 0)
 					{
 						Controller_HandleKeyDown(keyPressed);
@@ -465,7 +464,7 @@ int					keyPressed;
 			{
 				CONSOLE_DEBUG_W_STR("Deleting window", gControllerList[iii]->cWindowName);
 				delete gControllerList[iii];
-				cvWaitKey(10);
+				cv::waitKey(10);
 			//	sleep(2);
 			}
 		}

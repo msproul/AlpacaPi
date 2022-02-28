@@ -147,7 +147,7 @@ int		iii;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG_W_NUM("arrayCount\t=", arrayCount);
-	SetColor(W_RED);
+	LLD_SetColor(W_RED);
 	for (iii=0; iii<arrayCount; iii++)
 	{
 		pt1_X	=	iii;

@@ -385,7 +385,7 @@ char		lineBuff[32];
 	center_Y	=	theWidget->top + (theWidget->height / 2);
 	radius1		=	theWidget->width / 5;
 
-	SetColor(W_WHITE);
+	LLD_SetColor(W_WHITE);
 	LLD_FrameEllipse(center_X, center_Y, radius1, radius1);
 
 	//*	now draw the tick marks every 10 degrees
@@ -434,7 +434,7 @@ char		lineBuff[32];
 	pt2_Y	=	center_Y + (sin(radians) * radius2);
 
 	LLD_PenSize(2);
-	SetColor(W_RED);
+	LLD_SetColor(W_RED);
 	LLD_MoveTo(pt1_X, pt1_Y);
 	LLD_LineTo(pt2_X, pt2_Y);
 
@@ -450,7 +450,7 @@ char		lineBuff[32];
 
 	pt2_X	=	center_X + (cos(radians) * radius2);
 	pt2_Y	=	center_Y + (sin(radians) * radius2);
-	SetColor(W_GREEN);
+	LLD_SetColor(W_GREEN);
 	LLD_MoveTo(pt1_X, pt1_Y);
 	LLD_LineTo(pt2_X, pt2_Y);
 
@@ -468,16 +468,6 @@ void	WindowTabNitecrawler::DrawWidgetCustomGraphic(	IplImage	*openCV_Image,
 														const int	widgetIdx)
 #endif // _USE_OPENCV_CPP_
 {
-CvRect		myCVrect;
-CvPoint		myCVcenter;
-int			radius1;
-int			radius2;
-double		degrees;
-double		radians;
-CvPoint		pt1;
-CvPoint		pt2;
-char		lineBuff[32];
-
 	CONSOLE_DEBUG(__FUNCTION__);
 	cOpenCV_Image	=	openCV_Image;
 
@@ -488,8 +478,6 @@ char		lineBuff[32];
 			break;
 	}
 }
-
-
 
 //*****************************************************************************
 void	WindowTabNitecrawler::ProcessButtonClick(const int buttonIdx)

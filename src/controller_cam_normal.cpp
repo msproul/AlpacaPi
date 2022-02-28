@@ -642,22 +642,19 @@ double	newProgressValue;
 	{
 		SetWidgetProgress(kTab_Camera, kCameraBox_ErrorMsg, unitsRead, totalUnits);
 		cUpdateWindow	=	true;
-	#ifdef _USE_OPENCV_CPP_
 		cv::waitKey(1);
-	#else
-		cvWaitKey(1);
-	#endif
+
 		cProgressReDraws++;
 
 		cPrevProgessValue	=	newProgressValue;
 	}
 
-	if (newProgressValue > 0.9999)
-	{
-		CONSOLE_DEBUG_W_DBL("newProgressValue\t=", newProgressValue);
-		CONSOLE_DEBUG_W_NUM("cProgressUpdates\t=", cProgressUpdates);
-		CONSOLE_DEBUG_W_NUM("cProgressReDraws\t=", cProgressReDraws);
-	}
+//	if (newProgressValue > 0.9999)
+//	{
+//		CONSOLE_DEBUG_W_DBL("newProgressValue\t=", newProgressValue);
+//		CONSOLE_DEBUG_W_NUM("cProgressUpdates\t=", cProgressUpdates);
+//		CONSOLE_DEBUG_W_NUM("cProgressReDraws\t=", cProgressReDraws);
+//	}
 }
 
 //*****************************************************************************

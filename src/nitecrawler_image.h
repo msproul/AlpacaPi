@@ -3,9 +3,17 @@
 
 #ifndef _NITECRAWLER_IMAGE_H_
 #define	_NITECRAWLER_IMAGE_H_
-#include "opencv/highgui.h"
-#include "opencv2/highgui/highgui_c.h"
-#include "opencv2/imgproc/imgproc_c.h"
+
+
+#ifdef _USE_OPENCV_CPP_
+	#include	<opencv2/opencv.hpp>
+	#include	<opencv2/core.hpp>
+#else
+	#include "opencv/highgui.h"
+	#include "opencv2/highgui/highgui_c.h"
+	#include "opencv2/imgproc/imgproc_c.h"
+	#include "opencv2/core/version.hpp"
+#endif // _USE_OPENCV_CPP_
 
 #ifdef __cplusplus
 	extern "C" {
@@ -19,9 +27,8 @@
 	IplImage		*GetNiteCrawlerImage(void);
 	IplImage		*GetMoonLiteImage(void);
 	extern IplImage	*gNiteCrawlerImgPtr;
-
+	void			WriteOutImageAsCode(IplImage *theImage, const char *codeFileName);
 #endif
-void		WriteOutImageAsCode(IplImage *theImage, const char *codeFileName);
 void		WriteOutImageFileAsCode(const char *fileName);
 
 

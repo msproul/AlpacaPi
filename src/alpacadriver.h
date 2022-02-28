@@ -354,8 +354,6 @@ void			GetAlpacaName(TYPE_DEVICETYPE deviceType, char *alpacaName);
 //*****************************************************************************
 
 //*	this is a macro to help make all error messages consistent
-//#define	GENERATE_ALPACAPI_ERRMSG(buffer,errmsg)		sprintf(buffer, "AlpacaPi:%s:L#%d", errmsg, __LINE__);
-
 #define	GENERATE_ALPACAPI_ERRMSG(buffer,errmsg)		\
 		sprintf(buffer, "AlpacaPi:%s:%s:%d", errmsg, __FUNCTION__, __LINE__);
 

@@ -447,8 +447,8 @@ int	mkdirErrCode;
 
 #ifdef _USE_OPENCV_
 	cCreateOpenCVwindow				=	true;
-	cOpenCV_Image					=	NULL;
-	cOpenCV_LiveDisplay				=	NULL;
+	cOpenCV_ImagePtr				=	NULL;
+	cOpenCV_LiveDisplayPtr			=	NULL;
 	cOpenCV_Histogram				=	NULL;
 	cCreateHistogramWindow			=	true;
 	cOpenCV_videoWriter				=	NULL;
@@ -464,12 +464,11 @@ int	mkdirErrCode;
 	cLastLClickY					=	0;
 	cCurrentMouseX					=	0;
 	cCurrentMouseY					=	0;
-#if defined(_USE_OPENCV_CPP_) &&  (CV_MAJOR_VERSION >= 4)
-#else
+#ifdef _ENABLE_CVFONT_
 	cTextFont						=	cvFont(1.0, 1);
 	cOverlayTextFont				=	cvFont(2.0, 1);
-	cSideBarBGcolor					=	cvScalarAll(0);
 #endif
+	cSideBarBGcolor					=	cvScalarAll(128);
 	cVideoOverlayColor				=	CV_RGB(255,	0,	0);
 	cSideBarBlk						=	CV_RGB(0,	0,	0);
 
@@ -3727,12 +3726,7 @@ int					totalPixels;
 size_t				dataPayloadSize;
 size_t				bufferSize;
 unsigned char 		*binaryDataBuffer;
-int					xxx;
-int					yyy;
 int					ccc;
-unsigned char		*myPixelPtr;
-int					pixelValue;
-int					pixelIndex;
 int					bytesWritten;
 char				httpHeader[1024];
 char				lineBuff[128];
@@ -3802,12 +3796,12 @@ int					returnedDataLen;
 	dataPayloadSize		=	totalPixels * bytesPerPixel;
 	dataPayloadSize		+=	sizeof(TYPE_BinaryImageHdr);		//*	this should be 44 for version 1.
 	CONSOLE_DEBUG_W_NUM("bytesPerPixel\t\t=",			bytesPerPixel);
-	CONSOLE_DEBUG_W_NUM("dataPayloadSize\t\t=",			dataPayloadSize);
+	CONSOLE_DEBUG_W_LONG("dataPayloadSize\t\t=",		dataPayloadSize);
 
 
 	//*	time to build the HTTP header
 	strcpy(httpHeader,	"HTTP/1.0 200 OK\r\n");
-	sprintf(lineBuff,	"Content-Length: %d\r\n", dataPayloadSize);
+	sprintf(lineBuff,	"Content-Length: %ld\r\n", dataPayloadSize);
 	strcat(httpHeader,	lineBuff);
 	strcat(httpHeader,	"Content-type: application/imagebytes charset=utf-8\r\n");
 	strcat(httpHeader,	"Server: AlpacaPi\r\n");
@@ -3821,7 +3815,6 @@ int					returnedDataLen;
 	//*	make sure we have valid data
 	if ((cCameraDataBuffer != NULL) && (totalPixels > 0))
 	{
-		myPixelPtr	=	cCameraDataBuffer;
 		//*	allocate one big buffer and put the entire image into it
 		binaryDataBuffer	=	(unsigned char *)malloc(bufferSize + 100);
 		if (binaryDataBuffer != NULL)
@@ -3837,7 +3830,7 @@ int					returnedDataLen;
 			ccc			=	httpHeaderSize;
 			ccc			+=	sizeof(TYPE_BinaryImageHdr);
 
-			CONSOLE_DEBUG_W_NUM("httpHeaderSize\t=",	httpHeaderSize);
+			CONSOLE_DEBUG_W_LONG("httpHeaderSize\t=",	httpHeaderSize);
 			CONSOLE_DEBUG_W_NUM("ccc\t\t=",				ccc);
 
 			//*	now copy the image over
@@ -3848,8 +3841,8 @@ int					returnedDataLen;
 					CONSOLE_DEBUG("kImageType_RAW8");
 					returnedDataLen	=	BuildBinaryImage_Raw8(binaryDataBuffer, ccc, bufferSize);
 				//	returnedDataLen	=	BuildBinaryImage_Raw16(binaryDataBuffer, ccc, bufferSize);
-					CONSOLE_DEBUG_W_NUM("bufferSize     \t=",	bufferSize);
-					CONSOLE_DEBUG_W_NUM("returnedDataLen\t=",	returnedDataLen);
+					CONSOLE_DEBUG_W_LONG("bufferSize     \t=",	(long)bufferSize);
+					CONSOLE_DEBUG_W_NUM( "returnedDataLen\t=",	returnedDataLen);
 					break;
 
 				case kImageType_RAW16:
@@ -6569,7 +6562,7 @@ int32_t		delayMicroSecs;
 #ifdef _USE_OPENCV_
 //	if (delayMicroSecs > 500)
 	{
-		if (cOpenCV_Image != NULL)
+		if (cOpenCV_ImagePtr != NULL)
 		{
 			if ((cImageMode == kImageMode_Live) || cDisplayImage)
 			{
@@ -6584,7 +6577,7 @@ int32_t		delayMicroSecs;
 
 
 			}
-			else if (cOpenCV_LiveDisplay != NULL)
+			else if (cOpenCV_LiveDisplayPtr != NULL)
 			{
 				CONSOLE_DEBUG("Calling CloseLiveImage()");
 				CloseLiveImage();
@@ -6592,7 +6585,7 @@ int32_t		delayMicroSecs;
 		}
 		else if ((cImageMode == kImageMode_Live) || cDisplayImage)
 		{
-//			CONSOLE_DEBUG("cOpenCV_Image is NULL")
+//			CONSOLE_DEBUG("cOpenCV_ImagePtr is NULL")
 		}
 	}
 #endif // _USE_OPENCV_
@@ -6705,7 +6698,7 @@ char		fileNameDateString[64];
 	char	filterName1stChar[8];
 	bool	addFilterName;
 
-		CONSOLE_DEBUG("cFN_includeFilter");
+//		CONSOLE_DEBUG("cFN_includeFilter");
 
 		if (cConnectedFilterWheel != NULL)
 		{
@@ -6715,7 +6708,7 @@ char		fileNameDateString[64];
 
 		if ((cFilterWheelCurrPos >= 0) && (strlen(cFilterWheelCurrName) > 0))
 		{
-			CONSOLE_DEBUG_W_NUM("cFilterWheelCurrPos\t=", cFilterWheelCurrPos);
+//			CONSOLE_DEBUG_W_NUM("cFilterWheelCurrPos\t=", cFilterWheelCurrPos);
 			addFilterName	=	true;
 			if (strncasecmp(cFilterWheelCurrName, "None", 4) == 0)
 			{
@@ -6734,7 +6727,7 @@ char		fileNameDateString[64];
 			}
 		}
 	}
-	CONSOLE_DEBUG_W_STR("cFileNameRoot\t=", cFileNameRoot);
+//	CONSOLE_DEBUG_W_STR("cFileNameRoot\t=", cFileNameRoot);
 #endif // _ENABLE_FILTERWHEEL_
 
 //	CONSOLE_DEBUG_W_STR("cFileNameRoot\t=", cFileNameRoot);
@@ -6878,11 +6871,10 @@ int					iii;
 				keepGoing	=	false;
 			}
 		}
-CONSOLE_DEBUG(__FUNCTION__);
 	#ifdef _SORT_FILENAMES_
-CONSOLE_DEBUG("sorting");
-CONSOLE_DEBUG_W_NUM("kMaxFileCnt\t=", kMaxFileCnt);
-CONSOLE_DEBUG_W_NUM("fileIdx    \t=", fileIdx);
+//CONSOLE_DEBUG("sorting");
+//CONSOLE_DEBUG_W_NUM("kMaxFileCnt\t=", kMaxFileCnt);
+//CONSOLE_DEBUG_W_NUM("fileIdx    \t=", fileIdx);
 
 		qsort(files, fileIdx, sizeof(TYPE_FILE_ENTRY), DirSort);
 		for (iii=0; iii < fileIdx; iii++)
@@ -6905,25 +6897,25 @@ CONSOLE_DEBUG_W_NUM("fileIdx    \t=", fileIdx);
 		}
 	#endif // _SORT_FILENAMES_
 
-CONSOLE_DEBUG_W_NUM("kMaxJsonBuffLen      \t=", kMaxJsonBuffLen);
-CONSOLE_DEBUG_W_LONG("len of jsonTextBuffer\t=", strlen(reqData->jsonTextBuffer));
+//CONSOLE_DEBUG_W_NUM("kMaxJsonBuffLen      \t=", kMaxJsonBuffLen);
+//CONSOLE_DEBUG_W_LONG("len of jsonTextBuffer\t=", strlen(reqData->jsonTextBuffer));
 		cBytesWrittenForThisCmd	+=	JsonResponse_Add_RawText(	mySocketFD,
 										reqData->jsonTextBuffer,
 										kMaxJsonBuffLen,
 										"\t\t\t\"END\"\r\n");
-CONSOLE_DEBUG_W_LONG("len of jsonTextBuffer\t=", strlen(reqData->jsonTextBuffer));
+//CONSOLE_DEBUG_W_LONG("len of jsonTextBuffer\t=", strlen(reqData->jsonTextBuffer));
 		cBytesWrittenForThisCmd	+=	JsonResponse_Add_ArrayEnd(	mySocketFD,
 										reqData->jsonTextBuffer,
 										kMaxJsonBuffLen,
 										INCLUDE_COMMA);
-CONSOLE_DEBUG_W_LONG("len of jsonTextBuffer\t=", strlen(reqData->jsonTextBuffer));
+//CONSOLE_DEBUG_W_LONG("len of jsonTextBuffer\t=", strlen(reqData->jsonTextBuffer));
 		errorCode	=	closedir(directory);
 		if (errorCode != 0)
 		{
 			CONSOLE_DEBUG_W_NUM("closedir errorCode\t=", errorCode);
 			CONSOLE_DEBUG_W_NUM("errno\t=", errno);
 		}
-CONSOLE_DEBUG(__FUNCTION__);
+//CONSOLE_DEBUG(__FUNCTION__);
 	}
 	else
 	{
@@ -6935,7 +6927,7 @@ CONSOLE_DEBUG(__FUNCTION__);
 					kASCOM_Err_Success,
 					"Failed to open image data directory");
 	}
-CONSOLE_DEBUG(__FUNCTION__);
+//CONSOLE_DEBUG(__FUNCTION__);
 
 	return(alpacaErrCode);
 }

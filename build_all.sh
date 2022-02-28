@@ -63,6 +63,19 @@ then
 	echo "Open CV found at $OPENCV_INCLUDE" >> $LOGFILENAME
 fi
 
+if [ -d "/usr/include/opencv2" ]
+then
+	OPENCV_INCLUDE="/usr/include/opencv2"
+	OPENCV_OK=true
+	echo "Open CV found at $OPENCV_INCLUDE" >> $LOGFILENAME
+fi
+
+if [ -d "/usr/include/opencv4" ]
+then
+	OPENCV_INCLUDE="/usr/include/opencv4"
+	OPENCV_OK=true
+	echo "Open CV found at $OPENCV_INCLUDE" >> $LOGFILENAME
+fi
 
 #################################################
 #	check for JETSON

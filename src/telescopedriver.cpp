@@ -45,6 +45,7 @@
 //*	Apr 20,	2021	<MLS> Added Telescope_FindHome(), Telescope_SetPark()
 //*	Apr 20,	2021	<MLS> Added Telescope_SlewToAltAz(), Telescope_UnPark()
 //*	Apr 21,	2021	<MLS> Finished stubbing out the routines need in the subclass
+//*	Feb 28,	2022	<MLS> Updated Put_SyncToAltAz() to return kASCOM_Err_InvalidOperation if tracking is false
 //*****************************************************************************
 
 
@@ -326,7 +327,7 @@ int					cmdType;
 int					mySocket;
 
 //	CONSOLE_DEBUG_W_STR("htmlData\t=", reqData->htmlData);
-//	if (strcmp(reqData->deviceCommand, "readall") != 0)
+	if (strcmp(reqData->deviceCommand, "readall") != 0)
 	{
 		CONSOLE_DEBUG_W_STR("deviceCommand\t=",	reqData->deviceCommand);
 	}
@@ -674,6 +675,7 @@ int					mySocket;
 
 	case kCmd_Telescope_abortslew:					//*	Immediately stops a slew in progress.
 		alpacaErrCode	=	Put_AbortSlew(reqData, alpacaErrMsg);
+		CONSOLE_DEBUG_W_NUM("alpacaErrCode\t=", alpacaErrCode);
 		break;
 
 	case kCmd_Telescope_axisrates:					//*	Returns the rates at which the telescope may be moved about the specified axis.
@@ -2477,6 +2479,11 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 	//*	send the abort anyway
 	Telescope_AbortSlew(alpacaErrMsg);
 
+	CONSOLE_DEBUG_W_NUM("alpacaErrCode\t=", alpacaErrCode);
+	CONSOLE_DEBUG_W_STR("alpacaErrMsg\t=", alpacaErrMsg);
+
+	alpacaErrMsg[0]	=	0;
+
 	return(alpacaErrCode);
 }
 
@@ -3118,7 +3125,6 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 }
 
 
-
 //*****************************************************************************
 TYPE_ASCOM_STATUS	TelescopeDriver::Put_SyncToAltAz(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
 {
@@ -3129,7 +3135,15 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 
 	if (cTelescopeProp.CanSyncAltAz)
 	{
-		alpacaErrCode	=	kASCOM_Err_Success;
+		if (cTelescopeProp.Tracking == false)
+		{
+			alpacaErrCode	=	kASCOM_Err_InvalidOperation;
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Tracking is false");
+		}
+		else
+		{
+			alpacaErrCode	=	kASCOM_Err_Success;
+		}
 	}
 	else
 	{

@@ -172,8 +172,23 @@ int		fileNameLen;
 
 
 #if defined(_USE_OPENCV_)
+#ifdef _USE_OPENCV_CPP_
+#warning "OpenCV++ not finished"
 
+//*****************************************************************************
+int	CameraDriver::CreateOpenCVImage(const unsigned char *imageDataPtr)
+{
+	CONSOLE_DEBUG("OpenCV++ not finished!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+	return(-1);
+}
+//*****************************************************************************
+int	CameraDriver::SaveOpenCVImage(void)
+{
+	CONSOLE_DEBUG("OpenCV++ not finished!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+	return(-1);
+}
 
+#else
 //*****************************************************************************
 //*	wget http://192.168.0.201:6800/api/v1.0.0-oas3/camera/0/startexposure%20Content-Type:%20-dDuration=0.011&Light=true
 //*	wget http://192.168.0.201:6800/api/v1.0.0-oas3/camera/0/imagearray
@@ -195,17 +210,16 @@ int				bytesPerPixel2;	//*	calculated 2 different ways
 //	CONSOLE_DEBUG(__FUNCTION__);
 	GenerateFileNameRoot();
 
-	if (cOpenCV_Image != NULL)
+	if (cOpenCV_ImagePtr != NULL)
 	{
-		cvReleaseImage(&cOpenCV_Image);
-		cOpenCV_Image	=	NULL;
+		cvReleaseImage(&cOpenCV_ImagePtr);
+		cOpenCV_ImagePtr	=	NULL;
 	}
-	if (cOpenCV_Image != NULL)
+	if (cOpenCV_LiveDisplayPtr != NULL)
 	{
-		cvReleaseImage(&cOpenCV_LiveDisplay);
-		cOpenCV_LiveDisplay	=	NULL;
+		cvReleaseImage(&cOpenCV_LiveDisplayPtr);
+		cOpenCV_LiveDisplayPtr	=	NULL;
 	}
-
 	width			=	cCameraProp.CameraXsize;
 	height			=	cCameraProp.CameraYsize;
 	GetImage_ROI_info();
@@ -219,26 +233,26 @@ int				bytesPerPixel2;	//*	calculated 2 different ways
 	{
 		case kImageType_RAW8:
 		//	CONSOLE_DEBUG("kImageType_RAW8");
-			cOpenCV_Image	=	cvCreateImage(cvSize(width, height), IPL_DEPTH_8U, 1);
-			imageDataLen	=	width * height;
+			cOpenCV_ImagePtr	=	cvCreateImage(cvSize(width, height), IPL_DEPTH_8U, 1);
+			imageDataLen		=	width * height;
 			break;
 
 		case kImageType_RAW16:
 		//	CONSOLE_DEBUG("kImageType_RAW16");
-			cOpenCV_Image	=	cvCreateImage(cvSize(width, height), IPL_DEPTH_16U, 1);
-			imageDataLen	=	width * height * 2;
+			cOpenCV_ImagePtr	=	cvCreateImage(cvSize(width, height), IPL_DEPTH_16U, 1);
+			imageDataLen		=	width * height * 2;
 			break;
 
 
 		case kImageType_RGB24:
 		//	CONSOLE_DEBUG("kImageType_RGB24");
-			cOpenCV_Image	=	cvCreateImage(cvSize(width, height), IPL_DEPTH_8U, 3);
-			imageDataLen	=	width * height * 3;
+			cOpenCV_ImagePtr	=	cvCreateImage(cvSize(width, height), IPL_DEPTH_8U, 3);
+			imageDataLen		=	width * height * 3;
 			break;
 
 		case kImageType_Y8:
 		default:
-			cOpenCV_Image	=	NULL;
+			cOpenCV_ImagePtr	=	NULL;
 			break;
 
 	}
@@ -246,23 +260,23 @@ int				bytesPerPixel2;	//*	calculated 2 different ways
 
 	if (imageDataPtr != NULL)
 	{
-		if (cOpenCV_Image != NULL)
+		if (cOpenCV_ImagePtr != NULL)
 		{
 			//*	what size did openCV make the image
-	//		cvShowImage(cOpenCV_ImgWindowName, cOpenCV_Image);
-	//		cvWaitKey(1);
+	//		cvShowImage(cOpenCV_ImgWindowName, cOpenCV_ImagePtr);
+	//		cv::waitKey(1);
 
 //			CONSOLE_DEBUG_W_STR("Image SUCCESS!!!!!!!!!!!!!!-", cameraSerialNum);
-//			CONSOLE_DEBUG_W_NUM("cOpenCV_Image->imageSize\t=", cOpenCV_Image->imageSize);
+//			CONSOLE_DEBUG_W_NUM("cOpenCV_ImagePtr->imageSize\t=", cOpenCV_ImagePtr->imageSize);
 //			CONSOLE_DEBUG_W_LONG("imageDataLen\t\t=",			imageDataLen);
-//			CONSOLE_DEBUG_W_NUM("cOpenCV_Image->nChannels\t=",	cOpenCV_Image->nChannels);
-//			CONSOLE_DEBUG_W_NUM("cOpenCV_Image->depth\t=",		cOpenCV_Image->depth);
-//			CONSOLE_DEBUG_W_NUM("cOpenCV_Image->width\t=",		cOpenCV_Image->width);
-//			CONSOLE_DEBUG_W_NUM("cOpenCV_Image->widthStep\t=",	cOpenCV_Image->widthStep);
+//			CONSOLE_DEBUG_W_NUM("cOpenCV_ImagePtr->nChannels\t=",	cOpenCV_ImagePtr->nChannels);
+//			CONSOLE_DEBUG_W_NUM("cOpenCV_ImagePtr->depth\t=",		cOpenCV_ImagePtr->depth);
+//			CONSOLE_DEBUG_W_NUM("cOpenCV_ImagePtr->width\t=",		cOpenCV_ImagePtr->width);
+//			CONSOLE_DEBUG_W_NUM("cOpenCV_ImagePtr->widthStep\t=",	cOpenCV_ImagePtr->widthStep);
 
-			bytesPerPixel		=	(cOpenCV_Image->depth / 8) * cOpenCV_Image->nChannels;
-			bytesPerPixel2		=	cOpenCV_Image->widthStep / cOpenCV_Image->width;
-			openCVimageWidth	=	cOpenCV_Image->widthStep / bytesPerPixel;
+			bytesPerPixel		=	(cOpenCV_ImagePtr->depth / 8) * cOpenCV_ImagePtr->nChannels;
+			bytesPerPixel2		=	cOpenCV_ImagePtr->widthStep / cOpenCV_ImagePtr->width;
+			openCVimageWidth	=	cOpenCV_ImagePtr->widthStep / bytesPerPixel;
 //			CONSOLE_DEBUG_W_NUM("bytesPerPixel\t=",		bytesPerPixel);
 //			CONSOLE_DEBUG_W_NUM("bytesPerPixel2\t=",	bytesPerPixel2);
 //			CONSOLE_DEBUG_W_NUM("openCVimageWidth\t=",	openCVimageWidth);
@@ -272,10 +286,10 @@ int				bytesPerPixel2;	//*	calculated 2 different ways
 				CONSOLE_DEBUG("bytes per pixel is messed up");
 				CONSOLE_ABORT(__FUNCTION__);
 			}
-			if (openCVimageWidth == cOpenCV_Image->width)
+			if (openCVimageWidth == cOpenCV_ImagePtr->width)
 			{
 			//	CONSOLE_DEBUG("Normal image data !!!!!!!!!!!!!!");
-				memcpy(cOpenCV_Image->imageData, imageDataPtr, imageDataLen);
+				memcpy(cOpenCV_ImagePtr->imageData, imageDataPtr, imageDataLen);
 			}
 			else
 			{
@@ -285,14 +299,14 @@ int				bytesPerPixel2;	//*	calculated 2 different ways
 
 				//*	we have to copy over the image a line at a time
 //				CONSOLE_DEBUG("Miss match image data !!!!!!!!!!!!!!");
-				ocv_rowPtr	=	cOpenCV_Image->imageData;
+				ocv_rowPtr	=	cOpenCV_ImagePtr->imageData;
 				img_rowPtr	=	(char *)imageDataPtr;
-				rowLength	=	cOpenCV_Image->width * bytesPerPixel;
-				for (ii=0; ii<cOpenCV_Image->height; ii++)
+				rowLength	=	cOpenCV_ImagePtr->width * bytesPerPixel;
+				for (ii=0; ii<cOpenCV_ImagePtr->height; ii++)
 				{
 					memcpy(ocv_rowPtr, img_rowPtr, rowLength);
 
-					ocv_rowPtr	+=	cOpenCV_Image->widthStep;
+					ocv_rowPtr	+=	cOpenCV_ImagePtr->widthStep;
 					img_rowPtr	+=	rowLength;
 				}
 
@@ -327,9 +341,9 @@ int			quality[3] = {16, 200, 0};
 
 	SETUP_TIMING();
 
-	if (cOpenCV_Image != NULL)
+	if (cOpenCV_ImagePtr != NULL)
 	{
-		bytesPerPixel		=	(cOpenCV_Image->depth / 8) * cOpenCV_Image->nChannels;
+		bytesPerPixel		=	(cOpenCV_ImagePtr->depth / 8) * cOpenCV_ImagePtr->nChannels;
 		if (bytesPerPixel != 2)
 		{
 			//*	save as JPEG
@@ -341,7 +355,7 @@ int			quality[3] = {16, 200, 0};
 			strcat(imageFilePath, imageFileName);
 
 			strcpy(cLastJpegImageName, imageFilePath);	//*	save the full image path for the web server
-			openCVerr	=	cvSaveImage(imageFilePath, cOpenCV_Image, quality);
+			openCVerr	=	cvSaveImage(imageFilePath, cOpenCV_ImagePtr, quality);
 			if (openCVerr == 1)
 			{
 				AddToDataProductsList(imageFileName, "JPEG image-openCV");
@@ -352,7 +366,7 @@ int			quality[3] = {16, 200, 0};
 			}
 		}
 	#ifdef _ENABLE_PNG_
-		if (cOpenCV_Image->depth == 16)
+		if (cOpenCV_ImagePtr->depth == 16)
 		{
 			//*	OpenCV png file creation takes WAY too long, use caution
 			START_TIMING();
@@ -365,7 +379,7 @@ int			quality[3] = {16, 200, 0};
 			strcat(imageFilePath, imageFileName);
 
 			strcpy(cLastJpegImageName, imageFilePath);	//*	save the full image path for the web server
-			openCVerr	=	cvSaveImage(imageFilePath, cOpenCV_Image, quality);
+			openCVerr	=	cvSaveImage(imageFilePath, cOpenCV_ImagePtr, quality);
 			DEBUG_TIMING("Time to create PNG file=");
 			if (openCVerr == 1)
 			{
@@ -381,12 +395,13 @@ int			quality[3] = {16, 200, 0};
 		long	keyPointCnt;
 		//*	this is an attempt at finding the locations of all of the stars in an image.
 
-		keyPointCnt	=	ProcessORB_Image(cOpenCV_Image, cFileNameRoot);
+		keyPointCnt	=	ProcessORB_Image(cOpenCV_ImagePtr, cFileNameRoot);
 
 	#endif // _ENABLE_STAR_SEARCH_
 	}
 	return(0);
 }
+#endif // _USE_OPENCV_CPP_
 
 
 #endif	//	_USE_OPENCV_

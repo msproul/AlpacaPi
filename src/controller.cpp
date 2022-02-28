@@ -294,6 +294,30 @@ void	Controller_HandleKeyDown(const int keyPressed)
 }
 
 //*****************************************************************************
+static void	DumpCVMatStruct(cv::Mat *theImageMat)
+{
+
+	CONSOLE_DEBUG_W_NUM("theImageMat->cols\t\t=",	theImageMat->cols);
+	CONSOLE_DEBUG_W_NUM("theImageMat->rows\t\t=",	theImageMat->rows);
+	CONSOLE_DEBUG_W_NUM("theImageMat->dims\t\t=",	theImageMat->dims);
+	if (theImageMat->dims >= 1)
+	{
+		CONSOLE_DEBUG_W_LONG("theImageMat->step[0]\t=",	theImageMat->step[0]);
+	}
+	if (theImageMat->dims >= 2)
+	{
+		CONSOLE_DEBUG_W_LONG("theImageMat->step[1]\t=",	theImageMat->step[1]);
+	}
+	if (theImageMat->dims >= 3)
+	{
+		CONSOLE_DEBUG_W_LONG("theImageMat->step[2]\t=",	theImageMat->step[2]);
+	}
+//	CONSOLE_DEBUG_W_NUM("theImageMat->size\t=",		theImageMat->size);
+//	CONSOLE_ABORT(__FUNCTION__);
+}
+
+
+//*****************************************************************************
 Controller::Controller(	const char	*argWindowName,
 						const int	xSize,
 						const int	ySize)
@@ -381,16 +405,16 @@ int			objCntr;
 	cBackGrndColor		=	CV_RGB(0,	0,	0);
 
 #ifdef _USE_OPENCV_CPP_
-	CONSOLE_DEBUG("OpenCV++");
 	cOpenCV_matImage	=	new cv::Mat(cHeight, cWidth, CV_8UC3);
+	DumpCVMatStruct(cOpenCV_matImage);
 #else
 	cOpenCV_Image		=	cvCreateImage(cvSize(cWidth, cHeight), IPL_DEPTH_8U, 3);
 #endif // _USE_OPENCV_CPP_
 
-	CONSOLE_DEBUG("OpenCV++");
-	cvNamedWindow(	cWindowName,
+	cv::namedWindow(	cWindowName,
 				//	(CV_WINDOW_NORMAL)
-					(CV_WINDOW_NORMAL | CV_WINDOW_KEEPRATIO | CV_GUI_NORMAL)
+//	--->>>>good		(CV_WINDOW_NORMAL | CV_WINDOW_KEEPRATIO | CV_GUI_NORMAL)
+					(cv::WINDOW_NORMAL | cv::WINDOW_KEEPRATIO)
 				//	(CV_WINDOW_AUTOSIZE)
 				//	(CV_WINDOW_NORMAL | CV_GUI_EXPANDED)
 				//	(CV_WINDOW_NORMAL | CV_WINDOW_FULLSCREEN | CV_WINDOW_KEEPRATIO | CV_GUI_NORMAL)
@@ -400,14 +424,12 @@ int			objCntr;
 				//	(CV_WINDOW_AUTOSIZE)
 					);
 
-	cvResizeWindow(		cWindowName, cWidth, cHeight);
-//	cvMoveWindow(		cWindowName, (20 + ((gControllerCnt - 1) * (cWidth + 50))), 10);
-	cvMoveWindow(		cWindowName, (20 + ((gControllerCnt - 1) * (150))), 10);
+	cv::resizeWindow(		cWindowName, cWidth, cHeight);
+	cv::moveWindow(		cWindowName, (20 + ((gControllerCnt - 1) * (150))), 10);
 
-
-	cvSetMouseCallback( cWindowName,
-						LiveWindowMouseCallback,
-						(void *)this);
+	cv::setMouseCallback(	cWindowName,
+							LiveWindowMouseCallback,
+							(void *)this);
 
 
 
@@ -493,7 +515,7 @@ int		iii;
 		//*	we sometimes can open the same window twice, this should not happen but sometimes does.
 		//*	this catch prevents opencv from crashing
 		CONSOLE_DEBUG("cvDestroyWindow() had an exception");
-		if (ex.code != CV_StsAssert)
+//+++		if (ex.code != CV_StsAssert)
 		{
 			CONSOLE_DEBUG_W_NUM("openCV error code\t=",	ex.code);
 		}
@@ -572,7 +594,7 @@ bool		validData;
 //**************************************************************************************
 void	Controller::SetupWindowControls(void)
 {
-
+//	CONSOLE_DEBUG("SetupWindowControls must be overloaded");
 }
 
 //*****************************************************************************
@@ -623,7 +645,6 @@ void	Controller::HandleWindowUpdate(void)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
 #ifdef _USE_OPENCV_CPP_
-//	CONSOLE_DEBUG("OpenCV++");
 	if (cOpenCV_matImage != NULL)
 	{
 		//*	Do drawing
@@ -712,7 +733,6 @@ TYPE_WIDGET		*myWidgetPtr;
 		{
 			CONSOLE_DEBUG("widget ptr is NULL");
 		}
-
 	}
 	else
 	{
@@ -1034,7 +1054,8 @@ int		wheelMovement;
 	myWidgitIdx	=	FindClickedWidget(xxx,  yyy);
 	switch(event)
 	{
-		case CV_EVENT_MOUSEMOVE:
+	//	case CV_EVENT_MOUSEMOVE:
+		case cv::EVENT_MOUSEMOVE:
 		//	CONSOLE_DEBUG("CV_EVENT_MOUSEMOVE");
 			cCurrentMouseX	=	xxx;
 			cCurrentMouseY	=	yyy;
@@ -1074,7 +1095,7 @@ int		wheelMovement;
 			}
 			break;
 
-		case CV_EVENT_LBUTTONDOWN:
+		case cv::EVENT_LBUTTONDOWN:
 //			CONSOLE_DEBUG("CV_EVENT_LBUTTONDOWN");
 			cCurTextInput_Widget	=	-1;
 			cLeftButtonDown			=	true;
@@ -1126,16 +1147,16 @@ int		wheelMovement;
 			}
 			break;
 
-		case CV_EVENT_RBUTTONDOWN:
+		case cv::EVENT_RBUTTONDOWN:
 			cRightButtonDown	=	true;
 			CONSOLE_DEBUG("CV_EVENT_RBUTTONDOWN");
 			break;
 
-		case CV_EVENT_MBUTTONDOWN:
+		case cv::EVENT_MBUTTONDOWN:
 			CONSOLE_DEBUG("CV_EVENT_MBUTTONDOWN");
 			break;
 
-		case CV_EVENT_LBUTTONUP:
+		case cv::EVENT_LBUTTONUP:
 //			CONSOLE_DEBUG("CV_EVENT_LBUTTONUP");
 			cLeftButtonDown	=	false;
 			if (cHighlightedBtn >= 0)
@@ -1174,22 +1195,23 @@ int		wheelMovement;
 			}
 			break;
 
-		case CV_EVENT_RBUTTONUP:
+		case cv::EVENT_RBUTTONUP:
 			cRightButtonDown	=	false;
 			CONSOLE_DEBUG("CV_EVENT_RBUTTONUP");
 			break;
 
-		case CV_EVENT_MBUTTONUP:
+		case cv::EVENT_MBUTTONUP:
 			CONSOLE_DEBUG("CV_EVENT_MBUTTONUP");
 			break;
 
-		case CV_EVENT_LBUTTONDBLCLK:
+		case cv::EVENT_LBUTTONDBLCLK:
 		//	CONSOLE_DEBUG("CV_EVENT_LBUTTONDBLCLK");
 			clickedBtn		=	FindClickedTab(xxx,  yyy);
 			if (clickedBtn >= 0)
 			{
 				//*	we have a double click in the tab bar
-				cvResizeWindow(cWindowName, cWidth, cHeight);
+			//	cvResizeWindow(cWindowName, cWidth, cHeight);
+				cv::resizeWindow(cWindowName, cWidth, cHeight);
 			}
 			else
 			{
@@ -1202,14 +1224,14 @@ int		wheelMovement;
 			}
 			break;
 
-		case CV_EVENT_RBUTTONDBLCLK:
+		case cv::EVENT_RBUTTONDBLCLK:
 			CONSOLE_DEBUG("CV_EVENT_RBUTTONDBLCLK");
 			clickedBtn		=	FindClickedTab(xxx,  yyy);
 			if (clickedBtn >= 0)
 			{
 				CONSOLE_DEBUG("CV_EVENT_RBUTTONDBLCLK");
 				//*	we have a double click in the tab bar
-				cvResizeWindow(cWindowName, cWidth, cHeight);
+				cv::resizeWindow(cWindowName, cWidth, cHeight);
 			}
 			else
 			{
@@ -1223,13 +1245,13 @@ int		wheelMovement;
 			}
 			break;
 
-		case CV_EVENT_MBUTTONDBLCLK:
+		case cv::EVENT_MBUTTONDBLCLK:
 			CONSOLE_DEBUG("CV_EVENT_MBUTTONDBLCLK");
 			break;
 
 #if (CV_MAJOR_VERSION >= 3)
-		case CV_EVENT_MOUSEWHEEL:
-		case CV_EVENT_MOUSEHWHEEL:
+		case cv::EVENT_MOUSEWHEEL:
+		case cv::EVENT_MOUSEHWHEEL:
 //			CONSOLE_DEBUG_W_HEX("flags\t=", flags);
 			wheelMovement	=	flags & 0xffff0000;
 			wheelMovement	/=	65536;
@@ -1256,7 +1278,7 @@ int		wheelMovement;
 	{
 		cCurrentTabObjPtr->ProcessMouseEvent(myWidgitIdx, event,  xxx,  yyy,  flags);
 	}
-//	if (event == CV_EVENT_LBUTTONUP)
+//	if (event == cv::EVENT_LBUTTONUP)
 //	{
 //		CONSOLE_DEBUG("exit");
 //	}
@@ -1677,8 +1699,8 @@ int			sliderWidth;
 //**************************************************************************************
 void	Controller::DrawWidgetScrollBar(TYPE_WIDGET *theWidget)
 {
-CvRect		myCVrect;
-CvPoint		sliderLoc;
+cv::Rect		myCVrect;
+cv::Point		sliderLoc;
 //int			textOffsetY;
 //char		leftString[32];
 //char		rightString[32];
@@ -1939,25 +1961,41 @@ cv::Mat		image_roi;
 			theWidget->roiRect.width	=	theOpenCVimage->cols;
 			theWidget->roiRect.height	=	theOpenCVimage->rows;
 
-			image_roi		=	cv::Mat(*cOpenCV_matImage, theWidget->roiRect);
-
 //			cvSetImageROI(cOpenCV_matImage,  theWidget->roiRect);
 //			cvCopy(theWidget->openCVimagePtr, cOpenCV_matImage);
 //			cvResetImageROI(cOpenCV_matImage);
 
-	//		cOpenCV_matImage->copyTo(*theOpenCVimage);
-			theOpenCVimage->copyTo(image_roi);
+			//---try------try------try------try------try------try---
+			try
+			{
+				image_roi		=	cv::Mat(*cOpenCV_matImage, theWidget->roiRect);
+			}
+			catch(cv::Exception& ex)
+			{
+				CONSOLE_DEBUG("=========================================================");
+				CONSOLE_DEBUG("cv::Mat() had an exception");
+				CONSOLE_DEBUG_W_NUM("openCV error code\t=",	ex.code);
+			}
+			//---try------try------try------try------try------try---
+			try
+			{
+				//*	mostly working
+				theOpenCVimage->copyTo(image_roi);
+			}
+			catch(cv::Exception& ex)
+			{
+				//*	this catch prevents opencv from crashing
+				CONSOLE_DEBUG("=========================================================");
+				CONSOLE_DEBUG("copyTo() had an exception");
+				CONSOLE_DEBUG_W_NUM("openCV error code\t=",	ex.code);
+			//	CONSOLE_ABORT(__FUNCTION__);
+			}
 
 
 			//*	draw the border if enabled
 			if (theWidget->includeBorder)
 			{
-				cv::rectangle(	*cOpenCV_matImage,
-								theWidget->roiRect,
-								theWidget->borderColor,		//	color,
-								1,							//	int thickness CV_DEFAULT(1),
-								8,							//	int line_type CV_DEFAULT(8),
-								0);							//	int shift CV_DEFAULT(0));
+				LLD_FrameRect(&theWidget->roiRect);
 			}
 		}
 		else
@@ -1970,12 +2008,7 @@ cv::Mat		image_roi;
 				widgetRoiRect.width		=	theWidget->width;
 				widgetRoiRect.height	=	theWidget->height;
 
-				cv::rectangle(	*cOpenCV_matImage,
-								widgetRoiRect,
-								theWidget->borderColor,		//	color,
-								1,							//	int thickness CV_DEFAULT(1),
-								8,							//	int line_type CV_DEFAULT(8),
-								0);							//	int shift CV_DEFAULT(0));
+				LLD_FrameRect(&widgetRoiRect);
 			}
 		}
 	}
@@ -1990,7 +2023,7 @@ cv::Mat		image_roi;
 void	Controller::DrawWidgetImage(TYPE_WIDGET *theWidget, IplImage *theOpenCVimage)
 {
 int			delta;
-CvRect		widgetRect;
+cv::Rect		widgetRect;
 
 	if (cOpenCV_Image != NULL)
 	{
@@ -2069,7 +2102,14 @@ CvRect		widgetRect;
 void	Controller::DrawWidgetImage(TYPE_WIDGET *theWidget)
 {
 //	CONSOLE_DEBUG_W_HEX("Widget\t=", theWidget);
-	DrawWidgetImage(theWidget, theWidget->openCVimagePtr);
+	if (theWidget->openCVimagePtr != NULL)
+	{
+		DrawWidgetImage(theWidget, theWidget->openCVimagePtr);
+	}
+	else
+	{
+		CONSOLE_DEBUG("theWidget->openCVimagePtr is null");
+	}
 }
 
 //**************************************************************************************
@@ -2142,7 +2182,7 @@ TYPE_WIDGET		*myWidgetPtr;
 //**************************************************************************************
 void	Controller::DrawOneWidget(TYPE_WIDGET *theWidget, const int widgetIdx)
 {
-CvRect		widgetRect;
+cv::Rect		widgetRect;
 
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 	theWidget->needsUpdated	=	false;	//*	record the fact that this widget has been updated
@@ -2282,7 +2322,7 @@ void	Controller::DrawWindow(void)
 		cv::rectangle(	*cOpenCV_matImage,
 						myCVrect,
 						cBackGrndColor,			//	color,
-						CV_FILLED);
+						cv::FILLED);
 
 		DrawWindowTabs();
 
@@ -2304,7 +2344,7 @@ void	Controller::DrawWindow(void)
 		cvRectangleR(	cOpenCV_Image,
 						myCVrect,
 						cBackGrndColor,			//	color,
-						CV_FILLED,				//	int thickness CV_DEFAULT(1),
+						cv::FILLED,				//	int thickness CV_DEFAULT(1),
 						8,						//	int line_type CV_DEFAULT(8),
 						0);						//	int shift CV_DEFAULT(0));
 
@@ -2327,7 +2367,8 @@ int			quality[3] = {16, 200, 0};
 #endif
 bool		stillNeedsHandled;
 char		currentTabName[64]	=	"";
-//	CONSOLE_DEBUG_W_HEX("keyPressed\t=", keyPressed);
+
+	CONSOLE_DEBUG_W_HEX("keyPressed\t=", keyPressed);
 
 	stillNeedsHandled	=	true;
 
@@ -2359,12 +2400,13 @@ char		currentTabName[64]	=	"";
 				CONSOLE_DEBUG_W_NUM("openCVerr\t=", openCVerr);
 				break;
 
+			//*	^q  ctrl-q
 			case 'q':
 //				CONSOLE_DEBUG_W_STR("Quit from  window \t=", cWindowName);
 				gKeepRunning	=	false;
 				break;
 
-			//*	ctrl-w close window
+			//*	^w ctrl-w close window
 			case 'w':
 //				CONSOLE_DEBUG_W_STR("Close window \t=", cWindowName);
 				cKeepRunning	=	false;
@@ -2638,7 +2680,6 @@ void	Controller::SetWidgetTextColor(		const int tabNum, const int widgetIdx, cv:
 void	Controller::SetWidgetTextColor(		const int tabNum, const int widgetIdx, cv::Scalar newtextColor)
 #endif
 {
-//	CONSOLE_DEBUG("OpenCV++");
 	if ((tabNum >= 0)  && (tabNum < kMaxTabs))
 	{
 		if (cWindowTabs[tabNum] != NULL)
@@ -2663,7 +2704,6 @@ void	Controller::SetWidgetBGColor(const int tabNum, const int widgetIdx, cv::Sca
 void	Controller::SetWidgetBGColor(const int tabNum, const int widgetIdx, cv::Scalar newBGcolor)
 #endif
 {
-//	CONSOLE_DEBUG("OpenCV++");
 	if ((tabNum >= 0)  && (tabNum < kMaxTabs))
 	{
 		if (cWindowTabs[tabNum] != NULL)
@@ -2689,7 +2729,6 @@ void	Controller::SetWidgetBorderColor(	const int tabNum, const int widgetIdx, cv
 void	Controller::SetWidgetBorderColor(	const int tabNum, const int widgetIdx, cv::Scalar newBorderColor)
 #endif
 {
-//	CONSOLE_DEBUG("OpenCV++");
 	if ((tabNum >= 0)  && (tabNum < kMaxTabs))
 	{
 		if (cWindowTabs[tabNum] != NULL)
@@ -2714,7 +2753,6 @@ void	Controller::SetWidgetImage(	const int tabNum, const int widgetIdx, cv::Mat 
 void	Controller::SetWidgetImage(	const int tabNum, const int widgetIdx, IplImage *argImagePtr)
 #endif
 {
-//	CONSOLE_DEBUG("OpenCV++");
 	if ((tabNum >= 0)  && (tabNum < kMaxTabs))
 	{
 		if (cWindowTabs[tabNum] != NULL)
@@ -2983,16 +3021,17 @@ void	LoadAlpacaLogo(void)
 #ifdef _USE_OPENCV_CPP_
 //	gAlpacaLogoPtr	=	new cv::imread("logos/AlpacaLogo-vsmall.png", CV_LOAD_IMAGE_COLOR);
 //	gAlpacaLogoPtr	=	new cv::Mat("logos/AlpacaLogo-vsmall.png");
-	gAlpacaLogo		=	cv::imread("logos/AlpacaLogo-vsmall.png", CV_LOAD_IMAGE_COLOR);
+	gAlpacaLogo		=	cv::imread("logos/AlpacaLogo-vsmall.png");
 	gAlpacaLogoPtr	=	&gAlpacaLogo;
 
-//	cv::namedWindow("Logo");			//Declaring an window to show ROI//
-//	cv::imshow("Logo", gAlpacaLogo);	//Showing actual image//
+//*	debugging
+//	cv::namedWindow("Logo");			//Declaring an window to show ROI
+//	cv::imshow("Logo", gAlpacaLogo);	//Showing actual image
 
 #else
 	if (gAlpacaLogoPtr == NULL)
 	{
-		gAlpacaLogoPtr	=	cvLoadImage("logos/AlpacaLogo-vsmall.png", CV_LOAD_IMAGE_COLOR);
+		gAlpacaLogoPtr	=	cvLoadImage("logos/AlpacaLogo-vsmall.png");
 	}
 	#endif
 }
@@ -3184,9 +3223,6 @@ void	Controller::LLD_LineTo(const int xx, const int yy)
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 #ifdef _USE_OPENCV_CPP_
-//	CONSOLE_DEBUG("OpenCV++");
-
-
 	if (cOpenCV_matImage != NULL)
 	{
 	cv::Point		pt1;
@@ -3211,7 +3247,6 @@ void	Controller::LLD_LineTo(const int xx, const int yy)
 	{
 		CONSOLE_DEBUG("cOpenCV_matImage is NULL");
 	}
-
 #else
 	if (cOpenCV_Image != NULL)
 	{
@@ -3255,7 +3290,6 @@ void	Controller::LLD_FrameRect(int left, int top, int width, int height, int lin
 		CONSOLE_ABORT(__FUNCTION__);
 	}
 #ifdef _USE_OPENCV_CPP_
-//	CONSOLE_DEBUG("OpenCV++");
 	if (cOpenCV_matImage != NULL)
 	{
 	cv::Rect	myCVrect;
@@ -3292,12 +3326,18 @@ void	Controller::LLD_FrameRect(int left, int top, int width, int height, int lin
 }
 
 //**************************************************************************************
+void	Controller::LLD_FrameRect(cv::Rect *theRect)
+{
+	LLD_FrameRect(theRect->x, theRect->y, theRect->width, theRect->height);
+}
+
+
+//**************************************************************************************
 //*	Low Level FrameRect
 //**************************************************************************************
 void	Controller::LLD_FillRect(int left, int top, int width, int height)
 {
 #ifdef _USE_OPENCV_CPP_
-//	CONSOLE_DEBUG("OpenCV++");
 	if (cOpenCV_matImage != NULL)
 	{
 	cv::Rect	myCVrect;
@@ -3310,7 +3350,7 @@ void	Controller::LLD_FillRect(int left, int top, int width, int height)
 		cv::rectangle(	*cOpenCV_matImage,
 						myCVrect,
 						cCurrentColor,
-						CV_FILLED);
+						cv::FILLED);
 
 	}
 #else
@@ -3326,7 +3366,7 @@ void	Controller::LLD_FillRect(int left, int top, int width, int height)
 		cvRectangleR(	cOpenCV_Image,
 						myCVrect,
 						cCurrentColor,				//	color,
-						CV_FILLED,					//	int thickness CV_DEFAULT(1),
+						cv::FILLED,					//	int thickness CV_DEFAULT(1),
 						8,							//	int line_type CV_DEFAULT(8),
 						0);							//	int shift CV_DEFAULT(0));
 	}
@@ -3336,13 +3376,16 @@ void	Controller::LLD_FillRect(int left, int top, int width, int height)
 //**************************************************************************************
 //*	Low Level FrameRect
 //**************************************************************************************
-void	Controller::LLD_DrawCString(int xx, int yy, char *textString, int fontIndex)
+void	Controller::LLD_DrawCString(	const int	xx,
+										const int	yy,
+										const char	*textString,
+										const int	fontIndex)
+
 {
 
 	if (strlen(textString) > 0)
 	{
 #ifdef _USE_OPENCV_CPP_
-//	CONSOLE_DEBUG("OpenCV++");
 		if (cOpenCV_matImage != NULL)
 		{
 		cv::Point		textLoc;
@@ -3483,7 +3526,7 @@ void	Controller::LLD_FillEllipse(	int xCenter, int yCenter, int xRadius, int yRa
 							0.0,			//*	start_angle
 							360.0,			//*	end_angle
 							cCurrentColor,	//	color,
-							CV_FILLED);		//	int thickness CV_DEFAULT(1),
+							cv::FILLED);		//	int thickness CV_DEFAULT(1),
 		}
 		else
 		{
@@ -3493,7 +3536,6 @@ void	Controller::LLD_FillEllipse(	int xCenter, int yCenter, int xRadius, int yRa
 			CONSOLE_DEBUG_W_NUM("yRadius\t=", yRadius);
 			CONSOLE_ABORT("Invalid arguments");
 		}
-
 	}
 	else
 	{
@@ -3521,7 +3563,7 @@ void	Controller::LLD_FillEllipse(	int xCenter, int yCenter, int xRadius, int yRa
 						0.0,			//*	start_angle
 						360.0,			//*	end_angle
 						cCurrentColor,	//	color,
-						CV_FILLED,		//	int thickness CV_DEFAULT(1),
+						cv::FILLED,		//	int thickness CV_DEFAULT(1),
 						8,				//	int line_type CV_DEFAULT(8),
 						0);				//	int shift CV_DEFAULT(0));
 		}

@@ -224,25 +224,23 @@ int			pt1_Y;
 int			pt2_X;
 int			pt2_Y;
 int			radius1;
-
-double			degrees;
-double			radians;
-CvPoint			pt1;
-char			textString[64];
-char			myFilterName[32];
-int				filterPosition;		//*	0	= 12 o'clock
-int				fillColor_Wnum;
-int				textColor_Wnum;
-double			deltaDegrees;
-int				myFilterOffset;
-int				textWidthPixels;
+double		degrees;
+double		radians;
+char		textString[64];
+char		myFilterName[32];
+int			filterPosition;		//*	0	= 12 o'clock
+int			fillColor_Wnum;
+int			textColor_Wnum;
+double		deltaDegrees;
+int			myFilterOffset;
+int			textWidthPixels;
 
 
 	center_X	=	theWidget->left + (theWidget->width / 2);
 	center_Y	=	theWidget->top + (theWidget->height / 2);
 	radius1		=	((theWidget->width / 2) -2);
 
-	SetColor(W_WHITE);
+	LLD_SetColor(W_WHITE);
 	LLD_FrameEllipse(center_X, center_Y, radius1, radius1);
 
 	if (cFilterWheelPropPtr != NULL)
@@ -256,7 +254,7 @@ int				textWidthPixels;
 			strcpy(textString, "Double click to change filter");
 		}
 
-		textWidthPixels	=   GetTextSize_Width(textString);
+		textWidthPixels	=   LLD_GetTextSize(textString, kFont_Medium);
 		pt1_X			=	center_X;
 		pt1_X			-=	textWidthPixels / 2;
 		pt1_Y			=	center_Y;
@@ -336,10 +334,10 @@ int				textWidthPixels;
 			cFilterCirleCenterPt[filterPosition].x	=	pt1_X;
 			cFilterCirleCenterPt[filterPosition].y	=	pt1_Y;
 
-			SetColor(fillColor_Wnum);
+			LLD_SetColor(fillColor_Wnum);
 			LLD_FillEllipse(pt1_X, pt1_Y, kFilterCirleRadius, kFilterCirleRadius);
 
-			SetColor(W_WHITE);
+			LLD_SetColor(W_WHITE);
 			LLD_FrameEllipse(pt1_X, pt1_Y, kFilterCirleRadius, kFilterCirleRadius);
 
 			//*	make position zero distinct
@@ -351,16 +349,16 @@ int				textWidthPixels;
 			}
 
 			//*	now work on the names and numbers
-			textWidthPixels	=   GetTextSize_Width(myFilterName);
+			textWidthPixels	=   LLD_GetTextSize(myFilterName, kFont_Medium);
 			pt2_X			=	pt1_X - (textWidthPixels / 2);
 			pt2_Y			=	pt1_Y + 5;
-			SetColor(textColor_Wnum);
+			LLD_SetColor(textColor_Wnum);
 			LLD_DrawCString(pt2_X, pt2_Y, myFilterName, kFont_Medium);
 
 			//*	now print the number of the filter above the name
 			sprintf(textString, "-%d-", (myFilterOffset + 1));
 
-			textWidthPixels	=   GetTextSize_Width(myFilterName);
+			textWidthPixels	=   LLD_GetTextSize(myFilterName, kFont_Medium);
 			pt2_X			=	pt1_X - (textWidthPixels / 2);
 			pt2_Y			-=	15;
 

@@ -265,31 +265,35 @@ class WindowTab
 		//*	switch graphic environments later. Also they make it easier to
 		//*	incorporate some older code
 		//=============================================================
-//		void		DrawCString(const int xx, const int yy, const char *theString, const int fontIndex=1);
-		int			GetTextSize_Width(const char *textString, const int fontIndex=1);
-		void		SetColor(const int theColor);
+//		void		SetColor(const int theColor);
 
 		void		LLD_DrawCString(	const int xx, const int yy, const char *textString, const int fontIndex=1);
-		void		LLD_FrameEllipse(	int xCenter, int yCenter, int xRadius, int yRadius);
-		void		LLD_FrameRect(		int left, int top, int width, int height, int lineWidth=1);
-		void		LLD_FillEllipse(	int xCenter, int yCenter, int xRadius, int yRadius);
-		void		LLD_FillRect(		int left, int top, int width, int height);
+		void		LLD_FillEllipse(	const int xCenter, const int yCenter, const int xRadius, const int yRadius);
+		void		LLD_FrameEllipse(	const int xCenter, const int yCenter, const int xRadius, const int yRadius);
+		void		LLD_FrameRect(		const int left, const int top, const int width, const int height, const int lineWidth=1);
+		void		LLD_FrameRect(		cv::Rect *theRect);
+		void		LLD_FillRect(		const int left, const int top, const int width, const int height);
+		void		LLD_FillRect(		cv::Rect *theRect);
+
 		void		LLD_FloodFill(		const int xxx, const int yyy, const int color);
 		int			LLD_GetTextSize(	const char *textString, const int fontIndex);
 		void		LLD_LineTo(			const int xx, const int yy);
 		void		LLD_MoveTo(			const int xx, const int yy);
 		void		LLD_PenSize(		const int newLineWidth);
-		void		LLD_Putpixel(	const int xx, const int yy, const int theColor);
+		void		LLD_Putpixel(		const int xx, const int yy, const int theColor);
+		void		LLD_SetColor(		const int theColor);
 #ifdef _USE_OPENCV_CPP_
 		cv::Mat		*cOpenCV_Image;
 #else
 		IplImage	*cOpenCV_Image;
 #endif // _USE_OPENCV_CPP_
-		cv::Scalar	cCurrentColor;
 
+		cv::Scalar	cCurrentColor;
 		int			cCurrentXloc;
 		int			cCurrentYloc;
 		int			cCurrentLineWidth;
+		int			cCurrentFontHeight;
+		int			cCurrentFontBaseLine;
 
 
 		TYPE_WIDGET	cWidgetList[kMaxWidgets];

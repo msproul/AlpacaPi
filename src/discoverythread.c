@@ -89,6 +89,8 @@ static	int			gAlpacaListenPort	=	9999;
 
 static void		*LookForAlpacaDevicesThread(void *arg);
 static void		ReadExternalIPlist_FromThread(void);
+static void		GetMyAddress(void);
+
 static bool		gNeedToReadExternalList	=	true;	//*	we only need to do this once
 
 
@@ -719,11 +721,11 @@ int		alpacaListenPort;
 	if (newDevice)
 	{
 		//*	add the new devices to our list
-		CONSOLE_DEBUG("We have a new devices")
+//		CONSOLE_DEBUG("We have a new devices")
 		if (gAlpacaUnitCnt < kMaxAlpacaIPaddrCnt)
 		{
-			CONSOLE_DEBUG("Adding to table");
-			CONSOLE_DEBUG_W_NUM("gAlpacaUnitCnt\t=", gAlpacaUnitCnt);
+//			CONSOLE_DEBUG("Adding to table");
+//			CONSOLE_DEBUG_W_NUM("gAlpacaUnitCnt\t=", gAlpacaUnitCnt);
 			gAlpacaUnitList[gAlpacaUnitCnt].deviceAddress	=	*deviceAddress;
 			gAlpacaUnitList[gAlpacaUnitCnt].port			=	alpacaListenPort;
 			gAlpacaUnitList[gAlpacaUnitCnt].currentlyActive	=	false;
@@ -944,6 +946,9 @@ int StartDiscoveryQuerryThread(void)
 int			threadErr;
 
 	CONSOLE_DEBUG(__FUNCTION__);
+
+	GetMyAddress();
+
 	gDiscoveryThreadKeepRunning	=	true;
 	threadErr			=	pthread_create(&gDiscoveryFindThreadID, NULL, &LookForAlpacaDevicesThread, NULL);
 
@@ -989,11 +994,12 @@ int					sockOptValue;
 	cliaddr.sin_addr.s_addr		=	htonl(INADDR_ANY);
 	cliaddr.sin_port			=	htons(0);
 
-//#ifdef _USE_OPENCV_CPP_
-//	cliaddr.sin_addr.s_addr		=	htonl(0xc0a8019a);	//192.168.1.154
+#if !defined(__arm__)
+	#warning "Local IP address is hard coded!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+	cliaddr.sin_addr.s_addr		=	htonl(0xc0a8019a);	//192.168.1.154
 //	cliaddr.sin_addr.s_addr		=	htonl(0xc0a802ab);	//192.168.2.171
 //	cliaddr.sin_addr.s_addr		=	htonl(0x01060003);	//10.6.0.3
-//#endif // _USE_OPENCV_CPP_
+#endif
 
 //	inet_ntop(AF_INET, &(servaddr.sin_addr), ipAddressStr, INET_ADDRSTRLEN);
 //	CONSOLE_DEBUG_W_STR("servaddr.sin_addr\t=", ipAddressStr);
@@ -1216,21 +1222,17 @@ bool			keepGoing;
 		keepGoing	=	true;
 		while ((ifa != NULL) && keepGoing)
 		{
-			CONSOLE_DEBUG(__FUNCTION__);
+//			CONSOLE_DEBUG(__FUNCTION__);
 			// Check if it is a valid IPv4 address
 			if (ifa ->ifa_addr != NULL)
 			{
-				CONSOLE_DEBUG(__FUNCTION__);
+				CONSOLE_DEBUG_W_NUM("ifa ->ifa_addr->sa_family\t=", ifa ->ifa_addr->sa_family);
 				if (ifa ->ifa_addr->sa_family == AF_INET)
 				{
 					CONSOLE_DEBUG("AF_INET");
-					CONSOLE_DEBUG("AF_INET");
-					CONSOLE_DEBUG("AF_INET");
-					CONSOLE_DEBUG("AF_INET");
-					CONSOLE_DEBUG("AF_INET");
-					CONSOLE_DEBUG("AF_INET");
 					tmpAddrPtr	=	&((struct sockaddr_in *)ifa->ifa_addr)->sin_addr;
-					CONSOLE_DEBUG_W_HEX("tmpAddrPtr\t=", tmpAddrPtr);
+//					CONSOLE_DEBUG_W_HEX("tmpAddrPtr\t=", tmpAddrPtr);
+//					CONSOLE_DEBUG_W_HEX("sin_addr\t=", ((struct sockaddr_in *)ifa->ifa_addr)->sin_addr);
 
 					ipAddress32	=	ntohl(*((uint32_t *)tmpAddrPtr));
 					CONSOLE_DEBUG_W_HEX("ipAddress32\t=", ipAddress32);
@@ -1244,20 +1246,24 @@ bool			keepGoing;
 					CONSOLE_DEBUG_W_STR("IPV4 Name   :", ifa->ifa_name);
 					CONSOLE_DEBUG_W_STR("IPV4 Address:", addressBuffer);
 				}
-				else if (ifa->ifa_addr->sa_family==AF_INET6)
+				else if (ifa->ifa_addr->sa_family == AF_INET6)
 				{
 					CONSOLE_DEBUG("AF_INET6");
 					// Check if it is a valid IPv6 address
-					tmpAddrPtr	=	&((struct sockaddr_in6 *)ifa->ifa_addr)->sin6_addr;
-					inet_ntop(AF_INET6, tmpAddrPtr, addressBuffer, INET6_ADDRSTRLEN);
-		//			printf("%s IPV6 Address %s\n", ifa->ifa_name, addressBuffer);
-
-					CONSOLE_DEBUG_W_STR("IPV6 Name   :", ifa->ifa_name);
-					CONSOLE_DEBUG_W_STR("IPV6 Address:", addressBuffer);
+//					tmpAddrPtr	=	&((struct sockaddr_in6 *)ifa->ifa_addr)->sin6_addr;
+//					inet_ntop(AF_INET6, tmpAddrPtr, addressBuffer, INET6_ADDRSTRLEN);
+//		//			printf("%s IPV6 Address %s\n", ifa->ifa_name, addressBuffer);
+//
+//					CONSOLE_DEBUG_W_STR("IPV6 Name   :", ifa->ifa_name);
+//					CONSOLE_DEBUG_W_STR("IPV6 Address:", addressBuffer);
+				}
+				else if (ifa ->ifa_addr->sa_family == PF_PACKET)
+				{
+					CONSOLE_DEBUG("PF_PACKET");
 				}
 				else
 				{
-					CONSOLE_DEBUG_W_STR("Unknow family Name   :", ifa->ifa_name);
+					CONSOLE_DEBUG_W_STR("Unknown family Name   :", ifa->ifa_name);
 				}
 		//+		if (gDebugDiscovery)
 				{
@@ -1265,7 +1271,7 @@ bool			keepGoing;
 				}
 				CONSOLE_DEBUG("ifa	=	ifa->ifa_next;");
 				ifa	=	ifa->ifa_next;
-				CONSOLE_DEBUG(__FUNCTION__);
+//				CONSOLE_DEBUG(__FUNCTION__);
 			}
 			else
 			{
@@ -1282,7 +1288,9 @@ bool			keepGoing;
 	{
 		CONSOLE_DEBUG("getifaddrs() Failed!!!!!");
 	}
+	CONSOLE_DEBUG_W_HEX("gMyIPaddress\t=", gMyIPaddress);
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, "EXIT");
+//	CONSOLE_ABORT(__FUNCTION__);
 }
 
 

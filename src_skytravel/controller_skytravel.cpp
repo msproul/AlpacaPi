@@ -868,7 +868,7 @@ void	ControllerSkytravel::AlpacaProcessSupportedActions_Camera(	const int	devive
 void	ControllerSkytravel::RefreshWindow(void)
 {
 	HandleWindowUpdate();
-	cvWaitKey(100);
+	cv::waitKey(100);
 }
 
 //**************************************************************************************

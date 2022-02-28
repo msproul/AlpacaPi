@@ -82,7 +82,7 @@ int				filterWheelIdx;
 						//*	save the filter name
 						strcpy(cFilterWheelProp.Names[filterWheelIdx].FilterName, jsonParser.dataList[jjj].valueString);
 
-						CONSOLE_DEBUG(cFilterWheelProp.Names[filterWheelIdx].FilterName);
+//						CONSOLE_DEBUG(cFilterWheelProp.Names[filterWheelIdx].FilterName);
 						filterWheelIdx++;
 					}
 					jjj++;
