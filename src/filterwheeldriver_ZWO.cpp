@@ -155,15 +155,6 @@ EFW_ERROR_CODE	efwErrorCode;
 }
 
 //**************************************************************************************
-//*	this opens the connection
-bool	FilterwheelZWO::AlpacaConnect(void)
-{
-
-	return(false);
-}
-
-
-//**************************************************************************************
 void	FilterwheelZWO::ReadZWOfilterWheelInfo(void)
 {
 EFW_ERROR_CODE	efwErrorCode;

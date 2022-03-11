@@ -95,7 +95,10 @@ int			labelWidth;
 int			dataWidth;
 int			boxWidth;
 int			boxHeight;
-
+int			histLblWidth;
+int			histLblHeight;
+int			hist_xLoc;
+char		buttonName[16];
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	//------------------------------------------
@@ -109,14 +112,20 @@ int			boxHeight;
 	yLoc			+=	2;
 
 	//------------------------------------------
-	xLoc	=	5;
+	//*	do the buttons
+	xLoc			=	5;
+	buttonName[0]	=	'A';
+	buttonName[1]	=	0;
 	for (iii=kImageDisplay_Btn_1; iii<kImageDisplay_Btn_N; iii++)
 	{
 		SetWidget(				iii,	xLoc,	yLoc,		cTitleHeight,		cTitleHeight);
 		SetWidgetType(			iii, 	kWidgetType_Button);
+		SetWidgetText(			iii,	buttonName);
 
 		xLoc	+=	cTitleHeight;
 		xLoc	+=	2;
+
+		buttonName[0]++;
 	}
 	yLoc			+=	cTitleHeight;
 	yLoc			+=	2;
@@ -159,14 +168,49 @@ int			boxHeight;
 
 	//-------------------------------------------------------------------------
 	//*	set up the histogram
-	boxWidth	=	labelWidth + dataWidth + 2;
-	boxHeight	=	cSmallBtnHt * 5;
-	SetWidget(		kImageDisplay_Histogram,	xLoc,	yLoc,		boxWidth,		boxHeight);
+	//*	first 3 text boxes for the R,G,B percent values
+	boxWidth		=	labelWidth + dataWidth;
+	boxHeight		=	cSmallBtnHt * 4;
+	histLblWidth	=	(boxWidth - 8) / 3;
+	hist_xLoc		=	xLoc +2;
+	iii		=	kImageDisplay_HistRedPerct;
+	while (iii <= kImageDisplay_HistBluPerct)
+	{
+		SetWidget(				iii,	hist_xLoc,	yLoc,		histLblWidth,		cSmallBtnHt);
+		SetWidgetType(			iii, 	kWidgetType_TextBox);
+		SetWidgetFont(			iii, 	kFont_TextList);
+		SetWidgetJustification(	iii, 	kJustification_Center);
+		SetWidgetBorder(		iii,	true);
+
+		hist_xLoc	+=	histLblWidth;
+		hist_xLoc	+=	2;
+		iii++;
+	}
+	SetWidgetText(kImageDisplay_HistRedPerct,			"R=---%");
+	SetWidgetText(kImageDisplay_HistGrnPerct,			"G=---%");
+	SetWidgetText(kImageDisplay_HistBluPerct,			"B=---%");
+
+	SetWidgetTextColor(kImageDisplay_HistRedPerct,		CV_RGB(255,		0,		0));
+	SetWidgetTextColor(kImageDisplay_HistGrnPerct,		CV_RGB(0,		255,	0));
+	SetWidgetTextColor(kImageDisplay_HistBluPerct,		CV_RGB(0x64,	0x8c,	0xff));
+
+
+	yLoc	+=	cSmallBtnHt;
+	yLoc	+=	2;
+	SetWidget(		kImageDisplay_Histogram,	xLoc + 2,	yLoc,		boxWidth,		boxHeight);
 	SetWidgetType(	kImageDisplay_Histogram, 	kWidgetType_CustomGraphic);
 	SetWidgetText(	kImageDisplay_Histogram,	"Histogram");
 	CONSOLE_DEBUG_W_NUM("boxWidth\t=",	boxWidth);
 	CONSOLE_DEBUG_W_NUM("boxHeight\t=",	boxHeight);
+
+	SetWidgetOutlineBox(kImageDisplay_HistogramOutline, kImageDisplay_HistRedPerct, (kImageDisplay_HistogramOutline -1));
 //	CONSOLE_ABORT(__FUNCTION__);
+//	kImageDisplay_HistRedPerct,
+//	kImageDisplay_HistGrnPerct,
+//	kImageDisplay_HistBluPerct,
+//
+//	kImageDisplay_Histogram,
+//	kImageDisplay_HistogramOutline,
 
 	//-------------------------------------------------------------------------
 	//*	set up the image display area
@@ -393,13 +437,40 @@ int		cursorYYoffset;
 
 #ifdef _USE_OPENCV_CPP_
 //**************************************************************************************
-void	WindowTabImage::DrawWidgetCustomGraphic(cv::Mat *openCV_Image, const int widgetIdx)
+void	WindowTabImage::DrawWidgetCustomGraphic(cv::Mat *openCV_Image, TYPE_WIDGET *theWidget)
 {
-	if (cROIinfo.currentROIimageType == kImageType_RGB24)
-	{
+int		xLoc;
+int		yLoc;
+int		boxWidth;
+char	textStr1[32];
+char	textStr2[32];
+char	textStr3[32];
+
+	cOpenCV_Image	=	openCV_Image;		//*	set the image data ptr so the window tabs can use it
+
+	xLoc		=	theWidget->left;
+	yLoc		=	theWidget->top;
+	boxWidth	=	theWidget->width;
+
+//	sprintf(textStr1, "R=%d%%",	((66 * 100) / 255));
+//	sprintf(textStr2, "G=%d%%",	((190 * 100) / 255));
+//	sprintf(textStr3, "B=%d%%",	((15 * 100) / 255));
+//
+//	yLoc	+=	20;
+//	LLD_SetColor(W_RED);
+//	LLD_DrawCString(xLoc, yLoc, textStr1, kFont_Medium);
+//	LLD_SetColor(W_GREEN);
+//	LLD_DrawCString(xLoc + (boxWidth /2 ), yLoc, textStr2, kFont_Medium);
+//	LLD_SetColor(W_BLUE);
+//	LLD_DrawCString(xLoc, yLoc, textStr3, kFont_Medium);
 
 
-	}
+//	if (cROIinfo.currentROIimageType == kImageType_RGB24)
+//	{
+//
+//
+//	}
+
 }
 #else
 //**************************************************************************************

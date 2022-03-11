@@ -66,6 +66,14 @@ static int	gClientTransactionID	=	1;
 
 
 //*****************************************************************************
+//*	this should be over-ridden
+//*****************************************************************************
+bool	Controller::AlpacaGetStartupData(void)
+{
+	CONSOLE_ABORT(__FUNCTION__);
+}
+
+//*****************************************************************************
 //curl -X PUT "https://virtserver.swaggerhub.com/ASCOMInitiative/api/v1/telescope/0/connected"
 //		-H  "accept: application/json"
 //		-H  "Content-Type: application/x-www-form-urlencoded"
@@ -98,18 +106,6 @@ SJP_Parser_t	jsonParser;
 
 	return(validData);
 }
-
-
-
-
-//*****************************************************************************
-//*	this should be over-ridden
-//*****************************************************************************
-bool	Controller::AlpacaGetStartupData(void)
-{
-	CONSOLE_ABORT(__FUNCTION__);
-}
-
 
 //*****************************************************************************
 bool	Controller::AlpacaGetCommonConnectedState(const char *deviceTypeStr)
@@ -164,6 +160,7 @@ void	Controller::UpdateConnectedIndicator(const int tabNum, const int widgetNum)
 	{
 		SetWidgetText(		tabNum,	widgetNum,	"NC");
 		SetWidgetTextColor(	tabNum,	widgetNum,	CV_RGB(255,	0,	0));
+		SetWidgetTextColor(	tabNum,	widgetNum,	CV_RGB(255,	255,	255));
 	}
 }
 

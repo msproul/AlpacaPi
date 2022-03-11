@@ -297,22 +297,22 @@ void	Controller_HandleKeyDown(const int keyPressed)
 static void	DumpCVMatStruct(cv::Mat *theImageMat)
 {
 
-	CONSOLE_DEBUG_W_NUM("theImageMat->cols\t\t=",	theImageMat->cols);
-	CONSOLE_DEBUG_W_NUM("theImageMat->rows\t\t=",	theImageMat->rows);
-	CONSOLE_DEBUG_W_NUM("theImageMat->dims\t\t=",	theImageMat->dims);
-	if (theImageMat->dims >= 1)
-	{
-		CONSOLE_DEBUG_W_LONG("theImageMat->step[0]\t=",	theImageMat->step[0]);
-	}
-	if (theImageMat->dims >= 2)
-	{
-		CONSOLE_DEBUG_W_LONG("theImageMat->step[1]\t=",	theImageMat->step[1]);
-	}
-	if (theImageMat->dims >= 3)
-	{
-		CONSOLE_DEBUG_W_LONG("theImageMat->step[2]\t=",	theImageMat->step[2]);
-	}
-//	CONSOLE_DEBUG_W_NUM("theImageMat->size\t=",		theImageMat->size);
+//	CONSOLE_DEBUG_W_NUM("theImageMat->cols\t\t=",	theImageMat->cols);
+//	CONSOLE_DEBUG_W_NUM("theImageMat->rows\t\t=",	theImageMat->rows);
+//	CONSOLE_DEBUG_W_NUM("theImageMat->dims\t\t=",	theImageMat->dims);
+//	if (theImageMat->dims >= 1)
+//	{
+//		CONSOLE_DEBUG_W_LONG("theImageMat->step[0]\t=",	theImageMat->step[0]);
+//	}
+//	if (theImageMat->dims >= 2)
+//	{
+//		CONSOLE_DEBUG_W_LONG("theImageMat->step[1]\t=",	theImageMat->step[1]);
+//	}
+//	if (theImageMat->dims >= 3)
+//	{
+//		CONSOLE_DEBUG_W_LONG("theImageMat->step[2]\t=",	theImageMat->step[2]);
+//	}
+
 //	CONSOLE_ABORT(__FUNCTION__);
 }
 
@@ -503,7 +503,18 @@ int		iii;
 	{
 //		cv::(&cOpenCV_matImage);
 //		cOpenCV_matImage	=	NULL;
-		delete cOpenCV_matImage;
+		//---try------try------try------try------try------try---
+		try
+		{
+			delete cOpenCV_matImage;
+		}
+		catch(cv::Exception& ex)
+		{
+			//*	we sometimes can open the same window twice, this should not happen but sometimes does.
+			//*	this catch prevents opencv from crashing
+			CONSOLE_DEBUG("cvDestroyWindow() had an exception");
+			CONSOLE_DEBUG_W_NUM("openCV error code\t=",	ex.code);
+		}
 	}
 	//---try------try------try------try------try------try---
 	try

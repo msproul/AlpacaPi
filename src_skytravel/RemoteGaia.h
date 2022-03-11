@@ -2,11 +2,11 @@
 
 
 //*	these are read in from a config file "gaiasql.txt"
-extern	char	gGaiaSQLsever_IPaddr[];
-extern	int		gGaiaSQLsever_Port;
-extern	char	gGaiaSQLsever_UserName[];
-extern	char	gGaiaSQLsever_Password[];
-extern	char	gGaiaSQLsever_Database[];
-extern	int		gGaiaSQLerror_Count;
-extern	char	gGaiaSQLsever_StatusMsg[];
-extern	bool	gGaiaSQLsever_MsgUpdated;
+extern	char	gSQLsever_IPaddr[];
+extern	int		gSQLsever_Port;
+extern	char	gSQLsever_UserName[];
+extern	char	gSQLsever_Password[];
+extern	char	gSQLsever_Database[];
+extern	int		gSQLerror_Count;
+extern	char	gSQLsever_StatusMsg[];
+extern	bool	gSQLsever_MsgUpdated;

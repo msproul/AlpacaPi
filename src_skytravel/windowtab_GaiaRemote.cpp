@@ -431,12 +431,12 @@ int		ra_minutes;
 	}
 	SetWidgetText(	kGaiaRemoteList_Obj_Total,	textString);
 
-	sprintf(textString, "SQL Error count=%d", gGaiaSQLerror_Count);
+	sprintf(textString, "SQL Error count=%d", gSQLerror_Count);
 	SetWidgetText(	kGaiaRemoteList_ErrorCnt,	textString);
-	if (gGaiaSQLsever_MsgUpdated)
+	if (gSQLsever_MsgUpdated)
 	{
-		SetWidgetText(	kGaiaRemoteList_MsgBox,	gGaiaSQLsever_StatusMsg);
-		gGaiaSQLsever_MsgUpdated	=	false;
+		SetWidgetText(	kGaiaRemoteList_MsgBox,	gSQLsever_StatusMsg);
+		gSQLsever_MsgUpdated	=	false;
 	}
 //
 //	SetWidgetScrollBarLimits(	kGaiaRemoteList_ScrollBar, (kGaiaRemoteList_Obj_Last - kGaiaRemoteList_Obj_01), cStarListCount);

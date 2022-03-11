@@ -127,6 +127,7 @@
 //*	Dec 13,	2021	<MLS> Added CheckWatchDogTimeout() & WatchDog_TimeOut()
 //*	Dec 18,	2021	<MLS> Started using pmccabe to check routine complexity
 //*	Dec 29,	2021	<MLS> Fixed argument buffer overflow bug in GetKeyWordArgument()
+//*	Mar  2,	2022	<MLS> Updated Connected command
 //*****************************************************************************
 //*	to install code blocks 20
 //*	Step 1: sudo add-apt-repository ppa:codeblocks-devs/release
@@ -379,13 +380,15 @@ int		iii;
 //	CONSOLE_DEBUG("---------------------------------------");
 //	CONSOLE_DEBUG_W_NUM(__FUNCTION__, argDeviceType);
 
-	memset(&cCommonProp, 0, sizeof(TYPE_CommonProperties));
+
+	//*	set the common property defaults
+	memset((void *)&cCommonProp, 0, sizeof(TYPE_CommonProperties));
 	cCommonProp.InterfaceVersion	=	1;
 	strcpy(cCommonProp.Name,			"unknown");
 	sprintf(cCommonProp.DriverVersion, "%s Build %d", kVersionString, kBuildNumber);
+	cCommonProp.Connected		=	false;
 
 	cMagicCookie				=	kMagicCookieValue;
-	cDeviceConnected			=	true;
 	cDeviceModel[0]				=	0;
 	cDeviceManufacturer[0]		=	0;
 	cDeviceManufAbrev[0]		=	0;
@@ -532,6 +535,7 @@ int					mySocket;
 
 		case kCmd_Common_connected:			//*	GET--Retrieves the connected state of the device
 											//*	PUT--Sets the connected state of the device
+//			CONSOLE_DEBUG_W_STR("command=", "kCmd_Common_connected");
 			if (reqData->get_putIndicator == 'G')
 			{
 				alpacaErrCode	=	Get_Connected(reqData, alpacaErrMsg, gValueString);
@@ -600,7 +604,7 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 							reqData->jsonTextBuffer,
 							kMaxJsonBuffLen,
 							responseString,
-							cDeviceConnected,
+							cCommonProp.Connected,
 							INCLUDE_COMMA);
 
 	return(alpacaErrCode);
@@ -613,6 +617,8 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 bool				foundKeyWord;
 bool				connectFlag;
 char				argumentString[32];
+
+	CONSOLE_DEBUG(__FUNCTION__);
 
 	foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
 											"Connected",
@@ -629,6 +635,7 @@ char				argumentString[32];
 						NULL,
 						kASCOM_Err_Success,
 						"");
+			cCommonProp.Connected		=	true;
 		}
 		else
 		{
@@ -638,7 +645,14 @@ char				argumentString[32];
 						NULL,
 						kASCOM_Err_Success,
 						"");
+			cCommonProp.Connected		=	false;
 		}
+	}
+	else
+	{
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Keyword 'Connected' not found");
+		alpacaErrCode	=	kASCOM_Err_InvalidValue;
+		CONSOLE_DEBUG(alpacaErrMsg);
 	}
 
 	JsonResponse_Add_Bool(	reqData->socket,

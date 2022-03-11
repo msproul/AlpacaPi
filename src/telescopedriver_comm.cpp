@@ -157,21 +157,21 @@ int32_t	TelescopeDriverComm::RunStateMachine(void)
 
 	if (cThreadIsActive)
 	{
-		if (cDeviceConnected == false)
+		if (cCommonProp.Connected == false)
 		{
 			//*	if it was disconnected, print out a message
 			CONSOLE_DEBUG("Connection Established");
 		}
-		cDeviceConnected	=	true;
+		cCommonProp.Connected	=	true;
 	}
 	else
 	{
-		if (cDeviceConnected)
+		if (cCommonProp.Connected)
 		{
 			//*	if it was connected, print out a message
 			CONSOLE_DEBUG_W_STR("Connection failed!!!!!!!!!!!!!!!!!!", cCommonProp.Name);
 		}
-		cDeviceConnected	=	false;
+		cCommonProp.Connected	=	false;
 	}
 
 #ifdef _NOT_FINISHED

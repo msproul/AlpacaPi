@@ -436,8 +436,8 @@ char	lineBuff[64];
 void	WindowTab::SetWidgetImage(const int widgetIdx, cv::Mat *argImagePtr)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
-	CONSOLE_DEBUG_W_NUM("widgetIdx  \t=",	widgetIdx);
-	CONSOLE_DEBUG_W_HEX("argImagePtr\t=",	argImagePtr);
+//	CONSOLE_DEBUG_W_NUM("widgetIdx  \t=",	widgetIdx);
+//	CONSOLE_DEBUG_W_HEX("argImagePtr\t=",	argImagePtr);
 	if ((widgetIdx >= 0) && (widgetIdx < kMaxWidgets))
 	{
 		cWidgetList[widgetIdx].openCVimagePtr	=	argImagePtr;
@@ -927,10 +927,23 @@ void	WindowTab::SetupWindowControls(void)
 
 #ifdef _USE_OPENCV_CPP_
 //**************************************************************************************
-void	WindowTab::DrawWidgetCustomGraphic(cv::Mat *openCV_Image, const int widgetIdx)
+void	WindowTab::DrawWidgetCustomGraphic(cv::Mat *openCV_Image, TYPE_WIDGET *theWidget)
 {
 	//*	this routine should be overloaded
 	CONSOLE_ABORT(__FUNCTION__);
+}
+
+//**************************************************************************************
+void	WindowTab::DrawWidgetCustomGraphic(cv::Mat *openCV_Image, const int widgetIdx)
+{
+	if ((widgetIdx >= 0) && (widgetIdx < kMaxWidgets))
+	{
+		DrawWidgetCustomGraphic(openCV_Image, &cWidgetList[widgetIdx]);
+	}
+	else
+	{
+		CONSOLE_ABORT(__FUNCTION__);
+	}
 }
 #else
 //**************************************************************************************

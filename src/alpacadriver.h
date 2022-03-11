@@ -265,7 +265,7 @@ class AlpacaDriver
 				void				RecordCmdStats(int cmdNum, char getput, TYPE_ASCOM_STATUS alpacaErrCode);
 		virtual bool				GetCmdNameFromMyCmdTable(const int cmdNumber, char *comandName, char *getPut);
 
-				bool				cDeviceConnected;		//*	normally always true
+//				bool				cDeviceConnected;		//*	normally always true
 				TYPE_CMD_STATS		cCommonCmdStats[kCommonCmdCnt];
 				TYPE_CMD_STATS		cDeviceCmdStats[kDeviceCmdCnt];
 

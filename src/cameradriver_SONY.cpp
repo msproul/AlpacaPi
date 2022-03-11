@@ -571,8 +571,8 @@ char		sonyErrorString[128];
 			GetSonyErrorString(sonyErrCode, sonyErrorString);
 			CONSOLE_DEBUG_W_STR("SCRSDK::Disconnect() returned SDK err=\t=", sonyErrorString);
 		}
-		cSonyDeviceHandle	=	(CrDeviceHandle)NULL;
-		cDeviceConnected	=	false;
+		cSonyDeviceHandle		=	(CrDeviceHandle)NULL;
+		cCommonProp.Connected	=	false;
 	}
 	return(true);
 }

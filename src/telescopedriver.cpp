@@ -46,6 +46,8 @@
 //*	Apr 20,	2021	<MLS> Added Telescope_SlewToAltAz(), Telescope_UnPark()
 //*	Apr 21,	2021	<MLS> Finished stubbing out the routines need in the subclass
 //*	Feb 28,	2022	<MLS> Updated Put_SyncToAltAz() to return kASCOM_Err_InvalidOperation if tracking is false
+//*	Feb 28,	2022	<MLS> Added cDriverSupportsRefraction
+//*	Mar  2,	2022	<MLS> Setting Connected now working for telescope driver
 //*****************************************************************************
 
 
@@ -265,7 +267,6 @@ const TYPE_CmdEntry	gTelescopeCmdTable[]	=
 };
 
 
-
 //**************************************************************************************
 TelescopeDriver::TelescopeDriver(void)
 	:AlpacaDriver(kDeviceType_Telescope)
@@ -276,7 +277,7 @@ TelescopeDriver::TelescopeDriver(void)
 	strcpy(cCommonProp.Name, "Telescope");
 
 	//*	set the defaults, everything to false or zero
-	memset(&cTelescopeProp, 0, sizeof(TYPE_TelescopeProperties));
+	memset((void *)&cTelescopeProp, 0, sizeof(TYPE_TelescopeProperties));
 
 	cCommonProp.InterfaceVersion	=	3;
 	cTelescopeProp.AlginmentMode	=	kAlignmentMode_algGermanPolar;
@@ -284,9 +285,9 @@ TelescopeDriver::TelescopeDriver(void)
 	cTelescopeProp.EquatorialSystem	=	kECT_equOther;
 	cTelescopeProp.SideOfPier		=	kPierSide_pierUnknown;
 	cTelescopeProp.TrackingRate		=	kDriveRate_driveSidereal;
+	cTelescopeProp.DoesRefraction	=	false;
+	cDriverSupportsRefraction		=	false;		//*	can be over-ridden by sub class
 
-
-	cDeviceConnected				=	false;
 //+	cTrackingRates;
 //+	cUTCDate;
 
@@ -361,454 +362,454 @@ int					mySocket;
 	cmdEnumValue	=	FindCmdFromTable(reqData->deviceCommand, gTelescopeCmdTable, &cmdType);
 	switch(cmdEnumValue)
 	{
-	//----------------------------------------------------------------------------------------
-	//*	Common commands that we want to over ride
-	//----------------------------------------------------------------------------------------
-	case kCmd_Common_supportedactions:	//*	Returns the list of action names supported by this driver.
-		alpacaErrCode	=	Get_SupportedActions(reqData, gTelescopeCmdTable);
-		break;
-
-	//----------------------------------------------------------------------------------------
-	//*	Device specific commands
-	//----------------------------------------------------------------------------------------
-	case kCmd_Telescope_alignmentmode:	//*	Returns the current mount alignment mode
-		alpacaErrCode	=	Get_Alignmentmode(reqData, alpacaErrMsg, gValueString);
-		break;
-
-	case kCmd_Telescope_altitude:					//*	Returns the mount's Altitude above the horizon.
-		alpacaErrCode	=	Get_Altitude(reqData, alpacaErrMsg, gValueString);
-		break;
-
-	case kCmd_Telescope_aperturearea:				//*	Returns the telescope's aperture.
-		alpacaErrCode	=	Get_ApertureArea(reqData, alpacaErrMsg, gValueString);
-		break;
-
-	case kCmd_Telescope_aperturediameter:			//*	Returns the telescope's effective aperture.
-		alpacaErrCode	=	Get_ApertureDiameter(reqData, alpacaErrMsg, gValueString);
-		break;
-
-	case kCmd_Telescope_athome:						//*	Indicates whether the mount is at the home position.
-		alpacaErrCode	=	Get_AtHome(reqData, alpacaErrMsg, gValueString);
-		break;
-
-	case kCmd_Telescope_atpark:						//*	Indicates whether the telescope is at the park position.
-		alpacaErrCode	=	Get_AtPark(reqData, alpacaErrMsg, gValueString);
-		break;
-
-	case kCmd_Telescope_azimuth:					//*	Returns the telescope's aperture.
-		alpacaErrCode	=	Get_Azimuth(reqData, alpacaErrMsg, gValueString);
-		break;
-
-	case kCmd_Telescope_canfindhome:				//*	Indicates whether the mount can find the home position.
-		alpacaErrCode	=	Get_CanFindHome(reqData, alpacaErrMsg, gValueString);
-		break;
-
-	case kCmd_Telescope_canpark:					//*	Indicates whether the telescope can be parked.
-		alpacaErrCode	=	Get_CanPark(reqData, alpacaErrMsg, gValueString);
-		break;
-
-	case kCmd_Telescope_canpulseguide:				//*	Indicates whether the telescope can be pulse guided.
-		alpacaErrCode	=	Get_CanPulseGuide(reqData, alpacaErrMsg, gValueString);
-		break;
-
-	case kCmd_Telescope_cansetdeclinationrate:		//*	Indicates whether the DeclinationRate property can be changed.
-		alpacaErrCode	=	Get_CanSetDeclinationRate(reqData, alpacaErrMsg, gValueString);
-		break;
-
-	case kCmd_Telescope_cansetguiderates:			//*	Indicates whether the DeclinationRate property can be changed.
-		alpacaErrCode	=	Get_CanSetGuideRates(reqData, alpacaErrMsg, gValueString);
-		break;
-
-	case kCmd_Telescope_cansetpark:					//*	Indicates whether the telescope park position can be set.
-		alpacaErrCode	=	Get_CanSetPark(reqData, alpacaErrMsg, gValueString);
-		break;
-
-	case kCmd_Telescope_cansetpierside:				//*	Indicates whether the telescope SideOfPier can be set.
-		alpacaErrCode	=	Get_CanSetPierSide(reqData, alpacaErrMsg, gValueString);
-		break;
-
-	case kCmd_Telescope_cansetrightascensionrate:	//*	Indicates whether the RightAscensionRate property can be changed.
-		alpacaErrCode	=	Get_CanSetRightAscensionRate(reqData, alpacaErrMsg, gValueString);
-		break;
-
-	case kCmd_Telescope_cansettracking:				//*	Indicates whether the Tracking property can be changed.
-		alpacaErrCode	=	Get_CanSetTracking(reqData, alpacaErrMsg, gValueString);
-		break;
-
-	case kCmd_Telescope_canslew:					//*	Indicates whether the telescope can slew synchronously.
-		alpacaErrCode	=	Get_CanSlew(reqData, alpacaErrMsg, gValueString);
-		break;
-
-	case kCmd_Telescope_canslewaltaz:				//*	Indicates whether the telescope can slew synchronously to AltAz coordinates.
-		alpacaErrCode	=	Get_CanSlewAltAz(reqData, alpacaErrMsg, gValueString);
-		break;
-
-	case kCmd_Telescope_canslewaltazasync:			//*	Indicates whether the telescope can slew asynchronously to AltAz coordinates.
-		alpacaErrCode	=	Get_CanSlewAltAzAsync(reqData, alpacaErrMsg, gValueString);
-		break;
-
-	case kCmd_Telescope_canslewasync:				//*	Indicates whether the telescope can slew asynchronously.
-		alpacaErrCode	=	Get_CanSlewAsync(reqData, alpacaErrMsg, gValueString);
-		break;
-
-	case kCmd_Telescope_cansync:					//*	Indicates whether the telescope can sync to equatorial coordinates.
-		alpacaErrCode	=	Get_CanSync(reqData, alpacaErrMsg, gValueString);
-		break;
-
-	case kCmd_Telescope_cansyncaltaz:				//*	Indicates whether the telescope can sync to local horizontal coordinates.
-		alpacaErrCode	=	Get_CanSyncAltAz(reqData, alpacaErrMsg, gValueString);
-		break;
-
-	case kCmd_Telescope_canunpark:
-		alpacaErrCode	=	Get_CanUnpark(reqData, alpacaErrMsg, gValueString);
-		break;
-
-	case kCmd_Telescope_declination:				//*	Returns the telescope's declination.
-		alpacaErrCode	=	Get_Declination(reqData, alpacaErrMsg, gValueString);
-		break;
-
-	case kCmd_Telescope_declinationrate:			//*	Returns the telescope's declination tracking rate.
-													//*	Sets the telescope's declination tracking rate.
-		if (reqData->get_putIndicator == 'G')
-		{
-			alpacaErrCode	=	Get_DeclinationRate(reqData, alpacaErrMsg, gValueString);
-		}
-		else if (reqData->get_putIndicator == 'P')
-		{
-			alpacaErrCode	=	Put_DeclinationRate(reqData, alpacaErrMsg);
-		}
-		break;
-
-	case kCmd_Telescope_doesrefraction:				//*	Indicates whether atmospheric refraction is applied to coordinates.
-													//*	Determines whether atmospheric refraction is applied to coordinates.
-		if (reqData->get_putIndicator == 'G')
-		{
-			alpacaErrCode	=	Get_DoesRefraction(reqData, alpacaErrMsg, gValueString);
-		}
-		else if (reqData->get_putIndicator == 'P')
-		{
-			alpacaErrCode	=	Put_DoesRefraction(reqData, alpacaErrMsg);
-		}
-		break;
-
-	case kCmd_Telescope_equatorialsystem:			//*	Returns the current equatorial coordinate system used by this telescope.
-		alpacaErrCode	=	Get_EquatorialSystem(reqData, alpacaErrMsg, gValueString);
-		break;
-
-	case kCmd_Telescope_focallength:				//*	Returns the telescope's focal length in meters.
-		alpacaErrCode	=	Get_FocalLength(reqData, alpacaErrMsg, gValueString);
-		break;
-
-	case kCmd_Telescope_guideratedeclination:		//*	Returns the current Declination rate offset for telescope guiding
-													//*	Sets the current Declination rate offset for telescope guiding.
-		if (reqData->get_putIndicator == 'G')
-		{
-			alpacaErrCode	=	Get_GuideRateDeclination(reqData, alpacaErrMsg, gValueString);
-
-		}
-		else if (reqData->get_putIndicator == 'P')
-		{
-			alpacaErrCode	=	Put_GuideRateDeclination(reqData, alpacaErrMsg);
-		}
-		break;
-
-	case kCmd_Telescope_guideraterightascension:	//*	Returns the current RightAscension rate offset for telescope guiding
-													//*	Sets the current RightAscension rate offset for telescope guiding.
-		if (reqData->get_putIndicator == 'G')
-		{
-			alpacaErrCode	=	Get_GuideRateRightAscension(reqData, alpacaErrMsg, gValueString);
-		}
-		else if (reqData->get_putIndicator == 'P')
-		{
-			alpacaErrCode	=	Put_GuideRateRightAscension(reqData, alpacaErrMsg);
-		}
-		break;
-
-	case kCmd_Telescope_ispulseguiding:				//*	Indicates whether the telescope is currently executing a PulseGuide command
-		alpacaErrCode	=	Get_IsPulseGuiding(reqData, alpacaErrMsg, gValueString);
-		break;
-
-	case kCmd_Telescope_rightascension:				//*	Returns the telescope's right ascension coordinate.
-		alpacaErrCode	=	Get_RightAscension(reqData, alpacaErrMsg, gValueString);
-		break;
-
-	case kCmd_Telescope_rightascensionrate:			//*	Returns the telescope's right ascension tracking rate.
-													//*	Sets the telescope's right ascension tracking rate.
-		if (reqData->get_putIndicator == 'G')
-		{
-			alpacaErrCode	=	Get_RightAscensionRate(reqData, alpacaErrMsg, gValueString);
-		}
-		else if (reqData->get_putIndicator == 'P')
-		{
-			alpacaErrCode	=	Put_RightAscensionRate(reqData, alpacaErrMsg);
-		}
-		break;
-
-	case kCmd_Telescope_sideofpier:					//*	Returns the mount's pointing state.
-													//*	Sets the mount's pointing state.
-		if (reqData->get_putIndicator == 'G')
-		{
-			alpacaErrCode	=	Get_SideOfPier(reqData, alpacaErrMsg, gValueString);
-		}
-		break;
-
-	case kCmd_Telescope_siderealtime:				//*	Returns the local apparent sidereal time.
-		alpacaErrCode	=	Get_SiderealTime(reqData, alpacaErrMsg, gValueString);
-		break;
-
-
-	case kCmd_Telescope_siteelevation:				//*	Returns the observing site's elevation above mean sea level.
-													//*	Sets the observing site's elevation above mean sea level.
-		if (reqData->get_putIndicator == 'G')
-		{
-			alpacaErrCode	=	Get_SiteElevation(reqData, alpacaErrMsg, gValueString);
-		}
-		else if (reqData->get_putIndicator == 'P')
-		{
-			alpacaErrCode	=	Put_SiteElevation(reqData, alpacaErrMsg);
-		}
-		break;
-
-	case kCmd_Telescope_sitelatitude:				//*	Returns the observing site's latitude.
-													//*	Sets the observing site's latitude.
-		if (reqData->get_putIndicator == 'G')
-		{
-			alpacaErrCode	=	Get_SiteLatitude(reqData, alpacaErrMsg, gValueString);
-		}
-		else if (reqData->get_putIndicator == 'P')
-		{
-			alpacaErrCode	=	Put_SiteLatitude(reqData, alpacaErrMsg);
-		}
-		break;
-
-	case kCmd_Telescope_sitelongitude:				//*	Returns the observing site's longitude.
-													//*	Sets the observing site's longitude.
-		if (reqData->get_putIndicator == 'G')
-		{
-			alpacaErrCode	=	Get_SiteLongitude(reqData, alpacaErrMsg, gValueString);
-		}
-		else if (reqData->get_putIndicator == 'P')
-		{
-			alpacaErrCode	=	Put_SiteLongitude(reqData, alpacaErrMsg);
-		}
-		break;
-
-	case kCmd_Telescope_slewing:					//*	Indicates whether the telescope is currently slewing.
-		alpacaErrCode	=	Get_Slewing(reqData, alpacaErrMsg, gValueString);
-		break;
-
-	case kCmd_Telescope_slewsettletime:				//*	Returns the post-slew settling time.
-													//*	Sets the post-slew settling time.
-		if (reqData->get_putIndicator == 'G')
-		{
-			alpacaErrCode	=	Get_SlewSettleTime(reqData, alpacaErrMsg, gValueString);
-		}
-		else if (reqData->get_putIndicator == 'P')
-		{
-			alpacaErrCode	=	Put_SlewSettleTime(reqData, alpacaErrMsg);
-		}
-		break;
-
-	case kCmd_Telescope_targetdeclination:			//*	Returns the current target declination.
-													//*	Sets the target declination of a slew or sync.
-		if (reqData->get_putIndicator == 'G')
-		{
-			alpacaErrCode	=	Get_TargetDeclination(reqData, alpacaErrMsg, gValueString);
-		}
-		else if (reqData->get_putIndicator == 'P')
-		{
-			alpacaErrCode	=	Put_TargetDeclination(reqData, alpacaErrMsg);
-		}
-		break;
-
-	case kCmd_Telescope_targetrightascension:		//*	Returns the current target right ascension.
-													//*	Sets the target right ascension of a slew or sync.
-		if (reqData->get_putIndicator == 'G')
-		{
-			alpacaErrCode	=	Get_TargetRightAscension(reqData, alpacaErrMsg, gValueString);
-		}
-		else if (reqData->get_putIndicator == 'P')
-		{
-			alpacaErrCode	=	Put_TargetRightAscension(reqData, alpacaErrMsg);
-		}
-		break;
-
-	case kCmd_Telescope_tracking:					//*	Indicates whether the telescope is tracking.
-													//*	Enables or disables telescope tracking.
-		if (reqData->get_putIndicator == 'G')
-		{
-			alpacaErrCode	=	Get_Tracking(reqData, alpacaErrMsg, gValueString);
-		}
-		else if (reqData->get_putIndicator == 'P')
-		{
-			alpacaErrCode	=	Put_Tracking(reqData, alpacaErrMsg);
-		}
-		break;
-
-	case kCmd_Telescope_trackingrate:				//*	Returns the current tracking rate.
-													//*	Sets the mount's tracking rate.
-		if (reqData->get_putIndicator == 'G')
-		{
-			alpacaErrCode	=	Get_TrackingRate(reqData, alpacaErrMsg, gValueString);
-		}
-		else if (reqData->get_putIndicator == 'P')
-		{
-			alpacaErrCode	=	Put_TrackingRate(reqData, alpacaErrMsg);
-		}
-		break;
-
-	case kCmd_Telescope_trackingrates:				//*	Returns a collection of supported DriveRates values.
-		alpacaErrCode	=	Get_TrackingRates(reqData, alpacaErrMsg, gValueString);
-		break;
-
-	case kCmd_Telescope_utcdate:					//*	Returns the UTC date/time of the telescope's internal clock.
-													//*	Sets the UTC date/time of the telescope's internal clock.
-		if (reqData->get_putIndicator == 'G')
-		{
-			alpacaErrCode	=	Get_UTCdate(reqData, alpacaErrMsg, gValueString);
-		}
-		else if (reqData->get_putIndicator == 'P')
-		{
-			alpacaErrCode	=	Put_UTCdate(reqData, alpacaErrMsg);
-		}
-		break;
-
-	case kCmd_Telescope_abortslew:					//*	Immediately stops a slew in progress.
-		alpacaErrCode	=	Put_AbortSlew(reqData, alpacaErrMsg);
-		CONSOLE_DEBUG_W_NUM("alpacaErrCode\t=", alpacaErrCode);
-		break;
-
-	case kCmd_Telescope_axisrates:					//*	Returns the rates at which the telescope may be moved about the specified axis.
-		alpacaErrCode	=	Get_AxisRates(reqData, alpacaErrMsg, gValueString);
-		break;
-
-	case kCmd_Telescope_canmoveaxis:				//*	Indicates whether the telescope can move the requested axis.
-		alpacaErrCode	=	Get_CanMoveAxis(reqData, alpacaErrMsg, gValueString);
-		break;
-
-	case kCmd_Telescope_destinationsideofpier:		//*	Predicts the pointing state after a German equatorial mount slews to given coordinates.
-		alpacaErrCode	=	Get_DestinationSideOfPier(reqData, alpacaErrMsg, gValueString);
-		break;
-
-	case kCmd_Telescope_findhome:					//*	Moves the mount to the "home" position.
-		if (reqData->get_putIndicator == 'P')
-		{
-			alpacaErrCode	=	Put_FindHome(reqData, alpacaErrMsg);
-		}
-		break;
-
-	case kCmd_Telescope_moveaxis:					//*	Moves a telescope axis at the given rate.
-		if (reqData->get_putIndicator == 'P')
-		{
-			alpacaErrCode	=	Put_MoveAxis(reqData, alpacaErrMsg);
-		}
-		break;
-
-	case kCmd_Telescope_park:						//*	Park the mount
-		if (reqData->get_putIndicator == 'P')
-		{
-			alpacaErrCode	=	Put_Park(reqData, alpacaErrMsg);
-		}
-		break;
-
-	case kCmd_Telescope_pulseguide:					//*	Moves the scope in the given direction for the given time.
-		if (reqData->get_putIndicator == 'P')
-		{
-			alpacaErrCode	=	Put_PulseGuide(reqData, alpacaErrMsg);
-		}
-		break;
-
-	case kCmd_Telescope_setpark:					//*	Sets the telescope's park position
-		if (reqData->get_putIndicator == 'P')
-		{
-			alpacaErrCode	=	Put_SetPark(reqData, alpacaErrMsg);
-		}
-		break;
-
-	case kCmd_Telescope_slewtoaltaz:				//*	Synchronously slew to the given local horizontal coordinates.
-		if (reqData->get_putIndicator == 'P')
-		{
-			alpacaErrCode	=	Put_SlewToAltAz(reqData, alpacaErrMsg);
-		}
-		break;
-
-	case kCmd_Telescope_slewtoaltazasync:			//*	Asynchronously slew to the given local horizontal coordinates.
-		if (reqData->get_putIndicator == 'P')
-		{
-			alpacaErrCode	=	Put_SlewToAltAzAsync(reqData, alpacaErrMsg);
-		}
-		break;
-
-	case kCmd_Telescope_slewtocoordinates:			//*	Synchronously slew to the given equatorial coordinates.
-		if (reqData->get_putIndicator == 'P')
-		{
-			alpacaErrCode	=	Put_SlewToCoordinates(reqData, alpacaErrMsg);
-		}
-		break;
-
-	case kCmd_Telescope_slewtocoordinatesasync:		//*	Asynchronously slew to the given equatorial coordinates.
-		if (reqData->get_putIndicator == 'P')
-		{
-			alpacaErrCode	=	Put_SlewToCoordinatesAsync(reqData, alpacaErrMsg);
-		}
-		break;
-
-	case kCmd_Telescope_slewtotarget:				//*	Synchronously slew to the TargetRightAscension and TargetDeclination coordinates.
-		if (reqData->get_putIndicator == 'P')
-		{
-			alpacaErrCode	=	Put_SlewToTarget(reqData, alpacaErrMsg);
-		}
-		break;
-
-	case kCmd_Telescope_slewtotargetasync:			//*	Asynchronously slew to the TargetRightAscension and TargetDeclination coordinates.
-		if (reqData->get_putIndicator == 'P')
-		{
-			alpacaErrCode	=	Put_SlewToTargetAsync(reqData, alpacaErrMsg);
-		}
-		break;
-
-	case kCmd_Telescope_synctoaltaz:				//*	Syncs to the given local horizontal coordinates.
-		if (reqData->get_putIndicator == 'P')
-		{
-			alpacaErrCode	=	Put_SyncToAltAz(reqData, alpacaErrMsg);
-		}
-		break;
-
-	case kCmd_Telescope_synctocoordinates:			//*	Syncs to the given equatorial coordinates.
-		if (reqData->get_putIndicator == 'P')
-		{
-			alpacaErrCode	=	Put_SyncToCoordinates(reqData, alpacaErrMsg);
-		}
-		break;
-
-	case kCmd_Telescope_synctotarget:				//*	Syncs to the TargetRightAscension and TargetDeclination coordinates.
-		if (reqData->get_putIndicator == 'P')
-		{
-			alpacaErrCode	=	Put_SyncToTarget(reqData, alpacaErrMsg);
-		}
-		break;
-
-	case kCmd_Telescope_unpark:						//*	Unparks the mount.
-		alpacaErrCode	=	Put_UnPark(reqData, alpacaErrMsg);
-		break;
-
-
-	case kCmd_Telescope_readall:
-		alpacaErrCode	=	Get_Readall(reqData, alpacaErrMsg);
-		break;
-
-	//----------------------------------------------------------------------------------------
-	//*	let anything undefined go to the common command processor
-	//----------------------------------------------------------------------------------------
-	default:
-		if (cmdEnumValue < 999)
-		{
-			CONSOLE_DEBUG(__FUNCTION__);
-			CONSOLE_DEBUG(reqData->cmdBuffer);
-			CONSOLE_DEBUG(reqData->contentData);
-		}
-		alpacaErrCode	=	ProcessCommand_Common(reqData, cmdEnumValue, alpacaErrMsg);
-		break;
+		//----------------------------------------------------------------------------------------
+		//*	Common commands that we want to over ride
+		//----------------------------------------------------------------------------------------
+		case kCmd_Common_supportedactions:	//*	Returns the list of action names supported by this driver.
+			alpacaErrCode	=	Get_SupportedActions(reqData, gTelescopeCmdTable);
+			break;
+
+		//----------------------------------------------------------------------------------------
+		//*	Device specific commands
+		//----------------------------------------------------------------------------------------
+		case kCmd_Telescope_alignmentmode:	//*	Returns the current mount alignment mode
+			alpacaErrCode	=	Get_Alignmentmode(reqData, alpacaErrMsg, gValueString);
+			break;
+
+		case kCmd_Telescope_altitude:					//*	Returns the mount's Altitude above the horizon.
+			alpacaErrCode	=	Get_Altitude(reqData, alpacaErrMsg, gValueString);
+			break;
+
+		case kCmd_Telescope_aperturearea:				//*	Returns the telescope's aperture.
+			alpacaErrCode	=	Get_ApertureArea(reqData, alpacaErrMsg, gValueString);
+			break;
+
+		case kCmd_Telescope_aperturediameter:			//*	Returns the telescope's effective aperture.
+			alpacaErrCode	=	Get_ApertureDiameter(reqData, alpacaErrMsg, gValueString);
+			break;
+
+		case kCmd_Telescope_athome:						//*	Indicates whether the mount is at the home position.
+			alpacaErrCode	=	Get_AtHome(reqData, alpacaErrMsg, gValueString);
+			break;
+
+		case kCmd_Telescope_atpark:						//*	Indicates whether the telescope is at the park position.
+			alpacaErrCode	=	Get_AtPark(reqData, alpacaErrMsg, gValueString);
+			break;
+
+		case kCmd_Telescope_azimuth:					//*	Returns the telescope's aperture.
+			alpacaErrCode	=	Get_Azimuth(reqData, alpacaErrMsg, gValueString);
+			break;
+
+		case kCmd_Telescope_canfindhome:				//*	Indicates whether the mount can find the home position.
+			alpacaErrCode	=	Get_CanFindHome(reqData, alpacaErrMsg, gValueString);
+			break;
+
+		case kCmd_Telescope_canpark:					//*	Indicates whether the telescope can be parked.
+			alpacaErrCode	=	Get_CanPark(reqData, alpacaErrMsg, gValueString);
+			break;
+
+		case kCmd_Telescope_canpulseguide:				//*	Indicates whether the telescope can be pulse guided.
+			alpacaErrCode	=	Get_CanPulseGuide(reqData, alpacaErrMsg, gValueString);
+			break;
+
+		case kCmd_Telescope_cansetdeclinationrate:		//*	Indicates whether the DeclinationRate property can be changed.
+			alpacaErrCode	=	Get_CanSetDeclinationRate(reqData, alpacaErrMsg, gValueString);
+			break;
+
+		case kCmd_Telescope_cansetguiderates:			//*	Indicates whether the DeclinationRate property can be changed.
+			alpacaErrCode	=	Get_CanSetGuideRates(reqData, alpacaErrMsg, gValueString);
+			break;
+
+		case kCmd_Telescope_cansetpark:					//*	Indicates whether the telescope park position can be set.
+			alpacaErrCode	=	Get_CanSetPark(reqData, alpacaErrMsg, gValueString);
+			break;
+
+		case kCmd_Telescope_cansetpierside:				//*	Indicates whether the telescope SideOfPier can be set.
+			alpacaErrCode	=	Get_CanSetPierSide(reqData, alpacaErrMsg, gValueString);
+			break;
+
+		case kCmd_Telescope_cansetrightascensionrate:	//*	Indicates whether the RightAscensionRate property can be changed.
+			alpacaErrCode	=	Get_CanSetRightAscensionRate(reqData, alpacaErrMsg, gValueString);
+			break;
+
+		case kCmd_Telescope_cansettracking:				//*	Indicates whether the Tracking property can be changed.
+			alpacaErrCode	=	Get_CanSetTracking(reqData, alpacaErrMsg, gValueString);
+			break;
+
+		case kCmd_Telescope_canslew:					//*	Indicates whether the telescope can slew synchronously.
+			alpacaErrCode	=	Get_CanSlew(reqData, alpacaErrMsg, gValueString);
+			break;
+
+		case kCmd_Telescope_canslewaltaz:				//*	Indicates whether the telescope can slew synchronously to AltAz coordinates.
+			alpacaErrCode	=	Get_CanSlewAltAz(reqData, alpacaErrMsg, gValueString);
+			break;
+
+		case kCmd_Telescope_canslewaltazasync:			//*	Indicates whether the telescope can slew asynchronously to AltAz coordinates.
+			alpacaErrCode	=	Get_CanSlewAltAzAsync(reqData, alpacaErrMsg, gValueString);
+			break;
+
+		case kCmd_Telescope_canslewasync:				//*	Indicates whether the telescope can slew asynchronously.
+			alpacaErrCode	=	Get_CanSlewAsync(reqData, alpacaErrMsg, gValueString);
+			break;
+
+		case kCmd_Telescope_cansync:					//*	Indicates whether the telescope can sync to equatorial coordinates.
+			alpacaErrCode	=	Get_CanSync(reqData, alpacaErrMsg, gValueString);
+			break;
+
+		case kCmd_Telescope_cansyncaltaz:				//*	Indicates whether the telescope can sync to local horizontal coordinates.
+			alpacaErrCode	=	Get_CanSyncAltAz(reqData, alpacaErrMsg, gValueString);
+			break;
+
+		case kCmd_Telescope_canunpark:
+			alpacaErrCode	=	Get_CanUnpark(reqData, alpacaErrMsg, gValueString);
+			break;
+
+		case kCmd_Telescope_declination:				//*	Returns the telescope's declination.
+			alpacaErrCode	=	Get_Declination(reqData, alpacaErrMsg, gValueString);
+			break;
+
+		case kCmd_Telescope_declinationrate:			//*	Returns the telescope's declination tracking rate.
+														//*	Sets the telescope's declination tracking rate.
+			if (reqData->get_putIndicator == 'G')
+			{
+				alpacaErrCode	=	Get_DeclinationRate(reqData, alpacaErrMsg, gValueString);
+			}
+			else if (reqData->get_putIndicator == 'P')
+			{
+				alpacaErrCode	=	Put_DeclinationRate(reqData, alpacaErrMsg);
+			}
+			break;
+
+		case kCmd_Telescope_doesrefraction:				//*	Indicates whether atmospheric refraction is applied to coordinates.
+														//*	Determines whether atmospheric refraction is applied to coordinates.
+			if (reqData->get_putIndicator == 'G')
+			{
+				alpacaErrCode	=	Get_DoesRefraction(reqData, alpacaErrMsg, gValueString);
+			}
+			else if (reqData->get_putIndicator == 'P')
+			{
+				alpacaErrCode	=	Put_DoesRefraction(reqData, alpacaErrMsg);
+			}
+			break;
+
+		case kCmd_Telescope_equatorialsystem:			//*	Returns the current equatorial coordinate system used by this telescope.
+			alpacaErrCode	=	Get_EquatorialSystem(reqData, alpacaErrMsg, gValueString);
+			break;
+
+		case kCmd_Telescope_focallength:				//*	Returns the telescope's focal length in meters.
+			alpacaErrCode	=	Get_FocalLength(reqData, alpacaErrMsg, gValueString);
+			break;
+
+		case kCmd_Telescope_guideratedeclination:		//*	Returns the current Declination rate offset for telescope guiding
+														//*	Sets the current Declination rate offset for telescope guiding.
+			if (reqData->get_putIndicator == 'G')
+			{
+				alpacaErrCode	=	Get_GuideRateDeclination(reqData, alpacaErrMsg, gValueString);
+
+			}
+			else if (reqData->get_putIndicator == 'P')
+			{
+				alpacaErrCode	=	Put_GuideRateDeclination(reqData, alpacaErrMsg);
+			}
+			break;
+
+		case kCmd_Telescope_guideraterightascension:	//*	Returns the current RightAscension rate offset for telescope guiding
+														//*	Sets the current RightAscension rate offset for telescope guiding.
+			if (reqData->get_putIndicator == 'G')
+			{
+				alpacaErrCode	=	Get_GuideRateRightAscension(reqData, alpacaErrMsg, gValueString);
+			}
+			else if (reqData->get_putIndicator == 'P')
+			{
+				alpacaErrCode	=	Put_GuideRateRightAscension(reqData, alpacaErrMsg);
+			}
+			break;
+
+		case kCmd_Telescope_ispulseguiding:				//*	Indicates whether the telescope is currently executing a PulseGuide command
+			alpacaErrCode	=	Get_IsPulseGuiding(reqData, alpacaErrMsg, gValueString);
+			break;
+
+		case kCmd_Telescope_rightascension:				//*	Returns the telescope's right ascension coordinate.
+			alpacaErrCode	=	Get_RightAscension(reqData, alpacaErrMsg, gValueString);
+			break;
+
+		case kCmd_Telescope_rightascensionrate:			//*	Returns the telescope's right ascension tracking rate.
+														//*	Sets the telescope's right ascension tracking rate.
+			if (reqData->get_putIndicator == 'G')
+			{
+				alpacaErrCode	=	Get_RightAscensionRate(reqData, alpacaErrMsg, gValueString);
+			}
+			else if (reqData->get_putIndicator == 'P')
+			{
+				alpacaErrCode	=	Put_RightAscensionRate(reqData, alpacaErrMsg);
+			}
+			break;
+
+		case kCmd_Telescope_sideofpier:					//*	Returns the mount's pointing state.
+														//*	Sets the mount's pointing state.
+			if (reqData->get_putIndicator == 'G')
+			{
+				alpacaErrCode	=	Get_SideOfPier(reqData, alpacaErrMsg, gValueString);
+			}
+			break;
+
+		case kCmd_Telescope_siderealtime:				//*	Returns the local apparent sidereal time.
+			alpacaErrCode	=	Get_SiderealTime(reqData, alpacaErrMsg, gValueString);
+			break;
+
+
+		case kCmd_Telescope_siteelevation:				//*	Returns the observing site's elevation above mean sea level.
+														//*	Sets the observing site's elevation above mean sea level.
+			if (reqData->get_putIndicator == 'G')
+			{
+				alpacaErrCode	=	Get_SiteElevation(reqData, alpacaErrMsg, gValueString);
+			}
+			else if (reqData->get_putIndicator == 'P')
+			{
+				alpacaErrCode	=	Put_SiteElevation(reqData, alpacaErrMsg);
+			}
+			break;
+
+		case kCmd_Telescope_sitelatitude:				//*	Returns the observing site's latitude.
+														//*	Sets the observing site's latitude.
+			if (reqData->get_putIndicator == 'G')
+			{
+				alpacaErrCode	=	Get_SiteLatitude(reqData, alpacaErrMsg, gValueString);
+			}
+			else if (reqData->get_putIndicator == 'P')
+			{
+				alpacaErrCode	=	Put_SiteLatitude(reqData, alpacaErrMsg);
+			}
+			break;
+
+		case kCmd_Telescope_sitelongitude:				//*	Returns the observing site's longitude.
+														//*	Sets the observing site's longitude.
+			if (reqData->get_putIndicator == 'G')
+			{
+				alpacaErrCode	=	Get_SiteLongitude(reqData, alpacaErrMsg, gValueString);
+			}
+			else if (reqData->get_putIndicator == 'P')
+			{
+				alpacaErrCode	=	Put_SiteLongitude(reqData, alpacaErrMsg);
+			}
+			break;
+
+		case kCmd_Telescope_slewing:					//*	Indicates whether the telescope is currently slewing.
+			alpacaErrCode	=	Get_Slewing(reqData, alpacaErrMsg, gValueString);
+			break;
+
+		case kCmd_Telescope_slewsettletime:				//*	Returns the post-slew settling time.
+														//*	Sets the post-slew settling time.
+			if (reqData->get_putIndicator == 'G')
+			{
+				alpacaErrCode	=	Get_SlewSettleTime(reqData, alpacaErrMsg, gValueString);
+			}
+			else if (reqData->get_putIndicator == 'P')
+			{
+				alpacaErrCode	=	Put_SlewSettleTime(reqData, alpacaErrMsg);
+			}
+			break;
+
+		case kCmd_Telescope_targetdeclination:			//*	Returns the current target declination.
+														//*	Sets the target declination of a slew or sync.
+			if (reqData->get_putIndicator == 'G')
+			{
+				alpacaErrCode	=	Get_TargetDeclination(reqData, alpacaErrMsg, gValueString);
+			}
+			else if (reqData->get_putIndicator == 'P')
+			{
+				alpacaErrCode	=	Put_TargetDeclination(reqData, alpacaErrMsg);
+			}
+			break;
+
+		case kCmd_Telescope_targetrightascension:		//*	Returns the current target right ascension.
+														//*	Sets the target right ascension of a slew or sync.
+			if (reqData->get_putIndicator == 'G')
+			{
+				alpacaErrCode	=	Get_TargetRightAscension(reqData, alpacaErrMsg, gValueString);
+			}
+			else if (reqData->get_putIndicator == 'P')
+			{
+				alpacaErrCode	=	Put_TargetRightAscension(reqData, alpacaErrMsg);
+			}
+			break;
+
+		case kCmd_Telescope_tracking:					//*	Indicates whether the telescope is tracking.
+														//*	Enables or disables telescope tracking.
+			if (reqData->get_putIndicator == 'G')
+			{
+				alpacaErrCode	=	Get_Tracking(reqData, alpacaErrMsg, gValueString);
+			}
+			else if (reqData->get_putIndicator == 'P')
+			{
+				alpacaErrCode	=	Put_Tracking(reqData, alpacaErrMsg);
+			}
+			break;
+
+		case kCmd_Telescope_trackingrate:				//*	Returns the current tracking rate.
+														//*	Sets the mount's tracking rate.
+			if (reqData->get_putIndicator == 'G')
+			{
+				alpacaErrCode	=	Get_TrackingRate(reqData, alpacaErrMsg, gValueString);
+			}
+			else if (reqData->get_putIndicator == 'P')
+			{
+				alpacaErrCode	=	Put_TrackingRate(reqData, alpacaErrMsg);
+			}
+			break;
+
+		case kCmd_Telescope_trackingrates:				//*	Returns a collection of supported DriveRates values.
+			alpacaErrCode	=	Get_TrackingRates(reqData, alpacaErrMsg, gValueString);
+			break;
+
+		case kCmd_Telescope_utcdate:					//*	Returns the UTC date/time of the telescope's internal clock.
+														//*	Sets the UTC date/time of the telescope's internal clock.
+			if (reqData->get_putIndicator == 'G')
+			{
+				alpacaErrCode	=	Get_UTCdate(reqData, alpacaErrMsg, gValueString);
+			}
+			else if (reqData->get_putIndicator == 'P')
+			{
+				alpacaErrCode	=	Put_UTCdate(reqData, alpacaErrMsg);
+			}
+			break;
+
+		case kCmd_Telescope_abortslew:					//*	Immediately stops a slew in progress.
+			alpacaErrCode	=	Put_AbortSlew(reqData, alpacaErrMsg);
+			CONSOLE_DEBUG_W_NUM("alpacaErrCode\t=", alpacaErrCode);
+			break;
+
+		case kCmd_Telescope_axisrates:					//*	Returns the rates at which the telescope may be moved about the specified axis.
+			alpacaErrCode	=	Get_AxisRates(reqData, alpacaErrMsg, gValueString);
+			break;
+
+		case kCmd_Telescope_canmoveaxis:				//*	Indicates whether the telescope can move the requested axis.
+			alpacaErrCode	=	Get_CanMoveAxis(reqData, alpacaErrMsg, gValueString);
+			break;
+
+		case kCmd_Telescope_destinationsideofpier:		//*	Predicts the pointing state after a German equatorial mount slews to given coordinates.
+			alpacaErrCode	=	Get_DestinationSideOfPier(reqData, alpacaErrMsg, gValueString);
+			break;
+
+		case kCmd_Telescope_findhome:					//*	Moves the mount to the "home" position.
+			if (reqData->get_putIndicator == 'P')
+			{
+				alpacaErrCode	=	Put_FindHome(reqData, alpacaErrMsg);
+			}
+			break;
+
+		case kCmd_Telescope_moveaxis:					//*	Moves a telescope axis at the given rate.
+			if (reqData->get_putIndicator == 'P')
+			{
+				alpacaErrCode	=	Put_MoveAxis(reqData, alpacaErrMsg);
+			}
+			break;
+
+		case kCmd_Telescope_park:						//*	Park the mount
+			if (reqData->get_putIndicator == 'P')
+			{
+				alpacaErrCode	=	Put_Park(reqData, alpacaErrMsg);
+			}
+			break;
+
+		case kCmd_Telescope_pulseguide:					//*	Moves the scope in the given direction for the given time.
+			if (reqData->get_putIndicator == 'P')
+			{
+				alpacaErrCode	=	Put_PulseGuide(reqData, alpacaErrMsg);
+			}
+			break;
+
+		case kCmd_Telescope_setpark:					//*	Sets the telescope's park position
+			if (reqData->get_putIndicator == 'P')
+			{
+				alpacaErrCode	=	Put_SetPark(reqData, alpacaErrMsg);
+			}
+			break;
+
+		case kCmd_Telescope_slewtoaltaz:				//*	Synchronously slew to the given local horizontal coordinates.
+			if (reqData->get_putIndicator == 'P')
+			{
+				alpacaErrCode	=	Put_SlewToAltAz(reqData, alpacaErrMsg);
+			}
+			break;
+
+		case kCmd_Telescope_slewtoaltazasync:			//*	Asynchronously slew to the given local horizontal coordinates.
+			if (reqData->get_putIndicator == 'P')
+			{
+				alpacaErrCode	=	Put_SlewToAltAzAsync(reqData, alpacaErrMsg);
+			}
+			break;
+
+		case kCmd_Telescope_slewtocoordinates:			//*	Synchronously slew to the given equatorial coordinates.
+			if (reqData->get_putIndicator == 'P')
+			{
+				alpacaErrCode	=	Put_SlewToCoordinates(reqData, alpacaErrMsg);
+			}
+			break;
+
+		case kCmd_Telescope_slewtocoordinatesasync:		//*	Asynchronously slew to the given equatorial coordinates.
+			if (reqData->get_putIndicator == 'P')
+			{
+				alpacaErrCode	=	Put_SlewToCoordinatesAsync(reqData, alpacaErrMsg);
+			}
+			break;
+
+		case kCmd_Telescope_slewtotarget:				//*	Synchronously slew to the TargetRightAscension and TargetDeclination coordinates.
+			if (reqData->get_putIndicator == 'P')
+			{
+				alpacaErrCode	=	Put_SlewToTarget(reqData, alpacaErrMsg);
+			}
+			break;
+
+		case kCmd_Telescope_slewtotargetasync:			//*	Asynchronously slew to the TargetRightAscension and TargetDeclination coordinates.
+			if (reqData->get_putIndicator == 'P')
+			{
+				alpacaErrCode	=	Put_SlewToTargetAsync(reqData, alpacaErrMsg);
+			}
+			break;
+
+		case kCmd_Telescope_synctoaltaz:				//*	Syncs to the given local horizontal coordinates.
+			if (reqData->get_putIndicator == 'P')
+			{
+				alpacaErrCode	=	Put_SyncToAltAz(reqData, alpacaErrMsg);
+			}
+			break;
+
+		case kCmd_Telescope_synctocoordinates:			//*	Syncs to the given equatorial coordinates.
+			if (reqData->get_putIndicator == 'P')
+			{
+				alpacaErrCode	=	Put_SyncToCoordinates(reqData, alpacaErrMsg);
+			}
+			break;
+
+		case kCmd_Telescope_synctotarget:				//*	Syncs to the TargetRightAscension and TargetDeclination coordinates.
+			if (reqData->get_putIndicator == 'P')
+			{
+				alpacaErrCode	=	Put_SyncToTarget(reqData, alpacaErrMsg);
+			}
+			break;
+
+		case kCmd_Telescope_unpark:						//*	Unparks the mount.
+			alpacaErrCode	=	Put_UnPark(reqData, alpacaErrMsg);
+			break;
+
+
+		case kCmd_Telescope_readall:
+			alpacaErrCode	=	Get_Readall(reqData, alpacaErrMsg);
+			break;
+
+		//----------------------------------------------------------------------------------------
+		//*	let anything undefined go to the common command processor
+		//----------------------------------------------------------------------------------------
+		default:
+			if (cmdEnumValue < 999)
+			{
+				CONSOLE_DEBUG(__FUNCTION__);
+				CONSOLE_DEBUG(reqData->cmdBuffer);
+				CONSOLE_DEBUG(reqData->contentData);
+			}
+			alpacaErrCode	=	ProcessCommand_Common(reqData, cmdEnumValue, alpacaErrMsg);
+			break;
 	}
 //	CONSOLE_DEBUG_W_NUM("Calling RecordCmdStats(), cmdEnumValue=", cmdEnumValue);
 	RecordCmdStats(cmdEnumValue, reqData->get_putIndicator, alpacaErrCode);
@@ -1409,19 +1410,27 @@ char					doseRefractionString[64];
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	doseRefractionFound		=	GetKeyWordArgument(	reqData->contentData,
-												"DoesRefraction",
-												doseRefractionString,
-												(sizeof(doseRefractionString) -1));
-	if (doseRefractionFound)
+													"DoesRefraction",
+													doseRefractionString,
+													(sizeof(doseRefractionString) -1));
+	if (cDriverSupportsRefraction)
 	{
-		cTelescopeProp.DoesRefraction	=	IsTrueFalse(doseRefractionString);
-		alpacaErrCode					=	kASCOM_Err_Success;
+		if (doseRefractionFound)
+		{
+			cTelescopeProp.DoesRefraction	=	IsTrueFalse(doseRefractionString);
+			alpacaErrCode					=	kASCOM_Err_Success;
+		}
+		else
+		{
+			alpacaErrCode	=	kASCOM_Err_InvalidValue;
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "DoesRefraction is missing");
+	//		CONSOLE_DEBUG(alpacaErrMsg);
+		}
 	}
 	else
 	{
-		alpacaErrCode	=	kASCOM_Err_InvalidValue;
-		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "DoesRefraction is missing");
-//		CONSOLE_DEBUG(alpacaErrMsg);
+		alpacaErrCode	=	kASCOM_Err_PropertyNotImplemented;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Driver does not support refraction");
 	}
 
 	return(alpacaErrCode);

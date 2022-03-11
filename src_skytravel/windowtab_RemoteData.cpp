@@ -196,9 +196,9 @@ int		fullBoxWidth;
 	SetWidgetText(		kRemoteData_SQLportTxt,			"Port");
 	SetWidgetText(		kRemoteData_SQLusernameTxt,		"username");
 
-	SetWidgetText(		kRemoteData_SQLserverValue,		gGaiaSQLsever_IPaddr);
-	SetWidgetNumber(	kRemoteData_SQLportValue,		gGaiaSQLsever_Port);
-	SetWidgetText(		kRemoteData_SQLusernameValue,	gGaiaSQLsever_UserName);
+	SetWidgetText(		kRemoteData_SQLserverValue,		gSQLsever_IPaddr);
+	SetWidgetNumber(	kRemoteData_SQLportValue,		gSQLsever_Port);
+	SetWidgetText(		kRemoteData_SQLusernameValue,	gSQLsever_UserName);
 
 	SetWidget(			kRemoteData_EnableSQLlogging,	xLoc,	yLoc,	fullBoxWidth,		cSmallBtnHt);
 	SetWidgetType(		kRemoteData_EnableSQLlogging,	kWidgetType_CheckBox);
@@ -342,7 +342,7 @@ void	WindowTabRemoteData::ProcessButtonClick(const int buttonIdx)
 			break;
 
 		case kRemoteData_EnableSQLlogging:
-			gEnableSQLloggng	=	!gEnableSQLloggng;
+			gEnableSQLlogging	=	!gEnableSQLlogging;
 			break;
 
 		case kRemoteData_GaiaReqMode1x1:
@@ -420,13 +420,13 @@ void	WindowTabRemoteData::UpdateSettings(void)
 	SetWidgetText(kRemoteData_SDSS_LastCmd,				gRemoteDataStats[kRemoteSrc_SDSS].LastCmdString);
 
 #ifdef 	_ENABLE_REMOTE_GAIA_
-	SetWidgetChecked(	kRemoteData_GaiaReqMode1x1, (gST_DispOptions.GaiaRequestMode == kGaiaRequestMode_1x1));
-	SetWidgetChecked(	kRemoteData_GaiaReqMode3x1, (gST_DispOptions.GaiaRequestMode == kGaiaRequestMode_3x1));
-	SetWidgetChecked(	kRemoteData_GaiaReqMode3x3, (gST_DispOptions.GaiaRequestMode == kGaiaRequestMode_3x3));
+	SetWidgetChecked(	kRemoteData_GaiaReqMode1x1, 	(gST_DispOptions.GaiaRequestMode == kGaiaRequestMode_1x1));
+	SetWidgetChecked(	kRemoteData_GaiaReqMode3x1, 	(gST_DispOptions.GaiaRequestMode == kGaiaRequestMode_3x1));
+	SetWidgetChecked(	kRemoteData_GaiaReqMode3x3,		(gST_DispOptions.GaiaRequestMode == kGaiaRequestMode_3x3));
 
 
 	SetWidgetChecked(	kRemoteData_EnableRemoteGAIA,	gST_DispOptions.RemoteGAIAenabled);
-	SetWidgetChecked(	kRemoteData_EnableSQLlogging, gEnableSQLloggng);
+	SetWidgetChecked(	kRemoteData_EnableSQLlogging, 	gEnableSQLlogging);
 
 
 #endif

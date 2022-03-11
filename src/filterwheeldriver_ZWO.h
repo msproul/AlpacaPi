@@ -25,7 +25,6 @@ class FilterwheelZWO: public FilterwheelDriver
 		//
 						FilterwheelZWO(const int argDevNum);
 		virtual			~FilterwheelZWO(void);
-		virtual	bool	AlpacaConnect(void);
 
 	protected:
 		void						ReadZWOfilterWheelInfo(void);

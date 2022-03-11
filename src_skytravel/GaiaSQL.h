@@ -39,4 +39,4 @@ typedef struct
 #define	JD2016				(2457388.5)
 
 extern TYPE_GAIA_REMOTE_DATA	gGaiaDataList[];
-extern bool	gEnableSQLloggng;
+extern bool	gEnableSQLlogging;

@@ -44,9 +44,12 @@ enum
 	kImageDisplay_FramesSaved_Lbl,
 	kImageDisplay_FramesSaved,
 
-
+	kImageDisplay_HistRedPerct,
+	kImageDisplay_HistGrnPerct,
+	kImageDisplay_HistBluPerct,
 
 	kImageDisplay_Histogram,
+	kImageDisplay_HistogramOutline,
 
 	kImageDisplay_ImageDisplay,
 
@@ -81,7 +84,8 @@ class WindowTabImage: public WindowTab
 		virtual void	ProcessMouseLeftButtonUp(const int widgetIdx, const int event, const int xxx, const int yyy, const int flags);
 		virtual void	ProcessMouseLeftButtonDragged(const int widgetIdx, const int event, const int xxx, const int yyy, const int flags);
 #ifdef _USE_OPENCV_CPP_
-		virtual	void	DrawWidgetCustomGraphic(cv::Mat *openCV_Image, const int widgetIdx);
+		virtual	void	DrawWidgetCustomGraphic(cv::Mat *openCV_Image, TYPE_WIDGET *theWidget);
+//-		virtual	void	DrawWidgetCustomGraphic(cv::Mat *openCV_Image, const int widgetIdx);
 #else
 		virtual	void	DrawWidgetCustomGraphic(IplImage *openCV_Image, const int widgetIdx);
 #endif // _USE_OPENCV_CPP_

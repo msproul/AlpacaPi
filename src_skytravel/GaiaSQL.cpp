@@ -65,17 +65,17 @@
 
 #define	_XREF_AAVSO_
 
-char	gGaiaSQLsever_IPaddr[32]	=	"";
-int		gGaiaSQLsever_Port			=	0;
-char	gGaiaSQLsever_UserName[32]	=	"";
-char	gGaiaSQLsever_Password[32]	=	"";
-char	gGaiaSQLsever_Database[32]	=	"";
+char	gSQLsever_IPaddr[32]	=	"";
+int		gSQLsever_Port			=	0;
+char	gSQLsever_UserName[32]	=	"";
+char	gSQLsever_Password[32]	=	"";
+char	gSQLsever_Database[32]	=	"";
 
-int		gGaiaSQLerror_Count			=	0;
-char	gGaiaSQLsever_StatusMsg[128]=	"";
-bool	gGaiaSQLsever_MsgUpdated	=	false;
+int		gSQLerror_Count			=	0;
+char	gSQLsever_StatusMsg[128]=	"";
+bool	gSQLsever_MsgUpdated	=	false;
 
-bool	gEnableSQLloggng			=	true;
+bool	gEnableSQLlogging		=	true;
 
 
 static		pthread_t	gGaiaSQL_ThreadID			=	-1;
@@ -123,23 +123,23 @@ char	*valueStrPtr;
 
 		if (strcasecmp(keyword, "server") == 0)
 		{
-			strcpy(gGaiaSQLsever_IPaddr, valueStrPtr);
+			strcpy(gSQLsever_IPaddr, valueStrPtr);
 		}
 		else if (strcasecmp(keyword, "port") == 0)
 		{
-			gGaiaSQLsever_Port	=	atoi(valueStrPtr);
+			gSQLsever_Port	=	atoi(valueStrPtr);
 		}
 		else if (strcasecmp(keyword, "username") == 0)
 		{
-			strcpy(gGaiaSQLsever_UserName, valueStrPtr);
+			strcpy(gSQLsever_UserName, valueStrPtr);
 		}
 		else if (strcasecmp(keyword, "password") == 0)
 		{
-			strcpy(gGaiaSQLsever_Password, valueStrPtr);
+			strcpy(gSQLsever_Password, valueStrPtr);
 		}
 		else if (strcasecmp(keyword, "gaia_database") == 0)
 		{
-			strcpy(gGaiaSQLsever_Database, valueStrPtr);
+			strcpy(gSQLsever_Database, valueStrPtr);
 		}
 	}
 }
@@ -151,23 +151,23 @@ bool			configOK;
 
 	//*	check to see if we have all the information
 	configOK	=	true;
-	if (strlen(gGaiaSQLsever_IPaddr) == 0)
+	if (strlen(gSQLsever_IPaddr) == 0)
 	{
 		configOK	=	false;
 	}
-	if (strlen(gGaiaSQLsever_UserName) == 0)
+	if (strlen(gSQLsever_UserName) == 0)
 	{
 		configOK	=	false;
 	}
-	if (strlen(gGaiaSQLsever_Password) == 0)
+	if (strlen(gSQLsever_Password) == 0)
 	{
 		configOK	=	false;
 	}
-	if (strlen(gGaiaSQLsever_Database) == 0)
+	if (strlen(gSQLsever_Database) == 0)
 	{
 		configOK	=	false;
 	}
-	if (gGaiaSQLsever_Port == 0)
+	if (gSQLsever_Port == 0)
 	{
 		configOK	=	false;
 	}
@@ -251,7 +251,7 @@ int		iii;
 			memset(&gGaiaDataList[iii], 0, sizeof(TYPE_GAIA_REMOTE_DATA));
 		}
 	}
-	gGaiaSQLerror_Count	=	0;
+	gSQLerror_Count	=	0;
 }
 
 //*****************************************************************************
@@ -290,7 +290,7 @@ char			userString[64];
 		userString[31]	=	0;
 	}
 
-	sprintf(mySQLCmd, "call SetGaiaLogComment('%s');", userString);
+	sprintf(mySQLCmd, "call SetLogComment('%s');", userString);
 	CONSOLE_DEBUG_W_STR("mySQLCmd\t=", mySQLCmd);
 
 	mySQLConnection	=	mysql_init(NULL);
@@ -300,14 +300,14 @@ char			userString[64];
 
 		//*	establish connection to the database
 		if (mysql_real_connect(	mySQLConnection,
-								gGaiaSQLsever_IPaddr,
-								gGaiaSQLsever_UserName,
-								gGaiaSQLsever_Password,
-								gGaiaSQLsever_Database, 0, NULL, 0) != NULL)
+								gSQLsever_IPaddr,
+								gSQLsever_UserName,
+								gSQLsever_Password,
+								gSQLsever_Database, 0, NULL, 0) != NULL)
 		{
-			CONSOLE_DEBUG_W_STR("Successfully connected to", gGaiaSQLsever_IPaddr);
+			CONSOLE_DEBUG_W_STR("Successfully connected to", gSQLsever_IPaddr);
 
-			returnCode	=	mysql_select_db(mySQLConnection, gGaiaSQLsever_Database);
+			returnCode	=	mysql_select_db(mySQLConnection, gSQLsever_Database);
 			if (returnCode == 0)
 			{
 				CONSOLE_DEBUG("mysql_select_db -- OK");
@@ -516,33 +516,33 @@ unsigned int	endMilliSecs;
 		CONSOLE_DEBUG(__FUNCTION__);
 
 //		CONSOLE_DEBUG("Trying to establish connection to the database");
-//		CONSOLE_DEBUG_W_STR("gGaiaSQLsever_IPaddr\t=",		gGaiaSQLsever_IPaddr);
-//		CONSOLE_DEBUG_W_STR("gGaiaSQLsever_UserName\t=",	gGaiaSQLsever_UserName);
-//		CONSOLE_DEBUG_W_STR("gGaiaSQLsever_Password\t=",	gGaiaSQLsever_Password);
-//		CONSOLE_DEBUG_W_STR("gGaiaSQLsever_Database\t=",	gGaiaSQLsever_Database);
+//		CONSOLE_DEBUG_W_STR("gSQLsever_IPaddr\t=",		gSQLsever_IPaddr);
+//		CONSOLE_DEBUG_W_STR("gSQLsever_UserName\t=",	gSQLsever_UserName);
+//		CONSOLE_DEBUG_W_STR("gSQLsever_Password\t=",	gSQLsever_Password);
+//		CONSOLE_DEBUG_W_STR("gSQLsever_Database\t=",	gSQLsever_Database);
 
 		//*	establish connection to the database
 		//*	updated <KAS> 2/22/2022
 		if (mysql_real_connect(	mySQLConnection,
-									gGaiaSQLsever_IPaddr,
-									gGaiaSQLsever_UserName,
-									gGaiaSQLsever_Password,
-									gGaiaSQLsever_Database,
+									gSQLsever_IPaddr,
+									gSQLsever_UserName,
+									gSQLsever_Password,
+									gSQLsever_Database,
 									0,
 									NULL,
 									CLIENT_MULTI_RESULTS) != NULL)
 		{
-			CONSOLE_DEBUG_W_STR("Successfully connected to", gGaiaSQLsever_IPaddr);
+			CONSOLE_DEBUG_W_STR("Successfully connected to", gSQLsever_IPaddr);
 			ra_int		=	floor(ra_Degrees);
 			dec_int		=	floor(dec_Degrees);
 
 			if (fabs(dec_Degrees) >= kPolarDeclinationLimit)
 			{
-				sprintf(mySQLCmd,"call GetGaiaDeclination(%d);", dec_int);
+				sprintf(mySQLCmd,"call GetDeclination(%d);", dec_int);
 			}
 			else
 			{
-				sprintf(mySQLCmd,"call GetGaiaRaDec(%d,%d);", ra_int, dec_int);
+				sprintf(mySQLCmd,"call GetRaDec(%d,%d);", ra_int, dec_int);
 			}
 
 			CONSOLE_DEBUG(mySQLCmd);
@@ -551,7 +551,7 @@ unsigned int	endMilliSecs;
 			mySQLresult	=	NULL;
 			num_fields	=	Querry_mySQL_cmd(	mySQLConnection,
 												&mySQLresult,
-												gGaiaSQLsever_Database,
+												gSQLsever_Database,
 												mySQLCmd);
 			CONSOLE_DEBUG_W_NUM("num_fields", num_fields);
 			if (num_fields > 0)
@@ -638,7 +638,7 @@ unsigned int	endMilliSecs;
 
 				endMilliSecs	=	millis();
 
-				if (gEnableSQLloggng)
+				if (gEnableSQLlogging)
 				{
 				char	textBuff[128];
 
@@ -648,7 +648,7 @@ unsigned int	endMilliSecs;
 			}
 			else
 			{
-				LogSqlTransaction("num_fields <= 0", "");
+				LogSqlTransaction(mySQLCmd, "num_fields <= 0");
 			}
 			CONSOLE_DEBUG("Done");
 		}
@@ -702,19 +702,19 @@ bool			validFlag;
 		CONSOLE_DEBUG(__FUNCTION__);
 
 		CONSOLE_DEBUG("Trying to establish connection to the database");
-		CONSOLE_DEBUG_W_STR("gGaiaSQLsever_IPaddr\t=",		gGaiaSQLsever_IPaddr);
-		CONSOLE_DEBUG_W_STR("gGaiaSQLsever_UserName\t=",	gGaiaSQLsever_UserName);
-		CONSOLE_DEBUG_W_STR("gGaiaSQLsever_Password\t=",	gGaiaSQLsever_Password);
-		CONSOLE_DEBUG_W_STR("gGaiaSQLsever_Database\t=",	gGaiaSQLsever_Database);
+		CONSOLE_DEBUG_W_STR("gSQLsever_IPaddr\t=",		gSQLsever_IPaddr);
+		CONSOLE_DEBUG_W_STR("gSQLsever_UserName\t=",	gSQLsever_UserName);
+		CONSOLE_DEBUG_W_STR("gSQLsever_Password\t=",	gSQLsever_Password);
+		CONSOLE_DEBUG_W_STR("gSQLsever_Database\t=",	gSQLsever_Database);
 
 		//*	establish connection to the database
 		if (mysql_real_connect(	mySQLConnection,
-								gGaiaSQLsever_IPaddr,
-								gGaiaSQLsever_UserName,
-								gGaiaSQLsever_Password,
-								gGaiaSQLsever_Database, 0, NULL, 0) != NULL)
+								gSQLsever_IPaddr,
+								gSQLsever_UserName,
+								gSQLsever_Password,
+								gSQLsever_Database, 0, NULL, 0) != NULL)
 		{
-			CONSOLE_DEBUG_W_STR("Successfully connected to", gGaiaSQLsever_IPaddr);
+			CONSOLE_DEBUG_W_STR("Successfully connected to", gSQLsever_IPaddr);
 			sprintf(mySQLCmd,"call GetGaiaSourceID(%s);", gaiaIDnumberStr);
 			CONSOLE_DEBUG(mySQLCmd);
 			CONSOLE_DEBUG("Calling Querry_mySQL_cmd()");
@@ -722,7 +722,7 @@ bool			validFlag;
 			mySQLresult	=	NULL;
 			num_fields	=	Querry_mySQL_cmd(	mySQLConnection,
 												&mySQLresult,
-												gGaiaSQLsever_Database,
+												gSQLsever_Database,
 												mySQLCmd);
 			CONSOLE_DEBUG_W_NUM("num_fields", num_fields);
 			if (num_fields > 0)
@@ -790,7 +790,7 @@ bool			validFlag;
 
 				endMilliSecs	=	millis();
 
-				if (gEnableSQLloggng)
+				if (gEnableSQLlogging)
 				{
 				char	textBuff[128];
 
@@ -1172,24 +1172,24 @@ bool			requestOccured;
 							gGaiaDataList[iii].sequenceNum		=	gGaiaSQLsequenceNum;
 							gGaiaSQLsequenceNum++;
 
-							strcpy(gGaiaSQLsever_StatusMsg, "SQL success");
-							gGaiaSQLsever_MsgUpdated	=	true;
+							strcpy(gSQLsever_StatusMsg, "SQL success");
+							gSQLsever_MsgUpdated	=	true;
 						}
 						else
 						{
 							CONSOLE_DEBUG("Failed to get GAIA data!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-							strcpy(gGaiaSQLsever_StatusMsg, "SQL failed!!!");
-							gGaiaSQLsever_MsgUpdated	=	true;
+							strcpy(gSQLsever_StatusMsg, "SQL failed!!!");
+							gSQLsever_MsgUpdated	=	true;
 
 							gGaiaDataList[iii].validData	=	false;
 							memset(&gGaiaDataList[iii], 0, sizeof(TYPE_GAIA_REMOTE_DATA));
 
-							gGaiaSQLerror_Count++;
-							if (gGaiaSQLerror_Count > 10)
+							gSQLerror_Count++;
+							if (gSQLerror_Count > 10)
 							{
-								strcpy(gGaiaSQLsever_StatusMsg, "Too many SQL errors, sleeping for 5 minutes");
-								gGaiaSQLsever_MsgUpdated	=	true;
-								CONSOLE_DEBUG(gGaiaSQLsever_StatusMsg);
+								strcpy(gSQLsever_StatusMsg, "Too many SQL errors, sleeping for 5 minutes");
+								gSQLsever_MsgUpdated	=	true;
+								CONSOLE_DEBUG(gSQLsever_StatusMsg);
 								sleep(5 * 60);
 							}
 						}

@@ -5,6 +5,7 @@
 ###############################################################################
 ###	Jan 12,	2021	<MLS> Adding machine specific build commands
 ###	Jan 21,	2021	<MLS> Adding skytravel to build process
+###	Mar 11,	2022	<MLS> Updated ror build
 ###############################################################################
 
 date
@@ -100,7 +101,7 @@ then
 	rm camera
 	rm domectrl
 	rm focuser
-	rm ror
+	rm rorpi
 	rm skytravel
 	rm switch
 	echo "Building client apps" >> $LOGFILENAME
@@ -114,8 +115,8 @@ then
 	make clean domectrl | grep -v Wall
 	echo "*************************************************** making camera"	>/dev/stderr
 	make clean camera | grep -v Wall
-	echo "*************************************************** making ror"	>/dev/stderr
-	make clean ror | grep -v Wall
+	echo "*************************************************** making rorpi"	>/dev/stderr
+	make clean rorpi | grep -v Wall
 
 	if [ -f switch ]
 	then
@@ -195,7 +196,7 @@ then
 	##################################
 	make clean rorpi >/dev/null
 else
-	make clean ror >/dev/null
+	make clean rorpi >/dev/null
 fi
 if [ -f ror ]
 then

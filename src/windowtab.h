@@ -214,6 +214,8 @@ class WindowTab
 
 
 #ifdef _USE_OPENCV_CPP_
+
+		virtual	void	DrawWidgetCustomGraphic(cv::Mat *openCV_Image, TYPE_WIDGET *theWidget);
 		virtual	void	DrawWidgetCustomGraphic(cv::Mat *openCV_Image, const int widgetIdx);
 				void	SetHelpTextBoxColor(cv::Scalar newtextColor);
 #else

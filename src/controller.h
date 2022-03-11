@@ -471,11 +471,7 @@ class Controller
 	extern "C" {
 #endif
 
-#ifdef _USE_OPENCV_CPP_
-	cv::Scalar	Color16BitTo24Bit(const unsigned int color16);
-#else
-	cv::Scalar	Color16BitTo24Bit(const unsigned int color16);
-#endif
+cv::Scalar	Color16BitTo24Bit(const unsigned int color16);
 
 void		Controller_HandleKeyDown(const int keyPressed);
 void		LoadAlpacaLogo(void);

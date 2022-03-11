@@ -216,6 +216,10 @@ class TelescopeDriver: public AlpacaDriver
 				//*	full list of ASCOM telescope properties
 				TYPE_TelescopeProperties	cTelescopeProp;
 
+				//*	this defaults to FALSE,
+				//*	a subclass MUST set this to true if wants to support refraction calculations
+				bool						cDriverSupportsRefraction;
+
 
 };
 

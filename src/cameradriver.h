@@ -103,7 +103,7 @@
 //*****************************************************************************
 //*	Camera states
 //*	this is for the state machine to keep track of what each camera is doing
-//*	this is DIFFERENT than the alpca state, however there is a correlation between the 2
+//*	this is DIFFERENT than the alpaca state, however there is a correlation between the 2
 //*****************************************************************************
 typedef enum
 {

@@ -98,7 +98,6 @@ ControllerTelescope::ControllerTelescope(	const char			*argWindowName,
 		cPort			=	port;
 		cValidIPaddr	=	true;
 
-		CheckConnectedState();		//*	check connected and connect if not already connected
 	}
 	cLastUpdate_milliSecs	=	0;
 	SetupWindowControls();
@@ -194,6 +193,7 @@ bool		validData;
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 	if (cReadStartup)
 	{
+		CheckConnectedState();		//*	check connected and connect if not already connected
 		AlpacaGetStartupData();
 		AlpacaGetCommonProperties_OneAAT("telescope");
 
@@ -217,7 +217,7 @@ bool		validData;
 		}
 		cLastUpdate_milliSecs	=	millis();
 
-		UpdateConnectedIndicator(kTab_Telescope,		kTelescope_Connected);
+		UpdateConnectedIndicator(kTab_Telescope,	kTelescope_Connected);
 	}
 }
 
@@ -257,9 +257,7 @@ char	returnString[256];
 			SetWidgetText(kTab_Telescope, kTelescope_AlpacaDrvrVersion, returnString);
 		}
 	}
-
 	validData	=	AlpacaGetStartupData_TelescopeOneAAT();
-
 
 	SetWidgetValid(kTab_Telescope,	kTelescope_Readall,		cHas_readall);
 	return(validData);
