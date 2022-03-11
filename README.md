@@ -118,8 +118,10 @@ It is built using a conventional Makefile.
 The make file has many defines in to enable various features.
 
 Dependencies:
-	openCV
+	openCV 3.3.1 or earlier
 	cfitsio
+
+As of build 131, AlpacaPI requires openCV 3.3.1 however, support for newer versions is almost complete.
 
 On the Raspberry Pi, some of the drivers require the wiringPi library.
 wiringPi is pre-installed on Raspberrian.
@@ -136,6 +138,8 @@ Alpaca/ASCOM plus a couple extras I created for my own use.
 AlpacaPi has been tested on the following platforms
 
 	Ubuntu 16.04 LTS x86_64
+
+	Ubuntu 20.04 LTS x86_64
 
 	Raspberry Pi 3 (32 bit)
 

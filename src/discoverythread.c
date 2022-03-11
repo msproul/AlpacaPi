@@ -995,8 +995,8 @@ int					sockOptValue;
 	cliaddr.sin_port			=	htons(0);
 
 #if !defined(__arm__)
-	#warning "Local IP address is hard coded!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-	cliaddr.sin_addr.s_addr		=	htonl(0xc0a8019a);	//192.168.1.154
+//	#warning "Local IP address is hard coded!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+//	cliaddr.sin_addr.s_addr		=	htonl(0xc0a8019a);	//192.168.1.154
 //	cliaddr.sin_addr.s_addr		=	htonl(0xc0a802ab);	//192.168.2.171
 //	cliaddr.sin_addr.s_addr		=	htonl(0x01060003);	//10.6.0.3
 #endif
