@@ -5,6 +5,10 @@
 #ifndef _COMMON_COLOR_H_
 #define _COMMON_COLOR_H_
 
+#ifndef _GCC_STDINT_H
+	#include	<stdint.h>
+#endif
+
 
 #ifdef __cplusplus
 	extern "C" {

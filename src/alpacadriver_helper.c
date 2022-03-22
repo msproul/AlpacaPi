@@ -8,6 +8,7 @@
 //*	<MLS>	=	Mark L Sproul
 //*****************************************************************************
 //*	Jan 16,	2021	<MLS> Created alpacadriver_helper.c
+//*	Mar 12,	2022	<MLS> Added GetBinaryElementTypeString()
 //*****************************************************************************
 
 #include	<string.h>
@@ -77,3 +78,20 @@ TYPE_DEVICETYPE		enumValue;
 	return(enumValue);
 }
 
+//*****************************************************************************
+void	GetBinaryElementTypeString(const int elementType, char *typeString)
+{
+	switch(elementType)
+	{
+		case kAlpacaImageData_Unknown:	strcpy(typeString,	"Unknown");	break;
+		case kAlpacaImageData_Int16:	strcpy(typeString,	"Int16");	break;
+		case kAlpacaImageData_Int32:	strcpy(typeString,	"Int32");	break;
+		case kAlpacaImageData_Double:	strcpy(typeString,	"Double");	break;
+		case kAlpacaImageData_Single:	strcpy(typeString,	"Single");	break;
+		case kAlpacaImageData_Decimal:	strcpy(typeString,	"Decimal");	break;
+		case kAlpacaImageData_Byte:		strcpy(typeString,	"Byte");	break;
+		case kAlpacaImageData_Int64:	strcpy(typeString,	"Int64");	break;
+		case kAlpacaImageData_UInt16:	strcpy(typeString,	"UInt16");	break;
+		default:						strcpy(typeString,	"Unknown");	break;
+	}
+}

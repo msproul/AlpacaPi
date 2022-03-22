@@ -271,6 +271,60 @@ ROR_OBJECTS=												\
 
 
 ######################################################################################
+#pragma mark make help
+help:
+
+	#################################################################################
+	# The AlpacaPi project consists of two main parts, drivers and clients
+	#    Driver make options
+	#        make alpacapi   Driver for x86 linux
+	#        make pi         Version for Raspberry Pi
+	#        make picv4      Version for Raspberry Pi using OpenCV 4 or later
+	#        make dome       Raspberry pi version to control dome using DC motor controller
+	#        make jetson     Version to run on nvidia jetson board, this is an armv8
+	#        make nocamera   Build without the camera support
+	#        make wx         Version that uses the R-Pi sensor board
+	#        make noopencv   Camera driver for ZWO WITHOUT opencv
+	#        make noopencvpi Camera driver for ZWO WITHOUT opencv for Raspberry-Pi
+	#        make piqhy      Camera driver for QHY cameras only for Raspberry-Pi
+	#
+	#
+	# Telescope drivers,
+	# As of March 2022, the telescope driver is still in development,
+	# There are several options that are in progress
+	#        make tele		Makes a version which speaks LX200 over a TCP/IP connection
+	#        make rigel		Makes a special version for a user that uses a rigel controller
+	#        make eq6		A version to control eq6 style mounts
+	#
+	#
+	# Miscellaneous
+	#        make clean      removes all binaries
+	#        make help       this message
+	#
+	#    Client make options
+	#       SkyTravel is an all in one client program, it has all of the controllers built in
+	#       with full Alpaca Discovery support and generates a list of available devices
+	#
+	#       make sky         makes SkyTravel with openCV 3.3.1 or earlier
+	#       make skysql      same as sky but with SQL database support
+	#       make skycpp      makes SkyTravel with newer Versions after 3.3.1
+	#       make skycppsql   same as skycpp with SQL database support
+	#
+	#   Some of the clients can also be built separately
+	#       make camera
+	#       make domectrl
+	#       make focuser
+	#       make switch
+	#################################################################################
+
+
+
+#	Debug                     Makefile
+#        smate      Build a version to run on a Stellarmate running smate OS
+
+
+
+######################################################################################
 #pragma mark make alpacapi  C++ linux-x86
 alpacapi		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
 alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
@@ -290,7 +344,6 @@ alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_ROTATOR_
 #alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_SAFETYMONITOR_
 #alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_
 #alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_SLIT_TRACKER_
-#alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
 #alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_TOUP_
 alpacapi		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
 #alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
@@ -328,7 +381,7 @@ allcam		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
 allcam		:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
 allcam		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
 allcam		:		DEFINEFLAGS		+=	-D_ENABLE_ATIK_
-#allcam		:		DEFINEFLAGS		+=	-D_ENABLE_FLIR_
+allcam		:		DEFINEFLAGS		+=	-D_ENABLE_FLIR_
 allcam		:		DEFINEFLAGS		+=	-D_ENABLE_QHY_
 #allcam		:		DEFINEFLAGS		+=	-D_ENABLE_SONY_
 allcam		:		DEFINEFLAGS		+=	-D_ENABLE_TOUP_
@@ -344,7 +397,6 @@ allcam		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_ZWO_
 #allcam		:		DEFINEFLAGS		+=	-D_ENABLE_SAFETYMONITOR_
 #allcam		:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_
 #allcam		:		DEFINEFLAGS		+=	-D_ENABLE_SLIT_TRACKER_
-#allcam		:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
 allcam		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
 #allcam		:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
 #allcam		:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_LX200_
@@ -400,7 +452,6 @@ tele		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
 #tele	:		DEFINEFLAGS		+=	-D_ENABLE_SAFETYMONITOR_
 #tele	:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_
 #tele	:		DEFINEFLAGS		+=	-D_ENABLE_SLIT_TRACKER_
-#tele	:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
 #tele	:		DEFINEFLAGS		+=	-D_ENABLE_TOUP_
 #tele	:		DEFINEFLAGS		+=	-D_USE_OPENCV_
 tele	:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
@@ -501,10 +552,8 @@ toup	:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
 #toup	:		DEFINEFLAGS		+=	-D_ENABLE_SAFETYMONITOR_
 #toup	:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_
 #toup	:		DEFINEFLAGS		+=	-D_ENABLE_SLIT_TRACKER_
-#toup	:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
 toup	:		DEFINEFLAGS		+=	-D_ENABLE_TOUP_
 toup	:		DEFINEFLAGS		+=	-D_USE_OPENCV_
-#toup	:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
 toup	:			$(CPP_OBJECTS)				\
 					$(ALPACA_OBJECTS)			\
 					$(SOCKET_OBJECTS)			\
@@ -543,10 +592,8 @@ touppi	:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
 #touppi	:		DEFINEFLAGS		+=	-D_ENABLE_SAFETYMONITOR_
 #touppi	:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_
 #touppi	:		DEFINEFLAGS		+=	-D_ENABLE_SLIT_TRACKER_
-#touppi	:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
 touppi	:		DEFINEFLAGS		+=	-D_ENABLE_TOUP_
 touppi	:		DEFINEFLAGS		+=	-D_USE_OPENCV_
-#touppi	:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
 touppi	:			$(CPP_OBJECTS)				\
 					$(ALPACA_OBJECTS)			\
 					$(SOCKET_OBJECTS)			\
@@ -585,7 +632,6 @@ Release		:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_
 #Release		:		DEFINEFLAGS		+=	-D_ENABLE_SLIT_TRACKER_
 #Release		:		DEFINEFLAGS		+=	-D_ENABLE_TOUP_
 Release		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
-#Release		:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
 Release		:		$(CPP_OBJECTS)				\
 					$(ALPACA_OBJECTS)			\
 					$(SOCKET_OBJECTS)			\
@@ -619,7 +665,6 @@ Release		:		$(CPP_OBJECTS)				\
 #flir		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_ZWO_
 #flir		:		DEFINEFLAGS		+=	-D_ENABLE_SAFETYMONITOR_
 #flir		:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_
-#flir		:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
 flir		:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
 flir		:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
 flir		:		DEFINEFLAGS		+=	-D_ENABLE_DISCOVERY_QUERRY_
@@ -771,7 +816,6 @@ pi		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_
 pi		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_ZWO_
 #pi		:		DEFINEFLAGS		+=	-D_ENABLE_SAFETYMONITOR_
 #pi		:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_
-#pi		:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
 pi		:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
 pi		:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
 pi		:		DEFINEFLAGS		+=	-D_ENABLE_DISCOVERY_QUERRY_
@@ -818,7 +862,6 @@ picv4		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_
 picv4		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_ZWO_
 #picv4		:		DEFINEFLAGS		+=	-D_ENABLE_SAFETYMONITOR_
 #picv4		:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_
-#picv4		:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
 picv4		:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
 picv4		:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
 picv4		:		DEFINEFLAGS		+=	-D_ENABLE_DISCOVERY_QUERRY_
@@ -865,7 +908,6 @@ piqhy		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
 #piqhy		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_ZWO_
 #piqhy		:		DEFINEFLAGS		+=	-D_ENABLE_SAFETYMONITOR_
 #piqhy		:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_
-#piqhy		:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
 piqhy		:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
 piqhy		:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
 #piqhy		:		DEFINEFLAGS		+=	-D_ENABLE_DISCOVERY_QUERRY_
@@ -1642,6 +1684,7 @@ CONTROLLER_BASE_OBJECTS=										\
 
 ######################################################################################
 CONTROLLER_OBJECTS=												\
+				$(OBJECT_DIR)alpacadriver_helper.o				\
 				$(OBJECT_DIR)controller_main.o					\
 				$(OBJECT_DIR)controller.o						\
 				$(OBJECT_DIR)controllerAlpaca.o					\
@@ -1658,6 +1701,7 @@ CONTROLLER_OBJECTS=												\
 				$(OBJECT_DIR)controller_ml_nc.o					\
 				$(OBJECT_DIR)controller_ml_single.o				\
 				$(OBJECT_DIR)controller_usb.o					\
+				$(OBJECT_DIR)cpu_stats.o						\
 				$(OBJECT_DIR)helper_functions.o					\
 				$(OBJECT_DIR)linuxerrors.o						\
 				$(OBJECT_DIR)windowtab.o						\
@@ -1685,7 +1729,6 @@ CONTROLLER_OBJECTS=												\
 				$(OBJECT_DIR)serialport.o						\
 				$(OBJECT_DIR)commoncolor.o						\
 				$(OBJECT_DIR)sendrequest_lib.o					\
-				$(OBJECT_DIR)cpu_stats.o						\
 
 VIDEO_OBJECTS=													\
 				$(OBJECT_DIR)controller.o						\
@@ -1912,8 +1955,6 @@ sky		:	DEFINEFLAGS		+=	-D_ENABLE_SLIT_TRACKER_
 sky		:	DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
 sky		:	DEFINEFLAGS		+=	-D_ENABLE_GAIA_
 sky		:	DEFINEFLAGS		+=	-D_ENABLE_ASTERIODS_
-#sky		:	DEFINEFLAGS		+=	-D_ENABLE_REMOTE_SQL_
-#sky		:	DEFINEFLAGS		+=	-D_ENABLE_REMOTE_GAIA_
 sky		:	INCLUDES		+=	-I$(SRC_SKYTRAVEL)
 
 sky		:				$(SKYTRAVEL_OBJECTS)					\
@@ -1929,30 +1970,30 @@ sky		:				$(SKYTRAVEL_OBJECTS)					\
 							-o skytravel
 
 ######################################################################################
-#make opencvpp
+#make skycpp
 #pragma mark skytravel
-opencvpp		:	DEFINEFLAGS		+=	-D_INCLUDE_CTRL_MAIN_
-opencvpp		:	DEFINEFLAGS		+=	-D_ENABLE_SKYTRAVEL_
-opencvpp		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_CAMERA_
-opencvpp		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_DOME_
-opencvpp		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_FOCUSERS_
-opencvpp		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
-opencvpp		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_SWITCHES_
-opencvpp		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_TELESCOPE_
-opencvpp		:	DEFINEFLAGS		+=	-D_ENABLE_FITS_
-opencvpp		:	DEFINEFLAGS		+=	-D_CONTROLLER_USES_ALPACA_
-opencvpp		:	DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_CONTROLLER_
-opencvpp		:	DEFINEFLAGS		+=	-D_ENABLE_SLIT_TRACKER_
-opencvpp		:	DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
-opencvpp		:	DEFINEFLAGS		+=	-D_ENABLE_ASTERIODS_
-#opencvpp		:	DEFINEFLAGS		+=	-D_ENABLE_GAIA_
-#opencvpp		:	DEFINEFLAGS		+=	-D_ENABLE_REMOTE_SQL_
-#opencvpp		:	DEFINEFLAGS		+=	-D_ENABLE_REMOTE_GAIA_
-opencvpp		:	DEFINEFLAGS		+=	-D_USE_OPENCV_
-opencvpp		:	DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
-opencvpp		:	INCLUDES		+=	-I$(SRC_SKYTRAVEL)
+skycpp			:	DEFINEFLAGS		+=	-D_INCLUDE_CTRL_MAIN_
+skycpp			:	DEFINEFLAGS		+=	-D_ENABLE_SKYTRAVEL_
+skycpp			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_CAMERA_
+skycpp			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_DOME_
+skycpp			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_FOCUSERS_
+skycpp			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
+skycpp			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_SWITCHES_
+skycpp			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_TELESCOPE_
+skycpp			:	DEFINEFLAGS		+=	-D_ENABLE_FITS_
+skycpp			:	DEFINEFLAGS		+=	-D_CONTROLLER_USES_ALPACA_
+skycpp			:	DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_CONTROLLER_
+skycpp			:	DEFINEFLAGS		+=	-D_ENABLE_SLIT_TRACKER_
+skycpp			:	DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
+skycpp			:	DEFINEFLAGS		+=	-D_ENABLE_ASTERIODS_
+#skycpp			:	DEFINEFLAGS		+=	-D_ENABLE_GAIA_
+#skycpp			:	DEFINEFLAGS		+=	-D_ENABLE_REMOTE_SQL_
+#skycpp			:	DEFINEFLAGS		+=	-D_ENABLE_REMOTE_GAIA_
+skycpp			:	DEFINEFLAGS		+=	-D_USE_OPENCV_
+skycpp			:	DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
+skycpp			:	INCLUDES		+=	-I$(SRC_SKYTRAVEL)
 
-opencvpp		:		$(SKYTRAVEL_OBJECTS)					\
+skycpp			:		$(SKYTRAVEL_OBJECTS)					\
 						$(CONTROLLER_BASE_OBJECTS)				\
 
 
@@ -1965,30 +2006,74 @@ opencvpp		:		$(SKYTRAVEL_OBJECTS)					\
 							-lcfitsio							\
 							-o skytravel
 
+#						$(GAIA_SQL_OBJECTS)						\
+#							-lmysqlclient						\
+
 
 ######################################################################################
-#make sql
-#pragma mark camera-controller
-sql		:	DEFINEFLAGS		+=	-D_USE_OPENCV_
-sql		:	DEFINEFLAGS		+=	-D_INCLUDE_CTRL_MAIN_
-sql		:	DEFINEFLAGS		+=	-D_ENABLE_SKYTRAVEL_
-sql		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_CAMERA_
-sql		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_DOME_
-sql		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_FOCUSERS_
-sql		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
-sql		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_SWITCHES_
-sql		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_TELESCOPE_
-sql		:	DEFINEFLAGS		+=	-D_ENABLE_FITS_
-sql		:	DEFINEFLAGS		+=	-D_CONTROLLER_USES_ALPACA_
-sql		:	DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_CONTROLLER_
-sql		:	DEFINEFLAGS		+=	-D_ENABLE_SLIT_TRACKER_
-sql		:	DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
-sql		:	DEFINEFLAGS		+=	-D_ENABLE_ASTERIODS_
-sql		:	DEFINEFLAGS		+=	-D_ENABLE_REMOTE_SQL_
-sql		:	DEFINEFLAGS		+=	-D_ENABLE_REMOTE_GAIA_
-sql		:	INCLUDES		+=	-I$(SRC_SKYTRAVEL)
+#make skycppsql
+#pragma mark skytravel
+skycppsql			:	DEFINEFLAGS		+=	-D_INCLUDE_CTRL_MAIN_
+skycppsql			:	DEFINEFLAGS		+=	-D_ENABLE_SKYTRAVEL_
+skycppsql			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_CAMERA_
+skycppsql			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_DOME_
+skycppsql			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_FOCUSERS_
+skycppsql			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
+skycppsql			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_SWITCHES_
+skycppsql			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_TELESCOPE_
+skycppsql			:	DEFINEFLAGS		+=	-D_ENABLE_FITS_
+skycppsql			:	DEFINEFLAGS		+=	-D_CONTROLLER_USES_ALPACA_
+skycppsql			:	DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_CONTROLLER_
+skycppsql			:	DEFINEFLAGS		+=	-D_ENABLE_SLIT_TRACKER_
+skycppsql			:	DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
+skycppsql			:	DEFINEFLAGS		+=	-D_ENABLE_ASTERIODS_
+skycppsql			:	DEFINEFLAGS		+=	-D_ENABLE_GAIA_
+skycppsql			:	DEFINEFLAGS		+=	-D_ENABLE_REMOTE_SQL_
+skycppsql			:	DEFINEFLAGS		+=	-D_ENABLE_REMOTE_GAIA_
+skycppsql			:	DEFINEFLAGS		+=	-D_USE_OPENCV_
+skycppsql			:	DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
+skycppsql			:	INCLUDES		+=	-I$(SRC_SKYTRAVEL)
 
-sql		:				$(SKYTRAVEL_OBJECTS)				\
+skycppsql			:		$(SKYTRAVEL_OBJECTS)					\
+						$(CONTROLLER_BASE_OBJECTS)				\
+						$(GAIA_SQL_OBJECTS)						\
+
+
+				$(LINK)  										\
+							$(SKYTRAVEL_OBJECTS)				\
+							$(CONTROLLER_BASE_OBJECTS)			\
+							$(GAIA_SQL_OBJECTS)					\
+							-L/usr/local/lib					\
+							$(OPENCV_LINK)						\
+							-lmysqlclient						\
+							-lpthread							\
+							-lcfitsio							\
+							-o skytravel
+
+
+######################################################################################
+#make skysql
+#pragma mark camera-controller
+skysql		:	DEFINEFLAGS		+=	-D_USE_OPENCV_
+skysql		:	DEFINEFLAGS		+=	-D_INCLUDE_CTRL_MAIN_
+skysql		:	DEFINEFLAGS		+=	-D_ENABLE_SKYTRAVEL_
+skysql		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_CAMERA_
+skysql		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_DOME_
+skysql		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_FOCUSERS_
+skysql		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
+skysql		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_SWITCHES_
+skysql		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_TELESCOPE_
+skysql		:	DEFINEFLAGS		+=	-D_ENABLE_FITS_
+skysql		:	DEFINEFLAGS		+=	-D_CONTROLLER_USES_ALPACA_
+skysql		:	DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_CONTROLLER_
+skysql		:	DEFINEFLAGS		+=	-D_ENABLE_SLIT_TRACKER_
+skysql		:	DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
+skysql		:	DEFINEFLAGS		+=	-D_ENABLE_ASTERIODS_
+skysql		:	DEFINEFLAGS		+=	-D_ENABLE_REMOTE_SQL_
+skysql		:	DEFINEFLAGS		+=	-D_ENABLE_REMOTE_GAIA_
+skysql		:	INCLUDES		+=	-I$(SRC_SKYTRAVEL)
+
+skysql		:				$(SKYTRAVEL_OBJECTS)				\
 						$(GAIA_SQL_OBJECTS)					\
 						$(CONTROLLER_BASE_OBJECTS)			\
 
@@ -2002,8 +2087,6 @@ sql		:				$(SKYTRAVEL_OBJECTS)				\
 						-lmysqlclient						\
 						-lcfitsio							\
 						-o skytravel
-
-#						$(CONTROLLER_OBJECTS)				\
 
 
 
@@ -2112,24 +2195,6 @@ preview			:			$(PREVIEW_OBJECTS)
 clean:
 	rm -vf $(OBJECT_DIR)*.o
 
-
-
-######################################################################################
-#pragma mark help
-help:
-	#    make options
-	#        alpaca (default)
-	#        dome       Raspberry pi version to control dome using DC motor controller
-	#        jetson     Version to run on nvidia jetson board, this is an armv8
-	#        nocamera   Build without the camera support
-	#        smate      Build a version to run on a Stellarmate running smate OS
-	#        pi         Version for Raspberry Pi
-	#        wx         Version that uses
-	#        noopencv   Dont include opencv
-	#        clean		removes all binaries
-	#        help		this message
-
-#	Debug                     Makefile
 
 
 ######################################################################################

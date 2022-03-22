@@ -150,6 +150,9 @@ int					closeRetCode;
 	{
 		CONSOLE_DEBUG_W_STR(__FUNCTION__, "Exit");
 	}
+#ifdef _ENABLE_TELESCOPE_LX200_
+	CONSOLE_ABORT(__FUNCTION__);
+#endif
 }
 
 //**************************************************************************************
@@ -233,7 +236,7 @@ int					ipPortNumber;
 	filePointer	=	fopen(fileName, "r");
 	if (filePointer != NULL)
 	{
-		ipPortNumber	=	6800;	//*	my default port
+		ipPortNumber	=	kAlpacaPiDefaultPORT;	//*	my default port
 		while (fgets(lineBuff, 200, filePointer))
 		{
 			//*	get rid of the trailing CR/LF
@@ -266,6 +269,9 @@ int					ipPortNumber;
 		}
 		fclose(filePointer);
 	}
+#ifdef _ENABLE_TELESCOPE_LX200_
+	CONSOLE_ABORT(__FUNCTION__);
+#endif
 }
 
 //**************************************************************************************

@@ -125,7 +125,7 @@ char	wiringPi_VerString[32];
 	pinState	=	0;
 	CONSOLE_DEBUG("Setting up hardware io pins");
 	//*	step through the pin list and set them all to outputs
-	for (ii=0; ii<kR_Pi_SwitchCount; ii++)
+	for (ii=0; ii < kR_Pi_RelayCount; ii++)
 	{
 		pinNumber		=	gRelayControlPinNumbers[ii];
 		if ((pinNumber >= 0) && (pinNumber < 50))
@@ -145,7 +145,7 @@ char	wiringPi_VerString[32];
 			CONSOLE_DEBUG_W_NUM("Invalid pin number\t=", pinNumber);
 		}
 	}
-	return(kR_Pi_SwitchCount);
+	return(kR_Pi_RelayCount);
 }
 
 //*****************************************************************************
@@ -156,7 +156,7 @@ int		myRelayIndex;
 
 	myRelayIndex	=	relayNumber - 1;
 
-	if ((myRelayIndex >= 0) &&  (myRelayIndex < kR_Pi_SwitchCount))
+	if ((myRelayIndex >= 0) &&  (myRelayIndex < kR_Pi_RelayCount))
 	{
 		pinNumber	=	gRelayControlPinNumbers[myRelayIndex];
 	}

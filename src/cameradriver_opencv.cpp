@@ -46,20 +46,9 @@
 #include	<stdio.h>
 #include	<string.h>
 
-
-#ifdef _USE_OPENCV_CPP_
-	#include	<opencv2/opencv.hpp>
-#else
-	#include "opencv/highgui.h"
-	#include "opencv2/highgui/highgui_c.h"
-	#include "opencv2/imgproc/imgproc_c.h"
-	#include "opencv2/core/version.hpp"
-#endif // _USE_OPENCV_CPP_
-
 #ifdef _ENABLE_STAR_SEARCH_
 	#include	"imageprocess_orb.h"
 #endif
-
 
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"

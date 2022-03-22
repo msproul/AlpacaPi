@@ -22,7 +22,6 @@
 //*	Oct 26,	2021	<MLS> Created controller_constList.cpp
 //*****************************************************************************
 
-
 #define _ENABLE_CONSTELLATIONLIST_
 
 #ifdef _ENABLE_CONSTELLATIONLIST_
@@ -30,17 +29,6 @@
 #include	<stdio.h>
 #include	<stdlib.h>
 #include	<unistd.h>
-
-
-#ifdef _USE_OPENCV_CPP_
-	#include	<opencv2/opencv.hpp>
-#else
-	#include "opencv/highgui.h"
-	#include "opencv2/highgui/highgui_c.h"
-	#include "opencv2/imgproc/imgproc_c.h"
-#endif // _USE_OPENCV_CPP_
-
-
 
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"

@@ -471,7 +471,6 @@ void	WindowTabDome::DrawDomeGraphic(cv::Mat *openCV_Image, TYPE_WIDGET *theWidge
 void	WindowTabDome::DrawDomeGraphic(IplImage *openCV_Image, TYPE_WIDGET *theWidget)
 #endif // _USE_OPENCV_CPP_
 {
-cv::Point	pointLoc;
 cv::Point	centerLoc;
 int			radius;
 double		domeAzimuth_radians;
@@ -491,6 +490,7 @@ int			pt1_X;
 int			pt1_Y;
 int			pt2_X;
 int			pt2_Y;
+cv::Scalar	domeOpeningColor;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -554,9 +554,9 @@ int			pt2_Y;
 		pointCntr				=	0;
 
 	#ifdef _USE_OPENCV_CPP_
-	cv::Point		pt1;
-	cv::Point		ptList[20];
-	cv::Scalar		domeOpeningColor;
+cv::Point	pt1;
+cv::Point	ptList[20];
+cv::Point	pointLoc;
 		//-------------------
 		doorEdgeAzimuth			=	domeAzimuth_radians + doorOpeningHalfAngle;
 		pt1.x					=	centerLoc.x + (cos(doorEdgeAzimuth) * radius);
@@ -623,9 +623,9 @@ int			pt2_Y;
 							8,							//	int line_type CV_DEFAULT(8),
 							0);							//	int shift CV_DEFAULT(0));
 	#else
-	CvPoint		pt1;
-	CvPoint		ptList[20];
-	cv::Scalar	domeOpeningColor;
+CvPoint	pt1;
+CvPoint	ptList[20];
+CvPoint	pointLoc;
 
 		//-------------------
 		doorEdgeAzimuth			=	domeAzimuth_radians + doorOpeningHalfAngle;
@@ -633,8 +633,8 @@ int			pt2_Y;
 		pt1.y					=	centerLoc.y + (sin(doorEdgeAzimuth) * radius);
 
 		ptList[pointCntr++]		=	pt1;
-		pointLoc.x		=	centerLoc.x + (cos(domeAzimuth_radians) * radius);
-		pointLoc.y		=	centerLoc.y + (sin(domeAzimuth_radians) * radius);
+		pointLoc.x				=	centerLoc.x + (cos(domeAzimuth_radians) * radius);
+		pointLoc.y				=	centerLoc.y + (sin(domeAzimuth_radians) * radius);
 		ptList[pointCntr++]		=	pointLoc;	//*	this is the middle of the outer edge of the dome opening
 
 		//-------------------
@@ -642,7 +642,7 @@ int			pt2_Y;
 		pt1.x					=	centerLoc.x + (cos(doorEdgeAzimuth) * radius);
 		pt1.y					=	centerLoc.y + (sin(doorEdgeAzimuth) * radius);
 
-		ptList[pointCntr++]	=	pt1;
+		ptList[pointCntr++]		=	pt1;
 
 		//-------------------
 		slitEdgeAzimuth			=	domeAzimuth_radians - RADIANS(90.0);
@@ -650,7 +650,7 @@ int			pt2_Y;
 
 		pt1.x					=	centerLoc.x + (cos(slitEdgeAzimuth) * edgeRadius);
 		pt1.y					=	centerLoc.y + (sin(slitEdgeAzimuth) * edgeRadius);
-		ptList[pointCntr++]	=	pt1;
+		ptList[pointCntr++]		=	pt1;
 
 		//-------------------
 		slitEdgeAzimuth			=	domeAzimuth_radians + RADIANS(90.0);
@@ -658,7 +658,7 @@ int			pt2_Y;
 
 		pt1.x					=	centerLoc.x + (cos(slitEdgeAzimuth) * edgeRadius);
 		pt1.y					=	centerLoc.y + (sin(slitEdgeAzimuth) * edgeRadius);
-		ptList[pointCntr++]	=	pt1;
+		ptList[pointCntr++]		=	pt1;
 
 		//*	determine a color for the dome door
 		switch(cDomePropPtr->ShutterStatus)
@@ -686,6 +686,7 @@ int			pt2_Y;
 
 		}
 
+		#if (CV_MAJOR_VERSION <= 3)
 	//	ptList[pointCntr++]	=	centerLoc;
 		cvFillConvexPoly(openCV_Image,
 						ptList,						//	const CvPoint* pts,
@@ -693,6 +694,7 @@ int			pt2_Y;
 						domeOpeningColor,			//	color
 						8,							//	int line_type CV_DEFAULT(8),
 						0);							//	int shift CV_DEFAULT(0));
+		#endif
 	#endif // _USE_OPENCV_CPP_
 		//*	put the dark border around the dome
 		LLD_PenSize(5);

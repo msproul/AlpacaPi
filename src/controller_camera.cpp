@@ -76,15 +76,6 @@
 #include	<stdio.h>
 #include	<stdlib.h>
 #include	<unistd.h>
-	#include	<opencv2/opencv.hpp>
-
-#ifdef _USE_OPENCV_CPP_
-	#include	<opencv2/opencv.hpp>
-#else
-	#include "opencv/highgui.h"
-	#include "opencv2/highgui/highgui_c.h"
-	#include "opencv2/imgproc/imgproc_c.h"
-#endif // _USE_OPENCV_CPP_
 
 
 #include	"discovery_lib.h"
@@ -1732,6 +1723,7 @@ char			parameterString[128];
 void	ControllerCamera::UpdateDownloadProgress(const int unitsRead, const int totalUnits)
 {
 	//*	this is to be over loaded if needed
+	CONSOLE_ABORT(__FUNCTION__);
 }
 
 //*****************************************************************************

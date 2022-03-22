@@ -199,7 +199,7 @@ int					so_oobinline;
 			//*	this EXTRA CR/LF is VERY important for Alpaca Remote Server
 			strcat(xmitBuffer, "\r\n");
 
-//			CONSOLE_DEBUG(xmitBuffer);
+			CONSOLE_DEBUG(xmitBuffer);
 
 //			sendRetCode	=	send(socket_desc , xmitBuffer , strlen(xmitBuffer) , 0);
 			sendRetCode	=	send(socket_desc , xmitBuffer , strlen(xmitBuffer) , MSG_NOSIGNAL);

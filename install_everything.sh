@@ -1,7 +1,9 @@
+#!/bin/bash
 ###############################################################################
 #	script to check and install everything for alpaca on linux or raspberry pi
 ###	Nov 16,	2019	<MLS> Started on install script
 ###	Jan 25,	2021	<MLS> Updated ZWO files
+### Mar 21,	2022	<MLS> Added !/bin/bash to start of script
 ###############################################################################
 clear
 echo "Getting ready to update (sudo apt-get update)"

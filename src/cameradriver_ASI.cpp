@@ -99,22 +99,8 @@
 #include	<time.h>
 #include	<unistd.h>
 
-
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
-
-
-
-#ifdef _USE_OPENCV_
-	#ifdef _USE_OPENCV_CPP_
-		#include	<opencv2/opencv.hpp>
-	#else
-		#include "opencv/highgui.h"
-		#include "opencv2/highgui/highgui_c.h"
-		#include "opencv2/imgproc/imgproc_c.h"
-		#include "opencv2/core/version.hpp"
-	#endif // _USE_OPENCV_CPP_
-#endif
 
 #include	"ASICamera2.h"
 
@@ -127,8 +113,6 @@
 #include	"alpacadriver_helper.h"
 #include	"cameradriver.h"
 #include	"cameradriver_ASI.h"
-
-
 
 
 #define	kMaxCameraCnt	5

@@ -208,18 +208,6 @@
 
 #define	_USE_COLUMN_ORDER_
 
-#ifdef _USE_OPENCV_
-	#ifdef _USE_OPENCV_CPP_
-		#include	<opencv2/opencv.hpp>
-	#else
-		#include "opencv/highgui.h"
-		#include "opencv2/highgui/highgui_c.h"
-		#include "opencv2/imgproc/imgproc_c.h"
-		#include "opencv2/core/version.hpp"
-		#include <opencv2/videoio.hpp>
-	#endif // _USE_OPENCV_CPP_
-#endif
-		#include <opencv2/videoio.hpp>
 
 #ifdef _ENABLE_FITS_
 	#ifndef _FITSIO_H
@@ -468,7 +456,7 @@ int	mkdirErrCode;
 	cTextFont						=	cvFont(1.0, 1);
 	cOverlayTextFont				=	cvFont(2.0, 1);
 #endif
-	cSideBarBGcolor					=	cvScalarAll(128);
+	cSideBarBGcolor					=	CV_RGB(128, 128, 128);
 	cVideoOverlayColor				=	CV_RGB(255,	0,	0);
 	cSideBarBlk						=	CV_RGB(0,	0,	0);
 
@@ -5468,7 +5456,7 @@ CONSOLE_DEBUG(__FUNCTION__);
 				//	fourCC	=	-1;
 					CONSOLE_DEBUG_W_HEX("fourCC\t=", fourCC);
 					cAVIfourCC			=	fourCC;
-				#if defined(_USE_OPENCV_CPP_) &&  (CV_MAJOR_VERSION >= 4)
+				#if defined(_USE_OPENCV_CPP_) ||  (CV_MAJOR_VERSION >= 4)
 					cOpenCV_videoWriter	=	NULL;
 				#else
 					cOpenCV_videoWriter	=	cvCreateVideoWriter(	filePath,

@@ -33,6 +33,7 @@
 //*	Feb 18,	2022	<MLS> Version V0.5.0-beta
 //*	Feb 18,	2022	<MLS> Build 130
 //*	Mar 11,	2022	<MLS> Build 131
+//*	Mar 22,	2022	<MLS> Build 132
 //*****************************************************************************
 //*	These are for my comment extraction program that sorts comments by date.
 //*	Jan  1,	2019	-----------------------------------------------------------
@@ -61,10 +62,13 @@
 
 #define	kApplicationName	"AlpacaPi"
 #define	kVersionString		"V0.5.0-beta"
-#define	kBuildNumber		131
+#define	kBuildNumber		132
 
 
 #define kAlpacaDiscoveryPORT	32227
+
+#define kAlpacaPiDefaultPORT	6800
+
 
 #if defined(__ARM_ARCH) && !defined(__arm__)
 	#define __arm__
@@ -598,17 +602,17 @@ typedef struct
 {
 	//Metadata Structure
 	//The following structure describes the returned data
-	int			MetadataVersion;			// Bytes 0..3 - Metadata version = 1
-	int			ErrorNumber;				// Bytes 4..7 - Alpaca error number or zero for success
+	int32_t		MetadataVersion;			// Bytes 0..3 - Metadata version = 1
+	int32_t		ErrorNumber;				// Bytes 4..7 - Alpaca error number or zero for success
 	uint32_t	ClientTransactionID;		// Bytes 8..11 - Client's transaction ID
 	uint32_t	ServerTransactionID;		// Bytes 12..15 - Device's transaction ID
-	int			DataStart;					// Bytes 16..19 - Offset of the start of the data bytes = 36 for version 1
-	int			ImageElementType;			// Bytes 20..23 - Element type of the source image array
-	int			TransmissionElementType;	// Bytes 24..27 - Element type as sent over the network
-	int			Rank;						// Bytes 28..31 - Image array rank
-	int			Dimension1;					// Bytes 32..35 - Length of image array first dimension
-	int			Dimension2;					// Bytes 36..39 - Length of image array second dimension
-	int			Dimension3;					// Bytes 40..43 - Length of image array third dimension (0 for 2D array)
+	int32_t		DataStart;					// Bytes 16..19 - Offset of the start of the data bytes = 36 for version 1
+	int32_t		ImageElementType;			// Bytes 20..23 - Element type of the source image array
+	int32_t		TransmissionElementType;	// Bytes 24..27 - Element type as sent over the network
+	int32_t		Rank;						// Bytes 28..31 - Image array rank
+	int32_t		Dimension1;					// Bytes 32..35 - Length of image array first dimension
+	int32_t		Dimension2;					// Bytes 36..39 - Length of image array second dimension
+	int32_t		Dimension3;					// Bytes 40..43 - Length of image array third dimension (0 for 2D array)
 
 } TYPE_BinaryImageHdr;
 

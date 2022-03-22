@@ -23,9 +23,13 @@
 //*	Aug 23,	2021	<MLS> Changed discovery response string from "alpacaport" to "AlpacaPort"
 //*	Aug 23,	2021	<MLS> Added AlpacaUnitQsortProc(), ip addr list is now sorted
 //*	Feb 21,	2022	<MLS> Added ResetExternalIPaddress()
+//*	Mar 11,	2022	<MLS> WireGuard makes it so I cant figure out the local IP addres
+//*	Mar 11,	2022	<MLS> Added ReadLocalIPaddress()
+//*	Mar 11,	2022	<MLS> Working with WireGuards
 //*****************************************************************************
 
 
+#include	<ctype.h>
 #include	<stdio.h>
 #include	<stdlib.h>
 #include	<unistd.h>
@@ -93,6 +97,59 @@ static void		GetMyAddress(void);
 
 static bool		gNeedToReadExternalList	=	true;	//*	we only need to do this once
 
+//*****************************************************************************
+static bool	ReadLocalIPaddress(void)
+{
+FILE				*filePointer;
+char				lineBuff[256];
+char				fileName[]	=	"local_ip_addr.txt";
+//char				outputIPaddrStr[64];
+bool				validAddress;
+int					slen;
+int					iii;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	validAddress	=	false;
+	//*	see if there is a file with the local IP address
+	filePointer	=	fopen(fileName, "r");
+	if (filePointer != NULL)
+	{
+		while (fgets(lineBuff, 200, filePointer))
+		{
+			slen	=	strlen(lineBuff);
+			if ((slen > 6) && (lineBuff[0] != '#'))
+			{
+//				CONSOLE_DEBUG_W_STR("Local IP address\t=",		lineBuff);
+
+				if (isdigit(lineBuff[0]))
+				{
+					//*	get rid of the trailing CR/LF
+					for (iii=0; iii<slen; iii++)
+					{
+						if ((lineBuff[iii] == 0x0d) || (lineBuff[iii] == 0x0a))
+						{
+							lineBuff[iii]	=	0;
+							break;
+						}
+					}
+					//*	extract the IP address
+					inet_pton(AF_INET, lineBuff, &gMyIPaddress);
+//					CONSOLE_DEBUG_W_HEX("sin_addr\t\t=",		gMyIPaddress);
+
+					//*	this is just for debugging to make sure we got it right
+//					inet_ntop(AF_INET, &gMyIPaddress, outputIPaddrStr, INET_ADDRSTRLEN);
+//					CONSOLE_DEBUG_W_STR("outputIPaddrStr\t=",		outputIPaddrStr);
+
+					validAddress	=	true;
+				}
+			}
+		}
+		fclose(filePointer);
+	}
+	return(validAddress);
+}
+
 
 //*****************************************************************************
 void	Discovery_ClearIPAddrList(void)
@@ -103,12 +160,12 @@ int	iii;
 	gRemoteCnt		=	0;
 	for (iii=0; iii<kMaxAlpacaIPaddrCnt; iii++)
 	{
-		memset(&gAlpacaUnitList[iii], 0, sizeof(TYPE_ALPACA_UNIT));
+		memset((void *)&gAlpacaUnitList[iii], 0, sizeof(TYPE_ALPACA_UNIT));
 	}
 
 	for (iii=0; iii<kMaxAlpacaDeviceCnt; iii++)
 	{
-		memset(&gRemoteList[iii], 0, sizeof(TYPE_REMOTE_DEV));
+		memset((void *)&gRemoteList[iii], 0, sizeof(TYPE_REMOTE_DEV));
 	}
 	ResetExternalIPaddress();
 
@@ -136,7 +193,7 @@ char				ipAddrSt[48];
 	mySocket	=	socket(AF_INET, SOCK_DGRAM, 0);
 	if (mySocket >= 0)
 	{
-		memset(&serverAddress, '\0', sizeof(struct sockaddr_in));
+		memset((void *)&serverAddress, 0, sizeof(struct sockaddr_in));
 		serverAddress.sin_family			=	AF_INET;
 		serverAddress.sin_family			=	AF_INET;
 		serverAddress.sin_addr.s_addr		=	INADDR_ANY;
@@ -248,43 +305,19 @@ bool	newDevice;
 //	CONSOLE_DEBUG(__FUNCTION__);
 	newDevice	=	true;
 
-//	if (newRemoteDevice->port != 6800)
-//	{
-//	char	ipString[32];
-//	char	urlString[128];
-//		inet_ntop(AF_INET, &newRemoteDevice->deviceAddress.sin_addr, ipString, INET_ADDRSTRLEN);
-//		sprintf(urlString, "%s:%d\t%s", ipString, newRemoteDevice->port, newRemoteDevice->deviceTypeStr);
-//		CONSOLE_DEBUG(urlString);
-//
-//		CONSOLE_DEBUG_W_STR("newRemoteDevice->deviceTypeStr\t=",	newRemoteDevice->deviceTypeStr);
-//		CONSOLE_DEBUG_W_STR("newRemoteDevice->deviceNameStr\t=",	newRemoteDevice->deviceNameStr);
-//		CONSOLE_DEBUG_W_NUM("newRemoteDevice->alpacaDeviceNum\t=",	newRemoteDevice->alpacaDeviceNum);
-//	}
-
-	//*	dont add myself to the list
-	if (newRemoteDevice->deviceAddress.sin_addr.s_addr == gMyIPaddress)
+	//*	look to see if it is already in the list
+	for (iii=0; iii<gRemoteCnt; iii++)
 	{
-		CONSOLE_DEBUG("Leave me out of the list");
-//		CONSOLE_DEBUG_W_STR("newRemoteDevice->deviceTypeStr\t=",	newRemoteDevice->deviceTypeStr);
-//		CONSOLE_DEBUG_W_STR("newRemoteDevice->deviceNameStr\t=",	newRemoteDevice->deviceNameStr);
-		newDevice	=	false;
-	}
-	else
-	{
-		//*	look to see if it is already in the list
-		for (iii=0; iii<gRemoteCnt; iii++)
+		if (	(newRemoteDevice->deviceAddress.sin_addr.s_addr ==	gRemoteList[iii].deviceAddress.sin_addr.s_addr)
+			&&	(newRemoteDevice->port 							==	gRemoteList[iii].port)
+			&&	(newRemoteDevice->alpacaDeviceNum				==	gRemoteList[iii].alpacaDeviceNum)
+			&&	(strcmp(newRemoteDevice->deviceTypeStr,			gRemoteList[iii].deviceTypeStr) == 0)
+			&&	(strcmp(newRemoteDevice->deviceNameStr,			gRemoteList[iii].deviceNameStr) == 0)
+			)
 		{
-			if (	(newRemoteDevice->deviceAddress.sin_addr.s_addr ==	gRemoteList[iii].deviceAddress.sin_addr.s_addr)
-				&&	(newRemoteDevice->port 							==	gRemoteList[iii].port)
-				&&	(newRemoteDevice->alpacaDeviceNum				==	gRemoteList[iii].alpacaDeviceNum)
-				&&	(strcmp(newRemoteDevice->deviceTypeStr,			gRemoteList[iii].deviceTypeStr) == 0)
-				&&	(strcmp(newRemoteDevice->deviceNameStr,			gRemoteList[iii].deviceNameStr) == 0)
-				)
-			{
-				gRemoteList[iii].notSeenCounter	=	0;
-				newDevice						=	false;
-				break;
-			}
+			gRemoteList[iii].notSeenCounter	=	0;
+			newDevice						=	false;
+			break;
 		}
 	}
 
@@ -300,10 +333,6 @@ bool	newDevice;
 
 			gRemoteCnt++;
 		}
-	}
-	else
-	{
-	//	CONSOLE_DEBUG_W_STR("Ignoring device\t=",	newRemoteDevice->deviceNameStr);
 	}
 }
 
@@ -354,8 +383,8 @@ int				ii;
 char			myVersionString[64];
 
 //	CONSOLE_DEBUG(__FUNCTION__);
-	memset(&myRemoteDevice, 0, sizeof(TYPE_REMOTE_DEV));
-	memset(myVersionString, 0, sizeof(myVersionString));
+	memset((void *)&myRemoteDevice, 0, sizeof(TYPE_REMOTE_DEV));
+	memset((void *)myVersionString, 0, sizeof(myVersionString));
 
 	for (ii=0; ii<jsonParser->tokenCount_Data; ii++)
 	{
@@ -392,7 +421,7 @@ char			myVersionString[64];
 
 			UpdateRemoteList(&myRemoteDevice);
 
-			memset(&myRemoteDevice, 0, sizeof(TYPE_REMOTE_DEV));
+			memset((void *)&myRemoteDevice, 0, sizeof(TYPE_REMOTE_DEV));
 
 		}
 	}
@@ -975,6 +1004,7 @@ char				ipAddressStr[INET_ADDRSTRLEN];
 SJP_Parser_t		jsonParser;
 int					timeOutCntr;
 int					sockOptValue;
+bool				validLocalAddress;
 
 //	CONSOLE_DEBUG("*********************************************************");
 //	CONSOLE_DEBUG(__FUNCTION__);
@@ -985,7 +1015,7 @@ int					sockOptValue;
 		exit(EXIT_FAILURE);
 	}
 
-	memset(&servaddr, '\0', sizeof(struct sockaddr_in));
+	memset((void *)&servaddr, 0, sizeof(struct sockaddr_in));
 	servaddr.sin_family			=	AF_INET;
 	servaddr.sin_port			=	htons(kAlpacaDiscoveryPORT);
 	servaddr.sin_addr.s_addr	=	htonl(INADDR_BROADCAST);
@@ -995,10 +1025,12 @@ int					sockOptValue;
 	cliaddr.sin_port			=	htons(0);
 
 #if !defined(__arm__)
-//	#warning "Local IP address is hard coded!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-//	cliaddr.sin_addr.s_addr		=	htonl(0xc0a8019a);	//192.168.1.154
-//	cliaddr.sin_addr.s_addr		=	htonl(0xc0a802ab);	//192.168.2.171
-//	cliaddr.sin_addr.s_addr		=	htonl(0x01060003);	//10.6.0.3
+	validLocalAddress	=	ReadLocalIPaddress();
+	if (validLocalAddress)
+	{
+	//	cliaddr.sin_addr.s_addr		=	htonl(0xc0a8019a);	//192.168.1.154
+		cliaddr.sin_addr.s_addr		=	gMyIPaddress;
+	}
 #endif
 
 //	inet_ntop(AF_INET, &(servaddr.sin_addr), ipAddressStr, INET_ADDRSTRLEN);
@@ -1157,12 +1189,13 @@ char				*colonPtr;
 				{
 					colonPtr++;
 					strcpy(portNumStr, colonPtr);
-					CONSOLE_DEBUG_W_STR("External Port\t=",		portNumStr);
+					CONSOLE_DEBUG_W_STR("External Port\t\t=",		portNumStr);
 				}
 				else
 				{
 					//*	set the default
-					strcpy(portNumStr, "6800");
+				//	strcpy(portNumStr, "6800");
+					sprintf(portNumStr, "%d", kAlpacaPiDefaultPORT);
 				}
 				//*	isolate the IP address string
 				strcpy(externalIPaddrStr, lineBuff);
@@ -1195,11 +1228,30 @@ char				*colonPtr;
 	}
 }
 
-//	//*****************************************************************************
-//	int	GetMySubnetNumber(void)
-//	{
-//		return(gMyIPaddress & 0x00ff);
-//	}
+//**************************************************************************************
+int	FindDeviceInList(TYPE_REMOTE_DEV *theDevice, TYPE_REMOTE_DEV *theList, int maxDevices)
+{
+int		foundIndex;
+int		iii;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	foundIndex	=	-1;
+	iii			=	0;
+	while ((foundIndex < 0) && (iii < maxDevices))
+	{
+		if ((theDevice->deviceAddress.sin_addr.s_addr	==	theList[iii].deviceAddress.sin_addr.s_addr)
+			&&	(theDevice->port						==	theList[iii].port)
+			&&	(theDevice->alpacaDeviceNum				==	theList[iii].alpacaDeviceNum)
+			&&	(strcasecmp(theDevice->deviceTypeStr, theList[iii].deviceTypeStr) == 0)
+				)
+		{
+			foundIndex	=	iii;
+		}
+		iii++;
+	}
+	return(foundIndex);
+}
 
 //*****************************************************************************
 static void GetMyAddress(void)
@@ -1260,6 +1312,7 @@ bool			keepGoing;
 				else if (ifa ->ifa_addr->sa_family == PF_PACKET)
 				{
 					CONSOLE_DEBUG("PF_PACKET");
+					CONSOLE_DEBUG_W_STR("ifa->ifa_name:", ifa->ifa_name);
 				}
 				else
 				{
@@ -1291,32 +1344,6 @@ bool			keepGoing;
 	CONSOLE_DEBUG_W_HEX("gMyIPaddress\t=", gMyIPaddress);
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, "EXIT");
 //	CONSOLE_ABORT(__FUNCTION__);
-}
-
-
-//**************************************************************************************
-int	FindDeviceInList(TYPE_REMOTE_DEV *theDevice, TYPE_REMOTE_DEV *theList, int maxDevices)
-{
-int		foundIndex;
-int		iii;
-
-//	CONSOLE_DEBUG(__FUNCTION__);
-
-	foundIndex	=	-1;
-	iii			=	0;
-	while ((foundIndex < 0) && (iii < maxDevices))
-	{
-		if ((theDevice->deviceAddress.sin_addr.s_addr	==	theList[iii].deviceAddress.sin_addr.s_addr)
-			&&	(theDevice->port						==	theList[iii].port)
-			&&	(theDevice->alpacaDeviceNum				==	theList[iii].alpacaDeviceNum)
-			&&	(strcasecmp(theDevice->deviceTypeStr, theList[iii].deviceTypeStr) == 0)
-				)
-		{
-			foundIndex	=	iii;
-		}
-		iii++;
-	}
-	return(foundIndex);
 }
 
 
@@ -1354,7 +1381,7 @@ int	main(int argc, char **argv)
 {
 	printf("Staring discovery listen thread %s\r\n", __FUNCTION__);
 
-	StartDiscoveryThread(6800);
+	StartDiscoveryThread(kAlpacaPiDefaultPORT);
 
 	while(1)
 	{

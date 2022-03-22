@@ -25,7 +25,7 @@
 	#include	<opencv2/opencv.hpp>
 	#include	<opencv2/core.hpp>
 #else
-	#include "opencv/highgui.h"
+//	#include "opencv/highgui.h"
 	#include "opencv2/highgui/highgui_c.h"
 	#include "opencv2/imgproc/imgproc_c.h"
 	#include "opencv2/core/version.hpp"
@@ -303,11 +303,16 @@ char				jpegFileName[64];
 			numRead			=	fread(pixelPtr, dataByteCount, 1, filePointer);
 
 			sprintf(jpegFileName, "image%dx%d.png", openCvImgPtr->width, openCvImgPtr->height);
+		#if (CV_MAJOR_VERSION <= 3)
+			#warning "CV_MAJOR_VERSION <= 3"
 			openCVerr	=	cvSaveImage(jpegFileName, openCvImgPtr, quality);
 			if (openCVerr != 1)
 			{
 				CONSOLE_DEBUG_W_NUM("cvSaveImage returned", openCVerr);
 			}
+		#elif (CV_MAJOR_VERSION <= 4)
+			#warning "CV_MAJOR_VERSION <= 4"
+		#endif
 		}
 		fclose(filePointer);
 	}
@@ -349,7 +354,12 @@ char		extension[8];
 	else
 	{
 		CONSOLE_DEBUG_W_STR("imageFileName\t=", imageFileName);
+	#if (CV_MAJOR_VERSION <= 3)
+		#warning "CV_MAJOR_VERSION <= 3"
 		openCvImgPtr	=	cvLoadImage(imageFileName, CV_LOAD_IMAGE_COLOR);
+	#elif (CV_MAJOR_VERSION <= 4)
+		#warning "CV_MAJOR_VERSION <= 4"
+	#endif
 	}
 //	CONSOLE_DEBUG_W_HEX("openCvImgPtr\t=", openCvImgPtr);
 	return(openCvImgPtr);

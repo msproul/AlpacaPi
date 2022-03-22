@@ -12,26 +12,16 @@
 //*	Apr  3,	2021	<MLS> Added UpdateLiveWindowInfo()
 //*	Apr  8,	2021	<MLS> Added CopyImageToLiveImage()
 //*	Feb 25,	2022	<MLS> SetLiveWindowImage() working under C++ opencv
+//*	Mar 12,	2022	<MLS> Added SetImageWindowInfo()
+//*	Mar 12,	2022	<MLS> Added TYPE_BinaryImageHdr struct to Image controller
 //*****************************************************************************
 
-
 #ifdef _ENABLE_CTRL_IMAGE_
-
 
 #include	<stdio.h>
 #include	<stdlib.h>
 #include	<unistd.h>
 #include	<string.h>
-
-#ifdef _USE_OPENCV_CPP_
-	#include	<opencv2/opencv.hpp>
-#else
-	#include "opencv/highgui.h"
-	#include "opencv2/highgui/highgui_c.h"
-	#include "opencv2/imgproc/imgproc_c.h"
-#endif // _USE_OPENCV_CPP_
-
-
 
 #include	"discovery_lib.h"
 #include	"sendrequest_lib.h"
@@ -47,9 +37,6 @@
 
 #include	"alpaca_defs.h"
 #include	"windowtab_image.h"
-
-
-
 #include	"windowtab_about.h"
 
 
@@ -74,15 +61,18 @@ enum
 
 
 #ifdef _USE_OPENCV_CPP_
-#warning "OpenCV++ not finished"
 //**************************************************************************************
-ControllerImage::ControllerImage(const char	*argWindowName, cv::Mat *downloadedImage)
+ControllerImage::ControllerImage(	const char	*argWindowName,
+									cv::Mat		*downloadedImage,
+									TYPE_BinaryImageHdr	*binaryImageHdr)
 			:Controller(	argWindowName,
 							kWindowWidth,
 							kWindowHeight)
 #else
 //**************************************************************************************
-ControllerImage::ControllerImage(	const char *argWindowName, IplImage *downloadedImage)
+ControllerImage::ControllerImage(	const char	*argWindowName,
+									IplImage	*downloadedImage,
+									TYPE_BinaryImageHdr	*binaryImageHdr)
 			:Controller(	argWindowName,
 							kWindowWidth,
 							kWindowHeight)
@@ -97,6 +87,32 @@ ControllerImage::ControllerImage(	const char *argWindowName, IplImage *downloade
 
 	cImageTabObjPtr		=	NULL;
 	cAboutBoxTabObjPtr	=	NULL;
+
+	//*	deal with the binary image header if it was supplied
+	memset((void *)&cBinaryImageHdr, 0, sizeof(TYPE_BinaryImageHdr));
+	if (binaryImageHdr != NULL)
+	{
+	char	elementTypeStr[32];
+	char	transmitTypeStr[32];
+
+		cBinaryImageHdr	=	*binaryImageHdr;
+
+		GetBinaryElementTypeString(cBinaryImageHdr.ImageElementType,		elementTypeStr);
+		GetBinaryElementTypeString(cBinaryImageHdr.TransmissionElementType,	transmitTypeStr);
+
+		CONSOLE_DEBUG_W_NUM("MetadataVersion        \t=",	cBinaryImageHdr.MetadataVersion);
+		CONSOLE_DEBUG_W_NUM("ErrorNumber            \t=",	cBinaryImageHdr.ErrorNumber);
+		CONSOLE_DEBUG_W_NUM("ClientTransactionID    \t=",	cBinaryImageHdr.ClientTransactionID);
+		CONSOLE_DEBUG_W_NUM("ServerTransactionID    \t=",	cBinaryImageHdr.ServerTransactionID);
+		CONSOLE_DEBUG_W_NUM("DataStart              \t=",	cBinaryImageHdr.DataStart);
+		CONSOLE_DEBUG_W_STR("ImageElementType       \t=",	elementTypeStr);
+		CONSOLE_DEBUG_W_STR("TransmissionElementType\t=",	transmitTypeStr);
+		CONSOLE_DEBUG_W_NUM("Rank                   \t=",	cBinaryImageHdr.Rank);
+		CONSOLE_DEBUG_W_NUM("Dimension1             \t=",	cBinaryImageHdr.Dimension1);
+		CONSOLE_DEBUG_W_NUM("Dimension2             \t=",	cBinaryImageHdr.Dimension2);
+		CONSOLE_DEBUG_W_NUM("Dimension3             \t=",	cBinaryImageHdr.Dimension3);
+	}
+
 
 	SetupWindowControls();
 
@@ -119,8 +135,19 @@ ControllerImage::~ControllerImage(void)
 	CONSOLE_DEBUG(__FUNCTION__);
 	SetWidgetImage(kTab_Image, kImageDisplay_ImageDisplay, NULL);
 #ifdef _USE_OPENCV_CPP_
-	#warning "OpenCV++ not finished"
+	#warning "OpenCV++ not tested"
 	CONSOLE_DEBUG("OpenCV++ not finished!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+	//*	free up the image memory
+	if (cDownLoadedImage != NULL)
+	{
+		delete cDownLoadedImage;
+		cDownLoadedImage	=	NULL;
+	}
+	if (cDisplayedImage != NULL)
+	{
+		delete cDisplayedImage;
+		cDisplayedImage	=	NULL;
+	}
 #else
 	//--------------------------------------------
 	//*	free up the image memory
@@ -393,6 +420,8 @@ size_t	byteCount;
 		{
 			CONSOLE_DEBUG("Error creating image (new cv::Mat)");
 		}
+		//*	Update the image size on the screen
+		SetImageWindowInfo();
 	}
 }
 #else
@@ -518,17 +547,48 @@ size_t	byteCount;
 		{
 
 		}
+		//*	Update the image size on the screen
+		SetImageWindowInfo();
 	}
 }
 #endif // _USE_OPENCV_CPP_
 
+//**************************************************************************************
+void	ControllerImage::SetImageWindowInfo(void)
+{
+char	textString[64];
+int		imgWidth;
+int		imgHeight;
+int		imgChannels;
 
+#ifdef _USE_OPENCV_CPP_
+	imgWidth	=	cDownLoadedImage->cols;
+	imgHeight	=	cDownLoadedImage->rows;
+	imgChannels	=	cDownLoadedImage->step[1];
+
+#else
+	imgWidth	=	cDownLoadedImage->width;
+	imgHeight	=	cDownLoadedImage->height;
+	imgChannels	=	cDownLoadedImage->nChannels;
+#endif // _USE_OPENCV_CPP_
+
+	sprintf(textString, "%4d x %4d", imgWidth, imgHeight);
+	SetWidgetText(kTab_Image, kImageDisplay_FrameCnt, textString);
+
+	sprintf(textString, "ch = %d", imgChannels);
+	SetWidgetText(kTab_Image, kImageDisplay_Exposure, textString);
+}
 #ifdef _USE_OPENCV_CPP_
 #warning "OpenCV++ not finished"
 //**************************************************************************************
 void	ControllerImage::CopyImageToLiveImage(cv::Mat *newOpenCVImage)
 {
 	CONSOLE_DEBUG("OpenCV++ not finished!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+	CONSOLE_DEBUG(__FUNCTION__);
+	//*	this is just an extra check, it was crashing on testing
+	if ((cDownLoadedImage != NULL) && (newOpenCVImage != NULL))
+	{
+	}
 }
 #else
 //**************************************************************************************
@@ -615,12 +675,27 @@ bool	imagesAreTheSame;
 		else
 		{
 //			CONSOLE_DEBUG("Updating image");
-#ifdef _USE_OPENCV_CPP_
-#warning "OpenCV++ not finished"
-
-#else
-			//*	check if width are the same
 			imagesAreTheSame	=	true;
+	#ifdef _USE_OPENCV_CPP_
+		#warning "OpenCV++ not finished"
+			//*	check if width are the same
+			if (newOpenCVImage->cols != cDownLoadedImage->cols)
+			{
+				imagesAreTheSame	=	false;
+				CONSOLE_DEBUG("Failed on width");
+				CONSOLE_DEBUG_W_NUM("newOpenCVImage->cols  \t=",		newOpenCVImage->cols);
+				CONSOLE_DEBUG_W_NUM("cDownLoadedImage->cols\t=",	cDownLoadedImage->cols);
+			}
+			//*	check if height are the same
+			if (newOpenCVImage->rows != cDownLoadedImage->rows)
+			{
+				imagesAreTheSame	=	false;
+				CONSOLE_DEBUG("Failed on height");
+				CONSOLE_DEBUG_W_NUM("newOpenCVImage->rows  \t=",	newOpenCVImage->rows);
+				CONSOLE_DEBUG_W_NUM("cDownLoadedImage->rows\t=",	cDownLoadedImage->rows);
+			}
+	#else
+			//*	check if width are the same
 			if (newOpenCVImage->width != cDownLoadedImage->width)
 			{
 				imagesAreTheSame	=	false;
@@ -661,6 +736,7 @@ bool	imagesAreTheSame;
 				CONSOLE_DEBUG_W_NUM("newOpenCVImage->widthStep  \t=",	newOpenCVImage->widthStep);
 				CONSOLE_DEBUG_W_NUM("cDownLoadedImage->widthStep\t=",	cDownLoadedImage->widthStep);
 			}
+	#endif // _USE_OPENCV_CPP_
 
 			if (imagesAreTheSame)
 			{
@@ -669,6 +745,9 @@ bool	imagesAreTheSame;
 			else
 			{
 				CONSOLE_DEBUG("images are different !!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+	#ifdef _USE_OPENCV_CPP_
+		#warning "OpenCV++ not finished"
+	#else
 				//*	check to see if our temporary image exists
 				if (cColorImage == NULL)
 				{
@@ -687,8 +766,8 @@ bool	imagesAreTheSame;
 					cvCvtColor(newOpenCVImage, cColorImage, CV_GRAY2RGB);
 					CopyImageToLiveImage(cColorImage);
 				}
+	#endif // _USE_OPENCV_CPP_
 			}
-#endif // _USE_OPENCV_CPP_
 			cUpdateWindow	=	true;
 		}
 	}

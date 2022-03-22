@@ -95,19 +95,6 @@
 #include	<sys/time.h>
 
 
-#include	<opencv2/opencv.hpp>
-#include	<opencv2/core.hpp>
-#ifdef _USE_OPENCV_CPP_
-#else
-	#include "opencv/highgui.h"
-	#include "opencv2/highgui/highgui_c.h"
-	#include "opencv2/imgproc/imgproc_c.h"
-	#include "opencv2/core/version.hpp"
-
-	#if (CV_MAJOR_VERSION >= 3)
-		#include "opencv2/imgproc/imgproc.hpp"
-	#endif
-#endif // _USE_OPENCV_CPP_
 
 #include	"discovery_lib.h"
 #include	"helper_functions.h"
@@ -2034,7 +2021,7 @@ cv::Mat		image_roi;
 void	Controller::DrawWidgetImage(TYPE_WIDGET *theWidget, IplImage *theOpenCVimage)
 {
 int			delta;
-cv::Rect		widgetRect;
+cv::Rect	widgetRect;
 
 	if (cOpenCV_Image != NULL)
 	{
@@ -2052,8 +2039,14 @@ cv::Rect		widgetRect;
 			{
 				CONSOLE_DEBUG_W_NUM("Image is too big", theOpenCVimage->width);
 			}
-
+		#if (CV_MAJOR_VERSION == 3)
 			theWidget->roiRect	=	widgetRect;
+		#else
+			theWidget->roiRect.x		=	widgetRect.x;
+			theWidget->roiRect.y		=	widgetRect.y;
+			theWidget->roiRect.width	=	widgetRect.width;
+			theWidget->roiRect.height	=	widgetRect.height;
+		#endif
 			//*	we have to make sure the the destination rect is the same as the src rect
 			//*	if its smaller, then center it
 			if (theOpenCVimage->width < widgetRect.width)
@@ -2119,7 +2112,9 @@ void	Controller::DrawWidgetImage(TYPE_WIDGET *theWidget)
 	}
 	else
 	{
-		CONSOLE_DEBUG("theWidget->openCVimagePtr is null");
+	//	CONSOLE_DEBUG("theWidget->openCVimagePtr is null");
+		cCurrentColor	=	CV_RGB(100, 100, 100);
+		LLD_FillRect(theWidget->left, theWidget->top, theWidget->width, theWidget->height);
 	}
 }
 
@@ -2379,7 +2374,7 @@ int			quality[3] = {16, 200, 0};
 bool		stillNeedsHandled;
 char		currentTabName[64]	=	"";
 
-	CONSOLE_DEBUG_W_HEX("keyPressed\t=", keyPressed);
+//	CONSOLE_DEBUG_W_HEX("keyPressed\t=", keyPressed);
 
 	stillNeedsHandled	=	true;
 

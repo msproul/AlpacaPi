@@ -25,9 +25,13 @@ class ControllerImage: public Controller
 		// Construction
 		//
 			#ifdef _USE_OPENCV_CPP_
-				ControllerImage(const char	*argWindowName, cv::Mat *downloadedImage);
+				ControllerImage(const char	*argWindowName,
+								cv::Mat		*downloadedImage,
+								TYPE_BinaryImageHdr	*binaryImageHdr = NULL);
 			#else
-				ControllerImage(const char	*argWindowName, IplImage *downloadedImage);
+				ControllerImage(const char	*argWindowName,
+								IplImage	*downloadedImage,
+								TYPE_BinaryImageHdr	*binaryImageHdr = NULL);
 			#endif
 
 		virtual	~ControllerImage(void);
@@ -65,10 +69,13 @@ class ControllerImage: public Controller
 				IplImage *cDisplayedImage;
 				IplImage *cColorImage;
 			#endif // _USE_OPENCV_CPP_
+				void	SetImageWindowInfo(void);
+
+				TYPE_BinaryImageHdr		cBinaryImageHdr;
 
 				//*	tab information
-				WindowTabImage		*cImageTabObjPtr;
-				WindowTabAbout		*cAboutBoxTabObjPtr;
+				WindowTabImage			*cImageTabObjPtr;
+				WindowTabAbout			*cAboutBoxTabObjPtr;
 
 				//----------------------------------------------------
 				//*	image information

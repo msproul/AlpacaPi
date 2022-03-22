@@ -1051,6 +1051,7 @@ bool			myBooleanValue;
 void	Controller::UpdateDownloadProgress(const int unitsRead, const int totalUnits)
 {
 	//*	this is to be over loaded if needed
+	CONSOLE_ABORT(__FUNCTION__);
 }
 
 

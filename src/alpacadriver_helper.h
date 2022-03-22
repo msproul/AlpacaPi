@@ -60,6 +60,7 @@ void			AddLibraryVersion(const char *device, const char *manuf, const char *vers
 TYPE_DEVICETYPE	FindDeviceTypeByString(const char *deviceTypeStr);
 void			GetDeviceTypeFromEnum(const int deviceEnum, char *deviceTypeString);
 int				StartExtraListenThread(int exposureListenPort);
+void			GetBinaryElementTypeString(const int elementType, char *typeString);
 
 extern	char		gWebTitle[];
 

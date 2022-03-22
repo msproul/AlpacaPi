@@ -22,23 +22,12 @@
 //*	Jan 14,	2021	<MLS> Focuser controller working with ASCOM/Remote
 //*****************************************************************************
 
-
 #if defined(_ENABLE_CTRL_FOCUSERS_)
 
 #include	<stdio.h>
 #include	<stdlib.h>
 #include	<unistd.h>
 #include	<sys/time.h>
-
-#ifdef _USE_OPENCV_CPP_
-	#include	<opencv2/opencv.hpp>
-#else
-	#include "opencv/highgui.h"
-	#include "opencv2/highgui/highgui_c.h"
-	#include "opencv2/imgproc/imgproc_c.h"
-	#include "opencv2/core/version.hpp"
-#endif // _USE_OPENCV_CPP_
-
 
 #include	"discovery_lib.h"
 #include	"sendrequest_lib.h"

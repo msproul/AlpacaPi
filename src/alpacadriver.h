@@ -52,6 +52,25 @@
 	#include	<arpa/inet.h>
 #endif // _ARPA_INET_H
 
+
+
+#ifdef _USE_OPENCV_CPP_
+	#include	<opencv2/opencv.hpp>
+	#include	<opencv2/core.hpp>
+#else
+	#include	<opencv2/highgui/highgui_c.h>
+	#include	<opencv2/imgproc/imgproc_c.h>
+	#include	<opencv2/core/version.hpp>
+
+	#if (CV_MAJOR_VERSION >= 3)
+		#include	<opencv2/imgproc/imgproc.hpp>
+	#endif
+#endif // _USE_OPENCV_CPP_
+	#include	<opencv2/videoio.hpp>
+
+
+
+
 #ifndef _REQUESTDATA_H_
 	#include	"RequestData.h"
 #endif // _REQUESTDATA_H_

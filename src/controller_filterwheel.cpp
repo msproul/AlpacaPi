@@ -23,26 +23,13 @@
 //*	May 29,	2021	<MLS> Double Click on a filter circle moves to that filter
 //*****************************************************************************
 
-
-
 #ifdef _ENABLE_FILTERWHEEL_CONTROLLER_
-
 
 #include	<stdio.h>
 #include	<stdlib.h>
 #include	<unistd.h>
 
-
-#ifdef _USE_OPENCV_CPP_
-	#include	<opencv2/opencv.hpp>
-#else
-	#include "opencv/highgui.h"
-	#include "opencv2/highgui/highgui_c.h"
-	#include "opencv2/imgproc/imgproc_c.h"
-#endif // _USE_OPENCV_CPP_
-
 #include	"discovery_lib.h"
-
 
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"

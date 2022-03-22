@@ -14,15 +14,19 @@
 
 //=============================================================================
 #include	<opencv2/opencv.hpp>
+#include	<opencv2/core.hpp>
+
 #ifdef _USE_OPENCV_CPP_
 #else
-	#ifndef __OPENCV_OLD_HIGHGUI_H__
-		#include "opencv/highgui.h"
-	#endif
-	#ifndef __OPENCV_HIGHGUI_H__
-		#include "opencv2/highgui/highgui_c.h"
+	#include	<opencv2/highgui/highgui_c.h>
+	#include	<opencv2/imgproc/imgproc_c.h>
+	#include	<opencv2/core/version.hpp>
+
+	#if (CV_MAJOR_VERSION >= 3)
+		#include	<opencv2/imgproc/imgproc.hpp>
 	#endif
 #endif // _USE_OPENCV_CPP_
+	#include	<opencv2/opencv.hpp>
 
 
 #include	"json_parse.h"

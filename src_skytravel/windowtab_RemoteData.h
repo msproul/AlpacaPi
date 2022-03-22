@@ -36,6 +36,8 @@ enum
 #ifdef 	_ENABLE_REMOTE_GAIA_
 
 	kRemoteData_EnableRemoteGAIA,
+	kRemoteData_SQLhelpMsg,
+
 	kRemoteData_SQLserverTxt,
 	kRemoteData_SQLserverValue,
 
@@ -44,12 +46,17 @@ enum
 
 	kRemoteData_SQLusernameTxt,
 	kRemoteData_SQLusernameValue,
-
-
-
-
-
 	kRemoteData_EnableSQLlogging,
+
+	kRemoteData_SQLdatabaseTxt,
+	kRemoteData_SQLdatabase1,
+	kRemoteData_SQLdatabase2,
+	kRemoteData_SQLdatabase3,
+	kRemoteData_SQLdatabase4,
+
+
+
+
 
 	kRemoteData_GaiaReqMode,
 	kRemoteData_GaiaReqMode1x1,

@@ -23,20 +23,9 @@
 //*	Aug 11,	2020	<MLS> Added UpdateDisplayModes() to Preview window
 //*****************************************************************************
 
-
 #include	<stdio.h>
 #include	<stdlib.h>
 #include	<unistd.h>
-
-
-#ifdef _USE_OPENCV_CPP_
-	#include	<opencv2/opencv.hpp>
-#else
-	#include "opencv/highgui.h"
-	#include "opencv2/highgui/highgui_c.h"
-	#include "opencv2/imgproc/imgproc_c.h"
-	#include "opencv2/core/version.hpp"
-#endif // _USE_OPENCV_CPP_
 
 #include	"discovery_lib.h"
 #include	"sendrequest_lib.h"
@@ -45,8 +34,6 @@
 
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
-
-
 
 #include	"windowtab.h"
 #include	"windowtab_preview.h"

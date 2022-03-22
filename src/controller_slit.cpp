@@ -27,15 +27,6 @@
 #include	<unistd.h>
 #include	<sys/time.h>
 
-#ifdef _USE_OPENCV_CPP_
-	#include	<opencv2/opencv.hpp>
-#else
-	#include "opencv/highgui.h"
-	#include "opencv2/highgui/highgui_c.h"
-	#include "opencv2/imgproc/imgproc_c.h"
-	#include "opencv2/core/version.hpp"
-#endif // _USE_OPENCV_CPP_
-
 #include	"alpaca_defs.h"
 #include	"helper_functions.h"
 

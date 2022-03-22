@@ -232,6 +232,29 @@ char	*argumentPtr;
 }
 
 //*****************************************************************************
+void	ControllerCamera::UpdateImageProgressBar(int maxArrayLength)
+{
+//	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG_W_NUM("cImageArrayIndex\t=", cImageArrayIndex);
+
+	//=================================================
+	//*	deal with the progress bar
+	tCurrentMillisecs	=	millis();
+	tDeltaMillisecs		=	tCurrentMillisecs - tStartMillisecs;
+	//*	dont do anything at first, for short downloads it slows things down
+	if (tDeltaMillisecs > 1500)
+	{
+		tDeltaMillisecs	=	tCurrentMillisecs - tLastUpdateMillisecs;
+		if (tDeltaMillisecs > 250)
+		{
+			UpdateDownloadProgress(cImageArrayIndex, maxArrayLength);
+			tLastUpdateMillisecs	=	tCurrentMillisecs;
+		}
+	}
+}
+
+
+//*****************************************************************************
 //*
 //*	returns the RANK of the data found, 0 means no valid RANK
 //*****************************************************************************
@@ -502,27 +525,6 @@ int		byte2;
 }
 #endif // 0
 
-
-//*****************************************************************************
-void	ControllerCamera::UpdateImageProgressBar(int maxArrayLength)
-{
-
-	//=================================================
-	//*	deal with the progress bar
-	tCurrentMillisecs	=	millis();
-	tDeltaMillisecs		=	tCurrentMillisecs - tStartMillisecs;
-	//*	dont do anything at first, for short downloads it slows things down
-	if (tDeltaMillisecs > 1500)
-	{
-		tDeltaMillisecs	=	tCurrentMillisecs - tLastUpdateMillisecs;
-		if (tDeltaMillisecs > 250)
-		{
-			UpdateDownloadProgress(cImageArrayIndex, maxArrayLength);
-			tLastUpdateMillisecs	=	tCurrentMillisecs;
-		}
-	}
-}
-
 //*****************************************************************************
 void	ControllerCamera::AlpacaGetImageArray_Binary_Byte(	TYPE_ImageArray	*imageArray,
 															int				arrayLength)
@@ -530,7 +532,6 @@ void	ControllerCamera::AlpacaGetImageArray_Binary_Byte(	TYPE_ImageArray	*imageAr
 int				binaryDataValue;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
-//	CONSOLE_DEBUG_W_NUM("cBinaryImageHdr.Rank\t=", cBinaryImageHdr.Rank);
 
 	if (cBinaryImageHdr.Rank == 3)
 	{
@@ -595,6 +596,9 @@ int				dataByteIdx;
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG_W_NUM("arrayLength\t\t\t=",	arrayLength);
 
+	tStartMillisecs			=	millis();
+	tLastUpdateMillisecs	=	tStartMillisecs;
+
 	imgRank		=	0;
 	cRGBidx		=	0;
 	dataByteIdx	=	0;
@@ -650,6 +654,7 @@ int				dataByteIdx;
 			case kAlpacaImageData_Double:
 			case kAlpacaImageData_Single:
 			case kAlpacaImageData_Decimal:
+				CONSOLE_DEBUG("Specified Binary mode not implemented yet")
 //				LogEvent(	"camera",
 //							"Binary Download",
 //							NULL,
@@ -661,7 +666,8 @@ int				dataByteIdx;
 				AlpacaGetImageArray_Binary_Byte(imageArray, arrayLength);
 				break;
 
-		//	case kAlpacaImageData_Int64:
+			case kAlpacaImageData_Int64:
+				CONSOLE_DEBUG("Specified Binary mode not implemented yet")
 				break;
 
 			case kAlpacaImageData_Int16:

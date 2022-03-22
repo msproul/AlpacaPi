@@ -7,14 +7,6 @@
 //*	Feb 19,	2022	<MLS> Moonlite logos working with C++ version of openCV
 //*****************************************************************************
 
-#ifdef _USE_OPENCV_CPP_
-	#include	<opencv2/opencv.hpp>
-#else
-	#include "opencv/highgui.h"
-	#include "opencv2/highgui/highgui_c.h"
-	#include "opencv2/imgproc/imgproc_c.h"
-#endif // _USE_OPENCV_CPP_
-
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
 
@@ -123,12 +115,15 @@ IplImage	*myImage;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
+#if (CV_MAJOR_VERSION <= 3)
 	myImage	=	cvLoadImage("logos/Moonlite-logo.png", CV_LOAD_IMAGE_COLOR);
+#else
+	myImage	=	NULL;
+#endif
 	if (myImage == NULL)
 	{
 		CONSOLE_DEBUG("failed to load Moonlite-logo.png");
 	}
-
 	return(myImage);
 }
 #endif // _USE_OPENCV_CPP_

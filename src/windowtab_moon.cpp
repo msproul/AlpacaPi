@@ -178,7 +178,7 @@ int		myButtonWidth;
 
 #ifdef _USE_OPENCV_CPP_
 	#warning "OpenCV++ not finished"
-#else
+#elif (CV_MAJOR_VERSION <= 3)
 	cMoonImage	=	cvLoadImage("moon_fits/moon.jpg", CV_LOAD_IMAGE_COLOR);
 	if (cMoonImage != NULL)
 	{

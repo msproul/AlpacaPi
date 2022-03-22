@@ -34,20 +34,9 @@
 
 #ifdef _ENABLE_CTRL_CAMERA_
 
-
-
 #include	<stdio.h>
 #include	<stdlib.h>
 #include	<unistd.h>
-
-#ifdef _USE_OPENCV_CPP_
-	#include	<opencv2/opencv.hpp>
-#else
-	#include "opencv/highgui.h"
-	#include "opencv2/highgui/highgui_c.h"
-	#include "opencv2/imgproc/imgproc_c.h"
-#endif // _USE_OPENCV_CPP_
-
 
 #include	"discovery_lib.h"
 #include	"sendrequest_lib.h"
@@ -628,6 +617,8 @@ void	ControllerCamNormal::UpdateDownloadProgress(const int unitsRead, const int 
 {
 double	newProgressValue;
 
+	CONSOLE_DEBUG(__FUNCTION__);
+
 	newProgressValue	=	1.0 * unitsRead / totalUnits;
 
 	if (newProgressValue < cPrevProgessValue)
@@ -643,18 +634,19 @@ double	newProgressValue;
 		SetWidgetProgress(kTab_Camera, kCameraBox_ErrorMsg, unitsRead, totalUnits);
 		cUpdateWindow	=	true;
 		cv::waitKey(1);
+		cv::waitKey(5);
 
 		cProgressReDraws++;
 
 		cPrevProgessValue	=	newProgressValue;
 	}
 
-//	if (newProgressValue > 0.9999)
-//	{
-//		CONSOLE_DEBUG_W_DBL("newProgressValue\t=", newProgressValue);
-//		CONSOLE_DEBUG_W_NUM("cProgressUpdates\t=", cProgressUpdates);
-//		CONSOLE_DEBUG_W_NUM("cProgressReDraws\t=", cProgressReDraws);
-//	}
+	if (newProgressValue > 0.9999)
+	{
+		CONSOLE_DEBUG_W_DBL("newProgressValue\t=", newProgressValue);
+		CONSOLE_DEBUG_W_NUM("cProgressUpdates\t=", cProgressUpdates);
+		CONSOLE_DEBUG_W_NUM("cProgressReDraws\t=", cProgressReDraws);
+	}
 }
 
 //*****************************************************************************

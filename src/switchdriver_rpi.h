@@ -56,6 +56,7 @@ class SwitchDriverRPi: public SwitchDriver
 
 };
 
+//*	Moved to raspberrypi_relaylib.h
 //#ifdef _ENABLE_4REALY_BOARD
 ////	https://smile.amazon.com/gp/product/B077LV4F1B/ref=ppx_yo_dt_b_asin_title_o01_s00?ie=UTF8&psc=1
 ////	https://shop.sb-components.co.uk/products/pirelay-relay-board-shield-for-raspberry-pi
@@ -84,7 +85,7 @@ class SwitchDriverRPi: public SwitchDriver
 //	#define	kHWpin_Channel7	99
 //	#define	kHWpin_Channel8	99
 //
-//#define	kR_Pi_SwitchCount	4
+//	#define	kR_Pi_SwitchCount	4
 //
 //	//*	some boards are reverse logic so we have to do it this way
 //	#define		TURN_PIN_ON		1
@@ -102,7 +103,7 @@ class SwitchDriverRPi: public SwitchDriver
 //	#define	kHWpin_Channel7	21
 //	#define	kHWpin_Channel8	26
 //
-//#define	kR_Pi_SwitchCount	8
+//	#define	kR_Pi_SwitchCount	8
 //
 //	//*	some boards are reverse logic so we have to do it this way
 //	#define		TURN_PIN_ON		0

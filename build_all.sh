@@ -1,3 +1,4 @@
+#!/bin/bash
 ###############################################################################
 #	Due to all of the inter dependencies of these files,
 #	each one has to do a "make clean"
@@ -11,7 +12,8 @@
 date
 RASPPI=false
 PI64=false
-OPENCV_OK=false
+OPENCV_V3_OK=false
+OPENCV_V4_OK=false
 
 FILE_SEP_NAME="xxxxxxxxxxxxxxx"
 
@@ -49,7 +51,7 @@ OPENCV_INCLUDE="/usr/include/opencv"
 
 if [ -d $OPENCV_INCLUDE ]
 then
-	OPENCV_OK=true
+	OPENCV_V3_OK=true
 	echo "Open CV found at $OPENCV_INCLUDE" >> $LOGFILENAME
 else
 
@@ -60,22 +62,22 @@ fi
 if [ -d "/usr/local/include/opencv" ]
 then
 	OPENCV_INCLUDE="/usr/local/include/opencv"
-	OPENCV_OK=true
+	OPENCV_V3_OK=true
 	echo "Open CV found at $OPENCV_INCLUDE" >> $LOGFILENAME
 fi
 
 if [ -d "/usr/include/opencv2" ]
 then
 	OPENCV_INCLUDE="/usr/include/opencv2"
-	OPENCV_OK=true
+	OPENCV_V3_OK=true
 	echo "Open CV found at $OPENCV_INCLUDE" >> $LOGFILENAME
 fi
 
 if [ -d "/usr/include/opencv4" ]
 then
 	OPENCV_INCLUDE="/usr/include/opencv4"
-	OPENCV_OK=true
-	echo "Open CV found at $OPENCV_INCLUDE" >> $LOGFILENAME
+	OPENCV_V4_OK=true
+	echo "Open CV Version 4 found at $OPENCV_INCLUDE" >> $LOGFILENAME
 fi
 
 #################################################
@@ -94,9 +96,9 @@ echo "Platform = $PLATFORM"
 echo "*************************************************** making client"
 make clean client  >/dev/null
 
-################################
+########################################################################
 # if openCV is present, we can compile the clients
-if $OPENCV_OK
+if $OPENCV_V3_OK
 then
 	rm camera
 	rm domectrl
@@ -143,6 +145,7 @@ else
 fi
 
 
+########################################################################
 if $PI64
 then
 	echo "Building alpacapi server for 64 bit Raspberry Pi" >> $LOGFILENAME
@@ -216,7 +219,8 @@ then
 fi
 
 
-if $OPENCV_OK
+########################################################################
+if $OPENCV_V3_OK
 then
 	##############################################
 	#	lets try sky travel

@@ -61,23 +61,6 @@
 	#include	"alpacadriver.h"
 #endif
 
-#ifdef _USE_OPENCV_
-	#ifdef _USE_OPENCV_CPP_
-		#include	<opencv2/opencv.hpp>
-	#else
-//		#include "opencv/highgui.h"
-//		#include "opencv2/highgui/highgui_c.h"
-//		#include "opencv2/imgproc/imgproc_c.h"
-//		#include "opencv2/core/version.hpp"
-		#ifndef __OPENCV_OLD_HIGHGUI_H__
-			#include "opencv/highgui.h"
-		#endif
-		#ifndef __OPENCV_HIGHGUI_H__
-			#include "opencv2/highgui/highgui_c.h"
-		#endif
-	#endif // _USE_OPENCV_CPP_
-#endif
-
 #if defined(_ENABLE_FILTERWHEEL_) || defined(_ENABLE_FILTERWHEEL_ZWO_) || defined(_ENABLE_FILTERWHEEL_ATIK_)
 	#include	"filterwheeldriver.h"
 #endif

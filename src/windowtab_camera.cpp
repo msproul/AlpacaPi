@@ -624,7 +624,9 @@ int		camLogoIdx;
 		logoImagePtr	=	&gCameraLogoImage[camLogoIdx];
 	}
 #else
+	#if (CV_MAJOR_VERSION <= 3)
 	logoImagePtr	=	cvLoadImage(logoImagePath,		CV_LOAD_IMAGE_COLOR);
+	#endif
 #endif // _USE_OPENCV_CPP_
 
 //	CONSOLE_DEBUG_W_HEX("Calling SetWidgetImage() with logoImagePtr=", logoImagePtr);
@@ -650,25 +652,36 @@ void	WindowTabCamera::SetTempartueDisplayEnable(bool enabled)
 //*****************************************************************************
 void	WindowTabCamera::ProcessButtonClick(const int buttonIdx)
 {
-bool		validData;
-char		dataString[64];
-int			fwPosition;
-bool		weHadToWait;
+bool				validData;
+char				dataString[64];
+int					fwPosition;
+bool				weHadToWait;
 ControllerCamera	*myCameraController;
+//uint32_t			currentMillis;
+uint32_t			startMillis;
+uint32_t			deltaMilliSecs;
+int					loopCntr;
 
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 
 	myCameraController	=	(ControllerCamera *)cParentObjPtr;
-	weHadToWait	=	false;
-	while (myCameraController->cBackgroundTaskActive)
+	weHadToWait			=	false;
+	loopCntr			=	0;
+	deltaMilliSecs		=	0;
+	startMillis			=	millis();
+	while ((myCameraController->cBackgroundTaskActive) && (deltaMilliSecs < 5000))
 	{
 		weHadToWait	=	true;
 		CONSOLE_DEBUG("Waiting for background task");
 		usleep(2000);
+		deltaMilliSecs	=	millis() - startMillis;
+		loopCntr++;
 	}
 	if (weHadToWait)
 	{
 		CONSOLE_DEBUG("DONE Waiting!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+		CONSOLE_DEBUG_W_NUM("loopCntr\t=", loopCntr);
 	}
 
 	SetWidgetText(kCameraBox_ErrorMsg, "");
@@ -1184,6 +1197,7 @@ char				fileName[256];
 			}
 #else
 
+		#if (CV_MAJOR_VERSION <= 3)
 			openCVerr	=	cvSaveImage(fileName, myDownLoadedImage, quality);
 			if (openCVerr == 0)
 			{
@@ -1196,12 +1210,17 @@ char				fileName[256];
 				errorMsgPtr	=	(char *)cvErrorStr(openCVerrorCode);
 				CONSOLE_DEBUG_W_STR("errorMsgPtr\t=", errorMsgPtr);
 			}
+		#endif
 #endif // _USE_OPENCV_CPP_
 
 
 #ifdef _ENABLE_CTRL_IMAGE_
+ControllerCamera	*parentCameraController;
 			//*	this will open a new window with the image displayed
-			new ControllerImage(cDownLoadedFileNameRoot, myDownLoadedImage);
+			parentCameraController	=	(ControllerCamera *)cParentObjPtr;
+			new ControllerImage(	cDownLoadedFileNameRoot,
+									myDownLoadedImage,
+									&parentCameraController->cBinaryImageHdr);
 #else
 			cvReleaseImage(&myDownLoadedImage);
 #endif // _ENABLE_CTRL_IMAGE_

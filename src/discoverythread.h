@@ -36,9 +36,6 @@ int		StartDiscoveryQuerryThread(void);
 void	Discovery_ClearIPAddrList(void);
 void	ResetExternalIPaddress(void);
 
-
-int	GetMySubnetNumber(void);
-
 //-bool	GetJsonResponse(	struct sockaddr_in	*deviceAddress,
 //-							const int			port,
 //-							const char			*sendData,

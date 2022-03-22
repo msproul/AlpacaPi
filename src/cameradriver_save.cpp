@@ -43,19 +43,6 @@
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
 
-
-
-#ifdef _USE_OPENCV_
-	#ifdef _USE_OPENCV_CPP_
-		#include	<opencv2/opencv.hpp>
-	#else
-		#include "opencv/highgui.h"
-		#include "opencv2/highgui/highgui_c.h"
-		#include "opencv2/imgproc/imgproc_c.h"
-		#include "opencv2/core/version.hpp"
-	#endif // _USE_OPENCV_CPP_
-#endif
-
 #if defined(_JETSON_) && defined(_FIND_STARS_)
 	#include	"imageprocess_orb.h"
 #endif // _JETSON_
@@ -355,6 +342,9 @@ int			quality[3] = {16, 200, 0};
 			strcat(imageFilePath, imageFileName);
 
 			strcpy(cLastJpegImageName, imageFilePath);	//*	save the full image path for the web server
+		#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
+			#warning "OpenCV++ not finished"
+		#else
 			openCVerr	=	cvSaveImage(imageFilePath, cOpenCV_ImagePtr, quality);
 			if (openCVerr == 1)
 			{
@@ -364,6 +354,7 @@ int			quality[3] = {16, 200, 0};
 			{
 				CONSOLE_DEBUG_W_NUM("cvSaveImage (jpg) failed, returned\t=", openCVerr);
 			}
+		#endif
 		}
 	#ifdef _ENABLE_PNG_
 		if (cOpenCV_ImagePtr->depth == 16)

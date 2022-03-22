@@ -28,8 +28,10 @@
 //*	Jan 25,	2022	<MLS> Changed UpdateSkyTravelView() to use degrees
 //*	Jan 25,	2022	<MLS> Fixed 0 <-> 360 boundary bug in CalcRA_DEC_Distance_Deg()
 //*	Feb 11,	2022	<MLS> Added CheckSQLconfiguration()
-//*	Feb 12,	2022	<MLS> Added GetGAIAdataFromIDnumber()
+//*	Feb 12,	2022	<MLS> Added GetSQLdataFromIDnumber()
 //*	Feb 22,	2022	<KAS> Fixed dangling result that caused the server to log an error
+//*	Mar 13,	2022	<MLS> Added support for multiple database names
+//*	Mar 14,	2022	<MLS> Starting to make SQL routines more generic, i.e. remove "GAIA"
 //*****************************************************************************
 //*	sudo apt-get install libmysqlclient-dev		<<<< Use this one
 //*	sudo apt-get install libmariadb-dev
@@ -66,10 +68,10 @@
 #define	_XREF_AAVSO_
 
 char	gSQLsever_IPaddr[32]	=	"";
-int		gSQLsever_Port			=	0;
+int		gSQLsever_Port			=	3306;
 char	gSQLsever_UserName[32]	=	"";
 char	gSQLsever_Password[32]	=	"";
-char	gSQLsever_Database[32]	=	"";
+char	gSQLsever_Database[32]	=	"gaia";
 
 int		gSQLerror_Count			=	0;
 char	gSQLsever_StatusMsg[128]=	"";
@@ -78,32 +80,40 @@ bool	gSQLsever_MsgUpdated	=	false;
 bool	gEnableSQLlogging		=	true;
 
 
-static		pthread_t	gGaiaSQL_ThreadID			=	-1;
-static		bool		gGaiaSQL_ThreadIsRunning	=	false;
-static		bool		gGaiaSQL_KeepRunning		=	false;
+static			pthread_t	gSQL_ThreadID			=	-1;
+static			bool		gSQL_ThreadIsRunning	=	false;
+static			bool		gSQL_KeepRunning		=	false;
 
-TYPE_GAIA_REMOTE_DATA	gGaiaDataList[kMaxGaiaDataSets];
-static			bool	gGaiaDataListNeedsInit		=	true;
-static			bool	gSkyTravelUpdateOccured		=	false;
-static			int		gGaiaSQLsequenceNum			=	0;
-static			int		gGaiaStartThreadCnt			=	0;
+TYPE_GAIA_REMOTE_DATA		gGaiaDataList[kMaxGaiaDataSets];
+static			bool		gGaiaDataListNeedsInit		=	true;
+static			bool		gSkyTravelUpdateOccured		=	false;
+static			int			gGaiaSQLsequenceNum			=	0;
+static			int			gGaiaStartThreadCnt			=	0;
+
+TYPE_DATABASE_NAME			gDataBaseNames[kMaxDataBaseNames];
+				int			gDataBaseNameCnt			=	0;
+
 
 //-void	LogSqlTransaction(char *sqlCommand, char *results);
 void	LogSqlTransaction(const char *sqlCommand, const char *results);
 
 
 //*****************************************************************************
-static	void ProcessSQLserverLine(char *lineBuff)
+//*	returns false if the keyword was not valid
+//*****************************************************************************
+static	bool ProcessSQLserverLine(char *lineBuff)
 {
 char	keyword[32];
 int		iii;
 int		ccc;
 int		slen;
 char	*valueStrPtr;
+bool	validEntry;
 
-	iii		=	0;
-	ccc		=	0;
-	slen	=	strlen(lineBuff);
+	iii			=	0;
+	ccc			=	0;
+	validEntry	=	true;
+	slen		=	strlen(lineBuff);
 	while ((iii<slen) && (ccc < 31) && (lineBuff[iii] > 0x20))
 	{
 		keyword[ccc]	=	lineBuff[iii];
@@ -121,6 +131,7 @@ char	*valueStrPtr;
 			valueStrPtr++;
 		}
 
+		//*	look for the supported keywords
 		if (strcasecmp(keyword, "server") == 0)
 		{
 			strcpy(gSQLsever_IPaddr, valueStrPtr);
@@ -137,11 +148,26 @@ char	*valueStrPtr;
 		{
 			strcpy(gSQLsever_Password, valueStrPtr);
 		}
-		else if (strcasecmp(keyword, "gaia_database") == 0)
+		else if (strcasecmp(keyword, "database") == 0)
 		{
-			strcpy(gSQLsever_Database, valueStrPtr);
+			//*	this is an entry to the list of possible data bases
+//			CONSOLE_DEBUG_W_STR("database name\t=",		valueStrPtr);
+			if (gDataBaseNameCnt < kMaxDataBaseNames)
+			{
+				strcpy(gDataBaseNames[gDataBaseNameCnt].Name, valueStrPtr);
+				gDataBaseNameCnt++;
+			}
+//			else
+//			{
+//				CONSOLE_ABORT(__FUNCTION__);
+//			}
+		}
+		else
+		{
+			validEntry	=	false;
 		}
 	}
+	return(	validEntry);
 }
 
 //*****************************************************************************
@@ -178,17 +204,23 @@ bool			configOK;
 //*****************************************************************************
 static bool	ReadSQLconfigFile(void)
 {
-FILE			*filePointer;
-char			lineBuff[256];
-int				iii;
-int				slen;
-char			fileName[]	=	"sqlserver.txt";
-bool			configOK;
+FILE	*filePointer;
+char	lineBuff[256];
+int		iii;
+int		slen;
+bool	configOK;
+bool	validEntry;
 
 	CONSOLE_DEBUG(__FUNCTION__);
+	//*	set the database name list to all zeros
+	for (iii=0; iii<kMaxGaiaDataSets; iii++)
+	{
+		memset((void *)&gDataBaseNames[iii], 0, sizeof(TYPE_DATABASE_NAME));
+	}
+
 	configOK	=	false;
 	//*	check for the sql server settings file
-	filePointer	=	fopen(fileName, "r");
+	filePointer	=	fopen(kSQLserverConfigFile, "r");
 	if (filePointer != NULL)
 	{
 		while (fgets(lineBuff, 200, filePointer))
@@ -206,14 +238,37 @@ bool			configOK;
 			slen	=	strlen(lineBuff);
 			if ((slen > 3) && (lineBuff[0] != '#'))
 			{
-				ProcessSQLserverLine(lineBuff);
+				validEntry	=	ProcessSQLserverLine(lineBuff);
+				if (validEntry == false)
+				{
+					CONSOLE_DEBUG_W_STR("SQL Config file contains invalid data:", lineBuff);
+				}
 			}
 
 		}
 		//*	check the configuration, makes sure that all the required parameters were specified
 		configOK	=	CheckSQLconfiguration();
 		fclose(filePointer);
+
+		//*	set the current database to the first one in the list
 	}
+	else
+	{
+		strcpy(gDataBaseNames[0].Name, "gaia");
+		gDataBaseNameCnt	=	1;
+	}
+	if (gDataBaseNameCnt > 0)
+	{
+		strcpy(gSQLsever_Database, gDataBaseNames[0].Name);
+	}
+	CONSOLE_DEBUG("--------------------------------");
+	for (iii=0; iii<gDataBaseNameCnt; iii++)
+	{
+		CONSOLE_DEBUG_W_STR("Database name\t=", gDataBaseNames[iii].Name);
+	}
+
+	CONSOLE_DEBUG_W_NUM("gDataBaseNameCnt\t=", gDataBaseNameCnt);
+//	CONSOLE_ABORT(__FUNCTION__);
 
 	return(configOK);
 }
@@ -227,9 +282,10 @@ bool	configOK;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 	configOK	=	ReadSQLconfigFile();
+	//*	set the Gaia data list to all zeros
 	for (iii=0; iii<kMaxGaiaDataSets; iii++)
 	{
-		memset(&gGaiaDataList[iii], 0, sizeof(TYPE_GAIA_REMOTE_DATA));
+		memset((void *)&gGaiaDataList[iii], 0, sizeof(TYPE_GAIA_REMOTE_DATA));
 	}
 	gGaiaDataListNeedsInit	=	false;
 	return(configOK);
@@ -671,7 +727,7 @@ unsigned int	endMilliSecs;
 
 //*****************************************************************************
 //*****************************************************************************
-bool	GetGAIAdataFromIDnumber(const char *gaiaIDnumberStr, TYPE_CelestData *gaiaData)
+bool	GetSQLdataFromIDnumber(const char *gaiaIDnumberStr, TYPE_CelestData *gaiaData)
 {
 int				recNum;
 TYPE_CelestData	localStarData;
@@ -689,7 +745,7 @@ bool			validFlag;
 
 	CONSOLE_DEBUG("-------------------------------------------------------------");
 	CONSOLE_DEBUG(__FUNCTION__);
-	CONSOLE_DEBUG_W_STR("Searching GAIA for", gaiaIDnumberStr);
+	CONSOLE_DEBUG_W_STR("Searching SQL database for", gaiaIDnumberStr);
 
 	recNum		=	0;
 
@@ -715,7 +771,8 @@ bool			validFlag;
 								gSQLsever_Database, 0, NULL, 0) != NULL)
 		{
 			CONSOLE_DEBUG_W_STR("Successfully connected to", gSQLsever_IPaddr);
-			sprintf(mySQLCmd,"call GetGaiaSourceID(%s);", gaiaIDnumberStr);
+		//	sprintf(mySQLCmd,"call GetGaiaSourceID(%s);", gaiaIDnumberStr);
+			sprintf(mySQLCmd,"call GetStarFromID(%s);", gaiaIDnumberStr);
 			CONSOLE_DEBUG(mySQLCmd);
 			CONSOLE_DEBUG("Calling Querry_mySQL_cmd()");
 
@@ -1011,7 +1068,7 @@ int		requestStarted;
 
 	if ((viewAngle_Degrees < 5.0) && (dec_Degrees < 90.0) && (dec_Degrees >= -90.0))
 	{
-		if (gST_DispOptions.RemoteGAIAenabled && (gGaiaSQL_ThreadIsRunning == false))
+		if (gST_DispOptions.RemoteGAIAenabled && (gSQL_ThreadIsRunning == false))
 		{
 			CONSOLE_DEBUG("**************************************************************");
 			CONSOLE_DEBUG("Calling StartGaiaSQLthread()");
@@ -1124,8 +1181,8 @@ unsigned int	startMilliSecs;
 unsigned int	endMilliSecs;
 bool			requestOccured;
 
-	gGaiaSQL_ThreadIsRunning	=	true;
-	while (gGaiaSQL_KeepRunning)
+	gSQL_ThreadIsRunning	=	true;
+	while (gSQL_KeepRunning)
 	{
 		//*
 		if (gST_DispOptions.RemoteGAIAenabled && gSkyTravelUpdateOccured)
@@ -1214,7 +1271,7 @@ bool			requestOccured;
 		//	CONSOLE_DEBUG("Awake");
 		}
 	}
-	gGaiaSQL_ThreadIsRunning	=	false;
+	gSQL_ThreadIsRunning	=	false;
 	return(NULL);
 }
 
@@ -1247,13 +1304,13 @@ bool	configOK;
 	configOK	=	CheckSQLconfiguration();
 	if (configOK)
 	{
-		if (gGaiaSQL_ThreadIsRunning == false)
+		if (gSQL_ThreadIsRunning == false)
 		{
 			LogSQLuser();
 
 			CONSOLE_DEBUG("Staring Gaia SQL Thread");
-			gGaiaSQL_KeepRunning	=	true;
-			threadErr	=	pthread_create(	&gGaiaSQL_ThreadID,
+			gSQL_KeepRunning	=	true;
+			threadErr	=	pthread_create(	&gSQL_ThreadID,
 											NULL,
 											&GaiaSQL_Thead,
 											NULL);
@@ -1264,12 +1321,12 @@ bool	configOK;
 
 				//*	sleep a little so the thread has a chance to get running
 				loopCnt	=	0;
-				while ((gGaiaSQL_ThreadIsRunning == false) && (loopCnt < 200))
+				while ((gSQL_ThreadIsRunning == false) && (loopCnt < 200))
 				{
 					usleep(5000);
 					loopCnt++;
 				}
-				CONSOLE_DEBUG_W_NUM("gGaiaSQL_ThreadIsRunning\t=", gGaiaSQL_ThreadIsRunning);
+				CONSOLE_DEBUG_W_NUM("gSQL_ThreadIsRunning\t=", gSQL_ThreadIsRunning);
 				CONSOLE_DEBUG_W_NUM("loopCnt\t\t\t=", loopCnt);
 
 			}
@@ -1298,8 +1355,7 @@ bool	configOK;
 //*****************************************************************************
 void	StopGaiaSQLthread(void)
 {
-	gGaiaSQL_KeepRunning	=	false;
-
+	gSQL_KeepRunning	=	false;
 }
 #endif // _INCLUDE_GAIA_MAIN_
 

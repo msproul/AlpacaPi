@@ -45,7 +45,7 @@
 //*	Apr 20,	2021	<MLS> Added Telescope_FindHome(), Telescope_SetPark()
 //*	Apr 20,	2021	<MLS> Added Telescope_SlewToAltAz(), Telescope_UnPark()
 //*	Apr 21,	2021	<MLS> Finished stubbing out the routines need in the subclass
-//*	Feb 28,	2022	<MLS> Updated Put_SyncToAltAz() to return kASCOM_Err_InvalidOperation if tracking is false
+//*	Feb 28,	2022	<MLS> Put_SyncToAltAz() now returns InvalidOperation if tracking is false
 //*	Feb 28,	2022	<MLS> Added cDriverSupportsRefraction
 //*	Mar  2,	2022	<MLS> Setting Connected now working for telescope driver
 //*****************************************************************************

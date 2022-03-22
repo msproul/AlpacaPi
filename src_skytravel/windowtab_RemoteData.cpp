@@ -22,6 +22,7 @@
 //*	Jan  6,	2022	<MLS> Started working on Remote GAIA sql server interface
 //*	Jan 19,	2022	<MLS> Added SQL logging enable/disable
 //*	Feb 10,	2022	<MLS> Added 1x1, 3x1, and 3x3 gaia request modes
+//*	Mar 13,	2022	<MLS> Added radio buttons for different SQL databases
 //*****************************************************************************
 
 
@@ -144,8 +145,9 @@ int		iii;
 
 	xLoc		=	5;
 
+#define		kFullBoxWidth	600
 
-	SetWidget(				kRemoteData_StatusMsg,	xLoc,	yLoc,	550,		cTitleHeight);
+	SetWidget(				kRemoteData_StatusMsg,	xLoc,	yLoc,	kFullBoxWidth,		cTitleHeight);
 	SetWidgetType(			kRemoteData_StatusMsg,	kWidgetType_TextBox);
 	SetWidgetFont(			kRemoteData_StatusMsg,	kFont_TextList);
 	SetWidgetJustification(	kRemoteData_StatusMsg,	kJustification_Left);
@@ -157,26 +159,34 @@ int		iii;
 int		xLoc2;
 int		valueWitdth4;
 int		fullBoxWidth;
-
+char	helpMsg[128];
+int		dbNumber;
 	yLoc			+=	20;
-	valueWitdth1	=	200;
-	valueWitdth2	=	350;
+	valueWitdth1	=	150;
+	valueWitdth2	=	kFullBoxWidth - valueWitdth1;
 	fullBoxWidth	=	valueWitdth1 + valueWitdth2;
 	xLoc2			=	xLoc + valueWitdth1 + 2;
-	SetWidget(		kRemoteData_EnableRemoteGAIA,	xLoc,	yLoc,	(valueWitdth1 + valueWitdth2),		cSmallBtnHt);
+	SetWidget(		kRemoteData_EnableRemoteGAIA,	xLoc,	yLoc,	fullBoxWidth,		cSmallBtnHt);
 	SetWidgetType(	kRemoteData_EnableRemoteGAIA,	kWidgetType_CheckBox);
 	SetWidgetFont(	kRemoteData_EnableRemoteGAIA,	kFont_Medium);
 	SetWidgetText(	kRemoteData_EnableRemoteGAIA,	"Enable Remote GAIA SQL Server");
 	SetWidgetBorder(kRemoteData_EnableRemoteGAIA,	false);
 
-	yLoc			+=	cSmallBtnHt;
-	yLoc			+=	2;
+	yLoc	+=	cSmallBtnHt;
+	yLoc	+=	2;
 
-	iii	=	kRemoteData_SQLserverTxt;
+	SetWidget(		kRemoteData_SQLhelpMsg,	xLoc,	yLoc,	fullBoxWidth + 2,		cSmallBtnHt);
+	SetWidgetType(	kRemoteData_SQLhelpMsg,	kWidgetType_TextBox);
+	SetWidgetFont(	kRemoteData_SQLhelpMsg,	kFont_Medium);
+	sprintf(helpMsg, "Edit %s to change these settings", kSQLserverConfigFile);
+	SetWidgetText(	kRemoteData_SQLhelpMsg,	helpMsg);
+	yLoc	+=	cSmallBtnHt;
+	yLoc	+=	2;
+
+	iii		=	kRemoteData_SQLserverTxt;
 
 	while (iii < kRemoteData_EnableSQLlogging)
 	{
-
 		SetWidget(				iii,	xLoc,	yLoc,	valueWitdth1,		cSmallBtnHt);
 		SetWidgetType(			iii,	kWidgetType_TextBox);
 		SetWidgetFont(			iii,	kFont_Medium);
@@ -200,6 +210,48 @@ int		fullBoxWidth;
 	SetWidgetNumber(	kRemoteData_SQLportValue,		gSQLsever_Port);
 	SetWidgetText(		kRemoteData_SQLusernameValue,	gSQLsever_UserName);
 
+	//----------------------------------------------------------------------
+	//*	now deal with the data base entries
+	SetWidget(				kRemoteData_SQLdatabaseTxt,	xLoc,	yLoc,	valueWitdth1,		cSmallBtnHt);
+	SetWidgetType(			kRemoteData_SQLdatabaseTxt,	kWidgetType_TextBox);
+	SetWidgetFont(			kRemoteData_SQLdatabaseTxt,	kFont_Medium);
+	SetWidgetJustification(	kRemoteData_SQLdatabaseTxt,	kJustification_Left);
+	SetWidgetText(			kRemoteData_SQLdatabaseTxt,	"database:");
+
+	valueWitdth4	=	(fullBoxWidth - valueWitdth1 - 6) / 4;
+	dbNumber		=	0;
+	iii				=	kRemoteData_SQLdatabase1;
+	CONSOLE_DEBUG_W_NUM("gDataBaseNameCnt\t=", gDataBaseNameCnt);
+	while (iii <= kRemoteData_SQLdatabase4)
+	{
+		SetWidget(				iii,	xLoc2,	yLoc,	valueWitdth4,		cSmallBtnHt);
+		SetWidgetType(			iii,	kWidgetType_RadioButton);
+		SetWidgetFont(			iii,	kFont_Medium);
+		SetWidgetJustification(	iii,	kJustification_Left);
+		SetWidgetText(			iii,	"--");
+		if (dbNumber < gDataBaseNameCnt)
+		{
+			CONSOLE_DEBUG_W_NUM("dbNumber\t=", dbNumber);
+			CONSOLE_DEBUG_W_STR("Name    \t=", gDataBaseNames[dbNumber].Name);
+			SetWidgetText(		iii,	gDataBaseNames[dbNumber].Name);
+			dbNumber++;
+		}
+		else
+		{
+			SetWidgetValid(iii, false);
+		}
+
+		iii++;
+
+		xLoc2			+=	valueWitdth4;
+		xLoc2			+=	2;
+	}
+	SetWidgetChecked(kRemoteData_SQLdatabase1,	true);
+
+	yLoc			+=	cSmallBtnHt;
+	yLoc			+=	2;
+
+	//----------------------------------------------------------------------
 	SetWidget(			kRemoteData_EnableSQLlogging,	xLoc,	yLoc,	fullBoxWidth,		cSmallBtnHt);
 	SetWidgetType(		kRemoteData_EnableSQLlogging,	kWidgetType_CheckBox);
 	SetWidgetFont(		kRemoteData_EnableSQLlogging,	kFont_Medium);
@@ -231,7 +283,6 @@ int		fullBoxWidth;
 
 	SetWidgetOutlineBox(kRemoteData_GaiaReqModeOutLine, kRemoteData_GaiaReqMode, (kRemoteData_GaiaReqModeOutLine -1));
 
-
 	yLoc			+=	cSmallBtnHt;
 	yLoc			+=	2;
 	yLoc			+=	2;
@@ -253,27 +304,20 @@ int		fullBoxWidth;
 	SetWidget(			kRemoteData_GaiaSearchField,	xLoc,	yLoc,	valueWitdth1,		cSmallBtnHt);
 	SetWidgetFont(		kRemoteData_GaiaSearchField,	kFont_Medium);
 	SetWidgetType(		kRemoteData_GaiaSearchField,	kWidgetType_TextInput);
+	SetWidgetBGColor(	kRemoteData_GaiaSearchField,	CV_RGB(128,	128,	128));
 //	SetWidgetText(		kRemoteData_GaiaSearchField,	"4098214367441486592");
 	SetWidgetText(		kRemoteData_GaiaSearchField,	"133768513079427328");
 
-
 	SetWidget(			kRemoteData_GaiaSearchBtn,	xLoc2,	yLoc,	valueWitdth2,		cSmallBtnHt);
 	SetWidgetType(		kRemoteData_GaiaSearchBtn,	kWidgetType_Button);
-	SetWidgetText(		kRemoteData_GaiaSearchBtn,	"Search Gaia");
+	SetWidgetText(		kRemoteData_GaiaSearchBtn,	"SQL Search");
 	SetWidgetBGColor(	kRemoteData_GaiaSearchBtn,	CV_RGB(255,	255,	255));
 	SetWidgetTextColor(	kRemoteData_GaiaSearchBtn,	CV_RGB(0,	0,	0));
 
-
-
 	SetWidgetOutlineBox(kRemoteData_GAIAoutline, kRemoteData_EnableRemoteGAIA, (kRemoteData_GAIAoutline -1));
-
-
 #endif // _ENABLE_REMOTE_GAIA_
 
-
-
 	SetAlpacaLogoBottomCorner(kSkyT_Settings_AlpacaLogo);
-
 }
 
 //**************************************************************************************
@@ -309,10 +353,10 @@ void	WindowTabRemoteData::ProcessButtonClick(const int buttonIdx)
 {
 #ifdef 	_ENABLE_REMOTE_GAIA_
 	char				searchText[64];
-	TYPE_CelestData		gaiaStarData;
+	TYPE_CelestData		sqlStarData;
 	bool				validGaiaData;
+	int					dbNumber;
 #endif
-
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 //	CONSOLE_DEBUG_W_NUM("buttonIdx\t=", buttonIdx);
@@ -345,6 +389,23 @@ void	WindowTabRemoteData::ProcessButtonClick(const int buttonIdx)
 			gEnableSQLlogging	=	!gEnableSQLlogging;
 			break;
 
+		case kRemoteData_SQLdatabase1:
+		case kRemoteData_SQLdatabase2:
+		case kRemoteData_SQLdatabase3:
+		case kRemoteData_SQLdatabase4:
+			dbNumber	=	buttonIdx - kRemoteData_SQLdatabase1;
+			if ((dbNumber >= 0) && (dbNumber < gDataBaseNameCnt))
+			{
+				strcpy(gSQLsever_Database, gDataBaseNames[dbNumber].Name);
+				SetWidgetChecked(kRemoteData_SQLdatabase1,	false);
+				SetWidgetChecked(kRemoteData_SQLdatabase2,	false);
+				SetWidgetChecked(kRemoteData_SQLdatabase3,	false);
+				SetWidgetChecked(kRemoteData_SQLdatabase4,	false);
+
+				SetWidgetChecked(buttonIdx,	true);
+			}
+			break;
+
 		case kRemoteData_GaiaReqMode1x1:
 			gST_DispOptions.GaiaRequestMode	=	kGaiaRequestMode_1x1;
 			break;
@@ -364,11 +425,11 @@ void	WindowTabRemoteData::ProcessButtonClick(const int buttonIdx)
 		case kRemoteData_GaiaSearchBtn:
 			GetWidgetText(kRemoteData_GaiaSearchField, searchText);
 			CONSOLE_DEBUG_W_STR("Searching GAIA for", searchText);
-			validGaiaData	=	GetGAIAdataFromIDnumber(searchText, &gaiaStarData);
+			validGaiaData	=	GetSQLdataFromIDnumber(searchText, &sqlStarData);
 			if (validGaiaData)
 			{
-				CONSOLE_DEBUG("SUCCESS!!!!!");
-				Center_CelestralObject(&gaiaStarData);
+//				CONSOLE_DEBUG("SUCCESS!!!!!");
+				Center_CelestralObject(&sqlStarData);
 			}
 			else
 			{

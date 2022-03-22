@@ -325,20 +325,20 @@ int		iii;
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG_W_STR("RemoteGAIAenabled is", (gST_DispOptions.RemoteGAIAenabled ? "enabled" : "disabled"));
 
-#if defined(_USE_OPENCV_CPP_) &&  (CV_MAJOR_VERSION < 4)
-	CONSOLE_DEBUG_W_LONG("sizeof(CvScalar)  \t=",	sizeof(CvScalar));
-	CONSOLE_DEBUG_W_LONG("sizeof(cv::Scalar)\t=",	sizeof(cv::Scalar));
-
-	CONSOLE_DEBUG_W_LONG("sizeof(CvFont)  \t=",	sizeof(CvFont));
-
-	CONSOLE_DEBUG_W_LONG("sizeof(CvRect)  \t=",	sizeof(CvRect));
-	CONSOLE_DEBUG_W_LONG("sizeof(cv::rect)\t=",	sizeof(cv::Rect));
-
-	CONSOLE_DEBUG_W_LONG("sizeof(CvPoint) \t=",	sizeof(CvPoint));
-	CONSOLE_DEBUG_W_LONG("sizeof(cv::point)\t=",	sizeof(cv::Point));
-
-//	CONSOLE_ABORT(__FUNCTION__);
-#endif // defined
+//#if defined(_USE_OPENCV_CPP_) &&  (CV_MAJOR_VERSION < 4)
+//	CONSOLE_DEBUG_W_LONG("sizeof(CvScalar)  \t=",	sizeof(CvScalar));
+//	CONSOLE_DEBUG_W_LONG("sizeof(cv::Scalar)\t=",	sizeof(cv::Scalar));
+//
+//	CONSOLE_DEBUG_W_LONG("sizeof(CvFont)  \t=",	sizeof(CvFont));
+//
+//	CONSOLE_DEBUG_W_LONG("sizeof(CvRect)  \t=",	sizeof(CvRect));
+//	CONSOLE_DEBUG_W_LONG("sizeof(cv::rect)\t=",	sizeof(cv::Rect));
+//
+//	CONSOLE_DEBUG_W_LONG("sizeof(CvPoint) \t=",	sizeof(CvPoint));
+//	CONSOLE_DEBUG_W_LONG("sizeof(cv::point)\t=",	sizeof(cv::Point));
+//
+////	CONSOLE_ABORT(__FUNCTION__);
+//#endif // defined
 
 	gSkyTravelWindow		=	this;
 	cDebugCounter			=	0;
@@ -3816,7 +3816,7 @@ TYPE_WIDGET	*theWidget;
 				DrawSkyAll();
 				DrawWindowOverlays();
 				cOpenCV_Image	=	openCV_Image;
-			#else
+			#elif (CV_MAJOR_VERSION <= 3)
 				cvSetImageROI(cOpenCV_Image,  myCVrect);
 				DrawSkyAll();
 				DrawWindowOverlays();
