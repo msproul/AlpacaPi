@@ -123,7 +123,6 @@
 #include	<sys/time.h>
 #include	<unistd.h>
 #include	<math.h>
-//#include	<opencv2/opencv.hpp>
 
 #define	_DEBUG_TIMING_
 #define _ENABLE_CONSOLE_DEBUG_

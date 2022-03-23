@@ -74,12 +74,18 @@
 	#define __arm__
 #endif
 
-#if defined(_USE_OPENCV_CPP_) && !defined(__arm__)
-	#define _ENABLE_CVFONT_
-#elif defined(_USE_OPENCV_) && !defined(_USE_OPENCV_CPP_)
-	#define _ENABLE_CVFONT_
-#endif
 
+#ifdef _USE_OPENCV_
+	#ifdef _USE_OPENCV_CPP_
+		#include	<opencv2/opencv.hpp>
+		#include	<opencv2/core.hpp>
+	#else
+		#include	<opencv2/highgui/highgui_c.h>
+	#endif // _USE_OPENCV_CPP_
+	#if (CV_MAJOR_VERSION <= 3)
+		#define _ENABLE_CVFONT_
+	#endif
+#endif // _USE_OPENCV_
 
 //*****************************************************************************
 //*	enum for the various driver types

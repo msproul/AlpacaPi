@@ -51,6 +51,7 @@ GCC_DIR				=	/usr/bin/
 INCLUDE_BASE		=	/usr/include/
 LIB_BASE			=	/usr/lib/
 
+#	/usr/local/lib/pkgconfig/opencv.pc
 OPENCV_COMPILE		=	$(shell pkg-config --cflags opencv)
 OPENCV_LINK			=	$(shell pkg-config --libs opencv)
 
@@ -124,16 +125,20 @@ COMPILEPLUS		=	g++ -c $(CPLUSFLAGS) $(DEFINEFLAGS)
 LINK			=	g++
 
 
-INCLUDES		=	-I$(SRC_DIR)			\
-					-I$(EFW_LIB_DIR)		\
-					-I$(ASI_INCLUDE_DIR)	\
-					-I$(ATIK_INCLUDE_DIR)	\
-					-I$(ATIK_INCLUDE_DIR2)	\
-					-I$(TOUP_INCLUDE_DIR)	\
-					-I$(FLIR_INCLUDE_DIR)	\
-					-I$(MLS_LIB_DIR)		\
-					-I$(QHY_INCLUDE_DIR)	\
-					-I$(SRC_IMGPROC)		\
+INCLUDES		=	-I$(SRC_DIR)					\
+					-I$(EFW_LIB_DIR)				\
+					-I$(ASI_INCLUDE_DIR)			\
+					-I$(ATIK_INCLUDE_DIR)			\
+					-I$(ATIK_INCLUDE_DIR2)			\
+					-I$(TOUP_INCLUDE_DIR)			\
+					-I$(FLIR_INCLUDE_DIR)			\
+					-I$(MLS_LIB_DIR)				\
+					-I$(QHY_INCLUDE_DIR)			\
+					-I$(SRC_IMGPROC)				\
+					-I/usr/include/opencv2			\
+					-I/usr/include/opencv4			\
+					-I/usr/local/include/opencv2	\
+					-I/usr/local/include/opencv4	\
 
 
 ######################################################################################

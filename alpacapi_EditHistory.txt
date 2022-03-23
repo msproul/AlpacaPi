@@ -929,7 +929,7 @@ eph.c:12                 	//*	Jan  2,	2021	<MLS> More formatting cleanup
 lx200_com.c:23           	//*	Jan  2,	2021	<MLS> Fixed 0->24 hour bug in handling of Right Ascension
 windowtab_skytravel.cpp:23	//*	Jan  2,	2021	<MLS> Double click centers display
 windowtab_skytravel.cpp:24	//*	Jan  2,	2021	<MLS> Double click in LX200 RA/DEC box centers on scope
-windowtab_skytravel.cpp:2357	//*	Jan  2,	2021	<MLS> Added fix to displayed cursor RA to make sure its > 0
+windowtab_skytravel.cpp:2356	//*	Jan  2,	2021	<MLS> Added fix to displayed cursor RA to make sure its > 0
 lx200_com.c:24           	//*	Jan  3,	2021	<MLS> Added error msg to LX200_StartThread()
 lx200_com.c:25           	//*	Jan  3,	2021	<MLS> Added bounds checking to RA/DEC values rcvd from LX200
 lx200_com.c:26           	//*	Jan  3,	2021	<MLS> Added LX200_SyncScope()
@@ -1569,7 +1569,7 @@ windowtab_skytravel.cpp:97	//*	Jan 22,	2022	<MLS> Fixed bug when drawing stars w
 YaleStarCatalog.c:5      	//*	Jan 22,	2022	<MLS> Getting rid of leading digits in Yale star name
 windowtab_skytravel.cpp:98	//*	Jan 23,	2022	<MLS> Added user settable parameters for star size calculations (cFaintLimit_B)
 windowtab_skytravel.cpp:99	//*	Jan 23,	2022	<MLS> Control and mouse wheel adjust Faint Limit (cFaintLimit_B)
-windowtab_skytravel.cpp:4044	//*	Jan 23,	2022	<MLS> No longer precessing Messier objects data
+windowtab_skytravel.cpp:4043	//*	Jan 23,	2022	<MLS> No longer precessing Messier objects data
 AsteroidData.c:20        	//*	Jan 24,	2022	<MLS> Asteroids without magnitude now default to 10
 windowtab.cpp:62         	//*	Jan 24,	2022	<MLS> Added flags argument to ProcessMouseWheelMoved()
 GaiaSQL.cpp:28           	//*	Jan 25,	2022	<MLS> Changed UpdateSkyTravelView() to use degrees
@@ -1640,16 +1640,16 @@ controller_camera.cpp:67 	//*	Jan  1,	2121	<TODO> finish exposure step options
 controller_camera.cpp:68 	//*	Jan  1,	2121	<TODO> clear error msg
 controller_camera.cpp:69 	//*	Feb  6,	2121	<TODO> Move downloading of images to a separate thread
 History Comments found   = 1640 in 293 files
-Total lines              = 147433
+Total lines              = 147447
 Total comment Lines      = 20713 (14.0%)
-Total comments           = 23643 (16.0%)
+Total comments           = 23647 (16.0%)
 Total history comments   = 1640 (1.1%)
 Total C files            = 39
 Total C++ files          = 109
 Total H files            = 144
-Preprocssor cnt          = 4726
-Total SLOC               = 96939
-Total SLOC-Logical       = 75148
+Preprocssor cnt          = 4727
+Total SLOC               = 96944
+Total SLOC-Logical       = 75153
 Programmer comment summary
 MLS             = 1613
 TODO            =   13

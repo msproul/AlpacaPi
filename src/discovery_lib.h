@@ -12,10 +12,6 @@
 #endif // _ARPA_INET_H
 
 
-#ifdef __cplusplus
-	extern "C" {
-#endif
-
 
 #ifndef _JSON_PARSE_H_
 	#include	"json_parse.h"
@@ -73,6 +69,10 @@ typedef struct
 
 #define	kMaxAlpacaDeviceCnt	100
 
+
+#ifdef __cplusplus
+	extern "C" {
+#endif
 
 
 
