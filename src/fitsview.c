@@ -17,9 +17,11 @@
 #include	<fitsio.h>
 #include	<stdbool.h>
 
-#include "opencv/highgui.h"
-#include "opencv2/highgui/highgui_c.h"
-#include "opencv2/imgproc/imgproc_c.h"
+#include	"opencv/highgui.h"
+#include	"opencv2/core.hpp"
+#include	"opencv2/highgui/highgui_c.h"
+#include	"opencv2/imgproc/imgproc_c.h"
+
 //#include <opencv2/core/core.hpp>
 //#include <opencv2/highgui/highgui.hpp>
 
@@ -317,15 +319,17 @@ int		openCVerr;
 //			printf("\r\n");
 //
 //		}
-		openCVerr	=	cvSaveImage("striped.png", openCV_Image, quality);
+//++		openCVerr	=	cvSaveImage("striped.png", openCV_Image, quality);
 	}
 }
 
 //*****************************************************************************
 int	HandleKeyDownEvents(const char *fileName, const char *windowName, IplImage *openCV_Image)
 {
-cv::Scalar		mean;
-cv::Scalar		std_dev;
+//cv::Scalar		mean;
+//cv::Scalar		std_dev;
+CvScalar		mean;
+CvScalar		std_dev;
 int				keyPressed;
 bool			keepGoing;
 int				ii;

@@ -70,10 +70,11 @@ TelescopeDriverRigel::TelescopeDriverRigel(void)
 
 	//*	setup the options for this driver
 	cTelescopeProp.AlginmentMode	=	kAlignmentMode_algGermanPolar;
+	cTelescopeProp.CanFindHome		=	false;
+	cTelescopeProp.CanMoveAxis		=	false;
+	cTelescopeProp.CanSetTracking	=	false;
 	cTelescopeProp.CanSlewAsync		=	false;
 	cTelescopeProp.CanSync			=	false;
-	cTelescopeProp.CanSetTracking	=	false;
-	cTelescopeProp.CanMoveAxis		=	false;
 	cTelescopeProp.CanUnpark		=	false;
 
 	AlpacaConnect();

@@ -61,7 +61,7 @@ WindowTabAbout::~WindowTabAbout(void)
 static char	gAlpacaPiTxt1[]	=
 {
 	"AlpacaPi Project\r"
-	"(C) Mark Sproul 2019-2020\r"
+	"(C) Mark Sproul 2019-2022\r"
 	"msproul@skychariot.com\r"
 	"www.skychariot.com/dome\r"
 //	"www.skychariot.com/dome/alpacapi\r"
@@ -85,7 +85,8 @@ static char	gAlpacaPiTxt3[]	=
 	"^q to quit\r"
 	"^s will save a screen shot\r"
 	"^w Closes current window, quits if only one\r"
-	"Clicking the round x in the title bar does not work\r"
+	"Clicking the round x in the title bar does NOT work\r"
+	"Clicking the square red X in the top left corner closes the window\r"
 };
 
 
@@ -162,26 +163,31 @@ char	lineBuffer[64];
 
 #ifdef __ARM_NEON
 	strcat(multiLineTextBuff,	"ARM NEON instructions\r");
-
 #endif
 
 #ifdef _ENABLE_FITS_
+	//**************************************************************
 	//*	cfitsio version
-float	cfitsioVersion;
 
-//	sprintf(lineBuffer,	"FITS (cfitsio) V%d.%d\r", CFITSIO_MAJOR, CFITSIO_MINOR);
-//	strcat(multiLineTextBuff,	lineBuffer);
-
-	ffvers(&cfitsioVersion);
-	sprintf(lineBuffer,	"FITS (cfitsio) V%3.2f\r", cfitsioVersion);
+	#ifdef CFITSIO_MICRO
+		sprintf(lineBuffer,	"FITS (cfitsio) V%d.%d.%d\r", CFITSIO_MAJOR, CFITSIO_MINOR, CFITSIO_MICRO);
+	#else
+		sprintf(lineBuffer,	"FITS (cfitsio) V%d.%d\r", CFITSIO_MAJOR, CFITSIO_MINOR);
+	#endif
 	strcat(multiLineTextBuff,	lineBuffer);
+
+//float	cfitsioVersion;
+//	ffvers(&cfitsioVersion);
+//	sprintf(lineBuffer,	"FITS (cfitsio) V%3.2f\r", cfitsioVersion);
+//	strcat(multiLineTextBuff,	lineBuffer);
+//	CONSOLE_DEBUG_W_DBL("cfitsioVersion", cfitsioVersion);
 
 #endif // _ENABLE_FITS_
 
-//#ifdef _USE_OPENCV_
+	//**************************************************************
+	//*	OpenCV
 	sprintf(lineBuffer,	"OpenCV %s\r", CV_VERSION);
 	strcat(multiLineTextBuff,	lineBuffer);
-//#endif
 
 	SetWidgetText(kAboutBox_CPUinfo, multiLineTextBuff);
 }

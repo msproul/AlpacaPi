@@ -286,6 +286,9 @@ TelescopeDriver::TelescopeDriver(void)
 	cTelescopeProp.SideOfPier		=	kPierSide_pierUnknown;
 	cTelescopeProp.TrackingRate		=	kDriveRate_driveSidereal;
 	cTelescopeProp.DoesRefraction	=	false;
+	cTelescopeProp.CanFindHome		=	false;
+
+
 	cDriverSupportsRefraction		=	false;		//*	can be over-ridden by sub class
 
 //+	cTrackingRates;

@@ -103,12 +103,14 @@
 	#include	<jpeglib.h>
 #endif
 
-#ifndef _FITSIO_H
-	#include	<fitsio.h>
-#endif // _FITSIO_H
-#ifndef _FITSIO2_H
-//	#include	<fitsio2.h>
-#endif // _FITSIO2_H
+#ifdef _ENABLE_FITS_
+	#ifndef _FITSIO_H
+		#include	<fitsio.h>
+	#endif // _FITSIO_H
+	#ifndef _FITSIO2_H
+	//	#include	<fitsio2.h>
+	#endif // _FITSIO2_H
+#endif // _ENABLE_FITS_
 
 #define _ENABLE_CONSOLE_DEBUG_
 #define	_DEBUG_TIMING_

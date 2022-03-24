@@ -38,8 +38,25 @@
 #include	"alpaca_defs.h"
 #include	"fits_opencv.h"
 
-#if defined(_USE_OPENCV_CPP_) &&  (CV_MAJOR_VERSION >= 4)
+//*****************************************************************************
+static void	GetFitsErrorString(int fitsRetCode, char *errorString)
+{
+	switch(fitsRetCode)
+	{
+		//*	I will add to this list as needed
+		case FILE_NOT_CREATED:	strcpy(errorString,	"FITS: could not create the named file");		break;
+		case NUM_OVERFLOW:		strcpy(errorString,	"FITS: overflow during datatype conversion");	break;
+		case FILE_NOT_OPENED:	strcpy(errorString,	"FITS: could not open the named file");	break;
 
+
+		default:				sprintf(errorString, "Err not in table (%d)", fitsRetCode);	break;
+
+	}
+}
+
+#if defined(_USE_OPENCV_CPP_) && (CV_MAJOR_VERSION >= 4)
+	#warning "OpenCV++ not finished"
+//	#error "OpenCV++ not finished"
 #else
 //*****************************************************************************
 IplImage	*ReadFITSimageIntoOpenCVimage(const char *fitsFileName)
@@ -61,11 +78,11 @@ int				jjj;
 //unsigned short	*uShortPtr;
 //short			nullval;
 long			firstPixel;
-//char			errorString[64];
+char			errorString[64];
 int				errorCnt;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
-//	CONSOLE_DEBUG_W_STR("File:", fitsFileName);
+	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_STR("File:", fitsFileName);
 
 
 	openCvImgPtr	=	NULL;
@@ -221,9 +238,9 @@ int				errorCnt;
 							if (fitsRetCode != 0)
 							{
 								errorCnt++;
-						//		CONSOLE_DEBUG_W_NUM("fitsRetCode\t=",	fitsRetCode);
-						//		GetFitsErrorString(fitsRetCode, errorString);
-						//		CONSOLE_DEBUG_W_STR("fits_write_pix returned:", errorString);
+								CONSOLE_DEBUG_W_NUM("fitsRetCode\t=",	fitsRetCode);
+								GetFitsErrorString(fitsRetCode, errorString);
+								CONSOLE_DEBUG_W_STR("fits_write_pix returned:", errorString);
 							}
 							pixelPtr	+=	openCvImgPtr->widthStep;
 							firstPixel	+=	width;
@@ -240,7 +257,14 @@ int				errorCnt;
 		status		=	0;
 		fits_close_file(fptr, &status);
 	}
-	if (errorCnt> 0)
+	else
+	{
+		CONSOLE_DEBUG_W_NUM("fits_open_file failed with error code\t=",	fitsRetCode);
+		GetFitsErrorString(fitsRetCode, errorString);
+		CONSOLE_DEBUG_W_STR("fits_open_file returned:", errorString);
+
+	}
+	if (errorCnt > 0)
 	{
 		CONSOLE_DEBUG_W_NUM("errorCnt\t=",	errorCnt);
 	}

@@ -84,6 +84,7 @@ function Checksystem
 {
 MISSING_COUNT=0
 	clear
+	pwd
 	echo "**********************************************"
 	echo "*        AlpacaPi system check               *"
 	echo "*                                            *"
@@ -116,7 +117,10 @@ MISSING_COUNT=0
 
 	echo
 	echo "System libraries"
-	CheckFile	"/usr/local/include"				"fitsio.h"
+#	CheckFile	"/usr/local/include"		"fitsio.h"
+#	CheckFile	"/usr/include"				"fitsio.h"
+#echo $FITS_LOCATION
+	CheckFile	$FITS_LOCATION				"fitsio.h"
 
 	echo
 	echo "Checking for openCV (Required for images and clients)"
@@ -163,6 +167,14 @@ function CheckFITSversion
 		CFITSIO_PRESENT=true
 		FITS_FOLDER="cfitsio-4.0.0"
 	fi
+
+	#	Version 4.1.0 - Sep 2021
+	if [ -d cfitsio-4.1.0 ]
+	then
+		CFITSIO_PRESENT=true
+		FITS_FOLDER="cfitsio-4.1.0"
+	fi
+
 }
 
 ###########################################################
@@ -177,12 +189,42 @@ function UntarFitsFile
 }
 
 ###########################################################
+function CheckForFITSIO
+{
+	FITS_INSTALLED=false
+	FITS_LOCATION="not-found"
+
+	if [ -f	"/usr/local/include/fitsio.h" ]
+	then
+		FITS_INSTALLED=true
+		FITS_LOCATION="/usr/local/include"
+	fi
+
+	if [ -f	"/usr/include/fitsio.h" ]
+	then
+		FITS_INSTALLED=true
+		FITS_LOCATION="/usr/include"
+	fi
+}
+
+###########################################################
 function InstallFits
 {
+#	wget "http://heasarc.gsfc.nasa.gov/FTP/software/fitsio/c/cfitsio_latest.tar.gz
 CFITSIO_TAR="cfitsio_latest.tar.gz"
 
 
-if [ -f	"/usr/local/include/fitsio.h" ]
+	CheckForFITSIO
+
+if [ $FITS_INSTALLED ]
+then
+	echo "Fits located at $FITS_LOCATION"
+fi
+#exit
+
+
+#if [ -f	"/usr/local/include/fitsio.h" ]
+if [ $FITS_INSTALLED ]
 then
 	echo "cfitsio already installed"
 else
@@ -257,7 +299,7 @@ fi
 
 
 ##################################################################
-setupJPEGlib()
+function setupJPEGlib()
 {
 	echo	"*******************************************************"
 	echo "Getting ready to install libjpeg-dev"
@@ -284,8 +326,8 @@ function CheckForFLIR()
 		else
 			echo "FLIR install script not found"
 		fi
+		cd ..
 	fi
-
 }
 
 
@@ -304,9 +346,11 @@ else
 fi
 
 #install udev
-sudo apt-get install libudev-dev
+#sudo apt-get install libudev-dev
 
 mkdir -p Objectfiles
+CheckForFITSIO
+
 Checksystem
 
 
@@ -337,5 +381,5 @@ echo "MISSING_COUNT = $MISSING_COUNT"
 echo "*********************************************"
 echo "NOTE: This install script is not finished"
 echo "Please be patient"
-echo "Last updated 12/15/2020"
+echo "Last updated 3/23/2022"
 echo "*********************************************"

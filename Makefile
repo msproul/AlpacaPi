@@ -9,6 +9,7 @@
 #		sudo apt-get install libopencv-dev
 #		sudo apt-get install libi2c-dev
 #		sudo apt-get install libjpeg-dev
+#		sudo apt-get install libcfitsio-dev
 #
 #		sudo apt-get install wiringpi
 ######################################################################################
@@ -121,7 +122,7 @@ CPLUSFLAGS		+=	-g
 CPLUSFLAGS		+=	-Wno-format-overflow
 
 COMPILE			=	gcc -c $(CFLAGS) $(DEFINEFLAGS) $(OPENCV_COMPILE)
-COMPILEPLUS		=	g++ -c $(CPLUSFLAGS) $(DEFINEFLAGS)
+COMPILEPLUS		=	g++ -c $(CPLUSFLAGS) $(DEFINEFLAGS) $(OPENCV_COMPILE)
 LINK			=	g++
 
 
@@ -135,10 +136,14 @@ INCLUDES		=	-I$(SRC_DIR)					\
 					-I$(MLS_LIB_DIR)				\
 					-I$(QHY_INCLUDE_DIR)			\
 					-I$(SRC_IMGPROC)				\
-					-I/usr/include/opencv2			\
-					-I/usr/include/opencv4			\
-					-I/usr/local/include/opencv2	\
-					-I/usr/local/include/opencv4	\
+
+
+#					-I/usr/include/opencv2			\
+#					-I/usr/local/include/opencv2	\
+
+
+#					-I/usr/include/opencv4			\
+#					-I/usr/local/include/opencv4	\
 
 
 ######################################################################################
@@ -1958,10 +1963,9 @@ sky		:	DEFINEFLAGS		+=	-D_CONTROLLER_USES_ALPACA_
 sky		:	DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_CONTROLLER_
 sky		:	DEFINEFLAGS		+=	-D_ENABLE_SLIT_TRACKER_
 sky		:	DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
-sky		:	DEFINEFLAGS		+=	-D_ENABLE_GAIA_
+#sky		:	DEFINEFLAGS		+=	-D_ENABLE_GAIA_
 sky		:	DEFINEFLAGS		+=	-D_ENABLE_ASTERIODS_
 sky		:	INCLUDES		+=	-I$(SRC_SKYTRAVEL)
-
 sky		:				$(SKYTRAVEL_OBJECTS)					\
 						$(CONTROLLER_BASE_OBJECTS)				\
 
@@ -1997,7 +2001,8 @@ skycpp			:	DEFINEFLAGS		+=	-D_ENABLE_ASTERIODS_
 skycpp			:	DEFINEFLAGS		+=	-D_USE_OPENCV_
 skycpp			:	DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
 skycpp			:	INCLUDES		+=	-I$(SRC_SKYTRAVEL)
-
+skycpp			:	OPENCV_COMPILE	=	$(shell pkg-config --cflags opencv4)
+skycpp			:	OPENCV_LINK		=	$(shell pkg-config --libs opencv4)
 skycpp			:		$(SKYTRAVEL_OBJECTS)					\
 						$(CONTROLLER_BASE_OBJECTS)				\
 
@@ -2120,7 +2125,7 @@ FITSVIEW_OBJECTS=												\
 				$(OBJECT_DIR)fits_opencv.o						\
 
 ######################################################################################
-#pragma mark fitsview
+#pragma mark make fitsview
 fitsview	:		$(FITSVIEW_OBJECTS)
 
 
