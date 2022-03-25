@@ -43,6 +43,8 @@
 #++	Mar 24,	2022	<MLS> Added -fPIE to compile options
 #++	Mar 25,	2022	<MLS> Added _ENABLE_TELESCOPE_SERVO_
 ######################################################################################
+#	Cr_Core is for the Sony camera
+######################################################################################
 
 #PLATFORM			=	x86
 PLATFORM			=	x64
@@ -1100,13 +1102,16 @@ pi64		:		DEFINEFLAGS		+=	-D_ENABLE_MULTICAM_
 pi64		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
 #pi64		:		DEFINEFLAGS		+=	-D_ENABLE_ATIK_
 pi64		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
+pi64		:		DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
+pi64		:		OPENCV_COMPILE	=	$(shell pkg-config --cflags opencv4)
+pi64		:		OPENCV_LINK		=	$(shell pkg-config --libs opencv4)
 #pi64		:		DEFINEFLAGS		+=	-D_ENABLE_TOUP_
 #pi64		:		DEFINEFLAGS		+=	-D_ENABLE_SONY_
-pi64		:		DEFINEFLAGS		+=	-D_INCLUDE_EXIT_COMMAND_
+#pi64		:		DEFINEFLAGS		+=	-D_INCLUDE_EXIT_COMMAND_
 pi64		:		CPLUSFLAGS		+=	-fsigned-char
 pi64		:		CPLUSFLAGS		+=	-std=gnu++17
 pi64		:		PLATFORM		=	armv8
-pi64		:		INCLUDES		+=	-I$(SONY_INCLUDE_DIR)
+#pi64		:		INCLUDES		+=	-I$(SONY_INCLUDE_DIR)
 #pi64		:		ATIK_LIB_DIR	=	$(ATIK_LIB_MASTER_DIR)/ARM/x86/NoFlyCapture
 pi64		:		ATIK_LIB_DIR	=	$(ATIK_LIB_MASTER_DIR)/ARM/odroid/x86/NoFlyCapture
 pi64		:		$(CPP_OBJECTS)				\
@@ -1119,17 +1124,16 @@ pi64		:		$(CPP_OBJECTS)				\
 					$(CPP_OBJECTS)				\
 					$(ALPACA_OBJECTS)			\
 					$(OPENCV_LINK)				\
-					-L$(SONY_LIB_DIR)/			\
 					$(ASI_CAMERA_OBJECTS)		\
 					-L$(ATIK_LIB_DIR_ARM64)/	\
 					-latikcameras				\
-					-lCr_Core					\
 					-lcfitsio					\
 					-lusb-1.0					\
 					-ludev						\
 					-lpthread					\
 					-o alpacapi
 
+#					-L$(SONY_LIB_DIR)/			\
 #					$(ZWO_EFW_OBJECTS)			\
 #					-ltoupcam					\
 #					-lwiringPi					\

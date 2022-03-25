@@ -34,6 +34,8 @@
 //*****************************************************************************
 //*	Apr 20,	2021	<MLS> Created telescopedriver_Rigel.cpp
 //*	Apr 20,	2021	<MLS> Rigel version is being created for Jim H <JMH>
+//*	Mar 25,	2022	<JMH> Started working on fifo support
+//*	Mar 25,	2022	<MLS> Merged JMH fifo support into main code branch
 //*****************************************************************************
 
 
@@ -47,6 +49,9 @@
 #include	<stdint.h>
 #include	<unistd.h>
 #include	<math.h>
+#include	<unistd.h>
+#include	<fcntl.h>
+#include	<sys/shm.h>
 
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
@@ -54,10 +59,17 @@
 #include	"alpacadriver.h"
 #include	"alpacadriver_helper.h"
 #include	"helper_functions.h"
+//#include "telstatshm.h"
 
 
 #include	"telescopedriver.h"
 #include	"telescopedriver_Rigel.h"
+
+#define	RADIANS(degrees)	((degrees) * (M_PI / 180.0))
+
+const char	*gRigelFifo	=	"/usr/local/telescope/comm/Tel.in";
+int			tel_msg(char *msg);
+// int open_telshm(TelStatShm **tpp);
 
 //**************************************************************************************
 TelescopeDriverRigel::TelescopeDriverRigel(void)
@@ -69,13 +81,20 @@ TelescopeDriverRigel::TelescopeDriverRigel(void)
 	strcpy(cCommonProp.Description,	"Telescope control using Rigel protocol");
 
 	//*	setup the options for this driver
-	cTelescopeProp.AlginmentMode	=	kAlignmentMode_algGermanPolar;
-	cTelescopeProp.CanFindHome		=	false;
-	cTelescopeProp.CanMoveAxis		=	false;
-	cTelescopeProp.CanSetTracking	=	false;
-	cTelescopeProp.CanSlewAsync		=	false;
+	cTelescopeProp.AlginmentMode	=	kAlignmentMode_algPolar;
+	cTelescopeProp.CanSlewAsync		=	true;
 	cTelescopeProp.CanSync			=	false;
+	cTelescopeProp.CanSetTracking	=	false;
+	cTelescopeProp.CanMoveAxis		=	false;
 	cTelescopeProp.CanUnpark		=	false;
+	cTelescopeProp.CanFindHome		=	true;
+	cTelescopeProp.CanPark			=	true;
+	cTelescopeProp.CanSlewAltAzAsync	=	true;
+	cTelescopeProp.ApertureDiameter		=	0.370;		//*	meters
+	cTelescopeProp.FocalLength			=	cTelescopeProp.ApertureDiameter * 14;	//*	meters
+	cTelescopeProp.ApertureArea			=	M_PI * ((cTelescopeProp.ApertureDiameter / 2) * (cTelescopeProp.ApertureDiameter / 2)); // square meters
+
+//	need to start Rigel daemons and connect to shared memory here
 
 	AlpacaConnect();
 
@@ -94,24 +113,29 @@ TelescopeDriverRigel::~TelescopeDriverRigel(void)
 //*****************************************************************************
 TYPE_ASCOM_STATUS	TelescopeDriverRigel::Telescope_AbortSlew(char *alpacaErrMsg)
 {
-TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
+char				msg[80];
 
-	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
+	sprintf(msg,"stop");
+	tel_msg(msg);
 	return(alpacaErrCode);
-
 }
 
 //*****************************************************************************
 TYPE_ASCOM_STATUS	TelescopeDriverRigel::Telescope_FindHome(char *alpacaErrMsg)
 {
-TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
+char				msg[80];
 
-	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
+	sprintf(msg,"home");
+	tel_msg(msg);
 	return(alpacaErrCode);
 }
 
 //*****************************************************************************
-TYPE_ASCOM_STATUS	TelescopeDriverRigel::Telescope_MoveAxis(const int axisNum, const double moveRate_degPerSec, char *alpacaErrMsg)
+TYPE_ASCOM_STATUS	TelescopeDriverRigel::Telescope_MoveAxis(	const int		axisNum,
+																const double	moveRate_degPerSec,
+																char			*alpacaErrMsg)
 {
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
 
@@ -154,9 +178,11 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
 //*****************************************************************************
 TYPE_ASCOM_STATUS	TelescopeDriverRigel::Telescope_Park(char *alpacaErrMsg)
 {
-TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
+char				msg[80];
 
-	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
+	sprintf(msg,"stow");
+	tel_msg(msg);
 	return(alpacaErrCode);
 }
 
@@ -170,7 +196,50 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 }
 
 //*****************************************************************************
-TYPE_ASCOM_STATUS	TelescopeDriverRigel::Telescope_SlewToAltAz(const double newAlt_Degrees, const double newAz_Degrees, char *alpacaErrMsg)
+TYPE_ASCOM_STATUS	TelescopeDriverRigel::Telescope_SlewToAltAz(const double	newAlt_Degrees,
+																const double	newAz_Degrees,
+																char			*alpacaErrMsg)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
+double				newAlt_rad;
+double				newAz_rad;
+char				msg[80];
+
+	newAlt_rad	=	RADIANS(newAlt_Degrees);
+	newAz_rad	=	RADIANS(newAz_Degrees);
+
+	sprintf(msg,"Alt:%.6f Az:%.6f", newAlt_rad, newAz_rad);
+	tel_msg(msg);
+	CONSOLE_DEBUG(msg);
+
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	TelescopeDriverRigel::Telescope_SlewToRA_DEC(	const double	newRA,
+																	const double	newDec,
+																	char			*alpacaErrMsg)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
+double				newRa_rad;
+double				newDec_rad;
+char				msg[80];
+
+	newRa_rad	=	RADIANS(newRA * 15.0);	//*	newRA is hour angle not degrees
+	newDec_rad	=	RADIANS(newDec);
+
+	sprintf(msg,"RA:%.6f Dec:%.6f", newRa_rad, newDec_rad);
+	tel_msg(msg);
+	CONSOLE_DEBUG(msg);
+
+	return(alpacaErrCode);
+}
+
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	TelescopeDriverRigel::Telescope_SyncToRA_DEC(	const double	newRA,
+																	const double	newDec,
+																	char			*alpacaErrMsg)
 {
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 
@@ -179,26 +248,8 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 }
 
 //*****************************************************************************
-TYPE_ASCOM_STATUS	TelescopeDriverRigel::Telescope_SlewToRA_DEC(const double newRA, const double newDec, char *alpacaErrMsg)
-{
-TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
-
-	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
-	return(alpacaErrCode);
-}
-
-
-//*****************************************************************************
-TYPE_ASCOM_STATUS	TelescopeDriverRigel::Telescope_SyncToRA_DEC(const double newRA, const double newDec, char *alpacaErrMsg)
-{
-TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
-
-	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
-	return(alpacaErrCode);
-}
-
-//*****************************************************************************
-TYPE_ASCOM_STATUS	TelescopeDriverRigel::Telescope_TrackingOnOff(const bool newTrackingState, char *alpacaErrMsg)
+TYPE_ASCOM_STATUS	TelescopeDriverRigel::Telescope_TrackingOnOff(	const bool	newTrackingState,
+																	char		*alpacaErrMsg)
 {
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 
@@ -228,7 +279,47 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 
 }
 
+//*****************************************************************************
+int tel_msg(char *msg)
+{
+int fd;
 
+	// Open FIFO for write only
+	fd	=	open(gRigelFifo, O_WRONLY);
+	if (fd >= 0)
+	{
+		//*	Write the input on FIFO
+		write(fd, msg, strlen(msg)+1);
 
+		//*	and close it
+		close(fd);
+	}
+	else
+	{
+		CONSOLE_DEBUG_W_STR("Error opening fifo\t=", gRigelFifo);
+//		CONSOLE_ABORT(__FUNCTION__);
+	}
+	return 0;
+}
 
+/* connect to the telstatshm shared memory segment.
+ * return 0 and set *tpp if ok, else -1.
+
+int open_telshm(TelStatShm **tpp)
+{
+    int shmid;
+    long addr;
+
+    shmid = shmget (TELSTATSHMKEY, sizeof(TelStatShm), 0);
+    if (shmid < 0)
+        return (-1);
+
+    addr = (long) shmat (shmid, (void *)0, 0);
+    if (addr == -1)
+        return (-1);
+
+    *tpp = (TelStatShm *) addr;
+    return (0);
+}
+*/
 #endif // _ENABLE_TELESCOPE_RIGEL_

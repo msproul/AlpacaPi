@@ -1,4 +1,4 @@
-History Comments found =1648 in 295 files
+History Comments found =1650 in 295 files
 eph.c:10                 	//*	May  2,	1996	<MLS> (Mark Sproul) Starting on SkyTravel for Frank and Clif
 StarData.c:7             	//*	May  2,	1996	<MLS> (Mark Sproul) Starting on SkyTravel for Frank and Clif
 StarData.c:8             	//*	Nov 18,	1999	<MLS> restarting efforts
@@ -1631,6 +1631,8 @@ Makefile:43              	#++	Mar 24,	2022	<MLS> Added -fPIE to compile options
 alpaca_defs.h:37         	//*	Mar 25,	2022	<MLS> Build 133
 Makefile:44              	#++	Mar 25,	2022	<MLS> Added _ENABLE_TELESCOPE_SERVO_
 telescopedriver.cpp:51   	//*	Mar 25,	2022	<MLS> Added RunStateMachine() to telescopedriver
+telescopedriver_Rigel.cpp:37	//*	Mar 25,	2022	<JMH> Started working on fifo support
+telescopedriver_Rigel.cpp:38	//*	Mar 25,	2022	<MLS> Merged JMH fifo support into main code branch
 telescopedriver_servo.cpp:35	//*	Mar 25,	2022	<MLS> Created telescopedriver_Servo.cpp
 telescopedriver_servo.cpp:36	//*	Mar 25,	2022	<MLS> Servo version is being created for Ron S <RNS>
 telescopedriver_servo.h:18	//*	Mar 25,	2022	<MLS> Created telescopedriver_servo.h
@@ -1647,20 +1649,21 @@ controller_camera.cpp:66 	//*	Jan  1,	2121	<TODO> save cross hair location
 controller_camera.cpp:67 	//*	Jan  1,	2121	<TODO> finish exposure step options
 controller_camera.cpp:68 	//*	Jan  1,	2121	<TODO> clear error msg
 controller_camera.cpp:69 	//*	Feb  6,	2121	<TODO> Move downloading of images to a separate thread
-History Comments found   = 1648 in 295 files
-Total lines              = 148287
-Total comment Lines      = 20916 (14.1%)
-Total comments           = 23853 (16.1%)
-Total history comments   = 1648 (1.1%)
+History Comments found   = 1650 in 295 files
+Total lines              = 148382
+Total comment Lines      = 20927 (14.1%)
+Total comments           = 23868 (16.1%)
+Total history comments   = 1650 (1.1%)
 Total C files            = 39
 Total C++ files          = 110
 Total H files            = 145
-Preprocssor cnt          = 4781
-Total SLOC               = 97431
-Total SLOC-Logical       = 75504
+Preprocssor cnt          = 4790
+Total SLOC               = 97505
+Total SLOC-Logical       = 75570
 Programmer comment summary
-MLS             = 1621
+MLS             = 1622
 TODO            =   13
 DDB             =    1
 PDB             =    6
+JMH             =    1
 KAS             =    3
