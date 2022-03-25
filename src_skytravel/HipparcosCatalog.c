@@ -191,7 +191,7 @@
 #include	<stdio.h>
 
 //*	MLS Libraries
-#define _ENABLE_CONSOLE_DEBUG_
+//#define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
 
 
@@ -358,14 +358,12 @@ size_t			bufferSize;
 		}
 		fclose(filePointer);
 	}
-
 //	CONSOLE_DEBUG_W_DBL("gLargestMag\t=", gLargestMag);
 //	CONSOLE_DEBUG_W_DBL("gSmallestMag\t=", gSmallestMag);
 //	CONSOLE_DEBUG_W_NUM("g99Count\t=", g99Count);
 
 	return(hipStarData);
 }
-
 
 //************************************************************************
 int	ReadCommonStarNames(TYPE_CelestData	*hipStarData, long hipStarCount)
@@ -382,7 +380,7 @@ long	hippStarNumber;
 long	hhh;
 int		foundCount;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	foundCount	=	0;
 	strcpy(filePath, kSkyTravelDataDirectory);
 	strcat(filePath, "/commonstars.txt");
@@ -436,7 +434,7 @@ int		foundCount;
 		}
 		fclose(filePointer);
 	}
-	CONSOLE_DEBUG_W_NUM("foundCount=", foundCount);
+//	CONSOLE_DEBUG_W_NUM("foundCount=", foundCount);
 
 	return(foundCount);
 }

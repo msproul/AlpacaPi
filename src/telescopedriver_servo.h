@@ -1,7 +1,7 @@
 //**************************************************************************
-//*	Name:			telescopedriver_Rigel.h
+//*	Name:			telescopedriver_servo.h
 //*
-//*	Author:			Mark Sproul (C) 2021
+//*	Author:			Mark Sproul (C) 2022
 //*
 //*	Description:
 //*
@@ -15,9 +15,9 @@
 //*****************************************************************************
 //*	<MLS>	=	Mark L Sproul
 //*****************************************************************************
-//*	Apr 20,	2021	<MLS> Created telescopedriver_Rigel.h
+//*	Mar 25,	2022	<MLS> Created telescopedriver_servo.h
 //*****************************************************************************
-//#include	"telescopedriver_Rigel.h"
+//#include	"telescopedriver_servo.h"
 
 
 
@@ -33,18 +33,19 @@
 
 
 
-void	CreateTelescopeRigelObjects(void);
+void	CreateTelescopeServoObjects(void);
 
 //**************************************************************************************
-class TelescopeDriverRigel: public TelescopeDriver
+class TelescopeDriverServo: public TelescopeDriver
 {
 	public:
 
 		//
 		// Construction
 		//
-								TelescopeDriverRigel(void);
-		virtual					~TelescopeDriverRigel(void);
+									TelescopeDriverServo(void);
+		virtual						~TelescopeDriverServo(void);
+		virtual	int32_t				RunStateMachine(void);
 
 
 		//*************************************************************************

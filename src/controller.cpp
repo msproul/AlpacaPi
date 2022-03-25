@@ -3168,7 +3168,7 @@ static void	*ControllerBackgroundThread(void *arg)
 {
 Controller	*myControllerPtr;
 
-	CONSOLE_DEBUG("***************************************************************");
+	CONSOLE_DEBUG("*************************************************");
 	CONSOLE_DEBUG(__FUNCTION__);
 	myControllerPtr	=	(Controller *)arg;
 	if (myControllerPtr != NULL)

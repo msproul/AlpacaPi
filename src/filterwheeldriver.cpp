@@ -657,6 +657,14 @@ bool		isConnected;
 }
 
 //*****************************************************************************
+//*	returns delay time in micro-seconds
+//*****************************************************************************
+int32_t	FilterwheelDriver::RunStateMachine(void)
+{
+	return(5 * 1000 * 1000);
+}
+
+//*****************************************************************************
 bool	FilterwheelDriver::GetCmdNameFromMyCmdTable(const int cmdNumber, char *comandName, char *getPut)
 {
 bool	foundIt;

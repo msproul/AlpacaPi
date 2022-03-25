@@ -141,8 +141,55 @@ then
 		echo "client skytravel made OK" >> $LOGFILENAME
 	fi
 else
+	echo "OpenCV version 3 not found, skipping client apps" >> $LOGFILENAME
+fi
+
+if $OPENCV_V4_OK
+then
+	rm camera
+	rm domectrl
+	rm focuser
+	rm rorpi
+	rm skytravel
+	rm switch
+	echo "Building client apps" >> $LOGFILENAME
+	echo "*************************************************** making switch"	>/dev/stderr
+	make clean switch | grep -v Wall
+	echo "*************************************************** making skyshariot"		>/dev/stderr
+	make clean skycv4 | grep -v Wall
+	echo "*************************************************** making focuser"	>/dev/stderr
+	make clean focuser | grep -v Wall
+	echo "*************************************************** making domectrl"	>/dev/stderr
+	make clean domectrl | grep -v Wall
+	echo "*************************************************** making camera"	>/dev/stderr
+	make clean camera | grep -v Wall
+	echo "*************************************************** making rorpi"	>/dev/stderr
+	make clean rorpi | grep -v Wall
+
+	if [ -f switch ]
+	then
+		echo "client switch made OK" >> $LOGFILENAME
+	fi
+	if [ -f focuser ]
+	then
+		echo "client focuser made OK" >> $LOGFILENAME
+	fi
+	if [ -f domectrl ]
+	then
+		echo "client domectrl made OK" >> $LOGFILENAME
+	fi
+	if [ -f camera ]
+	then
+		echo "client camera made OK" >> $LOGFILENAME
+	fi
+	if [ -f skytravel ]
+	then
+		echo "client skytravel made OK" >> $LOGFILENAME
+	fi
+else
 	echo "OpenCV not found, skipping client apps" >> $LOGFILENAME
 fi
+
 
 
 ########################################################################

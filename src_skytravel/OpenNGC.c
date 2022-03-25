@@ -329,7 +329,7 @@ char			lineBuff[512];
 char			filePath[128];
 char			*firstLinePtr;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	ngcStarData	=	NULL;
 
@@ -422,7 +422,7 @@ char				lineBuff[512];
 char				filePath[128];
 bool				validObject;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	outlineArray	=	NULL;
 

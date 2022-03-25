@@ -66,6 +66,7 @@
 #include	"telescopedriver_lx200.h"
 #include	"telescopedriver_Rigel.h"
 #include	"telescopedriver_skywatch.h"
+#include	"telescopedriver_servo.h"
 
 static void	*Telescope_Comm_Thread(void *arg);
 
@@ -83,6 +84,11 @@ void	CreateTelescopeObjects(void)
 #ifdef _ENABLE_TELESCOPE_RIGEL_
 //	new TelescopeDriverRigel(kDevCon_Custom, "");
 	new TelescopeDriverRigel();
+#endif
+
+
+#ifdef _ENABLE_TELESCOPE_SERVO_
+	new TelescopeDriverServo();
 #endif
 
 }

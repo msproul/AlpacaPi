@@ -1002,12 +1002,12 @@ double			hightestMagValue;
 	{
 		CONSOLE_DEBUG_W_STR("Failed to read:", myFilePath);
 	}
-	CONSOLE_DEBUG_W_NUM("HYG records read\t=", recordCount);
-	CONSOLE_DEBUG_W_NUM("skippedCount    \t=", skippedCount);
-	CONSOLE_DEBUG_W_NUM("Total lines     \t=", (recordCount + skippedCount));
-	CONSOLE_DEBUG_W_NUM("validMagCount   \t=", validMagCount);
-	CONSOLE_DEBUG_W_NUM("zeroMagCount    \t=", zeroMagCount);
-	CONSOLE_DEBUG_W_DBL("hightestMagValue\t=", hightestMagValue);
+//	CONSOLE_DEBUG_W_NUM("HYG records read\t=", recordCount);
+//	CONSOLE_DEBUG_W_NUM("skippedCount    \t=", skippedCount);
+//	CONSOLE_DEBUG_W_NUM("Total lines     \t=", (recordCount + skippedCount));
+//	CONSOLE_DEBUG_W_NUM("validMagCount   \t=", validMagCount);
+//	CONSOLE_DEBUG_W_NUM("zeroMagCount    \t=", zeroMagCount);
+//	CONSOLE_DEBUG_W_DBL("hightestMagValue\t=", hightestMagValue);
 
 //	CONSOLE_ABORT(__FUNCTION__);
 	return(hygData);
@@ -1228,12 +1228,11 @@ int				headerLineCnt;
 	{
 		CONSOLE_DEBUG_W_STR("Failed to read:", myFilePath);
 	}
-	CONSOLE_DEBUG_W_NUM("HGC records read\t\t=", recordCount);
-	CONSOLE_DEBUG_W_NUM("gPhotMagSubsitutionCnt\t=", gPhotMagSubsitutionCnt);
-	CONSOLE_DEBUG_W_DBL("percent substitutions\t=", (gPhotMagSubsitutionCnt * 100.0) / recordCount);
-	CONSOLE_DEBUG_W_DBL("percent without mag\t=", (gHDstarsWithoutMag * 100.0) / recordCount);
+//	CONSOLE_DEBUG_W_NUM("HGC records read\t\t=", recordCount);
+//	CONSOLE_DEBUG_W_NUM("gPhotMagSubsitutionCnt\t=", gPhotMagSubsitutionCnt);
+//	CONSOLE_DEBUG_W_DBL("percent substitutions\t=", (gPhotMagSubsitutionCnt * 100.0) / recordCount);
+//	CONSOLE_DEBUG_W_DBL("percent without mag\t=", (gHDstarsWithoutMag * 100.0) / recordCount);
 
-//	CONSOLE_ABORT(__FUNCTION__);
 	return(draperData);
 }
 
@@ -1489,13 +1488,13 @@ int				linesRead;
 
 	strcpy(myFilePath, "special.txt");
 
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, myFilePath);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, myFilePath);
 
 	filePointer	=	fopen(myFilePath, "r");
 	if (filePointer != NULL)
 	{
 		specifiedLnCnt	=	CountLinesInFile(filePointer);
-		CONSOLE_DEBUG_W_NUM("Lines in file", specifiedLnCnt);
+//		CONSOLE_DEBUG_W_NUM("Lines in file", specifiedLnCnt);
 
 		bufferSize		=	(specifiedLnCnt + 2) * sizeof(TYPE_CelestData);
 		specialData		=	(TYPE_CelestData *)malloc(bufferSize);
@@ -1513,7 +1512,7 @@ int				linesRead;
 				}
 				else if ((strlen(lineBuff) > 50) && (lineBuff[0] == 0x20))
 				{
-					CONSOLE_DEBUG_W_STR("lineBuff\t=", lineBuff);
+//					CONSOLE_DEBUG_W_STR("lineBuff\t=", lineBuff);
 					ParseOneLineJPLhorizons(lineBuff, &specialData[recordCount]);
 					specialData[recordCount].dataSrc	=	dataSource;
 

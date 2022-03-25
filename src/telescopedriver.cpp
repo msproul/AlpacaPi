@@ -48,6 +48,7 @@
 //*	Feb 28,	2022	<MLS> Put_SyncToAltAz() now returns InvalidOperation if tracking is false
 //*	Feb 28,	2022	<MLS> Added cDriverSupportsRefraction
 //*	Mar  2,	2022	<MLS> Setting Connected now working for telescope driver
+//*	Mar 25,	2022	<MLS> Added RunStateMachine() to telescopedriver
 //*****************************************************************************
 
 
@@ -3430,6 +3431,14 @@ int		mySocketFD;
 
 		GenerateHTMLcmdLinkTable(mySocketFD, "telescope", cDeviceNum, gTelescopeCmdTable);
 	}
+}
+
+//*****************************************************************************
+int32_t	TelescopeDriver::RunStateMachine(void)
+{
+	//*	this routine should be over-ridden, not required, but this is where you would do
+	//*	any work you need to do.  Do it in the sub class NOT HERE
+	return(5 * 1000 * 1000);
 }
 
 //*****************************************************************************

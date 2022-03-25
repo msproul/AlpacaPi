@@ -237,7 +237,7 @@ class AlpacaDriver
 
 		virtual	void	OutputHTML(				TYPE_GetPutRequestData *reqData);
 		virtual	void	OutputHTML_Part2(		TYPE_GetPutRequestData *reqData);
-		virtual	int32_t	RunStateMachine(void);
+		virtual	int32_t	RunStateMachine(void);	//*	returns delay time in micro-seconds
 
 				void	OutputHTMLrowData(int socketFD, const char *string1, const char *string2);
 				void	OutputHTML_CmdStats(	TYPE_GetPutRequestData *reqData);

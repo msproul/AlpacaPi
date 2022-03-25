@@ -1263,7 +1263,7 @@ char			addressBuffer[256];
 uint32_t		ipAddress32;
 bool			keepGoing;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	getifaddrs(&ifAddrStruct);
 
@@ -1278,29 +1278,29 @@ bool			keepGoing;
 			// Check if it is a valid IPv4 address
 			if (ifa ->ifa_addr != NULL)
 			{
-				CONSOLE_DEBUG_W_NUM("ifa ->ifa_addr->sa_family\t=", ifa ->ifa_addr->sa_family);
+//				CONSOLE_DEBUG_W_NUM("ifa ->ifa_addr->sa_family\t=", ifa ->ifa_addr->sa_family);
 				if (ifa ->ifa_addr->sa_family == AF_INET)
 				{
-					CONSOLE_DEBUG("AF_INET");
+//					CONSOLE_DEBUG("AF_INET");
 					tmpAddrPtr	=	&((struct sockaddr_in *)ifa->ifa_addr)->sin_addr;
 //					CONSOLE_DEBUG_W_HEX("tmpAddrPtr\t=", tmpAddrPtr);
 //					CONSOLE_DEBUG_W_HEX("sin_addr\t=", ((struct sockaddr_in *)ifa->ifa_addr)->sin_addr);
 
 					ipAddress32	=	ntohl(*((uint32_t *)tmpAddrPtr));
-					CONSOLE_DEBUG_W_HEX("ipAddress32\t=", ipAddress32);
+//					CONSOLE_DEBUG_W_HEX("ipAddress32\t=", ipAddress32);
 					if (ipAddress32 != 0x7f000001)
 					{
 						gMyIPaddress	=	ipAddress32;
-						CONSOLE_DEBUG_W_HEX("gMyIPaddress\t=", gMyIPaddress);
+//						CONSOLE_DEBUG_W_HEX("gMyIPaddress\t=", gMyIPaddress);
 					}
 					inet_ntop(AF_INET, tmpAddrPtr, addressBuffer, INET_ADDRSTRLEN);
 		//			printf("%s IPV4 Address %s\n", ifa->ifa_name, addressBuffer);
-					CONSOLE_DEBUG_W_STR("IPV4 Name   :", ifa->ifa_name);
-					CONSOLE_DEBUG_W_STR("IPV4 Address:", addressBuffer);
+//					CONSOLE_DEBUG_W_STR("IPV4 Name   :", ifa->ifa_name);
+//					CONSOLE_DEBUG_W_STR("IPV4 Address:", addressBuffer);
 				}
 				else if (ifa->ifa_addr->sa_family == AF_INET6)
 				{
-					CONSOLE_DEBUG("AF_INET6");
+//					CONSOLE_DEBUG("AF_INET6");
 					// Check if it is a valid IPv6 address
 //					tmpAddrPtr	=	&((struct sockaddr_in6 *)ifa->ifa_addr)->sin6_addr;
 //					inet_ntop(AF_INET6, tmpAddrPtr, addressBuffer, INET6_ADDRSTRLEN);
@@ -1311,18 +1311,18 @@ bool			keepGoing;
 				}
 				else if (ifa ->ifa_addr->sa_family == PF_PACKET)
 				{
-					CONSOLE_DEBUG("PF_PACKET");
-					CONSOLE_DEBUG_W_STR("ifa->ifa_name:", ifa->ifa_name);
+//					CONSOLE_DEBUG("PF_PACKET");
+//					CONSOLE_DEBUG_W_STR("ifa->ifa_name:", ifa->ifa_name);
 				}
 				else
 				{
 					CONSOLE_DEBUG_W_STR("Unknown family Name   :", ifa->ifa_name);
 				}
-		//+		if (gDebugDiscovery)
-				{
-					CONSOLE_DEBUG("Stepping to Next ip address --------------------------------------");
-				}
-				CONSOLE_DEBUG("ifa	=	ifa->ifa_next;");
+//				if (gDebugDiscovery)
+//				{
+//					CONSOLE_DEBUG("Stepping to Next ip address -----------------------");
+//				}
+//				CONSOLE_DEBUG("ifa	=	ifa->ifa_next;");
 				ifa	=	ifa->ifa_next;
 //				CONSOLE_DEBUG(__FUNCTION__);
 			}
@@ -1334,18 +1334,16 @@ bool			keepGoing;
 		}
 
 
-		CONSOLE_DEBUG("Freeing ifAddrStruct");
+//		CONSOLE_DEBUG("Freeing ifAddrStruct");
 		freeifaddrs(ifAddrStruct);
 	}
 	else
 	{
 		CONSOLE_DEBUG("getifaddrs() Failed!!!!!");
 	}
-	CONSOLE_DEBUG_W_HEX("gMyIPaddress\t=", gMyIPaddress);
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, "EXIT");
-//	CONSOLE_ABORT(__FUNCTION__);
+//	CONSOLE_DEBUG_W_HEX("gMyIPaddress\t=", gMyIPaddress);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, "EXIT");
 }
-
 
 //*****************************************************************************
 int StartDiscoveryListenThread(const int alpacaListenPort)
@@ -1370,9 +1368,6 @@ int			threadErr;
 	}
 	return(threadErr);
 }
-
-
-
 
 #if 0
 

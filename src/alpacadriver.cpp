@@ -1279,6 +1279,8 @@ void	AlpacaDriver::OutputHTMLrowData(int socketFD, const char *string1, const ch
 
 
 //*****************************************************************************
+//*	returns delay time in micro-seconds
+//*****************************************************************************
 int32_t	AlpacaDriver::RunStateMachine(void)
 {
 	return(5 * 1000 * 1000);

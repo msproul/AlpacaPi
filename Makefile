@@ -3,7 +3,7 @@
 #	written by hand by Mark Sproul
 #	(C) 2019 by Mark Sproul
 #
-#
+#		sudo apt-get install build-essential
 #		sudo apt-get install libusb-1.0-0-dev
 #		sudo apt-get install libudev-dev
 #		sudo apt-get install libopencv-dev
@@ -40,6 +40,8 @@
 #++	Jan  6,	2022	<MLS> Added _ENABLE_REMOTE_SQL_  & _ENABLE_REMOTE_GAIA_
 #++	Jan 13,	2022	<MLS> Added _ENABLE_ASTERIODS_
 #++	Jan 18,	2022	<MLS> Added fitsview to makefile
+#++	Mar 24,	2022	<MLS> Added -fPIE to compile options
+#++	Mar 25,	2022	<MLS> Added _ENABLE_TELESCOPE_SERVO_
 ######################################################################################
 
 #PLATFORM			=	x86
@@ -112,6 +114,7 @@ CFLAGS			+=	-g
 #CFLAGS			+=	-Wno-unused-but-set-variable
 #CFLAGS			+=	-Wstrict-prototypes
 #CFLAGS			+=	-mx32
+CFLAGS			+=	-fPIE
 
 CPLUSFLAGS		=	-Wall -Wno-multichar -Wno-unknown-pragmas
 #CPLUSFLAGS		+=	-Wno-class-memaccess
@@ -120,6 +123,7 @@ CPLUSFLAGS		+=	-O2
 CPLUSFLAGS		+=	-g
 #CPLUSFLAGS		+=	-Wno-unused-but-set-variable
 CPLUSFLAGS		+=	-Wno-format-overflow
+CPLUSFLAGS		+=	-fPIE
 
 COMPILE			=	gcc -c $(CFLAGS) $(DEFINEFLAGS) $(OPENCV_COMPILE)
 COMPILEPLUS		=	g++ -c $(CPLUSFLAGS) $(DEFINEFLAGS) $(OPENCV_COMPILE)
@@ -195,6 +199,7 @@ CPP_OBJECTS=												\
 				$(OBJECT_DIR)telescopedriver_comm.o			\
 				$(OBJECT_DIR)telescopedriver_lx200.o		\
 				$(OBJECT_DIR)telescopedriver_Rigel.o		\
+				$(OBJECT_DIR)telescopedriver_servo.o		\
 				$(OBJECT_DIR)telescopedriver_skywatch.o		\
 
 LIVE_WINDOW_OBJECTS=										\
@@ -302,10 +307,10 @@ help:
 	# Telescope drivers,
 	# As of March 2022, the telescope driver is still in development,
 	# There are several options that are in progress
-	#        make tele		Makes a version which speaks LX200 over a TCP/IP connection
-	#        make rigel		Makes a special version for a user that uses a rigel controller
-	#        make eq6		A version to control eq6 style mounts
-	#
+	#        make tele      Makes a version which speaks LX200 over a TCP/IP connection
+	#        make rigel     Makes a special version for a user that uses a rigel controller
+	#        make eq6       A version to control eq6 style mounts
+	#        make servo     A telescope controller based on servo motors
 	#
 	# Miscellaneous
 	#        make clean      removes all binaries
@@ -317,8 +322,9 @@ help:
 	#
 	#       make sky         makes SkyTravel with openCV 3.3.1 or earlier
 	#       make skysql      same as sky but with SQL database support
-	#       make skycpp      makes SkyTravel with newer Versions after 3.3.1
-	#       make skycppsql   same as skycpp with SQL database support
+	#       make skycv3      SkyTravel utilizing OpenCV C++ version 3.3.1
+	#>      make skycv4      makes SkyTravel with newer Versions after 3.3.1
+	#>      make skycv4sql   same as skycv4 with SQL database support
 	#
 	#   Some of the clients can also be built separately
 	#       make camera
@@ -506,7 +512,7 @@ eq6		:			$(CPP_OBJECTS)				\
 
 
 ######################################################################################
-RIGEL_OBJECTS=												\
+TELESCOPE_OBJECTS=												\
 				$(OBJECT_DIR)alpacadriver.o					\
 				$(OBJECT_DIR)alpacadriver_helper.o			\
 				$(OBJECT_DIR)alpaca_discovery.o				\
@@ -523,6 +529,7 @@ RIGEL_OBJECTS=												\
 				$(OBJECT_DIR)telescopedriver.o				\
 				$(OBJECT_DIR)telescopedriver_comm.o			\
 				$(OBJECT_DIR)telescopedriver_Rigel.o		\
+				$(OBJECT_DIR)telescopedriver_servo.o		\
 				$(OBJECT_DIR)cpu_stats.o					\
 				$(OBJECT_DIR)helper_functions.o				\
 
@@ -532,15 +539,31 @@ RIGEL_OBJECTS=												\
 rigel		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
 rigel		:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
 rigel		:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_RIGEL_
-rigel		:		$(RIGEL_OBJECTS)			\
+rigel		:		$(TELESCOPE_OBJECTS)		\
 					$(SOCKET_OBJECTS)			\
 
 
 		$(LINK)  								\
 					$(SOCKET_OBJECTS)			\
-					$(RIGEL_OBJECTS)			\
+					$(TELESCOPE_OBJECTS)		\
 					-lpthread					\
 					-o alpacapi-rigel
+
+
+######################################################################################
+#pragma mark make servo
+servo		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
+servo		:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
+servo		:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_SERVO_
+servo		:		$(TELESCOPE_OBJECTS)		\
+					$(SOCKET_OBJECTS)			\
+
+
+		$(LINK)  								\
+					$(SOCKET_OBJECTS)			\
+					$(TELESCOPE_OBJECTS)		\
+					-lpthread					\
+					-o alpacapi-servo
 
 ######################################################################################
 #pragma mark make toup
@@ -1805,6 +1828,24 @@ camera		:			$(CONTROLLER_OBJECTS)					\
 
 
 ######################################################################################
+#make camera
+#pragma mark camera-controller
+cameracv4		:	DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
+cameracv4		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_CAMERA_
+cameracv4		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
+cameracv4		:	DEFINEFLAGS		+=	-D_CONTROLLER_USES_ALPACA_
+cameracv4		:	DEFINEFLAGS		+=	-D_USE_OPENCV_
+cameracv4		:	DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
+cameracv4		:	OPENCV_COMPILE	=	$(shell pkg-config --cflags opencv4)
+cameracv4		:	OPENCV_LINK		=	$(shell pkg-config --libs opencv4)
+cameracv4		:	$(CONTROLLER_OBJECTS)					\
+
+				$(LINK)  										\
+							$(CONTROLLER_OBJECTS)				\
+							$(OPENCV_LINK)						\
+							-lpthread							\
+
+######################################################################################
 #pragma mark dome-controller
 #	make domectrl
 domectrl		:	DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
@@ -1843,6 +1884,28 @@ focuser		:			$(CONTROLLER_OBJECTS)
 							-o focuser
 
 ######################################################################################
+#pragma mark focuser-controller
+#	make focuser
+focusercv4		:	DEFINEFLAGS		+=	-D_INCLUDE_CTRL_MAIN_
+focusercv4		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_FOCUSERS_
+focusercv4		:	DEFINEFLAGS		+=	-D_ENABLE_USB_FOCUSERS_
+focusercv4		:	DEFINEFLAGS		+=	-D_CONTROLLER_USES_ALPACA_
+focusercv4		:	DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
+focusercv4		:	DEFINEFLAGS		+=	-D_USE_OPENCV_
+focusercv4		:	DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
+focusercv4		:	OPENCV_COMPILE	=	$(shell pkg-config --cflags opencv4)
+focusercv4		:	OPENCV_LINK		=	$(shell pkg-config --libs opencv4)
+
+focusercv4		:			$(CONTROLLER_OBJECTS)
+
+				$(LINK)  										\
+							$(CONTROLLER_OBJECTS)				\
+							$(OPENCV_LINK)						\
+							-lpthread							\
+							-o focuser
+
+
+######################################################################################
 #make switch
 #pragma mark switch-controller
 switch		:	DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
@@ -1852,6 +1915,26 @@ switch		:	DEFINEFLAGS		+=	-D_CONTROLLER_USES_ALPACA_
 switch		:	DEFINEFLAGS		+=	-D_USE_OPENCV_
 
 switch		:			$(CONTROLLER_OBJECTS)
+
+				$(LINK)  										\
+							$(CONTROLLER_OBJECTS)				\
+							$(OPENCV_LINK)						\
+							-lpthread							\
+							-o switch
+
+######################################################################################
+#make switch
+#pragma mark switch-controller
+switchcv4		:	DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
+switchcv4		:	DEFINEFLAGS		+=	-D_INCLUDE_CTRL_MAIN_
+switchcv4		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_SWITCHES_
+switchcv4		:	DEFINEFLAGS		+=	-D_CONTROLLER_USES_ALPACA_
+switchcv4		:	DEFINEFLAGS		+=	-D_USE_OPENCV_
+switchcv4		:	DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
+switchcv4		:	OPENCV_COMPILE	=	$(shell pkg-config --cflags opencv4)
+switchcv4		:	OPENCV_LINK		=	$(shell pkg-config --libs opencv4)
+
+switchcv4		:			$(CONTROLLER_OBJECTS)
 
 				$(LINK)  										\
 							$(CONTROLLER_OBJECTS)				\
@@ -1979,31 +2062,71 @@ sky		:				$(SKYTRAVEL_OBJECTS)					\
 							-o skytravel
 
 ######################################################################################
-#make skycpp
+#make skycv3
 #pragma mark skytravel
-skycpp			:	DEFINEFLAGS		+=	-D_INCLUDE_CTRL_MAIN_
-skycpp			:	DEFINEFLAGS		+=	-D_ENABLE_SKYTRAVEL_
-skycpp			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_CAMERA_
-skycpp			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_DOME_
-skycpp			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_FOCUSERS_
-skycpp			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
-skycpp			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_SWITCHES_
-skycpp			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_TELESCOPE_
-skycpp			:	DEFINEFLAGS		+=	-D_ENABLE_FITS_
-skycpp			:	DEFINEFLAGS		+=	-D_CONTROLLER_USES_ALPACA_
-skycpp			:	DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_CONTROLLER_
-skycpp			:	DEFINEFLAGS		+=	-D_ENABLE_SLIT_TRACKER_
-skycpp			:	DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
-skycpp			:	DEFINEFLAGS		+=	-D_ENABLE_ASTERIODS_
-#skycpp			:	DEFINEFLAGS		+=	-D_ENABLE_GAIA_
-#skycpp			:	DEFINEFLAGS		+=	-D_ENABLE_REMOTE_SQL_
-#skycpp			:	DEFINEFLAGS		+=	-D_ENABLE_REMOTE_GAIA_
-skycpp			:	DEFINEFLAGS		+=	-D_USE_OPENCV_
-skycpp			:	DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
-skycpp			:	INCLUDES		+=	-I$(SRC_SKYTRAVEL)
-skycpp			:	OPENCV_COMPILE	=	$(shell pkg-config --cflags opencv4)
-skycpp			:	OPENCV_LINK		=	$(shell pkg-config --libs opencv4)
-skycpp			:		$(SKYTRAVEL_OBJECTS)					\
+skycv3			:	DEFINEFLAGS		+=	-D_INCLUDE_CTRL_MAIN_
+skycv3			:	DEFINEFLAGS		+=	-D_ENABLE_SKYTRAVEL_
+skycv3			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_CAMERA_
+skycv3			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_DOME_
+skycv3			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_FOCUSERS_
+skycv3			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
+skycv3			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_SWITCHES_
+skycv3			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_TELESCOPE_
+skycv3			:	DEFINEFLAGS		+=	-D_ENABLE_FITS_
+skycv3			:	DEFINEFLAGS		+=	-D_CONTROLLER_USES_ALPACA_
+skycv3			:	DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_CONTROLLER_
+skycv3			:	DEFINEFLAGS		+=	-D_ENABLE_SLIT_TRACKER_
+skycv3			:	DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
+skycv3			:	DEFINEFLAGS		+=	-D_ENABLE_ASTERIODS_
+skycv3			:	DEFINEFLAGS		+=	-D_ENABLE_GAIA_
+skycv3			:	DEFINEFLAGS		+=	-D_ENABLE_REMOTE_SQL_
+skycv3			:	DEFINEFLAGS		+=	-D_ENABLE_REMOTE_GAIA_
+skycv3			:	DEFINEFLAGS		+=	-D_USE_OPENCV_
+skycv3			:	DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
+skycv3			:	INCLUDES		+=	-I$(SRC_SKYTRAVEL)
+skycv3			:			$(SKYTRAVEL_OBJECTS)				\
+							$(CONTROLLER_BASE_OBJECTS)			\
+							$(GAIA_SQL_OBJECTS)					\
+
+
+				$(LINK)  										\
+							$(SKYTRAVEL_OBJECTS)				\
+							$(CONTROLLER_BASE_OBJECTS)			\
+							-L/usr/local/lib					\
+							$(OPENCV_LINK)						\
+							$(GAIA_SQL_OBJECTS)					\
+							-lmysqlclient						\
+							-lpthread							\
+							-lcfitsio							\
+							-o skytravel
+
+
+######################################################################################
+#make skycv4
+#pragma mark skytravel
+skycv4			:	DEFINEFLAGS		+=	-D_INCLUDE_CTRL_MAIN_
+skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_SKYTRAVEL_
+skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_CAMERA_
+skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_DOME_
+skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_FOCUSERS_
+skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
+skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_SWITCHES_
+skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_TELESCOPE_
+skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_FITS_
+skycv4			:	DEFINEFLAGS		+=	-D_CONTROLLER_USES_ALPACA_
+skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_CONTROLLER_
+skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_SLIT_TRACKER_
+skycv4			:	DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
+skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_ASTERIODS_
+#skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_GAIA_
+#skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_REMOTE_SQL_
+#skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_REMOTE_GAIA_
+skycv4			:	DEFINEFLAGS		+=	-D_USE_OPENCV_
+skycv4			:	DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
+skycv4			:	INCLUDES		+=	-I$(SRC_SKYTRAVEL)
+skycv4			:	OPENCV_COMPILE	=	$(shell pkg-config --cflags opencv4)
+skycv4			:	OPENCV_LINK		=	$(shell pkg-config --libs opencv4)
+skycv4			:		$(SKYTRAVEL_OBJECTS)					\
 						$(CONTROLLER_BASE_OBJECTS)				\
 
 
@@ -2016,35 +2139,33 @@ skycpp			:		$(SKYTRAVEL_OBJECTS)					\
 							-lcfitsio							\
 							-o skytravel
 
-#						$(GAIA_SQL_OBJECTS)						\
-#							-lmysqlclient						\
-
-
 ######################################################################################
-#make skycppsql
+#make skycv4sql
 #pragma mark skytravel
-skycppsql			:	DEFINEFLAGS		+=	-D_INCLUDE_CTRL_MAIN_
-skycppsql			:	DEFINEFLAGS		+=	-D_ENABLE_SKYTRAVEL_
-skycppsql			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_CAMERA_
-skycppsql			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_DOME_
-skycppsql			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_FOCUSERS_
-skycppsql			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
-skycppsql			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_SWITCHES_
-skycppsql			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_TELESCOPE_
-skycppsql			:	DEFINEFLAGS		+=	-D_ENABLE_FITS_
-skycppsql			:	DEFINEFLAGS		+=	-D_CONTROLLER_USES_ALPACA_
-skycppsql			:	DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_CONTROLLER_
-skycppsql			:	DEFINEFLAGS		+=	-D_ENABLE_SLIT_TRACKER_
-skycppsql			:	DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
-skycppsql			:	DEFINEFLAGS		+=	-D_ENABLE_ASTERIODS_
-skycppsql			:	DEFINEFLAGS		+=	-D_ENABLE_GAIA_
-skycppsql			:	DEFINEFLAGS		+=	-D_ENABLE_REMOTE_SQL_
-skycppsql			:	DEFINEFLAGS		+=	-D_ENABLE_REMOTE_GAIA_
-skycppsql			:	DEFINEFLAGS		+=	-D_USE_OPENCV_
-skycppsql			:	DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
-skycppsql			:	INCLUDES		+=	-I$(SRC_SKYTRAVEL)
+skycv4sql			:	DEFINEFLAGS		+=	-D_INCLUDE_CTRL_MAIN_
+skycv4sql			:	DEFINEFLAGS		+=	-D_ENABLE_SKYTRAVEL_
+skycv4sql			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_CAMERA_
+skycv4sql			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_DOME_
+skycv4sql			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_FOCUSERS_
+skycv4sql			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
+skycv4sql			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_SWITCHES_
+skycv4sql			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_TELESCOPE_
+skycv4sql			:	DEFINEFLAGS		+=	-D_ENABLE_FITS_
+skycv4sql			:	DEFINEFLAGS		+=	-D_CONTROLLER_USES_ALPACA_
+skycv4sql			:	DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_CONTROLLER_
+skycv4sql			:	DEFINEFLAGS		+=	-D_ENABLE_SLIT_TRACKER_
+skycv4sql			:	DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
+skycv4sql			:	DEFINEFLAGS		+=	-D_ENABLE_ASTERIODS_
+skycv4sql			:	DEFINEFLAGS		+=	-D_ENABLE_GAIA_
+skycv4sql			:	DEFINEFLAGS		+=	-D_ENABLE_REMOTE_SQL_
+skycv4sql			:	DEFINEFLAGS		+=	-D_ENABLE_REMOTE_GAIA_
+skycv4sql			:	DEFINEFLAGS		+=	-D_USE_OPENCV_
+skycv4sql			:	DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
+skycv4sql			:	INCLUDES		+=	-I$(SRC_SKYTRAVEL)
+skycv4sql			:	OPENCV_COMPILE	=	$(shell pkg-config --cflags opencv4)
+skycv4sql			:	OPENCV_LINK		=	$(shell pkg-config --libs opencv4)
 
-skycppsql			:		$(SKYTRAVEL_OBJECTS)					\
+skycv4sql			:		$(SKYTRAVEL_OBJECTS)					\
 						$(CONTROLLER_BASE_OBJECTS)				\
 						$(GAIA_SQL_OBJECTS)						\
 
@@ -2493,6 +2614,13 @@ $(OBJECT_DIR)telescopedriver_Rigel.o :	$(SRC_DIR)telescopedriver_Rigel.cpp	\
 										$(SRC_DIR)alpacadriver.h
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)telescopedriver_Rigel.cpp -o$(OBJECT_DIR)telescopedriver_Rigel.o
 
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)telescopedriver_servo.o :	$(SRC_DIR)telescopedriver_servo.cpp	\
+										$(SRC_DIR)telescopedriver_servo.h	\
+										$(SRC_DIR)telescopedriver_comm.h	\
+										$(SRC_DIR)telescopedriver.h			\
+										$(SRC_DIR)alpacadriver.h
+	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)telescopedriver_servo.cpp -o$(OBJECT_DIR)telescopedriver_servo.o
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)telescopedriver_skywatch.o :	$(SRC_DIR)telescopedriver_skywatch.cpp	\
