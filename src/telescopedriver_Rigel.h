@@ -45,6 +45,7 @@ class TelescopeDriverRigel: public TelescopeDriver
 		//
 								TelescopeDriverRigel(void);
 		virtual					~TelescopeDriverRigel(void);
+		virtual	int32_t				RunStateMachine(void);
 
 
 		//*************************************************************************

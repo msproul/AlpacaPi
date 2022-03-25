@@ -1283,6 +1283,8 @@ void	AlpacaDriver::OutputHTMLrowData(int socketFD, const char *string1, const ch
 //*****************************************************************************
 int32_t	AlpacaDriver::RunStateMachine(void)
 {
+	//*	5 * 1000 * 1000 means you might not get called again for 5 seconds
+	//*	you might get called earlier
 	return(5 * 1000 * 1000);
 }
 

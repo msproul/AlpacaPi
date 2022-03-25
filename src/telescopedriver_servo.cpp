@@ -105,6 +105,8 @@ int32_t	TelescopeDriverServo::RunStateMachine(void)
 	//*	update cTelescopeProp values here
 
 
+	//*	5 * 1000 * 1000 means you might not get called again for 5 seconds
+	//*	you might get called earlier
 	return(5 * 1000 * 1000);
 }
 

@@ -111,6 +111,20 @@ TelescopeDriverRigel::~TelescopeDriverRigel(void)
 }
 
 //*****************************************************************************
+//*	returns delay time in micro-seconds
+//*****************************************************************************
+int32_t	TelescopeDriverRigel::RunStateMachine(void)
+{
+	//*	this is where your periodic code goes
+	//*	update cTelescopeProp values here
+
+	//*	5 * 1000 * 1000 means you might not get called again for 5 seconds
+	//*	you might get called earlier
+	return(5 * 1000 * 1000);
+}
+
+
+//*****************************************************************************
 TYPE_ASCOM_STATUS	TelescopeDriverRigel::Telescope_AbortSlew(char *alpacaErrMsg)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
