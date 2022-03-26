@@ -1,5 +1,5 @@
 //**************************************************************************
-//*	Name:			telescopedriver_Servo.cpp
+//*	Name:			telescopedriver_servo.cpp
 //*
 //*	Author:			Mark Sproul (C) 2021
 //*

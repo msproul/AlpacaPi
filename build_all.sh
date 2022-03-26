@@ -94,7 +94,7 @@ fi
 echo "Platform = $PLATFORM"
 
 echo "*************************************************** making client"
-make clean client  >/dev/null
+make -j4 clean client  >/dev/null
 
 ########################################################################
 # if openCV is present, we can compile the clients
@@ -108,17 +108,17 @@ then
 	rm switch
 	echo "Building client apps" >> $LOGFILENAME
 	echo "*************************************************** making switch"	>/dev/stderr
-	make clean switch | grep -v Wall
+	make -j4 clean switch | grep -v Wall
 	echo "*************************************************** making skyshariot"		>/dev/stderr
-	make clean sky | grep -v Wall
+	make -j4 clean sky | grep -v Wall
 	echo "*************************************************** making focuser"	>/dev/stderr
-	make clean focuser | grep -v Wall
+	make -j4 clean focuser | grep -v Wall
 	echo "*************************************************** making domectrl"	>/dev/stderr
-	make clean domectrl | grep -v Wall
+	make -j4 clean domectrl | grep -v Wall
 	echo "*************************************************** making camera"	>/dev/stderr
-	make clean camera | grep -v Wall
+	make -j4 clean camera | grep -v Wall
 	echo "*************************************************** making rorpi"	>/dev/stderr
-	make clean rorpi | grep -v Wall
+	make -j4 clean rorpi | grep -v Wall
 
 	if [ -f switch ]
 	then
@@ -154,17 +154,17 @@ then
 	rm switch
 	echo "Building client apps" >> $LOGFILENAME
 	echo "*************************************************** making switch"	>/dev/stderr
-	make clean switch | grep -v Wall
+	make -j4 clean switch | grep -v Wall
 	echo "*************************************************** making skyshariot"		>/dev/stderr
-	make clean skycv4 | grep -v Wall
+	make -j4 clean skycv4 | grep -v Wall
 	echo "*************************************************** making focuser"	>/dev/stderr
-	make clean focuser | grep -v Wall
+	make -j4 clean focuser | grep -v Wall
 	echo "*************************************************** making domectrl"	>/dev/stderr
-	make clean domectrl | grep -v Wall
+	make -j4 clean domectrl | grep -v Wall
 	echo "*************************************************** making camera"	>/dev/stderr
-	make clean camera | grep -v Wall
+	make -j4 clean camera | grep -v Wall
 	echo "*************************************************** making rorpi"	>/dev/stderr
-	make clean rorpi | grep -v Wall
+	make -j4 clean rorpi | grep -v Wall
 
 	if [ -f switch ]
 	then
@@ -197,15 +197,15 @@ if $PI64
 then
 	echo "Building alpacapi server for 64 bit Raspberry Pi" >> $LOGFILENAME
 	echo "*************************************************** making pi64" >/dev/stderr
-	make clean pi64 >/dev/null
+	make -j4 clean pi64 >/dev/null
 elif $RASPPI
 then
 	echo "Building alpacapi server for 32 bit Raspberry Pi" >> $LOGFILENAME
 	echo "*************************************************** making pi" >/dev/stderr
-	make clean pi >/dev/null
+	make -j4 clean pi >/dev/null
 else
 	echo "Building alpacapi server on x86" >> $LOGFILENAME
-	make clean  >/dev/null
+	make -j4 clean  >/dev/null
 	echo "*************************************************** making default" >/dev/stderr
 	make >/dev/null
 fi
@@ -219,14 +219,14 @@ else
 	if $PI64
 	then
 		echo "Building alpacapi server for 64 bit Raspberry Pi"
-		make clean pi64 >/dev/null 2>$ERRORLOGFILE
+		make -j4 clean pi64 >/dev/null 2>$ERRORLOGFILE
 	elif $RASPPI
 	then
 		echo "Building alpacapi server for 32 bit Raspberry Pi"
-		make clean pi  >/dev/null 2>$ERRORLOGFILE
+		make -j4 clean pi  >/dev/null 2>$ERRORLOGFILE
 	else
 		echo "Building alpacapi server on x86"
-		make clean   >/dev/null 2>$ERRORLOGFILE
+		make -j4 clean   >/dev/null 2>$ERRORLOGFILE
 		make >/dev/null
 	fi
 fi
@@ -236,7 +236,7 @@ if $RASPPI
 then
 	##################################
 	#this only compiles on Raspberry Pi (depends on wiringPi library)
-	make clean calib >/dev/null
+	make -j4 clean calib >/dev/null
 	if [ -f alpacapi-calib ]
 	then
 		echo "alpacapi-calib driver made successfully" >> $LOGFILENAME
@@ -244,9 +244,9 @@ then
 		echo "Failed to build alpacapi-calib driver !!!!!!!!!!!!!!!!!!!!!" >> $LOGFILENAME
 	fi
 	##################################
-	make clean rorpi >/dev/null
+	make -j4 clean rorpi >/dev/null
 else
-	make clean rorpi >/dev/null
+	make -j4 clean rorpi >/dev/null
 fi
 if [ -f ror ]
 then
@@ -273,7 +273,7 @@ then
 	#	lets try sky travel
 	if [ -d src_skytravel ]
 	then
-		make clean sky >/dev/null
+		make -j4 clean sky >/dev/null
 		if [ -f skytravel ]
 		then
 			echo "skytravel client made successfully" >> $LOGFILENAME

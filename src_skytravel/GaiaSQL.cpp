@@ -33,6 +33,7 @@
 //*	Mar 13,	2022	<MLS> Added support for multiple database names
 //*	Mar 14,	2022	<MLS> Starting to make SQL routines more generic, i.e. remove "GAIA"
 //*	Mar 24,	2022	<MLS> SQL now working on Raspberry Pi with "mariadb"
+//*	Mar 25,	2022	<MLS> First external user accessing Gaia database (Ron S.)
 //*****************************************************************************
 //*	sudo apt-get install libmysqlclient-dev		<<<< Use this one
 //*	sudo apt-get install libmariadb-dev			<<<< Use this for Raspberry-Pi
@@ -58,6 +59,8 @@
 
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
+
+#define	_VERBOSE_SQL_DEBUG_
 
 #include	"controller_skytravel.h"
 #include	"helper_functions.h"
@@ -319,7 +322,7 @@ char			mySQLCmd[256];
 int				returnCode;
 char			userString[64];
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 
 	returnCode		=	-1;
 
@@ -338,7 +341,7 @@ char			userString[64];
 	}
 	else
 	{
-		//*	last resrot
+		//*	last resort
 		strcpy(userString, "Unknown");
 	}
 
@@ -348,13 +351,15 @@ char			userString[64];
 	}
 
 	sprintf(mySQLCmd, "call SetLogComment('%s');", userString);
-//	CONSOLE_DEBUG_W_STR("mySQLCmd\t=", mySQLCmd);
-
+#ifdef _VERBOSE_SQL_DEBUG_
+	CONSOLE_DEBUG_W_STR("mySQLCmd\t=", mySQLCmd);
+#endif
 	mySQLConnection	=	mysql_init(NULL);
 	if (mySQLConnection != NULL)
 	{
-//		CONSOLE_DEBUG(__FUNCTION__);
-
+#ifdef _VERBOSE_SQL_DEBUG_
+		CONSOLE_DEBUG(__FUNCTION__);
+#endif // _VERBOSE_SQL_DEBUG_
 		//*	establish connection to the database
 		if (mysql_real_connect(	mySQLConnection,
 								gSQLsever_IPaddr,
@@ -362,25 +367,30 @@ char			userString[64];
 								gSQLsever_Password,
 								gSQLsever_Database, 0, NULL, 0) != NULL)
 		{
-//			CONSOLE_DEBUG_W_STR("Successfully connected to", gSQLsever_IPaddr);
-
+#ifdef _VERBOSE_SQL_DEBUG_
+			CONSOLE_DEBUG_W_STR("Successfully connected to", gSQLsever_IPaddr);
+#endif
 			returnCode	=	mysql_select_db(mySQLConnection, gSQLsever_Database);
 			if (returnCode == 0)
 			{
-//				CONSOLE_DEBUG("mysql_select_db -- OK");
+#ifdef _VERBOSE_SQL_DEBUG_
+				CONSOLE_DEBUG("mysql_select_db -- OK");
+#endif
 				returnCode	=	mysql_query(mySQLConnection, mySQLCmd);
 				if (returnCode == 0)
 				{
-//					CONSOLE_DEBUG("mysql_query -- OK");
+#ifdef _VERBOSE_SQL_DEBUG_
+					CONSOLE_DEBUG("mysql_query -- OK");
+#endif
 				}
 				else
 				{
-					CONSOLE_DEBUG_W_NUM("mysql_query returnCode\t=", returnCode);
+					CONSOLE_DEBUG_W_NUM("mysql_query ERROR returnCode\t=", returnCode);
 				}
 			}
 			else
 			{
-				CONSOLE_DEBUG_W_NUM("mysql_select_db returnCode\t=", returnCode);
+				CONSOLE_DEBUG_W_NUM("mysql_select_db ERROR returnCode\t=", returnCode);
 			}
 
 		}
@@ -413,26 +423,35 @@ int		num_fields;
 int		returnCode;
 
 
-//	CONSOLE_DEBUG_W_STR(myDataBase,		mySQLCmd);
+#ifdef _VERBOSE_SQL_DEBUG_
+	CONSOLE_DEBUG_W_STR(myDataBase,		mySQLCmd);
+#endif
 	num_fields	=	-1;
 
 	returnCode	=	mysql_select_db(myCon, myDataBase);
 	if (returnCode == 0)
 	{
-//		CONSOLE_DEBUG_W_NUM("mysql_select_db returnCode\t=", returnCode);
-
-//		CONSOLE_DEBUG_W_STR("Calling mysql_query() with\t=", mySQLCmd);
+#ifdef _VERBOSE_SQL_DEBUG_
+		CONSOLE_DEBUG_W_NUM("mysql_select_db returnCode\t=", returnCode);
+		CONSOLE_DEBUG_W_STR("Calling mysql_query() with\t=", mySQLCmd);
+#endif
 		returnCode	=	mysql_query(myCon, mySQLCmd);
-//		CONSOLE_DEBUG_W_NUM("mysql_query returnCode\t=", returnCode);
+#ifdef _VERBOSE_SQL_DEBUG_
+		CONSOLE_DEBUG_W_NUM("mysql_query returnCode\t=", returnCode);
+#endif
 		if (returnCode == 0)
 		{
-//			CONSOLE_DEBUG("calling mysql_store_result()");
+#ifdef _VERBOSE_SQL_DEBUG_
+			CONSOLE_DEBUG("calling mysql_store_result()");
+#endif
 			*mySQLresult	=	mysql_store_result(myCon);
 
 			if (*mySQLresult != NULL)
 			{
 				num_fields	=	mysql_num_fields(*mySQLresult);
-//				CONSOLE_DEBUG_W_NUM("num_fields\t=", num_fields);
+#ifdef _VERBOSE_SQL_DEBUG_
+				CONSOLE_DEBUG_W_NUM("num_fields\t=", num_fields);
+#endif
 			}
 			else
 			{
@@ -559,8 +578,9 @@ double			bp_rp;
 unsigned int	startMilliSecs;
 unsigned int	endMilliSecs;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
-
+#ifdef _VERBOSE_SQL_DEBUG_
+	CONSOLE_DEBUG(__FUNCTION__);
+#endif
 	recNum		=	0;
 	gaiaData	=	NULL;
 
@@ -570,14 +590,15 @@ unsigned int	endMilliSecs;
 
 	if (mySQLConnection != NULL)
 	{
-//		CONSOLE_DEBUG(__FUNCTION__);
+#ifdef _VERBOSE_SQL_DEBUG_
+		CONSOLE_DEBUG(__FUNCTION__);
 
-//		CONSOLE_DEBUG("Trying to establish connection to the database");
-//		CONSOLE_DEBUG_W_STR("gSQLsever_IPaddr\t=",		gSQLsever_IPaddr);
-//		CONSOLE_DEBUG_W_STR("gSQLsever_UserName\t=",	gSQLsever_UserName);
-//		CONSOLE_DEBUG_W_STR("gSQLsever_Password\t=",	gSQLsever_Password);
-//		CONSOLE_DEBUG_W_STR("gSQLsever_Database\t=",	gSQLsever_Database);
-
+		CONSOLE_DEBUG("Trying to establish connection to the database");
+		CONSOLE_DEBUG_W_STR("gSQLsever_IPaddr\t=",		gSQLsever_IPaddr);
+		CONSOLE_DEBUG_W_STR("gSQLsever_UserName\t=",	gSQLsever_UserName);
+		CONSOLE_DEBUG_W_STR("gSQLsever_Password\t=",	gSQLsever_Password);
+		CONSOLE_DEBUG_W_STR("gSQLsever_Database\t=",	gSQLsever_Database);
+#endif
 		//*	establish connection to the database
 		//*	updated <KAS> 2/22/2022
 		if (mysql_real_connect(	mySQLConnection,
@@ -589,7 +610,9 @@ unsigned int	endMilliSecs;
 									NULL,
 									CLIENT_MULTI_RESULTS) != NULL)
 		{
-//			CONSOLE_DEBUG_W_STR("Successfully connected to", gSQLsever_IPaddr);
+#ifdef _VERBOSE_SQL_DEBUG_
+			CONSOLE_DEBUG_W_STR("Successfully connected to", gSQLsever_IPaddr);
+#endif
 			ra_int		=	floor(ra_Degrees);
 			dec_int		=	floor(dec_Degrees);
 
@@ -602,20 +625,24 @@ unsigned int	endMilliSecs;
 				sprintf(mySQLCmd,"call GetRaDec(%d,%d);", ra_int, dec_int);
 			}
 
-//			CONSOLE_DEBUG(mySQLCmd);
-//			CONSOLE_DEBUG("Calling Querry_mySQL_cmd()");
-
+#ifdef _VERBOSE_SQL_DEBUG_
+			CONSOLE_DEBUG(mySQLCmd);
+			CONSOLE_DEBUG("Calling Querry_mySQL_cmd()");
+#endif
 			mySQLresult	=	NULL;
 			num_fields	=	Querry_mySQL_cmd(	mySQLConnection,
 												&mySQLresult,
 												gSQLsever_Database,
 												mySQLCmd);
-//			CONSOLE_DEBUG_W_NUM("num_fields", num_fields);
+#ifdef _VERBOSE_SQL_DEBUG_
+			CONSOLE_DEBUG_W_NUM("num_fields", num_fields);
+#endif
 			if (num_fields > 0)
 			{
 				num_rows	=	mysql_num_rows(mySQLresult);
-//				CONSOLE_DEBUG_W_NUM("num_rows", num_rows);
-
+#ifdef _VERBOSE_SQL_DEBUG_
+				CONSOLE_DEBUG_W_NUM("num_rows", num_rows);
+#endif
 				if ((num_rows > 0) && (num_fields >= 3))
 				{
 					gaiaData		=	(TYPE_CelestData *)calloc((num_rows + 10), sizeof(TYPE_CelestData));
@@ -683,7 +710,9 @@ unsigned int	endMilliSecs;
 					CONSOLE_DEBUG_W_NUM("num_fields", num_fields);
 					CONSOLE_DEBUG_W_NUM("num_rows", num_rows);
 				}
-//				CONSOLE_DEBUG("Calling mysql_free_result()");
+#ifdef _VERBOSE_SQL_DEBUG_
+				CONSOLE_DEBUG("Calling mysql_free_result()");
+#endif
 				mysql_free_result(mySQLresult);
 
 				//*	Feb 22,	2022	<KAS> Fixed dangling result Bug
@@ -707,7 +736,9 @@ unsigned int	endMilliSecs;
 			{
 				LogSqlTransaction(mySQLCmd, "num_fields <= 0");
 			}
-//			CONSOLE_DEBUG("Done");
+#ifdef _VERBOSE_SQL_DEBUG_
+			CONSOLE_DEBUG("Done");
+#endif
 		}
 		else
 		{
@@ -744,10 +775,11 @@ unsigned int	startMilliSecs;
 unsigned int	endMilliSecs;
 bool			validFlag;
 
-//	CONSOLE_DEBUG("-------------------------------------------------------------");
-//	CONSOLE_DEBUG(__FUNCTION__);
-//	CONSOLE_DEBUG_W_STR("Searching SQL database for", gaiaIDnumberStr);
-
+#ifdef _VERBOSE_SQL_DEBUG_
+	CONSOLE_DEBUG("-------------------------------------------------------------");
+	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_STR("Searching SQL database for", gaiaIDnumberStr);
+#endif
 	recNum		=	0;
 
 	startMilliSecs	=	millis();
@@ -756,14 +788,15 @@ bool			validFlag;
 	validFlag		=	false;
 	if (mySQLConnection != NULL)
 	{
-//		CONSOLE_DEBUG(__FUNCTION__);
-//
-//		CONSOLE_DEBUG("Trying to establish connection to the database");
-//		CONSOLE_DEBUG_W_STR("gSQLsever_IPaddr\t=",		gSQLsever_IPaddr);
-//		CONSOLE_DEBUG_W_STR("gSQLsever_UserName\t=",	gSQLsever_UserName);
-//		CONSOLE_DEBUG_W_STR("gSQLsever_Password\t=",	gSQLsever_Password);
-//		CONSOLE_DEBUG_W_STR("gSQLsever_Database\t=",	gSQLsever_Database);
+#ifdef _VERBOSE_SQL_DEBUG_
+		CONSOLE_DEBUG(__FUNCTION__);
 
+		CONSOLE_DEBUG("Trying to establish connection to the database");
+		CONSOLE_DEBUG_W_STR("gSQLsever_IPaddr\t=",		gSQLsever_IPaddr);
+		CONSOLE_DEBUG_W_STR("gSQLsever_UserName\t=",	gSQLsever_UserName);
+		CONSOLE_DEBUG_W_STR("gSQLsever_Password\t=",	gSQLsever_Password);
+		CONSOLE_DEBUG_W_STR("gSQLsever_Database\t=",	gSQLsever_Database);
+#endif
 		//*	establish connection to the database
 		if (mysql_real_connect(	mySQLConnection,
 								gSQLsever_IPaddr,
@@ -772,11 +805,12 @@ bool			validFlag;
 								gSQLsever_Database, 0, NULL, 0) != NULL)
 		{
 //			CONSOLE_DEBUG_W_STR("Successfully connected to", gSQLsever_IPaddr);
-		//	sprintf(mySQLCmd,"call GetGaiaSourceID(%s);", gaiaIDnumberStr);
-			sprintf(mySQLCmd,"call GetStarFromID(%s);", gaiaIDnumberStr);
-//			CONSOLE_DEBUG(mySQLCmd);
-//			CONSOLE_DEBUG("Calling Querry_mySQL_cmd()");
 
+			sprintf(mySQLCmd,"call GetStarFromID(%s);", gaiaIDnumberStr);
+#ifdef _VERBOSE_SQL_DEBUG_
+			CONSOLE_DEBUG(mySQLCmd);
+			CONSOLE_DEBUG("Calling Querry_mySQL_cmd()");
+#endif
 			mySQLresult	=	NULL;
 			num_fields	=	Querry_mySQL_cmd(	mySQLConnection,
 												&mySQLresult,

@@ -12,6 +12,8 @@
 #		sudo apt-get install libcfitsio-dev
 #
 #		sudo apt-get install wiringpi
+#
+#	https://www.gnu.org/software/make/manual/make.html
 ######################################################################################
 #	Edit History
 ######################################################################################
@@ -47,8 +49,13 @@
 ######################################################################################
 
 #PLATFORM			=	x86
-PLATFORM			=	x64
+#PLATFORM			=	x64
 #PLATFORM			=	armv7
+
+###########################################
+#	lets try to determine platform
+MACHINE_TYPE		=	$(shell uname -m)
+PLATFORM			=	$(shell ./checkplatform.sh)
 
 # default settings for Desktop Linux build
 USR_HOME			=	$(HOME)/
@@ -65,6 +72,7 @@ SRC_DIR				=	./src/
 SRC_IMGPROC			=	./src_imageproc/
 SRC_DISCOVERY		=	./src_discovery/
 SRC_MOONRISE		=	./src_MoonRise/
+SRC_SERVO			=	./src_servo/
 MLS_LIB_DIR			=	./src_mlsLib/
 OBJECT_DIR			=	./Objectfiles/
 
@@ -290,7 +298,6 @@ ROR_OBJECTS=												\
 ######################################################################################
 #pragma mark make help
 help:
-
 	#################################################################################
 	# The AlpacaPi project consists of two main parts, drivers and clients
 	#    Driver make options
@@ -333,6 +340,10 @@ help:
 	#       make domectrl
 	#       make focuser
 	#       make switch
+	#
+	# Once everything is converted to openCV4, the opencv3 options will go away
+	# MACHINE_TYPE=$(MACHINE_TYPE)
+	# PLATFORM=$(PLATFORM)
 	#################################################################################
 
 
@@ -388,6 +399,94 @@ alpacapi		:	$(CPP_OBJECTS)				\
 					-lusb-1.0					\
 					-lpthread					\
 					-lcfitsio					\
+					-lqhyccd					\
+					-o alpacapi
+
+######################################################################################
+#pragma mark make picv4
+#picv4		:		DEFINEFLAGS		+=	-D_ENABLE_OBSERVINGCONDITIONS_
+picv4		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
+picv4		:		DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_
+picv4		:		DEFINEFLAGS		+=	-D_ENABLE_ROTATOR_
+picv4		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_
+picv4		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_ZWO_
+#picv4		:		DEFINEFLAGS		+=	-D_ENABLE_SAFETYMONITOR_
+#picv4		:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_
+picv4		:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
+picv4		:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
+picv4		:		DEFINEFLAGS		+=	-D_ENABLE_DISCOVERY_QUERRY_
+#picv4		:		DEFINEFLAGS		+=	-D_ENABLE_MULTICAM_
+#picv4		:		DEFINEFLAGS		+=	-D_ENABLE_DOME_
+picv4		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
+#picv4		:		DEFINEFLAGS		+=	-D_ENABLE_ATIK_
+picv4		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
+picv4		:		DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
+picv4		:		OPENCV_COMPILE	=	$(shell pkg-config --cflags opencv4)
+picv4		:		OPENCV_LINK		=	$(shell pkg-config --libs opencv4)
+#picv4		:		DEFINEFLAGS		+=	-D_ENABLE_TOUP_
+picv4		:		DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
+picv4		:		DEFINEFLAGS		+=	-D_ENABLE_LIVE_CONTROLLER_
+#picv4		:		PLATFORM		=	armv7
+#picv4		:		PLATFORM		=	armv8
+#picv4		:		ATIK_LIB_DIR	=	$(ATIK_LIB_MASTER_DIR)/ARM/x86/NoFlyCapture
+picv4		:		$(CPP_OBJECTS)				\
+					$(ALPACA_OBJECTS)			\
+					$(SOCKET_OBJECTS)			\
+					$(LIVE_WINDOW_OBJECTS)		\
+
+
+		$(LINK)  								\
+					$(SOCKET_OBJECTS)			\
+					$(CPP_OBJECTS)				\
+					$(ALPACA_OBJECTS)			\
+					$(LIVE_WINDOW_OBJECTS)		\
+					$(OPENCV_LINK)				\
+					$(ASI_CAMERA_OBJECTS)		\
+					$(ZWO_EFW_OBJECTS)			\
+					-lcfitsio					\
+					-lusb-1.0					\
+					-ludev						\
+					-lpthread					\
+					-o alpacapi
+
+#					-lwiringPi					\
+#					-latikcameras				\
+#					-L$(ATIK_LIB_DIR_ARM32)/	\
+
+######################################################################################
+#pragma mark make piqhy
+#piqhy		:		DEFINEFLAGS		+=	-D_ENABLE_OBSERVINGCONDITIONS_
+piqhy		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
+#piqhy		:		DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_
+#piqhy		:		DEFINEFLAGS		+=	-D_ENABLE_ROTATOR_
+#piqhy		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_ZWO_
+#piqhy		:		DEFINEFLAGS		+=	-D_ENABLE_SAFETYMONITOR_
+#piqhy		:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_
+piqhy		:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
+piqhy		:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
+#piqhy		:		DEFINEFLAGS		+=	-D_ENABLE_DISCOVERY_QUERRY_
+#piqhy		:		DEFINEFLAGS		+=	-D_ENABLE_MULTICAM_
+#piqhy		:		DEFINEFLAGS		+=	-D_ENABLE_DOME_
+#piqhy		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
+#piqhy		:		DEFINEFLAGS		+=	-D_ENABLE_ATIK_
+piqhy		:		DEFINEFLAGS		+=	-D_ENABLE_QHY_
+piqhy		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
+#piqhy		:		DEFINEFLAGS		+=	-D_ENABLE_TOUP_
+piqhy		:		PLATFORM		=	armv7
+piqhy		:		ATIK_LIB_DIR	=	$(ATIK_LIB_MASTER_DIR)/ARM/x86/NoFlyCapture
+piqhy		:		$(CPP_OBJECTS)				\
+					$(ALPACA_OBJECTS)			\
+					$(SOCKET_OBJECTS)			\
+
+		$(LINK)  								\
+					$(SOCKET_OBJECTS)			\
+					$(CPP_OBJECTS)				\
+					$(ALPACA_OBJECTS)			\
+					$(OPENCV_LINK)				\
+					-lcfitsio					\
+					-lusb-1.0					\
+					-ludev						\
+					-lpthread					\
 					-lqhyccd					\
 					-o alpacapi
 
@@ -551,6 +650,11 @@ rigel		:		$(TELESCOPE_OBJECTS)		\
 					-lpthread					\
 					-o alpacapi-rigel
 
+######################################################################################
+SERVO_OBJECTS=										\
+				$(OBJECT_DIR)mc_utils.o				\
+				$(OBJECT_DIR)mc_comm.o				\
+
 
 ######################################################################################
 #pragma mark make servo
@@ -559,11 +663,13 @@ servo		:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
 servo		:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_SERVO_
 servo		:		$(TELESCOPE_OBJECTS)		\
 					$(SOCKET_OBJECTS)			\
+					$(SERVO_OBJECTS)			\
 
 
 		$(LINK)  								\
 					$(SOCKET_OBJECTS)			\
 					$(TELESCOPE_OBJECTS)		\
+					$(SERVO_OBJECTS)			\
 					-lpthread					\
 					-o alpacapi-servo
 
@@ -885,90 +991,6 @@ pi		:			$(CPP_OBJECTS)				\
 					-ludev						\
 					-lwiringPi					\
 					-lpthread					\
-					-o alpacapi
-
-######################################################################################
-#pragma mark make picv4
-#picv4		:		DEFINEFLAGS		+=	-D_ENABLE_OBSERVINGCONDITIONS_
-picv4		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
-picv4		:		DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_
-picv4		:		DEFINEFLAGS		+=	-D_ENABLE_ROTATOR_
-picv4		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_
-picv4		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_ZWO_
-#picv4		:		DEFINEFLAGS		+=	-D_ENABLE_SAFETYMONITOR_
-#picv4		:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_
-picv4		:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
-picv4		:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
-picv4		:		DEFINEFLAGS		+=	-D_ENABLE_DISCOVERY_QUERRY_
-#picv4		:		DEFINEFLAGS		+=	-D_ENABLE_MULTICAM_
-#picv4		:		DEFINEFLAGS		+=	-D_ENABLE_DOME_
-picv4		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
-picv4		:		DEFINEFLAGS		+=	-D_ENABLE_ATIK_
-picv4		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
-picv4		:		DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
-#picv4		:		DEFINEFLAGS		+=	-D_ENABLE_TOUP_
-picv4		:		DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
-picv4		:		DEFINEFLAGS		+=	-D_ENABLE_LIVE_CONTROLLER_
-picv4		:		PLATFORM		=	armv7
-picv4		:		ATIK_LIB_DIR	=	$(ATIK_LIB_MASTER_DIR)/ARM/x86/NoFlyCapture
-picv4		:			$(CPP_OBJECTS)				\
-					$(ALPACA_OBJECTS)			\
-					$(SOCKET_OBJECTS)			\
-					$(LIVE_WINDOW_OBJECTS)		\
-
-
-		$(LINK)  								\
-					$(SOCKET_OBJECTS)			\
-					$(CPP_OBJECTS)				\
-					$(ALPACA_OBJECTS)			\
-					$(LIVE_WINDOW_OBJECTS)		\
-					$(OPENCV_LINK)				\
-					-L$(ATIK_LIB_DIR_ARM32)/	\
-					$(ASI_CAMERA_OBJECTS)		\
-					$(ZWO_EFW_OBJECTS)			\
-					-latikcameras				\
-					-lcfitsio					\
-					-lusb-1.0					\
-					-ludev						\
-					-lwiringPi					\
-					-lpthread					\
-					-o alpacapi
-
-######################################################################################
-#pragma mark make piqhy
-#piqhy		:		DEFINEFLAGS		+=	-D_ENABLE_OBSERVINGCONDITIONS_
-piqhy		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
-#piqhy		:		DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_
-#piqhy		:		DEFINEFLAGS		+=	-D_ENABLE_ROTATOR_
-#piqhy		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_ZWO_
-#piqhy		:		DEFINEFLAGS		+=	-D_ENABLE_SAFETYMONITOR_
-#piqhy		:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_
-piqhy		:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
-piqhy		:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
-#piqhy		:		DEFINEFLAGS		+=	-D_ENABLE_DISCOVERY_QUERRY_
-#piqhy		:		DEFINEFLAGS		+=	-D_ENABLE_MULTICAM_
-#piqhy		:		DEFINEFLAGS		+=	-D_ENABLE_DOME_
-#piqhy		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
-#piqhy		:		DEFINEFLAGS		+=	-D_ENABLE_ATIK_
-piqhy		:		DEFINEFLAGS		+=	-D_ENABLE_QHY_
-piqhy		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
-#piqhy		:		DEFINEFLAGS		+=	-D_ENABLE_TOUP_
-piqhy		:		PLATFORM		=	armv7
-piqhy		:		ATIK_LIB_DIR	=	$(ATIK_LIB_MASTER_DIR)/ARM/x86/NoFlyCapture
-piqhy		:		$(CPP_OBJECTS)				\
-					$(ALPACA_OBJECTS)			\
-					$(SOCKET_OBJECTS)			\
-
-		$(LINK)  								\
-					$(SOCKET_OBJECTS)			\
-					$(CPP_OBJECTS)				\
-					$(ALPACA_OBJECTS)			\
-					$(OPENCV_LINK)				\
-					-lcfitsio					\
-					-lusb-1.0					\
-					-ludev						\
-					-lpthread					\
-					-lqhyccd					\
 					-o alpacapi
 
 
@@ -3414,4 +3436,16 @@ $(OBJECT_DIR)startextrathread.o : 		$(SRC_SPECIAL)startextrathread.cpp	\
 										$(SRC_DIR)alpacadriver_helper.h
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_SPECIAL)startextrathread.cpp -o$(OBJECT_DIR)startextrathread.o
 
+##################################################################################
+#		Servo source code
+##################################################################################
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)mc_comm.o : 				$(SRC_SERVO)mc_comm.c	\
+										$(SRC_SERVO)mc_comm.h
+	$(COMPILE) $(INCLUDES) $(SRC_SERVO)mc_comm.c -o$(OBJECT_DIR)mc_comm.o
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)mc_utils.o : 				$(SRC_SERVO)mc_utils.c	\
+										$(SRC_SERVO)mc_utils.h
+	$(COMPILE) $(INCLUDES) $(SRC_SERVO)mc_utils.c -o$(OBJECT_DIR)mc_utils.o
 

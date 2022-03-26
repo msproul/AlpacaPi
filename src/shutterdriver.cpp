@@ -117,9 +117,9 @@ static TYPE_CmdEntry	gShutterCmdTable[]	=
 
 	{	"altitude",			kCmd_Dome_altitude,			kCmdType_GET	},
 	{	"cansetaltitude",	kCmd_Dome_cansetaltitude,	kCmdType_GET	},
-	{	"cansetshutter",	kCmd_Dome_cansetshutter,		kCmdType_GET	},
-	{	"shutterstatus",	kCmd_Dome_shutterstatus,		kCmdType_GET	},
-	{	"abortslew",		kCmd_Dome_abortslew,			kCmdType_PUT	},
+	{	"cansetshutter",	kCmd_Dome_cansetshutter,	kCmdType_GET	},
+	{	"shutterstatus",	kCmd_Dome_shutterstatus,	kCmdType_GET	},
+	{	"abortslew",		kCmd_Dome_abortslew,		kCmdType_PUT	},
 	{	"closeshutter",		kCmd_Dome_closeshutter,		kCmdType_PUT	},
 	{	"openshutter",		kCmd_Dome_openshutter,		kCmdType_PUT	},
 	{	"slewtoaltitude",	kCmd_Dome_slewtoaltitude,	kCmdType_PUT	},

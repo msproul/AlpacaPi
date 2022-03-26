@@ -177,7 +177,7 @@ class TelescopeDriver: public AlpacaDriver
 		//*************************************************************************
 		//*	DO NOT IMPLEMENT THE SYNCHRONOUS METHODS
 		//*		Use the ASYNC methods instead
-		//*		Alpaca cannot do synchronus and ASCOM/ALPACA are trying to eliminate all ASYNC commands
+		//*		Alpaca cannot do synchronus and ASCOM/ALPACA are trying to eliminate all SYNC commands
 		//*************************************************************************
 
 

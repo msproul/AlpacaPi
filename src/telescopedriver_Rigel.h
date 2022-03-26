@@ -51,7 +51,7 @@ class TelescopeDriverRigel: public TelescopeDriver
 		//*************************************************************************
 		//*	DO NOT IMPLEMENT THE SYNCHRONOUS METHODS
 		//*		Use the ASYNC methods instead
-		//*		Alpaca cannot do synchronous and ASCOM/ALPACA are trying to eliminate all ASYNC commands
+		//*		Alpaca cannot do synchronous and ASCOM/ALPACA are trying to eliminate all SYNC commands
 		//*************************************************************************
 
 

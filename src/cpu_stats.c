@@ -148,16 +148,12 @@ char	*stringPtr;
 
 
 
-#if defined(__arm__)
+#if defined(__arm__) || defined( __ARM_ARCH)
 	strcpy(gCpuInfoString,	"Arm");
-#elif defined( __ARM_ARCH)
-	strcpy(gCpuInfoString,	"Arm");
-#elif defined( __x86_64)
+#elif defined( __x86_64) || defined(__x86_64__)
 	strcpy(gCpuInfoString,	"64 bit x86");
 #elif defined( __i386__)
 	strcpy(gCpuInfoString,	"32 bit x86");
-#elif defined(__x86_64__)
-	strcpy(gCpuInfoString,	"64 bit x86");
 #else
 	strcpy(gCpuInfoString,	"Unknown arch");
 #endif

@@ -135,7 +135,7 @@ ControllerImage::~ControllerImage(void)
 	CONSOLE_DEBUG(__FUNCTION__);
 	SetWidgetImage(kTab_Image, kImageDisplay_ImageDisplay, NULL);
 #ifdef _USE_OPENCV_CPP_
-	#warning "OpenCV++ not tested"
+//++	#warning "OpenCV++ not tested"
 	CONSOLE_DEBUG("OpenCV++ not finished!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 	//*	free up the image memory
 	if (cDownLoadedImage != NULL)
