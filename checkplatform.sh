@@ -1,5 +1,6 @@
 #!/bin/bash
 ########################################################
+###	Mar 26,	2022	<MLS> Created checkplatform.sh
 #	Determine Platform
 #	This is used by the AlpacaPi Makefile
 ########################################################
@@ -16,8 +17,5 @@ then
 	PLATFORM="armv8"
 fi
 
-#uname -m
-#echo "MACHINE_TYPE = $MACHINE_TYPE"
-#echo "PLATFORM = $PLATFORM"
 
 echo "$PLATFORM"

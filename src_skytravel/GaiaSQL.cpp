@@ -34,6 +34,7 @@
 //*	Mar 14,	2022	<MLS> Starting to make SQL routines more generic, i.e. remove "GAIA"
 //*	Mar 24,	2022	<MLS> SQL now working on Raspberry Pi with "mariadb"
 //*	Mar 25,	2022	<MLS> First external user accessing Gaia database (Ron S.)
+//*	Mar 26,	2022	<MLS> Added the sql library version string to the login string
 //*****************************************************************************
 //*	sudo apt-get install libmysqlclient-dev		<<<< Use this one
 //*	sudo apt-get install libmariadb-dev			<<<< Use this for Raspberry-Pi
@@ -79,6 +80,7 @@ int		gSQLsever_Port			=	3306;
 char	gSQLsever_UserName[32]	=	"";
 char	gSQLsever_Password[32]	=	"";
 char	gSQLsever_Database[32]	=	"gaia";
+char	gSQLclientVersion[64]	=	"";
 
 int		gSQLerror_Count			=	0;
 char	gSQLsever_StatusMsg[128]=	"";
@@ -292,6 +294,18 @@ bool	configOK;
 		memset((void *)&gGaiaDataList[iii], 0, sizeof(TYPE_GAIA_REMOTE_DATA));
 	}
 	gGaiaDataListNeedsInit	=	false;
+
+#if defined(MYSQL_BASE_VERSION)
+	strcpy(gSQLclientVersion, MYSQL_BASE_VERSION);
+#elif defined(MARIADB_BASE_VERSION)
+	strcpy(gSQLclientVersion, MARIADB_BASE_VERSION);
+#else
+	strcpy(gSQLclientVersion, "Unknown:");
+#endif
+	strcat(gSQLclientVersion, "/");
+	strcat(gSQLclientVersion, mysql_get_client_info());
+	CONSOLE_DEBUG_W_STR("SQL library:", gSQLclientVersion);
+
 	return(configOK);
 }
 
@@ -320,7 +334,7 @@ static	int	LogSQLuser(void)
 MYSQL 			*mySQLConnection = NULL;
 char			mySQLCmd[256];
 int				returnCode;
-char			userString[64];
+char			userString[128];
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -345,10 +359,17 @@ char			userString[64];
 		strcpy(userString, "Unknown");
 	}
 
-	if (strlen(userString) >= 32)
+	//*	add the sql library version string to the login string
+	strcat(userString, " (");
+	strcat(userString, gSQLclientVersion);
+	strcat(userString, ")");
+
+	//*	make sure the string does not exceed what the database is expecting
+	if (strlen(userString) >= 60)
 	{
-		userString[31]	=	0;
+		userString[60]	=	0;
 	}
+
 
 	sprintf(mySQLCmd, "call SetLogComment('%s');", userString);
 #ifdef _VERBOSE_SQL_DEBUG_

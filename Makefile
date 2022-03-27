@@ -44,6 +44,9 @@
 #++	Jan 18,	2022	<MLS> Added fitsview to makefile
 #++	Mar 24,	2022	<MLS> Added -fPIE to compile options
 #++	Mar 25,	2022	<MLS> Added _ENABLE_TELESCOPE_SERVO_
+#++	Mar 26,	2022	<MLS> Added checkplatform.sh
+#++	Mar 26,	2022	<MLS> Added checkopencv.sh
+#++	Mar 26,	2022	<MLS> Added checksql.sh
 ######################################################################################
 #	Cr_Core is for the Sony camera
 ######################################################################################
@@ -56,7 +59,8 @@
 #	lets try to determine platform
 MACHINE_TYPE		=	$(shell uname -m)
 PLATFORM			=	$(shell ./checkplatform.sh)
-
+OPENCV_VERSION		=	$(shell ./checkopencv.sh)
+SQL_VERSION			=	$(shell ./checksql.sh)
 # default settings for Desktop Linux build
 USR_HOME			=	$(HOME)/
 GCC_DIR				=	/usr/bin/
@@ -64,8 +68,8 @@ INCLUDE_BASE		=	/usr/include/
 LIB_BASE			=	/usr/lib/
 
 #	/usr/local/lib/pkgconfig/opencv.pc
-OPENCV_COMPILE		=	$(shell pkg-config --cflags opencv)
-OPENCV_LINK			=	$(shell pkg-config --libs opencv)
+OPENCV_COMPILE		=	$(shell pkg-config --cflags $(OPENCV_VERSION))
+OPENCV_LINK			=	$(shell pkg-config --libs $(OPENCV_VERSION))
 
 
 SRC_DIR				=	./src/
@@ -331,7 +335,6 @@ help:
 	#
 	#       make sky         makes SkyTravel with openCV 3.3.1 or earlier
 	#       make skysql      same as sky but with SQL database support
-	#       make skycv3      SkyTravel utilizing OpenCV C++ version 3.3.1
 	#>      make skycv4      makes SkyTravel with newer Versions after 3.3.1
 	#>      make skycv4sql   same as skycv4 with SQL database support
 	#
@@ -342,8 +345,10 @@ help:
 	#       make switch
 	#
 	# Once everything is converted to openCV4, the opencv3 options will go away
-	# MACHINE_TYPE=$(MACHINE_TYPE)
-	# PLATFORM=$(PLATFORM)
+	# MACHINE_TYPE  =$(MACHINE_TYPE)
+	# PLATFORM      =$(PLATFORM)
+	# OPENCV_VERSION=$(OPENCV_VERSION)
+	# SQL_VERSION   =$(SQL_VERSION)
 	#################################################################################
 
 
@@ -421,8 +426,8 @@ picv4		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
 #picv4		:		DEFINEFLAGS		+=	-D_ENABLE_ATIK_
 picv4		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
 picv4		:		DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
-picv4		:		OPENCV_COMPILE	=	$(shell pkg-config --cflags opencv4)
-picv4		:		OPENCV_LINK		=	$(shell pkg-config --libs opencv4)
+#picv4		:		OPENCV_COMPILE	=	$(shell pkg-config --cflags opencv4)
+#picv4		:		OPENCV_LINK		=	$(shell pkg-config --libs opencv4)
 #picv4		:		DEFINEFLAGS		+=	-D_ENABLE_TOUP_
 picv4		:		DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
 picv4		:		DEFINEFLAGS		+=	-D_ENABLE_LIVE_CONTROLLER_
@@ -1125,8 +1130,8 @@ pi64		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
 #pi64		:		DEFINEFLAGS		+=	-D_ENABLE_ATIK_
 pi64		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
 pi64		:		DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
-pi64		:		OPENCV_COMPILE	=	$(shell pkg-config --cflags opencv4)
-pi64		:		OPENCV_LINK		=	$(shell pkg-config --libs opencv4)
+#pi64		:		OPENCV_COMPILE	=	$(shell pkg-config --cflags opencv4)
+#pi64		:		OPENCV_LINK		=	$(shell pkg-config --libs opencv4)
 #pi64		:		DEFINEFLAGS		+=	-D_ENABLE_TOUP_
 #pi64		:		DEFINEFLAGS		+=	-D_ENABLE_SONY_
 #pi64		:		DEFINEFLAGS		+=	-D_INCLUDE_EXIT_COMMAND_
@@ -2088,46 +2093,6 @@ sky		:				$(SKYTRAVEL_OBJECTS)					\
 							-o skytravel
 
 ######################################################################################
-#make skycv3
-#pragma mark skytravel
-skycv3			:	DEFINEFLAGS		+=	-D_INCLUDE_CTRL_MAIN_
-skycv3			:	DEFINEFLAGS		+=	-D_ENABLE_SKYTRAVEL_
-skycv3			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_CAMERA_
-skycv3			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_DOME_
-skycv3			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_FOCUSERS_
-skycv3			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
-skycv3			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_SWITCHES_
-skycv3			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_TELESCOPE_
-skycv3			:	DEFINEFLAGS		+=	-D_ENABLE_FITS_
-skycv3			:	DEFINEFLAGS		+=	-D_CONTROLLER_USES_ALPACA_
-skycv3			:	DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_CONTROLLER_
-skycv3			:	DEFINEFLAGS		+=	-D_ENABLE_SLIT_TRACKER_
-skycv3			:	DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
-skycv3			:	DEFINEFLAGS		+=	-D_ENABLE_ASTERIODS_
-skycv3			:	DEFINEFLAGS		+=	-D_ENABLE_GAIA_
-skycv3			:	DEFINEFLAGS		+=	-D_ENABLE_REMOTE_SQL_
-skycv3			:	DEFINEFLAGS		+=	-D_ENABLE_REMOTE_GAIA_
-skycv3			:	DEFINEFLAGS		+=	-D_USE_OPENCV_
-skycv3			:	DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
-skycv3			:	INCLUDES		+=	-I$(SRC_SKYTRAVEL)
-skycv3			:			$(SKYTRAVEL_OBJECTS)				\
-							$(CONTROLLER_BASE_OBJECTS)			\
-							$(GAIA_SQL_OBJECTS)					\
-
-
-				$(LINK)  										\
-							$(SKYTRAVEL_OBJECTS)				\
-							$(CONTROLLER_BASE_OBJECTS)			\
-							-L/usr/local/lib					\
-							$(OPENCV_LINK)						\
-							$(GAIA_SQL_OBJECTS)					\
-							-lmysqlclient						\
-							-lpthread							\
-							-lcfitsio							\
-							-o skytravel
-
-
-######################################################################################
 #make skycv4
 #pragma mark skytravel
 skycv4			:	DEFINEFLAGS		+=	-D_INCLUDE_CTRL_MAIN_
@@ -2144,14 +2109,11 @@ skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_CONTROLLER_
 skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_SLIT_TRACKER_
 skycv4			:	DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
 skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_ASTERIODS_
-#skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_GAIA_
-#skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_REMOTE_SQL_
-#skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_REMOTE_GAIA_
 skycv4			:	DEFINEFLAGS		+=	-D_USE_OPENCV_
 skycv4			:	DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
 skycv4			:	INCLUDES		+=	-I$(SRC_SKYTRAVEL)
-skycv4			:	OPENCV_COMPILE	=	$(shell pkg-config --cflags opencv4)
-skycv4			:	OPENCV_LINK		=	$(shell pkg-config --libs opencv4)
+#skycv4			:	OPENCV_COMPILE	=	$(shell pkg-config --cflags opencv4)
+#skycv4			:	OPENCV_LINK		=	$(shell pkg-config --libs opencv4)
 skycv4			:		$(SKYTRAVEL_OBJECTS)					\
 						$(CONTROLLER_BASE_OBJECTS)				\
 
@@ -2188,10 +2150,8 @@ skycv4sql			:	DEFINEFLAGS		+=	-D_ENABLE_REMOTE_GAIA_
 skycv4sql			:	DEFINEFLAGS		+=	-D_USE_OPENCV_
 skycv4sql			:	DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
 skycv4sql			:	INCLUDES		+=	-I$(SRC_SKYTRAVEL)
-skycv4sql			:	OPENCV_COMPILE	=	$(shell pkg-config --cflags opencv4)
-skycv4sql			:	OPENCV_LINK		=	$(shell pkg-config --libs opencv4)
 
-skycv4sql			:		$(SKYTRAVEL_OBJECTS)					\
+skycv4sql			:	$(SKYTRAVEL_OBJECTS)					\
 						$(CONTROLLER_BASE_OBJECTS)				\
 						$(GAIA_SQL_OBJECTS)						\
 
@@ -2202,10 +2162,13 @@ skycv4sql			:		$(SKYTRAVEL_OBJECTS)					\
 							$(GAIA_SQL_OBJECTS)					\
 							-L/usr/local/lib					\
 							$(OPENCV_LINK)						\
-							-lmysqlclient						\
+							-l$(SQL_VERSION)					\
 							-lpthread							\
 							-lcfitsio							\
 							-o skytravel
+
+#							-lmysqlclient						\
+
 
 
 ######################################################################################
@@ -2241,7 +2204,7 @@ skysql		:				$(SKYTRAVEL_OBJECTS)				\
 						$(CONTROLLER_BASE_OBJECTS)			\
 						$(OPENCV_LINK)						\
 						-lpthread							\
-						-lmysqlclient						\
+						-l$(SQL_VERSION)					\
 						-lcfitsio							\
 						-o skytravel
 

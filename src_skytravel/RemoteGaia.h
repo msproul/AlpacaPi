@@ -10,3 +10,6 @@ extern	char	gSQLsever_Database[];
 extern	int		gSQLerror_Count;
 extern	char	gSQLsever_StatusMsg[];
 extern	bool	gSQLsever_MsgUpdated;
+
+
+extern	char	gSQLclientVersion[64];
