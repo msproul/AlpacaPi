@@ -276,20 +276,21 @@ TelescopeDriver::TelescopeDriver(void)
 	CONSOLE_DEBUG(__FUNCTION__);
 
 	strcpy(cCommonProp.Name, "Telescope");
+	cCommonProp.InterfaceVersion	=	3;
 
+	//--------------------------------------------------------------------
 	//*	set the defaults, everything to false or zero
 	memset((void *)&cTelescopeProp, 0, sizeof(TYPE_TelescopeProperties));
-
-	cCommonProp.InterfaceVersion	=	3;
 	cTelescopeProp.AlginmentMode	=	kAlignmentMode_algGermanPolar;
-
 	cTelescopeProp.EquatorialSystem	=	kECT_equOther;
 	cTelescopeProp.SideOfPier		=	kPierSide_pierUnknown;
 	cTelescopeProp.TrackingRate		=	kDriveRate_driveSidereal;
 	cTelescopeProp.DoesRefraction	=	false;
 	cTelescopeProp.CanFindHome		=	false;
+	cTelescopeProp.CanUnpark		=	false;
 
-
+	//*	Set this to true if the system supports it
+	//*	cTelescopeProp.DoesRefraction is used to enable/disable if it is supported
 	cDriverSupportsRefraction		=	false;		//*	can be over-ridden by sub class
 
 //+	cTrackingRates;
@@ -3189,7 +3190,7 @@ double				newDeclination;
 	{
 		alpacaErrCode	=	kASCOM_Err_InvalidWhileParked;
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Invalid While Parked");
-//		CONSOLE_DEBUG(alpacaErrMsg);
+		CONSOLE_DEBUG(alpacaErrMsg);
 	}
 	else if (cTelescopeProp.CanSync)
 	{
@@ -3208,6 +3209,9 @@ double				newDeclination;
 		{
 			newRightAscension	=	atof(rightAscensionStr);
 			newDeclination		=	atof(declinationStr);
+
+			CONSOLE_DEBUG_W_DBL("newRightAscension\t=",	(newRightAscension * 15));
+			CONSOLE_DEBUG_W_DBL("newDeclination\t=",	newDeclination);
 
 			if ((newRightAscension >= 0.0) && (newRightAscension <= 24.0) &&
 				(newDeclination >= -90.0) && (newDeclination <= 90.0))
@@ -3237,14 +3241,14 @@ double				newDeclination;
 		{
 			alpacaErrCode	=	kASCOM_Err_InvalidValue;
 			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "cmd values missing");
-//			CONSOLE_DEBUG(alpacaErrMsg);
+			CONSOLE_DEBUG(alpacaErrMsg);
 		}
 	}
 	else
 	{
 		alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "cCanSync is false");
-//		CONSOLE_DEBUG(alpacaErrMsg);
+		CONSOLE_DEBUG(alpacaErrMsg);
 	}
 	return(alpacaErrCode);
 }

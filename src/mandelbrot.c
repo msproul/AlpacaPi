@@ -22,6 +22,7 @@
 
 #define		kQmax				3000
 #define		kStartColor			1
+//#define		kMaxItterations		512
 #define		kMaxItterations		512
 
 #define		kMandel_FarLeft		-2.01

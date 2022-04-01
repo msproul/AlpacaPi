@@ -28,9 +28,12 @@
 //*	Dec 13,	2021	<MLS> Added RunShellScript_Thead() and RunShellScript()
 //*	Dec 31,	2021	<MLS> Added Asteroid count display to settings window
 //*	Jan 29,	2022	<MLS> Added special list count display to settings window
+//*	Mar 29,	2022	<MLS> Added SaveSkyTravelSystemInfo()
 //*****************************************************************************
 
 #include	<pthread.h>
+#include	<fitsio.h>
+#include	<gnu/libc-version.h>
 
 #include	"controller.h"
 
@@ -39,6 +42,8 @@
 
 #include	"alpaca_defs.h"
 #include	"helper_functions.h"
+#include	"cpu_stats.h"
+#include	"linuxerrors.h"
 #include	"alpaca_defs.h"
 #include	"windowtab.h"
 #include	"windowtab_STsettings.h"
@@ -47,12 +52,19 @@
 #include	"observatory_settings.h"
 #include	"controller_starlist.h"
 #include	"controller_constList.h"
-#include	"controller_GaiaRemote.h"
+#include	"discoverythread.h"
 
 #include	"SkyStruc.h"
 #include	"AsteroidData.h"
 
+#ifdef _ENABLE_REMOTE_GAIA_
+	#include	"RemoteGaia.h"
+#endif
+
 #define	kSkyT_SettingsHeight	100
+
+static void	SaveSkyTravelSystemInfo(void);
+
 
 //**************************************************************************************
 WindowTabSTsettings::WindowTabSTsettings(	const int	xSize,
@@ -308,6 +320,14 @@ int		radioBtnWidth;
 	SetWidgetBGColor(	kSkyT_Settings_ResetToDefault,	CV_RGB(255,	255,	255));
 	SetWidgetText(		kSkyT_Settings_ResetToDefault,	"Reset to default");
 
+	yLoc			+=	cBoxHeight;
+	yLoc			+=	2;
+
+	SetWidget(			kSkyT_Settings_SaveSystemInfo,	xLoc,		yLoc,	labelWidth + (4 * cRadioBtnHt),	cBoxHeight);
+	SetWidgetFont(		kSkyT_Settings_SaveSystemInfo,	kFont_Medium);
+	SetWidgetType(		kSkyT_Settings_SaveSystemInfo,	kWidgetType_Button);
+	SetWidgetBGColor(	kSkyT_Settings_SaveSystemInfo,	CV_RGB(255,	255,	255));
+	SetWidgetText(		kSkyT_Settings_SaveSystemInfo,	"Save System Info");
 
 
 	//-----------------------------------------------------
@@ -794,6 +814,10 @@ void	WindowTabSTsettings::ProcessButtonClick(const int buttonIdx)
 			gST_DispOptions.LineWidth_NGCoutlines		=	1;
 			break;
 
+		case kSkyT_Settings_SaveSystemInfo:
+			SaveSkyTravelSystemInfo();
+			break;
+
 		case kSkyT_Settings_DispMag:
 			gST_DispOptions.DispMagnitude		=	!gST_DispOptions.DispMagnitude;
 			break;
@@ -970,6 +994,80 @@ char	textString[32];
 	SetWidgetText(kSkyT_Settings_MagnitudeLimit, textString);
 
 	ForceUpdate();
+}
+
+//**************************************************************************************
+static void	SaveSkyTravelSystemInfo(void)
+{
+FILE	*filePointer;
+char	linuxErrStr[128];
+int		iii;
+char	ipAddrStr[32];
+
+	CONSOLE_DEBUG(__FUNCTION__);
+	filePointer	=	fopen("SkyTravelSystemInfo.txt", "w");
+	if (filePointer != NULL)
+	{
+		fprintf(filePointer, "#########################################################\n");
+		fprintf(filePointer, "SkyTravel system information, include this in bug reports\n");
+
+		fprintf(filePointer, "Version: %s\n",	kVersionString);
+		fprintf(filePointer, "Build:%d\n",		kBuildNumber);
+		fprintf(filePointer, "Compiled on:%s\n", __DATE__);
+
+
+		fprintf(filePointer, "%s\n",	gOsReleaseString);
+		fprintf(filePointer, "%s\n",	gCpuInfoString);
+		fprintf(filePointer, "%s\n",	gPlatformString);
+		fprintf(filePointer, "gcc version:%s\n", __VERSION__);
+		fprintf(filePointer, "libc version:%s\n", gnu_get_libc_version());
+
+	#ifdef __ARM_NEON
+		fprintf(filePointer, "ARM NEON instructions\n");
+	#endif
+
+#ifdef _ENABLE_FITS_
+		//**************************************************************
+		//*	cfitsio version
+	#ifdef CFITSIO_MICRO
+		fprintf(filePointer, "FITS (cfitsio) V%d.%d.%d\n", CFITSIO_MAJOR, CFITSIO_MINOR, CFITSIO_MICRO);
+	#else
+		fprintf(filePointer, "FITS (cfitsio) V%d.%d\n", CFITSIO_MAJOR, CFITSIO_MINOR);
+	#endif
+#endif // _ENABLE_FITS_
+
+		//**************************************************************
+		//*	OpenCV
+		fprintf(filePointer, "OpenCV %s\n", CV_VERSION);
+
+#ifdef _ENABLE_REMOTE_GAIA_
+		fprintf(filePointer, "%s\n",	gSQLclientVersion);
+#endif // _ENABLE_REMOTE_GAIA_
+
+		//**************************************************************
+		fprintf(filePointer, "***********************************************************\n");
+		fprintf(filePointer, "Current active Alpaca devices, count=%d\n", gRemoteCnt);
+		for (iii=0; iii<gRemoteCnt; iii++)
+		{
+			inet_ntop(AF_INET, &(gRemoteList[iii].deviceAddress.sin_addr), ipAddrStr, INET_ADDRSTRLEN);
+
+			fprintf(filePointer, "%3d %s:%d\t%-20s\t%-35s\t%-20s\n",
+												(iii + 1),
+												ipAddrStr,
+												gRemoteList[iii].port,
+												gRemoteList[iii].deviceTypeStr,
+												gRemoteList[iii].deviceNameStr,
+												gRemoteList[iii].versionString
+												);
+		}
+		fclose(filePointer);
+	}
+	else
+	{
+		//*	something went wrong, we failed to create the file
+		GetLinuxErrorString(errno, linuxErrStr);
+		CONSOLE_DEBUG_W_STR("Failed to create template file:", linuxErrStr);
+	}
 }
 
 

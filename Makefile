@@ -44,9 +44,9 @@
 #++	Jan 18,	2022	<MLS> Added fitsview to makefile
 #++	Mar 24,	2022	<MLS> Added -fPIE to compile options
 #++	Mar 25,	2022	<MLS> Added _ENABLE_TELESCOPE_SERVO_
-#++	Mar 26,	2022	<MLS> Added checkplatform.sh
-#++	Mar 26,	2022	<MLS> Added checkopencv.sh
-#++	Mar 26,	2022	<MLS> Added checksql.sh
+#++	Mar 26,	2022	<MLS> Added make_checkplatform.sh
+#++	Mar 26,	2022	<MLS> Added make_checkopencv.sh
+#++	Mar 26,	2022	<MLS> Added make_checksql.sh
 ######################################################################################
 #	Cr_Core is for the Sony camera
 ######################################################################################
@@ -58,9 +58,9 @@
 ###########################################
 #	lets try to determine platform
 MACHINE_TYPE		=	$(shell uname -m)
-PLATFORM			=	$(shell ./checkplatform.sh)
-OPENCV_VERSION		=	$(shell ./checkopencv.sh)
-SQL_VERSION			=	$(shell ./checksql.sh)
+PLATFORM			=	$(shell ./make_checkplatform.sh)
+OPENCV_VERSION		=	$(shell ./make_checkopencv.sh)
+SQL_VERSION			=	$(shell ./make_checksql.sh)
 # default settings for Desktop Linux build
 USR_HOME			=	$(HOME)/
 GCC_DIR				=	/usr/bin/
@@ -323,7 +323,7 @@ help:
 	#        make tele      Makes a version which speaks LX200 over a TCP/IP connection
 	#        make rigel     Makes a special version for a user that uses a rigel controller
 	#        make eq6       A version to control eq6 style mounts
-	#        make servo     A telescope controller based on servo motors
+	#        make servo     A telescope controller based on servo motors using LM628/629
 	#
 	# Miscellaneous
 	#        make clean      removes all binaries
@@ -657,8 +657,8 @@ rigel		:		$(TELESCOPE_OBJECTS)		\
 
 ######################################################################################
 SERVO_OBJECTS=										\
-				$(OBJECT_DIR)mc_utils.o				\
-				$(OBJECT_DIR)mc_comm.o				\
+				$(OBJECT_DIR)LM62x_utils.o			\
+				$(OBJECT_DIR)LM62x_comm.o			\
 
 
 ######################################################################################
@@ -2149,6 +2149,7 @@ skycv4sql			:	DEFINEFLAGS		+=	-D_ENABLE_REMOTE_SQL_
 skycv4sql			:	DEFINEFLAGS		+=	-D_ENABLE_REMOTE_GAIA_
 skycv4sql			:	DEFINEFLAGS		+=	-D_USE_OPENCV_
 skycv4sql			:	DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
+skycv4sql			:	DEFINEFLAGS		+=	-D_SQL_$(SQL_VERSION)
 skycv4sql			:	INCLUDES		+=	-I$(SRC_SKYTRAVEL)
 
 skycv4sql			:	$(SKYTRAVEL_OBJECTS)					\
@@ -3403,12 +3404,14 @@ $(OBJECT_DIR)startextrathread.o : 		$(SRC_SPECIAL)startextrathread.cpp	\
 #		Servo source code
 ##################################################################################
 #-------------------------------------------------------------------------------------
-$(OBJECT_DIR)mc_comm.o : 				$(SRC_SERVO)mc_comm.c	\
-										$(SRC_SERVO)mc_comm.h
-	$(COMPILE) $(INCLUDES) $(SRC_SERVO)mc_comm.c -o$(OBJECT_DIR)mc_comm.o
+$(OBJECT_DIR)LM62x_comm.o : 			$(SRC_SERVO)LM62x_comm.c	\
+										$(SRC_SERVO)LM62x_comm.h	\
+										$(SRC_SERVO)servo_std_defs.h
+	$(COMPILE) $(INCLUDES) $(SRC_SERVO)LM62x_comm.c -o$(OBJECT_DIR)LM62x_comm.o
 
 #-------------------------------------------------------------------------------------
-$(OBJECT_DIR)mc_utils.o : 				$(SRC_SERVO)mc_utils.c	\
-										$(SRC_SERVO)mc_utils.h
-	$(COMPILE) $(INCLUDES) $(SRC_SERVO)mc_utils.c -o$(OBJECT_DIR)mc_utils.o
+$(OBJECT_DIR)LM62x_utils.o : 			$(SRC_SERVO)LM62x_utils.c	\
+										$(SRC_SERVO)LM62x_utils.h	\
+										$(SRC_SERVO)servo_std_defs.h
+	$(COMPILE) $(INCLUDES) $(SRC_SERVO)LM62x_utils.c -o$(OBJECT_DIR)LM62x_utils.o
 

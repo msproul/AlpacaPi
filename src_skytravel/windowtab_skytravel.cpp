@@ -2811,6 +2811,7 @@ short		iii;
 	}
 	if (cDispOptions.dispNGC)
 	{
+		//*	these are outlines from OpenNGC
 		DrawOpenNGC_Outlines();
 	}
 
@@ -8608,7 +8609,11 @@ void	WindowTabSkyTravel::Center_RA_DEC(double argRA_radians, double argDecl_radi
 //*****************************************************************************
 void	WindowTabSkyTravel::Center_CelestralObject(TYPE_CelestData *starObject)
 {
+double	maxViewAngle;
+
 	CONSOLE_DEBUG(__FUNCTION__);
+
+	maxViewAngle	=	RADIANS(10.0);
 	if (starObject != NULL)
 	{
 		cRa0		=	starObject->ra;
@@ -8633,6 +8638,7 @@ void	WindowTabSkyTravel::Center_CelestralObject(TYPE_CelestData *starObject)
 			case kDataSrc_NGC2000:
 			case kDataSrc_NGC2000IC:
 			case kDataSrc_OpenNGC:
+				CONSOLE_DEBUG("NGC object");
 				cDispOptions.dispNGC	=	true;
 				break;
 
@@ -8663,6 +8669,11 @@ void	WindowTabSkyTravel::Center_CelestralObject(TYPE_CelestData *starObject)
 				break;
 		}
 		SetCurrentTab(kTab_SkyTravel);
+		UpdateButtonStatus();
+		if (cView_angle > maxViewAngle)
+		{
+			SetView_Angle(maxViewAngle);
+		}
 		ForceUpdate();
 	}
 }

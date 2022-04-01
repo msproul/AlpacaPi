@@ -33,7 +33,9 @@
 #include	"controller.h"
 #include	"cpu_stats.h"
 
-
+#ifdef _ENABLE_REMOTE_GAIA_
+	#include	"RemoteGaia.h"
+#endif
 #define	kAboutBoxHeight	100
 
 //**************************************************************************************
@@ -189,8 +191,13 @@ char	lineBuffer[64];
 	sprintf(lineBuffer,	"OpenCV %s\r", CV_VERSION);
 	strcat(multiLineTextBuff,	lineBuffer);
 
+#ifdef _ENABLE_REMOTE_GAIA_
+	strcat(multiLineTextBuff,	gSQLclientVersion);
+	strcat(multiLineTextBuff,	"\r");
+#endif // _ENABLE_REMOTE_GAIA_
+
+
 	SetWidgetText(kAboutBox_CPUinfo, multiLineTextBuff);
 }
-
 
 

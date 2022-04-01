@@ -27,6 +27,7 @@
 //*	Sep 14,	2021	<MLS> Added export to CSV file (not finished)
 //*	Oct 23,	2021	<MLS> Added SetColumnOneTitle()
 //*	Oct 26,	2021	<MLS> Added magnitude to star list display
+//*	Mar 28,	2022	<MLS> Now we copy the data so we can sort properly
 //*****************************************************************************
 
 #include	<stdlib.h>
@@ -70,6 +71,15 @@ WindowTabStarList::WindowTabStarList(	const int	xSize,
 WindowTabStarList::~WindowTabStarList(void)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
+
+	//*	dispose of the data
+	if (cStarListPtr != NULL)
+	{
+		CONSOLE_DEBUG("Releasing memory for star list");
+		free(cStarListPtr);
+		cStarListPtr		=	NULL;
+		cStarListCount		=	0;
+	}
 }
 
 //**************************************************************************************
@@ -260,6 +270,7 @@ int		starDataIdx;
 			if ((starDataIdx >= 0) && (starDataIdx < cStarListCount))
 			{
 				CONSOLE_DEBUG_W_STR("Double clicked on: ", cStarListPtr[starDataIdx].shortName);
+				CONSOLE_DEBUG_W_STR("Double clicked on: ", cStarListPtr[starDataIdx].longName);
 				Center_CelestralObject(&cStarListPtr[starDataIdx]);
 			}
 			else
@@ -445,13 +456,19 @@ double	declSecs;
 //**************************************************************************************
 void	WindowTabStarList::SetStarDataPointers(TYPE_CelestData *argStarList, int argStarListCount)
 {
+size_t	memorySize;
 	CONSOLE_DEBUG(__FUNCTION__);
 
-	cStarListPtr	=	argStarList;
-	cStarListCount	=	argStarListCount;
-	if (cStarListPtr != NULL)
+	if ((argStarList != NULL) && (argStarListCount > 0))
 	{
-		cDataSource	=	cStarListPtr[0].dataSrc;
+		cStarListPtr	=	(TYPE_CelestData *)calloc((argStarListCount + 5), sizeof(TYPE_CelestData));
+		if (cStarListPtr != NULL)
+		{
+			memorySize		=	argStarListCount * sizeof(TYPE_CelestData);
+			memcpy(cStarListPtr, argStarList, memorySize);
+			cStarListCount	=	argStarListCount;
+			cDataSource		=	cStarListPtr[0].dataSrc;
+		}
 	}
 	UpdateOnScreenWidgetList();
 }

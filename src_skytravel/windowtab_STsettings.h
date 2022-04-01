@@ -75,6 +75,7 @@ enum
 
 	kSkyT_Settings_ResetToDefault,
 
+	kSkyT_Settings_SaveSystemInfo,
 
 	kSkyT_Settings_DataTitle,
 

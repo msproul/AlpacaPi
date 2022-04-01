@@ -109,6 +109,8 @@ void	LogEvent(	const char				*eventName,
 			strcpy(gEventLog[gLogIndex].errorString,	errorString);
 		}
 		gLogIndex++;
+
+		//*	check to see if the log is full
 		if (gLogIndex >= kMaxLogEntries)
 		{
 			FlushHalfLog();

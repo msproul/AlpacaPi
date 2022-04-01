@@ -216,14 +216,13 @@ enum TYPE_AlignmentModes
 //*****************************************************************************
 enum TYPE_EquatorialCoordinateType
 {
-
 	kECT_equOther				=	0,	//*	Custom or unknown equinox and/or reference frame.
 	kECT_equTopocentric			=	1,	//*	Topocentric coordinates.
 										//*	Coordinates of the object at the current date having allowed for annual aberration, precession and nutation.
 										//*	This is the most common coordinate type for amateur telescopes.
 	kECT_equJ2000				=	2,	//*	J2000 equator/equinox. Coordinates of the object at mid-day on 1st January 2000, ICRS reference frame.
 	kECT_equJ2050				=	3,	//*	J2050 equator/equinox, ICRS reference frame.
-	kECT_equB1950				=	4,	//*	B1950 equinox, FK4 reference frame.
+	kECT_equB1950				=	4	//*	B1950 equinox, FK4 reference frame.
 };
 
 //*****************************************************************************
@@ -231,7 +230,7 @@ enum TYPE_PierSide
 {
 	kPierSide_pierUnknown	=	-1,	//*	Unknown or indeterminate.
 	kPierSide_pierEast		=	0,	//*	Normal pointing state - Mount on the East side of pier (looking West)
-	kPierSide_pierWest		=	1,	//*	Through the pole pointing state - Mount on the West side of pier (looking East)
+	kPierSide_pierWest		=	1	//*	Through the pole pointing state - Mount on the West side of pier (looking East)
 };
 
 //*****************************************************************************
@@ -240,7 +239,7 @@ enum TYPE_DriveRates
 	kDriveRate_driveSidereal	=	0,	//*	Sidereal tracking rate (15.041 arcseconds per second).
 	kDriveRate_driveLunar		=	1,	//*	Lunar tracking rate (14.685 arcseconds per second).
 	kDriveRate_driveSolar		=	2,	//*	Solar tracking rate (15.0 arcseconds per second).
-	kDriveRate_driveKing		=	3,	//*	King tracking rate (15.0369 arcseconds per second).
+	kDriveRate_driveKing		=	3	//*	King tracking rate (15.0369 arcseconds per second).
 };
 
 
@@ -252,7 +251,7 @@ enum TYPE_SensorType
 	kSensorType_RGGB		=	2,	//*	Camera produces RGGB encoded Bayer array images
 	kSensorType_CMYG		=	3,	//*	Camera produces CMYG encoded Bayer array images
 	kSensorType_CMYG2		=	4,	//*	Camera produces CMYG2 encoded Bayer array images
-	kSensorType_LRGB		=	5,	//*	Camera produces Kodak TRUESENSE Bayer LRGB array images
+	kSensorType_LRGB		=	5	//*	Camera produces Kodak TRUESENSE Bayer LRGB array images
 };
 
 #define	kMaxSensorNameLen		32
@@ -346,7 +345,7 @@ typedef struct
 	int						MaxbinY;				//*	Maximum binning for the camera Y axis
 
 	//===================================
-	//*	subframe information
+	//*	sub-frame information
 	int						NumX;					//*	The current subframe width
 	int						NumY;					//*	The current subframe height
 
@@ -364,7 +363,7 @@ typedef struct
 
 	double					SetCCDTemperature;		//*	The current camera cooler setpoint in degrees Celsius.
 
-//	currently ReadoutMode is implemented at execution time
+	//*	currently ReadoutMode is implemented at execution time
 	int						ReadOutMode;					//*	Indicates the canera's readout mode as an index into the array ReadoutModes
 	READOUTMODE				ReadOutModes[kMaxReadOutModes];	//*	List of available readout modes
 

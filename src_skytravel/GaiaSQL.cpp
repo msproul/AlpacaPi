@@ -52,11 +52,15 @@
 #include	<unistd.h>
 
 //	<KAS>	For SQL Functions
-#if defined(__ARM_ARCH) || defined(__arm__)
+//*	this is defined in the Makefile to select which version of sql to use
+#if defined(_SQL_mysqlclient)
+	#include	<mysql/mysql.h>
+#elif defined(_SQL_mariadb)
 	#include	<mariadb/mysql.h>
 #else
-	#include	<mysql/mysql.h>
+	#error	"Unable to determine SQL library version"
 #endif
+
 
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"

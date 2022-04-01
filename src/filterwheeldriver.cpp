@@ -635,16 +635,19 @@ bool		isConnected;
 		}
 
 		SocketWriteData(mySocketFD,	"<TABLE BORDER=1>\r\n");
-		sprintf(lineBuffer,	"\t<TR><TD><CENTER>cSuccesfullOpens</TD><TD>%d</TD></TR>\r\n",	cSuccesfullOpens);
+		SocketWriteData(mySocketFD,	"<TR><TD><CENTER>Driver operations</TD><TD>%d</TD></TR>\r\n");
+
+
+		sprintf(lineBuffer,	"\t<TR><TD><CENTER>Succesful Opens</TD><TD>%d</TD></TR>\r\n",	cSuccesfullOpens);
 		SocketWriteData(mySocketFD,	lineBuffer);
 
-		sprintf(lineBuffer,	"\t<TR><TD><CENTER>cSuccesfullCloses</TD><TD>%d</TD></TR>\r\n",	cSuccesfullCloses);
+		sprintf(lineBuffer,	"\t<TR><TD><CENTER>Successful Closes</TD><TD>%d</TD></TR>\r\n",	cSuccesfullCloses);
 		SocketWriteData(mySocketFD,	lineBuffer);
 
-		sprintf(lineBuffer,	"\t<TR><TD><CENTER>cOpenFailures</TD><TD>%d</TD></TR>\r\n",	cOpenFailures);
+		sprintf(lineBuffer,	"\t<TR><TD><CENTER>Open Failures</TD><TD>%d</TD></TR>\r\n",	cOpenFailures);
 		SocketWriteData(mySocketFD,	lineBuffer);
 
-		sprintf(lineBuffer,	"\t<TR><TD><CENTER>cCloseFailures</TD><TD>%d</TD></TR>\r\n",	cCloseFailures);
+		sprintf(lineBuffer,	"\t<TR><TD><CENTER>Close Failures</TD><TD>%d</TD></TR>\r\n",	cCloseFailures);
 		SocketWriteData(mySocketFD,	lineBuffer);
 		SocketWriteData(mySocketFD,	"</TABLE>\r\n");
 		SocketWriteData(mySocketFD,	"<P>\r\n");

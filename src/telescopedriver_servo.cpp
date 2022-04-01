@@ -35,7 +35,8 @@
 //*	Mar 25,	2022	<MLS> Created telescopedriver_Servo.cpp
 //*	Mar 25,	2022	<MLS> Servo version is being created for Ron S <RNS>
 //*****************************************************************************
-
+//*	LM628/629 Si,
+//*****************************************************************************
 
 #ifdef _ENABLE_TELESCOPE_SERVO_
 
@@ -77,7 +78,7 @@ TelescopeDriverServo::TelescopeDriverServo(void)
 	cTelescopeProp.CanMoveAxis		=	false;
 	cTelescopeProp.CanSetTracking	=	false;
 	cTelescopeProp.CanSlewAsync		=	false;
-	cTelescopeProp.CanSync			=	false;
+	cTelescopeProp.CanSync			=	true;
 	cTelescopeProp.CanUnpark		=	false;
 
 	ReadServoConfigFile();
@@ -211,9 +212,8 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 //*****************************************************************************
 TYPE_ASCOM_STATUS	TelescopeDriverServo::Telescope_SyncToRA_DEC(const double newRA, const double newDec, char *alpacaErrMsg)
 {
-TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
+TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 
-	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
 	return(alpacaErrCode);
 }
 
