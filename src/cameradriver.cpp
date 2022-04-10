@@ -7216,7 +7216,7 @@ int					exposureState;
 char				exposureStateString[32];
 char				textBuffer[128];
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	if (cTempReadSupported)
 	{
 		alpacaErrCode	=	Read_SensorTemp();

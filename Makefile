@@ -161,11 +161,8 @@ INCLUDES		=	-I/usr/include					\
 					-I$(QHY_INCLUDE_DIR)			\
 					-I$(SRC_IMGPROC)				\
 
-
 #					-I/usr/include/opencv2			\
 #					-I/usr/local/include/opencv2	\
-
-
 #					-I/usr/include/opencv4			\
 #					-I/usr/local/include/opencv4	\
 

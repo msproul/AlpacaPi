@@ -79,13 +79,20 @@
 
 #ifdef _USE_OPENCV_
 	#ifdef _USE_OPENCV_CPP_
+//		#warning _USE_OPENCV_CPP_
 		#include	<opencv2/opencv.hpp>
 		#include	<opencv2/core.hpp>
+//		#include	<opencv.hpp>
+//		#include	<core.hpp>
 	#else
 		#include	<opencv2/highgui/highgui_c.h>
 	#endif // _USE_OPENCV_CPP_
 	#if (CV_MAJOR_VERSION <= 3)
 		#define _ENABLE_CVFONT_
+//		#warning (CV_MAJOR_VERSION <= 3)
+	#endif
+	#if (CV_MAJOR_VERSION == 4)
+//		#warning (CV_MAJOR_VERSION == 4)
 	#endif
 #endif // _USE_OPENCV_
 

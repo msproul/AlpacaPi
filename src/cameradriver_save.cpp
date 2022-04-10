@@ -214,10 +214,75 @@ int				imageDataLen;
 		default:
 			cOpenCV_ImagePtr	=	NULL;
 			break;
-
 	}
 
-
+//	if (imageDataPtr != NULL)
+//	{
+//		if (cOpenCV_ImagePtr != NULL)
+//		{
+//			//*	what size did openCV make the image
+//	//		cvShowImage(cOpenCV_ImgWindowName, cOpenCV_ImagePtr);
+//	//		cv::waitKey(1);
+//
+////			CONSOLE_DEBUG_W_STR("Image SUCCESS!!!!!!!!!!!!!!-", cameraSerialNum);
+////			CONSOLE_DEBUG_W_NUM("cOpenCV_ImagePtr->imageSize\t=", cOpenCV_ImagePtr->imageSize);
+////			CONSOLE_DEBUG_W_LONG("imageDataLen\t\t=",			imageDataLen);
+////			CONSOLE_DEBUG_W_NUM("cOpenCV_ImagePtr->nChannels\t=",	cOpenCV_ImagePtr->nChannels);
+////			CONSOLE_DEBUG_W_NUM("cOpenCV_ImagePtr->depth\t=",		cOpenCV_ImagePtr->depth);
+////			CONSOLE_DEBUG_W_NUM("cOpenCV_ImagePtr->width\t=",		cOpenCV_ImagePtr->width);
+////			CONSOLE_DEBUG_W_NUM("cOpenCV_ImagePtr->widthStep\t=",	cOpenCV_ImagePtr->widthStep);
+//
+//			bytesPerPixel		=	(cOpenCV_ImagePtr->depth / 8) * cOpenCV_ImagePtr->nChannels;
+//			bytesPerPixel2		=	cOpenCV_ImagePtr->widthStep / cOpenCV_ImagePtr->width;
+//			openCVimageWidth	=	cOpenCV_ImagePtr->widthStep / bytesPerPixel;
+////			CONSOLE_DEBUG_W_NUM("bytesPerPixel\t=",		bytesPerPixel);
+////			CONSOLE_DEBUG_W_NUM("bytesPerPixel2\t=",	bytesPerPixel2);
+////			CONSOLE_DEBUG_W_NUM("openCVimageWidth\t=",	openCVimageWidth);
+//			if (bytesPerPixel != bytesPerPixel2)
+//			{
+//				CONSOLE_DEBUG("Houston, we have a problem");
+//				CONSOLE_DEBUG("bytes per pixel is messed up");
+//				CONSOLE_ABORT(__FUNCTION__);
+//			}
+//			if (openCVimageWidth == cOpenCV_ImagePtr->width)
+//			{
+//			//	CONSOLE_DEBUG("Normal image data !!!!!!!!!!!!!!");
+//				memcpy(cOpenCV_ImagePtr->imageData, imageDataPtr, imageDataLen);
+//			}
+//			else
+//			{
+//			char	*ocv_rowPtr;
+//			char	*img_rowPtr;
+//			int		rowLength;
+//
+//				//*	we have to copy over the image a line at a time
+////				CONSOLE_DEBUG("Miss match image data !!!!!!!!!!!!!!");
+//				ocv_rowPtr	=	cOpenCV_ImagePtr->imageData;
+//				img_rowPtr	=	(char *)imageDataPtr;
+//				rowLength	=	cOpenCV_ImagePtr->width * bytesPerPixel;
+//				for (ii=0; ii<cOpenCV_ImagePtr->height; ii++)
+//				{
+//					memcpy(ocv_rowPtr, img_rowPtr, rowLength);
+//
+//					ocv_rowPtr	+=	cOpenCV_ImagePtr->widthStep;
+//					img_rowPtr	+=	rowLength;
+//				}
+//
+//			}
+//			//CONSOLE_DEBUG("Copy SUCCESS!!!!!!!!!!!!!!");
+//			DEBUG_TIMING("Stop point 2 (milliseconds)\t=");
+//
+//		}
+//		else
+//		{
+//			CONSOLE_DEBUG("Failed to allocate openCV image");
+//		}
+//	}
+//	else
+//	{
+//		CONSOLE_DEBUG("Image data is NULL");
+//	}
+//
 	return(returnCode);
 }
 //*****************************************************************************
