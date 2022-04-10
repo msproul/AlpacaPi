@@ -345,7 +345,7 @@ int	iii;
 //*****************************************************************************
 void	CameraDriver::DisplayLiveImage(void)
 {
-
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, "OpenCV++ not finished");
 }
 #else
 //*****************************************************************************
@@ -476,7 +476,7 @@ int			keyPressed;
 //*****************************************************************************
 void	CameraDriver::DisplayLiveImage_wSideBar(void)
 {
-
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, "OpenCV++ not finished");
 }
 #else
 //*****************************************************************************

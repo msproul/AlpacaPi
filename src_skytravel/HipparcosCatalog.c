@@ -319,7 +319,7 @@ char			lineBuff[512];
 char			filePath[128];
 size_t			bufferSize;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 
 	hipStarData	=	NULL;
 
@@ -333,8 +333,8 @@ size_t			bufferSize;
 		hipFileSize		=	GetFileSize(filePath);
 		hipLineCount	=	hipFileSize / kHIPrecordSize;
 
-//		CONSOLE_DEBUG_W_LONG("hipFileSize\t=", hipFileSize);
-//		CONSOLE_DEBUG_W_LONG("hipLineCount\t=", hipLineCount);
+		CONSOLE_DEBUG_W_LONG("hipFileSize\t=", hipFileSize);
+		CONSOLE_DEBUG_W_LONG("hipLineCount\t=", hipLineCount);
 
 		bufferSize	=	hipLineCount * sizeof(TYPE_CelestData);
 		hipStarData	=	(TYPE_CelestData *)malloc(bufferSize);
@@ -380,7 +380,7 @@ long	hippStarNumber;
 long	hhh;
 int		foundCount;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 	foundCount	=	0;
 	strcpy(filePath, kSkyTravelDataDirectory);
 	strcat(filePath, "/commonstars.txt");

@@ -316,24 +316,23 @@ int fd;
 	return 0;
 }
 
-/* connect to the telstatshm shared memory segment.
- * return 0 and set *tpp if ok, else -1.
+//* connect to the telstatshm shared memory segment.
+//* return 0 and set *tpp if ok, else -1.
 
-int open_telshm(TelStatShm **tpp)
-{
-    int shmid;
-    long addr;
-
-    shmid = shmget (TELSTATSHMKEY, sizeof(TelStatShm), 0);
-    if (shmid < 0)
-        return (-1);
-
-    addr = (long) shmat (shmid, (void *)0, 0);
-    if (addr == -1)
-        return (-1);
-
-    *tpp = (TelStatShm *) addr;
-    return (0);
-}
-*/
+//int open_telshm(TelStatShm **tpp)
+//{
+//	int shmid;
+//	long addr;
+//
+//	shmid = shmget (TELSTATSHMKEY, sizeof(TelStatShm), 0);
+//	if (shmid < 0)
+//		return (-1);
+//
+//	addr = (long) shmat (shmid, (void *)0, 0);
+//	if (addr == -1)
+//		return (-1);
+//
+//	*tpp = (TelStatShm *) addr;
+//	return (0);
+//}
 #endif // _ENABLE_TELESCOPE_RIGEL_

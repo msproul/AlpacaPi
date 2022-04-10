@@ -573,7 +573,7 @@ char		textBuff[32];
 }
 
 #ifdef _USE_OPENCV_CPP_
-#define	kCameraLogoCount	4
+#define	kCameraLogoCount	5
 	cv::Mat		gCameraLogoImage[kCameraLogoCount];
 #endif
 
@@ -614,6 +614,13 @@ int		camLogoIdx;
 		strcat(logoImagePath, "qhy-logo.png");
 		camLogoIdx	=	3;
 	}
+	else if (strcasestr(cAlpacaDeviceName, "QSI") != NULL)
+	{
+		strcat(logoImagePath, "qsi-logo.png");
+		camLogoIdx	=	4;
+	}
+
+
 //	CONSOLE_DEBUG_W_NUM("camLogoIdx   \t=",	camLogoIdx);
 //	CONSOLE_DEBUG_W_STR("logoImagePath\t=",	logoImagePath);
 

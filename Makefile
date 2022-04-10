@@ -114,6 +114,10 @@ SONY_LIB_DIR		=	./SONY_SDK/lib
 #	QHY support
 QHY_INCLUDE_DIR		=	./QHY/include
 
+############################################
+#	QSI support
+QSI_INCLUDE_DIR		=	./qsiapi-7.6.0
+
 #DEFINEFLAGS		=	-D_GENERATE_GRAPHICS_
 #DEFINEFLAGS		+=	-D_USE_WEB_GRAPH_
 DEFINEFLAGS		+=	-D_INCLUDE_HTTP_HEADER_
@@ -144,7 +148,9 @@ COMPILEPLUS		=	g++ -c $(CPLUSFLAGS) $(DEFINEFLAGS) $(OPENCV_COMPILE)
 LINK			=	g++
 
 
-INCLUDES		=	-I$(SRC_DIR)					\
+INCLUDES		=	-I/usr/include					\
+					-I/usr/local/include			\
+					-I$(SRC_DIR)					\
 					-I$(EFW_LIB_DIR)				\
 					-I$(ASI_INCLUDE_DIR)			\
 					-I$(ATIK_INCLUDE_DIR)			\
@@ -206,6 +212,7 @@ CPP_OBJECTS=												\
 				$(OBJECT_DIR)managementdriver.o				\
 				$(OBJECT_DIR)observatory_settings.o			\
 				$(OBJECT_DIR)sidereal.o						\
+				$(OBJECT_DIR)readconfigfile.o				\
 				$(OBJECT_DIR)shutterdriver.o				\
 				$(OBJECT_DIR)shutterdriver_arduino.o		\
 				$(OBJECT_DIR)serialport.o					\
@@ -244,6 +251,7 @@ ALPACA_OBJECTS=												\
 				$(OBJECT_DIR)cameradriver_TOUP.o			\
 				$(OBJECT_DIR)cameradriver_SONY.o			\
 				$(OBJECT_DIR)cameradriver_QHY.o				\
+				$(OBJECT_DIR)cameradriver_QSI.o				\
 				$(OBJECT_DIR)cameradriver_FLIR.o			\
 				$(OBJECT_DIR)commoncolor.o					\
 				$(OBJECT_DIR)filterwheeldriver.o			\
@@ -315,6 +323,7 @@ help:
 	#        make noopencv   Camera driver for ZWO WITHOUT opencv
 	#        make noopencvpi Camera driver for ZWO WITHOUT opencv for Raspberry-Pi
 	#        make piqhy      Camera driver for QHY cameras only for Raspberry-Pi
+	#        make qsi      Camera driver for QSI cameras
 	#
 	#
 	# Telescope drivers,
@@ -460,6 +469,7 @@ picv4		:		$(CPP_OBJECTS)				\
 
 ######################################################################################
 #pragma mark make piqhy
+#	make qhy
 #piqhy		:		DEFINEFLAGS		+=	-D_ENABLE_OBSERVINGCONDITIONS_
 piqhy		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
 #piqhy		:		DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_
@@ -493,6 +503,58 @@ piqhy		:		$(CPP_OBJECTS)				\
 					-ludev						\
 					-lpthread					\
 					-lqhyccd					\
+					-o alpacapi
+
+
+######################################################################################
+#pragma mark make qsi
+qsi		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
+qsi		:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
+qsi		:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
+qsi		:		DEFINEFLAGS		+=	-D_ENABLE_QSI_
+qsi		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
+qsi		:		INCLUDES		+=	-I$(QSI_INCLUDE_DIR)
+qsi		:			$(CPP_OBJECTS)				\
+					$(ALPACA_OBJECTS)			\
+					$(SOCKET_OBJECTS)			\
+
+		$(LINK)  								\
+					$(SOCKET_OBJECTS)			\
+					$(CPP_OBJECTS)				\
+					$(ALPACA_OBJECTS)			\
+					$(OPENCV_LINK)				\
+					-lcfitsio					\
+					-lqsiapi					\
+					-lftd2xx					\
+					-lusb-1.0					\
+					-ludev						\
+					-lpthread					\
+					-o alpacapi
+
+######################################################################################
+#pragma mark make qsicv4
+qsicv4		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
+qsicv4		:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
+qsicv4		:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
+qsicv4		:		DEFINEFLAGS		+=	-D_ENABLE_QSI_
+qsicv4		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
+qsicv4		:		DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
+qsicv4		:		INCLUDES		+=	-I$(QSI_INCLUDE_DIR)
+qsicv4		:			$(CPP_OBJECTS)				\
+					$(ALPACA_OBJECTS)			\
+					$(SOCKET_OBJECTS)			\
+
+		$(LINK)  								\
+					$(SOCKET_OBJECTS)			\
+					$(CPP_OBJECTS)				\
+					$(ALPACA_OBJECTS)			\
+					$(OPENCV_LINK)				\
+					-lcfitsio					\
+					-lqsiapi					\
+					-lftd2xx					\
+					-lusb-1.0					\
+					-ludev						\
+					-lpthread					\
 					-o alpacapi
 
 
@@ -630,6 +692,7 @@ TELESCOPE_OBJECTS=												\
 				$(OBJECT_DIR)linuxerrors.o					\
 				$(OBJECT_DIR)managementdriver.o				\
 				$(OBJECT_DIR)observatory_settings.o			\
+				$(OBJECT_DIR)readconfigfile.o				\
 				$(OBJECT_DIR)serialport.o					\
 				$(OBJECT_DIR)sidereal.o						\
 				$(OBJECT_DIR)telescopedriver.o				\
@@ -1414,27 +1477,15 @@ piswitch64		:	$(CPP_OBJECTS)				\
 
 ######################################################################################
 #pragma mark make shutter
-#shutter	:		DEFINEFLAGS		+=	-D_ENABLE_OBSERVINGCONDITIONS_
-#shutter	:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
-#shutter	:		DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_
-#shutter	:		DEFINEFLAGS		+=	-D_ENABLE_ROTATOR_
-#shutter	:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_ZWO_
-#shutter	:		DEFINEFLAGS		+=	-D_ENABLE_SAFETYMONITOR_
 shutter		:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_
-#shutter	:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
 shutter		:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
 shutter		:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
-#shutter	:		DEFINEFLAGS		+=	-D_ENABLE_MULTICAM_
-#shutter	:		DEFINEFLAGS		+=	-D_ENABLE_DOME_
 shutter		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
-#shutter	:		DEFINEFLAGS		+=	-D_ENABLE_ATIK_
 shutter		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
 shutter		:		DEFINEFLAGS		+=	-D_ENABLE_SHUTTER_
-#shutter		:		DEFINEFLAGS		+=	-D_ENABLE_PWM_SWITCH_
 shutter		:		DEFINEFLAGS		+=	-D_ENABLE_STATUS_SWITCH_
 shutter		:		DEFINEFLAGS		+=	-D_ENABLE_WIRING_PI_
 shutter		:		PLATFORM		=	armv7
-#shutter		:		ATIK_LIB_DIR	=	$(ATIK_LIB_MASTER_DIR)/ARM/x86/NoFlyCapture
 
 shutter		:		$(CPP_OBJECTS)				\
 					$(ALPACA_OBJECTS)			\
@@ -1454,7 +1505,39 @@ shutter		:		$(CPP_OBJECTS)				\
 					-lpthread					\
 					-o alpacapi
 
-#					-latikcameras				\
+
+######################################################################################
+#pragma mark make shuttercv4
+shuttercv4		:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_
+shuttercv4		:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
+shuttercv4		:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
+shuttercv4		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
+shuttercv4		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
+shuttercv4		:		DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
+shuttercv4		:		DEFINEFLAGS		+=	-D_ENABLE_SHUTTER_
+shuttercv4		:		DEFINEFLAGS		+=	-D_ENABLE_STATUS_SWITCH_
+shuttercv4		:		DEFINEFLAGS		+=	-D_ENABLE_WIRING_PI_
+#shuttercv4		:		DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
+#shuttercv4		:		DEFINEFLAGS		+=	-D_ENABLE_LIVE_CONTROLLER_
+shuttercv4		:		PLATFORM		=	armv7
+
+shuttercv4		:		$(CPP_OBJECTS)				\
+					$(ALPACA_OBJECTS)			\
+					$(SOCKET_OBJECTS)			\
+
+
+		$(LINK)  								\
+					$(SOCKET_OBJECTS)			\
+					$(CPP_OBJECTS)				\
+					$(ALPACA_OBJECTS)			\
+					$(OPENCV_LINK)				\
+					$(ASI_CAMERA_OBJECTS)		\
+					-lcfitsio					\
+					-lusb-1.0					\
+					-ludev						\
+					-lwiringPi					\
+					-lpthread					\
+					-o alpacapi
 
 
 ######################################################################################
@@ -2015,6 +2098,7 @@ SKYTRAVEL_OBJECTS=											\
 				$(OBJECT_DIR)observatory_settings.o			\
 				$(OBJECT_DIR)OpenNGC.o						\
 				$(OBJECT_DIR)polaralign.o					\
+				$(OBJECT_DIR)readconfigfile.o				\
 				$(OBJECT_DIR)RemoteImage.o					\
 				$(OBJECT_DIR)sidereal.o						\
 				$(OBJECT_DIR)StarCatalogHelper.o			\
@@ -2330,6 +2414,11 @@ $(OBJECT_DIR)eventlogging.o : $(SRC_DIR)eventlogging.c $(SRC_DIR)eventlogging.h
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)eventlogging.c -o$(OBJECT_DIR)eventlogging.o
 
 ######################################################################################
+$(OBJECT_DIR)readconfigfile.o : $(SRC_DIR)readconfigfile.c $(SRC_DIR)readconfigfile.h
+	$(COMPILE) $(INCLUDES) $(SRC_DIR)readconfigfile.c -o$(OBJECT_DIR)readconfigfile.o
+
+
+######################################################################################
 # CPP objects
 $(OBJECT_DIR)alpacadriver.o :			$(SRC_DIR)alpacadriver.cpp			\
 										$(SRC_DIR)alpacadriver.h			\
@@ -2408,6 +2497,16 @@ $(OBJECT_DIR)cameradriver_QHY.o :		$(SRC_DIR)cameradriver_QHY.cpp		\
 										$(SRC_DIR)alpacadriver.h			\
 										Makefile
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)cameradriver_QHY.cpp -o$(OBJECT_DIR)cameradriver_QHY.o
+
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)cameradriver_QSI.o :		$(SRC_DIR)cameradriver_QSI.cpp		\
+										$(SRC_DIR)cameradriver_QSI.h		\
+										$(SRC_DIR)cameradriver.h			\
+										$(SRC_DIR)alpacadriver.h			\
+										Makefile
+	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)cameradriver_QSI.cpp -o$(OBJECT_DIR)cameradriver_QSI.o
+
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)cameradriver_FLIR.o :		$(SRC_DIR)cameradriver_FLIR.cpp		\

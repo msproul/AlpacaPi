@@ -21,19 +21,13 @@
 //*
 //*	Redistributions of this source code must retain this copyright notice.
 //*****************************************************************************
-//*
-//*	Usage notes:	This driver does not implement any actual device,
-//*					you must create a sub-class that does the actual control
-//*
-//*	References:		https://ascom-standards.org/api/
-//*					https://ascom-standards.org/Help/Developer/html/N_ASCOM_DeviceInterface.htm
-//*****************************************************************************
 //*	Edit History
 //*****************************************************************************
 //*	<MLS>	=	Mark L Sproul
 //*****************************************************************************
 //*	Mar 25,	2022	<MLS> Created telescopedriver_Servo.cpp
 //*	Mar 25,	2022	<MLS> Servo version is being created for Ron S <RNS>
+//*	Apr  6,	2022	<MLS> Switched to using generic config reading routines
 //*****************************************************************************
 //*	LM628/629 Si,
 //*****************************************************************************
@@ -55,13 +49,14 @@
 #include	"alpacadriver.h"
 #include	"alpacadriver_helper.h"
 #include	"helper_functions.h"
+#include	"readconfigfile.h"
 
 
 #include	"telescopedriver.h"
 #include	"telescopedriver_servo.h"
 
 
-static bool	ReadServoConfigFile(void);
+static void	ProcessServoConfig(const char *keyword, const char *value);
 
 //**************************************************************************************
 TelescopeDriverServo::TelescopeDriverServo(void)
@@ -81,7 +76,9 @@ TelescopeDriverServo::TelescopeDriverServo(void)
 	cTelescopeProp.CanSync			=	true;
 	cTelescopeProp.CanUnpark		=	false;
 
-	ReadServoConfigFile();
+
+	ReadGenericConfigFile("ss_scope.cfg", ':', &ProcessServoConfig);
+
 
 	AlpacaConnect();
 
@@ -251,23 +248,9 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 //*****************************************************************************
 enum
 {
-	kServo_MC_FREQ	=	0,
-	kServo_COMM_PORT,
+	kServo_aaa	=	0,
 	kServo_BAUD,
-	kServo_MOUNT,
-	kServo_RA_CONFIG,
-	kServo_RA_MOTOR_GEAR,
-	kServo_RA_MAIN_GEAR,
-	kServo_RA_ENCODER,
-	kServo_RA_MAX_VEL,
-	kServo_RA_MAX_ACC,
-	kServo_RA_ADJ_VEL,
-	kServo_RA_SLEW_VEL,
-	kServo_RA_SI_CON,
-	kServo_RA_KP_CON,
-	kServo_RA_KI_CON,
-	kServo_RA_KD_CON,
-	kServo_RA_IL_CON,
+	kServo_COMM_PORT,
 	kServo_DEC_CONFIG,
 	kServo_DEC_MOTOR_GEAR,
 	kServo_DEC_MAIN_GEAR,
@@ -281,33 +264,43 @@ enum
 	kServo_DEC_KI_CON,
 	kServo_DEC_KD_CON,
 	kServo_DEC_IL_CON,
-	//	Note:  RA does not have a lock down position since LST is used
 	kServo_DEC_LOCK_DOWN,
+	kServo_DEC_GEAR_LASH,
+	kServo_DEC_PRECESSION,
+	kServo_DEC_STANDBY,
+	kServo_DEC_HOME,
+	kServo_DEC_HOME_FLAG,
+
+	kServo_FAST_ON_TARGET,
+	kServo_MC_FREQ,
+	kServo_MOUNT,
+	kServo_OFF_TARGET_TOL,
+
+	kServo_RA_CONFIG,
+	kServo_RA_MOTOR_GEAR,
+	kServo_RA_MAIN_GEAR,
+	kServo_RA_ENCODER,
+	kServo_RA_MAX_VEL,
+	kServo_RA_MAX_ACC,
+	kServo_RA_ADJ_VEL,
+	kServo_RA_SLEW_VEL,
+	kServo_RA_SI_CON,
+	kServo_RA_KP_CON,
+	kServo_RA_KI_CON,
+	kServo_RA_KD_CON,
+	kServo_RA_IL_CON,
 	kServo_RA_LOCK_DOWN,
 	kServo_RA_GEAR_LASH,
-	kServo_DEC_GEAR_LASH,
-	kServo_ROLLOVER_WIN,
 	kServo_RA_PRECESSION,
-	kServo_DEC_PRECESSION,
 	kServo_RA_STANDBY,
-	kServo_DEC_STANDBY,
 	kServo_RA_HOME,
-	kServo_DEC_HOME,
 	kServo_RA_HOME_FLAG,
-	kServo_DEC_HOME_FLAG,
-	kServo_OFF_TARGET_TOL,
-	kServo_FAST_ON_TARGET,
+	kServo_ROLLOVER_WIN,
 
 	kServo_last
 
 };
 
-//*****************************************************************************
-typedef struct
-{
-	char	keyword[16];
-	int		enumValue;
-} TYPE_KEYWORDS;
 
 //*****************************************************************************
 static TYPE_KEYWORDS	gServoCfgTable[]	=
@@ -364,6 +357,75 @@ static TYPE_KEYWORDS	gServoCfgTable[]	=
 
 };
 
+//*****************************************************************************
+static void	ProcessServoConfig(const char *keyword, const char *value)
+{
+int		keywordEnum;
+
+//	CONSOLE_DEBUG_W_STR(keyword, value);
+	keywordEnum	=   FindKeywordFromTable(keyword, gServoCfgTable);
+//	CONSOLE_DEBUG_W_NUM("keywordEnum\t=", keywordEnum);
+	CONSOLE_DEBUG_W_NUM(keyword, keywordEnum);
+	if (keywordEnum >= 0)
+	{
+		//*	we have a valid keyword, do something with it
+		switch (keywordEnum)
+		{
+			case kServo_MC_FREQ:
+			case kServo_COMM_PORT:
+			case kServo_BAUD:
+			case kServo_MOUNT:
+			case kServo_RA_CONFIG:
+			case kServo_RA_MOTOR_GEAR:
+			case kServo_RA_MAIN_GEAR:
+			case kServo_RA_ENCODER:
+			case kServo_RA_MAX_VEL:
+			case kServo_RA_MAX_ACC:
+			case kServo_RA_ADJ_VEL:
+			case kServo_RA_SLEW_VEL:
+			case kServo_RA_SI_CON:
+			case kServo_RA_KP_CON:
+			case kServo_RA_KI_CON:
+			case kServo_RA_KD_CON:
+			case kServo_RA_IL_CON:
+			case kServo_DEC_CONFIG:
+			case kServo_DEC_MOTOR_GEAR:
+			case kServo_DEC_MAIN_GEAR:
+			case kServo_DEC_ENCODER:
+			case kServo_DEC_MAX_VEL:
+			case kServo_DEC_MAX_ACC:
+			case kServo_DEC_ADJ_VEL:
+			case kServo_DEC_SLEW_VEL:
+			case kServo_DEC_SI_CON:
+			case kServo_DEC_KP_CON:
+			case kServo_DEC_KI_CON:
+			case kServo_DEC_KD_CON:
+			case kServo_DEC_IL_CON:
+			case kServo_DEC_LOCK_DOWN:
+			case kServo_RA_LOCK_DOWN:
+			case kServo_RA_GEAR_LASH:
+			case kServo_DEC_GEAR_LASH:
+			case kServo_ROLLOVER_WIN:
+			case kServo_RA_PRECESSION:
+			case kServo_DEC_PRECESSION:
+			case kServo_RA_STANDBY:
+			case kServo_DEC_STANDBY:
+			case kServo_RA_HOME:
+			case kServo_DEC_HOME:
+			case kServo_RA_HOME_FLAG:
+			case kServo_DEC_HOME_FLAG:
+			case kServo_OFF_TARGET_TOL:
+			case kServo_FAST_ON_TARGET:
+				break;
+
+			default:
+//				validEntry	=	false;
+				break;
+		}
+	}
+}
+
+
 #if 0
 //*****************************************************************************
 static void	CheckDuplicates(void)
@@ -394,160 +456,6 @@ int		dupCnt;
 }
 #endif
 
-//*****************************************************************************
-//*	returns false if the keyword was not valid
-//*****************************************************************************
-static	bool ProcessServoConfigLine(char *lineBuff)
-{
-char	keyword[32];
-int		iii;
-int		ccc;
-int		slen;
-char	*valueStrPtr;
-bool	validEntry;
-int		keywordEnum;
 
-	iii			=	0;
-	ccc			=	0;
-	validEntry	=	true;
-	slen		=	strlen(lineBuff);
-	while ((iii<slen) && (ccc < 31) && (lineBuff[iii] != ':') && (lineBuff[iii] > 0x20))
-	{
-		keyword[ccc]	=	lineBuff[iii];
-		ccc++;
-		iii++;
-	}
-	keyword[ccc]	=	0;
-
-	valueStrPtr	=	strchr(lineBuff, ':');
-	if (valueStrPtr != NULL)
-	{
-		valueStrPtr++;		//*	skip over the ":"
-		while (*valueStrPtr <= 0x20)
-		{
-			valueStrPtr++;
-		}
-
-		//*	now find the keyword in the table
-		keywordEnum	=	-1;
-		iii			=	0;
-		while ((gServoCfgTable[iii].enumValue >= 0) && (keywordEnum < 0))
-		{
-			if (strcasecmp(keyword, gServoCfgTable[iii].keyword) == 0)
-			{
-				keywordEnum	=	gServoCfgTable[iii].enumValue;
-			}
-			iii++;
-		}
-
-		if (keywordEnum >= 0)
-		{
-			CONSOLE_DEBUG_W_2STR("kw:val", keyword, valueStrPtr);
-			//*	we have a valid keyword, do something with it
-			switch (keywordEnum)
-			{
-				case kServo_MC_FREQ:
-				case kServo_COMM_PORT:
-				case kServo_BAUD:
-				case kServo_MOUNT:
-				case kServo_RA_CONFIG:
-				case kServo_RA_MOTOR_GEAR:
-				case kServo_RA_MAIN_GEAR:
-				case kServo_RA_ENCODER:
-				case kServo_RA_MAX_VEL:
-				case kServo_RA_MAX_ACC:
-				case kServo_RA_ADJ_VEL:
-				case kServo_RA_SLEW_VEL:
-				case kServo_RA_SI_CON:
-				case kServo_RA_KP_CON:
-				case kServo_RA_KI_CON:
-				case kServo_RA_KD_CON:
-				case kServo_RA_IL_CON:
-				case kServo_DEC_CONFIG:
-				case kServo_DEC_MOTOR_GEAR:
-				case kServo_DEC_MAIN_GEAR:
-				case kServo_DEC_ENCODER:
-				case kServo_DEC_MAX_VEL:
-				case kServo_DEC_MAX_ACC:
-				case kServo_DEC_ADJ_VEL:
-				case kServo_DEC_SLEW_VEL:
-				case kServo_DEC_SI_CON:
-				case kServo_DEC_KP_CON:
-				case kServo_DEC_KI_CON:
-				case kServo_DEC_KD_CON:
-				case kServo_DEC_IL_CON:
-				case kServo_DEC_LOCK_DOWN:
-				case kServo_RA_LOCK_DOWN:
-				case kServo_RA_GEAR_LASH:
-				case kServo_DEC_GEAR_LASH:
-				case kServo_ROLLOVER_WIN:
-				case kServo_RA_PRECESSION:
-				case kServo_DEC_PRECESSION:
-				case kServo_RA_STANDBY:
-				case kServo_DEC_STANDBY:
-				case kServo_RA_HOME:
-				case kServo_DEC_HOME:
-				case kServo_RA_HOME_FLAG:
-				case kServo_DEC_HOME_FLAG:
-				case kServo_OFF_TARGET_TOL:
-				case kServo_FAST_ON_TARGET:
-					break;
-
-				default:
-					validEntry	=	false;
-					break;
-			}
-		}
-	}
-	return(	validEntry);
-}
-
-//*****************************************************************************
-static bool	ReadServoConfigFile(void)
-{
-FILE	*filePointer;
-char	lineBuff[256];
-int		iii;
-int		slen;
-bool	configOK;
-bool	validEntry;
-char	configFileName[]	=	"ss_scope.cfg";
-
-	CONSOLE_DEBUG(__FUNCTION__);
-
-//	CheckDuplicates();
-
-	configOK	=	false;
-	//*	check for the sql server settings file
-	filePointer	=	fopen(configFileName, "r");
-	if (filePointer != NULL)
-	{
-		configOK	=	true;
-		while (fgets(lineBuff, 200, filePointer))
-		{
-			//*	get rid of the trailing CR/LF
-			slen	=	strlen(lineBuff);
-			for (iii=0; iii<slen; iii++)
-			{
-				if ((lineBuff[iii] == 0x0d) || (lineBuff[iii] == 0x0a))
-				{
-					lineBuff[iii]	=	0;
-					break;
-				}
-			}
-			slen	=	strlen(lineBuff);
-			if ((slen > 3) && (lineBuff[0] != '#'))
-			{
-				validEntry	=	ProcessServoConfigLine(lineBuff);
-				if (validEntry == false)
-				{
-					CONSOLE_DEBUG_W_STR("Servo Config file contains invalid data:", lineBuff);
-				}
-			}
-		}
-		fclose(filePointer);
-	}
-	return(configOK);
-}
 
 #endif // _ENABLE_TELESCOPE_SERVO_

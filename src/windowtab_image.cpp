@@ -288,6 +288,7 @@ bool	updateFlag;
 	}
 	if (updateFlag)
 	{
+		CONSOLE_DEBUG(__FUNCTION__);
 		DrawFullScaleIamge(cImageCenterX, cImageCenterY);
 	}
 }
@@ -425,6 +426,7 @@ int		cursorYYoffset;
 			cImageCenterX	-=	deltaXX;
 			cImageCenterY	-=	deltaYY;
 
+			CONSOLE_DEBUG(__FUNCTION__);
 			DrawFullScaleIamge(cImageCenterX, cImageCenterY);
 
 			cSavedMouseClick_X	=	cursorXXoffset;
@@ -591,6 +593,7 @@ int			imageCursorYY;
 			imageCursorXX		=	sourceImageWidth * cursorXXoffset / displayedWidth;
 			imageCursorYY		=	sourceImageHeight * cursorYYoffset / displayedHeight;
 
+			CONSOLE_DEBUG(__FUNCTION__);
 			DrawFullScaleIamge(imageCursorXX, imageCursorYY);
 
 			cImageZoomState	=	1;
@@ -604,6 +607,7 @@ int			imageCursorYY;
 //*****************************************************************************
 void	WindowTabImage::DrawFullScaleIamge(void)
 {
+	CONSOLE_DEBUG(__FUNCTION__);
 	DrawFullScaleIamge(cImageCenterX, cImageCenterY);
 }
 
@@ -735,9 +739,10 @@ cv::Mat		image_roi;
 	}
 	else
 	{
-//		CONSOLE_DEBUG_W_HEX("cOpenCVdownLoadedImage\t=", cOpenCVdownLoadedImage);
-//		CONSOLE_DEBUG_W_HEX("cOpenCVdisplayedImage\t=", cOpenCVdisplayedImage);
-		CONSOLE_ABORT(__FUNCTION__);
+		CONSOLE_DEBUG_W_HEX("cOpenCVdownLoadedImage\t=", cOpenCVdownLoadedImage);
+		CONSOLE_DEBUG_W_HEX("cOpenCVdisplayedImage\t=", cOpenCVdisplayedImage);
+		CONSOLE_DEBUG("Not finished");
+//		CONSOLE_ABORT(__FUNCTION__);
 	}
 }
 

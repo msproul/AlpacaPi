@@ -36,6 +36,7 @@
 //*	Dec 16,	2019	<MLS> Added email to observatory settings
 //*	Dec 16,	2019	<MLS> Added ObservatorySettings_CreateTemplateFile()
 //*	Mar 18,	2021	<MLS> Added better error message if create template fails
+//*	Apr  6,	2022	<MLS> Switched to using generic config file read routines
 //*****************************************************************************
 
 #include	<errno.h>
@@ -51,6 +52,7 @@
 
 #include	"eventlogging.h"
 #include	"linuxerrors.h"
+#include	"readconfigfile.h"
 
 #include	"alpacadriver_helper.h"
 #include	"observatory_settings.h"
@@ -93,25 +95,13 @@ enum
 	kObservatory_TelescopeNum,
 
 	kObservatory_ignored,
-//	kObservatory_,
-
-
-
 
 	kObservatory_last
 };
 
-#define	kMaxKeyWordLen	64
-#define	kMaxValueLen	80
-//**************************************************************************
-typedef struct
-{
-	char	keyWord[kMaxKeyWordLen];
-	int		enumValue;
-} TYPE_SETTINGS_DEF;
 
 //**************************************************************************
-const TYPE_SETTINGS_DEF	gSettingsList[]	=
+const TYPE_KEYWORDS	gSettingsList[]	=
 {
 	//*	the table is all lower case, case does not mater in the file
 	{	"name",				kObservatory_Name				},
@@ -156,9 +146,6 @@ const TYPE_SETTINGS_DEF	gSettingsList[]	=
 static int	gCurrTelescopeNum	=	0;
 static int	gCurrCommentIdx		=	0;
 
-static int	FindKeywordFromTable(const char *theCmd, const TYPE_SETTINGS_DEF *theCmdTable);
-
-
 //*****************************************************************************
 void	ObservatorySettings_Init(void)
 {
@@ -196,22 +183,22 @@ char	linuxErrStr[64];
 		fprintf(filePointer, "#	Note: this template file gets regenerated every time you run this program\n");
 		fprintf(filePointer, "%s",	separaterLine);
 		ii			=	0;
-		while (gSettingsList[ii].keyWord[0] != 0)
+		while (gSettingsList[ii].keyword[0] != 0)
 		{
-			if (strncmp(gSettingsList[ii].keyWord, "###", 3) == 0)
+			if (strncmp(gSettingsList[ii].keyword, "###", 3) == 0)
 			{
 				//*	print out a separator line
 				fprintf(filePointer, "%s",	separaterLine);
 			}
-			else if (gSettingsList[ii].keyWord[0] == '#')
+			else if (gSettingsList[ii].keyword[0] == '#')
 			{
 				//*	its a comment line, print it out as it is
-				fprintf(filePointer, "%s\n", gSettingsList[ii].keyWord);
+				fprintf(filePointer, "%s\n", gSettingsList[ii].keyword);
 			}
 			else
 			{
 				//*	format the keyword value pair
-				fprintf(filePointer, "%-30s\t=\t\n", gSettingsList[ii].keyWord);
+				fprintf(filePointer, "%-30s\t=\t\n", gSettingsList[ii].keyword);
 			}
 			ii++;
 		}
@@ -261,46 +248,12 @@ int		ii;
 }
 
 //*****************************************************************************
-static void	ProcessObservatorySetting(const char *lineBuff)
+static void	ProcessObsSettingsConfig(const char *keyword, const char *valueString)
 {
-char				keyword[kMaxKeyWordLen];
-char				valueString[128];
 int					keywordEnumVal;
-int					ii;
-int					cc;
 TYPE_TELESCOPE_INFO	*ts_infoPtr;
 
-	keyword[0]		=	0;
-	valueString[0]	=	0;
-	ii	=	0;
-	cc	=	0;
-	//*	pull out the keyword
-	while ((lineBuff[ii] != 0) && (lineBuff[ii] != '=') && (ii<100))
-	{
-		if ((lineBuff[ii] > 0x20) && (cc < kMaxKeyWordLen))
-		{
-			keyword[cc++]	=	tolower(lineBuff[ii]);
-			keyword[cc]	=	0;
-		}
-		ii++;
-	}
-
-	//*	skip white space
-	while (((lineBuff[ii] == 0x20) || (lineBuff[ii] == 0x09) || (lineBuff[ii] == '=')) && (ii<100))
-	{
-		ii++;
-	}
-	//*	pull out the value string
-	cc	=	0;
-	while ((lineBuff[ii] != 0) && (ii<100))
-	{
-		if ((lineBuff[ii] >= 0x20) && (cc < kMaxValueLen))
-		{
-			valueString[cc++]	=	lineBuff[ii];
-			valueString[cc]	=	0;
-		}
-		ii++;
-	}
+//	CONSOLE_DEBUG_W_STR(keyword, valueString);
 
 
 	//*	this is kind of redundant to do it EVERY time, but it is the easiest to insure
@@ -392,8 +345,11 @@ TYPE_TELESCOPE_INFO	*ts_infoPtr;
 			if (gCurrCommentIdx < kMaxComments)
 			{
 				//*	insure the string is not to long
-				valueString[kMaxCommentLen - 2]	=	0;
-				strcpy(ts_infoPtr->comments[gCurrCommentIdx].text,	valueString);
+	//			valueString[kMaxCommentLen - 2]	=	0;
+	//			strncpyZero(ts_infoPtr->comments[gCurrCommentIdx].text,	valueString, (kMaxCommentLen - 2));
+				strncpy(ts_infoPtr->comments[gCurrCommentIdx].text,	valueString, kMaxCommentLen);
+				ts_infoPtr->comments[gCurrCommentIdx].text[kMaxCommentLen - 2]	=	0;
+
 				gCurrCommentIdx++;
 			}
 			else
@@ -465,69 +421,8 @@ TYPE_TELESCOPE_INFO	*ts_infoPtr;
 //*****************************************************************************
 void	ObservatorySettings_ReadFile(void)
 {
-FILE			*filePointer;
-char			lineBuff[256];
-int				ii;
-int				slen;
-char			fileName[]	=	"observatorysettings.txt";
-
-//	CONSOLE_DEBUG(__FUNCTION__);
-
-	//*	check for the observatory settings file
-	filePointer	=	fopen(fileName, "r");
-	if (filePointer != NULL)
-	{
-#ifndef _ENABLE_SKYTRAVEL_
-		LogEvent(	"AlpacaPi",
-					"Obs settings file read",
-					NULL,
-					kASCOM_Err_Success,
-					fileName);
-#endif // _ENABLE_SKYTRAVEL_
-
-		gObseratorySettings.ValidInfo	=	true;
-		while (fgets(lineBuff, 200, filePointer))
-		{
-			//*	get rid of the trailing CR/LF
-			slen	=	strlen(lineBuff);
-			for (ii=0; ii<slen; ii++)
-			{
-				if ((lineBuff[ii] == 0x0d) || (lineBuff[ii] == 0x0a))
-				{
-					lineBuff[ii]	=	0;
-					break;
-				}
-			}
-			slen	=	strlen(lineBuff);
-			if ((slen > 3) && (lineBuff[0] != '#'))
-			{
-				ProcessObservatorySetting(lineBuff);
-			}
-
-		}
-		fclose(filePointer);
-
-		//*	set the current RefID
-		if (strlen(gObseratorySettings.TS_info[0].refID) > 0)
-		{
-			strcpy(gObseratorySettings.RefID, gObseratorySettings.TS_info[0].refID);
-			CONSOLE_DEBUG_W_STR("default RefID", gObseratorySettings.RefID);
-		}
-	//	CONSOLE_ABORT(__FUNCTION__);
-	}
-#ifndef __arm__
-//	CONSOLE_DEBUG(__FUNCTION__);
-//	ii	=	0;
-//	while ((strlen(gObseratorySettings.TS_info[ii].refID) > 0) && (ii < kMaxTelescopes))
-//	{
-//		printf("%2d\t%s\r\n",	(ii+1), gObseratorySettings.TS_info[ii].refID);
-//		ii++;
-//	}
-#endif
-//	CONSOLE_DEBUG_W_STR("Observer\t\t=",		gObseratorySettings.Observer);
-//	CONSOLE_DEBUG_W_STR("AAVSO_ObserverID\t=",	gObseratorySettings.AAVSO_ObserverID);
-//	CONSOLE_DEBUG_W_STR("Name\t\t=",			gObseratorySettings.Name);
-
+	CONSOLE_DEBUG(__FUNCTION__);
+	ReadGenericConfigFile("observatorysettings.txt", '=', &ProcessObsSettingsConfig);
 }
 
 //*****************************************************************************
@@ -585,26 +480,6 @@ int		ii;
 		}
 	#endif
 	}
-}
-
-
-//*****************************************************************************
-static int	FindKeywordFromTable(const char *theCmd, const TYPE_SETTINGS_DEF *theCmdTable)
-{
-int		ii;
-int		keywordEnumValue;
-
-	keywordEnumValue	=	-1;
-	ii					=	0;
-	while ((theCmdTable[ii].keyWord[0] != 0) && (keywordEnumValue < 0))
-	{
-		if (strcasecmp(theCmd, theCmdTable[ii].keyWord) == 0)
-		{
-			keywordEnumValue	=	theCmdTable[ii].enumValue;
-		}
-		ii++;
-	}
-	return(keywordEnumValue);
 }
 
 #ifndef _ENABLE_SKYTRAVEL_

@@ -32,6 +32,7 @@
 //*	Apr 27,	2020	<MLS> Added cpustats and readall to management driver commands
 //*	May  4,	2020	<MLS> Added library versions to keep track of different machines
 //*	May  4,	2020	<MLS> Added AddLibraryVersion() & Get_Libraries()
+//*	Apr  8,	2022	<MLS> Removed double quotes in version string, JSON doesnt like it
 //*****************************************************************************
 
 
@@ -73,6 +74,7 @@ int						gLibraryIndex	=	-1;
 void	AddLibraryVersion(const char *device, const char *manuf, const char *versionString)
 {
 int		iii;
+int		sLen;
 	if (gLibraryIndex < 0)
 	{
 		for (iii=0; iii<kMaxLibraries; iii++)
@@ -87,6 +89,17 @@ int		iii;
 		strcpy(gLibraryVersions[gLibraryIndex].device,			device);
 		strcpy(gLibraryVersions[gLibraryIndex].manuf,			manuf);
 		strcpy(gLibraryVersions[gLibraryIndex].versionString,	versionString);
+		//*	make sure there are no double quotes in the string
+		sLen	=	strlen(gLibraryVersions[gLibraryIndex].versionString);
+		//*	Apr  8,	2022	<MLS> Removed double quotes in version string, JSON doesnt like it
+		for (iii = 0; iii < sLen; iii++)
+		{
+			if (gLibraryVersions[gLibraryIndex].versionString[iii] == '"')
+			{
+				gLibraryVersions[gLibraryIndex].versionString[iii]	=	'\'';
+			}
+		}
+
 		gLibraryIndex++;
 	}
 }

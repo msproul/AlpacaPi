@@ -1085,9 +1085,9 @@ bool				validLocalAddress;
 			perror("sendto");
 		}
 		timeOutCntr	=	0;
-		fromlen	=	sizeof(struct sockaddr_in);
 		while (timeOutCntr < 2)
 		{
+			fromlen	=	sizeof(struct sockaddr_in);
 			rcvCnt	=	recvfrom(gBroadcastSock, buf, kReceiveBufferSize, 0, (struct sockaddr *)&from, &fromlen);
 			if (rcvCnt > 0)
 			{
@@ -1095,10 +1095,6 @@ bool				validLocalAddress;
 				SJP_Init(&jsonParser);
 				SJP_ParseData(&jsonParser, buf);
 //				SJP_DumpJsonData(&jsonParser);
-
-			#ifdef _ENABLE_SKYTRAVEL_
-//				CONSOLE_DEBUG_W_STR("buf=", buf);
-			#endif
 
 				AddIPaddressToList(&from, &jsonParser);
 
@@ -1108,7 +1104,7 @@ bool				validLocalAddress;
 			}
 			else if (rcvCnt == 0)
 			{
-				printf("no response\r\n");
+				CONSOLE_DEBUG("no response");
 			}
 			else
 			{

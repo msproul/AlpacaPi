@@ -62,6 +62,8 @@
 //*	Jan 24,	2022	<MLS> Added flags argument to ProcessMouseWheelMoved()
 //*	Feb 21,	2022	<MLS> Changed all references of CvScalar to cv::Scalar
 //*	Feb 26,	2022	<MLS> floodfill working under opencv C++
+//*	Apr  9,	2022	<MLS> Made some changes to be compatible with openCV ver 2
+//*	Apr  9,	2022	<MLS> OpenCV version 2.4.9.1 is default on R-Pi 3 (stretch)
 //*****************************************************************************
 
 
@@ -1884,7 +1886,12 @@ void	WindowTab::LLD_FillRect(int left, int top, int width, int height)
 		cv::rectangle(	*cOpenCV_Image,
 						myCVrect,
 						cCurrentColor,
-						cv::FILLED);
+					#if (CV_MAJOR_VERSION >= 3)
+						cv::FILLED
+					#else
+						CV_FILLED
+					#endif
+						);
 
 	}
 #else
@@ -1931,7 +1938,12 @@ void	WindowTab::LLD_FillEllipse(int xCenter, int yCenter, int xRadius, int yRadi
 							0.0,			//*	start_angle
 							360.0,			//*	end_angle
 							cCurrentColor,	//	cv::Scalar color,
-							cv::FILLED);		//	int thickness CV_DEFAULT(1),
+						#if (CV_MAJOR_VERSION >= 3)
+							cv::FILLED
+						#else
+							CV_FILLED
+						#endif
+							);		//	int thickness CV_DEFAULT(1),
 		}
 		else
 		{

@@ -252,6 +252,7 @@ void	ControllerImage::DrawWidgetImage(TYPE_WIDGET *theWidget)
 	{
 		if (cImageTabObjPtr->cImageZoomState)
 		{
+			CONSOLE_DEBUG(__FUNCTION__);
 			CONSOLE_DEBUG("Zoomed");
 			cImageTabObjPtr->DrawFullScaleIamge();
 			Controller::DrawWidgetImage(theWidget, cImageTabObjPtr->cOpenCVdisplayedImage);
@@ -583,11 +584,38 @@ int		imgChannels;
 //**************************************************************************************
 void	ControllerImage::CopyImageToLiveImage(cv::Mat *newOpenCVImage)
 {
+size_t	byteCount_src;
+size_t	byteCount_dst;
+int		newImgWidth;
+int		newImgHeight;
+int		newImgRowStepSize;
+int		newImgChannels;
+
 	CONSOLE_DEBUG("OpenCV++ not finished!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+	CONSOLE_DEBUG("++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+	CONSOLE_DEBUG("+++++           OpenCV++ not finished              +++++");
+	CONSOLE_DEBUG("+++++           Finish this NEXT!!!!!!             +++++");
+	CONSOLE_DEBUG("++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
 	CONSOLE_DEBUG(__FUNCTION__);
 	//*	this is just an extra check, it was crashing on testing
 	if ((cDownLoadedImage != NULL) && (newOpenCVImage != NULL))
 	{
+		newImgWidth			=	newOpenCVImage->cols;
+		newImgHeight		=	newOpenCVImage->rows;
+		newImgRowStepSize	=	newOpenCVImage->step[0];
+		newImgChannels		=	newOpenCVImage->step[1];
+
+		byteCount_src		=	newImgWidth * newImgHeight * newImgRowStepSize;
+
+		CONSOLE_DEBUG_W_NUM("newImgWidth\t=",		newImgWidth);
+		CONSOLE_DEBUG_W_NUM("newImgHeight\t=",		newImgHeight);
+		CONSOLE_DEBUG_W_NUM("newImgRowStepSize\t=",	newImgRowStepSize);
+		CONSOLE_DEBUG_W_NUM("newImgChannels\t=",	newImgChannels);
+//		CONSOLE_ABORT(__FUNCTION__);
+
+
+//+		byteCount_dst		=	cDownLoadedImage->height * cDownLoadedImage->widthStep;
+
 	}
 }
 #else
@@ -667,6 +695,7 @@ bool	imagesAreTheSame;
 	CONSOLE_DEBUG(__FUNCTION__);
 	if (newOpenCVImage  != NULL)
 	{
+		CONSOLE_DEBUG("newOpenCVImage is OK!!!!");
 		if ((cDownLoadedImage == NULL) || (cDisplayedImage == NULL))
 		{
 //			CONSOLE_DEBUG("Setting image");
@@ -683,7 +712,7 @@ bool	imagesAreTheSame;
 			{
 				imagesAreTheSame	=	false;
 				CONSOLE_DEBUG("Failed on width");
-				CONSOLE_DEBUG_W_NUM("newOpenCVImage->cols  \t=",		newOpenCVImage->cols);
+				CONSOLE_DEBUG_W_NUM("newOpenCVImage->cols  \t=",	newOpenCVImage->cols);
 				CONSOLE_DEBUG_W_NUM("cDownLoadedImage->cols\t=",	cDownLoadedImage->cols);
 			}
 			//*	check if height are the same

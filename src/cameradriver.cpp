@@ -745,6 +745,7 @@ char				httpHeader[500];
 	{
 		CONSOLE_DEBUG_W_STR("Command not found\t=",	reqData->deviceCommand);
 	}
+//		CONSOLE_DEBUG_W_STR("deviceCommand\t=",	reqData->deviceCommand);
 	switch(cmdEnumValue)
 	{
 		//----------------------------------------------------------------------------------------
@@ -3307,7 +3308,6 @@ double				myExposure_usecs;
 				SetLastExposureInfo();
 
 				alpacaErrCode				=	Start_CameraExposure(cCurrentExposure_us);
-CONSOLE_DEBUG(__FUNCTION__);
 				GenerateFileNameRoot();
 
 				if (alpacaErrCode == 0)
@@ -3347,8 +3347,8 @@ CONSOLE_DEBUG(__FUNCTION__);
 			CONSOLE_DEBUG_W_NUM("cCameraProp.CameraYsize\t=",	cCameraProp.CameraYsize);
 			CONSOLE_DEBUG_W_NUM("cCameraProp.NumX\t\t=",		cCameraProp.NumX);
 			CONSOLE_DEBUG_W_NUM("cCameraProp.NumY\t\t=",		cCameraProp.NumY);
-			CONSOLE_DEBUG_W_NUM("cCameraProp.BinX\t=",			cCameraProp.BinX);
-			CONSOLE_DEBUG_W_NUM("cCameraProp.BinY\t=",			cCameraProp.BinY);
+			CONSOLE_DEBUG_W_NUM("cCameraProp.BinX\t\t=",		cCameraProp.BinX);
+			CONSOLE_DEBUG_W_NUM("cCameraProp.BinY\t\t=",		cCameraProp.BinY);
 			CONSOLE_DEBUG_W_NUM("cCameraProp.MaxbinX\t=",		cCameraProp.MaxbinX);
 			CONSOLE_DEBUG_W_NUM("cCameraProp.MaxbinY\t=",		cCameraProp.MaxbinY);
 
@@ -5441,22 +5441,28 @@ CONSOLE_DEBUG(__FUNCTION__);
 						//	fourCC	=	CV_FOURCC('M', 'P', '4', '2');		//*	MP42 -> MPEG-4  WORKS!!
 						//
 						//	-1,									//*	user selectable dialog box
-						//	fourCC	=	CV_FOURCC('R', 'G', 'B', 'T');
+						#if (CV_MAJOR_VERSION >= 4)
 							fourCC	=	cv::VideoWriter::fourcc('R', 'G', 'B', 'T');
+						#else
+							fourCC	=	CV_FOURCC('R', 'G', 'B', 'T');
+						#endif
 							videoIsColor		=	1;
 							break;
 
 						default:
 						//	fourCC	=	CV_FOURCC('Y', '8', '0', '0');		//*	writes, but cant be read
-						//	fourCC	=	CV_FOURCC('Y', '8', ' ', ' ');		//*	writes, but cant be read
+						#if (CV_MAJOR_VERSION >= 4)
 							fourCC	=	cv::VideoWriter::fourcc('Y', '8', ' ', ' ');		//*	writes, but cant be read
+						#else
+							fourCC	=	CV_FOURCC('Y', '8', ' ', ' ');		//*	writes, but cant be read
+						#endif
 							videoIsColor		=	0;
 							break;
 					}
 				//	fourCC	=	-1;
 					CONSOLE_DEBUG_W_HEX("fourCC\t=", fourCC);
 					cAVIfourCC			=	fourCC;
-				#if defined(_USE_OPENCV_CPP_) ||  (CV_MAJOR_VERSION >= 4)
+				#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 					cOpenCV_videoWriter	=	NULL;
 				#else
 					cOpenCV_videoWriter	=	cvCreateVideoWriter(	filePath,
@@ -6415,6 +6421,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode;
 			cWorkingLoopCnt++;
 			if (cWorkingLoopCnt > 70000)
 			{
+//				CONSOLE_DEBUG("kExposure_Working");
 				Check_Exposure(true);
 			//	CONSOLE_DEBUG_W_STR("Aborting.... Reseting to idle-", cDeviceManufAbrev);
 			//	cInternalCameraState	=	kCameraState_Idle;
@@ -6562,8 +6569,6 @@ int32_t		delayMicroSecs;
 				{
 					DisplayLiveImage();
 				}
-
-
 			}
 			else if (cOpenCV_LiveDisplayPtr != NULL)
 			{
@@ -6573,7 +6578,7 @@ int32_t		delayMicroSecs;
 		}
 		else if ((cImageMode == kImageMode_Live) || cDisplayImage)
 		{
-//			CONSOLE_DEBUG("cOpenCV_ImagePtr is NULL")
+			CONSOLE_DEBUG("cOpenCV_ImagePtr is NULL")
 		}
 	}
 #endif // _USE_OPENCV_
@@ -7211,7 +7216,7 @@ int					exposureState;
 char				exposureStateString[32];
 char				textBuffer[128];
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 	if (cTempReadSupported)
 	{
 		alpacaErrCode	=	Read_SensorTemp();

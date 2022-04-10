@@ -14,6 +14,7 @@
 //*	Edit History
 //*****************************************************************************
 //*	Nov 16,	2021	<MLS> ReadFITSimageIntoOpenCVimage() now handles 8 bit RGB fits files
+//*	Apr  9,	2022	<MLS> Fixed RGB color order in 8 bit color FITS files (fits=BGR)
 //*****************************************************************************
 
 #include	<string.h>
@@ -80,6 +81,7 @@ int				jjj;
 long			firstPixel;
 char			errorString[64];
 int				errorCnt;
+int				rgbOffset;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG_W_STR("File:", fitsFileName);
@@ -128,6 +130,14 @@ int				errorCnt;
 						{
 							for (ccc=0; ccc<3; ccc++)
 							{
+								//*	fits files are BGR
+								switch(ccc)
+								{
+									case 0:		rgbOffset	=	2;	break;
+									case 1:		rgbOffset	=	1;	break;
+									case 2:		rgbOffset	=	0;	break;
+									default:	rgbOffset	=	0;	break;
+								}
 								pixelPtr	=	openCvImgPtr->imageData;
 								for (iii=0; iii<height; iii++)
 								{
@@ -149,7 +159,8 @@ int				errorCnt;
 									}
 									for (jjj=0; jjj<width; jjj++)
 									{
-										pixelPtr[(jjj * 3) + ccc]	=	pixelBuffer[jjj];
+									//	pixelPtr[(jjj * 3) + ccc]	=	pixelBuffer[jjj];
+										pixelPtr[(jjj * 3) + rgbOffset]	=	pixelBuffer[jjj];
 									}
 
 									pixelPtr	+=	openCvImgPtr->widthStep;

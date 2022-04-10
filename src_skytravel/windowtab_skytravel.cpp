@@ -100,6 +100,7 @@
 //*	Feb  3,	2022	<MLS> Added support for OpenNGC catalog
 //*	Feb  4,	2022	<MLS> Added DrawOpenNGC_Outlines()
 //*	Feb 18,	2022	<MLS> SkyTravel working with OpenCV-C++
+//*	Apr  7,	2022	<MLS> ProcessMouseEvent() ignores nearest object when mouse drag in progress
 //*****************************************************************************
 //*	TODO
 //*			star catalog lists
@@ -2094,7 +2095,6 @@ ControllerImage	*myControllerObj;
 	}
 }
 
-
 //*****************************************************************************
 void	WindowTabSkyTravel::ProcessMouseEvent(	const int	widgetIdx,
 												const int	event,
@@ -2116,7 +2116,7 @@ void	WindowTabSkyTravel::ProcessMouseEvent(	const int	widgetIdx,
 
 		Compute_cursor(&cCurrentTime, &cCurrLatLon);
 
-		if (gStarCount < 10000)
+		if ((gStarCount < 10000) && (cMouseDragInProgress == false))
 		{
 			FindObjectNearCursor();
 		}
@@ -2788,12 +2788,12 @@ short		iii;
 	#ifdef _ENABLE_HYG_
 		//*	draw the dense stuff first so the other stuff is on top
 		//*--------------------------------------------------------------------------------
-		PlotObjectsByDataSource(cDispOptions.dispHYG_all,	gHYGObjectPtr, gHYGObjectCount);
+		PlotObjectsByDataSource(cDispOptions.dispHYG_all,	gHYGObjectPtr,		gHYGObjectCount);
 	#endif
 		//*--------------------------------------------------------------------------------
 		//*	draw the faint Hipparcos stuff first
-		PlotObjectsByDataSource(cDispOptions.dispHipparcos,	gHipObjectPtr, gHipObjectCount);
-		PlotObjectsByDataSource(cDispOptions.dispDraper,	gDraperObjectPtr, gDraperObjectCount);
+		PlotObjectsByDataSource(cDispOptions.dispHipparcos,	gHipObjectPtr,		gHipObjectCount);
+		PlotObjectsByDataSource(cDispOptions.dispDraper,	gDraperObjectPtr,	gDraperObjectCount);
 
 
 	#ifdef _ENABLE_GAIA_
@@ -3738,7 +3738,7 @@ short	pt_XX, pt_YY;
 bool	ptInView;
 
 //	CONSOLE_DEBUG("-------------------------------------------------------");
-//	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG_W_NUM(__FUNCTION__, cDebugCounter++);
 
 	if ((gHipObjectPtr != NULL) && (gHipObjectCount > 0))
 	{
@@ -7526,12 +7526,12 @@ long	deltaYY;
 void	WindowTabSkyTravel::FindObjectNearCursor(void)
 {
 TYPE_CelestData	foundObject;
-TYPE_CelestData	cloestObject;
+TYPE_CelestData	closestObject;
 long			cloestDistance;
 long			pixDist;
 
 	memset(&foundObject, 0, sizeof(TYPE_CelestData));
-	memset(&cloestObject, 0, sizeof(TYPE_CelestData));
+	memset(&closestObject, 0, sizeof(TYPE_CelestData));
 
 	cloestDistance	=	9999;
 
@@ -7547,7 +7547,7 @@ long			pixDist;
 		if (pixDist < cloestDistance)
 		{
 			cloestDistance	=	pixDist;
-			cloestObject	=	foundObject;
+			closestObject	=	foundObject;
 		}
 	}
 	pixDist	=	FindXX_YYinObjectList(	cPlanets,
@@ -7558,7 +7558,7 @@ long			pixDist;
 	if (pixDist < cloestDistance)
 	{
 		cloestDistance	=	pixDist;
-		cloestObject	=	foundObject;
+		closestObject	=	foundObject;
 	}
 
 	if (cDispOptions.dispNGC && (gNGCobjectPtr != NULL) && (gNGCobjectCount > 0))
@@ -7571,7 +7571,7 @@ long			pixDist;
 		if (pixDist < cloestDistance)
 		{
 			cloestDistance	=	pixDist;
-			cloestObject	=	foundObject;
+			closestObject	=	foundObject;
 		}
 	}
 
@@ -7586,7 +7586,7 @@ long			pixDist;
 		{
 //			CONSOLE_DEBUG("Zodiac");
 			cloestDistance	=	pixDist;
-			cloestObject	=	foundObject;
+			closestObject	=	foundObject;
 		}
 	}
 
@@ -7601,7 +7601,7 @@ long			pixDist;
 		if (pixDist < cloestDistance)
 		{
 			cloestDistance	=	pixDist;
-			cloestObject	=	foundObject;
+			closestObject	=	foundObject;
 		}
 	}
 
@@ -7617,7 +7617,7 @@ long			pixDist;
 		if (pixDist < cloestDistance)
 		{
 			cloestDistance	=	pixDist;
-			cloestObject	=	foundObject;
+			closestObject	=	foundObject;
 		}
 	}
 
@@ -7637,10 +7637,10 @@ long			pixDist;
 
 
 		cInform_dist	=	1;
-		switch(cloestObject.dataSrc)
+		switch(closestObject.dataSrc)
 		{
 			case kDataSrc_Orginal:
-				sprintf(cInform_name, "Original DB = %4ld", cloestObject.id);
+				sprintf(cInform_name, "Original DB = %4ld", closestObject.id);
 				break;
 
 			case kDataSrc_Planets:
@@ -7649,7 +7649,7 @@ long			pixDist;
 				planetIndex	=	-1;
 				for (ii=0; ii<kPlanetObjectCnt; ii++)
 				{
-					if (cloestObject.id == cPlanets[ii].id)
+					if (closestObject.id == cPlanets[ii].id)
 					{
 						planetIndex	=	ii;
 						break;
@@ -7673,7 +7673,7 @@ long			pixDist;
 					zodiacIndex	=	-1;
 					for (ii=0; ii < kZodiacCount; ii++)
 					{
-						if (cloestObject.id == gZodiacPtr[ii].id)
+						if (closestObject.id == gZodiacPtr[ii].id)
 						{
 							zodiacIndex	=	ii;
 							break;
@@ -7691,32 +7691,21 @@ long			pixDist;
 				break;
 
 			case kDataSrc_YaleBrightStar:
-				sprintf(cInform_name, "Yale = %04ld mag=%4.2f", cloestObject.id, cloestObject.realMagnitude);
-				if (cloestObject.parallax > 0.0)
-				{
-					//*	1 / parallax = # of parsecs
-					//*	1 parsec = 3.26 light years
-
-					distance	=	(1.0 / cloestObject.parallax) * 3.26;
-
-					sprintf(moreInfo, " parallax = %5.4f distance=%4.2f light years", cloestObject.parallax, distance);
-					strcat(cInform_name, moreInfo);
-
-				}
+				sprintf(cInform_name, "Yale = %04ld mag=%4.2f", closestObject.id, closestObject.realMagnitude);
 				break;
 
 
 			case kDataSrc_NGC2000:
 			case kDataSrc_NGC2000IC:
-				tmpString[0]	=	(cloestObject.type >> 24) & 0x7f;
-				tmpString[1]	=	(cloestObject.type >> 16) & 0x7f;
-				tmpString[2]	=	(cloestObject.type >> 8) & 0x7f;
-				tmpString[3]	=	(cloestObject.type) & 0x7f;
+				tmpString[0]	=	(closestObject.type >> 24) & 0x7f;
+				tmpString[1]	=	(closestObject.type >> 16) & 0x7f;
+				tmpString[2]	=	(closestObject.type >> 8) & 0x7f;
+				tmpString[3]	=	(closestObject.type) & 0x7f;
 				tmpString[4]	=	0;
 
-				sprintf(cInform_name, "NGC = %04ld %s mag=%4.2f", cloestObject.id, tmpString, cloestObject.realMagnitude);
+				sprintf(cInform_name, "NGC = %04ld %s mag=%4.2f", closestObject.id, tmpString, closestObject.realMagnitude);
 
-				foundMoreInfo	=	GetObjectDescription(&cloestObject, moreInfo, 128);
+				foundMoreInfo	=	GetObjectDescription(&closestObject, moreInfo, 128);
 				if (foundMoreInfo)
 				{
 					strcat(cInform_name, " ");
@@ -7725,19 +7714,24 @@ long			pixDist;
 				break;
 
 			case kDataSrc_Hipparcos:
-				sprintf(cInform_name, "Hipparcos = %04ld mag=%4.2f", cloestObject.id, cloestObject.realMagnitude);
-				if (cloestObject.parallax > 0.0)
+				sprintf(cInform_name, "Hipparcos = H%04ld mag=%4.2f", closestObject.id, closestObject.realMagnitude);
+				if (closestObject.spectralClass > 0x40)
 				{
-					//*	1 / parallax = # of parsecs
-					//*	1 parsec = 3.26 light years
-
-					distance	=	(1.0 / cloestObject.parallax) * 3.26;
-
-					sprintf(moreInfo, " parallax = %5.4f distance=%4.2f light years", cloestObject.parallax, distance);
+					sprintf(moreInfo, " Spectral Class=%c", closestObject.spectralClass);
 					strcat(cInform_name, moreInfo);
-
 				}
 				break;
+		}
+		//*	check for parallax and display in light years if avaialble
+		if (closestObject.parallax > 0.0)
+		{
+			//*	1 / parallax = # of parsecs
+			//*	1 parsec = 3.26 light years
+
+			distance	=	(1.0 / closestObject.parallax) * 3.26;
+
+			sprintf(moreInfo, " parallax = %5.4f distance=%4.2f light years", closestObject.parallax, distance);
+			strcat(cInform_name, moreInfo);
 		}
 	}
 }

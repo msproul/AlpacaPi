@@ -1175,13 +1175,13 @@ int				headerLineCnt;
 	strcpy(myFilePath, folderPath);
 	strcat(myFilePath, "heasarc_hd.tdat");
 
-//	CONSOLE_DEBUG_W_STR(__FUNCTION__, myFilePath);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, myFilePath);
 
 	filePointer	=	fopen(myFilePath, "r");
 	if (filePointer != NULL)
 	{
 		specifiedLnCnt	=	CountLinesInFile(filePointer);
-//		CONSOLE_DEBUG_W_NUM("Lines in file", specifiedLnCnt);
+		CONSOLE_DEBUG_W_NUM("Lines in file", specifiedLnCnt);
 
 		bufferSize		=	(specifiedLnCnt + 2) * sizeof(TYPE_CelestData);
 		draperData		=	(TYPE_CelestData *)malloc(bufferSize);
@@ -1228,10 +1228,10 @@ int				headerLineCnt;
 	{
 		CONSOLE_DEBUG_W_STR("Failed to read:", myFilePath);
 	}
-//	CONSOLE_DEBUG_W_NUM("HGC records read\t\t=", recordCount);
-//	CONSOLE_DEBUG_W_NUM("gPhotMagSubsitutionCnt\t=", gPhotMagSubsitutionCnt);
-//	CONSOLE_DEBUG_W_DBL("percent substitutions\t=", (gPhotMagSubsitutionCnt * 100.0) / recordCount);
-//	CONSOLE_DEBUG_W_DBL("percent without mag\t=", (gHDstarsWithoutMag * 100.0) / recordCount);
+	CONSOLE_DEBUG_W_NUM("HGC records read\t\t=", recordCount);
+	CONSOLE_DEBUG_W_NUM("gPhotMagSubsitutionCnt\t=", gPhotMagSubsitutionCnt);
+	CONSOLE_DEBUG_W_DBL("percent substitutions\t=", (gPhotMagSubsitutionCnt * 100.0) / recordCount);
+	CONSOLE_DEBUG_W_DBL("percent without mag\t=", (gHDstarsWithoutMag * 100.0) / recordCount);
 
 	return(draperData);
 }

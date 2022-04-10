@@ -86,6 +86,7 @@
 //*	Feb 17,	2022	<MLS> Added SetFontInfo() and TYPE_FontInfo
 //*	Feb 18,	2022	<MLS> Added DrawWidgetBackground()
 //*	Feb 20,	2022	<MLS> Added a bunch of Low Level Drawing commands LLD_....
+//*	Apr  9,	2022	<MLS> Made some changes to be compatible with openCV ver 2
 //*****************************************************************************
 
 
@@ -401,7 +402,11 @@ int			objCntr;
 	cv::namedWindow(	cWindowName,
 				//	(CV_WINDOW_NORMAL)
 //	--->>>>good		(CV_WINDOW_NORMAL | CV_WINDOW_KEEPRATIO | CV_GUI_NORMAL)
+				#if (CV_MAJOR_VERSION >= 3)
 					(cv::WINDOW_NORMAL | cv::WINDOW_KEEPRATIO)
+				#else
+					(CV_WINDOW_NORMAL | CV_WINDOW_KEEPRATIO)
+				#endif
 				//	(CV_WINDOW_AUTOSIZE)
 				//	(CV_WINDOW_NORMAL | CV_GUI_EXPANDED)
 				//	(CV_WINDOW_NORMAL | CV_WINDOW_FULLSCREEN | CV_WINDOW_KEEPRATIO | CV_GUI_NORMAL)
@@ -486,13 +491,16 @@ int		iii;
 		gCurrentActiveWindow	=	NULL;
 	}
 #ifdef _USE_OPENCV_CPP_
+	CONSOLE_DEBUG(__FUNCTION__);
 	if (cOpenCV_matImage != NULL)
 	{
+	CONSOLE_DEBUG(__FUNCTION__);
 //		cv::(&cOpenCV_matImage);
 //		cOpenCV_matImage	=	NULL;
 		//---try------try------try------try------try------try---
 		try
 		{
+			CONSOLE_DEBUG("try delete cOpenCV_matImage");
 			delete cOpenCV_matImage;
 		}
 		catch(cv::Exception& ex)
@@ -506,6 +514,7 @@ int		iii;
 	//---try------try------try------try------try------try---
 	try
 	{
+		CONSOLE_DEBUG("try cv::destroyWindow");
 		cv::destroyWindow(cWindowName);
 	}
 	catch(cv::Exception& ex)
@@ -546,7 +555,7 @@ int		iii;
 	//---end------end------end------end------end------end---
 #endif // _USE_OPENCV_CPP_
 
-//	CONSOLE_DEBUG("Removing from list");
+	CONSOLE_DEBUG("Removing from list");
 	for (iii=0; iii<kMaxControllers; iii++)
 	{
 		if (gControllerList[iii] == this)
@@ -555,7 +564,7 @@ int		iii;
 			gControllerList[iii]	=	NULL;
 		}
 	}
-//	CONSOLE_DEBUG("Done");
+	CONSOLE_DEBUG("Done");
 }
 
 //**************************************************************************************
@@ -2328,7 +2337,12 @@ void	Controller::DrawWindow(void)
 		cv::rectangle(	*cOpenCV_matImage,
 						myCVrect,
 						cBackGrndColor,			//	color,
-						cv::FILLED);
+					#if (CV_MAJOR_VERSION >= 3)
+						cv::FILLED				//	int thickness CV_DEFAULT(1),
+					#else
+						CV_FILLED
+					#endif
+						);
 
 		DrawWindowTabs();
 
@@ -2350,7 +2364,11 @@ void	Controller::DrawWindow(void)
 		cvRectangleR(	cOpenCV_Image,
 						myCVrect,
 						cBackGrndColor,			//	color,
+					#if (CV_MAJOR_VERSION >= 3)
 						cv::FILLED,				//	int thickness CV_DEFAULT(1),
+					#else
+						CV_FILLED,
+					#endif
 						8,						//	int line_type CV_DEFAULT(8),
 						0);						//	int shift CV_DEFAULT(0));
 
@@ -3356,7 +3374,12 @@ void	Controller::LLD_FillRect(int left, int top, int width, int height)
 		cv::rectangle(	*cOpenCV_matImage,
 						myCVrect,
 						cCurrentColor,
-						cv::FILLED);
+					#if (CV_MAJOR_VERSION >= 3)
+						cv::FILLED				//	int thickness CV_DEFAULT(1),
+					#else
+						CV_FILLED
+					#endif
+						);
 
 	}
 #else
@@ -3372,7 +3395,11 @@ void	Controller::LLD_FillRect(int left, int top, int width, int height)
 		cvRectangleR(	cOpenCV_Image,
 						myCVrect,
 						cCurrentColor,				//	color,
-						cv::FILLED,					//	int thickness CV_DEFAULT(1),
+					#if (CV_MAJOR_VERSION >= 3)
+						cv::FILLED,				//	int thickness CV_DEFAULT(1),
+					#else
+						CV_FILLED,
+					#endif
 						8,							//	int line_type CV_DEFAULT(8),
 						0);							//	int shift CV_DEFAULT(0));
 	}
@@ -3532,7 +3559,12 @@ void	Controller::LLD_FillEllipse(	int xCenter, int yCenter, int xRadius, int yRa
 							0.0,			//*	start_angle
 							360.0,			//*	end_angle
 							cCurrentColor,	//	color,
-							cv::FILLED);		//	int thickness CV_DEFAULT(1),
+						#if (CV_MAJOR_VERSION >= 3)
+							cv::FILLED				//	int thickness CV_DEFAULT(1),
+						#else
+							CV_FILLED
+						#endif
+							);
 		}
 		else
 		{
@@ -3569,7 +3601,11 @@ void	Controller::LLD_FillEllipse(	int xCenter, int yCenter, int xRadius, int yRa
 						0.0,			//*	start_angle
 						360.0,			//*	end_angle
 						cCurrentColor,	//	color,
-						cv::FILLED,		//	int thickness CV_DEFAULT(1),
+					#if (CV_MAJOR_VERSION >= 3)
+						cv::FILLED,				//	int thickness CV_DEFAULT(1),
+					#else
+						CV_FILLED,
+					#endif
 						8,				//	int line_type CV_DEFAULT(8),
 						0);				//	int shift CV_DEFAULT(0));
 		}

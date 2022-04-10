@@ -165,8 +165,60 @@ int		fileNameLen;
 //*****************************************************************************
 int	CameraDriver::CreateOpenCVImage(const unsigned char *imageDataPtr)
 {
-	CONSOLE_DEBUG("OpenCV++ not finished!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-	return(-1);
+int				returnCode	=	0;
+int				width;
+int				height;
+int				imageDataLen;
+
+	CONSOLE_DEBUG("++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+	CONSOLE_DEBUG("+++++           OpenCV++ not finished              +++++");
+	CONSOLE_DEBUG("+++++           Finish this NEXT!!!!!!             +++++");
+	CONSOLE_DEBUG("++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+
+	if (cOpenCV_ImagePtr != NULL)
+	{
+		delete cOpenCV_ImagePtr;
+		cOpenCV_ImagePtr	=	NULL;
+	}
+	if (cOpenCV_LiveDisplayPtr != NULL)
+	{
+		delete cOpenCV_LiveDisplayPtr;
+		cOpenCV_LiveDisplayPtr	=	NULL;
+	}
+	width			=	cCameraProp.CameraXsize;
+	height			=	cCameraProp.CameraYsize;
+	GetImage_ROI_info();
+
+	switch(cROIinfo.currentROIimageType)
+	{
+		case kImageType_RAW8:
+		//	CONSOLE_DEBUG("kImageType_RAW8");
+			cOpenCV_ImagePtr	=	new cv::Mat(height, width, CV_8UC3);
+			imageDataLen		=	width * height;
+			break;
+
+		case kImageType_RAW16:
+		//	CONSOLE_DEBUG("kImageType_RAW16");
+			cOpenCV_ImagePtr	=	new cv::Mat(height, width, CV_8UC3);
+			imageDataLen		=	width * height * 2;
+			break;
+
+
+		case kImageType_RGB24:
+		//	CONSOLE_DEBUG("kImageType_RGB24");
+			cOpenCV_ImagePtr	=	new cv::Mat(height, width, CV_8UC3);
+			imageDataLen		=	width * height * 3;
+			break;
+
+		case kImageType_Y8:
+		default:
+			cOpenCV_ImagePtr	=	NULL;
+			break;
+
+	}
+
+
+	return(returnCode);
 }
 //*****************************************************************************
 int	CameraDriver::SaveOpenCVImage(void)

@@ -128,6 +128,7 @@
 //*	Dec 18,	2021	<MLS> Started using pmccabe to check routine complexity
 //*	Dec 29,	2021	<MLS> Fixed argument buffer overflow bug in GetKeyWordArgument()
 //*	Mar  2,	2022	<MLS> Updated Connected command
+//*	Apr  7,	2022	<MLS> Added _ENABLE_QSI_
 //*****************************************************************************
 //*	to install code blocks 20
 //*	Step 1: sudo add-apt-repository ppa:codeblocks-devs/release
@@ -198,7 +199,9 @@ char		gHostName[48]				=	"";
 #if defined(_ENABLE_CAMERA_) && defined(_ENABLE_QHY_)
 	#include	"cameradriver_QHY.h"
 #endif
-
+#if defined(_ENABLE_CAMERA_) && defined(_ENABLE_QSI_)
+	#include	"cameradriver_QSI.h"
+#endif
 #if defined(_ENABLE_CAMERA_) && defined(_ENABLE_FLIR_)
 	#include	"cameradriver_FLIR.h"
 #endif
@@ -2993,21 +2996,26 @@ double			freeDiskSpace_Gigs;
 #if defined(_ENABLE_CAMERA_) && defined(_ENABLE_ASI_)
 	CreateASI_CameraObjects();
 #endif
-
+//-----------------------------------------------------------
 #if defined(_ENABLE_CAMERA_) && defined(_ENABLE_TOUP_)
 	CreateTOUP_CameraObjects();
 #endif
-
+//-----------------------------------------------------------
 #if defined(_ENABLE_CAMERA_) && defined(_ENABLE_QHY_)
 	CreateQHY_CameraObjects();
 #endif
-
+//-----------------------------------------------------------
+#if defined(_ENABLE_CAMERA_) && defined(_ENABLE_QSI_)
+	CreateQSI_CameraObjects();
+#endif
+//-----------------------------------------------------------
 //#if defined(_ENABLE_CAMERA_) && defined(_ENABLE_FLIR_) && (__GNUC__ > 5)
 #if defined(_ENABLE_CAMERA_) && defined(_ENABLE_FLIR_)
 	CreateFLIR_CameraObjects();
 #endif
 
 
+//-----------------------------------------------------------
 #if defined(_ENABLE_CAMERA_) && defined(_ENABLE_SONY_)
 	CreateSONY_CameraObjects();
 #endif
