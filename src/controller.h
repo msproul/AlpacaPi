@@ -478,6 +478,7 @@ class Controller
 
 cv::Scalar	Color16BitTo24Bit(const unsigned int color16);
 
+int			ProcessControllerWindows(void);
 void		Controller_HandleKeyDown(const int keyPressed);
 void		LoadAlpacaLogo(void);
 bool		CheckForOpenWindowByName(const char *windowName);

@@ -36,6 +36,7 @@
 //*	Mar 22,	2022	<MLS> Build 132
 //*	Mar 25,	2022	<MLS> Build 134
 //*	Mar 25,	2022	<MLS> Build 135 - starting on QSI
+//*	Apr 13,	2022	<MLS> Build 136
 //*****************************************************************************
 //*	These are for my comment extraction program that sorts comments by date.
 //*	Jan  1,	2019	-----------------------------------------------------------
@@ -64,7 +65,7 @@
 
 #define	kApplicationName	"AlpacaPi"
 #define	kVersionString		"V0.5.0-beta"
-#define	kBuildNumber		135
+#define	kBuildNumber		136
 
 
 #define kAlpacaDiscoveryPORT	32227

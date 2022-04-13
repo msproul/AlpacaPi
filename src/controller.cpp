@@ -87,6 +87,7 @@
 //*	Feb 18,	2022	<MLS> Added DrawWidgetBackground()
 //*	Feb 20,	2022	<MLS> Added a bunch of Low Level Drawing commands LLD_....
 //*	Apr  9,	2022	<MLS> Made some changes to be compatible with openCV ver 2
+//*	Apr 11,	2022	<MLS> Added ProcessControllerWindows()
 //*****************************************************************************
 
 
@@ -188,7 +189,6 @@ static void	InitControllerList(void)
 {
 int		ii;
 
-
 	for (ii=0; ii<kMaxControllers; ii++)
 	{
 		gControllerList[ii]	=	NULL;
@@ -220,7 +220,7 @@ Controller	*myController;
 		else
 		{
 			CONSOLE_DEBUG("Magic cookie is incorrect");
-		//	CONSOLE_ABORT("Magic cookie is incorrect");
+			CONSOLE_ABORT("Magic cookie is incorrect");
 		}
 	}
 	else
@@ -230,46 +230,89 @@ Controller	*myController;
 }
 
 //*****************************************************************************
+//*	returns the number of active windows
+//*****************************************************************************
+int	ProcessControllerWindows(void)
+{
+int		activeObjCnt;
+int		keyPressed;
+int		iii;
+
+	activeObjCnt	=	0;
+	for (iii=0; iii<kMaxControllers; iii++)
+	{
+		if (gControllerList[iii] != NULL)
+		{
+			activeObjCnt++;
+			gControllerList[iii]->HandleWindow();
+		//	usleep(10);
+		#if (CV_MAJOR_VERSION >= 3)
+			keyPressed	=	cv::waitKeyEx(50);
+		#else
+			keyPressed	=	cvWaitKey(50);
+		#endif
+			if (keyPressed > 0)
+			{
+				Controller_HandleKeyDown(keyPressed);
+			}
+
+			if (gControllerList[iii]->cKeepRunning == false)
+			{
+				CONSOLE_DEBUG_W_NUM("Deleting control #", iii);
+				CONSOLE_DEBUG_W_STR("Deleting window", gControllerList[iii]->cWindowName);
+				delete gControllerList[iii];
+			}
+		}
+	}
+	return(activeObjCnt);
+}
+
+//*****************************************************************************
+static void	CycleThoughWindows(void)
+{
+int		iii;
+int		nextCtrlIdx;
+	//*	this should cycle through the windows, but it does not work.
+	nextCtrlIdx	=	-1;
+
+	CONSOLE_DEBUG("TAB");
+	for (iii=0; iii<gControllerCnt; iii++)
+	{
+		if (gCurrentActiveWindow == gControllerList[iii])
+		{
+			nextCtrlIdx	=	iii+1;
+		}
+	}
+	if ((nextCtrlIdx < 0) || (nextCtrlIdx >= gControllerCnt))
+	{
+		nextCtrlIdx	=	0;
+	}
+	gCurrentActiveWindow	=	gControllerList[nextCtrlIdx];
+
+	if (gCurrentActiveWindow != NULL)
+	{
+		CONSOLE_DEBUG(gCurrentActiveWindow->cWindowName);
+
+		gCurrentActiveWindow->HandleWindowUpdate();
+	}
+	else
+	{
+		CONSOLE_DEBUG("gCurrentActiveWindow is NULL");
+	}
+}
+
+//*****************************************************************************
 void	Controller_HandleKeyDown(const int keyPressed)
 {
-//	CONSOLE_DEBUG_W_HEX(__FUNCTION__, keyPressed);
+	CONSOLE_DEBUG_W_HEX(__FUNCTION__, keyPressed);
 
 	if (gCurrentActiveWindow != NULL)
 	{
 	#if 0
-//	//*	this should cycle through the windows, but it does not work.
-//		nextCtrlIdx	=	-1;
-//		if ((keyPressed & 0x0ff) == 0x09)
-//		{
-//		int		iii;
-//		int		nextCtrlIdx;
-//
-//			CONSOLE_DEBUG("TAB");
-//			for (iii=0; iii<gControllerCnt; iii++)
-//			{
-//				if (gCurrentActiveWindow == gControllerList[iii])
-//				{
-//					nextCtrlIdx	=	iii+1;
-//				}
-//			}
-//			if ((nextCtrlIdx < 0) || (nextCtrlIdx >= gControllerCnt))
-//			{
-//				nextCtrlIdx	=	0;
-//			}
-//			gCurrentActiveWindow	=	gControllerList[nextCtrlIdx];
-//
-//			if (gCurrentActiveWindow != NULL)
-//			{
-//				CONSOLE_DEBUG(gCurrentActiveWindow->cWindowName);
-//
-//				gCurrentActiveWindow->HandleWindowUpdate();
-//			}
-//			else
-//			{
-//				CONSOLE_DEBUG("gCurrentActiveWindow is NULL");
-//			}
-//		}
-//		else
+		if ((keyPressed & 0x0ff) == 0x09)
+		{
+			CycleThoughWindows();
+		}
 	#endif
 		{
 			gCurrentActiveWindow->HandleKeyDown(keyPressed);
@@ -419,6 +462,7 @@ int			objCntr;
 	cv::resizeWindow(		cWindowName, cWidth, cHeight);
 	cv::moveWindow(		cWindowName, (20 + ((gControllerCnt - 1) * (150))), 10);
 
+	CONSOLE_DEBUG("Setting mouse call back routine!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 	cv::setMouseCallback(	cWindowName,
 							LiveWindowMouseCallback,
 							(void *)this);
@@ -516,13 +560,15 @@ int		iii;
 	{
 		CONSOLE_DEBUG("try cv::destroyWindow");
 		cv::destroyWindow(cWindowName);
+		CONSOLE_DEBUG("Waiting");
+		cv::waitKey(2000);
 	}
 	catch(cv::Exception& ex)
 	{
 		//*	we sometimes can open the same window twice, this should not happen but sometimes does.
 		//*	this catch prevents opencv from crashing
 		CONSOLE_DEBUG("cvDestroyWindow() had an exception");
-//+++		if (ex.code != CV_StsAssert)
+//+++	if (ex.code != CV_StsAssert)
 		{
 			CONSOLE_DEBUG_W_NUM("openCV error code\t=",	ex.code);
 		}
@@ -555,7 +601,7 @@ int		iii;
 	//---end------end------end------end------end------end---
 #endif // _USE_OPENCV_CPP_
 
-	CONSOLE_DEBUG("Removing from list");
+//	CONSOLE_DEBUG("Removing from list");
 	for (iii=0; iii<kMaxControllers; iii++)
 	{
 		if (gControllerList[iii] == this)
@@ -658,6 +704,7 @@ void	Controller::HandleWindowUpdate(void)
 		DrawWindow();
 
 		cv::imshow(cWindowName, *cOpenCV_matImage);
+		cv::waitKey(5);
 //		cvUpdateWindow(cWindowName);//
 	}
 	else
@@ -1998,10 +2045,10 @@ cv::Mat		image_roi;
 			//	CONSOLE_ABORT(__FUNCTION__);
 			}
 
-
 			//*	draw the border if enabled
 			if (theWidget->includeBorder)
 			{
+				CONSOLE_DEBUG(__FUNCTION__);
 				LLD_FrameRect(&theWidget->roiRect);
 			}
 		}
@@ -3307,46 +3354,49 @@ void	Controller::LLD_LineTo(const int xx, const int yy)
 void	Controller::LLD_FrameRect(int left, int top, int width, int height, int lineWidth)
 {
 
-	if ((width <= 0) || (height <= 0))
+	if ((width > 0) && (height > 0))
+	{
+	#ifdef _USE_OPENCV_CPP_
+		if (cOpenCV_matImage != NULL)
+		{
+		cv::Rect	myCVrect;
+
+			myCVrect.x		=	left;
+			myCVrect.y		=	top;
+			myCVrect.width	=	width;
+			myCVrect.height	=	height;
+
+			cv::rectangle(	*cOpenCV_matImage,
+							myCVrect,
+							cCurrentColor,
+							lineWidth);
+
+		}
+	#else
+		if (cOpenCV_Image != NULL)
+		{
+		CvRect		myCVrect;
+			myCVrect.x		=	left;
+			myCVrect.y		=	top;
+			myCVrect.width	=	width;
+			myCVrect.height	=	height;
+
+			cvRectangleR(	cOpenCV_Image,
+							myCVrect,
+							cCurrentColor,				//	color,
+							lineWidth,					//	int thickness CV_DEFAULT(1),
+							8,							//	int line_type CV_DEFAULT(8),
+							0);							//	int shift CV_DEFAULT(0));
+
+		}
+	#endif // _USE_OPENCV_CPP_
+	}
+	else
 	{
 		CONSOLE_DEBUG_W_NUM("width\t=", width);
 		CONSOLE_DEBUG_W_NUM("height\t=", height);
-		CONSOLE_ABORT(__FUNCTION__);
+//		CONSOLE_ABORT(__FUNCTION__);
 	}
-#ifdef _USE_OPENCV_CPP_
-	if (cOpenCV_matImage != NULL)
-	{
-	cv::Rect	myCVrect;
-
-		myCVrect.x		=	left;
-		myCVrect.y		=	top;
-		myCVrect.width	=	width;
-		myCVrect.height	=	height;
-
-		cv::rectangle(	*cOpenCV_matImage,
-						myCVrect,
-						cCurrentColor,
-						lineWidth);
-
-	}
-#else
-	if (cOpenCV_Image != NULL)
-	{
-	CvRect		myCVrect;
-		myCVrect.x		=	left;
-		myCVrect.y		=	top;
-		myCVrect.width	=	width;
-		myCVrect.height	=	height;
-
-		cvRectangleR(	cOpenCV_Image,
-						myCVrect,
-						cCurrentColor,				//	color,
-						lineWidth,					//	int thickness CV_DEFAULT(1),
-						8,							//	int line_type CV_DEFAULT(8),
-						0);							//	int shift CV_DEFAULT(0));
-
-	}
-#endif // _USE_OPENCV_CPP_
 }
 
 //**************************************************************************************

@@ -30,6 +30,8 @@
 //*	Jan 30,	2020	<MLS> Added SaveImageData(), AddToDataProductsList()
 //*	Jan 30,	2020	<MLS> Added SaveOpenCVImage()
 //*	Jan 30,	2020	<MLS> Separated saving of opencv image from the creation part
+//*	Apr 10,	2022	<MLS> CreateOpenCVImage() now can use openCV++ calls
+//*	Apr 10,	2022	<MLS> SaveOpenCVImage() now can use openCV++ calls
 //*****************************************************************************
 
 #ifdef _ENABLE_CAMERA_
@@ -160,8 +162,8 @@ int		fileNameLen;
 
 #if defined(_USE_OPENCV_)
 #ifdef _USE_OPENCV_CPP_
-#warning "OpenCV++ not finished"
-
+//*****************************************************************************
+//*	using "C++" interface
 //*****************************************************************************
 int	CameraDriver::CreateOpenCVImage(const unsigned char *imageDataPtr)
 {
@@ -170,11 +172,12 @@ int				width;
 int				height;
 int				imageDataLen;
 
-	CONSOLE_DEBUG("++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
-	CONSOLE_DEBUG("+++++           OpenCV++ not finished              +++++");
-	CONSOLE_DEBUG("+++++           Finish this NEXT!!!!!!             +++++");
-	CONSOLE_DEBUG("++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+//	CONSOLE_DEBUG("++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+//	CONSOLE_DEBUG("+++++           OpenCV++ not finished              +++++");
+//	CONSOLE_DEBUG("+++++           Finish this NEXT!!!!!!             +++++");
+//	CONSOLE_DEBUG("++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
 
+	GenerateFileNameRoot();
 	if (cOpenCV_ImagePtr != NULL)
 	{
 		delete cOpenCV_ImagePtr;
@@ -216,34 +219,24 @@ int				imageDataLen;
 			break;
 	}
 
-//	if (imageDataPtr != NULL)
-//	{
-//		if (cOpenCV_ImagePtr != NULL)
-//		{
-//			//*	what size did openCV make the image
-//	//		cvShowImage(cOpenCV_ImgWindowName, cOpenCV_ImagePtr);
-//	//		cv::waitKey(1);
-//
-////			CONSOLE_DEBUG_W_STR("Image SUCCESS!!!!!!!!!!!!!!-", cameraSerialNum);
-////			CONSOLE_DEBUG_W_NUM("cOpenCV_ImagePtr->imageSize\t=", cOpenCV_ImagePtr->imageSize);
-////			CONSOLE_DEBUG_W_LONG("imageDataLen\t\t=",			imageDataLen);
-////			CONSOLE_DEBUG_W_NUM("cOpenCV_ImagePtr->nChannels\t=",	cOpenCV_ImagePtr->nChannels);
-////			CONSOLE_DEBUG_W_NUM("cOpenCV_ImagePtr->depth\t=",		cOpenCV_ImagePtr->depth);
-////			CONSOLE_DEBUG_W_NUM("cOpenCV_ImagePtr->width\t=",		cOpenCV_ImagePtr->width);
-////			CONSOLE_DEBUG_W_NUM("cOpenCV_ImagePtr->widthStep\t=",	cOpenCV_ImagePtr->widthStep);
-//
-//			bytesPerPixel		=	(cOpenCV_ImagePtr->depth / 8) * cOpenCV_ImagePtr->nChannels;
-//			bytesPerPixel2		=	cOpenCV_ImagePtr->widthStep / cOpenCV_ImagePtr->width;
-//			openCVimageWidth	=	cOpenCV_ImagePtr->widthStep / bytesPerPixel;
-////			CONSOLE_DEBUG_W_NUM("bytesPerPixel\t=",		bytesPerPixel);
-////			CONSOLE_DEBUG_W_NUM("bytesPerPixel2\t=",	bytesPerPixel2);
-////			CONSOLE_DEBUG_W_NUM("openCVimageWidth\t=",	openCVimageWidth);
-//			if (bytesPerPixel != bytesPerPixel2)
-//			{
-//				CONSOLE_DEBUG("Houston, we have a problem");
-//				CONSOLE_DEBUG("bytes per pixel is messed up");
-//				CONSOLE_ABORT(__FUNCTION__);
-//			}
+	if (imageDataPtr != NULL)
+	{
+		if (cOpenCV_ImagePtr != NULL)
+		{
+			//*	what size did openCV make the image
+			CONSOLE_DEBUG_W_NUM("width \t=",	cOpenCV_ImagePtr->cols);
+			CONSOLE_DEBUG_W_NUM("height\t=",	cOpenCV_ImagePtr->rows);
+			CONSOLE_DEBUG_W_LONG("step[0]\t=",	cOpenCV_ImagePtr->step[0]);
+			CONSOLE_DEBUG_W_LONG("step[1]\t=",	cOpenCV_ImagePtr->step[1]);
+			CONSOLE_DEBUG_W_LONG("step[2]\t=",	cOpenCV_ImagePtr->step[2]);
+
+			if (cOpenCV_ImagePtr->data != NULL)
+			{
+				memcpy(cOpenCV_ImagePtr->data, imageDataPtr, imageDataLen);
+			}
+
+			CONSOLE_DEBUG_W_LONG("imageDataLen\t\t=",			imageDataLen);
+
 //			if (openCVimageWidth == cOpenCV_ImagePtr->width)
 //			{
 //			//	CONSOLE_DEBUG("Normal image data !!!!!!!!!!!!!!");
@@ -272,30 +265,75 @@ int				imageDataLen;
 //			//CONSOLE_DEBUG("Copy SUCCESS!!!!!!!!!!!!!!");
 //			DEBUG_TIMING("Stop point 2 (milliseconds)\t=");
 //
-//		}
-//		else
-//		{
-//			CONSOLE_DEBUG("Failed to allocate openCV image");
-//		}
-//	}
-//	else
-//	{
-//		CONSOLE_DEBUG("Image data is NULL");
-//	}
+		}
+		else
+		{
+			CONSOLE_DEBUG("Failed to allocate openCV image");
+		}
+	}
+	else
+	{
+		CONSOLE_DEBUG("Image data is NULL");
+	}
 //
 	return(returnCode);
 }
 //*****************************************************************************
+//*	using "C++" interface
+//*****************************************************************************
 int	CameraDriver::SaveOpenCVImage(void)
 {
-	CONSOLE_DEBUG("OpenCV++ not finished!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-	return(-1);
+int			bytesPerPixel;
+int			openCVerr;
+char		imageFileName[64];
+char		imageFilePath[128];
+//int		quality[3] = {CV_IMWRITE_PNG_COMPRESSION, 200, 0};
+int			quality[3] = {16, 200, 0};
+
+	SETUP_TIMING();
+
+	if (cOpenCV_ImagePtr != NULL)
+	{
+		bytesPerPixel		=	cOpenCV_ImagePtr->step[1];
+		if (bytesPerPixel != 2)
+		{
+			//*	save as JPEG
+			strcpy(imageFileName, cFileNameRoot);
+			strcat(imageFileName, ".jpg");
+
+			strcpy(imageFilePath, kImageDataDir);
+			strcat(imageFilePath, "/");
+			strcat(imageFilePath, imageFileName);
+
+			strcpy(cLastJpegImageName, imageFilePath);	//*	save the full image path for the web server
+
+			openCVerr	=	cv::imwrite(imageFilePath, *cOpenCV_ImagePtr);
+			if (openCVerr == 1)
+			{
+				AddToDataProductsList(imageFileName, "JPEG image-openCV");
+			}
+			else
+			{
+				CONSOLE_DEBUG_W_NUM("cvSaveImage (jpg) failed, returned\t=", openCVerr);
+			}
+		}
+		else
+		{
+			CONSOLE_DEBUG("++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+			CONSOLE_DEBUG("+++++           OpenCV++ not finished              +++++");
+			CONSOLE_DEBUG("+++++   Saving JPEG only implemented for RGB       +++++");
+			CONSOLE_DEBUG("++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+		}
+	}
+	return(0);
 }
 
 #else
 //*****************************************************************************
 //*	wget http://192.168.0.201:6800/api/v1.0.0-oas3/camera/0/startexposure%20Content-Type:%20-dDuration=0.011&Light=true
 //*	wget http://192.168.0.201:6800/api/v1.0.0-oas3/camera/0/imagearray
+//*****************************************************************************
+//*	using "C" interface
 //*****************************************************************************
 int	CameraDriver::CreateOpenCVImage(const unsigned char *imageDataPtr)
 {
@@ -413,11 +451,9 @@ int				bytesPerPixel2;	//*	calculated 2 different ways
 					ocv_rowPtr	+=	cOpenCV_ImagePtr->widthStep;
 					img_rowPtr	+=	rowLength;
 				}
-
 			}
 			//CONSOLE_DEBUG("Copy SUCCESS!!!!!!!!!!!!!!");
 			DEBUG_TIMING("Stop point 2 (milliseconds)\t=");
-
 		}
 		else
 		{
@@ -433,6 +469,8 @@ int				bytesPerPixel2;	//*	calculated 2 different ways
 	return(returnCode);
 }
 
+//*****************************************************************************
+//*	using "C" interface
 //*****************************************************************************
 int	CameraDriver::SaveOpenCVImage(void)
 {

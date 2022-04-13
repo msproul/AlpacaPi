@@ -425,6 +425,9 @@ int					keyPressed;
 
 		while (gKeepRunning && (activeObjCnt > 0))
 		{
+		#if 1
+			activeObjCnt	=	ProcessControllerWindows();
+		#else
 			activeObjCnt	=	0;
 			for (iii=0; iii<kMaxControllers; iii++)
 			{
@@ -447,6 +450,7 @@ int					keyPressed;
 					}
 				}
 			}
+		#endif // 1
 		}
 		CONSOLE_DEBUG("Closing all windows");
 		for (iii=0; iii<kMaxControllers; iii++)

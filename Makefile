@@ -140,7 +140,7 @@ CPLUSFLAGS		+=	-O2
 #CPLUSFLAGS		+=	-trigraphs
 CPLUSFLAGS		+=	-g
 #CPLUSFLAGS		+=	-Wno-unused-but-set-variable
-CPLUSFLAGS		+=	-Wno-format-overflow
+#CPLUSFLAGS		+=	-Wno-format-overflow
 CPLUSFLAGS		+=	-fPIE
 
 COMPILE			=	gcc -c $(CFLAGS) $(DEFINEFLAGS) $(OPENCV_COMPILE)
@@ -1306,23 +1306,16 @@ newt16		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
 newt16		:		DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_
 newt16		:		DEFINEFLAGS		+=	-D_ENABLE_ROTATOR_
 newt16		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_ZWO_
-#newt16		:		DEFINEFLAGS		+=	-D_ENABLE_SAFETYMONITOR_
-#newt16		:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_
-#newt16		:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
 newt16		:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
 newt16		:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
 newt16		:		DEFINEFLAGS		+=	-D_ENABLE_DISCOVERY_QUERRY_
-newt16		:		DEFINEFLAGS		+=	-D_ENABLE_MULTICAM_
-#newt16		:		DEFINEFLAGS		+=	-D_ENABLE_DOME_
+#newt16		:		DEFINEFLAGS		+=	-D_ENABLE_MULTICAM_
 newt16		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
-#newt16		:		DEFINEFLAGS		+=	-D_ENABLE_ATIK_
 newt16		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
 newt16		:		DEFINEFLAGS		+=	-D_ENABLE_JPEGLIB_
-#newt16		:		DEFINEFLAGS		+=	-D_ENABLE_TOUP_
 newt16		:		DEFINEFLAGS		+=	-D_ENABLE_SLIT_TRACKER_
 newt16		:		DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
 newt16		:		DEFINEFLAGS		+=	-D_ENABLE_LIVE_CONTROLLER_
-newt16		:		PLATFORM		=	armv7
 newt16		:		ATIK_LIB_DIR	=	$(ATIK_LIB_MASTER_DIR)/ARM/x86/NoFlyCapture
 newt16		:		$(CPP_OBJECTS)				\
 					$(ALPACA_OBJECTS)			\
@@ -1336,10 +1329,8 @@ newt16		:		$(CPP_OBJECTS)				\
 					$(ALPACA_OBJECTS)			\
 					$(LIVE_WINDOW_OBJECTS)		\
 					$(OPENCV_LINK)				\
-					-L$(ATIK_LIB_DIR_ARM32)/	\
 					$(ASI_CAMERA_OBJECTS)		\
 					$(ZWO_EFW_OBJECTS)			\
-					-latikcameras				\
 					-lcfitsio					\
 					-ltoupcam					\
 					-lusb-1.0					\
@@ -1482,11 +1473,13 @@ shutter		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
 shutter		:		DEFINEFLAGS		+=	-D_ENABLE_SHUTTER_
 shutter		:		DEFINEFLAGS		+=	-D_ENABLE_STATUS_SWITCH_
 shutter		:		DEFINEFLAGS		+=	-D_ENABLE_WIRING_PI_
-shutter		:		PLATFORM		=	armv7
+shutter		:		DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
+shutter		:		DEFINEFLAGS		+=	-D_ENABLE_LIVE_CONTROLLER_
 
 shutter		:		$(CPP_OBJECTS)				\
 					$(ALPACA_OBJECTS)			\
 					$(SOCKET_OBJECTS)			\
+					$(LIVE_WINDOW_OBJECTS)		\
 
 
 		$(LINK)  								\
@@ -1495,6 +1488,7 @@ shutter		:		$(CPP_OBJECTS)				\
 					$(ALPACA_OBJECTS)			\
 					$(OPENCV_LINK)				\
 					$(ASI_CAMERA_OBJECTS)		\
+					$(LIVE_WINDOW_OBJECTS)		\
 					-lcfitsio					\
 					-lusb-1.0					\
 					-ludev						\
@@ -1514,13 +1508,14 @@ shuttercv4		:		DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
 shuttercv4		:		DEFINEFLAGS		+=	-D_ENABLE_SHUTTER_
 shuttercv4		:		DEFINEFLAGS		+=	-D_ENABLE_STATUS_SWITCH_
 shuttercv4		:		DEFINEFLAGS		+=	-D_ENABLE_WIRING_PI_
-#shuttercv4		:		DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
-#shuttercv4		:		DEFINEFLAGS		+=	-D_ENABLE_LIVE_CONTROLLER_
-shuttercv4		:		PLATFORM		=	armv7
+shuttercv4		:		DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
+shuttercv4		:		DEFINEFLAGS		+=	-D_ENABLE_LIVE_CONTROLLER_
+#shuttercv4		:		PLATFORM		=	armv7
 
-shuttercv4		:		$(CPP_OBJECTS)				\
+shuttercv4		:	$(CPP_OBJECTS)				\
 					$(ALPACA_OBJECTS)			\
 					$(SOCKET_OBJECTS)			\
+					$(LIVE_WINDOW_OBJECTS)		\
 
 
 		$(LINK)  								\
@@ -1529,6 +1524,7 @@ shuttercv4		:		$(CPP_OBJECTS)				\
 					$(ALPACA_OBJECTS)			\
 					$(OPENCV_LINK)				\
 					$(ASI_CAMERA_OBJECTS)		\
+					$(LIVE_WINDOW_OBJECTS)		\
 					-lcfitsio					\
 					-lusb-1.0					\
 					-ludev						\

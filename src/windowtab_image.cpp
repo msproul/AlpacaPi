@@ -302,7 +302,7 @@ void	WindowTabImage::ProcessButtonClick(const int buttonIdx)
 
 		default:
 //			CONSOLE_DEBUG(__FUNCTION__);
-//			CONSOLE_DEBUG_W_NUM("buttonIdx\t",	buttonIdx);
+			CONSOLE_DEBUG_W_NUM("buttonIdx\t",	buttonIdx);
 
 			break;
 	}
@@ -359,10 +359,10 @@ void	WindowTabImage::ProcessMouseLeftButtonDown(	const int	widgetIdx,
 int		cursorXXoffset;
 int		cursorYYoffset;
 
-//	CONSOLE_DEBUG("--------------------------------------------------------------------");
-//	CONSOLE_DEBUG(__FUNCTION__);
-//	CONSOLE_DEBUG_W_NUM("xxx\t=", xxx);
-//	CONSOLE_DEBUG_W_NUM("yyy\t=", yyy);
+	CONSOLE_DEBUG("--------------------------------------------------------------------");
+	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_NUM("xxx\t=", xxx);
+	CONSOLE_DEBUG_W_NUM("yyy\t=", yyy);
 
 	if (widgetIdx == kImageDisplay_ImageDisplay)
 	{

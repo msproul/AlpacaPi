@@ -1883,8 +1883,8 @@ int				imageWidthStep;
 					{
 						memset(myOpenCVimage->data, 128, imageDataLen);
 					}
-					CONSOLE_DEBUG_W_NUM("width \t\t=",	myOpenCVimage->cols);
-					CONSOLE_DEBUG_W_NUM("height\t\t=",	myOpenCVimage->rows);
+					CONSOLE_DEBUG_W_NUM("width \t\t=",		myOpenCVimage->cols);
+					CONSOLE_DEBUG_W_NUM("height\t\t=",		myOpenCVimage->rows);
 					CONSOLE_DEBUG_W_LONG("widthStep\t=",	myOpenCVimage->step[0]);
 
 					//*	move the image data into the openCV image structure

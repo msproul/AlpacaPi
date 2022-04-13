@@ -3194,6 +3194,9 @@ static	void HandleContollerWindow(AlpacaDriver *alpacaObjPtr)
 Controller	*myController;
 
 #ifdef _USE_OPENCV_
+#warning "Under test 4/11/2022"
+	ProcessControllerWindows();
+
 	myController	=	alpacaObjPtr->cLiveController;
 	if (myController != NULL)
 	{
