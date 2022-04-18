@@ -53,7 +53,7 @@
 #include	"QSIError.h"
 
 
-#define	_SIMULATE_CAMERA_
+//#define	_SIMULATE_CAMERA_
 
 //**************************************************************************************
 void	CreateQSI_CameraObjects(void)
@@ -494,6 +494,8 @@ TYPE_EXPOSURE_STATUS	myExposureStatus;
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	myExposureStatus	=	kExposure_Failed;
+
+
 
 #ifdef _SIMULATE_CAMERA_
 	//--------------------------------------------

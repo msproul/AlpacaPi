@@ -2700,7 +2700,7 @@ static void	*ListenThread(void *arg)
 //*****************************************************************************
 static void	PrintHelp(const char *appName)
 {
-	printf("usage: %s [-acdehlpqtv]\r\n", appName);
+	printf("usage: %s [-<option>]\r\n", appName);
 	printf("\t%-12s\t%s\r\n",	"a",			"Auto exposure");
 	printf("\t%-12s\t%s\r\n",	"c",			"Conform logging, log ALL commands to disk");
 	printf("\t%-12s\t%s\r\n",	"d",			"Display images as they are taken");
@@ -2709,7 +2709,7 @@ static void	PrintHelp(const char *appName)
 	printf("\t%-12s\t%s\r\n",	"l",			"Live mode");
 	printf("\t%-12s\t%s\r\n",	"p <port>",		"what port to use (default 6800)");
 	printf("\t%-12s\t%s\r\n",	"q",			"quiet (less console messages)");
-	printf("\t%-12s\t%s\r\n",	"s",			"Simulate camera image (ATIK and QHY only at present)");
+	printf("\t%-12s\t%s\r\n",	"s",			"Simulate camera image (ATIK, QHY and QSI only at present)");
 	printf("\t%-12s\t%s\r\n",	"t <profile>",	"Which telescope profile to use");
 	printf("\t%-12s\t%s\r\n",	"v",			"verbose (more console messages default)");
 }
