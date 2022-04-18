@@ -39,6 +39,7 @@
 
 //*	moved to make file
 //	#define		_ENABLE_FITS_
+
 #define		_INCLUDE_HISTOGRAM_
 
 
@@ -323,6 +324,8 @@ class CameraDriver: public AlpacaDriver
 		//
 									CameraDriver(void);
 		virtual						~CameraDriver(void);
+		virtual	bool				AlpacaConnect(void);
+		virtual	bool				AlpacaDisConnect(void);
 		virtual	TYPE_ASCOM_STATUS	ProcessCommand(TYPE_GetPutRequestData *reqData);
 		virtual	void				OutputHTML(TYPE_GetPutRequestData *reqData);
 		virtual	void				OutputHTML_Part2(TYPE_GetPutRequestData *reqData);
@@ -330,8 +333,6 @@ class CameraDriver: public AlpacaDriver
 				int32_t	RunStateMachine_Idle(void);
 				int		RunStateMachine_TakingPicture(void);
 		virtual	void	RunStateMachine_Device(void);
-		virtual	bool	AlpacaConnect(void);
-		virtual	bool	AlpacaDisConnect(void);
 
 				void	ProcessExposureOptions(TYPE_GetPutRequestData *reqData);
 
@@ -623,6 +624,8 @@ class CameraDriver: public AlpacaDriver
 
 				TYPE_ASCOM_STATUS	Read_Readoutmodes(char *readOutModeString, bool includeQuotes=false);
 				void				AddReadoutModeToList(const TYPE_IMAGE_TYPE imageType, const char *imgTypeStr=NULL);
+
+				void				CreateFakeImageData(unsigned char *cameraDataPtr, int imageWith, int imageHeight, int bytesPerPixel);
 
 	//*****************************************************************************
 public:

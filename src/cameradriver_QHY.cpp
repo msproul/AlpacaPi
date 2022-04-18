@@ -35,6 +35,7 @@
 //*	Feb 21,	2021	<MLS> Set ReadoutMode working for QHY
 //*	Sep 18,	2021	<MLS> Trying to use QHY camera for guide scope
 //*	Sep 18,	2021	<MLS> Fixed memory leak in CameraDriverQHY::Read_ImageData()
+//*	Apr 15,	2022	<MLS> Installed QHY5III462C on WO102 ONAG guider
 //*****************************************************************************
 
 #if defined(_ENABLE_CAMERA_) && defined(_ENABLE_QHY_)
@@ -163,6 +164,9 @@ CameraDriverQHY::CameraDriverQHY(const int deviceNum, const char *qhyIDstring)
 
 	strcpy(cDeviceManufAbrev,	"QHY");
 	strcpy(cQHYidString, qhyIDstring);
+
+	//*	set some defaults
+	cROIinfo.currentROIimageType	=	kImageType_RAW8;
 
 	ReadQHYcameraInfo();
 
@@ -914,16 +918,15 @@ uint32_t			qhyRetCode;
 //+				cROIinfo.currentROIimageType	=	kImageType_RAW16;
 				break;
 
-
 			case kImageType_RGB24:
 				qhyRetCode	=	SetQHYCCDDebayerOnOff(cQHYcamHandle, true);
-				CONSOLE_DEBUG_W_NUM("qhyRetCode\t=", qhyRetCode);
+				CONSOLE_DEBUG_W_NUM("SetQHYCCDDebayerOnOff/qhyRetCode\t=", qhyRetCode);
 				qhyRetCode	=	SetQHYCCDParam(cQHYcamHandle, CONTROL_WBR, 20);
-				CONSOLE_DEBUG_W_NUM("qhyRetCode\t=", qhyRetCode);
+				CONSOLE_DEBUG_W_NUM("SetQHYCCDParam/qhyRetCode\t=", qhyRetCode);
 				qhyRetCode	=	SetQHYCCDParam(cQHYcamHandle, CONTROL_WBG, 20);
-				CONSOLE_DEBUG_W_NUM("qhyRetCode\t=", qhyRetCode);
+				CONSOLE_DEBUG_W_NUM("SetQHYCCDParam/qhyRetCode\t=", qhyRetCode);
 				qhyRetCode	=	SetQHYCCDParam(cQHYcamHandle, CONTROL_WBB, 20);
-				CONSOLE_DEBUG_W_NUM("qhyRetCode\t=", qhyRetCode);
+				CONSOLE_DEBUG_W_NUM("SetQHYCCDParam/qhyRetCode\t=", qhyRetCode);
 
 				cROIinfo.currentROIimageType	=	kImageType_RGB24;
 				break;
@@ -935,20 +938,15 @@ uint32_t			qhyRetCode;
 			case kImageType_Invalid:
 			case kImageType_last:
 				break;
-
 		}
-
-
 	}
 	else
 	{
 		CONSOLE_DEBUG("Not connected");
 		alpacaErrCode	=	kASCOM_Err_NotConnected;
 	}
-
 	return(alpacaErrCode);
 }
-
 
 //**************************************************************************
 TYPE_ASCOM_STATUS	CameraDriverQHY::Read_ImageData(void)
@@ -985,15 +983,25 @@ bool				imageDataBuffOK;
 														cCameraDataBuffer);
 				if (qhyRetCode == QHYCCD_SUCCESS)
 				{
-	//				CONSOLE_DEBUG_W_NUM("imgWidth\t=", imgWidth);
-	//				CONSOLE_DEBUG_W_NUM("imgHeight\t=", imgHeight);
-	//				CONSOLE_DEBUG_W_NUM("bpp\t=", bpp);
-	//				CONSOLE_DEBUG_W_NUM("channels\t=", channels);
+					CONSOLE_DEBUG_W_NUM("imgWidth\t=", imgWidth);
+					CONSOLE_DEBUG_W_NUM("imgHeight\t=", imgHeight);
+					CONSOLE_DEBUG_W_NUM("bpp\t=", bpp);
+					CONSOLE_DEBUG_W_NUM("channels\t=", channels);
 
 					cCameraDataBuffer		=	cCameraDataBuffer;
 
 					cCameraProp.ImageReady	=	true;
 					alpacaErrCode			=	kASCOM_Err_Success;
+
+					//--------------------------------------------
+					//*	simulate image
+					if (gSimulateCameraImage)
+					{
+						if (channels == 3)
+						{
+							CreateFakeImageData(cCameraDataBuffer, cCameraProp.CameraXsize, cCameraProp.CameraYsize, 3);
+						}
+					}
 				}
 				else
 				{
@@ -1005,6 +1013,7 @@ bool				imageDataBuffOK;
 			else
 			{
 			char	errorString[256];
+
 				CONSOLE_DEBUG("Failed to allocate image data buffer");
 				GetLinuxErrorString(errno, errorString);
 				CONSOLE_DEBUG(errorString);

@@ -164,6 +164,7 @@
 //*	Dec 20,	2021	<MLS> Added BuildBinaryImage_RGB24x16() -- working
 //*	Dec 28,	2021	<MLS> Added GetPrecentCompleted() determines the status of the current exposure
 //*	Feb 14,	2022	<MLS> Fixed crash bug when creating LiveWindow
+//*	Apr 16,	2022	<MLS> Added CreateFakeImageData() for debugging without a sky
 //*****************************************************************************
 //*	Jan  1,	2119	<TODO> ----------------------------------------
 //*	Jun 26,	2119	<TODO> Add support for sub frames
@@ -204,9 +205,6 @@
 //#define _DEBUG_TIMING_
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
-
-
-#define	_USE_COLUMN_ORDER_
 
 
 #ifdef _ENABLE_FITS_
@@ -403,7 +401,7 @@ int	mkdirErrCode;
 	cHighSpeedMode					=	0;
 
 	cDesiredImageType				=	kImageType_RAW8;
-	CONSOLE_DEBUG_W_NUM("cDesiredImageType\t=",		cDesiredImageType);
+//	CONSOLE_DEBUG_W_NUM("cDesiredImageType\t=",		cDesiredImageType);
 
 	cNumFramesRequested				=	200;		//*	the number of frames requested
 	cNumFramesToSave				=	200;		//*	the number of frames left to go, 0 means none
@@ -544,11 +542,11 @@ int	iii;
 	mkdirErrCode	=	mkdir(kImageDataDir, 0744);
 	if (mkdirErrCode == 0)
 	{
-		CONSOLE_DEBUG_W_STR("Image directory created:", kImageDataDir);
+//		CONSOLE_DEBUG_W_STR("Image directory created:", kImageDataDir);
 	}
 	else if (errno == EEXIST)
 	{
-		CONSOLE_DEBUG_W_STR("Image directory already exists:", kImageDataDir);
+//		CONSOLE_DEBUG_W_STR("Image directory already exists:", kImageDataDir);
 	}
 	else
 	{
@@ -3211,6 +3209,13 @@ void	CameraDriver::SetLastExposureInfo(void)
 	GetImage_ROI_info();
 	cLastExposure_ROIinfo		=	cROIinfo;
 
+	if ((cLastExposure_ROIinfo.currentROIimageType <= kImageType_Invalid) ||
+		(cLastExposure_ROIinfo.currentROIimageType >= kImageType_last))
+	{
+		CONSOLE_DEBUG_W_NUM("currentROIimageType is INVALID\t=",	cLastExposure_ROIinfo.currentROIimageType);
+		CONSOLE_ABORT(__FUNCTION__);
+	}
+
 //	CONSOLE_DEBUG_W_NUM("cLastExposure_ROIinfo.currentROIwidth\t=",		cLastExposure_ROIinfo.currentROIwidth);
 //	CONSOLE_DEBUG_W_NUM("cLastExposure_ROIinfo.currentROIheight\t=",	cLastExposure_ROIinfo.currentROIheight);
 
@@ -3557,17 +3562,24 @@ int		pixelIndex;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 	ccc	=	startOffset;
-	for (xxx=0; xxx<cLastExposure_ROIinfo.currentROIwidth; xxx++)
+	if (cCameraDataBuffer != NULL)
 	{
-		pixelIndex	=	xxx;
-		for (yyy=0; yyy < cLastExposure_ROIinfo.currentROIheight; yyy++)
+		for (xxx=0; xxx<cLastExposure_ROIinfo.currentROIwidth; xxx++)
 		{
-			if (ccc < bufferSize)
+			pixelIndex	=	xxx;
+			for (yyy=0; yyy < cLastExposure_ROIinfo.currentROIheight; yyy++)
 			{
-				binaryDataBuffer[ccc++]	=	(cCameraDataBuffer[pixelIndex] & 0x00ff);
+				if (ccc < bufferSize)
+				{
+					binaryDataBuffer[ccc++]	=	(cCameraDataBuffer[pixelIndex] & 0x00ff);
+				}
+				pixelIndex	+=	cLastExposure_ROIinfo.currentROIwidth;
 			}
-			pixelIndex	+=	cLastExposure_ROIinfo.currentROIwidth;
 		}
+	}
+	else
+	{
+		CONSOLE_DEBUG("cCameraDataBuffer is NULL");
 	}
 	return(ccc);
 }
@@ -3586,42 +3598,30 @@ int		pixelIndex;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 	ccc	=	startOffset;
-#ifdef _USE_COLUMN_ORDER_
-	for (xxx=0; xxx<cLastExposure_ROIinfo.currentROIwidth; xxx++)
+	if (cCameraDataBuffer != NULL)
 	{
-		for (yyy=0; yyy<cLastExposure_ROIinfo.currentROIheight; yyy++)
-		{
-			pixelIndex	=	yyy * cLastExposure_ROIinfo.currentROIwidth;
-			pixelIndex	+=	xxx;
-			if (ccc < bufferSize)
-			{
-				//*	the outgoing data is little-endian 16 bit
-				//*	we are converting an 8 bit value to a 16 bit value, unsigned
-				binaryDataBuffer[ccc++]	=	0;
-				binaryDataBuffer[ccc++]	=	(cCameraDataBuffer[pixelIndex] & 0x00ff);
-			}
-
-			pixelIndex++;
-		}
-	}
-#else
-	for (yyy=0; yyy<cLastExposure_ROIinfo.currentROIheight; yyy++)
-	{
-		pixelIndex	=	yyy * cLastExposure_ROIinfo.currentROIwidth;
 		for (xxx=0; xxx<cLastExposure_ROIinfo.currentROIwidth; xxx++)
 		{
-			if (ccc < bufferSize)
+			for (yyy=0; yyy<cLastExposure_ROIinfo.currentROIheight; yyy++)
 			{
-				//*	the outgoing data is little-endian 16 bit
-				//*	we are converting an 8 bit value to a 16 bit value, unsigned
-				binaryDataBuffer[ccc++]	=	0;
-				binaryDataBuffer[ccc++]	=	(cCameraDataBuffer[pixelIndex] & 0x00ff);
-			}
+				pixelIndex	=	yyy * cLastExposure_ROIinfo.currentROIwidth * 2;
+				pixelIndex	+=	xxx * 2;
+				if (ccc < bufferSize)
+				{
+					//*	the outgoing data is little-endian 16 bit
+					//*	we are converting an 8 bit value to a 16 bit value, unsigned
+					binaryDataBuffer[ccc++]	=	(cCameraDataBuffer[pixelIndex++] & 0x00ff);
+					binaryDataBuffer[ccc++]	=	(cCameraDataBuffer[pixelIndex++] & 0x00ff);
+				}
 
-			pixelIndex++;
+			//	pixelIndex++;
+			}
 		}
 	}
-#endif // _USE_COLUMN_ORDER_
+	else
+	{
+		CONSOLE_DEBUG("cCameraDataBuffer is NULL");
+	}
 	return(ccc);
 }
 
@@ -3640,28 +3640,34 @@ int		pixelIndex;
 	CONSOLE_DEBUG(__FUNCTION__);
 
 	ccc	=	startOffset;
-	for (xxx=0; xxx<cLastExposure_ROIinfo.currentROIwidth; xxx++)
+	if (cCameraDataBuffer != NULL)
 	{
-		pixelIndex	=	xxx * 3;
-		for (yyy=0; yyy < cLastExposure_ROIinfo.currentROIheight; yyy++)
+		for (xxx=0; xxx<cLastExposure_ROIinfo.currentROIwidth; xxx++)
 		{
-			if (ccc < bufferSize)
+			pixelIndex	=	xxx * 3;
+			for (yyy=0; yyy < cLastExposure_ROIinfo.currentROIheight; yyy++)
 			{
-				//*	red data
-				binaryDataBuffer[ccc++]	=	(cCameraDataBuffer[pixelIndex + 2] & 0x00ff);
+				if (ccc < bufferSize)
+				{
+					//*	red data
+					binaryDataBuffer[ccc++]	=	(cCameraDataBuffer[pixelIndex + 2] & 0x00ff);
 
-				//*	green data
-				binaryDataBuffer[ccc++]	=	(cCameraDataBuffer[pixelIndex + 1] & 0x00ff);
+					//*	green data
+					binaryDataBuffer[ccc++]	=	(cCameraDataBuffer[pixelIndex + 1] & 0x00ff);
 
-				//*	blue data
-				binaryDataBuffer[ccc++]	=	(cCameraDataBuffer[pixelIndex] & 0x00ff);
+					//*	blue data
+					binaryDataBuffer[ccc++]	=	(cCameraDataBuffer[pixelIndex] & 0x00ff);
+				}
+				pixelIndex	+=	cLastExposure_ROIinfo.currentROIwidth * 3;
 			}
-			pixelIndex	+=	cLastExposure_ROIinfo.currentROIwidth * 3;
 		}
+	}
+	else
+	{
+		CONSOLE_DEBUG("cCameraDataBuffer is NULL");
 	}
 	return(ccc);
 }
-
 
 //*****************************************************************************
 //*	returns byte count
@@ -3725,7 +3731,7 @@ int					returnedDataLen;
 
 	cResponseIsJSON	=	false;
 
-	memset(&binaryImageHdr, 0, sizeof(TYPE_BinaryImageHdr));
+	memset((void *)&binaryImageHdr, 0, sizeof(TYPE_BinaryImageHdr));
 
 	binaryImageHdr.MetadataVersion			=	1;		//	Metadata version = 1
 	binaryImageHdr.ErrorNumber				=	0;		//	Alpaca error number or zero for success
@@ -3739,6 +3745,8 @@ int					returnedDataLen;
 	binaryImageHdr.Dimension2				=	cLastExposure_ROIinfo.currentROIheight;	//	Length of image array second dimension
 	binaryImageHdr.Dimension3				=	0;										//	Length of image array third dimension (0 for 2D array)
 
+	CONSOLE_DEBUG_W_NUM("cLastExposure_ROIinfo.currentROIwidth\t=",		cLastExposure_ROIinfo.currentROIwidth);
+	CONSOLE_DEBUG_W_NUM("cLastExposure_ROIinfo.currentROIheight\t=",	cLastExposure_ROIinfo.currentROIheight);
 	totalPixels		=	cLastExposure_ROIinfo.currentROIwidth * cLastExposure_ROIinfo.currentROIheight;
 	bytesPerPixel	=	6;
 	switch(cLastExposure_ROIinfo.currentROIimageType)
@@ -3755,6 +3763,9 @@ int					returnedDataLen;
 		case kImageType_RAW16:
 			CONSOLE_DEBUG("kImageType_RAW16");
 			bytesPerPixel	=	2;
+			binaryImageHdr.ImageElementType			=	kAlpacaImageData_UInt16;	//	Element type of the source image array
+			binaryImageHdr.Dimension3				=	0;							//	(0 for 2D array)
+			binaryImageHdr.TransmissionElementType	=	kAlpacaImageData_UInt16;	//	Element type as sent over the network
 			break;
 
 		case kImageType_RGB24:
@@ -3783,9 +3794,10 @@ int					returnedDataLen;
 
 	dataPayloadSize		=	totalPixels * bytesPerPixel;
 	dataPayloadSize		+=	sizeof(TYPE_BinaryImageHdr);		//*	this should be 44 for version 1.
-	CONSOLE_DEBUG_W_NUM("bytesPerPixel\t\t=",			bytesPerPixel);
-	CONSOLE_DEBUG_W_LONG("dataPayloadSize\t\t=",		dataPayloadSize);
 
+	CONSOLE_DEBUG_W_NUM("bytesPerPixel\t\t=",			bytesPerPixel);
+	CONSOLE_DEBUG_W_NUM("totalPixels\t\t=",				totalPixels);
+	CONSOLE_DEBUG_W_LONG("dataPayloadSize\t\t=",		dataPayloadSize);
 
 	//*	time to build the HTTP header
 	strcpy(httpHeader,	"HTTP/1.0 200 OK\r\n");
@@ -3828,7 +3840,6 @@ int					returnedDataLen;
 				case kImageType_Y8:
 					CONSOLE_DEBUG("kImageType_RAW8");
 					returnedDataLen	=	BuildBinaryImage_Raw8(binaryDataBuffer, ccc, bufferSize);
-				//	returnedDataLen	=	BuildBinaryImage_Raw16(binaryDataBuffer, ccc, bufferSize);
 					CONSOLE_DEBUG_W_LONG("bufferSize     \t=",	(long)bufferSize);
 					CONSOLE_DEBUG_W_NUM( "returnedDataLen\t=",	returnedDataLen);
 					break;
@@ -3845,14 +3856,15 @@ int					returnedDataLen;
 					break;
 
 				default:
+					CONSOLE_DEBUG_W_NUM("cLastExposure_ROIinfo.currentROIimageType\t=",	cLastExposure_ROIinfo.currentROIimageType);
+					CONSOLE_DEBUG_W_NUM("cLastExposure_ROIinfo.currentROIwidth    \t=",	cLastExposure_ROIinfo.currentROIwidth);
+					CONSOLE_DEBUG_W_NUM("cLastExposure_ROIinfo.currentROIheight   \t=",	cLastExposure_ROIinfo.currentROIheight);
 					CONSOLE_ABORT(__FUNCTION__);
 					break;
 			}
 
 			bytesWritten	=	write(reqData->socket, binaryDataBuffer, bufferSize);
 			CONSOLE_DEBUG_W_NUM("bytesWritten\t\t=", bytesWritten);
-
-
 
 			free(binaryDataBuffer);
 		}
@@ -5321,7 +5333,15 @@ bool			successFlag;
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	successFlag			=	false;
-	if ((cCameraDataBuffer != NULL) && (bufferSize <= cCameraDataBuffLen))
+	if (bufferSize > 0)
+	{
+		myBufferSize	=	bufferSize;
+	}
+	else
+	{
+		myBufferSize	=	cCameraProp.CameraXsize * cCameraProp.CameraYsize * 4;
+	}
+	if ((cCameraDataBuffer != NULL) && (myBufferSize <= cCameraDataBuffLen))
 	{
 		//*	everything is OK
 //		CONSOLE_DEBUG_W_LONG("everything is OK, current buff size\t=", cCameraDataBuffLen);
@@ -5338,14 +5358,6 @@ bool			successFlag;
 			cCameraDataBuffLen	=	0;
 		}
 
-		if (bufferSize > 0)
-		{
-			myBufferSize	=	bufferSize;
-		}
-		else
-		{
-			myBufferSize	=	cCameraProp.CameraXsize * cCameraProp.CameraYsize * 4;
-		}
 		CONSOLE_DEBUG_W_NUM("myBufferSize\t=", myBufferSize);
 		cCameraDataBuffer	=	(unsigned char *)malloc(myBufferSize + 128);
 		if (cCameraDataBuffer != NULL)
@@ -5855,8 +5867,6 @@ void	CameraDriver::OutputHTML_Part2(TYPE_GetPutRequestData *reqData)
 {
 char	lineBuffer[512];
 
-
-
 	//===============================================================
 	//*	display the most recent jpeg image
 	if (strlen(cLastJpegImageName) > 0)
@@ -5866,11 +5876,10 @@ char	lineBuffer[512];
 		SocketWriteData(reqData->socket,	lineBuffer);
 		SocketWriteData(reqData->socket,	"</CENTER>\r\n");
 	}
-	CONSOLE_DEBUG(__FUNCTION__);
-	CONSOLE_DEBUG_W_NUM("cCameraID\t=", cCameraID);
+//	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG_W_NUM("cCameraID\t=", cCameraID);
 	GenerateHTMLcmdLinkTable(reqData->socket, "camera", cDeviceNum, gCameraCmdTable);
 }
-
 
 #pragma mark -
 #pragma mark Virtual functions
@@ -6578,7 +6587,7 @@ int32_t		delayMicroSecs;
 		}
 		else if ((cImageMode == kImageMode_Live) || cDisplayImage)
 		{
-			CONSOLE_DEBUG("cOpenCV_ImagePtr is NULL")
+//			CONSOLE_DEBUG("cOpenCV_ImagePtr is NULL")
 		}
 	}
 #endif // _USE_OPENCV_
@@ -7683,5 +7692,77 @@ bool	foundIt;
 	foundIt	=	GetCmdNameFromTable(cmdNumber, comandName, gCameraCmdTable, getPut);
 	return(foundIt);
 }
+
+
+//*****************************************************************************
+void	CameraDriver::CreateFakeImageData(unsigned char *cameraDataPtr, int imageWith, int imageHeight, int bytesPerPixel)
+{
+int			iii;
+int			jjj;
+int			pixelIndex;
+double		sinValue;
+double		periodWidth;
+double		xFraction;
+int			pixelValueInt;
+//int			redValue;
+//int			grnValue;
+//int			bluValue;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_NUM("imageWith\t\t=",		imageWith);
+	CONSOLE_DEBUG_W_NUM("imageHeight\t=",		imageHeight);
+	CONSOLE_DEBUG_W_NUM("bytesPerPixel\t=",		bytesPerPixel);
+
+//	grnValue	=	rand() % 64;
+//	bluValue	=	rand() % 64;
+
+	if (cameraDataPtr != NULL)
+	{
+		periodWidth		=	imageWith / 4;
+		for (jjj = 0; jjj< imageHeight; jjj++)
+		{
+			pixelIndex	=	jjj * imageWith * bytesPerPixel;
+			for (iii = 0; iii< imageWith; iii++)
+			{
+			//	xFraction	=	((jjj + iii) * 1.0) / periodWidth;
+				xFraction	=	(iii * 1.0) / periodWidth;
+				sinValue	=	sin(xFraction * (2 * M_PI));
+				switch(bytesPerPixel)
+				{
+					//*	8 bit mono
+					case 1:
+						pixelValueInt				=	128 + (127 * sinValue);
+						cameraDataPtr[pixelIndex++]	=	pixelValueInt & 0x00ff;
+						break;
+
+					//*	16 bit mono
+					case 2:
+						pixelValueInt				=	32768 + (32700 * sinValue);
+						cameraDataPtr[pixelIndex++]	=	((pixelValueInt & 0x00ffff) >> 8) & 0x00ff;
+						cameraDataPtr[pixelIndex++]	=	(pixelValueInt & 0x00ff);
+						break;
+
+					//*	RGB
+					case 3:
+						pixelValueInt				=	128 + (127 * sinValue);
+//						cameraDataPtr[pixelIndex++]	=	pixelValueInt & 0x00ff;
+//						cameraDataPtr[pixelIndex++]	=	(255 - pixelValueInt) & 0x00ff;
+//						cameraDataPtr[pixelIndex++]	=	0;
+//
+						cameraDataPtr[pixelIndex++]	=	(iii / 2) & 0x00ff;
+						cameraDataPtr[pixelIndex++]	=	(iii / 4) & 0x00ff;
+//						cameraDataPtr[pixelIndex++]	=	(iii / 6) & 0x00ff;
+						cameraDataPtr[pixelIndex++]	=	(jjj / 2) & 0x00ff;
+						break;
+
+					default:
+						CONSOLE_ABORT(__FUNCTION__);
+						break;
+				}
+			}
+		}
+	}
+}
+
 
 #endif	//	_ENABLE_CAMERA_

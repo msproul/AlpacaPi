@@ -2159,7 +2159,7 @@ char		moonPhaseStr[64];
 												lineBuff,
 												NULL, &fitsStatus);
 
-		printf("Succeeding event:\n");
+//		printf("Succeeding event:\n");
 		if ((!mr.hasRise || (mr.hasRise && mr.riseTime < mr.queryTime)) &&
 			(!mr.hasSet || (mr.hasSet && mr.setTime < mr.queryTime)))
 		{
@@ -2182,16 +2182,14 @@ char		moonPhaseStr[64];
 		fits_write_key(fitsFilePtr, TSTRING,	"MOONNEXT",
 												lineBuff,
 												NULL, &fitsStatus);
-
-
-		if (mr.isVisible)
-		{
-			printf("Moon visible.\n");
-		}
-		else
-		{
-			printf("Moon not visible.\n");
-		}
+//		if (mr.isVisible)
+//		{
+//			printf("Moon visible.\n");
+//		}
+//		else
+//		{
+//			printf("Moon not visible.\n");
+//		}
 	}
 }
 

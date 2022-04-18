@@ -48,6 +48,8 @@
 //*	Feb 16,	2020	<MLS> Added Read_Gain() & Write_Gain()
 //*	Mar 13,	2020	<MLS> Finished Read_CoolerState() for ATIK
 //*	Apr 25,	2021	<MLS> Added check for camera devices (ArtemisDeviceIsCamera())
+//*	Apr 15,	2022	<MLS> Installed ATIK 460ex on WO71 telescope, updating ATIK drivers
+//*	Apr 16,	2022	<MLS> Fixed bug in GetImage_ROI_info()
 //*****************************************************************************
 
 #if defined(_ENABLE_CAMERA_) && defined(_ENABLE_ATIK_)
@@ -452,18 +454,16 @@ int		setpoint;
 	return(atikRetCode);
 }
 
-
 //*****************************************************************************
 //*	the camera must already be open when this is called
 //*****************************************************************************
 bool	CameraDriverATIK::GetImage_ROI_info(void)
 {
-
 	memset(&cROIinfo, 0, sizeof(TYPE_IMAGE_ROI_Info));
 
 	cROIinfo.currentROIimageType	=	kImageType_RAW16;
 	cROIinfo.currentROIwidth		=	cCameraProp.CameraXsize;
-	cROIinfo.currentROIwidth		=	cCameraProp.CameraYsize;
+	cROIinfo.currentROIheight		=	cCameraProp.CameraYsize;
 	cROIinfo.currentROIbin			=	1;
 
 	return(true);
@@ -499,6 +499,8 @@ int					atikRetCode;
 			alpacaErrCode			=	kASCOM_Err_Success;
 			cInternalCameraState	=	kCameraState_TakingPicture;
 		//	atikCameraState			=	ArtemisCameraState(hAtikCameraHandle);
+
+			SetLastExposureInfo();
 		}
 		else
 		{
@@ -583,12 +585,13 @@ int						downloadPercent;
 				imageIsReady	=	ArtemisImageReady(hAtikCameraHandle);
 				if (downloadPercent != gPrevDownloadPercent)
 				{
-					CONSOLE_DEBUG_W_NUM("downloadPercent\t=",		downloadPercent);
+					CONSOLE_DEBUG_W_NUM("downloadPercent (from camera to driver)\t=",		downloadPercent);
 //					CONSOLE_DEBUG_W_NUM("imageIsReady\t=",			imageIsReady);
 					gPrevDownloadPercent	=	downloadPercent;
 				}
 				if (imageIsReady)
 				{
+					CONSOLE_DEBUG("Image is ready");
 					exposureState	=	kExposure_Success;
 				}
 				else
@@ -597,7 +600,6 @@ int						downloadPercent;
 				}
 				break;
 		}
-
 	}
 	else
 	{
@@ -977,6 +979,10 @@ int					setpoint;
 				}
 				alpacaErrCode		=	kASCOM_Err_Success;
 			}
+			else if (atikRetCode == ARTEMIS_NOT_IMPLEMENTED)
+			{
+				//*	ignore this
+			}
 			else
 			{
 				CONSOLE_DEBUG_W_NUM("ArtemisCoolingInfo returned, atikRetCode=", atikRetCode);
@@ -1121,6 +1127,13 @@ int					atikImageSize;
 					//	memcpy(cCameraDataBuffer, atikImageBuffer, cCameraDataBuffLen);
 						memcpy(cCameraDataBuffer, atikImageBuffer, (atikImageSize * 2));
 					//	CONSOLE_DEBUG(__FUNCTION__);
+
+						//--------------------------------------------
+						if (gSimulateCameraImage)
+						{
+							//*	simulate image
+							CreateFakeImageData(cCameraDataBuffer, imageWith, imageHeight, 2);
+						}
 					}
 				}
 				alpacaErrCode	=	kASCOM_Err_Success;

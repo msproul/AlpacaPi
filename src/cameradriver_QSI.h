@@ -47,7 +47,11 @@ class CameraDriverQSI: public CameraDriver
 		//
 						CameraDriverQSI(const int deviceNum, std::string qsiSerialNumber);
 		virtual			~CameraDriverQSI(void);
+		virtual	bool	AlpacaConnect(void);
+//		virtual	bool	AlpacaDisConnect(void);
+
 //		virtual	void	OutputHTML_Part2(TYPE_GetPutRequestData *reqData);
+
 
 		//*****************************************************************************
 		//*	Camera specific routines
@@ -76,7 +80,7 @@ class CameraDriverQSI: public CameraDriver
 
 
 	protected:
-				void					ReadQSIcameraInfo(void);
+				bool					ReadQSIcameraInfo(void);
 				std::string				cQSIserialNumber;
 				QSICamera				cQSIcamera;
 

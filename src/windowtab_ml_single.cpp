@@ -75,7 +75,8 @@ int		iii;
 		}
 		else
 		{
-			CONSOLE_ABORT(__FUNCTION__);
+			CONSOLE_DEBUG("Failed to get moonlite image");
+//			CONSOLE_ABORT(__FUNCTION__);
 		}
 	}
 

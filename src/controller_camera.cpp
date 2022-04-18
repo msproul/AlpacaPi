@@ -1829,16 +1829,28 @@ int				yyy;
 int				pixIdx;
 int				pixIdxRowStart;
 int				imgRank;
+int				bytesPerPixel;
 TYPE_ImageArray	*imageArray;
 int				buffSize;
 int				imageDataLen;
 int				imageWidthStep;
+uint16_t		*dataPtr16bit;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG_W_NUM("cCameraProp.CameraXsize\t=",	cCameraProp.CameraXsize);
 	CONSOLE_DEBUG_W_NUM("cCameraProp.CameraYsize\t=",	cCameraProp.CameraYsize);
 	CONSOLE_DEBUG_W_NUM("force8BitRead\t\t=",	force8BitRead);
 	CONSOLE_DEBUG_W_NUM("allowBinary\t\t=",		allowBinary);
+
+	//*	set up default values for the binary image header in case we use JSON
+	memset((void *)&cBinaryImageHdr, 0, sizeof(TYPE_BinaryImageHdr));
+	cBinaryImageHdr.MetadataVersion			=	1;
+	cBinaryImageHdr.ImageElementType		=	kAlpacaImageData_Byte;
+	cBinaryImageHdr.TransmissionElementType	=	kAlpacaImageData_Byte;
+	cBinaryImageHdr.Rank					=	2;
+	cBinaryImageHdr.Dimension1				=	cCameraProp.CameraXsize;
+	cBinaryImageHdr.Dimension2				=	cCameraProp.CameraYsize;
+	cBinaryImageHdr.Dimension3				=	0;
 
 	imageArray		=	NULL;
 	pixelCount		=	cCameraProp.CameraXsize * cCameraProp.CameraYsize;
@@ -1868,13 +1880,22 @@ int				imageWidthStep;
 			CONSOLE_DEBUG_W_NUM("valuesRead\t\t=",	valuesRead);
 			if ((imgRank > 0) && (valuesRead > 10))
 			{
-				myOpenCVimage	=	new cv::Mat(	cCameraProp.CameraYsize,	//*	Note, Height is FIRST
-													cCameraProp.CameraXsize,
-													CV_8UC3);
+				if ((cBinaryImageHdr.ImageElementType == kAlpacaImageData_Int16) ||
+					(cBinaryImageHdr.ImageElementType == kAlpacaImageData_UInt16))
+				{
+					bytesPerPixel	=	2;
+					myOpenCVimage	=	new cv::Mat(	cBinaryImageHdr.Dimension2,	//*	Note, Height is FIRST
+														cBinaryImageHdr.Dimension1,
+														CV_16UC1);
+				}
+				else
+				{
+					bytesPerPixel	=	3;
+					myOpenCVimage	=	new cv::Mat(	cCameraProp.CameraYsize,	//*	Note, Height is FIRST
+														cCameraProp.CameraXsize,
+														CV_8UC3);
+				}
 
-//				myOpenCVimage	=	cvCreateImage(cvSize(	cCameraProp.CameraXsize, cCameraProp.CameraYsize),
-//															IPL_DEPTH_8U,
-//															3);
 				if (myOpenCVimage != NULL)
 				{
 					imageWidthStep	=	myOpenCVimage->step[0];
@@ -1891,28 +1912,52 @@ int				imageWidthStep;
 					START_TIMING();
 					iii	=	0;
 					//*	stepping ACROSS the field
+
+					//*	this is for 16 bit data only
+					dataPtr16bit	=	(uint16_t *)myOpenCVimage->data;
+
+					CONSOLE_DEBUG_W_NUM("bytesPerPixel\t=",		bytesPerPixel);
+					CONSOLE_DEBUG_W_HEX("dataPtr16bit \t=",		dataPtr16bit);
+
 					for (xxx=0; xxx < myOpenCVimage->cols; xxx++)
 					{
+						CONSOLE_DEBUG_W_NUM("xxx \t\t=",		xxx);
 						pixIdxRowStart	=	0;
 						//*	stepping DOWN the column
 						for (yyy=0; yyy < myOpenCVimage->rows; yyy++)
 						{
-							pixIdx	=	pixIdxRowStart + (xxx * 3);
-
-							//*	openCV uses BGR instead of RGB
-							//*	https://docs.opencv.org/master/df/d24/tutorial_js_image_display.html
-
-							if (force8BitRead)
+							switch(bytesPerPixel)
 							{
-								myOpenCVimage->data[pixIdx++]	=	(imageArray[iii].BluValue) & 0x00ff;
-								myOpenCVimage->data[pixIdx++]	=	(imageArray[iii].GrnValue) & 0x00ff;
-								myOpenCVimage->data[pixIdx++]	=	(imageArray[iii].RedValue) & 0x00ff;
-							}
-							else
-							{
-								myOpenCVimage->data[pixIdx++]	=	(imageArray[iii].BluValue >> 8) & 0x00ff;
-								myOpenCVimage->data[pixIdx++]	=	(imageArray[iii].GrnValue >> 8) & 0x00ff;
-								myOpenCVimage->data[pixIdx++]	=	(imageArray[iii].RedValue >> 8) & 0x00ff;
+								case 2:
+									pixIdx					=	pixIdxRowStart + (xxx * 2);
+							//		dataPtr16bit[pixIdx]	=	(imageArray[iii].BluValue) & 0x00ffff;
+								#if (__ORDER_LITTLE_ENDIAN__ == 1234)
+									myOpenCVimage->data[pixIdx++]	=	(imageArray[iii].RedValue) & 0x00ff;
+									myOpenCVimage->data[pixIdx++]	=	(imageArray[iii].RedValue >> 8) & 0x00ff;
+								#else
+
+								#endif
+									break;
+
+								case 3:
+									pixIdx	=	pixIdxRowStart + (xxx * 3);
+
+									//*	openCV uses BGR instead of RGB
+									//*	https://docs.opencv.org/master/df/d24/tutorial_js_image_display.html
+
+									if (force8BitRead)
+									{
+										myOpenCVimage->data[pixIdx++]	=	(imageArray[iii].BluValue) & 0x00ff;
+										myOpenCVimage->data[pixIdx++]	=	(imageArray[iii].GrnValue) & 0x00ff;
+										myOpenCVimage->data[pixIdx++]	=	(imageArray[iii].RedValue) & 0x00ff;
+									}
+									else
+									{
+										myOpenCVimage->data[pixIdx++]	=	(imageArray[iii].BluValue >> 8) & 0x00ff;
+										myOpenCVimage->data[pixIdx++]	=	(imageArray[iii].GrnValue >> 8) & 0x00ff;
+										myOpenCVimage->data[pixIdx++]	=	(imageArray[iii].RedValue >> 8) & 0x00ff;
+									}
+									break;
 							}
 
 							iii++;

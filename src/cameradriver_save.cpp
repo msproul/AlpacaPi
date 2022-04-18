@@ -84,7 +84,8 @@ int	ii;
 	{
 	#ifdef _INCLUDE_HISTOGRAM_
 		CalculateHistogramArray();
-		SaveHistogramFile();
+		//*	Apr 15,	2022	<MLS> Disabled Histogram to speed up saving files
+		//	SaveHistogramFile();
 	#endif // _INCLUDE_HISTOGRAM_
 
 
@@ -177,6 +178,8 @@ int				imageDataLen;
 //	CONSOLE_DEBUG("+++++           Finish this NEXT!!!!!!             +++++");
 //	CONSOLE_DEBUG("++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
 
+	CONSOLE_DEBUG(__FUNCTION__);
+
 	GenerateFileNameRoot();
 	if (cOpenCV_ImagePtr != NULL)
 	{
@@ -201,8 +204,8 @@ int				imageDataLen;
 			break;
 
 		case kImageType_RAW16:
-		//	CONSOLE_DEBUG("kImageType_RAW16");
-			cOpenCV_ImagePtr	=	new cv::Mat(height, width, CV_8UC3);
+			CONSOLE_DEBUG("kImageType_RAW16");
+			cOpenCV_ImagePtr	=	new cv::Mat(height, width, CV_16UC1);
 			imageDataLen		=	width * height * 2;
 			break;
 
@@ -224,18 +227,22 @@ int				imageDataLen;
 		if (cOpenCV_ImagePtr != NULL)
 		{
 			//*	what size did openCV make the image
-			CONSOLE_DEBUG_W_NUM("width \t=",	cOpenCV_ImagePtr->cols);
-			CONSOLE_DEBUG_W_NUM("height\t=",	cOpenCV_ImagePtr->rows);
-			CONSOLE_DEBUG_W_LONG("step[0]\t=",	cOpenCV_ImagePtr->step[0]);
-			CONSOLE_DEBUG_W_LONG("step[1]\t=",	cOpenCV_ImagePtr->step[1]);
-			CONSOLE_DEBUG_W_LONG("step[2]\t=",	cOpenCV_ImagePtr->step[2]);
+//			CONSOLE_DEBUG_W_NUM("width \t=",	cOpenCV_ImagePtr->cols);
+//			CONSOLE_DEBUG_W_NUM("height\t=",	cOpenCV_ImagePtr->rows);
+//			CONSOLE_DEBUG_W_LONG("step[0]\t=",	cOpenCV_ImagePtr->step[0]);
+//			CONSOLE_DEBUG_W_LONG("step[1]\t=",	cOpenCV_ImagePtr->step[1]);
+//			CONSOLE_DEBUG_W_LONG("step[2]\t=",	cOpenCV_ImagePtr->step[2]);
 
 			if (cOpenCV_ImagePtr->data != NULL)
 			{
 				memcpy(cOpenCV_ImagePtr->data, imageDataPtr, imageDataLen);
 			}
+			else
+			{
+				CONSOLE_DEBUG_W_NUM("did NOT copy image data into cOpenCV_ImagePtr, imageDataLen\t\t=",	imageDataLen);
+			}
 
-			CONSOLE_DEBUG_W_LONG("imageDataLen\t\t=",			imageDataLen);
+//			CONSOLE_DEBUG_W_LONG("imageDataLen\t\t=",			imageDataLen);
 
 //			if (openCVimageWidth == cOpenCV_ImagePtr->width)
 //			{
@@ -287,16 +294,18 @@ int			bytesPerPixel;
 int			openCVerr;
 char		imageFileName[64];
 char		imageFilePath[128];
-//int		quality[3] = {CV_IMWRITE_PNG_COMPRESSION, 200, 0};
-int			quality[3] = {16, 200, 0};
 
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, "Using C++ openCV calls");
 	SETUP_TIMING();
 
 	if (cOpenCV_ImagePtr != NULL)
 	{
 		bytesPerPixel		=	cOpenCV_ImagePtr->step[1];
-		if (bytesPerPixel != 2)
+		CONSOLE_DEBUG_W_NUM("bytesPerPixel\t=",	bytesPerPixel);
+//		if (bytesPerPixel != 2)
+		if (bytesPerPixel != 0)
 		{
+			//--------------------------------------------------------------------------------------------
 			//*	save as JPEG
 			strcpy(imageFileName, cFileNameRoot);
 			strcat(imageFileName, ".jpg");
@@ -316,6 +325,36 @@ int			quality[3] = {16, 200, 0};
 			{
 				CONSOLE_DEBUG_W_NUM("cvSaveImage (jpg) failed, returned\t=", openCVerr);
 			}
+
+
+//		#ifdef _ENABLE_PNG_
+			//--------------------------------------------------------------------------------------------
+			if (1)
+			{
+				SETUP_TIMING();
+				//*	OpenCV png file creation takes WAY too long, use caution
+				START_TIMING();
+
+				//*	save as png
+				strcpy(imageFileName, cFileNameRoot);
+				strcat(imageFileName, ".png");
+
+				strcpy(imageFilePath, kImageDataDir);
+				strcat(imageFilePath, "/");
+				strcat(imageFilePath, imageFileName);
+
+				openCVerr	=	cv::imwrite(imageFilePath, *cOpenCV_ImagePtr);
+				if (openCVerr == 1)
+				{
+					AddToDataProductsList(imageFileName, "PNG image-openCV");
+				}
+				else
+				{
+					CONSOLE_DEBUG_W_NUM("cvSaveImage (PNG) failed, returned\t=", openCVerr);
+				}
+				DEBUG_TIMING("Time to create PNG file=");
+			}
+//		#endif
 		}
 		else
 		{
@@ -324,6 +363,10 @@ int			quality[3] = {16, 200, 0};
 			CONSOLE_DEBUG("+++++   Saving JPEG only implemented for RGB       +++++");
 			CONSOLE_DEBUG("++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
 		}
+	}
+	else
+	{
+		CONSOLE_DEBUG("cOpenCV_ImagePtr is NULL!!!!!!");
 	}
 	return(0);
 }
@@ -481,6 +524,7 @@ char		imageFilePath[128];
 //int		quality[3] = {CV_IMWRITE_PNG_COMPRESSION, 200, 0};
 int			quality[3] = {16, 200, 0};
 
+	CONSOLE_DEBUG(__FUNCTION__);
 	SETUP_TIMING();
 
 	if (cOpenCV_ImagePtr != NULL)
@@ -514,6 +558,7 @@ int			quality[3] = {16, 200, 0};
 	#ifdef _ENABLE_PNG_
 		if (cOpenCV_ImagePtr->depth == 16)
 		{
+			SETUP_TIMING();
 			//*	OpenCV png file creation takes WAY too long, use caution
 			START_TIMING();
 			//*	save as PNG

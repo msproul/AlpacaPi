@@ -788,7 +788,7 @@ void	FocuserDriver::OutputHTML(TYPE_GetPutRequestData *reqData)
 int			mySocketFD;
 char		lineBuffer[128];
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	if (reqData != NULL)
 	{
 		mySocketFD	=	reqData->socket;

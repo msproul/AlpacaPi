@@ -344,6 +344,7 @@ extern	int				gDeviceCnt;
 extern	bool			gLiveView;
 extern	bool			gAutoExposure;
 extern	bool			gDisplayImage;
+extern	bool			gSimulateCameraImage;
 extern	bool			gVerbose;
 extern	bool			gDebugDiscovery;
 

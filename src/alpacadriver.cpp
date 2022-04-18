@@ -129,6 +129,8 @@
 //*	Dec 29,	2021	<MLS> Fixed argument buffer overflow bug in GetKeyWordArgument()
 //*	Mar  2,	2022	<MLS> Updated Connected command
 //*	Apr  7,	2022	<MLS> Added _ENABLE_QSI_
+//*	Apr 13,	2022	<MLS> Added CreateDriverObjects()
+//*	Apr 17,	2022	<MLS> Added run time option flag gSimulateCameraImage
 //*****************************************************************************
 //*	to install code blocks 20
 //*	Step 1: sudo add-apt-repository ppa:codeblocks-devs/release
@@ -279,8 +281,9 @@ int					gDeviceCnt					=	0;
 bool				gLiveView					=	false;
 bool				gAutoExposure				=	false;
 bool				gDisplayImage				=	false;
+bool				gSimulateCameraImage		=	false;
 bool				gVerbose					=	true;
-bool				gDebugDiscovery				=	true;
+bool				gDebugDiscovery				=	false;
 const char			gValueString[]				=	"Value";
 char				gDefaultTelescopeRefID[kDefaultRefIdMaxLen]	=	"";
 char				gWebTitle[80]				=	"AlpacaPi";
@@ -418,7 +421,7 @@ int		iii;
 	cTimeOfLastWatchDogCheck	=	time(NULL);
 	cWatchDogTimeOut_Minutes	=	5;				//*	default timeout, can be overridden
 
-	//========================================
+	//==========================================================================================
 	//*	add the device to the list
 	cDeviceType	=	argDeviceType;
 	//*	we have to figure out which index this devices is for this device type
@@ -439,6 +442,13 @@ int		iii;
 	{
 		gAlpacaDeviceList[gDeviceCnt]	=	this;
 		gDeviceCnt++;
+	}
+	else
+	{
+		CONSOLE_DEBUG("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+		CONSOLE_DEBUG("Exceed the maximum number of device objects");
+		CONSOLE_DEBUG_W_NUM("Current max is (kMaxDevices)\t=", kMaxDevices);
+		CONSOLE_ABORT(__FUNCTION__);
 	}
 
 	//*	command statistics
@@ -1937,13 +1947,13 @@ char			dataBuffer[1024];
 char			myJpegFileName[128];
 char			*myFilenamePtr;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
-	SocketWriteData(socket,	gJpegHeader);
+//	SocketWriteData(socket,	gJpegHeader);
 
 	if (jpegFileName != NULL)
 	{
-		CONSOLE_DEBUG_W_STR("jpegFileName=", jpegFileName);
+//		CONSOLE_DEBUG_W_STR("jpegFileName=", jpegFileName);
 
 		myFilenamePtr	=	jpegFileName;
 		if (*myFilenamePtr == '/')
@@ -1967,12 +1977,12 @@ char			*myFilenamePtr;
 	{
 		strcpy(myJpegFileName, "image.jpg");
 	}
-	CONSOLE_DEBUG_W_STR("myJpegFileName=", myJpegFileName);
+//	CONSOLE_DEBUG_W_STR("myJpegFileName=", myJpegFileName);
 
 	filePointer	=	fopen(myJpegFileName, "r");
 	if (filePointer != NULL)
 	{
-		CONSOLE_DEBUG_W_STR("File is open:", myJpegFileName);
+//		CONSOLE_DEBUG_W_STR("File is open:", myJpegFileName);
 		totalBytesWritten	=	0;
 		keepGoing	=	true;
 		while (keepGoing)
@@ -1994,14 +2004,14 @@ char			*myFilenamePtr;
 			}
 		}
 		fclose(filePointer);
-		CONSOLE_DEBUG_W_STR("File is closed:", myJpegFileName);
-		CONSOLE_DEBUG_W_NUM("totalBytesWritten\t=",	totalBytesWritten);
+//		CONSOLE_DEBUG_W_STR("File is closed:", myJpegFileName);
+//		CONSOLE_DEBUG_W_NUM("totalBytesWritten\t=",	totalBytesWritten);
 	}
 	else
 	{
 		CONSOLE_DEBUG("Failed to open file");
 	}
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 }
 
 
@@ -2699,6 +2709,7 @@ static void	PrintHelp(const char *appName)
 	printf("\t%-12s\t%s\r\n",	"l",			"Live mode");
 	printf("\t%-12s\t%s\r\n",	"p <port>",		"what port to use (default 6800)");
 	printf("\t%-12s\t%s\r\n",	"q",			"quiet (less console messages)");
+	printf("\t%-12s\t%s\r\n",	"s",			"Simulate camera image (ATIK and QHY only at present)");
 	printf("\t%-12s\t%s\r\n",	"t <profile>",	"Which telescope profile to use");
 	printf("\t%-12s\t%s\r\n",	"v",			"verbose (more console messages default)");
 }
@@ -2772,9 +2783,9 @@ int		newListenPort;
 					gVerbose	=	false;
 					break;
 
-				//	"-v" means verbose
-				case 'v':
-					gVerbose	=	true;
+				//	"-s" means Simulate image
+				case 's':
+					gSimulateCameraImage	=	true;
 					break;
 
 				//*	"-t" means which telescope profile to use
@@ -2795,6 +2806,10 @@ int		newListenPort;
 //					CONSOLE_DEBUG_W_STR("gDefaultTelescopeRefID\t=", gDefaultTelescopeRefID);
 					break;
 
+				//	"-v" means verbose
+				case 'v':
+					gVerbose	=	true;
+					break;
 			}
 		}
 	}
@@ -2879,6 +2894,122 @@ time_t		deltaSeconds;
 	}
 }
 
+//*****************************************************************************
+static void	CreateDriverObjects()
+{
+//*********************************************************
+//*	Cameras
+#if defined(_ENABLE_CAMERA_) && defined(_ENABLE_ATIK_)
+	CreateATIK_CameraObjects();
+#endif
+
+#if defined(_ENABLE_CAMERA_) && defined(_ENABLE_ASI_)
+	CreateASI_CameraObjects();
+#endif
+//-----------------------------------------------------------
+#if defined(_ENABLE_CAMERA_) && defined(_ENABLE_TOUP_)
+	CreateTOUP_CameraObjects();
+#endif
+//-----------------------------------------------------------
+#if defined(_ENABLE_CAMERA_) && defined(_ENABLE_QHY_)
+	CreateQHY_CameraObjects();
+#endif
+//-----------------------------------------------------------
+#if defined(_ENABLE_CAMERA_) && defined(_ENABLE_QSI_)
+	CreateQSI_CameraObjects();
+#endif
+//-----------------------------------------------------------
+//#if defined(_ENABLE_CAMERA_) && defined(_ENABLE_FLIR_) && (__GNUC__ > 5)
+#if defined(_ENABLE_CAMERA_) && defined(_ENABLE_FLIR_)
+	CreateFLIR_CameraObjects();
+#endif
+
+
+//-----------------------------------------------------------
+#if defined(_ENABLE_CAMERA_) && defined(_ENABLE_SONY_)
+	CreateSONY_CameraObjects();
+#endif
+
+
+//*********************************************************
+//*	Multicam
+#ifdef _ENABLE_MULTICAM_
+	cameraCnt	=	CountDevicesByType(kDeviceType_Camera);
+	if (cameraCnt > 1)
+	{
+		CreateMultiCamObject();
+	}
+#endif
+
+//*********************************************************
+//*	Focuser
+#ifdef _ENABLE_FOCUSER_
+	CreateFocuserNiteCrawlerObjects();
+#endif
+
+//*********************************************************
+//*	Filter wheel
+#ifdef _ENABLE_FILTERWHEEL_ZWO_
+	CreateZWOFilterWheelObjects();
+#endif
+#ifdef _ENABLE_FILTERWHEEL_ATIK_
+	CreateATIKFilterWheelObjects();
+#endif
+
+//*********************************************************
+//*	Dome
+#ifdef _ENABLE_DOME_
+	CreateDomeObjectsRPi();
+#endif
+//*********************************************************
+//*	Shutter
+#ifdef _ENABLE_SHUTTER_
+//	CreateShutterObjects();
+	CreateShuterArduinoObjects();
+#endif
+#ifdef	_ENABLE_ROR_
+	CreateDomeObjectsROR();
+#endif // _ENABLE_ROR_
+//*********************************************************
+//*	Switch
+#if defined(_ENABLE_SWITCH_) && defined(__arm__)
+	CreateSwitchObjectsRPi();
+#endif	//	_ENABLE_SWITCH_
+
+//*********************************************************
+//*	Observing conditions
+#if defined(_ENABLE_OBSERVINGCONDITIONS_) && defined(__arm__)
+	CreateObsConditionRpiObjects();
+#elif defined(_ENABLE_OBSERVINGCONDITIONS_)
+//	CreateObsConditionObjects();
+#endif
+
+
+#ifdef _ENABLE_CALIBRATION_
+//	CreateCalibrationObjects();
+	CreateCalibrationObjectsRPi();
+#endif // _ENABLE_CALIBRATION_
+
+//*********************************************************
+//*	Telescope
+#ifdef _ENABLE_TELESCOPE_
+	CreateTelescopeObjects();
+#endif // _ENABLE_TELESCOPE_
+
+
+//*********************************************************
+//*	Slit tacker
+#ifdef _ENABLE_SLIT_TRACKER_
+	CreateSlitTrackerObjects();
+#endif // _ENABLE_SLIT_TRACKER_
+
+
+	//*********************************************************
+	//*	Management
+	CreateManagementObject();
+
+
+}
 
 
 static	int32_t	gMainLoopCntr	=	0;
@@ -2893,7 +3024,7 @@ int				iii;
 int				cameraCnt;
 int				ram_Megabytes;
 double			freeDiskSpace_Gigs;
-
+bool			controllWindowActive;
 
 #if defined(_ENABLE_FITS_) || defined(_ENABLE_JPEGLIB_)
 	char			lineBuffer[64];
@@ -2985,121 +3116,8 @@ double			freeDiskSpace_Gigs;
 	ObservatorySettings_ReadFile();
 
 
+	CreateDriverObjects();
 
-
-//*********************************************************
-//*	Cameras
-#if defined(_ENABLE_CAMERA_) && defined(_ENABLE_ATIK_)
-	CreateATIK_CameraObjects();
-#endif
-
-#if defined(_ENABLE_CAMERA_) && defined(_ENABLE_ASI_)
-	CreateASI_CameraObjects();
-#endif
-//-----------------------------------------------------------
-#if defined(_ENABLE_CAMERA_) && defined(_ENABLE_TOUP_)
-	CreateTOUP_CameraObjects();
-#endif
-//-----------------------------------------------------------
-#if defined(_ENABLE_CAMERA_) && defined(_ENABLE_QHY_)
-	CreateQHY_CameraObjects();
-#endif
-//-----------------------------------------------------------
-#if defined(_ENABLE_CAMERA_) && defined(_ENABLE_QSI_)
-	CreateQSI_CameraObjects();
-#endif
-//-----------------------------------------------------------
-//#if defined(_ENABLE_CAMERA_) && defined(_ENABLE_FLIR_) && (__GNUC__ > 5)
-#if defined(_ENABLE_CAMERA_) && defined(_ENABLE_FLIR_)
-	CreateFLIR_CameraObjects();
-#endif
-
-
-//-----------------------------------------------------------
-#if defined(_ENABLE_CAMERA_) && defined(_ENABLE_SONY_)
-	CreateSONY_CameraObjects();
-#endif
-
-
-//*********************************************************
-//*	Multicam
-#ifdef _ENABLE_MULTICAM_
-	cameraCnt	=	CountDevicesByType(kDeviceType_Camera);
-	if (cameraCnt > 1)
-	{
-		CreateMultiCamObject();
-	}
-#endif
-
-//*********************************************************
-//*	Focuser
-#ifdef _ENABLE_FOCUSER_
-	CreateFocuserNiteCrawlerObjects();
-#endif
-
-//*********************************************************
-//*	Filter wheel
-#ifdef _ENABLE_FILTERWHEEL_ZWO_
-	CreateZWOFilterWheelObjects();
-#endif
-#ifdef _ENABLE_FILTERWHEEL_ATIK_
-	CreateATIKFilterWheelObjects();
-#endif
-
-
-
-
-//*********************************************************
-//*	Dome
-#ifdef _ENABLE_DOME_
-	CreateDomeObjectsRPi();
-#endif
-//*********************************************************
-//*	Shutter
-#ifdef _ENABLE_SHUTTER_
-//	CreateShutterObjects();
-	CreateShuterArduinoObjects();
-#endif
-#ifdef	_ENABLE_ROR_
-	CreateDomeObjectsROR();
-#endif // _ENABLE_ROR_
-//*********************************************************
-//*	Switch
-#if defined(_ENABLE_SWITCH_) && defined(__arm__)
-	CreateSwitchObjectsRPi();
-#endif	//	_ENABLE_SWITCH_
-
-//*********************************************************
-//*	Observing conditions
-#if defined(_ENABLE_OBSERVINGCONDITIONS_) && defined(__arm__)
-	CreateObsConditionRpiObjects();
-#elif defined(_ENABLE_OBSERVINGCONDITIONS_)
-//	CreateObsConditionObjects();
-#endif
-
-
-#ifdef _ENABLE_CALIBRATION_
-//	CreateCalibrationObjects();
-	CreateCalibrationObjectsRPi();
-#endif // _ENABLE_CALIBRATION_
-
-//*********************************************************
-//*	Telescope
-#ifdef _ENABLE_TELESCOPE_
-	CreateTelescopeObjects();
-#endif // _ENABLE_TELESCOPE_
-
-
-//*********************************************************
-//*	Slit tacker
-#ifdef _ENABLE_SLIT_TRACKER_
-	CreateSlitTrackerObjects();
-#endif // _ENABLE_SLIT_TRACKER_
-
-
-	//*********************************************************
-	//*	Management
-	CreateManagementObject();
 
 	//*********************************************************
 	StartDiscoveryListenThread(gAlpacaListenPort);
@@ -3129,6 +3147,7 @@ double			freeDiskSpace_Gigs;
 	gKeepRunning	=	true;
 	while (gKeepRunning)
 	{
+		controllWindowActive	=	false;
 		gMainLoopCntr++;
 		delayTime_microSecs	=	(1000000 / 2);		//*	default to 1/2 second
 		for (iii=0; iii<gDeviceCnt; iii++)
@@ -3151,13 +3170,12 @@ double			freeDiskSpace_Gigs;
 				//*	live window
 				if (gAlpacaDeviceList[iii]->cLiveController != NULL)
 				{
+					controllWindowActive	=	true;
 					HandleContollerWindow(gAlpacaDeviceList[iii]);
 
-					//*	if we have an active live window, we want to be able to give it more time
-					if (delayTime_microSecs > 5000)
-					{
-						delayTime_microSecs	=	5000;
-					}
+					//*	if we have an active live window,
+					//*	we want to be able to give it more time by waiting less time
+					delayTime_microSecs	=	10;
 				}
 			#endif // _ENABLE_LIVE_CONTROLLER_
 
@@ -3192,16 +3210,26 @@ double			freeDiskSpace_Gigs;
 static	void HandleContollerWindow(AlpacaDriver *alpacaObjPtr)
 {
 Controller	*myController;
+int			keyPressed;
 
 #ifdef _USE_OPENCV_
 #warning "Under test 4/11/2022"
-	ProcessControllerWindows();
+	//ProcessControllerWindows();
+#if (CV_MAJOR_VERSION >= 3)
+	keyPressed	=	cv::waitKeyEx(5);
+#else
+	keyPressed	=	cvWaitKey(5);
+#endif
+	if (keyPressed > 0)
+	{
+		Controller_HandleKeyDown(keyPressed);
+	}
 
 	myController	=	alpacaObjPtr->cLiveController;
 	if (myController != NULL)
 	{
 		myController->HandleWindow();
-		cv::waitKey(100);
+//		cv::waitKey(100);
 
 		if (myController->cKeepRunning == false)
 		{

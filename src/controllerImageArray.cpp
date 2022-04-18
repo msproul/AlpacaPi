@@ -1166,7 +1166,6 @@ int				ccc;
 						linebuf[ccc]	=	theChar;
 						ccc++;
 					}
-
 					cData_iii++;
 				}
 

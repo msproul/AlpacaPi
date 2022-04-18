@@ -332,10 +332,13 @@ size_t	byteCount;
 		else
 		{
 			CONSOLE_DEBUG("Image parameters invalid !!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-			CONSOLE_DEBUG_W_NUM("newImgWidth   \t=",	newImgWidth);
-			CONSOLE_DEBUG_W_NUM("newImgHeight  \t=",	newImgHeight);
-			CONSOLE_DEBUG_W_NUM("newImgChannels\t=",	newImgChannels);
-			CONSOLE_ABORT(__FUNCTION__);
+			CONSOLE_DEBUG_W_NUM("newImgWidth      \t=",	newImgWidth);
+			CONSOLE_DEBUG_W_NUM("newImgHeight     \t=",	newImgHeight);
+			CONSOLE_DEBUG_W_NUM("newImgRowStepSize\t=",	newImgChannels);
+			CONSOLE_DEBUG_W_NUM("newImgChannels   \t=",	newImgChannels);
+//			CONSOLE_ABORT(__FUNCTION__);
+
+			return;
 		}
 
 		//*	the downloaded image needs to be copied and/or resized to the displayed image
@@ -585,11 +588,20 @@ int		imgChannels;
 void	ControllerImage::CopyImageToLiveImage(cv::Mat *newOpenCVImage)
 {
 size_t	byteCount_src;
-size_t	byteCount_dst;
+size_t	byteCount_old;
 int		newImgWidth;
 int		newImgHeight;
 int		newImgRowStepSize;
 int		newImgChannels;
+
+int		oldImgWidth;
+int		oldImgHeight;
+int		oldImgRowStepSize;
+
+int		dspImgWidth;		//*	displayed image info
+int		dspImgHeight;
+int		dspImgRowStepSize;
+size_t	byteCount_dsp;
 
 	CONSOLE_DEBUG("OpenCV++ not finished!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 	CONSOLE_DEBUG("++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
@@ -605,17 +617,40 @@ int		newImgChannels;
 		newImgRowStepSize	=	newOpenCVImage->step[0];
 		newImgChannels		=	newOpenCVImage->step[1];
 
-		byteCount_src		=	newImgWidth * newImgHeight * newImgRowStepSize;
+		byteCount_src		=	newImgHeight * newImgRowStepSize;
 
 		CONSOLE_DEBUG_W_NUM("newImgWidth\t=",		newImgWidth);
 		CONSOLE_DEBUG_W_NUM("newImgHeight\t=",		newImgHeight);
 		CONSOLE_DEBUG_W_NUM("newImgRowStepSize\t=",	newImgRowStepSize);
 		CONSOLE_DEBUG_W_NUM("newImgChannels\t=",	newImgChannels);
+
+		oldImgWidth			=	cDownLoadedImage->cols;
+		oldImgHeight		=	cDownLoadedImage->rows;
+		oldImgRowStepSize	=	cDownLoadedImage->step[0];
+
+		byteCount_old		=	oldImgHeight * oldImgRowStepSize;
+		CONSOLE_DEBUG_W_NUM("byteCount_src\t=",	byteCount_src);
+		CONSOLE_DEBUG_W_NUM("byteCount_old\t=",	byteCount_old);
 //		CONSOLE_ABORT(__FUNCTION__);
 
+		if (byteCount_src == byteCount_old)
+		{
+			memcpy(cDownLoadedImage->data, newOpenCVImage->data, byteCount_src);
+		}
 
-//+		byteCount_dst		=	cDownLoadedImage->height * cDownLoadedImage->widthStep;
+		//*	double check the displayed image
+		if (cDisplayedImage != NULL)
+		{
+			dspImgWidth			=	cDisplayedImage->cols;
+			dspImgHeight		=	cDisplayedImage->rows;
+			dspImgRowStepSize	=	cDisplayedImage->step[0];
+			byteCount_dsp		=	dspImgHeight * dspImgRowStepSize;
 
+			if (byteCount_dsp == byteCount_old)
+			{
+				memcpy(cDisplayedImage->data, cDownLoadedImage->data, byteCount_dsp);
+			}
+		}
 	}
 }
 #else
@@ -691,14 +726,14 @@ void	ControllerImage::UpdateLiveWindowImage(IplImage *newOpenCVImage, const char
 {
 bool	imagesAreTheSame;
 
-//	CONSOLE_DEBUG("-------------------Start");
+	CONSOLE_DEBUG("-------------------Start");
 	CONSOLE_DEBUG(__FUNCTION__);
 	if (newOpenCVImage  != NULL)
 	{
 		CONSOLE_DEBUG("newOpenCVImage is OK!!!!");
 		if ((cDownLoadedImage == NULL) || (cDisplayedImage == NULL))
 		{
-//			CONSOLE_DEBUG("Setting image");
+			CONSOLE_DEBUG("Setting image");
 			SetLiveWindowImage(newOpenCVImage);
 		}
 		else

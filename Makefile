@@ -136,7 +136,7 @@ CFLAGS			+=	-fPIE
 
 CPLUSFLAGS		=	-Wall -Wno-multichar -Wno-unknown-pragmas
 #CPLUSFLAGS		+=	-Wno-class-memaccess
-CPLUSFLAGS		+=	-O2
+#CPLUSFLAGS		+=	-O2
 #CPLUSFLAGS		+=	-trigraphs
 CPLUSFLAGS		+=	-g
 #CPLUSFLAGS		+=	-Wno-unused-but-set-variable
@@ -674,6 +674,93 @@ eq6		:			$(CPP_OBJECTS)				\
 					-lusb-1.0					\
 					-lpthread					\
 					-o alpacapi-eq6
+
+
+
+######################################################################################
+#pragma mark make wo71
+#	this is for my William Optics 71 configuration
+wo71		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
+wo71		:		DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_
+wo71		:		DEFINEFLAGS		+=	-D_ENABLE_ROTATOR_
+#wo71		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_
+#wo71		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_ZWO_
+wo71		:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
+wo71		:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
+wo71		:		DEFINEFLAGS		+=	-D_ENABLE_DISCOVERY_QUERRY_
+#wo71		:		DEFINEFLAGS		+=	-D_ENABLE_MULTICAM_
+#wo71		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
+wo71		:		DEFINEFLAGS		+=	-D_ENABLE_ATIK_
+wo71		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
+#wo71		:		DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
+wo71		:		DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
+wo71		:		DEFINEFLAGS		+=	-D_ENABLE_LIVE_CONTROLLER_
+wo71		:		ATIK_LIB_DIR	=	$(ATIK_LIB_MASTER_DIR)/ARM/x86/NoFlyCapture
+wo71		:		$(CPP_OBJECTS)				\
+					$(ALPACA_OBJECTS)			\
+					$(SOCKET_OBJECTS)			\
+					$(LIVE_WINDOW_OBJECTS)		\
+
+
+		$(LINK)  								\
+					$(SOCKET_OBJECTS)			\
+					$(CPP_OBJECTS)				\
+					$(ALPACA_OBJECTS)			\
+					$(LIVE_WINDOW_OBJECTS)		\
+					$(OPENCV_LINK)				\
+					$(ASI_CAMERA_OBJECTS)		\
+					-L$(ATIK_LIB_DIR)/			\
+					-latikcameras				\
+					-lcfitsio					\
+					-lusb-1.0					\
+					-ludev						\
+					-lpthread					\
+					-o alpacapi
+
+
+
+#					-lqhyccd					\
+#					$(ZWO_EFW_OBJECTS)			\
+
+
+######################################################################################
+#pragma mark make wo102
+#	this is for my William Optics 102 configuration
+wo102		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
+wo102		:		DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_
+wo102		:		DEFINEFLAGS		+=	-D_ENABLE_ROTATOR_
+wo102		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_
+wo102		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_ZWO_
+wo102		:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
+wo102		:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
+wo102		:		DEFINEFLAGS		+=	-D_ENABLE_DISCOVERY_QUERRY_
+#wo102		:		DEFINEFLAGS		+=	-D_ENABLE_MULTICAM_
+wo102		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
+wo102		:		DEFINEFLAGS		+=	-D_ENABLE_QHY_
+wo102		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
+#wo102		:		DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
+wo102		:		DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
+wo102		:		DEFINEFLAGS		+=	-D_ENABLE_LIVE_CONTROLLER_
+wo102		:		$(CPP_OBJECTS)				\
+					$(ALPACA_OBJECTS)			\
+					$(SOCKET_OBJECTS)			\
+					$(LIVE_WINDOW_OBJECTS)		\
+
+
+		$(LINK)  								\
+					$(SOCKET_OBJECTS)			\
+					$(CPP_OBJECTS)				\
+					$(ALPACA_OBJECTS)			\
+					$(LIVE_WINDOW_OBJECTS)		\
+					$(OPENCV_LINK)				\
+					$(ASI_CAMERA_OBJECTS)		\
+					$(ZWO_EFW_OBJECTS)			\
+					-lqhyccd					\
+					-lcfitsio					\
+					-lusb-1.0					\
+					-ludev						\
+					-lpthread					\
+					-o alpacapi
 
 
 ######################################################################################
@@ -1380,25 +1467,17 @@ zwo		:		$(CPP_OBJECTS)				\
 #	make finder
 #finder		:		DEFINEFLAGS		+=	-D_ENABLE_OBSERVINGCONDITIONS_
 finder		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
-#finder		:		DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_
-#finder		:		DEFINEFLAGS		+=	-D_ENABLE_ROTATOR_
-#finder		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_
 #finder		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_ZWO_
 #finder		:		DEFINEFLAGS		+=	-D_ENABLE_SAFETYMONITOR_
 finder		:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_
-#finder		:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
 finder		:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
 finder		:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
-finder		:		DEFINEFLAGS		+=	-D_ENABLE_MULTICAM_
-#finder		:		DEFINEFLAGS		+=	-D_ENABLE_DOME_
+#finder		:		DEFINEFLAGS		+=	-D_ENABLE_MULTICAM_
 finder		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
-finder		:		DEFINEFLAGS		+=	-D_ENABLE_QHY_
-finder		:		DEFINEFLAGS		+=	-D_ENABLE_ATIK_
+#finder		:		DEFINEFLAGS		+=	-D_ENABLE_QHY_
+#finder		:		DEFINEFLAGS		+=	-D_ENABLE_ATIK_
 finder		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
 finder		:		DEFINEFLAGS		+=	-D_ENABLE_WIRING_PI_
-#finder		:		DEFINEFLAGS		+=	-D_ENABLE_PWM_SWITCH_
-#finder		:		DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
-finder		:		PLATFORM		=	armv7
 finder		:		ATIK_LIB_DIR	=	$(ATIK_LIB_MASTER_DIR)/ARM/x86/NoFlyCapture
 
 finder		:	$(CPP_OBJECTS)				\
@@ -1510,7 +1589,6 @@ shuttercv4		:		DEFINEFLAGS		+=	-D_ENABLE_STATUS_SWITCH_
 shuttercv4		:		DEFINEFLAGS		+=	-D_ENABLE_WIRING_PI_
 shuttercv4		:		DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
 shuttercv4		:		DEFINEFLAGS		+=	-D_ENABLE_LIVE_CONTROLLER_
-#shuttercv4		:		PLATFORM		=	armv7
 
 shuttercv4		:	$(CPP_OBJECTS)				\
 					$(ALPACA_OBJECTS)			\
@@ -1951,6 +2029,7 @@ cameracv4		:	$(CONTROLLER_OBJECTS)					\
 							$(CONTROLLER_OBJECTS)				\
 							$(OPENCV_LINK)						\
 							-lpthread							\
+							-o camera
 
 ######################################################################################
 #pragma mark dome-controller

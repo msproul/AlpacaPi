@@ -149,7 +149,7 @@ static int	gCurrCommentIdx		=	0;
 //*****************************************************************************
 void	ObservatorySettings_Init(void)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	memset(&gObseratorySettings, 0, sizeof(TYPE_OBSERVATORY_SETTINGS));
 
 	ObservatorySettings_CreateTemplateFile();
@@ -163,7 +163,7 @@ FILE	*filePointer;
 char	separaterLine[]	=	"###############################################################################\n";
 char	linuxErrStr[64];
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	filePointer	=	fopen("observatorysettings_template.txt", "w");
 	if (filePointer != NULL)
@@ -421,7 +421,7 @@ TYPE_TELESCOPE_INFO	*ts_infoPtr;
 //*****************************************************************************
 void	ObservatorySettings_ReadFile(void)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	ReadGenericConfigFile("observatorysettings.txt", '=', &ProcessObsSettingsConfig);
 }
 

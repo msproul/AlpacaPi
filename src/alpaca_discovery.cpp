@@ -56,7 +56,7 @@ int					ipPortNumber;
 char				broadCastMsg[]	=	kAlpacaDiscoveryMsg;
 int					closeRetCode;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	//*	send the broadcast message to everyone
 	sendtoRetCode	=	sendto(	cBroadcastSocket,
@@ -151,7 +151,7 @@ int					closeRetCode;
 		CONSOLE_DEBUG_W_STR(__FUNCTION__, "Exit");
 	}
 #ifdef _ENABLE_TELESCOPE_LX200_
-	CONSOLE_ABORT(__FUNCTION__);
+//	CONSOLE_ABORT(__FUNCTION__);
 #endif
 }
 
@@ -230,7 +230,7 @@ SJP_Parser_t		jsonParser;
 struct sockaddr_in	from;
 int					ipPortNumber;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	//*	see if there is a file listing extra IP address
 	filePointer	=	fopen(fileName, "r");
@@ -270,7 +270,7 @@ int					ipPortNumber;
 		fclose(filePointer);
 	}
 #ifdef _ENABLE_TELESCOPE_LX200_
-	CONSOLE_ABORT(__FUNCTION__);
+//	CONSOLE_ABORT(__FUNCTION__);
 #endif
 }
 
@@ -279,18 +279,18 @@ static void	*DiscoveryResponseThread(void *arg)
 {
 AlpacaDriver	*parentThisPtr;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	parentThisPtr	=	(AlpacaDriver *)arg;
 	if (parentThisPtr != NULL)
 	{
-		CONSOLE_DEBUG_W_STR("Thread started from device", parentThisPtr->cCommonProp.Name);
+//		CONSOLE_DEBUG_W_STR("Thread started from device", parentThisPtr->cCommonProp.Name);
 		parentThisPtr->HandleDiscoveryResponse();
 	}
 	else
 	{
 		CONSOLE_DEBUG("arg is null");
 	}
-	CONSOLE_DEBUG("Thread exit--------------------------------------------------------");
+//	CONSOLE_DEBUG("Thread exit--------------------------------------------------------");
 	return(NULL);
 }
 
@@ -312,7 +312,7 @@ struct sockaddr_in	myClient_addr;
 int					sockOptValue;
 int					threadErr;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	if (cDiscoveryThreadActive == false)
 	{
 		cBroadcastSocket	=	socket(AF_INET, SOCK_DGRAM, 0);
@@ -346,7 +346,7 @@ int					threadErr;
 				bindRetCode	=	bind(cBroadcastSocket, (const struct sockaddr *)&myClient_addr, sizeof(myClient_addr));
 				if (bindRetCode >= 0)
 				{
-					CONSOLE_DEBUG("Creating thread");
+//					CONSOLE_DEBUG("Creating thread");
 					threadErr	=	pthread_create(	&cDiscoveryThreadID,
 													NULL,
 													&DiscoveryResponseThread,
@@ -357,7 +357,7 @@ int					threadErr;
 					}
 					else
 					{
-						CONSOLE_DEBUG("Exiting creating thread");
+						CONSOLE_DEBUG_W_NUM("Error creating thread, threadErr\t=", threadErr);
 					}
 				}
 				else
@@ -380,12 +380,12 @@ int					threadErr;
 		}
 
 
-		CONSOLE_DEBUG_W_STR("success\t=", (success ? "true" : "false"));
+	//	CONSOLE_DEBUG_W_STR("success\t=", (success ? "true" : "false"));
 
 	//	CONSOLE_DEBUG("Exiting for now, if we got here, we are doing good");
 	//	CONSOLE_DEBUG("Sleeping");
 	//	sleep(5);
-		CONSOLE_DEBUG_W_NUM("DONE-------------------------------------- #", cDiscoveryCount);
+	//	CONSOLE_DEBUG_W_NUM("DONE-------------------------------------- #", cDiscoveryCount);
 	//	CONSOLE_ABORT(__FUNCTION__);
 	}
 	else

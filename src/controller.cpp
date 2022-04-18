@@ -238,6 +238,7 @@ int		activeObjCnt;
 int		keyPressed;
 int		iii;
 
+	CONSOLE_DEBUG(__FUNCTION__);
 	activeObjCnt	=	0;
 	for (iii=0; iii<kMaxControllers; iii++)
 	{
@@ -261,6 +262,7 @@ int		iii;
 				CONSOLE_DEBUG_W_NUM("Deleting control #", iii);
 				CONSOLE_DEBUG_W_STR("Deleting window", gControllerList[iii]->cWindowName);
 				delete gControllerList[iii];
+				gControllerList[iii]	=	NULL;
 			}
 		}
 	}
@@ -546,22 +548,25 @@ int		iii;
 		{
 			CONSOLE_DEBUG("try delete cOpenCV_matImage");
 			delete cOpenCV_matImage;
+			cOpenCV_matImage	=	NULL;
 		}
 		catch(cv::Exception& ex)
 		{
-			//*	we sometimes can open the same window twice, this should not happen but sometimes does.
-			//*	this catch prevents opencv from crashing
-			CONSOLE_DEBUG("cvDestroyWindow() had an exception");
+			CONSOLE_DEBUG("delete cOpenCV_matImage; had an exception");
 			CONSOLE_DEBUG_W_NUM("openCV error code\t=",	ex.code);
 		}
 	}
+
 	//---try------try------try------try------try------try---
 	try
 	{
-		CONSOLE_DEBUG("try cv::destroyWindow");
-		cv::destroyWindow(cWindowName);
+	std::string	myWindowName(cWindowName);
+		CONSOLE_DEBUG_W_STR("try cv::destroyWindow", cWindowName);
+		CONSOLE_DEBUG_W_STR("myWindowName", myWindowName.c_str());
+//		cv::destroyWindow(cWindowName);
+		cv::destroyWindow(myWindowName);
 		CONSOLE_DEBUG("Waiting");
-		cv::waitKey(2000);
+		cv::waitKey(200);
 	}
 	catch(cv::Exception& ex)
 	{
@@ -2048,7 +2053,7 @@ cv::Mat		image_roi;
 			//*	draw the border if enabled
 			if (theWidget->includeBorder)
 			{
-				CONSOLE_DEBUG(__FUNCTION__);
+			//	CONSOLE_DEBUG(__FUNCTION__);
 				LLD_FrameRect(&theWidget->roiRect);
 			}
 		}

@@ -188,7 +188,7 @@ bool				validDiscoveryRequest;
 char				ipAddrSt[48];
 
 
-	CONSOLE_DEBUG("Starting discovery listen thread");
+//	CONSOLE_DEBUG("Starting discovery listen thread");
 
 	mySocket	=	socket(AF_INET, SOCK_DGRAM, 0);
 	if (mySocket >= 0)
@@ -1324,7 +1324,7 @@ bool			keepGoing;
 			}
 			else
 			{
-				CONSOLE_DEBUG("Null");
+//				CONSOLE_DEBUG("Null");
 				keepGoing	=	false;
 			}
 		}
@@ -1348,7 +1348,7 @@ int			threadErr;
 
 	//*	yes, we have a separate copy of it here
 	gAlpacaListenPort	=	alpacaListenPort;
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	GetMyAddress();
 
@@ -1356,7 +1356,7 @@ int			threadErr;
 	threadErr			=	pthread_create(&gDiscoveryListenThreadID, NULL, &DiscoveryListenThread, NULL);
 	if (threadErr == 0)
 	{
-		CONSOLE_DEBUG("Listen thread created successfully");
+//		CONSOLE_DEBUG("Listen thread created successfully");
 	}
 	else
 	{

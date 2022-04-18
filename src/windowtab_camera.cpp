@@ -37,7 +37,8 @@
 //*	Dec 18,	2021	<MLS> Double click in the title bar causes connect to be sent
 //*	Dec 22,	2021	<MLS> Added support for flipmode
 //*	Feb 18,	2022	<MLS> Added SetCameraLogo()
-//*	Feb 25,	2022	<MLS> Downloading and saving image working with C++ opencv
+//*	Feb 25,	2022	<MLS> Downloading image working with C++ opencv
+//*	Apr 16,	2022	<MLS> Saving dowloaded image working with C++ opencv
 //*****************************************************************************
 
 #ifdef _ENABLE_CTRL_CAMERA_
@@ -1187,7 +1188,7 @@ char				fileName[256];
 			CONSOLE_DEBUG_W_NUM("myDownLoadedImage->width\t=",	myDownLoadedImage->width);
 			CONSOLE_DEBUG_W_NUM("myDownLoadedImage->height\t=",	myDownLoadedImage->height);
 #endif // _USE_OPENCV_CPP_
-			//======================================
+			//========================================================
 			//*	save the image
 			strcpy(fileName, cDownLoadedFileNameRoot);
 			strcat(fileName, ".jpg");
@@ -1196,12 +1197,26 @@ char				fileName[256];
 #ifdef _USE_OPENCV_CPP_
 			try
 			{
-//				cv::imwrite(fileName, *myDownLoadedImage);
+				cv::imwrite(fileName, *myDownLoadedImage);
 			}
 			catch (cv::Exception& ex)
 			{
 				CONSOLE_DEBUG_W_STR("Exception writing jpg image", ex.what());
 			}
+
+			//========================================================
+			//*	save it out as PNG as well
+			strcpy(fileName, cDownLoadedFileNameRoot);
+			strcat(fileName, ".png");
+			try
+			{
+				cv::imwrite(fileName, *myDownLoadedImage);
+			}
+			catch (cv::Exception& ex)
+			{
+				CONSOLE_DEBUG_W_STR("Exception writing jpg image", ex.what());
+			}
+
 #else
 
 		#if (CV_MAJOR_VERSION <= 3)

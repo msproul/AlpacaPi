@@ -475,7 +475,7 @@ bool			fileIsFits;
 			}
 			if (fileIsFits && (openCV_Image->depth == 16))
 			{
-				CONSOLE_DEBUG("Calling Adjust16bitImge()");
+			//	CONSOLE_DEBUG("Calling Adjust16bitImge()");
 			//	Adjust16bitImge(openCV_Image);
 			}
 //			CONSOLE_DEBUG(__FUNCTION__);

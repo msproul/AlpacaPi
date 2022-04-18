@@ -104,11 +104,11 @@ double			exposure_Secs;
 		myImageController->UpdateLiveWindowInfo(&cCameraProp,
 												cFramesRead,
 												exposure_Secs,
-									#ifdef _ENABLE_FILTERWHEEL_
+											#ifdef _ENABLE_FILTERWHEEL_
 												cFilterWheelCurrName,
-									#else
+											#else
 												NULL,
-									#endif // _ENABLE_FILTERWHEEL_
+											#endif // _ENABLE_FILTERWHEEL_
 												cObjectName
 												);
 	}
