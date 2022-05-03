@@ -1352,7 +1352,7 @@ int			threadErr;
 
 	GetMyAddress();
 
-	CONSOLE_DEBUG("Staring discovery listen thread on port");
+	CONSOLE_DEBUG_W_NUM("Staring discovery listen thread on port", gAlpacaListenPort);
 	threadErr			=	pthread_create(&gDiscoveryListenThreadID, NULL, &DiscoveryListenThread, NULL);
 	if (threadErr == 0)
 	{

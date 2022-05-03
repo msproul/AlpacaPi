@@ -1172,7 +1172,7 @@ int				ccc;
 				//*	check to see if we have binary data
 				if (cHttpHdrStruct.dataIsBinary)
 				{
-					DEBUG_TIMING("---------------Data is binary");
+					DEBUG_TIMING("---------------Data is binary, time= (ms)");
 					imgRank	=	AlpacaGetImageArray_Binary(imageArray, arrayLength, actualValueCnt);
 				}
 				else

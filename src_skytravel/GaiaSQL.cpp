@@ -223,9 +223,9 @@ int		slen;
 bool	configOK;
 bool	validEntry;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 	//*	set the database name list to all zeros
-	for (iii=0; iii<kMaxGaiaDataSets; iii++)
+	for (iii=0; iii<kMaxDataBaseNames; iii++)
 	{
 		memset((void *)&gDataBaseNames[iii], 0, sizeof(TYPE_DATABASE_NAME));
 	}
@@ -235,6 +235,7 @@ bool	validEntry;
 	filePointer	=	fopen(kSQLserverConfigFile, "r");
 	if (filePointer != NULL)
 	{
+		CONSOLE_DEBUG("SQL config file opened OK");
 		while (fgets(lineBuff, 200, filePointer))
 		{
 			//*	get rid of the trailing CR/LF
@@ -269,6 +270,7 @@ bool	validEntry;
 		strcpy(gDataBaseNames[0].Name, "gaia");
 		gDataBaseNameCnt	=	1;
 	}
+
 	if (gDataBaseNameCnt > 0)
 	{
 		strcpy(gSQLsever_Database, gDataBaseNames[0].Name);
@@ -278,8 +280,8 @@ bool	validEntry;
 //	{
 //		CONSOLE_DEBUG_W_STR("Database name\t=", gDataBaseNames[iii].Name);
 //	}
-//
-//	CONSOLE_DEBUG_W_NUM("gDataBaseNameCnt\t=", gDataBaseNameCnt);
+
+	CONSOLE_DEBUG_W_NUM("gDataBaseNameCnt\t=", gDataBaseNameCnt);
 	return(configOK);
 }
 
@@ -290,7 +292,7 @@ bool	GaiaSQLinit(void)
 int		iii;
 bool	configOK;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 	configOK	=	ReadSQLconfigFile();
 	//*	set the Gaia data list to all zeros
 	for (iii=0; iii<kMaxGaiaDataSets; iii++)

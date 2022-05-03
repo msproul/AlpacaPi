@@ -279,8 +279,9 @@ int		smallDisplayHeight;
 int		reduceFactor;
 int		newImgWidth;
 int		newImgHeight;
-int		newImgChannels;
+int		newImgBytesPerPixel;
 int		newImgRowStepSize;
+int		openCVerr;
 bool	validImg;
 size_t	byteCount;
 
@@ -307,7 +308,7 @@ size_t	byteCount;
 		newImgWidth			=	newOpenCVImage->cols;
 		newImgHeight		=	newOpenCVImage->rows;
 		newImgRowStepSize	=	newOpenCVImage->step[0];
-		newImgChannels		=	newOpenCVImage->step[1];
+		newImgBytesPerPixel	=	newOpenCVImage->step[1];
 		validImg			=	true;
 		if ((newImgWidth < 100) || (newImgWidth > 10000))
 		{
@@ -317,115 +318,151 @@ size_t	byteCount;
 		{
 			validImg		=	false;
 		}
-		if ((newImgChannels != 1) && (newImgChannels != 3))
-		{
-			validImg		=	false;
-		}
+//		if ((newImgBytesPerPixel != 1) && (newImgBytesPerPixel != 3))
+//		{
+//			validImg		=	false;
+//		}
+
+		//--------------------------------------------------------------
 		if (validImg)
 		{
-			CONSOLE_DEBUG_W_NUM("newImgChannels\t=", newImgChannels);
-			newImgChannels		=	3;
+			CONSOLE_DEBUG_W_NUM("newImgBytesPerPixel\t=", newImgBytesPerPixel);
+
 			cDownLoadedImage	=	new cv::Mat(cv::Size(	newImgWidth,
 															newImgHeight),
 															CV_8UC3);
-		}
-		else
-		{
-			CONSOLE_DEBUG("Image parameters invalid !!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-			CONSOLE_DEBUG_W_NUM("newImgWidth      \t=",	newImgWidth);
-			CONSOLE_DEBUG_W_NUM("newImgHeight     \t=",	newImgHeight);
-			CONSOLE_DEBUG_W_NUM("newImgRowStepSize\t=",	newImgChannels);
-			CONSOLE_DEBUG_W_NUM("newImgChannels   \t=",	newImgChannels);
-//			CONSOLE_ABORT(__FUNCTION__);
-
-			return;
-		}
-
-		//*	the downloaded image needs to be copied and/or resized to the displayed image
-		if (cDownLoadedImage != NULL)
-		{
-			//*	copy the image data to OUR image
-			byteCount	=	newOpenCVImage->rows * newImgRowStepSize;
-			if ((cDownLoadedImage->data != NULL) && (newOpenCVImage->data != NULL))
+			//*	the downloaded image needs to be copied and/or resized to the displayed image
+			if (cDownLoadedImage != NULL)
 			{
-				memcpy(cDownLoadedImage->data, newOpenCVImage->data, byteCount);
-			}
-			CONSOLE_DEBUG("Creating small image");
-			reduceFactor		=	1;
-			smallDispalyWidth	=	cDownLoadedImage->cols;
-			smallDisplayHeight	=	cDownLoadedImage->rows;
+				CONSOLE_DEBUG_W_NUM("cDownLoadedImage->step[0]\t=",	cDownLoadedImage->step[0]);
+				CONSOLE_DEBUG_W_NUM("cDownLoadedImage->step[1]\t=",	cDownLoadedImage->step[1]);
 
-			CONSOLE_DEBUG_W_NUM("cDownLoadedImage->cols\t=",	cDownLoadedImage->cols);
-			CONSOLE_DEBUG_W_NUM("cDownLoadedImage->rows\t=",	cDownLoadedImage->rows);
-
-
-			int		maxWindowWidth	=	800;
-			int		maxWindowHeight	=	700;
-
-			while ((smallDispalyWidth > maxWindowWidth) || (smallDisplayHeight > (maxWindowHeight - 50)))
-			{
-				CONSOLE_DEBUG_W_NUM("smallDisplayHeight\t=", smallDisplayHeight);
-				reduceFactor++;
-				smallDispalyWidth	=	cDownLoadedImage->cols / reduceFactor;
-				smallDisplayHeight	=	cDownLoadedImage->rows / reduceFactor;
-			}
-			CONSOLE_DEBUG_W_NUM("reduceFactor\t=", reduceFactor);
-			CONSOLE_DEBUG_W_NUM("smallDispalyWidth\t=", smallDispalyWidth);
-			CONSOLE_DEBUG_W_NUM("smallDisplayHeight\t=", smallDisplayHeight);
-
-			cDisplayedImage	=	new cv::Mat(cv::Size(	smallDispalyWidth,
-														smallDisplayHeight),
-														CV_8UC3);
-
-// 300 [DumpCVMatStruct     ] theImageMat->cols		= 1200
-// 301 [DumpCVMatStruct     ] theImageMat->rows		= 800
-// 302 [DumpCVMatStruct     ] theImageMat->dims		= 2
-// 303 [DumpCVMatStruct     ] theImageMat->step[0]	= 3600
-// 304 [DumpCVMatStruct     ] theImageMat->step[1]	= 3
-// 305 [DumpCVMatStruct     ] theImageMat->step[2]	= 0
-
-			if (cDisplayedImage != NULL)
-			{
-				CONSOLE_DEBUG("Resizing image");
-
-				//*	Check to see if the original is color
-				if ((cDownLoadedImage->step[1] == 3))
+				//---try------try------try------try------try------try---
+				try
 				{
+					switch(newImgBytesPerPixel)
+					{
+						case 1:
+							CONSOLE_DEBUG("Original is 8 bit B/W");
+							CONSOLE_DEBUG("OpenCV++ not finished!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+							//*				source  ->  destination
+							cv::cvtColor(*newOpenCVImage, *cDownLoadedImage, CV_GRAY2RGB);
+							break;
+
+						case 2:
+							CONSOLE_DEBUG("Original is 16 bit B/W");
+							//*				source  ->  destination
+						//	cv::cvtColor(*newOpenCVImage, *cDownLoadedImage, CV_GRAY2RGB);
+
+							openCVerr	=	cv::imwrite("16bitdownload.png", *cDownLoadedImage);
+
+							newOpenCVImage->convertTo(*cDownLoadedImage, CV_8UC3);
+							openCVerr	=	cv::imwrite("16bitdownload-8bit.png", *cDownLoadedImage);
+
+							break;
+
+						case 3:
+							//*	copy the image data to OUR image
+							byteCount	=	newOpenCVImage->rows * newImgRowStepSize;
+							if ((cDownLoadedImage->data != NULL) && (newOpenCVImage->data != NULL))
+							{
+								CONSOLE_DEBUG("Calling memcpy");
+								memcpy(cDownLoadedImage->data, newOpenCVImage->data, byteCount);
+							}
+							else
+							{
+								CONSOLE_DEBUG("Failed to copy data from newOpenCVImage to cDownLoadedImage");
+							}
+							break;
+					}
+				}
+				catch(cv::Exception& ex)
+				{
+					//*	this catch prevents opencv from crashing
+					CONSOLE_DEBUG("cvtColor() had an exception");
+					CONSOLE_DEBUG_W_NUM("openCV error code\t=",	ex.code);
+				}
+				CONSOLE_DEBUG_W_NUM("cDownLoadedImage->step[0]\t=",	cDownLoadedImage->step[0]);
+				CONSOLE_DEBUG_W_NUM("cDownLoadedImage->step[1]\t=",	cDownLoadedImage->step[1]);
+
+				CONSOLE_DEBUG("Creating small image");
+				reduceFactor		=	1;
+				smallDispalyWidth	=	cDownLoadedImage->cols;
+				smallDisplayHeight	=	cDownLoadedImage->rows;
+
+				CONSOLE_DEBUG_W_NUM("cDownLoadedImage->cols\t=",	cDownLoadedImage->cols);
+				CONSOLE_DEBUG_W_NUM("cDownLoadedImage->rows\t=",	cDownLoadedImage->rows);
+
+
+				int		maxWindowWidth	=	800;
+				int		maxWindowHeight	=	700;
+
+				CONSOLE_DEBUG_W_NUM("smallDisplayHeight\t=", smallDisplayHeight);
+				while ((smallDispalyWidth > maxWindowWidth) || (smallDisplayHeight > (maxWindowHeight - 50)))
+				{
+					reduceFactor++;
+					smallDispalyWidth	=	cDownLoadedImage->cols / reduceFactor;
+					smallDisplayHeight	=	cDownLoadedImage->rows / reduceFactor;
+					CONSOLE_DEBUG_W_NUM("smallDisplayHeight\t=", smallDisplayHeight);
+				}
+				CONSOLE_DEBUG_W_NUM("reduceFactor\t=", reduceFactor);
+				CONSOLE_DEBUG_W_NUM("smallDispalyWidth \t=",	smallDispalyWidth);
+				CONSOLE_DEBUG_W_NUM("smallDisplayHeight\t=",	smallDisplayHeight);
+
+				cDisplayedImage	=	new cv::Mat(cv::Size(	smallDispalyWidth,
+															smallDisplayHeight),
+															CV_8UC3);
+
+				if (cDisplayedImage != NULL)
+				{
+					CONSOLE_DEBUG_W_NUM("cDisplayedImage->step[0]\t=",	cDisplayedImage->step[0]);
+					CONSOLE_DEBUG_W_NUM("cDisplayedImage->step[1]\t=",	cDisplayedImage->step[1]);
+					CONSOLE_DEBUG("Resizing image");
+
 					CONSOLE_DEBUG("Original is 8 bit color (3 channels)");
-//					cvResize(cDownLoadedImage, cDisplayedImage, CV_INTER_LINEAR);
 					cv::resize(	*cDownLoadedImage,
 								*cDisplayedImage,
 								cDisplayedImage->size(),
 								0,
 								0,
 								cv::INTER_LINEAR);
+
+					openCVerr	=	cv::imwrite("resized.png", *cDisplayedImage);
+					CONSOLE_DEBUG_W_NUM("cDisplayedImage->cols   \t=",	cDisplayedImage->cols);
+					CONSOLE_DEBUG_W_NUM("cDisplayedImage->rows   \t=",	cDisplayedImage->rows);
+					CONSOLE_DEBUG_W_NUM("cDisplayedImage->step[0]\t=",	cDisplayedImage->step[0]);
+					CONSOLE_DEBUG_W_NUM("cDisplayedImage->step[1]\t=",	cDisplayedImage->step[1]);
+
+					SetWidgetImage(kTab_Image, kImageDisplay_ImageDisplay, cDisplayedImage);
 				}
-//				else if ((cDownLoadedImage->nChannels == 1) && (cDownLoadedImage->depth == 8))
-				else if ((cDownLoadedImage->step[1] == 1))
+				else
 				{
-					CONSOLE_DEBUG("Original is 8 bit B/W");
-					CONSOLE_DEBUG("OpenCV++ not finished!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-//					cvCvtColor(cDownLoadedImage, cDisplayedImage, CV_GRAY2RGB);
+					CONSOLE_DEBUG("Failed to create new image");
 				}
-//
-				SetWidgetImage(kTab_Image, kImageDisplay_ImageDisplay, cDisplayedImage);
+
+				if (cImageTabObjPtr != NULL)
+				{
+					cImageTabObjPtr->SetImagePtrs(cDownLoadedImage,	cDisplayedImage);
+				}
 			}
 			else
 			{
-				CONSOLE_DEBUG("Failed to create new image");
+				CONSOLE_DEBUG("Error creating image (new cv::Mat)");
 			}
+			//*	Update the image size on the screen
+			SetImageWindowInfo();
+		}
+	}
+	else
+	{
+		CONSOLE_DEBUG("Image parameters invalid !!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+		CONSOLE_DEBUG_W_NUM("newImgWidth        \t=",	newImgWidth);
+		CONSOLE_DEBUG_W_NUM("newImgHeight       \t=",	newImgHeight);
+		CONSOLE_DEBUG_W_NUM("newImgRowStepSize  \t=",	newImgRowStepSize);
+		CONSOLE_DEBUG_W_NUM("newImgBytesPerPixel\t=",	newImgBytesPerPixel);
+//			CONSOLE_ABORT(__FUNCTION__);
 
-			if (cImageTabObjPtr != NULL)
-			{
-				cImageTabObjPtr->SetImagePtrs(cDownLoadedImage,	cDisplayedImage);
-			}
-		}
-		else
-		{
-			CONSOLE_DEBUG("Error creating image (new cv::Mat)");
-		}
-		//*	Update the image size on the screen
-		SetImageWindowInfo();
+		return;
 	}
 }
 #else

@@ -101,6 +101,7 @@
 //*	Feb  4,	2022	<MLS> Added DrawOpenNGC_Outlines()
 //*	Feb 18,	2022	<MLS> SkyTravel working with OpenCV-C++
 //*	Apr  7,	2022	<MLS> ProcessMouseEvent() ignores nearest object when mouse drag in progress
+//*	Apr 30,	2022	<MLS> Added Messier objects to FindObjectNearCursor()
 //*****************************************************************************
 //*	TODO
 //*			star catalog lists
@@ -471,7 +472,7 @@ int		iii;
 
 	if (gZodiacPtr == NULL)
 	{
-		gZodiacPtr	=	(TYPE_CelestData *)malloc(kZodiacCount * sizeof(TYPE_CelestData));
+		gZodiacPtr	=	(TYPE_CelestData *)calloc(kZodiacCount, sizeof(TYPE_CelestData));
 
 		for (iii=0; iii < kZodiacCount; iii++)
 		{
@@ -528,11 +529,11 @@ int		iii;
 #define	kMaxPolarAlignCenterPts		200
 
 		bufferSize				=	kMaxPolarAlignCenterPts * sizeof(TYPE_CelestData);
-		gPolarAlignObjectPtr	=	(TYPE_CelestData *)malloc(bufferSize);
+		gPolarAlignObjectPtr	=	(TYPE_CelestData *)calloc(kMaxPolarAlignCenterPts, sizeof(TYPE_CelestData));
 
 		if (gPolarAlignObjectPtr != NULL)
 		{
-			memset(gPolarAlignObjectPtr, 0, bufferSize);
+		//	memset(gPolarAlignObjectPtr, 0, bufferSize);
 			theFirstChar	=	'A';
 			while (theFirstChar <= 'Z')
 			{
@@ -3215,7 +3216,7 @@ int		maxVectorIdx;
 	if (gConstelationCount > 0)
 	{
 		totalStars		=	0;
-		gConstelations	=	(TYPE_Constelation *)malloc(gConstelationCount * sizeof(TYPE_Constelation));
+		gConstelations	=	(TYPE_Constelation *)calloc(gConstelationCount, sizeof(TYPE_Constelation));
 		if (gConstelations != NULL)
 		{
 			for (ii=0; ii < gConstelationCount; ii++)
@@ -3256,7 +3257,7 @@ int		maxVectorIdx;
 			if (gStarDataPtr != NULL)
 			{
 				//*	now allocate an array for the constellation stars and FIND them
-				gConstStarPtr	=	(TYPE_CelestData *)malloc((totalStars + 5) * sizeof(TYPE_CelestData));
+				gConstStarPtr	=	(TYPE_CelestData *)calloc((totalStars + 5), sizeof(TYPE_CelestData));
 				if (gConstStarPtr != NULL)
 				{
 					gConstStarCount	=	totalStars;
@@ -5119,6 +5120,11 @@ int					myColor;
 							if (dataSource == kDataSrc_Orginal)
 							{
 								DrawObjectByShape(xcoord, ycoord, shape, magn);
+
+//								char		idNameString[64];
+//								sprintf(idNameString, "#%d", objectptr[iii].id);
+//								LLD_DrawCString(xcoord + 3, ycoord + 10, idNameString, 1);
+
 							}
 							else
 							{
@@ -7436,6 +7442,7 @@ double	raSecs;
 short	declDegress;
 short	declMinutes;
 double	declSecs;
+int		informStrLen;
 
 	elevDegress	=	cCursor_elev * 180 / PI;
 	azDegress	=	cCursor_az * 180 / PI;
@@ -7467,10 +7474,20 @@ double	declSecs;
 															elevDegress);
 	if (cInform_dist < kMinInformDist)
 	{
-		if (strlen(cInform_name) > 0)
+		informStrLen	=	strlen(cInform_name);
+		if (informStrLen > 0)
 		{
-			strcat(cursorString, " - ");
-			strcat(cursorString, cInform_name);
+			if ((informStrLen + strlen(cursorString)) < sizeof(cursorString))
+			{
+				strcat(cursorString, " - ");
+				strcat(cursorString, cInform_name);
+			}
+			else
+			{
+				CONSOLE_DEBUG_W_STR("cursorString\t=", cursorString);
+				CONSOLE_DEBUG_W_STR("cInform_name\t=", cInform_name);
+				CONSOLE_ABORT(__FUNCTION__);
+			}
 		}
 	}
 	SetWidgetText(kSkyTravel_CursorInfoTextBox,	cursorString);
@@ -7535,8 +7552,24 @@ long			pixDist;
 
 	cloestDistance	=	9999;
 
+	//--------------------------------------------------------------------------
+	//*	kDataSrc_Messier
+	if (cDispOptions.dispMessier && (gMessierObjectPtr != NULL) && (gMessierObjectCount > 0))
+	{
+		pixDist	=	FindXX_YYinObjectList(	gMessierObjectPtr,
+											gMessierObjectCount,
+											cCsrx,				//*	current x location of cursor,
+											cCsry,				//*	current y location of cursor,
+											&foundObject);		//*	closestObject
+		if (pixDist < cloestDistance)
+		{
+			cloestDistance	=	pixDist;
+			closestObject	=	foundObject;
+		}
+	}
 
-	if (cDispOptions.dispDefaultData && (gStarDataPtr != NULL))
+	//--------------------------------------------------------------------------
+	if (cDispOptions.dispDefaultData && (gStarDataPtr != NULL) && (gStarCount > 0))
 	{
 		pixDist	=	FindXX_YYinObjectList(	gStarDataPtr,
 											gStarCount,
@@ -7561,6 +7594,7 @@ long			pixDist;
 		closestObject	=	foundObject;
 	}
 
+	//--------------------------------------------------------------------------
 	if (cDispOptions.dispNGC && (gNGCobjectPtr != NULL) && (gNGCobjectCount > 0))
 	{
 		pixDist	=	FindXX_YYinObjectList(	gNGCobjectPtr,
@@ -7575,6 +7609,7 @@ long			pixDist;
 		}
 	}
 
+	//--------------------------------------------------------------------------
 	if (gZodiacPtr != NULL)
 	{
 		pixDist	=	FindXX_YYinObjectList(	gZodiacPtr,
@@ -7590,6 +7625,7 @@ long			pixDist;
 		}
 	}
 
+	//--------------------------------------------------------------------------
 	//*	kDataSrc_YaleBrightStar
 	if (cDispOptions.dispYale && (gYaleStarDataPtr != NULL) && (gYaleStarCount > 0))
 	{
@@ -7606,6 +7642,7 @@ long			pixDist;
 	}
 
 
+	//--------------------------------------------------------------------------
 	//*	kDataSrc_Hipparcos
 	if (cDispOptions.dispHipparcos && (gHipObjectPtr != NULL) && (gHipObjectCount > 0))
 	{
@@ -7622,19 +7659,20 @@ long			pixDist;
 	}
 
 
+
 	cInform_dist	=	0x7fff;
 
 	//*	lets make sure we have something semi valid
 	if (cloestDistance < kMinInformDist)
 	{
 	short	ii;
-	char	tmpString[8];
 	bool	foundMoreInfo;
-	char	moreInfo[128];
-	double	distance;
+	char	tmpString[8]	=	"";
+	char	moreInfo[128]	=	"";
+	double	distance_LY;
 
 		cInform_dist		=	cloestDistance;
-
+		strcpy(cInform_name, "Unknown");
 
 		cInform_dist	=	1;
 		switch(closestObject.dataSrc)
@@ -7721,19 +7759,48 @@ long			pixDist;
 					strcat(cInform_name, moreInfo);
 				}
 				break;
+
+			case kDataSrc_Messier:
+				sprintf(cInform_name, "Messier %s in %s", closestObject.shortName, closestObject.longName);
+				break;
+
+			case kDataSrc_OpenNGC:
+				sprintf(cInform_name, "OpenNGC = %s mag=%4.2f", closestObject.longName, closestObject.realMagnitude);
+				break;
+
+			default:
+				CONSOLE_DEBUG_W_STR("cInform_name\t=", cInform_name);
+				CONSOLE_DEBUG_W_NUM("dataSrc      \t=", closestObject.dataSrc);
+				strcpy(cInform_name, "default");
+				break;
 		}
+
 		//*	check for parallax and display in light years if avaialble
 		if (closestObject.parallax > 0.0)
 		{
 			//*	1 / parallax = # of parsecs
 			//*	1 parsec = 3.26 light years
 
-			distance	=	(1.0 / closestObject.parallax) * 3.26;
+			distance_LY	=	(1.0 / closestObject.parallax) * 3.26;
 
-			sprintf(moreInfo, " parallax = %5.4f distance=%4.2f light years", closestObject.parallax, distance);
-			strcat(cInform_name, moreInfo);
+			sprintf(moreInfo, " parallax = %5.4f distance=%4.2f light years", closestObject.parallax, distance_LY);
+
+			if ((strlen(cInform_name) + strlen(moreInfo)) < sizeof(cInform_name))
+			{
+				strcat(cInform_name, moreInfo);
+			}
+
+
+	//		CONSOLE_DEBUG_W_STR("cInform_name\t=", cInform_name);
+	//		CONSOLE_DEBUG_W_STR("moreInfo     \t=", moreInfo);
 		}
 	}
+//	if (strlen(cInform_name) >= 255)
+//	{
+//		CONSOLE_DEBUG_W_STR("cInform_name\t=", cInform_name);
+//		CONSOLE_DEBUG_W_NUM("Length      \t=", strlen(cInform_name));
+//		CONSOLE_ABORT(__FUNCTION__);
+//	}
 }
 
 //*****************************************************************************
@@ -8007,6 +8074,24 @@ bool	foundIt;
 	strcpy(cFoundDatabase, "");
 	strcpy(cFoundName, "");
 	//-------------------------------------------------------------------------------
+	//*	check to see if they specified original DB #
+	if (objectName[0] == '#')
+	{
+		CONSOLE_DEBUG_W_STR("Looking in NGC for", objectName);
+		foundIt	=	SearchSkyObjectsDataListByNumber(	gStarDataPtr,
+														gStarCount,
+														kDataSrc_Orginal,
+														NULL,
+														&objectName[1]);
+		if (foundIt)
+		{
+			cDispOptions.dispNGC	=	true;
+			strcpy(cFoundDatabase, "OriginalDB");
+		}
+	}
+
+
+	//-------------------------------------------------------------------------------
 	//*	check to see if they specified an NGC object
 	if (strncasecmp(objectName, "NGC", 3) == 0)
 	{
@@ -8155,7 +8240,7 @@ bool	foundIt;
 	if (cFoundSomething == false)
 	{
 		CONSOLE_DEBUG_W_STR("Looking in default for", objectName);
-		foundIt	=	SearchSkyObjectsDataListByShortName(	gStarDataPtr,
+		foundIt	=	SearchSkyObjectsDataListByShortName(gStarDataPtr,
 														gStarCount,
 														kDataSrc_Orginal,
 														objectName);

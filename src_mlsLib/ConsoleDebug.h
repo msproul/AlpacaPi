@@ -13,6 +13,7 @@
 //*	Jun 22,	2020	<MLS> Added debug timing to ConsoleDebug.h
 //*	Jun 30,	2020	<MLS> Added CONSOLE_ABORT()
 //*	Aug 10,	2021	<MLS> Added CONSOLE_DEBUG_W_LHEX()	long hex
+//*	Apr 18,	2022	<MLS> Added CONSOLE_DEBUG_W_BOOL
 //***************************************************************************************
 //#include	"ConsoleDebug.h"
 
@@ -45,6 +46,7 @@
 
 	//*	use these defines for debugging
 	#define	CONSOLE_DEBUG(msg)							printf("%-40s:%4d [%-20s] %s\n",			__FILE__, __LINE__, __FUNCTION__, msg);			fflush(stdout);
+	#define	CONSOLE_DEBUG_W_BOOL(msg, tfValue)			printf("%-40s:%4d [%-20s] %s %s\n", 		__FILE__, __LINE__, __FUNCTION__, msg, (tfValue ? "TRUE" : "FALSE"));	fflush(stdout);
 	#define	CONSOLE_DEBUG_W_NUM(msg, num)				printf("%-40s:%4d [%-20s] %s %d\n", 		__FILE__, __LINE__, __FUNCTION__, msg, num);	fflush(stdout);
 	#define	CONSOLE_DEBUG_W_NUM(msg, num)				printf("%-40s:%4d [%-20s] %s %d\n", 		__FILE__, __LINE__, __FUNCTION__, msg, num);	fflush(stdout);
 	#define	CONSOLE_DEBUG_W_LONG(msg, num)				printf("%-40s:%4d [%-20s] %s %ld\n", 		__FILE__, __LINE__, __FUNCTION__, msg, num);	fflush(stdout);

@@ -269,6 +269,11 @@ char		gHostName[48]				=	"";
 	#include	"slittracker.h"
 #endif // _ENABLE_SLIT_TRACKER_
 
+#ifdef _ENABLE_IMU_
+	#include "imu_lib.h"
+#endif // _ENABLE_IMU_
+
+
 #include	"managementdriver.h"
 
 #if defined(__arm__) && defined(_ENABLE_WIRING_PI_)
@@ -3052,6 +3057,10 @@ bool			controllWindowActive;
 	CONSOLE_DEBUG_W_DBL("freeDiskSpace_Gigs\t=", freeDiskSpace_Gigs);
 
 	GetMyHostName();
+#ifdef _ENABLE_IMU_
+	IMU_Init();
+#endif // _ENABLE_IMU_
+
 
 #ifdef _ENABLE_FITS_
 	//*	cfitsio version

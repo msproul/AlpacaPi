@@ -165,6 +165,7 @@
 //*	Dec 28,	2021	<MLS> Added GetPrecentCompleted() determines the status of the current exposure
 //*	Feb 14,	2022	<MLS> Fixed crash bug when creating LiveWindow
 //*	Apr 16,	2022	<MLS> Added CreateFakeImageData() for debugging without a sky
+//*	Apr 18,	2022	<MLS> Added DumpCameraProperties()
 //*****************************************************************************
 //*	Jan  1,	2119	<TODO> ----------------------------------------
 //*	Jun 26,	2119	<TODO> Add support for sub frames
@@ -1836,9 +1837,16 @@ TYPE_ASCOM_STATUS		alpacaErrCode;
 			}
 			else
 			{
-				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Failed to read temperature:");
-				strcat(alpacaErrMsg, cLastCameraErrMsg);
-				CONSOLE_DEBUG(alpacaErrMsg);
+				if (strlen(cLastCameraErrMsg) > 0)
+				{
+					GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, cLastCameraErrMsg);
+				}
+				else
+				{
+					GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Failed to read temperature:");
+				}
+//				CONSOLE_DEBUG(alpacaErrMsg);
+//				CONSOLE_DEBUG_W_HEX("alpacaErrCode\t=", alpacaErrCode);
 			}
 		}
 		else
@@ -3461,7 +3469,6 @@ TYPE_EXPOSURE_STATUS	internalCameraState;
 
 	return(alpacaCameraState);
 }
-
 
 //*****************************************************************************
 TYPE_ASCOM_STATUS	CameraDriver::Get_Lastexposureduration(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
@@ -5327,8 +5334,8 @@ double				deltaExp_secs;
 //*****************************************************************************
 bool	CameraDriver::AllcateImageBuffer(long bufferSize)
 {
-uint32_t		myBufferSize;
-bool			successFlag;
+int32_t		myBufferSize;
+bool		successFlag;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -7695,6 +7702,112 @@ bool	foundIt;
 
 
 //*****************************************************************************
+void	CameraDriver::DumpCameraProperties(const char *callingFunctionName)
+{
+char	titleLine[128];
+
+
+	CONSOLE_DEBUG(		"*************************************************************");
+	sprintf(titleLine,	"******************** %s *******************", __FUNCTION__);
+	CONSOLE_DEBUG(titleLine);
+	sprintf(titleLine,	"************* Called from: %-20s *************", callingFunctionName);
+	CONSOLE_DEBUG(titleLine);
+	CONSOLE_DEBUG(		"*************************************************************");
+
+	CONSOLE_DEBUG_W_NUM(	"cCameraProp.BinX              \t=",	cCameraProp.BinX);
+	CONSOLE_DEBUG_W_NUM(	"cCameraProp.BinY              \t=",	cCameraProp.BinY);
+	CONSOLE_DEBUG_W_DBL(	"cCameraProp.CCDtemperature    \t=",	cCameraProp.CCDtemperature);
+	CONSOLE_DEBUG_W_BOOL(	"cCameraProp.CanAbortExposure  \t=",	cCameraProp.CanAbortExposure);
+	CONSOLE_DEBUG_W_BOOL(	"cCameraProp.CanAsymmetricBin  \t=",	cCameraProp.CanAsymmetricBin);
+	CONSOLE_DEBUG_W_BOOL(	"cCameraProp.CanFastReadout    \t=",	cCameraProp.CanFastReadout);
+	CONSOLE_DEBUG_W_BOOL(	"cCameraProp.CanGetCoolerPower \t=",	cCameraProp.CanGetCoolerPower);
+	CONSOLE_DEBUG_W_BOOL(	"cCameraProp.CanPulseGuide     \t=",	cCameraProp.CanPulseGuide);
+	CONSOLE_DEBUG_W_BOOL(	"cCameraProp.Cansetccdtemperature\t=",	cCameraProp.Cansetccdtemperature);
+	CONSOLE_DEBUG_W_BOOL(	"cCameraProp.CanStopExposure   \t=",	cCameraProp.CanStopExposure);
+	CONSOLE_DEBUG_W_BOOL(	"cCameraProp.CoolerOn          \t=",	cCameraProp.CoolerOn);
+
+	CONSOLE_DEBUG_W_NUM(	"cCameraProp.CameraXsize       \t=",	cCameraProp.CameraXsize);
+	CONSOLE_DEBUG_W_NUM(	"cCameraProp.CameraYsize       \t=",	cCameraProp.CameraYsize);
+	CONSOLE_DEBUG_W_BOOL(	"cCameraProp.HasShutter        \t=",	cCameraProp.HasShutter);
+	CONSOLE_DEBUG_W_NUM(	"cCameraProp.MaxADU            \t=",	cCameraProp.MaxADU);
+	CONSOLE_DEBUG_W_NUM(	"cCameraProp.MaxbinX           \t=",	cCameraProp.MaxbinX);
+	CONSOLE_DEBUG_W_NUM(	"cCameraProp.MaxbinY           \t=",	cCameraProp.MaxbinY);
+	CONSOLE_DEBUG_W_DBL(	"cCameraProp.PixelSizeX        \t=",	cCameraProp.PixelSizeX);
+	CONSOLE_DEBUG_W_DBL(	"cCameraProp.PixelSizeY        \t=",	cCameraProp.PixelSizeY);
+
+
+//	short					BayerOffsetX;			//*	The X offset of the Bayer matrix.
+//	short					BayerOffsetY;			//*	The Y offset of the Bayer matrix.
+
+//	TYPE_ALPACA_CAMERASTATE	CameraState;			//*	the camera operational state.
+//	double					CCDtemperature;			//*	Returns the current CCD temperature
+//	bool					CoolerOn;				//*	Returns the current cooler on/off state.
+////+	double					CoolerPower;			//*	Returns the present cooler power level
+//	double					ElectronsPerADU;		//*	Returns the gain of the camera
+//	double					ExposureMax_seconds;	//*	Returns the maximum exposure time supported by StartExposure.
+//	long					ExposureMax_us;			//*	micro-seconds
+//	double					ExposureMin_seconds;	//*	Returns the Minimium exposure time
+//	long					ExposureMin_us;			//*	micro-seconds
+//	double					ExposureResolution;		//*	The smallest increment in exposure time supported by StartExposure.
+//
+////+	bool					FastReadout;			//*	Returns whether Fast Readout Mode is enabled.
+//	double					FullWellCapacity;		//*	Reports the full well capacity of the camera
+//	int						Gain;					//*	Returns the camera's gain
+//	int						GainMax;				//*	Maximum Gain value of that this camera supports
+//	int						GainMin;				//*	Minimum Gain value of that this camera supports
+////+	???						Gains;					//*	List of Gain names supported by the camera
+//	bool					HasShutter;				//*	Indicates whether the camera has a mechanical shutter
+////+	double					HeatSinkTemperature;	//*	Returns the current heat sink temperature.
+//	bool					ImageReady;				//*	Indicates that an image is ready to be downloaded
+//	bool					IsPulseGuiding;			//*	Indicates that the camera is pulse guideing.
+//
+//
+//
+//	//==========================================================================================
+//	//*	information about the last exposure
+//	//*	we need to record a bunch of stuff in case they get changed before
+//	//*	the image gets downloaded
+//	uint32_t				Lastexposure_duration_us;	//*	stored in microseconds, ASCOM wants seconds, convert on the fly
+//														//*	Reported as a string
+//	struct timeval			Lastexposure_StartTime;		//*	time exposure or video was started for frame rate calculations
+//	struct timeval			Lastexposure_EndTime;		//*	NON-ALPACA----time last exposure ended
+////+	TYPE_IMAGE_ROI_Info		LastExposure_ROIinfo;
+//
+//
+//
+//	//===================================
+//	//*	sub-frame information
+//	int						NumX;					//*	The current subframe width
+//	int						NumY;					//*	The current subframe height
+//
+//	int						StartX;					//*	The current subframe X axis start position
+//	int						StartY;					//*	The current subframe Y axis start position
+//
+//	int						Offset;					//*	The camera's offset
+//	int						OffsetMax;				//*	Maximum offset value of that this camera supports
+//	int						OffsetMin;				//*	Minimum offset value of that this camera supports
+////?	int						Offsets;				//*	List of offset names supported by the camera
+//	int						PercentCompleted;		//*	Indicates percentage completeness of the current operation
+//
+//
+//	double					SetCCDTemperature;		//*	The current camera cooler setpoint in degrees Celsius.
+//
+//	//*	currently ReadoutMode is implemented at execution time
+//	int						ReadOutMode;					//*	Indicates the canera's readout mode as an index into the array ReadoutModes
+//	READOUTMODE				ReadOutModes[kMaxReadOutModes];	//*	List of available readout modes
+//
+//	char					SensorName[kMaxSensorNameLen];	//	Sensor name
+////+	TYPE_SensorType			SensorType;						//*	Type of information returned by the the camera sensor (monochrome or colour)
+//
+//	//=======================================================================
+//	//=======================================================================
+//	//*	Extra stuff, not defined by Alpaca standard
+//	int						FlipMode;
+//
+}
+
+
+//*****************************************************************************
 void	CameraDriver::CreateFakeImageData(unsigned char *cameraDataPtr, int imageWith, int imageHeight, int bytesPerPixel)
 {
 int			iii;
@@ -7738,8 +7851,8 @@ int			pixelValueInt;
 					//*	16 bit mono
 					case 2:
 						pixelValueInt				=	32768 + (32700 * sinValue);
-						cameraDataPtr[pixelIndex++]	=	((pixelValueInt & 0x00ffff) >> 8) & 0x00ff;
 						cameraDataPtr[pixelIndex++]	=	(pixelValueInt & 0x00ff);
+						cameraDataPtr[pixelIndex++]	=	((pixelValueInt & 0x00ffff) >> 8) & 0x00ff;
 						break;
 
 					//*	RGB

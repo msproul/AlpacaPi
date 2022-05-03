@@ -625,6 +625,7 @@ class CameraDriver: public AlpacaDriver
 				TYPE_ASCOM_STATUS	Read_Readoutmodes(char *readOutModeString, bool includeQuotes=false);
 				void				AddReadoutModeToList(const TYPE_IMAGE_TYPE imageType, const char *imgTypeStr=NULL);
 
+				void				DumpCameraProperties(const char *callingFunctionName);
 				void				CreateFakeImageData(unsigned char *cameraDataPtr, int imageWith, int imageHeight, int bytesPerPixel);
 
 	//*****************************************************************************

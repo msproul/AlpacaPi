@@ -461,10 +461,10 @@ int			objCntr;
 				//	(CV_WINDOW_AUTOSIZE)
 					);
 
-	cv::resizeWindow(		cWindowName, cWidth, cHeight);
+	cv::resizeWindow(	cWindowName, cWidth, cHeight);
 	cv::moveWindow(		cWindowName, (20 + ((gControllerCnt - 1) * (150))), 10);
 
-	CONSOLE_DEBUG("Setting mouse call back routine!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+//	CONSOLE_DEBUG("Setting mouse call back routine!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 	cv::setMouseCallback(	cWindowName,
 							LiveWindowMouseCallback,
 							(void *)this);
@@ -557,10 +557,12 @@ int		iii;
 		}
 	}
 
+#if (CV_MAJOR_VERSION >= 4)
 	//---try------try------try------try------try------try---
 	try
 	{
 	std::string	myWindowName(cWindowName);
+
 		CONSOLE_DEBUG_W_STR("try cv::destroyWindow", cWindowName);
 		CONSOLE_DEBUG_W_STR("myWindowName", myWindowName.c_str());
 //		cv::destroyWindow(cWindowName);
@@ -579,6 +581,25 @@ int		iii;
 		}
 	}
 	//---end------end------end------end------end------end---
+#else	//	(CV_MAJOR_VERSION >= 4)
+	#warning "Compiling for openCV 3 or eariler"
+	//---try------try------try------try------try------try---
+	try
+	{
+		cvDestroyWindow(cWindowName);
+	}
+	catch(cv::Exception& ex)
+	{
+		//*	we sometimes can open the same window twice, this should not happen but sometimes does.
+		//*	this catch prevents opencv from crashing
+		CONSOLE_DEBUG("cvDestroyWindow() had an exception");
+		if (ex.code != CV_StsAssert)
+		{
+			CONSOLE_DEBUG_W_NUM("openCV error code\t=",	ex.code);
+		}
+	}
+	//---end------end------end------end------end------end---
+#endif	//	(CV_MAJOR_VERSION >= 4)
 
 #else
 	//*	release the image
@@ -638,7 +659,11 @@ bool		validData;
 		//*	if its not connected, send the connect command
 		if (cCommonProp.Connected == false)
 		{
-			AlpacaSetConnected(cAlpacaDeviceTypeStr, true);
+			validData	=	AlpacaSetConnected(cAlpacaDeviceTypeStr, true);
+			if (validData)
+			{
+				cReadStartup	=	true;
+			}
 		}
 	}
 	else
@@ -2101,7 +2126,7 @@ cv::Rect	widgetRect;
 				CONSOLE_DEBUG_W_NUM("Image is too big", theOpenCVimage->width);
 			}
 		#if (CV_MAJOR_VERSION == 3)
-			theWidget->roiRect	=	widgetRect;
+			theWidget->roiRect			=	widgetRect;
 		#else
 			theWidget->roiRect.x		=	widgetRect.x;
 			theWidget->roiRect.y		=	widgetRect.y;

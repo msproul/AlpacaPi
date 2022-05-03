@@ -21,6 +21,8 @@
 //*
 //*	References:
 //*			https://qsimaging.com/
+//*
+//*			sudo apt-get install libftdi-devel		??????
 //*****************************************************************************
 //*	Edit History
 //*****************************************************************************
@@ -53,33 +55,31 @@
 #include	"QSIError.h"
 
 
-//#define	_SIMULATE_CAMERA_
+#define	_SIMULATE_CAMERA_
 
 //**************************************************************************************
 void	CreateQSI_CameraObjects(void)
 {
-int				iii;
-//std::string		serial("");
-//std::string		desc("");
+//int				iii;
+unsigned int	qsi_Result;
 std::string		info	=	"";
 std::string		modelNumber("");
 std::string		camSerial[QSICamera::MAXCAMERAS];
 std::string		camDesc[QSICamera::MAXCAMERAS];
 std::string		text;
-std::string		last("");
+std::string		lastError("");
 int				numCamerasFound;
-QSICamera		qsiCam;
+QSICamera		cQSIcam;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
 	numCamerasFound	=	0;
 	camSerial[0]	=	"";
-	qsiCam.put_UseStructuredExceptions(true);
-	try
+	cQSIcam.put_UseStructuredExceptions(false);
+	qsi_Result	=	cQSIcam.get_DriverInfo(info);
+	if (qsi_Result == QSI_OK)
 	{
-		qsiCam.get_DriverInfo(info);
 		CONSOLE_DEBUG(info.c_str());
-	//	std::cout << "qsiapi version: " << info << "\n";
 
 		AddLibraryVersion("camera", "QSI", info.c_str());
 		LogEvent(	"camera",
@@ -87,45 +87,53 @@ QSICamera		qsiCam;
 					NULL,
 					kASCOM_Err_Success,
 					info.c_str());
+	}
+	else
+	{
+		CONSOLE_DEBUG("Error getting get_DriverInfo()");
+	}
 
-		//*	Discover the connected cameras
-		qsiCam.get_AvailableCameras(camSerial, camDesc, numCamerasFound);
+	//*	Discover the connected cameras
+	qsi_Result	=	cQSIcam.get_AvailableCameras(camSerial, camDesc, numCamerasFound);
+	if (qsi_Result == QSI_OK)
+	{
 		CONSOLE_DEBUG_W_NUM("numCamerasFound\t=", numCamerasFound);
-	}
-	catch (std::runtime_error &err)
-	{
-	std::string		text;
-	std::string		last("");
-		text	=	err.what();
-//		std::cout << text << "\n";
-		CONSOLE_DEBUG(text.c_str());
 
-		qsiCam.get_LastError(last);
-		CONSOLE_DEBUG(last.c_str());
-		CONSOLE_ABORT(__FUNCTION__);
-	}
-
-	if (numCamerasFound > 0)
-	{
-		for (iii=0; iii < numCamerasFound; iii++)
+//		if (numCamerasFound > 0)
+//		{
+//			for (iii=0; iii < numCamerasFound; iii++)
+//			{
+//				new CameraDriverQSI(iii, camSerial[iii]);
+//			}
+//		}
+//		else
 		{
-			new CameraDriverQSI(iii, camSerial[iii]);
+			//*	for debugging without a camera
+			new CameraDriverQSI(0, camSerial[0]);
 		}
 	}
 	else
 	{
-		//*	for debugging without a camera
-		new CameraDriverQSI(0, camSerial[0]);
+		cQSIcam.get_LastError(lastError);
+		CONSOLE_DEBUG(lastError.c_str());
+		CONSOLE_ABORT(__FUNCTION__);
 	}
 }
 
 //**************************************************************************************
 CameraDriverQSI::CameraDriverQSI(	const int	deviceNum,
 									std::string qsiSerialNumber)
-	:CameraDriver()
+					:CameraDriver()
 {
-int			qsi_Result;
-bool		cameraInfoOK;
+unsigned int	qsi_Result;
+bool			cameraInfoOK;
+bool			isConnected;
+//std::string		text		=	"";
+std::string		lastError	=	"";
+std::string		info		=	"";
+std::string		camSerial[QSICamera::MAXCAMERAS];
+std::string		camDesc[QSICamera::MAXCAMERAS];
+int				numCamerasFound;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG_W_NUM("Creating QSI device number ", deviceNum);
@@ -139,41 +147,30 @@ bool		cameraInfoOK;
 	strcpy(cCommonProp.Name,		"QSI");
 
 
+	cTempReadSupported	=	true;
+
+	//*	these are redundant
+	qsi_Result	=	cQSIcam.put_UseStructuredExceptions(false);
+	qsi_Result	=	cQSIcam.get_DriverInfo(info);
+	qsi_Result	=	cQSIcam.get_AvailableCameras(camSerial, camDesc, numCamerasFound);
+	if (qsi_Result != QSI_OK)
+	{
+		cQSIcam.get_LastError(lastError);
+		CONSOLE_DEBUG_W_STR("QSI Result (get_AvailableCameras)\t=",	lastError.c_str());
+	}
+
 	cQSIserialNumber	=	qsiSerialNumber;
-	cQSIcamera.put_UseStructuredExceptions(false);
+	CONSOLE_DEBUG_W_STR("cQSIserialNumber\t=",	cQSIserialNumber.c_str());
 
-	cQSIcamera.put_SelectCamera(cQSIserialNumber);
-	cQSIcamera.put_IsMainCamera(true);
-
-	//------------------------------------------------------
-	try
+	isConnected		=	AlpacaConnect();
+	if (isConnected)
 	{
-		//*	select the device that we were assigned
-		qsi_Result	=	cQSIcamera.put_QSISelectedDevice(cQSIserialNumber);
 
-
-//		//*	set to the default camera, only one attached
-//		cQSIcamera.put_QSISelectedDevice(std::string(""));
 	}
-	catch (std::runtime_error &err)
+	else
 	{
-	std::string		text;
-	std::string		last("");
-
-		text	=	err.what();
-		CONSOLE_DEBUG(text.c_str());
-
-		cQSIcamera.get_LastError(last);
-		CONSOLE_DEBUG(last.c_str());
-
-		CONSOLE_ABORT(__FUNCTION__);
+		CONSOLE_DEBUG("Failed to Connect!!!!!!!!");
 	}
-
-//	if (qsi_Result == QSI_OK)
-	{
-		AlpacaConnect();
-	}
-
 	cameraInfoOK	=	ReadQSIcameraInfo();
 	if (cameraInfoOK)
 	{
@@ -186,6 +183,7 @@ bool		cameraInfoOK;
 		CONSOLE_DEBUG("Failed to read QSI camera info!!!!!!!!");
 	}
 
+	DumpCameraProperties(__FUNCTION__);
 
 #ifdef _USE_OPENCV_
 	sprintf(cOpenCV_ImgWindowName, "%s-%d", cCommonProp.Name, cCameraID);
@@ -200,41 +198,117 @@ bool		cameraInfoOK;
 //**************************************************************************************
 CameraDriverQSI::~CameraDriverQSI(void)
 {
+bool			isConnected;
+unsigned int	qsi_Result;
+std::string		lastError("");
+
 	CONSOLE_DEBUG(__FUNCTION__);
+	//---------------------------------------------------------
+	//*	check to see if the camera is already connected
+	qsi_Result	=	cQSIcam.get_Connected(&isConnected);
+	if ((qsi_Result == QSI_OK) && (isConnected == true))
+	{
+		// Disconnect from the camera to the selected camera and retrieve camera parameters
+		qsi_Result	=	cQSIcam.put_Connected(false);
+		if (qsi_Result == QSI_OK)
+		{
+			CONSOLE_DEBUG("cQSIcam.put_Connected worked, now disconnected");
+		}
+		else
+		{
+			cQSIcam.get_LastError(lastError);
+			CONSOLE_DEBUG_W_STR("QSI Result (put_Connected)\t=",	lastError.c_str());
+		}
+	}
+	else
+	{
+		cQSIcam.get_LastError(lastError);
+		CONSOLE_DEBUG_W_STR("QSI Resul (get_Connected)\t=",	lastError.c_str());
+	}
 }
 
 
 //*****************************************************************************
 bool	CameraDriverQSI::AlpacaConnect(void)
 {
-bool	isMain;
-int		qsi_Result;
+bool			isMain;
+bool			isConnected;
+unsigned int	qsi_Result;
+std::string		text;
+std::string		lastError("");
 
 	CONSOLE_DEBUG(__FUNCTION__);
-
-	//------------------------------------------------------
-	try
+	isConnected	=	false;
+	qsi_Result	=	cQSIcam.put_SelectCamera(cQSIserialNumber);
+	if (qsi_Result == QSI_OK)
 	{
-		// Get the current selected camera role
-		// Either main or guider
-		qsi_Result	=	cQSIcamera.get_IsMainCamera(&isMain);
-		// Set the camera role to main camera (not guider)
-		qsi_Result	=	cQSIcamera.put_IsMainCamera(true);
-		// Connect to the selected camera and retrieve camera parameters
-		qsi_Result	=	cQSIcamera.put_Connected(true);
+		CONSOLE_DEBUG_W_STR("cQSIcam.put_SelectCamera worked\t=",	cQSIserialNumber.c_str());
 	}
-	catch (std::runtime_error &err)
+	else
 	{
-	std::string		text;
-	std::string		last("");
-
-		text	=	err.what();
-		CONSOLE_DEBUG(text.c_str());
-
-		cQSIcamera.get_LastError(last);
-		CONSOLE_DEBUG(last.c_str());
+		cQSIcam.get_LastError(lastError);
+		CONSOLE_DEBUG_W_STR("QSI Result, put_SelectCamera\t=",	lastError.c_str());
 	}
-	return(true);
+
+	// Get the current selected camera role
+	// Either main or guider
+	qsi_Result	=	cQSIcam.get_IsMainCamera(&isMain);
+	if (qsi_Result == QSI_OK)
+	{
+		CONSOLE_DEBUG_W_NUM("cQSIcam.get_IsMainCamera\t=",	isMain);
+	}
+	else
+	{
+		cQSIcam.get_LastError(lastError);
+		CONSOLE_DEBUG_W_STR("QSI Result\t=",	lastError.c_str());
+	}
+
+	// Set the camera role to main camera (not guider)
+	qsi_Result	=	cQSIcam.put_IsMainCamera(true);
+	if (qsi_Result == QSI_OK)
+	{
+		CONSOLE_DEBUG("cQSIcam.put_IsMainCamera worked");
+	}
+	else
+	{
+		cQSIcam.get_LastError(lastError);
+		CONSOLE_DEBUG_W_STR("QSI Result (put_IsMainCamera)\t=",	lastError.c_str());
+	}
+
+	//---------------------------------------------------------
+	//*	check to see if the camera is already connected
+	qsi_Result	=	cQSIcam.get_Connected(&isConnected);
+	if (qsi_Result == QSI_OK)
+	{
+		CONSOLE_DEBUG_W_NUM("get_Connected returned QSI_OK: isConnected\t=", isConnected);
+		if (isConnected == false)
+		{
+			// Connect to the selected camera and retrieve camera parameters
+			CONSOLE_DEBUG("Trying to connect (calling put_Connected(true))");
+			qsi_Result	=	cQSIcam.put_Connected(true);
+			if (qsi_Result == QSI_OK)
+			{
+				CONSOLE_DEBUG("cQSIcam.put_Connected worked");
+				isConnected	=	true;
+			}
+			else
+			{
+				cQSIcam.get_LastError(lastError);
+				CONSOLE_DEBUG_W_STR("QSI Result (put_Connected)\t=",	lastError.c_str());
+			}
+		}
+		else if ((qsi_Result == QSI_OK) && (isConnected == true))
+		{
+			CONSOLE_DEBUG("Already connected");
+		}
+	}
+	else
+	{
+		cQSIcam.get_LastError(lastError);
+		CONSOLE_DEBUG_W_STR("QSI Resul (get_Connected)\t=",	lastError.c_str());
+	}
+
+	return(isConnected);
 }
 
 //*****************************************************************************
@@ -242,17 +316,23 @@ int		qsi_Result;
 //*****************************************************************************
 bool	CameraDriverQSI::ReadQSIcameraInfo(void)
 {
-int			qsi_Result;
-bool		cameraInfoOK;
-bool		canSetTemp;
-bool		hasFilters;
-long		xsize;
-long		ysize;
-std::string	serial("");
-std::string	desc("");
-std::string	info	=	"";
-std::string	modelNumber("");
-std::string	lastError("");
+unsigned int	qsi_Result;
+bool			cameraInfoOK;
+bool			canSetTemp;
+bool			hasFilters;
+long			xsize;
+long			ysize;
+double			electronsPerADU;
+double			fullWellCapacity;
+short			maxBin;
+long			maxADU;
+double			pixelSize;
+std::string		serial("");
+std::string		desc("");
+std::string		text("");
+std::string		info	=	"";
+std::string		modelNumber("");
+std::string		lastError("");
 
 
 	CONSOLE_DEBUG(__FUNCTION__);
@@ -265,136 +345,240 @@ std::string	lastError("");
 	cCameraProp.NumX		=	4000;
 	cCameraProp.NumY		=	3000;
 
-	//------------------------------------------------------
-	try
+	AddReadoutModeToList(kImageType_RAW16);
+
+	//--------------------------------------------------------------
+	//*	Get Model Number
+	qsi_Result	=	cQSIcam.get_ModelNumber(modelNumber);
+	if (qsi_Result == QSI_OK)
 	{
-		//--------------------------------------------------------------
-		//*	Get Model Number
-		qsi_Result	=	cQSIcamera.get_ModelNumber(modelNumber);
-		if (qsi_Result == QSI_OK)
-		{
-			strcpy(cCommonProp.Name,		modelNumber.c_str());
-			CONSOLE_DEBUG_W_STR("QSI-modelNumber\t=",	cCommonProp.Name);
-		}
-		else if (qsi_Result == QSI_NOTCONNECTED)
-		{
-			cQSIcamera.get_LastError(lastError);
-			CONSOLE_DEBUG_W_STR("QSI Result\t\t=",	lastError.c_str());
-			cameraInfoOK	=	false;
-		}
+		strcpy(cCommonProp.Name,		modelNumber.c_str());
+		CONSOLE_DEBUG_W_STR("QSI-modelNumber\t=",	cCommonProp.Name);
+	}
+	else if (qsi_Result == QSI_NOTCONNECTED)
+	{
+		cQSIcam.get_LastError(lastError);
+		CONSOLE_DEBUG_W_STR("QSI Result\t=",	lastError.c_str());
+		cameraInfoOK	=	false;
+	}
 
-		//--------------------------------------------------------------
-		//*	Get Description
-		qsi_Result	=	cQSIcamera.get_Description(desc);
-		if (qsi_Result == QSI_OK)
-		{
-			strcpy(cCommonProp.Description,		desc.c_str());
-			CONSOLE_DEBUG_W_STR("QSI-Description\t=",	cCommonProp.Description);
-		}
-		else
-		{
-			cQSIcamera.get_LastError(lastError);
-			CONSOLE_DEBUG_W_STR("QSI Result\t\t=",	lastError.c_str());
-			cameraInfoOK	=	false;
-		}
+	//--------------------------------------------------------------
+	//*	Get Description
+	qsi_Result	=	cQSIcam.get_Description(desc);
+	if (qsi_Result == QSI_OK)
+	{
+		strcpy(cCommonProp.Description,		desc.c_str());
+		CONSOLE_DEBUG_W_STR("QSI-Description\t=",	cCommonProp.Description);
+	}
+	else
+	{
+		cQSIcam.get_LastError(lastError);
+		CONSOLE_DEBUG_W_STR("QSI Result\t=",	lastError.c_str());
+		cameraInfoOK	=	false;
+	}
 
-		//--------------------------------------------------------------
-		//*	Get the dimensions of the CCD
-		qsi_Result	=	cQSIcamera.get_CameraXSize(&xsize);
-		if (qsi_Result == QSI_OK)
-		{
-			cCameraProp.CameraXsize	=	xsize;
-		}
-		else
-		{
-			cQSIcamera.get_LastError(lastError);
-			CONSOLE_DEBUG_W_STR("QSI Result\t\t=",	lastError.c_str());
-			cameraInfoOK	=	false;
-		}
-		qsi_Result	=	cQSIcamera.get_CameraYSize(&ysize);
-		if (qsi_Result == QSI_OK)
-		{
-			cCameraProp.CameraYsize	=	ysize;
-		}
-		else
-		{
-			cQSIcamera.get_LastError(lastError);
-			CONSOLE_DEBUG_W_STR("QSI Result\t\t=",	lastError.c_str());
-			cameraInfoOK	=	false;
-		}
+	//--------------------------------------------------------------
+	//*	Get the dimensions of the CCD
+	qsi_Result	=	cQSIcam.get_CameraXSize(&xsize);
+	if (qsi_Result == QSI_OK)
+	{
+		cCameraProp.CameraXsize	=	xsize;
+		cCameraProp.NumX		=	xsize;
+		CONSOLE_DEBUG_W_LONG("xsize\t=",	xsize);
+	}
+	else
+	{
+		cQSIcam.get_LastError(lastError);
+		CONSOLE_DEBUG_W_STR("QSI Result (get_CameraXSize)\t=",	lastError.c_str());
+		cameraInfoOK	=	false;
+	}
+	//--------------------------------------------------------------
+	qsi_Result	=	cQSIcam.get_CameraYSize(&ysize);
+	if (qsi_Result == QSI_OK)
+	{
+		cCameraProp.CameraYsize	=	ysize;
+		cCameraProp.NumY		=	ysize;
+		CONSOLE_DEBUG_W_LONG("ysize\t=",	ysize);
+	}
+	else
+	{
+		cQSIcam.get_LastError(lastError);
+		CONSOLE_DEBUG_W_STR("QSI Result (get_CameraYSize)\t=",	lastError.c_str());
+		cameraInfoOK	=	false;
+	}
 
-	//	//--------------------------------------------------------------
-	//	if (qsi_Result == QSI_OK)
-	//	{
-	//	}
-	//	else
-	//	{
-	//		cQSIcamera.get_LastError(lastError);
-	//		CONSOLE_DEBUG_W_STR("QSI Result\t=",	lastError.c_str());
-	//	}
+	//--------------------------------------------------------------
+	qsi_Result	=	cQSIcam.get_ElectronsPerADU(&electronsPerADU);
+	if (qsi_Result == QSI_OK)
+	{
+		cCameraProp.ElectronsPerADU	=				electronsPerADU;
+		CONSOLE_DEBUG_W_DBL("electronsPerADU\t=",	electronsPerADU);
+	}
+	else
+	{
+		cQSIcam.get_LastError(lastError);
+		CONSOLE_DEBUG_W_STR("QSI Result (get_ElectronsPerADU)\t=",	lastError.c_str());
+		cameraInfoOK	=	false;
+	}
 
-		// Enable the beeper
-		qsi_Result	=	cQSIcamera.put_SoundEnabled(true);
-		// Enable the indicator LED
-		qsi_Result	=	cQSIcamera.put_LEDEnabled(true);
-		// Set the fan mode
-		qsi_Result	=	cQSIcamera.put_FanMode(QSICamera::fanQuiet);
-		// Query the current flush mode setting
-		qsi_Result	=	cQSIcamera.put_PreExposureFlush(QSICamera::FlushNormal);
+	//--------------------------------------------------------------
+	qsi_Result	=	cQSIcam.get_FullWellCapacity(&fullWellCapacity);
+	if (qsi_Result == QSI_OK)
+	{
+		cCameraProp.FullWellCapacity	=			fullWellCapacity;
+		CONSOLE_DEBUG_W_DBL("fullWellCapacity\t=",	fullWellCapacity);
+	}
+	else
+	{
+		cQSIcam.get_LastError(lastError);
+		CONSOLE_DEBUG_W_STR("QSI Result (get_ElectronsPerADU)\t=",	lastError.c_str());
+		cameraInfoOK	=	false;
+	}
 
-		// Query if the camera can control the CCD temp
-		qsi_Result	=	cQSIcamera.get_CanSetCCDTemperature(&canSetTemp);
-		if (canSetTemp)
-		{
-			// Set the CCD temp setpoint to 10.0C
-			qsi_Result	=	cQSIcamera.put_SetCCDTemperature(10.0);
-			// Enable the cooler
-			qsi_Result	=	cQSIcamera.put_CoolerOn(true);
-		}
+//	int get_HasFilterWheel(bool* pVal);
+//	int get_HasShutter(bool* pVal);
+//	int get_HeatSinkTemperature(double* pVal);
+//	int get_ImageArraySize(int& xSize, int& ySize, int& elementSize);
+//	int get_ImageArray(unsigned short* pVal);
+//	int get_ImageArray(double * pVal);
+//	int get_ImageReady(bool* pVal);
+//	int get_IsMainCamera(bool* pVal);
+//	int put_IsMainCamera(bool newVal);
+//	int get_IsPulseGuiding(bool* pVal);
+//	int get_LastError(std::string& pVal);
+//	int get_LastExposureDuration(double* pVal);
+//	int get_LastExposureStartTime(std::string& pVal);
 
-		if (modelNumber.substr(0,1) == "6")
-		{
-			qsi_Result	=	cQSIcamera.put_ReadoutSpeed(QSICamera::FastReadout);
-		}
+	//--------------------------------------------------------------
+	qsi_Result	=	cQSIcam.get_MaxADU(&maxADU);
+	if (qsi_Result == QSI_OK)
+	{
+		cCameraProp.MaxADU	=			maxADU;
+		CONSOLE_DEBUG_W_LONG("MaxADU\t=",	maxADU);
+	}
+	else
+	{
+		cQSIcam.get_LastError(lastError);
+		CONSOLE_DEBUG_W_STR("QSI Result (get_ElectronsPerADU)\t=",	lastError.c_str());
+		cameraInfoOK	=	false;
+	}
 
-		// Does the camera have a filer wheel?
-		qsi_Result	=	cQSIcamera.get_HasFilterWheel(&hasFilters);
+	//--------------------------------------------------------------
+	qsi_Result	=	cQSIcam.get_MaxBinX(&maxBin);
+	if (qsi_Result == QSI_OK)
+	{
+		cCameraProp.MaxbinX	=				maxBin;
+		CONSOLE_DEBUG_W_NUM("MaxbinX\t=",	maxBin);
+	}
+	else
+	{
+		cQSIcam.get_LastError(lastError);
+		CONSOLE_DEBUG_W_STR("QSI Result (get_MaxBinX)\t=",	lastError.c_str());
+		cameraInfoOK	=	false;
+	}
+	//--------------------------------------------------------------
+	qsi_Result	=	cQSIcam.get_MaxBinY(&maxBin);
+	if (qsi_Result == QSI_OK)
+	{
+		cCameraProp.MaxbinY	=				maxBin;
+		CONSOLE_DEBUG_W_NUM("MaxbinY\t=",	maxBin);
+	}
+	else
+	{
+		cQSIcam.get_LastError(lastError);
+		CONSOLE_DEBUG_W_STR("QSI Result (get_MaxBinX)\t=",	lastError.c_str());
+		cameraInfoOK	=	false;
+	}
+
+	//--------------------------------------------------------------
+	qsi_Result	=	cQSIcam.get_PixelSizeX(&pixelSize);
+	if (qsi_Result == QSI_OK)
+	{
+		cCameraProp.PixelSizeX	=				pixelSize;
+		CONSOLE_DEBUG_W_DBL("PixelSizeX\t=",	pixelSize);
+	}
+	else
+	{
+		cQSIcam.get_LastError(lastError);
+		CONSOLE_DEBUG_W_STR("QSI Result (get_PixelSizeX)\t=",	lastError.c_str());
+		cameraInfoOK	=	false;
+	}
+
+	//--------------------------------------------------------------
+	qsi_Result	=	cQSIcam.get_PixelSizeY(&pixelSize);
+	if (qsi_Result == QSI_OK)
+	{
+		cCameraProp.PixelSizeY	=				pixelSize;
+		CONSOLE_DEBUG_W_DBL("PixelSizeY\t=",	pixelSize);
+	}
+	else
+	{
+		cQSIcam.get_LastError(lastError);
+		CONSOLE_DEBUG_W_STR("QSI Result (PixelSizeY)\t=",	lastError.c_str());
+		cameraInfoOK	=	false;
+	}
+
+
+	// Enable the beeper
+	qsi_Result	=	cQSIcam.put_SoundEnabled(true);
+	// Enable the indicator LED
+	qsi_Result	=	cQSIcam.put_LEDEnabled(true);
+	// Set the fan mode
+	qsi_Result	=	cQSIcam.put_FanMode(QSICamera::fanQuiet);
+	// Query the current flush mode setting
+	qsi_Result	=	cQSIcam.put_PreExposureFlush(QSICamera::FlushNormal);
+
+	//-----------------------------------------------------------
+	// Query if the camera can control the CCD temp
+	qsi_Result	=	cQSIcam.get_CanSetCCDTemperature(&canSetTemp);
+	if (canSetTemp)
+	{
+		CONSOLE_DEBUG_W_NUM("canSetTemp\t=",	canSetTemp);
+		cCameraProp.Cansetccdtemperature	=	canSetTemp;
+
+
+		// Set the CCD temp setpoint to 10.0C
+		qsi_Result	=	cQSIcam.put_SetCCDTemperature(10.0);
+		// Enable the cooler
+		qsi_Result	=	cQSIcam.put_CoolerOn(true);
+	}
+
+	if (modelNumber.substr(0,1) == "6")
+	{
+		qsi_Result	=	cQSIcam.put_ReadoutSpeed(QSICamera::FastReadout);
+	}
+
+	// Does the camera have a filer wheel?
+	qsi_Result	=	cQSIcam.get_HasFilterWheel(&hasFilters);
+	if (qsi_Result == QSI_OK)
+	{
+		CONSOLE_DEBUG_W_BOOL("hasFilters\t=",	hasFilters);
+
 		if ( hasFilters)
 		{
 			// Set the filter wheel to position 1 (0 based position)
-			qsi_Result	=	cQSIcamera.put_Position(0);
+			qsi_Result	=	cQSIcam.put_Position(0);
 		}
-
-		if (modelNumber.substr(0,3) == "520" || modelNumber.substr(0,3) == "540")
-		{
-			qsi_Result	=	cQSIcamera.put_CameraGain(QSICamera::CameraGainHigh);
-			qsi_Result	=	cQSIcamera.put_PreExposureFlush(QSICamera::FlushNormal);
-		}
-		//
-		//////////////////////////////////////////////////////////////
-		// Set image size
-		//
-		qsi_Result	=	cQSIcamera.put_BinX(1);
-		qsi_Result	=	cQSIcamera.put_BinY(1);
-		// Set the exposure to a full frame
-		qsi_Result	=	cQSIcamera.put_StartX(0);
-		qsi_Result	=	cQSIcamera.put_StartY(0);
-		qsi_Result	=	cQSIcamera.put_NumX(xsize);
-		qsi_Result	=	cQSIcamera.put_NumY(ysize);
-
 	}
-	catch (std::runtime_error &err)
+
+	if (modelNumber.substr(0,3) == "520" || modelNumber.substr(0,3) == "540")
 	{
-	std::string		text;
-	std::string		last("");
-
-		text	=	err.what();
-		CONSOLE_DEBUG(text.c_str());
-
-		cQSIcamera.get_LastError(last);
-		CONSOLE_DEBUG(last.c_str());
-		cameraInfoOK	=	false;
+		qsi_Result	=	cQSIcam.put_CameraGain(QSICamera::CameraGainHigh);
+		qsi_Result	=	cQSIcam.put_PreExposureFlush(QSICamera::FlushNormal);
 	}
+	//
+	//////////////////////////////////////////////////////////////
+	// Set image size
+	//
+	qsi_Result	=	cQSIcam.put_BinX(1);
+	qsi_Result	=	cQSIcam.put_BinY(1);
+	// Set the exposure to a full frame
+	qsi_Result	=	cQSIcam.put_StartX(0);
+	qsi_Result	=	cQSIcam.put_StartY(0);
+	qsi_Result	=	cQSIcam.put_NumX(xsize);
+	qsi_Result	=	cQSIcam.put_NumY(ysize);
+
+
 	return(cameraInfoOK);
 }
 
@@ -404,13 +588,36 @@ std::string	lastError("");
 TYPE_ASCOM_STATUS	CameraDriverQSI::Read_SensorTemp(void)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
-//double				cameraTemp_DegC;
+double				cameraTemp_DegC;
+unsigned int		qsi_Result;
+std::string			lastError("");
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
+
 
 	cLastCameraErrMsg[0]	=	0;
 	if (cTempReadSupported)
 	{
+		//	Returns the current CCD temperature in degrees Celsius in parameter 1.
+		//	Only valid if CanSetCCDTemperature is true.
+		qsi_Result	=	cQSIcam.get_CCDTemperature(&cameraTemp_DegC);
+		if (qsi_Result == QSI_OK)
+		{
+			cCameraProp.CCDtemperature		=	cameraTemp_DegC;
+			CONSOLE_DEBUG_W_DBL("CCDtemperature\t=",	cameraTemp_DegC);
+		}
+		else if (qsi_Result == QSI_NOTCONNECTED)
+		{
+			alpacaErrCode	=	kASCOM_Err_NotConnected;
+			strcpy(cLastCameraErrMsg, "QSI Result: not connected");
+		}
+		else
+		{
+			alpacaErrCode	=	kASCOM_Err_NotImplemented;
+			cQSIcam.get_LastError(lastError);
+			strcpy(cLastCameraErrMsg, "QSI Result:");
+			strcat(cLastCameraErrMsg, lastError.c_str());
+		}
 	}
 	else
 	{
@@ -423,7 +630,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 //*****************************************************************************
 TYPE_ASCOM_STATUS	CameraDriverQSI::Write_Gain(const int newGainValue)
 {
-TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InvalidOperation;
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_PropertyNotImplemented;
 
 	CONSOLE_DEBUG_W_NUM(__FUNCTION__, newGainValue);
 
@@ -445,40 +652,57 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_PropertyNotImplemented;
 TYPE_ASCOM_STATUS		CameraDriverQSI::Start_CameraExposure(int32_t exposureMicrosecs)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
-double				exposureMilliSecs;
-int					qsi_Result;
+double				durationSeconds;
+unsigned int		qsi_Result;
 std::string			lastError("");
 
 	CONSOLE_DEBUG(__FUNCTION__);
 	cCameraProp.ImageReady		=	false;
 
-	exposureMilliSecs	=	(exposureMicrosecs * 1.0) / 1000.0;
+	durationSeconds	=	(exposureMicrosecs * 1.0) / 1000000.0;
 #ifdef _SIMULATE_CAMERA_
-	CONSOLE_DEBUG("Simulating camera");
-	alpacaErrCode			=	kASCOM_Err_Success;
-	cInternalCameraState	=	kCameraState_TakingPicture;
-	SetLastExposureInfo();
-#else
-	qsi_Result			=	cQSIcamera.StartExposure(exposureMilliSecs, true);
-	if (qsi_Result == QSI_OK)
+	if (gSimulateCameraImage)
 	{
+		CONSOLE_DEBUG("Simulating camera");
 		alpacaErrCode			=	kASCOM_Err_Success;
 		cInternalCameraState	=	kCameraState_TakingPicture;
 		SetLastExposureInfo();
 	}
 	else
-	{
-		cQSIcamera.get_LastError(lastError);
-		CONSOLE_DEBUG_W_STR("QSI Result\t\t=",	lastError.c_str());
-	}
 #endif
+	{
+		//-----------------------------------------------------------------
+		//Parameters
+		//double Duration - Duration of exposure in seconds
+		//bool Light - true for light frame, false for dark frame (ignored if no shutter)
+		qsi_Result			=	cQSIcam.StartExposure(durationSeconds, true);
+		if (qsi_Result == QSI_OK)
+		{
+			alpacaErrCode			=	kASCOM_Err_Success;
+			cInternalCameraState	=	kCameraState_TakingPicture;
+			SetLastExposureInfo();
+		}
+		else
+		{
+			cQSIcam.get_LastError(lastError);
+
+			strcpy(cLastCameraErrMsg,	"QSI Err:");
+			strcat(cLastCameraErrMsg,	lastError.c_str());
+			CONSOLE_DEBUG(cLastCameraErrMsg);
+			switch(qsi_Result)
+			{
+				case QSI_NOTCONNECTED:	alpacaErrCode	=	kASCOM_Err_NotConnected;		break;
+				default:				alpacaErrCode	=	kASCOM_Err_InvalidOperation;	break;
+			}
+		}
+	}
 	return(alpacaErrCode);
 }
 
 //*****************************************************************************
 bool	CameraDriverQSI::GetImage_ROI_info(void)
 {
-	cROIinfo.currentROIimageType	=	kImageType_RGB24;
+	cROIinfo.currentROIimageType	=	kImageType_RAW16;
 	cROIinfo.currentROIwidth		=	cCameraProp.CameraXsize;
 	cROIinfo.currentROIheight		=	cCameraProp.CameraYsize;
 	cROIinfo.currentROIbin			=	1;
@@ -488,15 +712,53 @@ bool	CameraDriverQSI::GetImage_ROI_info(void)
 //*****************************************************************************
 TYPE_EXPOSURE_STATUS	CameraDriverQSI::Check_Exposure(bool verboseFlag)
 {
-//uint32_t				precentRemaining;
 TYPE_EXPOSURE_STATUS	myExposureStatus;
+unsigned int			qsi_Result;
+QSICamera::CameraState	qsiCameraState;
+std::string				lastError("");
+bool					imageReady;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	myExposureStatus	=	kExposure_Failed;
 
+	qsi_Result	=	cQSIcam.get_CameraState(&qsiCameraState);
+	if (qsi_Result == QSI_OK)
+	{
+		switch(qsiCameraState)
+		{
+			case QSICamera::CameraIdle:		//At idle state, available to start exposure
+				myExposureStatus	=	kExposure_Idle;
+				imageReady			=	false;
+				qsi_Result			=	cQSIcam.get_ImageReady(&imageReady);
+				if (imageReady)
+				{
+					myExposureStatus	=	kExposure_Success;
+				}
+				break;
 
+			case QSICamera::CameraWaiting:	//Exposure started but waiting (for shutter, trigger, filter wheel, etc.)
+			case QSICamera::CameraExposing:	//Exposure currently in progress
+			case QSICamera::CameraReading:	//CCD array is being read out (digitized)
+			case QSICamera::CameraDownload:	//Downloading data to PC
+				myExposureStatus	=	kExposure_Working;
+				break;
 
+			case QSICamera::CameraError:	//Camera error condition serious enough to prevent further operations (link fail, etc.).
+				myExposureStatus	=	kExposure_Failed;
+				break;
+		}
+	}
+	else
+	{
+		myExposureStatus	=	kExposure_Failed;
+
+		cQSIcam.get_LastError(lastError);
+
+		strcpy(cLastCameraErrMsg,	"QSI Err:");
+		strcat(cLastCameraErrMsg,	lastError.c_str());
+//		CONSOLE_DEBUG(cLastCameraErrMsg);
+	}
 #ifdef _SIMULATE_CAMERA_
 	//--------------------------------------------
 	//*	simulate image
@@ -545,23 +807,25 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 				break;
 
 		}
-
-
 	}
 	else
 	{
 		CONSOLE_DEBUG("Not connected");
 		alpacaErrCode	=	kASCOM_Err_NotConnected;
 	}
-
 	return(alpacaErrCode);
 }
-
 
 //**************************************************************************
 TYPE_ASCOM_STATUS	CameraDriverQSI::Read_ImageData(void)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
+unsigned int		qsi_Result;
+int					xSize;
+int					ySize;
+int					elementSize;
+long				imgBufferSize;
+std::string			lastError("");
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -572,14 +836,40 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
 		if (cCameraDataBuffer != NULL)
 		{
 			//--------------------------------------------
-			//*	debugging
-			CreateFakeImageData(cCameraDataBuffer, cCameraProp.CameraXsize, cCameraProp.CameraYsize, 3);
+			CreateFakeImageData(cCameraDataBuffer, cCameraProp.CameraXsize, cCameraProp.CameraYsize, 2);
 			cCameraProp.ImageReady	=	true;
 			alpacaErrCode			=	kASCOM_Err_Success;
 		}
 	}
+	else
 #endif
+	{
+		//*	get the image size
+		qsi_Result	=	cQSIcam.get_ImageArraySize(xSize, ySize, elementSize);
+		if (qsi_Result == QSI_OK)
+		{
+			//*	make sure the buffer is allocated
+			imgBufferSize	=	xSize * ySize * elementSize;
+			AllcateImageBuffer(imgBufferSize);
+			if (cCameraDataBuffer != NULL)
+			{
+				//*	get the data
+				qsi_Result	=	cQSIcam.get_ImageArray((unsigned short *)cCameraDataBuffer);
+				if (qsi_Result == QSI_OK)
+				{
+					alpacaErrCode		=	kASCOM_Err_Success;
+				}
+				else
+				{
+					alpacaErrCode			=	kASCOM_Err_InvalidOperation;
+					cQSIcam.get_LastError(lastError);
 
+					strcpy(cLastCameraErrMsg,	"QSI Err:");
+					strcat(cLastCameraErrMsg,	lastError.c_str());
+				}
+			}
+		}
+	}
 	return(alpacaErrCode);
 }
 

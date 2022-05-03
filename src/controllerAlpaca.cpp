@@ -97,7 +97,11 @@ SJP_Parser_t	jsonParser;
 												dataString,
 												&jsonParser);
 
-	if (validData == false)
+	if (validData)
+	{
+//		CONSOLE_DEBUG("CONNECT Success");
+	}
+	else
 	{
 		CONSOLE_DEBUG("CONNECT failed");
 	}

@@ -82,7 +82,7 @@ class CameraDriverQSI: public CameraDriver
 	protected:
 				bool					ReadQSIcameraInfo(void);
 				std::string				cQSIserialNumber;
-				QSICamera				cQSIcamera;
+				QSICamera				cQSIcam;
 
 };
 #endif // _CAMERA_DRIVER_QSI_H_

@@ -261,13 +261,22 @@ bool		readStartUpOK;
 		if (readStartUpOK)
 		{
 			cReadStartup	=	false;
+			CONSOLE_DEBUG_W_STR("cReadStartup == ", (cReadStartup ? "TRUE" : "false"));
 			if (cHas_FilterWheel)
 			{
 				AlpacaSetConnected("filterwheel", true);
+			CONSOLE_DEBUG_W_STR("cReadStartup == ", (cReadStartup ? "TRUE" : "false"));
 				AlpacaGetFilterWheelStartup();
+			CONSOLE_DEBUG_W_STR("cReadStartup == ", (cReadStartup ? "TRUE" : "false"));
 			}
+			CONSOLE_DEBUG_W_STR("cReadStartup == ", (cReadStartup ? "TRUE" : "false"));
 		}
-
+		else
+		{
+			CONSOLE_DEBUG_W_STR("Failed to read startup data", cWindowName);
+			CONSOLE_ABORT(__FUNCTION__);
+		}
+		CONSOLE_DEBUG_W_STR("cReadStartup == ", (cReadStartup ? "TRUE" : "false"));
 	}
 
 	needToUpdate	=	false;
@@ -469,7 +478,7 @@ char			alpacaString[128];
 int				jjj;
 int				readOutModeIdx;
 
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 	validData	=	false;
 
 	//*	get the camera description
@@ -477,7 +486,7 @@ int				readOutModeIdx;
 	{
 		SJP_Init(&jsonParser);
 
-		CONSOLE_DEBUG_W_STR(__FUNCTION__, "description");
+//		CONSOLE_DEBUG_W_STR(__FUNCTION__, "description");
 		sprintf(alpacaString,	"/api/v1/camera/%d/description", cAlpacaDevNum);
 		validData	=	GetJsonResponse(	&cDeviceAddress,
 											cPort,
@@ -486,7 +495,7 @@ int				readOutModeIdx;
 											&jsonParser);
 		if (validData)
 		{
-			CONSOLE_DEBUG_W_STR(__FUNCTION__, "validData");
+//			CONSOLE_DEBUG_W_STR(__FUNCTION__, "validData");
 			for (jjj=0; jjj<jsonParser.tokenCount_Data; jjj++)
 			{
 	//			CONSOLE_DEBUG_W_2STR("json=",	jsonParser.dataList[jjj].keyword,
@@ -515,7 +524,7 @@ int				readOutModeIdx;
 			cReadFailureCnt++;
 			cOnLine	=	false;
 		}
-		CONSOLE_DEBUG_W_STR("cCommonProp.Name\t=", cCommonProp.Name);
+//		CONSOLE_DEBUG_W_STR("cCommonProp.Name\t=", cCommonProp.Name);
 	}
 
 	//===============================================================
@@ -1284,8 +1293,10 @@ bool	previousOnLineState;
 		//*	check to see if we were online before
 		if (cOnLine == false)
 		{
+			CONSOLE_DEBUG("Back on line, resetting read startup flag !!!!!!!!!!!!!!!!");
 			//*	if we go from offline back to online, re-do the startup info
 			cReadStartup	=	true;
+			CONSOLE_DEBUG_W_STR("cReadStartup == ", (cReadStartup ? "TRUE" : "false"));
 		}
 		cOnLine	=	true;
 #if 0
@@ -1921,7 +1932,7 @@ uint16_t		*dataPtr16bit;
 
 					for (xxx=0; xxx < myOpenCVimage->cols; xxx++)
 					{
-						CONSOLE_DEBUG_W_NUM("xxx \t\t=",		xxx);
+					//	CONSOLE_DEBUG_W_NUM("xxx \t\t=",		xxx);
 						pixIdxRowStart	=	0;
 						//*	stepping DOWN the column
 						for (yyy=0; yyy < myOpenCVimage->rows; yyy++)

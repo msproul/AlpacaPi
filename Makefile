@@ -47,6 +47,9 @@
 #++	Mar 26,	2022	<MLS> Added make_checkplatform.sh
 #++	Mar 26,	2022	<MLS> Added make_checkopencv.sh
 #++	Mar 26,	2022	<MLS> Added make_checksql.sh
+#++	May  2,	2022	<MLS> Added IMU source directory (src_imu)
+#++	May  2,	2022	<MLS> Added _ENABLE_IMU_
+#++	May  2,	2022	<MLS> Added make moonlite for stand alone moonlite focuser driver
 ######################################################################################
 #	Cr_Core is for the Sony camera
 ######################################################################################
@@ -79,6 +82,8 @@ SRC_MOONRISE		=	./src_MoonRise/
 SRC_SERVO			=	./src_servo/
 MLS_LIB_DIR			=	./src_mlsLib/
 OBJECT_DIR			=	./Objectfiles/
+SRC_IMU				=	./src_imu/
+
 
 GD_DIR				=	../gd/
 ASI_LIB_DIR			=	./ASI_lib
@@ -160,6 +165,7 @@ INCLUDES		=	-I/usr/include					\
 					-I$(MLS_LIB_DIR)				\
 					-I$(QHY_INCLUDE_DIR)			\
 					-I$(SRC_IMGPROC)				\
+					-I$(SRC_IMU)					\
 
 #					-I/usr/include/opencv2			\
 #					-I/usr/local/include/opencv2	\
@@ -303,6 +309,11 @@ ROR_OBJECTS=												\
 				$(OBJECT_DIR)observatory_settings.o			\
 				$(OBJECT_DIR)raspberrypi_relaylib.o			\
 
+######################################################################################
+# CPP objects
+IMU_OBJECTS=												\
+				$(OBJECT_DIR)imu_lib.o						\
+				$(OBJECT_DIR)i2c_bno055.o					\
 
 ######################################################################################
 #pragma mark make help
@@ -311,20 +322,21 @@ help:
 	# The AlpacaPi project consists of two main parts, drivers and clients
 	#    Driver make options
 	#        make alpacapi   Driver for x86 linux
-	#        make pi         Version for Raspberry Pi
-	#        make picv4      Version for Raspberry Pi using OpenCV 4 or later
 	#        make dome       Raspberry pi version to control dome using DC motor controller
 	#        make jetson     Version to run on nvidia jetson board, this is an armv8
+	#        make moonlite   Driver for moonlite focusers ONLY
 	#        make nocamera   Build without the camera support
-	#        make wx         Version that uses the R-Pi sensor board
 	#        make noopencv   Camera driver for ZWO WITHOUT opencv
 	#        make noopencvpi Camera driver for ZWO WITHOUT opencv for Raspberry-Pi
+	#        make pi         Version for Raspberry Pi
+	#        make picv4      Version for Raspberry Pi using OpenCV 4 or later
 	#        make piqhy      Camera driver for QHY cameras only for Raspberry-Pi
-	#        make qsi      Camera driver for QSI cameras
+	#        make qsi        Camera driver for QSI cameras
+	#        make wx         Version that uses the R-Pi sensor board
 	#
 	#
 	# Telescope drivers,
-	# As of March 2022, the telescope driver is still in development,
+	# As of May 2022, the telescope driver is still in development,
 	# There are several options that are in progress
 	#        make tele      Makes a version which speaks LX200 over a TCP/IP connection
 	#        make rigel     Makes a special version for a user that uses a rigel controller
@@ -463,6 +475,25 @@ picv4		:		$(CPP_OBJECTS)				\
 #					-lwiringPi					\
 #					-latikcameras				\
 #					-L$(ATIK_LIB_DIR_ARM32)/	\
+
+######################################################################################
+#pragma mark make moonlite
+moonlite		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
+moonlite		:		DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_
+moonlite		:	$(CPP_OBJECTS)				\
+					$(ALPACA_OBJECTS)			\
+					$(SOCKET_OBJECTS)			\
+
+
+		$(LINK)  								\
+					$(SOCKET_OBJECTS)			\
+					$(CPP_OBJECTS)				\
+					$(ALPACA_OBJECTS)			\
+					-ludev						\
+					-lusb-1.0					\
+					-lpthread					\
+					-o alpaca-moonlite
+
 
 ######################################################################################
 #pragma mark make piqhy
@@ -952,26 +983,18 @@ Release		:		$(CPP_OBJECTS)				\
 
 ######################################################################################
 #pragma mark Flir version for x86
-#flir			:	DEFINEFLAGS		+=	-D_ENABLE_OBSERVINGCONDITIONS_
-#flir		:		DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_
-#flir		:		DEFINEFLAGS		+=	-D_ENABLE_ROTATOR_
-#flir		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_ZWO_
-#flir		:		DEFINEFLAGS		+=	-D_ENABLE_SAFETYMONITOR_
-#flir		:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_
+#make flir
 flir		:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
 flir		:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
 flir		:		DEFINEFLAGS		+=	-D_ENABLE_DISCOVERY_QUERRY_
-#flir		:		DEFINEFLAGS		+=	-D_ENABLE_DOME_
-#flir		:		DEFINEFLAGS		+=	-D_ENABLE_MULTICAM_
-#flir		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
-#flir		:		DEFINEFLAGS		+=	-D_ENABLE_ATIK_
-#flir		:		DEFINEFLAGS		+=	-D_ENABLE_TOUP_
-#flir		:		DEFINEFLAGS		+=	-D_ENABLE_QHY_
 flir		:		DEFINEFLAGS		+=	-D_ENABLE_FLIR_
+flir		:		DEFINEFLAGS		+=	-D_ENABLE_IMU_
 flir		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
+flir		:		DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
 flir		:		$(CPP_OBJECTS)				\
 					$(ALPACA_OBJECTS)			\
 					$(SOCKET_OBJECTS)			\
+					$(IMU_OBJECTS)				\
 
 
 		$(LINK)  								\
@@ -979,18 +1002,12 @@ flir		:		$(CPP_OBJECTS)				\
 					$(CPP_OBJECTS)				\
 					$(ALPACA_OBJECTS)			\
 					$(OPENCV_LINK)				\
-					-L$(ATIK_LIB_DIR)/			\
-					-L$(TOUP_LIB_DIR)/			\
-					$(ASI_CAMERA_OBJECTS)		\
-					$(ZWO_EFW_OBJECTS)			\
+					$(IMU_OBJECTS)				\
 					-lSpinnaker_C				\
-					-latikcameras				\
-					-ltoupcam					\
 					-ludev						\
 					-lusb-1.0					\
 					-lpthread					\
 					-lcfitsio					\
-					-lqhyccd					\
 					-o alpacapi
 
 
@@ -3586,3 +3603,17 @@ $(OBJECT_DIR)LM62x_utils.o : 			$(SRC_SERVO)LM62x_utils.c	\
 										$(SRC_SERVO)servo_std_defs.h
 	$(COMPILE) $(INCLUDES) $(SRC_SERVO)LM62x_utils.c -o$(OBJECT_DIR)LM62x_utils.o
 
+
+##################################################################################
+#		IMU source code
+##################################################################################
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)imu_lib.o : 				$(SRC_IMU)imu_lib.c	\
+										$(SRC_IMU)imu_lib.h	\
+										$(SRC_IMU)getbno055.h
+	$(COMPILE) $(INCLUDES) $(SRC_IMU)imu_lib.c -o$(OBJECT_DIR)imu_lib.o
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)i2c_bno055.o : 			$(SRC_IMU)i2c_bno055.c	\
+										$(SRC_IMU)getbno055.h
+	$(COMPILE) $(INCLUDES) $(SRC_IMU)i2c_bno055.c -o$(OBJECT_DIR)i2c_bno055.o
