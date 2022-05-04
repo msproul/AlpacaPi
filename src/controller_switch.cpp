@@ -138,7 +138,6 @@ ControllerSwitch::~ControllerSwitch(void)
 	DELETE_OBJ_IF_VALID(cAboutBoxTabObjPtr);
 }
 
-
 //**************************************************************************************
 void	ControllerSwitch::SetupWindowControls(void)
 {
@@ -151,7 +150,6 @@ char	ipString[32];
 	SetTabText(kTab_Switch,		"Switch");
 	SetTabText(kTab_DriverInfo,	"Driver Info");
 	SetTabText(kTab_About,		"About");
-
 
 	cSwitchTabObjPtr	=	new WindowTabSwitch(cWidth, cHeight, cBackGrndColor, cWindowName);
 	if (cSwitchTabObjPtr != NULL)

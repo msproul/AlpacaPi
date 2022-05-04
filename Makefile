@@ -379,9 +379,9 @@ help:
 ######################################################################################
 #pragma mark make alpacapi  C++ linux-x86
 alpacapi		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
+alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
 alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
 #alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_ATIK_
-alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
 alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_CALIBRATION_
 alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_DISCOVERY_QUERRY_
 #alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_DOME_
@@ -449,8 +449,6 @@ picv4		:		DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
 #picv4		:		DEFINEFLAGS		+=	-D_ENABLE_TOUP_
 picv4		:		DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
 picv4		:		DEFINEFLAGS		+=	-D_ENABLE_LIVE_CONTROLLER_
-#picv4		:		PLATFORM		=	armv7
-#picv4		:		PLATFORM		=	armv8
 #picv4		:		ATIK_LIB_DIR	=	$(ATIK_LIB_MASTER_DIR)/ARM/x86/NoFlyCapture
 picv4		:		$(CPP_OBJECTS)				\
 					$(ALPACA_OBJECTS)			\
@@ -475,6 +473,9 @@ picv4		:		$(CPP_OBJECTS)				\
 #					-lwiringPi					\
 #					-latikcameras				\
 #					-L$(ATIK_LIB_DIR_ARM32)/	\
+
+
+
 
 ######################################################################################
 #pragma mark make moonlite
@@ -568,7 +569,7 @@ qsicv4		:		DEFINEFLAGS		+=	-D_ENABLE_QSI_
 qsicv4		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
 qsicv4		:		DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
 qsicv4		:		INCLUDES		+=	-I$(QSI_INCLUDE_DIR)
-qsicv4		:			$(CPP_OBJECTS)				\
+qsicv4		:		$(CPP_OBJECTS)				\
 					$(ALPACA_OBJECTS)			\
 					$(SOCKET_OBJECTS)			\
 
@@ -985,9 +986,9 @@ Release		:		$(CPP_OBJECTS)				\
 #pragma mark Flir version for x86
 #make flir
 flir		:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
+flir		:		DEFINEFLAGS		+=	-D_ENABLE_FLIR_
 flir		:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
 flir		:		DEFINEFLAGS		+=	-D_ENABLE_DISCOVERY_QUERRY_
-flir		:		DEFINEFLAGS		+=	-D_ENABLE_FLIR_
 flir		:		DEFINEFLAGS		+=	-D_ENABLE_IMU_
 flir		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
 flir		:		DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
@@ -1009,6 +1010,37 @@ flir		:		$(CPP_OBJECTS)				\
 					-lpthread					\
 					-lcfitsio					\
 					-o alpacapi
+
+
+######################################################################################
+#pragma mark imu
+#make imu
+imu		:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
+imu		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
+imu		:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
+imu		:		DEFINEFLAGS		+=	-D_ENABLE_DISCOVERY_QUERRY_
+imu		:		DEFINEFLAGS		+=	-D_ENABLE_IMU_
+imu		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
+imu		:		DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
+imu		:		$(CPP_OBJECTS)				\
+					$(ALPACA_OBJECTS)			\
+					$(SOCKET_OBJECTS)			\
+					$(IMU_OBJECTS)				\
+
+
+		$(LINK)  								\
+					$(SOCKET_OBJECTS)			\
+					$(CPP_OBJECTS)				\
+					$(ALPACA_OBJECTS)			\
+					$(OPENCV_LINK)				\
+					$(IMU_OBJECTS)				\
+					$(ASI_CAMERA_OBJECTS)		\
+					$(ZWO_EFW_OBJECTS)			\
+					-ludev						\
+					-lusb-1.0					\
+					-lpthread					\
+					-lcfitsio					\
+					-o imu
 
 
 ######################################################################################

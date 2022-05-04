@@ -261,22 +261,18 @@ bool		readStartUpOK;
 		if (readStartUpOK)
 		{
 			cReadStartup	=	false;
-			CONSOLE_DEBUG_W_STR("cReadStartup == ", (cReadStartup ? "TRUE" : "false"));
 			if (cHas_FilterWheel)
 			{
 				AlpacaSetConnected("filterwheel", true);
-			CONSOLE_DEBUG_W_STR("cReadStartup == ", (cReadStartup ? "TRUE" : "false"));
 				AlpacaGetFilterWheelStartup();
-			CONSOLE_DEBUG_W_STR("cReadStartup == ", (cReadStartup ? "TRUE" : "false"));
 			}
-			CONSOLE_DEBUG_W_STR("cReadStartup == ", (cReadStartup ? "TRUE" : "false"));
 		}
 		else
 		{
 			CONSOLE_DEBUG_W_STR("Failed to read startup data", cWindowName);
-			CONSOLE_ABORT(__FUNCTION__);
+		//	CONSOLE_ABORT(__FUNCTION__);
 		}
-		CONSOLE_DEBUG_W_STR("cReadStartup == ", (cReadStartup ? "TRUE" : "false"));
+//		CONSOLE_DEBUG_W_STR("cReadStartup == ", (cReadStartup ? "TRUE" : "false"));
 	}
 
 	needToUpdate	=	false;

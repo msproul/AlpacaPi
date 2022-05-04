@@ -478,8 +478,9 @@ class CameraDriver: public AlpacaDriver
 
 				bool	AllcateImageBuffer(long bufferSize);
 
-				void	WriteFireCaptureTextFile(void);
 				void	GenerateFileNameRoot(void);
+				void	WriteFireCaptureTextFile(void);
+				void	WriteIMUtextFile(void);
 
 
 				void	Send_imagearray_rgb24(	const int		socketFD,

@@ -258,7 +258,7 @@ char		gHostName[48]				=	"";
 	#include	"telescopedriver.h"
 	#include	"telescopedriver_lx200.h"
 	#include	"telescopedriver_comm.h"
-#endif // _ENABLE_TELESCOPE_
+#endif
 
 
 #ifdef _ENABLE_SHUTTER_
@@ -267,18 +267,19 @@ char		gHostName[48]				=	"";
 
 #ifdef _ENABLE_SLIT_TRACKER_
 	#include	"slittracker.h"
-#endif // _ENABLE_SLIT_TRACKER_
+#endif
 
 #ifdef _ENABLE_IMU_
 	#include "imu_lib.h"
-#endif // _ENABLE_IMU_
-
-
-#include	"managementdriver.h"
+#endif
 
 #if defined(__arm__) && defined(_ENABLE_WIRING_PI_)
 	#include <wiringPi.h>
 #endif
+
+
+#include	"managementdriver.h"
+
 
 AlpacaDriver		*gAlpacaDeviceList[kMaxDevices];
 bool				gKeepRunning				=	true;
@@ -3057,9 +3058,6 @@ bool			controllWindowActive;
 	CONSOLE_DEBUG_W_DBL("freeDiskSpace_Gigs\t=", freeDiskSpace_Gigs);
 
 	GetMyHostName();
-#ifdef _ENABLE_IMU_
-	IMU_Init();
-#endif // _ENABLE_IMU_
 
 
 #ifdef _ENABLE_FITS_
@@ -3151,6 +3149,9 @@ bool			controllWindowActive;
 		CONSOLE_DEBUG_W_NUM("threadErr=", threadErr);
 	}
 
+#ifdef _ENABLE_IMU_
+	IMU_Init();
+#endif
 
 	//========================================================================================
 	gKeepRunning	=	true;

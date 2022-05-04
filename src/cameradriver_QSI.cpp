@@ -345,6 +345,9 @@ std::string		lastError("");
 	cCameraProp.NumX		=	4000;
 	cCameraProp.NumY		=	3000;
 
+	cCameraProp.GainMin		=	0;
+	cCameraProp.GainMax		=	1;		//*	qsi has high/low reversed, we will have to handle that
+
 	AddReadoutModeToList(kImageType_RAW16);
 
 	//--------------------------------------------------------------
@@ -358,7 +361,7 @@ std::string		lastError("");
 	else if (qsi_Result == QSI_NOTCONNECTED)
 	{
 		cQSIcam.get_LastError(lastError);
-		CONSOLE_DEBUG_W_STR("QSI Result\t=",	lastError.c_str());
+		CONSOLE_DEBUG_W_STR("QSI Result (get_ModelNumber)\t=",	lastError.c_str());
 		cameraInfoOK	=	false;
 	}
 
@@ -368,7 +371,7 @@ std::string		lastError("");
 	if (qsi_Result == QSI_OK)
 	{
 		strcpy(cCommonProp.Description,		desc.c_str());
-		CONSOLE_DEBUG_W_STR("QSI-Description\t=",	cCommonProp.Description);
+		CONSOLE_DEBUG_W_STR("QSI-Description\t\t\t=",	cCommonProp.Description);
 	}
 	else
 	{
@@ -431,7 +434,7 @@ std::string		lastError("");
 	else
 	{
 		cQSIcam.get_LastError(lastError);
-		CONSOLE_DEBUG_W_STR("QSI Result (get_ElectronsPerADU)\t=",	lastError.c_str());
+		CONSOLE_DEBUG_W_STR("QSI Result (get_FullWellCapacity)\t=",	lastError.c_str());
 		cameraInfoOK	=	false;
 	}
 
@@ -459,7 +462,7 @@ std::string		lastError("");
 	else
 	{
 		cQSIcam.get_LastError(lastError);
-		CONSOLE_DEBUG_W_STR("QSI Result (get_ElectronsPerADU)\t=",	lastError.c_str());
+		CONSOLE_DEBUG_W_STR("QSI Result (get_MaxADU)\t\t=",	lastError.c_str());
 		cameraInfoOK	=	false;
 	}
 
@@ -473,7 +476,7 @@ std::string		lastError("");
 	else
 	{
 		cQSIcam.get_LastError(lastError);
-		CONSOLE_DEBUG_W_STR("QSI Result (get_MaxBinX)\t=",	lastError.c_str());
+		CONSOLE_DEBUG_W_STR("QSI Result (get_MaxBinX)\t\t=",	lastError.c_str());
 		cameraInfoOK	=	false;
 	}
 	//--------------------------------------------------------------
@@ -486,7 +489,7 @@ std::string		lastError("");
 	else
 	{
 		cQSIcam.get_LastError(lastError);
-		CONSOLE_DEBUG_W_STR("QSI Result (get_MaxBinX)\t=",	lastError.c_str());
+		CONSOLE_DEBUG_W_STR("QSI Result (get_MaxBinY)\t\t=",	lastError.c_str());
 		cameraInfoOK	=	false;
 	}
 
@@ -514,7 +517,7 @@ std::string		lastError("");
 	else
 	{
 		cQSIcam.get_LastError(lastError);
-		CONSOLE_DEBUG_W_STR("QSI Result (PixelSizeY)\t=",	lastError.c_str());
+		CONSOLE_DEBUG_W_STR("QSI Result (PixelSizeY)\t\t=",	lastError.c_str());
 		cameraInfoOK	=	false;
 	}
 
@@ -640,10 +643,28 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_PropertyNotImplemented;
 //*****************************************************************************
 TYPE_ASCOM_STATUS	CameraDriverQSI::Read_Gain(int *cameraGainValue)
 {
-TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_PropertyNotImplemented;
-//double				rawGainValue;
+TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_PropertyNotImplemented;
+unsigned int			qsi_Result;
+std::string				lastError("");
+QSICamera::CameraGain	qsiGainValue;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
+	qsi_Result	=	cQSIcam.get_CameraGain(&qsiGainValue);
+	if (qsi_Result == QSI_OK)
+	{
+		*cameraGainValue	=	(int)qsiGainValue;
+		alpacaErrCode	=	kASCOM_Err_Success;
+	}
+	else if (qsi_Result == QSI_NOTCONNECTED)
+	{
+		alpacaErrCode	=	kASCOM_Err_NotConnected;
+	}
+	else
+	{
+		cQSIcam.get_LastError(lastError);
+		CONSOLE_DEBUG_W_STR("QSI Result\t=",	lastError.c_str());
+		alpacaErrCode	=	kASCOM_Err_PropertyNotImplemented;
+	}
 
 	return(alpacaErrCode);
 }

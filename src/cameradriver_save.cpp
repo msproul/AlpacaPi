@@ -32,6 +32,7 @@
 //*	Jan 30,	2020	<MLS> Separated saving of opencv image from the creation part
 //*	Apr 10,	2022	<MLS> CreateOpenCVImage() now can use openCV++ calls
 //*	Apr 10,	2022	<MLS> SaveOpenCVImage() now can use openCV++ calls
+//*	May  3,	2022	<MLS> Added WriteIMUtextFile()
 //*****************************************************************************
 
 #ifdef _ENABLE_CAMERA_
@@ -61,6 +62,9 @@
 #ifdef _ENABLE_STAR_SEARCH_
 	//*	this is totally experimental and is not part of the normal release
 	#include	"imageprocess_orb.h"
+#endif
+#ifdef _ENABLE_IMU_
+	#include "imu_lib.h"
 #endif
 
 //*****************************************************************************
@@ -97,6 +101,9 @@ int	ii;
 		SaveUsingJpegLib();
 	#endif	//	_ENABLE_JPEGLIB_
 
+	#ifdef _ENABLE_IMU_
+		WriteIMUtextFile();
+	#endif
 
 	//*	we want FITS to be last so it can include info about other save data products
 	#ifdef _ENABLE_FITS_
@@ -752,17 +759,65 @@ int		gainPercent;
 			fprintf(filePointer, "AuxiliaryText=%s\r\n",		cAuxTextTag);
 
 		}
-
-
 		fclose(filePointer);
 	}
 	else
 	{
 		CONSOLE_DEBUG_W_STR("Failed to create file:", filePath);
 	}
-
 }
 
+#ifdef _ENABLE_IMU_
+#include "imu_lib.h"
+
+//**************************************************************************
+void	CameraDriver::WriteIMUtextFile(void)
+{
+char	imageFileName[64];
+char	imageFilePath[128];
+FILE	*filePointer;
+double	imuHeading;
+double	imuRoll;
+double	imuPitch;
+int		imuRetCode;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+
+	strcpy(imageFileName, cFileNameRoot);
+	strcat(imageFileName, "-imu.txt");
+
+
+	strcpy(imageFilePath, kImageDataDir);
+	strcat(imageFilePath, "/");
+	strcat(imageFilePath, imageFileName);
+	filePointer	=	fopen(imageFilePath, "w");
+	if (filePointer != NULL)
+	{
+		fprintf(filePointer, "#using bno055 sensor\r\n");
+		fprintf(filePointer, "Image   =%s\r\n",		cFileNameRoot);
+		imuRetCode	=	IMU_Read_EUL(&imuHeading, &imuRoll, &imuPitch);
+		if (imuRetCode == 0)
+		{
+			fprintf(filePointer, "Heading =%3.3f\r\n",	imuHeading);
+			fprintf(filePointer, "Roll    =%3.3f\r\n",	imuRoll);
+			fprintf(filePointer, "Pitch   =%3.3f\r\n",	imuPitch);
+		}
+		else
+		{
+			fprintf(filePointer, "Error getting IMU data\r\n");
+		}
+		fclose(filePointer);
+
+		AddToDataProductsList(imageFileName, "IMU data");
+
+	}
+	else
+	{
+		CONSOLE_DEBUG_W_STR("Failed to create file:", imageFilePath);
+	}
+
+}
+#endif
 
 
 #endif	//	_ENABLE_CAMERA_

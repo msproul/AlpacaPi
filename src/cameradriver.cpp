@@ -6246,7 +6246,7 @@ char	myImageTypeStr[16];
 					strcpy(myImageTypeStr,	"unknown");	break;
 					break;
 			}
-			CONSOLE_DEBUG_W_STR("myImageTypeStr\t=", myImageTypeStr);
+//			CONSOLE_DEBUG_W_STR("myImageTypeStr\t=", myImageTypeStr);
 			strcpy(cCameraProp.ReadOutModes[readOutModeIdx].modeStr,	myImageTypeStr);
 		}
 	}

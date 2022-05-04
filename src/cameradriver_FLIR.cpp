@@ -117,7 +117,7 @@ spinError		spinErr;
 					gSpinakerVerString);
 
 		AddLibraryVersion("camera", "FLIR", gSpinakerVerString);
-		printf(	"Spinnaker library version: %s\n\n", gSpinakerVerString);
+		CONSOLE_DEBUG_W_STR("Spinnaker library version:", gSpinakerVerString);
 
 
 		// Retrieve list of cameras from the system
