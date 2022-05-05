@@ -50,6 +50,7 @@
 #++	May  2,	2022	<MLS> Added IMU source directory (src_imu)
 #++	May  2,	2022	<MLS> Added _ENABLE_IMU_
 #++	May  2,	2022	<MLS> Added make moonlite for stand alone moonlite focuser driver
+#++	May  4,	2022	<MLS> Added camera simulator (make camerasim)
 ######################################################################################
 #	Cr_Core is for the Sony camera
 ######################################################################################
@@ -243,19 +244,20 @@ ALPACA_OBJECTS=												\
 				$(OBJECT_DIR)calibrationdriver_rpi.o		\
 				$(OBJECT_DIR)cameradriver.o					\
 				$(OBJECT_DIR)cameradriverAnalysis.o			\
-				$(OBJECT_DIR)cameradriver_fits.o			\
-				$(OBJECT_DIR)cameradriver_save.o			\
-				$(OBJECT_DIR)cameradriver_opencv.o			\
-				$(OBJECT_DIR)cameradriver_jpeg.o			\
-				$(OBJECT_DIR)cameradriver_livewindow.o		\
-				$(OBJECT_DIR)cameradriver_png.o				\
 				$(OBJECT_DIR)cameradriver_ASI.o				\
 				$(OBJECT_DIR)cameradriver_ATIK.o			\
-				$(OBJECT_DIR)cameradriver_TOUP.o			\
-				$(OBJECT_DIR)cameradriver_SONY.o			\
+				$(OBJECT_DIR)cameradriver_fits.o			\
+				$(OBJECT_DIR)cameradriver_FLIR.o			\
+				$(OBJECT_DIR)cameradriver_jpeg.o			\
+				$(OBJECT_DIR)cameradriver_livewindow.o		\
+				$(OBJECT_DIR)cameradriver_opencv.o			\
+				$(OBJECT_DIR)cameradriver_png.o				\
 				$(OBJECT_DIR)cameradriver_QHY.o				\
 				$(OBJECT_DIR)cameradriver_QSI.o				\
-				$(OBJECT_DIR)cameradriver_FLIR.o			\
+				$(OBJECT_DIR)cameradriver_SONY.o			\
+				$(OBJECT_DIR)cameradriver_save.o			\
+				$(OBJECT_DIR)cameradriver_sim.o				\
+				$(OBJECT_DIR)cameradriver_TOUP.o			\
 				$(OBJECT_DIR)commoncolor.o					\
 				$(OBJECT_DIR)filterwheeldriver.o			\
 				$(OBJECT_DIR)filterwheeldriver_ATIK.o		\
@@ -322,12 +324,12 @@ help:
 	# The AlpacaPi project consists of two main parts, drivers and clients
 	#    Driver make options
 	#        make alpacapi   Driver for x86 linux
+	#        make camerasim  Camera simulator
 	#        make dome       Raspberry pi version to control dome using DC motor controller
 	#        make jetson     Version to run on nvidia jetson board, this is an armv8
 	#        make moonlite   Driver for moonlite focusers ONLY
 	#        make nocamera   Build without the camera support
 	#        make noopencv   Camera driver for ZWO WITHOUT opencv
-	#        make noopencvpi Camera driver for ZWO WITHOUT opencv for Raspberry-Pi
 	#        make pi         Version for Raspberry Pi
 	#        make picv4      Version for Raspberry Pi using OpenCV 4 or later
 	#        make piqhy      Camera driver for QHY cameras only for Raspberry-Pi
@@ -424,6 +426,36 @@ alpacapi		:	$(CPP_OBJECTS)				\
 					-lcfitsio					\
 					-lqhyccd					\
 					-o alpacapi
+
+######################################################################################
+#        make camerasim  Camera simulator
+camerasim		:	DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
+camerasim		:	DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
+camerasim		:	DEFINEFLAGS		+=	-D_SIMULATE_CAMERA_
+camerasim		:	DEFINEFLAGS		+=	-D_ENABLE_FITS_
+camerasim		:	DEFINEFLAGS		+=	-D_ENABLE_DISCOVERY_QUERRY_
+camerasim		:	DEFINEFLAGS		+=	-D_USE_OPENCV_
+camerasim		:	DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
+camerasim		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
+camerasim		:	DEFINEFLAGS		+=	-D_ENABLE_LIVE_CONTROLLER_
+camerasim		:	$(CPP_OBJECTS)				\
+					$(ALPACA_OBJECTS)			\
+					$(SOCKET_OBJECTS)			\
+					$(LIVE_WINDOW_OBJECTS)		\
+
+
+		$(LINK)  								\
+					$(SOCKET_OBJECTS)			\
+					$(CPP_OBJECTS)				\
+					$(ALPACA_OBJECTS)			\
+					$(LIVE_WINDOW_OBJECTS)		\
+					$(OPENCV_LINK)				\
+					-lcfitsio					\
+					-lusb-1.0					\
+					-ludev						\
+					-lpthread					\
+					-o camerasim
+
 
 ######################################################################################
 #pragma mark make picv4
@@ -1692,42 +1724,6 @@ noopencv		:		$(ALPACA_OBJECTS)			\
 						-ljpeg						\
 						-o alpacapi
 
-######################################################################################
-#pragma mark linux-x86 - No opencv
-#make noopencvpi
-#noopencvpi		:		DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_
-noopencvpi		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_ZWO_
-#noopencvpi		:		DEFINEFLAGS		+=	-D_ENABLE_ROTATOR_
-#noopencvpi		:		DEFINEFLAGS		+=	-D_ENABLE_SAFETYMONITOR_
-#noopencvpi		:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_
-#noopencvpi		:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
-noopencvpi		:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
-noopencvpi		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
-#noopencvpi		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
-noopencvpi		:		DEFINEFLAGS		+=	-D_ENABLE_JPEGLIB_
-noopencvpi		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
-noopencvpi		:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
-noopencvpi		:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_SKYWATCH_
-noopencvpi		:		PLATFORM		=	armv7
-noopencvpi		:		$(ALPACA_OBJECTS)			\
-						$(CPP_OBJECTS)				\
-						$(SOCKET_OBJECTS)			\
-						$(ASI_CAMERA_OBJECTS)		\
-						$(ZWO_EFW_OBJECTS)			\
-
-		$(LINK)  									\
-						$(ALPACA_OBJECTS)			\
-						$(CPP_OBJECTS)				\
-						$(SOCKET_OBJECTS)			\
-						$(ASI_CAMERA_OBJECTS)		\
-						$(ZWO_EFW_OBJECTS)			\
-						-lcfitsio					\
-						-ludev						\
-						-lpthread					\
-						-lusb-1.0					\
-						-ljpeg						\
-						-o alpacapi
-
 
 ######################################################################################
 #pragma mark Debug linux-x86
@@ -2653,6 +2649,15 @@ $(OBJECT_DIR)cameradriver_save.o :		$(SRC_DIR)cameradriver_save.cpp		\
 										$(SRC_DIR)alpacadriver.h			\
 										Makefile
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)cameradriver_save.cpp -o$(OBJECT_DIR)cameradriver_save.o
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)cameradriver_sim.o :		$(SRC_DIR)cameradriver_sim.cpp		\
+									 	$(SRC_DIR)cameradriver_sim.h		\
+										$(SRC_DIR)cameradriver.h			\
+										$(SRC_DIR)alpacadriver.h			\
+										Makefile
+	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)cameradriver_sim.cpp -o$(OBJECT_DIR)cameradriver_sim.o
+
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)cameradriver_opencv.o :	$(SRC_DIR)cameradriver_opencv.cpp	\

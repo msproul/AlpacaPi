@@ -210,6 +210,9 @@ char		gHostName[48]				=	"";
 #if defined(_ENABLE_CAMERA_) && defined(_ENABLE_SONY_)
 	#include	"cameradriver_SONY.h"
 #endif
+#if defined(_ENABLE_CAMERA_) && defined(_SIMULATE_CAMERA_)
+	#include	"cameradriver_sim.h"
+#endif
 
 
 #ifdef	_ENABLE_DOME_
@@ -2936,6 +2939,9 @@ static void	CreateDriverObjects()
 	CreateSONY_CameraObjects();
 #endif
 
+#if defined(_ENABLE_CAMERA_) && defined(_SIMULATE_CAMERA_)
+	CreateSimulator_CameraObjects();
+#endif
 
 //*********************************************************
 //*	Multicam

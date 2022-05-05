@@ -3717,6 +3717,24 @@ int		pixelIndex;
 	return(ccc);
 }
 
+
+//*****************************************************************************
+static void	GetAlpacaImageDataTypeString(int dataType, char *dataTypeString)
+{
+	switch(dataType)
+	{
+		case kAlpacaImageData_Unknown:	strcpy(dataTypeString, "Unknown");	break;
+		case kAlpacaImageData_Int16:	strcpy(dataTypeString, "Int16");	break;
+		case kAlpacaImageData_Int32:	strcpy(dataTypeString, "Int32");	break;
+		case kAlpacaImageData_Double:	strcpy(dataTypeString, "Double");	break;
+		case kAlpacaImageData_Single:	strcpy(dataTypeString, "Single");	break;
+		case kAlpacaImageData_Decimal:	strcpy(dataTypeString, "Decimal");	break;
+		case kAlpacaImageData_Byte:		strcpy(dataTypeString, "Byte");		break;
+		case kAlpacaImageData_Int64:	strcpy(dataTypeString, "Int64");	break;
+		case kAlpacaImageData_UInt16:	strcpy(dataTypeString, "UInt16");	break;
+	}
+}
+
 //*****************************************************************************
 TYPE_ASCOM_STATUS	CameraDriver::Get_Imagearray_Binary(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
 {
@@ -3733,6 +3751,7 @@ char				httpHeader[1024];
 char				lineBuff[128];
 size_t				httpHeaderSize;
 int					returnedDataLen;
+char				dataTypeString[32];
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -3752,6 +3771,7 @@ int					returnedDataLen;
 	binaryImageHdr.Dimension2				=	cLastExposure_ROIinfo.currentROIheight;	//	Length of image array second dimension
 	binaryImageHdr.Dimension3				=	0;										//	Length of image array third dimension (0 for 2D array)
 
+	CONSOLE_DEBUG_W_NUM("cLastExposure_ROIinfo.currentROIimageType\t=",		cLastExposure_ROIinfo.currentROIimageType);
 	CONSOLE_DEBUG_W_NUM("cLastExposure_ROIinfo.currentROIwidth\t=",		cLastExposure_ROIinfo.currentROIwidth);
 	CONSOLE_DEBUG_W_NUM("cLastExposure_ROIinfo.currentROIheight\t=",	cLastExposure_ROIinfo.currentROIheight);
 	totalPixels		=	cLastExposure_ROIinfo.currentROIwidth * cLastExposure_ROIinfo.currentROIheight;
@@ -3779,6 +3799,7 @@ int					returnedDataLen;
 			CONSOLE_DEBUG("kImageType_RGB24");
 			binaryImageHdr.Rank						=	3;	//	Image array rank
 			binaryImageHdr.Dimension3				=	3;	//	Length of image array third dimension (0 for 2D array)
+			binaryImageHdr.ImageElementType			=	kAlpacaImageData_Byte;		//	Element type as sent over the network
 			binaryImageHdr.TransmissionElementType	=	kAlpacaImageData_Byte;		//	Element type as sent over the network
 			bytesPerPixel	=	3;
 			break;
@@ -3792,8 +3813,12 @@ int					returnedDataLen;
 	CONSOLE_DEBUG_W_NUM("ClientTransactionID\t=",		binaryImageHdr.ClientTransactionID);
 	CONSOLE_DEBUG_W_NUM("ServerTransactionID\t=",		binaryImageHdr.ServerTransactionID);
 	CONSOLE_DEBUG_W_NUM("DataStart\t\t\t=",				binaryImageHdr.DataStart);
+	GetAlpacaImageDataTypeString(binaryImageHdr.ImageElementType, dataTypeString);
 	CONSOLE_DEBUG_W_NUM("ImageElementType\t\t=",		binaryImageHdr.ImageElementType);
+	CONSOLE_DEBUG_W_STR("ImageElementType\t\t=",		dataTypeString);
+	GetAlpacaImageDataTypeString(binaryImageHdr.TransmissionElementType, dataTypeString);
 	CONSOLE_DEBUG_W_NUM("TransmissionElementType\t=",	binaryImageHdr.TransmissionElementType);
+	CONSOLE_DEBUG_W_STR("TransmissionElementType\t=",	dataTypeString);
 	CONSOLE_DEBUG_W_NUM("Rank\t\t\t=",					binaryImageHdr.Rank);
 	CONSOLE_DEBUG_W_NUM("Dimension1\t\t=",				binaryImageHdr.Dimension1);
 	CONSOLE_DEBUG_W_NUM("Dimension2\t\t=",				binaryImageHdr.Dimension2);
@@ -3837,8 +3862,8 @@ int					returnedDataLen;
 			ccc			=	httpHeaderSize;
 			ccc			+=	sizeof(TYPE_BinaryImageHdr);
 
-			CONSOLE_DEBUG_W_LONG("httpHeaderSize\t=",	httpHeaderSize);
-			CONSOLE_DEBUG_W_NUM("ccc\t\t=",				ccc);
+			CONSOLE_DEBUG_W_LONG("httpHeaderSize\t\t=",	httpHeaderSize);
+			CONSOLE_DEBUG_W_NUM("ccc\t\t\t=",			ccc);
 
 			//*	now copy the image over
 			switch(cLastExposure_ROIinfo.currentROIimageType)
@@ -3847,8 +3872,8 @@ int					returnedDataLen;
 				case kImageType_Y8:
 					CONSOLE_DEBUG("kImageType_RAW8");
 					returnedDataLen	=	BuildBinaryImage_Raw8(binaryDataBuffer, ccc, bufferSize);
-					CONSOLE_DEBUG_W_LONG("bufferSize     \t=",	(long)bufferSize);
-					CONSOLE_DEBUG_W_NUM( "returnedDataLen\t=",	returnedDataLen);
+					CONSOLE_DEBUG_W_LONG("bufferSize     \t\t=",	(long)bufferSize);
+					CONSOLE_DEBUG_W_NUM( "returnedDataLen\t\t=",	returnedDataLen);
 					break;
 
 				case kImageType_RAW16:
@@ -3870,6 +3895,7 @@ int					returnedDataLen;
 					break;
 			}
 
+			CONSOLE_DEBUG_W_NUM("Writting to TCP socket, bufferSize\t=", bufferSize);
 			bytesWritten	=	write(reqData->socket, binaryDataBuffer, bufferSize);
 			CONSOLE_DEBUG_W_NUM("bytesWritten\t\t=", bytesWritten);
 
@@ -3877,7 +3903,7 @@ int					returnedDataLen;
 		}
 		else
 		{
-			CONSOLE_DEBUG("Failed to allocate data buffer");
+			CONSOLE_DEBUG_W_NUM("Failed to allocate data buffer of size", bufferSize);
 		}
 	}
 	else

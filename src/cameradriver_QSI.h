@@ -21,7 +21,6 @@
 //#include	"cameradriver_QSI.h"
 
 
-void	CreateQSI_CameraObjects(void);
 
 
 #ifndef	_CAMERA_DRIVER_QSI_H_
@@ -35,6 +34,8 @@ void	CreateQSI_CameraObjects(void);
 //	#include	"lib/qsiapi.h"
 	#include	"qsiapi.h"
 #endif
+
+void	CreateQSI_CameraObjects(void);
 
 
 //**************************************************************************************

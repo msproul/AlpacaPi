@@ -359,6 +359,8 @@ int			iii;
 int			objCntr;
 
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, argWindowName);
+	CONSOLE_DEBUG_W_NUM("xSize        \t=",	xSize);
+	CONSOLE_DEBUG_W_NUM("ySize        \t=",	ySize);
 
 	memset(&cCommonProp, 0, sizeof(TYPE_CommonProperties));
 
@@ -2016,8 +2018,7 @@ cv::Mat		image_roi;
 	{
 		if (theOpenCVimage != NULL)
 		{
-
-		//	CONSOLE_DEBUG_W_NUM("Drawing image, widget#", widgetIdx);
+//			CONSOLE_DEBUG("Drawing image");
 			widgetRoiRect.x			=	theWidget->left;
 			widgetRoiRect.y			=	theWidget->top;
 			widgetRoiRect.width		=	theWidget->width;
@@ -2030,6 +2031,10 @@ cv::Mat		image_roi;
 			}
 
 			theWidget->roiRect	=	widgetRoiRect;
+//	CONSOLE_DEBUG_W_NUM("theWidget->roiRect.x\t=",		theWidget->roiRect.x);
+//	CONSOLE_DEBUG_W_NUM("theWidget->roiRect.y\t=",		theWidget->roiRect.y);
+//	CONSOLE_DEBUG_W_NUM("theWidget->roiRect.width\t=",	theWidget->roiRect.width);
+//	CONSOLE_DEBUG_W_NUM("theWidget->roiRect.height\t=",	theWidget->roiRect.height);
 			//*	we have to make sure the the destination rect is the same as the src rect
 			//*	if its smaller, then center it
 			if (theOpenCVimage->cols < widgetRoiRect.width)
@@ -2059,6 +2064,11 @@ cv::Mat		image_roi;
 				CONSOLE_DEBUG("=========================================================");
 				CONSOLE_DEBUG("cv::Mat() had an exception");
 				CONSOLE_DEBUG_W_NUM("openCV error code\t=",	ex.code);
+
+				CONSOLE_DEBUG_W_NUM("theWidget->roiRect.x\t=",		theWidget->roiRect.x);
+				CONSOLE_DEBUG_W_NUM("theWidget->roiRect.y\t=",		theWidget->roiRect.y);
+				CONSOLE_DEBUG_W_NUM("theWidget->roiRect.width\t=",	theWidget->roiRect.width);
+				CONSOLE_DEBUG_W_NUM("theWidget->roiRect.height\t=",	theWidget->roiRect.height);
 			}
 			//---try------try------try------try------try------try---
 			try

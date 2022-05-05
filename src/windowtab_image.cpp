@@ -51,7 +51,9 @@ WindowTabImage::WindowTabImage(	const int	xSize,
 								const char	*windowName)
 	:WindowTab(xSize, ySize, backGrndColor, windowName)
 {
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_NUM("xSize        \t=",	xSize);
+	CONSOLE_DEBUG_W_NUM("ySize        \t=",	ySize);
 
 	cOpenCVdownLoadedImage	=	NULL;
 	cOpenCVdisplayedImage	=	NULL;
@@ -99,7 +101,9 @@ int			histLblWidth;
 int			histLblHeight;
 int			hist_xLoc;
 char		buttonName[16];
-//	CONSOLE_DEBUG(__FUNCTION__);
+
+	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_NUM("cWidth        \t=",	cWidth);
 
 	//------------------------------------------
 	yLoc			=	cTabVertOffset;
@@ -226,8 +230,9 @@ char		buttonName[16];
 	SetWidgetBorderColor(	kImageDisplay_ImageDisplay,	CV_RGB(255,	255,	255));
 	SetWidgetBorder(		kImageDisplay_ImageDisplay,	true);
 
-//	CONSOLE_DEBUG_W_NUM("imageBoxWidth\t=",		imageBoxWidth);
-//	CONSOLE_DEBUG_W_NUM("imageBoxHeight\t=",	imageBoxHeight);
+	CONSOLE_DEBUG_W_NUM("cWidth        \t=",	cWidth);
+	CONSOLE_DEBUG_W_NUM("imageBoxWidth \t=",	imageBoxWidth);
+	CONSOLE_DEBUG_W_NUM("imageBoxHeight\t=",	imageBoxHeight);
 
 }
 

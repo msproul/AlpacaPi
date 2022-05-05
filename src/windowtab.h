@@ -1,5 +1,10 @@
 //*****************************************************************************
 //#include	"windowtab.h"
+//*****************************************************************************
+//*	Edit History
+//*****************************************************************************
+//*	May  4,	2022	<MLS> Increased length of cWindowName to 256
+//*****************************************************************************
 
 #ifndef _WINDOW_TAB_H_
 #define	_WINDOW_TAB_H_
@@ -113,6 +118,8 @@ enum
 		W_COLOR_LAST
 
 };
+
+#define	kWindowNameLen	256
 
 //*****************************************************************************
 class WindowTab
@@ -306,7 +313,7 @@ class WindowTab
 		TYPE_WIDGET	cWidgetList[kMaxWidgets];
 		int			cWidgetCnt;
 
-		char		cWindowName[48];
+		char		cWindowName[kWindowNameLen];
 		int			cWidth;
 		int			cHeight;
 		void		*cParentObjPtr;

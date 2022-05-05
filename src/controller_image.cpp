@@ -176,7 +176,8 @@ ControllerImage::~ControllerImage(void)
 void	ControllerImage::SetupWindowControls(void)
 {
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_NUM("cWidth        \t=",	cWidth);
 
 	SetTabCount(kTab_Count);
 
@@ -248,6 +249,11 @@ void	ControllerImage::RefreshWindow(void)
 //**************************************************************************************
 void	ControllerImage::DrawWidgetImage(TYPE_WIDGET *theWidget)
 {
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+	CONSOLE_DEBUG_W_NUM("theWidget->left\t=",	theWidget->roiRect);
+	CONSOLE_DEBUG_W_NUM("theWidget->top\t=",	theWidget->roiRect);
+	CONSOLE_DEBUG_W_NUM("theWidget->width\t=",	theWidget->width);
+	CONSOLE_DEBUG_W_NUM("theWidget->height\t=",	theWidget->height);
 	if (cImageTabObjPtr != NULL)
 	{
 		if (cImageTabObjPtr->cImageZoomState)
@@ -260,6 +266,7 @@ void	ControllerImage::DrawWidgetImage(TYPE_WIDGET *theWidget)
 		}
 		else
 		{
+
 			CONSOLE_DEBUG("Normal");
 			Controller::DrawWidgetImage(theWidget);
 		}
@@ -346,7 +353,11 @@ size_t	byteCount;
 							CONSOLE_DEBUG("Original is 8 bit B/W");
 							CONSOLE_DEBUG("OpenCV++ not finished!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 							//*				source  ->  destination
+						#if (CV_MAJOR_VERSION <= 3)
 							cv::cvtColor(*newOpenCVImage, *cDownLoadedImage, CV_GRAY2RGB);
+						#else
+							#warning "OpenCV convert from 8 bit to RGB not finished"
+						#endif
 							break;
 
 						case 2:
