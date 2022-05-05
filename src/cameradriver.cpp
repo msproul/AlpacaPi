@@ -3746,7 +3746,7 @@ size_t				dataPayloadSize;
 size_t				bufferSize;
 unsigned char 		*binaryDataBuffer;
 int					ccc;
-int					bytesWritten;
+size_t				bytesWritten;
 char				httpHeader[1024];
 char				lineBuff[128];
 size_t				httpHeaderSize;
@@ -3894,11 +3894,50 @@ char				dataTypeString[32];
 					CONSOLE_ABORT(__FUNCTION__);
 					break;
 			}
+			CONSOLE_DEBUG_W_LONG("bufferSize\t\t=", bufferSize);
+			//*	if the data buffer is small, send it as one block
+		//	if (bufferSize < (20 * 1000000))
+			if (1)
+			{
+				CONSOLE_DEBUG_W_NUM("Writting to TCP socket, bufferSize\t=", bufferSize);
+				bytesWritten	=	write(reqData->socket, binaryDataBuffer, bufferSize);
+				CONSOLE_DEBUG_W_NUM("bytesWritten\t\t=", bytesWritten);
+				if (bytesWritten < bufferSize)
+				{
+					CONSOLE_DEBUG("FAILED!!! to transmit entire data block!!!!!!!!!!!!!!!");
+				}
+			}
+			else
+			{
+			//*	send the data as multiple blocks
+			size_t			totalBytesWritten;
+			size_t			bytesPerBlock;
+			size_t			dataLeftToSend;
+			unsigned char 	*dataPointer;
 
-			CONSOLE_DEBUG_W_NUM("Writting to TCP socket, bufferSize\t=", bufferSize);
-			bytesWritten	=	write(reqData->socket, binaryDataBuffer, bufferSize);
-			CONSOLE_DEBUG_W_NUM("bytesWritten\t\t=", bytesWritten);
+				CONSOLE_DEBUG("transmitting image data in blocks");
+			#define		kXmitBlockSize	(2 * 1000000)
+				totalBytesWritten	=	0;
+				dataPointer			=	binaryDataBuffer;
+				while (totalBytesWritten < bufferSize)
+				{
+					dataLeftToSend		=	bufferSize - totalBytesWritten;
+					if (dataLeftToSend > kXmitBlockSize)
+					{
+						bytesPerBlock	=	kXmitBlockSize;
+					}
+					else
+					{
+						bytesPerBlock	=	dataLeftToSend;
+					}
+					CONSOLE_DEBUG_W_NUM("write() bytesPerBlock\t\t=", bytesPerBlock);
+					bytesWritten		=	write(reqData->socket, dataPointer, bytesPerBlock);
+					totalBytesWritten	+=	bytesWritten;
+					dataPointer			+=	bytesWritten;
 
+					CONSOLE_DEBUG_W_NUM("bytesWritten\t\t=", bytesWritten);
+				}
+			}
 			free(binaryDataBuffer);
 		}
 		else
