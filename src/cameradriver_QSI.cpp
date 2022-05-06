@@ -100,14 +100,14 @@ QSICamera		cQSIcam;
 	{
 		CONSOLE_DEBUG_W_NUM("numCamerasFound\t=", numCamerasFound);
 
-		if (numCamerasFound > 0)
-		{
-			for (iii=0; iii < numCamerasFound; iii++)
-			{
-				new CameraDriverQSI(iii, camSerial[iii]);
-			}
-		}
-		else if (gSimulateCameraImage)
+//		if (numCamerasFound > 0)
+//		{
+//			for (iii=0; iii < numCamerasFound; iii++)
+//			{
+//				new CameraDriverQSI(iii, camSerial[iii]);
+//			}
+//		}
+//		else
 		{
 			//*	for debugging without a camera
 			new CameraDriverQSI(0, camSerial[0]);
