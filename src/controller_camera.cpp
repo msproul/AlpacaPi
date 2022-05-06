@@ -1841,7 +1841,6 @@ TYPE_ImageArray	*imageArray;
 int				buffSize;
 int				imageDataLen;
 int				imageWidthStep;
-uint16_t		*dataPtr16bit;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG_W_NUM("cCameraProp.CameraXsize\t=",	cCameraProp.CameraXsize);
@@ -1920,11 +1919,8 @@ uint16_t		*dataPtr16bit;
 					iii	=	0;
 					//*	stepping ACROSS the field
 
-					//*	this is for 16 bit data only
-					dataPtr16bit	=	(uint16_t *)myOpenCVimage->data;
 
 					CONSOLE_DEBUG_W_NUM("bytesPerPixel\t=",		bytesPerPixel);
-					CONSOLE_DEBUG_W_HEX("dataPtr16bit \t=",		dataPtr16bit);
 
 					for (xxx=0; xxx < myOpenCVimage->cols; xxx++)
 					{
@@ -1937,12 +1933,11 @@ uint16_t		*dataPtr16bit;
 							{
 								case 2:
 									pixIdx					=	pixIdxRowStart + (xxx * 2);
-							//		dataPtr16bit[pixIdx]	=	(imageArray[iii].BluValue) & 0x00ffff;
 								#if (__ORDER_LITTLE_ENDIAN__ == 1234)
 									myOpenCVimage->data[pixIdx++]	=	(imageArray[iii].RedValue) & 0x00ff;
 									myOpenCVimage->data[pixIdx++]	=	(imageArray[iii].RedValue >> 8) & 0x00ff;
 								#else
-
+									#error "Not finished"
 								#endif
 									break;
 

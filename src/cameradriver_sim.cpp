@@ -155,7 +155,6 @@ bool	CameraDriverSIM::AlpacaConnect(void)
 TYPE_ASCOM_STATUS	CameraDriverSIM::Read_SensorTemp(void)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
-double				cameraTemp_DegC;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -163,6 +162,7 @@ double				cameraTemp_DegC;
 	if (cTempReadSupported)
 	{
 		//	Only valid if CanSetCCDTemperature is true.
+		cCameraProp.CCDtemperature		=	5.56;
 	}
 	else
 	{
@@ -244,14 +244,14 @@ TYPE_ASCOM_STATUS	alpacaErrCode;
 TYPE_ASCOM_STATUS		CameraDriverSIM::Start_CameraExposure(int32_t exposureMicrosecs)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
-double				durationSeconds;
+//double				durationSeconds;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 	if (cCommonProp.Connected)
 	{
 		cCameraProp.ImageReady		=	false;
 
-		durationSeconds	=	(exposureMicrosecs * 1.0) / 1000000.0;
+//		durationSeconds	=	(exposureMicrosecs * 1.0) / 1000000.0;
 
 		CONSOLE_DEBUG("Simulating camera");
 		cInternalCameraState	=	kCameraState_TakingPicture;
@@ -351,11 +351,8 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 TYPE_ASCOM_STATUS	CameraDriverSIM::Read_ImageData(void)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
-int					xSize;
-int					ySize;
-int					elementSize;
-long				imgBufferSize;
 int					bytesPerPixel;
+
 	CONSOLE_DEBUG(__FUNCTION__);
 
 	if (cCommonProp.Connected)

@@ -14,6 +14,7 @@
 //*	Feb 25,	2022	<MLS> SetLiveWindowImage() working under C++ opencv
 //*	Mar 12,	2022	<MLS> Added SetImageWindowInfo()
 //*	Mar 12,	2022	<MLS> Added TYPE_BinaryImageHdr struct to Image controller
+//*	May  5,	2022	<MLS> Added ConvertImageToRGB()
 //*****************************************************************************
 
 #ifdef _ENABLE_CTRL_IMAGE_
@@ -317,72 +318,82 @@ uint8_t	*rgbRowPtr;
 													CV_8UC3);
 	if (rgbOpenCVImage != NULL)
 	{
-		rgbImgRowStepSize	=	rgbOpenCVImage->step[0];
-
-		CONSOLE_DEBUG_W_NUM("oldImgBytesPerPixel\t=", oldImgBytesPerPixel);
-		CONSOLE_DEBUG_W_NUM("rgbImgRowStepSize\t=", rgbImgRowStepSize);
-
-		//*	now copy the data over, pixel at a time
-		switch(oldImgBytesPerPixel)
+		//*	double check the data buffers
+		if ((rgbOpenCVImage->data != NULL) && (openCVImage->data != NULL))
 		{
-			case 1:
-//		#if (CV_MAJOR_VERSION <= 3)
-//			cv::cvtColor(*newOpenCVImage, *cDownLoadedImage, CV_GRAY2RGB);
-//		#else
-//			#warning "OpenCV convert from 8 bit to RGB not finished"
-//		#endif
-				for (row = 0; row < oldImgHeight; row++)
-				{
-					oldRowPtr	=	openCVImage->data;
-					oldRowPtr	+=	row * oldImgRowStepSize;
+			rgbImgRowStepSize	=	rgbOpenCVImage->step[0];
 
-					rgbRowPtr	=	rgbOpenCVImage->data;
-					rgbRowPtr	+=	row * rgbImgRowStepSize;
+			CONSOLE_DEBUG_W_NUM("oldImgBytesPerPixel\t=", oldImgBytesPerPixel);
+			CONSOLE_DEBUG_W_NUM("rgbImgRowStepSize\t=", rgbImgRowStepSize);
 
-					pixIdx		=	0;
-					for (clm = 0; clm < oldImgWidth; clm++)
+			//*	copy the image data to OUR image
+			switch(oldImgBytesPerPixel)
+			{
+				case 1:
+							//		#if (CV_MAJOR_VERSION <= 3)
+							//			cv::cvtColor(*newOpenCVImage, *cDownLoadedImage, CV_GRAY2RGB);
+							//		#else
+							//			#warning "OpenCV convert from 8 bit to RGB not finished"
+							//		#endif
+					//*	copy the data over, pixel at a time
+					for (row = 0; row < oldImgHeight; row++)
 					{
-						pixValue			=	oldRowPtr[clm];
-						rgbRowPtr[pixIdx++]	=	pixValue;
-						rgbRowPtr[pixIdx++]	=	pixValue;
-						rgbRowPtr[pixIdx++]	=	pixValue;
+						oldRowPtr	=	openCVImage->data;
+						oldRowPtr	+=	row * oldImgRowStepSize;
+
+						rgbRowPtr	=	rgbOpenCVImage->data;
+						rgbRowPtr	+=	row * rgbImgRowStepSize;
+
+						pixIdx		=	0;
+						for (clm = 0; clm < oldImgWidth; clm++)
+						{
+							pixValue			=	oldRowPtr[clm];	//*	get the 8 bit pixel value
+							rgbRowPtr[pixIdx++]	=	pixValue;		//*	put it in R,G,B
+							rgbRowPtr[pixIdx++]	=	pixValue;
+							rgbRowPtr[pixIdx++]	=	pixValue;
+						}
 					}
-				}
-				break;
+					break;
 
-			case 2:
-				for (row = 0; row < oldImgHeight; row++)
-				{
-					oldRowPtr	=	openCVImage->data;
-					oldRowPtr	+=	row * oldImgRowStepSize;
-
-					rgbRowPtr	=	rgbOpenCVImage->data;
-					rgbRowPtr	+=	row * rgbImgRowStepSize;
-
-					pixIdx		=	0;
-					for (clm = 0; clm < oldImgWidth; clm++)
+				case 2:
+					//*	copy the data over, pixel at a time
+					for (row = 0; row < oldImgHeight; row++)
 					{
-						pixValue			=	oldRowPtr[(clm * 2) + 1];
-						rgbRowPtr[pixIdx++]	=	pixValue;
-						rgbRowPtr[pixIdx++]	=	pixValue;
-						rgbRowPtr[pixIdx++]	=	pixValue;
-					}
-				}
-				break;
+						oldRowPtr	=	openCVImage->data;
+						oldRowPtr	+=	row * oldImgRowStepSize;
 
-			case 3:
-				//*	copy the image data to OUR image
-				byteCount	=	openCVImage->rows * oldImgRowStepSize;
-				if ((rgbOpenCVImage->data != NULL) && (openCVImage->data != NULL))
-				{
-					CONSOLE_DEBUG("Calling memcpy");
-					memcpy(rgbOpenCVImage->data, openCVImage->data, byteCount);
-				}
-				else
-				{
-					CONSOLE_DEBUG("Failed to copy data from newOpenCVImage to cDownLoadedImage");
-				}
-				break;
+						rgbRowPtr	=	rgbOpenCVImage->data;
+						rgbRowPtr	+=	row * rgbImgRowStepSize;
+
+						pixIdx		=	0;
+						for (clm = 0; clm < oldImgWidth; clm++)
+						{
+							//*	get the most significant byte of the 16 bit value
+						#if (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)
+							pixValue			=	oldRowPtr[(clm * 2) + 1];
+						#else
+							pixValue			=	oldRowPtr[(clm * 2)];
+						#endif
+							rgbRowPtr[pixIdx++]	=	pixValue;	//*	put it in R,G,B
+							rgbRowPtr[pixIdx++]	=	pixValue;
+							rgbRowPtr[pixIdx++]	=	pixValue;
+						}
+					}
+					break;
+
+				case 3:
+					if (rgbImgRowStepSize == oldImgRowStepSize)
+					{
+						//*	the data is the same, use memcpy
+						byteCount	=	openCVImage->rows * oldImgRowStepSize;
+						memcpy(rgbOpenCVImage->data, openCVImage->data, byteCount);
+					}
+					else
+					{
+						CONSOLE_DEBUG("Failed to copy data from newOpenCVImage to cDownLoadedImage");
+					}
+					break;
+			}
 		}
 	}
 	else
@@ -409,11 +420,9 @@ int		smallDisplayHeight;
 int		reduceFactor;
 int		newImgWidth;
 int		newImgHeight;
-int		newImgRowStepSize;
 int		newImgBytesPerPixel;
 int		openCVerr;
 bool	validImg;
-size_t	byteCount;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -437,7 +446,6 @@ size_t	byteCount;
 		//	https://docs.opencv.org/3.4/d3/d63/classcv_1_1Mat.html
 		newImgWidth			=	newOpenCVImage->cols;
 		newImgHeight		=	newOpenCVImage->rows;
-		newImgRowStepSize	=	newOpenCVImage->step[0];
 		newImgBytesPerPixel	=	newOpenCVImage->step[1];
 		validImg			=	true;
 		if ((newImgWidth < 100) || (newImgWidth > 10000))
@@ -462,8 +470,8 @@ size_t	byteCount;
 			//*	the downloaded image needs to be copied and/or resized to the displayed image
 			if (cDownLoadedImage != NULL)
 			{
-				CONSOLE_DEBUG_W_NUM("cDownLoadedImage->step[0]\t=",	cDownLoadedImage->step[0]);
-				CONSOLE_DEBUG_W_NUM("cDownLoadedImage->step[1]\t=",	cDownLoadedImage->step[1]);
+				CONSOLE_DEBUG_W_LONG("cDownLoadedImage->step[0]\t=",	cDownLoadedImage->step[0]);
+				CONSOLE_DEBUG_W_LONG("cDownLoadedImage->step[1]\t=",	cDownLoadedImage->step[1]);
 
 				CONSOLE_DEBUG("Creating small image");
 				reduceFactor		=	1;
@@ -495,8 +503,8 @@ size_t	byteCount;
 
 				if (cDisplayedImage != NULL)
 				{
-					CONSOLE_DEBUG_W_NUM("cDisplayedImage->step[0]\t=",	cDisplayedImage->step[0]);
-					CONSOLE_DEBUG_W_NUM("cDisplayedImage->step[1]\t=",	cDisplayedImage->step[1]);
+					CONSOLE_DEBUG_W_LONG("cDisplayedImage->step[0]\t=",	cDisplayedImage->step[0]);
+					CONSOLE_DEBUG_W_LONG("cDisplayedImage->step[1]\t=",	cDisplayedImage->step[1]);
 					CONSOLE_DEBUG("Resizing image");
 
 					CONSOLE_DEBUG("Original is 8 bit color (3 channels)");
@@ -507,11 +515,15 @@ size_t	byteCount;
 								0,
 								cv::INTER_LINEAR);
 
-					openCVerr	=	cv::imwrite("resized.png", *cDisplayedImage);
-					CONSOLE_DEBUG_W_NUM("cDisplayedImage->cols   \t=",	cDisplayedImage->cols);
-					CONSOLE_DEBUG_W_NUM("cDisplayedImage->rows   \t=",	cDisplayedImage->rows);
-					CONSOLE_DEBUG_W_NUM("cDisplayedImage->step[0]\t=",	cDisplayedImage->step[0]);
-					CONSOLE_DEBUG_W_NUM("cDisplayedImage->step[1]\t=",	cDisplayedImage->step[1]);
+					openCVerr	=	cv::imwrite("displayed-resized.png", *cDisplayedImage);
+					if (openCVerr != 0)
+					{
+						CONSOLE_DEBUG_W_NUM("openCVerr               \t=",	openCVerr);
+						CONSOLE_DEBUG_W_NUM("cDisplayedImage->cols   \t=",	cDisplayedImage->cols);
+						CONSOLE_DEBUG_W_NUM("cDisplayedImage->rows   \t=",	cDisplayedImage->rows);
+						CONSOLE_DEBUG_W_LONG("cDisplayedImage->step[0]\t=",	cDisplayedImage->step[0]);
+						CONSOLE_DEBUG_W_LONG("cDisplayedImage->step[1]\t=",	cDisplayedImage->step[1]);
+					}
 
 					SetWidgetImage(kTab_Image, kImageDisplay_ImageDisplay, cDisplayedImage);
 				}
@@ -536,11 +548,7 @@ size_t	byteCount;
 	else
 	{
 		CONSOLE_DEBUG("Image parameters invalid !!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-		CONSOLE_DEBUG_W_NUM("newImgWidth        \t=",	newImgWidth);
-		CONSOLE_DEBUG_W_NUM("newImgHeight       \t=",	newImgHeight);
-		CONSOLE_DEBUG_W_NUM("newImgRowStepSize  \t=",	newImgRowStepSize);
-		CONSOLE_DEBUG_W_NUM("newImgBytesPerPixel\t=",	newImgBytesPerPixel);
-//			CONSOLE_ABORT(__FUNCTION__);
+//		CONSOLE_ABORT(__FUNCTION__);
 
 		return;
 	}
@@ -711,11 +719,10 @@ int		newImgHeight;
 int		newImgRowStepSize;
 int		newImgChannels;
 
-int		oldImgWidth;
 int		oldImgHeight;
 int		oldImgRowStepSize;
 
-int		dspImgWidth;		//*	displayed image info
+//*	displayed image info
 int		dspImgHeight;
 int		dspImgRowStepSize;
 size_t	byteCount_dsp;
@@ -741,13 +748,12 @@ size_t	byteCount_dsp;
 		CONSOLE_DEBUG_W_NUM("newImgRowStepSize\t=",	newImgRowStepSize);
 		CONSOLE_DEBUG_W_NUM("newImgChannels\t=",	newImgChannels);
 
-		oldImgWidth			=	cDownLoadedImage->cols;
 		oldImgHeight		=	cDownLoadedImage->rows;
 		oldImgRowStepSize	=	cDownLoadedImage->step[0];
 
 		byteCount_old		=	oldImgHeight * oldImgRowStepSize;
-		CONSOLE_DEBUG_W_NUM("byteCount_src\t=",	byteCount_src);
-		CONSOLE_DEBUG_W_NUM("byteCount_old\t=",	byteCount_old);
+		CONSOLE_DEBUG_W_LONG("byteCount_src\t=",	byteCount_src);
+		CONSOLE_DEBUG_W_LONG("byteCount_old\t=",	byteCount_old);
 //		CONSOLE_ABORT(__FUNCTION__);
 
 		if (byteCount_src == byteCount_old)
@@ -758,7 +764,6 @@ size_t	byteCount_dsp;
 		//*	double check the displayed image
 		if (cDisplayedImage != NULL)
 		{
-			dspImgWidth			=	cDisplayedImage->cols;
 			dspImgHeight		=	cDisplayedImage->rows;
 			dspImgRowStepSize	=	cDisplayedImage->step[0];
 			byteCount_dsp		=	dspImgHeight * dspImgRowStepSize;

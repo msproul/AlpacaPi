@@ -1,4 +1,4 @@
-History Comments found =1715 in 312 files
+History Comments found =1716 in 312 files
 eph.c:10                 	//*	May  2,	1996	<MLS> (Mark Sproul) Starting on SkyTravel for Frank and Clif
 StarData.c:7             	//*	May  2,	1996	<MLS> (Mark Sproul) Starting on SkyTravel for Frank and Clif
 StarData.c:8             	//*	Nov 18,	1999	<MLS> restarting efforts
@@ -422,7 +422,7 @@ cameradriver_ASI.cpp:73  	//*	Feb 16,	2020	<MLS> Added Read_Gain() & Write_Gain(
 cameradriver_ATIK.cpp:48 	//*	Feb 16,	2020	<MLS> Added Read_Gain() & Write_Gain()
 alpacadriver.cpp:88      	//*	Feb 18,	2020	<MLS> Added -q (quiet) -v (verbose default) options to command line
 cameradriver.cpp:88      	//*	Feb 18,	2020	<MLS> Fixed bug in live view when image format gets changed
-cameradriver_opencv.cpp:377	//*	Feb 18,	2020	<MLS> Fixed bug in live view when image format gets changed
+cameradriver_opencv.cpp:379	//*	Feb 18,	2020	<MLS> Fixed bug in live view when image format gets changed
 cameradriver_opencv.cpp:30	//*	Feb 19,	2020	<MLS> Started opencv mouse handling in image window
 cameradriver_opencv.cpp:31	//*	Feb 19,	2020	<MLS> Added SetOpenCVcallbackFunction()
 cameradriver_opencv.cpp:32	//*	Feb 19,	2020	<MLS> Added ProcessMouseEvent() & DrawCrossHairs()
@@ -929,7 +929,7 @@ eph.c:12                 	//*	Jan  2,	2021	<MLS> More formatting cleanup
 lx200_com.c:23           	//*	Jan  2,	2021	<MLS> Fixed 0->24 hour bug in handling of Right Ascension
 windowtab_skytravel.cpp:23	//*	Jan  2,	2021	<MLS> Double click centers display
 windowtab_skytravel.cpp:24	//*	Jan  2,	2021	<MLS> Double click in LX200 RA/DEC box centers on scope
-windowtab_skytravel.cpp:2357	//*	Jan  2,	2021	<MLS> Added fix to displayed cursor RA to make sure its > 0
+windowtab_skytravel.cpp:2354	//*	Jan  2,	2021	<MLS> Added fix to displayed cursor RA to make sure its > 0
 lx200_com.c:24           	//*	Jan  3,	2021	<MLS> Added error msg to LX200_StartThread()
 lx200_com.c:25           	//*	Jan  3,	2021	<MLS> Added bounds checking to RA/DEC values rcvd from LX200
 lx200_com.c:26           	//*	Jan  3,	2021	<MLS> Added LX200_SyncScope()
@@ -1569,7 +1569,7 @@ windowtab_skytravel.cpp:97	//*	Jan 22,	2022	<MLS> Fixed bug when drawing stars w
 YaleStarCatalog.c:5      	//*	Jan 22,	2022	<MLS> Getting rid of leading digits in Yale star name
 windowtab_skytravel.cpp:98	//*	Jan 23,	2022	<MLS> Added user settable parameters for star size calculations (cFaintLimit_B)
 windowtab_skytravel.cpp:99	//*	Jan 23,	2022	<MLS> Control and mouse wheel adjust Faint Limit (cFaintLimit_B)
-windowtab_skytravel.cpp:4045	//*	Jan 23,	2022	<MLS> No longer precessing Messier objects data
+windowtab_skytravel.cpp:4042	//*	Jan 23,	2022	<MLS> No longer precessing Messier objects data
 AsteroidData.c:20        	//*	Jan 24,	2022	<MLS> Asteroids without magnitude now default to 10
 windowtab.cpp:62         	//*	Jan 24,	2022	<MLS> Added flags argument to ProcessMouseWheelMoved()
 GaiaSQL.cpp:28           	//*	Jan 25,	2022	<MLS> Changed UpdateSkyTravelView() to use degrees
@@ -1700,6 +1700,7 @@ alpacadriver.cpp:134     	//*	May  5,	2022	<MLS> Added cVerboseDebug so an indiv
 cameradriver.cpp:169     	//*	May  5,	2022	<MLS> Added monochrome/color check for bayeroffset property
 cameradriver.cpp:170     	//*	May  5,	2022	<MLS> Added Get_SensorName() (was inline)
 cameradriver.h:26        	//*	May  5,	2022	<MLS> Added cOffsetSupported flag
+controller_image.cpp:17  	//*	May  5,	2022	<MLS> Added ConvertImageToRGB()
 i2c_bno055.c:18          	//*	May  5,	2022	<MLS> Changed get_i2cbus from void to int to allow return code
 cameradriver.cpp:172     	//*	Jan  1,	2119	<TODO> ----------------------------------------
 cameradriver.cpp:173     	//*	Jun 26,	2119	<TODO> Add support for sub frames
@@ -1714,19 +1715,19 @@ controller_camera.cpp:66 	//*	Jan  1,	2121	<TODO> save cross hair location
 controller_camera.cpp:67 	//*	Jan  1,	2121	<TODO> finish exposure step options
 controller_camera.cpp:68 	//*	Jan  1,	2121	<TODO> clear error msg
 controller_camera.cpp:69 	//*	Feb  6,	2121	<TODO> Move downloading of images to a separate thread
-History Comments found   = 1715 in 312 files
+History Comments found   = 1716 in 312 files
 Total lines              = 156364
-Total comment Lines      = 22232 (14.2%)
-Total comments           = 25499 (16.3%)
-Total history comments   = 1715 (1.1%)
+Total comment Lines      = 22236 (14.2%)
+Total comments           = 25506 (16.3%)
+Total history comments   = 1716 (1.1%)
 Total C files            = 45
 Total C++ files          = 112
 Total H files            = 154
-Preprocssor cnt          = 5150
-Total SLOC               = 102794
-Total SLOC-Logical       = 79728
+Preprocssor cnt          = 5154
+Total SLOC               = 102789
+Total SLOC-Logical       = 79713
 Programmer comment summary
-MLS             = 1679
+MLS             = 1680
 TODO            =   13
 DDB             =    1
 JMH             =    2

@@ -261,7 +261,9 @@ CameraDriver	*myCameraDriver;
 void	CameraDriver::SetOpenCVcallbackFunction(const char *windowName)
 {
 #ifdef _USE_OPENCV_CPP_
-#warning "OpenCV++ not finished"
+	cv::setMouseCallback( windowName,
+						LiveWindowMouseCallbac,
+						(void *)this);
 #else
 	cvSetMouseCallback( windowName,
 						LiveWindowMouseCallbac,

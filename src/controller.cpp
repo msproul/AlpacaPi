@@ -269,6 +269,7 @@ int		iii;
 	return(activeObjCnt);
 }
 
+#if 0
 //*****************************************************************************
 static void	CycleThoughWindows(void)
 {
@@ -302,6 +303,7 @@ int		nextCtrlIdx;
 		CONSOLE_DEBUG("gCurrentActiveWindow is NULL");
 	}
 }
+#endif // 0
 
 //*****************************************************************************
 void	Controller_HandleKeyDown(const int keyPressed)
@@ -644,9 +646,9 @@ int		iii;
 //**************************************************************************************
 void	Controller::CheckConnectedState(void)
 {
+#ifdef _CONTROLLER_USES_ALPACA_
 bool		validData;
 
-#ifdef _CONTROLLER_USES_ALPACA_
 	CONSOLE_DEBUG(__FUNCTION__);
 	if (strlen(cAlpacaDeviceTypeStr) > 0)
 	{

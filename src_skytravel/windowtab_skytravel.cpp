@@ -522,18 +522,15 @@ int		iii;
 	{
 	char			theFirstChar;
 	int				polarStarCnt;
-	size_t			bufferSize;
 	int				qqq;
 
 		CONSOLE_DEBUG("Creating Alignment object array");
 #define	kMaxPolarAlignCenterPts		200
 
-		bufferSize				=	kMaxPolarAlignCenterPts * sizeof(TYPE_CelestData);
 		gPolarAlignObjectPtr	=	(TYPE_CelestData *)calloc(kMaxPolarAlignCenterPts, sizeof(TYPE_CelestData));
 
 		if (gPolarAlignObjectPtr != NULL)
 		{
-		//	memset(gPolarAlignObjectPtr, 0, bufferSize);
 			theFirstChar	=	'A';
 			while (theFirstChar <= 'Z')
 			{

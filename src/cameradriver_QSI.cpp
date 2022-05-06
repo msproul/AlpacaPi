@@ -36,6 +36,7 @@
 
 #if defined(_ENABLE_CAMERA_) && defined(_ENABLE_QSI_)
 
+
 #include	<string>
 
 
@@ -60,7 +61,7 @@
 //**************************************************************************************
 void	CreateQSI_CameraObjects(void)
 {
-//int				iii;
+int				iii;
 unsigned int	qsi_Result;
 std::string		info	=	"";
 std::string		modelNumber("");
@@ -99,14 +100,14 @@ QSICamera		cQSIcam;
 	{
 		CONSOLE_DEBUG_W_NUM("numCamerasFound\t=", numCamerasFound);
 
-//		if (numCamerasFound > 0)
-//		{
-//			for (iii=0; iii < numCamerasFound; iii++)
-//			{
-//				new CameraDriverQSI(iii, camSerial[iii]);
-//			}
-//		}
-//		else
+		if (numCamerasFound > 0)
+		{
+			for (iii=0; iii < numCamerasFound; iii++)
+			{
+				new CameraDriverQSI(iii, camSerial[iii]);
+			}
+		}
+		else if (gSimulateCameraImage)
 		{
 			//*	for debugging without a camera
 			new CameraDriverQSI(0, camSerial[0]);
@@ -144,14 +145,17 @@ int				numCamerasFound;
 	strcpy(cDeviceManufAbrev,		"QSI");
 	strcpy(cCommonProp.Name,		"QSI");
 	strcpy(cCommonProp.Description,	"QSI");
-	strcpy(cCommonProp.Name,		"QSI");
-
+	strcpy(cCommonProp.DriverInfo,	"QSI");
 
 	cTempReadSupported	=	true;
 
-	//*	these are redundant
 	qsi_Result	=	cQSIcam.put_UseStructuredExceptions(false);
 	qsi_Result	=	cQSIcam.get_DriverInfo(info);
+	if (qsi_Result == QSI_OK)
+	{
+		strcpy(cCommonProp.DriverInfo,	info.c_str());
+	}
+
 	qsi_Result	=	cQSIcam.get_AvailableCameras(camSerial, camDesc, numCamerasFound);
 	if (qsi_Result != QSI_OK)
 	{

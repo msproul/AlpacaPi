@@ -98,7 +98,6 @@ int			dataWidth;
 int			boxWidth;
 int			boxHeight;
 int			histLblWidth;
-int			histLblHeight;
 int			hist_xLoc;
 char		buttonName[16];
 
@@ -448,18 +447,18 @@ int		cursorYYoffset;
 //**************************************************************************************
 void	WindowTabImage::DrawWidgetCustomGraphic(cv::Mat *openCV_Image, TYPE_WIDGET *theWidget)
 {
-int		xLoc;
-int		yLoc;
-int		boxWidth;
-char	textStr1[32];
-char	textStr2[32];
-char	textStr3[32];
+//int		xLoc;
+//int		yLoc;
+//int		boxWidth;
+//char	textStr1[32];
+//char	textStr2[32];
+//char	textStr3[32];
 
 	cOpenCV_Image	=	openCV_Image;		//*	set the image data ptr so the window tabs can use it
 
-	xLoc		=	theWidget->left;
-	yLoc		=	theWidget->top;
-	boxWidth	=	theWidget->width;
+//	xLoc		=	theWidget->left;
+//	yLoc		=	theWidget->top;
+//	boxWidth	=	theWidget->width;
 
 //	sprintf(textStr1, "R=%d%%",	((66 * 100) / 255));
 //	sprintf(textStr2, "G=%d%%",	((190 * 100) / 255));
@@ -742,12 +741,11 @@ cv::Mat		image_roi;
 		else
 		{
 			CONSOLE_DEBUG("Somethings not right!!!!!!!!!!!!");
+			CONSOLE_DEBUG("cOpenCVdownLoadedImage is NULL or cOpenCVdisplayedImage is NULL");
 		}
 	}
 	else
 	{
-		CONSOLE_DEBUG_W_HEX("cOpenCVdownLoadedImage\t=", cOpenCVdownLoadedImage);
-		CONSOLE_DEBUG_W_HEX("cOpenCVdisplayedImage\t=", cOpenCVdisplayedImage);
 		CONSOLE_DEBUG("Not finished");
 //		CONSOLE_ABORT(__FUNCTION__);
 	}

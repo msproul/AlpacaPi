@@ -146,8 +146,8 @@ CPLUSFLAGS		=	-Wall -Wno-multichar -Wno-unknown-pragmas
 #CPLUSFLAGS		+=	-trigraphs
 CPLUSFLAGS		+=	-g
 #CPLUSFLAGS		+=	-Wno-unused-but-set-variable
-#CPLUSFLAGS		+=	-Wno-format-overflow
 CPLUSFLAGS		+=	-fPIE
+CPLUSFLAGS		+=	-Wno-format-overflow
 
 COMPILE			=	gcc -c $(CFLAGS) $(DEFINEFLAGS) $(OPENCV_COMPILE)
 COMPILEPLUS		=	g++ -c $(CPLUSFLAGS) $(DEFINEFLAGS) $(OPENCV_COMPILE)

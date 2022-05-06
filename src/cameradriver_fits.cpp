@@ -2287,34 +2287,34 @@ unsigned char	*bluBufPtr;
 		#ifdef __ARM_NEON
 			//*	at the moment, we are duplicating the effort for testing
 			//*	then we are comparing the 2 buffers to make sure they are the same
-			unsigned char	*neonBFRbuffer;
+			unsigned char	*neonBGRbuffer;
 			int				diffCnt;
 
 				CONSOLE_DEBUG("NEON instructions set is available");
 
-				neonBFRbuffer	=		(unsigned char *)malloc(frameBufSize * 3);
-				if (neonBFRbuffer != NULL)
+				neonBGRbuffer	=		(unsigned char *)malloc(frameBufSize * 3);
+				if (neonBGRbuffer != NULL)
 				{
-					bluBufPtr	=	neonBFRbuffer;
-					grnBufPtr	=	neonBFRbuffer + frameBufSize;
-					redBufPtr	=	neonBFRbuffer + frameBufSize + frameBufSize;
+					bluBufPtr	=	neonBGRbuffer;
+					grnBufPtr	=	neonBGRbuffer + frameBufSize;
+					redBufPtr	=	neonBGRbuffer + frameBufSize + frameBufSize;
 					NEON_Deinterleave_RGB(cCameraDataBuffer, redBufPtr, grnBufPtr, bluBufPtr, frameBufSize);
 					//*	now lets check to see if its the same
 					diffCnt	=	0;
 					for (iii=0; iii<(frameBufSize * 3); iii++)
 					{
-						if ((neonBFRbuffer[iii] & 0x00ff) != ((cCameraBGRbuffer[iii] & 0x00ff)))
+						if ((neonBGRbuffer[iii] & 0x00ff) != ((cCameraBGRbuffer[iii] & 0x00ff)))
 						{
 							diffCnt++;
 							CONSOLE_DEBUG_W_NUM("Diff at offset\t=", iii);
 						}
 					}
 					CONSOLE_DEBUG_W_NUM("NEON diff count\t=", diffCnt);
-					free(neonBFRbuffer);
+					free(neonBGRbuffer);
 				}
 				else
 				{
-					CONSOLE_DEBUG("Failed to allocate neonBFRbuffer");
+					CONSOLE_DEBUG("Failed to allocate neonBGRbuffer");
 				}
 
 		#endif // __ARM_NEON
