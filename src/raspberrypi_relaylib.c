@@ -105,7 +105,7 @@ int		ii;
 char	debugString[64];
 int		pinNumber;
 int		pinState;
-#ifdef _ENABLE_WIRING_PI_
+#if defined(_ENABLE_WIRING_PI_) && defined(__arm__)
 int		wiringPi_rc;
 int		wiringPi_verMajor;
 int		wiringPi_verMinor;

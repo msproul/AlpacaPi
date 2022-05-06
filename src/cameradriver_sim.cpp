@@ -63,16 +63,22 @@ bool		isConnected;
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG_W_NUM("Creating Simulation device number ", deviceNum);
 
+	gVerbose				=	true;
 	cCameraID				=	deviceNum;
-
+	cVerboseDebug			=	true;
+	cSimulatedState			=   kExposure_Idle;
 	//*	set defaults
-	strcpy(cDeviceManufAbrev,		"AlpacaPi Simulator");
+	strcpy(cDeviceManufAbrev,		"Alp-Pi");
 	strcpy(cCommonProp.Name,		"AlpacaPi Simulator");
 	strcpy(cCommonProp.Description,	"AlpacaPi Simulator");
 	strcpy(cCommonProp.Name,		"AlpacaPi Simulator");
 
 
+	strcpy(cCameraProp.SensorName,	"Fake");
+
+
 	cTempReadSupported	=	true;
+	cOffsetSupported	=	true;
 	//*	set some defaults for testing
 	strcpy(cDeviceManufacturer,	"AlpacaPi");
 
@@ -82,22 +88,26 @@ bool		isConnected;
 	//*	In order to simulate a particular image size
 	cCameraProp.CameraXsize	=	1500;
 	cCameraProp.CameraYsize	=	1000;
-	while ((cCameraProp.CameraXsize * cCameraProp.CameraYsize) < (32 * 1000000))
-	{
-		cCameraProp.CameraXsize	+=	100;
-		cCameraProp.CameraYsize	=	cCameraProp.CameraXsize / 1.5;
-	}
+//	while ((cCameraProp.CameraXsize * cCameraProp.CameraYsize) < (48 * 1000000))
+//	{
+//		cCameraProp.CameraXsize	+=	100;
+//		cCameraProp.CameraYsize	=	cCameraProp.CameraXsize / 1.5;
+//	}
 
+	cCameraProp.NumX			=	cCameraProp.CameraXsize;
+	cCameraProp.NumY			=	cCameraProp.CameraYsize;
 
-	cCameraProp.NumX		=	cCameraProp.CameraXsize;
-	cCameraProp.NumY		=	cCameraProp.CameraYsize;
-
-	cCameraProp.GainMin		=	0;
-	cCameraProp.GainMax		=	10;
+	cCameraProp.GainMin			=	0;
+	cCameraProp.GainMax			=	10;
+	cCameraProp.ElectronsPerADU	=	65000;
+	cCameraProp.PixelSizeX		=	3.7;
+	cCameraProp.PixelSizeY		=	3.7;
 
 	AddReadoutModeToList(kImageType_RAW8);
 	AddReadoutModeToList(kImageType_RAW16);
 	AddReadoutModeToList(kImageType_RGB24);
+
+	SetImageType(kImageType_RGB24);
 
 	DumpCameraProperties(__FUNCTION__);
 
@@ -111,6 +121,7 @@ bool		isConnected;
 		CONSOLE_DEBUG("Failed to Connect!!!!!!!!");
 	}
 
+	DumpCameraProperties(__FUNCTION__);
 
 #ifdef _USE_OPENCV_
 	sprintf(cOpenCV_ImgWindowName, "%s-%d", cCommonProp.Name, cCameraID);
@@ -162,23 +173,70 @@ double				cameraTemp_DegC;
 }
 
 //*****************************************************************************
-TYPE_ASCOM_STATUS	CameraDriverSIM::Write_Gain(const int newGainValue)
+TYPE_ASCOM_STATUS	CameraDriverSIM::Write_BinX(const int newBinXvalue)
 {
-TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_PropertyNotImplemented;
+TYPE_ASCOM_STATUS		alpacaErrCode;
 
-	CONSOLE_DEBUG_W_NUM(__FUNCTION__, newGainValue);
+	CONSOLE_DEBUG(__FUNCTION__);
 
+	cCameraProp.BinX	=	newBinXvalue;
+	alpacaErrCode		=	kASCOM_Err_Success;
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	CameraDriverSIM::Write_BinY(const int newBinYvalue)
+{
+TYPE_ASCOM_STATUS		alpacaErrCode;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	cCameraProp.BinY	=	newBinYvalue;
+	alpacaErrCode		=	kASCOM_Err_Success;
 	return(alpacaErrCode);
 }
 
 //*****************************************************************************
 TYPE_ASCOM_STATUS	CameraDriverSIM::Read_Gain(int *cameraGainValue)
 {
-TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_PropertyNotImplemented;
-//double				rawGainValue;
+TYPE_ASCOM_STATUS	alpacaErrCode;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
+	*cameraGainValue	=	cCameraProp.Gain;
+	alpacaErrCode		=	kASCOM_Err_Success;
 
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	CameraDriverSIM::Write_Gain(const int newGainValue)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode;
+
+	cCameraProp.Gain	=	newGainValue;
+	alpacaErrCode		=	kASCOM_Err_Success;
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	CameraDriverSIM::Read_Offset(int *cameraOffsetValue)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+	*cameraOffsetValue	=	cCameraProp.Offset;
+	alpacaErrCode		=	kASCOM_Err_Success;
+
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	CameraDriverSIM::Write_Offset(const int newOffsetValue)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode;
+
+	cCameraProp.Offset	=	newOffsetValue;
+	alpacaErrCode		=	kASCOM_Err_Success;
 	return(alpacaErrCode);
 }
 
@@ -196,9 +254,10 @@ double				durationSeconds;
 		durationSeconds	=	(exposureMicrosecs * 1.0) / 1000000.0;
 
 		CONSOLE_DEBUG("Simulating camera");
-		alpacaErrCode			=	kASCOM_Err_Success;
 		cInternalCameraState	=	kCameraState_TakingPicture;
+//?		cCameraProp.CameraState	=   kALPACA_CameraState_Exposing;
 		SetLastExposureInfo();
+		alpacaErrCode			=	kASCOM_Err_Success;
 	}
 	else
 	{
@@ -221,11 +280,23 @@ bool	CameraDriverSIM::GetImage_ROI_info(void)
 TYPE_EXPOSURE_STATUS	CameraDriverSIM::Check_Exposure(bool verboseFlag)
 {
 TYPE_EXPOSURE_STATUS	myExposureStatus;
-bool					imageReady;
 
 	//--------------------------------------------
 	//*	simulate image
-	myExposureStatus	=	kExposure_Success;
+	switch(cInternalCameraState)
+	{
+		case kCameraState_TakingPicture:
+			CONSOLE_DEBUG("Not kCameraState_TakingPicture -->> kCameraState_Idle");
+			myExposureStatus		=	kExposure_Success;
+			break;
+
+		default:
+	//		myExposureStatus		=	kExposure_Idle;
+			myExposureStatus		=	kExposure_Success;
+			break;
+
+	}
+	CONSOLE_DEBUG_W_NUM("myExposureStatus\t=",			myExposureStatus);
 
 	return(myExposureStatus);
 }
@@ -316,6 +387,7 @@ int					bytesPerPixel;
 	{
 		CONSOLE_DEBUG("Not connected");
 		alpacaErrCode	=	kASCOM_Err_NotConnected;
+		CONSOLE_ABORT("Not connected");
 	}
 	return(alpacaErrCode);
 }

@@ -23,6 +23,7 @@
 //*	Feb 21,	2021	<MLS> Deleted TYPE_SUPPORTED_IMG_TYPE
 //*	Jun 23,	2021	<MLS> Added kCmd_Camera_subexposureduration
 //*	Feb 27,	2022	<MLS> Changed cOpenCV_Image to cOpenCV_ImagePtr
+//*	May  5,	2022	<MLS> Added cOffsetSupported flag
 //*****************************************************************************
 //#include	"cameradriver.h"
 
@@ -411,6 +412,7 @@ class CameraDriver: public AlpacaDriver
 		TYPE_ASCOM_STATUS	Get_Readoutmode(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
 		TYPE_ASCOM_STATUS	Put_Readoutmode(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 		TYPE_ASCOM_STATUS	Get_Readoutmodes(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+		TYPE_ASCOM_STATUS	Get_SensorName(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
 		TYPE_ASCOM_STATUS	Get_Sensortype(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
 
 		TYPE_ASCOM_STATUS	Get_SetCCDtemperature(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg,	const char *responseString);
@@ -594,11 +596,11 @@ class CameraDriver: public AlpacaDriver
 		virtual	TYPE_ASCOM_STATUS		Write_BinY(const int newBinYvalue);
 
 
-		virtual	TYPE_ASCOM_STATUS		Write_Gain(const int newGainValue);
 		virtual	TYPE_ASCOM_STATUS		Read_Gain(int *cameraGainValue);
+		virtual	TYPE_ASCOM_STATUS		Write_Gain(const int newGainValue);
 
-		virtual	TYPE_ASCOM_STATUS		Write_Offset(const int newOffsetValue);
 		virtual	TYPE_ASCOM_STATUS		Read_Offset(int *cameraOffsetValue);
+		virtual	TYPE_ASCOM_STATUS		Write_Offset(const int newOffsetValue);
 
 		virtual	TYPE_ASCOM_STATUS		Start_Video(void);
 		virtual	TYPE_ASCOM_STATUS		Stop_Video(void);
@@ -606,20 +608,20 @@ class CameraDriver: public AlpacaDriver
 
 		virtual	TYPE_ASCOM_STATUS		SetFlipMode(int newFlipMode);
 
-		virtual	TYPE_ALPACA_CAMERASTATE		Read_AlapcaCameraState(void);
+		virtual	TYPE_ALPACA_CAMERASTATE	Read_AlapcaCameraState(void);
 
 
 
-		virtual	bool				GetImage_ROI_info(void);
+		virtual	bool					GetImage_ROI_info(void);
 
-		virtual	TYPE_ASCOM_STATUS	Cooler_TurnOn(void);
-		virtual	TYPE_ASCOM_STATUS	Cooler_TurnOff(void);
-		virtual	TYPE_ASCOM_STATUS	Read_SensorTemp(void);
-		virtual	TYPE_ASCOM_STATUS	Read_CoolerState(bool *coolerOnOff);
-		virtual	TYPE_ASCOM_STATUS	Read_CoolerPowerLevel(void);
-		virtual	TYPE_ASCOM_STATUS	Read_Fastreadout(void);
-		virtual	TYPE_ASCOM_STATUS	Read_ImageData(void);
-		virtual bool				GetCmdNameFromMyCmdTable(const int cmdNumber, char *comandName, char *getPut);
+		virtual	TYPE_ASCOM_STATUS		Cooler_TurnOn(void);
+		virtual	TYPE_ASCOM_STATUS		Cooler_TurnOff(void);
+		virtual	TYPE_ASCOM_STATUS		Read_SensorTemp(void);
+		virtual	TYPE_ASCOM_STATUS		Read_CoolerState(bool *coolerOnOff);
+		virtual	TYPE_ASCOM_STATUS		Read_CoolerPowerLevel(void);
+		virtual	TYPE_ASCOM_STATUS		Read_Fastreadout(void);
+		virtual	TYPE_ASCOM_STATUS		Read_ImageData(void);
+		virtual bool					GetCmdNameFromMyCmdTable(const int cmdNumber, char *comandName, char *getPut);
 
 
 
@@ -631,7 +633,7 @@ class CameraDriver: public AlpacaDriver
 
 	//*****************************************************************************
 public:
-	char					cSensorName[kMaxSensorNameLen];	//*	obtained from my table lookup
+//-	char					cSensorName[kMaxSensorNameLen];	//*	obtained from my table lookup
 
 	//*****************************************************************************
 protected:
@@ -656,6 +658,7 @@ protected:
 	bool		cUpdateOtherDevices;
 	//=========================================================================================
 	bool		cTempReadSupported;				//*	true if temperature can be read from device
+	bool		cOffsetSupported;				//*	true pixel value offset is supported
 	long		cCoolerPowerLevel;
 	long		cCoolerState;
 	char		cLastCameraErrMsg[128];

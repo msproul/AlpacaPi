@@ -379,7 +379,7 @@ typedef struct
 	READOUTMODE				ReadOutModes[kMaxReadOutModes];	//*	List of available readout modes
 
 	char					SensorName[kMaxSensorNameLen];	//	Sensor name
-//+	TYPE_SensorType			SensorType;						//*	Type of information returned by the the camera sensor (monochrome or colour)
+	TYPE_SensorType			SensorType;						//*	Type of information returned by the the camera sensor (monochrome or colour)
 
 	//=======================================================================
 	//=======================================================================

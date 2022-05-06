@@ -250,6 +250,7 @@ class AlpacaDriver
 				TYPE_CommonProperties	cCommonProp;
 
 
+				bool				cVerboseDebug;
 				uint32_t			cMagicCookie;		//*	used to validate objects
 				TYPE_DEVICETYPE		cDeviceType;
 				int					cDeviceNum;			//*	device index for alpaca

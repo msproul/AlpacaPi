@@ -231,6 +231,8 @@ char		buttonName[16];
 	SetWidgetBorder(		kImageDisplay_ImageDisplay,	true);
 
 	CONSOLE_DEBUG_W_NUM("cWidth        \t=",	cWidth);
+	CONSOLE_DEBUG_W_NUM("xLoc          \t=",	xLoc);
+	CONSOLE_DEBUG_W_NUM("yLoc          \t=",	yLoc);
 	CONSOLE_DEBUG_W_NUM("imageBoxWidth \t=",	imageBoxWidth);
 	CONSOLE_DEBUG_W_NUM("imageBoxHeight\t=",	imageBoxHeight);
 
@@ -628,10 +630,10 @@ int			displayedHeight;
 int			sourceImageWidth;
 int			sourceImageHeight;
 
-	CONSOLE_DEBUG("--------------------------------------------------------------------");
-	CONSOLE_DEBUG(__FUNCTION__);
-	CONSOLE_DEBUG_W_NUM("image_X\t=", image_X);
-	CONSOLE_DEBUG_W_NUM("image_Y\t=", image_Y);
+//	CONSOLE_DEBUG("--------------------------------------------------------------------");
+//	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG_W_NUM("image_X\t=", image_X);
+//	CONSOLE_DEBUG_W_NUM("image_Y\t=", image_Y);
 
 	if ((cOpenCVdownLoadedImage != NULL) && (cOpenCVdisplayedImage != NULL))
 	{
@@ -654,10 +656,10 @@ int			sourceImageHeight;
 		displayedHeight			=	cOpenCVdisplayedImage->height;
 	#endif // _USE_OPENCV_CPP_
 
-		CONSOLE_DEBUG_W_NUM("sourceImageWidth\t=",	sourceImageWidth);
-		CONSOLE_DEBUG_W_NUM("sourceImageHeight\t=",	sourceImageHeight);
-		CONSOLE_DEBUG_W_NUM("displayedWidth\t=",	displayedWidth);
-		CONSOLE_DEBUG_W_NUM("displayedHeight\t=",	displayedHeight);
+//		CONSOLE_DEBUG_W_NUM("sourceImageWidth\t=",	sourceImageWidth);
+//		CONSOLE_DEBUG_W_NUM("sourceImageHeight\t=",	sourceImageHeight);
+//		CONSOLE_DEBUG_W_NUM("displayedWidth\t=",	displayedWidth);
+//		CONSOLE_DEBUG_W_NUM("displayedHeight\t=",	displayedHeight);
 
 		if ((displayedWidth > 0) && (displayedWidth < 10000)
 			&& (displayedHeight > 0) && (displayedHeight < 10000))
@@ -669,9 +671,9 @@ int			sourceImageHeight;
 			displayedImgRect.x		=	image_X - (displayedWidth / 2);
 			displayedImgRect.y		=	image_Y - (displayedHeight / 2);
 
-			CONSOLE_DEBUG("First pass");
-			CONSOLE_DEBUG_W_NUM("displayedImgRect.x\t\t=",		displayedImgRect.x);
-			CONSOLE_DEBUG_W_NUM("displayedImgRect.y\t\t=",		displayedImgRect.y);
+//			CONSOLE_DEBUG("First pass");
+//			CONSOLE_DEBUG_W_NUM("displayedImgRect.x\t\t=",		displayedImgRect.x);
+//			CONSOLE_DEBUG_W_NUM("displayedImgRect.y\t\t=",		displayedImgRect.y);
 
 			//*	check minimums
 			if (displayedImgRect.x < 0)
@@ -693,12 +695,12 @@ int			sourceImageHeight;
 			{
 				displayedImgRect.y	=	(sourceImageHeight - displayedHeight);
 			}
-			CONSOLE_DEBUG("Adjusted");
-			CONSOLE_DEBUG_W_NUM("displayedImgRect.x\t\t=",		displayedImgRect.x);
-			CONSOLE_DEBUG_W_NUM("displayedImgRect.y\t\t=",		displayedImgRect.y);
-
-			CONSOLE_DEBUG_W_NUM("displayedImgRect.width\t=",	displayedImgRect.width);
-			CONSOLE_DEBUG_W_NUM("displayedImgRect.height\t=",	displayedImgRect.height);
+//			CONSOLE_DEBUG("Adjusted");
+//			CONSOLE_DEBUG_W_NUM("displayedImgRect.x\t\t=",		displayedImgRect.x);
+//			CONSOLE_DEBUG_W_NUM("displayedImgRect.y\t\t=",		displayedImgRect.y);
+//
+//			CONSOLE_DEBUG_W_NUM("displayedImgRect.width\t=",	displayedImgRect.width);
+//			CONSOLE_DEBUG_W_NUM("displayedImgRect.height\t=",	displayedImgRect.height);
 
 		#ifdef _USE_OPENCV_CPP_
 cv::Mat		image_roi;

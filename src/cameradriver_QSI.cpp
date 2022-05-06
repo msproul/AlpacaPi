@@ -171,16 +171,38 @@ int				numCamerasFound;
 	{
 		CONSOLE_DEBUG("Failed to Connect!!!!!!!!");
 	}
-	cameraInfoOK	=	ReadQSIcameraInfo();
-	if (cameraInfoOK)
+#ifdef _SIMULATE_CAMERA_
+	if (gSimulateCameraImage)
 	{
-		strcpy(cCommonProp.Description, cDeviceManufacturer);
-		strcat(cCommonProp.Description, " - Model:");
-		strcat(cCommonProp.Description, cCommonProp.Name);
+		strcpy(cDeviceManufacturer,	"QSI");
+		cCameraProp.CameraXsize			=	4000;
+		cCameraProp.CameraYsize			=	3000;
+		cCameraProp.NumX				=	4000;
+		cCameraProp.NumY				=	3000;
+
+		cCameraProp.GainMin				=	0;
+		cCameraProp.GainMax				=	10;
+		cCameraProp.ElectronsPerADU		=	2.091615;
+		cCameraProp.PixelSizeX			=	3.7;
+		cCameraProp.PixelSizeY			=	3.7;
+		cCameraProp.FullWellCapacity	=	8567.253906;
+
+		AddReadoutModeToList(kImageType_RAW16);
 	}
 	else
+#endif
 	{
-		CONSOLE_DEBUG("Failed to read QSI camera info!!!!!!!!");
+		cameraInfoOK	=	ReadQSIcameraInfo();
+		if (cameraInfoOK)
+		{
+			strcpy(cCommonProp.Description, cDeviceManufacturer);
+			strcat(cCommonProp.Description, " - Model:");
+			strcat(cCommonProp.Description, cCommonProp.Name);
+		}
+		else
+		{
+			CONSOLE_DEBUG("Failed to read QSI camera info!!!!!!!!");
+		}
 	}
 
 	DumpCameraProperties(__FUNCTION__);
@@ -300,6 +322,7 @@ std::string		lastError("");
 		else if ((qsi_Result == QSI_OK) && (isConnected == true))
 		{
 			CONSOLE_DEBUG("Already connected");
+			cCommonProp.Connected	=	true;
 		}
 	}
 	else
@@ -307,7 +330,10 @@ std::string		lastError("");
 		cQSIcam.get_LastError(lastError);
 		CONSOLE_DEBUG_W_STR("QSI Resul (get_Connected)\t=",	lastError.c_str());
 	}
-
+#ifdef _SIMULATE_CAMERA_
+	cCommonProp.Connected	=	true;
+	isConnected				=	true;
+#endif
 	return(isConnected);
 }
 
@@ -597,38 +623,94 @@ std::string			lastError("");
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-
 	cLastCameraErrMsg[0]	=	0;
-	if (cTempReadSupported)
+
+#ifdef _SIMULATE_CAMERA_
+	if (gSimulateCameraImage)
 	{
-		//	Returns the current CCD temperature in degrees Celsius in parameter 1.
-		//	Only valid if CanSetCCDTemperature is true.
-		qsi_Result	=	cQSIcam.get_CCDTemperature(&cameraTemp_DegC);
-		if (qsi_Result == QSI_OK)
+		cCameraProp.CCDtemperature	=	2.23;
+		alpacaErrCode				=	kASCOM_Err_Success;
+	}
+	else
+#endif
+	{
+		if (cTempReadSupported)
 		{
-			cCameraProp.CCDtemperature		=	cameraTemp_DegC;
-			CONSOLE_DEBUG_W_DBL("CCDtemperature\t=",	cameraTemp_DegC);
-		}
-		else if (qsi_Result == QSI_NOTCONNECTED)
-		{
-			alpacaErrCode	=	kASCOM_Err_NotConnected;
-			strcpy(cLastCameraErrMsg, "QSI Result: not connected");
+			//	Returns the current CCD temperature in degrees Celsius in parameter 1.
+			//	Only valid if CanSetCCDTemperature is true.
+			qsi_Result	=	cQSIcam.get_CCDTemperature(&cameraTemp_DegC);
+			if (qsi_Result == QSI_OK)
+			{
+				cCameraProp.CCDtemperature		=	cameraTemp_DegC;
+				CONSOLE_DEBUG_W_DBL("CCDtemperature\t=",	cameraTemp_DegC);
+			}
+			else if (qsi_Result == QSI_NOTCONNECTED)
+			{
+				alpacaErrCode	=	kASCOM_Err_NotConnected;
+				strcpy(cLastCameraErrMsg, "QSI Result: not connected");
+			}
+			else
+			{
+				alpacaErrCode	=	kASCOM_Err_NotImplemented;
+				cQSIcam.get_LastError(lastError);
+				strcpy(cLastCameraErrMsg, "QSI Result:");
+				strcat(cLastCameraErrMsg, lastError.c_str());
+			}
 		}
 		else
 		{
-			alpacaErrCode	=	kASCOM_Err_NotImplemented;
-			cQSIcam.get_LastError(lastError);
-			strcpy(cLastCameraErrMsg, "QSI Result:");
-			strcat(cLastCameraErrMsg, lastError.c_str());
+			alpacaErrCode	=	kASCOM_Err_NotSupported;
+			strcpy(cLastCameraErrMsg, "Temperature not supported on this camera");
 		}
-	}
-	else
-	{
-		alpacaErrCode	=	kASCOM_Err_NotSupported;
-		strcpy(cLastCameraErrMsg, "Temperature not supported on this camera");
 	}
 	return(alpacaErrCode);
 }
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	CameraDriverQSI::Write_BinX(const int newBinXvalue)
+{
+TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+
+#ifdef _SIMULATE_CAMERA_
+	if (gSimulateCameraImage)
+	{
+		cCameraProp.BinX	=	newBinXvalue;
+		alpacaErrCode		=	kASCOM_Err_Success;
+	}
+	else
+#endif
+	{
+		alpacaErrCode	=	kASCOM_Err_Success;
+
+	}
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	CameraDriverQSI::Write_BinY(const int newBinYvalue)
+{
+TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+
+#ifdef _SIMULATE_CAMERA_
+	if (gSimulateCameraImage)
+	{
+		cCameraProp.BinY	=	newBinYvalue;
+		alpacaErrCode		=	kASCOM_Err_Success;
+	}
+	else
+#endif
+	{
+		alpacaErrCode	=	kASCOM_Err_Success;
+
+	}
+	return(alpacaErrCode);
+}
+
+
 
 //*****************************************************************************
 TYPE_ASCOM_STATUS	CameraDriverQSI::Write_Gain(const int newGainValue)
@@ -636,7 +718,17 @@ TYPE_ASCOM_STATUS	CameraDriverQSI::Write_Gain(const int newGainValue)
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_PropertyNotImplemented;
 
 	CONSOLE_DEBUG_W_NUM(__FUNCTION__, newGainValue);
-
+#ifdef _SIMULATE_CAMERA_
+	if (gSimulateCameraImage)
+	{
+		cCameraProp.Gain	=	newGainValue;
+		alpacaErrCode		=	kASCOM_Err_Success;
+	}
+	else
+#endif
+	{
+		alpacaErrCode		=	kASCOM_Err_Success;
+	}
 	return(alpacaErrCode);
 }
 
@@ -648,24 +740,33 @@ unsigned int			qsi_Result;
 std::string				lastError("");
 QSICamera::CameraGain	qsiGainValue;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
-	qsi_Result	=	cQSIcam.get_CameraGain(&qsiGainValue);
-	if (qsi_Result == QSI_OK)
+	CONSOLE_DEBUG(__FUNCTION__);
+#ifdef _SIMULATE_CAMERA_
+	if (gSimulateCameraImage)
 	{
-		*cameraGainValue	=	(int)qsiGainValue;
-		alpacaErrCode	=	kASCOM_Err_Success;
-	}
-	else if (qsi_Result == QSI_NOTCONNECTED)
-	{
-		alpacaErrCode	=	kASCOM_Err_NotConnected;
+		*cameraGainValue	=	cCameraProp.Gain;
+		alpacaErrCode		=	kASCOM_Err_Success;
 	}
 	else
+#endif
 	{
-		cQSIcam.get_LastError(lastError);
-		CONSOLE_DEBUG_W_STR("QSI Result\t=",	lastError.c_str());
-		alpacaErrCode	=	kASCOM_Err_PropertyNotImplemented;
+		qsi_Result	=	cQSIcam.get_CameraGain(&qsiGainValue);
+		if (qsi_Result == QSI_OK)
+		{
+			*cameraGainValue	=	(int)qsiGainValue;
+			alpacaErrCode	=	kASCOM_Err_Success;
+		}
+		else if (qsi_Result == QSI_NOTCONNECTED)
+		{
+			alpacaErrCode	=	kASCOM_Err_NotConnected;
+		}
+		else
+		{
+			cQSIcam.get_LastError(lastError);
+			CONSOLE_DEBUG_W_STR("QSI Result\t=",	lastError.c_str());
+			alpacaErrCode	=	kASCOM_Err_PropertyNotImplemented;
+		}
 	}
-
 	return(alpacaErrCode);
 }
 
@@ -685,9 +786,9 @@ std::string			lastError("");
 	if (gSimulateCameraImage)
 	{
 		CONSOLE_DEBUG("Simulating camera");
-		alpacaErrCode			=	kASCOM_Err_Success;
 		cInternalCameraState	=	kCameraState_TakingPicture;
 		SetLastExposureInfo();
+		alpacaErrCode			=	kASCOM_Err_Success;
 	}
 	else
 #endif

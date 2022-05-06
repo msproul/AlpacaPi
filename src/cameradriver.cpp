@@ -166,6 +166,8 @@
 //*	Feb 14,	2022	<MLS> Fixed crash bug when creating LiveWindow
 //*	Apr 16,	2022	<MLS> Added CreateFakeImageData() for debugging without a sky
 //*	Apr 18,	2022	<MLS> Added DumpCameraProperties()
+//*	May  5,	2022	<MLS> Added monochrome/color check for bayeroffset property
+//*	May  5,	2022	<MLS> Added Get_SensorName() (was inline)
 //*****************************************************************************
 //*	Jan  1,	2119	<TODO> ----------------------------------------
 //*	Jun 26,	2119	<TODO> Add support for sub frames
@@ -379,9 +381,9 @@ int	mkdirErrCode;
 	//======================================================
 	cUpdateOtherDevices				=	true;
 	cTempReadSupported				=	false;
+	cOffsetSupported				=	false;
 	cCoolerPowerLevel				=	0;
 	cLastCameraErrMsg[0]			=	0;
-	cSensorName[0]					=	0;
 	cLastJpegImageName[0]			=	0;
 	cCameraID						=	-1;
 	cCameraIsOpen					=	false;
@@ -690,12 +692,10 @@ char				httpHeader[500];
 //	CONSOLE_DEBUG(__FUNCTION__);
 	cResponseIsJSON	=	true;
 
-//#ifndef _JETSON_
-//	if ((strcmp(reqData->deviceCommand, "readall") != 0) && (strcmp(reqData->deviceCommand, "setccdtemperature") != 0))
-//	{
-//		CONSOLE_DEBUG_W_STR("deviceCommand\t=",	reqData->deviceCommand);
-//	}
-//#endif // _JETSON_
+	if (cVerboseDebug)
+	{
+		CONSOLE_DEBUG_W_STR("deviceCommand\t=",	reqData->deviceCommand);
+	}
 //	if (strcmp(reqData->deviceCommand, "supportedactions") == 0)
 //	{
 //		CONSOLE_DEBUG_W_STR("htmlData   \t=",	reqData->htmlData);
@@ -1141,13 +1141,7 @@ char				httpHeader[500];
 			break;
 
 		case kCmd_Camera_sensorname:			//*	Sensor name
-			cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(mySocket,
-											reqData->jsonTextBuffer,
-											kMaxJsonBuffLen,
-											gValueString,
-											cSensorName,
-											INCLUDE_COMMA);
-			alpacaErrCode	=	kASCOM_Err_Success;
+			alpacaErrCode	=	Get_SensorName(reqData, alpacaErrMsg, gValueString);
 			break;
 
 		case kCmd_Camera_sensortype:			//*	Type of information returned by the the camera sensor (monochrome or colour)
@@ -1506,6 +1500,13 @@ CONSOLE_DEBUG(__FUNCTION__);
 	strcpy(reqData->alpacaErrMsg, alpacaErrMsg);
 
 
+	if (cVerboseDebug)
+	{
+		if (alpacaErrCode != kASCOM_Err_Success)
+		{
+			CONSOLE_DEBUG_W_NUM("ERROR!!!!!!!     alpacaErrCode\t=",	alpacaErrCode);
+		}
+	}
 	return(alpacaErrCode);
 }
 
@@ -1601,7 +1602,7 @@ double	myExposure_usecs;
 	{
 		CONSOLE_DEBUG("Internal Error");
 	//	alpacaErrCode	=	kASCOM_Err_InternalError;
-		CONSOLE_ABORT("Internal Error");
+	//	CONSOLE_ABORT("Internal Error");
 	}
 }
 
@@ -1614,21 +1615,28 @@ TYPE_ASCOM_STATUS	CameraDriver::Get_BayerOffsetX(TYPE_GetPutRequestData *reqData
 {
 TYPE_ASCOM_STATUS	alpacaErrCode;
 
-
-	if (reqData != NULL)
+	if (cIsColorCam)
 	{
-		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	reqData->socket,
-										reqData->jsonTextBuffer,
-										kMaxJsonBuffLen,
-										responseString,
-										cCameraProp.BayerOffsetX,
-										INCLUDE_COMMA);
+		if (reqData != NULL)
+		{
+			cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	reqData->socket,
+											reqData->jsonTextBuffer,
+											kMaxJsonBuffLen,
+											responseString,
+											cCameraProp.BayerOffsetX,
+											INCLUDE_COMMA);
 
-		alpacaErrCode	=	kASCOM_Err_Success;
+			alpacaErrCode	=	kASCOM_Err_Success;
+		}
+		else
+		{
+			alpacaErrCode	=	kASCOM_Err_InternalError;
+		}
 	}
 	else
 	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Camera is monochrome");
+		alpacaErrCode	=	kASCOM_Err_PropertyNotImplemented;
 	}
 	return(alpacaErrCode);
 }
@@ -1639,20 +1647,28 @@ TYPE_ASCOM_STATUS	CameraDriver::Get_BayerOffsetY(TYPE_GetPutRequestData *reqData
 TYPE_ASCOM_STATUS	alpacaErrCode;
 
 
-	if (reqData != NULL)
+	if (cIsColorCam)
 	{
-		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	reqData->socket,
-										reqData->jsonTextBuffer,
-										kMaxJsonBuffLen,
-										responseString,		//gValueString,
-										cCameraProp.BayerOffsetY,
-										INCLUDE_COMMA);
+		if (reqData != NULL)
+		{
+			cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	reqData->socket,
+											reqData->jsonTextBuffer,
+											kMaxJsonBuffLen,
+											responseString,		//gValueString,
+											cCameraProp.BayerOffsetY,
+											INCLUDE_COMMA);
 
-		alpacaErrCode	=	kASCOM_Err_Success;
+			alpacaErrCode	=	kASCOM_Err_Success;
+		}
+		else
+		{
+			alpacaErrCode	=	kASCOM_Err_InternalError;
+		}
 	}
 	else
 	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Camera is monochrome");
+		alpacaErrCode	=	kASCOM_Err_PropertyNotImplemented;
 	}
 	return(alpacaErrCode);
 }
@@ -2461,21 +2477,28 @@ TYPE_ASCOM_STATUS	CameraDriver::Get_Offset(TYPE_GetPutRequestData *reqData, char
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
 
-	if (reqData != NULL)
+	if (cOffsetSupported)
 	{
-		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	reqData->socket,
-										reqData->jsonTextBuffer,
-										kMaxJsonBuffLen,
-										responseString,		//gValueString,
-										cCameraProp.Offset,
-										INCLUDE_COMMA);
-		alpacaErrCode	=	kASCOM_Err_Success;
+		if (reqData != NULL)
+		{
+			cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	reqData->socket,
+											reqData->jsonTextBuffer,
+											kMaxJsonBuffLen,
+											responseString,		//gValueString,
+											cCameraProp.Offset,
+											INCLUDE_COMMA);
+			alpacaErrCode	=	kASCOM_Err_Success;
+		}
+		else
+		{
+			alpacaErrCode	=	kASCOM_Err_InternalError;
+		}
 	}
 	else
 	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Offset not supported");
+		alpacaErrCode	=	kASCOM_Err_PropertyNotImplemented;
 	}
-
 	return(alpacaErrCode);
 }
 
@@ -2488,59 +2511,66 @@ bool				foundKeyWord;
 int					newValue;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
-	if (reqData != NULL)
+	if (cOffsetSupported)
 	{
-		foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
-												"offset",
-												argumentString,
-												(sizeof(argumentString) -1));
-		if (foundKeyWord)
+		if (reqData != NULL)
 		{
-			newValue		=	atoi(argumentString);
-			if ((newValue >= cCameraProp.OffsetMin) && (newValue <= cCameraProp.OffsetMax))
+			foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
+													"offset",
+													argumentString,
+													(sizeof(argumentString) -1));
+			if (foundKeyWord)
 			{
-				//*	we have a valid offset
-				alpacaErrCode	=	Write_Offset(newValue);
-				if (alpacaErrCode == kASCOM_Err_Success)
+				newValue		=	atoi(argumentString);
+				if ((newValue >= cCameraProp.OffsetMin) && (newValue <= cCameraProp.OffsetMax))
 				{
-					//*	save the new value
-					cCameraProp.Offset	=	newValue;
+					//*	we have a valid offset
+					alpacaErrCode	=	Write_Offset(newValue);
+					if (alpacaErrCode == kASCOM_Err_Success)
+					{
+						//*	save the new value
+						cCameraProp.Offset	=	newValue;
+					}
+					else
+					{
+						GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, cLastCameraErrMsg);
+						CONSOLE_DEBUG(alpacaErrMsg);
+					}
+
+				//*	debugging
+				//	if (1)
+				//	{
+				//	int	newOffsetValue;
+				//		alpacaErrCode	=	Read_Offset(&newOffsetValue);
+				//		CONSOLE_DEBUG_W_NUM("alpacaErrCode\t=",	alpacaErrCode);
+				//		CONSOLE_DEBUG_W_NUM("newOffsetValue\t=",	newOffsetValue);
+				//	}
 				}
 				else
 				{
-					GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, cLastCameraErrMsg);
+					alpacaErrCode	=	kASCOM_Err_InvalidValue;
+					GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Offset value out of range");
 					CONSOLE_DEBUG(alpacaErrMsg);
 				}
-
-			//*	debugging
-			//	if (1)
-			//	{
-			//	int	newOffsetValue;
-			//		alpacaErrCode	=	Read_Offset(&newOffsetValue);
-			//		CONSOLE_DEBUG_W_NUM("alpacaErrCode\t=",	alpacaErrCode);
-			//		CONSOLE_DEBUG_W_NUM("newOffsetValue\t=",	newOffsetValue);
-			//	}
 			}
 			else
 			{
+				//*	the keyword "offset" is missing
 				alpacaErrCode	=	kASCOM_Err_InvalidValue;
-				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Offset value out of range");
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Keyword 'offset' not found");
 				CONSOLE_DEBUG(alpacaErrMsg);
 			}
 		}
 		else
 		{
-			//*	the keyword "offset" is missing
-			alpacaErrCode	=	kASCOM_Err_InvalidValue;
-			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Keyword 'offset' not found");
-			CONSOLE_DEBUG(alpacaErrMsg);
+			alpacaErrCode	=	kASCOM_Err_InternalError;
 		}
 	}
 	else
 	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Offset not supported");
+		alpacaErrCode	=	kASCOM_Err_PropertyNotImplemented;
 	}
-
 	return(alpacaErrCode);
 }
 
@@ -2550,19 +2580,27 @@ TYPE_ASCOM_STATUS	CameraDriver::Get_OffsetMax(TYPE_GetPutRequestData *reqData, c
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
-	if (reqData != NULL)
+	if (cOffsetSupported)
 	{
-		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	reqData->socket,
-										reqData->jsonTextBuffer,
-										kMaxJsonBuffLen,
-										responseString,		//gValueString,
-										cCameraProp.OffsetMax,
-										INCLUDE_COMMA);
-		alpacaErrCode	=	kASCOM_Err_Success;
+		if (reqData != NULL)
+		{
+			cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	reqData->socket,
+											reqData->jsonTextBuffer,
+											kMaxJsonBuffLen,
+											responseString,		//gValueString,
+											cCameraProp.OffsetMax,
+											INCLUDE_COMMA);
+			alpacaErrCode	=	kASCOM_Err_Success;
+		}
+		else
+		{
+			alpacaErrCode	=	kASCOM_Err_InternalError;
+		}
 	}
 	else
 	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Offset not supported");
+		alpacaErrCode	=	kASCOM_Err_PropertyNotImplemented;
 	}
 
 	return(alpacaErrCode);
@@ -2574,21 +2612,28 @@ TYPE_ASCOM_STATUS	CameraDriver::Get_OffsetMin(TYPE_GetPutRequestData *reqData, c
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
-	if (reqData != NULL)
+	if (cOffsetSupported)
 	{
-		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	reqData->socket,
-										reqData->jsonTextBuffer,
-										kMaxJsonBuffLen,
-										responseString,		//gValueString,
-										cCameraProp.OffsetMin,
-										INCLUDE_COMMA);
-		alpacaErrCode	=	kASCOM_Err_Success;
+		if (reqData != NULL)
+		{
+			cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	reqData->socket,
+											reqData->jsonTextBuffer,
+											kMaxJsonBuffLen,
+											responseString,		//gValueString,
+											cCameraProp.OffsetMin,
+											INCLUDE_COMMA);
+			alpacaErrCode	=	kASCOM_Err_Success;
+		}
+		else
+		{
+			alpacaErrCode	=	kASCOM_Err_InternalError;
+		}
 	}
 	else
 	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Offset not supported");
+		alpacaErrCode	=	kASCOM_Err_PropertyNotImplemented;
 	}
-
 	return(alpacaErrCode);
 }
 
@@ -2974,10 +3019,26 @@ int					myAlpacaReadOutModeIdx;
 }
 
 //*****************************************************************************
+TYPE_ASCOM_STATUS	CameraDriver::Get_SensorName(TYPE_GetPutRequestData	*reqData,
+												char					*alpacaErrMsg,
+												const char				*responseString)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
+
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(reqData->socket,
+														reqData->jsonTextBuffer,
+														kMaxJsonBuffLen,
+														gValueString,
+														cCameraProp.SensorName,
+														INCLUDE_COMMA);
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
 //*	Returns a value indicating whether the sensor is monochrome, or what Bayer matrix it encodes. Where:
 //*
 //*		0 = Monochrome,
-//*		1 = Colour not requiring Bayer decoding
+//*		1 = Color not requiring Bayer decoding
 //*		2 = RGGB Bayer encoding
 //*		3 = CMYG Bayer encoding
 //*		4 = CMYG2 Bayer encoding
@@ -3221,7 +3282,7 @@ void	CameraDriver::SetLastExposureInfo(void)
 		(cLastExposure_ROIinfo.currentROIimageType >= kImageType_last))
 	{
 		CONSOLE_DEBUG_W_NUM("currentROIimageType is INVALID\t=",	cLastExposure_ROIinfo.currentROIimageType);
-		CONSOLE_ABORT(__FUNCTION__);
+	//	CONSOLE_ABORT(__FUNCTION__);
 	}
 
 //	CONSOLE_DEBUG_W_NUM("cLastExposure_ROIinfo.currentROIwidth\t=",		cLastExposure_ROIinfo.currentROIwidth);
@@ -3891,7 +3952,7 @@ char				dataTypeString[32];
 					CONSOLE_DEBUG_W_NUM("cLastExposure_ROIinfo.currentROIimageType\t=",	cLastExposure_ROIinfo.currentROIimageType);
 					CONSOLE_DEBUG_W_NUM("cLastExposure_ROIinfo.currentROIwidth    \t=",	cLastExposure_ROIinfo.currentROIwidth);
 					CONSOLE_DEBUG_W_NUM("cLastExposure_ROIinfo.currentROIheight   \t=",	cLastExposure_ROIinfo.currentROIheight);
-					CONSOLE_ABORT(__FUNCTION__);
+				//	CONSOLE_ABORT(__FUNCTION__);
 					break;
 			}
 			CONSOLE_DEBUG_W_LONG("bufferSize\t\t=", bufferSize);
@@ -4831,6 +4892,12 @@ char				stateString[16];
 									"camerastate-string",
 									stateString,
 									INCLUDE_COMMA);
+	if (cVerboseDebug)
+	{
+		CONSOLE_DEBUG_W_NUM("cCameraProp.CameraState\t=", cCameraProp.CameraState);
+		CONSOLE_DEBUG_W_STR("cCameraProp.CameraState\t=", stateString);
+	}
+
 	return(alpacaErrCode);
 }
 
@@ -5561,7 +5628,7 @@ CONSOLE_DEBUG(__FUNCTION__);
 						cInternalCameraState	=	kCameraState_Idle;
 						alpacaErrCode			=	kASCOM_Err_FailedToTakePicture;
 						GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Failed to create video writer (openCv)");
-						CONSOLE_ABORT("");
+					//	CONSOLE_ABORT("");
 
 					}
 					//=============================================
@@ -5792,13 +5859,13 @@ int					mySocketFD;
 
 
 	//===============================================================
-	if (strlen(cSensorName) > 0)
+	if (strlen(cCameraProp.SensorName) > 0)
 	{
 		SocketWriteData(mySocketFD,	"<TR>\r\n");
 		SocketWriteData(mySocketFD,	"\t<TD></TD>\r\n");
 		SocketWriteData(mySocketFD,	"\t<TD>Sensor</TD>");
 		SocketWriteData(mySocketFD,	"\t<TD>");
-		SocketWriteData(mySocketFD,	cSensorName);
+		SocketWriteData(mySocketFD,	cCameraProp.SensorName);
 		SocketWriteData(mySocketFD,	"</TD></TR>\r\n");
 	}
 
@@ -5985,23 +6052,7 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 }
 
 //*****************************************************************************
-TYPE_ASCOM_STATUS	CameraDriver::Write_BinX(const int newGainValue)
-{
-TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
-
-//	CONSOLE_DEBUG(__FUNCTION__);
-	CONSOLE_ABORT(__FUNCTION__);
-
-	//*	this should be over ridden
-	strcpy(cLastCameraErrMsg, "AlpacaPi: Not implemented-");
-	strcat(cLastCameraErrMsg, __FILE__);
-	strcat(cLastCameraErrMsg, ":");
-	strcat(cLastCameraErrMsg, __FUNCTION__);
-	return(alpacaErrCode);
-}
-
-//*****************************************************************************
-TYPE_ASCOM_STATUS	CameraDriver::Write_BinY(const int newBinXvalue)
+TYPE_ASCOM_STATUS	CameraDriver::Write_BinX(const int newBinXvalue)
 {
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 
@@ -6016,7 +6067,7 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 }
 
 //*****************************************************************************
-TYPE_ASCOM_STATUS	CameraDriver::Write_Gain(const int newBinYvalue)
+TYPE_ASCOM_STATUS	CameraDriver::Write_BinY(const int newBinYvalue)
 {
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 
@@ -6046,7 +6097,7 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 }
 
 //*****************************************************************************
-TYPE_ASCOM_STATUS	CameraDriver::Write_Offset(const int newOffsetValue)
+TYPE_ASCOM_STATUS	CameraDriver::Write_Gain(const int newBinYvalue)
 {
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 
@@ -6054,8 +6105,8 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 
 	//*	this should be over ridden
 	strcpy(cLastCameraErrMsg, "AlpacaPi: Not implemented-");
-//	strcat(cLastCameraErrMsg, __FILE__);
-//	strcat(cLastCameraErrMsg, ":");
+	strcat(cLastCameraErrMsg, __FILE__);
+	strcat(cLastCameraErrMsg, ":");
 	strcat(cLastCameraErrMsg, __FUNCTION__);
 	return(alpacaErrCode);
 }
@@ -6075,6 +6126,20 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 	return(alpacaErrCode);
 }
 
+//*****************************************************************************
+TYPE_ASCOM_STATUS	CameraDriver::Write_Offset(const int newOffsetValue)
+{
+TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	//*	this should be over ridden
+	strcpy(cLastCameraErrMsg, "AlpacaPi: Not implemented-");
+//	strcat(cLastCameraErrMsg, __FILE__);
+//	strcat(cLastCameraErrMsg, ":");
+	strcat(cLastCameraErrMsg, __FUNCTION__);
+	return(alpacaErrCode);
+}
 
 //*****************************************************************************
 static TYPE_IMAGE_TYPE	GetInternalImageType(const char *imageTypeString)
@@ -6489,7 +6554,10 @@ TYPE_ASCOM_STATUS	alpacaErrCode;
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	exposureState	=	Check_Exposure(true);
-//	CONSOLE_DEBUG_W_NUM("Taking picture: exposureState=", exposureState);
+	if (cVerboseDebug)
+	{
+		CONSOLE_DEBUG_W_NUM("Taking picture: exposureState=", exposureState);
+	}
 	switch(exposureState)
 	{
 		case kExposure_Idle:
@@ -7466,15 +7534,8 @@ char				textBuffer[128];
 										INCLUDE_COMMA);
 
 		//*	Sensor name
-		cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(mySocket,
-										reqData->jsonTextBuffer,
-										kMaxJsonBuffLen,
-										"sensorname",
-										cSensorName,
-										INCLUDE_COMMA);
-
+		Get_SensorName(	reqData,	alpacaErrMsg,	"sensorname");
 		Get_Sensortype(	reqData,	alpacaErrMsg,	"sensortype");
-
 		Get_StartX(					reqData,	alpacaErrMsg,	"startx");
 		Get_StartY(					reqData,	alpacaErrMsg,	"starty");
 
@@ -7779,54 +7840,66 @@ char	titleLine[128];
 	CONSOLE_DEBUG(titleLine);
 	CONSOLE_DEBUG(		"*************************************************************");
 
-	CONSOLE_DEBUG_W_NUM(	"cCameraProp.BinX              \t=",	cCameraProp.BinX);
-	CONSOLE_DEBUG_W_NUM(	"cCameraProp.BinY              \t=",	cCameraProp.BinY);
-	CONSOLE_DEBUG_W_DBL(	"cCameraProp.CCDtemperature    \t=",	cCameraProp.CCDtemperature);
-	CONSOLE_DEBUG_W_BOOL(	"cCameraProp.CanAbortExposure  \t=",	cCameraProp.CanAbortExposure);
-	CONSOLE_DEBUG_W_BOOL(	"cCameraProp.CanAsymmetricBin  \t=",	cCameraProp.CanAsymmetricBin);
-	CONSOLE_DEBUG_W_BOOL(	"cCameraProp.CanFastReadout    \t=",	cCameraProp.CanFastReadout);
-	CONSOLE_DEBUG_W_BOOL(	"cCameraProp.CanGetCoolerPower \t=",	cCameraProp.CanGetCoolerPower);
-	CONSOLE_DEBUG_W_BOOL(	"cCameraProp.CanPulseGuide     \t=",	cCameraProp.CanPulseGuide);
+	CONSOLE_DEBUG_W_BOOL(	"cCommonProp.Connected          \t=",	cCommonProp.Connected);
+	CONSOLE_DEBUG_W_STR(	"cCommonProp.Description        \t=",	cCommonProp.Description);
+	CONSOLE_DEBUG_W_STR(	"cCommonProp.DriverInfo         \t=",	cCommonProp.DriverInfo);
+	CONSOLE_DEBUG_W_STR(	"cCommonProp.DriverVersion      \t=",	cCommonProp.DriverVersion);
+	CONSOLE_DEBUG_W_NUM(	"cCommonProp.InterfaceVersion   \t=",	cCommonProp.InterfaceVersion);
+	CONSOLE_DEBUG_W_STR(	"cCommonProp.Name               \t=",	cCommonProp.Name);
+	CONSOLE_DEBUG_W_NUM(	"cCameraProp.BayerOffsetX       \t=",	cCameraProp.BayerOffsetX);
+	CONSOLE_DEBUG_W_NUM(	"cCameraProp.BayerOffsetY       \t=",	cCameraProp.BayerOffsetY);
+	CONSOLE_DEBUG_W_NUM(	"cCameraProp.BinX               \t=",	cCameraProp.BinX);
+	CONSOLE_DEBUG_W_NUM(	"cCameraProp.BinY               \t=",	cCameraProp.BinY);
+	CONSOLE_DEBUG_W_DBL(	"cCameraProp.CCDtemperature     \t=",	cCameraProp.CCDtemperature);
+	CONSOLE_DEBUG_W_BOOL(	"cCameraProp.CanAbortExposure   \t=",	cCameraProp.CanAbortExposure);
+	CONSOLE_DEBUG_W_BOOL(	"cCameraProp.CanAsymmetricBin   \t=",	cCameraProp.CanAsymmetricBin);
+	CONSOLE_DEBUG_W_BOOL(	"cCameraProp.CanFastReadout     \t=",	cCameraProp.CanFastReadout);
+	CONSOLE_DEBUG_W_BOOL(	"cCameraProp.CanGetCoolerPower  \t=",	cCameraProp.CanGetCoolerPower);
+	CONSOLE_DEBUG_W_BOOL(	"cCameraProp.CanPulseGuide      \t=",	cCameraProp.CanPulseGuide);
 	CONSOLE_DEBUG_W_BOOL(	"cCameraProp.Cansetccdtemperature\t=",	cCameraProp.Cansetccdtemperature);
-	CONSOLE_DEBUG_W_BOOL(	"cCameraProp.CanStopExposure   \t=",	cCameraProp.CanStopExposure);
-	CONSOLE_DEBUG_W_BOOL(	"cCameraProp.CoolerOn          \t=",	cCameraProp.CoolerOn);
+	CONSOLE_DEBUG_W_BOOL(	"cCameraProp.CanStopExposure    \t=",	cCameraProp.CanStopExposure);
+	CONSOLE_DEBUG_W_BOOL(	"cCameraProp.CoolerOn           \t=",	cCameraProp.CoolerOn);
+	CONSOLE_DEBUG_W_NUM(	"cCameraProp.CameraXsize        \t=",	cCameraProp.CameraXsize);
+	CONSOLE_DEBUG_W_NUM(	"cCameraProp.CameraYsize        \t=",	cCameraProp.CameraYsize);
+	CONSOLE_DEBUG_W_DBL(	"cCameraProp.ElectronsPerADU    \t=",	cCameraProp.ElectronsPerADU);
+	CONSOLE_DEBUG_W_DBL(	"cCameraProp.ExposureMax_seconds\t=",	cCameraProp.ExposureMax_seconds);
+	CONSOLE_DEBUG_W_DBL(	"cCameraProp.ExposureMin_seconds\t=",	cCameraProp.ExposureMin_seconds);
+	CONSOLE_DEBUG_W_DBL(	"cCameraProp.FullWellCapacity   \t=",	cCameraProp.FullWellCapacity);
+	CONSOLE_DEBUG_W_NUM(	"cCameraProp.Gain               \t=",	cCameraProp.Gain);
+	CONSOLE_DEBUG_W_NUM(	"cCameraProp.GainMax            \t=",	cCameraProp.GainMax);
+	CONSOLE_DEBUG_W_NUM(	"cCameraProp.GainMin            \t=",	cCameraProp.GainMin);
+	CONSOLE_DEBUG_W_BOOL(	"cCameraProp.HasShutter         \t=",	cCameraProp.HasShutter);
+	CONSOLE_DEBUG_W_NUM(	"cCameraProp.MaxADU             \t=",	cCameraProp.MaxADU);
+	CONSOLE_DEBUG_W_NUM(	"cCameraProp.MaxbinX            \t=",	cCameraProp.MaxbinX);
+	CONSOLE_DEBUG_W_NUM(	"cCameraProp.MaxbinY            \t=",	cCameraProp.MaxbinY);
+	CONSOLE_DEBUG_W_NUM(	"cCameraProp.NumX               \t=",	cCameraProp.NumX);
+	CONSOLE_DEBUG_W_NUM(	"cCameraProp.NumY               \t=",	cCameraProp.NumY);
+	CONSOLE_DEBUG_W_NUM(	"cCameraProp.StartX             \t=",	cCameraProp.StartX);
+	CONSOLE_DEBUG_W_NUM(	"cCameraProp.StartY             \t=",	cCameraProp.StartY);
+	CONSOLE_DEBUG_W_NUM(	"cCameraProp.Offset             \t=",	cCameraProp.Offset);
+	CONSOLE_DEBUG_W_NUM(	"cCameraProp.OffsetMax          \t=",	cCameraProp.OffsetMax);
+	CONSOLE_DEBUG_W_NUM(	"cCameraProp.OffsetMin          \t=",	cCameraProp.OffsetMin);
+	CONSOLE_DEBUG_W_DBL(	"cCameraProp.PixelSizeX         \t=",	cCameraProp.PixelSizeX);
+	CONSOLE_DEBUG_W_DBL(	"cCameraProp.PixelSizeY         \t=",	cCameraProp.PixelSizeY);
 
-	CONSOLE_DEBUG_W_NUM(	"cCameraProp.CameraXsize       \t=",	cCameraProp.CameraXsize);
-	CONSOLE_DEBUG_W_NUM(	"cCameraProp.CameraYsize       \t=",	cCameraProp.CameraYsize);
-	CONSOLE_DEBUG_W_BOOL(	"cCameraProp.HasShutter        \t=",	cCameraProp.HasShutter);
-	CONSOLE_DEBUG_W_NUM(	"cCameraProp.MaxADU            \t=",	cCameraProp.MaxADU);
-	CONSOLE_DEBUG_W_NUM(	"cCameraProp.MaxbinX           \t=",	cCameraProp.MaxbinX);
-	CONSOLE_DEBUG_W_NUM(	"cCameraProp.MaxbinY           \t=",	cCameraProp.MaxbinY);
-	CONSOLE_DEBUG_W_DBL(	"cCameraProp.PixelSizeX        \t=",	cCameraProp.PixelSizeX);
-	CONSOLE_DEBUG_W_DBL(	"cCameraProp.PixelSizeY        \t=",	cCameraProp.PixelSizeY);
 
 
-//	short					BayerOffsetX;			//*	The X offset of the Bayer matrix.
-//	short					BayerOffsetY;			//*	The Y offset of the Bayer matrix.
 
 //	TYPE_ALPACA_CAMERASTATE	CameraState;			//*	the camera operational state.
 //	double					CCDtemperature;			//*	Returns the current CCD temperature
 //	bool					CoolerOn;				//*	Returns the current cooler on/off state.
 ////+	double					CoolerPower;			//*	Returns the present cooler power level
-//	double					ElectronsPerADU;		//*	Returns the gain of the camera
-//	double					ExposureMax_seconds;	//*	Returns the maximum exposure time supported by StartExposure.
 //	long					ExposureMax_us;			//*	micro-seconds
-//	double					ExposureMin_seconds;	//*	Returns the Minimium exposure time
 //	long					ExposureMin_us;			//*	micro-seconds
 //	double					ExposureResolution;		//*	The smallest increment in exposure time supported by StartExposure.
 //
 ////+	bool					FastReadout;			//*	Returns whether Fast Readout Mode is enabled.
-//	double					FullWellCapacity;		//*	Reports the full well capacity of the camera
-//	int						Gain;					//*	Returns the camera's gain
-//	int						GainMax;				//*	Maximum Gain value of that this camera supports
-//	int						GainMin;				//*	Minimum Gain value of that this camera supports
+//	double					;		//*	Reports the full well capacity of the camera
 ////+	???						Gains;					//*	List of Gain names supported by the camera
 //	bool					HasShutter;				//*	Indicates whether the camera has a mechanical shutter
 ////+	double					HeatSinkTemperature;	//*	Returns the current heat sink temperature.
 //	bool					ImageReady;				//*	Indicates that an image is ready to be downloaded
 //	bool					IsPulseGuiding;			//*	Indicates that the camera is pulse guideing.
-//
-//
 //
 //	//==========================================================================================
 //	//*	information about the last exposure
@@ -7840,17 +7913,7 @@ char	titleLine[128];
 //
 //
 //
-//	//===================================
-//	//*	sub-frame information
-//	int						NumX;					//*	The current subframe width
-//	int						NumY;					//*	The current subframe height
-//
-//	int						StartX;					//*	The current subframe X axis start position
-//	int						StartY;					//*	The current subframe Y axis start position
-//
-//	int						Offset;					//*	The camera's offset
-//	int						OffsetMax;				//*	Maximum offset value of that this camera supports
-//	int						OffsetMin;				//*	Minimum offset value of that this camera supports
+
 ////?	int						Offsets;				//*	List of offset names supported by the camera
 //	int						PercentCompleted;		//*	Indicates percentage completeness of the current operation
 //
@@ -7934,7 +7997,7 @@ int			pixelValueInt;
 						break;
 
 					default:
-						CONSOLE_ABORT(__FUNCTION__);
+					//	CONSOLE_ABORT(__FUNCTION__);
 						break;
 				}
 			}

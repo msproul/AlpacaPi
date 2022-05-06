@@ -885,10 +885,10 @@ char	instrumentString[128];
 
 	//***************************************************
 	//*	output info about the sensor
-	if (strlen(cSensorName) > 0)
+	if (strlen(cCameraProp.SensorName) > 0)
 	{
 		fitsStatus	=	0;
-		fits_write_key(fitsFilePtr, TSTRING, "DETECTOR",	cSensorName,		NULL, &fitsStatus);
+		fits_write_key(fitsFilePtr, TSTRING, "DETECTOR",	cCameraProp.SensorName,		NULL, &fitsStatus);
 	}
 
 	sprintf(stringBuf, "[1:%d,1:%d]", cCameraProp.CameraXsize, cCameraProp.CameraYsize);
@@ -1006,10 +1006,10 @@ char	instrumentString[128];
 	}
 
 	//*	sensor name
-	if (strlen(cSensorName) > 0)
+	if (strlen(cCameraProp.SensorName) > 0)
 	{
 		strcpy(stringBuf, "Camera Sensor: ");
-		strcat(stringBuf, cSensorName);
+		strcat(stringBuf, cCameraProp.SensorName);
 		fitsStatus	=	0;
 		fits_write_key(fitsFilePtr, TSTRING, "COMMENT",	stringBuf,		NULL, &fitsStatus);
 	}
@@ -2219,24 +2219,31 @@ void NEON_Deinterleave_RGB(	uint8_t	*rgb,
 							uint8_t	*r,
 							uint8_t	*g,
 							uint8_t	*b,
-							int len_color)
+							int		len_color)
 {
 int				num8x16;
 uint8x16x3_t	intlv_rgb;
 int				iii;
-
+int				leftOverCount;
 	CONSOLE_DEBUG(__FUNCTION__);
-	SETUP_TIMING();
 	//*
 	//*	Take the elements of "rgb" and store the individual colors "r", "g", and "b"
 	//*
+	SETUP_TIMING();
 	num8x16	=	len_color / 16;
+	CONSOLE_DEBUG_W_NUM("len_color\t=", len_color);
+	CONSOLE_DEBUG_W_NUM("num8x16  \t=",	num8x16);
 	for (iii = 0; iii < num8x16; iii++)
 	{
 		intlv_rgb	=	vld3q_u8(rgb + (3 * 16 * iii));
 		vst1q_u8(r + (16 * iii), intlv_rgb.val[0]);
 		vst1q_u8(g + (16 * iii), intlv_rgb.val[1]);
 		vst1q_u8(b + (16 * iii), intlv_rgb.val[2]);
+	}
+	leftOverCount	=	len_color % 16;
+	if (leftOverCount > 0)
+	{
+
 	}
 	DEBUG_TIMING("Using NEON to Deinterleave");
 }
@@ -2246,8 +2253,8 @@ int				iii;
 void		CameraDriver::CreateFitsBGRimage(void)
 {
 long			frameBufSize;
-long			ii;
-long			pp;
+long			iii;
+long			ppp;
 unsigned char	*redBufPtr;
 unsigned char	*grnBufPtr;
 unsigned char	*bluBufPtr;
@@ -2259,7 +2266,7 @@ unsigned char	*bluBufPtr;
 	{
 		if (cCameraBGRbuffer == NULL)
 		{
-			cCameraBGRbuffer	=	(unsigned char *)malloc(frameBufSize * 3);
+			cCameraBGRbuffer	=	(unsigned char *)malloc((frameBufSize * 3) + 100);
 		}
 
 		if (cCameraBGRbuffer != NULL)
@@ -2268,12 +2275,12 @@ unsigned char	*bluBufPtr;
 			bluBufPtr	=	cCameraBGRbuffer;
 			grnBufPtr	=	cCameraBGRbuffer + frameBufSize;
 			redBufPtr	=	cCameraBGRbuffer + frameBufSize + frameBufSize;
-			ii	=	0;
-			for (pp=0; pp<frameBufSize; pp++)
+			iii	=	0;
+			for (ppp=0; ppp<frameBufSize; ppp++)
 			{
-				redBufPtr[pp]	=	cCameraDataBuffer[ii++];
-				grnBufPtr[pp]	=	cCameraDataBuffer[ii++];
-				bluBufPtr[pp]	=	cCameraDataBuffer[ii++];
+				redBufPtr[ppp]	=	cCameraDataBuffer[iii++];
+				grnBufPtr[ppp]	=	cCameraDataBuffer[iii++];
+				bluBufPtr[ppp]	=	cCameraDataBuffer[iii++];
 			}
 			DEBUG_TIMING("Using CPU to Deinterleave");
 
@@ -2294,11 +2301,12 @@ unsigned char	*bluBufPtr;
 					NEON_Deinterleave_RGB(cCameraDataBuffer, redBufPtr, grnBufPtr, bluBufPtr, frameBufSize);
 					//*	now lets check to see if its the same
 					diffCnt	=	0;
-					for (ii=0; ii<(frameBufSize * 3); ii++)
+					for (iii=0; iii<(frameBufSize * 3); iii++)
 					{
-						if ((neonBFRbuffer[ii] & 0x00ff) != ((cCameraBGRbuffer[ii] & 0x00ff)))
+						if ((neonBFRbuffer[iii] & 0x00ff) != ((cCameraBGRbuffer[iii] & 0x00ff)))
 						{
 							diffCnt++;
+							CONSOLE_DEBUG_W_NUM("Diff at offset\t=", iii);
 						}
 					}
 					CONSOLE_DEBUG_W_NUM("NEON diff count\t=", diffCnt);

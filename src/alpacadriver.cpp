@@ -131,6 +131,7 @@
 //*	Apr  7,	2022	<MLS> Added _ENABLE_QSI_
 //*	Apr 13,	2022	<MLS> Added CreateDriverObjects()
 //*	Apr 17,	2022	<MLS> Added run time option flag gSimulateCameraImage
+//*	May  5,	2022	<MLS> Added cVerboseDebug so an individual driver can be more verbose
 //*****************************************************************************
 //*	to install code blocks 20
 //*	Step 1: sudo add-apt-repository ppa:codeblocks-devs/release
@@ -393,6 +394,7 @@ int		iii;
 	sprintf(cCommonProp.DriverVersion, "%s Build %d", kVersionString, kBuildNumber);
 	cCommonProp.Connected		=	false;
 
+	cVerboseDebug				=	false;
 	cMagicCookie				=	kMagicCookieValue;
 	cDeviceModel[0]				=	0;
 	cDeviceManufacturer[0]		=	0;

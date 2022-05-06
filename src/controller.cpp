@@ -2012,7 +2012,12 @@ int			delta;
 cv::Rect	widgetRoiRect;
 cv::Mat		image_roi;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+//	if (theWidget->left == 272)
+//	{
+//		CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+//		DumpWidget(theWidget);
+//	}
 
 	if (cOpenCV_matImage != NULL)
 	{
@@ -2119,6 +2124,7 @@ void	Controller::DrawWidgetImage(TYPE_WIDGET *theWidget, IplImage *theOpenCVimag
 int			delta;
 cv::Rect	widgetRect;
 
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 	if (cOpenCV_Image != NULL)
 	{
 		if (theOpenCVimage != NULL)
@@ -2177,7 +2183,7 @@ cv::Rect	widgetRect;
 		}
 		else
 		{
-		//	CONSOLE_DEBUG("Image ptr is null");
+			CONSOLE_DEBUG("Image ptr is null");
 			if (theWidget->includeBorder)
 			{
 				widgetRect.x		=	theWidget->left;
@@ -2194,6 +2200,10 @@ cv::Rect	widgetRect;
 			}
 		}
 	}
+	else
+	{
+		CONSOLE_DEBUG("cOpenCV_Image is null");
+	}
 }
 #endif // _USE_OPENCV_CPP_
 
@@ -2201,14 +2211,14 @@ cv::Rect	widgetRect;
 //**************************************************************************************
 void	Controller::DrawWidgetImage(TYPE_WIDGET *theWidget)
 {
-//	CONSOLE_DEBUG_W_HEX("Widget\t=", theWidget);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 	if (theWidget->openCVimagePtr != NULL)
 	{
 		DrawWidgetImage(theWidget, theWidget->openCVimagePtr);
 	}
 	else
 	{
-	//	CONSOLE_DEBUG("theWidget->openCVimagePtr is null");
+		CONSOLE_DEBUG("theWidget->openCVimagePtr is null");
 		cCurrentColor	=	CV_RGB(100, 100, 100);
 		LLD_FillRect(theWidget->left, theWidget->top, theWidget->width, theWidget->height);
 	}

@@ -29,6 +29,7 @@
 
 
 #define _ENABLE_CONSOLE_DEBUG_
+#define	_DEBUG_TIMING_
 #include	"ConsoleDebug.h"
 
 
@@ -249,11 +250,18 @@ void	ControllerImage::RefreshWindow(void)
 //**************************************************************************************
 void	ControllerImage::DrawWidgetImage(TYPE_WIDGET *theWidget)
 {
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
-	CONSOLE_DEBUG_W_NUM("theWidget->left\t=",	theWidget->roiRect);
-	CONSOLE_DEBUG_W_NUM("theWidget->top\t=",	theWidget->roiRect);
-	CONSOLE_DEBUG_W_NUM("theWidget->width\t=",	theWidget->width);
-	CONSOLE_DEBUG_W_NUM("theWidget->height\t=",	theWidget->height);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+//	CONSOLE_DEBUG_W_NUM("theWidget->left\t=",	theWidget->left);
+//	CONSOLE_DEBUG_W_NUM("theWidget->top\t=",	theWidget->top);
+//
+//	//*	this is hard coded to debug an image display problem
+//	if (theWidget->left == 272)
+//	{
+//		DumpWidget(theWidget);
+//	}
+//
+//	CONSOLE_DEBUG_W_NUM("theWidget->width\t=",	theWidget->width);
+//	CONSOLE_DEBUG_W_NUM("theWidget->height\t=",	theWidget->height);
 	if (cImageTabObjPtr != NULL)
 	{
 		if (cImageTabObjPtr->cImageZoomState)
@@ -279,6 +287,121 @@ void	ControllerImage::DrawWidgetImage(TYPE_WIDGET *theWidget)
 
 #ifdef _USE_OPENCV_CPP_
 //**************************************************************************************
+static cv::Mat *ConvertImageToRGB(cv::Mat *openCVImage)
+{
+int		oldImgWidth;
+int		oldImgHeight;
+int		oldImgRowStepSize;
+int		oldImgBytesPerPixel;
+int		rgbImgRowStepSize;
+cv::Mat	*rgbOpenCVImage;
+size_t	byteCount;
+int		row;
+int		clm;
+int		pixIdx;
+int		pixValue;
+uint8_t	*oldRowPtr;
+uint8_t	*rgbRowPtr;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+	SETUP_TIMING();
+
+	oldImgWidth			=	openCVImage->cols;
+	oldImgHeight		=	openCVImage->rows;
+	oldImgRowStepSize	=	openCVImage->step[0];
+	oldImgBytesPerPixel	=	openCVImage->step[1];
+
+	//*	create an RGB image of the same size
+	rgbOpenCVImage		=	new cv::Mat(cv::Size(	oldImgWidth,
+													oldImgHeight),
+													CV_8UC3);
+	if (rgbOpenCVImage != NULL)
+	{
+		rgbImgRowStepSize	=	rgbOpenCVImage->step[0];
+
+		CONSOLE_DEBUG_W_NUM("oldImgBytesPerPixel\t=", oldImgBytesPerPixel);
+		CONSOLE_DEBUG_W_NUM("rgbImgRowStepSize\t=", rgbImgRowStepSize);
+
+		//*	now copy the data over, pixel at a time
+		switch(oldImgBytesPerPixel)
+		{
+			case 1:
+//		#if (CV_MAJOR_VERSION <= 3)
+//			cv::cvtColor(*newOpenCVImage, *cDownLoadedImage, CV_GRAY2RGB);
+//		#else
+//			#warning "OpenCV convert from 8 bit to RGB not finished"
+//		#endif
+				for (row = 0; row < oldImgHeight; row++)
+				{
+					oldRowPtr	=	openCVImage->data;
+					oldRowPtr	+=	row * oldImgRowStepSize;
+
+					rgbRowPtr	=	rgbOpenCVImage->data;
+					rgbRowPtr	+=	row * rgbImgRowStepSize;
+
+					pixIdx		=	0;
+					for (clm = 0; clm < oldImgWidth; clm++)
+					{
+						pixValue			=	oldRowPtr[clm];
+						rgbRowPtr[pixIdx++]	=	pixValue;
+						rgbRowPtr[pixIdx++]	=	pixValue;
+						rgbRowPtr[pixIdx++]	=	pixValue;
+					}
+				}
+				break;
+
+			case 2:
+				for (row = 0; row < oldImgHeight; row++)
+				{
+					oldRowPtr	=	openCVImage->data;
+					oldRowPtr	+=	row * oldImgRowStepSize;
+
+					rgbRowPtr	=	rgbOpenCVImage->data;
+					rgbRowPtr	+=	row * rgbImgRowStepSize;
+
+					pixIdx		=	0;
+					for (clm = 0; clm < oldImgWidth; clm++)
+					{
+						pixValue			=	oldRowPtr[(clm * 2) + 1];
+						rgbRowPtr[pixIdx++]	=	pixValue;
+						rgbRowPtr[pixIdx++]	=	pixValue;
+						rgbRowPtr[pixIdx++]	=	pixValue;
+					}
+				}
+				break;
+
+			case 3:
+				//*	copy the image data to OUR image
+				byteCount	=	openCVImage->rows * oldImgRowStepSize;
+				if ((rgbOpenCVImage->data != NULL) && (openCVImage->data != NULL))
+				{
+					CONSOLE_DEBUG("Calling memcpy");
+					memcpy(rgbOpenCVImage->data, openCVImage->data, byteCount);
+				}
+				else
+				{
+					CONSOLE_DEBUG("Failed to copy data from newOpenCVImage to cDownLoadedImage");
+				}
+				break;
+		}
+	}
+	else
+	{
+		CONSOLE_DEBUG("Failed to create new RGB image")
+	}
+	DEBUG_TIMING("Time to convert image to RGB");
+
+//	openCVerr	=	cv::imwrite("16bitdownload.png", *cDownLoadedImage);
+//
+//	newOpenCVImage->convertTo(*cDownLoadedImage, CV_8UC3);
+//	openCVerr	=	cv::imwrite("16bitdownload-8bit.png", *cDownLoadedImage);
+
+	return(rgbOpenCVImage);
+}
+
+
+
+//**************************************************************************************
 void	ControllerImage::SetLiveWindowImage(cv::Mat *newOpenCVImage)
 {
 int		smallDispalyWidth;
@@ -286,8 +409,8 @@ int		smallDisplayHeight;
 int		reduceFactor;
 int		newImgWidth;
 int		newImgHeight;
-int		newImgBytesPerPixel;
 int		newImgRowStepSize;
+int		newImgBytesPerPixel;
 int		openCVerr;
 bool	validImg;
 size_t	byteCount;
@@ -334,65 +457,11 @@ size_t	byteCount;
 		if (validImg)
 		{
 			CONSOLE_DEBUG_W_NUM("newImgBytesPerPixel\t=", newImgBytesPerPixel);
+			cDownLoadedImage	=	ConvertImageToRGB(newOpenCVImage);
 
-			cDownLoadedImage	=	new cv::Mat(cv::Size(	newImgWidth,
-															newImgHeight),
-															CV_8UC3);
 			//*	the downloaded image needs to be copied and/or resized to the displayed image
 			if (cDownLoadedImage != NULL)
 			{
-				CONSOLE_DEBUG_W_NUM("cDownLoadedImage->step[0]\t=",	cDownLoadedImage->step[0]);
-				CONSOLE_DEBUG_W_NUM("cDownLoadedImage->step[1]\t=",	cDownLoadedImage->step[1]);
-
-				//---try------try------try------try------try------try---
-				try
-				{
-					switch(newImgBytesPerPixel)
-					{
-						case 1:
-							CONSOLE_DEBUG("Original is 8 bit B/W");
-							CONSOLE_DEBUG("OpenCV++ not finished!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-							//*				source  ->  destination
-						#if (CV_MAJOR_VERSION <= 3)
-							cv::cvtColor(*newOpenCVImage, *cDownLoadedImage, CV_GRAY2RGB);
-						#else
-							#warning "OpenCV convert from 8 bit to RGB not finished"
-						#endif
-							break;
-
-						case 2:
-							CONSOLE_DEBUG("Original is 16 bit B/W");
-							//*				source  ->  destination
-						//	cv::cvtColor(*newOpenCVImage, *cDownLoadedImage, CV_GRAY2RGB);
-
-							openCVerr	=	cv::imwrite("16bitdownload.png", *cDownLoadedImage);
-
-							newOpenCVImage->convertTo(*cDownLoadedImage, CV_8UC3);
-							openCVerr	=	cv::imwrite("16bitdownload-8bit.png", *cDownLoadedImage);
-
-							break;
-
-						case 3:
-							//*	copy the image data to OUR image
-							byteCount	=	newOpenCVImage->rows * newImgRowStepSize;
-							if ((cDownLoadedImage->data != NULL) && (newOpenCVImage->data != NULL))
-							{
-								CONSOLE_DEBUG("Calling memcpy");
-								memcpy(cDownLoadedImage->data, newOpenCVImage->data, byteCount);
-							}
-							else
-							{
-								CONSOLE_DEBUG("Failed to copy data from newOpenCVImage to cDownLoadedImage");
-							}
-							break;
-					}
-				}
-				catch(cv::Exception& ex)
-				{
-					//*	this catch prevents opencv from crashing
-					CONSOLE_DEBUG("cvtColor() had an exception");
-					CONSOLE_DEBUG_W_NUM("openCV error code\t=",	ex.code);
-				}
 				CONSOLE_DEBUG_W_NUM("cDownLoadedImage->step[0]\t=",	cDownLoadedImage->step[0]);
 				CONSOLE_DEBUG_W_NUM("cDownLoadedImage->step[1]\t=",	cDownLoadedImage->step[1]);
 

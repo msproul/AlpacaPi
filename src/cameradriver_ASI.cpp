@@ -201,7 +201,7 @@ CameraDriverASI::~CameraDriverASI(void)
 void	CameraDriverASI::ReadASIcameraInfo(void)
 {
 int					numberOfCtrls;
-int					ii;
+int					iii;
 ASI_ERROR_CODE		asiErrorCode;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
@@ -228,11 +228,11 @@ ASI_ERROR_CODE		asiErrorCode;
 													cAsiCameraInfo.PixelSize);
 
 		printf("SupportedBins =");
-		ii	=	0;
-		while ((cAsiCameraInfo.SupportedBins[ii] > 0) && (ii<16))
+		iii	=	0;
+		while ((cAsiCameraInfo.SupportedBins[iii] > 0) && (iii<16))
 		{
-			printf("\t%d",	cAsiCameraInfo.SupportedBins[ii]);
-			ii++;
+			printf("\t%d",	cAsiCameraInfo.SupportedBins[iii]);
+			iii++;
 		}
 		printf("\r\n");
 
@@ -272,29 +272,32 @@ ASI_ERROR_CODE		asiErrorCode;
 		cCameraProp.NumX		=	cCameraProp.CameraXsize;
 		cCameraProp.NumY		=	cCameraProp.CameraYsize;
 
-		Get_ASI_SensorName(cCommonProp.Name, cSensorName);
+		Get_ASI_SensorName(cCommonProp.Name, cCameraProp.SensorName);
 
 	//	CONSOLE_DEBUG_W_NUM("cCameraID\t\t=", cCameraID);
 
 		//*	figure out max bin values
-		ii	=	0;
-		while ((cAsiCameraInfo.SupportedBins[ii] > 0) && (ii<16))
+		iii	=	0;
+		while ((cAsiCameraInfo.SupportedBins[iii] > 0) && (iii<16))
 		{
-			if (cAsiCameraInfo.SupportedBins[ii] > cCameraProp.MaxbinX)
+			if (cAsiCameraInfo.SupportedBins[iii] > cCameraProp.MaxbinX)
 			{
 				//*	Maximum binning for the camera X axis
-				cCameraProp.MaxbinX	=	cAsiCameraInfo.SupportedBins[ii];
+				cCameraProp.MaxbinX	=	cAsiCameraInfo.SupportedBins[iii];
 				//*	Maximum binning for the camera Y axis
-				cCameraProp.MaxbinY	=	cAsiCameraInfo.SupportedBins[ii];
+				cCameraProp.MaxbinY	=	cAsiCameraInfo.SupportedBins[iii];
 			}
-			ii++;
+			iii++;
 		}
+		//*	for now, we dont support binning, so make CONFORM happy
+		cCameraProp.MaxbinX	=	1;
+		cCameraProp.MaxbinY	=	1;
 
 		//*	get the supported image formats
-		ii	=	0;
-		while ((ii<8) && (cAsiCameraInfo.SupportedVideoFormat[ii] != ASI_IMG_END))
+		iii	=	0;
+		while ((iii < 8) && (cAsiCameraInfo.SupportedVideoFormat[iii] != ASI_IMG_END))
 		{
-			switch(cAsiCameraInfo.SupportedVideoFormat[ii])
+			switch(cAsiCameraInfo.SupportedVideoFormat[iii])
 			{
 				case ASI_IMG_RAW8:
 					AddReadoutModeToList(kImageType_RAW8);
@@ -313,10 +316,10 @@ ASI_ERROR_CODE		asiErrorCode;
 					break;
 
 				default:
-					CONSOLE_DEBUG_W_NUM("Unknown image type", cAsiCameraInfo.SupportedVideoFormat[ii]);
+					CONSOLE_DEBUG_W_NUM("Unknown image type", cAsiCameraInfo.SupportedVideoFormat[iii]);
 					break;
 			}
-			ii++;
+			iii++;
 		}
 	}
 	else
@@ -329,15 +332,15 @@ ASI_ERROR_CODE		asiErrorCode;
 	{
 		asiErrorCode	=	ASIInitCamera(cCameraID);
 		asiErrorCode	=	ASIGetNumOfControls(cCameraID, &numberOfCtrls);
-		for (ii=0; ii< numberOfCtrls; ii++)
+		for (iii=0; iii< numberOfCtrls; iii++)
 		{
-			ReadASIcontrol(ii);
+			ReadASIcontrol(iii);
 		}
 		//*	read the supported modes
 		asiErrorCode	=	ASIGetCameraSupportMode(cCameraID, &supportedModes);
-		//	for (ii=0; ii<16; ii++)
+		//	for (iii=0; iii<16; iii++)
 		//	{
-		//		CONSOLE_DEBUG_W_NUM("supportedModes\t=",	supportedModes.SupportedCameraMode[ii]);
+		//		CONSOLE_DEBUG_W_NUM("supportedModes\t=",	supportedModes.SupportedCameraMode[iii]);
 		//	}
 
 		memset(&cAsiSerialNum, 0, sizeof(ASI_ID));
@@ -1172,7 +1175,7 @@ bool			timeToStop;
 //*****************************************************************************
 void	CameraDriverASI::OutputHTML_Part2(TYPE_GetPutRequestData *reqData)
 {
-int					ii;
+int					iii;
 ASI_ERROR_CODE		asiErrorCode;
 int					numberOfCtrls;
 ASI_CONTROL_CAPS	controlCaps;
@@ -1212,14 +1215,14 @@ int					mySocketFD;
 	//*	supported image formats
 	lineBuffer[0]	=	0;
 	strcat(lineBuffer, "<TR><TD></TD><TD>Image formats = ");
-	ii	=	0;
-	while ((ii<8) && (cAsiCameraInfo.SupportedVideoFormat[ii] != ASI_IMG_END))
+	iii	=	0;
+	while ((iii<8) && (cAsiCameraInfo.SupportedVideoFormat[iii] != ASI_IMG_END))
 	{
-		Get_ASI_ImageTypeString(cAsiCameraInfo.SupportedVideoFormat[ii], asiImageTypeString);
+		Get_ASI_ImageTypeString(cAsiCameraInfo.SupportedVideoFormat[iii], asiImageTypeString);
 		strcat(lineBuffer, asiImageTypeString);
 		strcat(lineBuffer, ", ");
 
-		ii++;
+		iii++;
 	}
 	strcat(lineBuffer,	"</TD></TR>\r\n");
 
@@ -1227,14 +1230,14 @@ int					mySocketFD;
 
 	//*-----------------------------------------------------------
 	sprintf(lineBuffer,	"\t<TR><TD>Supported Bins</TD><TD>");
-	ii	=	0;
-	while ((cAsiCameraInfo.SupportedBins[ii] > 0) && (ii<16))
+	iii	=	0;
+	while ((cAsiCameraInfo.SupportedBins[iii] > 0) && (iii < 16))
 	{
 	char	numBuff[16];
 
-		sprintf(numBuff, "%d,",	cAsiCameraInfo.SupportedBins[ii]);
+		sprintf(numBuff, "%d,",	cAsiCameraInfo.SupportedBins[iii]);
 		strcat(lineBuffer, numBuff);
-		ii++;
+		iii++;
 	}
 	strcat(lineBuffer, "</TD></TR>\r\n");
 	SocketWriteData(mySocketFD,	lineBuffer);
@@ -1298,11 +1301,11 @@ int					mySocketFD;
 		asiErrorCode	=	ASIGetNumOfControls(cCameraID, &numberOfCtrls);
 		if (asiErrorCode == ASI_SUCCESS)
 		{
-			for (ii=0; ii< numberOfCtrls; ii++)
+			for (iii=0; iii< numberOfCtrls; iii++)
 			{
 				memset(&controlCaps, 0, sizeof(ASI_CONTROL_CAPS));
 
-				asiErrorCode	=	ASIGetControlCaps(cCameraID, ii, &controlCaps);
+				asiErrorCode	=	ASIGetControlCaps(cCameraID, iii, &controlCaps);
 				if (asiErrorCode == ASI_SUCCESS)
 				{
 					SocketWriteData(mySocketFD,	"<TR>\r\n");

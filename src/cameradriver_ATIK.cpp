@@ -214,20 +214,20 @@ char				tempDeviceName[64];
 
 	if (strcmp(cCommonProp.Name, "Atik Titan") == 0)
 	{
-		strcpy(cSensorName, "Sony ICX424");
+		strcpy(cCameraProp.SensorName, "Sony ICX424");
 		//*	https://www.atik-cameras.com/product/atik-titan/
 		cCameraProp.ElectronsPerADU	=	0.34;
 	}
 	else if (strcmp(cCommonProp.Name, "Atik 460ex") == 0)
 	{
-		strcpy(cSensorName, "Sony ICX694");
+		strcpy(cCameraProp.SensorName, "Sony ICX694");
 		//*	https://www.atik-cameras.com/product/atik-460ex/
 		cCameraProp.ElectronsPerADU	=	0.27;
 		cCameraProp.ExposureMin_us	=	1000;		//*	1/1000 sec = 1000 micro seconds
 	}
 	else if (strcmp(cCommonProp.Name, "Atik Horizon") == 0)
 	{
-		strcpy(cSensorName, "Panasonic MN34230");
+		strcpy(cCameraProp.SensorName, "Panasonic MN34230");
 		//*	https://www.atik-cameras.com/product/atik-horizon/
 		cBitDepth					=	12;
 		cCameraProp.ElectronsPerADU	=	1;
