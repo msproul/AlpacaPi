@@ -69,7 +69,7 @@ bool		isConnected;
 	cCameraID				=	deviceNum;
 	cSimulatedState			=   kExposure_Idle;
 	//*	set defaults
-	strcpy(cDeviceManufAbrev,		"Alp-Pi");
+	strcpy(cDeviceManufAbrev,		"APi");
 	strcpy(cCommonProp.Name,		"AlpacaPi Simulator");
 	strcpy(cCommonProp.Description,	"AlpacaPi Simulator");
 	strcpy(cCommonProp.Name,		"AlpacaPi Simulator");

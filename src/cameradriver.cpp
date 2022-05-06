@@ -7840,6 +7840,9 @@ char	titleLine[128];
 	CONSOLE_DEBUG(titleLine);
 	CONSOLE_DEBUG(		"*************************************************************");
 
+
+	CONSOLE_DEBUG_W_NUM(	"cDeviceType                    \t=",	cDeviceType);
+	CONSOLE_DEBUG_W_NUM(	"cDeviceNum                     \t=",	cDeviceNum);
 	CONSOLE_DEBUG_W_BOOL(	"cCommonProp.Connected          \t=",	cCommonProp.Connected);
 	CONSOLE_DEBUG_W_STR(	"cCommonProp.Description        \t=",	cCommonProp.Description);
 	CONSOLE_DEBUG_W_STR(	"cCommonProp.DriverInfo         \t=",	cCommonProp.DriverInfo);

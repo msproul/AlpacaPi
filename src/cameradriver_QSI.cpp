@@ -61,7 +61,7 @@
 //**************************************************************************************
 void	CreateQSI_CameraObjects(void)
 {
-int				iii;
+//int				iii;
 unsigned int	qsi_Result;
 std::string		info	=	"";
 std::string		modelNumber("");
