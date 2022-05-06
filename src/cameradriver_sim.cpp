@@ -64,8 +64,9 @@ bool		isConnected;
 	CONSOLE_DEBUG_W_NUM("Creating Simulation device number ", deviceNum);
 
 	gVerbose				=	true;
-	cCameraID				=	deviceNum;
 	cVerboseDebug			=	true;
+
+	cCameraID				=	deviceNum;
 	cSimulatedState			=   kExposure_Idle;
 	//*	set defaults
 	strcpy(cDeviceManufAbrev,		"Alp-Pi");

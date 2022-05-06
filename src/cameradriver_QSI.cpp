@@ -139,6 +139,10 @@ int				numCamerasFound;
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG_W_NUM("Creating QSI device number ", deviceNum);
 
+	gVerbose				=	true;
+	cVerboseDebug			=	true;
+
+
 	cCameraID				=	deviceNum;
 
 	//*	set defaults
