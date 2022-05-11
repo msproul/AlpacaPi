@@ -351,7 +351,6 @@ CrError		sonyRetCode;
 
 #ifdef  _ALPACA_PI_
 //*****************************************************************************
-//*	this is expected to get overloaded
 void	CameraDriverSONY::OutputHTML_Part2(TYPE_GetPutRequestData *reqData)
 {
 CrError				sonyErrCode;

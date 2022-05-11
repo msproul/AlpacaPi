@@ -502,7 +502,6 @@ int	ii;
 			gAlpacaDeviceList[ii]	=	NULL;
 		}
 	}
-
 }
 
 //**************************************************************************************
@@ -1802,6 +1801,12 @@ int		ii;
 			SocketWriteData(mySocketFD,	"<TR>\r\n");
 				SocketWriteData(mySocketFD,	"<TD>sizeof(double)</TD>\r\n");
 				sprintf(lineBuffer,	"<TD>%ld</TD>\r\n", (long)sizeof(double));
+				SocketWriteData(mySocketFD,	lineBuffer);
+			SocketWriteData(mySocketFD,	"</TR>\r\n");
+
+			SocketWriteData(mySocketFD,	"<TR>\r\n");
+				SocketWriteData(mySocketFD,	"<TD>sizeof(long double)</TD>\r\n");
+				sprintf(lineBuffer,	"<TD>%ld</TD>\r\n", (long)sizeof(long double));
 				SocketWriteData(mySocketFD,	lineBuffer);
 			SocketWriteData(mySocketFD,	"</TR>\r\n");
 		}

@@ -308,7 +308,7 @@ static	TYPE_CelestData	*gZodiacPtr	=	NULL;
 	{									\
 		CONSOLE_ABORT("X is not NULL");	\
 	}									\
-	if (y != 0)						\
+	if (y != 0)							\
 	{									\
 		CONSOLE_ABORT("Y is not zero");	\
 	}									\

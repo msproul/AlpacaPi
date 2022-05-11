@@ -245,18 +245,20 @@ TYPE_ASCOM_STATUS	alpacaErrCode;
 TYPE_ASCOM_STATUS		CameraDriverSIM::Start_CameraExposure(int32_t exposureMicrosecs)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
-//double				durationSeconds;
+double				durationSeconds;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 	if (cCommonProp.Connected)
 	{
 		cCameraProp.ImageReady		=	false;
 
-//		durationSeconds	=	(exposureMicrosecs * 1.0) / 1000000.0;
+		durationSeconds	=	(exposureMicrosecs * 1.0) / 1000000.0;
+
+		durationSeconds	=	2;
 
 		CONSOLE_DEBUG("Simulating camera");
 		cInternalCameraState	=	kCameraState_TakingPicture;
-//?		cCameraProp.CameraState	=   kALPACA_CameraState_Exposing;
+		cCameraProp.CameraState	=   kALPACA_CameraState_Exposing;
 		SetLastExposureInfo();
 		alpacaErrCode			=	kASCOM_Err_Success;
 	}
@@ -281,14 +283,24 @@ bool	CameraDriverSIM::GetImage_ROI_info(void)
 TYPE_EXPOSURE_STATUS	CameraDriverSIM::Check_Exposure(bool verboseFlag)
 {
 TYPE_EXPOSURE_STATUS	myExposureStatus;
+struct timeval			currentTIme;
+time_t					deltaTime_secs;
 
 	//--------------------------------------------
 	//*	simulate image
 	switch(cInternalCameraState)
 	{
 		case kCameraState_TakingPicture:
-			CONSOLE_DEBUG("Not kCameraState_TakingPicture -->> kCameraState_Idle");
-			myExposureStatus		=	kExposure_Success;
+			myExposureStatus		=	kExposure_Working;
+			gettimeofday(&currentTIme, NULL);	//*	get the current time
+			deltaTime_secs	=	currentTIme.tv_sec - cCameraProp.Lastexposure_StartTime.tv_sec;
+
+			CONSOLE_DEBUG_W_LONG("deltaTime_secs\t=",			deltaTime_secs);
+			if (deltaTime_secs > 2)
+			{
+				CONSOLE_DEBUG("Not kCameraState_TakingPicture -->> kCameraState_Idle");
+				myExposureStatus		=	kExposure_Success;
+			}
 			break;
 
 		default:
@@ -383,8 +395,8 @@ int					bytesPerPixel;
 	}
 	else
 	{
-		CONSOLE_DEBUG("Not connected");
 		alpacaErrCode	=	kASCOM_Err_NotConnected;
+		CONSOLE_DEBUG("Not connected");
 		CONSOLE_ABORT("Not connected");
 	}
 	return(alpacaErrCode);

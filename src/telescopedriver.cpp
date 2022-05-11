@@ -2240,7 +2240,7 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 //*****************************************************************************
 TYPE_ASCOM_STATUS	TelescopeDriver::Put_Tracking(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
 {
-TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
+TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 bool					trackingFound;
 char					trackingString[64];
 
@@ -2260,6 +2260,7 @@ char					trackingString[64];
 				cTelescopeProp.AtPark	=	false;
 			}
 			alpacaErrCode	=	Telescope_TrackingOnOff(cTelescopeProp.Tracking, alpacaErrMsg);
+			CONSOLE_DEBUG_W_NUM("alpacaErrCode\t=", alpacaErrCode);
 
 
 			CONSOLE_DEBUG(cTelescopeProp.Tracking ? "Tracking is ENABLED" : "Tracking is DISABLED");
@@ -2277,7 +2278,6 @@ char					trackingString[64];
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "cCanSetTracking is false");
 		CONSOLE_DEBUG(alpacaErrMsg);
 	}
-
 	return(alpacaErrCode);
 }
 
@@ -2478,29 +2478,30 @@ TYPE_ASCOM_STATUS	TelescopeDriver::Put_AbortSlew(TYPE_GetPutRequestData *reqData
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 
 	CONSOLE_DEBUG(__FUNCTION__);
-
 //	CONSOLE_DEBUG(reqData->contentData);
+
+	alpacaErrMsg[0]	=	0;
 	if (cTelescopeProp.AtPark)
 	{
 		alpacaErrCode	=	kASCOM_Err_InvalidWhileParked;
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Invalid While Parked");
 //		CONSOLE_DEBUG(alpacaErrMsg);
+		//*	send the abort anyway
+		Telescope_AbortSlew(alpacaErrMsg);
 	}
 	else
 	{
-		alpacaErrCode	=	kASCOM_Err_Success;
+		alpacaErrCode	=	Telescope_AbortSlew(alpacaErrMsg);;
 	}
-	//*	send the abort anyway
-	Telescope_AbortSlew(alpacaErrMsg);
 
-	CONSOLE_DEBUG_W_NUM("alpacaErrCode\t=", alpacaErrCode);
-	CONSOLE_DEBUG_W_STR("alpacaErrMsg\t=", alpacaErrMsg);
-
-	alpacaErrMsg[0]	=	0;
+	if (alpacaErrCode != kASCOM_Err_Success)
+	{
+		CONSOLE_DEBUG_W_NUM("alpacaErrCode\t=", alpacaErrCode);
+		CONSOLE_DEBUG_W_STR("alpacaErrMsg\t=", alpacaErrMsg);
+	}
 
 	return(alpacaErrCode);
 }
-
 
 //*****************************************************************************
 TYPE_ASCOM_STATUS	TelescopeDriver::Get_AxisRates(	TYPE_GetPutRequestData	*reqData,

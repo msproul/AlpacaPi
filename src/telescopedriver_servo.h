@@ -31,7 +31,9 @@
 	#include	"telescopedriver.h"
 #endif
 
-
+#ifndef _SERVO_SCOPE_CFG_H_
+	#include	"servo_scope_cfg.h"
+#endif // _SERVO_SCOPE_CFG_H_
 
 void	CreateTelescopeServoObjects(void);
 
@@ -47,6 +49,7 @@ class TelescopeDriverServo: public TelescopeDriver
 		virtual						~TelescopeDriverServo(void);
 		virtual	int32_t				RunStateMachine(void);
 
+		virtual	void				OutputHTML_Part2(TYPE_GetPutRequestData *reqData);
 
 		//*************************************************************************
 		//*	DO NOT IMPLEMENT THE SYNCHRONOUS METHODS
@@ -85,5 +88,8 @@ class TelescopeDriverServo: public TelescopeDriver
 
 		virtual	TYPE_ASCOM_STATUS	Telescope_UnPark(		char *alpacaErrMsg);
 
+	private:
+		TYPE_SCOPE_CONFIG	cServoConfig;
+		bool				cServoConfigIsValid;
 
 };

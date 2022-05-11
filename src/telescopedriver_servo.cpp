@@ -28,6 +28,8 @@
 //*	Mar 25,	2022	<MLS> Created telescopedriver_Servo.cpp
 //*	Mar 25,	2022	<MLS> Servo version is being created for Ron S <RNS>
 //*	Apr  6,	2022	<MLS> Switched to using generic config reading routines
+//*	May 11,	2022	<MLS> Now using servo config processing routines by <RNS>
+//*	May 11,	2022	<MLS> Added OutputHTML_Part2() to telescope servo driver
 //*****************************************************************************
 //*	LM628/629 Si,
 //*****************************************************************************
@@ -48,9 +50,13 @@
 
 #include	"alpacadriver.h"
 #include	"alpacadriver_helper.h"
-#include	"helper_functions.h"
-#include	"readconfigfile.h"
+//#include	"helper_functions.h"
+//#include	"readconfigfile.h"
 
+//*	servo controller routines using RoboClaws controller
+#include	"servo_scope_cfg.h"
+#include	"servo_scope.h"
+#include	"servo_std_defs.h"
 
 #include	"telescopedriver.h"
 #include	"telescopedriver_servo.h"
@@ -62,23 +68,33 @@ static void	ProcessServoConfig(const char *keyword, const char *value);
 TelescopeDriverServo::TelescopeDriverServo(void)
 	:TelescopeDriver()
 {
+int	cfgStatus;
 
 	CONSOLE_DEBUG(__FUNCTION__);
-	strcpy(cCommonProp.Name,		"Telescope-Servo");
-	strcpy(cCommonProp.Description,	"Telescope control using Servo protocol");
+	strcpy(cCommonProp.Name,		"AlpacaPi-Mount-Servo");
+	strcpy(cCommonProp.Description,	"Mount using RoboClaw servo controller");
 
 	//*	setup the options for this driver
 	cTelescopeProp.AlginmentMode	=	kAlignmentMode_algGermanPolar;
 	cTelescopeProp.CanFindHome		=	false;
-	cTelescopeProp.CanMoveAxis		=	false;
-	cTelescopeProp.CanSetTracking	=	false;
+	cTelescopeProp.CanMoveAxis		=	true;
+	cTelescopeProp.CanSetTracking	=	true;
 	cTelescopeProp.CanSlewAsync		=	false;
 	cTelescopeProp.CanSync			=	true;
 	cTelescopeProp.CanUnpark		=	false;
 
 
-	ReadGenericConfigFile("ss_scope.cfg", ':', &ProcessServoConfig);
+//	ReadGenericConfigFile("ss_scope.cfg", ':', &ProcessServoConfig);
+#define kLOCAL_CFG_FILE "servo_location.cfg"
 
+	cServoConfigIsValid	=	false;
+//	cfgStatus			=	Servo_Read_Scope_Cfg(NULL, &cServoConfig);
+	cfgStatus			=	Servo_init(kSCOPE_CFG_FILE, kLOCAL_CFG_FILE);
+	if (cfgStatus == 0)
+	{
+		cServoConfigIsValid	=	true;
+	}
+	CONSOLE_DEBUG_W_NUM("cServoConfigIsValid\t=", cServoConfigIsValid);
 
 	AlpacaConnect();
 
@@ -95,6 +111,37 @@ TelescopeDriverServo::~TelescopeDriverServo(void)
 }
 
 //*****************************************************************************
+void	TelescopeDriverServo::OutputHTML_Part2(TYPE_GetPutRequestData *reqData)
+{
+char		lineBuffer[512];
+FILE		*filePointer;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	//*	print the config file to the web page,
+	//*	this makes it much easier to see what the config is on a remote system
+	filePointer	=	fopen(kSCOPE_CFG_FILE, "r");
+	if (filePointer != NULL)
+	{
+		SocketWriteData(reqData->socket, "<HR>\r\n");
+		SocketWriteData(reqData->socket, "<P><CENTER>Servo Config File</CENTER>\r\n");
+
+		sprintf(lineBuffer, "Config file:%s is %s<P>\r\n",	kSCOPE_CFG_FILE,
+															(cServoConfigIsValid ? "valid" : "NOT valid"));
+		SocketWriteData(reqData->socket, lineBuffer);
+
+		SocketWriteData(reqData->socket, "<PRE>\r\n");
+		while (fgets(lineBuffer, 500, filePointer) != NULL)
+		{
+			SocketWriteData(reqData->socket, lineBuffer);
+		}
+		SocketWriteData(reqData->socket, "</PRE>\r\n");
+
+		fclose(filePointer);
+	}
+}
+
+//*****************************************************************************
 //*	returns delay time in micro-seconds
 //*****************************************************************************
 int32_t	TelescopeDriverServo::RunStateMachine(void)
@@ -108,15 +155,19 @@ int32_t	TelescopeDriverServo::RunStateMachine(void)
 	return(5 * 1000 * 1000);
 }
 
-
 //*****************************************************************************
 TYPE_ASCOM_STATUS	TelescopeDriverServo::Telescope_AbortSlew(char *alpacaErrMsg)
 {
-TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
+TYPE_ASCOM_STATUS		alpacaErrCode;
 
+	alpacaErrCode	=	kASCOM_Err_Success;
+	Servo_stop_all();
+
+	cTelescopeProp.Slewing	=	false;
+//testing
+	alpacaErrCode	=	kASCOM_Err_NotImplemented;
 	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
 	return(alpacaErrCode);
-
 }
 
 //*****************************************************************************
@@ -215,23 +266,33 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 }
 
 //*****************************************************************************
-TYPE_ASCOM_STATUS	TelescopeDriverServo::Telescope_TrackingOnOff(const bool newTrackingState, char *alpacaErrMsg)
+TYPE_ASCOM_STATUS	TelescopeDriverServo::Telescope_TrackingOnOff(	const bool	newTrackingState,
+																	char		*alpacaErrMsg)
 {
-TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
+int					servoStatus;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
 	if (newTrackingState)
 	{
-
-		alpacaErrCode	=	kASCOM_Err_NotImplemented;
+		servoStatus	=	Servo_start_tracking(SERVO_RA_AXIS);
 	}
 	else
 	{
-		alpacaErrCode	=	kASCOM_Err_NotImplemented;
-		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
-
+		servoStatus	=	Servo_stop_tracking(SERVO_RA_AXIS);
 	}
+	if (servoStatus == kSTATUS_OK)
+	{
+		alpacaErrCode	=	kASCOM_Err_Success;
+	}
+	else
+	{
+		alpacaErrCode	=	kASCOM_Err_InvalidOperation;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Telescope_TrackingOnOff failed");
+		CONSOLE_DEBUG(alpacaErrMsg);
+	}
+
 	return(alpacaErrCode);
 }
 
@@ -244,217 +305,6 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 	return(alpacaErrCode);
 
 }
-
-//*****************************************************************************
-enum
-{
-	kServo_aaa	=	0,
-	kServo_BAUD,
-	kServo_COMM_PORT,
-	kServo_DEC_CONFIG,
-	kServo_DEC_MOTOR_GEAR,
-	kServo_DEC_MAIN_GEAR,
-	kServo_DEC_ENCODER,
-	kServo_DEC_MAX_VEL,
-	kServo_DEC_MAX_ACC,
-	kServo_DEC_ADJ_VEL,
-	kServo_DEC_SLEW_VEL,
-	kServo_DEC_SI_CON,
-	kServo_DEC_KP_CON,
-	kServo_DEC_KI_CON,
-	kServo_DEC_KD_CON,
-	kServo_DEC_IL_CON,
-	kServo_DEC_LOCK_DOWN,
-	kServo_DEC_GEAR_LASH,
-	kServo_DEC_PRECESSION,
-	kServo_DEC_STANDBY,
-	kServo_DEC_HOME,
-	kServo_DEC_HOME_FLAG,
-
-	kServo_FAST_ON_TARGET,
-	kServo_MC_FREQ,
-	kServo_MOUNT,
-	kServo_OFF_TARGET_TOL,
-
-	kServo_RA_CONFIG,
-	kServo_RA_MOTOR_GEAR,
-	kServo_RA_MAIN_GEAR,
-	kServo_RA_ENCODER,
-	kServo_RA_MAX_VEL,
-	kServo_RA_MAX_ACC,
-	kServo_RA_ADJ_VEL,
-	kServo_RA_SLEW_VEL,
-	kServo_RA_SI_CON,
-	kServo_RA_KP_CON,
-	kServo_RA_KI_CON,
-	kServo_RA_KD_CON,
-	kServo_RA_IL_CON,
-	kServo_RA_LOCK_DOWN,
-	kServo_RA_GEAR_LASH,
-	kServo_RA_PRECESSION,
-	kServo_RA_STANDBY,
-	kServo_RA_HOME,
-	kServo_RA_HOME_FLAG,
-	kServo_ROLLOVER_WIN,
-
-	kServo_last
-
-};
-
-
-//*****************************************************************************
-static TYPE_KEYWORDS	gServoCfgTable[]	=
-{
-
-	{	"MC_FREQ",			kServo_MC_FREQ			},
-	{	"COMM_PORT",		kServo_COMM_PORT		},
-	{	"BAUD",				kServo_BAUD				},
-	{	"MOUNT",			kServo_MOUNT			},
-	{	"RA_CONFIG",		kServo_RA_CONFIG		},
-	{	"RA_MOTOR_GEAR",	kServo_RA_MOTOR_GEAR	},
-	{	"RA_MAIN_GEAR",		kServo_RA_MAIN_GEAR		},
-	{	"RA_ENCODER",		kServo_RA_ENCODER		},
-	{	"RA_MAX_VEL",		kServo_RA_MAX_VEL		},
-	{	"RA_MAX_ACC",		kServo_RA_MAX_ACC		},
-	{	"RA_ADJ_VEL",		kServo_RA_ADJ_VEL		},
-	{	"RA_SLEW_VEL",		kServo_RA_SLEW_VEL		},
-	{	"RA_SI_CON",		kServo_RA_SI_CON		},
-	{	"RA_KP_CON",		kServo_RA_KP_CON		},
-	{	"RA_KI_CON",		kServo_RA_KI_CON		},
-	{	"RA_KD_CON",		kServo_RA_KD_CON		},
-	{	"RA_IL_CON",		kServo_RA_IL_CON		},
-	{	"DEC_CONFIG",		kServo_DEC_CONFIG		},
-	{	"DEC_MOTOR_GEAR",	kServo_DEC_MOTOR_GEAR	},
-	{	"DEC_MAIN_GEAR",	kServo_DEC_MAIN_GEAR	},
-	{	"DEC_ENCODER",		kServo_DEC_ENCODER		},
-	{	"DEC_MAX_VEL",		kServo_DEC_MAX_VEL		},
-	{	"DEC_MAX_ACC",		kServo_DEC_MAX_ACC		},
-	{	"DEC_ADJ_VEL",		kServo_DEC_ADJ_VEL		},
-	{	"DEC_SLEW_VEL",		kServo_DEC_SLEW_VEL		},
-	{	"DEC_SI_CON",		kServo_DEC_SI_CON		},
-	{	"DEC_KP_CON",		kServo_DEC_KP_CON		},
-	{	"DEC_KI_CON",		kServo_DEC_KI_CON		},
-	{	"DEC_KD_CON",		kServo_DEC_KD_CON		},
-	{	"DEC_IL_CON",		kServo_DEC_IL_CON		},
-	//	Note:  RA does not have a lock down position since LST is used
-	{	"DEC_LOCK_DOWN",	kServo_DEC_LOCK_DOWN	},
-	{	"RA_LOCK_DOWN",		kServo_RA_LOCK_DOWN		},
-	{	"RA_GEAR_LASH",		kServo_RA_GEAR_LASH		},
-	{	"DEC_GEAR_LASH",	kServo_DEC_GEAR_LASH	},
-	{	"ROLLOVER_WIN",		kServo_ROLLOVER_WIN		},
-	{	"RA_PRECESSION",	kServo_RA_PRECESSION	},
-	{	"DEC_PRECESSION",	kServo_DEC_PRECESSION	},
-	{	"RA_STANDBY",		kServo_RA_STANDBY		},
-	{	"DEC_STANDBY",		kServo_DEC_STANDBY		},
-	{	"RA_HOME",			kServo_RA_HOME			},
-	{	"DEC_HOME",			kServo_DEC_HOME			},
-	{	"RA_HOME_FLAG",		kServo_RA_HOME_FLAG		},
-	{	"DEC_HOME_FLAG",	kServo_DEC_HOME_FLAG	},
-	{	"OFF_TARGET_TOL",	kServo_OFF_TARGET_TOL	},
-	{	"FAST_ON_TARGET",	kServo_FAST_ON_TARGET	},
-
-	{	"",	-1	}
-
-};
-
-//*****************************************************************************
-static void	ProcessServoConfig(const char *keyword, const char *value)
-{
-int		keywordEnum;
-
-//	CONSOLE_DEBUG_W_STR(keyword, value);
-	keywordEnum	=   FindKeywordFromTable(keyword, gServoCfgTable);
-//	CONSOLE_DEBUG_W_NUM("keywordEnum\t=", keywordEnum);
-	CONSOLE_DEBUG_W_NUM(keyword, keywordEnum);
-	if (keywordEnum >= 0)
-	{
-		//*	we have a valid keyword, do something with it
-		switch (keywordEnum)
-		{
-			case kServo_MC_FREQ:
-			case kServo_COMM_PORT:
-			case kServo_BAUD:
-			case kServo_MOUNT:
-			case kServo_RA_CONFIG:
-			case kServo_RA_MOTOR_GEAR:
-			case kServo_RA_MAIN_GEAR:
-			case kServo_RA_ENCODER:
-			case kServo_RA_MAX_VEL:
-			case kServo_RA_MAX_ACC:
-			case kServo_RA_ADJ_VEL:
-			case kServo_RA_SLEW_VEL:
-			case kServo_RA_SI_CON:
-			case kServo_RA_KP_CON:
-			case kServo_RA_KI_CON:
-			case kServo_RA_KD_CON:
-			case kServo_RA_IL_CON:
-			case kServo_DEC_CONFIG:
-			case kServo_DEC_MOTOR_GEAR:
-			case kServo_DEC_MAIN_GEAR:
-			case kServo_DEC_ENCODER:
-			case kServo_DEC_MAX_VEL:
-			case kServo_DEC_MAX_ACC:
-			case kServo_DEC_ADJ_VEL:
-			case kServo_DEC_SLEW_VEL:
-			case kServo_DEC_SI_CON:
-			case kServo_DEC_KP_CON:
-			case kServo_DEC_KI_CON:
-			case kServo_DEC_KD_CON:
-			case kServo_DEC_IL_CON:
-			case kServo_DEC_LOCK_DOWN:
-			case kServo_RA_LOCK_DOWN:
-			case kServo_RA_GEAR_LASH:
-			case kServo_DEC_GEAR_LASH:
-			case kServo_ROLLOVER_WIN:
-			case kServo_RA_PRECESSION:
-			case kServo_DEC_PRECESSION:
-			case kServo_RA_STANDBY:
-			case kServo_DEC_STANDBY:
-			case kServo_RA_HOME:
-			case kServo_DEC_HOME:
-			case kServo_RA_HOME_FLAG:
-			case kServo_DEC_HOME_FLAG:
-			case kServo_OFF_TARGET_TOL:
-			case kServo_FAST_ON_TARGET:
-				break;
-
-			default:
-//				validEntry	=	false;
-				break;
-		}
-	}
-}
-
-
-#if 0
-//*****************************************************************************
-static void	CheckDuplicates(void)
-{
-int		iii;
-int		jjj;
-int		dupCnt;
-
-	CONSOLE_DEBUG(__FUNCTION__);
-	iii			=	0;
-	dupCnt		=	0;
-	while (gServoCfgTable[iii].enumValue >= 0)
-	{
-		jjj	=	iii + 1;
-		while (gServoCfgTable[jjj].enumValue >= 0)
-		{
-			if (strcasecmp(gServoCfgTable[jjj].keyword, gServoCfgTable[iii].keyword) == 0)
-			{
-				CONSOLE_DEBUG_W_STR("duplicate:", gServoCfgTable[jjj].keyword);
-				dupCnt++;
-			}
-			jjj++;
-		}
-		iii++;
-	}
-	CONSOLE_DEBUG_W_NUM("dupCnt=", dupCnt);
-
-}
-#endif
 
 
 

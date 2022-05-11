@@ -168,6 +168,8 @@ INCLUDES		=	-I/usr/include					\
 					-I$(SRC_IMGPROC)				\
 					-I$(SRC_IMU)					\
 
+
+
 #					-I/usr/include/opencv2			\
 #					-I/usr/local/include/opencv2	\
 #					-I/usr/include/opencv4			\
@@ -868,8 +870,11 @@ rigel		:		$(TELESCOPE_OBJECTS)		\
 
 ######################################################################################
 SERVO_OBJECTS=										\
-				$(OBJECT_DIR)LM62x_utils.o			\
-				$(OBJECT_DIR)LM62x_comm.o			\
+				$(OBJECT_DIR)servo_scope_cfg.o		\
+				$(OBJECT_DIR)servo_time.o			\
+				$(OBJECT_DIR)servo_scope.o			\
+				$(OBJECT_DIR)servo_rc_utils.o		\
+				$(OBJECT_DIR)servo_mc_core.o		\
 
 
 ######################################################################################
@@ -877,6 +882,8 @@ SERVO_OBJECTS=										\
 servo		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
 servo		:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
 servo		:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_SERVO_
+servo		:		DEFINEFLAGS		+=	-D_USE_CONFIG_STRUCT_
+servo		:		INCLUDES		+=	-I$(SRC_SERVO)
 servo		:		$(TELESCOPE_OBJECTS)		\
 					$(SOCKET_OBJECTS)			\
 					$(SERVO_OBJECTS)			\
@@ -3629,17 +3636,34 @@ $(OBJECT_DIR)startextrathread.o : 		$(SRC_SPECIAL)startextrathread.cpp	\
 #		Servo source code
 ##################################################################################
 #-------------------------------------------------------------------------------------
-$(OBJECT_DIR)LM62x_comm.o : 			$(SRC_SERVO)LM62x_comm.c	\
-										$(SRC_SERVO)LM62x_comm.h	\
+$(OBJECT_DIR)servo_scope_cfg.o : 		$(SRC_SERVO)servo_scope_cfg.c	\
+										$(SRC_SERVO)servo_scope_cfg.h	\
 										$(SRC_SERVO)servo_std_defs.h
-	$(COMPILE) $(INCLUDES) $(SRC_SERVO)LM62x_comm.c -o$(OBJECT_DIR)LM62x_comm.o
+	$(COMPILE) $(INCLUDES) $(SRC_SERVO)servo_scope_cfg.c -o$(OBJECT_DIR)servo_scope_cfg.o
 
 #-------------------------------------------------------------------------------------
-$(OBJECT_DIR)LM62x_utils.o : 			$(SRC_SERVO)LM62x_utils.c	\
-										$(SRC_SERVO)LM62x_utils.h	\
+$(OBJECT_DIR)servo_time.o : 			$(SRC_SERVO)servo_time.c	\
+										$(SRC_SERVO)servo_time.h	\
 										$(SRC_SERVO)servo_std_defs.h
-	$(COMPILE) $(INCLUDES) $(SRC_SERVO)LM62x_utils.c -o$(OBJECT_DIR)LM62x_utils.o
+	$(COMPILE) $(INCLUDES) $(SRC_SERVO)servo_time.c -o$(OBJECT_DIR)servo_time.o
 
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)servo_scope.o : 			$(SRC_SERVO)servo_scope.c	\
+										$(SRC_SERVO)servo_scope.h	\
+										$(SRC_SERVO)servo_std_defs.h
+	$(COMPILE) $(INCLUDES) $(SRC_SERVO)servo_scope.c -o$(OBJECT_DIR)servo_scope.o
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)servo_rc_utils.o : 		$(SRC_SERVO)servo_rc_utils.c	\
+										$(SRC_SERVO)servo_rc_utils.h	\
+										$(SRC_SERVO)servo_std_defs.h
+	$(COMPILE) $(INCLUDES) $(SRC_SERVO)servo_rc_utils.c -o$(OBJECT_DIR)servo_rc_utils.o
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)servo_mc_core.o : 			$(SRC_SERVO)servo_mc_core.c	\
+										$(SRC_SERVO)servo_mc_core.h	\
+										$(SRC_SERVO)servo_std_defs.h
+	$(COMPILE) $(INCLUDES) $(SRC_SERVO)servo_mc_core.c -o$(OBJECT_DIR)servo_mc_core.o
 
 ##################################################################################
 #		IMU source code

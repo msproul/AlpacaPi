@@ -35,6 +35,8 @@
 //*	Mar 24,	2022	<MLS> SQL now working on Raspberry Pi with "mariadb"
 //*	Mar 25,	2022	<MLS> First external user accessing Gaia database (Ron S.)
 //*	Mar 26,	2022	<MLS> Added the sql library version string to the login string
+//*	May  9,	2022	<MLS> Added skytravel version number to remote SQL login information
+//*	May 10,	2022	<MLS> Added mysql error strings to local logging function
 //*****************************************************************************
 //*	sudo apt-get install libmysqlclient-dev		<<<< Use this one
 //*	sudo apt-get install libmariadb-dev			<<<< Use this for Raspberry-Pi
@@ -107,7 +109,7 @@ TYPE_DATABASE_NAME			gDataBaseNames[kMaxDataBaseNames];
 				int			gDataBaseNameCnt			=	0;
 
 
-void	LogSqlTransaction(const char *sqlCommand, const char *results);
+void	LogSqlTransaction(const char *sqlCommand, const char *results, const char *errorString);
 
 
 //*****************************************************************************
@@ -334,6 +336,59 @@ int		iii;
 	gSQLerror_Count	=	0;
 }
 
+
+enum
+{
+	kSQL_info_UserName	=	0,
+	kSQL_info_Version,
+
+};
+//*****************************************************************************
+static void	BuildSQLlogString(int whichString, char *logCommentString)
+{
+	switch(whichString)
+	{
+
+		case kSQL_info_UserName:
+		default:
+			//*	figure out which user name to use
+			if (strlen(gObseratorySettings.Observer) > 0)
+			{
+				strcpy(logCommentString, gObseratorySettings.Observer);
+			}
+			else if (strlen(gObseratorySettings.Owner) > 0)
+			{
+				strcpy(logCommentString, gObseratorySettings.Owner);
+			}
+			else if (strlen(gObseratorySettings.Name) > 0)
+			{
+				strcpy(logCommentString, gObseratorySettings.Name);
+			}
+			else
+			{
+				//*	last resort
+				strcpy(logCommentString, "Unknown");
+			}
+
+			//*	add the sql library version string to the login string
+			strcat(logCommentString, " (");
+			strcat(logCommentString, gSQLclientVersion);
+			strcat(logCommentString, ")");
+			break;
+
+
+		case kSQL_info_Version:
+			strcpy(logCommentString, gFullVersionString);
+			break;
+	}
+	//*	make sure the string does not exceed what the database is expecting
+	#define	kMaxSQLloginfoLen	60
+	if (strlen(logCommentString) >= kMaxSQLloginfoLen)
+	{
+		logCommentString[kMaxSQLloginfoLen]	=	0;
+	}
+}
+
 //*****************************************************************************
 static	int	LogSQLuser(void)
 {
@@ -346,91 +401,87 @@ char			userString[128];
 
 	returnCode		=	-1;
 
-	//*	figure out which user name to use
-	if (strlen(gObseratorySettings.Observer) > 0)
-	{
-		strcpy(userString, gObseratorySettings.Observer);
-	}
-	else if (strlen(gObseratorySettings.Owner) > 0)
-	{
-		strcpy(userString, gObseratorySettings.Owner);
-	}
-	else if (strlen(gObseratorySettings.Name) > 0)
-	{
-		strcpy(userString, gObseratorySettings.Name);
-	}
-	else
-	{
-		//*	last resort
-		strcpy(userString, "Unknown");
-	}
-
-	//*	add the sql library version string to the login string
-	strcat(userString, " (");
-	strcat(userString, gSQLclientVersion);
-	strcat(userString, ")");
-
-	//*	make sure the string does not exceed what the database is expecting
-	if (strlen(userString) >= 60)
-	{
-		userString[60]	=	0;
-	}
-
-
-	sprintf(mySQLCmd, "call SetLogComment('%s');", userString);
-#ifdef _VERBOSE_SQL_DEBUG_
-	CONSOLE_DEBUG_W_STR("mySQLCmd\t=", mySQLCmd);
-#endif
 	mySQLConnection	=	mysql_init(NULL);
 	if (mySQLConnection != NULL)
 	{
-#ifdef _VERBOSE_SQL_DEBUG_
+	#ifdef _VERBOSE_SQL_DEBUG_
 		CONSOLE_DEBUG(__FUNCTION__);
-#endif // _VERBOSE_SQL_DEBUG_
+	#endif // _VERBOSE_SQL_DEBUG_
 		//*	establish connection to the database
+		CONSOLE_DEBUG_W_STR("gSQLsever_Database\t", gSQLsever_Database);
 		if (mysql_real_connect(	mySQLConnection,
 								gSQLsever_IPaddr,
 								gSQLsever_UserName,
 								gSQLsever_Password,
-								gSQLsever_Database, 0, NULL, 0) != NULL)
+								gSQLsever_Database,
+								0,
+								NULL,
+								0) != NULL)
 		{
-#ifdef _VERBOSE_SQL_DEBUG_
+		#ifdef _VERBOSE_SQL_DEBUG_
 			CONSOLE_DEBUG_W_STR("Successfully connected to", gSQLsever_IPaddr);
-#endif
+		#endif
 			returnCode	=	mysql_select_db(mySQLConnection, gSQLsever_Database);
 			if (returnCode == 0)
 			{
-#ifdef _VERBOSE_SQL_DEBUG_
+			#ifdef _VERBOSE_SQL_DEBUG_
 				CONSOLE_DEBUG("mysql_select_db -- OK");
-#endif
+			#endif
+				BuildSQLlogString(kSQL_info_UserName, userString);
+				sprintf(mySQLCmd, "call SetLogComment('%s');", userString);
+			#ifdef _VERBOSE_SQL_DEBUG_
+				CONSOLE_DEBUG_W_STR("mySQLCmd\t=", mySQLCmd);
+			#endif
 				returnCode	=	mysql_query(mySQLConnection, mySQLCmd);
 				if (returnCode == 0)
 				{
-#ifdef _VERBOSE_SQL_DEBUG_
+				#ifdef _VERBOSE_SQL_DEBUG_
 					CONSOLE_DEBUG("mysql_query -- OK");
-#endif
+				#endif
 				}
 				else
 				{
 					CONSOLE_DEBUG_W_NUM("mysql_query ERROR returnCode\t=", returnCode);
+
+					CONSOLE_DEBUG(mysql_error(mySQLConnection));
+
+					LogSqlTransaction("mysql_query() failed", __FUNCTION__, mysql_error(mySQLConnection));
+				}
+
+				BuildSQLlogString(kSQL_info_Version, userString);
+				sprintf(mySQLCmd, "call SetLogComment('%s');", userString);
+			#ifdef _VERBOSE_SQL_DEBUG_
+				CONSOLE_DEBUG_W_STR("mySQLCmd\t=", mySQLCmd);
+			#endif
+				returnCode	=	mysql_query(mySQLConnection, mySQLCmd);
+				if (returnCode == 0)
+				{
+				#ifdef _VERBOSE_SQL_DEBUG_
+					CONSOLE_DEBUG("mysql_query -- OK");
+				#endif
+				}
+				else
+				{
+					CONSOLE_DEBUG_W_NUM("mysql_query ERROR returnCode\t=", returnCode);
+					LogSqlTransaction("mysql_query() failed", __FUNCTION__, mysql_error(mySQLConnection));
 				}
 			}
 			else
 			{
 				CONSOLE_DEBUG_W_NUM("mysql_select_db ERROR returnCode\t=", returnCode);
+				LogSqlTransaction("mysql_select_db() failed", __FUNCTION__, mysql_error(mySQLConnection));
 			}
-
 		}
 		else
 		{
 			CONSOLE_DEBUG("mysql_real_connect() failed");
-			LogSqlTransaction("mysql_real_connect() failed", "");
+			LogSqlTransaction("mysql_real_connect() failed", __FUNCTION__, mysql_error(mySQLConnection));
 		}
 	}
 	else
 	{
 		CONSOLE_DEBUG("mysql_init() failed");
-		LogSqlTransaction("mysql_init() failed", "");
+		LogSqlTransaction("mysql_init() failed", __FUNCTION__, mysql_error(mySQLConnection));
 	}
 	mysql_close(mySQLConnection);
 	mysql_library_end();
@@ -458,40 +509,43 @@ int		returnCode;
 	returnCode	=	mysql_select_db(myCon, myDataBase);
 	if (returnCode == 0)
 	{
-#ifdef _VERBOSE_SQL_DEBUG_
+	#ifdef _VERBOSE_SQL_DEBUG_
 		CONSOLE_DEBUG_W_NUM("mysql_select_db returnCode\t=", returnCode);
 		CONSOLE_DEBUG_W_STR("Calling mysql_query() with\t=", mySQLCmd);
-#endif
+	#endif
 		returnCode	=	mysql_query(myCon, mySQLCmd);
-#ifdef _VERBOSE_SQL_DEBUG_
+	#ifdef _VERBOSE_SQL_DEBUG_
 		CONSOLE_DEBUG_W_NUM("mysql_query returnCode\t=", returnCode);
-#endif
+	#endif
 		if (returnCode == 0)
 		{
-#ifdef _VERBOSE_SQL_DEBUG_
+		#ifdef _VERBOSE_SQL_DEBUG_
 			CONSOLE_DEBUG("calling mysql_store_result()");
-#endif
+		#endif
 			*mySQLresult	=	mysql_store_result(myCon);
 
 			if (*mySQLresult != NULL)
 			{
 				num_fields	=	mysql_num_fields(*mySQLresult);
-#ifdef _VERBOSE_SQL_DEBUG_
+			#ifdef _VERBOSE_SQL_DEBUG_
 				CONSOLE_DEBUG_W_NUM("num_fields\t=", num_fields);
-#endif
+			#endif
 			}
 			else
 			{
+				LogSqlTransaction("mysql_store_result() failed", __FUNCTION__, mysql_error(myCon));
 				CONSOLE_DEBUG("Error on Querry_mySQL_cmd mysql_store_result");
 			}
 		}
 		else
 		{
+			LogSqlTransaction("mysql_query() failed", __FUNCTION__, mysql_error(myCon));
 			CONSOLE_DEBUG_W_NUM("mysql_query failed with returnCode\t=", returnCode);
 		}
 	}
 	else
 	{
+		LogSqlTransaction("mysql_select_db() failed", __FUNCTION__, mysql_error(myCon));
 		CONSOLE_DEBUG_W_NUM("mysql_select_db failed with returnCode\t=", returnCode);
 	}
 
@@ -629,13 +683,13 @@ unsigned int	endMilliSecs;
 		//*	establish connection to the database
 		//*	updated <KAS> 2/22/2022
 		if (mysql_real_connect(	mySQLConnection,
-									gSQLsever_IPaddr,
-									gSQLsever_UserName,
-									gSQLsever_Password,
-									gSQLsever_Database,
-									0,
-									NULL,
-									CLIENT_MULTI_RESULTS) != NULL)
+								gSQLsever_IPaddr,
+								gSQLsever_UserName,
+								gSQLsever_Password,
+								gSQLsever_Database,
+								0,
+								NULL,
+								CLIENT_MULTI_RESULTS) != NULL)
 		{
 #ifdef _VERBOSE_SQL_DEBUG_
 			CONSOLE_DEBUG_W_STR("Successfully connected to", gSQLsever_IPaddr);
@@ -737,9 +791,9 @@ unsigned int	endMilliSecs;
 					CONSOLE_DEBUG_W_NUM("num_fields", num_fields);
 					CONSOLE_DEBUG_W_NUM("num_rows", num_rows);
 				}
-#ifdef _VERBOSE_SQL_DEBUG_
+			#ifdef _VERBOSE_SQL_DEBUG_
 				CONSOLE_DEBUG("Calling mysql_free_result()");
-#endif
+			#endif
 				mysql_free_result(mySQLresult);
 
 				//*	Feb 22,	2022	<KAS> Fixed dangling result Bug
@@ -756,12 +810,12 @@ unsigned int	endMilliSecs;
 				char	textBuff[128];
 
 					sprintf(textBuff, "Records rcvd=%d\tQuery time=%d", recNum, (endMilliSecs - startMilliSecs));
-					LogSqlTransaction(mySQLCmd, textBuff);
+					LogSqlTransaction(mySQLCmd, textBuff, "");
 				}
 			}
 			else
 			{
-				LogSqlTransaction(mySQLCmd, "num_fields <= 0");
+				LogSqlTransaction(mySQLCmd, "num_fields <= 0", mysql_error(mySQLConnection));
 			}
 #ifdef _VERBOSE_SQL_DEBUG_
 			CONSOLE_DEBUG("Done");
@@ -769,12 +823,12 @@ unsigned int	endMilliSecs;
 		}
 		else
 		{
-			LogSqlTransaction("mysql_real_connect() failed", "");
+			LogSqlTransaction("mysql_real_connect() failed", __FUNCTION__, mysql_error(mySQLConnection));
 		}
 	}
 	else
 	{
-		LogSqlTransaction("mysql_init() failed", "");
+		LogSqlTransaction("mysql_init() failed", __FUNCTION__, mysql_error(mySQLConnection));
 	}
 	mysql_close(mySQLConnection);
 	mysql_library_end();
@@ -829,7 +883,10 @@ bool			validFlag;
 								gSQLsever_IPaddr,
 								gSQLsever_UserName,
 								gSQLsever_Password,
-								gSQLsever_Database, 0, NULL, 0) != NULL)
+								gSQLsever_Database,
+								0,
+								NULL,
+								0) != NULL)
 		{
 //			CONSOLE_DEBUG_W_STR("Successfully connected to", gSQLsever_IPaddr);
 
@@ -914,23 +971,23 @@ bool			validFlag;
 				char	textBuff[128];
 
 					sprintf(textBuff, "Records rcvd=%d\tQuery time=%d", recNum, (endMilliSecs - startMilliSecs));
-					LogSqlTransaction(mySQLCmd, textBuff);
+					LogSqlTransaction(mySQLCmd, textBuff, "");
 				}
 			}
 			else
 			{
-				LogSqlTransaction("num_fields <= 0", "");
+				LogSqlTransaction("num_fields <= 0", __FUNCTION__, mysql_error(mySQLConnection));
 			}
 //			CONSOLE_DEBUG("Done");
 		}
 		else
 		{
-			LogSqlTransaction("mysql_real_connect() failed", "");
+			LogSqlTransaction("mysql_real_connect() failed", __FUNCTION__, mysql_error(mySQLConnection));
 		}
 	}
 	else
 	{
-		LogSqlTransaction("mysql_init() failed", "");
+		LogSqlTransaction("mysql_init() failed", __FUNCTION__, mysql_error(mySQLConnection));
 	}
 	mysql_close(mySQLConnection);
 	mysql_library_end();
@@ -1422,11 +1479,11 @@ void	StopGaiaSQLthread(void)
 #endif // _INCLUDE_GAIA_MAIN_
 
 //*****************************************************************************
-void	LogSqlTransaction(const char *sqlCommand, const char *results)
+void	LogSqlTransaction(const char *sqlCommand, const char *results, const char *errorString)
 {
 FILE			*filePointer;
 struct timeval	timeStamp;
-char			formatString[48];
+char			formatString[256];
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -1436,7 +1493,7 @@ char			formatString[48];
 		gettimeofday(&timeStamp, NULL);
 		FormatDateTimeString_Local(&timeStamp, formatString);
 
-		fprintf(filePointer, "%s\t%s\t%s\n",	formatString, sqlCommand, results);
+		fprintf(filePointer, "%s\t%s\t%s\t%s\n",	formatString, sqlCommand, results, errorString);
 		fclose(filePointer);
 	}
 	else
