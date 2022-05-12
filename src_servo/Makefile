@@ -7,13 +7,14 @@
 # for C++ define  CC = g++
 ############################################################################
 #++	May  9,	2022	<MLS> Updated to use Objectfiles directory for .o files
+#++	May 12,	2022	<RNS> Corrected OBJECT_DIR pathname
 ############################################################################
 
 CC			=	gcc -I$(MLS_LIB_DIR)
 
 CFLAGS 		=	-Wall
 RM 			=	/bin/rm -v
-OBJECT_DIR	=	./Objectfiles/
+OBJECT_DIR	=	../Objectfiles/
 MLS_LIB_DIR	=	../src_mlsLib/
 
 # typing 'make' will invoke the first target entry in the file
