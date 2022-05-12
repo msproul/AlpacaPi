@@ -44,7 +44,7 @@
 #define	kERROR			-1
 #define	kBELOW_HORIZON	-1
 
-#warning "<MLS> Why are these floating point numbers?"
+//#warning "<MLS> Why are these floating point numbers?"
 #define	kFORWARD		1.00000000
 #define	kREVERSE		-1.00000000
 
@@ -68,10 +68,6 @@
 
 #define	degsToRads(x)	(x * M_PI / 180.0)
 #define	radsToDegs(x)	(x / M_PI * 180.0)
-
-#warning "<MLS> Instead of these why not use tolower and toupper from <ctypes.h>"
-#define	tolow(C)	(((C) >= 'A') && ((C) <= 'Z')) ? (C + 0x20) : C
-#define	tohigh(C)	(((C) >= 'a') && ((C) <= 'z')) ? (C - 0x20) : C
 
 //*****************************************************************************
 typedef struct cfgItem_t

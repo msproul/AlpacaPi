@@ -101,9 +101,9 @@ uint8_t *tempPtr;
 //*****************************************************************************
 void Note_add_byte(uint8_t *buf, uint8_t arg, uint8_t **rover)
 {
-uint8_t	*tempPtr = NULL;
+uint8_t	*tempPtr;
 
-	tempPtr	=	buf;
+	tempPtr		=	buf;
 	*tempPtr++	=	arg;
 	*rover		=	tempPtr;
 }

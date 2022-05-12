@@ -73,11 +73,15 @@ int		status;
 int		writeStatus;
 
 	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_LONG("cmdLen\t=", cmdLen);
+	CONSOLE_DEBUG_W_LONG("retLen\t=", retLen);
 	writeStatus	=	MC_write_comm(cmdBuf, cmdLen);
 	CONSOLE_DEBUG_W_NUM("MC_write_comm -> writeStatus\t=", writeStatus);
 	if (writeStatus == kSTATUS_OK)
 	{
 		len	=	MC_read_comm(retBuf, retLen);
+		CONSOLE_DEBUG_W_NUM("MC_read_comm -> len\t=", len);
+		CONSOLE_DEBUG_W_LONG("retLen \t\t=", retLen);
 
 		if (len == retLen)
 		{
@@ -114,6 +118,7 @@ int			cmd;
 int			len;
 int			retState;
 
+	CONSOLE_DEBUG(__FUNCTION__);
 	// Select motor:  RA (0) means M1 and DEC (1) means M2
 	switch (motor)
 	{
@@ -138,13 +143,17 @@ int			retState;
 	retState	=	RC_converse(gNoteBuf, gRC[cmd].in, gReceiptBuf, gRC[cmd].out);
 	if (retState != kSTATUS_OK)
 	{
-		printf("MC_converse() returned error\n");
+		CONSOLE_DEBUG("MC_converse() returned error");
 		return kERROR;
 	}
 
 	// Get the encoder count 32bit from the receipt buf and status byte
 	count	=	Receipt_get_dword(gReceiptBuf, &ptrA);
 	status	=	Receipt_get_byte(ptrA, &ptrB);
+	if (status != kSTATUS_OK)
+	{
+		CONSOLE_DEBUG("Receipt_get_byte() returned error");
+	}
 
 	// Calc length from the receipt buf pointer distance and calc CRC
 	len			=	(int)(ptrB - gReceiptBuf);
@@ -175,7 +184,7 @@ int			retState;
 // Send: [Address, 18] = 2
 // Receive: [Speed(4 bytes), Status, CRC(2 bytes)] = 7
 //*****************************************************************************
-int RC_get_curr_vel(u_int8_t motor, int32_t *vel)
+int RC_get_curr_velocity(u_int8_t motor, int32_t *vel)
 {
 uint8_t		*ptrA, *ptrB;
 uint8_t		status;
@@ -187,22 +196,23 @@ int			cmd;
 int			len;
 int			retState;
 
+	CONSOLE_DEBUG(__FUNCTION__);
 	// Select motor:  RA (0) means M1 and DEC (1) means M2
 	switch (motor)
 	{
-	case SERVO_RA_AXIS:
-		cmd	=	GETM1ENCSPEED;
-		break;
+		case SERVO_RA_AXIS:
+			cmd	=	GETM1ENCSPEED;
+			break;
 
-	case SERVO_DEC_AXIS:
-		cmd	=	GETM2ENCSPEED;
-		break;
+		case SERVO_DEC_AXIS:
+			cmd	=	GETM2ENCSPEED;
+			break;
 
-	default:
-		// Neither RA or DEC selected, return error
-		*vel	=	kRC_ENCODER_ERROR;
-		return (kERROR);
-		break;
+		default:
+			// Neither RA or DEC selected, return error
+			*vel	=	kRC_ENCODER_ERROR;
+			return (kERROR);
+			break;
 	}
 
 	// Creat the note for the comms and converse
@@ -210,13 +220,17 @@ int			retState;
 	retState	=	RC_converse(gNoteBuf, gRC[cmd].in, gReceiptBuf, gRC[cmd].out);
 	if (retState != kSTATUS_OK)
 	{
-		printf("MC_converse() returned error\n");
+		CONSOLE_DEBUG("MC_converse() returned error");
 		return kERROR;
 	}
 
 	// Get the encoder count 32bit from the receipt buf and status byte
 	count	=	Receipt_get_dword(gReceiptBuf, &ptrA);
 	status	=	Receipt_get_byte(ptrA, &ptrB);
+	if (status != kSTATUS_OK)
+	{
+		CONSOLE_DEBUG("Receipt_get_byte() returned error");
+	}
 
 	// Calc length from the receipt buf pointer distance and calc CRC
 	len			=	(int)(ptrB - gReceiptBuf);
@@ -237,7 +251,7 @@ int			retState;
 	// Everything OK, return new value
 	*vel	=	count - kRC_ENCODER_OFFSET;
 	return(kSTATUS_OK);
-} // of RC_get_curr_vel()
+} // of RC_get_curr_velocity()
 
 //*****************************************************************************
 // Basic MC write position to a single axis
@@ -254,6 +268,7 @@ int			cmd;
 int			len;
 int			retState;
 
+	CONSOLE_DEBUG(__FUNCTION__);
 	// Select motor:  RA (0) means M1 and DEC (1) means M2
 	switch (motor)
 	{
@@ -287,7 +302,7 @@ int			retState;
 	retState	=	RC_converse(gNoteBuf, gRC[cmd].in, gReceiptBuf, gRC[cmd].out);
 	if (retState != kSTATUS_OK)
 	{
-		printf("MC_converse() returned error\n");
+		CONSOLE_DEBUG("MC_converse() returned error");
 		return kERROR;
 	}
 
@@ -324,6 +339,7 @@ int			cmd	=	GETSTATUS;
 int			len;
 int			retState;
 
+	CONSOLE_DEBUG(__FUNCTION__);
 	printf("RC_get_status: addr = %X cmd = %d gRC[cmd].cmd = %d\n", gAddr, cmd, gRC[cmd].cmd);
 
 	// Creat the note for the comms and read status a short cmd
@@ -333,7 +349,7 @@ int			retState;
 	retState	=	RC_converse(gNoteBuf, gRC[cmd].in, gReceiptBuf, gRC[cmd].out);
 	if (retState != kSTATUS_OK)
 	{
-		printf("MC_converse() returned error\n");
+		CONSOLE_DEBUG("MC_converse() returned error");
 		return kERROR;
 	}
 
@@ -386,6 +402,7 @@ int			cmd	=	GETBUFFERS;
 int			len;
 int			retState;
 
+	CONSOLE_DEBUG(__FUNCTION__);
 	// Creat the note for the comms and read status a short cmd
 	Note_init(gNoteBuf, gAddr, gRC[cmd].cmd, &ptrA);
 
@@ -393,7 +410,7 @@ int			retState;
 	retState	=	RC_converse(gNoteBuf, gRC[cmd].in, gReceiptBuf, gRC[cmd].out);
 	if (retState != kSTATUS_OK)
 	{
-		printf("MC_converse() returned error\n");
+		CONSOLE_DEBUG("MC_converse() returned error");
 		return kERROR;
 	}
 

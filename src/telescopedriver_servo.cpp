@@ -57,6 +57,7 @@
 #include	"servo_scope_cfg.h"
 #include	"servo_scope.h"
 #include	"servo_std_defs.h"
+#include	"servo_time.h"
 
 #include	"telescopedriver.h"
 #include	"telescopedriver_servo.h"
@@ -120,6 +121,27 @@ FILE		*filePointer;
 
 	//*	print the config file to the web page,
 	//*	this makes it much easier to see what the config is on a remote system
+
+	filePointer	=	fopen(kLOCAL_CFG_FILE, "r");
+	if (filePointer != NULL)
+	{
+		SocketWriteData(reqData->socket, "<HR>\r\n");
+		SocketWriteData(reqData->socket, "<P><CENTER>Location Config File</CENTER>\r\n");
+
+		sprintf(lineBuffer, "Config file:%ss<P>\r\n",	kLOCAL_CFG_FILE);
+		SocketWriteData(reqData->socket, lineBuffer);
+
+		SocketWriteData(reqData->socket, "<PRE>\r\n");
+		while (fgets(lineBuffer, 500, filePointer) != NULL)
+		{
+			SocketWriteData(reqData->socket, lineBuffer);
+		}
+		SocketWriteData(reqData->socket, "</PRE>\r\n");
+
+		fclose(filePointer);
+	}
+
+
 	filePointer	=	fopen(kSCOPE_CFG_FILE, "r");
 	if (filePointer != NULL)
 	{
@@ -149,6 +171,13 @@ int32_t	TelescopeDriverServo::RunStateMachine(void)
 	//*	this is where your periodic code goes
 	//*	update cTelescopeProp values here
 
+	CONSOLE_DEBUG(__FUNCTION__);
+
+double	hms;
+	hms	=	12.010203;
+	Time_check_hms(&hms);
+
+	Servo_state();
 
 	//*	5 * 1000 * 1000 means you might not get called again for 5 seconds
 	//*	you might get called earlier
@@ -274,22 +303,30 @@ int					servoStatus;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
+	alpacaErrCode	=	kASCOM_Err_Success;
 	if (newTrackingState)
 	{
 		servoStatus	=	Servo_start_tracking(SERVO_RA_AXIS);
+		if (servoStatus != kSTATUS_OK)
+		{
+		//	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Servo_start_tracking failed");
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not connected");
+			alpacaErrCode	=	kASCOM_Err_NotConnected;
+		}
 	}
 	else
 	{
 		servoStatus	=	Servo_stop_tracking(SERVO_RA_AXIS);
+		if (servoStatus != kSTATUS_OK)
+		{
+		//	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Servo_stop_tracking failed");
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not connected");
+			alpacaErrCode	=	kASCOM_Err_NotConnected;
+		}
 	}
+
 	if (servoStatus == kSTATUS_OK)
 	{
-		alpacaErrCode	=	kASCOM_Err_Success;
-	}
-	else
-	{
-		alpacaErrCode	=	kASCOM_Err_InvalidOperation;
-		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Telescope_TrackingOnOff failed");
 		CONSOLE_DEBUG(alpacaErrMsg);
 	}
 

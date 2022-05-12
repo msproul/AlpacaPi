@@ -37,6 +37,7 @@
 #include	<stdlib.h>
 #include	<math.h>
 #include	<stdbool.h>
+#include	<ctype.h>
 
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
@@ -77,7 +78,7 @@ int16_t	index;
 	{
 		for (index = 0; in[index] != '\0'; index++)
 		{
-			in[index]	=	(char)(tohigh(in[index]));
+			in[index]	=	toupper(in[index]);
 		}
 		return;
 	} // of str_to_upper()
@@ -168,6 +169,8 @@ int32_t		seconds;
 double		sign;
 double		value;
 
+	CONSOLE_DEBUG(__FUNCTION__);
+
 	// Save the sign since the algorithm only works on pos numbers
 	if (*hms < 0.0)
 	{
@@ -180,11 +183,30 @@ double		value;
 		sign	=	1;
 	}
 	// decode the hms fields to individual
-	#warning "<MLS> I dont think this the right way to do covnersion"
+//	#warning "<MLS> I dont think this the right way to do conversion"
 	hours		=	(int32_t)value;
 	minutes		=	(int32_t)((value - (double)hours) * 100.0);
 	seconds		=	(int32_t)((value - (double)hours) * 10000.0 - (double)minutes * 100.0);
 	fractSec	=	((value - (double)hours) * 10000.0 - (double)minutes * 100.0 - (double)seconds);
+
+//	CONSOLE_DEBUG_W_NUM("hours  \t=",	hours);
+//	CONSOLE_DEBUG_W_NUM("minutes\t=",	minutes);
+//	CONSOLE_DEBUG_W_NUM("seconds\t=",	seconds);
+//
+//	if (1)
+//	{
+//		hours		=	value;
+//		minutes		=	((value - hours) * 100.0);
+//		seconds		=	((value - hours) * 10000.0 - minutes * 100.0);
+//
+//		CONSOLE_DEBUG("----------------");
+//		CONSOLE_DEBUG_W_NUM("hours  \t=",	hours);
+//		CONSOLE_DEBUG_W_NUM("minutes\t=",	minutes);
+//		CONSOLE_DEBUG_W_NUM("seconds\t=",	seconds);
+//		CONSOLE_ABORT(__FUNCTION__);
+//	}
+
+
 	// make sure the range is ok for sec otherwise truncate it 0.0
 	if (seconds > 59)
 	{

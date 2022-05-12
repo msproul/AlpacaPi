@@ -31,6 +31,7 @@
 //*	May  8,	2022	<RNS> edit move_by_pos to _posva since default_acc is broken
 //*	May  8,	2022	<RNS> Added basic _TEST_ support to check build
 //*	May 11,	2022	<MLS> Added Servo_stop_tracking()
+//*	May 11,	2022	<MLS> Added return codes to several routines
 //*****************************************************************************
 // Notes:   M1 *MUST BE* connected to RA or Azimuth axis, M2 to Dec or Altitude
 //*****************************************************************************
@@ -127,6 +128,8 @@ void Servo_get_sync_coordins(double *ra, double *dec)
 	return;
 }
 
+#if 0
+//*	<MLS> these do not appear to be used anyplace
 //*****************************************************************************
 // INTERNAL ROUTINE: This sets an approximate time ratio between a warm
 // host computer and likely a cold motor controller. Modern oscillators
@@ -142,10 +145,11 @@ void Servo_set_time_ratio(double ratio)
 //*****************************************************************************
 // INTERNAL ROUTINE: Returns the current setting the time ratio
 //*****************************************************************************
-double Servo_get_time_ratio()
+double Servo_get_time_ratio(void)
 {
 	return (gSysDepend);
 }
+#endif // 0
 
 //*****************************************************************************
 // Routine scales down the Ra and Dec acceleration profiles to the passed-in
@@ -488,6 +492,7 @@ int Servo_stop_tracking(uint8_t motor)
 {
 int		status;
 
+	CONSOLE_DEBUG(__FUNCTION__);
 	status	=	-1;
 	switch (motor)
 	{
@@ -502,10 +507,12 @@ int		status;
 			break;
 
 		default:
+			CONSOLE_DEBUG("Invalid motor specified!!!!!!!!!!!!!!!!");
 			// do nothing
 			status	=	-1;
 			break;
 	} // of switch
+	CONSOLE_DEBUG_W_NUM("status\t=", status);
 
 	return(status);
 } // Servo_start_tracking()
@@ -523,7 +530,6 @@ int		status;
 int Servo_init(char *scopeCfgFile, char *localCfgFile)
 {
 int		status	=	kSTATUS_OK;
-double	frequency;
 int		baud;
 char	port[kMAX_STR_LEN];
 double	speed;
@@ -552,6 +558,8 @@ double	speed;
 	baud		=	gScopeConfig.baud;
 	strcpy(port, gScopeConfig.port);
 #else
+double	frequency;
+
 	status	=	Servo_Read_Scope_Cfg(	scopeCfgFile,
 										&gServoRa,
 										&gServoDec,
@@ -698,6 +706,8 @@ uint32_t	absVel, absTrack;
 float		velFloat, trackFloat;
 //bool		raStopped, decStopped;
 
+	CONSOLE_DEBUG(__FUNCTION__);
+
 	// read the command queue for RA and Dec
 	RC_check_queue(&raState, &decState);
 	// Go for the easy win, just see if both cmds queues are empty
@@ -725,13 +735,14 @@ float		velFloat, trackFloat;
 
 	// But check RA first, highly likely .track != 0, if any axis is tracking, then the mount
 	// is tracking.  So read the current mount velocity for RA to compare to tracking rate
-	RC_get_curr_vel(SERVO_RA_AXIS, &raVel);
+	RC_get_curr_velocity(SERVO_RA_AXIS, &raVel);
 
 	// KLUDGE!  using absolute values until I figure out how RC does neg velocities
 	absVel		=	abs(raVel);
 	absTrack	=	abs(gServoRa.track);
+
+//	#warning "<MLS> I dont think this is the right way to conver to float"
 	// convert to floats
-#warning "<MLS> I dont think this is the right way to conver to float"
 	velFloat	=	(float)absVel;
 	trackFloat	=	(float)absTrack;
 
@@ -745,13 +756,27 @@ float		velFloat, trackFloat;
 	}
 
 	// Check Dec for tracking (could be an alt-azi, but do not rely on that)
-	RC_get_curr_vel(SERVO_DEC_AXIS, &decVel);
+	RC_get_curr_velocity(SERVO_DEC_AXIS, &decVel);
 	// KLUDGE!  using absolute values until I figure out how RC does neg velocities
-	absVel	=	abs(decVel);
+	absVel		=	abs(decVel);
 	absTrack	=	abs(gServoDec.track);
 	// convert to floats
 	velFloat	=	(float)absVel;
 	trackFloat	=	(float)absTrack;
+
+//	CONSOLE_DEBUG_W_NUM("absVel\t=",	absVel);
+//	CONSOLE_DEBUG_W_NUM("absTrack\t=",	absTrack);
+//
+//	CONSOLE_DEBUG_W_DBL("velFloat\t=",		velFloat);
+//	CONSOLE_DEBUG_W_DBL("trackFloat\t=",	trackFloat);
+//
+//	velFloat	=	absVel;
+//	trackFloat	=	absTrack;
+//
+//	CONSOLE_DEBUG_W_DBL("velFloat\t=",		velFloat);
+//	CONSOLE_DEBUG_W_DBL("trackFloat\t=",	trackFloat);
+//
+//	CONSOLE_ABORT(__FUNCTION__);
 
 	// We are now in alt-azi territory, in the rare case RA tracking is ~zero (near pole)
 	// if the dec axis velocity is +/- 10% of the track velocity, then Dec is tracking
@@ -1294,13 +1319,12 @@ int			status;
 	// get the actual RA step needed  (absolute)
 	targetRaStep	=	(uint32_t)((gServoRa.direction) * (currRaDelta * 3600.0 * gServoRa.step));
 
-#warning "<MLS> This needs to be checked"
-	status	=	0;
-	status	-=	Servo_move_step(targetRaStep, targetDecStep);
+	//*	<RNS> 5/12/2022 Confirmed the typo in the return value calculation
+	status			=	Servo_move_step(targetRaStep, targetDecStep);
 
 	// If status is < zero, return error
 	return (status == kSTATUS_OK) ? kSTATUS_OK : kERROR;
-} // of Servo_shutdown()
+} // of Servo_move_to_static()
 
 //******************************************************************************
 //******************************************************************************

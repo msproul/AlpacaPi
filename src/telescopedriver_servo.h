@@ -21,19 +21,11 @@
 
 
 
-#ifdef _USE_TELESCOPE_COM_OBJECT_
-	#ifndef _TELESCOPE_COMM_H_
-		#include	"telescope_comm.h"
-	#endif
-#endif
 
 #ifndef _TELESCOPE_DRIVER_H_
 	#include	"telescopedriver.h"
 #endif
 
-#ifndef _SERVO_SCOPE_CFG_H_
-	#include	"servo_scope_cfg.h"
-#endif // _SERVO_SCOPE_CFG_H_
 
 void	CreateTelescopeServoObjects(void);
 
@@ -89,7 +81,6 @@ class TelescopeDriverServo: public TelescopeDriver
 		virtual	TYPE_ASCOM_STATUS	Telescope_UnPark(		char *alpacaErrMsg);
 
 	private:
-		TYPE_SCOPE_CONFIG	cServoConfig;
 		bool				cServoConfigIsValid;
 
 };

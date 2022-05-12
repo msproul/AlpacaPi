@@ -74,7 +74,7 @@
 void	str_to_upper(char *in);
 int		RC_converse(uint8_t *cmdBuf, size_t cmdLen, uint8_t *retBuf, size_t retLen);
 int		RC_get_curr_pos(uint8_t motor, int32_t *pos);
-int		RC_get_curr_vel(uint8_t motor, int32_t *vel);
+int		RC_get_curr_velocity(uint8_t motor, int32_t *vel);
 int		RC_set_home(uint8_t motor);
 int		RC_get_status(uint32_t *rcStatus);
 int		RC_check_queue(uint8_t *raDepth, uint8_t *decDepth);

@@ -43,6 +43,11 @@ typedef struct local_cfg_t
 
 extern localCfg	gServoLocalCfg;
 
+#ifdef __cplusplus
+	extern "C" {
+#endif
+
+
 void		Time_str_to_upper(char *in);
 void		Time_deci_days_to_hours(double *day);
 void		Time_deci_hours_to_deg(double *hours);
@@ -58,3 +63,8 @@ void		Time_ra_dec_to_alt_azi(double ra, double dec, long double sid, double lat,
 double		Time_calc_field_rotation(double alt, double azi, double lat);
 double		Time_calc_refraction(double alt, double temp, double press);
 int			Time_read_local_cfg(localCfgPtr local, char *localCfgFile);
+
+
+#ifdef __cplusplus
+}
+#endif
