@@ -493,7 +493,7 @@ std::string		lastError("");
 	if (qsi_Result == QSI_OK)
 	{
 		cCameraProp.ExposureMax_seconds	=			exposureTime;
-		cCameraProp.ExposureMin_us		=			ExposureMax_us * 1000000;
+		cCameraProp.ExposureMax_us		=			exposureTime * 1000000;
 		CONSOLE_DEBUG_W_DBL("ExposureMin_seconds\t=",	exposureTime);
 	}
 	else
