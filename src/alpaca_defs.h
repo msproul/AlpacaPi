@@ -247,6 +247,9 @@ enum TYPE_PierSide
 };
 
 //*****************************************************************************
+//*	these are ASCOM defined values
+//*	https://ascom-standards.org/Help/Platform/html/T_ASCOM_DeviceInterface_DriveRates.htm
+//*****************************************************************************
 enum TYPE_DriveRates
 {
 	kDriveRate_driveSidereal	=	0,	//*	Sidereal tracking rate (15.041 arcseconds per second).

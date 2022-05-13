@@ -19,6 +19,7 @@
 //*	Edit History
 //*****************************************************************************
 //*	Jan 23,	2021	<MLS> Created controller_tscope_common.cpp
+//*	May 12,	2022	<MLS> Added support for TrackingRate
 //*****************************************************************************
 
 //*	this file gets INCLUDED at the end of either controller_telescope OR controller_skytravel
@@ -51,29 +52,135 @@ bool	dataWasHandled;
 
 //	CONSOLE_DEBUG_W_2STR("json=",	keywordString, valueString);
 	dataWasHandled	=	true;
-	if (strcasecmp(keywordString, "Declination") == 0)
+	//=================================================================================
+	if (strcasecmp(keywordString,			"AlginmentMode") == 0)
+	{
+	//+	cTelescopeProp.AlginmentMode	=	IsTrueFalse(valueString);
+	}
+	//=================================================================================
+	else if (strcasecmp(keywordString,		"AtHome") == 0)
+	{
+		cTelescopeProp.AtHome	=	IsTrueFalse(valueString);
+	}
+	//=================================================================================
+	else if (strcasecmp(keywordString,		"AtPark") == 0)
+	{
+		cTelescopeProp.AtPark	=	IsTrueFalse(valueString);
+	}
+//	//=================================================================================
+//	else if (strcasecmp(keywordString,		"CanFindHome") == 0)
+//	{
+//		cTelescopeProp.CanFindHome	=	IsTrueFalse(valueString);
+//	}
+//	//=================================================================================
+//	else if (strcasecmp(keywordString,		"CanMoveAxis") == 0)
+//	{
+//		cTelescopeProp.CanMoveAxis	=	IsTrueFalse(valueString);
+//	}
+//	//=================================================================================
+//	else if (strcasecmp(keywordString,		"CanPark") == 0)
+//	{
+//		cTelescopeProp.CanPark	=	IsTrueFalse(valueString);
+//	}
+//	//=================================================================================
+//	else if (strcasecmp(keywordString,		"CanPulseGuide") == 0)
+//	{
+//		cTelescopeProp.CanPulseGuide	=	IsTrueFalse(valueString);
+//	}
+//	//=================================================================================
+//	else if (strcasecmp(keywordString,		"CanSetDeclinationRate") == 0)
+//	{
+//		cTelescopeProp.CanSetDeclinationRate	=	IsTrueFalse(valueString);
+//	}
+//	//=================================================================================
+//	else if (strcasecmp(keywordString,		"CanSetGuideRates") == 0)
+//	{
+//		cTelescopeProp.CanSetGuideRates	=	IsTrueFalse(valueString);
+//	}
+//	//=================================================================================
+//	else if (strcasecmp(keywordString,		"CanSetPark") == 0)
+//	{
+//		cTelescopeProp.CanSetPark	=	IsTrueFalse(valueString);
+//	}
+//	//=================================================================================
+//	else if (strcasecmp(keywordString,		"CanSetPierSide") == 0)
+//	{
+//		cTelescopeProp.CanSetPierSide	=	IsTrueFalse(valueString);
+//	}
+//	//=================================================================================
+//	else if (strcasecmp(keywordString,		"CanSetRightAscensionRate") == 0)
+//	{
+//		cTelescopeProp.CanSetRightAscensionRate	=	IsTrueFalse(valueString);
+//	}
+//	//=================================================================================
+//	else if (strcasecmp(keywordString,		"CanSetTracking") == 0)
+//	{
+//		cTelescopeProp.CanSetTracking	=	IsTrueFalse(valueString);
+//	}
+//	//=================================================================================
+//	else if (strcasecmp(keywordString,		"CanSlew") == 0)
+//	{
+//		cTelescopeProp.CanSlew	=	IsTrueFalse(valueString);
+//	}
+//	//=================================================================================
+//	else if (strcasecmp(keywordString,		"CanSlewAltAz") == 0)
+//	{
+//		cTelescopeProp.CanSlewAltAz	=	IsTrueFalse(valueString);
+//	}
+//	//=================================================================================
+//	else if (strcasecmp(keywordString,		"CanSlewAltAzAsync") == 0)
+//	{
+//		cTelescopeProp.CanSlewAltAzAsync	=	IsTrueFalse(valueString);
+//	}
+//	//=================================================================================
+//	else if (strcasecmp(keywordString,		"CanSlewAsync") == 0)
+//	{
+//		cTelescopeProp.CanSlewAsync	=	IsTrueFalse(valueString);
+//	}
+//	//=================================================================================
+//	else if (strcasecmp(keywordString,		"CanSync") == 0)
+//	{
+//		cTelescopeProp.CanSync	=	IsTrueFalse(valueString);
+//	}
+//	//=================================================================================
+//	else if (strcasecmp(keywordString,		"CanSyncAltAz") == 0)
+//	{
+//		cTelescopeProp.CanSyncAltAz	=	IsTrueFalse(valueString);
+//	}
+
+	//=================================================================================
+	else if (strcasecmp(keywordString,		"Declination") == 0)
 	{
 		cTelescopeProp.Declination	=	atof(valueString);
 		Update_TelescopeDeclination();
 	}
-	else if (strcasecmp(keywordString, "RightAscension") == 0)
+	//=================================================================================
+	else if (strcasecmp(keywordString,		"RightAscension") == 0)
 	{
 		cTelescopeProp.RightAscension	=	atof(valueString);
 		Update_TelescopeRtAscension();
 	}
-	else if (strcasecmp(keywordString, "Tracking") == 0)
-	{
-		cTelescopeProp.Tracking	=	IsTrueFalse(valueString);
-	}
-	else if (strcasecmp(keywordString, "Slewing") == 0)
+	//=================================================================================
+	else if (strcasecmp(keywordString,		"Slewing") == 0)
 	{
 		cTelescopeProp.Slewing	=	IsTrueFalse(valueString);
 	}
+	//=================================================================================
+	else if (strcasecmp(keywordString,		"Tracking") == 0)
+	{
+		cTelescopeProp.Tracking	=	IsTrueFalse(valueString);
+	}
+	//=================================================================================
+	else if (strcasecmp(keywordString,		"TrackingRate") == 0)
+	{
+		cTelescopeProp.TrackingRate	=	(TYPE_DriveRates)atoi(valueString);
+	}
+	//=================================================================================
 	else
 	{
+		CONSOLE_DEBUG_W_2STR("ignored=",	keywordString, valueString);
 		dataWasHandled	=	false;
 	}
-
 
 #ifdef _PARENT_IS_TELESCOPE_
 	if (strcasecmp(keywordString, "version") == 0)

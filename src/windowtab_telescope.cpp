@@ -22,6 +22,10 @@
 //*	Jan 23,	2021	<MLS> Started on telescope commands, abort, tracking on/off
 //*	Jan 23,	2021	<MLS> Slewing working with ASCOM Telescope simulator
 //*	Feb 25,	2021	<MLS> Added tracking rate to telescope control window
+//*	May 12,	2022	<MLS> Added UpdateTelescopeInfo()
+//*	May 12,	2022	<MLS> Added up/down east/west button logic
+//*	May 12,	2022	<MLS> Added up/down east/west Normal,Slewing,Disabled colors
+//*	May 12,	2022	<MLS> Added Tracking rate button handling
 //*****************************************************************************
 
 #ifdef _ENABLE_CTRL_TELESCOPE_
@@ -220,8 +224,6 @@ int			value_xLoc;
 	SetWidget(		kTelescope_ErrorMsg,	0,		yLoc,		cWidth - 100,		cBtnHeight);
 	SetWidgetFont(	kTelescope_ErrorMsg,	kFont_Medium);
 
-
-
 	//---------------------------------------------------------------------------------------
 	//*	go back to the top
 	yLoc			=	yLocSave;
@@ -332,6 +334,8 @@ bool	validData;
 bool	update;
 bool	updateButtons;
 double	slewRate	=	2.51234;
+int		trackingRate;
+
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	SetWidgetText(kTelescope_ErrorMsg, "");
@@ -351,41 +355,128 @@ double	slewRate	=	2.51234;
 	switch(buttonIdx)
 	{
 		case kTelescope_BtnUp:
-			sprintf(dataString, "Axis=1&Rate=%f", slewRate);
-			validData	=	AlpacaSendPutCmd(	"telescope", "moveaxis",	dataString);
-			if (validData)
+			if (cSlewingDown == false)
 			{
-				//*	the command was sent properly, set the button to indicate that it is moving
-				cSlewingUp	=	true;
-				SetWidgetBGColor(	kTelescope_BtnUp,	cBtnBGcolor_Slewing);
-				SetWidgetBGColor(	kTelescope_BtnDown,	cBtnBGcolor_Disabled);
+				if (cSlewingUp)
+				{
+					sprintf(dataString, "Axis=1&Rate=%f", 0.0);
+				}
+				else
+				{
+					sprintf(dataString, "Axis=1&Rate=%f", slewRate);
+				}
+				validData	=	AlpacaSendPutCmd(	"telescope", "moveaxis",	dataString);
+				if (validData)
+				{
+					//*	the command was sent properly, set the button to indicate that it is moving
+					cSlewingUp		=	!cSlewingUp;
+					updateButtons	=	true;
+				}
+				else
+				{
+					CONSOLE_DEBUG("kTelescope_BtnUp: AlpacaSendPutCmd() failed");
+				}
+			}
+			else
+			{
+				SetWidgetText(kTelescope_ErrorMsg,	"Invalid when slewing down");
 			}
 			break;
 
 		case kTelescope_BtnDown:
-			sprintf(dataString, "Axis=1&Rate=-%f", slewRate);
-			validData	=	AlpacaSendPutCmd(	"telescope", "moveaxis",	dataString);
-			if (validData)
+			if (cSlewingUp == false)
 			{
-				//*	the command was sent properly, set the button to indicate that it is moving
-				SetWidgetBGColor(	kTelescope_BtnDown,	cBtnBGcolor_Slewing);
-				SetWidgetBGColor(	kTelescope_BtnUp,	cBtnBGcolor_Disabled);
+				if (cSlewingDown)
+				{
+					sprintf(dataString, "Axis=1&Rate=%f", 0.0);
+				}
+				else
+				{
+					sprintf(dataString, "Axis=1&Rate=-%f", slewRate);
+				}
+				validData	=	AlpacaSendPutCmd(	"telescope", "moveaxis",	dataString);
+				if (validData)
+				{
+					//*	the command was sent properly, set the button to indicate that it is moving
+					cSlewingDown	=	!cSlewingDown;
+					updateButtons	=	true;
+				}
+				else
+				{
+					CONSOLE_DEBUG("kTelescope_BtnDown: AlpacaSendPutCmd() failed");
+				}
+			}
+			else
+			{
+				SetWidgetText(kTelescope_ErrorMsg,	"Invalid when slewing up");
 			}
 			break;
 
 
 		case kTelescope_BtnEast:
-			sprintf(dataString, "Axis=0&Rate=%f", slewRate);
-			validData	=	AlpacaSendPutCmd(	"telescope", "moveaxis",	dataString);
+			if (cSlewingWest == false)
+			{
+				if (cSlewingEast)
+				{
+					sprintf(dataString, "Axis=0&Rate=%f", 0.0);
+				}
+				else
+				{
+					sprintf(dataString, "Axis=0&Rate=%f", slewRate);
+				}
+				validData	=	AlpacaSendPutCmd(	"telescope", "moveaxis",	dataString);
+				if (validData)
+				{
+					//*	the command was sent properly, set the button to indicate that it is moving
+					cSlewingEast	=	!cSlewingEast;
+					updateButtons	=	true;
+				}
+				else
+				{
+					CONSOLE_DEBUG("kTelescope_BtnUp: AlpacaSendPutCmd() failed");
+				}
+			}
+			else
+			{
+				SetWidgetText(kTelescope_ErrorMsg,	"Invalid when slewing west");
+			}
 			break;
 
 		case kTelescope_BtnWest:
-			sprintf(dataString, "Axis=0&Rate=-%f", slewRate);
-			validData	=	AlpacaSendPutCmd(	"telescope", "moveaxis",	dataString);
+			if (cSlewingEast == false)
+			{
+				if (cSlewingWest)
+				{
+					sprintf(dataString, "Axis=0&Rate=%f", 0.0);
+				}
+				else
+				{
+					sprintf(dataString, "Axis=0&Rate=-%f", slewRate);
+				}
+				validData	=	AlpacaSendPutCmd(	"telescope", "moveaxis",	dataString);
+				if (validData)
+				{
+					//*	the command was sent properly, set the button to indicate that it is moving
+					cSlewingWest	=	!cSlewingWest;
+					updateButtons	=	true;
+				}
+				else
+				{
+					CONSOLE_DEBUG("kTelescope_BtnUp: AlpacaSendPutCmd() failed");
+				}
+			}
+			else
+			{
+				SetWidgetText(kTelescope_ErrorMsg,	"Invalid when slewing east");
+			}
 			break;
 
 		case kTelescope_BtnEmergencyStop:
-			validData	=	AlpacaSendPutCmd(	"telescope", "abortslew",	NULL);
+			validData		=	AlpacaSendPutCmd(	"telescope", "abortslew",	NULL);
+			cSlewingUp		=	false;
+			cSlewingDown	=	false;
+			cSlewingEast	=	false;
+			cSlewingWest	=	false;
 			break;
 
 		case kTelescope_BtnTrackingOn:
@@ -406,13 +497,20 @@ double	slewRate	=	2.51234;
 			updateButtons		=	true;
 			break;
 
+		case kTelescope_TrackingRate_Sidereal:	//*	Sidereal tracking rate (15.041 arcseconds per second).
+		case kTelescope_TrackingRate_Lunar:		//*	Lunar tracking rate (14.685 arcseconds per second).
+		case kTelescope_TrackingRate_Solar:		//*	Solar tracking rate (15.0 arcseconds per second).
+		case kTelescope_TrackingRate_King:		//*	King tracking rate (15.0369 arcseconds per second).
+			trackingRate	=	buttonIdx - kTelescope_TrackingRate_Sidereal;
+			sprintf(dataString, "TrackingRate=%d", trackingRate);
+			validData	=	AlpacaSendPutCmd(	"telescope", "trackingrate",	dataString);
+			break;
+
 		default:
 			update	=	false;
 //			CONSOLE_DEBUG(__FUNCTION__);
 //			CONSOLE_DEBUG_W_NUM("buttonIdx\t",	buttonIdx);
-
 			break;
-
 	}
 	if (validData == false)
 	{
@@ -434,13 +532,107 @@ double	slewRate	=	2.51234;
 void	WindowTabTelescope::UpdateButtons(void)
 {
 
+	CONSOLE_DEBUG(__FUNCTION__);
+
 	SetWidgetChecked(kTelescope_SlewRate_Fast,		(cCurrentSlewRate == kTelescope_SlewRate_Fast));
 	SetWidgetChecked(kTelescope_SlewRate_Med,		(cCurrentSlewRate == kTelescope_SlewRate_Med));
 	SetWidgetChecked(kTelescope_SlewRate_Slow,		(cCurrentSlewRate == kTelescope_SlewRate_Slow));
 	SetWidgetChecked(kTelescope_SlewRate_VerySlow,	(cCurrentSlewRate == kTelescope_SlewRate_VerySlow));
 
+	//*	deal with the slewing buttons
+	CONSOLE_DEBUG_W_BOOL("cSlewingUp  \t=",	cSlewingUp);
+	CONSOLE_DEBUG_W_BOOL("cSlewingDown\t=",	cSlewingDown);
+	CONSOLE_DEBUG_W_BOOL("cSlewingEast\t=",	cSlewingEast);
+	CONSOLE_DEBUG_W_BOOL("cSlewingWest\t=",	cSlewingWest);
+	if (cSlewingUp)
+	{
+		SetWidgetBGColor(	kTelescope_BtnUp,	cBtnBGcolor_Slewing);
+		SetWidgetBGColor(	kTelescope_BtnDown,	cBtnBGcolor_Disabled);
+	}
+	else if (cSlewingDown)
+	{
+		SetWidgetBGColor(	kTelescope_BtnUp,	cBtnBGcolor_Disabled);
+		SetWidgetBGColor(	kTelescope_BtnDown,	cBtnBGcolor_Slewing);
+	}
+	else
+	{
+		SetWidgetBGColor(	kTelescope_BtnUp,	cBtnBGcolor_Normal);
+		SetWidgetBGColor(	kTelescope_BtnDown,	cBtnBGcolor_Normal);
+	}
+
+
+	if (cSlewingEast)
+	{
+		SetWidgetBGColor(	kTelescope_BtnEast,	cBtnBGcolor_Slewing);
+		SetWidgetBGColor(	kTelescope_BtnWest,	cBtnBGcolor_Disabled);
+	}
+	else if (cSlewingWest)
+	{
+		SetWidgetBGColor(	kTelescope_BtnEast,	cBtnBGcolor_Disabled);
+		SetWidgetBGColor(	kTelescope_BtnWest,	cBtnBGcolor_Slewing);
+	}
+	else
+	{
+		SetWidgetBGColor(	kTelescope_BtnEast,	cBtnBGcolor_Normal);
+		SetWidgetBGColor(	kTelescope_BtnWest,	cBtnBGcolor_Normal);
+	}
+
 }
 
+//*****************************************************************************
+void	WindowTabTelescope::UpdateTelescopeInfo(TYPE_TelescopeProperties *telescopeProp)
+{
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	//*	update telescope tracking
+	if (telescopeProp->Tracking)
+	{
+		SetWidgetText(		kTelescope_TrackingStatus, "Tracking is On");
+		SetWidgetBGColor(	kTelescope_TrackingStatus,	CV_RGB(0,	255,	0));
+		SetWidgetTextColor(	kTelescope_TrackingStatus,	CV_RGB(0,	0,	0));
+	}
+	else
+	{
+		SetWidgetText(		kTelescope_TrackingStatus, "Tracking is Off");
+		SetWidgetBGColor(	kTelescope_TrackingStatus,	CV_RGB(0,	0,	0));
+		SetWidgetTextColor(	kTelescope_TrackingStatus,	CV_RGB(255,	0,	0));
+	}
+
+	//*	update slewing
+	if (telescopeProp->Slewing)
+	{
+		SetWidgetText(		kTelescope_SlewingStatus,	"Slewing is On");
+		SetWidgetBGColor(	kTelescope_SlewingStatus,	CV_RGB(0,	255,	0));
+		SetWidgetTextColor(	kTelescope_SlewingStatus,	CV_RGB(0,	0,	0));
+	}
+	else
+	{
+		SetWidgetText(		kTelescope_SlewingStatus, "Slewing is Off");
+		SetWidgetBGColor(	kTelescope_SlewingStatus,	CV_RGB(0,	0,	0));
+		SetWidgetTextColor(	kTelescope_SlewingStatus,	CV_RGB(255,	0,	0));
+
+		//*	set all of the slewing buttons to normal
+		SetWidgetBGColor(	kTelescope_BtnUp,	cBtnBGcolor_Normal);
+		SetWidgetBGColor(	kTelescope_BtnDown,	cBtnBGcolor_Normal);
+		SetWidgetBGColor(	kTelescope_BtnEast,	cBtnBGcolor_Normal);
+		SetWidgetBGColor(	kTelescope_BtnWest,	cBtnBGcolor_Normal);
+	}
+
+	//*	set the tracking rate
+	SetWidgetChecked(	kTelescope_TrackingRate_Sidereal,
+											(telescopeProp->TrackingRate == kDriveRate_driveSidereal));
+
+	SetWidgetChecked(	kTelescope_TrackingRate_Lunar,
+											(telescopeProp->TrackingRate == kDriveRate_driveLunar));
+
+	SetWidgetChecked(	kTelescope_TrackingRate_Solar,
+											(telescopeProp->TrackingRate == kDriveRate_driveSolar));
+
+	SetWidgetChecked(	kTelescope_TrackingRate_King,
+											(telescopeProp->TrackingRate == kDriveRate_driveKing));
+
+
+}
 
 
 #endif // _ENABLE_CTRL_IMAGE_

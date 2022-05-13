@@ -790,6 +790,10 @@ std::string			lastError("");
 	cCameraProp.ImageReady		=	false;
 
 	durationSeconds	=	(exposureMicrosecs * 1.0) / 1000000.0;
+
+	CONSOLE_DEBUG_W_NUM("exposureMicrosecs\t=",	exposureMicrosecs);
+	CONSOLE_DEBUG_W_DBL("durationSeconds\t=",	durationSeconds);
+
 #ifdef _SIMULATE_CAMERA_
 	if (gSimulateCameraImage)
 	{

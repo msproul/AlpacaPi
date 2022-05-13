@@ -487,13 +487,17 @@ void	Controller::AlpacaProcessReadAll(	const char	*deviceTypeStr,
 }
 
 //*****************************************************************************
-void	Controller::AlpacaProcessReadAll_Common(const char	*deviceTypeStr,
+bool	Controller::AlpacaProcessReadAll_Common(const char	*deviceTypeStr,
 												const int	deviceNum,
 												const char	*keywordString,
 												const char	*valueString)
 {
+bool	dataWasHandled;
+
 //	CONSOLE_DEBUG(cWindowName);
 //	CONSOLE_DEBUG_W_2STR("json=",	keywordString, valueString);
+
+	dataWasHandled	=	true;
 	//=================================================================================
 	if (strcasecmp(keywordString, "connected") == 0)
 	{
@@ -524,6 +528,12 @@ void	Controller::AlpacaProcessReadAll_Common(const char	*deviceTypeStr,
 	{
 		strcpy(cCommonProp.Name,	valueString);
 	}
+	else
+	{
+//		CONSOLE_DEBUG("Not handled");
+		dataWasHandled	=	false;
+	}
+	return(dataWasHandled);
 }
 
 

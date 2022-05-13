@@ -85,12 +85,13 @@ class WindowTabTelescope: public WindowTab
 //		virtual	void	ProcessDoubleClick(const int buttonIdx);
 
 				void	UpdateButtons(void);
+				void	UpdateTelescopeInfo(TYPE_TelescopeProperties	*telescopeProp);
 				int		cCurrentSlewRate;
 	private:
-				bool	cSlewingUp;
-				bool	cSlewingDown;
-				bool	cSlewingEast;
-				bool	cSlewingWest;
+				bool		cSlewingUp;
+				bool		cSlewingDown;
+				bool		cSlewingEast;
+				bool		cSlewingWest;
 				//*	button colors
 				cv::Scalar	cBtnBGcolor_Normal;
 				cv::Scalar	cBtnBGcolor_Slewing;
