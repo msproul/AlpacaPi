@@ -86,7 +86,16 @@ class WindowTabTelescope: public WindowTab
 
 				void	UpdateButtons(void);
 				int		cCurrentSlewRate;
-
+	private:
+				bool	cSlewingUp;
+				bool	cSlewingDown;
+				bool	cSlewingEast;
+				bool	cSlewingWest;
+				//*	button colors
+				cv::Scalar	cBtnBGcolor_Normal;
+				cv::Scalar	cBtnBGcolor_Slewing;
+				cv::Scalar	cBtnBGcolor_Disabled;
+				cv::Scalar	cBtnTXTcolor;
 
 };
 

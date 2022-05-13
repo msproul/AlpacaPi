@@ -50,6 +50,10 @@ WindowTabTelescope::WindowTabTelescope(	const int	xSize,
 	CONSOLE_DEBUG(__FUNCTION__);
 
 	cCurrentSlewRate	=	kTelescope_SlewRate_Med;
+	cSlewingUp			=	false;
+	cSlewingDown		=	false;
+	cSlewingEast		=	false;
+	cSlewingWest		=	false;
 
 	SetupWindowControls();
 
@@ -95,8 +99,6 @@ int			labelWidth;
 int			valueWidth;
 int			label_xLoc;
 int			value_xLoc;
-cv::Scalar	btnBGcolor;
-cv::Scalar	btnTXTcolor;
 
 	myClmWidth		=	cWidth / 12;
 	myClmWidth		-=	2;
@@ -132,16 +134,20 @@ cv::Scalar	btnTXTcolor;
 	yLocSave		=	yLoc;
 
 
-	directionBtnWidth	=	2 * myClmWidth;
-	directionBtnHeight	=	3 * cTitleHeight;
-	btnBGcolor			=	CV_RGB(32,	32,	128);
-	btnTXTcolor			=	CV_RGB(255,	255,	255);
+	directionBtnWidth		=	2 * myClmWidth;
+	directionBtnHeight		=	3 * cTitleHeight;
+	cBtnBGcolor_Normal		=	CV_RGB(32,	32,	128);
+	cBtnBGcolor_Slewing		=	CV_RGB(32,	128,	32);
+	cBtnBGcolor_Disabled	=	CV_RGB(128,	128,	128);
+	cBtnTXTcolor			=	CV_RGB(255,	255,	255);
+
+
 	//---------------------------------------------------------------------------------------
 	SetWidget(			kTelescope_BtnUp,	myClm4_offset,		yLoc,		directionBtnWidth,		directionBtnHeight);
 	SetWidgetText(		kTelescope_BtnUp,	"Up");
 	SetWidgetType(		kTelescope_BtnUp,	kWidgetType_Button);
-	SetWidgetBGColor(	kTelescope_BtnUp,	btnBGcolor);
-	SetWidgetTextColor(	kTelescope_BtnUp,	btnTXTcolor);
+	SetWidgetBGColor(	kTelescope_BtnUp,	cBtnBGcolor_Normal);
+	SetWidgetTextColor(	kTelescope_BtnUp,	cBtnTXTcolor);
 	yLoc			+=	directionBtnHeight;
 	yLoc			+=	10;
 
@@ -149,21 +155,21 @@ cv::Scalar	btnTXTcolor;
 	SetWidget(			kTelescope_BtnEast,	myClm1_offset,		yLoc,		directionBtnWidth,		directionBtnHeight);
 	SetWidgetText(		kTelescope_BtnEast,	"East");
 	SetWidgetType(		kTelescope_BtnEast,	kWidgetType_Button);
-	SetWidgetBGColor(	kTelescope_BtnEast,	btnBGcolor);
-	SetWidgetTextColor(	kTelescope_BtnEast,	btnTXTcolor);
+	SetWidgetBGColor(	kTelescope_BtnEast,	cBtnBGcolor_Normal);
+	SetWidgetTextColor(	kTelescope_BtnEast,	cBtnTXTcolor);
 
 	SetWidget(			kTelescope_BtnEmergencyStop,	myClm4_offset,		yLoc,		directionBtnWidth,		directionBtnHeight);
 	SetWidgetText(		kTelescope_BtnEmergencyStop,	"STOP");
 	SetWidgetType(		kTelescope_BtnEmergencyStop,	kWidgetType_Button);
 	SetWidgetBGColor(	kTelescope_BtnEmergencyStop,	CV_RGB(255,	0,	0));
-	SetWidgetTextColor(	kTelescope_BtnEmergencyStop,	btnTXTcolor);
+	SetWidgetTextColor(	kTelescope_BtnEmergencyStop,	cBtnTXTcolor);
 
 
 	SetWidget(			kTelescope_BtnWest,	myClm7_offset,		yLoc,		directionBtnWidth,		directionBtnHeight);
 	SetWidgetText(		kTelescope_BtnWest,	"West");
 	SetWidgetType(		kTelescope_BtnWest,	kWidgetType_Button);
-	SetWidgetBGColor(	kTelescope_BtnWest,	btnBGcolor);
-	SetWidgetTextColor(	kTelescope_BtnWest,	btnTXTcolor);
+	SetWidgetBGColor(	kTelescope_BtnWest,	cBtnBGcolor_Normal);
+	SetWidgetTextColor(	kTelescope_BtnWest,	cBtnTXTcolor);
 
 
 	yLoc			+=	directionBtnHeight;
@@ -172,8 +178,8 @@ cv::Scalar	btnTXTcolor;
 	SetWidget(			kTelescope_BtnDown,	myClm4_offset,		yLoc,		directionBtnWidth,		directionBtnHeight);
 	SetWidgetText(		kTelescope_BtnDown,	"Down");
 	SetWidgetType(		kTelescope_BtnDown,	kWidgetType_Button);
-	SetWidgetBGColor(	kTelescope_BtnDown,	btnBGcolor);
-	SetWidgetTextColor(	kTelescope_BtnDown,	btnTXTcolor);
+	SetWidgetBGColor(	kTelescope_BtnDown,	cBtnBGcolor_Normal);
+	SetWidgetTextColor(	kTelescope_BtnDown,	cBtnTXTcolor);
 
 
 	yLoc			+=	directionBtnHeight;
@@ -187,8 +193,8 @@ cv::Scalar	btnTXTcolor;
 	SetWidgetType(		kTelescope_BtnTrackingOn,	kWidgetType_Button);
 	SetWidgetText(		kTelescope_BtnTrackingOn,	"Tracking On");
 	SetWidgetFont(		kTelescope_BtnTrackingOn,	kFont_Medium);
-	SetWidgetBGColor(	kTelescope_BtnTrackingOn,	btnBGcolor);
-	SetWidgetTextColor(	kTelescope_BtnTrackingOn,	btnTXTcolor);
+	SetWidgetBGColor(	kTelescope_BtnTrackingOn,	cBtnBGcolor_Normal);
+	SetWidgetTextColor(	kTelescope_BtnTrackingOn,	cBtnTXTcolor);
 	xLoc	+=	trackingBtnWidth;
 	xLoc	+=	3;
 
@@ -196,8 +202,8 @@ cv::Scalar	btnTXTcolor;
 	SetWidgetType(		kTelescope_BtnTrackingOff,	kWidgetType_Button);
 	SetWidgetText(		kTelescope_BtnTrackingOff,	"Tracking Off");
 	SetWidgetFont(		kTelescope_BtnTrackingOff,	kFont_Medium);
-	SetWidgetBGColor(	kTelescope_BtnTrackingOff,	btnBGcolor);
-	SetWidgetTextColor(	kTelescope_BtnTrackingOff,	btnTXTcolor);
+	SetWidgetBGColor(	kTelescope_BtnTrackingOff,	cBtnBGcolor_Normal);
+	SetWidgetTextColor(	kTelescope_BtnTrackingOff,	cBtnTXTcolor);
 	xLoc	+=	trackingBtnWidth;
 	xLoc	+=	3;
 
@@ -324,6 +330,7 @@ void	WindowTabTelescope::ProcessButtonClick(const int buttonIdx)
 char	dataString[128];
 bool	validData;
 bool	update;
+bool	updateButtons;
 double	slewRate	=	2.51234;
 //	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -338,18 +345,32 @@ double	slewRate	=	2.51234;
 		default:							slewRate	=	2.0;	break;
 	}
 
-	update		=	true;
-	validData	=	true;
+	update			=	true;
+	validData		=	true;
+	updateButtons	=	false;
 	switch(buttonIdx)
 	{
 		case kTelescope_BtnUp:
 			sprintf(dataString, "Axis=1&Rate=%f", slewRate);
 			validData	=	AlpacaSendPutCmd(	"telescope", "moveaxis",	dataString);
+			if (validData)
+			{
+				//*	the command was sent properly, set the button to indicate that it is moving
+				cSlewingUp	=	true;
+				SetWidgetBGColor(	kTelescope_BtnUp,	cBtnBGcolor_Slewing);
+				SetWidgetBGColor(	kTelescope_BtnDown,	cBtnBGcolor_Disabled);
+			}
 			break;
 
 		case kTelescope_BtnDown:
 			sprintf(dataString, "Axis=1&Rate=-%f", slewRate);
 			validData	=	AlpacaSendPutCmd(	"telescope", "moveaxis",	dataString);
+			if (validData)
+			{
+				//*	the command was sent properly, set the button to indicate that it is moving
+				SetWidgetBGColor(	kTelescope_BtnDown,	cBtnBGcolor_Slewing);
+				SetWidgetBGColor(	kTelescope_BtnUp,	cBtnBGcolor_Disabled);
+			}
 			break;
 
 
@@ -382,7 +403,7 @@ double	slewRate	=	2.51234;
 		case kTelescope_SlewRate_Slow:
 		case kTelescope_SlewRate_VerySlow:
 			cCurrentSlewRate	=	buttonIdx;
-			UpdateButtons();
+			updateButtons		=	true;
 			break;
 
 		default:
@@ -396,8 +417,12 @@ double	slewRate	=	2.51234;
 	if (validData == false)
 	{
 		CONSOLE_DEBUG_W_NUM("Command failure, buttonIdx\t=", buttonIdx);
-
 	}
+	if (updateButtons)
+	{
+		UpdateButtons();
+	}
+
 	if (update)
 	{
 		DisplayLastAlpacaCommand();

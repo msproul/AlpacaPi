@@ -21,16 +21,16 @@
 //*	<MLS>	=	Mark L Sproul
 //*	<RNS>	=	Ron N Story
 //*****************************************************************************
-//*	Apr 05,	2022	<RNS> Created initial version from LM62x_comm.c
-//*	Apr 06,	2022	<RNS> Started on the endian stuff needed for Roboclaw
-//*	Apr 07,	2022	<RNS> Pulled out the note/receipt utils to make a test program
-//*	Apr 08,	2022	<RNS> Note/receipt now debugged, should support both host endians
-//*	Apr 09,	2022	<RNS> Simplified read/write and pulled in helper functions
+//*	Apr  5,	2022	<RNS> Created initial version from LM62x_comm.c
+//*	Apr  6,	2022	<RNS> Started on the endian stuff needed for Roboclaw
+//*	Apr  7,	2022	<RNS> Pulled out the note/receipt utils to make a test program
+//*	Apr  8,	2022	<RNS> Note/receipt now debugged, should support both host endians
+//*	Apr  9,	2022	<RNS> Simplified read/write and pulled in helper functions
 //*	Apr 20,	2022	<RNS> Debugged a logic issue in MC_read_comm()
 //*	Apr 19,	2022	<RNS> Reduced globals for notes and receipts, isolated comm globals
-//*	May 06,	2022	<RNS> changed str_to_upper to Time_str_to_upper and renamed file servo_mc_core.c
-//*	May 07,	2022	<RNS> reswizzled some setting in set_attr termios setting to not overlap with raw
-//*	May 07,	2022	<RNS> Modified the calc_crc16 function to take in a crc value
+//*	May  6,	2022	<RNS> changed str_to_upper to Time_str_to_upper and renamed file servo_mc_core.c
+//*	May  7,	2022	<RNS> reswizzled some setting in set_attr termios setting to not overlap with raw
+//*	May  7,	2022	<RNS> Modified the calc_crc16 function to take in a crc value
 //*****************************************************************************
 
 #include	<stdio.h>
@@ -517,5 +517,6 @@ int			iii;
 	printf("MC_read_comm return status = %d\n", iii);
 	MC_shutdown();
 
+	return(0);
 }
 #endif // _TEST_SERVO_ME_CORE_

@@ -32,6 +32,7 @@
 //*	May  8,	2022	<RNS> Added basic _TEST_ support to check build
 //*	May 11,	2022	<MLS> Added Servo_stop_tracking()
 //*	May 11,	2022	<MLS> Added return codes to several routines
+//*	May 12,	2022	<MLS> Added "const" to filename arguments (to make compiler happy)
 //*****************************************************************************
 // Notes:   M1 *MUST BE* connected to RA or Azimuth axis, M2 to Dec or Altitude
 //*****************************************************************************
@@ -103,7 +104,6 @@ void Servo_get_park_coordins(double *ha, double *dec)
 {
 	*ha		=	gServoRa.park;
 	*dec	=	gServoDec.park;
-	return;
 }
 
 //*****************************************************************************
@@ -115,7 +115,6 @@ void Servo_get_standby_coordins(double *ha, double *dec)
 {
 	*ha		=	gServoRa.standby;
 	*dec	=	gServoDec.standby;
-	return;
 }
 
 //*****************************************************************************
@@ -125,7 +124,6 @@ void Servo_get_sync_coordins(double *ra, double *dec)
 {
 	*ra		=	gServoRa.sync;
 	*dec	=	gServoDec.sync;
-	return;
 }
 
 #if 0
@@ -138,8 +136,6 @@ void Servo_get_sync_coordins(double *ra, double *dec)
 void Servo_set_time_ratio(double ratio)
 {
 	gSysDepend	=	ratio;
-
-	return;
 }
 
 //*****************************************************************************
@@ -160,12 +156,12 @@ int Servo_scale_acc(int32_t percentRa, int32_t percentDec)
 	// Check the range for 0 <= % <= 100
 	if ((percentRa < 0) || (percentRa > 100) || (percentDec < 0) || (percentDec > 100))
 	{
-		return (kERROR);
+		return(kERROR);
 	}
 	// Set the percent acceleration of the max value
 	gServoRa.acc	=	(gServoRa.maxAcc * percentRa) / 100;
 	gServoDec.acc	=	(gServoDec.maxAcc * percentDec) / 100;
-	return (kSTATUS_OK);
+	return(kSTATUS_OK);
 }
 
 //*****************************************************************************
@@ -178,12 +174,12 @@ int Servo_scale_vel(int32_t percentRa, int32_t percentDec)
 	// Check the range for 0 <= % <= 100
 	if ((percentRa < 0) || (percentRa > 100) || (percentDec < 0) || (percentRa > 100))
 	{
-		return (kERROR);
+		return(kERROR);
 	}
 	// Set the percent velocity of the max value
 	gServoRa.vel	=	(gServoRa.maxVel * percentRa) / 100;
 	gServoDec.vel	=	(gServoDec.maxVel * percentDec) / 100;
-	return (kSTATUS_OK);
+	return(kSTATUS_OK);
 }
 
 //*****************************************************************************
@@ -195,7 +191,7 @@ int Servo_ignore_horizon(int state)
 {
 	int oldValue	=	gIgnoreHorizon;
 	gIgnoreHorizon	=	state;
-	return (oldValue);
+	return(oldValue);
 }
 
 //*****************************************************************************
@@ -221,11 +217,11 @@ int Servo_reset_motor(uint8_t motor)
 			break;
 
 		default:
-			return kERROR;
+			return(kERROR);
 			break;
 	} // of switch
 
-	return kSTATUS_OK;
+	return(kSTATUS_OK);
 } // of Servo_reset_motor()
 
 //*****************************************************************************
@@ -267,7 +263,6 @@ double		home;
 	// convert to DMS
 	Time_deci_hours_to_hms(dec);
 
-	return;
 } // of Servo_step_to_pos()
 
 //*****************************************************************************
@@ -327,7 +322,6 @@ double		delta	=	0.0;
 	// convert to DMS
 	Time_deci_hours_to_hms(dec);
 
-	return;
 } // Servo_get_pos()
 
 //*****************************************************************************
@@ -352,7 +346,6 @@ void Servo_set_pos(double ra, double dec)
 
 	gServoDec.home	=	dec;
 	RC_set_home(SERVO_DEC_AXIS);
-	return;
 } // Servo_set_pos()
 
 //*****************************************************************************
@@ -383,7 +376,6 @@ void Servo_set_static_pos(double ha, double dec)
 
 	// Set the current position
 	Servo_set_pos(ra, dec);
-	return;
 } // of Servo_set_static_pos()
 
 //*****************************************************************************
@@ -527,12 +519,12 @@ int		status;
 // Dec axes to 100%, scale_val() and scale_acc()
 // Return Values: kSTATUS_OK or kERROR
 //*****************************************************************************
-int Servo_init(char *scopeCfgFile, char *localCfgFile)
+int			Servo_init(const char *scopeCfgFile, const char *localCfgFile)
 {
 int		status	=	kSTATUS_OK;
 int		baud;
 char	port[kMAX_STR_LEN];
-double	speed;
+//double	speed;
 //double	percentSpeed;
 
 	CONSOLE_DEBUG(__FUNCTION__);
@@ -542,7 +534,7 @@ double	speed;
 	if (status != kSTATUS_OK)
 	{
 		printf("FATAL: (servo_init) Could not open scope location file '%s'.\n", localCfgFile);
-		return kERROR;
+		return(kERROR);
 	}
 
 	// Read the telescope config file for the scope physical characteristics
@@ -573,7 +565,7 @@ double	frequency;
 	if (status != kSTATUS_OK)
 	{
 		printf("FATAL: (servo_init) Could not open scope configuration file '%s'.\n", scopeCfgFile);
-		return kERROR;
+		return(kERROR);
 	}
 
 	// Initialize the port from the scope config file for communication
@@ -581,7 +573,7 @@ double	frequency;
 	if (status != kSTATUS_OK)
 	{
 		printf("FATAL: (servo_init) Could not inti comms port '%s'.\n", port);
-		return kERROR;
+		return(kERROR);
 	}
 
 	// convert drive precession from arcsec/deg to percents only for friction drives - this term likely will be zero
@@ -594,22 +586,22 @@ double	frequency;
 	gServoRa.encoderMaxSpeed	=	gServoRa.motorMaxRPM * gServoRa.encoder / 60.0;
 
 	// calc max possible speed in degs/sec by dividing max CSP (above) by number of steps in one arcsec
-	speed	=	gServoRa.encoderMaxSpeed / gServoRa.step; // unit are arcsecs/sec
+//-	speed	=	gServoRa.encoderMaxSpeed / gServoRa.step; // unit are arcsecs/sec
 
 	// Max accel is the acc in arcsec/sec^2 from the config file
-	gServoRa.maxAcc	=	(uint32_t)gServoRa.realAcc * gServoRa.step;
-	gServoRa.acc	=	gServoRa.maxAcc;
+	gServoRa.maxAcc		=	(uint32_t)gServoRa.realAcc * gServoRa.step;
+	gServoRa.acc		=	gServoRa.maxAcc;
 
 	//  Initialize the encoder count to zero
-	gServoRa.pos	=	0;
+	gServoRa.pos		=	0;
 
 	// Max velocity in arcsec/sec from the config file and converted to step/sec
-	gServoRa.maxVel	=	(uint32_t)gServoRa.realVel * gServoRa.step;
-	gServoRa.vel	=	gServoRa.maxVel;
+	gServoRa.maxVel		=	(uint32_t)gServoRa.realVel * gServoRa.step;
+	gServoRa.vel		=	gServoRa.maxVel;
 
 	// Calc the adjust and slew speeds by multiplying by the mount's steps / arcsec ratio
-	gServoRa.adj	=	(uint32_t)gServoRa.realAdj * gServoRa.step;
-	gServoRa.slew	=	(uint32_t)gServoRa.realSlew * gServoRa.step;
+	gServoRa.adj		=	(uint32_t)gServoRa.realAdj * gServoRa.step;
+	gServoRa.slew		=	(uint32_t)gServoRa.realSlew * gServoRa.step;
 
 	gServoRa.status		=	0;
 	gServoRa.direction	=	gServoRa.config;
@@ -621,7 +613,7 @@ double	frequency;
 	gServoDec.prec				=	1.0 - (gServoDec.prec / 3600.0);
 	gServoDec.step				=	(gServoDec.motorGear * gServoDec.mainGear * gServoDec.encoder * gServoDec.prec) / 1296000.0;
 	gServoDec.encoderMaxSpeed	=	gServoDec.motorMaxRPM * gServoDec.encoder / 60.0;
-	speed						=	gServoDec.encoderMaxSpeed / gServoDec.step; // unit are arcsecs/sec
+//-	speed						=	gServoDec.encoderMaxSpeed / gServoDec.step; // unit are arcsecs/sec
 	gServoDec.maxAcc			=	(uint32_t)gServoDec.realAcc * gServoDec.step;
 	gServoDec.acc				=	gServoDec.maxAcc;
 	gServoDec.pos				=	0;
@@ -692,13 +684,13 @@ double	frequency;
 } // of ss__init()
 
 //*****************************************************************************
-// Returns whether the mount is STOPPED, MOVING, TRACKING used the typedef moveType
+// Returns whether the mount is STOPPED, MOVING, TRACKING used the typedef TYPE_MOVE
 // with the above fields. For stopped both axis must be stopped. If either access is
 // moving, then MOVING is returned.  If the mount is tracking on either or both axis,
 // TRACKING is returned.  Tracking is checked against the axis.track value and if close
 // TODO: Need to add a check for parked, but is park not implemented yet
 //*****************************************************************************
-moveType	Servo_state(void)
+TYPE_MOVE	Servo_state(void)
 {
 uint8_t		raState, decState;
 int32_t		raVel, decVel;
@@ -721,6 +713,7 @@ float		velFloat, trackFloat;
 	{
 		return(MOVING);
 	}
+	CONSOLE_DEBUG(__FUNCTION__);
 
 	// one or both axis have single cmd in queue, determining moving vs tracking
 
@@ -729,8 +722,10 @@ float		velFloat, trackFloat;
 	if ((decState != kRC_CMD_QUEUE_EMPTY) && gServoDec.track == 0)
 	{
 		// Therefore dec is moving
-		return MOVING;
+		return(MOVING);
 	}
+	CONSOLE_DEBUG("If you get to here, it means the dec is not moving, but could be tracking");
+
 	// If you get to here, it means the dec is not moving, but could be tracking
 
 	// But check RA first, highly likely .track != 0, if any axis is tracking, then the mount
@@ -751,7 +746,7 @@ float		velFloat, trackFloat;
 	{
 		if (gServoRa.track != 0)
 		{
-			return TRACKING;
+			return(TRACKING);
 		}
 	}
 
@@ -784,12 +779,12 @@ float		velFloat, trackFloat;
 	{
 		if (gServoDec.track != 0)
 		{
-			return TRACKING;
+			return(TRACKING);
 		}
 	}
 	// Not tracking on either axis but since cmd queue is not empty on at least
 	// one axis the mount must be moving
-	return MOVING;
+	return(MOVING);
 } // of Servo_state()
 
 //*****************************************************************************
@@ -897,8 +892,6 @@ void Servo_calc_flip_coordins(double *ra, double *dec, double *direction, int8_t
 
 	// toggle dec motion direction
 	*direction	=	(*direction < 0) ? kREVERSE : kFORWARD;
-
-	return;
 }
 
 //*****************************************************************************
@@ -911,7 +904,6 @@ void Servo_stop_all(void)
 	// stop the motors
 	RC_stop(SERVO_RA_AXIS);
 	RC_stop(SERVO_DEC_AXIS);
-	return;
 }
 
 //*****************************************************************************
@@ -959,7 +951,7 @@ int8_t	side;		// not used
 		// get the current position and convert to deci hours and degs
 		*raDirection	=	raPath;
 		*decDirection	=	decPath;
-		return false;
+		return(false);
 	}
 
 	// Now on to complex moves, we are crossing the meridian
@@ -990,7 +982,7 @@ int8_t	side;		// not used
 		printf("FTP--> ");
 		*raDirection	=	raPathFlip;
 		*decDirection	=	decPathFlip;
-		return true;
+		return(true);
 	}
 
 	// OK, now we need to cross the meridian, do not pass 'go', do not collect $200 ;^)
@@ -1002,7 +994,7 @@ int8_t	side;		// not used
 
 		*raDirection	=	raPathFlip;
 		*decDirection	=	decPathFlip;
-		return true;
+		return(true);
 	}
 
 	// Check to see if a GEM move goes past the meridian flip window
@@ -1015,7 +1007,7 @@ int8_t	side;		// not used
 
 			*raDirection	=	raPathFlip;
 			*decDirection	=	decPathFlip;
-			return true;
+			return(true);
 		}
 	}
 
@@ -1028,7 +1020,7 @@ int8_t	side;		// not used
 
 	*raDirection	=	raPath;
 	*decDirection	=	decPath;
-	return false;
+	return(false);
 }
 
 #ifdef _ALPHA_OUT_
@@ -1108,7 +1100,7 @@ bool		flip		=	false;
 	if (gIgnoreHorizon == false && alt < 0.0)
 	{
 		// this is astronomy not geology, so return
-		return (kBELOW_HORIZON);
+		return(kBELOW_HORIZON);
 	}
 
 	// get the current position and convert to deci hours and degs
@@ -1201,7 +1193,7 @@ bool		flip		=	false;
 	status	-=	Servo_move_step_track(targetRaStep, targetDecStep);
 
 	// If status is < zero, return error
-	return (status == kSTATUS_OK) ? kSTATUS_OK : kERROR;
+	return(status == kSTATUS_OK) ? kSTATUS_OK : kERROR;
 } // of Servo_move_to_coordins()
 
 //*****************************************************************************
@@ -1323,7 +1315,7 @@ int			status;
 	status			=	Servo_move_step(targetRaStep, targetDecStep);
 
 	// If status is < zero, return error
-	return (status == kSTATUS_OK) ? kSTATUS_OK : kERROR;
+	return(status == kSTATUS_OK) ? kSTATUS_OK : kERROR;
 } // of Servo_move_to_static()
 
 //******************************************************************************
@@ -1336,6 +1328,6 @@ int			status;
 int	main(int argc, char **argv)
 {
 	Servo_init(NULL, NULL);
-	return 0;
+	return(0);
 }
 #endif // _TEST_SERVO_SCOPE_

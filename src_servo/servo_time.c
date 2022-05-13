@@ -23,11 +23,11 @@
 //*****************************************************************************
 //*	Apr 20,	2022	<RNS> Created servo_time.c from a port of ephemeris functions
 //*	Apr 21,	2022	<RNS> Pulled needed function for UTC systime,jd, sid, lst
-//*	Apr 22,	2022	<RNS> Add alt/azi functions and field rotation
-//*	Apr 25,	2022	<RNS> Add improved refraction based on Bennett & NASA vector
-//*	Apr 25,	2022	<RNS> Add _TEST_ support for unit test build
-//*	May  6,	2022	<RNS> add Time_str_to_upper()
-//*	May  8,	2022	<RNS> fixed a warning do to long double cast
+//*	Apr 22,	2022	<RNS> Added alt/azi functions and field rotation
+//*	Apr 25,	2022	<RNS> Added improved refraction based on Bennett & NASA vector
+//*	Apr 25,	2022	<RNS> Added _TEST_ support for unit test build
+//*	May  6,	2022	<RNS> Added Time_str_to_upper()
+//*	May  8,	2022	<RNS> Fixed a warning do to long double cast
 //*****************************************************************************
 // Notes: For RoboClaw M1 *MUST BE* connected to RA or Azimuth axis, M2 to Dec or Altitude
 //*****************************************************************************
@@ -46,27 +46,24 @@
 #include	"servo_time.h"
 
 
-localCfg gServoLocalCfg;
+TYPE_LOCAL_CFG	gServoLocalCfg;
 
-//*****************************************************************************
-void Time_deci_days_to_hours(double *day)
-{
-	*day	=	(*day * 24.0);
-	return;
-}
+////*****************************************************************************
+//void Time_deci_days_to_hours(double *day)
+//{
+//	*day	=	(*day * 24.0);
+//}
 
 //*****************************************************************************
 void Time_deci_hours_to_deg(double *hours)
 {
 	*hours	=	(*hours * 15.0);
-	return;
 }
 
 //*****************************************************************************
 void Time_deci_deg_to_hours(double *deg)
 {
 	*deg	=	(*deg / 15.0);
-	return;
 }
 
 //*****************************************************************************
@@ -80,9 +77,8 @@ int16_t	index;
 		{
 			in[index]	=	toupper(in[index]);
 		}
-		return;
-	} // of str_to_upper()
-}
+	}
+}	// of str_to_upper()
 
 //*****************************************************************************
 // Returns Unix system time in  decimal seconds.microseconds from Epoch 1970.0
@@ -223,7 +219,6 @@ double		value;
 	fractSec	+=	((double)minutes * 100.0) + (double)seconds;
 	value		=	(double)hours + (fractSec / 10000.0);
 	*hms		=	sign * value;
-	return;
 }
 
 //*****************************************************************************
@@ -263,8 +258,6 @@ int32_t seconds;
 
 	fractSec	+=	((double)minutes * 100.0) + (double)seconds;
 	*value		=	(double)hours + (fractSec / 10000.0);
-
-	return;
 }
 
 //*****************************************************************************
@@ -303,8 +296,6 @@ int32_t seconds;
 
 	fractSec	+=	((double)minutes * 60.0) + (double)seconds;
 	*value		=	(double)hours + (fractSec / 3600.0);
-
-	return;
 }
 
 //*****************************************************************************
@@ -358,8 +349,6 @@ double temp;
 	{
 		*azi	=	2.0 * M_PI - *azi;
 	}
-
-	return;
 } // Time_ra_dec_to_alt_azi()
 
 //******************************************************************************
@@ -376,7 +365,7 @@ double rotRate;
 	latRad	=	degsToRads(lat);
 	rotRate	=	kARCSEC_PER_SEC * cos(latRad) * cos(azi) / cos(alt);
 
-	return rotRate;
+	return(rotRate);
 } // calc_field_rotation()
 
 //******************************************************************************
@@ -403,12 +392,14 @@ double	refraction;
 
 	// Convert arcmins to rads multiply by 0.000290888
 	refraction *= 0.000290888;
-	return refraction;
+
+	return(refraction);
 }
 
 //******************************************************************************
-int Time_read_local_cfg(localCfgPtr local, char *localCfgFile)
+int Time_read_local_cfg(TYPE_LOCAL_CFG *local, const char *localCfgFile)
 {
+int		retStatus;
 char	filename[kMAX_STR_LEN];
 FILE	*inFile;
 char	inString[kMAX_STR_LEN];
@@ -655,14 +646,15 @@ cfgItem initLocalArray[] =
 		fprintf(stderr, "Error: (validate_local_cfg) Error found in configuration:\n");
 		fprintf(stderr, "       from file '%s'\n", filename);
 		fflush(stderr);
-		return (-1);
+		retStatus	=	-1;
 	}
 	else
 	{
 		// No Errors in configuration file
-		return 0;
+		retStatus	=	0;
 	}
 
+	return(retStatus);
 } // time_read_local_cfg
 
 //*****************************************************************************
@@ -723,6 +715,6 @@ double		v, w, x, y, z;
 		printf("Alt degs= %lf  Refract arcmin= %lf  Temp + 10= %lf  Temp - 10= %lf Press + 0.5= %lf Press - 0.5= %lf\n", alt, v, w, x, y, z);
 	}
 
-	return 0;
+	return(0);
 } // of main()
 #endif // of _TEST_SERVO_TIME_

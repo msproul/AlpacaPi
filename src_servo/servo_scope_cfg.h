@@ -97,9 +97,9 @@ typedef struct
 //#define _USE_CONFIG_STRUCT_
 
 #ifdef _USE_CONFIG_STRUCT_
-	int	Servo_Read_Scope_Cfg(char *scopeCfgFile, TYPE_SCOPE_CONFIG *scopeConfig);
+	int	Servo_Read_Scope_Cfg(const char *scopeCfgFile, TYPE_SCOPE_CONFIG *scopeConfig);
 #else
-	int Servo_Read_Scope_Cfg(char scopeCfgFile[], axisPtr ra, axisPtr dec, double *freq, int8_t *addr, char *mount, int8_t *side, char port[], int *baud);
+	int Servo_Read_Scope_Cfg(const char scopeCfgFile[], axisPtr ra, axisPtr dec, double *freq, int8_t *addr, char *mount, int8_t *side, char port[], int *baud);
 #endif // _USE_CONFIG_STRUCT_
 
 #ifdef __cplusplus

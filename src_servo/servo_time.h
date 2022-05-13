@@ -29,7 +29,8 @@
 
 #define kLOCAL_CFG_FILE "servo_location.cfg"
 
-typedef struct local_cfg_t
+//*****************************************************************************
+typedef struct
 {
 	double	baseEpoch;
 	double	baseJd;
@@ -39,9 +40,9 @@ typedef struct local_cfg_t
 	double	temp;
 	double	press;
 	char	site[kMAX_STR_LEN];
-}	localCfg, *localCfgPtr;
+}	TYPE_LOCAL_CFG;
 
-extern localCfg	gServoLocalCfg;
+extern TYPE_LOCAL_CFG	gServoLocalCfg;
 
 #ifdef __cplusplus
 	extern "C" {
@@ -49,7 +50,7 @@ extern localCfg	gServoLocalCfg;
 
 
 void		Time_str_to_upper(char *in);
-void		Time_deci_days_to_hours(double *day);
+//void		Time_deci_days_to_hours(double *day);
 void		Time_deci_hours_to_deg(double *hours);
 void		Time_deci_deg_to_hours(double *deg);
 long double	Time_get_systime(void);
@@ -62,7 +63,7 @@ void		Time_hms_hours_to_deci(double *value);
 void		Time_ra_dec_to_alt_azi(double ra, double dec, long double sid, double lat, double *alt, double *azi);
 double		Time_calc_field_rotation(double alt, double azi, double lat);
 double		Time_calc_refraction(double alt, double temp, double press);
-int			Time_read_local_cfg(localCfgPtr local, char *localCfgFile);
+int			Time_read_local_cfg(TYPE_LOCAL_CFG *local, const char *localCfgFile);
 
 
 #ifdef __cplusplus

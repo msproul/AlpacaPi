@@ -39,7 +39,7 @@ typedef enum
 	STOPPED	=	0,
 	MOVING,
 	TRACKING
-}	moveType;
+}	TYPE_MOVE;
 
 #ifdef __cplusplus
 	extern "C" {
@@ -63,8 +63,8 @@ int32_t		Servo_get_tracking(uint8_t motor);
 int			Servo_set_tracking(uint8_t motor, int32_t tracking);
 int			Servo_start_tracking(uint8_t motor);
 int			Servo_stop_tracking(uint8_t motor);
-int			Servo_init(char *scopeCfgFile, char *localCfgFile);
-moveType	Servo_state(void);
+int			Servo_init(const char *scopeCfgFile, const char *localCfgFile);
+TYPE_MOVE	Servo_state(void);
 //int		Servo_move_step_track(uint32_t raStep, uint32_t decStep);
 int			Servo_move_step(uint32_t raStep, uint32_t decStep);
 void		Servo_calc_flip_coordins(double *ra, double *dec, double *direction, int8_t *side);

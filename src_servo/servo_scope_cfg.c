@@ -189,10 +189,10 @@ int		enumValue;
 
 #ifdef _USE_CONFIG_STRUCT_
 //******************************************************************
-int	Servo_Read_Scope_Cfg(char *scopeCfgFile, TYPE_SCOPE_CONFIG *scopeConfig)
+int	Servo_Read_Scope_Cfg(const char *scopeCfgFile, TYPE_SCOPE_CONFIG *scopeConfig)
 #else
 //******************************************************************
-int Servo_Read_Scope_Cfg(	char		*scopeCfgFile,
+int Servo_Read_Scope_Cfg(	const char		*scopeCfgFile,
 							axisPtr		ra,
 							axisPtr		dec,
 							double		*freq,
@@ -250,7 +250,7 @@ int			retStatus;
 	if (inFile == NULL)
 	{
 		fprintf(stderr, "Error: could not open cfg file %s\n", filename);
-		return (-1);
+		return(-1);
 	}
 
 	// get all of the lines in the file
@@ -1129,6 +1129,6 @@ TYPE_SCOPE_CONFIG	scopeConfig;
 							port,
 							&baud);
 #endif
-	return 0;
+	return(0);
 }
 #endif	//	_TEST_SERVO_SCOPE_CFG_

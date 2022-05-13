@@ -36,30 +36,27 @@
 #define	_INCLUDED_SERVO_STD_DEFS_
 
 // standard defines for c types
-//#define	kTRUE			1
-//#define	kFALSE			0
 #define	kFOUND			1
 #define	kNOT_FOUND		0
 #define	kSTATUS_OK		0
 #define	kERROR			-1
 #define	kBELOW_HORIZON	-1
 
-//#warning "<MLS> Why are these floating point numbers?"
-#define	kFORWARD		1.00000000
-#define	kREVERSE		-1.00000000
+#define	kFORWARD		(1.00000000)
+#define	kREVERSE		(-1.00000000)
 
 #define	kMAX_STR_LEN	256
 #define	kSMALL_STR_LEN	32
 
-#define	kALTAZI	'a'
-#define	kFORK	'f'
-#define	kGERMAN	'g'
-#define	kSPLIT	's'
-#define	kTEST	't'
+#define	kALTAZI			'a'
+#define	kFORK			'f'
+#define	kGERMAN			'g'
+#define	kSPLIT			's'
+#define	kTEST			't'
 
-#define	kEAST	'e'
-#define	kWEST	'w'
-#define	kNONE	'n'
+#define	kEAST			'e'
+#define	kWEST			'w'
+#define	kNONE			'n'
 
 #define	kARCSEC_PER_SEC	15.04106864
 
@@ -68,6 +65,10 @@
 
 #define	degsToRads(x)	(x * M_PI / 180.0)
 #define	radsToDegs(x)	(x / M_PI * 180.0)
+
+//*	TODO Change to using these instead to be consistent with the rest of AlpacaPi
+#define	DEGREES(radians)	((radians) * (180.0 / M_PI))
+#define	RADIANS(degrees)	((degrees) * (M_PI / 180.0))
 
 //*****************************************************************************
 typedef struct cfgItem_t
