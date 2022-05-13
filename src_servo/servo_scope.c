@@ -32,6 +32,7 @@
 //*	May  8,	2022	<RNS> Added basic _TEST_ support to check build
 //*	May 11,	2022	<MLS> Added Servo_stop_tracking()
 //*	May 11,	2022	<MLS> Added return codes to several routines
+//*	May 12,	2022	<RNS> Removed unused variable from servo_init()
 //*****************************************************************************
 // Notes:   M1 *MUST BE* connected to RA or Azimuth axis, M2 to Dec or Altitude
 //*****************************************************************************
@@ -532,8 +533,6 @@ int Servo_init(char *scopeCfgFile, char *localCfgFile)
 int		status	=	kSTATUS_OK;
 int		baud;
 char	port[kMAX_STR_LEN];
-double	speed;
-//double	percentSpeed;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
