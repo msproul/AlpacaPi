@@ -354,10 +354,12 @@ unsigned int	qsi_Result;
 bool			cameraInfoOK;
 bool			canSetTemp;
 bool			hasFilters;
+bool			hasShutter;
 long			xsize;
 long			ysize;
 double			electronsPerADU;
 double			fullWellCapacity;
+double			exposureTime;
 short			maxBin;
 long			maxADU;
 double			pixelSize;
@@ -472,8 +474,50 @@ std::string		lastError("");
 		cameraInfoOK	=	false;
 	}
 
+	//--------------------------------------------------------------
+	qsi_Result	=	cQSIcam.get_MinExposureTime(&exposureTime);
+	if (qsi_Result == QSI_OK)
+	{
+		cCameraProp.ExposureMin_seconds	=			exposureTime;
+		cCameraProp.ExposureMin_us		=			exposureTime * 1000000;
+		CONSOLE_DEBUG_W_DBL("ExposureMin_seconds\t=",	exposureTime);
+	}
+	else
+	{
+		cQSIcam.get_LastError(lastError);
+		CONSOLE_DEBUG_W_STR("QSI Result (get_MinExposureTime)\t=",	lastError.c_str());
+		cameraInfoOK	=	false;
+	}
+	//--------------------------------------------------------------
+	qsi_Result	=	cQSIcam.get_MaxExposureTime(&exposureTime);
+	if (qsi_Result == QSI_OK)
+	{
+		cCameraProp.ExposureMax_seconds	=			exposureTime;
+		cCameraProp.ExposureMin_us		=			ExposureMax_us * 1000000;
+		CONSOLE_DEBUG_W_DBL("ExposureMin_seconds\t=",	exposureTime);
+	}
+	else
+	{
+		cQSIcam.get_LastError(lastError);
+		CONSOLE_DEBUG_W_STR("QSI Result (get_MaxExposureTime)\t=",	lastError.c_str());
+		cameraInfoOK	=	false;
+	}
+
+	//--------------------------------------------------------------
+	qsi_Result	=	cQSIcam.get_HasShutter(&hasShutter);
+	if (qsi_Result == QSI_OK)
+	{
+		cCameraProp.HasShutter	=			hasShutter;
+		CONSOLE_DEBUG_W_DBL("HasShutter\t=",	hasShutter);
+	}
+	else
+	{
+		cQSIcam.get_LastError(lastError);
+		CONSOLE_DEBUG_W_STR("QSI Result (get_HasShutter)\t=",	lastError.c_str());
+		cameraInfoOK	=	false;
+	}
+
 //	int get_HasFilterWheel(bool* pVal);
-//	int get_HasShutter(bool* pVal);
 //	int get_HeatSinkTemperature(double* pVal);
 //	int get_ImageArraySize(int& xSize, int& ySize, int& elementSize);
 //	int get_ImageArray(unsigned short* pVal);
