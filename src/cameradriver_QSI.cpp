@@ -145,7 +145,6 @@ int				numCamerasFound;
 	gVerbose				=	true;
 	cVerboseDebug			=	true;
 
-
 	cCameraID				=	deviceNum;
 
 	//*	set defaults
@@ -674,6 +673,28 @@ std::string		lastError("");
 	qsi_Result	=	cQSIcam.put_NumX(xsize);
 	qsi_Result	=	cQSIcam.put_NumY(ysize);
 
+	//*	now lets check the cooler and get info on it
+	if (cCameraProp.CanGetCoolerPower)
+	{
+	double				coolerPowerLevel;
+		qsi_Result	=	cQSIcam.get_CoolerPower(&coolerPowerLevel);
+		if (qsi_Result == QSI_OK)
+		{
+			cCameraProp.CoolerPower	=	coolerPowerLevel;
+		}
+	}
+	if (cCameraProp.Cansetccdtemperature)
+	{
+	double		cameraTemp_DegC;
+
+		//	Returns the current CCD temperature in degrees Celsius in parameter 1.
+		//	Only valid if CanSetCCDTemperature is true.
+		qsi_Result	=	cQSIcam.get_CCDTemperature(&cameraTemp_DegC);
+		if (qsi_Result == QSI_OK)
+		{
+			cCameraProp.CCDtemperature		=	cameraTemp_DegC;
+		}
+	}
 
 	return(cameraInfoOK);
 }
@@ -701,7 +722,7 @@ std::string			lastError("");
 	else
 #endif
 	{
-		if (cTempReadSupported)
+		if (cCameraProp.Cansetccdtemperature)
 		{
 			//	Returns the current CCD temperature in degrees Celsius in parameter 1.
 			//	Only valid if CanSetCCDTemperature is true.
