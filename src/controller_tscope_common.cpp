@@ -178,7 +178,7 @@ bool	dataWasHandled;
 	//=================================================================================
 	else
 	{
-		CONSOLE_DEBUG_W_2STR("ignored=",	keywordString, valueString);
+//		CONSOLE_DEBUG_W_2STR("ignored=",	keywordString, valueString);
 		dataWasHandled	=	false;
 	}
 
@@ -265,8 +265,8 @@ int				iii;
 		{
 			cTelescopeProp.AxisRates[iii].Minimum	=	argDoubleMin;
 			cTelescopeProp.AxisRates[iii].Maximum	=	argDoubleMax;
-//			CONSOLE_DEBUG_W_DBL("argDoubleMin\t=",	argDoubleMin);
-//			CONSOLE_DEBUG_W_DBL("argDoubleMax\t=",	argDoubleMax);
+			CONSOLE_DEBUG_W_DBL("argDoubleMin\t=",	argDoubleMin);
+			CONSOLE_DEBUG_W_DBL("argDoubleMax\t=",	argDoubleMax);
 		}
 		else
 		{

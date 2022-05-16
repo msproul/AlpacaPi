@@ -406,7 +406,7 @@ char			filePath[128];
 char			lineBuff[512];
 size_t			bufferSize;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	yaleStarData	=	NULL;
 	strcpy(filePath, kSkyTravelDataDirectory);

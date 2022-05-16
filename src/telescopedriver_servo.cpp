@@ -175,7 +175,7 @@ TYPE_MOVE	currentMoveState;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
-
+#warning "Ron, you want to put your update status calls here"
 //	currentMoveState	=	Servo_state();
 
 	//*	5 * 1000 * 1000 means you might not get called again for 5 seconds
@@ -192,9 +192,7 @@ TYPE_ASCOM_STATUS		alpacaErrCode;
 	Servo_stop_all();
 
 	cTelescopeProp.Slewing	=	false;
-//testing
-	alpacaErrCode	=	kASCOM_Err_NotImplemented;
-	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
+
 	return(alpacaErrCode);
 }
 

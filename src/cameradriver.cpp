@@ -168,6 +168,7 @@
 //*	Apr 18,	2022	<MLS> Added DumpCameraProperties()
 //*	May  5,	2022	<MLS> Added monochrome/color check for bayeroffset property
 //*	May  5,	2022	<MLS> Added Get_SensorName() (was inline)
+//*	May 15,	2022	<MLS> Added Get_SubExposureDuration() & Put_SubExposureDuration()
 //*****************************************************************************
 //*	Jan  1,	2119	<TODO> ----------------------------------------
 //*	Jun 26,	2119	<TODO> Add support for sub frames
@@ -377,11 +378,14 @@ int	mkdirErrCode;
 	cCameraProp.CameraState			=	kALPACA_CameraState_Idle;
 	cCameraProp.PercentCompleted	=	-99;		//*	meaning invalid
 	cCameraProp.CanFastReadout		=	false;
+	strcpy(cCameraProp.SensorName,	"unknown");
+
 
 	//======================================================
 	cUpdateOtherDevices				=	true;
 	cTempReadSupported				=	false;
 	cOffsetSupported				=	false;
+	cSubDurationSupported			=	false;
 	cCoolerPowerLevel				=	0;
 	cLastCameraErrMsg[0]			=	0;
 	cLastJpegImageName[0]			=	0;
@@ -702,9 +706,6 @@ char				httpHeader[500];
 //		CONSOLE_DEBUG_W_STR("contentData\t=",	reqData->contentData);
 //	}
 
-	alpacaErrCode		=	kASCOM_Err_PropertyNotImplemented;
-	strcpy(alpacaErrMsg, "");
-	strcpy(cLastCameraErrMsg, "");
 
 	//*	make local copies of the data structure to make the code easier to read
 	mySocket	=	reqData->socket;
@@ -738,6 +739,10 @@ char				httpHeader[500];
 										INCLUDE_COMMA);
 
 
+	strcpy(alpacaErrMsg, "");
+	strcpy(cLastCameraErrMsg, "");
+	alpacaErrCode		=	kASCOM_Err_PropertyNotImplemented;
+
 	//*	look up the command
 	cmdEnumValue	=	FindCmdFromTable(reqData->deviceCommand, gCameraCmdTable, &cmdType);
 	if (cmdEnumValue < 0)
@@ -767,25 +772,25 @@ char				httpHeader[500];
 
 		//*	binx and biny are the same on ZWO cameras
 		case kCmd_Camera_binX:					//*	Returns the binning factor for the X axis.
-												//*	Sets the binning factor for the X axis.
 			if (reqData->get_putIndicator == 'G')
 			{
 				alpacaErrCode	=	Get_BinX(reqData, alpacaErrMsg, gValueString);
 			}
 			else if (reqData->get_putIndicator == 'P')
 			{
+												//*	Sets the binning factor for the X axis.
 				alpacaErrCode	=	Put_BinX(reqData, alpacaErrMsg);
 			}
 			break;
 
 		case kCmd_Camera_binY:					//*	Returns the binning factor for the Y axis.
-												//*	Sets the binning factor for the Y axis.
 			if (reqData->get_putIndicator == 'G')
 			{
 				alpacaErrCode	=	Get_BinY(reqData, alpacaErrMsg, gValueString);
 			}
 			else if (reqData->get_putIndicator == 'P')
 			{
+												//*	Sets the binning factor for the Y axis.
 				alpacaErrCode	=	Put_BinY(reqData, alpacaErrMsg);
 			}
 			break;
@@ -889,13 +894,13 @@ char				httpHeader[500];
 			break;
 
 		case kCmd_Camera_cooleron:				//*	GET- Returns the current cooler on/off state.
-												//*	PUT- Turns the camera cooler on and off
 			if (reqData->get_putIndicator == 'G')
 			{
 				alpacaErrCode	=	Get_Cooleron(reqData, alpacaErrMsg, gValueString);
 			}
 			else if (reqData->get_putIndicator == 'P')
 			{
+												//*	PUT- Turns the camera cooler on and off
 				alpacaErrCode	=	Put_Cooleron(reqData, alpacaErrMsg);
 			}
 			break;
@@ -933,13 +938,13 @@ char				httpHeader[500];
 			break;
 
 		case kCmd_Camera_fastreadout:			//*	Returns whether Fast Readout Mode is enabled.
-												//*	Sets whether Fast Readout Mode is enabled.
 			if (reqData->get_putIndicator == 'G')
 			{
 				alpacaErrCode	=	Get_Fastreadout(reqData, alpacaErrMsg, gValueString);
 			}
 			else if (reqData->get_putIndicator == 'P')
 			{
+												//*	Sets whether Fast Readout Mode is enabled.
 				alpacaErrCode	=	Put_Fastreadout(reqData, alpacaErrMsg);
 			}
 			break;
@@ -949,13 +954,13 @@ char				httpHeader[500];
 			break;
 
 		case kCmd_Camera_gain:					//*	Returns the camera's gain
-												//*	Sets the camera's gain.
 			if (reqData->get_putIndicator == 'G')
 			{
 				alpacaErrCode	=	Get_Gain(reqData, alpacaErrMsg, gValueString);
 			}
 			else if (reqData->get_putIndicator == 'P')
 			{
+												//*	Sets the camera's gain.
 				alpacaErrCode	=	Put_Gain(reqData, alpacaErrMsg);
 			}
 			else
@@ -1061,37 +1066,37 @@ char				httpHeader[500];
 
 
 		case kCmd_Camera_numX:					//*	Returns the current subframe width
-												//*	Sets the current subframe width
 			if (reqData->get_putIndicator == 'G')
 			{
 				alpacaErrCode	=	Get_NumX(reqData, alpacaErrMsg, gValueString);
 			}
 			else if (reqData->get_putIndicator == 'P')
 			{
+												//*	Sets the current subframe width
 				alpacaErrCode	=	Put_NumX(reqData, alpacaErrMsg);
 			}
 			break;
 
 		case kCmd_Camera_numY:					//*	Returns the current subframe height
-												//*	Sets the current subframe height
 			if (reqData->get_putIndicator == 'G')
 			{
 				alpacaErrCode	=	Get_NumY(reqData, alpacaErrMsg, gValueString);
 			}
 			else if (reqData->get_putIndicator == 'P')
 			{
+												//*	Sets the current subframe height
 				alpacaErrCode	=	Put_NumY(reqData, alpacaErrMsg);
 			}
 			break;
 
 		case kCmd_Camera_offset:				//*	Returns the camera's offset
-												//*	Sets the camera's offset.
 			if (reqData->get_putIndicator == 'G')
 			{
 				alpacaErrCode	=	Get_Offset(reqData, alpacaErrMsg, gValueString);
 			}
 			else if (reqData->get_putIndicator == 'P')
 			{
+												//*	Sets the camera's offset.
 				alpacaErrCode	=	Put_Offset(reqData, alpacaErrMsg);
 			}
 			break;
@@ -1224,7 +1229,14 @@ char				httpHeader[500];
 			break;
 
 		case kCmd_Camera_subexposureduration:
-			alpacaErrCode	=	kASCOM_Err_PropertyNotImplemented;
+			if (reqData->get_putIndicator == 'G')
+			{
+				alpacaErrCode	=	Get_SubExposureDuration(reqData, alpacaErrMsg, gValueString);
+			}
+			else
+			{
+				alpacaErrCode	=	Put_SubExposureDuration(reqData, alpacaErrMsg);
+			}
 			break;
 
 
@@ -1243,13 +1255,13 @@ char				httpHeader[500];
 			break;
 
 		case kCmd_Camera_exposuretime:
-			if (reqData->get_putIndicator == 'P')
-			{
-				alpacaErrCode	=	Put_ExposureTime(reqData, alpacaErrMsg);
-			}
-			else
+			if (reqData->get_putIndicator == 'G')
 			{
 				alpacaErrCode	=	Get_ExposureTime(reqData, alpacaErrMsg, gValueString);
+			}
+			else if (reqData->get_putIndicator == 'P')
+			{
+				alpacaErrCode	=	Put_ExposureTime(reqData, alpacaErrMsg);
 			}
 			break;
 
@@ -1343,13 +1355,13 @@ char				httpHeader[500];
 			break;
 
 		case kCmd_Camera_flip:
-			if (reqData->get_putIndicator == 'P')
-			{
-				alpacaErrCode	=	Put_Flip(reqData, alpacaErrMsg);
-			}
-			else
+			if (reqData->get_putIndicator == 'G')
 			{
 				alpacaErrCode	=	Get_Flip(reqData, alpacaErrMsg, gValueString);
+			}
+			else if (reqData->get_putIndicator == 'P')
+			{
+				alpacaErrCode	=	Put_Flip(reqData, alpacaErrMsg);
 			}
 			break;
 
@@ -1432,7 +1444,6 @@ CONSOLE_DEBUG(__FUNCTION__);
 			}
 			else if (reqData->get_putIndicator == 'P')
 			{
-
 				alpacaErrCode	=	kASCOM_Err_InvalidOperation;
 				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Invalid PUT");
 				CONSOLE_DEBUG(alpacaErrMsg);
@@ -3457,7 +3468,54 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
 		alpacaErrCode	=	kASCOM_Err_InvalidOperation;
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Stop exposure not supported")
 	}
+	return(alpacaErrCode);
+}
 
+//*****************************************************************************
+TYPE_ASCOM_STATUS	CameraDriver::Get_SubExposureDuration(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
+
+	if (cSubDurationSupported)
+	{
+		//*	not finished
+	}
+	else
+	{
+		alpacaErrCode	=	kASCOM_Err_NotImplemented;
+	}
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	CameraDriver::Put_SubExposureDuration(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
+bool				subDurationFound;
+char				mySubDurationString[32];
+
+	if (cSubDurationSupported)
+	{
+		subDurationFound	=	GetKeyWordArgument(	reqData->contentData,
+													"SubExposureDuration",
+													mySubDurationString,
+													(sizeof(mySubDurationString) -1),
+													kArgumentIsNumeric);
+		if (subDurationFound)
+		{
+			//*	not finished
+		}
+		else
+		{
+			alpacaErrCode	=	kASCOM_Err_InvalidValue;
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "'SubExposureDuration' argument not found");
+			CONSOLE_DEBUG(alpacaErrMsg);
+		}
+	}
+	else
+	{
+		alpacaErrCode	=	kASCOM_Err_NotImplemented;
+	}
 	return(alpacaErrCode);
 }
 
@@ -7832,28 +7890,14 @@ void	CameraDriver::DumpCameraProperties(const char *callingFunctionName)
 {
 char	titleLine[128];
 
+	DumpCommonProperties(callingFunctionName);
 
-	CONSOLE_DEBUG(		"*************************************************************");
-	sprintf(titleLine,	"******************** %s *******************", __FUNCTION__);
-	CONSOLE_DEBUG(titleLine);
-	sprintf(titleLine,	"************* Called from: %-20s *************", callingFunctionName);
-	CONSOLE_DEBUG(titleLine);
-	CONSOLE_DEBUG(		"*************************************************************");
-
-
-	CONSOLE_DEBUG_W_NUM(	"cDeviceType                    \t=",	cDeviceType);
-	CONSOLE_DEBUG_W_NUM(	"cDeviceNum                     \t=",	cDeviceNum);
-	CONSOLE_DEBUG_W_BOOL(	"cCommonProp.Connected          \t=",	cCommonProp.Connected);
-	CONSOLE_DEBUG_W_STR(	"cCommonProp.Description        \t=",	cCommonProp.Description);
-	CONSOLE_DEBUG_W_STR(	"cCommonProp.DriverInfo         \t=",	cCommonProp.DriverInfo);
-	CONSOLE_DEBUG_W_STR(	"cCommonProp.DriverVersion      \t=",	cCommonProp.DriverVersion);
-	CONSOLE_DEBUG_W_NUM(	"cCommonProp.InterfaceVersion   \t=",	cCommonProp.InterfaceVersion);
-	CONSOLE_DEBUG_W_STR(	"cCommonProp.Name               \t=",	cCommonProp.Name);
 	CONSOLE_DEBUG_W_NUM(	"cCameraProp.BayerOffsetX       \t=",	cCameraProp.BayerOffsetX);
 	CONSOLE_DEBUG_W_NUM(	"cCameraProp.BayerOffsetY       \t=",	cCameraProp.BayerOffsetY);
 	CONSOLE_DEBUG_W_NUM(	"cCameraProp.BinX               \t=",	cCameraProp.BinX);
 	CONSOLE_DEBUG_W_NUM(	"cCameraProp.BinY               \t=",	cCameraProp.BinY);
-	CONSOLE_DEBUG_W_DBL(	"cCameraProp.CCDtemperature     \t=",	cCameraProp.CCDtemperature);
+	CONSOLE_DEBUG_W_NUM(	"cCameraProp.CameraXsize        \t=",	cCameraProp.CameraXsize);
+	CONSOLE_DEBUG_W_NUM(	"cCameraProp.CameraYsize        \t=",	cCameraProp.CameraYsize);
 	CONSOLE_DEBUG_W_BOOL(	"cCameraProp.CanAbortExposure   \t=",	cCameraProp.CanAbortExposure);
 	CONSOLE_DEBUG_W_BOOL(	"cCameraProp.CanAsymmetricBin   \t=",	cCameraProp.CanAsymmetricBin);
 	CONSOLE_DEBUG_W_BOOL(	"cCameraProp.CanFastReadout     \t=",	cCameraProp.CanFastReadout);
@@ -7861,80 +7905,45 @@ char	titleLine[128];
 	CONSOLE_DEBUG_W_BOOL(	"cCameraProp.CanPulseGuide      \t=",	cCameraProp.CanPulseGuide);
 	CONSOLE_DEBUG_W_BOOL(	"cCameraProp.Cansetccdtemperature\t=",	cCameraProp.Cansetccdtemperature);
 	CONSOLE_DEBUG_W_BOOL(	"cCameraProp.CanStopExposure    \t=",	cCameraProp.CanStopExposure);
+	CONSOLE_DEBUG_W_DBL(	"cCameraProp.CCDtemperature     \t=",	cCameraProp.CCDtemperature);
 	CONSOLE_DEBUG_W_BOOL(	"cCameraProp.CoolerOn           \t=",	cCameraProp.CoolerOn);
-	CONSOLE_DEBUG_W_NUM(	"cCameraProp.CameraXsize        \t=",	cCameraProp.CameraXsize);
-	CONSOLE_DEBUG_W_NUM(	"cCameraProp.CameraYsize        \t=",	cCameraProp.CameraYsize);
+	CONSOLE_DEBUG_W_DBL(	"cCameraProp.CoolerPower        \t=",	cCameraProp.CoolerPower);
 	CONSOLE_DEBUG_W_DBL(	"cCameraProp.ElectronsPerADU    \t=",	cCameraProp.ElectronsPerADU);
 	CONSOLE_DEBUG_W_DBL(	"cCameraProp.ExposureMax_seconds\t=",	cCameraProp.ExposureMax_seconds);
 	CONSOLE_DEBUG_W_DBL(	"cCameraProp.ExposureMin_seconds\t=",	cCameraProp.ExposureMin_seconds);
+	CONSOLE_DEBUG_W_DBL(	"cCameraProp.ExposureResolution \t=",	cCameraProp.ExposureResolution);
+	CONSOLE_DEBUG_W_BOOL(	"cCameraProp.FastReadout        \t=",	cCameraProp.FastReadout);
 	CONSOLE_DEBUG_W_DBL(	"cCameraProp.FullWellCapacity   \t=",	cCameraProp.FullWellCapacity);
 	CONSOLE_DEBUG_W_NUM(	"cCameraProp.Gain               \t=",	cCameraProp.Gain);
 	CONSOLE_DEBUG_W_NUM(	"cCameraProp.GainMax            \t=",	cCameraProp.GainMax);
 	CONSOLE_DEBUG_W_NUM(	"cCameraProp.GainMin            \t=",	cCameraProp.GainMin);
 	CONSOLE_DEBUG_W_BOOL(	"cCameraProp.HasShutter         \t=",	cCameraProp.HasShutter);
+	CONSOLE_DEBUG_W_DBL(	"cCameraProp.HeatSinkTemperature\t=",	cCameraProp.HeatSinkTemperature);
+	CONSOLE_DEBUG_W_BOOL(	"cCameraProp.ImageReady         \t=",	cCameraProp.ImageReady);
+	CONSOLE_DEBUG_W_BOOL(	"cCameraProp.IsPulseGuiding     \t=",	cCameraProp.IsPulseGuiding);
+//Lastexposure_duration_us;	//*	stored in microseconds, ASCOM wants seconds, convert on the fly
+//Lastexposure_StartTime;		//*	time exposure or video was started for frame rate calculations
+//Lastexposure_EndTime;		//*	NON-ALPACA----time last exposure ended
+
 	CONSOLE_DEBUG_W_NUM(	"cCameraProp.MaxADU             \t=",	cCameraProp.MaxADU);
 	CONSOLE_DEBUG_W_NUM(	"cCameraProp.MaxbinX            \t=",	cCameraProp.MaxbinX);
 	CONSOLE_DEBUG_W_NUM(	"cCameraProp.MaxbinY            \t=",	cCameraProp.MaxbinY);
 	CONSOLE_DEBUG_W_NUM(	"cCameraProp.NumX               \t=",	cCameraProp.NumX);
 	CONSOLE_DEBUG_W_NUM(	"cCameraProp.NumY               \t=",	cCameraProp.NumY);
-	CONSOLE_DEBUG_W_NUM(	"cCameraProp.StartX             \t=",	cCameraProp.StartX);
-	CONSOLE_DEBUG_W_NUM(	"cCameraProp.StartY             \t=",	cCameraProp.StartY);
 	CONSOLE_DEBUG_W_NUM(	"cCameraProp.Offset             \t=",	cCameraProp.Offset);
 	CONSOLE_DEBUG_W_NUM(	"cCameraProp.OffsetMax          \t=",	cCameraProp.OffsetMax);
 	CONSOLE_DEBUG_W_NUM(	"cCameraProp.OffsetMin          \t=",	cCameraProp.OffsetMin);
+	CONSOLE_DEBUG_W_NUM(	"cCameraProp.PercentCompleted   \t=",	cCameraProp.PercentCompleted);
 	CONSOLE_DEBUG_W_DBL(	"cCameraProp.PixelSizeX         \t=",	cCameraProp.PixelSizeX);
 	CONSOLE_DEBUG_W_DBL(	"cCameraProp.PixelSizeY         \t=",	cCameraProp.PixelSizeY);
-
-
-
-
-//	TYPE_ALPACA_CAMERASTATE	CameraState;			//*	the camera operational state.
-//	double					CCDtemperature;			//*	Returns the current CCD temperature
-//	bool					CoolerOn;				//*	Returns the current cooler on/off state.
-////+	double					CoolerPower;			//*	Returns the present cooler power level
-//	long					ExposureMax_us;			//*	micro-seconds
-//	long					ExposureMin_us;			//*	micro-seconds
-//	double					ExposureResolution;		//*	The smallest increment in exposure time supported by StartExposure.
-//
-////+	bool					FastReadout;			//*	Returns whether Fast Readout Mode is enabled.
-//	double					;		//*	Reports the full well capacity of the camera
-////+	???						Gains;					//*	List of Gain names supported by the camera
-//	bool					HasShutter;				//*	Indicates whether the camera has a mechanical shutter
-////+	double					HeatSinkTemperature;	//*	Returns the current heat sink temperature.
-//	bool					ImageReady;				//*	Indicates that an image is ready to be downloaded
-//	bool					IsPulseGuiding;			//*	Indicates that the camera is pulse guideing.
-//
-//	//==========================================================================================
-//	//*	information about the last exposure
-//	//*	we need to record a bunch of stuff in case they get changed before
-//	//*	the image gets downloaded
-//	uint32_t				Lastexposure_duration_us;	//*	stored in microseconds, ASCOM wants seconds, convert on the fly
-//														//*	Reported as a string
-//	struct timeval			Lastexposure_StartTime;		//*	time exposure or video was started for frame rate calculations
-//	struct timeval			Lastexposure_EndTime;		//*	NON-ALPACA----time last exposure ended
-////+	TYPE_IMAGE_ROI_Info		LastExposure_ROIinfo;
-//
-//
-//
-
-////?	int						Offsets;				//*	List of offset names supported by the camera
-//	int						PercentCompleted;		//*	Indicates percentage completeness of the current operation
-//
-//
-//	double					SetCCDTemperature;		//*	The current camera cooler setpoint in degrees Celsius.
-//
-//	//*	currently ReadoutMode is implemented at execution time
-//	int						ReadOutMode;					//*	Indicates the canera's readout mode as an index into the array ReadoutModes
-//	READOUTMODE				ReadOutModes[kMaxReadOutModes];	//*	List of available readout modes
-//
-//	char					SensorName[kMaxSensorNameLen];	//	Sensor name
-////+	TYPE_SensorType			SensorType;						//*	Type of information returned by the the camera sensor (monochrome or colour)
-//
-//	//=======================================================================
-//	//=======================================================================
-//	//*	Extra stuff, not defined by Alpaca standard
-//	int						FlipMode;
-//
+	CONSOLE_DEBUG_W_NUM(	"cCameraProp.ReadOutMode        \t=",	cCameraProp.ReadOutMode);
+	CONSOLE_DEBUG_W_STR(	"cCameraProp.SensorName         \t=",	cCameraProp.SensorName);
+	CONSOLE_DEBUG_W_NUM(	"cCameraProp.SensorType         \t=",	cCameraProp.SensorType);
+	CONSOLE_DEBUG_W_NUM(	"cCameraProp.StartX             \t=",	cCameraProp.StartX);
+	CONSOLE_DEBUG_W_NUM(	"cCameraProp.StartY             \t=",	cCameraProp.StartY);
+	CONSOLE_DEBUG(			"---------------");
+	CONSOLE_DEBUG_W_NUM(	"cCameraProp.FlipMode           \t=",	cCameraProp.FlipMode);
+	CONSOLE_DEBUG(			"*************************************************************");
 }
 
 

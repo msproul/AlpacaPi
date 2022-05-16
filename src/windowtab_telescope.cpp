@@ -59,6 +59,12 @@ WindowTabTelescope::WindowTabTelescope(	const int	xSize,
 	cSlewingEast		=	false;
 	cSlewingWest		=	false;
 
+	cSlewRate_RAmin		=	0.0;
+	cSlewRate_RAmax		=	7.0;
+
+	cSlewRate_DECmin	=	0.0;
+	cSlewRate_DECmax	=	7.0;
+
 	SetupWindowControls();
 
 	UpdateButtons();
@@ -80,6 +86,7 @@ void	WindowTabTelescope::SetupWindowControls(void)
 int			xLoc;
 int			yLoc;
 int			yLocSave;
+int			yLocSave_SlewRate;
 int			iii;
 
 //*	create our own set of column offsets
@@ -227,34 +234,69 @@ int			value_xLoc;
 	//---------------------------------------------------------------------------------------
 	//*	go back to the top
 	yLoc			=	yLocSave;
-	labelWidth		=	(myClmWidth / 2) + (myClmWidth / 4);
-	valueWidth		=	myClmWidth * 3;
+	yLoc			+=	2;
+//	labelWidth		=	(myClmWidth / 2) + (myClmWidth / 4);
+	labelWidth		=	myClmWidth + myClmWidth;
+//	valueWidth		=	myClmWidth + (labelWidth / 2);
+	valueWidth		=	myClmWidth + myClmWidth;
 
 	label_xLoc		=	myClm9_offset + 20;
 	value_xLoc		=	label_xLoc + labelWidth + 5;
+	SetWidget(				kTelescope_SlewRate_Title,	label_xLoc + 2,		yLoc,	(labelWidth + valueWidth + 2),	cRadioBtnHt);
+	SetWidgetType(			kTelescope_SlewRate_Title,	kWidgetType_TextBox);
+	SetWidgetFont(			kTelescope_SlewRate_Title,	kFont_RadioBtn);
+	SetWidgetText(			kTelescope_SlewRate_Title,	"Slew Rate");
+	SetWidgetJustification(	kTelescope_SlewRate_Title,	kJustification_Center);
+	yLoc			+=	cRadioBtnHt;
+	yLoc			+=	2;
 
-
+	yLocSave_SlewRate	=	yLoc;
 	//---------------------------------------------------------------------------------------
-	for (iii = kTelescope_SlewRate_Title; iii <= kTelescope_SlewingStatus; iii++)
+	for (iii = kTelescope_SlewRate_VerySlow; iii <= kTelescope_SlewRate_Fast; iii++)
 	{
-		SetWidget(			iii,	label_xLoc + 2,		yLoc,		(labelWidth + valueWidth),	cRadioBtnHt);
+		SetWidget(			iii,	label_xLoc + 2,		yLoc,	labelWidth,	cRadioBtnHt);
 		SetWidgetType(		iii,	kWidgetType_RadioButton);
 		SetWidgetFont(		iii,	kFont_RadioBtn);
+		SetWidgetBorder(	iii,	true);
 		yLoc			+=	cRadioBtnHt;
 		yLoc			+=	2;
 	}
-
-
-	SetWidgetType(		kTelescope_SlewRate_Title,	kWidgetType_TextBox);
-	SetWidgetType(		kTelescope_SlewingStatus,	kWidgetType_TextBox);
-	SetWidgetText(		kTelescope_SlewingStatus,	"Slewing ???");
-
-	SetWidgetText(		kTelescope_SlewRate_Title,		"Slew Rate");
-	SetWidgetText(		kTelescope_SlewRate_Fast,		"Fast");
-	SetWidgetText(		kTelescope_SlewRate_Med,		"Medium");
-	SetWidgetText(		kTelescope_SlewRate_Slow,		"Slow");
 	SetWidgetText(		kTelescope_SlewRate_VerySlow,	"Very Slow");
+	SetWidgetText(		kTelescope_SlewRate_Slow,		"Slow");
+	SetWidgetText(		kTelescope_SlewRate_Med,		"Medium");
+	SetWidgetText(		kTelescope_SlewRate_Fast,		"Fast");
+
+	SetWidgetType(			kTelescope_SlewingStatus,	kWidgetType_TextBox);
+	SetWidget(				kTelescope_SlewingStatus,	label_xLoc + 2,		yLoc,	(labelWidth + valueWidth + 2),	cRadioBtnHt);
+	SetWidgetFont(			kTelescope_SlewingStatus,	kFont_RadioBtn);
+	SetWidgetType(			kTelescope_SlewingStatus,	kWidgetType_TextBox);
+	SetWidgetText(			kTelescope_SlewingStatus,	"Slewing ???");
+	yLoc				+=	cRadioBtnHt;
+	yLoc				+=	2;
+
+
+int	value_Xloc;
+	value_Xloc			=	label_xLoc + 2 + labelWidth + 2;
+	yLoc				=	yLocSave_SlewRate;
+	//---------------------------------------------------------------------------------------
+	for (iii = kTelescope_SlewRate_VerySlow_Val; iii <= kTelescope_SlewRate_Fast_Val; iii++)
+	{
+		SetWidget(			iii,	value_Xloc,		yLoc,		valueWidth,	cRadioBtnHt);
+		SetWidgetType(		iii,	kWidgetType_TextBox);
+		SetWidgetFont(		iii,	kFont_RadioBtn);
+		SetWidgetBorder(	iii,	true);
+		SetWidgetNumber(	iii,	(iii - kTelescope_SlewRate_VerySlow_Val));
+		SetWidgetJustification(	iii,	kJustification_Center);
+		yLoc			+=	cRadioBtnHt;
+		yLoc			+=	2;
+	}
+	yLoc				+=	cRadioBtnHt;
+	yLoc				+=	2;
+
+
+
 	SetWidgetOutlineBox(kTelescope_SlewRate_Outline, kTelescope_SlewRate_Title, kTelescope_SlewingStatus);
+	SetWidgetBorderColor(kTelescope_SlewRate_Outline, cBtnBGcolor_Slewing);
 
 	yLoc			+=	2;
 	yLoc			+=	2;
@@ -333,7 +375,8 @@ char	dataString[128];
 bool	validData;
 bool	update;
 bool	updateButtons;
-double	slewRate	=	2.51234;
+double	ra_SlewRate_degPerSec;
+double	dec_SlewRate_degPerSec;
 int		trackingRate;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
@@ -342,12 +385,33 @@ int		trackingRate;
 
 	switch(cCurrentSlewRate)
 	{
-		case kTelescope_SlewRate_Fast:		slewRate	=	3.0;	break;
-		case kTelescope_SlewRate_Med:		slewRate	=	2.0;	break;
-		case kTelescope_SlewRate_Slow:		slewRate	=	1.0;	break;
-		case kTelescope_SlewRate_VerySlow:	slewRate	=	0.25;	break;
-		default:							slewRate	=	2.0;	break;
+		case kTelescope_SlewRate_VerySlow:
+			ra_SlewRate_degPerSec	=	cRA_slewRates[0];
+			dec_SlewRate_degPerSec	=	cDEC_slewRates[0];
+			break;
+
+		case kTelescope_SlewRate_Slow:
+			ra_SlewRate_degPerSec	=	cRA_slewRates[1];
+			dec_SlewRate_degPerSec	=	cDEC_slewRates[1];
+			break;
+
+		case kTelescope_SlewRate_Med:
+			ra_SlewRate_degPerSec	=	cRA_slewRates[2];
+			dec_SlewRate_degPerSec	=	cDEC_slewRates[2];
+			break;
+
+		case kTelescope_SlewRate_Fast:
+			ra_SlewRate_degPerSec	=	cRA_slewRates[3];
+			dec_SlewRate_degPerSec	=	cDEC_slewRates[3];
+			break;
+
+		default:
+			break;
+
 	}
+
+	CONSOLE_DEBUG_W_DBL("ra_SlewRate_degPerSec\t=",		ra_SlewRate_degPerSec);
+	CONSOLE_DEBUG_W_DBL("dec_SlewRate_degPerSec\t=",	dec_SlewRate_degPerSec);
 
 	update			=	true;
 	validData		=	true;
@@ -359,11 +423,11 @@ int		trackingRate;
 			{
 				if (cSlewingUp)
 				{
-					sprintf(dataString, "Axis=1&Rate=%f", 0.0);
+					sprintf(dataString, "Axis=%d&Rate=%f", kAxis_DEC, 0.0);
 				}
 				else
 				{
-					sprintf(dataString, "Axis=1&Rate=%f", slewRate);
+					sprintf(dataString, "Axis=%d&Rate=%f", kAxis_DEC, dec_SlewRate_degPerSec);
 				}
 				validData	=	AlpacaSendPutCmd(	"telescope", "moveaxis",	dataString);
 				if (validData)
@@ -388,11 +452,11 @@ int		trackingRate;
 			{
 				if (cSlewingDown)
 				{
-					sprintf(dataString, "Axis=1&Rate=%f", 0.0);
+					sprintf(dataString, "Axis=%d&Rate=%f", kAxis_DEC, 0.0);
 				}
 				else
 				{
-					sprintf(dataString, "Axis=1&Rate=-%f", slewRate);
+					sprintf(dataString, "Axis=%d&Rate=-%f", kAxis_DEC, dec_SlewRate_degPerSec);
 				}
 				validData	=	AlpacaSendPutCmd(	"telescope", "moveaxis",	dataString);
 				if (validData)
@@ -418,11 +482,11 @@ int		trackingRate;
 			{
 				if (cSlewingEast)
 				{
-					sprintf(dataString, "Axis=0&Rate=%f", 0.0);
+					sprintf(dataString, "Axis=%d&Rate=%f", kAxis_RA, 0.0);
 				}
 				else
 				{
-					sprintf(dataString, "Axis=0&Rate=%f", slewRate);
+					sprintf(dataString, "Axis=%d&Rate=%f", kAxis_RA, ra_SlewRate_degPerSec);
 				}
 				validData	=	AlpacaSendPutCmd(	"telescope", "moveaxis",	dataString);
 				if (validData)
@@ -447,11 +511,11 @@ int		trackingRate;
 			{
 				if (cSlewingWest)
 				{
-					sprintf(dataString, "Axis=0&Rate=%f", 0.0);
+					sprintf(dataString, "Axis=%d&Rate=%f", kAxis_RA, 0.0);
 				}
 				else
 				{
-					sprintf(dataString, "Axis=0&Rate=-%f", slewRate);
+					sprintf(dataString, "Axis=%d&Rate=-%f", kAxis_RA, ra_SlewRate_degPerSec);
 				}
 				validData	=	AlpacaSendPutCmd(	"telescope", "moveaxis",	dataString);
 				if (validData)
@@ -631,7 +695,75 @@ void	WindowTabTelescope::UpdateTelescopeInfo(TYPE_TelescopeProperties *telescope
 	SetWidgetChecked(	kTelescope_TrackingRate_King,
 											(telescopeProp->TrackingRate == kDriveRate_driveKing));
 
+	//--------------------------------------------------------------------------
+	//*	calculate the slew rates for both RA and DEC
+	//*	NOTE: We may want to move this code some place else as it does not need to be done everytime
+	if ((cSlewRates_RA_valid == false) || (cSlewRates_DEC_valid == false))
+	{
+	double	axisRateDelta;
+	double	axisRateStep;
+	double	slewValue;;
+	int		iii;
+	char	valueString[48];
 
+		CONSOLE_DEBUG(__FUNCTION__);
+
+		if (telescopeProp->AxisRates[kAxis_RA].Minimum < telescopeProp->AxisRates[kAxis_RA].Maximum)
+		{
+			//*	ok, we have valid info
+			cSlewRate_RAmin	=	telescopeProp->AxisRates[kAxis_RA].Minimum;
+			cSlewRate_RAmax	=	telescopeProp->AxisRates[kAxis_RA].Maximum;
+			axisRateDelta	=	cSlewRate_RAmax - cSlewRate_RAmin;
+			axisRateStep	=	axisRateDelta / kSupportedSlewRates;
+
+			CONSOLE_DEBUG_W_DBL("cSlewRate_RAmin\t=", cSlewRate_RAmin);
+			CONSOLE_DEBUG_W_DBL("cSlewRate_RAmax\t=", cSlewRate_RAmax);
+			CONSOLE_DEBUG_W_DBL("axisRateDelta  \t=", axisRateDelta);
+			CONSOLE_DEBUG_W_DBL("axisRateStep   \t=", axisRateStep);
+
+			slewValue	=	cSlewRate_RAmin + axisRateStep;
+			for (iii=0; iii<kSupportedSlewRates; iii++)
+			{
+				CONSOLE_DEBUG_W_DBL("slewValue      \t=", slewValue);
+				cRA_slewRates[iii]	=	slewValue;
+
+				slewValue	+=	axisRateStep;
+			}
+			cSlewRates_RA_valid		=	true;
+		}
+
+		if (telescopeProp->AxisRates[kAxis_DEC].Minimum < telescopeProp->AxisRates[kAxis_DEC].Maximum)
+		{
+			//*	ok, we have valid info
+			cSlewRate_DECmin	=	telescopeProp->AxisRates[kAxis_DEC].Minimum;
+			cSlewRate_DECmax	=	telescopeProp->AxisRates[kAxis_DEC].Maximum;
+			axisRateDelta		=	cSlewRate_RAmax - cSlewRate_DECmin;
+			axisRateStep		=	axisRateDelta / kSupportedSlewRates;
+
+			CONSOLE_DEBUG_W_DBL("cSlewRate_DECmin\t=", cSlewRate_DECmin);
+			CONSOLE_DEBUG_W_DBL("cSlewRate_DECmax\t=", cSlewRate_DECmax);
+			CONSOLE_DEBUG_W_DBL("axisRateDelta  \t=", axisRateDelta);
+			CONSOLE_DEBUG_W_DBL("axisRateStep   \t=", axisRateStep);
+
+			slewValue	=	cSlewRate_DECmin + axisRateStep;
+			for (iii=0; iii<kSupportedSlewRates; iii++)
+			{
+				CONSOLE_DEBUG_W_DBL("slewValue      \t=", slewValue);
+				cDEC_slewRates[iii]	=	slewValue;
+
+				slewValue	+=	axisRateStep;
+			}
+			cSlewRates_DEC_valid	=	true;
+		}
+
+		//*	now set the text boxes with the values
+		for (iii=0; iii<kSupportedSlewRates; iii++)
+		{
+			sprintf(valueString, "%2.1f / %2.1f", cRA_slewRates[iii], cDEC_slewRates[iii]);
+			CONSOLE_DEBUG_W_STR("valueString\t=", valueString);
+			SetWidgetText((kTelescope_SlewRate_VerySlow_Val + iii), valueString);
+		}
+	}
 }
 
 

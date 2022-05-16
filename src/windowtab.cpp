@@ -102,9 +102,9 @@ WindowTab::WindowTab(	const int	xSize,
 {
 int		iii;
 
-	CONSOLE_DEBUG(__FUNCTION__);
-	CONSOLE_DEBUG_W_NUM("xSize        \t=",	xSize);
-	CONSOLE_DEBUG_W_NUM("ySize        \t=",	ySize);
+//	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG_W_NUM("xSize        \t=",	xSize);
+//	CONSOLE_DEBUG_W_NUM("ySize        \t=",	ySize);
 
 	cWidth			=	xSize;
 	cHeight			=	ySize;

@@ -281,7 +281,7 @@ void	ControllerTelescope::AlpacaProcessReadAll(	const char	*deviceTypeStr,
 {
 bool	dataWasHandled;
 
-	CONSOLE_DEBUG_W_2STR("json=",	keywordString, valueString);
+//	CONSOLE_DEBUG_W_2STR("json=",	keywordString, valueString);
 	if (strcasecmp(deviceTypeStr, "Telescope") == 0)
 	{
 		dataWasHandled	=	AlpacaProcessReadAll_Common(deviceTypeStr,
@@ -291,7 +291,7 @@ bool	dataWasHandled;
 		if (dataWasHandled)
 		{
 			//*	we are done, skip the rest
-			CONSOLE_DEBUG("Data handled by AlpacaProcessReadAll_Common()");
+		//	CONSOLE_DEBUG("Data handled by AlpacaProcessReadAll_Common()");
 		}
 		else
 		{
