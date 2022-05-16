@@ -1515,7 +1515,9 @@ CONSOLE_DEBUG(__FUNCTION__);
 	{
 		if (alpacaErrCode != kASCOM_Err_Success)
 		{
-			CONSOLE_DEBUG_W_NUM("ERROR!!!!!!!     alpacaErrCode\t=",	alpacaErrCode);
+			CONSOLE_DEBUG_W_NUM("ERROR!!!!!!!    	 alpacaErrCode\t=",	alpacaErrCode);
+			CONSOLE_DEBUG_W_NUM("alpacaErrMsg\t=",		alpacaErrMsg);
+
 		}
 	}
 	return(alpacaErrCode);
@@ -1912,14 +1914,20 @@ bool				coolerState;
 				coolerState	=	false;
 				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented:");
 				strcat(alpacaErrMsg, cLastCameraErrMsg);
-		//		CONSOLE_DEBUG(alpacaErrMsg);
+				if (cVerboseDebug)
+				{
+					CONSOLE_DEBUG(alpacaErrMsg);
+				}
 			}
 			else
 			{
 				coolerState	=	false;
 				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Failed to read cooler state:");
 				strcat(alpacaErrMsg, cLastCameraErrMsg);
-		//		CONSOLE_DEBUG(alpacaErrMsg);
+				if (cVerboseDebug)
+				{
+					CONSOLE_DEBUG(alpacaErrMsg);
+				}
 			}
 			cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	reqData->socket,
 											reqData->jsonTextBuffer,
@@ -1939,8 +1947,6 @@ bool				coolerState;
 	}
 	return(alpacaErrCode);
 }
-
-
 
 //*****************************************************************************
 TYPE_ASCOM_STATUS	CameraDriver::Put_Cooleron(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
@@ -2027,7 +2033,10 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
 		{
 			alpacaErrCode	=	kASCOM_Err_NotImplemented;
 			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "This Camera does not support cooling");
-//			CONSOLE_DEBUG(alpacaErrMsg);
+			if (cVerboseDebug)
+			{
+				CONSOLE_DEBUG(alpacaErrMsg);
+			}
 		}
 	}
 	else
@@ -7892,6 +7901,7 @@ char	titleLine[128];
 
 	DumpCommonProperties(callingFunctionName);
 
+	CONSOLE_DEBUG(			"------------------------------------");
 	CONSOLE_DEBUG_W_NUM(	"cCameraProp.BayerOffsetX       \t=",	cCameraProp.BayerOffsetX);
 	CONSOLE_DEBUG_W_NUM(	"cCameraProp.BayerOffsetY       \t=",	cCameraProp.BayerOffsetY);
 	CONSOLE_DEBUG_W_NUM(	"cCameraProp.BinX               \t=",	cCameraProp.BinX);
@@ -7941,11 +7951,11 @@ char	titleLine[128];
 	CONSOLE_DEBUG_W_NUM(	"cCameraProp.SensorType         \t=",	cCameraProp.SensorType);
 	CONSOLE_DEBUG_W_NUM(	"cCameraProp.StartX             \t=",	cCameraProp.StartX);
 	CONSOLE_DEBUG_W_NUM(	"cCameraProp.StartY             \t=",	cCameraProp.StartY);
-	CONSOLE_DEBUG(			"---------------");
+	CONSOLE_DEBUG(			"---------------Non alpaca stuff");
 	CONSOLE_DEBUG_W_NUM(	"cCameraProp.FlipMode           \t=",	cCameraProp.FlipMode);
+	CONSOLE_DEBUG_W_BOOL(	"cIsCoolerCam                   \t=",	cIsCoolerCam);
 	CONSOLE_DEBUG(			"*************************************************************");
 }
-
 
 //*****************************************************************************
 void	CameraDriver::CreateFakeImageData(unsigned char *cameraDataPtr, int imageWith, int imageHeight, int bytesPerPixel)

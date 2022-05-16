@@ -622,7 +622,7 @@ std::string		lastError("");
 		cCameraProp.Cansetccdtemperature	=	canSetTemp;
 		if (canSetTemp)
 		{
-
+			cIsCoolerCam	=	true;
 
 			// Set the CCD temp setpoint to 10.0C
 			qsi_Result	=	cQSIcam.put_SetCCDTemperature(10.0);
