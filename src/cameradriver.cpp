@@ -7954,6 +7954,7 @@ char	titleLine[128];
 	CONSOLE_DEBUG(			"---------------Non alpaca stuff");
 	CONSOLE_DEBUG_W_NUM(	"cCameraProp.FlipMode           \t=",	cCameraProp.FlipMode);
 	CONSOLE_DEBUG_W_BOOL(	"cIsCoolerCam                   \t=",	cIsCoolerCam);
+	CONSOLE_DEBUG_W_BOOL(	"cTempReadSupported             \t=",	cTempReadSupported);
 	CONSOLE_DEBUG(			"*************************************************************");
 }
 

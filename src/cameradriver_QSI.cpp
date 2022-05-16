@@ -955,7 +955,9 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
 unsigned int		qsi_Result;
 std::string			lastError("");
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_BOOL(	"cCameraProp.Cansetccdtemperature\t=",	cCameraProp.Cansetccdtemperature);
+	CONSOLE_DEBUG_W_BOOL(	"cCameraProp.CanGetCoolerPower  \t=",	cCameraProp.CanGetCoolerPower);
 
 	if (cCameraProp.Cansetccdtemperature)
 	{
@@ -963,6 +965,7 @@ std::string			lastError("");
 		qsi_Result	=	cQSIcam.put_CoolerOn(true);
 		if (qsi_Result == QSI_OK)
 		{
+			CONSOLE_DEBUG("cQSIcam.put_CoolerOn(true); return OK");
 			alpacaErrCode	=	kASCOM_Err_Success;
 		}
 		else
@@ -976,6 +979,7 @@ std::string			lastError("");
 	{
 		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 		strcpy(cLastCameraErrMsg, "Camera does not support cooling");
+		CONSOLE_DEBUG(cLastCameraErrMsg);
 	}
 	return(alpacaErrCode);
 }
@@ -987,7 +991,9 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
 unsigned int		qsi_Result;
 std::string			lastError("");
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_BOOL(	"cCameraProp.Cansetccdtemperature\t=",	cCameraProp.Cansetccdtemperature);
+	CONSOLE_DEBUG_W_BOOL(	"cCameraProp.CanGetCoolerPower  \t=",	cCameraProp.CanGetCoolerPower);
 
 	if (cCameraProp.Cansetccdtemperature)
 	{
@@ -995,6 +1001,7 @@ std::string			lastError("");
 		qsi_Result	=	cQSIcam.put_CoolerOn(false);
 		if (qsi_Result == QSI_OK)
 		{
+			CONSOLE_DEBUG("cQSIcam.put_CoolerOn(false); return OK");
 			alpacaErrCode	=	kASCOM_Err_Success;
 		}
 		else
@@ -1008,10 +1015,10 @@ std::string			lastError("");
 	{
 		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 		strcpy(cLastCameraErrMsg, "Camera does not support cooling");
+		CONSOLE_DEBUG(cLastCameraErrMsg);
 	}
 	return(alpacaErrCode);
 }
-
 
 //**************************************************************************
 TYPE_ASCOM_STATUS	CameraDriverQSI::Read_CoolerPowerLevel(void)
