@@ -1049,7 +1049,7 @@ unsigned int		qsi_Result;
 std::string			lastError("");
 double				coolerPowerLevel;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 	if (cCameraProp.CanGetCoolerPower)
 	{
 		qsi_Result	=	cQSIcam.get_CoolerPower(&coolerPowerLevel);
@@ -1057,12 +1057,14 @@ double				coolerPowerLevel;
 		{
 			cCameraProp.CoolerPower	=	coolerPowerLevel;
 			alpacaErrCode			=	kASCOM_Err_Success;
+			CONSOLE_DEBUG_W_STR("cCameraProp.CoolerPower\t=", cCameraProp.CoolerPower);
 		}
 		else
 		{
 			cQSIcam.get_LastError(lastError);
 			strcpy(cLastCameraErrMsg, lastError.c_str());
 			alpacaErrCode	=	kASCOM_Err_NotConnected;
+			CONSOLE_DEBUG_W_STR("cQSIcam.get_CoolerPower returned", cLastCameraErrMsg);
 		}
 	}
 	else
