@@ -35,6 +35,7 @@
 //*	May 14,	2022	<MLS> JMH was able to take a picture
 //*	May 14,	2022	<MLS> Working on cooler support for QSI camera
 //*	May 15,	2022	<MLS> Finished Read_CoolerPowerLevel()
+//*	May 17,	2022	<MLS> Implemented Read_CoolerState() for QSI camera
 //*****************************************************************************
 
 #if defined(_ENABLE_CAMERA_) && defined(_ENABLE_QSI_)
@@ -196,6 +197,10 @@ int				numCamerasFound;
 		cCameraProp.PixelSizeX			=	3.7;
 		cCameraProp.PixelSizeY			=	3.7;
 		cCameraProp.FullWellCapacity	=	8567.253906;
+
+		cCameraProp.Cansetccdtemperature	=	true;
+		cCameraProp.CanGetCoolerPower		=	true;
+		cIsCoolerCam						=	true;
 
 		AddReadoutModeToList(kImageType_RAW16);
 	}
@@ -1052,19 +1057,29 @@ double				coolerPowerLevel;
 	CONSOLE_DEBUG(__FUNCTION__);
 	if (cCameraProp.CanGetCoolerPower)
 	{
-		qsi_Result	=	cQSIcam.get_CoolerPower(&coolerPowerLevel);
-		if (qsi_Result == QSI_OK)
+	#ifdef _SIMULATE_CAMERA_
+		if (gSimulateCameraImage)
 		{
-			cCameraProp.CoolerPower	=	coolerPowerLevel;
+			cCameraProp.CoolerPower	=	52.34;
 			alpacaErrCode			=	kASCOM_Err_Success;
-			CONSOLE_DEBUG_W_STR("cCameraProp.CoolerPower\t=", cCameraProp.CoolerPower);
 		}
 		else
+	#endif
 		{
-			cQSIcam.get_LastError(lastError);
-			strcpy(cLastCameraErrMsg, lastError.c_str());
-			alpacaErrCode	=	kASCOM_Err_NotConnected;
-			CONSOLE_DEBUG_W_STR("cQSIcam.get_CoolerPower returned", cLastCameraErrMsg);
+			qsi_Result	=	cQSIcam.get_CoolerPower(&coolerPowerLevel);
+			if (qsi_Result == QSI_OK)
+			{
+				cCameraProp.CoolerPower	=	coolerPowerLevel;
+				alpacaErrCode			=	kASCOM_Err_Success;
+				CONSOLE_DEBUG_W_DBL("cCameraProp.CoolerPower\t=", cCameraProp.CoolerPower);
+			}
+			else
+			{
+				cQSIcam.get_LastError(lastError);
+				strcpy(cLastCameraErrMsg, lastError.c_str());
+				alpacaErrCode	=	kASCOM_Err_NotConnected;
+				CONSOLE_DEBUG_W_STR("cQSIcam.get_CoolerPower returned", cLastCameraErrMsg);
+			}
 		}
 	}
 	else
@@ -1081,18 +1096,38 @@ double				coolerPowerLevel;
 //**************************************************************************
 TYPE_ASCOM_STATUS	CameraDriverQSI::Read_CoolerState(bool *coolerOnOff)
 {
-TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
+unsigned int		qsi_Result;
+std::string			lastError("");
+bool				myCoolerState;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 
-	*coolerOnOff	=	false;
-	strcpy(cLastCameraErrMsg, "AlpacaPi: Not implemented-");
-	strcat(cLastCameraErrMsg, __FILE__);
-	strcat(cLastCameraErrMsg, ":");
-	strcat(cLastCameraErrMsg, __FUNCTION__);
+#ifdef _SIMULATE_CAMERA_
+	if (gSimulateCameraImage)
+	{
+		*coolerOnOff	=	true;
+	}
+	else
+#endif
+	{
+		qsi_Result	=	cQSIcam.get_CoolerOn(&myCoolerState);
+		if (qsi_Result == QSI_OK)
+		{
+			*coolerOnOff	=	myCoolerState;
+			alpacaErrCode	=	kASCOM_Err_Success;
+			CONSOLE_DEBUG_W_BOOL("coolerOnOff\t=", coolerOnOff);
+		}
+		else
+		{
+			cQSIcam.get_LastError(lastError);
+			strcpy(cLastCameraErrMsg, lastError.c_str());
+			alpacaErrCode	=	kASCOM_Err_NotConnected;
+			CONSOLE_DEBUG_W_STR("cQSIcam.get_CoolerPower returned", cLastCameraErrMsg);
+		}
+	}
 	return(alpacaErrCode);
 }
-
 
 //*****************************************************************************
 TYPE_EXPOSURE_STATUS	CameraDriverQSI::Check_Exposure(bool verboseFlag)

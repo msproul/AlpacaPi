@@ -1954,6 +1954,7 @@ TYPE_ASCOM_STATUS	CameraDriver::Put_Cooleron(TYPE_GetPutRequestData *reqData, ch
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
 char				argumentString[32];
 bool				foundKeyWord;
+bool				newCoolerState;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 	if (reqData != NULL)
@@ -1967,8 +1968,9 @@ bool				foundKeyWord;
 			if (foundKeyWord)
 			{
 				CONSOLE_DEBUG_W_STR("argumentString\t=", argumentString);
+				newCoolerState	=	IsTrueFalse(argumentString);
 
-				if (strcmp(argumentString, "true") == 0)
+				if (newCoolerState)
 				{
 					alpacaErrCode	=	Cooler_TurnOn();
 				}

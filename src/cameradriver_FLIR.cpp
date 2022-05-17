@@ -50,7 +50,7 @@
 //#include	<spinnaker/Camera.h>
 #include	<spinnaker/spinc/QuickSpinDefsC.h>
 #include	<spinnaker/spinc/CameraDefsC.h>
-#include	"FLIR-SDK/spinnaker/spinc/QuickSpinC.h"
+//#include	"FLIR-SDK/spinnaker/spinc/QuickSpinC.h"
 
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
