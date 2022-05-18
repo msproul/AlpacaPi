@@ -1,4 +1,4 @@
-History Comments found =1811 in 318 files
+History Comments found =1841 in 319 files
 eph.c:10                 	//*	May  2,	1996	<MLS> (Mark Sproul) Starting on SkyTravel for Frank and Clif
 StarData.c:7             	//*	May  2,	1996	<MLS> (Mark Sproul) Starting on SkyTravel for Frank and Clif
 StarData.c:8             	//*	Nov 18,	1999	<MLS> restarting efforts
@@ -1768,7 +1768,7 @@ servo_time.c:30          	//*	May  8,	2022	<RNS> Fixed a warning do to long doub
 GaiaSQL.cpp:38           	//*	May  9,	2022	<MLS> Added skytravel version number to remote SQL login information
 Makefile:9               	#++	May  9,	2022	<MLS> Updated to use Objectfiles directory for .o files
 GaiaSQL.cpp:39           	//*	May 10,	2022	<MLS> Added mysql error strings to local logging function
-servo_scope.c:1030       	//*	May 10,	2022	<MLS> Fixed Servo_calc_move_to_remove_gearlash()
+servo_scope.c:1072       	//*	May 10,	2022	<MLS> Fixed Servo_calc_move_to_remove_gearlash()
 servo_scope_cfg.c:32     	//*	May 10,	2022	<MLS> Changed the keyword table
 servo_scope_cfg.c:33     	//*	May 10,	2022	<MLS> Added FindKeyWordEnum()
 servo_scope_cfg.h:25     	//*	May 10,	2022	<MLS> Added structure TYPE_SCOPE_CONFIG
@@ -1781,6 +1781,7 @@ telescopedriver_servo.cpp:31	//*	May 11,	2022	<MLS> Now using servo config proce
 telescopedriver_servo.cpp:32	//*	May 11,	2022	<MLS> Added OutputHTML_Part2() to telescope servo driver
 controller_tscope_common.cpp:22	//*	May 12,	2022	<MLS> Added support for TrackingRate
 servo_scope.c:35         	//*	May 12,	2022	<MLS> Added "const" to filename arguments (to make compiler happy)
+servo_scope.c:36         	//*	May 12,	2022	<MLS> Converted all function parameters from D/HMS to deci hour/degs
 windowtab_telescope.cpp:25	//*	May 12,	2022	<MLS> Added UpdateTelescopeInfo()
 windowtab_telescope.cpp:26	//*	May 12,	2022	<MLS> Added up/down east/west button logic
 windowtab_telescope.cpp:27	//*	May 12,	2022	<MLS> Added up/down east/west Normal,Slewing,Disabled colors
@@ -1788,10 +1789,39 @@ windowtab_telescope.cpp:28	//*	May 12,	2022	<MLS> Added Tracking rate button han
 telescopedriver.cpp:52   	//*	May 13,	2022	<MLS> Made Get_AxisRates() understand specified axis number
 cameradriver_QSI.cpp:35  	//*	May 14,	2022	<MLS> JMH was able to take a picture
 cameradriver_QSI.cpp:36  	//*	May 14,	2022	<MLS> Working on cooler support for QSI camera
+servo_scope.c:37         	//*	May 14,	2022	<RNS> Fixed a spelling typo in error message
+servo_scope.c:38         	//*	May 14,	2022	<RNS> Changed all _step routines to signed variables
+servo_scope.h:25         	//*	May 14,	2022	<RNS> Changed all _step routines to signed variables
+servo_scope_cfg.c:34     	//*	May 14,	2022	<RNS> Added Time_ascii_maybe_HMS_tof for coordinate tokens park, sync, etc
+servo_std_defs.h:33      	//*	May 14,	2022	<MLS> Removed degToRads/radToDegs
+servo_time.c:31          	//*	May 14,	2022	<RNS> Swapped degsToRads/radsToDegs -> RADIANS/DEGREES
+servo_time.c:32          	//*	May 14,	2022	<RNS> Moved all conversions to use RADIANS/DEGREES
+servo_time.c:33          	//*	May 14,	2022	<RNS> Added Time_ascii_maybe_hms_tof()
+servo_time.h:27          	//*	May 14,	2022	<RNS> added Time_ascii_maybe_hms_tof()
 alpaca_defs.h:44         	//*	May 15,	2022	<MLS> Build 141
 cameradriver.cpp:171     	//*	May 15,	2022	<MLS> Added Get_SubExposureDuration() & Put_SubExposureDuration()
 cameradriver.h:27        	//*	May 15,	2022	<MLS> Added cSubDurationSupported flag
 cameradriver_QSI.cpp:37  	//*	May 15,	2022	<MLS> Finished Read_CoolerPowerLevel()
+Makefile:10              	#++	May 15,	2022	<RNS> Added servo_test_tty and fixed typos
+servo_mc_core.c:34       	//*	May 15,	2022	<RNS> Fixed typo in #define labee _TEST_SERVO_M*E*_CORE_
+servo_scope.c:39         	//*	May 15,	2022	<RNS> Codereview and updated comments and potential RA range issue
+servo_test_tty.c:24      	//*	May 15,	2022	<RNS> Initial port of Goddard test program for servo star system
+servo_time.c:34          	//*	May 15,	2022	<RNS> added Time_normalize functions
+servo_time.c:35          	//*	May 15,	2022	<RNS> added alt-azi tracking rates function, added to _TEST_
+servo_time.c:36          	//*	May 15,	2022	<RNS> added Time_alt_azi_to_ra_dec() function
+servo_time.h:28          	//*	May 15,	2022	<RNS> added Time_normalize_ functions
+servo_time.h:29          	//*	May 15,	2022	<RNS> added alt-azi tracking rates function
+servo_time.h:30          	//*	May 15,	2022	<RNS> added Time_alt_azi_to_ra_dec() function
+servo_scope.c:40         	//*	May 16,	2022	<RNS> Fixed lat/log access with location config global now hidden
+servo_scope.c:41         	//*	May 16,	2022	<RNS> Added Servo_pos_to_step() and removed dup code
+servo_scope.c:42         	//*	May 16,	2022	<RNS> Added a SYNCHRONOUS routine to test RC's independent moves for alt-azi
+servo_scope.h:26         	//*	May 16,	2022	<RNS> Added Servo_pos_to_step()
+servo_scope_cfg.c:35     	//*	May 16,	2022	<RNS> Corrected nesting of error messages to handle invalid field in cfgfile
+servo_scope_cfg.c:36     	//*	May 16,	2022	<RNS> Adopted _TYPE_SCOPE_CONFIG_
+servo_scope_cfg.h:26     	//*	May 16,	2022	<RNS> Adopted _TYPE_SCOPE_CONFIG_
+servo_time.c:37          	//*	May 16,	2022	<RNS> privitized the gServoLocalCfg global, added get_ field calls
+servo_time.c:38          	//*	May 16,	2022	<RNS> Added _maybe_hms_ vs atof for lat & lon config field
+servo_time.h:31          	//*	May 16,	2022	<RNS> privitized the gServoLocalCfg global, added get_ field calls
 alpaca_defs.h:45         	//*	May 17,	2022	<MLS> Build 142
 cameradriver.cpp:172     	//*	May 17,	2022	<JMH> Discovered bug where cooler power level was not being reported correctly
 cameradriver_ASI.cpp:81  	//*	May 17,	2022	<MLS> Changed the way power level is reported
@@ -1810,22 +1840,22 @@ controller_camera.cpp:66 	//*	Jan  1,	2121	<TODO> save cross hair location
 controller_camera.cpp:67 	//*	Jan  1,	2121	<TODO> finish exposure step options
 controller_camera.cpp:68 	//*	Jan  1,	2121	<TODO> clear error msg
 controller_camera.cpp:69 	//*	Feb  6,	2121	<TODO> Move downloading of images to a separate thread
-History Comments found   = 1811 in 318 files
-Total lines              = 160024
-Total comment Lines      = 23341 (14.6%)
-Total comments           = 26549 (16.6%)
-Total history comments   = 1811 (1.1%)
-Total C files            = 47
+History Comments found   = 1841 in 319 files
+Total lines              = 160537
+Total comment Lines      = 23508 (14.6%)
+Total comments           = 26722 (16.6%)
+Total history comments   = 1841 (1.1%)
+Total C files            = 48
 Total C++ files          = 112
 Total H files            = 157
-Preprocssor cnt          = 5187
-Total SLOC               = 104523
-Total SLOC-Logical       = 80903
+Preprocssor cnt          = 5163
+Total SLOC               = 104795
+Total SLOC-Logical       = 81088
 Programmer comment summary
-MLS             = 1711
+MLS             = 1713
 TODO            =   13
 DDB             =    1
 JMH             =    3
 PDB             =    6
 KAS             =    3
-RNS             =   70
+RNS             =   98

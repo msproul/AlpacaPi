@@ -50,7 +50,7 @@
 #include "servo_time.h"
 #include "servo_scope_cfg.h"
 
-static double RolloverRegion = 0.0;
+static double RolloverRegion	=	0.0;
 static double OffTargetTolerance;
 
 //******************************************************************
@@ -102,7 +102,7 @@ enum
 	RA_PARK_SENSOR,
 	DEC_PARK_SENSOR,
 	OFF_TARGET_TOL
-}; // of enum
+};	// of enum
 
 //******************************************************************
 typedef struct
@@ -198,7 +198,7 @@ int Servo_Read_Scope_Cfg(const char *scopeCfgFile, TYPE_SCOPE_CONFIG *scopeConfi
 	uint16_t line = 1;
 	bool okFlag = true;
 	// int			column			=	0;
-	char delimiters[] = " \t\r\n\v\f"; // POSIX whitespace chars
+	char delimiters[] = " \t\r\n\v\f";	// POSIX whitespace chars
 	char *token;
 	char *argument;
 	char *rest = NULL;
@@ -246,7 +246,7 @@ int Servo_Read_Scope_Cfg(const char *scopeCfgFile, TYPE_SCOPE_CONFIG *scopeConfi
 		// get first token of the line read from the file
 		token = strtok_r(inString, delimiters, &rest);
 
-		// If not a blank line and non-comment token found on line 
+		// If not a blank line and non-comment token found on line
 		if ((token != NULL) && (token[0] != '#'))
 		{
 			tokenEnumValue = FindKeyWordEnum(token);
@@ -939,21 +939,21 @@ int Servo_Read_Scope_Cfg(const char *scopeCfgFile, TYPE_SCOPE_CONFIG *scopeConfi
 					fprintf(stderr, "Error: (init_scope_cfg) on line %d of file '%s'\n", line, filename);
 					fprintf(stderr, "       Invalid syntax: field %s is missing argument\n", token);
 				}
-			} // of if-else token not valid
+			}	// of if-else token not valid
 			printf("\n");
-		} // of if not a comment line
+		}	// of if not a comment line
 
 		// increment the line counter
 		line++;
 
-	} // of while
+	}	// of while
 
 	fclose(inFile);
 
 	// Even out the columns before any missing args error statements
 	printf("\n");
 
-	iii = 0;
+	iii	=	0;
 	while (strlen(gScopeConfigArray[iii].parameter) > 0)
 	{
 		if (gScopeConfigArray[iii].found == false)
@@ -962,7 +962,7 @@ int Servo_Read_Scope_Cfg(const char *scopeCfgFile, TYPE_SCOPE_CONFIG *scopeConfi
 			fprintf(stderr, "       '%s' was not found or of improper format.\n",
 					gScopeConfigArray[iii].parameter);
 			fprintf(stderr, "       from file '%s'\n", filename);
-			okFlag = false;
+			okFlag	=	false;
 		}
 		iii++;
 	}
@@ -973,7 +973,7 @@ int Servo_Read_Scope_Cfg(const char *scopeCfgFile, TYPE_SCOPE_CONFIG *scopeConfi
 		fprintf(stderr, "Error: (validate_scope_cfg) Error found in configuration:\n");
 		fprintf(stderr, "       from file '%s'\n", filename);
 		fflush(stderr);
-		retStatus = -1;
+		retStatus	=	-1;
 	}
 	else
 	{
@@ -982,14 +982,14 @@ int Servo_Read_Scope_Cfg(const char *scopeCfgFile, TYPE_SCOPE_CONFIG *scopeConfi
 		// If mount is FORK, then set the side to EAST due to ASCOM default definitions
 		if (scopeConfig->mount == kFORK)
 		{
-			scopeConfig->side = kEAST;
+			scopeConfig->side	=	kEAST;
 		}
 
-		retStatus = 0;
+		retStatus	=	0;
 	}
 
 	return (retStatus);
-} // Servo_Read_Scope_Cfg
+}	// Servo_Read_Scope_Cfg
 
 //#define _TEST_SERVO_SCOPE_CFG_
 #ifdef _TEST_SERVO_SCOPE_CFG_
@@ -1031,7 +1031,7 @@ void Test_print_axis(axisPtr ax)
 int main(int argc, char **argv)
 {
 	TYPE_SCOPE_CONFIG scopeConfig;
-	char configFile[] = "servo_scope.cfg";
+	char configFile[]	=	"servo_scope.cfg";
 
 	printf("file name = %s\n", configFile);
 
@@ -1039,4 +1039,4 @@ int main(int argc, char **argv)
 
 	return (0);
 }
-#endif //	_TEST_SERVO_SCOPE_CFG_
+#endif	//	_TEST_SERVO_SCOPE_CFG_
