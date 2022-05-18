@@ -366,7 +366,7 @@ class CameraDriver: public AlpacaDriver
 		TYPE_ASCOM_STATUS	Get_Cooleron(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
 		TYPE_ASCOM_STATUS	Put_Cooleron(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 
-		TYPE_ASCOM_STATUS	Get_CoolerPowerLevel(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+		TYPE_ASCOM_STATUS	Get_CoolerPower(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
 
 		TYPE_ASCOM_STATUS	Get_ElectronsPerADU(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
 
@@ -665,7 +665,6 @@ protected:
 	bool		cTempReadSupported;				//*	true if temperature can be read from device
 	bool		cOffsetSupported;				//*	true pixel value offset is supported
 	bool		cSubDurationSupported;
-	long		cCoolerPowerLevel;
 	long		cCoolerState;
 	char		cLastCameraErrMsg[128];
 

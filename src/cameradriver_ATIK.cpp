@@ -50,6 +50,7 @@
 //*	Apr 25,	2021	<MLS> Added check for camera devices (ArtemisDeviceIsCamera())
 //*	Apr 15,	2022	<MLS> Installed ATIK 460ex on WO71 telescope, updating ATIK drivers
 //*	Apr 16,	2022	<MLS> Fixed bug in GetImage_ROI_info()
+//*	May 17,	2022	<MLS> Changed the way power level is reported
 //*****************************************************************************
 
 #if defined(_ENABLE_CAMERA_) && defined(_ENABLE_ATIK_)
@@ -1005,26 +1006,26 @@ TYPE_ASCOM_STATUS	CameraDriverATIK::Read_CoolerPowerLevel(void)
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
 int					atikRetCode;
 int					coolingFlags;
-int					level;
+int					myCoolerPowerLevel;
 int					minlvl;
 int					maxlvl;
 int					setpoint;
 
-	cCoolerPowerLevel	=	0;
+	myCoolerPowerLevel	=	0;
 	if (cCameraProp.CanGetCoolerPower)
 	{
 		if (hAtikCameraHandle != NULL)
 		{
 			atikRetCode		=	ArtemisCoolingInfo(	hAtikCameraHandle,
 													&coolingFlags,
-													&level,
+													&myCoolerPowerLevel,
 													&minlvl,
 													&maxlvl,
 													&setpoint);
 			if (atikRetCode == ARTEMIS_OK)
 			{
-				cCoolerPowerLevel	=	level;
-				alpacaErrCode		=	kASCOM_Err_Success;
+				cCameraProp.CoolerPower	=	myCoolerPowerLevel;
+				alpacaErrCode			=	kASCOM_Err_Success;
 			}
 			else
 			{

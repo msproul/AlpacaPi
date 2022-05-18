@@ -169,6 +169,7 @@
 //*	May  5,	2022	<MLS> Added monochrome/color check for bayeroffset property
 //*	May  5,	2022	<MLS> Added Get_SensorName() (was inline)
 //*	May 15,	2022	<MLS> Added Get_SubExposureDuration() & Put_SubExposureDuration()
+//*	May 17,	2022	<JMH> Discovered bug where cooler power level was not being reported correctly
 //*****************************************************************************
 //*	Jan  1,	2119	<TODO> ----------------------------------------
 //*	Jun 26,	2119	<TODO> Add support for sub frames
@@ -386,7 +387,6 @@ int	mkdirErrCode;
 	cTempReadSupported				=	false;
 	cOffsetSupported				=	false;
 	cSubDurationSupported			=	false;
-	cCoolerPowerLevel				=	0;
 	cLastCameraErrMsg[0]			=	0;
 	cLastJpegImageName[0]			=	0;
 	cCameraID						=	-1;
@@ -906,7 +906,7 @@ char				httpHeader[500];
 			break;
 
 		case kCmd_Camera_coolerpower:			//*	Returns the present cooler power level
-			alpacaErrCode	=	Get_CoolerPowerLevel(reqData, alpacaErrMsg, gValueString);
+			alpacaErrCode	=	Get_CoolerPower(reqData, alpacaErrMsg, gValueString);
 			break;
 
 		case kCmd_Camera_electronsperadu:		//*	Returns the gain of the camera
@@ -2006,7 +2006,7 @@ bool				newCoolerState;
 
 
 //*****************************************************************************
-TYPE_ASCOM_STATUS	CameraDriver::Get_CoolerPowerLevel(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
+TYPE_ASCOM_STATUS	CameraDriver::Get_CoolerPower(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
 
@@ -2018,11 +2018,11 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
 			alpacaErrCode		=	Read_CoolerPowerLevel();
 			if (alpacaErrCode == 0)
 			{
-				cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	reqData->socket,
+				cBytesWrittenForThisCmd	+=	JsonResponse_Add_Double(	reqData->socket,
 												reqData->jsonTextBuffer,
 												kMaxJsonBuffLen,
 												responseString,
-												cCoolerPowerLevel,
+												cCameraProp.CoolerPower,
 												INCLUDE_COMMA);
 			}
 			else
@@ -7476,12 +7476,12 @@ char				textBuffer[128];
 		Get_Readall_Common(			reqData, alpacaErrMsg);
 
 		//*	do them in alphabetical order
-		Get_BinX(					reqData, alpacaErrMsg, "binx");
-		Get_BinY(					reqData, alpacaErrMsg, "biny");
-		Get_Camerastate(			reqData, alpacaErrMsg, "camerastate");
-		Get_CCDtemperature(			reqData, alpacaErrMsg, "ccdtemperature");
-		Get_Cooleron(				reqData, alpacaErrMsg, "cooleron");
-		Get_CoolerPowerLevel(		reqData, alpacaErrMsg, "coolerpower");
+		Get_BinX(				reqData, alpacaErrMsg, "binx");
+		Get_BinY(				reqData, alpacaErrMsg, "biny");
+		Get_Camerastate(		reqData, alpacaErrMsg, "camerastate");
+		Get_CCDtemperature(		reqData, alpacaErrMsg, "ccdtemperature");
+		Get_Cooleron(			reqData, alpacaErrMsg, "cooleron");
+		Get_CoolerPower(		reqData, alpacaErrMsg, "coolerpower");
 
 
 		//*	make local copies of the data structure to make the code easier to read

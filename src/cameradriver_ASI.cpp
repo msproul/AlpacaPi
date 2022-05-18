@@ -2059,17 +2059,20 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
 ASI_BOOL			bAuto;
 ASI_ERROR_CODE		asiErrorCode;
 char				asiErrorMsgString[64];
+long				myCoolerPowerLevel;
 
-	cCoolerPowerLevel	=	0;
+	myCoolerPowerLevel	=	0;
 	asiErrorCode		=	OpenASIcameraIfNeeded(cCameraID);
 	if (asiErrorCode == ASI_SUCCESS)
 	{
 		bAuto				=	ASI_FALSE;
-		asiErrorCode		=	ASIGetControlValue(cCameraID, ASI_COOLER_POWER_PERC, &cCoolerPowerLevel, &bAuto);
+		asiErrorCode		=	ASIGetControlValue(cCameraID, ASI_COOLER_POWER_PERC, &myCoolerPowerLevel, &bAuto);
 		if (asiErrorCode == ASI_SUCCESS)
 		{
-			alpacaErrCode	=	kASCOM_Err_Success;
-//			CONSOLE_DEBUG_W_LONG("cCoolerPowerLevel\t=",		cCoolerPowerLevel);
+			alpacaErrCode			=	kASCOM_Err_Success;
+			cCameraProp.CoolerPower	=	myCoolerPowerLevel;
+
+//			CONSOLE_DEBUG_W_LONG("myCoolerPowerLevel\t=",		myCoolerPowerLevel);
 		}
 		else if (asiErrorCode == ASI_ERROR_INVALID_CONTROL_TYPE)
 		{
