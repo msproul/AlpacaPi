@@ -30,44 +30,42 @@
 //*	May  6,	2022	<RNS> Moved str_to_upper() to servo_time.c
 //*	May 11,	2022	<MLS> Changed constant RA to SERVO_RA_AXIS
 //*	May 11,	2022	<MLS> Changed constant DEC to SERVO_DEC_AXIS
+//*	May 14,	2022	<MLS> Removed degToRads/radToDegs
 //*****************************************************************************
 
 #ifndef	_INCLUDED_SERVO_STD_DEFS_
 #define	_INCLUDED_SERVO_STD_DEFS_
 
 // standard defines for c types
-//#define	kTRUE			1
-//#define	kFALSE			0
 #define	kFOUND			1
 #define	kNOT_FOUND		0
 #define	kSTATUS_OK		0
 #define	kERROR			-1
 #define	kBELOW_HORIZON	-1
 
-//#warning "<MLS> Why are these floating point numbers?"
-#define	kFORWARD		1.00000000
-#define	kREVERSE		-1.00000000
+#define	kFORWARD		(1.0)
+#define	kREVERSE		(-1.0)
 
 #define	kMAX_STR_LEN	256
 #define	kSMALL_STR_LEN	32
 
-#define	kALTAZI	'a'
-#define	kFORK	'f'
-#define	kGERMAN	'g'
-#define	kSPLIT	's'
-#define	kTEST	't'
+#define	kALTAZI			'a'
+#define	kFORK			'f'
+#define	kGERMAN			'g'
+#define	kSPLIT			's'
+#define	kTEST			't'
 
-#define	kEAST	'e'
-#define	kWEST	'w'
-#define	kNONE	'n'
+#define	kEAST			'e'
+#define	kWEST			'w'
+#define	kNONE			'n'
 
 #define	kARCSEC_PER_SEC	15.04106864
 
 #define	SERVO_RA_AXIS	(uint8_t)0
 #define	SERVO_DEC_AXIS	(uint8_t)1
 
-#define	degsToRads(x)	(x * M_PI / 180.0)
-#define	radsToDegs(x)	(x / M_PI * 180.0)
+#define	DEGREES(radians)	((radians) * (180.0 / M_PI))
+#define	RADIANS(degrees)	((degrees) * (M_PI / 180.0))
 
 //*****************************************************************************
 typedef struct cfgItem_t
