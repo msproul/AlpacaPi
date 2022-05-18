@@ -36,6 +36,7 @@
 //*	May 14,	2022	<MLS> Working on cooler support for QSI camera
 //*	May 15,	2022	<MLS> Finished Read_CoolerPowerLevel()
 //*	May 17,	2022	<MLS> Implemented Read_CoolerState() for QSI camera
+//*	May 18,	2022	<MLS> Added Write_SensorTemp()
 //*****************************************************************************
 
 #if defined(_ENABLE_CAMERA_) && defined(_ENABLE_QSI_)
@@ -736,6 +737,56 @@ std::string			lastError("");
 			{
 				cCameraProp.CCDtemperature		=	cameraTemp_DegC;
 				CONSOLE_DEBUG_W_DBL("CCDtemperature\t=",	cameraTemp_DegC);
+			}
+			else if (qsi_Result == QSI_NOTCONNECTED)
+			{
+				alpacaErrCode	=	kASCOM_Err_NotConnected;
+				strcpy(cLastCameraErrMsg, "QSI Result: not connected");
+			}
+			else
+			{
+				alpacaErrCode	=	kASCOM_Err_NotImplemented;
+				cQSIcam.get_LastError(lastError);
+				strcpy(cLastCameraErrMsg, "QSI Result:");
+				strcat(cLastCameraErrMsg, lastError.c_str());
+			}
+		}
+		else
+		{
+			alpacaErrCode	=	kASCOM_Err_NotSupported;
+			strcpy(cLastCameraErrMsg, "Temperature not supported on this camera");
+		}
+	}
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	CameraDriverQSI::Write_SensorTemp(const double newCCDtemp)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
+unsigned int		qsi_Result;
+std::string			lastError("");
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	cLastCameraErrMsg[0]	=	0;
+
+#ifdef _SIMULATE_CAMERA_
+	if (gSimulateCameraImage)
+	{
+		alpacaErrCode				=	kASCOM_Err_Success;
+	}
+	else
+#endif
+	{
+		if (cCameraProp.Cansetccdtemperature)
+		{
+			//	Sets the current CCD temperature in degrees Celsius in parameter 1.
+			//	Only valid if CanSetCCDTemperature is true.
+			qsi_Result	=	cQSIcam.put_SetCCDTemperature(newCCDtemp);
+			if (qsi_Result == QSI_OK)
+			{
+				CONSOLE_DEBUG_W_DBL("new CCDtemperature\t=",	newCCDtemp);
 			}
 			else if (qsi_Result == QSI_NOTCONNECTED)
 			{

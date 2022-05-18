@@ -622,6 +622,7 @@ class CameraDriver: public AlpacaDriver
 		virtual	TYPE_ASCOM_STATUS		Cooler_TurnOn(void);
 		virtual	TYPE_ASCOM_STATUS		Cooler_TurnOff(void);
 		virtual	TYPE_ASCOM_STATUS		Read_SensorTemp(void);
+		virtual	TYPE_ASCOM_STATUS		Write_SensorTemp(const double newCCDtemp);
 		virtual	TYPE_ASCOM_STATUS		Read_CoolerState(bool *coolerOnOff);
 		virtual	TYPE_ASCOM_STATUS		Read_CoolerPowerLevel(void);
 		virtual	TYPE_ASCOM_STATUS		Read_Fastreadout(void);

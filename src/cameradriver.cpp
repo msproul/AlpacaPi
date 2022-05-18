@@ -170,6 +170,7 @@
 //*	May  5,	2022	<MLS> Added Get_SensorName() (was inline)
 //*	May 15,	2022	<MLS> Added Get_SubExposureDuration() & Put_SubExposureDuration()
 //*	May 17,	2022	<JMH> Discovered bug where cooler power level was not being reported correctly
+//*	May 18,	2022	<MLS> Added Write_SensorTemp() (thanks to JMH)
 //*****************************************************************************
 //*	Jan  1,	2119	<TODO> ----------------------------------------
 //*	Jun 26,	2119	<TODO> Add support for sub frames
@@ -3247,8 +3248,10 @@ double				newSetCCDvalue;
 			CONSOLE_DEBUG_W_DBL("newSetCCDvalue\t=",	newSetCCDvalue);
 			if ((newSetCCDvalue > -273.15) && (newSetCCDvalue <= 100.0))
 			{
-				alpacaErrCode					=	kASCOM_Err_Success;
+				//*	The current camera cooler setpoint in degrees Celsius.
 				cCameraProp.SetCCDTemperature	=	newSetCCDvalue;
+				Write_SensorTemp(cCameraProp.SetCCDTemperature);
+				alpacaErrCode					=	kASCOM_Err_Success;
 			}
 			else
 			{
@@ -6469,6 +6472,21 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 	strcat(cLastCameraErrMsg, __FUNCTION__);
 	return(alpacaErrCode);
 }
+
+//**************************************************************************
+TYPE_ASCOM_STATUS	CameraDriver::Write_SensorTemp(const double newCCDtemp)
+{
+TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	strcpy(cLastCameraErrMsg, "AlpacaPi: Not implemented-");
+	strcat(cLastCameraErrMsg, __FILE__);
+	strcat(cLastCameraErrMsg, ":");
+	strcat(cLastCameraErrMsg, __FUNCTION__);
+	return(alpacaErrCode);
+}
+
 
 #pragma mark -
 #pragma mark Image data commands
