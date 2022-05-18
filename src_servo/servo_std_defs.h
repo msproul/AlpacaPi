@@ -30,6 +30,7 @@
 //*	May  6,	2022	<RNS> Moved str_to_upper() to servo_time.c
 //*	May 11,	2022	<MLS> Changed constant RA to SERVO_RA_AXIS
 //*	May 11,	2022	<MLS> Changed constant DEC to SERVO_DEC_AXIS
+//*	May 14,	2022	<MLS> Removed degToRads/radToDegs
 //*****************************************************************************
 
 #ifndef	_INCLUDED_SERVO_STD_DEFS_
@@ -42,8 +43,8 @@
 #define	kERROR			-1
 #define	kBELOW_HORIZON	-1
 
-#define	kFORWARD		(1.00000000)
-#define	kREVERSE		(-1.00000000)
+#define	kFORWARD		(1.0)
+#define	kREVERSE		(-1.0)
 
 #define	kMAX_STR_LEN	256
 #define	kSMALL_STR_LEN	32
@@ -63,8 +64,8 @@
 #define	SERVO_RA_AXIS	(uint8_t)0
 #define	SERVO_DEC_AXIS	(uint8_t)1
 
-#define	degsToRads(x)	(x * M_PI / 180.0)
-#define	radsToDegs(x)	(x / M_PI * 180.0)
+#define	DEGREES(radians)	((radians) * (180.0 / M_PI))
+#define	RADIANS(degrees)	((degrees) * (M_PI / 180.0))
 
 //*	TODO Change to using these instead to be consistent with the rest of AlpacaPi
 #define	DEGREES(radians)	((radians) * (180.0 / M_PI))
