@@ -31,7 +31,10 @@
 //*	May  6,	2022	<RNS> changed str_to_upper to Time_str_to_upper and renamed file servo_mc_core.c
 //*	May  7,	2022	<RNS> reswizzled some setting in set_attr termios setting to not overlap with raw
 //*	May  7,	2022	<RNS> Modified the calc_crc16 function to take in a crc value
+
 //*	May 15,	2022	<RNS> Fixed typo in #define labee _TEST_SERVO_M*E*_CORE_
+=======
+
 //*****************************************************************************
 
 #include <stdio.h>
@@ -517,6 +520,10 @@ int main(int argc, char **argv)
 	printf("MC_read_comm return status = %d\n", iii);
 	MC_shutdown();
 
+
 	return (0);
+
+
+
 }
 #endif // _TEST_SERVO_MC_CORE_

@@ -79,6 +79,8 @@ bool	validEntry;
 		{
 			valueStrPtr++;
 		}
+
+		//*	call the supplied callback function
 		if (configCallBack != NULL)
 		{
 			configCallBack(keyword, valueStrPtr);
@@ -88,7 +90,6 @@ bool	validEntry;
 	}
 	return(	validEntry);
 }
-
 
 //*****************************************************************************
 //*	returns # of processed lines

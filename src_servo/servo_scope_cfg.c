@@ -237,7 +237,7 @@ int Servo_Read_Scope_Cfg(const char *scopeCfgFile, TYPE_SCOPE_CONFIG *scopeConfi
 	if (inFile == NULL)
 	{
 		fprintf(stderr, "Error: could not open cfg file %s\n", filename);
-		return (-1);
+		return(-1);
 	}
 
 	// get all of the lines in the file

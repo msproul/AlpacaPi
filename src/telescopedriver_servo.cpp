@@ -168,16 +168,15 @@ FILE		*filePointer;
 //*****************************************************************************
 int32_t	TelescopeDriverServo::RunStateMachine(void)
 {
+TYPE_MOVE	currentMoveState;
+
 	//*	this is where your periodic code goes
 	//*	update cTelescopeProp values here
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
-double	hms;
-	hms	=	12.010203;
-	Time_check_hms(&hms);
-
-	Servo_state();
+#warning "Ron, you want to put your update status calls here"
+//	currentMoveState	=	Servo_state();
 
 	//*	5 * 1000 * 1000 means you might not get called again for 5 seconds
 	//*	you might get called earlier
@@ -193,9 +192,7 @@ TYPE_ASCOM_STATUS		alpacaErrCode;
 	Servo_stop_all();
 
 	cTelescopeProp.Slewing	=	false;
-//testing
-	alpacaErrCode	=	kASCOM_Err_NotImplemented;
-	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
+
 	return(alpacaErrCode);
 }
 

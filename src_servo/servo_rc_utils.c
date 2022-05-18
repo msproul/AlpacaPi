@@ -133,7 +133,7 @@ int			retState;
 		default:
 			// Neither RA or DEC selected, return error
 			*pos	=	kRC_ENCODER_ERROR;
-			return (kERROR);
+			return(kERROR);
 			break;
 	}
 	printf("RC_get_curr_pos: addr = %X cmd = %d gRC[cmd].cmd = %d\n", gAddr, cmd, gRC[cmd].cmd);
@@ -144,7 +144,7 @@ int			retState;
 	if (retState != kSTATUS_OK)
 	{
 		CONSOLE_DEBUG("MC_converse() returned error");
-		return kERROR;
+		return(kERROR);
 	}
 
 	// Get the encoder count 32bit from the receipt buf and status byte
@@ -171,7 +171,7 @@ int			retState;
 	{
 		// Return Error
 		*pos	=	kRC_ENCODER_ERROR;
-		return (kERROR);
+		return(kERROR);
 	}
 	// Everything OK, return new value
 	*pos	=	count - kRC_ENCODER_OFFSET;
@@ -211,7 +211,7 @@ int			retState;
 		default:
 			// Neither RA or DEC selected, return error
 			*vel	=	kRC_ENCODER_ERROR;
-			return (kERROR);
+			return(kERROR);
 			break;
 	}
 
@@ -221,7 +221,7 @@ int			retState;
 	if (retState != kSTATUS_OK)
 	{
 		CONSOLE_DEBUG("MC_converse() returned error");
-		return kERROR;
+		return(kERROR);
 	}
 
 	// Get the encoder count 32bit from the receipt buf and status byte
@@ -246,7 +246,7 @@ int			retState;
 	{
 		// Return Eerror
 		*vel	=	kRC_ENCODER_ERROR;
-		return (kERROR);
+		return(kERROR);
 	}
 	// Everything OK, return new value
 	*vel	=	count - kRC_ENCODER_OFFSET;
@@ -282,7 +282,7 @@ int			retState;
 
 		default:
 			// Neither RA or DEC selected, return error
-			return (kERROR);
+			return(kERROR);
 			break;
 	}
 
@@ -303,7 +303,7 @@ int			retState;
 	if (retState != kSTATUS_OK)
 	{
 		CONSOLE_DEBUG("MC_converse() returned error");
-		return kERROR;
+		return(kERROR);
 	}
 
 	// Check the return status for the happy 0xFF
@@ -311,10 +311,10 @@ int			retState;
 	printf("RC_set_home() : return status = %x\n", (int)status);
 	if (status != kRC_OK)
 	{
-		return kERROR;
+		return(kERROR);
 	}
 
-	return kSTATUS_OK;
+	return(kSTATUS_OK);
 } // RC_set_home()
 
 //******************************************************************
@@ -350,7 +350,7 @@ int			retState;
 	if (retState != kSTATUS_OK)
 	{
 		CONSOLE_DEBUG("MC_converse() returned error");
-		return kERROR;
+		return(kERROR);
 	}
 
 	// Get the status (32bit?)
@@ -371,11 +371,11 @@ int			retState;
 	{
 		// Return Eerror
 		*rcStatus	=	kRC_STATUS_ERROR;
-		return kERROR;
+		return(kERROR);
 	}
 	// Everything OK, return status
 	*rcStatus	=	status;
-	return kSTATUS_OK;
+	return(kSTATUS_OK);
 } // of RC_get_status()
 
 //******************************************************************
@@ -411,7 +411,7 @@ int			retState;
 	if (retState != kSTATUS_OK)
 	{
 		CONSOLE_DEBUG("MC_converse() returned error");
-		return kERROR;
+		return(kERROR);
 	}
 
 	// Get the status (32bit?)
@@ -435,10 +435,10 @@ int			retState;
 		*raDepth	=	0xFF;
 		*decDepth	=	0xFF;
 		// Return Eerror
-		return kERROR;
+		return(kERROR);
 	}
 	// Everything OK, return status
-	return kSTATUS_OK;
+	return(kSTATUS_OK);
 } // of RC_check_buffer()
 
 //*************************************************************************
@@ -470,7 +470,7 @@ int			len;
 
 	default:
 		// Neither RA or DEC selected, return error
-		return kERROR;
+		return(kERROR);
 		break;
 	}
 	printf("RC_set_default_acc: addr = %X cmd = %d gRC[cmd].cmd = %d\n", gAddr, cmd, gRC[cmd].cmd);
@@ -492,10 +492,10 @@ int			len;
 	status	=	Receipt_get_byte(gReceiptBuf, &ptrA);
 	if (status != kRC_OK)
 	{
-		return kERROR;
+		return(kERROR);
 	}
 
-	return kSTATUS_OK;
+	return(kSTATUS_OK);
 } // of RC_set_default_acc()
 
 //*************************************************************************
@@ -529,7 +529,7 @@ int			zero	=	0;
 
 	default:
 		// Neither RA or DEC selected, return error
-		return kERROR;
+		return(kERROR);
 		break;
 	}
 
@@ -549,10 +549,10 @@ int			zero	=	0;
 	status	=	Receipt_get_byte(gReceiptBuf, &ptrA);
 	if (status != kRC_OK)
 	{
-		return kERROR;
+		return(kERROR);
 	}
 
-	return kSTATUS_OK;
+	return(kSTATUS_OK);
 } // of RC_stop()
 
 //******************************************************************
@@ -586,7 +586,7 @@ double distF, velF, accF, vCalc, time;
 		time	=	2 * vCalc / accF;
 	}
 
-	return time;
+	return(time);
 } // RC_calc_move_time()
 
 //******************************************************************
@@ -620,7 +620,7 @@ int			len;
 
 		default:
 			// Neither RA or DEC selected, return error
-			return (kERROR);
+			return(kERROR);
 			break;
 	}
 	printf("RC_move_by_pos: addr = %X cmd = %d gRC[cmd].cmd = %d\n", gAddr, cmd, gRC[cmd].cmd);
@@ -647,10 +647,10 @@ int			len;
 	status	=	Receipt_get_byte(gReceiptBuf, &ptrA);
 	if (status != kRC_OK)
 	{
-		return kERROR;
+		return(kERROR);
 	}
 
-	return kSTATUS_OK;
+	return(kSTATUS_OK);
 } // of RC_move_by_posv()
 
 //******************************************************************
@@ -684,7 +684,7 @@ int			len;
 
 		default:
 			// Neither RA or DEC selected, return error
-			return (kERROR);
+			return(kERROR);
 			break;
 	}
 	printf("RC_move_by_pos: addr = %X cmd = %d gRC[cmd].cmd = %d\n", gAddr, cmd, gRC[cmd].cmd);
@@ -714,10 +714,10 @@ int			len;
 	status	=	Receipt_get_byte(gReceiptBuf, &ptrA);
 	if (status != kRC_OK)
 	{
-		return kERROR;
+		return(kERROR);
 	}
 
-	return kSTATUS_OK;
+	return(kSTATUS_OK);
 } // of RC_move_by_posva()
 
 //******************************************************************
@@ -799,7 +799,7 @@ int			len;
 
 		default:
 			// Neither RA or DEC selected, return error
-			return (kERROR);
+			return(kERROR);
 			break;
 	}
 
@@ -818,10 +818,10 @@ int			len;
 	status	=	Receipt_get_byte(gReceiptBuf, &ptrA);
 	if (status != kRC_OK)
 	{
-		return kERROR;
+		return(kERROR);
 	}
 
-	return kSTATUS_OK;
+	return(kSTATUS_OK);
 } // of RC_move_by_vel_raw()
 
 //******************************************************************
@@ -830,7 +830,7 @@ int			len;
 //******************************************************************
 //#define _TEST_RC_UTILS_
 #ifdef _TEST_RC_UTILS_
-void main(void)
+int	main(int argc, char **argv)
 {
 char buf[256];
 int status;
@@ -896,5 +896,7 @@ int32_t pos	=	0;
 	RC_stop(SERVO_RA_AXIS);
 
 	MC_shutdown();
+
+	return(0);
 }
 #endif

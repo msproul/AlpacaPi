@@ -149,15 +149,12 @@ class WindowTab
 				void	SetWidgetType(			const int widgetIdx, const int widetType);
 				void	SetWidgetFont(			const int widgetIdx, int fontNum);
 				void	SetWidgetJustification(	const int widgetIdx, int justification);
-			#ifdef _USE_OPENCV_CPP_
 				void	SetWidgetTextColor(		const int widgetIdx, cv::Scalar newtextColor);
 				void	SetWidgetBGColor(		const int widgetIdx, cv::Scalar newtextColor);
 				void	SetWidgetBorderColor(	const int widgetIdx, cv::Scalar newtextColor);
+			#ifdef _USE_OPENCV_CPP_
 				void	SetWidgetImage(			const int widgetIdx, cv::Mat *argImagePtr);
 			#else
-				void	SetWidgetTextColor(		const int widgetIdx, cv::Scalar newtextColor);
-				void	SetWidgetBGColor(		const int widgetIdx, cv::Scalar newtextColor);
-				void	SetWidgetBorderColor(	const int widgetIdx, cv::Scalar newtextColor);
 				void	SetWidgetImage(			const int widgetIdx, IplImage *argImagePtr);
 			#endif // _USE_OPENCV_CPP_
 

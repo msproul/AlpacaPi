@@ -39,7 +39,7 @@
 
 
 //*	MLS Libraries
-#define _ENABLE_CONSOLE_DEBUG_
+//#define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
 
 #include	"alpacadriver_helper.h"

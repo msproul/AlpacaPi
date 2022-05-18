@@ -29,10 +29,17 @@ enum
 
 
 	kTelescope_SlewRate_Title,
-	kTelescope_SlewRate_Fast,
-	kTelescope_SlewRate_Med,
-	kTelescope_SlewRate_Slow,
+
 	kTelescope_SlewRate_VerySlow,
+	kTelescope_SlewRate_Slow,
+	kTelescope_SlewRate_Med,
+	kTelescope_SlewRate_Fast,
+
+	kTelescope_SlewRate_VerySlow_Val,
+	kTelescope_SlewRate_Slow_Val,
+	kTelescope_SlewRate_Med_Val,
+	kTelescope_SlewRate_Fast_Val,
+
 	kTelescope_SlewingStatus,
 	kTelescope_SlewRate_Outline,
 
@@ -63,6 +70,7 @@ enum
 	kTelescope_last
 };
 
+#define	kSupportedSlewRates	4
 
 //**************************************************************************************
 class WindowTabTelescope: public WindowTab
@@ -85,8 +93,28 @@ class WindowTabTelescope: public WindowTab
 //		virtual	void	ProcessDoubleClick(const int buttonIdx);
 
 				void	UpdateButtons(void);
+				void	UpdateTelescopeInfo(TYPE_TelescopeProperties	*telescopeProp);
 				int		cCurrentSlewRate;
+	private:
+				bool		cSlewingUp;
+				bool		cSlewingDown;
+				bool		cSlewingEast;
+				bool		cSlewingWest;
+				//*	button colors
+				cv::Scalar	cBtnBGcolor_Normal;
+				cv::Scalar	cBtnBGcolor_Slewing;
+				cv::Scalar	cBtnBGcolor_Disabled;
+				cv::Scalar	cBtnTXTcolor;
 
+				bool		cSlewRates_RA_valid;
+				bool		cSlewRates_DEC_valid;
+				double		cSlewRate_RAmin;
+				double		cSlewRate_RAmax;
+				double		cRA_slewRates[kSupportedSlewRates];
+
+				double		cSlewRate_DECmin;
+				double		cSlewRate_DECmax;
+				double		cDEC_slewRates[kSupportedSlewRates];
 
 };
 

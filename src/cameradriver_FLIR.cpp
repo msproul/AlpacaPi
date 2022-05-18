@@ -50,6 +50,7 @@
 //#include	<spinnaker/Camera.h>
 #include	<spinnaker/spinc/QuickSpinDefsC.h>
 #include	<spinnaker/spinc/CameraDefsC.h>
+//#include	"FLIR-SDK/spinnaker/spinc/QuickSpinC.h"
 
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
@@ -232,11 +233,11 @@ quickSpin			quickSpinStruct;
 	CONSOLE_DEBUG(__FUNCTION__);
 //	cCameraID		=	deviceNum;
 
-	strcpy(cDeviceManufAbrev,	"FLIR");
-	strcpy(cDeviceManufacturer,	"FLIR");
+	strcpy(cDeviceManufAbrev,		"FLIR");
+	strcpy(cDeviceManufacturer,		"FLIR");
 	strcpy(cCommonProp.Description,	"FLIR Camera");
-	strcpy(cDeviceVersion,	gSpinakerVerString);
-	strcpy(cCommonProp.Name,			"FLIR");
+	strcpy(cDeviceVersion,			gSpinakerVerString);
+	strcpy(cCommonProp.Name,		"FLIR");
 
 	//*	we have to have something here
 	cCameraProp.CameraXsize	=	4240;
@@ -256,19 +257,14 @@ quickSpin			quickSpinStruct;
 	CONSOLE_DEBUG_W_LONG("quickSpinStruct.Width", (long)quickSpinStruct.Width);
 	CONSOLE_DEBUG_W_LONG("sizeof(quickSpin)", sizeof(quickSpin));
 
-
-
 	ReadFLIRcameraInfo();
 
 	strcpy(cCommonProp.Description, cDeviceManufacturer);
-	strcat(cCommonProp.Description, " driver using spinnaker api ");
-	strcat(cCommonProp.Description, "Version:");
+	strcat(cCommonProp.Description, " spinnaker Version");
 	strcat(cCommonProp.Description, gSpinakerVerString);
 
-	strcpy(cCommonProp.Name,	"FLIR");
-	strcat(cCommonProp.Name,	" - ");
+	strcpy(cCommonProp.Name,	"FLIR-");
 	strcat(cCommonProp.Name,	cDeviceModel);
-
 
 	// Initialize camera
 	if (cSpinCameraHandle != NULL)
@@ -283,6 +279,7 @@ quickSpin			quickSpinStruct;
 		}
 	}
 
+	DumpCameraProperties(__FUNCTION__);
 
 #ifdef _USE_OPENCV_
 	sprintf(cOpenCV_ImgWindowName, "%s-%d", cCommonProp.Name, cCameraID);
@@ -754,7 +751,8 @@ spinError			spinErr;
 			}
 			else
 			{
-				CONSOLE_DEBUG_W_NUM("Failed to get node map (spinCameraGetNodeMap)Aborting with error=", spinErr);
+				CONSOLE_DEBUG_W_NUM("Failed to get node map (spinCameraGetNodeMap)Aborting with error=",
+										spinErr);
 			}
 
 		}
@@ -790,8 +788,11 @@ TYPE_EXPOSURE_STATUS	CameraDriverFLIR::Check_Exposure(bool verboseFlag)
 {
 TYPE_EXPOSURE_STATUS	exposureState;
 
-	CONSOLE_DEBUG("-------------------------------------------------------------");
-	CONSOLE_DEBUG(__FUNCTION__);
+	if (cVerboseDebug)
+	{
+		CONSOLE_DEBUG("-------------------------------------------------------------");
+		CONSOLE_DEBUG(__FUNCTION__);
+	}
 //	exposureState	=	kExposure_Working;
 //	exposureState	=	kExposure_Idle;
 	exposureState	=	kExposure_Success;
@@ -870,8 +871,10 @@ TYPE_EXPOSURE_STATUS	exposureState;
 		CONSOLE_DEBUG("Check_Exposure already in progress");
 //		CONSOLE_ABORT(__FUNCTION__);
 	}
-	CONSOLE_DEBUG("EXIT---EXIT---EXIT---EXIT---EXIT---EXIT---EXIT---EXIT---EXIT---");
-
+	if (cVerboseDebug)
+	{
+		CONSOLE_DEBUG("EXIT---EXIT---EXIT---EXIT---EXIT---EXIT---EXIT---EXIT---EXIT---");
+	}
 	return(exposureState);
 }
 

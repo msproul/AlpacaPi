@@ -67,6 +67,10 @@
 #define	DEGREES(radians)	((radians) * (180.0 / M_PI))
 #define	RADIANS(degrees)	((degrees) * (M_PI / 180.0))
 
+//*	TODO Change to using these instead to be consistent with the rest of AlpacaPi
+#define	DEGREES(radians)	((radians) * (180.0 / M_PI))
+#define	RADIANS(degrees)	((degrees) * (M_PI / 180.0))
+
 //*****************************************************************************
 typedef struct cfgItem_t
 {

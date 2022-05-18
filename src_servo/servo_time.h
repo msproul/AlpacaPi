@@ -34,6 +34,7 @@
 
 #define kLOCAL_CFG_FILE "servo_location.cfg"
 
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -62,7 +63,6 @@ extern "C"
 	double Time_calc_field_rotation(double alt, double azi, double lat);
 	double Time_calc_refraction(double alt, double temp, double press);
 	int Time_read_local_cfg(const char *localCfgFile);
-
 #ifdef __cplusplus
 }
 #endif

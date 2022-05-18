@@ -49,6 +49,7 @@
 //*	Feb 28,	2022	<MLS> Added cDriverSupportsRefraction
 //*	Mar  2,	2022	<MLS> Setting Connected now working for telescope driver
 //*	Mar 25,	2022	<MLS> Added RunStateMachine() to telescopedriver
+//*	May 13,	2022	<MLS> Made Get_AxisRates() understand specified axis number
 //*****************************************************************************
 
 
@@ -272,7 +273,7 @@ const TYPE_CmdEntry	gTelescopeCmdTable[]	=
 TelescopeDriver::TelescopeDriver(void)
 	:AlpacaDriver(kDeviceType_Telescope)
 {
-
+int		iii;
 	CONSOLE_DEBUG(__FUNCTION__);
 
 	strcpy(cCommonProp.Name, "Telescope");
@@ -293,8 +294,13 @@ TelescopeDriver::TelescopeDriver(void)
 	//*	cTelescopeProp.DoesRefraction is used to enable/disable if it is supported
 	cDriverSupportsRefraction		=	false;		//*	can be over-ridden by sub class
 
-//+	cTrackingRates;
-//+	cUTCDate;
+	//*	Set default axis rates
+	for (iii=0; iii<3; iii++)
+	{
+		cTelescopeProp.AxisRates[iii].Minimum	=	0.0;
+		cTelescopeProp.AxisRates[iii].Maximum	=	4.0 + iii;	//*	the extra iii is for testing
+	}
+
 
 	if (gObseratorySettings.ValidInfo)
 	{
@@ -2516,7 +2522,6 @@ int						axisNumber;
 //	CONSOLE_DEBUG(__FUNCTION__);
 //	CONSOLE_DEBUG(reqData->contentData);
 
-
 	axisFound		=	GetKeyWordArgument(	reqData->contentData,
 											"Axis",
 											axisString,
@@ -2542,14 +2547,14 @@ int						axisNumber;
 									reqData->jsonTextBuffer,
 									kMaxJsonBuffLen,
 									"Minimum",
-									1.5,
+									cTelescopeProp.AxisRates[axisNumber].Minimum,
 									INCLUDE_COMMA);
 
 			JsonResponse_Add_Double(reqData->socket,
 									reqData->jsonTextBuffer,
 									kMaxJsonBuffLen,
 									"Maximum",
-									1.5,
+									cTelescopeProp.AxisRates[axisNumber].Maximum,
 									NO_COMMA);
 
 			JsonResponse_Add_RawText(	reqData->socket,

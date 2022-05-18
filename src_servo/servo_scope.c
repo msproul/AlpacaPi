@@ -104,8 +104,8 @@ int Servo_set_comm_port(char com[], int baud)
 //*****************************************************************************
 void Servo_get_park_coordins(double *ha, double *dec)
 {
-	*ha = gServoRa.park;
-	*dec = gServoDec.park;
+	*ha		=	gServoRa.park;
+	*dec	=	gServoDec.park;
 }
 
 //*****************************************************************************
@@ -157,7 +157,7 @@ int Servo_scale_acc(int32_t percentRa, int32_t percentDec)
 	// Check the range for 0 <= % <= 100
 	if ((percentRa < 0) || (percentRa > 100) || (percentDec < 0) || (percentDec > 100))
 	{
-		return (kERROR);
+		return(kERROR);
 	}
 	// Set the percent acceleration of the max value
 	gServoRa.acc = (gServoRa.maxAcc * percentRa) / 100;
@@ -175,7 +175,7 @@ int Servo_scale_vel(int32_t percentRa, int32_t percentDec)
 	// Check the range for 0 <= % <= 100
 	if ((percentRa < 0) || (percentRa > 100) || (percentDec < 0) || (percentRa > 100))
 	{
-		return (kERROR);
+		return(kERROR);
 	}
 	// Set the percent velocity of the max value
 	gServoRa.vel = (gServoRa.maxVel * percentRa) / 100;
@@ -264,7 +264,6 @@ void Servo_step_to_pos(int32_t raStep, int32_t decStep, double *ra, double *dec)
 	// get the 'true' position with home offset in decidegs
 	*dec = gServoDec.home + currPos;
 
-	return;
 } // of Servo_step_to_pos()
 
 //*****************************************************************************
@@ -386,7 +385,6 @@ void Servo_get_pos(double *ra, double *dec)
 	// get the 'true' position with home offset
 	*dec = gServoDec.home + currPos;
 
-	return;
 } // Servo_get_pos()
 
 //*****************************************************************************
@@ -408,8 +406,6 @@ void Servo_set_pos(double ra, double dec)
 	gServoDec.time = Time_get_systime();
 	gServoDec.home = dec;
 	RC_set_home(SERVO_DEC_AXIS);
-
-	return;
 } // Servo_set_pos()
 
 //*****************************************************************************
@@ -587,7 +583,6 @@ int Servo_init(const char *scopeCfgFile, const char *localCfgFile)
 	int status = kSTATUS_OK;
 	int baud;
 	char port[kMAX_STR_LEN];
-
 	CONSOLE_DEBUG(__FUNCTION__);
 
 	// Read the location config file for the scope location and check status
@@ -666,7 +661,8 @@ int Servo_init(const char *scopeCfgFile, const char *localCfgFile)
 	gServoDec.slew = (uint32_t)gServoDec.realSlew * gServoDec.step;
 	gServoDec.status = 0;
 	gServoDec.direction = gServoDec.config;
-	Servo_set_tracking(SERVO_DEC_AXIS, (kARCSEC_PER_SEC * (double)gServoDec.step));
+
+  Servo_set_tracking(SERVO_DEC_AXIS, (kARCSEC_PER_SEC * (double)gServoDec.step));
 	gServoDec.home = 0.0;
 	gServoDec.time = Time_get_systime();
 
@@ -1202,7 +1198,7 @@ int Servo_move_to_coordins(double gotoRa, double gotoDec, double lat, double lon
 	if (gIgnoreHorizon == false && alt < 0.0)
 	{
 		// this is astronomy not geology, so return
-		return (kBELOW_HORIZON);
+		return(kBELOW_HORIZON);
 	}
 
 	// get the current position in deci hours and degs
@@ -1245,7 +1241,7 @@ int Servo_move_to_coordins(double gotoRa, double gotoDec, double lat, double lon
 	status -= Servo_move_step_track(targetRaStep, targetDecStep);
 
 	// If status is < zero, return error
-	return (status == kSTATUS_OK) ? kSTATUS_OK : kERROR;
+	return(status == kSTATUS_OK) ? kSTATUS_OK : kERROR;
 } // of Servo_move_to_coordins()
 
 //*****************************************************************************
@@ -1356,7 +1352,7 @@ int Servo_move_to_static(double parkHA, double parkDec)
 	status -= Servo_move_step(targetRaStep, targetDecStep, false);
 
 	// If status is < zero, return error
-	return (status == kSTATUS_OK) ? kSTATUS_OK : kERROR;
+	return(status == kSTATUS_OK) ? kSTATUS_OK : kERROR;
 } // of Servo_move_to_static()
 
 //******************************************************************************

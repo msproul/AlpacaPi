@@ -365,7 +365,7 @@ class Controller
 													const char	*keywordString,
 													const char	*valueString);
 
-				void	AlpacaProcessReadAll_Common(const char	*deviceTypeStr,
+				bool	AlpacaProcessReadAll_Common(const char	*deviceTypeStr,
 													const int	deviceNum,
 													const char	*keywordString,
 													const char	*valueString);

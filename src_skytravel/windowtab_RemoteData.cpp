@@ -221,7 +221,7 @@ int		dbNumber;
 	valueWitdth4	=	(fullBoxWidth - valueWitdth1 - 6) / 4;
 	dbNumber		=	0;
 	iii				=	kRemoteData_SQLdatabase1;
-	CONSOLE_DEBUG_W_NUM("gDataBaseNameCnt\t=", gDataBaseNameCnt);
+//	CONSOLE_DEBUG_W_NUM("gDataBaseNameCnt\t=", gDataBaseNameCnt);
 	while (iii <= kRemoteData_SQLdatabase4)
 	{
 		SetWidget(				iii,	xLoc2,	yLoc,	valueWitdth4,		cSmallBtnHt);
@@ -231,8 +231,8 @@ int		dbNumber;
 		SetWidgetText(			iii,	"--");
 		if (dbNumber < gDataBaseNameCnt)
 		{
-			CONSOLE_DEBUG_W_NUM("dbNumber\t=", dbNumber);
-			CONSOLE_DEBUG_W_STR("Name    \t=", gDataBaseNames[dbNumber].Name);
+//			CONSOLE_DEBUG_W_NUM("dbNumber\t=", dbNumber);
+//			CONSOLE_DEBUG_W_STR("Name    \t=", gDataBaseNames[dbNumber].Name);
 			SetWidgetText(		iii,	gDataBaseNames[dbNumber].Name);
 			dbNumber++;
 		}

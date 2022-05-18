@@ -2911,6 +2911,30 @@ time_t		deltaSeconds;
 }
 
 //*****************************************************************************
+void	AlpacaDriver::DumpCommonProperties(const char *callingFunctionName)
+{
+char	titleLine[128];
+
+
+	CONSOLE_DEBUG(		"*************************************************************");
+	sprintf(titleLine,	"******************** Alpaca device properties ***************");
+	CONSOLE_DEBUG(titleLine);
+	sprintf(titleLine,	"************* Called from: %-20s *************", callingFunctionName);
+	CONSOLE_DEBUG(titleLine);
+	CONSOLE_DEBUG(		"*************************************************************");
+
+
+	CONSOLE_DEBUG_W_NUM(	"cDeviceType                    \t=",	cDeviceType);
+	CONSOLE_DEBUG_W_NUM(	"cDeviceNum                     \t=",	cDeviceNum);
+	CONSOLE_DEBUG_W_BOOL(	"cCommonProp.Connected          \t=",	cCommonProp.Connected);
+	CONSOLE_DEBUG_W_STR(	"cCommonProp.Description        \t=",	cCommonProp.Description);
+	CONSOLE_DEBUG_W_STR(	"cCommonProp.DriverInfo         \t=",	cCommonProp.DriverInfo);
+	CONSOLE_DEBUG_W_STR(	"cCommonProp.DriverVersion      \t=",	cCommonProp.DriverVersion);
+	CONSOLE_DEBUG_W_NUM(	"cCommonProp.InterfaceVersion   \t=",	cCommonProp.InterfaceVersion);
+	CONSOLE_DEBUG_W_STR(	"cCommonProp.Name               \t=",	cCommonProp.Name);
+}
+
+//*****************************************************************************
 static void	CreateDriverObjects()
 {
 //*********************************************************
@@ -3056,7 +3080,7 @@ bool			controllWindowActive;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG(gFullVersionString);
-	CONSOLE_DEBUG_W_STR("gcc version:", __VERSION__);
+//	CONSOLE_DEBUG_W_STR("gcc version:", __VERSION__);
 
 	AddLibraryVersion("software", "gcc", __VERSION__);
 	AddLibraryVersion("software", "libc", gnu_get_libc_version());

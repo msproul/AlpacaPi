@@ -251,34 +251,53 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 }
 
 //*****************************************************************************
-TYPE_ASCOM_STATUS	TelescopeDriverLX200::Telescope_MoveAxis(const int axisNum, const double moveRate_degPerSec, char *alpacaErrMsg)
+TYPE_ASCOM_STATUS	TelescopeDriverLX200::Telescope_MoveAxis(	const int		axisNum,
+																const double	moveRate_degPerSec,
+																char			*alpacaErrMsg)
 {
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 
+	CONSOLE_DEBUG_W_DBL("moveRate_degPerSec\t=", moveRate_degPerSec)
 	switch(axisNum)
 	{
 		case 0:
-			if (moveRate_degPerSec > 0)
+			cTelescopeProp.Slewing	=	true;
+			if (moveRate_degPerSec > 0.0)
 			{
 				AddCmdToQueue("Mw");
 			}
-			else
+			else if (moveRate_degPerSec < 0.0)
 			{
 				AddCmdToQueue("Me");
 			}
-			cTelescopeProp.Slewing	=	true;
+			else
+			{
+				AddCmdToQueue("Qe");
+				AddCmdToQueue("Qw");
+//				cQueuedCmdCnt	=	0;
+//				AddCmdToQueue("Q");
+//				cTelescopeProp.Slewing	=	false;
+			}
 			break;
 
 		case 1:
+			cTelescopeProp.Slewing	=	true;
 			if (moveRate_degPerSec > 0)
 			{
 				AddCmdToQueue("Mn");
 			}
-			else
+			else if (moveRate_degPerSec < 0.0)
 			{
 				AddCmdToQueue("Ms");
 			}
-			cTelescopeProp.Slewing	=	true;
+			else
+			{
+				AddCmdToQueue("Qn");
+				AddCmdToQueue("Qs");
+//				cQueuedCmdCnt	=	0;
+//				AddCmdToQueue("Q");
+//				cTelescopeProp.Slewing	=	false;
+			}
 			break;
 
 		default:

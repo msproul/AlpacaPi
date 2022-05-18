@@ -110,6 +110,18 @@ ControllerTelescope::~ControllerTelescope(void)
 	DELETE_OBJ_IF_VALID(cDriverInfoTabObjPtr);
 	DELETE_OBJ_IF_VALID(cAboutBoxTabObjPtr);
 
+	//*	check to see if we are slewing
+	if (cTelescopeProp.Slewing)
+	{
+	bool	validData;
+
+		CONSOLE_DEBUG("Slewing is active, shutting it down");
+		validData		=	AlpacaSendPutCmd(	"telescope", "abortslew",	NULL);
+		if (validData == false)
+		{
+			CONSOLE_DEBUG("abortslew failed!!!!!!!!!!!");
+		}
+	}
 }
 
 
@@ -272,40 +284,19 @@ bool	dataWasHandled;
 //	CONSOLE_DEBUG_W_2STR("json=",	keywordString, valueString);
 	if (strcasecmp(deviceTypeStr, "Telescope") == 0)
 	{
-		dataWasHandled	=	AlpacaProcessReadAll_Telescope(deviceNum, keywordString, valueString);
+		dataWasHandled	=	AlpacaProcessReadAll_Common(deviceTypeStr,
+														deviceNum,
+														keywordString,
+														valueString);
 		if (dataWasHandled)
 		{
 			//*	we are done, skip the rest
+		//	CONSOLE_DEBUG("Data handled by AlpacaProcessReadAll_Common()");
 		}
 		else
 		{
-			AlpacaProcessReadAll_Common(	deviceTypeStr,
-											deviceNum,
-											keywordString,
-											valueString);
-
+			dataWasHandled	=	AlpacaProcessReadAll_Telescope(deviceNum, keywordString, valueString);
 		}
-//		else if (strcasecmp(keywordString, "name") == 0)
-//		{
-//			SetWidgetText(kTab_DriverInfo, kDriverInfo_Name, valueString);
-//		}
-//		else if (strcasecmp(keywordString, "driverinfo") == 0)
-//		{
-//			SetWidgetText(kTab_DriverInfo, kDriverInfo_DriverInfo, valueString);
-//		}
-//		else if (strcasecmp(keywordString, "description") == 0)
-//		{
-//			SetWidgetText(kTab_DriverInfo, kDriverInfo_Description, valueString);
-//		}
-//		else if (strcasecmp(keywordString, "driverversion") == 0)
-//		{
-//			SetWidgetText(kTab_DriverInfo, kDriverInfo_DriverVersion, valueString);
-//		}
-//		else if (strcasecmp(keywordString, "interfaceversion") == 0)
-//		{
-//			SetWidgetText(kTab_DriverInfo, kDriverInfo_InterfaceVersion, valueString);
-//		}
-
 	}
 #ifdef _ENABLE_SKYTRAVEL_
 	else if (strcasecmp(deviceTypeStr, "somthingelse") == 0)
@@ -355,50 +346,18 @@ bool	previousOnLineState;
 		}
 		cOnLine	=	true;
 
-		//*	update telescope tracking
-		if (cTelescopeProp.Tracking)
+		//*	update the window tab with everything
+		if (cTelescopeTabObjPtr != NULL)
 		{
-			SetWidgetText(kTab_Telescope,		kTelescope_TrackingStatus, "Tracking is On");
-			SetWidgetBGColor(kTab_Telescope,	kTelescope_TrackingStatus,	CV_RGB(0,	255,	0));
-			SetWidgetTextColor(kTab_Telescope,	kTelescope_TrackingStatus,	CV_RGB(0,	0,	0));
+			SetTabWindow(kTab_Telescope,	cTelescopeTabObjPtr);
+			cTelescopeTabObjPtr->UpdateTelescopeInfo(&cTelescopeProp);
 		}
-		else
-		{
-			SetWidgetText(kTab_Telescope,		kTelescope_TrackingStatus, "Tracking is Off");
-			SetWidgetBGColor(kTab_Telescope,	kTelescope_TrackingStatus,	CV_RGB(0,	0,	0));
-			SetWidgetTextColor(kTab_Telescope,	kTelescope_TrackingStatus,	CV_RGB(255,	0,	0));
-		}
-
-		//*	update slewing
-		if (cTelescopeProp.Slewing)
-		{
-			SetWidgetText(kTab_Telescope,		kTelescope_SlewingStatus,	"Slewing is On");
-			SetWidgetBGColor(kTab_Telescope,	kTelescope_SlewingStatus,	CV_RGB(0,	255,	0));
-			SetWidgetTextColor(kTab_Telescope,	kTelescope_SlewingStatus,	CV_RGB(0,	0,	0));
-		}
-		else
-		{
-			SetWidgetText(kTab_Telescope,		kTelescope_SlewingStatus, "Slewing is Off");
-			SetWidgetBGColor(kTab_Telescope,	kTelescope_SlewingStatus,	CV_RGB(0,	0,	0));
-			SetWidgetTextColor(kTab_Telescope,	kTelescope_SlewingStatus,	CV_RGB(255,	0,	0));
-		}
-
-		SetWidgetChecked(kTab_Telescope,	kTelescope_TrackingRate_Sidereal,
-												(cTelescopeProp.TrackingRate == kDriveRate_driveSidereal));
-
-		SetWidgetChecked(kTab_Telescope,	kTelescope_TrackingRate_Lunar,
-												(cTelescopeProp.TrackingRate == kDriveRate_driveLunar));
-
-		SetWidgetChecked(kTab_Telescope,	kTelescope_TrackingRate_Solar,
-												(cTelescopeProp.TrackingRate == kDriveRate_driveSolar));
-
-		SetWidgetChecked(kTab_Telescope,	kTelescope_TrackingRate_King,
-												(cTelescopeProp.TrackingRate == kDriveRate_driveKing));
 	}
 	else
 	{
 		cOnLine	=	false;
 	}
+
 	if (cOnLine != previousOnLineState)
 	{
 		SetWindowIPaddrInfo(NULL, cOnLine);

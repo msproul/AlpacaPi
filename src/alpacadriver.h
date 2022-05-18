@@ -243,6 +243,7 @@ class AlpacaDriver
 				void	OutputHTML_CmdStats(	TYPE_GetPutRequestData *reqData);
 
 				TYPE_ASCOM_STATUS		SendSupportedActions(TYPE_GetPutRequestData *reqData, const TYPE_CmdEntry *theCmdTable);
+				void					DumpCommonProperties(const char *callingFunctionName);
 
 				//*	class variables start with "c"
 
@@ -373,6 +374,7 @@ AlpacaDriver	*FindDeviceByType(const int deviceType);
 bool			GetCmdNameFromTable(const int cmdNumber, char *comandName, const TYPE_CmdEntry *cmdTable, char *getPut);
 void			LogToDisk(const int whichLogFile, TYPE_GetPutRequestData *reqData);
 void			GetAlpacaName(TYPE_DEVICETYPE deviceType, char *alpacaName);
+
 
 
 //*****************************************************************************

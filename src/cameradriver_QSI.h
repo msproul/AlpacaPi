@@ -71,12 +71,13 @@ class CameraDriverQSI: public CameraDriver
 
 		virtual	bool					GetImage_ROI_info(void);
 
-//		virtual	int						Cooler_TurnOn(void);
-//		virtual	int						Cooler_TurnOff(void);
-//		virtual	int						Read_CoolerState(bool *coolerOnOff);
-//		virtual	int						Read_CoolerPowerLevel(void);
-//		virtual	int						Read_Fastreadout(void);
+		virtual	TYPE_ASCOM_STATUS		Cooler_TurnOn(void);
+		virtual	TYPE_ASCOM_STATUS		Cooler_TurnOff(void);
 		virtual	TYPE_ASCOM_STATUS		Read_SensorTemp(void);
+		virtual	TYPE_ASCOM_STATUS		Read_CoolerState(bool *coolerOnOff);
+		virtual	TYPE_ASCOM_STATUS		Read_CoolerPowerLevel(void);
+
+//		virtual	int						Read_Fastreadout(void);
 		virtual	TYPE_ASCOM_STATUS		Read_ImageData(void);
 
 		//*****************************************************************************
@@ -85,8 +86,8 @@ class CameraDriverQSI: public CameraDriver
 //		virtual	void					ResetCamera(void);
 //		virtual	TYPE_ASCOM_STATUS		Start_CameraExposure(int32_t exposureMicrosecs);
 //				TYPE_ASCOM_STATUS		Start_CameraExposure(void);
-//		virtual	TYPE_ASCOM_STATUS		Stop_Exposure(void);
-//		virtual	TYPE_ASCOM_STATUS		Abort_Exposure(void);
+		virtual	TYPE_ASCOM_STATUS		Stop_Exposure(void);
+		virtual	TYPE_ASCOM_STATUS		Abort_Exposure(void);
 //		virtual	TYPE_EXPOSURE_STATUS	Check_Exposure(bool verboseFlag = false);
 //
 //		virtual	TYPE_ASCOM_STATUS		SetImageTypeCameraOpen(TYPE_IMAGE_TYPE newImageType);

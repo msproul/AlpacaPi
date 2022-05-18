@@ -32,6 +32,10 @@
 //*	Apr  8,	2022	<MLS> Got QSI library to compile and install
 //*	Apr 16,	2022	<MLS> Added simulation option to QSI camera driver
 //*	Apr 17,	2022	<JMH> Making progress on QSI camera
+//*	May 14,	2022	<MLS> JMH was able to take a picture
+//*	May 14,	2022	<MLS> Working on cooler support for QSI camera
+//*	May 15,	2022	<MLS> Finished Read_CoolerPowerLevel()
+//*	May 17,	2022	<MLS> Implemented Read_CoolerState() for QSI camera
 //*****************************************************************************
 
 #if defined(_ENABLE_CAMERA_) && defined(_ENABLE_QSI_)
@@ -142,7 +146,6 @@ int				numCamerasFound;
 	gVerbose				=	true;
 	cVerboseDebug			=	true;
 
-
 	cCameraID				=	deviceNum;
 
 	//*	set defaults
@@ -194,6 +197,10 @@ int				numCamerasFound;
 		cCameraProp.PixelSizeX			=	3.7;
 		cCameraProp.PixelSizeY			=	3.7;
 		cCameraProp.FullWellCapacity	=	8567.253906;
+
+		cCameraProp.Cansetccdtemperature	=	true;
+		cCameraProp.CanGetCoolerPower		=	true;
+		cIsCoolerCam						=	true;
 
 		AddReadoutModeToList(kImageType_RAW16);
 	}
@@ -354,10 +361,13 @@ unsigned int	qsi_Result;
 bool			cameraInfoOK;
 bool			canSetTemp;
 bool			hasFilters;
+bool			hasShutter;
+bool			myBoolValue;
 long			xsize;
 long			ysize;
 double			electronsPerADU;
 double			fullWellCapacity;
+double			exposureTime;
 short			maxBin;
 long			maxADU;
 double			pixelSize;
@@ -472,8 +482,50 @@ std::string		lastError("");
 		cameraInfoOK	=	false;
 	}
 
+	//--------------------------------------------------------------
+	qsi_Result	=	cQSIcam.get_MinExposureTime(&exposureTime);
+	if (qsi_Result == QSI_OK)
+	{
+		cCameraProp.ExposureMin_seconds	=			exposureTime;
+		cCameraProp.ExposureMin_us		=			exposureTime * 1000000;
+		CONSOLE_DEBUG_W_DBL("ExposureMin_seconds\t=",	exposureTime);
+	}
+	else
+	{
+		cQSIcam.get_LastError(lastError);
+		CONSOLE_DEBUG_W_STR("QSI Result (get_MinExposureTime)\t=",	lastError.c_str());
+		cameraInfoOK	=	false;
+	}
+	//--------------------------------------------------------------
+	qsi_Result	=	cQSIcam.get_MaxExposureTime(&exposureTime);
+	if (qsi_Result == QSI_OK)
+	{
+		cCameraProp.ExposureMax_seconds	=			exposureTime;
+		cCameraProp.ExposureMax_us		=			exposureTime * 1000000;
+		CONSOLE_DEBUG_W_DBL("ExposureMin_seconds\t=",	exposureTime);
+	}
+	else
+	{
+		cQSIcam.get_LastError(lastError);
+		CONSOLE_DEBUG_W_STR("QSI Result (get_MaxExposureTime)\t=",	lastError.c_str());
+		cameraInfoOK	=	false;
+	}
+
+	//--------------------------------------------------------------
+	qsi_Result	=	cQSIcam.get_HasShutter(&hasShutter);
+	if (qsi_Result == QSI_OK)
+	{
+		cCameraProp.HasShutter	=			hasShutter;
+		CONSOLE_DEBUG_W_DBL("HasShutter\t=",	hasShutter);
+	}
+	else
+	{
+		cQSIcam.get_LastError(lastError);
+		CONSOLE_DEBUG_W_STR("QSI Result (get_HasShutter)\t=",	lastError.c_str());
+		cameraInfoOK	=	false;
+	}
+
 //	int get_HasFilterWheel(bool* pVal);
-//	int get_HasShutter(bool* pVal);
 //	int get_HeatSinkTemperature(double* pVal);
 //	int get_ImageArraySize(int& xSize, int& ySize, int& elementSize);
 //	int get_ImageArray(unsigned short* pVal);
@@ -568,16 +620,27 @@ std::string		lastError("");
 	//-----------------------------------------------------------
 	// Query if the camera can control the CCD temp
 	qsi_Result	=	cQSIcam.get_CanSetCCDTemperature(&canSetTemp);
-	if (canSetTemp)
+	if (qsi_Result == QSI_OK)
 	{
 		CONSOLE_DEBUG_W_NUM("canSetTemp\t=",	canSetTemp);
 		cCameraProp.Cansetccdtemperature	=	canSetTemp;
+		if (canSetTemp)
+		{
+			cIsCoolerCam	=	true;
 
+			// Set the CCD temp setpoint to 10.0C
+			qsi_Result	=	cQSIcam.put_SetCCDTemperature(10.0);
+			// Enable the cooler
+			qsi_Result	=	cQSIcam.put_CoolerOn(true);
+		}
+	}
 
-		// Set the CCD temp setpoint to 10.0C
-		qsi_Result	=	cQSIcam.put_SetCCDTemperature(10.0);
-		// Enable the cooler
-		qsi_Result	=	cQSIcam.put_CoolerOn(true);
+	//-----------------------------------------------------------
+	// Query if the camera can get cooler power level
+	qsi_Result	=	cQSIcam.get_CanGetCoolerPower(&myBoolValue);
+	if (qsi_Result == QSI_OK)
+	{
+		cCameraProp.CanGetCoolerPower	=	myBoolValue;
 	}
 
 	if (modelNumber.substr(0,1) == "6")
@@ -615,6 +678,28 @@ std::string		lastError("");
 	qsi_Result	=	cQSIcam.put_NumX(xsize);
 	qsi_Result	=	cQSIcam.put_NumY(ysize);
 
+	//*	now lets check the cooler and get info on it
+	if (cCameraProp.CanGetCoolerPower)
+	{
+	double				coolerPowerLevel;
+		qsi_Result	=	cQSIcam.get_CoolerPower(&coolerPowerLevel);
+		if (qsi_Result == QSI_OK)
+		{
+			cCameraProp.CoolerPower	=	coolerPowerLevel;
+		}
+	}
+	if (cCameraProp.Cansetccdtemperature)
+	{
+	double		cameraTemp_DegC;
+
+		//	Returns the current CCD temperature in degrees Celsius in parameter 1.
+		//	Only valid if CanSetCCDTemperature is true.
+		qsi_Result	=	cQSIcam.get_CCDTemperature(&cameraTemp_DegC);
+		if (qsi_Result == QSI_OK)
+		{
+			cCameraProp.CCDtemperature		=	cameraTemp_DegC;
+		}
+	}
 
 	return(cameraInfoOK);
 }
@@ -642,7 +727,7 @@ std::string			lastError("");
 	else
 #endif
 	{
-		if (cTempReadSupported)
+		if (cCameraProp.Cansetccdtemperature)
 		{
 			//	Returns the current CCD temperature in degrees Celsius in parameter 1.
 			//	Only valid if CanSetCCDTemperature is true.
@@ -790,6 +875,10 @@ std::string			lastError("");
 	cCameraProp.ImageReady		=	false;
 
 	durationSeconds	=	(exposureMicrosecs * 1.0) / 1000000.0;
+
+	CONSOLE_DEBUG_W_NUM("exposureMicrosecs\t=",	exposureMicrosecs);
+	CONSOLE_DEBUG_W_DBL("durationSeconds\t=",	durationSeconds);
+
 #ifdef _SIMULATE_CAMERA_
 	if (gSimulateCameraImage)
 	{
@@ -830,6 +919,52 @@ std::string			lastError("");
 }
 
 //*****************************************************************************
+TYPE_ASCOM_STATUS		CameraDriverQSI::Abort_Exposure(void)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
+unsigned int		qsi_Result;
+std::string			lastError("");
+
+	qsi_Result			=	cQSIcam.AbortExposure();
+	if (qsi_Result == QSI_OK)
+	{
+		alpacaErrCode			=	kASCOM_Err_Success;
+	}
+	else
+	{
+		cQSIcam.get_LastError(lastError);
+
+		strcpy(cLastCameraErrMsg,	"QSI Err:");
+		strcat(cLastCameraErrMsg,	lastError.c_str());
+		CONSOLE_DEBUG(cLastCameraErrMsg);
+		switch(qsi_Result)
+		{
+			case QSI_NOTCONNECTED:	alpacaErrCode	=	kASCOM_Err_NotConnected;		break;
+			default:				alpacaErrCode	=	kASCOM_Err_InvalidOperation;	break;
+		}
+	}
+	return(alpacaErrCode);
+}
+
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS		CameraDriverQSI::Stop_Exposure(void)
+{
+TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
+
+	//*	this should be over ridden
+	strcpy(cLastCameraErrMsg, "Not finished-");
+	strcat(cLastCameraErrMsg, __FILE__);
+	strcat(cLastCameraErrMsg, ":");
+	strcat(cLastCameraErrMsg, __FUNCTION__);
+	CONSOLE_DEBUG(cLastCameraErrMsg);
+
+	return(alpacaErrCode);
+}
+
+
+
+//*****************************************************************************
 bool	CameraDriverQSI::GetImage_ROI_info(void)
 {
 	cROIinfo.currentROIimageType	=	kImageType_RAW16;
@@ -837,6 +972,161 @@ bool	CameraDriverQSI::GetImage_ROI_info(void)
 	cROIinfo.currentROIheight		=	cCameraProp.CameraYsize;
 	cROIinfo.currentROIbin			=	1;
 	return(true);
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	CameraDriverQSI::Cooler_TurnOn(void)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
+unsigned int		qsi_Result;
+std::string			lastError("");
+
+	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_BOOL(	"cCameraProp.Cansetccdtemperature\t=",	cCameraProp.Cansetccdtemperature);
+	CONSOLE_DEBUG_W_BOOL(	"cCameraProp.CanGetCoolerPower  \t=",	cCameraProp.CanGetCoolerPower);
+
+	if (cCameraProp.Cansetccdtemperature)
+	{
+		// Enable the cooler
+		qsi_Result	=	cQSIcam.put_CoolerOn(true);
+		if (qsi_Result == QSI_OK)
+		{
+			CONSOLE_DEBUG("cQSIcam.put_CoolerOn(true); return OK");
+			alpacaErrCode	=	kASCOM_Err_Success;
+		}
+		else
+		{
+			cQSIcam.get_LastError(lastError);
+			strcpy(cLastCameraErrMsg, lastError.c_str());
+			alpacaErrCode	=	kASCOM_Err_NotConnected;
+		}
+	}
+	else
+	{
+		alpacaErrCode	=	kASCOM_Err_NotImplemented;
+		strcpy(cLastCameraErrMsg, "Camera does not support cooling");
+		CONSOLE_DEBUG(cLastCameraErrMsg);
+	}
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	CameraDriverQSI::Cooler_TurnOff(void)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
+unsigned int		qsi_Result;
+std::string			lastError("");
+
+	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_BOOL(	"cCameraProp.Cansetccdtemperature\t=",	cCameraProp.Cansetccdtemperature);
+	CONSOLE_DEBUG_W_BOOL(	"cCameraProp.CanGetCoolerPower  \t=",	cCameraProp.CanGetCoolerPower);
+
+	if (cCameraProp.Cansetccdtemperature)
+	{
+		// disable the cooler
+		qsi_Result	=	cQSIcam.put_CoolerOn(false);
+		if (qsi_Result == QSI_OK)
+		{
+			CONSOLE_DEBUG("cQSIcam.put_CoolerOn(false); return OK");
+			alpacaErrCode	=	kASCOM_Err_Success;
+		}
+		else
+		{
+			cQSIcam.get_LastError(lastError);
+			strcpy(cLastCameraErrMsg, lastError.c_str());
+			alpacaErrCode	=	kASCOM_Err_NotConnected;
+		}
+	}
+	else
+	{
+		alpacaErrCode	=	kASCOM_Err_NotImplemented;
+		strcpy(cLastCameraErrMsg, "Camera does not support cooling");
+		CONSOLE_DEBUG(cLastCameraErrMsg);
+	}
+	return(alpacaErrCode);
+}
+
+//**************************************************************************
+TYPE_ASCOM_STATUS	CameraDriverQSI::Read_CoolerPowerLevel(void)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
+unsigned int		qsi_Result;
+std::string			lastError("");
+double				coolerPowerLevel;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+	if (cCameraProp.CanGetCoolerPower)
+	{
+	#ifdef _SIMULATE_CAMERA_
+		if (gSimulateCameraImage)
+		{
+			cCameraProp.CoolerPower	=	52.34;
+			alpacaErrCode			=	kASCOM_Err_Success;
+		}
+		else
+	#endif
+		{
+			qsi_Result	=	cQSIcam.get_CoolerPower(&coolerPowerLevel);
+			if (qsi_Result == QSI_OK)
+			{
+				cCameraProp.CoolerPower	=	coolerPowerLevel;
+				alpacaErrCode			=	kASCOM_Err_Success;
+				CONSOLE_DEBUG_W_DBL("cCameraProp.CoolerPower\t=", cCameraProp.CoolerPower);
+			}
+			else
+			{
+				cQSIcam.get_LastError(lastError);
+				strcpy(cLastCameraErrMsg, lastError.c_str());
+				alpacaErrCode	=	kASCOM_Err_NotConnected;
+				CONSOLE_DEBUG_W_STR("cQSIcam.get_CoolerPower returned", cLastCameraErrMsg);
+			}
+		}
+	}
+	else
+	{
+		strcpy(cLastCameraErrMsg, "AlpacaPi: Not implemented-");
+		strcat(cLastCameraErrMsg, __FILE__);
+		strcat(cLastCameraErrMsg, ":");
+		strcat(cLastCameraErrMsg, __FUNCTION__);
+		return(alpacaErrCode);
+	}
+	return(alpacaErrCode);
+}
+
+//**************************************************************************
+TYPE_ASCOM_STATUS	CameraDriverQSI::Read_CoolerState(bool *coolerOnOff)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
+unsigned int		qsi_Result;
+std::string			lastError("");
+bool				myCoolerState;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+
+#ifdef _SIMULATE_CAMERA_
+	if (gSimulateCameraImage)
+	{
+		*coolerOnOff	=	true;
+	}
+	else
+#endif
+	{
+		qsi_Result	=	cQSIcam.get_CoolerOn(&myCoolerState);
+		if (qsi_Result == QSI_OK)
+		{
+			*coolerOnOff	=	myCoolerState;
+			alpacaErrCode	=	kASCOM_Err_Success;
+			CONSOLE_DEBUG_W_BOOL("coolerOnOff\t=", coolerOnOff);
+		}
+		else
+		{
+			cQSIcam.get_LastError(lastError);
+			strcpy(cLastCameraErrMsg, lastError.c_str());
+			alpacaErrCode	=	kASCOM_Err_NotConnected;
+			CONSOLE_DEBUG_W_STR("cQSIcam.get_CoolerPower returned", cLastCameraErrMsg);
+		}
+	}
+	return(alpacaErrCode);
 }
 
 //*****************************************************************************
@@ -851,6 +1141,41 @@ bool					imageReady;
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	myExposureStatus	=	kExposure_Failed;
+#ifdef _SIMULATE_CAMERA_
+	//--------------------------------------------
+	//*	simulate image
+	if (gSimulateCameraImage)
+	{
+	struct timeval			currentTIme;
+	time_t					deltaTime_secs;
+		//--------------------------------------------
+		//*	simulate image
+		switch(cInternalCameraState)
+		{
+			case kCameraState_TakingPicture:
+				myExposureStatus		=	kExposure_Working;
+				gettimeofday(&currentTIme, NULL);	//*	get the current time
+				deltaTime_secs	=	currentTIme.tv_sec - cCameraProp.Lastexposure_StartTime.tv_sec;
+
+				CONSOLE_DEBUG_W_LONG("deltaTime_secs\t=",			deltaTime_secs);
+				if (deltaTime_secs > 2)
+				{
+					CONSOLE_DEBUG("Not kCameraState_TakingPicture -->> kCameraState_Idle");
+					myExposureStatus		=	kExposure_Success;
+				}
+				break;
+
+			default:
+		//		myExposureStatus		=	kExposure_Idle;
+				myExposureStatus		=	kExposure_Success;
+				break;
+
+		}
+		CONSOLE_DEBUG_W_NUM("myExposureStatus\t=",			myExposureStatus);
+
+	return(myExposureStatus);
+	}
+#endif
 
 	qsi_Result	=	cQSIcam.get_CameraState(&qsiCameraState);
 	if (qsi_Result == QSI_OK)

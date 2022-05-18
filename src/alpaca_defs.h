@@ -41,6 +41,8 @@
 //*	May  2,	2022	<MLS> Build 138
 //*	May  6,	2022	<MLS> Build 139
 //*	May 11,	2022	<MLS> Build 140
+//*	May 15,	2022	<MLS> Build 141
+//*	May 17,	2022	<MLS> Build 142
 //*****************************************************************************
 //*	These are for my comment extraction program that sorts comments by date.
 //*	Jan  1,	2019	-----------------------------------------------------------
@@ -69,7 +71,7 @@
 
 #define	kApplicationName	"AlpacaPi"
 #define	kVersionString		"V0.5.0-beta"
-#define	kBuildNumber		140
+#define	kBuildNumber		142
 
 
 #define kAlpacaDiscoveryPORT	32227
@@ -247,6 +249,9 @@ enum TYPE_PierSide
 };
 
 //*****************************************************************************
+//*	these are ASCOM defined values
+//*	https://ascom-standards.org/Help/Platform/html/T_ASCOM_DeviceInterface_DriveRates.htm
+//*****************************************************************************
 enum TYPE_DriveRates
 {
 	kDriveRate_driveSidereal	=	0,	//*	Sidereal tracking rate (15.041 arcseconds per second).
@@ -321,7 +326,7 @@ typedef struct
 	bool					CanStopExposure;		//*	Returns a flag indicating whether this camera can stop an exposure that is in progress
 	double					CCDtemperature;			//*	Returns the current CCD temperature
 	bool					CoolerOn;				//*	Returns the current cooler on/off state.
-//+	double					CoolerPower;			//*	Returns the present cooler power level
+	double					CoolerPower;			//*	Returns the present cooler power level
 	double					ElectronsPerADU;		//*	Returns the gain of the camera
 	double					ExposureMax_seconds;	//*	Returns the maximum exposure time supported by StartExposure.
 	long					ExposureMax_us;			//*	micro-seconds
@@ -329,14 +334,14 @@ typedef struct
 	long					ExposureMin_us;			//*	micro-seconds
 	double					ExposureResolution;		//*	The smallest increment in exposure time supported by StartExposure.
 
-//+	bool					FastReadout;			//*	Returns whether Fast Readout Mode is enabled.
+	bool					FastReadout;			//*	Returns whether Fast Readout Mode is enabled.
 	double					FullWellCapacity;		//*	Reports the full well capacity of the camera
 	int						Gain;					//*	Returns the camera's gain
 	int						GainMax;				//*	Maximum Gain value of that this camera supports
 	int						GainMin;				//*	Minimum Gain value of that this camera supports
 //+	???						Gains;					//*	List of Gain names supported by the camera
 	bool					HasShutter;				//*	Indicates whether the camera has a mechanical shutter
-//+	double					HeatSinkTemperature;	//*	Returns the current heat sink temperature.
+	double					HeatSinkTemperature;	//*	Returns the current heat sink temperature.
 	bool					ImageReady;				//*	Indicates that an image is ready to be downloaded
 	bool					IsPulseGuiding;			//*	Indicates that the camera is pulse guideing.
 
@@ -417,6 +422,15 @@ typedef struct
 	//*	this is NOT a standard ASCOM/ALPACA property
 	bool			IsMoving;
 } TYPE_FilterWheelProperties;
+
+//*****************************************************************************
+enum TYPE_Axis
+{
+	kAxis_RA		=	0,	//*	Primary axis (e.g., Right Ascension or Azimuth).
+	kAxis_DEC		=	1,	//*	Secondary axis (e.g., Declination or Altitude).
+	kAxis_Tertiary	=	2	//*	Tertiary axis (e.g. imager rotator/de-rotator).
+};
+
 
 //*****************************************************************************
 typedef struct

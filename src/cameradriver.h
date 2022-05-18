@@ -24,6 +24,7 @@
 //*	Jun 23,	2021	<MLS> Added kCmd_Camera_subexposureduration
 //*	Feb 27,	2022	<MLS> Changed cOpenCV_Image to cOpenCV_ImagePtr
 //*	May  5,	2022	<MLS> Added cOffsetSupported flag
+//*	May 15,	2022	<MLS> Added cSubDurationSupported flag
 //*****************************************************************************
 //#include	"cameradriver.h"
 
@@ -365,7 +366,7 @@ class CameraDriver: public AlpacaDriver
 		TYPE_ASCOM_STATUS	Get_Cooleron(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
 		TYPE_ASCOM_STATUS	Put_Cooleron(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 
-		TYPE_ASCOM_STATUS	Get_CoolerPowerLevel(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+		TYPE_ASCOM_STATUS	Get_CoolerPower(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
 
 		TYPE_ASCOM_STATUS	Get_ElectronsPerADU(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
 
@@ -431,6 +432,10 @@ class CameraDriver: public AlpacaDriver
 		TYPE_ASCOM_STATUS	Put_StartExposure(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 		TYPE_ASCOM_STATUS	Put_StopExposure(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 		TYPE_ASCOM_STATUS	Put_AbortExposure(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
+
+		TYPE_ASCOM_STATUS	Get_SubExposureDuration(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg,	const char *responseString);
+		TYPE_ASCOM_STATUS	Put_SubExposureDuration(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
+
 
 		TYPE_ASCOM_STATUS	Get_Imagearray_JSON(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 		TYPE_ASCOM_STATUS	Get_Imagearray_Binary(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
@@ -659,7 +664,7 @@ protected:
 	//=========================================================================================
 	bool		cTempReadSupported;				//*	true if temperature can be read from device
 	bool		cOffsetSupported;				//*	true pixel value offset is supported
-	long		cCoolerPowerLevel;
+	bool		cSubDurationSupported;
 	long		cCoolerState;
 	char		cLastCameraErrMsg[128];
 

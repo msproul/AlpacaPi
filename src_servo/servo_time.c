@@ -445,8 +445,6 @@ void Time_ra_dec_to_alt_azi(double ra, double dec, long double lst, double lat, 
 	{
 		*azi = 2.0 * M_PI - *azi;
 	}
-
-	return;
 } // Time_ra_dec_to_alt_azi()
 
 //******************************************************************************
@@ -552,6 +550,7 @@ double Time_calc_refraction(double alt, double temp, double press)
 	// Convert arcmins to rads multiply by 0.000290888
 	refraction *= 0.000290888;
 
+
 	return (refraction);
 }
 
@@ -571,6 +570,7 @@ int Time_read_local_cfg(const char *localCfgFile)
 	char *token;
 	char *argument;
 	char *rest = NULL;
+
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
