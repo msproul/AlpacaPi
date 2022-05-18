@@ -78,6 +78,7 @@
 //*	Mar 26,	2021	<MLS> Added Write_Offset() & Read_Offset()
 //*	Mar 26,	2021	<MLS> Offset value read/write working in ASI cameras
 //*	Oct 13,	2021	<MLS> Added Write_BinX() & Write_BinY() to ASI driver
+//*	May 17,	2022	<MLS> Changed the way power level is reported
 //*****************************************************************************
 //*	Length: unspecified [text/plain]
 //*	Saving to: "imagearray.1"

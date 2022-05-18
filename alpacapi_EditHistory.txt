@@ -1,4 +1,4 @@
-History Comments found =1810 in 318 files
+History Comments found =1811 in 318 files
 eph.c:10                 	//*	May  2,	1996	<MLS> (Mark Sproul) Starting on SkyTravel for Frank and Clif
 StarData.c:7             	//*	May  2,	1996	<MLS> (Mark Sproul) Starting on SkyTravel for Frank and Clif
 StarData.c:8             	//*	Nov 18,	1999	<MLS> restarting efforts
@@ -1794,6 +1794,7 @@ cameradriver.h:27        	//*	May 15,	2022	<MLS> Added cSubDurationSupported fla
 cameradriver_QSI.cpp:37  	//*	May 15,	2022	<MLS> Finished Read_CoolerPowerLevel()
 alpaca_defs.h:45         	//*	May 17,	2022	<MLS> Build 142
 cameradriver.cpp:172     	//*	May 17,	2022	<JMH> Discovered bug where cooler power level was not being reported correctly
+cameradriver_ASI.cpp:81  	//*	May 17,	2022	<MLS> Changed the way power level is reported
 cameradriver_ATIK.cpp:53 	//*	May 17,	2022	<MLS> Changed the way power level is reported
 cameradriver_QSI.cpp:38  	//*	May 17,	2022	<MLS> Implemented Read_CoolerState() for QSI camera
 cameradriver.cpp:174     	//*	Jan  1,	2119	<TODO> ----------------------------------------
@@ -1802,18 +1803,18 @@ cameradriver_png.cpp:33  	//*	Jan 31,	2120	<TODO> Add support for libpng
 cameradriver_TOUP.cpp:44 	//*	Feb  4,	2120	<TODO> Add 16 bit readout to Toupcam
 cameradriver_TOUP.cpp:45 	//*	Feb 16,	2120	<TODO> Add gain setting to Toupcam
 multicam.cpp:22          	//*	Mar 29,	2120	<TODO> Change multicam commands to match updated camera commands
-cameradriver_ASI.cpp:1038	//*	Jun 29,	2120	<TODO> Change video timestamp to an option
+cameradriver_ASI.cpp:1039	//*	Jun 29,	2120	<TODO> Change video timestamp to an option
 controller_camera.cpp:64 	//*	Jan  1,	2121	<TODO> control key for different step size.
 controller_camera.cpp:65 	//*	Jan  1,	2121	<TODO> add error list window
 controller_camera.cpp:66 	//*	Jan  1,	2121	<TODO> save cross hair location
 controller_camera.cpp:67 	//*	Jan  1,	2121	<TODO> finish exposure step options
 controller_camera.cpp:68 	//*	Jan  1,	2121	<TODO> clear error msg
 controller_camera.cpp:69 	//*	Feb  6,	2121	<TODO> Move downloading of images to a separate thread
-History Comments found   = 1810 in 318 files
-Total lines              = 160023
-Total comment Lines      = 23340 (14.6%)
-Total comments           = 26548 (16.6%)
-Total history comments   = 1810 (1.1%)
+History Comments found   = 1811 in 318 files
+Total lines              = 160024
+Total comment Lines      = 23341 (14.6%)
+Total comments           = 26549 (16.6%)
+Total history comments   = 1811 (1.1%)
 Total C files            = 47
 Total C++ files          = 112
 Total H files            = 157
@@ -1821,7 +1822,7 @@ Preprocssor cnt          = 5187
 Total SLOC               = 104523
 Total SLOC-Logical       = 80903
 Programmer comment summary
-MLS             = 1710
+MLS             = 1711
 TODO            =   13
 DDB             =    1
 JMH             =    3
