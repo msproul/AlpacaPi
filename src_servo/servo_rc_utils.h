@@ -3,7 +3,7 @@
 //*
 //*	Author:			Ron Story (C) 2022
 //*
-//*	Description: Roboclaw basic utilities include for telescope control
+//*	Description: Roboclaw basic utilities for servo telescope mount control
 //*
 //*****************************************************************************
 //*	AlpacaPi is an open source project written in C/C++ and led by Mark Sproul

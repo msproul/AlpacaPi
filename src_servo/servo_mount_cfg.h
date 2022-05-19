@@ -1,5 +1,5 @@
 //******************************************************************************
-//*	Name:			servo_scope_cfg.h
+//*	Name:			servo_mount_cfg.h
 //*
 //*	Author:			Ron Story (C) 2022
 //*
@@ -23,16 +23,18 @@
 //*****************************************************************************
 //*	May  6,	2022	<RNS> Created servo_scope_cfg.h using cproto
 //*	May 10,	2022	<MLS> Added structure TYPE_SCOPE_CONFIG
-//*	May 16,	2022	<RNS> Adopted _TYPE_SCOPE_CONFIG_
+//*	May 16,	2022	<RNS> Adopted _TYPE_SCOPE_CONFIG
+//*	May 19,	2022	<RNS> convert .home field to .zero to avoid confusion with ASCOM Home
+//*	May 19,	2022	<RNS> Change all refs of 'scope' to 'mount', including filenames
 //****************************************************************************
-//#include	"servo_scope_cfg.h"
+//#include	"servo_mount_cfg.h"
 
 
-#ifndef _SERVO_SCOPE_CFG_H_
-#define _SERVO_SCOPE_CFG_H_
+#ifndef _SERVO_MOUNT_CFG_H_
+#define _SERVO_MOUNT_CFG_H_
 
-// Default name for the telescope config file
-#define kSCOPE_CFG_FILE "servo_scope.cfg"
+// Default name for the telescope mount config file
+#define kSCOPE_CFG_FILE "servo_mount.cfg"
 
 //******************************************************************
 typedef struct axis_t
@@ -70,7 +72,7 @@ typedef struct axis_t
 	long double	time;
 	double		gearLash;
 	// double	lockDown;
-	double		home;			// Axis value at zero steps in decimal degrees, including RA
+	double		zero;			// Axis real value at zero steps in decimal degrees, including RA
 	double		standby;
 	double		sync;
 	uint16_t	syncValue;
@@ -88,16 +90,16 @@ typedef struct
 	int8_t		side;
 	char		port[48];
 	int			baud;
-} TYPE_SCOPE_CONFIG;
+} TYPE_MOUNT_CONFIG;
 
 #ifdef __cplusplus
 	extern "C" {
 #endif
 
-int	Servo_Read_Scope_Cfg(const char *scopeCfgFile, TYPE_SCOPE_CONFIG *scopeConfig);
+int	Servo_read_mount_cfg(const char *mountCfgFile, TYPE_MOUNT_CONFIG *mountConfig);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // _SERVO_SCOPE_CFG_H_
+#endif // _SERVO_MOUNT_CFG_H_

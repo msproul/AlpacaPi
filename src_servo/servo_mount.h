@@ -1,5 +1,5 @@
 //******************************************************************************
-//*	Name:			servo_scope.h
+//*	Name:			servo_mount.h
 //*
 //*	Author:			Ron Story (C) 2022
 //*
@@ -24,12 +24,13 @@
 //*	May  6,	2022	<RNS> Created servo_scope.h using cproto
 //*	May 14,	2022	<RNS> Changed all _step routines to signed variables
 //*	May 16,	2022	<RNS> Added Servo_pos_to_step()
+//*	May 19,	2022	<RNS> Change all refs of 'scope' to 'mount', including filenames
 //****************************************************************************
-//#include	"servo_scope.h"
+//#include	"servo_mount.h"
 
 
-#ifndef _SERVO_SCOPE_H_
-#define _SERVO_SCOPE_H_
+#ifndef _SERVO_MOUNT_H_
+#define _SERVO_MOUNT_H_
 
 #ifndef _STDBOOL_H
 	#include	<stdbool.h>
@@ -66,7 +67,7 @@ int32_t		Servo_get_tracking(uint8_t motor);
 int			Servo_set_tracking(uint8_t motor, int32_t tracking);
 int			Servo_start_tracking(uint8_t motor);
 int			Servo_stop_tracking(uint8_t motor);
-int			Servo_init(const char *scopeCfgFile, const char *localCfgFile);
+int			Servo_init(const char *mountCfgFile, const char *localCfgFile);
 TYPE_MOVE	Servo_state(void);
 //int       	Servo_move_step_track(int32_t raStep, int32_t decStep);
 //int			Servo_move_step(int32_t raStep, int32_t decStep, bool buffered);
@@ -81,4 +82,4 @@ int			Servo_move_to_static(double parkHA, double parkDec);
 }
 #endif
 
-#endif // of _SERVO_SCOPE_H_
+#endif // of _SERVO_MOUNT_H_

@@ -3,7 +3,7 @@
 //*
 //*	Author:			Ron Story (C) 2022
 //*
-//*	Description: Basic test program for servo_scope.c/h functions via stdin/out
+//*	Description: Basic test program for servo_mount.c/h functions via stdin/out
 //*
 //*****************************************************************************
 //*	AlpacaPi is an open source project written in C/C++ and led by Mark Sproul
@@ -21,7 +21,8 @@
 //*	<MLS>	=	Mark L Sproul
 //*	<RNS>	=	Ron N Story
 //*****************************************************************************
-//*	May 15,	2022	<RNS> Initial port of Goddard test program for servo star system
+//*	May 15,	2022	<RNS> Initial port of Goddard test program for servo mount system
+//*	May 19,	2022	<RNS> Change all refs of 'scope' to 'mount', including filenames
 //*****************************************************************************
 // Notes:   M1 *MUST BE* connected to RA or Azimuth axis, M2 to Dec or Altitude
 //*****************************************************************************
@@ -41,8 +42,8 @@
 #include "servo_mc_core.h"
 #include "servo_time.h"
 #include "servo_rc_utils.h"
-#include "servo_scope_cfg.h"
-#include "servo_scope.h"
+#include "servo_mount_cfg.h"
+#include "servo_mount.h"
 
 #ifdef _ALPHA_OUT_
 #define UNDER_TARGET 5.0
@@ -88,9 +89,9 @@ int main(void)
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
-	// Initialize the scope and read the config file
+	// Initialize the mount and read the config file
 	CONSOLE_DEBUG("Entering Servo_init()");
-	status = Servo_init("servo_scope.cfg", "servo_location.cfg");
+	status = Servo_init("servo_mount.cfg", "servo_location.cfg");
 	if (status != kSTATUS_OK)
 	{
 			CONSOLE_DEBUG("Servo_init() failed to initialize");
@@ -108,9 +109,9 @@ int main(void)
 	// Move to the standby position even if below horizon
 
 	printf("\n");
-	printf("Initializing scope to standby mode\n");
+	printf("Initializing mount to standby mode\n");
 	printf("Please wait...\n");
-	Servo_ignore_horizon(1);
+	Servo_ignore_horizon(true);
 	Servo_get_standby_coordins(&ra, &dec);
 	Servo_move_to_static(ra, dec);
 
@@ -118,7 +119,7 @@ int main(void)
 	standbyMode = true;
 
 	// Greetings
-	printf("\nServo scope test program version 1.0\n");
+	printf("\nServo mount test program version 1.0\n");
 
 	done = false;
 	while (!done)
@@ -154,7 +155,7 @@ int main(void)
 		printf("  Half the max values for acc/vel\n");
 		printf("  Full the acc/vel values\n");
 		printf("  Go to standby mode\n");
-		printf("  Sync the mount to sensor positions\n");
+//		printf("  Sync the mount to sensor positions\n");
 		printf("  Joystick slew\n");
 		printf("  LST\n"); 
 		printf("  Quit and park the mount\n");
@@ -195,7 +196,7 @@ int main(void)
 				// Get the standby coordinates (hourAngle, dec)
 				Servo_get_standby_coordins(&ha, &dec);
 
-				// Set the current position for a stopped scope
+				// Set the current position for a stopped mount
 				Servo_set_static_pos(ha, dec);
 			}
 
@@ -275,7 +276,7 @@ int main(void)
 			// Get the standby position
 			Servo_get_standby_coordins(&ra, &dec);
 
-			// Stop the scope at standby position
+			// Stop the mount at standby position
 			Servo_move_to_static(ra, dec);
 
 			// Set the standby flag to TRUE
@@ -286,10 +287,10 @@ int main(void)
 		case 'S':
 		case 's':
 			break;
-			// Sync the scope to the home position
+			// Sync the mount to the home position
 			Servo_ignore_horizon(true);
 
-			// Sync the position of the scope only if sync is successful
+			// Sync the position of the mount only if sync is successful
 			if (Servo_sync(ephem, &newRa, &newDec) == SS_OK)
 			{
 				// Get the home position from the config file
@@ -351,7 +352,7 @@ int main(void)
 
 	} // of While not done
 
-	// Get the lockdown position and move the scope to it
+	// Get the lockdown position and move the mount to it
 	Servo_ignore_horizon(true);
 	Servo_get_park_coordins(&ra, &dec);
 	Servo_move_to_static(ra, dec);
