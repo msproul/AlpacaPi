@@ -242,7 +242,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode;
 }
 
 //*****************************************************************************
-TYPE_ASCOM_STATUS		CameraDriverSIM::Start_CameraExposure(int32_t exposureMicrosecs)
+TYPE_ASCOM_STATUS		CameraDriverSIM::Start_CameraExposure(int32_t exposureMicrosecs, const bool lightFrame)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
 double				durationSeconds;

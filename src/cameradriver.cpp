@@ -171,6 +171,9 @@
 //*	May 15,	2022	<MLS> Added Get_SubExposureDuration() & Put_SubExposureDuration()
 //*	May 17,	2022	<JMH> Discovered bug where cooler power level was not being reported correctly
 //*	May 18,	2022	<MLS> Added Write_SensorTemp() (thanks to JMH)
+//*	May 18,	2022	<MLS> Added lightField arg to Start_CameraExposure()
+//*	May 18,	2022	<MLS> Added BuildBinaryImage_Raw32()
+//*	May 18,	2022	<MLS> Updated Get_Imagearray() to return InvalidOperation when no image is available
 //*****************************************************************************
 //*	Jan  1,	2119	<TODO> ----------------------------------------
 //*	Jun 26,	2119	<TODO> Add support for sub frames
@@ -3334,13 +3337,19 @@ bool				lightFound;
 char				lightString[32];
 double				myExposureDuration_secs;
 double				myExposure_usecs;
+bool				lightFrame;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
-//	CONSOLE_DEBUG_W_NUM("currentROIimageType\t=",	cROIinfo.currentROIimageType);
+	if (cVerboseDebug)
+	{
+		CONSOLE_DEBUG(__FUNCTION__);
+		CONSOLE_DEBUG_W_NUM("currentROIimageType\t=",	cROIinfo.currentROIimageType);
+		CONSOLE_DEBUG_W_STR("contentData        \t=",	reqData->contentData);
+	}
 
 	if (reqData != NULL)
 	{
-//		CONSOLE_DEBUG_W_STR("contentData\t=",	reqData->contentData);
+		lightFrame	=	true;
+
 
 		//*	first we are going to check a bunch of stuff to make CONFORM happy
 		if ((cCameraProp.CanAsymmetricBin == false) && (cCameraProp.BinX != cCameraProp.BinY))
@@ -3391,6 +3400,7 @@ double				myExposure_usecs;
 			if (lightFound)
 			{
 				CONSOLE_DEBUG_W_STR("Light\t=", lightString);
+				lightFrame	=	IsTrueFalse(lightString);
 			}
 
 			if ((myExposure_usecs > 0) && (myExposure_usecs >= cCameraProp.ExposureMin_us))
@@ -3406,7 +3416,7 @@ double				myExposure_usecs;
 				//*	Save all of the info about this exposure for reference
 				SetLastExposureInfo();
 
-				alpacaErrCode				=	Start_CameraExposure(cCurrentExposure_us);
+				alpacaErrCode				=	Start_CameraExposure(cCurrentExposure_us, lightFrame);
 				GenerateFileNameRoot();
 
 				if (alpacaErrCode == 0)
@@ -3768,6 +3778,49 @@ int		pixelIndex;
 //*****************************************************************************
 //*	returns byte count
 //*****************************************************************************
+int	CameraDriver::BuildBinaryImage_Raw32(	unsigned char 	*binaryDataBuffer,
+											int				startOffset,
+											int				bufferSize)
+{
+int		xxx;
+int		yyy;
+int		ccc;
+int		pixelIndex;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+	ccc	=	startOffset;
+	if (cCameraDataBuffer != NULL)
+	{
+		for (xxx=0; xxx<cLastExposure_ROIinfo.currentROIwidth; xxx++)
+		{
+			for (yyy=0; yyy<cLastExposure_ROIinfo.currentROIheight; yyy++)
+			{
+				pixelIndex	=	yyy * cLastExposure_ROIinfo.currentROIwidth * 2;
+				pixelIndex	+=	xxx * 2;
+				if (ccc < bufferSize)
+				{
+					//*	the outgoing data is little-endian 32 bit
+					//*	we are converting a 16 bit value to a 32 bit value, unsigned
+					binaryDataBuffer[ccc++]	=	0;
+					binaryDataBuffer[ccc++]	=	0;
+					binaryDataBuffer[ccc++]	=	(cCameraDataBuffer[pixelIndex++] & 0x00ff);
+					binaryDataBuffer[ccc++]	=	(cCameraDataBuffer[pixelIndex++] & 0x00ff);
+				}
+
+			//	pixelIndex++;
+			}
+		}
+	}
+	else
+	{
+		CONSOLE_DEBUG("cCameraDataBuffer is NULL");
+	}
+	return(ccc);
+}
+
+//*****************************************************************************
+//*	returns byte count
+//*****************************************************************************
 int	CameraDriver::BuildBinaryImage_RGB24(	unsigned char 	*binaryDataBuffer,
 											int				startOffset,
 											int				bufferSize)
@@ -3871,7 +3924,7 @@ static void	GetAlpacaImageDataTypeString(int dataType, char *dataTypeString)
 //*****************************************************************************
 TYPE_ASCOM_STATUS	CameraDriver::Get_Imagearray_Binary(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
 {
-TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InvalidOperation;
 TYPE_BinaryImageHdr	binaryImageHdr;
 int					bytesPerPixel;
 int					totalPixels;
@@ -3909,6 +3962,8 @@ char				dataTypeString[32];
 	CONSOLE_DEBUG_W_NUM("cLastExposure_ROIinfo.currentROIheight\t=",	cLastExposure_ROIinfo.currentROIheight);
 	totalPixels		=	cLastExposure_ROIinfo.currentROIwidth * cLastExposure_ROIinfo.currentROIheight;
 	bytesPerPixel	=	6;
+
+bool	xmit16BitAs32Bit	=	true;
 	switch(cLastExposure_ROIinfo.currentROIimageType)
 	{
 		case kImageType_RAW8:
@@ -3922,10 +3977,20 @@ char				dataTypeString[32];
 
 		case kImageType_RAW16:
 			CONSOLE_DEBUG("kImageType_RAW16");
-			bytesPerPixel	=	2;
-			binaryImageHdr.ImageElementType			=	kAlpacaImageData_UInt16;	//	Element type of the source image array
-			binaryImageHdr.Dimension3				=	0;							//	(0 for 2D array)
-			binaryImageHdr.TransmissionElementType	=	kAlpacaImageData_UInt16;	//	Element type as sent over the network
+			if (xmit16BitAs32Bit)
+			{
+				bytesPerPixel	=	4;
+				binaryImageHdr.ImageElementType			=	kAlpacaImageData_Int32;	//	Element type of the source image array
+				binaryImageHdr.Dimension3				=	0;							//	(0 for 2D array)
+				binaryImageHdr.TransmissionElementType	=	kAlpacaImageData_Int32;	//	Element type as sent over the network
+			}
+			else
+			{
+				bytesPerPixel	=	2;
+				binaryImageHdr.ImageElementType			=	kAlpacaImageData_UInt16;	//	Element type of the source image array
+				binaryImageHdr.Dimension3				=	0;							//	(0 for 2D array)
+				binaryImageHdr.TransmissionElementType	=	kAlpacaImageData_UInt16;	//	Element type as sent over the network
+			}
 			break;
 
 		case kImageType_RGB24:
@@ -4011,7 +4076,14 @@ char				dataTypeString[32];
 
 				case kImageType_RAW16:
 					CONSOLE_DEBUG("kImageType_RAW16");
-					returnedDataLen	=	BuildBinaryImage_Raw16(binaryDataBuffer, ccc, bufferSize);
+					if (xmit16BitAs32Bit)
+					{
+						returnedDataLen	=	BuildBinaryImage_Raw32(binaryDataBuffer, ccc, bufferSize);
+					}
+					else
+					{
+						returnedDataLen	=	BuildBinaryImage_Raw16(binaryDataBuffer, ccc, bufferSize);
+					}
 					break;
 
 				case kImageType_RGB24:
@@ -4025,6 +4097,7 @@ char				dataTypeString[32];
 					CONSOLE_DEBUG_W_NUM("cLastExposure_ROIinfo.currentROIwidth    \t=",	cLastExposure_ROIinfo.currentROIwidth);
 					CONSOLE_DEBUG_W_NUM("cLastExposure_ROIinfo.currentROIheight   \t=",	cLastExposure_ROIinfo.currentROIheight);
 				//	CONSOLE_ABORT(__FUNCTION__);
+					returnedDataLen	=	0;
 					break;
 			}
 			CONSOLE_DEBUG_W_LONG("bufferSize\t\t=", bufferSize);
@@ -4038,6 +4111,10 @@ char				dataTypeString[32];
 				if (bytesWritten < bufferSize)
 				{
 					CONSOLE_DEBUG("FAILED!!! to transmit entire data block!!!!!!!!!!!!!!!");
+				}
+				else
+				{
+					alpacaErrCode	=	kASCOM_Err_Success;
 				}
 			}
 			else
@@ -4286,13 +4363,22 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
-	if (strcasestr(reqData->htmlData, "application/imagebytes") != NULL)
+	if (cCameraProp.ImageReady)
 	{
-		alpacaErrCode	=	Get_Imagearray_Binary(reqData, alpacaErrMsg);
+		if (strcasestr(reqData->htmlData, "application/imagebytes") != NULL)
+		{
+			alpacaErrCode	=	Get_Imagearray_Binary(reqData, alpacaErrMsg);
+		}
+		else
+		{
+			alpacaErrCode	=	Get_Imagearray_JSON(reqData, alpacaErrMsg);
+		}
 	}
 	else
 	{
-		alpacaErrCode	=	Get_Imagearray_JSON(reqData, alpacaErrMsg);
+		alpacaErrCode	=	kASCOM_Err_InvalidOperation;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "No image available");
+
 	}
 	return(alpacaErrCode);
 }
@@ -5784,7 +5870,7 @@ TYPE_ASCOM_STATUS	CameraDriver::Set_ExposureTime(int32_t exposureMicrosecs)
 //*****************************************************************************
 //*	this routine must be over loaded
 //*****************************************************************************
-TYPE_ASCOM_STATUS		CameraDriver::Start_CameraExposure(int32_t exposureMicrosecs)
+TYPE_ASCOM_STATUS		CameraDriver::Start_CameraExposure(int32_t exposureMicrosecs,  const bool lightFrame)
 {
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 
@@ -8021,7 +8107,15 @@ int			pixelValueInt;
 
 					//*	16 bit mono
 					case 2:
-						pixelValueInt				=	32768 + (32700 * sinValue);
+					//	pixelValueInt				=	32768 + (32700 * sinValue);
+						if (iii < 10)
+						{
+							pixelValueInt			=	65530;
+						}
+						else
+						{
+							pixelValueInt			=	32768 + ((100 * iii) + jjj);
+						}
 						cameraDataPtr[pixelIndex++]	=	(pixelValueInt & 0x00ff);
 						cameraDataPtr[pixelIndex++]	=	((pixelValueInt & 0x00ffff) >> 8) & 0x00ff;
 						break;
@@ -8035,12 +8129,11 @@ int			pixelValueInt;
 //
 						cameraDataPtr[pixelIndex++]	=	(iii / 2) & 0x00ff;
 						cameraDataPtr[pixelIndex++]	=	(iii / 4) & 0x00ff;
-//						cameraDataPtr[pixelIndex++]	=	(iii / 6) & 0x00ff;
 						cameraDataPtr[pixelIndex++]	=	(jjj / 2) & 0x00ff;
 						break;
 
 					default:
-					//	CONSOLE_ABORT(__FUNCTION__);
+						CONSOLE_ABORT(__FUNCTION__);
 						break;
 				}
 			}

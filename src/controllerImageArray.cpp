@@ -23,6 +23,7 @@
 //*	Dec 18,	2021	<MLS> Added UpdateImageProgressBar()
 //*	Dec 18,	2021	<MLS> Proved that the simulators are sending column order first
 //*	Dec 18,	2021	<MLS> Spoke to Peter in the UK about it (peter@peterandjill.co.uk)
+//*	May 18,	2022	<MLS> Added AlpacaGetImageArray_Binary_Int32()
 //*****************************************************************************
 
 #include	<string.h>
@@ -49,7 +50,6 @@
 #include	"controller_camera.h"
 
 #define		kImageArrayBuffSize	15000
-
 
 
 //*****************************************************************************
@@ -120,7 +120,6 @@ char	*colonPtr;
 		{
 			valueStr[sLen - 1]	=	0;
 		}
-
 //		CONSOLE_DEBUG_W_2STR("kw:value=", keywordStr, valueStr);
 	}
 }
@@ -527,7 +526,7 @@ int		byte2;
 
 //*****************************************************************************
 void	ControllerCamera::AlpacaGetImageArray_Binary_Byte(	TYPE_ImageArray	*imageArray,
-															int				arrayLength)
+															int				imageArrayLen)
 {
 int				binaryDataValue;
 
@@ -539,7 +538,7 @@ int				binaryDataValue;
 		{
 			binaryDataValue	=	(cReturnedData[cData_iii] & 0x00ff) << 8;
 		//	CONSOLE_DEBUG_W_HEX("binaryDataValue\t=", binaryDataValue);
-			if (cImageArrayIndex < arrayLength)
+			if (cImageArrayIndex < imageArrayLen)
 			{
 				//*	deal with the individual R,G,B values
 				switch(cRGBidx)
@@ -580,10 +579,93 @@ int				binaryDataValue;
 	}
 }
 
+//*****************************************************************************
+void	ControllerCamera::AlpacaGetImageArray_Binary_Int32(	TYPE_ImageArray	*imageArray,
+															int				imageArrayLen)
+{
+uint32_t		binaryDataValue;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG_W_NUM("Rank\t=", cBinaryImageHdr.Rank);
+
+	if (cBinaryImageHdr.Rank == 3)
+	{
+		while ((cData_iii < cRecvdByteCnt))
+		{
+			binaryDataValue	=	(cReturnedData[cData_iii] & 0x00ff) << 8;
+		//	CONSOLE_DEBUG_W_HEX("binaryDataValue\t=", binaryDataValue);
+			if (cImageArrayIndex < imageArrayLen)
+			{
+				//*	deal with the individual R,G,B values
+				switch(cRGBidx)
+				{
+					case 0:
+						imageArray[cImageArrayIndex].RedValue	=	binaryDataValue & 0x00ffff;
+						break;
+
+					case 1:
+						imageArray[cImageArrayIndex].GrnValue	=	binaryDataValue & 0x00ffff;
+						break;
+
+					case 2:
+						imageArray[cImageArrayIndex].BluValue	=	binaryDataValue & 0x00ffff;
+						cImageArrayIndex++;
+						break;
+				}
+				cRGBidx++;
+				if (cRGBidx >= 3)
+				{
+					cRGBidx	=	0;
+				}
+			}
+			cData_iii++;
+		}
+	}
+	else if (cBinaryImageHdr.Rank == 2)
+	{
+		while ((cData_iii < cRecvdByteCnt))
+		{
+			binaryDataValue	=	0;
+			binaryDataValue	+=	(cReturnedData[cData_iii++] & 0x00ff) << 24;
+			binaryDataValue	+=	(cReturnedData[cData_iii++] & 0x00ff) << 16;
+			binaryDataValue	+=	(cReturnedData[cData_iii++] & 0x00ff) << 8;
+			binaryDataValue	+=	(cReturnedData[cData_iii++] & 0x00ff);
+
+			imageArray[cImageArrayIndex].RedValue	=	binaryDataValue;
+			imageArray[cImageArrayIndex].GrnValue	=	binaryDataValue;
+			imageArray[cImageArrayIndex].BluValue	=	binaryDataValue;
+//			imageArray[cImageArrayIndex].BluValue	=	0x7980;
+			cImageArrayIndex++;
+		}
+	}
+	else
+	{
+		CONSOLE_DEBUG_W_NUM("Unknown rank value", cBinaryImageHdr.Rank);
+		CONSOLE_ABORT(__FUNCTION__);
+	}
+}
+
+//*****************************************************************************
+static void WriteRawDataForDebug(const char *dataBuffer, const int arrayLength)
+{
+FILE	*filePointer;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+
+	filePointer	=	fopen("rawdata.bin", "w");
+	if (filePointer != NULL)
+	{
+		fwrite(dataBuffer, arrayLength, 1, filePointer);
+
+
+		fclose(filePointer);
+	}
+}
+
 
 //*****************************************************************************
 int	ControllerCamera::AlpacaGetImageArray_Binary(	TYPE_ImageArray	*imageArray,
-													int				arrayLength,
+													int				imageArrayLen,
 													int				*actualValueCnt)
 {
 unsigned char	*binaryImgHdrPtr;
@@ -591,24 +673,30 @@ int				imgRank;
 int				jjj;
 int				binaryDataValue;
 int				dataByteIdx;
+char			dataTypeString[24];
+int				dataBlkCount;
 
 	CONSOLE_DEBUG("-----------------------------------------------------------");
 	CONSOLE_DEBUG(__FUNCTION__);
-	CONSOLE_DEBUG_W_NUM("arrayLength\t\t\t=",	arrayLength);
+	CONSOLE_DEBUG_W_NUM("imageArrayLen\t\t\t=",	imageArrayLen);
 
 	tStartMillisecs			=	millis();
 	tLastUpdateMillisecs	=	tStartMillisecs;
 
-	imgRank		=	0;
-	cRGBidx		=	0;
-	dataByteIdx	=	0;
+	imgRank			=	0;
+	cRGBidx			=	0;
+	dataByteIdx		=	0;
+	dataBlkCount	=	0;
 	while (cKeepReading)
 	{
+		CONSOLE_DEBUG_W_NUM("dataBlkCount\t=",	dataBlkCount++);
 		if (cReadBinaryHeader)
 		{
 			CONSOLE_DEBUG_W_NUM("contentLength\t\t=",			cHttpHdrStruct.contentLength);
 			CONSOLE_DEBUG_W_NUM("cRecvdByteCnt\t\t=", cRecvdByteCnt);
 	//		DumpHex(cReturnedData, 40);
+
+			WriteRawDataForDebug(cReturnedData, imageArrayLen);
 
 			//*	process the binary header
 			memset(&cBinaryImageHdr, 0, sizeof(TYPE_BinaryImageHdr));
@@ -634,7 +722,13 @@ int				dataByteIdx;
 			CONSOLE_DEBUG_W_NUM("ServerTransactionID    \t=",	cBinaryImageHdr.ServerTransactionID);
 			CONSOLE_DEBUG_W_NUM("DataStart              \t=",	cBinaryImageHdr.DataStart);
 			CONSOLE_DEBUG_W_NUM("ImageElementType       \t=",	cBinaryImageHdr.ImageElementType);
+			GetBinaryElementTypeString(cBinaryImageHdr.ImageElementType, dataTypeString);
+			CONSOLE_DEBUG_W_STR("ImageElementType       \t=",	dataTypeString);
+
 			CONSOLE_DEBUG_W_NUM("TransmissionElementType\t=",	cBinaryImageHdr.TransmissionElementType);
+			GetBinaryElementTypeString(cBinaryImageHdr.TransmissionElementType, dataTypeString);
+			CONSOLE_DEBUG_W_STR("TransmissionElementType\t=",	dataTypeString);
+
 			CONSOLE_DEBUG_W_NUM("Rank                   \t=",	cBinaryImageHdr.Rank);
 			CONSOLE_DEBUG_W_NUM("Dimension1             \t=",	cBinaryImageHdr.Dimension1);
 			CONSOLE_DEBUG_W_NUM("Dimension2             \t=",	cBinaryImageHdr.Dimension2);
@@ -650,7 +744,6 @@ int				dataByteIdx;
 		switch(cBinaryImageHdr.TransmissionElementType)
 		{
 			case kAlpacaImageData_Unknown:
-			case kAlpacaImageData_Int32:
 			case kAlpacaImageData_Double:
 			case kAlpacaImageData_Single:
 			case kAlpacaImageData_Decimal:
@@ -663,7 +756,11 @@ int				dataByteIdx;
 				break;
 
 			case kAlpacaImageData_Byte:
-				AlpacaGetImageArray_Binary_Byte(imageArray, arrayLength);
+				AlpacaGetImageArray_Binary_Byte(imageArray, imageArrayLen);
+				break;
+
+			case kAlpacaImageData_Int32:
+				AlpacaGetImageArray_Binary_Int32(imageArray, imageArrayLen);
 				break;
 
 			case kAlpacaImageData_Int64:
@@ -686,7 +783,7 @@ int				dataByteIdx;
 
 							case 1:
 								binaryDataValue	+=	(((cReturnedData[cData_iii] & 0x00ff) << 8) & 0x00ff00);
-								if (cImageArrayIndex < arrayLength)
+								if (cImageArrayIndex < imageArrayLen)
 								{
 									imageArray[cImageArrayIndex].RedValue	=	binaryDataValue;
 									imageArray[cImageArrayIndex].GrnValue	=	binaryDataValue;
@@ -718,7 +815,7 @@ int				dataByteIdx;
 
 							case 1:
 								binaryDataValue	+=	(((cReturnedData[cData_iii] & 0x00ff) << 8) & 0x00ff00);
-								if (cImageArrayIndex < arrayLength)
+								if (cImageArrayIndex < imageArrayLen)
 								{
 									//*	deal with the individual R,G,B values
 									switch(cRGBidx)
@@ -784,12 +881,12 @@ int				dataByteIdx;
 				break;
 		}
 
-		UpdateImageProgressBar(arrayLength);
+		UpdateImageProgressBar(imageArrayLen);
 		cRecvdByteCnt	=	recv(cSocket_desc, cReturnedData , kReadBuffLen , 0);
 		if (cRecvdByteCnt > 0)
 		{
 			cSocketReadCnt++;
-			cTotalBytesRead				+=	cRecvdByteCnt;
+			cTotalBytesRead					+=	cRecvdByteCnt;
 			cReturnedData[cRecvdByteCnt]	=	0;
 			cData_iii	=	0;
 		}
@@ -805,7 +902,7 @@ int				dataByteIdx;
 
 //*****************************************************************************
 int	ControllerCamera::AlpacaGetImageArray_JSON(	TYPE_ImageArray	*imageArray,
-												int				arrayLength,
+												int				imageArrayLen,
 												int				*actualValueCnt)
 {
 int				imgRank;
@@ -871,7 +968,7 @@ int				myIntegerValue;
 				if (isdigit(linebuf[0]))
 				{
 					myIntegerValue	=	atoi(linebuf);
-					if (cImageArrayIndex < arrayLength)
+					if (cImageArrayIndex < imageArrayLen)
 					{
 						if (imgRank == 3)
 						{
@@ -1018,7 +1115,7 @@ int				myIntegerValue;
 				}
 			}
 		}
-		UpdateImageProgressBar(arrayLength);
+		UpdateImageProgressBar(imageArrayLen);
 
 		CONSOLE_DEBUG("Reading next packet");
 		cRecvdByteCnt	=	recv(cSocket_desc, cReturnedData , kReadBuffLen , 0);
@@ -1056,7 +1153,7 @@ int	ControllerCamera::AlpacaGetImageArray(	const char		*alpacaDevice,
 											const char		*dataString,
 											const bool		allowBinary,
 											TYPE_ImageArray	*imageArray,
-											int				arrayLength,
+											int				imageArrayLen,
 											int				*actualValueCnt)
 {
 char			alpacaString[128];
@@ -1072,7 +1169,7 @@ int				ccc;
 	CONSOLE_DEBUG("------------------------------------------------------------------");
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG_W_NUM("kReadBuffLen\t=", kReadBuffLen);
-	CONSOLE_DEBUG_W_NUM("arrayLength\t=", arrayLength);
+	CONSOLE_DEBUG_W_NUM("imageArrayLen\t=", imageArrayLen);
 	CONSOLE_DEBUG_W_NUM("allowBinary\t=", allowBinary);
 
 	cImgArrayType			=	-1;
@@ -1173,12 +1270,12 @@ int				ccc;
 				if (cHttpHdrStruct.dataIsBinary)
 				{
 					DEBUG_TIMING("---------------Data is binary, time= (ms)");
-					imgRank	=	AlpacaGetImageArray_Binary(imageArray, arrayLength, actualValueCnt);
+					imgRank	=	AlpacaGetImageArray_Binary(imageArray, imageArrayLen, actualValueCnt);
 				}
 				else
 				{
 					CONSOLE_DEBUG("Data is JSON");
-					imgRank	=	AlpacaGetImageArray_JSON(imageArray, arrayLength, actualValueCnt);
+					imgRank	=	AlpacaGetImageArray_JSON(imageArray, imageArrayLen, actualValueCnt);
 				}
 			}
 			else
@@ -1187,10 +1284,10 @@ int				ccc;
 			}
 			//=================================================
 			//*	deal with the progress bar
-			UpdateImageProgressBar(arrayLength);
+			UpdateImageProgressBar(imageArrayLen);
 		}
 		//*	one last time to show we are done
-		UpdateDownloadProgress(cImageArrayIndex, arrayLength);
+		UpdateDownloadProgress(cImageArrayIndex, imageArrayLen);
 
 		*actualValueCnt	=	cImageArrayIndex;
 		CONSOLE_DEBUG_W_NUM("actualValueCnt\t=", *actualValueCnt);
@@ -1214,7 +1311,7 @@ int				ccc;
 //		CONSOLE_DEBUG_W_NUM("lfCnt\t=", lfCnt);
 
 		CONSOLE_DEBUG_W_NUM("cRanOutOfRoomCnt\t=", cRanOutOfRoomCnt);
-		CONSOLE_DEBUG_W_NUM("arrayLength\t=", arrayLength);
+		CONSOLE_DEBUG_W_NUM("imageArrayLen\t=", imageArrayLen);
 
 		CONSOLE_DEBUG_W_NUM("cImgArrayType\t=", cImgArrayType);
 		CONSOLE_DEBUG_W_NUM("imgRank\t\t=", imgRank);

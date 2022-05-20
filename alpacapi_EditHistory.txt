@@ -1,10 +1,10 @@
-History Comments found =1843 in 319 files
+History Comments found =1862 in 319 files
 eph.c:10                 	//*	May  2,	1996	<MLS> (Mark Sproul) Starting on SkyTravel for Frank and Clif
 StarData.c:7             	//*	May  2,	1996	<MLS> (Mark Sproul) Starting on SkyTravel for Frank and Clif
 StarData.c:8             	//*	Nov 18,	1999	<MLS> restarting efforts
 eph.c:11                 	//*	Nov 20,	1999	<MLS> Minor formatting cleanup to improve readability
 StarData.c:9             	//*	Nov 20,	1999	<MLS> major re-writing and re-organization
-alpaca_defs.h:48         	//*	Jan  1,	2019	-----------------------------------------------------------
+alpaca_defs.h:49         	//*	Jan  1,	2019	-----------------------------------------------------------
 socket_listen.c:17       	//*	Feb 14,	2019	<MLS> Started on socket_listen.c
 socket_listen.h:11       	//*	Feb 14,	2019	<MLS> Started on socket_listen.h
 alpacadriver.cpp:34      	//*	Apr  5,	2019	<MLS> Attended lecture by Bob Denny introducing Alpaca protocol
@@ -333,7 +333,7 @@ obsconditionsdriver_rpi.cpp:22	//*	Dec 31,	2019	<MLS> Working with RTIMULib on R
 obsconditionsdriver_rpi.cpp:23	//*	Dec 31,	2019	<MLS> The Temperature value on the R-Pi is not valid for use
 alpacadriver.cpp:79      	//*	Jan  1,	2020	<MLS> Added ability to set title for web page,
 alpacadriver.cpp:80      	//*	Jan  1,	2020	<MLS> Moved OutputHTMLrowData() to base class
-alpaca_defs.h:49         	//*	Jan  1,	2020	-----------------------------------------------------------
+alpaca_defs.h:50         	//*	Jan  1,	2020	-----------------------------------------------------------
 filterwheeldriver.cpp:34 	//*	Jan  1,	2020	<MLS> Filterwheel description list was not being initialized
 focuserdriver_nc.cpp:41  	//*	Jan  1,	2020	<MLS> Added OpenFocuserConnection() to separate functionality
 focuserdriver_nc.cpp:42  	//*	Jan  1,	2020	<MLS> Successfully tested 2 NiteCrawlers attached to the same R-Pi
@@ -1455,7 +1455,7 @@ discovery_lib.h:2        	//*	Dec  6,	2021	<MLS> Increased max alpaca device cou
 windowtab_alpacalist.cpp:25	//*	Dec  6,	2021	<MLS> Added scrolling to alpaca device list
 GaiaData.c:12            	//*	Dec  8,	2021	<MLS> Added CalcSpectralClassFrom_BP_RP()
 alpaca_defs.h:22         	//*	Dec 11,	2021	<MLS> Build 123
-controllerImageArray.cpp:1008	//*	Dec 12,	2021	<MLS> Fixed bug in AlpacaGetImageArray() processing "]"
+controllerImageArray.cpp:1105	//*	Dec 12,	2021	<MLS> Fixed bug in AlpacaGetImageArray() processing "]"
 controller_camera.cpp:57 	//*	Dec 12,	2021	<MLS> ImageArray now has RGB correct
 alpacadriver.cpp:126     	//*	Dec 13,	2021	<MLS> Started working on watchdog time out processing
 alpacadriver.cpp:127     	//*	Dec 13,	2021	<MLS> Added CheckWatchDogTimeout() & WatchDog_TimeOut()
@@ -1681,47 +1681,47 @@ alpacadriver.cpp:133     	//*	Apr 17,	2022	<MLS> Added run time option flag gSim
 alpaca_defs.h:40         	//*	Apr 17,	2022	<MLS> Build 137
 cameradriver_QSI.cpp:34  	//*	Apr 17,	2022	<JMH> Making progress on QSI camera
 cameradriver.cpp:168     	//*	Apr 18,	2022	<MLS> Added DumpCameraProperties()
-servo_scope_cfg.c:24     	//*	Apr 18,	2022	<RNS> revamped the token field to use enums in prep for future enhancements
+servo_mount_cfg.c:24     	//*	Apr 18,	2022	<RNS> revamped the token field to use enums in prep for future enhancements
 servo_mc_core.c:30       	//*	Apr 19,	2022	<RNS> Reduced globals for notes and receipts, isolated comm globals
 servo_rc_cmds.h:24       	//*	Apr 19,	2022	<RNS> Initially created by spreadsheet
 servo_mc_core.c:29       	//*	Apr 20,	2022	<RNS> Debugged a logic issue in MC_read_comm()
-servo_rc_utils.c:25      	//*	Apr 20,	2022	<RNS> Cleaned up globals to reduce scope
-servo_scope_cfg.c:25     	//*	Apr 20,	2022	<RNS> added config file support for MC_ADDR needed for RC MC
+servo_mount_cfg.c:25     	//*	Apr 20,	2022	<RNS> added config file support for MC_ADDR needed for RC MC
+servo_rc_utils.c:25      	//*	Apr 20,	2022	<RNS> Cleaned up globals to reduce variable's scope
 servo_time.c:24          	//*	Apr 20,	2022	<RNS> Created servo_time.c from a port of ephemeris functions
-servo_scope_cfg.c:26     	//*	Apr 21,	2022	<RNS> added support for default config filename and cleaned up tokens
+servo_mount_cfg.c:26     	//*	Apr 21,	2022	<RNS> added support for default config filename and cleaned up tokens
 servo_time.c:25          	//*	Apr 21,	2022	<RNS> Pulled needed function for UTC systime,jd, sid, lst
 cameradriver_sim.cpp:27  	//*	Apr 22,	2022	<MLS> Created cameradriver_sim.cpp
 servo_std_defs.h:25      	//*	Apr 22,	2022	<RNS> Pulled in cfg_item typedef
 servo_time.c:26          	//*	Apr 22,	2022	<RNS> Added alt/azi functions and field rotation
+servo_mount_cfg.c:27     	//*	Apr 25,	2022	<RNS> added _TEST_ support for an unit build test and print_axis
 servo_rc_utils.c:26      	//*	Apr 25,	2022	<RNS> Ported stop, reset and max_acc routines
-servo_scope_cfg.c:27     	//*	Apr 25,	2022	<RNS> added _TEST_ support for an unit build test and print_axis
 servo_std_defs.h:26      	//*	Apr 25,	2022	<RNS> Pulled in some simple defines for a common location
 servo_std_defs.h:27      	//*	Apr 25,	2022	<RNS> Removed legacy int/char typedefs, add str_to_upper()
 servo_time.c:27          	//*	Apr 25,	2022	<RNS> Added improved refraction based on Bennett & NASA vector
 servo_time.c:28          	//*	Apr 25,	2022	<RNS> Added _TEST_ support for unit test build
 servo_time.h:24          	//*	Apr 25,	2022	<RNS> Created servo_time.h using cproto
+servo_mount.c:24         	//*	Apr 26,	2022	<RNS> Initial port of the ServoStar code
+servo_mount_cfg.c:28     	//*	Apr 26,	2022	<RNS> added new field PARK_SIDE for GEM 'side' when parked
 servo_rc_cmds.h:25       	//*	Apr 26,	2022	<RNS> Update spreadsheet to pick up MxDUTY cmns for stop()
 servo_rc_utils.c:27      	//*	Apr 26,	2022	<RNS> Created move by pos and acc routines
-servo_scope.c:24         	//*	Apr 26,	2022	<RNS> Initial port of the ServoStar code
-servo_scope_cfg.c:28     	//*	Apr 26,	2022	<RNS> added new field PARK_SIDE for GEM 'side' when parked
+servo_mount.c:25         	//*	Apr 27,	2022	<RNS> still porting to the new RC and MC libs
 servo_rc_cmds.h:26       	//*	Apr 27,	2022	<RNS> Update spreadsheet to add yet more commands
 servo_rc_utils.c:28      	//*	Apr 27,	2022	<RNS> Add check_queue function find end-of move_by_pos
 servo_rc_utils.h:24      	//*	Apr 27,	2022	<RNS> Created servo_rc_utils.h using cproto
 servo_rc_utils.h:25      	//*	Apr 27,	2022	<RNS> add defines for RC return status
-servo_scope.c:25         	//*	Apr 27,	2022	<RNS> still porting to the new RC and MC libs
+servo_mount.c:26         	//*	Apr 28,	2022	<RNS> Removed history cornercase code from 1990s
+servo_mount.c:27         	//*	Apr 28,	2022	<RNS> Unifield path motion with calc_optimal_path
 servo_rc_utils.c:29      	//*	Apr 28,	2022	<RNS> added vel_raw and vel_buffered (now default)
 servo_rc_utils.c:30      	//*	Apr 28,	2022	<RNS> added calc_move_time
 servo_rc_utils.h:26      	//*	Apr 28,	2022	<RNS> add support for buffered moves & return status masks
 servo_rc_utils.h:27      	//*	Apr 28,	2022	<RNS> added vel_raw and vel_buffered (now default)
 servo_rc_utils.h:28      	//*	Apr 28,	2022	<RNS> added calc_move_time
-servo_scope.c:26         	//*	Apr 28,	2022	<RNS> Removed history cornercase code from 1990s
-servo_scope.c:27         	//*	Apr 28,	2022	<RNS> Unifield path motion with calc_optimal_path
 servo_std_defs.h:28      	//*	Apr 29,	2022	<RNS> Moved in common defines used in multiple files
 servo_std_defs.h:29      	//*	Apr 29,	2022	<RNS> Updated arcsec/sec
 servo_time.h:25          	//*	Apr 29,	2022	<RNS> added local typedefs and fixed macros back to functions
-servo_scope.c:28         	//*	Apr 30,	2022	<RNS> rewrote flip routine to use only hour angles in calcs
+servo_mount.c:28         	//*	Apr 30,	2022	<RNS> rewrote flip routine to use only hour angles in calcs
 windowtab_skytravel.cpp:104	//*	Apr 30,	2022	<MLS> Added Messier objects to FindObjectNearCursor()
-servo_scope_cfg.c:29     	//*	May  1,	2022	<RNS> removed support for split and alt-azi mounts
+servo_mount_cfg.c:29     	//*	May  1,	2022	<RNS> removed support for split and alt-azi mounts
 alpaca_defs.h:41         	//*	May  2,	2022	<MLS> Build 138
 i2c_bno055.h:13          	//*	May  2,	2022	<MLS> Updated prototypes, if no args, must have (void)
 imu_lib.c:8              	//*	May  2,	2022	<MLS> Created imu_lib.c
@@ -1742,13 +1742,13 @@ controller_image.cpp:17  	//*	May  5,	2022	<MLS> Added ConvertImageToRGB()
 i2c_bno055.c:18          	//*	May  5,	2022	<MLS> Changed get_i2cbus from void to int to allow return code
 alpaca_defs.h:42         	//*	May  6,	2022	<MLS> Build 139
 servo_mc_core.c:31       	//*	May  6,	2022	<RNS> changed str_to_upper to Time_str_to_upper and renamed file servo_mc_core.c
+servo_mount.c:29         	//*	May  6,	2022	<RNS> Merged updates and ready for RC testing
+servo_mount.h:24         	//*	May  6,	2022	<RNS> Created servo_scope.h using cproto
+servo_mount_cfg.h:24     	//*	May  6,	2022	<RNS> Created servo_scope_cfg.h using cproto
 servo_rc_cmds.h:27       	//*	May  6,	2022	<RNS> changed filename to servo_rc_cmds, fixed #defines
 servo_rc_cmds.h:28       	//*	May  6,	2022	<RNS> Fixed corrupted spreadsheet data
 servo_rc_utils.c:31      	//*	May  6,	2022	<RNS> fixed includes with servo_*c_* file name changes
 servo_rc_utils.h:29      	//*	May  6,	2022	<RNS> fixed includes with servo_*c_* file name changes
-servo_scope.c:29         	//*	May  6,	2022	<RNS> Merged updates and ready for RC testing
-servo_scope.h:24         	//*	May  6,	2022	<RNS> Created servo_scope.h using cproto
-servo_scope_cfg.h:24     	//*	May  6,	2022	<RNS> Created servo_scope_cfg.h using cproto
 servo_std_defs.h:30      	//*	May  6,	2022	<RNS> Moved str_to_upper() to servo_time.c
 servo_time.c:29          	//*	May  6,	2022	<RNS> Added Time_str_to_upper()
 servo_time.h:26          	//*	May  6,	2022	<RNS> add Time_str_to_upper()
@@ -1756,32 +1756,32 @@ servo_mc_core.c:32       	//*	May  7,	2022	<RNS> reswizzled some setting in set_
 servo_mc_core.c:33       	//*	May  7,	2022	<RNS> Modified the calc_crc16 function to take in a crc value
 servo_rc_utils.c:32      	//*	May  7,	2022	<RNS> Fixed ordering bug with rc_cmds.h
 servo_rc_utils.c:33      	//*	May  7,	2022	<RNS> Fixed a bug with RC CRC16 calcs missing addr & cmd
+servo_mount.c:30         	//*	May  8,	2022	<RNS> renamed RC* functions from _read_ to _get_
+servo_mount.c:31         	//*	May  8,	2022	<RNS> edit move_by_pos to _posva since default_acc is broken
+servo_mount.c:32         	//*	May  8,	2022	<RNS> Added basic _TEST_ support to check build
+servo_mount_cfg.c:30     	//*	May  8,	2022	<RNS> updated #includes with servo_time.c for  str_to_upper()
+servo_mount_cfg.c:31     	//*	May  8,	2022	<RNS> added support for 38400 baud
 servo_rc_utils.c:34      	//*	May  8,	2022	<RNS> renamed RC* functions from _read_ to _get_
 servo_rc_utils.c:35      	//*	May  8,	2022	<RNS> edit move_by_pos to _posva since default_acc is broken
 servo_rc_utils.h:30      	//*	May  8,	2022	<RNS> fadd a & va suffixes to the move_by functions
-servo_scope.c:30         	//*	May  8,	2022	<RNS> renamed RC* functions from _read_ to _get_
-servo_scope.c:31         	//*	May  8,	2022	<RNS> edit move_by_pos to _posva since default_acc is broken
-servo_scope.c:32         	//*	May  8,	2022	<RNS> Added basic _TEST_ support to check build
-servo_scope_cfg.c:30     	//*	May  8,	2022	<RNS> updated #includes with servo_time.c for  str_to_upper()
-servo_scope_cfg.c:31     	//*	May  8,	2022	<RNS> added support for 38400 baud
 servo_time.c:30          	//*	May  8,	2022	<RNS> Fixed a warning do to long double cast
 GaiaSQL.cpp:38           	//*	May  9,	2022	<MLS> Added skytravel version number to remote SQL login information
 Makefile:9               	#++	May  9,	2022	<MLS> Updated to use Objectfiles directory for .o files
 GaiaSQL.cpp:39           	//*	May 10,	2022	<MLS> Added mysql error strings to local logging function
-servo_scope.c:1072       	//*	May 10,	2022	<MLS> Fixed Servo_calc_move_to_remove_gearlash()
-servo_scope_cfg.c:32     	//*	May 10,	2022	<MLS> Changed the keyword table
-servo_scope_cfg.c:33     	//*	May 10,	2022	<MLS> Added FindKeyWordEnum()
-servo_scope_cfg.h:25     	//*	May 10,	2022	<MLS> Added structure TYPE_SCOPE_CONFIG
+servo_mount.c:1074       	//*	May 10,	2022	<MLS> Fixed Servo_calc_move_to_remove_gearlash()
+servo_mount_cfg.c:32     	//*	May 10,	2022	<MLS> Changed the keyword table
+servo_mount_cfg.c:33     	//*	May 10,	2022	<MLS> Added FindKeyWordEnum()
+servo_mount_cfg.h:25     	//*	May 10,	2022	<MLS> Added structure TYPE_SCOPE_CONFIG
 alpaca_defs.h:43         	//*	May 11,	2022	<MLS> Build 140
-servo_scope.c:33         	//*	May 11,	2022	<MLS> Added Servo_stop_tracking()
-servo_scope.c:34         	//*	May 11,	2022	<MLS> Added return codes to several routines
+servo_mount.c:33         	//*	May 11,	2022	<MLS> Added Servo_stop_tracking()
+servo_mount.c:34         	//*	May 11,	2022	<MLS> Added return codes to several routines
 servo_std_defs.h:31      	//*	May 11,	2022	<MLS> Changed constant RA to SERVO_RA_AXIS
 servo_std_defs.h:32      	//*	May 11,	2022	<MLS> Changed constant DEC to SERVO_DEC_AXIS
 telescopedriver_servo.cpp:31	//*	May 11,	2022	<MLS> Now using servo config processing routines by <RNS>
 telescopedriver_servo.cpp:32	//*	May 11,	2022	<MLS> Added OutputHTML_Part2() to telescope servo driver
 controller_tscope_common.cpp:22	//*	May 12,	2022	<MLS> Added support for TrackingRate
-servo_scope.c:35         	//*	May 12,	2022	<MLS> Added "const" to filename arguments (to make compiler happy)
-servo_scope.c:36         	//*	May 12,	2022	<MLS> Converted all function parameters from D/HMS to deci hour/degs
+servo_mount.c:35         	//*	May 12,	2022	<MLS> Added "const" to filename arguments (to make compiler happy)
+servo_mount.c:36         	//*	May 12,	2022	<MLS> Converted all function parameters from D/HMS to deci hour/degs
 windowtab_telescope.cpp:25	//*	May 12,	2022	<MLS> Added UpdateTelescopeInfo()
 windowtab_telescope.cpp:26	//*	May 12,	2022	<MLS> Added up/down east/west button logic
 windowtab_telescope.cpp:27	//*	May 12,	2022	<MLS> Added up/down east/west Normal,Slewing,Disabled colors
@@ -1789,10 +1789,10 @@ windowtab_telescope.cpp:28	//*	May 12,	2022	<MLS> Added Tracking rate button han
 telescopedriver.cpp:52   	//*	May 13,	2022	<MLS> Made Get_AxisRates() understand specified axis number
 cameradriver_QSI.cpp:35  	//*	May 14,	2022	<MLS> JMH was able to take a picture
 cameradriver_QSI.cpp:36  	//*	May 14,	2022	<MLS> Working on cooler support for QSI camera
-servo_scope.c:37         	//*	May 14,	2022	<RNS> Fixed a spelling typo in error message
-servo_scope.c:38         	//*	May 14,	2022	<RNS> Changed all _step routines to signed variables
-servo_scope.h:25         	//*	May 14,	2022	<RNS> Changed all _step routines to signed variables
-servo_scope_cfg.c:34     	//*	May 14,	2022	<RNS> Added Time_ascii_maybe_HMS_tof for coordinate tokens park, sync, etc
+servo_mount.c:37         	//*	May 14,	2022	<RNS> Fixed a spelling typo in error message
+servo_mount.c:38         	//*	May 14,	2022	<RNS> Changed all _step routines to signed variables
+servo_mount.h:25         	//*	May 14,	2022	<RNS> Changed all _step routines to signed variables
+servo_mount_cfg.c:34     	//*	May 14,	2022	<RNS> Added Time_ascii_maybe_HMS_tof for coordinate tokens park, sync, etc
 servo_std_defs.h:33      	//*	May 14,	2022	<MLS> Removed degToRads/radToDegs
 servo_time.c:31          	//*	May 14,	2022	<RNS> Swapped degsToRads/radsToDegs -> RADIANS/DEGREES
 servo_time.c:32          	//*	May 14,	2022	<RNS> Moved all conversions to use RADIANS/DEGREES
@@ -1803,22 +1803,22 @@ cameradriver.cpp:171     	//*	May 15,	2022	<MLS> Added Get_SubExposureDuration()
 cameradriver.h:27        	//*	May 15,	2022	<MLS> Added cSubDurationSupported flag
 cameradriver_QSI.cpp:37  	//*	May 15,	2022	<MLS> Finished Read_CoolerPowerLevel()
 Makefile:10              	#++	May 15,	2022	<RNS> Added servo_test_tty and fixed typos
-servo_mc_core.c:34       	//*	May 15,	2022	<RNS> Fixed typo in #define labee _TEST_SERVO_M*E*_CORE_
-servo_scope.c:39         	//*	May 15,	2022	<RNS> Codereview and updated comments and potential RA range issue
-servo_test_tty.c:24      	//*	May 15,	2022	<RNS> Initial port of Goddard test program for servo star system
+servo_mc_core.c:34       	//*	May 15,	2022	<RNS> Fixed typo in #define label _TEST_SERVO_M*E*_CORE_
+servo_mount.c:39         	//*	May 15,	2022	<RNS> Codereview and updated comments and potential RA range issue
+servo_test_tty.c:24      	//*	May 15,	2022	<RNS> Initial port of Goddard test program for servo mount system
 servo_time.c:34          	//*	May 15,	2022	<RNS> added Time_normalize functions
 servo_time.c:35          	//*	May 15,	2022	<RNS> added alt-azi tracking rates function, added to _TEST_
 servo_time.c:36          	//*	May 15,	2022	<RNS> added Time_alt_azi_to_ra_dec() function
 servo_time.h:28          	//*	May 15,	2022	<RNS> added Time_normalize_ functions
 servo_time.h:29          	//*	May 15,	2022	<RNS> added alt-azi tracking rates function
 servo_time.h:30          	//*	May 15,	2022	<RNS> added Time_alt_azi_to_ra_dec() function
-servo_scope.c:40         	//*	May 16,	2022	<RNS> Fixed lat/log access with location config global now hidden
-servo_scope.c:41         	//*	May 16,	2022	<RNS> Added Servo_pos_to_step() and removed dup code
-servo_scope.c:42         	//*	May 16,	2022	<RNS> Added a SYNCHRONOUS routine to test RC's independent moves for alt-azi
-servo_scope.h:26         	//*	May 16,	2022	<RNS> Added Servo_pos_to_step()
-servo_scope_cfg.c:35     	//*	May 16,	2022	<RNS> Corrected nesting of error messages to handle invalid field in cfgfile
-servo_scope_cfg.c:36     	//*	May 16,	2022	<RNS> Adopted _TYPE_SCOPE_CONFIG_
-servo_scope_cfg.h:26     	//*	May 16,	2022	<RNS> Adopted _TYPE_SCOPE_CONFIG_
+servo_mount.c:40         	//*	May 16,	2022	<RNS> Fixed lat/log access with location config global now hidden
+servo_mount.c:41         	//*	May 16,	2022	<RNS> Added Servo_pos_to_step() and removed dup code
+servo_mount.c:42         	//*	May 16,	2022	<RNS> Added a SYNCHRONOUS routine to test RC's independent moves for alt-azi
+servo_mount.h:26         	//*	May 16,	2022	<RNS> Added Servo_pos_to_step()
+servo_mount_cfg.c:35     	//*	May 16,	2022	<RNS> Corrected nesting of error messages to handle invalid field in cfgfile
+servo_mount_cfg.c:36     	//*	May 16,	2022	<RNS> Adopted _TYPE_SCOPE_CONFIG_
+servo_mount_cfg.h:26     	//*	May 16,	2022	<RNS> Adopted _TYPE_SCOPE_CONFIG
 servo_time.c:37          	//*	May 16,	2022	<RNS> privitized the gServoLocalCfg global, added get_ field calls
 servo_time.c:38          	//*	May 16,	2022	<RNS> Added _maybe_hms_ vs atof for lat & lon config field
 servo_time.h:31          	//*	May 16,	2022	<RNS> privitized the gServoLocalCfg global, added get_ field calls
@@ -1828,9 +1828,28 @@ cameradriver_ASI.cpp:81  	//*	May 17,	2022	<MLS> Changed the way power level is 
 cameradriver_ATIK.cpp:53 	//*	May 17,	2022	<MLS> Changed the way power level is reported
 cameradriver_QSI.cpp:38  	//*	May 17,	2022	<MLS> Implemented Read_CoolerState() for QSI camera
 cameradriver.cpp:173     	//*	May 18,	2022	<MLS> Added Write_SensorTemp() (thanks to JMH)
+cameradriver.cpp:174     	//*	May 18,	2022	<MLS> Added lightField arg to Start_CameraExposure()
+cameradriver.cpp:175     	//*	May 18,	2022	<MLS> Added BuildBinaryImage_Raw32()
+cameradriver.cpp:176     	//*	May 18,	2022	<MLS> Updated Get_Imagearray() to return InvalidOperation when no image is available
 cameradriver_QSI.cpp:39  	//*	May 18,	2022	<MLS> Added Write_SensorTemp()
-cameradriver.cpp:175     	//*	Jan  1,	2119	<TODO> ----------------------------------------
-cameradriver.cpp:176     	//*	Jun 26,	2119	<TODO> Add support for sub frames
+controllerImageArray.cpp:26	//*	May 18,	2022	<MLS> Added AlpacaGetImageArray_Binary_Int32()
+alpaca_defs.h:46         	//*	May 19,	2022	<MLS> Build 143
+Makefile:11              	#++	May 19,	2022	<RNS> Change all refs of 'scope' to 'mount', including filenames
+Makefile:12              	#++	May 19,	2022	<RNS> Added support for rc_utils unit test
+Makefile:13              	#++	May 19,	2022	<RNS> Fixed all unit tests for *.c files with unit _TEST_
+Makefile:54              	#++	May 19,	2022	<MLS> Updated Makefile to reflect RNS filename changes
+servo_mc_core.c:35       	//*	May 19,	2022	<RNS> Cleaned up unit _TEST_ of -Wall warnings
+servo_mount.c:43         	//*	May 19,	2022	<RNS> convert .home field to .zero to avoid confusion with ASCOM Home
+servo_mount.c:44         	//*	May 19,	2022	<RNS> Change all refs of 'scope' to 'mount', including filenames
+servo_mount.h:27         	//*	May 19,	2022	<RNS> Change all refs of 'scope' to 'mount', including filenames
+servo_mount_cfg.c:37     	//*	May 19,	2022	<RNS> Change all refs of 'scope' to 'mount', including filenames
+servo_mount_cfg.h:27     	//*	May 19,	2022	<RNS> convert .home field to .zero to avoid confusion with ASCOM Home
+servo_mount_cfg.h:28     	//*	May 19,	2022	<RNS> Change all refs of 'scope' to 'mount', including filenames
+servo_rc_utils.c:36      	//*	May 19,	2022	<RNS> Cleaned up unit _TEST_ for warnings and printfs
+servo_test_tty.c:25      	//*	May 19,	2022	<RNS> Change all refs of 'scope' to 'mount', including filenames
+telescopedriver_servo.cpp:33	//*	May 19,	2022	<MLS> Updated #include to reflect RNS filename changes
+cameradriver.cpp:178     	//*	Jan  1,	2119	<TODO> ----------------------------------------
+cameradriver.cpp:179     	//*	Jun 26,	2119	<TODO> Add support for sub frames
 cameradriver_png.cpp:33  	//*	Jan 31,	2120	<TODO> Add support for libpng
 cameradriver_TOUP.cpp:44 	//*	Feb  4,	2120	<TODO> Add 16 bit readout to Toupcam
 cameradriver_TOUP.cpp:45 	//*	Feb 16,	2120	<TODO> Add gain setting to Toupcam
@@ -1842,22 +1861,22 @@ controller_camera.cpp:66 	//*	Jan  1,	2121	<TODO> save cross hair location
 controller_camera.cpp:67 	//*	Jan  1,	2121	<TODO> finish exposure step options
 controller_camera.cpp:68 	//*	Jan  1,	2121	<TODO> clear error msg
 controller_camera.cpp:69 	//*	Feb  6,	2121	<TODO> Move downloading of images to a separate thread
-History Comments found   = 1843 in 319 files
-Total lines              = 160608
-Total comment Lines      = 23517 (14.6%)
-Total comments           = 26731 (16.6%)
-Total history comments   = 1843 (1.1%)
+History Comments found   = 1862 in 319 files
+Total lines              = 160788
+Total comment Lines      = 23515 (14.6%)
+Total comments           = 26732 (16.6%)
+Total history comments   = 1862 (1.2%)
 Total C files            = 48
 Total C++ files          = 112
 Total H files            = 157
-Preprocssor cnt          = 5165
-Total SLOC               = 104847
-Total SLOC-Logical       = 81122
+Preprocssor cnt          = 5168
+Total SLOC               = 105001
+Total SLOC-Logical       = 81222
 Programmer comment summary
-MLS             = 1715
+MLS             = 1722
 TODO            =   13
 DDB             =    1
 JMH             =    3
 PDB             =    6
 KAS             =    3
-RNS             =   98
+RNS             =  110

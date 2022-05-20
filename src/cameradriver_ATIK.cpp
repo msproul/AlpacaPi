@@ -474,7 +474,7 @@ bool	CameraDriverATIK::GetImage_ROI_info(void)
 //*****************************************************************************
 //*	http://192.168.0.201:6800/api/v1.0.0-oas3/camera/0/startexposure Content-Type: -dDuration=0.001&Light=true
 //*****************************************************************************
-TYPE_ASCOM_STATUS	CameraDriverATIK::Start_CameraExposure(int32_t exposureMicrosecs)
+TYPE_ASCOM_STATUS	CameraDriverATIK::Start_CameraExposure(int32_t exposureMicrosecs, const bool lightFrame)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
 int					exposureTime_ms;

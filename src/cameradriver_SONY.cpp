@@ -1540,7 +1540,7 @@ int					notProcessedCnt;
 //*****************************************************************************
 //*	returns Alpaca error code
 //*****************************************************************************
-TYPE_ASCOM_STATUS	CameraDriverSONY::Start_CameraExposure(int32_t exposureMicrosecs)
+TYPE_ASCOM_STATUS	CameraDriverSONY::Start_CameraExposure(int32_t exposureMicrosecs, const bool lightFrame)
 {
 CrError				sonyErrCode;
 char				sonyErrorString[128];

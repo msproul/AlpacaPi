@@ -233,14 +233,18 @@ class ControllerCamera: public Controller
 												TYPE_ImageArray	*imageArray,
 												int				arrayLength,
 												int				*actualValueCnt);
-				int		AlpacaGetImageArray_Binary(	TYPE_ImageArray	*imageArray,
-													int				arrayLength,
-													int				*actualValueCnt);
 				int		AlpacaGetImageArray_JSON(	TYPE_ImageArray	*imageArray,
 													int				arrayLength,
 													int				*actualValueCnt);
-				void	AlpacaGetImageArray_Binary_Byte(TYPE_ImageArray	*imageArray,
-														int				arrayLength);
+				void	AlpacaGetImageArray_Binary_Byte(	TYPE_ImageArray	*imageArray,
+															int				arrayLength);
+
+				void	AlpacaGetImageArray_Binary_Int32(	TYPE_ImageArray	*imageArray,
+															int				arrayLength);
+
+				int		AlpacaGetImageArray_Binary(			TYPE_ImageArray	*imageArray,
+															int				arrayLength,
+															int				*actualValueCnt);
 
 				void	UpdateImageProgressBar(int maxArrayLength);
 

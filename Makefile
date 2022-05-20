@@ -51,6 +51,7 @@
 #++	May  2,	2022	<MLS> Added _ENABLE_IMU_
 #++	May  2,	2022	<MLS> Added make moonlite for stand alone moonlite focuser driver
 #++	May  4,	2022	<MLS> Added camera simulator (make camerasim)
+#++	May 19,	2022	<MLS> Updated Makefile to reflect RNS filename changes
 ######################################################################################
 #	Cr_Core is for the Sony camera
 ######################################################################################
@@ -628,7 +629,7 @@ allcam		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
 allcam		:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
 allcam		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
 allcam		:		DEFINEFLAGS		+=	-D_ENABLE_ATIK_
-allcam		:		DEFINEFLAGS		+=	-D_ENABLE_FLIR_
+#allcam		:		DEFINEFLAGS		+=	-D_ENABLE_FLIR_
 allcam		:		DEFINEFLAGS		+=	-D_ENABLE_QHY_
 #allcam		:		DEFINEFLAGS		+=	-D_ENABLE_SONY_
 allcam		:		DEFINEFLAGS		+=	-D_ENABLE_TOUP_
@@ -666,7 +667,6 @@ allcam		:		$(CPP_OBJECTS)				\
 					-L$(TOUP_LIB_DIR)/			\
 					$(ASI_CAMERA_OBJECTS)		\
 					$(ZWO_EFW_OBJECTS)			\
-					-lSpinnaker_C				\
 					-latikcameras				\
 					-ltoupcam					\
 					-ludev						\
@@ -676,6 +676,7 @@ allcam		:		$(CPP_OBJECTS)				\
 					-lqhyccd					\
 					-o alpacapi
 
+#					-lSpinnaker_C				\
 
 
 ######################################################################################
@@ -870,9 +871,9 @@ rigel		:		$(TELESCOPE_OBJECTS)		\
 
 ######################################################################################
 SERVO_OBJECTS=										\
-				$(OBJECT_DIR)servo_scope_cfg.o		\
+				$(OBJECT_DIR)servo_mount_cfg.o		\
 				$(OBJECT_DIR)servo_time.o			\
-				$(OBJECT_DIR)servo_scope.o			\
+				$(OBJECT_DIR)servo_mount.o			\
 				$(OBJECT_DIR)servo_rc_utils.o		\
 				$(OBJECT_DIR)servo_mc_core.o		\
 
@@ -3637,10 +3638,10 @@ $(OBJECT_DIR)startextrathread.o : 		$(SRC_SPECIAL)startextrathread.cpp	\
 #		Servo source code
 ##################################################################################
 #-------------------------------------------------------------------------------------
-$(OBJECT_DIR)servo_scope_cfg.o : 		$(SRC_SERVO)servo_scope_cfg.c	\
-										$(SRC_SERVO)servo_scope_cfg.h	\
+$(OBJECT_DIR)servo_mount_cfg.o : 		$(SRC_SERVO)servo_mount_cfg.c	\
+										$(SRC_SERVO)servo_mount_cfg.h	\
 										$(SRC_SERVO)servo_std_defs.h
-	$(COMPILE) $(INCLUDES) $(SRC_SERVO)servo_scope_cfg.c -o$(OBJECT_DIR)servo_scope_cfg.o
+	$(COMPILE) $(INCLUDES) $(SRC_SERVO)servo_mount_cfg.c -o$(OBJECT_DIR)servo_mount_cfg.o
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)servo_time.o : 			$(SRC_SERVO)servo_time.c	\
@@ -3649,10 +3650,10 @@ $(OBJECT_DIR)servo_time.o : 			$(SRC_SERVO)servo_time.c	\
 	$(COMPILE) $(INCLUDES) $(SRC_SERVO)servo_time.c -o$(OBJECT_DIR)servo_time.o
 
 #-------------------------------------------------------------------------------------
-$(OBJECT_DIR)servo_scope.o : 			$(SRC_SERVO)servo_scope.c	\
-										$(SRC_SERVO)servo_scope.h	\
+$(OBJECT_DIR)servo_mount.o : 			$(SRC_SERVO)servo_mount.c	\
+										$(SRC_SERVO)servo_mount.h	\
 										$(SRC_SERVO)servo_std_defs.h
-	$(COMPILE) $(INCLUDES) $(SRC_SERVO)servo_scope.c -o$(OBJECT_DIR)servo_scope.o
+	$(COMPILE) $(INCLUDES) $(SRC_SERVO)servo_mount.c -o$(OBJECT_DIR)servo_mount.o
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)servo_rc_utils.o : 		$(SRC_SERVO)servo_rc_utils.c	\

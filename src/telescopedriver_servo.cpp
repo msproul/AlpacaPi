@@ -30,6 +30,7 @@
 //*	Apr  6,	2022	<MLS> Switched to using generic config reading routines
 //*	May 11,	2022	<MLS> Now using servo config processing routines by <RNS>
 //*	May 11,	2022	<MLS> Added OutputHTML_Part2() to telescope servo driver
+//*	May 19,	2022	<MLS> Updated #include to reflect RNS filename changes
 //*****************************************************************************
 //*	LM628/629 Si,
 //*****************************************************************************
@@ -54,8 +55,8 @@
 //#include	"readconfigfile.h"
 
 //*	servo controller routines using RoboClaws controller
-#include	"servo_scope_cfg.h"
-#include	"servo_scope.h"
+#include	"servo_mount_cfg.h"
+#include	"servo_mount.h"
 #include	"servo_std_defs.h"
 #include	"servo_time.h"
 

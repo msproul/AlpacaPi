@@ -8,9 +8,9 @@
 ############################################################################
 #++	May  9,	2022	<MLS> Updated to use Objectfiles directory for .o files
 #++	May 15,	2022	<RNS> Added servo_test_tty and fixed typos
-#++ May 19,	2022	<RNS> Change all refs of 'scope' to 'mount', including filenames
-#++ May 19,	2022	<RNS> Added support for rc_utils unit test
-#++ May 19,	2022	<RNS> Fixed all unit tests for *.c files with unit _TEST_
+#++	May 19,	2022	<RNS> Change all refs of 'scope' to 'mount', including filenames
+#++	May 19,	2022	<RNS> Added support for rc_utils unit test
+#++	May 19,	2022	<RNS> Fixed all unit tests for *.c files with unit _TEST_
 ############################################################################
 
 CC			=	gcc -I$(MLS_LIB_DIR)
@@ -42,7 +42,7 @@ RCUTILS_OBJECTS	=								\
 				$(OBJECT_DIR)servo_rc_utils.o 	\
 				$(OBJECT_DIR)servo_mc_core.o
 
-servo_test_tty:	CFLAGS	+=	
+servo_test_tty:	CFLAGS	+=
 servo_test_tty: 	$(SERVO_OBJECTS)	$(OBJECT_DIR)servo_test_tty.o
 
 	$(CC) $(CFLAGS) -o servo_test_tty				\
@@ -57,7 +57,7 @@ servo_test: 	$(SERVO_OBJECTS)
 					-lm
 
 
-test_cfg: 	CFLAGS	+=	-D_TEST_SERVO_MOUNT_CFG_ 
+test_cfg: 	CFLAGS	+=	-D_TEST_SERVO_MOUNT_CFG_
 test_cfg: 	$(TESTCFG_OBJECTS)
 	$(CC) $(CFLAGS) -o test_cfg 				\
 					$(TESTCFG_OBJECTS)			\

@@ -187,10 +187,10 @@ int				numCamerasFound;
 	if (gSimulateCameraImage)
 	{
 		strcpy(cDeviceManufacturer,	"QSI");
-		cCameraProp.CameraXsize			=	4000;
-		cCameraProp.CameraYsize			=	3000;
-		cCameraProp.NumX				=	4000;
-		cCameraProp.NumY				=	3000;
+		cCameraProp.CameraXsize			=	2000;
+		cCameraProp.CameraYsize			=	1500;
+		cCameraProp.NumX				=	cCameraProp.CameraXsize;
+		cCameraProp.NumY				=	cCameraProp.CameraYsize;
 
 		cCameraProp.GainMin				=	0;
 		cCameraProp.GainMax				=	10;
@@ -915,7 +915,7 @@ QSICamera::CameraGain	qsiGainValue;
 }
 
 //*****************************************************************************
-TYPE_ASCOM_STATUS		CameraDriverQSI::Start_CameraExposure(int32_t exposureMicrosecs)
+TYPE_ASCOM_STATUS		CameraDriverQSI::Start_CameraExposure(int32_t exposureMicrosecs, const bool lightFrame)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
 double				durationSeconds;
@@ -928,7 +928,8 @@ std::string			lastError("");
 	durationSeconds	=	(exposureMicrosecs * 1.0) / 1000000.0;
 
 	CONSOLE_DEBUG_W_NUM("exposureMicrosecs\t=",	exposureMicrosecs);
-	CONSOLE_DEBUG_W_DBL("durationSeconds\t=",	durationSeconds);
+	CONSOLE_DEBUG_W_DBL("durationSeconds  \t=",	durationSeconds);
+	CONSOLE_DEBUG_W_BOOL("lightFrame      \t=",	lightFrame);
 
 #ifdef _SIMULATE_CAMERA_
 	if (gSimulateCameraImage)
@@ -945,7 +946,7 @@ std::string			lastError("");
 		//Parameters
 		//double Duration - Duration of exposure in seconds
 		//bool Light - true for light frame, false for dark frame (ignored if no shutter)
-		qsi_Result			=	cQSIcam.StartExposure(durationSeconds, true);
+		qsi_Result			=	cQSIcam.StartExposure(durationSeconds, lightFrame);
 		if (qsi_Result == QSI_OK)
 		{
 			alpacaErrCode			=	kASCOM_Err_Success;

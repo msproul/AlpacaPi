@@ -1768,7 +1768,7 @@ int			pixIdx;
 	pixelsCount	=	cCameraProp.CameraXsize * cCameraProp.CameraYsize;
 	if (pixelsCount > 0)
 	{
-		imageData	=	(int *)malloc(pixelsCount * sizeof(int));
+		imageData	=	(int *)calloc(pixelsCount, sizeof(int));
 		if (imageData!= NULL)
 		{
 			valuesRead	=	0;
@@ -1865,7 +1865,7 @@ int				imageWidthStep;
 		CONSOLE_DEBUG_W_NUM("pixelCount\t=", pixelCount);
 		buffSize	=	(pixelCount + 100) * sizeof(TYPE_ImageArray);
 		CONSOLE_DEBUG_W_NUM("buffSize\t=", buffSize);
-		imageArray	=	(TYPE_ImageArray *)malloc(buffSize);
+		imageArray	=	(TYPE_ImageArray *)calloc(1, buffSize);
 		if (imageArray!= NULL)
 		{
 			memset(imageArray, 0, buffSize);
@@ -2018,7 +2018,8 @@ int				buffSize;
 		CONSOLE_DEBUG_W_NUM("pixelCount\t=", pixelCount);
 		buffSize	=	(pixelCount + 100) * sizeof(TYPE_ImageArray);
 		CONSOLE_DEBUG_W_NUM("buffSize\t=", buffSize);
-		imageArray	=	(TYPE_ImageArray *)malloc(buffSize);
+//		imageArray	=	(TYPE_ImageArray *)malloc(buffSize);
+		imageArray	=	(TYPE_ImageArray *)calloc(1, buffSize);
 		if (imageArray!= NULL)
 		{
 			memset(imageArray, 0, buffSize);

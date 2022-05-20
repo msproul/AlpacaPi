@@ -624,7 +624,7 @@ void	CameraDriverASI::ResetCamera(void)
 
 
 //*****************************************************************************
-TYPE_ASCOM_STATUS	CameraDriverASI::Start_CameraExposure(int32_t exposureMicrosecs)
+TYPE_ASCOM_STATUS	CameraDriverASI::Start_CameraExposure(int32_t exposureMicrosecs, const bool lightFrame)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
 ASI_BOOL			bAuto;

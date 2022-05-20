@@ -42,7 +42,7 @@ class CameraDriverTOUP: public CameraDriver
 
 		//*****************************************************************************
 		//*	Camera specific routines
-		virtual	TYPE_ASCOM_STATUS		Start_CameraExposure(int32_t exposureMicrosecs);
+		virtual	TYPE_ASCOM_STATUS		Start_CameraExposure(int32_t exposureMicrosecs, const bool lightFrame=true);
 		virtual	TYPE_ASCOM_STATUS		Stop_Exposure(void);
 		virtual	TYPE_EXPOSURE_STATUS	Check_Exposure(bool verboseFlag = false);
 		virtual	TYPE_ASCOM_STATUS		SetImageType(TYPE_IMAGE_TYPE newImageType);

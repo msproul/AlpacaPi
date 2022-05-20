@@ -441,6 +441,7 @@ class CameraDriver: public AlpacaDriver
 		TYPE_ASCOM_STATUS	Get_Imagearray_Binary(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 		int					BuildBinaryImage_Raw8(	unsigned char *binaryDataBuffer, int startOffset, int bufferSize);
 		int					BuildBinaryImage_Raw16(	unsigned char *binaryDataBuffer, int startOffset, int bufferSize);
+		int					BuildBinaryImage_Raw32(	unsigned char *binaryDataBuffer, int startOffset, int bufferSize);
 		int					BuildBinaryImage_RGB24(	unsigned char *binaryDataBuffer, int startOffset, int bufferSize);
 		int					BuildBinaryImage_RGBx16(unsigned char *binaryDataBuffer, int startOffset, int bufferSize);
 
@@ -587,7 +588,7 @@ class CameraDriver: public AlpacaDriver
 		//*	Camera specific routines
 		virtual	bool					IsCameraIDvalid(const int argCameraID);
 		virtual	void					ResetCamera(void);
-		virtual	TYPE_ASCOM_STATUS		Start_CameraExposure(int32_t exposureMicrosecs);
+		virtual	TYPE_ASCOM_STATUS		Start_CameraExposure(int32_t exposureMicrosecs, const bool lightFrame=true);
 				TYPE_ASCOM_STATUS		Start_CameraExposure(void);
 		virtual	TYPE_ASCOM_STATUS		Stop_Exposure(void);
 		virtual	TYPE_ASCOM_STATUS		Abort_Exposure(void);

@@ -53,7 +53,7 @@ class CameraDriverSIM: public CameraDriver
 		//*	Camera specific routines
 //		virtual	bool					IsCameraIDvalid(const int argCameraID);
 //		virtual	void					ResetCamera(void);
-		virtual	TYPE_ASCOM_STATUS		Start_CameraExposure(int32_t exposureMicrosecs);
+		virtual	TYPE_ASCOM_STATUS		Start_CameraExposure(int32_t exposureMicrosecs, const bool lightFrame);
 //		virtual	TYPE_ASCOM_STATUS		Stop_Exposure(void);
 //		virtual	TYPE_ASCOM_STATUS		Abort_Exposure(void);
 		virtual	TYPE_EXPOSURE_STATUS	Check_Exposure(bool verboseFlag = false);
