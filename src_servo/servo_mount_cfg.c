@@ -1,9 +1,9 @@
 //******************************************************************************
-//*	Name:			servo_scope_cfg.c
+//*	Name:			servo_mount_cfg.c
 //*
 //*	Author:			Ron Story (C) 2022
 //*
-//*	Description: Read/parses the telescope mount config file for attributes
+//*	Description: Read/parses the servo mount config file for attributes
 //*
 //*****************************************************************************
 //*	AlpacaPi is an open source project written in C/C++ and led by Mark Sproul
@@ -34,6 +34,7 @@
 //*	May 14,	2022	<RNS> Added Time_ascii_maybe_HMS_tof for coordinate tokens park, sync, etc
 //*	May 16,	2022	<RNS> Corrected nesting of error messages to handle invalid field in cfgfile
 //*	May 16,	2022	<RNS> Adopted _TYPE_SCOPE_CONFIG_
+//*	May 19,	2022	<RNS> Change all refs of 'scope' to 'mount', including filenames
 //****************************************************************************
 
 #include <stdio.h>
@@ -48,7 +49,7 @@
 
 #include "servo_std_defs.h"
 #include "servo_time.h"
-#include "servo_scope_cfg.h"
+#include "servo_mount_cfg.h"
 
 static double RolloverRegion	=	0.0;
 static double OffTargetTolerance;
@@ -115,7 +116,7 @@ typedef struct
 //} cfgItem, cfgItemPtr;
 
 //******************************************************************
-static TYPE_CFG_ITEM gScopeConfigArray[] =
+static TYPE_CFG_ITEM gMountConfigArray[] =
 	{
 		{"MC_FREQ:", MC_FREQ, false},
 		{"MC_ADDR:", MC_ADDR, false},
@@ -172,11 +173,11 @@ static int FindKeyWordEnum(const char *keyword)
 	int enumValue;
 	iii = 0;
 	enumValue = -1;
-	while ((enumValue < 0) && (gScopeConfigArray[iii].enumValue >= 0))
+	while ((enumValue < 0) && (gMountConfigArray[iii].enumValue >= 0))
 	{
-		if (strcasecmp(keyword, gScopeConfigArray[iii].parameter) == 0)
+		if (strcasecmp(keyword, gMountConfigArray[iii].parameter) == 0)
 		{
-			enumValue = gScopeConfigArray[iii].enumValue;
+			enumValue = gMountConfigArray[iii].enumValue;
 			//*	verify that the array is in the right order
 			if (enumValue != iii)
 			{
@@ -190,7 +191,7 @@ static int FindKeyWordEnum(const char *keyword)
 
 
 //******************************************************************
-int Servo_Read_Scope_Cfg(const char *scopeCfgFile, TYPE_SCOPE_CONFIG *scopeConfig)
+int Servo_read_mount_cfg(const char *mountCfgFile, TYPE_MOUNT_CONFIG *mountConfig)
 {
 	char filename[kMAX_STR_LEN];
 	char inString[kMAX_STR_LEN];
@@ -208,31 +209,31 @@ int Servo_Read_Scope_Cfg(const char *scopeCfgFile, TYPE_SCOPE_CONFIG *scopeConfi
 	axisPtr ra;
 	axisPtr dec;
 
-	ra = &scopeConfig->ra;
-	dec = &scopeConfig->dec;
+	ra = &mountConfig->ra;
+	dec = &mountConfig->dec;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
 	retStatus = -1;
 	//*	first, go through and invalidate all of the parameters
 	iii = 0;
-	while (strlen(gScopeConfigArray[iii].parameter) > 0)
+	while (strlen(gMountConfigArray[iii].parameter) > 0)
 	{
-		gScopeConfigArray[iii].found = false;
+		gMountConfigArray[iii].found = false;
 		iii++;
 	}
 
 	//	printf("\r\n%s ************************************************\r\n", __FUNCTION__);
 	// If no filename specified, use the default
-	if (scopeCfgFile == NULL)
+	if (mountCfgFile == NULL)
 	{
 		strcpy(filename, kSCOPE_CFG_FILE);
 	}
 	else
 	{
-		strcpy(filename, scopeCfgFile);
+		strcpy(filename, mountCfgFile);
 	}
-	// open the scope configuration file
+	// open the mount configuration file
 	inFile = fopen(filename, "r");
 	if (inFile == NULL)
 	{
@@ -254,7 +255,7 @@ int Servo_Read_Scope_Cfg(const char *scopeCfgFile, TYPE_SCOPE_CONFIG *scopeConfi
 			if (tokenEnumValue == -1)
 			{
 				// Not a valid token
-				fprintf(stderr, "Error: (init_scope_cfg) on line %d of file '%s'\n", line, filename);
+				fprintf(stderr, "Error: (init_mount_cfg) on line %d of file '%s'\n", line, filename);
 				fprintf(stderr, "       Invalid field: %s\n", token);
 			}
 			else
@@ -270,63 +271,63 @@ int Servo_Read_Scope_Cfg(const char *scopeCfgFile, TYPE_SCOPE_CONFIG *scopeConfi
 					switch (tokenEnumValue)
 					{
 					case MC_FREQ:
-						gScopeConfigArray[MC_FREQ].found = true;
-						scopeConfig->freq = atof(argument);
+						gMountConfigArray[MC_FREQ].found = true;
+						mountConfig->freq = atof(argument);
 						// parameter is ok, print it out
-						printf("%-15.15s = %-15.4f  ", token, scopeConfig->freq);
+						printf("%-15.15s = %-15.4f  ", token, mountConfig->freq);
 
-						if (scopeConfig->freq == 0.0)
+						if (mountConfig->freq == 0.0)
 						{
-							fprintf(stderr, "Error: (init_scope_cfg) on line %d of file '%s'\n", line, filename);
-							fprintf(stderr, "       Invalid %s field '%f'\n", token, scopeConfig->freq);
+							fprintf(stderr, "Error: (init_mount_cfg) on line %d of file '%s'\n", line, filename);
+							fprintf(stderr, "       Invalid %s field '%f'\n", token, mountConfig->freq);
 							fprintf(stderr, "       Must be '1000000.0'\n");
 							fprintf(stderr, "       Usage:  %s  1000000.0\n", token);
 						}
 						break;
 
 					case MC_ADDR:
-						gScopeConfigArray[MC_ADDR].found = true;
-						scopeConfig->addr = atoi(argument);
-						printf("%-15.15s = %-15d  ", token, scopeConfig->addr);
+						gMountConfigArray[MC_ADDR].found = true;
+						mountConfig->addr = atoi(argument);
+						printf("%-15.15s = %-15d  ", token, mountConfig->addr);
 
-						if (scopeConfig->addr < 0 || scopeConfig->addr > 255)
+						if (mountConfig->addr < 0 || mountConfig->addr > 255)
 						{
-							fprintf(stderr, "Error: (init_scope_cfg) on line %d of file '%s'\n", line, filename);
-							fprintf(stderr, "       Invalid %s field '%d'\n", token, scopeConfig->addr);
+							fprintf(stderr, "Error: (init_mount_cfg) on line %d of file '%s'\n", line, filename);
+							fprintf(stderr, "       Invalid %s field '%d'\n", token, mountConfig->addr);
 							fprintf(stderr, "       Usage:  %s  128\n", token);
 						}
 
 						break;
 
 					case BAUD:
-						gScopeConfigArray[BAUD].found = true;
-						scopeConfig->baud = atoi(argument);
-						printf("%-15.15s = %-15d  ", token, scopeConfig->baud);
+						gMountConfigArray[BAUD].found = true;
+						mountConfig->baud = atoi(argument);
+						printf("%-15.15s = %-15d  ", token, mountConfig->baud);
 
-						if ((scopeConfig->baud != 9600) && (scopeConfig->baud != 19200) && (scopeConfig->baud != 38400))
+						if ((mountConfig->baud != 9600) && (mountConfig->baud != 19200) && (mountConfig->baud != 38400))
 						{
-							fprintf(stderr, "Error: (init_scope_cfg) on line %d of file '%s'\n", line, filename);
-							fprintf(stderr, "       Invalid %s field '%d'\n", token, scopeConfig->baud);
+							fprintf(stderr, "Error: (init_mount_cfg) on line %d of file '%s'\n", line, filename);
+							fprintf(stderr, "       Invalid %s field '%d'\n", token, mountConfig->baud);
 							fprintf(stderr, "       Usage:  %s  9600\n", token);
 						}
 						break;
 
 					case COMM_PORT:
-						gScopeConfigArray[COMM_PORT].found = true;
-						strcpy(scopeConfig->port, argument);
-						printf("%-15.15s = %-15.15s  ", token, scopeConfig->port);
+						gMountConfigArray[COMM_PORT].found = true;
+						strcpy(mountConfig->port, argument);
+						printf("%-15.15s = %-15.15s  ", token, mountConfig->port);
 						break;
 
 					case MOUNT:
-						gScopeConfigArray[MOUNT].found = true;
+						gMountConfigArray[MOUNT].found = true;
 						printf("%-15.15s = %-15.15s  ", token, argument);
 						if (!strcmp(argument, "FORK"))
 						{
-							scopeConfig->mount = kFORK;
+							mountConfig->mount = kFORK;
 						}
 						else if (!strcmp(argument, "GERMAN"))
 						{
-							scopeConfig->mount = kGERMAN;
+							mountConfig->mount = kGERMAN;
 
 						}
 						//				else if (!strcmp(argument, "SPLIT"))
@@ -339,7 +340,7 @@ int Servo_Read_Scope_Cfg(const char *scopeCfgFile, TYPE_SCOPE_CONFIG *scopeConfi
 						//				}
 						else
 						{
-							fprintf(stderr, "Error: (init_scope_cfg) on line %d of file '%s'\n", line, filename);
+							fprintf(stderr, "Error: (init_mount_cfg) on line %d of file '%s'\n", line, filename);
 							fprintf(stderr, "       Invalid %s field '%s'\n", token, argument);
 							fprintf(stderr, "       Must be 'FORK' or'GERMAN'\n");
 							fprintf(stderr, "       Usage:  %s  FORK\n", token);
@@ -347,27 +348,27 @@ int Servo_Read_Scope_Cfg(const char *scopeCfgFile, TYPE_SCOPE_CONFIG *scopeConfi
 						break;
 
 					case PARK_SIDE:
-						gScopeConfigArray[PARK_SIDE].found = true;
+						gMountConfigArray[PARK_SIDE].found = true;
 						printf("%-15.15s = %-15.15s  ", token, argument);
 
 						if (!strcmp(argument, "WEST"))
 						{
-							scopeConfig->side = kWEST;
-							scopeConfig->ra.parkInfo = kWEST;
+							mountConfig->side = kWEST;
+							mountConfig->ra.parkInfo = kWEST;
 						}
 						else if (!strcmp(argument, "EAST"))
 						{
-							scopeConfig->side = kEAST;
-							scopeConfig->ra.parkInfo = kEAST;
+							mountConfig->side = kEAST;
+							mountConfig->ra.parkInfo = kEAST;
 						}
 						else if (!strcmp(argument, "NONE"))
 						{
-							scopeConfig->side = kNONE;
-							scopeConfig->ra.parkInfo = kNONE;
+							mountConfig->side = kNONE;
+							mountConfig->ra.parkInfo = kNONE;
 						}
 						else
 						{
-							fprintf(stderr, "Error: (init_scope_cfg) on line %d of file '%s'\n", line, filename);
+							fprintf(stderr, "Error: (init_mount_cfg) on line %d of file '%s'\n", line, filename);
 							fprintf(stderr, "       Invalid %s field '%s'\n", token, argument);
 							fprintf(stderr, "       Must be 'EAST', 'WEST', 'NONE'\n");
 							fprintf(stderr, "       Usage:  %s  EAST\n", token);
@@ -375,320 +376,320 @@ int Servo_Read_Scope_Cfg(const char *scopeCfgFile, TYPE_SCOPE_CONFIG *scopeConfi
 						break;
 
 					case RA_MOTOR_MAX_RPM:
-						gScopeConfigArray[RA_MOTOR_MAX_RPM].found = true;
+						gMountConfigArray[RA_MOTOR_MAX_RPM].found = true;
 						ra->motorMaxRPM = atof(argument);
 						printf("%-15.15s = %-15.4f  ", token, ra->motorMaxRPM);
 
 						if (ra->motorMaxRPM <= 0.0)
 						{
-							fprintf(stderr, "Error: (init_scope_cfg) on line %d of file '%s'\n", line, filename);
+							fprintf(stderr, "Error: (init_mount_cfg) on line %d of file '%s'\n", line, filename);
 							fprintf(stderr, "       Invalid %s field '%f'\n", token, ra->motorMaxRPM);
 							fprintf(stderr, "       Usage:  %s  7200.0\n", token);
 						}
 						break;
 
 					case RA_MOTOR_GEAR:
-						gScopeConfigArray[RA_MOTOR_GEAR].found = true;
+						gMountConfigArray[RA_MOTOR_GEAR].found = true;
 						ra->motorGear = atof(argument);
 						printf("%-15.15s = %-15.4f  ", token, ra->motorGear);
 
 						if (ra->motorGear <= 0.0)
 						{
-							fprintf(stderr, "Error: (init_scope_cfg) on line %d of file '%s'\n", line, filename);
+							fprintf(stderr, "Error: (init_mount_cfg) on line %d of file '%s'\n", line, filename);
 							fprintf(stderr, "       Invalid %s field '%f'\n", token, ra->motorGear);
 							fprintf(stderr, "       Usage:  %s  18.0\n", token);
 						}
 						break;
 
 					case RA_MAIN_GEAR:
-						gScopeConfigArray[RA_MAIN_GEAR].found = true;
+						gMountConfigArray[RA_MAIN_GEAR].found = true;
 						ra->mainGear = atof(argument);
 						printf("%-15.15s = %-15.4f  ", token, ra->mainGear);
 
 						if (ra->mainGear <= 0.0)
 						{
-							fprintf(stderr, "Error: (init_scope_cfg) on line %d of file '%s'\n", line, filename);
+							fprintf(stderr, "Error: (init_mount_cfg) on line %d of file '%s'\n", line, filename);
 							fprintf(stderr, "       Invalid %s field '%f'\n", token, ra->mainGear);
 							fprintf(stderr, "       Usage:  %s  359.0\n", token);
 						}
 						break;
 
 					case RA_ENCODER:
-						gScopeConfigArray[RA_ENCODER].found = true;
+						gMountConfigArray[RA_ENCODER].found = true;
 						ra->encoder = atof(argument);
 						printf("%-15.15s = %-15.4lf  ", token, ra->encoder);
 
 						if (ra->encoder == 0.0)
 						{
-							fprintf(stderr, "Error: (init_scope_cfg) on line %d of file '%s'\n", line, filename);
+							fprintf(stderr, "Error: (init_mount_cfg) on line %d of file '%s'\n", line, filename);
 							fprintf(stderr, "       Invalid %s field '%f'\n", token, ra->encoder);
 							fprintf(stderr, "       Usage:  %s  2000.0\n", token);
 						}
 						break;
 
 					case RA_MAX_VEL:
-						gScopeConfigArray[RA_MAX_VEL].found = true;
+						gMountConfigArray[RA_MAX_VEL].found = true;
 						ra->realVel = atof(argument);
 						printf("%-15.15s = %-15.4lf  ", token, ra->realVel);
 
 						if (ra->realVel == 0.0)
 						{
-							fprintf(stderr, "Error: (init_scope_cfg) on line %d of file '%s'\n", line, filename);
+							fprintf(stderr, "Error: (init_mount_cfg) on line %d of file '%s'\n", line, filename);
 							fprintf(stderr, "       Invalid %s field '%f'\n", token, ra->realVel);
 							fprintf(stderr, "       Usage:  %s  15000.0\n", token);
 						}
 						break;
 
 					case RA_MAX_ACC:
-						gScopeConfigArray[RA_MAX_ACC].found = true;
+						gMountConfigArray[RA_MAX_ACC].found = true;
 						ra->realAcc = atof(argument);
 						printf("%-15.15s = %-15.4f  ", token, ra->realAcc);
 
 						if (ra->realAcc == 0.0)
 						{
-							fprintf(stderr, "Error: (init_scope_cfg) on line %d of file '%s'\n", line, filename);
+							fprintf(stderr, "Error: (init_mount_cfg) on line %d of file '%s'\n", line, filename);
 							fprintf(stderr, "       Invalid %s field '%f'\n", token, ra->realAcc);
 							fprintf(stderr, "       Usage:  %s  10.0\n", token);
 						}
 						break;
 
 					case RA_ADJ_VEL:
-						gScopeConfigArray[RA_ADJ_VEL].found = true;
+						gMountConfigArray[RA_ADJ_VEL].found = true;
 						ra->realAdj = atof(argument);
 						printf("%-15.15s = %-15.4f  ", token, ra->realAdj);
 
 						if (ra->realAdj == 0.0)
 						{
-							fprintf(stderr, "Error: (init_scope_cfg) on line %d of file '%s'\n", line, filename);
+							fprintf(stderr, "Error: (init_mount_cfg) on line %d of file '%s'\n", line, filename);
 							fprintf(stderr, "       Invalid %s field '%f'\n", token, ra->realAdj);
 							fprintf(stderr, "       Usage:  %s  900.0\n", token);
 						}
 						break;
 
 					case RA_SI_CON:
-						gScopeConfigArray[RA_SI_CON].found = true;
+						gMountConfigArray[RA_SI_CON].found = true;
 						ra->si = (uint8_t)atoi(argument);
 						printf("%-15.15s = %-15d  ", token, ra->si);
 
 						if (!isdigit(argument[0]))
 						{
-							fprintf(stderr, "Error: (init_scope_cfg) on line %d of file '%s'\n", line, filename);
+							fprintf(stderr, "Error: (init_mount_cfg) on line %d of file '%s'\n", line, filename);
 							fprintf(stderr, "       Invalid %s field '%d'\n", token, (int)ra->si);
 							fprintf(stderr, "       Usage:  %s  0\n", token);
 						}
 						break;
 
 					case RA_KP_CON:
-						gScopeConfigArray[RA_KP_CON].found = true;
+						gMountConfigArray[RA_KP_CON].found = true;
 						ra->kp = atoi(argument);
 						printf("%-15.15s = %-15d  ", token, ra->kp);
 
 						if (!isdigit(argument[0]))
 						{
-							fprintf(stderr, "Error: (init_scope_cfg) on line %d of file '%s'\n", line, filename);
+							fprintf(stderr, "Error: (init_mount_cfg) on line %d of file '%s'\n", line, filename);
 							fprintf(stderr, "       Invalid %s field '%d'\n", token, ra->kp);
 							fprintf(stderr, "       Usage:  %s  60\n", token);
 						}
 						break;
 
 					case RA_KI_CON:
-						gScopeConfigArray[RA_KI_CON].found = true;
+						gMountConfigArray[RA_KI_CON].found = true;
 						ra->ki = atoi(argument);
 						printf("%-15.15s = %-15d  ", token, ra->ki);
 
 						if (!isdigit(argument[0]))
 						{
-							fprintf(stderr, "Error: (init_scope_cfg) on line %d of file '%s'\n", line, filename);
+							fprintf(stderr, "Error: (init_mount_cfg) on line %d of file '%s'\n", line, filename);
 							fprintf(stderr, "       Invalid %s field '%d'\n", token, ra->ki);
 							fprintf(stderr, "       Usage:  %s  30\n", token);
 						}
 						break;
 
 					case RA_KD_CON:
-						gScopeConfigArray[RA_KD_CON].found = true;
+						gMountConfigArray[RA_KD_CON].found = true;
 						ra->kd = atoi(argument);
 						printf("%-15.15s = %-15d  ", token, ra->kd);
 
 						if (!isdigit(argument[0]))
 						{
-							fprintf(stderr, "Error: (init_scope_cfg) on line %d of file '%s'\n", line, filename);
+							fprintf(stderr, "Error: (init_mount_cfg) on line %d of file '%s'\n", line, filename);
 							fprintf(stderr, "       Invalid %s field '%d'\n", token, ra->kd);
 							fprintf(stderr, "       Usage:  %s  300\n", token);
 						}
 						break;
 
 					case RA_IL_CON:
-						gScopeConfigArray[RA_IL_CON].found = true;
+						gMountConfigArray[RA_IL_CON].found = true;
 						ra->il = atoi(argument);
 						printf("%-15.15s = %-15d  ", token, ra->il);
 
 						if (!isdigit(argument[0]))
 						{
-							fprintf(stderr, "Error: (init_scope_cfg) on line %d of file '%s'\n", line, filename);
+							fprintf(stderr, "Error: (init_mount_cfg) on line %d of file '%s'\n", line, filename);
 							fprintf(stderr, "       Invalid %s field '%d'\n", token, ra->il);
 							fprintf(stderr, "       Usage:  %s  130\n", token);
 						}
 						break;
 
 					case DEC_MOTOR_MAX_RPM:
-						gScopeConfigArray[DEC_MOTOR_MAX_RPM].found = true;
+						gMountConfigArray[DEC_MOTOR_MAX_RPM].found = true;
 						dec->motorMaxRPM = atof(argument);
 						printf("%-15.15s = %-15.4f  ", token, dec->motorMaxRPM);
 
 						if (ra->motorMaxRPM <= 0.0)
 						{
-							fprintf(stderr, "Error: (init_scope_cfg) on line %d of file '%s'\n", line, filename);
+							fprintf(stderr, "Error: (init_mount_cfg) on line %d of file '%s'\n", line, filename);
 							fprintf(stderr, "       Invalid %s field '%f'\n", token, dec->motorMaxRPM);
 							fprintf(stderr, "       Usage:  %s  7200.0\n", token);
 						}
 						break;
 
 					case DEC_MOTOR_GEAR:
-						gScopeConfigArray[DEC_MOTOR_GEAR].found = true;
+						gMountConfigArray[DEC_MOTOR_GEAR].found = true;
 						dec->motorGear = atof(argument);
 						printf("%-15.15s = %-15.4f  ", token, dec->motorGear);
 
 						if (dec->motorGear == 0.0)
 						{
-							fprintf(stderr, "Error: (init_scope_cfg) on line %d of file '%s'\n", line, filename);
+							fprintf(stderr, "Error: (init_mount_cfg) on line %d of file '%s'\n", line, filename);
 							fprintf(stderr, "       Invalid %s field '%f'\n", token, dec->motorGear);
 							fprintf(stderr, "       Usage:  %s  18.0\n", token);
 						}
 						break;
 
 					case DEC_MAIN_GEAR:
-						gScopeConfigArray[DEC_MAIN_GEAR].found = true;
+						gMountConfigArray[DEC_MAIN_GEAR].found = true;
 						dec->mainGear = atof(argument);
 						printf("%-15.15s = %-15.4f  ", token, dec->mainGear);
 
 						if (dec->mainGear == 0.0)
 						{
-							fprintf(stderr, "Error: (init_scope_cfg) on line %d of file '%s'\n", line, filename);
+							fprintf(stderr, "Error: (init_mount_cfg) on line %d of file '%s'\n", line, filename);
 							fprintf(stderr, "       Invalid %s field '%f'\n", token, dec->mainGear);
 							fprintf(stderr, "       Usage:  %s  359.0\n", token);
 						}
 						break;
 
 					case DEC_ENCODER:
-						gScopeConfigArray[DEC_ENCODER].found = true;
+						gMountConfigArray[DEC_ENCODER].found = true;
 						dec->encoder = atof(argument);
 						printf("%-15.15s = %-15.4lf  ", token, dec->encoder);
 
 						if (dec->encoder == 0.0)
 						{
-							fprintf(stderr, "Error: (init_scope_cfg) on line %d of file '%s'\n", line, filename);
+							fprintf(stderr, "Error: (init_mount_cfg) on line %d of file '%s'\n", line, filename);
 							fprintf(stderr, "       Invalid %s field '%f'\n", token, dec->encoder);
 							fprintf(stderr, "       Usage:  %s  2000.0\n", token);
 						}
 						break;
 
 					case DEC_MAX_VEL:
-						gScopeConfigArray[DEC_MAX_VEL].found = true;
+						gMountConfigArray[DEC_MAX_VEL].found = true;
 						dec->realVel = atof(argument);
 						printf("%-15.15s = %-15.4f  ", token, dec->realVel);
 
 						if (dec->realVel == 0.0)
 						{
-							fprintf(stderr, "Error: (init_scope_cfg) on line %d of file '%s'\n", line, filename);
+							fprintf(stderr, "Error: (init_mount_cfg) on line %d of file '%s'\n", line, filename);
 							fprintf(stderr, "       Invalid %s field '%f'\n", token, dec->realVel);
 							fprintf(stderr, "       Usage:  %s  15000.0\n", token);
 						}
 						break;
 
 					case DEC_MAX_ACC:
-						gScopeConfigArray[DEC_MAX_ACC].found = true;
+						gMountConfigArray[DEC_MAX_ACC].found = true;
 						dec->realAcc = atof(argument);
 						printf("%-15.15s = %-15.4f  ", token, dec->realAcc);
 
 						if (dec->realAcc == 0.0)
 						{
-							fprintf(stderr, "Error: (init_scope_cfg) on line %d of file '%s'\n", line, filename);
+							fprintf(stderr, "Error: (init_mount_cfg) on line %d of file '%s'\n", line, filename);
 							fprintf(stderr, "       Invalid %s field '%f'\n", token, dec->realAcc);
 							fprintf(stderr, "       Usage:  %s  10.0\n", token);
 						}
 						break;
 
 					case DEC_ADJ_VEL:
-						gScopeConfigArray[DEC_ADJ_VEL].found = true;
+						gMountConfigArray[DEC_ADJ_VEL].found = true;
 						dec->realAdj = atof(argument);
 						printf("%-15.15s = %-15.4f  ", token, dec->realAdj);
 
 						if (dec->realAdj == 0.0)
 						{
-							fprintf(stderr, "Error: (init_scope_cfg) on line %d of file '%s'\n", line, filename);
+							fprintf(stderr, "Error: (init_mount_cfg) on line %d of file '%s'\n", line, filename);
 							fprintf(stderr, "       Invalid %s field '%f'\n", token, dec->realAdj);
 							fprintf(stderr, "       Usage:  %s  900.0\n", token);
 						}
 						break;
 
 					case DEC_SI_CON:
-						gScopeConfigArray[DEC_SI_CON].found = true;
+						gMountConfigArray[DEC_SI_CON].found = true;
 						dec->si = (uint8_t)atoi(argument);
 						printf("%-15.15s = %-15d  ", token, dec->si);
 
 						if (!isdigit(argument[0]))
 						{
-							fprintf(stderr, "Error: (init_scope_cfg) on line %d of file '%s'\n", line, filename);
+							fprintf(stderr, "Error: (init_mount_cfg) on line %d of file '%s'\n", line, filename);
 							fprintf(stderr, "       Invalid %s field '%d'\n", token, dec->si);
 							fprintf(stderr, "       Usage:  %s  0\n", token);
 						}
 						break;
 
 					case DEC_KP_CON:
-						gScopeConfigArray[DEC_KP_CON].found = true;
+						gMountConfigArray[DEC_KP_CON].found = true;
 						dec->kp = atoi(argument);
 						printf("%-15.15s = %-15d  ", token, dec->kp);
 
 						if (!isdigit(argument[0]))
 						{
-							fprintf(stderr, "Error: (init_scope_cfg) on line %d of file '%s'\n", line, filename);
+							fprintf(stderr, "Error: (init_mount_cfg) on line %d of file '%s'\n", line, filename);
 							fprintf(stderr, "       Invalid %s field '%d'\n", token, dec->kp);
 							fprintf(stderr, "       Usage:  %s  60\n", token);
 						}
 						break;
 
 					case DEC_KI_CON:
-						gScopeConfigArray[DEC_KI_CON].found = true;
+						gMountConfigArray[DEC_KI_CON].found = true;
 						dec->ki = atoi(argument);
 						printf("%-15.15s = %-15d  ", token, dec->ki);
 
 						if (!isdigit(argument[0]))
 						{
-							fprintf(stderr, "Error: (init_scope_cfg) on line %d of file '%s'\n", line, filename);
+							fprintf(stderr, "Error: (init_mount_cfg) on line %d of file '%s'\n", line, filename);
 							fprintf(stderr, "       Invalid %s field '%d'\n", token, dec->ki);
 							fprintf(stderr, "       Usage:  %s  60\n", token);
 						}
 						break;
 
 					case DEC_KD_CON:
-						gScopeConfigArray[DEC_KD_CON].found = true;
+						gMountConfigArray[DEC_KD_CON].found = true;
 						dec->kd = atoi(argument);
 
 						printf("%-15.15s = %-15d  ", token, dec->kd);
 
 						if (!isdigit(argument[0]))
 						{
-							fprintf(stderr, "Error: (init_scope_cfg) on line %d of file '%s'\n", line, filename);
+							fprintf(stderr, "Error: (init_mount_cfg) on line %d of file '%s'\n", line, filename);
 							fprintf(stderr, "       Invalid %s field '%d'\n", token, dec->kd);
 							fprintf(stderr, "       Usage:  %s  300\n", token);
 						}
 						break;
 
 					case DEC_IL_CON:
-						gScopeConfigArray[DEC_IL_CON].found = true;
+						gMountConfigArray[DEC_IL_CON].found = true;
 						dec->il = atoi(argument);
 						printf("%-15.15s = %-15d  ", token, dec->il);
 
 						if (!isdigit(argument[0]))
 						{
-							fprintf(stderr, "Error: (init_scope_cfg) on line %d of file '%s'\n", line, filename);
+							fprintf(stderr, "Error: (init_mount_cfg) on line %d of file '%s'\n", line, filename);
 							fprintf(stderr, "       Invalid %s field '%d'\n", token, dec->il);
 							fprintf(stderr, "       Usage:  %s  130\n", token);
 						}
 						break;
 
 					case RA_CONFIG:
-						gScopeConfigArray[RA_CONFIG].found = true;
+						gMountConfigArray[RA_CONFIG].found = true;
 						printf("%-15.15s = %-15.15s  ", token, argument);
 
 						if (!strcmp(argument, "FORWARD"))
@@ -701,7 +702,7 @@ int Servo_Read_Scope_Cfg(const char *scopeCfgFile, TYPE_SCOPE_CONFIG *scopeConfi
 						}
 						else
 						{
-							fprintf(stderr, "Error: (init_scope_cfg) on line %d of file '%s'\n", line, filename);
+							fprintf(stderr, "Error: (init_mount_cfg) on line %d of file '%s'\n", line, filename);
 							fprintf(stderr, "       Invalid %s field '%s'\n", token, argument);
 							fprintf(stderr, "       Must be 'FORWARD' or 'REVERSE'\n");
 							fprintf(stderr, "       Usage:  %s  FORWARD\n", token);
@@ -709,7 +710,7 @@ int Servo_Read_Scope_Cfg(const char *scopeCfgFile, TYPE_SCOPE_CONFIG *scopeConfi
 						break;
 
 					case DEC_CONFIG:
-						gScopeConfigArray[DEC_CONFIG].found = true;
+						gMountConfigArray[DEC_CONFIG].found = true;
 						printf("%-15.15s = %-15.15s  ", token, argument);
 
 						if (!strcmp(argument, "FORWARD"))
@@ -724,7 +725,7 @@ int Servo_Read_Scope_Cfg(const char *scopeCfgFile, TYPE_SCOPE_CONFIG *scopeConfi
 						}
 						else
 						{
-							fprintf(stderr, "Error: (init_scope_cfg) on line %d of file '%s'\n", line, filename);
+							fprintf(stderr, "Error: (init_mount_cfg) on line %d of file '%s'\n", line, filename);
 							fprintf(stderr, "       Invalid %s field '%s'\n", token, argument);
 							fprintf(stderr, "       Must be 'FORWARD' or 'REVERSE'\n");
 							fprintf(stderr, "       Usage:  %s  FORWARD\n", token);
@@ -733,150 +734,150 @@ int Servo_Read_Scope_Cfg(const char *scopeCfgFile, TYPE_SCOPE_CONFIG *scopeConfi
 						break;
 
 					case RA_GEAR_LASH:
-						gScopeConfigArray[RA_GEAR_LASH].found = true;
+						gMountConfigArray[RA_GEAR_LASH].found = true;
 						ra->gearLash = atof(argument);
 						printf("%-15.15s = %-15.4f  ", token, ra->gearLash);
 
 						if (ra->gearLash < 0.0)
 						{
-							fprintf(stderr, "Error: (init_scope_cfg) on line %d of file '%s'\n", line, filename);
+							fprintf(stderr, "Error: (init_mount_cfg) on line %d of file '%s'\n", line, filename);
 							fprintf(stderr, "       Invalid %s field '%f'\n", token, ra->gearLash);
 							fprintf(stderr, "       Usage:  %s  1500.0\n", token);
 						}
 						break;
 
 					case DEC_GEAR_LASH:
-						gScopeConfigArray[DEC_GEAR_LASH].found = true;
+						gMountConfigArray[DEC_GEAR_LASH].found = true;
 						dec->gearLash = atof(argument);
 						printf("%-15.15s = %-15.4f  ", token, dec->gearLash);
 
 						if (dec->gearLash < 0.0)
 						{
-							fprintf(stderr, "Error: (init_scope_cfg) on line %d of file '%s'\n", line, filename);
+							fprintf(stderr, "Error: (init_mount_cfg) on line %d of file '%s'\n", line, filename);
 							fprintf(stderr, "       Invalid %s field '%f'\n", token, dec->gearLash);
 							fprintf(stderr, "       Usage:  %s  1500.0\n", token);
 						}
 						break;
 
 					case DEC_PARK:
-						gScopeConfigArray[DEC_PARK].found = true;
+						gMountConfigArray[DEC_PARK].found = true;
 						dec->park = Time_ascii_maybe_HMS_tof(argument);
 						printf("%-15.15s = %-15.4f  ", token, dec->park);
 
 						if (dec->park < -91.0 || dec->park > 91.0)
 						{
-							fprintf(stderr, "Error: (init_scope_cfg) on line %d of file '%s'\n", line, filename);
+							fprintf(stderr, "Error: (init_mount_cfg) on line %d of file '%s'\n", line, filename);
 							fprintf(stderr, "       Invalid %s field '%f'\n", token, dec->park);
 							fprintf(stderr, "       Usage:  %s  0.0\n", token);
 						}
 						break;
 
 					case RA_SLEW_VEL:
-						gScopeConfigArray[RA_SLEW_VEL].found = true;
+						gMountConfigArray[RA_SLEW_VEL].found = true;
 						ra->realSlew = Time_ascii_maybe_HMS_tof(argument);
 						printf("%-15.15s = %-15.4f  ", token, ra->realSlew);
 
 						if (ra->realSlew <= 0.0)
 						{
-							fprintf(stderr, "Error: (init_scope_cfg) on line %d of file '%s'\n", line, filename);
+							fprintf(stderr, "Error: (init_mount_cfg) on line %d of file '%s'\n", line, filename);
 							fprintf(stderr, "       Invalid %s field '%f'\n", token, ra->realSlew);
 							fprintf(stderr, "       Usage:  %s  1000.0\n", token);
 						}
 						break;
 
 					case DEC_SLEW_VEL:
-						gScopeConfigArray[DEC_SLEW_VEL].found = true;
+						gMountConfigArray[DEC_SLEW_VEL].found = true;
 						dec->realSlew = atof(argument);
 						printf("%-15.15s = %-15.4f  ", token, dec->realSlew);
 
 						if (dec->realSlew <= 0.0)
 						{
-							fprintf(stderr, "Error: (init_scope_cfg) on line %d of file '%s'\n", line, filename);
+							fprintf(stderr, "Error: (init_mount_cfg) on line %d of file '%s'\n", line, filename);
 							fprintf(stderr, "       Invalid %s field '%f'\n", token, dec->realSlew);
 							fprintf(stderr, "       Usage:  %s  1000.0\n", token);
 						}
 						break;
 
 					case RA_PARK:
-						gScopeConfigArray[RA_PARK].found = true;
+						gMountConfigArray[RA_PARK].found = true;
 						ra->park = Time_ascii_maybe_HMS_tof(argument);
 						printf("%-15.15s = %-15.4f  ", token, ra->park);
 
 						if (ra->park < -7.0 || ra->park > 7.0)
 						{
-							fprintf(stderr, "Error: (init_scope_cfg) on line %d of file '%s'\n", line, filename);
+							fprintf(stderr, "Error: (init_mount_cfg) on line %d of file '%s'\n", line, filename);
 							fprintf(stderr, "       Invalid %s field '%f'\n", token, ra->park);
 							fprintf(stderr, "       Usage:  %s  0.0\n", token);
 						}
 						break;
 
 					case ROLLOVER_WIN:
-						gScopeConfigArray[ROLLOVER_WIN].found = true;
+						gMountConfigArray[ROLLOVER_WIN].found = true;
 						RolloverRegion = Time_ascii_maybe_HMS_tof(argument);
 						printf("%-15.15s = %-15.4f  ", token, RolloverRegion);
 
 						if (RolloverRegion < 0.0)
 						{
-							fprintf(stderr, "Error: (init_scope_cfg) on line %d of file '%s'\n", line, filename);
+							fprintf(stderr, "Error: (init_mount_cfg) on line %d of file '%s'\n", line, filename);
 							fprintf(stderr, "       Invalid %s field '%f'\n", token, RolloverRegion);
 							fprintf(stderr, "       Usage:  %s  1.0\n", token);
 						}
 						break;
 
 					case RA_PRECESSION:
-						gScopeConfigArray[RA_PRECESSION].found = true;
+						gMountConfigArray[RA_PRECESSION].found = true;
 						ra->prec = atof(argument);
 						printf("%-15.15s = %-15.4f  ", token, ra->prec);
 
 						if (ra->prec < 0.0)
 						{
-							fprintf(stderr, "Error: (init_scope_cfg) on line %d of file '%s'\n", line, filename);
+							fprintf(stderr, "Error: (init_mount_cfg) on line %d of file '%s'\n", line, filename);
 							fprintf(stderr, "       Invalid %s field '%f'\n", token, ra->prec);
 							fprintf(stderr, "       Usage:  %s  0.32\n", token);
 						}
 						break;
 
 					case DEC_PRECESSION:
-						gScopeConfigArray[DEC_PRECESSION].found = true;
+						gMountConfigArray[DEC_PRECESSION].found = true;
 						dec->prec = atof(argument);
 						printf("%-15.15s = %-15.4f  ", token, dec->prec);
 
 						if (dec->prec < 0.0)
 						{
-							fprintf(stderr, "Error: (init_scope_cfg) on line %d of file '%s'\n", line, filename);
+							fprintf(stderr, "Error: (init_mount_cfg) on line %d of file '%s'\n", line, filename);
 							fprintf(stderr, "       Invalid %s field '%f'\n", token, dec->prec);
 							fprintf(stderr, "       Usage:  %s  0.60\n", token);
 						}
 						break;
 
 					case RA_SENSOR:
-						gScopeConfigArray[RA_SENSOR].found = true;
+						gMountConfigArray[RA_SENSOR].found = true;
 						ra->sync = Time_ascii_maybe_HMS_tof(argument);
 						printf("%-15.15s = %-15.4f  ", token, ra->sync);
 
 						if (ra->sync < -7.0 || ra->sync > 7.0)
 						{
-							fprintf(stderr, "Error: (init_scope_cfg) on line %d of file '%s'\n", line, filename);
+							fprintf(stderr, "Error: (init_mount_cfg) on line %d of file '%s'\n", line, filename);
 							fprintf(stderr, "       Invalid %s field '%f'\n", token, ra->sync);
 							fprintf(stderr, "       Usage:  %s  0.0\n", token);
 						}
 						break;
 
 					case DEC_SENSOR:
-						gScopeConfigArray[DEC_SENSOR].found = true;
+						gMountConfigArray[DEC_SENSOR].found = true;
 						dec->sync = Time_ascii_maybe_HMS_tof(argument);
 						printf("%-15.15s = %-15.4f  ", token, dec->sync);
 
 						if (dec->sync < -91.0 || dec->sync > 91.0)
 						{
-							fprintf(stderr, "Error: (init_scope_cfg) on line %d of file '%s'\n", line, filename);
+							fprintf(stderr, "Error: (init_mount_cfg) on line %d of file '%s'\n", line, filename);
 							fprintf(stderr, "       Invalid %s field '%f'\n", token, dec->sync);
 							fprintf(stderr, "       Usage:  %s  0.0\n", token);
 						}
 						break;
 
 					case RA_PARK_SENSOR:
-						gScopeConfigArray[RA_PARK_SENSOR].found = true;
+						gMountConfigArray[RA_PARK_SENSOR].found = true;
 						printf("%-15.15s = %-15.15s  ", token, argument);
 
 						if (strcmp(argument, "ON") == 0)
@@ -889,7 +890,7 @@ int Servo_Read_Scope_Cfg(const char *scopeCfgFile, TYPE_SCOPE_CONFIG *scopeConfi
 						}
 						else
 						{
-							fprintf(stderr, "Error: (init_scope_cfg) on line %d of file '%s'\n", line, filename);
+							fprintf(stderr, "Error: (init_mount_cfg) on line %d of file '%s'\n", line, filename);
 							fprintf(stderr, "       Invalid %s field '%s'\n", token, argument);
 							fprintf(stderr, "       Must be 'ON' or 'OFF'\n");
 							fprintf(stderr, "       Usage:  %s  ON\n", token);
@@ -897,7 +898,7 @@ int Servo_Read_Scope_Cfg(const char *scopeCfgFile, TYPE_SCOPE_CONFIG *scopeConfi
 						break;
 
 					case DEC_PARK_SENSOR:
-						gScopeConfigArray[DEC_PARK_SENSOR].found = true;
+						gMountConfigArray[DEC_PARK_SENSOR].found = true;
 						printf("%-15.15s = %-15.15s  ", token, argument);
 						if (strcmp(argument, "ON") == 0)
 						{
@@ -909,7 +910,7 @@ int Servo_Read_Scope_Cfg(const char *scopeCfgFile, TYPE_SCOPE_CONFIG *scopeConfi
 						}
 						else
 						{
-							fprintf(stderr, "Error: (init_scope_cfg) on line %d of file '%s'\n", line, filename);
+							fprintf(stderr, "Error: (init_mount_cfg) on line %d of file '%s'\n", line, filename);
 							fprintf(stderr, "       Invalid %s field '%s'\n", token, argument);
 							fprintf(stderr, "       Must be 'ON' or 'OFF'\n");
 							fprintf(stderr, "       Usage:  %s  ON\n", token);
@@ -917,26 +918,26 @@ int Servo_Read_Scope_Cfg(const char *scopeCfgFile, TYPE_SCOPE_CONFIG *scopeConfi
 						break;
 
 					case OFF_TARGET_TOL:
-						gScopeConfigArray[OFF_TARGET_TOL].found = true;
+						gMountConfigArray[OFF_TARGET_TOL].found = true;
 						OffTargetTolerance = atof(argument);
 						printf("%-15.15s = %-15.4f  ", token, OffTargetTolerance);
 						if (OffTargetTolerance < 0.0)
 						{
-							fprintf(stderr, "Error: (init_scope_cfg) on line %d of file '%s'\n", line, filename);
+							fprintf(stderr, "Error: (init_mount_cfg) on line %d of file '%s'\n", line, filename);
 							fprintf(stderr, "       Invalid %s field '%f'\n", token, OffTargetTolerance);
 							fprintf(stderr, "       Usage:  %s  1.0\n", token);
 						}
 						break;
 
 					default:
-						fprintf(stderr, "Error: (init_scope_cfg) on line %d of file '%s'\n", line, filename);
+						fprintf(stderr, "Error: (init_mount_cfg) on line %d of file '%s'\n", line, filename);
 						fprintf(stderr, "       Unrecognized %s field\n", token);
 						break;
 					}
 				}
 				else
 				{
-					fprintf(stderr, "Error: (init_scope_cfg) on line %d of file '%s'\n", line, filename);
+					fprintf(stderr, "Error: (init_mount_cfg) on line %d of file '%s'\n", line, filename);
 					fprintf(stderr, "       Invalid syntax: field %s is missing argument\n", token);
 				}
 			}	// of if-else token not valid
@@ -954,13 +955,13 @@ int Servo_Read_Scope_Cfg(const char *scopeCfgFile, TYPE_SCOPE_CONFIG *scopeConfi
 	printf("\n");
 
 	iii	=	0;
-	while (strlen(gScopeConfigArray[iii].parameter) > 0)
+	while (strlen(gMountConfigArray[iii].parameter) > 0)
 	{
-		if (gScopeConfigArray[iii].found == false)
+		if (gMountConfigArray[iii].found == false)
 		{
-			fprintf(stderr, "Error: (validate_scope_cfg) Configuation variable:\n");
+			fprintf(stderr, "Error: (validate_mount_cfg) Configuation variable:\n");
 			fprintf(stderr, "       '%s' was not found or of improper format.\n",
-					gScopeConfigArray[iii].parameter);
+					gMountConfigArray[iii].parameter);
 			fprintf(stderr, "       from file '%s'\n", filename);
 			okFlag	=	false;
 		}
@@ -970,7 +971,7 @@ int Servo_Read_Scope_Cfg(const char *scopeCfgFile, TYPE_SCOPE_CONFIG *scopeConfi
 	// configuration file had a syntax error
 	if (okFlag == false)
 	{
-		fprintf(stderr, "Error: (validate_scope_cfg) Error found in configuration:\n");
+		fprintf(stderr, "Error: (validate_mount_cfg) Error found in configuration:\n");
 		fprintf(stderr, "       from file '%s'\n", filename);
 		fflush(stderr);
 		retStatus	=	-1;
@@ -980,19 +981,18 @@ int Servo_Read_Scope_Cfg(const char *scopeCfgFile, TYPE_SCOPE_CONFIG *scopeConfi
 		// No Errors in configuration file
 
 		// If mount is FORK, then set the side to EAST due to ASCOM default definitions
-		if (scopeConfig->mount == kFORK)
+		if (mountConfig->mount == kFORK)
 		{
-			scopeConfig->side	=	kEAST;
+			mountConfig->side	=	kEAST;
 		}
 
 		retStatus	=	0;
 	}
 
 	return (retStatus);
-}	// Servo_Read_Scope_Cfg
+}	// of Servo_read_mount_cfg()
 
-//#define _TEST_SERVO_SCOPE_CFG_
-#ifdef _TEST_SERVO_SCOPE_CFG_
+#ifdef _TEST_SERVO_MOUNT_CFG_
 //********************************************************************************************
 //* Dump the axisPtr data structure to standard out */
 //********************************************************************************************
@@ -1030,13 +1030,13 @@ void Test_print_axis(axisPtr ax)
 //********************************************************************************************
 int main(int argc, char **argv)
 {
-	TYPE_SCOPE_CONFIG scopeConfig;
-	char configFile[]	=	"servo_scope.cfg";
+	TYPE_MOUNT_CONFIG mountConfig;
+	char configFile[]	=	"servo_mount.cfg";
 
 	printf("file name = %s\n", configFile);
 
-	Servo_Read_Scope_Cfg(configFile, &scopeConfig);
+	Servo_read_mount_cfg(configFile, &mountConfig);
 
 	return (0);
 }
-#endif	//	_TEST_SERVO_SCOPE_CFG_
+#endif	//	_TEST_SERVO_MOUNT_CFG_

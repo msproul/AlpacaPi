@@ -3,7 +3,7 @@
 //*
 //*	Author:			Ron Story (C) 2022
 //*
-//*	Description: Roboclaw basic utilities for telescope control
+//*	Description: Roboclaw basic utilities for servo telescope mount control
 //*
 //*****************************************************************************
 //*	AlpacaPi is an open source project written in C/C++ and led by Mark Sproul
@@ -22,7 +22,7 @@
 //*	<RNS>	=	Ron N Story
 //*****************************************************************************
 //*	Apr 11,	2022	<RNS> Created RC_utils.c from LMx_utils.c
-//*	Apr 20,	2022	<RNS> Cleaned up globals to reduce scope
+//*	Apr 20,	2022	<RNS> Cleaned up globals to reduce variable's scope
 //*	Apr 25,	2022	<RNS> Ported stop, reset and max_acc routines
 //*	Apr 26,	2022	<RNS> Created move by pos and acc routines
 //*	Apr 27,	2022	<RNS> Add check_queue function find end-of move_by_pos
@@ -33,6 +33,7 @@
 //*	May  7,	2022	<RNS> Fixed a bug with RC CRC16 calcs missing addr & cmd
 //*	May  8,	2022	<RNS> renamed RC* functions from _read_ to _get_
 //*	May  8,	2022	<RNS> edit move_by_pos to _posva since default_acc is broken
+//*	May 19,	2022	<RNS> Cleaned up unit _TEST_ for warnings and printfs
 //*****************************************************************************
 // Notes:   M1 *MUST BE* connected to RA or Azimuth axis, M2 to Dec or Altitude
 //*****************************************************************************
@@ -828,18 +829,17 @@ int			len;
 //******************************************************************
 //******************************************************************
 //******************************************************************
-//#define _TEST_RC_UTILS_
 #ifdef _TEST_RC_UTILS_
 int	main(int argc, char **argv)
 {
 char buf[256];
-int status;
 int32_t pos	=	0;
+uint32_t status = 0; 
 
 	if (MC_init_comm("/dev/ttyACM0", 38400) != 0)
 	{
 		printf("Error: mc_init_comm() failed\n");
-		return;
+		return kERROR;
 	}
 	if (RC_set_home(SERVO_RA_AXIS) == kERROR)
 	{
@@ -858,14 +858,14 @@ int32_t pos	=	0;
 		printf("RC_move_by_pos returned error\n");
 	}
 
-	if (RC_get_status(&pos) == kERROR)
+	if (RC_get_status(&status) == kERROR)
 	{
 		printf("RC_get_status returned error\n");
 	}
-	printf("status = %X\n", pos);
+	printf("status = %X\n", status);
 
 	printf("hit any key to reverse motor \n");
-	gets(buf);
+	fgets(buf, 256, stdin);
 
 	if (RC_move_by_posva(SERVO_RA_AXIS, 0, 5000, 500, false) == kERROR)
 	//   if (RC_move_by_vel_raw(SERVO_RA_AXIS, 1000) == kERROR)
@@ -873,30 +873,30 @@ int32_t pos	=	0;
 		printf("RC_move_by_pos returned error\n");
 	}
 
-	if (RC_get_status(&pos) == kERROR)
+	if (RC_get_status(&status) == kERROR)
 	{
-		printf("RC_current_pos returned error\n");
+		printf("RC_get_status returned error\n");
 	}
-	printf("status = %X\n", pos);
+	printf("status = %X\n", status);
 	if (RC_get_curr_pos(SERVO_RA_AXIS, &pos) == kERROR)
 	{
 		printf("RC_current_pos returned error\n");
 	}
 	printf("Pos = %X\n", pos);
 
-	if (RC_get_status(&pos) == kERROR)
+	if (RC_get_status(&status) == kERROR)
 	{
 		printf("RC_get_status returned error\n");
 	}
 	printf("status = %X\n", pos);
 
 	printf("hit any key to stop motor\n");
-	gets(buf);
+	fgets(buf, 256, stdin);
 
 	RC_stop(SERVO_RA_AXIS);
 
 	MC_shutdown();
 
-	return(0);
+	return(kSTATUS_OK);
 }
 #endif

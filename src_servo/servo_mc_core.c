@@ -31,7 +31,8 @@
 //*	May  6,	2022	<RNS> changed str_to_upper to Time_str_to_upper and renamed file servo_mc_core.c
 //*	May  7,	2022	<RNS> reswizzled some setting in set_attr termios setting to not overlap with raw
 //*	May  7,	2022	<RNS> Modified the calc_crc16 function to take in a crc value
-//*	May 15,	2022	<RNS> Fixed typo in #define labee _TEST_SERVO_M*E*_CORE_
+//*	May 15,	2022	<RNS> Fixed typo in #define label _TEST_SERVO_M*E*_CORE_
+//*	May 19,	2022	<RNS> Cleaned up unit _TEST_ of -Wall warnings
 //*****************************************************************************
 
 #include <stdio.h>
@@ -427,7 +428,6 @@ int MC_shutdown(void)
 //*****************************************************************************
 //*****************************************************************************
 //*****************************************************************************
-//#define _TEST_SERVO_MC_CORE_
 #ifdef _TEST_SERVO_MC_CORE_
 int main(int argc, char **argv)
 {
@@ -439,7 +439,6 @@ uint16_t	pat16	=	0x6789;
 uint16_t	*uPtr16	=	(uint16_t *)&pat16;
 uint8_t		noteBuf[64], receiptBuf[64], *ptrA, *ptrB;
 uint8_t		pat8	=	0xAB;
-uint8_t		buf[128];
 int			iii;
 
 	CONSOLE_DEBUG(__FUNCTION__);
@@ -511,12 +510,8 @@ int			iii;
 
 	iii	=	MC_init_comm("/dev/ttyACM0", 38400);
 	printf("MC_init_comm return status = %d\n", iii);
-	iii	=	MC_write_comm("hello", 5);
-	printf("MC_write_comm return status = %d\n", iii);
-	iii	=	MC_read_comm(buf, 0);
-	printf("MC_read_comm return status = %d\n", iii);
-	MC_shutdown();
 
+	MC_shutdown();
 
 	return(0);
 }

@@ -1,5 +1,5 @@
 //******************************************************************************
-//*	Name:			servo_scope.c
+//*	Name:			servo_mount.c
 //*
 //*	Author:			Ron Story (C) 2022
 //*
@@ -40,6 +40,8 @@
 //*	May 16,	2022	<RNS> Fixed lat/log access with location config global now hidden
 //*	May 16,	2022	<RNS> Added Servo_pos_to_step() and removed dup code
 //*	May 16,	2022	<RNS> Added a SYNCHRONOUS routine to test RC's independent moves for alt-azi
+//*	May 19,	2022	<RNS> convert .home field to .zero to avoid confusion with ASCOM Home
+//*	May 19,	2022	<RNS> Change all refs of 'scope' to 'mount', including filenames
 //*****************************************************************************
 // Notes: M1 *MUST BE* connected to RA or Azimuth axis, M2 to Dec or Altitude
 //*****************************************************************************
@@ -59,8 +61,8 @@
 #include "servo_mc_core.h"
 #include "servo_time.h"
 #include "servo_rc_utils.h"
-#include "servo_scope_cfg.h"
-#include "servo_scope.h"
+#include "servo_mount_cfg.h"
+#include "servo_mount.h"
 
 #ifdef _ALPHA_OUT_
 #define UNDER_TARGET 5.0
@@ -69,7 +71,7 @@
 //#define BOTH_SENSOR_CHANGE 3
 #endif	// _ALPHA_OUT_
 
-// Globals for the telescope axis for real-world floating point variables
+// Globals for the telescope mount axis for real-world floating point variables
 static axis gServoRa	=	{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 static axis gServoDec	=	{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 
@@ -82,7 +84,7 @@ static int8_t	gSide			=	kEAST;
 static double	gMeridianWindow;
 static double	gOffTargetTolerance;
 
-static TYPE_SCOPE_CONFIG gScopeConfig;
+static TYPE_MOUNT_CONFIG gScopeConfig;
 
 //*****************************************************************************
 // Initializes the serial comm port using the identifying string and baud rates.
@@ -98,8 +100,8 @@ int	status;
 }	// of ss_set_comm_port()
 
 //*****************************************************************************
-// Returns the park position found in the scope configuration file.
-// This lockdown position is used for statically parking the scope for
+// Returns the park position found in the mount configuration file.
+// This lockdown position is used for statically parking the mount for
 // a power-off shutdown.
 //*****************************************************************************
 void Servo_get_park_coordins(double *ha, double *dec)
@@ -109,8 +111,8 @@ void Servo_get_park_coordins(double *ha, double *dec)
 }
 
 //*****************************************************************************
-// Returns the standby position found in the scope configuration file.
-// This standby position is used for statically parking the scope until
+// Returns the standby position found in the mount configuration file.
+// This standby position is used for statically parking the mount until
 // another slew is needed.
 //*****************************************************************************
 void Servo_get_standby_coordins(double *ha, double *dec)
@@ -150,7 +152,7 @@ double Servo_get_time_ratio(void)
 
 //*****************************************************************************
 // Routine scales down the Ra and Dec acceleration profiles to the passed-in
-// percent of max acceleration found in the servo scope config file
+// percent of max acceleration found in the servo mount config file
 //*****************************************************************************
 int	Servo_scale_acc(int32_t percentRa, int32_t percentDec)
 {
@@ -167,7 +169,7 @@ int	Servo_scale_acc(int32_t percentRa, int32_t percentDec)
 
 //*****************************************************************************
 // Routine scales down the Ra and Dec velocity profiles to the passed-in
-// percent of max acceleration found in the servo scope config file
+// percent of max acceleration found in the servo mount config file
 // Return Values: kSTATUS_OK or kERROR = outside of range 0 <= x <= 100
 //*****************************************************************************
 int	Servo_scale_vel(int32_t percentRa, int32_t percentDec)
@@ -184,8 +186,8 @@ int	Servo_scale_vel(int32_t percentRa, int32_t percentDec)
 }
 
 //*****************************************************************************
-// Allow the scope to move to object below the horizon, normally only
-//	used for statically parking the scope. Expects a TRUE | FALSE
+// Allow the mount to move to object below the horizon, normally only
+//	used for statically parking the mount. Expects a TRUE | FALSE
 //	Returns the old horizon value for the curious
 //*****************************************************************************
 int	Servo_ignore_horizon(int state)
@@ -251,8 +253,8 @@ void Servo_step_to_pos(int32_t raStep, int32_t decStep, double *ra, double *dec)
 
 	// compute the current home position with time delta, motor direction
 	// should not be needed (I think) since time can't go backwards ;^)
-	// home	=	gServoRa.home + (gServoRa.direction) * (gSysDepend * (double)time * ARCSEC_PER_SEC / 3600.0);
-	home	=	gServoRa.home + (gSysDepend * (double)time * kARCSEC_PER_SEC / 3600.0);
+	// home	=	gServoRa.zero + (gServoRa.direction) * (gSysDepend * (double)time * ARCSEC_PER_SEC / 3600.0);
+	home	=	gServoRa.zero + (gSysDepend * (double)time * kARCSEC_PER_SEC / 3600.0);
 	*ra		=	home + currPos;
 
 	// convert from decidegs to decihours
@@ -262,7 +264,7 @@ void Servo_step_to_pos(int32_t raStep, int32_t decStep, double *ra, double *dec)
 	currPos	=	(gServoDec.direction) * (decStep * (1.0 / gServoDec.step)) / 3600.0;
 
 	// get the 'true' position with home offset in decidegs
-	*dec	=	gServoDec.home + currPos;
+	*dec	=	gServoDec.zero + currPos;
 
 }	// of Servo_step_to_pos()
 
@@ -289,16 +291,16 @@ void Servo_pos_to_step(double ra, double dec, int32_t *raStep, int32_t *decStep)
 		time	=	time - gServoRa.time;
 
 		// compute the current home position with time delta
-		home	=	gServoRa.home + (gSysDepend * time * kARCSEC_PER_SEC / 3600.0);
+		home	=	gServoRa.zero + (gSysDepend * time * kARCSEC_PER_SEC / 3600.0);
 	}
 	else
 	{
 		// compute the home position without the time delta
-		home	=	gServoDec.home;
+		home	=	gServoDec.zero;
 	}
 
 	// Determine the degrees difference from target coordins and home position
-	// this math only works since axis.home value corresponds to zero step position
+	// this math only works since axis.zero value corresponds to zero step position
 	raDelta	=	ra - home;
 
 	// get the actual RA step needed (absolute)
@@ -313,16 +315,16 @@ void Servo_pos_to_step(double ra, double dec, int32_t *raStep, int32_t *decStep)
 		time	=	time - gServoDec.time;
 
 		// compute the current home position with time delta
-		home	=	gServoDec.home + (gSysDepend * time * kARCSEC_PER_SEC / 3600.0);
+		home	=	gServoDec.zero + (gSysDepend * time * kARCSEC_PER_SEC / 3600.0);
 	}
 	else
 	{
 		// compute the home position without the time delta
-		home	=	gServoDec.home;
+		home	=	gServoDec.zero;
 	}
 
 	// Determine the degrees difference from target coordins and home position
-	// this math only works since axis.home value corresponds to zero step position
+	// this math only works since axis.zero value corresponds to zero step position
 	decDelta	=	dec - home;
 
 	// get the actual Dec steps needed (absolute)
@@ -332,7 +334,7 @@ void Servo_pos_to_step(double ra, double dec, int32_t *raStep, int32_t *decStep)
 }	// of Servo_pos_to_step()
 
 //*****************************************************************************
-// Returns the current position of the telescope in RA and Dec values.
+// Returns the current position of the mount in RA and Dec values.
 // RA and DEC are returned in deci hours and deci degs
 // TODO: Will need major mind-numbing changes to support alt-azi
 //*****************************************************************************
@@ -362,12 +364,12 @@ double delta	=	0.0;
 
 		// compute the current home position with time delta
 		delta	=	(gSysDepend * time * kARCSEC_PER_SEC / 3600.0);
-		home	=	gServoRa.home + delta;
+		home	=	gServoRa.zero + delta;
 	}
 	else
 	{
 		// no tracking rate then delta is not needed.
-		home	=	gServoRa.home;
+		home	=	gServoRa.zero;
 	}
 
 	// add current pos + home position to get "real" value
@@ -383,14 +385,14 @@ double delta	=	0.0;
 	currPos	=	(gServoDec.direction) * (currStep * (1.0 / gServoDec.step)) / 3600.0;
 
 	// get the 'true' position with home offset
-	*dec	=	gServoDec.home + currPos;
+	*dec	=	gServoDec.zero + currPos;
 
 }	// Servo_get_pos()
 
 //*****************************************************************************
-// Sets the scope position to supplied RA and Dec values. Input RA and Dec
-//	are in deciHour and deciDegs respectively. Assume the scope is
-//	tracking more or less correctly. (ie. the scope is not stopped)
+// Sets the mount position to supplied RA and Dec values. Input RA and Dec
+//	are in deciHour and deciDegs respectively. Assume the mount is
+//	tracking more or less correctly. (ie. the mount is not stopped)
 //	Both RA/Dec home position are stored in deci degrees and the
 //	MC's set_home command always sets the encoder/position value to zero
 //*****************************************************************************
@@ -399,17 +401,17 @@ void Servo_set_pos(double ra, double dec)
 	// set home on the RA axis (deci degs)
 	gServoRa.time	=	Time_get_systime();
 	Time_deci_hours_to_deg(&ra);
-	gServoRa.home	=	ra;
+	gServoRa.zero	=	ra;
 	RC_set_home(SERVO_RA_AXIS);
 
 	// set home on the DEC axis (deci degs)
 	gServoDec.time	=	Time_get_systime();
-	gServoDec.home	=	dec;
+	gServoDec.zero	=	dec;
 	RC_set_home(SERVO_DEC_AXIS);
 }	// Servo_set_pos()
 
 //*****************************************************************************
-// Sets the position for a stopped scope. Since the scope is not moving,
+// Sets the position for a stopped mount. Since the mount is not moving,
 // Hour Angle is used instead of RA and inputs are deciHours and deciDegs
 //*****************************************************************************
 void Servo_set_static_pos(double ha, double dec)
@@ -571,14 +573,14 @@ int	Servo_stop_tracking(uint8_t motor)
 //*****************************************************************************
 // This is global initialization routine for the Servo system. It read the both
 // configuration files, initializes communication with the MC board and sets all
-// the motion parameters. Then it initials the scope's current position to Park
+// the motion parameters. Then it initializes the mount's current position to Park
 // values from config fields, set the encoder home position and starts keeping track
 // of any tracking rate positions changes but does not start tracking motion.
 // Note: calling this routine will reset the scaling on both the RA and
 // Dec axes to 100%, scale_val() and scale_acc()
 // Return Values: kSTATUS_OK or kERROR
 //*****************************************************************************
-int	Servo_init(const char *scopeCfgFile, const char *localCfgFile)
+int	Servo_init(const char *mountCfgFile, const char *localCfgFile)
 {
 int	status	=	kSTATUS_OK;
 int	baud;
@@ -586,17 +588,17 @@ char port[kMAX_STR_LEN];
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
-	// Read the location config file for the scope location and check status
+	// Read the location config file for the mount location and check status
 	status	=	Time_read_local_cfg(localCfgFile);
 	if (status != kSTATUS_OK)
 	{
-		printf("FATAL: (servo_init) Could not open scope location file '%s'.\n", localCfgFile);
+		printf("FATAL: (servo_init) Could not open mount location file '%s'.\n", localCfgFile);
 		return (kERROR);
 	}
 
-	// Read the telescope config file for the scope physical characteristics
-	memset((void *)&gScopeConfig, 0, sizeof(TYPE_SCOPE_CONFIG));
-	status		=	Servo_Read_Scope_Cfg(scopeCfgFile, &gScopeConfig);
+	// Read the mount config file for the mount physical characteristics
+	memset((void *)&gScopeConfig, 0, sizeof(TYPE_MOUNT_CONFIG));
+	status		=	Servo_read_mount_cfg(mountCfgFile, &gScopeConfig);
 	gServoRa	=	gScopeConfig.ra;
 	gServoDec	=	gScopeConfig.dec;
 	gAddr		=	gScopeConfig.addr;
@@ -607,11 +609,11 @@ char port[kMAX_STR_LEN];
 
 	if (status != kSTATUS_OK)
 	{
-		printf("FATAL: (servo_init) Could not open scope configuration file '%s'.\n", scopeCfgFile);
+		printf("FATAL: (servo_init) Could not open mount configuration file '%s'.\n", mountCfgFile);
 		return (kERROR);
 	}
 
-	// Initialize the port from the scope config file for communication
+	// Initialize the port from the mount config file for communication
 	status	=	MC_init_comm(port, baud);
 	if (status != kSTATUS_OK)
 	{
@@ -646,7 +648,7 @@ char port[kMAX_STR_LEN];
 	gServoRa.status		=	0;
 	gServoRa.direction	=	gServoRa.config;
 	Servo_set_tracking(SERVO_RA_AXIS, (kARCSEC_PER_SEC * (double)gServoRa.step));
-	gServoRa.home		=	0.0;
+	gServoRa.zero		=	0.0;
 	gServoRa.time		=	Time_get_systime();
 
 	// Duplicate of what's already done for RA, comments above
@@ -664,7 +666,7 @@ char port[kMAX_STR_LEN];
 	gServoDec.direction			=	gServoDec.config;
 
 	Servo_set_tracking(SERVO_DEC_AXIS, (kARCSEC_PER_SEC * (double)gServoDec.step));
-	gServoDec.home	=	0.0;
+	gServoDec.zero	=	0.0;
 	gServoDec.time	=	Time_get_systime();
 
 	// Make sure the "gear lash" is at least 40*axis->step arcseconds for the PID filter resolution
@@ -694,7 +696,7 @@ char port[kMAX_STR_LEN];
 	{
 
 		printf("(ss__init) RA sensor value on initialization does not\n");
-		printf("match RA_HOME_FLAG value in the scope configuration file\n");
+		printf("match RA_HOME_FLAG value in the mount configuration file\n");
 		gServoRa.syncError	=	TRUE;
 		printf("< Hit 'RETURN' to continue... >\n");
 		ch	=	getch();
@@ -709,7 +711,7 @@ char port[kMAX_STR_LEN];
 	else
 	{
 		printf("(ss__init) Dec sensor value on initialization does not\n");
-		printf("match DEC_HOME_FLAG value in the scope configuration file\n");
+		printf("match DEC_HOME_FLAG value in the mount configuration file\n");
 		gServoDec.syncError	=	TRUE;
 		printf("< Hit 'RETURN' to continue... >\n");
 		ch	=	getch();
@@ -910,7 +912,7 @@ int	status;
 
 //*****************************************************************************
 // INTERNAL ROUTINE: This routine translates the current position before
-// "rolling over" for flipping the scope in overwrite input values.
+// "rolling over" for flipping the mount in overwrite input values.
 // Input are in deciHours and deciDegs
 // It *DOES NOT* move the mount, but just calcs and returns the flip values
 //  Used on German and Split Ring mounts or on fork mounts to 'go thru the pole'
@@ -918,7 +920,7 @@ int	status;
 //*****************************************************************************
 void Servo_calc_flip_coordins(double *ra, double *dec, double *direction, int8_t *side)
 {
-	// check to see which side the scope is on
+	// check to see which side the mount is on
 	if (*side == kEAST)
 	{
 		*ra		+=	12.0;
@@ -953,7 +955,7 @@ void Servo_stop_all(void)
 
 //*****************************************************************************
 // This is try-before-you-buy routine. It calcs the best path for the mount to from start
-// to end and returns the *relative direction* needed to move the scope from the start
+// to end and returns the *relative direction* needed to move the mount from the start
 // position but makes *no changes*.  If you don't like the path chosen, don't use it and no
 // values will have changed. It assumes that end coordins are above the horizon.
 // It also will return whether a flip is needed, but *does not* make the flip coordins
@@ -1217,7 +1219,7 @@ bool	flip	=	false;
 		// Current coordins are guaranteed to change after this call
 		Servo_calc_flip_coordins(&currRa, &currDec, &direction, &gSide);
 
-		// Compare to the orignal direction values for Dec axix from the scope config file
+		// Compare to the orignal direction values for Dec axix from the mount config file
 		if (gSide != gServoRa.parkInfo)
 		{
 			// set the direction to the opposite from config file
@@ -1248,7 +1250,7 @@ bool	flip	=	false;
 }	// of Servo_move_to_coordins()
 
 //*****************************************************************************
-// This routine is for stopping the scope for extended periods of time and
+// This routine is for stopping the mount for extended periods of time and
 // uses and Hour Angle and not RA for an accurate static position.
 // Inputs are in deciHour and deciDeg and routine is asynchronous so you need to
 // to poll with Servo_state() and wait for STOPPED state
@@ -1310,16 +1312,16 @@ int		status	=	kSTATUS_OK;
 		time	=	time - gServoDec.time;
 
 		// compute the current home position with time delta
-		home	=	gServoDec.home + (gSysDepend * time * kARCSEC_PER_SEC / 3600.0);
+		home	=	gServoDec.zero + (gSysDepend * time * kARCSEC_PER_SEC / 3600.0);
 	}
 	else
 	{
 		// compute the home position without the time delta
-		home	=	gServoDec.home;
+		home	=	gServoDec.zero;
 	}
 
 	// Determine the degrees difference from target coordins and home position
-	// this math only works since axis.home value corresponds to zero step position
+	// this math only works since axis.zero value corresponds to zero step position
 	currDecDelta	=	targetDec - home;
 
 	// get the actual Dec steps needed (absolute)
@@ -1336,16 +1338,16 @@ int		status	=	kSTATUS_OK;
 		time	=	time - gServoRa.time;
 
 		// compute the current home position with time delta
-		home	=	gServoRa.home + (gSysDepend * time * kARCSEC_PER_SEC / 3600.0);
+		home	=	gServoRa.zero + (gSysDepend * time * kARCSEC_PER_SEC / 3600.0);
 	}
 	else
 	{
 		// compute the home position without the time delta
-		home	=	gServoDec.home;
+		home	=	gServoDec.zero;
 	}
 
 	// Determine the degrees difference from target coordins and home position
-	// this math only works since axis.home value corresponds to zero step position
+	// this math only works since axis.zero value corresponds to zero step position
 	currRaDelta	=	targetRa - home;
 
 	// get the actual RA step needed  (absolute)
@@ -1363,10 +1365,10 @@ int		status	=	kSTATUS_OK;
 //******************************************************************************
 //******************************************************************************
 //******************************************************************************
-#ifdef _TEST_SERVO_SCOPE_
+#ifdef _TEST_SERVO_MOUNT_
 int	main(int argc, char **argv)
 {
 	Servo_init(NULL, NULL);
 	return (0);
 }
-#endif	// _TEST_SERVO_SCOPE_
+#endif	// _TEST_SERVO_MOUNT_

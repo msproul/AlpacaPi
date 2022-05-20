@@ -8,6 +8,9 @@
 ############################################################################
 #++	May  9,	2022	<MLS> Updated to use Objectfiles directory for .o files
 #++	May 15,	2022	<RNS> Added servo_test_tty and fixed typos
+#++ May 19,	2022	<RNS> Change all refs of 'scope' to 'mount', including filenames
+#++ May 19,	2022	<RNS> Added support for rc_utils unit test
+#++ May 19,	2022	<RNS> Fixed all unit tests for *.c files with unit _TEST_
 ############################################################################
 
 CC			=	gcc -I$(MLS_LIB_DIR)
@@ -24,49 +27,53 @@ MLS_LIB_DIR	=	../src_mlsLib/
 #
 default: servo_test_tty
 
-# To create the executable file count we need the object files
-# countwords.o, counter.o, and scanner.o:
-#
-#rc_test:  servo_mc_core.o servo_rc_utils.o
-#	$(CC) $(CFLAGS) -o rc_test servo_mc_core.o servo_rc_utils.o -lm
-
 SERVO_OBJECTS	=								\
-				$(OBJECT_DIR)servo_test_tty.o	\
-				$(OBJECT_DIR)servo_scope.o		\
-				$(OBJECT_DIR)servo_scope_cfg.o	\
+				$(OBJECT_DIR)servo_mount.o		\
+				$(OBJECT_DIR)servo_mount_cfg.o	\
 				$(OBJECT_DIR)servo_time.o		\
 				$(OBJECT_DIR)servo_mc_core.o	\
 				$(OBJECT_DIR)servo_rc_utils.o
 
 TESTCFG_OBJECTS	=								\
-				$(OBJECT_DIR)servo_scope_cfg.o 	\
+				$(OBJECT_DIR)servo_mount_cfg.o 	\
 				$(OBJECT_DIR)servo_time.o
 
+RCUTILS_OBJECTS	=								\
+				$(OBJECT_DIR)servo_rc_utils.o 	\
+				$(OBJECT_DIR)servo_mc_core.o
+
 servo_test_tty:	CFLAGS	+=	
-servo_test_tty: 	$(SERVO_OBJECTS)
-	$(CC) $(CFLAGS) -o servo_test_tty			\
-					$(SERVO_OBJECTS)			\
+servo_test_tty: 	$(SERVO_OBJECTS)	$(OBJECT_DIR)servo_test_tty.o
+
+	$(CC) $(CFLAGS) -o servo_test_tty				\
+					$(SERVO_OBJECTS)				\
+					$(OBJECT_DIR)servo_test_tty.o	\
 					-lm
 
-servo_test: 	CFLAGS	+=	-D_TEST_SERVO_SCOPE_
+servo_test: 	CFLAGS	+=	-D_TEST_SERVO_MOUNT_
 servo_test: 	$(SERVO_OBJECTS)
 	$(CC) $(CFLAGS) -o servo_test 				\
 					$(SERVO_OBJECTS)			\
 					-lm
 
 
-test_cfg: 	CFLAGS	+=	-D_TEST_SERVO_SCOPE_CFG_ 
+test_cfg: 	CFLAGS	+=	-D_TEST_SERVO_MOUNT_CFG_ 
 test_cfg: 	$(TESTCFG_OBJECTS)
 	$(CC) $(CFLAGS) -o test_cfg 				\
 					$(TESTCFG_OBJECTS)			\
 					-lm
 
-
-core: 	CFLAGS	+=	-D_TEST_SERVO_MC_CORE_
-core: 	$(SERVO_OBJECTS)
-	$(CC) $(CFLAGS) -o core 				\
-					$(SERVO_OBJECTS)			\
+rc_utils: 	CFLAGS	+=	-D_TEST_RC_UTILS_
+rc_utils: 	$(RCUTILS_OBJECTS)
+	$(CC) $(CFLAGS) -o rc_utils				\
+					$(RCUTILS_OBJECTS)			\
 					-lm
+
+mc_core: 	CFLAGS	+=	-D_TEST_SERVO_MC_CORE_
+mc_core: 	servo_mc_core.c
+	$(CC) $(CFLAGS) -o mc_core 						\
+					servo_mc_core.c	\
+
 
 ############################################################################
 $(OBJECT_DIR)servo_mc_core.o:  servo_mc_core.c servo_mc_core.h  servo_std_defs.h
@@ -78,13 +85,13 @@ $(OBJECT_DIR)servo_rc_utils.o:  servo_rc_utils.c servo_rc_utils.h servo_rc_cmds.
 $(OBJECT_DIR)servo_time.o: 		servo_time.c servo_time.h servo_std_defs.h
 	$(CC) $(CFLAGS) -c servo_time.c -o $(OBJECT_DIR)servo_time.o
 
-$(OBJECT_DIR)servo_scope_cfg.o: servo_scope_cfg.c servo_scope_cfg.h servo_time.h servo_std_defs.h
-	$(CC) $(CFLAGS) -c servo_scope_cfg.c -o $(OBJECT_DIR)servo_scope_cfg.o
+$(OBJECT_DIR)servo_mount_cfg.o: servo_mount_cfg.c servo_mount_cfg.h servo_time.h servo_std_defs.h
+	$(CC) $(CFLAGS) -c servo_mount_cfg.c -o $(OBJECT_DIR)servo_mount_cfg.o
 
-$(OBJECT_DIR)servo_scope.o:		servo_scope.c servo_scope.h servo_rc_utils.h servo_rc_cmds.h servo_time.h servo_mc_core.h servo_std_defs.h
-	$(CC) $(CFLAGS) -c servo_scope.c -o $(OBJECT_DIR)servo_scope.o
+$(OBJECT_DIR)servo_mount.o:		servo_mount.c servo_mount.h servo_rc_utils.h servo_rc_cmds.h servo_time.h servo_mc_core.h servo_std_defs.h
+	$(CC) $(CFLAGS) -c servo_mount.c -o $(OBJECT_DIR)servo_mount.o
 
-$(OBJECT_DIR)servo_test_tty.o:		servo_test_tty.c servo_scope.c servo_scope.h servo_rc_utils.h servo_rc_cmds.h servo_time.h servo_mc_core.h servo_std_defs.h
+$(OBJECT_DIR)servo_test_tty.o:		servo_test_tty.c servo_mount.c servo_mount.h servo_rc_utils.h servo_rc_cmds.h servo_time.h servo_mc_core.h servo_std_defs.h
 	$(CC) $(CFLAGS) -c servo_test_tty.c -o $(OBJECT_DIR)servo_test_tty.o
 ############################################################################
 # To start over from scratch, type 'make clean'.  This

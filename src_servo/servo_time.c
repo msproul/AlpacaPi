@@ -612,12 +612,12 @@ int Time_read_local_cfg(const char *localCfgFile)
 		strcpy(filename, localCfgFile);
 	}
 
-	// open the scope configuration file
+	// open the mount locations configuration file
 	//	if ((inFile = fopen(filename, "r")) == NULL)
 	inFile = fopen(filename, "r");
 	if (inFile == NULL)
 	{
-		fprintf(stderr, "Error: could not open cfg file %s\n", filename);
+		fprintf(stderr, "Error: could not open location cfg file %s\n", filename);
 		return (-1);
 	}
 
@@ -820,7 +820,6 @@ int Time_read_local_cfg(const char *localCfgFile)
 } // time_read_local_cfg
 
 //*****************************************************************************
-//#define _TEST_SERVO_TIME_
 #ifdef _TEST_SERVO_TIME_
 //*****************************************************************************
 int main(void)
