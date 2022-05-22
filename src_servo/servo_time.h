@@ -54,8 +54,8 @@ extern "C"
 	void Time_check_hms(double *hms);
 	void Time_deci_hours_to_hms(double *value);
 	void Time_hms_hours_to_deci(double *value);
-	const double Time_get_lat(void);
-	const double Time_get_lon(void);
+	double Time_get_lat(void);
+	double Time_get_lon(void);
 	const char*  Time_get_site(void);
 	void Time_ra_dec_to_alt_azi(double ra, double dec, long double lst, double lat, double *alt, double *azi);
 	void Time_alt_azi_to_ra_dec(double alt, double azi, long double lst, double lat, double *ra, double *dec);

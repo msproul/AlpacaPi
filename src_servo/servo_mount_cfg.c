@@ -35,6 +35,9 @@
 //*	May 16,	2022	<RNS> Corrected nesting of error messages to handle invalid field in cfgfile
 //*	May 16,	2022	<RNS> Adopted _TYPE_SCOPE_CONFIG_
 //*	May 19,	2022	<RNS> Change all refs of 'scope' to 'mount', including filenames
+//*	May 20,	2022	<RNS> converted last 2 globals to use TYPE_MOUNT_CONFIG struct
+//*	May 22,	2022	<RNS> Changed main() back to be void, _TEST_ should never take args
+//*	May 22,	2022	<RNS> Added dummy var to check for addr field for range outside of uint8_t
 //****************************************************************************
 
 #include <stdio.h>
@@ -50,9 +53,6 @@
 #include "servo_std_defs.h"
 #include "servo_time.h"
 #include "servo_mount_cfg.h"
-
-static double RolloverRegion	=	0.0;
-static double OffTargetTolerance;
 
 //******************************************************************
 enum
@@ -112,8 +112,6 @@ typedef struct
 	short enumValue;
 	bool found;
 } TYPE_CFG_ITEM;
-
-//} cfgItem, cfgItemPtr;
 
 //******************************************************************
 static TYPE_CFG_ITEM gMountConfigArray[] =
@@ -205,6 +203,7 @@ int Servo_read_mount_cfg(const char *mountCfgFile, TYPE_MOUNT_CONFIG *mountConfi
 	char *rest = NULL;
 	int tokenEnumValue;
 	int iii;
+	int dummy; 
 	int retStatus;
 	axisPtr ra;
 	axisPtr dec;
@@ -287,13 +286,15 @@ int Servo_read_mount_cfg(const char *mountCfgFile, TYPE_MOUNT_CONFIG *mountConfi
 
 					case MC_ADDR:
 						gMountConfigArray[MC_ADDR].found = true;
+						// save to dummy to see if arg is out of range since addr is only 8bit
+						dummy = atoi(argument);
 						mountConfig->addr = atoi(argument);
 						printf("%-15.15s = %-15d  ", token, mountConfig->addr);
 
-						if (mountConfig->addr < 0 || mountConfig->addr > 255)
+						if (dummy < 0 || dummy > 255)
 						{
 							fprintf(stderr, "Error: (init_mount_cfg) on line %d of file '%s'\n", line, filename);
-							fprintf(stderr, "       Invalid %s field '%d'\n", token, mountConfig->addr);
+							fprintf(stderr, "       Invalid %s field '%d'\n", token, dummy);
 							fprintf(stderr, "       Usage:  %s  128\n", token);
 						}
 
@@ -813,13 +814,13 @@ int Servo_read_mount_cfg(const char *mountCfgFile, TYPE_MOUNT_CONFIG *mountConfi
 
 					case ROLLOVER_WIN:
 						gMountConfigArray[ROLLOVER_WIN].found = true;
-						RolloverRegion = Time_ascii_maybe_HMS_tof(argument);
-						printf("%-15.15s = %-15.4f  ", token, RolloverRegion);
+						mountConfig->flipWin = Time_ascii_maybe_HMS_tof(argument);
+						printf("%-15.15s = %-15.4f  ", token, mountConfig->flipWin);
 
-						if (RolloverRegion < 0.0)
+						if (mountConfig->flipWin < 0.0)
 						{
 							fprintf(stderr, "Error: (init_mount_cfg) on line %d of file '%s'\n", line, filename);
-							fprintf(stderr, "       Invalid %s field '%f'\n", token, RolloverRegion);
+							fprintf(stderr, "       Invalid %s field '%f'\n", token, mountConfig->flipWin);
 							fprintf(stderr, "       Usage:  %s  1.0\n", token);
 						}
 						break;
@@ -919,12 +920,12 @@ int Servo_read_mount_cfg(const char *mountCfgFile, TYPE_MOUNT_CONFIG *mountConfi
 
 					case OFF_TARGET_TOL:
 						gMountConfigArray[OFF_TARGET_TOL].found = true;
-						OffTargetTolerance = atof(argument);
-						printf("%-15.15s = %-15.4f  ", token, OffTargetTolerance);
-						if (OffTargetTolerance < 0.0)
+						mountConfig->offTarget = atof(argument);
+						printf("%-15.15s = %-15.4f  ", token, mountConfig->offTarget);
+						if (mountConfig->offTarget < 0.0)
 						{
 							fprintf(stderr, "Error: (init_mount_cfg) on line %d of file '%s'\n", line, filename);
-							fprintf(stderr, "       Invalid %s field '%f'\n", token, OffTargetTolerance);
+							fprintf(stderr, "       Invalid %s field '%f'\n", token, mountConfig->offTarget);
 							fprintf(stderr, "       Usage:  %s  1.0\n", token);
 						}
 						break;
@@ -1028,7 +1029,7 @@ void Test_print_axis(axisPtr ax)
 }
 
 //********************************************************************************************
-int main(int argc, char **argv)
+int main(void)
 {
 	TYPE_MOUNT_CONFIG mountConfig;
 	char configFile[]	=	"servo_mount.cfg";

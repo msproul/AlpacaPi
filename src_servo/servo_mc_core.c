@@ -33,6 +33,8 @@
 //*	May  7,	2022	<RNS> Modified the calc_crc16 function to take in a crc value
 //*	May 15,	2022	<RNS> Fixed typo in #define label _TEST_SERVO_M*E*_CORE_
 //*	May 19,	2022	<RNS> Cleaned up unit _TEST_ of -Wall warnings
+//*	May 22,	2022	<RNS> Fixed some signed / unsigned math operators
+//*	May 22,	2022	<RNS> Changed main() back to be void, _TEST_ should never take args
 //*****************************************************************************
 
 #include <stdio.h>
@@ -314,7 +316,7 @@ int		retValue;
 	printf("MC_read_comm: len = %d  and size = %d\n", (int)len, (int)size);
 
 	// If the read len doesn't meet the expected length and we still have retrys left
-	while ((size + total != len) && (gCommRetries > 0))
+	while ((size + total != (ssize_t)len) && (gCommRetries > 0))
 	{
 		// Append the current read to the tempP
 		memcpy(ptrA, buf, size);
@@ -359,7 +361,7 @@ int MC_write_comm(uint8_t *buf, size_t len)
 	// Write out all data ininput buf to the commport
 	tcflush(gCommPort, TCIFLUSH);
 	count	=	write(gCommPort, buf, len);
-	while ((count != len) && (gCommRetries > 0))
+	while ((count != (ssize_t)len) && (gCommRetries > 0))
 	{
 		count	=	write(gCommPort, buf, len);
 		gCommRetries--;
@@ -429,7 +431,7 @@ int MC_shutdown(void)
 //*****************************************************************************
 //*****************************************************************************
 #ifdef _TEST_SERVO_MC_CORE_
-int main(int argc, char **argv)
+int main(void)
 {
 uint32_t	pat32	=	0x12345678;
 // uint32_t	*ptr32		=	&pat32;

@@ -25,9 +25,14 @@
 //*	May 14,	2022	<RNS> Changed all _step routines to signed variables
 //*	May 16,	2022	<RNS> Added Servo_pos_to_step()
 //*	May 19,	2022	<RNS> Change all refs of 'scope' to 'mount', including filenames
+//*	May 20,	2022	<RNS> Changed gIgnoreHorizon from int to bool
+//*	May 20,	2022	<RNS> Added park state functions plus support in Servo_state()
+//*	May 21,	2022	<RNS> added Marked the internal routines static and commented out from .h
+//*	May 22,	2022	<RNS> Changed routines using steps as arg to _step_ and marked internal
+//*	May 22,	2022	<RNS> added _axis_ to functions that worked a single axis
+//*	May 22,	2022	<RNS> added move_axis_by_vel for the ASCOM guiding functionality
+//*	May 22,	2022	<RNS> General cleanup to get data/control flow aligned with ASCOM
 //****************************************************************************
-//#include	"servo_mount.h"
-
 
 #ifndef _SERVO_MOUNT_H_
 #define _SERVO_MOUNT_H_
@@ -39,7 +44,11 @@
 //****************************************************************************
 typedef enum
 {
-	STOPPED	=	0,
+	PARKED 	=	0,
+	PARKING,
+//	HOMED,
+//	HOMING,
+	STOPPED,
 	MOVING,
 	TRACKING
 }	TYPE_MOVE;
@@ -54,29 +63,34 @@ void		Servo_get_standby_coordins(double *ha, double *dec);
 void		Servo_get_sync_coordins(double *ra, double *dec);
 void		Servo_set_time_ratio(double ratio);
 double		Servo_get_time_ratio(void);
+bool		Servo_unpark(void);
+bool		Servo_get_park_state(void);
+int8_t		Servo_get_pier_side(void); 
 int			Servo_scale_acc(int32_t percentRa, int32_t percentDec);
 int			Servo_scale_vel(int32_t percentRa, int32_t percentDec);
-int			Servo_ignore_horizon(int state);
+bool		Servo_ignore_horizon(bool state);
 int			Servo_reset_motor(uint8_t motor);
 void		Servo_step_to_pos(int32_t raStep, int32_t decStep, double *ra, double *dec);
-void		Servo_pos_to_step(double ra, double dec, int32_t *raStep, int32_t *decStep);
+//void		Servo_pos_to_step(double ra, double dec, int32_t *raStep, int32_t *decStep);
 void		Servo_get_pos(double *ra, double *dec);
 void		Servo_set_pos(double ra, double dec);
 void		Servo_set_static_pos(double ha, double dec);
-int32_t		Servo_get_tracking(uint8_t motor);
-int			Servo_set_tracking(uint8_t motor, int32_t tracking);
-int			Servo_start_tracking(uint8_t motor);
-int			Servo_stop_tracking(uint8_t motor);
+int32_t		Servo_get_axis_step_track(uint8_t motor);
+int			Servo_set_axis_step_track(uint8_t motor, int32_t tracking);
+int			Servo_start_axis_tracking(uint8_t motor);
+int			Servo_stop_axis_tracking(uint8_t motor);
+int 		Servo_move_axis_by_vel(uint8_t motor, double vel);
 int			Servo_init(const char *mountCfgFile, const char *localCfgFile);
 TYPE_MOVE	Servo_state(void);
 //int       	Servo_move_step_track(int32_t raStep, int32_t decStep);
 //int			Servo_move_step(int32_t raStep, int32_t decStep, bool buffered);
-void		Servo_calc_flip_coordins(double *ra, double *dec, double *direction, int8_t *side);
+//void		Servo_calc_flip_coordins(double *ra, double *dec, double *direction, int8_t *side);
 void		Servo_stop_all(void);
-bool		Servo_calc_optimal_path(double startRa, double startDec, double lst, double endRa, double endDec, double *raDirection, double *decDirection);
-void 		Servo_spiral_move(double raMove, double decMove, int loop);
+//bool		Servo_calc_optimal_path(double startRa, double startDec, double lst, double endRa, double endDec, double *raDirection, double *decDirection);
+int 		Servo_move_spiral(double raMove, double decMove, int loop);
 int			Servo_move_to_coordins(double gotoRa, double gotoDec, double lat, double lon);
 int			Servo_move_to_static(double parkHA, double parkDec);
+int 		Servo_move_to_park(void);
 
 #ifdef __cplusplus
 }

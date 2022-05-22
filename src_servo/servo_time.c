@@ -375,7 +375,7 @@ void Time_hms_hours_to_deci(double *value)
 //*****************************************************************************
 // Returns the latitude field from the global location file struct 
 //*****************************************************************************
-const double Time_get_lat(void)
+double Time_get_lat(void)
 {
 	return gServoLocalCfg.lon; 
 }
@@ -383,7 +383,7 @@ const double Time_get_lat(void)
 //*****************************************************************************
 // Returns the longitude field from the global location file struct 
 //*****************************************************************************
-const double Time_get_lon(void)
+double Time_get_lon(void)
 {
 	return gServoLocalCfg.lon; 
 }
