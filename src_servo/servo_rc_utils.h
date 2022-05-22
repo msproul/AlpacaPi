@@ -28,6 +28,9 @@
 //*	Apr 28,	2022	<RNS> added calc_move_time
 //*	May  6,	2022	<RNS> fixed includes with servo_*c_* file name changes
 //*	May  8,	2022	<RNS> fadd a & va suffixes to the move_by functions
+//*	May 21,	2022	<RNS> added addr arg to RC_ MC cmds for multi-RC support
+//*	May 22,	2022	<RNS> corrected some signness for pos and vel args
+//*	May 22,	2022	<RNS> addded buffered capability to move_by_vela() 
 //****************************************************************************
 //#include "servo_rc_utils.h"
 
@@ -73,17 +76,17 @@
 
 void	str_to_upper(char *in);
 int		RC_converse(uint8_t *cmdBuf, size_t cmdLen, uint8_t *retBuf, size_t retLen);
-int		RC_get_curr_pos(uint8_t motor, int32_t *pos);
-int		RC_get_curr_velocity(uint8_t motor, int32_t *vel);
-int		RC_set_home(uint8_t motor);
-int		RC_get_status(uint32_t *rcStatus);
-int		RC_check_queue(uint8_t *raDepth, uint8_t *decDepth);
-int		RC_set_default_acc(uint8_t motor, uint32_t acc);
-int		RC_stop(uint8_t motor);
-double	RC_calc_move_time(uint32_t pos0, uint32_t pos1, uint32_t vel, uint32_t acc);
-int		RC_move_by_posv(uint8_t motor, uint32_t pos, uint32_t vel, bool buffered);
-int		RC_move_by_posva(uint8_t motor, uint32_t pos, uint32_t vel, uint32_t acc, bool buffered);
-int		RC_move_by_vela(uint8_t motor, uint32_t vel, uint32_t acc);
-int		RC_move_by_vel_raw(uint8_t motor, uint32_t vel);
+int		RC_get_curr_pos(uint8_t addr, uint8_t motor, int32_t *pos);
+int		RC_get_curr_velocity(uint8_t addr, uint8_t motor, int32_t *vel);
+int		RC_set_home(uint8_t addr, uint8_t motor);
+int		RC_get_status(uint8_t addr, uint32_t *rcStatus);
+int		RC_check_queue(uint8_t addr, uint8_t *raDepth, uint8_t *decDepth);
+int		RC_set_default_acc(uint8_t addr, uint8_t motor, uint32_t acc);
+int		RC_stop(uint8_t addr, uint8_t motor);
+double	RC_calc_move_time(int32_t pos0, int32_t pos1, uint32_t vel, uint32_t acc);
+int		RC_move_by_posv(uint8_t addr, uint8_t motor, int32_t pos, uint32_t vel, bool buffered);
+int		RC_move_by_posva(uint8_t addr, uint8_t motor, int32_t pos, uint32_t vel, uint32_t acc, bool buffered);
+int		RC_move_by_vela(uint8_t addr, uint8_t motor, int32_t vel, uint32_t acc, bool buffered);
+int		RC_move_by_vel_raw(uint8_t addr, uint8_t motor, int32_t vel);
 
 #endif // _SERVO_RC_UTILS_H_

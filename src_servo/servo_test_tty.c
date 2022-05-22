@@ -23,6 +23,8 @@
 //*****************************************************************************
 //*	May 15,	2022	<RNS> Initial port of Goddard test program for servo mount system
 //*	May 19,	2022	<RNS> Change all refs of 'scope' to 'mount', including filenames
+//*	May 20,	2022	<RNS> Removed globals that should be limited only to servo_mount.c
+//*	May 20,	2022	<RNS> Added park state support 
 //*****************************************************************************
 // Notes:   M1 *MUST BE* connected to RA or Azimuth axis, M2 to Dec or Altitude
 //*****************************************************************************
@@ -52,19 +54,8 @@
 //#define BOTH_SENSOR_CHANGE 3
 #endif // _ALPHA_OUT_
 
-
 // Danger, local globals ahead
-/*
-static double gSysDepend = 1.000000;
-static char gMount;
-static int gIgnoreHorizon = false;
-// static int		gLstOffset		=	0;
-// static int		gDecFlipped		=	false;
-static int8_t gAddr;
-static int8_t gSide = kEAST;
-static double gMeridianWindow = 1.0;
-static double gOffTargetTolerance;
-*/
+
 
 //**************************************************************************
 //**************************************************************************
@@ -82,6 +73,7 @@ int main(void)
 	double tempDec;
 	char inStr[256];
 	char inChar;
+	char *strPtr; 
 	int done;
 	int standbyMode;
 	int status; 
@@ -129,8 +121,16 @@ int main(void)
 		printf("\n");
 		printf("=======================================================\n");
 		printf("Current RA = %lf   Dec = %lf", ra, dec);
+		printf("Park = %s", strPtr = Servo_get_park_state() ? "true" : "false");
+
 		switch (state)
 		{
+			case PARKED:
+				printf("  Mount is PARKED\n");
+				break;
+			case PARKING:
+				printf("  Mount is PARKING\n");
+				break;
 			case STOPPED:
 				printf("  Mount is STOPPED\n");
 				break;
@@ -344,6 +344,7 @@ int main(void)
 			}
 			break;
 #endif // _ALPHA_OUT_
+
 		case 'Q':
 		case 'q':
 			done = true;

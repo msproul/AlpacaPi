@@ -34,6 +34,10 @@
 //*	May  8,	2022	<RNS> renamed RC* functions from _read_ to _get_
 //*	May  8,	2022	<RNS> edit move_by_pos to _posva since default_acc is broken
 //*	May 19,	2022	<RNS> Cleaned up unit _TEST_ for warnings and printfs
+//*	May 21,	2022	<RNS> added addr arg to RC_ MC cmds for multi-RC support
+//*	May 22,	2022	<RNS> Fixed some unsigned to signed compares for abs and fabs()
+//*	May 22,	2022	<RNS> Fixed some arg type inputs
+//*	May 22,	2022	<RNS> Changed main() back to be void, _TEST_ should never take args
 //*****************************************************************************
 // Notes:   M1 *MUST BE* connected to RA or Azimuth axis, M2 to Dec or Altitude
 //*****************************************************************************
@@ -60,16 +64,13 @@
 static uint8_t gNoteBuf[64];
 static uint8_t gReceiptBuf[64];
 
-// Roboclaw most popular values
-static uint8_t gAddr	=	0x80; // default address for RC
-
 //*****************************************************************************
 // Handles the messaging between the host the MC. Expect it to be modified to different
 //   MC if they require more than a simple send message and return value pair
 //*****************************************************************************
 int RC_converse(uint8_t *cmdBuf, size_t cmdLen, uint8_t *retBuf, size_t retLen)
 {
-int		len;
+size_t	len;
 int		status;
 int		writeStatus;
 
@@ -81,7 +82,7 @@ int		writeStatus;
 	if (writeStatus == kSTATUS_OK)
 	{
 		len	=	MC_read_comm(retBuf, retLen);
-		CONSOLE_DEBUG_W_NUM("MC_read_comm -> len\t=", len);
+		CONSOLE_DEBUG_W_NUM("MC_read_comm -> len\t=", (int)len);
 		CONSOLE_DEBUG_W_LONG("retLen \t\t=", retLen);
 
 		if (len == retLen)
@@ -90,7 +91,7 @@ int		writeStatus;
 		}
 		else
 		{
-			printf("RC_converse: got error - len = %d   retLen = %d\n", len, (int) retLen);
+			printf("RC_converse: got error - len = %ld   retLen = %ld\n", len, retLen);
 			status	=	kERROR;
 		}
 	}
@@ -109,7 +110,7 @@ int		writeStatus;
 // Send: [Address, 16] = 2
 // Receive: [Enc1(4 bytes), Status, CRC(2 bytes)] = 7
 //*****************************************************************************
-int RC_get_curr_pos(u_int8_t motor, int32_t *pos)
+int RC_get_curr_pos(uint8_t addr, uint8_t motor, int32_t *pos)
 {
 uint8_t		*ptrA, *ptrB, status;
 uint16_t	crc, receiptCrc;
@@ -137,10 +138,10 @@ int			retState;
 			return(kERROR);
 			break;
 	}
-	printf("RC_get_curr_pos: addr = %X cmd = %d gRC[cmd].cmd = %d\n", gAddr, cmd, gRC[cmd].cmd);
+	printf("RC_get_curr_pos: addr = %X cmd = %d gRC[cmd].cmd = %d\n", addr, cmd, gRC[cmd].cmd);
 
 	// Creat the note for the comms and converse
-	Note_init(gNoteBuf, gAddr, gRC[cmd].cmd, &ptrA);
+	Note_init(gNoteBuf, addr, gRC[cmd].cmd, &ptrA);
 	retState	=	RC_converse(gNoteBuf, gRC[cmd].in, gReceiptBuf, gRC[cmd].out);
 	if (retState != kSTATUS_OK)
 	{
@@ -159,7 +160,7 @@ int			retState;
 	// Calc length from the receipt buf pointer distance and calc CRC
 	len			=	(int)(ptrB - gReceiptBuf);
 	// Calc CRC including addr, cmd and entire receipt buffer, not the current ptr
-	crc			=	MC_calc_crc16(&gAddr, 1, kCLEAR_CRC);
+	crc			=	MC_calc_crc16(&addr, 1, kCLEAR_CRC);
 	crc			=	MC_calc_crc16(&gRC[cmd].cmd, 1, crc);
 	crc			=	MC_calc_crc16(gReceiptBuf, len, crc);
 	// Get CRC from the receipt message
@@ -185,7 +186,7 @@ int			retState;
 // Send: [Address, 18] = 2
 // Receive: [Speed(4 bytes), Status, CRC(2 bytes)] = 7
 //*****************************************************************************
-int RC_get_curr_velocity(u_int8_t motor, int32_t *vel)
+int RC_get_curr_velocity(uint8_t addr, uint8_t motor, int32_t *vel)
 {
 uint8_t		*ptrA, *ptrB;
 uint8_t		status;
@@ -217,7 +218,7 @@ int			retState;
 	}
 
 	// Creat the note for the comms and converse
-	Note_init(gNoteBuf, gAddr, gRC[cmd].cmd, &ptrA);
+	Note_init(gNoteBuf, addr, gRC[cmd].cmd, &ptrA);
 	retState	=	RC_converse(gNoteBuf, gRC[cmd].in, gReceiptBuf, gRC[cmd].out);
 	if (retState != kSTATUS_OK)
 	{
@@ -236,7 +237,7 @@ int			retState;
 	// Calc length from the receipt buf pointer distance and calc CRC
 	len			=	(int)(ptrB - gReceiptBuf);
 	// Calc CRC including addr, cmd and entire receipt buffer, not the current ptr
-	crc			=	MC_calc_crc16(&gAddr, 1, kCLEAR_CRC);
+	crc			=	MC_calc_crc16(&addr, 1, kCLEAR_CRC);
 	crc			=	MC_calc_crc16(&gRC[cmd].cmd, 1, crc);
 	crc			=	MC_calc_crc16(gReceiptBuf, len, crc);
 	// Get CRC from the receipt message
@@ -260,7 +261,7 @@ int			retState;
 // Send: [Address, 22, Value(4 bytes), CRC(2 bytes)] = 8
 // Receive: [0xFF] = 1
 //*****************************************************************************
-int RC_set_home(uint8_t motor)
+int RC_set_home(uint8_t addr, uint8_t motor)
 {
 uint8_t		*ptrA, *ptrB, status;
 uint16_t	crc;
@@ -288,9 +289,9 @@ int			retState;
 	}
 
 	// Create the note for the comms and set endcode to the offset
-	printf("RC_set_home: addr = %X cmd = %d gRC[cmd].cmd = %d\n", gAddr, cmd, gRC[cmd].cmd);
+	printf("RC_set_home: addr = %X cmd = %d gRC[cmd].cmd = %d\n", addr, cmd, gRC[cmd].cmd);
 
-	Note_init(gNoteBuf, gAddr, gRC[cmd].cmd, &ptrA);
+	Note_init(gNoteBuf, addr, gRC[cmd].cmd, &ptrA);
 	Note_add_dword(ptrA, kRC_ENCODER_OFFSET, &ptrB);
 
 	// Get length and calc CRC then add it the note
@@ -324,7 +325,7 @@ int			retState;
 // Receive: [Status (32bits?), CRC(2 bytes)] -> needs to be 6
 // Return masks are documented and decoded in RC_utils.h
 //******************************************************************
-int RC_get_status(uint32_t *rcStatus)
+int RC_get_status(uint8_t addr, uint32_t *rcStatus)
 {
 //uint8_t		readMsg[kSMALL_STR_LEN];	// data str to be sent to mc
 //uint8_t		writeMsg[kSMALL_STR_LEN];	// data str to be read from mc
@@ -341,10 +342,10 @@ int			len;
 int			retState;
 
 	CONSOLE_DEBUG(__FUNCTION__);
-	printf("RC_get_status: addr = %X cmd = %d gRC[cmd].cmd = %d\n", gAddr, cmd, gRC[cmd].cmd);
+	printf("RC_get_status: addr = %X cmd = %d gRC[cmd].cmd = %d\n", addr, cmd, gRC[cmd].cmd);
 
 	// Creat the note for the comms and read status a short cmd
-	Note_init(gNoteBuf, gAddr, gRC[cmd].cmd, &ptrA);
+	Note_init(gNoteBuf, addr, gRC[cmd].cmd, &ptrA);
 
 	RC_converse(gNoteBuf, gRC[cmd].in, gReceiptBuf, gRC[cmd].out);
 	retState	=	RC_converse(gNoteBuf, gRC[cmd].in, gReceiptBuf, gRC[cmd].out);
@@ -360,7 +361,7 @@ int			retState;
 	// Calc length from the receipt buf pointer distance and calc CRC
 	len			=	(int)(ptrA - gReceiptBuf);
 	// Calc CRC including addr, cmd and entire receipt buffer, not the current ptr
-	crc			=	MC_calc_crc16(&gAddr, 1, kCLEAR_CRC);
+	crc			=	MC_calc_crc16(&addr, 1, kCLEAR_CRC);
 	crc			=	MC_calc_crc16(&gRC[cmd].cmd, 1, crc);
 	crc			=	MC_calc_crc16(gReceiptBuf, len, crc);
 
@@ -387,7 +388,7 @@ int			retState;
 // Send: [Address, 47]
 // Receive: [BufferM1, BufferM2, CRC(2 bytes)]
 //******************************************************************
-int RC_check_queue(uint8_t *raDepth, uint8_t *decDepth)
+int RC_check_queue(uint8_t addr, uint8_t *raDepth, uint8_t *decDepth)
 {
 //uint8_t		readMsg[kSMALL_STR_LEN];	// data str to be sent to mc
 //uint8_t		writeMsg[kSMALL_STR_LEN];	// data str to be read from mc
@@ -405,7 +406,7 @@ int			retState;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 	// Creat the note for the comms and read status a short cmd
-	Note_init(gNoteBuf, gAddr, gRC[cmd].cmd, &ptrA);
+	Note_init(gNoteBuf, addr, gRC[cmd].cmd, &ptrA);
 
 	RC_converse(gNoteBuf, gRC[cmd].in, gReceiptBuf, gRC[cmd].out);
 	retState	=	RC_converse(gNoteBuf, gRC[cmd].in, gReceiptBuf, gRC[cmd].out);
@@ -422,7 +423,7 @@ int			retState;
 	// Calc length from the receipt buf pointer distance and calc CRC
 	len			=	(int)(ptrB - gReceiptBuf);
 	// Calc CRC including addr, cmd and entire receipt buffer, not the current ptr
-	crc			=	MC_calc_crc16(&gAddr, 1, kCLEAR_CRC);
+	crc			=	MC_calc_crc16(&addr, 1, kCLEAR_CRC);
 	crc			=	MC_calc_crc16(&gRC[cmd].cmd, 1, crc);
 	crc			=	MC_calc_crc16(gReceiptBuf, len, crc);
 
@@ -447,7 +448,7 @@ int			retState;
 // Send: [Address, 68, Accel(4 bytes), CRC(2 bytes)]
 // Receive: [0xFF]
 //*************************************************************************
-int RC_set_default_acc(uint8_t motor, uint32_t acc)
+int RC_set_default_acc(uint8_t addr, uint8_t motor, uint32_t acc)
 {
 uint8_t		*ptrA, *ptrB, status;
 uint16_t	crc;
@@ -474,10 +475,10 @@ int			len;
 		return(kERROR);
 		break;
 	}
-	printf("RC_set_default_acc: addr = %X cmd = %d gRC[cmd].cmd = %d\n", gAddr, cmd, gRC[cmd].cmd);
+	printf("RC_set_default_acc: addr = %X cmd = %d gRC[cmd].cmd = %d\n", addr, cmd, gRC[cmd].cmd);
 
 	// Create the note for the comms and set endcode to the offset
-	Note_init(gNoteBuf, gAddr, gRC[cmd].cmd, &ptrA);
+	Note_init(gNoteBuf, addr, gRC[cmd].cmd, &ptrA);
 	Note_add_dword(ptrA, acc, &ptrB);
 	// Get length and calc CRC then add it the note
 	len	=	(int)(ptrB - gNoteBuf);
@@ -504,7 +505,7 @@ int			len;
 // Send: [Address, 32, Duty(2 Bytes), CRC(2 bytes)]
 // Receive: [0xFF]
 //*************************************************************************
-int RC_stop(uint8_t motor)
+int RC_stop(uint8_t addr, uint8_t motor)
 {
 uint8_t		*ptrA, *ptrB, status;
 uint16_t	crc;
@@ -534,10 +535,10 @@ int			zero	=	0;
 		break;
 	}
 
-	printf("RC_stop: addr = %X cmd = %d gRC[cmd].cmd = %d\n", gAddr, cmd, gRC[cmd].cmd);
+	printf("RC_stop: addr = %X cmd = %d gRC[cmd].cmd = %d\n", addr, cmd, gRC[cmd].cmd);
 
 	// Create the note for the comms and set endcode to the offset
-	Note_init(gNoteBuf, gAddr, gRC[cmd].cmd, &ptrA);
+	Note_init(gNoteBuf, addr, gRC[cmd].cmd, &ptrA);
 	Note_add_word(ptrA, zero, &ptrB);
 	// Get length and calc CRC then add it the note
 	len	=	(int)(ptrB - gNoteBuf);
@@ -560,9 +561,9 @@ int			zero	=	0;
 // calcs the time it will take to move from pos1 from pos0 with given vel & acc
 // returns the value in decimal seconds
 //******************************************************************
-double RC_calc_move_time(uint32_t pos0, uint32_t pos1, uint32_t vel, uint32_t acc)
+double RC_calc_move_time(int32_t pos0, int32_t pos1, uint32_t vel, uint32_t acc)
 {
-uint32_t dist	=	abs(pos1 - pos0);
+int32_t dist	=	abs(pos1 - pos0);
 double distF, velF, accF, vCalc, time;
 
 	// Cast the uints to doubles
@@ -572,12 +573,13 @@ double distF, velF, accF, vCalc, time;
 
 	// our accel = decel, does the profile have time to reach max vel, from physics
 	// v = sqrt(2 * acc * displacement ) so use half the dist for displacement (2's cancel)
-	vCalc	=	sqrt(accF * distF);
+	// convert to floating absolute to avoid any ugliness from a sqrt of neg num
+	vCalc	=	sqrt(fabs(accF * distF));
 
 	// check to see if the move is long enough to get to max vel
 	if (vCalc > velF)
 	{
-		// move reaches max velocity so standard trapezoidal profile
+		// move reaches max velocity so standard trapezoidal print32_tofile
 		// time equal dist / max vel + extra time for accel and decel ramps
 		time	=	distF / velF + (velF / accF);
 	}
@@ -597,7 +599,7 @@ double distF, velF, accF, vCalc, time;
 // Send; [Address, 122, Speed (4 bytes), Position (4 bytes), Buffer, CRC (2 bytes)]
 // Receive: [0xFF]
 //******************************************************************
-int RC_move_by_posv(uint8_t motor, uint32_t pos, uint32_t vel, bool buffered)
+int RC_move_by_posv(uint8_t addr, uint8_t motor, int32_t pos, uint32_t vel, bool buffered)
 {
 uint8_t		*ptrA, *ptrB, status, now;
 uint16_t	crc;
@@ -624,14 +626,14 @@ int			len;
 			return(kERROR);
 			break;
 	}
-	printf("RC_move_by_pos: addr = %X cmd = %d gRC[cmd].cmd = %d\n", gAddr, cmd, gRC[cmd].cmd);
+	printf("RC_move_by_pos: addr = %X cmd = %d gRC[cmd].cmd = %d\n", addr, cmd, gRC[cmd].cmd);
 
 	// If requesting a buffered command (eg. TRUE) set variable now to 0
 	// otherwise, setting it to 1 means stop any running cmds and execute it now
 	now	=	(buffered == true) ? 0 : 1;
 
 	// Create the note for the comms and add vel, pos
-	Note_init(gNoteBuf, gAddr, gRC[cmd].cmd, &ptrA);
+	Note_init(gNoteBuf, addr, gRC[cmd].cmd, &ptrA);
 	Note_add_dword(ptrA, vel, &ptrB);
 	Note_add_dword(ptrB, pos, &ptrA);
 	// add buffer arg, 1 = stop any running cmds and execute it now
@@ -656,12 +658,12 @@ int			len;
 
 //******************************************************************
 // Move the axis to input position with the input velocity and accel and will
-// buffer the command if 'true'.   If 'false' it overwrites any executing cmd
+// buffer the command if 'true'.   If 'false' it overwrites any executing cmds
 // Moves the axis by pos steps with velocity and accel parameters
 // Send: [Address, 65, Accel(4 bytes), Speed(4 Bytes), Decel(4 bytes), Position(4 Bytes), Buffer, CRC(2 bytes)]
 // Receive: [0xFF]
 //******************************************************************
-int RC_move_by_posva(uint8_t motor, uint32_t pos, uint32_t vel, uint32_t acc, bool buffered)
+int RC_move_by_posva(uint8_t addr, uint8_t motor, int32_t pos, uint32_t vel, uint32_t acc, bool buffered)
 {
 uint8_t		*ptrA, *ptrB, status, now;
 uint16_t	crc;
@@ -688,14 +690,14 @@ int			len;
 			return(kERROR);
 			break;
 	}
-	printf("RC_move_by_pos: addr = %X cmd = %d gRC[cmd].cmd = %d\n", gAddr, cmd, gRC[cmd].cmd);
+	printf("RC_move_by_pos: addr = %X cmd = %d gRC[cmd].cmd = %d\n", addr, cmd, gRC[cmd].cmd);
 
 	// If requesting a buffered command (eg. TRUE) set variable now to 0
 	// otherwise, setting it to 1 means stop any running cmds and execute it now
 	now	=	(buffered == true) ? 0 : 1;
 
 	// Create the note for the comms and add vel, pos
-	Note_init(gNoteBuf, gAddr, gRC[cmd].cmd, &ptrA);
+	Note_init(gNoteBuf, addr, gRC[cmd].cmd, &ptrA);
 	Note_add_dword(ptrA, acc, &ptrB);
 	Note_add_dword(ptrB, vel, &ptrA);
 	Note_add_dword(ptrA, acc, &ptrB);
@@ -726,7 +728,7 @@ int			len;
 // far far away. This allows the RC to effectively have a buffered position
 // command that mimics the a velocity move that will last many many hours
 //******************************************************************
-int RC_move_by_vela(uint8_t motor, uint32_t vel, uint32_t acc)
+int RC_move_by_vela(uint8_t addr, uint8_t motor, int32_t vel, uint32_t acc, bool buffered)
 {
 int32_t	pos;
 int		status;
@@ -736,7 +738,7 @@ int		status;
 	switch (motor)
 	{
 		case SERVO_RA_AXIS:
-			RC_get_curr_pos(SERVO_RA_AXIS, &pos);
+			RC_get_curr_pos(addr, SERVO_RA_AXIS, &pos);
 			if (vel < 0)
 			{
 				pos	-=	POS_FOREVER;
@@ -745,11 +747,11 @@ int		status;
 			{
 				pos	+=	POS_FOREVER;
 			}
-			RC_move_by_posva(SERVO_RA_AXIS, pos, vel, acc, true);
+			RC_move_by_posva(addr, SERVO_RA_AXIS, pos, vel, acc, buffered);
 			break;
 
 		case SERVO_DEC_AXIS:
-			RC_get_curr_pos(SERVO_DEC_AXIS, &pos);
+			RC_get_curr_pos(addr, SERVO_DEC_AXIS, &pos);
 			if (vel < 0)
 			{
 				pos	-=	POS_FOREVER;
@@ -758,7 +760,7 @@ int		status;
 			{
 				pos	+=	POS_FOREVER;
 			}
-			RC_move_by_posva(SERVO_DEC_AXIS, pos, vel, acc, true);
+			RC_move_by_posva(addr, SERVO_DEC_AXIS, pos, vel, acc, buffered);
 			break;
 
 		default:
@@ -771,11 +773,12 @@ int		status;
 } // of RC_move_by_vela()
 
 //******************************************************************
-// Moves the axis by signed velocity
+// Moves the axis by signed velocity, this is an UNBUFFERED command 
+// and will clear our any current of pending actions in the command buffer
 // Send: [Address, 35, Speed(4 Bytes), CRC(2 bytes)]
 // Receive: [0xFF]
 //******************************************************************
-int RC_move_by_vel_raw(uint8_t motor, uint32_t vel)
+int RC_move_by_vel_raw(uint8_t addr, uint8_t motor, int32_t vel)
 {
 uint8_t		*ptrA, *ptrB, status;
 uint16_t	crc;
@@ -805,7 +808,7 @@ int			len;
 	}
 
 	// Create the note for the comms and add vel parameter
-	Note_init(gNoteBuf, gAddr, gRC[cmd].cmd, &ptrA);
+	Note_init(gNoteBuf, addr, gRC[cmd].cmd, &ptrA);
 	Note_add_dword(ptrA, vel, &ptrB);
 
 	// Get length and calc CRC then add it the note
@@ -830,35 +833,36 @@ int			len;
 //******************************************************************
 //******************************************************************
 #ifdef _TEST_RC_UTILS_
-int	main(int argc, char **argv)
+int	main(void)
 {
 char buf[256];
 int32_t pos	=	0;
 uint32_t status = 0; 
+uint8_t addr = 0x80; // Default addr for RC MC 
 
 	if (MC_init_comm("/dev/ttyACM0", 38400) != 0)
 	{
 		printf("Error: mc_init_comm() failed\n");
 		return kERROR;
 	}
-	if (RC_set_home(SERVO_RA_AXIS) == kERROR)
+	if (RC_set_home(addr, SERVO_RA_AXIS) == kERROR)
 	{
 		printf("RC_set_home returned error\n");
 	}
 
-	if (RC_get_curr_pos(SERVO_RA_AXIS, &pos) == kERROR)
+	if (RC_get_curr_pos(addr, SERVO_RA_AXIS, &pos) == kERROR)
 	{
 		printf("RC_current_pos returned error\n");
 	}
 	printf("Pos = %X\n", pos);
 
-	if (RC_move_by_posva(SERVO_RA_AXIS, 10000, 5000, 500, false) == kERROR)
-	//   if (RC_move_by_vel_raw(SERVO_RA_AXIS, 1000) == kERROR)
+	if (RC_move_by_posva(addr, SERVO_RA_AXIS, 10000, 5000, 500, false) == kERROR)
+	//   if (RC_move_by_vel_raw(addr, SERVO_RA_AXIS, 1000) == kERROR)
 	{
 		printf("RC_move_by_pos returned error\n");
 	}
 
-	if (RC_get_status(&status) == kERROR)
+	if (RC_get_status(addr, &status) == kERROR)
 	{
 		printf("RC_get_status returned error\n");
 	}
@@ -867,24 +871,24 @@ uint32_t status = 0;
 	printf("hit any key to reverse motor \n");
 	fgets(buf, 256, stdin);
 
-	if (RC_move_by_posva(SERVO_RA_AXIS, 0, 5000, 500, false) == kERROR)
-	//   if (RC_move_by_vel_raw(SERVO_RA_AXIS, 1000) == kERROR)
+	if (RC_move_by_posva(addr, SERVO_RA_AXIS, 0, 5000, 500, false) == kERROR)
+	//   if (RC_move_by_vel_raw(addr, SERVO_RA_AXIS, 1000) == kERROR)
 	{
 		printf("RC_move_by_pos returned error\n");
 	}
 
-	if (RC_get_status(&status) == kERROR)
+	if (RC_get_status(addr, &status) == kERROR)
 	{
 		printf("RC_get_status returned error\n");
 	}
 	printf("status = %X\n", status);
-	if (RC_get_curr_pos(SERVO_RA_AXIS, &pos) == kERROR)
+	if (RC_get_curr_pos(addr, SERVO_RA_AXIS, &pos) == kERROR)
 	{
 		printf("RC_current_pos returned error\n");
 	}
 	printf("Pos = %X\n", pos);
 
-	if (RC_get_status(&status) == kERROR)
+	if (RC_get_status(addr, &status) == kERROR)
 	{
 		printf("RC_get_status returned error\n");
 	}
@@ -893,7 +897,7 @@ uint32_t status = 0;
 	printf("hit any key to stop motor\n");
 	fgets(buf, 256, stdin);
 
-	RC_stop(SERVO_RA_AXIS);
+	RC_stop(addr, SERVO_RA_AXIS);
 
 	MC_shutdown();
 

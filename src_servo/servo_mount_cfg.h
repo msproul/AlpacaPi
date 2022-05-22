@@ -26,9 +26,9 @@
 //*	May 16,	2022	<RNS> Adopted _TYPE_SCOPE_CONFIG
 //*	May 19,	2022	<RNS> convert .home field to .zero to avoid confusion with ASCOM Home
 //*	May 19,	2022	<RNS> Change all refs of 'scope' to 'mount', including filenames
+//*	May 20,	2022	<RNS> added to flipWin and offTarget to TYPE_MOUNT_CONFIG
+//*	May 22,	2022	<RNS> Changed .pos from usigned to signed
 //****************************************************************************
-//#include	"servo_mount_cfg.h"
-
 
 #ifndef _SERVO_MOUNT_CFG_H_
 #define _SERVO_MOUNT_CFG_H_
@@ -51,7 +51,7 @@ typedef struct axis_t
 	double		step;				//	the all important calculated steps per arcsecond value
 	double		prec;				//	defines the amount of slippage between drive system, used for friction drives
 	uint16_t	encoderMaxSpeed;	//	here and below are the int value for the MC, calc'd from the real-world values above
-	uint32_t	pos;
+	int32_t		pos;
 	uint32_t	maxAcc;
 	uint32_t	acc;
 	uint32_t	maxVel;
@@ -88,6 +88,8 @@ typedef struct
 	uint8_t		addr;
 	char		mount;
 	int8_t		side;
+	double 		flipWin;
+	double 		offTarget;
 	char		port[48];
 	int			baud;
 } TYPE_MOUNT_CONFIG;
