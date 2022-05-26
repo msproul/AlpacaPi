@@ -53,6 +53,7 @@
 #include "servo_std_defs.h"
 #include "servo_time.h"
 
+//*****************************************************************************
 typedef struct
 {
 	double baseEpoch;
@@ -72,25 +73,25 @@ static TYPE_LOCAL_CFG gServoLocalCfg;
 // void Time_deci_days_to_hours(double *day)
 //{
 //	*day	=	(*day * 24.0);
-// }
+//}
 
 //*****************************************************************************
 void Time_deci_hours_to_deg(double *hours)
 {
-	*hours = (*hours * 15.0);
+	*hours	=	(*hours * 15.0);
 }
 
 //*****************************************************************************
 void Time_deci_deg_to_hours(double *deg)
 {
-	*deg = (*deg / 15.0);
+	*deg	=	(*deg / 15.0);
 }
 
 //*****************************************************************************
 void Time_normalize_HA(double *ha)
 {
-	*ha = (*ha < -12.0) ? *ha + 24.0 : *ha;
-	*ha = (*ha > 12.0) ? *ha - 24.0 : *ha;
+	*ha	=	(*ha < -12.0) ? *ha + 24.0 : *ha;
+	*ha	=	(*ha > 12.0) ? *ha - 24.0 : *ha;
 }
 
 //*****************************************************************************
@@ -106,15 +107,16 @@ void Time_normalize_hours(long double *hours)
 		*hours -= 24.0;
 	}
 }
+
 //*****************************************************************************
 void Time_normalize_RA(double *ra)
 {
 	long double temp;
 
-	temp = (long double)*ra;
+	temp	=	(long double)*ra;
 	Time_normalize_hours(&temp);
 
-	*ra = (double)temp;
+	*ra	=	(double)temp;
 }
 
 //*****************************************************************************
@@ -126,7 +128,7 @@ void Time_str_to_upper(char *in)
 	{
 		for (index = 0; in[index] != '\0'; index++)
 		{
-			in[index] = toupper(in[index]);
+			in[index]	=	toupper(in[index]);
 		}
 	}
 } // of Time_str_to_upper()
@@ -141,7 +143,7 @@ double Time_ascii_maybe_HMS_tof(char *token)
 	char *ptr;
 	double ret;
 
-	ptr = token;
+	ptr	=	token;
 
 	// look for the HMS colon in the input str until end-of-str
 	while (*ptr != ':' && *ptr != '\0')
@@ -152,15 +154,15 @@ double Time_ascii_maybe_HMS_tof(char *token)
 	if (*ptr == ':')
 	{
 		// Convert the string to floating format
-		*ptr = '.';
+		*ptr	=	'.';
 		// convert to a double and from HMS to deci
-		ret = atof(token);
+		ret	=	atof(token);
 		Time_hms_hours_to_deci(&ret);
 	}
 	else
 	{
 		// input format is a floating point
-		ret = atof(token);
+		ret	=	atof(token);
 	}
 
 	return ret;
@@ -198,12 +200,12 @@ long double Time_jd_to_sid(long double jd)
 	long double sid;
 
 	// Convert the jd to julian centuries
-	jCent = (jd - 2415020.0) / 36525.0;
-	sid = 280.46061837 + 360.98564736629 * (jd - 2451545.0);
-	sid += (0.000387933 * jCent * jCent) - (jCent * jCent * jCent / 38710000.0);
+	jCent	=	(jd - 2415020.0) / 36525.0;
+	sid		=	280.46061837 + 360.98564736629 * (jd - 2451545.0);
+	sid		+=	(0.000387933 * jCent * jCent) - (jCent * jCent * jCent / 38710000.0);
 
 	// convert to deci hours
-	sid *= 24.0;
+	sid		*=	24.0;
 
 	// make sure sid is postive and < 24.0
 	Time_normalize_hours(&sid);
@@ -233,32 +235,31 @@ long double Time_sid_to_lst(long double sid, double lon)
 //*****************************************************************************
 void Time_check_hms(double *hms)
 {
-	double fractSec;
-	int32_t hours;
-	int32_t minutes;
-	int32_t seconds;
-	double sign;
-	double value;
+double	fractSec;
+int32_t	hours;
+int32_t	minutes;
+int32_t	seconds;
+double	sign;
+double	value;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
 	// Save the sign since the algorithm only works on pos numbers
 	if (*hms < 0.0)
 	{
-		value = -(*hms);
-		sign = -1;
+		value	=	-(*hms);
+		sign	=	-1;
 	}
 	else
 	{
-		value = *hms;
-		sign = 1;
+		value	=	*hms;
+		sign	=	1;
 	}
 	// decode the hms fields to individual
-	//	#warning "<MLS> I dont think this the right way to do conversion"
-	hours = (int32_t)value;
-	minutes = (int32_t)((value - (double)hours) * 100.0);
-	seconds = (int32_t)((value - (double)hours) * 10000.0 - (double)minutes * 100.0);
-	fractSec = ((value - (double)hours) * 10000.0 - (double)minutes * 100.0 - (double)seconds);
+	hours		=	(int32_t)value;
+	minutes		=	(int32_t)((value - (double)hours) * 100.0);
+	seconds		=	(int32_t)((value - (double)hours) * 10000.0 - (double)minutes * 100.0);
+	fractSec	=	((value - (double)hours) * 10000.0 - (double)minutes * 100.0 - (double)seconds);
 
 	//	CONSOLE_DEBUG_W_NUM("hours  \t=",	hours);
 	//	CONSOLE_DEBUG_W_NUM("minutes\t=",	minutes);
@@ -280,19 +281,19 @@ void Time_check_hms(double *hms)
 	// make sure the range is ok for sec otherwise truncate it 0.0
 	if (seconds > 59)
 	{
-		seconds = 0;
-		fractSec = 0.0;
+		seconds		=	0;
+		fractSec	=	0.0;
 		minutes++;
 	}
 	// make sure the range is ok for min otherwise truncate it to 0
 	if (minutes > 59)
 	{
-		minutes = 0;
+		minutes	=	0;
 		hours++;
 	}
-	fractSec += ((double)minutes * 100.0) + (double)seconds;
-	value = (double)hours + (fractSec / 10000.0);
-	*hms = sign * value;
+	fractSec	+=	((double)minutes * 100.0) + (double)seconds;
+	value		=	(double)hours + (fractSec / 10000.0);
+	*hms		=	sign * value;
 }
 
 //*****************************************************************************
@@ -308,17 +309,17 @@ void Time_deci_hours_to_hms(double *value)
 	int32_t minutes;
 	int32_t seconds;
 
-	hours = (int32_t)*value;
-	fract = ((*value - (double)hours) * 3600.0);
-	minutes = ((int32_t)fract) / 60;
-	seconds = ((int32_t)fract) - minutes * 60;
-	fractSec = fract - (double)((int32_t)fract);
+	hours		=	(int32_t)*value;
+	fract		=	((*value - (double)hours) * 3600.0);
+	minutes		=	((int32_t)fract) / 60;
+	seconds		=	((int32_t)fract) - minutes * 60;
+	fractSec	=	fract - (double)((int32_t)fract);
 
 	// make sure the range is ok for sec otherwise truncate it 0.0
 	if (seconds > 59)
 	{
-		seconds = 0;
-		fractSec = 0.0;
+		seconds		=	0;
+		fractSec	=	0.0;
 		minutes++;
 	}
 
@@ -326,12 +327,12 @@ void Time_deci_hours_to_hms(double *value)
 	if (minutes > 59)
 	{
 
-		minutes = 0;
+		minutes	=	0;
 		hours++;
 	}
 
-	fractSec += ((double)minutes * 100.0) + (double)seconds;
-	*value = (double)hours + (fractSec / 10000.0);
+	fractSec	+=	((double)minutes * 100.0) + (double)seconds;
+	*value		=	(double)hours + (fractSec / 10000.0);
 }
 
 //*****************************************************************************
@@ -342,21 +343,21 @@ void Time_deci_hours_to_hms(double *value)
 //*****************************************************************************
 void Time_hms_hours_to_deci(double *value)
 {
-	double fractSec;
-	int32_t hours;
-	int32_t minutes;
-	int32_t seconds;
+double	fractSec;
+int32_t	hours;
+int32_t	minutes;
+int32_t	seconds;
 
-	hours = (int32_t)*value;
-	minutes = (int32_t)((*value - (double)hours) * 100.0);
-	seconds = (int32_t)((*value - (double)hours) * 10000.0 - (double)minutes * 100.0);
-	fractSec = ((*value - (double)hours) * 10000.0 - (double)minutes * 100.0 - (double)seconds);
+	hours		=	(int32_t)*value;
+	minutes		=	(int32_t)((*value - (double)hours) * 100.0);
+	seconds		=	(int32_t)((*value - (double)hours) * 10000.0 - (double)minutes * 100.0);
+	fractSec	=	((*value - (double)hours) * 10000.0 - (double)minutes * 100.0 - (double)seconds);
 
 	// make sure the range is ok for sec otherwise truncate it 0.0
 	if (seconds > 59)
 	{
-		seconds = 0;
-		fractSec = 0.0;
+		seconds		=	0;
+		fractSec	=	0.0;
 		minutes++;
 	}
 
@@ -364,56 +365,57 @@ void Time_hms_hours_to_deci(double *value)
 	if (minutes > 59)
 	{
 
-		minutes = 0;
+		minutes	=	0;
 		hours++;
 	}
 
-	fractSec += ((double)minutes * 60.0) + (double)seconds;
-	*value = (double)hours + (fractSec / 3600.0);
+	fractSec	+=	((double)minutes * 60.0) + (double)seconds;
+	*value		=	(double)hours + (fractSec / 3600.0);
 }
 
 //*****************************************************************************
-// Returns the latitude field from the global location file struct 
+// Returns the latitude field from the global location file struct
 //*****************************************************************************
 double Time_get_lat(void)
 {
-	return gServoLocalCfg.lon; 
+	return gServoLocalCfg.lon;
 }
 
 //*****************************************************************************
-// Returns the longitude field from the global location file struct 
+// Returns the longitude field from the global location file struct
 //*****************************************************************************
 double Time_get_lon(void)
 {
-	return gServoLocalCfg.lon; 
+	return gServoLocalCfg.lon;
 }
 
 //*****************************************************************************
-// Returns the site name field from the global location file struct 
+// Returns the site name field from the global location file struct
 //*****************************************************************************
 const char* Time_get_site(void)
 {
-	return gServoLocalCfg.site; 
+	return gServoLocalCfg.site;
 }
+
 //*****************************************************************************
 // Takes in ra, dec, let in deci degs and sidereal in deci hours and returns alt/azi in radians
 // Azi is done returned in the form of North = 0 and NESW sweep (E = 90, S = 180, W = 270)
 //*****************************************************************************
 void Time_ra_dec_to_alt_azi(double ra, double dec, long double lst, double lat, double *alt, double *azi)
 {
-	double hourAngle;
-	double raRad;
-	double decRad;
-	double latRad;
-	double temp;
+double	hourAngle;
+double	raRad;
+double	decRad;
+double	latRad;
+double	temp;
 
 	// convert ra, dec and lat to radians
-	raRad = RADIANS(ra);
-	decRad = RADIANS(dec);
-	latRad = RADIANS(lat);
+	raRad	=	RADIANS(ra);
+	decRad	=	RADIANS(dec);
+	latRad	=	RADIANS(lat);
 
 	// compute the local hour angle and return it in radians
-	hourAngle = ((lst * M_PI / 12.0) - raRad);
+	hourAngle	=	((lst * M_PI / 12.0) - raRad);
 
 	// if hour angle is negative
 	if (hourAngle < 0.0)
@@ -424,7 +426,7 @@ void Time_ra_dec_to_alt_azi(double ra, double dec, long double lst, double lat, 
 	//("hourangle	=	%lf\n", hourAngle);
 
 	// compute the altitude of the object
-	*alt = asin(sin(latRad) * sin(decRad) + cos(latRad) * cos(decRad) * cos(hourAngle));
+	*alt	=	asin(sin(latRad) * sin(decRad) + cos(latRad) * cos(decRad) * cos(hourAngle));
 
 	// compute the azimuth angle measured from the south
 	// from Jean Meeus  - "Astronomical Algorithms"
@@ -433,17 +435,17 @@ void Time_ra_dec_to_alt_azi(double ra, double dec, long double lst, double lat, 
 
 	// compute azi using north as zero
 	// *azi	=	acos( (sin(dec) - (sin(lat) * sin(*alt))) / (cos(lat) * cos(*alt)) );
-	temp = (sin(decRad) - (sin(latRad) * sin(*alt))) / (cos(latRad) * cos(*alt));
+	temp	=	(sin(decRad) - (sin(latRad) * sin(*alt))) / (cos(latRad) * cos(*alt));
 	printf("temp = %lf\n", temp);
 
-	*azi = acos(temp);
+	*azi	=	acos(temp);
 
 	printf("azi = %lf\n", *azi);
 
 	// convert to correct quadrant
 	if (sin(hourAngle) < 0.0)
 	{
-		*azi = 2.0 * M_PI - *azi;
+		*azi	=	2.0 * M_PI - *azi;
 	}
 } // Time_ra_dec_to_alt_azi()
 
@@ -453,32 +455,32 @@ void Time_ra_dec_to_alt_azi(double ra, double dec, long double lst, double lat, 
 //******************************************************************************
 void Time_alt_azi_to_ra_dec(double alt, double azi, long double lst, double lat, double *ra, double *dec)
 {
-	double hourAngle;
-	double raRad;
-	double decRad;
-	double latRad = RADIANS(lat);
+double	hourAngle;
+double	raRad;
+double	decRad;
+double	latRad	=	RADIANS(lat);
 
 	// Compute the easy axis, it's always dec ;^)
-	decRad = asin((sin(alt) * sin(latRad)) + (cos(alt) * cos(latRad) * cos(azi)));
+	decRad	=	asin((sin(alt) * sin(latRad)) + (cos(alt) * cos(latRad) * cos(azi)));
 
 	// compute hour angle in radians
-	hourAngle = acos((sin(alt) - (sin(latRad) * sin(decRad))) / (cos(latRad) * cos(decRad)));
+	hourAngle	=	acos((sin(alt) - (sin(latRad) * sin(decRad))) / (cos(latRad) * cos(decRad)));
 
 	// convert to correct quaderant, Note: everything is in radians
 	if (sin(azi) > 0.0)
 	{
-		hourAngle = 2.0 * M_PI - hourAngle;
+		hourAngle	=	2.0 * M_PI - hourAngle;
 	}
 
 	// Convert lst to radians and use hour angle to calc ra position
-	raRad = ((lst * M_PI / 12.0) - hourAngle);
+	raRad	=	((lst * M_PI / 12.0) - hourAngle);
 
-	/* make sure ra is positive */
-	raRad = (raRad < 0.0) ? raRad + 2.0 * M_PI : raRad;
+	//*	make sure ra is positive
+	raRad	=	(raRad < 0.0) ? raRad + 2.0 * M_PI : raRad;
 
-	/* convert to degrees */
-	*ra = DEGREES(raRad);
-	*dec = DEGREES(decRad);
+	//*	convert to degrees
+	*ra		=	DEGREES(raRad);
+	*dec	=	DEGREES(decRad);
 
 	return;
 } // of Time_alt_azi_to_ra_dec()
@@ -490,8 +492,8 @@ void Time_alt_azi_to_ra_dec(double alt, double azi, long double lst, double lat,
 //******************************************************************************
 int Time_calc_alt_azi_tracking(double alt, double azi, double lat, double *rateAlt, double *rateAzi)
 {
-	double zenith = (M_PI / 2.0) - alt; // in rads
-	double latRad = RADIANS(lat);
+double	zenith	=	(M_PI / 2.0) - alt; // in rads
+double	latRad	=	RADIANS(lat);
 
 	// chekc for a reasonable value for zenith to avoid sin() divisor -> zero
 	if (zenith > (0.99 * M_PI) || zenith < 0.01 * M_PI)
@@ -499,8 +501,8 @@ int Time_calc_alt_azi_tracking(double alt, double azi, double lat, double *rateA
 		return kERROR;
 	}
 	// the magic rate formulas for both axes in arcsec/sec
-	*rateAlt = cos(latRad) * sin(azi) * kARCSEC_PER_SEC;
-	*rateAzi = (sin(latRad) * sin(zenith) - (cos(latRad) * cos(zenith) * cos(azi))) / sin(zenith) * kARCSEC_PER_SEC;
+	*rateAlt	=	cos(latRad) * sin(azi) * kARCSEC_PER_SEC;
+	*rateAzi	=	(sin(latRad) * sin(zenith) - (cos(latRad) * cos(zenith) * cos(azi))) / sin(zenith) * kARCSEC_PER_SEC;
 
 	// TODO: integrate the forumla for blind spot region where azi rate exceeds axis max vel
 	// this should be an return error condition
@@ -515,12 +517,12 @@ int Time_calc_alt_azi_tracking(double alt, double azi, double lat, double *rateA
 //******************************************************************************
 double Time_calc_field_rotation(double alt, double azi, double lat)
 {
-	double latRad;
-	double rotRate;
+double	latRad;
+double	rotRate;
 
 	// convert lat to radians and calc rotation rate
-	latRad = RADIANS(lat);
-	rotRate = kARCSEC_PER_SEC * cos(latRad) * cos(azi) / cos(alt);
+	latRad	=	RADIANS(lat);
+	rotRate	=	kARCSEC_PER_SEC * cos(latRad) * cos(azi) / cos(alt);
 
 	return (rotRate);
 } // calc_field_rotation()
@@ -538,17 +540,17 @@ double Time_calc_refraction(double alt, double temp, double press)
 	double term;
 	double refraction;
 
-	altDegs = DEGREES(alt);
-	tempC = (temp - 32.0) / 1.8;
-	pressMb = press * 33.8637526; // Conversion factor for Hg.in -> millibars
+	altDegs	=	DEGREES(alt);
+	tempC	=	(temp - 32.0) / 1.8;
+	pressMb	=	press * 33.8637526; // Conversion factor for Hg.in -> millibars
 
 	// Convert term to rads, calc cotangent to get refraction in arcmins
-	term = altDegs + (7.31 / (altDegs + 4.4));
-	term = RADIANS(term);
-	refraction = (0.28 * pressMb / (tempC + 273)) / tan(term);
+	term		=	altDegs + (7.31 / (altDegs + 4.4));
+	term		=	RADIANS(term);
+	refraction	=	(0.28 * pressMb / (tempC + 273)) / tan(term);
 
 	// Convert arcmins to rads multiply by 0.000290888
-	refraction *= 0.000290888;
+	refraction	*=	0.000290888;
 
 
 	return (refraction);
@@ -557,25 +559,25 @@ double Time_calc_refraction(double alt, double temp, double press)
 //******************************************************************************
 int Time_read_local_cfg(const char *localCfgFile)
 {
-	TYPE_LOCAL_CFG *local; 
-	int retStatus;
-	char filename[kMAX_STR_LEN];
-	FILE *inFile;
-	char inString[kMAX_STR_LEN];
-	int line = 1;
-	int okFlag = true;
-	int column = 0;
-	int loop = 0;
-	char delimiters[] = " \t\r\n\v\f"; // POSIX whitespace chars
-	char *token;
-	char *argument;
-	char *rest = NULL;
+TYPE_LOCAL_CFG	*local;
+int				retStatus;
+char			filename[kMAX_STR_LEN];
+FILE			*inFile;
+char			inString[kMAX_STR_LEN];
+int				line			=	1;
+int				okFlag			=	true;
+int				column			=	0;
+int				loop			=	0;
+char			delimiters[]	=	" \t\r\n\v\f"; // POSIX whitespace chars
+char			*token;
+char			*argument;
+char			*rest			=	NULL;
 
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
-	// Map the local pointer to the address of private local global 
-	local = &gServoLocalCfg;
+	// Map the local pointer to the address of private local global
+	local	=	&gServoLocalCfg;
 
 	// list of defined tokens in config file and array to keep track of discovery
 	enum
@@ -614,7 +616,7 @@ int Time_read_local_cfg(const char *localCfgFile)
 
 	// open the mount locations configuration file
 	//	if ((inFile = fopen(filename, "r")) == NULL)
-	inFile = fopen(filename, "r");
+	inFile	=	fopen(filename, "r");
 	if (inFile == NULL)
 	{
 		fprintf(stderr, "Error: could not open location cfg file %s\n", filename);
@@ -625,13 +627,13 @@ int Time_read_local_cfg(const char *localCfgFile)
 	while (fgets(inString, kMAX_STR_LEN, inFile) != NULL)
 	{
 		// get first token of the line read from the file
-		token = strtok_r(inString, delimiters, &rest);
+		token	=	strtok_r(inString, delimiters, &rest);
 
 		// If non-comment token found on line
 		if (token != NULL && token[0] != '#')
 		{
 			// Get corresponding argument for the token
-			argument = strtok_r(NULL, delimiters, &rest);
+			argument	=	strtok_r(NULL, delimiters, &rest);
 			if (argument == NULL)
 			{
 				fprintf(stderr, "Error: (read_local_cfg) on line %d of file '%s'\n", line, filename);
@@ -643,8 +645,8 @@ int Time_read_local_cfg(const char *localCfgFile)
 
 			if (strcmp(token, initLocalArray[EPOCH].parameter) == 0)
 			{
-				initLocalArray[EPOCH].found = true;
-				local->baseEpoch = atof(argument);
+				initLocalArray[EPOCH].found	=	true;
+				local->baseEpoch			=	atof(argument);
 				// parameter is ok, print it out
 				printf("%-15.15s = %-15.4f  ", token, local->baseEpoch);
 				if (column++ % 2)
@@ -663,8 +665,8 @@ int Time_read_local_cfg(const char *localCfgFile)
 
 			else if (strcmp(token, initLocalArray[EPOCH_JD].parameter) == 0)
 			{
-				initLocalArray[EPOCH_JD].found = true;
-				local->baseJd = atof(argument);
+				initLocalArray[EPOCH_JD].found	=	true;
+				local->baseJd					=	atof(argument);
 				printf("%-15.15s = %-15f  ", token, local->baseJd);
 				if (column++ % 2)
 				{
@@ -680,8 +682,8 @@ int Time_read_local_cfg(const char *localCfgFile)
 			}
 			else if (strcmp(token, initLocalArray[LATITUDE].parameter) == 0)
 			{
-				initLocalArray[LATITUDE].found = true;
-				local->lat = Time_ascii_maybe_HMS_tof(argument);
+				initLocalArray[LATITUDE].found	=	true;
+				local->lat						=	Time_ascii_maybe_HMS_tof(argument);
 				printf("%-15.15s = %-15f  ", token, local->lat);
 				if (column++ % 2)
 				{
@@ -697,8 +699,8 @@ int Time_read_local_cfg(const char *localCfgFile)
 			}
 			else if (strcmp(token, initLocalArray[LONGITUDE].parameter) == 0)
 			{
-				initLocalArray[LONGITUDE].found = true;
-				local->lon = Time_ascii_maybe_HMS_tof(argument);
+				initLocalArray[LONGITUDE].found	=	true;
+				local->lon						=	Time_ascii_maybe_HMS_tof(argument);
 
 				printf("%-15.15s = %-15.15f  ", token, local->lon);
 				if (column++ % 2)
@@ -715,8 +717,8 @@ int Time_read_local_cfg(const char *localCfgFile)
 			}
 			else if (strcmp(token, initLocalArray[ELEVATION].parameter) == 0)
 			{
-				initLocalArray[ELEVATION].found = true;
-				local->elev = atof(argument);
+				initLocalArray[ELEVATION].found	=	true;
+				local->elev						=	atof(argument);
 				// parameter is ok, print it out
 				printf("%-15.15s = %-15.4f  ", token, local->elev);
 				if (column++ % 2)
@@ -735,8 +737,8 @@ int Time_read_local_cfg(const char *localCfgFile)
 
 			else if (strcmp(token, initLocalArray[TEMPERATURE].parameter) == 0)
 			{
-				initLocalArray[TEMPERATURE].found = true;
-				local->temp = atof(argument);
+				initLocalArray[TEMPERATURE].found	=	true;
+				local->temp							=	atof(argument);
 				printf("%-15.15s = %-15f  ", token, local->temp);
 				if (column++ % 2)
 				{
@@ -752,8 +754,8 @@ int Time_read_local_cfg(const char *localCfgFile)
 			}
 			else if (strcmp(token, initLocalArray[PRESSURE].parameter) == 0)
 			{
-				initLocalArray[PRESSURE].found = true;
-				local->press = atof(argument);
+				initLocalArray[PRESSURE].found	=	true;
+				local->press					=	atof(argument);
 				printf("%-15.15s = %-15f  ", token, local->press);
 				if (column++ % 2)
 				{
@@ -769,7 +771,7 @@ int Time_read_local_cfg(const char *localCfgFile)
 			}
 			else if (strcmp(token, initLocalArray[SITE].parameter) == 0)
 			{
-				initLocalArray[SITE].found = true;
+				initLocalArray[SITE].found	=	true;
 				strcpy(local->site, argument);
 				printf("%-15.15s = %-15.15s  ", token, local->site);
 				if (column++ % 2)
@@ -797,7 +799,7 @@ int Time_read_local_cfg(const char *localCfgFile)
 			fprintf(stderr, "Error: (validate_local_cfg) Configuation variable:\n");
 			fprintf(stderr, "       '%s' was not found or of improper format.\n", initLocalArray[loop].parameter);
 			fprintf(stderr, "       from file '%s'\n", filename);
-			okFlag = false;
+			okFlag	=	false;
 		}
 		loop++;
 	}
@@ -808,12 +810,12 @@ int Time_read_local_cfg(const char *localCfgFile)
 		fprintf(stderr, "Error: (validate_local_cfg) Error found in configuration:\n");
 		fprintf(stderr, "       from file '%s'\n", filename);
 		fflush(stderr);
-		retStatus = -1;
+		retStatus	=	-1;
 	}
 	else
 	{
 		// No Errors in configuration file
-		retStatus = 0;
+		retStatus	=	0;
 	}
 
 	return (retStatus);
@@ -824,40 +826,40 @@ int Time_read_local_cfg(const char *localCfgFile)
 //*****************************************************************************
 int main(void)
 {
-	TYPE_LOCAL_CFG test;
-	double lon = -120.0;
-	long double jd;
-	long double sid;
-	long double lst;
-	double ra, dec, lat, alt, azi, rate;
-	double temp = 50.0;
-	double press = 29.83; // 29.9214;
-	double v, w, x, y, z;
-	double rateAlt, rateAzi;
-	int status;
-	char inStr[256];
+TYPE_LOCAL_CFG	test;
+double			lon	=	-120.0;
+long double		jd;
+long double		sid;
+long double		lst;
+double			ra, dec, lat, alt, azi, rate;
+double			temp	=	50.0;
+double			press	=	29.83; // 29.9214;
+double			v, w, x, y, z;
+double			rateAlt, rateAzi;
+int				status;
+char			inStr[256];
 
 	// Read int the location config file
 	Time_read_local_cfg(&test, NULL);
 
 	printf("Time since epoch 1970.0 in seconds : %Lf\n", Time_get_systime());
-	jd = Time_systime_to_jd();
+	jd	=	Time_systime_to_jd();
 	printf("Today the JD time is : %Lf\n", jd);
-	sid = Time_jd_to_sid(jd);
+	sid	=	Time_jd_to_sid(jd);
 	printf("Sidereal time at 0 longitude : %Lf\n", sid);
-	lst = Time_sid_to_lst(sid, lon);
+	lst	=	Time_sid_to_lst(sid, lon);
 	printf("LST is  at %lf longitude : %Lf\n", lon, lst);
 
 	// Calc alt/azi
-	ra = (double)lst;
-	dec = 60.0;
-	lat = 45.0;
+	ra	=	(double)lst;
+	dec	=	60.0;
+	lat	=	45.0;
 
 	Time_ra_dec_to_alt_azi(ra, dec, lst, lat, &alt, &azi);
 	printf("ra = %lf  dec = %lf  alt = %lf  azi = %lf\n", ra, dec, DEGREES(alt), DEGREES(azi));
 
 	// Calc field rotation rate for alt-azi
-	rate = Time_calc_field_rotation(alt, azi, lat);
+	rate	=	Time_calc_field_rotation(alt, azi, lat);
 
 	printf("Field rotation rate = %lf degs/se\n", rate);
 
@@ -865,17 +867,17 @@ int main(void)
 	for (alt = 5.0; alt < 90.0; alt += 5.0)
 	{
 
-		v = Time_calc_refraction(RADIANS(alt), temp, press);
-		w = Time_calc_refraction(RADIANS(alt), temp + 10.0, press);
-		x = Time_calc_refraction(RADIANS(alt), temp - 10.0, press);
-		y = Time_calc_refraction(RADIANS(alt), temp, press + 0.5);
-		z = Time_calc_refraction(RADIANS(alt), temp, press - 0.5);
+		v	=	Time_calc_refraction(RADIANS(alt), temp, press);
+		w	=	Time_calc_refraction(RADIANS(alt), temp + 10.0, press);
+		x	=	Time_calc_refraction(RADIANS(alt), temp - 10.0, press);
+		y	=	Time_calc_refraction(RADIANS(alt), temp, press + 0.5);
+		z	=	Time_calc_refraction(RADIANS(alt), temp, press - 0.5);
 
-		v = DEGREES(v) * 60.0;
-		w = DEGREES(w) * 60.0;
-		x = DEGREES(x) * 60.0;
-		y = DEGREES(y) * 60.0;
-		z = DEGREES(z) * 60.0;
+		v	=	DEGREES(v) * 60.0;
+		w	=	DEGREES(w) * 60.0;
+		x	=	DEGREES(x) * 60.0;
+		y	=	DEGREES(y) * 60.0;
+		z	=	DEGREES(z) * 60.0;
 
 		printf("Alt degs= %lf  Refract arcmin= %lf  Temp + 10= %lf  Temp - 10= %lf Press + 0.5= %lf Press - 0.5= %lf\n", alt, v, w, x, y, z);
 	}
@@ -888,14 +890,14 @@ int main(void)
 
 		fgets(inStr, 256, stdin);
 		sscanf(inStr, "%lf %lf %lf", &alt, &azi, &lat);
-		alt = RADIANS(alt);
-		azi = RADIANS(azi);
+		alt	=	RADIANS(alt);
+		azi	=	RADIANS(azi);
 
 		if (inStr[0] == 'q' || inStr[0] == 'Q')
 		{
-			return -1;
+			return(-1);
 		}
-		status = Time_calc_alt_azi_tracking(alt, azi, lat, &rateAlt, &rateAzi);
+		status	=	Time_calc_alt_azi_tracking(alt, azi, lat, &rateAlt, &rateAzi);
 
 		if (status != kSTATUS_OK)
 		{

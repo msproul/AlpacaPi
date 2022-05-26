@@ -56,43 +56,43 @@
 //*****************************************************************************
 // Notes: M1 *MUST BE* connected to RA or Azimuth axis, M2 to Dec or Altitude
 //*****************************************************************************
-#include <sys/time.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <math.h>
-#include <stdbool.h>
-#include <unistd.h>
+#include	<sys/time.h>
+#include	<stdio.h>
+#include	<string.h>
+#include	<stdlib.h>
+#include	<stdint.h>
+#include	<math.h>
+#include	<stdbool.h>
+#include	<unistd.h>
 
 #define _ENABLE_CONSOLE_DEBUG_
-#include "ConsoleDebug.h"
+#include	"ConsoleDebug.h"
 
-#include "servo_std_defs.h"
-#include "servo_mc_core.h"
-#include "servo_time.h"
-#include "servo_rc_utils.h"
-#include "servo_mount_cfg.h"
-#include "servo_mount.h"
-//#include "mini_alpaca_defs.h"
+#include	"servo_std_defs.h"
+#include	"servo_mc_core.h"
+#include	"servo_time.h"
+#include	"servo_rc_utils.h"
+#include	"servo_mount_cfg.h"
+#include	"servo_mount.h"
+//#include	"mini_alpaca_defs.h"
 
 #ifdef _ALPHA_OUT_
-#define UNDER_TARGET 5.0
-//#define RA_SENSOR_CHANGE 1
-//#define DEC_SENSOR_CHANGE 2
-//#define BOTH_SENSOR_CHANGE 3
+#define	UNDER_TARGET	5.0
+//#define	RA_SENSOR_CHANGE	1
+//#define	DEC_SENSOR_CHANGE	2
+//#define	BOTH_SENSOR_CHANGE	3
 #endif	// _ALPHA_OUT_
 
 // Globals for the telescope mount axis for real-world floating point variables
-static axis gServoRa	=	{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-static axis gServoDec	=	{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+static axis	gServoRa	=	{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+static axis	gServoDec	=	{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 
 // Danger, local globals ahead
-static double	gSysDepend	=	1.000000;
+static double	gSysDepend		=	1.000000;
 static char		gMount;
 static bool		gIgnoreHorizon	=	false;
 static bool		gParkState		=	true;
-TYPE_MOVE		gMountAction; 
+TYPE_MOVE		gMountAction;
 static uint8_t	gAddr;
 static int8_t	gSide			=	kEAST;
 static double	gFlipWin		= 	0.0;  // zero flip window slop for GEM
@@ -131,7 +131,7 @@ void Servo_get_park_coordins(double *ha, double *dec)
 //*****************************************************************************
 void Servo_get_standby_coordins(double *ha, double *dec)
 {
-	*ha	=	gServoRa.standby;
+	*ha		=	gServoRa.standby;
 	*dec	=	gServoDec.standby;
 }
 
@@ -140,7 +140,7 @@ void Servo_get_standby_coordins(double *ha, double *dec)
 //*****************************************************************************
 void Servo_get_sync_coordins(double *ra, double *dec)
 {
-	*ra	=	gServoRa.sync;
+	*ra		=	gServoRa.sync;
 	*dec	=	gServoDec.sync;
 }
 
@@ -174,34 +174,38 @@ double	Servo_get_time_ratio(void)
 //*****************************************************************************
 bool	Servo_unpark(void)
 {
-	int state = Servo_state(); 
+int state;
+
+	state	=	Servo_state();
 	if (state == PARKED || state == STOPPED)
 	{
-		gParkState = false; 
+		gParkState	=	false;
 	}
 
-	return (!gParkState); 
+	return (!gParkState);
 }
 
 //*****************************************************************************
-// Returns the mount's current Park state, and will return false if the mount 
+// Returns the mount's current Park state, and will return false if the mount
 // is PARKING and not completed the move.  Note: the only way to set the park
 // state to PARKED is via Servo_move_to_park() and a call to Servo_state()
 //*****************************************************************************
 bool	Servo_get_park_state(void)
 {
-	int state = Servo_state(); 
+int state;
+
+	state	=	Servo_state();
 
 	return (state == PARKED ? true : false);
 }
 
 //*****************************************************************************
 // Returns the mount's current side of pier, using ASCOM non-sensical definition
-// of pier state. 
+// of pier state.
 //*****************************************************************************
 int8_t Servo_get_pier_side(void)
 {
-	return gSide; 
+	return gSide;
 }
 //*****************************************************************************
 // Routine scales down the Ra and Dec acceleration profiles to the passed-in
@@ -526,7 +530,7 @@ int	Servo_set_axis_step_track(uint8_t motor, int32_t tracking)
 double	ra, dec;
 int		status	=	kSTATUS_OK;
 
-	// Set the current pos with the current tracking rate but only if the step 
+	// Set the current pos with the current tracking rate but only if the step
 	// sizes for RA and Dec have been set during Servo_init()
 	if ((gServoRa.step != 0.0) && (gServoDec.step != 0.0))
 	{
@@ -561,7 +565,7 @@ int		status	=	kSTATUS_OK;
 
 //*****************************************************************************
 // Start the motor tracking if a tracking rate has been set in the
-// axisPtr data struct. this is an unbuffered command and will overwrite any 
+// axisPtr data struct. this is an unbuffered command and will overwrite any
 // pending actions on the axis
 //*	returns kSTATUS_OK on success, kERROR otherwise
 //*****************************************************************************
@@ -608,24 +612,24 @@ int Servo_stop_axis_tracking(uint8_t motor)
 	int status;
 
 	CONSOLE_DEBUG(__FUNCTION__);
-	status = kERROR;
+	status	=	kERROR;
 	switch (motor)
 	{
-	case SERVO_RA_AXIS:
-		// Stop the RA motor
-		status = RC_stop(gAddr, SERVO_RA_AXIS);
-		break;
+		case SERVO_RA_AXIS:
+			// Stop the RA motor
+			status	=	RC_stop(gAddr, SERVO_RA_AXIS);
+			break;
 
-	case SERVO_DEC_AXIS:
-		// Stop the Dec motor
-		status = RC_stop(gAddr, SERVO_DEC_AXIS);
-		break;
+		case SERVO_DEC_AXIS:
+			// Stop the Dec motor
+			status	=	RC_stop(gAddr, SERVO_DEC_AXIS);
+			break;
 
-	default:
-		CONSOLE_DEBUG("Invalid motor specified!!!!!!!!!!!!!!!!");
-		// do nothing
-		status = kERROR;
-		break;
+		default:
+			CONSOLE_DEBUG("Invalid motor specified!!!!!!!!!!!!!!!!");
+			// do nothing
+			status	=	kERROR;
+			break;
 	} // of switch
 	CONSOLE_DEBUG_W_NUM("status\t=", status);
 
@@ -641,26 +645,26 @@ int Servo_move_axis_by_vel(uint8_t motor, double vel)
 {
 	int status;
 	int32_t stepVel;
-	axisPtr currAxis = NULL;
+	axisPtr currAxis	=	NULL;
 
 	CONSOLE_DEBUG(__FUNCTION__);
-	status = kSTATUS_OK;
+	status	=	kSTATUS_OK;
 	// figure out which axis we are working with and assign to currAxis
 	switch (motor)
 	{
-	case SERVO_RA_AXIS:
-		currAxis = &gServoRa;
-		break;
+		case SERVO_RA_AXIS:
+			currAxis	=	&gServoRa;
+			break;
 
-	case SERVO_DEC_AXIS:
-		currAxis = &gServoDec;
-		break;
+		case SERVO_DEC_AXIS:
+			currAxis	=	&gServoDec;
+			break;
 
-	default:
-		CONSOLE_DEBUG("Invalid motor specified!!!!!!!!!!!!!!!!");
-		// do nothing
-		status = kERROR;
-		break;
+		default:
+			CONSOLE_DEBUG("Invalid motor specified!!!!!!!!!!!!!!!!");
+			// do nothing
+			status	=	kERROR;
+			break;
 	} // of switch
 
 	if (status != kERROR)
@@ -668,8 +672,8 @@ int Servo_move_axis_by_vel(uint8_t motor, double vel)
 		// Convert the input vel in degs/sec rate to step vel measured in steps/sec
 		vel 	*= 	3600.0;			// first convert input vel into arcsecs/sec
 		// Set velocity direction based on axis cfg, divide by the axis->steps to get final vel in steps
-		stepVel	 = 	(int32_t)(vel * currAxis->direction / currAxis->step);	
-		status	 = 	RC_move_by_vela(gAddr, motor, stepVel, currAxis->acc, false);
+		stepVel	=	(int32_t)(vel * currAxis->direction / currAxis->step);
+		status	=	RC_move_by_vela(gAddr, motor, stepVel, currAxis->acc, false);
 	}
 
 	CONSOLE_DEBUG_W_NUM("status\t=", status);
@@ -690,9 +694,9 @@ int Servo_move_axis_by_vel(uint8_t motor, double vel)
 //*****************************************************************************
 int	Servo_init(const char *mountCfgFile, const char *localCfgFile)
 {
-int	status	=	kSTATUS_OK;
-int	baud;
-char port[kMAX_STR_LEN];
+int		status	=	kSTATUS_OK;
+int		baud;
+char	port[kMAX_STR_LEN];
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -712,8 +716,8 @@ char port[kMAX_STR_LEN];
 	gAddr		=	gScopeConfig.addr;
 	gMount		=	gScopeConfig.mount;
 	gSide		=	gScopeConfig.side;
-	gFlipWin	=   gScopeConfig.flipWin; 
-	gOffTarget	=   gScopeConfig.offTarget; 
+	gFlipWin	=   gScopeConfig.flipWin;
+	gOffTarget	=   gScopeConfig.offTarget;
 	baud		=	gScopeConfig.baud;
 	strcpy(port, gScopeConfig.port);
 
@@ -795,7 +799,7 @@ char port[kMAX_STR_LEN];
 	// Set the position of the stationary mount to the park position from config file
 	Servo_set_static_pos(gServoRa.park, gServoDec.park);
 	// Set the mount state to Park
-	gParkState = true; 
+	gParkState	=	true;
 
 #ifdef _ALPHA_OUT_
 	// commented out due to not sensor support for Alpha
@@ -839,11 +843,11 @@ char port[kMAX_STR_LEN];
 
 //*****************************************************************************
 // Returns whether the mount is PARKED, STOPPED, MOVING or TRACKING using typedef TYPE_MOVE
-// with the above fields. For STOPPED both axis must be stopped and if it's stopped, 
+// with the above fields. For STOPPED both axis must be stopped and if it's stopped,
 // it may be parked if the global state gParkState is set to true. If either axis is
-// moving, then MOVING is returned and has a high precedence than TRACKING.  
-// If the mount is tracking on either or both axes, TRACKING is returned. 
-// Tracking is checked against the axis.track value must be withiin 10% 
+// moving, then MOVING is returned and has a high precedence than TRACKING.
+// If the mount is tracking on either or both axes, TRACKING is returned.
+// Tracking is checked against the axis.track value must be withiin 10%
 //*****************************************************************************
 TYPE_MOVE Servo_state(void)
 {
@@ -872,9 +876,9 @@ TYPE_MOVE Servo_state(void)
 			{
 				// Mount action is PARKING, but the mount is now STOPPED
 				// therefore it just completed PARKING and need to return PARKED
-				gParkState = true; 
+				gParkState		=	true;
 				// reset mount action to PARKED as well
-				gMountAction = PARKED; 
+				gMountAction	=	PARKED;
 				return (PARKED);
 			}
 			else
@@ -1089,13 +1093,13 @@ void Servo_stop_all(void)
 }
 
 //*****************************************************************************
-// INTERNAL ROUNTINE:  This is try-before-you-buy routine. It calcs the best path 
-// for the mount to from start to end and returns the *relative direction* needed 
+// INTERNAL ROUNTINE:  This is try-before-you-buy routine. It calcs the best path
+// for the mount to from start to end and returns the *relative direction* needed
 // to move the mount from the start position but makes *no changes*.  If you don't
-// like the path chosen, don't use it and no values will have changed. It assumes 
-// that end coordins are above the horizon. It also will return whether a flip 
+// like the path chosen, don't use it and no values will have changed. It assumes
+// that end coordins are above the horizon. It also will return whether a flip
 // is needed, but *does not* make the flip coordins changes to the start position.
-// If a flip is returned, you *MUST* flip the start coordins for the returned path 
+// If a flip is returned, you *MUST* flip the start coordins for the returned path
 // in raDirection & decDirection to be accurate.
 // All inputs in decimal Hours/degs format and returns boolean if a mount flip is required
 //*****************************************************************************
@@ -1516,17 +1520,17 @@ int		status	=	kSTATUS_OK;
 }	// of Servo_move_to_static()
 
 //******************************************************************************
-// This routine is will park the mount asynchronously.  You must check the 
-// with Servo_state() to confirm completetion of the action and to flip the 
+// This routine is will park the mount asynchronously.  You must check the
+// with Servo_state() to confirm completetion of the action and to flip the
 // mount the park state to true, needed for the ASCOM AtPark property
-// If you don't call Servo_state() after the mount completes parking, Park flag 
+// If you don't call Servo_state() after the mount completes parking, Park flag
 // will *never* be set.  That would be bad... so just do it. ;^)
 //*****************************************************************************
 int Servo_move_to_park(void)
 {
 	double ha, dec;
-	int status; 
-	
+	int status;
+
 	// Make sure the mount is not Parked, but *if parked* then return error
 	if (gParkState == true)
 	{
@@ -1537,9 +1541,9 @@ int Servo_move_to_park(void)
 	Servo_get_park_coordins(&ha, &dec);
 	// Allow a move to anywhere and set the action state, then  move to static pos
 	Servo_ignore_horizon(true);
-	gMountAction = PARKING; 
-	status = Servo_move_to_static(ha, dec); 
-	
+	gMountAction	=	PARKING;
+	status			=	Servo_move_to_static(ha, dec);
+
 	// If status is < zero, return error
 	return(status == kSTATUS_OK) ? kSTATUS_OK : kERROR;
 }	// of Servo_move_to_park()

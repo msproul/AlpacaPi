@@ -4748,7 +4748,9 @@ bool	starHasMag_and_Spectral;
 			case kDataSrc_NGC2000IC:
 				//*	this is a special case, NGC and IC are in the same database.
 				textColor	=	W_CYAN;
-				//*	fall through to default
+				strcpy(labelString, theStar->longName);
+				break;
+
 			default:
 				strcpy(labelString, theStar->longName);
 				break;

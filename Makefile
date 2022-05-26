@@ -132,6 +132,7 @@ DEFINEFLAGS		+=	-D_INCLUDE_ALPACA_EXTENSIONS_
 DEFINEFLAGS		+=	-D_ALPACA_PI_
 
 CFLAGS			=	-Wall -Wno-multichar -Wno-unknown-pragmas -Wstrict-prototypes
+CFLAGS			+=	-Wextra
 #CFLAGS			+=	-Werror
 CFLAGS			+=	-Wmissing-prototypes
 #CFLAGS			+=	-trigraphs
@@ -142,6 +143,8 @@ CFLAGS			+=	-g
 CFLAGS			+=	-fPIE
 
 CPLUSFLAGS		=	-Wall -Wno-multichar -Wno-unknown-pragmas
+CPLUSFLAGS		+=	-Wextra
+CPLUSFLAGS		+=	-Wno-unused-parameter
 #CPLUSFLAGS		+=	-Wno-class-memaccess
 #CPLUSFLAGS		+=	-O2
 #CPLUSFLAGS		+=	-trigraphs

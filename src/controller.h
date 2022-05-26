@@ -11,7 +11,7 @@
 	#include	<arpa/inet.h>
 #endif // _ARPA_INET_H
 
-
+//	#include	"/usr/include/opencv4/opencv2/highgui.hpp"
 //=============================================================================
 #ifdef _USE_OPENCV_
 	#include	"opencv2/opencv.hpp"

@@ -44,6 +44,8 @@
 //*	May 15,	2022	<MLS> Build 141
 //*	May 17,	2022	<MLS> Build 142
 //*	May 19,	2022	<MLS> Build 143
+//*	May 23,	2022	<MLS> Changed syntax of enum typedefs to make RNS compiler happy
+//*	May 19,	2022	<MLS> Build 144
 //*****************************************************************************
 //*	These are for my comment extraction program that sorts comments by date.
 //*	Jan  1,	2019	-----------------------------------------------------------
@@ -72,7 +74,7 @@
 
 #define	kApplicationName	"AlpacaPi"
 #define	kVersionString		"V0.5.0-beta"
-#define	kBuildNumber		143
+#define	kBuildNumber		144
 
 
 #define kAlpacaDiscoveryPORT	32227
@@ -167,7 +169,7 @@ enum
 
 
 //*****************************************************************************
-enum TYPE_ASCOM_STATUS
+typedef enum
 {
 	kASCOM_Err_Success					=	0,
 	kASCOM_Err_NotImplemented			=	0x400,
@@ -196,10 +198,10 @@ enum TYPE_ASCOM_STATUS
 
 	kASCOM_Err_last
 
-};
+} TYPE_ASCOM_STATUS;
 
 //*****************************************************************************
-enum CalibratorStatus
+typedef enum
 {
 	kCalibrator_NotPresent	=	0,	//*	This device does not have a calibration capability
 	kCalibrator_Off			=	1,	//*	The calibrator is off
@@ -207,11 +209,11 @@ enum CalibratorStatus
 	kCalibrator_Ready		=	3,	//*	The calibrator is ready for use
 	kCalibrator_Unknown		=	4,	//*	The calibrator state is unknown
 	kCalibrator_Error		=	5	//*	The calibrator encountered an error when changing state
-};
+} CalibratorStatus;
 
 
 //*****************************************************************************
-enum CoverStatus
+typedef enum
 {
 	kCover_NotPresent	=	0,	//*	This device does not have a cover that can be closed independently
 	kCover_Closed		=	1,	//*	The cover is closed
@@ -219,18 +221,18 @@ enum CoverStatus
 	kCover_Open			=	3,	//*	The cover is open
 	kCover_Unknown		=	4,	//*	The state of the cover is unknown
 	kCover_Error		=	5	//*	The device encountered an error when changing state
-};
+} CoverStatus;
 
 //*****************************************************************************
-enum TYPE_AlignmentModes
+typedef enum
 {
 	kAlignmentMode_algAltAz			=	0,	//*	Altitude-Azimuth alignment.
 	kAlignmentMode_algPolar			=	1,	//*	Polar (equatorial) mount other than German equatorial.
 	kAlignmentMode_algGermanPolar	=	2,	//*	German equatorial mount.
-};
+} TYPE_AlignmentModes;
 
 //*****************************************************************************
-enum TYPE_EquatorialCoordinateType
+typedef enum
 {
 	kECT_equOther				=	0,	//*	Custom or unknown equinox and/or reference frame.
 	kECT_equTopocentric			=	1,	//*	Topocentric coordinates.
@@ -239,31 +241,30 @@ enum TYPE_EquatorialCoordinateType
 	kECT_equJ2000				=	2,	//*	J2000 equator/equinox. Coordinates of the object at mid-day on 1st January 2000, ICRS reference frame.
 	kECT_equJ2050				=	3,	//*	J2050 equator/equinox, ICRS reference frame.
 	kECT_equB1950				=	4	//*	B1950 equinox, FK4 reference frame.
-};
+} TYPE_EquatorialCoordinateType;
 
 //*****************************************************************************
-enum TYPE_PierSide
+typedef enum
 {
 	kPierSide_pierUnknown	=	-1,	//*	Unknown or indeterminate.
 	kPierSide_pierEast		=	0,	//*	Normal pointing state - Mount on the East side of pier (looking West)
 	kPierSide_pierWest		=	1	//*	Through the pole pointing state - Mount on the West side of pier (looking East)
-};
+} TYPE_PierSide;
 
 //*****************************************************************************
 //*	these are ASCOM defined values
 //*	https://ascom-standards.org/Help/Platform/html/T_ASCOM_DeviceInterface_DriveRates.htm
 //*****************************************************************************
-enum TYPE_DriveRates
+typedef enum
 {
 	kDriveRate_driveSidereal	=	0,	//*	Sidereal tracking rate (15.041 arcseconds per second).
 	kDriveRate_driveLunar		=	1,	//*	Lunar tracking rate (14.685 arcseconds per second).
 	kDriveRate_driveSolar		=	2,	//*	Solar tracking rate (15.0 arcseconds per second).
 	kDriveRate_driveKing		=	3	//*	King tracking rate (15.0369 arcseconds per second).
-};
-
+} TYPE_DriveRates;
 
 //*****************************************************************************
-enum TYPE_SensorType
+typedef enum
 {
 	kSensorType_Monochrome	=	0,	//*	Camera produces monochrome array with no Bayer encoding
 	kSensorType_Color		=	1,	//*	Camera produces color image directly, requiring not Bayer decoding
@@ -271,7 +272,9 @@ enum TYPE_SensorType
 	kSensorType_CMYG		=	3,	//*	Camera produces CMYG encoded Bayer array images
 	kSensorType_CMYG2		=	4,	//*	Camera produces CMYG2 encoded Bayer array images
 	kSensorType_LRGB		=	5	//*	Camera produces Kodak TRUESENSE Bayer LRGB array images
-};
+} TYPE_SensorType;
+
+
 
 #define	kMaxSensorNameLen		32
 #define	kMaxReadOutModes		5
@@ -425,12 +428,12 @@ typedef struct
 } TYPE_FilterWheelProperties;
 
 //*****************************************************************************
-enum TYPE_Axis
+typedef enum
 {
 	kAxis_RA		=	0,	//*	Primary axis (e.g., Right Ascension or Azimuth).
 	kAxis_DEC		=	1,	//*	Secondary axis (e.g., Declination or Altitude).
 	kAxis_Tertiary	=	2	//*	Tertiary axis (e.g. imager rotator/de-rotator).
-};
+} TYPE_Axis;
 
 
 //*****************************************************************************

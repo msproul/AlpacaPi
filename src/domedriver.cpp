@@ -74,6 +74,7 @@
 //*	Jun 15,	2021	<MLS> Added Get_PowerStatus() & Get_AuxiliaryStatus()
 //*	Jun 23,	2021	<MLS> Updated dome driver cCommonProp.InterfaceVersion to 2
 //*	Dec 13,	2021	<MLS> Added WatchDog_TimeOut() to domedriver
+//*	May 24,	2022	<MLS> Updated dome driver to count output data
 //*****************************************************************************
 //*	cd /home/pi/dev-mark/alpaca
 //*	LOGFILE=logfile.txt
@@ -388,24 +389,24 @@ int					mySocket;
 	strcpy(alpacaErrMsg, "");
 
 	//*	set up the json response
-	JsonResponse_CreateHeader(reqData->jsonTextBuffer, kMaxJsonBuffLen);
+	cBytesWrittenForThisCmd	+=	JsonResponse_CreateHeader(reqData->jsonTextBuffer, kMaxJsonBuffLen);
 
 	//*	this is not part of the protocol, I am using it for testing
-	JsonResponse_Add_String(	mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"Device",
-								cCommonProp.Name,
-								INCLUDE_COMMA);
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(	mySocket,
+															reqData->jsonTextBuffer,
+															kMaxJsonBuffLen,
+															"Device",
+															cCommonProp.Name,
+															INCLUDE_COMMA);
 
-	JsonResponse_Add_String(	mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"Command",
-								reqData->deviceCommand,
-								INCLUDE_COMMA);
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(	mySocket,
+															reqData->jsonTextBuffer,
+															kMaxJsonBuffLen,
+															"Command",
+															reqData->deviceCommand,
+															INCLUDE_COMMA);
 
-//	JsonResponse_Add_Int32(		mySocket,
+//	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(		mySocket,
 //								reqData->jsonTextBuffer,
 //								kMaxJsonBuffLen,
 //								"PreviousState",
@@ -736,45 +737,45 @@ int					mySocket;
 	RecordCmdStats(cmdEnumValue, reqData->get_putIndicator, alpacaErrCode);
 
 	//*	send the response information
-	JsonResponse_Add_Int32(		mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"ClientTransactionID",
-								gClientTransactionID,
-								INCLUDE_COMMA);
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(		mySocket,
+															reqData->jsonTextBuffer,
+															kMaxJsonBuffLen,
+															"ClientTransactionID",
+															gClientTransactionID,
+															INCLUDE_COMMA);
 
-	JsonResponse_Add_Int32(		mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"ServerTransactionID",
-								gServerTransactionID,
-								INCLUDE_COMMA);
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(		mySocket,
+															reqData->jsonTextBuffer,
+															kMaxJsonBuffLen,
+															"ServerTransactionID",
+															gServerTransactionID,
+															INCLUDE_COMMA);
 
-	JsonResponse_Add_Int32(		mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"ErrorNumber",
-								alpacaErrCode,
-								INCLUDE_COMMA);
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(		mySocket,
+															reqData->jsonTextBuffer,
+															kMaxJsonBuffLen,
+															"ErrorNumber",
+															alpacaErrCode,
+															INCLUDE_COMMA);
 
-//	JsonResponse_Add_Int32(		mySocket,
+//	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(		mySocket,
 //								reqData->jsonTextBuffer,
 //								kMaxJsonBuffLen,
 //								"NewState",
 //								domeState,
 //								INCLUDE_COMMA);
 
-	JsonResponse_Add_String(	mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"ErrorMessage",
-								alpacaErrMsg,
-								NO_COMMA);
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(	mySocket,
+															reqData->jsonTextBuffer,
+															kMaxJsonBuffLen,
+															"ErrorMessage",
+															alpacaErrMsg,
+															NO_COMMA);
 
-	JsonResponse_Add_Finish(	mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								kInclude_HTTP_Header);
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Finish(	mySocket,
+															reqData->jsonTextBuffer,
+															kMaxJsonBuffLen,
+															kInclude_HTTP_Header);
 
 	//*	this is for the logging function
 	strcpy(reqData->alpacaErrMsg, alpacaErrMsg);
@@ -1009,12 +1010,12 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
 	if (reqData != NULL)
 	{
-		JsonResponse_Add_Double(	reqData->socket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									responseString,
-									cDomeProp.Altitude,
-									INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Double(	reqData->socket,
+																reqData->jsonTextBuffer,
+																kMaxJsonBuffLen,
+																responseString,
+																cDomeProp.Altitude,
+																INCLUDE_COMMA);
 	}
 	else
 	{
@@ -1030,12 +1031,12 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
 	if (reqData != NULL)
 	{
-		JsonResponse_Add_Bool(	reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								responseString,
-								cDomeProp.AtHome,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	reqData->socket,
+															reqData->jsonTextBuffer,
+															kMaxJsonBuffLen,
+															responseString,
+															cDomeProp.AtHome,
+															INCLUDE_COMMA);
 	}
 	else
 	{
@@ -1051,12 +1052,12 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
 	if (reqData != NULL)
 	{
-		JsonResponse_Add_Bool(	reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								responseString,
-								cDomeProp.AtPark,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	reqData->socket,
+															reqData->jsonTextBuffer,
+															kMaxJsonBuffLen,
+															responseString,
+															cDomeProp.AtPark,
+															INCLUDE_COMMA);
 	}
 	else
 	{
@@ -1072,12 +1073,12 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
 	if (reqData != NULL)
 	{
-		JsonResponse_Add_Double(reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								responseString,
-								cDomeProp.Azimuth,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Double(reqData->socket,
+															reqData->jsonTextBuffer,
+															kMaxJsonBuffLen,
+															responseString,
+															cDomeProp.Azimuth,
+															INCLUDE_COMMA);
 	}
 	else
 	{
@@ -1093,12 +1094,12 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
 	if (reqData != NULL)
 	{
-		JsonResponse_Add_Bool(	reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								responseString,
-								cDomeProp.CanFindHome,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	reqData->socket,
+															reqData->jsonTextBuffer,
+															kMaxJsonBuffLen,
+															responseString,
+															cDomeProp.CanFindHome,
+															INCLUDE_COMMA);
 	}
 	else
 	{
@@ -1115,12 +1116,12 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
 	if (reqData != NULL)
 	{
-		JsonResponse_Add_Bool(	reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								responseString,
-								cDomeProp.CanPark,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	reqData->socket,
+															reqData->jsonTextBuffer,
+															kMaxJsonBuffLen,
+															responseString,
+															cDomeProp.CanPark,
+															INCLUDE_COMMA);
 	}
 	else
 	{
@@ -1137,12 +1138,12 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
 	if (reqData != NULL)
 	{
-		JsonResponse_Add_Bool(	reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								responseString,
-								cDomeProp.CanSetAltitude,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	reqData->socket,
+															reqData->jsonTextBuffer,
+															kMaxJsonBuffLen,
+															responseString,
+															cDomeProp.CanSetAltitude,
+															INCLUDE_COMMA);
 	}
 	else
 	{
@@ -1159,12 +1160,12 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
 	if (reqData != NULL)
 	{
-		JsonResponse_Add_Bool(	reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								responseString,
-								cDomeProp.CanSetAzimuth,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	reqData->socket,
+															reqData->jsonTextBuffer,
+															kMaxJsonBuffLen,
+															responseString,
+															cDomeProp.CanSetAzimuth,
+															INCLUDE_COMMA);
 	}
 	else
 	{
@@ -1181,12 +1182,12 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
 	if (reqData != NULL)
 	{
-		JsonResponse_Add_Bool(	reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								responseString,
-								cDomeProp.CanSetPark,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	reqData->socket,
+															reqData->jsonTextBuffer,
+															kMaxJsonBuffLen,
+															responseString,
+															cDomeProp.CanSetPark,
+															INCLUDE_COMMA);
 	}
 	else
 	{
@@ -1204,12 +1205,12 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
 	if (reqData != NULL)
 	{
-		JsonResponse_Add_Bool(	reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								responseString,
-								cDomeProp.CanSetShutter,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	reqData->socket,
+															reqData->jsonTextBuffer,
+															kMaxJsonBuffLen,
+															responseString,
+															cDomeProp.CanSetShutter,
+															INCLUDE_COMMA);
 	}
 	else
 	{
@@ -1225,12 +1226,12 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
 	if (reqData != NULL)
 	{
-		JsonResponse_Add_Bool(	reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								responseString,
-								cDomeProp.CanSlave,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	reqData->socket,
+															reqData->jsonTextBuffer,
+															kMaxJsonBuffLen,
+															responseString,
+															cDomeProp.CanSlave,
+															INCLUDE_COMMA);
 	}
 	else
 	{
@@ -1247,12 +1248,12 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
 	if (reqData != NULL)
 	{
-		JsonResponse_Add_Bool(	reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								responseString,
-								cDomeProp.CanSyncAzimuth,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	reqData->socket,
+															reqData->jsonTextBuffer,
+															kMaxJsonBuffLen,
+															responseString,
+															cDomeProp.CanSyncAzimuth,
+															INCLUDE_COMMA);
 	}
 	else
 	{
@@ -1270,12 +1271,12 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
 	if (reqData != NULL)
 	{
-		JsonResponse_Add_Bool(	reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								responseString,
-								cDomeProp.Slewing,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	reqData->socket,
+															reqData->jsonTextBuffer,
+															kMaxJsonBuffLen,
+															responseString,
+															cDomeProp.Slewing,
+															INCLUDE_COMMA);
 	}
 	else
 	{
@@ -1294,21 +1295,21 @@ char				statusString[32];
 	if (reqData != NULL)
 	{
 		//*	shutter state is an enum defined by Alpaca/ASCOM, defined in alpaca_defs.h
-		JsonResponse_Add_Int32(	reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								responseString,
-								cDomeProp.ShutterStatus,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	reqData->socket,
+															reqData->jsonTextBuffer,
+															kMaxJsonBuffLen,
+															responseString,
+															cDomeProp.ShutterStatus,
+															INCLUDE_COMMA);
 
 		DomeControl_GetStatusString(cDomeProp.ShutterStatus, statusString);
 
-		JsonResponse_Add_String(	reqData->socket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									"shutterstatus-str",
-									statusString,
-									INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(	reqData->socket,
+																reqData->jsonTextBuffer,
+																kMaxJsonBuffLen,
+																"shutterstatus-str",
+																statusString,
+																INCLUDE_COMMA);
 	}
 	else
 	{
@@ -1326,12 +1327,12 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 	if (reqData != NULL)
 	{
 		alpacaErrCode	=	kASCOM_Err_Success;
-		JsonResponse_Add_Bool(	reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								responseString,
-								cDomeProp.Slaved,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	reqData->socket,
+															reqData->jsonTextBuffer,
+															kMaxJsonBuffLen,
+															responseString,
+															cDomeProp.Slaved,
+															INCLUDE_COMMA);
 
 	}
 	else
@@ -1842,12 +1843,12 @@ char				stateString[48];
 	if (reqData != NULL)
 	{
 		GetStateString(cDomeState, stateString);
-		JsonResponse_Add_String(	reqData->socket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									"CurrentState",
-									stateString,
-									INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(	reqData->socket,
+																reqData->jsonTextBuffer,
+																kMaxJsonBuffLen,
+																"CurrentState",
+																stateString,
+																INCLUDE_COMMA);
 	}
 	else
 	{
@@ -1886,12 +1887,12 @@ bool				powerState;
 	{
 		powerState		=	false;
 		alpacaErrCode	=	GetPower(&powerState);
-		JsonResponse_Add_String(	reqData->socket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									responseString,
-									(powerState ? "ON" : "OFF"),
-									INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(	reqData->socket,
+																reqData->jsonTextBuffer,
+																kMaxJsonBuffLen,
+																responseString,
+																(powerState ? "ON" : "OFF"),
+																INCLUDE_COMMA);
 
 		if (alpacaErrCode == kASCOM_Err_PropertyNotImplemented)
 		{
@@ -1940,12 +1941,12 @@ bool				auxiliaryState;
 	{
 		auxiliaryState	=	false;
 		alpacaErrCode	=	GetAuxiliary(&auxiliaryState);
-		JsonResponse_Add_String(	reqData->socket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									responseString,
-									(auxiliaryState ? "ON" : "OFF"),
-									INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(	reqData->socket,
+																reqData->jsonTextBuffer,
+																kMaxJsonBuffLen,
+																responseString,
+																(auxiliaryState ? "ON" : "OFF"),
+																INCLUDE_COMMA);
 
 		if (alpacaErrCode == kASCOM_Err_PropertyNotImplemented)
 		{
@@ -1993,30 +1994,30 @@ char				stateString[48];
 		Get_PowerStatus(	reqData,	alpacaErrMsg,	"powerstatus");
 		Get_AuxiliaryStatus(reqData,	alpacaErrMsg,	"auxiliarystatus");
 
-		JsonResponse_Add_Int32(	reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"SlewingRate-PWM",
-								cCurrentPWM,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	reqData->socket,
+															reqData->jsonTextBuffer,
+															kMaxJsonBuffLen,
+															"SlewingRate-PWM",
+															cCurrentPWM,
+															INCLUDE_COMMA);
 
 
 		//===============================================================
-		JsonResponse_Add_String(reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"version",
-								gFullVersionString,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(reqData->socket,
+															reqData->jsonTextBuffer,
+															kMaxJsonBuffLen,
+															"version",
+															gFullVersionString,
+															INCLUDE_COMMA);
 
 
 		GetStateString(cDomeState, stateString);
-		JsonResponse_Add_String(	reqData->socket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									"CurrentState",
-									stateString,
-									INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(reqData->socket,
+															reqData->jsonTextBuffer,
+															kMaxJsonBuffLen,
+															"CurrentState",
+															stateString,
+															INCLUDE_COMMA);
 
 		alpacaErrCode	=	kASCOM_Err_Success;
 		strcpy(alpacaErrMsg, "");

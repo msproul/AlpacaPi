@@ -254,21 +254,21 @@ int		status;
 	// Set baud rate or default to 9600
 	switch (baudrate)
 	{
-	case 9600:
-		cfsetispeed(&settings, B9600);
-		cfsetospeed(&settings, B9600);
-		break;
-	case 19200:
-		cfsetispeed(&settings, B19200);
-		cfsetospeed(&settings, B19200);
-		break;
-	case 38400:
-		cfsetispeed(&settings, B38400);
-		cfsetospeed(&settings, B38400);
-		break;
-	default:
-		cfsetispeed(&settings, B9600);
-		cfsetospeed(&settings, B9600);
+		case 9600:
+			cfsetispeed(&settings, B9600);
+			cfsetospeed(&settings, B9600);
+			break;
+		case 19200:
+			cfsetispeed(&settings, B19200);
+			cfsetospeed(&settings, B19200);
+			break;
+		case 38400:
+			cfsetispeed(&settings, B38400);
+			cfsetospeed(&settings, B38400);
+			break;
+		default:
+			cfsetispeed(&settings, B9600);
+			cfsetospeed(&settings, B9600);
 	}
 
 	// Flush both the input and output buffers

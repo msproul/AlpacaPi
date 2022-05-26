@@ -205,7 +205,7 @@ int		ii;
 static void	LiveWindowMouseCallback(int event, int x, int y, int flags, void* param)
 {
 Controller	*myController;
-
+//int			mouseWheelDelta;
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	myController	=	(Controller *)param;
@@ -214,6 +214,10 @@ Controller	*myController;
 		if (myController->cMagicCookie == kMagicCookieValue)
 		{
 //			CONSOLE_DEBUG("Magic cookie tastes good");
+
+//			mouseWheelDelta	=	cv::getMouseWheelDelta(flags);
+//			CONSOLE_DEBUG_W_NUM("mouseWheelDelta\t=", mouseWheelDelta);
+
 			gCurrentActiveWindow	=	myController;
 			myController->ProcessMouseEvent(event, x, y, flags);
 		}
@@ -1137,8 +1141,11 @@ int		myWidgitIdx;
 bool	widgetIsButton;
 int		wheelMovement;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
-//	CONSOLE_DEBUG_W_NUM("EVENT=", event);
+//	if (event != 0)
+//	{
+//		CONSOLE_DEBUG(__FUNCTION__);
+//		CONSOLE_DEBUG_W_NUM("EVENT=", event);
+//	}
 	myWidgitIdx	=	FindClickedWidget(xxx,  yyy);
 	switch(event)
 	{
@@ -1340,7 +1347,7 @@ int		wheelMovement;
 #if (CV_MAJOR_VERSION >= 3)
 		case cv::EVENT_MOUSEWHEEL:
 		case cv::EVENT_MOUSEHWHEEL:
-//			CONSOLE_DEBUG_W_HEX("flags\t=", flags);
+//			CONSOLE_DEBUG_W_HEX("EVENT_MOUSEWHEEL: flags\t=", flags);
 			wheelMovement	=	flags & 0xffff0000;
 			wheelMovement	/=	65536;
 			if (cCurrentTabObjPtr != NULL)
@@ -1355,6 +1362,7 @@ int		wheelMovement;
 			break;
 #else
 	#warning "Mouse wheel events not supported, "
+	#error "Mouse wheel events not supported, "
 #endif
 		default:
 			CONSOLE_DEBUG_W_NUM("UNKNOWN EVENT", event);

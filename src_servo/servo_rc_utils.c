@@ -462,18 +462,18 @@ int			len;
 	// Select motor:  RA (0) means M1 and DEC (1) means M2
 	switch (motor)
 	{
-	case SERVO_RA_AXIS:
-		cmd	=	SETM1DEFAULTACCEL;
-		break;
+		case SERVO_RA_AXIS:
+			cmd	=	SETM1DEFAULTACCEL;
+			break;
 
-	case SERVO_DEC_AXIS:
-		cmd	=	SETM2DEFAULTACCEL;
-		break;
+		case SERVO_DEC_AXIS:
+			cmd	=	SETM2DEFAULTACCEL;
+			break;
 
-	default:
-		// Neither RA or DEC selected, return error
-		return(kERROR);
-		break;
+		default:
+			// Neither RA or DEC selected, return error
+			return(kERROR);
+			break;
 	}
 	printf("RC_set_default_acc: addr = %X cmd = %d gRC[cmd].cmd = %d\n", addr, cmd, gRC[cmd].cmd);
 
@@ -521,18 +521,18 @@ int			zero	=	0;
 	// Select motor:  RA (0) means M1 and DEC (1) means M2
 	switch (motor)
 	{
-	case SERVO_RA_AXIS:
-		cmd	=	M1DUTY;
-		break;
+		case SERVO_RA_AXIS:
+			cmd	=	M1DUTY;
+			break;
 
-	case SERVO_DEC_AXIS:
-		cmd	=	M2DUTY;
-		break;
+		case SERVO_DEC_AXIS:
+			cmd	=	M2DUTY;
+			break;
 
-	default:
-		// Neither RA or DEC selected, return error
-		return(kERROR);
-		break;
+		default:
+			// Neither RA or DEC selected, return error
+			return(kERROR);
+			break;
 	}
 
 	printf("RC_stop: addr = %X cmd = %d gRC[cmd].cmd = %d\n", addr, cmd, gRC[cmd].cmd);
@@ -773,7 +773,7 @@ int		status;
 } // of RC_move_by_vela()
 
 //******************************************************************
-// Moves the axis by signed velocity, this is an UNBUFFERED command 
+// Moves the axis by signed velocity, this is an UNBUFFERED command
 // and will clear our any current of pending actions in the command buffer
 // Send: [Address, 35, Speed(4 Bytes), CRC(2 bytes)]
 // Receive: [0xFF]
@@ -837,8 +837,8 @@ int	main(void)
 {
 char buf[256];
 int32_t pos	=	0;
-uint32_t status = 0; 
-uint8_t addr = 0x80; // Default addr for RC MC 
+uint32_t status = 0;
+uint8_t addr = 0x80; // Default addr for RC MC
 
 	if (MC_init_comm("/dev/ttyACM0", 38400) != 0)
 	{
