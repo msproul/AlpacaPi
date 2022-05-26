@@ -53,6 +53,7 @@
 //*	May 22,	2022	<RNS> added _axis_ to functions that worked a single axis
 //*	May 22,	2022	<RNS> added move_axis_by_vel for the ASCOM guiding functionality
 //*	May 22,	2022	<RNS> General cleanup to get data/control flow aligned with ASCOM
+//*	May 25,	2022	<MLS> Changed gScopeConfig from static to global
 //*****************************************************************************
 // Notes: M1 *MUST BE* connected to RA or Azimuth axis, M2 to Dec or Altitude
 //*****************************************************************************
@@ -98,7 +99,8 @@ static int8_t	gSide			=	kEAST;
 static double	gFlipWin		= 	0.0;  // zero flip window slop for GEM
 static double	gOffTarget		= 	1000.0; // placeholder 1000 arcsec target slop
 
-static TYPE_MOUNT_CONFIG gScopeConfig;
+//*	must be global so AlpacaPi can access it
+TYPE_MOUNT_CONFIG gScopeConfig;
 
 //*****************************************************************************
 // Initializes the serial comm port using the identifying string and baud rates.

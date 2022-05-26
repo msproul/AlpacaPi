@@ -56,67 +56,9 @@
 #include "servo_time.h"
 #include "servo_mount_cfg.h"
 
-//******************************************************************
-enum
-{
-	MC_FREQ	=	0,
-	MC_ADDR,
-	BAUD,
-	COMM_PORT,
-	MOUNT,
-	PARK_SIDE,
-	RA_MOTOR_MAX_RPM,
-	RA_MOTOR_GEAR,
-	RA_MAIN_GEAR,
-	RA_ENCODER,
-	RA_MAX_VEL,
-	RA_MAX_ACC,
-	RA_ADJ_VEL,
-	RA_SI_CON,
-	RA_KP_CON,
-	RA_KI_CON,
-	RA_KD_CON,
-	RA_IL_CON,
-	DEC_MOTOR_MAX_RPM,
-	DEC_MOTOR_GEAR,
-	DEC_MAIN_GEAR,
-	DEC_ENCODER,
-	DEC_MAX_VEL,
-	DEC_MAX_ACC,
-	DEC_ADJ_VEL,
-	DEC_SI_CON,
-	DEC_KP_CON,
-	DEC_KI_CON,
-	DEC_KD_CON,
-	DEC_IL_CON,
-	RA_CONFIG,
-	DEC_CONFIG,
-	RA_GEAR_LASH,
-	DEC_GEAR_LASH,
-	DEC_PARK,
-	RA_SLEW_VEL,
-	DEC_SLEW_VEL,
-	RA_PARK,
-	ROLLOVER_WIN,
-	RA_PRECESSION,
-	DEC_PRECESSION,
-	RA_SENSOR,
-	DEC_SENSOR,
-	RA_PARK_SENSOR,
-	DEC_PARK_SENSOR,
-	OFF_TARGET_TOL
-};	// of enum
 
 //******************************************************************
-typedef struct
-{
-	char parameter[24];
-	short enumValue;
-	bool found;
-} TYPE_CFG_ITEM;
-
-//******************************************************************
-static TYPE_CFG_ITEM gMountConfigArray[] =
+TYPE_CFG_ITEM gMountConfigArray[] =
 {
 	{"MC_FREQ:",			MC_FREQ,		false},
 	{"MC_ADDR:",			MC_ADDR,		false},

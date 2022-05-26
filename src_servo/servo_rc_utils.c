@@ -74,11 +74,11 @@ size_t	len;
 int		status;
 int		writeStatus;
 
-	CONSOLE_DEBUG(__FUNCTION__);
-	CONSOLE_DEBUG_W_LONG("cmdLen\t=", cmdLen);
-	CONSOLE_DEBUG_W_LONG("retLen\t=", retLen);
+//	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG_W_LONG("cmdLen\t=", cmdLen);
+//	CONSOLE_DEBUG_W_LONG("retLen\t=", retLen);
 	writeStatus	=	MC_write_comm(cmdBuf, cmdLen);
-	CONSOLE_DEBUG_W_NUM("MC_write_comm -> writeStatus\t=", writeStatus);
+//	CONSOLE_DEBUG_W_NUM("MC_write_comm -> writeStatus\t=", writeStatus);
 	if (writeStatus == kSTATUS_OK)
 	{
 		len	=	MC_read_comm(retBuf, retLen);

@@ -34,6 +34,7 @@
 //*	May 21,	2022	<RNS> First pass of adding the functions needed from servo libs
 //*	May 22,	2022	<RNS> ID'd the missing functionality added to servo libs
 //*	May 22,	2022	<RNS> Adding the last of the functions, first pass review looks OK
+//*	May 26,	2022	<MLS> Added html output of current configuration
 //*****************************************************************************
 //*	Roboclaw MC servo support
 //*****************************************************************************
@@ -101,7 +102,7 @@ double	parkRA, parkDec;
 	CONSOLE_DEBUG_W_NUM("cfgStatus\t=", cfgStatus);
 	CONSOLE_DEBUG_W_NUM("kSTATUS_OK\t=", kSTATUS_OK);
 	CONSOLE_DEBUG_W_NUM("cServoConfigIsValid\t=", cServoConfigIsValid);
-	CONSOLE_ABORT(__FUNCTION__);
+//	CONSOLE_ABORT(__FUNCTION__);
 
 	//	<RNS> additions
 	//	Update the side of pier
@@ -146,10 +147,52 @@ TelescopeDriverServo::~TelescopeDriverServo(void)
 	AlpacaDisConnect();
 }
 
+//**************************************************************************************
+static void	WriteConfigParam_Dbl(const int socket, const int cfgEnum, const double value)
+{
+char	lineBuff[512];
+
+	if ((cfgEnum >= 0))
+	{
+		sprintf(lineBuff,	"<TR>\r\n<TD>%s</TD><TD>%5.4f</TD>\r\n<TR>\r\n",
+									gMountConfigArray[cfgEnum].parameter,
+									value);
+		SocketWriteData(socket,	lineBuff);
+	}
+}
+
+//**************************************************************************************
+static void	WriteConfigParam_Str(const int socket, const int cfgEnum, const char *value)
+{
+char	lineBuff[512];
+
+	if ((cfgEnum >= 0))
+	{
+		sprintf(lineBuff,	"<TR>\r\n<TD>%s</TD><TD>%s</TD>\r\n<TR>\r\n",
+									gMountConfigArray[cfgEnum].parameter,
+									value);
+		SocketWriteData(socket,	lineBuff);
+	}
+}
+
+//**************************************************************************************
+static void	WriteConfigParam_Int(const int socket, const int cfgEnum, const int value)
+{
+char	lineBuff[512];
+
+	if ((cfgEnum >= 0))
+	{
+		sprintf(lineBuff,	"<TR>\r\n<TD>%s</TD><TD>%d</TD>\r\n<TR>\r\n",
+									gMountConfigArray[cfgEnum].parameter,
+									value);
+		SocketWriteData(socket,	lineBuff);
+	}
+}
+
 //*****************************************************************************
 void	TelescopeDriverServo::OutputHTML_Part2(TYPE_GetPutRequestData *reqData)
 {
-char	lineBuffer[512];
+char	lineBuff[512];
 FILE	*filePointer;
 
 	//	CONSOLE_DEBUG(__FUNCTION__);
@@ -166,39 +209,141 @@ FILE	*filePointer;
 		SocketWriteData(reqData->socket, "<HR>\r\n");
 		SocketWriteData(reqData->socket, "<P><CENTER>Location Config File</CENTER>\r\n");
 
-		sprintf(lineBuffer, "Config file:%s<P>\r\n", kLOCAL_CFG_FILE);
-		SocketWriteData(reqData->socket, lineBuffer);
+		sprintf(lineBuff, "Config file:%s<P>\r\n", kLOCAL_CFG_FILE);
+		SocketWriteData(reqData->socket, lineBuff);
 
 		SocketWriteData(reqData->socket, "<PRE>\r\n");
-		while (fgets(lineBuffer, 500, filePointer) != NULL)
+		while (fgets(lineBuff, 500, filePointer) != NULL)
 		{
-			SocketWriteData(reqData->socket, lineBuffer);
+			SocketWriteData(reqData->socket, lineBuff);
 		}
 		SocketWriteData(reqData->socket, "</PRE>\r\n");
 
 		fclose(filePointer);
 	}
 
-	filePointer	=	fopen(kSCOPE_CFG_FILE, "r");
-	if (filePointer != NULL)
-	{
-		SocketWriteData(reqData->socket, "<HR>\r\n");
-		SocketWriteData(reqData->socket, "<P><CENTER>Servo Config File</CENTER>\r\n");
+//	filePointer	=	fopen(kSCOPE_CFG_FILE, "r");
+//	if (filePointer != NULL)
+//	{
+//		SocketWriteData(reqData->socket, "<HR>\r\n");
+//		SocketWriteData(reqData->socket, "<P><CENTER>Servo Config File</CENTER>\r\n");
+//
+//		sprintf(lineBuff, "Config file:%s is %s<P>\r\n", kSCOPE_CFG_FILE,
+//							(cServoConfigIsValid ? "valid" : "NOT valid"));
+//
+//		SocketWriteData(reqData->socket, lineBuff);
+//
+//		SocketWriteData(reqData->socket, "<PRE>\r\n");
+//		while (fgets(lineBuff, 500, filePointer) != NULL)
+//		{
+//			SocketWriteData(reqData->socket, lineBuff);
+//		}
+//		SocketWriteData(reqData->socket, "</PRE>\r\n");
+//
+//		fclose(filePointer);
+//	}
 
-		sprintf(lineBuffer, "Config file:%s is %s<P>\r\n", kSCOPE_CFG_FILE,
-							(cServoConfigIsValid ? "valid" : "NOT valid"));
-
-		SocketWriteData(reqData->socket, lineBuffer);
-
-		SocketWriteData(reqData->socket, "<PRE>\r\n");
-		while (fgets(lineBuffer, 500, filePointer) != NULL)
+	//---------------------------------------------------------------
+	SocketWriteData(reqData->socket,	"<HR><CENTER>\r\n");
+	SocketWriteData(reqData->socket,	"<TABLE BORDER=1>\r\n");
+		WriteConfigParam_Dbl(reqData->socket,	MC_FREQ,			gScopeConfig.freq);
+		WriteConfigParam_Str(reqData->socket,	COMM_PORT,			gScopeConfig.port);
+		WriteConfigParam_Int(reqData->socket,	BAUD,				gScopeConfig.baud);
+		WriteConfigParam_Int(reqData->socket,	MC_ADDR,			gScopeConfig.addr);
+		switch(gScopeConfig.mount)
 		{
-			SocketWriteData(reqData->socket, lineBuffer);
+			case kFORK:		strcpy(lineBuff,	"FORK");	break;
+			case kGERMAN:	strcpy(lineBuff,	"GERMAN");	break;
+			default:		strcpy(lineBuff,	"unknown");	break;
 		}
-		SocketWriteData(reqData->socket, "</PRE>\r\n");
+		WriteConfigParam_Str(reqData->socket,	MOUNT,			lineBuff);
 
-		fclose(filePointer);
-	}
+		switch(gScopeConfig.side)
+		{
+			case kWEST:		strcpy(lineBuff,	"WEST");	break;
+			case kEAST:		strcpy(lineBuff,	"EAST");	break;
+			case kNONE:		strcpy(lineBuff,	"NONE");	break;
+			default:		strcpy(lineBuff,	"unknown");	break;
+		}
+		WriteConfigParam_Str(reqData->socket,	PARK_SIDE,		lineBuff);
+
+//	ROLLOVER_WIN,
+//	OFF_TARGET_TOL
+
+		SocketWriteData(reqData->socket,	"<TR><TH COLSPAN=2>Right Assention</TH></TR>\r\n");
+		WriteConfigParam_Dbl(reqData->socket,	RA_MOTOR_GEAR,		gScopeConfig.ra.motorGear);
+		WriteConfigParam_Dbl(reqData->socket,	RA_MAIN_GEAR,		gScopeConfig.ra.mainGear);
+		WriteConfigParam_Dbl(reqData->socket,	RA_MOTOR_MAX_RPM,	gScopeConfig.ra.motorMaxRPM);
+		WriteConfigParam_Dbl(reqData->socket,	RA_ENCODER,			gScopeConfig.ra.encoder);
+		WriteConfigParam_Dbl(reqData->socket,	RA_MAX_ACC,			gScopeConfig.ra.realAcc);
+		WriteConfigParam_Dbl(reqData->socket,	RA_MAX_VEL,			gScopeConfig.ra.realVel);
+		WriteConfigParam_Dbl(reqData->socket,	RA_ADJ_VEL,			gScopeConfig.ra.realAdj);
+		WriteConfigParam_Dbl(reqData->socket,	RA_SLEW_VEL,		gScopeConfig.ra.realSlew);
+		WriteConfigParam_Dbl(reqData->socket,	RA_CONFIG,			gScopeConfig.ra.config);
+		WriteConfigParam_Dbl(reqData->socket,	RA_PRECESSION,		gScopeConfig.ra.prec);
+		WriteConfigParam_Dbl(reqData->socket,	RA_PARK,			gScopeConfig.ra.park);
+//	RA_SI_CON,
+//	RA_KP_CON,
+//	RA_KI_CON,
+//	RA_KD_CON,
+//	RA_IL_CON,
+		WriteConfigParam_Dbl(reqData->socket,	RA_GEAR_LASH,		gScopeConfig.ra.gearLash);
+//	RA_SENSOR,
+//	RA_PARK_SENSOR,
+
+		//--------------------------------------------------------------------------------
+		SocketWriteData(reqData->socket,	"<TR><TH COLSPAN=2>Declination</TH></TR>\r\n");
+		WriteConfigParam_Dbl(reqData->socket,	DEC_MOTOR_GEAR,		gScopeConfig.dec.motorGear);
+		WriteConfigParam_Dbl(reqData->socket,	DEC_MAIN_GEAR,		gScopeConfig.dec.mainGear);
+		WriteConfigParam_Dbl(reqData->socket,	DEC_MOTOR_MAX_RPM,	gScopeConfig.dec.motorMaxRPM);
+		WriteConfigParam_Dbl(reqData->socket,	DEC_ENCODER,		gScopeConfig.dec.encoder);
+		WriteConfigParam_Dbl(reqData->socket,	DEC_MAX_ACC,		gScopeConfig.dec.realAcc);
+		WriteConfigParam_Dbl(reqData->socket,	DEC_MAX_VEL,		gScopeConfig.dec.realVel);
+		WriteConfigParam_Dbl(reqData->socket,	DEC_ADJ_VEL,		gScopeConfig.dec.realAdj);
+		WriteConfigParam_Dbl(reqData->socket,	DEC_SLEW_VEL,		gScopeConfig.dec.realSlew);
+		WriteConfigParam_Dbl(reqData->socket,	DEC_CONFIG,			gScopeConfig.dec.config);
+		WriteConfigParam_Dbl(reqData->socket,	DEC_PRECESSION,		gScopeConfig.dec.prec);
+		WriteConfigParam_Dbl(reqData->socket,	DEC_PARK,			gScopeConfig.dec.park);
+//	DEC_SI_CON,
+//	DEC_KP_CON,
+//	DEC_KI_CON,
+//	DEC_KD_CON,
+//	DEC_IL_CON,
+		WriteConfigParam_Dbl(reqData->socket,	DEC_GEAR_LASH,		gScopeConfig.dec.gearLash);
+//	DEC_SENSOR,
+//	DEC_PARK_SENSOR,
+
+
+
+//	uint16_t	encoderMaxSpeed;	//	here and below are the int value for the MC, calc'd from the real-world values above
+//	int32_t		pos;
+//	uint32_t	maxAcc;
+//	uint32_t	acc;
+//	uint32_t	maxVel;
+//	uint32_t	vel;
+//	uint32_t	adj;
+//	uint32_t	slew;
+//	uint8_t		si;
+//	uint16_t	kp;
+//	uint16_t	ki;
+//	uint16_t	kd;
+//	uint16_t	il;
+//	uint16_t	status;
+//	uint8_t		cmdQueue;
+//	int32_t		track;
+//	double		direction;
+//	double		park;
+//	int8_t		parkInfo;		// on RA holds the original park_side of mount, on dec it hold the original direction before any flip
+//	long double	time;
+//	// double	lockDown;
+//	double		zero;			// Axis real value at zero steps in decimal degrees, including RA
+//	double		standby;
+//	double		sync;
+//	uint16_t	syncValue;
+//	uint16_t	syncError;
+
+	SocketWriteData(reqData->socket,	"</TABLE>\r\n");
+	SocketWriteData(reqData->socket,	"</CENTER>\r\n");
 }
 
 //*****************************************************************************
@@ -221,7 +366,6 @@ int8_t 		servoSide;
 	currentMoveState	=	Servo_state();
 	if (currentMoveState == MOVING || currentMoveState == PARKING)
 	{
-
 		cTelescopeProp.Slewing	=	true;
 	}
 	else
