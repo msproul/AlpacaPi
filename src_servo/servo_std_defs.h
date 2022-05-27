@@ -32,6 +32,7 @@
 //*	May 11,	2022	<MLS> Changed constant DEC to SERVO_DEC_AXIS
 //*	May 14,	2022	<MLS> Removed degToRads/radToDegs
 //*****************************************************************************
+//#include	"servo_std_defs.h"
 
 #ifndef	_INCLUDED_SERVO_STD_DEFS_
 #define	_INCLUDED_SERVO_STD_DEFS_
@@ -72,10 +73,10 @@
 #define	RADIANS(degrees)	((degrees) * (M_PI / 180.0))
 
 //*****************************************************************************
-typedef struct cfgItem_t
+typedef struct
 {
 	char *parameter;
 	int found;
-} cfgItem, cfgItemPtr;
+} TYPE_CfgItem;
 
 #endif

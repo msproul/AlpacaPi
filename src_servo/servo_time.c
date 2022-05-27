@@ -36,6 +36,8 @@
 //*	May 15,	2022	<RNS> added Time_alt_azi_to_ra_dec() function
 //*	May 16,	2022	<RNS> privitized the gServoLocalCfg global, added get_ field calls
 //*	May 16,	2022	<RNS> Added _maybe_hms_ vs atof for lat & lon config field
+//*	May 26,	2022	<MLS> Moved enum defs to .h file for AlpacaPi
+//*	May 26,	2122	<TODO> Remove printf statements from Time_read_local_cfg()
 //*****************************************************************************
 // Notes: For RoboClaw M1 *MUST BE* connected to RA or Azimuth axis, M2 to Dec or Altitude
 //*****************************************************************************
@@ -53,21 +55,24 @@
 #include "servo_std_defs.h"
 #include "servo_time.h"
 
-//*****************************************************************************
-typedef struct
-{
-	double baseEpoch;
-	double baseJd;
-	double lat;
-	double lon;
-	double elev;
-	double temp;
-	double press;
-	char site[kMAX_STR_LEN];
-} TYPE_LOCAL_CFG;
 
-// local global variable
-static TYPE_LOCAL_CFG gServoLocalCfg;
+////*****************************************************************************
+TYPE_LOCAL_CFG gServoLocalCfg;
+
+////*****************************************************************************
+TYPE_CfgItem gLocationArray[] =
+{
+	{"EPOCH:",		0},
+	{"EPOCH_JD:",	0},
+	{"LATITUDE:",	0},
+	{"LONGITUDE:",	0},
+	{"ELEVATION:",	0},
+	{"TEMPERATURE:",0},
+	{"PRESSURE:",	0},
+	{"SITE:",		0},
+	{NULL,			0}
+};
+
 
 ////*****************************************************************************
 // void Time_deci_days_to_hours(double *day)
@@ -140,8 +145,8 @@ void Time_str_to_upper(char *in)
 //****************************************************************
 double Time_ascii_maybe_HMS_tof(char *token)
 {
-	char *ptr;
-	double ret;
+char	*ptr;
+double	ret;
 
 	ptr	=	token;
 
@@ -475,10 +480,10 @@ double	latRad	=	RADIANS(lat);
 	// Convert lst to radians and use hour angle to calc ra position
 	raRad	=	((lst * M_PI / 12.0) - hourAngle);
 
-	//*	make sure ra is positive
+	/* make sure ra is positive */
 	raRad	=	(raRad < 0.0) ? raRad + 2.0 * M_PI : raRad;
 
-	//*	convert to degrees
+	/* convert to degrees */
 	*ra		=	DEGREES(raRad);
 	*dec	=	DEGREES(decRad);
 
@@ -579,31 +584,6 @@ char			*rest			=	NULL;
 	// Map the local pointer to the address of private local global
 	local	=	&gServoLocalCfg;
 
-	// list of defined tokens in config file and array to keep track of discovery
-	enum
-	{
-		EPOCH,
-		EPOCH_JD,
-		LATITUDE,
-		LONGITUDE,
-		ELEVATION,
-		TEMPERATURE,
-		PRESSURE,
-		SITE
-	};
-
-	cfgItem initLocalArray[] =
-		{
-			{"EPOCH:", 0},
-			{"EPOCH_JD:", 0},
-			{"LATITUDE:", 0},
-			{"LONGITUDE:", 0},
-			{"ELEVATION:", 0},
-			{"TEMPERATURE:", 0},
-			{"PRESSURE:", 0},
-			{"SITE:", 0},
-			{NULL, 0}};
-
 	// If not filename provided, use default name
 	if (localCfgFile == NULL)
 	{
@@ -643,9 +623,9 @@ char			*rest			=	NULL;
 			// Token and argument exist, now determine if they are valid
 			Time_str_to_upper(token);
 
-			if (strcmp(token, initLocalArray[EPOCH].parameter) == 0)
+			if (strcmp(token, gLocationArray[EPOCH].parameter) == 0)
 			{
-				initLocalArray[EPOCH].found	=	true;
+				gLocationArray[EPOCH].found	=	true;
 				local->baseEpoch			=	atof(argument);
 				// parameter is ok, print it out
 				printf("%-15.15s = %-15.4f  ", token, local->baseEpoch);
@@ -663,9 +643,9 @@ char			*rest			=	NULL;
 				}
 			}
 
-			else if (strcmp(token, initLocalArray[EPOCH_JD].parameter) == 0)
+			else if (strcmp(token, gLocationArray[EPOCH_JD].parameter) == 0)
 			{
-				initLocalArray[EPOCH_JD].found	=	true;
+				gLocationArray[EPOCH_JD].found	=	true;
 				local->baseJd					=	atof(argument);
 				printf("%-15.15s = %-15f  ", token, local->baseJd);
 				if (column++ % 2)
@@ -680,9 +660,9 @@ char			*rest			=	NULL;
 					fprintf(stderr, "       Usage:  %s 2451545.0 \n", token);
 				}
 			}
-			else if (strcmp(token, initLocalArray[LATITUDE].parameter) == 0)
+			else if (strcmp(token, gLocationArray[LATITUDE].parameter) == 0)
 			{
-				initLocalArray[LATITUDE].found	=	true;
+				gLocationArray[LATITUDE].found	=	true;
 				local->lat						=	Time_ascii_maybe_HMS_tof(argument);
 				printf("%-15.15s = %-15f  ", token, local->lat);
 				if (column++ % 2)
@@ -697,9 +677,9 @@ char			*rest			=	NULL;
 					fprintf(stderr, "       Usage:  %s  45.0\n", token);
 				}
 			}
-			else if (strcmp(token, initLocalArray[LONGITUDE].parameter) == 0)
+			else if (strcmp(token, gLocationArray[LONGITUDE].parameter) == 0)
 			{
-				initLocalArray[LONGITUDE].found	=	true;
+				gLocationArray[LONGITUDE].found	=	true;
 				local->lon						=	Time_ascii_maybe_HMS_tof(argument);
 
 				printf("%-15.15s = %-15.15f  ", token, local->lon);
@@ -715,9 +695,9 @@ char			*rest			=	NULL;
 					fprintf(stderr, "       Usage:  %s  120.0\n", token);
 				}
 			}
-			else if (strcmp(token, initLocalArray[ELEVATION].parameter) == 0)
+			else if (strcmp(token, gLocationArray[ELEVATION].parameter) == 0)
 			{
-				initLocalArray[ELEVATION].found	=	true;
+				gLocationArray[ELEVATION].found	=	true;
 				local->elev						=	atof(argument);
 				// parameter is ok, print it out
 				printf("%-15.15s = %-15.4f  ", token, local->elev);
@@ -735,9 +715,9 @@ char			*rest			=	NULL;
 				}
 			}
 
-			else if (strcmp(token, initLocalArray[TEMPERATURE].parameter) == 0)
+			else if (strcmp(token, gLocationArray[TEMPERATURE].parameter) == 0)
 			{
-				initLocalArray[TEMPERATURE].found	=	true;
+				gLocationArray[TEMPERATURE].found	=	true;
 				local->temp							=	atof(argument);
 				printf("%-15.15s = %-15f  ", token, local->temp);
 				if (column++ % 2)
@@ -752,9 +732,9 @@ char			*rest			=	NULL;
 					fprintf(stderr, "       Usage:  %s  60.0\n", token);
 				}
 			}
-			else if (strcmp(token, initLocalArray[PRESSURE].parameter) == 0)
+			else if (strcmp(token, gLocationArray[PRESSURE].parameter) == 0)
 			{
-				initLocalArray[PRESSURE].found	=	true;
+				gLocationArray[PRESSURE].found	=	true;
 				local->press					=	atof(argument);
 				printf("%-15.15s = %-15f  ", token, local->press);
 				if (column++ % 2)
@@ -769,9 +749,9 @@ char			*rest			=	NULL;
 					fprintf(stderr, "       Usage:  %s  30.0\n", token);
 				}
 			}
-			else if (strcmp(token, initLocalArray[SITE].parameter) == 0)
+			else if (strcmp(token, gLocationArray[SITE].parameter) == 0)
 			{
-				initLocalArray[SITE].found	=	true;
+				gLocationArray[SITE].found	=	true;
 				strcpy(local->site, argument);
 				printf("%-15.15s = %-15.15s  ", token, local->site);
 				if (column++ % 2)
@@ -792,12 +772,12 @@ char			*rest			=	NULL;
 	// Even out the columns before any missing args error statements
 	printf("\n");
 
-	while (initLocalArray[loop].parameter != NULL)
+	while (gLocationArray[loop].parameter != NULL)
 	{
-		if (initLocalArray[loop].found == false)
+		if (gLocationArray[loop].found == false)
 		{
 			fprintf(stderr, "Error: (validate_local_cfg) Configuation variable:\n");
-			fprintf(stderr, "       '%s' was not found or of improper format.\n", initLocalArray[loop].parameter);
+			fprintf(stderr, "       '%s' was not found or of improper format.\n", gLocationArray[loop].parameter);
 			fprintf(stderr, "       from file '%s'\n", filename);
 			okFlag	=	false;
 		}

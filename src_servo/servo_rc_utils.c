@@ -82,8 +82,8 @@ int		writeStatus;
 	if (writeStatus == kSTATUS_OK)
 	{
 		len	=	MC_read_comm(retBuf, retLen);
-		CONSOLE_DEBUG_W_NUM("MC_read_comm -> len\t=", (int)len);
-		CONSOLE_DEBUG_W_LONG("retLen \t\t=", retLen);
+//		CONSOLE_DEBUG_W_NUM("MC_read_comm -> len\t=", (int)len);
+//		CONSOLE_DEBUG_W_LONG("retLen \t\t=", retLen);
 
 		if (len == retLen)
 		{
@@ -120,7 +120,7 @@ int			cmd;
 int			len;
 int			retState;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	// Select motor:  RA (0) means M1 and DEC (1) means M2
 	switch (motor)
 	{
@@ -198,7 +198,7 @@ int			cmd;
 int			len;
 int			retState;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	// Select motor:  RA (0) means M1 and DEC (1) means M2
 	switch (motor)
 	{
@@ -270,7 +270,7 @@ int			cmd;
 int			len;
 int			retState;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	// Select motor:  RA (0) means M1 and DEC (1) means M2
 	switch (motor)
 	{
@@ -341,7 +341,7 @@ int			cmd	=	GETSTATUS;
 int			len;
 int			retState;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	printf("RC_get_status: addr = %X cmd = %d gRC[cmd].cmd = %d\n", addr, cmd, gRC[cmd].cmd);
 
 	// Creat the note for the comms and read status a short cmd
@@ -404,7 +404,7 @@ int			cmd	=	GETBUFFERS;
 int			len;
 int			retState;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	// Creat the note for the comms and read status a short cmd
 	Note_init(gNoteBuf, addr, gRC[cmd].cmd, &ptrA);
 
@@ -516,7 +516,7 @@ int			zero	=	0;
 //uint32_t	count;
 //uint32_t	ret;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	// Select motor:  RA (0) means M1 and DEC (1) means M2
 	switch (motor)

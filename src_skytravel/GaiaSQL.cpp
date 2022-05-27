@@ -67,7 +67,7 @@
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
 
-//#define	_VERBOSE_SQL_DEBUG_
+#define	_VERBOSE_SQL_DEBUG_
 
 #include	"controller_skytravel.h"
 #include	"helper_functions.h"

@@ -22,7 +22,7 @@
 //*	References:
 //*			https://qsimaging.com/
 //*
-//*			sudo apt-get install libftdi-devel		??????
+//*			sudo apt-get install libftdi-dev
 //*****************************************************************************
 //*	Edit History
 //*****************************************************************************

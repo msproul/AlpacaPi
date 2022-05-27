@@ -40,6 +40,8 @@
 //*	May 22,	2022	<RNS> Added dummy var to check for addr field for range outside of uint8_t
 //*	May 23,	2022	<MLS> Added ProcessConfigToken() to reduce cyclomatic complexity
 //*	May 23,	2022	<MLS> Modified config processing so that error strings are returned
+//*	May 26,	2022	<MLS> Added PrintMountConfiguration();
+//*	May 26,	2022	<MLS> Updated test code to print out config
 //****************************************************************************
 
 #include <stdio.h>
@@ -136,18 +138,18 @@ int enumValue;
 //******************************************************************************
 //*	return error strings so they can be logged or displayed elsewhere
 //******************************************************************************
-static bool	ProcessConfigToken(	const char			*token,
-								const char			*argument,
+static bool	ProcessConfigToken(	char				*token,
+								char				*argument,
 								TYPE_MOUNT_CONFIG	*mountConfig,
 								char				*cfgErrorString1,
 								char				*cfgErrorString2,
 								char				*cfgErrorString3)
 {
-int			tokenEnumValue;
-axisPtr		ra;
-axisPtr		dec;
-bool		configLineOK;
-int			dummy;
+int				tokenEnumValue;
+TYPE_MountAxis	*ra;
+TYPE_MountAxis	*dec;
+bool			configLineOK;
+int				dummy;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -166,7 +168,7 @@ int			dummy;
 			gMountConfigArray[MC_FREQ].found	=	true;
 			mountConfig->freq					=	atof(argument);
 			// parameter is ok, print it out
-			printf("%-15.15s = %-15.4f\n", token, mountConfig->freq);
+		//	printf("%-15.15s = %-15.4f\n", token, mountConfig->freq);
 
 			if (mountConfig->freq == 0.0)
 			{
@@ -181,7 +183,7 @@ int			dummy;
 			// save to dummy to see if arg is out of range since addr is only 8bit
 			dummy								=	atoi(argument);
 			mountConfig->addr					=	atoi(argument);
-			printf("%-15.15s = %-15d  \n", token, mountConfig->addr);
+		//	printf("%-15.15s = %-15d  \n", token, mountConfig->addr);
 
 			if (dummy < 0 || dummy > 255)
 			{
@@ -194,7 +196,7 @@ int			dummy;
 		case BAUD:
 			gMountConfigArray[BAUD].found	=	true;
 			mountConfig->baud				=	atoi(argument);
-			printf("%-15.15s = %-15d  \n", token, mountConfig->baud);
+		//	printf("%-15.15s = %-15d  \n", token, mountConfig->baud);
 
 			if ((mountConfig->baud != 9600) && (mountConfig->baud != 19200) && (mountConfig->baud != 38400))
 			{
@@ -207,12 +209,12 @@ int			dummy;
 		case COMM_PORT:
 			gMountConfigArray[COMM_PORT].found	=	true;
 			strcpy(mountConfig->port, argument);
-			printf("%-15.15s = %-15.15s  \n", token, mountConfig->port);
+		//	printf("%-15.15s = %-15.15s  \n", token, mountConfig->port);
 			break;
 
 		case MOUNT:
 			gMountConfigArray[MOUNT].found	=	true;
-			printf("%-15.15s = %-15.15s  \n", token, argument);
+		//	printf("%-15.15s = %-15.15s  \n", token, argument);
 			if (!strcmp(argument, "FORK"))
 			{
 				mountConfig->mount	=	kFORK;
@@ -241,7 +243,7 @@ int			dummy;
 
 		case PARK_SIDE:
 			gMountConfigArray[PARK_SIDE].found	=	true;
-			printf("%-15.15s = %-15.15s  \n", token, argument);
+		//	printf("%-15.15s = %-15.15s  \n", token, argument);
 
 			if (!strcmp(argument, "WEST"))
 			{
@@ -270,7 +272,7 @@ int			dummy;
 		case RA_MOTOR_MAX_RPM:
 			gMountConfigArray[RA_MOTOR_MAX_RPM].found	=	true;
 			ra->motorMaxRPM								=	atof(argument);
-			printf("%-15.15s = %-15.4f  \n", token, ra->motorMaxRPM);
+		//	printf("%-15.15s = %-15.4f  \n", token, ra->motorMaxRPM);
 
 			if (ra->motorMaxRPM <= 0.0)
 			{
@@ -283,7 +285,7 @@ int			dummy;
 		case RA_MOTOR_GEAR:
 			gMountConfigArray[RA_MOTOR_GEAR].found	=	true;
 			ra->motorGear							=	atof(argument);
-			printf("%-15.15s = %-15.4f  \n", token, ra->motorGear);
+		//	printf("%-15.15s = %-15.4f  \n", token, ra->motorGear);
 
 			if (ra->motorGear <= 0.0)
 			{
@@ -296,7 +298,7 @@ int			dummy;
 		case RA_MAIN_GEAR:
 			gMountConfigArray[RA_MAIN_GEAR].found	=	true;
 			ra->mainGear							=	atof(argument);
-			printf("%-15.15s = %-15.4f  \n", token, ra->mainGear);
+		//	printf("%-15.15s = %-15.4f  \n", token, ra->mainGear);
 
 			if (ra->mainGear <= 0.0)
 			{
@@ -309,7 +311,7 @@ int			dummy;
 		case RA_ENCODER:
 			gMountConfigArray[RA_ENCODER].found	=	true;
 			ra->encoder							=	atof(argument);
-			printf("%-15.15s = %-15.4lf  \n", token, ra->encoder);
+		//	printf("%-15.15s = %-15.4lf  \n", token, ra->encoder);
 
 			if (ra->encoder == 0.0)
 			{
@@ -322,7 +324,7 @@ int			dummy;
 		case RA_MAX_VEL:
 			gMountConfigArray[RA_MAX_VEL].found	=	true;
 			ra->realVel							=	atof(argument);
-			printf("%-15.15s = %-15.4lf  \n", token, ra->realVel);
+		//	printf("%-15.15s = %-15.4lf  \n", token, ra->realVel);
 
 			if (ra->realVel == 0.0)
 			{
@@ -335,7 +337,7 @@ int			dummy;
 		case RA_MAX_ACC:
 			gMountConfigArray[RA_MAX_ACC].found	=	true;
 			ra->realAcc							=	atof(argument);
-			printf("%-15.15s = %-15.4f  \n", token, ra->realAcc);
+		//	printf("%-15.15s = %-15.4f  \n", token, ra->realAcc);
 
 			if (ra->realAcc == 0.0)
 			{
@@ -348,7 +350,7 @@ int			dummy;
 		case RA_ADJ_VEL:
 			gMountConfigArray[RA_ADJ_VEL].found	=	true;
 			ra->realAdj							=	atof(argument);
-			printf("%-15.15s = %-15.4f  \n", token, ra->realAdj);
+		//	printf("%-15.15s = %-15.4f  \n", token, ra->realAdj);
 
 			if (ra->realAdj == 0.0)
 			{
@@ -361,7 +363,7 @@ int			dummy;
 		case RA_SI_CON:
 			gMountConfigArray[RA_SI_CON].found	=	true;
 			ra->si								=	(uint8_t)atoi(argument);
-			printf("%-15.15s = %-15d  \n", token, ra->si);
+		//	printf("%-15.15s = %-15d  \n", token, ra->si);
 
 			if (!isdigit(argument[0]))
 			{
@@ -375,7 +377,7 @@ int			dummy;
 		case RA_KP_CON:
 			gMountConfigArray[RA_KP_CON].found	=	true;
 			ra->kp								=	atoi(argument);
-			printf("%-15.15s = %-15d  \n", token, ra->kp);
+		//	printf("%-15.15s = %-15d  \n", token, ra->kp);
 
 			if (!isdigit(argument[0]))
 			{
@@ -388,7 +390,7 @@ int			dummy;
 		case RA_KI_CON:
 			gMountConfigArray[RA_KI_CON].found	=	true;
 			ra->ki								=	atoi(argument);
-			printf("%-15.15s = %-15d  \n", token, ra->ki);
+		//	printf("%-15.15s = %-15d  \n", token, ra->ki);
 
 			if (!isdigit(argument[0]))
 			{
@@ -401,7 +403,7 @@ int			dummy;
 		case RA_KD_CON:
 			gMountConfigArray[RA_KD_CON].found	=	true;
 			ra->kd								=	atoi(argument);
-			printf("%-15.15s = %-15d  \n", token, ra->kd);
+		//	printf("%-15.15s = %-15d  \n", token, ra->kd);
 
 			if (!isdigit(argument[0]))
 			{
@@ -414,7 +416,7 @@ int			dummy;
 		case RA_IL_CON:
 			gMountConfigArray[RA_IL_CON].found	=	true;
 			ra->il								=	atoi(argument);
-			printf("%-15.15s = %-15d  \n", token, ra->il);
+		//	printf("%-15.15s = %-15d  \n", token, ra->il);
 
 			if (!isdigit(argument[0]))
 			{
@@ -427,7 +429,7 @@ int			dummy;
 		case DEC_MOTOR_MAX_RPM:
 			gMountConfigArray[DEC_MOTOR_MAX_RPM].found	=	true;
 			dec->motorMaxRPM							=	atof(argument);
-			printf("%-15.15s = %-15.4f  \n", token, dec->motorMaxRPM);
+		//	printf("%-15.15s = %-15.4f  \n", token, dec->motorMaxRPM);
 
 			if (ra->motorMaxRPM <= 0.0)
 			{
@@ -440,7 +442,7 @@ int			dummy;
 		case DEC_MOTOR_GEAR:
 			gMountConfigArray[DEC_MOTOR_GEAR].found	=	true;
 			dec->motorGear							=	atof(argument);
-			printf("%-15.15s = %-15.4f  \n", token, dec->motorGear);
+		//	printf("%-15.15s = %-15.4f  \n", token, dec->motorGear);
 
 			if (dec->motorGear == 0.0)
 			{
@@ -453,7 +455,7 @@ int			dummy;
 		case DEC_MAIN_GEAR:
 			gMountConfigArray[DEC_MAIN_GEAR].found	=	true;
 			dec->mainGear							=	atof(argument);
-			printf("%-15.15s = %-15.4f  \n", token, dec->mainGear);
+		//	printf("%-15.15s = %-15.4f  \n", token, dec->mainGear);
 
 			if (dec->mainGear == 0.0)
 			{
@@ -466,7 +468,7 @@ int			dummy;
 		case DEC_ENCODER:
 			gMountConfigArray[DEC_ENCODER].found	=	true;
 			dec->encoder							=	atof(argument);
-			printf("%-15.15s = %-15.4lf  \n", token, dec->encoder);
+		//	printf("%-15.15s = %-15.4lf  \n", token, dec->encoder);
 
 			if (dec->encoder == 0.0)
 			{
@@ -479,7 +481,7 @@ int			dummy;
 		case DEC_MAX_VEL:
 			gMountConfigArray[DEC_MAX_VEL].found	=	true;
 			dec->realVel							=	atof(argument);
-			printf("%-15.15s = %-15.4f  \n", token, dec->realVel);
+		//	printf("%-15.15s = %-15.4f  \n", token, dec->realVel);
 
 			if (dec->realVel == 0.0)
 			{
@@ -492,7 +494,7 @@ int			dummy;
 		case DEC_MAX_ACC:
 			gMountConfigArray[DEC_MAX_ACC].found	=	true;
 			dec->realAcc							=	atof(argument);
-			printf("%-15.15s = %-15.4f  \n", token, dec->realAcc);
+		//	printf("%-15.15s = %-15.4f  \n", token, dec->realAcc);
 
 			if (dec->realAcc == 0.0)
 			{
@@ -505,7 +507,7 @@ int			dummy;
 		case DEC_ADJ_VEL:
 			gMountConfigArray[DEC_ADJ_VEL].found	=	true;
 			dec->realAdj							=	atof(argument);
-			printf("%-15.15s = %-15.4f  \n", token, dec->realAdj);
+		//	printf("%-15.15s = %-15.4f  \n", token, dec->realAdj);
 
 			if (dec->realAdj == 0.0)
 			{
@@ -518,7 +520,7 @@ int			dummy;
 		case DEC_SI_CON:
 			gMountConfigArray[DEC_SI_CON].found	=	true;
 			dec->si								=	(uint8_t)atoi(argument);
-			printf("%-15.15s = %-15d  \n", token, dec->si);
+		//	printf("%-15.15s = %-15d  \n", token, dec->si);
 
 			if (!isdigit(argument[0]))
 			{
@@ -531,7 +533,7 @@ int			dummy;
 		case DEC_KP_CON:
 			gMountConfigArray[DEC_KP_CON].found	=	true;
 			dec->kp								=	atoi(argument);
-			printf("%-15.15s = %-15d  \n", token, dec->kp);
+		//	printf("%-15.15s = %-15d  \n", token, dec->kp);
 
 			if (!isdigit(argument[0]))
 			{
@@ -544,7 +546,7 @@ int			dummy;
 		case DEC_KI_CON:
 			gMountConfigArray[DEC_KI_CON].found	=	true;
 			dec->ki								=	atoi(argument);
-			printf("%-15.15s = %-15d  \n", token, dec->ki);
+		//	printf("%-15.15s = %-15d  \n", token, dec->ki);
 
 			if (!isdigit(argument[0]))
 			{
@@ -558,7 +560,7 @@ int			dummy;
 			gMountConfigArray[DEC_KD_CON].found	=	true;
 			dec->kd								=	atoi(argument);
 
-			printf("%-15.15s = %-15d  \n", token, dec->kd);
+		//	printf("%-15.15s = %-15d  \n", token, dec->kd);
 
 			if (!isdigit(argument[0]))
 			{
@@ -571,7 +573,7 @@ int			dummy;
 		case DEC_IL_CON:
 			gMountConfigArray[DEC_IL_CON].found	=	true;
 			dec->il								=	atoi(argument);
-			printf("%-15.15s = %-15d  \n", token, dec->il);
+		//	printf("%-15.15s = %-15d  \n", token, dec->il);
 
 			if (!isdigit(argument[0]))
 			{
@@ -583,7 +585,7 @@ int			dummy;
 
 		case RA_CONFIG:
 			gMountConfigArray[RA_CONFIG].found	=	true;
-			printf("%-15.15s = %-15.15s  \n", token, argument);
+		//	printf("%-15.15s = %-15.15s  \n", token, argument);
 
 			if (!strcmp(argument, "FORWARD"))
 			{
@@ -604,7 +606,7 @@ int			dummy;
 
 		case DEC_CONFIG:
 			gMountConfigArray[DEC_CONFIG].found	=	true;
-			printf("%-15.15s = %-15.15s  \n", token, argument);
+		//	printf("%-15.15s = %-15.15s  \n", token, argument);
 
 			if (!strcmp(argument, "FORWARD"))
 			{
@@ -629,7 +631,7 @@ int			dummy;
 		case RA_GEAR_LASH:
 			gMountConfigArray[RA_GEAR_LASH].found	=	true;
 			ra->gearLash							=	atof(argument);
-			printf("%-15.15s = %-15.4f  \n", token, ra->gearLash);
+		//	printf("%-15.15s = %-15.4f  \n", token, ra->gearLash);
 
 			if (ra->gearLash < 0.0)
 			{
@@ -642,7 +644,7 @@ int			dummy;
 		case DEC_GEAR_LASH:
 			gMountConfigArray[DEC_GEAR_LASH].found	=	true;
 			dec->gearLash							=	atof(argument);
-			printf("%-15.15s = %-15.4f  \n", token, dec->gearLash);
+		//	printf("%-15.15s = %-15.4f  \n", token, dec->gearLash);
 
 			if (dec->gearLash < 0.0)
 			{
@@ -655,7 +657,7 @@ int			dummy;
 		case DEC_PARK:
 			gMountConfigArray[DEC_PARK].found	=	true;
 			dec->park							=	Time_ascii_maybe_HMS_tof(argument);
-			printf("%-15.15s = %-15.4f  \n", token, dec->park);
+		//	printf("%-15.15s = %-15.4f  \n", token, dec->park);
 
 			if (dec->park < -91.0 || dec->park > 91.0)
 			{
@@ -668,7 +670,7 @@ int			dummy;
 		case RA_SLEW_VEL:
 			gMountConfigArray[RA_SLEW_VEL].found	=	true;
 			ra->realSlew							=	Time_ascii_maybe_HMS_tof(argument);
-			printf("%-15.15s = %-15.4f  \n", token, ra->realSlew);
+		//	printf("%-15.15s = %-15.4f  \n", token, ra->realSlew);
 
 			if (ra->realSlew <= 0.0)
 			{
@@ -681,7 +683,7 @@ int			dummy;
 		case DEC_SLEW_VEL:
 			gMountConfigArray[DEC_SLEW_VEL].found	=	true;
 			dec->realSlew							=	atof(argument);
-			printf("%-15.15s = %-15.4f  \n", token, dec->realSlew);
+		//	printf("%-15.15s = %-15.4f  \n", token, dec->realSlew);
 
 			if (dec->realSlew <= 0.0)
 			{
@@ -694,7 +696,7 @@ int			dummy;
 		case RA_PARK:
 			gMountConfigArray[RA_PARK].found	=	true;
 			ra->park							=	Time_ascii_maybe_HMS_tof(argument);
-			printf("%-15.15s = %-15.4f  \n", token, ra->park);
+		//	printf("%-15.15s = %-15.4f  \n", token, ra->park);
 
 			if (ra->park < -7.0 || ra->park > 7.0)
 			{
@@ -707,7 +709,7 @@ int			dummy;
 		case ROLLOVER_WIN:
 			gMountConfigArray[ROLLOVER_WIN].found	=	true;
 			mountConfig->flipWin					=	Time_ascii_maybe_HMS_tof(argument);
-			printf("%-15.15s = %-15.4f  \n", token, mountConfig->flipWin);
+		//	printf("%-15.15s = %-15.4f  \n", token, mountConfig->flipWin);
 
 			if (mountConfig->flipWin < 0.0)
 			{
@@ -720,7 +722,7 @@ int			dummy;
 		case RA_PRECESSION:
 			gMountConfigArray[RA_PRECESSION].found	=	true;
 			ra->prec								=	atof(argument);
-			printf("%-15.15s = %-15.4f  \n", token, ra->prec);
+		//	printf("%-15.15s = %-15.4f  \n", token, ra->prec);
 
 			if (ra->prec < 0.0)
 			{
@@ -733,7 +735,7 @@ int			dummy;
 		case DEC_PRECESSION:
 			gMountConfigArray[DEC_PRECESSION].found	=	true;
 			dec->prec								=	atof(argument);
-			printf("%-15.15s = %-15.4f  \n", token, dec->prec);
+		//	printf("%-15.15s = %-15.4f  \n", token, dec->prec);
 
 			if (dec->prec < 0.0)
 			{
@@ -746,7 +748,7 @@ int			dummy;
 		case RA_SENSOR:
 			gMountConfigArray[RA_SENSOR].found	=	true;
 			ra->sync							=	Time_ascii_maybe_HMS_tof(argument);
-			printf("%-15.15s = %-15.4f  \n", token, ra->sync);
+		//	printf("%-15.15s = %-15.4f  \n", token, ra->sync);
 
 			if (ra->sync < -7.0 || ra->sync > 7.0)
 			{
@@ -759,7 +761,7 @@ int			dummy;
 		case DEC_SENSOR:
 			gMountConfigArray[DEC_SENSOR].found	=	true;
 			dec->sync							=	Time_ascii_maybe_HMS_tof(argument);
-			printf("%-15.15s = %-15.4f  \n", token, dec->sync);
+		//	printf("%-15.15s = %-15.4f  \n", token, dec->sync);
 
 			if (dec->sync < -91.0 || dec->sync > 91.0)
 			{
@@ -771,7 +773,7 @@ int			dummy;
 
 		case RA_PARK_SENSOR:
 			gMountConfigArray[RA_PARK_SENSOR].found	=	true;
-			printf("%-15.15s = %-15.15s  \n", token, argument);
+		//	printf("%-15.15s = %-15.15s  \n", token, argument);
 
 			if (strcmp(argument, "ON") == 0)
 			{
@@ -792,7 +794,7 @@ int			dummy;
 
 		case DEC_PARK_SENSOR:
 			gMountConfigArray[DEC_PARK_SENSOR].found	=	true;
-			printf("%-15.15s = %-15.15s  \n", token, argument);
+		//	printf("%-15.15s = %-15.15s  \n", token, argument);
 			if (strcmp(argument, "ON") == 0)
 			{
 				dec->syncValue	=	true;
@@ -813,7 +815,7 @@ int			dummy;
 		case OFF_TARGET_TOL:
 			gMountConfigArray[OFF_TARGET_TOL].found	=	true;
 			mountConfig->offTarget					=	atof(argument);
-			printf("%-15.15s = %-15.4f  \n", token, mountConfig->offTarget);
+		//	printf("%-15.15s = %-15.4f  \n", token, mountConfig->offTarget);
 			if (mountConfig->offTarget < 0.0)
 			{
 				sprintf(cfgErrorString1,	"Invalid %s field '%f'", token, mountConfig->offTarget);
@@ -830,6 +832,7 @@ int			dummy;
 	return(configLineOK);
 }
 
+
 //******************************************************************
 int Servo_read_mount_cfg(const char *mountCfgFile, TYPE_MOUNT_CONFIG *mountConfig)
 {
@@ -843,7 +846,6 @@ char		*token;
 char		*argument;
 char		*rest	=	NULL;
 int			iii;
-int			dummy;
 int			retStatus;
 bool		configLineOK;
 char		cfgErrorString1[80];
@@ -916,7 +918,8 @@ char		cfgErrorString3[80];
 		fclose(inFile);
 
 		// Even out the columns before any missing args error statements
-		printf("\n");
+		//printf("\n");
+//		PrintMountConfiguration();
 
 		iii	=	0;
 		while (strlen(gMountConfigArray[iii].parameter) > 0)
@@ -958,18 +961,116 @@ char		cfgErrorString3[80];
 		fprintf(stderr, "Error: could not open cfg file %s\n", filename);
 		retStatus	=	-1;
 	}	//*	of fopen
-
-
-//	CONSOLE_ABORT(__FUNCTION__);
-
 	return (retStatus);
 }	// of Servo_read_mount_cfg()
 
+
 #ifdef _TEST_SERVO_MOUNT_CFG_
+//**************************************************************************************
+static void	PrintConfigParam_Dbl(const int cfgEnum, const double value)
+{
+	if ((cfgEnum >= 0))
+	{
+		printf("%-15.15s = %-15.4f  \n", gMountConfigArray[cfgEnum].parameter, value);
+	}
+}
+
+//**************************************************************************************
+static void	PrintConfigParam_Str(const int cfgEnum, const char *value)
+{
+	if ((cfgEnum >= 0))
+	{
+		printf("%-15.15s = %s  \n", gMountConfigArray[cfgEnum].parameter, value);
+	}
+}
+
+//**************************************************************************************
+static void	PrintConfigParam_Int(const int cfgEnum, const int value)
+{
+	if ((cfgEnum >= 0))
+	{
+		printf("%-15.15s = %-15d  \n", gMountConfigArray[cfgEnum].parameter, value);
+	}
+}
+
+//******************************************************************
+void	PrintMountConfiguration(void)
+{
+char	lineBuff[64];
+
+	PrintConfigParam_Dbl(MC_FREQ,		gScopeConfig.freq);
+	PrintConfigParam_Int(MC_ADDR,		gScopeConfig.addr);
+	PrintConfigParam_Str(COMM_PORT,		gScopeConfig.port);
+	PrintConfigParam_Int(BAUD,			gScopeConfig.baud);
+	switch(gScopeConfig.mount)
+	{
+		case kFORK:		strcpy(lineBuff,	"FORK");	break;
+		case kGERMAN:	strcpy(lineBuff,	"GERMAN");	break;
+		default:		strcpy(lineBuff,	"unknown");	break;
+	}
+	PrintConfigParam_Str(MOUNT,			lineBuff);
+
+	switch(gScopeConfig.side)
+	{
+		case kEAST:		strcpy(lineBuff,	"EAST");	break;
+		case kWEST:		strcpy(lineBuff,	"WEST");	break;
+		case kNONE:		strcpy(lineBuff,	"NONE");	break;
+		default:		strcpy(lineBuff,	"unknown");	break;
+	}
+	PrintConfigParam_Str(PARK_SIDE,			lineBuff);
+	PrintConfigParam_Dbl(ROLLOVER_WIN,		gScopeConfig.flipWin);
+	PrintConfigParam_Dbl(OFF_TARGET_TOL,	gScopeConfig.offTarget);
+
+
+	//--------------------------------------------------------------------------------
+	PrintConfigParam_Dbl(RA_MOTOR_GEAR,		gScopeConfig.ra.motorGear);
+	PrintConfigParam_Dbl(RA_MAIN_GEAR,		gScopeConfig.ra.mainGear);
+	PrintConfigParam_Dbl(RA_MOTOR_MAX_RPM,	gScopeConfig.ra.motorMaxRPM);
+	PrintConfigParam_Dbl(RA_ENCODER,		gScopeConfig.ra.encoder);
+	PrintConfigParam_Dbl(RA_MAX_ACC,		gScopeConfig.ra.realAcc);
+	PrintConfigParam_Dbl(RA_MAX_VEL,		gScopeConfig.ra.realVel);
+	PrintConfigParam_Dbl(RA_ADJ_VEL,		gScopeConfig.ra.realAdj);
+	PrintConfigParam_Dbl(RA_SLEW_VEL,		gScopeConfig.ra.realSlew);
+	PrintConfigParam_Dbl(RA_CONFIG,			gScopeConfig.ra.config);
+	PrintConfigParam_Dbl(RA_PRECESSION,		gScopeConfig.ra.prec);
+	PrintConfigParam_Dbl(RA_PARK,			gScopeConfig.ra.park);
+
+	PrintConfigParam_Int(RA_SI_CON,			gScopeConfig.ra.si);
+	PrintConfigParam_Int(RA_KP_CON,			gScopeConfig.ra.kp);
+	PrintConfigParam_Int(RA_KI_CON,			gScopeConfig.ra.ki);
+	PrintConfigParam_Int(RA_KD_CON,			gScopeConfig.ra.kd);
+	PrintConfigParam_Int(RA_IL_CON,			gScopeConfig.ra.il);
+	PrintConfigParam_Dbl(RA_GEAR_LASH,		gScopeConfig.ra.gearLash);
+	PrintConfigParam_Dbl(RA_SENSOR,			gScopeConfig.ra.sync);
+	PrintConfigParam_Int(RA_PARK_SENSOR,	gScopeConfig.ra.syncValue);
+
+	//--------------------------------------------------------------------------------
+	PrintConfigParam_Dbl(DEC_MOTOR_GEAR,	gScopeConfig.dec.motorGear);
+	PrintConfigParam_Dbl(DEC_MAIN_GEAR,		gScopeConfig.dec.mainGear);
+	PrintConfigParam_Dbl(DEC_MOTOR_MAX_RPM,	gScopeConfig.dec.motorMaxRPM);
+	PrintConfigParam_Dbl(DEC_ENCODER,		gScopeConfig.dec.encoder);
+	PrintConfigParam_Dbl(DEC_MAX_ACC,		gScopeConfig.dec.realAcc);
+	PrintConfigParam_Dbl(DEC_MAX_VEL,		gScopeConfig.dec.realVel);
+	PrintConfigParam_Dbl(DEC_ADJ_VEL,		gScopeConfig.dec.realAdj);
+	PrintConfigParam_Dbl(DEC_SLEW_VEL,		gScopeConfig.dec.realSlew);
+	PrintConfigParam_Dbl(DEC_CONFIG,		gScopeConfig.dec.config);
+	PrintConfigParam_Dbl(DEC_PRECESSION,	gScopeConfig.dec.prec);
+	PrintConfigParam_Dbl(DEC_PARK,			gScopeConfig.dec.park);
+
+	PrintConfigParam_Int(DEC_SI_CON,		gScopeConfig.dec.si);
+	PrintConfigParam_Int(DEC_KP_CON,		gScopeConfig.dec.kp);
+	PrintConfigParam_Int(DEC_KI_CON,		gScopeConfig.dec.ki);
+	PrintConfigParam_Int(DEC_KD_CON,		gScopeConfig.dec.kd);
+	PrintConfigParam_Int(DEC_IL_CON,		gScopeConfig.dec.il);
+	PrintConfigParam_Dbl(DEC_GEAR_LASH,		gScopeConfig.dec.gearLash);
+	PrintConfigParam_Dbl(DEC_SENSOR,		gScopeConfig.dec.sync);
+	PrintConfigParam_Int(DEC_PARK_SENSOR,	gScopeConfig.dec.syncValue);
+}
+
 //********************************************************************************************
 //* Dump the axisPtr data structure to standard out */
 //********************************************************************************************
-void Test_print_axis(axisPtr ax)
+void Test_print_axis(TYPE_MountAxis *ax)
 {
 	printf("ax->motorGear = %f\n", ax->motorGear);
 	printf("ax->mainGear = %f\n", ax->mainGear);
@@ -1000,15 +1101,18 @@ void Test_print_axis(axisPtr ax)
 	printf("ax->syncError = %d\n", ax->syncError);
 }
 
+TYPE_MOUNT_CONFIG gScopeConfig;
+
 //********************************************************************************************
 int main(void)
 {
-	TYPE_MOUNT_CONFIG mountConfig;
-	char configFile[]	=	"servo_mount.cfg";
+char configFile[]	=	"servo_mount.cfg";
 
 	printf("file name = %s\n", configFile);
 
-	Servo_read_mount_cfg(configFile, &mountConfig);
+	Servo_read_mount_cfg(configFile, &gScopeConfig);
+
+	PrintMountConfiguration();
 
 	return (0);
 }

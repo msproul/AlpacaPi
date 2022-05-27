@@ -22,22 +22,24 @@
 //*	<RNS>	=	Ron N Story
 //*****************************************************************************
 //*	May  6,	2022	<RNS> Created servo_scope_cfg.h using cproto
-//*	May 10,	2022	<MLS> Added structure TYPE_SCOPE_CONFIG
-//*	May 16,	2022	<RNS> Adopted _TYPE_SCOPE_CONFIG
+//*	May 10,	2022	<MLS> Added structure TYPE_MOUNT_CONFIG
+//*	May 16,	2022	<RNS> Adopted TYPE_MOUNT_CONFIG
 //*	May 19,	2022	<RNS> convert .home field to .zero to avoid confusion with ASCOM Home
 //*	May 19,	2022	<RNS> Change all refs of 'scope' to 'mount', including filenames
 //*	May 20,	2022	<RNS> added to flipWin and offTarget to TYPE_MOUNT_CONFIG
-//*	May 22,	2022	<RNS> Changed .pos from usigned to signed
-//*	May 25,	2022	<MLS> Moved config token defs to .h for access from other routines
+//*	May 22,	2022	<RNS> Changed .pos from unsigned to signed
 //****************************************************************************
 
 #ifndef _SERVO_MOUNT_CFG_H_
 #define _SERVO_MOUNT_CFG_H_
 
+#ifndef	_INCLUDED_SERVO_STD_DEFS_
+	#include	"servo_std_defs.h"
+#endif
+
+
 // Default name for the telescope mount config file
 #define kSCOPE_CFG_FILE "servo_mount.cfg"
-
-
 //******************************************************************
 enum
 {
@@ -86,7 +88,9 @@ enum
 	DEC_SENSOR,
 	RA_PARK_SENSOR,
 	DEC_PARK_SENSOR,
-	OFF_TARGET_TOL
+	OFF_TARGET_TOL,
+
+	SERVO_CFG_LAST
 };	// of enum
 
 //******************************************************************
@@ -97,10 +101,11 @@ typedef struct
 	bool found;
 } TYPE_CFG_ITEM;
 
-extern	TYPE_CFG_ITEM gMountConfigArray[];
+extern TYPE_CFG_ITEM gMountConfigArray[];
+
 
 //******************************************************************
-typedef struct axis_t
+typedef struct
 {
 	double		motorGear;			// here and below, real-world float values for mount physical characteristics
 	double		mainGear;
@@ -140,30 +145,31 @@ typedef struct axis_t
 	double		sync;
 	uint16_t	syncValue;
 	uint16_t	syncError;
-} axis, *axisPtr;
-
+} TYPE_MountAxis;
+//-	*axisPtr;
 //******************************************************************
 typedef struct
 {
-	axis		ra;
-	axis		dec;
-	double		freq;
-	uint8_t		addr;
-	char		mount;
-	int8_t		side;
-	double 		flipWin;
-	double 		offTarget;
-	char		port[48];
-	int			baud;
+	TYPE_MountAxis	ra;
+	TYPE_MountAxis	dec;
+	double			freq;
+	uint8_t			addr;
+	char			mount;
+	int8_t			side;
+	double 			flipWin;
+	double 			offTarget;
+	char			port[kMAX_STR_LEN];
+	int				baud;
 } TYPE_MOUNT_CONFIG;
+
+extern TYPE_MOUNT_CONFIG gMountConfig;
 
 #ifdef __cplusplus
 	extern "C" {
 #endif
 
-extern	TYPE_MOUNT_CONFIG gScopeConfig;
-
-int	Servo_read_mount_cfg(const char *mountCfgFile, TYPE_MOUNT_CONFIG *mountConfig);
+int		Servo_read_mount_cfg(const char *mountCfgFile, TYPE_MOUNT_CONFIG *mountConfig);
+void	PrintMountConfiguration(void);
 
 #ifdef __cplusplus
 }

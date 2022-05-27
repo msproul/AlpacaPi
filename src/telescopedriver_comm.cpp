@@ -111,8 +111,6 @@ char	*colonPtr;
 	cThreadIsActive			=	false;
 	cKeepRunningFlag		=	false;
 
-
-
 	//*	set the parameters
 	strcpy(cCommonProp.Name,		"Telescope-Comm");
 	strcpy(cCommonProp.Description,	"Telescope control using ??? protocol");
@@ -226,6 +224,9 @@ bool	connectionOKflag;
 			{
 				connectionOKflag	=	true;
 			}
+			break;
+
+		case kDevCon_Custom:
 			break;
 	}
 	if (connectionOKflag)
@@ -530,6 +531,9 @@ bool		sendOK;
 					connectionOpen	=	false;
 				}
 				break;
+
+			case kDevCon_Custom:
+				break;
 		}
 
 		//--------------------------------------------------------
@@ -597,6 +601,9 @@ bool		sendOK;
 					break;
 
 				case kDevCon_Serial:
+					break;
+
+				case kDevCon_Custom:
 					break;
 			}
 		}

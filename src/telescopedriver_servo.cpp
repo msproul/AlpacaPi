@@ -148,6 +148,34 @@ TelescopeDriverServo::~TelescopeDriverServo(void)
 }
 
 //**************************************************************************************
+static void	WriteLocationParam_Dbl(const int socket, const int cfgEnum, const double value)
+{
+char	lineBuff[512];
+
+	if ((cfgEnum >= 0))
+	{
+		sprintf(lineBuff,	"<TR>\r\n<TD>%s</TD><TD>%5.4f</TD>\r\n<TR>\r\n",
+									gLocationArray[cfgEnum].parameter,
+									value);
+		SocketWriteData(socket,	lineBuff);
+	}
+}
+
+//**************************************************************************************
+static void	WriteLocationParam_Str(const int socket, const int cfgEnum, const char *value)
+{
+char	lineBuff[512];
+
+	if ((cfgEnum >= 0))
+	{
+		sprintf(lineBuff,	"<TR>\r\n<TD>%s</TD><TD>%s</TD>\r\n<TR>\r\n",
+									gLocationArray[cfgEnum].parameter,
+									value);
+		SocketWriteData(socket,	lineBuff);
+	}
+}
+
+//**************************************************************************************
 static void	WriteConfigParam_Dbl(const int socket, const int cfgEnum, const double value)
 {
 char	lineBuff[512];
@@ -200,8 +228,22 @@ FILE	*filePointer;
 	//*	print the config file to the web page,
 	//*	this makes it much easier to see what the config is on a remote system
 
-#warning <RNS> Need to use the output text from Servo_read_*_file cal.  Dumping parsed data
-#warning <RNS> is more valuable than the input file. Perhaps dump to log file in Servo_init()?
+	SocketWriteData(reqData->socket,	"<HR><CENTER>\r\n");
+	SocketWriteData(reqData->socket,	"<H2>Location configuration parameters</H2><BR>\r\n");
+	SocketWriteData(reqData->socket,	"<TABLE BORDER=1>\r\n");
+		WriteLocationParam_Dbl(reqData->socket,	EPOCH,			gServoLocalCfg.baseEpoch);
+		WriteLocationParam_Dbl(reqData->socket,	EPOCH_JD,		gServoLocalCfg.baseJd);
+		WriteLocationParam_Dbl(reqData->socket,	LATITUDE,		gServoLocalCfg.lat);
+		WriteLocationParam_Dbl(reqData->socket,	LONGITUDE,		gServoLocalCfg.lon);
+		WriteLocationParam_Dbl(reqData->socket,	ELEVATION,		gServoLocalCfg.elev);
+		WriteLocationParam_Dbl(reqData->socket,	TEMPERATURE,	gServoLocalCfg.temp);
+		WriteLocationParam_Dbl(reqData->socket,	PRESSURE,		gServoLocalCfg.press);
+		WriteLocationParam_Str(reqData->socket,	SITE,			gServoLocalCfg.site);
+
+	SocketWriteData(reqData->socket,	"</TABLE>\r\n");
+	SocketWriteData(reqData->socket,	"</CENTER>\r\n");
+
+	//--------------------------------------------------------------------------------
 
 	filePointer	=	fopen(kLOCAL_CFG_FILE, "r");
 	if (filePointer != NULL)
@@ -222,35 +264,18 @@ FILE	*filePointer;
 		fclose(filePointer);
 	}
 
-//	filePointer	=	fopen(kSCOPE_CFG_FILE, "r");
-//	if (filePointer != NULL)
-//	{
-//		SocketWriteData(reqData->socket, "<HR>\r\n");
-//		SocketWriteData(reqData->socket, "<P><CENTER>Servo Config File</CENTER>\r\n");
-//
-//		sprintf(lineBuff, "Config file:%s is %s<P>\r\n", kSCOPE_CFG_FILE,
-//							(cServoConfigIsValid ? "valid" : "NOT valid"));
-//
-//		SocketWriteData(reqData->socket, lineBuff);
-//
-//		SocketWriteData(reqData->socket, "<PRE>\r\n");
-//		while (fgets(lineBuff, 500, filePointer) != NULL)
-//		{
-//			SocketWriteData(reqData->socket, lineBuff);
-//		}
-//		SocketWriteData(reqData->socket, "</PRE>\r\n");
-//
-//		fclose(filePointer);
-//	}
+
+//	CONSOLE_DEBUG_W_NUM("SERVO_CFG_LAST\t=", SERVO_CFG_LAST);
 
 	//---------------------------------------------------------------
 	SocketWriteData(reqData->socket,	"<HR><CENTER>\r\n");
+	SocketWriteData(reqData->socket,	"<H2>Servo Mount configuration parameters</H2><BR>\r\n");
 	SocketWriteData(reqData->socket,	"<TABLE BORDER=1>\r\n");
-		WriteConfigParam_Dbl(reqData->socket,	MC_FREQ,			gScopeConfig.freq);
-		WriteConfigParam_Str(reqData->socket,	COMM_PORT,			gScopeConfig.port);
-		WriteConfigParam_Int(reqData->socket,	BAUD,				gScopeConfig.baud);
-		WriteConfigParam_Int(reqData->socket,	MC_ADDR,			gScopeConfig.addr);
-		switch(gScopeConfig.mount)
+		WriteConfigParam_Dbl(reqData->socket,	MC_FREQ,		gMountConfig.freq);
+		WriteConfigParam_Int(reqData->socket,	MC_ADDR,		gMountConfig.addr);
+		WriteConfigParam_Str(reqData->socket,	COMM_PORT,		gMountConfig.port);
+		WriteConfigParam_Int(reqData->socket,	BAUD,			gMountConfig.baud);
+		switch(gMountConfig.mount)
 		{
 			case kFORK:		strcpy(lineBuff,	"FORK");	break;
 			case kGERMAN:	strcpy(lineBuff,	"GERMAN");	break;
@@ -258,92 +283,89 @@ FILE	*filePointer;
 		}
 		WriteConfigParam_Str(reqData->socket,	MOUNT,			lineBuff);
 
-		switch(gScopeConfig.side)
+		switch(gMountConfig.side)
 		{
-			case kWEST:		strcpy(lineBuff,	"WEST");	break;
 			case kEAST:		strcpy(lineBuff,	"EAST");	break;
+			case kWEST:		strcpy(lineBuff,	"WEST");	break;
 			case kNONE:		strcpy(lineBuff,	"NONE");	break;
 			default:		strcpy(lineBuff,	"unknown");	break;
 		}
 		WriteConfigParam_Str(reqData->socket,	PARK_SIDE,		lineBuff);
+		WriteConfigParam_Dbl(reqData->socket,	ROLLOVER_WIN,	gMountConfig.flipWin);
+		WriteConfigParam_Dbl(reqData->socket,	OFF_TARGET_TOL,	gMountConfig.offTarget);
 
-//	ROLLOVER_WIN,
-//	OFF_TARGET_TOL
 
+		//--------------------------------------------------------------------------------
 		SocketWriteData(reqData->socket,	"<TR><TH COLSPAN=2>Right Assention</TH></TR>\r\n");
-		WriteConfigParam_Dbl(reqData->socket,	RA_MOTOR_GEAR,		gScopeConfig.ra.motorGear);
-		WriteConfigParam_Dbl(reqData->socket,	RA_MAIN_GEAR,		gScopeConfig.ra.mainGear);
-		WriteConfigParam_Dbl(reqData->socket,	RA_MOTOR_MAX_RPM,	gScopeConfig.ra.motorMaxRPM);
-		WriteConfigParam_Dbl(reqData->socket,	RA_ENCODER,			gScopeConfig.ra.encoder);
-		WriteConfigParam_Dbl(reqData->socket,	RA_MAX_ACC,			gScopeConfig.ra.realAcc);
-		WriteConfigParam_Dbl(reqData->socket,	RA_MAX_VEL,			gScopeConfig.ra.realVel);
-		WriteConfigParam_Dbl(reqData->socket,	RA_ADJ_VEL,			gScopeConfig.ra.realAdj);
-		WriteConfigParam_Dbl(reqData->socket,	RA_SLEW_VEL,		gScopeConfig.ra.realSlew);
-		WriteConfigParam_Dbl(reqData->socket,	RA_CONFIG,			gScopeConfig.ra.config);
-		WriteConfigParam_Dbl(reqData->socket,	RA_PRECESSION,		gScopeConfig.ra.prec);
-		WriteConfigParam_Dbl(reqData->socket,	RA_PARK,			gScopeConfig.ra.park);
-//	RA_SI_CON,
-//	RA_KP_CON,
-//	RA_KI_CON,
-//	RA_KD_CON,
-//	RA_IL_CON,
-		WriteConfigParam_Dbl(reqData->socket,	RA_GEAR_LASH,		gScopeConfig.ra.gearLash);
-//	RA_SENSOR,
-//	RA_PARK_SENSOR,
+		WriteConfigParam_Dbl(reqData->socket,	RA_MOTOR_GEAR,		gMountConfig.ra.motorGear);
+		WriteConfigParam_Dbl(reqData->socket,	RA_MAIN_GEAR,		gMountConfig.ra.mainGear);
+		WriteConfigParam_Dbl(reqData->socket,	RA_MOTOR_MAX_RPM,	gMountConfig.ra.motorMaxRPM);
+		WriteConfigParam_Dbl(reqData->socket,	RA_ENCODER,			gMountConfig.ra.encoder);
+		WriteConfigParam_Dbl(reqData->socket,	RA_MAX_ACC,			gMountConfig.ra.realAcc);
+		WriteConfigParam_Dbl(reqData->socket,	RA_MAX_VEL,			gMountConfig.ra.realVel);
+		WriteConfigParam_Dbl(reqData->socket,	RA_ADJ_VEL,			gMountConfig.ra.realAdj);
+		WriteConfigParam_Dbl(reqData->socket,	RA_SLEW_VEL,		gMountConfig.ra.realSlew);
+		WriteConfigParam_Dbl(reqData->socket,	RA_CONFIG,			gMountConfig.ra.config);
+		WriteConfigParam_Dbl(reqData->socket,	RA_PRECESSION,		gMountConfig.ra.prec);
+		WriteConfigParam_Dbl(reqData->socket,	RA_PARK,			gMountConfig.ra.park);
+
+		WriteConfigParam_Int(reqData->socket,	RA_SI_CON,			gMountConfig.ra.si);
+		WriteConfigParam_Int(reqData->socket,	RA_KP_CON,			gMountConfig.ra.kp);
+		WriteConfigParam_Int(reqData->socket,	RA_KI_CON,			gMountConfig.ra.ki);
+		WriteConfigParam_Int(reqData->socket,	RA_KD_CON,			gMountConfig.ra.kd);
+		WriteConfigParam_Int(reqData->socket,	RA_IL_CON,			gMountConfig.ra.il);
+		WriteConfigParam_Dbl(reqData->socket,	RA_GEAR_LASH,		gMountConfig.ra.gearLash);
+		WriteConfigParam_Dbl(reqData->socket,	RA_SENSOR,			gMountConfig.ra.sync);
+		WriteConfigParam_Int(reqData->socket,	RA_PARK_SENSOR,		gMountConfig.ra.syncValue);
 
 		//--------------------------------------------------------------------------------
 		SocketWriteData(reqData->socket,	"<TR><TH COLSPAN=2>Declination</TH></TR>\r\n");
-		WriteConfigParam_Dbl(reqData->socket,	DEC_MOTOR_GEAR,		gScopeConfig.dec.motorGear);
-		WriteConfigParam_Dbl(reqData->socket,	DEC_MAIN_GEAR,		gScopeConfig.dec.mainGear);
-		WriteConfigParam_Dbl(reqData->socket,	DEC_MOTOR_MAX_RPM,	gScopeConfig.dec.motorMaxRPM);
-		WriteConfigParam_Dbl(reqData->socket,	DEC_ENCODER,		gScopeConfig.dec.encoder);
-		WriteConfigParam_Dbl(reqData->socket,	DEC_MAX_ACC,		gScopeConfig.dec.realAcc);
-		WriteConfigParam_Dbl(reqData->socket,	DEC_MAX_VEL,		gScopeConfig.dec.realVel);
-		WriteConfigParam_Dbl(reqData->socket,	DEC_ADJ_VEL,		gScopeConfig.dec.realAdj);
-		WriteConfigParam_Dbl(reqData->socket,	DEC_SLEW_VEL,		gScopeConfig.dec.realSlew);
-		WriteConfigParam_Dbl(reqData->socket,	DEC_CONFIG,			gScopeConfig.dec.config);
-		WriteConfigParam_Dbl(reqData->socket,	DEC_PRECESSION,		gScopeConfig.dec.prec);
-		WriteConfigParam_Dbl(reqData->socket,	DEC_PARK,			gScopeConfig.dec.park);
-//	DEC_SI_CON,
-//	DEC_KP_CON,
-//	DEC_KI_CON,
-//	DEC_KD_CON,
-//	DEC_IL_CON,
-		WriteConfigParam_Dbl(reqData->socket,	DEC_GEAR_LASH,		gScopeConfig.dec.gearLash);
-//	DEC_SENSOR,
-//	DEC_PARK_SENSOR,
+		WriteConfigParam_Dbl(reqData->socket,	DEC_MOTOR_GEAR,		gMountConfig.dec.motorGear);
+		WriteConfigParam_Dbl(reqData->socket,	DEC_MAIN_GEAR,		gMountConfig.dec.mainGear);
+		WriteConfigParam_Dbl(reqData->socket,	DEC_MOTOR_MAX_RPM,	gMountConfig.dec.motorMaxRPM);
+		WriteConfigParam_Dbl(reqData->socket,	DEC_ENCODER,		gMountConfig.dec.encoder);
+		WriteConfigParam_Dbl(reqData->socket,	DEC_MAX_ACC,		gMountConfig.dec.realAcc);
+		WriteConfigParam_Dbl(reqData->socket,	DEC_MAX_VEL,		gMountConfig.dec.realVel);
+		WriteConfigParam_Dbl(reqData->socket,	DEC_ADJ_VEL,		gMountConfig.dec.realAdj);
+		WriteConfigParam_Dbl(reqData->socket,	DEC_SLEW_VEL,		gMountConfig.dec.realSlew);
+		WriteConfigParam_Dbl(reqData->socket,	DEC_CONFIG,			gMountConfig.dec.config);
+		WriteConfigParam_Dbl(reqData->socket,	DEC_PRECESSION,		gMountConfig.dec.prec);
+		WriteConfigParam_Dbl(reqData->socket,	DEC_PARK,			gMountConfig.dec.park);
 
-
-
-//	uint16_t	encoderMaxSpeed;	//	here and below are the int value for the MC, calc'd from the real-world values above
-//	int32_t		pos;
-//	uint32_t	maxAcc;
-//	uint32_t	acc;
-//	uint32_t	maxVel;
-//	uint32_t	vel;
-//	uint32_t	adj;
-//	uint32_t	slew;
-//	uint8_t		si;
-//	uint16_t	kp;
-//	uint16_t	ki;
-//	uint16_t	kd;
-//	uint16_t	il;
-//	uint16_t	status;
-//	uint8_t		cmdQueue;
-//	int32_t		track;
-//	double		direction;
-//	double		park;
-//	int8_t		parkInfo;		// on RA holds the original park_side of mount, on dec it hold the original direction before any flip
-//	long double	time;
-//	// double	lockDown;
-//	double		zero;			// Axis real value at zero steps in decimal degrees, including RA
-//	double		standby;
-//	double		sync;
-//	uint16_t	syncValue;
-//	uint16_t	syncError;
+		WriteConfigParam_Int(reqData->socket,	DEC_SI_CON,			gMountConfig.dec.si);
+		WriteConfigParam_Int(reqData->socket,	DEC_KP_CON,			gMountConfig.dec.kp);
+		WriteConfigParam_Int(reqData->socket,	DEC_KI_CON,			gMountConfig.dec.ki);
+		WriteConfigParam_Int(reqData->socket,	DEC_KD_CON,			gMountConfig.dec.kd);
+		WriteConfigParam_Int(reqData->socket,	DEC_IL_CON,			gMountConfig.dec.il);
+		WriteConfigParam_Dbl(reqData->socket,	DEC_GEAR_LASH,		gMountConfig.dec.gearLash);
+		WriteConfigParam_Dbl(reqData->socket,	DEC_SENSOR,			gMountConfig.dec.sync);
+		WriteConfigParam_Int(reqData->socket,	DEC_PARK_SENSOR,	gMountConfig.dec.syncValue);
 
 	SocketWriteData(reqData->socket,	"</TABLE>\r\n");
 	SocketWriteData(reqData->socket,	"</CENTER>\r\n");
+
+	//--------------------------------------------------------------------------------
+	filePointer	=	fopen(kSCOPE_CFG_FILE, "r");
+	if (filePointer != NULL)
+	{
+		SocketWriteData(reqData->socket, "<HR>\r\n");
+		SocketWriteData(reqData->socket, "<P><CENTER>Servo Config File</CENTER>\r\n");
+
+		sprintf(lineBuff, "Config file:%s is %s<P>\r\n", kSCOPE_CFG_FILE,
+							(cServoConfigIsValid ? "valid" : "NOT valid"));
+
+		SocketWriteData(reqData->socket, lineBuff);
+
+		SocketWriteData(reqData->socket, "<PRE>\r\n");
+		while (fgets(lineBuff, 500, filePointer) != NULL)
+		{
+			SocketWriteData(reqData->socket, lineBuff);
+		}
+		SocketWriteData(reqData->socket, "</PRE>\r\n");
+
+		fclose(filePointer);
+	}
+
 }
 
 //*****************************************************************************
@@ -359,6 +381,7 @@ int8_t 		servoSide;
 	//*	this is where your periodic code goes
 	//*	update cTelescopeProp values here
 #warning <RNS>  Not sure I did this right but here is an attempt, please code review
+#warning <MLS>  Looks good to me
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -374,6 +397,7 @@ int8_t 		servoSide;
 	}
 
 #warning <RNS>  Also not positive I did this right but here is an attempt
+#warning <MLS>  Looks good to me
 	//	If moving, get current RA & Dec
 	Servo_get_pos(&currRA, &currDec);
 	//	Convert park RA from hours to degs

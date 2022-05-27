@@ -2443,7 +2443,6 @@ TYPE_ASCOM_STATUS	TelescopeDriver::Put_UTCdate(TYPE_GetPutRequestData *reqData, 
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
 bool					utcDateFound;
 char					utcDateString[64];
-int						axisNumber;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG(reqData->contentData);
