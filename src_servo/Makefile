@@ -16,7 +16,7 @@
 CC			=	gcc -I$(MLS_LIB_DIR)
 
 CFLAGS 		=	-Wall
-RM 			=	/bin/rm -v
+RM 			=	/bin/rm -v -f
 OBJECT_DIR	=	./Objectfiles/
 MLS_LIB_DIR	=	../src_mlsLib/
 

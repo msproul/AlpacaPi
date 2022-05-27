@@ -65,9 +65,6 @@
 #define	SERVO_RA_AXIS	(uint8_t)0
 #define	SERVO_DEC_AXIS	(uint8_t)1
 
-#define	DEGREES(radians)	((radians) * (180.0 / M_PI))
-#define	RADIANS(degrees)	((degrees) * (M_PI / 180.0))
-
 //*	TODO Change to using these instead to be consistent with the rest of AlpacaPi
 #define	DEGREES(radians)	((radians) * (180.0 / M_PI))
 #define	RADIANS(degrees)	((degrees) * (M_PI / 180.0))

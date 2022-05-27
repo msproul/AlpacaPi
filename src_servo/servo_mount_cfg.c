@@ -998,11 +998,11 @@ void	PrintMountConfiguration(void)
 {
 char	lineBuff[64];
 
-	PrintConfigParam_Dbl(MC_FREQ,		gScopeConfig.freq);
-	PrintConfigParam_Int(MC_ADDR,		gScopeConfig.addr);
-	PrintConfigParam_Str(COMM_PORT,		gScopeConfig.port);
-	PrintConfigParam_Int(BAUD,			gScopeConfig.baud);
-	switch(gScopeConfig.mount)
+	PrintConfigParam_Dbl(MC_FREQ,		gMountConfig.freq);
+	PrintConfigParam_Int(MC_ADDR,		gMountConfig.addr);
+	PrintConfigParam_Str(COMM_PORT,		gMountConfig.port);
+	PrintConfigParam_Int(BAUD,			gMountConfig.baud);
+	switch(gMountConfig.mount)
 	{
 		case kFORK:		strcpy(lineBuff,	"FORK");	break;
 		case kGERMAN:	strcpy(lineBuff,	"GERMAN");	break;
@@ -1010,7 +1010,7 @@ char	lineBuff[64];
 	}
 	PrintConfigParam_Str(MOUNT,			lineBuff);
 
-	switch(gScopeConfig.side)
+	switch(gMountConfig.side)
 	{
 		case kEAST:		strcpy(lineBuff,	"EAST");	break;
 		case kWEST:		strcpy(lineBuff,	"WEST");	break;
@@ -1018,53 +1018,53 @@ char	lineBuff[64];
 		default:		strcpy(lineBuff,	"unknown");	break;
 	}
 	PrintConfigParam_Str(PARK_SIDE,			lineBuff);
-	PrintConfigParam_Dbl(ROLLOVER_WIN,		gScopeConfig.flipWin);
-	PrintConfigParam_Dbl(OFF_TARGET_TOL,	gScopeConfig.offTarget);
+	PrintConfigParam_Dbl(ROLLOVER_WIN,		gMountConfig.flipWin);
+	PrintConfigParam_Dbl(OFF_TARGET_TOL,	gMountConfig.offTarget);
 
 
 	//--------------------------------------------------------------------------------
-	PrintConfigParam_Dbl(RA_MOTOR_GEAR,		gScopeConfig.ra.motorGear);
-	PrintConfigParam_Dbl(RA_MAIN_GEAR,		gScopeConfig.ra.mainGear);
-	PrintConfigParam_Dbl(RA_MOTOR_MAX_RPM,	gScopeConfig.ra.motorMaxRPM);
-	PrintConfigParam_Dbl(RA_ENCODER,		gScopeConfig.ra.encoder);
-	PrintConfigParam_Dbl(RA_MAX_ACC,		gScopeConfig.ra.realAcc);
-	PrintConfigParam_Dbl(RA_MAX_VEL,		gScopeConfig.ra.realVel);
-	PrintConfigParam_Dbl(RA_ADJ_VEL,		gScopeConfig.ra.realAdj);
-	PrintConfigParam_Dbl(RA_SLEW_VEL,		gScopeConfig.ra.realSlew);
-	PrintConfigParam_Dbl(RA_CONFIG,			gScopeConfig.ra.config);
-	PrintConfigParam_Dbl(RA_PRECESSION,		gScopeConfig.ra.prec);
-	PrintConfigParam_Dbl(RA_PARK,			gScopeConfig.ra.park);
+	PrintConfigParam_Dbl(RA_MOTOR_GEAR,		gMountConfig.ra.motorGear);
+	PrintConfigParam_Dbl(RA_MAIN_GEAR,		gMountConfig.ra.mainGear);
+	PrintConfigParam_Dbl(RA_MOTOR_MAX_RPM,	gMountConfig.ra.motorMaxRPM);
+	PrintConfigParam_Dbl(RA_ENCODER,		gMountConfig.ra.encoder);
+	PrintConfigParam_Dbl(RA_MAX_ACC,		gMountConfig.ra.realAcc);
+	PrintConfigParam_Dbl(RA_MAX_VEL,		gMountConfig.ra.realVel);
+	PrintConfigParam_Dbl(RA_ADJ_VEL,		gMountConfig.ra.realAdj);
+	PrintConfigParam_Dbl(RA_SLEW_VEL,		gMountConfig.ra.realSlew);
+	PrintConfigParam_Dbl(RA_CONFIG,			gMountConfig.ra.config);
+	PrintConfigParam_Dbl(RA_PRECESSION,		gMountConfig.ra.prec);
+	PrintConfigParam_Dbl(RA_PARK,			gMountConfig.ra.park);
 
-	PrintConfigParam_Int(RA_SI_CON,			gScopeConfig.ra.si);
-	PrintConfigParam_Int(RA_KP_CON,			gScopeConfig.ra.kp);
-	PrintConfigParam_Int(RA_KI_CON,			gScopeConfig.ra.ki);
-	PrintConfigParam_Int(RA_KD_CON,			gScopeConfig.ra.kd);
-	PrintConfigParam_Int(RA_IL_CON,			gScopeConfig.ra.il);
-	PrintConfigParam_Dbl(RA_GEAR_LASH,		gScopeConfig.ra.gearLash);
-	PrintConfigParam_Dbl(RA_SENSOR,			gScopeConfig.ra.sync);
-	PrintConfigParam_Int(RA_PARK_SENSOR,	gScopeConfig.ra.syncValue);
+	PrintConfigParam_Int(RA_SI_CON,			gMountConfig.ra.si);
+	PrintConfigParam_Int(RA_KP_CON,			gMountConfig.ra.kp);
+	PrintConfigParam_Int(RA_KI_CON,			gMountConfig.ra.ki);
+	PrintConfigParam_Int(RA_KD_CON,			gMountConfig.ra.kd);
+	PrintConfigParam_Int(RA_IL_CON,			gMountConfig.ra.il);
+	PrintConfigParam_Dbl(RA_GEAR_LASH,		gMountConfig.ra.gearLash);
+	PrintConfigParam_Dbl(RA_SENSOR,			gMountConfig.ra.sync);
+	PrintConfigParam_Int(RA_PARK_SENSOR,	gMountConfig.ra.syncValue);
 
 	//--------------------------------------------------------------------------------
-	PrintConfigParam_Dbl(DEC_MOTOR_GEAR,	gScopeConfig.dec.motorGear);
-	PrintConfigParam_Dbl(DEC_MAIN_GEAR,		gScopeConfig.dec.mainGear);
-	PrintConfigParam_Dbl(DEC_MOTOR_MAX_RPM,	gScopeConfig.dec.motorMaxRPM);
-	PrintConfigParam_Dbl(DEC_ENCODER,		gScopeConfig.dec.encoder);
-	PrintConfigParam_Dbl(DEC_MAX_ACC,		gScopeConfig.dec.realAcc);
-	PrintConfigParam_Dbl(DEC_MAX_VEL,		gScopeConfig.dec.realVel);
-	PrintConfigParam_Dbl(DEC_ADJ_VEL,		gScopeConfig.dec.realAdj);
-	PrintConfigParam_Dbl(DEC_SLEW_VEL,		gScopeConfig.dec.realSlew);
-	PrintConfigParam_Dbl(DEC_CONFIG,		gScopeConfig.dec.config);
-	PrintConfigParam_Dbl(DEC_PRECESSION,	gScopeConfig.dec.prec);
-	PrintConfigParam_Dbl(DEC_PARK,			gScopeConfig.dec.park);
+	PrintConfigParam_Dbl(DEC_MOTOR_GEAR,	gMountConfig.dec.motorGear);
+	PrintConfigParam_Dbl(DEC_MAIN_GEAR,		gMountConfig.dec.mainGear);
+	PrintConfigParam_Dbl(DEC_MOTOR_MAX_RPM,	gMountConfig.dec.motorMaxRPM);
+	PrintConfigParam_Dbl(DEC_ENCODER,		gMountConfig.dec.encoder);
+	PrintConfigParam_Dbl(DEC_MAX_ACC,		gMountConfig.dec.realAcc);
+	PrintConfigParam_Dbl(DEC_MAX_VEL,		gMountConfig.dec.realVel);
+	PrintConfigParam_Dbl(DEC_ADJ_VEL,		gMountConfig.dec.realAdj);
+	PrintConfigParam_Dbl(DEC_SLEW_VEL,		gMountConfig.dec.realSlew);
+	PrintConfigParam_Dbl(DEC_CONFIG,		gMountConfig.dec.config);
+	PrintConfigParam_Dbl(DEC_PRECESSION,	gMountConfig.dec.prec);
+	PrintConfigParam_Dbl(DEC_PARK,			gMountConfig.dec.park);
 
-	PrintConfigParam_Int(DEC_SI_CON,		gScopeConfig.dec.si);
-	PrintConfigParam_Int(DEC_KP_CON,		gScopeConfig.dec.kp);
-	PrintConfigParam_Int(DEC_KI_CON,		gScopeConfig.dec.ki);
-	PrintConfigParam_Int(DEC_KD_CON,		gScopeConfig.dec.kd);
-	PrintConfigParam_Int(DEC_IL_CON,		gScopeConfig.dec.il);
-	PrintConfigParam_Dbl(DEC_GEAR_LASH,		gScopeConfig.dec.gearLash);
-	PrintConfigParam_Dbl(DEC_SENSOR,		gScopeConfig.dec.sync);
-	PrintConfigParam_Int(DEC_PARK_SENSOR,	gScopeConfig.dec.syncValue);
+	PrintConfigParam_Int(DEC_SI_CON,		gMountConfig.dec.si);
+	PrintConfigParam_Int(DEC_KP_CON,		gMountConfig.dec.kp);
+	PrintConfigParam_Int(DEC_KI_CON,		gMountConfig.dec.ki);
+	PrintConfigParam_Int(DEC_KD_CON,		gMountConfig.dec.kd);
+	PrintConfigParam_Int(DEC_IL_CON,		gMountConfig.dec.il);
+	PrintConfigParam_Dbl(DEC_GEAR_LASH,		gMountConfig.dec.gearLash);
+	PrintConfigParam_Dbl(DEC_SENSOR,		gMountConfig.dec.sync);
+	PrintConfigParam_Int(DEC_PARK_SENSOR,	gMountConfig.dec.syncValue);
 }
 
 //********************************************************************************************
@@ -1101,7 +1101,7 @@ void Test_print_axis(TYPE_MountAxis *ax)
 	printf("ax->syncError = %d\n", ax->syncError);
 }
 
-TYPE_MOUNT_CONFIG gScopeConfig;
+TYPE_MOUNT_CONFIG gMountConfig;
 
 //********************************************************************************************
 int main(void)
@@ -1110,7 +1110,7 @@ char configFile[]	=	"servo_mount.cfg";
 
 	printf("file name = %s\n", configFile);
 
-	Servo_read_mount_cfg(configFile, &gScopeConfig);
+	Servo_read_mount_cfg(configFile, &gMountConfig);
 
 	PrintMountConfiguration();
 

@@ -1912,7 +1912,7 @@ controller_camera.cpp:68 	//*	Jan  1,	2121	<TODO> clear error msg
 controller_camera.cpp:69 	//*	Feb  6,	2121	<TODO> Move downloading of images to a separate thread
 servo_time.c:40          	//*	May 26,	2122	<TODO> Remove printf statements from Time_read_local_cfg()
 History Comments found   = 1912 in 319 files
-Total lines              = 161515
+Total lines              = 161512
 Total comment Lines      = 23733 (14.7%)
 Total comments           = 26958 (16.7%)
 Total history comments   = 1912 (1.2%)
