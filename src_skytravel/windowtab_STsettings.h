@@ -109,11 +109,6 @@ enum
 	kSkyT_Settings_ConstOutLines_txt,
 	kSkyT_Settings_ConstOutLines_cnt,
 
-#ifdef _ENABLE_GAIA_
-	kSkyT_Settings_Gaia_txt,
-	kSkyT_Settings_Gaia_cnt,
-#endif // _ENABLE_GAIA_
-
 	kSkyT_Settings_Asteroids_txt,
 	kSkyT_Settings_Asteroids_cnt,
 

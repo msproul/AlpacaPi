@@ -50,6 +50,9 @@
 //*	Mar  2,	2022	<MLS> Setting Connected now working for telescope driver
 //*	Mar 25,	2022	<MLS> Added RunStateMachine() to telescopedriver
 //*	May 13,	2022	<MLS> Made Get_AxisRates() understand specified axis number
+//*	May 28,	2022	<MLS> Added Put_SideOfPier()
+//*	May 28,	2022	<MLS> Added Get_PhysicalSideOfPier()
+//*	May 28,	2022	<MLS> Added cDriverSupportsLimitSwitches
 //*****************************************************************************
 
 
@@ -170,6 +173,7 @@ enum
 
 	//*	added by MLS
 	kCmd_Telescope_Extras,
+	kCmd_Telescope_physicalsideofpier,
 	kCmd_Telescope_readall,
 
 };
@@ -263,6 +267,7 @@ const TYPE_CmdEntry	gTelescopeCmdTable[]	=
 
 	//*	added by MLS
 	{	"--extras",					kCmd_Telescope_Extras,					kCmdType_GET	},
+	{	"physicalsideofpier",		kCmd_Telescope_physicalsideofpier,		kCmdType_GET	},
 	{	"readall",					kCmd_Telescope_readall,					kCmdType_GET	},
 
 	{	"",						-1,	0x00	}
@@ -282,17 +287,19 @@ int		iii;
 	//--------------------------------------------------------------------
 	//*	set the defaults, everything to false or zero
 	memset((void *)&cTelescopeProp, 0, sizeof(TYPE_TelescopeProperties));
-	cTelescopeProp.AlginmentMode	=	kAlignmentMode_algGermanPolar;
-	cTelescopeProp.EquatorialSystem	=	kECT_equOther;
-	cTelescopeProp.SideOfPier		=	kPierSide_pierUnknown;
-	cTelescopeProp.TrackingRate		=	kDriveRate_driveSidereal;
-	cTelescopeProp.DoesRefraction	=	false;
-	cTelescopeProp.CanFindHome		=	false;
-	cTelescopeProp.CanUnpark		=	false;
+	cTelescopeProp.AlginmentMode		=	kAlignmentMode_algGermanPolar;
+	cTelescopeProp.EquatorialSystem		=	kECT_equOther;
+	cTelescopeProp.SideOfPier			=	kPierSide_pierUnknown;
+	cTelescopeProp.PhysicalSideOfPier	=	kPierSide_pierUnknown;
+	cTelescopeProp.TrackingRate			=	kDriveRate_driveSidereal;
+	cTelescopeProp.DoesRefraction		=	false;
+	cTelescopeProp.CanFindHome			=	false;
+	cTelescopeProp.CanUnpark			=	false;
 
 	//*	Set this to true if the system supports it
 	//*	cTelescopeProp.DoesRefraction is used to enable/disable if it is supported
 	cDriverSupportsRefraction		=	false;		//*	can be over-ridden by sub class
+	cDriverSupportsLimitSwitches	=	false;		//*	can be over-ridden by sub class
 
 	//*	Set default axis rates
 	for (iii=0; iii<3; iii++)
@@ -561,6 +568,10 @@ int					mySocket;
 			if (reqData->get_putIndicator == 'G')
 			{
 				alpacaErrCode	=	Get_SideOfPier(reqData, alpacaErrMsg, gValueString);
+			}
+			else if (reqData->get_putIndicator == 'P')
+			{
+				alpacaErrCode	=	Put_SideOfPier(reqData, alpacaErrMsg);
 			}
 			break;
 
@@ -1777,29 +1788,38 @@ char					extraString[128];
 							cTelescopeProp.SideOfPier,
 							INCLUDE_COMMA);
 
-		switch(cTelescopeProp.SideOfPier)
-		{
-			case kPierSide_pierEast:		//*	Altitude-Azimuth alignment.
-				strcpy(extraString, "Normal pointing state - Mount on the East side of pier (looking West)");
-				break;
+	switch(cTelescopeProp.SideOfPier)
+	{
+		case kPierSide_pierUnknown:		//*	Polar (equatorial) mount other than German equatorial.
+			strcpy(extraString, "Unknown or indeterminate.");
+			break;
 
-			case kPierSide_pierUnknown:		//*	Polar (equatorial) mount other than German equatorial.
-				strcpy(extraString, "Unknown or indeterminate.");
-				break;
+		case kPierSide_pierEast:		//*	Altitude-Azimuth alignment.
+			strcpy(extraString, "Normal pointing state - Mount on the East side of pier (looking West)");
+			break;
 
-			case kPierSide_pierWest:
-				strcpy(extraString, "Through the pole pointing state - Mount on the West side of pier (looking East)");
-				break;
+		case kPierSide_pierWest:
+			strcpy(extraString, "Through the pole pointing state - Mount on the West side of pier (looking East)");
+			break;
 
-		}
-		JsonResponse_Add_String(	reqData->socket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									"SideOfPier-str",
-									extraString,
-									INCLUDE_COMMA);
+	}
+	JsonResponse_Add_String(	reqData->socket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								"SideOfPier-str",
+								extraString,
+								INCLUDE_COMMA);
 
 
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	TelescopeDriver::Put_SideOfPier(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_ActionNotImplemented;
+
+	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Put_SideOfPier not implemented");
 	return(alpacaErrCode);
 }
 
@@ -3317,6 +3337,46 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 
 
 //*****************************************************************************
+//*	this is NOT part of the ASCOM standard
+//*****************************************************************************
+TYPE_ASCOM_STATUS	TelescopeDriver::Get_PhysicalSideOfPier(TYPE_GetPutRequestData *reqData,
+															char *alpacaErrMsg,
+															const char *responseString)
+{
+TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
+char					extraString[128];
+
+	JsonResponse_Add_Int32(	reqData->socket,
+							reqData->jsonTextBuffer,
+							kMaxJsonBuffLen,
+							responseString,
+							cTelescopeProp.PhysicalSideOfPier,
+							INCLUDE_COMMA);
+
+	switch(cTelescopeProp.SideOfPier)
+	{
+		case kPierSide_pierUnknown:		//*	Polar (equatorial) mount other than German equatorial.
+			strcpy(extraString, "Unknown or indeterminate.");
+			break;
+
+		case kPierSide_pierEast:		//*	Altitude-Azimuth alignment.
+			strcpy(extraString, "Physically East of the pier");
+			break;
+
+		case kPierSide_pierWest:
+			strcpy(extraString, "Physically West of the pier");
+			break;
+
+	}
+	JsonResponse_Add_String(	reqData->socket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								"SideOfPier-str",
+								extraString,
+								INCLUDE_COMMA);
+}
+
+//*****************************************************************************
 //*****************************************************************************
 //*****************************************************************************
 //*****************************************************************************
@@ -3395,7 +3455,6 @@ int		mySocket;
 		alpacaErrCode	=	Get_CanMoveAxis(			reqData, alpacaErrMsg, "CanMoveAxis");
 		alpacaErrCode	=	Get_DestinationSideOfPier(	reqData, alpacaErrMsg, "DestinationSideOfPier");
 
-
 		//===============================================================
 		JsonResponse_Add_String(mySocket,
 								reqData->jsonTextBuffer,
@@ -3403,6 +3462,9 @@ int		mySocket;
 								"Comment",
 								"Non-standard alpaca commands follow",
 								INCLUDE_COMMA);
+
+		alpacaErrCode	=	Get_PhysicalSideOfPier(	reqData, alpacaErrMsg, "PysicalSideOfPier");
+
 
 		JsonResponse_Add_String(mySocket,
 								reqData->jsonTextBuffer,
@@ -3470,7 +3532,6 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
 	return(alpacaErrCode);
 }
-
 
 //*****************************************************************************
 //*	needs to be over-ridden
@@ -3598,6 +3659,7 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 	return(alpacaErrCode);
 
 }
+
 
 
 

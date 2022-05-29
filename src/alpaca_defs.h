@@ -511,6 +511,9 @@ typedef struct
 	TYPE_DriveRates					TrackingRate;
 	double							TrackingRates;
 	double							UTCDate;
+
+	//*	extras NOT defined by ASCOM
+	TYPE_PierSide					PhysicalSideOfPier;
 } TYPE_TelescopeProperties;
 
 

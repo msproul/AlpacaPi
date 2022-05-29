@@ -13,6 +13,8 @@
 #
 #		sudo apt-get install wiringpi
 #
+#		sudo apt-get install libnova-dev		<<<< required for TSC
+#
 #	https://www.gnu.org/software/make/manual/make.html
 ######################################################################################
 #	Edit History
@@ -2215,7 +2217,6 @@ SKYTRAVEL_OBJECTS=											\
 				$(OBJECT_DIR)cpu_stats.o					\
 				$(OBJECT_DIR)eph.o							\
 				$(OBJECT_DIR)fits_opencv.o					\
-				$(OBJECT_DIR)GaiaData.o						\
 				$(OBJECT_DIR)helper_functions.o				\
 				$(OBJECT_DIR)HipparcosCatalog.o				\
 				$(OBJECT_DIR)moonlite_com.o					\
@@ -2265,6 +2266,8 @@ SKYTRAVEL_OBJECTS=											\
 				$(OBJECT_DIR)YaleStarCatalog.o				\
 
 
+#	5/27/2022	Gaia data no longer used, using GaiaSQL instead
+#				$(OBJECT_DIR)GaiaData.o						\
 
 ######################################################################################
 GAIA_SQL_OBJECTS=											\
@@ -2290,7 +2293,6 @@ sky		:	DEFINEFLAGS		+=	-D_CONTROLLER_USES_ALPACA_
 sky		:	DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_CONTROLLER_
 sky		:	DEFINEFLAGS		+=	-D_ENABLE_SLIT_TRACKER_
 sky		:	DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
-#sky		:	DEFINEFLAGS		+=	-D_ENABLE_GAIA_
 sky		:	DEFINEFLAGS		+=	-D_ENABLE_ASTERIODS_
 sky		:	INCLUDES		+=	-I$(SRC_SKYTRAVEL)
 sky		:				$(SKYTRAVEL_OBJECTS)					\
@@ -2357,7 +2359,6 @@ skycv4sql			:	DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_CONTROLLER_
 skycv4sql			:	DEFINEFLAGS		+=	-D_ENABLE_SLIT_TRACKER_
 skycv4sql			:	DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
 skycv4sql			:	DEFINEFLAGS		+=	-D_ENABLE_ASTERIODS_
-skycv4sql			:	DEFINEFLAGS		+=	-D_ENABLE_GAIA_
 skycv4sql			:	DEFINEFLAGS		+=	-D_ENABLE_REMOTE_SQL_
 skycv4sql			:	DEFINEFLAGS		+=	-D_ENABLE_REMOTE_GAIA_
 skycv4sql			:	DEFINEFLAGS		+=	-D_USE_OPENCV_
@@ -3541,9 +3542,9 @@ $(OBJECT_DIR)ConstellationData.o :		$(SRC_SKYTRAVEL)ConstellationData.c	\
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYTRAVEL)ConstellationData.c -o$(OBJECT_DIR)ConstellationData.o
 
 #-------------------------------------------------------------------------------------
-$(OBJECT_DIR)GaiaData.o :				$(SRC_SKYTRAVEL)GaiaData.c	\
-										$(SRC_SKYTRAVEL)GaiaData.h
-	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYTRAVEL)GaiaData.c -o$(OBJECT_DIR)GaiaData.o
+#$(OBJECT_DIR)GaiaData.o :				$(SRC_SKYTRAVEL)GaiaData.c	\
+#										$(SRC_SKYTRAVEL)GaiaData.h
+#	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYTRAVEL)GaiaData.c -o$(OBJECT_DIR)GaiaData.o
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)GaiaSQL.o :				$(SRC_SKYTRAVEL)GaiaSQL.cpp	\

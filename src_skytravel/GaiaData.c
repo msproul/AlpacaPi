@@ -12,6 +12,7 @@
 //*	Dec  8,	2021	<MLS> Added CalcSpectralClassFrom_BP_RP()
 //*****************************************************************************
 
+#ifdef _ENABLE_GAIA_
 
 #include	<stdbool.h>
 #include	<string.h>
@@ -675,3 +676,6 @@ char			filePath[64];
 }
 
 #endif
+
+
+#endif // _ENABLE_GAIA_

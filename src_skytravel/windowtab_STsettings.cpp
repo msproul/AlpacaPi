@@ -423,11 +423,6 @@ int		radioBtnWidth;
 	SetWidgetText(		kSkyT_Settings_ConstOutLines_txt,	"Outlines");
 	SetWidgetNumber(	kSkyT_Settings_ConstOutLines_cnt,	gConstOutlineCount);
 
-#ifdef _ENABLE_GAIA_
-	SetWidgetText(		kSkyT_Settings_Gaia_txt,			"Gaia Data count");
-	SetWidgetNumber(	kSkyT_Settings_Gaia_cnt,			gGaiaObjectCnt);
-#endif // _ENABLE_GAIA_
-
 #ifdef _ENABLE_ASTERIODS_
 	strcpy(textString, "Asteroids");
 	if (strlen(gAsteroidDatbase) > 0)
@@ -465,14 +460,6 @@ int		radioBtnWidth;
 
 	SetWidgetTextColor(	kSkyT_Settings_Constellations_txt,	CV_RGB(0,	255,	0));
 	SetWidgetTextColor(	kSkyT_Settings_Constellations_cnt,	CV_RGB(0,	255,	0));
-
-#ifdef _ENABLE_GAIA_
-	if (gGaiaObjectCnt > 0)
-	{
-		SetWidgetTextColor(	kSkyT_Settings_Gaia_txt,			CV_RGB(0,	255,	0));
-		SetWidgetTextColor(	kSkyT_Settings_Gaia_cnt,			CV_RGB(0,	255,	0));
-	}
-#endif // _ENABLE_GAIA_
 
 	if (gSpecialObjectCount > 0)
 	{
@@ -927,13 +914,6 @@ void	WindowTabSTsettings::ProcessDoubleClick(const int	widgetIdx,
 			}
 			break;
 
-	#ifdef _ENABLE_GAIA_
-//		case kSkyT_Settings_Gaia_txt:
-//		case kSkyT_Settings_Gaia_cnt:
-//			CreateGaiaRemoteListWindow();
-//			break;
-	#endif // _ENABLE_GAIA_
-
 		case kSkyT_Settings_Special_txt:
 		case kSkyT_Settings_Special_cnt:
 			if ((gSpecialObjectPtr != NULL) && (gSpecialObjectCount > 0))
@@ -941,8 +921,6 @@ void	WindowTabSTsettings::ProcessDoubleClick(const int	widgetIdx,
 				CreateStarlistWindow("special.txt list", gSpecialObjectPtr, gSpecialObjectCount, "--");
 			}
 			break;
-
-
 	}
 }
 

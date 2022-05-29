@@ -102,6 +102,7 @@ class TelescopeDriver: public AlpacaDriver
 		TYPE_ASCOM_STATUS	Put_RightAscensionRate(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 
 		TYPE_ASCOM_STATUS	Get_SideOfPier(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+		TYPE_ASCOM_STATUS	Put_SideOfPier(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 		TYPE_ASCOM_STATUS	Get_SiderealTime(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
 		TYPE_ASCOM_STATUS	Get_SiteElevation(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
 		TYPE_ASCOM_STATUS	Put_SiteElevation(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
@@ -171,6 +172,7 @@ class TelescopeDriver: public AlpacaDriver
 
 		//--------------------------------------------------------------------------------------------------
 		//*	extras added by MLS
+		TYPE_ASCOM_STATUS	Get_PhysicalSideOfPier(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
 		TYPE_ASCOM_STATUS	Get_Readall(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 
 
@@ -219,7 +221,7 @@ class TelescopeDriver: public AlpacaDriver
 				//*	this defaults to FALSE,
 				//*	a subclass MUST set this to true if wants to support refraction calculations
 				bool						cDriverSupportsRefraction;
-
+				bool						cDriverSupportsLimitSwitches;
 
 };
 

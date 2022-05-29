@@ -102,6 +102,7 @@
 //*	Feb 18,	2022	<MLS> SkyTravel working with OpenCV-C++
 //*	Apr  7,	2022	<MLS> ProcessMouseEvent() ignores nearest object when mouse drag in progress
 //*	Apr 30,	2022	<MLS> Added Messier objects to FindObjectNearCursor()
+//*	May 26,	2022	<MLS> Removed support for reading GAIA data directly
 //*****************************************************************************
 //*	TODO
 //*			star catalog lists
@@ -161,11 +162,6 @@
 
 #include	"AsteroidData.h"
 #include	"OpenNGC.h"
-
-
-#ifdef _ENABLE_GAIA_
-	#include	"GaiaData.h"
-#endif
 
 #ifdef _ENABLE_REMOTE_GAIA_
 	#include	"GaiaSQL.h"
@@ -564,12 +560,6 @@ int		iii;
 		}
 	}
 
-#ifdef _ENABLE_GAIA_
-	gGaiaObjectPtr	=	ReadGaiaExtractedList(&gGaiaObjectCnt);
-
-	CONSOLE_DEBUG_W_LONG("gGaiaObjectCnt\t=", gGaiaObjectCnt);
-#endif // _ENABLE_GAIA_
-
 
 #ifdef _ENABLE_ASTERIODS_
 	//==================================================================
@@ -773,7 +763,7 @@ int		buttonBoxWidth;
 	SetWidgetHelpText(	kSkyTravel_Btn_Messier,			"Toggle Missier display");
 	SetWidgetHelpText(	kSkyTravel_Btn_AAVSOalerts,		"Toggle AAVSO alerts");
 
-#if defined(_ENABLE_GAIA_) || defined(_ENABLE_REMOTE_GAIA_)
+#if defined(_ENABLE_REMOTE_GAIA_)
 	SetWidgetHelpText(	kSkyTravel_Btn_Gaia,			"Toggle GAIA display");
 #endif
 #ifdef _ENABLE_ASTERIODS_
@@ -817,7 +807,7 @@ int		buttonBoxWidth;
 	SetWidgetText(		kSkyTravel_Btn_ConstOutline,	"O");
 	SetWidgetText(		kSkyTravel_Btn_Constellations,	"?");
 	SetWidgetText(		kSkyTravel_Btn_NGC,				"G");
-#if defined(_ENABLE_GAIA_) || defined(_ENABLE_REMOTE_GAIA_)
+#if defined(_ENABLE_REMOTE_GAIA_)
 	SetWidgetText(		kSkyTravel_Btn_Gaia,			"g");
 #endif
 #ifdef _ENABLE_ASTERIODS_
@@ -1173,7 +1163,7 @@ void	WindowTabSkyTravel::UpdateButtonStatus(void)
 #ifdef _ENABLE_ASTERIODS_
 	SetWidgetChecked(		kSkyTravel_Btn_Asteroids,		cDispOptions.dispAsteroids);
 #endif // _ENABLE_ASTERIODS_
-#if defined(_ENABLE_GAIA_) || defined(_ENABLE_REMOTE_GAIA_)
+#if defined(_ENABLE_REMOTE_GAIA_)
 	SetWidgetChecked(		kSkyTravel_Btn_Gaia,			cDispOptions.dispGaia);
 #endif
 
@@ -1759,7 +1749,7 @@ char	searchText[128];
 		case kSkyTravel_Btn_DeepSky:			ProcessSingleCharCmd('D');	break;
 		case kSkyTravel_Btn_Draper:				ProcessSingleCharCmd('d');	break;
 		case kSkyTravel_Btn_Earth:				ProcessSingleCharCmd('E');	break;
-#if defined(_ENABLE_GAIA_) || defined(_ENABLE_REMOTE_GAIA_)
+#if defined(_ENABLE_REMOTE_GAIA_)
 		case kSkyTravel_Btn_Gaia:				ProcessSingleCharCmd('g');	break;
 #endif
 		case kSkyTravel_Btn_NGC:				ProcessSingleCharCmd('G');	break;
@@ -1963,7 +1953,7 @@ bool			reDrawSky;
 			cElev0	=	cCursor_elev;
 			break;
 
-#if defined(_ENABLE_GAIA_) || defined(_ENABLE_REMOTE_GAIA_)
+#if defined(_ENABLE_REMOTE_GAIA_)
 		case kSkyTravel_Btn_Gaia:
 			SetView_Angle(RADIANS(4.9999));
 			break;
@@ -2793,10 +2783,6 @@ short		iii;
 		PlotObjectsByDataSource(cDispOptions.dispHipparcos,	gHipObjectPtr,		gHipObjectCount);
 		PlotObjectsByDataSource(cDispOptions.dispDraper,	gDraperObjectPtr,	gDraperObjectCount);
 
-
-	#ifdef _ENABLE_GAIA_
-		PlotObjectsByDataSource(cDispOptions.dispGaia,			gGaiaObjectPtr, gGaiaObjectCnt);
-	#endif // _ENABLE_GAIA_
 		//*--------------------------------------------------------------------------------
 		//*	check to see if the asteroids are loaded
 //		if (cDispOptions.dispAsteroids && ((cView_angle < 1.0) || (gST_DispOptions.MagnitudeMode == kMagnitudeMode_All)))
@@ -4059,13 +4045,6 @@ bool			pressesOccurred;
 			Precess(gHYGObjectPtr, gHYGObjectCount, kSortData, kForcePression);
 		}
 #endif
-
-#ifdef _ENABLE_GAIA_
-		if ((gGaiaObjectPtr != NULL) && (gGaiaObjectCnt > 0))
-		{
-			Precess(gGaiaObjectPtr, gGaiaObjectCnt, kSortData, kForcePression);
-		}
-#endif // _ENABLE_GAIA_
 
 
 //*	special objects should not be precessed

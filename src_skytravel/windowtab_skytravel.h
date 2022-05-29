@@ -57,7 +57,7 @@ enum
 #ifdef _ENABLE_ASTERIODS_
 	kSkyTravel_Btn_Asteroids,
 #endif
-#if defined(_ENABLE_GAIA_) || defined(_ENABLE_REMOTE_GAIA_)
+#if defined(_ENABLE_REMOTE_GAIA_)
 	kSkyTravel_Btn_Gaia,
 #endif
 
