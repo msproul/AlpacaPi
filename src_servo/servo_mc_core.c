@@ -313,7 +313,7 @@ int		retValue;
 		gCommRetries--;
 	} while (size <= 0 && gCommRetries > 0);
 
-	printf("MC_read_comm: len = %d  and size = %d\n", (int)len, (int)size);
+	//printf("MC_read_comm: len = %d  and size = %d\n", (int)len, (int)size);
 
 	// If the read len doesn't meet the expected length and we still have retrys left
 	while ((size + total != (ssize_t)len) && (gCommRetries > 0))
