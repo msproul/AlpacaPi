@@ -121,7 +121,9 @@ int main(void)
 		printf("\n");
 		printf("=======================================================\n");
 		printf("Current RA = %lf   Dec = %lf", ra, dec);
-		printf("Park = %s", strPtr = Servo_get_park_state() ? "true" : "false");
+		printf("Park = %s   ", strPtr = Servo_get_park_state() ? "true" : "false");
+
+		state = Servo_state(); 
 
 		switch (state)
 		{
@@ -144,8 +146,8 @@ int main(void)
 		// Display the current LST
 		jd = Time_systime_to_jd();
 		// get the sid time and convert to LST in HMS
-		lst = Time_jd_to_sid(jd);
-		lst = Time_sid_to_lst(lst, Time_get_lon());
+		lst = Time_jd_to_gmst(jd);
+		lst = Time_gmst_to_lst(lst, Time_get_lon());
 		Time_deci_hours_to_hms(&lst);
 		Time_check_hms(&lst);
 		printf("LST = %lf\n", lst);
@@ -169,6 +171,10 @@ int main(void)
 
 		switch (inChar)
 		{
+		case '!':
+			exit(-1);
+			break;
+
 		case 'l':
 		case 'L':
 			break;
@@ -322,8 +328,8 @@ int main(void)
 				// rns        Servo_set_pos(newRa, newDec);
 
 				// get the sid time and convert to LST in HMS
-				ephem->sid = eph__jd_to_sid(ephem->jd);
-				ephem->sid = eph__sid_to_lst(ephem->sid, ephem->env->lon);
+				ephem->sid = eph__jd_to_gmst(ephem->jd);
+				ephem->sid = eph__gmst_to_lst(ephem->sid, ephem->env->lon);
 
 				// Get the "correct" sync pos and convert from HA to RA
 				Servo_get_sync_pos(&newRa, &newDec);

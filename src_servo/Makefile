@@ -11,6 +11,7 @@
 #++	May 19,	2022	<RNS> Change all refs of 'scope' to 'mount', including filenames
 #++	May 19,	2022	<RNS> Added support for rc_utils unit test
 #++	May 19,	2022	<RNS> Fixed all unit tests for *.c files with unit _TEST_
+#++	May 27,	2022	<RNS> Added support for servo_time unit test
 ############################################################################
 
 CC			=	gcc -I$(MLS_LIB_DIR)
@@ -68,6 +69,12 @@ rc_utils: 	$(RCUTILS_OBJECTS)
 	$(CC) $(CFLAGS) -o rc_utils				\
 					$(RCUTILS_OBJECTS)			\
 					-lm
+
+test_time:  CFLAGS  +=  -D_TEST_SERVO_TIME_
+test_time:  servo_time.c
+	$(CC) $(CFLAGS) -Wextra -o test_time			\
+ 					servo_time.c					\
+ 					-lm
 
 mc_core: 	CFLAGS	+=	-D_TEST_SERVO_MC_CORE_
 mc_core: 	servo_mc_core.c

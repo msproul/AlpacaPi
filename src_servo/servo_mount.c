@@ -172,7 +172,8 @@ int state;
 	state	=	Servo_state();
 	if (state == PARKED || state == STOPPED)
 	{
-		gParkState	=	false;
+		gParkState		=	false;
+		gMountAction 	= 	STOPPED;
 	}
 
 	return(!gParkState);
@@ -477,8 +478,8 @@ double		ra;
 
 	// get the jd, sid time and convert to LST
 	jd	=	Time_systime_to_jd();
-	lst	=	Time_jd_to_sid(jd);
-	lst	=	Time_sid_to_lst(lst, Time_get_lon());
+	lst	=	Time_jd_to_gmst(jd);
+	lst	=	Time_gmst_to_lst(lst, Time_get_lon());
 
 	// set RA to the LST + HA offset
 	ra	=	lst + ha;
@@ -845,18 +846,26 @@ uint8_t		raState, decState;
 int32_t		raVel, decVel;
 uint32_t	absVel, absTrack;
 float		velFloat, trackFloat;
+int 		status;
 	// bool		raStopped, decStopped;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
 	// read the command queue for RA and Dec
-	RC_check_queue(gMountConfig.addr, &raState, &decState);
+	status = RC_check_queue(gMountConfig.addr, &raState, &decState);
+	if (status != kSTATUS_OK)
+	{
+		CONSOLE_DEBUG("ERROR:  RC_check_queue returned error!");
+	}
 	// Go for the easy win, just see if both cmds queues are empty
+	printf("\n *** ra state = %x	dec state = %x ***\n", raState, decState);
+
 	if ((raState & decState) == kRC_CMD_QUEUE_EMPTY)
 	{
 		// Check to see is the mount is PARKED or just STOPPED
 		if (gParkState == true)
 		{
+			printf("### Mount is parked\n");
 			return(PARKED);
 		}
 		else
@@ -880,7 +889,7 @@ float		velFloat, trackFloat;
 	}
 
 	// if cmd queues have more than 1 cmd queued in either buffer (0-based), then definitely moving
-	if ((raState & decState) > 0)
+	if ((raState | decState) !=  0x0)
 	{
 		return(MOVING);
 	}
@@ -1337,8 +1346,8 @@ bool	flip	=	false;
 
 	// Calc time jd, sid, lst to get alt-azi
 	jd	=	Time_systime_to_jd();
-	lst	=	Time_jd_to_sid(jd);
-	lst	=	Time_sid_to_lst(lst, lon);
+	lst	=	Time_jd_to_gmst(jd);
+	lst	=	Time_gmst_to_lst(lst, lon);
 	// alt-azi is returned in radians
 	Time_ra_dec_to_alt_azi(gotoRa, gotoDec, lst, lat, &alt, &azi);
 
@@ -1436,8 +1445,8 @@ int		status	=	kSTATUS_OK;
 
 	// Calc time jd, sid to get LST
 	jd	=	Time_systime_to_jd();
-	lst	=	Time_jd_to_sid(jd);
-	lst	=	Time_sid_to_lst(lst, Time_get_lon());
+	lst	=	Time_jd_to_gmst(jd);
+	lst	=	Time_gmst_to_lst(lst, Time_get_lon());
 
 	// calc HA of the current RA position
 	currHA		=	lst - currRa;
@@ -1546,7 +1555,43 @@ int Servo_move_to_park(void)
 #ifdef _TEST_SERVO_MOUNT_
 int	main(void)
 {
-	Servo_init(NULL, NULL);
+	double ra, dec, ha; 
+	double parkHa, parkDec;
+	double jd, gmst, lst;
+	double currRa, currDec; 
+	int state; 
+	
+	printf("\nSERVO_TEST unit test program\n");
+	Servo_init("servo_mount.cfg", "servo_location.cfg");
+
+	Servo_get_park_coordins(&parkHa, &parkDec);
+	printf("** Current Park HA = %lf   Dec = %lf\n", parkHa, parkDec);
+
+	jd 		= 	Time_systime_to_jd();
+	gmst 	= 	Time_jd_to_gmst(jd);
+	lst 	= 	Time_gmst_to_lst(gmst, Time_get_lon()); 
+
+	Servo_get_pos(&currRa, &currDec); 
+	printf("** Current Pos  RA = %lf   Dec = %lf\n", currRa, currDec);
+
+	Servo_unpark();
+
+	Servo_move_to_coordins( (currRa + 0.01l), (currDec + 1.0l), Time_get_lat(), Time_get_lon() );
+
+	state = Servo_state(); 
+
+	printf("** Servo state = %d\n", state);
+
+	while (state == MOVING)
+	{
+	Servo_get_pos(&currRa, &currDec); 
+	printf("** Current Pos  RA = %lf   Dec = %lf\n", currRa, currDec);
+	sleep(3);
+	}
+
+	printf("STOPPING motors\n");
+	Servo_stop_all(); 
+
 	return(0);
 }
 #endif	// _TEST_SERVO_MOUNT_

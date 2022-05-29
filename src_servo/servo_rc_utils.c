@@ -38,6 +38,8 @@
 //*	May 22,	2022	<RNS> Fixed some unsigned to signed compares for abs and fabs()
 //*	May 22,	2022	<RNS> Fixed some arg type inputs
 //*	May 22,	2022	<RNS> Changed main() back to be void, _TEST_ should never take args
+//*	May 28,	2022	<RNS> Fixed CRC bug in _check_queue due to ptr swap
+//*	May 28,	2022	<RNS> Enhanced unit _TEST_ to support both motors
 //*****************************************************************************
 // Notes:   M1 *MUST BE* connected to RA or Azimuth axis, M2 to Dec or Altitude
 //*****************************************************************************
@@ -138,7 +140,7 @@ int			retState;
 			return(kERROR);
 			break;
 	}
-	printf("RC_get_curr_pos: addr = %X cmd = %d gRC[cmd].cmd = %d\n", addr, cmd, gRC[cmd].cmd);
+	//printf("RC_get_curr_pos: addr = %X cmd = %d gRC[cmd].cmd = %d\n", addr, cmd, gRC[cmd].cmd);
 
 	// Creat the note for the comms and converse
 	Note_init(gNoteBuf, addr, gRC[cmd].cmd, &ptrA);
@@ -152,10 +154,6 @@ int			retState;
 	// Get the encoder count 32bit from the receipt buf and status byte
 	count	=	Receipt_get_dword(gReceiptBuf, &ptrA);
 	status	=	Receipt_get_byte(ptrA, &ptrB);
-	if (status != kSTATUS_OK)
-	{
-		CONSOLE_DEBUG("Receipt_get_byte() returned error");
-	}
 
 	// Calc length from the receipt buf pointer distance and calc CRC
 	len			=	(int)(ptrB - gReceiptBuf);
@@ -166,7 +164,7 @@ int			retState;
 	// Get CRC from the receipt message
 	receiptCrc	=	Receipt_get_word(ptrB, &ptrA);
 
-	printf("RC_get_curr_pos() crc = %d  receiptCrc = %d\n", crc, receiptCrc);
+	//printf("RC_get_curr_pos() crc = %d  receiptCrc = %d\n", crc, receiptCrc);
 
 	// Check CRC and return the encoder count with corrected offset
 	if (receiptCrc != crc)
@@ -229,10 +227,6 @@ int			retState;
 	// Get the encoder count 32bit from the receipt buf and status byte
 	count	=	Receipt_get_dword(gReceiptBuf, &ptrA);
 	status	=	Receipt_get_byte(ptrA, &ptrB);
-	if (status != kSTATUS_OK)
-	{
-		CONSOLE_DEBUG("Receipt_get_byte() returned error");
-	}
 
 	// Calc length from the receipt buf pointer distance and calc CRC
 	len			=	(int)(ptrB - gReceiptBuf);
@@ -310,7 +304,7 @@ int			retState;
 
 	// Check the return status for the happy 0xFF
 	status	=	Receipt_get_byte(gReceiptBuf, &ptrA);
-	printf("RC_set_home() : return status = %x\n", (int)status);
+
 	if (status != kRC_OK)
 	{
 		return(kERROR);
@@ -347,7 +341,6 @@ int			retState;
 	// Creat the note for the comms and read status a short cmd
 	Note_init(gNoteBuf, addr, gRC[cmd].cmd, &ptrA);
 
-	RC_converse(gNoteBuf, gRC[cmd].in, gReceiptBuf, gRC[cmd].out);
 	retState	=	RC_converse(gNoteBuf, gRC[cmd].in, gReceiptBuf, gRC[cmd].out);
 	if (retState != kSTATUS_OK)
 	{
@@ -405,10 +398,9 @@ int			len;
 int			retState;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
-	// Creat the note for the comms and read status a short cmd
+	// Create the note for the comms and read status a short cmd
 	Note_init(gNoteBuf, addr, gRC[cmd].cmd, &ptrA);
 
-	RC_converse(gNoteBuf, gRC[cmd].in, gReceiptBuf, gRC[cmd].out);
 	retState	=	RC_converse(gNoteBuf, gRC[cmd].in, gReceiptBuf, gRC[cmd].out);
 	if (retState != kSTATUS_OK)
 	{
@@ -428,7 +420,10 @@ int			retState;
 	crc			=	MC_calc_crc16(gReceiptBuf, len, crc);
 
 	// Get CRC from the receipt message
-	receiptCrc	=	Receipt_get_word(ptrA, &ptrB);
+	receiptCrc	=	Receipt_get_word(ptrB, &ptrA);
+
+	//printf("RC_check_queue() crc = %d  receiptCrc = %d\n", crc, receiptCrc);
+
 
 	// Check SRC and return the encoder count with corrected offset
 	if (receiptCrc != crc)
@@ -441,7 +436,7 @@ int			retState;
 	}
 	// Everything OK, return status
 	return(kSTATUS_OK);
-} // of RC_check_buffer()
+} // of RC_check_queue()
 
 //*************************************************************************
 // Set the max acceleration from the config file to the RC default speed
@@ -835,69 +830,86 @@ int			len;
 #ifdef _TEST_RC_UTILS_
 int	main(void)
 {
+uint8_t raDepth, decDepth; 
 char buf[256];
 int32_t pos	=	0;
 uint32_t status = 0;
 uint8_t addr = 0x80; // Default addr for RC MC
+
+	// Mark, Ignore this one line if format, need to see more statements on one screen, it's just for testing
 
 	if (MC_init_comm("/dev/ttyACM0", 38400) != 0)
 	{
 		printf("Error: mc_init_comm() failed\n");
 		return kERROR;
 	}
-	if (RC_set_home(addr, SERVO_RA_AXIS) == kERROR)
-	{
-		printf("RC_set_home returned error\n");
-	}
+	printf("Initializin RA and Dec Motors with unbuffered commands\n");
 
-	if (RC_get_curr_pos(addr, SERVO_RA_AXIS, &pos) == kERROR)
-	{
-		printf("RC_current_pos returned error\n");
-	}
-	printf("Pos = %X\n", pos);
+	if (RC_set_home(addr, SERVO_RA_AXIS) == kERROR)			printf("RC_set_home returned error\n");
+	if (RC_get_curr_pos(addr, SERVO_RA_AXIS, &pos) == kERROR)		printf("RC_current_pos returned error\n");
+	printf("RA pos = %X		", pos);
 
-	if (RC_move_by_posva(addr, SERVO_RA_AXIS, 10000, 5000, 500, false) == kERROR)
-	//   if (RC_move_by_vel_raw(addr, SERVO_RA_AXIS, 1000) == kERROR)
-	{
-		printf("RC_move_by_pos returned error\n");
-	}
+	printf("Starting RA and Dec Motors with unbuffered commands\n");
 
-	if (RC_get_status(addr, &status) == kERROR)
-	{
-		printf("RC_get_status returned error\n");
-	}
-	printf("status = %X\n", status);
+	if (RC_set_home(addr, SERVO_DEC_AXIS) == kERROR)			printf("RC_set_home returned error\n");
+	if (RC_get_curr_pos(addr, SERVO_DEC_AXIS, &pos) == kERROR)		printf("RC_current_pos returned error\n");
+	printf(" Dec pos = %X\n", pos);
 
-	printf("hit any key to reverse motor \n");
+	if (RC_move_by_posva(addr, SERVO_RA_AXIS, 10000, 10000, 2000, false) == kERROR)		printf("RA RC_move_by_pos returned error\n");
+	if (RC_move_by_posva(addr, SERVO_DEC_AXIS, 10000, 10000, 2000, false) == kERROR)		printf("DEC RC_move_by_pos returned error\n");
+	if (RC_get_status(addr, &status) == kERROR)		printf("RC_get_status returned error\n");
+	if (RC_check_queue(addr, &raDepth, &decDepth) == kERROR)		printf("RC_get_status returned error\n");
+	printf("*** status = %X  RA queue = %X  Dec queue = %X\n", status, (uint8_t) raDepth, (uint8_t) decDepth);
+
+	printf("hit any key to reverse motors \n");
 	fgets(buf, 256, stdin);
 
-	if (RC_move_by_posva(addr, SERVO_RA_AXIS, 0, 5000, 500, false) == kERROR)
-	//   if (RC_move_by_vel_raw(addr, SERVO_RA_AXIS, 1000) == kERROR)
-	{
-		printf("RC_move_by_pos returned error\n");
-	}
+	if (RC_move_by_posva(addr, SERVO_RA_AXIS, 0, 10000, 2000, false) == kERROR)		printf("RA RC_move_by_pos returned error\n");
+	if (RC_move_by_posva(addr, SERVO_DEC_AXIS, 0, 10000, 2000, false) == kERROR)		printf("DEC RC_move_by_pos returned error\n");
+	if (RC_get_status(addr, &status) == kERROR)		printf("RC_get_status returned error\n");
+	if (RC_check_queue(addr, &raDepth, &decDepth) == kERROR)		printf("RC_get_status returned error\n");
+	printf("*** status = %X  RA queue = %X  Dec queue = %X\n", status, raDepth, decDepth);
 
-	if (RC_get_status(addr, &status) == kERROR)
-	{
-		printf("RC_get_status returned error\n");
-	}
-	printf("status = %X\n", status);
-	if (RC_get_curr_pos(addr, SERVO_RA_AXIS, &pos) == kERROR)
-	{
-		printf("RC_current_pos returned error\n");
-	}
-	printf("Pos = %X\n", pos);
-
-	if (RC_get_status(addr, &status) == kERROR)
-	{
-		printf("RC_get_status returned error\n");
-	}
-	printf("status = %X\n", pos);
-
-	printf("hit any key to stop motor\n");
+	printf("hit any key to stop motors\n");
 	fgets(buf, 256, stdin);
 
 	RC_stop(addr, SERVO_RA_AXIS);
+	RC_stop(addr, SERVO_DEC_AXIS);
+
+	printf("\nStarting RA and Dec Motors with 4 buffered commands\n");
+	printf("hit any key to begin\n");
+	fgets(buf, 256, stdin);
+
+	if (RC_move_by_posva(addr, SERVO_RA_AXIS, -10000, 10000, 2000, true) == kERROR)		printf("RA RC_move_by_pos returned error\n");
+	if (RC_move_by_posva(addr, SERVO_DEC_AXIS, 10000, 10000, 2000, true) == kERROR)		printf("DEC RC_move_by_pos returned error\n");
+	if (RC_get_status(addr, &status) == kERROR)		printf("RC_get_status returned error\n");
+	if (RC_check_queue(addr, &raDepth, &decDepth) == kERROR)		printf("RC_get_status returned error\n");
+	printf("*** status = %X  RA queue = %X  Dec queue = %X\n", status, (uint8_t) raDepth, (uint8_t) decDepth);
+
+	if (RC_move_by_posva(addr, SERVO_RA_AXIS, 0, 10000, 2000, true) == kERROR)		printf("RA RC_move_by_pos returned error\n");
+	if (RC_move_by_posva(addr, SERVO_DEC_AXIS, 0, 10000, 2000, true) == kERROR)		printf("DEC RC_move_by_pos returned error\n");
+	if (RC_get_status(addr, &status) == kERROR)		printf("RC_get_status returned error\n");
+	if (RC_check_queue(addr, &raDepth, &decDepth) == kERROR)		printf("RC_get_status returned error\n");
+	printf("*** status = %X  RA queue = %X  Dec queue = %X\n", status, (uint8_t) raDepth, (uint8_t) decDepth);
+
+	if (RC_move_by_posva(addr, SERVO_RA_AXIS, 10000, 10000, 2000, true) == kERROR)		printf("RA RC_move_by_pos returned error\n");
+	if (RC_move_by_posva(addr, SERVO_DEC_AXIS, -10000, 10000, 2000, true) == kERROR)		printf("DEC RC_move_by_pos returned error\n");
+	if (RC_get_status(addr, &status) == kERROR)		printf("RC_get_status returned error\n");
+	if (RC_check_queue(addr, &raDepth, &decDepth) == kERROR)		printf("RC_get_status returned error\n");
+	if (RC_check_queue(addr, &raDepth, &decDepth) == kERROR)		printf("RC_get_status returned error\n");
+	printf("*** status = %X  RA queue = %X  Dec queue = %X\n", status, (uint8_t) raDepth, (uint8_t) decDepth);
+
+		if (RC_move_by_posva(addr, SERVO_RA_AXIS, 0, 10000, 2000, true) == kERROR)		printf("RA RC_move_by_pos returned error\n");
+	if (RC_move_by_posva(addr, SERVO_DEC_AXIS, 0, 10000, 2000, true) == kERROR)		printf("DEC RC_move_by_pos returned error\n");
+	if (RC_get_status(addr, &status) == kERROR)		printf("RC_get_status returned error\n");
+	if (RC_check_queue(addr, &raDepth, &decDepth) == kERROR)		printf("RC_get_status returned error\n");
+	printf("*** status = %X  RA queue = %X  Dec queue = %X\n", status, (uint8_t) raDepth, (uint8_t) decDepth);
+
+	printf("hit any key to stop motors\n");
+	fgets(buf, 256, stdin);
+
+	RC_stop(addr, SERVO_RA_AXIS);
+	RC_stop(addr, SERVO_DEC_AXIS);
 
 	MC_shutdown();
 
