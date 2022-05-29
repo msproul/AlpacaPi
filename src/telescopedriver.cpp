@@ -292,9 +292,26 @@ int		iii;
 	cTelescopeProp.SideOfPier			=	kPierSide_pierUnknown;
 	cTelescopeProp.PhysicalSideOfPier	=	kPierSide_pierUnknown;
 	cTelescopeProp.TrackingRate			=	kDriveRate_driveSidereal;
-	cTelescopeProp.DoesRefraction		=	false;
-	cTelescopeProp.CanFindHome			=	false;
-	cTelescopeProp.CanUnpark			=	false;
+
+	//*	set them all to false, let the sub class decide what it can do
+	cTelescopeProp.CanFindHome				=	false;
+	cTelescopeProp.CanMoveAxis				=	false;
+	cTelescopeProp.CanPark					=	false;
+	cTelescopeProp.CanPulseGuide			=	false;
+	cTelescopeProp.CanSetDeclinationRate	=	false;
+	cTelescopeProp.CanSetGuideRates			=	false;
+	cTelescopeProp.CanSetPark				=	false;
+	cTelescopeProp.CanSetPierSide			=	false;
+	cTelescopeProp.CanSetRightAscensionRate	=	false;
+	cTelescopeProp.CanSetTracking			=	false;
+	cTelescopeProp.CanSlew					=	false;
+	cTelescopeProp.CanSlewAltAz				=	false;
+	cTelescopeProp.CanSlewAltAzAsync		=	false;
+	cTelescopeProp.CanSlewAsync				=	false;
+	cTelescopeProp.CanSync					=	false;
+	cTelescopeProp.CanSyncAltAz				=	false;
+	cTelescopeProp.CanUnpark				=	false;
+	cTelescopeProp.DoesRefraction			=	false;
 
 	//*	Set this to true if the system supports it
 	//*	cTelescopeProp.DoesRefraction is used to enable/disable if it is supported
@@ -346,9 +363,12 @@ int					cmdType;
 int					mySocket;
 
 //	CONSOLE_DEBUG_W_STR("htmlData\t=", reqData->htmlData);
-	if (strcmp(reqData->deviceCommand, "readall") != 0)
+	if (cVerboseDebug)
 	{
-		CONSOLE_DEBUG_W_STR("deviceCommand\t=",	reqData->deviceCommand);
+		if (strcmp(reqData->deviceCommand, "readall") != 0)
+		{
+			CONSOLE_DEBUG_W_STR("deviceCommand\t=",	reqData->deviceCommand);
+		}
 	}
 
 	//*	make local copies of the data structure to make the code easier to read
@@ -3330,7 +3350,6 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "CanUnpark is false");
 //		CONSOLE_DEBUG(alpacaErrMsg);
 	}
-
 	return(alpacaErrCode);
 }
 
@@ -3353,7 +3372,7 @@ char					extraString[128];
 							cTelescopeProp.PhysicalSideOfPier,
 							INCLUDE_COMMA);
 
-	switch(cTelescopeProp.SideOfPier)
+	switch(cTelescopeProp.PhysicalSideOfPier)
 	{
 		case kPierSide_pierUnknown:		//*	Polar (equatorial) mount other than German equatorial.
 			strcpy(extraString, "Unknown or indeterminate.");
@@ -3371,9 +3390,10 @@ char					extraString[128];
 	JsonResponse_Add_String(	reqData->socket,
 								reqData->jsonTextBuffer,
 								kMaxJsonBuffLen,
-								"SideOfPier-str",
+								"PhysicalSideOfPier-str",
 								extraString,
 								INCLUDE_COMMA);
+	return(alpacaErrCode);
 }
 
 //*****************************************************************************

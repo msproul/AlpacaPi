@@ -55,7 +55,7 @@
 
 #include	"alpacadriver.h"
 #include	"alpacadriver_helper.h"
-//#include	"helper_functions.h"
+#include	"helper_functions.h"
 
 //*	servo controller routines using RoboClaws controller
 #include	"servo_mount_cfg.h"
@@ -77,13 +77,15 @@ double	parkRA, parkDec;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
+	cVerboseDebug	=	true;
+
 	strcpy(cCommonProp.Name, "AlpacaPi-Mount-Servo");
 	strcpy(cCommonProp.Description, "Mount using RoboClaw servo controller");
 
 	//*	setup the options for this driver
 	cTelescopeProp.AlginmentMode	=	kAlignmentMode_algGermanPolar;
 	cTelescopeProp.CanSlewAsync		=	true;
-	cTelescopeProp.CanSync			=	false;
+	cTelescopeProp.CanSync			=	true;
 	cTelescopeProp.CanSetTracking	=	true;
 	cTelescopeProp.CanMoveAxis		=	true;
 	cTelescopeProp.CanUnpark		=	true;
@@ -376,55 +378,64 @@ int32_t	TelescopeDriverServo::RunStateMachine(void)
 TYPE_MOVE 	currentMoveState;
 double 		currRA, currDec;
 int8_t 		servoSide;
+uint32_t	currentMilliSecs;
+uint32_t	deltaMilliSecs;
 
+	currentMilliSecs	=	millis();
+	deltaMilliSecs		=	currentMilliSecs - cLastUpdate_milliSecs;
 
-	//*	this is where your periodic code goes
-	//*	update cTelescopeProp values here
-#warning <RNS>  Not sure I did this right but here is an attempt, please code review
-#warning <MLS>  Looks good to me
-
-	CONSOLE_DEBUG(__FUNCTION__);
-
-	//	Update mount state and if "moving" update the .Slewing flag
-	currentMoveState	=	Servo_state();
-	if (currentMoveState == MOVING || currentMoveState == PARKING)
+//	CONSOLE_DEBUG_W_LONG("deltaMilliSecs\t=", deltaMilliSecs);
+	if (deltaMilliSecs > (5 * 1000))
 	{
-		cTelescopeProp.Slewing	=	true;
+//		CONSOLE_DEBUG(__FUNCTION__);
+
+		//*	this is where your periodic code goes
+		//*	update cTelescopeProp values here
+	#warning <RNS>  Not sure I did this right but here is an attempt, please code review
+	#warning <MLS>  Looks good to me
+
+
+		//	Update mount state and if "moving" update the .Slewing flag
+		currentMoveState	=	Servo_state();
+		if (currentMoveState == MOVING || currentMoveState == PARKING)
+		{
+			cTelescopeProp.Slewing	=	true;
+		}
+		else
+		{
+			cTelescopeProp.Slewing	=	false;
+		}
+
+	#warning <RNS>  Also not positive I did this right but here is an attempt
+	#warning <MLS>  Looks good to me
+		//	If moving, get current RA & Dec
+		Servo_get_pos(&currRA, &currDec);
+		//	Convert park RA from hours to degs
+		Time_deci_hours_to_deg(&currRA);
+		cTelescopeProp.RightAscension	=	currRA;
+		cTelescopeProp.Declination		=	currDec;
+
+		//	Update the side of pier
+		servoSide	=	Servo_get_pier_side();
+		switch (servoSide)
+		{
+			case kEAST:
+				cTelescopeProp.SideOfPier	=	kPierSide_pierEast;
+				break;
+
+			case kWEST:
+				cTelescopeProp.SideOfPier	=	kPierSide_pierWest;
+				break;
+
+			default:
+				cTelescopeProp.SideOfPier	=	kPierSide_pierUnknown;
+				break;
+		}
+		cLastUpdate_milliSecs	=	currentMilliSecs;
 	}
-	else
-	{
-		cTelescopeProp.Slewing	=	false;
-	}
-
-#warning <RNS>  Also not positive I did this right but here is an attempt
-#warning <MLS>  Looks good to me
-	//	If moving, get current RA & Dec
-	Servo_get_pos(&currRA, &currDec);
-	//	Convert park RA from hours to degs
-	Time_deci_hours_to_deg(&currRA);
-	cTelescopeProp.RightAscension	=	currRA;
-	cTelescopeProp.Declination		=	currDec;
-
-	//	Update the side of pier
-	servoSide	=	Servo_get_pier_side();
-	switch (servoSide)
-	{
-		case kEAST:
-			cTelescopeProp.SideOfPier	=	kPierSide_pierEast;
-			break;
-
-		case kWEST:
-			cTelescopeProp.SideOfPier	=	kPierSide_pierWest;
-			break;
-
-		default:
-			cTelescopeProp.SideOfPier	=	kPierSide_pierUnknown;
-			break;
-	}
-
-	//*	5 * 1000 * 1000 means you might not get called again for 5 seconds
+	//*	2 * 1000 * 1000 means you might not get called again for 2 seconds
 	//*	you might get called earlier
-	return(5 * 1000 * 1000);
+	return(2 * 1000 * 1000);
 }
 
 //*****************************************************************************

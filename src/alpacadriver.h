@@ -255,6 +255,7 @@ class AlpacaDriver
 				uint32_t			cMagicCookie;		//*	used to validate objects
 				TYPE_DEVICETYPE		cDeviceType;
 				int					cDeviceNum;			//*	device index for alpaca
+				uint32_t			cLastUpdate_milliSecs;
 
 
 				char				cAlpacaName[32];

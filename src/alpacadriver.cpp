@@ -404,6 +404,7 @@ int		iii;
 	cDeviceFirmwareVersStr[0]	=	0;
 	cTotalCmdsProcessed			=	0;
 	cTotalCmdErrors				=	0;
+	cLastUpdate_milliSecs		=	0;
 
 	cTotalBytesRcvd				=	0;
 	cTotalBytesSent				=	0;
@@ -2830,8 +2831,6 @@ int		newListenPort;
 		}
 	}
 }
-
-
 
 //*****************************************************************************
 static void	GetMyHostName(void)

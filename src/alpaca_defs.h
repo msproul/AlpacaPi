@@ -489,10 +489,10 @@ typedef struct
 	bool							TargetDec_HasBeenSet;
 	double							Declination;				//*	degrees
 	double							DeclinationRate;
+	bool							DoesRefraction;
 	bool							TargetRA_HasBeenSet;
 	double							RightAscension;				//*	hours
 	double							RightAscensionRate;
-	bool							DoesRefraction;
 	TYPE_EquatorialCoordinateType	EquatorialSystem;
 	double							FocalLength;
 	double							GuideRateDeclination;
