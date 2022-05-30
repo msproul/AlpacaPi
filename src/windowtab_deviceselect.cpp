@@ -241,7 +241,7 @@ ControllerSkytravel	*myControllerObj;
 	}
 	if (forceUpdate)
 	{
-		ForceUpdate();
+		ForceWindowUpdate();
 	}
 }
 

@@ -126,6 +126,7 @@ double	parkRA, parkDec;
 	cTelescopeProp.TrackingRate		=	kDriveRate_driveSidereal;
 	cTelescopeProp.SiteLatitude		=	Time_get_lat();
 	cTelescopeProp.SiteLongitude	=	Time_get_lon();
+	cTelescopeProp.SiteElevation	=	Time_get_elev();
 
 	//	We know that Servo_init() always sets the scope to the park position
 	Servo_get_park_coordins(&parkRA, &parkDec);

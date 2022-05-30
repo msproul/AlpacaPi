@@ -237,7 +237,7 @@ void	WindowTabGaiaRemote::ProcessButtonClick(const int buttonIdx)
 
 	}
 	UpdateOnScreenWidgetList();
-	ForceUpdate();
+	ForceWindowUpdate();
 }
 
 //*****************************************************************************
@@ -287,7 +287,7 @@ void	WindowTabGaiaRemote::ProcessMouseWheelMoved(	const int	widgetIdx,
 		cFirstLineIdx	=	0;
 	}
 	UpdateOnScreenWidgetList();
-	ForceUpdate();
+	ForceWindowUpdate();
 }
 
 //*****************************************************************************
@@ -305,10 +305,8 @@ void	WindowTabGaiaRemote::UpdateSliderValue(const int	widgetIdx, double newSlide
 		//		cLastExposureUpdate_Millis	=	millis();
 			}
 			break;
-
 	}
-
-	ForceUpdate();
+	ForceWindowUpdate();
 }
 
 //**************************************************************************************
@@ -443,7 +441,7 @@ int		ra_minutes;
 //	SetWidgetScrollBarValue(	kGaiaRemoteList_ScrollBar, 100);
 //
 
-	ForceUpdate();
+	ForceWindowUpdate();
 
 }
 

@@ -3409,7 +3409,8 @@ char	theChar;
 				}
 				jjj				=	0;
 				myArgString[0]	=	0;
-				while ((dataSource[iii] >= 0x20) && (dataSource[iii] != '&') && (jjj < (maxArgLen - 1)))
+				//*	leave room for the null termination
+				while ((dataSource[iii] >= 0x20) && (dataSource[iii] != '&') && (jjj < (maxArgLen - 2)))
 				{
 					myArgString[jjj]	=	dataSource[iii];
 					myArgString[jjj+1]	=	0;

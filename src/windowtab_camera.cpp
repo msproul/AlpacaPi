@@ -86,7 +86,7 @@ WindowTabCamera::WindowTabCamera(	const int	xSize,
 	cLastOffsetUpdate_Millis	=	0;
 
 	SetupWindowControls();
-	ForceUpdate();
+	ForceAlpacaUpdate();
 }
 
 //**************************************************************************************
@@ -727,7 +727,7 @@ int					loopCntr;
 		case kCameraBox_ReadMode4:
 			sprintf(dataString, "ReadoutMode=%d", (buttonIdx - kCameraBox_ReadMode0));
 			validData	=	AlpacaSendPutCmd(	"camera", "readoutmode",	dataString);
-			ForceUpdate();
+			ForceAlpacaUpdate();
 			break;
 
 		case kCameraBox_LiveMode:
@@ -773,12 +773,12 @@ int					loopCntr;
 
 		case kCameraBox_Btn_8Bit:
 			cForce8BitRead	=	!cForce8BitRead;
-			ForceUpdate();
+			ForceAlpacaUpdate();
 			break;
 
 		case kCameraBox_EnableBinary:
 			cAllowBinaryDownload	=	!cAllowBinaryDownload;
-			ForceUpdate();
+			ForceAlpacaUpdate();
 			break;
 
 		case kCameraBox_DownloadImage:
@@ -807,14 +807,13 @@ int					loopCntr;
 			validData	=	AlpacaSendPutCmd(	"filterwheel", "position",	dataString);
 			if (validData)
 			{
-				ForceUpdate();
+				ForceAlpacaUpdate();
 			}
 			else
 			{
 				CONSOLE_DEBUG("Error setting filter wheel position");
 			}
 			break;
-
 
 		case kCameraBox_FlipHorzCheckBox:
 			ToggleFlipMode(true, false);
@@ -827,9 +826,7 @@ int					loopCntr;
 		default:
 			CONSOLE_DEBUG(__FUNCTION__);
 			CONSOLE_DEBUG_W_NUM("buttonIdx\t",	buttonIdx);
-
 			break;
-
 	}
 	DisplayLastAlpacaCommand();
 }
@@ -910,22 +907,19 @@ int					newSliderValue_int;
 				cLastOffsetUpdate_Millis	=	millis();
 			}
 			break;
-
 	}
-
-	ForceUpdate();
+	ForceAlpacaUpdate();
 }
 
 
 //*****************************************************************************
-void	WindowTabCamera::ForceUpdate(void)
+void	WindowTabCamera::ForceAlpacaUpdate(void)
 {
 ControllerCamera	*myCameraController;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 	SetWidgetChecked(kCameraBox_Btn_8Bit,		cForce8BitRead);
 	SetWidgetChecked(kCameraBox_EnableBinary,	cAllowBinaryDownload);
-
 
 	myCameraController	=	(ControllerCamera *)cParentObjPtr;
 
@@ -1134,7 +1128,7 @@ ControllerCamera	*myCameraController;
 	if (myCameraController != NULL)
 	{
 		SetWidgetText(kCameraBox_State,			"-----");
-		ForceUpdate();
+		ForceAlpacaUpdate();
 
 		myCameraController->StartExposure();
 	}

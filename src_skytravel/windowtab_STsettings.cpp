@@ -971,7 +971,7 @@ char	textString[32];
 	sprintf(textString, "%1.1f", gST_DispOptions.DisplayedMagnitudeLimit);
 	SetWidgetText(kSkyT_Settings_MagnitudeLimit, textString);
 
-	ForceUpdate();
+	ForceWindowUpdate();
 }
 
 //**************************************************************************************

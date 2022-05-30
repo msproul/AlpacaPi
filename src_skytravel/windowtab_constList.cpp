@@ -200,10 +200,8 @@ int	newSortColumn;
 			}
 			cSortColumn		=	newSortColumn;
 			UpdateSortOrder();
-			ForceUpdate();
+			ForceWindowUpdate();
 			break;
-
-
 	}
 }
 
@@ -266,7 +264,7 @@ void	WindowTabConstellationList::ProcessMouseWheelMoved(	const int	widgetIdx,
 		cFirstLineIdx	=	0;
 	}
 	UpdateOnScreenWidgetList();
-	ForceUpdate();
+	ForceWindowUpdate();
 }
 
 //*****************************************************************************
@@ -288,10 +286,8 @@ void	WindowTabConstellationList::UpdateSliderValue(const int	widgetIdx, double n
 		//		cLastExposureUpdate_Millis	=	millis();
 			}
 			break;
-
 	}
-
-	ForceUpdate();
+	ForceWindowUpdate();
 }
 
 //**************************************************************************************

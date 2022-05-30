@@ -22,6 +22,7 @@
 //*	Jan 23,	2021	<MLS> Added Update_TelescopeRtAscension()
 //*	Jan 23,	2021	<MLS> Added Update_TelescopeDeclination()
 //*	Jan 24,	2021	<MLS> Converted TelescopeControler to use properties struct
+//*	May 29,	2022	<MLS> Added telescope settings tab
 //*****************************************************************************
 
 #ifdef _ENABLE_CTRL_TELESCOPE_
@@ -42,6 +43,7 @@
 #define	kWindowHeight	550
 
 #include	"windowtab_telescope.h"
+#include	"windowtab_teleSettings.h"
 #include	"windowtab_capabilities.h"
 #include	"windowtab_drvrInfo.h"
 #include	"windowtab_about.h"
@@ -53,7 +55,8 @@
 //**************************************************************************************
 enum
 {
-	kTab_Telescope	=	1,
+	kTab_Control	=	1,
+	kTab_Settings,
 	kTab_Capabilities,
 	kTab_DriverInfo,
 	kTab_About,
@@ -74,12 +77,14 @@ ControllerTelescope::ControllerTelescope(	const char			*argWindowName,
 	memset(&cTelescopeProp, 0, sizeof(TYPE_TelescopeProperties));
 	strcpy(cAlpacaDeviceTypeStr,	"telescope");
 
+	cTelescopeProp.PhysicalSideOfPier	=	kPierSide_NotAvailable;
 
 	cAlpacaDevNum			=	deviceNum;
 	cFirstDataRead			=	true;
 	cLastUpdate_milliSecs	=	millis();
 
 	cTelescopeTabObjPtr		=	NULL;
+	cTeleSettingsTabObjPtr	=	NULL;
 	cDriverInfoTabObjPtr	=	NULL;
 	cAboutBoxTabObjPtr		=	NULL;
 
@@ -107,6 +112,7 @@ ControllerTelescope::~ControllerTelescope(void)
 	CONSOLE_DEBUG(__FUNCTION__);
 	//--------------------------------------------
 	DELETE_OBJ_IF_VALID(cTelescopeTabObjPtr);
+	DELETE_OBJ_IF_VALID(cTeleSettingsTabObjPtr);
 	DELETE_OBJ_IF_VALID(cDriverInfoTabObjPtr);
 	DELETE_OBJ_IF_VALID(cAboutBoxTabObjPtr);
 
@@ -132,7 +138,8 @@ void	ControllerTelescope::SetupWindowControls(void)
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	SetTabCount(kTab_Count);
-	SetTabText(kTab_Telescope,		"Telescope");
+	SetTabText(kTab_Control,		"Control");
+	SetTabText(kTab_Settings,		"Settings");
 	SetTabText(kTab_Capabilities,	"Capabilities");
 	SetTabText(kTab_DriverInfo,		"Driver Info");
 	SetTabText(kTab_About,			"About");
@@ -142,8 +149,16 @@ void	ControllerTelescope::SetupWindowControls(void)
 	cTelescopeTabObjPtr	=	new WindowTabTelescope(cWidth, cHeight, cBackGrndColor, cWindowName);
 	if (cTelescopeTabObjPtr != NULL)
 	{
-		SetTabWindow(kTab_Telescope,	cTelescopeTabObjPtr);
+		SetTabWindow(kTab_Control,	cTelescopeTabObjPtr);
 		cTelescopeTabObjPtr->SetParentObjectPtr(this);
+	}
+
+	//--------------------------------------------
+	cTeleSettingsTabObjPtr	=	new WindowTabTeleSettings(cWidth, cHeight, cBackGrndColor, cWindowName);
+	if (cTeleSettingsTabObjPtr != NULL)
+	{
+		SetTabWindow(kTab_Settings,	cTeleSettingsTabObjPtr);
+		cTeleSettingsTabObjPtr->SetParentObjectPtr(this);
 	}
 
 	//--------------------------------------------
@@ -170,7 +185,7 @@ void	ControllerTelescope::SetupWindowControls(void)
 		cAboutBoxTabObjPtr->SetParentObjectPtr(this);
 	}
 
-	SetWidgetFont(kTab_Telescope,	kTelescope_IPaddr, kFont_Medium);
+	SetWidgetFont(kTab_Control,	kTelescope_IPaddr, kFont_Medium);
 
 	//*	display the IPaddres/port
 	if (cValidIPaddr)
@@ -211,7 +226,7 @@ bool		validData;
 
 	currentMilliSecs	=	millis();
 	deltaMilliSecs		=	currentMilliSecs - cLastUpdate_milliSecs;
-	if (deltaMilliSecs > 2000)
+	if (cForceAlpacaUpdate || (deltaMilliSecs > 2000))
 	{
 		validData	=	AlpacaGetStatus();
 		if (validData == false)
@@ -220,7 +235,8 @@ bool		validData;
 		}
 		cLastUpdate_milliSecs	=	millis();
 
-		UpdateConnectedIndicator(kTab_Telescope,	kTelescope_Connected);
+		UpdateConnectedIndicator(kTab_Control,	kTelescope_Connected);
+		cForceAlpacaUpdate	=	false;
 	}
 }
 
@@ -257,12 +273,20 @@ char	returnString[256];
 		validData	=	AlpacaGetStringValue(	"telescope", "description",	NULL,	returnString);
 		if (validData)
 		{
-			SetWidgetText(kTab_Telescope, kTelescope_AlpacaDrvrVersion, returnString);
+			SetWidgetText(kTab_Control, kTelescope_AlpacaDrvrVersion, returnString);
 		}
 	}
 	validData	=	AlpacaGetStartupData_TelescopeOneAAT();
+	if (cTeleSettingsTabObjPtr != NULL)
+	{
+		cTeleSettingsTabObjPtr->UpdateTelescopeInfo(&cTelescopeProp, true);
+	}
+	else
+	{
+		CONSOLE_ABORT(__FUNCTION__);
+	}
 
-	SetWidgetValid(kTab_Telescope,	kTelescope_Readall,		cHas_readall);
+	SetWidgetValid(kTab_Control,	kTelescope_Readall,		cHas_readall);
 	return(validData);
 }
 
@@ -270,7 +294,7 @@ char	returnString[256];
 void	ControllerTelescope::AlpacaDisplayErrorMessage(const char *errorMsgString)
 {
 	CONSOLE_DEBUG_W_STR("Alpaca error=", errorMsgString);
-	SetWidgetText(kTab_Telescope, kTelescope_ErrorMsg, errorMsgString);
+	SetWidgetText(kTab_Control, kTelescope_ErrorMsg, errorMsgString);
 }
 
 //*****************************************************************************
@@ -349,8 +373,12 @@ bool	previousOnLineState;
 		//*	update the window tab with everything
 		if (cTelescopeTabObjPtr != NULL)
 		{
-			SetTabWindow(kTab_Telescope,	cTelescopeTabObjPtr);
 			cTelescopeTabObjPtr->UpdateTelescopeInfo(&cTelescopeProp);
+		}
+		if (cTeleSettingsTabObjPtr != NULL)
+		{
+			//*	false means only update the dynamic properties
+			cTeleSettingsTabObjPtr->UpdateTelescopeInfo(&cTelescopeProp, false);
 		}
 	}
 	else
@@ -373,7 +401,7 @@ void	ControllerTelescope::Update_TelescopeRtAscension(void)
 char	hhmmssString[64];
 
 	FormatHHMMSS(cTelescopeProp.RightAscension, hhmmssString, false);
-	SetWidgetText(kTab_Telescope,	kTelescope_RA_value,		hhmmssString);
+	SetWidgetText(kTab_Control,	kTelescope_RA_value,		hhmmssString);
 }
 
 //**************************************************************************************
@@ -382,7 +410,7 @@ void	ControllerTelescope::Update_TelescopeDeclination(void)
 char	hhmmssString[64];
 
 	FormatHHMMSS(cTelescopeProp.Declination, hhmmssString, true);
-	SetWidgetText(kTab_Telescope,	kTelescope_DEC_value,		hhmmssString);
+	SetWidgetText(kTab_Control,	kTelescope_DEC_value,		hhmmssString);
 }
 
 

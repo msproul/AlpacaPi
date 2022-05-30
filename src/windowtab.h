@@ -217,7 +217,7 @@ class WindowTab
 				void	SetWindowTabColorScheme(const int colorScheme);
 				void	BumpColorScheme(void);
 
-				void	ForceUpdate(void);
+				void	ForceWindowUpdate(void);
 				void	UpdateWindowAsNeeded(void);
 		virtual	void	UpdateColors(void);
 
@@ -319,6 +319,7 @@ class WindowTab
 #ifdef _CONTROLLER_USES_ALPACA_
 		//------------------------------------------------------------
 		//*	Alpaca command stuff
+		void	ForceAlpacaUpdate(void);
 		bool	AlpacaSendPutCmd(	sockaddr_in		*deviceAddress,
 									int				devicePort,
 									const char		*alpacaDevice,

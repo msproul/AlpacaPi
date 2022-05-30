@@ -53,6 +53,7 @@
 //*	May 28,	2022	<MLS> Added Put_SideOfPier()
 //*	May 28,	2022	<MLS> Added Get_PhysicalSideOfPier()
 //*	May 28,	2022	<MLS> Added cDriverSupportsLimitSwitches
+//*	May 28,	2022	<MLS> Added Telescope_GetLimitSwitchStatus()
 //*****************************************************************************
 
 
@@ -290,7 +291,7 @@ int		iii;
 	cTelescopeProp.AlginmentMode		=	kAlignmentMode_algGermanPolar;
 	cTelescopeProp.EquatorialSystem		=	kECT_equOther;
 	cTelescopeProp.SideOfPier			=	kPierSide_pierUnknown;
-	cTelescopeProp.PhysicalSideOfPier	=	kPierSide_pierUnknown;
+	cTelescopeProp.PhysicalSideOfPier	=	kPierSide_NotAvailable;
 	cTelescopeProp.TrackingRate			=	kDriveRate_driveSidereal;
 
 	//*	set them all to false, let the sub class decide what it can do
@@ -1399,7 +1400,7 @@ double					newDecRate;
 		decRateFound		=	GetKeyWordArgument(	reqData->contentData,
 													"DeclinationRate",
 													decRateString,
-													(sizeof(decRateString) -1),
+													sizeof(decRateString),
 													kArgumentIsNumeric);
 		if (decRateFound)
 		{
@@ -1432,12 +1433,20 @@ TYPE_ASCOM_STATUS	TelescopeDriver::Get_DoesRefraction(TYPE_GetPutRequestData	*re
 {
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 
-	JsonResponse_Add_Bool(	reqData->socket,
-							reqData->jsonTextBuffer,
-							kMaxJsonBuffLen,
-							responseString,
-							cTelescopeProp.DoesRefraction,
-							INCLUDE_COMMA);
+	if (cDriverSupportsRefraction)
+	{
+		JsonResponse_Add_Bool(	reqData->socket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								responseString,
+								cTelescopeProp.DoesRefraction,
+								INCLUDE_COMMA);
+	}
+	else
+	{
+		alpacaErrCode	=	kASCOM_Err_PropertyNotImplemented;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Driver does not support refraction");
+	}
 	return(alpacaErrCode);
 }
 
@@ -1454,7 +1463,7 @@ char					doseRefractionString[64];
 	doseRefractionFound		=	GetKeyWordArgument(	reqData->contentData,
 													"DoesRefraction",
 													doseRefractionString,
-													(sizeof(doseRefractionString) -1));
+													sizeof(doseRefractionString));
 	if (cDriverSupportsRefraction)
 	{
 		if (doseRefractionFound)
@@ -1474,7 +1483,6 @@ char					doseRefractionString[64];
 		alpacaErrCode	=	kASCOM_Err_PropertyNotImplemented;
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Driver does not support refraction");
 	}
-
 	return(alpacaErrCode);
 }
 
@@ -1577,7 +1585,7 @@ double				newGuideRateDeclination;
 		guideRateDeclinationFound	=	GetKeyWordArgument(	reqData->contentData,
 															"GuideRateDeclination",
 															guideRateDeclinationStr,
-															(sizeof(guideRateDeclinationStr) -1),
+															sizeof(guideRateDeclinationStr),
 															kArgumentIsNumeric);
 		if (guideRateDeclinationFound)
 		{
@@ -1639,7 +1647,7 @@ double				newGuideRateRightAscension;
 		guideRateRightAscensionFound	=	GetKeyWordArgument(	reqData->contentData,
 																"GuideRateRightAscension",
 																guideRateRightAscensionStr,
-																(sizeof(guideRateRightAscensionStr) -1),
+																sizeof(guideRateRightAscensionStr),
 																kArgumentIsNumeric);
 		if (guideRateRightAscensionFound)
 		{
@@ -1762,7 +1770,7 @@ double				newrightAscenRate;
 		rightAscenRateFound		=	GetKeyWordArgument(	reqData->contentData,
 														"RightAscensionRate",
 														rightAscenRateString,
-														(sizeof(rightAscenRateString) -1),
+														sizeof(rightAscenRateString),
 														kArgumentIsNumeric);
 		if (rightAscenRateFound)
 		{
@@ -1893,7 +1901,7 @@ double				newElevation;
 	siteElevFound		=	GetKeyWordArgument(	reqData->contentData,
 												"SiteElevation",
 												siteElevString,
-												(sizeof(siteElevString) -1),
+												sizeof(siteElevString),
 												kArgumentIsNumeric);
 	if (siteElevFound)
 	{
@@ -1957,7 +1965,7 @@ double				newLatitude;
 	siteLatFound		=	GetKeyWordArgument(	reqData->contentData,
 												"SiteLatitude",
 												siteLatString,
-												(sizeof(siteLatString) -1),
+												sizeof(siteLatString),
 												kArgumentIsNumeric);
 	if (siteLatFound)
 	{
@@ -2013,7 +2021,7 @@ double				newLongitude;
 	siteLonFound		=	GetKeyWordArgument(	reqData->contentData,
 												"SiteLongitude",
 												siteLonString,
-												(sizeof(siteLonString) -1),
+												sizeof(siteLonString),
 												kArgumentIsNumeric);
 	if (siteLonFound)
 	{
@@ -2092,7 +2100,7 @@ short				newSlewSettleTime;
 	slewSettleTimeFound		=	GetKeyWordArgument(	reqData->contentData,
 													"SlewSettleTime",
 													slewSettleTimeString,
-													(sizeof(slewSettleTimeString) -1));
+													sizeof(slewSettleTimeString));
 	if (slewSettleTimeFound)
 	{
 		newSlewSettleTime	=	atoi(slewSettleTimeString);
@@ -2116,10 +2124,8 @@ short				newSlewSettleTime;
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "SlewSettleTime is missing");
 //		CONSOLE_DEBUG(alpacaErrMsg);
 	}
-
 	return(alpacaErrCode);
 }
-
 
 //*****************************************************************************
 TYPE_ASCOM_STATUS	TelescopeDriver::Get_TargetDeclination(	TYPE_GetPutRequestData *reqData,
@@ -2164,7 +2170,7 @@ double				newTargetDeclination;
 	targetDeclinationFound	=	GetKeyWordArgument(	reqData->contentData,
 													"TargetDeclination",
 													targetDeclinationString,
-													(sizeof(targetDeclinationString) -1),
+													sizeof(targetDeclinationString),
 													kArgumentIsNumeric);
 	if (targetDeclinationFound)
 	{
@@ -2238,7 +2244,7 @@ double				newTargetRightAscension;
 	targetRightAscensionFound	=	GetKeyWordArgument(	reqData->contentData,
 														"TargetRightAscension",
 														targetRightAscensionString,
-														(sizeof(targetRightAscensionString) -1),
+														sizeof(targetRightAscensionString),
 														kArgumentIsNumeric);
 	if (targetRightAscensionFound)
 	{
@@ -2297,7 +2303,7 @@ char					trackingString[64];
 		trackingFound		=	GetKeyWordArgument(	reqData->contentData,
 													"Tracking",
 													trackingString,
-													(sizeof(trackingString) -1));
+													sizeof(trackingString));
 		if (trackingFound)
 		{
 			cTelescopeProp.Tracking		=	IsTrueFalse(trackingString);
@@ -2387,7 +2393,7 @@ TYPE_DriveRates			newtrackingRate;
 	trackingRateFound		=	GetKeyWordArgument(	reqData->contentData,
 													"TrackingRate",
 													trackingRateString,
-													(sizeof(trackingRateString) -1));
+													sizeof(trackingRateString));
 	if (trackingRateFound)
 	{
 		newtrackingRate		=	(TYPE_DriveRates)atoi(trackingRateString);
@@ -2491,7 +2497,7 @@ char					utcDateString[64];
 	utcDateFound	=	GetKeyWordArgument(	reqData->contentData,
 											"UTCDate",
 											utcDateString,
-											(sizeof(utcDateString) -1));
+											sizeof(utcDateString));
 	if (utcDateFound)
 	{
 		//*	we have to parse the ISO8601 time string
@@ -2564,7 +2570,7 @@ int						axisNumber;
 	axisFound		=	GetKeyWordArgument(	reqData->contentData,
 											"Axis",
 											axisString,
-											(sizeof(axisString) -1));
+											sizeof(axisString));
 	if (axisFound)
 	{
 		axisNumber		=	atoi(axisString);
@@ -2640,7 +2646,7 @@ int						axisNumber;
 	axisFound		=	GetKeyWordArgument(	reqData->contentData,
 											"Axis",
 											axisString,
-											(sizeof(axisString) -1));
+											sizeof(axisString));
 	if (axisFound)
 	{
 		axisNumber		=	atoi(axisString);
@@ -2726,12 +2732,12 @@ double					newRate;
 		axisFound		=	GetKeyWordArgument(	reqData->contentData,
 												"Axis",
 												axisString,
-												(sizeof(axisString) -1));
+												sizeof(axisString));
 
 		rateFound		=	GetKeyWordArgument(	reqData->contentData,
 												"Rate",
 												rateString,
-												(sizeof(rateString) -1),
+												sizeof(rateString),
 												kArgumentIsNumeric);
 
 		if (axisFound)
@@ -2804,12 +2810,12 @@ double					newRate;
 		axisFound		=	GetKeyWordArgument(	reqData->contentData,
 														"Axis",
 														axisString,
-														(sizeof(axisString) -1));
+														sizeof(axisString));
 
 		rateFound		=	GetKeyWordArgument(	reqData->contentData,
 														"Rate",
 														rateString,
-														(sizeof(rateString) -1),
+														sizeof(rateString),
 														kArgumentIsNumeric);
 
 		if (axisFound)
@@ -2915,13 +2921,13 @@ double				newAz_degrees;
 		altitudeFound	=	GetKeyWordArgument(	reqData->contentData,
 												"Altitude",
 												altitudeString,
-												(sizeof(altitudeString) -1),
+												sizeof(altitudeString),
 												kArgumentIsNumeric);
 
 		azimuthFound	=	GetKeyWordArgument(	reqData->contentData,
 												"Azimuth",
 												azimuthString,
-												(sizeof(azimuthString) -1),
+												sizeof(azimuthString),
 												kArgumentIsNumeric);
 
 		if (altitudeFound && azimuthFound)
@@ -2992,13 +2998,13 @@ double				newDeclination;
 		rightAscensionFound		=	GetKeyWordArgument(	reqData->contentData,
 														"RightAscension",
 														rightAscensionStr,
-														(sizeof(rightAscensionStr) -1),
+														sizeof(rightAscensionStr),
 														kArgumentIsNumeric);
 
 		declinationFound		=	GetKeyWordArgument(	reqData->contentData,
 														"Declination",
 														declinationStr,
-														(sizeof(rightAscensionStr) -1),
+														sizeof(rightAscensionStr),
 														kArgumentIsNumeric);
 
 		if (rightAscensionFound && declinationFound)
@@ -3111,13 +3117,13 @@ double				newDeclination;
 		rightAscensionFound		=	GetKeyWordArgument(	reqData->contentData,
 														"RightAscension",
 														rightAscensionStr,
-														(sizeof(rightAscensionStr) -1),
+														sizeof(rightAscensionStr),
 														kArgumentIsNumeric);
 
 		declinationFound		=	GetKeyWordArgument(	reqData->contentData,
 														"Declination",
 														declinationStr,
-														(sizeof(declinationStr) -1),
+														sizeof(declinationStr),
 														kArgumentIsNumeric);
 		if (rightAscensionFound && declinationFound)
 		{
@@ -3242,13 +3248,13 @@ double				newDeclination;
 		rightAscensionFound		=	GetKeyWordArgument(	reqData->contentData,
 														"RightAscension",
 														rightAscensionStr,
-														(sizeof(rightAscensionStr) -1),
+														sizeof(rightAscensionStr),
 														kArgumentIsNumeric);
 
 		declinationFound		=	GetKeyWordArgument(	reqData->contentData,
 														"Declination",
 														declinationStr,
-														(sizeof(declinationStr) -1),
+														sizeof(declinationStr),
 														kArgumentIsNumeric);
 		if (rightAscensionFound && declinationFound)
 		{
@@ -3680,6 +3686,30 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 
 }
 
+//*****************************************************************************
+//* this can be over-ridden
+//*****************************************************************************
+int	TelescopeDriver::Telescope_GetLimitSwitchStatus(const TYPE_LIMITSWITCH whichLimit)
+{
+int		limitSwichStatus;
+
+	switch(whichLimit)
+	{
+		case kLimitSwitch_RA_East:
+			limitSwichStatus	=	-1;
+			break;
+
+		case kLimitSwitch_RA_West:
+			limitSwichStatus	=	-1;
+			break;
+
+		default:
+			limitSwichStatus	=	-1;
+			break;
+
+	}
+	return(limitSwichStatus);
+}
 
 
 

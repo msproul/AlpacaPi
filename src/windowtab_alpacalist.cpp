@@ -361,7 +361,7 @@ int	newSortColumn;
 			}
 			cSortColumn		=	newSortColumn;
 			UpdateSortOrder();
-			ForceUpdate();
+			ForceWindowUpdate();
 			break;
 
 		case kAlpacaList_ChkBx_IncManagment:
@@ -371,7 +371,7 @@ int	newSortColumn;
 
 		case kAlpacaList_Btn_Refresh:
 			ClearRemoteDeviceList();
-			ForceUpdate();
+			ForceWindowUpdate();
 			break;
 
 		case kAlpacaList_Btn_CloseAll:
@@ -568,7 +568,7 @@ void	WindowTabAlpacaList::ProcessMouseWheelMoved(const int	widgetIdx,
 		cFirstLineIdx	=	0;
 	}
 	UpdateOnScreenWidgetList();
-	ForceUpdate();
+	ForceWindowUpdate();
 }
 
 //*****************************************************************************
@@ -583,8 +583,7 @@ void	WindowTabAlpacaList::UpdateSliderValue(const int	widgetIdx, double newSlide
 			break;
 
 	}
-
-	ForceUpdate();
+	ForceWindowUpdate();
 }
 
 //**************************************************************************************
@@ -672,7 +671,7 @@ int		foundIndex;
 
 	if (cAlpacaDevCnt != cPrevAlpacaDevCnt)
 	{
-		ForceUpdate();
+		ForceWindowUpdate();
 		cPrevAlpacaDevCnt	=	cAlpacaDevCnt;
 	}
 }

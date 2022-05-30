@@ -221,7 +221,7 @@ char		moonPhaseStr[64];
 
 		cLastUpdateTime_ms	=	currentMilliSecs;
 
-		ForceUpdate();
+		ForceWindowUpdate();
 
 		cFirstRead	=	false;
 	}
@@ -487,7 +487,7 @@ char			myMoonFilePath[128];
 		SetWidgetText(kMoon_FileName,	errMsgString);
 	}
 #endif // _USE_OPENCV_CPP_
-	ForceUpdate();
+	ForceWindowUpdate();
 }
 
 //**************************************************************************************

@@ -246,6 +246,7 @@ typedef enum
 //*****************************************************************************
 typedef enum
 {
+	kPierSide_NotAvailable	=	-2,	//*	NOT PART OF ASCOM
 	kPierSide_pierUnknown	=	-1,	//*	Unknown or indeterminate.
 	kPierSide_pierEast		=	0,	//*	Normal pointing state - Mount on the East side of pier (looking West)
 	kPierSide_pierWest		=	1	//*	Through the pole pointing state - Mount on the West side of pier (looking East)

@@ -67,87 +67,6 @@ bool	dataWasHandled;
 	{
 		cTelescopeProp.AtPark	=	IsTrueFalse(valueString);
 	}
-//	//=================================================================================
-//	else if (strcasecmp(keywordString,		"CanFindHome") == 0)
-//	{
-//		cTelescopeProp.CanFindHome	=	IsTrueFalse(valueString);
-//	}
-//	//=================================================================================
-//	else if (strcasecmp(keywordString,		"CanMoveAxis") == 0)
-//	{
-//		cTelescopeProp.CanMoveAxis	=	IsTrueFalse(valueString);
-//	}
-//	//=================================================================================
-//	else if (strcasecmp(keywordString,		"CanPark") == 0)
-//	{
-//		cTelescopeProp.CanPark	=	IsTrueFalse(valueString);
-//	}
-//	//=================================================================================
-//	else if (strcasecmp(keywordString,		"CanPulseGuide") == 0)
-//	{
-//		cTelescopeProp.CanPulseGuide	=	IsTrueFalse(valueString);
-//	}
-//	//=================================================================================
-//	else if (strcasecmp(keywordString,		"CanSetDeclinationRate") == 0)
-//	{
-//		cTelescopeProp.CanSetDeclinationRate	=	IsTrueFalse(valueString);
-//	}
-//	//=================================================================================
-//	else if (strcasecmp(keywordString,		"CanSetGuideRates") == 0)
-//	{
-//		cTelescopeProp.CanSetGuideRates	=	IsTrueFalse(valueString);
-//	}
-//	//=================================================================================
-//	else if (strcasecmp(keywordString,		"CanSetPark") == 0)
-//	{
-//		cTelescopeProp.CanSetPark	=	IsTrueFalse(valueString);
-//	}
-//	//=================================================================================
-//	else if (strcasecmp(keywordString,		"CanSetPierSide") == 0)
-//	{
-//		cTelescopeProp.CanSetPierSide	=	IsTrueFalse(valueString);
-//	}
-//	//=================================================================================
-//	else if (strcasecmp(keywordString,		"CanSetRightAscensionRate") == 0)
-//	{
-//		cTelescopeProp.CanSetRightAscensionRate	=	IsTrueFalse(valueString);
-//	}
-//	//=================================================================================
-//	else if (strcasecmp(keywordString,		"CanSetTracking") == 0)
-//	{
-//		cTelescopeProp.CanSetTracking	=	IsTrueFalse(valueString);
-//	}
-//	//=================================================================================
-//	else if (strcasecmp(keywordString,		"CanSlew") == 0)
-//	{
-//		cTelescopeProp.CanSlew	=	IsTrueFalse(valueString);
-//	}
-//	//=================================================================================
-//	else if (strcasecmp(keywordString,		"CanSlewAltAz") == 0)
-//	{
-//		cTelescopeProp.CanSlewAltAz	=	IsTrueFalse(valueString);
-//	}
-//	//=================================================================================
-//	else if (strcasecmp(keywordString,		"CanSlewAltAzAsync") == 0)
-//	{
-//		cTelescopeProp.CanSlewAltAzAsync	=	IsTrueFalse(valueString);
-//	}
-//	//=================================================================================
-//	else if (strcasecmp(keywordString,		"CanSlewAsync") == 0)
-//	{
-//		cTelescopeProp.CanSlewAsync	=	IsTrueFalse(valueString);
-//	}
-//	//=================================================================================
-//	else if (strcasecmp(keywordString,		"CanSync") == 0)
-//	{
-//		cTelescopeProp.CanSync	=	IsTrueFalse(valueString);
-//	}
-//	//=================================================================================
-//	else if (strcasecmp(keywordString,		"CanSyncAltAz") == 0)
-//	{
-//		cTelescopeProp.CanSyncAltAz	=	IsTrueFalse(valueString);
-//	}
-
 	//=================================================================================
 	else if (strcasecmp(keywordString,		"Declination") == 0)
 	{
@@ -159,6 +78,16 @@ bool	dataWasHandled;
 	{
 		cTelescopeProp.RightAscension	=	atof(valueString);
 		Update_TelescopeRtAscension();
+	}
+	//=================================================================================
+	else if (strcasecmp(keywordString,		"PhysicalSideOfPier") == 0)
+	{
+		cTelescopeProp.PhysicalSideOfPier	=	(TYPE_PierSide)atoi(valueString);
+	}
+	//=================================================================================
+	else if (strcasecmp(keywordString,		"SideOfPier") == 0)
+	{
+		cTelescopeProp.SideOfPier	=	(TYPE_PierSide)atoi(valueString);
 	}
 	//=================================================================================
 	else if (strcasecmp(keywordString,		"Slewing") == 0)
@@ -187,7 +116,7 @@ bool	dataWasHandled;
 	{
 		//*	"version": "AlpacaPi - V0.2.2-beta build #32",
 		strcpy(cAlpacaVersionString, valueString);
-		SetWidgetText(kTab_Telescope,	kTelescope_AlpacaDrvrVersion,		cAlpacaVersionString);
+		SetWidgetText(kTab_Control,	kTelescope_AlpacaDrvrVersion,		cAlpacaVersionString);
 //--		SetWidgetText(kTab_DriverInfo,	kDriverInfo_AlpacaDrvrVersion,		cAlpacaVersionString);
 		dataWasHandled	=	true;
 	}
@@ -201,7 +130,6 @@ void	PARENT_CLASS::ReadOneTelescopeCapability(	const char	*propertyStr,
 													const char	*reportedStr,
 													bool		*booleanValue)
 {
-
 	ReadOneDriverCapability("telescope", propertyStr, reportedStr, booleanValue);
 }
 
@@ -212,10 +140,11 @@ bool			validData;
 int				myFailureCount;
 double			argDoubleMin;
 double			argDoubleMax;
+double			argDouble;
 char			alpacaString[64];
 int				iii;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 #ifndef _PARENT_IS_TELESCOPE_
 //	CONSOLE_DEBUG("NOT   _PARENT_IS_TELESCOPE_");
 	cDeviceAddress	=	cTelescopeIpAddress;
@@ -224,6 +153,7 @@ int				iii;
 #endif
 
 	ReadOneTelescopeCapability("canfindhome",			"CanFindHome",			&cTelescopeProp.CanFindHome);
+	ReadOneTelescopeCapability("canmoveaxis",			"CanMoveAxis",			&cTelescopeProp.CanMoveAxis);
 	ReadOneTelescopeCapability("canpark",				"CanPark",				&cTelescopeProp.CanPark);
 	ReadOneTelescopeCapability("canpulseguide",			"CanPulseGuide",		&cTelescopeProp.CanPulseGuide);
 	ReadOneTelescopeCapability("cansetdeclinationrate",	"CanSetDeclinationRate",
@@ -274,6 +204,46 @@ int				iii;
 			cReadFailureCnt++;
 			myFailureCount++;
 		}
+	}
+
+	//========================================================
+	validData	=	AlpacaGetDoubleValue(	"telescope", "sitelatitude",	NULL,	&argDouble);
+	if (validData)
+	{
+		cTelescopeProp.SiteLatitude	=	argDouble;
+		CONSOLE_DEBUG_W_DBL("SiteLatitude\t=", cTelescopeProp.SiteLatitude);
+	}
+	else
+	{
+		CONSOLE_DEBUG("Failed");
+		cReadFailureCnt++;
+		myFailureCount++;
+	}
+	//========================================================
+	validData	=	AlpacaGetDoubleValue(	"telescope", "sitelongitude",	NULL,	&argDouble);
+	if (validData)
+	{
+		cTelescopeProp.SiteLongitude	=	argDouble;
+		CONSOLE_DEBUG_W_DBL("SiteLongitude\t=", cTelescopeProp.SiteLongitude);
+	}
+	else
+	{
+		CONSOLE_DEBUG("Failed");
+		cReadFailureCnt++;
+		myFailureCount++;
+	}
+	//========================================================
+	validData	=	AlpacaGetDoubleValue(	"telescope", "siteelevation",	NULL,	&argDouble);
+	if (validData)
+	{
+		cTelescopeProp.SiteElevation	=	argDouble;
+		CONSOLE_DEBUG_W_DBL("SiteElevation\t=", cTelescopeProp.SiteElevation);
+	}
+	else
+	{
+		CONSOLE_DEBUG("Failed");
+		cReadFailureCnt++;
+		myFailureCount++;
 	}
 
 	return(true);

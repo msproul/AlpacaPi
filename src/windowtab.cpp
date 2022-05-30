@@ -64,6 +64,7 @@
 //*	Feb 26,	2022	<MLS> floodfill working under opencv C++
 //*	Apr  9,	2022	<MLS> Made some changes to be compatible with openCV ver 2
 //*	Apr  9,	2022	<MLS> OpenCV version 2.4.9.1 is default on R-Pi 3 (stretch)
+//*	May 29,	2022	<MLS> Added ForceAlpacaUpdate()
 //*****************************************************************************
 
 
@@ -74,25 +75,17 @@
 #include	<unistd.h>
 #include	<sys/time.h>
 
-
-
-
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
-
-
 
 #include	"commoncolor.h"
 #include	"widget.h"
 #include	"windowtab.h"
 #include	"controller.h"
 
-
 TYPE_WINDOWTAB_COLORSCHEME	gWT_ColorScheme;
 
 int	gCurrWindowTabColorScheme	=	0;
-
-
 
 //**************************************************************************************
 WindowTab::WindowTab(	const int	xSize,
@@ -945,7 +938,7 @@ void	WindowTab::DrawWidgetCustomGraphic(IplImage *openCV_Image, const int widget
 #endif // _USE_OPENCV_CPP_
 
 //**************************************************************************************
-void	WindowTab::ForceUpdate(void)
+void	WindowTab::ForceWindowUpdate(void)
 {
 Controller	*myControllerObj;
 
@@ -2169,6 +2162,19 @@ void	InsetRect(CvRect *theRect, const int xInset, const int yInset)
 
 
 #ifdef _CONTROLLER_USES_ALPACA_
+//*****************************************************************************
+void	WindowTab::ForceAlpacaUpdate(void)
+{
+Controller	*myControllerObj;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+
+	myControllerObj	=	(Controller *)cParentObjPtr;
+	if (myControllerObj != NULL)
+	{
+		myControllerObj->cForceAlpacaUpdate	=	true;
+	}
+}
 
 //*****************************************************************************
 bool	WindowTab::AlpacaSendPutCmd(	sockaddr_in		*deviceAddress,
@@ -2220,11 +2226,8 @@ Controller	*myControllerObj;
 	{
 		validData	=	false;
 	}
-
-
 	return(validData);
 }
-
 
 //*****************************************************************************
 bool	WindowTab::AlpacaSendPutCmd(const char		*alpacaDevice,

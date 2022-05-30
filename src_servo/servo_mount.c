@@ -67,7 +67,7 @@
 #include	<stdbool.h>
 #include	<unistd.h>
 
-#define _ENABLE_CONSOLE_DEBUG_
+//#define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
 
 #include	"servo_std_defs.h"
@@ -1555,12 +1555,12 @@ int Servo_move_to_park(void)
 #ifdef _TEST_SERVO_MOUNT_
 int	main(void)
 {
-	double ra, dec, ha; 
+	double ra, dec, ha;
 	double parkHa, parkDec;
 	double jd, gmst, lst;
-	double currRa, currDec; 
-	int state; 
-	
+	double currRa, currDec;
+	int state;
+
 	printf("\nSERVO_TEST unit test program\n");
 	Servo_init("servo_mount.cfg", "servo_location.cfg");
 
@@ -1569,28 +1569,28 @@ int	main(void)
 
 	jd 		= 	Time_systime_to_jd();
 	gmst 	= 	Time_jd_to_gmst(jd);
-	lst 	= 	Time_gmst_to_lst(gmst, Time_get_lon()); 
+	lst 	= 	Time_gmst_to_lst(gmst, Time_get_lon());
 
-	Servo_get_pos(&currRa, &currDec); 
+	Servo_get_pos(&currRa, &currDec);
 	printf("** Current Pos  RA = %lf   Dec = %lf\n", currRa, currDec);
 
 	Servo_unpark();
 
 	Servo_move_to_coordins( (currRa + 0.01l), (currDec + 1.0l), Time_get_lat(), Time_get_lon() );
 
-	state = Servo_state(); 
+	state = Servo_state();
 
 	printf("** Servo state = %d\n", state);
 
 	while (state == MOVING)
 	{
-	Servo_get_pos(&currRa, &currDec); 
+	Servo_get_pos(&currRa, &currDec);
 	printf("** Current Pos  RA = %lf   Dec = %lf\n", currRa, currDec);
 	sleep(3);
 	}
 
 	printf("STOPPING motors\n");
-	Servo_stop_all(); 
+	Servo_stop_all();
 
 	return(0);
 }

@@ -358,7 +358,7 @@ double	cosE_minus_e;		//*	value of "(cos(E) - e)"
 double	a_cosE_minus_e;		//*	value of "a (cos(E) - e)"
 double	a_sqrt_1_minus_e_sqrd;
 double	sinE;
-double	rrr;
+//double	rrr;
 double	eee_sqrd;
 
 double	sunXXX;
@@ -414,21 +414,21 @@ double	deltaEarth;
 	zzz	+=	a_sqrt_1_minus_e_sqrd * asteroidData->Qz * sinE;
 
 	//*	[MAA] Equation (7.12) page 33
-	rrr	=	sqrt((xxx * xxx) + (yyy * yyy) + (zzz * zzz));
-	if (gEnableDebug)
-	{
-		CONSOLE_DEBUG_W_DBL("cosE_minus_e\t\t=",		cosE_minus_e);
-		CONSOLE_DEBUG_W_DBL("a_cosE_minus_e\t\t=",	a_cosE_minus_e);
-		CONSOLE_DEBUG_W_DBL("a_sqrt_1_minus_e_sqrd\t=",	a_sqrt_1_minus_e_sqrd);
-		CONSOLE_DEBUG_W_DBL("sinE\t\t\t=",				sinE);
-
-		CONSOLE_DEBUG_W_DBL("sinE*a_sqrt_1_minus_e_sqrd\t=",	sinE * a_sqrt_1_minus_e_sqrd);
-
-		CONSOLE_DEBUG_W_DBL("xxx\t\t\t\t=",		xxx);
-		CONSOLE_DEBUG_W_DBL("yyy\t\t\t\t=",		yyy);
-		CONSOLE_DEBUG_W_DBL("zzz\t\t\t\t=",		zzz);
-		CONSOLE_DEBUG_W_DBL("rrr\t\t\t\t=",		rrr);
-	}
+//	rrr	=	sqrt((xxx * xxx) + (yyy * yyy) + (zzz * zzz));
+//	if (gEnableDebug)
+//	{
+//		CONSOLE_DEBUG_W_DBL("cosE_minus_e\t\t=",		cosE_minus_e);
+//		CONSOLE_DEBUG_W_DBL("a_cosE_minus_e\t\t=",	a_cosE_minus_e);
+//		CONSOLE_DEBUG_W_DBL("a_sqrt_1_minus_e_sqrd\t=",	a_sqrt_1_minus_e_sqrd);
+//		CONSOLE_DEBUG_W_DBL("sinE\t\t\t=",				sinE);
+//
+//		CONSOLE_DEBUG_W_DBL("sinE*a_sqrt_1_minus_e_sqrd\t=",	sinE * a_sqrt_1_minus_e_sqrd);
+//
+//		CONSOLE_DEBUG_W_DBL("xxx\t\t\t\t=",		xxx);
+//		CONSOLE_DEBUG_W_DBL("yyy\t\t\t\t=",		yyy);
+//		CONSOLE_DEBUG_W_DBL("zzz\t\t\t\t=",		zzz);
+//		CONSOLE_DEBUG_W_DBL("rrr\t\t\t\t=",		rrr);
+//	}
 
 	//*	we need to calculate the heliocentric to geocentric offsets
 	if (validSunData)

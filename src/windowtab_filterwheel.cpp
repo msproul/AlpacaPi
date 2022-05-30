@@ -179,7 +179,7 @@ bool	validData;
 				if (validData)
 				{
 					cFilterWheelPropPtr->IsMoving	=	true;
-					ForceUpdate();
+					ForceWindowUpdate();
 				}
 				else
 				{

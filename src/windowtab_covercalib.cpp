@@ -288,7 +288,7 @@ bool	validData;
 
 	}
 	DisplayLastAlpacaCommand();
-	ForceUpdate();
+	ForceWindowUpdate();
 }
 
 //*****************************************************************************
@@ -315,7 +315,7 @@ int			deltaBrightness;
 	//	CONSOLE_DEBUG_W_NUM("deltaBrightness\t=", deltaBrightness);
 	//	CONSOLE_DEBUG_W_NUM("deltaMilliSecs\t=", deltaMilliSecs);
 	}
-	ForceUpdate();
+	ForceWindowUpdate();
 	cLastBrightnewssUpdate_Millis	=	millis();
 }
 
@@ -331,7 +331,7 @@ void	WindowTabCoverCalib::ProcessMouseLeftButtonUp(const int	widgetIdx,
 	{
 		case kCoverCalib_Brightness_Slider:
 			CONSOLE_DEBUG("kCoverCalib_Brightness_Slider");
-			ForceUpdate();
+			ForceWindowUpdate();
 			break;
 	}
 }

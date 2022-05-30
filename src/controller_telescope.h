@@ -11,12 +11,12 @@
 #include	"controller.h"
 
 #include	"windowtab_telescope.h"
-
+#ifndef	_WINDOWTAB_TELE_SETTINGS_H_
+	#include	"windowtab_teleSettings.h"
+#endif
 #ifndef	_WINDOWTAB_CAPABILITIES_H_
 	#include	"windowtab_capabilities.h"
 #endif
-
-
 #ifndef	_WINDOWTAB_ABOUT_H_
 	#include	"windowtab_about.h"
 #endif // _WINDOWTAB_ABOUT_H_
@@ -66,6 +66,7 @@ class ControllerTelescope: public Controller
 				bool	AlpacaGetStartupData_TelescopeOneAAT(void);	//*	One At A Time
 			//*	tab information
 				WindowTabTelescope		*cTelescopeTabObjPtr;
+				WindowTabTeleSettings	*cTeleSettingsTabObjPtr;
 				WindowTabCapabilities	*cCapabilitiesTabObjPtr;
 				WindowTabDriverInfo		*cDriverInfoTabObjPtr;
 				WindowTabAbout			*cAboutBoxTabObjPtr;

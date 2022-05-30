@@ -227,7 +227,7 @@ int	newSortColumn;
 			}
 			cSortColumn		=	newSortColumn;
 			UpdateSortOrder();
-			ForceUpdate();
+			ForceWindowUpdate();
 			break;
 
 		case kStarList_ExportCSV:
@@ -299,7 +299,7 @@ void	WindowTabStarList::ProcessMouseWheelMoved(	const int	widgetIdx,
 		cFirstLineIdx	=	0;
 	}
 	UpdateOnScreenWidgetList();
-	ForceUpdate();
+	ForceWindowUpdate();
 }
 
 //*****************************************************************************
@@ -321,10 +321,8 @@ void	WindowTabStarList::UpdateSliderValue(const int	widgetIdx, double newSliderV
 		//		cLastExposureUpdate_Millis	=	millis();
 			}
 			break;
-
 	}
-
-	ForceUpdate();
+	ForceWindowUpdate();
 }
 
 //**************************************************************************************

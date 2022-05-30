@@ -492,7 +492,7 @@ void	WindowTabRemoteData::UpdateSettings(void)
 
 #endif
 
-	ForceUpdate();
+	ForceWindowUpdate();
 }
 
 

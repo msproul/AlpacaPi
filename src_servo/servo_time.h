@@ -30,7 +30,7 @@
 //*	May 15,	2022	<RNS> added Time_alt_azi_to_ra_dec() function
 //*	May 16,	2022	<RNS> privatized the gServoLocalCfg global, added get_ field calls
 //*	May 26,	2022	<MLS> Made gServoLocalCfg global so it can be accessed by AlpacaPi
-//*	May 28,	2022	<RNS> Renamed _jd_to_sid() to _js_to_gmst() 
+//*	May 28,	2022	<RNS> Renamed _jd_to_sid() to _js_to_gmst()
 //*	May 29,	2022	<RNS> Renamed _sid_to_lst() to _gmst_to_lst() for consistancy
 //*****************************************************************************
 // $ cproto servo_time.c
@@ -90,6 +90,7 @@ extern "C"
 	void		Time_hms_hours_to_deci(double *value);
 	double		Time_get_lat(void);
 	double		Time_get_lon(void);
+	double		Time_get_elev(void);
 	const char	*Time_get_site(void);
 	void		Time_ra_dec_to_alt_azi(double ra, double dec, long double lst, double lat, double *alt, double *azi);
 	void		Time_alt_azi_to_ra_dec(double alt, double azi, long double lst, double lat, double *ra, double *dec);

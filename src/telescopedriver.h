@@ -33,6 +33,20 @@
 	#include	"alpacadriver.h"
 #endif
 
+//**************************************************************************************
+//*	limit switch definitions
+typedef enum
+{
+	//*	On a German Equatorial Mount, Northern Hemisphere
+	//*	when standing to the south, looking to the north along the RA axis
+	//*	East is clockwise,
+	//*	West is counter-clockwise
+	kLimitSwitch_RA_East	=	0,
+	kLimitSwitch_RA_West
+
+
+} TYPE_LIMITSWITCH;
+
 
 //**************************************************************************************
 class TelescopeDriver: public AlpacaDriver
@@ -214,17 +228,17 @@ class TelescopeDriver: public AlpacaDriver
 		virtual	TYPE_ASCOM_STATUS	Telescope_UnPark(		char *alpacaErrMsg);
 
 
+		virtual	int					Telescope_GetLimitSwitchStatus(const TYPE_LIMITSWITCH whichLimit);
 
 				//*	full list of ASCOM telescope properties
 				TYPE_TelescopeProperties	cTelescopeProp;
 
-				//*	this defaults to FALSE,
+				//*	these default to FALSE,
 				//*	a subclass MUST set this to true if wants to support refraction calculations
 				bool						cDriverSupportsRefraction;
 				bool						cDriverSupportsLimitSwitches;
 
 };
-
 
 
 #endif // _TELESCOPE_DRIVER_H_

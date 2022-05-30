@@ -49,7 +49,7 @@
 #include "servo_std_defs.h"
 #include "servo_mc_core.h"
 
-#define _ENABLE_CONSOLE_DEBUG_
+//#define _ENABLE_CONSOLE_DEBUG_
 #include "ConsoleDebug.h"
 
 // Endian services to handle both endians from host side

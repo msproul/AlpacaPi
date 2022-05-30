@@ -149,7 +149,7 @@ class WindowTabCamera: public WindowTab
 		virtual	void	UpdateSliderValue(const int widgetIdx, double newSliderValue);
 
 				void	SetCameraLogo(void);
-				void	ForceUpdate(void);
+				void	ForceAlpacaUpdate(void);
 				void	BumpGain(const int howMuch);
 				void	BumpExposure(const double howMuch);
 				void	BumpOffset(const int howMuch);

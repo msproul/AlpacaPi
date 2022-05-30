@@ -516,7 +516,7 @@ char				ipAddrStr[32];
 		{
 			//*	now update the widget text
 			UpdateOnScreenWidgetList();
-			ForceUpdate();
+			ForceWindowUpdate();
 		}
 	}
 }
@@ -577,7 +577,7 @@ int		cameraIdx;
 	}
 	if (forceUpdateFlg)
 	{
-		ForceUpdate();
+		ForceWindowUpdate();
 	}
 }
 
@@ -660,7 +660,7 @@ int		foundIndex;
 
 	if (cAlpacaDevCnt != cPrevAlpacaDevCnt)
 	{
-		ForceUpdate();
+		ForceWindowUpdate();
 		cPrevAlpacaDevCnt	=	cAlpacaDevCnt;
 	}
 }

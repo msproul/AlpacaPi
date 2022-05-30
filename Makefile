@@ -1081,12 +1081,13 @@ imu		:		$(CPP_OBJECTS)				\
 					$(IMU_OBJECTS)				\
 					$(ASI_CAMERA_OBJECTS)		\
 					$(ZWO_EFW_OBJECTS)			\
-					-ludev						\
 					-lusb-1.0					\
 					-lpthread					\
 					-lcfitsio					\
 					-o imu
 
+
+#					-ludev						\
 
 ######################################################################################
 #pragma mark nousb -C++ linux-x86
@@ -2263,6 +2264,7 @@ SKYTRAVEL_OBJECTS=											\
 				$(OBJECT_DIR)windowtab_STsettings.o			\
 				$(OBJECT_DIR)windowtab_switch.o				\
 				$(OBJECT_DIR)windowtab_telescope.o			\
+				$(OBJECT_DIR)windowtab_teleSettings.o		\
 				$(OBJECT_DIR)YaleStarCatalog.o				\
 
 
@@ -3438,6 +3440,14 @@ $(OBJECT_DIR)windowtab_telescope.o :	$(SRC_DIR)windowtab_telescope.cpp	\
 										$(SRC_DIR)windowtab_telescope.h		\
 										$(SRC_DIR)windowtab.h
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)windowtab_telescope.cpp -o$(OBJECT_DIR)windowtab_telescope.o
+
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)windowtab_teleSettings.o :	$(SRC_DIR)windowtab_teleSettings.cpp	\
+										$(SRC_DIR)windowtab_teleSettings.h		\
+										$(SRC_DIR)windowtab.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)windowtab_teleSettings.cpp -o$(OBJECT_DIR)windowtab_teleSettings.o
+
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)controller_skytravel.o :	$(SRC_SKYTRAVEL)controller_skytravel.cpp	\

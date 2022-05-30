@@ -1074,7 +1074,7 @@ struct tm			siderealTime;
 
 				SetWidgetTextColor(	kSkyTravel_MsgTextBox, CV_RGB(0, 255, 0));
 				SetWidgetText(kSkyTravel_MsgTextBox, textBuff);
-				ForceUpdate();
+				ForceWindowUpdate();
 			}
 		}
 	}
@@ -1089,7 +1089,7 @@ struct tm			siderealTime;
 		{
 			//*	this makes it real time.
 			SetCurrentTime();
-			ForceUpdate();
+			ForceWindowUpdate();
 			cLastUpdateTime_ms		=	millis();
 //			CONSOLE_DEBUG_W_NUM("deltaMilliSecs\t=", deltaMilliSecs);
 		}
@@ -1139,7 +1139,7 @@ struct tm			siderealTime;
 //		//*	this makes it real time.
 //		SetCurrentTime();
 //
-//		ForceUpdate();
+//		ForceWindowUpdate();
 //	}
 //#endif
 }
@@ -1297,14 +1297,14 @@ bool	controlKeyDown;
 			cAutoAdvanceTime	=	false;
 			Sub_hour(&cCurrentTime);
 			cLastClockUpdateTime_ms	=	0;		//*	force clock on screen to update
-			ForceUpdate();
+			ForceWindowUpdate();
 			break;
 
 		case '>':	//*	Forward one hour
 			cAutoAdvanceTime	=	false;
 			Add_hour(&cCurrentTime);
 			cLastClockUpdateTime_ms	=	0;		//*	force clock on screen to update
-			ForceUpdate();
+			ForceWindowUpdate();
 			break;
 
 		case '[':	//*	Back one day
@@ -1312,56 +1312,56 @@ bool	controlKeyDown;
 			Sub_day(&cCurrentTime);
 			DumpTimeStruct(&cCurrentTime, "Back one day");
 			cLastClockUpdateTime_ms	=	0;		//*	force clock on screen to update
-			ForceUpdate();
+			ForceWindowUpdate();
 			break;
 
 		case ']':	//*	Forward one day
 			cAutoAdvanceTime	=	false;
 			Add_day(&cCurrentTime);
 			cLastClockUpdateTime_ms	=	0;		//*	force clock on screen to update
-			ForceUpdate();
+			ForceWindowUpdate();
 			break;
 
 		case '{':	//*	Back one month
 			cAutoAdvanceTime	=	false;
 			Sub_month(&cCurrentTime);
 			cLastClockUpdateTime_ms	=	0;		//*	force clock on screen to update
-			ForceUpdate();
+			ForceWindowUpdate();
 			break;
 
 		case '}':	//*	Forward one month
 			cAutoAdvanceTime	=	false;
 			Add_month(&cCurrentTime);
 			cLastClockUpdateTime_ms	=	0;		//*	force clock on screen to update
-			ForceUpdate();
+			ForceWindowUpdate();
 			break;
 
 		case '(':	//*	Back one year
 			cAutoAdvanceTime	=	false;
 			Sub_year(&cCurrentTime, 1);
 			cLastClockUpdateTime_ms	=	0;		//*	force clock on screen to update
-			ForceUpdate();
+			ForceWindowUpdate();
 			break;
 
 		case ')':	//*	Forward one year
 			cAutoAdvanceTime	=	false;
 			Add_year(&cCurrentTime, 1);
 			cLastClockUpdateTime_ms	=	0;		//*	force clock on screen to update
-			ForceUpdate();
+			ForceWindowUpdate();
 			break;
 
 		case '9':	//*	Back one minute
 			cAutoAdvanceTime	=	false;
 			Sub_min(&cCurrentTime);
 			cLastClockUpdateTime_ms	=	0;		//*	force clock on screen to update
-			ForceUpdate();
+			ForceWindowUpdate();
 			break;
 
 		case '0':	//*	Forward one minute
 			cAutoAdvanceTime	=	false;
 			Add_min(&cCurrentTime);
 			cLastClockUpdateTime_ms	=	0;		//*	force clock on screen to update
-			ForceUpdate();
+			ForceWindowUpdate();
 			break;
 
 
@@ -2262,7 +2262,7 @@ uint32_t	timeSinceLastRedraw;
 			cMouseDragInProgress	=	false;
 		}
 	}
-	ForceUpdate();
+	ForceWindowUpdate();
 }
 
 //*****************************************************************************
@@ -8655,7 +8655,7 @@ void	WindowTabSkyTravel::Center_RA_DEC(double argRA_radians, double argDecl_radi
 	cRa0		=	argRA_radians;
 	cDecl0		=	argDecl_radians;
 	cFindFlag	=	true;
-	ForceUpdate();
+	ForceWindowUpdate();
 
 }
 
@@ -8729,7 +8729,7 @@ double	maxViewAngle;
 		{
 			SetView_Angle(maxViewAngle);
 		}
-		ForceUpdate();
+		ForceWindowUpdate();
 	}
 }
 

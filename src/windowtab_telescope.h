@@ -43,20 +43,21 @@ enum
 	kTelescope_SlewingStatus,
 	kTelescope_SlewRate_Outline,
 
-	kTelescope_RA_label,
-	kTelescope_RA_value,
 	kTelescope_HA_label,
 	kTelescope_HA_value,
+	kTelescope_RA_label,
+	kTelescope_RA_value,
 	kTelescope_DEC_label,
 	kTelescope_DEC_value,
 
-	//*	drive rates
-	kTelescope_TrackingRate_Title,
-	kTelescope_TrackingRate_Sidereal,	//*	Sidereal tracking rate (15.041 arcseconds per second).
-	kTelescope_TrackingRate_Lunar,		//*	Lunar tracking rate (14.685 arcseconds per second).
-	kTelescope_TrackingRate_Solar,		//*	Solar tracking rate (15.0 arcseconds per second).
-	kTelescope_TrackingRate_King,		//*	King tracking rate (15.0369 arcseconds per second).
-	kTelescope_TrackingRate_Outline,
+	kTelescope_SideOfPier_label,
+	kTelescope_SideOfPier_value,
+
+	kTelescope_PhysSideOfPier_label,
+	kTelescope_PhysSideOfPier_value,
+
+	kTelescope_Coord_Outline,
+
 
 
 	kTelescope_ErrorMsg,
@@ -93,7 +94,7 @@ class WindowTabTelescope: public WindowTab
 //		virtual	void	ProcessDoubleClick(const int buttonIdx);
 
 				void	UpdateButtons(void);
-				void	UpdateTelescopeInfo(TYPE_TelescopeProperties	*telescopeProp);
+				void	UpdateTelescopeInfo(TYPE_TelescopeProperties *telescopeProp, bool updateAll=true);
 				int		cCurrentSlewRate;
 	private:
 				bool		cSlewingUp;

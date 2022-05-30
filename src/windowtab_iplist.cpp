@@ -239,7 +239,7 @@ bool	updateFlag;
 	}
 	if (updateFlag)
 	{
-		ForceUpdate();
+		ForceWindowUpdate();
 	}
 }
 
@@ -266,7 +266,7 @@ void	WindowTabIPList::ProcessMouseWheelMoved(const int	widgetIdx,
 //		cFirstLineIdx	=	0;
 //	}
 //	UpdateOnScreenWidgetList();
-//	ForceUpdate();
+//	ForceWindowUpdate();
 }
 
 //**************************************************************************************

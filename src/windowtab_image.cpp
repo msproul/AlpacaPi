@@ -345,7 +345,7 @@ void	WindowTabImage::ProcessDoubleClick(	const int	widgetIdx,
 					cOpenCVdisplayedImage->imageData[iii]	+=	75;
 				}
 		#endif // _USE_OPENCV_CPP_
-				ForceUpdate();
+				ForceWindowUpdate();
 			}
 			else
 			{
@@ -438,7 +438,7 @@ int		cursorYYoffset;
 			cSavedMouseClick_X	=	cursorXXoffset;
 			cSavedMouseClick_Y	=	cursorYYoffset;
 
-			ForceUpdate();
+			ForceWindowUpdate();
 		}
 	}
 }
@@ -542,7 +542,7 @@ void	WindowTabImage::ResetImage(void)
 	}
 #endif // _USE_OPENCV_CPP_
 	cImageZoomState	=	0;
-	ForceUpdate();
+	ForceWindowUpdate();
 }
 
 
@@ -605,7 +605,7 @@ int			imageCursorYY;
 			cImageZoomState	=	1;
 		}
 
-		//ForceUpdate();
+		//ForceWindowUpdate();
 	}
 }
 
@@ -736,7 +736,7 @@ cv::Mat		image_roi;
 			//*	now update the CURRENT center of the displayed image
 			cImageCenterX	=	displayedImgRect.x + (displayedWidth / 2);
 			cImageCenterY	=	displayedImgRect.y + (displayedHeight / 2);
-			ForceUpdate();
+			ForceWindowUpdate();
 		}
 		else
 		{
