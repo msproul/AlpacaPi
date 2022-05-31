@@ -389,7 +389,7 @@ int					mySocket;
 	strcpy(alpacaErrMsg, "");
 
 	//*	set up the json response
-	cBytesWrittenForThisCmd	+=	JsonResponse_CreateHeader(reqData->jsonTextBuffer, kMaxJsonBuffLen);
+	JsonResponse_CreateHeader(reqData->jsonTextBuffer, kMaxJsonBuffLen);
 
 	//*	this is not part of the protocol, I am using it for testing
 	cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(	mySocket,

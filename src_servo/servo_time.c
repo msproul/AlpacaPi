@@ -43,6 +43,7 @@
 //*	May 29,	2022	<RNS> Renamed _sid_to_lst() to _gmst_to_lst() for consistency
 //*	May 29,	2022	<MLS> Fixed couple of lat/lon reporting errors
 //*	May 29,	2022	<MLS> Added Time_get_elev()
+//*	May 30,	2022	<MLS> Added Time_set_lat(), Time_set_lon(), Time_set_elev()
 //*****************************************************************************
 // Notes: For RoboClaw M1 *MUST BE* connected to RA or Azimuth axis, M2 to Dec or Altitude
 //*****************************************************************************
@@ -396,11 +397,23 @@ double Time_get_lat(void)
 }
 
 //*****************************************************************************
+void Time_set_lat(double newLatValue)
+{
+	gServoLocalCfg.lat	=	newLatValue;
+}
+
+//*****************************************************************************
 // Returns the longitude field from the global location file struct
 //*****************************************************************************
 double Time_get_lon(void)
 {
 	return(gServoLocalCfg.lon);
+}
+
+//*****************************************************************************
+void Time_set_lon(double newLonValue)
+{
+	gServoLocalCfg.lon	=	newLonValue;
 }
 
 //*****************************************************************************
@@ -410,6 +423,25 @@ double Time_get_elev(void)
 {
 	return(gServoLocalCfg.elev);
 }
+
+//*****************************************************************************
+void Time_set_elev(double newElevValue)
+{
+	gServoLocalCfg.elev	=	newElevValue;
+}
+
+//*****************************************************************************
+double Time_get_temperature(void)
+{
+	return(gServoLocalCfg.temp);
+}
+
+//*****************************************************************************
+double Time_get_pressure(void)
+{
+	return(gServoLocalCfg.press);
+}
+
 
 //*****************************************************************************
 // Returns the site name field from the global location file struct

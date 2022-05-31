@@ -46,6 +46,7 @@
 //*	May 19,	2022	<MLS> Build 143
 //*	May 23,	2022	<MLS> Changed syntax of enum typedefs to make RNS compiler happy
 //*	May 19,	2022	<MLS> Build 144
+//*	May 30,	2022	<MLS> Build 145
 //*****************************************************************************
 //*	These are for my comment extraction program that sorts comments by date.
 //*	Jan  1,	2019	-----------------------------------------------------------
@@ -74,7 +75,7 @@
 
 #define	kApplicationName	"AlpacaPi"
 #define	kVersionString		"V0.5.0-beta"
-#define	kBuildNumber		144
+#define	kBuildNumber		145
 
 
 #define kAlpacaDiscoveryPORT	32227
@@ -172,13 +173,13 @@ enum
 typedef enum
 {
 	kASCOM_Err_Success					=	0,
-	kASCOM_Err_NotImplemented			=	0x400,
+	kASCOM_Err_NotImplemented			=	0x400,		//	1024
 	kASCOM_Err_PropertyNotImplemented	=	0x400,		//*	use this one
 	kASCOM_Err_MethodNotImplemented		=	0x400,		//*	or this one
-	kASCOM_Err_InvalidValue				=	0x401,
-	kASCOM_Err_ValueNotSet				=	0x402,
-	kASCOM_Err_NotConnected				=	0x407,
-	kASCOM_Err_InvalidWhileParked		=	0x408,
+	kASCOM_Err_InvalidValue				=	0x401,		//	1025
+	kASCOM_Err_ValueNotSet				=	0x402,		//	1026
+	kASCOM_Err_NotConnected				=	0x407,		//	1031
+	kASCOM_Err_InvalidWhileParked		=	0x408,		//	1032
 	kASCOM_Err_InvalidWhileSlaved		=	0x409,
 	kASCOM_Err_InvalidOperation			=	0x40B,
 	kASCOM_Err_ActionNotImplemented		=	0x40C,
@@ -433,7 +434,7 @@ typedef enum
 {
 	kAxis_RA		=	0,	//*	Primary axis (e.g., Right Ascension or Azimuth).
 	kAxis_DEC		=	1,	//*	Secondary axis (e.g., Declination or Altitude).
-	kAxis_Tertiary	=	2	//*	Tertiary axis (e.g. imager rotator/de-rotator).
+	kAxis_Tertiary	=	2	//*	Tertiary axis (e.g. image rotator/de-rotator).
 } TYPE_Axis;
 
 
@@ -471,7 +472,7 @@ typedef struct
 	TYPE_AxisRates					AxisRates[3];	//*	there are 3 possible axis
 	double							Azimuth;
 	bool							CanFindHome;
-	bool							CanMoveAxis;
+	bool							CanMoveAxis[3];
 	bool							CanPark;
 	bool							CanPulseGuide;
 	bool							CanSetDeclinationRate;
@@ -487,11 +488,9 @@ typedef struct
 	bool							CanSync;
 	bool							CanSyncAltAz;
 	bool							CanUnpark;
-	bool							TargetDec_HasBeenSet;
 	double							Declination;				//*	degrees
 	double							DeclinationRate;
 	bool							DoesRefraction;
-	bool							TargetRA_HasBeenSet;
 	double							RightAscension;				//*	hours
 	double							RightAscensionRate;
 	TYPE_EquatorialCoordinateType	EquatorialSystem;
@@ -501,17 +500,20 @@ typedef struct
 	bool							IsPulseGuiding;
 	TYPE_PierSide					SideOfPier;
 	double							SiderealTime;
-	double							SiteElevation;
+	double							SiteElevation;				//*	meters
 	double							SiteLatitude;
 	double							SiteLongitude;
 	bool							Slewing;
 	short							SlewSettleTime;
 	double							TargetDeclination;
 	double							TargetRightAscension;
+	bool							TargetDec_HasBeenSet;	//*	non-Alpaca
+	bool							TargetRA_HasBeenSet;	//*	non-Alpaca
 	bool							Tracking;
 	TYPE_DriveRates					TrackingRate;
-	double							TrackingRates;
-	double							UTCDate;
+//	double							TrackingRates;
+////	double							UTCDate;	//*	this is the real time date so we dont keep it around
+
 
 	//*	extras NOT defined by ASCOM
 	TYPE_PierSide					PhysicalSideOfPier;

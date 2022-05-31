@@ -49,6 +49,7 @@ typedef struct
 typedef struct
 {
 	bool				ValidInfo;
+	int					KeyWordCount;
 	char				RefID[kMaxRefIDLen];
 	char				Name[64];
 	char				Location[48];
@@ -60,7 +61,6 @@ typedef struct
 	char				Observer[64];
 	char				TimeZone[16];
 	int					UTCoffset;
-
 
 	bool				ValidLatLon;
 	char				ElevationString[48];		//*	feet above sea level
@@ -79,7 +79,7 @@ extern TYPE_OBSERVATORY_SETTINGS	gObseratorySettings;
 
 void	ObservatorySettings_Init(void);
 void	ObservatorySettings_CreateTemplateFile(void);
-void	ObservatorySettings_ReadFile(void);
+bool	ObservatorySettings_ReadFile(void);
 void	GetTelescopeSettingsByRefID(const char *refID, int argIndex, TYPE_TELESCOPE_INFO *ts_info);
 void	OutPutObservatoryInfoHTML(int socketFD);
 

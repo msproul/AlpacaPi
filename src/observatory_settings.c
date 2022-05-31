@@ -268,7 +268,10 @@ TYPE_TELESCOPE_INFO	*ts_infoPtr;
 
 	//*	look up the keyword in the table
 	keywordEnumVal	=	FindKeywordFromTable(keyword, gSettingsList);
-
+	if (keywordEnumVal >= 0)
+	{
+		gObseratorySettings.KeyWordCount++;
+	}
 	//*	use the keyword enum value to figure out what to do with the data
 	switch(keywordEnumVal)
 	{
@@ -419,10 +422,24 @@ TYPE_TELESCOPE_INFO	*ts_infoPtr;
 }
 
 //*****************************************************************************
-void	ObservatorySettings_ReadFile(void)
+bool	ObservatorySettings_ReadFile(void)
 {
+bool	configFileOK;
+int		linesRead;
+
 //	CONSOLE_DEBUG(__FUNCTION__);
-	ReadGenericConfigFile("observatorysettings.txt", '=', &ProcessObsSettingsConfig);
+	configFileOK	=	false;
+	linesRead		=	ReadGenericConfigFile("observatorysettings.txt", '=', &ProcessObsSettingsConfig);
+	if (linesRead > 5)
+	{
+		configFileOK	=	true;
+	}
+	if (gObseratorySettings.KeyWordCount > 10)
+	{
+		gObseratorySettings.ValidInfo	=	true;
+	}
+
+	return(configFileOK);
 }
 
 //*****************************************************************************

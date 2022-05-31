@@ -88,21 +88,21 @@ TelescopeDriverLX200::TelescopeDriverLX200(DeviceConnectionType connectionType, 
 	strcpy(cCommonProp.Description,	"Telescope control using LX200 protocol");
 
 	//*	setup the options for this driver
-	cTelescopeProp.AlginmentMode	=	kAlignmentMode_algGermanPolar;
-	cTelescopeProp.CanSlewAsync		=	true;
-	cTelescopeProp.CanSync			=	true;
-	cTelescopeProp.CanSetTracking	=	true;
-	cTelescopeProp.CanMoveAxis		=	true;
-	cTelescopeProp.CanUnpark		=	true;
+	cTelescopeProp.AlginmentMode			=	kAlignmentMode_algGermanPolar;
+	cTelescopeProp.CanSlewAsync				=	true;
+	cTelescopeProp.CanSync					=	true;
+	cTelescopeProp.CanSetTracking			=	true;
+	cTelescopeProp.CanMoveAxis[kAxis_RA]	=	true;
+	cTelescopeProp.CanMoveAxis[kAxis_DEC]	=	true;
+	cTelescopeProp.CanUnpark				=	true;
 
+	cTelescopeInfoValid						=	false;
+	cLX200_SocketErrCnt						=	0;
+	cLX200_OutOfBoundsCnt					=	0;
+	cTelescopeRA_String[0]					=	0;
+	cTelescopeDecl_String[0]				=	0;
 
-	cTelescopeInfoValid				=	false;
-	cLX200_SocketErrCnt				=	0;
-	cLX200_OutOfBoundsCnt			=	0;
-	cTelescopeRA_String[0]			=	0;
-	cTelescopeDecl_String[0]		=	0;
-
-	cQueuedCmdCnt					=	0;
+	cQueuedCmdCnt							=	0;
 
 
 	AlpacaConnect();

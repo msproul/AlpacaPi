@@ -46,14 +46,16 @@
 //*	Apr 20,	2021	<MLS> Added Telescope_SlewToAltAz(), Telescope_UnPark()
 //*	Apr 21,	2021	<MLS> Finished stubbing out the routines need in the subclass
 //*	Feb 28,	2022	<MLS> Put_SyncToAltAz() now returns InvalidOperation if tracking is false
-//*	Feb 28,	2022	<MLS> Added cDriverSupportsRefraction
+//*	Feb 28,	2022	<MLS> Added cDriverSupports_Refraction
 //*	Mar  2,	2022	<MLS> Setting Connected now working for telescope driver
 //*	Mar 25,	2022	<MLS> Added RunStateMachine() to telescopedriver
 //*	May 13,	2022	<MLS> Made Get_AxisRates() understand specified axis number
 //*	May 28,	2022	<MLS> Added Put_SideOfPier()
 //*	May 28,	2022	<MLS> Added Get_PhysicalSideOfPier()
-//*	May 28,	2022	<MLS> Added cDriverSupportsLimitSwitches
+//*	May 28,	2022	<MLS> Added cDriverSupports_LimitSwitches
 //*	May 28,	2022	<MLS> Added Telescope_GetLimitSwitchStatus()
+//*	May 30,	2022	<MLS> If observatory settings is valid, copy to telescope properties
+//*	May 30,	2022	<MLS> Added cDriverSupports_SlewSettleTime
 //*****************************************************************************
 
 
@@ -295,29 +297,33 @@ int		iii;
 	cTelescopeProp.TrackingRate			=	kDriveRate_driveSidereal;
 
 	//*	set them all to false, let the sub class decide what it can do
-	cTelescopeProp.CanFindHome				=	false;
-	cTelescopeProp.CanMoveAxis				=	false;
-	cTelescopeProp.CanPark					=	false;
-	cTelescopeProp.CanPulseGuide			=	false;
-	cTelescopeProp.CanSetDeclinationRate	=	false;
-	cTelescopeProp.CanSetGuideRates			=	false;
-	cTelescopeProp.CanSetPark				=	false;
-	cTelescopeProp.CanSetPierSide			=	false;
-	cTelescopeProp.CanSetRightAscensionRate	=	false;
-	cTelescopeProp.CanSetTracking			=	false;
-	cTelescopeProp.CanSlew					=	false;
-	cTelescopeProp.CanSlewAltAz				=	false;
-	cTelescopeProp.CanSlewAltAzAsync		=	false;
-	cTelescopeProp.CanSlewAsync				=	false;
-	cTelescopeProp.CanSync					=	false;
-	cTelescopeProp.CanSyncAltAz				=	false;
-	cTelescopeProp.CanUnpark				=	false;
-	cTelescopeProp.DoesRefraction			=	false;
+	cTelescopeProp.CanFindHome					=	false;
+	cTelescopeProp.CanMoveAxis[kAxis_RA]		=	false;
+	cTelescopeProp.CanMoveAxis[kAxis_DEC]		=	false;
+	cTelescopeProp.CanMoveAxis[kAxis_Tertiary]	=	false;
+	cTelescopeProp.CanPark						=	false;
+	cTelescopeProp.CanPulseGuide				=	false;
+	cTelescopeProp.CanSetDeclinationRate		=	false;
+	cTelescopeProp.CanSetGuideRates				=	false;
+	cTelescopeProp.CanSetPark					=	false;
+	cTelescopeProp.CanSetPierSide				=	false;
+	cTelescopeProp.CanSetRightAscensionRate		=	false;
+	cTelescopeProp.CanSetTracking				=	false;
+	cTelescopeProp.CanSlew						=	false;
+	cTelescopeProp.CanSlewAltAz					=	false;
+	cTelescopeProp.CanSlewAltAzAsync			=	false;
+	cTelescopeProp.CanSlewAsync					=	false;
+	cTelescopeProp.CanSync						=	false;
+	cTelescopeProp.CanSyncAltAz					=	false;
+	cTelescopeProp.CanUnpark					=	false;
+	cTelescopeProp.DoesRefraction				=	false;
+
 
 	//*	Set this to true if the system supports it
 	//*	cTelescopeProp.DoesRefraction is used to enable/disable if it is supported
-	cDriverSupportsRefraction		=	false;		//*	can be over-ridden by sub class
-	cDriverSupportsLimitSwitches	=	false;		//*	can be over-ridden by sub class
+	cDriverSupports_Refraction		=	false;		//*	can be over-ridden by sub class
+	cDriverSupports_LimitSwitches	=	false;		//*	can be over-ridden by sub class
+	cDriverSupports_SlewSettleTime	=	false;
 
 	//*	Set default axis rates
 	for (iii=0; iii<3; iii++)
@@ -326,23 +332,45 @@ int		iii;
 		cTelescopeProp.AxisRates[iii].Maximum	=	4.0 + iii;	//*	the extra iii is for testing
 	}
 
-
-	if (gObseratorySettings.ValidInfo)
-	{
-		//*	now set the things we do know
-		cTelescopeProp.SiteElevation	=	gObseratorySettings.Elevation_m;
-		cTelescopeProp.SiteLatitude		=	gObseratorySettings.Latitude;
-		cTelescopeProp.SiteLongitude	=	gObseratorySettings.Longitude;
-	}
-
-
+	//*	there are a bunch of static settings that conform needs to be happy
 	//*	these are temporary to get CONFORM to work
+	//*	set some defaults
 	cTelescopeProp.ApertureDiameter		=	16 * 25.4;
-	cTelescopeProp.FocalLength			=	cTelescopeProp.ApertureDiameter * 4;
+	cTelescopeProp.FocalLength			=	cTelescopeProp.ApertureDiameter * 4;	//*	F-ration = 4
 	cTelescopeProp.ApertureArea			=	M_PI * ((cTelescopeProp.ApertureDiameter/2) * (cTelescopeProp.ApertureDiameter/2));
 
+	//------------------------------------------------------------------
+	//*	check to see if the observatory settings is valid
+	CONSOLE_DEBUG_W_BOOL("gObservatorySettingsOK\t=",			gObservatorySettingsOK);
+	CONSOLE_DEBUG_W_BOOL("gObseratorySettings.ValidInfo\t=",	gObseratorySettings.ValidInfo);
+	if (gObservatorySettingsOK && gObseratorySettings.ValidInfo)
+	{
+		//*	now set the things we do know
+		cTelescopeProp.SiteLatitude		=	gObseratorySettings.Latitude;
+		cTelescopeProp.SiteLongitude	=	gObseratorySettings.Longitude;
+		cTelescopeProp.SiteElevation	=	gObseratorySettings.Elevation_m;
 
-	CONSOLE_DEBUG_W_NUM("cTelescopeProp.CanUnpark\t=", cTelescopeProp.CanUnpark);
+//		CONSOLE_DEBUG_W_DBL("cTelescopeProp.SiteLatitude\t=",	cTelescopeProp.SiteLatitude);
+//		CONSOLE_DEBUG_W_DBL("cTelescopeProp.SiteLongitude\t=",	cTelescopeProp.SiteLongitude);
+//		CONSOLE_DEBUG_W_DBL("cTelescopeProp.SiteElevation\t=",	cTelescopeProp.SiteElevation);
+//		CONSOLE_ABORT(__FUNCTION__);
+
+		//*	make sure there is valid information
+		if ((gObseratorySettings.TS_info[0].aperature_mm > 0.0) && (gObseratorySettings.TS_info[0].focalLen_mm > 0.0))
+		{
+		double	aperatureRadius;
+
+			cTelescopeProp.ApertureDiameter		=	gObseratorySettings.TS_info[0].aperature_mm;
+			cTelescopeProp.FocalLength			=	gObseratorySettings.TS_info[0].focalLen_mm;
+			aperatureRadius						=	cTelescopeProp.ApertureDiameter / 2.0;
+			cTelescopeProp.ApertureArea			=	M_PI * (aperatureRadius* aperatureRadius);
+		}
+	}
+	else
+	{
+		CONSOLE_DEBUG("observatory settings are not valid");
+//		CONSOLE_ABORT(__FUNCTION__);
+	}
 }
 
 //**************************************************************************************
@@ -1433,7 +1461,7 @@ TYPE_ASCOM_STATUS	TelescopeDriver::Get_DoesRefraction(TYPE_GetPutRequestData	*re
 {
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 
-	if (cDriverSupportsRefraction)
+	if (cDriverSupports_Refraction)
 	{
 		JsonResponse_Add_Bool(	reqData->socket,
 								reqData->jsonTextBuffer,
@@ -1464,7 +1492,7 @@ char					doseRefractionString[64];
 													"DoesRefraction",
 													doseRefractionString,
 													sizeof(doseRefractionString));
-	if (cDriverSupportsRefraction)
+	if (cDriverSupports_Refraction)
 	{
 		if (doseRefractionFound)
 		{
@@ -2071,22 +2099,34 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 
 
 //*****************************************************************************
-TYPE_ASCOM_STATUS	TelescopeDriver::Get_SlewSettleTime(	TYPE_GetPutRequestData *reqData,
-															char *alpacaErrMsg,
-															const char *responseString)
+//*	slew settle time is for synchronous slewing commands and really does not apply to Alpaca
+//*****************************************************************************
+TYPE_ASCOM_STATUS	TelescopeDriver::Get_SlewSettleTime(TYPE_GetPutRequestData *reqData,
+														char					*alpacaErrMsg,
+														const char				*responseString)
 {
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 
-	JsonResponse_Add_Int32(	reqData->socket,
-							reqData->jsonTextBuffer,
-							kMaxJsonBuffLen,
-							responseString,
-							cTelescopeProp.SlewSettleTime,
-							INCLUDE_COMMA);
+	if (cDriverSupports_SlewSettleTime)
+	{
+		JsonResponse_Add_Int32(	reqData->socket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								responseString,
+								cTelescopeProp.SlewSettleTime,
+								INCLUDE_COMMA);
+	}
+	else
+	{
+		alpacaErrCode	=	kASCOM_Err_PropertyNotImplemented;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "SlewSettleTime not supported");
+	}
 	return(alpacaErrCode);
 }
 
 
+//*****************************************************************************
+//*	slew settle time is for synchronous slewing commands and really does not apply to Alpaca
 //*****************************************************************************
 TYPE_ASCOM_STATUS	TelescopeDriver::Put_SlewSettleTime(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
 {
@@ -2097,32 +2137,40 @@ short				newSlewSettleTime;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-	slewSettleTimeFound		=	GetKeyWordArgument(	reqData->contentData,
-													"SlewSettleTime",
-													slewSettleTimeString,
-													sizeof(slewSettleTimeString));
-	if (slewSettleTimeFound)
+	if (cDriverSupports_SlewSettleTime)
 	{
-		newSlewSettleTime	=	atoi(slewSettleTimeString);
-//		CONSOLE_DEBUG_W_STR("slewSettleTimeString\t=", slewSettleTimeString);
-//		CONSOLE_DEBUG_W_DBL("newSlewSettleTime\t=", newSlewSettleTime);
-		if (newSlewSettleTime >= 0)
+		slewSettleTimeFound		=	GetKeyWordArgument(	reqData->contentData,
+														"SlewSettleTime",
+														slewSettleTimeString,
+														sizeof(slewSettleTimeString));
+		if (slewSettleTimeFound)
 		{
-			cTelescopeProp.SlewSettleTime	=	newSlewSettleTime;
-			alpacaErrCode					=	kASCOM_Err_Success;
+			newSlewSettleTime	=	atoi(slewSettleTimeString);
+	//		CONSOLE_DEBUG_W_STR("slewSettleTimeString\t=", slewSettleTimeString);
+	//		CONSOLE_DEBUG_W_DBL("newSlewSettleTime\t=", newSlewSettleTime);
+			if (newSlewSettleTime >= 0)
+			{
+				cTelescopeProp.SlewSettleTime	=	newSlewSettleTime;
+				alpacaErrCode					=	kASCOM_Err_Success;
+			}
+			else
+			{
+				alpacaErrCode	=	kASCOM_Err_InvalidValue;
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "SlewSettleTime is out of bounds");
+	//			CONSOLE_DEBUG(alpacaErrMsg);
+			}
 		}
 		else
 		{
 			alpacaErrCode	=	kASCOM_Err_InvalidValue;
-			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "SlewSettleTime is out of bounds");
-//			CONSOLE_DEBUG(alpacaErrMsg);
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "SlewSettleTime is missing");
+	//		CONSOLE_DEBUG(alpacaErrMsg);
 		}
 	}
 	else
 	{
-		alpacaErrCode	=	kASCOM_Err_InvalidValue;
-		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "SlewSettleTime is missing");
-//		CONSOLE_DEBUG(alpacaErrMsg);
+		alpacaErrCode	=	kASCOM_Err_PropertyNotImplemented;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "SlewSettleTime not supported");
 	}
 	return(alpacaErrCode);
 }
@@ -2472,6 +2520,9 @@ struct timeval			currentTime;
 
 	gettimeofday(&currentTime, NULL);
 
+//	"2022-05-30T13:49:10.4766414Z"		correct
+//	"2022-05-30T13:48:55.094"
+
 	FormatTimeStringISO8601(&currentTime, timeStampString);
 	JsonResponse_Add_String(reqData->socket,
 							reqData->jsonTextBuffer,
@@ -2658,7 +2709,7 @@ int						axisNumber;
 									reqData->jsonTextBuffer,
 									kMaxJsonBuffLen,
 									responseString,
-									cTelescopeProp.CanMoveAxis,
+									cTelescopeProp.CanMoveAxis[axisNumber],
 									INCLUDE_COMMA);
 
 		}
@@ -2749,7 +2800,7 @@ double					newRate;
 				if (rateFound)
 				{
 					newRate		=	atof(rateString);
-
+					CONSOLE_DEBUG_W_DBL("newRate\t=", newRate);
 					JsonResponse_Add_Double(reqData->socket,
 											reqData->jsonTextBuffer,
 											kMaxJsonBuffLen,
@@ -2758,6 +2809,8 @@ double					newRate;
 											INCLUDE_COMMA);
 
 					alpacaErrCode	=	Telescope_MoveAxis(axisNumber, newRate, alpacaErrMsg);
+					CONSOLE_DEBUG_W_NUM("alpacaErrCode\t=", alpacaErrCode);
+					CONSOLE_DEBUG(alpacaErrMsg);
 				}
 				else
 				{
@@ -2783,7 +2836,7 @@ double					newRate;
 	else
 	{
 		alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
-		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "cCanMoveAxis is false");
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "CanMoveAxis is false");
 //		CONSOLE_DEBUG(alpacaErrMsg);
 	}
 	return(alpacaErrCode);
@@ -3243,6 +3296,13 @@ double				newDeclination;
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Invalid While Parked");
 		CONSOLE_DEBUG(alpacaErrMsg);
 	}
+	else if (cTelescopeProp.Tracking == false)
+	{
+		//*	make CONFORM happy
+		alpacaErrCode	=	kASCOM_Err_InvalidOperation;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Invalid While not tracking");
+		CONSOLE_DEBUG(alpacaErrMsg);
+	}
 	else if (cTelescopeProp.CanSync)
 	{
 		rightAscensionFound		=	GetKeyWordArgument(	reqData->contentData,
@@ -3369,7 +3429,7 @@ TYPE_ASCOM_STATUS	TelescopeDriver::Get_PhysicalSideOfPier(TYPE_GetPutRequestData
 															const char *responseString)
 {
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
-char					extraString[128];
+char					extraString[64];
 
 	JsonResponse_Add_Int32(	reqData->socket,
 							reqData->jsonTextBuffer,
@@ -3380,8 +3440,12 @@ char					extraString[128];
 
 	switch(cTelescopeProp.PhysicalSideOfPier)
 	{
+		case kPierSide_NotAvailable:
+			strcpy(extraString, "Not available");
+			break;
+
 		case kPierSide_pierUnknown:		//*	Polar (equatorial) mount other than German equatorial.
-			strcpy(extraString, "Unknown or indeterminate.");
+			strcpy(extraString, "Unknown or indeterminate");
 			break;
 
 		case kPierSide_pierEast:		//*	Altitude-Azimuth alignment.
@@ -3392,6 +3456,9 @@ char					extraString[128];
 			strcpy(extraString, "Physically West of the pier");
 			break;
 
+		default:
+			strcpy(extraString, "Error");
+			break;
 	}
 	JsonResponse_Add_String(	reqData->socket,
 								reqData->jsonTextBuffer,
@@ -3489,7 +3556,7 @@ int		mySocket;
 								"Non-standard alpaca commands follow",
 								INCLUDE_COMMA);
 
-		alpacaErrCode	=	Get_PhysicalSideOfPier(	reqData, alpacaErrMsg, "PysicalSideOfPier");
+		alpacaErrCode	=	Get_PhysicalSideOfPier(	reqData, alpacaErrMsg, "PhysicalSideOfPier");
 
 
 		JsonResponse_Add_String(mySocket,

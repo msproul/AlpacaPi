@@ -294,6 +294,7 @@ bool				gDisplayImage				=	false;
 bool				gSimulateCameraImage		=	false;
 bool				gVerbose					=	true;
 bool				gDebugDiscovery				=	false;
+bool				gObservatorySettingsOK		=	false;
 const char			gValueString[]				=	"Value";
 char				gDefaultTelescopeRefID[kDefaultRefIdMaxLen]	=	"";
 char				gWebTitle[80]				=	"AlpacaPi";
@@ -3156,7 +3157,7 @@ bool			controllWindowActive;
 				gFullVersionString);
 
 	ObservatorySettings_Init();
-	ObservatorySettings_ReadFile();
+	gObservatorySettingsOK	=	ObservatorySettings_ReadFile();
 
 
 	CreateDriverObjects();

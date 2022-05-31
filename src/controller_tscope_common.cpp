@@ -153,7 +153,9 @@ int				iii;
 #endif
 
 	ReadOneTelescopeCapability("canfindhome",			"CanFindHome",			&cTelescopeProp.CanFindHome);
-	ReadOneTelescopeCapability("canmoveaxis",			"CanMoveAxis",			&cTelescopeProp.CanMoveAxis);
+	ReadOneTelescopeCapability("canmoveaxis?Axis=0",	"CanMoveAxis-RA",		&cTelescopeProp.CanMoveAxis[0]);
+	ReadOneTelescopeCapability("canmoveaxis?Axis=1",	"CanMoveAxis-DEC",		&cTelescopeProp.CanMoveAxis[1]);
+	ReadOneTelescopeCapability("canmoveaxis?Axis=2",	"CanMoveAxis-3",		&cTelescopeProp.CanMoveAxis[2]);
 	ReadOneTelescopeCapability("canpark",				"CanPark",				&cTelescopeProp.CanPark);
 	ReadOneTelescopeCapability("canpulseguide",			"CanPulseGuide",		&cTelescopeProp.CanPulseGuide);
 	ReadOneTelescopeCapability("cansetdeclinationrate",	"CanSetDeclinationRate",
@@ -269,7 +271,43 @@ int				argInt;
 
 	myFailureCount	=	0;
 
+	//========================================================
+	validData	=	AlpacaGetBooleanValue(	"telescope", "athome",	NULL,	&argBoolean);
+	if (validData)
+	{
+		cTelescopeProp.AtHome	=	argBoolean;
+	}
+	else
+	{
+		CONSOLE_DEBUG("Failed");
+		cReadFailureCnt++;
+		myFailureCount++;
+	}
+	//========================================================
+	validData	=	AlpacaGetBooleanValue(	"telescope", "atpark",	NULL,	&argBoolean);
+	if (validData)
+	{
+		cTelescopeProp.AtPark	=	argBoolean;
+	}
+	else
+	{
+		CONSOLE_DEBUG("Failed");
+		cReadFailureCnt++;
+		myFailureCount++;
+	}
 
+	//========================================================
+	validData	=	AlpacaGetBooleanValue(	"telescope", "ispulseguiding",	NULL,	&argBoolean);
+	if (validData)
+	{
+		cTelescopeProp.IsPulseGuiding	=	argBoolean;
+	}
+	else
+	{
+		CONSOLE_DEBUG("Failed");
+		cReadFailureCnt++;
+		myFailureCount++;
+	}
 
 	//========================================================
 	validData	=	AlpacaGetDoubleValue(	"telescope", "declination",	NULL,	&argDouble);
@@ -278,6 +316,34 @@ int				argInt;
 		cTelescopeProp.Declination	=	argDouble;
 		Update_TelescopeDeclination();
 //		CONSOLE_DEBUG_W_DBL("cTelescopeProp.Declination\t=", cTelescopeProp.Declination);
+	}
+	else
+	{
+		CONSOLE_DEBUG("Failed");
+		cReadFailureCnt++;
+		myFailureCount++;
+	}
+
+	//========================================================
+	validData	=	AlpacaGetDoubleValue(	"telescope", "guiderateDeclination",	NULL,	&argDouble);
+	if (validData)
+	{
+		cTelescopeProp.GuideRateDeclination	=	argDouble;
+		CONSOLE_DEBUG_W_DBL("cTelescopeProp.GuideRateDeclination\t=", cTelescopeProp.GuideRateDeclination);
+	}
+	else
+	{
+		CONSOLE_DEBUG("Failed");
+		cReadFailureCnt++;
+		myFailureCount++;
+	}
+
+	//========================================================
+	validData	=	AlpacaGetDoubleValue(	"telescope", "guideraterightascension",	NULL,	&argDouble);
+	if (validData)
+	{
+		cTelescopeProp.GuideRateRightAscension	=	argDouble;
+		CONSOLE_DEBUG_W_DBL("cTelescopeProp.GuideRateRightAscension\t=", cTelescopeProp.GuideRateRightAscension);
 	}
 	else
 	{

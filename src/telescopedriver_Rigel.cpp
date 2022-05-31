@@ -75,24 +75,24 @@ int			tel_msg(char *msg);
 TelescopeDriverRigel::TelescopeDriverRigel(void)
 	:TelescopeDriver()
 {
-
 	CONSOLE_DEBUG(__FUNCTION__);
 	strcpy(cCommonProp.Name,		"Telescope-Rigel");
 	strcpy(cCommonProp.Description,	"Telescope control using Rigel protocol");
 
 	//*	setup the options for this driver
-	cTelescopeProp.AlginmentMode	=	kAlignmentMode_algPolar;
-	cTelescopeProp.CanSlewAsync		=	true;
-	cTelescopeProp.CanSync			=	false;
-	cTelescopeProp.CanSetTracking	=	false;
-	cTelescopeProp.CanMoveAxis		=	false;
-	cTelescopeProp.CanUnpark		=	false;
-	cTelescopeProp.CanFindHome		=	true;
-	cTelescopeProp.CanPark			=	true;
-	cTelescopeProp.CanSlewAltAzAsync	=	true;
-	cTelescopeProp.ApertureDiameter		=	0.370;		//*	meters
-	cTelescopeProp.FocalLength			=	cTelescopeProp.ApertureDiameter * 14;	//*	meters
-	cTelescopeProp.ApertureArea			=	M_PI * ((cTelescopeProp.ApertureDiameter / 2) * (cTelescopeProp.ApertureDiameter / 2)); // square meters
+	cTelescopeProp.AlginmentMode			=	kAlignmentMode_algPolar;
+	cTelescopeProp.CanSlewAsync				=	true;
+	cTelescopeProp.CanSync					=	false;
+	cTelescopeProp.CanSetTracking			=	false;
+	cTelescopeProp.CanMoveAxis[kAxis_RA]	=	true;
+	cTelescopeProp.CanMoveAxis[kAxis_DEC]	=	true;
+	cTelescopeProp.CanUnpark				=	false;
+	cTelescopeProp.CanFindHome				=	true;
+	cTelescopeProp.CanPark					=	true;
+	cTelescopeProp.CanSlewAltAzAsync		=	true;
+	cTelescopeProp.ApertureDiameter			=	0.370;		//*	meters
+	cTelescopeProp.FocalLength				=	cTelescopeProp.ApertureDiameter * 14;	//*	meters
+	cTelescopeProp.ApertureArea				=	M_PI * ((cTelescopeProp.ApertureDiameter / 2) * (cTelescopeProp.ApertureDiameter / 2)); // square meters
 
 //	need to start Rigel daemons and connect to shared memory here
 

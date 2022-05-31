@@ -544,11 +544,11 @@ int		iii;
 	{
 		gCurrentActiveWindow	=	NULL;
 	}
+
 #ifdef _USE_OPENCV_CPP_
-	CONSOLE_DEBUG(__FUNCTION__);
 	if (cOpenCV_matImage != NULL)
 	{
-	CONSOLE_DEBUG(__FUNCTION__);
+		CONSOLE_DEBUG("Deleting cOpenCV_matImage");
 //		cv::(&cOpenCV_matImage);
 //		cOpenCV_matImage	=	NULL;
 		//---try------try------try------try------try------try---

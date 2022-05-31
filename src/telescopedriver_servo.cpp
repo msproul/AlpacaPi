@@ -83,14 +83,15 @@ double	parkRA, parkDec;
 	strcpy(cCommonProp.Description, "Mount using RoboClaw servo controller");
 
 	//*	setup the options for this driver
-	cTelescopeProp.AlginmentMode	=	kAlignmentMode_algGermanPolar;
-	cTelescopeProp.CanSlewAsync		=	true;
-	cTelescopeProp.CanSync			=	true;
-	cTelescopeProp.CanSetTracking	=	true;
-	cTelescopeProp.CanMoveAxis		=	true;
-	cTelescopeProp.CanUnpark		=	true;
-	cTelescopeProp.CanPark			=	true;
-	cTelescopeProp.CanFindHome		=	false;
+	cTelescopeProp.AlginmentMode			=	kAlignmentMode_algGermanPolar;
+	cTelescopeProp.CanSlewAsync				=	true;
+	cTelescopeProp.CanSync					=	true;
+	cTelescopeProp.CanSetTracking			=	true;
+	cTelescopeProp.CanMoveAxis[kAxis_RA]	=	true;
+	cTelescopeProp.CanMoveAxis[kAxis_DEC]	=	true;
+	cTelescopeProp.CanUnpark				=	true;
+	cTelescopeProp.CanPark					=	true;
+	cTelescopeProp.CanFindHome				=	false;
 
 #warning <RNS> No sure of your invocation location but we likely need complete pathnames or soft paths
 #define kLOCAL_CFG_FILE "servo_location.cfg"
@@ -124,9 +125,21 @@ double	parkRA, parkDec;
 			break;
 	}
 	cTelescopeProp.TrackingRate		=	kDriveRate_driveSidereal;
-	cTelescopeProp.SiteLatitude		=	Time_get_lat();
-	cTelescopeProp.SiteLongitude	=	Time_get_lon();
-	cTelescopeProp.SiteElevation	=	Time_get_elev();
+	//*	check to see if the observatory settings is valid
+	if (gObservatorySettingsOK)
+	{
+		//*	we have settings from observatorysettings.txt config file
+		//*	these override the "servo_location.cfg" file
+		Time_set_lat(cTelescopeProp.SiteLatitude);
+		Time_set_lon(cTelescopeProp.SiteLongitude);
+		Time_set_elev(cTelescopeProp.SiteElevation);
+	}
+	else
+	{
+		cTelescopeProp.SiteLatitude		=	Time_get_lat();
+		cTelescopeProp.SiteLongitude	=	Time_get_lon();
+		cTelescopeProp.SiteElevation	=	Time_get_elev();
+	}
 
 	//	We know that Servo_init() always sets the scope to the park position
 	Servo_get_park_coordins(&parkRA, &parkDec);
@@ -377,7 +390,8 @@ FILE	*filePointer;
 int32_t	TelescopeDriverServo::RunStateMachine(void)
 {
 TYPE_MOVE 	currentMoveState;
-double 		currRA, currDec;
+double 		currRA_hours;
+double 		currDec_degrees;
 int8_t 		servoSide;
 uint32_t	currentMilliSecs;
 uint32_t	deltaMilliSecs;
@@ -408,13 +422,19 @@ uint32_t	deltaMilliSecs;
 		}
 
 	#warning <RNS>  Also not positive I did this right but here is an attempt
-	#warning <MLS>  Looks good to me
 		//	If moving, get current RA & Dec
-		Servo_get_pos(&currRA, &currDec);
-		//	Convert park RA from hours to degs
-		Time_deci_hours_to_deg(&currRA);
-		cTelescopeProp.RightAscension	=	currRA;
-		cTelescopeProp.Declination		=	currDec;
+		Servo_get_pos(&currRA_hours, &currDec_degrees);
+
+
+	#warning <MLS>  Ron, please confirm this
+//--		//	Convert park RA from hours to degs
+//--		Time_deci_hours_to_deg(&currRA);
+		while (currRA_hours > 24.0)
+		{
+			currRA_hours	-=	24.0;
+		}
+		cTelescopeProp.RightAscension	=	currRA_hours;
+		cTelescopeProp.Declination		=	currDec_degrees;
 
 		//	Update the side of pier
 		servoSide	=	Servo_get_pier_side();
@@ -462,7 +482,9 @@ TYPE_ASCOM_STATUS alpacaErrCode	=	kASCOM_Err_NotImplemented;
 }
 
 //*****************************************************************************
-TYPE_ASCOM_STATUS TelescopeDriverServo::Telescope_MoveAxis(const int axisNum, const double moveRate_degPerSec, char *alpacaErrMsg)
+TYPE_ASCOM_STATUS TelescopeDriverServo::Telescope_MoveAxis(	const int		axisNum,
+															const double	moveRate_degPerSec,
+															char			*alpacaErrMsg)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
 int					servoStatus;
@@ -477,6 +499,8 @@ int					servoStatus;
 	//	axisNum = 0 -> RA - maps correclty to "servo_std_defs.h"
 	//	axisNum = 1 -> Dec - maps to correctly "servo_std_defs.h"
 
+	CONSOLE_DEBUG_W_DBL("moveRate_degPerSec\t=", moveRate_degPerSec);
+
 	// if a non-zero velocity is requested
 	if (moveRate_degPerSec != 0.0)
 	{
@@ -488,9 +512,11 @@ int					servoStatus;
 		else
 		{
 			// Only ways to get an error from move_axis_by_vel is to have a bad axisNum
-			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
 			alpacaErrCode			=	kASCOM_Err_NotImplemented;
+			alpacaErrCode			=	kASCOM_Err_NotConnected;
 			cTelescopeProp.Slewing	=	false;
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Servo_move_axis_by_vel() failed");
+			CONSOLE_DEBUG(alpacaErrMsg);
 		}
 	}
 	else
@@ -501,7 +527,9 @@ int					servoStatus;
 		{
 			// Only ways to get an error from start_axis_tracking is to have a bad axisNum
 			alpacaErrCode	=	kASCOM_Err_NotImplemented;
-			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
+			alpacaErrCode	=	kASCOM_Err_NotConnected;
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Servo_start_axis_tracking() failed");
+			CONSOLE_DEBUG(alpacaErrMsg);
 		}
 		cTelescopeProp.Slewing	=	false;
 	}	// of if-else non-zero velocity

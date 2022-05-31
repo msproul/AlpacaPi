@@ -294,7 +294,21 @@ char	returnString[256];
 void	ControllerTelescope::AlpacaDisplayErrorMessage(const char *errorMsgString)
 {
 	CONSOLE_DEBUG_W_STR("Alpaca error=", errorMsgString);
-	SetWidgetText(kTab_Control, kTelescope_ErrorMsg, errorMsgString);
+	switch(cCurrentTabNum)
+	{
+		case kTab_Control:
+			SetWidgetText(kTab_Control, kTelescope_ErrorMsg, errorMsgString);
+			break;
+
+		case kTab_Settings:
+			SetWidgetText(kTab_Settings, kTeleSettings_ErrorMsg, errorMsgString);
+			break;
+
+		default:	//*	dont know whats going on, so do both
+			SetWidgetText(kTab_Control, kTelescope_ErrorMsg, errorMsgString);
+			SetWidgetText(kTab_Settings, kTeleSettings_ErrorMsg, errorMsgString);
+			break;
+	}
 }
 
 //*****************************************************************************

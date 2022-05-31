@@ -721,10 +721,13 @@ tele	:			$(CPP_OBJECTS)				\
 					$(CPP_OBJECTS)				\
 					$(ALPACA_OBJECTS)			\
 					$(OPENCV_LINK)				\
-					-ludev						\
 					-lusb-1.0					\
 					-lpthread					\
 					-o alpacapi-telescope
+
+
+#					-ludev						\
+
 
 ######################################################################################
 #pragma mark make eq6

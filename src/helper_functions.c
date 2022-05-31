@@ -4,6 +4,7 @@
 //*	Jan 10,	2022	<MLS> Added FormatTimeString_Local()
 //*	Jan 18,	2022	<MLS> Moved FormatTime routines to helper_functions
 //*	Jan 19,	2022	<MLS> Added FormatDateTimeString_Local()
+//*	May 30,	2022	<MLS> Added "Z" to the end of ISO8601 date/time string
 //*****************************************************************************
 
 #include	<math.h>
@@ -285,7 +286,9 @@ int		linesRead;
 //*****************************************************************************
 //	DATE-OBS	String - The UTC date and time at the start of the exposure in
 //	the ISO standard 8601 format: '2002-09-07T15:42:17.123'
-//	(CCYY-MM-DDTHH:MM:SS.SSS).
+//	(CCYY-MM-DDTHH:MM:SS.SSSZ).
+//	"2022-05-30T13:49:10.4766414Z"		correct
+//	"2022-05-30T13:48:55.094"			wrong
 //*****************************************************************************
 void	FormatTimeStringISO8601(struct timeval *tv, char *timeString)
 {
@@ -297,7 +300,7 @@ long		milliSecs;
 		linuxTime		=	gmtime(&tv->tv_sec);
 		milliSecs		=	tv->tv_usec / 1000;
 
-		sprintf(timeString, "%d-%02d-%02dT%02d:%02d:%02d.%03ld",
+		sprintf(timeString, "%d-%02d-%02dT%02d:%02d:%02d.%03ldZ",
 								(1900 + linuxTime->tm_year),
 								(1 + linuxTime->tm_mon),
 								linuxTime->tm_mday,

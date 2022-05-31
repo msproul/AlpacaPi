@@ -350,7 +350,7 @@ extern	bool			gDisplayImage;
 extern	bool			gSimulateCameraImage;
 extern	bool			gVerbose;
 extern	bool			gDebugDiscovery;
-
+extern	bool			gObservatorySettingsOK;
 extern	const char		gValueString[];
 extern	bool			gImageDownloadInProgress;
 
