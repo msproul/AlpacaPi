@@ -35,6 +35,7 @@
 //*	May 19,	2022	<RNS> Cleaned up unit _TEST_ of -Wall warnings
 //*	May 22,	2022	<RNS> Fixed some signed / unsigned math operators
 //*	May 22,	2022	<RNS> Changed main() back to be void, _TEST_ should never take args
+//*	May 31,	2022	<RNS> Removed the old hand coded RC messages and strings, obsolete 
 //*****************************************************************************
 
 #include <stdio.h>
@@ -49,7 +50,7 @@
 #include "servo_std_defs.h"
 #include "servo_mc_core.h"
 
-//#define _ENABLE_CONSOLE_DEBUG_
+#define _ENABLE_CONSOLE_DEBUG_
 #include "ConsoleDebug.h"
 
 // Endian services to handle both endians from host side
@@ -67,20 +68,6 @@
 #endif // Endian
 
 #define kMAX_RETRY 3
-
-// Handcoded Command 16 - Read Encoder Count M1
-// Send: [Address, 16]
-// Receive: [Enc1(4 bytes), Status, CRC(2 bytes)str_to]
-uint8_t cmd16SendStr[32]	=	{0x80, 16};
-// uint8_t cmd16RecStr[32]	=	{0x01, 0x02, 0x03, 0x04, 0x00, 0x2D, 0xAD};
-uint8_t cmd16RecStr[32]		=	{0x05, 0x04, 0x03, 0x02, 0x00, 0x94, 0xD6};
-
-// Handcoded Command  22 - Set Quad Encoder 1
-// Send: [Address, 22, Value(4 bytes), CRC(2 bytes)]
-// Receive: [0xFF]
-// Write value	=	0x06070605
-uint8_t cmd22SendStr[32]	=	{0x80, 22, 0x05, 0x06, 0x07, 0x06, 0x4B, 0xEA};
-uint8_t cmd22RecStr[32]		=	{0xFF};
 
 // Internal global variables visibel for this file only
 static int gCommPort;
@@ -297,7 +284,7 @@ ssize_t	size;
 ssize_t	total	=	0;
 int		retValue;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	// Attempt to the read the message and set buffer ptr just-in-case
 	ptrA			=	retryBuf;
 	gCommRetries	=	kMAX_RETRY;
@@ -355,7 +342,7 @@ int MC_write_comm(uint8_t *buf, size_t len)
 	ssize_t count;
 	int returnCode;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	gCommRetries	=	kMAX_RETRY;
 	// Write out all data ininput buf to the commport
@@ -389,7 +376,7 @@ int MC_init_comm(char *pathName, int baud)
 	// uint8_t	buf[256];
 	int status;
 
-	// if ((gCommPort	=	open(pathName, O_RDWR | O_NOCTTY | O_NDELAY)) == -1)
+	// Open port for read/write
 	gCommPort	=	open(pathName, O_RDWR);
 	if (gCommPort == -1)
 	{
