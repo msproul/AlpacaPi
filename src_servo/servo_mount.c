@@ -59,11 +59,12 @@
 //*	May 30,	2022	<RNS> Tracked down misc ra & dec reference that were copy/paste errors
 //*	May 30,	2022	<RNS> Fixed a conversion error in _calc_opt_path
 //*	May 30,	2022	<RNS> Fixed bug in servo_state that returned moving to often
-//*	May 31,	2022	<RNS> Fixed a mask in servo_state 
+//*	May 31,	2022	<RNS> Fixed a mask in servo_state
 //*	May 31,	2022	<RNS> Add debug tags for servo_state and cal_opt_path for  multi returns
 //*	May 31,	2022	<RNS> Fixed the RA rel direction sign, was returning HA vector, not RA
 //*	May 31,	2022	<RNS> Added a forgotten _set_pos after doing a flip
-//*	May 31,	2022	<RNS> Temporary errata - GEM rollover is inop, goes incorrect direction
+//*	Jun  1,	2022	<RNS> Rewrote _calc_optimal_path(), added _calc_short_vector()
+//*	Jun  2,	2022	<RNS> Merged code and fix a sign bug in _set_static_pos()
 //*****************************************************************************
 // Notes: M1 *MUST BE* connected to RA or Azimuth axis, M2 to Dec or Altitude
 //*****************************************************************************
@@ -104,7 +105,6 @@ static bool gParkState = true;
 static TYPE_MOVE gMountAction;
 static char gDebugInfoSS[] = "00";
 static char gDebugInfoCOP[] = "00000";
-
 
 //*****************************************************************************
 // Initializes the serial comm port using the identifying string and baud rates.
@@ -510,7 +510,7 @@ void Servo_set_static_pos(double ha, double dec)
 	lst = Time_gmst_to_lst(lst, Time_get_lon());
 
 	// set RA to the LST + HA offset
-	ra = lst + ha;
+	ra = lst - ha;
 
 	// Set the current position
 	Servo_set_pos(ra, dec);
@@ -726,6 +726,7 @@ int Servo_move_axis_by_vel(uint8_t motor, double vel)
 int Servo_init(const char *mountCfgFile, const char *localCfgFile)
 {
 	int status = kSTATUS_OK;
+	double currRa, currDec; 
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -821,7 +822,10 @@ int Servo_init(const char *mountCfgFile, const char *localCfgFile)
 	gMountConfig.offTarget /= 3600.0;
 
 	// Set the position of the stationary mount to the park position from config file
+	printf("ra.park = %lf	dec.park = %lf\n",gMountConfig.ra.park, gMountConfig.dec.park);
 	Servo_set_static_pos(gMountConfig.ra.park, gMountConfig.dec.park);
+	Servo_get_pos(&currRa, &currDec);
+	printf("** Current Pos  RA = %lf   Dec = %lf\n", currRa, currDec);
 	// Set the mount state to Park
 	gParkState = true;
 
@@ -882,7 +886,7 @@ TYPE_MOVE Servo_state(void)
 	int status;
 	// bool		raStopped, decStopped;
 
-	//CONSOLE_DEBUG(__FUNCTION__);
+	// CONSOLE_DEBUG(__FUNCTION__);
 
 	// read the command queue for RA and Dec
 	status = RC_check_queue(gMountConfig.addr, &raState, &decState);
@@ -891,14 +895,14 @@ TYPE_MOVE Servo_state(void)
 		CONSOLE_DEBUG("ERROR:  RC_check_queue returned error!");
 	}
 	// Go for the easy win, just see if both cmds queues are empty
-	//printf("\n *** ra state = %x	dec state = %x ***\n", raState, decState);
+	// printf("\n *** ra state = %x	dec state = %x ***\n", raState, decState);
 
 	if ((raState & decState) == kRC_CMD_QUEUE_EMPTY)
 	{
 		// Check to see is the mount is PARKED or just STOPPED
 		if (gParkState == true)
 		{
-			//printf("### Mount is parked\n");
+			// printf("### Mount is parked\n");
 			strcpy(gDebugInfoSS, "P1");
 			return (PARKED);
 		}
@@ -925,14 +929,14 @@ TYPE_MOVE Servo_state(void)
 	}
 
 	// if cmd queues have more than 1 cmd queued in either buffer (0-based), then definitely moving
-	// This mask/compare is tricky and only works due to the above 'if' eliminated double  0x80 case 
+	// This mask/compare is tricky and only works due to the above 'if' eliminated double  0x80 case
 	if (((raState | decState) & 0x3F) != 0x0)
 	{
-		//printf("\n *** ra state = %x	dec state = %x ***\n", raState, decState);
+		// printf("\n *** ra state = %x	dec state = %x ***\n", raState, decState);
 		strcpy(gDebugInfoSS, "M1");
 		return (MOVING);
 	}
-	//CONSOLE_DEBUG(__FUNCTION__);
+	// CONSOLE_DEBUG(__FUNCTION__);
 
 	// one or both axis have single cmd in queue, determining moving vs tracking
 
@@ -955,7 +959,7 @@ TYPE_MOVE Servo_state(void)
 	// KLUDGE!  using absolute values until I figure out how RC does neg velocities
 	absVel = abs(raVel);
 	absTrack = abs(gMountConfig.ra.track);
-	//printf("^^^ absVel = %d	absTrack = %d\n", absVel, absTrack);
+	// printf("^^^ absVel = %d	absTrack = %d\n", absVel, absTrack);
 
 	// convert to floats
 	velFloat = (float)absVel;
@@ -1040,8 +1044,8 @@ static int Servo_move_step_track(int32_t raStep, int32_t decStep)
 		// make the first slew to time corrected target and buffer a vel cmd for tracking
 		// this first command has to empty any remaining buffered cmds (false)
 		status -= RC_move_by_posva(gMountConfig.addr, SERVO_RA_AXIS, raStep, gMountConfig.ra.vel, gMountConfig.ra.acc, false);
-		//printf("!!! raStep = %d  vel = %d  acc = %d\n", raStep, gMountConfig.ra.vel, gMountConfig.ra.acc);
-		// This velocity command will start when the above pos cmd completes
+		// printf("!!! raStep = %d  vel = %d  acc = %d\n", raStep, gMountConfig.ra.vel, gMountConfig.ra.acc);
+		//  This velocity command will start when the above pos cmd completes
 		status -= RC_move_by_vela(gMountConfig.addr, SERVO_RA_AXIS, gMountConfig.ra.track, gMountConfig.ra.acc, true);
 	}
 	else
@@ -1139,6 +1143,47 @@ void Servo_stop_all(void)
 }
 
 //*****************************************************************************
+// This routine will find the shortest path between two points on a circle
+// Circle size is supplied by the 'max' arg, and for RA it is 24.0
+// It is only used the RA axis (Dec doesn't need it) and will return the
+// vector needed to move from the start position in hour.  This was a PITA
+//*****************************************************************************
+static double Servo_calc_short_vector(double begin, double end, double max)
+{
+	double sDiff;
+	double rawDiff;
+	double modDiff;
+
+	sDiff = 0.0;
+	rawDiff = (begin > end) ? begin - end : end - begin;
+	// set the rollover value from the args
+	modDiff = fmod(rawDiff, max);
+
+	// Split the circle and pick the shorter length
+	if (modDiff > (max / 2.0))
+	{
+		// There is a shorter path in opposite direction
+		sDiff = (max - modDiff);
+		// if end larger toggle the sign
+		if (end > begin)
+		{
+			sDiff = sDiff * -1.0;
+		}
+	}
+	else
+	{
+		sDiff = modDiff;
+		// if begin larger toggle the sign
+		if (begin > end)
+		{
+			sDiff = sDiff * -1.0;
+		}
+	}
+
+	return sDiff;
+}
+
+//*****************************************************************************
 // INTERNAL ROUNTINE:  This is try-before-you-buy routine. It calcs the best path
 // for the mount to from start to end and returns the *relative direction* needed
 // to move the mount from the start position but makes *no changes*.  If you don't
@@ -1146,77 +1191,87 @@ void Servo_stop_all(void)
 // that end coordins are above the horizon. It also will return whether a flip
 // is needed, but *does not* make the flip coordins changes to the start position.
 // If a flip is returned, you *MUST* flip the start coordins for the returned path
-// in raDirection & decDirection to be accurate. Note: raPath(Flip) vector is 
+// in raDirection & decDirection to be accurate. Note: raPath(Flip) vector is
 // measured in HA which is the opposite of the RA direction, so need to toggle the
-// sign on the return for relative RA movement 
+// sign on the return for relative RA movement
 // All inputs in decimal Hours/degs format and returns boolean if a mount flip is required
 //*****************************************************************************
 static bool Servo_calc_optimal_path(double startRa, double startDec, double lst, double endRa, double endDec, double *raDirection, double *decDirection)
 {
-	double startRaHA, endRaHA;
-	double startRaFlip, startDecFlip, startRaHAFlip;
-	double raPath, decPath, raPathFlip, decPathFlip;
+	double startRaHa, endRaHa;
+	double startRaFlip, startDecFlip, startRaHaFlip;
+	double decStdPath, decFlipPath, raStdPath, raFlipPath;
 	double direction; // not used
 	int8_t side;	  // not used
 
-	// calc HA for all coordins
-	startRaHA = lst - startRa;
-	endRaHA = lst - endRa;
+	// Converting the input star and end coordins to hour angle
+	startRaHa = lst - startRa;
+	endRaHa = lst - endRa;
+	Time_normalize_HA(&startRaHa);
+	Time_normalize_HA(&endRaHa);
 
-	// Converting the coordins to hour angle and normalizing solves the RA 0/24 wrap issue
-	// normalize both RA HA to -12.0 < ra < 12.0
-	Time_normalize_HA(&startRaHA);
-	Time_normalize_HA(&endRaHA);
-
-	// RA path distance is just  endHA - startHA
-	// Note: if pathRa is neg, it means a move Eastward, a positve pathRa means Westward in North Hemisphere
-	raPath = startRaHA - endRaHA;
-
+	// Do the simple Dec axis first, it just path = end - start;
 	// Note: if pathDec is neg, it means a move towards South, positive... a move towards North
-	decPath = endDec - startDec;
-	// printf("decPath(%lf) = endDec(%lf) - startDec(%lf)\n", decPath, endDec, startDec);
+	decStdPath = endDec - startDec;
+	// printf(> decStdPath(%.2lf)  endDec(%.2lf)  startDec(%.2lf)\n", decStdPath, endDec, startDec);
 
-	// look for the simple move where RA does not cross the meridian becomes
-	// length of path < starting Ra distance from meridian
-	if (fabs(raPath) < fabs(startRaHA))
+	// Find the short path for the Ra axis for a std move
+	raStdPath = Servo_calc_short_vector(startRa, endRa, 24.0);
+	// printf("LST:%.2lf - StartRa = %.2lf  endRa = %.2lf  raStdPath = %.2lf  startRaHa = %.2lf  endRaHa = %.2lf\n", lst, startRa, endRa, raStdPath, startRaHa, endRaHa);
+
+	// if starting on the west side and std path moves east past LST
+	if (startRaHa > 0.0 && (startRaHa - raStdPath) < 0.0)
 	{
-		// got lucky, it's a simple path return the directions in HA and degss
-		// get the current position and convert to deci hours and degs
-		// Note: raPath scale is in HA, so need to toggle sign for relative RA movement 
-		*raDirection = raPath;
-		*decDirection = decPath;
+		// this move crosses meridian
+	}
+	// if starting on the east side and std path moves west past lst
+	else if (startRaHa < 0.0 && (startRaHa - raStdPath) > 0.0)
+	{
+		// this move crosses meridian
+	}
+	else
+	{
+		// this move stays on it's side of the meridian
+		*raDirection = raStdPath;
+		*decDirection = decStdPath;
 		strcpy(gDebugInfoCOP, "X--SM");
 		return (false);
 	}
-	// Now on to complex moves, we are crossing the meridian
-	// and first determine if we *really* need to cross the meridian
 
-	// do a what-if calc if we flipped the start position
+	// Now that crosses meridian is true, but lets see if we can change that with a flip
+	// so do a what-if compare of distance with start position flipped for TTP move
+	// TODO:  This move could be merged with the GEM flip routine, but just get it working
 	startRaFlip = startRa;
 	startDecFlip = startDec;
 	Servo_calc_flip_coordins(&startRaFlip, &startDecFlip, &direction, &side);
+	// printf("LST:%.2lf - StartRaFlip = %.2lf	endRa = %.2lf	raFlippath = %.2lf startRaHaFlip = %.2lf\n", lst, startRaFlip, endRa, raFlipPath, startRaHaFlip);
 
-	// COPIED from above - only calc new flipped start HA for all coordins
-	// The end coorindates remain the same
-	startRaHAFlip = lst - startRaFlip;  // 6 - 20 = -14
+	// Calc the the HA of the new flipped start position, endRaHa remain the same
+	startRaHaFlip = lst - startRaFlip;
+	Time_normalize_HA(&startRaHaFlip);
 
-	// Converting the flipped start coordins to hour angle and normalizing solves the RA 0/24 wrap issue
-	// normalize HA to -12.0 < ra < 12.0
-	Time_normalize_HA(&startRaHAFlip);  // 10
-
-	// RA flipped path distance is just endHA - startHA
-	raPathFlip = startRaHAFlip - endRaHA; // 8
 	// Note: if pathDec is neg, it means a move towards South, positive... a move towards North
-	decPathFlip = endDec - startDecFlip;
-	// Check to see if the flipped coordins are now a simple move, where RA does not cross the meridian
-	// length of path < starting Ra distance from meridian
+	decFlipPath = endDec - startDecFlip;
 
-	if (fabs(raPathFlip) < fabs(startRaHAFlip))
+	// Find the short path of the Ra axis for a flip move, endRa is same as std path
+	raFlipPath = Servo_calc_short_vector(startRaFlip, endRa, 24.0);
+	// printf("LST:%.2lf - StartRaFlip = %.2lf	endRa = %.2lf	raFlippath = %.2lf startRaHaFlip = %.2lf\n", lst, startRaFlip, endRa, raFlipPath, startRaHaFlip);
+
+	// if starting on the west side and std path moves past lst
+	if (startRaHaFlip > 0.0 && (startRaHaFlip - raFlipPath) < 0.0)
 	{
-		// got lucky with the flip, it's a simple path return the directions in HA and degs
-		*raDirection = raPathFlip;
-		*decDirection = decPathFlip;
-		// ALL Flip makes it simple move 
+		// this move crosses meridian
+	}
+	// if starting on the east side and std path moves past lst
+	else if (startRaHaFlip < 0.0 && (startRaHaFlip - raFlipPath) > 0.0)
+	{
+		// this move crosses meridian
+	}
+	else
+	{
+		// After the flip this move stays on it's side of the meridian
+		*raDirection = raFlipPath;
+		*decDirection = decFlipPath;
 		strcpy(gDebugInfoCOP, "XF-SM");
 		return (true);
 	}
@@ -1227,36 +1282,50 @@ static bool Servo_calc_optimal_path(double startRa, double startDec, double lst,
 	if (gMountConfig.mount == kGERMAN)
 	{
 		// Check to see if a GEM mount must flip due to the RA path exceed the meridian window
-		if ((fabs(raPath) - fabs(startRaHA)) > gMountConfig.flipWin)
+
+		// if starting on the west side and std path moves east past LST
+		if ((startRaHa > 0.0) && ((startRaHa - raStdPath) < gMountConfig.flipWin))
 		{
-			// Note: raPathFlip scale is in HA, so need to toggle sign for relative RA movement 
-			*raDirection = raPathFlip;
-			*decDirection = decPathFlip;
-			// GEM Flip do to move is greather than meridian window
-			strcpy(gDebugInfoCOP, "GF>MW");
+			// this move crosses meridian from the west and goes past the GEM's meridian flip window, so flip and return
+			*raDirection = raFlipPath;
+			*decDirection = decFlipPath;
+			strcpy(gDebugInfoCOP, "GFWMW");
 			return (true);
 		}
+		// if starting on the east side and std path moves west past LST
+		else if ((startRaHa < 0.0) && ((startRaHa - raStdPath) > gMountConfig.flipWin))
+		{
+			// this move crosses meridian from the east and goes past the GEM's meridian flip window, so flip and return
+			*raDirection = raFlipPath;
+			*decDirection = decFlipPath;
+			strcpy(gDebugInfoCOP, "GFEMW");
+			return (true);
+		}
+		else
+		{
+			// the move does cross the meridian but stay within the meridian flip window, no flip needed
+			*raDirection = raStdPath;
+			*decDirection = decStdPath;
+			strcpy(gDebugInfoCOP, "GF<MW");
+			return (false);
+		}
 	}
-	//// Check to see of the RA axis moves at least 10% less on the RA flip path vs RA path
-	//if (fabs(raPathFlip) < (fabs(raPath) * 0.9))
-	//{
-	//	*raDirection = raPathFlip;
-	//	*decDirection = decPathFlip;
-	//	// ALL Flip is shorter than the 'normal' path and will cross the meridian
-	//	strcpy(gDebugInfoCOP, "XF<CM");
-	//	return (true);
-	//}
+	// If you got here, the *mount is NOT a GEM* and need to find the shortest path for a FORK
 
-	// Basically all easy and special cases for mount type are complete
-	// so for a FORK, it just a normal move across the meridian
-	// If GEM mount got here, it means it crosses the meridian but still
-	// within the meridian flip window, so no flip required and stick
-	// with the original path calculation
-	// Note: raPath scale is in HA, so need to toggle sign for relative RA movement 
-	*raDirection = raPath;
-	*decDirection = decPath;
-	// While this could be a FORK, the interesting path is the the GEM so tag it
-	strcpy(gDebugInfoCOP, "G-<MW");
+	// Check to see of the RA axis moves at least 10% less on the RA flip path vs RA path
+	if (fabs(raFlipPath) < (fabs(raStdPath) * 0.9))
+	{
+		// the flip is shorter than the 'normal' path and will cross the meridian
+		*raDirection = raFlipPath;
+		*decDirection = decFlipPath;
+		strcpy(gDebugInfoCOP, "FT-CM");
+		return (true);
+	}
+
+	// This is just FORK std path move that crosses the meridian
+	*raDirection = raStdPath;
+	*decDirection = decStdPath;
+	strcpy(gDebugInfoCOP, "F--CM");
 	return (false);
 }
 
@@ -1420,7 +1489,7 @@ int Servo_move_to_coordins(double gotoRa, double gotoDec, double lat, double lon
 
 	// Determine the 'best' path form curr position to the goto position
 	flip = Servo_calc_optimal_path(currRa, currDec, lst, gotoRa, gotoDec, &raRelDir, &decRelDir);
-	printf("\n&&& CurrRa = %lf	CurrDec = %lf 	LST = %lf	flip = %d\n", currRa, currDec, lst, (int) flip);
+	printf("\n&&& CurrRa = %lf	CurrDec = %lf 	LST = %lf	flip = %d\n", currRa, currDec, lst, (int)flip);
 	printf("&&& gotoRa = %lf	gotoDec = %lf 	raRelDir = %lf	decRelDir = %lf\n", gotoRa, gotoDec, raRelDir, decRelDir);
 
 	// If flip is return, You must flip the mount otherwise the rel dir for RA/Dec will be incorrect
@@ -1451,8 +1520,7 @@ int Servo_move_to_coordins(double gotoRa, double gotoDec, double lat, double lon
 
 	// convert the target RA & Dec to target steps
 	Servo_pos_to_step(targetRa, targetDec, &targetRaStep, &targetDecStep);
-	//printf("&&& targRa = %lf	targDec = %lf 	targRaStep = %d	targDecStep = %d\n\n", targetRa, targetDec, targetRaStep, targetDecStep);
-
+	// printf("&&& targRa = %lf	targDec = %lf 	targRaStep = %d	targDecStep = %d\n\n", targetRa, targetDec, targetRaStep, targetDecStep);
 
 	/////////////////////////////////////////////////////////////////////////////////////
 	// TODO:  add back in gearlash,  KLUDGE!
@@ -1614,51 +1682,52 @@ int Servo_move_to_park(void)
 //********************************************************************************************
 //* Dump the axisPtr data structure to standard out */
 //********************************************************************************************
-static void Servo_print_axis(TYPE_MountAxis *ax)
-{
-	printf("ax->motorGear = %f\n", ax->motorGear);
-	printf("ax->mainGear = %f\n", ax->mainGear);
-	printf("ax->motorMaxRPM = %f\n", ax->motorMaxRPM);
-	printf("ax->encoder = %f\n", ax->encoder);
-	printf("ax->realAcc = %f\n", ax->realAcc);
-	printf("ax->realVel = %f\n", ax->realVel);
-	printf("ax->realAdj = %f\n", ax->realAdj);
-	printf("ax->config = %f\n", ax->config);
-	printf("ax->step = %f\n", ax->step);
-	printf("ax->prec = %f\n", ax->prec);
-	printf("ax->encoderMaxSpeed = %d\n", ax->encoderMaxSpeed);
-	printf("ax->pos = %d\n", ax->pos);
-	printf("ax->maxAcc = %d\n", ax->maxAcc);
-	printf("ax->acc = %d\n", ax->acc);
-	printf("ax->maxVel = %d\n", ax->maxVel);
-	printf("ax->vel = %d\n", ax->vel);
-	printf("ax->adj = %d\n", ax->adj);
-	printf("ax->si = %d\n", ax->si);
-	printf("ax->kp = %d\n", ax->kp);
-	printf("ax->ki = %d\n", ax->ki);
-	printf("ax->kd = %d\n", ax->kd);
-	printf("ax->il = %d\n", ax->il);
-	printf("ax->status = %x\n", ax->status);
-	printf("ax->track = %d\n", ax->track);
-	printf("ax->direction = %f\n", ax->direction);
-	printf("ax->park = %f\n", ax->park);
-	printf("ax->parkInfo = %x\n", (int)ax->parkInfo);
-	printf("ax->time = %Lf\n", ax->time);
-	printf("ax->gearLash = %f\n", ax->gearLash);
-	printf("ax->zero = %f\n", ax->zero);
-	printf("ax->standby = %f\n", ax->standby);
-	printf("ax->sync = %f\n", ax->sync);
-	printf("ax->syncValue = %d\n", ax->syncValue);
-	printf("ax->syncError = %d\n", ax->syncError);
-}
+// static void Servo_print_axis(TYPE_MountAxis *ax)
+// {
+// 	printf("ax->motorGear = %f\n", ax->motorGear);
+// 	printf("ax->mainGear = %f\n", ax->mainGear);
+// 	printf("ax->motorMaxRPM = %f\n", ax->motorMaxRPM);
+// 	printf("ax->encoder = %f\n", ax->encoder);
+// 	printf("ax->realAcc = %f\n", ax->realAcc);
+// 	printf("ax->realVel = %f\n", ax->realVel);
+// 	printf("ax->realAdj = %f\n", ax->realAdj);
+// 	printf("ax->config = %f\n", ax->config);
+// 	printf("ax->step = %f\n", ax->step);
+// 	printf("ax->prec = %f\n", ax->prec);
+// 	printf("ax->encoderMaxSpeed = %d\n", ax->encoderMaxSpeed);
+// 	printf("ax->pos = %d\n", ax->pos);
+// 	printf("ax->maxAcc = %d\n", ax->maxAcc);
+// 	printf("ax->acc = %d\n", ax->acc);
+// 	printf("ax->maxVel = %d\n", ax->maxVel);
+// 	printf("ax->vel = %d\n", ax->vel);
+// 	printf("ax->adj = %d\n", ax->adj);
+// 	printf("ax->si = %d\n", ax->si);
+// 	printf("ax->kp = %d\n", ax->kp);
+// 	printf("ax->ki = %d\n", ax->ki);
+// 	printf("ax->kd = %d\n", ax->kd);
+// 	printf("ax->il = %d\n", ax->il);
+// 	printf("ax->status = %x\n", ax->status);
+// 	printf("ax->track = %d\n", ax->track);
+// 	printf("ax->direction = %f\n", ax->direction);
+// 	printf("ax->park = %f\n", ax->park);
+// 	printf("ax->parkInfo = %x\n", (int)ax->parkInfo);
+// 	printf("ax->time = %Lf\n", ax->time);
+// 	printf("ax->gearLash = %f\n", ax->gearLash);
+// 	printf("ax->zero = %f\n", ax->zero);
+// 	printf("ax->standby = %f\n", ax->standby);
+// 	printf("ax->sync = %f\n", ax->sync);
+// 	printf("ax->syncValue = %d\n", ax->syncValue);
+// 	printf("ax->syncError = %d\n", ax->syncError);
+// }
 //******************************************************************************
 //******************************************************************************
 //******************************************************************************
 //******************************************************************************
+#define _TEST_SERVO_MOUNT_
 #ifdef _TEST_SERVO_MOUNT_
 int main(void)
 {
-//	double ra, dec, ha;
+	//	double ra, dec, ha;
 	double parkHa, parkDec;
 	double jd, gmst, lst;
 	double lat, lon;
@@ -1685,8 +1754,8 @@ int main(void)
 	Servo_step_to_pos(currRaStep, currDecStep, &currRa, &currDec);
 	printf("** Current Pos  RA = %lf   Dec = %lf\n", currRa, currDec);
 
-	//printf("Dumping RA settings\n\n");
-	//Servo_print_axis(&(gMountConfig.ra));
+	// printf("Dumping RA settings\n\n");
+	// Servo_print_axis(&(gMountConfig.ra));
 
 	// printf("\nhit any key to begin\n");
 	// fgets(buf, 256, stdin);
@@ -1725,9 +1794,9 @@ int main(void)
 
 	lat = Time_get_lat();
 	lon = Time_get_lon();
-	
+
 	printf("********************************************************\n");
-	printf("Move 1: Simple -0.5 hr +5 deg, no meridian crossing \n");
+	printf("Move 1: Simple -0.5 hr +5 deg, no meridian crossing at LST:%lf\n", lst);
 	printf("********************************************************\n");
 	// Reset current RA/Dec back to the park position
 	currRa = lst - parkHa;
@@ -1736,7 +1805,8 @@ int main(void)
 	Servo_set_pos(currRa, currDec);
 	printf("* Current  Pos  RA = %lf   Dec = %lf\n", currRa, currDec);
 	currRa -= 0.5;
-	currDec += 5; ;
+	currDec += 5;
+	;
 	printf("* Target Pos  RA = %lf   Dec = %lf\n", currRa, currDec);
 	printf("********************************************************\n");
 	Servo_move_to_coordins(currRa, currDec, lat, lon);
@@ -1751,16 +1821,17 @@ int main(void)
 	}
 
 	printf("********************************************************\n");
-	printf("Move 2: Simple -2.5 hr +40 deg with meridian crossing \n");
+	printf("Move 2: Simple +2.5 hr +40 deg with meridian crossing at LST:%lf\n", lst);
 	printf("********************************************************\n");
 	// Reset current RA/Dec back to the park position
 	currRa = lst - parkHa;
 	Time_normalize_RA(&currRa);
 	currDec = parkDec;
-	Servo_set_pos(currRa, currDec);;
+	Servo_set_pos(currRa, currDec);
+	;
 	printf("* Current  Pos  RA = %lf   Dec = %lf\n", currRa, currDec);
-	currRa -= 2.5;
-	currDec += 40; 
+	currRa += 2.5;
+	currDec += 40;
 	printf("* Target Pos  RA = %lf   Dec = %lf\n", currRa, currDec);
 	printf("********************************************************\n");
 
