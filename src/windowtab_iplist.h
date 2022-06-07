@@ -30,7 +30,9 @@ enum
 	kIPaddrList_ClmTitle4,
 	kIPaddrList_ClmTitle5,
 	kIPaddrList_ClmTitle6,
-	kIPaddrList_Outline,
+	kIPaddrList_ClmTitle7,
+	kIPaddrList_ClmTitle8,
+	kIPaddrList_ClmOutline,
 
 	kIPaddrList_AlpacaDev_01,
 	kIPaddrList_AlpacaDev_02,
@@ -99,7 +101,7 @@ class WindowTabIPList: public WindowTab
 		virtual	~WindowTabIPList(void);
 
 		virtual	void	SetupWindowControls(void);
-		virtual	void	ProcessButtonClick(const int buttonIdx);
+		virtual	void	ProcessButtonClick(const int buttonIdx, const int flags);
 		virtual	void	ProcessDoubleClick(const int buttonIdx);
 		virtual void	ProcessMouseWheelMoved(	const int	widgetIdx,
 												const int	event,

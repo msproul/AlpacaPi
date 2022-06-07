@@ -716,13 +716,12 @@ char				httpHeader[500];
 	myDeviceNum	=	reqData->deviceNumber;
 	if (myDeviceNum >= kMaxCameraCnt)
 	{
-		//*	protect the bounds so we dont have to later
+		//*	protect the bounds so we don't have to later
 		myDeviceNum	=	0;
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Device number out of bounds, using device #0");
 	}
 
 	httpHeaderSent	=	false;
-
 
 	//*	set up the json response
 	JsonResponse_CreateHeader(reqData->jsonTextBuffer, kMaxJsonBuffLen);
@@ -1514,14 +1513,17 @@ CONSOLE_DEBUG(__FUNCTION__);
 	//*	this is for the logging function
 	strcpy(reqData->alpacaErrMsg, alpacaErrMsg);
 
-
 	if (cVerboseDebug)
 	{
 		if (alpacaErrCode != kASCOM_Err_Success)
 		{
-			CONSOLE_DEBUG_W_NUM("ERROR!!!!!!!    	 alpacaErrCode\t=",	alpacaErrCode);
-			CONSOLE_DEBUG_W_NUM("alpacaErrMsg\t=",		alpacaErrMsg);
-
+			CONSOLE_DEBUG_W_NUM("ERROR!!!!!!! alpacaErrCode\t=",	alpacaErrCode);
+			CONSOLE_DEBUG_W_STR("alpacaErrMsg\t=",	alpacaErrMsg);
+			if (alpacaErrCode != kASCOM_Err_NotImplemented)
+			{
+				CONSOLE_DEBUG_W_STR("htmlData   \t=",	reqData->htmlData);
+				CONSOLE_DEBUG_W_STR("contentData\t=",	reqData->contentData);
+			}
 		}
 	}
 	return(alpacaErrCode);

@@ -32,7 +32,8 @@
 //*	Apr 27,	2020	<MLS> Added cpustats and readall to management driver commands
 //*	May  4,	2020	<MLS> Added library versions to keep track of different machines
 //*	May  4,	2020	<MLS> Added AddLibraryVersion() & Get_Libraries()
-//*	Apr  8,	2022	<MLS> Removed double quotes in version string, JSON doesnt like it
+//*	Apr  8,	2022	<MLS> Removed double quotes in version string, JSON doesn't like it
+//*	Jun  2,	2022	<MLS> Added cpu temp and uptime to configureddevices response
 //*****************************************************************************
 
 
@@ -51,11 +52,30 @@
 #include	"alpacadriver_helper.h"
 #include	"JsonResponse.h"
 #include	"eventlogging.h"
+#include	"cpu_stats.h"
+
 #include	"managementdriver.h"
 
 #define	kMaxLen_DeviceType	24
 #define	kMaxLen_Manuf		48
 #define	kMaxLen_Version		32
+
+
+//*****************************************************************************
+const TYPE_CmdEntry	gManagementCmdTable[]	=
+{
+	{	"apiversions",			kCmd_Managment_apiversions,			kCmdType_GET	},
+	{	"description",			kCmd_Managment_description,			kCmdType_GET	},
+	{	"configureddevices",	kCmd_Managment_configureddevices,	kCmdType_GET	},
+
+	//*	items added by MLS
+	{	"--extras",				kCmd_Managment_Extras,				kCmdType_GET	},
+	{	"cpustats",				kCmd_Managment_cpustats,			kCmdType_GET	},
+	{	"libraries",			kCmd_Managment_libraries,			kCmdType_GET	},
+	{	"readall",				kCmd_Managment_readall,				kCmdType_GET	},
+
+	{	"",						-1,	0x00	}
+};
 
 //**************************************************************************************
 typedef struct
@@ -128,213 +148,6 @@ ManagementDriver::~ManagementDriver(void)
 {
 	CONSOLE_DEBUG(__FUNCTION__);
 }
-
-
-
-//*****************************************************************************
-const TYPE_CmdEntry	gManagementCmdTable[]	=
-{
-	{	"apiversions",			kCmd_Managment_apiversions,			kCmdType_GET	},
-	{	"description",			kCmd_Managment_description,			kCmdType_GET	},
-	{	"configureddevices",	kCmd_Managment_configureddevices,	kCmdType_GET	},
-
-	//*	items added by MLS
-	{	"--extras",				kCmd_Managment_Extras,				kCmdType_GET	},
-	{	"cpustats",				kCmd_Managment_cpustats,			kCmdType_GET	},
-	{	"libraries",			kCmd_Managment_libraries,			kCmdType_GET	},
-	{	"readall",				kCmd_Managment_readall,				kCmdType_GET	},
-
-	{	"",						-1,	0x00	}
-};
-
-
-//*****************************************************************************
-TYPE_ASCOM_STATUS	ManagementDriver::Get_Apiversions(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
-{
-TYPE_ASCOM_STATUS			alpacaErrCode	=	kASCOM_Err_Success;
-
-	JsonResponse_Add_ArrayStart(reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"Value");
-
-
-	JsonResponse_Add_RawText(	reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"1");
-
-	JsonResponse_Add_ArrayEnd(	reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								INCLUDE_COMMA);
-	return(alpacaErrCode);
-}
-
-//*****************************************************************************
-//*
-//*		{
-//*		  "Value": {
-//*		    "ServerName": "Random Alpaca Device",
-//*		    "Manufacturer": "The Briliant Company",
-//*		    "ManufacturerVersion": "v1.0.0",
-//*		    "Location": "Horsham, UK"
-//*		  },
-//*		  "ClientTransactionID": 9876,
-//*		  "ServerTransactionID": 54321
-//*		}
-//*****************************************************************************
-TYPE_ASCOM_STATUS	ManagementDriver::Get_Description(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
-{
-TYPE_ASCOM_STATUS				alpacaErrCode	=	kASCOM_Err_Success;
-
-	JsonResponse_Add_RawText(	reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"\t\t\"Value\":\r\n\t\t{\r\n");
-
-	JsonResponse_Add_String(reqData->socket,
-							reqData->jsonTextBuffer,
-							kMaxJsonBuffLen,
-							"ServerName",
-							"Alpaca driver by Mark Sproul",
-							INCLUDE_COMMA);
-
-	JsonResponse_Add_String(reqData->socket,
-							reqData->jsonTextBuffer,
-							kMaxJsonBuffLen,
-							"Manufacturer",
-							"msproul@skychariot.com",
-							INCLUDE_COMMA);
-
-	JsonResponse_Add_String(reqData->socket,
-							reqData->jsonTextBuffer,
-							kMaxJsonBuffLen,
-							"ManufacturerVersion",
-							kVersionString,
-							INCLUDE_COMMA);
-
-	JsonResponse_Add_String(reqData->socket,
-							reqData->jsonTextBuffer,
-							kMaxJsonBuffLen,
-							"Location",
-							"Pennsylvania, USA",
-							NO_COMMA);
-
-	JsonResponse_Add_RawText(	reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"\t\t},\r\n");
-
-	return(alpacaErrCode);
-}
-
-//*****************************************************************************
-//*	https://ascom-standards.org/api/?urls.primaryName=ASCOM%20Alpaca%20Management%20API#/Management%20Interface%20(JSON)/get_management_v1_description
-//*****************************************************************************
-TYPE_ASCOM_STATUS	ManagementDriver::Get_Configureddevices(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
-{
-TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
-int					ii;
-AlpacaDriver		*devicePtr;
-char				deviceTypeString[32];
-char				uniqueIDstring[64];
-
-	if (reqData != NULL)
-	{
-		JsonResponse_Add_String(reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"Version",
-								gFullVersionString,
-								INCLUDE_COMMA);
-
-		JsonResponse_Add_ArrayStart(reqData->socket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									"Value");
-		JsonResponse_Add_RawText(	reqData->socket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									"\r\n");
-		for (ii=0; ii<gDeviceCnt; ii++)
-		{
-			if (gAlpacaDeviceList[ii] != NULL)
-			{
-				devicePtr	=	gAlpacaDeviceList[ii];
-				GetDeviceTypeFromEnum(devicePtr->cDeviceType, deviceTypeString);
-
-				JsonResponse_Add_RawText(	reqData->socket,
-											reqData->jsonTextBuffer,
-											kMaxJsonBuffLen,
-											"\t\t{\r\n");
-
-				JsonResponse_Add_String(reqData->socket,
-										reqData->jsonTextBuffer,
-										kMaxJsonBuffLen,
-										"DeviceType",
-										deviceTypeString,
-										INCLUDE_COMMA);
-
-				JsonResponse_Add_String(reqData->socket,
-										reqData->jsonTextBuffer,
-										kMaxJsonBuffLen,
-										"DeviceName",
-										devicePtr->cCommonProp.Name,
-										INCLUDE_COMMA);
-
-				JsonResponse_Add_Int32(reqData->socket,
-										reqData->jsonTextBuffer,
-										kMaxJsonBuffLen,
-										"DeviceNumber",
-										devicePtr->cDeviceNum,
-										INCLUDE_COMMA);
-
-				sprintf(uniqueIDstring, "%08X-%04X-%04X-%04X-%012X",
-										devicePtr->cUniqueID.part1,
-										devicePtr->cUniqueID.part2,
-										devicePtr->cUniqueID.part3,
-										devicePtr->cUniqueID.part4,
-										devicePtr->cUniqueID.part5);
-
-				JsonResponse_Add_String(reqData->socket,
-										reqData->jsonTextBuffer,
-										kMaxJsonBuffLen,
-										"UniqueID",
-									//	"277C652F-2AA9-4E86-A6A6-9230C42876FA",
-									//	"11111111-2222-3333-4444-555555555555",
-										uniqueIDstring,
-										NO_COMMA);
-				if (ii < (gDeviceCnt-1))
-				{
-					JsonResponse_Add_RawText(	reqData->socket,
-												reqData->jsonTextBuffer,
-												kMaxJsonBuffLen,
-												"\t\t},\r\n");
-				}
-				else
-				{
-					JsonResponse_Add_RawText(	reqData->socket,
-												reqData->jsonTextBuffer,
-												kMaxJsonBuffLen,
-												"\t\t}\r\n");
-				}
-			}
-		}
-
-		JsonResponse_Add_ArrayEnd(	reqData->socket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									INCLUDE_COMMA);
-	}
-	else
-	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
-	}
-	return(alpacaErrCode);
-}
-
-
 
 //*****************************************************************************
 TYPE_ASCOM_STATUS	ManagementDriver::ProcessCommand(TYPE_GetPutRequestData *reqData)
@@ -462,6 +275,219 @@ int					mySocket;
 							kMaxJsonBuffLen,
 							kInclude_HTTP_Header);
 
+	return(alpacaErrCode);
+}
+
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	ManagementDriver::Get_Apiversions(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
+{
+TYPE_ASCOM_STATUS			alpacaErrCode	=	kASCOM_Err_Success;
+
+	JsonResponse_Add_ArrayStart(reqData->socket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								"Value");
+
+
+	JsonResponse_Add_RawText(	reqData->socket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								"1");
+
+	JsonResponse_Add_ArrayEnd(	reqData->socket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								INCLUDE_COMMA);
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+//*
+//*		{
+//*		  "Value": {
+//*		    "ServerName": "Random Alpaca Device",
+//*		    "Manufacturer": "The Briliant Company",
+//*		    "ManufacturerVersion": "v1.0.0",
+//*		    "Location": "Horsham, UK"
+//*		  },
+//*		  "ClientTransactionID": 9876,
+//*		  "ServerTransactionID": 54321
+//*		}
+//*****************************************************************************
+TYPE_ASCOM_STATUS	ManagementDriver::Get_Description(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
+{
+TYPE_ASCOM_STATUS				alpacaErrCode	=	kASCOM_Err_Success;
+
+	JsonResponse_Add_RawText(	reqData->socket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								"\t\t\"Value\":\r\n\t\t{\r\n");
+
+	JsonResponse_Add_String(reqData->socket,
+							reqData->jsonTextBuffer,
+							kMaxJsonBuffLen,
+							"ServerName",
+							"Alpaca driver by Mark Sproul",
+							INCLUDE_COMMA);
+
+	JsonResponse_Add_String(reqData->socket,
+							reqData->jsonTextBuffer,
+							kMaxJsonBuffLen,
+							"Manufacturer",
+							"msproul@skychariot.com",
+							INCLUDE_COMMA);
+
+	JsonResponse_Add_String(reqData->socket,
+							reqData->jsonTextBuffer,
+							kMaxJsonBuffLen,
+							"ManufacturerVersion",
+							kVersionString,
+							INCLUDE_COMMA);
+
+	JsonResponse_Add_String(reqData->socket,
+							reqData->jsonTextBuffer,
+							kMaxJsonBuffLen,
+							"Location",
+							"Pennsylvania, USA",
+							NO_COMMA);
+
+	JsonResponse_Add_RawText(	reqData->socket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								"\t\t},\r\n");
+
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+//*	https://ascom-standards.org/api/?urls.primaryName=ASCOM%20Alpaca%20Management%20API#/Management%20Interface%20(JSON)/get_management_v1_description
+//*****************************************************************************
+TYPE_ASCOM_STATUS	ManagementDriver::Get_Configureddevices(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
+int					ii;
+AlpacaDriver		*devicePtr;
+char				deviceTypeString[32];
+char				uniqueIDstring[64];
+double				cpuTemp_DegC;
+double				cpuTemp_DegF;
+uint32_t	upTime;
+int			upTime_Days;
+
+	if (reqData != NULL)
+	{
+		JsonResponse_Add_String(reqData->socket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								"Version",
+								gFullVersionString,
+								INCLUDE_COMMA);
+
+		//====================================================
+		upTime		=	CPUstats_GetUptime();
+		upTime_Days	=	upTime / (24 * 60 * 60);
+
+		JsonResponse_Add_Int32(	reqData->socket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								"upTime_Days",
+								upTime_Days,
+								INCLUDE_COMMA);
+
+
+		//====================================================
+		cpuTemp_DegC	=	CPUstats_GetTemperature(NULL);
+		cpuTemp_DegF	=	((cpuTemp_DegC * (9.0/5.0)) + 32);
+		JsonResponse_Add_Double(reqData->socket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								"cpuTemp_DegF",
+								cpuTemp_DegF,
+								INCLUDE_COMMA);
+
+		JsonResponse_Add_ArrayStart(reqData->socket,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									"Value");
+		JsonResponse_Add_RawText(	reqData->socket,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									"\r\n");
+		for (ii=0; ii<gDeviceCnt; ii++)
+		{
+			if (gAlpacaDeviceList[ii] != NULL)
+			{
+				devicePtr	=	gAlpacaDeviceList[ii];
+				GetDeviceTypeFromEnum(devicePtr->cDeviceType, deviceTypeString);
+
+				JsonResponse_Add_RawText(	reqData->socket,
+											reqData->jsonTextBuffer,
+											kMaxJsonBuffLen,
+											"\t\t{\r\n");
+
+				JsonResponse_Add_String(reqData->socket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										"DeviceType",
+										deviceTypeString,
+										INCLUDE_COMMA);
+
+				JsonResponse_Add_String(reqData->socket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										"DeviceName",
+										devicePtr->cCommonProp.Name,
+										INCLUDE_COMMA);
+
+				JsonResponse_Add_Int32(reqData->socket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										"DeviceNumber",
+										devicePtr->cDeviceNum,
+										INCLUDE_COMMA);
+
+				sprintf(uniqueIDstring, "%08X-%04X-%04X-%04X-%012X",
+										devicePtr->cUniqueID.part1,
+										devicePtr->cUniqueID.part2,
+										devicePtr->cUniqueID.part3,
+										devicePtr->cUniqueID.part4,
+										devicePtr->cUniqueID.part5);
+
+				JsonResponse_Add_String(reqData->socket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										"UniqueID",
+									//	"277C652F-2AA9-4E86-A6A6-9230C42876FA",
+									//	"11111111-2222-3333-4444-555555555555",
+										uniqueIDstring,
+										NO_COMMA);
+				if (ii < (gDeviceCnt-1))
+				{
+					JsonResponse_Add_RawText(	reqData->socket,
+												reqData->jsonTextBuffer,
+												kMaxJsonBuffLen,
+												"\t\t},\r\n");
+				}
+				else
+				{
+					JsonResponse_Add_RawText(	reqData->socket,
+												reqData->jsonTextBuffer,
+												kMaxJsonBuffLen,
+												"\t\t}\r\n");
+				}
+			}
+		}
+
+		JsonResponse_Add_ArrayEnd(	reqData->socket,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									INCLUDE_COMMA);
+	}
+	else
+	{
+		alpacaErrCode	=	kASCOM_Err_InternalError;
+	}
 	return(alpacaErrCode);
 }
 

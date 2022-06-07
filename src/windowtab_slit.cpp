@@ -159,7 +159,7 @@ int		yLoc;
 }
 
 //*****************************************************************************
-void	WindowTabSlitTracker::ProcessButtonClick(const int buttonIdx)
+void	WindowTabSlitTracker::ProcessButtonClick(const int buttonIdx, const int flags)
 {
 int	previousDispMode;
 

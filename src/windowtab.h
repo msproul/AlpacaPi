@@ -129,21 +129,41 @@ class WindowTab
 		//
 		// Construction
 		//
-			#ifdef _USE_OPENCV_CPP_
 				WindowTab(	const int	xSize,
 							const int	ySize,
 							cv::Scalar	backGrndColor,
 							const char	*windowName=NULL);
-			#else
-				WindowTab(	const int	xSize,
-							const int	ySize,
-							cv::Scalar	backGrndColor,
-							const char	*windowName=NULL);
-			#endif // _USE_OPENCV_CPP_
 		virtual	~WindowTab(void);
 
 				//*	set up functions
 		virtual	void	RunBackgroundTasks(void);
+		virtual	void	SetupWindowControls(void);
+//		virtual	void	DrawWindow(void);
+		virtual void	HandleKeyDown(const int keyPressed);
+		virtual	void	ProcessButtonClick(const int buttonIdx, const int	flags);
+		virtual	void	ProcessDoubleClick(	const int	widgetIdx,
+											const int	event,
+											const int	xxx,
+											const int	yyy,
+											const int	flags);
+
+		virtual	void	ProcessDoubleClick_RtBtn(	const int	widgetIdx,
+													const int	event,
+													const int	xxx,
+													const int	yyy,
+													const int	flags);
+
+		virtual void	ProcessMouseEvent(const int widgetIdx, const int event, const int xxx, const int yyy, const int flags);
+		virtual void	ProcessMouseLeftButtonDown(const int widgetIdx, const int event, const int xxx, const int yyy, const int flags);
+		virtual void	ProcessMouseLeftButtonUp(const int widgetIdx, const int event, const int xxx, const int yyy, const int flags);
+		virtual void	ProcessMouseLeftButtonDragged(const int widgetIdx, const int event, const int xxx, const int yyy, const int flags);
+		virtual void	ProcessMouseWheelMoved(	const int	widgetIdx,
+												const int	event,
+												const int	xxx,
+												const int	yyy,
+												const int	wheelMovement,
+												const int	flags);
+
 				void	ComputeWidgetColumns(const int windowWitdh);
 				void	SetWidget(				const int widgetIdx, int left, int top, int width, int height);
 				void	SetWidgetType(			const int widgetIdx, const int widetType);
@@ -236,32 +256,6 @@ class WindowTab
 											const bool	onLine = true);
 
 
-		virtual	void	SetupWindowControls(void);
-//		virtual	void	DrawWindow(void);
-		virtual void	HandleKeyDown(const int keyPressed);
-		virtual	void	ProcessButtonClick(const int buttonIdx);
-		virtual	void	ProcessDoubleClick(	const int	widgetIdx,
-											const int	event,
-											const int	xxx,
-											const int	yyy,
-											const int	flags);
-
-		virtual	void	ProcessDoubleClick_RtBtn(	const int	widgetIdx,
-													const int	event,
-													const int	xxx,
-													const int	yyy,
-													const int	flags);
-
-		virtual void	ProcessMouseEvent(const int widgetIdx, const int event, const int xxx, const int yyy, const int flags);
-		virtual void	ProcessMouseLeftButtonDown(const int widgetIdx, const int event, const int xxx, const int yyy, const int flags);
-		virtual void	ProcessMouseLeftButtonUp(const int widgetIdx, const int event, const int xxx, const int yyy, const int flags);
-		virtual void	ProcessMouseLeftButtonDragged(const int widgetIdx, const int event, const int xxx, const int yyy, const int flags);
-		virtual void	ProcessMouseWheelMoved(	const int	widgetIdx,
-												const int	event,
-												const int	xxx,
-												const int	yyy,
-												const int	wheelMovement,
-												const int	flags);
 
 				bool	AlpacaSetConnected(const char *deviceTypeStr, const bool newConnectedState);
 				void	SetUpConnectedIndicator(const int buttonIdx, const int yLoc);

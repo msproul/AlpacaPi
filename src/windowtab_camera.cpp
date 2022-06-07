@@ -658,7 +658,7 @@ void	WindowTabCamera::SetTempartueDisplayEnable(bool enabled)
 }
 
 //*****************************************************************************
-void	WindowTabCamera::ProcessButtonClick(const int buttonIdx)
+void	WindowTabCamera::ProcessButtonClick(const int buttonIdx, const int flags)
 {
 bool				validData;
 char				dataString[64];

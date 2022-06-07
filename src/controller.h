@@ -215,7 +215,8 @@ class Controller
 		virtual void	HandleKeyDown(const int keyPressed);
 				void	HandleKeyDownInTextWidget(const int tabNum, const int widgetIdx,const int keyPressed);
 
-		virtual	void	ProcessButtonClick(const int buttonIdx);
+		virtual	void	ProcessButtonClick(const int buttonIdx,
+											const int	flags);
 
 		virtual	void	ProcessDoubleClick(	const int	widgetIdx,
 											const int	event,
@@ -483,6 +484,7 @@ void		Controller_HandleKeyDown(const int keyPressed);
 void		LoadAlpacaLogo(void);
 bool		CheckForOpenWindowByName(const char *windowName);
 void		DumpControllerBackGroundTaskStatus(void);
+void		RunCommandLine(const char *commandLine);
 
 #ifdef __cplusplus
 }
@@ -496,6 +498,8 @@ extern	char		gColorOverRide;
 extern	char		gFullVersionString[];	//*	this is version of the controller software
 											//*	which may be different from the remote software
 extern	char		gFirstArgString[];
+extern	char		gWebBrowserCmdString[];
+
 #ifdef _USE_OPENCV_CPP_
 	extern	cv::Mat		*gAlpacaLogoPtr;
 #else

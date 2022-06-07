@@ -216,7 +216,7 @@ int		boxID;
 //}
 
 //*****************************************************************************
-void	WindowTabGaiaRemote::ProcessButtonClick(const int buttonIdx)
+void	WindowTabGaiaRemote::ProcessButtonClick(const int buttonIdx, const int flags)
 {
 
 //	CONSOLE_DEBUG(__FUNCTION__);

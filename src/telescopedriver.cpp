@@ -56,6 +56,10 @@
 //*	May 28,	2022	<MLS> Added Telescope_GetLimitSwitchStatus()
 //*	May 30,	2022	<MLS> If observatory settings is valid, copy to telescope properties
 //*	May 30,	2022	<MLS> Added cDriverSupports_SlewSettleTime
+//*	May 30,	2022	<MLS> Fixed CanMoveAxis to handle 3 axis as per the spec
+//*	May 31,	2022	<MLS> Added Get_HourAngle()
+//*	May 31,	2022	<MLS> Added Telescope_GetPhysicalSideOfPier()
+//*	Jun  1,	2022	<MLS> Added IMU support for RA Hour Angle (compile time option)
 //*****************************************************************************
 
 
@@ -83,6 +87,10 @@
 #include	"observatory_settings.h"
 
 #include	"telescopedriver.h"
+
+#ifdef _ENABLE_IMU_
+	#include "imu_lib.h"
+#endif
 
 
 //*****************************************************************************
@@ -176,6 +184,7 @@ enum
 
 	//*	added by MLS
 	kCmd_Telescope_Extras,
+	kCmd_Telescope_hourangle,
 	kCmd_Telescope_physicalsideofpier,
 	kCmd_Telescope_readall,
 
@@ -270,12 +279,12 @@ const TYPE_CmdEntry	gTelescopeCmdTable[]	=
 
 	//*	added by MLS
 	{	"--extras",					kCmd_Telescope_Extras,					kCmdType_GET	},
+	{	"hourangle",				kCmd_Telescope_hourangle,				kCmdType_GET	},
 	{	"physicalsideofpier",		kCmd_Telescope_physicalsideofpier,		kCmdType_GET	},
 	{	"readall",					kCmd_Telescope_readall,					kCmdType_GET	},
 
 	{	"",						-1,	0x00	}
 };
-
 
 //**************************************************************************************
 TelescopeDriver::TelescopeDriver(void)
@@ -371,6 +380,10 @@ int		iii;
 		CONSOLE_DEBUG("observatory settings are not valid");
 //		CONSOLE_ABORT(__FUNCTION__);
 	}
+
+#ifdef _ENABLE_IMU_
+	IMU_StartBackgroundThread();
+#endif // _ENABLE_IMU_
 }
 
 //**************************************************************************************
@@ -864,6 +877,15 @@ int					mySocket;
 			alpacaErrCode	=	Put_UnPark(reqData, alpacaErrMsg);
 			break;
 
+		//----------------------------------------------------------------------------------------
+		//*	extras, NON ASCOM!!!!
+		case kCmd_Telescope_hourangle:
+			alpacaErrCode	=	Get_HourAngle(reqData, alpacaErrMsg, gValueString);
+			break;
+
+		case kCmd_Telescope_physicalsideofpier:
+			alpacaErrCode	=	Get_PhysicalSideOfPier(reqData, alpacaErrMsg, gValueString);
+			break;
 
 		case kCmd_Telescope_readall:
 			alpacaErrCode	=	Get_Readall(reqData, alpacaErrMsg);
@@ -1764,7 +1786,6 @@ char					rightAscString[48];
 								INCLUDE_COMMA);
 	return(alpacaErrCode);
 }
-
 
 //*****************************************************************************
 TYPE_ASCOM_STATUS	TelescopeDriver::Get_RightAscensionRate(	TYPE_GetPutRequestData *reqData,
@@ -2701,7 +2722,7 @@ int						axisNumber;
 	if (axisFound)
 	{
 		axisNumber		=	atoi(axisString);
-		CONSOLE_DEBUG_W_NUM("axisNumber\t=", axisNumber);
+//		CONSOLE_DEBUG_W_NUM("axisNumber\t=", axisNumber);
 		if ((axisNumber >= 0) && (axisNumber <= 2))
 		{
 
@@ -2736,7 +2757,9 @@ TYPE_ASCOM_STATUS	TelescopeDriver::Get_DestinationSideOfPier(	TYPE_GetPutRequest
 																char					*alpacaErrMsg,
 																const char				*responseString)
 {
-TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
+TYPE_ASCOM_STATUS		alpacaErrCode;
+
+	alpacaErrCode	=	kASCOM_Err_NotImplemented;
 
 	return(alpacaErrCode);
 }
@@ -3296,13 +3319,13 @@ double				newDeclination;
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Invalid While Parked");
 		CONSOLE_DEBUG(alpacaErrMsg);
 	}
-	else if (cTelescopeProp.Tracking == false)
-	{
-		//*	make CONFORM happy
-		alpacaErrCode	=	kASCOM_Err_InvalidOperation;
-		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Invalid While not tracking");
-		CONSOLE_DEBUG(alpacaErrMsg);
-	}
+//	else if (cTelescopeProp.Tracking == false)
+//	{
+//		//*	make CONFORM happy
+//		alpacaErrCode	=	kASCOM_Err_InvalidOperation;
+//		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Invalid While not tracking");
+//		CONSOLE_DEBUG(alpacaErrMsg);
+//	}
 	else if (cTelescopeProp.CanSync)
 	{
 		rightAscensionFound		=	GetKeyWordArgument(	reqData->contentData,
@@ -3419,7 +3442,73 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 	return(alpacaErrCode);
 }
 
+//*****************************************************************************
+//	https://www.bogan.ca/astro/telescopes/coodcvtn.html
+//	ra = Right Ascension of the celestial object
+//	lst = Local Siderial Time
+//	H = lst - ra
+//	therefore
+//	ra =  lst - H
+//*****************************************************************************
 
+//*****************************************************************************
+//*	this is NOT part of the ASCOM standard
+//*****************************************************************************
+TYPE_ASCOM_STATUS	TelescopeDriver::Get_HourAngle(	TYPE_GetPutRequestData *reqData,
+													char *alpacaErrMsg,
+													const char *responseString)
+{
+TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
+char					hourAngleString[48];
+double					hourAngle_Degrees;
+
+#define _FAKE_HOUR_ANGLE_
+
+#ifdef _ENABLE_IMU_
+
+	hourAngle_Degrees			=	IMU_GetAverageRoll();
+	cTelescopeProp.HourAngle	=	hourAngle_Degrees / 15.0;
+
+//	CONSOLE_DEBUG_W_DBL("hourAngle_Degrees\t=",	hourAngle_Degrees);
+//	CONSOLE_DEBUG_W_DBL("HourAngle  \t=",	cTelescopeProp.HourAngle);
+
+#elif defined(_FAKE_HOUR_ANGLE_)
+	cTelescopeProp.SiderealTime	=	CalcSiderealTime_dbl(NULL, gObseratorySettings.Longitude);
+	cTelescopeProp.HourAngle	=	cTelescopeProp.SiderealTime - cTelescopeProp.RightAscension;
+	if (cTelescopeProp.HourAngle < 0.0)
+	{
+		cTelescopeProp.HourAngle	+=	24.0;
+	}
+	hourAngle_Degrees	=	cTelescopeProp.HourAngle * 15;
+#endif // _ENABLE_IMU_
+
+	FormatHHMMSSdd(cTelescopeProp.HourAngle, hourAngleString, true);
+//	CONSOLE_DEBUG(hourAngleString);
+
+	JsonResponse_Add_Double(reqData->socket,
+							reqData->jsonTextBuffer,
+							kMaxJsonBuffLen,
+							responseString,
+							cTelescopeProp.HourAngle,
+							INCLUDE_COMMA);
+
+	JsonResponse_Add_Double(reqData->socket,
+							reqData->jsonTextBuffer,
+							kMaxJsonBuffLen,
+							"HourAngle-degrees",
+							hourAngle_Degrees,
+							INCLUDE_COMMA);
+
+	//*	extra... add the string value
+	FormatHHMMSSdd(cTelescopeProp.HourAngle, hourAngleString, true);
+	JsonResponse_Add_String(	reqData->socket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								"HourAngle-str",
+								hourAngleString,
+								INCLUDE_COMMA);
+	return(alpacaErrCode);
+}
 
 //*****************************************************************************
 //*	this is NOT part of the ASCOM standard
@@ -3430,6 +3519,8 @@ TYPE_ASCOM_STATUS	TelescopeDriver::Get_PhysicalSideOfPier(TYPE_GetPutRequestData
 {
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 char					extraString[64];
+
+	cTelescopeProp.PhysicalSideOfPier	=	Telescope_GetPhysicalSideOfPier();
 
 	JsonResponse_Add_Int32(	reqData->socket,
 							reqData->jsonTextBuffer,
@@ -3556,6 +3647,7 @@ int		mySocket;
 								"Non-standard alpaca commands follow",
 								INCLUDE_COMMA);
 
+		alpacaErrCode	=	Get_HourAngle(			reqData, alpacaErrMsg, "HourAngle");
 		alpacaErrCode	=	Get_PhysicalSideOfPier(	reqData, alpacaErrMsg, "PhysicalSideOfPier");
 
 
@@ -3778,6 +3870,26 @@ int		limitSwichStatus;
 	return(limitSwichStatus);
 }
 
+//*****************************************************************************
+//* this can be over-ridden
+//*****************************************************************************
+TYPE_PierSide	TelescopeDriver::Telescope_GetPhysicalSideOfPier(void)
+{
+TYPE_PierSide	physicalSideOfPier;
+#ifdef _FAKE_HOUR_ANGLE_
+	cTelescopeProp.SiderealTime	=	CalcSiderealTime_dbl(NULL, gObseratorySettings.Longitude);
+	cTelescopeProp.HourAngle	=	cTelescopeProp.SiderealTime - cTelescopeProp.RightAscension;
+#endif
+	if (cTelescopeProp.HourAngle < 0)
+	{
+		physicalSideOfPier	=	kPierSide_pierEast;
+	}
+	else
+	{
+		physicalSideOfPier	=	kPierSide_pierWest;
+	}
+	return(physicalSideOfPier);
+}
 
 
 #endif	//	_ENABLE_TELESCOPE_

@@ -202,7 +202,7 @@ int		clmnHdrWidth;
 //}
 
 //*****************************************************************************
-void	WindowTabStarList::ProcessButtonClick(const int buttonIdx)
+void	WindowTabStarList::ProcessButtonClick(const int buttonIdx, const int flags)
 {
 int	newSortColumn;
 

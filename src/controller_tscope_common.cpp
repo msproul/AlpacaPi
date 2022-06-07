@@ -20,11 +20,158 @@
 //*****************************************************************************
 //*	Jan 23,	2021	<MLS> Created controller_tscope_common.cpp
 //*	May 12,	2022	<MLS> Added support for TrackingRate
+//*	May 29,	2022	<MLS> Parsing more fields in AlpacaProcessReadAll_Telescope()
+//*	May 30,	2022	<MLS> Added more fields to AlpacaGetStatus_TelescopeOneAAT()
+//*	May 31,	2022	<MLS> Added ability to determine if driver supports refraction
+//*	Jun  3,	2022	<MLS> Added MountData_SaveRA() & MountData_SaveDec()
 //*****************************************************************************
 
+//*****************************************************************************
+//!!!!!!!!!!!!!!!!!!!! NOTE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+//*
 //*	this file gets INCLUDED at the end of either controller_telescope OR controller_skytravel
+//*	PARENT_CLASS is defined in those files
+//*****************************************************************************
+
+#if defined(_PARENT_IS_SKYTRAVEL_) && !defined( __ARM_ARCH )
+#include	"MountData.h"
+
+double	gHourAngleData[kMaxMountData + 10];
+double	gRightAsceData[kMaxMountData + 10];
+double	gDeclinationData[kMaxMountData + 10];
+
+static int	gSecsSinceMidnight	=	0;
+static bool	gInitMountData		=	true;
+
+//*****************************************************************************
+void	MountData_Init(void)
+{
+int		iii;
+
+	for (iii=0; iii<kMaxMountData; iii++)
+	{
+		gHourAngleData[iii]	=	0.0;
+		gRightAsceData[iii]	=	0.0;
+		gDeclinationData[iii]	=	0.0;
+	}
+}
+
+//*****************************************************************************
+static void	MountData_SaveHA(const double hourAngleDegrees)
+{
+time_t		currentTime;
+int			secsPastMignight;
+int			tableIndex;
+int			jjj;
+double		myHourAngleDegrees;
+
+//	CONSOLE_DEBUG_W_DBL("hourAngleDegrees\t\t=", hourAngleDegrees);
+	if (gInitMountData)
+	{
+		MountData_Init();
+		gInitMountData	=	false;
+	}
 
 
+	myHourAngleDegrees	=	hourAngleDegrees;
+	if (myHourAngleDegrees > 180.0)
+	{
+		myHourAngleDegrees	-=	360.0;
+	}
+//	CONSOLE_DEBUG_W_DBL("myHourAngleDegrees\t\t=", myHourAngleDegrees);
+	currentTime			=	time(NULL);
+
+	secsPastMignight	=	currentTime % kSecondsPerDay;
+	tableIndex			=	secsPastMignight / 4;
+	if (tableIndex < kMaxMountData)
+	{
+		gHourAngleData[tableIndex]	=	myHourAngleDegrees;
+
+		//*	there is a possibility that a value might not be filled in in the table.
+		//*	to protect against that, we are going to put the next 5 values the same as this one
+		//*	the buffer is 10 values larger so we wont over flow the buffer
+		for (jjj=0; jjj<5; jjj++)
+		{
+			gHourAngleData[tableIndex + jjj]	=	myHourAngleDegrees;
+		}
+	}
+//	CONSOLE_DEBUG_W_NUM("tableIndex      \t=", tableIndex);
+}
+
+//*****************************************************************************
+static void	MountData_SaveRA(const double rightAscention_Hours)
+{
+time_t		currentTime;
+int			secsPastMignight;
+int			tableIndex;
+int			jjj;
+double		rightAscention_Degrees;
+
+//	CONSOLE_DEBUG_W_DBL("rightAscention_Hours\t=", rightAscention_Hours);
+	if (gInitMountData)
+	{
+		MountData_Init();
+		gInitMountData	=	false;
+	}
+	currentTime			=	time(NULL);
+
+	rightAscention_Degrees	=	rightAscention_Hours * 15.0;
+	if (rightAscention_Degrees > 180.0)
+	{
+		rightAscention_Degrees	-=	360.0;
+	}
+
+	secsPastMignight	=	currentTime % kSecondsPerDay;
+	tableIndex			=	secsPastMignight / 4;
+	if (tableIndex < kMaxMountData)
+	{
+		gRightAsceData[tableIndex]	=	rightAscention_Degrees;
+
+		//*	there is a possibility that a value might not be filled in in the table.
+		//*	to protect against that, we are going to put the next 5 values the same as this one
+		//*	the buffer is 10 values larger so we wont over flow the buffer
+		for (jjj=0; jjj<5; jjj++)
+		{
+			gRightAsceData[tableIndex + jjj]	=	rightAscention_Degrees;
+		}
+	}
+//	CONSOLE_DEBUG_W_NUM("tableIndex      \t=", tableIndex);
+}
+
+//*****************************************************************************
+static void	MountData_SaveDec(const double declination_Degrees)
+{
+time_t		currentTime;
+int			secsPastMignight;
+int			tableIndex;
+int			jjj;
+
+//	CONSOLE_DEBUG_W_DBL("declination_Degrees\t=", declination_Degrees);
+	if (gInitMountData)
+	{
+		MountData_Init();
+		gInitMountData	=	false;
+	}
+	currentTime			=	time(NULL);
+
+	secsPastMignight	=	currentTime % kSecondsPerDay;
+	tableIndex			=	secsPastMignight / 4;
+	if (tableIndex < kMaxMountData)
+	{
+		gDeclinationData[tableIndex]	=	declination_Degrees;
+
+		//*	there is a possibility that a value might not be filled in in the table.
+		//*	to protect against that, we are going to put the next 5 values the same as this one
+		//*	the buffer is 10 values larger so we wont over flow the buffer
+		for (jjj=0; jjj<5; jjj++)
+		{
+			gDeclinationData[tableIndex + jjj]	=	declination_Degrees;
+		}
+	}
+//	CONSOLE_DEBUG_W_NUM("tableIndex      \t=", tableIndex);
+}
+
+#endif //	defined(_PARENT_IS_SKYTRAVEL_) && !defined( __ARM_ARCH )
 
 //*****************************************************************************
 void	PARENT_CLASS::AlpacaProcessSupportedActions_Telescope(	const int	deviveNum,
@@ -72,17 +219,45 @@ bool	dataWasHandled;
 	{
 		cTelescopeProp.Declination	=	atof(valueString);
 		Update_TelescopeDeclination();
+#if defined(_PARENT_IS_SKYTRAVEL_) && !defined( __ARM_ARCH )
+		MountData_SaveDec(cTelescopeProp.Declination);
+#endif
 	}
 	//=================================================================================
-	else if (strcasecmp(keywordString,		"RightAscension") == 0)
+	else if (strcasecmp(keywordString,		"DoesRefraction") == 0)
 	{
-		cTelescopeProp.RightAscension	=	atof(valueString);
-		Update_TelescopeRtAscension();
+		cTelescopeProp.DoesRefraction	=	IsTrueFalse(valueString);
+		Update_TelescopeDeclination();
 	}
 	//=================================================================================
 	else if (strcasecmp(keywordString,		"PhysicalSideOfPier") == 0)
 	{
 		cTelescopeProp.PhysicalSideOfPier	=	(TYPE_PierSide)atoi(valueString);
+	}
+	//=================================================================================
+	else if (strcasecmp(keywordString,		"HourAngle") == 0)
+	{
+		cTelescopeProp.hourAngleIsValid	=	true;
+		cTelescopeProp.HourAngle		=	atof(valueString);
+	}
+#if defined(_PARENT_IS_SKYTRAVEL_) && !defined( __ARM_ARCH )
+	//=================================================================================
+	else if (strcasecmp(keywordString,		"HourAngle-degrees") == 0)
+	{
+	double		hourAngleDegrees;
+
+		hourAngleDegrees	=	atof(valueString);
+		MountData_SaveHA(hourAngleDegrees);
+	}
+#endif // _PARENT_IS_SKYTRAVEL_
+	//=================================================================================
+	else if (strcasecmp(keywordString,		"RightAscension") == 0)
+	{
+		cTelescopeProp.RightAscension	=	atof(valueString);
+		Update_TelescopeRtAscension();
+#if defined(_PARENT_IS_SKYTRAVEL_) && !defined( __ARM_ARCH )
+		MountData_SaveRA(cTelescopeProp.RightAscension);
+#endif
 	}
 	//=================================================================================
 	else if (strcasecmp(keywordString,		"SideOfPier") == 0)
@@ -116,8 +291,9 @@ bool	dataWasHandled;
 	{
 		//*	"version": "AlpacaPi - V0.2.2-beta build #32",
 		strcpy(cAlpacaVersionString, valueString);
-		SetWidgetText(kTab_Control,	kTelescope_AlpacaDrvrVersion,		cAlpacaVersionString);
-//--		SetWidgetText(kTab_DriverInfo,	kDriverInfo_AlpacaDrvrVersion,		cAlpacaVersionString);
+
+		SetWidgetText(kTab_Control,		kTelescope_AlpacaDrvrVersion,		cAlpacaVersionString);
+		SetWidgetText(kTab_Settings,	kTeleSettings_AlpacaDrvrVersion,	cAlpacaVersionString);
 		dataWasHandled	=	true;
 	}
 #endif // _PARENT_IS_TELESCOPE_
@@ -143,6 +319,7 @@ double			argDoubleMax;
 double			argDouble;
 char			alpacaString[64];
 int				iii;
+bool			argBoolean;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 #ifndef _PARENT_IS_TELESCOPE_
@@ -176,6 +353,18 @@ int				iii;
 	ReadOneTelescopeCapability("cansyncaltaz",			"CanSyncAltAz",			&cTelescopeProp.CanSyncAltAz);
 	ReadOneTelescopeCapability("canunpark",				"CanUnpark",			&cTelescopeProp.CanUnpark);
 	ReadOneTelescopeCapability("doesrefraction",		"DoesRefraction",		&cTelescopeProp.DoesRefraction);
+
+	//========================================================
+	//*	we have to look at DoesRefraction again, to see if it is supported
+	validData	=	AlpacaGetBooleanValue(	"telescope", "doesrefraction",	NULL,	&argBoolean);
+	if (validData)
+	{
+		if (cLastAlpacaErrNum == kASCOM_Err_Success)
+		{
+			cTelescopeProp.driverSupportsRefraction	=	true;
+		}
+	}
+
 
 
 	myFailureCount	=	0;
@@ -325,11 +514,23 @@ int				argInt;
 	}
 
 	//========================================================
+	validData	=	AlpacaGetBooleanValue(	"telescope", "doesrefraction",	NULL,	&argBoolean);
+	if (validData)
+	{
+		cTelescopeProp.DoesRefraction	=	argBoolean;
+	}
+	else
+	{
+		CONSOLE_DEBUG("Failed");
+		cReadFailureCnt++;
+		myFailureCount++;
+	}
+
+	//========================================================
 	validData	=	AlpacaGetDoubleValue(	"telescope", "guiderateDeclination",	NULL,	&argDouble);
 	if (validData)
 	{
 		cTelescopeProp.GuideRateDeclination	=	argDouble;
-		CONSOLE_DEBUG_W_DBL("cTelescopeProp.GuideRateDeclination\t=", cTelescopeProp.GuideRateDeclination);
 	}
 	else
 	{
@@ -343,7 +544,6 @@ int				argInt;
 	if (validData)
 	{
 		cTelescopeProp.GuideRateRightAscension	=	argDouble;
-		CONSOLE_DEBUG_W_DBL("cTelescopeProp.GuideRateRightAscension\t=", cTelescopeProp.GuideRateRightAscension);
 	}
 	else
 	{

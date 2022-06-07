@@ -164,7 +164,7 @@ int		myRadioBtnWidth;
 }
 
 //*****************************************************************************
-void	WindowTabDeviceSelect::ProcessButtonClick(const int buttonIdx)
+void	WindowTabDeviceSelect::ProcessButtonClick(const int buttonIdx, const int flags)
 {
 bool				forceUpdate;
 int					previousDevIdx;

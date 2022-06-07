@@ -40,7 +40,7 @@
 
 
 #define	kWindowWidth	700
-#define	kWindowHeight	550
+#define	kWindowHeight	600
 
 #include	"windowtab_telescope.h"
 #include	"windowtab_teleSettings.h"
@@ -274,6 +274,7 @@ char	returnString[256];
 		if (validData)
 		{
 			SetWidgetText(kTab_Control, kTelescope_AlpacaDrvrVersion, returnString);
+			SetWidgetText(kTab_Settings, kTeleSettings_AlpacaDrvrVersion, returnString);
 		}
 	}
 	validData	=	AlpacaGetStartupData_TelescopeOneAAT();

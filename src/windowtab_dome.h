@@ -115,7 +115,7 @@ class WindowTabDome: public WindowTab
 				void	DrawDomeGraphic(IplImage *openCV_Image, TYPE_WIDGET *theWidget);
 	#endif // _USE_OPENCV_CPP_
 
-		virtual	void	ProcessButtonClick(const int buttonIdx);
+		virtual	void	ProcessButtonClick(const int buttonIdx, const int flags);
 		virtual	void	ProcessDoubleClick(	const int	widgetIdx,
 											const int	event,
 											const int	xxx,

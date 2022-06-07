@@ -186,8 +186,9 @@ class TelescopeDriver: public AlpacaDriver
 
 		//--------------------------------------------------------------------------------------------------
 		//*	extras added by MLS
-		TYPE_ASCOM_STATUS	Get_PhysicalSideOfPier(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
-		TYPE_ASCOM_STATUS	Get_Readall(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
+		TYPE_ASCOM_STATUS	Get_HourAngle(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+		TYPE_ASCOM_STATUS	Get_PhysicalSideOfPier(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+		TYPE_ASCOM_STATUS	Get_Readall(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 
 
 		//*************************************************************************
@@ -229,6 +230,7 @@ class TelescopeDriver: public AlpacaDriver
 
 
 		virtual	int					Telescope_GetLimitSwitchStatus(const TYPE_LIMITSWITCH whichLimit);
+		virtual	TYPE_PierSide		Telescope_GetPhysicalSideOfPier(void);
 
 				//*	full list of ASCOM telescope properties
 				TYPE_TelescopeProperties	cTelescopeProp;

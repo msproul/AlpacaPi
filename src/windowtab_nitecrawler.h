@@ -117,7 +117,7 @@ class WindowTabNitecrawler: public WindowTab
 		virtual	void	DrawWidgetCustomGraphic(IplImage *openCV_Image, const int widgetIdx);
 	#endif // _USE_OPENCV_CPP_
 				void	DrawRotatorCompass(TYPE_WIDGET *theWidget);
-		virtual	void	ProcessButtonClick(const int buttonIdx);
+		virtual	void	ProcessButtonClick(const int buttonIdx, const int flags);
 		virtual	void	ProcessDoubleClick(const int buttonIdx);
 
 		int			cComMode;

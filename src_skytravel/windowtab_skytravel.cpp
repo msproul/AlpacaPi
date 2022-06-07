@@ -1723,7 +1723,7 @@ bool			reDrawSky;
 }
 
 //*****************************************************************************
-void	WindowTabSkyTravel::ProcessButtonClick(const int buttonIdx)
+void	WindowTabSkyTravel::ProcessButtonClick(const int buttonIdx, const int flags)
 {
 bool	reDrawSky;
 char	searchText[128];

@@ -135,7 +135,9 @@ enum
 	kSkyT_Settings_StarOutLine,
 
 	kSkyT_Settings_RunStartup,
+	kSkyT_Settings_RunStartup_Edit,
 	kSkyT_Settings_RunShutdown,
+	kSkyT_Settings_RunShutdown_Edit,
 
 
 	kSkyT_Settings_AlpacaLogo,
@@ -160,7 +162,7 @@ class WindowTabSTsettings: public WindowTab
 
 		virtual	void	SetupWindowControls(void);
 		virtual	void	ActivateWindow(void);
-		virtual	void	ProcessButtonClick(const int buttonIdx);
+		virtual	void	ProcessButtonClick(const int buttonIdx, const int flags);
 		virtual	void	ProcessDoubleClick(	const int	widgetIdx,
 											const int	event,
 											const int	xxx,

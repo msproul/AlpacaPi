@@ -26,6 +26,7 @@
 //*	Mar 11,	2022	<MLS> WireGuard makes it so I cant figure out the local IP addres
 //*	Mar 11,	2022	<MLS> Added ReadLocalIPaddress()
 //*	Mar 11,	2022	<MLS> Working with WireGuards
+//*	Jun  2,	2022	<MLS> Added parsing for upTime_Days & cpuTemp_DegF
 //*****************************************************************************
 
 
@@ -374,7 +375,6 @@ bool	newDevice;
 //
 
 
-
 //*****************************************************************************
 void	ExtractDevicesFromJSON(SJP_Parser_t *jsonParser, TYPE_ALPACA_UNIT *theDevice)
 {
@@ -393,6 +393,16 @@ char			myVersionString[64];
 			strcpy(myVersionString,				jsonParser->dataList[ii].valueString);
 			strcpy(theDevice->versionString,	jsonParser->dataList[ii].valueString);
 		}
+		else if (strcasecmp(jsonParser->dataList[ii].keyword, "upTime_Days") == 0)
+		{
+			theDevice->upTimeValid	=	true;
+			theDevice->upTimeDays	=	atoi(jsonParser->dataList[ii].valueString);
+		}
+		else if (strcasecmp(jsonParser->dataList[ii].keyword, "cpuTemp_DegF") == 0)
+		{
+			theDevice->cpuTempValid	=	true;
+			theDevice->cpuTemp_DegF	=	atof(jsonParser->dataList[ii].valueString);
+		}
 		else if (strcasecmp(jsonParser->dataList[ii].keyword, "DEVICETYPE") == 0)
 		{
 			strcpy(myRemoteDevice.deviceTypeStr, jsonParser->dataList[ii].valueString);
@@ -405,6 +415,10 @@ char			myVersionString[64];
 		{
 			myRemoteDevice.alpacaDeviceNum	=	atoi(jsonParser->dataList[ii].valueString);
 		}
+
+
+
+
 //		else
 //		{
 //			CONSOLE_DEBUG_W_STR("keyword\t=",	jsonParser->dataList[ii].keyword);
@@ -546,7 +560,7 @@ char				errorString[64];
 		//	CONSOLE_DEBUG("connect error");
 		//	CONSOLE_DEBUG_W_NUM("errno\t=", errno);
 			GetLinuxErrorString(errno, errorString);
-			CONSOLE_DEBUG_W_STR("Connect error: Error message\t\t=",	errorString);
+			CONSOLE_DEBUG_W_STR("Connect error: ErrMsg=",	errorString);
 		}
 		//*	Moved 2/4/2021
 		closeRetCode	=	close(socket_desc);
@@ -1328,7 +1342,6 @@ bool			keepGoing;
 				keepGoing	=	false;
 			}
 		}
-
 
 //		CONSOLE_DEBUG("Freeing ifAddrStruct");
 		freeifaddrs(ifAddrStruct);

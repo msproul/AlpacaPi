@@ -304,7 +304,7 @@ ControllerCamera	*myCameraController;
 
 
 //**************************************************************************************
-void	WindowTabCamSettings::ProcessButtonClick(const int buttonIdx)
+void	WindowTabCamSettings::ProcessButtonClick(const int buttonIdx, const int flags)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
 	switch(buttonIdx)

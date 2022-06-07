@@ -16,6 +16,7 @@
 //*	Mar 13,	2021	<MLS> Added AlpacaGetStartupData_Camera()
 //*	Sep  5,	2021	<MLS> Added AlpacaProcessSupportedActions_Camera()
 //*	Nov 14,	2021	<MLS> Added remote data window tab
+//*	Jun  4,	2022	<MLS> Updated SetTelescopeIPaddress() to handle mount graph window
 //*****************************************************************************
 
 #ifndef _ENABLE_SKYTRAVEL_
@@ -44,9 +45,10 @@
 #include	"helper_functions.h"
 #include	"windowtab_about.h"
 #include	"windowtab_alpacalist.h"
+#include	"windowtab_fov.h"
 #include	"windowtab_deviceselect.h"
 #include	"windowtab_dome.h"
-#include	"windowtab_fov.h"
+#include	"windowtab_mount.h"
 #include	"windowtab_iplist.h"
 #include	"windowtab_moon.h"
 #include	"windowtab_RemoteData.h"
@@ -83,6 +85,9 @@ ControllerSkytravel::ControllerSkytravel(	const char *argWindowName)
 	cIPaddrListObjPtr		=	NULL;
 	cAboutBoxTabObjPtr		=	NULL;
 	cFOVTabObjPtr			=	NULL;
+#ifndef __ARM_ARCH
+	cMountTabObjPtr			=	NULL;
+#endif
 
 	cDomeAddressValid		=	false;
 	cTelescopeAddressValid	=	false;
@@ -122,6 +127,9 @@ ControllerSkytravel::~ControllerSkytravel(void)
 	DELETE_OBJ_IF_VALID(cDeviceSelectObjPtr);
 	DELETE_OBJ_IF_VALID(cAboutBoxTabObjPtr);
 	DELETE_OBJ_IF_VALID(cFOVTabObjPtr);
+#ifndef __ARM_ARCH
+	DELETE_OBJ_IF_VALID(cMountTabObjPtr);
+#endif
 }
 
 
@@ -181,16 +189,6 @@ void	ControllerSkytravel::SetupWindowControls(void)
 		cRemoteDataObjPtr->SetParentObjectPtr(this);
 	}
 
-
-	//=============================================================
-	SetTabText(kTab_Moon,	"Moon");
-	cMoonTabObjPtr		=	new WindowTabMoon(	cWidth, cHeight, cBackGrndColor, cWindowName);
-	if (cMoonTabObjPtr != NULL)
-	{
-		SetTabWindow(kTab_Moon,	cMoonTabObjPtr);
-		cMoonTabObjPtr->SetParentObjectPtr(this);
-	}
-
 	//=============================================================
 	SetTabText(kTab_ST_Dome,		"Dome");
 	cDomeTabObjPtr	=	new WindowTabDome(cWidth, cHeight, cBackGrndColor, cWindowName, true);
@@ -199,6 +197,27 @@ void	ControllerSkytravel::SetupWindowControls(void)
 		SetTabWindow(kTab_ST_Dome,	cDomeTabObjPtr);
 		cDomeTabObjPtr->SetParentObjectPtr(this);
 		cDomeTabObjPtr->SetDomePropertiesPtr(&cDomeProp);
+	}
+
+#ifndef __ARM_ARCH
+	DELETE_OBJ_IF_VALID(cMountTabObjPtr);
+	//=============================================================
+	SetTabText(kTab_ST_Mount,		"Mount RA/DEC");
+	cMountTabObjPtr	=	new WindowTabMount(cWidth, cHeight, cBackGrndColor, cWindowName);
+	if (cMountTabObjPtr != NULL)
+	{
+		SetTabWindow(kTab_ST_Mount,	cMountTabObjPtr);
+		cMountTabObjPtr->SetParentObjectPtr(this);
+	}
+#endif
+
+	//=============================================================
+	SetTabText(kTab_DeviceList,		"Device Selection");
+	cDeviceSelectObjPtr	=	new WindowTabDeviceSelect(cWidth, cHeight, cBackGrndColor, cWindowName);
+	if (cDeviceSelectObjPtr != NULL)
+	{
+		SetTabWindow(kTab_DeviceList,	cDeviceSelectObjPtr);
+		cDeviceSelectObjPtr->SetParentObjectPtr(this);
 	}
 
 	//=============================================================
@@ -219,14 +238,13 @@ void	ControllerSkytravel::SetupWindowControls(void)
 		cIPaddrListObjPtr->SetParentObjectPtr(this);
 	}
 
-
 	//=============================================================
-	SetTabText(kTab_DeviceList,		"Device Selection");
-	cDeviceSelectObjPtr	=	new WindowTabDeviceSelect(cWidth, cHeight, cBackGrndColor, cWindowName);
-	if (cDeviceSelectObjPtr != NULL)
+	SetTabText(kTab_Moon,	"Moon");
+	cMoonTabObjPtr		=	new WindowTabMoon(	cWidth, cHeight, cBackGrndColor, cWindowName);
+	if (cMoonTabObjPtr != NULL)
 	{
-		SetTabWindow(kTab_DeviceList,	cDeviceSelectObjPtr);
-		cDeviceSelectObjPtr->SetParentObjectPtr(this);
+		SetTabWindow(kTab_Moon,	cMoonTabObjPtr);
+		cMoonTabObjPtr->SetParentObjectPtr(this);
 	}
 
 	//=============================================================
@@ -300,11 +318,16 @@ char	lineBuff[64];
 	PrintIPaddressToString(cDomeIpAddress.sin_addr.s_addr, ipAddrStr);
 	sprintf(lineBuff, "%s:%d/%d", ipAddrStr, cDomeIpPort, cDomeAlpacaDeviceNum);
 
-	SetWindowIPaddrInfo(lineBuff, true);
+//-	SetWindowIPaddrInfo(lineBuff, true);
+
+	if (cWindowTabs[kTab_ST_Dome] != NULL)
+	{
+		cWindowTabs[kTab_ST_Dome]->SetWindowIPaddrInfo(lineBuff, true);
+	}
 
 	SetWidgetBGColor(kTab_SkyTravel,	kSkyTravel_DomeIndicator,		CV_RGB(64,	255,	64));
 
-	CONSOLE_DEBUG_W_STR("IP address=", ipAddrStr);
+//	CONSOLE_DEBUG_W_STR("IP address=", ipAddrStr);
 }
 
 //**************************************************************************************
@@ -325,10 +348,18 @@ char	ipAddrStr[32];
 	SetWidgetBGColor(kTab_SkyTravel,	kSkyTravel_TelescopeIndicator,	CV_RGB(64,	255,	64));
 
 	SetWidgetText(kTab_SkyTravel,	kSkyTravel_Telescope_RA_DEC,	"-----------");
+#ifndef __ARM_ARCH
+	if (cWindowTabs[kTab_ST_Mount] != NULL)
+	{
+	char	lineBuff[64];
 
+		PrintIPaddressToString(cTelescopeIpAddress.sin_addr.s_addr, ipAddrStr);
+		sprintf(lineBuff, "%s:%d/%d", ipAddrStr, cTelescopeIpPort, cTelescopeAlpacaDeviceNum);
+		cWindowTabs[kTab_ST_Mount]->SetWindowIPaddrInfo(lineBuff, true);
+	}
+#endif
 	inet_ntop(AF_INET, &(cTelescopeIpAddress.sin_addr), ipAddrStr, INET_ADDRSTRLEN);
-	CONSOLE_DEBUG_W_STR("IP address=", ipAddrStr);
-
+//	CONSOLE_DEBUG_W_STR("IP address=", ipAddrStr);
 }
 
 int		gSkyTravelBGcnt	=	0;
@@ -882,6 +913,7 @@ void	ControllerSkytravel::Update_TelescopeDeclination(void)
 
 
 #define	PARENT_CLASS	ControllerSkytravel
+#define _PARENT_IS_SKYTRAVEL_
 #include	"controller_tscope_common.cpp"
 
 #endif // _ENABLE_SKYTRAVEL_

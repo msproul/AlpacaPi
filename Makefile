@@ -15,6 +15,8 @@
 #
 #		sudo apt-get install libnova-dev		<<<< required for TSC
 #
+#		sudo apt-get install git-gui
+#
 #	https://www.gnu.org/software/make/manual/make.html
 ######################################################################################
 #	Edit History
@@ -891,7 +893,6 @@ SERVO_OBJECTS=										\
 servo		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
 servo		:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
 servo		:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_SERVO_
-servo		:		DEFINEFLAGS		+=	-D_USE_CONFIG_STRUCT_
 servo		:		INCLUDES		+=	-I$(SRC_SERVO)
 servo		:		$(TELESCOPE_OBJECTS)		\
 					$(SOCKET_OBJECTS)			\
@@ -902,6 +903,28 @@ servo		:		$(TELESCOPE_OBJECTS)		\
 					$(SOCKET_OBJECTS)			\
 					$(TELESCOPE_OBJECTS)		\
 					$(SERVO_OBJECTS)			\
+					-lpthread					\
+					-o alpacapi-servo
+
+
+######################################################################################
+#pragma mark make servoimu
+servoimu	:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
+servoimu	:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
+servoimu	:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_SERVO_
+servoimu	:		DEFINEFLAGS		+=	-D_ENABLE_IMU_
+servoimu	:		INCLUDES		+=	-I$(SRC_SERVO)
+servoimu	:		$(TELESCOPE_OBJECTS)		\
+					$(SOCKET_OBJECTS)			\
+					$(SERVO_OBJECTS)			\
+					$(IMU_OBJECTS)				\
+
+
+		$(LINK)  								\
+					$(SOCKET_OBJECTS)			\
+					$(TELESCOPE_OBJECTS)		\
+					$(SERVO_OBJECTS)			\
+					$(IMU_OBJECTS)				\
 					-lpthread					\
 					-o alpacapi-servo
 
@@ -2258,6 +2281,7 @@ SKYTRAVEL_OBJECTS=											\
 				$(OBJECT_DIR)windowtab_iplist.o				\
 				$(OBJECT_DIR)windowtab_ml_single.o			\
 				$(OBJECT_DIR)windowtab_moon.o				\
+				$(OBJECT_DIR)windowtab_mount.o				\
 				$(OBJECT_DIR)windowtab_nitecrawler.o		\
 				$(OBJECT_DIR)windowtab_RemoteData.o			\
 				$(OBJECT_DIR)windowtab_slit.o				\
@@ -3320,6 +3344,12 @@ $(OBJECT_DIR)windowtab_dome.o : 		$(SRC_DIR)windowtab_dome.cpp		\
 										$(SRC_DIR)controller.h
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)windowtab_dome.cpp -o$(OBJECT_DIR)windowtab_dome.o
 
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)windowtab_mount.o : 		$(SRC_DIR)windowtab_mount.cpp		\
+										$(SRC_DIR)windowtab_mount.h			\
+										$(SRC_DIR)windowtab.h				\
+										$(SRC_DIR)controller.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)windowtab_mount.cpp -o$(OBJECT_DIR)windowtab_mount.o
 
 
 #-------------------------------------------------------------------------------------

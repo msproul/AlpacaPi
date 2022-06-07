@@ -92,7 +92,7 @@ class WindowTabMLsingle: public WindowTab
 		virtual	~WindowTabMLsingle(void);
 
 		virtual	void	SetupWindowControls(void);
-		virtual	void	ProcessButtonClick(const int buttonIdx);
+		virtual	void	ProcessButtonClick(const int buttonIdx, const int flags);
 		virtual	void	ProcessDoubleClick(const int buttonIdx);
 
 				int		cComMode;

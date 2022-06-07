@@ -46,7 +46,7 @@ class WindowTabUSB: public WindowTab
 		virtual	~WindowTabUSB(void);
 
 		virtual	void	SetupWindowControls(void);
-		virtual	void	ProcessButtonClick(const int buttonIdx);
+		virtual	void	ProcessButtonClick(const int buttonIdx, const int flags);
 
 };
 

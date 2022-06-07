@@ -85,7 +85,7 @@ class WindowTabConstellationList: public WindowTab
 		virtual	~WindowTabConstellationList(void);
 
 		virtual	void	SetupWindowControls(const char *argWindowName);
-		virtual	void	ProcessButtonClick(const int buttonIdx);
+		virtual	void	ProcessButtonClick(const int buttonIdx, const int flags);
 		virtual	void	ProcessDoubleClick(	const int	widgetIdx,
 											const int	event,
 											const int	xxx,

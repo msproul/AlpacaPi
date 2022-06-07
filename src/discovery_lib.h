@@ -33,6 +33,11 @@ typedef struct
 	int					noResponseCnt;
 	char				hostName[48];		//*	device name from hosts file
 
+	bool				upTimeValid;
+	int					upTimeDays;
+	bool				cpuTempValid;
+	double				cpuTemp_DegF;
+
 	//*	for use by discovery thread for keeping track of responses
 	int					queryOKcnt;
 	int					queryERRcnt;

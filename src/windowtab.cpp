@@ -65,6 +65,7 @@
 //*	Apr  9,	2022	<MLS> Made some changes to be compatible with openCV ver 2
 //*	Apr  9,	2022	<MLS> OpenCV version 2.4.9.1 is default on R-Pi 3 (stretch)
 //*	May 29,	2022	<MLS> Added ForceAlpacaUpdate()
+//*	Jun  4,	2022	<MLS> Added flags arg to ProcessButtonClick()
 //*****************************************************************************
 
 
@@ -1063,7 +1064,7 @@ void	WindowTab::HandleKeyDown(const int keyPressed)
 
 
 //*****************************************************************************
-void	WindowTab::ProcessButtonClick(const int buttonIdx)
+void	WindowTab::ProcessButtonClick(const int buttonIdx, const int flags)
 {
 //	CONSOLE_DEBUG_W_NUM("this routine should be overloaded: buttonIdx=", buttonIdx);
 	//*	this routine should be overloaded

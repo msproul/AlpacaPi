@@ -42,6 +42,7 @@
 //*	Dec  7,	2020	<MLS> Fixed comma bug in JsonResponse_Add_Double()
 //*	Jul 18,	2021	<MLS> Added _DEBUG_JSON_RESPONSE_
 //*	Sep  5,	2021	<MLS> Added enableDebug arg to JsonRespnse_XmitIfFull()
+//*	Jun  1,	2022	<MLS> Increased decimal places for double output from 6 to 12
 //*****************************************************************************
 
 
@@ -332,7 +333,7 @@ int		bytesWritten	=	0;
 
 	if (jsonTextBuffer != NULL)
 	{
-		sprintf(numberString, "%f", dblValue);
+		sprintf(numberString, "%13.12f", dblValue);
 		//*	calculate the length of what we are adding to the buffer
 		payloadLen	=	strlen(numberString);
 		if (itemName != NULL)

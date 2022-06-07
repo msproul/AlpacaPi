@@ -65,7 +65,7 @@ class WindowTabSlitGraph: public WindowTab
 		virtual	~WindowTabSlitGraph(void);
 
 		virtual	void	SetupWindowControls(void);
-		virtual	void	ProcessButtonClick(const int buttonIdx);
+		virtual	void	ProcessButtonClick(const int buttonIdx, const int flags);
 #ifdef _USE_OPENCV_CPP_
 		virtual void	DrawWidgetCustomGraphic(cv::Mat *openCV_Image, const int widgetIdx);
 #else

@@ -320,7 +320,7 @@ int		myClmWidth;
 }
 
 //*****************************************************************************
-void	WindowTabPreview::ProcessButtonClick(const int buttonIdx)
+void	WindowTabPreview::ProcessButtonClick(const int buttonIdx, const int flags)
 {
 bool		validData;
 char		dataString[64];

@@ -29,6 +29,7 @@
 //*	Dec 31,	2021	<MLS> Added Asteroid count display to settings window
 //*	Jan 29,	2022	<MLS> Added special list count display to settings window
 //*	Mar 29,	2022	<MLS> Added SaveSkyTravelSystemInfo()
+//*	May 31,	2022	<MLS> Added ability to open gedit for scripts and settings
 //*****************************************************************************
 
 #include	<pthread.h>
@@ -176,10 +177,12 @@ int		radioBtnWidth;
 
 	xLoc			=	5;
 	SetWidget(			kSkyT_Settings_ObsSettingsText,	xLoc,	yLoc,	(labelWidth + valueWitdth1 + valueWitdth2),	cTitleHeight);
-	SetWidgetFont(		kSkyT_Settings_ObsSettingsText,	kFont_TextList);
+	SetWidgetType(		kSkyT_Settings_ObsSettingsText,	kWidgetType_Button);
+	SetWidgetFont(		kSkyT_Settings_ObsSettingsText,	kFont_RadioBtn);
 	SetWidgetText(		kSkyT_Settings_ObsSettingsText,	"Edit observatorysettings.txt to change these values");
 	SetWidgetBorder(	kSkyT_Settings_ObsSettingsText, false);
-	SetWidgetTextColor(kSkyT_Settings_ObsSettingsText,	CV_RGB(255,	255,	255));
+	SetWidgetBGColor(	kSkyT_Settings_ObsSettingsText,	CV_RGB(255,	255,	255));
+	SetWidgetTextColor(	kSkyT_Settings_ObsSettingsText,	CV_RGB(0,	0,	0));
 	yLoc			+=	cTitleHeight;
 	yLoc			+=	2;
 
@@ -551,13 +554,23 @@ int		radioBtnWidth;
 	yLoc			+=	cSmallBtnHt;
 	yLoc			+=	2;
 
-	for (iii=kSkyT_Settings_RunStartup; iii<=kSkyT_Settings_RunShutdown; iii++)
+	iii=kSkyT_Settings_RunStartup;
+	while ( iii<=kSkyT_Settings_RunShutdown)
 	{
 		SetWidget(			iii,	xLoc,	yLoc,	radioBtnWidth,	cSmallBtnHt);
 		SetWidgetType(		iii,	kWidgetType_Button);
 		SetWidgetFont(		iii,	kFont_Medium);
 		SetWidgetBGColor(	iii,	CV_RGB(255,	255,	255));
 		SetWidgetTextColor(	iii,	CV_RGB(0,	0,	0));
+		iii++;
+
+		SetWidget(			iii,	(xLoc + radioBtnWidth + 4),	yLoc,	100,	cSmallBtnHt);
+		SetWidgetType(		iii,	kWidgetType_Button);
+		SetWidgetFont(		iii,	kFont_Medium);
+		SetWidgetText(		iii,	"Edit");
+		SetWidgetBGColor(	iii,	CV_RGB(255,	255,	255));
+		SetWidgetTextColor(	iii,	CV_RGB(0,	0,	0));
+		iii++;
 
 		yLoc			+=	cSmallBtnHt;
 		yLoc			+=	2;
@@ -729,14 +742,19 @@ int		threadErr;
 }
 
 //*****************************************************************************
-void	WindowTabSTsettings::ProcessButtonClick(const int buttonIdx)
+void	WindowTabSTsettings::ProcessButtonClick(const int buttonIdx, const int flags)
 {
 
-//	CONSOLE_DEBUG(__FUNCTION__);
-//	CONSOLE_DEBUG_W_NUM("buttonIdx\t=", buttonIdx);
+	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_NUM("buttonIdx\t=", buttonIdx);
 
 	switch(buttonIdx)
 	{
+		case kSkyT_Settings_ObsSettingsText:
+			CONSOLE_DEBUG("kSkyT_Settings_ObsSettingsText");
+			RunCommandLine("gedit observatorysettings.txt &");
+			break;
+
 		case kSkyT_Settings_EarthThin:
 		case kSkyT_Settings_EarthThick:
 		case kSkyT_Settings_EarthSolidBrn:
@@ -845,10 +863,17 @@ void	WindowTabSTsettings::ProcessButtonClick(const int buttonIdx)
 			RunShellScript("./startup.sh");
 			break;
 
+		case kSkyT_Settings_RunStartup_Edit:
+			RunCommandLine("gedit startup.sh &");
+			break;
+
 		case kSkyT_Settings_RunShutdown:
 			RunShellScript("./shutdown.sh");
 			break;
 
+		case kSkyT_Settings_RunShutdown_Edit:
+			RunCommandLine("gedit shutdown.sh &");
+			break;
 
 	}
 	UpdateSettings();
@@ -1039,6 +1064,9 @@ char	ipAddrStr[32];
 												);
 		}
 		fclose(filePointer);
+
+		RunCommandLine("gedit SkyTravelSystemInfo.txt &");
+
 	}
 	else
 	{

@@ -152,7 +152,7 @@ int		graphHeight;
 	SetWidget(			kSlitGraph_DisplayRaw,		0,			yLoc,		(cWidth / 2),		cRadioBtnHt);
 	SetWidgetType(		kSlitGraph_DisplayRaw,		kWidgetType_CheckBox);
 	SetWidgetFont(		kSlitGraph_DisplayRaw,		kFont_RadioBtn);
-	SetWidgetText(		kSlitGraph_DisplayRaw,		"DIsplay Raw Data");
+	SetWidgetText(		kSlitGraph_DisplayRaw,		"Display Raw Data");
 	SetWidgetChecked(	kSlitGraph_DisplayRaw,		cDisplayRawData);
 	yLoc			+=	cRadioBtnHt;
 	yLoc			+=	2;
@@ -161,7 +161,7 @@ int		graphHeight;
 	SetWidget(			kSlitGraph_DisplayAvg,		0,			yLoc,		(cWidth / 2),		cRadioBtnHt);
 	SetWidgetType(		kSlitGraph_DisplayAvg,		kWidgetType_CheckBox);
 	SetWidgetFont(		kSlitGraph_DisplayAvg,		kFont_RadioBtn);
-	SetWidgetText(		kSlitGraph_DisplayAvg,		"DIsplay Averaged Data");
+	SetWidgetText(		kSlitGraph_DisplayAvg,		"Display Averaged Data");
 	SetWidgetChecked(	kSlitGraph_DisplayAvg,		cDisplayAvgData);
 	yLoc			+=	cRadioBtnHt;
 	yLoc			+=	2;
@@ -376,7 +376,7 @@ int			pt2_Y;
 
 
 //*****************************************************************************
-void	WindowTabSlitGraph::ProcessButtonClick(const int buttonIdx)
+void	WindowTabSlitGraph::ProcessButtonClick(const int buttonIdx, const int flags)
 {
 int		clockIdx;
 
@@ -420,7 +420,5 @@ int		clockIdx;
 	}
 }
 
-
-
-#endif // _ENABLE_CTRL_DOME_
+#endif // defined(_ENABLE_CTRL_DOME_) && defined(_ENABLE_SLIT_TRACKER_)
 

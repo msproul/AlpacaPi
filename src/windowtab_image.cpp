@@ -300,7 +300,7 @@ bool	updateFlag;
 }
 
 //*****************************************************************************
-void	WindowTabImage::ProcessButtonClick(const int buttonIdx)
+void	WindowTabImage::ProcessButtonClick(const int buttonIdx, const int flags)
 {
 
 	switch(buttonIdx)

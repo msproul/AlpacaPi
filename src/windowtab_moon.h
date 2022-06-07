@@ -68,7 +68,7 @@ class WindowTabMoon: public WindowTab
 		virtual	void	RunBackgroundTasks(void);
 
 		virtual	void	SetupWindowControls(void);
-		virtual	void	ProcessButtonClick(const int buttonIdx);
+		virtual	void	ProcessButtonClick(const int buttonIdx, const int flags);
 
 				void	ReadMoonDirectory(void);
 				void	NextImage(void);

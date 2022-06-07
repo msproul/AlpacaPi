@@ -337,7 +337,7 @@ static int	gSortColumn;
 static bool	gInvertSort_StarList	=	false;
 
 //*****************************************************************************
-void	WindowTabAlpacaList::ProcessButtonClick(const int buttonIdx)
+void	WindowTabAlpacaList::ProcessButtonClick(const int buttonIdx, const int flags)
 {
 int	newSortColumn;
 

@@ -19,6 +19,7 @@
 //*	Edit History
 //*****************************************************************************
 //*	Feb  9,	2021	<MLS> Created windowtab_drvrInfo.cpp
+//*	Jun  1,	2022	<MLS> Added "Launch Web" button
 //*****************************************************************************
 
 
@@ -139,7 +140,46 @@ int		lastItemID;
 	//*	IP address
 //	SetIPaddressBoxes(kDriverInfo_IPaddr, kDriverInfo_Readall, kDriverInfo_AlpacaDrvrVersion, -1);
 	SetIPaddressBoxes(kDriverInfo_IPaddr, kDriverInfo_Readall, -1, -1);
+
+	//*	adjust the width of the IP address box
+	boxWidth	=	115;
+	cWidgetList[kDriverInfo_IPaddr].width		-=	boxWidth;
+	cWidgetList[kDriverInfo_IPaddr].width		-=	3;
+	//*	web launch button
+	SetWidget(	kDriverInfo_LaunchWeb,	(cWidth - boxWidth),
+										(cHeight - cBtnHeight),
+										boxWidth,
+										(cBtnHeight-1));
+	SetWidgetType(		kDriverInfo_LaunchWeb,	kWidgetType_Button);
+	SetWidgetBGColor(	kDriverInfo_LaunchWeb,	CV_RGB(255,	255, 255));
+	SetWidgetTextColor(	kDriverInfo_LaunchWeb,	CV_RGB(0,	0,	0));
+	SetWidgetFont(		kDriverInfo_LaunchWeb,	kFont_TextList);
+	SetWidgetText(		kDriverInfo_LaunchWeb,	"Launch Web");
 }
 
+//*****************************************************************************
+void	WindowTabDriverInfo::ProcessButtonClick(const int buttonIdx, const int flags)
+{
+char		ipAddrStr[64];
+char		dataString[256];
+Controller	*myControllerPtr;
 
+//	CONSOLE_DEBUG(__FUNCTION__);
 
+	switch(buttonIdx)
+	{
+		case kDriverInfo_LaunchWeb:
+			myControllerPtr	=   (Controller *)cParentObjPtr;
+			if (myControllerPtr != NULL)
+			{
+				inet_ntop(AF_INET, &(myControllerPtr->cDeviceAddress.sin_addr), ipAddrStr, INET_ADDRSTRLEN);
+				sprintf(dataString, "%s http://%s:%d/setup &",
+										gWebBrowserCmdString,
+										ipAddrStr,
+										myControllerPtr->cPort);
+				CONSOLE_DEBUG(dataString);
+				RunCommandLine(dataString);
+			}
+			break;
+	}
+}

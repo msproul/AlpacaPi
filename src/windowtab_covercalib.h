@@ -81,7 +81,7 @@ class WindowTabCoverCalib: public WindowTab
 		virtual	~WindowTabCoverCalib(void);
 
 		virtual	void	SetupWindowControls(void);
-		virtual	void	ProcessButtonClick(const int buttonIdx);
+		virtual	void	ProcessButtonClick(const int buttonIdx, const int flags);
 		virtual void	ProcessMouseLeftButtonUp(const int widgetIdx, const int event, const int xxx, const int yyy, const int flags);
 		virtual	void	UpdateSliderValue(const int widgetIdx, double newSliderValue);
 

@@ -144,7 +144,7 @@ int		iii;
 }
 
 //*****************************************************************************
-void	WindowTabAuxMotor::ProcessButtonClick(const int buttonIdx)
+void	WindowTabAuxMotor::ProcessButtonClick(const int buttonIdx, const int flags)
 {
 int				previousAuxMotorDesiredPosition;
 ControllerFocus	*focusController;

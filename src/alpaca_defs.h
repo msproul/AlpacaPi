@@ -1,4 +1,7 @@
 //*****************************************************************************
+//*	These are for my comment extraction program that sorts comments by date.
+//*	Jan  1,	2019	-----------------------------------------------------------
+//*	Jan  1,	2020	-----------------------------------------------------------
 //*	Mar  6,	2020	<MLS> Created alpaca_defs.h
 //*	Sep  8,	2020	<MLS> Added TYPE_ASCOM_STATUS to ASCOM error return codes
 //*	Dec  6,	2020	<MLS> Version V0.3.8-beta
@@ -47,10 +50,8 @@
 //*	May 23,	2022	<MLS> Changed syntax of enum typedefs to make RNS compiler happy
 //*	May 19,	2022	<MLS> Build 144
 //*	May 30,	2022	<MLS> Build 145
-//*****************************************************************************
-//*	These are for my comment extraction program that sorts comments by date.
-//*	Jan  1,	2019	-----------------------------------------------------------
-//*	Jan  1,	2020	-----------------------------------------------------------
+//*	Jun  7,	2022	<MLS> Version V0.5.1-beta
+//*	Jun  7,	2022	<MLS> Build 146
 //*****************************************************************************
 //#include	"alpaca_defs.h"
 
@@ -74,8 +75,8 @@
 #endif
 
 #define	kApplicationName	"AlpacaPi"
-#define	kVersionString		"V0.5.0-beta"
-#define	kBuildNumber		145
+#define	kVersionString		"V0.5.1-beta"
+#define	kBuildNumber		146
 
 
 #define kAlpacaDiscoveryPORT	32227
@@ -490,6 +491,7 @@ typedef struct
 	bool							CanUnpark;
 	double							Declination;				//*	degrees
 	double							DeclinationRate;
+	bool							driverSupportsRefraction;	//*	NON-alpaca
 	bool							DoesRefraction;
 	double							RightAscension;				//*	hours
 	double							RightAscensionRate;
@@ -516,6 +518,8 @@ typedef struct
 
 
 	//*	extras NOT defined by ASCOM
+	bool							hourAngleIsValid;
+	double							HourAngle;
 	TYPE_PierSide					PhysicalSideOfPier;
 } TYPE_TelescopeProperties;
 

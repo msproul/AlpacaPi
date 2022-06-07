@@ -44,6 +44,7 @@ enum
 	kDriverInfo_Readall,
 
 
+	kDriverInfo_LaunchWeb,
 
 
 
@@ -68,6 +69,7 @@ class WindowTabDriverInfo: public WindowTab
 		virtual	~WindowTabDriverInfo(void);
 
 		virtual	void	SetupWindowControls(void);
+		virtual	void	ProcessButtonClick(const int buttonIdx, const int flags);
 
 };
 

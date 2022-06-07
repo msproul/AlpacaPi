@@ -726,7 +726,7 @@ int Servo_move_axis_by_vel(uint8_t motor, double vel)
 int Servo_init(const char *mountCfgFile, const char *localCfgFile)
 {
 	int status = kSTATUS_OK;
-	double currRa, currDec; 
+	double currRa, currDec;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -1723,7 +1723,7 @@ int Servo_move_to_park(void)
 //******************************************************************************
 //******************************************************************************
 //******************************************************************************
-#define _TEST_SERVO_MOUNT_
+//#define _TEST_SERVO_MOUNT_
 #ifdef _TEST_SERVO_MOUNT_
 int main(void)
 {

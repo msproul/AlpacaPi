@@ -241,7 +241,7 @@ int		newBrightnessValue;
 }
 
 //*****************************************************************************
-void	WindowTabCoverCalib::ProcessButtonClick(const int buttonIdx)
+void	WindowTabCoverCalib::ProcessButtonClick(const int buttonIdx, const int flags)
 {
 bool	validData;
 

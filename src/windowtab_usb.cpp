@@ -114,7 +114,7 @@ int		iii;
 }
 
 //*****************************************************************************
-void	WindowTabUSB::ProcessButtonClick(const int buttonIdx)
+void	WindowTabUSB::ProcessButtonClick(const int buttonIdx, const int flags)
 {
 ControllerUSB	*parentController;
 char			usbPath[45];

@@ -188,127 +188,6 @@ ObsConditionsDriver::~ObsConditionsDriver(void)
 }
 
 
-
-
-//*****************************************************************************
-//*	return number of microseconds allowed for delay
-//*****************************************************************************
-int32_t	ObsConditionsDriver::RunStateMachine(void)
-{
-time_t	currentTimeSecs;
-int		ii;
-
-//	CONSOLE_DEBUG(__FUNCTION__);
-
-	currentTimeSecs	=	time(NULL);
-
-	switch(cObservCondState)
-	{
-		//*	the first time thru we are going to read multiple times to fill the buffers
-		case kObservCondState_Startup:
-			for (ii=0; ii<kAvgSampleCount; ii++)
-			{
-				UpdateSensorsReadings();
-			}
-			cTimeOfLastUpdate_secs	=	time(NULL);
-			cObservCondState		=	kObservCondState_Idle;
-			break;
-
-		case kObservCondState_Idle:
-			if ((currentTimeSecs - cTimeOfLastUpdate_secs) >= kSampleDetlaSecs)
-			{
-				UpdateSensorsReadings();
-
-				cTimeOfLastUpdate_secs	=	time(NULL);
-			}
-			break;
-
-		default:
-			break;
-	}
-
-	return(10 * 1000 * 1000);	//*	10 seconds
-}
-
-//*****************************************************************************
-void	ObsConditionsDriver::UpdateSensorsReadings(void)
-{
-int		ii;
-double	pressureTotal;
-double	temperatureTotal;
-double	humidityTotal;
-
-//	CONSOLE_DEBUG(__FUNCTION__);
-	//*	move everything up in the array
-	for (ii=0; ii< (kAvgSampleCount - 1); ii++)
-	{
-		cPressureArray[ii]		=	cPressureArray[ii + 1];
-		cTemperatureArray[ii]	=	cTemperatureArray[ii + 1];
-		cHumidityArray[ii]		=	cHumidityArray[ii + 1];
-	}
-	//*	read the new values
-	cPressureArray[kAvgSampleCount - 1]		=	ReadPressure_kPa();
-	cTemperatureArray[kAvgSampleCount - 1]	=	ReadTemperature();
-	cHumidityArray[kAvgSampleCount - 1]		=	ReadHumidity();
-
-	//*	now average them
-	pressureTotal		=	0.0;
-	temperatureTotal	=	0.0;
-	humidityTotal		=	0.0;
-	for (ii=0; ii< kAvgSampleCount; ii++)
-	{
-		pressureTotal		+=	cPressureArray[ii];
-		temperatureTotal	+=	cTemperatureArray[ii];
-		humidityTotal		+=	cHumidityArray[ii];
-	}
-	cCurrentPressure_kPa				=	pressureTotal / kAvgSampleCount;
-	cObsConditionProp.Pressure_hPa		=	cCurrentPressure_kPa * 10;
-	cObsConditionProp.Temperature_DegC	=	temperatureTotal / kAvgSampleCount;
-	cObsConditionProp.Humidity			=	humidityTotal / kAvgSampleCount;
-
-
-	//*	update the global copy
-
-	gEnvData.siteTemperature_degC	=	cObsConditionProp.Temperature_DegC;
-	gEnvData.sitePressure_kPa		=	cCurrentPressure_kPa;
-	gEnvData.siteHumidity			=	cObsConditionProp.Humidity;
-	gEnvData.siteDataValid			=	true;
-	gettimeofday(&gEnvData.siteLastUpdate, NULL);
-
-
-	gEnvData.domeTemperature_degC	=	cObsConditionProp.Temperature_DegC;
-	gEnvData.domePressure_kPa		=	cCurrentPressure_kPa;
-	gEnvData.domeHumidity			=	cObsConditionProp.Humidity;
-	gEnvData.domeDataValid			=	true;
-	gettimeofday(&gEnvData.domeLastUpdate, NULL);
-}
-
-//*****************************************************************************
-double	ObsConditionsDriver::ReadPressure_kPa(void)
-{
-	CONSOLE_DEBUG("Should not be here");
-	//*	this routine should be overloaded by sub class
-	return(0.0);
-}
-
-//*****************************************************************************
-double	ObsConditionsDriver::ReadTemperature(void)
-{
-	CONSOLE_DEBUG("Should not be here");
-	//*	this routine should be overloaded by sub class
-	return(0.0);
-}
-
-//*****************************************************************************
-double	ObsConditionsDriver::ReadHumidity(void)
-{
-	CONSOLE_DEBUG("Should not be here");
-	//*	this routine should be overloaded by sub class
-	return(0.0);
-}
-
-
-
 //*****************************************************************************
 TYPE_ASCOM_STATUS	ObsConditionsDriver::ProcessCommand(TYPE_GetPutRequestData *reqData)
 {
@@ -482,6 +361,127 @@ int					mySocket;
 	strcpy(reqData->alpacaErrMsg, alpacaErrMsg);
 	return(alpacaErrCode);
 }
+
+
+
+
+//*****************************************************************************
+//*	return number of microseconds allowed for delay
+//*****************************************************************************
+int32_t	ObsConditionsDriver::RunStateMachine(void)
+{
+time_t	currentTimeSecs;
+int		ii;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	currentTimeSecs	=	time(NULL);
+
+	switch(cObservCondState)
+	{
+		//*	the first time thru we are going to read multiple times to fill the buffers
+		case kObservCondState_Startup:
+			for (ii=0; ii<kAvgSampleCount; ii++)
+			{
+				UpdateSensorsReadings();
+			}
+			cTimeOfLastUpdate_secs	=	time(NULL);
+			cObservCondState		=	kObservCondState_Idle;
+			break;
+
+		case kObservCondState_Idle:
+			if ((currentTimeSecs - cTimeOfLastUpdate_secs) >= kSampleDetlaSecs)
+			{
+				UpdateSensorsReadings();
+
+				cTimeOfLastUpdate_secs	=	time(NULL);
+			}
+			break;
+
+		default:
+			break;
+	}
+
+	return(10 * 1000 * 1000);	//*	10 seconds
+}
+
+//*****************************************************************************
+void	ObsConditionsDriver::UpdateSensorsReadings(void)
+{
+int		ii;
+double	pressureTotal;
+double	temperatureTotal;
+double	humidityTotal;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+	//*	move everything up in the array
+	for (ii=0; ii< (kAvgSampleCount - 1); ii++)
+	{
+		cPressureArray[ii]		=	cPressureArray[ii + 1];
+		cTemperatureArray[ii]	=	cTemperatureArray[ii + 1];
+		cHumidityArray[ii]		=	cHumidityArray[ii + 1];
+	}
+	//*	read the new values
+	cPressureArray[kAvgSampleCount - 1]		=	ReadPressure_kPa();
+	cTemperatureArray[kAvgSampleCount - 1]	=	ReadTemperature();
+	cHumidityArray[kAvgSampleCount - 1]		=	ReadHumidity();
+
+	//*	now average them
+	pressureTotal		=	0.0;
+	temperatureTotal	=	0.0;
+	humidityTotal		=	0.0;
+	for (ii=0; ii< kAvgSampleCount; ii++)
+	{
+		pressureTotal		+=	cPressureArray[ii];
+		temperatureTotal	+=	cTemperatureArray[ii];
+		humidityTotal		+=	cHumidityArray[ii];
+	}
+	cCurrentPressure_kPa				=	pressureTotal / kAvgSampleCount;
+	cObsConditionProp.Pressure_hPa		=	cCurrentPressure_kPa * 10;
+	cObsConditionProp.Temperature_DegC	=	temperatureTotal / kAvgSampleCount;
+	cObsConditionProp.Humidity			=	humidityTotal / kAvgSampleCount;
+
+
+	//*	update the global copy
+
+	gEnvData.siteTemperature_degC	=	cObsConditionProp.Temperature_DegC;
+	gEnvData.sitePressure_kPa		=	cCurrentPressure_kPa;
+	gEnvData.siteHumidity			=	cObsConditionProp.Humidity;
+	gEnvData.siteDataValid			=	true;
+	gettimeofday(&gEnvData.siteLastUpdate, NULL);
+
+
+	gEnvData.domeTemperature_degC	=	cObsConditionProp.Temperature_DegC;
+	gEnvData.domePressure_kPa		=	cCurrentPressure_kPa;
+	gEnvData.domeHumidity			=	cObsConditionProp.Humidity;
+	gEnvData.domeDataValid			=	true;
+	gettimeofday(&gEnvData.domeLastUpdate, NULL);
+}
+
+//*****************************************************************************
+double	ObsConditionsDriver::ReadPressure_kPa(void)
+{
+	CONSOLE_DEBUG("Should not be here");
+	//*	this routine should be overloaded by sub class
+	return(0.0);
+}
+
+//*****************************************************************************
+double	ObsConditionsDriver::ReadTemperature(void)
+{
+	CONSOLE_DEBUG("Should not be here");
+	//*	this routine should be overloaded by sub class
+	return(0.0);
+}
+
+//*****************************************************************************
+double	ObsConditionsDriver::ReadHumidity(void)
+{
+	CONSOLE_DEBUG("Should not be here");
+	//*	this routine should be overloaded by sub class
+	return(0.0);
+}
+
 
 //*****************************************************************************
 TYPE_ASCOM_STATUS	ObsConditionsDriver::Get_AveragePeriod(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
@@ -897,10 +897,8 @@ int						iii;
 	{
 		CONSOLE_DEBUG_W_STR("Unknown sensor type=", sensorName);
 	}
-
 	return(mySensorType);
 }
-
 
 //*****************************************************************************
 //*	curl -X GET "https://virtserver.swaggerhub.com/ASCOMInitiative/api/v1/observingconditions/0/sensordescription?

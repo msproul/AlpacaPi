@@ -36,6 +36,7 @@
 
 
 #include	"alpaca_defs.h"
+#include	"helper_functions.h"
 
 #include	"controller.h"
 #include	"controller_telescope.h"
@@ -348,7 +349,7 @@ int			coordHeight;
 }
 
 //*****************************************************************************
-void	WindowTabTelescope::ProcessButtonClick(const int buttonIdx)
+void	WindowTabTelescope::ProcessButtonClick(const int buttonIdx, const int flags)
 {
 char	dataString[128];
 bool	validData;
@@ -389,7 +390,8 @@ int		trackingRate;
 
 	}
 
-	CONSOLE_DEBUG_W_DBL("ra_SlewRate_degPerSec\t=",		ra_SlewRate_degPerSec);
+	CONSOLE_DEBUG_W_NUM("cCurrentSlewRate      \t=",	cCurrentSlewRate);
+	CONSOLE_DEBUG_W_DBL("ra_SlewRate_degPerSec \t=",	ra_SlewRate_degPerSec);
 	CONSOLE_DEBUG_W_DBL("dec_SlewRate_degPerSec\t=",	dec_SlewRate_degPerSec);
 
 	update			=	true;
@@ -465,7 +467,7 @@ int		trackingRate;
 				}
 				else
 				{
-					sprintf(dataString, "Axis=%d&Rate=%f", kAxis_RA, ra_SlewRate_degPerSec);
+					sprintf(dataString, "Axis=%d&Rate=%f", kAxis_RA, -ra_SlewRate_degPerSec);
 				}
 				validData	=	AlpacaSendPutCmd(	"telescope", "moveaxis",	dataString);
 				if (validData)
@@ -494,7 +496,7 @@ int		trackingRate;
 				}
 				else
 				{
-					sprintf(dataString, "Axis=%d&Rate=-%f", kAxis_RA, ra_SlewRate_degPerSec);
+					sprintf(dataString, "Axis=%d&Rate=%f", kAxis_RA, ra_SlewRate_degPerSec);
 				}
 				validData	=	AlpacaSendPutCmd(	"telescope", "moveaxis",	dataString);
 				if (validData)
@@ -532,10 +534,10 @@ int		trackingRate;
 			validData	=	AlpacaSendPutCmd(	"telescope", "tracking",	dataString);
 			break;
 
-		case kTelescope_SlewRate_Fast:
-		case kTelescope_SlewRate_Med:
-		case kTelescope_SlewRate_Slow:
 		case kTelescope_SlewRate_VerySlow:
+		case kTelescope_SlewRate_Slow:
+		case kTelescope_SlewRate_Med:
+		case kTelescope_SlewRate_Fast:
 			cCurrentSlewRate	=	buttonIdx;
 			updateButtons		=	true;
 			break;
@@ -690,6 +692,12 @@ char	dataString[64];
 
 	GetSideOfPierString(telescopeProp->PhysicalSideOfPier, dataString);
 	SetWidgetText(		kTelescope_PhysSideOfPier_value,	dataString);
+
+	if (telescopeProp->hourAngleIsValid)
+	{
+		FormatHHMMSS(telescopeProp->HourAngle, dataString, true);
+		SetWidgetText(		kTelescope_HA_value,	dataString);
+	}
 
 	//--------------------------------------------------------------------------
 	if (updateAll)

@@ -118,7 +118,7 @@ int		yLoc;
 }
 
 //*****************************************************************************
-void	WindowTabFilterWheel::ProcessButtonClick(const int buttonIdx)
+void	WindowTabFilterWheel::ProcessButtonClick(const int buttonIdx, const int flags)
 {
 
 	CONSOLE_DEBUG(__FUNCTION__);

@@ -815,7 +815,7 @@ ControllerDome	*myDomeController;
 }
 
 //*****************************************************************************
-void	WindowTabDome::ProcessButtonClick(const int buttonIdx)
+void	WindowTabDome::ProcessButtonClick(const int buttonIdx, const int flags)
 {
 bool			validData;
 SJP_Parser_t	jsonResponse;

@@ -133,7 +133,7 @@ class WindowTabSkyTravel: public WindowTab
 		virtual	void	SetupWindowControls(void);
 //		virtual	void	DrawWindow(void);
 		virtual void	HandleKeyDown(const int keyPressed);
-		virtual	void	ProcessButtonClick(const int buttonIdx);
+		virtual	void	ProcessButtonClick(const int buttonIdx, const int flags);
 		virtual	void	ProcessDoubleClick(	const int	widgetIdx,
 											const int	event,
 											const int	xxx,

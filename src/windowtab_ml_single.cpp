@@ -325,7 +325,7 @@ int		logoHeight;
 
 
 //*****************************************************************************
-void	WindowTabMLsingle::ProcessButtonClick(const int buttonIdx)
+void	WindowTabMLsingle::ProcessButtonClick(const int buttonIdx, const int flags)
 {
 ControllerFocus	*focusController;
 int				prevDesiredFocusPosition;

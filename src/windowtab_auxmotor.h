@@ -56,7 +56,7 @@ class WindowTabAuxMotor: public WindowTab
 		virtual	~WindowTabAuxMotor(void);
 
 		virtual	void	SetupWindowControls(void);
-		virtual	void	ProcessButtonClick(const int buttonIdx);
+		virtual	void	ProcessButtonClick(const int buttonIdx, const int flags);
 				void	DisableAuxMotorButons(void);
 
 

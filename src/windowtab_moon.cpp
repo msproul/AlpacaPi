@@ -229,7 +229,7 @@ char		moonPhaseStr[64];
 
 
 //*****************************************************************************
-void	WindowTabMoon::ProcessButtonClick(const int buttonIdx)
+void	WindowTabMoon::ProcessButtonClick(const int buttonIdx, const int flags)
 {
 	switch(buttonIdx)
 	{

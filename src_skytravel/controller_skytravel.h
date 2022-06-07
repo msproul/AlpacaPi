@@ -57,7 +57,9 @@
 	#include	"windowtab_RemoteData.h"
 #endif
 
-
+#ifndef	_WINDOWTAB_MOUNT_H_
+	#include	"windowtab_mount.h"
+#endif
 
 extern	double	gTelescopeRA_Hours;
 extern	double	gTelescopeRA_Radians;
@@ -117,18 +119,19 @@ enum
 	kTab_ST_Settings,
 	kTab_ST_FOV,
 	kTab_ST_RemoteData,
-	kTab_Moon,
 	kTab_ST_Dome,
+#ifndef __ARM_ARCH
+	kTab_ST_Mount,
+#endif
 	kTab_DeviceList,
 	kTab_AlpacaList,
 	kTab_IPList,
+	kTab_Moon,
 	kTab_ST_About,
-
 
 	kTab_ST_Count
 
 };
-
 
 //**************************************************************************************
 class ControllerSkytravel: public Controller
@@ -181,6 +184,9 @@ class ControllerSkytravel: public Controller
 				WindowTabSTsettings		*cSkySettingsTabObjPtr;
 				WindowTabMoon			*cMoonTabObjPtr;
 				WindowTabDome			*cDomeTabObjPtr;
+			#ifndef __ARM_ARCH
+				WindowTabMount			*cMountTabObjPtr;
+			#endif
 				WindowTabAlpacaList		*cAlpacaListObjPtr;
 				WindowTabIPList			*cIPaddrListObjPtr;
 				WindowTabDeviceSelect	*cDeviceSelectObjPtr;

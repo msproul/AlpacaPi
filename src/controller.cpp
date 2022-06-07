@@ -88,6 +88,8 @@
 //*	Feb 20,	2022	<MLS> Added a bunch of Low Level Drawing commands LLD_....
 //*	Apr  9,	2022	<MLS> Made some changes to be compatible with openCV ver 2
 //*	Apr 11,	2022	<MLS> Added ProcessControllerWindows()
+//*	May 31,	2022	<MLS> Added RunCommandLine()
+//*	Jun  4,	2022	<MLS> Added flags arg to ProcessButtonClick()
 //*****************************************************************************
 
 
@@ -114,11 +116,12 @@
 #endif
 
 Controller	*gControllerList[kMaxControllers];
-int			gControllerCnt			=	-1;
-bool		gFontsNeedInit			=	true;
-char		gColorOverRide			=	0;
-Controller	*gCurrentActiveWindow	=	NULL;
-bool		gDebugBackgroundThread	=	false;
+int			gControllerCnt				=	-1;
+bool		gFontsNeedInit				=	true;
+char		gColorOverRide				=	0;
+Controller	*gCurrentActiveWindow		=	NULL;
+bool		gDebugBackgroundThread		=	false;
+char		gWebBrowserCmdString[32]	=	"firefox";
 
 
 TYPE_FontInfo	gFontInfo[kFont_last];
@@ -1063,12 +1066,12 @@ bool		widgetIsButton;
 }
 
 //*****************************************************************************
-void	Controller::ProcessButtonClick(const int buttonIdx)
+void	Controller::ProcessButtonClick(const int buttonIdx, const int	flags)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
 	if (cCurrentTabObjPtr != NULL)
 	{
-		cCurrentTabObjPtr->ProcessButtonClick(buttonIdx);
+		cCurrentTabObjPtr->ProcessButtonClick(buttonIdx, flags);
 	}
 	else
 	{
@@ -1084,7 +1087,7 @@ void	Controller::ProcessDoubleClick(	const int	widgetIdx,
 										const int	yyy,
 										const int	flags)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	if (cCurrentTabObjPtr != NULL)
 	{
 		cCurrentTabObjPtr->ProcessDoubleClick(widgetIdx,  event,  xxx,  yyy,  flags);
@@ -1132,6 +1135,15 @@ bool	updateOccurred;
 	}
 }
 
+////! Mouse Event Flags see cv::MouseCallback
+//enum MouseEventFlags {
+//       EVENT_FLAG_LBUTTON   = 1, //!< indicates that the left mouse button is down.
+//       EVENT_FLAG_RBUTTON   = 2, //!< indicates that the right mouse button is down.
+//       EVENT_FLAG_MBUTTON   = 4, //!< indicates that the middle mouse button is down.
+//       EVENT_FLAG_CTRLKEY   = 8, //!< indicates that CTRL Key is pressed.
+//       EVENT_FLAG_SHIFTKEY  = 16,//!< indicates that SHIFT Key is pressed.
+//       EVENT_FLAG_ALTKEY    = 32 //!< indicates that ALT Key is pressed.
+//     };
 
 //*****************************************************************************
 void	Controller::ProcessMouseEvent(int event, int xxx, int yyy, int flags)
@@ -1278,7 +1290,8 @@ int		wheelMovement;
 				clickedBtn		=	FindClickedWidget(xxx,  yyy);
 				if ((clickedBtn >= 0) && (clickedBtn == cLastClicked_Btn))
 				{
-					ProcessButtonClick(clickedBtn);
+				//	CONSOLE_DEBUG_W_HEX("flags\t=", flags);
+					ProcessButtonClick(clickedBtn, flags);
 				}
 			}
 			cLastClicked_Btn	=	-1;
@@ -1362,7 +1375,7 @@ int		wheelMovement;
 			break;
 #else
 	#warning "Mouse wheel events not supported, "
-	#error "Mouse wheel events not supported, "
+//	#error "Mouse wheel events not supported, "
 #endif
 		default:
 			CONSOLE_DEBUG_W_NUM("UNKNOWN EVENT", event);
@@ -3785,3 +3798,74 @@ int	iii;
 		}
 	}
 }
+
+
+
+
+static	pthread_t	gShellScript_ThreadID;
+static	char		gShellCmdLine[128];
+static	bool		gShellThreadIsRunning	=	false;
+
+//*****************************************************************************
+static void	*RunCommandLine_Thead(void *arg)
+{
+int		systemRetCode;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+
+	if (arg != NULL)
+	{
+
+		CONSOLE_DEBUG((char *)arg);
+
+		CONSOLE_DEBUG_W_STR("cmdLine\t=",	(char *)arg);
+		systemRetCode	=	system((char *)arg);
+		if (systemRetCode == 0)
+		{
+		}
+		else
+		{
+			CONSOLE_DEBUG_W_NUM("ERROR system() returned", systemRetCode);
+		}
+	}
+	else
+	{
+		CONSOLE_DEBUG("arg is NULL");
+	}
+	CONSOLE_DEBUG("Thread exiting");
+
+	return(NULL);
+}
+
+//*****************************************************************************
+void	RunCommandLine(const char *commandLine)
+{
+int		threadErr;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+
+	if (gShellThreadIsRunning == false)
+	{
+		strcpy(gShellCmdLine, commandLine);
+		CONSOLE_DEBUG_W_STR("gShellCmdLine\t=",	gShellCmdLine);
+
+		threadErr	=	pthread_create(	&gShellScript_ThreadID,
+										NULL,
+										&RunCommandLine_Thead,
+										(void *)gShellCmdLine);
+		if (threadErr == 0)
+		{
+			CONSOLE_DEBUG("Shell script thread created successfully");
+		}
+		else
+		{
+			CONSOLE_DEBUG_W_NUM("Error on thread creation, Error number:", threadErr);
+		}
+		CONSOLE_DEBUG("EXIT");
+	}
+	else
+	{
+		CONSOLE_DEBUG("Thread currently busy!!!!");
+	}
+}
+

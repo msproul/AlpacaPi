@@ -40,7 +40,7 @@
 
 
 //*	MLS Libraries
-//#define _ENABLE_CONSOLE_DEBUG_
+#define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
 
 #include	"AsteroidData.h"
@@ -689,8 +689,8 @@ double				targetJulian;
 	{
 		CONSOLE_DEBUG_W_STR("Failed to open file:", filePath);
 	}
-	CONSOLE_DEBUG_W_NUM("linesRead:", linesRead);
-	CONSOLE_DEBUG_W_NUM("maxLineLength:", maxLineLength);
+//	CONSOLE_DEBUG_W_NUM("linesRead:", linesRead);
+//	CONSOLE_DEBUG_W_NUM("maxLineLength:", maxLineLength);
 
 	*asteroidCount	=	asteroidIdx;
 	return(asteroidArray);

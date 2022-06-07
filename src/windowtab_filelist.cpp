@@ -132,7 +132,7 @@ int		scrollBarYLoc;
 }
 
 //**************************************************************************************
-void	WindowTabFileList::ProcessButtonClick(const int buttonIdx)
+void	WindowTabFileList::ProcessButtonClick(const int buttonIdx, const int flags)
 {
 	CONSOLE_DEBUG(__FUNCTION__);
 	switch(buttonIdx)

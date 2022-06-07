@@ -180,7 +180,7 @@ int		iii;
 }
 
 //*****************************************************************************
-void	WindowTabSwitch::ProcessButtonClick(const int buttonIdx)
+void	WindowTabSwitch::ProcessButtonClick(const int buttonIdx, const int flags)
 {
 
 //	CONSOLE_DEBUG(__FUNCTION__);

@@ -71,9 +71,25 @@ int		textBoxHt;
 int		textBoxWd;
 int		widgetWidth;
 int		iii;
-short	tabArray[kMaxTabStops]	=	{150, 250, 500, 600, 700, 1100, 1150, 1199, 0};
+short	widthArray[kMaxTabStops]	=	{150, 100, 100, 63, 63, 63, 63, 420, 0, 0, 0};
+short	tabArray[kMaxTabStops];
 int		clmnHdr_xLoc;
 int		clmnHdrWidth;
+int		tabOffset;
+
+	for (iii=0; iii<kMaxTabStops; iii++)
+	{
+		tabArray[iii]	=	0;
+	}
+	tabOffset	=	widthArray[0];
+	iii			=	0;
+	while ((widthArray[iii] > 0) && (iii < kMaxTabStops))
+	{
+		tabArray[iii]	=	tabOffset;
+		tabOffset		+=	widthArray[iii+1];
+		CONSOLE_DEBUG_W_NUM("tabArray[iii]\t=", tabArray[iii]);
+		iii++;
+	}
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 //	CONSOLE_ABORT(__FUNCTION__);
@@ -128,7 +144,7 @@ int		clmnHdrWidth;
 
 	//------------------------------------------
 	xLoc	=	5;
-	SetWidget(				kIPaddrList_ErrorMsg,	xLoc,		yLoc,		tabArray[5],		cTitleHeight);
+	SetWidget(				kIPaddrList_ErrorMsg,	xLoc,		yLoc,		tabArray[7],		cTitleHeight);
 	SetWidgetType(			kIPaddrList_ErrorMsg,	kWidgetType_TextBox);
 	SetWidgetJustification(	kIPaddrList_ErrorMsg,	kJustification_Left);
 	SetWidgetFont(			kIPaddrList_ErrorMsg,	kFont_Medium);
@@ -139,7 +155,7 @@ int		clmnHdrWidth;
 
 	clmnHdr_xLoc		=	1;
 	iii	=	kIPaddrList_ClmTitle1;
-	while(iii <= kIPaddrList_ClmTitle6)
+	while(iii < kIPaddrList_ClmOutline)
 	{
 		clmnHdrWidth	=	tabArray[iii - kIPaddrList_ClmTitle1] - clmnHdr_xLoc;
 
@@ -159,14 +175,16 @@ int		clmnHdrWidth;
 	SetWidgetText(		kIPaddrList_ClmTitle1,	"ip-address");
 	SetWidgetText(		kIPaddrList_ClmTitle2,	"port");
 	SetWidgetText(		kIPaddrList_ClmTitle3,	"/etc/hosts");
-	SetWidgetText(		kIPaddrList_ClmTitle4,	"Valid Count");
-	SetWidgetText(		kIPaddrList_ClmTitle5,	"Error Count");
-	SetWidgetText(		kIPaddrList_ClmTitle6,	"Status");
+	SetWidgetText(		kIPaddrList_ClmTitle4,	"Valid#");
+	SetWidgetText(		kIPaddrList_ClmTitle5,	"Err#");
+	SetWidgetText(		kIPaddrList_ClmTitle6,	"Uptime");
+	SetWidgetText(		kIPaddrList_ClmTitle7,	"Cpu(F)");
+	SetWidgetText(		kIPaddrList_ClmTitle8,	"Status");
 	yLoc			+=	cRadioBtnHt;
 	yLoc			+=	2;
 	yLoc			+=	6;
 
-	SetWidgetOutlineBox(kIPaddrList_Outline, kIPaddrList_DiscoveryThrdStatus, kIPaddrList_ClmTitle6);
+	SetWidgetOutlineBox(kIPaddrList_ClmOutline, kIPaddrList_DiscoveryThrdStatus, (kIPaddrList_ClmOutline - 1));
 
 
 
@@ -202,7 +220,7 @@ int		clmnHdrWidth;
 }
 
 //*****************************************************************************
-void	WindowTabIPList::ProcessButtonClick(const int buttonIdx)
+void	WindowTabIPList::ProcessButtonClick(const int buttonIdx, const int flags)
 {
 bool	updateFlag;
 
@@ -287,6 +305,7 @@ void	WindowTabIPList::UpdateIPaddrList(void)
 int		boxId;
 int		iii;
 char	textString[128];
+char	extraString[32];
 char	ipAddrStr[32];
 
 //	CONSOLE_DEBUG(__FUNCTION__);
@@ -322,6 +341,25 @@ char	ipAddrStr[32];
 														gAlpacaUnitList[iii].hostName,
 														gAlpacaUnitList[iii].queryOKcnt,
 														gAlpacaUnitList[iii].queryERRcnt);
+
+			if (gAlpacaUnitList[iii].upTimeValid)
+			{
+				sprintf(extraString, "\t%d", gAlpacaUnitList[iii].upTimeDays);
+				strcat(textString, extraString);
+			}
+			else
+			{
+				strcat(textString, "\t-");
+			}
+			if (gAlpacaUnitList[iii].upTimeValid)
+			{
+				sprintf(extraString, "\t%5.1f", gAlpacaUnitList[iii].cpuTemp_DegF);
+				strcat(textString, extraString);
+			}
+			else
+			{
+				strcat(textString, "\t-");
+			}
 
 			if (gAlpacaUnitList[iii].currentlyActive)
 			{

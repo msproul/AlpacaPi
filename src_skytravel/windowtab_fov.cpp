@@ -104,6 +104,7 @@ void	WindowTabFOV::SetupWindowControls(void)
 {
 int		yLoc;
 int		textBoxHt;
+int		buttonWidth;
 int		boxNum;
 int		clmnHdr_xLoc;
 int		chkBoxWidth;
@@ -133,12 +134,12 @@ char	textString[80];
 	textBoxOffsetX	=	chkBoxWidth + 1;
 
 	//------------------------------------------
-	SetWidget(		kFOVbox_FileInfo,	textBoxOffsetX,			yLoc,	(cWidth - textBoxOffsetX),		cRadioBtnHt);
+	SetWidget(		kFOVbox_FileInfo,	textBoxOffsetX,			yLoc,	(cWidth - textBoxOffsetX),		cBtnHeight);
 	SetWidgetType(	kFOVbox_FileInfo,	kWidgetType_TextBox);
-	SetWidgetFont(	kFOVbox_FileInfo,	kFont_TextList);
-	sprintf(textString, "Modify file '%s' to change these values", kCameraFOVfileName);
+	SetWidgetFont(	kFOVbox_FileInfo,	kFont_Medium);
+	sprintf(textString, "Edit file '%s' to change these values", kCameraFOVfileName);
 	SetWidgetText(		kFOVbox_FileInfo,	textString);
-	yLoc			+=	cRadioBtnHt;
+	yLoc			+=	cBtnHeight;
 	yLoc			+=	2;
 
 
@@ -212,11 +213,19 @@ char	textString[80];
 	}
 
 
-	SetWidget(				kFOVbox_SaveButton,	0,				yLoc,		150,		cBtnHeight);
+	buttonWidth	=	150;
+	SetWidget(				kFOVbox_SaveButton,	0,				yLoc,		buttonWidth,		cBtnHeight);
 	SetWidgetType(			kFOVbox_SaveButton,	kWidgetType_Button);
 	SetWidgetTextColor(		kFOVbox_SaveButton,	CV_RGB(0,	0,	0));
 	SetWidgetBGColor(		kFOVbox_SaveButton,	CV_RGB(255,	255,	255));
 	SetWidgetText(			kFOVbox_SaveButton,	"Save");
+
+	SetWidget(				kFOVbox_EditButton,	(buttonWidth + 2),				yLoc,		buttonWidth,		cBtnHeight);
+	SetWidgetType(			kFOVbox_EditButton,	kWidgetType_Button);
+	SetWidgetTextColor(		kFOVbox_EditButton,	CV_RGB(0,	0,	0));
+	SetWidgetBGColor(		kFOVbox_EditButton,	CV_RGB(255,	255,	255));
+	SetWidgetText(			kFOVbox_EditButton,	"Edit");
+
 
 	SetAlpacaLogoBottomCorner(kFOVbox_AlpacaLogo);
 }
@@ -523,11 +532,12 @@ char				ipAddrStr[32];
 
 
 //*****************************************************************************
-void	WindowTabFOV::ProcessButtonClick(const int buttonIdx)
+void	WindowTabFOV::ProcessButtonClick(const int buttonIdx, const int flags)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
 bool	forceUpdateFlg;
 int		cameraIdx;
+char	commandString[64];
 
 	forceUpdateFlg	=	true;
 	switch(buttonIdx)
@@ -570,6 +580,14 @@ int		cameraIdx;
 		case kFOVbox_SaveButton:
 			WriteCameraFOVfile();
 			break;
+
+		case kFOVbox_EditButton:
+			strcpy(commandString, "gedit ");
+			strcat(commandString, kCameraFOVfileName);
+			strcat(commandString, " &");
+			RunCommandLine(commandString);
+			break;
+
 
 		default:
 			forceUpdateFlg	=	false;

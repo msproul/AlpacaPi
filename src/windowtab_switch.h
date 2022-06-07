@@ -147,7 +147,7 @@ class WindowTabSwitch: public WindowTab
 		virtual	~WindowTabSwitch(void);
 
 		virtual	void	SetupWindowControls(void);
-		virtual	void	ProcessButtonClick(const int buttonIdx);
+		virtual	void	ProcessButtonClick(const int buttonIdx, const int flags);
 
 				void	ToggleSwitchState(const int switchNum);
 				void	TurnAllSwitchesOff(void);

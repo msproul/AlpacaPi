@@ -349,7 +349,7 @@ uint32_t			deltaMilliSecs;
 }
 
 //*****************************************************************************
-void	WindowTabRemoteData::ProcessButtonClick(const int buttonIdx)
+void	WindowTabRemoteData::ProcessButtonClick(const int buttonIdx, const int flags)
 {
 #ifdef 	_ENABLE_REMOTE_GAIA_
 	char				searchText[64];

@@ -480,7 +480,7 @@ void	WindowTabNitecrawler::DrawWidgetCustomGraphic(	IplImage	*openCV_Image,
 }
 
 //*****************************************************************************
-void	WindowTabNitecrawler::ProcessButtonClick(const int buttonIdx)
+void	WindowTabNitecrawler::ProcessButtonClick(const int buttonIdx, const int flags)
 {
 int				prevDesiredFocusPosition;
 int				prevDesiredRotatorPosition;

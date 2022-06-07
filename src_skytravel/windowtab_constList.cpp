@@ -175,7 +175,7 @@ int		clmnHdrWidth;
 
 
 //*****************************************************************************
-void	WindowTabConstellationList::ProcessButtonClick(const int buttonIdx)
+void	WindowTabConstellationList::ProcessButtonClick(const int buttonIdx, const int flags)
 {
 int	newSortColumn;
 
