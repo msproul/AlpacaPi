@@ -701,6 +701,9 @@ std::string		lastError("");
 			cCameraProp.CCDtemperature		=	cameraTemp_DegC;
 		}
 	}
+	//*	override until binning is implemented.
+	cCameraProp.MaxbinX	=	1;
+	cCameraProp.MaxbinY	=	1;
 
 	return(cameraInfoOK);
 }
