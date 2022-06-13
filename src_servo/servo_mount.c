@@ -65,6 +65,8 @@
 //*	May 31,	2022	<RNS> Added a forgotten _set_pos after doing a flip
 //*	Jun  1,	2022	<RNS> Rewrote _calc_optimal_path(), added _calc_short_vector()
 //*	Jun  2,	2022	<RNS> Merged code and fix a sign bug in _set_static_pos()
+//*	Jun 12	2022	<RNS> updated Servo_init() to read PID setting from config file
+//*	Jun 13	2022	<RNS> Converted all PID function to use float for PID args
 //*****************************************************************************
 // Notes: M1 *MUST BE* connected to RA or Azimuth axis, M2 to Dec or Altitude
 //*****************************************************************************
@@ -318,7 +320,7 @@ void Servo_step_to_pos(int32_t raStep, int32_t decStep, double *ra, double *dec)
 	// compute the current home position with time delta, motor direction
 	// should not be needed (I think) since time can't go backwards ;^)
 	// home	=	gMountConfig.ra.zero + (gMountConfig.ra.direction) * (gSysDepend * (double)time * ARCSEC_PER_SEC / 3600.0);
-	home = gMountConfig.ra.zero + (gSysDepend * (double)time * kARCSEC_PER_SEC / 3600.0);
+	home = gMountConfig.ra.zero + (gSysDepend * (double)time * kSID_RATE_ARCSECS / 3600.0);
 	*ra = home + currPos;
 
 	// convert from decidegs to decihours
@@ -355,7 +357,7 @@ static void Servo_pos_to_step(double ra, double dec, int32_t *raStep, int32_t *d
 		time = time - gMountConfig.ra.time;
 
 		// compute the current home position with time delta
-		home = gMountConfig.ra.zero + (gSysDepend * time * kARCSEC_PER_SEC / 3600.0);
+		home = gMountConfig.ra.zero + (gSysDepend * time * kSID_RATE_ARCSECS / 3600.0);
 	}
 	else
 	{
@@ -383,7 +385,7 @@ static void Servo_pos_to_step(double ra, double dec, int32_t *raStep, int32_t *d
 		time = time - gMountConfig.dec.time;
 
 		// compute the current home position with time delta
-		home = gMountConfig.dec.zero + (gSysDepend * time * kARCSEC_PER_SEC / 3600.0);
+		home = gMountConfig.dec.zero + (gSysDepend * time * kSID_RATE_ARCSECS / 3600.0);
 	}
 	else
 	{
@@ -439,7 +441,7 @@ void Servo_get_pos(double *ra, double *dec)
 		// compute the current home position with time delta
 		// direction not needed, time only flows one way
 		// TODO: need to add actual tracking rate and not always sidereal
-		delta = (gSysDepend * time * kARCSEC_PER_SEC / 3600.0);
+		delta = (gSysDepend * time * kSID_RATE_ARCSECS / 3600.0);
 		home = gMountConfig.ra.zero + delta;
 	}
 	else
@@ -783,10 +785,29 @@ int Servo_init(const char *mountCfgFile, const char *localCfgFile)
 	gMountConfig.ra.status = 0;
 	gMountConfig.ra.direction = gMountConfig.ra.config;
 
-	// TODO: BUG!  routine set the position for both ra & dec, but dec is not yet initialized, see below
-	gMountConfig.ra.track = -kARCSEC_PER_SEC * gMountConfig.ra.direction * gSysDepend * gMountConfig.ra.step;
+	// Set the PID value in MC with the config file data
+	RC_set_pos_pid(	gMountConfig.addr, 
+					SERVO_RA_AXIS,
+					gMountConfig.ra.kp,
+					gMountConfig.ra.ki,
+					gMountConfig.ra.kd,
+					(uint32_t) gMountConfig.ra.il,
+					0, // DeadZone
+					(int32_t)  (gMountConfig.ra.step * -1296000.0),  // Set min pos to one full revolution negative
+					(int32_t)  (gMountConfig.ra.step * 1296000.0) ); // Set min pos to one full revolution positive
 
-	// Servo_set_axis_step_track(SERVO_RA_AXIS, (kARCSEC_PER_SEC * (double)gMountConfig.ra.step));
+	// Need to set QPPS or the MC will not move, the only way is using vel pid
+	RC_set_vel_pid(	gMountConfig.addr, 
+					SERVO_RA_AXIS,
+					gMountConfig.ra.kp / 40.0, 	// convert to internal data format (divide pos value by 40)
+					gMountConfig.ra.ki / 40.0, 	// convert to internal data format (divide pos value by 40)
+					0.0, 									// it's really a PI cmd so zero D as is not needed							
+					(uint32_t) gMountConfig.ra.maxVel);		// calc'd max step rate from above
+
+	// Set the  RC tracking rate to sidereal as default 
+	gMountConfig.ra.track = -kSID_RATE_ARCSECS * gMountConfig.ra.direction * gSysDepend * gMountConfig.ra.step;
+
+	// Servo_set_axis_step_track(SERVO_RA_AXIS, (kSID_RATE_ARCSECS * (double)gMountConfig.ra.step));
 	gMountConfig.ra.zero = 0.0;
 	gMountConfig.ra.time = Time_get_systime();
 
@@ -803,6 +824,25 @@ int Servo_init(const char *mountCfgFile, const char *localCfgFile)
 	gMountConfig.dec.slew = (uint32_t)gMountConfig.dec.realSlew * gMountConfig.dec.step;
 	gMountConfig.dec.status = 0;
 	gMountConfig.dec.direction = gMountConfig.dec.config;
+
+	// Set the PID value in MC with the config file data
+	RC_set_pos_pid(	gMountConfig.addr, 
+					SERVO_DEC_AXIS,
+					gMountConfig.dec.kp,
+					gMountConfig.dec.ki,
+					gMountConfig.dec.kd,
+					(uint32_t) gMountConfig.dec.il,
+					0, // DeadZone
+					(int32_t)  (gMountConfig.dec.step * -1296000.0),  // Set min pos to one full revolution negative
+					(int32_t)  (gMountConfig.dec.step * 1296000.0) ); // Set min pos to one full revolution positive
+
+	// Need to set QPPS or the MC will not move, the only way is using vel pid
+	RC_set_vel_pid(	gMountConfig.addr, 
+					SERVO_DEC_AXIS,
+					gMountConfig.dec.kp / 40.0, 			// convert to internal data format (divide pos value by 40)
+					gMountConfig.dec.ki / 40.0, 			// convert to internal data format (divide pos value by 40)
+					0.0, 									// it's really a PI cmd so zero D as is not needed							
+					(uint32_t) gMountConfig.dec.maxVel);	// calc'd max step rate from above
 
 	gMountConfig.dec.track = 0;
 	gMountConfig.dec.zero = 0.0;
@@ -1148,7 +1188,7 @@ void Servo_stop_all(void)
 // It is only used the RA axis (Dec doesn't need it) and will return the
 // vector needed to move from the start position in hour.  This was a PITA
 //*****************************************************************************
-static double Servo_calc_short_vector(double begin, double end, double max)
+double Servo_calc_short_vector(double begin, double end, double max)
 {
 	double sDiff;
 	double rawDiff;
@@ -1196,7 +1236,7 @@ static double Servo_calc_short_vector(double begin, double end, double max)
 // sign on the return for relative RA movement
 // All inputs in decimal Hours/degs format and returns boolean if a mount flip is required
 //*****************************************************************************
-static bool Servo_calc_optimal_path(double startRa, double startDec, double lst, double endRa, double endDec, double *raDirection, double *decDirection)
+bool Servo_calc_optimal_path(double startRa, double startDec, double lst, double endRa, double endDec, double *raDirection, double *decDirection)
 {
 	double startRaHa, endRaHa;
 	double startRaFlip, startDecFlip, startRaHaFlip;
@@ -1601,7 +1641,7 @@ int Servo_move_to_static(double parkHA, double parkDec)
 		time = time - gMountConfig.dec.time;
 
 		// compute the current home position with time delta
-		home = gMountConfig.dec.zero + (gSysDepend * time * kARCSEC_PER_SEC / 3600.0);
+		home = gMountConfig.dec.zero + (gSysDepend * time * kSID_RATE_ARCSECS / 3600.0);
 	}
 	else
 	{
@@ -1627,7 +1667,7 @@ int Servo_move_to_static(double parkHA, double parkDec)
 		time = time - gMountConfig.ra.time;
 
 		// compute the current home position with time delta
-		home = gMountConfig.ra.zero + (gSysDepend * time * kARCSEC_PER_SEC / 3600.0);
+		home = gMountConfig.ra.zero + (gSysDepend * time * kSID_RATE_ARCSECS / 3600.0);
 	}
 	else
 	{
@@ -1723,7 +1763,7 @@ int Servo_move_to_park(void)
 //******************************************************************************
 //******************************************************************************
 //******************************************************************************
-#define _TEST_SERVO_MOUNT_
+//#define _TEST_SERVO_MOUNT_
 #ifdef _TEST_SERVO_MOUNT_
 int main(void)
 {
@@ -1733,6 +1773,9 @@ int main(void)
 	double lat, lon;
 	double currRa, currDec;
 	int32_t currRaStep, currDecStep;
+	double propo, integ, deriv;
+	uint32_t iMax, deadZ;
+	int32_t minP, maxP;
 
 	int state;
 	char buf[256];
@@ -1753,6 +1796,12 @@ int main(void)
 	printf("Converting back from steps to position\n");
 	Servo_step_to_pos(currRaStep, currDecStep, &currRa, &currDec);
 	printf("** Current Pos  RA = %lf   Dec = %lf\n", currRa, currDec);
+
+	RC_get_pos_pid(gMountConfig.addr, SERVO_RA_AXIS,  &propo, &integ, &deriv, &iMax, &deadZ, &minP, &maxP);
+	printf("POS P:%.2f I:%.2f D:%.2f iMax:%d Dz:%d Min:%d Max:%d\n", propo, integ, deriv, iMax, deadZ, minP, maxP);
+
+	RC_get_vel_pid(gMountConfig.addr, SERVO_RA_AXIS,  &propo, &integ, &deriv, &iMax); 
+	printf("VEL P:%.2f I:%.2f D:%.2f QPPS:%d\n", propo, integ, deriv, iMax);
 
 	// printf("Dumping RA settings\n\n");
 	// Servo_print_axis(&(gMountConfig.ra));

@@ -1,0 +1,40 @@
+#************************************
+# GEM MOUNT TESTING
+#************************************
+# GEM1 westward move east of LST 2
+# Move is from -4HA to -2HA - wORKS!
+G 2 6 45 4 80
+# GEM2 westward move across meridan and 0/24  LST 2 
+# Move is from -4HA to +4HA - WORKS!
+G 2 6 45 22 15
+# GEM3 westward move across meridan and 0/24  LST 2 but within meridian window
+# Move is -4HA to +1HA - WORKS!
+G 2 6 45 1 15
+# GEM4 eastward move across meridan LST 10 
+# Move is +2HA to -4HA - WORKS!
+G 10 8 60 14 20
+# GEM5 shoot under the pole LST 10
+# Move is +2HA to -10HA - WORKS!
+G 10 8 60 20 80
+#************************************
+# FORK MOUNT TESTING
+#************************************
+# FORK1 westward move east of LST 2
+# Move is -4HA to +2HA - WORKS!
+F 2 6 45 4 80
+# FORK2 westward move across meridian  of LST 2 
+# Move is -4HA to -1HA - WORKS! - but may be better not TTP, good for testing
+F 2 6 45 1 80
+# FORK3 westward move across meridian and past meridian window with LST 3
+# Move is -3HA to +2HA - WORKS! - but may be better not TTP, good for testing
+F 3 6 45 1 80
+# FORK4 westward move across meridian and past meridian window and 0/24 with LST 2 
+# Move is -4HA to +4HA - WORKS! - but may be better not TTP, good for testing
+F 2 6 45 22 15
+# FORK5 eastward move across meridan LST 10 - WORKS
+# Move is +2HA to -4HA - WORKS! - but may be better not TTP, good for testing
+F 10 8 60 14 20
+# FORK6 shoot under the pole LST 10 - ERROR should have gone TTP
+# Move is -2HA to +10HA - WORKS! - but may be better not TTP, good for testing
+F 10 8 60 20 80
+Q

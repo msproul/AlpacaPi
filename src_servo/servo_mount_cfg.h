@@ -28,6 +28,7 @@
 //*	May 19,	2022	<RNS> Change all refs of 'scope' to 'mount', including filenames
 //*	May 20,	2022	<RNS> added to flipWin and offTarget to TYPE_MOUNT_CONFIG
 //*	May 22,	2022	<RNS> Changed .pos from unsigned to signed
+//*	Jun 12,	2022	<RNS> Changed PIDL fields from integer to double 
 //****************************************************************************
 
 #ifndef _SERVO_MOUNT_CFG_H_
@@ -127,10 +128,10 @@ typedef struct
 	uint32_t	adj;
 	uint32_t	slew;
 	uint8_t		si;
-	uint16_t	kp;
-	uint16_t	ki;
-	uint16_t	kd;
-	uint16_t	il;
+	double		kp;
+	double		ki;
+	double		kd;
+	double		il;
 	uint16_t	status;
 	uint8_t		cmdQueue;
 	int32_t		track;
