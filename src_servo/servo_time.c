@@ -550,8 +550,8 @@ double latRad	=	RADIANS(lat);
 		return(kERROR);
 	}
 	// the magic rate formulas for both axes in arcsec/sec
-	*rateAlt	=	cos(latRad) * sin(azi) * kARCSEC_PER_SEC;
-	*rateAzi	=	(sin(latRad) * sin(zenith) - (cos(latRad) * cos(zenith) * cos(azi))) / sin(zenith) * kARCSEC_PER_SEC;
+	*rateAlt	=	cos(latRad) * sin(azi) * kSID_RATE_ARCSECS;
+	*rateAzi	=	(sin(latRad) * sin(zenith) - (cos(latRad) * cos(zenith) * cos(azi))) / sin(zenith) * kSID_RATE_ARCSECS;
 
 	// TODO: integrate the forumla for blind spot region where azi rate exceeds axis max vel
 	// this should be an return error condition
@@ -571,7 +571,7 @@ double rotRate;
 
 	// convert lat to radians and calc rotation rate
 	latRad	=	RADIANS(lat);
-	rotRate	=	kARCSEC_PER_SEC * cos(latRad) * cos(azi) / cos(alt);
+	rotRate	=	kSID_RATE_ARCSECS * cos(latRad) * cos(azi) / cos(alt);
 
 	return(rotRate);
 } // calc_field_rotation()

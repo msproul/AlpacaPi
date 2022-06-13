@@ -12,6 +12,7 @@
 #++	May 19,	2022	<RNS> Added support for rc_utils unit test
 #++	May 19,	2022	<RNS> Fixed all unit tests for *.c files with unit _TEST_
 #++	May 27,	2022	<RNS> Added support for servo_time unit test
+#++	May 27,	2022	<RNS> Added support for test_cop
 ############################################################################
 
 CC			=	gcc -I$(MLS_LIB_DIR)
@@ -45,10 +46,16 @@ RCUTILS_OBJECTS	=								\
 
 servo_test_tty:	CFLAGS	+=
 servo_test_tty: 	$(SERVO_OBJECTS)	$(OBJECT_DIR)servo_test_tty.o
-
 	$(CC) $(CFLAGS) -o servo_test_tty				\
 					$(SERVO_OBJECTS)				\
 					$(OBJECT_DIR)servo_test_tty.o	\
+					-lm
+
+test_cop: 	CFLAGS	+=
+test_cop: 	$(SERVO_OBJECTS) $(OBJECT_DIR)test_cop.o
+	$(CC) $(CFLAGS) -o test_cop					\
+					$(SERVO_OBJECTS)			\
+					$(OBJECT_DIR)test_cop.o	\
 					-lm
 
 servo_test: 	CFLAGS	+=	-D_TEST_SERVO_MOUNT_
@@ -56,7 +63,6 @@ servo_test: 	$(SERVO_OBJECTS)
 	$(CC) $(CFLAGS) -o servo_test 				\
 					$(SERVO_OBJECTS)			\
 					-lm
-
 
 test_cfg: 	CFLAGS	+=	-D_TEST_SERVO_MOUNT_CFG_
 test_cfg: 	$(TESTCFG_OBJECTS)
@@ -97,6 +103,9 @@ $(OBJECT_DIR)servo_mount_cfg.o: servo_mount_cfg.c servo_mount_cfg.h servo_time.h
 
 $(OBJECT_DIR)servo_mount.o:		servo_mount.c servo_mount.h servo_rc_utils.h servo_rc_cmds.h servo_time.h servo_mc_core.h servo_std_defs.h
 	$(CC) $(CFLAGS) -c servo_mount.c -o $(OBJECT_DIR)servo_mount.o
+
+$(OBJECT_DIR)test_cop.o:		test_cop.c servo_mount.c servo_mount.h servo_rc_utils.h servo_rc_cmds.h servo_time.h servo_mc_core.h servo_std_defs.h
+	$(CC) $(CFLAGS) -c test_cop.c -o $(OBJECT_DIR)test_cop.o
 
 $(OBJECT_DIR)servo_test_tty.o:		servo_test_tty.c servo_mount.c servo_mount.h servo_rc_utils.h servo_rc_cmds.h servo_time.h servo_mc_core.h servo_std_defs.h
 	$(CC) $(CFLAGS) -c servo_test_tty.c -o $(OBJECT_DIR)servo_test_tty.o

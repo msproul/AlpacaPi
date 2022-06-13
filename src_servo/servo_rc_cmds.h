@@ -26,6 +26,7 @@
 //*	Apr 27,	2022	<RNS> Update spreadsheet to add yet more commands
 //*	May  6,	2022	<RNS> changed filename to servo_rc_cmds, fixed #defines
 //*	May  6,	2022	<RNS> Fixed corrupted spreadsheet data
+//*	Jun  6,	2022	<RNS> Fixed naming convetion from READ to GET for PID cmds
 //*****************************************************************************
 #ifndef _SERVO_RC_CMDS_H_
 #define _SERVO_RC_CMDS_H_
@@ -65,16 +66,16 @@ enum
 	GETBUFFERS				=	18,
 	GETPWMS					=	19,
 	GETCURRENTS				=	20,
-	READM1VELPID			=	21,
-	READM2VELPID			=	22,
+	GETM1VELPID				=	21,
+	GETM2VELPID				=	22,
 	SETMAINVOLTAGES			=	23,
 	SETLOGICVOLTAGES		=	24,
 	GETMAINVOLTSETTING		=	25,
 	GETLOGICVOLTSETTING		=	26,
 	SETM1POSPID				=	27,
 	SETM2POSPID				=	28,
-	READM1POSPID			=	29,
-	READM2POSPID			=	30,
+	GETM1POSPID				=	29,
+	GETM2POSPID				=	30,
 	M1SPEEDACCELDECELPOS	=	31,
 	M2SPEEDACCELDECELPOS	=	32,
 	MIXEDSPEEDACCELDECELPOS	=	33,

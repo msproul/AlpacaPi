@@ -31,6 +31,7 @@
 //*	May 11,	2022	<MLS> Changed constant RA to SERVO_RA_AXIS
 //*	May 11,	2022	<MLS> Changed constant DEC to SERVO_DEC_AXIS
 //*	May 14,	2022	<MLS> Removed degToRads/radToDegs
+//*	Jun 12,	2022	<RNS> Renamed ARCSEC_PER_SEC to SID_RATE_ARCSECS
 //*****************************************************************************
 //#include	"servo_std_defs.h"
 
@@ -60,7 +61,7 @@
 #define	kWEST			'w'
 #define	kNONE			'n'
 
-#define	kARCSEC_PER_SEC	15.04106864
+#define	kSID_RATE_ARCSECS	15.04106864
 
 #define	SERVO_RA_AXIS	(uint8_t)0
 #define	SERVO_DEC_AXIS	(uint8_t)1

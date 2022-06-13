@@ -42,6 +42,7 @@
 //*	May 23,	2022	<MLS> Modified config processing so that error strings are returned
 //*	May 26,	2022	<MLS> Added PrintMountConfiguration();
 //*	May 26,	2022	<MLS> Updated test code to print out config
+//*	Jun 12,	2022	<RNS> Added RC PID support and moved PIDL fields to float
 //****************************************************************************
 
 #include <stdio.h>
@@ -376,52 +377,52 @@ int				dummy;
 
 		case RA_KP_CON:
 			gMountConfigArray[RA_KP_CON].found	=	true;
-			ra->kp								=	atoi(argument);
+			ra->kp								=	atof(argument);
 		//	printf("%-15.15s = %-15d  \n", token, ra->kp);
 
 			if (!isdigit(argument[0]))
 			{
-				sprintf(cfgErrorString1,	"Invalid %s field '%d'", token, ra->kp);
-				sprintf(cfgErrorString2,	"Usage:  %s  60", token);
+				sprintf(cfgErrorString1,	"Invalid %s field '%f'", token, ra->kp);
+				sprintf(cfgErrorString2,	"Usage:  %s  60.0", token);
 				configLineOK	=	false;
 			}
 			break;
 
 		case RA_KI_CON:
 			gMountConfigArray[RA_KI_CON].found	=	true;
-			ra->ki								=	atoi(argument);
+			ra->ki								=	atof(argument);
 		//	printf("%-15.15s = %-15d  \n", token, ra->ki);
 
 			if (!isdigit(argument[0]))
 			{
-				sprintf(cfgErrorString1,	"Invalid %s field '%d'", token, ra->ki);
-				sprintf(cfgErrorString2,	"Usage:  %s  30", token);
+				sprintf(cfgErrorString1,	"Invalid %s field '%f'", token, ra->ki);
+				sprintf(cfgErrorString2,	"Usage:  %s  30.0", token);
 				configLineOK	=	false;
 			}
 			break;
 
 		case RA_KD_CON:
 			gMountConfigArray[RA_KD_CON].found	=	true;
-			ra->kd								=	atoi(argument);
+			ra->kd								=	atof(argument);
 		//	printf("%-15.15s = %-15d  \n", token, ra->kd);
 
 			if (!isdigit(argument[0]))
 			{
-				sprintf(cfgErrorString1,	"Invalid %s field '%d'", token, ra->kd);
-				sprintf(cfgErrorString2,	"Usage:  %s  300", token);
+				sprintf(cfgErrorString1,	"Invalid %s field '%f'", token, ra->kd);
+				sprintf(cfgErrorString2,	"Usage:  %s  300.0", token);
 				configLineOK	=	false;
 			}
 			break;
 
 		case RA_IL_CON:
 			gMountConfigArray[RA_IL_CON].found	=	true;
-			ra->il								=	atoi(argument);
+			ra->il								=	atof(argument);
 		//	printf("%-15.15s = %-15d  \n", token, ra->il);
 
 			if (!isdigit(argument[0]))
 			{
-				sprintf(cfgErrorString1,	"Invalid %s field '%d'", token, ra->il);
-				sprintf(cfgErrorString2,	"Usage:  %s  130", token);
+				sprintf(cfgErrorString1,	"Invalid %s field '%f'", token, ra->il);
+				sprintf(cfgErrorString2,	"Usage:  %s  130.0", token);
 				configLineOK	=	false;
 			}
 			break;
@@ -532,53 +533,53 @@ int				dummy;
 
 		case DEC_KP_CON:
 			gMountConfigArray[DEC_KP_CON].found	=	true;
-			dec->kp								=	atoi(argument);
+			dec->kp								=	atof(argument);
 		//	printf("%-15.15s = %-15d  \n", token, dec->kp);
 
 			if (!isdigit(argument[0]))
 			{
-				sprintf(cfgErrorString1,	"Invalid %s field '%d'", token, dec->kp);
-				sprintf(cfgErrorString2,	"Usage:  %s  60", token);
+				sprintf(cfgErrorString1,	"Invalid %s field '%f'", token, dec->kp);
+				sprintf(cfgErrorString2,	"Usage:  %s  60.0", token);
 				configLineOK	=	false;
 			}
 			break;
 
 		case DEC_KI_CON:
 			gMountConfigArray[DEC_KI_CON].found	=	true;
-			dec->ki								=	atoi(argument);
+			dec->ki								=	atof(argument);
 		//	printf("%-15.15s = %-15d  \n", token, dec->ki);
 
 			if (!isdigit(argument[0]))
 			{
-				sprintf(cfgErrorString1,	"Invalid %s field '%d'", token, dec->ki);
-				sprintf(cfgErrorString2,	"Usage:  %s  60", token);
+				sprintf(cfgErrorString1,	"Invalid %s field '%f'", token, dec->ki);
+				sprintf(cfgErrorString2,	"Usage:  %s  60.0", token);
 				configLineOK	=	false;
 			}
 			break;
 
 		case DEC_KD_CON:
 			gMountConfigArray[DEC_KD_CON].found	=	true;
-			dec->kd								=	atoi(argument);
+			dec->kd								=	atof(argument);
 
 		//	printf("%-15.15s = %-15d  \n", token, dec->kd);
 
 			if (!isdigit(argument[0]))
 			{
-				sprintf(cfgErrorString1,	"Invalid %s field '%d'", token, dec->kd);
-				sprintf(cfgErrorString2,	"Usage:  %s  300", token);
+				sprintf(cfgErrorString1,	"Invalid %s field '%f'", token, dec->kd);
+				sprintf(cfgErrorString2,	"Usage:  %s  300.0", token);
 				configLineOK	=	false;
 			}
 			break;
 
 		case DEC_IL_CON:
 			gMountConfigArray[DEC_IL_CON].found	=	true;
-			dec->il								=	atoi(argument);
+			dec->il								=	atof(argument);
 		//	printf("%-15.15s = %-15d  \n", token, dec->il);
 
 			if (!isdigit(argument[0]))
 			{
-				sprintf(cfgErrorString1,	"Invalid %s field '%d'", token, dec->il);
-				sprintf(cfgErrorString2,	"Usage:  %s  130", token);
+				sprintf(cfgErrorString1,	"Invalid %s field '%f'", token, dec->il);
+				sprintf(cfgErrorString2,	"Usage:  %s  130.0", token);
 				configLineOK	=	false;
 			}
 			break;
