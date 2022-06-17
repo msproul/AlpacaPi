@@ -33,6 +33,7 @@
 //*	May 22,	2022	<RNS> added move_axis_by_vel for the ASCOM guiding functionality
 //*	May 22,	2022	<RNS> General cleanup to get data/control flow aligned with ASCOM
 //* Jun  6,	2022	<RNS> regenerated *all* function declarations with cproto
+//* Jun 17,	2022	<RNS> regenerated *all* function declarations with cproto
 //****************************************************************************
 
 #ifndef _SERVO_MOUNT_H_
@@ -78,12 +79,11 @@ void Servo_set_pos(double ra, double dec);
 void Servo_set_static_pos(double ha, double dec);
 int32_t Servo_get_axis_step_track(uint8_t motor);
 int Servo_set_axis_step_track(uint8_t motor, int32_t tracking);
-int Servo_start_axis_tracking(uint8_t motor);
-int Servo_stop_axis_tracking(uint8_t motor);
+int Servo_start_tracking(uint8_t motor);
+int Servo_stop(uint8_t motor);
 int Servo_move_axis_by_vel(uint8_t motor, double vel);
 int Servo_init(const char *mountCfgFile, const char *localCfgFile);
 TYPE_MOVE Servo_state(void);
-void Servo_stop_all(void);
 double Servo_calc_short_vector(double begin, double end, double max);
 bool Servo_calc_optimal_path(double startRa, double startDec, double lst, double endRa, double endDec, double *raDirection, double *decDirection);
 int Servo_move_spiral(double raMove, double decMove, int loop);

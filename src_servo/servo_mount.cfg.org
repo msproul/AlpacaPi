@@ -21,7 +21,7 @@ BAUD:			38400
 
 # type of mount, either FORK or GERMAN
 # Enables or disables roll-over during movement.
-MOUNT:			FORK
+MOUNT:			GERMAN
 
 # If a GEM, then state the which side of the mount
 # is physically located. Otherwise NONE
@@ -38,7 +38,7 @@ PARK_SIDE:      EAST
 RA_CONFIG:		FORWARD
 
 # Approimate maximum RPM possible for the RA axis motor
-RA_MOTOR_MAX_RPM:	5000.0
+RA_MOTOR_MAX_RPM:	6000.0
 
 # gear ratio of the gearhead motor.
 # Greater than 1 means the motor turns faster
@@ -50,12 +50,12 @@ RA_MAIN_GEAR:	360.0
 
 # Number of encoder transition with quadrature / motor revolution
 #RA_ENCODER:		2000.0
-RA_ENCODER:		2000.0
+RA_ENCODER:		800.0
 
 
 # Maximum velocity during slew in arcsec/sec
 # RA_MAX_VEL:     7200.0
-RA_MAX_VEL:		8000.0
+RA_MAX_VEL:		5000.0
 
 # Maximum acceleration for ramp up/down during movement.
 # Measured in arcsec/sec**2
@@ -73,10 +73,10 @@ RA_SLEW_VEL:	5000.0
 # Filter parameters for motor controllers
 # DO NOT CHANGE!!!
 RA_SI_CON:		0
-RA_KP_CON:		95.2
-RA_KI_CON:		1.88
-RA_KD_CON:		563.3
-RA_IL_CON:		624
+RA_KP_CON:		40
+RA_KI_CON:		1
+RA_KD_CON:		0
+RA_IL_CON:		100
 
 #
 # physical parameters for the DEC axis
@@ -88,7 +88,7 @@ RA_IL_CON:		624
 DEC_CONFIG:		REVERSE
 
 # Approximate maximum RPM possible for the Dec axis motor
-DEC_MOTOR_MAX_RPM:  5000.0
+DEC_MOTOR_MAX_RPM:  6000.0
 
 # gear ratio of the gearhead motor.
 # Greater than 1 means the motor turns faster
@@ -100,12 +100,12 @@ DEC_MAIN_GEAR:   360.0
 
 # Number of encoder transition with quadrature / motor revolution
 #DEC_ENCODER:     2000.0
-DEC_ENCODER:     2000.0
+DEC_ENCODER:     800.0
 
 
 # Maximum velocity during slew in arcsec/sec
 # DEC_MAX_VEL:     9000.0
-DEC_MAX_VEL:      8000.0
+DEC_MAX_VEL:      5000.0
 
 # Maximum acceleration for ramp up/down during movement.
 # Measured in arcsec/sec**2
@@ -122,17 +122,17 @@ DEC_SLEW_VEL:        5000.0
 # Filter parameters for motor controllers
 # DO NOT CHANGE!!!
 DEC_SI_CON:      0
-DEC_KP_CON:      85.6
-DEC_KI_CON:      2.14
-DEC_KD_CON:      641.8
-DEC_IL_CON:      1125
+DEC_KP_CON:      20
+DEC_KI_CON:      1
+DEC_KD_CON:      4
+DEC_IL_CON:      100
 
 # The declination assumed to be the park position and
 # will also be the end position after the session.
 # The Dec park position is in +/-DD.MMSSss units.
 # RA park position is in hour angle, eg. LST is RA value at zenith
 DEC_PARK:  45.0
-RA_PARK:   0.0
+RA_PARK:   1.0
 
 # Conservative RA gear lash in arcseconds
 RA_GEAR_LASH:   600.0
