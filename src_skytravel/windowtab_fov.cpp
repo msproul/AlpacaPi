@@ -23,6 +23,8 @@
 //*	Mar 16,	2021	<MLS> Added creation of "camerafov.txt" file
 //*	Mar 16,	2021	<MLS> Added ReadCameraFOVfile()
 //*	Mar 17,	2021	<MLS> Added RA and DEC offsets to cameraFOV data
+//*	Jun  4,	2022	<MLS> Added FOV Edit button
+//*	Jun 15,	2022	<MLS> Added FOV Reload button
 //*****************************************************************************
 
 
@@ -86,9 +88,8 @@ WindowTabFOV::~WindowTabFOV(void)
 {
 struct stat	fileStatus;
 int			returnCode;
-//	CONSOLE_DEBUG(__FUNCTION__);
 
-
+	CONSOLE_DEBUG(__FUNCTION__);
 
 	//*	fstat - check for existence of file
 	returnCode	=	stat(kCameraFOVfileName, &fileStatus);
@@ -98,10 +99,10 @@ int			returnCode;
 	}
 }
 
-
 //**************************************************************************************
 void	WindowTabFOV::SetupWindowControls(void)
 {
+int		xLoc;
 int		yLoc;
 int		textBoxHt;
 int		buttonWidth;
@@ -214,17 +215,23 @@ char	textString[80];
 
 
 	buttonWidth	=	150;
-	SetWidget(				kFOVbox_SaveButton,	0,				yLoc,		buttonWidth,		cBtnHeight);
-	SetWidgetType(			kFOVbox_SaveButton,	kWidgetType_Button);
-	SetWidgetTextColor(		kFOVbox_SaveButton,	CV_RGB(0,	0,	0));
-	SetWidgetBGColor(		kFOVbox_SaveButton,	CV_RGB(255,	255,	255));
-	SetWidgetText(			kFOVbox_SaveButton,	"Save");
+	iii			=	kFOVbox_SaveButton;
+	xLoc		=	1;
+	while (iii <= kFOVbox_ReloadButton)
+	{
+		SetWidget(				iii,	xLoc,	yLoc,	buttonWidth,	cBtnHeight);
+		SetWidgetType(			iii,	kWidgetType_Button);
+		SetWidgetTextColor(		iii,	CV_RGB(0,	0,	0));
+		SetWidgetBGColor(		iii,	CV_RGB(255,	255,	255));
 
-	SetWidget(				kFOVbox_EditButton,	(buttonWidth + 2),				yLoc,		buttonWidth,		cBtnHeight);
-	SetWidgetType(			kFOVbox_EditButton,	kWidgetType_Button);
-	SetWidgetTextColor(		kFOVbox_EditButton,	CV_RGB(0,	0,	0));
-	SetWidgetBGColor(		kFOVbox_EditButton,	CV_RGB(255,	255,	255));
-	SetWidgetText(			kFOVbox_EditButton,	"Edit");
+		xLoc	+=	buttonWidth;
+		xLoc	+=	2;
+
+		iii++;
+	}
+	SetWidgetText(			kFOVbox_SaveButton,		"Save");
+	SetWidgetText(			kFOVbox_EditButton,		"Edit");
+	SetWidgetText(			kFOVbox_ReloadButton,	"Reload");
 
 
 	SetAlpacaLogoBottomCorner(kFOVbox_AlpacaLogo);
@@ -297,7 +304,6 @@ bool	disableFOVdisplay;
 	strcpy(raOffsetStr,		"0");
 	strcpy(decOffsetStr,	"0");
 
-	disableFOVdisplay	=	false;
 
 	filePointer	=	fopen(kCameraFOVfileName, "r");
 	if (filePointer != NULL)
@@ -314,6 +320,7 @@ bool	disableFOVdisplay;
 				iii	=	0;
 				ccc	=	0;
 
+				disableFOVdisplay	=	false;
 				if (lineBuff[iii] == '-')
 				{
 					disableFOVdisplay	=	true;
@@ -537,7 +544,6 @@ void	WindowTabFOV::ProcessButtonClick(const int buttonIdx, const int flags)
 //	CONSOLE_DEBUG(__FUNCTION__);
 bool	forceUpdateFlg;
 int		cameraIdx;
-char	commandString[64];
 
 	forceUpdateFlg	=	true;
 	switch(buttonIdx)
@@ -582,12 +588,18 @@ char	commandString[64];
 			break;
 
 		case kFOVbox_EditButton:
-			strcpy(commandString, "gedit ");
-			strcat(commandString, kCameraFOVfileName);
-			strcat(commandString, " &");
-			RunCommandLine(commandString);
+			EditTextFile(kCameraFOVfileName);
 			break;
 
+		case kFOVbox_ReloadButton:
+			{
+			int		iii;
+				for (iii=0; iii<kMaxCamaeraFOVcnt; iii++)
+				{
+					cCameraData[iii].PropertyDataValid	=	false;
+				}
+			}
+			break;
 
 		default:
 			forceUpdateFlg	=	false;
@@ -665,8 +677,8 @@ int		foundIndex;
 				cRemoteDeviceList[cAlpacaDevCnt].validEntry	=	true;
 				cCameraData[cAlpacaDevCnt].IsValid			=	true;
 
-				strcpy(cCameraData[cAlpacaDevCnt].CameraName, gRemoteList[iii].hostName);
-
+				strcpy(cCameraData[cAlpacaDevCnt].HostName,		gRemoteList[iii].hostName);
+				strcpy(cCameraData[cAlpacaDevCnt].CameraName,	gRemoteList[iii].deviceNameStr);
 
 				cAlpacaDevCnt++;
 			}

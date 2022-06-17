@@ -5,11 +5,12 @@
 //*	Jan 18,	2022	<MLS> Moved FormatTime routines to helper_functions
 //*	Jan 19,	2022	<MLS> Added FormatDateTimeString_Local()
 //*	May 30,	2022	<MLS> Added "Z" to the end of ISO8601 date/time string
+//*	Jun 14,	2022	<MLS> Added tolowerStr()
 //*****************************************************************************
 
 #include	<math.h>
 #include	<stdbool.h>
-//#include	<strings.h>
+#include	<ctype.h>
 #include	<string.h>
 #include	<stdlib.h>
 #include	<stdio.h>
@@ -312,7 +313,18 @@ long		milliSecs;
 	}
 }
 
+//*****************************************************************************
+void	tolowerStr(char *theString)
+{
+int		iii;
 
+	iii	=	0;
+	while (theString[iii] > 0)
+	{
+		theString[iii]	=	tolower(theString[iii]);
+		iii++;
+	}
+}
 #if !defined(__arm__) || defined(_INCLUDE_MILLIS_)
 
 static uint32_t	gSystemStartSecs = 0;

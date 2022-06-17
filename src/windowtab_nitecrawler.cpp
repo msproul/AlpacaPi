@@ -84,7 +84,7 @@ WindowTabNitecrawler::WindowTabNitecrawler(	const int	xSize,
 //**************************************************************************************
 WindowTabNitecrawler::~WindowTabNitecrawler(void)
 {
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 }
 
 //**************************************************************************************

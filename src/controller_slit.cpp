@@ -113,7 +113,6 @@ char	ipAddrStr[32];
 		cDeviceAddress	=	alpacaDevice->deviceAddress;
 		cPort			=	alpacaDevice->port;
 
-		strcpy(cAlpacaDeviceTypeStr,	alpacaDevice->deviceTypeStr);
 		strcpy(cAlpacaDeviceNameStr,	alpacaDevice->deviceNameStr);
 	#ifdef _ENABLE_SKYTRAVEL_
 		//*	make a 2nd copy if we are in SKYTRAVEL

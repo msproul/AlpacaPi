@@ -24,8 +24,7 @@
 //*	Feb 23,	2020	<MLS> Now using host name from /etc/hosts for window name
 //*	Feb 25,	2020	<MLS> Added DrawWidgetMultiLineText()
 //*	Mar  2,	2020	<MLS> Added background color to controller class
-//*	Mar  2,	2020	<MLS> Added AlpacaGetIntegerValue() & DrawWidgetRadioButton()
-//*	Mar  3,	2020	<MLS> Added AlpacaGetBooleanValue()
+//*	Mar  2,	2020	<MLS> Added DrawWidgetRadioButton()
 //*	Mar  3,	2020	<MLS> Added ProcessDoubleClick()
 //*	Mar  8,	2020	<MLS> Added DrawWidgetGraph()
 //*	Mar  9,	2020	<MLS> Added cLastAlpacaErrNum & cLastAlpacaErrStr
@@ -90,6 +89,7 @@
 //*	Apr 11,	2022	<MLS> Added ProcessControllerWindows()
 //*	May 31,	2022	<MLS> Added RunCommandLine()
 //*	Jun  4,	2022	<MLS> Added flags arg to ProcessButtonClick()
+//*	Jun  8,	2022	<MLS> Added EditTextFile()
 //*****************************************************************************
 
 
@@ -102,6 +102,7 @@
 
 #include	"discovery_lib.h"
 #include	"helper_functions.h"
+#include	"sendrequest_lib.h"
 
 
 #define _ENABLE_CONSOLE_DEBUG_
@@ -368,8 +369,8 @@ int			iii;
 int			objCntr;
 
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, argWindowName);
-	CONSOLE_DEBUG_W_NUM("xSize        \t=",	xSize);
-	CONSOLE_DEBUG_W_NUM("ySize        \t=",	ySize);
+//	CONSOLE_DEBUG_W_NUM("xSize        \t=",	xSize);
+//	CONSOLE_DEBUG_W_NUM("ySize        \t=",	ySize);
 
 	memset(&cCommonProp, 0, sizeof(TYPE_CommonProperties));
 
@@ -3269,8 +3270,11 @@ bool			argBoolean;
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 //	CONSOLE_DEBUG_W_2STR(driverNameStr, propertyStr, reportedStr);
 
+//	Set_SendRequestLibDebug(true);
+
+	//*	set default value
 	argBoolean	=	false;
-	validData	=	AlpacaGetBooleanValue(	driverNameStr, propertyStr,	NULL,	&argBoolean);
+	validData	=	AlpacaGetBooleanValue(	driverNameStr, propertyStr,	NULL,	&argBoolean, NULL, false);
 	if (validData)
 	{
 		AddCapability(reportedStr, (argBoolean ? "\tTrue" : "False"));
@@ -3281,6 +3285,7 @@ bool			argBoolean;
 		CONSOLE_DEBUG("Failed");
 		cReadFailureCnt++;
 	}
+//	Set_SendRequestLibDebug(false);
 }
 
 //**************************************************************************************
@@ -3815,7 +3820,6 @@ int		systemRetCode;
 
 	if (arg != NULL)
 	{
-
 		CONSOLE_DEBUG((char *)arg);
 
 		CONSOLE_DEBUG_W_STR("cmdLine\t=",	(char *)arg);
@@ -3867,5 +3871,17 @@ int		threadErr;
 	{
 		CONSOLE_DEBUG("Thread currently busy!!!!");
 	}
+}
+
+
+//*****************************************************************************
+void	EditTextFile(const char *filename)
+{
+char	commandLine[128];
+
+	strcpy(commandLine, "gedit ");
+	strcat(commandLine, filename);
+	strcat(commandLine, " &");
+	RunCommandLine(commandLine);
 }
 

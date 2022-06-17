@@ -485,6 +485,7 @@ void		LoadAlpacaLogo(void);
 bool		CheckForOpenWindowByName(const char *windowName);
 void		DumpControllerBackGroundTaskStatus(void);
 void		RunCommandLine(const char *commandLine);
+void		EditTextFile(const char *filename);
 
 #ifdef __cplusplus
 }

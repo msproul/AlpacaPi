@@ -36,7 +36,7 @@ enum
 #ifdef 	_ENABLE_REMOTE_GAIA_
 
 	kRemoteData_EnableRemoteGAIA,
-	kRemoteData_SQLhelpMsg,
+	kRemoteData_EditSQLSettingsBtn,
 
 	kRemoteData_SQLserverTxt,
 	kRemoteData_SQLserverValue,

@@ -182,18 +182,17 @@ class ControllerSkytravel: public Controller
 		//*	tab information
 				WindowTabSkyTravel		*cSkyTravelTabOjbPtr;
 				WindowTabSTsettings		*cSkySettingsTabObjPtr;
-				WindowTabMoon			*cMoonTabObjPtr;
+				WindowTabFOV			*cFOVTabObjPtr;
+				WindowTabRemoteData		*cRemoteDataObjPtr;
 				WindowTabDome			*cDomeTabObjPtr;
 			#ifndef __ARM_ARCH
 				WindowTabMount			*cMountTabObjPtr;
 			#endif
+				WindowTabDeviceSelect	*cDeviceSelectObjPtr;
 				WindowTabAlpacaList		*cAlpacaListObjPtr;
 				WindowTabIPList			*cIPaddrListObjPtr;
-				WindowTabDeviceSelect	*cDeviceSelectObjPtr;
+				WindowTabMoon			*cMoonTabObjPtr;
 				WindowTabAbout			*cAboutBoxTabObjPtr;
-				WindowTabFOV			*cFOVTabObjPtr;
-
-				WindowTabRemoteData		*cRemoteDataObjPtr;
 		//====================================================
 		//*	alpaca device information
 				bool				LookForIPaddress(void);

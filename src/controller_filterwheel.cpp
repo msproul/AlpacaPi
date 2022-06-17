@@ -82,7 +82,6 @@ ControllerFilterWheel::ControllerFilterWheel(	const char			*argWindowName,
 		cDeviceAddress	=	alpacaDevice->deviceAddress;
 		cPort			=	alpacaDevice->port;
 
-		strcpy(cAlpacaDeviceTypeStr,	alpacaDevice->deviceTypeStr);
 		strcpy(cAlpacaDeviceNameStr,	alpacaDevice->deviceNameStr);
 		strcpy(cAlpacaVersionString,	alpacaDevice->versionString);
 

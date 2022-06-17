@@ -56,7 +56,7 @@ WindowTabAbout::WindowTabAbout(	const int	xSize,
 //**************************************************************************************
 WindowTabAbout::~WindowTabAbout(void)
 {
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 }
 
 //**************************************************************************************

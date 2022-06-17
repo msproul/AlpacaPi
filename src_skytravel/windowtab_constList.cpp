@@ -60,7 +60,7 @@ WindowTabConstellationList::WindowTabConstellationList(	const int	xSize,
 //**************************************************************************************
 WindowTabConstellationList::~WindowTabConstellationList(void)
 {
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 }
 
 //**************************************************************************************

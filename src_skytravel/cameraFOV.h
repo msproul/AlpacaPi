@@ -18,6 +18,7 @@ typedef struct
 	bool					PropertyDataValid;
 	bool					HasReadAll;
 	TYPE_CameraProperties	CameraProp;
+	char					HostName[64];
 	char					CameraName[64];
 
 	//*	these are offsets from the primary scope.

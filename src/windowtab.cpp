@@ -66,6 +66,7 @@
 //*	Apr  9,	2022	<MLS> OpenCV version 2.4.9.1 is default on R-Pi 3 (stretch)
 //*	May 29,	2022	<MLS> Added ForceAlpacaUpdate()
 //*	Jun  4,	2022	<MLS> Added flags arg to ProcessButtonClick()
+//*	Jun 13,	2022	<MLS> Added ClearLastAlpacaCommand()
 //*****************************************************************************
 
 
@@ -727,6 +728,27 @@ int	yLoc;
 	return(logoHeight);
 }
 
+//**************************************************************************************
+void	WindowTab::ClearLastAlpacaCommand(void)
+{
+Controller	*myControllerObj;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+
+	myControllerObj	=	(Controller *)cParentObjPtr;
+	if (myControllerObj != NULL)
+	{
+		myControllerObj->cLastAlpacaCmdString[0]	=	0;
+	}
+	else
+	{
+		CONSOLE_ABORT(__FUNCTION__);
+	}
+	if (cLastCmdTextBox >= 0)
+	{
+		SetWidgetText(	cLastCmdTextBox, "");
+	}
+}
 
 //**************************************************************************************
 void	WindowTab::DisplayLastAlpacaCommand(void)
@@ -774,7 +796,7 @@ void	WindowTab::SetWidgetValid(const int widgetIdx, bool valid)
 
 	if ((widgetIdx >= 0) && (widgetIdx < kMaxWidgets))
 	{
-		cWidgetList[widgetIdx].valid	=	valid;
+		cWidgetList[widgetIdx].valid		=	valid;
 		cWidgetList[widgetIdx].needsUpdated	=	true;
 	}
 }
@@ -2161,14 +2183,13 @@ void	InsetRect(CvRect *theRect, const int xInset, const int yInset)
 }
 
 
-
 #ifdef _CONTROLLER_USES_ALPACA_
 //*****************************************************************************
 void	WindowTab::ForceAlpacaUpdate(void)
 {
 Controller	*myControllerObj;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	myControllerObj	=	(Controller *)cParentObjPtr;
 	if (myControllerObj != NULL)
@@ -2209,10 +2230,7 @@ Controller	*myControllerObj;
 		{
 		SJP_Parser_t	localJsonStruct;
 
-			CONSOLE_DEBUG("jsonParser is NULL");
-	//+		validData	=	myControllerObj->AlpacaSendPutCmd(	alpacaDevice,
-	//															alpacaCmd,
-	//															dataString);
+//			CONSOLE_DEBUG("jsonParser is NULL");
 			validData	=	myControllerObj->AlpacaSendPutCmdwResponse(	deviceAddress,
 																		devicePort,
 																		alpacaDevice,
@@ -2221,7 +2239,6 @@ Controller	*myControllerObj;
 																		dataString,
 																		&localJsonStruct);
 		}
-//-		strcpy(cLastAlpacaCmdString, myControllerObj->cLastAlpacaCmdString);
 	}
 	else
 	{
@@ -2260,14 +2277,19 @@ Controller	*myControllerObj;
 		}
 		else
 		{
+		SJP_Parser_t	localJsonParser;
+
+			SJP_Init(&localJsonParser);
 //			CONSOLE_DEBUG("jsonParser is NULL");
-			validData	=	myControllerObj->AlpacaSendPutCmd(	alpacaDevice,
-																alpacaCmd,
-																dataString);
+//			validData	=	myControllerObj->AlpacaSendPutCmd(	alpacaDevice,
+//																alpacaCmd,
+//																dataString);
+			validData	=	myControllerObj->AlpacaSendPutCmdwResponse(	alpacaDevice,
+																		alpacaCmd,
+																		dataString,
+																		&localJsonParser);
+			cLastAlpacaErrNum	=	AlpacaCheckForErrors(&localJsonParser, cLastAlpacaErrStr, true);
 		}
-
-
-//-		strcpy(cLastAlpacaCmdString, myControllerObj->cLastAlpacaCmdString);
 	}
 	else
 	{

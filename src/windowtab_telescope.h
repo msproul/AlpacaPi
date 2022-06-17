@@ -16,6 +16,8 @@ enum
 	kTelescope_Title	=	0,
 
 	kTelescope_Connected,
+	kTelescope_Parked,
+	kTelescope_PulseGuiding,
 
 	kTelescope_BtnUp,
 	kTelescope_BtnDown,
@@ -93,8 +95,9 @@ class WindowTabTelescope: public WindowTab
 		virtual	void	ProcessButtonClick(const int buttonIdx, const int flags);
 //		virtual	void	ProcessDoubleClick(const int buttonIdx);
 
+				bool	ProcessSlewButton(const int buttonIdx, const int flags);
 				void	UpdateButtons(void);
-				void	UpdateTelescopeInfo(TYPE_TelescopeProperties *telescopeProp, bool updateAll=true);
+				void	UpdateTelescopeInfo(TYPE_TelescopeProperties *telescopeProp, bool updateAll);
 				int		cCurrentSlewRate;
 	private:
 				bool		cSlewingUp;
@@ -117,6 +120,7 @@ class WindowTabTelescope: public WindowTab
 				double		cSlewRate_DECmax;
 				double		cDEC_slewRates[kSupportedSlewRates];
 
+				bool		cAtPark;
 };
 
 

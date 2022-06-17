@@ -174,7 +174,6 @@ INCLUDES		=	-I/usr/include					\
 					-I$(MLS_LIB_DIR)				\
 					-I$(QHY_INCLUDE_DIR)			\
 					-I$(SRC_IMGPROC)				\
-					-I$(SRC_IMU)					\
 
 
 
@@ -689,14 +688,14 @@ allcam		:		$(CPP_OBJECTS)				\
 ######################################################################################
 #pragma mark make tele  C++ linux-x86
 tele		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
-#tele	:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
+tele	:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
 #tele	:		DEFINEFLAGS		+=	-D_ENABLE_ATIK_
-#tele	:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
+tele	:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
 #tele	:		DEFINEFLAGS		+=	-D_ENABLE_CALIBRATION_
 #tele	:		DEFINEFLAGS		+=	-D_ENABLE_DISCOVERY_QUERRY_
 #tele	:		DEFINEFLAGS		+=	-D_ENABLE_DOME_
 #tele	:		DEFINEFLAGS		+=	-D_ENABLE_ROR_
-#tele	:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
+tele	:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
 #tele	:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_ZWO_
 #tele	:		DEFINEFLAGS		+=	-D_ENABLE_FLIR_
 #tele	:		DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_
@@ -708,22 +707,28 @@ tele		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
 #tele	:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_
 #tele	:		DEFINEFLAGS		+=	-D_ENABLE_SLIT_TRACKER_
 #tele	:		DEFINEFLAGS		+=	-D_ENABLE_TOUP_
-#tele	:		DEFINEFLAGS		+=	-D_USE_OPENCV_
+tele	:		DEFINEFLAGS		+=	-D_USE_OPENCV_
 tele	:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
 tele	:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_LX200_
 tele	:		DEFINEFLAGS		+=	-D_ENABLE_LX200_COM_
+tele	:		DEFINEFLAGS		+=	-D_ENABLE_IMU_
+tele	:		INCLUDES		+=	-I$(SRC_IMU)
 #tele	:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_SKYWATCH_
 tele	:			$(CPP_OBJECTS)				\
 					$(ALPACA_OBJECTS)			\
 					$(SOCKET_OBJECTS)			\
+					$(IMU_OBJECTS)				\
 
 
 		$(LINK)  								\
 					$(SOCKET_OBJECTS)			\
 					$(CPP_OBJECTS)				\
 					$(ALPACA_OBJECTS)			\
+					$(IMU_OBJECTS)				\
 					$(OPENCV_LINK)				\
+					$(ASI_CAMERA_OBJECTS)		\
 					-lusb-1.0					\
+					-lcfitsio					\
 					-lpthread					\
 					-o alpacapi-telescope
 
@@ -913,6 +918,7 @@ servoimu	:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
 servoimu	:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
 servoimu	:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_SERVO_
 servoimu	:		DEFINEFLAGS		+=	-D_ENABLE_IMU_
+servoimu	:		INCLUDES		+=	-I$(SRC_IMU)
 servoimu	:		INCLUDES		+=	-I$(SRC_SERVO)
 servoimu	:		$(TELESCOPE_OBJECTS)		\
 					$(SOCKET_OBJECTS)			\
@@ -1061,6 +1067,7 @@ flir		:		DEFINEFLAGS		+=	-D_ENABLE_FLIR_
 flir		:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
 flir		:		DEFINEFLAGS		+=	-D_ENABLE_DISCOVERY_QUERRY_
 flir		:		DEFINEFLAGS		+=	-D_ENABLE_IMU_
+flir		:		INCLUDES		+=	-I$(SRC_IMU)
 flir		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
 flir		:		DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
 flir		:		$(CPP_OBJECTS)				\
@@ -1091,6 +1098,7 @@ imu		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
 imu		:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
 imu		:		DEFINEFLAGS		+=	-D_ENABLE_DISCOVERY_QUERRY_
 imu		:		DEFINEFLAGS		+=	-D_ENABLE_IMU_
+imu		:		INCLUDES		+=	-I$(SRC_IMU)
 imu		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
 imu		:		DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
 imu		:		$(CPP_OBJECTS)				\
@@ -2322,7 +2330,7 @@ sky		:	DEFINEFLAGS		+=	-D_CONTROLLER_USES_ALPACA_
 sky		:	DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_CONTROLLER_
 sky		:	DEFINEFLAGS		+=	-D_ENABLE_SLIT_TRACKER_
 sky		:	DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
-sky		:	DEFINEFLAGS		+=	-D_ENABLE_ASTERIODS_
+#sky		:	DEFINEFLAGS		+=	-D_ENABLE_ASTERIODS_
 sky		:	INCLUDES		+=	-I$(SRC_SKYTRAVEL)
 sky		:				$(SKYTRAVEL_OBJECTS)					\
 						$(CONTROLLER_BASE_OBJECTS)				\
@@ -2352,7 +2360,7 @@ skycv4			:	DEFINEFLAGS		+=	-D_CONTROLLER_USES_ALPACA_
 skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_CONTROLLER_
 skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_SLIT_TRACKER_
 skycv4			:	DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
-skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_ASTERIODS_
+#skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_ASTERIODS_
 skycv4			:	DEFINEFLAGS		+=	-D_USE_OPENCV_
 skycv4			:	DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
 skycv4			:	INCLUDES		+=	-I$(SRC_SKYTRAVEL)
@@ -2387,7 +2395,7 @@ skycv4sql			:	DEFINEFLAGS		+=	-D_CONTROLLER_USES_ALPACA_
 skycv4sql			:	DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_CONTROLLER_
 skycv4sql			:	DEFINEFLAGS		+=	-D_ENABLE_SLIT_TRACKER_
 skycv4sql			:	DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
-skycv4sql			:	DEFINEFLAGS		+=	-D_ENABLE_ASTERIODS_
+#skycv4sql			:	DEFINEFLAGS		+=	-D_ENABLE_ASTERIODS_
 skycv4sql			:	DEFINEFLAGS		+=	-D_ENABLE_REMOTE_SQL_
 skycv4sql			:	DEFINEFLAGS		+=	-D_ENABLE_REMOTE_GAIA_
 skycv4sql			:	DEFINEFLAGS		+=	-D_USE_OPENCV_

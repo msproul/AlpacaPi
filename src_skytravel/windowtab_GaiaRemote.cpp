@@ -60,7 +60,7 @@ WindowTabGaiaRemote::WindowTabGaiaRemote(	const int	xSize,
 //**************************************************************************************
 WindowTabGaiaRemote::~WindowTabGaiaRemote(void)
 {
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 }
 
 //**************************************************************************************

@@ -182,8 +182,11 @@ typedef enum
 	kASCOM_Err_NotConnected				=	0x407,		//	1031
 	kASCOM_Err_InvalidWhileParked		=	0x408,		//	1032
 	kASCOM_Err_InvalidWhileSlaved		=	0x409,
+	kASCOM_Err_SettingsProviderError	=	0x40A,
 	kASCOM_Err_InvalidOperation			=	0x40B,
 	kASCOM_Err_ActionNotImplemented		=	0x40C,
+	kASCOM_Err_NotInCacheException		=	0x40D,
+	kASCOM_Err_UnspecifiedError			=	0x4FF,
 
 	//*	0x0500 to 0x0fff are driver defined.
 	kASCOM_Err_NotSupported				=	0x500,
@@ -520,6 +523,7 @@ typedef struct
 	//*	extras NOT defined by ASCOM
 	bool							hourAngleIsValid;
 	double							HourAngle;
+	double							HourAngle_deg;
 	TYPE_PierSide					PhysicalSideOfPier;
 } TYPE_TelescopeProperties;
 

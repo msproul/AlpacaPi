@@ -157,10 +157,8 @@ int		iii;
 		cDeviceAddress	=	alpacaDevice->deviceAddress;
 		cPort			=	alpacaDevice->port;
 
-		strcpy(cAlpacaDeviceTypeStr,	alpacaDevice->deviceTypeStr);
 		strcpy(cAlpacaDeviceNameStr,	alpacaDevice->deviceNameStr);
-
-		CONSOLE_DEBUG_W_NUM("deviceTypeEnum\t=", alpacaDevice->deviceTypeEnum);
+//		CONSOLE_DEBUG_W_NUM("deviceTypeEnum\t=", alpacaDevice->deviceTypeEnum);
 		if (alpacaDevice->deviceTypeEnum == kDeviceType_Shutter)
 		{
 			CONSOLE_DEBUG("Switching to SHUTTER!!!!!!!!!!!!!!!!");
@@ -178,7 +176,6 @@ int		iii;
 
 	inet_ntop(AF_INET, &(cDeviceAddress.sin_addr), ipAddrStr, INET_ADDRSTRLEN);
 	CONSOLE_DEBUG_W_STR("IP address=", ipAddrStr);
-
 
 	SetupWindowControls();
 
@@ -422,7 +419,8 @@ bool	ControllerDome::AlpacaGetStartupData(void)
 bool			validData;
 char			returnString[128];
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG_W_STR("cAlpacaDeviceTypeStr\t=",	cAlpacaDeviceTypeStr);
 	//===============================================================
 	//*	get supportedactions
 	validData	=	AlpacaGetSupportedActions(cAlpacaDeviceTypeStr, cAlpacaDevNum);
@@ -442,7 +440,7 @@ char			returnString[128];
 				SetWidgetText(kTab_Dome,		kDomeBox_AlpacaDrvrVersion,		cAlpacaVersionString);
 			}
 		}
-		CONSOLE_DEBUG_W_NUM("cDomeProp.CanSyncAzimuth\t=",	cDomeProp.CanSyncAzimuth);
+//		CONSOLE_DEBUG_W_NUM("cDomeProp.CanSyncAzimuth\t=",	cDomeProp.CanSyncAzimuth);
 		ReadOneDriverCapability(cAlpacaDeviceTypeStr,	"canfindhome",		"CanFindHome",		&cDomeProp.CanFindHome);
 		ReadOneDriverCapability(cAlpacaDeviceTypeStr,	"canpark",			"CanPark",			&cDomeProp.CanPark);
 		ReadOneDriverCapability(cAlpacaDeviceTypeStr,	"cansetaltitude",	"CanSetAltitude",	&cDomeProp.CanSetAltitude);
@@ -451,7 +449,7 @@ char			returnString[128];
 		ReadOneDriverCapability(cAlpacaDeviceTypeStr,	"cansetshutter",	"CanSetShutter",	&cDomeProp.CanSetShutter);
 		ReadOneDriverCapability(cAlpacaDeviceTypeStr,	"canslave",			"CanSlave",			&cDomeProp.CanSlave);
 		ReadOneDriverCapability(cAlpacaDeviceTypeStr,	"cansyncazimuth",	"CanSyncAzimuth",	&cDomeProp.CanSyncAzimuth);
-		CONSOLE_DEBUG_W_NUM("cDomeProp.CanSyncAzimuth\t=",	cDomeProp.CanSyncAzimuth);
+//		CONSOLE_DEBUG_W_NUM("cDomeProp.CanSyncAzimuth\t=",	cDomeProp.CanSyncAzimuth);
 //		CONSOLE_ABORT(__FUNCTION__);
 
 	}

@@ -238,8 +238,9 @@ class TelescopeDriver: public AlpacaDriver
 				//*	these default to FALSE,
 				//*	a subclass MUST set this to true if wants to support refraction calculations
 				bool						cDriverSupports_Refraction;
-				bool						cDriverSupports_LimitSwitches;
+
 				bool						cDriverSupports_SlewSettleTime;
+				bool						cDriverSupports_LimitSwitches;
 
 };
 

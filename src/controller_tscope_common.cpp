@@ -239,15 +239,17 @@ bool	dataWasHandled;
 	{
 		cTelescopeProp.hourAngleIsValid	=	true;
 		cTelescopeProp.HourAngle		=	atof(valueString);
+		if (cTelescopeProp.HourAngle < 0.0)
+		{
+			cTelescopeProp.HourAngle	+=	24.0;
+		}
 	}
 #if defined(_PARENT_IS_SKYTRAVEL_) && !defined( __ARM_ARCH )
 	//=================================================================================
 	else if (strcasecmp(keywordString,		"HourAngle-degrees") == 0)
 	{
-	double		hourAngleDegrees;
-
-		hourAngleDegrees	=	atof(valueString);
-		MountData_SaveHA(hourAngleDegrees);
+		cTelescopeProp.HourAngle_deg	=	atof(valueString);
+		MountData_SaveHA(cTelescopeProp.HourAngle_deg);
 	}
 #endif // _PARENT_IS_SKYTRAVEL_
 	//=================================================================================
@@ -402,7 +404,7 @@ bool			argBoolean;
 	if (validData)
 	{
 		cTelescopeProp.SiteLatitude	=	argDouble;
-		CONSOLE_DEBUG_W_DBL("SiteLatitude\t=", cTelescopeProp.SiteLatitude);
+	//	CONSOLE_DEBUG_W_DBL("SiteLatitude\t=", cTelescopeProp.SiteLatitude);
 	}
 	else
 	{
@@ -415,7 +417,7 @@ bool			argBoolean;
 	if (validData)
 	{
 		cTelescopeProp.SiteLongitude	=	argDouble;
-		CONSOLE_DEBUG_W_DBL("SiteLongitude\t=", cTelescopeProp.SiteLongitude);
+	//	CONSOLE_DEBUG_W_DBL("SiteLongitude\t=", cTelescopeProp.SiteLongitude);
 	}
 	else
 	{
@@ -428,7 +430,7 @@ bool			argBoolean;
 	if (validData)
 	{
 		cTelescopeProp.SiteElevation	=	argDouble;
-		CONSOLE_DEBUG_W_DBL("SiteElevation\t=", cTelescopeProp.SiteElevation);
+	//	CONSOLE_DEBUG_W_DBL("SiteElevation\t=", cTelescopeProp.SiteElevation);
 	}
 	else
 	{
@@ -527,7 +529,7 @@ int				argInt;
 	}
 
 	//========================================================
-	validData	=	AlpacaGetDoubleValue(	"telescope", "guiderateDeclination",	NULL,	&argDouble);
+	validData	=	AlpacaGetDoubleValue(	"telescope", "guideratedeclination",	NULL,	&argDouble);
 	if (validData)
 	{
 		cTelescopeProp.GuideRateDeclination	=	argDouble;

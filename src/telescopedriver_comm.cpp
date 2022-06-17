@@ -385,9 +385,7 @@ char				linuxErrorStr[256];
 		connRetCode	=	connect(socket_desc , (struct sockaddr *)&remoteDev , sizeof(remoteDev));
 		if (connRetCode >= 0)
 		{
-
 			CONSOLE_DEBUG("Open successful");
-
 		}
 		else if (errno == ECONNREFUSED)
 		{

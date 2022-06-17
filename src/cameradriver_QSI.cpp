@@ -37,6 +37,7 @@
 //*	May 15,	2022	<MLS> Finished Read_CoolerPowerLevel()
 //*	May 17,	2022	<MLS> Implemented Read_CoolerState() for QSI camera
 //*	May 18,	2022	<MLS> Added Write_SensorTemp()
+//*	Jun  7,	2022	<MLS> Added maxbinx/y override until binning is implemented
 //*****************************************************************************
 
 #if defined(_ENABLE_CAMERA_) && defined(_ENABLE_QSI_)
@@ -1382,6 +1383,5 @@ std::string			lastError("");
 	}
 	return(alpacaErrCode);
 }
-
 
 #endif // defined(_ENABLE_CAMERA_) && defined(_ENABLE_QSI_)

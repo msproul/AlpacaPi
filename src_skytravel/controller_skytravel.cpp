@@ -121,15 +121,17 @@ ControllerSkytravel::~ControllerSkytravel(void)
 
 	DELETE_OBJ_IF_VALID(cSkyTravelTabOjbPtr);
 	DELETE_OBJ_IF_VALID(cSkySettingsTabObjPtr);
-	DELETE_OBJ_IF_VALID(cDomeTabObjPtr);
-	DELETE_OBJ_IF_VALID(cAlpacaListObjPtr);
-	DELETE_OBJ_IF_VALID(cIPaddrListObjPtr);
-	DELETE_OBJ_IF_VALID(cDeviceSelectObjPtr);
-	DELETE_OBJ_IF_VALID(cAboutBoxTabObjPtr);
 	DELETE_OBJ_IF_VALID(cFOVTabObjPtr);
+	DELETE_OBJ_IF_VALID(cRemoteDataObjPtr);
+	DELETE_OBJ_IF_VALID(cDomeTabObjPtr);
 #ifndef __ARM_ARCH
 	DELETE_OBJ_IF_VALID(cMountTabObjPtr);
 #endif
+	DELETE_OBJ_IF_VALID(cDeviceSelectObjPtr);
+	DELETE_OBJ_IF_VALID(cAlpacaListObjPtr);
+	DELETE_OBJ_IF_VALID(cIPaddrListObjPtr);
+	DELETE_OBJ_IF_VALID(cMoonTabObjPtr);
+	DELETE_OBJ_IF_VALID(cAboutBoxTabObjPtr);
 }
 
 

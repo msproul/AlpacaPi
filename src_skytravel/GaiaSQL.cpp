@@ -37,6 +37,7 @@
 //*	Mar 26,	2022	<MLS> Added the sql library version string to the login string
 //*	May  9,	2022	<MLS> Added skytravel version number to remote SQL login information
 //*	May 10,	2022	<MLS> Added mysql error strings to local logging function
+//*	Jun  8,	2022	<MLS> Updated mysql_real_connect() calls to use specified port number
 //*****************************************************************************
 //*	sudo apt-get install libmysqlclient-dev		<<<< Use this one
 //*	sudo apt-get install libmariadb-dev			<<<< Use this for Raspberry-Pi
@@ -414,7 +415,7 @@ char			userString[128];
 								gSQLsever_UserName,
 								gSQLsever_Password,
 								gSQLsever_Database,
-								0,
+								gSQLsever_Port,
 								NULL,
 								0) != NULL)
 		{
@@ -687,7 +688,7 @@ unsigned int	endMilliSecs;
 								gSQLsever_UserName,
 								gSQLsever_Password,
 								gSQLsever_Database,
-								0,
+								gSQLsever_Port,
 								NULL,
 								CLIENT_MULTI_RESULTS) != NULL)
 		{
@@ -884,7 +885,7 @@ bool			validFlag;
 								gSQLsever_UserName,
 								gSQLsever_Password,
 								gSQLsever_Database,
-								0,
+								gSQLsever_Port,
 								NULL,
 								0) != NULL)
 		{

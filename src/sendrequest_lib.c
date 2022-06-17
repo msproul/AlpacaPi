@@ -52,8 +52,8 @@
 #include	<errno.h>
 #include	<ctype.h>
 
-//#define _ENABLE_CONSOLE_DEBUG_
 //#define _DEBUG_TIMING_
+#define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
 
 #include	"json_parse.h"
@@ -71,7 +71,13 @@ int		gNumSocketOpenErrCnt	=	0;
 int		gNumSocketConnOKcnt		=	0;
 int		gNumSocketConnErrCnt	=	0;
 bool	gReportError			=	true;
+bool	gEnableDebug			=	false;
 
+//*****************************************************************************
+void	Set_SendRequestLibDebug(bool enableFlag)
+{
+	gEnableDebug	=	enableFlag;
+}
 
 //*****************************************************************************
 static int	SetSocketTimeouts(int socket_desc, int timeOut_Secs, int timeOut_microSecs)
@@ -259,9 +265,11 @@ int					setOptRetCode;
 int					readLoopCnt;		//*	for debugging
 int					readSuccessCnt;		//*	for debugging
 
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, "------start-------");
-	CONSOLE_DEBUG(sendData);
-//	CONSOLE_ABORT(__FUNCTION__);
+	if (gEnableDebug)
+	{
+		CONSOLE_DEBUG_W_STR(__FUNCTION__, "------start-------");
+		CONSOLE_DEBUG(sendData);
+	}
 	inet_ntop(AF_INET, &deviceAddress->sin_addr.s_addr, ipString, INET_ADDRSTRLEN);
 
 	SETUP_TIMING();
@@ -377,10 +385,13 @@ int					readSuccessCnt;		//*	for debugging
 						keepReading		=	false;
 					}
 				}
-//				CONSOLE_DEBUG_W_STR("longBuffer\t=",	longBuffer);
-//				CONSOLE_DEBUG_W_NUM("readLoopCnt   \t=",	readLoopCnt);
-//				CONSOLE_DEBUG_W_NUM("readSuccessCnt\t=",	readSuccessCnt);
-//				CONSOLE_DEBUG_W_STR("longBuffer\t=",	longBuffer);
+				if (gEnableDebug)
+				{
+					CONSOLE_DEBUG_W_STR("longBuffer\t=",	longBuffer);
+					CONSOLE_DEBUG_W_NUM("readLoopCnt   \t=",	readLoopCnt);
+					CONSOLE_DEBUG_W_NUM("readSuccessCnt\t=",	readSuccessCnt);
+					CONSOLE_DEBUG_W_STR("longBuffer\t=",	longBuffer);
+				}
 				SJP_Init(jsonParser);
 				SJP_ParseData(jsonParser, longBuffer);
 //				CONSOLE_DEBUG(__FUNCTION__);

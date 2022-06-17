@@ -278,6 +278,10 @@ char	returnString[256];
 		}
 	}
 	validData	=	AlpacaGetStartupData_TelescopeOneAAT();
+	if (cTelescopeTabObjPtr != NULL)
+	{
+		cTelescopeTabObjPtr->UpdateTelescopeInfo(&cTelescopeProp, true);
+	}
 	if (cTeleSettingsTabObjPtr != NULL)
 	{
 		cTeleSettingsTabObjPtr->UpdateTelescopeInfo(&cTelescopeProp, true);
@@ -388,7 +392,7 @@ bool	previousOnLineState;
 		//*	update the window tab with everything
 		if (cTelescopeTabObjPtr != NULL)
 		{
-			cTelescopeTabObjPtr->UpdateTelescopeInfo(&cTelescopeProp);
+			cTelescopeTabObjPtr->UpdateTelescopeInfo(&cTelescopeProp, false);
 		}
 		if (cTeleSettingsTabObjPtr != NULL)
 		{

@@ -75,8 +75,6 @@ WindowTabRemoteData::~WindowTabRemoteData(void)
 	CONSOLE_DEBUG(__FUNCTION__);
 }
 
-
-
 //**************************************************************************************
 void	WindowTabRemoteData::SetupWindowControls(void)
 {
@@ -175,11 +173,13 @@ int		dbNumber;
 	yLoc	+=	cSmallBtnHt;
 	yLoc	+=	2;
 
-	SetWidget(		kRemoteData_SQLhelpMsg,	xLoc,	yLoc,	fullBoxWidth + 2,		cSmallBtnHt);
-	SetWidgetType(	kRemoteData_SQLhelpMsg,	kWidgetType_TextBox);
-	SetWidgetFont(	kRemoteData_SQLhelpMsg,	kFont_Medium);
+	SetWidget(			kRemoteData_EditSQLSettingsBtn,	xLoc,	yLoc,	fullBoxWidth + 2,		cSmallBtnHt);
+	SetWidgetType(		kRemoteData_EditSQLSettingsBtn,	kWidgetType_Button);
+	SetWidgetFont(		kRemoteData_EditSQLSettingsBtn,	kFont_Medium);
+	SetWidgetBGColor(	kRemoteData_EditSQLSettingsBtn,	CV_RGB(255,	255,	255));
+	SetWidgetTextColor(	kRemoteData_EditSQLSettingsBtn,	CV_RGB(0,	0,	0));
 	sprintf(helpMsg, "Edit %s to change these settings", kSQLserverConfigFile);
-	SetWidgetText(	kRemoteData_SQLhelpMsg,	helpMsg);
+	SetWidgetText(	kRemoteData_EditSQLSettingsBtn,	helpMsg);
 	yLoc	+=	cSmallBtnHt;
 	yLoc	+=	2;
 
@@ -383,6 +383,10 @@ void	WindowTabRemoteData::ProcessButtonClick(const int buttonIdx, const int flag
 				//*	this will start the thread if it is not already running
 				StartGaiaSQLthread();
 			}
+			break;
+
+		case kRemoteData_EditSQLSettingsBtn:
+			EditTextFile(kSQLserverConfigFile);
 			break;
 
 		case kRemoteData_EnableSQLlogging:

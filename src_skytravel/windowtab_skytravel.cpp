@@ -103,6 +103,7 @@
 //*	Apr  7,	2022	<MLS> ProcessMouseEvent() ignores nearest object when mouse drag in progress
 //*	Apr 30,	2022	<MLS> Added Messier objects to FindObjectNearCursor()
 //*	May 26,	2022	<MLS> Removed support for reading GAIA data directly
+//*	Jun 15,	2022	<MLS> Added camera name to telescope display if enough room
 //*****************************************************************************
 //*	TODO
 //*			star catalog lists
@@ -5420,7 +5421,28 @@ void	WindowTabSkyTravel::DrawWindowOverlays(void)
 													gTelescopeDecl_Radians,
 													&telescopeXX,
 													&telescopeYY);
+//		CONSOLE_DEBUG_W_NUM("telescopeXX           \t=",	telescopeXX);
+//		CONSOLE_DEBUG_W_NUM("telescopeYY           \t=",	telescopeYY);
+//		//*	do we display the telescope cross hairs
+//		if (telescopeIsInView)
+		{
+		int	fovCount;
 
+			fovCount	=	DrawTelescopeFOV();
+			if (fovCount == 0)
+			{
+				telescopeXX	+=	cWorkSpaceTopOffset;
+				telescopeYY	+=	cWorkSpaceLeftOffset;
+				DrawTelescopeReticle(telescopeXX, telescopeYY);
+			}
+		}
+//		else
+//		{
+//			CONSOLE_DEBUG("-------------------------");
+//			CONSOLE_DEBUG_W_DBL("gTelescopeRA_Radians  \t=",	DEGREES(gTelescopeRA_Radians / 15.0));
+//			CONSOLE_DEBUG_W_DBL("gTelescopeDecl_Radians\t=",	DEGREES(gTelescopeDecl_Radians));
+//		}
+	}
 #if 0
 		//*	are we keeping the display centered on the telescope position
 		if (cTrackTelescope)
@@ -5452,31 +5474,6 @@ void	WindowTabSkyTravel::DrawWindowOverlays(void)
 			}
 		}
 #endif
-
-		//*	do we display the telescope cross hairs
-		if (telescopeIsInView)
-		{
-		int	fovCount;
-
-			telescopeXX	+=	cWorkSpaceTopOffset;
-			telescopeYY	+=	cWorkSpaceLeftOffset;
-
-			fovCount	=	DrawTelescopeFOV();
-			if (fovCount == 0)
-			{
-				DrawTelescopeReticle(telescopeXX, telescopeYY);
-			}
-
-		}
-		else
-		{
-		//	CONSOLE_DEBUG("-------------------------");
-		//	CONSOLE_DEBUG_W_STR("gTelescopeRA_String   \t=",	gTelescopeRA_String);
-		//	CONSOLE_DEBUG_W_DBL("gTelescopeRA_Radians  \t=",	DEGREES(gTelescopeRA_Radians / 15.0));
-		//	CONSOLE_DEBUG_W_STR("gTelescopeDecl_String \t=",	gTelescopeDecl_String);
-		//	CONSOLE_DEBUG_W_DBL("gTelescopeDecl_Radians\t=",	DEGREES(gTelescopeDecl_Radians));
-		}
-	}
 
 	if (cDispOptions.dispDomeSlit)
 	{
@@ -5573,7 +5570,7 @@ double	fovWidth_RAD;
 double	fovHeight_RAD;
 int		pixelsWide;
 int		pixelsTall;
-
+char	cameraDisplayName[128];
 
 	LLD_SetColor(W_RED);
 //	LLD_SetColor(W_WHITE);
@@ -5644,22 +5641,29 @@ int		pixelsTall;
 			//*	check the width of the box, only draw the label if its is big enough
 			if (pixelsWide > 50)
 			{
+				strcpy(cameraDisplayName, fovPtr->HostName);
+				if (pixelsWide > 200)
+				{
+					//*	if we have enough room, add the camera name as well
+					strcat(cameraDisplayName, "-");
+					strcat(cameraDisplayName, fovPtr->CameraName);
+				}
 				//*	now do the label
 				if ((btmLeft_XX > 0) && (btmLeft_YY > 0))
 				{
-					LLD_DrawCString(btmLeft_XX, btmLeft_YY, fovPtr->CameraName);
+					LLD_DrawCString(btmLeft_XX, btmLeft_YY, cameraDisplayName);
 				}
 				else if ((topLeft_XX > 0) && (topLeft_YY > 0))
 				{
-					LLD_DrawCString(topLeft_XX, topLeft_YY, fovPtr->CameraName);
+					LLD_DrawCString(topLeft_XX, topLeft_YY, cameraDisplayName);
 				}
 				else if ((topRight_XX > 0) && (topRight_YY > 0))
 				{
-					LLD_DrawCString(topRight_XX, topRight_YY, fovPtr->CameraName);
+					LLD_DrawCString(topRight_XX, topRight_YY, cameraDisplayName);
 				}
 				else if ((btmRight_XX > 0) && (btmRight_YY > 0))
 				{
-					LLD_DrawCString(btmRight_XX, btmRight_YY, fovPtr->CameraName);
+					LLD_DrawCString(btmRight_XX, btmRight_YY, cameraDisplayName);
 				}
 			}
 		}
@@ -5680,13 +5684,13 @@ short	telescopeXX, telescopeYY;
 
 //	CONSOLE_DEBUG_W_NUM(__FUNCTION__, cDebugCounter++);
 
-	fovCount	=	0;
 	LLD_SetColor(W_RED);
 //	LLD_SetColor(W_WHITE);
 	telescopeIsInView	=	GetXYfromRA_Decl(	gTelescopeRA_Radians,
 												gTelescopeDecl_Radians,
 												&telescopeXX,
 												&telescopeYY);
+	fovCount	=	0;
 	if (telescopeIsInView && (cCameraFOVarrayPtr != NULL))
 	{
 		for (iii=0; iii<kMaxCamaeraFOVcnt; iii++)

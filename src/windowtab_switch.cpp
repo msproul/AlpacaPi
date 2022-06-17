@@ -54,7 +54,7 @@ WindowTabSwitch::WindowTabSwitch(	const int	xSize,
 //**************************************************************************************
 WindowTabSwitch::~WindowTabSwitch(void)
 {
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 }
 
 //**************************************************************************************

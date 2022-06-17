@@ -16,6 +16,8 @@
 //*****************************************************************************
 //*	Edit History
 //*****************************************************************************
+//*	Mar  2,	2020	<MLS> Added AlpacaGetIntegerValue()
+//*	Mar  3,	2020	<MLS> Added AlpacaGetBooleanValue()
 //*	Mar 17,	2020	<MLS> Created controllerAlpaca.cpp
 //*	Mar 17,	2020	<MLS> Added AlpacaGetSupportedActions()
 //*	Mar 17,	2020	<MLS> Added AlpacaProcessSupportedActions()
@@ -663,6 +665,8 @@ char			alpacaString[128];
 int				jjj;
 int				myIntgerValue;
 
+//	CONSOLE_DEBUG(__FUNCTION__);
+
 	SJP_Init(&jsonParser);
 	sprintf(alpacaString,	"/api/v1/%s/%d/%s", alpacaDevice, alpacaDevNum, alpacaCmd);
 //	CONSOLE_DEBUG_W_STR("alpacaString\t=",	alpacaString);
@@ -672,7 +676,6 @@ int				myIntgerValue;
 										alpacaString,
 										dataString,
 										&jsonParser);
-//	CONSOLE_DEBUG(__FUNCTION__);
 	if (validData)
 	{
 		cLastAlpacaErrNum	=	kASCOM_Err_Success;

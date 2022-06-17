@@ -60,6 +60,7 @@
 //*	May 31,	2022	<MLS> Added Get_HourAngle()
 //*	May 31,	2022	<MLS> Added Telescope_GetPhysicalSideOfPier()
 //*	Jun  1,	2022	<MLS> Added IMU support for RA Hour Angle (compile time option)
+//*	Jun 15,	2022	<MLS> Updated Telescope_GetPhysicalSideOfPier() to know about IMU
 //*****************************************************************************
 
 
@@ -2832,8 +2833,11 @@ double					newRate;
 											INCLUDE_COMMA);
 
 					alpacaErrCode	=	Telescope_MoveAxis(axisNumber, newRate, alpacaErrMsg);
-					CONSOLE_DEBUG_W_NUM("alpacaErrCode\t=", alpacaErrCode);
-					CONSOLE_DEBUG(alpacaErrMsg);
+					if (alpacaErrCode != kASCOM_Err_Success)
+					{
+						CONSOLE_DEBUG_W_NUM("alpacaErrCode\t=", alpacaErrCode);
+						CONSOLE_DEBUG(alpacaErrMsg);
+					}
 				}
 				else
 				{
@@ -3720,6 +3724,7 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 
 //*****************************************************************************
 //*	needs to be over-ridden
+//*****************************************************************************
 TYPE_ASCOM_STATUS	TelescopeDriver::Telescope_MoveAxis(const int axisNum, const double moveRate_degPerSec, char *alpacaErrMsg)
 {
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
@@ -3875,19 +3880,21 @@ int		limitSwichStatus;
 //*****************************************************************************
 TYPE_PierSide	TelescopeDriver::Telescope_GetPhysicalSideOfPier(void)
 {
-TYPE_PierSide	physicalSideOfPier;
-#ifdef _FAKE_HOUR_ANGLE_
-	cTelescopeProp.SiderealTime	=	CalcSiderealTime_dbl(NULL, gObseratorySettings.Longitude);
-	cTelescopeProp.HourAngle	=	cTelescopeProp.SiderealTime - cTelescopeProp.RightAscension;
-#endif
-	if (cTelescopeProp.HourAngle < 0)
-	{
-		physicalSideOfPier	=	kPierSide_pierEast;
-	}
-	else
+TYPE_PierSide	physicalSideOfPier	=	kPierSide_NotAvailable;
+
+#ifdef _ENABLE_IMU_
+double					hourAngle_Degrees;
+
+	hourAngle_Degrees	=	IMU_GetAverageRoll();
+	if (hourAngle_Degrees < 0.0)
 	{
 		physicalSideOfPier	=	kPierSide_pierWest;
 	}
+	else
+	{
+		physicalSideOfPier	=	kPierSide_pierEast;
+	}
+#endif
 	return(physicalSideOfPier);
 }
 

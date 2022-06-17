@@ -22,8 +22,6 @@
 //*	Redistributions of this source code must retain this copyright notice.
 //*****************************************************************************
 //*
-//*	Usage notes:	This driver does not implement any actual device,
-//*					you must create a sub-class that does the actual control
 //*
 //*	References:		https://ascom-standards.org/api/
 //*					https://ascom-standards.org/Help/Developer/html/N_ASCOM_DeviceInterface.htm
@@ -241,6 +239,7 @@ TYPE_ASCOM_STATUS	TelescopeDriverLX200::Telescope_AbortSlew(char *alpacaErrMsg)
 {
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 
+	CONSOLE_DEBUG(__FUNCTION__);
 	//*	because this is ABORT, we are going to wipe out all pending commands
 	cQueuedCmdCnt	=	0;
 	AddCmdToQueue("Q");
@@ -274,9 +273,7 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 			{
 				AddCmdToQueue("Qe");
 				AddCmdToQueue("Qw");
-//				cQueuedCmdCnt	=	0;
-//				AddCmdToQueue("Q");
-//				cTelescopeProp.Slewing	=	false;
+				cTelescopeProp.Slewing	=	false;
 			}
 			break;
 

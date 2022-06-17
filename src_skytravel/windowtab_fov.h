@@ -100,6 +100,7 @@ enum
 
 	kFOVbox_SaveButton,
 	kFOVbox_EditButton,
+	kFOVbox_ReloadButton,
 
 	kFOVbox_AlpacaLogo,
 

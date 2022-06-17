@@ -752,7 +752,7 @@ void	WindowTabSTsettings::ProcessButtonClick(const int buttonIdx, const int flag
 	{
 		case kSkyT_Settings_ObsSettingsText:
 			CONSOLE_DEBUG("kSkyT_Settings_ObsSettingsText");
-			RunCommandLine("gedit observatorysettings.txt &");
+			EditTextFile("observatorysettings.txt");
 			break;
 
 		case kSkyT_Settings_EarthThin:
@@ -864,7 +864,7 @@ void	WindowTabSTsettings::ProcessButtonClick(const int buttonIdx, const int flag
 			break;
 
 		case kSkyT_Settings_RunStartup_Edit:
-			RunCommandLine("gedit startup.sh &");
+			EditTextFile("startup.sh");
 			break;
 
 		case kSkyT_Settings_RunShutdown:
@@ -872,7 +872,7 @@ void	WindowTabSTsettings::ProcessButtonClick(const int buttonIdx, const int flag
 			break;
 
 		case kSkyT_Settings_RunShutdown_Edit:
-			RunCommandLine("gedit shutdown.sh &");
+			EditTextFile("shutdown.sh");
 			break;
 
 	}
@@ -1006,9 +1006,10 @@ FILE	*filePointer;
 char	linuxErrStr[128];
 int		iii;
 char	ipAddrStr[32];
+char	systemInfoFileName[]	=	"SkyTravelSystemInfo.txt";
 
 	CONSOLE_DEBUG(__FUNCTION__);
-	filePointer	=	fopen("SkyTravelSystemInfo.txt", "w");
+	filePointer	=	fopen(systemInfoFileName, "w");
 	if (filePointer != NULL)
 	{
 		fprintf(filePointer, "#########################################################\n");
@@ -1065,7 +1066,7 @@ char	ipAddrStr[32];
 		}
 		fclose(filePointer);
 
-		RunCommandLine("gedit SkyTravelSystemInfo.txt &");
+		EditTextFile(systemInfoFileName);
 
 	}
 	else

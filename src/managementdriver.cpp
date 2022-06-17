@@ -111,7 +111,7 @@ int		sLen;
 		strcpy(gLibraryVersions[gLibraryIndex].versionString,	versionString);
 		//*	make sure there are no double quotes in the string
 		sLen	=	strlen(gLibraryVersions[gLibraryIndex].versionString);
-		//*	Apr  8,	2022	<MLS> Removed double quotes in version string, JSON doesnt like it
+		//*	Apr  8,	2022	<MLS> Removed double quotes in version string, JSON doesn't like it
 		for (iii = 0; iii < sLen; iii++)
 		{
 			if (gLibraryVersions[gLibraryIndex].versionString[iii] == '"')

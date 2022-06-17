@@ -71,7 +71,7 @@ WindowTabMoon::WindowTabMoon(	const int	xSize,
 //**************************************************************************************
 WindowTabMoon::~WindowTabMoon(void)
 {
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 }
 
 //**************************************************************************************

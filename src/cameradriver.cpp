@@ -8005,7 +8005,6 @@ bool	foundIt;
 //*****************************************************************************
 void	CameraDriver::DumpCameraProperties(const char *callingFunctionName)
 {
-char	titleLine[128];
 
 	DumpCommonProperties(callingFunctionName);
 

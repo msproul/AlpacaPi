@@ -192,6 +192,7 @@ class WindowTab
 													const int	connectBtnBox = -1);
 				void	SetAlpacaLogo(const int logoWidgetIdx, const int lastCmdWidgetIdx = -1);
 				int		SetAlpacaLogoBottomCorner(const int logoWidgetIdx);
+				void	ClearLastAlpacaCommand(void);
 				void	DisplayLastAlpacaCommand(void);
 
 				//*	display value functions
@@ -368,8 +369,6 @@ virtual	void	AlpacaDisplayErrorMessage(const char *errorMsgString);
 		int					cIpAddrTextBox;		//*	the index of the box for the ip address, < 0 means not set
 
 		int					cLastCmdTextBox;	//*	index of the box for the last alpaca command, < 0 means not set
-//-		char				cLastAlpacaCmdString[256];
-
 		int					cHelpTextBoxNumber;	//*	index of the box for help text (-1 is not set)
 		cv::Scalar			cHelpTextBoxColor;
 		int					cPrevDisplayedHelpBox;

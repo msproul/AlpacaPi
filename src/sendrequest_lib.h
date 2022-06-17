@@ -28,6 +28,7 @@ bool	SendPutCommand(		struct sockaddr_in	*deviceAddress,
 							const char			*dataString,
 							SJP_Parser_t		*jsonParser);
 
+void	Set_SendRequestLibDebug(bool enableFlag);
 #define	READ_BINARY_IMAGE		true
 #define	READ_JSON_IMAGE			false
 int		OpenSocketAndSendRequest(	struct sockaddr_in	*deviceAddress,

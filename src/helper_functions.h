@@ -41,6 +41,7 @@ void		FormatDateTimeString_Local(struct timeval *tv, char *timeString);
 void		FormatTimeString_TM(struct tm *timeStruct, char *timeString);
 //-void		FormatTimeString(time_t *time, char *timeString);
 void		FormatTimeStringISO8601(struct timeval *tv, char *timeString);
+void		tolowerStr(char *theString);
 
 uint32_t	millis(void);
 int			CountLinesInFile(FILE *filePointer);

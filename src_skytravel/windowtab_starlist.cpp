@@ -70,7 +70,7 @@ WindowTabStarList::WindowTabStarList(	const int	xSize,
 //**************************************************************************************
 WindowTabStarList::~WindowTabStarList(void)
 {
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 
 	//*	dispose of the data
 	if (cStarListPtr != NULL)
