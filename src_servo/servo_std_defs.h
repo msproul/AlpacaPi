@@ -32,6 +32,7 @@
 //*	May 11,	2022	<MLS> Changed constant DEC to SERVO_DEC_AXIS
 //*	May 14,	2022	<MLS> Removed degToRads/radToDegs
 //*	Jun 12,	2022	<RNS> Renamed ARCSEC_PER_SEC to SID_RATE_ARCSECS
+//*	Jun 17,	2022	<RNS> Added solar, lunar and King tracking
 //*****************************************************************************
 //#include	"servo_std_defs.h"
 
@@ -61,10 +62,15 @@
 #define	kWEST			'w'
 #define	kNONE			'n'
 
-#define	kSID_RATE_ARCSECS	15.04106864
+// Rates is ASCOM order [0:3] for giggles
+#define	kSIDER_RATE_ARCSECS	15.04106864
+#define	kLUNAR_RATE_ARCSECS	14.497 // from NASA Horizons DB, average of 31 days vs. ASCOM 15.465
+#define	kSOLAR_RATE_ARCSECS	15.0
+#define	kKING_RATE_ARCSECS	15.0369 
 
 #define	SERVO_RA_AXIS	(uint8_t)0
 #define	SERVO_DEC_AXIS	(uint8_t)1
+#define	SERVO_BOTH_AXES	(uint8_t)2
 
 //*	TODO Change to using these instead to be consistent with the rest of AlpacaPi
 #define	DEGREES(radians)	((radians) * (180.0 / M_PI))

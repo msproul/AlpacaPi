@@ -35,6 +35,8 @@
 //*	May 22,	2022	<RNS> ID'd the missing functionality added to servo libs
 //*	May 22,	2022	<RNS> Adding the last of the functions, first pass review looks OK
 //*	May 26,	2022	<MLS> Added html output of current configuration
+//*	Jun 17,	2022	<RNS> Updated Servo_stop and start_tracking to use new args
+//*	Jun 17,	2022	<RNS> cleaned up the #warning notes
 //*****************************************************************************
 //*	Roboclaw MC servo support
 //*****************************************************************************
@@ -93,7 +95,6 @@ double	parkRA, parkDec;
 	cTelescopeProp.CanPark					=	true;
 	cTelescopeProp.CanFindHome				=	false;
 
-#warning <RNS> No sure of your invocation location but we likely need complete pathnames or soft paths
 #define kLOCAL_CFG_FILE "servo_location.cfg"
 
 	cServoConfigIsValid	=	false;
@@ -404,12 +405,6 @@ uint32_t	deltaMilliSecs;
 	{
 //		CONSOLE_DEBUG(__FUNCTION__);
 
-		//*	this is where your periodic code goes
-		//*	update cTelescopeProp values here
-	#warning <RNS>  Not sure I did this right but here is an attempt, please code review
-	#warning <MLS>  Looks good to me
-
-
 		//	Update mount state and if "moving" update the .Slewing flag
 		currentMoveState	=	Servo_state();
 		if (currentMoveState == MOVING || currentMoveState == PARKING)
@@ -421,14 +416,9 @@ uint32_t	deltaMilliSecs;
 			cTelescopeProp.Slewing	=	false;
 		}
 
-	#warning <RNS>  Also not positive I did this right but here is an attempt
 		//	If moving, get current RA & Dec
 		Servo_get_pos(&currRA_hours, &currDec_degrees);
 
-
-	#warning <MLS>  Ron, please confirm this
-//--		//	Convert park RA from hours to degs
-//--		Time_deci_hours_to_deg(&currRA);
 		while (currRA_hours > 24.0)
 		{
 			currRA_hours	-=	24.0;
@@ -465,7 +455,7 @@ TYPE_ASCOM_STATUS TelescopeDriverServo::Telescope_AbortSlew(char *alpacaErrMsg)
 TYPE_ASCOM_STATUS	alpacaErrCode;
 
 	alpacaErrCode	=	kASCOM_Err_Success;
-	Servo_stop_all();
+	Servo_stop(SERVO_BOTH_AXES);
 
 	cTelescopeProp.Slewing	=	false;
 
@@ -489,7 +479,6 @@ TYPE_ASCOM_STATUS TelescopeDriverServo::Telescope_MoveAxis(	const int		axisNum,
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
 int					servoStatus;
 
-#warning <RNS> This might work, needs a your code review please ;^)
 	CONSOLE_DEBUG(__FUNCTION__);
 
 	//	RA axis - positive degsPerSec means decreasing RA direction (West)
@@ -522,13 +511,13 @@ int					servoStatus;
 	else
 	{
 		//	Restore tracking rate, if set on axis
-		servoStatus	=	Servo_start_axis_tracking(axisNum);
+		servoStatus	=	Servo_start_tracking(axisNum);
 		if (servoStatus != kSTATUS_OK)
 		{
-			// Only ways to get an error from start_axis_tracking is to have a bad axisNum
+			// Only ways to get an error from start_tracking is to have a bad axisNum
 			alpacaErrCode	=	kASCOM_Err_NotImplemented;
 			alpacaErrCode	=	kASCOM_Err_NotConnected;
-			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Servo_start_axis_tracking() failed");
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Servo_start_tracking() failed");
 			CONSOLE_DEBUG(alpacaErrMsg);
 		}
 		cTelescopeProp.Slewing	=	false;
@@ -653,6 +642,8 @@ double				hoursRA;
 }
 
 //*****************************************************************************
+//* TODO: Will need to modify from RA only to BOTH for alt-azi mount
+//*****************************************************************************
 TYPE_ASCOM_STATUS TelescopeDriverServo::Telescope_TrackingOnOff(const bool newTrackingState,
 																char *alpacaErrMsg)
 {
@@ -664,7 +655,7 @@ int					servoStatus;
 	alpacaErrCode	=	kASCOM_Err_Success;
 	if (newTrackingState)
 	{
-		servoStatus	=	Servo_start_axis_tracking(SERVO_RA_AXIS);
+		servoStatus	=	Servo_start_tracking(SERVO_RA_AXIS);
 		if (servoStatus != kSTATUS_OK)
 		{
 			//	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Servo_start_tracking failed");
@@ -674,10 +665,10 @@ int					servoStatus;
 	}
 	else
 	{
-		servoStatus	=	Servo_stop_axis_tracking(SERVO_RA_AXIS);
+		servoStatus	=	Servo_stop(SERVO_RA_AXIS);
 		if (servoStatus != kSTATUS_OK)
 		{
-			//	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Servo_stop_tracking failed");
+			//	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Servo_stop failed");
 			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not connected");
 			alpacaErrCode	=	kASCOM_Err_NotConnected;
 		}
