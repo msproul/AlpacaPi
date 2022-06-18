@@ -680,7 +680,7 @@ int			switchValueInt;
 		{
 			boxNumber		=	kSwitchBox_Value01 + (kBoxesPerSwitch * switchNum);
 			switchValueInt	=	atoi(valueString);
-			switchValueDbl	=	atof(valueString);
+			switchValueDbl	=	AsciiToDouble(valueString);
 			SetWidgetNumber(kTab_Switch, boxNumber, switchValueInt);
 
 			boxNumber		=	kSwitchBox_Description01 + (kBoxesPerSwitch * switchNum);
@@ -696,7 +696,7 @@ int			switchValueInt;
 		switchNum	=	atoi(&keywordString[15]);
 		if ((switchNum >= 0) && (switchNum < kMaxSwitches))
 		{
-			cSwitchInfo[switchNum].maxswitchvalue	=	atof(valueString);
+			cSwitchInfo[switchNum].maxswitchvalue	=	AsciiToDouble(valueString);
 		}
 		else
 		{

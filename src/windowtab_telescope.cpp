@@ -467,6 +467,7 @@ bool	updateButtons;
 double	ra_SlewRate_degPerSec;
 double	dec_SlewRate_degPerSec;
 
+	CONSOLE_DEBUG(__FUNCTION__);
 	updateButtons	=	false;
 	switch(cCurrentSlewRate)
 	{

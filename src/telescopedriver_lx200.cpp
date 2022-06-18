@@ -593,7 +593,7 @@ bool	isValid;
 	if (isValid)
 	{
 //		CONSOLE_DEBUG_W_STR(__FUNCTION__, dataBuffer);
-	//	gTelescopeTrackingRate	=	atof(dataBuffer);
+	//	gTelescopeTrackingRate	=	AsciiToDouble(dataBuffer);
 	}
 	return(isValid);
 }

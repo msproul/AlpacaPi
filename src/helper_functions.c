@@ -6,6 +6,7 @@
 //*	Jan 19,	2022	<MLS> Added FormatDateTimeString_Local()
 //*	May 30,	2022	<MLS> Added "Z" to the end of ISO8601 date/time string
 //*	Jun 14,	2022	<MLS> Added tolowerStr()
+//*	Jun 17,	2022	<MLS> Added AsciiToDouble()
 //*****************************************************************************
 
 #include	<math.h>
@@ -325,6 +326,43 @@ int		iii;
 		iii++;
 	}
 }
+
+//*****************************************************************************
+double	AsciiToDouble(const char *asciiString)
+{
+char	firstChar;
+double	dblValue;
+char	*asciiPtr;
+
+	dblValue	=	0.0;
+	if (asciiString != NULL)
+	{
+		//*	atof returns garbage if the data is not numeric
+
+		//*	skip any leading spaces
+		asciiPtr	=	(char *)asciiString;
+		while (*asciiPtr == 0x20)
+		{
+			asciiPtr++;
+		}
+		firstChar	=	asciiPtr[0];
+		if (isdigit(firstChar) || (firstChar == '-') || (firstChar == '+') || (firstChar == '.'))
+		{
+			dblValue	=	atof(asciiPtr);
+		}
+//		else
+//		{
+//			CONSOLE_DEBUG_W_STR("asciiPtr \t=",	asciiPtr);
+//			CONSOLE_DEBUG_W_HEX("firstChar\t=",	firstChar);
+//		}
+	}
+//	else
+//	{
+//		CONSOLE_ABORT(__FUNCTION__);
+//	}
+	return(dblValue);
+}
+
 #if !defined(__arm__) || defined(_INCLUDE_MILLIS_)
 
 static uint32_t	gSystemStartSecs = 0;

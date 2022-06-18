@@ -831,7 +831,7 @@ void	ControllerCamera::AlpacaProcessReadAll(	const char	*deviceTypeStr,
 //		CONSOLE_DEBUG("ccdtemperature");
 		//=================================================================================
 		//*	ccdtemperature
-		cCameraProp.CCDtemperature	=	atof(valueString);
+		cCameraProp.CCDtemperature	=	AsciiToDouble(valueString);
 		UpdateCameraTemperature();
 		LogCameraTemp(cCameraProp.CCDtemperature);
 	}
@@ -850,7 +850,7 @@ void	ControllerCamera::AlpacaProcessReadAll(	const char	*deviceTypeStr,
 	{
 		//=================================================================================
 		//*	exposure
-		cExposure	=	atof(valueString);
+		cExposure	=	AsciiToDouble(valueString);
 
 		UpdateCameraExposure();
 	}
@@ -887,7 +887,7 @@ void	ControllerCamera::AlpacaProcessReadAll(	const char	*deviceTypeStr,
 	{
 	double	gigabytesFree;
 
-		gigabytesFree	=	atof(valueString);
+		gigabytesFree	=	AsciiToDouble(valueString);
 		UpdateFreeDiskSpace(gigabytesFree);
 	}
 	else if (strcasecmp(keywordString, "flip") == 0)

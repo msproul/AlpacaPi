@@ -55,13 +55,14 @@ In most cases AlpacaPi relies on libraries supplied by the vendors to talk to th
 These libraries are required for the following devices:
 
 	ATIK cameras
-	QHY Cameras
+	ATIK Filter wheel
 	FLIR Cameras
+	QHY Cameras
+	QSI Cameras
 	SONY Cameras
 	ToupTek Cameras
 	ZWO ASI cameras
 	ZWO EFW Filter Wheel
-	ATIK Filter wheel
 
 External libraries are NOT required for
 

@@ -217,7 +217,7 @@ bool	dataWasHandled;
 	//=================================================================================
 	else if (strcasecmp(keywordString,		"Declination") == 0)
 	{
-		cTelescopeProp.Declination	=	atof(valueString);
+		cTelescopeProp.Declination	=	AsciiToDouble(valueString);
 		Update_TelescopeDeclination();
 #if defined(_PARENT_IS_SKYTRAVEL_) && !defined( __ARM_ARCH )
 		MountData_SaveDec(cTelescopeProp.Declination);
@@ -238,7 +238,7 @@ bool	dataWasHandled;
 	else if (strcasecmp(keywordString,		"HourAngle") == 0)
 	{
 		cTelescopeProp.hourAngleIsValid	=	true;
-		cTelescopeProp.HourAngle		=	atof(valueString);
+		cTelescopeProp.HourAngle		=	AsciiToDouble(valueString);
 		if (cTelescopeProp.HourAngle < 0.0)
 		{
 			cTelescopeProp.HourAngle	+=	24.0;
@@ -248,14 +248,14 @@ bool	dataWasHandled;
 	//=================================================================================
 	else if (strcasecmp(keywordString,		"HourAngle-degrees") == 0)
 	{
-		cTelescopeProp.HourAngle_deg	=	atof(valueString);
+		cTelescopeProp.HourAngle_deg	=	AsciiToDouble(valueString);
 		MountData_SaveHA(cTelescopeProp.HourAngle_deg);
 	}
 #endif // _PARENT_IS_SKYTRAVEL_
 	//=================================================================================
 	else if (strcasecmp(keywordString,		"RightAscension") == 0)
 	{
-		cTelescopeProp.RightAscension	=	atof(valueString);
+		cTelescopeProp.RightAscension	=	AsciiToDouble(valueString);
 		Update_TelescopeRtAscension();
 #if defined(_PARENT_IS_SKYTRAVEL_) && !defined( __ARM_ARCH )
 		MountData_SaveRA(cTelescopeProp.RightAscension);

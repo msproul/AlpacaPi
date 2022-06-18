@@ -270,20 +270,20 @@ double	bp_rp;
 
 				case kGAIA_ra:
 				//	CONSOLE_DEBUG_W_STR("kGAIA_ra:", argString);
-					rightAscen	=	atof(argString);
+					rightAscen	=	AsciiToDouble(argString);
 				//	CONSOLE_DEBUG_W_DBL("rightAscen:", rightAscen);
 					break;
 
 				case kGAIA_dec:
 				//	CONSOLE_DEBUG_W_STR("kGAIA_dec:", argString);
-					declination	=	atof(argString);
+					declination	=	AsciiToDouble(argString);
 				//	CONSOLE_DEBUG_W_DBL("declination:", declination);
 					break;
 
 				case kGAIA_phot_g_mean_mag:
 					if (isdigit(argString[0]))
 					{
-						magnitude	=	atof(argString);
+						magnitude	=	AsciiToDouble(argString);
 					#ifdef _INCLUDE_GAIA_MAIN_
 						if (magnitude < gLowestMagnitude)
 						{
@@ -312,7 +312,7 @@ double	bp_rp;
 				//	CONSOLE_DEBUG_W_STR("kGAIA_bp_rp:", argString);
 					if (isdigit(argString[0]))
 					{
-						bp_rp	=	atof(argString);
+						bp_rp	=	AsciiToDouble(argString);
 						if (bp_rp < gBP_RP_min)
 						{
 							gBP_RP_min	=	bp_rp;

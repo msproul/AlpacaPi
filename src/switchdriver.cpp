@@ -58,6 +58,7 @@
 
 #include	"alpacadriver.h"
 #include	"alpacadriver_helper.h"
+#include	"helper_functions.h"
 
 
 #include	"JsonResponse.h"
@@ -815,12 +816,12 @@ double				newSwitchValue;
 													(sizeof(valueString) - 1));
 				if (foundValue)
 				{
-					newSwitchValue				=	atof(valueString);
+					newSwitchValue				=	AsciiToDouble(valueString);
 					if ((newSwitchValue >= cMinSwitchValue[switchNum]) &&
 						(newSwitchValue <= cMaxSwitchValue[switchNum]))
 					{
 						SetSwitchValue(switchNum, newSwitchValue);
-						cCurSwitchValue[switchNum]	=	atof(valueString);
+						cCurSwitchValue[switchNum]	=	AsciiToDouble(valueString);
 						alpacaErrCode				=	kASCOM_Err_Success;
 					}
 					else

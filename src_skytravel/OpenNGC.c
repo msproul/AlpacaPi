@@ -21,6 +21,7 @@
 //*	Feb  3,	2022	<MLS> Created OpenNGC.c
 //*	Feb  3,	2022	<MLS> OpenNGC star data working
 //*	Feb  4,	2022	<MLS> Added Read_OpenNGC_Outline_catgen()
+//*	Jun 17,	2022	<MLS> Added error checking to ParseOneLine_OpenNGC()
 //*****************************************************************************
 //*	git clone https://github.com/mattiaverga/OpenNGC
 //*****************************************************************************
@@ -122,6 +123,10 @@ double	minutes;
 double	seconds;
 char	*idPtr;
 
+//	CONSOLE_DEBUG("-------------------------------------------------");
+//	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(lineBuff);
+
 	validData		=	false;
 	sLen			=	strlen(lineBuff);
 	argNum			=	0;
@@ -132,7 +137,6 @@ char	*idPtr;
 	declination_Deg	=	0.0;
 	strcpy(designation, "");
 
-//	CONSOLE_DEBUG("-------------------------------------------------");
 
 	for (iii=0; iii <= sLen; iii++)
 	{
@@ -155,33 +159,41 @@ char	*idPtr;
 					break;
 
 				case kOpenNGC_RA:
-					hours			=	atoi(argString);
-					minutes			=	atoi(&argString[3]);
-					seconds			=	atof(&argString[6]);
-					rightAscen_Deg	=	hours;
-					rightAscen_Deg	+=	minutes / 60.0;
-					rightAscen_Deg	+=	seconds / 3600.0;
-//					CONSOLE_DEBUG_W_STR("rightAscen_Deg:", argString);
-//					CONSOLE_DEBUG_W_DBL("rightAscen_Deg:", rightAscen_Deg);
-
-					rightAscen_Deg	=	rightAscen_Deg * 15.0;
-//					CONSOLE_DEBUG_W_DBL("rightAscen_Deg:", rightAscen_Deg);
+					if (strlen(argString) > 0)
+					{
+						hours			=	atoi(argString);
+						minutes			=	atoi(&argString[3]);
+						seconds			=	AsciiToDouble(&argString[6]);
+						rightAscen_Deg	=	hours;
+						rightAscen_Deg	+=	minutes / 60.0;
+						rightAscen_Deg	+=	seconds / 3600.0;
+						rightAscen_Deg	=	rightAscen_Deg * 15.0;
+					}
+//					else
+//					{
+//						CONSOLE_DEBUG(lineBuff);
+//					}
 					break;
 
 				case kOpenNGC_Dec:
-					decl_Sign		=	argString[0];
-					degrees			=	atoi(&argString[1]);
-					minutes			=	atoi(&argString[4]);
-					seconds			=	atof(&argString[7]);
-					declination_Deg	=	degrees;
-					declination_Deg	+=	minutes / 60.0;
-					declination_Deg	+=	seconds / 3600.0;
-					if (decl_Sign == '-')
+					if (strlen(argString) > 0)
 					{
-						declination_Deg	=	-declination_Deg;
+						decl_Sign		=	argString[0];
+						degrees			=	atoi(&argString[1]);
+						minutes			=	atoi(&argString[4]);
+						seconds			=	AsciiToDouble(&argString[7]);
+						declination_Deg	=	degrees;
+						declination_Deg	+=	minutes / 60.0;
+						declination_Deg	+=	seconds / 3600.0;
+						if (decl_Sign == '-')
+						{
+							declination_Deg	=	-declination_Deg;
+						}
 					}
-//					CONSOLE_DEBUG_W_STR("declination_Deg:", argString);
-//					CONSOLE_DEBUG_W_DBL("declination_Deg:", declination_Deg);
+//					else
+//					{
+//						CONSOLE_DEBUG(lineBuff);
+//					}
 					break;
 
 //				case kOpenNGC_Const:
@@ -192,31 +204,35 @@ char	*idPtr;
 				case kOpenNGC_B_Mag:
 					if (strlen(argString) > 0)
 					{
-						b_mag	=	atof(argString);
+						b_mag	=	AsciiToDouble(argString);
 					}
 					break;
+
 				case kOpenNGC_V_Mag:
 					if (strlen(argString) > 0)
 					{
-						v_mag	=	atof(argString);
+						v_mag	=	AsciiToDouble(argString);
 					}
 					break;
+
 				case kOpenNGC_J_Mag:
 					if (strlen(argString) > 0)
 					{
-						j_mag	=	atof(argString);
+						j_mag	=	AsciiToDouble(argString);
 					}
 					break;
+
 				case kOpenNGC_H_Mag:
 					if (strlen(argString) > 0)
 					{
-						h_mag	=	atof(argString);
+						h_mag	=	AsciiToDouble(argString);
 					}
 					break;
+
 //				case kOpenNGC_K_Mag:
 //					if (strlen(argString) > 0)
 //					{
-//						k_mag	=	atof(argString);
+//						k_mag	=	AsciiToDouble(argString);
 //					}
 //					break;
 
@@ -224,7 +240,10 @@ char	*idPtr;
 //				case kOpenNGC_SurfBr:
 //				case kOpenNGC_Hubble:
 				case kOpenNGC_Pax:
-					parallax	=	atof(argString);
+					if (strlen(argString) > 0)
+					{
+						parallax	=	AsciiToDouble(argString);
+					}
 					break;
 
 //				case kOpenNGC_Pm_RA:
@@ -329,7 +348,7 @@ char			lineBuff[512];
 char			filePath[128];
 char			*firstLinePtr;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 
 	ngcStarData	=	NULL;
 
@@ -372,6 +391,7 @@ char			*firstLinePtr;
 	{
 		CONSOLE_DEBUG_W_STR("File not found\t=", filePath);
 	}
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, "exit");
 
 	return(ngcStarData);
 }
@@ -400,8 +420,8 @@ double				dec_degrees;
 int					flag;
 
 
-	ra_degrees	=	atof(lineBuff);
-	dec_degrees	=	atof(&lineBuff[10]);
+	ra_degrees	=	AsciiToDouble(lineBuff);
+	dec_degrees	=	AsciiToDouble(&lineBuff[10]);
 	flag		=	atoi(&lineBuff[20]);
 
 	outlinePt->ra_rad	=	RADIANS(ra_degrees);
@@ -422,7 +442,7 @@ char				lineBuff[512];
 char				filePath[128];
 bool				validObject;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 
 	outlineArray	=	NULL;
 

@@ -47,10 +47,10 @@ WindowTabMount::WindowTabMount(	const int	xSize,
 {
 	CONSOLE_DEBUG(__FUNCTION__);
 
-	cVerticalMagnification		=	2;
+	cVerticalMagnification		=	1;
 	cHorizontalMagnification	=	1;
 	cCurrentHorzOffset			=	0;
-	cDisplayAverage				=	true;
+	cDisplayAverage				=	false;
 	SetupWindowControls();
 }
 
@@ -283,7 +283,7 @@ int		deltaMag;
 	switch(buttonIdx)
 	{
 		case kMount_Reset:
-			cVerticalMagnification		=	2;
+			cVerticalMagnification		=	1;
 			cHorizontalMagnification	=	1;
 			cCurrentHorzOffset			=	0;
 			cCurrentVertCenter			=	cDefaultVertCenter;

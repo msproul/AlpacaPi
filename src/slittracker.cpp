@@ -461,7 +461,7 @@ char			gravityVectorChar;
 				{
 					inchesPtr++;
 				}
-				inchValue	=	atof(inchesPtr);
+				inchValue	=	AsciiToDouble(inchesPtr);
 //				CONSOLE_DEBUG_W_DBL("inchValue\t=", inchValue);
 
 				cSlitDistance[clockValue].distanceInches	=	inchValue;
@@ -484,7 +484,7 @@ char			gravityVectorChar;
 		//*	=gT:9.80
 
 		gravityVectorChar	=	lineBuff[2];
-		gravityValue		=	atof(&lineBuff[4]);
+		gravityValue		=	AsciiToDouble(&lineBuff[4]);
 //		CONSOLE_DEBUG(lineBuff);
 //		CONSOLE_DEBUG_W_HEX("gravityVectorChar\t=", gravityVectorChar);
 //		CONSOLE_DEBUG_W_DBL("gravityValue\t\t=",	gravityValue);

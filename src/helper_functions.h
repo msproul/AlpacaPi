@@ -42,6 +42,7 @@ void		FormatTimeString_TM(struct tm *timeStruct, char *timeString);
 //-void		FormatTimeString(time_t *time, char *timeString);
 void		FormatTimeStringISO8601(struct timeval *tv, char *timeString);
 void		tolowerStr(char *theString);
+double		AsciiToDouble(const char *asciiString);
 
 uint32_t	millis(void);
 int			CountLinesInFile(FILE *filePointer);

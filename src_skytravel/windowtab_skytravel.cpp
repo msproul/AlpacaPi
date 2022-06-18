@@ -772,6 +772,7 @@ int		buttonBoxWidth;
 #endif
 
 	SetWidgetHelpText(	kSkyTravel_Btn_MagnitudeDisp,	"Toggle Magnitude display");
+	SetWidgetHelpText(	kSkyTravel_UTCtime,				"Time UTC and Sidereal (in live mode)");
 
 
 	SetWidgetHelpText(	kSkyTravel_Btn_Hipparcos,		"Toggle Hipparcos display");

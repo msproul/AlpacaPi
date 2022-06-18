@@ -1596,7 +1596,7 @@ double	myExposure_usecs;
 		//*	if duration is NOT found, leave it alone
 		if (durationFound)
 		{
-			myExposureDuration_secs	=	atof(duarationString);
+			myExposureDuration_secs	=	AsciiToDouble(duarationString);
 //			CONSOLE_DEBUG_W_DBL("myExposureDuration_secs\t=", myExposureDuration_secs);
 			myExposure_usecs		=	myExposureDuration_secs * 1000 * 1000;
 			if (myExposure_usecs < cCameraProp.ExposureMin_us)
@@ -3249,7 +3249,7 @@ double				newSetCCDvalue;
 												kArgumentIsNumeric);
 		if (setCCDtempFound)
 		{
-			newSetCCDvalue	=	atof(setCCDtempString);
+			newSetCCDvalue	=	AsciiToDouble(setCCDtempString);
 			CONSOLE_DEBUG_W_DBL("newSetCCDvalue\t=",	newSetCCDvalue);
 			if ((newSetCCDvalue > -273.15) && (newSetCCDvalue <= 100.0))
 			{
@@ -3384,7 +3384,7 @@ bool				lightFrame;
 
 			if (durationFound)
 			{
-				myExposureDuration_secs	=	atof(duarationString);
+				myExposureDuration_secs	=	AsciiToDouble(duarationString);
 				myExposure_usecs		=	myExposureDuration_secs * (1000.0 * 1000.0);
 
 				CONSOLE_DEBUG_W_STR("Specified Duration (str)  \t=",	duarationString);
@@ -5418,7 +5418,7 @@ long				exposureDuration_us;	//*	micro seconds
 													kArgumentIsNumeric);
 		if (durationFound)
 		{
-			exposureDuration_secs	=	atof(duarationString);
+			exposureDuration_secs	=	AsciiToDouble(duarationString);
 			exposureDuration_us		=	exposureDuration_secs * 1000 * 1000;
 			if ((exposureDuration_us >= cCameraProp.ExposureMin_us) && (exposureDuration_us <= cCameraProp.ExposureMax_us))
 			{
@@ -5576,7 +5576,7 @@ double				deltaExp_secs;
 		//==============================================
 		if (sequenceCntFound)
 		{
-			sequenceCnt				=	atof(countString);
+			sequenceCnt				=	AsciiToDouble(countString);
 		}
 		if (sequenceCnt <= 0)
 		{
@@ -5585,7 +5585,7 @@ double				deltaExp_secs;
 		//==============================================
 		if (delayFound)
 		{
-			delay_secs			=	atof(delayString);
+			delay_secs			=	AsciiToDouble(delayString);
 			cSequenceDelay_us	=	delay_secs * 1000 * 1000;
 		}
 		else
@@ -5595,7 +5595,7 @@ double				deltaExp_secs;
 		//==============================================
 		if (deltaDurationFound)
 		{
-			deltaExp_secs			=	atof(deltaDurationString);
+			deltaExp_secs			=	AsciiToDouble(deltaDurationString);
 			cSeqDeltaExposure_us	=	deltaExp_secs * 1000 * 1000;
 		}
 		else
@@ -5718,7 +5718,7 @@ bool				recTimeFound;
 				if (recTimeFound)
 				{
 					cNumFramesToSave	=	0;
-					cVideoDuration_secs	=	atof(recordTimeStr);
+					cVideoDuration_secs	=	AsciiToDouble(recordTimeStr);
 				}
 				else
 				{

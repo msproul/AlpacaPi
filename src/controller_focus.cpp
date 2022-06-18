@@ -486,7 +486,7 @@ bool		switchStatus;
 	}
 	else if (strcasecmp(keywordString, "temperature") == 0)
 	{
-		argDouble	=	atof(valueString);
+		argDouble	=	AsciiToDouble(valueString);
 		UpdateTemperature(argDouble);
 	}
 	//===============================================================
@@ -530,7 +530,7 @@ bool		switchStatus;
 	}
 	else if (strcasecmp(keywordString, "Voltage") == 0)
 	{
-		argDouble	=	atof(valueString);
+		argDouble	=	AsciiToDouble(valueString);
 		UpdateVoltage(argDouble);
 	}
 	else if (strcasecmp(keywordString, "RotatorIsMoving") == 0)

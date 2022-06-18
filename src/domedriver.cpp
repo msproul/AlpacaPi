@@ -1616,7 +1616,7 @@ bool				foundKeyWord;
 													kArgumentIsNumeric);
 			if (foundKeyWord)
 			{
-				newAzimuthValue	=	atof(argumentString);
+				newAzimuthValue	=	AsciiToDouble(argumentString);
 				CONSOLE_DEBUG_W_DBL("newAzimuthValue\t=", newAzimuthValue);
 				if ((newAzimuthValue >= 0.0) && (newAzimuthValue <= 360.0))
 				{
@@ -1694,7 +1694,7 @@ bool				foundKeyWord;
 													kArgumentIsNumeric);
 			if (foundKeyWord)
 			{
-				newAzimuthValue	=	atof(argumentString);
+				newAzimuthValue	=	AsciiToDouble(argumentString);
 				CONSOLE_DEBUG_W_DBL("newAzimuthValue\t=", newAzimuthValue);
 				if ((newAzimuthValue >= 0.0) && (newAzimuthValue <= 360.0))
 				{
@@ -2490,7 +2490,7 @@ double			inchValue;
 			{
 				strcpy(clockString, &jsonParser.dataList[jjj].keyword[7]);
 				clockValue	=	atoi(clockString);
-				inchValue	=	atof(jsonParser.dataList[jjj].valueString);
+				inchValue	=	AsciiToDouble(jsonParser.dataList[jjj].valueString);
 				if ((clockValue >= 0) && (clockValue < kSensorValueCnt))
 				{
 					cSlitDistance[clockValue].distanceInches	=	inchValue;

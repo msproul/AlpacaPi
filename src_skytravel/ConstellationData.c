@@ -28,6 +28,7 @@
 #define _ENABLE_CONSOLE_DEBUG_
 #define	_DEBUG_TIMING_
 #include	"ConsoleDebug.h"
+#include	"helper_functions.h"
 
 #include	"ConstellationData.h"
 #include	"HipparcosCatalog.h"
@@ -617,7 +618,7 @@ char	myLongName[64];
 
 
 //************************************************************************
-static void	ParseConstOutlineCenter(const char *lineBuff, TYPE_ConstOutline	*constelOutlineData)
+static void	ParseConstOutlineCenter(char *lineBuff, TYPE_ConstOutline	*constelOutlineData)
 {
 int		recordIdx;
 int		jjj;
@@ -641,8 +642,8 @@ double	myDeclina;
 
 		//	0123456789 123459789
 		//	=PEG=23.5000:22.0000
-		myRtAscen	=	atof(&lineBuff[5]);
-		myDeclina	=	atof(&lineBuff[13]);
+		myRtAscen	=	AsciiToDouble(&lineBuff[5]);
+		myDeclina	=	AsciiToDouble(&lineBuff[13]);
 //		CONSOLE_DEBUG_W_DBL("myRtAscen\t=", myRtAscen);
 //		CONSOLE_DEBUG_W_DBL("myDeclina\t=", myDeclina);
 
@@ -766,11 +767,11 @@ TYPE_RaDec			linePoint;
 					//*	0123456789 123456789 1234567890
 					//*	10 20 43.5185|-29.7947845|ANT
 					//*	12 57 20.2827|-55.6771049|CRU
-					hours			=	atof(lineBuff);
-					minutes			=	atof(&lineBuff[3]);
-					seconds			=	atof(&lineBuff[6]);
+					hours			=	AsciiToDouble(lineBuff);
+					minutes			=	AsciiToDouble(&lineBuff[3]);
+					seconds			=	AsciiToDouble(&lineBuff[6]);
 					rtAscension_Deg	=	DegreesFromHHMMSS(hours, minutes, seconds);
-					declination_Deg	=	atof(&lineBuff[14]);
+					declination_Deg	=	AsciiToDouble(&lineBuff[14]);
 
 					strncpy(name, &lineBuff[26], 4);
 					name[4]	=	0;

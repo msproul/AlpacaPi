@@ -195,7 +195,7 @@ char	*stringPtr;
 				else if (strncasecmp(lineBuff, "bogomips", 8) == 0)
 				{
 					ExtractArgValue(lineBuff, ':', argValueString);
-					gBogoMipsValue	=	atof(argValueString);
+					gBogoMipsValue	=	AsciiToDouble(argValueString);
 				}
 			}
 		}

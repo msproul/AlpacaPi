@@ -49,6 +49,9 @@
 #endif
 
 
+#ifndef _HELPER_FUNCTIONS_H_
+	#include	"helper_functions.h"
+#endif
 
 
 //*****************************************************************************
@@ -237,7 +240,7 @@ double	argDouble;
 	}
 	else if (strcasecmp(keywordString, "azimuth") == 0)
 	{
-		argDouble	=	atof(valueString);
+		argDouble	=	AsciiToDouble(valueString);
 		UpdateDomeAzimuth(argDouble);
 	}
 	else if (strcasecmp(keywordString, "altitude") == 0)
@@ -247,7 +250,7 @@ double	argDouble;
 		{
 		double	myNewAltitude;
 
-			myNewAltitude	=	atof(valueString);
+			myNewAltitude	=	AsciiToDouble(valueString);
 			UpdateShutterAltitude(myNewAltitude);
 		}
 	}

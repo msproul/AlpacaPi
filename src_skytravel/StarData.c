@@ -510,7 +510,7 @@ char	*delimPtr;
 					if (delimPtr != NULL)
 					{
 						delimPtr++;
-						raMin	=	atof(delimPtr);
+						raMin	=	AsciiToDouble(delimPtr);
 					}
 					break;
 
@@ -522,7 +522,7 @@ char	*delimPtr;
 					if (delimPtr != NULL)
 					{
 						delimPtr++;
-						deMin	=	atof(delimPtr);
+						deMin	=	AsciiToDouble(delimPtr);
 					}
 					break;
 
@@ -831,15 +831,15 @@ int		ccc;
 
 				//*	The star's right ascension and declination, for epoch and equinox 2000.0.
 				case kHYG_ra:	//*	right ascension
-					raDegrees		=	atof(argString);
+					raDegrees		=	AsciiToDouble(argString);
 					break;
 
 				case kHYG_dec:		//*	declination
-					declDegrees		=	atof(argString);
+					declDegrees		=	AsciiToDouble(argString);
 					break;
 
 				case kHYG_mag:	//*	magnitude
-					magnitude		=	atof(argString);
+					magnitude		=	AsciiToDouble(argString);
 					break;
 
 				case kHYG_spect:
@@ -1077,7 +1077,7 @@ double	photo_Magnitude;
 			switch(argNum)
 			{
 				case 2:				//*	declination
-					declDegrees		=	atof(argString);
+					declDegrees		=	AsciiToDouble(argString);
 					break;
 
 				case 6:				// HD Catalog Number
@@ -1089,11 +1089,11 @@ double	photo_Magnitude;
 					break;
 
 				case 10:			// Photographic Magnitude
-					photo_Magnitude		=	atof(argString);
+					photo_Magnitude		=	AsciiToDouble(argString);
 					break;
 
 				case 11:			//*	right ascension
-					raDegrees		=	atof(argString);
+					raDegrees		=	AsciiToDouble(argString);
 					break;
 
 				case 12:			//*	Spectral class
@@ -1105,7 +1105,7 @@ double	photo_Magnitude;
 					break;
 
 				case 14:			//*	V Magnitude
-					starRec->realMagnitude		=	atof(argString);
+					starRec->realMagnitude		=	AsciiToDouble(argString);
 					break;
 
 			}
@@ -1303,7 +1303,7 @@ int		argLen;
 					break;
 
 				case 3:	//*	raSec
-					raSec	=	atof(argString);
+					raSec	=	AsciiToDouble(argString);
 					break;
 
 				//--------------
@@ -1317,7 +1317,7 @@ int		argLen;
 					break;
 
 				case 6:	//*	deSec
-					deSec	=	atof(argString);
+					deSec	=	AsciiToDouble(argString);
 					break;
 
 			}
@@ -1401,11 +1401,11 @@ double	declRadians	=	0;
 	lineBuff[17]	=	0;
 	raHour			=	atoi(&lineBuff[23]);
 	raMin			=	atoi(&lineBuff[26]);
-	raSec			=	atof(&lineBuff[29]);
+	raSec			=	AsciiToDouble(&lineBuff[29]);
 	deSign			=	lineBuff[35];
 	deDeg			=	atoi(&lineBuff[36]);
 	deMin			=	atoi(&lineBuff[39]);
-	deSec			=	atof(&lineBuff[42]);
+	deSec			=	AsciiToDouble(&lineBuff[42]);
 
 	CONSOLE_DEBUG_W_NUM("raHour\t=", raHour);
 	CONSOLE_DEBUG_W_NUM("raMin \t=", raMin);

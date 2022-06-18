@@ -53,6 +53,7 @@
 #include	"eventlogging.h"
 #include	"linuxerrors.h"
 #include	"readconfigfile.h"
+#include	"helper_functions.h"
 
 #include	"alpacadriver_helper.h"
 #include	"observatory_settings.h"
@@ -238,7 +239,7 @@ int		ii;
 	}
 	if ((dotCnt == 1) && (colonCnt == 0))
 	{
-		latLonValue	=	atof(latlonString);
+		latLonValue	=	AsciiToDouble(latlonString);
 	}
 	else if (colonCnt == 2)
 	{
@@ -293,7 +294,7 @@ TYPE_TELESCOPE_INFO	*ts_infoPtr;
 
 		case kObservatory_Elevation:
 			strcpy(gObseratorySettings.ElevationString,			valueString);
-			gObseratorySettings.Elevation_ft	=	atof(valueString);
+			gObseratorySettings.Elevation_ft	=	AsciiToDouble(valueString);
 			gObseratorySettings.Elevation_m		=	(gObseratorySettings.Elevation_ft * 12.0) * 0.0254;
 			break;
 
@@ -336,11 +337,11 @@ TYPE_TELESCOPE_INFO	*ts_infoPtr;
 		//--------------------------------------------------------------
 		//*	these are telescope specific attributes
 		case kObservatory_Aperture:
-			ts_infoPtr->aperature_mm			=	atof(valueString);
+			ts_infoPtr->aperature_mm			=	AsciiToDouble(valueString);
 			break;
 
 		case kObservatory_Secondary:
-			ts_infoPtr->secondary_mm			=	atof(valueString);
+			ts_infoPtr->secondary_mm			=	AsciiToDouble(valueString);
 			break;
 
 
@@ -374,7 +375,7 @@ TYPE_TELESCOPE_INFO	*ts_infoPtr;
 			break;
 
 		case kObservatory_FocalLength:
-			ts_infoPtr->focalLen_mm				=	atof(valueString);
+			ts_infoPtr->focalLen_mm				=	AsciiToDouble(valueString);
 			break;
 
 		case kObservatory_Focuser:

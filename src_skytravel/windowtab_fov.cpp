@@ -14,7 +14,7 @@
 //*	that you agree that the author(s) have no warranty, obligations or liability.  You
 //*	must determine the suitability of this source code for your use.
 //*
-//*	Redistributions of this source code must retain this copyright notice.
+//*	Redistribution of this source code must retain this copyright notice.
 //*****************************************************************************
 //*	Edit History
 //*****************************************************************************
@@ -390,11 +390,11 @@ bool	disableFOVdisplay;
 					//	CONSOLE_DEBUG_W_STR("apertureStr \t=",	apertureStr);
 					//	CONSOLE_DEBUG_W_STR("focalLenStr \t=",	focalLenStr);
 
-						cameraDataPtr->FocalLen_mm			=   atof(focalLenStr);
-						cameraDataPtr->Aperture_mm			=	atof(apertureStr);
+						cameraDataPtr->FocalLen_mm			=   AsciiToDouble(focalLenStr);
+						cameraDataPtr->Aperture_mm			=	AsciiToDouble(apertureStr);
 
-						cameraDataPtr->RighttAscen_Offset	=	atof(raOffsetStr);
-						cameraDataPtr->Declination_Offset	=	atof(decOffsetStr);
+						cameraDataPtr->RighttAscen_Offset	=	AsciiToDouble(raOffsetStr);
+						cameraDataPtr->Declination_Offset	=	AsciiToDouble(decOffsetStr);
 
 						if (disableFOVdisplay)
 						{
@@ -808,11 +808,11 @@ bool	dataWasHandled;
 		}
 		else if (strcasecmp(keywordString, "PixelSizeX") == 0)
 		{
-			cCurrentCamera->CameraProp.PixelSizeX	=	atof(valueString);
+			cCurrentCamera->CameraProp.PixelSizeX	=	AsciiToDouble(valueString);
 		}
 		else if (strcasecmp(keywordString, "PixelSizeY") == 0)
 		{
-			cCurrentCamera->CameraProp.PixelSizeY	=	atof(valueString);
+			cCurrentCamera->CameraProp.PixelSizeY	=	AsciiToDouble(valueString);
 		}
 	}
 	else

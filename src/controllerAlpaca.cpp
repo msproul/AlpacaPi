@@ -834,7 +834,11 @@ double			myDoubleValue;
 
 			if (strcasecmp(jsonParser.dataList[jjj].keyword, "VALUE") == 0)
 			{
-				myDoubleValue	=	atof(jsonParser.dataList[jjj].valueString);
+//				CONSOLE_DEBUG_W_STR("VALUE string\t=", jsonParser.dataList[jjj].valueString);
+
+				myDoubleValue	=	AsciiToDouble(jsonParser.dataList[jjj].valueString);
+
+				//*	make sure there is someplace valid to put it
 				if (returnValue != NULL)
 				{
 					*returnValue	=	myDoubleValue;
@@ -872,7 +876,7 @@ bool	Controller::AlpacaGetDoubleValue(	const char	*alpacaDevice,
 											bool		*rtnValidData)
 {
 bool			validData;
-#if 1
+
 	validData	=	AlpacaGetDoubleValue(	cDeviceAddress,
 											cPort,
 											cAlpacaDevNum,
@@ -881,54 +885,6 @@ bool			validData;
 											dataString,
 											returnValue,
 											rtnValidData);
-#else
-
-SJP_Parser_t	jsonParser;
-char			alpacaString[128];
-int				jjj;
-double			myDoubleValue;
-
-	SJP_Init(&jsonParser);
-	sprintf(alpacaString,	"/api/v1/%s/%d/%s", alpacaDevice, cAlpacaDevNum, alpacaCmd);
-//	CONSOLE_DEBUG_W_STR("alpacaString\t=",	alpacaString);
-
-	validData	=	GetJsonResponse(	&cDeviceAddress,
-										cPort,
-										alpacaString,
-										dataString,
-										&jsonParser);
-//	CONSOLE_DEBUG(__FUNCTION__);
-	if (validData)
-	{
-		cLastAlpacaErrNum	=	kASCOM_Err_Success;
-		for (jjj=0; jjj<jsonParser.tokenCount_Data; jjj++)
-		{
-
-			if (strcasecmp(jsonParser.dataList[jjj].keyword, "VALUE") == 0)
-			{
-				myDoubleValue	=	atof(jsonParser.dataList[jjj].valueString);
-				if (returnValue != NULL)
-				{
-					*returnValue	=	myDoubleValue;
-				}
-			}
-		}
-		cLastAlpacaErrNum	=	AlpacaCheckForErrors(&jsonParser, cLastAlpacaErrStr);
-		if (cLastAlpacaErrNum != kASCOM_Err_Success)
-		{
-			//*	does the calling routine want to know if the data was good
-			if (rtnValidData != NULL)
-			{
-				*rtnValidData	=	false;
-			}
-		}
-	}
-	else
-	{
-		cReadFailureCnt++;
-	}
-//	CONSOLE_DEBUG(__FUNCTION__);
-#endif
 
 	return(validData);
 }
@@ -965,7 +921,7 @@ double			myDoubleValue;
 		{
 			if (strcasecmp(jsonParser.dataList[jjj].keyword, "MINIMUM") == 0)
 			{
-				myDoubleValue	=	atof(jsonParser.dataList[jjj].valueString);
+				myDoubleValue	=	AsciiToDouble(jsonParser.dataList[jjj].valueString);
 				if (returnMinValue != NULL)
 				{
 					*returnMinValue	=	myDoubleValue;
@@ -973,7 +929,7 @@ double			myDoubleValue;
 			}
 			if (strcasecmp(jsonParser.dataList[jjj].keyword, "MAXIMUM") == 0)
 			{
-				myDoubleValue	=	atof(jsonParser.dataList[jjj].valueString);
+				myDoubleValue	=	AsciiToDouble(jsonParser.dataList[jjj].valueString);
 				if (returnMaxValue != NULL)
 				{
 					*returnMaxValue	=	myDoubleValue;

@@ -144,6 +144,18 @@ double	parkRA, parkDec;
 
 	//	We know that Servo_init() always sets the scope to the park position
 	Servo_get_park_coordins(&parkRA, &parkDec);
+	if (parkRA == NAN)
+	{
+		parkRA	=	0.0;
+		CONSOLE_DEBUG("parkRA is NAN");
+	}
+	if (parkDec == NAN)
+	{
+		parkDec	=	0.0;
+		CONSOLE_DEBUG("parkDec is NAN");
+	}
+
+
 	//	Convert park RA from hours to degs
 	Time_deci_hours_to_deg(&parkRA);
 
@@ -419,6 +431,20 @@ uint32_t	deltaMilliSecs;
 		//	If moving, get current RA & Dec
 		Servo_get_pos(&currRA_hours, &currDec_degrees);
 
+//		CONSOLE_DEBUG_W_DBL("currRA_hours   \t=", currDec_degrees);
+//		CONSOLE_DEBUG_W_DBL("currDec_degrees\t=", currRA_hours);
+
+		if (__isnan(currRA_hours))
+		{
+//			currRA_hours	=	0.0;
+//			CONSOLE_DEBUG("currRA_hours is NAN");
+		}
+		if (__isnan(currDec_degrees))
+		{
+//			currDec_degrees	=	0.0;
+//			CONSOLE_DEBUG("currDec_degrees is NAN");
+		}
+
 		while (currRA_hours > 24.0)
 		{
 			currRA_hours	-=	24.0;
@@ -497,12 +523,12 @@ int					servoStatus;
 		if (servoStatus == kSTATUS_OK)
 		{
 			cTelescopeProp.Slewing	=	true;
+			alpacaErrCode			=	kASCOM_Err_Success;
 		}
 		else
 		{
 			// Only ways to get an error from move_axis_by_vel is to have a bad axisNum
-			alpacaErrCode			=	kASCOM_Err_NotImplemented;
-			alpacaErrCode			=	kASCOM_Err_NotConnected;
+			alpacaErrCode			=	kASCOM_Err_InvalidValue;
 			cTelescopeProp.Slewing	=	false;
 			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Servo_move_axis_by_vel() failed");
 			CONSOLE_DEBUG(alpacaErrMsg);
@@ -512,16 +538,24 @@ int					servoStatus;
 	{
 		//	Restore tracking rate, if set on axis
 		servoStatus	=	Servo_start_tracking(axisNum);
-		if (servoStatus != kSTATUS_OK)
+		if (servoStatus == kSTATUS_OK)
+		{
+			alpacaErrCode			=	kASCOM_Err_Success;
+		}
+		else
 		{
 			// Only ways to get an error from start_tracking is to have a bad axisNum
-			alpacaErrCode	=	kASCOM_Err_NotImplemented;
-			alpacaErrCode	=	kASCOM_Err_NotConnected;
+			alpacaErrCode	=	kASCOM_Err_InvalidValue;
 			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Servo_start_tracking() failed");
 			CONSOLE_DEBUG(alpacaErrMsg);
 		}
 		cTelescopeProp.Slewing	=	false;
 	}	// of if-else non-zero velocity
+	if (alpacaErrCode != kASCOM_Err_Success)
+	{
+		CONSOLE_DEBUG_W_NUM("alpacaErrCode\t=", alpacaErrCode);
+		CONSOLE_DEBUG(alpacaErrMsg);
+	}
 
 	return(alpacaErrCode);
 }

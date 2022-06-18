@@ -327,9 +327,10 @@ int		iii;
 	cTelescopeProp.CanSyncAltAz					=	false;
 	cTelescopeProp.CanUnpark					=	false;
 	cTelescopeProp.DoesRefraction				=	false;
+	cTelescopeProp.RightAscension				=	0.0;
+	cTelescopeProp.Declination					=	0.0;
 
-
-	//*	Set this to true if the system supports it
+	//*	Set these to true if the system supports it
 	//*	cTelescopeProp.DoesRefraction is used to enable/disable if it is supported
 	cDriverSupports_Refraction		=	false;		//*	can be over-ridden by sub class
 	cDriverSupports_LimitSwitches	=	false;		//*	can be over-ridden by sub class
@@ -341,6 +342,9 @@ int		iii;
 		cTelescopeProp.AxisRates[iii].Minimum	=	0.0;
 		cTelescopeProp.AxisRates[iii].Maximum	=	4.0 + iii;	//*	the extra iii is for testing
 	}
+
+
+
 
 	//*	there are a bunch of static settings that conform needs to be happy
 	//*	these are temporary to get CONFORM to work
@@ -1455,7 +1459,7 @@ double					newDecRate;
 													kArgumentIsNumeric);
 		if (decRateFound)
 		{
-			newDecRate			=	atof(decRateString);
+			newDecRate			=	AsciiToDouble(decRateString);
 			CONSOLE_DEBUG_W_DBL("newDecRate\t=", newDecRate);
 			cTelescopeProp.DeclinationRate	=	newDecRate;
 			alpacaErrCode					=	kASCOM_Err_Success;
@@ -1640,7 +1644,7 @@ double				newGuideRateDeclination;
 															kArgumentIsNumeric);
 		if (guideRateDeclinationFound)
 		{
-			newGuideRateDeclination	=	atof(guideRateDeclinationStr);
+			newGuideRateDeclination	=	AsciiToDouble(guideRateDeclinationStr);
 			CONSOLE_DEBUG_W_STR("guideRateDeclinationStr\t=", guideRateDeclinationStr);
 			CONSOLE_DEBUG_W_DBL("newGuideRateDeclination\t=", newGuideRateDeclination);
 
@@ -1702,7 +1706,7 @@ double				newGuideRateRightAscension;
 																kArgumentIsNumeric);
 		if (guideRateRightAscensionFound)
 		{
-			newGuideRateRightAscension	=	atof(guideRateRightAscensionStr);
+			newGuideRateRightAscension	=	AsciiToDouble(guideRateRightAscensionStr);
 			CONSOLE_DEBUG_W_STR("guideRateRightAscensionStr\t=", guideRateRightAscensionStr);
 			CONSOLE_DEBUG_W_DBL("newGuideRateRightAscension\t=", newGuideRateRightAscension);
 
@@ -1824,7 +1828,7 @@ double				newrightAscenRate;
 														kArgumentIsNumeric);
 		if (rightAscenRateFound)
 		{
-			newrightAscenRate	=	atof(rightAscenRateString);
+			newrightAscenRate	=	AsciiToDouble(rightAscenRateString);
 			CONSOLE_DEBUG_W_STR("rightAscenRateString\t=", rightAscenRateString);
 			CONSOLE_DEBUG_W_DBL("newrightAscenRate\t=", newrightAscenRate);
 
@@ -1955,7 +1959,7 @@ double				newElevation;
 												kArgumentIsNumeric);
 	if (siteElevFound)
 	{
-		newElevation	=	atof(siteElevString);
+		newElevation	=	AsciiToDouble(siteElevString);
 //		CONSOLE_DEBUG_W_STR("siteElevString\t=", siteElevString);
 //		CONSOLE_DEBUG_W_DBL("newElevitude\t=", newElevation);
 
@@ -2019,7 +2023,7 @@ double				newLatitude;
 												kArgumentIsNumeric);
 	if (siteLatFound)
 	{
-		newLatitude	=	atof(siteLatString);
+		newLatitude	=	AsciiToDouble(siteLatString);
 
 		if ((newLatitude >= -90.0) && (newLatitude <= 90.0))
 		{
@@ -2075,7 +2079,7 @@ double				newLongitude;
 												kArgumentIsNumeric);
 	if (siteLonFound)
 	{
-		newLongitude	=	atof(siteLonString);
+		newLongitude	=	AsciiToDouble(siteLonString);
 //		CONSOLE_DEBUG_W_STR("siteLonString\t=", siteLonString);
 //		CONSOLE_DEBUG_W_DBL("newLongitude\t=", newLongitude);
 
@@ -2244,7 +2248,7 @@ double				newTargetDeclination;
 													kArgumentIsNumeric);
 	if (targetDeclinationFound)
 	{
-		newTargetDeclination		=	atof(targetDeclinationString);
+		newTargetDeclination		=	AsciiToDouble(targetDeclinationString);
 		CONSOLE_DEBUG_W_DBL("newTargetDeclination\t=", newTargetDeclination);
 
 		if ((newTargetDeclination >= -90.0) && (newTargetDeclination <= 90.0))
@@ -2318,7 +2322,7 @@ double				newTargetRightAscension;
 														kArgumentIsNumeric);
 	if (targetRightAscensionFound)
 	{
-		newTargetRightAscension		=	atof(targetRightAscensionString);
+		newTargetRightAscension		=	AsciiToDouble(targetRightAscensionString);
 		CONSOLE_DEBUG_W_DBL("newTargetRightAscension\t=", newTargetRightAscension);
 
 		if ((newTargetRightAscension >= 0.0) && (newTargetRightAscension <= 24.0))
@@ -2802,6 +2806,8 @@ double					newRate;
 //	CONSOLE_DEBUG(__FUNCTION__);
 //	CONSOLE_DEBUG(reqData->contentData);
 
+	alpacaErrMsg[0]	=	0;
+
 	if (cTelescopeProp.CanMoveAxis)
 	{
 		axisFound		=	GetKeyWordArgument(	reqData->contentData,
@@ -2823,7 +2829,7 @@ double					newRate;
 			{
 				if (rateFound)
 				{
-					newRate		=	atof(rateString);
+					newRate		=	AsciiToDouble(rateString);
 					CONSOLE_DEBUG_W_DBL("newRate\t=", newRate);
 					JsonResponse_Add_Double(reqData->socket,
 											reqData->jsonTextBuffer,
@@ -2906,7 +2912,7 @@ double					newRate;
 			{
 				if (rateFound)
 				{
-					newRate		=	atof(rateString);
+					newRate		=	AsciiToDouble(rateString);
 
 					JsonResponse_Add_Double(reqData->socket,
 											reqData->jsonTextBuffer,
@@ -3012,8 +3018,8 @@ double				newAz_degrees;
 
 		if (altitudeFound && azimuthFound)
 		{
-			newAlt_degrees	=	atof(altitudeString);
-			newAz_degrees	=	atof(azimuthString);
+			newAlt_degrees	=	AsciiToDouble(altitudeString);
+			newAz_degrees	=	AsciiToDouble(azimuthString);
 			alpacaErrCode	=	Telescope_SlewToAltAz(newAlt_degrees, newAz_degrees, alpacaErrMsg);
 		}
 		else
@@ -3089,8 +3095,8 @@ double				newDeclination;
 
 		if (rightAscensionFound && declinationFound)
 		{
-			newRightAscension	=	atof(rightAscensionStr);
-			newDeclination		=	atof(declinationStr);
+			newRightAscension	=	AsciiToDouble(rightAscensionStr);
+			newDeclination		=	AsciiToDouble(declinationStr);
 
 			CONSOLE_DEBUG_W_DBL("newRightAscension\t=",	newRightAscension);
 			CONSOLE_DEBUG_W_DBL("newDeclination\t=",	newDeclination);
@@ -3207,8 +3213,8 @@ double				newDeclination;
 														kArgumentIsNumeric);
 		if (rightAscensionFound && declinationFound)
 		{
-			newRightAscension	=	atof(rightAscensionStr);
-			newDeclination		=	atof(declinationStr);
+			newRightAscension	=	AsciiToDouble(rightAscensionStr);
+			newDeclination		=	AsciiToDouble(declinationStr);
 
 			if ((newRightAscension >= 0.0) && (newRightAscension <= 24.0) &&
 				(newDeclination >= -90.0) && (newDeclination <= 90.0))
@@ -3345,8 +3351,8 @@ double				newDeclination;
 														kArgumentIsNumeric);
 		if (rightAscensionFound && declinationFound)
 		{
-			newRightAscension	=	atof(rightAscensionStr);
-			newDeclination		=	atof(declinationStr);
+			newRightAscension	=	AsciiToDouble(rightAscensionStr);
+			newDeclination		=	AsciiToDouble(declinationStr);
 
 			CONSOLE_DEBUG_W_DBL("newRightAscension\t=",	(newRightAscension * 15));
 			CONSOLE_DEBUG_W_DBL("newDeclination\t=",	newDeclination);

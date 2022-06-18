@@ -738,17 +738,17 @@ unsigned int	endMilliSecs;
 	//						CONSOLE_DEBUG_W_STR("longName\t=",	localStarData.longName);
 
 							//*	Get the RA
-							localStarData.ra		=	RADIANS(atof(row[1]));
+							localStarData.ra		=	RADIANS(AsciiToDouble(row[1]));
 							localStarData.org_ra	=	localStarData.ra;
 
 							//*	Get the DEC
-							localStarData.decl		=	RADIANS(atof(row[2]));
+							localStarData.decl		=	RADIANS(AsciiToDouble(row[2]));
 							localStarData.org_decl	=	localStarData.decl;
 
 							//*	Get the Magnitude
 							if (row[3] != NULL)
 							{
-								localStarData.realMagnitude		=	atof(row[3]);
+								localStarData.realMagnitude		=	AsciiToDouble(row[3]);
 //								if (localStarData.realMagnitude > 21.0)
 //								{
 //									CONSOLE_DEBUG_W_STR("longName     \t=",	localStarData.longName);
@@ -771,7 +771,7 @@ unsigned int	endMilliSecs;
 							//*	Get the spectral class
 							if (row[4] != NULL)
 							{
-								bp_rp		=	atof(row[4]);
+								bp_rp		=	AsciiToDouble(row[4]);
 								localStarData.spectralClass		=	CalcSpectralClassFrom_BP_RP(bp_rp);
 							}
 							else
@@ -920,17 +920,17 @@ bool			validFlag;
 //					CONSOLE_DEBUG_W_STR("longName\t=",	localStarData.longName);
 
 					//*	Get the RA
-					localStarData.ra		=	RADIANS(atof(row[1]));
+					localStarData.ra		=	RADIANS(AsciiToDouble(row[1]));
 					localStarData.org_ra	=	localStarData.ra;
 
 					//*	Get the DEC
-					localStarData.decl		=	RADIANS(atof(row[2]));
+					localStarData.decl		=	RADIANS(AsciiToDouble(row[2]));
 					localStarData.org_decl	=	localStarData.decl;
 
 					//*	Get the Magnitude
 					if (row[3] != NULL)
 					{
-						localStarData.realMagnitude		=	atof(row[3]);
+						localStarData.realMagnitude		=	AsciiToDouble(row[3]);
 						if (localStarData.realMagnitude > 21.0)
 						{
 							CONSOLE_DEBUG_W_STR("longName     \t=",	localStarData.longName);
@@ -946,7 +946,7 @@ bool			validFlag;
 					//*	Get the spectral class
 					if (row[4] != NULL)
 					{
-						bp_rp		=	atof(row[4]);
+						bp_rp		=	AsciiToDouble(row[4]);
 						localStarData.spectralClass		=	CalcSpectralClassFrom_BP_RP(bp_rp);
 					}
 					else

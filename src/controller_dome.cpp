@@ -647,7 +647,7 @@ int				newShutterStatus;
 			{
 			double	myNewAltitude;
 
-				myNewAltitude	=	atof(jsonParser.dataList[jjj].valueString);
+				myNewAltitude	=	AsciiToDouble(jsonParser.dataList[jjj].valueString);
 				UpdateShutterAltitude(myNewAltitude);
 
 			}
@@ -758,7 +758,7 @@ char			gravityVectorChar;
 			{
 				strcpy(clockString, &jsonParser.dataList[jjj].keyword[7]);
 				clockValue	=	atoi(clockString);
-				inchValue	=	atof(jsonParser.dataList[jjj].valueString);
+				inchValue	=	AsciiToDouble(jsonParser.dataList[jjj].valueString);
 				if ((clockValue >= 0) && (clockValue < kSensorValueCnt))
 				{
 					gSlitDistance[clockValue].distanceInches	=	inchValue;
@@ -773,7 +773,7 @@ char			gravityVectorChar;
 			{
 			//	CONSOLE_DEBUG_W_STR("Gravity vector:", jsonParser.dataList[jjj].keyword);
 				gravityVectorChar	=	jsonParser.dataList[jjj].keyword[8];
-				gravityValue		=	atof(jsonParser.dataList[jjj].valueString);
+				gravityValue		=	AsciiToDouble(jsonParser.dataList[jjj].valueString);
 
 				switch(gravityVectorChar)
 				{
@@ -1077,7 +1077,7 @@ unsigned long	deltaMilliSecs;
 				{
 					inchesPtr++;
 				}
-				inchValue	=	atof(inchesPtr);
+				inchValue	=	AsciiToDouble(inchesPtr);
 //				CONSOLE_DEBUG_W_DBL("inchValue\t=", inchValue);
 
 				gSlitDistance[clockValue].distanceInches	=	inchValue;
