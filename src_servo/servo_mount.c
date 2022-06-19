@@ -70,6 +70,7 @@
 //*	Jun 17	2022	<RNS> Renamed servo_stop_axis_tracking to servo_stop and can do both
 //*	Jun 17	2022	<RNS> Deleted servo_stop_all(), obsolete with servo_stop doing both
 //*	Jun 17	2022	<RNS> Added and renamed start_axis_tracking to support both axes 
+//*	Jun 19	2022	<RNS> Fixed a toggle gParkState bug in _unpark() and return to int
 //*****************************************************************************
 // Notes: M1 *MUST BE* connected to RA or Azimuth axis, M2 to Dec or Altitude
 //*****************************************************************************
@@ -175,24 +176,28 @@ double Servo_get_time_ratio(void)
 }
 
 //*****************************************************************************
-// Releases the mount "parking brake" and allow movement. I order for an unpark
+// Releases the mount "parking brake" and allow movement. In order for an unpark
 // to happen, the mount must be parked or stopped (allows for error recovery)
-// It return bool of true is successful, false if mount could not be unparked
-// is PARKING and not completed the move.  Note: the only way to set the park
-// state to PARKED is via Servo_move_to_park() and a call to Servo_state
+// It returns bool of true is successful, false if mount could not be unparked
+// Note: the only way to set the park state to PARKED is via Servo_move_to_park() 
+// and a call to Servo_state after the PARKING move is complete
 //*****************************************************************************
-bool Servo_unpark(void)
+int Servo_unpark(void)
 {
 	int state;
 
 	state = Servo_state();
+	printf("@@@ Servo_unpark() state = %d\n", state);
 	if (state == PARKED || state == STOPPED)
 	{
 		gParkState = false;
 		gMountAction = STOPPED;
+		return(kSTATUS_OK); 
 	}
-
-	return (!gParkState);
+	else
+	{
+		return (kERROR);
+	}
 }
 
 //*****************************************************************************
@@ -1511,7 +1516,7 @@ int Servo_move_to_coordins(double gotoRa, double gotoDec, double lat, double lon
 	double alt, azi;
 	int status = kSTATUS_OK;
 	bool flip = false;
-
+	printf("Servo_move_to_coordins: RA:%.4f Dec:%.4f Lat:%.4f Lon:%.4f Park:%d\n", gotoRa, gotoDec, lat, lon, gParkState);
 	// Make sure the mount is not Parked, but *if parked* then return error
 	if (gParkState == true)
 	{
@@ -1713,6 +1718,7 @@ int Servo_move_to_park(void)
 	double ha, dec;
 	int status;
 
+	printf("@@@ Servo_move_to_park() gParkState = %d\n", gParkState);
 	// Make sure the mount is not Parked, but *if parked* then return error
 	if (gParkState == true)
 	{
@@ -1726,6 +1732,7 @@ int Servo_move_to_park(void)
 	gMountAction = PARKING;
 	status = Servo_move_to_static(ha, dec);
 
+	printf("@@@ Servo_move_to_park() status = %d\n", status);
 	// If status is < zero, return error
 	return (status == kSTATUS_OK) ? kSTATUS_OK : kERROR;
 } // of Servo_move_to_park()
@@ -1788,6 +1795,7 @@ int main(void)
 	double propo, integ, deriv;
 	uint32_t iMax, deadZ;
 	int32_t minP, maxP;
+	uint8_t raState, decState; 
 
 	int state;
 	char buf[256];
@@ -1796,6 +1804,11 @@ int main(void)
 	Servo_init("servo_mount.cfg", "servo_location.cfg");
 
 	Servo_stop(SERVO_BOTH_AXES);
+
+	jd = Time_systime_to_jd();
+	gmst = Time_jd_to_gmst(jd);
+	lst = Time_gmst_to_lst(gmst, Time_get_lon());
+	printf("@@@ current time is jd:%.5lf GMST:%.5lf LST:%.5lf\n", jd, gmst, lst);
 
 	printf("\nhit any key to begin\n");
 	fgets(buf, 256, stdin);
@@ -1833,11 +1846,12 @@ int main(void)
 	jd = Time_systime_to_jd();
 	gmst = Time_jd_to_gmst(jd);
 	lst = Time_gmst_to_lst(gmst, Time_get_lon());
+	printf("@@@ current time is jd:%.5lf GMST:%.5lf LST:%.5lf\n", jd, gmst, lst);
 
 	currRa = lst - parkHa;
 	Time_normalize_RA(&currRa);
 	currDec = parkDec;
-	printf("after park - curr RA = %lf dec = %lf\n", currRa, currDec);
+	printf("LST:%.5lf After park - curr RA = %lf dec = %lf\n", lst, currRa, currDec);
 	Servo_set_pos(currRa, currDec);
 
 	Servo_get_pos(&currRa, &currDec);
@@ -1849,50 +1863,40 @@ int main(void)
 
 	Servo_unpark();
 
-	// Make a small change to Ra and dec for testing
-	//	currRa += 0.25;
-	//	currDec -= 2.0;
-
 	lat = Time_get_lat();
 	lon = Time_get_lon();
 
 	printf("********************************************************\n");
-	printf("Move 1: Simple -0.5 hr +5 deg, no meridian crossing at LST:%lf\n", lst);
+	printf("Move 1: Simple -1.0 hr 0 deg, no meridian crossing at LST:%lf\n", lst);
 	printf("********************************************************\n");
 	// Reset current RA/Dec back to the park position
 	currRa = lst - parkHa;
 	Time_normalize_RA(&currRa);
 	currDec = parkDec;
 	Servo_set_pos(currRa, currDec);
-	printf("* Current  Pos  RA = %lf   Dec = %lf\n", currRa, currDec);
-	currRa -= 0.5;
-	currDec += 5;
-	;
-	printf("* Target Pos  RA = %lf   Dec = %lf\n", currRa, currDec);
-	printf("********************************************************\n");
-	Servo_move_to_coordins(currRa, currDec, lat, lon);
-
-	state = Servo_state();
-	while (state == MOVING)
-	{
-		sleep(3);
-		Servo_get_pos(&currRa, &currDec);
-		state = Servo_state();
-		printf("** Current Pos  RA = %lf   Dec = %lf   gDebugInfoSS = %s\n", currRa, currDec, gDebugInfoSS);
-	}
-
-	printf("********************************************************\n");
-	printf("Move 2: Simple +2.5 hr +40 deg with meridian crossing at LST:%lf\n", lst);
-	printf("********************************************************\n");
-	// Reset current RA/Dec back to the park position
-	currRa = lst - parkHa;
-	Time_normalize_RA(&currRa);
-	currDec = parkDec;
-	Servo_set_pos(currRa, currDec);
-	;
 	printf("* Current  Pos  RA = %lf   Dec = %lf\n", currRa, currDec);
 	currRa -= 1.0;
-	currDec += 15;
+	//currDec -= 5;
+	;
+	printf("* Target Pos  RA = %lf   Dec = %lf\n", currRa, currDec);
+	printf("********************************************************\n");
+	Servo_move_to_coordins(currRa, currDec, lat, lon);
+
+	state = Servo_state();
+	while (state == MOVING)
+	{
+		sleep(3);
+		Servo_get_pos(&currRa, &currDec);
+		state = Servo_state();
+		RC_check_queue(gMountConfig.addr, &raState, &decState);
+		printf("** Current Pos  RA = %lf   Dec = %lf   gDebugInfoSS = %s Qra:%d Qdec:%d\n", currRa, currDec, gDebugInfoSS, raState, decState);	}
+
+	printf("********************************************************\n");
+	printf("Move 2: Simple -1.0 hr 0 deg with meridian crossing at LST:%lf\n", lst);
+	printf("********************************************************\n");
+	printf("* Current  Pos  RA = %lf   Dec = %lf\n", currRa, currDec);
+	currRa  -= 1.0;
+	//currDec -= 70;
 	printf("* Target Pos  RA = %lf   Dec = %lf\n", currRa, currDec);
 	printf("********************************************************\n");
 
@@ -1904,7 +1908,9 @@ int main(void)
 		sleep(3);
 		Servo_get_pos(&currRa, &currDec);
 		state = Servo_state();
-		printf("** Current Pos  RA = %lf   Dec = %lf   gDebugInfoSS = %s\n", currRa, currDec, gDebugInfoSS);
+		RC_check_queue(gMountConfig.addr, &raState, &decState);
+		printf("** Current Pos  RA = %lf   Dec = %lf   gDebugInfoSS = %s Qra:%d Qdec:%d\n", currRa, currDec, gDebugInfoSS, raState, decState);
+
 	}
 
 	printf("## Target RA tracking %d\n", gMountConfig.ra.track);

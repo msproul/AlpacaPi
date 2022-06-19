@@ -37,6 +37,9 @@
 //*	May 26,	2022	<MLS> Added html output of current configuration
 //*	Jun 17,	2022	<RNS> Updated Servo_stop and start_tracking to use new args
 //*	Jun 17,	2022	<RNS> cleaned up the #warning notes
+//*	Jun 19,	2022	<RNS> Fixed curr position getting set to HA and not RA=LST-HA
+//*	Jun 19,	2022	<RNS> Added .AtPark assignments to support unpark
+//*	Jun 19,	2022	<RNS> Toggled RA direction for _MoveAxis
 //*****************************************************************************
 //*	Roboclaw MC servo support
 //*****************************************************************************
@@ -73,9 +76,11 @@
 TelescopeDriverServo::TelescopeDriverServo(void)
 	: TelescopeDriver()
 {
-int		cfgStatus;
-int8_t	servoSide;
-double	parkRA, parkDec;
+int				cfgStatus;
+int8_t			servoSide;
+double			parkHA, parkDec;
+long double		jd, lst; 
+
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -143,11 +148,11 @@ double	parkRA, parkDec;
 	}
 
 	//	We know that Servo_init() always sets the scope to the park position
-	Servo_get_park_coordins(&parkRA, &parkDec);
-	if (parkRA == NAN)
+	Servo_get_park_coordins(&parkHA, &parkDec);
+	if (parkHA == NAN)
 	{
-		parkRA	=	0.0;
-		CONSOLE_DEBUG("parkRA is NAN");
+		parkHA	=	0.0;
+		CONSOLE_DEBUG("parkHA is NAN");
 	}
 	if (parkDec == NAN)
 	{
@@ -155,12 +160,18 @@ double	parkRA, parkDec;
 		CONSOLE_DEBUG("parkDec is NAN");
 	}
 
+	//	Convert park HA to RA
+	jd = Time_systime_to_jd();
+	lst = Time_jd_to_gmst(jd);
+	lst = Time_gmst_to_lst(lst, cTelescopeProp.SiteLongitude);
+	// Subtrack the park hour angle from LST to get Park RA - reuse lst long double 
+	lst -= parkHA; 
+	// Normalize to 0 -> 23.99999 and type is long double 
+	Time_normalize_hours(&lst);
 
-	//	Convert park RA from hours to degs
-	Time_deci_hours_to_deg(&parkRA);
-
-	cTelescopeProp.RightAscension	=	parkRA;
+	cTelescopeProp.RightAscension	=	lst;
 	cTelescopeProp.Declination		=	parkDec;
+	cTelescopeProp.AtPark 			= 	true;	
 
 	AlpacaConnect();
 
@@ -511,15 +522,25 @@ int					servoStatus;
 	//	RA axis - negative degsPerSec means increasing RA direction (West)
 	//	Dec axis - positive degsPerSec means increasing Dec direction (North)
 	//	Dec axis - negative degsPerSec means decreasing Dec direction (Sout)
-	//	axisNum = 0 -> RA - maps correclty to "servo_std_defs.h"
-	//	axisNum = 1 -> Dec - maps to correctly "servo_std_defs.h"
+	//	axisNum = 0 -> SERVO_RA_AXIS- maps correclty to "servo_std_defs.h"
+	//	axisNum = 1 -> SERVO_DEC_AXIS - maps to correctly "servo_std_defs.h"
 
 	CONSOLE_DEBUG_W_DBL("moveRate_degPerSec\t=", moveRate_degPerSec);
 
 	// if a non-zero velocity is requested
 	if (moveRate_degPerSec != 0.0)
 	{
-		servoStatus	=	Servo_move_axis_by_vel(axisNum, moveRate_degPerSec);
+		// Toggle the direction for RA due to ASCOM sign difference with reality
+		if (axisNum == SERVO_RA_AXIS)
+		{
+			// Use the inverse of supplied moveRate arg
+			servoStatus	=	Servo_move_axis_by_vel(axisNum, -moveRate_degPerSec);
+		}
+		else
+		{
+			// For Dec, no correction needed
+			servoStatus	=	Servo_move_axis_by_vel(axisNum, moveRate_degPerSec);
+		}
 		if (servoStatus == kSTATUS_OK)
 		{
 			cTelescopeProp.Slewing	=	true;
@@ -565,7 +586,8 @@ TYPE_ASCOM_STATUS TelescopeDriverServo::Telescope_Park(char *alpacaErrMsg)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
 int					servoStatus;
-double				parkRA, parkDec;
+double				parkHA, parkDec;
+long double			jd, lst; 
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -582,12 +604,21 @@ double				parkRA, parkDec;
 		//	Mount is moving to the park position
 
 		//	Update target RA/DEC using park position and slew state
-		Servo_get_park_coordins(&parkRA, &parkDec);
-		// Convert RA from hours to degs
-		Time_deci_hours_to_deg(&parkRA);
-		cTelescopeProp.TargetRightAscension	=	parkRA;
-		cTelescopeProp.TargetDeclination	=	parkDec;
-		cTelescopeProp.Slewing				=	true;
+		Servo_get_park_coordins(&parkHA, &parkDec);
+
+		//	Convert park HA to RA
+		jd = Time_systime_to_jd();
+		lst = Time_jd_to_gmst(jd);
+		lst = Time_gmst_to_lst(lst, cTelescopeProp.SiteLongitude);
+		// Subtrack the park hour angle from LST to get Park RA - reuse lst long double
+		lst -= parkHA;
+		// Normalize to 0 -> 23.99999 and type is long double
+		Time_normalize_hours(&lst);
+
+		cTelescopeProp.RightAscension 	=	lst;
+		cTelescopeProp.Declination 		=	parkDec;
+		cTelescopeProp.Slewing			=	false;
+		cTelescopeProp.AtPark 			= 	true;  // rns:
 
 		CONSOLE_DEBUG(alpacaErrMsg);
 	}
@@ -719,14 +750,15 @@ int					servoStatus;
 TYPE_ASCOM_STATUS	TelescopeDriverServo::Telescope_UnPark(char *alpacaErrMsg)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode;
-int					servoStatus;
-
+int					servoStatus; 
 	CONSOLE_DEBUG(__FUNCTION__);
 
 	alpacaErrCode	=	kASCOM_Err_Success;
 
 	//	Attempt to unpark the mount, only works if it's current state is parked
 	servoStatus	=	Servo_unpark();
+#warning "RNS: This printf never prints, so I believe this derived function is not being called"
+	printf("@@@ Telescope_UnPark() servoStatus = %d\n", servoStatus);
 	if (servoStatus != kSTATUS_OK)
 	{
 		//	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Servo_unpark failed, mount was not parked");
@@ -736,6 +768,7 @@ int					servoStatus;
 	else
 	{
 		//	Mount is now unparked and ready for movement
+		cTelescopeProp.AtPark 		= 	false;	
 		CONSOLE_DEBUG(alpacaErrMsg);
 	}
 	return(alpacaErrCode);
