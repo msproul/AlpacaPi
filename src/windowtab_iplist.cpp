@@ -87,7 +87,7 @@ int		tabOffset;
 	{
 		tabArray[iii]	=	tabOffset;
 		tabOffset		+=	widthArray[iii+1];
-		CONSOLE_DEBUG_W_NUM("tabArray[iii]\t=", tabArray[iii]);
+//		CONSOLE_DEBUG_W_NUM("tabArray[iii]\t=", tabArray[iii]);
 		iii++;
 	}
 

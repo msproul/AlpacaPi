@@ -53,6 +53,7 @@
 #define	kG2000			6.5988098
 #define	kLC				0.0497958000000001
 #define	kNC				-0.0159140999999998
+//#define	kFUDGE			0.0				//	fudge factor (unnecessary?
 #define	kFUDGE			-0.013922				//	fudge factor (unnecessary?
 //#define	LONGITUDE		-2.247926			//	Longitude for Manchester UK
 //#define	LATITUDE		53.53					//	Latitude for Manchester UK
@@ -95,13 +96,12 @@ int		leapyear;
 
 
 
-// ********************************************************************************** //
+// **********************************************************************************
 //						GREENWICH & LOCAL SIDEREAL TIME CALCULATIONS
-// ********************************************************************************** //
+// **********************************************************************************
 // based on "ASTR 310 - Observational Astronomy: Formula for Greenwich Sidereal Time (GST)"
 // see http://www.astro.umd.edu/~jph/GST_eqn.pdf formulas
-
-//**************************************************************************
+// **********************************************************************************
 void	CalcSiderealTime(	struct tm	*utcTime,
 							struct tm	*siderealTimePtr,
 							double		argLongitude)

@@ -61,6 +61,8 @@
 //*	May 31,	2022	<MLS> Added Telescope_GetPhysicalSideOfPier()
 //*	Jun  1,	2022	<MLS> Added IMU support for RA Hour Angle (compile time option)
 //*	Jun 15,	2022	<MLS> Updated Telescope_GetPhysicalSideOfPier() to know about IMU
+//*	Jun 17,	2022	<MLS> Working on Hour Angle
+//*	Jun 18,	2022	<MLS> Cleaning up how Park is handled
 //*****************************************************************************
 
 
@@ -3249,7 +3251,6 @@ double				newDeclination;
 	return(alpacaErrCode);
 }
 
-
 //*****************************************************************************
 TYPE_ASCOM_STATUS	TelescopeDriver::Put_Park(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
 {
@@ -3259,11 +3260,12 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 
 	if (cTelescopeProp.CanPark)
 	{
+		//*	it is up to the sub class to actually set AtPark to true
 		alpacaErrCode	=	Telescope_Park(alpacaErrMsg);
-		if (alpacaErrCode == kASCOM_Err_Success)
-		{
-			cTelescopeProp.AtPark			=	true;
-		}
+//-		if (alpacaErrCode == kASCOM_Err_Success)
+//-		{
+//-			cTelescopeProp.AtPark			=	true;
+//-		}
 	}
 	else
 	{
@@ -3271,10 +3273,8 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "cTelescopeProp.CanPark is false");
 //		CONSOLE_DEBUG(alpacaErrMsg);
 	}
-
 	return(alpacaErrCode);
 }
-
 
 //*****************************************************************************
 TYPE_ASCOM_STATUS	TelescopeDriver::Put_SyncToAltAz(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
@@ -3440,8 +3440,7 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 
 	if (cTelescopeProp.CanUnpark)
 	{
-		alpacaErrCode	=	kASCOM_Err_Success;
-		cTelescopeProp.AtPark			=	false;
+		alpacaErrCode			=	Telescope_UnPark(alpacaErrMsg);
 	}
 	else
 	{
@@ -3477,6 +3476,11 @@ double					hourAngle_Degrees;
 #ifdef _ENABLE_IMU_
 
 	hourAngle_Degrees			=	IMU_GetAverageRoll();
+	if (hourAngle_Degrees <= 0.0)
+	{
+		//*	we are on the east side of the pier, add 90 degrees
+		hourAngle_Degrees	+=	90.0;
+	}
 	cTelescopeProp.HourAngle	=	hourAngle_Degrees / 15.0;
 
 //	CONSOLE_DEBUG_W_DBL("hourAngle_Degrees\t=",	hourAngle_Degrees);
@@ -3708,33 +3712,33 @@ int32_t	TelescopeDriver::RunStateMachine(void)
 }
 
 //*****************************************************************************
-//*	needs to be over-ridden
 TYPE_ASCOM_STATUS	TelescopeDriver::Telescope_AbortSlew(char *alpacaErrMsg)
 {
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 
+	//*	needs to be over-ridden
+
 	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
 	return(alpacaErrCode);
 
 }
 
 //*****************************************************************************
-//*	needs to be over-ridden
 TYPE_ASCOM_STATUS	TelescopeDriver::Telescope_FindHome(char *alpacaErrMsg)
 {
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 
+	//*	needs to be over-ridden
 	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
 	return(alpacaErrCode);
 }
 
-//*****************************************************************************
-//*	needs to be over-ridden
 //*****************************************************************************
 TYPE_ASCOM_STATUS	TelescopeDriver::Telescope_MoveAxis(const int axisNum, const double moveRate_degPerSec, char *alpacaErrMsg)
 {
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
 
+	//*	needs to be over-ridden
 	CONSOLE_DEBUG(__FUNCTION__);
 	switch(axisNum)
 	{
@@ -3766,103 +3770,99 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
 			alpacaErrCode	=	kASCOM_Err_NotImplemented;
 			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
 			break;
-
 	}
 	return(alpacaErrCode);
 }
 
 //*****************************************************************************
-//*	needs to be over-ridden
 TYPE_ASCOM_STATUS	TelescopeDriver::Telescope_Park(char *alpacaErrMsg)
 {
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 
-	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
+	//*	needs to be over-ridden
+	cTelescopeProp.AtPark	=	true;
+	alpacaErrCode			=	kASCOM_Err_Success;
 	return(alpacaErrCode);
 }
 
 //*****************************************************************************
-//*	needs to be over-ridden
 TYPE_ASCOM_STATUS	TelescopeDriver::Telescope_SetPark(char *alpacaErrMsg)
 {
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 
+	//*	needs to be over-ridden
 	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
 	return(alpacaErrCode);
 }
 
 //*****************************************************************************
-//*	needs to be over-ridden
 TYPE_ASCOM_STATUS	TelescopeDriver::Telescope_SlewToAltAz(const double newAlt_Degrees, const double newAz_Degrees, char *alpacaErrMsg)
 {
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 
+	//*	needs to be over-ridden
 	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
 	return(alpacaErrCode);
 }
 
 //*****************************************************************************
-//*	needs to be over-ridden
 TYPE_ASCOM_STATUS	TelescopeDriver::Telescope_SlewToRA_DEC(const double newRA, const double newDec, char *alpacaErrMsg)
 {
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 
+	//*	needs to be over-ridden
 	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
 	return(alpacaErrCode);
 }
 
 
 //*****************************************************************************
-//*	needs to be over-ridden
 TYPE_ASCOM_STATUS	TelescopeDriver::Telescope_SyncToRA_DEC(const double newRA, const double newDec, char *alpacaErrMsg)
 {
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 
+	//*	needs to be over-ridden
 	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
 	return(alpacaErrCode);
 }
 
 //*****************************************************************************
-//*	needs to be over-ridden
 TYPE_ASCOM_STATUS	TelescopeDriver::Telescope_TrackingOnOff(const bool newTrackingState, char *alpacaErrMsg)
 {
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 
+	//*	needs to be over-ridden
 	CONSOLE_DEBUG(__FUNCTION__);
 
 	if (newTrackingState)
 	{
-
 		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 	}
 	else
 	{
 		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
-
 	}
 	return(alpacaErrCode);
 }
 
-
 //*****************************************************************************
-//*	needs to be over-ridden
 TYPE_ASCOM_STATUS	TelescopeDriver::Telescope_UnPark(char *alpacaErrMsg)
 {
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 
-	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
+	//*	needs to be over-ridden
+	cTelescopeProp.AtPark	=	false;
+	alpacaErrCode			=	kASCOM_Err_Success;
 	return(alpacaErrCode);
-
 }
 
-//*****************************************************************************
-//* this can be over-ridden
 //*****************************************************************************
 int	TelescopeDriver::Telescope_GetLimitSwitchStatus(const TYPE_LIMITSWITCH whichLimit)
 {
 int		limitSwichStatus;
 
+	//*	needs to be over-ridden
 	switch(whichLimit)
 	{
 		case kLimitSwitch_RA_East:
@@ -3882,23 +3882,28 @@ int		limitSwichStatus;
 }
 
 //*****************************************************************************
-//* this can be over-ridden
-//*****************************************************************************
 TYPE_PierSide	TelescopeDriver::Telescope_GetPhysicalSideOfPier(void)
 {
 TYPE_PierSide	physicalSideOfPier	=	kPierSide_NotAvailable;
 
+	//* this can be over-ridden
+
 #ifdef _ENABLE_IMU_
 double					hourAngle_Degrees;
 
+	//*	The sensor must be placed at the 12:00 position of the axis, that its
+	//*	When the counter weights are at the lowest point, the ROLL axis MUST read ZERO (or very near zero)
+	//*	Standing to the south of the telescope, looking along the RA axis at the North Celestial Poll
+	//*	When the telescope rotates to the right(clockwise / east), the ROLL angle must be NEGATIVE
+	//*	When the telescope rotates to the left (counter-clockwise /west ), the ROLL angle must be POSITIVE
 	hourAngle_Degrees	=	IMU_GetAverageRoll();
 	if (hourAngle_Degrees < 0.0)
 	{
-		physicalSideOfPier	=	kPierSide_pierWest;
+		physicalSideOfPier	=	kPierSide_pierEast;
 	}
 	else
 	{
-		physicalSideOfPier	=	kPierSide_pierEast;
+		physicalSideOfPier	=	kPierSide_pierWest;
 	}
 #endif
 	return(physicalSideOfPier);

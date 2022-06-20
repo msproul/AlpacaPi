@@ -68,7 +68,7 @@
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
 
-#define	_VERBOSE_SQL_DEBUG_
+//#define	_VERBOSE_SQL_DEBUG_
 
 #include	"controller_skytravel.h"
 #include	"helper_functions.h"
@@ -226,7 +226,7 @@ int		slen;
 bool	configOK;
 bool	validEntry;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	//*	set the database name list to all zeros
 	for (iii=0; iii<kMaxDataBaseNames; iii++)
 	{
@@ -238,7 +238,7 @@ bool	validEntry;
 	filePointer	=	fopen(kSQLserverConfigFile, "r");
 	if (filePointer != NULL)
 	{
-		CONSOLE_DEBUG("SQL config file opened OK");
+//		CONSOLE_DEBUG("SQL config file opened OK");
 		while (fgets(lineBuff, 200, filePointer))
 		{
 			//*	get rid of the trailing CR/LF
@@ -295,7 +295,7 @@ bool	GaiaSQLinit(void)
 int		iii;
 bool	configOK;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	configOK	=	ReadSQLconfigFile();
 	//*	set the Gaia data list to all zeros
 	for (iii=0; iii<kMaxGaiaDataSets; iii++)
@@ -313,7 +313,7 @@ bool	configOK;
 #endif
 	strcat(gSQLclientVersion, "/");
 	strcat(gSQLclientVersion, mysql_get_client_info());
-	CONSOLE_DEBUG_W_STR("SQL library:", gSQLclientVersion);
+//	CONSOLE_DEBUG_W_STR("SQL library:", gSQLclientVersion);
 
 	return(configOK);
 }
@@ -398,7 +398,7 @@ char			mySQLCmd[256];
 int				returnCode;
 char			userString[128];
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	returnCode		=	-1;
 

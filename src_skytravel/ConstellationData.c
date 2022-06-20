@@ -26,7 +26,7 @@
 
 //*	MLS Libraries
 #define _ENABLE_CONSOLE_DEBUG_
-#define	_DEBUG_TIMING_
+//#define	_DEBUG_TIMING_
 #include	"ConsoleDebug.h"
 #include	"helper_functions.h"
 
@@ -38,8 +38,8 @@ int					gConstVectorCnt		=	0;
 TYPE_ConstOutline	*gConstOutlinePtr	=	NULL;
 int					gConstOutlineCount	=	0;
 
-#define	RADIANS(degrees)	(degrees * M_PI / 180.0)
-#define	DEGREES(radians)	(radians * 180.0 / M_PI)
+//#define	RADIANS(degrees)	(degrees * M_PI / 180.0)
+//#define	DEGREES(radians)	(radians * 180.0 / M_PI)
 
 
 
@@ -466,7 +466,7 @@ int					iii;
 
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, directoryPath);
 
-	SETUP_TIMING();
+//	SETUP_TIMING();
 
 	*objectCount	=	0;
 
@@ -537,7 +537,7 @@ int					iii;
 	//	CONSOLE_ABORT(__FUNCTION__);
 	}
 
-	DEBUG_TIMING("Elapsed millisconds=");
+//	DEBUG_TIMING("Elapsed millisconds=");
 	return(constVectors_return);
 }
 

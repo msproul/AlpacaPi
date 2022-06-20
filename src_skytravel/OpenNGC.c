@@ -348,7 +348,7 @@ char			lineBuff[512];
 char			filePath[128];
 char			*firstLinePtr;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	ngcStarData	=	NULL;
 
@@ -391,11 +391,8 @@ char			*firstLinePtr;
 	{
 		CONSOLE_DEBUG_W_STR("File not found\t=", filePath);
 	}
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, "exit");
-
 	return(ngcStarData);
 }
-
 
 //97.92134  9.93024   2
 //97.92182  9.90016   2
@@ -442,7 +439,7 @@ char				lineBuff[512];
 char				filePath[128];
 bool				validObject;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	outlineArray	=	NULL;
 

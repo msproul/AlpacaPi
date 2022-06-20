@@ -62,11 +62,43 @@
 #include	"alpacadriver_helper.h"
 #include	"helper_functions.h"
 
-//*	servo controller routines using RoboClaws controller
-#include	"servo_mount_cfg.h"
-#include	"servo_mount.h"
-#include	"servo_std_defs.h"
-#include	"servo_time.h"
+
+	#include	"servo_mount_cfg.h"
+	#include	"servo_time.h"
+	#include	"servo_std_defs.h"
+
+//#define	_DEBUG_WITHOUT_ROBOCLAW_
+#ifdef _DEBUG_WITHOUT_ROBOCLAW_
+	#define	Servo_set_pos(x,y)				(kSTATUS_OK)
+	#define	Servo_move_axis_by_vel(x,y)		(kSTATUS_OK)
+	#define	Servo_get_park_coordins(x,y)	(kSTATUS_OK)
+	#define	Servo_get_pos(x,y)				(kSTATUS_OK)
+	#define	Servo_unpark()					(kSTATUS_OK)
+	#define	Servo_state()					(STOPPED)
+	#define	Servo_move_to_park()			(kSTATUS_OK)
+	#define	Servo_get_pier_side()			(kSTATUS_OK)
+	#define	Servo_init(x,y)					(kSTATUS_OK)
+
+	#define	Servo_start_tracking(x)			(kSTATUS_OK)
+	#define	Servo_stop(x)					(kSTATUS_OK)
+	#define	Servo_move_to_coordins(x,y,z,q)	(kSTATUS_OK)
+
+//****************************************************************************
+typedef enum
+{
+	PARKED 	=	0,
+	PARKING,
+//	HOMED,
+//	HOMING,
+	STOPPED,
+	MOVING,
+	TRACKING
+}	TYPE_MOVE;
+
+#else
+	//*	servo controller routines using RoboClaws controller
+	#include	"servo_mount.h"
+#endif // _DEBUG_WITHOUT_ROBOCLAW_
 
 #include	"telescopedriver.h"
 #include	"telescopedriver_servo.h"
@@ -79,7 +111,7 @@ TelescopeDriverServo::TelescopeDriverServo(void)
 int				cfgStatus;
 int8_t			servoSide;
 double			parkHA, parkDec;
-long double		jd, lst; 
+long double		jd, lst;
 
 
 	CONSOLE_DEBUG(__FUNCTION__);
@@ -149,12 +181,12 @@ long double		jd, lst;
 
 	//	We know that Servo_init() always sets the scope to the park position
 	Servo_get_park_coordins(&parkHA, &parkDec);
-	if (parkHA == NAN)
+	if (__isnan(parkHA))
 	{
 		parkHA	=	0.0;
 		CONSOLE_DEBUG("parkHA is NAN");
 	}
-	if (parkDec == NAN)
+	if (__isnan(parkDec))
 	{
 		parkDec	=	0.0;
 		CONSOLE_DEBUG("parkDec is NAN");
@@ -164,14 +196,14 @@ long double		jd, lst;
 	jd = Time_systime_to_jd();
 	lst = Time_jd_to_gmst(jd);
 	lst = Time_gmst_to_lst(lst, cTelescopeProp.SiteLongitude);
-	// Subtrack the park hour angle from LST to get Park RA - reuse lst long double 
-	lst -= parkHA; 
-	// Normalize to 0 -> 23.99999 and type is long double 
+	// Subtrack the park hour angle from LST to get Park RA - reuse lst long double
+	lst -= parkHA;
+	// Normalize to 0 -> 23.99999 and type is long double
 	Time_normalize_hours(&lst);
 
 	cTelescopeProp.RightAscension	=	lst;
 	cTelescopeProp.Declination		=	parkDec;
-	cTelescopeProp.AtPark 			= 	true;	
+	cTelescopeProp.AtPark 			= 	true;
 
 	AlpacaConnect();
 
@@ -587,19 +619,13 @@ TYPE_ASCOM_STATUS TelescopeDriverServo::Telescope_Park(char *alpacaErrMsg)
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
 int					servoStatus;
 double				parkHA, parkDec;
-long double			jd, lst; 
+long double			jd, lst;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
 	alpacaErrCode	=	kASCOM_Err_Success;
 	servoStatus		=	Servo_move_to_park();
-	if (servoStatus != kSTATUS_OK)
-	{
-		//	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Servo_move_to_park failed");
-		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not connected");
-		alpacaErrCode	=	kASCOM_Err_NotConnected;
-	}
-	else
+	if (servoStatus == kSTATUS_OK)
 	{
 		//	Mount is moving to the park position
 
@@ -607,11 +633,11 @@ long double			jd, lst;
 		Servo_get_park_coordins(&parkHA, &parkDec);
 
 		//	Convert park HA to RA
-		jd = Time_systime_to_jd();
-		lst = Time_jd_to_gmst(jd);
-		lst = Time_gmst_to_lst(lst, cTelescopeProp.SiteLongitude);
-		// Subtrack the park hour angle from LST to get Park RA - reuse lst long double
-		lst -= parkHA;
+		jd	=	Time_systime_to_jd();
+		lst	=	Time_jd_to_gmst(jd);
+		lst	=	Time_gmst_to_lst(lst, cTelescopeProp.SiteLongitude);
+		// subtract the park hour angle from LST to get Park RA - reuse lst long double
+		lst	-=	parkHA;
 		// Normalize to 0 -> 23.99999 and type is long double
 		Time_normalize_hours(&lst);
 
@@ -622,6 +648,13 @@ long double			jd, lst;
 
 		CONSOLE_DEBUG(alpacaErrMsg);
 	}
+	else
+	{
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Servo_move_to_park failed");
+		alpacaErrCode	=	kASCOM_Err_NotConnected;
+	}
+	//*	for now, force it parked regardless
+	cTelescopeProp.AtPark 		= 	true;
 
 	return(alpacaErrCode);
 }
@@ -750,27 +783,33 @@ int					servoStatus;
 TYPE_ASCOM_STATUS	TelescopeDriverServo::Telescope_UnPark(char *alpacaErrMsg)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode;
-int					servoStatus; 
+int					servoStatus;
+
 	CONSOLE_DEBUG(__FUNCTION__);
 
 	alpacaErrCode	=	kASCOM_Err_Success;
 
 	//	Attempt to unpark the mount, only works if it's current state is parked
-	servoStatus	=	Servo_unpark();
-#warning "RNS: This printf never prints, so I believe this derived function is not being called"
-	printf("@@@ Telescope_UnPark() servoStatus = %d\n", servoStatus);
-	if (servoStatus != kSTATUS_OK)
+	servoStatus		=	Servo_unpark();
+
+	CONSOLE_DEBUG_W_NUM("@@@ Telescope_UnPark() servoStatus\t=", servoStatus);
+	if (servoStatus == kSTATUS_OK)
+	{
+		//	Mount is now unparked and ready for movement
+		cTelescopeProp.AtPark 		= 	false;
+		CONSOLE_DEBUG(alpacaErrMsg);
+	}
+	else
 	{
 		//	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Servo_unpark failed, mount was not parked");
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not connected");
 		alpacaErrCode	=	kASCOM_Err_NotConnected;
 	}
-	else
-	{
-		//	Mount is now unparked and ready for movement
-		cTelescopeProp.AtPark 		= 	false;	
-		CONSOLE_DEBUG(alpacaErrMsg);
-	}
+
+	//*	for now, force it unparked regardless
+	cTelescopeProp.AtPark 		= 	false;
+
+
 	return(alpacaErrCode);
 }
 

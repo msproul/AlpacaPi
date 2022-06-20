@@ -197,12 +197,17 @@ unsigned int		deltaSecs;
 	fitsVersionRet		=	ffvers(&fitsVersionVal);
 #ifdef CFITSIO_MAJOR
 	#if (CFITSIO_MAJOR >= 4)
+		printf("cfitsio version %d.%d.%d\r\n", CFITSIO_MAJOR, CFITSIO_MINOR, CFITSIO_MICRO);
 	#else
 		printf("cfitsio version %3.2f\r\n", CFITSIO_VERSION);
 	#endif
-#endif
-	printf("cfitsio version %3.2f\r\n", fitsVersionRet);
+#else
 	printf("cfitsio version %3.2f\r\n", fitsVersionVal);
+#endif
+	if (fitsVersionRet != fitsVersionVal)
+	{
+		printf("cfitsio version %3.2f\r\n", fitsVersionRet);
+	}
 
 	memset(&gST_DispOptions,	0, sizeof(SkyTravelDispOptions));
 
@@ -230,7 +235,7 @@ unsigned int		deltaSecs;
 #else
 	gST_DispOptions.RemoteGAIAenabled			=	false;
 #endif // _ENABLE_REMOTE_GAIA_
-	CONSOLE_DEBUG_W_STR("RemoteGAIAenabled is", (gST_DispOptions.RemoteGAIAenabled ? "enabled" : "disabled"));
+//	CONSOLE_DEBUG_W_STR("RemoteGAIAenabled is", (gST_DispOptions.RemoteGAIAenabled ? "enabled" : "disabled"));
 
 #ifdef _USE_OPENCV_CPP_
 	new ControllerSkytravel("SkyTravel++");

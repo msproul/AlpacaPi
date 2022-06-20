@@ -50,9 +50,9 @@ class TelescopeDriverServo: public TelescopeDriver
 		//*************************************************************************
 
 
-		//--------------------------------------------------------------------------------------------------
-		//*	these routines should be implemented by the sub-classes
-		//*	all have to return an Alpaca Error code
+//		//--------------------------------------------------------------------------------------------------
+//		//*	these routines should be implemented by the sub-classes
+//		//*	all have to return an Alpaca Error code
 		virtual	TYPE_ASCOM_STATUS	Telescope_AbortSlew(	char *alpacaErrMsg);
 		virtual	TYPE_ASCOM_STATUS	Telescope_FindHome(		char *alpacaErrMsg);
 		virtual	TYPE_ASCOM_STATUS	Telescope_MoveAxis(		const int axisNum,
@@ -64,21 +64,25 @@ class TelescopeDriverServo: public TelescopeDriver
 		virtual	TYPE_ASCOM_STATUS	Telescope_SlewToAltAz(	const double	newAlt_Degrees,
 															const double	newAz_Degrees,
 															char *alpacaErrMsg);
-
+//
 		virtual	TYPE_ASCOM_STATUS	Telescope_SlewToRA_DEC(	const double	newRtAscen_Hours,
 															const double	newDeclination_Degrees,
 															char *alpacaErrMsg);
 
-
-
+//
+//
 		virtual	TYPE_ASCOM_STATUS	Telescope_SyncToRA_DEC(	const double	newRtAscen_Hours,
 															const double	newDeclination_Degrees,
 															char *alpacaErrMsg);
 		virtual	TYPE_ASCOM_STATUS	Telescope_TrackingOnOff(const bool newTrackingState,
 															char *alpacaErrMsg);
-
-
+//
+//
 		virtual	TYPE_ASCOM_STATUS	Telescope_UnPark(		char *alpacaErrMsg);
+//
+//
+//		virtual	int					Telescope_GetLimitSwitchStatus(const TYPE_LIMITSWITCH whichLimit);
+//		virtual	TYPE_PierSide		Telescope_GetPhysicalSideOfPier(void);
 
 	private:
 		bool				cServoConfigIsValid;
