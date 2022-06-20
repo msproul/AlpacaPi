@@ -27,6 +27,7 @@
 //*	Jul 15,	2019	<MLS> Started on sidereal time
 //*	Nov  8,	2019	<MLS> Made sidereal into a library
 //*	Dec  6,	2020	<MLS> Added CalcSiderealTime_dbl()
+//*	Jun 20,	2022	<RNS> Reimplemented CalcSiderealTime with Meeus eq. 12.4
 //*****************************************************************************
 
 #ifdef _INCLUDE_SIDERIAL_MAIN_
@@ -41,9 +42,10 @@
 
 #include	<time.h>
 
-#define _ENABLE_CONSOLE_DEBUG_
-#include	"ConsoleDebug.h"
+// #define _ENABLE_CONSOLE_DEBUG_
+// #include	"ConsoleDebug.h"
 
+#include 	"julianTime.h"
 #include	"sidereal.h"
 
 // sidereal calculation constants
@@ -106,68 +108,57 @@ void	CalcSiderealTime(	struct tm	*utcTime,
 							struct tm	*siderealTimePtr,
 							double		argLongitude)
 {
-double	utc;
-int		fullYear;
-int		g;
-int		leap;		// number of leap years since 2000
-int		nonleap;	// number of non-leap years since 2000
-double	G;			// number of days
-int		numDays;
-double	GST;		// Greenwich Sidereal Time
-double	LST;		// Local apparent Sidereal Time
-int		dh,dm,ds;	// local sidereal time
+time_t	utcSysTime; 
+time_t	sidSysTime; 
+double 	jd, jCent, deltaJd; 
+double	gmstDegs;
 
-	// decimal form
-	utc	=	utcTime->tm_hour +
-			utcTime->tm_min / 60.0 +
-			utcTime->tm_sec / 3600.0;
+	// Convert the itemized UTC time struct back to timeval format with only second accuracy
+	utcSysTime	=	timegm(utcTime);
 
+	// Calc the std JD 
+	jd = ((double) utcSysTime / 86400.0) + 2440587.5;
 
-	fullYear	=	1900 + utcTime->tm_year;
-	// calculate numDays
-	numDays		=	CalcNumDays(fullYear, (utcTime->tm_mon + 1), utcTime->tm_mday);
+	// Get the Julian centuries and the delta against J2000
+	deltaJd	=	jd - 2451545.0L;
+	jCent	=	deltaJd / 36525.0L;
 
+	// Using Meeus formula 12.4, which does not need whole Julian days
+	gmstDegs	=	280.46061837 + (360.98564736629 * deltaJd);
+	jCent		*=	jCent;		//  Need the square for the next term
+	gmstDegs	+=	0.000387933 * jCent;
+	jCent		*=	jCent;		//  Need the cube for the next term
+	gmstDegs	-=	jCent / 38710000.0;
 
-	// calculate G (based on extrapolation)
-	g		=	(fullYear - 2000);
-	leap	=	(g + 1.0) / 4.0;							// number of leap years since 2000
-	nonleap	=	g - leap;									// number of non-leap years since 2000
-	G		=	kG2000 + (leap * kLC) + (nonleap * kNC);	// number of days
+	// add the offset for longitude in degrees
+	gmstDegs 	+=	argLongitude;
 
-//	CONSOLE_DEBUG_W_DBL("G\t\t=",	G);
-
-	// calculate GST and Local Sidereal Time (LST)
-	GST		=	G + (kDC * numDays) + (kTC * utc) + kFUDGE;			// Greenwich Sidereal Time
-	LST		=	GST + 24.0 + (argLongitude / 360.0 * kSiderealday);	// adjust for longitude (longitude portion of siderail day
-	while (LST > 24.0)
+	// convert from degrees to hours and normalize
+	gmstDegs	/=	15.0;
+	if (gmstDegs > 24.0)
 	{
-		LST	-=	24.0;
-	}											// adjust to bring into 0-24 hours
-	dh	=	LST;								// translate into hours, ...
-	dm	=	(LST - dh) * 60.0;					//... mins and ...
-	ds	=	(LST - dh - (dm / 60.0))*3600.0;	//... seconds
+		gmstDegs -= 24.0;
+	}
+	if (gmstDegs < 24.0)
+	{
+		gmstDegs += 24.0;
+	}
 
+	// Convert gmst into timeval system time format
+	sidSysTime	= (time_t) gmstDegs; 
 
-//	printf("\r\n");
-//	CONSOLE_DEBUG_W_NUM("fullYear\t=", fullYear);
-//	CONSOLE_DEBUG_W_NUM("g\t\t=", g);
-//	CONSOLE_DEBUG_W_NUM("leap\t=", leap);
-//	CONSOLE_DEBUG_W_NUM("nonleap\t=", nonleap);
+	// Round up by one if the leftover fraction is >= half
+	if ((gmstDegs - (double) sidSysTime) >= 0.5)
+	{
+		sidSysTime += 1;
+	}
 
-//	CONSOLE_DEBUG_W_DBL("LST\t=", LST);
-//	CONSOLE_DEBUG_W_NUM("dh\t\t=", dh);
-//	CONSOLE_DEBUG_W_NUM("dm\t\t=", dm);
-//	CONSOLE_DEBUG_W_NUM("ds\t\t=", ds);
-
-	//*	copy all of the UTC stuff over, then change what needs to be changed
-	*siderealTimePtr			=	*utcTime;
-	siderealTimePtr->tm_year	=	fullYear - 1900;
-	siderealTimePtr->tm_hour	=	dh;
-	siderealTimePtr->tm_min		=	dm;
-	siderealTimePtr->tm_sec		=	ds;
+	// Convert to broken down time format
+	siderealTimePtr = gmtime(&sidSysTime); 
 
 	//**********************************************
 	//*	Added by MLS, Nov 8, 2019
+	//RNS - now obsolete, Jun 20, 2022
 	//*	check to see if we went over a day boundary
 //	if (siderealTimePtr->tm_hour == 0)
 //	{

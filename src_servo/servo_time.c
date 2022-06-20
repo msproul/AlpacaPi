@@ -237,7 +237,7 @@ long double		deltaJd;
 //*****************************************************************************
 long double Time_gmst_to_lst(long double sid, double lon)
 {
-	sid	-=	(lon / 15.0);
+	sid	+=	(lon / 15.0);
 
 	// make sure sid is postive and < 24.0
 	Time_normalize_hours(&sid);
