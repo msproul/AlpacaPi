@@ -34,6 +34,7 @@
 //*	May 22,	2022	<RNS> General cleanup to get data/control flow aligned with ASCOM
 //* Jun  6,	2022	<RNS> regenerated *all* function declarations with cproto
 //* Jun 17,	2022	<RNS> regenerated *all* function declarations with cproto
+//* Jun 19,	2022	<RNS> changed Servo_park() return type from bool to int
 //****************************************************************************
 
 #ifndef _SERVO_MOUNT_H_
@@ -66,7 +67,7 @@ void Servo_get_standby_coordins(double *ha, double *dec);
 void Servo_get_sync_coordins(double *ra, double *dec);
 void Servo_set_time_ratio(double ratio);
 double Servo_get_time_ratio(void);
-bool Servo_unpark(void);
+int Servo_unpark(void);
 bool Servo_get_park_state(void);
 int8_t Servo_get_pier_side(void);
 int Servo_scale_acc(int32_t percentRa, int32_t percentDec);

@@ -52,6 +52,7 @@
 //*	Jun 12,	2022	<RNS> Masked 'set but not used' warning for a returned RC state
 //*	Jun 12,	2022	<RNS> Added _set_vel_pid and _get_vel_pid functions
 //*	Jun 13	2022	<RNS> Converted all PID function to use float for PID args
+//*	Jun 19	2022	<RNS> Fixed an 'unused' compiler warning
 //*****************************************************************************
 // Notes:   M1 *MUST BE* connected to RA or Azimuth axis, M2 to Dec or Altitude
 //*****************************************************************************
@@ -134,7 +135,6 @@ int			cmd;
 int			len;
 int			retState;
 [[maybe_unused]] uint8_t status;
-
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 	// Select motor:  RA (0) means M1 and DEC (1) means M2
@@ -575,7 +575,7 @@ int			retState;
 // Send: [Address, 95]
 // Receive: [Enc1Mode, Enc2Mode, CRC(2 bytes)]
 //******************************************************************
-int RC_read_settings(uint8_t addr, uint32_t *rcStatus)
+int RC_read_settings(uint8_t addr, [[maybe_unused]] uint32_t *rcStatus)
 {
 //uint8_t		readMsg[kSMALL_STR_LEN];	// data str to be sent to mc
 //uint8_t		writeMsg[kSMALL_STR_LEN];	// data str to be read from mc
