@@ -45,7 +45,6 @@
 // #define _ENABLE_CONSOLE_DEBUG_
 // #include	"ConsoleDebug.h"
 
-#include 	"julianTime.h"
 #include	"sidereal.h"
 
 // sidereal calculation constants
