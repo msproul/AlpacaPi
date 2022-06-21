@@ -71,6 +71,7 @@
 //*	Jun 17	2022	<RNS> Deleted servo_stop_all(), obsolete with servo_stop doing both
 //*	Jun 17	2022	<RNS> Added and renamed start_axis_tracking to support both axes 
 //*	Jun 19	2022	<RNS> Fixed a toggle gParkState bug in _unpark() and return to int
+//*	Jun 21	2022	<RNS> Fixed incorret variable ref and conversion in move_to_static()
 //*****************************************************************************
 // Notes: M1 *MUST BE* connected to RA or Azimuth axis, M2 to Dec or Altitude
 //*****************************************************************************
@@ -1602,10 +1603,12 @@ int Servo_move_to_static(double parkHA, double parkDec)
 	double targetRa, targetDec;
 	double currRa, currDec;
 	double dummy = 0;
-	double currHA, targetHA, raRelDir;
+	double currHA, raRelDir;
 	double time, jd, lst;
 	double home;
 	int status = kSTATUS_OK;
+
+	// printf("@@@ Servo_move_to_static()  parkHA:%.6f parkDec:%.6f\n", parkHA, parkDec);
 
 	// Make sure the mount is not Parked, but *if parked* then return error
 	if (gParkState == true)
@@ -1613,17 +1616,17 @@ int Servo_move_to_static(double parkHA, double parkDec)
 		return kERROR;
 	}
 
-	targetHA = parkHA;
+	// Setting the dec target is easy, only updated if mount need to flip
 	targetDec = parkDec;
 
-	// convert ra deciHours to deciDegs
-	Time_deci_hours_to_deg(&targetHA);
+	// printf("@@@ Servo_move_to_static()  .side:%d .ra.parkInfo:%d\n", gMountConfig.side, gMountConfig.ra.parkInfo);
+
+	// RA target is harder, so get where the mount is now
+	Servo_get_pos(&currRa, &currDec);
 
 	// if the mount is currently thru-the-pole or flipped from config file setting
 	if (gMountConfig.side != gMountConfig.ra.parkInfo)
 	{
-		// Get the current position and flip it
-		Servo_get_pos(&currRa, &currDec);
 		// Unflip the mount
 		Servo_calc_flip_coordins(&currRa, &currDec, &dummy, &gMountConfig.side);
 
@@ -1639,11 +1642,16 @@ int Servo_move_to_static(double parkHA, double parkDec)
 	// calc HA of the current RA position
 	currHA = lst - currRa;
 
-	// relative change needed for RA by subtracting current pos HA from the input park RA
-	raRelDir = targetHA - currHA;
+	// printf("@@@ Servo_move_to_static()  currHA:%.6f lst:%.6f currRa:%.6f\n", currHA, lst, currRa);
 
-	// determine the new target based on the  RA/Dec relative direction
+	// relative change in hours needed for RA by subtracting current pos HA from the input park RA
+	raRelDir = parkHA - currHA;
+	// printf("@@@ Servo_move_to_static()  parkHA:%.6f currHA:%.6f\n", parkHA, currHA);
+
+	// determine the new target in hours based on the RA/Dec relative direction
 	targetRa = currRa + raRelDir;
+	// printf("@@@ Servo_move_to_static()  targetRa:%.6f currRa:%.6f raRelDri:%.6f\n", targetRa, currRa, raRelDir);
+
 	// Dec relative calc is not needed since targetDec is just the parkDec
 
 	// Prepare Dec axis for move first (Dec is typically less time sensitive than RA)
@@ -1692,9 +1700,14 @@ int Servo_move_to_static(double parkHA, double parkDec)
 		home = gMountConfig.ra.zero;
 	}
 
+	// convert ra deciHours to deciDegs to compare with the zero position (in degs)
+	Time_deci_hours_to_deg(&targetRa);
+
 	// Determine the degrees difference from target coordins and home position
 	// this math only works since axis.zero value corresponds to zero step position
 	currRaDelta = targetRa - home;
+	// printf("@@@ Servo_move_to_static()  currRaDelta:%.6f targetRa:%.6f home:%.6f\n", currRaDelta, targetRa, home);
+
 
 	// get the actual RA step needed  (absolute)
 	targetRaStep = (uint32_t)((gMountConfig.ra.direction) * (currRaDelta * 3600.0 * gMountConfig.ra.step));
@@ -1718,7 +1731,7 @@ int Servo_move_to_park(void)
 	double ha, dec;
 	int status;
 
-	printf("@@@ Servo_move_to_park() gParkState = %d\n", gParkState);
+	// printf("@@@ Servo_move_to_park() gParkState = %d\n", gParkState);
 	// Make sure the mount is not Parked, but *if parked* then return error
 	if (gParkState == true)
 	{
@@ -1730,9 +1743,11 @@ int Servo_move_to_park(void)
 	// Allow a move to anywhere and set the action state, then  move to static pos
 	Servo_ignore_horizon(true);
 	gMountAction = PARKING;
+	// printf("@@@ Servo_move_to_park() ha:%.6f dec:%.6f\n", ha, dec);
+
 	status = Servo_move_to_static(ha, dec);
 
-	printf("@@@ Servo_move_to_park() status = %d\n", status);
+	// printf("@@@ Servo_move_to_park() status = %d\n", status);
 	// If status is < zero, return error
 	return (status == kSTATUS_OK) ? kSTATUS_OK : kERROR;
 } // of Servo_move_to_park()
