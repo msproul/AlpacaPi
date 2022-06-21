@@ -28,9 +28,9 @@
 //*	Nov  8,	2019	<MLS> Made sidereal into a library
 //*	Dec  6,	2020	<MLS> Added CalcSiderealTime_dbl()
 //*	Jun 20,	2022	<RNS> Reimplemented CalcSiderealTime with Meeus eq. 12.4
+//*	Jun 20,	2022	<RNS> fixed some logic bug and a pointer bug
 //*****************************************************************************
-
-#ifdef _INCLUDE_SIDERIAL_MAIN_
+#ifdef _INCLUDE_SIDEREAL_MAIN_
 	#include	<stdlib.h>
 	#include	<string.h>
 	#include	<strings.h>
@@ -38,32 +38,19 @@
 	#include	<stdbool.h>
 	#include	<stdio.h>
 	#include	<math.h>
-#endif // _INCLUDE_SIDERIAL_MAIN_
+#endif // _INCLUDE_SIDEREAL_MAIN_
 
 #include	<time.h>
 
-// #define _ENABLE_CONSOLE_DEBUG_
-// #include	"ConsoleDebug.h"
+#define _ENABLE_CONSOLE_DEBUG_
+#include	"ConsoleDebug.h"
 
 #include	"sidereal.h"
 
-// sidereal calculation constants
-#define	kDC				0.0657098244
-#define	kTC				1.00273791
-#define	kGC				6.648605
-#define	kG2000			6.5988098
-#define	kLC				0.0497958000000001
-#define	kNC				-0.0159140999999998
-//#define	kFUDGE			0.0				//	fudge factor (unnecessary?
-#define	kFUDGE			-0.013922				//	fudge factor (unnecessary?
 //#define	LONGITUDE		-2.247926			//	Longitude for Manchester UK
-//#define	LATITUDE		53.53					//	Latitude for Manchester UK
+//#define	LATITUDE		53.53				//	Latitude for Manchester UK
 
 #define	LONGITUDE		-(74.0 + (58.0 / 60.0) + (49.0 / 3600.0)) 	//	Longitude for Shohola NJ
-
-//#define	kSiderealday	23.9344699
-#define	kSiderealday	(23.0 + (56.0 / 60.0) + (4.0905 / 3600.0))	//	length of sidereal day (23:56:04.0905)
-
 
 //**************************************************************************
 // Calculate the number of days since Jan 1
@@ -95,8 +82,6 @@ int		leapyear;
 	return daysSinceJan1 + day;			// days from Jan 1 of given year
 }
 
-
-
 // **********************************************************************************
 //						GREENWICH & LOCAL SIDEREAL TIME CALCULATIONS
 // **********************************************************************************
@@ -107,10 +92,10 @@ void	CalcSiderealTime(	struct tm	*utcTime,
 							struct tm	*siderealTimePtr,
 							double		argLongitude)
 {
-time_t	utcSysTime; 
-time_t	sidSysTime; 
-double 	jd, jCent, deltaJd; 
-double	gmstDegs;
+time_t		utcSysTime; 
+int			sidSecTime; 
+double 		jd, jCent, deltaJd; 
+double		gmstDegs;
 
 	// Convert the itemized UTC time struct back to timeval format with only second accuracy
 	utcSysTime	=	timegm(utcTime);
@@ -134,47 +119,43 @@ double	gmstDegs;
 
 	// convert from degrees to hours and normalize
 	gmstDegs	/=	15.0;
-	if (gmstDegs > 24.0)
-	{
-		gmstDegs -= 24.0;
-	}
-	if (gmstDegs < 24.0)
+
+	while (gmstDegs < 0.0)
 	{
 		gmstDegs += 24.0;
 	}
-
-	// Convert gmst into timeval system time format
-	sidSysTime	= (time_t) gmstDegs; 
-
-	// Round up by one if the leftover fraction is >= half
-	if ((gmstDegs - (double) sidSysTime) >= 0.5)
+	while (gmstDegs >= 24.0)
 	{
-		sidSysTime += 1;
+		gmstDegs -= 24.0;
+	}
+	// Convert gmst hours to seconds
+	gmstDegs *= 3600.0;
+	sidSecTime	= gmstDegs;
+
+	// Convert float to int for fractional compare
+	sidSecTime	= gmstDegs;
+	//Round up by one sec if the leftover fraction is >= half
+	if ((gmstDegs - (double) sidSecTime) >= 0.5)
+	{
+		sidSecTime += 1;
 	}
 
-	// Convert to broken down time format
-	siderealTimePtr = gmtime(&sidSysTime); 
+	// Convert to broken down time format - not the day may be off by one and it never used
+	memcpy(siderealTimePtr, utcTime, sizeof(struct tm));
 
-	//**********************************************
-	//*	Added by MLS, Nov 8, 2019
-	//RNS - now obsolete, Jun 20, 2022
-	//*	check to see if we went over a day boundary
-//	if (siderealTimePtr->tm_hour == 0)
-//	{
-//		//*	we are on the next day
-//		CONSOLE_DEBUG("We have crossed a day boundry!!!!!!!!!!!!!!!!!!!!!");
-//		CONSOLE_DEBUG_W_NUM("utcTime->tm_mon\t=",	(utcTime->tm_mon + 1));
-//		CONSOLE_DEBUG_W_NUM("utcTime->tm_mday\t=",	utcTime->tm_mday);
-//		CONSOLE_DEBUG_W_NUM("utcTime->tm_hour\t=",	utcTime->tm_hour);
-//		CONSOLE_DEBUG_W_NUM("sidTime->tm_hour\t=",	siderealTimePtr->tm_hour);
-//		exit(0);
-//	}
+	// Load the actual sidereal time int the fields
+	siderealTimePtr->tm_hour	= sidSecTime / 3600;
+	sidSecTime = sidSecTime % 3600; 
+	siderealTimePtr->tm_min		= sidSecTime / 60; 
+	sidSecTime = sidSecTime % 60; 
+	siderealTimePtr->tm_sec		= sidSecTime;
 
-//	CONSOLE_DEBUG_W_NUM("tm_year\t\t=",	siderealTimePtr->tm_year);
-//	CONSOLE_DEBUG_W_NUM("tm_hour\t\t=",	siderealTimePtr->tm_hour);
-//	CONSOLE_DEBUG_W_NUM("tm_min\t\t=",	siderealTimePtr->tm_min);
-//	CONSOLE_DEBUG_W_NUM("tm_sec\t\t=",	siderealTimePtr->tm_sec);
+	// CONSOLE_DEBUG_W_NUM("tm_year\t\t=",	siderealTimePtr->tm_year);
+	// CONSOLE_DEBUG_W_NUM("tm_hour\t\t=",	siderealTimePtr->tm_hour);
+	// CONSOLE_DEBUG_W_NUM("tm_min\t\t=",	siderealTimePtr->tm_min);
+	// CONSOLE_DEBUG_W_NUM("tm_sec\t\t=",	siderealTimePtr->tm_sec);
 
+	return;
 }
 
 //**************************************************************************
@@ -203,7 +184,7 @@ time_t		currentTime;
 	return(siderTime_Dbl);
 }
 
-#ifdef _INCLUDE_SIDERIAL_MAIN_
+#ifdef _INCLUDE_SIDEREAL_MAIN_
 //**************************************************************************
 int main(int argc, char **argv)
 {
@@ -213,7 +194,6 @@ struct tm	siderealTime;
 time_t		currentTime;
 int			daysSinceJan1;
 
-	printf("Sidereal day =%3.10f\r\n",	kSiderealday);
 	printf("Sidereal day =%3.10f\r\n",	23.0 + (56.0 / 60.0) + (4.0905 / 3600.0));
 
 	currentTime	=	time(NULL);
@@ -229,7 +209,6 @@ int			daysSinceJan1;
 	{
 		currentTime	=	time(NULL);
 		linuxTime	=	localtime(&currentTime);
-
 
 		printf("%d/%d/%d %02d:%02d:%02d",
 								(1 + linuxTime->tm_mon),
