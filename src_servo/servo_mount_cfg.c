@@ -43,6 +43,7 @@
 //*	May 26,	2022	<MLS> Added PrintMountConfiguration();
 //*	May 26,	2022	<MLS> Updated test code to print out config
 //*	Jun 12,	2022	<RNS> Added RC PID support and moved PIDL fields to float
+//*	Jun 26,	2022	<RNS> Added support for TTP (thru-the-pole) config field
 //****************************************************************************
 
 #include <stdio.h>
@@ -68,6 +69,7 @@ TYPE_CFG_ITEM gMountConfigArray[] =
 	{"BAUD:",				BAUD,			false},
 	{"COMM_PORT:",			COMM_PORT,		false},
 	{"MOUNT:",				MOUNT,			false},
+	{"TTP:",				TTP,			false},
 	{"PARK_SIDE:",			PARK_SIDE,		false},
 	{"RA_MOTOR_MAX_RPM:",	RA_MOTOR_MAX_RPM,false},
 	{"RA_MOTOR_GEAR:",		RA_MOTOR_GEAR,	false},
@@ -238,6 +240,27 @@ int				dummy;
 				sprintf(cfgErrorString1,	"Invalid %s field '%s'", token, argument);
 				sprintf(cfgErrorString2,	"Must be 'FORK' or'GERMAN'");
 				sprintf(cfgErrorString3,	"Usage:  %s  FORK", token);
+				configLineOK	=	false;
+			}
+			break;
+
+		case TTP:
+			gMountConfigArray[TTP].found	=	true;
+		//	printf("%-15.15s = %-15.15s  \n", token, argument);
+
+			if (!strcmp(argument, "YES"))
+			{
+				mountConfig->ttp	=	true;
+			}
+			else if (!strcmp(argument, "NO"))
+			{
+				mountConfig->ttp	=	false;
+			}
+			else
+			{
+				sprintf(cfgErrorString1,	"Invalid %s field '%s'", token, argument);
+				sprintf(cfgErrorString2,	"Must be 'YES' or'NO'");
+				sprintf(cfgErrorString3,	"Usage:  %s  YES", token);
 				configLineOK	=	false;
 			}
 			break;
@@ -1019,6 +1042,7 @@ char	lineBuff[64];
 		default:		strcpy(lineBuff,	"unknown");	break;
 	}
 	PrintConfigParam_Str(PARK_SIDE,			lineBuff);
+	PrintConfigParam_Int(TTP,				gMountConfig.ttp);
 	PrintConfigParam_Dbl(ROLLOVER_WIN,		gMountConfig.flipWin);
 	PrintConfigParam_Dbl(OFF_TARGET_TOL,	gMountConfig.offTarget);
 

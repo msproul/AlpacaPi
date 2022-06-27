@@ -35,6 +35,7 @@
 //* Jun  6,	2022	<RNS> regenerated *all* function declarations with cproto
 //* Jun 17,	2022	<RNS> regenerated *all* function declarations with cproto
 //* Jun 19,	2022	<RNS> changed Servo_park() return type from bool to int
+//*	Jun 24,	2022	<RNS> Added routines _is_TTP(), _get_lst(), _get_HA() 
 //****************************************************************************
 
 #ifndef _SERVO_MOUNT_H_
@@ -70,6 +71,9 @@ double Servo_get_time_ratio(void);
 int Servo_unpark(void);
 bool Servo_get_park_state(void);
 int8_t Servo_get_pier_side(void);
+bool Servo_is_TTP(void);
+double Servo_get_lst(void);
+double Servo_get_HA(void);
 int Servo_scale_acc(int32_t percentRa, int32_t percentDec);
 int Servo_scale_vel(int32_t percentRa, int32_t percentDec);
 bool Servo_ignore_horizon(bool state);

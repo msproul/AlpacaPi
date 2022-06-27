@@ -13,11 +13,12 @@
 #++	May 19,	2022	<RNS> Fixed all unit tests for *.c files with unit _TEST_
 #++	May 27,	2022	<RNS> Added support for servo_time unit test
 #++	May 27,	2022	<RNS> Added support for test_cop
+#++	Jun 24,	2022	<RNS> Added -Wextra to CFLAGS
 ############################################################################
 
 CC			=	gcc -I$(MLS_LIB_DIR)
 
-CFLAGS 		=	-Wall
+CFLAGS 		=	-Wall -Wextra
 RM 			=	/bin/rm -v -f
 OBJECT_DIR	=	./Objectfiles/
 MLS_LIB_DIR	=	../src_mlsLib/
