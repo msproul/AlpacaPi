@@ -29,6 +29,7 @@
 //*	May 20,	2022	<RNS> added to flipWin and offTarget to TYPE_MOUNT_CONFIG
 //*	May 22,	2022	<RNS> Changed .pos from unsigned to signed
 //*	Jun 12,	2022	<RNS> Changed PIDL fields from integer to double 
+//*	Jun 26,	2022	<RNS> Added support for TTP (thru-the-pole) config field
 //****************************************************************************
 
 #ifndef _SERVO_MOUNT_CFG_H_
@@ -49,6 +50,7 @@ enum
 	BAUD,
 	COMM_PORT,
 	MOUNT,
+	TTP, 
 	PARK_SIDE,
 	RA_MOTOR_MAX_RPM,
 	RA_MOTOR_GEAR,
@@ -156,6 +158,7 @@ typedef struct
 	double			freq;
 	uint8_t			addr;
 	char			mount;
+	int				ttp; 
 	int8_t			side;
 	double 			flipWin;
 	double 			offTarget;
