@@ -44,6 +44,7 @@
 //*	May 29,	2022	<MLS> Fixed couple of lat/lon reporting errors
 //*	May 29,	2022	<MLS> Added Time_get_elev()
 //*	May 30,	2022	<MLS> Added Time_set_lat(), Time_set_lon(), Time_set_elev()
+//*	Jun 28,	2022	<RNS> Moved location type/data/routines to new _local_cfg.c
 //*****************************************************************************
 // Notes: For RoboClaw M1 *MUST BE* connected to RA or Azimuth axis, M2 to Dec or Altitude
 //*****************************************************************************
@@ -60,23 +61,6 @@
 
 #include	"servo_std_defs.h"
 #include	"servo_time.h"
-
-////*****************************************************************************
-TYPE_LOCAL_CFG gServoLocalCfg;
-
-////*****************************************************************************
-TYPE_CfgItem gLocationArray[] =
-{
-	{"EPOCH:",		0},
-	{"EPOCH_JD:",	0},
-	{"LATITUDE:",	0},
-	{"LONGITUDE:",	0},
-	{"ELEVATION:",	0},
-	{"TEMPERATURE:",0},
-	{"PRESSURE:",	0},
-	{"SITE:",		0},
-	{NULL,			0}
-};
 
 ////*****************************************************************************
 // void Time_deci_days_to_hours(double *day)
@@ -389,69 +373,6 @@ int32_t		seconds;
 }
 
 //*****************************************************************************
-// Returns the latitude field from the global location file struct
-//*****************************************************************************
-double Time_get_lat(void)
-{
-	return(gServoLocalCfg.lat);
-}
-
-//*****************************************************************************
-void Time_set_lat(double newLatValue)
-{
-	gServoLocalCfg.lat	=	newLatValue;
-}
-
-//*****************************************************************************
-// Returns the longitude field from the global location file struct
-//*****************************************************************************
-double Time_get_lon(void)
-{
-	return(gServoLocalCfg.lon);
-}
-
-//*****************************************************************************
-void Time_set_lon(double newLonValue)
-{
-	gServoLocalCfg.lon	=	newLonValue;
-}
-
-//*****************************************************************************
-// Returns the elevation field from the global location file struct
-//*****************************************************************************
-double Time_get_elev(void)
-{
-	return(gServoLocalCfg.elev);
-}
-
-//*****************************************************************************
-void Time_set_elev(double newElevValue)
-{
-	gServoLocalCfg.elev	=	newElevValue;
-}
-
-//*****************************************************************************
-double Time_get_temperature(void)
-{
-	return(gServoLocalCfg.temp);
-}
-
-//*****************************************************************************
-double Time_get_pressure(void)
-{
-	return(gServoLocalCfg.press);
-}
-
-
-//*****************************************************************************
-// Returns the site name field from the global location file struct
-//*****************************************************************************
-const char *Time_get_site(void)
-{
-	return(gServoLocalCfg.site);
-}
-
-//*****************************************************************************
 // Takes in ra, dec, let in deci degs and sidereal in deci hours and returns alt/azi in radians
 // Azi is done returned in the form of North = 0 and NESW sweep (E = 90, S = 180, W = 270)
 //*****************************************************************************
@@ -604,198 +525,6 @@ double refraction;
 	return(refraction);
 }
 
-//******************************************************************************
-int Time_read_local_cfg(const char *localCfgFile)
-{
-TYPE_LOCAL_CFG	*local;
-int				retStatus;
-char			filename[kMAX_STR_LEN];
-FILE			*inFile;
-char			inString[kMAX_STR_LEN];
-int				line	=	1;
-int				okFlag	=	true;
-int				loop	=	0;
-char			delimiters[]	=	" \t\r\n\v\f";	//	POSIX whitespace chars
-char			*token;
-char			*argument;
-char			*rest	=	NULL;
-
-	CONSOLE_DEBUG(__FUNCTION__);
-
-	// Map the local pointer to the address of private local global
-	local	=	&gServoLocalCfg;
-
-	// If not filename provided, use default name
-	if (localCfgFile == NULL)
-	{
-		strcpy(filename, kLOCAL_CFG_FILE);
-	}
-	else
-	{
-		strcpy(filename, localCfgFile);
-	}
-
-	// open the mount locations configuration file
-	//	if ((inFile = fopen(filename, "r")) == NULL)
-	inFile	=	fopen(filename, "r");
-	if (inFile == NULL)
-	{
-		fprintf(stderr, "Error: could not open location cfg file %s\n", filename);
-		return(-1);
-	}
-
-	// get all of the lines in the file
-	while (fgets(inString, kMAX_STR_LEN, inFile) != NULL)
-	{
-		// get first token of the line read from the file
-		token	=	strtok_r(inString, delimiters, &rest);
-
-		// If non-comment token found on line
-		if (token != NULL && token[0] != '#')
-		{
-			// Get corresponding argument for the token
-			argument	=	strtok_r(NULL, delimiters, &rest);
-			if (argument == NULL)
-			{
-				fprintf(stderr, "Error: (read_local_cfg) on line %d of file '%s'\n", line, filename);
-				fprintf(stderr, "       Invalid syntax: field %s is missing argument", token);
-			}
-
-			// Token and argument exist, now determine if they are valid
-			Time_str_to_upper(token);
-
-			if (strcmp(token, gLocationArray[EPOCH].parameter) == 0)
-			{
-				gLocationArray[EPOCH].found	=	true;
-				local->baseEpoch	=	atof(argument);
-
-				if (local->baseEpoch < 1999.99 || local->baseEpoch > 2050.01)
-				{
-					fprintf(stderr, "Error: (init_local_cfg) on line %d of file '%s'\n", line, filename);
-					fprintf(stderr, "       Invalid %s field '%f'\n", token, local->baseEpoch);
-					fprintf(stderr, "       Must be between 2000.0 and 2050.0'\n");
-					fprintf(stderr, "       Usage:  %s  2000.0\n", token);
-				}
-			}
-			else if (strcmp(token, gLocationArray[EPOCH_JD].parameter) == 0)
-			{
-				gLocationArray[EPOCH_JD].found	=	true;
-				local->baseJd					=	atof(argument);
-
-				if ((local->baseJd < 2451544.9) || (local->baseJd > 2469808.1))
-				{
-					fprintf(stderr, "Error: (init_local_cfg) on line %d of file '%s'\n", line, filename);
-					fprintf(stderr, "       Invalid %s field '%f'\n", token, local->baseJd);
-					fprintf(stderr, "       Usage:  %s 2451545.0 \n", token);
-				}
-			}
-			else if (strcmp(token, gLocationArray[LATITUDE].parameter) == 0)
-			{
-				gLocationArray[LATITUDE].found	=	true;
-				local->lat						=	Time_ascii_maybe_HMS_tof(argument);
-
-				if ((local->lat < -90.1) || (local->lat > 90.1))
-				{
-					fprintf(stderr, "Error: (init_local_cfg) on line %d of file '%s'\n", line, filename);
-					fprintf(stderr, "       Invalid %s field '%f'\n", token, local->lat);
-					fprintf(stderr, "       Usage:  %s  45.0\n", token);
-				}
-			}
-			else if (strcmp(token, gLocationArray[LONGITUDE].parameter) == 0)
-			{
-				gLocationArray[LONGITUDE].found	=	true;
-				local->lon						=	Time_ascii_maybe_HMS_tof(argument);
-
-				if ((local->lon < -180.1) || (local->lon > 180.1))
-				{
-					fprintf(stderr, "Error: (init_local_cfg) on line %d of file '%s'\n", line, filename);
-					fprintf(stderr, "       Invalid %s field '%f'\n", token, local->elev);
-					fprintf(stderr, "       Must be between -180.0 and 180.0'\n");
-					fprintf(stderr, "       Usage:  %s  120.0\n", token);
-				}
-			}
-			else if (strcmp(token, gLocationArray[ELEVATION].parameter) == 0)
-			{
-				gLocationArray[ELEVATION].found	=	true;
-				local->elev						=	atof(argument);
-
-				if (local->elev < -10.0 || local->elev > 15000.0)
-				{
-					fprintf(stderr, "Error: (init_local_cfg) on line %d of file '%s'\n", line, filename);
-					fprintf(stderr, "       Invalid %s field '%f'\n", token, local->elev);
-					fprintf(stderr, "       Must be between 0.0 and 15000.0'\n");
-					fprintf(stderr, "       Usage:  %s  500.0\n", token);
-				}
-			}
-
-			else if (strcmp(token, gLocationArray[TEMPERATURE].parameter) == 0)
-			{
-				gLocationArray[TEMPERATURE].found	=	true;
-				local->temp							=	atof(argument);
-
-				if (local->temp < -80.0 || local->temp > 140.0)
-				{
-					fprintf(stderr, "Error: (init_local_cfg) on line %d of file '%s'\n", line, filename);
-					fprintf(stderr, "       Invalid %s field '%f'\n", token, local->temp);
-					fprintf(stderr, "       Usage:  %s  60.0\n", token);
-				}
-			}
-			else if (strcmp(token, gLocationArray[PRESSURE].parameter) == 0)
-			{
-				gLocationArray[PRESSURE].found	=	true;
-				local->press					=	atof(argument);
-
-				if (local->lat < 28.0 || local->press > 32.0)
-				{
-					fprintf(stderr, "Error: (init_local_cfg) on line %d of file '%s'\n", line, filename);
-					fprintf(stderr, "       Invalid %s field '%f'\n", token, local->press);
-					fprintf(stderr, "       Usage:  %s  30.0\n", token);
-				}
-			}
-			else if (strcmp(token, gLocationArray[SITE].parameter) == 0)
-			{
-				gLocationArray[SITE].found	=	true;
-				strcpy(local->site, argument);
-			}
-			else
-			{
-				fprintf(stderr, "Error: (init_local_cfg) on line %d of file '%s'\n", line, filename);
-				fprintf(stderr, "       Unrecognized %s field\n", token);
-			}
-		} // of if not a comment line
-		// increment the line counter
-		line++;
-	} // of while
-
-	while (gLocationArray[loop].parameter != NULL)
-	{
-		if (gLocationArray[loop].found == false)
-		{
-			fprintf(stderr, "Error: (validate_local_cfg) Configuation variable:\n");
-			fprintf(stderr, "       '%s' was not found or of improper format.\n", gLocationArray[loop].parameter);
-			fprintf(stderr, "       from file '%s'\n", filename);
-			okFlag	=	false;
-		}
-		loop++;
-	}
-
-	// configuration file had a syntax error
-	if (okFlag == false)
-	{
-		fprintf(stderr, "Error: (validate_local_cfg) Error found in configuration:\n");
-		fprintf(stderr, "       from file '%s'\n", filename);
-		fflush(stderr);
-		retStatus	=	-1;
-	}
-	else
-	{
-		// No Errors in configuration file
-		retStatus	=	0;
-	}
-
-	return(retStatus);
-} // time_read_local_cfg
-
 //*****************************************************************************
 #ifdef _TEST_SERVO_TIME_
 //*****************************************************************************
@@ -816,9 +545,6 @@ char		inStr[256];
 time_t		current;
 struct tm	*utcTime;
 
-	// Read int the location config file
-	Time_read_local_cfg("servo_location.cfg");
-
 	// wait for a second rollover
 	current	=	time(NULL);
 	while (current == time(NULL))
@@ -835,7 +561,7 @@ struct tm	*utcTime;
 	printf("SID  is %.8Lf for JD = %.8Lf\n", sid, jd);
 	sid	=	Time_jd_to_gmst(jd);
 	printf("GMST is %.8Lf for JD = %.8Lf\n", sid, jd);
-	lst	=	Time_sid_to_lst(sid, lon);
+	lst	=	Time_gmst_to_lst(sid, lon);
 	printf("LST is  at %Lf longitude : %lf\n\n", lst, lon);
 
 	// Calc alt/azi

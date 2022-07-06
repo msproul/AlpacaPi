@@ -32,41 +32,10 @@
 //*	May 26,	2022	<MLS> Made gServoLocalCfg global so it can be accessed by AlpacaPi
 //*	May 28,	2022	<RNS> Renamed _jd_to_sid() to _js_to_gmst()
 //*	May 29,	2022	<RNS> Renamed _sid_to_lst() to _gmst_to_lst() for consistancy
+//*	Jun 28,	2022	<RNS> Moved location type/data/routines to new _local_cfg.h
 //*****************************************************************************
 // $ cproto servo_time.c
 
-#define kLOCAL_CFG_FILE "servo_location.cfg"
-//*****************************************************************************
-// list of defined tokens in config file and array to keep track of discovery
-enum
-{
-	EPOCH	=	0,
-	EPOCH_JD,
-	LATITUDE,
-	LONGITUDE,
-	ELEVATION,
-	TEMPERATURE,
-	PRESSURE,
-	SITE
-};
-
-
-//*****************************************************************************
-typedef struct
-{
-	double	baseEpoch;
-	double	baseJd;
-	double	lat;
-	double	lon;
-	double	elev;
-	double	temp;
-	double	press;
-	char	site[kMAX_STR_LEN];
-} TYPE_LOCAL_CFG;
-
-// local global variable
-extern	TYPE_LOCAL_CFG	gServoLocalCfg;
-extern	TYPE_CfgItem	gLocationArray[];
 
 #ifdef __cplusplus
 extern "C"
@@ -88,21 +57,6 @@ extern "C"
 	void		Time_check_hms(double *hms);
 	void		Time_deci_hours_to_hms(double *value);
 	void		Time_hms_hours_to_deci(double *value);
-	//*	get routines
-	double		Time_get_lat(void);
-	double		Time_get_lon(void);
-	double		Time_get_elev(void);
-	const char*	Time_get_site(void);
-	double		Time_get_temperature(void);
-	double		Time_get_pressure(void);
-
-	//*	set routines
-	void		Time_set_lat(double newLatValue);
-	void		Time_set_lon(double newLonValue);
-	void		Time_set_elev(double newElevValue);
-	void		Time_set_temperature(double newTempValue);
-	void		Time_set_pressure(double newPressureValue);
-
 	void		Time_ra_dec_to_alt_azi(double ra, double dec, long double lst, double lat, double *alt, double *azi);
 	void		Time_alt_azi_to_ra_dec(double alt, double azi, long double lst, double lat, double *ra, double *dec);
 	int			Time_calc_alt_azi_tracking(double alt, double azi, double lat, double *rateAlt, double *rateAzi);

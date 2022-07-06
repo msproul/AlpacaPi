@@ -30,6 +30,10 @@
 //*	May 22,	2022	<RNS> Changed .pos from unsigned to signed
 //*	Jun 12,	2022	<RNS> Changed PIDL fields from integer to double 
 //*	Jun 26,	2022	<RNS> Added support for TTP (thru-the-pole) config field
+//*	Jun 27,	2022	<RNS> Changed default mount cfg #define to kMOUNT_CFG_FILE
+//*	Jul  3,	2022	<RNS> Changed .time/.zero to .zeroTS/.zeroPos for clarity
+//*	Jul  3,	2022,	<RNS> Moved enum of config files to .c file
+//*	Jul  4,	2022,	<RNS> Moved tracking rate support back in from Motion_
 //****************************************************************************
 
 #ifndef _SERVO_MOUNT_CFG_H_
@@ -41,109 +45,43 @@
 
 
 // Default name for the telescope mount config file
-#define kSCOPE_CFG_FILE "servo_mount.cfg"
-//******************************************************************
-enum
-{
-	MC_FREQ	=	0,
-	MC_ADDR,
-	BAUD,
-	COMM_PORT,
-	MOUNT,
-	TTP, 
-	PARK_SIDE,
-	RA_MOTOR_MAX_RPM,
-	RA_MOTOR_GEAR,
-	RA_MAIN_GEAR,
-	RA_ENCODER,
-	RA_MAX_VEL,
-	RA_MAX_ACC,
-	RA_ADJ_VEL,
-	RA_SI_CON,
-	RA_KP_CON,
-	RA_KI_CON,
-	RA_KD_CON,
-	RA_IL_CON,
-	DEC_MOTOR_MAX_RPM,
-	DEC_MOTOR_GEAR,
-	DEC_MAIN_GEAR,
-	DEC_ENCODER,
-	DEC_MAX_VEL,
-	DEC_MAX_ACC,
-	DEC_ADJ_VEL,
-	DEC_SI_CON,
-	DEC_KP_CON,
-	DEC_KI_CON,
-	DEC_KD_CON,
-	DEC_IL_CON,
-	RA_CONFIG,
-	DEC_CONFIG,
-	RA_GEAR_LASH,
-	DEC_GEAR_LASH,
-	DEC_PARK,
-	RA_SLEW_VEL,
-	DEC_SLEW_VEL,
-	RA_PARK,
-	ROLLOVER_WIN,
-	RA_PRECESSION,
-	DEC_PRECESSION,
-	RA_SENSOR,
-	DEC_SENSOR,
-	RA_PARK_SENSOR,
-	DEC_PARK_SENSOR,
-	OFF_TARGET_TOL,
+#define kMOUNT_CFG_FILE "servo_mount.cfg"
 
-	SERVO_CFG_LAST
-};	// of enum
+
+//******************************************************************
+
+//extern TYPE_CFG_ITEM gsMountConfigArray[];
 
 //******************************************************************
 typedef struct
 {
-	char parameter[24];
-	short enumValue;
-	bool found;
-} TYPE_CFG_ITEM;
-
-extern TYPE_CFG_ITEM gMountConfigArray[];
-
-
-//******************************************************************
-typedef struct
-{
-	double		motorGear;			// here and below, real-world float values for mount physical characteristics
+	double		motorGear;		// here and below, real-world float values for mount physical characteristics
 	double		mainGear;
-	double		motorMaxRPM;
 	double		encoder;
 	double		realAcc;
 	double		realVel;
 	double		realAdj;
 	double		realSlew;
-	double		config;			 	//	arbitrary value based on physical motor mounting and wiring
-	double		step;				//	the all important calculated steps per arcsecond value
-	double		prec;				//	defines the amount of slippage between drive system, used for friction drives
-	uint16_t	encoderMaxSpeed;	//	here and below are the int value for the MC, calc'd from the real-world values above
-	int32_t		pos;
+	double		config;			//	arbitrary value based on physical motor mounting and wiring
+	double		step;			//	the all important calculated steps per arcsecond value
+	double		prec;			//	defines the amount of slippage between drive system, used for friction drives
+	double		direction;
+	double		park;
+
 	uint32_t	maxAcc;
 	uint32_t	acc;
 	uint32_t	maxVel;
 	uint32_t	vel;
-	uint32_t	adj;
-	uint32_t	slew;
-	uint8_t		si;
-	double		kp;
-	double		ki;
-	double		kd;
-	double		il;
-	uint16_t	status;
-	uint8_t		cmdQueue;
-	int32_t		track;
-	double		direction;
-	double		park;
+
+	int32_t		defaultRate;	// default rate is set to sidereral in signed/steps
+	int32_t		trackRate;
+	uint32_t	guideRate;
+	uint32_t	manSlewRate;
+
 	int8_t		parkInfo;		// on RA holds the original park_side of mount, on dec it hold the original direction before any flip
-	long double	time;
 	double		gearLash;
-	// double	lockDown;
-	double		zero;			// Axis real value at zero steps in decimal degrees, including RA
+	long double	zeroTS;			// Timestamp the zero position was set
+	double		zeroPos;		// Axis real value at zero steps in decimal degrees, including RA
 	double		standby;
 	double		sync;
 	uint16_t	syncValue;
@@ -155,25 +93,21 @@ typedef struct
 {
 	TYPE_MountAxis	ra;
 	TYPE_MountAxis	dec;
-	double			freq;
-	uint8_t			addr;
 	char			mount;
 	int				ttp; 
 	int8_t			side;
 	double 			flipWin;
 	double 			offTarget;
-	char			port[kMAX_STR_LEN];
-	int				baud;
 } TYPE_MOUNT_CONFIG;
 
-extern TYPE_MOUNT_CONFIG gMountConfig;
+//extern TYPE_MOUNT_CONFIG gMountConfig;
 
 #ifdef __cplusplus
 	extern "C" {
 #endif
 
-int		Servo_read_mount_cfg(const char *mountCfgFile, TYPE_MOUNT_CONFIG *mountConfig);
-void	PrintMountConfiguration(void);
+int 	Servo_read_mount_cfg(const char *mountCfgFile, TYPE_MOUNT_CONFIG *mountConfig);
+void	Print_mount_configuration(void);
 
 #ifdef __cplusplus
 }
