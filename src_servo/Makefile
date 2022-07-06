@@ -14,11 +14,17 @@
 #++	May 27,	2022	<RNS> Added support for servo_time unit test
 #++	May 27,	2022	<RNS> Added support for test_cop
 #++	Jun 24,	2022	<RNS> Added -Wextra to CFLAGS
+#++	Jun 27,	2022	<RNS> Added support for servo_motion build
+#++	Jun 27,	2022	<RNS> Mod'd mc_core build to read motion config file
+#++	Jun 28,	2022	<RNS> Add support for servo_local_cfg build
+#++	Jul  2,	2022	<RNS> Support for some renamed observ files
+#++	Jul  2,	2022	<RNS> Support for servo_motion test build
+#++	Jul  2,	2022	<RNS> Enabled gdb support in CFLAGS (-g)
 ############################################################################
 
 CC			=	gcc -I$(MLS_LIB_DIR)
 
-CFLAGS 		=	-Wall -Wextra
+CFLAGS 		=	-Wall -Wextra -g
 RM 			=	/bin/rm -v -f
 OBJECT_DIR	=	./Objectfiles/
 MLS_LIB_DIR	=	../src_mlsLib/
@@ -33,17 +39,38 @@ default: servo_test_tty
 SERVO_OBJECTS	=								\
 				$(OBJECT_DIR)servo_mount.o		\
 				$(OBJECT_DIR)servo_mount_cfg.o	\
+				$(OBJECT_DIR)servo_motion.o 	\
+				$(OBJECT_DIR)servo_motion_cfg.o	\
 				$(OBJECT_DIR)servo_time.o		\
+				$(OBJECT_DIR)servo_observ_cfg.o	\
 				$(OBJECT_DIR)servo_mc_core.o	\
 				$(OBJECT_DIR)servo_rc_utils.o
 
-TESTCFG_OBJECTS	=								\
-				$(OBJECT_DIR)servo_mount_cfg.o 	\
+TESTMOUNTCFG_OBJECTS	=						\
+				$(OBJECT_DIR)servo_mount_cfg.o	\
+				$(OBJECT_DIR)servo_time.o
+
+TESTMOTIONCFG_OBJECTS	=						\
+				$(OBJECT_DIR)servo_motion_cfg.o 
+
+TESTOBSERVCFG_OBJECTS	=						\
+				$(OBJECT_DIR)servo_observ_cfg.o	\
 				$(OBJECT_DIR)servo_time.o
 
 RCUTILS_OBJECTS	=								\
 				$(OBJECT_DIR)servo_rc_utils.o 	\
 				$(OBJECT_DIR)servo_mc_core.o
+
+MOTION_OBJECTS	=								\
+				$(OBJECT_DIR)servo_motion.o 	\
+				$(OBJECT_DIR)servo_motion_cfg.o	\
+				$(OBJECT_DIR)servo_time.o		\
+				$(OBJECT_DIR)servo_rc_utils.o 	\
+				$(OBJECT_DIR)servo_mc_core.o
+
+MCCORE_OBJECTS	=								\
+				$(OBJECT_DIR)servo_mc_core.o 	\
+				$(OBJECT_DIR)servo_motion_cfg.o
 
 servo_test_tty:	CFLAGS	+=
 servo_test_tty: 	$(SERVO_OBJECTS)	$(OBJECT_DIR)servo_test_tty.o
@@ -65,10 +92,28 @@ servo_test: 	$(SERVO_OBJECTS)
 					$(SERVO_OBJECTS)			\
 					-lm
 
-test_cfg: 	CFLAGS	+=	-D_TEST_SERVO_MOUNT_CFG_
-test_cfg: 	$(TESTCFG_OBJECTS)
-	$(CC) $(CFLAGS) -o test_cfg 				\
-					$(TESTCFG_OBJECTS)			\
+motion_test: 	CFLAGS	+=	-D_TEST_SERVO_MOTION_
+motion_test: 	$(MOTION_OBJECTS)
+	$(CC) $(CFLAGS) -o motion_test				\
+					$(MOTION_OBJECTS)			\
+					-lm
+
+test_mnt_cfg: 	CFLAGS	+=	-D_TEST_SERVO_MOUNT_CFG_
+test_mnt_cfg: 	$(TESTMOUNTCFG_OBJECTS)
+	$(CC) $(CFLAGS) -o test_mount_cfg 				\
+					$(TESTMOUNTCFG_OBJECTS)			\
+					-lm
+
+test_mot_cfg: 	CFLAGS	+=	-D_TEST_SERVO_MOTION_CFG_
+test_mot_cfg: 	$(TESTMOTIONCFG_OBJECTS)
+	$(CC) $(CFLAGS) -o test_motion_cfg 				\
+					$(TESTMOTIONCFG_OBJECTS)			\
+					-lm
+
+test_obs_cfg: 	CFLAGS	+=	-D_TEST_SERVO_OBSERV_CFG_
+test_obs_cfg: 	$(TESTOBSERVCFG_OBJECTS)
+	$(CC) $(CFLAGS) -o test_observ_cfg 				\
+					$(TESTOBSERVCFG_OBJECTS)			\
 					-lm
 
 rc_utils: 	CFLAGS	+=	-D_TEST_RC_UTILS_
@@ -84,16 +129,16 @@ test_time:  servo_time.c
  					-lm
 
 mc_core: 	CFLAGS	+=	-D_TEST_SERVO_MC_CORE_
-mc_core: 	servo_mc_core.c
+mc_core: 	$(MCCORE_OBJECTS)
 	$(CC) $(CFLAGS) -o mc_core 						\
-					servo_mc_core.c	\
+					$(MCCORE_OBJECTS)
 
 
 ############################################################################
-$(OBJECT_DIR)servo_mc_core.o:  servo_mc_core.c servo_mc_core.h  servo_std_defs.h
+$(OBJECT_DIR)servo_mc_core.o:  servo_mc_core.c servo_mc_core.h servo_motion_cfg.c servo_motion_cfg.h servo_std_defs.h
 	$(CC) $(CFLAGS) -c servo_mc_core.c -o $(OBJECT_DIR)servo_mc_core.o
 
-$(OBJECT_DIR)servo_rc_utils.o:  servo_rc_utils.c servo_rc_utils.h servo_rc_cmds.h servo_mc_core.h servo_std_defs.h
+$(OBJECT_DIR)servo_rc_utils.o:  servo_rc_utils.c servo_rc_utils.h servo_rc_cmds.h servo_mc_core.h servo_motion_cfg.c servo_motion_cfg.h servo_std_defs.h
 	$(CC) $(CFLAGS) -c servo_rc_utils.c -o $(OBJECT_DIR)servo_rc_utils.o
 
 $(OBJECT_DIR)servo_time.o: 		servo_time.c servo_time.h servo_std_defs.h
@@ -102,8 +147,17 @@ $(OBJECT_DIR)servo_time.o: 		servo_time.c servo_time.h servo_std_defs.h
 $(OBJECT_DIR)servo_mount_cfg.o: servo_mount_cfg.c servo_mount_cfg.h servo_time.h servo_std_defs.h
 	$(CC) $(CFLAGS) -c servo_mount_cfg.c -o $(OBJECT_DIR)servo_mount_cfg.o
 
+$(OBJECT_DIR)servo_motion_cfg.o: servo_motion_cfg.c servo_motion_cfg.h servo_std_defs.h
+	$(CC) $(CFLAGS) -c servo_motion_cfg.c -o $(OBJECT_DIR)servo_motion_cfg.o	
+
+$(OBJECT_DIR)servo_observ_cfg.o: servo_observ_cfg.c servo_observ_cfg.h servo_std_defs.h
+	$(CC) $(CFLAGS) -c servo_observ_cfg.c -o $(OBJECT_DIR)servo_observ_cfg.o	
+
 $(OBJECT_DIR)servo_mount.o:		servo_mount.c servo_mount.h servo_rc_utils.h servo_rc_cmds.h servo_time.h servo_mc_core.h servo_std_defs.h
 	$(CC) $(CFLAGS) -c servo_mount.c -o $(OBJECT_DIR)servo_mount.o
+
+$(OBJECT_DIR)servo_motion.o:	servo_motion.c servo_motion.h servo_rc_utils.h servo_rc_cmds.h servo_time.h servo_mc_core.h servo_std_defs.h
+	$(CC) $(CFLAGS) -c servo_motion.c -o $(OBJECT_DIR)servo_motion.o
 
 $(OBJECT_DIR)test_cop.o:		test_cop.c servo_mount.c servo_mount.h servo_rc_utils.h servo_rc_cmds.h servo_time.h servo_mc_core.h servo_std_defs.h
 	$(CC) $(CFLAGS) -c test_cop.c -o $(OBJECT_DIR)test_cop.o

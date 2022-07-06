@@ -51,8 +51,12 @@
 //*	Jun 09,	2022	<RNS> Fixed bug in _set_pos_pid, PID order actually DPI in docs
 //*	Jun 12,	2022	<RNS> Masked 'set but not used' warning for a returned RC state
 //*	Jun 12,	2022	<RNS> Added _set_vel_pid and _get_vel_pid functions
-//*	Jun 13	2022	<RNS> Converted all PID function to use float for PID args
-//*	Jun 19	2022	<RNS> Fixed an 'unused' compiler warning
+//*	Jun 13,	2022	<RNS> Converted all PID function to use float for PID args
+//*	Jun 19,	2022	<RNS> Fixed an 'unused' compiler warning
+//*	Jul  2,	2022	<RNS> Changed the function name _velocity() to _vel()
+//*	Jul  2,	2022	<RNS> Changed POS_FOREVER to kSTEP_FOREVER, moved to .h
+//*	Jul  4,	2022	<RNS> Added calc_move_dist function
+//*	Jul  4,	2022	<RNS> Added RC_move_by_posvad to support pulse guiding
 //*****************************************************************************
 // Notes:   M1 *MUST BE* connected to RA or Azimuth axis, M2 to Dec or Altitude
 //*****************************************************************************
@@ -62,6 +66,7 @@
 #include	<stdint.h>
 #include	<stdlib.h>
 #include	<stdbool.h>
+#include 	<unistd.h>
 #include	<math.h>
 
 #define _ENABLE_CONSOLE_DEBUG_
@@ -73,7 +78,7 @@
 #include	"servo_rc_cmds.h"
 
 // This is value used to make a buffered move_by_vel command
-#define POS_FOREVER 0x3000000
+#define kSTEP_FOREVER 0x3000000
 
 // Global buffers for Notes and Receipts
 static uint8_t gNoteBuf[64];
@@ -199,7 +204,7 @@ int			retState;
 // Receive: [Speed(4 bytes), Status, CRC(2 bytes)] = 7
 // Status indicates the direction (0 – forward, 1 - backward)
 //*****************************************************************************
-int RC_get_curr_velocity(uint8_t addr, uint8_t motor, int32_t *vel)
+int RC_get_curr_vel(uint8_t addr, uint8_t motor, int32_t *vel)
 {
 uint8_t		*ptrA, *ptrB;
 uint8_t		status;
@@ -1042,6 +1047,43 @@ double distF, velF, accF, vCalc, time;
 	return(time);
 } // RC_calc_move_time()
 
+
+//******************************************************************
+// calcs the distance travelled for specified time in seconds with 
+// a constant acceleration rate and no deceleration. Velocity and 
+// Acceleration are in steps per second. 
+//******************************************************************
+int32_t RC_calc_move_distance(int32_t startVel, int32_t endVel, int32_t acc, double seconds)
+{
+int32_t 	dist; 
+double 		deltaVel, accelTime; 
+
+	// determine velocity direction so we accel the same direction
+	deltaVel = endVel - startVel; 
+	if (deltaVel < 0 && acc > 0)
+	{
+		// set acc negative so it 'adds' with negative vel direction
+		acc = -abs(acc);
+	}
+
+	// check to see time is long enough to reach end
+	accelTime = fabs(deltaVel / acc); 
+	if (accelTime > seconds)
+	{
+		// time is not long enough to reach end velocity so d = v*t + a*t*t/2
+		dist = (int32_t) startVel * seconds + acc * seconds * seconds / 2.0; 
+	}
+	else
+	{
+		// this is the acceleration profile distance 
+		dist = (int32_t) startVel * accelTime + acc * accelTime * accelTime / 2.0;
+		// this the constant velocity distance 
+		dist += (int32_t) endVel * (seconds - accelTime); 
+	}
+
+	return dist;
+} // of RC_calc_move_distance()
+
 //******************************************************************
 // Move the axis to input position with the input velocity and will buffer the
 // command if 'true'.   If 'false' it overwrites any executing cmd
@@ -1113,7 +1155,7 @@ int			len;
 // Send: [Address, 65, Accel(4 bytes), Speed(4 Bytes), Decel(4 bytes), Position(4 Bytes), Buffer, CRC(2 bytes)]
 // Receive: [0xFF]
 //******************************************************************
-int RC_move_by_posva(uint8_t addr, uint8_t motor, int32_t pos, uint32_t vel, uint32_t acc, bool buffered)
+int RC_move_by_posvad(uint8_t addr, uint8_t motor, int32_t pos, uint32_t vel, uint32_t acc, uint32_t decel, bool buffered)
 {
 uint8_t		*ptrA, *ptrB, status, now;
 uint16_t	crc;
@@ -1140,7 +1182,8 @@ int			len;
 			return(kERROR);
 			break;
 	}
-	//printf("RC_move_by_pos: addr = %X cmd = %d gRC[cmd].cmd = %d\n", addr, cmd, gRC[cmd].cmd);
+	printf("RC_move_by_posvad: addr = %X cmd = %d gRC[cmd].cmd = %d\n", addr, cmd, gRC[cmd].cmd);
+	printf("RC_move_by_posvad: motor:%d, pos:%d vel:%d acc:%d decel:%d, buff:%d\n", motor, pos, vel, acc, decel, buffered);
 
 	// If requesting a buffered command (eg. TRUE) set variable now to 0
 	// otherwise, setting it to 1 means stop any running cmds and execute it now
@@ -1150,7 +1193,7 @@ int			len;
 	Note_init(gNoteBuf, addr, gRC[cmd].cmd, &ptrA);
 	Note_add_dword(ptrA, acc, &ptrB);
 	Note_add_dword(ptrB, vel, &ptrA);
-	Note_add_dword(ptrA, acc, &ptrB);
+	Note_add_dword(ptrA, decel, &ptrB);
 	Note_add_dword(ptrB, pos, &ptrA);
 
 	// add buffer arg, 1 = stop any running cmds and execute it now
@@ -1171,6 +1214,13 @@ int			len;
 	}
 
 	return(kSTATUS_OK);
+} // of RC_move_by_posvad()
+
+//******************************************************************
+int RC_move_by_posva(uint8_t addr, uint8_t motor, int32_t pos, uint32_t vel, uint32_t acc, bool buffered)
+{
+	// See the above, Just a wrapper to use same value for both accel and decel
+	return RC_move_by_posvad(addr, motor, pos, vel, acc, acc, buffered);
 } // of RC_move_by_posva()
 
 //******************************************************************
@@ -1193,11 +1243,11 @@ int		status;
 			RC_get_curr_pos(addr, SERVO_RA_AXIS, &pos);
 			if (vel < 0)
 			{
-				pos	=	- POS_FOREVER;
+				pos	=	- kSTEP_FOREVER;
 			}
 			else
 			{
-				pos	=	POS_FOREVER;
+				pos	=	kSTEP_FOREVER;
 			}
 			RC_move_by_posva(addr, SERVO_RA_AXIS, pos, abs(vel), acc, buffered);
 			break;
@@ -1206,11 +1256,11 @@ int		status;
 			RC_get_curr_pos(addr, SERVO_DEC_AXIS, &pos);
 			if (vel < 0)
 			{
-				pos	=	- POS_FOREVER;
+				pos	=	- kSTEP_FOREVER;
 			}
 			else
 			{
-				pos	=	POS_FOREVER;
+				pos	=	kSTEP_FOREVER;
 			}
 			RC_move_by_posva(addr, SERVO_DEC_AXIS, pos, abs(vel), acc, buffered);
 			break;
@@ -1284,6 +1334,7 @@ int			len;
 //******************************************************************
 //******************************************************************
 //******************************************************************
+//#define _TEST_RC_UTILS_
 #ifdef _TEST_RC_UTILS_
 #include <time.h>
 int	main(void)
@@ -1292,12 +1343,11 @@ uint8_t raDepth, decDepth;
 char buf[256];
 int32_t pos	=	0;
 uint32_t status = 0;
-//uint32_t settings;
+uint32_t settings;
 uint8_t addr = 0x80; // Default addr for RC MC
 double 	propo, integ, deriv;
 uint32_t iMax, deadZ;
 int32_t minP, maxP;
-
 
 	// Mark, Ignore this one line if format, need to see more statements on one screen, it's just for testing
 
@@ -1315,26 +1365,27 @@ int32_t minP, maxP;
 	if (RC_set_home(addr, SERVO_DEC_AXIS) == kERROR)			printf("RC_set_home returned error\n");
 	if (RC_get_curr_pos(addr, SERVO_DEC_AXIS, &pos) == kERROR)		printf("RC_current_pos returned error\n");
 	printf("Dec pos = %X\n", pos);
+
 	if (RC_check_queue(addr, &raDepth, &decDepth) == kERROR)		printf("RC_check_queue returned error\n");
 	printf("*** status = %X  RA queue = %X  Dec queue = %X\n", status, (uint8_t) raDepth, (uint8_t) decDepth);
 
 	printf("\nTesting PID commands\n");
-	// Get the current settings
-	// RC_get_pos_pid(addr, SERVO_RA_AXIS,  &propo, &integ, &deriv, &iMax, &deadZ, &minP, &maxP);
-	// printf("P:%d I:%d D:%d iMax:%d: Dz%d Min:%d Max:%d\n", propo, integ, deriv, iMax, deadZ, minP, maxP);
+	//Get the current settings
+	RC_get_pos_pid(addr, SERVO_RA_AXIS,  &propo, &integ, &deriv, &iMax, &deadZ, &minP, &maxP);
+	printf("P:%.2f I:%.2f D:%.2f iMax:%d: Dz%d Min:%d Max:%d\n", propo, integ, deriv, iMax, deadZ, minP, maxP);
 
-	// printf("Incrementing all values by 1\n");
-	// propo++;
-	// integ++;
-	// deriv++;
-	// iMax++;
-	// deadZ++;
-	// minP -= 16;
-	// maxP -= 16; 
-	// printf("P:%d I:%d D:%d iMax:%d: Dz%d Min:%d Max:%d\n", propo, integ, deriv, iMax, deadZ, minP, maxP);
+	printf("Incrementing all values by 1\n");
+	propo++;
+	integ++;
+	deriv++;
+	iMax++;
+	deadZ++;
+	minP -= 16;
+	maxP -= 16; 
+	printf("P:%.2f I:%.2f D:%.2f iMax:%d: Dz%d Min:%d Max:%d\n", propo, integ, deriv, iMax, deadZ, minP, maxP);
 
-	// printf("Setting the PID and then reading back\n");
-	// RC_set_pos_pid(addr, SERVO_RA_AXIS,  propo, integ, deriv, iMax, deadZ, minP, maxP);
+	printf("Setting the PID and then reading back\n");
+	RC_set_pos_pid(addr, SERVO_RA_AXIS,  propo, integ, deriv, iMax, deadZ, minP, maxP);
 	RC_get_pos_pid(addr, SERVO_RA_AXIS,  &propo, &integ, &deriv, &iMax, &deadZ, &minP, &maxP);
 	printf("POS P:%.2f I:%.2f D:%.2f iMax:%d: Dz:%d Min:%d Max:%d\n", propo, integ, deriv, iMax, deadZ, minP, maxP);
 
@@ -1342,136 +1393,136 @@ int32_t minP, maxP;
 	printf("VEL P:%.2f I:%.2f D:%.2f QPPS:%d\n", propo, integ, deriv, iMax);
 
 	
-	// printf("Writing new values to EEPROM\n");
-	// RC_write_settings(addr); 
-	// printf("Reading values from EEPROM\n");
-	// RC_read_settings(addr, &settings); 
+	printf("Writing new values to EEPROM\n");
+	RC_write_settings(addr); 
+	printf("Reading values from EEPROM\n");
+	RC_read_settings(addr, &settings); 
 
-	// printf("Setting default acc\n");
-	// RC_set_default_acc(addr, SERVO_RA_AXIS, 4000); 
+	printf("Setting default acc\n");
+	RC_set_default_acc(addr, SERVO_RA_AXIS, 4000); 
 
-	// printf("\nStarting RA and Dec Motors with unbuffered commands\n");
-	// if (RC_move_by_posva(addr, SERVO_RA_AXIS, 10000, 20000, 5000, false) == kERROR)		printf("RA RC_move_by_pos returned error\n");
-	// if (RC_move_by_posva(addr, SERVO_DEC_AXIS, 10000, 20000, 5000, false) == kERROR)		printf("DEC RC_move_by_pos returned error\n");
-	// if (RC_get_status(addr, &status) == kERROR)		printf("RC_get_status returned error\n");
-	// if (RC_check_queue(addr, &raDepth, &decDepth) == kERROR)		printf("RC_check_queue returned error\n");
-	// printf("*** status = %X  RA queue = %X  Dec queue = %X\n", status, (uint8_t) raDepth, (uint8_t) decDepth);
+	printf("\nStarting RA and Dec Motors with unbuffered commands\n");
+	if (RC_move_by_posva(addr, SERVO_RA_AXIS, 10000, 20000, 5000, false) == kERROR)		printf("RA RC_move_by_pos returned error\n");
+	if (RC_move_by_posva(addr, SERVO_DEC_AXIS, 10000, 20000, 5000, false) == kERROR)		printf("DEC RC_move_by_pos returned error\n");
+	if (RC_get_status(addr, &status) == kERROR)		printf("RC_get_status returned error\n");
+	if (RC_check_queue(addr, &raDepth, &decDepth) == kERROR)		printf("RC_check_queue returned error\n");
+	printf("*** status = %X  RA queue = %X  Dec queue = %X\n", status, (uint8_t) raDepth, (uint8_t) decDepth);
 
-	// if (RC_move_by_posva(addr, SERVO_RA_AXIS, 10000, 20000, 5000, false) == kERROR)		printf("RA RC_move_by_pos returned error\n");
-	// if (RC_move_by_posva(addr, SERVO_DEC_AXIS, 10000, 20000, 5000, false) == kERROR)		printf("DEC RC_move_by_pos returned error\n");
-	// if (RC_get_status(addr, &status) == kERROR)		printf("RC_get_status returned error\n");
-	// if (RC_check_queue(addr, &raDepth, &decDepth) == kERROR)		printf("RC_check_queue returned error\n");
+	if (RC_move_by_posva(addr, SERVO_RA_AXIS, 10000, 20000, 5000, false) == kERROR)		printf("RA RC_move_by_pos returned error\n");
+	if (RC_move_by_posva(addr, SERVO_DEC_AXIS, 10000, 20000, 5000, false) == kERROR)		printf("DEC RC_move_by_pos returned error\n");
+	if (RC_get_status(addr, &status) == kERROR)		printf("RC_get_status returned error\n");
+	if (RC_check_queue(addr, &raDepth, &decDepth) == kERROR)		printf("RC_check_queue returned error\n");
 
-	// printf("*** status = %X  RA queue = %X  Dec queue = %X\n", status, (uint8_t) raDepth, (uint8_t) decDepth);
-	// if (RC_move_by_posva(addr, SERVO_RA_AXIS, 10000, 20000, 5000, false) == kERROR)		printf("RA RC_move_by_pos returned error\n");
-	// if (RC_move_by_posva(addr, SERVO_DEC_AXIS, 10000, 20000, 5000, false) == kERROR)		printf("DEC RC_move_by_pos returned error\n");
-	// if (RC_get_status(addr, &status) == kERROR)		printf("RC_get_status returned error\n");
-	// if (RC_check_queue(addr, &raDepth, &decDepth) == kERROR)		printf("RC_check_queue returned error\n");
-	// printf("*** status = %X  RA queue = %X  Dec queue = %X\n", status, (uint8_t) raDepth, (uint8_t) decDepth);
+	printf("*** status = %X  RA queue = %X  Dec queue = %X\n", status, (uint8_t) raDepth, (uint8_t) decDepth);
+	if (RC_move_by_posva(addr, SERVO_RA_AXIS, 10000, 20000, 5000, false) == kERROR)		printf("RA RC_move_by_pos returned error\n");
+	if (RC_move_by_posva(addr, SERVO_DEC_AXIS, 10000, 20000, 5000, false) == kERROR)		printf("DEC RC_move_by_pos returned error\n");
+	if (RC_get_status(addr, &status) == kERROR)		printf("RC_get_status returned error\n");
+	if (RC_check_queue(addr, &raDepth, &decDepth) == kERROR)		printf("RC_check_queue returned error\n");
+	printf("*** status = %X  RA queue = %X  Dec queue = %X\n", status, (uint8_t) raDepth, (uint8_t) decDepth);
 
-	// if (RC_move_by_posva(addr, SERVO_RA_AXIS, 50000, 20000, 5000, false) == kERROR)		printf("RA RC_move_by_pos returned error\n");
-	// if (RC_move_by_posva(addr, SERVO_DEC_AXIS, 50000, 20000, 5000, false) == kERROR)		printf("DEC RC_move_by_pos returned error\n");
-	// if (RC_get_status(addr, &status) == kERROR)		printf("RC_get_status returned error\n");
-	// if (RC_check_queue(addr, &raDepth, &decDepth) == kERROR)		printf("RC_check_queue returned error\n");
-	// printf("*** status = %X  RA queue = %X  Dec queue = %X\n", status, (uint8_t) raDepth, (uint8_t) decDepth);
+	if (RC_move_by_posva(addr, SERVO_RA_AXIS, 50000, 20000, 5000, false) == kERROR)		printf("RA RC_move_by_pos returned error\n");
+	if (RC_move_by_posva(addr, SERVO_DEC_AXIS, 50000, 20000, 5000, false) == kERROR)		printf("DEC RC_move_by_pos returned error\n");
+	if (RC_get_status(addr, &status) == kERROR)		printf("RC_get_status returned error\n");
+	if (RC_check_queue(addr, &raDepth, &decDepth) == kERROR)		printf("RC_check_queue returned error\n");
+	printf("*** status = %X  RA queue = %X  Dec queue = %X\n", status, (uint8_t) raDepth, (uint8_t) decDepth);
 
-	// printf("\nOutput of buffers from 4 unbuffered moves:\n");
-	// while ((raDepth & decDepth) != 0x80)
-	// {
-	// 	sleep(1);
-	// 	RC_check_queue(addr, &raDepth, &decDepth);
-	// 	printf("*** status = %X  RA queue = %X  Dec queue = %X\n", status, (uint8_t) raDepth, (uint8_t) decDepth);
-	// }
+	printf("\nOutput of buffers from 4 unbuffered moves:\n");
+	while ((raDepth & decDepth) != 0x80)
+	{
+		sleep(1);
+		RC_check_queue(addr, &raDepth, &decDepth);
+		printf("*** status = %X  RA queue = %X  Dec queue = %X\n", status, (uint8_t) raDepth, (uint8_t) decDepth);
+	}
 
-	// printf("\nOutput of buffers from 1 buffered move:\n");
-	// RC_check_queue(addr, &raDepth, &decDepth);
-	// printf("*** status = %X  RA queue = %X  Dec queue = %X\n", status, (uint8_t) raDepth, (uint8_t) decDepth);
-	// if (RC_move_by_posva(addr, SERVO_RA_AXIS, 10000, 20000, 5000, true) == kERROR)		printf("RA RC_move_by_pos returned error\n");
-	// if (RC_move_by_posva(addr, SERVO_DEC_AXIS, 10000, 20000, 5000, true) == kERROR)		printf("DEC RC_move_by_pos returned error\n");
-	// if (RC_get_status(addr, &status) == kERROR)		printf("RC_get_status returned error\n");
-	// if (RC_check_queue(addr, &raDepth, &decDepth) == kERROR)		printf("RC_check_queue returned error\n");
-	// printf("*** status = %X  RA queue = %X  Dec queue = %X\n", status, (uint8_t) raDepth, (uint8_t) decDepth);
+	printf("\nOutput of buffers from 1 buffered move:\n");
+	RC_check_queue(addr, &raDepth, &decDepth);
+	printf("*** status = %X  RA queue = %X  Dec queue = %X\n", status, (uint8_t) raDepth, (uint8_t) decDepth);
+	if (RC_move_by_posva(addr, SERVO_RA_AXIS, 10000, 20000, 5000, true) == kERROR)		printf("RA RC_move_by_pos returned error\n");
+	if (RC_move_by_posva(addr, SERVO_DEC_AXIS, 10000, 20000, 5000, true) == kERROR)		printf("DEC RC_move_by_pos returned error\n");
+	if (RC_get_status(addr, &status) == kERROR)		printf("RC_get_status returned error\n");
+	if (RC_check_queue(addr, &raDepth, &decDepth) == kERROR)		printf("RC_check_queue returned error\n");
+	printf("*** status = %X  RA queue = %X  Dec queue = %X\n", status, (uint8_t) raDepth, (uint8_t) decDepth);
 
-	// printf("hit any key to reverse motors \n");
-	// fgets(buf, 256, stdin);
-	// if (RC_check_queue(addr, &raDepth, &decDepth) == kERROR)		printf("RC_check_queue returned error\n");
+	printf("hit any key to reverse motors \n");
+	fgets(buf, 256, stdin);
+	if (RC_check_queue(addr, &raDepth, &decDepth) == kERROR)		printf("RC_check_queue returned error\n");
 
-	// printf("*** status = %X  RA queue = %X  Dec queue = %X\n", status, (uint8_t) raDepth, (uint8_t) decDepth);
-	// if (RC_move_by_posva(addr, SERVO_RA_AXIS, 0, 20000, 5000, false) == kERROR)		printf("RA RC_move_by_pos returned error\n");
-	// if (RC_move_by_posva(addr, SERVO_DEC_AXIS, 0, 20000, 5000, false) == kERROR)		printf("DEC RC_move_by_pos returned error\n");
-	// if (RC_get_status(addr, &status) == kERROR)		printf("RC_get_status returned error\n");
-	// if (RC_check_queue(addr, &raDepth, &decDepth) == kERROR)		printf("RC_check_queue returned error\n");
-	// printf("*** status = %X  RA queue = %X  Dec queue = %X\n", status, raDepth, decDepth);
+	printf("*** status = %X  RA queue = %X  Dec queue = %X\n", status, (uint8_t) raDepth, (uint8_t) decDepth);
+	if (RC_move_by_posva(addr, SERVO_RA_AXIS, 0, 20000, 5000, false) == kERROR)		printf("RA RC_move_by_pos returned error\n");
+	if (RC_move_by_posva(addr, SERVO_DEC_AXIS, 0, 20000, 5000, false) == kERROR)		printf("DEC RC_move_by_pos returned error\n");
+	if (RC_get_status(addr, &status) == kERROR)		printf("RC_get_status returned error\n");
+	if (RC_check_queue(addr, &raDepth, &decDepth) == kERROR)		printf("RC_check_queue returned error\n");
+	printf("*** status = %X  RA queue = %X  Dec queue = %X\n", status, raDepth, decDepth);
 
-	// printf("hit any key to stop motors\n");
-	// fgets(buf, 256, stdin);
-	// if (RC_check_queue(addr, &raDepth, &decDepth) == kERROR)		printf("RC_check_queue returned error\n");
-	// printf("*** status = %X  RA queue = %X  Dec queue = %X\n", status, (uint8_t) raDepth, (uint8_t) decDepth);
-	// RC_stop(addr, SERVO_RA_AXIS);
-	// RC_stop(addr, SERVO_DEC_AXIS);
-	// if (RC_check_queue(addr, &raDepth, &decDepth) == kERROR)		printf("RC_check_queue returned error\n");
-	// printf("*** status = %X  RA queue = %X  Dec queue = %X\n", status, (uint8_t) raDepth, (uint8_t) decDepth);
+	printf("hit any key to stop motors\n");
+	fgets(buf, 256, stdin);
+	if (RC_check_queue(addr, &raDepth, &decDepth) == kERROR)		printf("RC_check_queue returned error\n");
+	printf("*** status = %X  RA queue = %X  Dec queue = %X\n", status, (uint8_t) raDepth, (uint8_t) decDepth);
+	RC_stop(addr, SERVO_RA_AXIS);
+	RC_stop(addr, SERVO_DEC_AXIS);
+	if (RC_check_queue(addr, &raDepth, &decDepth) == kERROR)		printf("RC_check_queue returned error\n");
+	printf("*** status = %X  RA queue = %X  Dec queue = %X\n", status, (uint8_t) raDepth, (uint8_t) decDepth);
 
-	// printf("\nStarting RA and Dec Motors with 4 buffered commands\n");
-	// printf("hit any key to begin\n");
-	// fgets(buf, 256, stdin);
+	printf("\nStarting RA and Dec Motors with 4 buffered commands\n");
+	printf("hit any key to begin\n");
+	fgets(buf, 256, stdin);
 
-	// if (RC_move_by_posva(addr, SERVO_RA_AXIS, -10000, 20000, 5000, true) == kERROR)		printf("RA RC_move_by_pos returned error\n");
-	// if (RC_move_by_posva(addr, SERVO_DEC_AXIS, 10000, 20000, 5000, true) == kERROR)		printf("DEC RC_move_by_pos returned error\n");
-	// if (RC_get_status(addr, &status) == kERROR)		printf("RC_get_status returned error\n");
-	// if (RC_check_queue(addr, &raDepth, &decDepth) == kERROR)		printf("RC_check_queue returned error\n");
-	// printf("*** status = %X  RA queue = %X  Dec queue = %X\n", status, (uint8_t) raDepth, (uint8_t) decDepth);
+	if (RC_move_by_posva(addr, SERVO_RA_AXIS, -10000, 20000, 5000, true) == kERROR)		printf("RA RC_move_by_pos returned error\n");
+	if (RC_move_by_posva(addr, SERVO_DEC_AXIS, 10000, 20000, 5000, true) == kERROR)		printf("DEC RC_move_by_pos returned error\n");
+	if (RC_get_status(addr, &status) == kERROR)		printf("RC_get_status returned error\n");
+	if (RC_check_queue(addr, &raDepth, &decDepth) == kERROR)		printf("RC_check_queue returned error\n");
+	printf("*** status = %X  RA queue = %X  Dec queue = %X\n", status, (uint8_t) raDepth, (uint8_t) decDepth);
 
-	// if (RC_move_by_posva(addr, SERVO_RA_AXIS, 0, 20000, 5000, true) == kERROR)		printf("RA RC_move_by_pos returned error\n");
-	// if (RC_move_by_posva(addr, SERVO_DEC_AXIS, 0, 20000, 5000, true) == kERROR)		printf("DEC RC_move_by_pos returned error\n");
-	// if (RC_get_status(addr, &status) == kERROR)		printf("RC_get_status returned error\n");
-	// if (RC_check_queue(addr, &raDepth, &decDepth) == kERROR)		printf("RC_check_queue returned error\n");
-	// printf("*** status = %X  RA queue = %X  Dec queue = %X\n", status, (uint8_t) raDepth, (uint8_t) decDepth);
+	if (RC_move_by_posva(addr, SERVO_RA_AXIS, 0, 20000, 5000, true) == kERROR)		printf("RA RC_move_by_pos returned error\n");
+	if (RC_move_by_posva(addr, SERVO_DEC_AXIS, 0, 20000, 5000, true) == kERROR)		printf("DEC RC_move_by_pos returned error\n");
+	if (RC_get_status(addr, &status) == kERROR)		printf("RC_get_status returned error\n");
+	if (RC_check_queue(addr, &raDepth, &decDepth) == kERROR)		printf("RC_check_queue returned error\n");
+	printf("*** status = %X  RA queue = %X  Dec queue = %X\n", status, (uint8_t) raDepth, (uint8_t) decDepth);
 
-	// if (RC_move_by_posva(addr, SERVO_RA_AXIS, 10000, 20000, 5000, true) == kERROR)		printf("RA RC_move_by_pos returned error\n");
-	// if (RC_move_by_posva(addr, SERVO_DEC_AXIS, -10000, 20000, 5000, true) == kERROR)		printf("DEC RC_move_by_pos returned error\n");
-	// if (RC_get_status(addr, &status) == kERROR)		printf("RC_get_status returned error\n");
-	// if (RC_check_queue(addr, &raDepth, &decDepth) == kERROR)		printf("RC_check_queue returned error\n");
-	// printf("*** status = %X  RA queue = %X  Dec queue = %X\n", status, (uint8_t) raDepth, (uint8_t) decDepth);
+	if (RC_move_by_posva(addr, SERVO_RA_AXIS, 10000, 20000, 5000, true) == kERROR)		printf("RA RC_move_by_pos returned error\n");
+	if (RC_move_by_posva(addr, SERVO_DEC_AXIS, -10000, 20000, 5000, true) == kERROR)		printf("DEC RC_move_by_pos returned error\n");
+	if (RC_get_status(addr, &status) == kERROR)		printf("RC_get_status returned error\n");
+	if (RC_check_queue(addr, &raDepth, &decDepth) == kERROR)		printf("RC_check_queue returned error\n");
+	printf("*** status = %X  RA queue = %X  Dec queue = %X\n", status, (uint8_t) raDepth, (uint8_t) decDepth);
 
-	// 	if (RC_move_by_posva(addr, SERVO_RA_AXIS, 0, 20000, 5000, true) == kERROR)		printf("RA RC_move_by_pos returned error\n");
-	// if (RC_move_by_posva(addr, SERVO_DEC_AXIS, 0, 20000, 5000, true) == kERROR)		printf("DEC RC_move_by_pos returned error\n");
-	// if (RC_get_status(addr, &status) == kERROR)		printf("RC_get_status returned error\n");
-	// if (RC_check_queue(addr, &raDepth, &decDepth) == kERROR)		printf("RC_check_queue returned error\n");
-	// printf("*** status = %X  RA queue = %X  Dec queue = %X\n", status, (uint8_t) raDepth, (uint8_t) decDepth);
+		if (RC_move_by_posva(addr, SERVO_RA_AXIS, 0, 20000, 5000, true) == kERROR)		printf("RA RC_move_by_pos returned error\n");
+	if (RC_move_by_posva(addr, SERVO_DEC_AXIS, 0, 20000, 5000, true) == kERROR)		printf("DEC RC_move_by_pos returned error\n");
+	if (RC_get_status(addr, &status) == kERROR)		printf("RC_get_status returned error\n");
+	if (RC_check_queue(addr, &raDepth, &decDepth) == kERROR)		printf("RC_check_queue returned error\n");
+	printf("*** status = %X  RA queue = %X  Dec queue = %X\n", status, (uint8_t) raDepth, (uint8_t) decDepth);
 
-	// while ((raDepth & decDepth) != 0x80)
-	// {
-	// 	sleep(1);
-	// 	RC_check_queue(addr, &raDepth, &decDepth);
-	// 	printf("*** status = %X  RA queue = %X  Dec queue = %X\n", status, (uint8_t) raDepth, (uint8_t) decDepth);
-	// }
+	while ((raDepth & decDepth) != 0x80)
+	{
+		sleep(1);
+		RC_check_queue(addr, &raDepth, &decDepth);
+		printf("*** status = %X  RA queue = %X  Dec queue = %X\n", status, (uint8_t) raDepth, (uint8_t) decDepth);
+	}
 
 
-	// printf("hit any key to stop motors\n");
-	// fgets(buf, 256, stdin);
+	printf("hit any key to stop motors\n");
+	fgets(buf, 256, stdin);
 
-	// RC_stop(addr, SERVO_RA_AXIS);
-	// RC_stop(addr, SERVO_DEC_AXIS);
+	RC_stop(addr, SERVO_RA_AXIS);
+	RC_stop(addr, SERVO_DEC_AXIS);
 
-	// printf("Now starting test for move by velocity\n");
-	// if (RC_move_by_vela(addr, SERVO_RA_AXIS, 20000, 5000, true) == kERROR)		printf("RA RC_move_by_vela returned error\n");
-	// if (RC_move_by_vela(addr, SERVO_DEC_AXIS, 20000, 5000, true) == kERROR)		printf("DEC RC_move_by_vela returned error\n");
-	// if (RC_get_status(addr, &status) == kERROR)		printf("RC_get_status returned error\n");
-	// //printf("Sleeping for 5 secs\n");
-	// //sleep(5);
+	printf("Now starting test for move by velocity\n");
+	if (RC_move_by_vela(addr, SERVO_RA_AXIS, 20000, 5000, true) == kERROR)		printf("RA RC_move_by_vela returned error\n");
+	if (RC_move_by_vela(addr, SERVO_DEC_AXIS, 20000, 5000, true) == kERROR)		printf("DEC RC_move_by_vela returned error\n");
+	if (RC_get_status(addr, &status) == kERROR)		printf("RC_get_status returned error\n");
+	//printf("Sleeping for 5 secs\n");
+	//sleep(5);
 
-	// printf("hit any key to reverse velocity\n");
-	// fgets(buf, 256, stdin);
+	printf("hit any key to reverse velocity\n");
+	fgets(buf, 256, stdin);
 
-	// RC_stop(addr, SERVO_RA_AXIS);
-	// RC_stop(addr, SERVO_DEC_AXIS);
+	RC_stop(addr, SERVO_RA_AXIS);
+	RC_stop(addr, SERVO_DEC_AXIS);
 	
-	// printf("Now testing reverse for velocity\n");
+	printf("Now testing reverse for velocity\n");
 
-	// if (RC_move_by_vela(addr, SERVO_RA_AXIS, -20000, 5000, false) == kERROR)		printf("RA RC_move_by_vela returned error\n");
-	// if (RC_move_by_vela(addr, SERVO_DEC_AXIS, -20000, 5000, false) == kERROR)		printf("DEC RC_move_by_vela returned error\n");
-	// printf("*** status = %X  RA queue = %X  Dec queue = %X\n", status, (uint8_t) raDepth, (uint8_t) decDepth);
+	if (RC_move_by_vela(addr, SERVO_RA_AXIS, -20000, 5000, false) == kERROR)		printf("RA RC_move_by_vela returned error\n");
+	if (RC_move_by_vela(addr, SERVO_DEC_AXIS, -20000, 5000, false) == kERROR)		printf("DEC RC_move_by_vela returned error\n");
+	printf("*** status = %X  RA queue = %X  Dec queue = %X\n", status, (uint8_t) raDepth, (uint8_t) decDepth);
 
 
 	printf("hit any key to stop motors\n");

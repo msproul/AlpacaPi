@@ -30,7 +30,7 @@
 //*	May  8,	2022	<RNS> renamed RC* functions from _read_ to _get_
 //*	May  8,	2022	<RNS> edit move_by_pos to _posva since default_acc is broken
 //*	May  8,	2022	<RNS> Added basic _TEST_ support to check build
-//*	May 11,	2022	<MLS> Added Servo_stop_tracking()
+//*	May 11,	2022	<MLS> Added Servo_stop_axes_tracking()
 //*	May 11,	2022	<MLS> Added return codes to several routines
 //*	May 12,	2022	<MLS> Added "const" to filename arguments (to make compiler happy)
 //*	May 12,	2022	<MLS> Converted all function parameters from D/HMS to deci hour/degs
@@ -67,13 +67,25 @@
 //*	Jun  2,	2022	<RNS> Merged code and fix a sign bug in _set_static_pos()
 //*	Jun 12,	2022	<RNS> updated Servo_init() to read PID setting from config file
 //*	Jun 13,	2022	<RNS> Converted all PID function to use float for PID args
-//*	Jun 17,	2022	<RNS> Renamed servo_stop_axis_tracking to servo_stop and can do both
-//*	Jun 17,	2022	<RNS> Deleted servo_stop_all(), obsolete with servo_stop doing both
+//*	Jun 17,	2022	<RNS> Renamed Servo_stop_axes_axis_tracking to Servo_stop_axes and can do both
+//*	Jun 17,	2022	<RNS> Deleted Servo_stop_axes_all(), obsolete with Servo_stop_axes doing both
 //*	Jun 17,	2022	<RNS> Added and renamed start_axis_tracking to support both axes 
 //*	Jun 19,	2022	<RNS> Fixed a toggle gParkState bug in _unpark() and return to int
 //*	Jun 21,	2022	<RNS> Fixed incorret variable ref and conversion in move_to_static()
 //*	Jun 24,	2022	<RNS> Added routines _is_TTP(), _get_lst(), _get_HA() 
 //*	Jun 26,	2022	<RNS> Added _COP_type() and simplified _calc_COP routines
+//*	Ju1  1,	2022	<RNS> Moved low-level motor routines to Motion_ lib
+//*	Ju1  2,	2022	<RNS> Ported Mount_ code to new Motion_ lib routines
+//*	Jul  3,	2022	<RNS> Changed .time/.zero to .zeroTS/.zeroPos for clarity
+//*	Jul  3,	2022	<RNS> Relocated memset to *_cfg.h source files 
+//*	Jul  3,	2022	<RNS> Rewrote both _step_to_pos and _pos_to_step
+//*	Jul  3,	2022	<RNS> ported servo_init() to use Motion and Observ fields
+//*	Jul  3,	2022	<RNS> renamed Servo_stop to Servo_stop_axes for consistancy
+//*	Jul  4,	2022	<RNS> renamed gMountConfig to gsMountConfig to ID static
+//*	Jul  4,	2022	<RNS> Removed dup code in move_static to use common _pos_to_step()
+//*	Jul  4,	2022	<RNS> removed old code, now committed to new routines
+//*	Jul  5,	2022	<RNS> Fixed not setting acc/vel down at the Motion level 
+
 //*****************************************************************************
 // Notes: M1 *MUST BE* connected to RA or Azimuth axis, M2 to Dec or Altitude
 //*****************************************************************************
@@ -93,9 +105,11 @@
 #include "servo_mc_core.h"
 #include "servo_time.h"
 #include "servo_rc_utils.h"
+#include "servo_observ_cfg.h"
+#include "servo_motion_cfg.h"
 #include "servo_mount_cfg.h"
+#include "servo_motion.h"
 #include "servo_mount.h"
-//#include	"mini_alpaca_defs.h"
 
 #ifdef _ALPHA_OUT_
 #define UNDER_TARGET 5.0
@@ -104,8 +118,8 @@
 //#define	BOTH_SENSOR_CHANGE	3
 #endif // _ALPHA_OUT_
 
-// Globals for the telescope mount axis for real-world floating point variables
-TYPE_MOUNT_CONFIG gMountConfig;
+// Globals for the telescope mount, motion and location data structs
+static TYPE_MOUNT_CONFIG 	gsMountConfig;
 
 // Danger, local globals ahead
 static double gSysDepend = 1.000000;
@@ -125,27 +139,14 @@ enum
 }; 
 
 //*****************************************************************************
-// Initializes the serial comm port using the identifying string and baud rates.
-// Port setting will always be set to parity 'none' and stop bits equal 1.
-//*****************************************************************************
-int Servo_set_comm_port(char com[], int baud)
-{
-	int status;
-
-	status = MC_init_comm(com, baud);
-
-	return (status);
-} // of ss_set_comm_port()
-
-//*****************************************************************************
 // Returns the park position found in the mount configuration file.
 // This lockdown position is used for statically parking the mount for
 // a power-off shutdown.
 //*****************************************************************************
 void Servo_get_park_coordins(double *ha, double *dec)
 {
-	*ha = gMountConfig.ra.park;
-	*dec = gMountConfig.dec.park;
+	*ha = gsMountConfig.ra.park;
+	*dec = gsMountConfig.dec.park;
 }
 
 //*****************************************************************************
@@ -155,8 +156,8 @@ void Servo_get_park_coordins(double *ha, double *dec)
 //*****************************************************************************
 void Servo_get_standby_coordins(double *ha, double *dec)
 {
-	*ha = gMountConfig.ra.standby;
-	*dec = gMountConfig.dec.standby;
+	*ha = gsMountConfig.ra.standby;
+	*dec = gsMountConfig.dec.standby;
 }
 
 //*****************************************************************************
@@ -164,8 +165,8 @@ void Servo_get_standby_coordins(double *ha, double *dec)
 //*****************************************************************************
 void Servo_get_sync_coordins(double *ra, double *dec)
 {
-	*ra = gMountConfig.ra.sync;
-	*dec = gMountConfig.dec.sync;
+	*ra = gsMountConfig.ra.sync;
+	*dec = gsMountConfig.dec.sync;
 }
 
 //*****************************************************************************
@@ -215,7 +216,8 @@ int Servo_unpark(void)
 //*****************************************************************************
 // Returns the mount's current Park state, and will return false if the mount
 // is PARKING and not completed the move.  Note: the only way to set the park
-// state to PARKED is via Servo_move_to_park() and a call to Servo_state
+// state to PARKED to call Servo_move_to_park() and after move is complete, 
+//  a call to Servo_state.  Servo_state will set the PARKED flag
 //*****************************************************************************
 bool Servo_get_park_state(void)
 {
@@ -232,7 +234,7 @@ bool Servo_get_park_state(void)
 //*****************************************************************************
 int8_t Servo_get_pier_side(void)
 {
-	return gMountConfig.side;
+	return gsMountConfig.side;
 }
 
 //*****************************************************************************
@@ -241,7 +243,7 @@ int8_t Servo_get_pier_side(void)
 bool Servo_is_TTP(void)
 {
 	// If the current side is different the config file starting orientation 
-	return (gMountConfig.side != gMountConfig.ra.parkInfo ? true : false);
+	return (gsMountConfig.side != gsMountConfig.ra.parkInfo ? true : false);
 }
 
 //*****************************************************************************
@@ -254,7 +256,7 @@ double Servo_get_lst(void)
 	// get the jd, GM Sid Time and convert to LST
 	jd = Time_systime_to_jd();
 	lst = Time_jd_to_gmst(jd);
-	lst = Time_gmst_to_lst(lst, Time_get_lon());
+	lst = Time_gmst_to_lst(lst, Servo_get_lon());
 
 	return(lst); 
 }
@@ -277,40 +279,6 @@ double Servo_get_HA(void)
 
 	return (lst);
 }
-//*****************************************************************************
-// Routine scales down the Ra and Dec acceleration profiles to the passed-in
-// percent of max acceleration found in the servo mount config file
-//*****************************************************************************
-int Servo_scale_acc(int32_t percentRa, int32_t percentDec)
-{
-	// Check the range for 0 <= % <= 100
-	if ((percentRa < 0) || (percentRa > 100) || (percentDec < 0) || (percentDec > 100))
-	{
-		return (kERROR);
-	}
-	// Set the percent acceleration of the max value
-	gMountConfig.ra.acc = (gMountConfig.ra.maxAcc * percentRa) / 100;
-	gMountConfig.dec.acc = (gMountConfig.dec.maxAcc * percentDec) / 100;
-	return (kSTATUS_OK);
-}
-
-//*****************************************************************************
-// Routine scales down the Ra and Dec velocity profiles to the passed-in
-// percent of max acceleration found in the servo mount config file
-// Return Values: kSTATUS_OK or kERROR = outside of range 0 <= x <= 100
-//*****************************************************************************
-int Servo_scale_vel(int32_t percentRa, int32_t percentDec)
-{
-	// Check the range for 0 <= % <= 100
-	if ((percentRa < 0) || (percentRa > 100) || (percentDec < 0) || (percentDec > 100))
-	{
-		return (kERROR);
-	}
-	// Set the percent velocity of the max value
-	gMountConfig.ra.vel = (gMountConfig.ra.maxVel * percentRa) / 100;
-	gMountConfig.dec.vel = (gMountConfig.dec.maxVel * percentDec) / 100;
-	return (kSTATUS_OK);
-}
 
 //*****************************************************************************
 // Allows the mount to move to object below the horizon, normally only
@@ -321,7 +289,7 @@ bool Servo_ignore_horizon(bool state)
 {
 	bool oldValue = gIgnoreHorizon;
 	gIgnoreHorizon = state;
-	return (oldValue);
+	return oldValue;
 }
 
 //*****************************************************************************
@@ -331,29 +299,11 @@ bool Servo_ignore_horizon(bool state)
 //*****************************************************************************
 int Servo_reset_motor(uint8_t motor)
 {
-	switch (motor)
-	{
-	case SERVO_RA_AXIS:
-		// reset and intialize the mc
-		RC_stop(gMountConfig.addr, motor);
-		// This command does not seem to work as documented on RC :(
-		// RC_set_default_acc(gMountConfig.addr, motor, gMountConfig.ra.acc);
-		RC_set_home(gMountConfig.addr, motor);
-		break;
+	int status; 
 
-	case SERVO_DEC_AXIS:
-		RC_stop(gMountConfig.addr, motor);
-		// This command does not seem to work as documented on RC :(
-		// RC_set_default_acc(gMountConfig.addr, motor, gMountConfig.dec.acc);
-		RC_set_home(gMountConfig.addr, motor);
-		break;
+	status = Motion_reset_axis(motor); 
 
-	default:
-		return (kERROR);
-		break;
-	} // of switch
-
-	return (kSTATUS_OK);
+	return status; 
 } // of Servo_reset_motor()
 
 //*****************************************************************************
@@ -362,198 +312,119 @@ int Servo_reset_motor(uint8_t motor)
 // RA and DEC are returned in deciHours and deciDegs
 // TODO: Will need major mind-numbing changes to support alt-azi
 //*****************************************************************************
-// <RNS> Commented out due to -Wall whining about a static function not being used
-// static void Servo_step_to_pos(int32_t raStep, int32_t decStep, double *ra, double *dec)
-void Servo_step_to_pos(int32_t raStep, int32_t decStep, double *ra, double *dec)
+static void Servo_step_to_pos(int32_t raStep, int32_t decStep, double *ra, double *dec)
 {
-	double currPos;
-	long double time;
-	double home;
+	double zeroDegs, raDegs;
+	long double currTime, elapsedTime, elapsedDegs;
 
-	// convert RA position from steps to decimal deg
-	currPos = (gMountConfig.ra.direction) * (raStep * (1.0 / gMountConfig.ra.step)) / 3600.0;
+	// get the current time and compute the elapsed time since zeroPos set
+	currTime = Time_get_systime();
+	elapsedTime = currTime - gsMountConfig.ra.zeroTS;
+	
+	// Calc the elasped arcsecs since last zeroPos, based on Sidereal rate
+	elapsedDegs = -kSIDER_RATE_ARCSECS * gsMountConfig.ra.direction * gSysDepend * elapsedTime;
+	elapsedDegs /= 3600.0; 	// Convert to degrees
 
-	// compute the current home position by adding the movement of the earth since
-	// saving the home position
+	// Calc the updated zeroPos by adding the movement of the earth since saving the zero position
+	zeroDegs = gsMountConfig.ra.zeroPos + elapsedDegs;
 
-	// get the current time and compute the elapsed time
-	time = Time_get_systime();
-	time = time - gMountConfig.ra.time;
+	// convert input RA position from steps to decimal deg
+	raDegs = (gsMountConfig.ra.direction) * (raStep / gsMountConfig.ra.step) / 3600.0;
 
-	// compute the current home position with time delta, motor direction
-	// should not be needed (I think) since time can't go backwards ;^)
-	// home	=	gMountConfig.ra.zero + (gMountConfig.ra.direction) * (gSysDepend * (double)time * ARCSEC_PER_SEC / 3600.0);
-	home = gMountConfig.ra.zero + (gSysDepend * (double)time * kSIDER_RATE_ARCSECS / 3600.0);
-	*ra = home + currPos;
-
-	// convert from decidegs to decihours
-	Time_deci_deg_to_hours(ra);
+	// Calculated RA in degs is just zeroDegs + raDegs because of zero steps based
+	*ra = zeroDegs + raDegs;
+	// convert from decidegs to decihours for ra return value
+	Time_deci_deg_to_hours(ra);	
+	Time_normalize_RA(ra);
 
 	// convert Dec position from steps to decimal deg
-	currPos = (gMountConfig.dec.direction) * (decStep * (1.0 / gMountConfig.dec.step)) / 3600.0;
+	zeroDegs = (gsMountConfig.dec.direction) * (decStep * gsMountConfig.dec.step) / 3600.0;
 
-	// get the 'true' position with home offset in decidegs
-	*dec = gMountConfig.dec.zero + currPos;
-
+	// get the 'true' position with home offset in decidegs, works due to steps is zero based
+	*dec = gsMountConfig.dec.zeroPos + zeroDegs;
+	return; 
 } // of Servo_step_to_pos()
 
 //*****************************************************************************
 // INTERNAL ROUTINE: used to convert ra and dev values in decihour and decidegs
-// to MC step positions. It does zero checks for meridian, flip/TTP, etc
+// to MC step positions. It does no checks for meridian, flip/TTP, etc
 // TODO: Will need major mind-numbing changes to support alt-azi
 //*****************************************************************************
 static void Servo_pos_to_step(double ra, double dec, int32_t *raStep, int32_t *decStep)
 {
+	double zeroDegs;
+	long double currTime, elapsedTime, elapsedDegs;
 	double raDelta, decDelta;
-	double time;
-	double home;
 
 	// Convert RA to decidegs
 	Time_deci_hours_to_deg(&ra);
 
-	// if a RA tracking rate is set then compute the time delta for the offset in deci-degs
-	// Note: this only works for a constant velocity value since last Servo_set_pos() call
-	if (gMountConfig.ra.track != 0)
-	{
-		// get the current time and compute the elapsed time
-		time = Time_get_systime();
-		time = time - gMountConfig.ra.time;
+	// get the current time and compute the elapsed time since zeroPos set
+	currTime = Time_get_systime();
+	elapsedTime = currTime - gsMountConfig.ra.zeroTS;
+	
+	// Calc the elasped arcsecs since last zeroPos, based on Sidereal rate
+	elapsedDegs = -kSIDER_RATE_ARCSECS * gsMountConfig.ra.direction * gSysDepend * elapsedTime;
+	elapsedDegs /= 3600.0; 	// Convert to degrees
 
-		// compute the current home position with time delta
-		home = gMountConfig.ra.zero + (gSysDepend * time * kSIDER_RATE_ARCSECS / 3600.0);
-	}
-	else
-	{
-		// compute the home position without the time delta
-		home = gMountConfig.ra.zero;
-	}
+	// Calc the updated zeroPos by adding the movement of the earth since saving the zero position
+	zeroDegs = gsMountConfig.ra.zeroPos + elapsedDegs;
 
-	// Determine the degrees difference from target coordins and home position
-	// this math only works since axis.zero value corresponds to zero step position
-	// TODO: Potential error due to 0/24 rollover comparison, need to convert to HA?
-	raDelta = ra - home;
-
-	// Convert from decidegs to arcsecs
-	raDelta *= 3600.0;
+	// Determine the degrees difference from target coordins and zero position
+	// this math only works since axis.zeroPos value corresponds to zero step position
+	// TODO: Rare potential 24/0 rolloever issue if zero position is set more than 12 hours ago
+	raDelta = Servo_calc_short_vector(zeroDegs, ra, 360.0);
+	raDelta *= 3600.0; 	// Convert from decidegs to arcsecs
 
 	// get the actual RA steps needed in absolute steps, not relative offset
-	*raStep = (int32_t)((gMountConfig.ra.direction) * (raDelta * gMountConfig.ra.step));
+	*raStep = (int32_t)((gsMountConfig.ra.direction) * (raDelta * gsMountConfig.ra.step));
 
-	// if a Dec tracking rate is set then compute the time delta for the offset in deci-degs
-	// Note: this only works for a constant velocity value since last Servo_set_pos() call
-	if (gMountConfig.dec.track != 0)
-	{
-		// get the current time and compute the elapsed time
-		time = Time_get_systime();
-		time = time - gMountConfig.dec.time;
-
-		// compute the current home position with time delta
-		home = gMountConfig.dec.zero + (gSysDepend * time * kSIDER_RATE_ARCSECS / 3600.0);
-	}
-	else
-	{
-		// compute the home position without the time delta
-		home = gMountConfig.dec.zero;
-	}
-
-	// Determine the degrees difference from target coordins and home position
-	// this math only works since axis.zero value corresponds to zero step position
-	decDelta = dec - home;
-
-	// Convert from decidegs to arcsecs
-	decDelta *= 3600.0;
+	// Determine the Dec degrees difference from target coordins and home position
+	// this math only works since axis.zeroPos value corresponds to zero step position
+	decDelta = dec - gsMountConfig.dec.zeroPos;
+	decDelta *= 3600.0;	// Convert from decidegs to arcsecs
 
 	// get the actual Dec steps needed in absolute steps, not relative offset
-	*decStep = (int32_t)((gMountConfig.dec.direction) * (decDelta * gMountConfig.dec.step));
-
+	*decStep = (int32_t)((gsMountConfig.dec.direction) * (decDelta * gsMountConfig.dec.step));
 	return;
 } // of Servo_pos_to_step()
 
 //*****************************************************************************
 // Returns the current position of the mount in RA and Dec values.
 // RA and DEC are returned in deci hours and deci degs
-// TODO: Will need major mind-numbing changes to support alt-azi
-// TODO: will need to add tracking delta for Dec for alt-azi
 //*****************************************************************************
 void Servo_get_pos(double *ra, double *dec)
 {
-	int32_t currStep;
-	double currPos;
-	long double time;
-	double home;
-	double delta = 0.0;
+	int32_t raStep, decStep;
 
-	// Get the current RA position in steps
-	RC_get_curr_pos(gMountConfig.addr, SERVO_RA_AXIS, &currStep);
+	// Get the current RA/Dec position in steps
+	Motion_get_axis_curr_step(SERVO_RA_AXIS, &raStep);
+	Motion_get_axis_curr_step(SERVO_DEC_AXIS, &decStep);
 
-	// convert RA step position to arcsec
-	currPos = (gMountConfig.ra.direction) * (currStep / gMountConfig.ra.step);
-	// Convert from arcsecs to decidegs
-	currPos /= 3600.0;
-
-	// if a Ra tracking rate has been set then add in the time delta
-	if (gMountConfig.ra.track != 0)
-	{
-		// compute the current home position by adding the movement of the earth since
-		// saving the home position
-
-		// get the current time and compute the elapsed time
-		time = Time_get_systime();
-		time -= gMountConfig.ra.time;
-
-		// compute the current home position with time delta
-		// direction not needed, time only flows one way
-		// TODO: need to add actual tracking rate and not always sidereal
-		delta = (gSysDepend * time * kSIDER_RATE_ARCSECS / 3600.0);
-		home = gMountConfig.ra.zero + delta;
-	}
-	else
-	{
-		// no tracking rate then delta is not needed.
-		home = gMountConfig.ra.zero;
-	}
-
-	// add current pos + home position to get "real" value
-	*ra = home + currPos;
-
-	// convert to decihours
-	// TODO: RA could be out-of-range 0/24
-	Time_deci_deg_to_hours(ra);
-
-	// TODO:  Missing check for Dec tracking needed for Alt-azl
-	// get the current dec position in steps
-	RC_get_curr_pos(gMountConfig.addr, SERVO_DEC_AXIS, &currStep);
-
-	// convert position from steps to arcsecs
-	currPos = (gMountConfig.dec.direction) * (currStep / gMountConfig.dec.step);
-	// Convert from arcsecs to decidegs
-	currPos /= 3600.0;
-
-	// get the "real" position with home offset
-	*dec = gMountConfig.dec.zero + currPos;
-
+	// Convert from steps to RA/Dec
+	Servo_step_to_pos(raStep, decStep, ra, dec); 
 	return;
 } // Servo_get_pos()
 
 //*****************************************************************************
 // Sets the mount position to supplied RA and Dec values. Input RA and Dec
-//	are in deciHour and deciDegs respectively. Assume the mount is
-//	tracking more or less correctly. (ie. the mount is not stopped)
-//	Both RA/Dec home position are stored in deci degrees and the
-//	MC's set_home command always sets the encoder/position value to zero
+// are in deciHour and deciDegs respectively. Assume the mount is
+// tracking more or less correctly. (ie. the mount is not stopped)
+// Both RA/Dec home position are stored in deci degrees and the
+// MC's set_home command always sets the encoder/position value to zero
 //*****************************************************************************
 void Servo_set_pos(double ra, double dec)
 {
 	// set home on the RA axis (deci degs)
-	gMountConfig.ra.time = Time_get_systime();
+	gsMountConfig.ra.zeroTS = Time_get_systime();
 	Time_deci_hours_to_deg(&ra);
-	gMountConfig.ra.zero = ra;
-	RC_set_home(gMountConfig.addr, SERVO_RA_AXIS);
+	gsMountConfig.ra.zeroPos = ra;
+	Motion_set_axis_zero(SERVO_RA_AXIS);
 
 	// set home on the DEC axis (deci degs)
-	gMountConfig.dec.time = Time_get_systime();
-	gMountConfig.dec.zero = dec;
-	RC_set_home(gMountConfig.addr, SERVO_DEC_AXIS);
+	gsMountConfig.dec.zeroTS = Time_get_systime();
+	gsMountConfig.dec.zeroPos = dec;
+	Motion_set_axis_zero(SERVO_DEC_AXIS);
 } // Servo_set_pos()
 
 //*****************************************************************************
@@ -579,22 +450,52 @@ void Servo_set_static_pos(double ha, double dec)
 } // of Servo_set_static_pos()
 
 //*****************************************************************************
-// INTERNAL ROUTINE: Returns the current tracking rate in motor controller axis
-//	in steps/sec
+// INTERNAL ROUTINE: Sets the tracking rate in motor controller axis
+//	in steps/sec but does not start tracking
 //*****************************************************************************
-int32_t Servo_get_axis_step_track(uint8_t motor)
+static int Servo_set_axis_tracking(uint8_t motor, int32_t tracking)
 {
-	int32_t curTrackingRate;
+	int status = kSTATUS_OK;
 
-	curTrackingRate = 0;
 	switch (motor)
 	{
 	case SERVO_RA_AXIS:
-		curTrackingRate = gMountConfig.ra.track;
+		gsMountConfig.ra.trackRate = (int32_t)tracking;
 		break;
 
 	case SERVO_DEC_AXIS:
-		curTrackingRate = gMountConfig.dec.track;
+		gsMountConfig.dec.trackRate = (int32_t)tracking;
+		break;
+
+	default:
+		// do nothing
+		status = kERROR;
+		break;
+	} // of switch
+
+	// save a local copy for Motion routines
+	Motion_set_axis_trackRate(motor, tracking);
+
+	return (status);
+} // of Servo_set_axis_tracking()
+
+//*****************************************************************************
+// INTERNAL ROUTINE: Returns the current tracking rate in motor controller axis
+//	in steps/sec
+//*****************************************************************************
+static int32_t Servo_get_axis_trackRate(uint8_t motor)
+{
+	int32_t currTrackingRate;
+
+	currTrackingRate = 0;
+	switch (motor)
+	{
+	case SERVO_RA_AXIS:
+		currTrackingRate = gsMountConfig.ra.trackRate;
+		break;
+
+	case SERVO_DEC_AXIS:
+		currTrackingRate = gsMountConfig.dec.trackRate;
 		break;
 
 	default:
@@ -602,35 +503,67 @@ int32_t Servo_get_axis_step_track(uint8_t motor)
 		break;
 	} // of switch
 
-	return (curTrackingRate);
-} // of Servo_get_step_track()
+	return (currTrackingRate);
+} // of Servo_get_axis_trackRate()
 
 //*****************************************************************************
-// INTERNAL ROUTINE: Sets the tracking rate in motor controller axis
-//	in steps/sec but does not start tracking
-// TODO: the minus sign in the equate is likely wrong
+// Start the one or both motors tracking if a tracking rate has been set in the
+// axisPtr data struct. this is an unbuffered command and will overwrite any
+// pending actions on the axis
+//*	returns kSTATUS_OK on success, kERROR otherwise
 //*****************************************************************************
-int Servo_set_axis_step_track(uint8_t motor, int32_t tracking)
+int Servo_start_axes_tracking(uint8_t motor)
 {
 	double ra, dec;
-	int status = kSTATUS_OK;
+	int32_t trackingRate;
+	int status;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+	status = kERROR;
 
 	// Set the current pos with the current tracking rate but only if the step
 	// sizes for RA and Dec have been set during Servo_init
-	if ((gMountConfig.ra.step != 0.0) && (gMountConfig.dec.step != 0.0))
+	if ((gsMountConfig.ra.step > 0.0) && (gsMountConfig.dec.step > 0.0))
 	{
-		// Get and set the position to set begin timestamp for new tracking rate
+		// Get and set the position to set begin timestamp for new tracking rate session
 		Servo_get_pos(&ra, &dec);
 		Servo_set_pos(ra, dec);
 
 		switch (motor)
 		{
-		case SERVO_RA_AXIS:
-			gMountConfig.ra.track = (int32_t)(-gMountConfig.ra.direction * gSysDepend * tracking);
-			break;
+		case SERVO_BOTH_AXES:
+			// for both axes, do RA first and fall thru the case switch to get Dec too
+			// Start RA velocity move with the axis tracking rate if not zero
+			trackingRate = Servo_get_axis_trackRate(SERVO_RA_AXIS);
+			if (trackingRate != 0)
+			{
+				// Non-buffered move by tracking velocity
+				Motion_set_axis_buffer(SERVO_RA_AXIS, false);
+				status = Motion_move_axis_by_vel(SERVO_RA_AXIS, trackingRate);
+			}
+			[[fallthrough]];
+			// NOTE: NO BREAK, BOTH needs to fall thru to check Dec as well
 
 		case SERVO_DEC_AXIS:
-			gMountConfig.dec.track = (int32_t)(-gMountConfig.dec.direction * gSysDepend * tracking);
+			// Start DEC velocity move with the axis tracking rate if not zero
+			trackingRate = Servo_get_axis_trackRate(SERVO_DEC_AXIS);
+			if (trackingRate != 0)
+			{
+				// Non-buffered move by tracking velocity
+				Motion_set_axis_buffer(SERVO_DEC_AXIS, false);
+				status = Motion_move_axis_by_vel(SERVO_DEC_AXIS, trackingRate);
+			}
+			break;
+
+		case SERVO_RA_AXIS:
+			// Start RA velocity move with the axis tracking rate if not zero
+			trackingRate = Servo_get_axis_trackRate(SERVO_RA_AXIS);
+			if (trackingRate != 0)
+			{
+				// Non-buffered move by tracking velocity
+				Motion_set_axis_buffer(SERVO_RA_AXIS, false);
+				status = Motion_move_axis_by_vel(SERVO_RA_AXIS, trackingRate);
+			}
 			break;
 
 		default:
@@ -643,312 +576,210 @@ int Servo_set_axis_step_track(uint8_t motor, int32_t tracking)
 	{
 		// Mount was not initialized or failed Servo_init
 		status = kERROR;
-	}
-
-	return (status);
-} // of Servo_set_step_track()
-
-//*****************************************************************************
-// Start the motor tracking if a tracking rate has been set in the
-// axisPtr data struct. this is an unbuffered command and will overwrite any
-// pending actions on the axis
-//*	returns kSTATUS_OK on success, kERROR otherwise
-//*****************************************************************************
-int Servo_start_tracking(uint8_t motor)
-{
-	int status;
-
-	CONSOLE_DEBUG(__FUNCTION__);
-	status = kERROR;
-
-	switch (motor)
-	{
-	case SERVO_BOTH_AXES:
-		// for both axes, do RA first and fall thru the case switch to get Dec too
-		// Start RA velocity move with the axis tracking rate if not zero
-		if (gMountConfig.ra.track != 0)
-		{
-			status = RC_move_by_vela(gMountConfig.addr,
-									 SERVO_RA_AXIS,
-									 gMountConfig.ra.track,
-									 gMountConfig.ra.acc,
-									 false);
-		}
-		[[fallthrough]];
-		// NOTE: NO BREAK, BOTH needs to fall thru to check Dec as well
-
-	case SERVO_DEC_AXIS:
-		// Start DEC velocity move with the axis tracking rate if not zero
-		if (gMountConfig.dec.track != 0)
-		{
-			status = RC_move_by_vela(gMountConfig.addr,
-									 SERVO_DEC_AXIS,
-									 gMountConfig.dec.track,
-									 gMountConfig.dec.acc,
-									 false);
-		}
-		break;
-
-	case SERVO_RA_AXIS:
-		// Start RA velocity move with the axis tracking rate if not zero
-		if (gMountConfig.ra.track != 0)
-		{
-			status = RC_move_by_vela(gMountConfig.addr,
-									 SERVO_RA_AXIS,
-									 gMountConfig.ra.track,
-									 gMountConfig.ra.acc,
-									 false);
-		}
-		break;
-
-	default:
-		// do nothing
-		status = kERROR;
-		break;
-	} // of switch
+	} // of if-else steps vars initialized
 
 	return (status);
 } // of Servo_start_tracking()
 
-//*****************************************************************************
-// Stops a single motor or both motors. Existing tracking rate value, if set, is not affected
-// returns kSTATUS_OK on success, or kERROR otherwise
-//*****************************************************************************
-int Servo_stop(uint8_t motor)
-{
-	int status;
-
-	CONSOLE_DEBUG(__FUNCTION__);
-	status = kERROR;
-	switch (motor)
+	//*****************************************************************************
+	// Stops a single motor or both motors. Existing tracking rate value, if set,
+	// is not affected. Returns kSTATUS_OK on success, or kERROR otherwise
+	//*****************************************************************************
+	int Servo_stop_axes(uint8_t motor)
 	{
-	case SERVO_BOTH_AXES:
-		// for both axes, do RA first and fall thru the case switch to get Dec too
-		// Stop the RA motor
-		status = RC_stop(gMountConfig.addr, SERVO_RA_AXIS);
-		[[fallthrough]];
-		// NO BREAK
+		int status;
 
-	case SERVO_DEC_AXIS:
-		// Stop the Dec motor
-		status = RC_stop(gMountConfig.addr, SERVO_DEC_AXIS);
-		break;
-
-	case SERVO_RA_AXIS:
-		// Stop the RA motor
-		status = RC_stop(gMountConfig.addr, SERVO_RA_AXIS);
-		break;
-
-	default:
-		CONSOLE_DEBUG("Invalid motor specified!!!!!!!!!!!!!!!!");
-		// do nothing
+		CONSOLE_DEBUG(__FUNCTION__);
 		status = kERROR;
-		break;
-	} // of switch
-	CONSOLE_DEBUG_W_NUM("status\t=", status);
+		switch (motor)
+		{
+		case SERVO_BOTH_AXES:
+			// for both axes, do RA first and fall thru the case switch to get Dec too
+			// Stop the RA motor
+			status = Motion_stop_axis(SERVO_RA_AXIS);
+			[[fallthrough]];
+			// NO BREAK
 
-	return (status);
-} // Servo_stop()
+		case SERVO_DEC_AXIS:
+			// Stop the Dec motor
+			status = Motion_stop_axis(SERVO_DEC_AXIS);
+			break;
 
-//*****************************************************************************
-// Move the axis indefinately at a rate in degs/sec specfied by the argument.
-// Rate is limited by the axis .slew field which is the max hand control speed
-//*	returns kSTATUS_OK on success, or kERROR otherwise
-//*****************************************************************************
-int Servo_move_axis_by_vel(uint8_t motor, double vel)
-{
-	int status;
-	int32_t stepVel;
-	TYPE_MountAxis *currAxis = NULL;
+		case SERVO_RA_AXIS:
+			// Stop the RA motor
+			status = Motion_stop_axis(SERVO_RA_AXIS);
+			break;
 
-	CONSOLE_DEBUG(__FUNCTION__);
-	status = kSTATUS_OK;
-	// figure out which axis we are working with and assign to currAxis
-	switch (motor)
+		default:
+			CONSOLE_DEBUG("Invalid motor specified!!!!!!!!!!!!!!!!");
+			// do nothing
+			status = kERROR;
+			break;
+		} // of switch
+		CONSOLE_DEBUG_W_NUM("status\t=", status);
+
+		return status;
+	} // Servo_stop_axes()
+
+	//*****************************************************************************
+	// Move the axis at a rate in degs/sec for
+	// Rate is limited by the axis .slew field which is the max hand control speed
+	//*	returns kSTATUS_OK on success, or kERROR otherwise
+	// TODO: Need to update this for guidin with time direction field, 0 is forever
+	//*****************************************************************************
+	int Servo_move_axis_by_vel_time(uint8_t motor, double vel, double seconds)
 	{
-	case SERVO_RA_AXIS:
-		currAxis = &gMountConfig.ra;
-		break;
+		int status;
+		int32_t velStep;
 
-	case SERVO_DEC_AXIS:
-		currAxis = &gMountConfig.dec;
-		break;
+		CONSOLE_DEBUG(__FUNCTION__);
 
-	default:
-		CONSOLE_DEBUG("Invalid motor specified!!!!!!!!!!!!!!!!");
-		// do nothing
-		status = kERROR;
-		break;
-	} // of switch
-
-	if (status != kERROR)
-	{
 		// Convert the input vel in degs/sec rate to step vel measured in steps/sec
-		vel *= 3600.0; // first convert input vel into arcsecs/sec
-		// Set velocity direction based on axis cfg, divide by the axis->steps to get final vel in steps
-		stepVel = (int32_t)(vel * currAxis->direction / currAxis->step);
-		status = RC_move_by_vela(gMountConfig.addr, motor, stepVel, currAxis->acc, false);
-	}
+		// first convert input vel into arcsecs/sec
+		vel *= 3600.0;
+		switch (motor)
+		{
+		case SERVO_RA_AXIS:
+			// Set velocity direction based on axis cfg, divide by the axis->steps to get final vel in steps
+			velStep = (int32_t)(vel * gsMountConfig.ra.direction / gsMountConfig.ra.step);
+			break;
 
-	CONSOLE_DEBUG_W_NUM("status\t=", status);
+		case SERVO_DEC_AXIS:
+			// Set velocity direction based on axis cfg, divide by the axis->steps to get final vel in steps
+			velStep = (int32_t)(vel * gsMountConfig.dec.direction / gsMountConfig.dec.step);
+			break;
 
-	return (status);
-} // Servo_move_by_vel()
+		default:
+			// do nothing
+			break;
+		} // of switch
 
-//*****************************************************************************
-// This is global initialization routine for the Servo system. It read the both
-// configuration files, initializes communication with the MC board and sets all
-// the motion parameters. Then it initializes the mount's current position to Park
-// values from config fields, set the encoder home position and starts keeping track
-// of any tracking rate positions changes but does not start tracking motion.
-// Note: calling this routine will reset the scaling on both the RA and
-// Dec axes to 100%, scale_val() and scale_acc()
-// It assumes the mount is at it's PARK state and will set gParkState to true
-// Return Values: kSTATUS_OK or kERROR
-//*****************************************************************************
-int Servo_init(const char *mountCfgFile, const char *localCfgFile)
-{
-	int status = kSTATUS_OK;
-	double currRa, currDec;
+		// Set the move to be unbuffered
+		Motion_set_axis_buffer(motor, false);
+		status = Motion_move_axis_by_time(motor, velStep, seconds);
+		CONSOLE_DEBUG_W_NUM("status\t=", status);
 
-	CONSOLE_DEBUG(__FUNCTION__);
+		return status;
+	} // Servo_move_axis_by_vel()
 
-	// Read the location config file for the mount location and check status
-	status = Time_read_local_cfg(localCfgFile);
-	if (status != kSTATUS_OK)
+	//*****************************************************************************
+	// This is global initialization routine for the Servo system. It read the both
+	// configuration files, initializes communication with the MC board and sets all
+	// the motion parameters. Then it initializes the mount's current position to Park
+	// values from config fields, set the encoder home position and starts keeping track
+	// of any tracking rate positions changes but does not start tracking motion.
+	// Note: calling this routine will reset the scaling on both the RA and
+	// Dec axes to 100%, scale_val() and scale_acc()
+	// It assumes the mount is at it's PARK state and will set gParkState to true
+	// Return Values: kSTATUS_OK or kERROR
+	//*****************************************************************************
+	int Servo_init(const char *observCfgFile, const char *mountCfgFile, const char *motionCfgFile)
 	{
-		printf("FATAL: (servo_init) Could not open mount location file '%s'.\n", localCfgFile);
-		return (kERROR);
-	}
+		int status = kSTATUS_OK;
+		double currRa, currDec;
 
-	// Read the mount config file for the mount physical characteristics
-	memset((void *)&gMountConfig, 0, sizeof(TYPE_MOUNT_CONFIG));
-	status = Servo_read_mount_cfg(mountCfgFile, &gMountConfig);
+		CONSOLE_DEBUG(__FUNCTION__);
 
-	if (status != kSTATUS_OK)
-	{
-		printf("FATAL: (servo_init) Could not open mount configuration file '%s'.\n", mountCfgFile);
-		return (kERROR);
-	}
+		// Read the location config file for the mount location and check status
+		status = Servo_read_observ_cfg(observCfgFile);
+		if (status != kSTATUS_OK)
+		{
+			printf("FATAL: (servo_init) Could not open observatory location file '%s'.\n", observCfgFile);
+			return (kERROR);
+		}
 
-	// Initialize the port from the mount config file for communication
-	status = MC_init_comm(gMountConfig.port, gMountConfig.baud);
-	if (status != kSTATUS_OK)
-	{
-		printf("FATAL: (servo_init) Could not initialize comm port '%s'.\n", gMountConfig.port);
-		return (kERROR);
-	}
+		// intialize motion interface for the motor controller
+		status = Motion_init(motionCfgFile);
+		if (status != kSTATUS_OK)
+		{
+			printf("FATAL: (servo_init) Could not open intialize the motor controller\n");
+			return (kERROR);
+		}
 
-	// convert drive precession for *friction drives* from arcsec/deg to percents only - this term will likely just be 1.0
-	gMountConfig.ra.prec = 1.0 - (gMountConfig.ra.prec / 3600.0);
+		// Read the mount config file for the mount physical characteristics
+		status = Servo_read_mount_cfg(mountCfgFile, &gsMountConfig);
+		if (status != kSTATUS_OK)
+		{
+			printf("FATAL: (servo_init) Could not open mount configuration file '%s'.\n", mountCfgFile);
+			return (kERROR);
+		}
 
-	// calc encoder steps per arcsec
-	gMountConfig.ra.step = (gMountConfig.ra.motorGear * gMountConfig.ra.mainGear * gMountConfig.ra.encoder * gMountConfig.ra.prec) / 1296000.0;
+		// convert drive precession for *friction drives* from arcsec/deg to percents only - this term will likely just be 1.0
+		gsMountConfig.ra.prec = 1.0 - (gsMountConfig.ra.prec / 3600.0);
 
-	// calc the max encoder speed in counts per sec (max CPS) based on max motor RPM and encoder resolution
-	gMountConfig.ra.encoderMaxSpeed = gMountConfig.ra.motorMaxRPM * gMountConfig.ra.encoder / 60.0;
+		// calc encoder steps per arcsec
+		gsMountConfig.ra.step = (gsMountConfig.ra.motorGear * gsMountConfig.ra.mainGear * gsMountConfig.ra.encoder * gsMountConfig.ra.prec) / 1296000.0;
 
-	// Max accel is the acc in arcsec/sec^2 from the config file
-	gMountConfig.ra.maxAcc = (uint32_t)gMountConfig.ra.realAcc * gMountConfig.ra.step;
-	gMountConfig.ra.acc = gMountConfig.ra.maxAcc;
+		// Max accel is the acc in arcsec/sec^2 from the mount config file
+		gsMountConfig.ra.maxAcc = (uint32_t)gsMountConfig.ra.realAcc * gsMountConfig.ra.step;
+		gsMountConfig.ra.acc = gsMountConfig.ra.maxAcc;
+		Motion_set_axis_acc(SERVO_RA_AXIS, gsMountConfig.ra.acc);
 
-	//*	Initialize the encoder count to zero
-	gMountConfig.ra.pos = 0;
+		// Max velocity in arcsec/sec from the config file and converted to step/sec
+		gsMountConfig.ra.maxVel = (uint32_t)gsMountConfig.ra.realVel * gsMountConfig.ra.step;
+		gsMountConfig.ra.vel = gsMountConfig.ra.maxVel;
+		Motion_set_axis_vel(SERVO_RA_AXIS, gsMountConfig.ra.vel);
 
-	// Max velocity in arcsec/sec from the config file and converted to step/sec
-	gMountConfig.ra.maxVel = (uint32_t)gMountConfig.ra.realVel * gMountConfig.ra.step;
-	gMountConfig.ra.vel = gMountConfig.ra.maxVel;
+		// Calc the adjust and slew speeds by multiplying by the mount's steps / arcsec ratio
+		gsMountConfig.ra.guideRate = (uint32_t)gsMountConfig.ra.realAdj * gsMountConfig.ra.step;
+		gsMountConfig.ra.manSlewRate = (uint32_t)gsMountConfig.ra.realSlew * gsMountConfig.ra.step;
 
-	// Calc the adjust and slew speeds by multiplying by the mount's steps / arcsec ratio
-	gMountConfig.ra.adj = (uint32_t)gMountConfig.ra.realAdj * gMountConfig.ra.step;
-	gMountConfig.ra.slew = (uint32_t)gMountConfig.ra.realSlew * gMountConfig.ra.step;
+		gsMountConfig.ra.direction = gsMountConfig.ra.config;
 
-	gMountConfig.ra.status = 0;
-	gMountConfig.ra.direction = gMountConfig.ra.config;
+		// Set the PID value in MC with the profile from motion config file data
+		Motion_set_axis_profile(SERVO_RA_AXIS);
 
-	// Set the PID value in MC with the config file data
-	RC_set_pos_pid(	gMountConfig.addr, 
-					SERVO_RA_AXIS,
-					gMountConfig.ra.kp,
-					gMountConfig.ra.ki,
-					gMountConfig.ra.kd,
-					(uint32_t) gMountConfig.ra.il,
-					0, // DeadZone
-					(int32_t)  (gMountConfig.ra.step * -1296000.0),  // Set min pos to one full revolution negative
-					(int32_t)  (gMountConfig.ra.step * 1296000.0) ); // Set min pos to one full revolution positive
+		// Set the  RC tracking rate to sidereal as default and copy to active tracking rate
+		gsMountConfig.ra.defaultRate = -kSIDER_RATE_ARCSECS * gsMountConfig.ra.direction * gSysDepend * gsMountConfig.ra.step;
+		Servo_set_axis_tracking(SERVO_RA_AXIS, gsMountConfig.ra.defaultRate); 
 
-	// Need to set QPPS or the MC will not move, the only way is using vel pid
-	RC_set_vel_pid(	gMountConfig.addr, 
-					SERVO_RA_AXIS,
-					gMountConfig.ra.kp / 40.0, 	// convert to internal data format (divide pos value by 40)
-					gMountConfig.ra.ki / 40.0, 	// convert to internal data format (divide pos value by 40)
-					0.0, 									// it's really a PI cmd so zero D as is not needed							
-					(uint32_t) gMountConfig.ra.maxVel);		// calc'd max step rate from above
+		// Servo_set_axis_step_track(SERVO_RA_AXIS, (kSIDER_RATE_ARCSECS * (double)gsMountConfig.ra.step));
+		gsMountConfig.ra.zeroPos = 0.0;
+		gsMountConfig.ra.zeroTS = Time_get_systime();
 
-	// Set the  RC tracking rate to sidereal as default 
-	gMountConfig.ra.track = -kSIDER_RATE_ARCSECS * gMountConfig.ra.direction * gSysDepend * gMountConfig.ra.step;
+		// Duplicate of what's already done for RA, comments above
+		gsMountConfig.dec.prec = 1.0 - (gsMountConfig.dec.prec / 3600.0);
+		gsMountConfig.dec.step = (gsMountConfig.dec.motorGear * gsMountConfig.dec.mainGear * gsMountConfig.dec.encoder * gsMountConfig.dec.prec) / 1296000.0;
+		gsMountConfig.dec.maxAcc = (uint32_t)gsMountConfig.dec.realAcc * gsMountConfig.dec.step;
+		gsMountConfig.dec.acc = gsMountConfig.dec.maxAcc;
+		Motion_set_axis_acc(SERVO_DEC_AXIS, gsMountConfig.dec.acc);
+		gsMountConfig.dec.maxVel = (uint32_t)gsMountConfig.dec.realVel * gsMountConfig.dec.step;
+		gsMountConfig.dec.vel = gsMountConfig.dec.maxVel;
+		Motion_set_axis_vel(SERVO_DEC_AXIS, gsMountConfig.dec.vel);
+		gsMountConfig.dec.guideRate = (uint32_t)gsMountConfig.dec.realAdj * gsMountConfig.dec.step;
+		gsMountConfig.dec.manSlewRate = (uint32_t)gsMountConfig.dec.realSlew * gsMountConfig.dec.step;
+		gsMountConfig.dec.direction = gsMountConfig.dec.config;
 
-	// Servo_set_axis_step_track(SERVO_RA_AXIS, (kSIDER_RATE_ARCSECS * (double)gMountConfig.ra.step));
-	gMountConfig.ra.zero = 0.0;
-	gMountConfig.ra.time = Time_get_systime();
+		// Set the PID value in MC with the profile from motion config file data
+		Motion_set_axis_profile(SERVO_DEC_AXIS);
 
-	// Duplicate of what's already done for RA, comments above
-	gMountConfig.dec.prec = 1.0 - (gMountConfig.dec.prec / 3600.0);
-	gMountConfig.dec.step = (gMountConfig.dec.motorGear * gMountConfig.dec.mainGear * gMountConfig.dec.encoder * gMountConfig.dec.prec) / 1296000.0;
-	gMountConfig.dec.encoderMaxSpeed = gMountConfig.dec.motorMaxRPM * gMountConfig.dec.encoder / 60.0;
-	gMountConfig.dec.maxAcc = (uint32_t)gMountConfig.dec.realAcc * gMountConfig.dec.step;
-	gMountConfig.dec.acc = gMountConfig.dec.maxAcc;
-	gMountConfig.dec.pos = 0;
-	gMountConfig.dec.maxVel = (uint32_t)gMountConfig.dec.realVel * gMountConfig.dec.step;
-	gMountConfig.dec.vel = gMountConfig.dec.maxVel;
-	gMountConfig.dec.adj = (uint32_t)gMountConfig.dec.realAdj * gMountConfig.dec.step;
-	gMountConfig.dec.slew = (uint32_t)gMountConfig.dec.realSlew * gMountConfig.dec.step;
-	gMountConfig.dec.status = 0;
-	gMountConfig.dec.direction = gMountConfig.dec.config;
+		gsMountConfig.dec.defaultRate = 0;
+		Servo_set_axis_tracking(SERVO_DEC_AXIS, gsMountConfig.dec.defaultRate); 
+		gsMountConfig.dec.zeroPos = 0.0;
+		gsMountConfig.dec.zeroTS = Time_get_systime();
 
-	// Set the PID value in MC with the config file data
-	RC_set_pos_pid(	gMountConfig.addr, 
-					SERVO_DEC_AXIS,
-					gMountConfig.dec.kp,
-					gMountConfig.dec.ki,
-					gMountConfig.dec.kd,
-					(uint32_t) gMountConfig.dec.il,
-					0, // DeadZone
-					(int32_t)  (gMountConfig.dec.step * -1296000.0),  // Set min pos to one full revolution negative
-					(int32_t)  (gMountConfig.dec.step * 1296000.0) ); // Set min pos to one full revolution positive
+		// Make sure the "gear lash" is at least 40*axis->step arcseconds for the PID filter resolution
+		if (gsMountConfig.ra.gearLash < (gsMountConfig.ra.step * 40.0))
+		{
+			gsMountConfig.ra.gearLash = gsMountConfig.ra.step * 40.0;
+		}
+		if (gsMountConfig.dec.gearLash < (gsMountConfig.dec.step * 40.0))
+		{
+			gsMountConfig.dec.gearLash = gsMountConfig.dec.step * 40.0;
+		}
 
-	// Need to set QPPS or the MC will not move, the only way is using vel pid
-	RC_set_vel_pid(	gMountConfig.addr, 
-					SERVO_DEC_AXIS,
-					gMountConfig.dec.kp / 40.0, 			// convert to internal data format (divide pos value by 40)
-					gMountConfig.dec.ki / 40.0, 			// convert to internal data format (divide pos value by 40)
-					0.0, 									// it's really a PI cmd so zero D as is not needed							
-					(uint32_t) gMountConfig.dec.maxVel);	// calc'd max step rate from above
+		// Convert the global off target tolerance from arcseconds to deci degrees
+		gsMountConfig.offTarget /= 3600.0;
 
-	gMountConfig.dec.track = 0;
-	gMountConfig.dec.zero = 0.0;
-	gMountConfig.dec.time = Time_get_systime();
-
-	// Make sure the "gear lash" is at least 40*axis->step arcseconds for the PID filter resolution
-	if (gMountConfig.ra.gearLash < (gMountConfig.ra.step * 40.0))
-	{
-		gMountConfig.ra.gearLash = gMountConfig.ra.step * 40.0;
-	}
-	if (gMountConfig.dec.gearLash < (gMountConfig.dec.step * 40.0))
-	{
-		gMountConfig.dec.gearLash = gMountConfig.dec.step * 40.0;
-	}
-
-	// Convert the global off target tolerance from arcseconds to deci degrees
-	gMountConfig.offTarget /= 3600.0;
-
-	// Set the position of the stationary mount to the park position from config file
-	printf("ra.park = %lf	dec.park = %lf\n",gMountConfig.ra.park, gMountConfig.dec.park);
-	Servo_set_static_pos(gMountConfig.ra.park, gMountConfig.dec.park);
-	Servo_get_pos(&currRa, &currDec);
-	printf("** Current Pos  RA = %lf   Dec = %lf\n", currRa, currDec);
-	// Set the mount state to Park
-	gParkState = true;
+		// Set the position of the stationary mount to the park position from config file
+		printf("ra.park = %lf	dec.park = %lf\n", gsMountConfig.ra.park, gsMountConfig.dec.park);
+		// Set the position based on the park *HA* and Dec
+		Servo_set_static_pos(gsMountConfig.ra.park, gsMountConfig.dec.park);
+		// This returns the current position in *RA* and Dec
+		Servo_get_pos(&currRa, &currDec);
+		printf("** Current Pos  RA = %lf   Dec = %lf\n", currRa, currDec);
+		// Set the mount state to Park
+		gParkState = true;
 
 #ifdef _ALPHA_OUT_
 	// commented out due to not sensor support for Alpha
@@ -956,31 +787,31 @@ int Servo_init(const char *mountCfgFile, const char *localCfgFile)
 	ss__read_sensors(&raSensor, &decSensor);
 
 	// Check the current sensor status for RA and Dec
-	if (gMountConfig.ra.syncValue == raSensor)
+	if (gsMountConfig.ra.syncValue == raSensor)
 	{
-		gMountConfig.ra.syncError = false;
+		gsMountConfig.ra.syncError = false;
 	}
 	elsefor Roboclaw, need to set the "zero" position to middle of the unsigned position range
 	{
 
 		printf("(ss__init) RA sensor value on initialization does not\n");
 		printf("match RA_HOME_FLAG value in the mount configuration file\n");
-		gMountConfig.ra.syncError = TRUE;
+		gsMountConfig.ra.syncError = TRUE;
 		printf("< Hit 'RETURN' to continue... >\n");
 		ch = getch();
 	}
 
 	statout("Made it 4\n");
 
-	if (gMountConfig.dec.syncValue == decSensor)
+	if (gsMountConfig.dec.syncValue == decSensor)
 	{
-		gMountConfig.dec.syncError = false;
+		gsMountConfig.dec.syncError = false;
 	}
 	else
 	{
 		printf("(ss__init) Dec sensor value on initialization does not\n");
 		printf("match DEC_HOME_FLAG value in the mount configuration file\n");
-		gMountConfig.dec.syncError = TRUE;
+		gsMountConfig.dec.syncError = TRUE;
 		printf("< Hit 'RETURN' to continue... >\n");
 		ch = getch();
 	}
@@ -988,7 +819,7 @@ int Servo_init(const char *mountCfgFile, const char *localCfgFile)
 
 	// If status is < zero, return error
 	return (status == kSTATUS_OK) ? kSTATUS_OK : kERROR;
-} // of ss__init()
+} // of Servo__init()
 
 //*****************************************************************************
 // Returns whether the mount is PARKED, STOPPED, MOVING or TRACKING using typedef TYPE_MOVE
@@ -996,7 +827,7 @@ int Servo_init(const char *mountCfgFile, const char *localCfgFile)
 // it may be parked if the global state gParkState is set to true. If either axis is
 // moving, then MOVING is returned and has a high precedence than TRACKING.
 // If the mount is tracking on either or both axes, TRACKING is returned.
-// Tracking is checked against the axis.track value must be withiin 10%
+// Tracking is checked against the axis.trackRate value must be withiin 10%
 //*****************************************************************************
 TYPE_MOVE Servo_state(void)
 {
@@ -1010,14 +841,15 @@ TYPE_MOVE Servo_state(void)
 	// CONSOLE_DEBUG(__FUNCTION__);
 
 	// read the command queue for RA and Dec
-	status = RC_check_queue(gMountConfig.addr, &raState, &decState);
+	status = Motion_get_pending_cmds(&raState, &decState);
 	if (status != kSTATUS_OK)
 	{
-		CONSOLE_DEBUG("ERROR:  RC_check_queue returned error!");
+		CONSOLE_DEBUG("ERROR:  Motion_get_pending_cmds() returned error!");
 	}
 	// Go for the easy win, just see if both cmds queues are empty
 	// printf("\n *** ra state = %x	dec state = %x ***\n", raState, decState);
 
+	// TODO: need to convert the weird RC numbering system to simple zero based 
 	if ((raState & decState) == kRC_CMD_QUEUE_EMPTY)
 	{
 		// Check to see is the mount is PARKED or just STOPPED
@@ -1063,7 +895,7 @@ TYPE_MOVE Servo_state(void)
 
 	// 2nd easy case, dec is executing a command and dec is not supposed to be tracking
 	// which is very likely true for any mount other than alt-azi
-	if ((decState != kRC_CMD_QUEUE_EMPTY) && gMountConfig.dec.track == 0)
+	if ((decState != kRC_CMD_QUEUE_EMPTY) && gsMountConfig.dec.trackRate == 0)
 	{
 		// Therefore dec is moving
 		strcpy(gDebugInfoSS, "M2");
@@ -1073,13 +905,13 @@ TYPE_MOVE Servo_state(void)
 
 	// If you get to here, it means the dec is not moving, but could be tracking
 
-	// But check RA first, highly likely .track != 0, if any axis is tracking, then the mount
+	// But check RA first, highly likely .trackRate != 0, if any axis is tracking, then the mount
 	// is tracking.  So read the current mount velocity for RA to compare to tracking rate
-	RC_get_curr_velocity(gMountConfig.addr, SERVO_RA_AXIS, &raVel);
+	Motion_get_axis_curr_vel(SERVO_RA_AXIS, &raVel);
 
 	// KLUDGE!  using absolute values until I figure out how RC does neg velocities
 	absVel = abs(raVel);
-	absTrack = abs(gMountConfig.ra.track);
+	absTrack = abs(gsMountConfig.ra.trackRate);
 	// printf("^^^ absVel = %d	absTrack = %d\n", absVel, absTrack);
 
 	// convert to floats
@@ -1090,7 +922,7 @@ TYPE_MOVE Servo_state(void)
 	// TODO: KLUDGE!  Tighten down the PID to get a better tolerance than 50%
 	if (velFloat > (trackFloat * 0.5) && velFloat < (trackFloat * 1.5))
 	{
-		if (gMountConfig.ra.track != 0)
+		if (gsMountConfig.ra.trackRate != 0)
 		{
 			strcpy(gDebugInfoSS, "T1");
 			return (TRACKING);
@@ -1098,10 +930,10 @@ TYPE_MOVE Servo_state(void)
 	}
 
 	// Check Dec for tracking (could be an alt-azi, but do not rely on that)
-	RC_get_curr_velocity(gMountConfig.addr, SERVO_DEC_AXIS, &decVel);
+	Motion_get_axis_curr_vel(SERVO_DEC_AXIS, &decVel);
 	// KLUDGE!  using absolute values until I figure out how RC does neg velocities
 	absVel = abs(decVel);
-	absTrack = abs(gMountConfig.dec.track);
+	absTrack = abs(gsMountConfig.dec.trackRate);
 	// convert to floats
 	velFloat = (float)absVel;
 	trackFloat = (float)absTrack;
@@ -1124,7 +956,7 @@ TYPE_MOVE Servo_state(void)
 	// if the dec axis velocity is +/- 10% of the track velocity, then Dec is tracking
 	if (velFloat > (trackFloat * 0.9) && velFloat < (trackFloat * 1.1))
 	{
-		if (gMountConfig.dec.track != 0)
+		if (gsMountConfig.dec.trackRate != 0)
 		{
 			strcpy(gDebugInfoSS, "T2");
 			return (TRACKING);
@@ -1146,52 +978,69 @@ TYPE_MOVE Servo_state(void)
 // If the track parameter (velocity coefficient) is non-zero for either axis
 // the routine will start tracking on that axis(axes).
 // TODO: May need to pull the calc_move_time() out of this routine for alt-azi
+// TODO: need to check the logic of using tracking&sign to set alt-azi move time
 //*****************************************************************************
 static int Servo_move_step_track(int32_t raStep, int32_t decStep)
 {
-	double duration;
-	int32_t pos;
+	double	duration;
+	int32_t	trackingRate; 
+	int32_t	currStep;
+
 	int status = kSTATUS_OK;
 
 	// If RA axis has a tracking value
-	if (gMountConfig.ra.track != 0)
+	trackingRate = Servo_get_axis_trackRate(SERVO_RA_AXIS); 
+	if (trackingRate != 0)
 	{
 		// figure out where we are now
-		status -= RC_get_curr_pos(gMountConfig.addr, SERVO_RA_AXIS, &pos);
+		status -= Motion_get_axis_curr_step(SERVO_RA_AXIS, &currStep);
 		// calculate the duration of the axis move and convert to step and add to target
-		duration = RC_calc_move_time(pos, raStep, gMountConfig.ra.vel, gMountConfig.ra.acc);
-		raStep += (uint32_t)(duration * (double)gMountConfig.ra.track);
+		duration = Motion_calc_axis_move_time(SERVO_RA_AXIS, currStep, raStep);
+		// additional steps are add/subract based on the sign of the axis tracking rate
+		raStep += (uint32_t)(duration * (double)trackingRate);
 
 		// make the first slew to time corrected target and buffer a vel cmd for tracking
 		// this first command has to empty any remaining buffered cmds (false)
-		status -= RC_move_by_posva(gMountConfig.addr, SERVO_RA_AXIS, raStep, gMountConfig.ra.vel, gMountConfig.ra.acc, false);
-		// printf("!!! raStep = %d  vel = %d  acc = %d\n", raStep, gMountConfig.ra.vel, gMountConfig.ra.acc);
-		//  This velocity command will start when the above pos cmd completes
-		status -= RC_move_by_vela(gMountConfig.addr, SERVO_RA_AXIS, gMountConfig.ra.track, gMountConfig.ra.acc, true);
+		Motion_set_axis_buffer(SERVO_RA_AXIS, false);
+		status -= Motion_move_axis_by_step(SERVO_RA_AXIS, raStep);
+		printf("!!! raStep = %d  vel = %d  acc = %d\n", raStep, gsMountConfig.ra.vel, gsMountConfig.ra.acc);
+
+		// This velocity command will start when the above pos cmd completes
+		// Buffered move by tracking velocity
+		Motion_set_axis_buffer(SERVO_RA_AXIS, true);
+		status -= Motion_move_axis_by_vel(SERVO_RA_AXIS, trackingRate);
 	}
 	else
 	{
-		status -= RC_move_by_posva(gMountConfig.addr, SERVO_RA_AXIS, raStep, gMountConfig.ra.vel, gMountConfig.ra.acc, false);
+		Motion_set_axis_buffer(SERVO_RA_AXIS, false);
+		status -= Motion_move_axis_by_step(SERVO_RA_AXIS, raStep);
 	}
 
 	// If Dec axis has a tracking value
-	if (gMountConfig.dec.track != 0)
-	{
+	trackingRate = Servo_get_axis_trackRate(SERVO_DEC_AXIS); 
+	if (trackingRate != 0)	{
 		// figure out where we are now
-		status -= RC_get_curr_pos(gMountConfig.addr, SERVO_DEC_AXIS, &pos);
+		status -= Motion_get_axis_curr_step(SERVO_DEC_AXIS, &currStep);
 		// calculate the duration of the axis move and convert to step and add to target
-		duration = RC_calc_move_time(pos, decStep, gMountConfig.dec.vel, gMountConfig.dec.acc);
-		decStep += (uint32_t)(duration * (double)gMountConfig.dec.track);
+		duration = Motion_calc_axis_move_time(SERVO_DEC_AXIS, currStep, decStep);
+		// additional steps are add/subract based on the sign of the axis tracking rate
+		decStep += (uint32_t)(duration * (double)trackingRate);
 
 		// make the first slew to time corrected target and buffer a vel cmd for tracking
 		// this first command has to empty any remaining buffered cmds (false)
-		status -= RC_move_by_posva(gMountConfig.addr, SERVO_DEC_AXIS, decStep, gMountConfig.dec.vel, gMountConfig.dec.acc, false);
+		Motion_set_axis_buffer(SERVO_DEC_AXIS, false);
+		status -= Motion_move_axis_by_step(SERVO_DEC_AXIS, decStep);
+		printf("!!! decStep = %d  vel = %d  acc = %d\n", raStep, gsMountConfig.dec.vel, gsMountConfig.dec.acc);
+
 		// This velocity command will start when the above pos cmd completes
-		status -= RC_move_by_vela(gMountConfig.addr, SERVO_DEC_AXIS, gMountConfig.dec.track, gMountConfig.dec.acc, true);
+		// Buffered move by tracking velocity
+		Motion_set_axis_buffer(SERVO_DEC_AXIS, true);
+		status -= Motion_move_axis_by_vel(SERVO_DEC_AXIS, trackingRate);
 	}
 	else
 	{
-		status -= RC_move_by_posva(gMountConfig.addr, SERVO_DEC_AXIS, decStep, gMountConfig.dec.vel, gMountConfig.dec.acc, false);
+		Motion_set_axis_buffer(SERVO_DEC_AXIS, false);
+		status -= Motion_move_axis_by_step(SERVO_DEC_AXIS, decStep);
 	}
 
 	// If status is < zero, return error
@@ -1210,11 +1059,16 @@ static int Servo_move_step_track(int32_t raStep, int32_t decStep)
 static int Servo_move_step(int32_t raStep, int32_t decStep, bool buffered)
 {
 	int status;
-	// Start the Dec move
-	status = RC_move_by_posva(gMountConfig.addr, SERVO_DEC_AXIS, decStep, gMountConfig.dec.vel, gMountConfig.dec.acc, buffered);
+
+	// Set the desired buffered state for the moves
+	Motion_set_axis_buffer(SERVO_RA_AXIS, buffered);
+	Motion_set_axis_buffer(SERVO_DEC_AXIS, buffered);
 
 	// Start the RA move and decrement status if error returned
-	status -= RC_move_by_posva(gMountConfig.addr, SERVO_RA_AXIS, raStep, gMountConfig.ra.vel, gMountConfig.ra.acc, buffered);
+	status = Motion_move_axis_by_step(SERVO_RA_AXIS, raStep);	
+
+	// Start the Dec move
+	status -= Motion_move_axis_by_step(SERVO_DEC_AXIS, decStep);
 
 	// If status is < zero, return error
 	return (status == kSTATUS_OK) ? kSTATUS_OK : kERROR;
@@ -1369,7 +1223,7 @@ bool Servo_calc_optimal_path(double startRa, double startDec, double lst, double
 	printf("!!! LST:%.2lf - StartRa = %.2lf  endRa = %.2lf  raStdPath = %.2lf  startRaHa = %.2lf  endRaHa = %.2lf\n", lst, startRa, endRa, raStdPath, startRaHa, endRaHa);
 
 	// This first check is for a simple move (no meridian crossing), works for both FORK and GEM mounts
-	raStdPathType = Servo_COP_type(startRaHa, raStdPath, gMountConfig.flipWin);
+	raStdPathType = Servo_COP_type(startRaHa, raStdPath, gsMountConfig.flipWin);
 	switch (raStdPathType)
 	{
 	case EAST_TO_EAST:
@@ -1403,13 +1257,13 @@ bool Servo_calc_optimal_path(double startRa, double startDec, double lst, double
 	printf("LST:%.2lf startRaFlip:%.2lf endRa:%.2lf  raFlipPath:%.2lf startRaHaFlip:%.2lf\n", lst, startRaFlip, endRa, raFlipPath, startRaHaFlip);
 
 	// Not needed - Determine the move type of flipped path
-	// raFlipPathType = Servo_COP_move_type(startRaHaFlip, raFlipPath, gMountConfig.flipWin);
+	// raFlipPathType = Servo_COP_move_type(startRaHaFlip, raFlipPath, gsMountConfig.flipWin);
 
 	// Let's calc the path FORK mount type first
-	if (gMountConfig.mount == kFORK)
+	if (gsMountConfig.mount == kFORK)
 	{
 		// Check to see if a FORK allows TTP movement *and* RA path is at least 10% shorter with RA flip path vs RA std path
-		if ((gMountConfig.ttp == true) && (fabs(raFlipPath) < (fabs(raStdPath) * 0.9)))
+		if ((gsMountConfig.ttp == true) && (fabs(raFlipPath) < (fabs(raStdPath) * 0.9)))
 		{
 			// the flip is shorter than the 'normal' path and will cross the meridian
 			*raDirection = raFlipPath;
@@ -1430,7 +1284,7 @@ bool Servo_calc_optimal_path(double startRa, double startDec, double lst, double
 	// If you got here, the *mount is NOT a FORK* - just planning for Alt-azi support
 
 	// Check to see if a GEM move goes past the meridian flip window
-	if (gMountConfig.mount == kGERMAN)
+	if (gsMountConfig.mount == kGERMAN)
 	{
 		// Check to see if a GEM mount must flip due to the RA path exceed the meridian window
 		switch (raStdPathType)
@@ -1471,139 +1325,140 @@ bool Servo_calc_optimal_path(double startRa, double startDec, double lst, double
 	return (false);
 } // of Servo_calc_optimal_path()
 
+//*****************************************************************************
 // old routine
-bool old_Servo_calc_optimal_path(double startRa, double startDec, double lst, double endRa, double endDec, double *raDirection, double *decDirection)
-{
-	double startRaHa, endRaHa;
-	double startRaFlip, startDecFlip, startRaHaFlip;
-	double decStdPath, decFlipPath, raStdPath, raFlipPath;
-	double direction; // not used
-	int8_t side;	  // not used
+// bool old_Servo_calc_optimal_path(double startRa, double startDec, double lst, double endRa, double endDec, double *raDirection, double *decDirection)
+// {
+// 	double startRaHa, endRaHa;
+// 	double startRaFlip, startDecFlip, startRaHaFlip;
+// 	double decStdPath, decFlipPath, raStdPath, raFlipPath;
+// 	double direction; // not used
+// 	int8_t side;	  // not used
 
-	// Converting the input star and end coordins to hour angle
-	startRaHa = lst - startRa;
-	endRaHa = lst - endRa;
-	Time_normalize_HA(&startRaHa);
-	Time_normalize_HA(&endRaHa);
+// 	// Converting the input star and end coordins to hour angle
+// 	startRaHa = lst - startRa;
+// 	endRaHa = lst - endRa;
+// 	Time_normalize_HA(&startRaHa);
+// 	Time_normalize_HA(&endRaHa);
 
-	// Do the simple Dec axis first, it just path = end - start;
-	// Note: if pathDec is neg, it means a move towards South, positive... a move towards North
-	decStdPath = endDec - startDec;
-	// printf(> decStdPath(%.2lf)  endDec(%.2lf)  startDec(%.2lf)\n", decStdPath, endDec, startDec);
+// 	// Do the simple Dec axis first, it just path = end - start;
+// 	// Note: if pathDec is neg, it means a move towards South, positive... a move towards North
+// 	decStdPath = endDec - startDec;
+// 	// printf(> decStdPath(%.2lf)  endDec(%.2lf)  startDec(%.2lf)\n", decStdPath, endDec, startDec);
 
-	// Find the short path for the Ra axis for a std move
-	raStdPath = Servo_calc_short_vector(startRa, endRa, 24.0);
-	// printf("LST:%.2lf - StartRa = %.2lf  endRa = %.2lf  raStdPath = %.2lf  startRaHa = %.2lf  endRaHa = %.2lf\n", lst, startRa, endRa, raStdPath, startRaHa, endRaHa);
+// 	// Find the short path for the Ra axis for a std move
+// 	raStdPath = Servo_calc_short_vector(startRa, endRa, 24.0);
+// 	// printf("LST:%.2lf - StartRa = %.2lf  endRa = %.2lf  raStdPath = %.2lf  startRaHa = %.2lf  endRaHa = %.2lf\n", lst, startRa, endRa, raStdPath, startRaHa, endRaHa);
 
-	// if starting on the west side and std path moves east past LST
-	if (startRaHa > 0.0 && (startRaHa - raStdPath) < 0.0)
-	{
-		// this move crosses meridian
-	}
-	// if starting on the east side and std path moves west past lst
-	else if (startRaHa < 0.0 && (startRaHa - raStdPath) > 0.0)
-	{
-		// this move crosses meridian
-	}
-	else
-	{
-		// this move stays on it's side of the meridian
-		*raDirection = raStdPath;
-		*decDirection = decStdPath;
-		strcpy(gDebugInfoCOP, "X--SM");
-		return (false);
-	}
+// 	// if starting on the west side and std path moves east past LST
+// 	if (startRaHa > 0.0 && (startRaHa - raStdPath) < 0.0)
+// 	{
+// 		// this move crosses meridian
+// 	}
+// 	// if starting on the east side and std path moves west past lst
+// 	else if (startRaHa < 0.0 && (startRaHa - raStdPath) > 0.0)
+// 	{
+// 		// this move crosses meridian
+// 	}
+// 	else
+// 	{
+// 		// this move stays on it's side of the meridian
+// 		*raDirection = raStdPath;
+// 		*decDirection = decStdPath;
+// 		strcpy(gDebugInfoCOP, "X--SM");
+// 		return (false);
+// 	}
 
-	// Now that crosses meridian is true, but lets see if we can change that with a flip
-	// so do a what-if compare of distance with start position flipped for TTP move
-	// TODO:  This move could be merged with the GEM flip routine, but just get it working
-	startRaFlip = startRa;
-	startDecFlip = startDec;
-	Servo_calc_flip_coordins(&startRaFlip, &startDecFlip, &direction, &side);
-	// printf("LST:%.2lf - StartRaFlip = %.2lf	endRa = %.2lf	raFlippath = %.2lf startRaHaFlip = %.2lf\n", lst, startRaFlip, endRa, raFlipPath, startRaHaFlip);
+// 	// Now that crosses meridian is true, but lets see if we can change that with a flip
+// 	// so do a what-if compare of distance with start position flipped for TTP move
+// 	// TODO:  This move could be merged with the GEM flip routine, but just get it working
+// 	startRaFlip = startRa;
+// 	startDecFlip = startDec;
+// 	Servo_calc_flip_coordins(&startRaFlip, &startDecFlip, &direction, &side);
+// 	// printf("LST:%.2lf - StartRaFlip = %.2lf	endRa = %.2lf	raFlippath = %.2lf startRaHaFlip = %.2lf\n", lst, startRaFlip, endRa, raFlipPath, startRaHaFlip);
 
-	// Calc the the HA of the new flipped start position, endRaHa remain the same
-	startRaHaFlip = lst - startRaFlip;
-	Time_normalize_HA(&startRaHaFlip);
+// 	// Calc the the HA of the new flipped start position, endRaHa remain the same
+// 	startRaHaFlip = lst - startRaFlip;
+// 	Time_normalize_HA(&startRaHaFlip);
 
-	// Note: if pathDec is neg, it means a move towards South, positive... a move towards North
-	decFlipPath = endDec - startDecFlip;
+// 	// Note: if pathDec is neg, it means a move towards South, positive... a move towards North
+// 	decFlipPath = endDec - startDecFlip;
 
-	// Find the short path of the Ra axis for a flip move, endRa is same as std path
-	raFlipPath = Servo_calc_short_vector(startRaFlip, endRa, 24.0);
-	// printf("LST:%.2lf - StartRaFlip = %.2lf	endRa = %.2lf	raFlippath = %.2lf startRaHaFlip = %.2lf\n", lst, startRaFlip, endRa, raFlipPath, startRaHaFlip);
+// 	// Find the short path of the Ra axis for a flip move, endRa is same as std path
+// 	raFlipPath = Servo_calc_short_vector(startRaFlip, endRa, 24.0);
+// 	// printf("LST:%.2lf - StartRaFlip = %.2lf	endRa = %.2lf	raFlippath = %.2lf startRaHaFlip = %.2lf\n", lst, startRaFlip, endRa, raFlipPath, startRaHaFlip);
 
-	// if starting on the west side and std path moves past lst
-	if (startRaHaFlip > 0.0 && (startRaHaFlip - raFlipPath) < 0.0)
-	{
-		// this move crosses meridian
-	}
-	// if starting on the east side and std path moves past lst
-	else if (startRaHaFlip < 0.0 && (startRaHaFlip - raFlipPath) > 0.0)
-	{
-		// this move crosses meridian
-	}
-	else
-	{
-		// After the flip this move stays on it's side of the meridian
-		*raDirection = raFlipPath;
-		*decDirection = decFlipPath;
-		strcpy(gDebugInfoCOP, "XF-SM");
-		return (true);
-	}
+// 	// if starting on the west side and std path moves past lst
+// 	if (startRaHaFlip > 0.0 && (startRaHaFlip - raFlipPath) < 0.0)
+// 	{
+// 		// this move crosses meridian
+// 	}
+// 	// if starting on the east side and std path moves past lst
+// 	else if (startRaHaFlip < 0.0 && (startRaHaFlip - raFlipPath) > 0.0)
+// 	{
+// 		// this move crosses meridian
+// 	}
+// 	else
+// 	{
+// 		// After the flip this move stays on it's side of the meridian
+// 		*raDirection = raFlipPath;
+// 		*decDirection = decFlipPath;
+// 		strcpy(gDebugInfoCOP, "XF-SM");
+// 		return (true);
+// 	}
 
-	// OK, now we need to cross the meridian, do not pass 'go', do not collect $200 ;^)
+// 	// OK, now we need to cross the meridian, do not pass 'go', do not collect $200 ;^)
 
-	// Check to see if a GEM move goes past the meridian flip window
-	if (gMountConfig.mount == kGERMAN)
-	{
-		// Check to see if a GEM mount must flip due to the RA path exceed the meridian window
+// 	// Check to see if a GEM move goes past the meridian flip window
+// 	if (gsMountConfig.mount == kGERMAN)
+// 	{
+// 		// Check to see if a GEM mount must flip due to the RA path exceed the meridian window
 
-		// if starting on the west side and std path moves east past LST
-		if ((startRaHa > 0.0) && ((startRaHa - raStdPath) < gMountConfig.flipWin))
-		{
-			// this move crosses meridian from the west and goes past the GEM's meridian flip window, so flip and return
-			*raDirection = raFlipPath;
-			*decDirection = decFlipPath;
-			strcpy(gDebugInfoCOP, "GFWMW");
-			return (true);
-		}
-		// if starting on the east side and std path moves west past LST
-		else if ((startRaHa < 0.0) && ((startRaHa - raStdPath) > gMountConfig.flipWin))
-		{
-			// this move crosses meridian from the east and goes past the GEM's meridian flip window, so flip and return
-			*raDirection = raFlipPath;
-			*decDirection = decFlipPath;
-			strcpy(gDebugInfoCOP, "GFEMW");
-			return (true);
-		}
-		else
-		{
-			// the move does cross the meridian but stay within the meridian flip window, no flip needed
-			*raDirection = raStdPath;
-			*decDirection = decStdPath;
-			strcpy(gDebugInfoCOP, "GF<MW");
-			return (false);
-		}
-	}
-	// If you got here, the *mount is NOT a GEM* and need to find the shortest path for a FORK
+// 		// if starting on the west side and std path moves east past LST
+// 		if ((startRaHa > 0.0) && ((startRaHa - raStdPath) < gsMountConfig.flipWin))
+// 		{
+// 			// this move crosses meridian from the west and goes past the GEM's meridian flip window, so flip and return
+// 			*raDirection = raFlipPath;
+// 			*decDirection = decFlipPath;
+// 			strcpy(gDebugInfoCOP, "GFWMW");
+// 			return (true);
+// 		}
+// 		// if starting on the east side and std path moves west past LST
+// 		else if ((startRaHa < 0.0) && ((startRaHa - raStdPath) > gsMountConfig.flipWin))
+// 		{
+// 			// this move crosses meridian from the east and goes past the GEM's meridian flip window, so flip and return
+// 			*raDirection = raFlipPath;
+// 			*decDirection = decFlipPath;
+// 			strcpy(gDebugInfoCOP, "GFEMW");
+// 			return (true);
+// 		}
+// 		else
+// 		{
+// 			// the move does cross the meridian but stay within the meridian flip window, no flip needed
+// 			*raDirection = raStdPath;
+// 			*decDirection = decStdPath;
+// 			strcpy(gDebugInfoCOP, "GF<MW");
+// 			return (false);
+// 		}
+// 	}
+// 	// If you got here, the *mount is NOT a GEM* and need to find the shortest path for a FORK
 
-	// Check to see of the RA axis moves at least 10% less on the RA flip path vs RA path
-	if (fabs(raFlipPath) < (fabs(raStdPath) * 0.9))
-	{
-		// the flip is shorter than the 'normal' path and will cross the meridian
-		*raDirection = raFlipPath;
-		*decDirection = decFlipPath;
-		strcpy(gDebugInfoCOP, "FT-CM");
-		return (true);
-	}
+// 	// Check to see of the RA axis moves at least 10% less on the RA flip path vs RA path
+// 	if (fabs(raFlipPath) < (fabs(raStdPath) * 0.9))
+// 	{
+// 		// the flip is shorter than the 'normal' path and will cross the meridian
+// 		*raDirection = raFlipPath;
+// 		*decDirection = decFlipPath;
+// 		strcpy(gDebugInfoCOP, "FT-CM");
+// 		return (true);
+// 	}
 
-	// This is just FORK std path move that crosses the meridian
-	*raDirection = raStdPath;
-	*decDirection = decStdPath;
-	strcpy(gDebugInfoCOP, "F--CM");
-	return (false);
-}
+// 	// This is just FORK std path move that crosses the meridian
+// 	*raDirection = raStdPath;
+// 	*decDirection = decStdPath;
+// 	strcpy(gDebugInfoCOP, "F--CM");
+// 	return (false);
+// }
 
 #ifdef _ALPHA_OUT_
 //*****************************************************************************
@@ -1617,23 +1472,23 @@ void Servo_calc_move_to_remove_gearlash(void)
 	if (ss__get_tracking(SERVO_RA_AXIS) >= 0)
 	{
 		// tracking is in the positive direction come in on the negative side of the target
-		currRaStep += (uint32_t)(gMountConfig.ra.direction * UNDER_TARGET * gMountConfig.ra.step);
+		currRaStep += (uint32_t)(gsMountConfig.ra.direction * UNDER_TARGET * gsMountConfig.ra.step);
 	}
 	else
 	{
 		// tracking is in the negative direction come in on the positive side of the target
-		currRaStep -= (uint32_t)(gMountConfig.ra.direction * UNDER_TARGET * gMountConfig.ra.step);
+		currRaStep -= (uint32_t)(gsMountConfig.ra.direction * UNDER_TARGET * gsMountConfig.ra.step);
 	}
 	// Take care of the Dec axis
 	if (ss__get_tracking(SERVO_DEC_AXIS) >= 0)
 	{
 		// tracking is in the positive direction come in on the negative side of the target
-		currDecStep += (uint32_t)(gMountConfig.dec.direction * UNDER_TARGET * gMountConfig.dec.step);
+		currDecStep += (uint32_t)(gsMountConfig.dec.direction * UNDER_TARGET * gsMountConfig.dec.step);
 	}
 	else
 	{
 		// tracking is in the negative direction come in on the positive side of the target
-		currDecStep -= (uint32_t)(gMountConfig.dec.direction * UNDER_TARGET * gMountConfig.dec.step);
+		currDecStep -= (uint32_t)(gsMountConfig.dec.direction * UNDER_TARGET * gsMountConfig.dec.step);
 	}
 }
 #endif
@@ -1766,12 +1621,12 @@ int Servo_move_to_coordins(double gotoRa, double gotoDec, double lat, double lon
 	printf("\n&&& CurrRa = %lf	CurrDec = %lf 	LST = %lf	flip = %d\n", currRa, currDec, lst, (int)flip);
 	printf("&&& gotoRa = %lf	gotoDec = %lf 	raRelDir = %lf	decRelDir = %lf\n", gotoRa, gotoDec, raRelDir, decRelDir);
 
-	// If flip is return, You must flip the mount otherwise the rel dir for RA/Dec will be incorrect
+	// If flip is returned, you must flip the mount otherwise the rel dir for RA/Dec will be incorrect
 	if (flip == true)
 	{
 		// Do the actual flip on the current coordins
 		// Current coordins are guaranteed to change after this call
-		Servo_calc_flip_coordins(&currRa, &currDec, &direction, &gMountConfig.side);
+		Servo_calc_flip_coordins(&currRa, &currDec, &direction, &gsMountConfig.side);
 		Servo_set_pos(currRa, currDec);
 		printf("&&& After flip CurrRa = %lf	CurrDec = %lf\n\n", currRa, currDec);
 
@@ -1779,12 +1634,12 @@ int Servo_move_to_coordins(double gotoRa, double gotoDec, double lat, double lon
 		if (Servo_is_TTP() == true)
 		{
 			// set the direction to the opposite from config file
-			gMountConfig.dec.direction = (gMountConfig.dec.parkInfo > 0.0) ? kREVERSE : kFORWARD;
+			gsMountConfig.dec.direction = (gsMountConfig.dec.parkInfo > 0.0) ? kREVERSE : kFORWARD;
 		}
 		else
 		{
 			// side equals the value in the config file, so set direction to config file value
-			gMountConfig.dec.direction = (double)gMountConfig.dec.parkInfo;
+			gsMountConfig.dec.direction = (double)gsMountConfig.dec.parkInfo;
 		}
 	}
 
@@ -1794,7 +1649,7 @@ int Servo_move_to_coordins(double gotoRa, double gotoDec, double lat, double lon
 
 	// convert the target RA & Dec to target steps
 	Servo_pos_to_step(targetRa, targetDec, &targetRaStep, &targetDecStep);
-	// printf("&&& targRa = %lf	targDec = %lf 	targRaStep = %d	targDecStep = %d\n\n", targetRa, targetDec, targetRaStep, targetDecStep);
+	printf("&&& targRa = %lf	targDec = %lf 	targRaStep = %d	targDecStep = %d\n\n", targetRa, targetDec, targetRaStep, targetDecStep);
 
 	/////////////////////////////////////////////////////////////////////////////////////
 	// TODO:  add back in gearlash,  KLUDGE!
@@ -1808,20 +1663,21 @@ int Servo_move_to_coordins(double gotoRa, double gotoDec, double lat, double lon
 
 //*****************************************************************************
 // This routine is for stopping the mount for extended periods of time and
-// uses and Hour Angle and not RA for an accurate static position.
+// uses and Hour Angle and not RA for an accurate static position. If the 
+// mount flipped, it will unflip and then just converts the HA/Dec to 
+// current RA/Dec and then moves the mount with tracking off.
 // Inputs are in deciHour and deciDeg and routine is asynchronous so you need to
-// to poll w15ith Servo_state() and wait for STOPPED state
+// to poll with Servo_state() and wait for STOPPED state
+// TODO: need to pull the tracking checks out since not needed for future alt-azi
 //*****************************************************************************
 int Servo_move_to_static(double parkHA, double parkDec)
 {
 	int32_t targetRaStep, targetDecStep;
-	double currRaDelta, currDecDelta;
 	double targetRa, targetDec;
 	double currRa, currDec;
 	double dummy = 0;
 	double currHA, raRelDir;
-	double time, lst;
-	double home;
+	double lst;
 	int status = kSTATUS_OK;
 
 	// printf("@@@ Servo_move_to_static()  parkHA:%.6f parkDec:%.6f\n", parkHA, parkDec);
@@ -1832,10 +1688,10 @@ int Servo_move_to_static(double parkHA, double parkDec)
 		return kERROR;
 	}
 
-	// Setting the dec target is easy, only updated if mount need to flip
+	// Setting the dec target is easy, only updated if mount needs to flip
 	targetDec = parkDec;
 
-	// printf("@@@ Servo_move_to_static()  .side:%d .ra.parkInfo:%d\n", gMountConfig.side, gMountConfig.ra.parkInfo);
+	// printf("@@@ Servo_move_to_static()  .side:%d .ra.parkInfo:%d\n", gsMountConfig.side, gsMountConfig.ra.parkInfo);
 
 	// RA target is harder, so get where the mount is now
 	Servo_get_pos(&currRa, &currDec);
@@ -1843,88 +1699,31 @@ int Servo_move_to_static(double parkHA, double parkDec)
 	// if the mount is currently thru-the-pole or flipped from config file setting
 	if (Servo_is_TTP() == true)
 	{
-		// Unflip the mount
-		Servo_calc_flip_coordins(&currRa, &currDec, &dummy, &gMountConfig.side);
+		// Unflip the mount and update targetDec to reflect flipped value
+		Servo_calc_flip_coordins(&currRa, &currDec, &dummy, &gsMountConfig.side);
+		targetDec = currDec;
 
 		// Since side now equals the value in the config file, so set direction from config file value
-		gMountConfig.dec.direction = (double)gMountConfig.dec.parkInfo;
+		gsMountConfig.dec.direction = (double)gsMountConfig.dec.parkInfo;
 	}
 
-	// get the LST
+	// get the LST and calc HA of the current RA position
 	lst = Servo_get_lst(); 
-
-	// calc HA of the current RA position
 	currHA = lst - currRa;
 
 	// printf("@@@ Servo_move_to_static()  currHA:%.6f lst:%.6f currRa:%.6f\n", currHA, lst, currRa);
 
-	// relative change in hours needed for RA by subtracting current pos HA from the input park RA
+	// calc relative hours needed for RA by subtracting current pos HA from the input park HA
 	raRelDir = parkHA - currHA;
 	// printf("@@@ Servo_move_to_static()  parkHA:%.6f currHA:%.6f\n", parkHA, currHA);
 
-	// determine the new target in hours based on the RA/Dec relative direction
+	// determine the new RA target in hours based current RA plus relative direction
 	targetRa = currRa + raRelDir;
 	// printf("@@@ Servo_move_to_static()  targetRa:%.6f currRa:%.6f raRelDri:%.6f\n", targetRa, currRa, raRelDir);
 
-	// Dec relative calc is not needed since targetDec is just the parkDec
-
-	// Prepare Dec axis for move first (Dec is typically less time sensitive than RA)
-	// However, this sensitivity will change when adding alt-azi support
-
-	// if a Dec tracking rate is set then compute the time delta for the offset in deci-degs
-	// Note: this only works for a constant velocity value since Servo_set_pos() call
-	if (gMountConfig.dec.track != 0)
-	{
-		// get the current time and compute the elapsed time
-		time = Time_get_systime();
-		time = time - gMountConfig.dec.time;
-
-		// compute the current home position with time delta
-		home = gMountConfig.dec.zero + (gSysDepend * time * kSIDER_RATE_ARCSECS / 3600.0);
-	}
-	else
-	{
-		// compute the home position without the time delta
-		home = gMountConfig.dec.zero;
-	}
-
-	// Determine the degrees difference from target coordins and home position
-	// this math only works since axis.zero value corresponds to zero step position
-	currDecDelta = targetDec - home;
-
-	// get the actual Dec steps needed (absolute)
-	targetDecStep = (uint32_t)((gMountConfig.dec.direction) * (currDecDelta * 3600.0 * gMountConfig.dec.step));
-
-	// Prepare RA axis for move last (less change from the systime call)
-
-	// if a RA tracking rate is set then compute the time delta for the offset in deci-degs
-	// Note: this only works for a constant velocity value since Servo_set_pos() call
-	if (gMountConfig.ra.track != 0)
-	{
-		// get the current time and compute the elapsed time
-		time = Time_get_systime();
-		time = time - gMountConfig.ra.time;
-
-		// compute the current home position with time delta
-		home = gMountConfig.ra.zero + (gSysDepend * time * kSIDER_RATE_ARCSECS / 3600.0);
-	}
-	else
-	{
-		// compute the home position without the time delta
-		home = gMountConfig.ra.zero;
-	}
-
-	// convert ra deciHours to deciDegs to compare with the zero position (in degs)
-	Time_deci_hours_to_deg(&targetRa);
-
-	// Determine the degrees difference from target coordins and home position
-	// this math only works since axis.zero value corresponds to zero step position
-	currRaDelta = targetRa - home;
-	// printf("@@@ Servo_move_to_static()  currRaDelta:%.6f targetRa:%.6f home:%.6f\n", currRaDelta, targetRa, home);
-
-
-	// get the actual RA step needed  (absolute)
-	targetRaStep = (uint32_t)((gMountConfig.ra.direction) * (currRaDelta * 3600.0 * gMountConfig.ra.step));
+	// convert the target RA & Dec to target steps
+	Servo_pos_to_step(targetRa, targetDec, &targetRaStep, &targetDecStep);
+	// printf("&&& targRa = %lf	targDec = %lf 	targRaStep = %d	targDecStep = %d\n\n", targetRa, targetDec, targetRaStep, targetDecStep);
 
 	// Check the status and if not zero, decrement
 	status -= Servo_move_step(targetRaStep, targetDecStep, false);
@@ -2030,13 +1829,13 @@ int main(void)
 	char buf[256];
 
 	printf("\nSERVO_TEST unit test program\n");
-	Servo_init("servo_mount.cfg", "servo_location.cfg");
+	Servo_init("servo_observatory.cfg", "servo_mount.cfg", "servo_motion.cfg");
 
-	Servo_stop(SERVO_BOTH_AXES);
+	Servo_stop_axes(SERVO_BOTH_AXES);
 
 	jd = Time_systime_to_jd();
 	gmst = Time_jd_to_gmst(jd);
-	lst = Time_gmst_to_lst(gmst, Time_get_lon());
+	lst = Time_gmst_to_lst(gmst, Servo_get_lon());
 	printf("@@@ current time is jd:%.5lf GMST:%.5lf LST:%.5lf\n", jd, gmst, lst);
 
 	printf("\nhit any key to begin\n");
@@ -2051,20 +1850,20 @@ int main(void)
 	Servo_step_to_pos(currRaStep, currDecStep, &currRa, &currDec);
 	printf("** Current Pos  RA = %lf   Dec = %lf\n", currRa, currDec);
 
-	RC_get_pos_pid(gMountConfig.addr, SERVO_RA_AXIS,  &propo, &integ, &deriv, &iMax, &deadZ, &minP, &maxP);
+	RC_get_pos_pid(128, SERVO_RA_AXIS,  &propo, &integ, &deriv, &iMax, &deadZ, &minP, &maxP);
 	printf("POS P:%.2f I:%.2f D:%.2f iMax:%d Dz:%d Min:%d Max:%d\n", propo, integ, deriv, iMax, deadZ, minP, maxP);
 
-	RC_get_vel_pid(gMountConfig.addr, SERVO_RA_AXIS,  &propo, &integ, &deriv, &iMax); 
+	RC_get_vel_pid(128, SERVO_RA_AXIS,  &propo, &integ, &deriv, &iMax); 
 	printf("VEL P:%.2f I:%.2f D:%.2f QPPS:%d\n", propo, integ, deriv, iMax);
 
 	// printf("Dumping RA settings\n\n");
-	// Servo_print_axis(&(gMountConfig.ra));
+	// Servo_print_axis(&(gsMountConfig.ra));
 
 	// printf("\nhit any key to begin\n");
 	// fgets(buf, 256, stdin);
 
 	// printf("Dumping Dec settings\\nn");
-	// Servo_print_axis(&(gMountConfig.dec));
+	// Servo_print_axis(&(gsMountConfig.dec));
 
 	// printf("\nhit any key to begin\n");
 	// fgets(buf, 256, stdin);
@@ -2074,7 +1873,7 @@ int main(void)
 
 	jd = Time_systime_to_jd();
 	gmst = Time_jd_to_gmst(jd);
-	lst = Time_gmst_to_lst(gmst, Time_get_lon());
+	lst = Time_gmst_to_lst(gmst, Servo_get_lon());
 	printf("@@@ current time is jd:%.5lf GMST:%.5lf LST:%.5lf\n", jd, gmst, lst);
 
 	currRa = lst - parkHa;
@@ -2092,8 +1891,8 @@ int main(void)
 
 	Servo_unpark();
 
-	lat = Time_get_lat();
-	lon = Time_get_lon();
+	lat = Servo_get_lat();
+	lon = Servo_get_lon();
 
 	printf("********************************************************\n");
 	printf("Move 1: Simple -1.0 hr -15 deg relative, no meridian crossing at LST:%lf\n", lst);
@@ -2117,7 +1916,7 @@ int main(void)
 		sleep(3);
 		Servo_get_pos(&currRa, &currDec);
 		state = Servo_state();
-		RC_check_queue(gMountConfig.addr, &raState, &decState);
+		RC_check_queue(128, &raState, &decState);
 		printf("** Current Pos  RA = %lf   Dec = %lf   gDebugInfoSS = %s Qra:%d Qdec:%d\n", currRa, currDec, gDebugInfoSS, raState, decState);	}
 
 	printf("********************************************************\n");
@@ -2132,12 +1931,12 @@ int main(void)
 	sleep(1); 
 
 	Servo_move_to_coordins(currRa, currDec, lat, lon);
-	RC_check_queue(gMountConfig.addr, &raState, &decState);
+	RC_check_queue(128, &raState, &decState);
 	while (raState == 2) 
 	{
 		printf("raState is 2\n");
 		Servo_move_to_coordins(currRa, currDec, lat, lon);
-		RC_check_queue(gMountConfig.addr, &raState, &decState);
+		RC_check_queue(128, &raState, &decState);
 	}
 
 
@@ -2149,22 +1948,22 @@ int main(void)
 		sleep(3);
 		Servo_get_pos(&currRa, &currDec);
 		state = Servo_state();
-		RC_check_queue(gMountConfig.addr, &raState, &decState);
+		RC_check_queue(128, &raState, &decState);
 		printf("** Current Pos  RA = %lf   Dec = %lf   gDebugInfoSS = %s Qra:%d Qdec:%d\n", currRa, currDec, gDebugInfoSS, raState, decState);
 
 	}
 
-	printf("## Target RA tracking %d\n", gMountConfig.ra.track);
+	printf("## Target RA tracking %d\n", gsMountConfig.ra.trackRate);
 	state = Servo_state();
 	while (state == TRACKING)
 	{
 		sleep(2);
-		RC_get_curr_velocity(gMountConfig.addr, SERVO_RA_AXIS, &currRaStep);		
+		RC_get_curr_vel(128, SERVO_RA_AXIS, &currRaStep);		
 		state = Servo_state();
 		printf("** Current velocity  RA = %d  gDebugInfoSS = %s\n", currRaStep, gDebugInfoSS);
 	}
 	printf("STOPPING motors\n");
-	Servo_stop(SERVO_BOTH_AXES);
+	Servo_stop_axes(SERVO_BOTH_AXES);
 
 	return (0);
 }

@@ -36,6 +36,9 @@
 //*	May 22,	2022	<RNS> Fixed some signed / unsigned math operators
 //*	May 22,	2022	<RNS> Changed main() back to be void, _TEST_ should never take args
 //*	May 31,	2022	<RNS> Removed the old hand coded RC messages and strings, obsolete 
+//*	Jul  2,	2022	<RNS> Adding support for boolean types
+//*	Jul  3,	2022	<RNS> changed prefix on static global to gs*
+
 //*****************************************************************************
 
 #include <stdio.h>
@@ -45,6 +48,7 @@
 #include <termios.h>
 #include <unistd.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <endian.h>
 #include <errno.h>
 #include "servo_std_defs.h"
@@ -70,8 +74,8 @@
 #define kMAX_RETRY 3
 
 // Internal global variables visibel for this file only
-static int gCommPort;
-static int gCommRetries;
+static int gsCommPort;
+static int gsCommRetries;
 
 //*****************************************************************************
 // Resets to the top of buffer, and add MC target/cmd and updates rover
@@ -259,7 +263,7 @@ int		status;
 	}
 
 	// Flush both the input and output buffers
-	tcflush(gCommPort, TCIOFLUSH);
+	tcflush(gsCommPort, TCIOFLUSH);
 
 	// Set the terminal settings
 	status	=	tcsetattr(portFd, TCSANOW, &settings);
@@ -287,37 +291,37 @@ int		retValue;
 //	CONSOLE_DEBUG(__FUNCTION__);
 	// Attempt to the read the message and set buffer ptr just-in-case
 	ptrA			=	retryBuf;
-	gCommRetries	=	kMAX_RETRY;
+	gsCommRetries	=	kMAX_RETRY;
 
 	// Loop to make sure the port does not return an error up to max retry
 	do
 	{
-		size	=	read(gCommPort, buf, len);
+		size	=	read(gsCommPort, buf, len);
 		if (size < 0)
 		{
 			perror("Error in MC_read_comm: ");
 		}
-		gCommRetries--;
-	} while (size <= 0 && gCommRetries > 0);
+		gsCommRetries--;
+	} while (size <= 0 && gsCommRetries > 0);
 
 	//printf("MC_read_comm: len = %d  and size = %d\n", (int)len, (int)size);
 
 	// If the read len doesn't meet the expected length and we still have retrys left
-	while ((size + total != (ssize_t)len) && (gCommRetries > 0))
+	while ((size + total != (ssize_t)len) && (gsCommRetries > 0))
 	{
 		// Append the current read to the tempP
 		memcpy(ptrA, buf, size);
 		total += size;
 
 		ptrA	+=	size;
-		size	=	read(gCommPort, buf, len);
-		gCommRetries--;
+		size	=	read(gsCommPort, buf, len);
+		gsCommRetries--;
 	}
 
 	// If > max retries then error
-	if (size < 0 || gCommRetries < 0)
+	if (size < 0 || gsCommRetries < 0)
 	{
-		printf("MC_read_comm: len = %d  and size = %d  retries = %d\n", (int)len, (int)size, gCommRetries);
+		printf("MC_read_comm: len = %d  and size = %d  retries = %d\n", (int)len, (int)size, gsCommRetries);
 		retValue	=	kERROR;
 	}
 	else
@@ -344,17 +348,17 @@ int MC_write_comm(uint8_t *buf, size_t len)
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-	gCommRetries	=	kMAX_RETRY;
+	gsCommRetries	=	kMAX_RETRY;
 	// Write out all data ininput buf to the commport
-	tcflush(gCommPort, TCIFLUSH);
-	count	=	write(gCommPort, buf, len);
-	while ((count != (ssize_t)len) && (gCommRetries > 0))
+	tcflush(gsCommPort, TCIFLUSH);
+	count	=	write(gsCommPort, buf, len);
+	while ((count != (ssize_t)len) && (gsCommRetries > 0))
 	{
-		count	=	write(gCommPort, buf, len);
-		gCommRetries--;
+		count	=	write(gsCommPort, buf, len);
+		gsCommRetries--;
 	}
 	// If > max retries then error
-	if (gCommRetries < 0)
+	if (gsCommRetries < 0)
 	{
 		returnCode	=	kERROR;
 	}
@@ -377,8 +381,8 @@ int MC_init_comm(char *pathName, int baud)
 	int status;
 
 	// Open port for read/write
-	gCommPort	=	open(pathName, O_RDWR);
-	if (gCommPort == -1)
+	gsCommPort	=	open(pathName, O_RDWR);
+	if (gsCommPort == -1)
 	{
 		perror("Error in MC_init_comm: ");
 		// Device open failed, return neg
@@ -387,11 +391,11 @@ int MC_init_comm(char *pathName, int baud)
 	// Wait for any lingering data to get to the buffer
 	usleep(10000);
 
-	status	=	MC_set_comm_attr(gCommPort, baud);
-	tcflush(gCommPort, TCIOFLUSH);
+	status	=	MC_set_comm_attr(gsCommPort, baud);
+	tcflush(gsCommPort, TCIOFLUSH);
 
 	// set the globe SIO retires
-	gCommRetries	=	kMAX_RETRY;
+	gsCommRetries	=	kMAX_RETRY;
 
 	return(status);
 } // of MC_init_comm()
@@ -407,7 +411,7 @@ int MC_shutdown(void)
 	// Add command stuff here when it exists
 
 	// release the port
-	close(gCommPort);
+	close(gsCommPort);
 
 	return(kSTATUS_OK);
 } // of MC_shutdown()

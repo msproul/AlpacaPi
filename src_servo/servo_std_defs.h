@@ -33,6 +33,7 @@
 //*	May 14,	2022	<MLS> Removed degToRads/radToDegs
 //*	Jun 12,	2022	<RNS> Renamed ARCSEC_PER_SEC to SID_RATE_ARCSECS
 //*	Jun 17,	2022	<RNS> Added solar, lunar and King tracking
+//*	Jun 27,	2022	<RNS> Moved TYPE_CFG_ITEM here and removed obsolete one
 //*****************************************************************************
 //#include	"servo_std_defs.h"
 
@@ -76,11 +77,19 @@
 #define	DEGREES(radians)	((radians) * (180.0 / M_PI))
 #define	RADIANS(degrees)	((degrees) * (M_PI / 180.0))
 
+//TODO: Need to eliminate the below and relace with TYPE_CFG_ITEM
 //*****************************************************************************
 typedef struct
 {
 	char *parameter;
 	int found;
 } TYPE_CfgItem;
+//*****************************************************************************
+typedef struct
+{
+	char parameter[24];
+	short enumValue;
+	bool found;
+} TYPE_CFG_ITEM;
 
 #endif
