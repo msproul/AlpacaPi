@@ -98,6 +98,8 @@ static void		GetMyAddress(void);
 
 static bool		gNeedToReadExternalList	=	true;	//*	we only need to do this once
 
+#if !defined(__arm__)
+
 //*****************************************************************************
 static bool	ReadLocalIPaddress(void)
 {
@@ -150,6 +152,7 @@ int					iii;
 	}
 	return(validAddress);
 }
+#endif	//	!defined(__arm__)
 
 
 //*****************************************************************************
@@ -1018,7 +1021,6 @@ char				ipAddressStr[INET_ADDRSTRLEN];
 SJP_Parser_t		jsonParser;
 int					timeOutCntr;
 int					sockOptValue;
-bool				validLocalAddress;
 
 //	CONSOLE_DEBUG("*********************************************************");
 //	CONSOLE_DEBUG(__FUNCTION__);
@@ -1039,6 +1041,7 @@ bool				validLocalAddress;
 	cliaddr.sin_port			=	htons(0);
 
 #if !defined(__arm__)
+bool				validLocalAddress;
 	validLocalAddress	=	ReadLocalIPaddress();
 	if (validLocalAddress)
 	{

@@ -46,6 +46,7 @@
 #include	"serialport.h"
 #include	"alpacadriver.h"
 #include	"alpacadriver_helper.h"
+#include	"helper_functions.h"
 #include	"JsonResponse.h"
 #include	"eventlogging.h"
 #include	"slittracker.h"
@@ -175,7 +176,7 @@ int					mySocket;
 
 
 	//*	set up the json response
-	JsonResponse_CreateHeader(reqData->jsonTextBuffer, kMaxJsonBuffLen);
+	JsonResponse_CreateHeader(reqData->jsonTextBuffer);
 
 	//*	this is not part of the protocol, I am using it for testing
 	JsonResponse_Add_String(	mySocket,

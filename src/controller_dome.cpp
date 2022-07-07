@@ -604,7 +604,6 @@ char	textString[80];
 		{
 			SetWidgetText(kTab_Capabilities, boxID, textString);
 		}
-
 		iii++;
 	}
 }

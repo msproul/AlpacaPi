@@ -57,7 +57,7 @@ WindowTabRemoteData::WindowTabRemoteData(	const int	xSize,
 											const char	*windowName)
 	:WindowTab(xSize, ySize, backGrndColor, windowName)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG_W_STR("RemoteGAIAenabled is", (gST_DispOptions.RemoteGAIAenabled ? "enabled" : "disabled"));
 
 	cLastRemoteImageUpdate_ms	=	0;
@@ -85,7 +85,7 @@ int		valueWitdth2;
 int		valueWitdth3;
 int		iii;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	//------------------------------------------
 	yLoc			=	cTabVertOffset;
@@ -325,7 +325,7 @@ int		dbNumber;
 //**************************************************************************************
 void	WindowTabRemoteData::ActivateWindow(void)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	UpdateSettings();
 }
 

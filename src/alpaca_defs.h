@@ -52,6 +52,7 @@
 //*	May 30,	2022	<MLS> Build 145
 //*	Jun  7,	2022	<MLS> Version V0.5.1-beta
 //*	Jun  7,	2022	<MLS> Build 146
+//*	Jul  6,	2022	<MLS> Build 147
 //*****************************************************************************
 //#include	"alpaca_defs.h"
 
@@ -76,7 +77,7 @@
 
 #define	kApplicationName	"AlpacaPi"
 #define	kVersionString		"V0.5.1-beta"
-#define	kBuildNumber		146
+#define	kBuildNumber		147
 
 
 #define kAlpacaDiscoveryPORT	32227
@@ -91,14 +92,12 @@
 
 #ifdef _USE_OPENCV_
 	#ifdef _USE_OPENCV_CPP_
-//		#warning _USE_OPENCV_CPP_
 		#include	<opencv2/opencv.hpp>
 		#include	<opencv2/core.hpp>
-//		#include	<opencv.hpp>
-//		#include	<core.hpp>
 	#else
 		#include	<opencv2/highgui/highgui_c.h>
 	#endif // _USE_OPENCV_CPP_
+
 	#if (CV_MAJOR_VERSION <= 3)
 		#define _ENABLE_CVFONT_
 //		#warning (CV_MAJOR_VERSION <= 3)
@@ -138,7 +137,7 @@ typedef enum
 
 
 //*****************************************************************************
-//*	defined by the ascom standarads
+//*	defined by the ascom standards
 //*	https://ascom-standards.org/api/
 //*****************************************************************************
 typedef enum
@@ -154,7 +153,7 @@ typedef enum
 
 //*****************************************************************************
 //*	Shutter Status
-//*	defined by the ascom standarads
+//*	defined by the ascom standards
 //*	https://ascom-standards.org/api/#/Dome%20Specific%20Methods/get_dome__device_number__shutterstatus
 //*****************************************************************************
 enum
@@ -195,8 +194,7 @@ typedef enum
 	kASCOM_Err_CameraBusy				=	0x503,
 	kASCOM_Err_DataFailure				=	0x504,
 	kASCOM_Err_Unknown					=	0x505,
-	kASCOM_Err_RequestFormatErr			=	0x506,
-	kASCOM_Err_InternalError			=	0x507,
+	kASCOM_Err_InternalError			=	0x506,
 
 
 	kASCOM_Err_FailedUnknown,
@@ -327,12 +325,12 @@ typedef struct
 	int						CameraXsize;			//*	The width of the CCD camera chip.
 	int						CameraYsize;			//*	The height of the CCD camera chip.
 	TYPE_ALPACA_CAMERASTATE	CameraState;			//*	the camera operational state.
-	int						CanAbortExposure;		//*	Indicates whether the camera can abort exposures.
+	bool					CanAbortExposure;		//*	Indicates whether the camera can abort exposures.
 	bool					CanAsymmetricBin;		//*	Indicates whether the camera supports asymmetric binning
 	bool					CanFastReadout;			//*	Indicates whether the camera has a fast readout mode.
 	bool					CanGetCoolerPower;		//*	Indicates whether the camera's cooler power setting can be read.
 	bool					CanPulseGuide;			//*	Indicates whether this camera supports pulse guiding
-	bool					Cansetccdtemperature;	//*	Indicates whether this camera supports setting the CCD temperature
+	bool					CanSetCCDtemperature;	//*	Indicates whether this camera supports setting the CCD temperature
 	bool					CanStopExposure;		//*	Returns a flag indicating whether this camera can stop an exposure that is in progress
 	double					CCDtemperature;			//*	Returns the current CCD temperature
 	bool					CoolerOn;				//*	Returns the current cooler on/off state.
@@ -605,10 +603,13 @@ typedef struct
 } TYPE_ObsConditionProperties;
 
 
-#if 0
-//*	not finished, haven't started using this yet
+
+//*****************************************************************************
+//*	not finished
+#define	kMaxSwitchCnt			16
 #define	kMaxSwitchNameLen		32
 #define	kMaxSwitchDescLen		64
+
 //*****************************************************************************
 typedef struct
 {
@@ -620,12 +621,12 @@ typedef struct
 //*****************************************************************************
 typedef struct
 {
-	int						MaxSwitch;
-	TYPE_SwitchDescription	SwitchTable[kMaxSwitchCnt];
+	int					MaxSwitch;
+	TYPE_SwitchInfo		SwitchTable[kMaxSwitchCnt];
 
 } TYPE_SwitchProperties;
 
-#endif
+
 
 
 //*****************************************************************************

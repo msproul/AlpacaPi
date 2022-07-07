@@ -25,7 +25,7 @@
 //int		JsonResponse_SendTextBuffer(int socketFD, const char *jsonTextBuffer);
 
 //*	routines that write to a text buffer and xmit if needed
-void	JsonResponse_CreateHeader(char *jsonTextBuffer, const int maxLen);
+void	JsonResponse_CreateHeader(char *jsonTextBuffer);
 
 
 

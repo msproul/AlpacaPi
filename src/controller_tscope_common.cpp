@@ -40,7 +40,7 @@ double	gHourAngleData[kMaxMountData + 10];
 double	gRightAsceData[kMaxMountData + 10];
 double	gDeclinationData[kMaxMountData + 10];
 
-static int	gSecsSinceMidnight	=	0;
+//-static int	gSecsSinceMidnight	=	0;
 static bool	gInitMountData		=	true;
 
 //*****************************************************************************

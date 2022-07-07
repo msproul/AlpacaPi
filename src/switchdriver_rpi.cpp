@@ -62,6 +62,7 @@
 #endif // _ENABLE_PWM_SWITCH_
 
 #ifdef _ENABLE_STATUS_SWITCH_
+	//*	using BCM pin numbers
 	#define		kStatusPin1	23
 	#define		kStatusPin2	24
 	#define		kStatusPin3	25
@@ -108,7 +109,9 @@ const int	gRelayControlPinNumbers[]	=
 
 
 #if defined(__arm__)
-	#define	_ENABLE_WIRING_PI_
+	#ifndef _ENABLE_WIRING_PI_
+		#define	_ENABLE_WIRING_PI_
+	#endif
 	#include <wiringPi.h>
 #else
 	//*****************************************************************************
@@ -159,10 +162,10 @@ SwitchDriverRPi::SwitchDriverRPi(void)
 	strcpy(cCommonProp.Description,	"Switch utilizing R-Pi 8 channel relay board");
 #endif
 
-	cNumSwitches	=	kR_Pi_RelayCount;
+	cSwitchProp.MaxSwitch	=	kR_Pi_RelayCount;
 
 #ifdef _ENABLE_PWM_SWITCH_
-	cNumSwitches	+=	1;
+	cSwitchProp.MaxSwitch	+=	1;
 #endif // _ENABLE_PWM_SWITCH_
 
 
@@ -246,9 +249,9 @@ char	wiringPi_VerString[32];
 #ifdef _ENABLE_STATUS_SWITCH_
 	CONSOLE_DEBUG("_ENABLE_STATUS_SWITCH_");
 
-	ConfigureSwitch(cNumSwitches, kSwitchType_Status, kStatusPin1);
-	ConfigureSwitch(cNumSwitches, kSwitchType_Status, kStatusPin2);
-	ConfigureSwitch(cNumSwitches, kSwitchType_Status, kStatusPin3);
+	ConfigureSwitch(cSwitchProp.MaxSwitch, kSwitchType_Status, kStatusPin1);
+	ConfigureSwitch(cSwitchProp.MaxSwitch, kSwitchType_Status, kStatusPin2);
+	ConfigureSwitch(cSwitchProp.MaxSwitch, kSwitchType_Status, kStatusPin3);
 
 	for (iii=kR_Pi_RelayCount; iii<kMaxSwitchCnt; iii++)
 	{
@@ -370,7 +373,7 @@ int		pinNumber;
 void	SwitchDriverRPi::SetSwitchValue(const int switchNumber, double switchValue)
 {
 	CONSOLE_DEBUG(__FUNCTION__);
-	if ((switchNumber >= 0) && (switchNumber < cNumSwitches))
+	if ((switchNumber >= 0) && (switchNumber < cSwitchProp.MaxSwitch))
 	{
 #ifdef _ENABLE_PWM_SWITCH_
 		if (switchNumber == kAnalogSwitch1)

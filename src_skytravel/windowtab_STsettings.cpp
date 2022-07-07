@@ -74,8 +74,7 @@ WindowTabSTsettings::WindowTabSTsettings(	const int	xSize,
 											const char	*windowName)
 	:WindowTab(xSize, ySize, backGrndColor, windowName)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
-
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	SetupWindowControls();
 
@@ -89,8 +88,6 @@ WindowTabSTsettings::~WindowTabSTsettings(void)
 {
 	CONSOLE_DEBUG(__FUNCTION__);
 }
-
-
 
 //**************************************************************************************
 void	WindowTabSTsettings::SetupWindowControls(void)
@@ -109,7 +106,7 @@ char	textString[64];
 int		myBoxHeight;
 int		radioBtnWidth;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	//------------------------------------------
 	yLoc			=	cTabVertOffset;
@@ -191,13 +188,13 @@ int		radioBtnWidth;
 	//-----------------------------------------------------
 	if (gObseratorySettings.ValidLatLon)
 	{
-		SetWidgetNumber6F(kSkyT_Settings_LatValue1, gObseratorySettings.Latitude);
-		SetWidgetNumber6F(kSkyT_Settings_LonValue1, gObseratorySettings.Longitude);
+		SetWidgetNumber6F(kSkyT_Settings_LatValue1, gObseratorySettings.Latitude_deg);
+		SetWidgetNumber6F(kSkyT_Settings_LonValue1, gObseratorySettings.Longitude_deg);
 
-		FormatHHMMSS(gObseratorySettings.Latitude, textString, true);
+		FormatHHMMSS(gObseratorySettings.Latitude_deg,	textString, true);
 		SetWidgetText(		kSkyT_Settings_LatValue2,	textString);
 
-		FormatHHMMSS(gObseratorySettings.Longitude, textString, true);
+		FormatHHMMSS(gObseratorySettings.Longitude_deg, textString, true);
 		SetWidgetText(		kSkyT_Settings_LonValue2,	textString);
 
 		SetWidgetText(		kSkyT_Settings_TimeZoneTxt,	gObseratorySettings.TimeZone);
@@ -588,7 +585,7 @@ int		radioBtnWidth;
 //**************************************************************************************
 void	WindowTabSTsettings::ActivateWindow(void)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	UpdateSettings();
 }
 

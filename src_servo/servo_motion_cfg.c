@@ -23,13 +23,14 @@
 //*****************************************************************************
 //*	Jun 27,	2022	<RNS> Initial version of Motion read config routines
 //*	Jun 30,	2022	<RNS> Renamed local globals prefix to 'gs'
-//*	Jul  2,	2022,	<RNS> Renamed .adj field to .guide, removed .freq field
-//*	Jul  2,	2022,	<RNS> Updated motionMotor fields to print
-//*	Jul  2,	2022,	<RNS> Changed ra/dec to motor0/1 and moved addr into motor0/1
-//*	Jul  2,	2022,	<RNS> Removed dummy and corrected RC address range
+//*	Jul  2,	2022	<RNS> Renamed .adj field to .guide, removed .freq field
+//*	Jul  2,	2022	<RNS> Updated motionMotor fields to print
+//*	Jul  2,	2022	<RNS> Changed ra/dec to motor0/1 and moved addr into motor0/1
+//*	Jul  2,	2022	<RNS> Removed dummy and corrected RC address range
 //*	Jul  3,	2022	<RNS> moved memset for motion config to _read_cfg routine
-//*	Jul  3,	2022,	<RNS> Added enum of config files
-//*	Jul  4,	2022,	<RNS> renamed .position field to .state
+//*	Jul  3,	2022	<RNS> Added enum of config files
+//*	Jul  4,	2022	<RNS> renamed .position field to .state
+//*	Jul  6,	2022	<MLS> Added Servo_check_motion_cfg()
 //****************************************************************************
 
 #include <stdio.h>
@@ -45,27 +46,10 @@
 #include "servo_std_defs.h"
 #include "servo_motion_cfg.h"
 
-//******************************************************************
-enum
-{
-	MC_ADDR,
-	BAUD,
-	COMM_PORT,
-	RA_KP_CON,
-	RA_KI_CON,
-	RA_KD_CON,
-	RA_IL_CON,
-	DEC_KP_CON,
-	DEC_KI_CON,
-	DEC_KD_CON,
-	DEC_IL_CON,
-
-	SERVO_CFG_LAST
-};	// of enum
 
 
 //******************************************************************
-static TYPE_CFG_ITEM gsMotionConfigArray[] =
+TYPE_CFG_ITEM gMotionConfigArray[] =
 {
 	{"MC_ADDR:",			MC_ADDR,		false},
 	{"BAUD:",				BAUD,			false},
@@ -90,11 +74,11 @@ int enumValue;
 
 	iii			=	0;
 	enumValue	=	-1;
-	while ((enumValue < 0) && (gsMotionConfigArray[iii].enumValue >= 0))
+	while ((enumValue < 0) && (gMotionConfigArray[iii].enumValue >= 0))
 	{
-		if (strcasecmp(keyword, gsMotionConfigArray[iii].parameter) == 0)
+		if (strcasecmp(keyword, gMotionConfigArray[iii].parameter) == 0)
 		{
-			enumValue	=	gsMotionConfigArray[iii].enumValue;
+			enumValue	=	gMotionConfigArray[iii].enumValue;
 			//*	verify that the array is in the right order
 			if (enumValue != iii)
 			{
@@ -135,7 +119,7 @@ bool				configLineOK;
 	switch (tokenEnumValue)
 	{
 		case MC_ADDR:
-			gsMotionConfigArray[MC_ADDR].found	=	true;
+			gMotionConfigArray[MC_ADDR].found	=	true;
 			// Convert to in, Roboclaw only supports 8 addr 0x80 to 0x87, so AND mask with 0x87
 			motionConfig->motor0.addr			=	atoi(argument) & 0x87;
 			motionConfig->motor1.addr			=	motionConfig->motor0.addr;
@@ -148,13 +132,13 @@ bool				configLineOK;
 				sprintf(cfgErrorString2,	"Usage:  %s  128", token);
 				configLineOK	=	false;
 				// default to the standard RC address 128, best chance for something to work
-				motionConfig->motor0.addr = 128; 
-				motionConfig->motor1.addr = 128; 
+				motionConfig->motor0.addr	=	128;
+				motionConfig->motor1.addr	=	128;
 			}
 			break;
 
 		case BAUD:
-			gsMotionConfigArray[BAUD].found	=	true;
+			gMotionConfigArray[BAUD].found	=	true;
 			motionConfig->baud				=	atoi(argument);
 		//	printf("%-15.15s = %-15d  \n", token, motionConfig->baud);
 
@@ -167,13 +151,13 @@ bool				configLineOK;
 			break;
 
 		case COMM_PORT:
-			gsMotionConfigArray[COMM_PORT].found	=	true;
+			gMotionConfigArray[COMM_PORT].found	=	true;
 			strcpy(motionConfig->port, argument);
 		//	printf("%-15.15s = %-15.15s  \n", token, motionConfig->port);
 			break;
 
 		case RA_KP_CON:
-			gsMotionConfigArray[RA_KP_CON].found	=	true;
+			gMotionConfigArray[RA_KP_CON].found	=	true;
 			ra->kp								=	atof(argument);
 		//	printf("%-15.15s = %-15d  \n", token, ra->kp);
 
@@ -186,7 +170,7 @@ bool				configLineOK;
 			break;
 
 		case RA_KI_CON:
-			gsMotionConfigArray[RA_KI_CON].found	=	true;
+			gMotionConfigArray[RA_KI_CON].found	=	true;
 			ra->ki								=	atof(argument);
 		//	printf("%-15.15s = %-15d  \n", token, ra->ki);
 
@@ -199,7 +183,7 @@ bool				configLineOK;
 			break;
 
 		case RA_KD_CON:
-			gsMotionConfigArray[RA_KD_CON].found	=	true;
+			gMotionConfigArray[RA_KD_CON].found	=	true;
 			ra->kd								=	atof(argument);
 		//	printf("%-15.15s = %-15d  \n", token, ra->kd);
 
@@ -212,7 +196,7 @@ bool				configLineOK;
 			break;
 
 		case RA_IL_CON:
-			gsMotionConfigArray[RA_IL_CON].found	=	true;
+			gMotionConfigArray[RA_IL_CON].found	=	true;
 			ra->il								=	atof(argument);
 		//	printf("%-15.15s = %-15d  \n", token, ra->il);
 
@@ -225,7 +209,7 @@ bool				configLineOK;
 			break;
 
 		case DEC_KP_CON:
-			gsMotionConfigArray[DEC_KP_CON].found	=	true;
+			gMotionConfigArray[DEC_KP_CON].found	=	true;
 			dec->kp								=	atof(argument);
 		//	printf("%-15.15s = %-15d  \n", token, dec->kp);
 
@@ -238,7 +222,7 @@ bool				configLineOK;
 			break;
 
 		case DEC_KI_CON:
-			gsMotionConfigArray[DEC_KI_CON].found	=	true;
+			gMotionConfigArray[DEC_KI_CON].found	=	true;
 			dec->ki								=	atof(argument);
 		//	printf("%-15.15s = %-15d  \n", token, dec->ki);
 
@@ -251,7 +235,7 @@ bool				configLineOK;
 			break;
 
 		case DEC_KD_CON:
-			gsMotionConfigArray[DEC_KD_CON].found	=	true;
+			gMotionConfigArray[DEC_KD_CON].found	=	true;
 			dec->kd								=	atof(argument);
 
 		//	printf("%-15.15s = %-15d  \n", token, dec->kd);
@@ -265,7 +249,7 @@ bool				configLineOK;
 			break;
 
 		case DEC_IL_CON:
-			gsMotionConfigArray[DEC_IL_CON].found	=	true;
+			gMotionConfigArray[DEC_IL_CON].found	=	true;
 			dec->il								=	atof(argument);
 		//	printf("%-15.15s = %-15d  \n", token, dec->il);
 
@@ -306,13 +290,14 @@ char		cfgErrorString2[80];
 char		cfgErrorString3[80];
 
 	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_STR("Reading file:", motionCfgFile);
 
 	retStatus	=	-1;
 	//*	first, go through and invalidate all of the parameters
 	iii	=	0;
-	while (strlen(gsMotionConfigArray[iii].parameter) > 0)
+	while (strlen(gMotionConfigArray[iii].parameter) > 0)
 	{
-		gsMotionConfigArray[iii++].found	=	false;
+		gMotionConfigArray[iii++].found	=	false;
 	}
 	// Zero out the motion config data structure
 	memset((void *)motionConfig, 0, sizeof(TYPE_MOTION_CONFIG));
@@ -377,13 +362,13 @@ char		cfgErrorString3[80];
 //		Print_motion_configuration();
 
 		iii	=	0;
-		while (strlen(gsMotionConfigArray[iii].parameter) > 0)
+		while (strlen(gMotionConfigArray[iii].parameter) > 0)
 		{
-			if (gsMotionConfigArray[iii].found == false)
+			if (gMotionConfigArray[iii].found == false)
 			{
 				fprintf(stderr, "Error: (motion_read_cfg) Configuation variable:\n");
 				fprintf(stderr, "       '%s' was not found or of improper format.\n",
-											gsMotionConfigArray[iii].parameter);
+											gMotionConfigArray[iii].parameter);
 				fprintf(stderr, "       from file '%s'\n", filename);
 				okFlag	=	false;
 			}
@@ -409,14 +394,41 @@ char		cfgErrorString3[80];
 		fprintf(stderr, "Error: could not open cfg file %s\n", filename);
 		retStatus	=	-1;
 	}	//*	of fopen
+
+	CONSOLE_DEBUG_W_NUM("Returning with status:", retStatus);
 	return (retStatus);
 }	// of Servo_read_motion_cfg()
+
+//******************************************************************
+bool Servo_check_motion_cfg(void)
+{
+int		iii;
+bool	validConfiguration;
+
+	validConfiguration	=	true;
+	iii	=	0;
+	while (strlen(gMotionConfigArray[iii].parameter) > 0)
+	{
+		if (gMotionConfigArray[iii].found == false)
+		{
+			validConfiguration	=	false;
+			break;
+		}
+		iii++;
+	}
+	return(validConfiguration);
+}
+
+//**************************************************************************************
+//**************************************************************************************
+//**************************************************************************************
+//**************************************************************************************
 
 //#define _TEST_SERVO_MOTION_CFG_
 #ifdef _TEST_SERVO_MOTION_CFG_
 
 // Local global for print* commands
-TYPE_MOTION_CONFIG  gsMotionConfig; 
+TYPE_MOTION_CONFIG  gMotionConfig;
 
 
 //**************************************************************************************
@@ -424,7 +436,7 @@ static void	PrintConfigParam_Dbl(const int cfgEnum, const double value)
 {
 	if ((cfgEnum >= 0))
 	{
-		printf("%-15.15s = %-15.4f  \n", gsMotionConfigArray[cfgEnum].parameter, value);
+		printf("%-15.15s = %-15.4f  \n", gMotionConfigArray[cfgEnum].parameter, value);
 	}
 }
 
@@ -433,7 +445,7 @@ static void	PrintConfigParam_Str(const int cfgEnum, const char *value)
 {
 	if ((cfgEnum >= 0))
 	{
-		printf("%-15.15s = %s  \n", gsMotionConfigArray[cfgEnum].parameter, value);
+		printf("%-15.15s = %s  \n", gMotionConfigArray[cfgEnum].parameter, value);
 	}
 }
 
@@ -442,7 +454,7 @@ static void	PrintConfigParam_Int(const int cfgEnum, const int value)
 {
 	if ((cfgEnum >= 0))
 	{
-		printf("%-15.15s = %-15d  \n", gsMotionConfigArray[cfgEnum].parameter, value);
+		printf("%-15.15s = %-15d  \n", gMotionConfigArray[cfgEnum].parameter, value);
 	}
 }
 
@@ -451,19 +463,19 @@ void	PrintMotionConfiguration(void)
 {
 //char	lineBuff[64];
 
-	PrintConfigParam_Int(MC_ADDR,		gsMotionConfig.motor0.addr);
-	PrintConfigParam_Str(COMM_PORT,		gsMotionConfig.port);
-	PrintConfigParam_Int(BAUD,			gsMotionConfig.baud);
+	PrintConfigParam_Int(MC_ADDR,			gMotionConfig.motor0.addr);
+	PrintConfigParam_Str(COMM_PORT,			gMotionConfig.port);
+	PrintConfigParam_Int(BAUD,				gMotionConfig.baud);
 
-	PrintConfigParam_Dbl(RA_KP_CON,			gsMotionConfig.motor0.kp);
-	PrintConfigParam_Dbl(RA_KI_CON,			gsMotionConfig.motor0.ki);
-	PrintConfigParam_Dbl(RA_KD_CON,			gsMotionConfig.motor0.kd);
-	PrintConfigParam_Dbl(RA_IL_CON,			gsMotionConfig.motor0.il);
+	PrintConfigParam_Dbl(RA_KP_CON,			gMotionConfig.motor0.kp);
+	PrintConfigParam_Dbl(RA_KI_CON,			gMotionConfig.motor0.ki);
+	PrintConfigParam_Dbl(RA_KD_CON,			gMotionConfig.motor0.kd);
+	PrintConfigParam_Dbl(RA_IL_CON,			gMotionConfig.motor0.il);
 
-	PrintConfigParam_Dbl(DEC_KP_CON,		gsMotionConfig.motor1.kp);
-	PrintConfigParam_Dbl(DEC_KI_CON,		gsMotionConfig.motor1.ki);
-	PrintConfigParam_Dbl(DEC_KD_CON,		gsMotionConfig.motor1.kd);
-	PrintConfigParam_Dbl(DEC_IL_CON,		gsMotionConfig.motor1.il);
+	PrintConfigParam_Dbl(DEC_KP_CON,		gMotionConfig.motor1.kp);
+	PrintConfigParam_Dbl(DEC_KI_CON,		gMotionConfig.motor1.ki);
+	PrintConfigParam_Dbl(DEC_KD_CON,		gMotionConfig.motor1.kd);
+	PrintConfigParam_Dbl(DEC_IL_CON,		gMotionConfig.motor1.il);
 }
 
 //********************************************************************************************
@@ -495,11 +507,11 @@ void Test_print_motion_motor(TYPE_MOTION_MOTOR *ax)
 //********************************************************************************************
 int main(void)
 {
-	char configFile[]	=	"servo_motion.cfg";
+char configFile[]	=	"servo_motion.cfg";
 
 	printf("file name = %s\n", configFile);
 
-	Servo_read_motion_cfg(configFile, &gsMotionConfig);
+	Servo_read_motion_cfg(configFile, &gMotionConfig);
 
 	PrintMotionConfiguration();
 

@@ -361,14 +361,12 @@ bool			myCanWriteFlag;
 		if (validData)
 		{
 			cSwitchInfo[switchNum].canWrite	=	myCanWriteFlag;
-		//	CONSOLE_DEBUG_W_NUM("switchNum\t\t=",		switchNum);
-			CONSOLE_DEBUG_W_NUM("myCanWriteFlag\t=",	myCanWriteFlag);
+//			CONSOLE_DEBUG_W_NUM("switchNum\t\t=",		switchNum);
+//			CONSOLE_DEBUG_W_NUM("myCanWriteFlag\t=",	myCanWriteFlag);
 		}
 
 		switchNum++;
 	}
-
-//	CONSOLE_ABORT(__FUNCTION__);
 	return(validData);
 }
 
@@ -465,7 +463,7 @@ int				switchValue;
 	switchNum		=	0;
 	while ((switchNum < kMaxSwitches) && (switchNum < cMaxSwitch))
 	{
-		CONSOLE_DEBUG_W_NUM("working on switch #", switchNum);
+//		CONSOLE_DEBUG_W_NUM("working on switch #", switchNum);
 		//-------------------------------------------------------------------------------
 		//*	get the switch state
 		SJP_Init(&jsonParser);

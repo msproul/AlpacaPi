@@ -376,7 +376,8 @@ char				linuxErrorStr[256];
 												sizeof(timeoutLength));
 		if (setOptRetCode < 0)
 		{
-			perror("setsockopt(SO_RCVTIMEO) failed");
+			CONSOLE_DEBUG("setsockopt(SO_RCVTIMEO) failed");
+		//	perror("setsockopt(SO_RCVTIMEO) failed");
 		}
 		remoteDev.sin_addr.s_addr	=	deviceAddress->sin_addr.s_addr;
 		remoteDev.sin_family		=	AF_INET;
@@ -501,6 +502,7 @@ bool		sendOK;
 		switch(cDeviceConnType)
 		{
 			case kDevCon_Ethernet:
+				CONSOLE_DEBUG("Calling OpenSocket()");
 				cSocket_desc	=	OpenSocket(cDeviceIPaddress, cTCPportNum);
 				if (cSocket_desc > 0)
 				{

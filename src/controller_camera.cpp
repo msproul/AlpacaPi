@@ -65,7 +65,6 @@
 //*	Jan  1,	2121	<TODO> add error list window
 //*	Jan  1,	2121	<TODO> save cross hair location
 //*	Jan  1,	2121	<TODO> finish exposure step options
-//*	Jan  1,	2121	<TODO> clear error msg
 //*	Feb  6,	2121	<TODO> Move downloading of images to a separate thread
 //*****************************************************************************
 
@@ -87,9 +86,6 @@
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
 
-
-#define	kCamWindowWidth		456
-#define	kCamWindowHeight	800
 
 
 #include	"helper_functions.h"
@@ -521,6 +517,7 @@ int				readOutModeIdx;
 			cOnLine	=	false;
 		}
 //		CONSOLE_DEBUG_W_STR("cCommonProp.Name\t=", cCommonProp.Name);
+
 	}
 
 	//===============================================================
@@ -598,13 +595,23 @@ int				readOutModeIdx;
 		validData	=	AlpacaGetDoubleValue("camera", "exposuremax",	NULL,	&cCameraProp.ExposureMax_seconds);
 		UpdateCameraExposure();
 
-		validData	=	AlpacaGetBooleanValue(	"camera", "canstopexposure",	NULL,	&cCameraProp.CanStopExposure);
+//-		validData	=	AlpacaGetBooleanValue(	"camera", "canstopexposure",	NULL,	&cCameraProp.CanStopExposure);
+
+		ReadOneDriverCapability("camera",	"canabortexposure",		"CanAbortExposure",		&cCameraProp.CanAbortExposure);
+		ReadOneDriverCapability("camera",	"canasymmetricbin",		"CanAsymmetricBin",		&cCameraProp.CanAsymmetricBin);
+		ReadOneDriverCapability("camera",	"canfastreadout",		"CanFastreadout",		&cCameraProp.CanFastReadout);
+		ReadOneDriverCapability("camera",	"cangetcoolerpower",	"CanGetCoolerPower",	&cCameraProp.CanGetCoolerPower);
+		ReadOneDriverCapability("camera",	"canpulseguide",		"CanPulseguide",		&cCameraProp.CanPulseGuide);
+		ReadOneDriverCapability("camera",	"cansetccdtemperature",	"CanSetCCDtemperature",	&cCameraProp.CanSetCCDtemperature);
+		ReadOneDriverCapability("camera",	"canstopexposure",		"CanStopExposure",		&cCameraProp.CanStopExposure);
+
 		UpdateCameraState();
 	}
 
 	return(validData);
 
 }
+
 
 //*****************************************************************************
 //*	this routine gets called one time to get the info on the camera that does not change
@@ -1668,6 +1675,8 @@ bool			validData;
 SJP_Parser_t	jsonParser;
 int				jjj;
 char			parameterString[128];
+int				returnedAlpacaErrNum;
+char			returnedAlpacaErrStr[256];
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -1710,13 +1719,28 @@ char			parameterString[128];
 	if (validData)
 	{
 		CONSOLE_DEBUG(__FUNCTION__);
+		returnedAlpacaErrNum	=	0;
 		for (jjj=0; jjj<jsonParser.tokenCount_Data; jjj++)
 		{
+//			CONSOLE_DEBUG_W_STR(jsonParser.dataList[jjj].keyword, jsonParser.dataList[jjj].valueString)
+
 			if (strcasecmp(jsonParser.dataList[jjj].keyword, "filenameroot") == 0)
 			{
-		//		CONSOLE_DEBUG_W_STR("device type\t=", jsonParser.dataList[jjj].valueString);
+				CONSOLE_DEBUG_W_STR("filenameroot\t=", jsonParser.dataList[jjj].valueString);
 				UpdateReceivedFileName(jsonParser.dataList[jjj].valueString);
 			}
+			else if (strcasecmp(jsonParser.dataList[jjj].keyword, "ERRORNUMBER") == 0)
+			{
+				returnedAlpacaErrNum	=	atoi(jsonParser.dataList[jjj].valueString);
+			}
+			else if (strcasecmp(jsonParser.dataList[jjj].keyword, "ERRORMESSAGE") == 0)
+			{
+				strcpy(returnedAlpacaErrStr, jsonParser.dataList[jjj].valueString);
+			}
+		}
+		if (returnedAlpacaErrNum != 0)
+		{
+			CONSOLE_DEBUG_W_STR("Error\t=", returnedAlpacaErrStr);
 		}
 	}
 	else

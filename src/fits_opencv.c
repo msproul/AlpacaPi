@@ -57,7 +57,68 @@ static void	GetFitsErrorString(int fitsRetCode, char *errorString)
 
 #if defined(_USE_OPENCV_CPP_) && (CV_MAJOR_VERSION >= 4)
 	#warning "OpenCV++ not finished"
-//	#error "OpenCV++ not finished"
+//*****************************************************************************
+cv::Mat	*ReadFITSimageIntoOpenCVimage(const char *fitsFileName)
+{
+int			fitsRetCode;
+char		errorString[64];
+cv::Mat		*openCvImgPtr;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+
+//*	make the compiler happy for now
+	fitsRetCode		=	0;
+	GetFitsErrorString(fitsRetCode, errorString);
+
+	openCvImgPtr	=	NULL;
+	return(openCvImgPtr);
+}
+
+//*****************************************************************************
+//*	Function:	Reads an image into opencv data structure.
+//*				uses the extension to determine how to read it
+//*****************************************************************************
+cv::Mat	*ReadImageIntoOpenCVimage(const char *imageFileName)
+{
+cv::Mat		*openCvImgPtr;
+int			fnameLen;
+char		extension[8];
+
+	CONSOLE_DEBUG(__FUNCTION__);
+
+	openCvImgPtr	=	NULL;
+	fnameLen		=	strlen(imageFileName);
+	strcpy(extension, &imageFileName[fnameLen - 4]);
+	CONSOLE_DEBUG_W_STR("extension\t=", extension);
+	if ((strcasecmp(extension, "fits") == 0) ||
+		(strcasecmp(extension, ".fit") == 0))
+	{
+		openCvImgPtr	=	ReadFITSimageIntoOpenCVimage(imageFileName);
+	}
+	else if ((strcasecmp(extension, "csv") == 0) ||
+			(strcasecmp(extension, ".csv") == 0))
+	{
+		openCvImgPtr	=	NULL;
+	}
+	else if (strcasecmp(extension, ".bin") == 0)
+	{
+//		openCvImgPtr	=	ReadAlpacaBinaryIntoOpenCVimage(imageFileName);
+	}
+	else
+	{
+		CONSOLE_DEBUG_W_STR("imageFileName\t=", imageFileName);
+	#if (CV_MAJOR_VERSION <= 3)
+		#warning "CV_MAJOR_VERSION <= 3"
+		openCvImgPtr	=	cvLoadImage(imageFileName, CV_LOAD_IMAGE_COLOR);
+	#elif (CV_MAJOR_VERSION <= 4)
+		#warning "CV_MAJOR_VERSION <= 4"
+	#endif
+	}
+//	CONSOLE_DEBUG_W_HEX("openCvImgPtr\t=", openCvImgPtr);
+	return(openCvImgPtr);
+}
+
+
 #else
 //*****************************************************************************
 IplImage	*ReadFITSimageIntoOpenCVimage(const char *fitsFileName)
@@ -356,6 +417,7 @@ char				jpegFileName[64];
 }
 
 
+
 //*****************************************************************************
 //*	Function:	Reads an image into opencv data structure.
 //*				uses the extension to determine how to read it
@@ -399,6 +461,5 @@ char		extension[8];
 //	CONSOLE_DEBUG_W_HEX("openCvImgPtr\t=", openCvImgPtr);
 	return(openCvImgPtr);
 }
-
 
 #endif // _USE_OPENCV_CPP_ && CV_MAJOR_VERSION

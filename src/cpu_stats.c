@@ -22,6 +22,8 @@
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
 
+#include	"helper_functions.h"
+
 #include	"cpu_stats.h"
 
 //#define _INCLUDE_MAIN_CPU_STATS_

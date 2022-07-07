@@ -87,6 +87,7 @@ class CameraDriverFLIR: public CameraDriver
 
 
 	protected:
+		void			InitFlirCamera(void);
 		int				ReadFLIRcameraInfo(void);
 		spinError		SetFlirAqcuistionMode(int mode);
 		int				ConvertToMono(void);

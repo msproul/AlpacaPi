@@ -67,8 +67,8 @@
 //*	May 29,	2022	<MLS> Added ForceAlpacaUpdate()
 //*	Jun  4,	2022	<MLS> Added flags arg to ProcessButtonClick()
 //*	Jun 13,	2022	<MLS> Added ClearLastAlpacaCommand()
+//*	Jun 29,	2022	<MLS> Added cLeftButtonDown & cRightButtonDown to WindowTab
 //*****************************************************************************
-
 
 
 #include	<stdio.h>
@@ -101,10 +101,12 @@ int		iii;
 //	CONSOLE_DEBUG_W_NUM("xSize        \t=",	xSize);
 //	CONSOLE_DEBUG_W_NUM("ySize        \t=",	ySize);
 
-	cWidth			=	xSize;
-	cHeight			=	ySize;
-	cParentObjPtr	=	NULL;
-	cWindowName[0]	=	0;
+	cWidth				=	xSize;
+	cHeight				=	ySize;
+	cParentObjPtr		=	NULL;
+	cWindowName[0]		=	0;
+	cLeftButtonDown		=	false;
+	cRightButtonDown	=	false;
 
 	ComputeWidgetColumns(cWidth);
 

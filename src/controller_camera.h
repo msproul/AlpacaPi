@@ -96,6 +96,8 @@ class ControllerCamera: public Controller
 		virtual	void	RunBackgroundTasks(const char *callingFunction=NULL, bool enableDebug=false);
 	//	virtual	void	DrawWidgetCustomGraphic(const int widgetIdx);
 
+
+
 		//*	this is a large list of update routines, they should be implemented in the subclass
 		virtual	void	UpdateCameraGain(const TYPE_ASCOM_STATUS lastAlpacaErr = kASCOM_Err_Success);
 		virtual	void	UpdateCameraOffset(const TYPE_ASCOM_STATUS lastAlpacaErr = kASCOM_Err_Success);

@@ -389,7 +389,7 @@ bool	previousOnLineState;
 		}
 		cOnLine	=	true;
 
-		//*	update the window tab with everything
+		//*	update the window tabs with everything
 		if (cTelescopeTabObjPtr != NULL)
 		{
 			cTelescopeTabObjPtr->UpdateTelescopeInfo(&cTelescopeProp, false);

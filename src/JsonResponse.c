@@ -86,15 +86,13 @@
 
 
 //*****************************************************************************
-void	JsonResponse_CreateHeader(	char *jsonTextBuffer, const int maxLen)
+void	JsonResponse_CreateHeader(char *jsonTextBuffer)
 {
 	CONSOLE_DEBUG(__FUNCTION__);
 
 	if (jsonTextBuffer != NULL)
 	{
-		jsonTextBuffer[0]	=	0;
-//		strcat(jsonTextBuffer, "\r\n");
-		strcat(jsonTextBuffer, "{\r\n");
+		strcpy(jsonTextBuffer, "{\r\n");
 	}
 }
 

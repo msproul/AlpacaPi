@@ -118,13 +118,16 @@ typedef struct
 #ifdef _USE_OPENCV_CPP_
 	cv::Mat		*openCVimagePtr;
 	cv::Rect	roiRect;
-#else
-	IplImage	*openCVimagePtr;
-	CvRect		roiRect;
-#endif // _USE_OPENCV_CPP_
 	cv::Scalar	bgColor;
 	cv::Scalar	textColor;
 	cv::Scalar	borderColor;
+#else
+	IplImage	*openCVimagePtr;
+	CvRect		roiRect;
+	CvScalar	bgColor;
+	CvScalar	textColor;
+	CvScalar	borderColor;
+#endif // _USE_OPENCV_CPP_
 	bool		includeBorder;
 	int			fontNum;
 	bool		selected;			//*	radio buttons and check boxes

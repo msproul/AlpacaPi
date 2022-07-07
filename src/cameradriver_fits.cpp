@@ -1452,13 +1452,13 @@ char	stringBuf[128];
 
 		if (gObseratorySettings.ValidLatLon)
 		{
-			FormatLatLonString(gObseratorySettings.Latitude, stringBuf);
+			FormatLatLonString(gObseratorySettings.Latitude_deg, stringBuf);
 			fitsStatus	=	0;
 			fits_write_key(fitsFilePtr, TSTRING,	"SITELAT",
 													(void *)stringBuf,
 													"+DD MM SS.SSS", &fitsStatus);
 
-			FormatLatLonString(gObseratorySettings.Longitude, stringBuf);
+			FormatLatLonString(gObseratorySettings.Longitude_deg, stringBuf);
 			fitsStatus	=	0;
 			fits_write_key(fitsFilePtr, TSTRING,	"SITELONG",
 													(void *)stringBuf,
@@ -1466,11 +1466,11 @@ char	stringBuf[128];
 
 			fitsStatus	=	0;
 			fits_write_key(fitsFilePtr, TDOUBLE,	"LATITUDE",
-													&gObseratorySettings.Latitude,
+													&gObseratorySettings.Latitude_deg,
 													"Degrees Latitude", &fitsStatus);
 			fitsStatus	=	0;
 			fits_write_key(fitsFilePtr, TDOUBLE,	"LONGITUD",
-													&gObseratorySettings.Longitude,
+													&gObseratorySettings.Longitude_deg,
 													"Degrees Longitude", &fitsStatus);
 		}
 		if (gObseratorySettings.Elevation_m != 0.0)
@@ -1590,7 +1590,7 @@ struct tm		*localTime;
 	fits_write_key(fitsFilePtr, TSTRING, "DATE-OBS",	stringBuf,		"UTC date of observation", &fitsStatus);
 
 	gmtime_r(&cCameraProp.Lastexposure_StartTime.tv_sec, &utcTime);
-	CalcSiderealTime(&utcTime, &siderealTime, gObseratorySettings.Longitude);
+	CalcSiderealTime(&utcTime, &siderealTime, gObseratorySettings.Longitude_deg);
 	FormatTimeString_TM(&siderealTime, stringBuf);
 	fitsStatus	=	0;
 	fits_write_key(fitsFilePtr, TSTRING,	"LST-OBS",
@@ -2102,7 +2102,7 @@ char		moonPhaseStr[64];
 #define utcOffset 0
 
 		time_t	t	=	time(NULL);
-		mr.calculate(gObseratorySettings.Latitude, gObseratorySettings.Longitude, t + utcOffset);
+		mr.calculate(gObseratorySettings.Latitude_deg, gObseratorySettings.Longitude_deg, t + utcOffset);
 
 		//	Returned values:
 		bool	moonVisible	=	mr.isVisible;
@@ -2132,7 +2132,7 @@ char		moonPhaseStr[64];
 
 		// Use the results as desired (use the utcOffset variables on the Arduino):
 //		printf("Moon rise/set nearest %.24s for latitude %.2f longitude %.2f:\n",
-//					ctime(&mr.queryTime), gObseratorySettings.Latitude, gObseratorySettings.Longitude);
+//					ctime(&mr.queryTime), gObseratorySettings.Latitude_deg, gObseratorySettings.Longitude_deg);
 
 //		printf("Preceding event:\n");
 		if ((!mr.hasRise || (mr.hasRise && mr.riseTime > mr.queryTime)) &&

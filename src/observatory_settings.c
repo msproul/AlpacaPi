@@ -256,7 +256,6 @@ TYPE_TELESCOPE_INFO	*ts_infoPtr;
 
 //	CONSOLE_DEBUG_W_STR(keyword, valueString);
 
-
 	//*	this is kind of redundant to do it EVERY time, but it is the easiest to insure
 	//*	the telescope index is not out of bounds
 	if ((gCurrTelescopeNum < 0) || (gCurrTelescopeNum >= kMaxTelescopes))
@@ -300,13 +299,13 @@ TYPE_TELESCOPE_INFO	*ts_infoPtr;
 
 		case kObservatory_Latitude:
 			strcpy(gObseratorySettings.LatString,			valueString);
-			gObseratorySettings.Latitude		=	EvaluateLatLonString(valueString);
+			gObseratorySettings.Latitude_deg	=	EvaluateLatLonString(valueString);
 			gObseratorySettings.ValidLatLon		=	true;
 			break;
 
 		case kObservatory_Longitude:
 			strcpy(gObseratorySettings.LonString,			valueString);
-			gObseratorySettings.Longitude		=	EvaluateLatLonString(valueString);
+			gObseratorySettings.Longitude_deg	=	EvaluateLatLonString(valueString);
 			gObseratorySettings.ValidLatLon		=	true;
 			break;
 

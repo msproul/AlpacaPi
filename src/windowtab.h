@@ -340,6 +340,8 @@ virtual	void	AlpacaDisplayErrorMessage(const char *errorMsgString);
 #endif // _CONTROLLER_USES_ALPACA_
 
 
+		bool		cLeftButtonDown;
+		bool		cRightButtonDown;
 
 
 	protected:

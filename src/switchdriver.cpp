@@ -40,6 +40,7 @@
 //*	Jan  1,	2022	<MLS> Added GetSwitchValue()
 //*	Jan  2,	2022	<MLS> Read-only switches did not pass CONFORM the first try
 //*	Jan  2,	2022	<MLS> CONFORM-switch -> PASSED!!!!!!!!!!!!!!!!!!!!!
+//*	Jul  3,	2022	<MLS> Started converting to using switch property structure
 //*****************************************************************************
 
 #ifdef _ENABLE_SWITCH_
@@ -56,12 +57,14 @@
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
 
+#include	"JsonResponse.h"
+
+#include	"alpaca_defs.h"
 #include	"alpacadriver.h"
 #include	"alpacadriver_helper.h"
 #include	"helper_functions.h"
 
 
-#include	"JsonResponse.h"
 #include	"switchdriver.h"
 
 //#define _DEBUG_CONFORM_
@@ -110,7 +113,10 @@ int		iii;
 	strcpy(cCommonProp.Description,	"Generic Switch");
 	cCommonProp.InterfaceVersion	=	2;
 
-	cNumSwitches					=	8;
+	CONSOLE_DEBUG_W_LONG("sizeof(TYPE_SwitchProperties)\t=", sizeof(TYPE_SwitchProperties));
+	memset((void *)&cSwitchProp, 0, sizeof(TYPE_SwitchProperties));
+
+	cSwitchProp.MaxSwitch			=	8;
 
 	//*	zero out the switch description table
 	for (iii=0; iii<kMaxSwitchCnt; iii++)
@@ -160,7 +166,7 @@ int					mySocket;
 	alpacaErrCode	=	kASCOM_Err_Success;
 
 	//*	set up the json response
-	JsonResponse_CreateHeader(reqData->jsonTextBuffer, kMaxJsonBuffLen);
+	JsonResponse_CreateHeader(reqData->jsonTextBuffer);
 
 	//*	this is not part of the protocol, I am using it for testing
 	JsonResponse_Add_String(	mySocket,
@@ -331,7 +337,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 								reqData->jsonTextBuffer,
 								kMaxJsonBuffLen,
 								responseString,
-								cNumSwitches,
+								cSwitchProp.MaxSwitch,
 								INCLUDE_COMMA);
 
 		alpacaErrCode	=	kASCOM_Err_Success;
@@ -359,7 +365,7 @@ bool				canWriteSwitch;
 	if (reqData != NULL)
 	{
 		switchNum	=	GetSwitchID(reqData);
-		if ((switchNum >= 0) && (switchNum < cNumSwitches))
+		if ((switchNum >= 0) && (switchNum < cSwitchProp.MaxSwitch))
 		{
 			canWriteSwitch	=	true;
 			if (cSwitchTable[switchNum].switchType == kSwitchType_Status)
@@ -376,7 +382,7 @@ bool				canWriteSwitch;
 		else
 		{
 			CONSOLE_DEBUG_W_NUM("Switch number out of range\t=", switchNum);
-			CONSOLE_DEBUG_W_NUM("Max switch number is\t=", cNumSwitches);
+			CONSOLE_DEBUG_W_NUM("Max switch number is\t=", cSwitchProp.MaxSwitch);
 			alpacaErrCode	=	kASCOM_Err_InvalidValue;
 			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Switch number out of range");
 		}
@@ -406,7 +412,7 @@ bool				switchState;
 	if (reqData != NULL)
 	{
 		switchNum	=	GetSwitchID(reqData);
-		if ((switchNum >= 0) && (switchNum < cNumSwitches))
+		if ((switchNum >= 0) && (switchNum < cSwitchProp.MaxSwitch))
 		{
 			JsonResponse_Add_Int32(		reqData->socket,
 										reqData->jsonTextBuffer,
@@ -450,14 +456,14 @@ int					switchNum;
 
 #ifdef _DEBUG_CONFORM_
 	CONSOLE_DEBUG(__FUNCTION__);
-	CONSOLE_DEBUG_W_NUM("cNumSwitches\t=", cNumSwitches);
+	CONSOLE_DEBUG_W_NUM("cSwitchProp.MaxSwitch\t=", cSwitchProp.MaxSwitch);
 	CONSOLE_DEBUG_W_STR("contentData\t=", reqData->contentData);
 #endif
 
 	if (reqData != NULL)
 	{
 		switchNum	=	GetSwitchID(reqData);
-		if ((switchNum >= 0) && (switchNum < cNumSwitches))
+		if ((switchNum >= 0) && (switchNum < cSwitchProp.MaxSwitch))
 		{
 			JsonResponse_Add_String(	reqData->socket,
 										reqData->jsonTextBuffer,
@@ -499,7 +505,7 @@ int					switchNum;
 	if (reqData != NULL)
 	{
 		switchNum	=	GetSwitchID(reqData);
-		if ((switchNum >= 0) && (switchNum < cNumSwitches))
+		if ((switchNum >= 0) && (switchNum < cSwitchProp.MaxSwitch))
 		{
 			JsonResponse_Add_String(	reqData->socket,
 										reqData->jsonTextBuffer,
@@ -543,7 +549,7 @@ int					switchNum;
 		switchNum	=	GetSwitchID(reqData);
 		CONSOLE_DEBUG_W_NUM("switchNum\t\t=",		switchNum);
 		CONSOLE_DEBUG_W_DBL("cCurSwitchValue\t=",	cCurSwitchValue[switchNum]);
-		if ((switchNum >= 0) && (switchNum < cNumSwitches))
+		if ((switchNum >= 0) && (switchNum < cSwitchProp.MaxSwitch))
 		{
 			JsonResponse_Add_Double(reqData->socket,
 									reqData->jsonTextBuffer,
@@ -585,7 +591,7 @@ int					switchNum;
 	{
 		switchNum	=	GetSwitchID(reqData);
 
-		if ((switchNum >= 0) && (switchNum < cNumSwitches))
+		if ((switchNum >= 0) && (switchNum < cSwitchProp.MaxSwitch))
 		{
 			JsonResponse_Add_Double(reqData->socket,
 									reqData->jsonTextBuffer,
@@ -627,7 +633,7 @@ int					switchNum;
 //		CONSOLE_DEBUG_W_NUM("switchNum\t\t=",		switchNum);
 //		CONSOLE_DEBUG_W_DBL("cMaxSwitchValue\t=",	cMaxSwitchValue[switchNum]);
 
-		if ((switchNum >= 0) && (switchNum < cNumSwitches))
+		if ((switchNum >= 0) && (switchNum < cSwitchProp.MaxSwitch))
 		{
 			JsonResponse_Add_Double(reqData->socket,
 									reqData->jsonTextBuffer,
@@ -674,7 +680,7 @@ int					switchNum;
 	{
 		switchNum	=	GetSwitchID(reqData);
 
-		if ((switchNum >= 0) && (switchNum < cNumSwitches))
+		if ((switchNum >= 0) && (switchNum < cSwitchProp.MaxSwitch))
 		{
 			//*	make sure it is a switch and not a status
 			if (cSwitchTable[switchNum].switchType != kSwitchType_Status)
@@ -747,7 +753,7 @@ int					switchNum;
 	if (reqData != NULL)
 	{
 		switchNum	=	GetSwitchID(reqData);
-		if ((switchNum >= 0) && (switchNum < cNumSwitches))
+		if ((switchNum >= 0) && (switchNum < cSwitchProp.MaxSwitch))
 		{
 			foundName	=	GetKeyWordArgument(	reqData->contentData,
 												"Name",
@@ -805,7 +811,7 @@ double				newSwitchValue;
 	if (reqData != NULL)
 	{
 		switchNum	=	GetSwitchID(reqData);
-		if ((switchNum >= 0) && (switchNum < cNumSwitches))
+		if ((switchNum >= 0) && (switchNum < cSwitchProp.MaxSwitch))
 		{
 			//*	make sure it is a switch and not a status
 			if (cSwitchTable[switchNum].switchType != kSwitchType_Status)
@@ -863,7 +869,7 @@ int					switchNum;
 	{
 		switchNum	=	GetSwitchID(reqData);
 
-		if ((switchNum >= 0) && (switchNum < cNumSwitches))
+		if ((switchNum >= 0) && (switchNum < cSwitchProp.MaxSwitch))
 		{
 			JsonResponse_Add_Double(reqData->socket,
 									reqData->jsonTextBuffer,
@@ -909,7 +915,7 @@ bool				switchState;
 
 		Get_Maxswitch(	reqData, alpacaErrMsg, "maxswitch");	//*	The number of switch devices managed by this driver
 
-		for (iii=0; iii<cNumSwitches; iii++)
+		for (iii=0; iii<cSwitchProp.MaxSwitch; iii++)
 		{
 			GetSwitchValue(iii);
 
@@ -1024,7 +1030,7 @@ char	lineBuffer[32];
 		SocketWriteData(mySocketFD,	"State");
 		SocketWriteData(mySocketFD,	"</TH>\r\n</TR>\r\n");
 
-		for (ii=0; ii<cNumSwitches; ii++)
+		for (ii=0; ii<cSwitchProp.MaxSwitch; ii++)
 		{
 
 			SocketWriteData(mySocketFD,	"<TR>\r\n\t<TD>");
@@ -1078,11 +1084,11 @@ void	SwitchDriver::ConfigureSwitch(	const int	switchNumber,
 		cSwitchTable[switchNumber].hwPinNumber	=	hardWarePinNumber;
 		cSwitchTable[switchNumber].valueForTrue	=	trueValue;
 
-		if (switchNumber >= cNumSwitches)
+		if (switchNumber >= cSwitchProp.MaxSwitch)
 		{
-			cNumSwitches	=	switchNumber + 1;
+			cSwitchProp.MaxSwitch	=	switchNumber + 1;
 		}
-		CONSOLE_DEBUG_W_NUM("cNumSwitches\t=", cNumSwitches);
+//		CONSOLE_DEBUG_W_NUM("cSwitchProp.MaxSwitch\t=", cSwitchProp.MaxSwitch);
 	}
 }
 
@@ -1199,7 +1205,7 @@ FILE	*filePointer;
 		fprintf(filePointer, "# You can edit this file\r\n");
 		fprintf(filePointer, "# One tab (0x09) between each field\r\n");
 		fprintf(filePointer, "#########################################\r\n");
-		for (ii=0; ii<cNumSwitches; ii++)
+		for (ii=0; ii<cSwitchProp.MaxSwitch; ii++)
 		{
 			fprintf(filePointer, "%d\t",	ii);
 			fprintf(filePointer, "%s\t",	cSwitchTable[ii].switchName);
@@ -1240,7 +1246,7 @@ double	switchValue;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 	switchValue	=	0.0;
-	if ((switchNumber >= 0) && (switchNumber < cNumSwitches))
+	if ((switchNumber >= 0) && (switchNumber < cSwitchProp.MaxSwitch))
 	{
 		switch(cSwitchTable[switchNumber].switchType)
 		{

@@ -1058,9 +1058,13 @@ TYPE_ASCOM_STATUS	Controller::AlpacaCheckForErrors(	SJP_Parser_t	*jsonParser,
 {
 int					jjj;
 TYPE_ASCOM_STATUS	alpacaErrorCode;
-
+bool				foundErrNum;
+bool				foundErrStr;
+char				errorReportStr[256];
 //	CONSOLE_DEBUG(__FUNCTION__);
 
+	foundErrNum		=	false;
+	foundErrStr		=	false;
 	alpacaErrorCode	=	kASCOM_Err_Success;
 	strcpy(errorMsg, "");
 	if (jsonParser != NULL)
@@ -1070,18 +1074,28 @@ TYPE_ASCOM_STATUS	alpacaErrorCode;
 			if (strcasecmp(jsonParser->dataList[jjj].keyword, "ErrorNumber") == 0)
 			{
 				alpacaErrorCode	=	(TYPE_ASCOM_STATUS)atoi(jsonParser->dataList[jjj].valueString);
+				foundErrNum		=	true;
 			}
 			else if (strcasecmp(jsonParser->dataList[jjj].keyword, "ErrorMessage") == 0)
 			{
 				if (strlen(jsonParser->dataList[jjj].valueString) > 0)
 				{
+					foundErrStr		=	true;
 					strcpy(errorMsg, jsonParser->dataList[jjj].valueString);
-					if (reportError)
-					{
-						AlpacaDisplayErrorMessage(errorMsg);
-					}
 				}
 			}
+		}
+		if (reportError)
+		{
+			if (foundErrNum && foundErrStr)
+			{
+				sprintf(errorReportStr, "E#%d - %s", alpacaErrorCode, errorMsg);
+			}
+			else
+			{
+				strcpy(errorReportStr, errorMsg);
+			}
+			AlpacaDisplayErrorMessage(errorReportStr);
 		}
 	}
 	else

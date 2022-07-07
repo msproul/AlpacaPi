@@ -72,7 +72,7 @@ enum
 	kDataSrc_PolarAlignCenter,
 	kDataSrc_AAVSOalert,
 
-	kDataSrc_GAIA_gedr3,
+	kDataSrc_GAIA_SQL,
 	kDataSrc_Asteroids,
 	kDataSrc_OpenNGC,
 

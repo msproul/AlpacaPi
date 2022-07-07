@@ -21,10 +21,11 @@
 //*	<MLS>	=	Mark L Sproul
 //*	<RNS>	=	Ron N Story
 //*****************************************************************************
-//*	Jul  2,	2022,	<RNS> Initial version of this file via cproto
-//*	Jul  3,	2022,	<RNS> Updated via cproto
-//*	Jul  5,	2022,	<RNS> Updated via cproto
+//*	Jul  2,	2022	<RNS> Initial version of this file via cproto
+//*	Jul  3,	2022	<RNS> Updated via cproto
+//*	Jul  5,	2022	<RNS> Updated via cproto
 //****************************************************************************
+//#include	"servo_motion.h"
 
 #ifndef _SERVO_MOTION_H_
 #define _SERVO_MOTION_H_
@@ -34,31 +35,36 @@
 #endif
 
 
+#ifndef	_SERVO_MOTION_CFG_H_
+	#include	"servo_motion_cfg.h"
+#endif
+
+
 #ifdef __cplusplus
 	extern "C" {
 #endif
 
-TYPE_MOTION_MOTOR *Motion_get_motor_ptr(uint8_t motor);
-int Motion_set_axis_acc(uint8_t axis, uint32_t acc);
-int Motion_get_axis_acc(uint8_t axis, uint32_t *acc);
-int Motion_set_axis_vel(uint8_t axis, uint32_t vel);
-int Motion_get_axis_vel(uint8_t axis, uint32_t *vel);
-void Motion_set_axis_trackRate(uint8_t axis, int32_t track);
-int32_t Motion_get_axis_trackRate(uint8_t axis);
-int Motion_get_axis_curr_step(uint8_t axis, int32_t *step);
-int Motion_get_axis_curr_vel(uint8_t axis, int32_t *vel);
-int Motion_set_axis_buffer(uint8_t axis, _Bool state);
-TYPE_MOTION_STATE Motion_get_axis_state(uint8_t axis);
-int Motion_set_axis_profile(uint8_t axis);
-double Motion_calc_axis_move_time(uint8_t axis, int32_t start, int32_t end);
-int Motion_move_axis_by_step(uint8_t axis, int32_t step);
-int Motion_move_axis_by_vel(uint8_t axis, int32_t vel);
-int Motion_move_axis_by_time(uint8_t axis, int32_t vel, double seconds);
-int Motion_stop_axis(uint8_t axis);
-int Motion_reset_axis(uint8_t axis);
-int Motion_set_axis_zero(uint8_t axis);
-int Motion_get_pending_cmds(uint8_t *raState, uint8_t *decState);
-int Motion_init(const char *motionCfgFile);
+TYPE_MOTION_MOTOR	*Motion_get_motor_ptr(uint8_t motor);
+int					Motion_set_axis_acc(uint8_t axis, uint32_t acc);
+int					Motion_get_axis_acc(uint8_t axis, uint32_t *acc);
+int					Motion_set_axis_vel(uint8_t axis, uint32_t vel);
+int					Motion_get_axis_vel(uint8_t axis, uint32_t *vel);
+void				Motion_set_axis_trackRate(uint8_t axis, int32_t track);
+int32_t				Motion_get_axis_trackRate(uint8_t axis);
+int					Motion_get_axis_curr_step(uint8_t axis, int32_t *step);
+int					Motion_get_axis_curr_vel(uint8_t axis, int32_t *vel);
+int					Motion_set_axis_buffer(uint8_t axis, bool state);
+TYPE_MOTION_STATE	Motion_get_axis_state(uint8_t axis);
+int					Motion_set_axis_profile(uint8_t axis);
+double				Motion_calc_axis_move_time(uint8_t axis, int32_t start, int32_t end);
+int					Motion_move_axis_by_step(uint8_t axis, int32_t step);
+int					Motion_move_axis_by_vel(uint8_t axis, int32_t vel);
+int					Motion_move_axis_by_time(uint8_t axis, int32_t vel, double seconds);
+int					Motion_stop_axis(uint8_t axis);
+int					Motion_reset_axis(uint8_t axis);
+int					Motion_set_axis_zero(uint8_t axis);
+int					Motion_get_pending_cmds(uint8_t *raState, uint8_t *decState);
+int					Motion_init(const char *motionCfgFile);
 
 #ifdef __cplusplus
 }

@@ -419,7 +419,7 @@ int		setpoint;
 		//	b1	0 = always on 1= controllable
 		CONSOLE_DEBUG("ARTEMIS_COOLING_INFO_CONTROLLABLE");
 		cCameraProp.CanGetCoolerPower		=	true;
-		cCameraProp.Cansetccdtemperature	=	true;
+		cCameraProp.CanSetCCDtemperature	=	true;
 	}
 	if (coolingFlags & ARTEMIS_COOLING_INFO_ONOFFCOOLINGCONTROL)
 	{

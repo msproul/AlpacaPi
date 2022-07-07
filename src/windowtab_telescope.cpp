@@ -26,7 +26,7 @@
 //*	May 12,	2022	<MLS> Added up/down east/west button logic
 //*	May 12,	2022	<MLS> Added up/down east/west Normal,Slewing,Disabled colors
 //*	May 12,	2022	<MLS> Added Tracking rate button handling
-//*	Jun 13,	2022	<MLS> Added ProcessSlewButton() to simplify code
+//*	Jun 13,	2022	<MLS> Added ProcessMovementButtons() to simplify code
 //*****************************************************************************
 
 #ifdef _ENABLE_CTRL_TELESCOPE_
@@ -381,7 +381,7 @@ char	dataString[128];
 bool	validData;
 bool	update;
 bool	updateButtons;
-int		trackingRate;
+//-int		trackingRate;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -398,9 +398,11 @@ int		trackingRate;
 		case kTelescope_BtnDown:
 		case kTelescope_BtnEast:
 		case kTelescope_BtnWest:
+		case kTelescope_BtnTrackingOn:
+		case kTelescope_BtnTrackingOff:
 			if (cAtPark == false)
 			{
-				updateButtons	=	ProcessSlewButton(buttonIdx, flags);
+				updateButtons	=	ProcessMovementButtons(buttonIdx, flags);
 			}
 			else
 			{
@@ -416,15 +418,6 @@ int		trackingRate;
 			cSlewingWest	=	false;
 			break;
 
-		case kTelescope_BtnTrackingOn:
-			sprintf(dataString, "Tracking=true");
-			validData	=	AlpacaSendPutCmd(	"telescope", "tracking",	dataString);
-			break;
-
-		case kTelescope_BtnTrackingOff:
-			sprintf(dataString, "Tracking=false");
-			validData	=	AlpacaSendPutCmd(	"telescope", "tracking",	dataString);
-			break;
 
 		case kTelescope_SlewRate_VerySlow:
 		case kTelescope_SlewRate_Slow:
@@ -459,7 +452,7 @@ int		trackingRate;
 }
 
 //*****************************************************************************
-bool	WindowTabTelescope::ProcessSlewButton(const int buttonIdx, const int flags)
+bool	WindowTabTelescope::ProcessMovementButtons(const int buttonIdx, const int flags)
 {
 char	dataString[128];
 bool	validData;
@@ -649,6 +642,16 @@ double	dec_SlewRate_degPerSec;
 				SetWidgetText(kTelescope_ErrorMsg,	"Invalid when slewing east");
 			}
 			break;
+
+		case kTelescope_BtnTrackingOn:
+			sprintf(dataString, "Tracking=true");
+			validData	=	AlpacaSendPutCmd(	"telescope", "tracking",	dataString);
+			break;
+
+		case kTelescope_BtnTrackingOff:
+			sprintf(dataString, "Tracking=false");
+			validData	=	AlpacaSendPutCmd(	"telescope", "tracking",	dataString);
+			break;
 	}
 	return(updateButtons);
 }
@@ -657,7 +660,7 @@ double	dec_SlewRate_degPerSec;
 void	WindowTabTelescope::UpdateButtons(void)
 {
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	SetWidgetChecked(kTelescope_SlewRate_Fast,		(cCurrentSlewRate == kTelescope_SlewRate_Fast));
 	SetWidgetChecked(kTelescope_SlewRate_Med,		(cCurrentSlewRate == kTelescope_SlewRate_Med));
@@ -675,10 +678,10 @@ void	WindowTabTelescope::UpdateButtons(void)
 	else
 	{
 		//*	deal with the slewing buttons
-		CONSOLE_DEBUG_W_BOOL("cSlewingUp  \t=",	cSlewingUp);
-		CONSOLE_DEBUG_W_BOOL("cSlewingDown\t=",	cSlewingDown);
-		CONSOLE_DEBUG_W_BOOL("cSlewingEast\t=",	cSlewingEast);
-		CONSOLE_DEBUG_W_BOOL("cSlewingWest\t=",	cSlewingWest);
+//		CONSOLE_DEBUG_W_BOOL("cSlewingUp  \t=",	cSlewingUp);
+//		CONSOLE_DEBUG_W_BOOL("cSlewingDown\t=",	cSlewingDown);
+//		CONSOLE_DEBUG_W_BOOL("cSlewingEast\t=",	cSlewingEast);
+//		CONSOLE_DEBUG_W_BOOL("cSlewingWest\t=",	cSlewingWest);
 		if (cSlewingUp)
 		{
 			SetWidgetBGColor(	kTelescope_BtnUp,	cBtnBGcolor_Slewing);
@@ -712,7 +715,7 @@ void	WindowTabTelescope::UpdateButtons(void)
 			SetWidgetBGColor(	kTelescope_BtnWest,	cBtnBGcolor_Normal);
 		}
 	}
-
+	ForceWindowUpdate();
 }
 
 //*****************************************************************************
@@ -904,6 +907,7 @@ char	dataString[64];
 			}
 		}
 	}
+	UpdateButtons();
 }
 
 #endif // _ENABLE_CTRL_TELESCOPE_

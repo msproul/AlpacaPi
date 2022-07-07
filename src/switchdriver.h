@@ -62,9 +62,6 @@ enum
 
 void	CreateSwitchObjects(void);
 
-#define	kMaxSwitchCnt			16
-#define	kMaxSwitchNameLen		32
-#define	kMaxSwitchDescLen		64
 //*****************************************************************************
 typedef struct
 {
@@ -127,7 +124,7 @@ class SwitchDriver: public AlpacaDriver
 											const int	hardWarePinNumber,
 											const int	trueValue=1);
 
-				int		cNumSwitches;
+				int						cNumSwitches;
 				TYPE_SwitchDescription	cSwitchTable[kMaxSwitchCnt];
 
 				//*	min max values as doubles
@@ -135,6 +132,8 @@ class SwitchDriver: public AlpacaDriver
 				double	cMinSwitchValue[kMaxSwitchCnt];
 				double	cMaxSwitchValue[kMaxSwitchCnt];
 				double	cCurSwitchValue[kMaxSwitchCnt];
+
+				TYPE_SwitchProperties	cSwitchProp;
 };
 
 

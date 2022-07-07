@@ -206,7 +206,7 @@ int					mySocket;
 
 
 	//*	set up the json response
-	JsonResponse_CreateHeader(reqData->jsonTextBuffer, kMaxJsonBuffLen);
+	JsonResponse_CreateHeader(reqData->jsonTextBuffer);
 
 	//*	this is not part of the protocol, I am using it for testing
 	JsonResponse_Add_String(	mySocket,
@@ -565,10 +565,9 @@ char				commentString[128];
 	}
 	else
 	{
-		//*	improperly formated request
-		CONSOLE_DEBUG_W_STR("improperly formated request\t=", reqData->contentData);
-		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Improperly formated request");
-		alpacaErrCode	=	kASCOM_Err_RequestFormatErr;
+		//*	improperly formatted request
+		CONSOLE_DEBUG_W_STR("improperly formatted request\t=", reqData->contentData);
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Improperly formatted request");
 		alpacaErrCode	=	kASCOM_Err_InvalidOperation;
 	}
 	return(alpacaErrCode);

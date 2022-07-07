@@ -43,12 +43,13 @@
 TYPE_ASCOM_STATUS	CameraDriver::OpenLiveWindow(char *alpacaErrMsg)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode;
-char				myWindowName[80];
-bool				windowExists;
 
 	alpacaErrCode	=	kASCOM_Err_Success;
 
 #ifdef _ENABLE_CTRL_IMAGE_
+char				myWindowName[80];
+bool				windowExists;
+
 	CONSOLE_DEBUG(__FUNCTION__);
 
 	if (strlen(gHostName) > 0)

@@ -231,7 +231,7 @@ int				mySocket;
 	alpacaErrCode	=	kASCOM_Err_Success;
 
 	//*	set up the json response
-	JsonResponse_CreateHeader(reqData->jsonTextBuffer, kMaxJsonBuffLen);
+	JsonResponse_CreateHeader(reqData->jsonTextBuffer);
 
 	//*	this is not part of the protocol, I am using it for testing
 	JsonResponse_Add_String(	mySocket,
@@ -678,6 +678,7 @@ char		lineBuffer[128];
 	//*	now generate links to all of the commands
 	GenerateHTMLcmdLinkTable(mySocketFD, "shutter", 0, gShutterCmdTable);
 
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, "Exit");
 }
 
 

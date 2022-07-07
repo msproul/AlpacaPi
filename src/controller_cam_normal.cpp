@@ -22,6 +22,7 @@
 //*	Jun 24,	2020	<MLS> Created controller_cam_normal.cpp
 //*	Jun 25,	2020	<MLS> Cam_normal subclass now back to same functionality as before
 //*	Dec 27,	2020	<MLS> Added UpdateDownloadProgress()
+//*	Jun 30,	2022	<MLS> Added capability list to camera controller
 //*****************************************************************************
 //*	todo
 //*		control key for different step size.
@@ -47,7 +48,8 @@
 #include	"ConsoleDebug.h"
 
 
-#define	kCamWindowWidth		456
+//#define	kCamWindowWidth		456
+#define	kCamWindowWidth		500
 #define	kCamWindowHeight	800
 
 
@@ -68,6 +70,7 @@ enum
 {
 	kTab_Camera	=	1,
 	kTab_Settings,
+	kTab_Capabilities,
 //	kTab_Advanced,
 //	kTab_Graphs,
 	kTab_FileList,
@@ -107,6 +110,7 @@ ControllerCamNormal::~ControllerCamNormal(void)
 	//*	delete the windowtab objects
 	DELETE_OBJ_IF_VALID(cCameraTabObjPtr);
 	DELETE_OBJ_IF_VALID(cCamSettingsTabObjPtr);
+	DELETE_OBJ_IF_VALID(cCapabilitiesTabObjPtr);
 	DELETE_OBJ_IF_VALID(cFileListTabObjPtr);
 	DELETE_OBJ_IF_VALID(cDriverInfoTabObjPtr);
 	DELETE_OBJ_IF_VALID(cAboutBoxTabObjPtr);
@@ -122,6 +126,7 @@ char	lineBuff[64];
 	SetTabCount(kTab_Count);
 	SetTabText(kTab_Camera,			"Camera");
 	SetTabText(kTab_Settings,		"Settings");
+	SetTabText(kTab_Capabilities,	"Capabilities");
 //	SetTabText(kTab_Advanced,		"Adv");
 //	SetTabText(kTab_Graphs,			"Graphs");
 	SetTabText(kTab_FileList,		"File List");
@@ -152,6 +157,14 @@ char	lineBuff[64];
 	{
 		SetTabWindow(kTab_Settings,	cCamSettingsTabObjPtr);
 		cCamSettingsTabObjPtr->SetParentObjectPtr(this);
+	}
+
+	//--------------------------------------------
+	cCapabilitiesTabObjPtr		=	new WindowTabCapabilities(	cWidth, cHeight, cBackGrndColor, cWindowName);
+	if (cCapabilitiesTabObjPtr != NULL)
+	{
+		SetTabWindow(kTab_Capabilities,	cCapabilitiesTabObjPtr);
+		cCapabilitiesTabObjPtr->SetParentObjectPtr(this);
 	}
 
 	//--------------------------------------------
@@ -187,6 +200,34 @@ char	lineBuff[64];
 		sprintf(lineBuff, "%s:%d/%d", ipString, cPort, cAlpacaDevNum);
 
 		SetWindowIPaddrInfo(lineBuff, true);
+	}
+}
+
+
+//**************************************************************************************
+void	ControllerCamNormal::UpdateCapabilityList(void)
+{
+int		boxID;
+int		iii;
+char	textString[80];
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	iii	=	0;
+	while (cCapabilitiesList[iii].capabilityName[0] != 0)
+	{
+		boxID	=	kCapabilities_TextBox1 + iii;
+		strcpy(textString,	cCapabilitiesList[iii].capabilityName);
+		strcat(textString,	":\t");
+		strcat(textString,	cCapabilitiesList[iii].capabilityValue);
+
+//		CONSOLE_DEBUG(textString);
+
+		if (boxID <= kCapabilities_TextBoxN)
+		{
+			SetWidgetText(kTab_Capabilities, boxID, textString);
+		}
+		iii++;
 	}
 }
 

@@ -46,6 +46,7 @@
 static const int	gRelayControlPinNumbers[]	=
 {
 //*	these pin number are defined in .h file
+//*	using BCM pin numbers
 //	8 port relay on DIN rail 	5,	6,	13,	16,	19,	20,	21,	26
 //	4 port relay HAT			22, 27, 17, 4
 

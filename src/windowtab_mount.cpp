@@ -45,7 +45,7 @@ WindowTabMount::WindowTabMount(	const int	xSize,
 								const char	*windowName)
 	:WindowTab(xSize, ySize, backGrndColor, windowName)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	cVerticalMagnification		=	1;
 	cHorizontalMagnification	=	1;
@@ -72,7 +72,7 @@ int		boxWidth;
 int		buttonWidth;
 int		iii;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	//------------------------------------------
 	yLoc			=	cTabVertOffset;
@@ -87,7 +87,7 @@ int		iii;
 	graphHeight		=	cHeight - cTabVertOffset;
 	graphHeight		-=	cBtnHeight;
 	graphHeight		-=	150;
-	CONSOLE_DEBUG_W_NUM("graphHeight\t=", graphHeight);
+//	CONSOLE_DEBUG_W_NUM("graphHeight\t=", graphHeight);
 
 	SetWidget(		kMount_Graph,		0,			yLoc,		cWidth,		graphHeight);
 	SetWidgetType(	kMount_Graph, kWidgetType_CustomGraphic);

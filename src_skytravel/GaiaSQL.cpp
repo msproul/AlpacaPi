@@ -38,6 +38,7 @@
 //*	May  9,	2022	<MLS> Added skytravel version number to remote SQL login information
 //*	May 10,	2022	<MLS> Added mysql error strings to local logging function
 //*	Jun  8,	2022	<MLS> Updated mysql_real_connect() calls to use specified port number
+//*	Jun 27,	2022	<MLS> Switched parsing to use ReadGenericConfigFile()
 //*****************************************************************************
 //*	sudo apt-get install libmysqlclient-dev		<<<< Use this one
 //*	sudo apt-get install libmariadb-dev			<<<< Use this for Raspberry-Pi
@@ -75,6 +76,7 @@
 #include	"SkyStruc.h"
 #include	"RemoteImage.h"
 #include	"observatory_settings.h"
+#include	"readconfigfile.h"
 
 #include	"GaiaSQL.h"
 #include	"RemoteGaia.h"
@@ -83,7 +85,7 @@
 #define	_XREF_AAVSO_
 
 char	gSQLsever_IPaddr[32]	=	"";
-int		gSQLsever_Port			=	3306;
+int		gSQLsever_Port			=	4570;	//*	the standard QSL port is 3306
 char	gSQLsever_UserName[32]	=	"";
 char	gSQLsever_Password[32]	=	"";
 char	gSQLsever_Database[32]	=	"gaia";
@@ -114,75 +116,45 @@ void	LogSqlTransaction(const char *sqlCommand, const char *results, const char *
 
 
 //*****************************************************************************
-//*	returns false if the keyword was not valid
-//*****************************************************************************
-static	bool ProcessSQLserverLine(char *lineBuff)
+static void	ProcessSQLConfig(const char *keyword, const char *valueString)
 {
-char	keyword[32];
-int		iii;
-int		ccc;
-int		slen;
-char	*valueStrPtr;
 bool	validEntry;
 
-	iii			=	0;
-	ccc			=	0;
-	validEntry	=	true;
-	slen		=	strlen(lineBuff);
-	while ((iii<slen) && (ccc < 31) && (lineBuff[iii] > 0x20))
+	//*	look for the supported keywords
+	if (strcasecmp(keyword, "server") == 0)
 	{
-		keyword[ccc]	=	lineBuff[iii];
-		ccc++;
-		iii++;
+		strcpy(gSQLsever_IPaddr, valueString);
 	}
-	keyword[ccc]	=	0;
-
-	valueStrPtr	=	strchr(lineBuff, '=');
-	if (valueStrPtr != NULL)
+	else if (strcasecmp(keyword, "port") == 0)
 	{
-		valueStrPtr++;		//*	skip over the "="
-		while (*valueStrPtr <= 0x20)
+		gSQLsever_Port	=	atoi(valueString);
+	}
+	else if (strcasecmp(keyword, "username") == 0)
+	{
+		strcpy(gSQLsever_UserName, valueString);
+	}
+	else if (strcasecmp(keyword, "password") == 0)
+	{
+		strcpy(gSQLsever_Password, valueString);
+	}
+	else if (strcasecmp(keyword, "database") == 0)
+	{
+		//*	this is an entry to the list of possible data bases
+//			CONSOLE_DEBUG_W_STR("database name\t=",		valueString);
+		if (gDataBaseNameCnt < kMaxDataBaseNames)
 		{
-			valueStrPtr++;
+			strcpy(gDataBaseNames[gDataBaseNameCnt].Name, valueString);
+			gDataBaseNameCnt++;
 		}
-
-		//*	look for the supported keywords
-		if (strcasecmp(keyword, "server") == 0)
-		{
-			strcpy(gSQLsever_IPaddr, valueStrPtr);
-		}
-		else if (strcasecmp(keyword, "port") == 0)
-		{
-			gSQLsever_Port	=	atoi(valueStrPtr);
-		}
-		else if (strcasecmp(keyword, "username") == 0)
-		{
-			strcpy(gSQLsever_UserName, valueStrPtr);
-		}
-		else if (strcasecmp(keyword, "password") == 0)
-		{
-			strcpy(gSQLsever_Password, valueStrPtr);
-		}
-		else if (strcasecmp(keyword, "database") == 0)
-		{
-			//*	this is an entry to the list of possible data bases
-//			CONSOLE_DEBUG_W_STR("database name\t=",		valueStrPtr);
-			if (gDataBaseNameCnt < kMaxDataBaseNames)
-			{
-				strcpy(gDataBaseNames[gDataBaseNameCnt].Name, valueStrPtr);
-				gDataBaseNameCnt++;
-			}
 //			else
 //			{
 //				CONSOLE_ABORT(__FUNCTION__);
 //			}
-		}
-		else
-		{
-			validEntry	=	false;
-		}
 	}
-	return(	validEntry);
+	else
+	{
+		validEntry	=	false;
+	}
 }
 
 //*****************************************************************************
@@ -219,72 +191,36 @@ bool			configOK;
 //*****************************************************************************
 static bool	ReadSQLconfigFile(void)
 {
-FILE	*filePointer;
-char	lineBuff[256];
 int		iii;
-int		slen;
 bool	configOK;
-bool	validEntry;
+int		linesRead;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
+	configOK	=	false;
+
 	//*	set the database name list to all zeros
 	for (iii=0; iii<kMaxDataBaseNames; iii++)
 	{
 		memset((void *)&gDataBaseNames[iii], 0, sizeof(TYPE_DATABASE_NAME));
 	}
 
-	configOK	=	false;
-	//*	check for the sql server settings file
-	filePointer	=	fopen(kSQLserverConfigFile, "r");
-	if (filePointer != NULL)
+	linesRead	=	ReadGenericConfigFile(kSQLserverConfigFile, '=', &ProcessSQLConfig);
+	if (linesRead > 2)
 	{
-//		CONSOLE_DEBUG("SQL config file opened OK");
-		while (fgets(lineBuff, 200, filePointer))
-		{
-			//*	get rid of the trailing CR/LF
-			slen	=	strlen(lineBuff);
-			for (iii=0; iii<slen; iii++)
-			{
-				if ((lineBuff[iii] == 0x0d) || (lineBuff[iii] == 0x0a))
-				{
-					lineBuff[iii]	=	0;
-					break;
-				}
-			}
-			slen	=	strlen(lineBuff);
-			if ((slen > 3) && (lineBuff[0] != '#'))
-			{
-				validEntry	=	ProcessSQLserverLine(lineBuff);
-				if (validEntry == false)
-				{
-					CONSOLE_DEBUG_W_STR("SQL Config file contains invalid data:", lineBuff);
-				}
-			}
-
-		}
 		//*	check the configuration, makes sure that all the required parameters were specified
 		configOK	=	CheckSQLconfiguration();
-		fclose(filePointer);
+	}
 
+	if (gDataBaseNameCnt > 0)
+	{
 		//*	set the current database to the first one in the list
+		strcpy(gSQLsever_Database, gDataBaseNames[0].Name);
 	}
 	else
 	{
 		strcpy(gDataBaseNames[0].Name, "gaia");
 		gDataBaseNameCnt	=	1;
 	}
-
-	if (gDataBaseNameCnt > 0)
-	{
-		strcpy(gSQLsever_Database, gDataBaseNames[0].Name);
-	}
-//	CONSOLE_DEBUG("--------------------------------");
-//	for (iii=0; iii<gDataBaseNameCnt; iii++)
-//	{
-//		CONSOLE_DEBUG_W_STR("Database name\t=", gDataBaseNames[iii].Name);
-//	}
-
-	CONSOLE_DEBUG_W_NUM("gDataBaseNameCnt\t=", gDataBaseNameCnt);
 	return(configOK);
 }
 
@@ -780,7 +716,7 @@ unsigned int	endMilliSecs;
 							}
 
 
-							localStarData.dataSrc	=	kDataSrc_GAIA_gedr3;
+							localStarData.dataSrc	=	kDataSrc_GAIA_SQL;
 							gaiaData[recNum]		=	localStarData;
 							recNum++;
 						}
@@ -954,7 +890,7 @@ bool			validFlag;
 						localStarData.spectralClass		=	0;
 					}
 
-					localStarData.dataSrc	=	kDataSrc_GAIA_gedr3;
+					localStarData.dataSrc	=	kDataSrc_GAIA_SQL;
 				}
 				else
 				{

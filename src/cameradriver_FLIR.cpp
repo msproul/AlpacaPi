@@ -38,6 +38,8 @@
 //*	Feb 25,	2021	<MLS> Added CheckUSBFS_memory()
 //*	Apr 14,	2021	<MLS> Working on FLIR single frame mode
 //*	Apr 14,	2021	<MLS> Added _FLIR_SINGLE_FRAME_
+//*	Jun 30,	2022	<MLS> Added GetSpinnakerErrorString()
+//*	Jun 30,	2022	<MLS> Added InitFlirCamera()
 //*****************************************************************************
 
 #if defined(_ENABLE_CAMERA_) && defined(_ENABLE_FLIR_)
@@ -68,6 +70,7 @@ static	spinLibraryVersion	gLibraryVersionHandle;
 static	spinCameraList		gCameraList;
 
 static	void	CheckUSBFS_memory(void);
+static	void	GetSpinnakerErrorString(_spinError errorCode, char *errorString);
 
 
 //**************************************************************************************
@@ -170,11 +173,8 @@ spinError		spinErr;
 	}
 
 	//------------------------------------------------------------
-	//*	if there were any cameras found, check the usbfs_memory_mb system parameter
-	if (numCameras > 0)
-	{
-		CheckUSBFS_memory();
-	}
+	//*	check the usbfs_memory_mb system parameter
+	CheckUSBFS_memory();
 
 
 	CONSOLE_DEBUG(__FUNCTION__);
@@ -218,10 +218,13 @@ char			*charPtr;
 				}
 			}
 		}
+		else
+		{
+			CONSOLE_DEBUG_W_STR("Failed to open ubfs memory file\t=", fileName);
+		}
 		fclose(filePointer);
 	}
 }
-
 
 //**************************************************************************************
 CameraDriverFLIR::CameraDriverFLIR(spinCamera hCamera)
@@ -232,6 +235,8 @@ quickSpin			quickSpinStruct;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 //	cCameraID		=	deviceNum;
+
+//	cVerboseDebug	=	true;
 
 	strcpy(cDeviceManufAbrev,		"FLIR");
 	strcpy(cDeviceManufacturer,		"FLIR");
@@ -252,12 +257,15 @@ quickSpin			quickSpinStruct;
 	cSpinNodeMapHandle		=	NULL;
 	cSpinNodeMapTLDeviceH	=	NULL;
 
-	quickSpinInit(cSpinCameraHandle, &quickSpinStruct);
+//	quickSpinInit(cSpinCameraHandle, &quickSpinStruct);
+//
+//	CONSOLE_DEBUG_W_LONG("quickSpinStruct.Width", (long)quickSpinStruct.Width);
+//	CONSOLE_DEBUG_W_LONG("sizeof(quickSpin)", sizeof(quickSpin));
+//
+//	ReadFLIRcameraInfo();
 
-	CONSOLE_DEBUG_W_LONG("quickSpinStruct.Width", (long)quickSpinStruct.Width);
-	CONSOLE_DEBUG_W_LONG("sizeof(quickSpin)", sizeof(quickSpin));
-
-	ReadFLIRcameraInfo();
+	// Initialize camera
+	InitFlirCamera();
 
 	strcpy(cCommonProp.Description, cDeviceManufacturer);
 	strcat(cCommonProp.Description, " spinnaker Version");
@@ -266,18 +274,6 @@ quickSpin			quickSpinStruct;
 	strcpy(cCommonProp.Name,	"FLIR-");
 	strcat(cCommonProp.Name,	cDeviceModel);
 
-	// Initialize camera
-	if (cSpinCameraHandle != NULL)
-	{
-		spinErr	=	spinCameraInit(cSpinCameraHandle);
-		if (spinErr == SPINNAKER_ERR_SUCCESS)
-		{
-		}
-		else
-		{
-			CONSOLE_DEBUG_W_NUM("Unable to initialize camera. Aborting with error=", spinErr);
-		}
-	}
 
 	DumpCameraProperties(__FUNCTION__);
 
@@ -297,6 +293,40 @@ CameraDriverFLIR::~CameraDriverFLIR(void)
 }
 
 
+//**************************************************************************************
+void CameraDriverFLIR::InitFlirCamera(void)
+{
+spinError			spinErr;
+quickSpin			quickSpinStruct;
+char				spinErrorString[64];
+
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, "------------------------");
+	quickSpinInit(cSpinCameraHandle, &quickSpinStruct);
+
+	CONSOLE_DEBUG_W_LONG("quickSpinStruct.Width",	(long)quickSpinStruct.Width);
+	CONSOLE_DEBUG_W_LONG("sizeof(quickSpin)",		sizeof(quickSpin));
+
+	ReadFLIRcameraInfo();
+
+	if (cSpinCameraHandle != NULL)
+	{
+		spinErr	=	spinCameraInit(cSpinCameraHandle);
+		if (spinErr == SPINNAKER_ERR_SUCCESS)
+		{
+		}
+		else
+		{
+			GetSpinnakerErrorString(spinErr, spinErrorString);
+			CONSOLE_DEBUG_W_STR("Unable to initialize camera. Aborting with error=", spinErrorString);
+		}
+	}
+	else
+	{
+		CONSOLE_ABORT(__FUNCTION__);
+	}
+}
+
+
 // This macro helps with C-strings.
 #define MAX_BUFF_LEN 256
 
@@ -304,43 +334,44 @@ CameraDriverFLIR::~CameraDriverFLIR(void)
 // This function helps to check if a node is available and readable
 bool8_t IsAvailableAndReadable(spinNodeHandle hNode, const char nodeName[])
 {
-bool8_t pbAvailable	=	False;
-spinError err = SPINNAKER_ERR_SUCCESS;
+bool8_t		pbAvailable	=	False;
+bool8_t		pbReadable	=	False;
+spinError	spinErr		=	SPINNAKER_ERR_SUCCESS;
 
-	err		=	spinNodeIsAvailable(hNode, &pbAvailable);
-	if (err != SPINNAKER_ERR_SUCCESS)
+	spinErr		=	spinNodeIsAvailable(hNode, &pbAvailable);
+	if (spinErr != SPINNAKER_ERR_SUCCESS)
 	{
-		printf("Unable to retrieve node availability (%s node), with error %d...\n\n", nodeName, err);
+		printf("Unable to retrieve node availability (%s node), with error %d...\n\n", nodeName, spinErr);
 	}
 
-	bool8_t pbReadable	=	False;
-	err	=	spinNodeIsReadable(hNode, &pbReadable);
-	if (err != SPINNAKER_ERR_SUCCESS)
+	spinErr	=	spinNodeIsReadable(hNode, &pbReadable);
+	if (spinErr != SPINNAKER_ERR_SUCCESS)
 	{
-		printf("Unable to retrieve node readability (%s node), with error %d...\n\n", nodeName, err);
+		printf("Unable to retrieve node readability (%s node), with error %d...\n\n", nodeName, spinErr);
 	}
-	return pbReadable && pbAvailable;
+	return(pbReadable && pbAvailable);
 }
 
 //**************************************************************************************
 // This function helps to check if a node is available and writable
 bool8_t IsAvailableAndWritable(spinNodeHandle hNode, const char nodeName[])
 {
-	bool8_t pbAvailable	=	False;
-	spinError err	=	SPINNAKER_ERR_SUCCESS;
-	err	=	spinNodeIsAvailable(hNode, &pbAvailable);
-	if (err != SPINNAKER_ERR_SUCCESS)
+bool8_t		pbAvailable	=	False;
+bool8_t		pbWritable	=	False;
+spinError	spinErr		=	SPINNAKER_ERR_SUCCESS;
+
+	spinErr	=	spinNodeIsAvailable(hNode, &pbAvailable);
+	if (spinErr != SPINNAKER_ERR_SUCCESS)
 	{
-		printf("Unable to retrieve node availability (%s node), with error %d...\n\n", nodeName, err);
+		printf("Unable to retrieve node availability (%s node), with error %d...\n\n", nodeName, spinErr);
 	}
 
-	bool8_t pbWritable	=	False;
-	err	=	spinNodeIsWritable(hNode, &pbWritable);
-	if (err != SPINNAKER_ERR_SUCCESS)
+	spinErr	=	spinNodeIsWritable(hNode, &pbWritable);
+	if (spinErr != SPINNAKER_ERR_SUCCESS)
 	{
-		printf("Unable to retrieve node writability (%s node), with error %d...\n\n", nodeName, err);
+		printf("Unable to retrieve node writability (%s node), with error %d...\n\n", nodeName, spinErr);
 	}
-	return pbWritable && pbAvailable;
+	return(pbWritable && pbAvailable);
 }
 
 //**************************************************************************************
@@ -360,8 +391,8 @@ void PrintRetrieveNodeFailure(const char node[], const char name[])
 //**************************************************************************************
 spinError PrintDeviceInfo(spinNodeMapHandle hNodeMap)
 {
-	spinError err	=	SPINNAKER_ERR_SUCCESS;
-	unsigned int i	=	0;
+spinError err	=	SPINNAKER_ERR_SUCCESS;
+unsigned int i	=	0;
 
 	printf("\n*** DEVICE INFORMATION ***\n\n");
 
@@ -721,6 +752,7 @@ TYPE_ASCOM_STATUS	CameraDriverFLIR::Start_CameraExposure(int32_t exposureMicrose
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
 spinError			spinErr;
+char				spinErrorString[64];
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -740,7 +772,8 @@ spinError			spinErr;
 	//
 	if (cSpinCameraHandle != NULL)
 	{
-		if (cSpinNodeMapHandle == NULL)
+//*testing 7/5/2022
+//		if (cSpinNodeMapHandle == NULL)
 		{
 			spinErr	=	spinCameraGetNodeMap(cSpinCameraHandle, &cSpinNodeMapHandle);
 			if (spinErr == SPINNAKER_ERR_SUCCESS)
@@ -764,19 +797,40 @@ spinError			spinErr;
 			cInternalCameraState	=	kCameraState_TakingPicture;
 			alpacaErrCode			=	kASCOM_Err_Success;
 		}
-		else
+		else if (spinErr == SPINNAKER_ERR_NOT_INITIALIZED)
 		{
-			sprintf(cLastCameraErrMsg, "Unable to begin image acquisition. spinErr=%d", spinErr);
+			CONSOLE_DEBUG("SPINNAKER_ERR_NOT_INITIALIZED");
+			InitFlirCamera();
+			spinErr	=	spinCameraBeginAcquisition(cSpinCameraHandle);
+			if (spinErr == SPINNAKER_ERR_SUCCESS)
+			{
+				CONSOLE_DEBUG("spinCameraBeginAcquisition  SUCCESS!!!");
+				cInternalCameraState	=	kCameraState_TakingPicture;
+				alpacaErrCode			=	kASCOM_Err_Success;
+			}
+		}
+		CONSOLE_DEBUG(__FUNCTION__);
+
+		if (spinErr != SPINNAKER_ERR_SUCCESS)
+		{
+			GetSpinnakerErrorString(spinErr, spinErrorString);
+			strcpy(cLastCameraErrMsg, "Unable to begin image acquisition. spinErr=");
+			strcat(cLastCameraErrMsg, spinErrorString);
 			CONSOLE_DEBUG(cLastCameraErrMsg);
-			alpacaErrCode	=	kASCOM_Err_FailedToTakePicture;
+			alpacaErrCode	=	kASCOM_Err_UnspecifiedError;
 		}
 	}
 	else
 	{
+		alpacaErrCode	=	kASCOM_Err_UnspecifiedError;
 		strcpy(cLastCameraErrMsg, "cSpinCameraHandle is NULL");
 		CONSOLE_DEBUG(cLastCameraErrMsg);
 	}
-	CONSOLE_DEBUG(__FUNCTION__);
+	if (alpacaErrCode != kASCOM_Err_Success)
+	{
+		CONSOLE_DEBUG_W_NUM("Returning Alpaca error code\t=", alpacaErrCode);
+	}
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, "EXIT");
 	return(alpacaErrCode);
 }
 
@@ -809,7 +863,7 @@ TYPE_EXPOSURE_STATUS	exposureState;
 
 		if (cSpinCameraHandle != NULL)
 		{
-			CONSOLE_DEBUG("cSpinCameraHandle is OK");
+//			CONSOLE_DEBUG("cSpinCameraHandle is OK");
 			cSpinImageHandle	=	NULL;
 			spinErr	=	spinCameraGetNextImage(cSpinCameraHandle, &cSpinImageHandle);
 			if (spinErr == SPINNAKER_ERR_SUCCESS)
@@ -854,7 +908,7 @@ TYPE_EXPOSURE_STATUS	exposureState;
 			}
 			else
 			{
-				CONSOLE_DEBUG("Failed to get cSpinImageHandle");
+//				CONSOLE_DEBUG("Failed to get cSpinImageHandle");
 			}
 		}
 		else
@@ -882,7 +936,7 @@ TYPE_EXPOSURE_STATUS	exposureState;
 //**************************************************************************
 TYPE_ASCOM_STATUS	CameraDriverFLIR::Read_ImageData(void)
 {
-TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
+TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_UnspecifiedError;
 spinError				spinErr;
 bool8_t					isIncomplete	=	false;
 size_t					spinnakerWidth;
@@ -893,6 +947,7 @@ bool					imageIsGood;
 char					myImageFileName[64];
 char					spinnakerPixelFormatName[64];
 size_t					bufferLen;
+char					spinErrorString[64];
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 	//
@@ -1013,7 +1068,8 @@ size_t					bufferLen;
 					}
 					else
 					{
-						CONSOLE_DEBUG_W_NUM("Unable to save image. Non-fatal error=", spinErr);
+						GetSpinnakerErrorString(spinErr, spinErrorString);
+						CONSOLE_DEBUG_W_STR("Unable to save image. Non-fatal error=", spinErrorString);
 					}
 				}
 				if (cSpinImageHandle == NULL)
@@ -1039,17 +1095,22 @@ size_t					bufferLen;
 			spinErr	=	spinCameraEndAcquisition(cSpinCameraHandle);
 			if (spinErr != SPINNAKER_ERR_SUCCESS)
 			{
-				CONSOLE_DEBUG_W_NUM("Unable to end acquisition. Non-fatal error=", spinErr);
+				GetSpinnakerErrorString(spinErr, spinErrorString);
+				CONSOLE_DEBUG_W_STR("Unable to end acquisition. Non-fatal error=", spinErrorString);
 			}
 		}
 		else
 		{
-			CONSOLE_DEBUG_W_NUM("Unable to get next image. Non-fatal error", spinErr);
+			alpacaErrCode	=	kASCOM_Err_UnspecifiedError;
+			GetSpinnakerErrorString(spinErr, spinErrorString);
+			CONSOLE_DEBUG_W_STR("Unable to get next image. Non-fatal error", spinErrorString);
 		}
 	}
 	else
 	{
+		alpacaErrCode	=	kASCOM_Err_UnspecifiedError;
 		CONSOLE_DEBUG("cSpinCameraHandle is NULL");
+		CONSOLE_ABORT(__FUNCTION__);
 	}
 
 	return(alpacaErrCode);
@@ -1310,5 +1371,97 @@ TYPE_ASCOM_STATUS			alpacaErrCode	=	kASCOM_Err_NotImplemented;
 	return(alpacaErrCode);
 }
 
+//*****************************************************************************
+typedef struct
+{
+	int		errorNum;
+	char	errorString[64];
+}	TYPE_SPIN_ERROR_MSG;
+
+TYPE_SPIN_ERROR_MSG	gSpinkerErrorStrings[]	=
+{
+
+	{	SPINNAKER_ERR_ERROR,				"SPINNAKER_ERR_ERROR"				},
+	{	SPINNAKER_ERR_NOT_INITIALIZED,		"SPINNAKER_ERR_NOT_INITIALIZED"		},
+	{	SPINNAKER_ERR_NOT_IMPLEMENTED,		"SPINNAKER_ERR_NOT_IMPLEMENTED"		},
+	{	SPINNAKER_ERR_RESOURCE_IN_USE,		"SPINNAKER_ERR_RESOURCE_IN_USE"		},
+	{	SPINNAKER_ERR_ACCESS_DENIED,		"SPINNAKER_ERR_ACCESS_DENIED"		},
+	{	SPINNAKER_ERR_INVALID_HANDLE,		"SPINNAKER_ERR_INVALID_HANDLE"		},
+	{	SPINNAKER_ERR_INVALID_ID,			"SPINNAKER_ERR_INVALID_ID"			},
+	{	SPINNAKER_ERR_NO_DATA,				"SPINNAKER_ERR_NO_DATA"				},
+	{	SPINNAKER_ERR_INVALID_PARAMETER,	"SPINNAKER_ERR_INVALID_PARAMETER"	},
+	{	SPINNAKER_ERR_IO,					"SPINNAKER_ERR_IO"					},
+	{	SPINNAKER_ERR_TIMEOUT,				"SPINNAKER_ERR_TIMEOUT"				},
+	{	SPINNAKER_ERR_ABORT,				"SPINNAKER_ERR_ABORT"				},
+	{	SPINNAKER_ERR_INVALID_BUFFER,		"SPINNAKER_ERR_INVALID_BUFFER"		},
+	{	SPINNAKER_ERR_NOT_AVAILABLE,		"SPINNAKER_ERR_NOT_AVAILABLE"		},
+	{	SPINNAKER_ERR_INVALID_ADDRESS,		"SPINNAKER_ERR_INVALID_ADDRESS"		},
+	{	SPINNAKER_ERR_BUFFER_TOO_SMALL,		"SPINNAKER_ERR_BUFFER_TOO_SMALL"	},
+	{	SPINNAKER_ERR_INVALID_INDEX,		"SPINNAKER_ERR_INVALID_INDEX"		},
+	{	SPINNAKER_ERR_PARSING_CHUNK_DATA,	"SPINNAKER_ERR_PARSING_CHUNK_DATA"	},
+	{	SPINNAKER_ERR_INVALID_VALUE,		"SPINNAKER_ERR_INVALID_VALUE"		},
+	{	SPINNAKER_ERR_RESOURCE_EXHAUSTED,	"SPINNAKER_ERR_RESOURCE_EXHAUSTED"	},
+	{	SPINNAKER_ERR_OUT_OF_MEMORY,		"SPINNAKER_ERR_OUT_OF_MEMORY"		},
+	{	SPINNAKER_ERR_BUSY,					"SPINNAKER_ERR_BUSY"				},
+
+
+
+	//*
+	//*The error codes in the range of -2000 to -2999 are reserved for
+	//* Gen API related errors.
+
+	{	GENICAM_ERR_INVALID_ARGUMENT,		"GENICAM_ERR_INVALID_ARGUMENT"	},
+	{	GENICAM_ERR_OUT_OF_RANGE,			"GENICAM_ERR_OUT_OF_RANGE"		},
+	{	GENICAM_ERR_PROPERTY,				"GENICAM_ERR_PROPERTY"			},
+	{	GENICAM_ERR_RUN_TIME,				"GENICAM_ERR_RUN_TIME"			},
+	{	GENICAM_ERR_LOGICAL,				"GENICAM_ERR_LOGICAL"			},
+	{	GENICAM_ERR_ACCESS,					"GENICAM_ERR_ACCESS"			},
+	{	GENICAM_ERR_TIMEOUT,				"GENICAM_ERR_TIMEOUT"			},
+	{	GENICAM_ERR_DYNAMIC_CAST,			"GENICAM_ERR_DYNAMIC_CAST"		},
+	{	GENICAM_ERR_GENERIC,				"GENICAM_ERR_GENERIC"			},
+	{	GENICAM_ERR_BAD_ALLOCATION,			"GENICAM_ERR_BAD_ALLOCATION"	},
+
+	//*	The error codes in the range of -3000 to -3999 are reserved for
+	//*	image processing related errors.
+
+	{	SPINNAKER_ERR_IM_CONVERT,			"SPINNAKER_ERR_IM_CONVERT"			},
+	{	SPINNAKER_ERR_IM_COPY,				"SPINNAKER_ERR_IM_COPY"				},
+	{	SPINNAKER_ERR_IM_MALLOC,			"SPINNAKER_ERR_IM_MALLOC"			},
+	{	SPINNAKER_ERR_IM_NOT_SUPPORTED,		"SPINNAKER_ERR_IM_NOT_SUPPORTED"	},
+	{	SPINNAKER_ERR_IM_HISTOGRAM_RANGE,	"SPINNAKER_ERR_IM_HISTOGRAM_RANGE"	},
+	{	SPINNAKER_ERR_IM_HISTOGRAM_MEAN,	"SPINNAKER_ERR_IM_HISTOGRAM_MEAN"	},
+	{	SPINNAKER_ERR_IM_MIN_MAX,			"SPINNAKER_ERR_IM_MIN_MAX"			},
+	{	SPINNAKER_ERR_IM_COLOR_CONVERSION,	"SPINNAKER_ERR_IM_COLOR_CONVERSION"	},
+
+	//*	Error codes less than -10000 are reserved for user-defined customerrors.
+	{	SPINNAKER_ERR_CUSTOM_ID,			"SPINNAKER_ERR_CUSTOM_ID"			},
+
+	{	0,	""	}
+
+};
+
+//*****************************************************************************
+static void	GetSpinnakerErrorString(_spinError errorCode, char *errorString)
+{
+int		iii;
+bool	keepLooking;
+
+	keepLooking	=	true;
+	iii			=	0;
+	while ((gSpinkerErrorStrings[iii].errorNum != 0) && (iii < 40))
+	{
+		if (errorCode == gSpinkerErrorStrings[iii].errorNum)
+		{
+			strcpy(errorString, gSpinkerErrorStrings[iii].errorString);
+			keepLooking	=	false;
+			break;
+		}
+		iii++;
+	}
+	if (keepLooking)
+	{
+		sprintf(errorString, "Err# %d - Not found in table", errorCode);
+	}
+}
 
 #endif // defined(_ENABLE_CAMERA_) && defined(_ENABLE_FLIR_)

@@ -110,7 +110,9 @@ class WindowTabTeleSettings: public WindowTab
 //				void	UpdateButtons(void);
 				void	UpdateTelescopeInfo(TYPE_TelescopeProperties *telescopeProp, bool updateAll);
 	private:
+				//*	these are certain telescope properties that we need to keep track of
 				bool	cAtPark;
+				bool	cTracking;
 				bool	cDoesRefraction;
 
 };

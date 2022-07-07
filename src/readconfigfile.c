@@ -145,7 +145,6 @@ bool	validEntry;
 	return(valideLineCnt);
 }
 
-
 //*****************************************************************************
 int		FindKeywordFromTable(const char *keyword, const TYPE_KEYWORDS *keywordTable)
 {

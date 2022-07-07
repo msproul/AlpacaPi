@@ -570,7 +570,7 @@ int					setOptRetCode;
 				strcat(xmitBuffer, "\r\n");
 			}
 			strcat(xmitBuffer, "\r\n");
-			CONSOLE_DEBUG_W_STR("Sending:", xmitBuffer);
+//			CONSOLE_DEBUG_W_STR("Sending:", xmitBuffer);
 
 			sendRetCode	=	send(socket_desc , xmitBuffer , strlen(xmitBuffer) , MSG_NOSIGNAL);
 			if (sendRetCode >= 0)

@@ -331,11 +331,13 @@ class WindowTabSkyTravel: public WindowTab
 				double	cViewAngle_InfoDisplay;
 
 
-			uint32_t			cLastUpdateTime_ms;
-			uint32_t			cLastClockUpdateTime_ms;
-			uint32_t			cLastRedrawTime_ms;
+			bool				cForceClockUpdate;
+			uint32_t			cPreviousClockUpdateTVsecs;
 
+			uint32_t			cLastUpdateTime_ms;
+			uint32_t			cLastRedrawTime_ms;
 			uint32_t			cLastRemoteImageUpdate_ms;
+			uint32_t			cLastGaiaUpdate_ms;
 
 			//*	I am using openCV ROI for the drawing so these are always zero
 			int					cWorkSpaceLeftOffset;

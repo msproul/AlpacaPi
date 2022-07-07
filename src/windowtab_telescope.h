@@ -95,7 +95,7 @@ class WindowTabTelescope: public WindowTab
 		virtual	void	ProcessButtonClick(const int buttonIdx, const int flags);
 //		virtual	void	ProcessDoubleClick(const int buttonIdx);
 
-				bool	ProcessSlewButton(const int buttonIdx, const int flags);
+				bool	ProcessMovementButtons(const int buttonIdx, const int flags);
 				void	UpdateButtons(void);
 				void	UpdateTelescopeInfo(TYPE_TelescopeProperties *telescopeProp, bool updateAll);
 				int		cCurrentSlewRate;

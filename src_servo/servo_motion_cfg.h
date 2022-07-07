@@ -21,12 +21,14 @@
 //*	<MLS>	=	Mark L Sproul
 //*	<RNS>	=	Ron N Story
 //*****************************************************************************
-//*	Jun 27,	2022,	<RNS> Initial version of Motion read config routines
-//*	Jul  1,	2022,	<RNS> Added typedef MOTION_STATE
-//*	Jul  2,	2022,	<RNS> Renamed .adj field to .guide, removed .freq field
-//*	Jul  2,	2022,	<RNS> Changed order of typedefs to be more clear
-//*	Jul  3,	2022,	<RNS> Moved enum of config files to .c file
+//*	Jun 27,	2022	<RNS> Initial version of Motion read config routines
+//*	Jul  1,	2022	<RNS> Added typedef MOTION_STATE
+//*	Jul  2,	2022	<RNS> Renamed .adj field to .guide, removed .freq field
+//*	Jul  2,	2022	<RNS> Changed order of typedefs to be more clear
+//*	Jul  3,	2022	<RNS> Moved enum of config files to .c file
+//*	Jul  6,	2022	<MLS> Moved enums BACK to .h file
 //****************************************************************************
+//#include	"servo_motion_cfg.h"
 
 #ifndef _SERVO_MOTION_CFG_H_
 #define _SERVO_MOTION_CFG_H_
@@ -38,6 +40,28 @@
 
 // Default name for the telescope motion config file
 #define kMOTION_CFG_FILE "servo_motion.cfg"
+
+
+//******************************************************************
+enum
+{
+	MC_ADDR,
+	BAUD,
+	COMM_PORT,
+	RA_KP_CON,
+	RA_KI_CON,
+	RA_KD_CON,
+	RA_IL_CON,
+	DEC_KP_CON,
+	DEC_KI_CON,
+	DEC_KD_CON,
+	DEC_IL_CON,
+
+	MOTION_CFG_LAST
+};	// of enum
+
+extern TYPE_CFG_ITEM gMotionConfigArray[];
+
 
 //******************************************************************
 typedef enum
@@ -52,22 +76,22 @@ typedef enum
 typedef struct
 {
 	// Common motor fields for any motion controller
-	TYPE_MOTION_STATE	state; 
-	uint32_t	acc;
-	uint32_t	vel;
-	int32_t		trackRate;
+	TYPE_MOTION_STATE	state;
+	uint32_t			acc;
+	uint32_t			vel;
+	int32_t				trackRate;
 	// Common PID + intergration limit fields for MCs
-	double		kp;
-	double		ki;
-	double		kd;
-	double		il;
+	double				kp;
+	double				ki;
+	double				kd;
+	double				il;
 	// fields unique to Roboclaw
-	uint8_t		addr;
-	double		motorMaxRPM;
-	uint16_t	encoderMaxSpeed;	
-	uint16_t	status;
-	uint8_t		cmdQueue;
-	bool		buffered; 
+	uint8_t				addr;
+	double				motorMaxRPM;
+	uint16_t			encoderMaxSpeed;
+	uint16_t			status;
+	uint8_t				cmdQueue;
+	bool				buffered;
 } TYPE_MOTION_MOTOR;
 
 
@@ -76,19 +100,20 @@ typedef struct
 {
 	TYPE_MOTION_MOTOR	motor0;
 	TYPE_MOTION_MOTOR	motor1;
-	TYPE_MOTION_STATE	state; 
+	TYPE_MOTION_STATE	state;
 	char			    port[kMAX_STR_LEN];
 	int				    baud;
 } TYPE_MOTION_CONFIG;
 
-// extern TYPE_MOTION_CONFIG gMotionConfig;
-// extern TYPE_CFG_ITEM gMotionConfigArray[];
+extern TYPE_MOTION_CONFIG	gMotionConfig;
+extern TYPE_CFG_ITEM		gMotionConfigArray[];
 
 #ifdef __cplusplus
 	extern "C" {
 #endif
 
 int		Servo_read_motion_cfg(const char *motionCfgFile, TYPE_MOTION_CONFIG *motionConfig);
+bool	Servo_check_motion_cfg(void);
 void	Print_motion_configuration(void);
 
 #ifdef __cplusplus

@@ -488,12 +488,6 @@ int			objCntr;
 		InitFonts();
 	}
 
-
-
-//	CONSOLE_DEBUG_W_DBL("font dx=", gTextFont[kFont_Simplex].dx);
-//	gTextFont[kFont_Simplex].dx	=	20.0;
-//	CONSOLE_DEBUG_W_DBL("font dx=", gTextFont[kFont_Simplex].dx);
-
 	//*	set defaults for the tabs
 	for (iii=0; iii < kMaxTabs; iii++)
 	{
@@ -746,7 +740,7 @@ void	Controller::HandleWindowUpdate(void)
 		DrawWindow();
 
 		cv::imshow(cWindowName, *cOpenCV_matImage);
-		cv::waitKey(5);
+//waitKey		cv::waitKey(5);
 //		cvUpdateWindow(cWindowName);//
 	}
 	else
@@ -822,7 +816,7 @@ TYPE_WIDGET		*myWidgetPtr;
 		#else
 			cvShowImage(cWindowName, cOpenCV_Image);
 		#endif
-			cv::waitKey(15);
+//waitKey			cv::waitKey(15);
 //			CONSOLE_DEBUG_W_NUM("updatedCnt\t=", updatedCnt);
 		}
 		else
@@ -2242,7 +2236,7 @@ void	Controller::DrawWidgetImage(TYPE_WIDGET *theWidget)
 	}
 	else
 	{
-		CONSOLE_DEBUG("theWidget->openCVimagePtr is null");
+//		CONSOLE_DEBUG("theWidget->openCVimagePtr is null");
 		cCurrentColor	=	CV_RGB(100, 100, 100);
 		LLD_FillRect(theWidget->left, theWidget->top, theWidget->width, theWidget->height);
 	}
@@ -2537,8 +2531,9 @@ char		currentTabName[64]	=	"";
 				GetCurrentTabName(currentTabName);
 				sprintf(imageFileName, "%s-%s-screenshot.jpg", cWindowName, currentTabName);
 			#ifdef _USE_OPENCV_CPP_
-			//	openCVerr	=	cv::imwrite(imageFileName, *cOpenCV_matImage, quality);
 				openCVerr	=	cv::imwrite(imageFileName, *cOpenCV_matImage);
+			#elif (CV_MAJOR_VERSION >= 4)
+				//*	do nothing because its not supported
 			#else
 				openCVerr	=	cvSaveImage(imageFileName, cOpenCV_Image, quality);
 			#endif
@@ -3173,6 +3168,8 @@ void	LoadAlpacaLogo(void)
 //	cv::namedWindow("Logo");			//Declaring an window to show ROI
 //	cv::imshow("Logo", gAlpacaLogo);	//Showing actual image
 
+#elif (CV_MAJOR_VERSION >= 4)
+	//*	do nothing because its not supported
 #else
 	if (gAlpacaLogoPtr == NULL)
 	{
@@ -3316,7 +3313,7 @@ Controller	*myControllerPtr;
 	myControllerPtr	=	(Controller *)arg;
 	if (myControllerPtr != NULL)
 	{
-		CONSOLE_DEBUG("Valid Controller ptr");
+//		CONSOLE_DEBUG("Valid Controller ptr");
 		while(myControllerPtr->cMagicCookie == kMagicCookieValue)
 		{
 			if (gDebugBackgroundThread)
@@ -3346,7 +3343,6 @@ int	Controller::StartBackgroundThread(void)
 int			threadErr;
 
 	CONSOLE_DEBUG("***************************************************************");
-	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG_W_STR("Starting background thread for window:",	cWindowName);
 	threadErr			=	pthread_create(&cBackgroundThreadID, NULL, &ControllerBackgroundThread, this);
 	if (threadErr == 0)
@@ -3571,12 +3567,14 @@ void	Controller::LLD_DrawCString(	const int	xx,
 			textLoc.x	=	xx;
 			textLoc.y	=	yy;
 
+#ifdef _ENABLE_CVFONT_
 			cvPutText(	cOpenCV_Image,
 						textString,
 						textLoc,
 						&gTextFont[fontIndex],
 						cCurrentColor
 						);
+#endif // _ENABLE_CVFONT_
 		}
 		else
 		{
@@ -3771,12 +3769,14 @@ cv::Size		textSize;
 #else
 
 CvSize		textSize;
+#ifdef _ENABLE_CVFONT_
 	cvGetTextSize(	textString,
 					&gTextFont[fontIndex],
 					&textSize,
 					&cCurrentFontBaseLine);
 	textWidthPixels		=	textSize.width;
 	cCurrentFontHeight	=	textSize.height;
+#endif
 #endif
 
 	return(textWidthPixels);

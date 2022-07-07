@@ -56,6 +56,7 @@
 #++	May  2,	2022	<MLS> Added make moonlite for stand alone moonlite focuser driver
 #++	May  4,	2022	<MLS> Added camera simulator (make camerasim)
 #++	May 19,	2022	<MLS> Updated Makefile to reflect RNS filename changes
+#++	Jun 30,	2022	<MLS> Added dumpfits to makefile
 ######################################################################################
 #	Cr_Core is for the Sony camera
 ######################################################################################
@@ -652,6 +653,7 @@ allcam		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_ZWO_
 #allcam		:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_
 #allcam		:		DEFINEFLAGS		+=	-D_ENABLE_SLIT_TRACKER_
 allcam		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
+allcam		:		DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
 #allcam		:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
 #allcam		:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_LX200_
 allcam		:		DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
@@ -888,7 +890,10 @@ rigel		:		$(TELESCOPE_OBJECTS)		\
 SERVO_OBJECTS=										\
 				$(OBJECT_DIR)servo_mount_cfg.o		\
 				$(OBJECT_DIR)servo_time.o			\
+				$(OBJECT_DIR)servo_motion.o			\
+				$(OBJECT_DIR)servo_motion_cfg.o		\
 				$(OBJECT_DIR)servo_mount.o			\
+				$(OBJECT_DIR)servo_observ_cfg.o		\
 				$(OBJECT_DIR)servo_rc_utils.o		\
 				$(OBJECT_DIR)servo_mc_core.o		\
 
@@ -1673,16 +1678,16 @@ piswitch64		:	$(CPP_OBJECTS)				\
 
 ######################################################################################
 #pragma mark make shutter
-shutter		:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_
+shutter		:		DEFINEFLAGS		+=	-D_ENABLE_SHUTTER_
 shutter		:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
 shutter		:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
 shutter		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
-shutter		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
-shutter		:		DEFINEFLAGS		+=	-D_ENABLE_SHUTTER_
+shutter		:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_
 shutter		:		DEFINEFLAGS		+=	-D_ENABLE_STATUS_SWITCH_
 shutter		:		DEFINEFLAGS		+=	-D_ENABLE_WIRING_PI_
 shutter		:		DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
 shutter		:		DEFINEFLAGS		+=	-D_ENABLE_LIVE_CONTROLLER_
+shutter		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
 
 shutter		:		$(CPP_OBJECTS)				\
 					$(ALPACA_OBJECTS)			\
@@ -1707,17 +1712,17 @@ shutter		:		$(CPP_OBJECTS)				\
 
 ######################################################################################
 #pragma mark make shuttercv4
-shuttercv4		:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_
+shuttercv4		:		DEFINEFLAGS		+=	-D_ENABLE_SHUTTER_
 shuttercv4		:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
 shuttercv4		:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
 shuttercv4		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
-shuttercv4		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
-shuttercv4		:		DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
-shuttercv4		:		DEFINEFLAGS		+=	-D_ENABLE_SHUTTER_
+shuttercv4		:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_
 shuttercv4		:		DEFINEFLAGS		+=	-D_ENABLE_STATUS_SWITCH_
 shuttercv4		:		DEFINEFLAGS		+=	-D_ENABLE_WIRING_PI_
 shuttercv4		:		DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
 shuttercv4		:		DEFINEFLAGS		+=	-D_ENABLE_LIVE_CONTROLLER_
+shuttercv4		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
+shuttercv4		:		DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
 
 shuttercv4		:	$(CPP_OBJECTS)				\
 					$(ALPACA_OBJECTS)			\
@@ -1828,6 +1833,8 @@ jetson		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
 jetson		:	DEFINEFLAGS		+=	-D_ENABLE_LIVE_CONTROLLER_
 jetson		:	DEFINEFLAGS		+=	-D_ENABLE_STAR_SEARCH_
 jetson		:	DEFINEFLAGS		+=	-D_PLATFORM_STRING_=\"Nvidia-jetson\"
+jetson		:	DEFINEFLAGS		+=	-D_ENABLE_IMU_
+jetson		:	INCLUDES		+=	-I$(SRC_IMU)
 jetson		:	PLATFORM		=	armv8
 jetson		:	TOUP_LIB_DIR	=	$(TOUP_DIR)/linux/arm64
 jetson		:				$(ALPACA_OBJECTS)			\
@@ -1835,6 +1842,7 @@ jetson		:				$(ALPACA_OBJECTS)			\
 							$(CPP_OBJECTS)				\
 							$(IMAGEPROC_OBJECTS)		\
 							$(JETSON_OBJECTS)			\
+							$(IMU_OBJECTS)				\
 							$(LIVE_WINDOW_OBJECTS)		\
 
 
@@ -1844,6 +1852,7 @@ jetson		:				$(ALPACA_OBJECTS)			\
 							$(CPP_OBJECTS)				\
 							$(IMAGEPROC_OBJECTS)		\
 							$(JETSON_OBJECTS)			\
+							$(IMU_OBJECTS)				\
 							$(LIVE_WINDOW_OBJECTS)		\
 							$(OPENCV_LINK)				\
 							-lcfitsio					\
@@ -2486,6 +2495,10 @@ FITSVIEW_OBJECTS=												\
 				$(OBJECT_DIR)fitsview.o							\
 				$(OBJECT_DIR)fits_opencv.o						\
 
+
+DUMPFITS_OBJECTS=												\
+				$(OBJECT_DIR)dumpfits.o							\
+
 ######################################################################################
 #pragma mark make fitsview
 fitsview	:		$(FITSVIEW_OBJECTS)
@@ -2498,6 +2511,29 @@ fitsview	:		$(FITSVIEW_OBJECTS)
 							-lm									\
 							-o fitsview
 
+######################################################################################
+#pragma mark make dumpfits
+dumpfits	:		$(DUMPFITS_OBJECTS)
+
+
+				$(LINK)  										\
+							$(DUMPFITS_OBJECTS)					\
+							-lcfitsio							\
+							-o dumpfits
+
+
+######################################################################################
+#pragma mark make fitsviewcv4
+fitsviewcv4	:		DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
+fitsviewcv4	:		$(FITSVIEW_OBJECTS)
+
+
+				$(LINK)  										\
+							$(FITSVIEW_OBJECTS)					\
+							$(OPENCV_LINK)						\
+							-lcfitsio							\
+							-lm									\
+							-o fitsview
 
 ######################################################################################
 #pragma mark make net
@@ -3427,6 +3463,10 @@ $(OBJECT_DIR)fitsview.o :				$(SRC_DIR)fitsview.c
 
 
 #-------------------------------------------------------------------------------------
+$(OBJECT_DIR)dumpfits.o :				$(SRC_DIR)dumpfits.c
+	$(COMPILE) $(INCLUDES) $(SRC_DIR)dumpfits.c -o$(OBJECT_DIR)dumpfits.o
+
+#-------------------------------------------------------------------------------------
 $(OBJECT_DIR)discovery_lib.o :			$(SRC_DIR)discovery_lib.c			\
 										$(SRC_DIR)discovery_lib.h
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)discovery_lib.c -o$(OBJECT_DIR)discovery_lib.o
@@ -3709,6 +3749,24 @@ $(OBJECT_DIR)servo_mount.o : 			$(SRC_SERVO)servo_mount.c	\
 										$(SRC_SERVO)servo_mount.h	\
 										$(SRC_SERVO)servo_std_defs.h
 	$(COMPILE) $(INCLUDES) $(SRC_SERVO)servo_mount.c -o$(OBJECT_DIR)servo_mount.o
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)servo_motion.o : 			$(SRC_SERVO)servo_motion.c	\
+										$(SRC_SERVO)servo_motion.h	\
+										$(SRC_SERVO)servo_std_defs.h
+	$(COMPILE) $(INCLUDES) $(SRC_SERVO)servo_motion.c -o$(OBJECT_DIR)servo_motion.o
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)servo_motion_cfg.o : 		$(SRC_SERVO)servo_motion_cfg.c	\
+										$(SRC_SERVO)servo_motion_cfg.h	\
+										$(SRC_SERVO)servo_std_defs.h
+	$(COMPILE) $(INCLUDES) $(SRC_SERVO)servo_motion_cfg.c -o$(OBJECT_DIR)servo_motion_cfg.o
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)servo_observ_cfg.o : 		$(SRC_SERVO)servo_observ_cfg.c	\
+										$(SRC_SERVO)servo_observ_cfg.h	\
+										$(SRC_SERVO)servo_std_defs.h
+	$(COMPILE) $(INCLUDES) $(SRC_SERVO)servo_observ_cfg.c -o$(OBJECT_DIR)servo_observ_cfg.o
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)servo_rc_utils.o : 		$(SRC_SERVO)servo_rc_utils.c	\

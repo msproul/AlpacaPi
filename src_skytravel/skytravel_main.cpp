@@ -131,7 +131,7 @@ char	theChar;
 
 	strcpy(gFirstArgString, "");
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	ii	=	1;
 	while (ii<argc)
 	{

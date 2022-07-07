@@ -139,7 +139,7 @@ double	ret;
 	ptr	=	token;
 
 	// look for the HMS colon in the input str until end-of-str
-	while (*ptr != ':' && *ptr != '\0')
+	while ((*ptr != ':') && (*ptr != '\0'))
 	{
 		ptr++;
 	}

@@ -113,7 +113,7 @@ int		hippIndex;
 				//*	since we couldnt find the star, make it a move
 				constellation->hippStars[iii].moveFlag	=	true;
 				gFailedToFindCnt++;
-				CONSOLE_DEBUG_W_STR("-----", constellation->constellationName);
+//				CONSOLE_DEBUG_W_STR("-----", constellation->constellationName);
 			}
 		}
 	}
@@ -152,7 +152,7 @@ bool	freeNeededFlag	=	false;
 				free(gHippData);
 			}
 		}
-		CONSOLE_DEBUG_W_NUM("gFailedToFindCnt\t=", gFailedToFindCnt);
+//		CONSOLE_DEBUG_W_NUM("gFailedToFindCnt\t=", gFailedToFindCnt);
 	}
 	else
 	{
@@ -226,7 +226,7 @@ int					intgerArray[20];
 int					integerCount;
 bool				moveFlag;
 
-	CONSOLE_DEBUG_W_STR("Reading:", filePath);
+//	CONSOLE_DEBUG_W_STR("Reading:", filePath);
 
 	constelVectorData	=	NULL;
 	linesRead			=	0;
@@ -464,7 +464,7 @@ int					objectCount_return;
 int					subCnt;
 int					iii;
 
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, directoryPath);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, directoryPath);
 
 //	SETUP_TIMING();
 
@@ -742,7 +742,7 @@ char				currentName[32];
 TYPE_RaDec			linePoint;
 
 
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, filePath);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, filePath);
 
 	constelOutlineData	=	NULL;
 	*objectCount		=	0;

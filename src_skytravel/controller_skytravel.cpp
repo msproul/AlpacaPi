@@ -74,8 +74,7 @@ ControllerSkytravel::ControllerSkytravel(	const char *argWindowName)
 								kWindowWidth,
 								kWindowHeight)
 {
-
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	cSkyTravelTabOjbPtr		=	NULL;
 	cSkySettingsTabObjPtr	=	NULL;
@@ -100,7 +99,6 @@ ControllerSkytravel::ControllerSkytravel(	const char *argWindowName)
 	memset(&cDomeProp, 0, sizeof(TYPE_DomeProperties));
 	cDomeProp.ShutterStatus	=	-1;
 
-
 	//*	clear all of the telescope specific properties
 	memset(&cTelescopeProp, 0, sizeof(TYPE_TelescopeProperties));
 
@@ -110,7 +108,6 @@ ControllerSkytravel::ControllerSkytravel(	const char *argWindowName)
 	StartBackgroundThread();
 #endif // _USE_BACKGROUND_THREAD_
 }
-
 
 //**************************************************************************************
 // Destructor

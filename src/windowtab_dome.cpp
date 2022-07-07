@@ -492,12 +492,11 @@ int			pt2_X;
 int			pt2_Y;
 cv::Scalar	domeOpeningColor;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	centerLoc.x		=	theWidget->left + (theWidget->height / 2);
 	centerLoc.y		=	theWidget->top + (theWidget->height / 2);
 
-	CONSOLE_DEBUG(__FUNCTION__);
 
 	domeAzimuth_degrees	=	145.0;
 	if (cDomePropPtr != NULL)

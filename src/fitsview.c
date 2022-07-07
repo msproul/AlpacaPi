@@ -17,10 +17,15 @@
 #include	<fitsio.h>
 #include	<stdbool.h>
 
-#include	"opencv/highgui.h"
-#include	"opencv2/core.hpp"
-#include	"opencv2/highgui/highgui_c.h"
-#include	"opencv2/imgproc/imgproc_c.h"
+#ifdef _USE_OPENCV_CPP_
+	#include	"opencv2/opencv.hpp"
+	#include	"opencv2/core.hpp"
+#else
+	#include	"opencv/highgui.h"
+	#include	"opencv2/core.hpp"
+	#include	"opencv2/highgui/highgui_c.h"
+	#include	"opencv2/imgproc/imgproc_c.h"
+#endif // _USE_OPENCV_CPP_
 
 //#include <opencv2/core/core.hpp>
 //#include <opencv2/highgui/highgui.hpp>
@@ -82,18 +87,37 @@ char	gNormalWindowName[]	=	"Normalized";
 bool	gCreateNormalWindow	=	true;
 bool	gAutomatic			=	false;
 
-
+#ifndef _USE_OPENCV_CPP_
 //*****************************************************************************
+#ifdef _USE_OPENCV_CPP_
+void	NormalizeImage(cv::Mat *openCV_Image)
+#else
 void	NormalizeImage(IplImage *openCV_Image)
+#endif
 {
-IplImage	*adjusted_Image;
-IplImage	*normalized_Image;
 int			newWidth;
 int			newHeight;
 int			keyPressed;
 double		a	=	1.0;
 double		b	=	0.0;
+#ifdef _USE_OPENCV_CPP_
+	cv::Mat		*adjusted_Image;
+	cv::Mat		*normalized_Image;
+#else
+	IplImage	*adjusted_Image;
+	IplImage	*normalized_Image;
+#endif
 
+
+#ifdef _USE_OPENCV_CPP_
+	newWidth			=	openCV_Image->cols / 4;
+	newHeight			=	openCV_Image->rows / 4;
+	adjusted_Image		=	cv::createImage(cvSize(newWidth, newHeight), IPL_DEPTH_16U, 1);
+//	adjusted_Image		=	cvCreateImage(cvSize(newWidth, newHeight), IPL_DEPTH_8U, 1);
+	normalized_Image	=	cv::createImage(cvSize(newWidth, newHeight), IPL_DEPTH_16U, 1);
+	cvResize(openCV_Image, adjusted_Image, CV_INTER_LINEAR);
+//	cvShowImage(myWindowName, smallCV_Image);
+#else
 
 	newWidth			=	openCV_Image->width / 4;
 	newHeight			=	openCV_Image->height / 4;
@@ -102,6 +126,7 @@ double		b	=	0.0;
 	normalized_Image	=	cvCreateImage(cvSize(newWidth, newHeight), IPL_DEPTH_16U, 1);
 	cvResize(openCV_Image, adjusted_Image, CV_INTER_LINEAR);
 //	cvShowImage(myWindowName, smallCV_Image);
+#endif
 
 	a	=	0.0;
 	b	=	3000.0;
@@ -114,6 +139,11 @@ double		b	=	0.0;
 					NULL);				//	const CvArr* mask CV_DEFAULT(NULL) );
 	if (gCreateNormalWindow)
 	{
+#ifdef _USE_OPENCV_CPP_
+		cv::namedWindow(	gNormalWindowName,
+							(cv::WINDOW_NORMAL | cv::WINDOW_KEEPRATIO)
+							);
+#else
 		cvNamedWindow(	gNormalWindowName,
 					//	(CV_WINDOW_NORMAL)
 					//	(CV_WINDOW_NORMAL | CV_WINDOW_FULLSCREEN | CV_WINDOW_KEEPRATIO | CV_GUI_NORMAL)
@@ -122,7 +152,7 @@ double		b	=	0.0;
 					//	(CV_WINDOW_AUTOSIZE | CV_WINDOW_KEEPRATIO | CV_GUI_EXPANDED)
 					//	(CV_WINDOW_AUTOSIZE)
 						);
-
+#endif
 		gCreateNormalWindow	=	false;
 	}
 	cvShowImage(gNormalWindowName, normalized_Image);
@@ -213,47 +243,6 @@ int			newPixValue;
 }
 
 //*****************************************************************************
-void	DeleteFileWithExension(const char *fileNameRoot, const char *extenstion)
-{
-char	deleteFileName[256];
-int		retCode;
-
-	strcpy(deleteFileName, fileNameRoot);
-	strcat(deleteFileName, extenstion);
-	retCode	=	remove(deleteFileName);
-	if (retCode == 0)
-	{
-		CONSOLE_DEBUG_W_STR("File deleted:", deleteFileName)
-	}
-	else
-	{
-//		CONSOLE_DEBUG_W_STR("FAILED TO DELETE:", deleteFileName)
-	}
-}
-
-//*****************************************************************************
-void	DeleteFiles(const char *fileName)
-{
-char			fileNameRoot[256];
-int				slen;
-int				iii;
-
-	strcpy(fileNameRoot, fileName);
-	slen	=	strlen(fileNameRoot);
-	iii		=	slen-1;
-	while ((fileNameRoot[iii] != '.') && (iii > 0))
-	{
-		fileNameRoot[iii]	=	0;
-		iii--;
-	}
-	CONSOLE_DEBUG_W_STR("fileNameRoot\t=", fileNameRoot);
-	DeleteFileWithExension(fileNameRoot, "fits");
-	DeleteFileWithExension(fileNameRoot, "csv");
-	DeleteFileWithExension(fileNameRoot, "png");
-	DeleteFileWithExension(fileNameRoot, "jpg");
-}
-
-//*****************************************************************************
 void	WriteOutColumnOne(IplImage *openCV_Image)
 {
 int		xxx;
@@ -323,33 +312,82 @@ int		openCVerr;
 	}
 }
 
+#endif // _USE_OPENCV_CPP_
+
+
 //*****************************************************************************
-int	HandleKeyDownEvents(const char *fileName, const char *windowName, IplImage *openCV_Image)
+void	DeleteFileWithExension(const char *fileNameRoot, const char *extenstion)
 {
-//cv::Scalar		mean;
-//cv::Scalar		std_dev;
-CvScalar		mean;
-CvScalar		std_dev;
+char	deleteFileName[256];
+int		retCode;
+
+	strcpy(deleteFileName, fileNameRoot);
+	strcat(deleteFileName, extenstion);
+	retCode	=	remove(deleteFileName);
+	if (retCode == 0)
+	{
+		CONSOLE_DEBUG_W_STR("File deleted:", deleteFileName)
+	}
+	else
+	{
+//		CONSOLE_DEBUG_W_STR("FAILED TO DELETE:", deleteFileName)
+	}
+}
+
+//*****************************************************************************
+void	DeleteFiles(const char *fileName)
+{
+char			fileNameRoot[256];
+int				slen;
+int				iii;
+
+	strcpy(fileNameRoot, fileName);
+	slen	=	strlen(fileNameRoot);
+	iii		=	slen-1;
+	while ((fileNameRoot[iii] != '.') && (iii > 0))
+	{
+		fileNameRoot[iii]	=	0;
+		iii--;
+	}
+	CONSOLE_DEBUG_W_STR("fileNameRoot\t=", fileNameRoot);
+	DeleteFileWithExension(fileNameRoot, "fits");
+	DeleteFileWithExension(fileNameRoot, "csv");
+	DeleteFileWithExension(fileNameRoot, "png");
+	DeleteFileWithExension(fileNameRoot, "jpg");
+}
+
+
+//*****************************************************************************
+int	HandleKeyDownEvents(	const char	*fileName,
+							const char	*windowName,
+						#ifdef _USE_OPENCV_CPP_
+							cv::Mat		*openCV_Image
+						#else
+							IplImage	*openCV_Image
+						#endif
+							)
+{
 int				keyPressed;
 bool			keepGoing;
-int				ii;
-IplImage		*adjusted_Image;
-IplImage		*normalized_Image;
+#ifdef _USE_OPENCV_CPP_
+	cv::Scalar		mean;
+	cv::Scalar		std_dev;
+	cv::Mat			*adjusted_Image;
+	cv::Mat			*normalized_Image;
+#else
+	IplImage		*adjusted_Image;
+	IplImage		*normalized_Image;
+	CvScalar		mean;
+	CvScalar		std_dev;
+#endif
 
 //	CONSOLE_DEBUG(__FUNCTION__);
+#ifdef _USE_OPENCV_CPP_
+//?	cv::avgSdv(openCV_Image, &mean, &std_dev, NULL);
+#else
 	cvAvgSdv(openCV_Image, &mean, &std_dev, NULL);
-#if 0
-	for (ii=0; ii<4; ii++)
-	{
-		printf("%f\t(%f)\t", mean.val[ii], (mean.val[ii] / 256));
-	}
-	printf("\r\n");
-	for (ii=0; ii<4; ii++)
-	{
-		printf("%f\t(%f)\t", std_dev.val[ii], (std_dev.val[ii] / 256));
-	}
-	printf("\r\n");
-#endif // 0
+#endif
+
 	if ((mean.val[0] < 0.001) && (std_dev.val[0] < 0.001))
 	{
 		CONSOLE_DEBUG("No image");
@@ -358,7 +396,11 @@ IplImage		*normalized_Image;
 	keepGoing		=	true;
 	while (keepGoing)
 	{
+	#ifdef _USE_OPENCV_CPP_
+		keyPressed	=	cv::waitKey(0);
+	#else
 		keyPressed	=	cvWaitKey(0);
+	#endif
 		switch(keyPressed & 0x07f)
 		{
 			case 'a':
@@ -379,12 +421,13 @@ IplImage		*normalized_Image;
 			case 'n':
 				break;
 
+#ifndef _USE_OPENCV_CPP_
 			case 'z':
 				//*	write out the first vertical column
 				WriteOutColumnOne(openCV_Image);
 				cvShowImage(windowName, openCV_Image);
 				break;
-
+#endif // _USE_OPENCV_CPP_
 		}
 	}
 	return(keyPressed);
@@ -396,8 +439,6 @@ int main(int argc, char *argv[])
 {
 int				ii;
 int				fileIdx;
-IplImage		*openCV_Image;
-IplImage		*smallCV_Image;
 int				keyPressed;
 char			myWindowName[128];
 bool			createWindow;
@@ -406,9 +447,16 @@ char			firstChar;
 char			argChar;
 bool			keepLooping;
 bool			fileIsFits;
+#ifdef _USE_OPENCV_CPP_
+	cv::Mat			*openCV_Image;
+	cv::Mat			*smallCV_Image;
+#else
+	IplImage		*openCV_Image;
+	IplImage		*smallCV_Image;
+#endif
 
 	CONSOLE_DEBUG(__FUNCTION__);
-	CONSOLE_DEBUG_W_LONG("sizeof(gTranslationMap)\t=", sizeof(gTranslationMap));
+//	CONSOLE_DEBUG_W_LONG("sizeof(gTranslationMap)\t=", sizeof(gTranslationMap));
 
 	strcpy(myWindowName, "fits file");
 	gAutomatic	=	false;
@@ -455,11 +503,15 @@ bool			fileIsFits;
 		openCV_Image	=	ReadImageIntoOpenCVimage(argv[fileIdx]);
 		if (openCV_Image != NULL)
 		{
-
 //			CONSOLE_DEBUG(__FUNCTION__);
 			if (createWindow)
 			{
 				CONSOLE_DEBUG("Create Window");
+			#ifdef _USE_OPENCV_CPP_
+				cv::namedWindow(	myWindowName,
+									(cv::WINDOW_NORMAL | cv::WINDOW_KEEPRATIO)
+									);
+			#else
 				cvNamedWindow(	myWindowName,
 							//	(CV_WINDOW_NORMAL)
 							//	(CV_WINDOW_NORMAL | CV_WINDOW_FULLSCREEN | CV_WINDOW_KEEPRATIO | CV_GUI_NORMAL)
@@ -468,18 +520,51 @@ bool			fileIsFits;
 							//	(CV_WINDOW_AUTOSIZE | CV_WINDOW_KEEPRATIO | CV_GUI_EXPANDED)
 							//	(CV_WINDOW_AUTOSIZE)
 								);
-
+			#endif
 			//	cvMoveWindow(myWindowName, -1025, 100);
 				createWindow	=	false;
 				CONSOLE_DEBUG(__FUNCTION__);
 			}
-			if (fileIsFits && (openCV_Image->depth == 16))
-			{
-			//	CONSOLE_DEBUG("Calling Adjust16bitImge()");
-			//	Adjust16bitImge(openCV_Image);
-			}
+//			if (fileIsFits && (openCV_Image->depth == 16))
+//			{
+//			//	CONSOLE_DEBUG("Calling Adjust16bitImge()");
+//			//	Adjust16bitImge(openCV_Image);
+//			}
 //			CONSOLE_DEBUG(__FUNCTION__);
 
+		#ifdef _USE_OPENCV_CPP_
+//			if (openCV_Image->cols > 2000)
+//			{
+//			int	newWidth;
+//			int	newHeight;
+//
+//				CONSOLE_DEBUG(__FUNCTION__);
+//
+//				newWidth		=	openCV_Image->cols / 4;
+//				newHeight		=	openCV_Image->rows / 4;
+//				if (openCV_Image->depth == 16)
+//				{
+//					smallCV_Image	=	cvCreateImage(cvSize(newWidth, newHeight), IPL_DEPTH_16U, 1);
+//				}
+//				else
+//				{
+//					if (openCV_Image->nChannels == 3)
+//					{
+//						smallCV_Image	=	cvCreateImage(cvSize(newWidth, newHeight), IPL_DEPTH_8U, 3);
+//					}
+//					else
+//					{
+//						smallCV_Image	=	cvCreateImage(cvSize(newWidth, newHeight), IPL_DEPTH_8U, 1);
+//					}
+//				}
+//				cv::resize(*openCV_Image, *smallCV_Image, cv::INTER_LINEAR);
+//				cv::imshow(myWindowName, *smallCV_Image);
+//			}
+//			else
+			{
+				cv::imshow(myWindowName, *openCV_Image);
+			}
+		#else
 			if (openCV_Image->width > 2000)
 			{
 			int	newWidth;
@@ -511,11 +596,16 @@ bool			fileIsFits;
 			{
 				cvShowImage(myWindowName, openCV_Image);
 			}
+		#endif
 //			CONSOLE_DEBUG(__FUNCTION__);
 
 			if (gAutomatic)
 			{
+			#ifdef _USE_OPENCV_CPP_
+				keyPressed	=	cv::waitKey(3000);
+			#else
 				keyPressed	=	cvWaitKey(3000);
+			#endif // _USE_OPENCV_CPP_
 			}
 			else
 			{
@@ -541,6 +631,15 @@ bool			fileIsFits;
 
 				}
 			}
+		#ifdef _USE_OPENCV_CPP_
+			delete openCV_Image;
+			openCV_Image	=	NULL;
+			if (smallCV_Image != NULL)
+			{
+				delete smallCV_Image;
+				smallCV_Image	=	NULL;
+			}
+		#else
 			cvReleaseImage(&openCV_Image);
 			openCV_Image	=	NULL;
 			if (smallCV_Image != NULL)
@@ -548,7 +647,7 @@ bool			fileIsFits;
 				cvReleaseImage(&smallCV_Image);
 				smallCV_Image	=	NULL;
 			}
-
+		#endif
 		}
 
 		fileIdx++;

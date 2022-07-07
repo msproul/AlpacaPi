@@ -724,7 +724,7 @@ char				httpHeader[500];
 	httpHeaderSent	=	false;
 
 	//*	set up the json response
-	JsonResponse_CreateHeader(reqData->jsonTextBuffer, kMaxJsonBuffLen);
+	JsonResponse_CreateHeader(reqData->jsonTextBuffer);
 
 	//*	this is not part of the protocol, I am using it for testing
 	cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(	mySocket,
@@ -877,7 +877,7 @@ char				httpHeader[500];
 											reqData->jsonTextBuffer,
 											kMaxJsonBuffLen,
 											gValueString,
-											cCameraProp.Cansetccdtemperature,
+											cCameraProp.CanSetCCDtemperature,
 											INCLUDE_COMMA);
 			alpacaErrCode	=	kASCOM_Err_Success;
 			break;
@@ -2176,7 +2176,7 @@ int					cameraGainValue;
 		else
 		{
 			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Failed to read gain");
-			alpacaErrCode	=	kASCOM_Err_InternalError;
+			alpacaErrCode	=	kASCOM_Err_UnspecifiedError;
 //			CONSOLE_DEBUG_W_STR("alpacaErrMsg\t=",		alpacaErrMsg);
 //			CONSOLE_DEBUG_W_LONG("GainMin\t=",			cCameraProp.GainMin);
 //			CONSOLE_DEBUG_W_LONG("GainMax\t=",			cCameraProp.GainMax);
@@ -3208,7 +3208,7 @@ TYPE_ASCOM_STATUS	CameraDriver::Get_SetCCDtemperature(TYPE_GetPutRequestData *re
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
 
-	if (cCameraProp.Cansetccdtemperature)
+	if (cCameraProp.CanSetCCDtemperature)
 	{
 		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Double(reqData->socket,
 										reqData->jsonTextBuffer,
@@ -3240,7 +3240,7 @@ double				newSetCCDvalue;
 //	CONSOLE_DEBUG(__FUNCTION__);
 //	CONSOLE_DEBUG_W_STR("contentData\t=",	reqData->contentData);
 
-	if (cCameraProp.Cansetccdtemperature)
+	if (cCameraProp.CanSetCCDtemperature)
 	{
 		setCCDtempFound	=	GetKeyWordArgument(	reqData->contentData,
 												"SetCCDTemperature",
@@ -3407,7 +3407,7 @@ bool				lightFrame;
 
 			if ((myExposure_usecs > 0) && (myExposure_usecs >= cCameraProp.ExposureMin_us))
 			{
-				CONSOLE_DEBUG("cCameraProp.ImageReady set to FALSE!!!!!!!!!!!!!!");
+//				CONSOLE_DEBUG("cCameraProp.ImageReady set to FALSE!!!!!!!!!!!!!!");
 				cCameraProp.ImageReady		=	false;
 				cAVIfourCC					=	0;
 				cFrameRate					=	0;
@@ -7652,8 +7652,8 @@ char				textBuffer[128];
 		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	mySocket,
 										reqData->jsonTextBuffer,
 										kMaxJsonBuffLen,
-										"cansetccdtemperature",
-										cCameraProp.Cansetccdtemperature,
+										"CanSetCCDtemperature",
+										cCameraProp.CanSetCCDtemperature,
 										INCLUDE_COMMA);
 
 		//*	Returns a flag indicating whether this camera can stop an exposure that is in progress
@@ -8020,7 +8020,7 @@ void	CameraDriver::DumpCameraProperties(const char *callingFunctionName)
 	CONSOLE_DEBUG_W_BOOL(	"cCameraProp.CanFastReadout     \t=",	cCameraProp.CanFastReadout);
 	CONSOLE_DEBUG_W_BOOL(	"cCameraProp.CanGetCoolerPower  \t=",	cCameraProp.CanGetCoolerPower);
 	CONSOLE_DEBUG_W_BOOL(	"cCameraProp.CanPulseGuide      \t=",	cCameraProp.CanPulseGuide);
-	CONSOLE_DEBUG_W_BOOL(	"cCameraProp.Cansetccdtemperature\t=",	cCameraProp.Cansetccdtemperature);
+	CONSOLE_DEBUG_W_BOOL(	"cCameraProp.CanSetCCDtemperature\t=",	cCameraProp.CanSetCCDtemperature);
 	CONSOLE_DEBUG_W_BOOL(	"cCameraProp.CanStopExposure    \t=",	cCameraProp.CanStopExposure);
 	CONSOLE_DEBUG_W_DBL(	"cCameraProp.CCDtemperature     \t=",	cCameraProp.CCDtemperature);
 	CONSOLE_DEBUG_W_BOOL(	"cCameraProp.CoolerOn           \t=",	cCameraProp.CoolerOn);

@@ -132,6 +132,7 @@
 //*	Apr 13,	2022	<MLS> Added CreateDriverObjects()
 //*	Apr 17,	2022	<MLS> Added run time option flag gSimulateCameraImage
 //*	May  5,	2022	<MLS> Added cVerboseDebug so an individual driver can be more verbose
+//*	Jul  3,	2022	<MLS> Added HTTP header for JPEG output (was removed for some reason)
 //*****************************************************************************
 //*	to install code blocks 20
 //*	Step 1: sudo add-apt-repository ppa:codeblocks-devs/release
@@ -1514,8 +1515,6 @@ const char	gHtmlNightMode[]	=
 
 };
 
-
-
 #pragma mark -
 //*****************************************************************************
 static void	SendHtmlResponse(TYPE_GetPutRequestData *reqData)
@@ -1534,11 +1533,13 @@ int		ii;
 		SocketWriteData(mySocketFD,	gHtmlHeader);
 
 		sprintf(lineBuffer, "<TITLE>%s</TITLE>\r\n", gWebTitle);
+
 		SocketWriteData(mySocketFD,	lineBuffer);
 		SocketWriteData(mySocketFD,	gHtmlNightMode);
 		SocketWriteData(mySocketFD,	"</HEAD><BODY>\r\n<CENTER>\r\n");
 		SocketWriteData(mySocketFD,	"<H1>Alpaca device driver Web server</H1>\r\n");
 		sprintf(lineBuffer, "<H3>%s</H3>\r\n", gWebTitle);
+
 		SocketWriteData(mySocketFD,	lineBuffer);
 		SocketWriteData(mySocketFD,	"</CENTER>\r\n");
 
@@ -1654,6 +1655,7 @@ int		ii;
 		//*	Output the html for each device
 		for (ii=0; ii<gDeviceCnt; ii++)
 		{
+//			CONSOLE_DEBUG_W_STR(__FUNCTION__, gAlpacaDeviceList[ii]->cCommonProp.Name);
 			if (gAlpacaDeviceList[ii] != NULL)
 			{
 				SocketWriteData(mySocketFD,	separaterLine);
@@ -1846,8 +1848,8 @@ int		ii;
 	{
 	//	CONSOLE_DEBUG("reqData is NULL");
 	}
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, "Exit");
 }
-
 
 //*****************************************************************************
 static void	SendHtmlStats(TYPE_GetPutRequestData *reqData)
@@ -1967,7 +1969,7 @@ char			*myFilenamePtr;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-//	SocketWriteData(socket,	gJpegHeader);
+	SocketWriteData(socket,	gJpegHeader);
 
 	if (jpegFileName != NULL)
 	{
@@ -2002,13 +2004,14 @@ char			*myFilenamePtr;
 	{
 //		CONSOLE_DEBUG_W_STR("File is open:", myJpegFileName);
 		totalBytesWritten	=	0;
-		keepGoing	=	true;
+		keepGoing			=	true;
 		while (keepGoing)
 		{
 			numRead	=	fread(dataBuffer, 1, 1000, filePointer);
 			if ((numRead > 0) || (feof(filePointer)))
 			{
-				bytesWritten	=	write(socket, dataBuffer, numRead);
+//				CONSOLE_DEBUG_W_NUM("numRead=", numRead);
+				bytesWritten		=	write(socket, dataBuffer, numRead);
 				totalBytesWritten	+=	bytesWritten;
 			}
 			else
@@ -2603,7 +2606,7 @@ int	iii;
 	}
 	//-------------------------------------------------------------------
 	//*	standard ALPACA setup
-	else if (strncmp(parseChrPtr, "/setup", 6) == 0)
+	else if ((strncmp(parseChrPtr, "/setup", 6) == 0) || (strncmp(parseChrPtr, "/web", 4) == 0))
 	{
 		SendHtmlResponse(&reqData);
 	}
@@ -2612,12 +2615,6 @@ int	iii;
 	else if (strncmp(parseChrPtr, "/management", 11) == 0)
 	{
 		alpacaErrCode	=	ProcessManagementRequest(&reqData, parseChrPtr, byteCount);
-	}
-	//-------------------------------------------------------------------
-	//*	extra web interface
-	else if (strncmp(parseChrPtr, "/web", 4) == 0)
-	{
-		SendHtmlResponse(&reqData);
 	}
 	//-------------------------------------------------------------------
 	//*	extra log interface
@@ -2640,13 +2637,13 @@ int	iii;
 	//-------------------------------------------------------------------
 	else if (strncmp(parseChrPtr, "/image.jpg", 10) == 0)
 	{
-//		CONSOLE_DEBUG("image.jpg");
+		CONSOLE_DEBUG("image.jpg");
 		SendJpegResponse(socket, NULL);
 	}
 	//-------------------------------------------------------------------
 	else if (strstr(parseChrPtr, ".jpg") != NULL)
 	{
-//		CONSOLE_DEBUG(".....jpg");
+		CONSOLE_DEBUG(".....jpg");
 		SendJpegResponse(socket, parseChrPtr);
 	}
 	//-------------------------------------------------------------------
@@ -2659,6 +2656,7 @@ int	iii;
 		CONSOLE_DEBUG_W_STR("Incomplete alpaca command\t=",	htmlData);
 		SocketWriteData(socket,	gBadResponse400);
 	}
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, "Exit");
 	return(alpacaErrCode);
 }
 
@@ -2681,7 +2679,7 @@ int		returnCode	=	-1;
 	}
 	else if ((strncmp(htmlData, "GET", 3) == 0) || (strncmp(htmlData, "PUT", 3) == 0))
 	{
-//		CONSOLE_DEBUG("ProcessGetPutRequest");
+//		CONSOLE_DEBUG("Calling ProcessGetPutRequest");
 		returnCode	=	ProcessGetPutRequest(socket, htmlData, byteCount);
 	}
 	else if (byteCount > 0)
@@ -2694,6 +2692,7 @@ int		returnCode	=	-1;
 
 //	DEBUG_TIMING(__FUNCTION__);
 
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, "Exit");
 	return(returnCode);
 }
 
@@ -3067,7 +3066,6 @@ int				iii;
 int				cameraCnt;
 int				ram_Megabytes;
 double			freeDiskSpace_Gigs;
-bool			controllWindowActive;
 
 #if defined(_ENABLE_FITS_) || defined(_ENABLE_JPEGLIB_)
 	char			lineBuffer[64];
@@ -3195,7 +3193,6 @@ bool			controllWindowActive;
 	gKeepRunning	=	true;
 	while (gKeepRunning)
 	{
-		controllWindowActive	=	false;
 		gMainLoopCntr++;
 		delayTime_microSecs	=	(1000000 / 2);		//*	default to 1/2 second
 		for (iii=0; iii<gDeviceCnt; iii++)
@@ -3218,7 +3215,6 @@ bool			controllWindowActive;
 				//*	live window
 				if (gAlpacaDeviceList[iii]->cLiveController != NULL)
 				{
-					controllWindowActive	=	true;
 					HandleContollerWindow(gAlpacaDeviceList[iii]);
 
 					//*	if we have an active live window,

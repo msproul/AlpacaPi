@@ -53,6 +53,7 @@ WindowTabTeleSettings::WindowTabTeleSettings(	const int	xSize,
 	//*	local copies of values that we need to remember
 	cAtPark			=	false;
 	cDoesRefraction	=	false;
+	cTracking		=	false;
 	SetupWindowControls();
 
 //	UpdateButtons();
@@ -269,14 +270,13 @@ char	dataString[128];
 bool	validData;
 int		trackingRate;
 bool	update;
-//bool	updateButtons;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	ClearLastAlpacaCommand();
 	SetWidgetText(kTeleSettings_ErrorMsg, "");
-	update	=	true;
-
+	update		=	true;
+	validData	=	true;
 	switch(buttonIdx)
 	{
 		case kTeleSettings_TrackingRate_Sidereal:	//*	Sidereal tracking rate (15.041 arcseconds per second).
@@ -304,6 +304,11 @@ bool	update;
 			else
 			{
 				CONSOLE_DEBUG("Sending PARK command");
+				if (cTracking)
+				{
+					sprintf(dataString, "Tracking=false");
+					validData	=	AlpacaSendPutCmd(	"telescope", "tracking",	dataString);
+				}
 				validData	=	AlpacaSendPutCmd(	"telescope", "park",	NULL);
 			}
 			ForceAlpacaUpdate();
@@ -320,7 +325,11 @@ bool	update;
 			update	=	false;
 			break;
 	}
-
+	if (validData == false)
+	{
+		CONSOLE_DEBUG_W_NUM("buttonIdx\t=", buttonIdx);
+		CONSOLE_DEBUG_W_STR("Failure with:", dataString);
+	}
 	if (update)
 	{
 		DisplayLastAlpacaCommand();
@@ -405,6 +414,8 @@ char		notAvailableStr[]	=	"---N/A---";
 	{
 		SetWidgetValid(kTeleSettings_AtPark_Btn, false);
 	}
+
+	cTracking	=	telescopeProp->Tracking;
 //	//------------------------------------------
 //	//*	deal with pulse guiding
 //	if (telescopeProp->CanPulseGuide)

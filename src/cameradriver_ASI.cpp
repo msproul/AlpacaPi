@@ -490,7 +490,7 @@ ASI_CONTROL_CAPS	controlCaps;
 			case ASI_TARGET_TEMP:				// not need *10
 				if (controlCaps.IsWritable)
 				{
-					cCameraProp.Cansetccdtemperature		=	true;
+					cCameraProp.CanSetCCDtemperature		=	true;
 				}
 				break;
 

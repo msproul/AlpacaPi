@@ -200,7 +200,7 @@ int				numCamerasFound;
 		cCameraProp.PixelSizeY			=	3.7;
 		cCameraProp.FullWellCapacity	=	8567.253906;
 
-		cCameraProp.Cansetccdtemperature	=	true;
+		cCameraProp.CanSetCCDtemperature	=	true;
 		cCameraProp.CanGetCoolerPower		=	true;
 		cIsCoolerCam						=	true;
 
@@ -625,7 +625,7 @@ std::string		lastError("");
 	if (qsi_Result == QSI_OK)
 	{
 		CONSOLE_DEBUG_W_NUM("canSetTemp\t=",	canSetTemp);
-		cCameraProp.Cansetccdtemperature	=	canSetTemp;
+		cCameraProp.CanSetCCDtemperature	=	canSetTemp;
 		if (canSetTemp)
 		{
 			cIsCoolerCam	=	true;
@@ -690,12 +690,12 @@ std::string		lastError("");
 			cCameraProp.CoolerPower	=	coolerPowerLevel;
 		}
 	}
-	if (cCameraProp.Cansetccdtemperature)
+	if (cCameraProp.CanSetCCDtemperature)
 	{
 	double		cameraTemp_DegC;
 
 		//	Returns the current CCD temperature in degrees Celsius in parameter 1.
-		//	Only valid if CanSetCCDTemperature is true.
+		//	Only valid if CanSetCCDtemperature is true.
 		qsi_Result	=	cQSIcam.get_CCDTemperature(&cameraTemp_DegC);
 		if (qsi_Result == QSI_OK)
 		{
@@ -732,10 +732,10 @@ std::string			lastError("");
 	else
 #endif
 	{
-		if (cCameraProp.Cansetccdtemperature)
+		if (cCameraProp.CanSetCCDtemperature)
 		{
 			//	Returns the current CCD temperature in degrees Celsius in parameter 1.
-			//	Only valid if CanSetCCDTemperature is true.
+			//	Only valid if CanSetCCDtemperature is true.
 			qsi_Result	=	cQSIcam.get_CCDTemperature(&cameraTemp_DegC);
 			if (qsi_Result == QSI_OK)
 			{
@@ -783,10 +783,10 @@ std::string			lastError("");
 	else
 #endif
 	{
-		if (cCameraProp.Cansetccdtemperature)
+		if (cCameraProp.CanSetCCDtemperature)
 		{
 			//	Sets the current CCD temperature in degrees Celsius in parameter 1.
-			//	Only valid if CanSetCCDTemperature is true.
+			//	Only valid if CanSetCCDtemperature is true.
 			qsi_Result	=	cQSIcam.put_SetCCDTemperature(newCCDtemp);
 			if (qsi_Result == QSI_OK)
 			{
@@ -1038,10 +1038,10 @@ unsigned int		qsi_Result;
 std::string			lastError("");
 
 	CONSOLE_DEBUG(__FUNCTION__);
-	CONSOLE_DEBUG_W_BOOL(	"cCameraProp.Cansetccdtemperature\t=",	cCameraProp.Cansetccdtemperature);
+	CONSOLE_DEBUG_W_BOOL(	"cCameraProp.CanSetCCDtemperature\t=",	cCameraProp.CanSetCCDtemperature);
 	CONSOLE_DEBUG_W_BOOL(	"cCameraProp.CanGetCoolerPower  \t=",	cCameraProp.CanGetCoolerPower);
 
-	if (cCameraProp.Cansetccdtemperature)
+	if (cCameraProp.CanSetCCDtemperature)
 	{
 		// Enable the cooler
 		qsi_Result	=	cQSIcam.put_CoolerOn(true);
@@ -1074,10 +1074,10 @@ unsigned int		qsi_Result;
 std::string			lastError("");
 
 	CONSOLE_DEBUG(__FUNCTION__);
-	CONSOLE_DEBUG_W_BOOL(	"cCameraProp.Cansetccdtemperature\t=",	cCameraProp.Cansetccdtemperature);
+	CONSOLE_DEBUG_W_BOOL(	"cCameraProp.CanSetCCDtemperature\t=",	cCameraProp.CanSetCCDtemperature);
 	CONSOLE_DEBUG_W_BOOL(	"cCameraProp.CanGetCoolerPower  \t=",	cCameraProp.CanGetCoolerPower);
 
-	if (cCameraProp.Cansetccdtemperature)
+	if (cCameraProp.CanSetCCDtemperature)
 	{
 		// disable the cooler
 		qsi_Result	=	cQSIcam.put_CoolerOn(false);

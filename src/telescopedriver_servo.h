@@ -86,5 +86,7 @@ class TelescopeDriverServo: public TelescopeDriver
 
 	private:
 		bool				cServoConfigIsValid;
+		void 				UpdateSlewingProperty(void);
+
 
 };

@@ -68,8 +68,8 @@ typedef struct
 	char				LonString[48];
 	double				Elevation_ft;				//*	feet above sea level
 	double				Elevation_m;				//*	meters above sea level
-	double				Latitude;					//*	degrees
-	double				Longitude;					//*	degrees
+	double				Latitude_deg;				//*	degrees
+	double				Longitude_deg;				//*	degrees
 	TYPE_TELESCOPE_INFO	TS_info[kMaxTelescopes];
 
 } TYPE_OBSERVATORY_SETTINGS;

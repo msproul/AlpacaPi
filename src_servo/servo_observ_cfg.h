@@ -16,17 +16,16 @@
 //*	that you agree that the author(s) have no warranty, obligations or liability.
 //*	You must determine the suitability of this source code for your use.
 //*
-//*	Redistributions of this source code must retain this copyright notice.
+//*	Redistribution of this source code must retain this copyright notice.
 //*****************************************************************************
 //*	<MLS>	=	Mark L Sproul
 //*	<RNS>	=	Ron N Story
 //*****************************************************************************
 //*	Jun 28,	2022	<RNS> Initial version of this file
 //*	Jul  3,	2022	<RNS> renamed default file to servo_observatory.cfg
-//*	Jul  3,	2022,	<RNS> Moved enum of config files to .c file
-
-
+//*	Jul  3,	2022	<RNS> Moved enum of config files to .c file
 //****************************************************************************
+//#include	"servo_observ_cfg.h"
 
 #ifndef _SERVO_OBSERV_CFG_H_
 #define _SERVO_OBSERV_CFG_H_
@@ -37,6 +36,22 @@
 
 // Default name for the telescope location config file
 #define kOBSERV_CFG_FILE "servo_observatory.cfg"
+
+//*****************************************************************************
+// list of defined tokens in config file and array to keep track of discovery
+enum
+{
+	EPOCH	=	0,
+	EPOCH_JD,
+	LATITUDE,
+	LONGITUDE,
+	ELEVATION,
+	TEMPERATURE,
+	PRESSURE,
+	SITE,
+
+	OBS_CFG_LAST
+};	// of enum
 
 //*****************************************************************************
 typedef struct
@@ -51,29 +66,32 @@ typedef struct
 	char	site[kMAX_STR_LEN];
 } TYPE_OBSERV_CFG;
 
+extern TYPE_OBSERV_CFG	gServoObservCfg;
+extern TYPE_CFG_ITEM	gObservConfigArray[];
 
 #ifdef __cplusplus
 	extern "C" {
 #endif
 
-		int Servo_read_observ_cfg(const char *observCfgFile);
+		int			Servo_read_observ_cfg(const char *observCfgFile);
+		bool		Servo_check_observ_cfg(void);
 
 		//*	get routines
-		double Servo_get_lat(void);
-		double Servo_get_lon(void);
-		double Servo_get_elev(void);
-		const char *Servo_get_site(void);
-		double Servo_get_temperature(void);
-		double Servo_get_pressure(void);
+		double		Servo_get_lat(void);
+		double		Servo_get_lon(void);
+		double		Servo_get_elev(void);
+		const char	*Servo_get_site(void);
+		double		Servo_get_temperature(void);
+		double		Servo_get_pressure(void);
 
 		//*	set routines
-		void Servo_set_lat(double newLatValue);
-		void Servo_set_lon(double newLonValue);
-		void Servo_set_elev(double newElevValue);
-		void Servo_set_temperature(double newTempValue);
-		void Servo_set_pressure(double newPressureValue);
+		void		Servo_set_lat(double newLatValue);
+		void		Servo_set_lon(double newLonValue);
+		void		Servo_set_elev(double newElevValue);
+		void		Servo_set_temperature(double newTempValue);
+		void		Servo_set_pressure(double newPressureValue);
 
-		void Print_observ_configuration(void);
+		void		Print_observ_configuration(void);
 
 #ifdef __cplusplus
 }

@@ -265,7 +265,7 @@ int			retState;
 		return(kERROR);
 	}
 	// Everything OK, return new value
-	*vel	=	(status == 0) ? count : - count; 
+	*vel	=	(status == 0) ? count : - count;
 	return(kSTATUS_OK);
 } // of RC_get_curr_velocity()
 
@@ -457,8 +457,8 @@ int			retState;
 		// WORKAROUND! to RC having a lazy bit 7 bit set issue
 		// Cmd 47 is never supposed to return a number > 0x80
 		// So if it happends, subtract 0x80 from it
-		*raDepth = (*raDepth > 0x80) ? *raDepth - 0x80 : *raDepth;
-		*decDepth = (*decDepth > 0x80) ? *decDepth - 0x80 : *decDepth;
+		*raDepth	=	(*raDepth > 0x80) ? *raDepth - 0x80 : *raDepth;
+		*decDepth	=	(*decDepth > 0x80) ? *decDepth - 0x80 : *decDepth;
 	}
 
 
@@ -537,11 +537,11 @@ int			len;
 //******************************************************************
 int RC_write_settings(uint8_t addr)
 {
-uint8_t		*ptrA, *ptrB; 
+uint8_t		*ptrA, *ptrB;
 uint32_t	status;
 uint16_t	crc;
 int			cmd	=	WRITENVM;
-int			len; 
+int			len;
 int			retState;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
@@ -549,7 +549,7 @@ int			retState;
 
 	// Creat the note for the comms and read status a short cmd
 	Note_init(gNoteBuf, addr, gRC[cmd].cmd, &ptrA);
-	// WORKAROUND: Add dummy 32bit value 
+	// WORKAROUND: Add dummy 32bit value
 	//Note_add_dword(ptrA, 0xE22EAB7A, &ptrB);
 	Note_add_dword(ptrA, 0x0, &ptrB);
 
@@ -663,7 +663,7 @@ int			retState;
 
 	// Creat the note for the comms and converse
 	Note_init(gNoteBuf, addr, gRC[cmd].cmd, &ptrA);
-	retState = RC_converse(gNoteBuf, gRC[cmd].in, gReceiptBuf, gRC[cmd].out);
+	retState	=	RC_converse(gNoteBuf, gRC[cmd].in, gReceiptBuf, gRC[cmd].out);
 	if (retState != kSTATUS_OK)
 	{
 		CONSOLE_DEBUG("MC_converse() returned error");
@@ -680,19 +680,19 @@ int			retState;
 	*maxP	= Receipt_get_dword(ptrB, &ptrA);
 
 	// Calc length from the receipt buf pointer distance and calc CRC
-	len = (int)(ptrA - gReceiptBuf);
+	len			=	(int)(ptrA - gReceiptBuf);
 	// Calc CRC including addr, cmd and entire receipt buffer, not the current ptr
-	crc = MC_calc_crc16(&addr, 1, kCLEAR_CRC);
-	crc = MC_calc_crc16(&gRC[cmd].cmd, 1, crc);
-	crc = MC_calc_crc16(gReceiptBuf, len, crc);
+	crc			=	MC_calc_crc16(&addr, 1, kCLEAR_CRC);
+	crc			=	MC_calc_crc16(&gRC[cmd].cmd, 1, crc);
+	crc			=	MC_calc_crc16(gReceiptBuf, len, crc);
 	// Get CRC from the receipt message
-	receiptCrc = Receipt_get_word(ptrA, &ptrB);
+	receiptCrc	=	Receipt_get_word(ptrA, &ptrB);
 
 	// Check CRC and retun the encoder count with corrected offset
 	if (receiptCrc != crc)
 	{
 		// Return Error and all zeros
-		*propo	= 	0.0; 
+		*propo	= 	0.0;
 		*integ	=	0.0;
 		*deriv	=	0.0;
 		*iMax	=	0;
@@ -744,12 +744,12 @@ int			len;
 	//printf("RC_stop: addr = %X cmd = %d gRC[cmd].cmd = %d\n", addr, cmd, gRC[cmd].cmd);
 
 	// Convert from float to internal RC integer format by multiply by 1024
-	propo	*= 1024.0;
-	deriv	*= 1024.0;
-	integ	*= 1024.0; 
+	propo	*=	1024.0;
+	deriv	*=	1024.0;
+	integ	*=	1024.0;
 
 	Note_init(gNoteBuf, addr, gRC[cmd].cmd, &ptrA);
-	// Note: the set command order is not PID---- but DPI---- 
+	// Note: the set command order is not PID---- but DPI----
 	Note_add_dword(ptrA, (uint32_t) deriv, &ptrB);
 	Note_add_dword(ptrB, (uint32_t) propo, &ptrA);
 	Note_add_dword(ptrA, (uint32_t) integ, &ptrB);
@@ -811,7 +811,7 @@ int			retState;
 
 	// Creat the note for the comms and converse
 	Note_init(gNoteBuf, addr, gRC[cmd].cmd, &ptrA);
-	retState = RC_converse(gNoteBuf, gRC[cmd].in, gReceiptBuf, gRC[cmd].out);
+	retState	=	RC_converse(gNoteBuf, gRC[cmd].in, gReceiptBuf, gRC[cmd].out);
 	if (retState != kSTATUS_OK)
 	{
 		CONSOLE_DEBUG("MC_converse() returned error");
@@ -825,19 +825,19 @@ int			retState;
 	*qpps	= Receipt_get_dword(ptrA, &ptrB);
 
 	// Calc length from the receipt buf pointer distance and calc CRC
-	len = (int)(ptrB - gReceiptBuf);
+	len			=	(int)(ptrB - gReceiptBuf);
 	// Calc CRC including addr, cmd and entire receipt buffer, not the current ptr
-	crc = MC_calc_crc16(&addr, 1, kCLEAR_CRC);
-	crc = MC_calc_crc16(&gRC[cmd].cmd, 1, crc);
-	crc = MC_calc_crc16(gReceiptBuf, len, crc);
+	crc			=	MC_calc_crc16(&addr, 1, kCLEAR_CRC);
+	crc			=	MC_calc_crc16(&gRC[cmd].cmd, 1, crc);
+	crc			=	MC_calc_crc16(gReceiptBuf, len, crc);
 	// Get CRC from the receipt message
-	receiptCrc = Receipt_get_word(ptrB, &ptrA);
+	receiptCrc	=	Receipt_get_word(ptrB, &ptrA);
 
 	// Check CRC and retun the encoder count with corrected offset
 	if (receiptCrc != crc)
 	{
 		// Return Error and all zeros
-		*propo	= 	0; 
+		*propo	= 	0;
 		*integ	=	0;
 		*deriv	=	0;
 		*qpps	=	0;
@@ -848,7 +848,7 @@ int			retState;
 } // of RC_get_vel_pid()
 
 //******************************************************************
-// Sets the *velocity* PID values and QPPS values for an axis  
+// Sets the *velocity* PID values and QPPS values for an axis
 // Returns kSTATUS_OK or kERROR, PID values need to be scaled by 65536x
 // Send: [Address, 28, D(4 bytes), P(4 bytes), I(4 bytes), QPPS(4 byte), CRC(2 bytes)]
 // Receive: [0xFF]
@@ -891,7 +891,7 @@ int			len;
 
 	// Create the note for the comms and set end code to the offset
 	Note_init(gNoteBuf, addr, gRC[cmd].cmd, &ptrA);
-	// Note: the set command order is not PID---- but DPI---- 
+	// Note: the set command order is not PID---- but DPI----
 	Note_add_dword(ptrA, deriv, &ptrB);
 	Note_add_dword(ptrB, propo, &ptrA);
 	Note_add_dword(ptrA, integ, &ptrB);
@@ -1049,36 +1049,36 @@ double distF, velF, accF, vCalc, time;
 
 
 //******************************************************************
-// calcs the distance travelled for specified time in seconds with 
-// a constant acceleration rate and no deceleration. Velocity and 
-// Acceleration are in steps per second. 
+// calcs the distance travelled for specified time in seconds with
+// a constant acceleration rate and no deceleration. Velocity and
+// Acceleration are in steps per second.
 //******************************************************************
 int32_t RC_calc_move_distance(int32_t startVel, int32_t endVel, int32_t acc, double seconds)
 {
-int32_t 	dist; 
-double 		deltaVel, accelTime; 
+int32_t 	dist;
+double 		deltaVel, accelTime;
 
 	// determine velocity direction so we accel the same direction
-	deltaVel = endVel - startVel; 
+	deltaVel	=	endVel - startVel;
 	if (deltaVel < 0 && acc > 0)
 	{
 		// set acc negative so it 'adds' with negative vel direction
-		acc = -abs(acc);
+		acc	=	-abs(acc);
 	}
 
 	// check to see time is long enough to reach end
-	accelTime = fabs(deltaVel / acc); 
+	accelTime	=	fabs(deltaVel / acc);
 	if (accelTime > seconds)
 	{
 		// time is not long enough to reach end velocity so d = v*t + a*t*t/2
-		dist = (int32_t) startVel * seconds + acc * seconds * seconds / 2.0; 
+		dist	=	(int32_t) startVel * seconds + acc * seconds * seconds / 2.0;
 	}
 	else
 	{
-		// this is the acceleration profile distance 
-		dist = (int32_t) startVel * accelTime + acc * accelTime * accelTime / 2.0;
-		// this the constant velocity distance 
-		dist += (int32_t) endVel * (seconds - accelTime); 
+		// this is the acceleration profile distance
+		dist	=	(int32_t) startVel * accelTime + acc * accelTime * accelTime / 2.0;
+		// this the constant velocity distance
+		dist	+=	(int32_t) endVel * (seconds - accelTime);
 	}
 
 	return dist;
@@ -1339,15 +1339,15 @@ int			len;
 #include <time.h>
 int	main(void)
 {
-uint8_t raDepth, decDepth; 
-char buf[256];
-int32_t pos	=	0;
-uint32_t status = 0;
-uint32_t settings;
-uint8_t addr = 0x80; // Default addr for RC MC
-double 	propo, integ, deriv;
-uint32_t iMax, deadZ;
-int32_t minP, maxP;
+uint8_t		raDepth, decDepth;
+char		buf[256];
+int32_t		pos		=	0;
+uint32_t	status	=	0;
+uint32_t	settings;
+uint8_t		addr	=	0x80; // Default addr for RC MC
+double		propo, integ, deriv;
+uint32_t	iMax, deadZ;
+int32_t		minP, maxP;
 
 	// Mark, Ignore this one line if format, need to see more statements on one screen, it's just for testing
 
@@ -1381,7 +1381,7 @@ int32_t minP, maxP;
 	iMax++;
 	deadZ++;
 	minP -= 16;
-	maxP -= 16; 
+	maxP -= 16;
 	printf("P:%.2f I:%.2f D:%.2f iMax:%d: Dz%d Min:%d Max:%d\n", propo, integ, deriv, iMax, deadZ, minP, maxP);
 
 	printf("Setting the PID and then reading back\n");
@@ -1389,17 +1389,17 @@ int32_t minP, maxP;
 	RC_get_pos_pid(addr, SERVO_RA_AXIS,  &propo, &integ, &deriv, &iMax, &deadZ, &minP, &maxP);
 	printf("POS P:%.2f I:%.2f D:%.2f iMax:%d: Dz:%d Min:%d Max:%d\n", propo, integ, deriv, iMax, deadZ, minP, maxP);
 
-	RC_get_vel_pid(addr, SERVO_RA_AXIS,  &propo, &integ, &deriv, &iMax); 
+	RC_get_vel_pid(addr, SERVO_RA_AXIS,  &propo, &integ, &deriv, &iMax);
 	printf("VEL P:%.2f I:%.2f D:%.2f QPPS:%d\n", propo, integ, deriv, iMax);
 
-	
+
 	printf("Writing new values to EEPROM\n");
-	RC_write_settings(addr); 
+	RC_write_settings(addr);
 	printf("Reading values from EEPROM\n");
-	RC_read_settings(addr, &settings); 
+	RC_read_settings(addr, &settings);
 
 	printf("Setting default acc\n");
-	RC_set_default_acc(addr, SERVO_RA_AXIS, 4000); 
+	RC_set_default_acc(addr, SERVO_RA_AXIS, 4000);
 
 	printf("\nStarting RA and Dec Motors with unbuffered commands\n");
 	if (RC_move_by_posva(addr, SERVO_RA_AXIS, 10000, 20000, 5000, false) == kERROR)		printf("RA RC_move_by_pos returned error\n");
@@ -1517,7 +1517,7 @@ int32_t minP, maxP;
 
 	RC_stop(addr, SERVO_RA_AXIS);
 	RC_stop(addr, SERVO_DEC_AXIS);
-	
+
 	printf("Now testing reverse for velocity\n");
 
 	if (RC_move_by_vela(addr, SERVO_RA_AXIS, -20000, 5000, false) == kERROR)		printf("RA RC_move_by_vela returned error\n");

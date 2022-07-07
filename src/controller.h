@@ -252,11 +252,13 @@ class Controller
 
 #ifdef _USE_OPENCV_CPP_
 		cv::Mat		*cOpenCV_matImage;
-#else
-		IplImage	*cOpenCV_Image;
-#endif
 		cv::Scalar	cBackGrndColor;
 		cv::Scalar	cCurrentColor;
+#else
+		IplImage	*cOpenCV_Image;
+		CvScalar	cBackGrndColor;
+		CvScalar	cCurrentColor;
+#endif
 		int			cCurrentXloc;
 		int			cCurrentYloc;
 		int			cCurrentLineWidth;

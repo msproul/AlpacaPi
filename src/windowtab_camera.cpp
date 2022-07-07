@@ -39,6 +39,7 @@
 //*	Feb 18,	2022	<MLS> Added SetCameraLogo()
 //*	Feb 25,	2022	<MLS> Downloading image working with C++ opencv
 //*	Apr 16,	2022	<MLS> Saving dowloaded image working with C++ opencv
+//*	Jul  2,	2022	<MLS> Added FLIR logo to camera display
 //*****************************************************************************
 
 #ifdef _ENABLE_CTRL_CAMERA_
@@ -573,8 +574,9 @@ char		textBuff[32];
 	SetIPaddressBoxes(kCameraBox_IPaddr, kCameraBox_Readall, kCameraBox_AlpacaDrvrVersion, -1);
 }
 
+#define	kCameraLogoCount	6
+
 #ifdef _USE_OPENCV_CPP_
-#define	kCameraLogoCount	5
 	cv::Mat		gCameraLogoImage[kCameraLogoCount];
 #endif
 
@@ -620,28 +622,36 @@ int		camLogoIdx;
 		strcat(logoImagePath, "qsi-logo.png");
 		camLogoIdx	=	4;
 	}
+	else if (strcasestr(cAlpacaDeviceName, "FLIR") != NULL)
+	{
+		strcat(logoImagePath, "flir-logo.png");
+		camLogoIdx	=	5;
+	}
 
 
-//	CONSOLE_DEBUG_W_NUM("camLogoIdx   \t=",	camLogoIdx);
-//	CONSOLE_DEBUG_W_STR("logoImagePath\t=",	logoImagePath);
+	CONSOLE_DEBUG_W_NUM("camLogoIdx   \t=",	camLogoIdx);
+	CONSOLE_DEBUG_W_STR("logoImagePath\t=",	logoImagePath);
 
-#ifdef _USE_OPENCV_CPP_
 	if ((camLogoIdx >= 0) && (camLogoIdx < kCameraLogoCount))
 	{
+#ifdef _USE_OPENCV_CPP_
 		gCameraLogoImage[camLogoIdx]	=	cv::imread(logoImagePath);
-		logoImagePtr	=	&gCameraLogoImage[camLogoIdx];
-	}
+		logoImagePtr					=	&gCameraLogoImage[camLogoIdx];
 #else
+		CONSOLE_DEBUG("Not using _USE_OPENCV_CPP_");
 	#if (CV_MAJOR_VERSION <= 3)
-	logoImagePtr	=	cvLoadImage(logoImagePath,		CV_LOAD_IMAGE_COLOR);
+		CONSOLE_DEBUG("CV_MAJOR_VERSION <= 3)");
+		logoImagePtr	=	cvLoadImage(logoImagePath,		CV_LOAD_IMAGE_COLOR);
 	#endif
 #endif // _USE_OPENCV_CPP_
+	}
 
-//	CONSOLE_DEBUG_W_HEX("Calling SetWidgetImage() with logoImagePtr=", logoImagePtr);
+	CONSOLE_DEBUG_W_HEX("Calling SetWidgetImage() with logoImagePtr=", logoImagePtr);
 	if (logoImagePtr != NULL)
 	{
 		SetWidgetImage(kCameraBox_Logo, logoImagePtr);
 	}
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, "Exit");
 }
 
 //**************************************************************************************

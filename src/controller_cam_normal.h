@@ -16,6 +16,9 @@
 #include	"windowtab_filelist.h"
 #include	"windowtab_about.h"
 
+#ifndef	_WINDOWTAB_CAPABILITIES_H_
+	#include	"windowtab_capabilities.h"
+#endif
 #ifndef	_WINDOWTAB_DRIVER_INFO_H_
 	#include	"windowtab_drvrInfo.h"
 #endif
@@ -53,6 +56,7 @@ class ControllerCamNormal: public ControllerCamera
 
 		//*	this is a large list of update routines, they should be implemented in the subclass
 		virtual	void	UpdateCommonProperties(void);
+		virtual	void	UpdateCapabilityList(void);
 
 		virtual	void	UpdateCameraGain(const TYPE_ASCOM_STATUS lastAlpacaErr = kASCOM_Err_Success);
 		virtual	void	UpdateCameraOffset(const TYPE_ASCOM_STATUS lastAlpacaErr = kASCOM_Err_Success);
@@ -84,6 +88,7 @@ class ControllerCamNormal: public ControllerCamera
 
 				WindowTabCamera			*cCameraTabObjPtr;
 				WindowTabCamSettings	*cCamSettingsTabObjPtr;
+				WindowTabCapabilities	*cCapabilitiesTabObjPtr;
 				WindowTabFileList		*cFileListTabObjPtr;
 				WindowTabDriverInfo		*cDriverInfoTabObjPtr;
 				WindowTabAbout			*cAboutBoxTabObjPtr;

@@ -44,7 +44,7 @@ WindowTabDeviceSelect::WindowTabDeviceSelect(	const int	xSize,
 												const char	*windowName)
 	:WindowTab(xSize, ySize, backGrndColor, windowName)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	cDomeCnt				=	0;
 	cSelectedDomeIdx		=	0;

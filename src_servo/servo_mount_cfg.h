@@ -16,7 +16,7 @@
 //*	that you agree that the author(s) have no warranty, obligations or liability.
 //*	You must determine the suitability of this source code for your use.
 //*
-//*	Redistributions of this source code must retain this copyright notice.
+//*	Redistribution of this source code must retain this copyright notice.
 //*****************************************************************************
 //*	<MLS>	=	Mark L Sproul
 //*	<RNS>	=	Ron N Story
@@ -28,12 +28,12 @@
 //*	May 19,	2022	<RNS> Change all refs of 'scope' to 'mount', including filenames
 //*	May 20,	2022	<RNS> added to flipWin and offTarget to TYPE_MOUNT_CONFIG
 //*	May 22,	2022	<RNS> Changed .pos from unsigned to signed
-//*	Jun 12,	2022	<RNS> Changed PIDL fields from integer to double 
+//*	Jun 12,	2022	<RNS> Changed PIDL fields from integer to double
 //*	Jun 26,	2022	<RNS> Added support for TTP (thru-the-pole) config field
 //*	Jun 27,	2022	<RNS> Changed default mount cfg #define to kMOUNT_CFG_FILE
 //*	Jul  3,	2022	<RNS> Changed .time/.zero to .zeroTS/.zeroPos for clarity
-//*	Jul  3,	2022,	<RNS> Moved enum of config files to .c file
-//*	Jul  4,	2022,	<RNS> Moved tracking rate support back in from Motion_
+//*	Jul  3,	2022	<RNS> Moved enum of config files to .c file
+//*	Jul  4,	2022	<RNS> Moved tracking rate support back in from Motion_
 //****************************************************************************
 
 #ifndef _SERVO_MOUNT_CFG_H_
@@ -49,8 +49,46 @@
 
 
 //******************************************************************
+enum
+{
+	MOUNT,
+	TTP,
+	PARK_SIDE,
+	RA_MOTOR_GEAR,
+	RA_MAIN_GEAR,
+	RA_ENCODER,
+	RA_MAX_VEL,
+	RA_MAX_ACC,
+	RA_ADJ_VEL,
+	DEC_MOTOR_GEAR,
+	DEC_MAIN_GEAR,
+	DEC_ENCODER,
+	DEC_MAX_VEL,
+	DEC_MAX_ACC,
+	DEC_ADJ_VEL,
+	RA_CONFIG,
+	DEC_CONFIG,
+	RA_GEAR_LASH,
+	DEC_GEAR_LASH,
+	DEC_PARK,
+	RA_SLEW_VEL,
+	DEC_SLEW_VEL,
+	RA_PARK,
+	ROLLOVER_WIN,
+	RA_PRECESSION,
+	DEC_PRECESSION,
+	RA_SENSOR,
+	DEC_SENSOR,
+	RA_PARK_SENSOR,
+	DEC_PARK_SENSOR,
+	OFF_TARGET_TOL,
 
-//extern TYPE_CFG_ITEM gsMountConfigArray[];
+	MOUNT_CFG_LAST
+};	// of enum
+
+//******************************************************************
+
+extern TYPE_CFG_ITEM gMountConfigArray[];
 
 //******************************************************************
 typedef struct
@@ -94,19 +132,20 @@ typedef struct
 	TYPE_MountAxis	ra;
 	TYPE_MountAxis	dec;
 	char			mount;
-	int				ttp; 
+	int				ttp;
 	int8_t			side;
 	double 			flipWin;
 	double 			offTarget;
 } TYPE_MOUNT_CONFIG;
 
-//extern TYPE_MOUNT_CONFIG gMountConfig;
+extern TYPE_MOUNT_CONFIG gMountConfig;
 
 #ifdef __cplusplus
 	extern "C" {
 #endif
 
 int 	Servo_read_mount_cfg(const char *mountCfgFile, TYPE_MOUNT_CONFIG *mountConfig);
+bool	Servo_check_mount_cfg(void);
 void	Print_mount_configuration(void);
 
 #ifdef __cplusplus

@@ -104,6 +104,7 @@
 //*	Apr 30,	2022	<MLS> Added Messier objects to FindObjectNearCursor()
 //*	May 26,	2022	<MLS> Removed support for reading GAIA data directly
 //*	Jun 15,	2022	<MLS> Added camera name to telescope display if enough room
+//*	Jun 21,	2022	<MLS> Changed logic for clock update so it happens at beginning of the second
 //*****************************************************************************
 //*	TODO
 //*			star catalog lists
@@ -320,7 +321,7 @@ WindowTabSkyTravel::WindowTabSkyTravel(	const int	xSize,
 {
 int		iii;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG_W_STR("RemoteGAIAenabled is", (gST_DispOptions.RemoteGAIAenabled ? "enabled" : "disabled"));
 
 //#if defined(_USE_OPENCV_CPP_) &&  (CV_MAJOR_VERSION < 4)
@@ -350,7 +351,6 @@ int		iii;
 
 	cAutoAdvanceTime			=	true;
 	cLastUpdateTime_ms			=	0;
-	cLastClockUpdateTime_ms		=	0;
 	cLastRedrawTime_ms			=	0;
 	cLastRemoteImageUpdate_ms	=	0;
 	cNightMode					=	false;
@@ -390,8 +390,8 @@ int		iii;
 
 	if (gObseratorySettings.ValidLatLon)
 	{
-		cCurrLatLon.latitude		=	RADIANS(gObseratorySettings.Latitude);
-		cCurrLatLon.longitude		=	RADIANS(gObseratorySettings.Longitude);
+		cCurrLatLon.latitude		=	RADIANS(gObseratorySettings.Latitude_deg);
+		cCurrLatLon.longitude		=	RADIANS(gObseratorySettings.Longitude_deg);
 	}
 	else
 	{
@@ -445,8 +445,7 @@ int		iii;
 
 
 	gStarDataPtr	=	ReadDefaultStarData(&gStarCount, &cCurrentTime);
-	CONSOLE_DEBUG_W_LONG("gStarCount\t=", gStarCount);
-
+//	CONSOLE_DEBUG_W_LONG("gStarCount\t=", gStarCount);
 
 	for (iii=0; iii < kPlanetObjectCnt; iii++)
 	{
@@ -465,7 +464,6 @@ int		iii;
 		cPlanetStruct[iii].delta_dte	=	gDeltaPlanet[iii];	//*interpolation deltas
 		cPlanetStruct[iii].dte0			=	1.e20;				//*impossible dte0 so that eph does a full compute
 	}
-
 
 	if (gZodiacPtr == NULL)
 	{
@@ -489,7 +487,7 @@ int		iii;
 	{
 		gNGCobjectPtr	=	ReadNGCStarCatalog(&gNGCobjectCount);
 	}
-	CONSOLE_DEBUG_W_LONG("gNGCobjectCount\t=",	gNGCobjectCount);
+//	CONSOLE_DEBUG_W_LONG("gNGCobjectCount\t=",	gNGCobjectCount);
 
 	gOpenNGC_outlines	=	Read_OpenNGC_Outline_catgen(&gOpenNGC_outlineCnt);
 
@@ -504,7 +502,7 @@ int		iii;
 	gConstOutlinePtr	=	ReadConstellationOutlines("skytravel_data/constOutlines.txt", &gConstOutlineCount);
 
 	gAAVSOalertsPtr		=	ReadAAVSO_TargetData(&gAAVSOalertsCnt);
-	CONSOLE_DEBUG_W_LONG("gAAVSOalertsCnt\t=", gAAVSOalertsCnt);
+//	CONSOLE_DEBUG_W_LONG("gAAVSOalertsCnt\t=", gAAVSOalertsCnt);
 //	CONSOLE_ABORT(__FUNCTION__);
 
 	gHipObjectPtr		=	ReadHipparcosStarCatalog(&gHipObjectCount);
@@ -513,6 +511,7 @@ int		iii;
 		ReadCommonStarNames(gHipObjectPtr, gHipObjectCount);
 	}
 
+#define	kMaxPolarAlignCenterPts		200
 	//*	read the special.txt file
 	gSpecialObjectPtr	=	ReadSpecialData(kDataSrc_Special, &gSpecialObjectCount);
 	if (gSpecialObjectPtr != NULL)
@@ -521,8 +520,7 @@ int		iii;
 	int				polarStarCnt;
 	int				qqq;
 
-		CONSOLE_DEBUG("Creating Alignment object array");
-#define	kMaxPolarAlignCenterPts		200
+//		CONSOLE_DEBUG("Creating Alignment object array");
 
 		gPolarAlignObjectPtr	=	(TYPE_CelestData *)calloc(kMaxPolarAlignCenterPts, sizeof(TYPE_CelestData));
 
@@ -555,7 +553,7 @@ int		iii;
 			}
 
 			gPolarAlignObjectCount	=	qqq;
-			CONSOLE_DEBUG_W_LONG("gPolarAlignObjectCount\t=", gPolarAlignObjectCount);
+//			CONSOLE_DEBUG_W_LONG("gPolarAlignObjectCount\t=", gPolarAlignObjectCount);
 
 //			CONSOLE_ABORT(__FUNCTION__);
 		}
@@ -933,8 +931,8 @@ int		buttonBoxWidth;
 
 //-	cWorkSpaceTopOffset	=	yLoc;
 	skyBoxHeight		=	cHeight - yLoc;
-	CONSOLE_DEBUG_W_NUM("skyBoxHeight\t=", skyBoxHeight);
-	CONSOLE_DEBUG_W_NUM("cWorkSpaceTopOffset\t=", cWorkSpaceTopOffset);
+//	CONSOLE_DEBUG_W_NUM("skyBoxHeight\t=", skyBoxHeight);
+//	CONSOLE_DEBUG_W_NUM("cWorkSpaceTopOffset\t=", cWorkSpaceTopOffset);
 
 	SetWidget(				kSkyTravel_NightSky,	0,	yLoc,		cWidth,		skyBoxHeight);
 	SetWidgetType(			kSkyTravel_NightSky, 	kWidgetType_CustomGraphic);
@@ -962,17 +960,17 @@ struct tm			siderealTime;
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 	currentMilliSecs	=	millis();
 
-	//*	do the clock first so that it doesn't update twice
-	deltaMilliSecs		=	currentMilliSecs - cLastClockUpdateTime_ms;
-	if (deltaMilliSecs >= 1000)
+	gettimeofday(&currentTime, NULL);
+	if (cForceClockUpdate || (currentTime.tv_sec != cPreviousClockUpdateTVsecs))
 	{
+
 		if (cAutoAdvanceTime)
 		{
 			gettimeofday(&currentTime, NULL);
 			FormatTimeString(&currentTime, utcTimeString);
 
 			gmtime_r(&currentTime.tv_sec, &utcTime);
-			CalcSiderealTime(&utcTime, &siderealTime, gObseratorySettings.Longitude);
+			CalcSiderealTime(&utcTime, &siderealTime, gObseratorySettings.Longitude_deg);
 			FormatTimeString_TM(&siderealTime, siderealTimeString);
 			sprintf(textBuff, "U%s / S%s", utcTimeString, siderealTimeString);
 		}
@@ -985,11 +983,12 @@ struct tm			siderealTime;
 		}
 		SetWidgetText(kSkyTravel_UTCtime, textBuff);
 
-		cLastClockUpdateTime_ms		=	millis();
+		cPreviousClockUpdateTVsecs	=	currentTime.tv_sec;
+		ForceWindowUpdate();
 	}
 #ifdef _ENABLE_REMOTE_GAIA_
-	//*	update the GAIA background task ever 1/2 second
-//	if (deltaMilliSecs >= 500)
+	deltaMilliSecs		=	currentMilliSecs - cLastGaiaUpdate_ms;
+	//*	update the GAIA background task ever second
 	if (deltaMilliSecs >= 1000)
 	{
 		//*	if GAIA is active, let the GAIA background thread know about any changes
@@ -1079,6 +1078,7 @@ struct tm			siderealTime;
 				ForceWindowUpdate();
 			}
 		}
+		cLastGaiaUpdate_ms	=	currentMilliSecs;
 	}
 #endif // _ENABLE_REMOTE_GAIA_
 
@@ -1298,14 +1298,14 @@ bool	controlKeyDown;
 		case '<':	//*	Back one hour
 			cAutoAdvanceTime	=	false;
 			Sub_hour(&cCurrentTime);
-			cLastClockUpdateTime_ms	=	0;		//*	force clock on screen to update
+			cForceClockUpdate	=	true;		//*	force clock on screen to update
 			ForceWindowUpdate();
 			break;
 
 		case '>':	//*	Forward one hour
 			cAutoAdvanceTime	=	false;
 			Add_hour(&cCurrentTime);
-			cLastClockUpdateTime_ms	=	0;		//*	force clock on screen to update
+			cForceClockUpdate	=	true;		//*	force clock on screen to update
 			ForceWindowUpdate();
 			break;
 
@@ -1313,56 +1313,56 @@ bool	controlKeyDown;
 			cAutoAdvanceTime	=	false;
 			Sub_day(&cCurrentTime);
 			DumpTimeStruct(&cCurrentTime, "Back one day");
-			cLastClockUpdateTime_ms	=	0;		//*	force clock on screen to update
+			cForceClockUpdate	=	true;		//*	force clock on screen to update
 			ForceWindowUpdate();
 			break;
 
 		case ']':	//*	Forward one day
 			cAutoAdvanceTime	=	false;
 			Add_day(&cCurrentTime);
-			cLastClockUpdateTime_ms	=	0;		//*	force clock on screen to update
+			cForceClockUpdate	=	true;		//*	force clock on screen to update
 			ForceWindowUpdate();
 			break;
 
 		case '{':	//*	Back one month
 			cAutoAdvanceTime	=	false;
 			Sub_month(&cCurrentTime);
-			cLastClockUpdateTime_ms	=	0;		//*	force clock on screen to update
+			cForceClockUpdate	=	true;		//*	force clock on screen to update
 			ForceWindowUpdate();
 			break;
 
 		case '}':	//*	Forward one month
 			cAutoAdvanceTime	=	false;
 			Add_month(&cCurrentTime);
-			cLastClockUpdateTime_ms	=	0;		//*	force clock on screen to update
+			cForceClockUpdate	=	true;		//*	force clock on screen to update
 			ForceWindowUpdate();
 			break;
 
 		case '(':	//*	Back one year
 			cAutoAdvanceTime	=	false;
 			Sub_year(&cCurrentTime, 1);
-			cLastClockUpdateTime_ms	=	0;		//*	force clock on screen to update
+			cForceClockUpdate	=	true;		//*	force clock on screen to update
 			ForceWindowUpdate();
 			break;
 
 		case ')':	//*	Forward one year
 			cAutoAdvanceTime	=	false;
 			Add_year(&cCurrentTime, 1);
-			cLastClockUpdateTime_ms	=	0;		//*	force clock on screen to update
+			cForceClockUpdate	=	true;		//*	force clock on screen to update
 			ForceWindowUpdate();
 			break;
 
 		case '9':	//*	Back one minute
 			cAutoAdvanceTime	=	false;
 			Sub_min(&cCurrentTime);
-			cLastClockUpdateTime_ms	=	0;		//*	force clock on screen to update
+			cForceClockUpdate	=	true;		//*	force clock on screen to update
 			ForceWindowUpdate();
 			break;
 
 		case '0':	//*	Forward one minute
 			cAutoAdvanceTime	=	false;
 			Add_min(&cCurrentTime);
-			cLastClockUpdateTime_ms	=	0;		//*	force clock on screen to update
+			cForceClockUpdate	=	true;		//*	force clock on screen to update
 			ForceWindowUpdate();
 			break;
 
@@ -1430,7 +1430,7 @@ bool	controlKeyDown;
 				SetCurrentTime();
 			}
 			SetWidgetChecked(		kSkyTravel_Btn_AutoAdvTime,		cAutoAdvanceTime);
-			cLastClockUpdateTime_ms	=	0;		//*	force clock on screen to update
+			cForceClockUpdate	=	true;		//*	force clock on screen to update
 			break;
 
 		case '#':	//*	toggle GRID
@@ -1658,7 +1658,7 @@ bool	controlKeyDown;
 
 		case '=':	//*	reset the clock to now
 			SetCurrentTime();
-			cLastClockUpdateTime_ms	=	0;		//*	force clock on screen to update
+			cForceClockUpdate	=	true;		//*	force clock on screen to update
 			break;
 
 ////			{
@@ -2092,40 +2092,87 @@ void	WindowTabSkyTravel::ProcessMouseEvent(	const int	widgetIdx,
 												const int	yyy,
 												const int	flags)
 {
-	if (widgetIdx == kSkyTravel_NightSky)
+	switch(event)
 	{
-//		CONSOLE_DEBUG("kSkyTravel_NightSky");
-		cCsrx	=	xxx;
-		cCsry	=	yyy;
+		case cv::EVENT_MOUSEMOVE:
+			if (widgetIdx == kSkyTravel_NightSky)
+			{
+		//		CONSOLE_DEBUG("kSkyTravel_NightSky");
+				cCsrx	=	xxx;
+				cCsry	=	yyy;
 
-		cCsrx	-=	cWorkSpaceLeftOffset;
-		cCsry	-=	cWorkSpaceTopOffset;
+				cCsrx	-=	cWorkSpaceLeftOffset;
+				cCsry	-=	cWorkSpaceTopOffset;
 
-		//*	still need the offset for doing cursor calculations
-		cCsry	-=	cCursorOffsetY;
+				//*	still need the offset for doing cursor calculations
+				cCsry	-=	cCursorOffsetY;
 
-		Compute_cursor(&cCurrentTime, &cCurrLatLon);
+				Compute_cursor(&cCurrentTime, &cCurrLatLon);
 
-		if ((gStarCount < 10000) && (cMouseDragInProgress == false))
-		{
-			FindObjectNearCursor();
-		}
-		else
-		{
-			cInform_dist	=	0x7fff;
-			cInform_id	=	-1;
-		}
+				if ((gStarCount < 10000) && (cMouseDragInProgress == false))
+				{
+					FindObjectNearCursor();
+				}
+				else
+				{
+					cInform_dist	=	0x7fff;
+					cInform_id	=	-1;
+				}
 
-		DrawCursorLocationInfo();
+				DrawCursorLocationInfo();
 
-		UpdateWindowAsNeeded();
+				UpdateWindowAsNeeded();
 
-//		SetCursorFromXY(argLocalPt->h, argLocalPt->v);
+		//		SetCursorFromXY(argLocalPt->h, argLocalPt->v);
+			}
+			else
+			{
+		//		CONSOLE_DEBUG(__FUNCTION__);
+			}
+			break;
+
+		case cv::EVENT_LBUTTONDOWN:
+			cLeftButtonDown			=	true;
+			break;
+
+		case cv::EVENT_RBUTTONDOWN:
+			cRightButtonDown		=	true;
+			break;
+
+		case cv::EVENT_MBUTTONDOWN:
+			break;
+
+		case cv::EVENT_LBUTTONUP:
+			cLeftButtonDown			=	false;
+			break;
+
+		case cv::EVENT_RBUTTONUP:
+			cRightButtonDown		=	false;
+			break;
+
+//		case cv::EVENT_MBUTTONUP:
+//			break;
+//
+//		case cv::EVENT_LBUTTONDBLCLK:
+//			break;
+//
+//		case cv::EVENT_RBUTTONDBLCLK:
+//			break;
+//
+//		case cv::EVENT_MBUTTONDBLCLK:
+//			break;
+//
+//#if (CV_MAJOR_VERSION >= 3)
+//		case cv::EVENT_MOUSEWHEEL:
+//		case cv::EVENT_MOUSEHWHEEL:
+//			break;
+//#endif
+		default:
+			CONSOLE_DEBUG_W_NUM("UNKNOWN EVENT", event);
+			break;
 	}
-	else
-	{
-//		CONSOLE_DEBUG(__FUNCTION__);
-	}
+
+
 }
 
 //*****************************************************************************
@@ -2185,7 +2232,6 @@ double				moveAmount;
 
 		if (widgetIdx == kSkyTravel_NightSky)
 		{
-
 			deltaXX	=	xxx - cSavedMouseClick_X;
 			deltaYY	=	yyy - cSavedMouseClick_Y;
 
@@ -2561,10 +2607,10 @@ short	dataSource;
 				Search_and_plot(objectptr, maxObjects, false);	//*	data is NOT sorted
 				break;
 
-			case kDataSrc_GAIA_gedr3:
+			case kDataSrc_GAIA_SQL:
 //				CONSOLE_DEBUG_W_NUM("Data source\t=", objectptr->dataSrc);
-//				CONSOLE_DEBUG_W_NUM("should be  \t=", kDataSrc_GAIA_gedr3);
-				Search_and_plot(objectptr, maxObjects, true);	//*	data is NOT sorted
+//				CONSOLE_DEBUG_W_NUM("should be  \t=", kDataSrc_GAIA_SQL);
+				Search_and_plot(objectptr, maxObjects, true);	//*	data is sorted
 				break;
 
 
@@ -2715,7 +2761,7 @@ short		iii;
 	//*--------------------------------------------------------------------------------
 	//*--------------------------------------------------------------------------------
 	//*	the first group of things should NOT be drawn we we are mouse dragging
-	if (cMouseDragInProgress == false)
+	if ((cMouseDragInProgress == false) && (cLeftButtonDown == false))
 	{
 	#ifdef _ENABLE_REMOTE_GAIA_
 		if (cDispOptions.dispGaia)
@@ -2785,6 +2831,7 @@ short		iii;
 		PlotObjectsByDataSource(cDispOptions.dispHipparcos,	gHipObjectPtr,		gHipObjectCount);
 		PlotObjectsByDataSource(cDispOptions.dispDraper,	gDraperObjectPtr,	gDraperObjectCount);
 
+	#ifdef _ENABLE_ASTERIODS_
 		//*--------------------------------------------------------------------------------
 		//*	check to see if the asteroids are loaded
 //		if (cDispOptions.dispAsteroids && ((cView_angle < 1.0) || (gST_DispOptions.MagnitudeMode == kMagnitudeMode_All)))
@@ -2792,6 +2839,7 @@ short		iii;
 		{
 			DrawAsteroids();
 		}
+	#endif // _ENABLE_ASTERIODS_
 
 		PlotObjectsByDataSource(cDispOptions.dispNGC,				gNGCobjectPtr,		gNGCobjectCount);
 	}
@@ -3012,8 +3060,8 @@ void	WindowTabSkyTravel::ResetView(void)
 	//*	set auto advance time to on
 	cAutoAdvanceTime					=	true;
 	SetCurrentTime();
-	cLastClockUpdateTime_ms				=	0;		//*	force clock on screen to update
-
+	cForceClockUpdate					=	true;		//*	force clock on screen to update
+	cPreviousClockUpdateTVsecs			=
 
 	cChartMode							=	false;
 
@@ -4874,7 +4922,7 @@ int		textColor;
 			cViewAngle_LabelDisplay	=	2.5;
 			break;
 
-		case kDataSrc_GAIA_gedr3:
+		case kDataSrc_GAIA_SQL:
 			textColor				=	W_ORANGE;
 			cViewAngle_LabelDisplay	=	0.0005;
 			cViewAngle_InfoDisplay	=	0.001;
@@ -5825,7 +5873,7 @@ double	obsLatitude_rad;
 	CONSOLE_DEBUG(__FUNCTION__);
 	LLD_SetColor(W_CYAN);
 
-	obsLatitude_rad		=	RADIANS(gObseratorySettings.Latitude);
+	obsLatitude_rad		=	RADIANS(gObseratorySettings.Latitude_deg);
 	slitWidth_Radians	=	2.0 * atan2((gSlitWidth_inches / 2.0), (gDomeDiameter_inches / 2.0));
 //	slitHeight_Radians	=	RADIANS(gSlitTop_degrees) - RADIANS(gSlitBottom_degrees);
 
@@ -8724,7 +8772,7 @@ double	maxViewAngle;
 				SetAAVSOdisplayFlag(true);
 				break;
 
-			case kDataSrc_GAIA_gedr3:
+			case kDataSrc_GAIA_SQL:
 				cDispOptions.dispGaia	=	true;
 				break;
 		}

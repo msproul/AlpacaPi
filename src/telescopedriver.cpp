@@ -362,8 +362,8 @@ int		iii;
 	if (gObservatorySettingsOK && gObseratorySettings.ValidInfo)
 	{
 		//*	now set the things we do know
-		cTelescopeProp.SiteLatitude		=	gObseratorySettings.Latitude;
-		cTelescopeProp.SiteLongitude	=	gObseratorySettings.Longitude;
+		cTelescopeProp.SiteLatitude		=	gObseratorySettings.Latitude_deg;
+		cTelescopeProp.SiteLongitude	=	gObseratorySettings.Longitude_deg;
 		cTelescopeProp.SiteElevation	=	gObseratorySettings.Elevation_m;
 
 //		CONSOLE_DEBUG_W_DBL("cTelescopeProp.SiteLatitude\t=",	cTelescopeProp.SiteLatitude);
@@ -427,7 +427,7 @@ int					mySocket;
 	alpacaErrCode	=	kASCOM_Err_ActionNotImplemented;
 
 	//*	set up the json response
-	JsonResponse_CreateHeader(reqData->jsonTextBuffer, kMaxJsonBuffLen);
+	JsonResponse_CreateHeader(reqData->jsonTextBuffer);
 
 	//*	this is not part of the protocol, I am using it for testing
 	JsonResponse_Add_String(	mySocket,
@@ -1915,7 +1915,7 @@ TYPE_ASCOM_STATUS	TelescopeDriver::Get_SiderealTime(	TYPE_GetPutRequestData	*req
 {
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 
-	cTelescopeProp.SiderealTime	=	CalcSiderealTime_dbl(NULL, gObseratorySettings.Longitude);
+	cTelescopeProp.SiderealTime	=	CalcSiderealTime_dbl(NULL, gObseratorySettings.Longitude_deg);
 
 	JsonResponse_Add_Double(reqData->socket,
 							reqData->jsonTextBuffer,
@@ -3487,7 +3487,7 @@ double					hourAngle_Degrees;
 //	CONSOLE_DEBUG_W_DBL("HourAngle  \t=",	cTelescopeProp.HourAngle);
 
 #elif defined(_FAKE_HOUR_ANGLE_)
-	cTelescopeProp.SiderealTime	=	CalcSiderealTime_dbl(NULL, gObseratorySettings.Longitude);
+	cTelescopeProp.SiderealTime	=	CalcSiderealTime_dbl(NULL, gObseratorySettings.Longitude_deg);
 	cTelescopeProp.HourAngle	=	cTelescopeProp.SiderealTime - cTelescopeProp.RightAscension;
 	if (cTelescopeProp.HourAngle < 0.0)
 	{

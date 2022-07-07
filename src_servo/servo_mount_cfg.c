@@ -16,19 +16,19 @@
 //*	that you agree that the author(s) have no warranty, obligations or liability.
 //*	You must determine the suitability of this source code for your use.
 //*
-//*	Redistributions of this source code must retain this copyright notice.
+//*	Redistribution of this source code must retain this copyright notice.
 //*****************************************************************************
 //*	<MLS>	=	Mark L Sproul
 //*	<RNS>	=	Ron N Story
 //*****************************************************************************
-//*	Apr 18,	2022	<RNS> revamped the token field to use enums in prep for future enhancements
-//*	Apr 20,	2022	<RNS> added config file support for MC_ADDR needed for RC MC
-//*	Apr 21,	2022	<RNS> added support for default config filename and cleaned up tokens
-//*	Apr 25,	2022	<RNS> added _TEST_ support for an unit build test and print_axis
-//*	Apr 26,	2022	<RNS> added new field PARK_SIDE for GEM 'side' when parked
-//*	May  1,	2022	<RNS> removed support for split and alt-azi mounts
-//*	May  8,	2022	<RNS> updated #includes with servo_time.c for  str_to_upper()
-//*	May  8,	2022	<RNS> added support for 38400 baud
+//*	Apr 18,	2022	<RNS> Revamped the token field to use enums in prep for future enhancements
+//*	Apr 20,	2022	<RNS> Added config file support for MC_ADDR needed for RC MC
+//*	Apr 21,	2022	<RNS> Added support for default config filename and cleaned up tokens
+//*	Apr 25,	2022	<RNS> Added _TEST_ support for an unit build test and print_axis
+//*	Apr 26,	2022	<RNS> Added new field PARK_SIDE for GEM 'side' when parked
+//*	May  1,	2022	<RNS> Removed support for split and alt-azi mounts
+//*	May  8,	2022	<RNS> Updated #includes with servo_time.c for  str_to_upper()
+//*	May  8,	2022	<RNS> Added support for 38400 baud
 //*	May 10,	2022	<MLS> Changed the keyword table
 //*	May 10,	2022	<MLS> Added FindKeyWordEnum()
 //*	May 14,	2022	<RNS> Added Time_ascii_maybe_HMS_tof for coordinate tokens park, sync, etc
@@ -45,10 +45,11 @@
 //*	Jun 12,	2022	<RNS> Added RC PID support and moved PIDL fields to float
 //*	Jun 26,	2022	<RNS> Added support for TTP (thru-the-pole) config field
 //*	Jun 27,	2022	<RNS> Changed default mount cfg #define to kMOUNT_CFG_FILE
-//*	Jun	29,	2022	<RNS> Pulled out Motocontrol configs and moved to Motion CFG
-//*	Jul  1,	2022	<RNS> cleaned up globals to statics with 'gs' prefix
-//*	Jul  3,	2022	<RNS> moved memset for mount config to _read_cfg routine
-//*	Jul  3,	2022,	<RNS> added enum of config files
+//*	Jun 29,	2022	<RNS> Pulled out Motocontrol configs and moved to Motion CFG
+//*	Jul  1,	2022	<RNS> Cleaned up globals to statics with 'gs' prefix
+//*	Jul  3,	2022	<RNS> Moved memset for mount config to _read_cfg routine
+//*	Jul  3,	2022	<RNS> Added enum of config files
+//*	Jul  6,	2022	<MLS> Added Servo_check_mount_cfg()
 //****************************************************************************
 
 #include <stdio.h>
@@ -65,45 +66,9 @@
 #include "servo_time.h"
 #include "servo_mount_cfg.h"
 
-//******************************************************************
-enum
-{
-	MOUNT,
-	TTP, 
-	PARK_SIDE,
-	RA_MOTOR_GEAR,
-	RA_MAIN_GEAR,
-	RA_ENCODER,
-	RA_MAX_VEL,
-	RA_MAX_ACC,
-	RA_ADJ_VEL,
-	DEC_MOTOR_GEAR,
-	DEC_MAIN_GEAR,
-	DEC_ENCODER,
-	DEC_MAX_VEL,
-	DEC_MAX_ACC,
-	DEC_ADJ_VEL,
-	RA_CONFIG,
-	DEC_CONFIG,
-	RA_GEAR_LASH,
-	DEC_GEAR_LASH,
-	DEC_PARK,
-	RA_SLEW_VEL,
-	DEC_SLEW_VEL,
-	RA_PARK,
-	ROLLOVER_WIN,
-	RA_PRECESSION,
-	DEC_PRECESSION,
-	RA_SENSOR,
-	DEC_SENSOR,
-	RA_PARK_SENSOR,
-	DEC_PARK_SENSOR,
-	OFF_TARGET_TOL,
 
-	SERVO_CFG_LAST
-};	// of enum
 //******************************************************************
-static TYPE_CFG_ITEM gsMountConfigArray[] =
+TYPE_CFG_ITEM gMountConfigArray[] =
 {
 
 	{"MOUNT:",				MOUNT,			false},
@@ -148,11 +113,11 @@ int enumValue;
 
 	iii			=	0;
 	enumValue	=	-1;
-	while ((enumValue < 0) && (gsMountConfigArray[iii].enumValue >= 0))
+	while ((enumValue < 0) && (gMountConfigArray[iii].enumValue >= 0))
 	{
-		if (strcasecmp(keyword, gsMountConfigArray[iii].parameter) == 0)
+		if (strcasecmp(keyword, gMountConfigArray[iii].parameter) == 0)
 		{
-			enumValue	=	gsMountConfigArray[iii].enumValue;
+			enumValue	=	gMountConfigArray[iii].enumValue;
 			//*	verify that the array is in the right order
 			if (enumValue != iii)
 			{
@@ -194,7 +159,7 @@ bool			configLineOK;
 	switch (tokenEnumValue)
 	{
 		case MOUNT:
-			gsMountConfigArray[MOUNT].found	=	true;
+			gMountConfigArray[MOUNT].found	=	true;
 		//	printf("%-15.15s = %-15.15s  \n", token, argument);
 			if (!strcmp(argument, "FORK"))
 			{
@@ -223,7 +188,7 @@ bool			configLineOK;
 			break;
 
 		case TTP:
-			gsMountConfigArray[TTP].found	=	true;
+			gMountConfigArray[TTP].found	=	true;
 		//	printf("%-15.15s = %-15.15s  \n", token, argument);
 
 			if (!strcmp(argument, "YES"))
@@ -244,7 +209,7 @@ bool			configLineOK;
 			break;
 
 		case PARK_SIDE:
-			gsMountConfigArray[PARK_SIDE].found	=	true;
+			gMountConfigArray[PARK_SIDE].found	=	true;
 		//	printf("%-15.15s = %-15.15s  \n", token, argument);
 
 			if (!strcmp(argument, "WEST"))
@@ -272,7 +237,7 @@ bool			configLineOK;
 			break;
 
 		case RA_MOTOR_GEAR:
-			gsMountConfigArray[RA_MOTOR_GEAR].found	=	true;
+			gMountConfigArray[RA_MOTOR_GEAR].found	=	true;
 			ra->motorGear							=	atof(argument);
 		//	printf("%-15.15s = %-15.4f  \n", token, ra->motorGear);
 
@@ -285,7 +250,7 @@ bool			configLineOK;
 			break;
 
 		case RA_MAIN_GEAR:
-			gsMountConfigArray[RA_MAIN_GEAR].found	=	true;
+			gMountConfigArray[RA_MAIN_GEAR].found	=	true;
 			ra->mainGear							=	atof(argument);
 		//	printf("%-15.15s = %-15.4f  \n", token, ra->mainGear);
 
@@ -298,7 +263,7 @@ bool			configLineOK;
 			break;
 
 		case RA_ENCODER:
-			gsMountConfigArray[RA_ENCODER].found	=	true;
+			gMountConfigArray[RA_ENCODER].found	=	true;
 			ra->encoder							=	atof(argument);
 		//	printf("%-15.15s = %-15.4lf  \n", token, ra->encoder);
 
@@ -311,7 +276,7 @@ bool			configLineOK;
 			break;
 
 		case RA_MAX_VEL:
-			gsMountConfigArray[RA_MAX_VEL].found	=	true;
+			gMountConfigArray[RA_MAX_VEL].found	=	true;
 			ra->realVel							=	atof(argument);
 		//	printf("%-15.15s = %-15.4lf  \n", token, ra->realVel);
 
@@ -324,7 +289,7 @@ bool			configLineOK;
 			break;
 
 		case RA_MAX_ACC:
-			gsMountConfigArray[RA_MAX_ACC].found	=	true;
+			gMountConfigArray[RA_MAX_ACC].found	=	true;
 			ra->realAcc							=	atof(argument);
 		//	printf("%-15.15s = %-15.4f  \n", token, ra->realAcc);
 
@@ -337,7 +302,7 @@ bool			configLineOK;
 			break;
 
 		case RA_ADJ_VEL:
-			gsMountConfigArray[RA_ADJ_VEL].found	=	true;
+			gMountConfigArray[RA_ADJ_VEL].found	=	true;
 			ra->realAdj							=	atof(argument);
 		//	printf("%-15.15s = %-15.4f  \n", token, ra->realAdj);
 
@@ -350,7 +315,7 @@ bool			configLineOK;
 			break;
 
 		case DEC_MOTOR_GEAR:
-			gsMountConfigArray[DEC_MOTOR_GEAR].found	=	true;
+			gMountConfigArray[DEC_MOTOR_GEAR].found	=	true;
 			dec->motorGear							=	atof(argument);
 		//	printf("%-15.15s = %-15.4f  \n", token, dec->motorGear);
 
@@ -363,7 +328,7 @@ bool			configLineOK;
 			break;
 
 		case DEC_MAIN_GEAR:
-			gsMountConfigArray[DEC_MAIN_GEAR].found	=	true;
+			gMountConfigArray[DEC_MAIN_GEAR].found	=	true;
 			dec->mainGear							=	atof(argument);
 		//	printf("%-15.15s = %-15.4f  \n", token, dec->mainGear);
 
@@ -376,7 +341,7 @@ bool			configLineOK;
 			break;
 
 		case DEC_ENCODER:
-			gsMountConfigArray[DEC_ENCODER].found	=	true;
+			gMountConfigArray[DEC_ENCODER].found	=	true;
 			dec->encoder							=	atof(argument);
 		//	printf("%-15.15s = %-15.4lf  \n", token, dec->encoder);
 
@@ -389,7 +354,7 @@ bool			configLineOK;
 			break;
 
 		case DEC_MAX_VEL:
-			gsMountConfigArray[DEC_MAX_VEL].found	=	true;
+			gMountConfigArray[DEC_MAX_VEL].found	=	true;
 			dec->realVel							=	atof(argument);
 		//	printf("%-15.15s = %-15.4f  \n", token, dec->realVel);
 
@@ -402,7 +367,7 @@ bool			configLineOK;
 			break;
 
 		case DEC_MAX_ACC:
-			gsMountConfigArray[DEC_MAX_ACC].found	=	true;
+			gMountConfigArray[DEC_MAX_ACC].found	=	true;
 			dec->realAcc							=	atof(argument);
 		//	printf("%-15.15s = %-15.4f  \n", token, dec->realAcc);
 
@@ -415,7 +380,7 @@ bool			configLineOK;
 			break;
 
 		case DEC_ADJ_VEL:
-			gsMountConfigArray[DEC_ADJ_VEL].found	=	true;
+			gMountConfigArray[DEC_ADJ_VEL].found	=	true;
 			dec->realAdj							=	atof(argument);
 		//	printf("%-15.15s = %-15.4f  \n", token, dec->realAdj);
 
@@ -428,7 +393,7 @@ bool			configLineOK;
 			break;
 
 		case RA_CONFIG:
-			gsMountConfigArray[RA_CONFIG].found	=	true;
+			gMountConfigArray[RA_CONFIG].found	=	true;
 		//	printf("%-15.15s = %-15.15s  \n", token, argument);
 
 			if (!strcmp(argument, "FORWARD"))
@@ -449,7 +414,7 @@ bool			configLineOK;
 			break;
 
 		case DEC_CONFIG:
-			gsMountConfigArray[DEC_CONFIG].found	=	true;
+			gMountConfigArray[DEC_CONFIG].found	=	true;
 		//	printf("%-15.15s = %-15.15s  \n", token, argument);
 
 			if (!strcmp(argument, "FORWARD"))
@@ -473,7 +438,7 @@ bool			configLineOK;
 			break;
 
 		case RA_GEAR_LASH:
-			gsMountConfigArray[RA_GEAR_LASH].found	=	true;
+			gMountConfigArray[RA_GEAR_LASH].found	=	true;
 			ra->gearLash							=	atof(argument);
 		//	printf("%-15.15s = %-15.4f  \n", token, ra->gearLash);
 
@@ -486,7 +451,7 @@ bool			configLineOK;
 			break;
 
 		case DEC_GEAR_LASH:
-			gsMountConfigArray[DEC_GEAR_LASH].found	=	true;
+			gMountConfigArray[DEC_GEAR_LASH].found	=	true;
 			dec->gearLash							=	atof(argument);
 		//	printf("%-15.15s = %-15.4f  \n", token, dec->gearLash);
 
@@ -499,7 +464,7 @@ bool			configLineOK;
 			break;
 
 		case DEC_PARK:
-			gsMountConfigArray[DEC_PARK].found	=	true;
+			gMountConfigArray[DEC_PARK].found	=	true;
 			dec->park							=	Time_ascii_maybe_HMS_tof(argument);
 		//	printf("%-15.15s = %-15.4f  \n", token, dec->park);
 
@@ -512,7 +477,7 @@ bool			configLineOK;
 			break;
 
 		case RA_SLEW_VEL:
-			gsMountConfigArray[RA_SLEW_VEL].found	=	true;
+			gMountConfigArray[RA_SLEW_VEL].found	=	true;
 			ra->realSlew							=	Time_ascii_maybe_HMS_tof(argument);
 		//	printf("%-15.15s = %-15.4f  \n", token, ra->realSlew);
 
@@ -525,7 +490,7 @@ bool			configLineOK;
 			break;
 
 		case DEC_SLEW_VEL:
-			gsMountConfigArray[DEC_SLEW_VEL].found	=	true;
+			gMountConfigArray[DEC_SLEW_VEL].found	=	true;
 			dec->realSlew							=	atof(argument);
 		//	printf("%-15.15s = %-15.4f  \n", token, dec->realSlew);
 
@@ -538,7 +503,7 @@ bool			configLineOK;
 			break;
 
 		case RA_PARK:
-			gsMountConfigArray[RA_PARK].found	=	true;
+			gMountConfigArray[RA_PARK].found	=	true;
 			ra->park							=	Time_ascii_maybe_HMS_tof(argument);
 		//	printf("%-15.15s = %-15.4f  \n", token, ra->park);
 
@@ -551,7 +516,7 @@ bool			configLineOK;
 			break;
 
 		case ROLLOVER_WIN:
-			gsMountConfigArray[ROLLOVER_WIN].found	=	true;
+			gMountConfigArray[ROLLOVER_WIN].found	=	true;
 			mountConfig->flipWin					=	Time_ascii_maybe_HMS_tof(argument);
 		//	printf("%-15.15s = %-15.4f  \n", token, mountConfig->flipWin);
 
@@ -564,7 +529,7 @@ bool			configLineOK;
 			break;
 
 		case RA_PRECESSION:
-			gsMountConfigArray[RA_PRECESSION].found	=	true;
+			gMountConfigArray[RA_PRECESSION].found	=	true;
 			ra->prec								=	atof(argument);
 		//	printf("%-15.15s = %-15.4f  \n", token, ra->prec);
 
@@ -577,7 +542,7 @@ bool			configLineOK;
 			break;
 
 		case DEC_PRECESSION:
-			gsMountConfigArray[DEC_PRECESSION].found	=	true;
+			gMountConfigArray[DEC_PRECESSION].found	=	true;
 			dec->prec								=	atof(argument);
 		//	printf("%-15.15s = %-15.4f  \n", token, dec->prec);
 
@@ -590,7 +555,7 @@ bool			configLineOK;
 			break;
 
 		case RA_SENSOR:
-			gsMountConfigArray[RA_SENSOR].found	=	true;
+			gMountConfigArray[RA_SENSOR].found	=	true;
 			ra->sync							=	Time_ascii_maybe_HMS_tof(argument);
 		//	printf("%-15.15s = %-15.4f  \n", token, ra->sync);
 
@@ -603,7 +568,7 @@ bool			configLineOK;
 			break;
 
 		case DEC_SENSOR:
-			gsMountConfigArray[DEC_SENSOR].found	=	true;
+			gMountConfigArray[DEC_SENSOR].found	=	true;
 			dec->sync							=	Time_ascii_maybe_HMS_tof(argument);
 		//	printf("%-15.15s = %-15.4f  \n", token, dec->sync);
 
@@ -616,7 +581,7 @@ bool			configLineOK;
 			break;
 
 		case RA_PARK_SENSOR:
-			gsMountConfigArray[RA_PARK_SENSOR].found	=	true;
+			gMountConfigArray[RA_PARK_SENSOR].found	=	true;
 		//	printf("%-15.15s = %-15.15s  \n", token, argument);
 
 			if (strcmp(argument, "ON") == 0)
@@ -637,7 +602,7 @@ bool			configLineOK;
 			break;
 
 		case DEC_PARK_SENSOR:
-			gsMountConfigArray[DEC_PARK_SENSOR].found	=	true;
+			gMountConfigArray[DEC_PARK_SENSOR].found	=	true;
 		//	printf("%-15.15s = %-15.15s  \n", token, argument);
 			if (strcmp(argument, "ON") == 0)
 			{
@@ -657,7 +622,7 @@ bool			configLineOK;
 			break;
 
 		case OFF_TARGET_TOL:
-			gsMountConfigArray[OFF_TARGET_TOL].found	=	true;
+			gMountConfigArray[OFF_TARGET_TOL].found	=	true;
 			mountConfig->offTarget					=	atof(argument);
 		//	printf("%-15.15s = %-15.4f  \n", token, mountConfig->offTarget);
 			if (mountConfig->offTarget < 0.0)
@@ -683,12 +648,12 @@ int Servo_read_mount_cfg(const char *mountCfgFile, TYPE_MOUNT_CONFIG *mountConfi
 char		filename[kMAX_STR_LEN];
 char		inString[kMAX_STR_LEN];
 FILE		*inFile;
-uint16_t	line	=	1;
-bool		okFlag	=	true;
+uint16_t	line			=	1;
+bool		okFlag			=	true;
 char		delimiters[]	=	" \t\r\n\v\f";	// POSIX whitespace chars
 char		*token;
 char		*argument;
-char		*rest	=	NULL;
+char		*rest			=	NULL;
 int			iii;
 int			retStatus;
 bool		configLineOK;
@@ -701,9 +666,9 @@ char		cfgErrorString3[80];
 	retStatus	=	-1;
 	//*	first, go through and invalidate all of the parameters
 	iii	=	0;
-	while (strlen(gsMountConfigArray[iii].parameter) > 0)
+	while (strlen(gMountConfigArray[iii].parameter) > 0)
 	{
-		gsMountConfigArray[iii++].found	=	false;
+		gMountConfigArray[iii++].found	=	false;
 	}
 	// Zero out the supplied mount config data structure
 	memset((void *)mountConfig, 0, sizeof(TYPE_MOUNT_CONFIG));
@@ -768,13 +733,13 @@ char		cfgErrorString3[80];
 //		PrintMountConfiguration();
 
 		iii	=	0;
-		while (strlen(gsMountConfigArray[iii].parameter) > 0)
+		while (strlen(gMountConfigArray[iii].parameter) > 0)
 		{
-			if (gsMountConfigArray[iii].found == false)
+			if (gMountConfigArray[iii].found == false)
 			{
 				fprintf(stderr, "Error: (motion_read_cfg) Configuation variable:\n");
 				fprintf(stderr, "       '%s' was not found or of improper format.\n",
-											gsMountConfigArray[iii].parameter);
+											gMountConfigArray[iii].parameter);
 				fprintf(stderr, "       from file '%s'\n", filename);
 				okFlag	=	false;
 			}
@@ -810,6 +775,28 @@ char		cfgErrorString3[80];
 	return (retStatus);
 }	// of Servo_read_mount_cfg()
 
+
+//******************************************************************
+bool Servo_check_mount_cfg(void)
+{
+int		iii;
+bool	validConfiguration;
+
+	validConfiguration	=	true;
+	iii	=	0;
+	while (strlen(gMountConfigArray[iii].parameter) > 0)
+	{
+		if (gMountConfigArray[iii].found == false)
+		{
+			validConfiguration	=	false;
+			break;
+		}
+		iii++;
+	}
+	return(validConfiguration);
+}
+
+
 //#define _TEST_SERVO_MOUNT_CFG_
 #ifdef _TEST_SERVO_MOUNT_CFG_
 //**************************************************************************************
@@ -817,7 +804,7 @@ static void	PrintConfigParam_Dbl(const int cfgEnum, const double value)
 {
 	if ((cfgEnum >= 0))
 	{
-		printf("%-15.15s = %-15.4f  \n", gsMountConfigArray[cfgEnum].parameter, value);
+		printf("%-15.15s = %-15.4f  \n", gMountConfigArray[cfgEnum].parameter, value);
 	}
 }
 
@@ -826,7 +813,7 @@ static void	PrintConfigParam_Str(const int cfgEnum, const char *value)
 {
 	if ((cfgEnum >= 0))
 	{
-		printf("%-15.15s = %s  \n", gsMountConfigArray[cfgEnum].parameter, value);
+		printf("%-15.15s = %s  \n", gMountConfigArray[cfgEnum].parameter, value);
 	}
 }
 
@@ -835,7 +822,7 @@ static void	PrintConfigParam_Int(const int cfgEnum, const int value)
 {
 	if ((cfgEnum >= 0))
 	{
-		printf("%-15.15s = %-15d  \n", gsMountConfigArray[cfgEnum].parameter, value);
+		printf("%-15.15s = %-15d  \n", gMountConfigArray[cfgEnum].parameter, value);
 	}
 }
 
