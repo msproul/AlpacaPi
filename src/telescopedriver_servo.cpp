@@ -41,6 +41,11 @@
 //*	Jun 19,	2022	<RNS> Added .AtPark assignments to support unpark
 //*	Jun 19,	2022	<RNS> Toggled RA direction for _MoveAxis
 //*	Jun 20,	2022	<MLS> Added UpdateSlewingProperty()
+//*	Jul 16,	2022	<RNS> Reviews MLS edits and corrected as needed
+//*	Jul 17,	2022	<RNS> Simplified LST calcs using Servo_get_lst()
+//*	Jul 18,	2022	<RNS> Fixed the mount settings move-by-button functionality
+//*	Jul 20,	2022	<RNS> Fixed a hour/degs conversion error in SlewToRA_DEC
+//*	Jul 20,	2022	<RNS> Removed LST calcs, not needed afterall
 //*****************************************************************************
 //*	Roboclaw MC servo support
 //*****************************************************************************
@@ -114,9 +119,7 @@ TelescopeDriverServo::TelescopeDriverServo(void)
 {
 int				cfgStatus;
 int8_t			servoSide;
-double			parkHA, parkDec;
-long double		jd, lst;
-
+double			parkRa, parkDec;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -180,29 +183,20 @@ long double		jd, lst;
 		cTelescopeProp.SiteElevation	=	Servo_get_elev();
 	}
 
-	//	We know that Servo_init() always sets the scope to the park position
-	Servo_get_park_coordins(&parkHA, &parkDec);
-	if (__isnan(parkHA))
+	//	Servo_init() always sets the mount to the park position and _get_pos returns RA/De (not HA)
+	Servo_get_pos(&parkRa, &parkDec);
+	if (__isnan(parkRa))
 	{
-		parkHA	=	0.0;
-		CONSOLE_DEBUG("parkHA is NAN");
+		parkRa	=	0.0;
+		CONSOLE_DEBUG("parkRa is NAN");
 	}
 	if (__isnan(parkDec))
 	{
 		parkDec	=	0.0;
 		CONSOLE_DEBUG("parkDec is NAN");
 	}
-
-	//	Convert park HA to RA
-	jd	=	Time_systime_to_jd();
-	lst	=	Time_jd_to_gmst(jd);
-	lst	=	Time_gmst_to_lst(lst, cTelescopeProp.SiteLongitude);
-	// Subtrack the park hour angle from LST to get Park RA - reuse lst long double
-	lst	-=	parkHA;
-	// Normalize to 0 -> 23.99999 and type is long double
-	Time_normalize_hours(&lst);
-
-	cTelescopeProp.RightAscension	=	lst;
+	// Set ASCOM properties to current RA/Dec
+	cTelescopeProp.RightAscension	=	parkRa;
 	cTelescopeProp.Declination		=	parkDec;
 	cTelescopeProp.AtPark 			= 	true;
 
@@ -603,9 +597,8 @@ TYPE_ASCOM_STATUS TelescopeDriverServo::Telescope_AbortSlew(char *alpacaErrMsg)
 TYPE_ASCOM_STATUS	alpacaErrCode;
 
 	alpacaErrCode	=	kASCOM_Err_Success;
-//-	Servo_stop(SERVO_BOTH_AXES);
-//+Ron
-	Motion_stop_axis(SERVO_BOTH_AXES);
+
+	Servo_stop_axes(SERVO_BOTH_AXES);
 
 	cTelescopeProp.Slewing	=	false;
 
@@ -647,17 +640,13 @@ int					servoStatus;
 		if (axisNum == SERVO_RA_AXIS)
 		{
 			// Use the inverse of supplied moveRate arg
-//-			servoStatus	=	Servo_move_axis_by_vel(axisNum, -moveRate_degPerSec);
-//+Ron
-			servoStatus	=	Motion_move_axis_by_vel(axisNum, -moveRate_degPerSec);
+			servoStatus	=	Servo_move_axis_by_vel(axisNum, -moveRate_degPerSec);
 
 		}
 		else
 		{
 			// For Dec, no correction needed
-//-			servoStatus	=	Servo_move_axis_by_vel(axisNum, moveRate_degPerSec);
-//+Ron
-			servoStatus	=	Motion_move_axis_by_vel(axisNum, moveRate_degPerSec);
+			servoStatus	=	Servo_move_axis_by_vel(axisNum, moveRate_degPerSec);
 		}
 		if (servoStatus == kSTATUS_OK)
 		{
@@ -676,8 +665,6 @@ int					servoStatus;
 	else
 	{
 		//	Restore tracking rate, if set on axis
-//-		servoStatus	=	Servo_start_tracking(axisNum);
-//+Ron
 		servoStatus	=	Servo_start_axes_tracking(axisNum);
 		if (servoStatus == kSTATUS_OK)
 		{
@@ -706,8 +693,6 @@ TYPE_ASCOM_STATUS TelescopeDriverServo::Telescope_Park(char *alpacaErrMsg)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
 int					servoStatus;
-double				parkHA, parkDec;
-long double			jd, lst;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -716,23 +701,7 @@ long double			jd, lst;
 	if (servoStatus == kSTATUS_OK)
 	{
 		//	Mount is moving to the park position
-
-		//	Update target RA/DEC using park position and slew state
-		Servo_get_park_coordins(&parkHA, &parkDec);
-
-		//	Convert park HA to RA
-		jd	=	Time_systime_to_jd();
-		lst	=	Time_jd_to_gmst(jd);
-		lst	=	Time_gmst_to_lst(lst, cTelescopeProp.SiteLongitude);
-		// subtract the park hour angle from LST to get Park RA - reuse lst long double
-		lst	-=	parkHA;
-		// Normalize to 0 -> 23.99999 and type is long double
-		Time_normalize_hours(&lst);
-
-		cTelescopeProp.RightAscension 	=	lst;
-		cTelescopeProp.Declination 		=	parkDec;
-		cTelescopeProp.Slewing			=	false;
-		cTelescopeProp.AtPark 			= 	true;  // rns:
+		cTelescopeProp.Slewing			=	true;
 
 		CONSOLE_DEBUG(alpacaErrMsg);
 	}
@@ -741,7 +710,7 @@ long double			jd, lst;
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Servo_move_to_park failed");
 		alpacaErrCode	=	kASCOM_Err_NotConnected;
 	}
-	//*	for now, force it parked regardless
+	//*RNS TODO: ...for now, force it parked regardless
 	cTelescopeProp.AtPark 		= 	true;
 
 	return(alpacaErrCode);
@@ -770,21 +739,15 @@ TYPE_ASCOM_STATUS TelescopeDriverServo::Telescope_SlewToRA_DEC(const double newR
 {
 TYPE_ASCOM_STATUS	alpacaErrCode;
 int					servoStatus;
-double				hoursRA;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
 	alpacaErrCode	=	kASCOM_Err_Success;
-	hoursRA			=	(double)newRA;
 
-	// Convert RA to hours
-	Time_deci_deg_to_hours(&hoursRA);
-
-//+Ron
-	servoStatus	=	Servo_move_to_coordins(hoursRA, newDec, Servo_get_lat(), Servo_get_lon());
+	servoStatus	=	Servo_move_to_coordins(newRA, newDec, Servo_get_lat(), Servo_get_lon());
 	if (servoStatus != kSTATUS_OK)
 	{
-		//	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Servo_more_to_coordins failed");
+		//	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Servo_move_to_coordins failed");
 		alpacaErrCode	=	kASCOM_Err_NotConnected;
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not connected");
 		CONSOLE_DEBUG(alpacaErrMsg);
@@ -801,18 +764,18 @@ double				hoursRA;
 TYPE_ASCOM_STATUS	TelescopeDriverServo::Telescope_SyncToRA_DEC(const double newRA, const double newDec, char *alpacaErrMsg)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode;
-double				hoursRA;
+// double				hoursRA;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
 	alpacaErrCode	=	kASCOM_Err_Success;
-	hoursRA			=	newRA;
+	// hoursRA			=	newRA;
 
 	//	Convert RA to hours
-	Time_deci_deg_to_hours(&hoursRA);
+	//Time_deci_deg_to_hours(&hoursRA);
 
 	// Set the new value to the current position
-	Servo_set_pos(hoursRA, newDec);
+	Servo_set_pos(newRA, newDec);
 
 	return (alpacaErrCode);
 }
@@ -831,8 +794,7 @@ int					servoStatus;
 	alpacaErrCode	=	kASCOM_Err_Success;
 	if (newTrackingState)
 	{
-//+Ron
-//-		servoStatus	=	Servo_start_tracking(SERVO_RA_AXIS);
+
 		servoStatus	=	Servo_start_axes_tracking(SERVO_RA_AXIS);
 		if (servoStatus != kSTATUS_OK)
 		{
@@ -843,8 +805,6 @@ int					servoStatus;
 	}
 	else
 	{
-//+Ron
-//-		servoStatus	=	Servo_stop(SERVO_RA_AXIS);
 		servoStatus	=	Servo_stop_axes(SERVO_RA_AXIS);
 		if (servoStatus != kSTATUS_OK)
 		{

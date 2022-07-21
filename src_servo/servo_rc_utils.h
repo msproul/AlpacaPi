@@ -36,6 +36,7 @@
 //*	Jul  2,	2022	<RNS> Changed the function name _velocity() to _vel()
 //*	Jul  2,	2022	<RNS> Changed POS_FOREVER to kSTEP_FOREVER and moved here
 //*	Jul  5,	2022	<RNS> Regenerated all headers with cproto
+//* Jul	 7, 2022	<RNS> Changed to signed vel/acc/decel in move_by_pos*
 //****************************************************************************
 //#include "servo_rc_utils.h"
 
@@ -100,10 +101,10 @@ int RC_restore_defaults(uint8_t addr);
 int RC_stop(uint8_t addr, uint8_t motor);
 double RC_calc_move_time(int32_t pos0, int32_t pos1, uint32_t vel, uint32_t acc);
 int32_t RC_calc_move_distance(int32_t startVel, int32_t endVel, int32_t acc, double seconds);
-int RC_move_by_posv(uint8_t addr, uint8_t motor, int32_t pos, uint32_t vel, bool buffered);
-int RC_move_by_posvad(uint8_t addr, uint8_t motor, int32_t pos, uint32_t vel, uint32_t acc, uint32_t decel, bool buffered);
-int RC_move_by_posva(uint8_t addr, uint8_t motor, int32_t pos, uint32_t vel, uint32_t acc, bool buffered);
-int RC_move_by_vela(uint8_t addr, uint8_t motor, int32_t vel, uint32_t acc, bool buffered);
+int RC_move_by_posv(uint8_t addr, uint8_t motor, int32_t pos, int32_t vel, bool buffered);
+int RC_move_by_posvad(uint8_t addr, uint8_t motor, int32_t pos, int32_t vel, int32_t acc, int32_t decel, bool buffered);
+int RC_move_by_posva(uint8_t addr, uint8_t motor, int32_t pos, int32_t vel, int32_t acc, bool buffered);
+int RC_move_by_vela(uint8_t addr, uint8_t motor, int32_t vel, int32_t acc, bool buffered);
 int RC_move_by_vel_raw(uint8_t addr, uint8_t motor, int32_t vel);
 
 #endif // _SERVO_RC_UTILS_H_

@@ -20,6 +20,7 @@
 #++	Jul  2,	2022	<RNS> Support for some renamed observ files
 #++	Jul  2,	2022	<RNS> Support for servo_motion test build
 #++	Jul  2,	2022	<RNS> Enabled gdb support in CFLAGS (-g)
+#++	Jul 20,	2022	<RNS> Support servo_move and servo_pos_step test progs
 ############################################################################
 
 CC			=	gcc -I$(MLS_LIB_DIR)
@@ -78,6 +79,20 @@ servo_test_tty: 	$(SERVO_OBJECTS)	$(OBJECT_DIR)servo_test_tty.o
 					$(SERVO_OBJECTS)				\
 					$(OBJECT_DIR)servo_test_tty.o	\
 					-lm
+
+servo_move:		CFLAGS	+=
+servo_move: 	$(SERVO_OBJECTS)	$(OBJECT_DIR)servo_move.o
+	$(CC) $(CFLAGS) -o servo_move				\
+					$(SERVO_OBJECTS)				\
+					$(OBJECT_DIR)servo_move.o	\
+					-lm					
+	
+servo_pos_step:		CFLAGS	+=
+servo_pos_step: 	$(SERVO_OBJECTS)	$(OBJECT_DIR)servo_pos_step.o
+	$(CC) $(CFLAGS) -o servo_pos_step			\
+					$(SERVO_OBJECTS)				\
+					$(OBJECT_DIR)servo_pos_step.o	\
+					-lm				
 
 test_cop: 	CFLAGS	+=
 test_cop: 	$(SERVO_OBJECTS) $(OBJECT_DIR)test_cop.o
@@ -164,6 +179,13 @@ $(OBJECT_DIR)test_cop.o:		test_cop.c servo_mount.c servo_mount.h servo_rc_utils.
 
 $(OBJECT_DIR)servo_test_tty.o:		servo_test_tty.c servo_mount.c servo_mount.h servo_rc_utils.h servo_rc_cmds.h servo_time.h servo_mc_core.h servo_std_defs.h
 	$(CC) $(CFLAGS) -c servo_test_tty.c -o $(OBJECT_DIR)servo_test_tty.o
+
+$(OBJECT_DIR)servo_move.o:		servo_move.c servo_mount.c servo_mount.h servo_rc_utils.h servo_rc_cmds.h servo_time.h servo_mc_core.h servo_std_defs.h
+	$(CC) $(CFLAGS) -c servo_move.c -o $(OBJECT_DIR)servo_move.o	
+
+$(OBJECT_DIR)servo_pos_step.o:		servo_pos_step.c servo_mount.c servo_mount.h servo_rc_utils.h servo_rc_cmds.h servo_time.h servo_mc_core.h servo_std_defs.h
+	$(CC) $(CFLAGS) -c servo_pos_step.c -o $(OBJECT_DIR)servo_pos_step.o	
+
 ############################################################################
 # To start over from scratch, type 'make clean'.  This
 # removes the executable file, as well as old .o object
