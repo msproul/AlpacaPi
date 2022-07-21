@@ -38,6 +38,7 @@
 //*	Jun 24,	2022	<RNS> Added routines _is_TTP(), _get_lst(), _get_HA()
 //*	Jul  3,	2022	<RNS> Regenerated all headers with cproto
 //*	Jul  5,	2022	<RNS> Regenerated all headers with cproto
+//*	Jul	18,	2022	<RNS> Added Servo_move_axis_by_vel() 
 //****************************************************************************
 
 #ifndef _SERVO_MOUNT_H_
@@ -82,6 +83,7 @@ void		Servo_set_pos(double ra, double dec);
 void		Servo_set_static_pos(double ha, double dec);
 int			Servo_start_axes_tracking(uint8_t motor);
 int			Servo_stop_axes(uint8_t motor);
+int 		Servo_move_axis_by_vel(uint8_t motor, double vel);
 int			Servo_move_axis_by_vel_time(uint8_t motor, double vel, double seconds);
 int			Servo_init(const char *observCfgFile, const char *mountCfgFile, const char *motionCfgFile);
 TYPE_MOVE	Servo_state(void);
@@ -92,7 +94,6 @@ int			Servo_move_spiral(double raMove, double decMove, int loop);
 int			Servo_move_to_coordins(double gotoRa, double gotoDec, double lat, double lon);
 int			Servo_move_to_static(double parkHA, double parkDec);
 int			Servo_move_to_park(void);
-
 
 #ifdef __cplusplus
 }

@@ -57,6 +57,7 @@
 //*	Jul  2,	2022	<RNS> Changed POS_FOREVER to kSTEP_FOREVER, moved to .h
 //*	Jul  4,	2022	<RNS> Added calc_move_dist function
 //*	Jul  4,	2022	<RNS> Added RC_move_by_posvad to support pulse guiding
+//* Jul	 7, 2022	<RNS> Fixed move_by_pos* bugs with negative vel/acc/decel
 //*****************************************************************************
 // Notes:   M1 *MUST BE* connected to RA or Azimuth axis, M2 to Dec or Altitude
 //*****************************************************************************
@@ -355,7 +356,7 @@ int			len;
 int			retState;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
-	//printf("RC_get_status: addr = %X cmd = %d gRC[cmd].cmd = %d\n", addr, cmd, gRC[cmd].cmd);
+	printf("RC_get_status: addr = %X cmd = %d gRC[cmd].cmd = %d gRC[cmd].in:%d gRC[cmd].out:%d\n", addr, cmd, gRC[cmd].cmd, gRC[cmd].in, gRC[cmd].out);
 
 	// Creat the note for the comms and read status a short cmd
 	Note_init(gNoteBuf, addr, gRC[cmd].cmd, &ptrA);
@@ -1068,15 +1069,16 @@ double 		deltaVel, accelTime;
 
 	// check to see time is long enough to reach end
 	accelTime	=	fabs(deltaVel / acc);
+	printf("deltaVel:%f acc:%d accelTime:%f\n", deltaVel, acc, accelTime);
 	if (accelTime > seconds)
 	{
 		// time is not long enough to reach end velocity so d = v*t + a*t*t/2
-		dist	=	(int32_t) startVel * seconds + acc * seconds * seconds / 2.0;
+		dist	=	(int32_t) startVel * seconds + ((acc * seconds * seconds) / 2.0);
 	}
 	else
 	{
 		// this is the acceleration profile distance
-		dist	=	(int32_t) startVel * accelTime + acc * accelTime * accelTime / 2.0;
+		dist	=	(int32_t) startVel * accelTime + ((acc * accelTime * accelTime) / 2.0);
 		// this the constant velocity distance
 		dist	+=	(int32_t) endVel * (seconds - accelTime);
 	}
@@ -1091,7 +1093,7 @@ double 		deltaVel, accelTime;
 // Send; [Address, 122, Speed (4 bytes), Position (4 bytes), Buffer, CRC (2 bytes)]
 // Receive: [0xFF]
 //******************************************************************
-int RC_move_by_posv(uint8_t addr, uint8_t motor, int32_t pos, uint32_t vel, bool buffered)
+int RC_move_by_posv(uint8_t addr, uint8_t motor, int32_t pos, int32_t vel, bool buffered)
 {
 uint8_t		*ptrA, *ptrB, status, now;
 uint16_t	crc;
@@ -1118,6 +1120,8 @@ int			len;
 			return(kERROR);
 			break;
 	}
+	// Make sure vel is positive to avoid Roboclaw confusion
+	vel = abs(vel);
 	//printf("RC_move_by_pos: addr = %X cmd = %d gRC[cmd].cmd = %d\n", addr, cmd, gRC[cmd].cmd);
 
 	// If requesting a buffered command (eg. TRUE) set variable now to 0
@@ -1155,7 +1159,7 @@ int			len;
 // Send: [Address, 65, Accel(4 bytes), Speed(4 Bytes), Decel(4 bytes), Position(4 Bytes), Buffer, CRC(2 bytes)]
 // Receive: [0xFF]
 //******************************************************************
-int RC_move_by_posvad(uint8_t addr, uint8_t motor, int32_t pos, uint32_t vel, uint32_t acc, uint32_t decel, bool buffered)
+int RC_move_by_posvad(uint8_t addr, uint8_t motor, int32_t pos, int32_t vel, int32_t acc, int32_t decel, bool buffered)
 {
 uint8_t		*ptrA, *ptrB, status, now;
 uint16_t	crc;
@@ -1182,6 +1186,11 @@ int			len;
 			return(kERROR);
 			break;
 	}
+		// Make sure vel, acc, decel are all positive to avoid Roboclaw confusion
+	vel 	= 	abs(vel);
+	acc 	= 	abs(acc);
+	decel 	= 	abs(decel);
+
 	printf("RC_move_by_posvad: addr = %X cmd = %d gRC[cmd].cmd = %d\n", addr, cmd, gRC[cmd].cmd);
 	printf("RC_move_by_posvad: motor:%d, pos:%d vel:%d acc:%d decel:%d, buff:%d\n", motor, pos, vel, acc, decel, buffered);
 
@@ -1197,6 +1206,7 @@ int			len;
 	Note_add_dword(ptrB, pos, &ptrA);
 
 	// add buffer arg, 1 = stop any running cmds and execute it now
+	printf("RC_move_by_posvad: now=%d\n", now);
 	Note_add_byte(ptrA, now, &ptrB);
 
 	// Get length and calc CRC then add it the note
@@ -1217,7 +1227,7 @@ int			len;
 } // of RC_move_by_posvad()
 
 //******************************************************************
-int RC_move_by_posva(uint8_t addr, uint8_t motor, int32_t pos, uint32_t vel, uint32_t acc, bool buffered)
+int RC_move_by_posva(uint8_t addr, uint8_t motor, int32_t pos, int32_t vel, int32_t acc, bool buffered)
 {
 	// See the above, Just a wrapper to use same value for both accel and decel
 	return RC_move_by_posvad(addr, motor, pos, vel, acc, acc, buffered);
@@ -1230,10 +1240,11 @@ int RC_move_by_posva(uint8_t addr, uint8_t motor, int32_t pos, uint32_t vel, uin
 // Added workaround to negative position move with a negative velocity become a
 // positive position move.  That is soooooo not documented :(
 //******************************************************************
-int RC_move_by_vela(uint8_t addr, uint8_t motor, int32_t vel, uint32_t acc, bool buffered)
+int RC_move_by_vela(uint8_t addr, uint8_t motor, int32_t vel, int32_t acc, bool buffered)
 {
 int32_t	pos;
 int		status;
+
 
 	// if vel is negative, the subtract the faraway position from current
 	status	=	kSTATUS_OK;
@@ -1249,7 +1260,7 @@ int		status;
 			{
 				pos	=	kSTEP_FOREVER;
 			}
-			RC_move_by_posva(addr, SERVO_RA_AXIS, pos, abs(vel), acc, buffered);
+			RC_move_by_posva(addr, SERVO_RA_AXIS, pos, vel, acc, buffered);
 			break;
 
 		case SERVO_DEC_AXIS:
@@ -1262,7 +1273,7 @@ int		status;
 			{
 				pos	=	kSTEP_FOREVER;
 			}
-			RC_move_by_posva(addr, SERVO_DEC_AXIS, pos, abs(vel), acc, buffered);
+			RC_move_by_posva(addr, SERVO_DEC_AXIS, pos, vel, acc, buffered);
 			break;
 
 		default:
@@ -1393,10 +1404,10 @@ int32_t		minP, maxP;
 	printf("VEL P:%.2f I:%.2f D:%.2f QPPS:%d\n", propo, integ, deriv, iMax);
 
 
-	printf("Writing new values to EEPROM\n");
-	RC_write_settings(addr);
-	printf("Reading values from EEPROM\n");
-	RC_read_settings(addr, &settings);
+	// printf("Writing new values to EEPROM\n");
+	// RC_write_settings(addr);
+	// printf("Reading values from EEPROM\n");
+	// RC_read_settings(addr, &settings);
 
 	printf("Setting default acc\n");
 	RC_set_default_acc(addr, SERVO_RA_AXIS, 4000);

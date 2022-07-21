@@ -27,6 +27,7 @@
 //*	Jul  2,	2022	<RNS> Changed order of typedefs to be more clear
 //*	Jul  3,	2022	<RNS> Moved enum of config files to .c file
 //*	Jul  6,	2022	<MLS> Moved enums BACK to .h file
+//*	Jul  7,	2022	<RNS> Added enum support for max encoder rate
 //****************************************************************************
 //#include	"servo_motion_cfg.h"
 
@@ -52,10 +53,12 @@ enum
 	RA_KI_CON,
 	RA_KD_CON,
 	RA_IL_CON,
+	RA_ENC_MAX,
 	DEC_KP_CON,
 	DEC_KI_CON,
 	DEC_KD_CON,
 	DEC_IL_CON,
+	DEC_ENC_MAX,
 
 	MOTION_CFG_LAST
 };	// of enum
@@ -88,7 +91,7 @@ typedef struct
 	// fields unique to Roboclaw
 	uint8_t				addr;
 	double				motorMaxRPM;
-	uint16_t			encoderMaxSpeed;
+	uint32_t			encoderMaxRate;
 	uint16_t			status;
 	uint8_t				cmdQueue;
 	bool				buffered;

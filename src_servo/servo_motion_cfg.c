@@ -31,6 +31,7 @@
 //*	Jul  3,	2022	<RNS> Added enum of config files
 //*	Jul  4,	2022	<RNS> renamed .position field to .state
 //*	Jul  6,	2022	<MLS> Added Servo_check_motion_cfg()
+//*	Jul  7,	2022	<RNS> Added support for *_ENC_MAX: and encoderMaxRate
 //****************************************************************************
 
 #include <stdio.h>
@@ -58,10 +59,12 @@ TYPE_CFG_ITEM gMotionConfigArray[] =
 	{"RA_KI_CON:",			RA_KI_CON,		false},
 	{"RA_KD_CON:",			RA_KD_CON,		false},
 	{"RA_IL_CON:",			RA_IL_CON,		false},
+	{"RA_ENC_MAX:",			RA_ENC_MAX,		false},
 	{"DEC_KP_CON:",			DEC_KP_CON,		false},
 	{"DEC_KI_CON:",			DEC_KI_CON,		false},
 	{"DEC_KD_CON:",			DEC_KD_CON,		false},
 	{"DEC_IL_CON:",			DEC_IL_CON,		false},
+	{"DEC_ENC_MAX:",		DEC_ENC_MAX,	false},
 	{"",					-1,				false}
 };
 
@@ -208,6 +211,19 @@ bool				configLineOK;
 			}
 			break;
 
+		case RA_ENC_MAX:
+			gMotionConfigArray[RA_ENC_MAX].found	=	true;
+			ra->encoderMaxRate						=	atoi(argument);
+		//	printf("%-15.15s = %-15d  \n", token, ra->encoderMaxRate);
+
+			if (!isdigit(argument[0]))
+			{
+				sprintf(cfgErrorString1,	"Invalid %s field '%d'", token, ra->encoderMaxRate);
+				sprintf(cfgErrorString2,	"Usage:  %s  54000", token);
+				configLineOK	=	false;
+			}
+			break;
+
 		case DEC_KP_CON:
 			gMotionConfigArray[DEC_KP_CON].found	=	true;
 			dec->kp								=	atof(argument);
@@ -257,6 +273,19 @@ bool				configLineOK;
 			{
 				sprintf(cfgErrorString1,	"Invalid %s field '%f'", token, dec->il);
 				sprintf(cfgErrorString2,	"Usage:  %s  130.0", token);
+				configLineOK	=	false;
+			}
+			break;
+
+		case DEC_ENC_MAX:
+			gMotionConfigArray[DEC_ENC_MAX].found	=	true;
+			dec->encoderMaxRate						=	atoi(argument);
+		//	printf("%-15.15s = %-15d  \n", token, dec->encoderMaxRate);
+
+			if (!isdigit(argument[0]))
+			{
+				sprintf(cfgErrorString1,	"Invalid %s field '%d'", token, dec->encoderMaxRate);
+				sprintf(cfgErrorString2,	"Usage:  %s  61000", token);
 				configLineOK	=	false;
 			}
 			break;
@@ -467,11 +496,13 @@ void	PrintMotionConfiguration(void)
 	PrintConfigParam_Str(COMM_PORT,			gMotionConfig.port);
 	PrintConfigParam_Int(BAUD,				gMotionConfig.baud);
 
+	PrintConfigParam_Int(RA_ENC_MAX,		gMotionConfig.motor0.encoderMaxRate);
 	PrintConfigParam_Dbl(RA_KP_CON,			gMotionConfig.motor0.kp);
 	PrintConfigParam_Dbl(RA_KI_CON,			gMotionConfig.motor0.ki);
 	PrintConfigParam_Dbl(RA_KD_CON,			gMotionConfig.motor0.kd);
 	PrintConfigParam_Dbl(RA_IL_CON,			gMotionConfig.motor0.il);
 
+	PrintConfigParam_Int(DEC_ENC_MAX,		gMotionConfig.motor1.encoderMaxRate);
 	PrintConfigParam_Dbl(DEC_KP_CON,		gMotionConfig.motor1.kp);
 	PrintConfigParam_Dbl(DEC_KI_CON,		gMotionConfig.motor1.ki);
 	PrintConfigParam_Dbl(DEC_KD_CON,		gMotionConfig.motor1.kd);
@@ -483,14 +514,10 @@ void	PrintMotionConfiguration(void)
 //********************************************************************************************
 void Test_print_motion_motor(TYPE_MOTION_MOTOR *ax)
 {
-	printf("ax->encoderMaxSpeed = %d\n", ax->encoderMaxSpeed);
+	printf("ax->encoderMaxRate = %d\n", ax->encoderMaxRate);
 	printf("ax->state = %d\n", ax->state);
-	printf("ax->maxAcc = %d\n", ax->maxAcc);
 	printf("ax->acc = %d\n", ax->acc);
-	printf("ax->maxVel = %d\n", ax->maxVel);
 	printf("ax->vel = %d\n", ax->vel);
-	printf("ax->guideRate = %d\n", ax->guideRate);
-	printf("ax->manSlewRate = %d\n", ax->manSlewRate);
 	printf("ax->kp = %f\n", ax->kp);
 	printf("ax->ki = %f\n", ax->ki);
 	printf("ax->kd = %f\n", ax->kd);
