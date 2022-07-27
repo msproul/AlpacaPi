@@ -87,9 +87,11 @@
 //*	Jul  5,	2022	<RNS> Fixed not setting acc/vel down at the Motion level
 //*	Jul  8,	2022	<RNS> Added missing support for .encoderMaxRate
 //*	Jul  8,	2022	<RNS> Fixed _step_to_pos, dec had / swapped for *
-//*	Jul	12,	2022	<RNS> Fixed a ton of initialization in Servo_init()
+//*	Jul 12,	2022	<RNS> Fixed a ton of initialization in Servo_init()
 //*	Jul 20,	2022	<RNS> Fixed sign error in _move_to_static for relative RA direction
 //*	Jul 20,	2022	<RNS> Fixed if-else braces error in COP for Fork mount
+//*	Jul 22,	2022	<RNS> Fixed incorrect direction sign in flip_coordins 
+
 //*****************************************************************************
 
 //*****************************************************************************
@@ -1134,8 +1136,8 @@ static void Servo_calc_flip_coordins(double *ra, double *dec, double *direction,
 	// complement Dec and reverse direction
 	*dec	=	180.0 - *dec;
 
-	// toggle dec motion direction
-	*direction	=	(*direction < 0) ? kREVERSE : kFORWARD;
+	// toggle dec motion direction - basically > 0 means currently "forward"
+	*direction	=	(*direction > 0) ? kREVERSE : kFORWARD;
 }
 
 //*****************************************************************************
@@ -1249,11 +1251,11 @@ int8_t	side;		// not used
 	// Do the simple Dec axis first, it just path = end - start;
 	// Note: if pathDec is neg, it means a move towards South, positive... a move towards North
 	decStdPath	=	endDec - startDec;
-	// printf(> decStdPath(%.2lf)  endDec(%.2lf)  startDec(%.2lf)\n", decStdPath, endDec, startDec);
+	printf("&&& Servo_COP()  decStdPath(%.2lf)  endDec(%.2lf)  startDec(%.2lf)\n", decStdPath, endDec, startDec);
 
 	// Find the short path for the Ra axis for a std move
 	raStdPath	=	Servo_calc_short_vector(startRa, endRa, 24.0);
-	printf("!!! LST:%.2lf - StartRa = %.2lf  endRa = %.2lf  raStdPath = %.2lf  startRaHa = %.2lf  endRaHa = %.2lf\n", lst, startRa, endRa, raStdPath, startRaHa, endRaHa);
+	printf("&&& Servo_COP() LST:%.2lf - StartRa = %.2lf  endRa = %.2lf  raStdPath = %.2lf  startRaHa = %.2lf  endRaHa = %.2lf\n", lst, startRa, endRa, raStdPath, startRaHa, endRaHa);
 
 	// This first check is for a simple move (no meridian crossing), works for both FORK and GEM mounts
 	raStdPathType	=	Servo_COP_type(startRaHa, raStdPath, gMountConfig.flipWin);
@@ -1276,7 +1278,7 @@ int8_t	side;		// not used
 	startRaFlip		=	startRa;
 	startDecFlip	=	startDec;
 	Servo_calc_flip_coordins(&startRaFlip, &startDecFlip, &direction, &side);
-	printf("LST:%.2lf startRaFlip:%.2lf endRa:%.2lf  startRaHaFlip:%.2lf\n", lst, startRaFlip, endRa, startRaHaFlip);
+	printf("&&& Servo_COP() LST:%.2lf startRaFlip:%.2lf endRa:%.2lf  startRaHaFlip:%.2lf\n", lst, startRaFlip, endRa, startRaHaFlip);
 
 	// Calc the the HA of the new flipped start position, but endRaHa remains the same
 	startRaHaFlip	=	lst - startRaFlip;
@@ -1284,10 +1286,11 @@ int8_t	side;		// not used
 
 	// Note: if pathDec is neg, it means a move towards South, positive... a move towards North
 	decFlipPath	=	endDec - startDecFlip;
+	printf("&&& Servo_COP() decFlipPath(%.2lf)  endDec(%.2lf)  startDecFlip(%.2lf)\n", decFlipPath, endDec, startDecFlip);
 
 	// Find the short path of the Ra axis for a flip move, endRa is same as std path
 	raFlipPath	=	Servo_calc_short_vector(startRaFlip, endRa, 24.0);
-	printf("LST:%.2lf startRaFlip:%.2lf endRa:%.2lf  raFlipPath:%.2lf startRaHaFlip:%.2lf\n", lst, startRaFlip, endRa, raFlipPath, startRaHaFlip);
+	printf("&&& Servo_COP() LST:%.2lf startRaFlip:%.2lf endRa:%.2lf  raFlipPath:%.2lf startRaHaFlip:%.2lf\n", lst, startRaFlip, endRa, raFlipPath, startRaHaFlip);
 
 	// Not needed - Determine the move type of flipped path
 	// raFlipPathType	=	Servo_COP_move_type(startRaHaFlip, raFlipPath, gMountConfig.flipWin);
@@ -1356,141 +1359,6 @@ int8_t	side;		// not used
 	strcpy(gDebugInfoCOP, "ERROR");
 	return (false);
 } // of Servo_calc_optimal_path()
-
-//*****************************************************************************
-// old routine
-// bool old_Servo_calc_optimal_path(double startRa, double startDec, double lst, double endRa, double endDec, double *raDirection, double *decDirection)
-// {
-// 	double startRaHa, endRaHa;
-// 	double startRaFlip, startDecFlip, startRaHaFlip;
-// 	double decStdPath, decFlipPath, raStdPath, raFlipPath;
-// 	double direction; // not used
-// 	int8_t side;	  // not used
-
-// 	// Converting the input star and end coordins to hour angle
-// 	startRaHa = lst - startRa;
-// 	endRaHa = lst - endRa;
-// 	Time_normalize_HA(&startRaHa);
-// 	Time_normalize_HA(&endRaHa);
-
-// 	// Do the simple Dec axis first, it just path = end - start;
-// 	// Note: if pathDec is neg, it means a move towards South, positive... a move towards North
-// 	decStdPath = endDec - startDec;
-// 	// printf(> decStdPath(%.2lf)  endDec(%.2lf)  startDec(%.2lf)\n", decStdPath, endDec, startDec);
-
-// 	// Find the short path for the Ra axis for a std move
-// 	raStdPath = Servo_calc_short_vector(startRa, endRa, 24.0);
-// 	// printf("LST:%.2lf - StartRa = %.2lf  endRa = %.2lf  raStdPath = %.2lf  startRaHa = %.2lf  endRaHa = %.2lf\n", lst, startRa, endRa, raStdPath, startRaHa, endRaHa);
-
-// 	// if starting on the west side and std path moves east past LST
-// 	if (startRaHa > 0.0 && (startRaHa - raStdPath) < 0.0)
-// 	{
-// 		// this move crosses meridian
-// 	}
-// 	// if starting on the east side and std path moves west past lst
-// 	else if (startRaHa < 0.0 && (startRaHa - raStdPath) > 0.0)
-// 	{
-// 		// this move crosses meridian
-// 	}
-// 	else
-// 	{
-// 		// this move stays on it's side of the meridian
-// 		*raDirection = raStdPath;
-// 		*decDirection = decStdPath;
-// 		strcpy(gDebugInfoCOP, "X--SM");
-// 		return (false);
-// 	}
-
-// 	// Now that crosses meridian is true, but lets see if we can change that with a flip
-// 	// so do a what-if compare of distance with start position flipped for TTP move
-// 	// TODO:  This move could be merged with the GEM flip routine, but just get it working
-// 	startRaFlip = startRa;
-// 	startDecFlip = startDec;
-// 	Servo_calc_flip_coordins(&startRaFlip, &startDecFlip, &direction, &side);
-// 	// printf("LST:%.2lf - StartRaFlip = %.2lf	endRa = %.2lf	raFlippath = %.2lf startRaHaFlip = %.2lf\n", lst, startRaFlip, endRa, raFlipPath, startRaHaFlip);
-
-// 	// Calc the the HA of the new flipped start position, endRaHa remain the same
-// 	startRaHaFlip = lst - startRaFlip;
-// 	Time_normalize_HA(&startRaHaFlip);
-
-// 	// Note: if pathDec is neg, it means a move towards South, positive... a move towards North
-// 	decFlipPath = endDec - startDecFlip;
-
-// 	// Find the short path of the Ra axis for a flip move, endRa is same as std path
-// 	raFlipPath = Servo_calc_short_vector(startRaFlip, endRa, 24.0);
-// 	// printf("LST:%.2lf - StartRaFlip = %.2lf	endRa = %.2lf	raFlippath = %.2lf startRaHaFlip = %.2lf\n", lst, startRaFlip, endRa, raFlipPath, startRaHaFlip);
-
-// 	// if starting on the west side and std path moves past lst
-// 	if (startRaHaFlip > 0.0 && (startRaHaFlip - raFlipPath) < 0.0)
-// 	{
-// 		// this move crosses meridian
-// 	}
-// 	// if starting on the east side and std path moves past lst
-// 	else if (startRaHaFlip < 0.0 && (startRaHaFlip - raFlipPath) > 0.0)
-// 	{
-// 		// this move crosses meridian
-// 	}
-// 	else
-// 	{
-// 		// After the flip this move stays on it's side of the meridian
-// 		*raDirection = raFlipPath;
-// 		*decDirection = decFlipPath;
-// 		strcpy(gDebugInfoCOP, "XF-SM");
-// 		return (true);
-// 	}
-
-// 	// OK, now we need to cross the meridian, do not pass 'go', do not collect $200 ;^)
-
-// 	// Check to see if a GEM move goes past the meridian flip window
-// 	if (gMountConfig.mount == kGERMAN)
-// 	{
-// 		// Check to see if a GEM mount must flip due to the RA path exceed the meridian window
-
-// 		// if starting on the west side and std path moves east past LST
-// 		if ((startRaHa > 0.0) && ((startRaHa - raStdPath) < gMountConfig.flipWin))
-// 		{
-// 			// this move crosses meridian from the west and goes past the GEM's meridian flip window, so flip and return
-// 			*raDirection = raFlipPath;
-// 			*decDirection = decFlipPath;
-// 			strcpy(gDebugInfoCOP, "GFWMW");
-// 			return (true);
-// 		}
-// 		// if starting on the east side and std path moves west past LST
-// 		else if ((startRaHa < 0.0) && ((startRaHa - raStdPath) > gMountConfig.flipWin))
-// 		{
-// 			// this move crosses meridian from the east and goes past the GEM's meridian flip window, so flip and return
-// 			*raDirection = raFlipPath;
-// 			*decDirection = decFlipPath;
-// 			strcpy(gDebugInfoCOP, "GFEMW");
-// 			return (true);
-// 		}
-// 		else
-// 		{
-// 			// the move does cross the meridian but stay within the meridian flip window, no flip needed
-// 			*raDirection = raStdPath;
-// 			*decDirection = decStdPath;
-// 			strcpy(gDebugInfoCOP, "GF<MW");
-// 			return (false);
-// 		}
-// 	}
-// 	// If you got here, the *mount is NOT a GEM* and need to find the shortest path for a FORK
-
-// 	// Check to see of the RA axis moves at least 10% less on the RA flip path vs RA path
-// 	if (fabs(raFlipPath) < (fabs(raStdPath) * 0.9))
-// 	{
-// 		// the flip is shorter than the 'normal' path and will cross the meridian
-// 		*raDirection = raFlipPath;
-// 		*decDirection = decFlipPath;
-// 		strcpy(gDebugInfoCOP, "FT-CM");
-// 		return (true);
-// 	}
-
-// 	// This is just FORK std path move that crosses the meridian
-// 	*raDirection = raStdPath;
-// 	*decDirection = decStdPath;
-// 	strcpy(gDebugInfoCOP, "F--CM");
-// 	return (false);
-// }
 
 #ifdef _ALPHA_OUT_
 //*****************************************************************************
@@ -1623,7 +1491,7 @@ double	alt, azi;
 int		status	=	kSTATUS_OK;
 bool	flip	=	false;
 
-	printf("Servo_move_to_coordins: RA:%.4f Dec:%.4f Lat:%.4f Lon:%.4f Park:%d\n", gotoRa, gotoDec, lat, lon, gParkState);
+	printf("&&& Servo_move_to_coordins() RA:%.4f Dec:%.4f Lat:%.4f Lon:%.4f Park:%d\n", gotoRa, gotoDec, lat, lon, gParkState);
 	// Make sure the mount is not Parked, but *if parked* then return error
 	if (gParkState == true)
 	{
@@ -1651,8 +1519,8 @@ bool	flip	=	false;
 
 	// Determine the 'best' path form curr position to the goto position
 	flip	=	Servo_calc_optimal_path(currRa, currDec, lst, gotoRa, gotoDec, &raRelDir, &decRelDir);
-	printf("\n&&& CurrRa = %lf	CurrDec = %lf 	LST = %lf	flip = %d	COP:%s\n", currRa, currDec, lst, (int)flip, gDebugInfoCOP);
-	printf("&&& gotoRa = %lf	gotoDec = %lf 	raRelDir = %lf	decRelDir = %lf\n", gotoRa, gotoDec, raRelDir, decRelDir);
+	printf("\n&&& Servo_move_to_coordins()  CurrRa = %lf	CurrDec = %lf 	LST = %lf	flip = %d	COP:%s\n", currRa, currDec, lst, (int)flip, gDebugInfoCOP);
+	printf("&&& Servo_move_to_coordins()  gotoRa = %lf	gotoDec = %lf 	raRelDir = %lf	decRelDir = %lf\n", gotoRa, gotoDec, raRelDir, decRelDir);
 
 	// If flip is returned, you must flip the mount otherwise the rel dir for RA/Dec will be incorrect
 	if (flip == true)
@@ -1661,7 +1529,7 @@ bool	flip	=	false;
 		// Current coordins are guaranteed to change after this call
 		Servo_calc_flip_coordins(&currRa, &currDec, &direction, &gMountConfig.side);
 		Servo_set_pos(currRa, currDec);
-		printf("&&& After flip CurrRa = %lf	CurrDec = %lf\n\n", currRa, currDec);
+		printf("&&& Servo_move_to_coordins() After flip CurrRa = %lf	CurrDec = %lf\n\n", currRa, currDec);
 
 		// Compare to the orignal direction values for Dec axis from the mount config file
 		if (Servo_is_TTP() == true)
@@ -1682,7 +1550,7 @@ bool	flip	=	false;
 
 	// convert the target RA & Dec to target steps
 	Servo_pos_to_step(targetRa, targetDec, &targetRaStep, &targetDecStep);
-	printf("&&& targRa = %lf	targDec = %lf 	targRaStep = %d	targDecStep = %d\n\n", targetRa, targetDec, targetRaStep, targetDecStep);
+	printf("&&& Servo_move_to_coordins()  targRa = %lf	targDec = %lf 	targRaStep = %d	targDecStep = %d\n\n", targetRa, targetDec, targetRaStep, targetDecStep);
 
 	/////////////////////////////////////////////////////////////////////////////////////
 	// TODO:  add back in gearlash,  KLUDGE!
@@ -1757,7 +1625,7 @@ int		status	=	kSTATUS_OK;
 
 	// convert the target RA & Dec to target steps
 	Servo_pos_to_step(targetRa, targetDec, &targetRaStep, &targetDecStep);
-	printf("&&& targRa = %lf	targDec = %lf 	targRaStep = %d	targDecStep = %d\n\n", targetRa, targetDec, targetRaStep, targetDecStep);
+	printf("@@@ Servo_move_to_static() targRa = %lf	targDec = %lf 	targRaStep = %d	targDecStep = %d\n\n", targetRa, targetDec, targetRaStep, targetDecStep);
 
 	// Check the status and if not zero, decrement
 	status	-=	Servo_move_step(targetRaStep, targetDecStep, false);
@@ -1934,7 +1802,7 @@ char buf[256];
 	lon	=	Servo_get_lon();
 
 	printf("********************************************************\n");
-	printf("Move 1: Simple +3.0 hr +40 deg relative, at LST:%lf\n", lst);
+	printf("Move 1: Simple -1.0 hr -15.0 deg relative, at LST:%lf\n", lst);
 	printf("********************************************************\n");
 	// Reset current RA/Dec back to the park position
 	currRa	=	lst - parkHa;

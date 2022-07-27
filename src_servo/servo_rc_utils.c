@@ -57,7 +57,7 @@
 //*	Jul  2,	2022	<RNS> Changed POS_FOREVER to kSTEP_FOREVER, moved to .h
 //*	Jul  4,	2022	<RNS> Added calc_move_dist function
 //*	Jul  4,	2022	<RNS> Added RC_move_by_posvad to support pulse guiding
-//* Jul	 7, 2022	<RNS> Fixed move_by_pos* bugs with negative vel/acc/decel
+//*	Jul  7,	2022	<RNS> Fixed move_by_pos* bugs with negative vel/acc/decel
 //*****************************************************************************
 // Notes:   M1 *MUST BE* connected to RA or Azimuth axis, M2 to Dec or Altitude
 //*****************************************************************************
@@ -1069,7 +1069,7 @@ double 		deltaVel, accelTime;
 
 	// check to see time is long enough to reach end
 	accelTime	=	fabs(deltaVel / acc);
-	printf("deltaVel:%f acc:%d accelTime:%f\n", deltaVel, acc, accelTime);
+	// printf("deltaVel:%f acc:%d accelTime:%f\n", deltaVel, acc, accelTime);
 	if (accelTime > seconds)
 	{
 		// time is not long enough to reach end velocity so d = v*t + a*t*t/2
@@ -1191,8 +1191,8 @@ int			len;
 	acc 	= 	abs(acc);
 	decel 	= 	abs(decel);
 
-	printf("RC_move_by_posvad: addr = %X cmd = %d gRC[cmd].cmd = %d\n", addr, cmd, gRC[cmd].cmd);
-	printf("RC_move_by_posvad: motor:%d, pos:%d vel:%d acc:%d decel:%d, buff:%d\n", motor, pos, vel, acc, decel, buffered);
+	// printf("RC_move_by_posvad: addr = %X cmd = %d gRC[cmd].cmd = %d\n", addr, cmd, gRC[cmd].cmd);
+	// printf("RC_move_by_posvad: motor:%d, pos:%d vel:%d acc:%d decel:%d, buff:%d\n", motor, pos, vel, acc, decel, buffered);
 
 	// If requesting a buffered command (eg. TRUE) set variable now to 0
 	// otherwise, setting it to 1 means stop any running cmds and execute it now
@@ -1206,7 +1206,7 @@ int			len;
 	Note_add_dword(ptrB, pos, &ptrA);
 
 	// add buffer arg, 1 = stop any running cmds and execute it now
-	printf("RC_move_by_posvad: now=%d\n", now);
+	// printf("RC_move_by_posvad: now=%d\n", now);
 	Note_add_byte(ptrA, now, &ptrB);
 
 	// Get length and calc CRC then add it the note
@@ -1383,7 +1383,7 @@ int32_t		minP, maxP;
 	printf("\nTesting PID commands\n");
 	//Get the current settings
 	RC_get_pos_pid(addr, SERVO_RA_AXIS,  &propo, &integ, &deriv, &iMax, &deadZ, &minP, &maxP);
-	printf("P:%.2f I:%.2f D:%.2f iMax:%d: Dz%d Min:%d Max:%d\n", propo, integ, deriv, iMax, deadZ, minP, maxP);
+	// printf("P:%.2f I:%.2f D:%.2f iMax:%d: Dz%d Min:%d Max:%d\n", propo, integ, deriv, iMax, deadZ, minP, maxP);
 
 	printf("Incrementing all values by 1\n");
 	propo++;
@@ -1396,7 +1396,8 @@ int32_t		minP, maxP;
 	printf("P:%.2f I:%.2f D:%.2f iMax:%d: Dz%d Min:%d Max:%d\n", propo, integ, deriv, iMax, deadZ, minP, maxP);
 
 	printf("Setting the PID and then reading back\n");
-	RC_set_pos_pid(addr, SERVO_RA_AXIS,  propo, integ, deriv, iMax, deadZ, minP, maxP);
+	RC_set_pos_pid(addr, SERVO_RA_AXIS,  propo, integ, deriv, iMax, deadZ, -20000000, 20000000);
+	// RC_set_pos_pid(addr, SERVO_RA_AXIS,  propo, integ, deriv, iMax, deadZ, minP, maxP);
 	RC_get_pos_pid(addr, SERVO_RA_AXIS,  &propo, &integ, &deriv, &iMax, &deadZ, &minP, &maxP);
 	printf("POS P:%.2f I:%.2f D:%.2f iMax:%d: Dz:%d Min:%d Max:%d\n", propo, integ, deriv, iMax, deadZ, minP, maxP);
 
@@ -1408,6 +1409,30 @@ int32_t		minP, maxP;
 	// RC_write_settings(addr);
 	// printf("Reading values from EEPROM\n");
 	// RC_read_settings(addr, &settings);
+
+	printf("Testing accuracy of dec encoder\n");
+
+	//Get the current settings
+	RC_get_pos_pid(addr, SERVO_DEC_AXIS,  &propo, &integ, &deriv, &iMax, &deadZ, &minP, &maxP);
+	// printf("P:%.2f I:%.2f D:%.2f iMax:%d: Dz%d Min:%d Max:%d\n", propo, integ, deriv, iMax, deadZ, minP, maxP);
+
+	printf("Setting the PID and then reading back\n");
+	RC_set_pos_pid(addr, SERVO_DEC_AXIS,  propo, integ, deriv, iMax, deadZ, -20000000, 20000000);
+	// RC_set_pos_pid(addr, SERVO_RA_AXIS,  propo, integ, deriv, iMax, deadZ, minP, maxP);
+	RC_get_pos_pid(addr, SERVO_DEC_AXIS,  &propo, &integ, &deriv, &iMax, &deadZ, &minP, &maxP);
+	printf("POS P:%.2f I:%.2f D:%.2f iMax:%d: Dz:%d Min:%d Max:%d\n", propo, integ, deriv, iMax, deadZ, minP, maxP);
+	
+	if (RC_move_by_posva(addr, SERVO_DEC_AXIS, 12960000, 60000, 15000, false) == kERROR)		printf("DEC RC_move_by_pos returned error\n");
+
+//////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////
+return 0;
+//////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////
+
+
+
+
 
 	printf("Setting default acc\n");
 	RC_set_default_acc(addr, SERVO_RA_AXIS, 4000);
