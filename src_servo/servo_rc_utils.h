@@ -30,13 +30,13 @@
 //*	May  8,	2022	<RNS> fadd a & va suffixes to the move_by functions
 //*	May 21,	2022	<RNS> added addr arg to RC_ MC cmds for multi-RC support
 //*	May 22,	2022	<RNS> corrected some signness for pos and vel args
-//*	May 22,	2022	<RNS> added buffered capability to move_by_vela() 
+//*	May 22,	2022	<RNS> added buffered capability to move_by_vela()
 //*	Jun 12	2022	<RNS> Updated functions list using cproto
 //*	Jun 13	2022	<RNS> Converted all PID function to use float for PID args
 //*	Jul  2,	2022	<RNS> Changed the function name _velocity() to _vel()
 //*	Jul  2,	2022	<RNS> Changed POS_FOREVER to kSTEP_FOREVER and moved here
 //*	Jul  5,	2022	<RNS> Regenerated all headers with cproto
-//* Jul	 7, 2022	<RNS> Changed to signed vel/acc/decel in move_by_pos*
+//*	Jul  7,	2022	<RNS> Changed to signed vel/acc/decel in move_by_pos*
 //****************************************************************************
 //#include "servo_rc_utils.h"
 

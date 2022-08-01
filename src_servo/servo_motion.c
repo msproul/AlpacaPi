@@ -3,7 +3,7 @@
 //*
 //*	Author:			Ron Story (C) 2022
 //*
-//*	Description: Servo motor motion command that are ported to motor controller
+//*	Description: Servo motor motion commands that are ported to motor controller
 //*
 //*****************************************************************************
 //*	AlpacaPi is an open source project written in C/C++ and led by Mark Sproul
@@ -328,7 +328,7 @@ TYPE_MOTION_MOTOR	*motor;
 	// Update the motor state and send move cmd
 	motor->state	=	MOVING_BY_POS;
 	RC_move_by_posva(motor->addr, axis, step, motor->vel, motor->acc, motor->buffered);
-	printf("!!! motor-addr:%d axis:%d step:%d, motor->vel:%d motor->acc:%d motor->buffered:%d\n", motor->addr, axis, step, motor->vel, motor->acc, motor->buffered);
+	printf("!!! Motion_move_axis_by_step() motor-addr:%d axis:%d step:%d, motor->vel:%d motor->acc:%d motor->buffered:%d\n", motor->addr, axis, step, motor->vel, motor->acc, motor->buffered);
 	return kSTATUS_OK;
 }
 
@@ -375,7 +375,7 @@ TYPE_MOTION_MOTOR	*motor;
 	// Update the motor state and send move cmd
 	motor->state	=	MOVING_BY_TIME;
 	startVel	=	Motion_get_axis_trackRate(axis);
-	printf("StartVel = %d\n", startVel); 
+	// printf("StartVel = %d\n", startVel); 
 	Motion_get_axis_acc(axis, &acc);
 
 	// Calc the move distance for the time period assuming a rapid decel
@@ -434,7 +434,7 @@ TYPE_MOTION_MOTOR	*motor;
 	status = Motion_set_axis_profile(axis);
 	if (status != kSTATUS_OK)
 	{
-		printf("ERROR!!!  set_axis_profile return error\n");
+		printf("ERROR!!!  Motion_reset_axis() returned error\n");
 	}
 	Motion_set_axis_buffer(axis, false);
 	RC_set_home(motor->addr, axis);
@@ -491,7 +491,7 @@ int status;
 	status	=	MC_init_comm(gMotionConfig.port, gMotionConfig.baud);
 	if (status != kSTATUS_OK)
 	{
-		printf("FATAL: (servo_init) Could not initialize comm port '%s'.\n", gMotionConfig.port);
+		printf("FATAL: Motion_init() Could not initialize comm port '%s'.\n", gMotionConfig.port);
 		return (kERROR);
 	}
 
@@ -517,7 +517,7 @@ int main(void)
 	status = Motion_init("servo_motion.cfg");
 	if (status != kSTATUS_OK)
 	{
-		printf("ERROR!!! (main) Motion_init() returned error\n");
+		printf("ERROR!!! main() : Motion_init() returned error\n");
 	}
 
 

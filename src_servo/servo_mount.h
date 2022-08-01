@@ -38,7 +38,7 @@
 //*	Jun 24,	2022	<RNS> Added routines _is_TTP(), _get_lst(), _get_HA()
 //*	Jul  3,	2022	<RNS> Regenerated all headers with cproto
 //*	Jul  5,	2022	<RNS> Regenerated all headers with cproto
-//*	Jul	18,	2022	<RNS> Added Servo_move_axis_by_vel() 
+//*	Jul 18,	2022	<RNS> Added Servo_move_axis_by_vel()
 //****************************************************************************
 
 #ifndef _SERVO_MOUNT_H_
