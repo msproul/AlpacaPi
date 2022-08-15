@@ -84,6 +84,8 @@
 //*	Mar 27,	2021	<MLS> Added OFFSET value to FITS header
 //*	Dec 23,	2021	<MLS> Added local time to FITS header
 //*	Jan 15,	2022	<MLS> Fixed bug in FITS header filter wheel name
+//*	Jul 25,	2022	<MLS> Added WriteFITS_IMUinfo()
+//*	Aug 14,	2022	<MLS> Added FITS simulation comment if camera is in simulation mode
 //*****************************************************************************
 
 #if defined(_ENABLE_CAMERA_) && defined(_ENABLE_FITS_)
@@ -129,6 +131,9 @@
 #include	"julianTime.h"
 #include	"cpu_stats.h"
 
+#ifdef _ENABLE_IMU_
+	#include "imu_lib.h"
+#endif
 
 
 //*****************************************************************************
@@ -542,6 +547,12 @@ int				iii;
 		//*	Telescope info
 		WriteFITS_TelescopeInfo(fitsFilePtr);
 
+#ifdef _ENABLE_IMU_
+		//************************************************************
+		//*	Telescope info
+		WriteFITS_IMUinfo(fitsFilePtr);
+#endif
+
 		//************************************************************
 		//*	Focuser info
 		WriteFITS_FocuserInfo(fitsFilePtr);
@@ -844,7 +855,11 @@ char	instrumentString[128];
 	CONSOLE_DEBUG(__FUNCTION__);
 
 	WriteFITS_Seperator(fitsFilePtr, "Camera Info");
-
+	if (gSimulateCameraImage)
+	{
+		fitsStatus	=	0;
+		fits_write_key(fitsFilePtr, TSTRING, "COMMENT",	(void *)"Camera is in simulate mode",	NULL, &fitsStatus);
+	}
 	//***************************************************
 	//*	output info about the camera and instrument
 	if (strlen(cTS_info.instrument) > 0)
@@ -2193,6 +2208,76 @@ char		moonPhaseStr[64];
 	}
 }
 
+#ifdef _ENABLE_IMU_
+//**************************************************************************
+void	CameraDriver::WriteFITS_IMUinfo(fitsfile *fitsFilePtr)
+{
+int		fitsStatus;
+char	imageFileName[64];
+char	imageFilePath[128];
+FILE	*filePointer;
+double	imuHeading;
+double	imuRoll;
+double	imuPitch;
+int		imuRetCode;
+double	xxx;
+double	yyy;
+double	zzz;
+double	www;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+
+	WriteFITS_Seperator(fitsFilePtr, "IMU Info");
+
+	fitsStatus	=	0;
+	fits_write_key(fitsFilePtr, TSTRING,	"COMMENT",
+											(char *)"Using bno055 sensor attached to camera",
+											NULL, &fitsStatus);
+
+	imuRetCode	=	IMU_Read_Euler(&imuHeading, &imuRoll, &imuPitch);
+	if (imuRetCode == 0)
+	{
+		fits_write_key(fitsFilePtr, TSTRING,	"COMMENT",
+												(char *)"IMU Euler Data",
+												NULL, &fitsStatus);
+		fitsStatus	=	0;
+		fits_write_key(fitsFilePtr, TDOUBLE,	"IMU_HEAD",	&imuHeading,	NULL, &fitsStatus);
+
+		fitsStatus	=	0;
+		fits_write_key(fitsFilePtr, TDOUBLE,	"IMU_ROLL",	&imuRoll,		NULL, &fitsStatus);
+
+		fitsStatus	=	0;
+		fits_write_key(fitsFilePtr, TDOUBLE,	"IMU_PTCH",	&imuPitch,		NULL, &fitsStatus);
+	}
+	else
+	{
+	}
+
+	imuRetCode	=	IMU_Read_Quaternion(&www, &xxx, &yyy, &zzz);
+	if (imuRetCode == 0)
+	{
+		fits_write_key(fitsFilePtr, TSTRING,	"COMMENT",
+												(char *)"IMU Quaternion Data",
+												NULL, &fitsStatus);
+
+		fitsStatus	=	0;
+		fits_write_key(fitsFilePtr, TDOUBLE,	"IMU_W",	&www,	NULL, &fitsStatus);
+
+		fitsStatus	=	0;
+		fits_write_key(fitsFilePtr, TDOUBLE,	"IMU_X",	&xxx,	NULL, &fitsStatus);
+
+		fitsStatus	=	0;
+		fits_write_key(fitsFilePtr, TDOUBLE,	"IMU_Y",	&yyy,	NULL, &fitsStatus);
+
+		fitsStatus	=	0;
+		fits_write_key(fitsFilePtr, TDOUBLE,	"IMU_Z",	&zzz,	NULL, &fitsStatus);
+	}
+	else
+	{
+	}
+}
+#endif // _ENABLE_IMU_
+
 #pragma mark -
 
 #ifdef __ARM_NEON
@@ -2306,7 +2391,7 @@ unsigned char	*bluBufPtr;
 						if ((neonBGRbuffer[iii] & 0x00ff) != ((cCameraBGRbuffer[iii] & 0x00ff)))
 						{
 							diffCnt++;
-							CONSOLE_DEBUG_W_NUM("Diff at offset\t=", iii);
+							CONSOLE_DEBUG_W_LONG("Diff at offset\t=", iii);
 						}
 					}
 					CONSOLE_DEBUG_W_NUM("NEON diff count\t=", diffCnt);

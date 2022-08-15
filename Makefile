@@ -2277,6 +2277,7 @@ SKYTRAVEL_OBJECTS=											\
 				$(OBJECT_DIR)sidereal.o						\
 				$(OBJECT_DIR)StarCatalogHelper.o			\
 				$(OBJECT_DIR)skytravel_main.o				\
+				$(OBJECT_DIR)SAO_stardata.o					\
 				$(OBJECT_DIR)StarData.o						\
 				$(OBJECT_DIR)SkyTravelTimeRoutines.o		\
 				$(OBJECT_DIR)serialport.o					\
@@ -2288,6 +2289,7 @@ SKYTRAVEL_OBJECTS=											\
 				$(OBJECT_DIR)windowtab_config.o				\
 				$(OBJECT_DIR)windowtab_constList.o			\
 				$(OBJECT_DIR)windowtab_covercalib.o			\
+				$(OBJECT_DIR)windowtab_cpustats.o			\
 				$(OBJECT_DIR)windowtab_deviceselect.o		\
 				$(OBJECT_DIR)windowtab_dome.o				\
 				$(OBJECT_DIR)windowtab_drvrInfo.o			\
@@ -2409,6 +2411,7 @@ skycv4sql			:	DEFINEFLAGS		+=	-D_ENABLE_REMOTE_SQL_
 skycv4sql			:	DEFINEFLAGS		+=	-D_ENABLE_REMOTE_GAIA_
 skycv4sql			:	DEFINEFLAGS		+=	-D_USE_OPENCV_
 skycv4sql			:	DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
+skycv4sql			:	DEFINEFLAGS		+=	-D_ENABLE_CPU_STATS_
 skycv4sql			:	DEFINEFLAGS		+=	-D_SQL_$(SQL_VERSION)
 skycv4sql			:	INCLUDES		+=	-I$(SRC_SKYTRAVEL)
 
@@ -3553,6 +3556,12 @@ $(OBJECT_DIR)StarData.o :				$(SRC_SKYTRAVEL)StarData.c	\
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYTRAVEL)StarData.c -o$(OBJECT_DIR)StarData.o
 
 #-------------------------------------------------------------------------------------
+$(OBJECT_DIR)SAO_stardata.o :			$(SRC_SKYTRAVEL)SAO_stardata.c	\
+										$(SRC_SKYTRAVEL)SAO_stardata.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYTRAVEL)SAO_stardata.c -o$(OBJECT_DIR)SAO_stardata.o
+
+
+#-------------------------------------------------------------------------------------
 $(OBJECT_DIR)aavso_data.o :				$(SRC_SKYTRAVEL)aavso_data.c	\
 										$(SRC_SKYTRAVEL)aavso_data.h	\
 										$(SRC_SKYTRAVEL)SkyStruc.h
@@ -3575,6 +3584,12 @@ $(OBJECT_DIR)windowtab_skytravel.o :	$(SRC_SKYTRAVEL)windowtab_skytravel.cpp	\
 										$(SRC_SKYTRAVEL)SkyStruc.h
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYTRAVEL)windowtab_skytravel.cpp -o$(OBJECT_DIR)windowtab_skytravel.o
 
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)windowtab_cpustats.o :		$(SRC_SKYTRAVEL)windowtab_cpustats.cpp	\
+										$(SRC_SKYTRAVEL)windowtab_cpustats.h	\
+										$(SRC_DIR)windowtab.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYTRAVEL)windowtab_cpustats.cpp -o$(OBJECT_DIR)windowtab_cpustats.o
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)windowtab_STsettings.o :	$(SRC_SKYTRAVEL)windowtab_STsettings.cpp	\

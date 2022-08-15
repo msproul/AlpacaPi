@@ -306,7 +306,8 @@ int		dbNumber;
 	SetWidgetType(		kRemoteData_GaiaSearchField,	kWidgetType_TextInput);
 	SetWidgetBGColor(	kRemoteData_GaiaSearchField,	CV_RGB(128,	128,	128));
 //	SetWidgetText(		kRemoteData_GaiaSearchField,	"4098214367441486592");
-	SetWidgetText(		kRemoteData_GaiaSearchField,	"133768513079427328");
+//	SetWidgetText(		kRemoteData_GaiaSearchField,	"133768513079427328");
+	SetWidgetText(		kRemoteData_GaiaSearchField,	"2093214988170429184");
 
 	SetWidget(			kRemoteData_GaiaSearchBtn,	xLoc2,	yLoc,	valueWitdth2,		cSmallBtnHt);
 	SetWidgetType(		kRemoteData_GaiaSearchBtn,	kWidgetType_Button);

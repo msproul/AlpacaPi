@@ -17,6 +17,7 @@
 //*	Sep  5,	2021	<MLS> Added AlpacaProcessSupportedActions_Camera()
 //*	Nov 14,	2021	<MLS> Added remote data window tab
 //*	Jun  4,	2022	<MLS> Updated SetTelescopeIPaddress() to handle mount graph window
+//*	Jul 14,	2022	<MLS> Started on CPU stats, skytravel is using too much CPU time
 //*****************************************************************************
 
 #ifndef _ENABLE_SKYTRAVEL_
@@ -87,6 +88,9 @@ ControllerSkytravel::ControllerSkytravel(	const char *argWindowName)
 #ifndef __ARM_ARCH
 	cMountTabObjPtr			=	NULL;
 #endif
+#ifdef _ENABLE_CPU_STATS_
+	cCpuStatsTabObjPtr		=	NULL;
+#endif
 
 	cDomeAddressValid		=	false;
 	cTelescopeAddressValid	=	false;
@@ -129,6 +133,9 @@ ControllerSkytravel::~ControllerSkytravel(void)
 	DELETE_OBJ_IF_VALID(cIPaddrListObjPtr);
 	DELETE_OBJ_IF_VALID(cMoonTabObjPtr);
 	DELETE_OBJ_IF_VALID(cAboutBoxTabObjPtr);
+#ifdef _ENABLE_CPU_STATS_
+	DELETE_OBJ_IF_VALID(cCpuStatsTabObjPtr);
+#endif
 }
 
 
@@ -254,6 +261,19 @@ void	ControllerSkytravel::SetupWindowControls(void)
 		SetTabWindow(kTab_ST_About,	cAboutBoxTabObjPtr);
 		cAboutBoxTabObjPtr->SetParentObjectPtr(this);
 	}
+
+#ifdef _ENABLE_CPU_STATS_
+	//=============================================================
+	SetTabText(kTab_CPU_STATS,		"CPU Stats");
+	cCpuStatsTabObjPtr		=	new WindowTabCpuStats(	cWidth, cHeight, cBackGrndColor, cWindowName);
+	if (cCpuStatsTabObjPtr != NULL)
+	{
+		SetTabWindow(kTab_CPU_STATS,	cCpuStatsTabObjPtr);
+		cCpuStatsTabObjPtr->SetParentObjectPtr(this);
+	}
+#endif
+
+
 }
 
 //**************************************************************************************
@@ -715,22 +735,22 @@ bool	previousOnLineState;
 			//*	if we slewing, we want to update more often
 			cUpdateDelta	=	1;
 			SetWidgetText(kTab_ST_Dome, kDomeBox_CurPosition, "Slewing");
-			cUpdateWindow	=	true;
+//			cUpdateWindow	=	true;
 		}
 		else if (cDomeProp.AtHome)
 		{
 			SetWidgetText(kTab_ST_Dome, kDomeBox_CurPosition, "Home");
-			cUpdateWindow	=	true;
+//			cUpdateWindow	=	true;
 		}
 		else if (cDomeProp.AtPark)
 		{
 			SetWidgetText(kTab_ST_Dome, kDomeBox_CurPosition, "Park");
-			cUpdateWindow	=	true;
+//			cUpdateWindow	=	true;
 		}
 		else
 		{
 			SetWidgetText(kTab_ST_Dome, kDomeBox_CurPosition, "Stopped");
-			cUpdateWindow	=	true;
+//			cUpdateWindow	=	true;
 		}
 
 
@@ -764,14 +784,12 @@ bool	previousOnLineState;
 bool	ControllerSkytravel::AlpacaGetTelescopeStatus(void)
 {
 bool	validData;
-//bool	previousOnLineState;
 char	raString[64];
 char	decString[64];
 char	textBuff[64];
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 	validData			=	false;
-//	previousOnLineState	=	cOnLine;
 	if (cTelescopeHas_readall)
 	{
 //		CONSOLE_DEBUG("cTelescopeHas_readall");
@@ -789,12 +807,10 @@ char	textBuff[64];
 	//*	do we have new data
 	if (validData)
 	{
-
 		//*	update the RA/DEC in the SkyTravel window
 		FormatHHMMSS(cTelescopeProp.RightAscension,	raString, false);
 		FormatHHMMSS(cTelescopeProp.Declination,	decString, true);
 		sprintf(textBuff, "%s / %s", raString, decString);
-
 
 		SetWidgetText(		kTab_SkyTravel, kSkyTravel_Telescope_RA_DEC, textBuff);
 		SetWidgetBGColor(	kTab_SkyTravel,	kSkyTravel_TelescopeIndicator,	CV_RGB(64,	255,	64));

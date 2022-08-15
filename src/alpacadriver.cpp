@@ -2803,6 +2803,7 @@ int		newListenPort;
 				//	"-s" means Simulate image
 				case 's':
 					gSimulateCameraImage	=	true;
+					CONSOLE_DEBUG("gSimulateCameraImage = true");
 					break;
 
 				//*	"-t" means which telescope profile to use

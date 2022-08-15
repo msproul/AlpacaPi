@@ -16,7 +16,7 @@
 //*	that you agree that the author(s) have no warranty, obligations or liability.  You
 //*	must determine the suitability of this source code for your use.
 //*
-//*	Redistributions of this source code must retain this copyright notice.
+//*	Redistribution of this source code must retain this copyright notice.
 //*****************************************************************************
 //*
 //*	References:
@@ -33,6 +33,8 @@
 //*	Apr 10,	2022	<MLS> CreateOpenCVImage() now can use openCV++ calls
 //*	Apr 10,	2022	<MLS> SaveOpenCVImage() now can use openCV++ calls
 //*	May  3,	2022	<MLS> Added WriteIMUtextFile()
+//*	Jul  7,	2022	<MLS> Added Quaternion data to WriteIMUtextFile()
+//*	Jul 25,	2022	<MLS> Increased # of decimal points in WriteIMUtextFile()
 //*****************************************************************************
 
 #ifdef _ENABLE_CAMERA_
@@ -780,6 +782,10 @@ double	imuHeading;
 double	imuRoll;
 double	imuPitch;
 int		imuRetCode;
+double	xxx;
+double	yyy;
+double	zzz;
+double	www;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -795,17 +801,31 @@ int		imuRetCode;
 	{
 		fprintf(filePointer, "#using bno055 sensor\r\n");
 		fprintf(filePointer, "Image   =%s\r\n",		cFileNameRoot);
-		imuRetCode	=	IMU_Read_EUL(&imuHeading, &imuRoll, &imuPitch);
+		imuRetCode	=	IMU_Read_Euler(&imuHeading, &imuRoll, &imuPitch);
 		if (imuRetCode == 0)
 		{
-			fprintf(filePointer, "Heading =%3.3f\r\n",	imuHeading);
-			fprintf(filePointer, "Roll    =%3.3f\r\n",	imuRoll);
-			fprintf(filePointer, "Pitch   =%3.3f\r\n",	imuPitch);
+			fprintf(filePointer, "Heading =%3.5f\r\n",	imuHeading);
+			fprintf(filePointer, "Roll    =%3.5f\r\n",	imuRoll);
+			fprintf(filePointer, "Pitch   =%3.5f\r\n",	imuPitch);
 		}
 		else
 		{
 			fprintf(filePointer, "Error getting IMU data\r\n");
 		}
+
+		imuRetCode	=	IMU_Read_Quaternion(&www, &xxx, &yyy, &zzz);
+		if (imuRetCode == 0)
+		{
+			fprintf(filePointer, "www   =%3.5f\r\n",	www);
+			fprintf(filePointer, "xxx   =%3.5f\r\n",	xxx);
+			fprintf(filePointer, "yyy   =%3.5f\r\n",	yyy);
+			fprintf(filePointer, "zzz   =%3.5f\r\n",	zzz);
+		}
+		else
+		{
+			fprintf(filePointer, "Error getting IMU data\r\n");
+		}
+
 		fclose(filePointer);
 
 		AddToDataProductsList(imageFileName, "IMU data");

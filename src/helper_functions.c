@@ -7,6 +7,8 @@
 //*	May 30,	2022	<MLS> Added "Z" to the end of ISO8601 date/time string
 //*	Jun 14,	2022	<MLS> Added tolowerStr()
 //*	Jun 17,	2022	<MLS> Added AsciiToDouble()
+//*	Jul  8,	2022	<MLS> Added MSecTimer_getNanoSecs()
+//*	Aug  6,	2022	<MLS> Added GetMinutesSinceMidnight()
 //*****************************************************************************
 
 #include	<math.h>
@@ -361,6 +363,48 @@ char	*asciiPtr;
 //		CONSOLE_ABORT(__FUNCTION__);
 //	}
 	return(dblValue);
+}
+
+static unsigned long	gBaseSeconds		=	0;
+
+//*****************************************************************************
+unsigned long MSecTimer_getNanoSecs(void)
+{
+unsigned long	currentNanoSecs;
+struct timespec currentTime;
+unsigned long	currentSecs;
+
+	clock_gettime(CLOCK_REALTIME, &currentTime);
+	if (gBaseSeconds == 0)
+	{
+		gBaseSeconds	=	currentTime.tv_sec;
+	}
+
+	currentSecs		=	currentTime.tv_sec - gBaseSeconds;
+
+	currentNanoSecs	=	(currentSecs * 1000000000L) + currentTime.tv_nsec;
+	return(currentNanoSecs);
+}
+
+
+//*****************************************************************************
+int	GetMinutesSinceMidnight(void)
+{
+struct timeval	currentTimeVal;
+struct tm		*linuxTime;
+int				minutesSinceMidnight;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	gettimeofday(&currentTimeVal, NULL);
+
+	linuxTime	=	localtime(&currentTimeVal.tv_sec);
+
+//	CONSOLE_DEBUG_W_NUM("linuxTime->tm_hour\t=", linuxTime->tm_hour);
+//	CONSOLE_DEBUG_W_NUM("linuxTime->tm_min\t=", linuxTime->tm_min);
+	minutesSinceMidnight	=	linuxTime->tm_hour * 60;
+	minutesSinceMidnight	+=	linuxTime->tm_min;
+	return(minutesSinceMidnight);
 }
 
 #if !defined(__arm__) || defined(_INCLUDE_MILLIS_)

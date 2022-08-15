@@ -28,13 +28,14 @@ int			fileCntr;
 
 		for (iii = 1; iii <= nkeys; iii++)
 		{
-			fits_read_record(fptr, iii, card, &status); /* read keyword */
+			status	=	0;
+			fits_read_record(fptr, iii, card, &status);	//* read keyword
 			printf("%s\n", card);
 		}
-		printf("END\n\n");		/* terminate listing with END */
+		printf("END\n\n");		//* terminate listing with END
 		fits_close_file(fptr, &status);
 
-		if (status)			/* print any error messages */
+		if (status)				//* print any error messages
 		{
 			fits_report_error(stderr, status);
 		}

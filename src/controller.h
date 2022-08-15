@@ -107,6 +107,46 @@ typedef struct
 } TYPE_CAPABILITY;
 
 
+
+//*****************************************************************************
+typedef struct
+{
+	unsigned long	Count;
+	unsigned long	RecentNanoSecons;
+	unsigned long	TotalNanoSecons;
+	unsigned long	AverageNanoSecons;
+
+} TYPE_CONTROLER_TIMING_INFO;
+extern TYPE_CONTROLER_TIMING_INFO	gControllerTime[];
+
+
+#define	_ENABLE_TASK_TIMING_
+
+
+#ifdef _ENABLE_TASK_TIMING_
+//*****************************************************************************
+//*	task IDs
+enum
+{
+	kTask_BackgroundThread	=	0,
+	kTask_UpdateWindow,
+};
+
+#define	kMaxTaskTiming	10
+//*****************************************************************************
+typedef struct
+{
+	char			taskName[48];
+	unsigned long	totalMilliSecsUsed;
+	unsigned long	startNanoSecs;
+	unsigned long	endNanoSecs;
+	unsigned long	nanoSecsAccumulator;
+
+} TYPE_TAKS_TIMING;
+
+
+#endif // _ENABLE_TASK_TIMING_
+
 //*****************************************************************************
 class Controller
 {
@@ -472,6 +512,14 @@ class Controller
 		bool		cButtonClickInProgress;
 		bool		cBackgroundTaskActive;
 
+//------------------------------------------------------------
+#ifdef _ENABLE_TASK_TIMING_
+		TYPE_TAKS_TIMING	cTaskData[kMaxTaskTiming];
+		void				TaskTiming_Init(void);
+		void				TaskTiming_SetName(const int taskID, const char *taskName);
+		void				TaskTiming_Start(const int taskID);
+		void				TaskTiming_Stop(const int taskID);
+#endif // _ENABLE_TASK_TIMING_
 
 };
 

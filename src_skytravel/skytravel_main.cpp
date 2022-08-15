@@ -80,6 +80,8 @@ long				gNGCobjectCount		=	0;
 TYPE_OpenNGCoutline	*gOpenNGC_outlines	=	NULL;
 long				gOpenNGC_outlineCnt	=	0;
 
+TYPE_CelestData		*gSAOobjectPtr		=	NULL;
+long				gSAOobjectCount		=	0;
 
 //*	Hipparcos
 TYPE_CelestData		*gHipObjectPtr		=	NULL;
@@ -173,7 +175,7 @@ char	theChar;
 }
 
 
-
+TYPE_CONTROLER_TIMING_INFO	gControllerTime[kMaxControllers];
 
 //*****************************************************************************
 int main(int argc, char *argv[])
@@ -187,11 +189,16 @@ float				fitsVersionVal;
 unsigned int		currentMillis;
 unsigned int		lastDebugMillis;
 unsigned int		deltaSecs;
+unsigned long		startNanoSecs;
+unsigned long		endNanoSecs;
+unsigned long		deltaNanoSecs;
+unsigned long		lastTimingMillis;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 //	CONSOLE_DEBUG_W_NUM("sizeof(TYPE_CelestData)", sizeof(TYPE_CelestData));
 
 	lastDebugMillis		=	millis();
+	lastTimingMillis	=	millis();
 
 
 	fitsVersionRet		=	ffvers(&fitsVersionVal);
@@ -244,71 +251,81 @@ unsigned int		deltaSecs;
 #endif
 	objectsCreated++;
 
+	//*	set the time to all zeros
+	for (iii=0; iii<kMaxControllers; iii++)
+	{
+		gControllerTime[iii].Count				=	0;
+		gControllerTime[iii].RecentNanoSecons	=	0;
+		gControllerTime[iii].TotalNanoSecons	=	0;
+		gControllerTime[iii].AverageNanoSecons	=	0;
+	}
+
 	StartDiscoveryQuerryThread();
 
 
-	if (objectsCreated > 0)
+	gKeepRunning	=	true;
+	activeObjCnt	=	objectsCreated;
+
+	while (gKeepRunning && (activeObjCnt > 0))
 	{
-		gKeepRunning	=	true;
-		activeObjCnt	=	objectsCreated;
-
-		while (gKeepRunning && (activeObjCnt > 0))
-		{
-			activeObjCnt	=	0;
-			for (iii=0; iii<kMaxControllers; iii++)
-			{
-				if (gControllerList[iii] != NULL)
-				{
-					activeObjCnt++;
-					gControllerList[iii]->HandleWindow();
-
-					keyPressed	=	cv::waitKeyEx(5);
-
-					if (keyPressed > 0)
-					{
-						Controller_HandleKeyDown(keyPressed);
-					}
-
-					if (gControllerList[iii]->cKeepRunning == false)
-					{
-					//	CONSOLE_DEBUG_W_NUM("Deleting control #", iii);
-					//	CONSOLE_DEBUG_W_STR("Deleting window", gControllerList[iii]->cWindowName);
-						delete gControllerList[iii];
-						if (gControllerList[iii] != NULL)
-						{
-							CONSOLE_DEBUG_W_STR("Delete had a problem", gControllerList[iii]->cWindowName);
-						}
-					}
-				}
-			}
-			if (gVerbose)
-			{
-				currentMillis	=	millis();
-				deltaSecs		=	(currentMillis - lastDebugMillis) / 1000;
-				if (deltaSecs > 15)
-				{
-					DumpControllerBackGroundTaskStatus();
-					lastDebugMillis	=	millis();
-				}
-			}
-		}
-		CONSOLE_DEBUG("Closing all windows");
+		activeObjCnt	=	0;
 		for (iii=0; iii<kMaxControllers; iii++)
 		{
 			if (gControllerList[iii] != NULL)
 			{
-				CONSOLE_DEBUG_W_STR("Deleting window", gControllerList[iii]->cWindowName);
-				delete gControllerList[iii];
-				cv::waitKey(10);
-			//	sleep(2);
+				activeObjCnt++;
+				startNanoSecs	=	MSecTimer_getNanoSecs();
+				gControllerList[iii]->HandleWindow();
+				endNanoSecs		=	MSecTimer_getNanoSecs();
+				deltaNanoSecs	=	endNanoSecs - startNanoSecs;
+
+				gControllerTime[iii].Count++;
+				gControllerTime[iii].RecentNanoSecons	=	deltaNanoSecs;
+				gControllerTime[iii].TotalNanoSecons	+=	deltaNanoSecs;
+				gControllerTime[iii].AverageNanoSecons	=	gControllerTime[iii].TotalNanoSecons / gControllerTime[iii].Count;
+
+				keyPressed	=	cv::waitKeyEx(5);
+
+				if (keyPressed > 0)
+				{
+					Controller_HandleKeyDown(keyPressed);
+				}
+
+				if (gControllerList[iii]->cKeepRunning == false)
+				{
+				//	CONSOLE_DEBUG_W_NUM("Deleting control #", iii);
+				//	CONSOLE_DEBUG_W_STR("Deleting window", gControllerList[iii]->cWindowName);
+					delete gControllerList[iii];
+					if (gControllerList[iii] != NULL)
+					{
+						CONSOLE_DEBUG_W_STR("Delete had a problem", gControllerList[iii]->cWindowName);
+					}
+				}
 			}
 		}
-		CONSOLE_DEBUG("Clean exit");
+		if (gVerbose)
+		{
+			currentMillis	=	millis();
+			deltaSecs		=	(currentMillis - lastDebugMillis) / 1000;
+			if (deltaSecs > 15)
+			{
+				DumpControllerBackGroundTaskStatus();
+				lastDebugMillis	=	millis();
+			}
+		}
 	}
-	else
+	CONSOLE_DEBUG("Closing all windows");
+	for (iii=0; iii<kMaxControllers; iii++)
 	{
-		CONSOLE_DEBUG("No devices found");
+		if (gControllerList[iii] != NULL)
+		{
+			CONSOLE_DEBUG_W_STR("Deleting window", gControllerList[iii]->cWindowName);
+			delete gControllerList[iii];
+			cv::waitKey(10);
+		//	sleep(2);
+		}
 	}
+	CONSOLE_DEBUG("Clean exit");
 }
 
 //*****************************************************************************

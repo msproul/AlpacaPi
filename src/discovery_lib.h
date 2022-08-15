@@ -23,6 +23,7 @@
 
 #define	kAlpacaDiscoveryMsg	"alpacadiscovery1"
 
+#define	kMaxCPUtempEntries	(((24 * 60) / 2) + 10)
 
 //*****************************************************************************
 //*	this is a list of IP addresses
@@ -33,16 +34,21 @@ typedef struct
 	int					noResponseCnt;
 	char				hostName[48];		//*	device name from hosts file
 
-	bool				upTimeValid;
-	int					upTimeDays;
-	bool				cpuTempValid;
-	double				cpuTemp_DegF;
 
 	//*	for use by discovery thread for keeping track of responses
 	int					queryOKcnt;
 	int					queryERRcnt;
 	bool				currentlyActive;
 	char				versionString[64];
+
+
+	//*	only works with AlpacaPi drivers, beyond the scope of normal Alpaca
+	bool				upTimeValid;
+	int					upTimeDays;
+
+	bool				cpuTempValid;
+	double				cpuTemp_DegF;
+	double				cpuTempLog[kMaxCPUtempEntries];
 
 } TYPE_ALPACA_UNIT;
 

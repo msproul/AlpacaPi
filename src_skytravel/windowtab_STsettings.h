@@ -100,6 +100,9 @@ enum
 	kSkyT_Settings_DataNGC_txt,
 	kSkyT_Settings_DataNGC_cnt,
 
+	kSkyT_Settings_DataSAO_txt,
+	kSkyT_Settings_DataSAO_cnt,
+
 	kSkyT_Settings_DataYALE_txt,
 	kSkyT_Settings_DataYALE_cnt,
 

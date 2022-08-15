@@ -53,6 +53,7 @@ enum
 	kSkyTravel_Btn_YaleCat,
 	kSkyTravel_Btn_Hipparcos,
 	kSkyTravel_Btn_Draper,
+	kSkyTravel_Btn_SAO,
 	kSkyTravel_Btn_AAVSOalerts,
 #ifdef _ENABLE_ASTERIODS_
 	kSkyTravel_Btn_Asteroids,

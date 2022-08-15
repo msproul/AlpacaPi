@@ -9,6 +9,7 @@
 //*	Apr 17,	2021	<MLS> Increased short name length from 8 to 12
 //*	Jul  9,	2021	<MLS> Finished converting all start data to globals
 //*	Oct 23,	2021	<MLS> Added spectralClass to star structure (O,B,A,F,G,K,M)
+//*	Aug  2,	2022	<MLS> Added kDataSrc_SAO
 //*****************************************************************************
 //#include	"SkyStruc.h"
 
@@ -76,6 +77,8 @@ enum
 	kDataSrc_Asteroids,
 	kDataSrc_OpenNGC,
 
+	kDataSrc_SAO,
+
 	kDataSrc_Unknown,
 
 	kDataSrc_last
@@ -102,7 +105,7 @@ typedef struct
 	double			org_ra;
 	double			org_decl;
 //	double			properMotion;	//	https://en.wikipedia.org/wiki/Proper_motion
-	double			maxSizeArcMinutes;
+//	double			maxSizeArcMinutes;
 	double			parallax;
 	char			shortName[kShortNameMax];
 	char			longName[kLongNameMax];
@@ -480,6 +483,10 @@ extern	long				gGaiaObjectCnt;
 
 extern	TYPE_CelestData		*gNGCobjectPtr;
 extern	long				gNGCobjectCount;
+
+extern	TYPE_CelestData		*gSAOobjectPtr;
+extern	long				gSAOobjectCount;
+
 
 extern	char				gNGCDatbase[];
 

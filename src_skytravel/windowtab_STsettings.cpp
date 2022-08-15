@@ -413,6 +413,8 @@ int		radioBtnWidth;
 		SetWidgetText(		kSkyT_Settings_DataNGC_txt,		textString);
 	}
 
+	SetWidgetText(		kSkyT_Settings_DataSAO_txt,			"SAO count");
+	SetWidgetNumber(	kSkyT_Settings_DataSAO_cnt,			gSAOobjectCount);
 
 	SetWidgetText(		kSkyT_Settings_DataYALE_txt,		"YALE count");
 	SetWidgetNumber(	kSkyT_Settings_DataYALE_cnt,		gYaleStarCount);
@@ -454,6 +456,9 @@ int		radioBtnWidth;
 
 	SetWidgetTextColor(	kSkyT_Settings_DataNGC_txt,			CV_RGB(0,	255,	0));
 	SetWidgetTextColor(	kSkyT_Settings_DataNGC_cnt,			CV_RGB(0,	255,	0));
+
+	SetWidgetTextColor(	kSkyT_Settings_DataSAO_txt,			CV_RGB(0,	255,	0));
+	SetWidgetTextColor(	kSkyT_Settings_DataSAO_cnt,			CV_RGB(0,	255,	0));
 
 	SetWidgetTextColor(	kSkyT_Settings_DataYALE_txt,		CV_RGB(0,	255,	0));
 	SetWidgetTextColor(	kSkyT_Settings_DataYALE_cnt,		CV_RGB(0,	255,	0));
@@ -919,6 +924,14 @@ void	WindowTabSTsettings::ProcessDoubleClick(const int	widgetIdx,
 			}
 			break;
 
+
+		case kSkyT_Settings_DataSAO_txt:
+		case kSkyT_Settings_DataSAO_cnt:
+			if ((gYaleStarDataPtr != NULL) && (gYaleStarCount > 0))
+			{
+				CreateStarlistWindow("SAO Catalog", gSAOobjectPtr, gSAOobjectCount);
+			}
+			break;
 
 		case kSkyT_Settings_DataYALE_txt:
 		case kSkyT_Settings_DataYALE_cnt:

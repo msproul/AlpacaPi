@@ -502,7 +502,7 @@ class CameraDriver: public AlpacaDriver
 												const int		numClms,
 												const int		pixelCount);
 				void	Send_imagearray_raw16(	const int		socketFD,
-												unsigned char	*pixelPtr,
+												uint16_t		*pixelPtr,
 												const int		numRows,
 												const int		numClms,
 												const int		pixelCount);
@@ -526,6 +526,9 @@ class CameraDriver: public AlpacaDriver
 				void	WriteFITS_TelescopeInfo(	fitsfile *fitsFilePtr);
 				void	WriteFITS_VersionInfo(		fitsfile *fitsFilePtr);
 				void	WriteFITS_MoonInfo(			fitsfile *fitsFilePtr);
+			#ifdef _ENABLE_IMU_
+				void	WriteFITS_IMUinfo(			fitsfile *fitsFilePtr);
+			#endif
 
 				TYPE_ASCOM_STATUS	Get_FitsHeader(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 				int					ExtractFitsHeader(fitsfile *fitsFilePtr);

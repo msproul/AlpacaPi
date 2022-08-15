@@ -23,6 +23,11 @@ enum
 	kIPaddrList_DiscoveryClear,
 
 	kIPaddrList_ErrorMsg,
+	kIPaddrList_TemperatureGraph,
+	kIPaddrList_TemperatureList,
+	kIPaddrList_TempModeRaw,
+	kIPaddrList_TempModeAvg,
+	kIPaddrList_ExportCSV,
 
 	kIPaddrList_ClmTitle1,
 	kIPaddrList_ClmTitle2,
@@ -58,34 +63,37 @@ enum
 	kIPaddrList_AlpacaDev_22,
 	kIPaddrList_AlpacaDev_23,
 	kIPaddrList_AlpacaDev_24,
-	kIPaddrList_AlpacaDev_25,
-	kIPaddrList_AlpacaDev_26,
-	kIPaddrList_AlpacaDev_27,
-	kIPaddrList_AlpacaDev_28,
-	kIPaddrList_AlpacaDev_29,
-	kIPaddrList_AlpacaDev_30,
-	kIPaddrList_AlpacaDev_31,
-	kIPaddrList_AlpacaDev_32,
-	kIPaddrList_AlpacaDev_33,
-	kIPaddrList_AlpacaDev_34,
+//	kIPaddrList_AlpacaDev_25,
+//	kIPaddrList_AlpacaDev_26,
+//	kIPaddrList_AlpacaDev_27,
+//	kIPaddrList_AlpacaDev_28,
+//	kIPaddrList_AlpacaDev_29,
+//	kIPaddrList_AlpacaDev_30,
+//	kIPaddrList_AlpacaDev_31,
+//	kIPaddrList_AlpacaDev_32,
+//	kIPaddrList_AlpacaDev_33,
+//	kIPaddrList_AlpacaDev_34,
 //	kIPaddrList_AlpacaDev_35,
 //	kIPaddrList_AlpacaDev_36,
 //	kIPaddrList_AlpacaDev_37,
 //	kIPaddrList_AlpacaDev_38,
 //	kIPaddrList_AlpacaDev_39,
 
-	kIPaddrList_AlpacaDev_Last	=	kIPaddrList_AlpacaDev_34,
-
+	kIPaddrList_AlpacaDev_Last	=	kIPaddrList_AlpacaDev_24,
 
 	kIPaddrList_AlpacaDev_Total,
-
-
 	kIPaddrList_AlpacaLogo,
-
-
 	kIPaddrList_last
 };
 
+//*****************************************************************************
+enum
+{
+	kGraphMode_Raw	=	0,
+	kGraphMode_Avg5,
+};
+
+#define	kCpuColorCnt	12
 
 //**************************************************************************************
 class WindowTabIPList: public WindowTab
@@ -109,12 +117,26 @@ class WindowTabIPList: public WindowTab
 												const int	yyy,
 												const int	wheelMovement,
 												const int	flags);
+#ifdef _USE_OPENCV_CPP_
+		virtual	void	DrawWidgetCustomGraphic(cv::Mat *openCV_Image, const int widgetIdx);
+#else
+		virtual	void	DrawWidgetCustomGraphic(IplImage *openCV_Image, const int widgetIdx);
+#endif // _USE_OPENCV_CPP_
+				void	DrawCpuTempGraph(TYPE_WIDGET *theWidget);
 
 				void	UpdateIPaddrList(void);
 				void	ClearIPaddrList(void);
 
+				void	UpdateButtons(void);
+				void	ExportCSV(void);
+
 				int				cPrevAlpacaDevCnt;
 				int				cSortColumn;
+
+				cv::Scalar		cCPUcolors[kCpuColorCnt];
+
+				int				cGraphMode;
+
 };
 
 

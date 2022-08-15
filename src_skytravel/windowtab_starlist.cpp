@@ -92,7 +92,7 @@ int		textBoxHt;
 int		textBoxWd;
 int		widgetWidth;
 int		iii;
-short	tabArray[kMaxTabStops]	=	{100, 400, 600, 700, 900, 950, 0, 0};
+short	tabArray[kMaxTabStops]	=	{100, 400, 550, 700, 900, 950, 0, 0};
 int		clmnHdr_xLoc;
 int		clmnHdrWidth;
 
@@ -383,7 +383,7 @@ double	declSecs;
 									&declMinutes,
 									&declSecs);
 
-			sprintf(formatString, "\t%3d:%02d:%04.1f\t%3d:%02d:%04.1f",
+			sprintf(formatString, "\t%3d:%02d:%04.2f\t%3d:%02d:%04.2f",
 															raHours,
 															raMinutes,
 															raSecs,

@@ -174,6 +174,7 @@
 //*	May 18,	2022	<MLS> Added lightField arg to Start_CameraExposure()
 //*	May 18,	2022	<MLS> Added BuildBinaryImage_Raw32()
 //*	May 18,	2022	<MLS> Updated Get_Imagearray() to return InvalidOperation when no image is available
+//*	Aug 14,	2022	<MLS> Fixed bug in Send_imagearray_raw16(), was sending 8 bit data
 //*****************************************************************************
 //*	Jan  1,	2119	<TODO> ----------------------------------------
 //*	Jun 26,	2119	<TODO> Add support for sub frames
@@ -4317,7 +4318,7 @@ char				httpHeader[500];
 			case kImageType_RAW16:
 				CONSOLE_DEBUG("kImageType_RAW16");
 				Send_imagearray_raw16(	mySocket,
-										cCameraDataBuffer,
+										(uint16_t *)cCameraDataBuffer,
 										cLastExposure_ROIinfo.currentROIheight,		//*	# of rows
 										cLastExposure_ROIinfo.currentROIwidth,		//*	# of columns
 										pixelCount);
@@ -4570,13 +4571,13 @@ int				totalValuesWritten;
 
 
 //*****************************************************************************
-void	CameraDriver::Send_imagearray_raw16(	const int		socketFD,
-												unsigned char	*pixelPtr,
-												const int		numRows,
-												const int		numClms,
-												const int		pixelCount)
+void	CameraDriver::Send_imagearray_raw16(	const int	socketFD,
+												uint16_t	*pixelPtr,
+												const int	numRows,
+												const int	numClms,
+												const int	pixelCount)
 {
-unsigned char	*myPixelPtr;
+uint16_t		*myPixelPtr;
 uint32_t		pixelValue;
 char			lineBuff[256];
 int				xxx;
@@ -5775,6 +5776,8 @@ CONSOLE_DEBUG(__FUNCTION__);
 					cAVIfourCC			=	fourCC;
 				#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 					cOpenCV_videoWriter	=	NULL;
+					//*	make the compiler happy
+					CONSOLE_DEBUG_W_NUM("videoIsColor\t=", videoIsColor);
 				#else
 					cOpenCV_videoWriter	=	cvCreateVideoWriter(	filePath,
 																	fourCC,
@@ -8095,7 +8098,6 @@ int			pixelValueInt;
 			pixelIndex	=	jjj * imageWith * bytesPerPixel;
 			for (iii = 0; iii< imageWith; iii++)
 			{
-			//	xFraction	=	((jjj + iii) * 1.0) / periodWidth;
 				xFraction	=	(iii * 1.0) / periodWidth;
 				sinValue	=	sin(xFraction * (2 * M_PI));
 				switch(bytesPerPixel)
@@ -8115,7 +8117,11 @@ int			pixelValueInt;
 						}
 						else
 						{
-							pixelValueInt			=	32768 + ((100 * iii) + jjj);
+							//*	this one puts a vertical skew on the image
+						//	pixelValueInt			=	32768 + ((100 * iii) + jjj);
+
+							//*	this one makes the image variation straight up and down
+							pixelValueInt			=	32768 + ((100 * iii));
 						}
 						cameraDataPtr[pixelIndex++]	=	(pixelValueInt & 0x00ff);
 						cameraDataPtr[pixelIndex++]	=	((pixelValueInt & 0x00ffff) >> 8) & 0x00ff;

@@ -27,6 +27,7 @@
 //*	Mar 11,	2022	<MLS> Added ReadLocalIPaddress()
 //*	Mar 11,	2022	<MLS> Working with WireGuards
 //*	Jun  2,	2022	<MLS> Added parsing for upTime_Days & cpuTemp_DegF
+//*	Aug  6,	2022	<MLS> Added CPU temp logging
 //*****************************************************************************
 
 
@@ -61,6 +62,7 @@
 #include	"discovery_lib.h"
 #include	"sendrequest_lib.h"
 #include	"linuxerrors.h"
+#include	"helper_functions.h"
 
 #include	"obsconditions_globals.h"
 #include	"HostNames.h"
@@ -382,41 +384,66 @@ bool	newDevice;
 void	ExtractDevicesFromJSON(SJP_Parser_t *jsonParser, TYPE_ALPACA_UNIT *theDevice)
 {
 TYPE_REMOTE_DEV	myRemoteDevice;
-int				ii;
+int				iii;
+int				jjj;
 char			myVersionString[64];
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 	memset((void *)&myRemoteDevice, 0, sizeof(TYPE_REMOTE_DEV));
 	memset((void *)myVersionString, 0, sizeof(myVersionString));
 
-	for (ii=0; ii<jsonParser->tokenCount_Data; ii++)
+	for (iii=0; iii<jsonParser->tokenCount_Data; iii++)
 	{
-		if (strcasecmp(jsonParser->dataList[ii].keyword, "VERSION") == 0)
+		if (strcasecmp(jsonParser->dataList[iii].keyword, "VERSION") == 0)
 		{
-			strcpy(myVersionString,				jsonParser->dataList[ii].valueString);
-			strcpy(theDevice->versionString,	jsonParser->dataList[ii].valueString);
+			strcpy(myVersionString,				jsonParser->dataList[iii].valueString);
+			strcpy(theDevice->versionString,	jsonParser->dataList[iii].valueString);
 		}
-		else if (strcasecmp(jsonParser->dataList[ii].keyword, "upTime_Days") == 0)
+		else if (strcasecmp(jsonParser->dataList[iii].keyword, "upTime_Days") == 0)
 		{
 			theDevice->upTimeValid	=	true;
-			theDevice->upTimeDays	=	atoi(jsonParser->dataList[ii].valueString);
+			theDevice->upTimeDays	=	atoi(jsonParser->dataList[iii].valueString);
 		}
-		else if (strcasecmp(jsonParser->dataList[ii].keyword, "cpuTemp_DegF") == 0)
+		else if (strcasecmp(jsonParser->dataList[iii].keyword, "cpuTemp_DegF") == 0)
 		{
+		int	minutesSinceMidnight;
+		int	cpuTempIndex;
+
 			theDevice->cpuTempValid	=	true;
-			theDevice->cpuTemp_DegF	=	atof(jsonParser->dataList[ii].valueString);
+			theDevice->cpuTemp_DegF	=	atof(jsonParser->dataList[iii].valueString);
+
+			minutesSinceMidnight	=	GetMinutesSinceMidnight();
+			cpuTempIndex			=	minutesSinceMidnight / 2;
+			if (cpuTempIndex < kMaxCPUtempEntries)
+			{
+//				CONSOLE_DEBUG_W_NUM("cpuTempIndex\t=", cpuTempIndex);
+				theDevice->cpuTempLog[cpuTempIndex]	=	theDevice->cpuTemp_DegF;
+				//*	make sure there is a separator when wrapping to the previous day
+				cpuTempIndex++;
+				jjj	=	0;
+				while ((cpuTempIndex < kMaxCPUtempEntries) && (jjj < 10))
+				{
+					theDevice->cpuTempLog[cpuTempIndex]	=	0;
+					cpuTempIndex++;
+					jjj++;
+				}
+			}
+			else
+			{
+				CONSOLE_DEBUG_W_NUM("ERROR!!!! cpuTempIndex\t=", cpuTempIndex);
+			}
 		}
-		else if (strcasecmp(jsonParser->dataList[ii].keyword, "DEVICETYPE") == 0)
+		else if (strcasecmp(jsonParser->dataList[iii].keyword, "DEVICETYPE") == 0)
 		{
-			strcpy(myRemoteDevice.deviceTypeStr, jsonParser->dataList[ii].valueString);
+			strcpy(myRemoteDevice.deviceTypeStr, jsonParser->dataList[iii].valueString);
 		}
-		else if (strcasecmp(jsonParser->dataList[ii].keyword, "DEVICENAME") == 0)
+		else if (strcasecmp(jsonParser->dataList[iii].keyword, "DEVICENAME") == 0)
 		{
-			strcpy(myRemoteDevice.deviceNameStr, jsonParser->dataList[ii].valueString);
+			strcpy(myRemoteDevice.deviceNameStr, jsonParser->dataList[iii].valueString);
 		}
-		else if (strcasecmp(jsonParser->dataList[ii].keyword, "DEVICENUMBER") == 0)
+		else if (strcasecmp(jsonParser->dataList[iii].keyword, "DEVICENUMBER") == 0)
 		{
-			myRemoteDevice.alpacaDeviceNum	=	atoi(jsonParser->dataList[ii].valueString);
+			myRemoteDevice.alpacaDeviceNum	=	atoi(jsonParser->dataList[iii].valueString);
 		}
 
 
@@ -424,12 +451,12 @@ char			myVersionString[64];
 
 //		else
 //		{
-//			CONSOLE_DEBUG_W_STR("keyword\t=",	jsonParser->dataList[ii].keyword);
-//			CONSOLE_DEBUG_W_STR("value  \t=",	jsonParser->dataList[ii].valueString);
+//			CONSOLE_DEBUG_W_STR("keyword\t=",	jsonParser->dataList[iii].keyword);
+//			CONSOLE_DEBUG_W_STR("value  \t=",	jsonParser->dataList[iii].valueString);
 //		}
 
 		//------------------------------------
-		if (strcasecmp(jsonParser->dataList[ii].keyword, "ARRAY-NEXT") == 0)
+		if (strcasecmp(jsonParser->dataList[iii].keyword, "ARRAY-NEXT") == 0)
 		{
 			myRemoteDevice.deviceAddress	=	theDevice->deviceAddress;
 			myRemoteDevice.port				=	theDevice->port;
@@ -611,12 +638,12 @@ char				ipString[32];
 //*****************************************************************************
 static void	BumpNoResponseCount(void)
 {
-int		ii;
+int		iii;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
-	for (ii=0; ii<gAlpacaUnitCnt; ii++)
+	for (iii=0; iii<gAlpacaUnitCnt; iii++)
 	{
-		gAlpacaUnitList[ii].noResponseCnt++;
+		gAlpacaUnitList[iii].noResponseCnt++;
 	}
 }
 #endif // 0
@@ -624,16 +651,16 @@ int		ii;
 //*****************************************************************************
 static void	PollAllDevices(void)
 {
-int		ii;
+int		iii;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 //	CONSOLE_DEBUG_W_NUM("gAlpacaUnitCnt\t=", gAlpacaUnitCnt);
-	for (ii=0; ii<gAlpacaUnitCnt; ii++)
+	for (iii=0; iii<gAlpacaUnitCnt; iii++)
 	{
-//		CONSOLE_DEBUG_W_NUM("ii\t=", ii);
-		if (gAlpacaUnitList[ii].noResponseCnt == 0)
+//		CONSOLE_DEBUG_W_NUM("iii\t=", iii);
+		if (gAlpacaUnitList[iii].noResponseCnt == 0)
 		{
-			SendGetRequest(&gAlpacaUnitList[ii], "/management/v1/configureddevices");
+			SendGetRequest(&gAlpacaUnitList[iii], "/management/v1/configureddevices");
 		}
 	}
 //	CONSOLE_DEBUG_W_NUM("gRemoteCnt\t=", gRemoteCnt);

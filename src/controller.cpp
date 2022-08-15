@@ -247,6 +247,7 @@ int		keyPressed;
 int		iii;
 
 	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_ABORT(__FUNCTION__);
 	activeObjCnt	=	0;
 	for (iii=0; iii<kMaxControllers; iii++)
 	{
@@ -404,6 +405,11 @@ int			objCntr;
 
 	//*	low level drawing stuff
 	cCurrentLineWidth	=	1;
+
+#ifdef _ENABLE_TASK_TIMING_
+	TaskTiming_Init();
+#endif // _ENABLE_TASK_TIMING_
+
 
 #ifdef _CONTROLLER_USES_ALPACA_
 	ClearCapabilitiesList();
@@ -3320,10 +3326,14 @@ Controller	*myControllerPtr;
 			{
 				CONSOLE_DEBUG_W_STR("Calling RunBackgroundTasks() for", myControllerPtr->cWindowName);
 			}
+			myControllerPtr->TaskTiming_Start(kTask_BackgroundThread);
 			myControllerPtr->cBackgroundTaskActive	=	true;
 			myControllerPtr->RunBackgroundTasks(__FUNCTION__, gDebugBackgroundThread);
 			myControllerPtr->cBackgroundTaskActive	=	false;
-			usleep(200 * 1000);	//*	200 milliseconds
+			myControllerPtr->TaskTiming_Stop(kTask_BackgroundThread);
+
+			//*	sleep for a period of time
+			usleep(500 * 1000);
 		}
 		CONSOLE_ABORT("Magic cookie is stale")
 	}
@@ -3885,3 +3895,5 @@ char	commandLine[128];
 	RunCommandLine(commandLine);
 }
 
+
+#include	"controller_tasktiming.cpp"

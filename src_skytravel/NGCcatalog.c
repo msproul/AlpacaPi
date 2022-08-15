@@ -112,7 +112,7 @@ double		magnitude;
 	deDeg						=	ParseLongFromString(lineBuff,		21-1, 2);
 	deMin						=	ParseLongFromString(lineBuff,		24-1, 2);
 
-	starRec->maxSizeArcMinutes	=	ParseFloatFromString(lineBuff,		34-1, 5);
+//	starRec->maxSizeArcMinutes	=	ParseFloatFromString(lineBuff,		34-1, 5);
 	if (isdigit(lineBuff[40]) || isdigit(lineBuff[41]))
 	{
 		starRec->realMagnitude	=	ParseFloatFromString(lineBuff,		41-1, 4);

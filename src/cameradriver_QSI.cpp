@@ -67,7 +67,6 @@
 //**************************************************************************************
 void	CreateQSI_CameraObjects(void)
 {
-//int				iii;
 unsigned int	qsi_Result;
 std::string		info	=	"";
 std::string		modelNumber("");
@@ -145,8 +144,8 @@ int				numCamerasFound;
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG_W_NUM("Creating QSI device number ", deviceNum);
 
-	gVerbose				=	true;
-	cVerboseDebug			=	true;
+//	gVerbose				=	true;
+//	cVerboseDebug			=	true;
 
 	cCameraID				=	deviceNum;
 
@@ -518,7 +517,7 @@ std::string		lastError("");
 	if (qsi_Result == QSI_OK)
 	{
 		cCameraProp.HasShutter	=			hasShutter;
-		CONSOLE_DEBUG_W_DBL("HasShutter\t=",	hasShutter);
+		CONSOLE_DEBUG_W_BOOL("HasShutter\t=",	hasShutter);
 	}
 	else
 	{
@@ -888,7 +887,7 @@ unsigned int			qsi_Result;
 std::string				lastError("");
 QSICamera::CameraGain	qsiGainValue;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 #ifdef _SIMULATE_CAMERA_
 	if (gSimulateCameraImage)
 	{
@@ -1110,7 +1109,7 @@ unsigned int		qsi_Result;
 std::string			lastError("");
 double				coolerPowerLevel;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	if (cCameraProp.CanGetCoolerPower)
 	{
 	#ifdef _SIMULATE_CAMERA_
@@ -1157,7 +1156,7 @@ unsigned int		qsi_Result;
 std::string			lastError("");
 bool				myCoolerState;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 #ifdef _SIMULATE_CAMERA_
 	if (gSimulateCameraImage)
@@ -1227,7 +1226,7 @@ bool					imageReady;
 				break;
 
 		}
-		CONSOLE_DEBUG_W_NUM("myExposureStatus\t=",			myExposureStatus);
+//		CONSOLE_DEBUG_W_NUM("myExposureStatus\t=",			myExposureStatus);
 
 	return(myExposureStatus);
 	}

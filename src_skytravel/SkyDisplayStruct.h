@@ -53,6 +53,7 @@ typedef struct
 		bool				dispConstOutlines;		//*	Constellation outlines on/off
 		bool				dispConstellations;		//*	Constellation vectors on/off
 		bool				dispCommonStarNames;	//*	Common star names on/off
+		bool				dispSAO;				//*	SAO database
 		bool				dispHYG_all;
 		bool				dispDraper;				//*	Henry Draper Catalog
 		bool				dispAAVSOalerts;		//*	AAVSO TargetTool Alerts

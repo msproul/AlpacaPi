@@ -1,12 +1,12 @@
 //*****************************************************************************
 //*	Jan  6,	2022	<MLS> Added RemoteGAIAenabled to skytravel options
 //*	Feb 10,	2022	<MLS> Added GaiaRequestMode
+//*	Jul 14,	2022	<MLS> Added _ENABLE_CPU_STATS_
 //*****************************************************************************
 //#include	"controller_skytravel.h"
 
 #ifndef _CONTROLLER_SKYTRAVEL_H_
 #define _CONTROLLER_SKYTRAVEL_H_
-
 
 
 #ifndef	_ALPACA_DEFS_H_
@@ -60,6 +60,11 @@
 #ifndef	_WINDOWTAB_MOUNT_H_
 	#include	"windowtab_mount.h"
 #endif
+
+#ifndef	_WINDOWTAB_CPU_STATS_H_
+	#include	"windowtab_cpustats.h"
+#endif
+
 
 extern	double	gTelescopeRA_Hours;
 extern	double	gTelescopeRA_Radians;
@@ -127,6 +132,9 @@ enum
 	kTab_AlpacaList,
 	kTab_IPList,
 	kTab_Moon,
+#ifdef _ENABLE_CPU_STATS_
+	kTab_CPU_STATS,
+#endif
 	kTab_ST_About,
 
 	kTab_ST_Count
@@ -193,6 +201,13 @@ class ControllerSkytravel: public Controller
 				WindowTabIPList			*cIPaddrListObjPtr;
 				WindowTabMoon			*cMoonTabObjPtr;
 				WindowTabAbout			*cAboutBoxTabObjPtr;
+
+		//====================================================
+		//*	CPU status stuff (primarily for debugging)
+			#ifdef _ENABLE_CPU_STATS_
+				WindowTabCpuStats		*cCpuStatsTabObjPtr;
+			#endif
+
 		//====================================================
 		//*	alpaca device information
 				bool				LookForIPaddress(void);

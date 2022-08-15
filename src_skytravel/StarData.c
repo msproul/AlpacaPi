@@ -18,6 +18,7 @@
 //*	Apr 17,	2021	<MLS> Jim H. Found bug in ReadHYGdata(), short name overflow
 //*	Oct 23,	2021	<MLS> Added magnitude processing to ParseOneLineHYGdata()
 //*	Oct 24,	2021	<MLS> Added parsing of spectral class to Henry Draper catalog
+//*	Aug  1,	2022	<MLS> Added magnitude to special.txt parsing
 //*****************************************************************************
 //*	Messier data
 //	https://starlust.org/messier-catalog/
@@ -1258,6 +1259,7 @@ int		deMin		=	0;
 double	deSec		=	0;
 double	declDegrees	=	0;
 double	declRadians	=	0;
+double	magnitude	=	0;
 
 int		ii;
 int		argNum;
@@ -1322,6 +1324,11 @@ int		argLen;
 					deSec	=	AsciiToDouble(argString);
 					break;
 
+				case 7:	//*	magnitude
+					magnitude	=	AsciiToDouble(argString);
+					break;
+
+
 			}
 			argNum++;
 			ccc		=	0;
@@ -1357,7 +1364,7 @@ int		argLen;
 	starRec->org_ra			=	raRadians;
 	starRec->org_decl		=	declRadians;
 	starRec->dataSrc		=	kDataSrc_Unknown;
-	starRec->realMagnitude	=	0.0;
+	starRec->realMagnitude	=	magnitude;
 	starRec->spectralClass	=	0;
 
 	starRec->magn			=	ST_STAR;
