@@ -2239,16 +2239,16 @@ controller_camera.cpp:67 	//*	Jan  1,	2121	<TODO> save cross hair location
 controller_camera.cpp:68 	//*	Jan  1,	2121	<TODO> finish exposure step options
 controller_camera.cpp:69 	//*	Feb  6,	2121	<TODO> Move downloading of images to a separate thread
 History Comments found   = 2239 in 347 files
-Total lines              = 175098
+Total lines              = 175104
 Total comment Lines      = 26419 (15.1%)
 Total comments           = 29842 (17.0%)
 Total history comments   = 2239 (1.3%)
 Total C files            = 53
 Total C++ files          = 122
 Total H files            = 170
-Preprocssor cnt          = 5623
-Total SLOC               = 113687
-Total SLOC-Logical       = 87897
+Preprocssor cnt          = 5624
+Total SLOC               = 113691
+Total SLOC-Logical       = 87901
 Programmer comment summary
 MLS             = 1906
 TODO            =   12

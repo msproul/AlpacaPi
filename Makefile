@@ -258,7 +258,6 @@ LIVE_WINDOW_OBJECTS=										\
 DRIVER_OBJECTS=												\
 				$(OBJECT_DIR)calibrationdriver.o			\
 				$(OBJECT_DIR)calibrationdriver_rpi.o		\
-				$(OBJECT_DIR)calibrationdriver_Alnitak.o	\
 				$(OBJECT_DIR)cameradriver.o					\
 				$(OBJECT_DIR)cameradriverAnalysis.o			\
 				$(OBJECT_DIR)cameradriver_ASI.o				\
@@ -268,7 +267,6 @@ DRIVER_OBJECTS=												\
 				$(OBJECT_DIR)cameradriver_jpeg.o			\
 				$(OBJECT_DIR)cameradriver_livewindow.o		\
 				$(OBJECT_DIR)cameradriver_opencv.o			\
-				$(OBJECT_DIR)cameradriver_PhaseOne.o		\
 				$(OBJECT_DIR)cameradriver_png.o				\
 				$(OBJECT_DIR)cameradriver_QHY.o				\
 				$(OBJECT_DIR)cameradriver_QSI.o				\
@@ -294,6 +292,12 @@ DRIVER_OBJECTS=												\
 				$(OBJECT_DIR)slittracker.o					\
 				$(OBJECT_DIR)switchdriver.o					\
 				$(OBJECT_DIR)switchdriver_rpi.o				\
+
+
+######################################################################################
+TEST_OBJECTS=												\
+				$(OBJECT_DIR)calibrationdriver_Alnitak.o	\
+				$(OBJECT_DIR)cameradriver_PhaseOne.o		\
 
 ######################################################################################
 #	Camera Objects
@@ -1458,12 +1462,14 @@ alnitak		:		DEFINEFLAGS		+=	-D_ENABLE_CALIBRATION_ALNITAK_
 alnitak		:		$(CPP_OBJECTS)				\
 					$(DRIVER_OBJECTS)			\
 					$(SOCKET_OBJECTS)			\
+					$(TEST_OBJECTS)				\
 
 
 		$(LINK)  								\
-					$(SOCKET_OBJECTS)			\
 					$(CPP_OBJECTS)				\
 					$(DRIVER_OBJECTS)			\
+					$(SOCKET_OBJECTS)			\
+					$(TEST_OBJECTS)				\
 					-lpthread					\
 					-lusb-1.0					\
 					-o alpacapi-alnitak
