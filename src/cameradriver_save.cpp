@@ -208,7 +208,9 @@ int				imageDataLen;
 	{
 		case kImageType_RAW8:
 		//	CONSOLE_DEBUG("kImageType_RAW8");
-			cOpenCV_ImagePtr	=	new cv::Mat(height, width, CV_8UC3);
+//	9/20/2022
+//			cOpenCV_ImagePtr	=	new cv::Mat(height, width, CV_8UC3);
+			cOpenCV_ImagePtr	=	new cv::Mat(height, width, CV_8UC1);
 			imageDataLen		=	width * height;
 			break;
 
@@ -249,6 +251,7 @@ int				imageDataLen;
 			else
 			{
 				CONSOLE_DEBUG_W_NUM("did NOT copy image data into cOpenCV_ImagePtr, imageDataLen\t\t=",	imageDataLen);
+				CONSOLE_ABORT(__FUNCTION__);
 			}
 
 //			CONSOLE_DEBUG_W_LONG("imageDataLen\t\t=",			imageDataLen);
@@ -285,11 +288,13 @@ int				imageDataLen;
 		else
 		{
 			CONSOLE_DEBUG("Failed to allocate openCV image");
+			CONSOLE_ABORT(__FUNCTION__);
 		}
 	}
 	else
 	{
 		CONSOLE_DEBUG("Image data is NULL");
+		CONSOLE_ABORT(__FUNCTION__);
 	}
 //
 	return(returnCode);
@@ -550,9 +555,6 @@ int			quality[3] = {16, 200, 0};
 			strcat(imageFilePath, imageFileName);
 
 			strcpy(cLastJpegImageName, imageFilePath);	//*	save the full image path for the web server
-		#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
-			#warning "OpenCV++ not finished"
-		#else
 			openCVerr	=	cvSaveImage(imageFilePath, cOpenCV_ImagePtr, quality);
 			if (openCVerr == 1)
 			{
@@ -562,7 +564,6 @@ int			quality[3] = {16, 200, 0};
 			{
 				CONSOLE_DEBUG_W_NUM("cvSaveImage (jpg) failed, returned\t=", openCVerr);
 			}
-		#endif
 		}
 	#ifdef _ENABLE_PNG_
 		if (cOpenCV_ImagePtr->depth == 16)
@@ -770,7 +771,6 @@ int		gainPercent;
 }
 
 #ifdef _ENABLE_IMU_
-#include "imu_lib.h"
 
 //**************************************************************************
 void	CameraDriver::WriteIMUtextFile(void)

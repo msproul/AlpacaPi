@@ -113,7 +113,6 @@ int		iii;
 	strcpy(cCommonProp.Description,	"Generic Switch");
 	cCommonProp.InterfaceVersion	=	2;
 
-	CONSOLE_DEBUG_W_LONG("sizeof(TYPE_SwitchProperties)\t=", sizeof(TYPE_SwitchProperties));
 	memset((void *)&cSwitchProp, 0, sizeof(TYPE_SwitchProperties));
 
 	cSwitchProp.MaxSwitch			=	8;
@@ -289,7 +288,6 @@ int					mySocket;
 
 	JsonResponse_Add_Finish(	mySocket,
 								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
 								kInclude_HTTP_Header);
 
 	//*	this is for the logging function

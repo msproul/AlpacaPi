@@ -35,6 +35,7 @@
 #include	"discoverythread.h"
 #include	"discovery_lib.h"
 #include	"linuxerrors.h"
+#include	"helper_functions.h"
 
 #include	"windowtab_iplist.h"
 
@@ -91,7 +92,7 @@ int		textBoxHt;
 int		textBoxWd;
 int		widgetWidth;
 int		iii;
-short	widthArray[kMaxTabStops]	=	{150, 100, 100, 63, 63, 63, 63, 420, 0, 0, 0};
+short	widthArray[kMaxTabStops]	=	{150, 100, 100, 63, 63, 63, 63, 63, 420, 0, 0, 0};
 short	tabArray[kMaxTabStops];
 int		clmnHdr_xLoc;
 int		clmnHdrWidth;
@@ -181,16 +182,28 @@ int		tempListWidth;
 
 	xLoc		+=	kMaxCPUtempEntries;
 	xLoc		+=	2;
+	xLoc		+=	2;
 
-	tempListWidth	=	cClmWidth + 50;
-	SetWidget(				kIPaddrList_TemperatureList,	xLoc,	yLoc,	tempListWidth,	graphHeight);
-	SetWidgetType(			kIPaddrList_TemperatureList,	kWidgetType_MultiLineText);
-	SetWidgetJustification(	kIPaddrList_TemperatureList,	kJustification_Left);
-	SetWidgetBorder(		kIPaddrList_TemperatureList,	true);
-	SetWidgetFont(			kIPaddrList_TemperatureList,	kFont_TextList);
+	//------------------------------------------
+	tempListWidth	=	(cClmWidth + 40) / 2;
+	SetWidget(				kIPaddrList_SortedCPUList,	xLoc,	yLoc,	tempListWidth,	(graphHeight - 2));
+	SetWidgetType(			kIPaddrList_SortedCPUList,	kWidgetType_MultiLineText);
+	SetWidgetJustification(	kIPaddrList_SortedCPUList,	kJustification_Left);
+	SetWidgetBorder(		kIPaddrList_SortedCPUList,	false);
+	SetWidgetFont(			kIPaddrList_SortedCPUList,	kFont_TextList);
 	xLoc		+=	tempListWidth;
 	xLoc		+=	2;
 
+	//------------------------------------------
+	SetWidget(				kIPaddrList_SortedTempList,	xLoc,	yLoc,	tempListWidth,	(graphHeight - 2));
+	SetWidgetType(			kIPaddrList_SortedTempList,	kWidgetType_MultiLineText);
+	SetWidgetJustification(	kIPaddrList_SortedTempList,	kJustification_Right);
+	SetWidgetBorder(		kIPaddrList_SortedTempList,	false);
+	SetWidgetFont(			kIPaddrList_SortedTempList,	kFont_TextList);
+
+	SetWidgetOutlineBox(kIPaddrList_SortedOutline, kIPaddrList_SortedCPUList, (kIPaddrList_SortedOutline - 1));
+	xLoc		+=	tempListWidth;
+	xLoc		+=	4;
 
 	//------------------------------------------
 	iii			=	kIPaddrList_TempModeRaw;
@@ -249,7 +262,8 @@ int		tempListWidth;
 	SetWidgetText(		kIPaddrList_ClmTitle5,	"Err#");
 	SetWidgetText(		kIPaddrList_ClmTitle6,	"Uptime");
 	SetWidgetText(		kIPaddrList_ClmTitle7,	"Cpu(F)");
-	SetWidgetText(		kIPaddrList_ClmTitle8,	"Status");
+	SetWidgetText(		kIPaddrList_ClmTitle8,	"Max");
+	SetWidgetText(		kIPaddrList_ClmTitle9,	"Status");
 	yLoc			+=	cRadioBtnHt;
 	yLoc			+=	2;
 	yLoc			+=	6;
@@ -466,9 +480,21 @@ char	ipAddrStr[32];
 			{
 				strcat(textString, "\t-");
 			}
+			//*	CPU temp
 			if (gAlpacaUnitList[iii].cpuTempValid)
 			{
 				sprintf(extraString, "\t%5.1f", gAlpacaUnitList[iii].cpuTemp_DegF);
+				strcat(textString, extraString);
+			}
+			else
+			{
+				strcat(textString, "\t-");
+			}
+
+			//*	Max CPU temp
+			if (gAlpacaUnitList[iii].cpuTempValid)
+			{
+				sprintf(extraString, "\t%5.1f", gAlpacaUnitList[iii].cpuTemp_DegF_max);
 				strcat(textString, extraString);
 			}
 			else
@@ -576,6 +602,9 @@ TYPE_CPU_SORT	cpuNameList[kMaxCPUs];
 int				validCpuTempCnt;
 char			cpuNameListStr[2048];
 char			cpuTempStr[48];
+int				minutesSinceMidnight;
+int				cpuTempIndex;
+
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	for (iii=0; iii<kMaxCPUs; iii++)
@@ -604,7 +633,7 @@ char			cpuTempStr[48];
 	//=========================================================
 	for (iii=0; iii<gAlpacaUnitCnt; iii++)
 	{
-		colorIdx	=	iii % kCpuColorCnt;
+		colorIdx		=	iii % kCpuColorCnt;
 		cCurrentColor	=	cCPUcolors[colorIdx];
 
 		if (gAlpacaUnitList[iii].cpuTempValid)
@@ -668,7 +697,19 @@ char			cpuTempStr[48];
 			}
 		}
 	}
+	//=========================================================
+	//*	now draw a vertical line for the CURRENT time
+	minutesSinceMidnight	=	GetMinutesSinceMidnight();
+	cpuTempIndex			=	minutesSinceMidnight / 2;
+	pt1_X					=	theWidget->left + cpuTempIndex;
+	pt1_Y					=	theWidget->top - 1;
+	pt2_X					=	pt1_X;
+	pt2_Y					=	(theWidget->top + theWidget->height) - 1;
+	LLD_SetColor(W_RED);
+	LLD_MoveTo(pt1_X, pt1_Y);
+	LLD_LineTo(pt2_X, pt2_Y);
 
+	//=========================================================
 	//*	were there any valid temperatures
 	if (validCpuTempCnt > 0)
 	{
@@ -679,18 +720,28 @@ char			cpuTempStr[48];
 		cpuNameListStr[0]	=	0;
 		for (iii=0; iii<validCpuTempCnt; iii++)
 		{
-			sprintf(cpuTempStr, "%-8s %3.2f", cpuNameList[iii].cpuName, cpuNameList[iii].cpuTemp);
-		//	strcat(cpuNameListStr, cpuNameList[iii].cpuName);
+			sprintf(cpuTempStr, "%s\r", cpuNameList[iii].cpuName);
 			strcat(cpuNameListStr, cpuTempStr);
-
-			strcat(cpuNameListStr, "\r");
 
 			if (iii > 10)
 			{
 				break;
 			}
 		}
-		SetWidgetText(kIPaddrList_TemperatureList, cpuNameListStr);
+		SetWidgetText(kIPaddrList_SortedCPUList, cpuNameListStr);
+
+		cpuNameListStr[0]	=	0;
+		for (iii=0; iii<validCpuTempCnt; iii++)
+		{
+			sprintf(cpuTempStr, "%3.2f\r", cpuNameList[iii].cpuTemp);
+			strcat(cpuNameListStr, cpuTempStr);
+
+			if (iii > 10)
+			{
+				break;
+			}
+		}
+		SetWidgetText(kIPaddrList_SortedTempList, cpuNameListStr);
 	}
 }
 

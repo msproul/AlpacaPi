@@ -58,9 +58,6 @@ enum
 
 };
 
-#define	kFocuserBoxWidth	302
-#define	kFocuserBoxHeight	715
-
 
 //**************************************************************************************
 ControllerFocusGeneric::ControllerFocusGeneric(	const char			*argWindowName,
@@ -73,6 +70,7 @@ ControllerFocusGeneric::ControllerFocusGeneric(	const char			*argWindowName,
 						deviceNum,
 						kFocuserType_MoonliteSingle)
 {
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 
 	//*	moved all init stuff to separate routine so we can have multiple constructors
@@ -121,6 +119,7 @@ void	ControllerFocusGeneric::CreateWindowTabs(void)
 														cHeight,
 														cBackGrndColor,
 														cCommMode,
+														kFocuserType_Other,
 														cWindowName);
 	if (cMLsingleTabObjPtr != NULL)
 	{
@@ -168,6 +167,11 @@ void	ControllerFocusGeneric::UpdateCommonProperties(void)
 	SetWidgetText(kTab_DriverInfo,		kDriverInfo_DriverInfo,			cCommonProp.DriverInfo);
 	SetWidgetText(kTab_DriverInfo,		kDriverInfo_DriverVersion,		cCommonProp.DriverVersion);
 	SetWidgetNumber(kTab_DriverInfo,	kDriverInfo_InterfaceVersion,	cCommonProp.InterfaceVersion);
+
+	SetWidgetText(kTab_Focuser,			kMLsingle_Model,				cCommonProp.Description);
+
+
+	UpdateAboutBoxRemoteDevice(kTab_About, kAboutBox_CPUinfo);
 
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, "Exit");
 }

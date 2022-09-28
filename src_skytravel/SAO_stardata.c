@@ -215,10 +215,7 @@ double	dec_Degrees;
 TYPE_CelestData	*SAO_ReadFile(long *starCount)
 {
 FILE			*filePointer;
-long			fileSize;
-long			myDiskObjectCount;
 char			filePath[128];
-int				bytesRead;
 char			lineBuff[1024];
 bool			readHeader;
 bool			keepReading;
@@ -226,7 +223,6 @@ int				linesRead;
 int				lineLen;
 int				maxLineLen;
 int				recordCount;
-TYPE_CelestData	objectStruct;
 TYPE_CelestData	*saoStarData;
 
 	CONSOLE_DEBUG(__FUNCTION__);
@@ -251,7 +247,7 @@ TYPE_CelestData	*saoStarData;
 				if (lineLen > maxLineLen)
 				{
 					maxLineLen	=	lineLen;
-					CONSOLE_DEBUG_W_NUM("maxLineLen\t=", maxLineLen);
+//					CONSOLE_DEBUG_W_NUM("maxLineLen\t=", maxLineLen);
 				}
 				linesRead++;
 				if (strncmp(lineBuff, "<DATA>", 6) == 0)

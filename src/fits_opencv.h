@@ -1,7 +1,7 @@
 //*****************************************************************************
 //#include	"fits_opencv.h"
 
-#if defined(_USE_OPENCV_CPP_) && (CV_MAJOR_VERSION >= 4)
+#if defined(_USE_OPENCV_CPP_)
 	cv::Mat		*ReadFITSimageIntoOpenCVimage(const char *fitsFileName);
 	cv::Mat		*ReadImageIntoOpenCVimage(const char *imageFileName);
 #else

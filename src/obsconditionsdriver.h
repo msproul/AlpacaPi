@@ -112,9 +112,9 @@ virtual	TYPE_ASCOM_STATUS	GetSensorInfo(			TYPE_ObsConSensorType sensorType,
 		ObservCond_STATE_TYPE		cObservCondState;
 		TYPE_ObsConditionProperties	cObsConditionProp;
 
-		bool		cHasTempSensor;
-		bool		cHasPresSensor;
-		bool		cHasHumidSensor;
+//		bool		cHasTempSensor;
+//		bool		cHasPresSensor;
+//		bool		cHasHumidSensor;
 
 
 		//*	these arrays are for averaging

@@ -37,7 +37,6 @@
 #include	"controller.h"
 #include	"MountData.h"
 
-
 //**************************************************************************************
 WindowTabMount::WindowTabMount(	const int	xSize,
 								const int	ySize,

@@ -35,8 +35,6 @@
 #endif // _WINDOWTAB_ABOUT_H_
 
 
-#define	kFocuserBoxWidth	302
-#define	kFocuserBoxHeight	715
 
 
 //**************************************************************************************

@@ -75,14 +75,14 @@ ObsConditionsDriverRpi::ObsConditionsDriverRpi(const int argDevNum)
 	strcpy(gEnvData.siteDataSource,	"Data source:Raspberry Pi Sense hat");
 	strcpy(gEnvData.domeDataSource,	"Data source:Raspberry Pi Sense hat");
 
-
 #ifdef _ENABLE_RTIMULib_
 	strcpy(cCommonProp.Description, "R-Pi dome conditions");
 //	strcat(cCommonProp.Name, "-RTIMULib");
 
-	cHasTempSensor			=	true;
-	cHasPresSensor			=	true;
-	cHasHumidSensor			=	true;
+	cObsConditionProp.Dewpoint.IsSupported			=	true;
+	cObsConditionProp.Humidity.IsSupported			=	true;
+	cObsConditionProp.Pressure.IsSupported			=	true;
+	cObsConditionProp.Temperature.IsSupported		=	true;
 
 	rt_settings	=	new RTIMUSettings("RTIMULib");
 	if (rt_settings != NULL)
@@ -381,12 +381,12 @@ int		loopCntr;
 
 
 					cCurrentPressure_kPa	=	pressure;
-					cObsConditionProp.Temperature_DegC		=	temp_degC;
+					cObsConditionProp.Temperature.Value		=	temp_degC;
 
 					//*	output
-					PrintValues("from press",	cObsConditionProp.Temperature_DegC,
+					PrintValues("from press",	cObsConditionProp.Temperature.Value,
 												cCurrentPressure_kPa,
-												cObsConditionProp.Humidity);
+												cObsConditionProp.Humidity.Value);
 
 					//*	Power down the device
 					i2c_smbus_write_byte_data(fd, CTRL_REG1, 0x00);
@@ -568,12 +568,12 @@ uint8_t	t_out_h;
 					//*	Calculate ambient humidity
 					double H_rH	=	(h_gradient_m * H_T_OUT) + h_intercept_c;
 
-					cObsConditionProp.Temperature_DegC	=	temp_degC;
-					cObsConditionProp.Humidity	=	H_rH;
+					cObsConditionProp.Temperature.Value	=	temp_degC;
+					cObsConditionProp.Humidity.Value	=	H_rH;
 					//*	Output
-					PrintValues("from humid",	cObsConditionProp.Temperature_DegC,
+					PrintValues("from humid",	cObsConditionProp.Temperature.Value,
 												cCurrentPressure_kPa,
-												cObsConditionProp.Humidity);
+												cObsConditionProp.Humidity.Value);
 
 					//*	Power down the device
 					i2c_smbus_write_byte_data(fd, CTRL_REG1, 0x00);

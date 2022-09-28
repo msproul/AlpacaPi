@@ -150,7 +150,10 @@ char	lineBuffer[64];
 	SetWidgetText(kAboutBox_TextBox2, gAlpacaPiTxt2);
 	SetWidgetText(kAboutBox_TextBox3, gAlpacaPiTxt3);
 
-	strcpy(multiLineTextBuff,	gOsReleaseString);
+	multiLineTextBuff[0]	=	0;
+
+	strcat(multiLineTextBuff,	"LOCAL DEVICE:\r");
+	strcat(multiLineTextBuff,	gOsReleaseString);
 	strcat(multiLineTextBuff,	"\r");
 	strcat(multiLineTextBuff,	gCpuInfoString);
 	strcat(multiLineTextBuff,	"\r");

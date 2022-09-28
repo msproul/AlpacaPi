@@ -299,6 +299,7 @@ void	ControllerDome::UpdateCommonProperties(void)
 	SetWidgetText(kTab_DriverInfo,		kDriverInfo_DriverInfo,			cCommonProp.DriverInfo);
 	SetWidgetText(kTab_DriverInfo,		kDriverInfo_DriverVersion,		cCommonProp.DriverVersion);
 	SetWidgetNumber(kTab_DriverInfo,	kDriverInfo_InterfaceVersion,	cCommonProp.InterfaceVersion);
+
 }
 
 //**************************************************************************************
@@ -362,10 +363,13 @@ bool		needToUpdate;
 	if (cReadStartup)
 	{
 		CONSOLE_DEBUG(__FUNCTION__);
-		AlpacaGetCommonProperties_OneAAT(cAlpacaDeviceTypeStr);
 		AlpacaGetStartupData();
-		cReadStartup	=	false;
+		AlpacaGetCommonProperties_OneAAT(cAlpacaDeviceTypeStr);
+		UpdateAboutBoxRemoteDevice(kTab_About, kAboutBox_CPUinfo);
+
 		cDomeTabObjPtr->UpdateControls();
+
+		cReadStartup	=	false;
 	}
 
 //	CONSOLE_DEBUG_W_NUM("cDomeUpdateDelta\t=", cDomeUpdateDelta);

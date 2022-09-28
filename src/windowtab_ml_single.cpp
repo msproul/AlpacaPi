@@ -55,11 +55,14 @@ WindowTabMLsingle::WindowTabMLsingle(	const int	xSize,
 										const int	ySize,
 										cv::Scalar	backGrndColor,
 										const int	comMode,
+										const int	focuserType,
 										const char	*windowName)
 	:WindowTab(xSize, ySize, backGrndColor, windowName)
 {
 int		iii;
 	CONSOLE_DEBUG(__FUNCTION__);
+
+	cFocuserType	=	focuserType;
 
 	if (gMoonLiteImage == NULL)
 	{
@@ -113,6 +116,7 @@ WindowTabMLsingle::~WindowTabMLsingle(void)
 //**************************************************************************************
 void	WindowTabMLsingle::SetupWindowControls(void)
 {
+int		xLoc;
 int		yLoc;
 int		yLocSave;
 int		yloc2;
@@ -130,32 +134,48 @@ int		logoHeight;
 	//------------------------------------------
 	yLoc			=	cTabVertOffset;
 
-	if (gMoonLiteImage != NULL)
+	//*	make sure it is a Moonlite focuser
+	if (cFocuserType <= kFocuserType_MoonliteDouble)
 	{
-	#ifdef _USE_OPENCV_CPP_
-		logoWidth	=	gMoonLiteImage->cols;
-		logoHeight	=	gMoonLiteImage->rows;
-	#else
-		logoWidth	=	gMoonLiteImage->width;
-		logoHeight	=	gMoonLiteImage->height;
-	#endif // _USE_OPENCV_CPP_
-		SetWidget(	kMLsingle_logo,
-					0,
-					yLoc,
-					logoWidth,
-					logoHeight);
-
-
-		SetWidgetImage(kMLsingle_logo, gMoonLiteImage);
+		if (gMoonLiteImage != NULL)
+		{
+		#ifdef _USE_OPENCV_CPP_
+			logoWidth	=	gMoonLiteImage->cols;
+			logoHeight	=	gMoonLiteImage->rows;
+		#else
+			logoWidth	=	gMoonLiteImage->width;
+			logoHeight	=	gMoonLiteImage->height;
+		#endif // _USE_OPENCV_CPP_
+			CONSOLE_DEBUG_W_NUM("logoWidth \t=",	logoWidth);
+			CONSOLE_DEBUG_W_NUM("logoHeight\t=",	logoHeight);
+			if (logoWidth < cWidth)
+			{
+				xLoc	=	(cWidth - logoWidth) / 2;
+			}
+			else
+			{
+				xLoc	=	0;
+			}
+			SetWidget(	kMLsingle_logo,
+						xLoc,
+						yLoc,
+						logoWidth,
+						logoHeight);
+			SetWidgetBorder(kMLsingle_logo, false);
+			SetWidgetType(kMLsingle_logo, kWidgetType_Image);
+			SetWidgetImage(kMLsingle_logo, gMoonLiteImage);
+		}
+		else
+		{
+			SetWidgetValid(kMLsingle_logo,	false);
+		}
 	}
 	else
 	{
-		SetWidget(kMLsingle_logo,		0,			yLoc,		cWidth,		kLogoHeight	);
-//		yLoc			+=	kLogoHeight;
+			SetWidgetValid(kMLsingle_logo,	false);
 	}
 	yLoc			+=	kLogoHeight;
 	yLoc			+=	2;
-	SetWidgetType(kMLsingle_logo, kWidgetType_Image);
 
 	//==========================================
 	SetWidget(		kMLsingle_Model,			0,				yLoc,		cWidth,	cBtnHeight);

@@ -9,6 +9,8 @@
 //*	Mar  8,	2021	<MLS> Added ReadUSBfsMemorySetting()
 //*****************************************************************************
 
+
+
 #include	<stdlib.h>
 #include	<stdbool.h>
 #include	<stdio.h>
@@ -129,14 +131,16 @@ void	CPUstats_ReadInfo(void)
 FILE	*filePointer;
 char	lineBuff[256];
 int		slen;
-bool	stillNeedModel;
 char	argValueString[64];
 char	*stringPtr;
+bool	stillNeedModel;
+bool	stillNeedModelName;
 
 	//*	set the default value in case we fail to read /proc/cpuinfo
 	strcpy(gPlatformString,	"");
 	strcpy(gCpuInfoString,	"");
-	stillNeedModel	=	true;
+	stillNeedModel		=	true;
+	stillNeedModelName	=	true;
 
 #if defined(__arm__) && !defined(_PLATFORM_STRING_)
 	strcpy(gPlatformString,	"Raspberry Pi - ");
@@ -150,7 +154,9 @@ char	*stringPtr;
 
 
 
-#if defined(__arm__) || defined( __ARM_ARCH)
+#if defined( __ARM_ARCH)
+	sprintf(gCpuInfoString,	"Arm%d", __ARM_ARCH);
+#elif defined(__arm__)
 	strcpy(gCpuInfoString,	"Arm");
 #elif defined( __x86_64) || defined(__x86_64__)
 	strcpy(gCpuInfoString,	"64 bit x86");
@@ -159,6 +165,7 @@ char	*stringPtr;
 #else
 	strcpy(gCpuInfoString,	"Unknown arch");
 #endif
+
 
 	//*	open up the cpuinfo file and get data from there
 	filePointer	=	fopen("/proc/cpuinfo", "r");
@@ -172,6 +179,18 @@ char	*stringPtr;
 				if (strncmp(lineBuff, "model name", 10) == 0)
 				{
 					ExtractArgValue(lineBuff, ':', gCpuInfoString);
+					stillNeedModelName	=	false;
+				}
+				else if (strncmp(lineBuff, "CPU architecture", 16) == 0)
+				{
+					if (stillNeedModelName)
+					{
+						ExtractArgValue(lineBuff, ':', argValueString);
+						strcat(gCpuInfoString, "-V");
+						strcat(gCpuInfoString, argValueString);
+
+						stillNeedModelName	=	false;
+					}
 				}
 				else if (strncmp(lineBuff, "Model", 5) == 0)
 				{
@@ -202,6 +221,9 @@ char	*stringPtr;
 			}
 		}
 		fclose(filePointer);
+	#ifdef __ARM_NEON
+		strcat(gCpuInfoString,	" w/NEON");
+	#endif
 	}
 	else
 	{

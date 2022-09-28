@@ -38,6 +38,10 @@
 //*	Dec 14,	2021	<MLS> Started working on support for imageBinary
 //*	Dec 15,	2021	<MLS> AlpacaGetImageArray() binary working with 16 bit monochrome
 //*	Dec 16,	2021	<MLS> AlpacaGetImageArray() binary working with 16 bit Color (RGB)
+//*	Sep  4,	2022	<MLS> Added Alpaca_GetRemoteCPUinfo()
+//*	Sep  4,	2022	<MLS> Added UpdateAboutBoxRemoteDevice()
+//*	Sep  5,	2022	<MLS> About box now updated to display specs of remote device
+//*	Sep 26,	2022	<MLS> Fixed return data valid bug in all routines
 //*****************************************************************************
 
 #ifdef _CONTROLLER_USES_ALPACA_
@@ -180,6 +184,8 @@ bool	myConnectedFlag;
 int		validCnt;
 
 	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_STR("Reading common properties for", cWindowName);
+	CONSOLE_DEBUG_W_BOOL("Has read all\t=", cHas_readall);
 	validCnt		=	0;
 	myOnLineFlag	=	true;	//*	assume it is on line
 	validData		=	false;
@@ -292,6 +298,9 @@ int		validCnt;
 	}
 	CONSOLE_DEBUG_W_NUM("validCnt\t=", validCnt);
 
+	CONSOLE_DEBUG_W_BOOL("Has read all\t=", cHas_readall);
+	Alpaca_GetRemoteCPUinfo();
+
 	UpdateCommonProperties();
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, "Exit");
 	return(validData);
@@ -345,14 +354,6 @@ int				jjj;
 //	CONSOLE_DEBUG("Returned from GetJsonResponse");
 	if (validData)
 	{
-//		CONSOLE_DEBUG("We have valid data");
-//		CONSOLE_DEBUG_W_NUM("tokenCount_Data\t=", jsonParser.tokenCount_Data);
-//		if (jsonParser.tokenCount_Data > 90)
-//		{
-//			CONSOLE_DEBUG("Dumping FULL Json parser");
-//		}
-//		CONSOLE_DEBUG("Dumping FULL Json parser");
-//		SJP_DumpJsonData(&jsonParser);
 		cHas_readall	=	false;
 		jjj	=	0;
 		while (jjj < jsonParser.tokenCount_Data)
@@ -410,6 +411,7 @@ bool			validData;
 //*****************************************************************************
 void	Controller::AlpacaProcessSupportedActions(const char *deviceTypeStr, const int deviveNum, const char *valueString)
 {
+//	CONSOLE_DEBUG(cWindowName);
 
 	if (strcasecmp(valueString, "readall") == 0)
 	{
@@ -419,7 +421,6 @@ void	Controller::AlpacaProcessSupportedActions(const char *deviceTypeStr, const 
 	{
 		//*	you get the idea
 	}
-//	CONSOLE_DEBUG(cWindowName);
 //	CONSOLE_ABORT(__FUNCTION__);
 }
 
@@ -552,6 +553,7 @@ char		alpacaString[128];
 bool		sucessFlag;
 char		myDataString[512]	=	"";
 int			dataStrLen;
+//bool		myReturnDataIsValid;
 
 
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, alpacaCmd);
@@ -593,7 +595,11 @@ int			dataStrLen;
 			CONSOLE_DEBUG_W_STR("cLastAlpacaErrStr\t=", cLastAlpacaErrStr);
 		}
 		cLastAlpacaErrNum	=	AlpacaCheckForErrors(jsonParser, cLastAlpacaErrStr, true);
-
+		if (cLastAlpacaErrNum != kASCOM_Err_Success)
+		{
+			CONSOLE_DEBUG_W_NUM("cLastAlpacaErrNum        \t=",	cLastAlpacaErrNum);
+//			myReturnDataIsValid	=	false;
+		}
 
 		cForceAlpacaUpdate	=	true;
 		gClientTransactionID++;
@@ -664,6 +670,7 @@ bool			validData;
 char			alpacaString[128];
 int				jjj;
 int				myIntgerValue;
+bool			myReturnDataIsValid;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -694,16 +701,18 @@ int				myIntgerValue;
 		cLastAlpacaErrNum	=	AlpacaCheckForErrors(&jsonParser, cLastAlpacaErrStr);
 		if (cLastAlpacaErrNum != kASCOM_Err_Success)
 		{
-			//*	does the calling routine want to know if the data was good
-			if (rtnValidData != NULL)
-			{
-				*rtnValidData	=	false;
-			}
+			CONSOLE_DEBUG_W_NUM("cLastAlpacaErrNum        \t=",	cLastAlpacaErrNum);
+			myReturnDataIsValid	=	false;
 		}
 	}
 	else
 	{
 		cReadFailureCnt++;
+	}
+	//*	does the calling routine want to know if the data was good
+	if (rtnValidData != NULL)
+	{
+		*rtnValidData	=	myReturnDataIsValid;
 	}
 //	CONSOLE_DEBUG(__FUNCTION__);
 	return(validData);
@@ -722,10 +731,25 @@ bool			validData;
 char			alpacaString[128];
 int				myIntgerValue;
 int				jjj;
+bool			myReturnDataIsValid;
 
+	//*	set the default valid data flag to TRUE
+	myReturnDataIsValid	=	true;
 	SJP_Init(&jsonParser);
 	sprintf(alpacaString,	"/api/v1/%s/%d/%s", alpacaDevice, cAlpacaDevNum, alpacaCmd);
-//	CONSOLE_DEBUG_W_STR("alpacaString\t=",	alpacaString);
+	if (gVerbose)
+	{
+	char			ipAddrStr[32];
+
+		CONSOLE_DEBUG("------------------------------");
+		CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+
+		inet_ntop(AF_INET, &(cDeviceAddress.sin_addr), ipAddrStr, INET_ADDRSTRLEN);
+		CONSOLE_DEBUG_W_STR("IP address   \t=",	ipAddrStr);
+		CONSOLE_DEBUG_W_NUM("cPort        \t=",	cPort);
+		CONSOLE_DEBUG_W_STR("alpacaString \t=",	alpacaString);
+		CONSOLE_DEBUG_W_NUM("cAlpacaDevNum\t=",	cAlpacaDevNum);
+	}
 	validData	=	GetJsonResponse(	&cDeviceAddress,
 										cPort,
 										alpacaString,
@@ -747,11 +771,23 @@ int				jjj;
 				}
 			}
 		}
+//		SJP_DumpJsonData(&jsonParser);
 		cLastAlpacaErrNum	=	AlpacaCheckForErrors(&jsonParser, cLastAlpacaErrStr);
+		if (cLastAlpacaErrNum != kASCOM_Err_Success)
+		{
+			CONSOLE_DEBUG_W_NUM("cLastAlpacaErrNum        \t=",	cLastAlpacaErrNum);
+			myReturnDataIsValid	=	false;
+		}
 	}
 	else
 	{
 		cReadFailureCnt++;
+		myReturnDataIsValid	=	false;
+	}
+	//*	does the calling routine want to know if the data was good
+	if (rtnValidData != NULL)
+	{
+		*rtnValidData	=	myReturnDataIsValid;
 	}
 	return(validData);
 }
@@ -767,6 +803,7 @@ SJP_Parser_t	jsonParser;
 bool			validData;
 char			alpacaString[128];
 int				jjj;
+bool			myReturnDataIsValid;
 
 	SJP_Init(&jsonParser);
 	sprintf(alpacaString,	"/api/v1/%s/%d/%s", alpacaDevice, cAlpacaDevNum, alpacaCmd);
@@ -792,10 +829,20 @@ int				jjj;
 			}
 		}
 		cLastAlpacaErrNum	=	AlpacaCheckForErrors(&jsonParser, cLastAlpacaErrStr);
+		if (cLastAlpacaErrNum != kASCOM_Err_Success)
+		{
+			CONSOLE_DEBUG_W_NUM("cLastAlpacaErrNum        \t=",	cLastAlpacaErrNum);
+			myReturnDataIsValid	=	false;
+		}
 	}
 	else
 	{
 		cReadFailureCnt++;
+	}
+	//*	does the calling routine want to know if the data was good
+	if (rtnValidData != NULL)
+	{
+		*rtnValidData	=	myReturnDataIsValid;
 	}
 	return(validData);
 }
@@ -815,11 +862,13 @@ bool			validData;
 char			alpacaString[128];
 int				jjj;
 double			myDoubleValue;
+bool			myReturnDataIsValid;
+
 
 	SJP_Init(&jsonParser);
 	sprintf(alpacaString,	"/api/v1/%s/%d/%s", alpacaDevice, alpacaDevNum, alpacaCmd);
 //	CONSOLE_DEBUG_W_STR("alpacaString\t=",	alpacaString);
-
+	myReturnDataIsValid	=	true;
 	validData	=	GetJsonResponse(	&deviceAddress,
 										port,
 										alpacaString,
@@ -848,16 +897,18 @@ double			myDoubleValue;
 		cLastAlpacaErrNum	=	AlpacaCheckForErrors(&jsonParser, cLastAlpacaErrStr);
 		if (cLastAlpacaErrNum != kASCOM_Err_Success)
 		{
-			//*	does the calling routine want to know if the data was good
-			if (rtnValidData != NULL)
-			{
-				*rtnValidData	=	false;
-			}
+//			CONSOLE_DEBUG_W_NUM("cLastAlpacaErrNum        \t=",	cLastAlpacaErrNum);
+			myReturnDataIsValid	=	false;
 		}
 	}
 	else
 	{
 		cReadFailureCnt++;
+	}
+	//*	does the calling routine want to know if the data was good
+	if (rtnValidData != NULL)
+	{
+		*rtnValidData	=	myReturnDataIsValid;
 	}
 //	CONSOLE_DEBUG(__FUNCTION__);
 	return(validData);
@@ -875,7 +926,7 @@ bool	Controller::AlpacaGetDoubleValue(	const char	*alpacaDevice,
 											double		*returnValue,
 											bool		*rtnValidData)
 {
-bool			validData;
+bool		validData;
 
 	validData	=	AlpacaGetDoubleValue(	cDeviceAddress,
 											cPort,
@@ -904,6 +955,7 @@ bool			validData;
 char			alpacaString[128];
 int				jjj;
 double			myDoubleValue;
+bool			myReturnDataIsValid;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 	SJP_Init(&jsonParser);
@@ -939,16 +991,18 @@ double			myDoubleValue;
 		cLastAlpacaErrNum	=	AlpacaCheckForErrors(&jsonParser, cLastAlpacaErrStr);
 		if (cLastAlpacaErrNum != kASCOM_Err_Success)
 		{
-			//*	does the calling routine want to know if the data was good
-			if (rtnValidData != NULL)
-			{
-				*rtnValidData	=	false;
-			}
+			CONSOLE_DEBUG_W_NUM("cLastAlpacaErrNum        \t=",	cLastAlpacaErrNum);
+			myReturnDataIsValid	=	false;
 		}
 	}
 	else
 	{
 		cReadFailureCnt++;
+	}
+	//*	does the calling routine want to know if the data was good
+	if (rtnValidData != NULL)
+	{
+		*rtnValidData	=	myReturnDataIsValid;
 	}
 //	CONSOLE_DEBUG(__FUNCTION__);
 	return(validData);
@@ -969,6 +1023,7 @@ bool			validData;
 char			alpacaString[128];
 int				jjj;
 bool			myBooleanValue;
+bool			myReturnDataIsValid;
 
 	if (printDebug)
 	{
@@ -1010,11 +1065,21 @@ bool			myBooleanValue;
 			}
 		}
 		cLastAlpacaErrNum	=	AlpacaCheckForErrors(&jsonParser, cLastAlpacaErrStr);
+		if (cLastAlpacaErrNum != kASCOM_Err_Success)
+		{
+			CONSOLE_DEBUG_W_NUM("cLastAlpacaErrNum        \t=",	cLastAlpacaErrNum);
+			myReturnDataIsValid	=	false;
+		}
 	}
 	else
 	{
 		CONSOLE_DEBUG_W_2STR("Failed", alpacaString, dataString);
 		cReadFailureCnt++;
+	}
+	//*	does the calling routine want to know if the data was good
+	if (rtnValidData != NULL)
+	{
+		*rtnValidData	=	myReturnDataIsValid;
 	}
 	return(validData);
 }
@@ -1053,19 +1118,20 @@ int		iii;
 
 //*****************************************************************************
 TYPE_ASCOM_STATUS	Controller::AlpacaCheckForErrors(	SJP_Parser_t	*jsonParser,
-										char			*errorMsg,
-										bool 			reportError)
+														char			*errorMsg,
+														bool 			reportError)
 {
 int					jjj;
 TYPE_ASCOM_STATUS	alpacaErrorCode;
 bool				foundErrNum;
 bool				foundErrStr;
 char				errorReportStr[256];
+
 //	CONSOLE_DEBUG(__FUNCTION__);
 
+	alpacaErrorCode	=	kASCOM_Err_UnspecifiedError;
 	foundErrNum		=	false;
 	foundErrStr		=	false;
-	alpacaErrorCode	=	kASCOM_Err_Success;
 	strcpy(errorMsg, "");
 	if (jsonParser != NULL)
 	{
@@ -1110,5 +1176,122 @@ void	Controller::AlpacaDisplayErrorMessage(const char *errorMsgString)
 {
 	//*	this should be overloaded
 }
+
+//*****************************************************************************
+int	Controller::Alpaca_GetRemoteCPUinfo(void)
+{
+bool			validData;
+SJP_Parser_t	jsonParser;
+int				returnCode;
+int				jjj;
+char			alpacaString[128];
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+	returnCode	=	-1;
+
+	if (cGetCPUinfoCallCnt > 0)
+	{
+		CONSOLE_DEBUG_W_NUM("Alpaca_GetRemoteCPUinfo had already been called!!! Count=", cGetCPUinfoCallCnt);
+	}
+
+
+	cGetCPUinfoCallCnt++;
+	//*	 if it has readall, then it has cpustats
+	if (cHas_readall)
+	{
+		SJP_Init(&jsonParser);
+		//	http://wo102:6800/api/v1/management/0/cpustats
+		sprintf(alpacaString,	"/api/v1/management/%d/cpustats", 0);	//*	the device number for management is always 0
+
+		validData	=	GetJsonResponse(	&cDeviceAddress,
+											cPort,
+											alpacaString,
+											NULL,
+											&jsonParser);
+		if (validData)
+		{
+			returnCode	=	0;
+//			SJP_DumpJsonData(&jsonParser);
+			for (jjj=0; jjj<jsonParser.tokenCount_Data; jjj++)
+			{
+
+				if (strcasecmp(jsonParser.dataList[jjj].keyword, "PLATFORM") == 0)
+				{
+					strcpy(cRemote_Platform, jsonParser.dataList[jjj].valueString);
+				}
+				else if (strcasecmp(jsonParser.dataList[jjj].keyword, "CPUINFO") == 0)
+				{
+					strcpy(cRemote_CPUinfo, jsonParser.dataList[jjj].valueString);
+				}
+				else if (strcasecmp(jsonParser.dataList[jjj].keyword, "OPERATINGSYSTEM") == 0)
+				{
+					strcpy(cRemote_OperatingSystem, jsonParser.dataList[jjj].valueString);
+				}
+				else if (strcasecmp(jsonParser.dataList[jjj].keyword, "VERSION") == 0)
+				{
+					strcpy(cRemote_Version, jsonParser.dataList[jjj].valueString);
+				}
+
+			}
+			CONSOLE_DEBUG(cRemote_Platform);
+			CONSOLE_DEBUG(cRemote_CPUinfo);
+			CONSOLE_DEBUG(cRemote_OperatingSystem);
+			CONSOLE_DEBUG(cRemote_Version);
+		}
+		else
+		{
+			CONSOLE_DEBUG("Invalid return data");
+		}
+	}
+	else
+	{
+		CONSOLE_DEBUG_W_STR("device does not have Readall", cWindowName);
+
+		cGetCPUinfoCallCnt	=	0;
+	//	CONSOLE_ABORT(__FUNCTION__);
+	}
+	return(returnCode);
+}
+
+//*****************************************************************************
+void	Controller::UpdateAboutBoxRemoteDevice(const int tabNumber, const int widgetNumber)
+{
+	CONSOLE_DEBUG(__FUNCTION__);
+
+	if (cHas_readall)
+	{
+	char	multieLineText[800];
+
+		if (cGetCPUinfoCallCnt == 0)
+		{
+			CONSOLE_DEBUG("Calling Alpaca_GetRemoteCPUinfo()");
+			Alpaca_GetRemoteCPUinfo();
+		}
+
+		strcpy(multieLineText,	"REMOTE DEVICE:\r\n");
+		strcat(multieLineText,	cRemote_Platform);
+		strcat(multieLineText,	"\r\n");
+		strcat(multieLineText,	cRemote_CPUinfo);
+		strcat(multieLineText,	"\r\n");
+		strcat(multieLineText,	cRemote_OperatingSystem);
+		strcat(multieLineText,	"\r\n");
+		strcat(multieLineText,	cRemote_Version);
+		strcat(multieLineText,	"\r\n");
+
+		SetWidgetText(tabNumber, widgetNumber, multieLineText);
+
+//		CONSOLE_DEBUG(multieLineText);
+	}
+	else
+	{
+		CONSOLE_DEBUG_W_STR("device does not have Readall", cWindowName);
+		CONSOLE_DEBUG(cRemote_Platform);
+		CONSOLE_DEBUG(cRemote_CPUinfo);
+		CONSOLE_DEBUG(cRemote_OperatingSystem);
+		CONSOLE_DEBUG(cRemote_Version);
+//		CONSOLE_ABORT(__FUNCTION__);
+	}
+}
+
 #endif // _CONTROLLER_USES_ALPACA_
 

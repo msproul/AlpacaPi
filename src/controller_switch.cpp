@@ -195,6 +195,8 @@ bool		needToUpdate;
 	{
 		AlpacaGetStartupData();
 		AlpacaGetCommonProperties_OneAAT("switch");
+		UpdateAboutBoxRemoteDevice(kTab_About, kAboutBox_CPUinfo);
+
 		cReadStartup	=	false;
 	}
 
@@ -721,6 +723,7 @@ void	ControllerSwitch::UpdateCommonProperties(void)
 	SetWidgetText(kTab_DriverInfo,		kDriverInfo_DriverInfo,			cCommonProp.DriverInfo);
 	SetWidgetText(kTab_DriverInfo,		kDriverInfo_DriverVersion,		cCommonProp.DriverVersion);
 	SetWidgetNumber(kTab_DriverInfo,	kDriverInfo_InterfaceVersion,	cCommonProp.InterfaceVersion);
+
 }
 
 //*****************************************************************************

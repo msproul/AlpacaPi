@@ -326,7 +326,7 @@ void	ControllerNiteCrawler::UpdateCommonProperties(void)
 	SetWidgetText(kTab_DriverInfo,		kDriverInfo_DriverVersion,		cCommonProp.DriverVersion);
 	SetWidgetNumber(kTab_DriverInfo,	kDriverInfo_InterfaceVersion,	cCommonProp.InterfaceVersion);
 
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, "Exit");
+	UpdateAboutBoxRemoteDevice(kTab_About, kAboutBox_CPUinfo);
 }
 
 

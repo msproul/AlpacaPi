@@ -24,7 +24,9 @@ enum
 
 	kIPaddrList_ErrorMsg,
 	kIPaddrList_TemperatureGraph,
-	kIPaddrList_TemperatureList,
+	kIPaddrList_SortedCPUList,
+	kIPaddrList_SortedTempList,
+	kIPaddrList_SortedOutline,
 	kIPaddrList_TempModeRaw,
 	kIPaddrList_TempModeAvg,
 	kIPaddrList_ExportCSV,
@@ -37,6 +39,7 @@ enum
 	kIPaddrList_ClmTitle6,
 	kIPaddrList_ClmTitle7,
 	kIPaddrList_ClmTitle8,
+	kIPaddrList_ClmTitle9,
 	kIPaddrList_ClmOutline,
 
 	kIPaddrList_AlpacaDev_01,

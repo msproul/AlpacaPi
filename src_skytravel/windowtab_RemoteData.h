@@ -17,6 +17,8 @@ enum
 {
 	kRemoteData_Title	=	0,
 
+	kRemoteData_ControlDblClkTitle,
+
 	kRemoteData_stsci_fits_checkbox,
 	kRemoteData_stsci_fits_Count,
 	kRemoteData_stsci_fits_LastCmd,
@@ -34,6 +36,7 @@ enum
 	kRemoteData_StatusMsg,
 
 #ifdef 	_ENABLE_REMOTE_GAIA_
+	kRemoteData_RemoteDataTitle,
 
 	kRemoteData_EnableRemoteGAIA,
 	kRemoteData_EditSQLSettingsBtn,
@@ -48,14 +51,6 @@ enum
 	kRemoteData_SQLusernameValue,
 	kRemoteData_EnableSQLlogging,
 
-	kRemoteData_SQLdatabaseTxt,
-	kRemoteData_SQLdatabase1,
-	kRemoteData_SQLdatabase2,
-	kRemoteData_SQLdatabase3,
-	kRemoteData_SQLdatabase4,
-
-
-
 
 
 	kRemoteData_GaiaReqMode,
@@ -68,6 +63,24 @@ enum
 
 	kRemoteData_GaiaSearchField,
 	kRemoteData_GaiaSearchBtn,
+
+	kRemoteData_UpdateDBlistBtn,
+
+	//*	2nd column for database list
+	kRemoteData_SQLdatabaseTxt,
+	kRemoteData_SQLdatabase1,
+	kRemoteData_SQLdatabase2,
+	kRemoteData_SQLdatabase3,
+	kRemoteData_SQLdatabase4,
+	kRemoteData_SQLdatabase5,
+	kRemoteData_SQLdatabase6,
+	kRemoteData_SQLdatabase7,
+	kRemoteData_SQLdatabase8,
+	kRemoteData_SQLdatabase9,
+	kRemoteData_SQLdatabase10,
+
+	kRemoteData_DBoutLine,
+
 
 	kRemoteData_GAIAoutline,
 
@@ -105,7 +118,11 @@ class WindowTabRemoteData: public WindowTab
 											const int	flags);
 
 				void	UpdateSettings(void);
-		uint32_t			cLastRemoteImageUpdate_ms;
+	#ifdef 	_ENABLE_REMOTE_GAIA_
+			void	UpdateDataBaseButtons(void);
+				void	UpdateSelectedDataBase(const int newDBnumber);
+	#endif // _ENABLE_REMOTE_GAIA_
+	uint32_t			cLastRemoteImageUpdate_ms;
 
 };
 

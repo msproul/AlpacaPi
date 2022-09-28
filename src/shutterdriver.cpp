@@ -16,7 +16,7 @@
 //*	that you agree that the author(s) have no warranty, obligations or liability.  You
 //*	must determine the suitability of this source code for your use.
 //*
-//*	Redistributions of this source code must retain this copyright notice.
+//*	Redistribution of this source code must retain this copyright notice.
 //*****************************************************************************
 //*	Edit History
 //*****************************************************************************
@@ -368,7 +368,6 @@ int				mySocket;
 
 	JsonResponse_Add_Finish(	mySocket,
 								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
 								kInclude_HTTP_Header);
 
 	//*	this is for the logging function

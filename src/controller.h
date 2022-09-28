@@ -142,7 +142,7 @@ typedef struct
 	unsigned long	endNanoSecs;
 	unsigned long	nanoSecsAccumulator;
 
-} TYPE_TAKS_TIMING;
+} TYPE_TASK_TIMING;
 
 
 #endif // _ENABLE_TASK_TIMING_
@@ -363,6 +363,11 @@ class Controller
 		bool				cFirstDataRead;
 		uint32_t			cLastUpdate_milliSecs;
 
+		char				cRemote_Platform[128];
+		char				cRemote_CPUinfo[128];
+		char				cRemote_OperatingSystem[128];
+		char				cRemote_Version[128];
+
 		//*	alpaca download stats
 		uint32_t			cLastDownload_Bytes;
 		uint32_t			cLastDownload_Millisecs;
@@ -490,6 +495,10 @@ class Controller
 												int			arrayLength,
 												int			*actualValueCnt);
 
+				int		Alpaca_GetRemoteCPUinfo(void);
+				int		cGetCPUinfoCallCnt;		//*	mainly for debugging
+				void	UpdateAboutBoxRemoteDevice(const int tabNumber, const int widgetNumber);
+
 				//**********************************************
 				//*	this is a table of capabilities for the purpose of displaying what
 				//*	the driver is capable of doing.
@@ -514,7 +523,7 @@ class Controller
 
 //------------------------------------------------------------
 #ifdef _ENABLE_TASK_TIMING_
-		TYPE_TAKS_TIMING	cTaskData[kMaxTaskTiming];
+		TYPE_TASK_TIMING	cTaskData[kMaxTaskTiming];
 		void				TaskTiming_Init(void);
 		void				TaskTiming_SetName(const int taskID, const char *taskName);
 		void				TaskTiming_Start(const int taskID);

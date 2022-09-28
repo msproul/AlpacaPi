@@ -36,6 +36,7 @@
 #include	"alpacadriver.h"
 #include	"alpacadriver_helper.h"
 #include	"cameradriver.h"
+#include	"opencv_utils.h"
 
 #include	"controller_image.h"
 
@@ -89,15 +90,18 @@ bool				windowExists;
 //*****************************************************************************
 void	CameraDriver::UpdateLiveWindow(void)
 {
+#ifdef _ENABLE_CTRL_IMAGE_
 ControllerImage	*myImageController;
 double			exposure_Secs;
 
-#ifdef _ENABLE_CTRL_IMAGE_
 	CONSOLE_DEBUG(__FUNCTION__);
 
 	myImageController	=	(ControllerImage *)cLiveController;
 	if (myImageController != NULL)
 	{
+#ifdef _USE_OPENCV_CPP_
+		DumpCVMatStruct(cOpenCV_ImagePtr, __FUNCTION__);
+#endif // _USE_OPENCV_CPP_
 		myImageController->UpdateLiveWindowImage(cOpenCV_ImagePtr, cFileNameRoot);
 
 		exposure_Secs	=	1.0 * cCurrentExposure_us / 1000000.0;

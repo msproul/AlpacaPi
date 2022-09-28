@@ -13,7 +13,7 @@
 //*	that you agree that the author(s) have no warranty, obligations or liability.  You
 //*	must determine the suitability of this source code for your use.
 //*
-//*	Redistributions of this source code must retain this copyright notice.
+//*	Re-distributions of this source code must retain this copyright notice.
 //*****************************************************************************
 //*
 //*****************************************************************************
@@ -60,6 +60,7 @@
 //*	Dec 17,	2021	<MLS> Added support for canstopexposure
 //*	Dec 23,	2021	<MLS> Added UpdateFlipMode() & SetFlipMode()
 //*	Dec 26,	2021	<MLS> Update timeout is now 1 second if camera is anything but idle
+//*	Sep 21,	2022	<MLS> Added ProcessReadAll_IMU()
 //*****************************************************************************
 //*	Jan  1,	2121	<TODO> control key for different step size.
 //*	Jan  1,	2121	<TODO> add error list window
@@ -86,20 +87,11 @@
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
 
-
-
 #include	"helper_functions.h"
-#include	"windowtab_camera.h"
-#include	"windowtab_camgraph.h"
-#include	"windowtab_filelist.h"
 #include	"windowtab_camsettings.h"
-#include	"windowtab_drvrInfo.h"
-#include	"windowtab_about.h"
 
 #include	"controller.h"
 #include	"controller_camera.h"
-
-
 
 //**************************************************************************************
 ControllerCamera::ControllerCamera(	const char			*argWindowName,
@@ -662,6 +654,7 @@ bool			validData;
 	SetWindowIPaddrInfo(NULL, cOnLine);
 
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, "EXIT");
+
 	return(validData);
 }
 
@@ -756,6 +749,19 @@ int	iii;
 	}
 	return(intValue);
 }
+
+//*****************************************************************************
+//*	this routine is going to be present even if IMU support is not enabled
+//*	this one is a place holder, the real processing will be in the subclass (controller_cam_normal)
+//*****************************************************************************
+void	ControllerCamera::ProcessReadAll_IMU(	const char	*deviceTypeStr,
+											const int	deviceNum,
+											const char	*keywordString,
+											const char	*valueString)
+{
+	//*	this should be over ridden if it is needed
+}
+
 
 //*****************************************************************************
 void	ControllerCamera::AlpacaProcessReadAll(	const char	*deviceTypeStr,
@@ -966,8 +972,11 @@ void	ControllerCamera::AlpacaProcessReadAll(	const char	*deviceTypeStr,
 		UpdateRemoteAlpacaVersion();
 
 	}
+	else if (strncasecmp(keywordString, "IMU", 3) == 0)
+	{
+		ProcessReadAll_IMU(deviceTypeStr, deviceNum, keywordString, valueString);
 
-
+	}
 }
 
 //*****************************************************************************
@@ -1324,14 +1333,20 @@ bool	previousOnLineState;
 	//*	get the filter wheel position
 	if (cHas_FilterWheel)
 	{
+		//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		//*	this routine is in controller_fw_common.cpp
+		//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		AlpacaGetFilterWheelStatus();
+
+		if (cHas_FilterWheel == false)
+		{
+			CONSOLE_DEBUG("FilterWheel is now disabled");
+		}
 	}
 
 	cLastUpdate_milliSecs	=	millis();
 	return(validData);
 }
-
 
 //*****************************************************************************
 bool	ControllerCamera::AlpacaGetFileList(void)
@@ -2284,6 +2299,7 @@ void	ControllerCamera::UpdateConnectedStatusIndicator(void)
 //*****************************************************************************
 //*****************************************************************************
 #define	PARENT_CLASS	ControllerCamera
+#define	_PARENT_IS_CAMERA_
 
 #include "controller_fw_common.cpp"
 

@@ -63,7 +63,6 @@
 #include	"focuser_common.h"
 #include	"nitecrawler_colors.h"
 
-#define	kBoxWidth	302
 
 
 #pragma mark -
@@ -1259,6 +1258,7 @@ int				myFocuserType;
 		//*	create the controller window object
 		if (myFocuserType == kFocuserType_NiteCrawler)
 		{
+			CONSOLE_DEBUG("Focuser is Moonlite NiteCrawler");
 			myController	=	new ControllerNiteCrawler(	windowName,
 															&remoteDevice->deviceAddress,
 															remoteDevice->port,
@@ -1267,6 +1267,7 @@ int				myFocuserType;
 		}
 		else if (myFocuserType == kFocuserType_MoonliteSingle)
 		{
+			CONSOLE_DEBUG("Focuser is Moonlite Single");
 			myController	=	new ControllerMLsingle(		windowName,
 															&remoteDevice->deviceAddress,
 															remoteDevice->port,
@@ -1274,6 +1275,7 @@ int				myFocuserType;
 		}
 		else
 		{
+			CONSOLE_DEBUG("Focuser is Generic");
 			myController	=	new ControllerFocusGeneric(	windowName,
 															&remoteDevice->deviceAddress,
 															remoteDevice->port,

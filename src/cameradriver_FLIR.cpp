@@ -787,8 +787,8 @@ char				spinErrorString[64];
 				CONSOLE_DEBUG_W_NUM("Failed to get node map (spinCameraGetNodeMap)Aborting with error=",
 										spinErr);
 			}
-
 		}
+
 		CONSOLE_DEBUG(__FUNCTION__);
 		spinErr	=	spinCameraBeginAcquisition(cSpinCameraHandle);
 		if (spinErr == SPINNAKER_ERR_SUCCESS)

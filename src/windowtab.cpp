@@ -68,6 +68,7 @@
 //*	Jun  4,	2022	<MLS> Added flags arg to ProcessButtonClick()
 //*	Jun 13,	2022	<MLS> Added ClearLastAlpacaCommand()
 //*	Jun 29,	2022	<MLS> Added cLeftButtonDown & cRightButtonDown to WindowTab
+//*	Sep 28,	2022	<MLS> Added SetWidgetNumber() with specified number of decimal places
 //*****************************************************************************
 
 
@@ -393,6 +394,7 @@ char	lineBuff[64];
 	SetWidgetText(widgetIdx, lineBuff);
 }
 
+
 //**************************************************************************************
 void	WindowTab::SetWidgetNumber(const int widgetIdx, const double number)
 {
@@ -405,6 +407,26 @@ char	lineBuff[64];
 	else
 	{
 		sprintf(lineBuff, "%1.4f", number);
+	}
+	SetWidgetText(widgetIdx, lineBuff);
+}
+
+
+//**************************************************************************************
+void	WindowTab::SetWidgetNumber(const int widgetIdx, const double number, const int decimalPlaces)
+{
+char	lineBuff[64];
+
+	switch(decimalPlaces)
+	{
+		case 0:		sprintf(lineBuff, "%0.0f", number);	break;
+		case 1:		sprintf(lineBuff, "%0.1f", number);	break;
+		case 2:		sprintf(lineBuff, "%0.2f", number);	break;
+		case 3:		sprintf(lineBuff, "%0.3f", number);	break;
+		case 4:		sprintf(lineBuff, "%0.4f", number);	break;
+		case 5:		sprintf(lineBuff, "%0.5f", number);	break;
+		case 6:		sprintf(lineBuff, "%0.6f", number);	break;
+		default:	sprintf(lineBuff, "%0.4f", number);	break;
 	}
 	SetWidgetText(widgetIdx, lineBuff);
 }
@@ -434,7 +456,7 @@ void	WindowTab::SetWidgetImage(const int widgetIdx, cv::Mat *argImagePtr)
 	}
 	if (argImagePtr == NULL)
 	{
-		CONSOLE_DEBUG("argImagePtr is NULL!!!!!!!!!!!!!!!!!!!");
+//		CONSOLE_DEBUG("argImagePtr is NULL!!!!!!!!!!!!!!!!!!!");
 //		CONSOLE_ABORT(__FUNCTION__);
 	}
 }

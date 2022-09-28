@@ -32,6 +32,7 @@
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
 
+#include	"opencv_utils.h"
 
 #include	"alpaca_defs.h"
 
@@ -150,7 +151,7 @@ char		buttonName[16];
 		SetWidget(				iii,	(xLoc + labelWidth + 2),	yLoc,		dataWidth,		cSmallBtnHt);
 		SetWidgetType(			iii, 	kWidgetType_TextBox);
 		SetWidgetFont(			iii, 	kFont_TextList);
-		SetWidgetJustification(	iii, 	kJustification_Left);
+		SetWidgetJustification(	iii, 	kJustification_Center);
 
 
 
@@ -159,7 +160,6 @@ char		buttonName[16];
 
 		iii++;
 	}
-	SetWidgetJustification(	kImageDisplay_FrameCnt, 	kJustification_Center);
 
 	SetWidgetText(kImageDisplay_FrameCnt_Lbl,		"Frames");
 	SetWidgetText(kImageDisplay_Exposure_Lbl,		"Exposure");
@@ -335,12 +335,18 @@ void	WindowTabImage::ProcessDoubleClick(	const int	widgetIdx,
 			//*	this adjusts the blue part of the image, just for testing.
 			if (cOpenCVdisplayedImage != NULL)
 			{
-		#ifdef _USE_OPENCV_CPP_
-			#warning "OpenCV++ not finished"
-			CONSOLE_DEBUG("OpenCV++ not finished!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-		#else
 			int		iii;
-				for (iii= 0; iii< cOpenCVdisplayedImage->imageSize; iii+=3)
+			int		myImageSize;
+		#ifdef _USE_OPENCV_CPP_
+				CONSOLE_DEBUG("OpenCV++ not finished!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+				myImageSize	=	cOpenCVdisplayedImage->cols * cOpenCVdisplayedImage->rows * 3;
+				for (iii= 0; iii< myImageSize; iii+=3)
+				{
+					cOpenCVdisplayedImage->data[iii]	+=	75;
+				}
+		#else
+				myImageSize	=	cOpenCVdisplayedImage->imageSize;
+				for (iii= 0; iii< myImageSize; iii+=3)
 				{
 					cOpenCVdisplayedImage->imageData[iii]	+=	75;
 				}
@@ -509,12 +515,18 @@ void	WindowTabImage::SetImagePtrs(IplImage *originalImage, IplImage *displayedIm
 //*****************************************************************************
 void	WindowTabImage::ResetImage(void)
 {
+int	bytesPerPixel;
+//int	rowStepSize;
+
 	CONSOLE_DEBUG(__FUNCTION__);
 #ifdef _USE_OPENCV_CPP_
-	#warning "OpenCV++ not finished"
+	DumpCVMatStruct(cOpenCVdownLoadedImage, __FUNCTION__);
+
 	//*	Check to see if the original is color
+//	rowStepSize		=	cOpenCVdownLoadedImage->step[0];
+	bytesPerPixel	=	cOpenCVdownLoadedImage->step[1];
 //	if ((cOpenCVdownLoadedImage->nChannels == 3) && (cOpenCVdownLoadedImage->depth == 8))
-	if ((cOpenCVdownLoadedImage->step[1] == 3))
+	if ((bytesPerPixel == 3))
 	{
 	//	cvResize(cOpenCVdownLoadedImage, cOpenCVdisplayedImage, CV_INTER_LINEAR);
 		cv::resize(	*cOpenCVdownLoadedImage,
@@ -525,10 +537,12 @@ void	WindowTabImage::ResetImage(void)
 					cv::INTER_LINEAR);
 	}
 //	else if ((cOpenCVdownLoadedImage->nChannels == 1) && (cOpenCVdownLoadedImage->depth == 8))
-	else if ((cOpenCVdownLoadedImage->step[1] == 1))
+	else if ((bytesPerPixel == 1))
 	{
+//		#warning "OpenCV++ not finished"
 		CONSOLE_DEBUG("OpenCV++ not finished!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 //		cvCvtColor(cOpenCVdownLoadedImage, cOpenCVdisplayedImage, CV_GRAY2RGB);
+		cv::cvtColor(*cOpenCVdownLoadedImage, *cOpenCVdisplayedImage, cv::COLOR_GRAY2BGR);
 	}
 #else
 	//*	Check to see if the original is color

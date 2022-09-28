@@ -622,6 +622,10 @@ HRESULT					toupResult;
 	if (cIsTriggerCam == true)
 	{
 		toupResult	=	Toupcam_Trigger(cToupCamH, 1);
+		if (FAILED(toupResult))
+		{
+			CONSOLE_DEBUG_W_NUM("Toupcam_Trigger() returned error code:", toupResult);
+		}
 	}
 
 	return(alpacaErrCode);
@@ -767,7 +771,7 @@ HRESULT				toupResult;
 		}
 		else
 		{
-			if (toupResult == E_NOTIMPL)
+			if ((unsigned int)toupResult == E_NOTIMPL)
 			{
 				alpacaErrCode	=	kASCOM_Err_NotImplemented;
 				strcpy(cLastCameraErrMsg, "Camera does not support gain");
@@ -911,17 +915,18 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
 TYPE_ASCOM_STATUS	CameraDriverTOUP::Read_ImageData(void)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
-ToupcamFrameInfoV2	toupFrameInfo	=	{ 0 };
-HRESULT				toupResult;
+ToupcamFrameInfoV2	toupFrameInfo;
 
 	CONSOLE_DEBUG(__FUNCTION__);
+
+	memset((void*)&toupFrameInfo, 0, sizeof(ToupcamFrameInfoV2));
 
 	GetImage_ROI_info();
 
 	if ((cToupCamH != NULL) && (cCameraDataBuffer != NULL))
 	{
-			cNewImageReadyToDisplay	=	true;
-				cToupPicReady	=	false;
+		cNewImageReadyToDisplay	=	true;
+		cToupPicReady			=	false;
 	}
 	else
 	{
@@ -933,8 +938,10 @@ HRESULT				toupResult;
 //**************************************************************************
 void	CameraDriverTOUP::HandleToupCallbackEvent(unsigned nEvent)
 {
-ToupcamFrameInfoV2	toupFrameInfo = { 0 };
+ToupcamFrameInfoV2	toupFrameInfo;
 HRESULT				toupResult;
+
+	memset((void*)&toupFrameInfo, 0, sizeof(ToupcamFrameInfoV2));
 
 	switch(nEvent)
 	{

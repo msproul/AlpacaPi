@@ -19,22 +19,6 @@
 	#include	"controller.h"
 #endif
 
-#ifndef	_WINDOWTAB_CAMERA_H_
-	#include	"windowtab_camera.h"
-#endif
-
-#ifndef	_WINDOWTAB_FILELIST_H_
-	#include	"windowtab_filelist.h"
-#endif
-
-#ifndef	_WINDOWTAB_CAMSETTINGS_H_
-	#include	"windowtab_camsettings.h"
-#endif
-
-
-#ifndef	_WINDOWTAB_ABOUT_H_
-	#include	"windowtab_about.h"
-#endif
 
 #ifndef _SENDREQUEST_LIB_H
 	#include	"sendrequest_lib.h"
@@ -135,6 +119,10 @@ class ControllerCamera: public Controller
 		virtual	bool	AlpacaGetStartupData(void);
 				bool	AlpacaGetStartupData_OneAAT(void);
 		virtual	void	AlpacaProcessReadAll(	const char	*deviceTypeStr,
+												const int	deviceNum,
+												const char	*keywordString,
+												const char	*valueString);
+		virtual	void	ProcessReadAll_IMU(		const char	*deviceTypeStr,
 												const int	deviceNum,
 												const char	*keywordString,
 												const char	*valueString);

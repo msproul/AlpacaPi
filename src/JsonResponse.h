@@ -83,7 +83,6 @@ int		JsonResponse_Add_ArrayEnd(	const int		socketFD,
 #define	kNo_HTTP_Header			false
 int		JsonResponse_Add_Finish(	const int		socketFD,
 									char			*jsonTextBuffer,
-									const int		maxLen,
 									bool			includeHeader);
 
 int		JsonResponse_Add_RawText(	const int		socketFD,

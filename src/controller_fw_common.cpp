@@ -107,16 +107,22 @@ bool	PARENT_CLASS::AlpacaGetFilterWheelStatus(void)
 {
 bool	validData;
 int		newFilterWheelPosition;
+bool	rtnValidData;
 
-//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 #ifdef _PARENT_IS_FILTERWHEEL_
 	validData	=	AlpacaGetCommonConnectedState("filterwheel");
 #endif
 
-	validData	=	AlpacaGetIntegerValue("filterwheel", "position",	NULL,	&newFilterWheelPosition);
-	if (validData)
+	validData	=	AlpacaGetIntegerValue(	"filterwheel",
+											"position",
+											NULL,
+											&newFilterWheelPosition,
+											&rtnValidData);
+	CONSOLE_DEBUG_W_BOOL("rtnValidData\t=", rtnValidData);
+	if (validData && rtnValidData)
 	{
-//		CONSOLE_DEBUG_W_NUM("rcvd newFilterWheelPosition\t=", newFilterWheelPosition);
+		CONSOLE_DEBUG_W_NUM("rcvd newFilterWheelPosition\t=", newFilterWheelPosition);
 		cOnLine	=	true;
 
 		//*	alpaca/ascom uses filter wheel positions from 0 -> N-1
@@ -134,7 +140,15 @@ int		newFilterWheelPosition;
 	else
 	{
 		CONSOLE_DEBUG("Failed to get filter wheel position");
+	#ifdef _PARENT_IS_FILTERWHEEL_
 		cOnLine	=	false;
+	#endif
+
+	#ifdef _PARENT_IS_CAMERA_
+		CONSOLE_DEBUG_W_STR("This camera does NOT have a filterwheel", cWindowName);
+		cHas_FilterWheel		=	false;
+		UpdateFilterWheelPosition();
+	#endif // _PARENT_IS_CAMERA_
 	}
 	SetWindowIPaddrInfo(NULL, cOnLine);
 	return(validData);

@@ -7,6 +7,7 @@
 #endif
 
 #define	kMaxKeyWordLen	64
+#define	kMaxVakyeStrLen	256
 
 //*****************************************************************************
 typedef struct

@@ -52,7 +52,7 @@ WindowTabDriverInfo::WindowTabDriverInfo(	const int	xSize,
 //**************************************************************************************
 WindowTabDriverInfo::~WindowTabDriverInfo(void)
 {
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 }
 
 

@@ -272,7 +272,6 @@ int					mySocket;
 
 	JsonResponse_Add_Finish(mySocket,
 							reqData->jsonTextBuffer,
-							kMaxJsonBuffLen,
 							kInclude_HTTP_Header);
 
 	return(alpacaErrCode);

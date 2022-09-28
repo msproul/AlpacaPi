@@ -22,6 +22,7 @@
 //*	Feb 14,	2021	<MLS> Added moon image, will add phases later
 //*	Mar 25,	2021	<MLS> Added support for multiple moon FITS images to step through
 //*	Mar 25,	2021	<MLS> Added ReadMoonDirectory() & ReadMoonImage()
+//*	Sep 19,	2022	<MLS> Finished openCV C++ conversion for moon display
 //*****************************************************************************
 
 #include	<dirent.h>
@@ -39,7 +40,7 @@
 
 #include	"moonphase.h"
 #include	"fits_opencv.h"
-
+#include	"opencv_utils.h"
 
 #define		kMoonImageDir	"moon_fits"
 
@@ -177,14 +178,18 @@ int		myButtonWidth;
 	SetWidgetOutlineBox(	kMoon_MoonImgOutline, kMoon_Image, kMoon_Image);
 
 #ifdef _USE_OPENCV_CPP_
-	#warning "OpenCV++ not finished"
+	cMoonImage		=	new cv::Mat();
+	if (cMoonImage != NULL)
+	{
+		*cMoonImage	=	cv::imread("moon_fits/moon.jpg");
+	}
 #elif (CV_MAJOR_VERSION <= 3)
 	cMoonImage	=	cvLoadImage("moon_fits/moon.jpg", CV_LOAD_IMAGE_COLOR);
+#endif // _USE_OPENCV_CPP_
 	if (cMoonImage != NULL)
 	{
 		SetWidgetImage(kMoon_Image, cMoonImage);
 	}
-#endif // _USE_OPENCV_CPP_
 	yLoc	+=	cMaxMoonImgSize;
 	yLoc	+=	2;
 
@@ -334,31 +339,65 @@ int					fileIdx;
 void WindowTabMoon::ReadFitsHeader(const char *fitsFilePath)
 {
 fitsfile	*fptr;
+int			fitsRetCode;
 char		card[FLEN_CARD];
 int			status;
 int			nkeys;
 int			iii;
+bool		includeRecord;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
-	status = 0;	///* MUST initialize status
-	fits_open_file(&fptr, fitsFilePath, READONLY, &status);
-	fits_get_hdrspace(fptr, &nkeys, NULL, &status);
-
-	cFitsHeaderBuffer[0]	=	0;
-
-	for (iii = 1; iii <= nkeys; iii++)
+	status		=	0;		//* MUST initialize status
+	fitsRetCode	=	fits_open_file(&fptr, fitsFilePath, READONLY, &status);
+	if (fitsRetCode == 0)
 	{
-		fits_read_record(fptr, iii, card, &status);	//* read keyword
-		if (strncmp(card, "MOON", 4) == 0)
-		{
-			strcat(cFitsHeaderBuffer, card);
-			strcat(cFitsHeaderBuffer, "\r");
-		}
-	}
-	//strcat(cFitsHeaderBuffer, "END\r");		//* terminate listing with END
-	fits_close_file(fptr, &status);
 
+		cFitsHeaderBuffer[0]	=	0;
+		strcat(cFitsHeaderBuffer, fitsFilePath);
+		strcat(cFitsHeaderBuffer, "\r \r");
+
+		fits_get_hdrspace(fptr, &nkeys, NULL, &status);
+		for (iii = 1; iii <= nkeys; iii++)
+		{
+			fits_read_record(fptr, iii, card, &status);	//* read keyword
+			includeRecord	=	false;
+
+			if (strncmp(card, "BITPIX", 6) == 0)
+			{
+				includeRecord	=	true;
+			}
+			if (strncmp(card, "NAXIS ", 6) == 0)
+			{
+				includeRecord	=	true;
+			}
+			if (strncmp(card, "MOON", 4) == 0)
+			{
+				includeRecord	=	true;
+			}
+			if (strncmp(card, "CAMERA", 6) == 0)
+			{
+				includeRecord	=	true;
+			}
+			if (strncmp(card, "TELESCOP", 8) == 0)
+			{
+				includeRecord	=	true;
+			}
+			if (strncmp(card, "FILTER", 6) == 0)
+			{
+				includeRecord	=	true;
+			}
+
+
+			if (includeRecord)
+			{
+				strcat(cFitsHeaderBuffer, card);
+				strcat(cFitsHeaderBuffer, "\r");
+			}
+		}
+		//strcat(cFitsHeaderBuffer, "END\r");		//* terminate listing with END
+		fits_close_file(fptr, &status);
+	}
 	CONSOLE_DEBUG_W_LONG("bufflen=", (long int)strlen(cFitsHeaderBuffer));
 	CONSOLE_DEBUG(__FUNCTION__);
 }
@@ -366,16 +405,18 @@ int			iii;
 //**************************************************************************************
 void WindowTabMoon::ReadMoonImage(const char *moonFileName)
 {
-#if defined(_USE_OPENCV_CPP_) &&  (CV_MAJOR_VERSION >= 4)
-	#warning "OpenCV++ not finished"
-//	cv::Mat		*myOpenCVimage;
-//	cv::Mat		*smallImg;
+#if defined(_USE_OPENCV_CPP_)
+	cv::Mat		*myOpenCVimage;
+	cv::Mat		*smallImg;
 #else
 	IplImage	*myOpenCVimage;
 	IplImage	*smallImg;
+#endif
 int				divideFactor;
 int				newWidth;
 int				newHeight;
+int				oldImgRowStepSize;
+int				oldImgChannels;
 char			myMoonFilePath[128];
 
 	CONSOLE_DEBUG(__FUNCTION__);
@@ -383,7 +424,19 @@ char			myMoonFilePath[128];
 	SetWidgetImage(kMoon_Image, NULL);
 	if (cMoonImage != NULL)
 	{
+#ifdef _USE_OPENCV_CPP_
+		try
+		{
+			delete cMoonImage;
+		}
+		catch(cv::Exception& ex)
+		{
+			CONSOLE_DEBUG("delete cMoonImage; had an exception");
+			CONSOLE_DEBUG_W_NUM("openCV error code\t=",	ex.code);
+		}
+#else
 		cvReleaseImage(&cMoonImage);
+#endif // _USE_OPENCV_CPP_
 		cMoonImage	=	NULL;
 	}
 
@@ -396,24 +449,89 @@ char			myMoonFilePath[128];
 	//*	did we open the image OK?
 	if (myOpenCVimage != NULL)
 	{
+		CONSOLE_DEBUG("ReadFITSimageIntoOpenCVimage() OK");
+	#ifdef _USE_OPENCV_CPP_
+		DumpCVMatStruct(myOpenCVimage);
+
+		newWidth			=	myOpenCVimage->cols;
+		newHeight			=	myOpenCVimage->rows;
+		oldImgRowStepSize	=	myOpenCVimage->step[0];
+		oldImgChannels		=	myOpenCVimage->step[1];
+		CONSOLE_DEBUG_W_NUM("oldImgRowStepSize\t=",		oldImgRowStepSize);
+		CONSOLE_DEBUG_W_NUM("oldImgChannels\t=",		oldImgChannels);
+	#else
+		newWidth		=	myOpenCVimage->width;
+		newHeight		=	myOpenCVimage->height;
+	#endif // _USE_OPENCV_CPP_
 		//*	check the size
-		if (myOpenCVimage->width > cMaxMoonImgSize)
+		if (newWidth > cMaxMoonImgSize)
 		{
-//			CONSOLE_DEBUG("Resizing openCV image");
+			CONSOLE_DEBUG("Resizing openCV image");
 			//*	we have to resize the image
-			newWidth		=	myOpenCVimage->width;
-			newHeight		=	myOpenCVimage->height;
 			divideFactor	=	1;
 			while ((newWidth > cMaxMoonImgSize) || (newHeight > cMaxMoonImgSize))
 			{
 				divideFactor++;
+			#ifdef _USE_OPENCV_CPP_
+				newWidth		=	myOpenCVimage->cols / divideFactor;
+				newHeight		=	myOpenCVimage->rows / divideFactor;
+			#else
 				newWidth		=	myOpenCVimage->width / divideFactor;
 				newHeight		=	myOpenCVimage->height / divideFactor;
+			#endif // _USE_OPENCV_CPP_
 			}
-//			CONSOLE_DEBUG("-----------------------");
-//			CONSOLE_DEBUG_W_NUM("divideFactor\t=", divideFactor);
-//			CONSOLE_DEBUG_W_NUM("New width   \t=", newWidth);
-//			CONSOLE_DEBUG_W_NUM("New height  \t=", newHeight);
+			CONSOLE_DEBUG("-----------------------");
+			CONSOLE_DEBUG_W_NUM("divideFactor\t=", divideFactor);
+			CONSOLE_DEBUG_W_NUM("New width   \t=", newWidth);
+			CONSOLE_DEBUG_W_NUM("New height  \t=", newHeight);
+		#ifdef _USE_OPENCV_CPP_
+			smallImg	=	new cv::Mat(newHeight, newWidth, CV_8UC3);
+			if (smallImg != NULL)
+			{
+				CONSOLE_DEBUG("smallImg ok");
+				switch(oldImgChannels)
+				{
+					case 1:
+						{
+						cv::Mat		*rgbImage;
+
+							rgbImage	=   ConvertImageToRGB(myOpenCVimage);
+							if (rgbImage != NULL)
+							{
+								cv::resize(	*rgbImage,
+											*smallImg,
+											smallImg->size(),
+											0,
+											0,
+											cv::INTER_LINEAR);
+
+								delete rgbImage;
+							}
+							else
+							{
+								CONSOLE_DEBUG("ConvertImageToRGB() failed!!!");
+							}
+						}
+						break;
+
+					case 3:
+						cv::resize(	*myOpenCVimage,
+									*smallImg,
+									smallImg->size(),
+									0,
+									0,
+									cv::INTER_LINEAR);
+						break;
+
+				}
+				cMoonImage	=	smallImg;
+			}
+			else
+			{
+				CONSOLE_DEBUG("new cv::Mat() failed");
+			}
+
+		#else
 			//*	now check the bit depth
 			if ((myOpenCVimage->nChannels == 1) && (myOpenCVimage->depth == 8))
 			{
@@ -460,9 +578,11 @@ char			myMoonFilePath[128];
 				CONSOLE_DEBUG_W_NUM("nChannels\t=", myOpenCVimage->nChannels);
 				CONSOLE_DEBUG_W_NUM("depth    \t=", myOpenCVimage->depth);
 			}
+		#endif // _USE_OPENCV_CPP_
 		}
 		else
 		{
+			CONSOLE_DEBUG("Image size is OK");
 			cMoonImage	=	myOpenCVimage;
 		}
 
@@ -471,11 +591,8 @@ char			myMoonFilePath[128];
 
 	if (cMoonImage != NULL)
 	{
-	//	CONSOLE_DEBUG("fits image  OK");
-#if defined(_USE_OPENCV_CPP_)
-#else
+		CONSOLE_DEBUG("fits image  OK");
 		SetWidgetImage(kMoon_Image, cMoonImage);
-#endif // defined
 		SetWidgetText(kMoon_FileName,	moonFileName);
 	}
 	else
@@ -486,7 +603,6 @@ char			myMoonFilePath[128];
 		strcat(errMsgString, moonFileName);
 		SetWidgetText(kMoon_FileName,	errMsgString);
 	}
-#endif // _USE_OPENCV_CPP_
 	ForceWindowUpdate();
 }
 
@@ -513,3 +629,5 @@ void WindowTabMoon::PrevImage(void)
 	}
 	ReadMoonImage(cMoonFileList[cCurrentMoonIdx].fitsFileName);
 }
+
+

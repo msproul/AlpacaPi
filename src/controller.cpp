@@ -103,6 +103,7 @@
 #include	"discovery_lib.h"
 #include	"helper_functions.h"
 #include	"sendrequest_lib.h"
+#include	"opencv_utils.h"
 
 
 #define _ENABLE_CONSOLE_DEBUG_
@@ -246,8 +247,8 @@ int		activeObjCnt;
 int		keyPressed;
 int		iii;
 
-	CONSOLE_DEBUG(__FUNCTION__);
-	CONSOLE_ABORT(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_ABORT(__FUNCTION__);
 	activeObjCnt	=	0;
 	for (iii=0; iii<kMaxControllers; iii++)
 	{
@@ -278,41 +279,41 @@ int		iii;
 	return(activeObjCnt);
 }
 
-#if 0
-//*****************************************************************************
-static void	CycleThoughWindows(void)
-{
-int		iii;
-int		nextCtrlIdx;
-	//*	this should cycle through the windows, but it does not work.
-	nextCtrlIdx	=	-1;
-
-	CONSOLE_DEBUG("TAB");
-	for (iii=0; iii<gControllerCnt; iii++)
-	{
-		if (gCurrentActiveWindow == gControllerList[iii])
-		{
-			nextCtrlIdx	=	iii+1;
-		}
-	}
-	if ((nextCtrlIdx < 0) || (nextCtrlIdx >= gControllerCnt))
-	{
-		nextCtrlIdx	=	0;
-	}
-	gCurrentActiveWindow	=	gControllerList[nextCtrlIdx];
-
-	if (gCurrentActiveWindow != NULL)
-	{
-		CONSOLE_DEBUG(gCurrentActiveWindow->cWindowName);
-
-		gCurrentActiveWindow->HandleWindowUpdate();
-	}
-	else
-	{
-		CONSOLE_DEBUG("gCurrentActiveWindow is NULL");
-	}
-}
-#endif // 0
+//#if 0
+////*****************************************************************************
+//static void	CycleThoughWindows(void)
+//{
+//int		iii;
+//int		nextCtrlIdx;
+//	//*	this should cycle through the windows, but it does not work.
+//	nextCtrlIdx	=	-1;
+//
+//	CONSOLE_DEBUG("TAB");
+//	for (iii=0; iii<gControllerCnt; iii++)
+//	{
+//		if (gCurrentActiveWindow == gControllerList[iii])
+//		{
+//			nextCtrlIdx	=	iii+1;
+//		}
+//	}
+//	if ((nextCtrlIdx < 0) || (nextCtrlIdx >= gControllerCnt))
+//	{
+//		nextCtrlIdx	=	0;
+//	}
+//	gCurrentActiveWindow	=	gControllerList[nextCtrlIdx];
+//
+//	if (gCurrentActiveWindow != NULL)
+//	{
+//		CONSOLE_DEBUG(gCurrentActiveWindow->cWindowName);
+//
+//		gCurrentActiveWindow->HandleWindowUpdate();
+//	}
+//	else
+//	{
+//		CONSOLE_DEBUG("gCurrentActiveWindow is NULL");
+//	}
+//}
+//#endif // 0
 
 //*****************************************************************************
 void	Controller_HandleKeyDown(const int keyPressed)
@@ -335,29 +336,6 @@ void	Controller_HandleKeyDown(const int keyPressed)
 	{
 		CONSOLE_DEBUG("No window active");
 	}
-}
-
-//*****************************************************************************
-static void	DumpCVMatStruct(cv::Mat *theImageMat)
-{
-
-//	CONSOLE_DEBUG_W_NUM("theImageMat->cols\t\t=",	theImageMat->cols);
-//	CONSOLE_DEBUG_W_NUM("theImageMat->rows\t\t=",	theImageMat->rows);
-//	CONSOLE_DEBUG_W_NUM("theImageMat->dims\t\t=",	theImageMat->dims);
-//	if (theImageMat->dims >= 1)
-//	{
-//		CONSOLE_DEBUG_W_LONG("theImageMat->step[0]\t=",	theImageMat->step[0]);
-//	}
-//	if (theImageMat->dims >= 2)
-//	{
-//		CONSOLE_DEBUG_W_LONG("theImageMat->step[1]\t=",	theImageMat->step[1]);
-//	}
-//	if (theImageMat->dims >= 3)
-//	{
-//		CONSOLE_DEBUG_W_LONG("theImageMat->step[2]\t=",	theImageMat->step[2]);
-//	}
-
-//	CONSOLE_ABORT(__FUNCTION__);
 }
 
 
@@ -403,6 +381,11 @@ int			objCntr;
 	cAlpacaDeviceNameStr[0]		=	0;
 	cLastUpdate_milliSecs		=	millis();
 
+	cRemote_Platform[0]			=	0;
+	cRemote_CPUinfo[0]			=	0;
+	cRemote_OperatingSystem[0]	=	0;
+	cRemote_Version[0]			=	0;
+
 	//*	low level drawing stuff
 	cCurrentLineWidth	=	1;
 
@@ -412,6 +395,7 @@ int			objCntr;
 
 
 #ifdef _CONTROLLER_USES_ALPACA_
+	cGetCPUinfoCallCnt			=	0;
 	ClearCapabilitiesList();
 #endif // _CONTROLLER_USES_ALPACA_
 
@@ -457,7 +441,7 @@ int			objCntr;
 
 #ifdef _USE_OPENCV_CPP_
 	cOpenCV_matImage	=	new cv::Mat(cHeight, cWidth, CV_8UC3);
-	DumpCVMatStruct(cOpenCV_matImage);
+//	DumpCVMatStruct(cOpenCV_matImage);
 #else
 	cOpenCV_Image		=	cvCreateImage(cvSize(cWidth, cHeight), IPL_DEPTH_8U, 3);
 #endif // _USE_OPENCV_CPP_
@@ -522,6 +506,7 @@ Controller::~Controller(void)
 {
 int		iii;
 
+	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG_W_STR("Deleting window:\t", cWindowName);
 //	CONSOLE_DEBUG_W_NUM("gControllerCnt\t=:", gControllerCnt);
 
@@ -1027,7 +1012,7 @@ int		widgetIdx;
 	else
 	{
 		widgetIdx	=	-1;
-		CONSOLE_DEBUG("cCurrentTabObjPtr is NULL");
+//		CONSOLE_DEBUG("cCurrentTabObjPtr is NULL");
 	}
 	return(widgetIdx);
 }
@@ -3332,8 +3317,9 @@ Controller	*myControllerPtr;
 			myControllerPtr->cBackgroundTaskActive	=	false;
 			myControllerPtr->TaskTiming_Stop(kTask_BackgroundThread);
 
-			//*	sleep for a period of time
-			usleep(500 * 1000);
+			//*	sleep for a period of time (in micro seconds)
+		//	usleep(500 * 1000);
+			usleep(1000 * 1000);
 		}
 		CONSOLE_ABORT("Magic cookie is stale")
 	}

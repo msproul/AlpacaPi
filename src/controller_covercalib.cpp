@@ -176,8 +176,10 @@ bool		needToUpdate;
 	if (cReadStartup)
 	{
 		CONSOLE_DEBUG_W_STR("Reading startup information for", cWindowName);
-		AlpacaGetCommonProperties_OneAAT("covercalibrator");
 		AlpacaGetStartupData();
+		AlpacaGetCommonProperties_OneAAT("covercalibrator");
+
+		UpdateAboutBoxRemoteDevice(kTab_About, kAboutBox_CPUinfo);
 		cReadStartup	=	false;
 	}
 
@@ -218,6 +220,7 @@ bool			validData;
 int				integerValue;
 
 	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_BOOL("Has read all\t=", cHas_readall);
 	//===============================================================
 	//*	get supportedactions
 	validData	=	AlpacaGetSupportedActions("covercalibrator", cAlpacaDevNum);
@@ -233,6 +236,8 @@ int				integerValue;
 	}
 
 	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_BOOL("Has read all\t=", cHas_readall);
+//	CONSOLE_ABORT(__FUNCTION__);
 	//------------------------------------------------------------------
 	validData	=	AlpacaGetIntegerValue("covercalibrator", "coverstate",	NULL,	&integerValue);
 	if (validData)
@@ -279,6 +284,7 @@ int				integerValue;
 		CONSOLE_DEBUG("Read failure - calibratorstate");
 		cReadFailureCnt++;
 	}
+	UpdateCommonProperties();
 	CONSOLE_DEBUG(__FUNCTION__);
 	return(validData);
 }
@@ -287,11 +293,14 @@ int				integerValue;
 void	ControllerCoverCalib::UpdateCommonProperties(void)
 {
 	CONSOLE_DEBUG(__FUNCTION__);
+
 	SetWidgetText(	kTab_DriverInfo,	kDriverInfo_Name,				cCommonProp.Name);
 	SetWidgetText(	kTab_DriverInfo,	kDriverInfo_Description,		cCommonProp.Description);
 	SetWidgetText(	kTab_DriverInfo,	kDriverInfo_DriverInfo,			cCommonProp.DriverInfo);
 	SetWidgetText(	kTab_DriverInfo,	kDriverInfo_DriverVersion,		cCommonProp.DriverVersion);
 	SetWidgetNumber(kTab_DriverInfo,	kDriverInfo_InterfaceVersion,	cCommonProp.InterfaceVersion);
+
+//	CONSOLE_ABORT(__FUNCTION__);
 }
 
 //*****************************************************************************

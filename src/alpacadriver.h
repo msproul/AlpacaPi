@@ -51,8 +51,12 @@
 #ifndef _ARPA_INET_H
 	#include	<arpa/inet.h>
 #endif // _ARPA_INET_H
-
-
+#ifndef _SYS_TIME_H
+	#include	<sys/time.h>
+#endif
+#ifndef _SYS_RESOURCE_H
+	#include	<sys/resource.h>
+#endif
 
 //=============================================================================
 #ifdef _USE_OPENCV_
@@ -321,6 +325,12 @@ class AlpacaDriver
 				time_t					cTimeOfLastWatchDogCheck;
 				int						cWatchDogTimeOut_Minutes;
 
+		//-------------------------------------------------------------------------
+		//*	CPU usage information
+				uint64_t				cAccumilatedNanoSecs;
+				uint64_t				cTotalNanoSeconds;
+				uint64_t				cTotalMilliSeconds;
+
 	#ifdef _USE_OPENCV_
 		//-------------------------------------------------------------------------
 		//*	live controller window
@@ -330,6 +340,10 @@ class AlpacaDriver
 				Controller				*cLiveController;
 	#endif // _USE_OPENCV_
 
+
+		//*	cpu usage statistics
+				void					ComputeCPUusage(void);
+				struct rusage			cRusage;
 };
 
 //**************************************************************************************
@@ -371,7 +385,7 @@ int				FindCmdFromTable(const char *theCmd, const TYPE_CmdEntry *theCmdTable, in
 void			GenerateHTMLcmdLinkTable(int socketFD, const char *deviceName, const int deviceNum, const TYPE_CmdEntry *cmdTable);
 int				GetFilterWheelCnt(void);
 int				CountDevicesByType(const int deviceType);
-AlpacaDriver	*FindDeviceByType(const int deviceType);
+AlpacaDriver	*FindDeviceByType(const int deviceType, const int alpacaDevNum=-1);
 bool			GetCmdNameFromTable(const int cmdNumber, char *comandName, const TYPE_CmdEntry *cmdTable, char *getPut);
 void			LogToDisk(const int whichLogFile, TYPE_GetPutRequestData *reqData);
 void			GetAlpacaName(TYPE_DEVICETYPE deviceType, char *alpacaName);

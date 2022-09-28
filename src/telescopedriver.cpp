@@ -945,7 +945,6 @@ int					mySocket;
 
 	JsonResponse_Add_Finish(	mySocket,
 								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
 								kInclude_HTTP_Header);
 
 	//*	this is for the logging function

@@ -107,6 +107,8 @@
 //*	Jun 21,	2022	<MLS> Changed logic for clock update so it happens at beginning of the second
 //*	Jul 21,	2022	<MLS> Added _USE_LARGE_FONT_FOR_PUBLICATION_ for GAIA paper
 //*	Aug  2,	2022	<MLS> Added SAO star catalog
+//*	Sep  3,	2022	<MLS> Fixed bug in SearchSkyObjectsDataListByNumber() that made HIP search not work
+//*	Sep  3,	2022	<MLS> Added SAO star catalog to search routine
 //*****************************************************************************
 //*	TODO
 //*			star catalog lists
@@ -516,8 +518,8 @@ int		iii;
 
 	//*	read the SAO database
 	gSAOobjectPtr		=	SAO_ReadFile(&gSAOobjectCount);
-	CONSOLE_DEBUG_W_HEX("gSAOobjectPtr\t=", gSAOobjectPtr);
-	CONSOLE_DEBUG_W_LONG("gSAOobjectCount\t=", gSAOobjectCount);
+//	CONSOLE_DEBUG_W_HEX("gSAOobjectPtr\t=",		gSAOobjectPtr);
+//	CONSOLE_DEBUG_W_LONG("gSAOobjectCount\t=",	gSAOobjectCount);
 
 #define	kMaxPolarAlignCenterPts		200
 	//*	read the special.txt file
@@ -4986,6 +4988,13 @@ int		textColor;
 			cViewAngle_InfoDisplay	=	0.001;
 			break;
 
+		case kDataSrc_SAO:
+			textColor				=	W_LIGHTMAGENTA;
+			cViewAngle_LabelDisplay	=	0.05;
+			cViewAngle_InfoDisplay	=	0.02;
+			break;
+
+
 		default:
 			textColor				=	W_WHITE;
 			cViewAngle_LabelDisplay	=	1.0;
@@ -5521,10 +5530,11 @@ void	WindowTabSkyTravel::DrawWindowOverlays(void)
 	//*	are we supposed to draw the telescope F.O.V. information
 	if (cDispOptions.dispTelescope)
 	{
-	bool	telescopeIsInView;
+//	bool	telescopeIsInView;
 	short	telescopeXX, telescopeYY;
 
-		telescopeIsInView	=	GetXYfromRA_Decl(	gTelescopeRA_Radians,
+//		telescopeIsInView	=
+								GetXYfromRA_Decl(	gTelescopeRA_Radians,
 													gTelescopeDecl_Radians,
 													&telescopeXX,
 													&telescopeYY);
@@ -7912,12 +7922,14 @@ int		prefixLen;
 		{
 			prefixLen	=	strlen(namePrefix);
 			argPtr		+=	prefixLen;
+			//*	now skip any white space
 			while (*argPtr == 0x20)
 			{
 				argPtr++;
 			}
 		}
 		objectIDnum	=	atoi(argPtr);
+		CONSOLE_DEBUG_W_NUM("looking for objectIDnum", objectIDnum);
 		iii			=	0;
 		while ((cFoundSomething == false) && (iii < starCount))
 		{
@@ -7926,7 +7938,7 @@ int		prefixLen;
 				cFound_newRA	=	starDataPtr[iii].ra;
 				cFound_newDec	=	starDataPtr[iii].decl;
 
-				if (namePrefix != NULL)
+				if ((namePrefix != NULL) && (strlen(starDataPtr[iii].longName) > 0))
 				{
 					//*	a prefix specified, make sure it matches
 					if (strncasecmp(starDataPtr[iii].longName, namePrefix, prefixLen) == 0)
@@ -8274,6 +8286,7 @@ bool	foundIt;
 	//*	look for Hipparcos numbers
 	if ((firstChar == 'H') && isdigit(objectName[1]))
 	{
+		CONSOLE_DEBUG_W_STR("Looking in Hipparcos for", objectName);
 		foundIt	=	SearchSkyObjectsDataListByNumber(	gHipObjectPtr,
 														gHipObjectCount,
 														kDataSrc_Hipparcos,
@@ -8287,40 +8300,27 @@ bool	foundIt;
 			SetMaximumViewAngle(0.03);
 		}
 	}
-//	if ((cFoundSomething == false) && (gHipObjectPtr != NULL) && (gHipObjectCount > 0))
-//	{
-//		if ((firstChar == 'H') && isdigit(objectName[1]))
-//		{
-//			hippObjectId	=	atol(&objectName[1]);
-//			CONSOLE_DEBUG_W_LONG("Searching Hipparcosfor ID\t=", hippObjectId);
-//			//*	ok, lets look
-//			iii	=	0;
-//			while ((cFoundSomething == false) && (iii < gHipObjectCount))
-//			{
-//				if (hippObjectId == gHipObjectPtr[iii].id)
-//				{
-//					CONSOLE_DEBUG("found in Hipparcos");
-//
-//					cFound_newRA	=	gHipObjectPtr[iii].ra;
-//					cFound_newDec	=	gHipObjectPtr[iii].decl;
-//
-//					strcpy(cFoundDatabase, "Hipparcos catalog");
-//					sprintf(cFoundName, "H%ld", gHipObjectPtr[iii].id);
-//					if (gHipObjectPtr[iii].longName[0] > 0x20)
-//					{
-//						strcat(cFoundName, "-");
-//						strcat(cFoundName, gHipObjectPtr[iii].longName);
-//					}
-//
-//					cFoundSomething			=	true;
-//					cDispOptions.dispHipparcos	=	true;
-//					//*	make sure we can see the data base
-//					SetMaximumViewAngle(0.03);
-//				}
-//				iii++;
-//			}
-//		}
-//	}
+
+
+	//-------------------------------------------------------------------------------
+	//*	look for SAO numbers
+	if ((firstChar == 'S') && isdigit(objectName[1]))
+	{
+		CONSOLE_DEBUG_W_STR("Looking in SAO for", objectName);
+		foundIt	=	SearchSkyObjectsDataListByNumber(	gSAOobjectPtr,
+														gSAOobjectCount,
+														kDataSrc_SAO,
+														"S",
+														objectName);
+		if (foundIt)
+		{
+			cDispOptions.dispSAO	=	true;
+			strcpy(cFoundDatabase, "SAO catalog");
+			//*	make sure we can see the data base
+			SetMaximumViewAngle(0.03);
+		}
+	}
+
 
 	//-------------------------------------------------------------------------------
 	//*	look in the default star list
@@ -8402,6 +8402,9 @@ bool	foundIt;
 			strcpy(cFoundDatabase, "Hipparcos catalog");
 		}
 	}
+
+
+
 //	if ((cFoundSomething == false) && (gHipObjectPtr != NULL) && (gHipObjectCount > 0))
 //	{
 //	//	CONSOLE_DEBUG_W_STR("Searching Hipparcosfor \t=", objectName);
@@ -8481,43 +8484,13 @@ bool	foundIt;
 			cDispOptions.dispDraper	=	true;
 			strcpy(cFoundDatabase, "Henry Drapper");
 		}
-
-
-//		CONSOLE_DEBUG("looking for Henry draper objects");
-//		if ((gDraperObjectPtr != NULL) && (gDraperObjectCount > 0))
-//		{
-//			argPtr	=	objectName;
-//			argPtr	+=	2;
-//			while (*argPtr == 0x20)
-//			{
-//				argPtr++;
-//			}
-//			objectIDnum	=	atoi(argPtr);
-//			iii			=	0;
-//			CONSOLE_DEBUG_W_NUM("looking for HD", objectIDnum);
-//			while ((cFoundSomething == false) && (iii < gDraperObjectCount))
-//			{
-//				if ((objectIDnum == gDraperObjectPtr[iii].id))
-//				{
-//					cFound_newRA	=	gDraperObjectPtr[iii].org_ra;
-//					cFound_newDec	=	gDraperObjectPtr[iii].org_decl;
-//
-//					strcpy(cFoundDatabase, "HD");
-//					sprintf(cFoundName, "HD-%d mag=%2.1f", objectIDnum, gDraperObjectPtr[iii].realMagnitude);;
-//					cDispOptions.dispDraper	=	true;
-//					cFoundSomething			=	true;
-//			//		DumpCelestDataStruct(__FUNCTION__, &gDraperObjectPtr[iii]);
-//				}
-//				iii++;
-//			}
-//		}
 	}
 
 
 #ifdef _ENABLE_HYG_
 	//-------------------------------------------------------------------------------
 	//*	check to see if they specified an Henry Draper lists
-	if (strncasecmp(objectName, "HD", 2) == 0)
+	if ((cFoundSomething == false) && (strncasecmp(objectName, "HD", 2) == 0))
 	{
 		CONSOLE_DEBUG("looking for Henry draper objects")
 		if ((gHYGObjectPtr != NULL) && (gHYGObjectCount > 0))

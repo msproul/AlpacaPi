@@ -24,6 +24,9 @@
 //*	May 30,	2022	<MLS> Added more fields to AlpacaGetStatus_TelescopeOneAAT()
 //*	May 31,	2022	<MLS> Added ability to determine if driver supports refraction
 //*	Jun  3,	2022	<MLS> Added MountData_SaveRA() & MountData_SaveDec()
+//*	Sep 28,	2022	<MLS> Consolidated 3 Save routines into one
+//*	Sep 28,	2002	<MLS> Added MountData_SaveData()
+//*	Sep 28,	2002	<MLS> Deleted MountData_SaveRA, MountData_SaveHA, MountData_SaveDec
 //*****************************************************************************
 
 //*****************************************************************************
@@ -57,118 +60,78 @@ int		iii;
 }
 
 //*****************************************************************************
-static void	MountData_SaveHA(const double hourAngleDegrees)
+enum
 {
-time_t		currentTime;
-int			secsPastMignight;
-int			tableIndex;
-int			jjj;
-double		myHourAngleDegrees;
-
-//	CONSOLE_DEBUG_W_DBL("hourAngleDegrees\t\t=", hourAngleDegrees);
-	if (gInitMountData)
-	{
-		MountData_Init();
-		gInitMountData	=	false;
-	}
-
-
-	myHourAngleDegrees	=	hourAngleDegrees;
-	if (myHourAngleDegrees > 180.0)
-	{
-		myHourAngleDegrees	-=	360.0;
-	}
-//	CONSOLE_DEBUG_W_DBL("myHourAngleDegrees\t\t=", myHourAngleDegrees);
-	currentTime			=	time(NULL);
-
-	secsPastMignight	=	currentTime % kSecondsPerDay;
-	tableIndex			=	secsPastMignight / 4;
-	if (tableIndex < kMaxMountData)
-	{
-		gHourAngleData[tableIndex]	=	myHourAngleDegrees;
-
-		//*	there is a possibility that a value might not be filled in in the table.
-		//*	to protect against that, we are going to put the next 5 values the same as this one
-		//*	the buffer is 10 values larger so we wont over flow the buffer
-		for (jjj=0; jjj<5; jjj++)
-		{
-			gHourAngleData[tableIndex + jjj]	=	myHourAngleDegrees;
-		}
-	}
-//	CONSOLE_DEBUG_W_NUM("tableIndex      \t=", tableIndex);
-}
+	kMountData_HA	=	0,
+	kMountData_RA,
+	kMountData_DEC
+};
 
 //*****************************************************************************
-static void	MountData_SaveRA(const double rightAscention_Hours)
-{
-time_t		currentTime;
-int			secsPastMignight;
-int			tableIndex;
-int			jjj;
-double		rightAscention_Degrees;
-
-//	CONSOLE_DEBUG_W_DBL("rightAscention_Hours\t=", rightAscention_Hours);
-	if (gInitMountData)
-	{
-		MountData_Init();
-		gInitMountData	=	false;
-	}
-	currentTime			=	time(NULL);
-
-	rightAscention_Degrees	=	rightAscention_Hours * 15.0;
-	if (rightAscention_Degrees > 180.0)
-	{
-		rightAscention_Degrees	-=	360.0;
-	}
-
-	secsPastMignight	=	currentTime % kSecondsPerDay;
-	tableIndex			=	secsPastMignight / 4;
-	if (tableIndex < kMaxMountData)
-	{
-		gRightAsceData[tableIndex]	=	rightAscention_Degrees;
-
-		//*	there is a possibility that a value might not be filled in in the table.
-		//*	to protect against that, we are going to put the next 5 values the same as this one
-		//*	the buffer is 10 values larger so we wont over flow the buffer
-		for (jjj=0; jjj<5; jjj++)
-		{
-			gRightAsceData[tableIndex + jjj]	=	rightAscention_Degrees;
-		}
-	}
-//	CONSOLE_DEBUG_W_NUM("tableIndex      \t=", tableIndex);
-}
-
+//*	to make this cleaner, all three data points are saved by the same routine into different buffers
 //*****************************************************************************
-static void	MountData_SaveDec(const double declination_Degrees)
+static void	MountData_SaveData(const int whichData, const double newEntryInDegrees)
 {
 time_t		currentTime;
 int			secsPastMignight;
 int			tableIndex;
 int			jjj;
+double		myDataDegrees;
+double		*arrayPointer;
 
-//	CONSOLE_DEBUG_W_DBL("declination_Degrees\t=", declination_Degrees);
+//	CONSOLE_DEBUG_W_DBL("newEntryInDegrees\t\t=", newEntryInDegrees);
 	if (gInitMountData)
 	{
 		MountData_Init();
 		gInitMountData	=	false;
 	}
+
+
+	myDataDegrees	=	newEntryInDegrees;
+	if (myDataDegrees > 180.0)
+	{
+		myDataDegrees	-=	360.0;
+	}
+//	CONSOLE_DEBUG_W_DBL("myDataDegrees\t\t=", myDataDegrees);
 	currentTime			=	time(NULL);
 
 	secsPastMignight	=	currentTime % kSecondsPerDay;
 	tableIndex			=	secsPastMignight / 4;
 	if (tableIndex < kMaxMountData)
 	{
-		gDeclinationData[tableIndex]	=	declination_Degrees;
+
+		switch(whichData)
+		{
+			case kMountData_HA:
+				arrayPointer	=	gHourAngleData;
+				break;
+
+			case kMountData_RA:
+				arrayPointer	=	gRightAsceData;
+				break;
+
+			case kMountData_DEC:
+				arrayPointer	=	gDeclinationData;
+				break;
+
+			default:
+				CONSOLE_ABORT("Invalid data index");
+				break;
+		}
+		arrayPointer[tableIndex]	=	myDataDegrees;
 
 		//*	there is a possibility that a value might not be filled in in the table.
 		//*	to protect against that, we are going to put the next 5 values the same as this one
 		//*	the buffer is 10 values larger so we wont over flow the buffer
 		for (jjj=0; jjj<5; jjj++)
 		{
-			gDeclinationData[tableIndex + jjj]	=	declination_Degrees;
+			arrayPointer[tableIndex + jjj]	=	myDataDegrees;
 		}
 	}
-//	CONSOLE_DEBUG_W_NUM("tableIndex      \t=", tableIndex);
+	else
+	{
+		CONSOLE_DEBUG_W_NUM("tableIndex      \t=", tableIndex);
+	}
 }
 
 #endif //	defined(_PARENT_IS_SKYTRAVEL_) && !defined( __ARM_ARCH )
@@ -220,7 +183,7 @@ bool	dataWasHandled;
 		cTelescopeProp.Declination	=	AsciiToDouble(valueString);
 		Update_TelescopeDeclination();
 #if defined(_PARENT_IS_SKYTRAVEL_) && !defined( __ARM_ARCH )
-		MountData_SaveDec(cTelescopeProp.Declination);
+		MountData_SaveData(kMountData_DEC, cTelescopeProp.Declination);
 #endif
 	}
 	//=================================================================================
@@ -249,7 +212,7 @@ bool	dataWasHandled;
 	else if (strcasecmp(keywordString,		"HourAngle-degrees") == 0)
 	{
 		cTelescopeProp.HourAngle_deg	=	AsciiToDouble(valueString);
-		MountData_SaveHA(cTelescopeProp.HourAngle_deg);
+		MountData_SaveData(kMountData_HA, cTelescopeProp.HourAngle_deg);
 	}
 #endif // _PARENT_IS_SKYTRAVEL_
 	//=================================================================================
@@ -258,7 +221,7 @@ bool	dataWasHandled;
 		cTelescopeProp.RightAscension	=	AsciiToDouble(valueString);
 		Update_TelescopeRtAscension();
 #if defined(_PARENT_IS_SKYTRAVEL_) && !defined( __ARM_ARCH )
-		MountData_SaveRA(cTelescopeProp.RightAscension);
+		MountData_SaveData(kMountData_RA, cTelescopeProp.RightAscension * 15.0);
 #endif
 	}
 	//=================================================================================

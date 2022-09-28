@@ -53,7 +53,10 @@
 //*	Jun  7,	2022	<MLS> Version V0.5.1-beta
 //*	Jun  7,	2022	<MLS> Build 146
 //*	Jul  6,	2022	<MLS> Build 147
-//*	Aug 14,	2022	<MLS> Build 148
+//*	Aug 15,	2022	<MLS> Build 148
+//*	Aug 30,	2022	<MLS> Build 149
+//*	Sep 11,	2022	<MLS> Build 150
+//*	Sep 26,	2022	<MLS> Added structure TYPE_Sensor for ObservingConditions
 //*****************************************************************************
 //#include	"alpaca_defs.h"
 
@@ -78,7 +81,7 @@
 
 #define	kApplicationName	"AlpacaPi"
 #define	kVersionString		"V0.5.1-beta"
-#define	kBuildNumber		148
+#define	kBuildNumber		150
 
 
 #define kAlpacaDiscoveryPORT	32227
@@ -577,26 +580,36 @@ typedef struct
 	double	TargetPosition;		//*	The destination position angle for Move() and MoveAbsolute().
 } TYPE_RotatorProperties;
 
+//*****************************************************************************
+typedef struct
+{
+	bool		IsSupported;
+	bool		ValidData;
+	double		Value;
+	char		Description[128];
+	uint32_t	LastRead;
+} TYPE_Sensor;
 
 //*****************************************************************************
 typedef struct
 {
-	double	Averageperiod;			//*	Returns the time period over which observations will be averaged
-	double	Cloudcover;				//*	Returns the amount of sky obscured by cloud
-	double	Dewpoint;				//*	Returns the atmospheric dew point at the observatory
-	double	Humidity;				//*	Returns the atmospheric humidity at the observatory
-	double	Pressure_hPa;			//*	Returns the atmospheric pressure at the observatory.
-									//*	hectoPascals
+	TYPE_Sensor		Averageperiod;		//*	Returns the time period over which observations will be averaged
+	TYPE_Sensor		Cloudcover;			//*	Returns the amount of sky obscured by cloud
+	TYPE_Sensor		Dewpoint;			//*	Returns the atmospheric dew point at the observatory
+	TYPE_Sensor		Humidity;			//*	Returns the atmospheric humidity at the observatory
+	TYPE_Sensor		Pressure;			//*	Returns the atmospheric pressure at the observatory.
+										//*	hectoPascals
 
-	double	RainRate;				//*	Returns the rain rate at the observatory.
-	double	SkyBrightness;			//*	Returns the sky brightness at the observatory
-	double	SkyQuality;				//*	Returns the sky quality at the observatory
-	double	SkyTemperature_DegC;	//*	Returns the sky temperature at the observatory
-	double	StarFWHM;				//*	Returns the seeing at the observatory
-	double	Temperature_DegC;		//*	Returns the temperature at the observatory
-	double	WindDirection;			//*	Returns the wind direction at the observatory
-	double	WindGust;				//*	Returns the peak 3 second wind gust at the observatory over the last 2 minutes
-	double	WindSpeed;				//*	Returns the wind speed at the observatory.
+	TYPE_Sensor		RainRate;			//*	Returns the rain rate at the observatory.
+	TYPE_Sensor		SkyBrightness;		//*	Returns the sky brightness at the observatory
+	TYPE_Sensor		SkyQuality;			//*	Returns the sky quality at the observatory
+	TYPE_Sensor		SkyTemperature;		//*	Returns the sky temperature at the observatory
+	TYPE_Sensor		StarFWHM;			//*	Returns the seeing at the observatory
+	TYPE_Sensor		Temperature;		//*	Returns the temperature at the observatory
+
+	TYPE_Sensor		WindDirection;		//*	Returns the wind direction at the observatory
+	TYPE_Sensor		WindGust;			//*	Returns the peak 3 second wind gust at the observatory over the last 2 minutes
+	TYPE_Sensor		WindSpeed;			//*	Returns the wind speed at the observatory.
 
 //	double	sensordescription,		//*	Return a sensor description
 //	double	timesincelastupdate,	//*	Return the time since the sensor value was last updated

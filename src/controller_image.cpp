@@ -14,7 +14,6 @@
 //*	Feb 25,	2022	<MLS> SetLiveWindowImage() working under C++ opencv
 //*	Mar 12,	2022	<MLS> Added SetImageWindowInfo()
 //*	Mar 12,	2022	<MLS> Added TYPE_BinaryImageHdr struct to Image controller
-//*	May  5,	2022	<MLS> Added ConvertImageToRGB()
 //*****************************************************************************
 
 #ifdef _ENABLE_CTRL_IMAGE_
@@ -28,6 +27,7 @@
 #include	"sendrequest_lib.h"
 #include	"helper_functions.h"
 
+#include	"opencv_utils.h"
 
 #define _ENABLE_CONSOLE_DEBUG_
 #define	_DEBUG_TIMING_
@@ -287,130 +287,6 @@ void	ControllerImage::DrawWidgetImage(TYPE_WIDGET *theWidget)
 }
 
 #ifdef _USE_OPENCV_CPP_
-//**************************************************************************************
-static cv::Mat *ConvertImageToRGB(cv::Mat *openCVImage)
-{
-int		oldImgWidth;
-int		oldImgHeight;
-int		oldImgRowStepSize;
-int		oldImgBytesPerPixel;
-int		rgbImgRowStepSize;
-cv::Mat	*rgbOpenCVImage;
-size_t	byteCount;
-int		row;
-int		clm;
-int		pixIdx;
-int		pixValue;
-uint8_t	*oldRowPtr;
-uint8_t	*rgbRowPtr;
-
-	CONSOLE_DEBUG(__FUNCTION__);
-	SETUP_TIMING();
-
-	oldImgWidth			=	openCVImage->cols;
-	oldImgHeight		=	openCVImage->rows;
-	oldImgRowStepSize	=	openCVImage->step[0];
-	oldImgBytesPerPixel	=	openCVImage->step[1];
-
-	//*	create an RGB image of the same size
-	rgbOpenCVImage		=	new cv::Mat(cv::Size(	oldImgWidth,
-													oldImgHeight),
-													CV_8UC3);
-	if (rgbOpenCVImage != NULL)
-	{
-		//*	double check the data buffers
-		if ((rgbOpenCVImage->data != NULL) && (openCVImage->data != NULL))
-		{
-			rgbImgRowStepSize	=	rgbOpenCVImage->step[0];
-
-			CONSOLE_DEBUG_W_NUM("oldImgBytesPerPixel\t=", oldImgBytesPerPixel);
-			CONSOLE_DEBUG_W_NUM("rgbImgRowStepSize\t=", rgbImgRowStepSize);
-
-			//*	copy the image data to OUR image
-			switch(oldImgBytesPerPixel)
-			{
-				case 1:
-							//		#if (CV_MAJOR_VERSION <= 3)
-							//			cv::cvtColor(*newOpenCVImage, *cDownLoadedImage, CV_GRAY2RGB);
-							//		#else
-							//			#warning "OpenCV convert from 8 bit to RGB not finished"
-							//		#endif
-					//*	copy the data over, pixel at a time
-					for (row = 0; row < oldImgHeight; row++)
-					{
-						oldRowPtr	=	openCVImage->data;
-						oldRowPtr	+=	row * oldImgRowStepSize;
-
-						rgbRowPtr	=	rgbOpenCVImage->data;
-						rgbRowPtr	+=	row * rgbImgRowStepSize;
-
-						pixIdx		=	0;
-						for (clm = 0; clm < oldImgWidth; clm++)
-						{
-							pixValue			=	oldRowPtr[clm];	//*	get the 8 bit pixel value
-							rgbRowPtr[pixIdx++]	=	pixValue;		//*	put it in R,G,B
-							rgbRowPtr[pixIdx++]	=	pixValue;
-							rgbRowPtr[pixIdx++]	=	pixValue;
-						}
-					}
-					break;
-
-				case 2:
-					//*	copy the data over, pixel at a time
-					for (row = 0; row < oldImgHeight; row++)
-					{
-						oldRowPtr	=	openCVImage->data;
-						oldRowPtr	+=	row * oldImgRowStepSize;
-
-						rgbRowPtr	=	rgbOpenCVImage->data;
-						rgbRowPtr	+=	row * rgbImgRowStepSize;
-
-						pixIdx		=	0;
-						for (clm = 0; clm < oldImgWidth; clm++)
-						{
-							//*	get the most significant byte of the 16 bit value
-						#if (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)
-							pixValue			=	oldRowPtr[(clm * 2) + 1];
-						#else
-							pixValue			=	oldRowPtr[(clm * 2)];
-						#endif
-							rgbRowPtr[pixIdx++]	=	pixValue;	//*	put it in R,G,B
-							rgbRowPtr[pixIdx++]	=	pixValue;
-							rgbRowPtr[pixIdx++]	=	pixValue;
-						}
-					}
-					break;
-
-				case 3:
-					if (rgbImgRowStepSize == oldImgRowStepSize)
-					{
-						//*	the data is the same, use memcpy
-						byteCount	=	openCVImage->rows * oldImgRowStepSize;
-						memcpy(rgbOpenCVImage->data, openCVImage->data, byteCount);
-					}
-					else
-					{
-						CONSOLE_DEBUG("Failed to copy data from newOpenCVImage to cDownLoadedImage");
-					}
-					break;
-			}
-		}
-	}
-	else
-	{
-		CONSOLE_DEBUG("Failed to create new RGB image")
-	}
-	DEBUG_TIMING("Time to convert image to RGB");
-
-//	openCVerr	=	cv::imwrite("16bitdownload.png", *cDownLoadedImage);
-//
-//	newOpenCVImage->convertTo(*cDownLoadedImage, CV_8UC3);
-//	openCVerr	=	cv::imwrite("16bitdownload-8bit.png", *cDownLoadedImage);
-
-	return(rgbOpenCVImage);
-}
-
-
 
 //**************************************************************************************
 void	ControllerImage::SetLiveWindowImage(cv::Mat *newOpenCVImage)
@@ -707,8 +583,9 @@ int		imgChannels;
 	sprintf(textString, "ch = %d", imgChannels);
 	SetWidgetText(kTab_Image, kImageDisplay_Exposure, textString);
 }
+
 #ifdef _USE_OPENCV_CPP_
-#warning "OpenCV++ not finished"
+//#warning "OpenCV++ not finished"
 //**************************************************************************************
 void	ControllerImage::CopyImageToLiveImage(cv::Mat *newOpenCVImage)
 {
@@ -736,6 +613,8 @@ size_t	byteCount_dsp;
 	//*	this is just an extra check, it was crashing on testing
 	if ((cDownLoadedImage != NULL) && (newOpenCVImage != NULL))
 	{
+		DumpCVMatStruct(newOpenCVImage, "newOpenCVImage");
+		DumpCVMatStruct(cDownLoadedImage, "cDownLoadedImage");
 		newImgWidth			=	newOpenCVImage->cols;
 		newImgHeight		=	newOpenCVImage->rows;
 		newImgRowStepSize	=	newOpenCVImage->step[0];
@@ -758,18 +637,21 @@ size_t	byteCount_dsp;
 
 		if (byteCount_src == byteCount_old)
 		{
+			CONSOLE_DEBUG("memcpy to cDownLoadedImage");
 			memcpy(cDownLoadedImage->data, newOpenCVImage->data, byteCount_src);
 		}
 
 		//*	double check the displayed image
 		if (cDisplayedImage != NULL)
 		{
+			DumpCVMatStruct(cDisplayedImage, "cDisplayedImage");
 			dspImgHeight		=	cDisplayedImage->rows;
 			dspImgRowStepSize	=	cDisplayedImage->step[0];
 			byteCount_dsp		=	dspImgHeight * dspImgRowStepSize;
 
 			if (byteCount_dsp == byteCount_old)
 			{
+				CONSOLE_DEBUG("memcpy to cDisplayedImage");
 				memcpy(cDisplayedImage->data, cDownLoadedImage->data, byteCount_dsp);
 			}
 		}
@@ -846,7 +728,10 @@ void	ControllerImage::UpdateLiveWindowImage(cv::Mat *newOpenCVImage, const char 
 void	ControllerImage::UpdateLiveWindowImage(IplImage *newOpenCVImage, const char *imageFileName)
 #endif // _USE_OPENCV_CPP_
 {
-bool	imagesAreTheSame;
+bool			imagesAreTheSame;
+unsigned int	rowStepSize;
+unsigned int	nChannels;
+
 
 	CONSOLE_DEBUG("-------------------Start");
 	CONSOLE_DEBUG(__FUNCTION__);
@@ -879,6 +764,19 @@ bool	imagesAreTheSame;
 				CONSOLE_DEBUG("Failed on height");
 				CONSOLE_DEBUG_W_NUM("newOpenCVImage->rows  \t=",	newOpenCVImage->rows);
 				CONSOLE_DEBUG_W_NUM("cDownLoadedImage->rows\t=",	cDownLoadedImage->rows);
+			}
+			rowStepSize	=	newOpenCVImage->step[0];
+			nChannels	=	newOpenCVImage->step[1];
+			if (rowStepSize != cDownLoadedImage->step[0])
+			{
+				imagesAreTheSame	=	false;
+				CONSOLE_DEBUG("Failed on rowStepSize");
+			}
+
+			if (nChannels != cDownLoadedImage->step[1])
+			{
+				imagesAreTheSame	=	false;
+				CONSOLE_DEBUG("Failed on nChannels");
 			}
 	#else
 			//*	check if width are the same
@@ -926,33 +824,42 @@ bool	imagesAreTheSame;
 
 			if (imagesAreTheSame)
 			{
+				CONSOLE_DEBUG("imagesAreTheSame");
 				CopyImageToLiveImage(newOpenCVImage);
 			}
 			else
 			{
 				CONSOLE_DEBUG("images are different !!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-	#ifdef _USE_OPENCV_CPP_
-		#warning "OpenCV++ not finished"
-	#else
 				//*	check to see if our temporary image exists
 				if (cColorImage == NULL)
 				{
 				int		newImgWidth;
 				int		newImgHeight;
 
+			#ifdef _USE_OPENCV_CPP_
+					newImgWidth		=	newOpenCVImage->cols;
+					newImgHeight	=	newOpenCVImage->rows;
+					cColorImage		=	new cv::Mat(cv::Size(	newImgWidth,
+																newImgHeight),
+																CV_8UC3);
+			#else
 					newImgWidth		=	newOpenCVImage->width;
 					newImgHeight	=	newOpenCVImage->height;
 					cColorImage		=	cvCreateImage(cvSize(	newImgWidth,
 																newImgHeight),
 																IPL_DEPTH_8U,
 																3);
+			#endif // _USE_OPENCV_CPP_
 				}
 				if (cColorImage != NULL)
 				{
+				#ifdef _USE_OPENCV_CPP_
+					cv::cvtColor(*newOpenCVImage, *cColorImage, cv::COLOR_GRAY2BGR);
+				#else
 					cvCvtColor(newOpenCVImage, cColorImage, CV_GRAY2RGB);
+				#endif // _USE_OPENCV_CPP_
 					CopyImageToLiveImage(cColorImage);
 				}
-	#endif // _USE_OPENCV_CPP_
 			}
 			cUpdateWindow	=	true;
 		}

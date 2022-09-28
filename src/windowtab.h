@@ -218,6 +218,7 @@ class WindowTab
 				void	SetWidgetNumber(		const int widgetIdx, const int number);
 				void	SetWidgetNumber(		const int widgetIdx, const long number);
 				void	SetWidgetNumber(		const int widgetIdx, const double number);
+				void	SetWidgetNumber(		const int widgetIdx, const double number, const int decimalPlaces);
 				void	SetWidgetNumber6F(		const int widgetIdx, const double number);
 
 				void	SetWidgetIcon(			const int widgetIdx, const int iconNumber);

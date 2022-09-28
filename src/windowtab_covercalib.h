@@ -21,7 +21,6 @@ enum
 	kCoverCalib_Title	=	0,
 	kCoverCalib_Connected,
 
-	kCoverCalib_Instructions,
 
 	kCoverCalib_Cover_Label,
 	kCoverCalib_Cover_State,
@@ -48,6 +47,7 @@ enum
 
 	kCoverCalib_Brightness_Outline,
 
+	kCoverCalib_ErrorMsg,
 
 	kCoverCalib_LastCmdString,
 	kCoverCalib_AlpacaLogo,
@@ -84,6 +84,7 @@ class WindowTabCoverCalib: public WindowTab
 		virtual	void	ProcessButtonClick(const int buttonIdx, const int flags);
 		virtual void	ProcessMouseLeftButtonUp(const int widgetIdx, const int event, const int xxx, const int yyy, const int flags);
 		virtual	void	UpdateSliderValue(const int widgetIdx, double newSliderValue);
+		virtual	void	AlpacaDisplayErrorMessage(const char *errorMsgString);
 
 				void	SetBrightness(const int newBrightnessValue);
 				void	AdjustBrightness(const int howMuch);

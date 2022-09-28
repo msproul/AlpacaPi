@@ -191,6 +191,16 @@ int		myButtonHt;
 
 	SetWidgetOutlineBox(kCoverCalib_Brightness_Outline, kCoverCalib_Brightness_Label, kCoverCalib_Plus50);
 
+	//=======================================================
+	//*	Error messages
+	SetWidget(			kCoverCalib_ErrorMsg,	cClm1_offset,	yLoc,	cFullWidthBtn,		cRadioBtnHt * 2	);
+	SetWidgetType(		kCoverCalib_ErrorMsg, 	kWidgetType_MultiLineText);
+	SetWidgetFont(		kCoverCalib_ErrorMsg,	kFont_Medium);
+	SetWidgetText(		kCoverCalib_ErrorMsg,	"-----");
+	SetWidgetTextColor(	kCoverCalib_ErrorMsg,	CV_RGB(255,	0,	0));
+	yLoc			+=	cRadioBtnHt * 2;
+	yLoc			+=	2;
+
 
 	yLoc			+=	cTitleHeight;
 	yLoc			+=	50;
@@ -340,6 +350,13 @@ void	WindowTabCoverCalib::ProcessMouseLeftButtonUp(const int	widgetIdx,
 void	WindowTabCoverCalib::SetCoverCalibPropPtr(TYPE_CoverCalibrationProperties *argPropPtr)
 {
 	cCoverCalibrationPropPtr		=	argPropPtr;
+}
+
+//*****************************************************************************
+void	WindowTabCoverCalib::AlpacaDisplayErrorMessage(const char *errorMsgString)
+{
+//	CONSOLE_DEBUG_W_STR("Alpaca error=", errorMsgString);
+	SetWidgetText(kCoverCalib_ErrorMsg, errorMsgString);
 }
 
 

@@ -10,6 +10,7 @@
 //*	Jan 31,	2020	<MLS> 	works correctly on Ubunto 16.04LTS
 //*	Nov 13,	2021	<MLS> Added cmd 'a' to toggle between automatic and manual advance
 //*	Nov 13,	2021	<MLS> Added -t title option
+//*	Sep 19,	2022	<MLS> fitsview now working with openCV C++ version
 //*****************************************************************************
 
 #include	<string.h>
@@ -388,10 +389,10 @@ bool			keepGoing;
 	cvAvgSdv(openCV_Image, &mean, &std_dev, NULL);
 #endif
 
-	if ((mean.val[0] < 0.001) && (std_dev.val[0] < 0.001))
-	{
-		CONSOLE_DEBUG("No image");
-	}
+//	if ((mean.val[0] < 0.001) && (std_dev.val[0] < 0.001))
+//	{
+//		CONSOLE_DEBUG("No image");
+//	}
 
 	keepGoing		=	true;
 	while (keepGoing)
@@ -562,7 +563,9 @@ bool			fileIsFits;
 //			}
 //			else
 			{
+				CONSOLE_DEBUG(__FUNCTION__);
 				cv::imshow(myWindowName, *openCV_Image);
+				CONSOLE_DEBUG(__FUNCTION__);
 			}
 		#else
 			if (openCV_Image->width > 2000)

@@ -191,7 +191,7 @@
 #include	<stdio.h>
 
 //*	MLS Libraries
-//#define _ENABLE_CONSOLE_DEBUG_
+#define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
 
 
@@ -229,7 +229,6 @@ char		raString[32];
 char		deString[32];
 char		spectralClass;
 
-//	CONSOLE_DEBUG(lineBuff);
 
 	memset(starRec, 0, sizeof(TYPE_CelestData));
 
@@ -300,6 +299,11 @@ char		spectralClass;
 	starRec->dataSrc		=	kDataSrc_Hipparcos;
 	starRec->spectralClass	=	spectralClass;
 
+//	if (strstr(lineBuff, " 65426") != NULL)
+//	{
+//		CONSOLE_DEBUG(lineBuff);
+//		DumpCelestDataStruct(__FUNCTION__, starRec);
+//	}
 	return(validObject);
 }
 

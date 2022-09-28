@@ -259,11 +259,14 @@ char	lineBuff[64];
 //*****************************************************************************
 void	ControllerSlit::UpdateCommonProperties(void)
 {
+	CONSOLE_DEBUG(__FUNCTION__);
+
 	SetWidgetText(kTab_DriverInfo,		kDriverInfo_Name,				cCommonProp.Name);
 	SetWidgetText(kTab_DriverInfo,		kDriverInfo_Description,		cCommonProp.Description);
 	SetWidgetText(kTab_DriverInfo,		kDriverInfo_DriverInfo,			cCommonProp.DriverInfo);
 	SetWidgetText(kTab_DriverInfo,		kDriverInfo_DriverVersion,		cCommonProp.DriverVersion);
 	SetWidgetNumber(kTab_DriverInfo,	kDriverInfo_InterfaceVersion,	cCommonProp.InterfaceVersion);
+
 }
 
 
@@ -303,10 +306,11 @@ bool		needToUpdate;
 	if (cReadStartup)
 	{
 		CONSOLE_DEBUG(__FUNCTION__);
-		AlpacaGetCommonProperties_OneAAT("slittracker");
 		AlpacaGetStartupData();
+		AlpacaGetCommonProperties_OneAAT("slittracker");
+		UpdateAboutBoxRemoteDevice(kTab_About, kAboutBox_CPUinfo);
 		cReadStartup	=	false;
-//--	cDomeTabObjPtr->UpdateControls();
+
 	}
 
 

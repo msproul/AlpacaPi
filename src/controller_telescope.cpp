@@ -215,6 +215,8 @@ bool		validData;
 		AlpacaGetStartupData();
 		AlpacaGetCommonProperties_OneAAT("telescope");
 
+		UpdateAboutBoxRemoteDevice(kTab_About, kAboutBox_CPUinfo);
+
 		SetWidgetText(kTab_DriverInfo,		kDriverInfo_Name,				cCommonProp.Name);
 		SetWidgetText(kTab_DriverInfo,		kDriverInfo_Description,		cCommonProp.Description);
 		SetWidgetText(kTab_DriverInfo,		kDriverInfo_DriverInfo,			cCommonProp.DriverInfo);

@@ -218,14 +218,12 @@
 
 
 #ifdef _ENABLE_FITS_
-	#ifndef _FITSIO_H
-		#include <fitsio.h>
-	#endif // _FITSIO_H
-	#ifndef _FITSIO2_H
-	//	#include <fitsio2.h>
-	#endif // _FITSIO2_H
+	#include <fitsio.h>
 #endif // _ENABLE_FITS_
 
+#ifdef _ENABLE_IMU_
+	#include "imu_lib.h"
+#endif
 
 #include	"JsonResponse.h"
 #include	"eventlogging.h"
@@ -1502,9 +1500,8 @@ CONSOLE_DEBUG(__FUNCTION__);
 
 		//CONSOLE_DEBUG_W_NUM("len of jsonTextBuffer\t=", strlen(reqData->jsonTextBuffer));
 		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Finish(	mySocket,
-											reqData->jsonTextBuffer,
-											kMaxJsonBuffLen,
-											(httpHeaderSent == false));
+																reqData->jsonTextBuffer,
+																(httpHeaderSent == false));
 	}
 
 //	if (cmdEnumValue != kCmd_Camera_imagearray)
@@ -2044,7 +2041,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
 			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "This Camera does not support cooling");
 			if (cVerboseDebug)
 			{
-				CONSOLE_DEBUG(alpacaErrMsg);
+//				CONSOLE_DEBUG(alpacaErrMsg);
 			}
 		}
 	}
@@ -4108,9 +4105,9 @@ bool	xmit16BitAs32Bit	=	true;
 		//	if (bufferSize < (20 * 1000000))
 			if (1)
 			{
-				CONSOLE_DEBUG_W_NUM("Writting to TCP socket, bufferSize\t=", bufferSize);
+				CONSOLE_DEBUG_W_LONG("Writting to TCP socket, bufferSize\t=", bufferSize);
 				bytesWritten	=	write(reqData->socket, binaryDataBuffer, bufferSize);
-				CONSOLE_DEBUG_W_NUM("bytesWritten\t\t=", bytesWritten);
+				CONSOLE_DEBUG_W_LONG("bytesWritten\t\t=", bytesWritten);
 				if (bytesWritten < bufferSize)
 				{
 					CONSOLE_DEBUG("FAILED!!! to transmit entire data block!!!!!!!!!!!!!!!");
@@ -4143,19 +4140,19 @@ bool	xmit16BitAs32Bit	=	true;
 					{
 						bytesPerBlock	=	dataLeftToSend;
 					}
-					CONSOLE_DEBUG_W_NUM("write() bytesPerBlock\t\t=", bytesPerBlock);
+					CONSOLE_DEBUG_W_LONG("write() bytesPerBlock\t\t=", bytesPerBlock);
 					bytesWritten		=	write(reqData->socket, dataPointer, bytesPerBlock);
 					totalBytesWritten	+=	bytesWritten;
 					dataPointer			+=	bytesWritten;
 
-					CONSOLE_DEBUG_W_NUM("bytesWritten\t\t=", bytesWritten);
+					CONSOLE_DEBUG_W_LONG("bytesWritten\t\t=", bytesWritten);
 				}
 			}
 			free(binaryDataBuffer);
 		}
 		else
 		{
-			CONSOLE_DEBUG_W_NUM("Failed to allocate data buffer of size", bufferSize);
+			CONSOLE_DEBUG_W_LONG("Failed to allocate data buffer of size", bufferSize);
 		}
 	}
 	else
@@ -5879,6 +5876,7 @@ TYPE_ASCOM_STATUS		CameraDriver::Start_CameraExposure(int32_t exposureMicrosecs,
 {
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 
+
 	//*	this should be over ridden
 	strcpy(cLastCameraErrMsg, "Needs to be overloaded:-");
 	strcat(cLastCameraErrMsg, __FILE__);
@@ -5919,7 +5917,6 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 	return(alpacaErrCode);
 }
 
-
 //*****************************************************************************
 TYPE_ASCOM_STATUS		CameraDriver::Stop_Exposure(void)
 {
@@ -5934,8 +5931,6 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 
 	return(alpacaErrCode);
 }
-
-
 
 //*****************************************************************************
 TYPE_ASCOM_STATUS	CameraDriver::Start_Video(void)
@@ -5980,13 +5975,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
 	return(alpacaErrCode);
 }
 
-
-
-
-
 #pragma mark -
-
-
 //*****************************************************************************
 void	CameraDriver::OutputHTML(TYPE_GetPutRequestData *reqData)
 {
@@ -6190,6 +6179,8 @@ char	lineBuffer[512];
 //*****************************************************************************
 bool	CameraDriver::GetImage_ROI_info(void)
 {
+	CONSOLE_DEBUG(__FUNCTION__);
+
 	memset(&cROIinfo, 0, sizeof(TYPE_IMAGE_ROI_Info));
 
 	cROIinfo.currentROIimageType	=	kImageType_RAW8;
@@ -6211,6 +6202,8 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 	strcat(cLastCameraErrMsg, __FILE__);
 	strcat(cLastCameraErrMsg, ":");
 	strcat(cLastCameraErrMsg, __FUNCTION__);
+	CONSOLE_DEBUG(cLastCameraErrMsg);
+
 	return(alpacaErrCode);
 }
 
@@ -6226,6 +6219,7 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 	strcat(cLastCameraErrMsg, __FILE__);
 	strcat(cLastCameraErrMsg, ":");
 	strcat(cLastCameraErrMsg, __FUNCTION__);
+	CONSOLE_DEBUG(cLastCameraErrMsg);
 	return(alpacaErrCode);
 }
 
@@ -6241,6 +6235,7 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 	strcat(cLastCameraErrMsg, __FILE__);
 	strcat(cLastCameraErrMsg, ":");
 	strcat(cLastCameraErrMsg, __FUNCTION__);
+	CONSOLE_DEBUG(cLastCameraErrMsg);
 	return(alpacaErrCode);
 }
 
@@ -6256,6 +6251,7 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 	strcat(cLastCameraErrMsg, __FILE__);
 	strcat(cLastCameraErrMsg, ":");
 	strcat(cLastCameraErrMsg, __FUNCTION__);
+	CONSOLE_DEBUG(cLastCameraErrMsg);
 	return(alpacaErrCode);
 }
 
@@ -6271,6 +6267,7 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 	strcat(cLastCameraErrMsg, __FILE__);
 	strcat(cLastCameraErrMsg, ":");
 	strcat(cLastCameraErrMsg, __FUNCTION__);
+	CONSOLE_DEBUG(cLastCameraErrMsg);
 	return(alpacaErrCode);
 }
 
@@ -6593,9 +6590,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
 	return(alpacaErrCode);
 }
 
-
 #pragma mark -
-
 //*****************************************************************************
 void	CameraDriver::CheckPulseGuiding(void)
 {
@@ -6617,7 +6612,6 @@ uint32_t		deltaSecs;
 	}
 }
 
-
 //*****************************************************************************
 int32_t	CameraDriver::RunStateMachine_Idle(void)
 {
@@ -6632,7 +6626,7 @@ uint32_t			elapsedMilliSecs;
 	if (cUpdateOtherDevices)
 	{
 	#ifdef _ENABLE_FITS_
-
+		CONSOLE_DEBUG_W_STR("Updating device links", cCommonProp.Name);
 		//*	check on other devices
 		#ifdef _ENABLE_FOCUSER_
 			UpdateFocuserLink();
@@ -7918,6 +7912,75 @@ char				textBuffer[128];
 																timeRemaining,
 																INCLUDE_COMMA);
 		}
+
+	#ifdef _ENABLE_IMU_
+		//===============================================================
+		int		imuRetCode;
+		double	imuHeading;
+		double	imuRoll;
+		double	imuPitch;
+
+		imuRetCode	=	IMU_Read_Euler(&imuHeading, &imuRoll, &imuPitch);
+		if (imuRetCode == 0)
+		{
+			cBytesWrittenForThisCmd	+=	JsonResponse_Add_Double(	mySocket,
+																	reqData->jsonTextBuffer,
+																	kMaxJsonBuffLen,
+																	"IMU-Heading",
+																	imuHeading,
+																	INCLUDE_COMMA);
+			cBytesWrittenForThisCmd	+=	JsonResponse_Add_Double(	mySocket,
+																	reqData->jsonTextBuffer,
+																	kMaxJsonBuffLen,
+																	"IMU-Roll",
+																	imuRoll,
+																	INCLUDE_COMMA);
+			cBytesWrittenForThisCmd	+=	JsonResponse_Add_Double(	mySocket,
+																	reqData->jsonTextBuffer,
+																	kMaxJsonBuffLen,
+																	"IMU-Pitch",
+																	imuPitch,
+																	INCLUDE_COMMA);
+		}
+		else
+		{
+			cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(mySocket,
+																reqData->jsonTextBuffer,
+																kMaxJsonBuffLen,
+																"IMU-Failure",
+																"Failed to read IMU Euler data",
+																INCLUDE_COMMA);
+		}
+
+		//*	now do the calibration status
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	mySocket,
+															reqData->jsonTextBuffer,
+															kMaxJsonBuffLen,
+															"IMU-Cal-Gyro",
+															IMU_Get_Calibration(kIMU_Gyro),
+															INCLUDE_COMMA);
+
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	mySocket,
+															reqData->jsonTextBuffer,
+															kMaxJsonBuffLen,
+															"IMU-Cal-Accel",
+															IMU_Get_Calibration(kIMU_Accelerometer),
+															INCLUDE_COMMA);
+
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	mySocket,
+															reqData->jsonTextBuffer,
+															kMaxJsonBuffLen,
+															"IMU-Cal-Magn",
+															IMU_Get_Calibration(kIMU_Magnetometer),
+															INCLUDE_COMMA);
+
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	mySocket,
+															reqData->jsonTextBuffer,
+															kMaxJsonBuffLen,
+															"IMU-Cal-Sys",
+															IMU_Get_Calibration(kIMU_System),
+															INCLUDE_COMMA);
+	#endif // _ENABLE_IMU_
 
 		//===============================================================
 		//*	all of the debugging stuff last

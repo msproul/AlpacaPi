@@ -201,6 +201,10 @@ class DomeDriver: public AlpacaDriver
 		//-------------------------------------------------------------------------
 		//*	Watchdog timer stuff
 		virtual	void					WatchDog_TimeOut(void);
+				time_t					cTimeOfLastMoveCmd;
+				time_t					cTimeOfLastMoveCheck;
+				bool					cEnableIdleMoveTimeout;
+				int						cIdleMoveTimeoutMinutes;
 
 
 #ifdef _ENABLE_SLIT_TRACKER_REMOTE_

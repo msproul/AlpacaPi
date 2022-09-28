@@ -17,7 +17,7 @@
 //*	that you agree that the author(s) have no warranty, obligations or liability.  You
 //*	must determine the suitability of this source code for your use.
 //*
-//*	Redistributions of this source code must retain this copyright notice.
+//*	Re-distribution of this source code must retain this copyright notice.
 //*****************************************************************************
 //*	References:
 //*		https://ascom-standards.org/api/#/Dome%20Specific%20Methods/get_dome__device_number__athome
@@ -133,12 +133,17 @@
 //*	Apr 17,	2022	<MLS> Added run time option flag gSimulateCameraImage
 //*	May  5,	2022	<MLS> Added cVerboseDebug so an individual driver can be more verbose
 //*	Jul  3,	2022	<MLS> Added HTTP header for JPEG output (was removed for some reason)
+//*	Aug 28,	2022	<MLS> Now recognize the "POST" command, ignore for now.
+//*	Sep 13,	2022	<MLS> Added _ENABLE_PHASEONE_
+//*	Sep 18,	2022	<MLS> Added ComputeCPUusage()
+//*	Sep 19,	2022	<MLS> Working on CPU usage per active driver
 //*****************************************************************************
 //*	to install code blocks 20
 //*	Step 1: sudo add-apt-repository ppa:codeblocks-devs/release
 //*	Step 2: sudo apt-get update
 //*	Step 3: sudo apt-get install codeblocks codeblocks-contrib
 //*****************************************************************************
+//		getrusage
 
 #include	<stdio.h>
 #include	<stdlib.h>
@@ -215,6 +220,9 @@ char		gHostName[48]				=	"";
 #if defined(_ENABLE_CAMERA_) && defined(_SIMULATE_CAMERA_)
 	#include	"cameradriver_sim.h"
 #endif
+#if defined(_ENABLE_CAMERA_) && defined(_ENABLE_PHASEONE_)
+	#include	"cameradriver_PhaseOne.h"
+#endif
 
 
 #ifdef	_ENABLE_DOME_
@@ -257,6 +265,7 @@ char		gHostName[48]				=	"";
 #ifdef _ENABLE_CALIBRATION_
 	#include	"calibrationdriver.h"
 	#include	"calibrationdriver_rpi.h"
+	#include	"calibrationdriver_Alnitak.h"
 #endif // _ENABLE_CALIBRATION_
 
 #ifdef _ENABLE_TELESCOPE_
@@ -434,6 +443,13 @@ int		iii;
 	cTimeOfLastValidCmd			=	time(NULL);		//*	these need to be set or it will do a shutdown before it even starts
 	cTimeOfLastWatchDogCheck	=	time(NULL);
 	cWatchDogTimeOut_Minutes	=	5;				//*	default timeout, can be overridden
+
+	//========================================
+	//*	CPU usage information
+	cAccumilatedNanoSecs		=	0;
+	cTotalNanoSeconds			=	0;
+	cTotalMilliSeconds			=	0;
+
 
 	//==========================================================================================
 	//*	add the device to the list
@@ -817,6 +833,8 @@ int			upTime_Days;
 int			ram_Megabytes;
 double		freeDiskSpace_Gigs;
 bool		hasUSBfs;
+int			runTimeSeconds;
+int			percentCPU;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 	JsonResponse_Add_String(reqData->socket,
@@ -824,6 +842,27 @@ bool		hasUSBfs;
 							kMaxJsonBuffLen,
 							"platform",
 							gPlatformString,
+							INCLUDE_COMMA);
+
+	JsonResponse_Add_String(reqData->socket,
+							reqData->jsonTextBuffer,
+							kMaxJsonBuffLen,
+							"cpuinfo",
+							gCpuInfoString,
+							INCLUDE_COMMA);
+
+	JsonResponse_Add_String(reqData->socket,
+							reqData->jsonTextBuffer,
+							kMaxJsonBuffLen,
+							"operatingsystem",
+							gOsReleaseString,
+							INCLUDE_COMMA);
+
+	JsonResponse_Add_String(reqData->socket,
+							reqData->jsonTextBuffer,
+							kMaxJsonBuffLen,
+							"version",
+							gFullVersionString,
 							INCLUDE_COMMA);
 
 	if (gBogoMipsValue > 1.0)
@@ -915,6 +954,33 @@ bool		hasUSBfs;
 								textBuff,
 								INCLUDE_COMMA);
 	}
+
+	//====================================================
+	JsonResponse_Add_Int32(	reqData->socket,
+							reqData->jsonTextBuffer,
+							kMaxJsonBuffLen,
+							"cRusage.ru_utime.tv_sec",
+							cRusage.ru_utime.tv_sec,
+							INCLUDE_COMMA);
+	JsonResponse_Add_Int32(	reqData->socket,
+							reqData->jsonTextBuffer,
+							kMaxJsonBuffLen,
+							"cRusage.ru_stime.tv_sec",
+							cRusage.ru_stime.tv_sec,
+							INCLUDE_COMMA);
+	runTimeSeconds	=	millis() / 1000;
+	if (runTimeSeconds > 0)
+	{
+		percentCPU	=	(100 * (cRusage.ru_utime.tv_sec + cRusage.ru_stime.tv_sec)) / runTimeSeconds;
+		JsonResponse_Add_Int32(	reqData->socket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								"percentCPU",
+								percentCPU,
+								INCLUDE_COMMA);
+	}
+
+
 
 	return(kASCOM_Err_Success);
 }
@@ -1523,7 +1589,7 @@ char	lineBuffer[256];
 char	separaterLine[]	=	"<HR SIZE=4 COLOR=RED>\r\n";
 //char	separaterLine[]	=	"<HR SIZE=4 COLOR=BLUE>\r\n";
 int		mySocketFD;
-int		ii;
+int		iii;
 
 
 	if (reqData != NULL)
@@ -1614,34 +1680,42 @@ int		ii;
 		SocketWriteData(mySocketFD,	"\t\t<TH><FONT COLOR=yellow>Device Name</TH>\r\n");
 		SocketWriteData(mySocketFD,	"\t\t<TH><FONT COLOR=yellow>Description</TH>\r\n");
 		SocketWriteData(mySocketFD,	"\t\t<TH><FONT COLOR=yellow>Cmds / Errs</TH>\r\n");
+		SocketWriteData(mySocketFD,	"\t\t<TH><FONT COLOR=yellow>CPU (ms)</TH>\r\n");
+		SocketWriteData(mySocketFD,	"\t\t<TH><FONT COLOR=yellow>CPU (nano-secs)</TH>\r\n");
 		SocketWriteData(mySocketFD,	"\t</TR>\r\n");
 
-		for (ii=0; ii<gDeviceCnt; ii++)
+		for (iii=0; iii<gDeviceCnt; iii++)
 		{
-			if (gAlpacaDeviceList[ii] != NULL)
+			if (gAlpacaDeviceList[iii] != NULL)
 			{
 				SocketWriteData(mySocketFD,	"\t<TR>\r\n");
 
 				SocketWriteData(mySocketFD,	"\t\t<TD>\r\n");
-					SocketWriteData(mySocketFD,	gAlpacaDeviceList[ii]->cAlpacaName);
+					SocketWriteData(mySocketFD,	gAlpacaDeviceList[iii]->cAlpacaName);
 				SocketWriteData(mySocketFD,	"\t\t</TD>\r\n");
 
-				sprintf(lineBuffer, "<TD><CENTER>%d</TD>\r\n", gAlpacaDeviceList[ii]->cDeviceNum);
+				sprintf(lineBuffer, "<TD><CENTER>%d</TD>\r\n", gAlpacaDeviceList[iii]->cDeviceNum);
 				SocketWriteData(mySocketFD,	lineBuffer);
 
 				SocketWriteData(mySocketFD,	"\t\t<TD>\r\n");
-					SocketWriteData(mySocketFD,	gAlpacaDeviceList[ii]->cCommonProp.Name);
+					SocketWriteData(mySocketFD,	gAlpacaDeviceList[iii]->cCommonProp.Name);
 				SocketWriteData(mySocketFD,	"\t\t</TD>\r\n");
 
 				SocketWriteData(mySocketFD,	"\t\t<TD>\r\n");
-					SocketWriteData(mySocketFD,	gAlpacaDeviceList[ii]->cCommonProp.Description);
+					SocketWriteData(mySocketFD,	gAlpacaDeviceList[iii]->cCommonProp.Description);
 				SocketWriteData(mySocketFD,	"\t\t</TD>\r\n");
 
 				sprintf(lineBuffer, "<TD><CENTER>%d/%d</TD>\r\n",
-											gAlpacaDeviceList[ii]->cTotalCmdsProcessed,
-											gAlpacaDeviceList[ii]->cTotalCmdErrors);
+											gAlpacaDeviceList[iii]->cTotalCmdsProcessed,
+											gAlpacaDeviceList[iii]->cTotalCmdErrors);
 				SocketWriteData(mySocketFD,	lineBuffer);
 
+				//*	cpu usage, this may get moved to a different page later
+				sprintf(lineBuffer, "<TD><CENTER>%lu</TD>\r\n", gAlpacaDeviceList[iii]->cTotalMilliSeconds);
+				SocketWriteData(mySocketFD,	lineBuffer);
+
+				sprintf(lineBuffer, "<TD><CENTER>%lu</TD>\r\n", gAlpacaDeviceList[iii]->cTotalNanoSeconds);
+				SocketWriteData(mySocketFD,	lineBuffer);
 
 				SocketWriteData(mySocketFD,	"\t</TR>\r\n");
 
@@ -1653,14 +1727,14 @@ int		ii;
 
 		//**********************************************************
 		//*	Output the html for each device
-		for (ii=0; ii<gDeviceCnt; ii++)
+		for (iii=0; iii<gDeviceCnt; iii++)
 		{
-//			CONSOLE_DEBUG_W_STR(__FUNCTION__, gAlpacaDeviceList[ii]->cCommonProp.Name);
-			if (gAlpacaDeviceList[ii] != NULL)
+//			CONSOLE_DEBUG_W_STR(__FUNCTION__, gAlpacaDeviceList[iii]->cCommonProp.Name);
+			if (gAlpacaDeviceList[iii] != NULL)
 			{
 				SocketWriteData(mySocketFD,	separaterLine);
-				gAlpacaDeviceList[ii]->OutputHTML(reqData);
-				gAlpacaDeviceList[ii]->OutputHTML_Part2(reqData);
+				gAlpacaDeviceList[iii]->OutputHTML(reqData);
+				gAlpacaDeviceList[iii]->OutputHTML_Part2(reqData);
 			}
 		}
 
@@ -1858,7 +1932,7 @@ char	lineBuffer[256];
 char	separaterLine[]	=	"<HR SIZE=4 COLOR=RED>\r\n";
 //char	separaterLine[]	=	"<HR SIZE=4 COLOR=BLUE>\r\n";
 int		mySocketFD;
-int		ii;
+int		iii;
 
 	if (reqData != NULL)
 	{
@@ -1875,12 +1949,12 @@ int		ii;
 
 		OutPutObservatoryInfoHTML(mySocketFD);
 
-		for (ii=0; ii<gDeviceCnt; ii++)
+		for (iii=0; iii<gDeviceCnt; iii++)
 		{
-			if (gAlpacaDeviceList[ii] != NULL)
+			if (gAlpacaDeviceList[iii] != NULL)
 			{
 				SocketWriteData(mySocketFD,	separaterLine);
-				gAlpacaDeviceList[ii]->OutputHTML_CmdStats(reqData);
+				gAlpacaDeviceList[iii]->OutputHTML_CmdStats(reqData);
 			}
 		}
 
@@ -1907,38 +1981,38 @@ void	GenerateHTMLcmdLinkTable(	int			socketFD,
 									const int	deviceNum,
 									const TYPE_CmdEntry *cmdTable)
 {
-int		ii;
+int		iii;
 char	lineBuffer[256];
 
 //	CONSOLE_DEBUG_W_STR("deviceName\t=", deviceName);
 //	CONSOLE_DEBUG_W_NUM("deviceNum\t=", deviceNum);
 	//*	now generate links to all of the commands
 	SocketWriteData(socketFD,	"\r\n<UL>\r\n");
-	ii	=	0;
-	while (gCommonCmdTable[ii].commandName[0] != 0)
+	iii	=	0;
+	while (gCommonCmdTable[iii].commandName[0] != 0)
 	{
 		sprintf(lineBuffer,	"\t<LI><A HREF=../api/v1/%s/%d/%s target=cmd>%s</A>\r\n",
 									deviceName,
 									deviceNum,
-									gCommonCmdTable[ii].commandName,
-									gCommonCmdTable[ii].commandName);
+									gCommonCmdTable[iii].commandName,
+									gCommonCmdTable[iii].commandName);
 		SocketWriteData(socketFD,	lineBuffer);
-		ii++;
+		iii++;
 	}
 
 	SocketWriteData(socketFD,	"<P>\r\n");
 
-	ii	=	0;
-	while (cmdTable[ii].commandName[0] != 0)
+	iii	=	0;
+	while (cmdTable[iii].commandName[0] != 0)
 	{
 		sprintf(lineBuffer,	"\t<LI><A HREF=../api/v1/%s/%d/%s target=cmd>%s</A>\r\n",
 									deviceName,
 									deviceNum,
-									cmdTable[ii].commandName,
-									cmdTable[ii].commandName);
+									cmdTable[iii].commandName,
+									cmdTable[iii].commandName);
 		SocketWriteData(socketFD,	lineBuffer);
 //		CONSOLE_DEBUG(lineBuffer);
-		ii++;
+		iii++;
 	}
 	SocketWriteData(socketFD,	"</UL>\r\n");
 }
@@ -2661,6 +2735,36 @@ int	iii;
 }
 
 //*****************************************************************************
+static void	ProcessPostCommand(const int socket)
+{
+char	postResponse[2048];
+int		bytesWritten;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+
+	strcpy(postResponse,	"HTTP/1.1 200 OK\r\n");
+	strcat(postResponse,	"Date: Tue, 06 Sep 2022 00:34:52 GMT\r\n");
+	strcat(postResponse,	"/Server: Apache/2.4.41 (Ubuntu)\r\n");
+	strcat(postResponse,	"Content-Type: text/plain\r\n");
+	strcat(postResponse,	"X-Frame-Options: DENY\r\n");
+	strcat(postResponse,	"Vary: Cookie,Accept-Encoding\r\n");
+//	strcat(postResponse,	"Content-Length: 126\r\n");
+	strcat(postResponse,	"X-Content-Type-Options: nosniff\r\n");
+	strcat(postResponse,	"Referrer-Policy: same-origin\r\n");
+	strcat(postResponse,	"Cross-Origin-Opener-Policy: same-origin\r\n");
+//	strcat(postResponse,	"Set-Cookie: csrftoken=T7AkBsNUMW0a6FjxDw2bDtMBFlExEWfXO7VXrawwSX6F704cS2zPOst8QHT7LtWh; expires=Tue, 05 Sep 2023 00:34:52 GMT; Max-Age=31449600; Path=/; SameSite=Lax
+	strcat(postResponse,	"Connection: close\r\n");
+
+	strcat(postResponse,	"{\"status\": \"success\", \"message\": \"authenticated user: xyzzy@gmail.com\", \"session\": \"i56kn2jy8gdn1lgq865e2fdo9uht2eak\"}\r\n");
+
+	CONSOLE_DEBUG_W_STR("Sending data:", postResponse);
+
+	bytesWritten	=	SocketWriteData(socket,	postResponse);
+	CONSOLE_DEBUG_W_NUM("bytesWritten\t=",	bytesWritten);
+}
+
+
+//*****************************************************************************
 //*	this function is called from the socket handler with the received data
 //*	It will parse through the data checking all of the normal alpaca requirements
 //*	and then call the appropriate function based on the device type
@@ -2681,6 +2785,13 @@ int		returnCode	=	-1;
 	{
 //		CONSOLE_DEBUG("Calling ProcessGetPutRequest");
 		returnCode	=	ProcessGetPutRequest(socket, htmlData, byteCount);
+	}
+	else if (strncmp(htmlData, "POST", 4) == 0)
+	{
+		CONSOLE_DEBUG("POST command not supported (yet)");
+		CONSOLE_DEBUG_W_STR("htmlData\t=",	htmlData);
+		CONSOLE_DEBUG_W_LONG("byteCount\t=",	byteCount);
+		ProcessPostCommand(socket);
 	}
 	else if (byteCount > 0)
 	{
@@ -2917,7 +3028,7 @@ char	titleLine[128];
 
 
 	CONSOLE_DEBUG(		"*************************************************************");
-	sprintf(titleLine,	"******************** Alpaca device properties ***************");
+	CONSOLE_DEBUG(		"******************** Alpaca device properties ***************");
 	CONSOLE_DEBUG(titleLine);
 	sprintf(titleLine,	"************* Called from: %-20s *************", callingFunctionName);
 	CONSOLE_DEBUG(titleLine);
@@ -2934,22 +3045,40 @@ char	titleLine[128];
 	CONSOLE_DEBUG_W_STR(	"cCommonProp.Name               \t=",	cCommonProp.Name);
 }
 
+
+//*****************************************************************************
+void	AlpacaDriver::ComputeCPUusage(void)
+{
+
+	getrusage(RUSAGE_SELF, &cRusage);
+
+}
+
+
 //*****************************************************************************
 static void	CreateDriverObjects()
 {
 //*********************************************************
 //*	Cameras
+//-----------------------------------------------------------
 #if defined(_ENABLE_CAMERA_) && defined(_ENABLE_ATIK_)
 	CreateATIK_CameraObjects();
 #endif
 
+//-----------------------------------------------------------
 #if defined(_ENABLE_CAMERA_) && defined(_ENABLE_ASI_)
 	CreateASI_CameraObjects();
 #endif
 //-----------------------------------------------------------
-#if defined(_ENABLE_CAMERA_) && defined(_ENABLE_TOUP_)
-	CreateTOUP_CameraObjects();
+//#if defined(_ENABLE_CAMERA_) && defined(_ENABLE_FLIR_) && (__GNUC__ > 5)
+#if defined(_ENABLE_CAMERA_) && defined(_ENABLE_FLIR_)
+	CreateFLIR_CameraObjects();
 #endif
+//-----------------------------------------------------------
+#if defined(_ENABLE_CAMERA_) && defined(_ENABLE_PHASEONE_)
+	CreatePhaseOne_CameraObjects();
+#endif
+
 //-----------------------------------------------------------
 #if defined(_ENABLE_CAMERA_) && defined(_ENABLE_QHY_)
 	CreateQHY_CameraObjects();
@@ -2959,11 +3088,9 @@ static void	CreateDriverObjects()
 	CreateQSI_CameraObjects();
 #endif
 //-----------------------------------------------------------
-//#if defined(_ENABLE_CAMERA_) && defined(_ENABLE_FLIR_) && (__GNUC__ > 5)
-#if defined(_ENABLE_CAMERA_) && defined(_ENABLE_FLIR_)
-	CreateFLIR_CameraObjects();
+#if defined(_ENABLE_CAMERA_) && defined(_ENABLE_TOUP_)
+	CreateTOUP_CameraObjects();
 #endif
-
 
 //-----------------------------------------------------------
 #if defined(_ENABLE_CAMERA_) && defined(_ENABLE_SONY_)
@@ -3028,10 +3155,15 @@ static void	CreateDriverObjects()
 #endif
 
 
-#ifdef _ENABLE_CALIBRATION_
-//	CreateCalibrationObjects();
-	CreateCalibrationObjectsRPi();
+#if _ENABLE_CALIBRATION_
+	#ifdef _ENABLE_CALIBRATION_RPI_
+		CreateCalibrationObjectsRPi();
+	#endif
+	#ifdef _ENABLE_CALIBRATION_ALNITAK_
+		CreateCalibrationObjectsAlnitak();
+	#endif
 #endif // _ENABLE_CALIBRATION_
+
 
 //*********************************************************
 //*	Telescope
@@ -3055,7 +3187,7 @@ static void	CreateDriverObjects()
 }
 
 
-static	int32_t	gMainLoopCntr	=	0;
+//static	int32_t	gMainLoopCntr;
 //*****************************************************************************
 int	main(int argc, char **argv)
 {
@@ -3067,6 +3199,10 @@ int				iii;
 int				cameraCnt;
 int				ram_Megabytes;
 double			freeDiskSpace_Gigs;
+int32_t			mainLoopCntr;
+uint64_t		startNanoSecs;
+uint64_t		endNanoSecs;
+uint64_t		deltaNanoSecs;
 
 #if defined(_ENABLE_FITS_) || defined(_ENABLE_JPEGLIB_)
 	char			lineBuffer[64];
@@ -3130,9 +3266,12 @@ double			freeDiskSpace_Gigs;
 	CPUstats_ReadOSreleaseVersion();
 	CPUstats_ReadInfo();
 
-	CONSOLE_DEBUG_W_STR("CPU info  \t=",	gCpuInfoString);
-	CONSOLE_DEBUG_W_STR("OS Release\t=",	gOsReleaseString);
-	CONSOLE_DEBUG_W_STR("Platform  \t=",	gPlatformString);
+	if (gVerbose)
+	{
+		CONSOLE_DEBUG_W_STR("CPU info  \t=",	gCpuInfoString);
+		CONSOLE_DEBUG_W_STR("OS Release\t=",	gOsReleaseString);
+		CONSOLE_DEBUG_W_STR("Platform  \t=",	gPlatformString);
+	}
 
 
 	InitObsConditionGloblas();
@@ -3158,7 +3297,15 @@ double			freeDiskSpace_Gigs;
 	ObservatorySettings_Init();
 	gObservatorySettingsOK	=	ObservatorySettings_ReadFile();
 
+#ifdef _ENABLE_IMU_
+	IMU_Init();
+	IMU_Print_Calibration();
+	IMU_SetDebug(false);
+#endif
 
+
+	//--------------------------------------------------------
+	//*	create the various driver objects
 	CreateDriverObjects();
 
 
@@ -3186,15 +3333,13 @@ double			freeDiskSpace_Gigs;
 		CONSOLE_DEBUG_W_NUM("threadErr=", threadErr);
 	}
 
-#ifdef _ENABLE_IMU_
-	IMU_Init();
-#endif
 
 	//========================================================================================
 	gKeepRunning	=	true;
+	mainLoopCntr	=	0;
 	while (gKeepRunning)
 	{
-		gMainLoopCntr++;
+		mainLoopCntr++;
 		delayTime_microSecs	=	(1000000 / 2);		//*	default to 1/2 second
 		for (iii=0; iii<gDeviceCnt; iii++)
 		{
@@ -3203,35 +3348,63 @@ double			freeDiskSpace_Gigs;
 			//*	Not all devices have state machines to run
 			if (gAlpacaDeviceList[iii] != NULL)
 			{
-				delayTimeForThisTask	=	gAlpacaDeviceList[iii]->RunStateMachine();
-
-				//*	figure out what is the minimum delay time we have
-				if (delayTimeForThisTask < delayTime_microSecs)
+				//*	this helps verify that it is a valid object and nothing is corrupted
+				if (gAlpacaDeviceList[iii]->cMagicCookie == kMagicCookieValue)
 				{
-					delayTime_microSecs	=	delayTimeForThisTask;
-				}
+					startNanoSecs			=	MSecTimer_getNanoSecs();
 
-			#ifdef _ENABLE_LIVE_CONTROLLER_
-				//==================================================================================
-				//*	live window
-				if (gAlpacaDeviceList[iii]->cLiveController != NULL)
+					delayTimeForThisTask	=	gAlpacaDeviceList[iii]->RunStateMachine();
+					endNanoSecs				=	MSecTimer_getNanoSecs();
+					deltaNanoSecs			=	endNanoSecs - startNanoSecs;
+
+					gAlpacaDeviceList[iii]->cTotalNanoSeconds		+=	deltaNanoSecs;
+					gAlpacaDeviceList[iii]->cAccumilatedNanoSecs	+=	deltaNanoSecs;
+					if (gAlpacaDeviceList[iii]->cAccumilatedNanoSecs > 1000000)
+					{
+						gAlpacaDeviceList[iii]->cAccumilatedNanoSecs	-=	1000000;
+						gAlpacaDeviceList[iii]->cTotalMilliSeconds++;
+					}
+
+					//*	figure out what is the minimum delay time we have
+					if (delayTimeForThisTask < delayTime_microSecs)
+					{
+						delayTime_microSecs	=	delayTimeForThisTask;
+					}
+
+
+				#ifdef _ENABLE_LIVE_CONTROLLER_
+					//==================================================================================
+					//*	live window
+					if (gAlpacaDeviceList[iii]->cLiveController != NULL)
+					{
+						HandleContollerWindow(gAlpacaDeviceList[iii]);
+
+						//*	if we have an active live window,
+						//*	we want to be able to give it more time by waiting less time
+						delayTime_microSecs	=	50;
+					}
+				#endif // _ENABLE_LIVE_CONTROLLER_
+
+					//*	we dont need to do these every time through
+					if ((mainLoopCntr % 5) == 0)
+					{
+						gAlpacaDeviceList[iii]->CheckWatchDogTimeout();
+						gAlpacaDeviceList[iii]->ComputeCPUusage();
+					}
+
+					//*	put a little delay in between each device
+					usleep(10);
+				}
+				else
 				{
-					HandleContollerWindow(gAlpacaDeviceList[iii]);
-
-					//*	if we have an active live window,
-					//*	we want to be able to give it more time by waiting less time
-					delayTime_microSecs	=	10;
+					CONSOLE_DEBUG("Magic cookie is bad");
 				}
-			#endif // _ENABLE_LIVE_CONTROLLER_
-
-				gAlpacaDeviceList[iii]->CheckWatchDogTimeout();
 			}
 		}
-		if (delayTime_microSecs < 10)
+		if (delayTime_microSecs < 50)
 		{
-			delayTime_microSecs	=	10;
+			delayTime_microSecs	=	50;
 		}
-//		CONSOLE_DEBUG_W_INT32("delayTime_microSecs\t=", delayTime_microSecs);
 		usleep(delayTime_microSecs);
 	}
 
@@ -3505,22 +3678,34 @@ int		filterWhlCnt;
 
 
 //*****************************************************************************
-AlpacaDriver	*FindDeviceByType(const int deviceType)
+AlpacaDriver	*FindDeviceByType(const int deviceType, const int alpacaDevNum)
 {
-int				ii;
+int				iii;
 AlpacaDriver	*devicePtr;
 
 	devicePtr	=	NULL;
-	for (ii=0; ii<gDeviceCnt; ii++)
+	for (iii=0; iii<gDeviceCnt; iii++)
 	{
-		if (gAlpacaDeviceList[ii] != NULL)
+		if (gAlpacaDeviceList[iii] != NULL)
 		{
 			//*	make sure the object is valid
-			if (gAlpacaDeviceList[ii]->cMagicCookie == kMagicCookieValue)
+			if (gAlpacaDeviceList[iii]->cMagicCookie == kMagicCookieValue)
 			{
-				if (gAlpacaDeviceList[ii]->cDeviceType == deviceType)
+				if (gAlpacaDeviceList[iii]->cDeviceType == deviceType)
 				{
-					devicePtr	=	gAlpacaDeviceList[ii];
+					//*	was a specific device number specified
+					if (alpacaDevNum >= 0)
+					{
+						if (gAlpacaDeviceList[iii]->cDeviceNum == alpacaDevNum)
+						{
+							CONSOLE_DEBUG("Found matching device with matching device number");
+							devicePtr	=	gAlpacaDeviceList[iii];
+						}
+					}
+					else
+					{
+						devicePtr	=	gAlpacaDeviceList[iii];
+					}
 				}
 			}
 		}

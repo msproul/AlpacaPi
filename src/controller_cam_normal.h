@@ -85,6 +85,14 @@ class ControllerCamNormal: public ControllerCamera
 
 		virtual	void	UpdateBackgroundColor(const int redValue, const int grnValue, const int bluValue);
 
+		virtual	void	ProcessReadAll_IMU(		const char	*deviceTypeStr,
+												const int	deviceNum,
+												const char	*keywordString,
+												const char	*valueString);
+
+				void	DisableFilterWheel(void);
+
+				bool					cIMUdetected;
 
 				WindowTabCamera			*cCameraTabObjPtr;
 				WindowTabCamSettings	*cCamSettingsTabObjPtr;

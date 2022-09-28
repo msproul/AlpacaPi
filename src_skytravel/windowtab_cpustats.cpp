@@ -185,7 +185,7 @@ void	WindowTabCpuStats::ActivateWindow(void)
 //*****************************************************************************
 void	WindowTabCpuStats::ProcessButtonClick(const int buttonIdx, const int flags)
 {
-int	newSortColumn;
+//int	newSortColumn;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -221,8 +221,8 @@ void	WindowTabCpuStats::ProcessDoubleClick(	const int	widgetIdx,
 													const int	yyy,
 													const int	flags)
 {
-int		screenLineNum;
-int		starDataIdx;
+//int		screenLineNum;
+//int		starDataIdx;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 //	CONSOLE_DEBUG_W_NUM("widgetIdx\t=", widgetIdx);
@@ -276,14 +276,7 @@ int		boxId;
 int		iii;
 char	textString[256];
 char	formatString[64];
-int		myDevCount;
 int		lineIndex;
-short	raHours;
-short	raMinutes;
-double	raSecs;
-short	declDegress;
-short	declMinutes;
-double	declSecs;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 

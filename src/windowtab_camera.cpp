@@ -14,7 +14,7 @@
 //*	that you agree that the author(s) have no warranty, obligations or liability.  You
 //*	must determine the suitability of this source code for your use.
 //*
-//*	Redistributions of this source code must retain this copyright notice.
+//*	Re-distribution of this source code must retain this copyright notice.
 //*****************************************************************************
 //*	Edit History
 //*****************************************************************************
@@ -40,6 +40,9 @@
 //*	Feb 25,	2022	<MLS> Downloading image working with C++ opencv
 //*	Apr 16,	2022	<MLS> Saving dowloaded image working with C++ opencv
 //*	Jul  2,	2022	<MLS> Added FLIR logo to camera display
+//*	Sep 18,	2022	<MLS> Added DisableFilterWheel()
+//*	Sep 21,	2022	<MLS> Added display of remote IMU data
+//*	Sep 21,	2022	<MLS> Added SetRemoteIMUdisplay()
 //*****************************************************************************
 
 #ifdef _ENABLE_CTRL_CAMERA_
@@ -101,6 +104,7 @@ WindowTabCamera::~WindowTabCamera(void)
 //**************************************************************************************
 void	WindowTabCamera::SetupWindowControls(void)
 {
+int			xLoc;
 int			yLoc;
 int			yLocSave;
 int			yLocClm4;
@@ -567,6 +571,43 @@ char		textBuff[32];
 #endif // _TEMP_GRAPH_
 
 
+#ifdef _SUPPORT_REMOTE_IMU_
+int imuClmWidth;
+int	imuHeight;
+
+	//=======================================================
+	xLoc		=	cClm4_offset + 2;
+	yLoc		+=	5;
+	imuClmWidth	=	cClmWidth * 2;
+	imuHeight	=	25;
+	iii		=	kCameraBox_IMU_Title;
+	while (iii < kCameraBox_IMU_Outline)
+	{
+		SetWidget(					iii,	xLoc,	yLoc,	imuClmWidth,	imuHeight);
+		SetWidgetType(				iii,	kWidgetType_TextBox);
+		SetWidgetFont(				iii,	kFont_TextList);
+		SetWidgetJustification  (	iii,	kJustification_Left);
+		iii++;
+
+		yLoc			+=	imuHeight;
+		yLoc			+=	2;
+	}
+	SetWidgetOutlineBox(kCameraBox_IMU_Outline, kCameraBox_IMU_Title, (kCameraBox_IMU_Outline -1));
+	SetWidgetFont(				kCameraBox_IMU_Title,	kFont_Medium);
+	SetWidgetJustification  (	kCameraBox_IMU_Title,	kJustification_Center);
+	SetWidgetText(				kCameraBox_IMU_Title,	"IMU");
+	SetWidgetBGColor(			kCameraBox_IMU_Title,	CV_RGB(0xff, 0xff, 0xff));
+	SetWidgetTextColor(			kCameraBox_IMU_Title,	CV_RGB(0x00, 0x00, 0x00));
+
+	SetWidgetText(				kCameraBox_IMU_Heading,	"Heading");
+	SetWidgetText(				kCameraBox_IMU_Roll,	"Roll");
+	SetWidgetText(				kCameraBox_IMU_Pitch,	"Pitch");
+
+	//*	now turn all the IMU stuff off unless we actually see an IMU
+	SetRemoteIMUdisplay(false);
+#endif	//	_SUPPORT_REMOTE_IMU_
+
+
 	SetAlpacaLogo(kCameraBox_AlpacaLogo, kCameraBox_LastCmdString);
 
 	//=======================================================
@@ -574,7 +615,19 @@ char		textBuff[32];
 	SetIPaddressBoxes(kCameraBox_IPaddr, kCameraBox_Readall, kCameraBox_AlpacaDrvrVersion, -1);
 }
 
-#define	kCameraLogoCount	6
+//**************************************************************************************
+void	WindowTabCamera::DisableFilterWheel(void)
+{
+int		iii;
+
+	for (iii=kCameraBox_FilterWheelName; iii<=kCameraBox_FilterWheelOutline; iii++)
+	{
+		SetWidgetValid(iii, false);
+	}
+}
+
+
+#define	kCameraLogoCount	8
 
 #ifdef _USE_OPENCV_CPP_
 	cv::Mat		gCameraLogoImage[kCameraLogoCount];
@@ -627,6 +680,11 @@ int		camLogoIdx;
 		strcat(logoImagePath, "flir-logo.png");
 		camLogoIdx	=	5;
 	}
+	else if (strcasestr(cAlpacaDeviceName, "Phase") != NULL)
+	{
+		strcat(logoImagePath, "PhaseOne.png");
+		camLogoIdx	=	6;
+	}
 
 
 	CONSOLE_DEBUG_W_NUM("camLogoIdx   \t=",	camLogoIdx);
@@ -646,7 +704,7 @@ int		camLogoIdx;
 #endif // _USE_OPENCV_CPP_
 	}
 
-	CONSOLE_DEBUG_W_HEX("Calling SetWidgetImage() with logoImagePtr=", logoImagePtr);
+//	CONSOLE_DEBUG_W_HEX("Calling SetWidgetImage() with logoImagePtr=", logoImagePtr);
 	if (logoImagePtr != NULL)
 	{
 		SetWidgetImage(kCameraBox_Logo, logoImagePtr);
@@ -1280,5 +1338,19 @@ void	WindowTabCamera::SetReceivedFileName(const char *newFileName)
 {
 	strcpy(cDownLoadedFileNameRoot, newFileName);
 }
+
+#ifdef _SUPPORT_REMOTE_IMU_
+//**************************************************************************************
+void	WindowTabCamera::SetRemoteIMUdisplay(const bool enableFlag)
+{
+int		iii;
+
+	for (iii=kCameraBox_IMU_Title; iii<=kCameraBox_IMU_Outline; iii++)
+	{
+		SetWidgetValid(iii, enableFlag);
+	}
+}
+#endif // _SUPPORT_REMOTE_IMU_
+
 
 #endif // _ENABLE_CTRL_CAMERA_

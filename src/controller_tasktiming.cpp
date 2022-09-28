@@ -39,9 +39,9 @@
 //	unsigned long	endNanoSecs;
 //	unsigned long	nanoSecsAccumulator;
 //
-//} TYPE_TAKS_TIMING;
+//} TYPE_TASK_TIMING;
 
-//		TYPE_TAKS_TIMING	cTaskData[kMaxTaskTiming];
+//		TYPE_TASK_TIMING	cTaskData[kMaxTaskTiming];
 
 
 //*****************************************************************************
@@ -51,7 +51,7 @@ int		iii;
 
 	for (iii=0; iii<kMaxTaskTiming; iii++)
 	{
-		memset((void *)&cTaskData[iii], 0, sizeof(TYPE_TAKS_TIMING));
+		memset((void *)&cTaskData[iii], 0, sizeof(TYPE_TASK_TIMING));
 	}
 
 	TaskTiming_SetName(kTask_BackgroundThread, "BackgroundThread");

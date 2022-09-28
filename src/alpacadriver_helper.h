@@ -61,6 +61,7 @@ TYPE_DEVICETYPE	FindDeviceTypeByString(const char *deviceTypeStr);
 void			GetDeviceTypeFromEnum(const int deviceEnum, char *deviceTypeString);
 int				StartExtraListenThread(int exposureListenPort);
 void			GetBinaryElementTypeString(const int elementType, char *typeString);
+void			DumpObservingconditionsProp(TYPE_ObsConditionProperties	*obsCondProp, const char *functionName);
 
 extern	char		gWebTitle[];
 

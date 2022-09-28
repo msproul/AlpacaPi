@@ -14,7 +14,7 @@
 	#include	"windowtab.h"
 #endif // _WINDOW_TAB_H
 
-
+#define	_SUPPORT_REMOTE_IMU_
 
 //*****************************************************************************
 enum
@@ -114,6 +114,15 @@ enum
 	kCameraBox_TempOutline,
 #endif
 
+#ifdef _SUPPORT_REMOTE_IMU_
+	kCameraBox_IMU_Title,
+	kCameraBox_IMU_Heading,
+	kCameraBox_IMU_Roll,
+	kCameraBox_IMU_Pitch,
+
+	kCameraBox_IMU_Outline,
+#endif
+
 	kCameraBox_LastCmdString,
 	kCameraBox_AlpacaLogo,
 
@@ -148,6 +157,7 @@ class WindowTabCamera: public WindowTab
 											const int	flags);
 		virtual	void	UpdateSliderValue(const int widgetIdx, double newSliderValue);
 
+				void	DisableFilterWheel(void);
 				void	SetCameraLogo(void);
 				void	ForceAlpacaUpdate(void);
 				void	BumpGain(const int howMuch);
@@ -176,6 +186,10 @@ class WindowTabCamera: public WindowTab
 				uint32_t	cLastExposureUpdate_Millis;
 				uint32_t	cLastGainUpdate_Millis;
 				uint32_t	cLastOffsetUpdate_Millis;
+
+		#ifdef _SUPPORT_REMOTE_IMU_
+				void		SetRemoteIMUdisplay(const bool enableFlag);
+		#endif // _SUPPORT_REMOTE_IMU_
 
 };
 

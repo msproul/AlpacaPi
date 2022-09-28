@@ -25,6 +25,7 @@
 //*****************************************************************************
 //*	Apr  5,	2022	<MLS> Created readconfigfile.c
 //*	Apr  6,	2022	<MLS> Added FindConfigKeywordFromTable()
+//*	Sep 20,	2022	<MLS> Fixed bug in ProcessConfigLine() when argument was empty
 //*****************************************************************************
 
 #include	<stdbool.h>
@@ -51,6 +52,7 @@ static	bool ProcessConfigLine(	const char			*lineBuff,
 								ProcessConfigEntry	*configCallBack)
 {
 char	keyword[kMaxKeyWordLen];
+char	valueString[kMaxVakyeStrLen];
 int		iii;
 int		ccc;
 int		slen;
@@ -75,15 +77,17 @@ bool	validEntry;
 	if (valueStrPtr != NULL)
 	{
 		valueStrPtr++;		//*	skip over the separterChar
-		while (*valueStrPtr <= 0x20)
+		while ((*valueStrPtr == 0x20) || (*valueStrPtr == 0x09))
 		{
 			valueStrPtr++;
 		}
+		strncpy(valueString, valueStrPtr, (kMaxVakyeStrLen-2));
+		valueString[kMaxVakyeStrLen-2]	=	0;
 
 		//*	call the supplied callback function
 		if (configCallBack != NULL)
 		{
-			configCallBack(keyword, valueStrPtr);
+			configCallBack(keyword, valueString);
 		}
 //		CallBackFunction(keyword, valueStrPtr);
 

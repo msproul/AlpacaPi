@@ -51,10 +51,11 @@ class FilterwheelDriver: public AlpacaDriver
 		virtual bool				GetCmdNameFromMyCmdTable(const int cmdNumber, char *comandName, char *getPut);
 
 
-			TYPE_ASCOM_STATUS		Get_Position(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
+			TYPE_ASCOM_STATUS		Get_Position(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
 			TYPE_ASCOM_STATUS		Put_Position(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
-			TYPE_ASCOM_STATUS		Get_Focusoffsets(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
-			TYPE_ASCOM_STATUS		Get_Names(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
+			TYPE_ASCOM_STATUS		Get_Focusoffsets(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+			TYPE_ASCOM_STATUS		Get_Names(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+			TYPE_ASCOM_STATUS		Get_Readall(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 
 		virtual void				ReadFilterNamesTextFile(void);
 		virtual	int					Read_CurrentFWstate(void);
@@ -89,8 +90,10 @@ enum
 {
 	kCmd_Filterwheel_focusoffsets	=	0,	//*	Filter focus offsets
 	kCmd_Filterwheel_names,					//*	Filter wheel filter names
-	kCmd_Filterwheel_position				//*	GET-Returns the current filter wheel position
+	kCmd_Filterwheel_position,				//*	GET-Returns the current filter wheel position
 											//*	PUT-Sets the filter wheel position
+	kCmd_Filterwheel_Extras,
+	kCmd_Filterwheel_readall
 };
 
 

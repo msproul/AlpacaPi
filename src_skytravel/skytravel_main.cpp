@@ -192,13 +192,13 @@ unsigned int		deltaSecs;
 unsigned long		startNanoSecs;
 unsigned long		endNanoSecs;
 unsigned long		deltaNanoSecs;
-unsigned long		lastTimingMillis;
+//unsigned long		lastTimingMillis;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 //	CONSOLE_DEBUG_W_NUM("sizeof(TYPE_CelestData)", sizeof(TYPE_CelestData));
 
 	lastDebugMillis		=	millis();
-	lastTimingMillis	=	millis();
+//	lastTimingMillis	=	millis();
 
 
 	fitsVersionRet		=	ffvers(&fitsVersionVal);

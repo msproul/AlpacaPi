@@ -9,6 +9,7 @@
 //*	Jun 17,	2022	<MLS> Added AsciiToDouble()
 //*	Jul  8,	2022	<MLS> Added MSecTimer_getNanoSecs()
 //*	Aug  6,	2022	<MLS> Added GetMinutesSinceMidnight()
+//*	Sep 19,	2022	<MLS> Changed MSecTimer_getNanoSecs() to return uint64_t
 //*****************************************************************************
 
 #include	<math.h>
@@ -365,14 +366,14 @@ char	*asciiPtr;
 	return(dblValue);
 }
 
-static unsigned long	gBaseSeconds		=	0;
+static uint64_t	gBaseSeconds		=	0;
 
 //*****************************************************************************
-unsigned long MSecTimer_getNanoSecs(void)
+uint64_t MSecTimer_getNanoSecs(void)
 {
-unsigned long	currentNanoSecs;
 struct timespec currentTime;
-unsigned long	currentSecs;
+uint64_t		currentNanoSecs;
+uint64_t		currentSecs;
 
 	clock_gettime(CLOCK_REALTIME, &currentTime);
 	if (gBaseSeconds == 0)

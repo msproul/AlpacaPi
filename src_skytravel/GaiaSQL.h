@@ -25,6 +25,8 @@ double	CalcRA_DEC_Distance_Deg(const double	ra1_Deg,
 								const double	dec2Deg);
 bool	GetSQLdataFromIDnumber(const char *gaiaIDnumberStr, TYPE_CelestData *gaiaData);
 
+int		UpdateDataBaseListFromServer(void);
+
 //*****************************************************************************
 typedef struct
 {
@@ -55,7 +57,7 @@ typedef struct
 	char			Name[32];
 } TYPE_DATABASE_NAME;
 
-#define	kMaxDataBaseNames	4
+#define	kMaxDataBaseNames	10
 
 extern TYPE_DATABASE_NAME	gDataBaseNames[];
 extern int					gDataBaseNameCnt;

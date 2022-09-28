@@ -88,6 +88,7 @@ class WindowTabMLsingle: public WindowTab
 									const int	ySize,
 									cv::Scalar	backGrndColor,
 									const int	comMode,
+									const int	focuserType,
 									const char	*windowName=NULL);
 		virtual	~WindowTabMLsingle(void);
 
@@ -96,6 +97,7 @@ class WindowTabMLsingle: public WindowTab
 		virtual	void	ProcessDoubleClick(const int buttonIdx);
 
 				int		cComMode;
+				int		cFocuserType;
 
 //-				int		cButtonNumValues[10]	=	{5000, 1000, 100, 10, 1, -1, -10, -100, -1000, -5000};
 				int		cButtonNumValues[10];

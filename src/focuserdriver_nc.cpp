@@ -16,7 +16,7 @@
 //*	that you agree that the author(s) have no warranty, obligations or liability.  You
 //*	must determine the suitability of this source code for your use.
 //*
-//*	Redistributions of this source code must retain this copyright notice.
+//*	Re-distribution of this source code must retain this copyright notice.
 //*****************************************************************************
 //*
 //*	Limitations:	This driver was originally written for the MoonLite Nitecrawler focuser only
@@ -42,6 +42,7 @@
 //*	Jan  1,	2020	<MLS> Successfully tested 2 NiteCrawlers attached to the same R-Pi
 //*	Feb 29,	2020	<MLS> Switching over to using moonlite_com.c interface
 //*	Mar 17,	2020	<MLS> Fixed bug, /dev directory was not being closed
+//*	Sep 18,	2022	<MLS> Changed RunStateMachine() to return 100000 (100 ms) instead of 500 (.5 ms)
 //*****************************************************************************
 
 #ifdef _ENABLE_FOCUSER_
@@ -402,7 +403,7 @@ uint32_t	currentSeconds;
 		cLastTimeMilSecs_Position	=	currentMillis;
 	}
 
-	return(500);
+	return(100 * 1000);
 }
 
 

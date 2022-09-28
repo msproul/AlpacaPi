@@ -66,9 +66,6 @@ enum
 
 };
 
-#define	kFocuserBoxWidth	302
-#define	kFocuserBoxHeight	715
-
 
 //**************************************************************************************
 ControllerMLsingle::ControllerMLsingle(	const char			*argWindowName,
@@ -156,6 +153,7 @@ void	ControllerMLsingle::CreateWindowTabs(void)
 														cHeight,
 														cBackGrndColor,
 														cCommMode,
+														kFocuserType_MoonliteSingle,
 														cWindowName);
 	if (cMLsingleTabObjPtr != NULL)
 	{
@@ -211,7 +209,9 @@ void	ControllerMLsingle::UpdateCommonProperties(void)
 	SetWidgetText(kTab_DriverInfo,		kDriverInfo_DriverVersion,		cCommonProp.DriverVersion);
 	SetWidgetNumber(kTab_DriverInfo,	kDriverInfo_InterfaceVersion,	cCommonProp.InterfaceVersion);
 
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, "Exit");
+	SetWidgetText(kTab_MLsingle,		kMLsingle_Model,				cCommonProp.Description);
+
+	UpdateAboutBoxRemoteDevice(kTab_About, kAboutBox_CPUinfo);
 }
 
 //**************************************************************************************

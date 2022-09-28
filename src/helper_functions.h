@@ -43,7 +43,7 @@ void		FormatTimeString_TM(struct tm *timeStruct, char *timeString);
 void		FormatTimeStringISO8601(struct timeval *tv, char *timeString);
 void		tolowerStr(char *theString);
 double		AsciiToDouble(const char *asciiString);
-unsigned long MSecTimer_getNanoSecs(void);
+uint64_t	MSecTimer_getNanoSecs(void);
 int			GetMinutesSinceMidnight(void);
 
 uint32_t	millis(void);

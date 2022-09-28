@@ -1,5 +1,7 @@
 //*****************************************************************************
-//*	Alpaca discovery thread
+//*	File:	discoverythread.c
+//*
+//*		Alpaca discovery thread
 //*
 //*****************************************************************************
 //*	Edit History
@@ -18,16 +20,17 @@
 //*	Feb  4,	2021	<MLS> Rearranged close logic in GetJsonResponse()
 //*	Feb  7,	2021	<MLS> Added Discovery_ClearIPAddrList()
 //*	Feb  7,	2021	<MLS> Fixed bug that did not discover 2 listen ports on same IP addrr
-//*	Mar  9,	2021	<MLS> Moved FindDeviceInList() to discoverytjread.c
+//*	Mar  9,	2021	<MLS> Moved FindDeviceInList() to discoverythread.c
 //*	Aug 20,	2021	<MLS> Added debugging code for new universal CONFORM program from Peter
 //*	Aug 23,	2021	<MLS> Changed discovery response string from "alpacaport" to "AlpacaPort"
 //*	Aug 23,	2021	<MLS> Added AlpacaUnitQsortProc(), ip addr list is now sorted
 //*	Feb 21,	2022	<MLS> Added ResetExternalIPaddress()
 //*	Mar 11,	2022	<MLS> WireGuard makes it so I cant figure out the local IP addres
 //*	Mar 11,	2022	<MLS> Added ReadLocalIPaddress()
-//*	Mar 11,	2022	<MLS> Working with WireGuards
+//*	Mar 11,	2022	<MLS> Working with WireGuard
 //*	Jun  2,	2022	<MLS> Added parsing for upTime_Days & cpuTemp_DegF
 //*	Aug  6,	2022	<MLS> Added CPU temp logging
+//*	Aug 23,	2022	<MLS> Added keeping track of max CPU temp
 //*****************************************************************************
 
 
@@ -108,12 +111,12 @@ static bool	ReadLocalIPaddress(void)
 FILE				*filePointer;
 char				lineBuff[256];
 char				fileName[]	=	"local_ip_addr.txt";
-//char				outputIPaddrStr[64];
+char				outputIPaddrStr[64];
 bool				validAddress;
 int					slen;
 int					iii;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 
 	validAddress	=	false;
 	//*	see if there is a file with the local IP address
@@ -125,7 +128,7 @@ int					iii;
 			slen	=	strlen(lineBuff);
 			if ((slen > 6) && (lineBuff[0] != '#'))
 			{
-//				CONSOLE_DEBUG_W_STR("Local IP address\t=",		lineBuff);
+				CONSOLE_DEBUG_W_STR("Local IP address\t=",		lineBuff);
 
 				if (isdigit(lineBuff[0]))
 				{
@@ -140,11 +143,11 @@ int					iii;
 					}
 					//*	extract the IP address
 					inet_pton(AF_INET, lineBuff, &gMyIPaddress);
-//					CONSOLE_DEBUG_W_HEX("sin_addr\t\t=",		gMyIPaddress);
+					CONSOLE_DEBUG_W_HEX("sin_addr\t\t=",		gMyIPaddress);
 
 					//*	this is just for debugging to make sure we got it right
-//					inet_ntop(AF_INET, &gMyIPaddress, outputIPaddrStr, INET_ADDRSTRLEN);
-//					CONSOLE_DEBUG_W_STR("outputIPaddrStr\t=",		outputIPaddrStr);
+					inet_ntop(AF_INET, &gMyIPaddress, outputIPaddrStr, INET_ADDRSTRLEN);
+					CONSOLE_DEBUG_W_STR("outputIPaddrStr\t=",		outputIPaddrStr);
 
 					validAddress	=	true;
 				}
@@ -411,6 +414,10 @@ char			myVersionString[64];
 
 			theDevice->cpuTempValid	=	true;
 			theDevice->cpuTemp_DegF	=	atof(jsonParser->dataList[iii].valueString);
+			if (theDevice->cpuTemp_DegF > theDevice->cpuTemp_DegF_max)
+			{
+				theDevice->cpuTemp_DegF_max	=	theDevice->cpuTemp_DegF;
+			}
 
 			minutesSinceMidnight	=	GetMinutesSinceMidnight();
 			cpuTempIndex			=	minutesSinceMidnight / 2;
@@ -420,8 +427,10 @@ char			myVersionString[64];
 				theDevice->cpuTempLog[cpuTempIndex]	=	theDevice->cpuTemp_DegF;
 				//*	make sure there is a separator when wrapping to the previous day
 				cpuTempIndex++;
+
+				//*	set the next 10 values to zero for a break between days
 				jjj	=	0;
-				while ((cpuTempIndex < kMaxCPUtempEntries) && (jjj < 10))
+				while ((cpuTempIndex < kMaxCPUtempEntries) && (jjj < 6))
 				{
 					theDevice->cpuTempLog[cpuTempIndex]	=	0;
 					cpuTempIndex++;
@@ -807,8 +816,12 @@ int		alpacaListenPort;
 			foundHostName	=	LookupNameFromIPaddr(deviceAddress->sin_addr.s_addr, myHostNameStr);
 			if (foundHostName)
 			{
-			//	CONSOLE_DEBUG(myHostNameStr);
+				CONSOLE_DEBUG_W_STR("Found host name:", myHostNameStr);
 				strcpy(gAlpacaUnitList[gAlpacaUnitCnt].hostName, myHostNameStr);
+			}
+			else
+			{
+				CONSOLE_DEBUG_W_HEX("Did not find host name for address", deviceAddress->sin_addr.s_addr);
 			}
 			gAlpacaUnitCnt++;
 
@@ -1170,7 +1183,7 @@ bool				validLocalAddress;
 
 		//*	we dont need to do this very often
 	//	sleep(3000);
-		sleep(15);
+		sleep(90);
 	//	CONSOLE_DEBUG("Done sleeping");
 	}
 

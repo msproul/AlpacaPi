@@ -15,11 +15,13 @@
 //*	<MLS>	=	Mark L Sproul
 //*****************************************************************************
 //*	Jan 16,	2021	<MLS> Created HostNames.c
+//*	Sep 26,	2022	<MLS> Increased size of hostname table from 32 to 64
 //*****************************************************************************
 
 #include	<ctype.h>
 #include	<string.h>
 #include	<stdio.h>
+#include	<stdlib.h>
 #include	<stdbool.h>
 #include	<arpa/inet.h>
 #include	<netinet/in.h>
@@ -41,7 +43,7 @@ typedef struct
 
 } TYPE_HOSTNAME;
 
-#define	kMaxHostNames	32
+#define	kMaxHostNames	64
 static TYPE_HOSTNAME	gHostNameTable[kMaxHostNames];
 static int				gHostNameCount	=	0;
 
@@ -61,7 +63,7 @@ char	hostName[48];
 char	hostsFileName[]	=	"/etc/hosts";
 struct sockaddr_in	myIPaddress;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 
 	for (iii=0; iii<kMaxHostNames; iii++)
 	{
@@ -74,6 +76,14 @@ struct sockaddr_in	myIPaddress;
 	{
 		while (fgets(lineBuff, 200, filePointer))
 		{
+//			//*	remove the trailing cr/lf
+//			iii	=	0;
+//			while ((lineBuff[iii] >= 0x20) || (lineBuff[iii] == 0x09))
+//			{
+//				iii++;
+//			}
+//			lineBuff[iii]	=	0;
+//			CONSOLE_DEBUG(lineBuff);
 			hostAddrString[0]	=	0;
 			hostName[0]			=	0;
 			slen	=	strlen(lineBuff);
@@ -102,7 +112,7 @@ struct sockaddr_in	myIPaddress;
 				}
 				//*	we should now be pointing at the name
  				ccc	=	0;
-				while (iii<slen)
+				while (iii < slen)
 				{
 					theChar	=	lineBuff[iii];
 					if (theChar > 0x20)
@@ -112,6 +122,7 @@ struct sockaddr_in	myIPaddress;
 					}
 					iii++;
 				}
+
 				if (gHostNameCount < kMaxHostNames)
 				{
 //					CONSOLE_DEBUG_W_2STR("New entry", hostAddrString, hostName);
@@ -122,6 +133,10 @@ struct sockaddr_in	myIPaddress;
 
 					gHostNameTable[gHostNameCount].ipAddress	=	myIPaddress;
 					gHostNameCount++;
+				}
+				else
+				{
+					CONSOLE_DEBUG("Exceeded host name table space");
 				}
 			}
 		}

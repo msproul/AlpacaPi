@@ -14,7 +14,7 @@
 //*	that you agree that the author(s) have no warranty, obligations or liability.  You
 //*	must determine the suitability of this source code for your use.
 //*
-//*	Redistributions of this source code must retain this copyright notice.
+//*	Re-distribution of this source code must retain this copyright notice.
 //*****************************************************************************
 //*	Edit History
 //*****************************************************************************
@@ -23,6 +23,8 @@
 //*	Jun 25,	2020	<MLS> Cam_normal subclass now back to same functionality as before
 //*	Dec 27,	2020	<MLS> Added UpdateDownloadProgress()
 //*	Jun 30,	2022	<MLS> Added capability list to camera controller
+//*	Sep 18,	2022	<MLS> Added DisableFilterWheel()
+//*	Sep 21,	2022	<MLS> Added ProcessReadAll_IMU()
 //*****************************************************************************
 //*	todo
 //*		control key for different step size.
@@ -87,6 +89,8 @@ ControllerCamNormal::ControllerCamNormal(	const char			*argWindowName,
 	:ControllerCamera(argWindowName, alpacaDevice, kCamWindowWidth,  kCamWindowHeight)
 {
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+
+	cIMUdetected	=	false;
 
 	SetupWindowControls();
 
@@ -203,6 +207,14 @@ char	lineBuff[64];
 	}
 }
 
+//**************************************************************************************
+void	ControllerCamNormal::DisableFilterWheel(void)
+{
+	if (cCameraTabObjPtr != NULL)
+	{
+		cCameraTabObjPtr->DisableFilterWheel();
+	}
+}
 
 //**************************************************************************************
 void	ControllerCamNormal::UpdateCapabilityList(void)
@@ -269,6 +281,8 @@ void	ControllerCamNormal::AlpacaDisplayErrorMessage(const char *errorMsgString)
 //*****************************************************************************
 void	ControllerCamNormal::UpdateSupportedActions(void)
 {
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+
 	SetWidgetValid(kTab_Camera,		kCameraBox_Readall,				cHas_readall);
 	SetWidgetValid(kTab_Camera,		kCameraBox_FlipText,			cHas_Flip);
 	SetWidgetValid(kTab_Camera,		kCameraBox_FlipValue,			cHas_Flip);
@@ -297,6 +311,7 @@ void	ControllerCamNormal::UpdateSupportedActions(void)
 	SetWidgetValid(kTab_Camera,	kCameraBox_DownloadRGBarray,	cHas_rgbarray);
 	SetWidgetValid(kTab_Camera,	kCameraBox_SaveAll,				cHas_SaveAll);
 
+	UpdateAboutBoxRemoteDevice(kTab_About, kAboutBox_CPUinfo);
 }
 
 //*****************************************************************************
@@ -505,7 +520,6 @@ int		fwTabNumber;
 	SetWidgetText(	kTab_Camera,	kCameraBox_FilterWheelName,	cFilterWheelName);
 	for (iii=0; iii<kMaxFiltersPerWheel; iii++)
 	{
-	#if 1
 		if (strlen(cFilterWheelProp.Names[iii].FilterName) > 0)
 		{
 			//*	set the text in the window widget
@@ -532,31 +546,6 @@ int		fwTabNumber;
 							cFilterWheelProp.Names[iii].FilterName);
 
 		}
-	#else
-
-		if (strlen(cFilterNames[iii].filterName) > 0)
-		{
-			//*	set the text in the window widget
-			fwTabNumber	=	kCameraBox_FilterWheel1 + iii;
-			SetWidgetValid(	kTab_Camera, fwTabNumber, true);
-			SetWidgetText(	kTab_Camera,
-							fwTabNumber,
-							cFilterNames[iii].filterName);
-
-			if (strncasecmp(cFilterNames[iii].filterName, "RED", 3) == 0)
-			{
-				SetWidgetTextColor(kTab_Camera, fwTabNumber, CV_RGB(255,	0,	0));
-			}
-			else if (strncasecmp(cFilterNames[iii].filterName, "GREEN", 5) == 0)
-			{
-				SetWidgetTextColor(kTab_Camera, fwTabNumber, CV_RGB(0,	255,	0));
-			}
-			else if (strncasecmp(cFilterNames[iii].filterName, "BLUE", 4) == 0)
-			{
-				SetWidgetTextColor(kTab_Camera, fwTabNumber, CV_RGB(0,	0,	255));
-			}
-		}
-	#endif // 1
 	}
 }
 
@@ -565,11 +554,18 @@ void	ControllerCamNormal::UpdateFilterWheelPosition(void)
 {
 int		jjj;
 
-	for (jjj=kCameraBox_FilterWheel1; jjj<=kCameraBox_FilterWheel8; jjj++)
+	if (cHas_FilterWheel)
 	{
-		SetWidgetChecked(kTab_Camera, jjj, false);
+		for (jjj=kCameraBox_FilterWheel1; jjj<=kCameraBox_FilterWheel8; jjj++)
+		{
+			SetWidgetChecked(kTab_Camera, jjj, false);
+		}
+		SetWidgetChecked(kTab_Camera, (kCameraBox_FilterWheel1 + cFilterWheelProp.Position), true);
 	}
-	SetWidgetChecked(kTab_Camera, (kCameraBox_FilterWheel1 + cFilterWheelProp.Position), true);
+	else
+	{
+		DisableFilterWheel();
+	}
 }
 
 //*****************************************************************************
@@ -695,6 +691,84 @@ void	ControllerCamNormal::UpdateConnectedStatusIndicator(void)
 {
 	UpdateConnectedIndicator(kTab_Camera,		kCameraBox_Connected);
 }
+
+
+//*****************************************************************************
+//*	if remote IMU is not enabled, this routine does nothing and will probably never get called,
+//*	It has to be here to satisfy the parent class
+//*****************************************************************************
+void	ControllerCamNormal::ProcessReadAll_IMU(const char	*deviceTypeStr,
+												const int	deviceNum,
+												const char	*keywordString,
+												const char	*valueString)
+{
+#ifdef _SUPPORT_REMOTE_IMU_
+double		valueDouble;
+int			valueInt;
+char		textString[64];
+cv::Scalar	textColor;
+
+//	CONSOLE_DEBUG_W_STR(keywordString,valueString);
+
+	if (cIMUdetected == false)
+	{
+		if (cCameraTabObjPtr != NULL)
+		{
+			cCameraTabObjPtr->SetRemoteIMUdisplay(true);
+		}
+		cIMUdetected	=	true;
+	}
+
+	valueDouble	=	atof(valueString);
+	valueInt	=	atoi(valueString);
+	switch(valueInt)
+	{
+		case 0:		textColor	=	CV_RGB(0xff,	0x00,	0x00);	break;	//*	red
+		case 1:		textColor	=	CV_RGB(0xff,	0xff,	0x00);	break;	//*	yellow
+		case 2:		textColor	=	CV_RGB(0x00,	0xff,	0xff);	break;	//*	cyan
+		case 3:		textColor	=	CV_RGB(0x00,	0xff,	0x00);	break;	//*	green
+		default:	textColor	=	CV_RGB(0xff,	0xff,	0xff);	break;	//*	white
+
+	}
+// [ProcessReadAll_IMU  ] IMU-HEADING 114.937500000000
+// [ProcessReadAll_IMU  ] IMU-ROLL 10.500000000000
+// [ProcessReadAll_IMU  ] IMU-PITCH -24.500000000000
+// [ProcessReadAll_IMU  ] IMU-CAL-GYRO 3
+// [ProcessReadAll_IMU  ] IMU-CAL-ACCEL 3
+// [ProcessReadAll_IMU  ] IMU-CAL-MAGN 3
+// [ProcessReadAll_IMU  ] IMU-CAL-SYS 0
+	if (strcasecmp(keywordString, "IMU-HEADING") == 0)
+	{
+		sprintf(textString, "H=%3.3f", valueDouble);
+		SetWidgetText(kTab_Camera, kCameraBox_IMU_Heading, textString);
+	}
+	else if (strcasecmp(keywordString, "IMU-ROLL") == 0)
+	{
+		sprintf(textString, "R=%3.3f", valueDouble);
+		SetWidgetText(kTab_Camera, kCameraBox_IMU_Roll, textString);
+	}
+	else if (strcasecmp(keywordString, "IMU-PITCH") == 0)
+	{
+		sprintf(textString, "P=%3.3f", valueDouble);
+		SetWidgetText(kTab_Camera, kCameraBox_IMU_Pitch, textString);
+	}
+	else if (strcasecmp(keywordString, "IMU-CAL-MAGN") == 0)
+	{
+		sprintf(textString, "IMU (%d)", valueInt);
+		SetWidgetText(kTab_Camera,		kCameraBox_IMU_Title, textString);
+
+		SetWidgetTextColor(kTab_Camera, kCameraBox_IMU_Heading, textColor);
+		SetWidgetTextColor(kTab_Camera, kCameraBox_IMU_Roll,	textColor);
+		SetWidgetTextColor(kTab_Camera, kCameraBox_IMU_Pitch,	textColor);
+	}
+	else if (strcasecmp(keywordString, "IMU-CAL-SYS") == 0)
+	{
+		SetWidgetBGColor(kTab_Camera,	kCameraBox_IMU_Title, textColor);
+	}
+
+#endif // _SUPPORT_REMOTE_IMU_
+}
+
 
 #endif // _ENABLE_CTRL_CAMERA_
 

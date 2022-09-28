@@ -39,6 +39,9 @@
 //*	May 10,	2022	<MLS> Added mysql error strings to local logging function
 //*	Jun  8,	2022	<MLS> Updated mysql_real_connect() calls to use specified port number
 //*	Jun 27,	2022	<MLS> Switched parsing to use ReadGenericConfigFile()
+//*	Sep 22,	2022	<MLS> Added UpdateDataBaseListFromServer()
+//*	Sep 22,	2022	<MLS> Query of "Stars" database to get list of databases fully working
+//*	Sep 24,	2022	<MLS> Database list now defaults to "gaia" and "2mass"
 //*****************************************************************************
 //*	sudo apt-get install libmysqlclient-dev		<<<< Use this one
 //*	sudo apt-get install libmariadb-dev			<<<< Use this for Raspberry-Pi
@@ -112,13 +115,13 @@ TYPE_DATABASE_NAME			gDataBaseNames[kMaxDataBaseNames];
 				int			gDataBaseNameCnt			=	0;
 
 
-void	LogSqlTransaction(const char *sqlCommand, const char *results, const char *errorString);
+void	LogSqlTransaction(const char *dbName,const char *sqlCommand, const char *results, const char *errorString);
 
 
 //*****************************************************************************
 static void	ProcessSQLConfig(const char *keyword, const char *valueString)
 {
-bool	validEntry;
+//bool	validEntry;
 
 	//*	look for the supported keywords
 	if (strcasecmp(keyword, "server") == 0)
@@ -146,15 +149,15 @@ bool	validEntry;
 			strcpy(gDataBaseNames[gDataBaseNameCnt].Name, valueString);
 			gDataBaseNameCnt++;
 		}
-//			else
-//			{
-//				CONSOLE_ABORT(__FUNCTION__);
-//			}
+		else
+		{
+			CONSOLE_DEBUG("Number of database entries exceeded");
+		}
 	}
-	else
-	{
-		validEntry	=	false;
-	}
+//	else
+//	{
+//		validEntry	=	false;
+//	}
 }
 
 //*****************************************************************************
@@ -204,12 +207,22 @@ int		linesRead;
 		memset((void *)&gDataBaseNames[iii], 0, sizeof(TYPE_DATABASE_NAME));
 	}
 
+	//*	"sqlserver.txt"
 	linesRead	=	ReadGenericConfigFile(kSQLserverConfigFile, '=', &ProcessSQLConfig);
 	if (linesRead > 2)
 	{
 		//*	check the configuration, makes sure that all the required parameters were specified
 		configOK	=	CheckSQLconfiguration();
 	}
+
+	if (gDataBaseNameCnt <= 0)
+	{
+		strcpy(gDataBaseNames[gDataBaseNameCnt].Name, "gaia");
+		gDataBaseNameCnt++;
+		strcpy(gDataBaseNames[gDataBaseNameCnt].Name, "2mass");
+		gDataBaseNameCnt++;
+	}
+
 
 	if (gDataBaseNameCnt > 0)
 	{
@@ -382,7 +395,7 @@ char			userString[128];
 
 					CONSOLE_DEBUG(mysql_error(mySQLConnection));
 
-					LogSqlTransaction("mysql_query() failed", __FUNCTION__, mysql_error(mySQLConnection));
+					LogSqlTransaction(gSQLsever_Database, "mysql_query() failed", __FUNCTION__, mysql_error(mySQLConnection));
 				}
 
 				BuildSQLlogString(kSQL_info_Version, userString);
@@ -400,25 +413,25 @@ char			userString[128];
 				else
 				{
 					CONSOLE_DEBUG_W_NUM("mysql_query ERROR returnCode\t=", returnCode);
-					LogSqlTransaction("mysql_query() failed", __FUNCTION__, mysql_error(mySQLConnection));
+					LogSqlTransaction(gSQLsever_Database, "mysql_query() failed", __FUNCTION__, mysql_error(mySQLConnection));
 				}
 			}
 			else
 			{
 				CONSOLE_DEBUG_W_NUM("mysql_select_db ERROR returnCode\t=", returnCode);
-				LogSqlTransaction("mysql_select_db() failed", __FUNCTION__, mysql_error(mySQLConnection));
+				LogSqlTransaction(gSQLsever_Database, "mysql_select_db() failed", __FUNCTION__, mysql_error(mySQLConnection));
 			}
 		}
 		else
 		{
 			CONSOLE_DEBUG("mysql_real_connect() failed");
-			LogSqlTransaction("mysql_real_connect() failed", __FUNCTION__, mysql_error(mySQLConnection));
+			LogSqlTransaction(gSQLsever_Database, "mysql_real_connect() failed", __FUNCTION__, mysql_error(mySQLConnection));
 		}
 	}
 	else
 	{
 		CONSOLE_DEBUG("mysql_init() failed");
-		LogSqlTransaction("mysql_init() failed", __FUNCTION__, mysql_error(mySQLConnection));
+		LogSqlTransaction(gSQLsever_Database, "mysql_init() failed", __FUNCTION__, mysql_error(mySQLConnection));
 	}
 	mysql_close(mySQLConnection);
 	mysql_library_end();
@@ -426,13 +439,13 @@ char			userString[128];
 	return(returnCode);
 }
 
-
 //*****************************************************************************
 //*	returns # of fields
+//*****************************************************************************
 static int Querry_mySQL_cmd(	MYSQL		*myCon,
 								MYSQL_RES	**mySQLresult,
-								char		*myDataBase,
-								char		*mySQLCmd )
+								const char	*myDataBase,
+								const char	*mySQLCmd )
 {
 int		num_fields;
 int		returnCode;
@@ -470,19 +483,19 @@ int		returnCode;
 			}
 			else
 			{
-				LogSqlTransaction("mysql_store_result() failed", __FUNCTION__, mysql_error(myCon));
+				LogSqlTransaction(gSQLsever_Database, "mysql_store_result() failed", __FUNCTION__, mysql_error(myCon));
 				CONSOLE_DEBUG("Error on Querry_mySQL_cmd mysql_store_result");
 			}
 		}
 		else
 		{
-			LogSqlTransaction("mysql_query() failed", __FUNCTION__, mysql_error(myCon));
+			LogSqlTransaction(gSQLsever_Database, "mysql_query() failed", __FUNCTION__, mysql_error(myCon));
 			CONSOLE_DEBUG_W_NUM("mysql_query failed with returnCode\t=", returnCode);
 		}
 	}
 	else
 	{
-		LogSqlTransaction("mysql_select_db() failed", __FUNCTION__, mysql_error(myCon));
+		LogSqlTransaction(gSQLsever_Database, "mysql_select_db() failed", __FUNCTION__, mysql_error(myCon));
 		CONSOLE_DEBUG_W_NUM("mysql_select_db failed with returnCode\t=", returnCode);
 	}
 
@@ -747,12 +760,12 @@ unsigned int	endMilliSecs;
 				char	textBuff[128];
 
 					sprintf(textBuff, "Records rcvd=%d\tQuery time=%d", recNum, (endMilliSecs - startMilliSecs));
-					LogSqlTransaction(mySQLCmd, textBuff, "");
+					LogSqlTransaction(gSQLsever_Database, mySQLCmd, textBuff, "");
 				}
 			}
 			else
 			{
-				LogSqlTransaction(mySQLCmd, "num_fields <= 0", mysql_error(mySQLConnection));
+				LogSqlTransaction(gSQLsever_Database, mySQLCmd, "num_fields <= 0", mysql_error(mySQLConnection));
 			}
 #ifdef _VERBOSE_SQL_DEBUG_
 			CONSOLE_DEBUG("Done");
@@ -760,12 +773,12 @@ unsigned int	endMilliSecs;
 		}
 		else
 		{
-			LogSqlTransaction("mysql_real_connect() failed", __FUNCTION__, mysql_error(mySQLConnection));
+			LogSqlTransaction(gSQLsever_Database, "mysql_real_connect() failed", __FUNCTION__, mysql_error(mySQLConnection));
 		}
 	}
 	else
 	{
-		LogSqlTransaction("mysql_init() failed", __FUNCTION__, mysql_error(mySQLConnection));
+		LogSqlTransaction(gSQLsever_Database, "mysql_init() failed", __FUNCTION__, mysql_error(mySQLConnection));
 	}
 	mysql_close(mySQLConnection);
 	mysql_library_end();
@@ -908,23 +921,23 @@ bool			validFlag;
 				char	textBuff[128];
 
 					sprintf(textBuff, "Records rcvd=%d\tQuery time=%d", recNum, (endMilliSecs - startMilliSecs));
-					LogSqlTransaction(mySQLCmd, textBuff, "");
+					LogSqlTransaction(gSQLsever_Database, mySQLCmd, textBuff, "");
 				}
 			}
 			else
 			{
-				LogSqlTransaction("num_fields <= 0", __FUNCTION__, mysql_error(mySQLConnection));
+				LogSqlTransaction(gSQLsever_Database, "num_fields <= 0", __FUNCTION__, mysql_error(mySQLConnection));
 			}
 //			CONSOLE_DEBUG("Done");
 		}
 		else
 		{
-			LogSqlTransaction("mysql_real_connect() failed", __FUNCTION__, mysql_error(mySQLConnection));
+			LogSqlTransaction(gSQLsever_Database, "mysql_real_connect() failed", __FUNCTION__, mysql_error(mySQLConnection));
 		}
 	}
 	else
 	{
-		LogSqlTransaction("mysql_init() failed", __FUNCTION__, mysql_error(mySQLConnection));
+		LogSqlTransaction(gSQLsever_Database, "mysql_init() failed", __FUNCTION__, mysql_error(mySQLConnection));
 	}
 	mysql_close(mySQLConnection);
 	mysql_library_end();
@@ -934,6 +947,154 @@ bool			validFlag;
 
 	return(validFlag);
 }
+
+
+//*****************************************************************************
+//Database name	Stars
+//Function	call GetStarCatalogs;
+//
+//It returns a list of database names:
+//
+//gdr1
+//gdr2
+//Gaia
+//2mass
+//
+//*****************************************************************************
+int		UpdateDataBaseListFromServer(void)
+{
+int				dbaseCount;
+MYSQL 			*mySQLConnection = NULL;
+char			mySQLCmd[256];
+MYSQL_ROW		row;
+MYSQL_RES		*mySQLresult;
+int				num_fields;
+int				num_rows;
+int				recNum;
+int				nextResultRetCode;
+char			starsDBname[]	=	"Stars";
+char			textBuff[128];
+unsigned int	startMilliSecs;
+unsigned int	endMilliSecs;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+
+	startMilliSecs	=	millis();
+
+	dbaseCount		=	0;
+	mySQLConnection	=	mysql_init(NULL);
+	if (mySQLConnection != NULL)
+	{
+#ifdef _VERBOSE_SQL_DEBUG_
+		CONSOLE_DEBUG(__FUNCTION__);
+
+		CONSOLE_DEBUG("Trying to establish connection to the database");
+		CONSOLE_DEBUG_W_STR("gSQLsever_IPaddr  \t=",	gSQLsever_IPaddr);
+		CONSOLE_DEBUG_W_STR("gSQLsever_UserName\t=",	gSQLsever_UserName);
+		CONSOLE_DEBUG_W_STR("gSQLsever_Password\t=",	gSQLsever_Password);
+		CONSOLE_DEBUG_W_STR("gSQLsever_Database\t=",	gSQLsever_Database);
+		CONSOLE_DEBUG_W_NUM("gSQLsever_Port    \t=",	gSQLsever_Port);
+#endif
+		//*	establish connection to the database
+		if (mysql_real_connect(	mySQLConnection,
+								gSQLsever_IPaddr,
+								gSQLsever_UserName,
+								gSQLsever_Password,
+								starsDBname,
+								gSQLsever_Port,
+								NULL,
+								CLIENT_MULTI_RESULTS) != NULL)
+		{
+		#ifdef _VERBOSE_SQL_DEBUG_
+			CONSOLE_DEBUG_W_STR("Successfully connected to", gSQLsever_IPaddr);
+		#endif
+			strcpy(mySQLCmd, "call GetStarCatalogs();");
+#ifdef _VERBOSE_SQL_DEBUG_
+			CONSOLE_DEBUG(mySQLCmd);
+			CONSOLE_DEBUG("Calling Querry_mySQL_cmd()");
+#endif
+			mySQLresult	=	NULL;
+			num_fields	=	Querry_mySQL_cmd(	mySQLConnection,
+												&mySQLresult,
+												starsDBname,
+												mySQLCmd);
+#ifdef _VERBOSE_SQL_DEBUG_
+			CONSOLE_DEBUG_W_NUM("num_fields", num_fields);
+#endif
+			if (num_fields > 0)
+			{
+				num_rows	=	mysql_num_rows(mySQLresult);
+#ifdef _VERBOSE_SQL_DEBUG_
+				CONSOLE_DEBUG_W_NUM("num_rows", num_rows);
+#endif
+				if ((num_rows > 0) && (num_fields > 0))
+				{
+					dbaseCount		=	0;
+					recNum			=	0;
+					//	Loop through the Rows
+					while ((row = mysql_fetch_row(mySQLresult)) && (recNum < num_rows))
+					{
+						//*	Get the name
+						CONSOLE_DEBUG(row[0]);
+						if (strlen(row[0]) > 0)
+						{
+							strcpy(gDataBaseNames[dbaseCount].Name, row[0]);
+							dbaseCount++;
+						}
+						recNum++;
+					}
+					gDataBaseNameCnt	=	dbaseCount;
+
+					endMilliSecs	=	millis();
+					sprintf(textBuff, "Records rcvd=%d\tQuery time=%d", recNum, (endMilliSecs - startMilliSecs));
+
+					LogSqlTransaction(starsDBname, mySQLCmd, textBuff, "");
+				}
+				else
+				{
+					CONSOLE_DEBUG("NO RESULTS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+					CONSOLE_DEBUG_W_NUM("num_fields", num_fields);
+					CONSOLE_DEBUG_W_NUM("num_rows", num_rows);
+				}
+			#ifdef _VERBOSE_SQL_DEBUG_
+				CONSOLE_DEBUG("Calling mysql_free_result()");
+			#endif
+				mysql_free_result(mySQLresult);
+
+				//*	Feb 22,	2022	<KAS> Fixed dangling result Bug
+				nextResultRetCode	=	mysql_next_result(mySQLConnection);
+				if (nextResultRetCode != 0)
+				{
+					CONSOLE_DEBUG_W_NUM("mysql_next_result", nextResultRetCode);
+				}
+			}
+			else
+			{
+				CONSOLE_DEBUG(__FUNCTION__);
+				LogSqlTransaction(starsDBname, mySQLCmd, "num_fields <= 0", mysql_error(mySQLConnection));
+			}
+#ifdef _VERBOSE_SQL_DEBUG_
+			CONSOLE_DEBUG("Done");
+#endif
+		}
+		else
+		{
+			CONSOLE_DEBUG(__FUNCTION__);
+			LogSqlTransaction(starsDBname, "mysql_real_connect() failed", __FUNCTION__, mysql_error(mySQLConnection));
+		}
+	}
+	else
+	{
+		CONSOLE_DEBUG(__FUNCTION__);
+		LogSqlTransaction(starsDBname, "mysql_init() failed", __FUNCTION__, mysql_error(mySQLConnection));
+	}
+	mysql_close(mySQLConnection);
+	mysql_library_end();
+
+	CONSOLE_DEBUG_W_NUM("Number of databases found\t=", dbaseCount);
+	return(dbaseCount);
+}
+
 
 
 //*****************************************************************************
@@ -1416,13 +1577,16 @@ void	StopGaiaSQLthread(void)
 #endif // _INCLUDE_GAIA_MAIN_
 
 //*****************************************************************************
-void	LogSqlTransaction(const char *sqlCommand, const char *results, const char *errorString)
+void	LogSqlTransaction(	const char	*dbName,
+							const char	*sqlCommand,
+							const char	*results,
+							const char	*errorString)
 {
 FILE			*filePointer;
 struct timeval	timeStamp;
 char			formatString[256];
 
-	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, sqlCommand);
 
 	filePointer	=	fopen("SQL_log.txt", "a");
 	if (filePointer != NULL)
@@ -1430,13 +1594,14 @@ char			formatString[256];
 		gettimeofday(&timeStamp, NULL);
 		FormatDateTimeString_Local(&timeStamp, formatString);
 
-		fprintf(filePointer, "%s\t%s\t%s\t%s\n",	formatString, sqlCommand, results, errorString);
+		fprintf(filePointer, "%s\t%s\t%s\t%s\t%s\n", formatString, dbName, sqlCommand, results, errorString);
 		fclose(filePointer);
 	}
 	else
 	{
 		CONSOLE_DEBUG("Failed to create sql log file");
 	}
+	CONSOLE_DEBUG("exit");
 }
 
 #ifdef _INCLUDE_GAIA_MAIN_

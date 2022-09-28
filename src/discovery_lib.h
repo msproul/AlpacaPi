@@ -48,6 +48,7 @@ typedef struct
 
 	bool				cpuTempValid;
 	double				cpuTemp_DegF;
+	double				cpuTemp_DegF_max;
 	double				cpuTempLog[kMaxCPUtempEntries];
 
 } TYPE_ALPACA_UNIT;

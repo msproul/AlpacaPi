@@ -9,11 +9,16 @@
 //*****************************************************************************
 //*	Jan 16,	2021	<MLS> Created alpacadriver_helper.c
 //*	Mar 12,	2022	<MLS> Added GetBinaryElementTypeString()
+//*	Sep 25,	2022	<MLS> Added (DumpObservingconditionsProp)
 //*****************************************************************************
 
 #include	<string.h>
+#include	<stdio.h>
 
+#define _ENABLE_CONSOLE_DEBUG_
+#include	"ConsoleDebug.h"
 
+#include	"alpaca_defs.h"
 #include	"alpacadriver_helper.h"
 
 
@@ -94,4 +99,34 @@ void	GetBinaryElementTypeString(const int elementType, char *typeString)
 		case kAlpacaImageData_UInt16:	strcpy(typeString,	"UInt16");	break;
 		default:						strcpy(typeString,	"Unknown");	break;
 	}
+}
+
+
+//*****************************************************************************
+void	DumpObservingconditionsProp(TYPE_ObsConditionProperties	*obsCondProp, const char *callingFunctionName)
+{
+char	titleLine[128];
+
+	CONSOLE_DEBUG(		"*************************************************************");
+	CONSOLE_DEBUG(		"************** Observingconditions properties ***************");
+	sprintf(titleLine,	"************* Called from: %-20s *************", callingFunctionName);
+	CONSOLE_DEBUG(titleLine);
+	CONSOLE_DEBUG(		"*************************************************************");
+
+
+	CONSOLE_DEBUG_W_DBL(	"obsCondProp->Averageperiod      \t=",	obsCondProp->Averageperiod.Value);
+	CONSOLE_DEBUG_W_DBL(	"obsCondProp->Cloudcover         \t=",	obsCondProp->Cloudcover.Value);
+	CONSOLE_DEBUG_W_DBL(	"obsCondProp->Dewpoint           \t=",	obsCondProp->Dewpoint.Value);
+	CONSOLE_DEBUG_W_DBL(	"obsCondProp->Humidity           \t=",	obsCondProp->Humidity.Value);
+	CONSOLE_DEBUG_W_DBL(	"obsCondProp->Pressure_hPa       \t=",	obsCondProp->Pressure.Value);
+	CONSOLE_DEBUG_W_DBL(	"obsCondProp->RainRate           \t=",	obsCondProp->RainRate.Value);
+	CONSOLE_DEBUG_W_DBL(	"obsCondProp->SkyBrightness      \t=",	obsCondProp->SkyBrightness.Value);
+	CONSOLE_DEBUG_W_DBL(	"obsCondProp->SkyQuality         \t=",	obsCondProp->SkyQuality.Value);
+	CONSOLE_DEBUG_W_DBL(	"obsCondProp->SkyTemperature_DegC\t=",	obsCondProp->SkyTemperature.Value);
+	CONSOLE_DEBUG_W_DBL(	"obsCondProp->StarFWHM           \t=",	obsCondProp->StarFWHM.Value);
+	CONSOLE_DEBUG_W_DBL(	"obsCondProp->Temperature_DegC   \t=",	obsCondProp->Temperature.Value);
+	CONSOLE_DEBUG_W_DBL(	"obsCondProp->WindDirection      \t=",	obsCondProp->WindDirection.Value);
+	CONSOLE_DEBUG_W_DBL(	"obsCondProp->WindGust           \t=",	obsCondProp->WindGust.Value);
+	CONSOLE_DEBUG_W_DBL(	"obsCondProp->WindSpeed          \t=",	obsCondProp->WindSpeed.Value);
+
 }

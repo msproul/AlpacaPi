@@ -45,6 +45,7 @@
 #include	"controller_dome.h"
 #include	"controller_filterwheel.h"
 #include	"controller_focus.h"
+#include	"controller_obsconditions.h"
 #include	"controller_switch.h"
 #include	"controller_telescope.h"
 #include	"controller_skytravel.h"
@@ -485,7 +486,23 @@ bool	windowExists;
 					break;
 
 				case kDeviceType_Management:
+					break;
+
 				case kDeviceType_Observingconditions:
+					windowExists	=	CheckForOpenWindowByName(windowName);
+					if (windowExists)
+					{
+						CONSOLE_DEBUG_W_STR("Window already open:", windowName);
+					}
+					else
+					{
+						new ControllerObsCond(	windowName,
+												&cRemoteDeviceList[deviceIdx].deviceAddress,
+												cRemoteDeviceList[deviceIdx].port,
+												cRemoteDeviceList[deviceIdx].alpacaDeviceNum);
+					}
+					break;
+
 				case kDeviceType_Rotator:
 					break;
 
@@ -717,31 +734,40 @@ int		linesOnScreen;
 			switch(cRemoteDeviceList[deviceIdx].deviceTypeEnum)
 			{
 				case kDeviceType_Camera:
-					SetWidgetTextColor(		boxId,	CV_RGB(255,	255,	0));		//*	yellow
+					SetWidgetTextColor(		boxId,	CV_RGB(0xff,	0xff,	0x00));		//*	yellow
 					break;
 
 				case kDeviceType_CoverCalibrator:
-					SetWidgetTextColor(		boxId,	CV_RGB(255,	0,		0));		//*	Red
+					SetWidgetTextColor(		boxId,	CV_RGB(0xff,	0x00,	0x00));		//*	Red
 					break;
 
 				case kDeviceType_Dome:
-					SetWidgetTextColor(		boxId,	CV_RGB(255,	0,		255));		//*	magenta
+					SetWidgetTextColor(		boxId,	CV_RGB(0xff,	0x00,	0xff));		//*	magenta
 					break;
 
 				case kDeviceType_Filterwheel:
-					SetWidgetTextColor(		boxId,	CV_RGB(255,	127,	0));		//*	orange
+					SetWidgetTextColor(		boxId,	CV_RGB(0xff,	0x7f,	0x00));		//*	orange
 					break;
 
 				case kDeviceType_Focuser:
-					SetWidgetTextColor(		boxId,	CV_RGB(0,	255,	0));		//*	green
+					SetWidgetTextColor(		boxId,	CV_RGB(0x00,	0xff,	0x00));		//*	green
 					break;
 
+				case kDeviceType_Observingconditions:	//#DB7171
+					SetWidgetTextColor(		boxId,	CV_RGB(0xDB,	0x71,	0x71));		//*	green
+					break;
+
+
 				case kDeviceType_Switch:
-					SetWidgetTextColor(		boxId,	CV_RGB(0,	255,	255));		//*	cyan
+					SetWidgetTextColor(		boxId,	CV_RGB(0x00,	0xff,	0xff));		//*	cyan
 					break;
 
 				case kDeviceType_Telescope:
-					SetWidgetTextColor(		boxId,	CV_RGB(100,	100,	255));		//*	blue
+					SetWidgetTextColor(		boxId,	CV_RGB(0x64,	0x64,	0xff));		//*	blue
+					break;
+
+				case kDeviceType_Shutter:
+					SetWidgetTextColor(		boxId,	CV_RGB(0xCF,	0x0E,	0xF2));		//* pink
 					break;
 
 				case kDeviceType_SlitTracker:
@@ -749,9 +775,8 @@ int		linesOnScreen;
 					break;
 
 				case kDeviceType_Multicam:
-				case kDeviceType_Shutter:
 				default:
-					SetWidgetTextColor(		boxId,	CV_RGB(255,	255,	255));
+					SetWidgetTextColor(		boxId,	CV_RGB(0xff,	0xff,	0xff));
 					break;
 			}
 		}

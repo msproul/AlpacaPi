@@ -26,6 +26,7 @@
 //*	Apr 17,	2020	<MLS> Added Alpaca Logo to NiteCrawler screen
 //*	Dec 28,	2020	<MLS> Added ZERO button to zero Rotator and Aux values
 //*	Feb 19,	2022	<MLS> Added DrawRotatorCompass()
+//*	Sep  5,	2022	<MLS> Made focuser controller wider, adjusted compass routine
 //*****************************************************************************
 
 #ifdef _ENABLE_CTRL_FOCUSERS_
@@ -100,6 +101,8 @@ char	textBuff[32];
 int		homeBtnWidth;
 int		logoWidth;
 int		logoHeight;
+int		compassWidth;
+int		compassHeight;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -110,18 +113,27 @@ int		logoHeight;
 	if (gNiteCrawlerImgPtr != NULL)
 	{
 	#ifdef _USE_OPENCV_CPP_
-		#warning "OpenCV++ not finished"
 		logoWidth	=	gNiteCrawlerImgPtr->cols;
 		logoHeight	=	gNiteCrawlerImgPtr->rows;
 	#else
 		logoWidth	=	gNiteCrawlerImgPtr->width;
 		logoHeight	=	gNiteCrawlerImgPtr->height;
 	#endif // _USE_OPENCV_CPP_
+		if (logoWidth < cWidth)
+		{
+			xLoc	=	(cWidth - logoWidth) / 2;
+		}
+		else
+		{
+			xLoc	=	0;
+		}
+
 		SetWidget(	kNiteCrawlerTab_logo,
-					0,
+					xLoc,
 					yLoc,
 					logoWidth,
 					logoHeight);
+		SetWidgetBorder(kNiteCrawlerTab_logo, false);
 
 		yLoc		+=	logoHeight;
 
@@ -176,8 +188,12 @@ int		logoHeight;
 
 	//==========================================
 	//*	create the compass wheel
-	SetWidget(kNiteCrawlerTab_RotatorCompass,	0,			yLoc,		(cWidth/2),	(cWidth/2));
-	SetWidgetType(kNiteCrawlerTab_RotatorCompass, kWidgetType_CustomGraphic);
+	compassWidth	=	cWidth / 2;
+	compassHeight	=	151;
+	CONSOLE_DEBUG_W_NUM("compassWidth\t=",	compassWidth);
+	CONSOLE_DEBUG_W_NUM("compassHeight\t=",	compassHeight);
+	SetWidget(		kNiteCrawlerTab_RotatorCompass,	0,		yLoc,	compassWidth,	compassHeight);
+	SetWidgetType(	kNiteCrawlerTab_RotatorCompass, kWidgetType_CustomGraphic);
 
 	//==========================================
 	yloc2	=	yLoc;
@@ -234,7 +250,7 @@ int		logoHeight;
 
 
 	//*	move down to the bottom of the compass
-	yLoc		+=	(cWidth/2);
+	yLoc		+=	compassHeight;
 
 	SetWidget(		kNiteCrawlerTab_RotationJog,	cClm1_offset,	yLoc,	(cClmWidth * 2),	cBoxHeight);
 	SetWidget(		kNiteCrawlerTab_FocusJog,		cClm5_offset,	yLoc,	(cClmWidth * 2),	cBoxHeight);
@@ -389,8 +405,8 @@ char		lineBuff[32];
 	LLD_FrameEllipse(center_X, center_Y, radius1, radius1);
 
 	//*	now draw the tick marks every 10 degrees
-	radius1	=	(theWidget->width / 2) - 8;
-	radius2	=	(theWidget->width / 2) - 16;
+	radius1	=	(theWidget->height / 2) - 8;
+	radius2	=	(theWidget->height / 2) - 16;
 	degrees	=	0;
 	while (degrees < 360)
 	{
@@ -409,8 +425,8 @@ char		lineBuff[32];
 	//*	now figure out where it is pointing
 	degrees	=	(cRotatorPosition * 360.0) / cStepsPerRev;
 	sprintf(lineBuff, "%1.1f", degrees);
-	CONSOLE_DEBUG_W_DBL("degrees\t=", degrees);
-	CONSOLE_DEBUG(lineBuff);
+//	CONSOLE_DEBUG_W_DBL("degrees\t=", degrees);
+//	CONSOLE_DEBUG(lineBuff);
 
 	//*	draw the numeric degrees in the center
 	pt1_X	=	center_X - 18;
@@ -422,10 +438,11 @@ char		lineBuff[32];
 	LLD_DrawCString(pt1_X, pt1_Y, lineBuff, kFont_Medium);
 
 
+	//*	determine dimensions for red/green indicators
 	degrees	-=	90;
 	radians	=	degrees * M_PI / 180.0;
-	radius1	=	(theWidget->width / 5) + 3;
-	radius2	=	(theWidget->width / 2) - 20;
+	radius1	=	(theWidget->height / 5) + 3;
+	radius2	=	(theWidget->height / 2) - 20;
 
 	pt1_X	=	center_X + (cos(radians) * radius1);
 	pt1_Y	=	center_Y + (sin(radians) * radius1);
@@ -442,8 +459,8 @@ char		lineBuff[32];
 	degrees	=	(cRotatorDesiredPos * 360.0) / cStepsPerRev;
 	degrees	-=	90;
 	radians	=	degrees * M_PI / 180.0;
-	radius1	=	(theWidget->width / 2) - 20;
-	radius2	=	(theWidget->width / 2);
+	radius1	=	(theWidget->height / 2) - 20;
+	radius2	=	(theWidget->height / 2);
 
 	pt1_X	=	center_X + (cos(radians) * radius1);
 	pt1_Y	=	center_Y + (sin(radians) * radius1);
@@ -468,7 +485,7 @@ void	WindowTabNitecrawler::DrawWidgetCustomGraphic(	IplImage	*openCV_Image,
 														const int	widgetIdx)
 #endif // _USE_OPENCV_CPP_
 {
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	cOpenCV_Image	=	openCV_Image;
 
 	switch(widgetIdx)

@@ -42,6 +42,7 @@
 //*	Apr 30,	2021	<MLS> Added "Filter #" if name not specified to names list
 //*	Jun 15,	2021	<MLS> Fixed filterwheel ifdefs
 //*	Jun 22,	2021	<MLS> Updated filtwheel driver cCommonProp.InterfaceVersion to 2
+//*	AUg  5,	2022	<MLS> Added Get_Readall() to filterwheel driver
 //*****************************************************************************
 
 #if defined(_ENABLE_FILTERWHEEL_) || defined(_ENABLE_FILTERWHEEL_ZWO_) || defined(_ENABLE_FILTERWHEEL_ATIK_)
@@ -71,6 +72,9 @@ const TYPE_CmdEntry	gFilterwheelCmdTable[]	=
 	{	"focusoffsets",			kCmd_Filterwheel_focusoffsets,	kCmdType_GET	},
 	{	"names",				kCmd_Filterwheel_names,			kCmdType_GET	},
 	{	"position",				kCmd_Filterwheel_position,		kCmdType_BOTH	},
+	//*	items added by MLS
+	{	"--extras",				kCmd_Filterwheel_Extras,		kCmdType_GET	},
+	{	"readall",				kCmd_Filterwheel_readall,		kCmdType_GET	},
 
 	{	"",						-1,	0x00	}
 };
@@ -239,18 +243,18 @@ int					mySocket;
 		//*	Filterwheel specific commands
 		//----------------------------------------------------------------------------------------
 		case kCmd_Filterwheel_focusoffsets:		//*	Filter focus offsets
-			alpacaErrCode	=	Get_Focusoffsets(reqData, alpacaErrMsg);
+			alpacaErrCode	=	Get_Focusoffsets(reqData, alpacaErrMsg, gValueString);
 			break;
 
 		case kCmd_Filterwheel_names:			//*	Filter wheel filter names
-			alpacaErrCode	=	Get_Names(reqData, alpacaErrMsg);
+			alpacaErrCode	=	Get_Names(reqData, alpacaErrMsg, gValueString);
 			break;
 
 		case kCmd_Filterwheel_position:			//*	GET-Returns the current filter wheel position
 												//*	PUT-Sets the filter wheel position
 			if (reqData->get_putIndicator == 'G')
 			{
-				alpacaErrCode	=	Get_Position(reqData, alpacaErrMsg);
+				alpacaErrCode	=	Get_Position(reqData, alpacaErrMsg, gValueString);
 			}
 			else if (reqData->get_putIndicator == 'P')
 			{
@@ -258,6 +262,9 @@ int					mySocket;
 			}
 			break;
 
+		case kCmd_Filterwheel_readall:
+			alpacaErrCode	=	Get_Readall(reqData, alpacaErrMsg);
+			break;
 
 		//----------------------------------------------------------------------------------------
 		//*	let anything undefined go to the common command processor
@@ -300,7 +307,6 @@ int					mySocket;
 
 	JsonResponse_Add_Finish(mySocket,
 							reqData->jsonTextBuffer,
-							kMaxJsonBuffLen,
 							kInclude_HTTP_Header);
 #ifdef _DEBUG_CONFORM_
 	CONSOLE_DEBUG_W_STR("Output JSON\t=", reqData->jsonTextBuffer);
@@ -310,7 +316,9 @@ int					mySocket;
 }
 
 //*****************************************************************************
-TYPE_ASCOM_STATUS	FilterwheelDriver::Get_Focusoffsets(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
+TYPE_ASCOM_STATUS	FilterwheelDriver::Get_Focusoffsets(TYPE_GetPutRequestData	*reqData,
+														char					*alpacaErrMsg,
+														const char				*responseString)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 int					ii;
@@ -374,7 +382,7 @@ char				lineBuffer[256];
 }
 
 //*****************************************************************************
-TYPE_ASCOM_STATUS	FilterwheelDriver::Get_Names(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
+TYPE_ASCOM_STATUS	FilterwheelDriver::Get_Names(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 int					ii;
@@ -448,7 +456,7 @@ char				filterNameBuff[32];
 }
 
 //*****************************************************************************
-TYPE_ASCOM_STATUS	FilterwheelDriver::Get_Position(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
+TYPE_ASCOM_STATUS	FilterwheelDriver::Get_Position(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 int					curState;
@@ -475,7 +483,7 @@ int					myFilterPosition;
 	JsonResponse_Add_Int32(	reqData->socket,
 							reqData->jsonTextBuffer,
 							kMaxJsonBuffLen,
-							gValueString,
+							responseString,
 							myFilterPosition,
 							INCLUDE_COMMA);
 
@@ -572,6 +580,33 @@ char				commentString[128];
 	}
 	return(alpacaErrCode);
 }
+
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	FilterwheelDriver::Get_Readall(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
+
+
+	if (reqData != NULL)
+	{
+		//*	do the common ones first
+		Get_Readall_Common(	reqData, alpacaErrMsg);
+
+		alpacaErrCode	=	Get_Position(reqData,		alpacaErrMsg,	"position");
+		alpacaErrCode	=	Get_Focusoffsets(reqData,	alpacaErrMsg,	"focusoffsets");
+		alpacaErrCode	=	Get_Names(reqData,			alpacaErrMsg,	"names");
+
+		alpacaErrCode	=	kASCOM_Err_Success;
+		strcpy(alpacaErrMsg, "");
+	}
+	else
+	{
+		alpacaErrCode	=	kASCOM_Err_InternalError;
+	}
+	return(alpacaErrCode);
+}
+
 
 #pragma mark -
 
@@ -724,7 +759,6 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 
 	return(alpacaErrCode);
 }
-
 
 //*****************************************************************************
 bool	FilterwheelDriver::IsFilterwheelConnected(void)

@@ -990,7 +990,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
 #ifdef _USE_OPENCV_
 
 #ifdef _USE_OPENCV_CPP_
-#warning "OpenCV++ not finished"
+	#warning "OpenCV++ not finished"
 	alpacaErrCode	=		kASCOM_Err_MethodNotImplemented;
 #else
 ASI_ERROR_CODE	asiErrorCode;

@@ -181,8 +181,8 @@ long	delteaMillSecs;
 		HandleWindowUpdate();
 		cv::waitKey(60);
 
-		AlpacaGetCommonProperties_OneAAT("filterwheel");
 		AlpacaGetStartupData();
+		AlpacaGetCommonProperties_OneAAT("filterwheel");
 
 		AlpacaGetCommonConnectedState("filterwheel");
 		UpdateConnectedIndicator(kTab_FilterWheel,		kFilterWheel_Connected);
@@ -250,6 +250,8 @@ void	ControllerFilterWheel::UpdateCommonProperties(void)
 	SetWidgetText(	kTab_DriverInfo,	kDriverInfo_DriverInfo,			cCommonProp.DriverInfo);
 	SetWidgetText(	kTab_DriverInfo,	kDriverInfo_DriverVersion,		cCommonProp.DriverVersion);
 	SetWidgetNumber(kTab_DriverInfo,	kDriverInfo_InterfaceVersion,	cCommonProp.InterfaceVersion);
+
+	UpdateAboutBoxRemoteDevice(kTab_About, kAboutBox_CPUinfo);
 }
 
 

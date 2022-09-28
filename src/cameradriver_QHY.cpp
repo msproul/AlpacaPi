@@ -16,7 +16,7 @@
 //*	that you agree that the author(s) have no warranty, obligations or liability.  You
 //*	must determine the suitability of this source code for your use.
 //*
-//*	Redistributions of this source code must retain this copyright notice.
+//*	Re-distribution of this source code must retain this copyright notice.
 //*****************************************************************************
 //*
 //*	References:
@@ -285,7 +285,7 @@ double			controlStep;
 		}
 
 		//*	get the control information from the camera
-		for (controlID=0; controlID<CONTROL_MAX_ID; controlID++)
+		for (controlID = 0; controlID < CONTROL_MAX_ID; controlID++)
 		{
 			qhyRetCode	=	IsQHYCCDControlAvailable(cQHYcamHandle,	(CONTROL_ID)controlID);
 			if (qhyRetCode == QHYCCD_SUCCESS)
@@ -694,7 +694,10 @@ TYPE_ASCOM_STATUS	CameraDriverQHY::Read_SensorTemp(void)
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 double				cameraTemp_DegC;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+//	if (gVerbose)
+	{
+		CONSOLE_DEBUG(__FUNCTION__);
+	}
 
 	cLastCameraErrMsg[0]	=	0;
 	if (cTempReadSupported)
@@ -757,7 +760,10 @@ TYPE_ASCOM_STATUS	CameraDriverQHY::Read_Gain(int *cameraGainValue)
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 double				rawGainValue;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+//	if (gVerbose)
+	{
+		CONSOLE_DEBUG(__FUNCTION__);
+	}
 
 	if (cQHYcamHandle != NULL)
 	{
@@ -787,8 +793,8 @@ double				exposureDBL;
 //double				traffic;
 //double				bit;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
-//	CONSOLE_DEBUG_W_NUM("currentROIimageType\t=",	cROIinfo.currentROIimageType);
+	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_NUM("currentROIimageType\t=",	cROIinfo.currentROIimageType);
 
 	if (cQHYcamHandle != NULL)
 	{
@@ -849,6 +855,7 @@ double				exposureDBL;
 //*****************************************************************************
 bool	CameraDriverQHY::GetImage_ROI_info(void)
 {
+	CONSOLE_DEBUG(__FUNCTION__);
 
 	cROIinfo.currentROIwidth		=	cCameraProp.CameraXsize;
 	cROIinfo.currentROIheight		=	cCameraProp.CameraYsize;
@@ -862,7 +869,10 @@ TYPE_EXPOSURE_STATUS	CameraDriverQHY::Check_Exposure(bool verboseFlag)
 uint32_t				precentRemaining;
 TYPE_EXPOSURE_STATUS	myExposureStatus;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+//	if (gVerbose)
+	{
+		CONSOLE_DEBUG(__FUNCTION__);
+	}
 
 	myExposureStatus	=	kExposure_Unknown;
 	if (cQHYcamHandle != NULL)
@@ -961,7 +971,10 @@ unsigned int		channels = 0;
 //unsigned char 		*imgDataPtr;
 bool				imageDataBuffOK;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+//	if (gVerbose)
+	{
+		CONSOLE_DEBUG(__FUNCTION__);
+	}
 
 	if (cQHYcamHandle != NULL)
 	{

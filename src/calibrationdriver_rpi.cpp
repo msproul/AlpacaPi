@@ -21,7 +21,7 @@
 //*****************************************************************************
 
 
-#ifdef _ENABLE_CALIBRATION_
+#if defined(_ENABLE_CALIBRATION_) && defined(_ENABLE_CALIBRATION_RPI_)
 
 #include	<string.h>
 #define _ENABLE_CONSOLE_DEBUG_

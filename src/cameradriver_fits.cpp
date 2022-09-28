@@ -136,6 +136,13 @@
 #endif
 
 
+#if defined(_ENABLE_FILTERWHEEL_ZWO_) || defined(_ENABLE_FILTERWHEEL_ATIK_)
+	#ifndef _ENABLE_FILTERWHEEL_
+		#error "Makefile needs to have _ENABLE_FILTERWHEEL_ enabled"
+	#endif // _ENABLE_FILTERWHEEL_
+#endif // defined
+
+
 //*****************************************************************************
 static void	FormatLatLonString(double latLonValue, char *latLonString)
 {
@@ -297,7 +304,7 @@ void	CameraDriver::UpdateFilterwheelLink(void)
 {
 	CONSOLE_DEBUG(__FUNCTION__);
 
-	cConnectedFilterWheel	=	(FilterwheelDriver *)FindDeviceByType(kDeviceType_Filterwheel);
+	cConnectedFilterWheel	=	(FilterwheelDriver *)FindDeviceByType(kDeviceType_Filterwheel, cDeviceNum);
 	if (cConnectedFilterWheel != NULL)
 	{
 		cFilterWheelInfoValid	=	true;

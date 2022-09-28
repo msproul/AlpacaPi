@@ -75,6 +75,7 @@
 //*	Jun 23,	2021	<MLS> Updated dome driver cCommonProp.InterfaceVersion to 2
 //*	Dec 13,	2021	<MLS> Added WatchDog_TimeOut() to domedriver
 //*	May 24,	2022	<MLS> Updated dome driver to count output data
+//*	Aug 29,	2022	<MLS> Added logic to keep track of last time any movement was made
 //*****************************************************************************
 //*	cd /home/pi/dev-mark/alpaca
 //*	LOGFILE=logfile.txt
@@ -288,6 +289,7 @@ DomeDriver::DomeDriver(const int argDevNum)
 	cCommonProp.InterfaceVersion	=	2;
 
 
+	cDomeConfig						=	kIsDome;
 	cAzimuth_Destination			=	-1.0;		//*	must be >= to 0 to be valid
 	cParkAzimuth					=	0.0;
 	cHomeAzimuth					=	0.0;
@@ -297,7 +299,10 @@ DomeDriver::DomeDriver(const int argDevNum)
 	cTimeOfLastSpeedChange			=	0;
 	cTimeOfMovingStart				=	0;
 
-	cDomeConfig						=	kIsDome;
+	cTimeOfLastMoveCmd				=	time(NULL);		//*	these need to be set or it will do a shutdown before it even starts
+	cTimeOfLastMoveCheck			=	time(NULL);
+	cEnableIdleMoveTimeout			=	true;
+	cIdleMoveTimeoutMinutes			=	2 * 60;
 
 	//*	clear out all of the properties data
 	memset(&cDomeProp, 0, sizeof(TYPE_DomeProperties));
@@ -774,7 +779,6 @@ int					mySocket;
 
 	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Finish(	mySocket,
 															reqData->jsonTextBuffer,
-															kMaxJsonBuffLen,
 															kInclude_HTTP_Header);
 
 	//*	this is for the logging function
@@ -895,6 +899,9 @@ int32_t	DomeDriver::RunStateMachine(void)
 {
 int32_t		minDealy_microSecs;
 char		stateString[48];
+time_t		currentTimeEpoch;
+time_t		deltaSeconds;
+
 #if defined(_ENABLE_REMOTE_SHUTTER_) || defined(_ENABLE_SLIT_TRACKER_REMOTE_)
 	uint32_t	currentMilliSecs;
 	uint32_t	timeSinceLastWhatever;
@@ -957,6 +964,56 @@ char		stateString[48];
 	}
 #endif // _ENABLE_SLIT_TRACKER_REMOTE_
 
+	//----------------------------------------------------------
+	//*	check for dome activity, this is in addition to the watchdog stuff
+	if (cEnableIdleMoveTimeout)
+	{
+	char	alpacaErrMsg[128];
+	char	msgString[64];
+
+		currentTimeEpoch	=	time(NULL);
+		deltaSeconds		=	currentTimeEpoch - cTimeOfLastMoveCheck;
+		if (deltaSeconds >= 15)
+		{
+		int		deltaMinutes;
+		int		hours;
+		int		minutes;
+		int		seconds;
+
+			//*	compute how long it has been since a move command was received,
+			//*	this can be dome rotation OR shutter movement
+			deltaSeconds		=	currentTimeEpoch - cTimeOfLastMoveCmd;
+			deltaMinutes		=	deltaSeconds / 60;
+
+			minutes				=	deltaSeconds / 60;
+			hours				=	minutes / 60;
+			minutes				=	minutes % 60;
+			seconds				=	deltaSeconds % 60;
+			sprintf(msgString, "Time since last move command %d:%02d:%02d", hours, minutes, seconds);
+			CONSOLE_DEBUG(msgString);
+
+			//*	are we past the set time out for dome movement
+			if (deltaMinutes >= cIdleMoveTimeoutMinutes)
+			{
+				if ((cDomeProp.AtPark == false) || (cDomeProp.ShutterStatus != kShutterStatus_Closed))
+				{
+					LogEvent("dome",	"Shutting down dome",	msgString,	kASCOM_Err_Success,	msgString);
+
+					if (cDomeProp.AtPark == false)
+					{
+						LogEvent("dome",	"Shutdown - moving to park",	"",	kASCOM_Err_Success,	"");
+						Put_Park(NULL, alpacaErrMsg);
+					}
+					if (cDomeProp.ShutterStatus != kShutterStatus_Closed)
+					{
+						WatchDog_TimeOut();
+					}
+				}
+			}
+			cTimeOfLastMoveCheck			=	time(NULL);	//*	reset the check timer
+		}
+	}
+
 	//*	has the state changed.
 	if (cDomeState != cPreviousDomeState)
 	{
@@ -973,7 +1030,7 @@ void	DomeDriver::ProcessDiscovery(	struct sockaddr_in	*deviceAddress,
 										const char			*deviceType,
 										const int			deviceNumber)
 {
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, deviceType);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, deviceType);
 #ifdef _ENABLE_SLIT_TRACKER_REMOTE_
 	if (strcasecmp(deviceType, "slittracker") == 0)
 	{
@@ -1430,62 +1487,51 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 }
 
 //*****************************************************************************
-TYPE_ASCOM_STATUS	DomeDriver::Put_Park(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
+TYPE_ASCOM_STATUS	DomeDriver::Put_Park(		TYPE_GetPutRequestData *reqDataQQ, char *alpacaErrMsg)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 double				deltaDegrees;
 int 				direction;
 
 	CONSOLE_DEBUG(__FUNCTION__);
-	if (reqData != NULL)
+	cTimeOfLastMoveCmd	=	time(NULL);
+	CheckSensors();
+
+	cGoingBump	=	false;
+	cGoingHome	=	false;
+
+	if (cDomeProp.CanPark)
 	{
-		CheckSensors();
-
-		cGoingBump	=	false;
-		cGoingHome	=	false;
-
-		if (cDomeProp.CanPark)
+		if (cDomeProp.AtPark)
 		{
-			if (cDomeProp.AtPark)
-			{
-				CONSOLE_DEBUG("Already at park, command ignored");
-			}
-			else if (cDomeProp.Slewing)
-			{
-				cGoingPark	=	true;
-			}
-			else
-			{
-				//*	lets try and figure out which way to go.
-				direction		=	kRotateDome_CW;	//*	set a default
-				deltaDegrees	=	cDomeProp.Azimuth - cParkAzimuth;
-				CONSOLE_DEBUG_W_DBL("Distance from park\t=", deltaDegrees);
-
-				if ((deltaDegrees > 0.0) && (deltaDegrees < 180.0))
-				{
-					direction		=	kRotateDome_CCW;	//*	set a default
-				}
-				cGoingPark		=	true;
-
-				if (cDomeProp.AtHome)
-				{
-					StartDomeMoving(kRotateDome_CCW);
-				}
-				else
-				{
-					StartDomeMoving(direction);
-				}
-			}
+			CONSOLE_DEBUG("Already at park, command ignored");
+		}
+		else if (cDomeProp.Slewing)
+		{
+			cGoingPark	=	true;
 		}
 		else
 		{
-			alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
-			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Park Not supported");
+			//*	lets try and figure out which way to go.
+			deltaDegrees	=	cDomeProp.Azimuth - cParkAzimuth;
+			CONSOLE_DEBUG_W_DBL("Distance from park\t=", deltaDegrees);
+
+			if ((deltaDegrees > 0.0) && (deltaDegrees < 180.0))
+			{
+				direction		=	kRotateDome_CCW;
+			}
+			else
+			{
+				direction		=	kRotateDome_CW;
+			}
+			cGoingPark			=	true;
+			StartDomeMoving(direction);
 		}
 	}
 	else
 	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
+		alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Park Not supported");
 	}
 	return(alpacaErrCode);
 }
@@ -1496,6 +1542,7 @@ TYPE_ASCOM_STATUS	DomeDriver::Put_OpenShutter(	TYPE_GetPutRequestData *reqData, 
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
 	CONSOLE_DEBUG(__FUNCTION__);
+	cTimeOfLastMoveCmd		=	time(NULL);
 	alpacaErrCode			=	OpenShutter(alpacaErrMsg);
 
 	cDomeProp.ShutterStatus	=	kShutterStatus_Opening;
@@ -1510,6 +1557,7 @@ TYPE_ASCOM_STATUS	DomeDriver::Put_CloseShutter(	TYPE_GetPutRequestData *reqData,
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
 	CONSOLE_DEBUG(__FUNCTION__);
+	cTimeOfLastMoveCmd		=	time(NULL);
 	cDomeProp.ShutterStatus	=	kShutterStatus_Closing;
 
 	alpacaErrCode			=	CloseShutter(alpacaErrMsg);
@@ -1524,6 +1572,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 int					direction;
 double				deltaDegrees;
 
+	cTimeOfLastMoveCmd		=	time(NULL);
 	if (cDomeProp.CanFindHome)
 	{
 		cGoingBump	=	false;
@@ -1550,15 +1599,7 @@ double				deltaDegrees;
 				direction		=	kRotateDome_CCW;	//*	set a default
 			}
 
-			if (cDomeProp.AtPark)
-			{
-				//*	because my HOME is CW from my PARK
-				StartDomeMoving(kRotateDome_CW);
-			}
-			else
-			{
-				StartDomeMoving(direction);
-			}
+			StartDomeMoving(direction);
 		}
 	}
 	else
@@ -1604,6 +1645,7 @@ char				argumentString[64];
 bool				foundKeyWord;
 
 	CONSOLE_DEBUG(__FUNCTION__);
+	cTimeOfLastMoveCmd		=	time(NULL);
 	if (cDomeProp.CanSetAzimuth)
 	{
 		if (reqData != NULL)
@@ -1682,6 +1724,7 @@ char				argumentString[64];
 bool				foundKeyWord;
 
 	CONSOLE_DEBUG(__FUNCTION__);
+	cTimeOfLastMoveCmd		=	time(NULL);
 	if (cDomeProp.CanSyncAzimuth)
 	{
 		if (reqData != NULL)
@@ -1739,6 +1782,7 @@ TYPE_ASCOM_STATUS	DomeDriver::Put_BumpMove(	TYPE_GetPutRequestData *reqData, cha
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
+	cTimeOfLastMoveCmd		=	time(NULL);
 	if (cDomeConfig == kIsDome)
 	{
 		if (reqData != NULL)
@@ -1774,6 +1818,8 @@ TYPE_ASCOM_STATUS	DomeDriver::Put_NormalMove(	TYPE_GetPutRequestData *reqData, c
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
+	cTimeOfLastMoveCmd				=	time(NULL);
+
 	if (cDomeConfig == kIsDome)
 	{
 		if (reqData != NULL)
@@ -1804,6 +1850,8 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 TYPE_ASCOM_STATUS	DomeDriver::Put_SlowMove(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, int direction)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
+
+	cTimeOfLastMoveCmd				=	time(NULL);
 
 	if (cDomeConfig == kIsDome)
 	{
@@ -2018,6 +2066,21 @@ char				stateString[48];
 															"CurrentState",
 															stateString,
 															INCLUDE_COMMA);
+
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(reqData->socket,
+															reqData->jsonTextBuffer,
+															kMaxJsonBuffLen,
+															"Idle Timeout Enabled",
+															cEnableIdleMoveTimeout,
+															INCLUDE_COMMA);
+
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(reqData->socket,
+															reqData->jsonTextBuffer,
+															kMaxJsonBuffLen,
+															"Idle Timeout (minutes)",
+															cIdleMoveTimeoutMinutes,
+															INCLUDE_COMMA);
+
 
 		alpacaErrCode	=	kASCOM_Err_Success;
 		strcpy(alpacaErrMsg, "");

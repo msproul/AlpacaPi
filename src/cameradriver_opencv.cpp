@@ -63,7 +63,7 @@
 #define	FC_BLUE()	CV_RGB(0x64, 0x8c, 0xff)
 
 #ifdef _USE_OPENCV_CPP_
-#warning "OpenCV++ not finished"
+//	#warning "OpenCV++ not finished"
 //*****************************************************************************
 void	LoadAlpacaImage(void)
 {
@@ -185,7 +185,7 @@ cv::Point			point2;
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 #if defined(_USE_OPENCV_CPP_) &&  (CV_MAJOR_VERSION >= 4)
-#warning "OpenCV++ not finished"
+//	#warning "OpenCV++ not finished"
 #else
 	if (cOpenCV_LiveDisplayPtr != NULL)
 	{
@@ -276,7 +276,7 @@ void	CameraDriver::SetOpenCVcallbackFunction(const char *windowName)
 void	CameraDriver::OpenLiveImage(void)
 {
 #ifdef _USE_OPENCV_CPP_
-#warning "OpenCV++ not finished"
+//	#warning "OpenCV++ not finished"
 #else
 	if (cOpenCV_LiveDisplayPtr == NULL)
 	{
@@ -316,7 +316,7 @@ int	iii;
 	CONSOLE_DEBUG(__FUNCTION__);
 
 #ifdef _USE_OPENCV_CPP_
-#warning "OpenCV++ not finished"
+//	#warning "OpenCV++ not finished"
 #else
 	if (cOpenCV_LiveDisplayPtr != NULL)
 	{
@@ -343,7 +343,7 @@ int	iii;
 }
 
 #ifdef _USE_OPENCV_CPP_
-#warning "OpenCV++ not finished"
+//	#warning "OpenCV++ not finished"
 //*****************************************************************************
 void	CameraDriver::DisplayLiveImage(void)
 {
@@ -474,7 +474,7 @@ int			keyPressed;
 #endif // _USE_OPENCV_CPP_
 
 #ifdef _USE_OPENCV_CPP_
-#warning "OpenCV++ not finished"
+//	#warning "OpenCV++ not finished"
 //*****************************************************************************
 void	CameraDriver::DisplayLiveImage_wSideBar(void)
 {
@@ -718,7 +718,7 @@ CvRect		myCVrect;
 #endif // _USE_OPENCV_CPP_
 
 #ifdef _USE_OPENCV_CPP_
-#warning "OpenCV++ not finished"
+//	#warning "OpenCV++ not finished"
 //*****************************************************************************
 void	CameraDriver::DrawSidebar(cv::Mat *imageDisplay)
 {
@@ -882,7 +882,7 @@ enum
 };
 
 #ifdef _USE_OPENCV_CPP_
-#warning "OpenCV++ not finished"
+//	#warning "OpenCV++ not finished"
 
 
 #else
@@ -1080,7 +1080,7 @@ int			baseLine;
 
 
 #ifdef _USE_OPENCV_CPP_
-#warning "OpenCV++ not finished"
+//	#warning "OpenCV++ not finished"
 //*****************************************************************************
 void	CameraDriver::CreateHistogramGraph(cv::Mat *imageDisplay)
 {
@@ -1218,7 +1218,7 @@ char		textStr3[32];
 
 
 #ifdef _USE_OPENCV_CPP_
-#warning "OpenCV++ not finished"
+//	#warning "OpenCV++ not finished"
 //*****************************************************************************
 void	CameraDriver::SetOpenCVcolors(cv::Mat *imageDisplay)
 #else

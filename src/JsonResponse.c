@@ -129,11 +129,11 @@ char	lineBuff[64];
 }
 
 //*****************************************************************************
-static int	JsonRespnse_XmitIfFull(	const int	socketFD,
-									char		*jsonTextBuffer,
-									const int	maxLen,
-									const int	payloadLen,
-									const bool	enableDebug)
+static int	JsonRespnse_XmitIfFull(	const int			socketFD,
+									char				*jsonTextBuffer,
+									const unsigned int	maxLen,
+									const int			payloadLen,
+									const bool			enableDebug)
 {
 size_t	bufLen;
 int		bytesWritten	=	0;
@@ -400,7 +400,11 @@ int		bytesWritten	=	0;
 		{
 			strcat(jsonTextBuffer, "false");
 		}
-		strcat(jsonTextBuffer, ",\r\n");
+		if (includeTrailingComma)
+		{
+			strcat(jsonTextBuffer, ",");
+		}
+		strcat(jsonTextBuffer, "\r\n");
 
 	}
 	return(bytesWritten);
@@ -443,9 +447,9 @@ int		bytesWritten	=	0;
 
 //*****************************************************************************
 int		JsonResponse_Add_ArrayEnd(	const int		socketFD,
-								char			*jsonTextBuffer,
-								const int		maxLen,
-								bool			includeTrailingComma)
+									char			*jsonTextBuffer,
+									const int		maxLen,
+									bool			includeTrailingComma)
 {
 int		payloadLen;
 int		bytesWritten	=	0;
@@ -544,7 +548,6 @@ int		bytesWritten	=	0;
 //*****************************************************************************
 int			JsonResponse_Add_Finish(const int		socketFD,
 									char			*jsonTextBuffer,
-									const int		maxLen,
 									bool			includeHeader)
 {
 char	fullDataBuffer[kMaxJsonBuffLen];

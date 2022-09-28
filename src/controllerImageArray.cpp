@@ -689,7 +689,7 @@ int				dataBlkCount;
 	dataBlkCount	=	0;
 	while (cKeepReading)
 	{
-		CONSOLE_DEBUG_W_NUM("dataBlkCount\t=",	dataBlkCount++);
+		dataBlkCount++;
 		if (cReadBinaryHeader)
 		{
 			CONSOLE_DEBUG_W_NUM("contentLength\t\t=",			cHttpHdrStruct.contentLength);
@@ -895,7 +895,8 @@ int				dataBlkCount;
 			cKeepReading		=	false;
 		}
 	}
-	CONSOLE_DEBUG_W_NUM("imgRank\t\t\t=", imgRank);
+	CONSOLE_DEBUG_W_NUM("dataBlkCount\t=",	dataBlkCount);
+	CONSOLE_DEBUG_W_NUM("imgRank\t\t\t=",	imgRank);
 	CONSOLE_DEBUG_W_NUM("cImageArrayIndex\t=", cImageArrayIndex);
 	return(imgRank);
 }

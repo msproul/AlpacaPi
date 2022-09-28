@@ -9,12 +9,13 @@
 //*	that you agree that the author(s) have no warranty, obligations or liability.  You
 //*	must determine the suitability of this source code for your use.
 //*
-//*	Redistributions of this source code must retain this copyright notice.
+//*	Re-distributions of this source code must retain this copyright notice.
 //*****************************************************************************
 //*	Edit History
 //*****************************************************************************
 //*	Nov 16,	2021	<MLS> ReadFITSimageIntoOpenCVimage() now handles 8 bit RGB fits files
 //*	Apr  9,	2022	<MLS> Fixed RGB color order in 8 bit color FITS files (fits=BGR)
+//*	Sep 19,	2022	<MLS> Finished converting ReadFITSimageIntoOpenCVimage() to openCV C++
 //*****************************************************************************
 
 #include	<string.h>
@@ -55,24 +56,301 @@ static void	GetFitsErrorString(int fitsRetCode, char *errorString)
 	}
 }
 
-#if defined(_USE_OPENCV_CPP_) && (CV_MAJOR_VERSION >= 4)
-	#warning "OpenCV++ not finished"
+#if defined(_USE_OPENCV_CPP_)
 //*****************************************************************************
 cv::Mat	*ReadFITSimageIntoOpenCVimage(const char *fitsFileName)
 {
-int			fitsRetCode;
-char		errorString[64];
-cv::Mat		*openCvImgPtr;
+cv::Mat			*openCvImgPtr;
+fitsfile		*fptr;
+int				fitsRetCode;
+int				status;
+int				nAxisfound;
+long			naxes[3];
+long			bitpix;
+int				width;
+int				height;
+unsigned char	*pixelPtr;
+char			*pixelBuffer;
+int				ccc;
+int				iii;
+int				jjj;
+long			firstPixel;
+char			errorString[64];
+int				errorCnt;
+int				rgbOffset;
+int				myWidthStep;
+long			fitsDATAMIN;
+long			fitsDATAMAX;
+char			commentStr[128];
+bool			dataMinMaxValid;
+double			dataScaleFactor;
+int				newDataMin;
+int				newDataMax;
 
-	CONSOLE_DEBUG(__FUNCTION__);
-
-//*	make the compiler happy for now
-	fitsRetCode		=	0;
-	GetFitsErrorString(fitsRetCode, errorString);
+	CONSOLE_DEBUG(fitsFileName);
 
 	openCvImgPtr	=	NULL;
+
+	openCvImgPtr	=	NULL;
+	errorCnt		=	0;
+	naxes[0]		=	0;
+	naxes[1]		=	0;
+	naxes[2]		=	0;
+	status			=	0;
+	newDataMin		=	70000;
+	newDataMax		=	0;
+
+	fitsRetCode		=	fits_open_file(&fptr, fitsFileName, READONLY, &status);
+	if (fitsRetCode == 0)
+	{
+		//* read the NAXIS key words
+		status		=	0;
+		fitsRetCode	=	fits_read_keys_lng(fptr, "NAXIS", 1, 3, naxes, &nAxisfound, &status);
+//		CONSOLE_DEBUG_W_NUM("nAxisfound\t=",	nAxisfound);
+//		CONSOLE_DEBUG_W_LONG("naxes[0]\t=",	naxes[0]);
+//		CONSOLE_DEBUG_W_LONG("naxes[1]\t=",	naxes[1]);
+//		CONSOLE_DEBUG_W_LONG("naxes[2]\t=",	naxes[2]);
+//		CONSOLE_DEBUG_W_NUM("TSHORT\t=", TSHORT);
+//		CONSOLE_DEBUG_W_NUM("TUSHORT\t=", TUSHORT);
+
+		fitsDATAMIN	=	-1;
+		fitsDATAMAX	=	-1;
+
+		//-------------------------------------------------------------------
+		//*	look for data min and max
+		dataMinMaxValid	=	true;
+		status		=	0;
+		fitsRetCode	=	fits_read_key_lng(fptr, "DATAMIN", &fitsDATAMIN, commentStr, &status);
+		if (status != 0)
+		{
+			dataMinMaxValid	=	false;
+		}
+
+		status		=	0;
+		fitsRetCode	=	fits_read_key_lng(fptr, "DATAMAX", &fitsDATAMAX, commentStr, &status);
+		if (status != 0)
+		{
+			dataMinMaxValid	=	false;
+		}
+
+		if (dataMinMaxValid)
+		{
+			dataScaleFactor	=	(fitsDATAMAX - fitsDATAMIN) / 65535.0;
+//			CONSOLE_DEBUG_W_DBL("dataScaleFactor\t=",		dataScaleFactor);
+		}
+
+
+		status		=	0;
+		bitpix		=	0;	//*	set a default
+		fitsRetCode	=	fits_read_key_lng(fptr, "BITPIX", &bitpix, NULL, &status);
+//		CONSOLE_DEBUG_W_LONG("bitpix\t=",	bitpix);
+
+		switch(bitpix)
+		{
+			case 8:
+//				CONSOLE_DEBUG("case 8");
+				//*	is it color?
+				if (nAxisfound == 3)
+				{
+//					CONSOLE_DEBUG("nAxisfound == 3, Color image");
+					//*	we have an 8 bit Color image
+					width			=	naxes[0];
+					height			=	naxes[1];
+					myWidthStep		=	width * 3;
+					firstPixel		=	1;
+//-					openCvImgPtr	=	cvCreateImage(cvSize(width, height), IPL_DEPTH_8U, 3);
+					openCvImgPtr	=	new cv::Mat(height, width, CV_8UC3);
+					if (openCvImgPtr != NULL)
+					{
+//						CONSOLE_DEBUG("New MAT created");
+						pixelBuffer	=	(char *)malloc(width * 3);
+						if (pixelBuffer != NULL)
+						{
+							for (ccc=0; ccc<3; ccc++)
+							{
+								//*	fits files are BGR
+								switch(ccc)
+								{
+									case 0:		rgbOffset	=	2;	break;
+									case 1:		rgbOffset	=	1;	break;
+									case 2:		rgbOffset	=	0;	break;
+									default:	rgbOffset	=	0;	break;
+								}
+								pixelPtr	=	openCvImgPtr->data;
+
+								for (iii=0; iii<height; iii++)
+								{
+									//*	now we are going to read in the image a row at a time
+									status		=	0;
+									fitsRetCode	=	fits_read_img(	fptr,
+																	TBYTE,
+																	firstPixel,			//*	first pixel
+																	width,
+																	NULL,				//*	nullval,
+																	pixelBuffer,
+																	NULL,
+																	&status);
+									if (fitsRetCode != 0)
+									{
+										errorCnt++;
+										CONSOLE_DEBUG_W_NUM("fitsRetCode\t=",	fitsRetCode);
+									}
+									for (jjj=0; jjj<width; jjj++)
+									{
+									//	pixelPtr[(jjj * 3) + ccc]	=	pixelBuffer[jjj];
+										pixelPtr[(jjj * 3) + rgbOffset]	=	pixelBuffer[jjj];
+									}
+
+									pixelPtr	+=	myWidthStep;
+									firstPixel	+=	width;
+								}
+							}
+							free(pixelBuffer);
+						}
+						else
+						{
+							CONSOLE_DEBUG("malloc failed");
+						}
+					}
+				}
+				else if (nAxisfound == 2)
+				{
+					//*	we have an 8 bit B/W image
+					width			=	naxes[0];
+					height			=	naxes[1];
+					myWidthStep		=	width;
+					firstPixel		=	1;
+//					openCvImgPtr	=	cvCreateImage(cvSize(width, height), IPL_DEPTH_8U, 1);
+					openCvImgPtr	=	new cv::Mat(height, width, CV_8UC1);
+					if (openCvImgPtr != NULL)
+					{
+						pixelPtr	=	openCvImgPtr->data;
+						for (iii=0; iii<height; iii++)
+						{
+							//*	now we are going to read in the image a row at a time
+							status		=	0;
+							//nullval		=	0;
+							fitsRetCode	=	fits_read_img(	fptr,
+															TBYTE,
+															firstPixel,			//*	first pixel
+															width,
+															NULL,				//*	nullval,
+															pixelPtr,
+															NULL,
+															&status);
+							if (fitsRetCode != 0)
+							{
+								errorCnt++;
+								CONSOLE_DEBUG_W_NUM("fitsRetCode\t=",	fitsRetCode);
+							}
+							pixelPtr	+=	myWidthStep;
+							firstPixel	+=	width;
+						}
+					}
+				}
+				else
+				{
+					CONSOLE_DEBUG_W_NUM("Invalid format; nAxisfound\t=",	nAxisfound);
+				}
+				break;
+
+			case 16:
+				if (nAxisfound == 2)
+				{
+					//*	we have what we are expecting, a 16 bit B/W image
+
+					width			=	naxes[0];
+					height			=	naxes[1];
+					myWidthStep		=	width * 2;
+					firstPixel		=	1;
+					openCvImgPtr	=	new cv::Mat(height, width, CV_16UC1);
+					if (openCvImgPtr != NULL)
+					{
+						pixelPtr	=	openCvImgPtr->data;
+						for (iii=0; iii<height; iii++)
+						{
+							//*	now we are going to read in the image a row at a time
+							status		=	0;
+							//*	http://www.mssl.ucl.ac.uk/swift/om/sw/help/fitsio/node59.html
+							//*	https://heasarc.gsfc.nasa.gov/docs/software/fitsio/c/c_user/node20.html
+							fitsRetCode	=	fits_read_img(	fptr,
+															TUSHORT,			//	was TSHORT
+															firstPixel,			//*	first pixel
+															width,
+															NULL,				//*	nullval,
+															pixelPtr,
+															NULL,
+															&status);
+							//*	if the data min/max values were in the FITS header
+							//*	we can stretch the image accordingly.
+							if (dataMinMaxValid && (dataScaleFactor > 0))
+							{
+							unsigned short	*uShortPtr;
+							int				qqq;
+							int				oldPixValue;
+							int				newPixValue;
+
+								uShortPtr	=	(unsigned short *)pixelPtr;
+								for (qqq=0; qqq<width; qqq++)
+								{
+									oldPixValue		=	uShortPtr[qqq] & 0x00ffff;
+									newPixValue		=	(oldPixValue - fitsDATAMIN) / dataScaleFactor;
+									uShortPtr[qqq]	=	newPixValue;
+
+									//*	keep track of new min/max
+									if (newPixValue < newDataMin)
+									{
+										newDataMin	=	newPixValue;
+									}
+									if (newPixValue > newDataMax)
+									{
+										newDataMax	=	newPixValue;
+									}
+								}
+							}
+
+							if (fitsRetCode != 0)
+							{
+								errorCnt++;
+								CONSOLE_DEBUG_W_NUM("fitsRetCode\t=",	fitsRetCode);
+								GetFitsErrorString(fitsRetCode, errorString);
+								CONSOLE_DEBUG_W_STR("fits_write_pix returned:", errorString);
+							}
+							pixelPtr	+=	myWidthStep;
+							firstPixel	+=	width;
+						}
+					}
+				}
+				break;
+
+			default:
+				CONSOLE_DEBUG_W_LONG("Unsupported bit depth\t=",	bitpix);
+				break;
+
+		}
+		status		=	0;
+		fits_close_file(fptr, &status);
+	}
+	else
+	{
+		CONSOLE_DEBUG_W_NUM("fits_open_file failed with error code\t=",	fitsRetCode);
+		GetFitsErrorString(fitsRetCode, errorString);
+		CONSOLE_DEBUG_W_STR("fits_open_file returned:", errorString);
+
+	}
+	if (errorCnt > 0)
+	{
+		CONSOLE_DEBUG_W_NUM("errorCnt\t=",	errorCnt);
+	}
+//	CONSOLE_DEBUG_W_NUM("newDataMin\t=",	newDataMin);
+//	CONSOLE_DEBUG_W_NUM("newDataMax\t=",	newDataMax);
 	return(openCvImgPtr);
 }
+
+#if defined(_USE_OPENCV_CPP_)
+cv::Mat		gOpenCvImg;
+#endif
+
 
 //*****************************************************************************
 //*	Function:	Reads an image into opencv data structure.
@@ -84,12 +362,13 @@ cv::Mat		*openCvImgPtr;
 int			fnameLen;
 char		extension[8];
 
-	CONSOLE_DEBUG(__FUNCTION__);
-
+//	CONSOLE_DEBUG(__FUNCTION__);
+//	for reference,
+//#include	"/usr/local/include/opencv4/opencv2/core/mat.hpp"
 	openCvImgPtr	=	NULL;
 	fnameLen		=	strlen(imageFileName);
 	strcpy(extension, &imageFileName[fnameLen - 4]);
-	CONSOLE_DEBUG_W_STR("extension\t=", extension);
+//	CONSOLE_DEBUG_W_STR("extension\t=", extension);
 	if ((strcasecmp(extension, "fits") == 0) ||
 		(strcasecmp(extension, ".fit") == 0))
 	{
@@ -107,11 +386,12 @@ char		extension[8];
 	else
 	{
 		CONSOLE_DEBUG_W_STR("imageFileName\t=", imageFileName);
-	#if (CV_MAJOR_VERSION <= 3)
-		#warning "CV_MAJOR_VERSION <= 3"
+		#warning "OpenCV++ not finished"
+	#if defined(_USE_OPENCV_CPP_)
+		gOpenCvImg		=	cv::imread(imageFileName);
+		openCvImgPtr	=	&gOpenCvImg;
+	#else
 		openCvImgPtr	=	cvLoadImage(imageFileName, CV_LOAD_IMAGE_COLOR);
-	#elif (CV_MAJOR_VERSION <= 4)
-		#warning "CV_MAJOR_VERSION <= 4"
 	#endif
 	}
 //	CONSOLE_DEBUG_W_HEX("openCvImgPtr\t=", openCvImgPtr);
@@ -127,7 +407,7 @@ fitsfile		*fptr;
 int				fitsRetCode;
 int				status;
 IplImage		*openCvImgPtr;
-int				nfound;
+int				nAxisfound;
 long			naxes[3];
 long			bitpix;
 int				width;
@@ -160,24 +440,24 @@ int				rgbOffset;
 
 		//* read the NAXIS key words
 		status		=	0;
-		fitsRetCode	=	fits_read_keys_lng(fptr, "NAXIS", 1, 3, naxes, &nfound, &status);
-		CONSOLE_DEBUG_W_NUM("nfound\t=",	nfound);
-		CONSOLE_DEBUG_W_LONG("naxes[0]\t=",	naxes[0]);
-		CONSOLE_DEBUG_W_LONG("naxes[1]\t=",	naxes[1]);
-		CONSOLE_DEBUG_W_LONG("naxes[2]\t=",	naxes[2]);
+		fitsRetCode	=	fits_read_keys_lng(fptr, "NAXIS", 1, 3, naxes, &nAxisfound, &status);
+//		CONSOLE_DEBUG_W_NUM("nAxisfound\t=",	nAxisfound);
+//		CONSOLE_DEBUG_W_LONG("naxes[0]\t=",	naxes[0]);
+//		CONSOLE_DEBUG_W_LONG("naxes[1]\t=",	naxes[1]);
+//		CONSOLE_DEBUG_W_LONG("naxes[2]\t=",	naxes[2]);
 //		CONSOLE_DEBUG_W_NUM("TSHORT\t=", TSHORT);
 //		CONSOLE_DEBUG_W_NUM("TUSHORT\t=", TUSHORT);
 
 		status		=	0;
 		bitpix		=	0;	//*	set a default
 		fitsRetCode	=	fits_read_key_lng(fptr, "BITPIX", &bitpix, NULL, &status);
-		CONSOLE_DEBUG_W_LONG("bitpix\t=",	bitpix);
+//		CONSOLE_DEBUG_W_LONG("bitpix\t=",	bitpix);
 
 		switch(bitpix)
 		{
 			case 8:
 				//*	is it color?
-				if (nfound == 3)
+				if (nAxisfound == 3)
 				{
 					//*	we have an 8 bit Color image
 					width			=	naxes[0];
@@ -232,7 +512,7 @@ int				rgbOffset;
 						}
 					}
 				}
-				else if (nfound == 2)
+				else if (nAxisfound == 2)
 				{
 					//*	we have an 8 bit B/W image
 					width			=	naxes[0];
@@ -267,12 +547,12 @@ int				rgbOffset;
 				}
 				else
 				{
-					CONSOLE_DEBUG_W_NUM("Invalid format; nfound\t=",	nfound);
+					CONSOLE_DEBUG_W_NUM("Invalid format; nAxisfound\t=",	nAxisfound);
 				}
 				break;
 
 			case 16:
-				if (nfound == 2)
+				if (nAxisfound == 2)
 				{
 					//*	we have what we are expecting, a 16 bit B/W image
 

@@ -377,7 +377,6 @@ int			coordHeight;
 //*****************************************************************************
 void	WindowTabTelescope::ProcessButtonClick(const int buttonIdx, const int flags)
 {
-char	dataString[128];
 bool	validData;
 bool	update;
 bool	updateButtons;
