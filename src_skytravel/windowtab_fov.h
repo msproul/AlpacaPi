@@ -130,10 +130,10 @@ class WindowTabFOV: public WindowTab
 											const int	xxx,
 											const int	yyy,
 											const int	flags);
+		virtual	void	UpdateOnScreenWidgetList(void);
 
 				void	ClearRemoteDeviceList(void);
 				void	UpdateRemoteDeviceList(void);
-				void	UpdateOnScreenWidgetList(void);
 				void	UpdateSortOrder(void);
 
 				bool	AlpacaProcessReadAll_Camera(	const int	deviceNum,
@@ -149,7 +149,6 @@ class WindowTabFOV: public WindowTab
 
 				int				cAlpacaDevCnt;
 				int				cPrevAlpacaDevCnt;
-				int				cSortColumn;
 
 				bool			cFirstRead;
 				uint32_t		cLastUpdateTime_ms;

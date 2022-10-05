@@ -69,6 +69,9 @@
 //*	Jun 13,	2022	<MLS> Added ClearLastAlpacaCommand()
 //*	Jun 29,	2022	<MLS> Added cLeftButtonDown & cRightButtonDown to WindowTab
 //*	Sep 28,	2022	<MLS> Added SetWidgetNumber() with specified number of decimal places
+//*	Oct  4,	2022	<MLS> Added HandleSpecialKeys()
+//*	Oct  4,	2022	<MLS> Moved a bunch of the list stuff to the main windowtab.cpp class
+//*	Oct  4,	2022	<MLS> Added page-up, page-down and home processing for lists
 //*****************************************************************************
 
 
@@ -1108,6 +1111,35 @@ void	WindowTab::HandleKeyDown(const int keyPressed)
 //	CONSOLE_DEBUG_W_HEX("this routine should be overloaded: keyPressed=", keyPressed);
 }
 
+//*****************************************************************************
+void	WindowTab::HandleSpecialKeys(const int keyPressed)
+{
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	switch(keyPressed)
+	{
+		case 0x10FF50:	//*	home key
+			cFirstLineIdx	=	0;
+			break;
+
+		case 0x10FF56:	//*	page down
+			cFirstLineIdx	+=	10;
+			break;
+
+		case 0x10FF55:	//*	page up
+			cFirstLineIdx	-=	10;
+			break;
+
+		case 0x10FF57:	//*	end
+			break;
+	}
+	if (cFirstLineIdx < 0)
+	{
+		cFirstLineIdx	=	0;
+	}
+	UpdateOnScreenWidgetList();
+	ForceWindowUpdate();
+}
 
 //*****************************************************************************
 void	WindowTab::ProcessButtonClick(const int buttonIdx, const int flags)
@@ -1271,6 +1303,12 @@ void	WindowTab::ProcessMouseWheelMoved(	const int	widgetIdx,
 	//*	this is a virtual function and should be overridden if you need to do anything with it.
 //	CONSOLE_DEBUG_W_NUM(__FUNCTION__, wheelMovement);
 //	CONSOLE_ABORT(__FUNCTION__);
+}
+
+//*****************************************************************************
+void	WindowTab::UpdateOnScreenWidgetList(void)
+{
+	//*	only needs to be overloaded if the window tab has a list to update
 }
 
 //*****************************************************************************

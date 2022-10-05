@@ -14,7 +14,7 @@
 //*	that you agree that the author(s) have no warranty, obligations or liability.  You
 //*	must determine the suitability of this source code for your use.
 //*
-//*	Redistributions of this source code must retain this copyright notice.
+//*	Redistribution of this source code must retain this copyright notice.
 //*****************************************************************************
 //*	Edit History
 //*****************************************************************************
@@ -23,9 +23,16 @@
 //*	Aug  6,	2022	<MLS> Added DrawCpuTempGraph()
 //*	Aug  7,	2022	<MLS> Added cpu temp sorted list
 //*	Aug  8,	2022	<MLS> Added ExportCSV()
+//*	Sep 29,	2022	<MLS> Added dynamic display CPU temp when mouse is moved over graph
+//*	Sep 30,	2022	<MLS> Added HandleMouseMovedInGraph()
+//*	Oct  4,	2022	<MLS> Added scrolling to IP list
 //*****************************************************************************
 
 #include	<stdlib.h>
+#include	<sys/types.h>
+#include	<sys/socket.h>
+#include	<arpa/inet.h>
+#include	<netinet/in.h>
 
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
@@ -41,6 +48,7 @@
 
 #include	"controller.h"
 
+static  int CPUtempSortProc(const void *e1, const void *e2);
 
 
 //**************************************************************************************
@@ -55,6 +63,7 @@ int		iii;
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	cSortColumn			=	-1;
+	cFirstLineIdx		=	0;
 	cGraphMode			=	kGraphMode_Raw;
 	iii	=	0;
 	cCPUcolors[iii++]	=	CV_RGB(255,	0,		0),
@@ -98,7 +107,8 @@ int		clmnHdr_xLoc;
 int		clmnHdrWidth;
 int		tabOffset;
 int		graphHeight;
-int		errMsgWidth;
+int		statusMsgWidth;
+int		statusMsgHeight;
 int		tempListWidth;
 //	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -156,21 +166,22 @@ int		tempListWidth;
 	SetWidgetFont(		kIPaddrList_DiscoveryClear,	kFont_Medium);
 	SetWidgetBGColor(	kIPaddrList_DiscoveryClear,	CV_RGB(255,	255,	255));
 	SetWidgetText(		kIPaddrList_DiscoveryClear,	"Clear");
-	xLoc		+=	cBtnWidth;
-	errMsgWidth	=	xLoc;
-	xLoc		+=	2;
+	xLoc			+=	cBtnWidth;
+	statusMsgWidth	=	xLoc;
+	xLoc			+=	2;
 
 	yLoc	+=	cTitleHeight;
 	yLoc	+=	2;
 
 	//------------------------------------------
-	xLoc		=	5;
-	errMsgWidth	-=	xLoc;
-	SetWidget(				kIPaddrList_ErrorMsg,	xLoc,		yLoc,		errMsgWidth,		cTitleHeight);
-	SetWidgetType(			kIPaddrList_ErrorMsg,	kWidgetType_TextBox);
-	SetWidgetJustification(	kIPaddrList_ErrorMsg,	kJustification_Left);
-	SetWidgetFont(			kIPaddrList_ErrorMsg,	kFont_Medium);
-	yLoc			+=	cTitleHeight;
+	xLoc			=	5;
+	statusMsgWidth	-=	xLoc;
+	statusMsgHeight	=	2 * cTitleHeight;
+	SetWidget(				kIPaddrList_StatusMsg,	xLoc,		yLoc,		statusMsgWidth,		statusMsgHeight);
+	SetWidgetType(			kIPaddrList_StatusMsg,	kWidgetType_MultiLineText);
+	SetWidgetJustification(	kIPaddrList_StatusMsg,	kJustification_Left);
+	SetWidgetFont(			kIPaddrList_StatusMsg,	kFont_Medium);
+	yLoc			+=	statusMsgHeight;
 	yLoc			+=	2;
 
 	//------------------------------------------
@@ -276,7 +287,7 @@ int		tempListWidth;
 	xLoc		=	10;
 	textBoxHt	=	14;
 	textBoxWd	=	cWidth - (xLoc + 3);
-	for (iii=kIPaddrList_AlpacaDev_01; iii<=kIPaddrList_AlpacaDev_Last; iii++)
+	for (iii=kIPaddrList_AlpacaDev_01; iii <= kIPaddrList_AlpacaDev_Last; iii++)
 	{
 		SetWidget(				iii,	xLoc,			yLoc,		textBoxWd,		textBoxHt);
 		SetWidgetJustification(	iii,	kJustification_Left);
@@ -314,18 +325,18 @@ bool	updateFlag;
 	{
 		case kIPaddrList_DiscoveryThrdStop:
 			gDiscoveryThreadKeepRunning	=	false;
-			SetWidgetText(	kIPaddrList_ErrorMsg,	"Stop message sent");
+			SetWidgetText(	kIPaddrList_StatusMsg,	"Stop message sent");
 			break;
 
 		case kIPaddrList_DiscoveryThrdReStart:
 			if (gDiscoveryThreadIsRunning == false)
 			{
 				StartDiscoveryQuerryThread();
-				SetWidgetText(	kIPaddrList_ErrorMsg,	"Start message sent");
+				SetWidgetText(	kIPaddrList_StatusMsg,	"Start message sent");
 			}
 			else
 			{
-				SetWidgetText(	kIPaddrList_ErrorMsg,	"Discovery thread already running");
+				SetWidgetText(	kIPaddrList_StatusMsg,	"Discovery thread already running");
 			}
 			break;
 
@@ -375,22 +386,171 @@ void	WindowTabIPList::ProcessDoubleClick(const int buttonIdx)
 }
 
 //*****************************************************************************
+void	WindowTabIPList::HandleMouseMovedInGraph(	TYPE_WIDGET *theWidget,
+													const int	box_XXX,
+													const int	box_YYY)
+{
+int				time_TotalMin;
+int				time_Hours;
+int				time_Minutes;
+int				temp_degF;
+char			msgString[400];
+char			shortString[32];
+int				cpuTemp;
+int				iii;
+int				cpuIdx;
+TYPE_CPU_SORT	myCPUnameList[kMaxCPUs];
+
+	//*	each pixel is worth 2 minutes
+	time_TotalMin	=	box_XXX * 2;
+	time_Hours		=	time_TotalMin / 60;
+	time_Minutes	=	time_TotalMin % 60;
+	temp_degF		=	theWidget->height - box_YYY;
+	temp_degF		-=	4;
+
+	//*	make sure we are in valid data territory
+	if ((temp_degF >= 0) && (time_TotalMin < (24 * 60)))
+	{
+		sprintf(msgString, "Time: %02d:%02d, ", time_Hours, time_Minutes);
+
+		temp_degF		=	theWidget->height - box_YYY;
+		temp_degF		-=	4;
+
+		//*	get a list of the valid temperatures
+		cpuIdx	=	0;
+		for (iii=0; iii<kMaxAlpacaIPaddrCnt; iii++)
+		{
+			if (gAlpacaUnitList[iii].cpuTempValid)
+			{
+				cpuTemp		=	gAlpacaUnitList[iii].cpuTempLog[box_XXX];
+				if (cpuTemp > 20)
+				{
+					myCPUnameList[cpuIdx].cpuTemp		=	gAlpacaUnitList[iii].cpuTempLog[box_XXX];
+					if (strlen(gAlpacaUnitList[iii].hostName) > 0)
+					{
+						strcpy(myCPUnameList[cpuIdx].cpuName, gAlpacaUnitList[iii].hostName);
+					}
+					else
+					{
+						inet_ntop(AF_INET, &(gAlpacaUnitList[iii].deviceAddress.sin_addr), myCPUnameList[cpuIdx].cpuName, INET_ADDRSTRLEN);
+					}
+					cpuIdx++;
+				}
+			}
+		}
+
+		//*	now we have a list, sort it.
+		qsort(myCPUnameList, cpuIdx, sizeof(TYPE_CPU_SORT), CPUtempSortProc);
+
+		//*	now build the string to display
+		//*	the list is in descending order
+		for (iii=0; iii<cpuIdx; iii++)
+		{
+			sprintf(shortString, " %s=%2.1f",	myCPUnameList[iii].cpuName,
+												myCPUnameList[iii].cpuTemp);
+			strcat(msgString, shortString);
+		}
+		SetWidgetText(kIPaddrList_StatusMsg, msgString);
+		ForceWindowUpdate();
+	}
+	else
+	{
+	//		CONSOLE_DEBUG(__FUNCTION__);
+	}
+}
+
+//*****************************************************************************
+void	WindowTabIPList::ProcessMouseEvent(	const int	widgetIdx,
+											const int	event,
+											const int	xxx,
+											const int	yyy,
+											const int	flags)
+{
+int		box_XXX;
+int		box_YYY;
+
+
+	switch(event)
+	{
+		case cv::EVENT_MOUSEMOVE:
+			if (widgetIdx == kIPaddrList_TemperatureGraph)
+			{
+				//*	compute the offsets within the box
+				box_XXX	=	xxx - cWidgetList[widgetIdx].left;
+				box_YYY	=	yyy - cWidgetList[widgetIdx].top;
+				HandleMouseMovedInGraph(&cWidgetList[widgetIdx], box_XXX, box_YYY);
+			}
+			break;
+
+		case cv::EVENT_LBUTTONDOWN:
+			cLeftButtonDown	=	true;
+			break;
+
+		case cv::EVENT_LBUTTONUP:
+			cLeftButtonDown	=	false;
+			break;
+
+//
+//		case cv::EVENT_RBUTTONDOWN:
+//			cRightButtonDown		=	true;
+//			break;
+//
+//		case cv::EVENT_MBUTTONDOWN:
+//			break;
+//
+//		case cv::EVENT_RBUTTONUP:
+//			cRightButtonDown		=	false;
+//			break;
+//
+//		case cv::EVENT_MBUTTONUP:
+//			break;
+//
+//		case cv::EVENT_LBUTTONDBLCLK:
+//			break;
+//
+//		case cv::EVENT_RBUTTONDBLCLK:
+//			break;
+//
+//		case cv::EVENT_MBUTTONDBLCLK:
+//			break;
+//
+#if (CV_MAJOR_VERSION >= 3)
+		case cv::EVENT_MOUSEWHEEL:
+			break;
+		case cv::EVENT_MOUSEHWHEEL:
+			break;
+#endif
+		default:
+			CONSOLE_DEBUG_W_NUM("UNKNOWN EVENT", event);
+			break;
+	}
+}
+
+//*****************************************************************************
 void	WindowTabIPList::ProcessMouseWheelMoved(const int	widgetIdx,
-													const int	event,
-													const int	xxx,
-													const int	yyy,
-													const int	wheelMovement,
-													const int	flags)
+												const int	event,
+												const int	xxx,
+												const int	yyy,
+												const int	wheelMovement,
+												const int	flags)
 {
 //	CONSOLE_DEBUG_W_NUM(__FUNCTION__, wheelMovement);
 
-//	cFirstLineIdx	+=	wheelMovement;
-//	if (cFirstLineIdx < 0)
-//	{
-//		cFirstLineIdx	=	0;
-//	}
-//	UpdateOnScreenWidgetList();
-//	ForceWindowUpdate();
+	//*	make sure we have something to scroll
+	if (gAlpacaUnitCnt > 0)
+	{
+		cFirstLineIdx	+=	wheelMovement;
+		if (cFirstLineIdx < 0)
+		{
+			cFirstLineIdx	=	0;
+		}
+		if (cFirstLineIdx >= gAlpacaUnitCnt)
+		{
+			cFirstLineIdx	=	gAlpacaUnitCnt -1;
+		}
+		UpdateOnScreenWidgetList();
+		ForceWindowUpdate();
+	}
 }
 
 
@@ -421,7 +581,7 @@ void	WindowTabIPList::ClearIPaddrList(void)
 {
 int		boxId;
 
-	for (boxId=kIPaddrList_AlpacaDev_01; boxId <= kIPaddrList_AlpacaDev_Last; boxId++)
+	for (boxId=kIPaddrList_AlpacaDev_01; boxId < kIPaddrList_AlpacaDev_Last; boxId++)
 	{
 		SetWidgetTextColor(	boxId,	CV_RGB(255,	255,	255));
 		SetWidgetText(		boxId,	"");
@@ -429,13 +589,14 @@ int		boxId;
 }
 
 //**************************************************************************************
-void	WindowTabIPList::UpdateIPaddrList(void)
+void	WindowTabIPList::UpdateOnScreenWidgetList(void)
 {
 int		boxId;
 int		iii;
 char	textString[128];
 char	extraString[32];
 char	ipAddrStr[32];
+int		deviceIdx;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 //	CONSOLE_ABORT(__FUNCTION__);
@@ -457,23 +618,32 @@ char	ipAddrStr[32];
 		SetWidgetBGColor(	kIPaddrList_DiscoveryThrdReStart,	CV_RGB(255,	255,	255));
 	}
 
-	iii			=	0;
-	for (iii=0; iii<gAlpacaUnitCnt; iii++)
+	//*	limit how far we can scroll
+	if (cFirstLineIdx >= gAlpacaUnitCnt)
 	{
-		boxId	=	iii + kIPaddrList_AlpacaDev_01;
-		if (boxId <= kIPaddrList_AlpacaDev_Last)
+		cFirstLineIdx	=	gAlpacaUnitCnt -1;
+	}
+
+	cLinesOnScreen	=	(kIPaddrList_AlpacaDev_Last - kIPaddrList_AlpacaDev_01) + 1;
+
+	iii			=	0;
+	while (iii < cLinesOnScreen)
+	{
+		boxId		=	iii + kIPaddrList_AlpacaDev_01;
+		deviceIdx	=	cFirstLineIdx + iii;
+		if ((boxId < kIPaddrList_AlpacaDev_Last) && (deviceIdx < gAlpacaUnitCnt))
 		{
-			inet_ntop(AF_INET, &(gAlpacaUnitList[iii].deviceAddress.sin_addr), ipAddrStr, INET_ADDRSTRLEN);
+			inet_ntop(AF_INET, &(gAlpacaUnitList[deviceIdx].deviceAddress.sin_addr), ipAddrStr, INET_ADDRSTRLEN);
 
 			sprintf(textString, "%s\t%d\t%s\t%d\t%d",	ipAddrStr,
-														gAlpacaUnitList[iii].port,
-														gAlpacaUnitList[iii].hostName,
-														gAlpacaUnitList[iii].queryOKcnt,
-														gAlpacaUnitList[iii].queryERRcnt);
+														gAlpacaUnitList[deviceIdx].port,
+														gAlpacaUnitList[deviceIdx].hostName,
+														gAlpacaUnitList[deviceIdx].queryOKcnt,
+														gAlpacaUnitList[deviceIdx].queryERRcnt);
 
-			if (gAlpacaUnitList[iii].upTimeValid)
+			if (gAlpacaUnitList[deviceIdx].upTimeValid)
 			{
-				sprintf(extraString, "\t%d", gAlpacaUnitList[iii].upTimeDays);
+				sprintf(extraString, "\t%d", gAlpacaUnitList[deviceIdx].upTimeDays);
 				strcat(textString, extraString);
 			}
 			else
@@ -481,9 +651,9 @@ char	ipAddrStr[32];
 				strcat(textString, "\t-");
 			}
 			//*	CPU temp
-			if (gAlpacaUnitList[iii].cpuTempValid)
+			if (gAlpacaUnitList[deviceIdx].cpuTempValid)
 			{
-				sprintf(extraString, "\t%5.1f", gAlpacaUnitList[iii].cpuTemp_DegF);
+				sprintf(extraString, "\t%5.1f", gAlpacaUnitList[deviceIdx].cpuTemp_DegF);
 				strcat(textString, extraString);
 			}
 			else
@@ -492,9 +662,9 @@ char	ipAddrStr[32];
 			}
 
 			//*	Max CPU temp
-			if (gAlpacaUnitList[iii].cpuTempValid)
+			if (gAlpacaUnitList[deviceIdx].cpuTempValid)
 			{
-				sprintf(extraString, "\t%5.1f", gAlpacaUnitList[iii].cpuTemp_DegF_max);
+				sprintf(extraString, "\t%5.1f", gAlpacaUnitList[deviceIdx].cpuTemp_DegF_max);
 				strcat(textString, extraString);
 			}
 			else
@@ -502,14 +672,14 @@ char	ipAddrStr[32];
 				strcat(textString, "\t-");
 			}
 
-			if (gAlpacaUnitList[iii].currentlyActive)
+			if (gAlpacaUnitList[deviceIdx].currentlyActive)
 			{
 				strcat(textString, "\t");
-				strcat(textString, gAlpacaUnitList[iii].versionString);
+				strcat(textString, gAlpacaUnitList[deviceIdx].versionString);
 
 				SetWidgetTextColor(		boxId,	CV_RGB(0,	255,	0));
 			}
-			else if (gAlpacaUnitList[iii].queryERRcnt > 0)
+			else if (gAlpacaUnitList[deviceIdx].queryERRcnt > 0)
 			{
 				SetWidgetTextColor(		boxId,	CV_RGB(255,	0,	0));
 				strcat(textString, "\tOff-line");
@@ -521,10 +691,16 @@ char	ipAddrStr[32];
 			SetWidgetText(boxId, textString);
 
 		}
+		else if (boxId <= kIPaddrList_AlpacaDev_Last)
+		{
+			SetWidgetTextColor(		boxId,	CV_RGB(255,	255,	255));
+			SetWidgetText(boxId, "---");
+		}
 		else
 		{
-			CONSOLE_DEBUG("Too many IP addresses");
+			SetWidgetText(boxId, "");
 		}
+		iii++;
 	}
 	sprintf(textString, "Total Alpaca IP address found=%d", gAlpacaUnitCnt);
 	SetWidgetText(kIPaddrList_AlpacaDev_Total, textString);
@@ -552,12 +728,6 @@ int	myYvalue;
 	return(myYvalue);
 }
 
-//**************************************************************************************
-typedef struct
-{
-	char	cpuName[32];
-	double	cpuTemp;
-} TYPE_CPU_SORT;
 
 #define	kMaxCPUs	32
 
@@ -598,18 +768,17 @@ int				pt2_Y;
 int				cpuTemp;
 int				previousCPUtemp;
 int				colorIdx;
-TYPE_CPU_SORT	cpuNameList[kMaxCPUs];
-int				validCpuTempCnt;
 char			cpuNameListStr[2048];
 char			cpuTempStr[48];
 int				minutesSinceMidnight;
 int				cpuTempIndex;
+int				validCPUtempCount;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	for (iii=0; iii<kMaxCPUs; iii++)
 	{
-		memset((void *)&cpuNameList, 0, sizeof(TYPE_CPU_SORT));
+		memset((void *)&cCPU_NameList, 0, sizeof(TYPE_CPU_SORT));
 	}
 
 
@@ -629,7 +798,7 @@ int				cpuTempIndex;
 //	//*	draw a special one at 30
 //	DrawTickLine(&myCVrect, 30);
 
-	validCpuTempCnt	=	0;
+	validCPUtempCount	=	0;
 	//=========================================================
 	for (iii=0; iii<gAlpacaUnitCnt; iii++)
 	{
@@ -638,9 +807,16 @@ int				cpuTempIndex;
 
 		if (gAlpacaUnitList[iii].cpuTempValid)
 		{
-			strcpy(cpuNameList[validCpuTempCnt].cpuName, gAlpacaUnitList[iii].hostName);
-			cpuNameList[validCpuTempCnt].cpuTemp	=	gAlpacaUnitList[iii].cpuTemp_DegF;
-			validCpuTempCnt++;
+			if (strlen(gAlpacaUnitList[iii].hostName) > 0)
+			{
+				strcpy(cCPU_NameList[validCPUtempCount].cpuName, gAlpacaUnitList[iii].hostName);
+			}
+			else
+			{
+				inet_ntop(AF_INET, &(gAlpacaUnitList[iii].deviceAddress.sin_addr), cCPU_NameList[validCPUtempCount].cpuName, INET_ADDRSTRLEN);
+			}
+			cCPU_NameList[validCPUtempCount].cpuTemp		=	gAlpacaUnitList[iii].cpuTemp_DegF;
+			validCPUtempCount++;
 
 			previousX		=	theWidget->left;
 			previousCPUtemp	=	0;
@@ -711,16 +887,16 @@ int				cpuTempIndex;
 
 	//=========================================================
 	//*	were there any valid temperatures
-	if (validCpuTempCnt > 0)
+	if (validCPUtempCount > 0)
 	{
 		//*	do the sort here
-		qsort(cpuNameList, validCpuTempCnt, sizeof(TYPE_CPU_SORT), CPUtempSortProc);
+		qsort(cCPU_NameList, validCPUtempCount, sizeof(TYPE_CPU_SORT), CPUtempSortProc);
 
 		//*	now create the name list
 		cpuNameListStr[0]	=	0;
-		for (iii=0; iii<validCpuTempCnt; iii++)
+		for (iii=0; iii<validCPUtempCount; iii++)
 		{
-			sprintf(cpuTempStr, "%s\r", cpuNameList[iii].cpuName);
+			sprintf(cpuTempStr, "%s\r", cCPU_NameList[iii].cpuName);
 			strcat(cpuNameListStr, cpuTempStr);
 
 			if (iii > 10)
@@ -731,9 +907,9 @@ int				cpuTempIndex;
 		SetWidgetText(kIPaddrList_SortedCPUList, cpuNameListStr);
 
 		cpuNameListStr[0]	=	0;
-		for (iii=0; iii<validCpuTempCnt; iii++)
+		for (iii=0; iii<validCPUtempCount; iii++)
 		{
-			sprintf(cpuTempStr, "%3.2f\r", cpuNameList[iii].cpuTemp);
+			sprintf(cpuTempStr, "%3.2f\r", cCPU_NameList[iii].cpuTemp);
 			strcat(cpuNameListStr, cpuTempStr);
 
 			if (iii > 10)

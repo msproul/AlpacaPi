@@ -124,6 +124,7 @@ char		gColorOverRide				=	0;
 Controller	*gCurrentActiveWindow		=	NULL;
 bool		gDebugBackgroundThread		=	false;
 char		gWebBrowserCmdString[32]	=	"firefox";
+char		gDownloadFilePath[64]		=	"imagedata";
 
 
 TYPE_FontInfo	gFontInfo[kFont_last];
@@ -318,7 +319,7 @@ int		iii;
 //*****************************************************************************
 void	Controller_HandleKeyDown(const int keyPressed)
 {
-	CONSOLE_DEBUG_W_HEX(__FUNCTION__, keyPressed);
+//	CONSOLE_DEBUG_W_HEX(__FUNCTION__, keyPressed);
 
 	if (gCurrentActiveWindow != NULL)
 	{
@@ -1149,7 +1150,6 @@ int		wheelMovement;
 	{
 	//	case CV_EVENT_MOUSEMOVE:
 		case cv::EVENT_MOUSEMOVE:
-		//	CONSOLE_DEBUG("CV_EVENT_MOUSEMOVE");
 			cCurrentMouseX	=	xxx;
 			cCurrentMouseY	=	yyy;
 			if (cLeftButtonDown)
@@ -1346,7 +1346,7 @@ int		wheelMovement;
 #if (CV_MAJOR_VERSION >= 3)
 		case cv::EVENT_MOUSEWHEEL:
 		case cv::EVENT_MOUSEHWHEEL:
-//			CONSOLE_DEBUG_W_HEX("EVENT_MOUSEWHEEL: flags\t=", flags);
+			CONSOLE_DEBUG_W_HEX("EVENT_MOUSEWHEEL: flags\t=", flags);
 			wheelMovement	=	flags & 0xffff0000;
 			wheelMovement	/=	65536;
 			if (cCurrentTabObjPtr != NULL)
@@ -1585,6 +1585,7 @@ int			textLoc_Y;
 		ccc			=	0;
 		sLen		=	strlen(myStringPtr);
 		drawTextFlg	=	false;
+		//*	step through the chars one at a time
 		for (iii=0; iii<=sLen; iii++)
 		{
 			theChar	=	myStringPtr[iii];
@@ -1608,7 +1609,26 @@ int			textLoc_Y;
 				textWidthPixels	=	LLD_GetTextSize(lineBuff, theWidget->fontNum);
 				if (textWidthPixels > (theWidget->width - 150))
 				{
-					drawTextFlg	=	true;
+				int		jjj;
+				int		qqq;
+				int		textWidthNextWord;
+				char	nextWord[kMaxTextLineLen];
+
+					//*	lets get a bit more creative, check the actual width of the chars to the next space or EOL
+					jjj				=	iii + 1;
+					qqq				=	0;
+					nextWord[qqq++]	=	0x20;	//*	we have to
+					while ((jjj < sLen) && (myStringPtr[jjj] > 0x20))
+					{
+						nextWord[qqq++]	=	myStringPtr[jjj];
+						jjj++;
+					}
+					nextWord[qqq]		=	0;
+					textWidthNextWord	=	LLD_GetTextSize(nextWord, theWidget->fontNum);
+					if ((textWidthPixels + textWidthNextWord) >= theWidget->width)
+					{
+						drawTextFlg	=	true;
+					}
 				}
 			}
 			else
@@ -2554,6 +2574,10 @@ char		currentTabName[64]	=	"";
 		if (cCurTextInput_Widget >= 0)
 		{
 			HandleKeyDownInTextWidget(cCurrentTabNum, cCurTextInput_Widget, keyPressed);
+		}
+		else if ((keyPressed & 0x00ff00) == 0x00ff00)
+		{
+			cCurrentTabObjPtr->HandleSpecialKeys(keyPressed);
 		}
 		else if (cCurrentTabObjPtr != NULL)
 		{

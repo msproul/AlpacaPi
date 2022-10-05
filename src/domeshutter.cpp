@@ -53,6 +53,7 @@
 #include	"ConsoleDebug.h"
 
 
+#include	"alpaca_defs.h"
 
 #include	"RequestData.h"
 #include	"json_parse.h"

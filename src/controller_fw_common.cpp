@@ -119,10 +119,10 @@ bool	rtnValidData;
 											NULL,
 											&newFilterWheelPosition,
 											&rtnValidData);
-	CONSOLE_DEBUG_W_BOOL("rtnValidData\t=", rtnValidData);
+//	CONSOLE_DEBUG_W_BOOL("rtnValidData\t=", rtnValidData);
 	if (validData && rtnValidData)
 	{
-		CONSOLE_DEBUG_W_NUM("rcvd newFilterWheelPosition\t=", newFilterWheelPosition);
+//		CONSOLE_DEBUG_W_NUM("rcvd newFilterWheelPosition\t=", newFilterWheelPosition);
 		cOnLine	=	true;
 
 		//*	alpaca/ascom uses filter wheel positions from 0 -> N-1

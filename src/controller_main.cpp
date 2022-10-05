@@ -336,10 +336,9 @@ char	theChar;
 //*****************************************************************************
 int main(int argc, char *argv[])
 {
-int					iii;
-int					objectsCreated;
-int					activeObjCnt;
-int					keyPressed;
+int		iii;
+int		objectsCreated;
+int		activeObjCnt;
 
 	objectsCreated	=	0;
 	gColorOverRide	=	0;
@@ -425,32 +424,7 @@ int					keyPressed;
 
 		while (gKeepRunning && (activeObjCnt > 0))
 		{
-		#if 1
 			activeObjCnt	=	ProcessControllerWindows();
-		#else
-			activeObjCnt	=	0;
-			for (iii=0; iii<kMaxControllers; iii++)
-			{
-				if (gControllerList[iii] != NULL)
-				{
-					activeObjCnt++;
-					gControllerList[iii]->HandleWindow();
-				//	usleep(10);
-					keyPressed	=	cv::waitKeyEx(50);
-					if (keyPressed > 0)
-					{
-						Controller_HandleKeyDown(keyPressed);
-					}
-
-					if (gControllerList[iii]->cKeepRunning == false)
-					{
-						CONSOLE_DEBUG_W_NUM("Deleting control #", iii);
-						CONSOLE_DEBUG_W_STR("Deleting window", gControllerList[iii]->cWindowName);
-						delete gControllerList[iii];
-					}
-				}
-			}
-		#endif // 1
 		}
 		CONSOLE_DEBUG("Closing all windows");
 		for (iii=0; iii<kMaxControllers; iii++)

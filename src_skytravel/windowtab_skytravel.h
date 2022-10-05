@@ -60,12 +60,15 @@ enum
 #endif
 #if defined(_ENABLE_REMOTE_GAIA_)
 	kSkyTravel_Btn_Gaia,
+	kSkyTravel_SQL_database,
 #endif
 
 	kSkyTravel_Btn_MagnitudeDisp,
 
 	kSkyTravel_UTCtime,
 
+	kSkyTravel_Search_Text,
+	kSkyTravel_Search_Btn,
 
 	//*	these are display controls
 	kSkyTravel_Btn_Reset,
@@ -90,20 +93,18 @@ enum
 	kSkyTravel_DomeIndicator,
 	kSkyTravel_TelescopeIndicator,
 
-	//*	this MUST be the first one after the buttons
+	kSkyTravel_Telescope_RA_DEC,
+	kSkyTravel_Telescope_Sync,
+	kSkyTravel_Telescope_GoTo,
+
+
+
 	kSkyTravel_MsgTextBox,
 
 
 	kSkyTravel_CursorInfoTextBox,
 //	kSkyTravel_HelpTextBox,
 
-	kSkyTravel_Telescope_RA_DEC,
-	kSkyTravel_Telescope_Sync,
-	kSkyTravel_Telescope_GoTo,
-
-
-	kSkyTravel_Search_Text,
-	kSkyTravel_Search_Btn,
 
 
 	kSkyTravel_NightSky,
@@ -134,6 +135,7 @@ class WindowTabSkyTravel: public WindowTab
 		virtual	void	SetupWindowControls(void);
 //		virtual	void	DrawWindow(void);
 		virtual void	HandleKeyDown(const int keyPressed);
+		virtual	void	HandleSpecialKeys(const int keyPressed);
 		virtual	void	ProcessButtonClick(const int buttonIdx, const int flags);
 		virtual	void	ProcessDoubleClick(	const int	widgetIdx,
 											const int	event,
@@ -145,6 +147,7 @@ class WindowTabSkyTravel: public WindowTab
 													const int	xxx,
 													const int	yyy,
 													const int	flags);
+		virtual	void	ActivateWindow(void);
 
 		virtual void	ProcessMouseEvent(const int widgetIdx, const int event, const int xxx, const int yyy, const int flags);
 		virtual void	ProcessMouseLeftButtonDown(const int widgetIdx, const int event, const int xxx, const int yyy, const int flags);

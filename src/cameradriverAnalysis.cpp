@@ -731,7 +731,7 @@ FILE	*csvFile;
 	strcpy(csvFileName, cFileNameRoot);
 	strcat(csvFileName, ".csv");
 
-	strcpy(csvPathName, kImageDataDir);
+	strcpy(csvPathName, gImageDataDir);
 	strcat(csvPathName, "/");
 	strcat(csvPathName, csvFileName);
 

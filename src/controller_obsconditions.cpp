@@ -19,7 +19,11 @@
 //*	Edit History
 //*****************************************************************************
 //*	Sep 25,	2022	<MLS> Created controller_obsconditions.cpp
+//*	Oct  3,	2022	<MLS> Fixed connection status for observing conditions window
 //*****************************************************************************
+
+
+#ifdef _ENABLE_CTRL_OBS_CONDITIONS_
 
 
 #include	<stdio.h>
@@ -197,7 +201,7 @@ bool		needToUpdate;
 				CONSOLE_DEBUG("Failed to get data");
 			}
 
-//			UpdateConnectedIndicator(kTab_ObsCond,		kSwitchBox_Connected);
+			UpdateConnectedIndicator(kTab_ObsCond,		kObsCond_Connected);
 		}
 	}
 }
@@ -656,3 +660,5 @@ void	ControllerObsCond::UpdateCommonProperties(void)
 	SetWidgetNumber(kTab_DriverInfo,	kDriverInfo_InterfaceVersion,	cCommonProp.InterfaceVersion);
 
 }
+
+#endif // _ENABLE_CTRL_OBS_CONDITIONS_

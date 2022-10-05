@@ -666,7 +666,7 @@ char	lineBuff[128];
 		CONSOLE_DEBUG_W_STR("Offline-", cWindowName);
 		cOnLine	=	false;
 	}
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	SetWindowIPaddrInfo(NULL, cOnLine);
 
 

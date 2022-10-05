@@ -165,12 +165,15 @@ int		radioBtnWidth;
 		yLoc			+=	cTitleHeight;
 		yLoc			+=	2;
 	}
-	SetWidgetText(		kSkyT_Settings_LatLable,	"Latitude");
-	SetWidgetText(		kSkyT_Settings_LonLable,	"Longitude");
-	SetWidgetText(		kSkyT_Settings_ElevLable,	"Elevation");
-	SetWidgetText(		kSkyT_Settings_TimeZoneLbl,	"UTC/Time Zone");
+	SetWidgetText(		kSkyT_Settings_LatLable,		"Latitude");
+	SetWidgetText(		kSkyT_Settings_LonLable,		"Longitude");
+	SetWidgetText(		kSkyT_Settings_ElevLable,		"Elevation");
+	SetWidgetText(		kSkyT_Settings_TimeZoneLbl,		"UTC/Time Zone");
+	SetWidgetText(		kSkyT_Settings_DownLoadPathLbl,	"Download path");
 
-
+	SetWidgetText(		kSkyT_Settings_DownLoadPath,	gDownloadFilePath);
+	SetWidgetValid(		kSkyT_Settings_unused,	false);
+	cWidgetList[kSkyT_Settings_DownLoadPath].width		=	valueWitdth1 + valueWitdth2 + 3;
 
 	xLoc			=	5;
 	SetWidget(			kSkyT_Settings_ObsSettingsText,	xLoc,	yLoc,	(labelWidth + valueWitdth1 + valueWitdth2),	cTitleHeight);

@@ -57,6 +57,7 @@
 //*	Aug 30,	2022	<MLS> Build 149
 //*	Sep 11,	2022	<MLS> Build 150
 //*	Sep 26,	2022	<MLS> Added structure TYPE_Sensor for ObservingConditions
+//*	Sep 29,	2022	<MLS> Build 151
 //*****************************************************************************
 //#include	"alpaca_defs.h"
 
@@ -81,7 +82,7 @@
 
 #define	kApplicationName	"AlpacaPi"
 #define	kVersionString		"V0.5.1-beta"
-#define	kBuildNumber		150
+#define	kBuildNumber		151
 
 
 #define kAlpacaDiscoveryPORT	32227

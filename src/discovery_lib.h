@@ -41,8 +41,8 @@ typedef struct
 	bool				currentlyActive;
 	char				versionString[64];
 
-
-	//*	only works with AlpacaPi drivers, beyond the scope of normal Alpaca
+	//-------------------------------------------------------------------------------
+	//*	This data only works with AlpacaPi drivers, beyond the scope of normal Alpaca
 	bool				upTimeValid;
 	int					upTimeDays;
 

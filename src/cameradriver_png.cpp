@@ -77,7 +77,7 @@ int				yyy;
 	strcpy(imageFileName, cFileNameRoot);
 	strcat(imageFileName, ".png");
 
-	strcpy(imageFilePath, kImageDataDir);
+	strcpy(imageFilePath, gImageDataDir);
 	strcat(imageFilePath, "/");
 	strcat(imageFilePath, imageFileName);
 

@@ -79,6 +79,7 @@
 //*	Mar 26,	2021	<MLS> Offset value read/write working in ASI cameras
 //*	Oct 13,	2021	<MLS> Added Write_BinX() & Write_BinY() to ASI driver
 //*	May 17,	2022	<MLS> Changed the way power level is reported
+//*	Oct  1,	2022	<MLS> Changed CreateASI_CameraObjects() to return camera count
 //*****************************************************************************
 //*	Length: unspecified [text/plain]
 //*	Saving to: "imagearray.1"
@@ -126,14 +127,17 @@ static void	Get_ASI_ErrorMsg(ASI_ERROR_CODE asiErrorCode, char *asiErrorMessage)
 static void	Get_ASI_ImageTypeString(ASI_IMG_TYPE imageType, char *typeString);
 
 //**************************************************************************************
-void	CreateASI_CameraObjects(void)
+//*	returns the number of camera objects created
+//**************************************************************************************
+int	CreateASI_CameraObjects(void)
 {
 int		devNum;
 char	driverVersionString[64];
 char	rulesFileName[]	=	"asi.rules";		//	"99-asi.rules";
 bool	rulesFileOK;
+int		numCameras;
 
-
+	numCameras	=	0;
 //	CONSOLE_DEBUG_W_LONG("sizeof(CameraDriver)\t=",		(long)sizeof(CameraDriver));
 //	CONSOLE_DEBUG_W_LONG("sizeof(unsigned long)\t=",	(long)sizeof(unsigned long));
 //	CONSOLE_DEBUG_W_LONG("sizeof(long)\t\t=",			(long)sizeof( long));
@@ -165,7 +169,9 @@ bool	rulesFileOK;
 	for (devNum=0; devNum < gASIcameraCount; devNum++)
 	{
 		new CameraDriverASI(devNum);
+		numCameras++;
 	}
+	return(numCameras);
 }
 
 
@@ -1018,7 +1024,7 @@ bool			timeToStop;
 			int		openCVerr;
 			int		quality[3] = {16, 200, 0};
 
-			sprintf(imageFilePath, "%s/DEBUG_IMG%03d.jpg", kImageDataDir, cNumVideoFramesSaved);
+			sprintf(imageFilePath, "%s/DEBUG_IMG%03d.jpg", gImageDataDir, cNumVideoFramesSaved);
 			CONSOLE_DEBUG(imageFilePath);
 			openCVerr	=	cvSaveImage(imageFilePath, cOpenCV_ImagePtr, quality);
 

@@ -37,6 +37,12 @@ enum
 	kSkyT_Settings_UTCoffset,
 	kSkyT_Settings_TimeZoneTxt,
 
+	kSkyT_Settings_DownLoadPathLbl,
+	kSkyT_Settings_DownLoadPath,
+	kSkyT_Settings_unused,
+
+
+
 	kSkyT_Settings_ObsSettingsText,
 
 	kSkyT_Settings_SiteInfoOutline,

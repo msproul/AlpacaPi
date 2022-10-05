@@ -265,7 +265,9 @@ char		gHostName[48]				=	"";
 #ifdef _ENABLE_CALIBRATION_
 	#include	"calibrationdriver.h"
 	#include	"calibrationdriver_rpi.h"
-	#include	"calibrationdriver_Alnitak.h"
+	#ifdef _ENABLE_CALIBRATION_ALNITAK_
+		#include	"calibration_Alnitak.h"
+	#endif
 #endif // _ENABLE_CALIBRATION_
 
 #ifdef _ENABLE_TELESCOPE_
@@ -302,7 +304,7 @@ bool				gLiveView					=	false;
 bool				gAutoExposure				=	false;
 bool				gDisplayImage				=	false;
 bool				gSimulateCameraImage		=	false;
-bool				gVerbose					=	true;
+bool				gVerbose					=	false;
 bool				gDebugDiscovery				=	false;
 bool				gObservatorySettingsOK		=	false;
 const char			gValueString[]				=	"Value";
@@ -3058,6 +3060,9 @@ void	AlpacaDriver::ComputeCPUusage(void)
 //*****************************************************************************
 static void	CreateDriverObjects()
 {
+int		cameraCnt	=	0;
+
+
 //*********************************************************
 //*	Cameras
 //-----------------------------------------------------------
@@ -3067,7 +3072,7 @@ static void	CreateDriverObjects()
 
 //-----------------------------------------------------------
 #if defined(_ENABLE_CAMERA_) && defined(_ENABLE_ASI_)
-	CreateASI_CameraObjects();
+	cameraCnt	+=	CreateASI_CameraObjects();
 #endif
 //-----------------------------------------------------------
 //#if defined(_ENABLE_CAMERA_) && defined(_ENABLE_FLIR_) && (__GNUC__ > 5)

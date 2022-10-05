@@ -60,12 +60,14 @@ char						imageFilePath[128];
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
+
 	strcpy(imageFileName, cFileNameRoot);
 	strcat(imageFileName, ".jpg");
 
-	strcpy(imageFilePath, kImageDataDir);
+	strcpy(imageFilePath, gImageDataDir);
 	strcat(imageFilePath, "/");
 	strcat(imageFilePath, imageFileName);
+
 
 	jinfo.err	=	jpeg_std_error(&jerr);
 

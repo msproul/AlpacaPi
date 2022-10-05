@@ -405,7 +405,7 @@ int				iii;
 	strcpy(imageFileName, cFileNameRoot);
 	strcat(imageFileName, ".fits");
 
-	strcpy(imageFilePath, kImageDataDir);
+	strcpy(imageFilePath, gImageDataDir);
 	strcat(imageFilePath, "/");
 	strcat(imageFilePath, imageFileName);
 

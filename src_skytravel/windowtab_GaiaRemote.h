@@ -106,13 +106,9 @@ class WindowTabGaiaRemote: public WindowTab
 												const int	wheelMovement,
 												const int	flags);
 		virtual	void	UpdateSliderValue(	const int widgetIdx, double newSliderValue);
+		virtual	void	UpdateOnScreenWidgetList(void);
 
 				void	UpdateSettings(void);
-				void	UpdateOnScreenWidgetList(void);
-
-
-//?				int				cSortColumn;
-				int				cFirstLineIdx;
 
 };
 

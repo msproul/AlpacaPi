@@ -126,7 +126,7 @@ int	ii;
 		CONSOLE_DEBUG_W_LONG("keyPointCnt\t=", keyPointCnt);
 
 		CONSOLE_DEBUG("Saving ORB Image *****************************************");
-		strcpy(imageFilePath, kImageDataDir);
+		strcpy(imageFilePath, gImageDataDir);
 		strcat(imageFilePath, "/");
 		strcat(imageFilePath, cFileNameRoot);
 		strcat(imageFilePath, "-orb.jpg");
@@ -324,7 +324,7 @@ char		imageFilePath[128];
 			strcpy(imageFileName, cFileNameRoot);
 			strcat(imageFileName, ".jpg");
 
-			strcpy(imageFilePath, kImageDataDir);
+			strcpy(imageFilePath, gImageDataDir);
 			strcat(imageFilePath, "/");
 			strcat(imageFilePath, imageFileName);
 
@@ -353,7 +353,7 @@ char		imageFilePath[128];
 				strcpy(imageFileName, cFileNameRoot);
 				strcat(imageFileName, ".png");
 
-				strcpy(imageFilePath, kImageDataDir);
+				strcpy(imageFilePath, gImageDataDir);
 				strcat(imageFilePath, "/");
 				strcat(imageFilePath, imageFileName);
 
@@ -550,7 +550,7 @@ int			quality[3] = {16, 200, 0};
 			strcpy(imageFileName, cFileNameRoot);
 			strcat(imageFileName, ".jpg");
 
-			strcpy(imageFilePath, kImageDataDir);
+			strcpy(imageFilePath, gImageDataDir);
 			strcat(imageFilePath, "/");
 			strcat(imageFilePath, imageFileName);
 
@@ -575,7 +575,7 @@ int			quality[3] = {16, 200, 0};
 			strcpy(imageFileName, cFileNameRoot);
 			strcat(imageFileName, ".png");
 
-			strcpy(imageFilePath, kImageDataDir);
+			strcpy(imageFilePath, gImageDataDir);
 			strcat(imageFilePath, "/");
 			strcat(imageFilePath, imageFileName);
 
@@ -686,7 +686,7 @@ int		gainPercent;
 	CONSOLE_DEBUG_W_STR("codecString\t=", codecString);
 
 	GenerateFileNameRoot();
-	strcpy(filePath, kImageDataDir);
+	strcpy(filePath, gImageDataDir);
 	strcat(filePath, "/");
 	strcat(filePath, cFileNameRoot);
 	strcat(filePath, ".txt");
@@ -793,7 +793,7 @@ double	www;
 	strcat(imageFileName, "-imu.txt");
 
 
-	strcpy(imageFilePath, kImageDataDir);
+	strcpy(imageFilePath, gImageDataDir);
 	strcat(imageFilePath, "/");
 	strcat(imageFilePath, imageFileName);
 	filePointer	=	fopen(imageFilePath, "w");

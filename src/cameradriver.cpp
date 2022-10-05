@@ -175,6 +175,8 @@
 //*	May 18,	2022	<MLS> Added BuildBinaryImage_Raw32()
 //*	May 18,	2022	<MLS> Updated Get_Imagearray() to return InvalidOperation when no image is available
 //*	Aug 14,	2022	<MLS> Fixed bug in Send_imagearray_raw16(), was sending 8 bit data
+//*	Sep 29,	2022	<MLS> Added gImageDataDir for specifying alternate save locations
+//*	Sep 29,	2022	<MLS> Added SetImageDataDirectory()
 //*****************************************************************************
 //*	Jan  1,	2119	<TODO> ----------------------------------------
 //*	Jun 26,	2119	<TODO> Add support for sub frames
@@ -203,10 +205,10 @@
 	#include <wiringPi.h>
 #endif
 
-#define	_USE_ALPACA_READOUT_MODES_
 
 #if defined(_ENABLE_FILTERWHEEL_ZWO_) || defined(_ENABLE_FILTERWHEEL_ATIK_)
 	#ifndef _ENABLE_FILTERWHEEL_
+		#warning "Make file should have _ENABLE_FILTERWHEEL_ defined"
 		#define	_ENABLE_FILTERWHEEL_
 	#endif
 #endif
@@ -237,6 +239,9 @@
 #include	"alpacadriver_helper.h"
 #include	"cameradriver.h"
 #include	"observatory_settings.h"
+
+
+char	gImageDataDir[]	=	"imagedata";
 
 
 //*****************************************************************************
@@ -349,7 +354,26 @@ const TYPE_CmdEntry	gCameraCmdTable[]	=
 	{	"",							-1,									0x00			}
 };
 
+//**************************************************************************************
+void	SetImageDataDirectory(const char *newImageDir)
+{
+struct stat	fileStatus;
+int			returnCode;
 
+	CONSOLE_DEBUG(__FUNCTION__);
+
+	//*	fstat - check for existence of file
+	returnCode	=	stat(newImageDir, &fileStatus);
+	if (returnCode == 0)
+	{
+		strcpy(gImageDataDir, newImageDir);
+	}
+	else
+	{
+		strcpy(gImageDataDir, "imagedata");
+	}
+	CONSOLE_DEBUG_W_STR("gImageDataDir\t=", gImageDataDir);
+}
 
 //**************************************************************************************
 CameraDriver::CameraDriver(void)
@@ -360,6 +384,7 @@ int	mkdirErrCode;
 	CONSOLE_DEBUG(__FUNCTION__);
 	//*	set all of the class data to known states
 
+	SetImageDataDirectory("/media/pi/rpdata/imagedata");
 
 	//======================================================
 	//*	Start with the ASCOM properties
@@ -549,14 +574,14 @@ int	iii;
 	}
 #endif // _ENABLE_FITS_
 
-	mkdirErrCode	=	mkdir(kImageDataDir, 0744);
+	mkdirErrCode	=	mkdir(kDefaultImageDataDir, 0744);
 	if (mkdirErrCode == 0)
 	{
-//		CONSOLE_DEBUG_W_STR("Image directory created:", kImageDataDir);
+//		CONSOLE_DEBUG_W_STR("Image directory created:", kDefaultImageDataDir);
 	}
 	else if (errno == EEXIST)
 	{
-//		CONSOLE_DEBUG_W_STR("Image directory already exists:", kImageDataDir);
+//		CONSOLE_DEBUG_W_STR("Image directory already exists:", kDefaultImageDataDir);
 	}
 	else
 	{
@@ -5733,7 +5758,7 @@ bool				recTimeFound;
 					videoIsColor		=	1;
 CONSOLE_DEBUG(__FUNCTION__);
 					GenerateFileNameRoot();
-					strcpy(filePath, kImageDataDir);
+					strcpy(filePath, gImageDataDir);
 					strcat(filePath, "/");
 					strcat(filePath, cFileNameRoot);
 					strcat(filePath, ".avi");
@@ -5796,7 +5821,7 @@ CONSOLE_DEBUG(__FUNCTION__);
 					{
 CONSOLE_DEBUG(__FUNCTION__);
 						GenerateFileNameRoot();
-						strcpy(filePath, kImageDataDir);
+						strcpy(filePath, gImageDataDir);
 						strcat(filePath, "/");
 						strcat(filePath, cFileNameRoot);
 						strcat(filePath, ".csv");
@@ -6123,27 +6148,34 @@ int					mySocketFD;
 	SocketWriteData(reqData->socket,	"<TABLE BORDER=1>\r\n");
 
 	//*	frames read
-	sprintf(lineBuffer,	"\t<TR><TD>Total frames taken</TD><TD>%ld</TD></TR>\r\n",
+	sprintf(lineBuffer,	"\t<TR><TD>Total frames taken</TD><TD><CENTER>%ld</TD></TR>\r\n",
 										cFramesRead);
 	SocketWriteData(reqData->socket,	lineBuffer);
 
 	if (cImageMode == kImageMode_Live)
 	{
 		//*	frame rate
-		sprintf(lineBuffer,	"\t<TR><TD>Frame rate</TD><TD>%1.1f</TD></TR>\r\n",
+		sprintf(lineBuffer,	"\t<TR><TD>Frame rate</TD><TD><CENTER>%1.1f</TD></TR>\r\n",
 											cFrameRate);
 		SocketWriteData(reqData->socket,	lineBuffer);
 
 		//*	last exposure time
-		sprintf(lineBuffer,	"\t<TR><TD>last exposure time</TD><TD>%d (u-secs)</TD></TR>\r\n",
+		sprintf(lineBuffer,	"\t<TR><TD>last exposure time</TD><TD><CENTER>%d (u-secs)</TD></TR>\r\n",
 											cCurrentExposure_us);
 		SocketWriteData(reqData->socket,	lineBuffer);
 	}
 
 	//*	failure count
-	sprintf(lineBuffer,	"\t<TR><TD>Frame Read Failure count</TD><TD>%d</TD></TR>\r\n",
+	sprintf(lineBuffer,	"\t<TR><TD>Frame Read Failure count</TD><TD><CENTER>%d</TD></TR>\r\n",
 										cExposureFailureCnt);
 	SocketWriteData(reqData->socket,	lineBuffer);
+
+	//*	current directory for storing files
+
+	sprintf(lineBuffer,	"\t<TR><TD>Local image directory</TD><TD><CENTER>%s</TD></TR>\r\n",
+										gImageDataDir);
+	SocketWriteData(reqData->socket,	lineBuffer);
+
 
 
 	SocketWriteData(reqData->socket,	"</TABLE>\r\n");
@@ -7094,20 +7126,20 @@ int					fileIdx		=	0;
 int					iii;
 #endif // _SORT_FILENAMES_
 
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, kImageDataDir);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, gImageDataDir);
 	DumpRequestStructure(__FUNCTION__, reqData);
 
 	mySocketFD	=	reqData->socket;
 	CONSOLE_DEBUG_W_NUM("mySocketFD    \t=", mySocketFD);
 
-	directory	=	opendir(kImageDataDir);
+	directory	=	opendir(gImageDataDir);
 	if (directory != NULL)
 	{
 		cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(mySocketFD,
 										reqData->jsonTextBuffer,
 										kMaxJsonBuffLen,
 										"Directory",
-										kImageDataDir,
+										gImageDataDir,
 										INCLUDE_COMMA);
 
 		cBytesWrittenForThisCmd	+=	JsonResponse_Add_ArrayStart(	mySocketFD,
@@ -7233,7 +7265,7 @@ int					iii;
 	}
 	else
 	{
-		CONSOLE_DEBUG_W_STR("Failed to open", kImageDataDir);
+		CONSOLE_DEBUG_W_STR("Failed to open", gImageDataDir);
 		CONSOLE_DEBUG_W_NUM("errno\t=", errno);
 		LogEvent(	"camera",
 					"Failure",

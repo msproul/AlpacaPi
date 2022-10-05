@@ -1221,9 +1221,11 @@ char				textBuf[128];
 double				download_MBytes;
 double				download_MB_per_sec;
 double				download_seconds;
-char				fileName[256];
+char				filePath[256];
+//char				fileName[256];
 
 	CONSOLE_DEBUG(__FUNCTION__);
+
 
 	myDownLoadedImage	=	NULL;
 	myCameraController	=	(ControllerCamera *)cParentObjPtr;
@@ -1252,14 +1254,16 @@ char				fileName[256];
 #endif // _USE_OPENCV_CPP_
 			//========================================================
 			//*	save the image
-			strcpy(fileName, cDownLoadedFileNameRoot);
-			strcat(fileName, ".jpg");
+			strcpy(filePath, gDownloadFilePath);
+			strcat(filePath, "/");
+			strcat(filePath, cDownLoadedFileNameRoot);
+			strcat(filePath, ".jpg");
 
-			CONSOLE_DEBUG_W_STR("Saving image as", fileName);
+			CONSOLE_DEBUG_W_STR("Saving image as", filePath);
 #ifdef _USE_OPENCV_CPP_
 			try
 			{
-				cv::imwrite(fileName, *myDownLoadedImage);
+				cv::imwrite(filePath, *myDownLoadedImage);
 			}
 			catch (cv::Exception& ex)
 			{
@@ -1268,11 +1272,13 @@ char				fileName[256];
 
 			//========================================================
 			//*	save it out as PNG as well
-			strcpy(fileName, cDownLoadedFileNameRoot);
-			strcat(fileName, ".png");
+			strcpy(filePath, gDownloadFilePath);
+			strcat(filePath, "/");
+			strcat(filePath, cDownLoadedFileNameRoot);
+			strcat(filePath, ".png");
 			try
 			{
-				cv::imwrite(fileName, *myDownLoadedImage);
+				cv::imwrite(filePath, *myDownLoadedImage);
 			}
 			catch (cv::Exception& ex)
 			{
@@ -1282,7 +1288,7 @@ char				fileName[256];
 #else
 
 		#if (CV_MAJOR_VERSION <= 3)
-			openCVerr	=	cvSaveImage(fileName, myDownLoadedImage, quality);
+			openCVerr	=	cvSaveImage(filePath, myDownLoadedImage, quality);
 			if (openCVerr == 0)
 			{
 			int		openCVerrorCode;

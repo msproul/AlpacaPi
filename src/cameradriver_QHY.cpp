@@ -40,6 +40,8 @@
 
 #if defined(_ENABLE_CAMERA_) && defined(_ENABLE_QHY_)
 
+#include	<string>
+#include	<stdio.h>
 
 #include	"../QHY/include/qhyccd.h"
 

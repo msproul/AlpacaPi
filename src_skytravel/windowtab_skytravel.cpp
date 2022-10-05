@@ -109,6 +109,9 @@
 //*	Aug  2,	2022	<MLS> Added SAO star catalog
 //*	Sep  3,	2022	<MLS> Fixed bug in SearchSkyObjectsDataListByNumber() that made HIP search not work
 //*	Sep  3,	2022	<MLS> Added SAO star catalog to search routine
+//*	Oct  2,	2022	<MLS> Cleaned up button setting code in SetupWindowControls()
+//*	Oct  2,	2022	<MLS> Added which SQL database in use to main display
+//*	Oct  5,	2022	<MLS> Added HandleSpecialKeys() to skytravel window
 //*****************************************************************************
 //*	TODO
 //*			star catalog lists
@@ -171,6 +174,7 @@
 #include	"OpenNGC.h"
 
 #ifdef _ENABLE_REMOTE_GAIA_
+	#include	"RemoteGaia.h"
 	#include	"GaiaSQL.h"
 #endif
 
@@ -657,10 +661,7 @@ int		yLoc;
 int		labelWidth;
 int		skyBoxHeight;
 int		iii;
-int		searchBoxWidth;
-int		customButtonWidth;
 int		buttonBoxWidth;
-int		utcBoxWitdth;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -668,7 +669,7 @@ int		utcBoxWitdth;
 	yLoc			=	cTabVertOffset;
 
 
-	labelWidth	=	cTitleHeight * 4;
+	labelWidth	=	(cTitleHeight * 3) + 8;
 	//------------------------------------------
 	SetWidget(			kSkyTravel_Data,	0,			yLoc,		labelWidth,		cTitleHeight);
 	SetWidgetText(		kSkyTravel_Data, 	"Data control");
@@ -690,80 +691,119 @@ int		utcBoxWitdth;
 	yLoc			+=	2;
 
 	yLoc			=	cTabVertOffset;
-	buttonBoxWidth	=	cTitleHeight - 2;
 
 	//------------------------------------------------------------------------------
 	//*	set up all of the buttons
 	xLoc			=	labelWidth + 5;
-	for (iii = kSkyTravel_Btn_First; iii < kSkyTravel_MsgTextBox; iii++)
+	for (iii = kSkyTravel_Btn_First; iii <= kSkyTravel_Telescope_GoTo; iii++)
 	{
-		//*	check for next row of layout
-		if (iii == kSkyTravel_Btn_Reset)
-		{
-			//*	move to the next row
-			xLoc	=	labelWidth + 5;
-			yLoc	+=	cTitleHeight;
-			yLoc	+=	2;
-		}
+		buttonBoxWidth	=	cTitleHeight - 2;
 
 		//*	we have some special cases
 		switch(iii)
 		{
 			case kSkyTravel_UTCtime:
-				utcBoxWitdth	=	(labelWidth * 3) - buttonBoxWidth;
-				SetWidget(			iii,	xLoc,	yLoc,		utcBoxWitdth,		cTitleHeight);
-				SetWidgetType(		iii, 	kWidgetType_TextBox);
-				SetWidgetFont(		iii,	kFont_Medium);
-				SetWidgetTextColor(	iii,	CV_RGB(255,	255,	255));
-				SetWidgetText(		iii, 	"UTC Time");
-				xLoc	+=	utcBoxWitdth;
+				buttonBoxWidth	=	(cTitleHeight * 10);
+				break;
+
+		#ifdef _ENABLE_REMOTE_GAIA_
+			case kSkyTravel_SQL_database:
+				buttonBoxWidth		=	cTitleHeight * 2;
+				break;
+		#endif // _ENABLE_REMOTE_GAIA_
+
+			case kSkyTravel_Btn_Reset:
+				//*	move to the next row
+				xLoc	=	labelWidth + 5;
+				yLoc	+=	cTitleHeight;
+				yLoc	+=	2;
 				break;
 
 			case kSkyTravel_Screen_ViewAngle:
-				customButtonWidth		=	(cBtnWidth / 2) + 15;
-				SetWidget(			iii,	xLoc,	yLoc, customButtonWidth,	cTitleHeight);
-				SetWidgetText(		iii,	"---");
-				SetWidgetFont(		iii,	kFont_Medium);
-				SetWidgetTextColor(	iii,	CV_RGB(255,	255,	255));
-				SetWidgetType(		iii,	kWidgetType_TextBox);
-				xLoc	+=	customButtonWidth;
+				buttonBoxWidth		=	(cBtnWidth / 2) + 15;
 				break;
 
 			case kSkyTravel_DisplayedStarCnt:
-				customButtonWidth		=	(cTitleHeight * 2) + 10;
-				SetWidget(			iii,	xLoc,	yLoc, customButtonWidth,	cTitleHeight);
-				SetWidgetText(		iii,	"---");
-				SetWidgetFont(		iii,	kFont_Medium);
-				SetWidgetTextColor(	iii,	CV_RGB(255,	255,	255));
-				SetWidgetType(		iii,	kWidgetType_TextBox);
-				xLoc	+=	customButtonWidth;
+				buttonBoxWidth		=	(cTitleHeight * 2) + 10;
+				break;
+
+			case kSkyTravel_Telescope_RA_DEC:
+				buttonBoxWidth		=	cBtnWidth;
+				break;
+
+			case kSkyTravel_Telescope_Sync:
+			case kSkyTravel_Telescope_GoTo:
+				buttonBoxWidth	=	(cBtnWidth / 2) - 30;
+				break;
+
+			case kSkyTravel_Search_Text:
+				buttonBoxWidth	=	200;
 				break;
 
 			default:
-				SetWidget(			iii,	xLoc,	yLoc,		buttonBoxWidth,		cTitleHeight);
-				SetWidgetType(		iii, 	kWidgetType_Button);
-				xLoc	+=	buttonBoxWidth;
 				break;
 		}
+		SetWidget(			iii,	xLoc,	yLoc,		buttonBoxWidth,		cTitleHeight);
+		SetWidgetType(		iii, 	kWidgetType_Button);
+		xLoc	+=	buttonBoxWidth;
 		xLoc	+=	2;
 	}
 
+	//-----------------------------------------------
 	SetWidgetType(		kSkyTravel_Btn_ZoomLevel, 		kWidgetType_TextBox);
 	SetWidgetFont(		kSkyTravel_Btn_ZoomLevel, 		kFont_Medium);
 	SetWidgetTextColor(	kSkyTravel_Btn_ZoomLevel, 		CV_RGB(255,	255,	255));
 
+	//-----------------------------------------------
+	SetWidgetType(		kSkyTravel_UTCtime, 			kWidgetType_TextBox);
+	SetWidgetFont(		kSkyTravel_UTCtime,				kFont_Medium);
+	SetWidgetTextColor(	kSkyTravel_UTCtime,				CV_RGB(255,	255,	255));
+	SetWidgetText(		kSkyTravel_UTCtime, 			"UTC Time");
 
+	//-----------------------------------------------
+	//*	set up the search button/text
+	SetWidgetType(			kSkyTravel_Search_Text,		kWidgetType_TextInput);
+	SetWidgetFont(			kSkyTravel_Search_Text,		kFont_Medium);
+	SetWidgetBGColor(		kSkyTravel_Search_Text,		CV_RGB(128,	128,	128));
+	SetWidgetTextColor(		kSkyTravel_Search_Text,		CV_RGB(0,	0,	0));
+	SetWidgetJustification(	kSkyTravel_Search_Text,		kJustification_Left);
+
+	//-----------------------------------------------
+	SetWidgetType(		kSkyTravel_Screen_ViewAngle,	kWidgetType_TextBox);
+	SetWidgetFont(		kSkyTravel_Screen_ViewAngle,	kFont_Medium);
+	SetWidgetTextColor(	kSkyTravel_Screen_ViewAngle,	CV_RGB(255,	255,	255));
+	SetWidgetText(		kSkyTravel_Screen_ViewAngle,	"---");
+
+	//-----------------------------------------------
+	SetWidgetType(		kSkyTravel_DisplayedStarCnt,	kWidgetType_TextBox);
+	SetWidgetFont(		kSkyTravel_DisplayedStarCnt,	kFont_Medium);
+	SetWidgetText(		kSkyTravel_DisplayedStarCnt,	"---");
+	SetWidgetTextColor(	kSkyTravel_DisplayedStarCnt,	CV_RGB(255,	255,	255));
+
+	//------------------------------------------------------------------------------------
+	SetWidgetText(		kSkyTravel_Telescope_Sync,		"Sync");
+	SetWidgetFont(		kSkyTravel_Telescope_Sync,		kFont_Medium);
+	SetWidgetTextColor(	kSkyTravel_Telescope_Sync,		CV_RGB(0,	0, 0));
+	SetWidgetBGColor(	kSkyTravel_Telescope_Sync,		CV_RGB(255,	255,	255));
+	SetWidgetHelpText(	kSkyTravel_Telescope_Sync,		"Sync telescope to center of screen");
+
+	//-----------------------------------------------
+	SetWidgetText(		kSkyTravel_Telescope_GoTo,		"GoTo");
+	SetWidgetFont(		kSkyTravel_Telescope_GoTo,		kFont_Medium);
+	SetWidgetTextColor(	kSkyTravel_Telescope_GoTo,		CV_RGB(0,	0, 0));
+	SetWidgetBGColor(	kSkyTravel_Telescope_GoTo,		CV_RGB(255,	255,	255));
+	SetWidgetHelpText(	kSkyTravel_Telescope_GoTo,		"Slew telescope to center of screen");
+
+	//---------------------------------------------------------------------------
+	//*	set the help text for the rest of them
 	SetWidgetHelpText(	kSkyTravel_Btn_Reset,			"Reset");
-
 	SetWidgetHelpText(	kSkyTravel_Btn_Lines,			"Toggle Line display");
 	SetWidgetHelpText(	kSkyTravel_Btn_OrigDatabase,	"Toggle Original star database");
-
 	SetWidgetHelpText(	kSkyTravel_Btn_AutoAdvTime,		"Toggle Auto Advance Time");
 	SetWidgetHelpText(	kSkyTravel_Btn_Chart,			"Toggle Chart mode");
 	SetWidgetHelpText(	kSkyTravel_Btn_DeepSky,			"Toggle Deep Sky Objects");
 	SetWidgetHelpText(	kSkyTravel_Btn_Names,			"Toggle Name display");
 	SetWidgetHelpText(	kSkyTravel_Btn_CommonStarNames,	"Toggle Common star names display");
-
 	SetWidgetHelpText(	kSkyTravel_Btn_ConstOutline,	"Toggle Constellation outlines");
 	SetWidgetHelpText(	kSkyTravel_Btn_Constellations,	"Toggle Constellations");
 	SetWidgetHelpText(	kSkyTravel_Btn_NGC,				"Toggle NGC display");
@@ -775,8 +815,11 @@ int		utcBoxWitdth;
 	SetWidgetHelpText(	kSkyTravel_Btn_Messier,			"Toggle Missier display");
 	SetWidgetHelpText(	kSkyTravel_Btn_AAVSOalerts,		"Toggle AAVSO alerts");
 
-#if defined(_ENABLE_REMOTE_GAIA_)
-	SetWidgetHelpText(	kSkyTravel_Btn_Gaia,			"Toggle GAIA display");
+#ifdef _ENABLE_REMOTE_GAIA_
+	SetWidgetHelpText(	kSkyTravel_Btn_Gaia,			"Toggle GAIA/SQL display");
+	SetWidgetText(		kSkyTravel_SQL_database,		gSQLsever_Database);
+	SetWidgetFont(		kSkyTravel_SQL_database,		kFont_RadioBtn);
+	SetWidgetHelpText(	kSkyTravel_SQL_database,		"Currently selected database");
 #endif
 #ifdef _ENABLE_ASTERIODS_
 	SetWidgetHelpText(	kSkyTravel_Btn_Asteroids,		"Toggle Asteroid display");
@@ -784,8 +827,6 @@ int		utcBoxWitdth;
 
 	SetWidgetHelpText(	kSkyTravel_Btn_MagnitudeDisp,	"Toggle Magnitude display");
 	SetWidgetHelpText(	kSkyTravel_UTCtime,				"Time UTC and Sidereal (in live mode)");
-
-
 	SetWidgetHelpText(	kSkyTravel_Btn_Hipparcos,		"Toggle Hipparcos display");
 	SetWidgetHelpText(	kSkyTravel_Btn_NightMode,		"Toggle Night Mode");
 	SetWidgetHelpText(	kSkyTravel_Btn_Symbols,			"Toggle Symbols for planets and zodiac");
@@ -793,24 +834,21 @@ int		utcBoxWitdth;
 	SetWidgetHelpText(	kSkyTravel_Btn_TscopeDisp,		"Toggle telescope position display");
 	SetWidgetHelpText(	kSkyTravel_Btn_Draper,			"Toggle Draper display");
 	SetWidgetHelpText(	kSkyTravel_Btn_SAO,				"Toggle SAO display");
-
-
 	SetWidgetHelpText(	kSkyTravel_Btn_Plus,			"Zoom In");
 	SetWidgetHelpText(	kSkyTravel_Btn_Minus,			"Zoom Out");
 	SetWidgetHelpText(	kSkyTravel_Btn_ZoomLevel,		"Indicates Current Zoom level");
 	SetWidgetHelpText(	kSkyTravel_Screen_ViewAngle,	"Indicates Current View Angle (radians/degrees) : dd:mm:ss if below 2 degrees");
 	SetWidgetHelpText(	kSkyTravel_DisplayedStarCnt,	"Indicates the number of stars currently displayed");
-
 	SetWidgetHelpText(	kSkyTravel_Search_Text,			"Enter object to search for");
 	SetWidgetHelpText(	kSkyTravel_Search_Btn,			"Click to search");
 
 
+	//---------------------------------------------------------------------------
+	//*	set the button characters (names)
 	SetWidgetText(		kSkyTravel_Btn_AutoAdvTime,		"@");
 	SetWidgetText(		kSkyTravel_Btn_Reset,			"r");
 	SetWidgetText(		kSkyTravel_Btn_Chart,			"c");
-
 	SetWidgetText(		kSkyTravel_Btn_AAVSOalerts,		"a");
-
 	SetWidgetText(		kSkyTravel_Btn_DeepSky,			"D");
 	SetWidgetText(		kSkyTravel_Btn_Draper,			"d");
 	SetWidgetText(		kSkyTravel_Btn_SAO,				"^");
@@ -818,85 +856,51 @@ int		utcBoxWitdth;
 	SetWidgetText(		kSkyTravel_Btn_CommonStarNames,	"m");
 	SetWidgetText(		kSkyTravel_Btn_Lines,			"L");
 	SetWidgetText(		kSkyTravel_Btn_OrigDatabase,	"$");
-
 	SetWidgetText(		kSkyTravel_Btn_ConstOutline,	"O");
 	SetWidgetText(		kSkyTravel_Btn_Constellations,	"?");
 	SetWidgetText(		kSkyTravel_Btn_NGC,				"G");
-#if defined(_ENABLE_REMOTE_GAIA_)
-	SetWidgetText(		kSkyTravel_Btn_Gaia,			"g");
-#endif
-#ifdef _ENABLE_ASTERIODS_
-	SetWidgetText(		kSkyTravel_Btn_Asteroids,		",");
-#endif
 	SetWidgetText(		kSkyTravel_Btn_Earth,			"E");
 	SetWidgetText(		kSkyTravel_Btn_Grid,			"#");
 	SetWidgetText(		kSkyTravel_Btn_Equator,			"Q");
 	SetWidgetText(		kSkyTravel_Btn_Ecliptic,		"C");
 	SetWidgetText(		kSkyTravel_Btn_YaleCat,			"Y");
 	SetWidgetText(		kSkyTravel_Btn_Messier,			"M");
-
 	SetWidgetText(		kSkyTravel_Btn_Hipparcos,		"H");
 	SetWidgetText(		kSkyTravel_Btn_NightMode,		"!");
 	SetWidgetText(		kSkyTravel_Btn_Symbols,			"S");
 	SetWidgetText(		kSkyTravel_Btn_AllMagnitudes,	"A");
-
 	SetWidgetText(		kSkyTravel_Btn_TscopeDisp,		"t");
-
 	SetWidgetText(		kSkyTravel_Btn_Plus,			"+");
 	SetWidgetText(		kSkyTravel_Btn_Minus,			"-");
 	SetWidgetText(		kSkyTravel_Btn_MagnitudeDisp,	".");
+#if defined(_ENABLE_REMOTE_GAIA_)
+	SetWidgetText(		kSkyTravel_Btn_Gaia,			"g");
+#endif
+#ifdef _ENABLE_ASTERIODS_
+	SetWidgetText(		kSkyTravel_Btn_Asteroids,		",");
+#endif
 
-//	yLoc			+=	cTitleHeight;
-//	yLoc			+=	2;
 
 	//------------------------------------------------------------------------------------
 	//*	Dome/Telescope indicators
+	SetWidgetType(		kSkyTravel_DomeIndicator, 		kWidgetType_TextBox);
 	SetWidgetText(		kSkyTravel_DomeIndicator,		"D");
 	SetWidgetTextColor(	kSkyTravel_DomeIndicator,		CV_RGB(0,	0, 0));
 	SetWidgetBGColor(	kSkyTravel_DomeIndicator,		CV_RGB(255,	0,	0));
 	SetWidgetHelpText(	kSkyTravel_DomeIndicator,		"Indicates if Dome is OnLine (Grn=yes/Red=no)");
-	SetWidgetType(		kSkyTravel_DomeIndicator, 		kWidgetType_TextBox);
 
+	//------------------------------------------------------------------------------------
+	SetWidgetType(		kSkyTravel_TelescopeIndicator, 	kWidgetType_TextBox);
 	SetWidgetText(		kSkyTravel_TelescopeIndicator,	"T");
 	SetWidgetTextColor(	kSkyTravel_TelescopeIndicator,	CV_RGB(0,	0, 0));
 	SetWidgetBGColor(	kSkyTravel_TelescopeIndicator,	CV_RGB(255,	0,	0));
 	SetWidgetHelpText(	kSkyTravel_TelescopeIndicator,	"Indicates if Telescope is OnLine (Grn=yes/Red=no)");
-	SetWidgetType(		kSkyTravel_TelescopeIndicator, 	kWidgetType_TextBox);
 
 
-	SetWidget(			kSkyTravel_Telescope_RA_DEC,	xLoc,	yLoc, cBtnWidth,	cTitleHeight);
+	//------------------------------------------------------------------------------------
 	SetWidgetFont(		kSkyTravel_Telescope_RA_DEC,	kFont_Medium);
 	SetWidgetText(		kSkyTravel_Telescope_RA_DEC,	"--");
 	SetWidgetHelpText(	kSkyTravel_Telescope_RA_DEC,	"Current telescope location, Double click to center screen");
-
-	xLoc	+=	cBtnWidth;
-	xLoc	+=	2;
-
-	//------------------------------------------------------------------------------------
-	customButtonWidth	=	(cBtnWidth / 2) - 30;
-	SetWidget(			kSkyTravel_Telescope_Sync,	xLoc,	yLoc, customButtonWidth,	cTitleHeight);
-	SetWidgetText(		kSkyTravel_Telescope_Sync,	"Sync");
-	SetWidgetFont(		kSkyTravel_Telescope_Sync,	kFont_Medium);
-	SetWidgetTextColor(	kSkyTravel_Telescope_Sync,	CV_RGB(0,	0, 0));
-	SetWidgetBGColor(	kSkyTravel_Telescope_Sync,	CV_RGB(255,	255,	255));
-	SetWidgetType(		kSkyTravel_Telescope_Sync, 	kWidgetType_Button);
-	SetWidgetHelpText(	kSkyTravel_Telescope_Sync,	"Sync telescope to center of screen");
-
-	xLoc	+=	customButtonWidth;
-	xLoc	+=	2;
-
-	//-----------------------------------------------
-	SetWidget(			kSkyTravel_Telescope_GoTo,	xLoc,	yLoc, customButtonWidth,	cTitleHeight);
-	SetWidgetText(		kSkyTravel_Telescope_GoTo,	"GoTo");
-	SetWidgetFont(		kSkyTravel_Telescope_GoTo,	kFont_Medium);
-	SetWidgetTextColor(	kSkyTravel_Telescope_GoTo,	CV_RGB(0,	0, 0));
-	SetWidgetBGColor(	kSkyTravel_Telescope_GoTo,	CV_RGB(255,	255,	255));
-	SetWidgetType(		kSkyTravel_Telescope_GoTo, 	kWidgetType_Button);
-	SetWidgetHelpText(	kSkyTravel_Telescope_GoTo,	"Slew telescope to center of screen");
-
-	xLoc	+=	customButtonWidth;
-	xLoc	+=	2;
-	//-----------------------------------------------
 
 	yLoc			+=	cTitleHeight;
 	yLoc			+=	2;
@@ -926,22 +930,6 @@ int		utcBoxWitdth;
 	yLoc			+=	cTitleHeight;
 	yLoc			+=	2;
 
-	//-----------------------------------------------
-	//*	set up the search button/text
-	xLoc	=	cWidth - (cTitleHeight + 2);
-	searchBoxWidth	=	200;
-
-	SetWidget(				kSkyTravel_Search_Btn,	xLoc,	cTabVertOffset,		cTitleHeight,		cTitleHeight);
-	SetWidgetType(			kSkyTravel_Search_Btn, 	kWidgetType_Button);
-	xLoc	-=  searchBoxWidth;
-	xLoc	-=  2;
-	SetWidget(				kSkyTravel_Search_Text,	xLoc,	cTabVertOffset,		searchBoxWidth,		cTitleHeight);
-	SetWidgetType(			kSkyTravel_Search_Text, kWidgetType_TextInput);
-	SetWidgetBGColor(		kSkyTravel_Search_Text,	CV_RGB(128,	128,	128));
-	SetWidgetTextColor(		kSkyTravel_Search_Text,	CV_RGB(0,	0,	0));
-	SetWidgetJustification(	kSkyTravel_Search_Text,	kJustification_Left);
-	SetWidgetFont(			kSkyTravel_Search_Text,	kFont_Medium);
-
 
 
 //-	cWorkSpaceTopOffset	=	yLoc;
@@ -959,6 +947,13 @@ int		utcBoxWitdth;
 	UpdateButtonStatus();
 }
 
+//**************************************************************************************
+void WindowTabSkyTravel::ActivateWindow(void)
+{
+#if defined(_ENABLE_REMOTE_GAIA_)
+	SetWidgetText(		kSkyTravel_SQL_database,		gSQLsever_Database);
+#endif
+}
 
 //**************************************************************************************
 void WindowTabSkyTravel::RunBackgroundTasks(void)
@@ -1745,6 +1740,43 @@ bool			reDrawSky;
 }
 
 //*****************************************************************************
+void	WindowTabSkyTravel::HandleSpecialKeys(const int keyPressed)
+{
+uint32_t	timeSinceLastRedraw;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	switch(keyPressed)
+	{
+		case 0x10FF50:	//*	home key
+			SetView_Angle(kViewAngle_Default);
+			cElev0					=	kHALFPI / 2;		//* 45 degrees
+			cAz0					=	0.0;				//* north
+			cRa0					=	0.0;
+			cDecl0					=	0.0;
+			break;
+
+		case 0x10FF56:	//*	page down
+			ZoomViewAngle(-2);
+			break;
+
+		case 0x10FF55:	//*	page up
+			ZoomViewAngle(2);
+			break;
+
+		case 0x10FF57:	//*	end
+			break;
+	}
+	timeSinceLastRedraw	=	millis() - cLastRedrawTime_ms;
+	if (timeSinceLastRedraw > 200)
+	{
+		cMouseDragInProgress	=	true;
+		ForceReDrawSky();
+		cMouseDragInProgress	=	false;
+	}
+}
+
+//*****************************************************************************
 void	WindowTabSkyTravel::ProcessButtonClick(const int buttonIdx, const int flags)
 {
 bool	reDrawSky;
@@ -2192,8 +2224,6 @@ void	WindowTabSkyTravel::ProcessMouseEvent(	const int	widgetIdx,
 			CONSOLE_DEBUG_W_NUM("UNKNOWN EVENT", event);
 			break;
 	}
-
-
 }
 
 //*****************************************************************************

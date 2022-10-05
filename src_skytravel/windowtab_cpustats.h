@@ -92,11 +92,8 @@ class WindowTabCpuStats: public WindowTab
 												const int	wheelMovement,
 												const int	flags);
 		virtual	void	ActivateWindow(void);
+		virtual	void	UpdateOnScreenWidgetList(void);
 
-				void	UpdateOnScreenWidgetList(void);
-
-				int				cSortColumn;
-				int				cFirstLineIdx;
 
 };
 

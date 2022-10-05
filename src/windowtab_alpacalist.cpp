@@ -701,17 +701,24 @@ int		iii;
 char	textString[128];
 char	ipAddrStr[32];
 int		deviceIdx;
-int		linesOnScreen;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 //	CONSOLE_DEBUG_W_NUM("kMaxAlpacaDeviceCnt\t=", kMaxAlpacaDeviceCnt);
 //	CONSOLE_ABORT(__FUNCTION__);
 
+	//*	limit how far we can scroll
+	if (cFirstLineIdx >= gRemoteCnt)
+	{
+		cFirstLineIdx	=	gRemoteCnt -1;
+	}
+	CONSOLE_DEBUG_W_NUM("gRemoteCnt   \t=", gRemoteCnt);
+	CONSOLE_DEBUG_W_NUM("cFirstLineIdx\t=", cFirstLineIdx);
+
 	iii				=	0;
 	boxId			=	0;
-	linesOnScreen	=	(kAlpacaList_AlpacaDev_Last - kAlpacaList_AlpacaDev_01) + 1;
-//	CONSOLE_DEBUG_W_NUM("linesOnScreen\t=", linesOnScreen);
-	while (iii < linesOnScreen)
+	cLinesOnScreen	=	(kAlpacaList_AlpacaDev_Last - kAlpacaList_AlpacaDev_01) + 1;
+//	CONSOLE_DEBUG_W_NUM("cLinesOnScreen\t=", cLinesOnScreen);
+	while (iii < cLinesOnScreen)
 	{
 		boxId		=	iii + kAlpacaList_AlpacaDev_01;
 		deviceIdx	=	cFirstLineIdx + iii;
@@ -783,7 +790,7 @@ int		linesOnScreen;
 		else if (boxId <= kAlpacaList_AlpacaDev_Last)
 		{
 			SetWidgetText(boxId, "---");
-		//	SetWidgetNumber(boxId, iii);
+			SetWidgetTextColor(		boxId,	CV_RGB(0xff,	0xff,	0xff));
 		}
 		else
 		{

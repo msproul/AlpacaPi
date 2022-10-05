@@ -22,7 +22,7 @@ enum
 	kIPaddrList_DiscoveryThrdReStart,
 	kIPaddrList_DiscoveryClear,
 
-	kIPaddrList_ErrorMsg,
+	kIPaddrList_StatusMsg,
 	kIPaddrList_TemperatureGraph,
 	kIPaddrList_SortedCPUList,
 	kIPaddrList_SortedTempList,
@@ -64,8 +64,8 @@ enum
 	kIPaddrList_AlpacaDev_20,
 	kIPaddrList_AlpacaDev_21,
 	kIPaddrList_AlpacaDev_22,
-	kIPaddrList_AlpacaDev_23,
-	kIPaddrList_AlpacaDev_24,
+//	kIPaddrList_AlpacaDev_23,
+//	kIPaddrList_AlpacaDev_24,
 //	kIPaddrList_AlpacaDev_25,
 //	kIPaddrList_AlpacaDev_26,
 //	kIPaddrList_AlpacaDev_27,
@@ -82,7 +82,7 @@ enum
 //	kIPaddrList_AlpacaDev_38,
 //	kIPaddrList_AlpacaDev_39,
 
-	kIPaddrList_AlpacaDev_Last	=	kIPaddrList_AlpacaDev_24,
+	kIPaddrList_AlpacaDev_Last,
 
 	kIPaddrList_AlpacaDev_Total,
 	kIPaddrList_AlpacaLogo,
@@ -97,6 +97,13 @@ enum
 };
 
 #define	kCpuColorCnt	12
+//**************************************************************************************
+typedef struct
+{
+	char	cpuName[32];
+	double	cpuTemp;
+} TYPE_CPU_SORT;
+#define	kMaxCPUs	32
 
 //**************************************************************************************
 class WindowTabIPList: public WindowTab
@@ -114,6 +121,10 @@ class WindowTabIPList: public WindowTab
 		virtual	void	SetupWindowControls(void);
 		virtual	void	ProcessButtonClick(const int buttonIdx, const int flags);
 		virtual	void	ProcessDoubleClick(const int buttonIdx);
+		virtual void	ProcessMouseEvent(const int widgetIdx, const int event, const int xxx, const int yyy, const int flags);
+//		virtual void	ProcessMouseLeftButtonDown(const int widgetIdx, const int event, const int xxx, const int yyy, const int flags);
+//		virtual void	ProcessMouseLeftButtonUp(const int widgetIdx, const int event, const int xxx, const int yyy, const int flags);
+//		virtual void	ProcessMouseLeftButtonDragged(const int widgetIdx, const int event, const int xxx, const int yyy, const int flags);
 		virtual void	ProcessMouseWheelMoved(	const int	widgetIdx,
 												const int	event,
 												const int	xxx,
@@ -125,20 +136,27 @@ class WindowTabIPList: public WindowTab
 #else
 		virtual	void	DrawWidgetCustomGraphic(IplImage *openCV_Image, const int widgetIdx);
 #endif // _USE_OPENCV_CPP_
+		virtual	void	UpdateOnScreenWidgetList(void);
+
 				void	DrawCpuTempGraph(TYPE_WIDGET *theWidget);
 
-				void	UpdateIPaddrList(void);
 				void	ClearIPaddrList(void);
 
 				void	UpdateButtons(void);
 				void	ExportCSV(void);
 
+				void	HandleMouseMovedInGraph(	TYPE_WIDGET *theWidget,
+													const int	box_XXX,
+													const int	box_YYY);
+
 				int				cPrevAlpacaDevCnt;
-				int				cSortColumn;
 
 				cv::Scalar		cCPUcolors[kCpuColorCnt];
 
 				int				cGraphMode;
+
+				TYPE_CPU_SORT	cCPU_NameList[kMaxCPUs];
+				int				cValidCPUtempCount;
 
 };
 

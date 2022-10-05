@@ -26,9 +26,9 @@
 //*****************************************************************************
 int	Serial_Set_Attribs(int fd, int speed, int parity)
 {
-struct termios tty;
-int		tcReturnCode;
-int		myReturnCode;
+struct termios	tty;
+int				tcReturnCode;
+int				myReturnCode;
 
 	if (tcgetattr (fd, &tty) != 0)
 	{

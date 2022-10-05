@@ -460,7 +460,7 @@ bool		foundSomething;
 		cAlpacaListObjPtr->UpdateRemoteDeviceList();
 		cDeviceSelectObjPtr->UpdateRemoteDeviceList();
 		cFOVTabObjPtr->UpdateRemoteDeviceList();
-		cIPaddrListObjPtr->UpdateIPaddrList();
+		cIPaddrListObjPtr->UpdateOnScreenWidgetList();
 	}
 
 	//-----------------------------------------------------------------------------

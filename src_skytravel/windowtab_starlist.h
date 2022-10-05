@@ -97,16 +97,14 @@ class WindowTabStarList: public WindowTab
 												const int	wheelMovement,
 												const int	flags);
 		virtual	void	UpdateSliderValue(	const int widgetIdx, double newSliderValue);
+		virtual	void	UpdateOnScreenWidgetList(void);
 
 				void	UpdateSettings(void);
-				void	UpdateOnScreenWidgetList(void);
 				void	UpdateSortOrder(void);
 
 				void	SetStarDataPointers(TYPE_CelestData *argStarList, int argStarListCount);
 				void	SetColumnOneTitle(const char *clmOneTitle);
 
-				int				cSortColumn;
-				int				cFirstLineIdx;
 
 				TYPE_CelestData	*cStarListPtr;
 				int				cStarListCount;

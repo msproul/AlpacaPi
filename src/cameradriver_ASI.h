@@ -24,7 +24,7 @@
 	#include	"ASICamera2.h"
 #endif
 
-void	CreateASI_CameraObjects(void);
+int		CreateASI_CameraObjects(void);
 
 
 //**************************************************************************************

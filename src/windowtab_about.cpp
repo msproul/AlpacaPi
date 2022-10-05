@@ -86,9 +86,9 @@ static char	gAlpacaPiTxt3[]	=
 	"Quick help\r"
 	"^q to quit\r"
 	"^s will save a screen shot\r"
-	"^w Closes current window, quits if only one\r"
-	"Clicking the round x in the title bar does NOT work\r"
-	"Clicking the square red X in the top left corner closes the window\r"
+	"^w Closes current window, quits if only one.\r"
+	"Clicking the round x in the title bar does NOT work.\r"
+	"Clicking the square red X in the top left corner closes the window.\r"
 };
 
 

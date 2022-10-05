@@ -106,8 +106,6 @@ class WindowTabConstellationList: public WindowTab
 				void	SetStarDataPointers(TYPE_ConstVector *argConstellationPtr, int argConstellationCount);
 				void	SetColumnOneTitle(const char *clmOneTitle);
 
-				int				cSortColumn;
-				int				cFirstLineIdx;
 
 				TYPE_ConstVector		*cConstellationsPtr;
 				int						cConstellationCnt;

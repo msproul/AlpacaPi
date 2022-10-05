@@ -63,8 +63,8 @@ bool		isConnected;
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG_W_NUM("Creating Simulation device number ", deviceNum);
 
-	gVerbose				=	true;
-	cVerboseDebug			=	true;
+//	gVerbose				=	true;
+//	cVerboseDebug			=	true;
 
 	cCameraID				=	deviceNum;
 	cSimulatedState			=   kExposure_Idle;
@@ -87,8 +87,8 @@ bool		isConnected;
 //	cCameraProp.CameraYsize	=	6388;
 
 	//*	In order to simulate a particular image size
-	cCameraProp.CameraXsize	=	1500;
-	cCameraProp.CameraYsize	=	1000;
+	cCameraProp.CameraXsize	=	5000;
+	cCameraProp.CameraYsize	=	4000;
 //	while ((cCameraProp.CameraXsize * cCameraProp.CameraYsize) < (48 * 1000000))
 //	{
 //		cCameraProp.CameraXsize	+=	100;
@@ -295,7 +295,7 @@ time_t					deltaTime_secs;
 			gettimeofday(&currentTIme, NULL);	//*	get the current time
 			deltaTime_secs	=	currentTIme.tv_sec - cCameraProp.Lastexposure_StartTime.tv_sec;
 
-			CONSOLE_DEBUG_W_LONG("deltaTime_secs\t=",			deltaTime_secs);
+//			CONSOLE_DEBUG_W_LONG("deltaTime_secs\t=",			deltaTime_secs);
 			if (deltaTime_secs > 2)
 			{
 				CONSOLE_DEBUG("Not kCameraState_TakingPicture -->> kCameraState_Idle");
@@ -309,7 +309,10 @@ time_t					deltaTime_secs;
 			break;
 
 	}
-	CONSOLE_DEBUG_W_NUM("myExposureStatus\t=",			myExposureStatus);
+	if (gVerbose)
+	{
+		CONSOLE_DEBUG_W_NUM("myExposureStatus\t=",			myExposureStatus);
+	}
 
 	return(myExposureStatus);
 }

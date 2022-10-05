@@ -333,7 +333,7 @@ void	ControllerNiteCrawler::UpdateCommonProperties(void)
 //*****************************************************************************
 void	ControllerNiteCrawler::UpdateFocuserPosition(const int newFocuserPosition)
 {
-	CONSOLE_DEBUG_W_NUM(__FUNCTION__, newFocuserPosition);
+//	CONSOLE_DEBUG_W_NUM(__FUNCTION__, newFocuserPosition);
 	cFocuserPosition	=	newFocuserPosition;
 	SetWidgetNumber(kTab_Focuser, kNiteCrawlerTab_focValue, cFocuserPosition);
 

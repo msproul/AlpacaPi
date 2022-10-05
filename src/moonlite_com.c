@@ -63,6 +63,7 @@ char	gLastCmdSent[48]	=	"";
 
 static void	USB_SendCommand(TYPE_MOONLITECOM *moonliteCom, const char *theCommand);
 static int	ReadUntilChar(const int fileDesc, char *readBuff, const int maxChars, const char terminator);
+static int	gMoonLiteReadFailureCnt	=	0;
 
 //*****************************************************************************
 typedef struct
@@ -509,7 +510,6 @@ int		ii;
 			CONSOLE_DEBUG("moonliteCom->fileDesc is NULL=");
 		}
 	}
-
 	return(validFlag);
 }
 
@@ -582,7 +582,8 @@ int		cc;
 		}
 		else
 		{
-			CONSOLE_DEBUG("Failed to read position");
+			gMoonLiteReadFailureCnt++;
+			CONSOLE_DEBUG_W_NUM("Failed to read position", gMoonLiteReadFailureCnt);
 		}
 	}
 	else

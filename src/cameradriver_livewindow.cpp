@@ -99,7 +99,7 @@ double			exposure_Secs;
 	myImageController	=	(ControllerImage *)cLiveController;
 	if (myImageController != NULL)
 	{
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) && (CV_MAJOR_VERSION >= 2)
 		DumpCVMatStruct(cOpenCV_ImagePtr, __FUNCTION__);
 #endif // _USE_OPENCV_CPP_
 		myImageController->UpdateLiveWindowImage(cOpenCV_ImagePtr, cFileNameRoot);

@@ -17,6 +17,8 @@
 	#include	"opencv2/opencv.hpp"
 	#include	"opencv2/core.hpp"
 
+	#include	"opencv4/opencv2/highgui.hpp"
+//EVENT_FLAG_CTRLKEY
 	#ifdef _USE_OPENCV_CPP_
 	#else
 		#include	"opencv2/highgui/highgui_c.h"
@@ -84,6 +86,7 @@ extern TYPE_FontInfo	gFontInfo[];
 #endif // _ENABLE_CVFONT_
 
 extern	bool	gVerbose;
+extern	char	gDownloadFilePath[];
 
 #define	RADIANS(degrees)	((degrees) * (M_PI / 180.0))
 #define	DEGREES(radians)	((radians) * (180.0 / M_PI))

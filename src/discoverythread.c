@@ -591,7 +591,8 @@ char				errorString[64];
 		char	ipString[32];
 
 			PrintIPaddressToString(deviceAddress->sin_addr.s_addr, ipString);
-			CONSOLE_DEBUG_W_STR("connect refused", ipString);
+			sprintf(errorString, "connect refused by %s:%d", ipString, port);
+			CONSOLE_DEBUG(errorString);
 		}
 		else
 		{
@@ -816,7 +817,7 @@ int		alpacaListenPort;
 			foundHostName	=	LookupNameFromIPaddr(deviceAddress->sin_addr.s_addr, myHostNameStr);
 			if (foundHostName)
 			{
-				CONSOLE_DEBUG_W_STR("Found host name:", myHostNameStr);
+//				CONSOLE_DEBUG_W_STR("Found host name:", myHostNameStr);
 				strcpy(gAlpacaUnitList[gAlpacaUnitCnt].hostName, myHostNameStr);
 			}
 			else

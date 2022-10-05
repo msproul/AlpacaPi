@@ -83,8 +83,8 @@
 	#include	"alpaca_defs.h"
 #endif
 
-#define	kImageDataDir	"imagedata"
-
+#define	kDefaultImageDataDir	"imagedata"
+extern	char	gImageDataDir[];
 
 //*****************************************************************************
 //*	Camera states

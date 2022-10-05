@@ -18,6 +18,8 @@
 #		sudo apt-get install git-gui
 #
 #	https://www.gnu.org/software/make/manual/make.html
+#
+#	https://github.com/TheNextLVL/wiringPi
 ######################################################################################
 #	Edit History
 ######################################################################################
@@ -71,6 +73,8 @@ MACHINE_TYPE		=	$(shell uname -m)
 PLATFORM			=	$(shell ./make_checkplatform.sh)
 OPENCV_VERSION		=	$(shell ./make_checkopencv.sh)
 SQL_VERSION			=	$(shell ./make_checksql.sh)
+
+###########################################
 # default settings for Desktop Linux build
 USR_HOME			=	$(HOME)/
 GCC_DIR				=	/usr/bin/
@@ -110,6 +114,19 @@ ATIK_LIB_DIR		=	$(ATIK_LIB_MASTER_DIR)/linux/64/NoFlyCapture
 #ATIK_LIB_DIR_V129	=	$(ATIK_LIB_MASTER_DIR)/ARM/pi/pi3/x86/NoFlyCapture
 ATIK_LIB_DIR_ARM32	=	$(ATIK_LIB_MASTER_DIR)/ARM/32/NoFlyCapture
 ATIK_LIB_DIR_ARM64	=	$(ATIK_LIB_MASTER_DIR)/ARM/64/NoFlyCapture
+
+ATIK_PLATFORM		=	unknown
+
+ifeq ($(PLATFORM),  x64)
+	ATIK_PLATFORM	=	linux/64
+endif
+ifeq ($(PLATFORM),  armv7)
+	ATIK_PLATFORM	=	ARM/32
+endif
+ifeq ($(PLATFORM),  armv8)
+	ATIK_PLATFORM	=	ARM/64
+endif
+ATIK_LIB_DIR	=	$(ATIK_LIB_MASTER_DIR)/$(ATIK_PLATFORM)/NoFlyCapture
 
 ############################################
 TOUP_DIR			=	./toupcamsdk
@@ -296,7 +313,7 @@ DRIVER_OBJECTS=												\
 
 ######################################################################################
 TEST_OBJECTS=												\
-				$(OBJECT_DIR)calibrationdriver_Alnitak.o	\
+				$(OBJECT_DIR)calibration_Alnitak.o			\
 				$(OBJECT_DIR)cameradriver_PhaseOne.o		\
 
 ######################################################################################
@@ -391,6 +408,7 @@ help:
 	# PLATFORM      =$(PLATFORM)
 	# OPENCV_VERSION=$(OPENCV_VERSION)
 	# SQL_VERSION   =$(SQL_VERSION)
+	# ATIK_PLATFORM =$(ATIK_PLATFORM)
 	#################################################################################
 
 
@@ -410,6 +428,7 @@ alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_CALIBRATION_
 alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_DISCOVERY_QUERRY_
 #alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_DOME_
 alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
+alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_
 alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_ZWO_
 #alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_FLIR_
 alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_
@@ -570,7 +589,6 @@ piqhy		:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
 piqhy		:		DEFINEFLAGS		+=	-D_ENABLE_QHY_
 piqhy		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
 #piqhy		:		DEFINEFLAGS		+=	-D_ENABLE_TOUP_
-piqhy		:		PLATFORM		=	armv7
 piqhy		:		ATIK_LIB_DIR	=	$(ATIK_LIB_MASTER_DIR)/ARM/x86/NoFlyCapture
 piqhy		:		$(CPP_OBJECTS)				\
 					$(DRIVER_OBJECTS)			\
@@ -913,6 +931,7 @@ wo102		:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
 wo102		:		DEFINEFLAGS		+=	-D_ENABLE_DISCOVERY_QUERRY_
 wo102		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
 wo102		:		DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
+wo102		:		DEFINEFLAGS		+=	-D_ENABLE_JPEGLIB_
 wo102		:		DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
 wo102		:		DEFINEFLAGS		+=	-D_ENABLE_LIVE_CONTROLLER_
 wo102		:		$(CPP_OBJECTS)				\
@@ -929,6 +948,7 @@ wo102		:		$(CPP_OBJECTS)				\
 					$(OPENCV_LINK)				\
 					$(ASI_CAMERA_OBJECTS)		\
 					$(ZWO_EFW_OBJECTS)			\
+					-ljpeg						\
 					-lqhyccd					\
 					-lcfitsio					\
 					-lusb-1.0					\
@@ -1285,14 +1305,12 @@ nousb		:		$(CPP_OBJECTS)				\
 
 ######################################################################################
 #pragma mark dome
+#make dome
 #dome		:	DEFINEFLAGS		+=	-D_ENABLE_OBSERVINGCONDITIONS_
 dome		:	DEFINEFLAGS		+=	-D_ENABLE_DOME_
 dome		:	DEFINEFLAGS		+=	-D_ENABLE_SLIT_TRACKER_REMOTE_
 dome		:	DEFINEFLAGS		+=	-D_ENABLE_REMOTE_SHUTTER_
 dome		:	DEFINEFLAGS		+=	-D_ENABLE_WIRING_PI_
-#dome		:	DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
-#dome		:	DEFINEFLAGS		+=	-D_ENABLE_ASI_
-dome		:	PLATFORM		=	armv7
 dome		:				$(CPP_OBJECTS)				\
 							$(SOCKET_OBJECTS)			\
 
@@ -1376,7 +1394,6 @@ pi		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
 #pi		:		DEFINEFLAGS		+=	-D_ENABLE_TOUP_
 pi		:		DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
 pi		:		DEFINEFLAGS		+=	-D_ENABLE_LIVE_CONTROLLER_
-pi		:		PLATFORM		=	armv7
 pi		:		ATIK_LIB_DIR	=	$(ATIK_LIB_MASTER_DIR)/ARM/x86/NoFlyCapture
 pi		:			$(CPP_OBJECTS)				\
 					$(DRIVER_OBJECTS)			\
@@ -1408,27 +1425,54 @@ pi		:			$(CPP_OBJECTS)				\
 calib		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
 calib		:		DEFINEFLAGS		+=	-D_ENABLE_CALIBRATION_
 calib		:		DEFINEFLAGS		+=	-D_ENABLE_CALIBRATION_RPI_
-#calib		:		DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_
-#calib		:		DEFINEFLAGS		+=	-D_ENABLE_ROTATOR_
-#calib		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_ZWO_
-#calib		:		DEFINEFLAGS		+=	-D_ENABLE_SAFETYMONITOR_
-#calib		:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_
-#calib		:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
 calib		:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
 calib		:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
-#calib		:		DEFINEFLAGS		+=	-D_ENABLE_DISCOVERY_QUERRY_
-#calib		:		DEFINEFLAGS		+=	-D_ENABLE_MULTICAM_
-#calib		:		DEFINEFLAGS		+=	-D_ENABLE_DOME_
 calib		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
-#calib		:		DEFINEFLAGS		+=	-D_ENABLE_ATIK_
 calib		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
-#calib		:		DEFINEFLAGS		+=	-D_ENABLE_TOUP_
-#calib		:		DEFINEFLAGS		+=	-D_ENABLE_WIRING_PI_
+calib		:		DEFINEFLAGS		+=	-D_ENABLE_WIRING_PI_
 calib		:		DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
 calib		:		DEFINEFLAGS		+=	-D_ENABLE_LIVE_CONTROLLER_
-calib		:		PLATFORM		=	armv7
-#calib		:		ATIK_LIB_DIR	=	$(ATIK_LIB_MASTER_DIR)/ARM/x86/NoFlyCapture
 calib		:		$(CPP_OBJECTS)				\
+					$(DRIVER_OBJECTS)			\
+					$(SOCKET_OBJECTS)			\
+					$(LIVE_WINDOW_OBJECTS)		\
+
+
+		$(LINK)  								\
+					$(SOCKET_OBJECTS)			\
+					$(CPP_OBJECTS)				\
+					$(DRIVER_OBJECTS)			\
+					$(LIVE_WINDOW_OBJECTS)		\
+					$(OPENCV_LINK)				\
+					$(ASI_CAMERA_OBJECTS)		\
+					-lwiringPi					\
+					-lcfitsio					\
+					-lpthread					\
+					-lusb-1.0					\
+					-o alpacapi-calib
+
+#					$(OPENCV_LINK)				\
+#					$(ASI_CAMERA_OBJECTS)		\
+#					-lcfitsio					\
+#					-lusb-1.0					\
+#					-ludev						\
+
+
+######################################################################################
+#pragma mark Raspberry pi - calibration
+#make calibcv4
+calibcv4	:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
+calibcv4	:		DEFINEFLAGS		+=	-D_ENABLE_CALIBRATION_
+calibcv4	:		DEFINEFLAGS		+=	-D_ENABLE_CALIBRATION_RPI_
+calibcv4	:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
+calibcv4	:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
+calibcv4	:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
+calibcv4	:		DEFINEFLAGS		+=	-D_USE_OPENCV_
+calibcv4	:		DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
+calibcv4	:		DEFINEFLAGS		+=	-D_ENABLE_WIRING_PI_
+calibcv4	:		DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
+calibcv4	:		DEFINEFLAGS		+=	-D_ENABLE_LIVE_CONTROLLER_
+calibcv4	:		$(CPP_OBJECTS)				\
 					$(DRIVER_OBJECTS)			\
 					$(SOCKET_OBJECTS)			\
 					$(LIVE_WINDOW_OBJECTS)		\
@@ -1501,7 +1545,6 @@ piswitch4	:		DEFINEFLAGS		+=	-D_ENABLE_4REALY_BOARD
 #piswitch4	:		DEFINEFLAGS		+=	-D_ENABLE_TOUP_
 #piswitch4	:		DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
 piswitch4	:		DEFINEFLAGS		+=	-D_ENABLE_WIRING_PI_
-piswitch4	:		PLATFORM		=	armv7
 piswitch4	:		ATIK_LIB_DIR	=	$(ATIK_LIB_MASTER_DIR)/ARM/x86/NoFlyCapture
 piswitch4	:		$(CPP_OBJECTS)				\
 					$(DRIVER_OBJECTS)			\
@@ -1529,7 +1572,6 @@ sony		:		DEFINEFLAGS		+=	-D_INCLUDE_SONY_MAIN_
 sony		:		CPLUSFLAGS		+=	-fsigned-char
 sony		:		CPLUSFLAGS		+=	-std=gnu++17
 sony		:		CPLUSFLAGS		+=	-O3 -DNDEBUG -std=c++17
-sony		:		PLATFORM		=	armv8
 sony		:		INCLUDES		+=	-I$(SONY_INCLUDE_DIR)
 sony		:		$(SONY_OBJECTS)
 
@@ -1545,30 +1587,27 @@ sony		:		$(SONY_OBJECTS)
 pi64		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
 pi64		:		DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_
 pi64		:		DEFINEFLAGS		+=	-D_ENABLE_ROTATOR_
+#pi64		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_
 #pi64		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_ZWO_
 #pi64		:		DEFINEFLAGS		+=	-D_ENABLE_SAFETYMONITOR_
 #pi64		:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_
 #pi64		:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
 pi64		:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
+pi64		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
 pi64		:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
 pi64		:		DEFINEFLAGS		+=	-D_ENABLE_DISCOVERY_QUERRY_
 pi64		:		DEFINEFLAGS		+=	-D_ENABLE_MULTICAM_
 #pi64		:		DEFINEFLAGS		+=	-D_ENABLE_DOME_
-pi64		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
 #pi64		:		DEFINEFLAGS		+=	-D_ENABLE_ATIK_
 pi64		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
 pi64		:		DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
-#pi64		:		OPENCV_COMPILE	=	$(shell pkg-config --cflags opencv4)
-#pi64		:		OPENCV_LINK		=	$(shell pkg-config --libs opencv4)
 #pi64		:		DEFINEFLAGS		+=	-D_ENABLE_TOUP_
 #pi64		:		DEFINEFLAGS		+=	-D_ENABLE_SONY_
 #pi64		:		DEFINEFLAGS		+=	-D_INCLUDE_EXIT_COMMAND_
 pi64		:		CPLUSFLAGS		+=	-fsigned-char
 pi64		:		CPLUSFLAGS		+=	-std=gnu++17
-pi64		:		PLATFORM		=	armv8
 #pi64		:		INCLUDES		+=	-I$(SONY_INCLUDE_DIR)
-#pi64		:		ATIK_LIB_DIR	=	$(ATIK_LIB_MASTER_DIR)/ARM/x86/NoFlyCapture
-pi64		:		ATIK_LIB_DIR	=	$(ATIK_LIB_MASTER_DIR)/ARM/odroid/x86/NoFlyCapture
+
 pi64		:		$(CPP_OBJECTS)				\
 					$(DRIVER_OBJECTS)			\
 					$(SOCKET_OBJECTS)			\
@@ -1580,14 +1619,14 @@ pi64		:		$(CPP_OBJECTS)				\
 					$(DRIVER_OBJECTS)			\
 					$(OPENCV_LINK)				\
 					$(ASI_CAMERA_OBJECTS)		\
-					-L$(ATIK_LIB_DIR_ARM64)/	\
+					-L$(ATIK_LIB_DIR)			\
 					-latikcameras				\
 					-lcfitsio					\
 					-lusb-1.0					\
-					-ludev						\
 					-lpthread					\
 					-o alpacapi
 
+#					-ludev						\
 #					-L$(SONY_LIB_DIR)/			\
 #					$(ZWO_EFW_OBJECTS)			\
 #					-ltoupcam					\
@@ -1612,7 +1651,6 @@ pizwo		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
 #pizwo		:		DEFINEFLAGS		+=	-D_ENABLE_ATIK_
 pizwo		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
 #pizwo		:		DEFINEFLAGS		+=	-D_ENABLE_TOUP_
-pizwo		:		PLATFORM		=	armv7
 #pizwo		:		ATIK_LIB_DIR	=	$(ATIK_LIB_MASTER_DIR)/ARM/x86/NoFlyCapture
 pizwo		:		$(CPP_OBJECTS)				\
 					$(DRIVER_OBJECTS)			\
@@ -1649,7 +1687,6 @@ manag		:		DEFINEFLAGS		+=	-D_ENABLE_DISCOVERY_QUERRY_
 #manag		:		DEFINEFLAGS		+=	-D_ENABLE_ATIK_
 #manag		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
 #manag		:		DEFINEFLAGS		+=	-D_ENABLE_TOUP_
-manag		:		PLATFORM		=	armv7
 #manag		:		ATIK_LIB_DIR	=	$(ATIK_LIB_MASTER_DIR)/ARM/x86/NoFlyCapture
 manag		:		$(CPP_OBJECTS)				\
 					$(DRIVER_OBJECTS)			\
@@ -1720,8 +1757,7 @@ zwo		:		DEFINEFLAGS		+=	-D_ENABLE_DISCOVERY_QUERRY_
 zwo		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
 #zwo		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
 zwo		:		DEFINEFLAGS		+=	-D_ENABLE_JPEGLIB_
-#zwo		:		PLATFORM		=	armv7
-zwo		:		$(CPP_OBJECTS)				\
+zwo		:			$(CPP_OBJECTS)				\
 					$(DRIVER_OBJECTS)			\
 					$(SOCKET_OBJECTS)			\
 
@@ -1803,7 +1839,6 @@ piswitch64		:		DEFINEFLAGS		+=	-D_ENABLE_WIRING_PI_
 #piswitch64		:		DEFINEFLAGS		+=	-D_ENABLE_PWM_SWITCH_
 piswitch64		:		DEFINEFLAGS		+=	-D_ENABLE_4REALY_BOARD
 piswitch64		:		CPLUSFLAGS		+=	-std=gnu++17
-piswitch64		:		PLATFORM		=	armv8
 
 piswitch64		:	$(CPP_OBJECTS)				\
 					$(DRIVER_OBJECTS)			\
@@ -1983,7 +2018,6 @@ jetson		:	DEFINEFLAGS		+=	-D_ENABLE_STAR_SEARCH_
 jetson		:	DEFINEFLAGS		+=	-D_PLATFORM_STRING_=\"Nvidia-jetson\"
 jetson		:	DEFINEFLAGS		+=	-D_ENABLE_IMU_
 jetson		:	INCLUDES		+=	-I$(SRC_IMU)
-jetson		:	PLATFORM		=	armv8
 jetson		:	TOUP_LIB_DIR	=	$(TOUP_DIR)/linux/arm64
 jetson		:				$(DRIVER_OBJECTS)			\
 							$(SOCKET_OBJECTS)			\
@@ -2018,7 +2052,6 @@ jetson		:				$(DRIVER_OBJECTS)			\
 wx			:	DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_
 wx			:	DEFINEFLAGS		+=	-D_ENABLE_OBSERVINGCONDITIONS_
 wx			:	DEFINEFLAGS		+=	-D_ENABLE_PI_HAT_SESNSOR_BOARD_
-wx			:	PLATFORM		=	armv7
 wx			:				$(DRIVER_OBJECTS)			\
 							$(SOCKET_OBJECTS)			\
 							$(CPP_OBJECTS)				\
@@ -2044,7 +2077,6 @@ smate		:	DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_ZWO_
 smate		:	DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_
 smate		:	DEFINEFLAGS		+=	-D_ENABLE_OBSERVINGCONDITIONS_
 smate		:	DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
-smate		:	PLATFORM		=	armv7
 smate		:				$(DRIVER_OBJECTS)			\
 							$(SOCKET_OBJECTS)			\
 
@@ -2175,6 +2207,7 @@ CONTROLLER_OBJECTS=												\
 				$(OBJECT_DIR)cpu_stats.o						\
 				$(OBJECT_DIR)helper_functions.o					\
 				$(OBJECT_DIR)linuxerrors.o						\
+				$(OBJECT_DIR)opencv_utils.o						\
 				$(OBJECT_DIR)windowtab.o						\
 				$(OBJECT_DIR)windowtab_about.o					\
 				$(OBJECT_DIR)windowtab_auxmotor.o				\
@@ -2303,6 +2336,25 @@ domectrl		:			$(CONTROLLER_OBJECTS)
 							-lpthread							\
 							-o domectrl
 
+######################################################################################
+#pragma mark dome-controller
+#	make domectrlcv4
+domectrlcv4		:	DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
+domectrlcv4		:	DEFINEFLAGS		+=	-D_INCLUDE_CTRL_MAIN_
+domectrlcv4		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_DOME_
+#domectrlcv4		:	DEFINEFLAGS		+=	-D_ENABLE_SLIT_TRACKER_
+domectrlcv4		:	DEFINEFLAGS		+=	-D_CONTROLLER_USES_ALPACA_
+domectrlcv4		:	DEFINEFLAGS		+=	-D_USE_OPENCV_
+domectrlcv4		:	DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
+
+
+domectrlcv4		:			$(CONTROLLER_OBJECTS)
+
+				$(LINK)  										\
+							$(CONTROLLER_OBJECTS)				\
+							$(OPENCV_LINK)						\
+							-lpthread							\
+							-o domectrl
 
 ######################################################################################
 #pragma mark focuser-controller
@@ -2486,6 +2538,7 @@ sky		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_CAMERA_
 sky		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_DOME_
 sky		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_FOCUSERS_
 sky		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
+sky		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_OBS_CONDITIONS_
 sky		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_SWITCHES_
 sky		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_TELESCOPE_
 sky		:	DEFINEFLAGS		+=	-D_ENABLE_FITS_
@@ -2516,6 +2569,7 @@ skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_CAMERA_
 skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_DOME_
 skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_FOCUSERS_
 skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
+skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_OBS_CONDITIONS_
 skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_SWITCHES_
 skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_TELESCOPE_
 skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_FITS_
@@ -2551,6 +2605,7 @@ skycv4sql			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_CAMERA_
 skycv4sql			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_DOME_
 skycv4sql			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_FOCUSERS_
 skycv4sql			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
+skycv4sql			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_OBS_CONDITIONS_
 skycv4sql			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_SWITCHES_
 skycv4sql			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_TELESCOPE_
 skycv4sql			:	DEFINEFLAGS		+=	-D_ENABLE_FITS_
@@ -2597,6 +2652,7 @@ skysql		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_CAMERA_
 skysql		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_DOME_
 skysql		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_FOCUSERS_
 skysql		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
+skysql		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_OBS_CONDITIONS_
 skysql		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_SWITCHES_
 skysql		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_TELESCOPE_
 skysql		:	DEFINEFLAGS		+=	-D_ENABLE_FITS_
@@ -3147,12 +3203,12 @@ $(OBJECT_DIR)calibrationdriver_rpi.o :		$(SRC_DIR)calibrationdriver_rpi.cpp \
 
 
 #-------------------------------------------------------------------------------------
-$(OBJECT_DIR)calibrationdriver_Alnitak.o :	$(SRC_DIR)calibrationdriver_rpi.cpp 	\
-											$(SRC_DIR)calibrationdriver_Alnitak.h	\
-											$(SRC_DIR)calibrationdriver.h			\
-											$(SRC_DIR)alpacadriver.h				\
+$(OBJECT_DIR)calibration_Alnitak.o :		$(SRC_DIR)calibration_Alnitak.cpp 	\
+											$(SRC_DIR)calibration_Alnitak.h		\
+											$(SRC_DIR)calibrationdriver.h		\
+											$(SRC_DIR)alpacadriver.h			\
 											Makefile
-	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)calibrationdriver_Alnitak.cpp -o$(OBJECT_DIR)calibrationdriver_Alnitak.o
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)calibration_Alnitak.cpp -o$(OBJECT_DIR)calibration_Alnitak.o
 
 
 #-------------------------------------------------------------------------------------

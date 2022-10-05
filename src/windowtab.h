@@ -140,6 +140,7 @@ class WindowTab
 		virtual	void	SetupWindowControls(void);
 //		virtual	void	DrawWindow(void);
 		virtual void	HandleKeyDown(const int keyPressed);
+		virtual	void	HandleSpecialKeys(const int keyPressed);
 		virtual	void	ProcessButtonClick(const int buttonIdx, const int	flags);
 		virtual	void	ProcessDoubleClick(	const int	widgetIdx,
 											const int	event,
@@ -163,6 +164,7 @@ class WindowTab
 												const int	yyy,
 												const int	wheelMovement,
 												const int	flags);
+		virtual	void	UpdateOnScreenWidgetList(void);
 
 				void	ComputeWidgetColumns(const int windowWitdh);
 				void	SetWidget(				const int widgetIdx, int left, int top, int width, int height);
@@ -311,6 +313,14 @@ class WindowTab
 		int			cHeight;
 		void		*cParentObjPtr;
 //		Controller	*cParentObjPtr;
+
+		//------------------------------------------------------------
+		//*	for windows that have a list
+		int			cLinesOnScreen;
+		int			cSortColumn;
+		int			cFirstLineIdx;
+
+
 
 #ifdef _CONTROLLER_USES_ALPACA_
 		//------------------------------------------------------------

@@ -19,7 +19,13 @@
 
 #include	"opencv_utils.h"
 
-#if (CV_MAJOR_VERSION >= 3)
+
+#if (CV_MAJOR_VERSION == 2)
+	#warning "OpenCV is version 2"
+#endif
+
+
+#if (CV_MAJOR_VERSION >= 2)
 
 //**************************************************************************************
 cv::Mat *ConvertImageToRGB(cv::Mat *openCVImage)

@@ -4,6 +4,7 @@
 ###	Nov 16,	2019	<MLS> Started on install script
 ###	Jan 25,	2021	<MLS> Updated ZWO files
 ### Mar 21,	2022	<MLS> Added !/bin/bash to start of script
+### Oct  1,	2022	<MLS> Added libcfitsio-dev in install script
 ###############################################################################
 clear
 echo "Getting ready to update (sudo apt-get update)"
@@ -11,19 +12,25 @@ echo "Press return to continue, ^C to abort"
 read INPUT_VARIABLE
 sudo apt-get update
 
+echo "****************************************************************************"
 echo "Getting ready to install libusb-1.0-0-dev"
 sudo apt-get install libusb-1.0-0-dev
 
+echo "****************************************************************************"
 echo "Getting ready to install libudev-dev"
 sudo apt-get install libudev-dev
 
+echo "****************************************************************************"
 echo "Getting ready to install libopencv-dev"
 sudo apt-get install libopencv-dev
 
+echo "****************************************************************************"
 echo "Getting ready to install libi2c-dev"
 sudo apt-get install libi2c-dev
 
-
+echo "****************************************************************************"
+echo "Getting ready to install libcfitsio-dev"
+sudo apt-get install libcfitsio-dev
 
 
 
@@ -65,14 +72,14 @@ checkfiles()
 		echo	"ASI Library file present and accounted for"
 	else
 		echo	"Can't find $ASI_TAR_FILE"
-		exit
+	#	exit
 	fi
 	if [ -f $EFW_TAR_FILE ]
 	then
 		echo	"EFW Library file present and accounted for"
 	else
 		echo	"Can't find $EFW_TAR_FILE"
-		exit
+	#	exit
 	fi
 
 
@@ -81,7 +88,7 @@ checkfiles()
 		echo	"cfitios file present and accounted for"
 	else
 		echo	"Can't find $CFITSIO_FILE"
-		exit
+	#	exit
 	fi
 
 	if [ -f $ATIK_LIB_FILE ]
@@ -89,15 +96,14 @@ checkfiles()
 		echo	"ATIK file present and accounted for"
 	else
 		echo	"Can't find $ATIK_LIB_FILE"
-		exit
+	#	exit
 	fi
 	if [ -f $ATIK_RULES_FILE ]
 	then
 		echo	"ATIK rules file present and accounted for"
 	else
-		echo	"Can't find $ATIK_RULES_FILE
-	"
-		exit
+		echo	"Can't find $ATIK_RULES_FILE"
+	#	exit
 	fi
 
 
@@ -106,7 +112,7 @@ checkfiles()
 		echo	"Toupcam file present and accounted for"
 	else
 		echo	"Can't find $TOUP_ZIP_FILE"
-		exit
+	#	exit
 	fi
 	echo	"------------------------------------------------------------------"
 }
@@ -443,8 +449,10 @@ setupLibUSB()
 }
 
 ###############################################################################
+	./install_rules.sh
+
 	checkfiles
-#	setupDirectories
+	setupDirectories
 	setupOPENCV
 	setupCfitsio
 	setupASI
@@ -453,6 +461,7 @@ setupLibUSB()
 	setupLibUSB
 	setupTOUP
 
+	checkfiles
 
 
 		sudo apt-get -y install libudev-dev

@@ -110,17 +110,15 @@ class WindowTabAlpacaList: public WindowTab
 												const int	wheelMovement,
 												const int	flags);
 		virtual	void	UpdateSliderValue(	const int widgetIdx, double newSliderValue);
+		virtual	void	UpdateOnScreenWidgetList(void);
 
 				void	ClearRemoteDeviceList(void);
 				void	UpdateRemoteDeviceList(void);
-				void	UpdateOnScreenWidgetList(void);
 				void	UpdateSortOrder(void);
 
 				TYPE_REMOTE_DEV	cRemoteDeviceList[kMaxAlpacaDeviceCnt];
 				int				cAlpacaDevCnt;
 				int				cPrevAlpacaDevCnt;
-				int				cSortColumn;
-				int				cFirstLineIdx;
 
 				bool			cIncludeManagment;
 

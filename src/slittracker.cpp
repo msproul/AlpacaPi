@@ -257,7 +257,6 @@ int					mySocket;
 
 	JsonResponse_Add_Finish(mySocket,
 							reqData->jsonTextBuffer,
-							kMaxJsonBuffLen,
 							kInclude_HTTP_Header);
 #ifdef _DEBUG_CONFORM_
 	CONSOLE_DEBUG_W_STR("Output JSON\t=", reqData->jsonTextBuffer);
