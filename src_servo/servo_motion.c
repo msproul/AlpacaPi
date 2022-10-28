@@ -31,6 +31,8 @@
 //*	Jul  7,	2022	<RNS> Fixed a bug where encoderMaxRate was not set 
 //*	Jul 11,	2022	<RNS> Tweaked the _PID functions to work better for RC
 //*	Jul 12,	2022	<RNS> Moved code around to help with the queue glitch
+//*	Oct 27,	2022	<RNS> Changed reset_motor() to use motion and not RC calls
+//*	Oct 28,	2022	<RNS> Added set/get calls for absZero motor field
 //*****************************************************************************
 
 #include <stdio.h>
@@ -175,6 +177,37 @@ TYPE_MOTION_MOTOR	*motor;
 
 	// return the tracking rate
 	return motor->trackRate;
+} // of Motion_get_axis_trackRate()
+
+
+//*************************************************************************
+// Sets the specified axis's velocity tracking speed field
+// Returns error if the axis ID is out of range, otherwise OK
+//*************************************************************************
+void Motion_set_axis_absZero(uint8_t axis, int32_t count)
+{
+TYPE_MOTION_MOTOR	*motor;
+
+	// find the correct motor data
+	motor	=	Motion_get_motor_ptr(axis);
+
+	// set the absolute zero position
+	motor->absZero	=	count;
+	return;
+}
+
+//*****************************************************************************
+// Returns the current tracking rate from motor controller axis in steps/sec
+//*****************************************************************************
+int32_t Motion_get_axis_absZero(uint8_t axis)
+{
+TYPE_MOTION_MOTOR	*motor;
+
+	// find the correct motor data
+	motor	=	Motion_get_motor_ptr(axis);
+
+	// return the absolute zero position
+	return motor->absZero;
 } // of Motion_get_axis_trackRate()
 
 //*************************************************************************
@@ -417,7 +450,23 @@ TYPE_MOTION_MOTOR	*motor;
 	RC_stop(motor->addr, axis);
 	return kSTATUS_OK;
 }
+
 //*************************************************************************
+// Sets the axis zero position, formerly known as 'home'
+//*************************************************************************
+int Motion_set_axis_zero(uint8_t axis)
+{
+TYPE_MOTION_MOTOR	*motor;
+
+	motor	=	Motion_get_motor_ptr(axis);
+	if (motor == NULL)
+	{
+		return kERROR;
+	}
+	RC_set_home(motor->addr, axis);
+	return kSTATUS_OK;
+
+}//*************************************************************************
 // Resets the specified axis to a known good state
 //*************************************************************************
 int Motion_reset_axis(uint8_t axis)
@@ -437,23 +486,10 @@ TYPE_MOTION_MOTOR	*motor;
 		printf("ERROR!!!  Motion_reset_axis() returned error\n");
 	}
 	Motion_set_axis_buffer(axis, false);
-	RC_set_home(motor->addr, axis);
-	return kSTATUS_OK;
-}
+	// CO'd to use the motion* routine instead of the RC* routine 
+	//RC_set_home(motor->addr, axis);
+	Motion_set_axis_zero(axis);
 
-//*************************************************************************
-// Sets the axis zero position, formerly known as 'home'
-//*************************************************************************
-int Motion_set_axis_zero(uint8_t axis)
-{
-TYPE_MOTION_MOTOR	*motor;
-
-	motor	=	Motion_get_motor_ptr(axis);
-	if (motor == NULL)
-	{
-		return kERROR;
-	}
-	RC_set_home(motor->addr, axis);
 	return kSTATUS_OK;
 }
 

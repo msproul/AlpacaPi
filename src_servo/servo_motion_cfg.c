@@ -32,6 +32,7 @@
 //*	Jul  4,	2022	<RNS> renamed .position field to .state
 //*	Jul  6,	2022	<MLS> Added Servo_check_motion_cfg()
 //*	Jul  7,	2022	<RNS> Added support for *_ENC_MAX: and encoderMaxRate
+//*	Oct 28,	2022	<RNS> Added support for absZero field 
 //****************************************************************************
 
 #include <stdio.h>
@@ -518,6 +519,7 @@ void Test_print_motion_motor(TYPE_MOTION_MOTOR *ax)
 	printf("ax->state = %d\n", ax->state);
 	printf("ax->acc = %d\n", ax->acc);
 	printf("ax->vel = %d\n", ax->vel);
+	printf("ax->absZero = %d\n", ax->absZero);
 	printf("ax->kp = %f\n", ax->kp);
 	printf("ax->ki = %f\n", ax->ki);
 	printf("ax->kd = %f\n", ax->kd);

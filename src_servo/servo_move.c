@@ -16,7 +16,11 @@ double		currRa, currDec;
 Servo_init(kOBSERV_CFG_FILE, kMOUNT_CFG_FILE, kMOTION_CFG_FILE);
 Servo_unpark(); 
 
-printf("SERVO MOVE Utility... Stopping Mount.\n");
+printf("SERVO MOVE Utility - stops mount and then moves mount relative hours and degrees\n");
+printf("USAGE ->  1 15 <RET> moves +1 hour in RA and +15 degs in Dec\n");
+printf("USAGE ->  No input agrs just stops mount\n");
+
+printf("\nSERVO MOVE Utility... Stopping Mount.\n");
 printf("** LST:%f\n", Servo_get_lst());
 Servo_stop_axes(SERVO_BOTH_AXES);
 
