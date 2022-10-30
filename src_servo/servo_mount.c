@@ -91,7 +91,7 @@
 //*	Jul 20,	2022	<RNS> Fixed sign error in _move_to_static for relative RA direction
 //*	Jul 20,	2022	<RNS> Fixed if-else braces error in COP for Fork mount
 //*	Jul 22,	2022	<RNS> Fixed incorrect direction sign in flip_coordins 
-
+//*	Oct 28,	2022	<RNS> Added support to initilize motor absZero field
 //*****************************************************************************
 
 //*****************************************************************************
@@ -788,7 +788,8 @@ double	currRa, currDec;
 		gMountConfig.ra.defaultRate = -kSIDER_RATE_ARCSECS * gMountConfig.ra.direction * gSysDepend * gMountConfig.ra.step;
 		Servo_set_axis_tracking(SERVO_RA_AXIS, gMountConfig.ra.defaultRate);
 
-		// Servo_set_axis_step_track(SERVO_RA_AXIS, (kSIDER_RATE_ARCSECS * (double)gMountConfig.ra.step));
+		// Initialize all the zero position fields and set timestamp
+		Motion_set_axis_absZero(SERVO_RA_AXIS, 0); 
 		gMountConfig.ra.zeroPos = 0.0;
 		gMountConfig.ra.zeroTS = Time_get_systime();
 
@@ -804,12 +805,10 @@ double	currRa, currDec;
 		gMountConfig.dec.guideRate = (uint32_t)gMountConfig.dec.realAdj * gMountConfig.dec.step;
 		gMountConfig.dec.manSlewRate = (uint32_t)gMountConfig.dec.realSlew * gMountConfig.dec.step;
 		gMountConfig.dec.direction = gMountConfig.dec.config;
-
-		// Set the PID value in MC with the profile from motion config file data
 		Motion_set_axis_profile(SERVO_DEC_AXIS);
-
 		gMountConfig.dec.defaultRate = 0;
 		Servo_set_axis_tracking(SERVO_DEC_AXIS, gMountConfig.dec.defaultRate);
+		Motion_set_axis_absZero(SERVO_DEC_AXIS, 0); 
 		gMountConfig.dec.zeroPos = 0.0;
 		gMountConfig.dec.zeroTS = Time_get_systime();
 

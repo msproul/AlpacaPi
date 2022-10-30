@@ -28,6 +28,7 @@
 //*	Jul  3,	2022	<RNS> Moved enum of config files to .c file
 //*	Jul  6,	2022	<MLS> Moved enums BACK to .h file
 //*	Jul  7,	2022	<RNS> Added enum support for max encoder rate
+//*	Oct 28,	2022	<RNS> added absZero field for  original zero relative to currpos
 //****************************************************************************
 //#include	"servo_motion_cfg.h"
 
@@ -83,6 +84,8 @@ typedef struct
 	uint32_t			acc;
 	uint32_t			vel;
 	int32_t				trackRate;
+	int32_t				absZero;
+
 	// Common PID + intergration limit fields for MCs
 	double				kp;
 	double				ki;

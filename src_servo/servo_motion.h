@@ -24,6 +24,7 @@
 //*	Jul  2,	2022	<RNS> Initial version of this file via cproto
 //*	Jul  3,	2022	<RNS> Updated via cproto
 //*	Jul  5,	2022	<RNS> Updated via cproto
+//*	Oct 28,	2022	<RNS> Updated via cproto
 //****************************************************************************
 //#include	"servo_motion.h"
 
@@ -51,6 +52,8 @@ int					Motion_set_axis_vel(uint8_t axis, uint32_t vel);
 int					Motion_get_axis_vel(uint8_t axis, uint32_t *vel);
 void				Motion_set_axis_trackRate(uint8_t axis, int32_t track);
 int32_t				Motion_get_axis_trackRate(uint8_t axis);
+void 				Motion_set_axis_absZero(uint8_t axis, int32_t count);
+int32_t				Motion_get_axis_absZero(uint8_t axis);
 int					Motion_get_axis_curr_step(uint8_t axis, int32_t *step);
 int					Motion_get_axis_curr_vel(uint8_t axis, int32_t *vel);
 int					Motion_set_axis_buffer(uint8_t axis, bool state);
@@ -61,8 +64,8 @@ int					Motion_move_axis_by_step(uint8_t axis, int32_t step);
 int					Motion_move_axis_by_vel(uint8_t axis, int32_t vel);
 int					Motion_move_axis_by_time(uint8_t axis, int32_t vel, double seconds);
 int					Motion_stop_axis(uint8_t axis);
-int					Motion_reset_axis(uint8_t axis);
 int					Motion_set_axis_zero(uint8_t axis);
+int					Motion_reset_axis(uint8_t axis);
 int					Motion_get_pending_cmds(uint8_t *raState, uint8_t *decState);
 int					Motion_init(const char *motionCfgFile);
 
