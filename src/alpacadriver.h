@@ -135,9 +135,11 @@ enum
 #endif // _INCLUDE_EXIT_COMMAND_
 	kCmd_Common_Extras,
 	kCmd_Common_LiveWindow,
+	kCmd_Common_TemperatureLog,
 
 	kCmd_Common_last
 };
+
 
 //*****************************************************************************
 enum
@@ -175,7 +177,6 @@ typedef struct
 } TYPE_UniqueID;
 
 //*****************************************************************************
-#define	kCommonCmdCnt	13
 #define	kDeviceCmdCnt	100
 typedef struct
 {
@@ -213,8 +214,15 @@ class AlpacaDriver
 		//
 		// Construction
 		//
-				AlpacaDriver(TYPE_DEVICETYPE argDeviceType);
-		virtual	~AlpacaDriver(void);
+						AlpacaDriver(TYPE_DEVICETYPE argDeviceType);
+		virtual			~AlpacaDriver(void);
+
+		virtual	int32_t	RunStateMachine(void);	//*	returns delay time in micro-seconds
+		virtual int		UpdateProperties(void);
+
+
+		virtual	bool	AlpacaConnect(void);	//*	Connect and Disconnect names conflicted with other libraries
+		virtual	bool	AlpacaDisConnect(void);
 
 		virtual	TYPE_ASCOM_STATUS		ProcessCommand(			TYPE_GetPutRequestData *reqData);
 				TYPE_ASCOM_STATUS		ProcessCommand_Common(	TYPE_GetPutRequestData *reqData, const int cmdEnum, char *alpacaErrMsg);
@@ -235,13 +243,12 @@ class AlpacaDriver
 				TYPE_ASCOM_STATUS		Get_Readall_CPUstats(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 
 
-						//*	Connect and Disconnect conflicted with other libraries
-		virtual	bool	AlpacaConnect(void);
-		virtual	bool	AlpacaDisConnect(void);
 
 		virtual	void	OutputHTML(				TYPE_GetPutRequestData *reqData);
 		virtual	void	OutputHTML_Part2(		TYPE_GetPutRequestData *reqData);
-		virtual	int32_t	RunStateMachine(void);	//*	returns delay time in micro-seconds
+				void	OutputHTML_DriverDocs(	TYPE_GetPutRequestData *reqData);
+				void	OutputCommadTable(int mySocketFD, const char *title, const TYPE_CmdEntry *commandTable);
+		virtual void	GetCommandArgumentString(const int cmdNumber, char *agumentString);
 
 				void	OutputHTMLrowData(int socketFD, const char *string1, const char *string2);
 				void	OutputHTML_CmdStats(	TYPE_GetPutRequestData *reqData);
@@ -253,8 +260,10 @@ class AlpacaDriver
 
 				//*	start with the Alpaca properties
 				TYPE_CommonProperties	cCommonProp;
+				TYPE_CmdEntry			*cDriverCmdTablePtr;
 
-
+				bool				cHttpHeaderSent;
+				bool				cRunStartupOperations;
 				bool				cVerboseDebug;
 				uint32_t			cMagicCookie;		//*	used to validate objects
 				TYPE_DEVICETYPE		cDeviceType;
@@ -295,7 +304,7 @@ class AlpacaDriver
 		virtual bool				GetCmdNameFromMyCmdTable(const int cmdNumber, char *comandName, char *getPut);
 
 //				bool				cDeviceConnected;		//*	normally always true
-				TYPE_CMD_STATS		cCommonCmdStats[kCommonCmdCnt];
+				TYPE_CMD_STATS		cCommonCmdStats[kCmd_Common_last];
 				TYPE_CMD_STATS		cDeviceCmdStats[kDeviceCmdCnt];
 
 				//=========================================================
@@ -330,6 +339,21 @@ class AlpacaDriver
 				uint64_t				cAccumilatedNanoSecs;
 				uint64_t				cTotalNanoSeconds;
 				uint64_t				cTotalMilliSeconds;
+		//*	cpu usage statistics
+				void					ComputeCPUusage(void);
+				struct rusage			cRusage;
+
+		//-------------------------------------------------------------------------
+		//*	Temperature logging
+				void				TemperatureLog_Init(void);
+				void				TemperatureLog_SetDescription(const char *description);
+				void				TemperatureLog_AddEntry(const double temperatureEntry);
+				TYPE_ASCOM_STATUS	Get_TemperatureLog(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+				char				cTempLogDescription[32];
+				double				cTemperatureLog[kTemperatureLogEntries + 10];
+				uint32_t			cLastTempUpdate_Secs;
+
+
 
 	#ifdef _USE_OPENCV_
 		//-------------------------------------------------------------------------
@@ -341,9 +365,6 @@ class AlpacaDriver
 	#endif // _USE_OPENCV_
 
 
-		//*	cpu usage statistics
-				void					ComputeCPUusage(void);
-				struct rusage			cRusage;
 };
 
 //**************************************************************************************
@@ -396,7 +417,8 @@ void			GetAlpacaName(TYPE_DEVICETYPE deviceType, char *alpacaName);
 
 //*	this is a macro to help make all error messages consistent
 #define	GENERATE_ALPACAPI_ERRMSG(buffer,errmsg)		\
-		sprintf(buffer, "AlpacaPi:%s:%s:%d", errmsg, __FUNCTION__, __LINE__);
+		sprintf(buffer, "AlpacaPi:%s: %s: %d", errmsg, __FUNCTION__, __LINE__);
+
 
 #ifdef __cplusplus
 }

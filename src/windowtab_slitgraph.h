@@ -30,15 +30,12 @@ enum
 	kSlitGraph_Clock10,
 	kSlitGraph_Clock11,
 
-
 	kSlitGraph_DisplayRaw,
 	kSlitGraph_DisplayAvg,
 
-//	kSlitGraph_RemoteAddress,
-
-
+	kSlitGraph_LastCmdString,
 	kSlitGraph_AlpacaLogo,
-	kSlitGraph_AlpacaDrvrVersion,
+	kSlitGraph_AlpacaErrorMsg,
 	kSlitGraph_IPaddr,
 	kSlitGraph_Readall,
 

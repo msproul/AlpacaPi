@@ -107,9 +107,13 @@ int		iii;
 //	SetWidgetText(kUSBselect_BtnCrawler,		"Moonlite Crawler");
 
 	//=======================================================
-	//*	IP address
-	CONSOLE_DEBUG(__FUNCTION__);
-	SetIPaddressBoxes(kUSBselect_IPaddr, -1, kUSBselect_AlpacaDrvrVersion, -1);
+	//*	set up all the bottom stuff so that it is the same on all windowtabs
+	SetupWindowBottomBoxes(	kUSBselect_IPaddr,
+							-1,	//	kUSBselect_Readall,
+							-1,	//	kUSBselect_AlpacaErrorMsg,
+							-1,	//	kUSBselect_LastCmdString,
+							kUSBselect_AlpacaLogo,
+							-1);
 
 }
 

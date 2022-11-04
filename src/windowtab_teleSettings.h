@@ -78,7 +78,7 @@ enum
 	kTeleSettings_LastCmdString,
 	kTeleSettings_AlpacaLogo,
 
-	kTeleSettings_AlpacaDrvrVersion,
+	kTeleSettings_AlpacaErrorMsg,
 	kTeleSettings_IPaddr,
 	kTeleSettings_Readall,
 
@@ -105,7 +105,11 @@ class WindowTabTeleSettings: public WindowTab
 //		virtual	void	DrawWindow(void);
 //		virtual void	HandleKeyDown(const int keyPressed);
 		virtual	void	ProcessButtonClick(const int buttonIdx, const int flags);
-		virtual	void	ProcessDoubleClick(const int buttonIdx);
+		virtual	void	ProcessDoubleClick(const int	widgetIdx,
+											const int	event,
+											const int	xxx,
+											const int	yyy,
+											const int	flags);
 
 //				void	UpdateButtons(void);
 				void	UpdateTelescopeInfo(TYPE_TelescopeProperties *telescopeProp, bool updateAll);

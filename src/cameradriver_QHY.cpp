@@ -36,6 +36,8 @@
 //*	Sep 18,	2021	<MLS> Trying to use QHY camera for guide scope
 //*	Sep 18,	2021	<MLS> Fixed memory leak in CameraDriverQHY::Read_ImageData()
 //*	Apr 15,	2022	<MLS> Installed QHY5III462C on WO102 ONAG guider
+//*----------------------------------------------------------------------------
+//*	Oct 10,	2122	<TODO> Add support for percentcompleted to QHY camera driver
 //*****************************************************************************
 
 #if defined(_ENABLE_CAMERA_) && defined(_ENABLE_QHY_)
@@ -126,11 +128,11 @@ bool			rulesFileOK;
 					kASCOM_Err_Success,
 					driverVersionString);
 
+		//*	see how many QHY cameras are attached
 		qhyCameraCnt	=	ScanQHYCCD();
 		CONSOLE_DEBUG_W_INT32("qhyCameraCnt\t=",	qhyCameraCnt);
 		for(iii=0; iii < qhyCameraCnt; iii++)
 		{
-
 			qhyRetCode = GetQHYCCDId(iii, qhyIDstring);
 			if (qhyRetCode == QHYCCD_SUCCESS)
 			{
@@ -762,7 +764,7 @@ TYPE_ASCOM_STATUS	CameraDriverQHY::Read_Gain(int *cameraGainValue)
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 double				rawGainValue;
 
-//	if (gVerbose)
+	if (gVerbose)
 	{
 		CONSOLE_DEBUG(__FUNCTION__);
 	}
@@ -871,7 +873,7 @@ TYPE_EXPOSURE_STATUS	CameraDriverQHY::Check_Exposure(bool verboseFlag)
 uint32_t				precentRemaining;
 TYPE_EXPOSURE_STATUS	myExposureStatus;
 
-//	if (gVerbose)
+	if (gVerbose)
 	{
 		CONSOLE_DEBUG(__FUNCTION__);
 	}
@@ -890,7 +892,7 @@ TYPE_EXPOSURE_STATUS	myExposureStatus;
 		}
 		else if (cInternalCameraState == kCameraState_TakingPicture)
 		{
-			myExposureStatus		=	kExposure_Success;
+			myExposureStatus	=	kExposure_Success;
 		}
 		else
 		{
@@ -933,12 +935,15 @@ uint32_t			qhyRetCode;
 			case kImageType_RGB24:
 				qhyRetCode	=	SetQHYCCDDebayerOnOff(cQHYcamHandle, true);
 				CONSOLE_DEBUG_W_NUM("SetQHYCCDDebayerOnOff/qhyRetCode\t=", qhyRetCode);
+
 				qhyRetCode	=	SetQHYCCDParam(cQHYcamHandle, CONTROL_WBR, 20);
-				CONSOLE_DEBUG_W_NUM("SetQHYCCDParam/qhyRetCode\t=", qhyRetCode);
+//				CONSOLE_DEBUG_W_NUM("SetQHYCCDParam/qhyRetCode\t=", qhyRetCode);
+
 				qhyRetCode	=	SetQHYCCDParam(cQHYcamHandle, CONTROL_WBG, 20);
-				CONSOLE_DEBUG_W_NUM("SetQHYCCDParam/qhyRetCode\t=", qhyRetCode);
+//				CONSOLE_DEBUG_W_NUM("SetQHYCCDParam/qhyRetCode\t=", qhyRetCode);
+
 				qhyRetCode	=	SetQHYCCDParam(cQHYcamHandle, CONTROL_WBB, 20);
-				CONSOLE_DEBUG_W_NUM("SetQHYCCDParam/qhyRetCode\t=", qhyRetCode);
+//				CONSOLE_DEBUG_W_NUM("SetQHYCCDParam/qhyRetCode\t=", qhyRetCode);
 
 				cROIinfo.currentROIimageType	=	kImageType_RGB24;
 				break;

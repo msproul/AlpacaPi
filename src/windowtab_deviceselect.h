@@ -48,10 +48,6 @@ enum
 
 
 	kDeviceSelect_AlpacaLogo,
-//	kDeviceSelect_AlpacaDrvrVersion,
-//	kDeviceSelect_IPaddr,
-//	kDeviceSelect_Readall,
-
 
 	kDeviceSelect_last
 };

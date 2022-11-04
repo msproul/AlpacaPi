@@ -219,28 +219,7 @@ void	ControllerCamNormal::DisableFilterWheel(void)
 //**************************************************************************************
 void	ControllerCamNormal::UpdateCapabilityList(void)
 {
-int		boxID;
-int		iii;
-char	textString[80];
-
-//	CONSOLE_DEBUG(__FUNCTION__);
-
-	iii	=	0;
-	while (cCapabilitiesList[iii].capabilityName[0] != 0)
-	{
-		boxID	=	kCapabilities_TextBox1 + iii;
-		strcpy(textString,	cCapabilitiesList[iii].capabilityName);
-		strcat(textString,	":\t");
-		strcat(textString,	cCapabilitiesList[iii].capabilityValue);
-
-//		CONSOLE_DEBUG(textString);
-
-		if (boxID <= kCapabilities_TextBoxN)
-		{
-			SetWidgetText(kTab_Capabilities, boxID, textString);
-		}
-		iii++;
-	}
+	UpdateCapabilityListID(kTab_Capabilities, kCapabilities_TextBox1, kCapabilities_TextBoxN);
 }
 
 #pragma mark -
@@ -274,7 +253,7 @@ void	ControllerCamNormal::UpdateSettings_Object(const char *filePrefix)
 void	ControllerCamNormal::AlpacaDisplayErrorMessage(const char *errorMsgString)
 {
 //	CONSOLE_DEBUG_W_STR("Alpaca error=", errorMsgString);
-	SetWidgetText(kTab_Camera, kCameraBox_ErrorMsg, errorMsgString);
+	SetWidgetText(kTab_Camera, kCameraBox_AlpacaErrorMsg, errorMsgString);
 }
 
 
@@ -301,8 +280,8 @@ void	ControllerCamNormal::UpdateSupportedActions(void)
 		SetWidgetCrossedout(kTab_Settings, kCamSet_ObjOutline,		true);
 		SetWidgetCrossedout(kTab_Settings, kCamSet_FilenameOutline, true);
 
-		SetWidgetText(kTab_Camera,		kCameraBox_AlpacaDrvrVersion,	"readall not supported");
-		SetWidgetText(kTab_Settings,	kCamSet_AlpacaDrvrVersion,		"readall not supported");
+		SetWidgetText(kTab_Camera,		kCamSet_AlpacaErrorMsg,	"readall not supported");
+		SetWidgetText(kTab_Settings,	kCamSet_AlpacaErrorMsg,	"readall not supported");
 	}
 	SetWidgetValid(kTab_Camera,	kCameraBox_AutoExposure,		cHas_autoexposure);
 	SetWidgetValid(kTab_Camera,	kCameraBox_DisplayImage,		cHas_displayimage);
@@ -312,14 +291,6 @@ void	ControllerCamNormal::UpdateSupportedActions(void)
 	SetWidgetValid(kTab_Camera,	kCameraBox_SaveAll,				cHas_SaveAll);
 
 	UpdateAboutBoxRemoteDevice(kTab_About, kAboutBox_CPUinfo);
-}
-
-//*****************************************************************************
-void	ControllerCamNormal::UpdateRemoteAlpacaVersion(void)
-{
-	SetWidgetText(kTab_Camera,		kCameraBox_AlpacaDrvrVersion,	cAlpacaVersionString);
-	SetWidgetText(kTab_Settings,	kCamSet_AlpacaDrvrVersion,		cAlpacaVersionString);
-	SetWidgetText(kTab_FileList,	kFileList_AlpacaDrvrVersion,	cAlpacaVersionString);
 }
 
 //*****************************************************************************

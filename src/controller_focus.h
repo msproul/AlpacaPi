@@ -42,7 +42,7 @@
 
 
 #define	kFocuserBoxWidth	400
-#define	kFocuserBoxHeight	715
+#define	kFocuserBoxHeight	750
 
 
 //**************************************************************************************
@@ -91,6 +91,7 @@ class ControllerFocus: public Controller
 
 //		virtual	void	ProcessButtonClick(const int buttonIdx);
 		virtual	void	RunBackgroundTasks(const char *callingFunction=NULL, bool enableDebug=false);
+		virtual	void	AlpacaDisplayErrorMessage(const char *errorMsgString);
 
 		//*	sub class specific routines
 
@@ -107,7 +108,6 @@ class ControllerFocus: public Controller
 		virtual	void	UpdateWindowTabs_ReadAll(bool hasReadAll);
 		virtual	void	UpdateWindowTabs_SwitchBits(unsigned char switchBits);
 		virtual	void	UpdateWindowTabs_AuxSwitchBits(unsigned char auxSwitchBits);
-		virtual	void	UpdateWindowTabs_Version(const char *versionString);
 		virtual	void	UpdateWindowTabs_DesiredFocusPos(const int newDesiredPoistion);
 		virtual	void	UpdateWindowTabs_DesiredRotatorPos(const int newDesiredPoistion);
 		virtual	void	UpdateWindowTabs_DesiredAuxPos(const int newDesiredPoistion);

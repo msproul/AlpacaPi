@@ -153,7 +153,6 @@ void	ObservatorySettings_Init(void)
 //	CONSOLE_DEBUG(__FUNCTION__);
 	memset(&gObseratorySettings, 0, sizeof(TYPE_OBSERVATORY_SETTINGS));
 
-	ObservatorySettings_CreateTemplateFile();
 }
 
 //*****************************************************************************
@@ -427,13 +426,19 @@ bool	ObservatorySettings_ReadFile(void)
 bool	configFileOK;
 int		linesRead;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
+	ObservatorySettings_Init();
 	configFileOK	=	false;
 	linesRead		=	ReadGenericConfigFile("observatorysettings.txt", '=', &ProcessObsSettingsConfig);
 	if (linesRead > 5)
 	{
 		configFileOK	=	true;
 	}
+	else
+	{
+		ObservatorySettings_CreateTemplateFile();
+	}
+
 	if (gObseratorySettings.KeyWordCount > 10)
 	{
 		gObseratorySettings.ValidInfo	=	true;

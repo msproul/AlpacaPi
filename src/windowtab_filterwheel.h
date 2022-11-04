@@ -25,7 +25,7 @@ enum
 
 	kFilterWheel_LastCmdString,
 	kFilterWheel_AlpacaLogo,
-	kFilterWheel_AlpacaDrvrVersion,
+	kFilterWheel_AlpacaErrorMsg,
 	kFilterWheel_IPaddr,
 	kFilterWheel_Readall,
 

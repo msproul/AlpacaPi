@@ -35,6 +35,7 @@
 //*	May  3,	2022	<MLS> Added WriteIMUtextFile()
 //*	Jul  7,	2022	<MLS> Added Quaternion data to WriteIMUtextFile()
 //*	Jul 25,	2022	<MLS> Increased # of decimal points in WriteIMUtextFile()
+//*	Oct  5,	2022	<MLS> Added ReadIMUdata()
 //*****************************************************************************
 
 #ifdef _ENABLE_CAMERA_
@@ -88,6 +89,12 @@ int	ii;
 
 	if (cCameraDataBuffer != NULL)
 	{
+	#ifdef _ENABLE_IMU_
+		//*	we want to do this first so the readings are closest to the time we took the picture
+		ReadIMUdata();
+		WriteIMUtextFile();
+	#endif
+
 	#ifdef _INCLUDE_HISTOGRAM_
 		CalculateHistogramArray();
 		//*	Apr 15,	2022	<MLS> Disabled Histogram to speed up saving files
@@ -99,13 +106,11 @@ int	ii;
 		SaveOpenCVImage();
 	#endif	//	_USE_OPENCV_
 
+
 	#if defined(_ENABLE_JPEGLIB_) && !defined(_USE_OPENCV_)
 		SaveUsingJpegLib();
 	#endif	//	_ENABLE_JPEGLIB_
 
-	#ifdef _ENABLE_IMU_
-		WriteIMUtextFile();
-	#endif
 
 	//*	we want FITS to be last so it can include info about other save data products
 	#ifdef _ENABLE_FITS_
@@ -771,6 +776,53 @@ int		gainPercent;
 }
 
 #ifdef _ENABLE_IMU_
+//**************************************************************************
+//*	we only want to read the data ONCE for each frame.
+//*	Reading multiple times proved to give different answers
+//**************************************************************************
+void	CameraDriver::ReadIMUdata(void)
+{
+double	imuHeading;
+double	imuRoll;
+double	imuPitch;
+double	imuwww;
+double	imuxxx;
+double	imuyyy;
+double	imuzzz;
+int		imuRetCode;
+
+	//*	set default values
+	cIMU_EulerValid	=	false;
+	cIMU_Heading	=	0.0;
+	cIMU_Roll		=	0.0;
+	cIMU_Pitch		=	0.0;
+	cIMU_QuatValid	=	false;
+	cIMU_www		=	0.0;
+	cIMU_xxx		=	0.0;
+	cIMU_yyy		=	0.0;
+	cIMU_zzz		=	0.0;
+	imuRetCode	=	IMU_Read_Euler(&imuHeading, &imuRoll, &imuPitch);
+	if (imuRetCode == 0)
+	{
+		cIMU_EulerValid	=	true;
+		cIMU_Heading	=	imuHeading;
+		cIMU_Roll		=	imuRoll;
+		cIMU_Pitch		=	imuPitch;
+	}
+	imuRetCode	=	IMU_Read_Quaternion(&imuwww, &imuxxx, &imuyyy, &imuzzz);
+	if (imuRetCode == 0)
+	{
+		cIMU_QuatValid	=	true;
+		cIMU_www		=	imuwww;
+		cIMU_xxx		=	imuxxx;
+		cIMU_yyy		=	imuyyy;
+		cIMU_zzz		=	imuzzz;
+	}
+	cIMU_Cal_Gyro	=	IMU_Get_Calibration(kIMU_Gyro);
+	cIMU_Cal_Acce	=	IMU_Get_Calibration(kIMU_Accelerometer);
+	cIMU_Cal_Magn	=	IMU_Get_Calibration(kIMU_Magnetometer);
+	cIMU_Cal_Syst	=	IMU_Get_Calibration(kIMU_System);
+}
 
 //**************************************************************************
 void	CameraDriver::WriteIMUtextFile(void)
@@ -778,14 +830,6 @@ void	CameraDriver::WriteIMUtextFile(void)
 char	imageFileName[64];
 char	imageFilePath[128];
 FILE	*filePointer;
-double	imuHeading;
-double	imuRoll;
-double	imuPitch;
-int		imuRetCode;
-double	xxx;
-double	yyy;
-double	zzz;
-double	www;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -801,35 +845,37 @@ double	www;
 	{
 		fprintf(filePointer, "#using bno055 sensor\r\n");
 		fprintf(filePointer, "Image   =%s\r\n",		cFileNameRoot);
-		imuRetCode	=	IMU_Read_Euler(&imuHeading, &imuRoll, &imuPitch);
-		if (imuRetCode == 0)
+		if (cIMU_EulerValid)
 		{
-			fprintf(filePointer, "Heading =%3.5f\r\n",	imuHeading);
-			fprintf(filePointer, "Roll    =%3.5f\r\n",	imuRoll);
-			fprintf(filePointer, "Pitch   =%3.5f\r\n",	imuPitch);
+			fprintf(filePointer, "Heading =%3.5f\r\n",	cIMU_Heading);
+			fprintf(filePointer, "Roll    =%3.5f\r\n",	cIMU_Roll);
+			fprintf(filePointer, "Pitch   =%3.5f\r\n",	cIMU_Pitch);
 		}
 		else
 		{
 			fprintf(filePointer, "Error getting IMU data\r\n");
 		}
 
-		imuRetCode	=	IMU_Read_Quaternion(&www, &xxx, &yyy, &zzz);
-		if (imuRetCode == 0)
+		if (cIMU_QuatValid)
 		{
-			fprintf(filePointer, "www   =%3.5f\r\n",	www);
-			fprintf(filePointer, "xxx   =%3.5f\r\n",	xxx);
-			fprintf(filePointer, "yyy   =%3.5f\r\n",	yyy);
-			fprintf(filePointer, "zzz   =%3.5f\r\n",	zzz);
+			fprintf(filePointer, "www   =%3.5f\r\n",	cIMU_www);
+			fprintf(filePointer, "xxx   =%3.5f\r\n",	cIMU_xxx);
+			fprintf(filePointer, "yyy   =%3.5f\r\n",	cIMU_yyy);
+			fprintf(filePointer, "zzz   =%3.5f\r\n",	cIMU_zzz);
 		}
 		else
 		{
 			fprintf(filePointer, "Error getting IMU data\r\n");
 		}
+		fprintf(filePointer,	"IMU-Calibration values 0=uncalibrated 3 = fully calibrated\r\n");
+		fprintf(filePointer,	"IMU-Cal-Gyro   =%d\r\n",	cIMU_Cal_Gyro);
+		fprintf(filePointer,	"IMU-Cal-Acce   =%d\r\n",	cIMU_Cal_Acce);
+		fprintf(filePointer,	"IMU-Cal-Magn   =%d\r\n",	cIMU_Cal_Magn);
+		fprintf(filePointer,	"IMU-Cal-Syst   =%d\r\n",	cIMU_Cal_Syst);
 
 		fclose(filePointer);
 
 		AddToDataProductsList(imageFileName, "IMU data");
-
 	}
 	else
 	{

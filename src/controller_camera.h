@@ -93,7 +93,6 @@ class ControllerCamera: public Controller
 		virtual	void	UpdatePercentCompleted(void);
 
 		virtual	void	UpdateSupportedActions(void);
-		virtual	void	UpdateRemoteAlpacaVersion(void);
 		virtual	void	UpdateReadoutModes(void);
 		virtual	void	UpdateCurrReadoutMode(void);
 		virtual	void	UpdateCoolerState(void);

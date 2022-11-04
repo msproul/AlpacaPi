@@ -15,6 +15,10 @@
 #ifndef _OBSERVINGCONDITIONSDRIVER_H_
 #define	_OBSERVINGCONDITIONSDRIVER_H_
 
+#ifndef	_ALPACA_DEFS_H_
+	#include	"alpaca_defs.h"
+#endif // _ALPACA_DEFS_H_
+
 #ifndef _ALPACA_DRIVER_H_
 	#include	"alpacadriver.h"
 #endif

@@ -582,6 +582,7 @@ TYPE_MOVE 	currentMoveState;
 	currentMoveState	=	Servo_state();
 	if (currentMoveState == MOVING || currentMoveState == PARKING)
 	{
+		CONSOLE_DEBUG("Setting cTelescopeProp.Slewing to TRUE");
 		cTelescopeProp.Slewing	=	true;
 	}
 	else
@@ -650,6 +651,7 @@ int					servoStatus;
 		}
 		if (servoStatus == kSTATUS_OK)
 		{
+			CONSOLE_DEBUG("Setting cTelescopeProp.Slewing to TRUE");
 			cTelescopeProp.Slewing	=	true;
 			alpacaErrCode			=	kASCOM_Err_Success;
 		}
@@ -701,6 +703,7 @@ int					servoStatus;
 	if (servoStatus == kSTATUS_OK)
 	{
 		//	Mount is moving to the park position
+		CONSOLE_DEBUG("Setting cTelescopeProp.Slewing to TRUE");
 		cTelescopeProp.Slewing			=	true;
 
 		CONSOLE_DEBUG(alpacaErrMsg);

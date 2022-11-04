@@ -25,6 +25,7 @@
 //*	Feb 27,	2022	<MLS> Changed cOpenCV_Image to cOpenCV_ImagePtr
 //*	May  5,	2022	<MLS> Added cOffsetSupported flag
 //*	May 15,	2022	<MLS> Added cSubDurationSupported flag
+//*	Oct  9,	2022	<MLS> Added cCameraIsSiumlated flag
 //*****************************************************************************
 //#include	"cameradriver.h"
 
@@ -535,6 +536,24 @@ class CameraDriver: public AlpacaDriver
 				TYPE_FITS_RECORD	cFitsHeader[kMaxFitsRecords];
 
 			#endif // _ENABLE_FITS_
+			#ifdef _ENABLE_IMU_
+				void	ReadIMUdata(void);
+				bool	cIMU_EulerValid;
+				bool	cIMU_QuatValid;
+				double	cIMU_Heading;
+				double	cIMU_Roll;
+				double	cIMU_Pitch;
+
+				double	cIMU_www;
+				double	cIMU_xxx;
+				double	cIMU_yyy;
+				double	cIMU_zzz;
+				int		cIMU_Cal_Gyro;
+				int		cIMU_Cal_Acce;
+				int		cIMU_Cal_Magn;
+				int		cIMU_Cal_Syst;
+			#endif
+
 			#ifdef _ENABLE_JPEGLIB_
 				void	SaveUsingJpegLib(void);
 			#endif	//	_ENABLE_JPEGLIB_
@@ -660,12 +679,13 @@ protected:
 	//=========================================================================================
 	//=========================================================================================
 	//*	non-alpaca stuff
-	long		cExposureDefault_us;	//*	micro-seconds
 
+
+	bool		cCameraIsSiumlated;
+	bool		cUpdateOtherDevices;
 	bool		cCanFlipImage;
 	int			cFlipMode;
-
-	bool		cUpdateOtherDevices;
+	long		cExposureDefault_us;	//*	micro-seconds
 	//=========================================================================================
 	bool		cTempReadSupported;				//*	true if temperature can be read from device
 	bool		cOffsetSupported;				//*	true pixel value offset is supported
@@ -897,8 +917,8 @@ typedef struct
 }	TYPE_SensorName;
 
 
-extern	const TYPE_CmdEntry	gCameraCmdTable[];
-extern	const char			*gCameraStateStrings[];
+extern	TYPE_CmdEntry	gCameraCmdTable[];
+extern	const char		*gCameraStateStrings[];
 
 void	GetImageTypeString(TYPE_IMAGE_TYPE imageType, char *imageTypeString);
 

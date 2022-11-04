@@ -38,11 +38,8 @@ enum
 	kDriverInfo_InterfaceVersion,
 	kDriverInfo_InterfaceVersion_Outline,
 
-//-	kDriverInfo_AlpacaLogo,
-//-	kDriverInfo_AlpacaDrvrVersion,
 	kDriverInfo_IPaddr,
 	kDriverInfo_Readall,
-
 
 	kDriverInfo_LaunchWeb,
 

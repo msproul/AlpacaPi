@@ -118,9 +118,6 @@ ControllerMLsingle::ControllerMLsingle(	const char			*argWindowName,
 	CreateWindowTabs();
 
 	SetWindowIPaddrInfo(cUSBpath, true);
-
-	SetWidgetText(kTab_MLsingle,	kMLsingle_AlpacaDrvrVersion,		gFullVersionString);
-	SetWidgetText(kTab_Config,		kCongfigBox_AlpacaDrvrVersion,		gFullVersionString);
 }
 
 //**************************************************************************************
@@ -265,16 +262,6 @@ void	ControllerMLsingle::UpdateWindowTabs_ReadAll(bool hasReadAll)
 
 	SetWidgetValid(kTab_MLsingle,	kMLsingle_Readall,		cHas_readall);
 	SetWidgetValid(kTab_Config,		kCongfigBox_Readall,	cHas_readall);
-}
-
-//*****************************************************************************
-void	ControllerMLsingle::UpdateWindowTabs_Version(const char *versionString)
-{
-//	CONSOLE_DEBUG_W_STR(__FUNCTION__, versionString);
-//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cAlpacaVersionString);
-
-	SetWidgetText(kTab_MLsingle,	kMLsingle_AlpacaDrvrVersion,	cAlpacaVersionString);
-	SetWidgetText(kTab_Config,		kCongfigBox_AlpacaDrvrVersion,	cAlpacaVersionString);
 }
 
 //*****************************************************************************

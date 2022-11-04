@@ -58,6 +58,9 @@
 //*	Sep 11,	2022	<MLS> Build 150
 //*	Sep 26,	2022	<MLS> Added structure TYPE_Sensor for ObservingConditions
 //*	Sep 29,	2022	<MLS> Build 151
+//*	Oct  5,	2022	<MLS> Build 152
+//*	Oct 16,	2022	<MLS> Build 153
+//*	Oct 21,	2022	<MLS> Build 154
 //*****************************************************************************
 //#include	"alpaca_defs.h"
 
@@ -82,7 +85,7 @@
 
 #define	kApplicationName	"AlpacaPi"
 #define	kVersionString		"V0.5.1-beta"
-#define	kBuildNumber		151
+#define	kBuildNumber		154
 
 
 #define kAlpacaDiscoveryPORT	32227
@@ -127,14 +130,15 @@ typedef enum
 	kDeviceType_Management,
 	kDeviceType_Observingconditions,
 	kDeviceType_Rotator,
-	kDeviceType_Telescope,
 	kDeviceType_SafetyMonitor,
 	kDeviceType_Switch,
+	kDeviceType_Telescope,
 
 	//*	extras defined by MLS
 	kDeviceType_Multicam,
 	kDeviceType_Shutter,
 	kDeviceType_SlitTracker,
+	kDeviceType_Spectrograph,
 
 	kDeviceType_last
 
@@ -185,12 +189,12 @@ typedef enum
 	kASCOM_Err_ValueNotSet				=	0x402,		//	1026
 	kASCOM_Err_NotConnected				=	0x407,		//	1031
 	kASCOM_Err_InvalidWhileParked		=	0x408,		//	1032
-	kASCOM_Err_InvalidWhileSlaved		=	0x409,
-	kASCOM_Err_SettingsProviderError	=	0x40A,
-	kASCOM_Err_InvalidOperation			=	0x40B,
+	kASCOM_Err_InvalidWhileSlaved		=	0x409,		//	1033
+	kASCOM_Err_SettingsProviderError	=	0x40A,		//	1034
+	kASCOM_Err_InvalidOperation			=	0x40B,		//	1035
 	kASCOM_Err_ActionNotImplemented		=	0x40C,
 	kASCOM_Err_NotInCacheException		=	0x40D,
-	kASCOM_Err_UnspecifiedError			=	0x4FF,
+	kASCOM_Err_UnspecifiedError			=	0x4FF,		//	1279
 
 	//*	0x0500 to 0x0fff are driver defined.
 	kASCOM_Err_NotSupported				=	0x500,
@@ -555,12 +559,10 @@ typedef struct
 //*****************************************************************************
 typedef struct
 {
-
-
 	bool			Absolute;			//	Indicates whether the focuser is capable of absolute position.
 	bool			IsMoving;			//	Indicates whether the focuser is currently moving.
 	int32_t			MaxIncrement;		//	Returns the focuser's maximum increment size.
-	int32_t			MaxStep;			//	Returns the focuser's maximum step size.
+	int32_t			MaxStep;			//	Returns the focuser's maximum step value.
 	int32_t			Position;			//	Returns the focuser's current position.
 	double			StepSize;			//	Returns the focuser's step size.
 	bool			TempComp;			//	Retrieves the state of temperature compensation mode
@@ -578,16 +580,20 @@ typedef struct
 	double	Position;			//*	Current instantaneous Rotator position, allowing for any sync offset, in degrees.
 	bool	Reverse;			//*	Sets or Returns the rotator’s Reverse state.
 	double	StepSize;			//*	The minimum StepSize, in degrees.
-	double	TargetPosition;		//*	The destination position angle for Move() and MoveAbsolute().
+	double	TargetPosition;		//*	The destination position angle for Move() and MoveAbsolute(). (in degrees)
 } TYPE_RotatorProperties;
 
+//*****************************************************************************
+//*	this is for observing conditions and spectrograph
 //*****************************************************************************
 typedef struct
 {
 	bool		IsSupported;
 	bool		ValidData;
 	double		Value;
+	double		ValueInteger;
 	char		Description[128];
+	char		Info[128];
 	uint32_t	LastRead;
 } TYPE_Sensor;
 
@@ -598,16 +604,13 @@ typedef struct
 	TYPE_Sensor		Cloudcover;			//*	Returns the amount of sky obscured by cloud
 	TYPE_Sensor		Dewpoint;			//*	Returns the atmospheric dew point at the observatory
 	TYPE_Sensor		Humidity;			//*	Returns the atmospheric humidity at the observatory
-	TYPE_Sensor		Pressure;			//*	Returns the atmospheric pressure at the observatory.
-										//*	hectoPascals
-
+	TYPE_Sensor		Pressure;			//*	Returns the atmospheric pressure at the observatory. hectoPascals
 	TYPE_Sensor		RainRate;			//*	Returns the rain rate at the observatory.
 	TYPE_Sensor		SkyBrightness;		//*	Returns the sky brightness at the observatory
 	TYPE_Sensor		SkyQuality;			//*	Returns the sky quality at the observatory
 	TYPE_Sensor		SkyTemperature;		//*	Returns the sky temperature at the observatory
 	TYPE_Sensor		StarFWHM;			//*	Returns the seeing at the observatory
 	TYPE_Sensor		Temperature;		//*	Returns the temperature at the observatory
-
 	TYPE_Sensor		WindDirection;		//*	Returns the wind direction at the observatory
 	TYPE_Sensor		WindGust;			//*	Returns the peak 3 second wind gust at the observatory over the last 2 minutes
 	TYPE_Sensor		WindSpeed;			//*	Returns the wind speed at the observatory.
@@ -696,6 +699,13 @@ enum
 	kAlpacaImageData_Int64		=	7,
 	kAlpacaImageData_UInt16		=	8
 };
+
+
+//*****************************************************************************
+//*	this is for the temperature log used in both drivers and controllers
+//*	extra, not part of ASCOM/Alpaca specs
+#define	kTemperatureLogEntries	(24 * 60)
+
 
 #endif // _ALPACA_DEFS_H_
 

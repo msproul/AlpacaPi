@@ -315,11 +315,6 @@ void	ControllerCamera::UpdateSupportedActions(void)
 	CONSOLE_DEBUG("this routine should be overloaded");
 }
 //*****************************************************************************
-void	ControllerCamera::UpdateRemoteAlpacaVersion(void)
-{
-	CONSOLE_DEBUG("this routine should be overloaded");
-}
-//*****************************************************************************
 void	ControllerCamera::UpdateCameraName(void)
 {
 	CONSOLE_DEBUG("this routine should be overloaded");
@@ -969,8 +964,6 @@ void	ControllerCamera::AlpacaProcessReadAll(	const char	*deviceTypeStr,
 	{
 		//*	"version": "AlpacaPi - V0.2.2-beta build #32",
 		strcpy(cAlpacaVersionString, valueString);
-		UpdateRemoteAlpacaVersion();
-
 	}
 	else if (strncasecmp(keywordString, "IMU", 3) == 0)
 	{

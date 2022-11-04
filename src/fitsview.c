@@ -11,6 +11,7 @@
 //*	Nov 13,	2021	<MLS> Added cmd 'a' to toggle between automatic and manual advance
 //*	Nov 13,	2021	<MLS> Added -t title option
 //*	Sep 19,	2022	<MLS> fitsview now working with openCV C++ version
+//*	Oct  7,	2022	<MLS> Image scaling for large image display working w/ openCV C++
 //*****************************************************************************
 
 #include	<string.h>
@@ -451,6 +452,8 @@ bool			fileIsFits;
 #ifdef _USE_OPENCV_CPP_
 	cv::Mat			*openCV_Image;
 	cv::Mat			*smallCV_Image;
+	unsigned int	nChannels;
+
 #else
 	IplImage		*openCV_Image;
 	IplImage		*smallCV_Image;
@@ -534,38 +537,51 @@ bool			fileIsFits;
 //			CONSOLE_DEBUG(__FUNCTION__);
 
 		#ifdef _USE_OPENCV_CPP_
-//			if (openCV_Image->cols > 2000)
-//			{
-//			int	newWidth;
-//			int	newHeight;
-//
-//				CONSOLE_DEBUG(__FUNCTION__);
-//
-//				newWidth		=	openCV_Image->cols / 4;
-//				newHeight		=	openCV_Image->rows / 4;
-//				if (openCV_Image->depth == 16)
-//				{
-//					smallCV_Image	=	cvCreateImage(cvSize(newWidth, newHeight), IPL_DEPTH_16U, 1);
-//				}
-//				else
-//				{
-//					if (openCV_Image->nChannels == 3)
-//					{
-//						smallCV_Image	=	cvCreateImage(cvSize(newWidth, newHeight), IPL_DEPTH_8U, 3);
-//					}
-//					else
-//					{
-//						smallCV_Image	=	cvCreateImage(cvSize(newWidth, newHeight), IPL_DEPTH_8U, 1);
-//					}
-//				}
-//				cv::resize(*openCV_Image, *smallCV_Image, cv::INTER_LINEAR);
-//				cv::imshow(myWindowName, *smallCV_Image);
-//			}
-//			else
+			if (openCV_Image->cols > 2000)
 			{
-				CONSOLE_DEBUG(__FUNCTION__);
+			int	newImgWidth;
+			int	newImgHeight;
+			int	divideFactor;
+
+				//*	make it fit on the screen
+				divideFactor	=	1;
+				newImgWidth		=	openCV_Image->cols / divideFactor;
+				newImgHeight	=	openCV_Image->rows / divideFactor;
+				while (newImgWidth > 2000)
+				{
+					divideFactor++;
+					newImgWidth		=	openCV_Image->cols / divideFactor;
+					newImgHeight	=	openCV_Image->rows / divideFactor;
+				}
+//				CONSOLE_DEBUG_W_NUM("divideFactor\t=",	divideFactor);
+//				CONSOLE_DEBUG_W_NUM("newImgWidth\t=",	newImgWidth);
+
+				//*	create the new smaller image
+				smallCV_Image		=	new cv::Mat(cv::Size(	newImgWidth,
+																newImgHeight),
+																CV_8UC3);
+
+				nChannels		=	openCV_Image->step[1];
+				if (nChannels == 3)
+				{
+					cv::resize(	*openCV_Image,
+								*smallCV_Image,
+								smallCV_Image->size(),
+								0,
+								0,
+								cv::INTER_LINEAR);
+				}
+				else
+				{
+					CONSOLE_DEBUG("convert gray scale to color");
+					//*	convert gray scale to color
+					cv::cvtColor(*openCV_Image, *smallCV_Image, cv::COLOR_GRAY2BGR);
+				}
+				cv::imshow(myWindowName, *smallCV_Image);
+			}
+			else
+			{
 				cv::imshow(myWindowName, *openCV_Image);
-				CONSOLE_DEBUG(__FUNCTION__);
 			}
 		#else
 			if (openCV_Image->width > 2000)

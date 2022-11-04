@@ -379,7 +379,11 @@ void	WindowTabIPList::UpdateButtons(void)
 
 
 //*****************************************************************************
-void	WindowTabIPList::ProcessDoubleClick(const int buttonIdx)
+void	WindowTabIPList::ProcessDoubleClick(const int	widgetIdx,
+											const int	event,
+											const int	xxx,
+											const int	yyy,
+											const int	flags)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
 //	CONSOLE_DEBUG_W_NUM("buttonIdx\t=", buttonIdx);
@@ -622,6 +626,10 @@ int		deviceIdx;
 	if (cFirstLineIdx >= gAlpacaUnitCnt)
 	{
 		cFirstLineIdx	=	gAlpacaUnitCnt -1;
+	}
+	if (cFirstLineIdx < 0)
+	{
+		cFirstLineIdx	=	0;
 	}
 
 	cLinesOnScreen	=	(kIPaddrList_AlpacaDev_Last - kIPaddrList_AlpacaDev_01) + 1;

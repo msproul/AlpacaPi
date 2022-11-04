@@ -254,13 +254,15 @@ char		notAvailableStr[]	=	"---N/A---";
 	SetWidget(		kTeleSettings_ErrorMsg,	0,		yLoc,		cWidth - 100,		cBtnHeight);
 	SetWidgetFont(	kTeleSettings_ErrorMsg,	kFont_Medium);
 
-
-	SetAlpacaLogo(kTeleSettings_AlpacaLogo, kTeleSettings_LastCmdString);
-
 	//=======================================================
-	//*	IP address
-	SetIPaddressBoxes(kTeleSettings_IPaddr, kTeleSettings_Readall, kTeleSettings_AlpacaDrvrVersion, -1);
-//	SetIPaddressBoxes(kTeleSettings_IPaddr, kTeleSettings_Readall, -1, -1);
+	//*	set up all the bottom stuff so that it is the same on all windowtabs
+	SetupWindowBottomBoxes(	kTeleSettings_IPaddr,
+							kTeleSettings_Readall,
+							kTeleSettings_AlpacaErrorMsg,
+							kTeleSettings_LastCmdString,
+							kTeleSettings_AlpacaLogo,
+							-1);
+
 }
 
 //*****************************************************************************
@@ -338,7 +340,11 @@ bool	update;
 }
 
 //*****************************************************************************
-void	WindowTabTeleSettings::ProcessDoubleClick(const int buttonIdx)
+void	WindowTabTeleSettings::ProcessDoubleClick(	const int	widgetIdx,
+													const int	event,
+													const int	xxx,
+													const int	yyy,
+													const int	flags)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
 //	CONSOLE_DEBUG_W_NUM("buttonIdx\t=", buttonIdx);

@@ -33,6 +33,7 @@ enum
 {
 	kCmd_Rotator_canreverse=	0,		//*	Indicates whether the Rotator supports the Reverse method.
 	kCmd_Rotator_ismoving,				//*	Indicates whether the rotator is currently moving.
+	kCmd_Rotator_mechanicalposition,	//*	Returns the rotator's mechanical current position.
 	kCmd_Rotator_position,				//*	Returns the rotator's current position.
 	kCmd_Rotator_reverse,				//*	Returns the rotator's Reverse state.
 										//*	Sets the rotator's Reverse state.
@@ -41,6 +42,8 @@ enum
 	kCmd_Rotator_halt,					//*	Immediately stops rotator motion.
 	kCmd_Rotator_move,					//*	Moves the rotator to a new relative position.
 	kCmd_Rotator_moveabsolute,			//*	Moves the rotator to a new absolute position.
+	kCmd_Rotator_movemechanical,		//*	Moves the rotator to a new raw mechanical position.
+	kCmd_Rotator_sync,					//*	Syncs the rotator to the specified position angle without moving it.
 
 	//*	added by MLS
 	kCmd_Rotator_Extras,
@@ -63,11 +66,12 @@ class RotatorDriver: public AlpacaDriver
 		virtual	TYPE_ASCOM_STATUS	ProcessCommand(TYPE_GetPutRequestData *reqData);
 		virtual	void				OutputHTML(TYPE_GetPutRequestData *reqData);
 //		virtual	void				OutputHTML_Part2(TYPE_GetPutRequestData *reqData);
-//		virtual	int32_t				RunStateMachine(void);
+		virtual	int32_t				RunStateMachine(void);
 		virtual bool				GetCmdNameFromMyCmdTable(const int cmdNumber, char *comandName, char *getPut);
 
 		TYPE_ASCOM_STATUS	Get_Canreverse(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
 		TYPE_ASCOM_STATUS	Get_Ismoving(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+		TYPE_ASCOM_STATUS	Get_MechanicalPosition(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
 		TYPE_ASCOM_STATUS	Get_Position(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
 		TYPE_ASCOM_STATUS	Get_Reverse(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
 		TYPE_ASCOM_STATUS	Put_Reverse(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
@@ -77,16 +81,13 @@ class RotatorDriver: public AlpacaDriver
 		TYPE_ASCOM_STATUS	Put_Halt(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 		TYPE_ASCOM_STATUS	Put_Move(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 		TYPE_ASCOM_STATUS	Put_Moveabsolute(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
+		TYPE_ASCOM_STATUS	Put_MoveMechanical(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
+		TYPE_ASCOM_STATUS	Put_Sync(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 
 		//*	added by MLS
 		TYPE_ASCOM_STATUS	Put_Step(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 		TYPE_ASCOM_STATUS	Put_Stepabsolute(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 		TYPE_ASCOM_STATUS	Get_Readall(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
-
-		//*	these are access functions for FITS output
-		void	GetRotatorManufacturer(char *manufactString);
-		void	GetRotatorModel(char *modelName);
-		void	GetRotatorSerialNumber(char *serialNumber);
 
 		virtual	int32_t					ReadCurrentPoisiton_steps(void);
 		virtual	double					ReadCurrentPoisiton_degs(void);
@@ -95,6 +96,14 @@ class RotatorDriver: public AlpacaDriver
 		virtual	TYPE_ASCOM_STATUS		HaltMovement(void);
 		virtual	bool					IsRotatorMoving(void);
 
+				void					UpdateRotorPosition(bool updateTargetPosition=false);
+
+				//*	these are access functions for FITS output
+				void					GetRotatorManufacturer(char *manufactString);
+				void					GetRotatorModel(char *modelName);
+				void					GetRotatorSerialNumber(char *serialNumber);
+
+
 	protected:
 		TYPE_RotatorProperties	cRotatorProp;
 
@@ -102,15 +111,10 @@ class RotatorDriver: public AlpacaDriver
 		char		cRotatorModel[64];
 		char		cRotatorSerialNum[64];
 
-//-		bool		cRotatorCanReverse;
 		bool		cRotatorReverseState;		//*	reverse enable (default = false)
-//-		bool		cRotatorIsMoving;
-//-		double		cRotatorStepSize;
 
 		int32_t		cRotatorStepsPerRev;		//*	number of steps per rev
-		int32_t		cRotatorPos_step;			//*	current rotator position
-		double		cRotatorPos_degs;
-		double		cRotatorTrgtPos_degs;
+		int32_t		cRotatorPosition_steps;		//*	current rotator position
 };
 
 void	CreateRotatorObjects(void);

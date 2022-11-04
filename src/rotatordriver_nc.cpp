@@ -55,6 +55,7 @@ RotatorDriver_NiteCrawler::RotatorDriver_NiteCrawler(const int argDevNum, Focuse
 	strcpy(cCommonProp.Description,	"Moonlite NiteCrawler Rotator");
 	strcpy(cRotatorManufacturer,	"Moonlite");
 
+	//*	for IRotatorV3, this must be TRUE, for now we are using version 2
 	cRotatorProp.CanReverse	=	false;
 
 	if (cFocuserObject != NULL)
@@ -179,7 +180,7 @@ TYPE_ASCOM_STATUS	RotatorDriver_NiteCrawler::HaltMovement(void)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	if (cFocuserObject != NULL)
 	{
 		alpacaErrCode	=	cFocuserObject->HaltStepper(2);
@@ -197,7 +198,7 @@ bool	RotatorDriver_NiteCrawler::IsRotatorMoving(void)
 {
 bool	isMoving;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	if (cFocuserObject != NULL)
 	{
 		isMoving	=	cFocuserObject->GetRotatorIsMoving();

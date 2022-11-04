@@ -66,7 +66,7 @@ enum
 	kTelescope_LastCmdString,
 	kTelescope_AlpacaLogo,
 
-	kTelescope_AlpacaDrvrVersion,
+	kTelescope_AlpacaErrorMsg,
 	kTelescope_IPaddr,
 	kTelescope_Readall,
 
@@ -93,7 +93,11 @@ class WindowTabTelescope: public WindowTab
 //		virtual	void	DrawWindow(void);
 //		virtual void	HandleKeyDown(const int keyPressed);
 		virtual	void	ProcessButtonClick(const int buttonIdx, const int flags);
-//		virtual	void	ProcessDoubleClick(const int buttonIdx);
+//		virtual	void	ProcessDoubleClick(const int	widgetIdx,
+//											const int	event,
+//											const int	xxx,
+//											const int	yyy,
+//											const int	flags);
 
 				bool	ProcessMovementButtons(const int buttonIdx, const int flags);
 				void	UpdateButtons(void);

@@ -63,9 +63,6 @@
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
 
-
-#define	kBoxWidth	302
-
 #include	"windowtab_nitecrawler.h"
 #include	"windowtab_auxmotor.h"
 #include	"windowtab_graphs.h"
@@ -501,19 +498,6 @@ void	ControllerNiteCrawler::UpdateWindowTabs_AuxSwitchBits(unsigned char auxSwit
 	{
 		SetWidgetBGColor(kTab_AuxMotor, kAuxMotorBox_Switch2, kSwitchColorOff);
 	}
-}
-
-//*****************************************************************************
-void	ControllerNiteCrawler::UpdateWindowTabs_Version(const char *versionString)
-{
-//	CONSOLE_DEBUG(__FUNCTION__);
-
-	SetWidgetText(kTab_AuxMotor,	kAuxMotorBox_AlpacaDrvrVersion,	cAlpacaVersionString);
-#ifdef _ENABLE_CONFIG_TAB_
-	SetWidgetText(kTab_Config,		kCongfigBox_AlpacaDrvrVersion,	cAlpacaVersionString);
-#endif
-
-	SetWidgetText(kTab_Graphs,		kGraphBox_AlpacaDrvrVersion,	cAlpacaVersionString);
 }
 
 //*****************************************************************************

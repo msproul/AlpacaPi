@@ -35,10 +35,6 @@
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
 
-
-#define	kWindowWidth	450
-#define	kWindowHeight	700
-
 #include	"windowtab_config.h"
 #include	"windowtab_about.h"
 #include	"focuser_common.h"
@@ -219,20 +215,19 @@ void	ControllerFocusGeneric::UpdateWindowTabs_ReadAll(bool hasReadAll)
 }
 
 //*****************************************************************************
-void	ControllerFocusGeneric::UpdateWindowTabs_Version(const char *versionString)
-{
-//	CONSOLE_DEBUG_W_STR(__FUNCTION__, versionString);
-//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cAlpacaVersionString);
-
-	SetWidgetText(kTab_Focuser,	kMLsingle_AlpacaDrvrVersion,	cAlpacaVersionString);
-}
-
-//*****************************************************************************
 void	ControllerFocusGeneric::UpdateWindowTabs_DesiredFocusPos(const int newDesiredPoistion)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
 	SetWidgetNumber(kTab_Focuser, kMLsingle_focDesired, cFocuserDesiredPos);
 }
+
+//*****************************************************************************
+void	ControllerFocusGeneric::AlpacaDisplayErrorMessage(const char *errorMsgString)
+{
+	CONSOLE_DEBUG_W_STR("Alpaca error=", errorMsgString);
+	SetWidgetText(kTab_Focuser, kMLsingle_AlpacaErrorMsg, errorMsgString);
+}
+
 
 //*****************************************************************************
 void	ControllerFocusGeneric::UpdateWindowTabs_ConnectState(bool connectedState)

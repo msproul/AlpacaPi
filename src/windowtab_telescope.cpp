@@ -364,14 +364,14 @@ int			coordHeight;
 
 	yLoc			+=	8;
 
-
-
-	SetAlpacaLogo(kTelescope_AlpacaLogo, kTelescope_LastCmdString);
-
 	//=======================================================
-	//*	IP address
-	SetIPaddressBoxes(kTelescope_IPaddr, kTelescope_Readall, kTelescope_AlpacaDrvrVersion, -1);
-
+	//*	set up all the bottom stuff so that it is the same on all windowtabs
+	SetupWindowBottomBoxes(	kTelescope_IPaddr,
+							kTelescope_Readall,
+							kTelescope_AlpacaErrorMsg,
+							kTelescope_LastCmdString,
+							kTelescope_AlpacaLogo,
+							-1);
 }
 
 //*****************************************************************************
@@ -900,7 +900,16 @@ char	dataString[64];
 			//*	now set the text boxes with the values
 			for (iii=0; iii<kSupportedSlewRates; iii++)
 			{
-				sprintf(valueString, "%2.1f / %2.1f", cRA_slewRates[iii], cDEC_slewRates[iii]);
+				if ((cRA_slewRates[iii] > 0.0) && (cDEC_slewRates[iii] > 0.0) && (cRA_slewRates[iii] < 1000.0) && (cDEC_slewRates[iii] < 1000.0))
+				{
+					sprintf(valueString, "%2.1f / %2.1f", cRA_slewRates[iii], cDEC_slewRates[iii]);
+				}
+				else
+				{
+					CONSOLE_DEBUG_W_DBL("cRA_slewRates[iii] \t=",	cRA_slewRates[iii]);
+					CONSOLE_DEBUG_W_DBL("cDEC_slewRates[iii]\t=",	cDEC_slewRates[iii]);
+					strcpy(valueString, "-N/A-");
+				}
 				CONSOLE_DEBUG_W_STR("valueString\t=", valueString);
 				SetWidgetText((kTelescope_SlewRate_VerySlow_Val + iii), valueString);
 			}

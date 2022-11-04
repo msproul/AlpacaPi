@@ -38,6 +38,7 @@ typedef struct
 	//*	for use by discovery thread for keeping track of responses
 	int					queryOKcnt;
 	int					queryERRcnt;
+//	int					ignoredCount;
 	bool				currentlyActive;
 	char				versionString[64];
 

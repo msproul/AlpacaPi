@@ -21,6 +21,7 @@
 //*	Jan  9,	2022	<MLS> Created windowtab_GaiaRemote.cpp
 //*	Jan 10,	2022	<MLS> Gaia remote list window fully working
 //*****************************************************************************
+#ifdef _ENABLE_REMOTE_SQL_
 
 #include	<stdlib.h>
 
@@ -445,3 +446,4 @@ int		ra_minutes;
 
 }
 
+#endif // _ENABLE_REMOTE_SQL_

@@ -34,6 +34,7 @@
 //*	May  4,	2020	<MLS> Added AddLibraryVersion() & Get_Libraries()
 //*	Apr  8,	2022	<MLS> Removed double quotes in version string, JSON doesn't like it
 //*	Jun  2,	2022	<MLS> Added cpu temp and uptime to configureddevices response
+//*	Oct 16,	2022	<MLS> Management driver stores CPU temp in temperature log
 //*****************************************************************************
 
 
@@ -62,7 +63,7 @@
 
 
 //*****************************************************************************
-const TYPE_CmdEntry	gManagementCmdTable[]	=
+static TYPE_CmdEntry	gManagementCmdTable[]	=
 {
 	{	"apiversions",			kCmd_Managment_apiversions,			kCmdType_GET	},
 	{	"description",			kCmd_Managment_description,			kCmdType_GET	},
@@ -137,8 +138,11 @@ void	CreateManagementObject(void)
 ManagementDriver::ManagementDriver(const int argDevNum)
 	:AlpacaDriver(kDeviceType_Management)
 {
+	cDriverCmdTablePtr				=	gManagementCmdTable;
 	strcpy(cCommonProp.Name,		"ManagementDriver");
 	strcpy(cCommonProp.Description,	"AlpacaPi Management driver");
+
+	TemperatureLog_SetDescription("CPU Temperature");
 }
 
 //**************************************************************************************
@@ -147,6 +151,27 @@ ManagementDriver::ManagementDriver(const int argDevNum)
 ManagementDriver::~ManagementDriver(void)
 {
 	CONSOLE_DEBUG(__FUNCTION__);
+}
+
+
+//*****************************************************************************
+//*	return value 0 = OK
+//*****************************************************************************
+int	ManagementDriver::UpdateProperties(void)
+{
+int			returnCode;
+double		cpuTemp_DegC;
+double		cpuTemp_DegF;
+
+	returnCode	=	0;
+
+	cpuTemp_DegC	=	CPUstats_GetTemperature(NULL);
+	cpuTemp_DegF	=	((cpuTemp_DegC * (9.0/5.0)) + 32);
+
+	TemperatureLog_AddEntry(cpuTemp_DegF);
+
+
+	return(returnCode);
 }
 
 //*****************************************************************************
@@ -272,7 +297,7 @@ int					mySocket;
 
 	JsonResponse_Add_Finish(mySocket,
 							reqData->jsonTextBuffer,
-							kInclude_HTTP_Header);
+							(cHttpHeaderSent == false));
 
 	return(alpacaErrCode);
 }

@@ -36,7 +36,7 @@
 
 
 #define	kWindowWidth	450
-#define	kWindowHeight	700
+#define	kWindowHeight	750
 
 #include	"windowtab_filterwheel.h"
 #include	"windowtab_drvrInfo.h"
@@ -94,7 +94,6 @@ ControllerFilterWheel::ControllerFilterWheel(	const char			*argWindowName,
 
 	SetupWindowControls();
 
-	SetWidgetText(kTab_FilterWheel,		kFilterWheel_AlpacaDrvrVersion,		cAlpacaVersionString);
 
 #ifdef _USE_BACKGROUND_THREAD_
 	StartBackgroundThread();
@@ -165,6 +164,13 @@ void	ControllerFilterWheel::SetupWindowControls(void)
 		SetWindowIPaddrInfo(lineBuff, true);
 	}
 
+}
+
+//*****************************************************************************
+void	ControllerFilterWheel::AlpacaDisplayErrorMessage(const char *errorMsgString)
+{
+//	CONSOLE_DEBUG_W_STR("Alpaca error=", errorMsgString);
+	SetWidgetText(kTab_FilterWheel, kFilterWheel_AlpacaErrorMsg, errorMsgString);
 }
 
 //**************************************************************************************

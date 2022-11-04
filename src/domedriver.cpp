@@ -287,6 +287,7 @@ DomeDriver::DomeDriver(const int argDevNum)
 	strcpy(cCommonProp.Name,		"Dome");
 	strcpy(cCommonProp.Description,	"Generic Dome");
 	cCommonProp.InterfaceVersion	=	2;
+	cDriverCmdTablePtr				=	gDomeCmdTable;
 
 
 	cDomeConfig						=	kIsDome;

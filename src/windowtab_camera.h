@@ -125,8 +125,7 @@ enum
 
 	kCameraBox_LastCmdString,
 	kCameraBox_AlpacaLogo,
-
-	kCameraBox_AlpacaDrvrVersion,
+	kCameraBox_AlpacaErrorMsg,
 	kCameraBox_IPaddr,
 	kCameraBox_Readall,
 

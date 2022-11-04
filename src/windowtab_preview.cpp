@@ -14,7 +14,7 @@
 //*	that you agree that the author(s) have no warranty, obligations or liability.  You
 //*	must determine the suitability of this source code for your use.
 //*
-//*	Redistributions of this source code must retain this copyright notice.
+//*	Redistribution of this source code must retain this copyright notice.
 //*****************************************************************************
 //*	Edit History
 //*****************************************************************************
@@ -310,8 +310,13 @@ int		myClmWidth;
 
 
 	//=======================================================
-	//*	IP address
-	SetIPaddressBoxes(kPreviewBox_IPaddr, kPreviewBox_Readall, kPreviewBox_ProgressBar, -1);
+	//*	set up all the bottom stuff so that it is the same on all windowtabs
+	SetupWindowBottomBoxes(	kPreviewBox_IPaddr,
+							kPreviewBox_Readall,
+							kPreviewBox_ProgressBar,	//	kPreviewBox_AlpacaErrorMsg,
+							-1,							//	kPreviewBox_LastCmdString,
+							-1,							//	kPreviewBox_AlpacaLogo,
+							-1);
 
 	SetWidgetBGColor(		kPreviewBox_ProgressBar,	CV_RGB(0,	0,	0));
 	SetWidgetTextColor(		kPreviewBox_ProgressBar,	CV_RGB(0,	255,	0));

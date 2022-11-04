@@ -93,11 +93,11 @@ class ControllerDome: public Controller
 
 
 		virtual	void	SetupWindowControls(void);
+		virtual	void	AlpacaDisplayErrorMessage(const char *errorMsgString);
 		virtual	void	RunBackgroundTasks(const char *callingFunction=NULL, bool enableDebug=false);
 	//	virtual	void	DrawWidgetCustomGraphic(const int widgetIdx);
 		virtual	bool	AlpacaGetStartupData(void);
 				bool	AlpacaGetStatus(void);
-		virtual	void	AlpacaDisplayErrorMessage(const char *errorMsgString);
 
 		virtual	void	AlpacaProcessReadAll(			const char	*deviceType,
 														const int	deviveNum,

@@ -69,12 +69,12 @@ enum
 	kDomeBox_CloseShutter,
 	kDomeBox_StopShutter,
 
-	kDomeBox_ErrorMsg,
+//	kDomeBox_ErrorMsg,
 
 	kDomeBox_LastCmdString,
 
 	kDomeBox_AlpacaLogo,
-	kDomeBox_AlpacaDrvrVersion,
+	kDomeBox_AlpacaErrorMsg,
 	kDomeBox_IPaddr,
 	kDomeBox_Readall,
 #ifdef _ENABLE_SKYTRAVEL_
@@ -121,7 +121,6 @@ class WindowTabDome: public WindowTab
 											const int	xxx,
 											const int	yyy,
 											const int	flags);
-		virtual	void	AlpacaDisplayErrorMessage(const char *errorMsgString);
 		virtual	void	UpdateControls(void);
 
 				void	SetDomePropertiesPtr(TYPE_DomeProperties *domePropPtr);

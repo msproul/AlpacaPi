@@ -143,6 +143,7 @@ ShutterDriver::ShutterDriver(const int argDevNum)
 	cShutterStatus				=	kShutterStatus_Unknown;
 	cPreviousShutterStatus		=	kShutterStatus_Unknown;
 	cWatchDogTimeOut_Minutes	=	7;
+	cDriverCmdTablePtr			=	gShutterCmdTable;
 
 	strcpy(cCommonProp.Name, "shutter");
 	strcpy(gWebTitle, "shutter");

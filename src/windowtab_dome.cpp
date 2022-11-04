@@ -295,23 +295,14 @@ int		domeGraphic_yLoc;
 	yLoc			+=	myButtonHt;
 	yLoc			+=	2;
 
-
-	//============================================
-	btnWidth		=	(cClmWidth * 6);
-	SetWidget(			kDomeBox_ErrorMsg,	cClm1_offset,		yLoc,		btnWidth,		myButtonHt);
-	SetWidgetFont(		kDomeBox_ErrorMsg,	kFont_Medium);
-	SetWidgetTextColor(	kDomeBox_ErrorMsg,	CV_RGB(255,	0,	0));
-	SetWidgetText(		kDomeBox_ErrorMsg, 	"---");
-	yLoc			+=	myButtonHt;
-	yLoc			+=	2;
-
-
-	SetAlpacaLogo(kDomeBox_AlpacaLogo, kDomeBox_LastCmdString);
-
 	//=======================================================
-	//*	IP address
-	SetIPaddressBoxes(kDomeBox_IPaddr, kDomeBox_Readall, kDomeBox_AlpacaDrvrVersion, -1);
-
+	//*	set up all the bottom stuff so that it is the same on all windowtabs
+	SetupWindowBottomBoxes(	kDomeBox_IPaddr,
+							kDomeBox_Readall,
+							kDomeBox_AlpacaErrorMsg,
+							kDomeBox_LastCmdString,
+							kDomeBox_AlpacaLogo,
+							-1);
 
 #ifdef _ENABLE_SKYTRAVEL_
 	if (cParentIsSkyTravel)
@@ -322,7 +313,7 @@ int		domeGraphic_yLoc;
 	int	compassBox_xloc;
 	int	compassBox_yLoc;
 
-		SetWidgetOutlineBox(kDomeBox_Outline, kDomeBox_CurPosLabel, kDomeBox_ErrorMsg);
+		SetWidgetOutlineBox(kDomeBox_Outline, kDomeBox_CurPosLabel, kDomeBox_StopShutter);
 
 		//------------------------------------------------------
 		xLoc		=	600;
@@ -823,7 +814,7 @@ SJP_Parser_t	jsonResponse;
 //	CONSOLE_DEBUG_W_NUM("buttonIdx\t",	buttonIdx);
 
 	//*	clear out any existing error message
-	SetWidgetText(	kDomeBox_ErrorMsg, 	"---");
+	SetWidgetText(	kDomeBox_AlpacaErrorMsg, 	"---");
 	validData	=	true;
 	switch(buttonIdx)
 	{
@@ -960,7 +951,10 @@ SJP_Parser_t	jsonResponse;
 //*****************************************************************************
 void	WindowTabDome::ToggleSlaveMode(void)
 {
-#ifndef _ENABLE_SKYTRAVEL_
+#ifdef _ENABLE_SKYTRAVEL_
+	SetWidgetText(kDomeBox_AlpacaErrorMsg, "Slave mode not enabled for SkyTravel yet");
+	ForceWindowUpdate();
+#else
 bool			validData;
 //int				myShutterStatus;
 int				mySlavedMode;
@@ -993,7 +987,7 @@ ControllerDome	*myDomeController;
 			{
 				CONSOLE_DEBUG_W_STR("alpacaErrorMsg\t=", alpacaErrorMsg);
 				sprintf(textString, "Err# %d - %s", alpacaErrorCode, alpacaErrorMsg);
-				SetWidgetText(	kDomeBox_ErrorMsg, 	textString);
+				SetWidgetText(	kDomeBox_AlpacaErrorMsg, 	textString);
 
 			}
 
@@ -1003,7 +997,7 @@ ControllerDome	*myDomeController;
 	//		}
 	//		else
 	//		{
-	//			SetWidgetText(		kDomeBox_ErrorMsg, 	"Can't enable slave mode unless shutter is open");
+	//			SetWidgetText(		kDomeBox_AlpacaErrorMsg, 	"Can't enable slave mode unless shutter is open");
 	//		}
 		}
 		if (validData == false)
@@ -1016,13 +1010,6 @@ ControllerDome	*myDomeController;
 		CONSOLE_DEBUG("myDomeController is NULL");
 	}
 #endif
-}
-
-//*****************************************************************************
-void	WindowTabDome::AlpacaDisplayErrorMessage(const char *errorMsgString)
-{
-//	CONSOLE_DEBUG_W_STR("Alpaca error=", errorMsgString);
-	SetWidgetText(kDomeBox_ErrorMsg, errorMsgString);
 }
 
 

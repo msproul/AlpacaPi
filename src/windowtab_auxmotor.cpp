@@ -136,10 +136,14 @@ int		iii;
 	SetWidgetText(	kAuxMotorBox_Position,		"-----");
 	SetWidgetText(	kAuxMotorBox_DesiredPos,	"-----");
 
-	SetAlpacaLogo(kAuxMotorBox_AlpacaLogo, -1);
 	//=======================================================
-	//*	IP address
-	SetIPaddressBoxes(kAuxMotorBox_IPaddr, kAuxMotorBox_Readall, kAuxMotorBox_AlpacaDrvrVersion, -1);
+	//*	set up all the bottom stuff so that it is the same on all windowtabs
+	SetupWindowBottomBoxes(	kAuxMotorBox_IPaddr,
+							kAuxMotorBox_Readall,
+							kAuxMotorBox_AlpacaErrorMsg,
+							kAuxMotorBox_LastCmdString,
+							kAuxMotorBox_AlpacaLogo,
+							-1);
 
 }
 

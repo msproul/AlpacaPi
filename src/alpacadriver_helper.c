@@ -39,8 +39,10 @@ TYPE_DeviceTable	gDeviceTable[]	=
 
 	//*	extras defined by MLS
 	{	"Multicam",				kDeviceType_Multicam			},
+	{	"Shutter",				kDeviceType_Shutter				},
 	{	"SlitTracker",			kDeviceType_SlitTracker			},
 	{	"Shutter",				kDeviceType_Shutter				},
+	{	"Spectrograph",			kDeviceType_Spectrograph		},
 
 	{	"",						kDeviceType_undefined			}
 };

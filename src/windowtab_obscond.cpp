@@ -173,11 +173,14 @@ int		boxLeft;
 
 	cFirstRead	=	true;
 
-	SetAlpacaLogo(kObsCond_AlpacaLogo, kObsCond_LastCmdString);
-
 	//=======================================================
-	//*	IP address
-	SetIPaddressBoxes(kObsCond_IPaddr, kObsCond_Readall, kObsCond_AlpacaDrvrVersion, -1);
+	//*	set up all the bottom stuff so that it is the same on all windowtabs
+	SetupWindowBottomBoxes(	kObsCond_IPaddr,
+							kObsCond_Readall,
+							kObsCond_AlpacaErrorMsg,
+							kObsCond_LastCmdString,
+							kObsCond_AlpacaLogo,
+							-1);
 }
 
 //*****************************************************************************
@@ -194,21 +197,6 @@ void	WindowTabObsCond::ProcessButtonClick(const int buttonIdx, const int flags)
 //	DisplayLastAlpacaCommand();
 }
 
-//*****************************************************************************
-void	WindowTabObsCond::UpdateOneValue(const int widgetNum, TYPE_Sensor *sensorData, const int decimalPlaces)
-{
-
-	if (sensorData->ValidData)
-	{
-		SetWidgetNumber(	widgetNum,	sensorData->Value, decimalPlaces);
-		SetWidgetTextColor(	widgetNum, CV_RGB(0x00, 0xff, 0x00));
-	}
-	else
-	{
-		SetWidgetText(	widgetNum,	"-N/A-");
-		SetWidgetTextColor(	widgetNum, CV_RGB(0xff, 0x00, 0x00));
-	}
-}
 
 //*****************************************************************************
 void	WindowTabObsCond::UpdateObservationValues(TYPE_ObsConditionProperties *obsCondProp)
@@ -222,21 +210,21 @@ TYPE_Sensor		temperatureDegF;
 	temperatureDegF.Value	=	(temperatureDegF.Value * (9.0 /5.0)) + 32.0;
 
 	//*	last argument is decimal places											***
-	UpdateOneValue(	kObsCond_Averageperiod,		&obsCondProp->Averageperiod,	5);
-	UpdateOneValue(	kObsCond_Cloudcover,		&obsCondProp->Cloudcover,		1);
-	UpdateOneValue(	kObsCond_Dewpoint,			&obsCondProp->Dewpoint,			1);
-	UpdateOneValue(	kObsCond_Humidity,			&obsCondProp->Humidity,			1);
-	UpdateOneValue(	kObsCond_Pressure_hPa,		&obsCondProp->Pressure, 		0);
-	UpdateOneValue(	kObsCond_RainRate,			&obsCondProp->RainRate, 		1);
-	UpdateOneValue(	kObsCond_SkyBrightness,		&obsCondProp->SkyBrightness,	1);
-	UpdateOneValue(	kObsCond_SkyQuality,		&obsCondProp->SkyQuality,		1);
-	UpdateOneValue(	kObsCond_SkyTemperature,	&obsCondProp->SkyTemperature,	1);
-	UpdateOneValue(	kObsCond_StarFWHM,			&obsCondProp->StarFWHM,			3);
-	UpdateOneValue(	kObsCond_Temperature,		&obsCondProp->Temperature,	 	1);
-	UpdateOneValue(	kObsCond_TempDegreesF,		&temperatureDegF,	 			1);
-	UpdateOneValue(	kObsCond_WindDirection,		&obsCondProp->WindDirection,	1);
-	UpdateOneValue(	kObsCond_WindGust,			&obsCondProp->WindGust,			1);
-	UpdateOneValue(	kObsCond_WindSpeed,			&obsCondProp->WindSpeed,		1);
+	SetWidgetSensorValue(	kObsCond_Averageperiod,		&obsCondProp->Averageperiod,	5);
+	SetWidgetSensorValue(	kObsCond_Cloudcover,		&obsCondProp->Cloudcover,		1);
+	SetWidgetSensorValue(	kObsCond_Dewpoint,			&obsCondProp->Dewpoint,			1);
+	SetWidgetSensorValue(	kObsCond_Humidity,			&obsCondProp->Humidity,			1);
+	SetWidgetSensorValue(	kObsCond_Pressure_hPa,		&obsCondProp->Pressure, 		0);
+	SetWidgetSensorValue(	kObsCond_RainRate,			&obsCondProp->RainRate, 		1);
+	SetWidgetSensorValue(	kObsCond_SkyBrightness,		&obsCondProp->SkyBrightness,	1);
+	SetWidgetSensorValue(	kObsCond_SkyQuality,		&obsCondProp->SkyQuality,		1);
+	SetWidgetSensorValue(	kObsCond_SkyTemperature,	&obsCondProp->SkyTemperature,	1);
+	SetWidgetSensorValue(	kObsCond_StarFWHM,			&obsCondProp->StarFWHM,			3);
+	SetWidgetSensorValue(	kObsCond_Temperature,		&obsCondProp->Temperature,	 	1);
+	SetWidgetSensorValue(	kObsCond_TempDegreesF,		&temperatureDegF,	 			1);
+	SetWidgetSensorValue(	kObsCond_WindDirection,		&obsCondProp->WindDirection,	1);
+	SetWidgetSensorValue(	kObsCond_WindGust,			&obsCondProp->WindGust,			1);
+	SetWidgetSensorValue(	kObsCond_WindSpeed,			&obsCondProp->WindSpeed,		1);
 
 	ForceWindowUpdate();
 }

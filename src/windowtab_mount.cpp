@@ -171,10 +171,17 @@ int		iii;
 	SetWidgetTextColor(	kMount_ScaleInfoTextBox,	CV_RGB(255,	255, 255));
 	SetWidgetJustification(	kMount_ScaleInfoTextBox, kJustification_Left);
 
-	//=======================================================
-	//*	IP address
-	SetIPaddressBoxes(kMount_IPaddr, kMount_Readall, kMount_HelpMsgTextBox, -1);
 	SetHelpTextBoxNumber(kMount_HelpMsgTextBox);
+
+	//=======================================================
+	//*	set up all the bottom stuff so that it is the same on all windowtabs
+	SetupWindowBottomBoxes(	kMount_IPaddr,
+							kMount_Readall,
+							kMount_HelpMsgTextBox,
+							-1,		//	kMount_LastCmdString,
+							-1,		//	kMount_AlpacaLogo,
+							-1);
+	SetWidgetText(kMount_HelpMsgTextBox, "");
 
 	UpdateButtons();
 }

@@ -351,8 +351,8 @@ void	TelescopeDriverComm::StopThread(void)
 
 
 //*****************************************************************************
-int	TelescopeDriverComm::OpenSocket(	struct sockaddr_in	*deviceAddress,
-								const int			port)
+int	TelescopeDriverComm::OpenSocket(struct sockaddr_in	*deviceAddress,
+									const int			port)
 {
 int					socket_desc;
 struct sockaddr_in	remoteDev;
@@ -425,8 +425,8 @@ struct sockaddr_in	deviceAddress;
 char				outputIPaddr[64];
 int					socket_desc;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
-//	CONSOLE_DEBUG_W_STR("ipAddress\t\t=",	ipAddress);
+	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_STR("ipAddress\t\t=",	ipAddress);
 
 	inet_pton(AF_INET, ipAddress, &(deviceAddress.sin_addr));
 	inet_ntop(AF_INET, &(deviceAddress.sin_addr), outputIPaddr, INET_ADDRSTRLEN);
@@ -507,6 +507,10 @@ bool		sendOK;
 				if (cSocket_desc > 0)
 				{
 					connectionOpen	=	true;
+				}
+				else
+				{
+					CONSOLE_DEBUG("Failed to open socket");
 				}
 				break;
 
@@ -610,7 +614,11 @@ bool		sendOK;
 		else
 		{
 			CONSOLE_DEBUG("Failed to open connection");
-			cKeepRunningFlag	=	false;
+		//	cKeepRunningFlag	=	false;
+
+			//*	try sleeping a bit to see if the problem fixes itself
+			CONSOLE_DEBUG("Going to sleep, will try again");
+			sleep(5);
 		}
 	}
 	CONSOLE_DEBUG("Thread EXIT!!!!!!!!!!!!!!!!!!");

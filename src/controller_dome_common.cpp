@@ -172,12 +172,6 @@ double	argDouble;
 	{
 		//*	"version": "AlpacaPi - V0.2.2-beta build #32",
 		strcpy(cAlpacaVersionString, valueString);
-		SetWidgetText(kTab_Dome,		kDomeBox_AlpacaDrvrVersion,		cAlpacaVersionString);
-
-	#if defined(_ENABLE_SLIT_TRACKER_) && !defined(_ENABLE_SKYTRAVEL_)
-		SetWidgetText(kTab_SlitTracker,	kSlitTracker_AlpacaDrvrVersion,	cAlpacaVersionString);
-		SetWidgetText(kTab_SlitGraph,	kSlitGraph_AlpacaDrvrVersion,	cAlpacaVersionString);
-	#endif
 	}
 	else if (strcasecmp(keywordString, "canfindhome") == 0)
 	{
@@ -416,7 +410,7 @@ char	statusString[16];
 void	PARENT_CLASS::AlpacaDisplayErrorMessage(const char *errorMsgString)
 {
 	CONSOLE_DEBUG_W_STR("Alpaca error=", errorMsgString);
-	SetWidgetText(kTab_Dome, kDomeBox_ErrorMsg, errorMsgString);
+	SetWidgetText(kTab_Dome, kDomeBox_AlpacaErrorMsg, errorMsgString);
 #ifdef _ENABLE_SKYTRAVEL_
 	SetWidgetTextColor(	kTab_SkyTravel, kSkyTravel_MsgTextBox, CV_RGB(255, 0, 0));
 	SetWidgetText(		kTab_SkyTravel, kSkyTravel_MsgTextBox, errorMsgString);

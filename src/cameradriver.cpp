@@ -259,9 +259,7 @@ const char	*gCameraStateStrings[]	=
 
 
 //*****************************************************************************
-//*	this table was obtained from
-//*	https://agenaastro.com/zwo-astronomy-cameras-buyers-guide.html
-const TYPE_CmdEntry	gCameraCmdTable[]	=
+TYPE_CmdEntry	gCameraCmdTable[]	=
 {
 
 	{	"bayeroffsetx",				kCmd_Camera_bayeroffsetX,			kCmdType_GET	},
@@ -393,6 +391,9 @@ int	mkdirErrCode;
 	strcpy(cCommonProp.Description,	"Camera");
 	cCommonProp.InterfaceVersion	=	3;
 
+	cDriverCmdTablePtr	=	gCameraCmdTable;
+	TemperatureLog_SetDescription("Camera Temperature");
+
 	//*	set everything to false first
 	memset(&cCameraProp, 0, sizeof(TYPE_CameraProperties));
 
@@ -411,6 +412,7 @@ int	mkdirErrCode;
 
 
 	//======================================================
+	cCameraIsSiumlated				=	false;
 	cUpdateOtherDevices				=	true;
 	cTempReadSupported				=	false;
 	cOffsetSupported				=	false;
@@ -717,7 +719,6 @@ int					cmdEnumValue;
 int					cmdType;
 int					myDeviceNum;
 int					mySocket;
-bool				httpHeaderSent;
 char				httpHeader[500];
 
 
@@ -745,7 +746,7 @@ char				httpHeader[500];
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Device number out of bounds, using device #0");
 	}
 
-	httpHeaderSent	=	false;
+	cHttpHeaderSent	=	false;
 
 	//*	set up the json response
 	JsonResponse_CreateHeader(reqData->jsonTextBuffer);
@@ -1031,7 +1032,7 @@ char				httpHeader[500];
 			{
 //				JsonResponse_FinishHeader(httpHeader, "");
 //				JsonResponse_SendTextBuffer(mySocket, httpHeader);
-				httpHeaderSent	=	true;
+				cHttpHeaderSent	=	true;
 				alpacaErrCode	=	Get_Imagearray(reqData, alpacaErrMsg);
 			}
 			else if (reqData->get_putIndicator == 'P')
@@ -1398,7 +1399,7 @@ char				httpHeader[500];
 		case kCmd_Camera_filelist:
 			JsonResponse_FinishHeader(httpHeader, "");
 			JsonResponse_SendTextBuffer(mySocket, httpHeader);
-			httpHeaderSent	=	true;
+			cHttpHeaderSent	=	true;
 CONSOLE_DEBUG(__FUNCTION__);
 			alpacaErrCode	=	Get_Filelist(reqData, alpacaErrMsg);
 CONSOLE_DEBUG(__FUNCTION__);
@@ -1466,7 +1467,7 @@ CONSOLE_DEBUG(__FUNCTION__);
 				JsonResponse_FinishHeader(httpHeader, "");
 				JsonResponse_SendTextBuffer(mySocket, httpHeader);
 //				CONSOLE_DEBUG_W_STR("httpHeader\t=", httpHeader);
-				httpHeaderSent	=	true;
+				cHttpHeaderSent	=	true;
 				alpacaErrCode	=	Get_RGBarray(reqData, alpacaErrMsg);
 			}
 			else if (reqData->get_putIndicator == 'P')
@@ -1526,7 +1527,7 @@ CONSOLE_DEBUG(__FUNCTION__);
 		//CONSOLE_DEBUG_W_NUM("len of jsonTextBuffer\t=", strlen(reqData->jsonTextBuffer));
 		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Finish(	mySocket,
 																reqData->jsonTextBuffer,
-																(httpHeaderSent == false));
+																(cHttpHeaderSent == false));
 	}
 
 //	if (cmdEnumValue != kCmd_Camera_imagearray)
@@ -6874,6 +6875,9 @@ TYPE_ASCOM_STATUS	alpacaErrCode;
 int32_t	CameraDriver::RunStateMachine(void)
 {
 int32_t		delayMicroSecs;
+time_t		deltaSeconds;
+time_t		currentSeconds;
+
 
 //	if (cInternalCameraState != kCameraState_Idle)
 //	{
@@ -6935,6 +6939,24 @@ int32_t		delayMicroSecs;
 		}
 	}
 #endif // _USE_OPENCV_
+
+	if (cTempReadSupported)
+	{
+		//*	if we support camera temperature, log it every 30 seconds
+		currentSeconds	=   GetSecondsSinceEpoch();
+		deltaSeconds	=	currentSeconds - cLastTempUpdate_Secs;
+		if (deltaSeconds >= 30)
+		{
+		TYPE_ASCOM_STATUS	alpacaErrCode;
+
+			alpacaErrCode	=	Read_SensorTemp();
+			if (alpacaErrCode == kASCOM_Err_Success)
+			{
+				TemperatureLog_AddEntry(cCameraProp.CCDtemperature);
+			}
+			cLastTempUpdate_Secs	=	currentSeconds;
+		}
+	}
 	CheckPulseGuiding();
 	RunStateMachine_Device();
 	return(delayMicroSecs);

@@ -35,6 +35,11 @@
 	#include	"widget.h"
 #endif // _WIDGET_H_
 
+#ifndef	_ALPACA_DEFS_H_
+	#include	"alpaca_defs.h"
+#endif
+
+
 //*****************************************************************************
 typedef struct
 {
@@ -187,12 +192,15 @@ class WindowTab
 				void	SetCurrentTab(			const int tabIdx);
 
 				//*	special purpose routines
+				void	SetupWindowBottomBoxes(	const int	ipaddrBox,
+												const int	readAllBox,
+												const int	errorMsgBox,
+												const int	lastCmdWidgetIdx,
+												const int	logoWidgetIdx,
+												const int	connectBtnBox = -1);
+
+
 				void	SetBGcolorFromWindowName(	const int	widgetIdx);
-				void	SetIPaddressBoxes(			const int	ipaddrBox,
-													const int	readAllBox,
-													const int	versionBox,
-													const int	connectBtnBox = -1);
-				void	SetAlpacaLogo(const int logoWidgetIdx, const int lastCmdWidgetIdx = -1);
 				int		SetAlpacaLogoBottomCorner(const int logoWidgetIdx);
 				void	ClearLastAlpacaCommand(void);
 				void	DisplayLastAlpacaCommand(void);
@@ -228,6 +236,7 @@ class WindowTab
 				void	SetWidgetHelpText(		const int widgetIdx, const char *newText);
 
 				void	SetWidgetHighlighted(	const int widgetIdx, bool highLighted);
+				void	SetWidgetSensorValue(	const int widgetNum, TYPE_Sensor *sensorData, const int decimalPlaces=4);
 
 
 				int		FindClickedWidget(const int xxx, const int yyy);
@@ -319,6 +328,7 @@ class WindowTab
 		int			cLinesOnScreen;
 		int			cSortColumn;
 		int			cFirstLineIdx;
+		int			cTotalLines;
 
 
 
@@ -347,7 +357,6 @@ class WindowTab
 		int		AlpacaCheckForErrors(	SJP_Parser_t	*jsonParser,
 										char			*errorMsg,
 										bool			reportError=false);
-virtual	void	AlpacaDisplayErrorMessage(const char *errorMsgString);
 #endif // _CONTROLLER_USES_ALPACA_
 
 

@@ -42,6 +42,8 @@
 //*	Sep  4,	2022	<MLS> Added UpdateAboutBoxRemoteDevice()
 //*	Sep  5,	2022	<MLS> About box now updated to display specs of remote device
 //*	Sep 26,	2022	<MLS> Fixed return data valid bug in all routines
+//*	Oct 16,	2022	<MLS> Added Alpaca_GetTemperatureLog()
+//*	Oct 26,	2022	<MLS> Fixed return data valid bug in AlpacaGetStringValue()
 //*****************************************************************************
 
 #ifdef _CONTROLLER_USES_ALPACA_
@@ -57,6 +59,7 @@
 
 #include	"discovery_lib.h"
 #include	"sendrequest_lib.h"
+#include	"helper_functions.h"
 
 #define	_DEBUG_TIMING_
 #define _ENABLE_CONSOLE_DEBUG_
@@ -670,7 +673,7 @@ bool			validData;
 char			alpacaString[128];
 int				jjj;
 int				myIntgerValue;
-bool			myReturnDataIsValid;
+bool			myReturnDataIsValid	=	true;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -707,6 +710,7 @@ bool			myReturnDataIsValid;
 	}
 	else
 	{
+		myReturnDataIsValid	=	false;
 		cReadFailureCnt++;
 	}
 	//*	does the calling routine want to know if the data was good
@@ -731,10 +735,9 @@ bool			validData;
 char			alpacaString[128];
 int				myIntgerValue;
 int				jjj;
-bool			myReturnDataIsValid;
+bool			myReturnDataIsValid	=	true;
 
 	//*	set the default valid data flag to TRUE
-	myReturnDataIsValid	=	true;
 	SJP_Init(&jsonParser);
 	sprintf(alpacaString,	"/api/v1/%s/%d/%s", alpacaDevice, cAlpacaDevNum, alpacaCmd);
 	if (gVerbose)
@@ -775,7 +778,8 @@ bool			myReturnDataIsValid;
 		cLastAlpacaErrNum	=	AlpacaCheckForErrors(&jsonParser, cLastAlpacaErrStr);
 		if (cLastAlpacaErrNum != kASCOM_Err_Success)
 		{
-			CONSOLE_DEBUG_W_NUM("cLastAlpacaErrNum        \t=",	cLastAlpacaErrNum);
+			CONSOLE_DEBUG_W_NUM("cLastAlpacaErrNum\t=",	cLastAlpacaErrNum);
+			CONSOLE_DEBUG_W_STR("alpacaString     \t=",	alpacaString);
 			myReturnDataIsValid	=	false;
 		}
 	}
@@ -803,7 +807,7 @@ SJP_Parser_t	jsonParser;
 bool			validData;
 char			alpacaString[128];
 int				jjj;
-bool			myReturnDataIsValid;
+bool			myReturnDataIsValid	=	true;
 
 	SJP_Init(&jsonParser);
 	sprintf(alpacaString,	"/api/v1/%s/%d/%s", alpacaDevice, cAlpacaDevNum, alpacaCmd);
@@ -832,11 +836,13 @@ bool			myReturnDataIsValid;
 		if (cLastAlpacaErrNum != kASCOM_Err_Success)
 		{
 			CONSOLE_DEBUG_W_NUM("cLastAlpacaErrNum        \t=",	cLastAlpacaErrNum);
+			CONSOLE_DEBUG_W_STR("alpacaString     \t=",	alpacaString);
 			myReturnDataIsValid	=	false;
 		}
 	}
 	else
 	{
+		myReturnDataIsValid	=	false;
 		cReadFailureCnt++;
 	}
 	//*	does the calling routine want to know if the data was good
@@ -862,13 +868,12 @@ bool			validData;
 char			alpacaString[128];
 int				jjj;
 double			myDoubleValue;
-bool			myReturnDataIsValid;
+bool			myReturnDataIsValid	=	true;
 
 
 	SJP_Init(&jsonParser);
 	sprintf(alpacaString,	"/api/v1/%s/%d/%s", alpacaDevice, alpacaDevNum, alpacaCmd);
 //	CONSOLE_DEBUG_W_STR("alpacaString\t=",	alpacaString);
-	myReturnDataIsValid	=	true;
 	validData	=	GetJsonResponse(	&deviceAddress,
 										port,
 										alpacaString,
@@ -903,6 +908,7 @@ bool			myReturnDataIsValid;
 	}
 	else
 	{
+		myReturnDataIsValid	=	false;
 		cReadFailureCnt++;
 	}
 	//*	does the calling routine want to know if the data was good
@@ -955,7 +961,7 @@ bool			validData;
 char			alpacaString[128];
 int				jjj;
 double			myDoubleValue;
-bool			myReturnDataIsValid;
+bool			myReturnDataIsValid	=	true;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 	SJP_Init(&jsonParser);
@@ -991,12 +997,14 @@ bool			myReturnDataIsValid;
 		cLastAlpacaErrNum	=	AlpacaCheckForErrors(&jsonParser, cLastAlpacaErrStr);
 		if (cLastAlpacaErrNum != kASCOM_Err_Success)
 		{
-			CONSOLE_DEBUG_W_NUM("cLastAlpacaErrNum        \t=",	cLastAlpacaErrNum);
+			CONSOLE_DEBUG_W_NUM("cLastAlpacaErrNum\t=",	cLastAlpacaErrNum);
+			CONSOLE_DEBUG_W_STR("alpacaString     \t=",	alpacaString);
 			myReturnDataIsValid	=	false;
 		}
 	}
 	else
 	{
+		myReturnDataIsValid	=	false;
 		cReadFailureCnt++;
 	}
 	//*	does the calling routine want to know if the data was good
@@ -1023,15 +1031,16 @@ bool			validData;
 char			alpacaString[128];
 int				jjj;
 bool			myBooleanValue;
-bool			myReturnDataIsValid;
+bool			myReturnDataIsValid	=	true;
 
-	if (printDebug)
-	{
-		CONSOLE_DEBUG_W_2STR(__FUNCTION__, alpacaDevice, alpacaCmd);
-	}
 
 	SJP_Init(&jsonParser);
 	sprintf(alpacaString,	"/api/v1/%s/%d/%s", alpacaDevice, cAlpacaDevNum, alpacaCmd);
+	if (printDebug)
+	{
+		CONSOLE_DEBUG_W_2STR(__FUNCTION__, alpacaDevice, alpacaCmd);
+		CONSOLE_DEBUG(alpacaString);
+	}
 
 //	if (strcmp(alpacaDevice, "switch") == 0)
 //	{
@@ -1067,14 +1076,16 @@ bool			myReturnDataIsValid;
 		cLastAlpacaErrNum	=	AlpacaCheckForErrors(&jsonParser, cLastAlpacaErrStr);
 		if (cLastAlpacaErrNum != kASCOM_Err_Success)
 		{
-			CONSOLE_DEBUG_W_NUM("cLastAlpacaErrNum        \t=",	cLastAlpacaErrNum);
+			CONSOLE_DEBUG_W_NUM("cLastAlpacaErrNum\t=",	cLastAlpacaErrNum);
+			CONSOLE_DEBUG_W_STR("alpacaString     \t=",	alpacaString);
 			myReturnDataIsValid	=	false;
 		}
 	}
 	else
 	{
-		CONSOLE_DEBUG_W_2STR("Failed", alpacaString, dataString);
+		myReturnDataIsValid	=	false;
 		cReadFailureCnt++;
+		CONSOLE_DEBUG_W_2STR("Failed", alpacaString, dataString);
 	}
 	//*	does the calling routine want to know if the data was good
 	if (rtnValidData != NULL)
@@ -1171,11 +1182,6 @@ char				errorReportStr[256];
 	return(alpacaErrorCode);
 }
 
-//*****************************************************************************
-void	Controller::AlpacaDisplayErrorMessage(const char *errorMsgString)
-{
-	//*	this should be overloaded
-}
 
 //*****************************************************************************
 int	Controller::Alpaca_GetRemoteCPUinfo(void)
@@ -1292,6 +1298,338 @@ void	Controller::UpdateAboutBoxRemoteDevice(const int tabNumber, const int widge
 //		CONSOLE_ABORT(__FUNCTION__);
 	}
 }
+
+
+//*****************************************************************************
+//*	returns number of data points read
+//*	-1 means error
+//*****************************************************************************
+int	Controller::Alpaca_GetTemperatureLog(	const char	*alpacaDeviceString,
+											const int	alpacaDeviceNumber,
+											double		*temperatureLog,
+											const int	maxBufferSize)
+{
+char			alpacaString[128];
+int				shutDownRetCode;
+int				closeRetCode;
+char			theChar;
+char			linebuf[kReadBuffLen];
+bool			readingHttpHeader;
+int				ccc;
+char			keywordStr[kLineBufSize];
+char			valueStr[kLineBufSize];
+char			returnedData[kReadBuffLen + 10];
+int				recvdByteCnt;
+int				totalBytesRead;
+int				linesProcessed;
+int				ranOutOfRoomCnt;
+bool			keepReading;
+int				socketReadCnt;
+int				data_iii;
+int				socket_desc;
+bool			valueFoundFlag;
+int				dataIndex;
+int				firstCharNotDigitCnt	=	0;
+int				returnDataCnt;
+int				braceCnt;
+double			myDoubleValue;
+
+
+	CONSOLE_DEBUG(__FUNCTION__);
+	if ((temperatureLog == NULL) || (maxBufferSize <= 0))
+	{
+		CONSOLE_DEBUG("No place to put data");
+		return(-1);
+	}
+
+
+	returnDataCnt	=	-1;
+	dataIndex		=	0;
+
+	sprintf(alpacaString,	"/api/v1/%s/%d/temperaturelog", alpacaDeviceString, alpacaDeviceNumber);
+
+	strcpy(cLastAlpacaCmdString, alpacaString);
+	CONSOLE_DEBUG_W_STR("alpacaString\t=",	alpacaString);
+
+	socket_desc	=	OpenSocketAndSendRequest(	&cDeviceAddress,
+												cPort,
+												"GET",	//*	must be either GET or PUT
+												alpacaString,
+												"",
+												false);
+
+
+
+	if (socket_desc >= 0)
+	{
+
+		CONSOLE_DEBUG("Success: Connection open and data sent");
+		valueFoundFlag		=	false;
+		keepReading			=	true;
+		readingHttpHeader	=	true;
+		data_iii			=	0;
+		linesProcessed		=	0;
+		totalBytesRead		=	0;
+		socketReadCnt		=	0;
+		ranOutOfRoomCnt		=	0;
+		ccc					=	0;
+		while (keepReading)
+		{
+			recvdByteCnt	=	recv(socket_desc, returnedData , kReadBuffLen , 0);
+			if (recvdByteCnt > 0)
+			{
+				socketReadCnt++;
+
+				totalBytesRead				+=	recvdByteCnt;
+				returnedData[recvdByteCnt]	=	0;
+				data_iii					=	0;
+
+				CONSOLE_DEBUG_W_NUM("recvdByteCnt  \t=", recvdByteCnt);
+				CONSOLE_DEBUG_W_NUM("totalBytesRead\t=", totalBytesRead);
+
+				//----------------------------------------------------------------
+				//*	this part reads and processes the HTTP header
+				while (readingHttpHeader && (data_iii < recvdByteCnt))
+				{
+					theChar	=	returnedData[data_iii];
+					if ((theChar == 0x0d) || (theChar == 0x0a))
+					{
+						//*	null terminate the line
+						linebuf[ccc]	=	0;
+
+						if (strlen(linebuf) > 0)
+						{
+							//*	process the header line
+							JSON_ExtractKeyword_Value(linebuf, keywordStr, valueStr);
+							CONSOLE_DEBUG_W_2STR("JSON:", keywordStr, valueStr);
+						//	ProcessHTTPheaderLine(linebuf, &cHttpHdrStruct);
+						}
+						else
+						{
+							//*	Done with the header
+							CONSOLE_DEBUG("Done with the header");
+							readingHttpHeader	=	false;
+						}
+
+						//*	reset for next line
+						ccc				=	0;
+						linebuf[ccc]	=	0;
+
+						//*	check for the lf of cr/lf
+					//	if ((returnedData[data_iii + 1] == 0x0a) || (returnedData[data_iii + 1] == 0x0d))
+						if ((returnedData[data_iii + 1] == 0x0a))
+						{
+							data_iii++;
+						}
+					}
+					else
+					{
+						linebuf[ccc]	=	theChar;
+						ccc++;
+					}
+					data_iii++;
+				}
+				CONSOLE_DEBUG_W_NUM("data_iii    \t=", data_iii);
+
+				//*	dont reset data_iii
+				for (; data_iii<recvdByteCnt; data_iii++)
+				{
+					theChar	=	returnedData[data_iii];
+					if (theChar == '{')
+					{
+						braceCnt++;
+					}
+					else if (theChar == '}')
+					{
+						braceCnt--;
+					}
+
+					if (valueFoundFlag && ((theChar == ',') || (theChar == ']')))
+					{
+						linebuf[ccc]	=	0;
+						if (isdigit(linebuf[0]) || (linebuf[0] == '-'))
+						{
+							myDoubleValue	=	atof(linebuf);
+//							if (myDoubleValue > 1.0)
+//							{
+//								CONSOLE_DEBUG_W_DBL("myDoubleValue\t=", myDoubleValue);
+//							}
+							if (dataIndex < maxBufferSize)
+							{
+								temperatureLog[dataIndex]	=	myDoubleValue;
+								dataIndex++;
+							}
+							else
+							{
+								ranOutOfRoomCnt++;
+								if (ranOutOfRoomCnt < 10)
+								{
+									CONSOLE_DEBUG("Ran out of room");
+								}
+							}
+						}
+						else
+						{
+						//	CONSOLE_DEBUG_W_STR("First char not digit=", linebuf);
+							firstCharNotDigitCnt++;
+						}
+						ccc				=	0;
+						linebuf[ccc]	=	0;
+
+						if ((theChar == ']') || (returnedData[data_iii+1] == ','))
+						{
+		//					CONSOLE_DEBUG_W_NUM("Skipping at \t=", data_iii);
+							data_iii++;
+						}
+					}
+
+			//		else
+					if (theChar == ',')
+					{
+						linebuf[ccc]	=	0;
+						if (ccc > 0)
+						{
+						//	CONSOLE_DEBUG_W_STR("linebuf\t=", linebuf);
+						}
+						if ((strlen(linebuf) > 3) && (linebuf[0] != 0x30))
+						{
+							JSON_ExtractKeyword_Value(linebuf, keywordStr, valueStr);
+							CONSOLE_DEBUG_W_2STR("KW:VAL\t=", keywordStr, valueStr);
+
+							if (strcasecmp(keywordStr, "value") == 0)
+							{
+								CONSOLE_DEBUG("value found!!!!");
+								valueFoundFlag	=	true;
+							}
+						}
+						ccc	=	0;
+					}
+					else if ((theChar == 0x0d) || (theChar == 0x0a))
+					{
+						linesProcessed++;
+					}
+					else if (braceCnt > 0)
+					{
+						if (ccc < kReadBuffLen)
+						{
+							if ((theChar != '[') && (theChar != ']') && (theChar > 0x20))
+							{
+								linebuf[ccc++]	=	theChar;
+								linebuf[ccc]	=	0;
+							}
+						}
+						else
+						{
+							CONSOLE_DEBUG("Line to long");
+						}
+					}
+				}
+			}
+			else
+			{
+				keepReading		=	false;
+			}
+		}
+		CONSOLE_DEBUG(__FUNCTION__);
+		shutDownRetCode	=	shutdown(socket_desc, SHUT_RDWR);
+		if (shutDownRetCode != 0)
+		{
+			CONSOLE_DEBUG_W_NUM("shutDownRetCode\t=", shutDownRetCode);
+			CONSOLE_DEBUG_W_NUM("errno\t=", errno);
+		}
+
+		closeRetCode	=	close(socket_desc);
+		if (closeRetCode != 0)
+		{
+			CONSOLE_DEBUG("Close error");
+		}
+	}
+	else
+	{
+		CONSOLE_DEBUG("Failed");
+		cReadFailureCnt++;
+	}
+
+	//*	if we actually got some data, return the count
+	if (returnDataCnt)
+	{
+		returnDataCnt	=	dataIndex;
+	}
+	return(returnDataCnt);
+}
+
+//*****************************************************************************
+void	JSON_ExtractKeyword_Value(const char *linebuf, char *keywordStr, char *valueStr)
+{
+char	myLineBuf[kLineBufSize];
+int		ccc;
+int		sLen;
+char	*colonPtr;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	keywordStr[0]	=	0;
+	valueStr[0]		=	0;
+
+	sLen	=	strlen(linebuf);
+	//*	get rid of leading spaces
+	ccc	=	0;
+	while (((linebuf[ccc] == 0x20) || (linebuf[ccc] == 0x09)) && (ccc < sLen))
+	{
+		ccc++;
+	}
+	strcpy(myLineBuf, &linebuf[ccc]);
+
+
+	//*	separate out the keyword
+	if (myLineBuf[0] == '"')
+	{
+		strcpy(keywordStr, &myLineBuf[1]);
+	}
+	else
+	{
+		strcpy(keywordStr, myLineBuf);
+	}
+	colonPtr	=	strchr(keywordStr, ':');
+	if (colonPtr != NULL)
+	{
+		*colonPtr	=	0;
+	}
+	//*	check for trailing quote
+	sLen	=	strlen(keywordStr);
+	if (keywordStr[sLen - 1] == '"')
+	{
+		keywordStr[sLen - 1]	=	0;
+	}
+	//*	now go back to the original and look for the value
+	colonPtr	=	strchr(myLineBuf, ':');
+	if (colonPtr != NULL)
+	{
+		//*	we have a value string
+		colonPtr++;	//*	skip the colon
+		if (*colonPtr == '"')
+		{
+			colonPtr++;
+		}
+		strcpy(valueStr, colonPtr);
+
+		//*	check for trailing coma
+		sLen	=	strlen(valueStr);
+		if (valueStr[sLen - 1] == ',')
+		{
+			valueStr[sLen - 1]	=	0;
+		}
+
+		//*	check for trailing quote
+		sLen	=	strlen(valueStr);
+		if (valueStr[sLen - 1] == '"')
+		{
+			valueStr[sLen - 1]	=	0;
+		}
+//		CONSOLE_DEBUG_W_2STR("kw:value=", keywordStr, valueStr);
+	}
+}
+
 
 #endif // _CONTROLLER_USES_ALPACA_
 

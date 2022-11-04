@@ -31,7 +31,7 @@ enum
 	kCamGraph_TempGraph,
 	kCamGraph_TempOutline,
 
-	kCamGraph_AlpacaDrvrVersion,
+	kCamGraph_AlpacaErrorMsg,
 	kCamGraph_IPaddr,
 	kCamGraph_Readall,
 

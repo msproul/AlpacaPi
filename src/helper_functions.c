@@ -10,6 +10,7 @@
 //*	Jul  8,	2022	<MLS> Added MSecTimer_getNanoSecs()
 //*	Aug  6,	2022	<MLS> Added GetMinutesSinceMidnight()
 //*	Sep 19,	2022	<MLS> Changed MSecTimer_getNanoSecs() to return uint64_t
+//*	Oct 16,	2022	<MLS> Added GetSecondsSinceEpoch()
 //*****************************************************************************
 
 #include	<math.h>
@@ -191,7 +192,6 @@ struct tm	*linuxTime;
 								linuxTime->tm_hour,
 								linuxTime->tm_min,
 								linuxTime->tm_sec);
-
 	}
 }
 
@@ -209,7 +209,6 @@ struct tm	*linuxTime;
 								linuxTime->tm_hour,
 								linuxTime->tm_min,
 								linuxTime->tm_sec);
-
 	}
 }
 
@@ -226,7 +225,6 @@ struct tm	*linuxTime;
 								linuxTime->tm_hour,
 								linuxTime->tm_min,
 								linuxTime->tm_sec);
-
 	}
 }
 
@@ -253,7 +251,6 @@ struct tm	*linuxTime;
 								linuxTime->tm_sec);
 	}
 }
-
 
 //*****************************************************************************
 void	FormatTimeString_TM(struct tm *timeStruct, char *timeString)
@@ -408,6 +405,17 @@ int				minutesSinceMidnight;
 	return(minutesSinceMidnight);
 }
 
+//*****************************************************************************
+time_t	GetSecondsSinceEpoch(void)
+{
+struct timeval	currentTime;
+
+	gettimeofday(&currentTime, NULL);
+
+	return(currentTime.tv_sec);
+}
+
+
 #if !defined(__arm__) || defined(_INCLUDE_MILLIS_)
 
 static uint32_t	gSystemStartSecs = 0;
@@ -429,4 +437,6 @@ struct timeval	currentTime;
 	milliSecs	=	(elapsedSecs * 1000) + (currentTime.tv_usec / 1000);
 	return(milliSecs);
 }
+
+
 #endif	//	!defined(__arm__) || defined(_INCLUDE_MILLIS_)

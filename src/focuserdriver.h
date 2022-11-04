@@ -106,9 +106,11 @@ class FocuserDriver: public AlpacaDriver
 		int32_t			GetRotatorStepsPerRev(void);
 		bool			GetRotatorIsMoving(void);
 
+		void			DumpFocuserProperties(const char *callingFunctionName);
 
 	protected:
 		TYPE_FocuserProperties	cFocuserProp;
+		TYPE_RotatorProperties	cRotatorProp;
 
 		int32_t			cFocuserPGet_Readallostion;
 		int32_t			cPrevFocuserPosition;
@@ -118,8 +120,9 @@ class FocuserDriver: public AlpacaDriver
 		//*	this is for support of Moonlite NiteCrawler
 		bool			cIsNiteCrawler;
 		bool			cFocuserSupportsRotation;
-		int32_t			cRotatorPosition;
 		int32_t			cRotatorStepsPerRev;
+
+		int32_t			cRotatorPosition;
 		int32_t			cPrevRotatorPosition;
 		int32_t			cNewRotatorPosition;
 		bool			cRotatorIsMoving;
@@ -134,7 +137,6 @@ class FocuserDriver: public AlpacaDriver
 		bool			cFocuserHasTemperature;
 		double			cFocuserTemp;			//*	degrees C
 		bool			cHasTempComp;
-//-		bool			cTempCompEnabled;
 
 		bool			cFocuserHasVoltage;
 		double			cFocuserVoltage;

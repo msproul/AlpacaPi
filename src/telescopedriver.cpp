@@ -194,10 +194,8 @@ enum
 };
 
 //*****************************************************************************
-const TYPE_CmdEntry	gTelescopeCmdTable[]	=
+static TYPE_CmdEntry	gTelescopeCmdTable[]	=
 {
-
-
 	{	"alignmentmode",			kCmd_Telescope_alignmentmode,			kCmdType_GET	},	//*	Returns the current mount alignment mode
 	{	"altitude",					kCmd_Telescope_altitude,				kCmdType_GET	},	//*	Returns the mount's Altitude above the horizon.
 	{	"aperturearea",				kCmd_Telescope_aperturearea,			kCmdType_GET	},	//*	Returns the telescope's aperture.
@@ -298,6 +296,7 @@ int		iii;
 
 	strcpy(cCommonProp.Name, "Telescope");
 	cCommonProp.InterfaceVersion	=	3;
+	cDriverCmdTablePtr				=	gTelescopeCmdTable;
 
 	//--------------------------------------------------------------------
 	//*	set the defaults, everything to false or zero
@@ -1883,6 +1882,10 @@ char					extraString[128];
 
 		case kPierSide_pierWest:
 			strcpy(extraString, "Through the pole pointing state - Mount on the West side of pier (looking East)");
+			break;
+
+		case kPierSide_NotAvailable:
+			strcpy(extraString, "Not available");
 			break;
 
 	}

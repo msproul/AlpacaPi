@@ -191,27 +191,18 @@ int		myButtonHt;
 
 	SetWidgetOutlineBox(kCoverCalib_Brightness_Outline, kCoverCalib_Brightness_Label, kCoverCalib_Plus50);
 
-	//=======================================================
-	//*	Error messages
-	SetWidget(			kCoverCalib_ErrorMsg,	cClm1_offset,	yLoc,	cFullWidthBtn,		cRadioBtnHt * 2	);
-	SetWidgetType(		kCoverCalib_ErrorMsg, 	kWidgetType_MultiLineText);
-	SetWidgetFont(		kCoverCalib_ErrorMsg,	kFont_Medium);
-	SetWidgetText(		kCoverCalib_ErrorMsg,	"-----");
-	SetWidgetTextColor(	kCoverCalib_ErrorMsg,	CV_RGB(255,	0,	0));
-	yLoc			+=	cRadioBtnHt * 2;
-	yLoc			+=	2;
-
-
 	yLoc			+=	cTitleHeight;
 	yLoc			+=	50;
 
 
-	SetAlpacaLogo(kCoverCalib_AlpacaLogo, kCoverCalib_LastCmdString);
-
 	//=======================================================
-	//*	IP address
-	CONSOLE_DEBUG(__FUNCTION__);
-	SetIPaddressBoxes(kCoverCalib_IPaddr, kCoverCalib_Readall, kCoverCalib_AlpacaDrvrVersion, -1);
+	//*	set up all the bottom stuff so that it is the same on all windowtabs
+	SetupWindowBottomBoxes(	kCoverCalib_IPaddr,
+							kCoverCalib_Readall,
+							kCoverCalib_AlpacaErrorMsg,
+							kCoverCalib_LastCmdString,
+							kCoverCalib_AlpacaLogo,
+							-1);
 
 }
 
@@ -352,12 +343,6 @@ void	WindowTabCoverCalib::SetCoverCalibPropPtr(TYPE_CoverCalibrationProperties *
 	cCoverCalibrationPropPtr		=	argPropPtr;
 }
 
-//*****************************************************************************
-void	WindowTabCoverCalib::AlpacaDisplayErrorMessage(const char *errorMsgString)
-{
-//	CONSOLE_DEBUG_W_STR("Alpaca error=", errorMsgString);
-	SetWidgetText(kCoverCalib_ErrorMsg, errorMsgString);
-}
 
 
 #endif // _ENABLE_USB_FOCUSERS_

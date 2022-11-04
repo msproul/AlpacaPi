@@ -44,10 +44,9 @@ enum
 	kCongfigBox_Text13,
 	kCongfigBox_Text14,
 
-
-
+	kCongfigBox_LastCmdString,
 	kCongfigBox_AlpacaLogo,
-	kCongfigBox_AlpacaDrvrVersion,
+	kCongfigBox_AlpacaErrorMsg,
 	kCongfigBox_IPaddr,
 	kCongfigBox_Readall,
 

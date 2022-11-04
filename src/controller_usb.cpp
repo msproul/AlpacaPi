@@ -59,8 +59,6 @@ ControllerUSB::ControllerUSB(	const char			*argWindowName,
 	strcpy(cUSBpath, usbPath);
 
 	SetupWindowControls();
-
-	SetWidgetText(kTab_USB,		kUSBselect_AlpacaDrvrVersion,		gFullVersionString);
 }
 
 //**************************************************************************************

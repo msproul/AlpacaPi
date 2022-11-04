@@ -111,7 +111,7 @@ int		slen;
 int		valideLineCnt;
 bool	validEntry;
 
-//	CONSOLE_DEBUG_W_STR(__FUNCTION__, configFilePath);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, configFilePath);
 
 //	CheckDuplicates();
 
@@ -145,6 +145,10 @@ bool	validEntry;
 			}
 		}
 		fclose(filePointer);
+	}
+	else
+	{
+		CONSOLE_DEBUG_W_STR("Failed to open:", configFilePath);
 	}
 	return(valideLineCnt);
 }

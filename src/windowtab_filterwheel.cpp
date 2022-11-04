@@ -110,11 +110,14 @@ int		yLoc;
 	yLoc			+=	cWidth;
 	yLoc			+=	2;
 
-	SetAlpacaLogo(kFilterWheel_AlpacaLogo, kFilterWheel_LastCmdString);
-
 	//=======================================================
-	//*	IP address
-	SetIPaddressBoxes(kFilterWheel_IPaddr, kFilterWheel_Readall, kFilterWheel_AlpacaDrvrVersion, -1);
+	//*	set up all the bottom stuff so that it is the same on all windowtabs
+	SetupWindowBottomBoxes(	kFilterWheel_IPaddr,
+							kFilterWheel_Readall,
+							kFilterWheel_AlpacaErrorMsg,
+							kFilterWheel_LastCmdString,
+							kFilterWheel_AlpacaLogo,
+							-1);
 }
 
 //*****************************************************************************

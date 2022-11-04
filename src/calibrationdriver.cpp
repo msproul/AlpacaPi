@@ -83,7 +83,7 @@ enum
 };
 
 //*****************************************************************************
-const TYPE_CmdEntry	gCalibrationCmdTable[]	=
+static TYPE_CmdEntry	gCalibrationCmdTable[]	=
 {
 
 
@@ -126,6 +126,9 @@ CalibrationDriver::CalibrationDriver(void)
 	cCoverCalibrationProp.CalibratorState	=	kCalibrator_NotPresent;
 	cCoverCalibrationProp.CoverState		=	kCover_NotPresent;
 	cCoverCalibrationProp.MaxBrightness		=	1;
+
+	cDriverCmdTablePtr	=	gCalibrationCmdTable;
+
 }
 
 //**************************************************************************************

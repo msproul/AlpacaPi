@@ -120,22 +120,25 @@ bool	rtnValidData;
 											&newFilterWheelPosition,
 											&rtnValidData);
 //	CONSOLE_DEBUG_W_BOOL("rtnValidData\t=", rtnValidData);
-	if (validData && rtnValidData)
+	if (validData)
 	{
-//		CONSOLE_DEBUG_W_NUM("rcvd newFilterWheelPosition\t=", newFilterWheelPosition);
-		cOnLine	=	true;
+		if (rtnValidData)
+		{
+	//		CONSOLE_DEBUG_W_NUM("rcvd newFilterWheelPosition\t=", newFilterWheelPosition);
+			cOnLine	=	true;
 
-		//*	alpaca/ascom uses filter wheel positions from 0 -> N-1
-		if ((newFilterWheelPosition >= 0) && (newFilterWheelPosition < kMaxFiltersPerWheel))
-		{
-			cFilterWheelProp.Position	=	newFilterWheelPosition;
-			cFilterWheelProp.IsMoving	=	false;
+			//*	alpaca/ascom uses filter wheel positions from 0 -> N-1
+			if ((newFilterWheelPosition >= 0) && (newFilterWheelPosition < kMaxFiltersPerWheel))
+			{
+				cFilterWheelProp.Position	=	newFilterWheelPosition;
+				cFilterWheelProp.IsMoving	=	false;
+			}
+			else if (newFilterWheelPosition == -1)
+			{
+				cFilterWheelProp.IsMoving	=	true;
+			}
+			UpdateFilterWheelPosition();
 		}
-		else if (newFilterWheelPosition == -1)
-		{
-			cFilterWheelProp.IsMoving	=	true;
-		}
-		UpdateFilterWheelPosition();
 	}
 	else
 	{

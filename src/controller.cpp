@@ -90,6 +90,9 @@
 //*	May 31,	2022	<MLS> Added RunCommandLine()
 //*	Jun  4,	2022	<MLS> Added flags arg to ProcessButtonClick()
 //*	Jun  8,	2022	<MLS> Added EditTextFile()
+//*	Oct  7,	2022	<MLS> Added UpdateCapabilityListID()
+//*	Oct 13,	2022	<MLS> Finished support for kJustification_Right
+//*	Oct 20,	2022	<MLS> Changing all controllers to use the same error msg box
 //*****************************************************************************
 
 
@@ -671,6 +674,11 @@ bool		validData;
 #endif // _CONTROLLER_USES_ALPACA_
 }
 
+//*****************************************************************************
+void	Controller::AlpacaDisplayErrorMessage(const char *errorMsgString)
+{
+	//*	this should be overloaded
+}
 
 //**************************************************************************************
 void	Controller::SetupWindowControls(void)
@@ -695,7 +703,6 @@ int		iii;
 	}
 	cUpdateWindow	=	true;
 }
-
 
 //**************************************************************************************
 void	Controller::RunBackgroundTasks(const char *callingFunction, bool enableDebug)
@@ -1140,11 +1147,11 @@ int		myWidgitIdx;
 bool	widgetIsButton;
 int		wheelMovement;
 
-//	if (event != 0)
-//	{
-//		CONSOLE_DEBUG(__FUNCTION__);
-//		CONSOLE_DEBUG_W_NUM("EVENT=", event);
-//	}
+	if (event != 0)
+	{
+		CONSOLE_DEBUG(__FUNCTION__);
+		CONSOLE_DEBUG_W_NUM("EVENT=", event);
+	}
 	myWidgitIdx	=	FindClickedWidget(xxx,  yyy);
 	switch(event)
 	{
@@ -1344,6 +1351,14 @@ int		wheelMovement;
 			break;
 
 #if (CV_MAJOR_VERSION >= 3)
+		//********************************************************************************
+		//*	NOTE:
+		//*	OpenCV Version 4.5.4, mouse wheel does NOT work
+		//*	https://github.com/opencv/opencv/issues/22043
+		//*	https://github.com/opencv/opencv/issues/21853
+		//*	I went back to 4.5.1 and they work fine.
+		//*	Oct 24,	2022	<MLS> Dont use openCV 4.5.4 (mousewheel bug), use 4.5.1 instead
+		//********************************************************************************
 		case cv::EVENT_MOUSEWHEEL:
 		case cv::EVENT_MOUSEHWHEEL:
 			CONSOLE_DEBUG_W_HEX("EVENT_MOUSEWHEEL: flags\t=", flags);
@@ -1513,8 +1528,20 @@ int			textOffsetY;
 				textLoc_X	=	theWidget->left + 7;
 				break;
 
-			case kJustification_Center:
 			case kJustification_Right:
+				textOffsetX	=	theWidget->width - textWidthPixels;
+				if (textOffsetX > 0)
+				{
+					textLoc_X	=	theWidget->left + textOffsetX;
+					textLoc_X	-=	7;
+				}
+				else
+				{
+					textLoc_X	=	theWidget->left + 2;
+				}
+				break;
+
+			case kJustification_Center:
 			default:
 				textOffsetX	=	(theWidget->width / 2) - (textWidthPixels / 2);
 				textLoc_X	=	theWidget->left + textOffsetX;
@@ -1654,8 +1681,20 @@ int			textLoc_Y;
 							textLoc_X	=	theWidget->left + 7;
 							break;
 
-						case kJustification_Center:
 						case kJustification_Right:
+							textOffsetX	=	theWidget->width - textWidthPixels;
+							if (textOffsetX > 0)
+							{
+								textLoc_X	=	theWidget->left + textOffsetX;
+								textLoc_X	-=	7;
+							}
+							else
+							{
+								textLoc_X	=	theWidget->left + 2;
+							}
+							break;
+
+						case kJustification_Center:
 						default:
 							textOffsetX	=	(theWidget->width / 2) - (textWidthPixels / 2);
 							textLoc_X	=	theWidget->left + textOffsetX;
@@ -3245,12 +3284,12 @@ int		iii;
 int		foundIdx;
 
 //	CONSOLE_DEBUG_W_2STR(__FUNCTION__, capability, value);
-
 	foundIdx	=	-1;
 	iii			=	0;
 
 	while ((foundIdx < 0) && (iii<kMaxCapabilities))
 	{
+		//*	look for the first available empty slot
 		if (cCapabilitiesList[iii].capabilityName[0] == 0)
 		{
 			foundIdx	=	iii;
@@ -3305,6 +3344,32 @@ bool			argBoolean;
 void	Controller::UpdateCapabilityList(void)
 {
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+}
+
+//**************************************************************************************
+void	Controller::UpdateCapabilityListID(const int tabID, const int startBoxID, const int lastBoxID)
+{
+int		boxID;
+int		iii;
+char	textString[80];
+
+	iii	=	0;
+	while (cCapabilitiesList[iii].capabilityName[0] != 0)
+	{
+		boxID	=	startBoxID + iii;
+		if (boxID <= lastBoxID)
+		{
+			strcpy(textString,	cCapabilitiesList[iii].capabilityName);
+			strcat(textString,	":\t");
+			strcat(textString,	cCapabilitiesList[iii].capabilityValue);
+			SetWidgetText(tabID, boxID, textString);
+		}
+		else
+		{
+			break;
+		}
+		iii++;
+	}
 }
 
 //*****************************************************************************

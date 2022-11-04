@@ -123,7 +123,7 @@ enum
 	kSwitchBox_LastCmdString,
 	kSwitchBox_AlpacaLogo,
 
-	kSwitchBox_AlpacaDrvrVersion,
+	kSwitchBox_AlpacaErrorMsg,
 	kSwitchBox_IPaddr,
 	kSwitchBox_Readall,
 

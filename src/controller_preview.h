@@ -54,7 +54,6 @@ class ControllerPreview: public ControllerCamera
 		virtual	void	UpdateDisplayModes(void);
 
 		virtual	void	UpdateSupportedActions(void);
-		virtual	void	UpdateRemoteAlpacaVersion(void);
 		virtual	void	UpdateReadoutModes(void);
 		virtual	void	UpdateReceivedFileName(const char *newFileName);
 

@@ -219,11 +219,25 @@ char		buttonName[16];
 	//*	set up the image display area
 	xLoc			+=	labelWidth + dataWidth;
 	xLoc			+=	2;
+	imageBoxWidth	=	cWidth - xLoc;
+	imageBoxWidth	-=	10;
 	yLoc			=	save_yLoc;
+
+	//*	first set the image display info
+	SetWidget(		kImageDisplay_ImageDisplayInfo,	xLoc + 5,	yLoc,		imageBoxWidth,		cTitleHeight);
+	SetWidgetFont(	kImageDisplay_ImageDisplayInfo, 		kFont_Medium);
+	SetWidgetJustification(	kImageDisplay_ImageDisplayInfo, kJustification_Left);
+	SetWidgetText(	kImageDisplay_ImageDisplayInfo,	"Image info");
+	yLoc			+=	cTitleHeight;
+	yLoc			+=	2;
+
+	//*	now compute the display area
 	imageBoxWidth	=	cWidth - xLoc;
 	imageBoxHeight	=	cHeight - yLoc;
 	imageBoxWidth	-=	2;
 	imageBoxHeight	-=	2;
+
+
 	SetWidget(				kImageDisplay_ImageDisplay,	xLoc,	yLoc,		imageBoxWidth,		imageBoxHeight);
 	SetWidgetBGColor(		kImageDisplay_ImageDisplay,	CV_RGB(128,	128,	128));
 	SetWidgetBorderColor(	kImageDisplay_ImageDisplay,	CV_RGB(255,	255,	255));
@@ -241,8 +255,9 @@ char		buttonName[16];
 void	WindowTabImage::HandleKeyDown(const int keyPressed)
 {
 bool	updateFlag;
-//	CONSOLE_DEBUG(__FUNCTION__);
-//	CONSOLE_DEBUG_W_HEX("keyPressed\t",	keyPressed);
+
+	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_HEX("keyPressed\t",	keyPressed);
 
 	updateFlag	=	true;
 	switch(keyPressed & 0x7f)
@@ -519,6 +534,7 @@ int	bytesPerPixel;
 //int	rowStepSize;
 
 	CONSOLE_DEBUG(__FUNCTION__);
+	SetWidgetText(	kImageDisplay_ImageDisplayInfo,	"Full image");
 #ifdef _USE_OPENCV_CPP_
 	DumpCVMatStruct(cOpenCVdownLoadedImage, __FUNCTION__);
 
@@ -642,11 +658,15 @@ int			displayedWidth;
 int			displayedHeight;
 int			sourceImageWidth;
 int			sourceImageHeight;
-
+char		imageInfoText[80];
 //	CONSOLE_DEBUG("--------------------------------------------------------------------");
 //	CONSOLE_DEBUG(__FUNCTION__);
 //	CONSOLE_DEBUG_W_NUM("image_X\t=", image_X);
 //	CONSOLE_DEBUG_W_NUM("image_Y\t=", image_Y);
+
+	sprintf(imageInfoText, "cx=%4d cy=%4d", image_X, image_Y);
+	SetWidgetText(	kImageDisplay_ImageDisplayInfo,	imageInfoText);
+
 
 	if ((cOpenCVdownLoadedImage != NULL) && (cOpenCVdisplayedImage != NULL))
 	{

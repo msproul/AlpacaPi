@@ -134,14 +134,18 @@ int		lastItemID;
 	SetWidgetText(	kDriverInfo_DriverVersion_Lbl,		"DriverVersion");
 	SetWidgetText(	kDriverInfo_InterfaceVersion_Lbl,	"InterfaceVersion");
 
-//	SetAlpacaLogo(kDriverInfo_AlpacaLogo, -1);
-
 	//=======================================================
-	//*	IP address
-//	SetIPaddressBoxes(kDriverInfo_IPaddr, kDriverInfo_Readall, kDriverInfo_AlpacaDrvrVersion, -1);
-	SetIPaddressBoxes(kDriverInfo_IPaddr, kDriverInfo_Readall, -1, -1);
+	//*	set up all the bottom stuff so that it is the same on all windowtabs
+	SetupWindowBottomBoxes(	kDriverInfo_IPaddr,
+							kDriverInfo_Readall,
+							-1,
+							-1,
+							-1,
+							-1);
 
-	//*	adjust the width of the IP address box
+	//---------------------------------------------------------
+	//*	Now go back and adjust the width of the IP address box so we can fit the LAUNCH button
+	//---------------------------------------------------------
 	boxWidth	=	115;
 	cWidgetList[kDriverInfo_IPaddr].width		-=	boxWidth;
 	cWidgetList[kDriverInfo_IPaddr].width		-=	3;
@@ -164,7 +168,7 @@ char		ipAddrStr[64];
 char		dataString[256];
 Controller	*myControllerPtr;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 
 	switch(buttonIdx)
 	{
@@ -179,6 +183,10 @@ Controller	*myControllerPtr;
 										myControllerPtr->cPort);
 				CONSOLE_DEBUG(dataString);
 				RunCommandLine(dataString);
+			}
+			else
+			{
+				CONSOLE_DEBUG("myControllerPtr is NULL!!!!");
 			}
 			break;
 	}

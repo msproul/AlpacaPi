@@ -28,9 +28,9 @@ enum
 
 	kSlitTracker_RemoteAddress,
 
-
+	kSlitTracker_LastCmdString,
 	kSlitTracker_AlpacaLogo,
-	kSlitTracker_AlpacaDrvrVersion,
+	kSlitTracker_AlpacaErrorMsg,
 	kSlitTracker_IPaddr,
 	kSlitTracker_Readall,
 

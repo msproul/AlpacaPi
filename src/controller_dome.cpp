@@ -12,7 +12,7 @@
 //*	that you agree that the author(s) have no warranty, obligations or liability.  You
 //*	must determine the suitability of this source code for your use.
 //*
-//*	Redistributions of this source code must retain this copyright notice.
+//*	Redistribution of this source code must retain this copyright notice.
 //*****************************************************************************
 //*
 //*****************************************************************************
@@ -441,7 +441,6 @@ char			returnString[128];
 			if (validData)
 			{
 				strcpy(cAlpacaVersionString, returnString);
-				SetWidgetText(kTab_Dome,		kDomeBox_AlpacaDrvrVersion,		cAlpacaVersionString);
 			}
 		}
 //		CONSOLE_DEBUG_W_NUM("cDomeProp.CanSyncAzimuth\t=",	cDomeProp.CanSyncAzimuth);
@@ -588,30 +587,8 @@ void	ControllerDome::AlpacaProcessSupportedActions(const char *deviceType, const
 //**************************************************************************************
 void	ControllerDome::UpdateCapabilityList(void)
 {
-int		boxID;
-int		iii;
-char	textString[80];
-
-//	CONSOLE_DEBUG(__FUNCTION__);
-
-	iii	=	0;
-	while (cCapabilitiesList[iii].capabilityName[0] != 0)
-	{
-		boxID	=	kCapabilities_TextBox1 + iii;
-		strcpy(textString,	cCapabilitiesList[iii].capabilityName);
-		strcat(textString,	":\t");
-		strcat(textString,	cCapabilitiesList[iii].capabilityValue);
-
-//		CONSOLE_DEBUG(textString);
-
-		if (boxID <= kCapabilities_TextBoxN)
-		{
-			SetWidgetText(kTab_Capabilities, boxID, textString);
-		}
-		iii++;
-	}
+	UpdateCapabilityListID(kTab_Capabilities, kCapabilities_TextBox1, kCapabilities_TextBoxN);
 }
-
 
 #ifdef  _ENABLE_EXTERNAL_SHUTTER_
 //*****************************************************************************
@@ -657,7 +634,7 @@ int				newShutterStatus;
 		}
 		if (cShutterCommFailed)
 		{
-			SetWidgetText(kTab_Dome, kDomeBox_ErrorMsg, "---");
+			SetWidgetText(kTab_Dome, kDomeBox_AlpacaErrorMsg, "---");
 			SetWidgetTextColor(kTab_Dome,	kDomeBox_ShutterStatus,	CV_RGB(0,	255,	0));
 		}
 		cShutterCommFailed	=	false;
@@ -668,7 +645,7 @@ int				newShutterStatus;
 		cShutterCommFailed	=	true;
 		cShutterCommFailCnt++;
 		sprintf(alpacaString, "Failed to read data from shutter - %d", cShutterCommFailCnt);
-		SetWidgetText(kTab_Dome, kDomeBox_ErrorMsg, alpacaString);
+		SetWidgetText(kTab_Dome, kDomeBox_AlpacaErrorMsg, alpacaString);
 
 //?		cShutterStatus	=	kShutterStatus_Unknown;
 		SetWidgetText(kTab_Dome, kDomeBox_ShutterStatus, "Unknown");
@@ -867,7 +844,7 @@ char			gravityVectorChar;
 		if (cSlitTrackerCommFailed)
 		{
 			//*	set the indicators back to OK
-			SetWidgetText(		kTab_Dome, 			kDomeBox_ErrorMsg, "---");
+			SetWidgetText(		kTab_Dome, 			kDomeBox_AlpacaErrorMsg, "---");
 			SetWidgetBGColor(	kTab_SlitTracker,	kSlitTracker_RemoteAddress, CV_RGB(0,0,0));
 			SetWidgetTextColor(	kTab_SlitTracker,	kSlitTracker_RemoteAddress, CV_RGB(255,0,0));
 
@@ -876,7 +853,7 @@ char			gravityVectorChar;
 	}
 	else
 	{
-		SetWidgetText(kTab_Dome,				kDomeBox_ErrorMsg, "Failed to read data from Slit Tracker");
+		SetWidgetText(kTab_Dome,				kDomeBox_AlpacaErrorMsg, "Failed to read data from Slit Tracker");
 		SetWidgetBGColor(kTab_SlitTracker,		kSlitTracker_RemoteAddress, CV_RGB(255,0,0));
 		SetWidgetTextColor(kTab_SlitTracker,	kSlitTracker_RemoteAddress, CV_RGB(0,0,0));
 		cSlitTrackerCommFailed	=	true;
@@ -1009,7 +986,7 @@ void	ControllerDome::SendShutterCommand(const char *shutterCmd)
 	else
 	{
 		CONSOLE_DEBUG("No shutter info");
-		SetWidgetText(kTab_Dome, kDomeBox_ErrorMsg, "Shutter controller not found");
+		SetWidgetText(kTab_Dome, kDomeBox_AlpacaErrorMsg, "Shutter controller not found");
 	}
 #else
 	//*	normal, send command to the dome controller.

@@ -36,8 +36,9 @@ enum
 	kAuxMotorBox_Switch2,
 	kAuxMotorBox_SwitchLbl,
 
+	kAuxMotorBox_LastCmdString,
 	kAuxMotorBox_AlpacaLogo,
-	kAuxMotorBox_AlpacaDrvrVersion,
+	kAuxMotorBox_AlpacaErrorMsg,
 	kAuxMotorBox_IPaddr,
 	kAuxMotorBox_Readall,
 

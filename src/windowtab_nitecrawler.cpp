@@ -103,6 +103,8 @@ int		logoWidth;
 int		logoHeight;
 int		compassWidth;
 int		compassHeight;
+int		connectButtonIdx;
+int		alpacaLogoBottom;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -317,6 +319,7 @@ int		compassHeight;
 		yLoc	+=	cBtnHeight;
 		yLoc	+=	2;
 	}
+	alpacaLogoBottom	=	yLoc;
 
 	//*	set the colors for the buttons
 	for (iii=kNiteCrawlerTab_Home; iii<=kNiteCrawlerTab_Foc_p5000; iii++)
@@ -326,9 +329,6 @@ int		compassHeight;
 		SetWidgetBorderColor(	iii,		CV_RGB(0, 0, 0));
 		SetWidgetTextColor(		iii,		CV_RGB(0, 0, 0));
 	}
-
-	yLoc	+=	cBtnHeight;
-	yLoc	+=	2;
 
 	//*	set default text strings
 	SetWidgetText(	kNiteCrawlerTab_focValue,		"-----");
@@ -348,7 +348,6 @@ int		compassHeight;
 		LoadAlpacaLogo();
 		if (gAlpacaLogoPtr != NULL)
 		{
-
 		#ifdef _USE_OPENCV_CPP_
 			logoWidth	=	gAlpacaLogoPtr->cols;
 			logoHeight	=	gAlpacaLogoPtr->rows;
@@ -358,7 +357,7 @@ int		compassHeight;
 		#endif
 			xLoc		=	((cWidth/2) - (logoWidth/2));
 			xLoc		-=	6;
-			yLoc		=	cHeight - (1 * cBtnHeight);
+			yLoc		=	alpacaLogoBottom;
 			yLoc		-=	logoHeight;
 
 			SetWidget(		kNiteCrawlerTab_AlpacaLogo,	xLoc,	yLoc,	logoWidth,	logoHeight);
@@ -372,14 +371,23 @@ int		compassHeight;
 
 	switch(cComMode)
 	{
-		case kNCcomMode_Alpaca:
-			SetIPaddressBoxes(kNiteCrawlerTab_IPaddr, kNiteCrawlerTab_Readall, -1, -1);
+		case kNCcomMode_USB:
+			connectButtonIdx	=	kNiteCrawlerTab_Connect;
 			break;
 
-		case kNCcomMode_USB:
-			SetIPaddressBoxes(kNiteCrawlerTab_IPaddr, kNiteCrawlerTab_Readall, -1, kNiteCrawlerTab_Connect);
+		case kNCcomMode_Alpaca:
+		default:
+			connectButtonIdx	=	-1;
 			break;
 	}
+	//=======================================================
+	//*	set up all the bottom stuff so that it is the same on all windowtabs
+	SetupWindowBottomBoxes(	kNiteCrawlerTab_IPaddr,
+							kNiteCrawlerTab_Readall,
+							-1,							//kNiteCrawlerTab_AlpacaErrorMsg,
+							kNiteCrawlerTab_LastCmdString,
+							-1,							//	kNiteCrawlerTab_AlpacaLogo,
+							connectButtonIdx);
 }
 
 //**************************************************************************************
@@ -593,16 +601,21 @@ int				myRotatorDesiredPotion;
 		SetWidgetNumber(kNiteCrawlerTab_focDesired, myFocuserDesiredPotion);
 		SetWidgetNumber(kNiteCrawlerTab_rotDesired, myRotatorDesiredPotion);
 	}
+	DisplayLastAlpacaCommand();
 }
 
 //*****************************************************************************
-void	WindowTabNitecrawler::ProcessDoubleClick(const int buttonIdx)
+void	WindowTabNitecrawler::ProcessDoubleClick(	const int	widgetIdx,
+													const int	event,
+													const int	xxx,
+													const int	yyy,
+													const int	flags)
 {
 ControllerFocus	*focusController;
 
 	focusController				=	(ControllerFocus*)cParentObjPtr;
 
-	switch(buttonIdx)
+	switch(widgetIdx)
 	{
 		case kNiteCrawlerTab_rotLabel:
 		case kNiteCrawlerTab_focLabel:
@@ -612,8 +625,14 @@ ControllerFocus	*focusController;
 			}
 			break;
 
+		case kNiteCrawlerTab_focDesired:
+			break;
+		case kNiteCrawlerTab_rotDesired:
+			break;
+
+
 		default:
-			CONSOLE_DEBUG_W_NUM("Double click on button #", buttonIdx);
+			CONSOLE_DEBUG_W_NUM("Double click on button #", widgetIdx);
 			break;
 
 	}

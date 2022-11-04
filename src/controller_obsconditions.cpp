@@ -107,8 +107,6 @@ ControllerObsCond::ControllerObsCond(	const char			*argWindowName,
 #ifdef _USE_BACKGROUND_THREAD_
 	StartBackgroundThread();
 #endif // _USE_BACKGROUND_THREAD_
-
-//	SetWidgetText(kTab_USB,		kUSBselect_AlpacaDrvrVersion,		gFullVersionString);
 }
 
 //**************************************************************************************
@@ -242,9 +240,7 @@ char			alpacaString[128];
 	{
 		CONSOLE_DEBUG_W_STR("description\t=", alpacaString);
 		strcpy(cAlpacaVersionString, alpacaString);
-//		SetWidgetText(kTab_ObsCond, kSwitchBox_AlpacaDrvrVersion, alpacaString);
 	}
-
 	return(validData);
 }
 
@@ -644,10 +640,6 @@ void	ControllerObsCond::AlpacaProcessReadAll(	const char	*deviceTypeStr,
 										keywordString,
 										valueString);
 	}
-//
-//} TYPE_ObsConditionProperties;
-//
-
 }
 
 //*****************************************************************************

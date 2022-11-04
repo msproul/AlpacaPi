@@ -619,6 +619,7 @@ static void	SendGetRequest(TYPE_ALPACA_UNIT *theDevice, const char *sendData)
 bool				validData;
 SJP_Parser_t		jsonParser;
 char				ipString[32];
+char				errMsgString[64];
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -637,7 +638,8 @@ char				ipString[32];
 	else
 	{
 		inet_ntop(AF_INET, &theDevice->deviceAddress.sin_addr, ipString, INET_ADDRSTRLEN);
-		CONSOLE_DEBUG_W_STR("No valid data from", ipString);
+		sprintf(errMsgString, "No valid data from %s:%d", ipString, theDevice->port);
+		CONSOLE_DEBUG(errMsgString);
 
 		theDevice->queryERRcnt++;
 		theDevice->currentlyActive	=	false;
@@ -667,7 +669,6 @@ int		iii;
 //	CONSOLE_DEBUG_W_NUM("gAlpacaUnitCnt\t=", gAlpacaUnitCnt);
 	for (iii=0; iii<gAlpacaUnitCnt; iii++)
 	{
-//		CONSOLE_DEBUG_W_NUM("iii\t=", iii);
 		if (gAlpacaUnitList[iii].noResponseCnt == 0)
 		{
 			SendGetRequest(&gAlpacaUnitList[iii], "/management/v1/configureddevices");

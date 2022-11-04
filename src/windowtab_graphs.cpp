@@ -101,11 +101,14 @@ int		yLoc;
 	SetWidgetText(kGraphBox_VoltageLabel,	"Voltage Log");
 	SetWidgetFont(kGraphBox_VoltageLabel,	kFont_Medium);
 
-	SetAlpacaLogo(kGraphBox_AlpacaLogo, -1);
 	//=======================================================
-	//*	IP address
-	SetIPaddressBoxes(kGraphBox_IPaddr, kGraphBox_Readall, kGraphBox_AlpacaDrvrVersion, -1);
-
+	//*	set up all the bottom stuff so that it is the same on all windowtabs
+	SetupWindowBottomBoxes(	kGraphBox_IPaddr,
+							kGraphBox_Readall,
+							-1,		//	kGraphBox_AlpacaErrorMsg,
+							-1,		//	kGraphBox_LastCmdString,
+							kGraphBox_AlpacaLogo,
+							-1);
 }
 
 #ifdef _USE_OPENCV_CPP_

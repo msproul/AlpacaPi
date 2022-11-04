@@ -62,7 +62,7 @@ enum
 
 	kMLsingle_LastCmdString,
 	kMLsingle_AlpacaLogo,
-	kMLsingle_AlpacaDrvrVersion,
+	kMLsingle_AlpacaErrorMsg,
 	kMLsingle_IPaddr,
 	kMLsingle_Readall,
 	kMLsingle_Connect,
@@ -94,7 +94,12 @@ class WindowTabMLsingle: public WindowTab
 
 		virtual	void	SetupWindowControls(void);
 		virtual	void	ProcessButtonClick(const int buttonIdx, const int flags);
-		virtual	void	ProcessDoubleClick(const int buttonIdx);
+		virtual	void	ProcessDoubleClick(const int	widgetIdx,
+											const int	event,
+											const int	xxx,
+											const int	yyy,
+											const int	flags);
+
 
 				int		cComMode;
 				int		cFocuserType;

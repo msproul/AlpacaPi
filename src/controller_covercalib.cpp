@@ -93,13 +93,9 @@ ControllerCoverCalib::ControllerCoverCalib(	const char			*argWindowName,
 	{
 		cCoverCalibTabObjPtr->SetCoverCalibPropPtr(&cCoverCalibrationProp);
 	}
-
-	SetWidgetText(kTab_Cover,		kCoverCalib_AlpacaDrvrVersion,		gFullVersionString);
-
 #ifdef _USE_BACKGROUND_THREAD_
 	StartBackgroundThread();
 #endif // _USE_BACKGROUND_THREAD_
-
 }
 
 //**************************************************************************************
@@ -112,7 +108,6 @@ ControllerCoverCalib::~ControllerCoverCalib(void)
 	DELETE_OBJ_IF_VALID(cDriverInfoTabObjPtr);
 	DELETE_OBJ_IF_VALID(cAboutBoxTabObjPtr);
 }
-
 
 //**************************************************************************************
 void	ControllerCoverCalib::SetupWindowControls(void)
@@ -311,6 +306,13 @@ void	ControllerCoverCalib::UpdateSupportedActions(void)
 	SetWidgetValid(kTab_Cover,		kCoverCalib_Readall,		cHas_readall);
 	SetWidgetValid(kTab_DriverInfo,	kDriverInfo_Readall,		cHas_readall);
 
+}
+
+//*****************************************************************************
+void	ControllerCoverCalib::AlpacaDisplayErrorMessage(const char *errorMsgString)
+{
+//	CONSOLE_DEBUG_W_STR("Alpaca error=", errorMsgString);
+	SetWidgetText(kTab_Cover, kCoverCalib_AlpacaErrorMsg, errorMsgString);
 }
 
 //*****************************************************************************

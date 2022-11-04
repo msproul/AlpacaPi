@@ -51,6 +51,7 @@ enum
 	kImageDisplay_Histogram,
 	kImageDisplay_HistogramOutline,
 
+	kImageDisplay_ImageDisplayInfo,
 	kImageDisplay_ImageDisplay,
 
 	kImageDisplay_last

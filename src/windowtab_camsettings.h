@@ -74,10 +74,8 @@ enum
 	kCamSet_FilenameOutline,
 
 	kCamSet_LastCmdString,
-
-
 	kCamSet_AlpacaLogo,
-	kCamSet_AlpacaDrvrVersion,
+	kCamSet_AlpacaErrorMsg,
 	kCamSet_IPaddr,
 	kCamSet_Readall,
 

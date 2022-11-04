@@ -26,7 +26,7 @@ enum
 	kFileList_Outline,
 
 	kFileList_AlpacaLogo,
-	kFileList_AlpacaDrvrVersion,
+	kFileList_AlpacaErrorMsg,
 
 	kFileList_IPaddr,
 	kFileList_Readall,

@@ -1020,7 +1020,7 @@ bool	keepGoing;
 	cc			=	0;
 	noDataCnt	=	0;
 	keepGoing	=	true;
-	while (keepGoing && (cc < maxChars) && (noDataCnt < 2))
+	while (keepGoing && (cc < maxChars) && (noDataCnt < 4))
 	{
 		readCnt	=	read(fileDesc, oneCharBuff, 1);
 		if (readCnt > 0)
@@ -1036,6 +1036,7 @@ bool	keepGoing;
 		else
 		{
 			noDataCnt++;
+			usleep(25);
 		}
 	}
 	if (strncmp(readBuff, "NAK", 3) == 0)

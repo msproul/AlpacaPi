@@ -17,7 +17,7 @@
 	#include	"opencv2/opencv.hpp"
 	#include	"opencv2/core.hpp"
 
-	#include	"opencv4/opencv2/highgui.hpp"
+//	#include	"opencv4/opencv2/highgui.hpp"
 //EVENT_FLAG_CTRLKEY
 	#ifdef _USE_OPENCV_CPP_
 	#else
@@ -163,6 +163,7 @@ class Controller
 							const int	ySize);
 		virtual	~Controller(void);
 				void	CheckConnectedState(void);
+		virtual	void	AlpacaDisplayErrorMessage(const char *errorMsgString);
 
 
 				void	HandleWindow(void);
@@ -400,7 +401,6 @@ class Controller
 				TYPE_ASCOM_STATUS	AlpacaCheckForErrors(	SJP_Parser_t	*jsonParser,
 															char			*errorMsg,
 															bool			reportError=false);
-		virtual	void	AlpacaDisplayErrorMessage(const char *errorMsgString);
 
 
 				bool	AlpacaGetStatus_ReadAll(	const char	*deviceTypeStr, const int deviceNum);
@@ -499,6 +499,11 @@ class Controller
 												int			*actualValueCnt);
 
 				int		Alpaca_GetRemoteCPUinfo(void);
+				int		Alpaca_GetTemperatureLog(	const char	*alpacaDeviceString,
+													const int	alpacaDeviceNumber,
+													double		*temperatureLog,
+													const int	maxBufferSize);
+
 				int		cGetCPUinfoCallCnt;		//*	mainly for debugging
 				void	UpdateAboutBoxRemoteDevice(const int tabNumber, const int widgetNumber);
 
@@ -509,6 +514,7 @@ class Controller
 				void				ClearCapabilitiesList(void);
 				void				AddCapability(const char *capability, const char *value);
 		virtual	void				UpdateCapabilityList(void);
+				void				UpdateCapabilityListID(const int tabID, const int startBoxID, const int lastBoxID);
 				void				ReadOneDriverCapability(const char	*driverNameStr,
 															const char	*propertyStr,
 															const char	*reportedStr,
@@ -548,6 +554,7 @@ bool		CheckForOpenWindowByName(const char *windowName);
 void		DumpControllerBackGroundTaskStatus(void);
 void		RunCommandLine(const char *commandLine);
 void		EditTextFile(const char *filename);
+void		JSON_ExtractKeyword_Value(const char *linebuf, char *keywordStr, char *valueStr);
 
 #ifdef __cplusplus
 }

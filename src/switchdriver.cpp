@@ -70,9 +70,8 @@
 //#define _DEBUG_CONFORM_
 
 //*****************************************************************************
-const TYPE_CmdEntry	gSwitchCmdTable[]	=
+static TYPE_CmdEntry	gSwitchCmdTable[]	=
 {
-
 	{	"maxswitch",			kCmd_Switch_maxswitch,				kCmdType_GET	},
 	{	"canwrite",				kCmd_Switch_canwrite,				kCmdType_GET	},
 	{	"getswitch",			kCmd_Switch_getswitch,				kCmdType_GET	},
@@ -112,6 +111,7 @@ int		iii;
 	strcpy(cCommonProp.Name, 		"Switch");
 	strcpy(cCommonProp.Description,	"Generic Switch");
 	cCommonProp.InterfaceVersion	=	2;
+	cDriverCmdTablePtr				=	gSwitchCmdTable;
 
 	memset((void *)&cSwitchProp, 0, sizeof(TYPE_SwitchProperties));
 

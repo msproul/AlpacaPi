@@ -122,13 +122,14 @@ int		scrollBarYLoc;
 	SetWidgetType(	kFileList_ScrollBar,	kWidgetType_ScrollBar);
 
 
-	SetAlpacaLogo(kFileList_AlpacaLogo, -1);
-
-
 	//=======================================================
-	//*	IP address
-	SetIPaddressBoxes(kFileList_IPaddr, kFileList_Readall, kFileList_AlpacaDrvrVersion, -1);
-
+	//*	set up all the bottom stuff so that it is the same on all windowtabs
+	SetupWindowBottomBoxes(	kFileList_IPaddr,
+							kFileList_Readall,
+							kFileList_AlpacaErrorMsg,
+							-1,
+							kFileList_AlpacaLogo,
+							-1);
 }
 
 //**************************************************************************************

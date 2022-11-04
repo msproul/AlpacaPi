@@ -142,12 +142,6 @@ void	ControllerPreview::UpdateSupportedActions(void)
 }
 
 //*****************************************************************************
-void	ControllerPreview::UpdateRemoteAlpacaVersion(void)
-{
-
-}
-
-//*****************************************************************************
 void	ControllerPreview::UpdateCameraName(void)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);

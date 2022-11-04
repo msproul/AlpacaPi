@@ -155,6 +155,7 @@ int	ii;
 	CONSOLE_DEBUG(__FUNCTION__);
 
 	strcpy(cCommonProp.Name,	"ObsConditionsDriver");
+	cDriverCmdTablePtr			=	gObsCondCmdTable;
 
 	//--------------------------------------------------------
 	//*	clear the entire properties list data structure

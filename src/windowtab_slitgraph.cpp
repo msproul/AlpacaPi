@@ -166,19 +166,15 @@ int		graphHeight;
 	yLoc			+=	cRadioBtnHt;
 	yLoc			+=	2;
 
-	//==========================================
-//	SetWidget(		kSlitGraph_RemoteAddress,	cClm3_offset+ 8,		yLoc,		(cClmWidth * 4),	cBtnHeight);
-//	SetWidgetText(	kSlitGraph_RemoteAddress,	"Remote address");
-//	SetWidgetFont(	kSlitGraph_RemoteAddress,	kFont_Medium);
-
-
-
-	SetAlpacaLogo(kSlitGraph_AlpacaLogo, -1);
 
 	//=======================================================
-	//*	IP address
-	SetIPaddressBoxes(kSlitGraph_IPaddr, kSlitGraph_Readall, kSlitGraph_AlpacaDrvrVersion, -1);
-
+	//*	set up all the bottom stuff so that it is the same on all windowtabs
+	SetupWindowBottomBoxes(	kSlitGraph_IPaddr,
+							kSlitGraph_Readall,
+							kSlitGraph_AlpacaErrorMsg,
+							kSlitGraph_LastCmdString,
+							kSlitGraph_AlpacaLogo,
+							-1);
 }
 
 #ifdef _USE_OPENCV_CPP_

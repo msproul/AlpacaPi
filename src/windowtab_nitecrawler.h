@@ -68,10 +68,19 @@ enum
 
 	kNiteCrawlerTab_AlpacaLogo,
 
+	kNiteCrawlerTab_LastCmdString,
+//	kNiteCrawlerTab_AlpacaLogo,
+//	kNiteCrawlerTab_AlpacaErrorMsg,
 	kNiteCrawlerTab_IPaddr,
 	kNiteCrawlerTab_Readall,
+
 	kNiteCrawlerTab_Connect,
 
+//	kCameraBox_LastCmdString,
+//	kCameraBox_AlpacaLogo,
+//	kCameraBox_AlpacaErrorMsg,
+//	kCameraBox_IPaddr,
+//	kCameraBox_Readall,
 
 	kNiteCrawlerTab_last
 };
@@ -118,7 +127,11 @@ class WindowTabNitecrawler: public WindowTab
 	#endif // _USE_OPENCV_CPP_
 				void	DrawRotatorCompass(TYPE_WIDGET *theWidget);
 		virtual	void	ProcessButtonClick(const int buttonIdx, const int flags);
-		virtual	void	ProcessDoubleClick(const int buttonIdx);
+		virtual	void	ProcessDoubleClick(	const int	widgetIdx,
+											const int	event,
+											const int	xxx,
+											const int	yyy,
+											const int	flags);
 
 		int			cComMode;
 		int			cRotatorPosition;

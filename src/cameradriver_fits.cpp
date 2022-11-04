@@ -25,9 +25,9 @@
 //*
 //*	Fits Info
 //*		http://tigra-astronomy.com/sbfitsext-guidelines-for-fits-keywords
-//*		http://iraf.noao.edu/projects/ccdmosaic/imagedef/fitsdic.html
+//*		http://iraf.noao.edu/projects/ccdmosaic/imagedef/fitsdic.html		<-no longer online
 //*		https://free-astro.org/index.php?title=Siril:FITS_orientation
-//*
+//*		http://iraf.nao.ac.jp/projects/ccdmosaic/imagedef/fitsdic.html
 //*****************************************************************************
 //*	Edit History
 //*****************************************************************************
@@ -86,6 +86,9 @@
 //*	Jan 15,	2022	<MLS> Fixed bug in FITS header filter wheel name
 //*	Jul 25,	2022	<MLS> Added WriteFITS_IMUinfo()
 //*	Aug 14,	2022	<MLS> Added FITS simulation comment if camera is in simulation mode
+//*	Oct  9,	2022	<MLS> Fixed bug in WriteFITS_MoonInfo(), Moon was always reported as visable
+//*	Oct 20,	2022	<MLS> Neon instructions now used for FITS De-interleave
+//*	Oct 25,	2022	<MLS> Now using cv::getVersionString().c_str() for openCV version string
 //*****************************************************************************
 
 #if defined(_ENABLE_CAMERA_) && defined(_ENABLE_FITS_)
@@ -862,7 +865,7 @@ char	instrumentString[128];
 	CONSOLE_DEBUG(__FUNCTION__);
 
 	WriteFITS_Seperator(fitsFilePtr, "Camera Info");
-	if (gSimulateCameraImage)
+	if (gSimulateCameraImage || cCameraIsSiumlated)
 	{
 		fitsStatus	=	0;
 		fits_write_key(fitsFilePtr, TSTRING, "COMMENT",	(void *)"Camera is in simulate mode",	NULL, &fitsStatus);
@@ -1883,7 +1886,12 @@ char			stringBuf[128];
 											NULL, &fitsStatus);
 
 #ifdef _USE_OPENCV_
+
+#if (CV_MAJOR_VERSION >= 3)
+	sprintf(stringBuf,	"Using OpenCV library Version: %s", cv::getVersionString().c_str());
+#else
 	sprintf(stringBuf,	"Using OpenCV library Version: %s", CV_VERSION);
+#endif
 	fitsStatus	=	0;
 	fits_write_key(fitsFilePtr, TSTRING,	"COMMENT",
 											stringBuf,
@@ -2084,6 +2092,11 @@ int		fitsStatus;
 	fits_write_key(fitsFilePtr, TSTRING,	"COMMENT",
 											(char *)"http://iraf.noao.edu/projects/ccdmosaic/imagedef/fitsdic.html",
 											NULL, &fitsStatus);
+	fitsStatus	=	0;
+	fits_write_key(fitsFilePtr, TSTRING,	"COMMENT",
+											(char *)"http://iraf.nao.ac.jp/projects/ccdmosaic/imagedef/fitsdic.html",
+											NULL, &fitsStatus);
+
 }
 
 //*****************************************************************************
@@ -2127,7 +2140,7 @@ char		moonPhaseStr[64];
 		mr.calculate(gObseratorySettings.Latitude_deg, gObseratorySettings.Longitude_deg, t + utcOffset);
 
 		//	Returned values:
-		bool	moonVisible	=	mr.isVisible;
+		int		moonVisible	=	mr.isVisible;
 //		bool	moonHasRise	=	mr.hasRise;
 //		bool	moonHasSet	=	mr.hasSet;
 //		float	moonRiseAz	=	mr.riseAz;	// Where the moon will rise/set in degrees from
@@ -2220,17 +2233,7 @@ char		moonPhaseStr[64];
 void	CameraDriver::WriteFITS_IMUinfo(fitsfile *fitsFilePtr)
 {
 int		fitsStatus;
-char	imageFileName[64];
-char	imageFilePath[128];
-FILE	*filePointer;
-double	imuHeading;
-double	imuRoll;
-double	imuPitch;
-int		imuRetCode;
-double	xxx;
-double	yyy;
-double	zzz;
-double	www;
+char	lineBuff[80];
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -2241,47 +2244,76 @@ double	www;
 											(char *)"Using bno055 sensor attached to camera",
 											NULL, &fitsStatus);
 
-	imuRetCode	=	IMU_Read_Euler(&imuHeading, &imuRoll, &imuPitch);
-	if (imuRetCode == 0)
+	if (cIMU_EulerValid)
 	{
 		fits_write_key(fitsFilePtr, TSTRING,	"COMMENT",
 												(char *)"IMU Euler Data",
 												NULL, &fitsStatus);
+		//*	use the values that were read when the image was taken
 		fitsStatus	=	0;
-		fits_write_key(fitsFilePtr, TDOUBLE,	"IMU_HEAD",	&imuHeading,	NULL, &fitsStatus);
+		fits_write_key(fitsFilePtr, TDOUBLE,	"IMU_HEAD",	&cIMU_Heading,	NULL, &fitsStatus);
 
 		fitsStatus	=	0;
-		fits_write_key(fitsFilePtr, TDOUBLE,	"IMU_ROLL",	&imuRoll,		NULL, &fitsStatus);
+		fits_write_key(fitsFilePtr, TDOUBLE,	"IMU_ROLL",	&cIMU_Roll,		NULL, &fitsStatus);
 
 		fitsStatus	=	0;
-		fits_write_key(fitsFilePtr, TDOUBLE,	"IMU_PTCH",	&imuPitch,		NULL, &fitsStatus);
+		fits_write_key(fitsFilePtr, TDOUBLE,	"IMU_PTCH",	&cIMU_Pitch,		NULL, &fitsStatus);
 	}
 	else
 	{
+		fits_write_key(fitsFilePtr, TSTRING,	"COMMENT",
+												(char *)"IMU Euler Data was invalid",
+												NULL, &fitsStatus);
 	}
 
-	imuRetCode	=	IMU_Read_Quaternion(&www, &xxx, &yyy, &zzz);
-	if (imuRetCode == 0)
+	if (cIMU_QuatValid)
 	{
 		fits_write_key(fitsFilePtr, TSTRING,	"COMMENT",
 												(char *)"IMU Quaternion Data",
 												NULL, &fitsStatus);
 
+		//*	use the values that were read when the image was taken
 		fitsStatus	=	0;
-		fits_write_key(fitsFilePtr, TDOUBLE,	"IMU_W",	&www,	NULL, &fitsStatus);
+		fits_write_key(fitsFilePtr, TDOUBLE,	"IMU_W",	&cIMU_www,	NULL, &fitsStatus);
 
 		fitsStatus	=	0;
-		fits_write_key(fitsFilePtr, TDOUBLE,	"IMU_X",	&xxx,	NULL, &fitsStatus);
+		fits_write_key(fitsFilePtr, TDOUBLE,	"IMU_X",	&cIMU_xxx,	NULL, &fitsStatus);
 
 		fitsStatus	=	0;
-		fits_write_key(fitsFilePtr, TDOUBLE,	"IMU_Y",	&yyy,	NULL, &fitsStatus);
+		fits_write_key(fitsFilePtr, TDOUBLE,	"IMU_Y",	&cIMU_yyy,	NULL, &fitsStatus);
 
 		fitsStatus	=	0;
-		fits_write_key(fitsFilePtr, TDOUBLE,	"IMU_Z",	&zzz,	NULL, &fitsStatus);
+		fits_write_key(fitsFilePtr, TDOUBLE,	"IMU_Z",	&cIMU_zzz,	NULL, &fitsStatus);
 	}
 	else
 	{
+		fits_write_key(fitsFilePtr, TSTRING,	"COMMENT",
+												(char *)"IMU Quaternion Data was invalid",
+												NULL, &fitsStatus);
 	}
+
+	//---------------------------------------------------------------------------
+	//*	now save the calibration data
+	fits_write_key(fitsFilePtr, TSTRING,	"COMMENT",
+											(char *)"IMU Calibration: 0=uncalibrated, 3=fully calibrated",
+											NULL, &fitsStatus);
+
+	//*	use the values that were read when the image was taken
+	sprintf(lineBuff,	"IMU-Cal-Gyro=%d",	cIMU_Cal_Gyro);
+	fitsStatus	=	0;
+	fits_write_key(fitsFilePtr, TSTRING,	"COMMENT",	lineBuff,	NULL, &fitsStatus);
+
+	sprintf(lineBuff,	"IMU-Cal-Acce=%d",	cIMU_Cal_Acce);
+	fitsStatus	=	0;
+	fits_write_key(fitsFilePtr, TSTRING,	"COMMENT",	lineBuff,	NULL, &fitsStatus);
+
+	sprintf(lineBuff,	"IMU-Cal-Magn=%d",	cIMU_Cal_Magn);
+	fitsStatus	=	0;
+	fits_write_key(fitsFilePtr, TSTRING,	"COMMENT",	lineBuff,	NULL, &fitsStatus);
+
+	sprintf(lineBuff,	"IMU-Cal-Syst=%d",	cIMU_Cal_Syst);
+	fitsStatus	=	0;
+	fits_write_key(fitsFilePtr, TSTRING,	"COMMENT",	lineBuff,	NULL, &fitsStatus);
 }
 #endif // _ENABLE_IMU_
 
@@ -2363,53 +2395,40 @@ unsigned char	*bluBufPtr;
 
 		if (cCameraBGRbuffer != NULL)
 		{
-			SETUP_TIMING();
 			bluBufPtr	=	cCameraBGRbuffer;
 			grnBufPtr	=	cCameraBGRbuffer + frameBufSize;
 			redBufPtr	=	cCameraBGRbuffer + frameBufSize + frameBufSize;
-			iii	=	0;
-			for (ppp=0; ppp<frameBufSize; ppp++)
-			{
-				redBufPtr[ppp]	=	cCameraDataBuffer[iii++];
-				grnBufPtr[ppp]	=	cCameraDataBuffer[iii++];
-				bluBufPtr[ppp]	=	cCameraDataBuffer[iii++];
-			}
-			DEBUG_TIMING("Using CPU to Deinterleave");
-
 		#ifdef __ARM_NEON
-			//*	at the moment, we are duplicating the effort for testing
-			//*	then we are comparing the 2 buffers to make sure they are the same
-			unsigned char	*neonBGRbuffer;
-			int				diffCnt;
+			//:2379 [CreateFitsBGRimage  ] CreateFitsBGRimage
+			//:2402 [CreateFitsBGRimage  ] Using CPU to Deinterleave 307
+			//:2410 [CreateFitsBGRimage  ] NEON instructions set is available
+			//:2345 [NEON_Deinterleave_RGB] NEON_Deinterleave_RGB
+			//:2351 [NEON_Deinterleave_RGB] len_color	= 16389120
+			//:2352 [NEON_Deinterleave_RGB] num8x16  	= 1024320
+			//:2365 [NEON_Deinterleave_RGB] Using NEON to Deinterleave 136
+			//:2429 [CreateFitsBGRimage  ] NEON diff count	= 0
+			//-----------------------------------------------------------
+			//*	determine the number of NEON opperations
+			//*	For now, it must be an even multiple of 16
+			if ((frameBufSize % 16) == 0)
+			{
+				CONSOLE_DEBUG("Using NEON instructions for de-interleave");
 
-				CONSOLE_DEBUG("NEON instructions set is available");
-
-				neonBGRbuffer	=		(unsigned char *)malloc(frameBufSize * 3);
-				if (neonBGRbuffer != NULL)
-				{
-					bluBufPtr	=	neonBGRbuffer;
-					grnBufPtr	=	neonBGRbuffer + frameBufSize;
-					redBufPtr	=	neonBGRbuffer + frameBufSize + frameBufSize;
-					NEON_Deinterleave_RGB(cCameraDataBuffer, redBufPtr, grnBufPtr, bluBufPtr, frameBufSize);
-					//*	now lets check to see if its the same
-					diffCnt	=	0;
-					for (iii=0; iii<(frameBufSize * 3); iii++)
-					{
-						if ((neonBGRbuffer[iii] & 0x00ff) != ((cCameraBGRbuffer[iii] & 0x00ff)))
-						{
-							diffCnt++;
-							CONSOLE_DEBUG_W_LONG("Diff at offset\t=", iii);
-						}
-					}
-					CONSOLE_DEBUG_W_NUM("NEON diff count\t=", diffCnt);
-					free(neonBGRbuffer);
-				}
-				else
-				{
-					CONSOLE_DEBUG("Failed to allocate neonBGRbuffer");
-				}
-
+				NEON_Deinterleave_RGB(cCameraDataBuffer, redBufPtr, grnBufPtr, bluBufPtr, frameBufSize);
+			}
+			else
 		#endif // __ARM_NEON
+			{
+				SETUP_TIMING();
+				iii	=	0;
+				for (ppp=0; ppp<frameBufSize; ppp++)
+				{
+					redBufPtr[ppp]	=	cCameraDataBuffer[iii++];
+					grnBufPtr[ppp]	=	cCameraDataBuffer[iii++];
+					bluBufPtr[ppp]	=	cCameraDataBuffer[iii++];
+				}
+				DEBUG_TIMING("Using CPU to Deinterleave");
+			}
 		}
 		else
 		{

@@ -33,6 +33,13 @@
 //*	Apr  2,	2020	<MLS> CONFORM-rotator -> PASSED!!!!!!!!!!!!!!!!!!!!!
 //*	Apr 19,	2020	<MLS> Finished ReadAll for Rotator
 //*	May 19,	2020	<MLS> Started on implementing Rotator REVERSE functionality
+//*	Oct  8,	2022	<MLS> Working on implementing IRotatorV3 functionality
+//*	Oct  8,	2022	<MLS> Added Get_MechanicalPosition()
+//*	Oct  8,	2022	<MLS> Added Put_MoveMechanical()
+//*	Oct  8,	2022	<MLS> Added Put_Sync()
+//*	Oct 10,	2022	<MLS> Added RunStateMachine() to Rotatordriver
+//*	Oct 10,	2022	<MLS> Added UpdateRotorPosition()
+//*	Oct 11,	2022	<MLS> Put_Move() now working properly (relative move)
 //*****************************************************************************
 
 #ifdef _ENABLE_ROTATOR_
@@ -45,6 +52,7 @@
 #include	"ConsoleDebug.h"
 #include	"eventlogging.h"
 
+#include	"helper_functions.h"
 
 #include	"alpacadriver.h"
 #include	"alpacadriver_helper.h"
@@ -54,18 +62,23 @@
 
 
 //*****************************************************************************
-TYPE_CmdEntry	gRotatorCmdTable[]	=
+static TYPE_CmdEntry	gRotatorCmdTable[]	=
 {
 
 	{	"canreverse",			kCmd_Rotator_canreverse,		kCmdType_GET	},
 	{	"ismoving",				kCmd_Rotator_ismoving,			kCmdType_GET	},
+	{	"mechanicalposition",	kCmd_Rotator_mechanicalposition,kCmdType_GET	},
 	{	"position",				kCmd_Rotator_position,			kCmdType_GET	},
 	{	"reverse",				kCmd_Rotator_reverse,			kCmdType_BOTH	},
 	{	"stepsize",				kCmd_Rotator_stepsize,			kCmdType_GET	},
 	{	"targetposition",		kCmd_Rotator_targetposition,	kCmdType_GET	},
+
 	{	"halt",					kCmd_Rotator_halt,				kCmdType_PUT	},
 	{	"move",					kCmd_Rotator_move,				kCmdType_PUT	},
 	{	"moveabsolute",			kCmd_Rotator_moveabsolute,		kCmdType_PUT	},
+	{	"movemechanical",		kCmd_Rotator_movemechanical,	kCmdType_PUT	},
+	{	"sync",					kCmd_Rotator_sync,				kCmdType_PUT	},
+
 
 	//*	added by MLS
 	{	"--extras",				kCmd_Rotator_Extras,			kCmdType_GET	},
@@ -76,6 +89,22 @@ TYPE_CmdEntry	gRotatorCmdTable[]	=
 	{	"",						-1,	0x00	}
 };
 
+//*****************************************************************************
+static double	AdjustDegrees0_360(const double degreeValue)
+{
+double	newDegreeValue;
+
+	newDegreeValue	=	degreeValue;
+	while (newDegreeValue < 0.0)
+	{
+		newDegreeValue	+=	360.0;
+	}
+	while (newDegreeValue >= 360.0)
+	{
+		newDegreeValue	-=	360.0;
+	}
+	return(newDegreeValue);
+}
 
 //**************************************************************************************
 RotatorDriver::RotatorDriver(const int argDevNum)
@@ -87,23 +116,25 @@ RotatorDriver::RotatorDriver(const int argDevNum)
 	strcpy(cCommonProp.Name,		"Rotator");
 	strcpy(cCommonProp.Description,	"Generic Rotator");
 	cCommonProp.InterfaceVersion	=	2;
-
-	memset(&cRotatorProp, 0, sizeof(TYPE_RotatorProperties));
-
+	cDriverCmdTablePtr				=	gRotatorCmdTable;
 
 	cRotatorManufacturer[0]	=	0;
 	cRotatorModel[0]		=	0;
 	cRotatorSerialNum[0]	=	0;
 
+	//-------------------------------------------------------
+	memset(&cRotatorProp, 0, sizeof(TYPE_RotatorProperties));
 	cRotatorProp.CanReverse		=	false;		//*	True if the rotation and angular direction must be reversed for the optics
 	cRotatorProp.Reverse		=	false;
 	cRotatorProp.IsMoving		=	false;
 	cRotatorProp.StepSize		=	1.0;
+	cRotatorProp.Position		=	0.0;
+	cRotatorProp.TargetPosition	=	0.0;
 
+	cRotatorReverseState		=	false;
 	cRotatorStepsPerRev			=	360;
-	cRotatorPos_step			=	0;
-	cRotatorPos_degs			=	0.0;
-	cRotatorTrgtPos_degs		=	0.0;
+	cRotatorPosition_steps		=	0;
+//	cRotatorPosition_degs		=	0.0;
 }
 
 
@@ -113,6 +144,43 @@ RotatorDriver::RotatorDriver(const int argDevNum)
 RotatorDriver::~RotatorDriver(void)
 {
 	CONSOLE_DEBUG(__FUNCTION__);
+}
+
+//*****************************************************************************
+int32_t		RotatorDriver::RunStateMachine(void)
+{
+uint32_t	currentMilliSecs;
+uint32_t	deltaMilliSecs;
+
+	if (cRunStartupOperations)
+	{
+		CONSOLE_DEBUG(__FUNCTION__);
+		UpdateRotorPosition(true);
+
+		CONSOLE_DEBUG_W_DBL("cRotatorProp.MechanicalPosition\t=",	cRotatorProp.MechanicalPosition);
+		CONSOLE_DEBUG_W_DBL("cRotatorProp.Position          \t=",	cRotatorProp.Position);
+		CONSOLE_DEBUG_W_DBL("cRotatorProp.TargetPosition    \t=",	cRotatorProp.TargetPosition);
+
+		cRunStartupOperations		=	false;
+	}
+
+	currentMilliSecs	=	millis();
+	deltaMilliSecs		=	currentMilliSecs - cLastUpdate_milliSecs;
+	if (deltaMilliSecs > 2000)
+	{
+		if (cRotatorProp.IsMoving)
+		{
+			UpdateRotorPosition(false);
+		}
+		else
+		{
+			UpdateRotorPosition(true);
+		}
+
+		cLastUpdate_milliSecs	=	currentMilliSecs;
+	}
+
+	return(5 * 1000 * 1000);
 }
 
 //*****************************************************************************
@@ -175,9 +243,14 @@ int					mySocket;
 			alpacaErrCode	=	Get_Ismoving(reqData, alpacaErrMsg, gValueString);
 			break;
 
+		case kCmd_Rotator_mechanicalposition:	//*	Returns the rotator's mechanical current position.
+			alpacaErrCode	=	Get_MechanicalPosition(reqData, alpacaErrMsg, gValueString);
+			break;
+
 		case kCmd_Rotator_position:				//*	Returns the focuser's current position.
 			alpacaErrCode	=	Get_Position(reqData, alpacaErrMsg, gValueString);
 			break;
+
 
 		case kCmd_Rotator_reverse:				//*	Returns the rotator's Reverse state.
 			if (reqData->get_putIndicator == 'G')
@@ -210,6 +283,16 @@ int					mySocket;
 			alpacaErrCode	=	Put_Moveabsolute(reqData, alpacaErrMsg);
 			break;
 
+		case kCmd_Rotator_movemechanical:
+			alpacaErrCode	=	Put_MoveMechanical(reqData, alpacaErrMsg);
+			break;
+
+		case kCmd_Rotator_sync:
+			alpacaErrCode	=	Put_Sync(reqData, alpacaErrMsg);
+			break;
+
+		//----------------------------------------------------------------------------------
+		//*	Extras added by MLS
 		case kCmd_Rotator_step:					//*	Moves the rotator to a new relative position.
 			alpacaErrCode	=	Put_Step(reqData, alpacaErrMsg);
 			break;
@@ -319,6 +402,32 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 	return(alpacaErrCode);
 }
 
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	RotatorDriver::Get_MechanicalPosition(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
+
+	if (reqData != NULL)
+	{
+		UpdateRotorPosition(false);
+
+		JsonResponse_Add_Double(	reqData->socket,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									responseString,
+									cRotatorProp.Position,
+									INCLUDE_COMMA);
+
+		alpacaErrCode	=	kASCOM_Err_Success;
+	}
+	else
+	{
+		alpacaErrCode	=	kASCOM_Err_InternalError;
+	}
+	return(alpacaErrCode);
+}
+
 //*****************************************************************************
 TYPE_ASCOM_STATUS	RotatorDriver::Get_Position(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
 {
@@ -326,22 +435,44 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
 	if (reqData != NULL)
 	{
-		cRotatorPos_step	=	ReadCurrentPoisiton_steps();
-		cRotatorPos_degs	=	ReadCurrentPoisiton_degs();
+		UpdateRotorPosition(false);
 
-		while (cRotatorPos_degs < 0.0)
+		while (cRotatorProp.Position < 0.0)
 		{
-			cRotatorPos_degs	+=	360.0;
+			cRotatorProp.Position	+=	360.0;
 		}
-		while (cRotatorPos_degs >= 360.0)
+		while (cRotatorProp.Position >= 360.0)
 		{
-			cRotatorPos_degs	-=	360.0;
+			cRotatorProp.Position	-=	360.0;
 		}
 		JsonResponse_Add_Double(	reqData->socket,
 									reqData->jsonTextBuffer,
 									kMaxJsonBuffLen,
 									responseString,
-									cRotatorPos_degs,
+									cRotatorProp.Position,
+									INCLUDE_COMMA);
+
+		alpacaErrCode	=	kASCOM_Err_Success;
+	}
+	else
+	{
+		alpacaErrCode	=	kASCOM_Err_InternalError;
+	}
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	RotatorDriver::Get_Targetposition(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
+
+	if (reqData != NULL)
+	{
+		JsonResponse_Add_Double(	reqData->socket,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									responseString,
+									cRotatorProp.TargetPosition,
 									INCLUDE_COMMA);
 
 		alpacaErrCode	=	kASCOM_Err_Success;
@@ -379,16 +510,32 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 //*****************************************************************************
 TYPE_ASCOM_STATUS	RotatorDriver::Put_Reverse(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
 {
-TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
+bool				foundKeyWord;
+char				argumentString[32];
 
 	if (reqData != NULL)
 	{
-		alpacaErrCode	=	kASCOM_Err_NotImplemented;
-		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Command not implemented");
-		CONSOLE_DEBUG(alpacaErrMsg);
+		foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
+												"Reverse",
+												argumentString,
+												(sizeof(argumentString) -1),
+												false);
+		if (foundKeyWord)
+		{
+			cRotatorProp.Reverse	=	IsTrueFalse(argumentString);
+			alpacaErrCode			=	kASCOM_Err_Success;
+		}
+		else
+		{
+			alpacaErrCode	=	kASCOM_Err_InvalidValue;
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Keyword 'Reverse' not specified");
+			CONSOLE_DEBUG(alpacaErrMsg);
+		}
 	}
 	else
 	{
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Internal Error");
 		alpacaErrCode	=	kASCOM_Err_InternalError;
 	}
 	return(alpacaErrCode);
@@ -425,30 +572,6 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 	return(alpacaErrCode);
 }
 
-
-//*****************************************************************************
-TYPE_ASCOM_STATUS	RotatorDriver::Get_Targetposition(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
-{
-TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
-
-	if (reqData != NULL)
-	{
-		JsonResponse_Add_Double(	reqData->socket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									responseString,
-									cRotatorTrgtPos_degs,
-									INCLUDE_COMMA);
-
-		alpacaErrCode	=	kASCOM_Err_Success;
-	}
-	else
-	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
-	}
-	return(alpacaErrCode);
-}
-
 //*****************************************************************************
 TYPE_ASCOM_STATUS	RotatorDriver::Put_Halt(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
 {
@@ -457,9 +580,18 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 	CONSOLE_DEBUG(__FUNCTION__);
 	alpacaErrCode	=	HaltMovement();
 
+	//*	update the position and reset the target
+	UpdateRotorPosition(true);
+
 	return(alpacaErrCode);
 }
 
+//*****************************************************************************
+//*	this is move REALITIVE
+//*	https://ascom-standards.org/Help/Developer/html/M_ASCOM_DeviceInterface_IRotatorV3_Move.htm
+//*	Calling Move causes the TargetPosition property to change to the sum of
+//*	the current angular position and the value of the Position parameter (modulo 360 degrees),
+//*	then starts rotation to TargetPosition.
 //*****************************************************************************
 TYPE_ASCOM_STATUS	RotatorDriver::Put_Move(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
 {
@@ -467,7 +599,6 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 bool				foundKeyWord;
 char				argumentString[32];
 double				newPositionOffset_deg;
-double				newPosition_degs;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -480,30 +611,19 @@ double				newPosition_degs;
 												kArgumentIsNumeric);
 		if (foundKeyWord)
 		{
-			newPositionOffset_deg	=	atof(argumentString);
+			newPositionOffset_deg		=	atof(argumentString);
 
+			CONSOLE_DEBUG_W_DBL("newPositionOffset_deg\t=", newPositionOffset_deg);
 
-			//*	its a relative move so get the current position and add
-			cRotatorPos_degs		=	ReadCurrentPoisiton_degs();
+			cRotatorProp.TargetPosition	+=	newPositionOffset_deg;
+			cRotatorProp.TargetPosition	=	AdjustDegrees0_360(cRotatorProp.TargetPosition);
+			alpacaErrCode				=	SetCurrentPoisiton_degs(cRotatorProp.TargetPosition);
 
-			newPosition_degs		=	cRotatorPos_degs + newPositionOffset_deg;
-			if ((newPosition_degs >= 0.0) && (newPosition_degs < 360.0))
-			{
-				alpacaErrCode			=	SetCurrentPoisiton_degs(newPosition_degs);
-				cRotatorTrgtPos_degs	=	newPosition_degs;
-
-				LogEvent(	"rotator",
-							__FUNCTION__,
-							NULL,
-							kASCOM_Err_Success,
-							argumentString);
-			}
-			else
-			{
-				alpacaErrCode	=	kASCOM_Err_InvalidValue;
-				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Value is out of range");
-				CONSOLE_DEBUG(alpacaErrMsg);
-			}
+			LogEvent(	"rotator",
+						__FUNCTION__,
+						NULL,
+						kASCOM_Err_Success,
+						argumentString);
 		}
 		else
 		{
@@ -541,8 +661,8 @@ double	newPosition_degs;
 			newPosition_degs		=	atof(argumentString);
 			if ((newPosition_degs >= 0.0) && (newPosition_degs < 360.0))
 			{
-				alpacaErrCode			=	SetCurrentPoisiton_degs(newPosition_degs);
-				cRotatorTrgtPos_degs	=	newPosition_degs;
+				alpacaErrCode				=	SetCurrentPoisiton_degs(newPosition_degs);
+				cRotatorProp.TargetPosition	=	newPosition_degs;
 
 				LogEvent(	"rotator",
 							__FUNCTION__,
@@ -577,6 +697,23 @@ double	newPosition_degs;
 }
 
 //*****************************************************************************
+TYPE_ASCOM_STATUS	RotatorDriver::Put_MoveMechanical(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
+
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	RotatorDriver::Put_Sync(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
+
+	return(alpacaErrCode);
+}
+
+
+//*****************************************************************************
 TYPE_ASCOM_STATUS	RotatorDriver::Put_Step(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
@@ -594,11 +731,11 @@ int32_t				newPosition;
 		if (foundKeyWord)
 		{
 			//*	its a relative move so get the current position and add
-			cRotatorPos_step	=	ReadCurrentPoisiton_steps();
-			cRotatorPos_degs	=	ReadCurrentPoisiton_degs();
+			cRotatorPosition_steps	=	ReadCurrentPoisiton_steps();
+			cRotatorProp.Position	=	ReadCurrentPoisiton_degs();
 
 			newPositionOffset	=	atoi(argumentString);
-			newPosition			=	cRotatorPos_step + newPositionOffset;
+			newPosition			=	cRotatorPosition_steps + newPositionOffset;
 			alpacaErrCode		=	SetCurrentPoisiton_steps(newPosition);
 		}
 		else
@@ -661,12 +798,13 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 		//*	do the common ones first
 		Get_Readall_Common(	reqData, alpacaErrMsg);
 
-		Get_Canreverse(		reqData, alpacaErrMsg, "canreverse");
-		Get_Ismoving(		reqData, alpacaErrMsg, "ismoving");
-		Get_Position(		reqData, alpacaErrMsg, "position");
-		Get_Reverse(		reqData, alpacaErrMsg, "reverse");
-		Get_Stepsize(		reqData, alpacaErrMsg, "stepsize");
-		Get_Targetposition(	reqData, alpacaErrMsg, "targetposition");
+		Get_Canreverse(			reqData, alpacaErrMsg, "canreverse");
+		Get_Ismoving(			reqData, alpacaErrMsg, "ismoving");
+		Get_MechanicalPosition(	reqData, alpacaErrMsg, "mechanicalposition");
+		Get_Position(			reqData, alpacaErrMsg, "position");
+		Get_Targetposition(		reqData, alpacaErrMsg, "targetposition");
+		Get_Stepsize(			reqData, alpacaErrMsg, "stepsize");
+		Get_Reverse(			reqData, alpacaErrMsg, "reverse");
 
 		strcpy(alpacaErrMsg, "");
 	}
@@ -695,6 +833,22 @@ void	RotatorDriver::GetRotatorSerialNumber(char *serialNumber)
 	strcpy(serialNumber,	cRotatorSerialNum);
 }
 
+//*****************************************************************************
+void	RotatorDriver::UpdateRotorPosition(bool updateTargetPosition)
+{
+double		currPositionDeg;
+
+	cRotatorPosition_steps			=	ReadCurrentPoisiton_steps();
+	currPositionDeg					=	ReadCurrentPoisiton_degs();;
+	currPositionDeg					=	AdjustDegrees0_360(currPositionDeg);
+
+	cRotatorProp.MechanicalPosition	=	currPositionDeg;
+	cRotatorProp.Position			=	currPositionDeg;
+	if (updateTargetPosition)
+	{
+		cRotatorProp.TargetPosition	=	currPositionDeg;
+	}
+}
 
 //*****************************************************************************
 void	RotatorDriver::OutputHTML(TYPE_GetPutRequestData *reqData)
@@ -716,12 +870,12 @@ char		lineBuffer[128];
 		OutputHTMLrowData(mySocketFD,	"Model",		cRotatorModel);
 
 		//*	rotator position
-		cRotatorPos_step	=	ReadCurrentPoisiton_steps();
-		cRotatorPos_degs	=	ReadCurrentPoisiton_degs();
-		sprintf(lineBuffer, "%d steps", cRotatorPos_step);
+		cRotatorPosition_steps	=	ReadCurrentPoisiton_steps();
+		cRotatorProp.Position	=	ReadCurrentPoisiton_degs();
+		sprintf(lineBuffer, "%d steps", cRotatorPosition_steps);
 		OutputHTMLrowData(mySocketFD,	"Rotator position",	lineBuffer);
 
-		sprintf(lineBuffer, "%2.1f&deg;", cRotatorPos_degs);
+		sprintf(lineBuffer, "%2.1f&deg;", cRotatorProp.Position);
 		OutputHTMLrowData(mySocketFD,	"Rotator position",	lineBuffer);
 
 		SocketWriteData(mySocketFD,	"</TABLE>\r\n");
@@ -754,6 +908,7 @@ int32_t	RotatorDriver::ReadCurrentPoisiton_steps(void)
 double	RotatorDriver::ReadCurrentPoisiton_degs(void)
 {
 	//*	this should be overloaded by the hardware implementation
+	//*	this is in HARDWARE units, not adjusted
 	return(0);
 }
 

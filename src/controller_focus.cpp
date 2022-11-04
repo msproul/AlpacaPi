@@ -281,6 +281,12 @@ void	ControllerFocus::AlpacaProcessSupportedActions(const char *deviceTypeStr, c
 }
 
 //*****************************************************************************
+void	ControllerFocus::AlpacaDisplayErrorMessage(const char *errorMsgString)
+{
+	CONSOLE_DEBUG_W_STR("Alpaca error=", errorMsgString);
+}
+
+//*****************************************************************************
 void	ControllerFocus::UpdateFocuserPosition(const int newFocuserPosition)
 {
 	//*	This function should be overloaded
@@ -332,11 +338,11 @@ void	ControllerFocus::UpdateStepsPerRev(const int newStepsPerRev)
 //*****************************************************************************
 void	ControllerFocus::UpdateFromFirstRead(void)
 {
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 
-//	CONSOLE_DEBUG_W_NUM("cFocuserPosition\t=",		cFocuserPosition);
-//	CONSOLE_DEBUG_W_NUM("cRotatorPosition\t=",		cRotatorPosition);
-//	CONSOLE_DEBUG_W_NUM("cAuxMotorPosition\t=",		cAuxMotorPosition);
+	CONSOLE_DEBUG_W_NUM("cFocuserPosition\t=",		cFocuserPosition);
+	CONSOLE_DEBUG_W_NUM("cRotatorPosition\t=",		cRotatorPosition);
+	CONSOLE_DEBUG_W_NUM("cAuxMotorPosition\t=",		cAuxMotorPosition);
 
 	cFocuserDesiredPos	=	cFocuserPosition;
 	cRotatorDesiredPos	=	cRotatorPosition;
@@ -374,16 +380,6 @@ void	ControllerFocus::UpdateWindowTabs_AuxSwitchBits(unsigned char auxSwitchBits
 {
 	//*	This function should be overloaded
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, "This function should be overloaded");
-//	CONSOLE_ABORT(__FUNCTION__);
-}
-
-//*****************************************************************************
-void	ControllerFocus::UpdateWindowTabs_Version(const char *versionString)
-{
-	//*	This function should be overloaded
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, "This function should be overloaded");
-	CONSOLE_ABORT(__FUNCTION__);
-
 }
 
 //*****************************************************************************
@@ -494,7 +490,6 @@ bool		switchStatus;
 	{
 		//*	"version": "AlpacaPi - V0.2.2-beta build #32",
 		strcpy(cAlpacaVersionString, valueString);
-		UpdateWindowTabs_Version(cAlpacaVersionString);
 	}
 	else if (strcasecmp(keywordString, "Model") == 0)
 	{

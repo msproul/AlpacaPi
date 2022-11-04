@@ -137,6 +137,10 @@
 //*	Sep 13,	2022	<MLS> Added _ENABLE_PHASEONE_
 //*	Sep 18,	2022	<MLS> Added ComputeCPUusage()
 //*	Sep 19,	2022	<MLS> Working on CPU usage per active driver
+//*	Oct 13,	2022	<MLS> Added UpdateProperties()
+//*	Oct 14,	2022	<MLS> Added OutputHTML_DriverDocs()
+//*	Oct 14,	2022	<MLS> Added OutputCommadTable()
+//*	Oct 16,	2022	<MLS> Added temperaturelog command
 //*****************************************************************************
 //*	to install code blocks 20
 //*	Step 1: sudo add-apt-repository ppa:codeblocks-devs/release
@@ -288,6 +292,12 @@ char		gHostName[48]				=	"";
 #ifdef _ENABLE_IMU_
 	#include "imu_lib.h"
 #endif
+#ifdef _ENABLE_SPECTROGRAPH_
+	#include	"spectrodriver.h"
+	#include	"spectrodrvr_usis.h"
+	#include	"filterwheeldriver_usis.h"
+	#include	"focuserdriver_USIS.h"
+#endif
 
 #if defined(__arm__) && defined(_ENABLE_WIRING_PI_)
 	#include <wiringPi.h>
@@ -353,8 +363,9 @@ const TYPE_CmdEntry	gCommonCmdTable[]	=
 	//*	extras added by MLS
 	{	"--extras",				kCmd_Common_Extras,				kCmdType_GET	},
 	{	"livewindow",			kCmd_Common_LiveWindow,			kCmdType_PUT	},
+	{	"temperaturelog",		kCmd_Common_TemperatureLog,		kCmdType_GET	},
 
-	//*	make sure to update kCommonCmdCnt if any commands are added
+
 
 #ifdef _INCLUDE_EXIT_COMMAND_
 	//*	the exit command was implemented for a special case application, it is not intended
@@ -407,6 +418,7 @@ int		iii;
 	sprintf(cCommonProp.DriverVersion, "%s Build %d", kVersionString, kBuildNumber);
 	cCommonProp.Connected		=	false;
 
+	cRunStartupOperations		=	true;
 	cVerboseDebug				=	false;
 	cMagicCookie				=	kMagicCookieValue;
 	cDeviceModel[0]				=	0;
@@ -418,7 +430,7 @@ int		iii;
 	cTotalCmdsProcessed			=	0;
 	cTotalCmdErrors				=	0;
 	cLastUpdate_milliSecs		=	0;
-
+	cDriverCmdTablePtr			=	NULL;
 	cTotalBytesRcvd				=	0;
 	cTotalBytesSent				=	0;
 
@@ -452,6 +464,9 @@ int		iii;
 	cTotalNanoSeconds			=	0;
 	cTotalMilliSeconds			=	0;
 
+	//========================================
+	//*	Temperature logging
+	TemperatureLog_Init();
 
 	//==========================================================================================
 	//*	add the device to the list
@@ -484,7 +499,7 @@ int		iii;
 	}
 
 	//*	command statistics
-	for (iii=0; iii<kCommonCmdCnt; iii++)
+	for (iii=0; iii<kCmd_Common_last; iii++)
 	{
 		memset(&cCommonCmdStats[iii], 0, sizeof(TYPE_CMD_STATS));
 	}
@@ -501,7 +516,6 @@ int		iii;
 
 #ifdef _ENABLE_BANDWIDTH_LOGGING_
 	BandWidthStatsInit();
-
 #endif // _ENABLE_BANDWIDTH_LOGGING_
 }
 
@@ -512,9 +526,10 @@ AlpacaDriver::~AlpacaDriver( void )
 {
 int	ii;
 
+	CONSOLE_DEBUG(__FUNCTION__);
+
 	cMagicCookie	=	0;
 
-	CONSOLE_DEBUG(__FUNCTION__);
 	//*	remove this device from the list
 	for (ii=0; ii<kMaxDevices; ii++)
 	{
@@ -523,6 +538,42 @@ int	ii;
 			gAlpacaDeviceList[ii]	=	NULL;
 		}
 	}
+}
+
+//*****************************************************************************
+//*	returns delay time in micro-seconds
+//*****************************************************************************
+int32_t	AlpacaDriver::RunStateMachine(void)
+{
+uint32_t			currentMilliSecs;
+uint32_t			deltaMilliSecs;
+int32_t				delayMicroSeconds;
+
+	//*	5 * 1000 * 1000 means you might not get called again for 5 seconds
+	//*	you might get called earlier
+	delayMicroSeconds	=	5 *1000 * 1000;
+	currentMilliSecs	=	millis();
+	deltaMilliSecs		=	currentMilliSecs - cLastUpdate_milliSecs;
+	if (deltaMilliSecs > 5000)
+	{
+		UpdateProperties();
+
+		cLastUpdate_milliSecs	=	currentMilliSecs;
+	}
+
+	return(delayMicroSeconds);
+}
+
+//*****************************************************************************
+//*	return value 0 = OK
+//*****************************************************************************
+int	AlpacaDriver::UpdateProperties(void)
+{
+int			returnCode;
+
+	returnCode	=	0;
+
+	return(returnCode);
 }
 
 //**************************************************************************************
@@ -618,11 +669,17 @@ int					mySocket;
 			alpacaErrCode	=	Put_LiveWindow(reqData, alpacaErrMsg);
 			break;
 
+		case kCmd_Common_TemperatureLog:
+			cHttpHeaderSent	=	true;
+			alpacaErrCode	=	Get_TemperatureLog(reqData, alpacaErrMsg, gValueString);
+			break;
 
 		default:
 			alpacaErrCode	=	kASCOM_Err_InvalidOperation;
 			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Unrecognized command");
 			CONSOLE_DEBUG(alpacaErrMsg);
+			CONSOLE_DEBUG_W_STR("deviceCommand\t=", reqData->deviceCommand);
+
 			strcpy(reqData->alpacaErrMsg, alpacaErrMsg);
 			break;
 	}
@@ -1132,6 +1189,92 @@ void	AlpacaDriver::OutputHTML_Part2(TYPE_GetPutRequestData *reqData)
 }
 
 //*****************************************************************************
+void	AlpacaDriver::OutputCommadTable(int mySocketFD, const char *title, const TYPE_CmdEntry *commandTable)
+{
+int		iii;
+char	lineBuff[128];
+char	cmdArgumentStr[128];
+
+	sprintf(lineBuff,	"<TR><TD COLSPAN=4><B><CENTER>%s</B></TD></TR>", title);
+	SocketWriteData(mySocketFD,	lineBuff);
+	iii=	0;
+	while (commandTable[iii].enumValue >= 0)
+	{
+		if (commandTable[iii].commandName[0] != '-')
+		{
+			sprintf(lineBuff,	"<TR><TD>%s</TD>",	commandTable[iii].commandName);
+			SocketWriteData(mySocketFD,	lineBuff);
+			if ((commandTable[iii].get_put == kCmdType_GET) || (commandTable[iii].get_put == kCmdType_BOTH))
+			{
+				SocketWriteData(mySocketFD,	"<TD><FONT COLOR=GREEN><CENTER>GET</TD>");
+			}
+			else
+			{
+				SocketWriteData(mySocketFD,	"<TD></TD>");
+			}
+			if ((commandTable[iii].get_put == kCmdType_PUT) || (commandTable[iii].get_put == kCmdType_BOTH))
+			{
+				SocketWriteData(mySocketFD,	"<TD><FONT COLOR=RED><CENTER>PUT</TD>");
+			}
+			else
+			{
+				SocketWriteData(mySocketFD,	"<TD></TD>");
+			}
+
+			GetCommandArgumentString(commandTable[iii].enumValue, cmdArgumentStr);
+			sprintf(lineBuff,	"<TD>%s</TD>",	cmdArgumentStr);
+			SocketWriteData(mySocketFD,	lineBuff);
+
+			SocketWriteData(mySocketFD,	"</TD>\r\n");
+		}
+		iii++;
+	}
+}
+
+//*****************************************************************************
+//*	the purpose of this routine is for self documenting code
+//*	it should return the parameter options for the command specified
+void	AlpacaDriver::GetCommandArgumentString(const int cmdENum, char *agumentString)
+{
+	//*	this needs to be over-ridden
+	strcpy(agumentString, "");
+}
+
+//*****************************************************************************
+//*	the purpose of this routine is to provide self documenting code
+//*	in the form of a command table for the device type
+void	AlpacaDriver::OutputHTML_DriverDocs(TYPE_GetPutRequestData *reqData)
+{
+int		mySocketFD;
+char	lineBuff[128];
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+	mySocketFD	=	reqData->socket;
+
+	if (cDriverCmdTablePtr != NULL)
+	{
+		SocketWriteData(mySocketFD,	"<CENTER>\r\n");
+		SocketWriteData(mySocketFD,	"<TABLE BORDER=1>\r\n");
+
+		sprintf(lineBuff,	"<TR><TD COLSPAN=4><CENTER><H2>%s</H2></TD></TR>",	cAlpacaName);
+		SocketWriteData(mySocketFD,	lineBuff);
+
+		SocketWriteData(mySocketFD,	"<TR><TH>command</TH><TH COLSPAN=2><CENTER>GET / PUT</TH><TH>Alpaca data sting</TH></TR>");
+
+		//-----------------------------------------------
+		//*	first do the common commands
+		OutputCommadTable(mySocketFD,	"Common Commands",			gCommonCmdTable);
+		//-----------------------------------------------
+		//*	Now do the device specific commands
+		OutputCommadTable(mySocketFD,	"Device specific Commands", cDriverCmdTablePtr);
+
+		SocketWriteData(mySocketFD,	"</TABLE>\r\n");
+		SocketWriteData(mySocketFD,	"</CENTER>\r\n");
+	}
+}
+
+
+//*****************************************************************************
 bool	AlpacaDriver::GetCmdNameFromMyCmdTable(const int cmdNumber, char *comandName, char *getPut)
 {
 	CONSOLE_DEBUG("This function should be over-ridden");
@@ -1252,7 +1395,7 @@ char	getPutIndicator;
 	//===============================================================
 	//*	first do the common commands
 	strcpy(cmdName, "???");
-	for (iii=0; iii<kCommonCmdCnt; iii++)
+	for (iii=0; iii<kCmd_Common_last; iii++)
 	{
 		//*	get the info about this command
 		foundIt	=	GetCmdNameFromTable((kCmd_Common_action + iii),
@@ -1372,16 +1515,6 @@ void	AlpacaDriver::OutputHTMLrowData(int socketFD, const char *string1, const ch
 }
 
 
-//*****************************************************************************
-//*	returns delay time in micro-seconds
-//*****************************************************************************
-int32_t	AlpacaDriver::RunStateMachine(void)
-{
-	//*	5 * 1000 * 1000 means you might not get called again for 5 seconds
-	//*	you might get called earlier
-	return(5 * 1000 * 1000);
-}
-
 
 //*****************************************************************************
 void	AlpacaDriver::RecordCmdStats(int cmdNum, char getput, TYPE_ASCOM_STATUS alpacaErrCode)
@@ -1392,7 +1525,7 @@ int		tblIdx;
 	if (cmdNum >= kCmd_Common_action)
 	{
 		tblIdx	=	cmdNum - kCmd_Common_action;
-		if ((tblIdx >= 0) && (tblIdx < kCommonCmdCnt))
+		if ((tblIdx >= 0) && (tblIdx < kCmd_Common_last))
 		{
 			cCommonCmdStats[tblIdx].connCnt++;
 			if (getput == 'G')
@@ -1909,14 +2042,13 @@ int		iii;
 
 		SocketWriteData(mySocketFD,	"</UL>\r\n");
 
-
 		//**********************************************************
 		SocketWriteData(mySocketFD,	separaterLine);
 		SocketWriteData(mySocketFD,	"Compiled on ");
 		SocketWriteData(mySocketFD,	__DATE__);
 		SocketWriteData(mySocketFD,	"\r\n<BR>");
 		SocketWriteData(mySocketFD,	"C++ version\r\n<BR>");
-		SocketWriteData(mySocketFD,	"(C) 2020-21 by Mark Sproul msproul@skychariot.com\r\n<BR>");
+		SocketWriteData(mySocketFD,	"(C) 2019-2022 by Mark Sproul msproul@skychariot.com\r\n<BR>");
 
 		SocketWriteData(mySocketFD,	"</BODY></HTML>\r\n");
 	}
@@ -1932,7 +2064,6 @@ static void	SendHtmlStats(TYPE_GetPutRequestData *reqData)
 {
 char	lineBuffer[256];
 char	separaterLine[]	=	"<HR SIZE=4 COLOR=RED>\r\n";
-//char	separaterLine[]	=	"<HR SIZE=4 COLOR=BLUE>\r\n";
 int		mySocketFD;
 int		iii;
 
@@ -1976,6 +2107,52 @@ int		iii;
 	}
 }
 
+//*****************************************************************************
+static void	OutputHTML_DriverDocs(TYPE_GetPutRequestData *reqData)
+{
+char	lineBuffer[256];
+char	separaterLine[]	=	"<HR SIZE=4 COLOR=RED>\r\n";
+int		mySocketFD;
+int		iii;
+
+	if (reqData != NULL)
+	{
+		mySocketFD	=	reqData->socket;
+		SocketWriteData(mySocketFD,	gHtmlHeader);
+		sprintf(lineBuffer, "<TITLE>%s</TITLE>\r\n", gWebTitle);
+		SocketWriteData(mySocketFD,	lineBuffer);
+		SocketWriteData(mySocketFD,	"</HEAD><BODY>\r\n<CENTER>\r\n");
+		SocketWriteData(mySocketFD,	"<H1>Alpaca device driver Web server</H1>\r\n");
+		sprintf(lineBuffer, "<H3>%s</H3>\r\n", gWebTitle);
+		SocketWriteData(mySocketFD,	lineBuffer);
+		SocketWriteData(mySocketFD,	"</CENTER>\r\n");
+
+		OutPutObservatoryInfoHTML(mySocketFD);
+
+		for (iii=0; iii<gDeviceCnt; iii++)
+		{
+			if (gAlpacaDeviceList[iii] != NULL)
+			{
+				SocketWriteData(mySocketFD,	separaterLine);
+				gAlpacaDeviceList[iii]->OutputHTML_DriverDocs(reqData);
+			}
+		}
+
+
+		SocketWriteData(mySocketFD,	separaterLine);
+		SocketWriteData(mySocketFD,	"Compiled on ");
+		SocketWriteData(mySocketFD,	__DATE__);
+		SocketWriteData(mySocketFD,	"\r\n<BR>");
+		SocketWriteData(mySocketFD,	"C++ version\r\n<BR>");
+		SocketWriteData(mySocketFD,	"(C) 2020-21 by Mark Sproul msproul@skychariot.com\r\n<BR>");
+
+		SocketWriteData(mySocketFD,	"</BODY></HTML>\r\n");
+	}
+	else
+	{
+	//	CONSOLE_DEBUG("reqData is NULL");
+	}
+}
 
 //*****************************************************************************
 void	GenerateHTMLcmdLinkTable(	int			socketFD,
@@ -2294,6 +2471,7 @@ bool				foundKeyWord;
 					deviceFound		=	true;
 
 					gAlpacaDeviceList[iii]->cBytesWrittenForThisCmd	=	0;
+					gAlpacaDeviceList[iii]->cHttpHeaderSent			=	false;
 					alpacaErrCode	=	gAlpacaDeviceList[iii]->ProcessCommand(reqData);
 					if (alpacaErrCode == kASCOM_Err_Success)
 					{
@@ -2432,6 +2610,7 @@ int					cmdStrLen;
 		{
 			if (gAlpacaDeviceList[iii]->cDeviceType == kDeviceType_Management)
 			{
+				gAlpacaDeviceList[iii]->cHttpHeaderSent			=	false;
 				alpacaErrCode	=	gAlpacaDeviceList[iii]->ProcessCommand(reqData);
 				gAlpacaDeviceList[iii]->cTotalCmdsProcessed++;
 				if (alpacaErrCode!= kASCOM_Err_Success)
@@ -2675,43 +2854,51 @@ int	iii;
 
 	//-------------------------------------------------------------------
 	//*	standard ALPACA api call
-	if (strncmp(parseChrPtr, "/api/", 5) == 0)
+	if (strncasecmp(parseChrPtr, "/api/", 5) == 0)
 	{
 		//*	if we are here, we are guaranteed to have either GET or PUT, so no need to check
 		alpacaErrCode	=	ProcessAlpacaAPIrequest(&reqData, parseChrPtr, byteCount);
 	}
 	//-------------------------------------------------------------------
 	//*	standard ALPACA setup
-	else if ((strncmp(parseChrPtr, "/setup", 6) == 0) || (strncmp(parseChrPtr, "/web", 4) == 0))
+	else if ((strncasecmp(parseChrPtr, "/setup", 6) == 0) || (strncmp(parseChrPtr, "/web", 4) == 0))
 	{
 		SendHtmlResponse(&reqData);
 	}
 	//-------------------------------------------------------------------
 	//*	standard ALPACA management
-	else if (strncmp(parseChrPtr, "/management", 11) == 0)
+	else if (strncasecmp(parseChrPtr, "/management", 11) == 0)
 	{
 		alpacaErrCode	=	ProcessManagementRequest(&reqData, parseChrPtr, byteCount);
 	}
 	//-------------------------------------------------------------------
+	//-------------------------------------------------------------------
+	//-------------------------------------------------------------------
 	//*	extra log interface
-	else if (strncmp(parseChrPtr, "/log", 4) == 0)
+	else if (strncasecmp(parseChrPtr,	"/log", 4) == 0)
 	{
 		SendHtmlLog(socket);
 	}
 	//-------------------------------------------------------------------
+	//*	docs interface
+	else if (strncasecmp(parseChrPtr,	"/docs", 5) == 0)
+	{
+		OutputHTML_DriverDocs(&reqData);
+	}
+	//-------------------------------------------------------------------
 	//*	Stats interface
-	else if (strncmp(parseChrPtr, "/stats", 6) == 0)
+	else if (strncasecmp(parseChrPtr,	"/stats", 6) == 0)
 	{
 		SendHtmlStats(&reqData);
 	}
 	//-------------------------------------------------------------------
-	else if (strncmp(parseChrPtr, "/favicon.ico", 12) == 0)
+	else if (strncasecmp(parseChrPtr,	"/favicon.ico", 12) == 0)
 	{
 		//*	do nothing, this is my web browser sends this
 //		CONSOLE_DEBUG("Ignored");
 	}
 	//-------------------------------------------------------------------
-	else if (strncmp(parseChrPtr, "/image.jpg", 10) == 0)
+	else if (strncasecmp(parseChrPtr,	"/image.jpg", 10) == 0)
 	{
 		CONSOLE_DEBUG("image.jpg");
 		SendJpegResponse(socket, NULL);
@@ -2831,17 +3018,17 @@ static void	*ListenThread(void *arg)
 static void	PrintHelp(const char *appName)
 {
 	printf("usage: %s [-<option>]\r\n", appName);
-	printf("\t%-12s\t%s\r\n",	"a",			"Auto exposure");
-	printf("\t%-12s\t%s\r\n",	"c",			"Conform logging, log ALL commands to disk");
-	printf("\t%-12s\t%s\r\n",	"d",			"Display images as they are taken");
-	printf("\t%-12s\t%s\r\n",	"e",			"Error logging, log errors commands to disk");
-	printf("\t%-12s\t%s\r\n",	"h",			"This help message");
-	printf("\t%-12s\t%s\r\n",	"l",			"Live mode");
-	printf("\t%-12s\t%s\r\n",	"p <port>",		"what port to use (default 6800)");
-	printf("\t%-12s\t%s\r\n",	"q",			"quiet (less console messages)");
-	printf("\t%-12s\t%s\r\n",	"s",			"Simulate camera image (ATIK, QHY and QSI only at present)");
-	printf("\t%-12s\t%s\r\n",	"t <profile>",	"Which telescope profile to use");
-	printf("\t%-12s\t%s\r\n",	"v",			"verbose (more console messages default)");
+	printf("\t%-12s\t%s\r\n",	"-a",			"Auto exposure");
+	printf("\t%-12s\t%s\r\n",	"-c",			"Conform logging, log ALL commands to disk");
+	printf("\t%-12s\t%s\r\n",	"-d",			"Display images as they are taken");
+	printf("\t%-12s\t%s\r\n",	"-e",			"Error logging, log errors commands to disk");
+	printf("\t%-12s\t%s\r\n",	"-h",			"This help message");
+	printf("\t%-12s\t%s\r\n",	"-l",			"Live mode");
+	printf("\t%-12s\t%s\r\n",	"-p <port>",	"what port to use (default 6800)");
+	printf("\t%-12s\t%s\r\n",	"-q",			"quiet (less console messages)");
+	printf("\t%-12s\t%s\r\n",	"-s",			"Simulate camera image (ATIK, QHY and QSI only at present)");
+	printf("\t%-12s\t%s\r\n",	"-t <profile>",	"Which telescope profile to use");
+	printf("\t%-12s\t%s\r\n",	"-v",			"verbose (more console messages default)");
 }
 
 //*****************************************************************************
@@ -3028,10 +3215,8 @@ void	AlpacaDriver::DumpCommonProperties(const char *callingFunctionName)
 {
 char	titleLine[128];
 
-
 	CONSOLE_DEBUG(		"*************************************************************");
 	CONSOLE_DEBUG(		"******************** Alpaca device properties ***************");
-	CONSOLE_DEBUG(titleLine);
 	sprintf(titleLine,	"************* Called from: %-20s *************", callingFunctionName);
 	CONSOLE_DEBUG(titleLine);
 	CONSOLE_DEBUG(		"*************************************************************");
@@ -3118,7 +3303,7 @@ int		cameraCnt	=	0;
 
 //*********************************************************
 //*	Focuser
-#ifdef _ENABLE_FOCUSER_
+#ifdef _ENABLE_FOCUSER_MOONLITE_
 	CreateFocuserNiteCrawlerObjects();
 #endif
 
@@ -3183,6 +3368,12 @@ int		cameraCnt	=	0;
 	CreateSlitTrackerObjects();
 #endif // _ENABLE_SLIT_TRACKER_
 
+//*********************************************************
+#ifdef _ENABLE_SPECTROGRAPH_
+	CreateSpectrographObjects();
+	CreateFilterWheelObjects_USIS();
+	CreateFocuserObjects_USUS();
+#endif
 
 	//*********************************************************
 	//*	Management
@@ -3246,8 +3437,13 @@ uint64_t		deltaNanoSecs;
 
 #ifdef _USE_OPENCV_
 	//*	openCV version
+#if (CV_MAJOR_VERSION >= 3)
+	AddLibraryVersion("software", "opencv", cv::getVersionString().c_str());
+	CONSOLE_DEBUG_W_STR("opencv version (library)\t=", cv::getVersionString().c_str());
+#else
 	AddLibraryVersion("software", "opencv", CV_VERSION);
-	CONSOLE_DEBUG_W_STR("opencv version\t=", CV_VERSION);
+#endif
+	CONSOLE_DEBUG_W_STR("opencv version (include)\t=", CV_VERSION);
 #endif
 
 #ifdef _ENABLE_JPEGLIB_
@@ -3299,7 +3495,6 @@ uint64_t		deltaNanoSecs;
 				kASCOM_Err_Success,
 				gFullVersionString);
 
-	ObservatorySettings_Init();
 	gObservatorySettingsOK	=	ObservatorySettings_ReadFile();
 
 #ifdef _ENABLE_IMU_
@@ -3586,7 +3781,8 @@ char	theChar;
 				jjj				=	0;
 				myArgString[0]	=	0;
 				//*	leave room for the null termination
-				while ((dataSource[iii] >= 0x20) && (dataSource[iii] != '&') && (jjj < (maxArgLen - 2)))
+		//		while ((dataSource[iii] >= 0x20) && (dataSource[iii] != '&') && (jjj < (maxArgLen - 2)))
+				while ((dataSource[iii] > 0x20) && (dataSource[iii] != '&') && (jjj < (maxArgLen - 2)))
 				{
 					myArgString[jjj]	=	dataSource[iii];
 					myArgString[jjj+1]	=	0;
@@ -3830,9 +4026,10 @@ void			GetAlpacaName(TYPE_DEVICETYPE deviceType, char *alpacaName)
 
 		//*	extras - non Alpaca standard
 		case kDeviceType_Multicam:				strcpy(alpacaName, "Multicam");			break;
-//		case kDeviceType_RemoteDiscovery:		strcpy(alpacaName, "RemoteDiscovery");	break;
 		case kDeviceType_Shutter:				strcpy(alpacaName, "Shutter");			break;
 		case kDeviceType_SlitTracker:			strcpy(alpacaName, "SlitTracker");		break;
+		case kDeviceType_Spectrograph:			strcpy(alpacaName, "Spectrograph");		break;
+
 		default:								strcpy(alpacaName, "unknown");			break;
 	}
 }

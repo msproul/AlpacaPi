@@ -10,6 +10,9 @@
 	#include	"controller.h"
 #endif // _CONTROLLER_H_
 
+#ifndef _WINDOW_TAB_H_
+	#include	"windowtab.h"
+#endif // _WINDOW_TAB_H_
 
 #define	kBoxesPerSwitch	5
 //*****************************************************************************
@@ -79,12 +82,9 @@ enum
 	kObsCond_WindSpeed,
 	kObsCond_WindSpeed_Units,
 
-
-
 	kObsCond_LastCmdString,
 	kObsCond_AlpacaLogo,
-
-	kObsCond_AlpacaDrvrVersion,
+	kObsCond_AlpacaErrorMsg,
 	kObsCond_IPaddr,
 	kObsCond_Readall,
 
@@ -111,7 +111,6 @@ class WindowTabObsCond: public WindowTab
 		virtual	void	ProcessButtonClick(const int buttonIdx, const int flags);
 
 				void	UpdateObservationValues(TYPE_ObsConditionProperties *obsCondProp);
-				void	UpdateOneValue(const int widgetNum, TYPE_Sensor *sensorData, const int decimalPlaces=4);
 
 				bool	cFirstRead;
 

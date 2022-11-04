@@ -248,7 +248,7 @@ bool		validData;
 bool	ControllerTelescope::AlpacaGetStartupData(void)
 {
 bool	validData;
-char	returnString[256];
+//char	returnString[256];
 
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 
@@ -271,13 +271,8 @@ char	returnString[256];
 	}
 	else
 	{
-		//========================================================
-		validData	=	AlpacaGetStringValue(	"telescope", "description",	NULL,	returnString);
-		if (validData)
-		{
-			SetWidgetText(kTab_Control, kTelescope_AlpacaDrvrVersion, returnString);
-			SetWidgetText(kTab_Settings, kTeleSettings_AlpacaDrvrVersion, returnString);
-		}
+//		//========================================================
+//		validData	=	AlpacaGetStringValue(	"telescope", "description",	NULL,	returnString);
 	}
 	validData	=	AlpacaGetStartupData_TelescopeOneAAT();
 	if (cTelescopeTabObjPtr != NULL)
@@ -438,29 +433,7 @@ char	hhmmssString[64];
 //**************************************************************************************
 void	ControllerTelescope::UpdateCapabilityList(void)
 {
-int		boxID;
-int		iii;
-char	textString[80];
-
-//	CONSOLE_DEBUG(__FUNCTION__);
-
-	iii	=	0;
-	while (cCapabilitiesList[iii].capabilityName[0] != 0)
-	{
-		boxID	=	kCapabilities_TextBox1 + iii;
-		strcpy(textString,	cCapabilitiesList[iii].capabilityName);
-		strcat(textString,	":\t");
-		strcat(textString,	cCapabilitiesList[iii].capabilityValue);
-
-//		CONSOLE_DEBUG(textString);
-
-		if (boxID <= kCapabilities_TextBoxN)
-		{
-			SetWidgetText(kTab_Capabilities, boxID, textString);
-		}
-
-		iii++;
-	}
+	UpdateCapabilityListID(kTab_Capabilities, kCapabilities_TextBox1, kCapabilities_TextBoxN);
 }
 
 

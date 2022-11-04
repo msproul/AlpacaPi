@@ -46,10 +46,14 @@
 #include	"controller_filterwheel.h"
 #include	"controller_focus.h"
 #include	"controller_obsconditions.h"
+#include	"controller_rotator.h"
 #include	"controller_switch.h"
 #include	"controller_telescope.h"
 #include	"controller_skytravel.h"
 #include	"controller_slit.h"
+#ifdef _ENABLE_CTRL_SPECTROGRAPH_
+	#include	"controller_spectrograph.h"
+#endif
 
 //**************************************************************************************
 WindowTabAlpacaList::WindowTabAlpacaList(	const int	xSize,
@@ -214,11 +218,6 @@ int		clmnHdrWidth;
 	SetWidgetScrollBarValue(	kAlpacaList_ScrollBar, 50);
 
 	SetAlpacaLogoBottomCorner(kAlpacaList_AlpacaLogo);
-
-	//=======================================================
-	//*	IP address
-//	SetIPaddressBoxes(kAlpacaList_IPaddr, kAlpacaList_Readall, kAlpacaList_AlpacaDrvrVersion, -1);
-//	SetIPaddressBoxes(kAlpacaList_IPaddr, kAlpacaList_Readall, -1, -1);
 }
 
 //*****************************************************************************
@@ -504,6 +503,18 @@ bool	windowExists;
 					break;
 
 				case kDeviceType_Rotator:
+					windowExists	=	CheckForOpenWindowByName(windowName);
+					if (windowExists)
+					{
+						CONSOLE_DEBUG_W_STR("Window already open:", windowName);
+					}
+					else
+					{
+						new ControllerRotator(	windowName,
+												&cRemoteDeviceList[deviceIdx].deviceAddress,
+												cRemoteDeviceList[deviceIdx].port,
+												cRemoteDeviceList[deviceIdx].alpacaDeviceNum);
+					}
 					break;
 
 				case kDeviceType_Telescope:
@@ -551,6 +562,24 @@ bool	windowExists;
 						new ControllerSlit(windowName, &cRemoteDeviceList[deviceIdx]);
 					}
 					break;
+
+			#ifdef _ENABLE_CTRL_SPECTROGRAPH_
+				case kDeviceType_Spectrograph:
+					windowExists	=	CheckForOpenWindowByName(windowName);
+					if (windowExists)
+					{
+						CONSOLE_DEBUG_W_STR("Window already open:", windowName);
+					}
+					else
+					{
+						new ControllerSpectrograph(	windowName,
+													&cRemoteDeviceList[deviceIdx].deviceAddress,
+													cRemoteDeviceList[deviceIdx].port,
+													cRemoteDeviceList[deviceIdx].alpacaDeviceNum);
+					}
+					break;
+
+			#endif // _ENABLE_CTRL_SPECTROGRAPH_
 
 				case kDeviceType_Multicam:
 	//			case kDeviceType_Shutter:
@@ -694,13 +723,45 @@ int		foundIndex;
 }
 
 //**************************************************************************************
+static	cv::Scalar	gDeviceColorsRGBscalar[]	=
+{
+
+	CV_RGB(0xff,	0xff,	0x00),		//	kDeviceType_Camera,
+	CV_RGB(0xff,	0x00,	0x00),		//	kDeviceType_CoverCalibrator,
+	CV_RGB(0xff,	0x00,	0xff),		//*	kDeviceType_Dome			magenta
+	CV_RGB(0xff,	0x7f,	0x00),		//*	kDeviceType_Filterwheel		orange
+	CV_RGB(0x00,	0xff,	0x00),		//*	kDeviceType_Focuser			green
+	CV_RGB(0xff,	0xff,	0xff),		//*	kDeviceType_Management
+	CV_RGB(0xDB,	0x71,	0x71),		//*	kDeviceType_Observingconditions
+	CV_RGB(0xEB,	0x17,	0x17),		//*	kDeviceType_Rotator			#EB1717
+	CV_RGB(0xff,	0xff,	0xff),		//*	kDeviceType_SafetyMonitor
+	CV_RGB(0x00,	0xff,	0xff),		//*	kDeviceType_Switch			cyan
+	CV_RGB(0x64,	0x64,	0xff),		//*	kDeviceType_Telescope		blue
+
+//	//*	extras defined by MLS
+	CV_RGB(0xff,	0xff,	0xff),		//*	kDeviceType_Multicam
+	CV_RGB(0xCF,	0x0E,	0xF2),		//*	kDeviceType_Shutter			pink
+	CV_RGB(0x91,	0x30,	0xFA),		//* kDeviceType_SlitTracker		purple
+	CV_RGB(0xff,	0xff,	0xff),		//*	kDeviceType_Spectrograph
+	CV_RGB(0xff,	0xff,	0xff),
+	CV_RGB(0xff,	0xff,	0xff),
+	CV_RGB(0xff,	0xff,	0xff),
+	CV_RGB(0xff,	0xff,	0xff),
+	CV_RGB(0xff,	0xff,	0xff),
+	CV_RGB(0xff,	0xff,	0xff),
+
+	CV_RGB(0xff,	0xff,	0xff)
+};
+
+//**************************************************************************************
 void	WindowTabAlpacaList::UpdateOnScreenWidgetList(void)
 {
-int		boxId;
-int		iii;
-char	textString[128];
-char	ipAddrStr[32];
-int		deviceIdx;
+int				boxId;
+int				iii;
+char			textString[128];
+char			ipAddrStr[32];
+int				deviceIdx;
+TYPE_DEVICETYPE	deviceEnum;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 //	CONSOLE_DEBUG_W_NUM("kMaxAlpacaDeviceCnt\t=", kMaxAlpacaDeviceCnt);
@@ -711,8 +772,12 @@ int		deviceIdx;
 	{
 		cFirstLineIdx	=	gRemoteCnt -1;
 	}
-	CONSOLE_DEBUG_W_NUM("gRemoteCnt   \t=", gRemoteCnt);
-	CONSOLE_DEBUG_W_NUM("cFirstLineIdx\t=", cFirstLineIdx);
+	if (cFirstLineIdx < 0)
+	{
+		cFirstLineIdx	=	0;
+	}
+//	CONSOLE_DEBUG_W_NUM("gRemoteCnt   \t=", gRemoteCnt);
+//	CONSOLE_DEBUG_W_NUM("cFirstLineIdx\t=", cFirstLineIdx);
 
 	iii				=	0;
 	boxId			=	0;
@@ -736,55 +801,11 @@ int		deviceIdx;
 
 
 			SetWidgetText(boxId, textString);
-
-
-			switch(cRemoteDeviceList[deviceIdx].deviceTypeEnum)
+			//*	set the color based on the device type
+			deviceEnum	=	cRemoteDeviceList[deviceIdx].deviceTypeEnum;
+			if ((deviceEnum >= 0)  && (deviceEnum < kDeviceType_last))
 			{
-				case kDeviceType_Camera:
-					SetWidgetTextColor(		boxId,	CV_RGB(0xff,	0xff,	0x00));		//*	yellow
-					break;
-
-				case kDeviceType_CoverCalibrator:
-					SetWidgetTextColor(		boxId,	CV_RGB(0xff,	0x00,	0x00));		//*	Red
-					break;
-
-				case kDeviceType_Dome:
-					SetWidgetTextColor(		boxId,	CV_RGB(0xff,	0x00,	0xff));		//*	magenta
-					break;
-
-				case kDeviceType_Filterwheel:
-					SetWidgetTextColor(		boxId,	CV_RGB(0xff,	0x7f,	0x00));		//*	orange
-					break;
-
-				case kDeviceType_Focuser:
-					SetWidgetTextColor(		boxId,	CV_RGB(0x00,	0xff,	0x00));		//*	green
-					break;
-
-				case kDeviceType_Observingconditions:	//#DB7171
-					SetWidgetTextColor(		boxId,	CV_RGB(0xDB,	0x71,	0x71));		//*	green
-					break;
-
-
-				case kDeviceType_Switch:
-					SetWidgetTextColor(		boxId,	CV_RGB(0x00,	0xff,	0xff));		//*	cyan
-					break;
-
-				case kDeviceType_Telescope:
-					SetWidgetTextColor(		boxId,	CV_RGB(0x64,	0x64,	0xff));		//*	blue
-					break;
-
-				case kDeviceType_Shutter:
-					SetWidgetTextColor(		boxId,	CV_RGB(0xCF,	0x0E,	0xF2));		//* pink
-					break;
-
-				case kDeviceType_SlitTracker:
-					SetWidgetTextColor(		boxId,	CV_RGB(0x91,	0x30,	0xFA));		//* purple
-					break;
-
-				case kDeviceType_Multicam:
-				default:
-					SetWidgetTextColor(		boxId,	CV_RGB(0xff,	0xff,	0xff));
-					break;
+				SetWidgetTextColor(boxId,	gDeviceColorsRGBscalar[deviceEnum]);
 			}
 		}
 		else if (boxId <= kAlpacaList_AlpacaDev_Last)

@@ -49,11 +49,6 @@
 extern	bool	gUpdateSLitWindow;
 
 
-#define	kDomeWindowWidth	475
-#define	kDomeWindowHeight	720
-
-
-
 //**************************************************************************************
 class ControllerSlit: public Controller
 {

@@ -72,6 +72,12 @@
 //*	Oct  4,	2022	<MLS> Added HandleSpecialKeys()
 //*	Oct  4,	2022	<MLS> Moved a bunch of the list stuff to the main windowtab.cpp class
 //*	Oct  4,	2022	<MLS> Added page-up, page-down and home processing for lists
+//*	Oct 20,	2022	<MLS> Changed SetIPaddressBoxes() to have errorMsgBox instead of versionBox
+//*	Oct 21,	2022	<MLS> Removed AlpacaDisplayErrorMessage from all windowtab classes
+//*	Oct 21,	2022	<MLS> Added SetupWindowBottomBoxes()
+//*	Oct 21,	2022	<MLS> Updated all windowtabs to use SetupWindowBottomBoxes()
+//*	Oct 21,	2022	<MLS> Removed SetIPaddressBoxes() use SetupWindowBottomBoxes() instead
+//*	Oct 21,	2022	<MLS> Removed SetAlpacaLogo()
 //*****************************************************************************
 
 
@@ -121,10 +127,16 @@ int		iii;
 	cHelpTextBoxColor			=	CV_RGB(255,	255,	255);
 	cPrevDisplayedHelpBox		=	-1;
 
+	//*	for windows that have a list
+	cLinesOnScreen		=	0;
+	cSortColumn			=	-1;
+	cFirstLineIdx		=	0;
+	cTotalLines			=	0;
+
+	//*	openCV stuff
 	cOpenCV_Image		=	NULL;
 	cCurrentXloc		=	0;
 	cCurrentYloc		=	0;
-
 	cCurrentColor		=	CV_RGB(255,	255,	255);
 	cCurrentLineWidth	=	1;
 
@@ -181,7 +193,7 @@ void WindowTab::ComputeWidgetColumns(const int windowWitdh)
 //**************************************************************************************
 void WindowTab::RunBackgroundTasks(void)
 {
-//	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 }
 
 //**************************************************************************************
@@ -429,6 +441,8 @@ char	lineBuff[64];
 		case 4:		sprintf(lineBuff, "%0.4f", number);	break;
 		case 5:		sprintf(lineBuff, "%0.5f", number);	break;
 		case 6:		sprintf(lineBuff, "%0.6f", number);	break;
+		case 7:		sprintf(lineBuff, "%0.7f", number);	break;
+		case 8:		sprintf(lineBuff, "%0.8f", number);	break;
 		default:	sprintf(lineBuff, "%0.4f", number);	break;
 	}
 	SetWidgetText(widgetIdx, lineBuff);
@@ -593,43 +607,46 @@ RGBcolor	txColor;
 	SetWidgetTextColor(	widgetIdx,	CV_RGB(txColor.red,		txColor.grn,		txColor.blu));
 }
 
+
+
+
+
 //**************************************************************************************
 //*	this is for consistency between window tabs
 //*	setup the
-//*		ip address box
-//*		readall indicator
-//*		Version box
-//*		optional connect button
+//*	starting at the bottom
+//*		Bottom row
+//*					ip address box
+//*					readall indicator
+//*					optional connect button
+//*		2nd from bottom
+//*					Error msg box
+//*		3rd from bottom
+//*					Last command
+//*		4th from bottom
+//*					Alpaca logo
 //**************************************************************************************
-void	WindowTab::SetIPaddressBoxes(	const int	ipaddrBox,
-										const int	readAllBox,
-										const int	versionBox,
-										const int	connectBtnBox)
+void	WindowTab::SetupWindowBottomBoxes(	const int	ipaddrBox,
+											const int	readAllBox,
+											const int	errorMsgBox,
+											const int	lastCmdWidgetIdx,
+											const int	logoWidgetIdx,
+											const int	connectBtnBox)
 {
+int		xLoc;
 int		yLoc;
 int		connBtnWidth;
-
-//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
-//	CONSOLE_DEBUG_W_NUM("ipaddrBox\t=", ipaddrBox);
-//	CONSOLE_DEBUG_W_NUM("readAllBox\t=", readAllBox);
-//	CONSOLE_DEBUG_W_NUM("versionBox\t=", versionBox);
-//	CONSOLE_DEBUG_W_NUM("connectBtnBox\t=", connectBtnBox);
+int		errMsgBoxHeight;
+int		logoWidth;
+int		logoHeight;
 
 	cIpAddrTextBox	=	ipaddrBox;
+	//*	start at the bottom and work our way up
+	yLoc	=	cHeight - 1;
 
-	if (versionBox > 0)
-	{
-		//=======================================================
-		yLoc	=	cHeight - (2 *cBtnHeight);
-		yLoc	-=	1;
-		SetWidget(			versionBox,	0,	yLoc,		cWidth,	cBtnHeight);
-		SetWidgetFont(		versionBox,	kFont_Medium);
-		SetWidgetTextColor(	versionBox,	CV_RGB(255,	0,	0));
-	}
-
-	yLoc	=	cHeight - cBtnHeight;
-	yLoc	-=	1;
-	//=======================================================
+	//==========================================================================
+	//*	BOTTOM ROW
+	//==========================================================================
 	//*	IP address
 	if (ipaddrBox >= 0)
 	{
@@ -637,12 +654,12 @@ int		connBtnWidth;
 		if (connectBtnBox > 0)
 		{
 			//*	a connect button was specified, adjust the IP box to be smaller
-			SetWidget(		ipaddrBox,	0,			yLoc,		(cClmWidth * 4),	cBtnHeight);
+			SetWidget(		ipaddrBox,	0,	(yLoc - cBtnHeight),		(cClmWidth * 4),	cBtnHeight);
 			SetWidgetFont(	ipaddrBox,	kFont_Medium);
 
 			//*	now setup the "Connect" button
 			connBtnWidth	=	cWidth - cClm5_offset - 2;
-			SetWidget(				connectBtnBox,	cClm5_offset + 1,	yLoc,	connBtnWidth,		cBtnHeight);
+			SetWidget(				connectBtnBox,	cClm5_offset + 1,	(yLoc - cBtnHeight),	connBtnWidth,		cBtnHeight);
 			SetWidgetType(			connectBtnBox,	kWidgetType_Button);
 			SetWidgetFont(			connectBtnBox,	kFont_Medium);
 			SetWidgetText(			connectBtnBox,	"Connect");
@@ -653,7 +670,7 @@ int		connBtnWidth;
 		}
 		else
 		{
-			SetWidget(		ipaddrBox,	0,	yLoc,		cWidth,	cBtnHeight);
+			SetWidget(		ipaddrBox,	0,	(yLoc - cBtnHeight),		cWidth,	cBtnHeight);
 			SetWidgetFont(	ipaddrBox, kFont_Medium);
 		}
 	}
@@ -663,42 +680,58 @@ int		connBtnWidth;
 	//*	this is an indicator, "R" to signify that the alpaca driver supports READALL
 	if (readAllBox >= 0)
 	{
-		SetWidget(				readAllBox,	4,	yLoc+2,		cBtnHeight-4,	cBtnHeight-4);
+		SetWidget(				readAllBox,	4,	(yLoc - cBtnHeight)+2,		cBtnHeight-4,	cBtnHeight-4);
 		SetWidgetBorderColor(	readAllBox,	CV_RGB(0,	0,	0));
 		SetWidgetValid(			readAllBox,	false);		//*	will only be enabled if READALL command exists
 		SetWidgetText(			readAllBox,	"R");
 		SetWidgetFont(			readAllBox,	kFont_Medium);
 		SetWidgetTextColor(		readAllBox,	CV_RGB(0,255,	0));
 	}
-}
 
-//**************************************************************************************
-//*	this puts the alpaca logo in the default place
-//*	To override the position, call SetWiget after calling this routine
-//**************************************************************************************
-void	WindowTab::SetAlpacaLogo(const int logoWidgetIdx, const int lastCmdWidgetIdx)
-{
-int	logoWidth;
-int	logoHeight;
-int	xLoc;
-int	yLoc;
+	if ((ipaddrBox >= 0) || (readAllBox >= 0))
+	{
+		yLoc	-=	cBtnHeight;
+	}
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	//==========================================================================
+	//*	2nd ROW from bottom
+	//==========================================================================
+	if (errorMsgBox > 0)
+	{
+		//*	for narrow screens we need 2 lines
+		CONSOLE_DEBUG_W_NUM("cWidth\t=",	cWidth);
+		if (cWidth < 550)
+		{
+			errMsgBoxHeight	=	2 * cBtnHeight;
+		}
+		else
+		{
+			errMsgBoxHeight	=	cBtnHeight;
+		}
+		SetWidget(			errorMsgBox,	0,	(yLoc - errMsgBoxHeight),	cWidth,	errMsgBoxHeight);
+		SetWidgetType(		errorMsgBox,	kWidgetType_MultiLineText);
+		SetWidgetFont(		errorMsgBox,	kFont_Medium);
+		SetWidgetTextColor(	errorMsgBox,	CV_RGB(255,	0,	0));
+		SetWidgetText(		errorMsgBox,	"Error messages will be displayed here");
+		yLoc	-=	errMsgBoxHeight;
+	}
 
+	//==========================================================================
+	//*	3rd ROW from bottom
+	//==========================================================================
 	if (lastCmdWidgetIdx >= 0)
 	{
 		cLastCmdTextBox	=	lastCmdWidgetIdx;
-		yLoc			=	cHeight - (3 * cBtnHeight);
-		SetWidget(			lastCmdWidgetIdx,	0,			yLoc,		cWidth,		cBtnHeight);
+		SetWidget(			lastCmdWidgetIdx,	0,			(yLoc - cBtnHeight),		cWidth,		cBtnHeight);
 		SetWidgetText(		lastCmdWidgetIdx,	"---");
 		SetWidgetFont(		lastCmdWidgetIdx,	kFont_Medium);
 		SetWidgetTextColor(	lastCmdWidgetIdx,	CV_RGB(0,	255,	0));
-	}
-	else
-	{
-		yLoc		=	cHeight - (2 *cBtnHeight);
+		yLoc	-=	cBtnHeight;
 	}
 
+	//==========================================================================
+	//*	4th ROW from bottom
+	//==========================================================================
 	if (logoWidgetIdx >= 0)
 	{
 		//*	now set the Alpaca Logo
@@ -721,8 +754,10 @@ int	yLoc;
 	}
 }
 
+
 //**************************************************************************************
 //*	returns logo height
+//**************************************************************************************
 int	WindowTab::SetAlpacaLogoBottomCorner(const int logoWidgetIdx)
 {
 int	logoWidth;
@@ -935,6 +970,24 @@ void	WindowTab::SetWidgetProgress(const int widgetIdx, const int currPosition, c
 	}
 }
 
+//*****************************************************************************
+void	WindowTab::SetWidgetSensorValue(const int widgetNum, TYPE_Sensor *sensorData, const int decimalPlaces)
+{
+
+	if (sensorData->ValidData)
+	{
+		SetWidgetNumber(	widgetNum,	sensorData->Value, decimalPlaces);
+		SetWidgetTextColor(	widgetNum, CV_RGB(0x00, 0xff, 0x00));
+	}
+	else
+	{
+		SetWidgetText(	widgetNum,	"-N/A-");
+		SetWidgetTextColor(	widgetNum, CV_RGB(0xff, 0x00, 0x00));
+	}
+	ForceWindowUpdate();
+}
+
+
 //**************************************************************************************
 void	WindowTab::SetCurrentTab(const int tabIdx)
 {
@@ -1146,6 +1199,12 @@ void	WindowTab::ProcessButtonClick(const int buttonIdx, const int flags)
 {
 //	CONSOLE_DEBUG_W_NUM("this routine should be overloaded: buttonIdx=", buttonIdx);
 	//*	this routine should be overloaded
+}
+
+//*****************************************************************************
+void	ProcessDoubleClick(const int buttonIdx)
+{
+	CONSOLE_ABORT(__FUNCTION__);
 }
 
 //*****************************************************************************
@@ -2330,7 +2389,6 @@ Controller	*myControllerObj;
 																		alpacaCmd,
 																		dataString,
 																		jsonParser);
-//			CONSOLE_DEBUG("Calling AlpacaCheckForErrors()");
 			cLastAlpacaErrNum	=	AlpacaCheckForErrors(jsonParser, cLastAlpacaErrStr, true);
 
 
@@ -2392,47 +2450,17 @@ int	WindowTab::AlpacaCheckForErrors(	SJP_Parser_t	*jsonParser,
 										char			*errorMsg,
 										bool 			reportError)
 {
-int		jjj;
 int		alpacaErrorCode;
+Controller	*myParentObjPtr;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
-
+	myParentObjPtr	=	(Controller *)cParentObjPtr;
 	alpacaErrorCode	=	0;
-	strcpy(errorMsg, "");
-	if (jsonParser != NULL)
+	if (myParentObjPtr != NULL)
 	{
-		for (jjj=0; jjj<jsonParser->tokenCount_Data; jjj++)
-		{
-			if (strcasecmp(jsonParser->dataList[jjj].keyword, "ErrorNumber") == 0)
-			{
-				alpacaErrorCode	=	atoi(jsonParser->dataList[jjj].valueString);
-			}
-			else if (strcasecmp(jsonParser->dataList[jjj].keyword, "ErrorMessage") == 0)
-			{
-				if (strlen(jsonParser->dataList[jjj].valueString) > 0)
-				{
-					strcpy(errorMsg, jsonParser->dataList[jjj].valueString);
-					if (reportError)
-					{
-						AlpacaDisplayErrorMessage(errorMsg);
-					}
-				}
-			}
-		}
-	}
-	else
-	{
-		CONSOLE_DEBUG("jsonParser is NULL");
+		alpacaErrorCode	=	myParentObjPtr->AlpacaCheckForErrors(jsonParser, errorMsg, reportError);
 	}
 	return(alpacaErrorCode);
-}
-
-
-//*****************************************************************************
-void	WindowTab::AlpacaDisplayErrorMessage(const char *errorMsgString)
-{
-	//*	this should be overloaded
-	CONSOLE_DEBUG_W_STR("Json err:", errorMsgString);
 }
 
 //*****************************************************************************

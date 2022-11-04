@@ -225,7 +225,7 @@ bool		needToUpdate;
 		needToUpdate		=	true;
 		cForceAlpacaUpdate	=	false;
 	}
-	else if (deltaSeconds >= 2)
+	else if (deltaSeconds >= 1)
 	{
 		needToUpdate	=	true;
 	}
@@ -425,10 +425,9 @@ bool	validImg;
 	{
 		CONSOLE_DEBUG("Image parameters invalid !!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 //		CONSOLE_ABORT(__FUNCTION__);
-
-		return;
 	}
 }
+
 #else
 //**************************************************************************************
 void	ControllerImage::SetLiveWindowImage(IplImage *newOpenCVImage)
@@ -613,8 +612,8 @@ size_t	byteCount_dsp;
 	//*	this is just an extra check, it was crashing on testing
 	if ((cDownLoadedImage != NULL) && (newOpenCVImage != NULL))
 	{
-		DumpCVMatStruct(newOpenCVImage, "newOpenCVImage");
-		DumpCVMatStruct(cDownLoadedImage, "cDownLoadedImage");
+		DumpCVMatStruct(newOpenCVImage,		"newOpenCVImage");
+		DumpCVMatStruct(cDownLoadedImage,	"cDownLoadedImage");
 		newImgWidth			=	newOpenCVImage->cols;
 		newImgHeight		=	newOpenCVImage->rows;
 		newImgRowStepSize	=	newOpenCVImage->step[0];
@@ -654,7 +653,27 @@ size_t	byteCount_dsp;
 				CONSOLE_DEBUG("memcpy to cDisplayedImage");
 				memcpy(cDisplayedImage->data, cDownLoadedImage->data, byteCount_dsp);
 			}
+			else
+			{
+				CONSOLE_DEBUG("byteCount_dsp != byteCount_old");
+				CONSOLE_DEBUG_W_LONG("byteCount_dsp\t=",	byteCount_dsp);
+				CONSOLE_DEBUG_W_LONG("byteCount_old\t=",	byteCount_old);
+				cv::resize(	*newOpenCVImage,
+							*cDisplayedImage,
+							cDisplayedImage->size(),
+							0,
+							0,
+							cv::INTER_LINEAR);
+			}
 		}
+		else
+		{
+			CONSOLE_DEBUG("cDisplayedImage is NULL");
+		}
+	}
+	else
+	{
+		CONSOLE_DEBUG("((cDownLoadedImage != NULL) && (newOpenCVImage != NULL))");
 	}
 }
 #else
@@ -854,6 +873,7 @@ unsigned int	nChannels;
 				if (cColorImage != NULL)
 				{
 				#ifdef _USE_OPENCV_CPP_
+					//*	convert gray scale to color
 					cv::cvtColor(*newOpenCVImage, *cColorImage, cv::COLOR_GRAY2BGR);
 				#else
 					cvCvtColor(newOpenCVImage, cColorImage, CV_GRAY2RGB);

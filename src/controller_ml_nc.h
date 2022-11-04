@@ -71,7 +71,6 @@ class ControllerNiteCrawler: public ControllerFocus
 		virtual	void	UpdateWindowTabs_ReadAll(bool hasReadAll);
 		virtual	void	UpdateWindowTabs_SwitchBits(unsigned char switchBits);
 		virtual	void	UpdateWindowTabs_AuxSwitchBits(unsigned char auxSwitchBits);
-		virtual	void	UpdateWindowTabs_Version(const char *versionString);
 		virtual	void	UpdateWindowTabs_DesiredFocusPos(const int newDesiredPoistion);
 		virtual	void	UpdateWindowTabs_DesiredRotatorPos(const int newDesiredPoistion);
 		virtual	void	UpdateWindowTabs_DesiredAuxPos(const int newDesiredPoistion);

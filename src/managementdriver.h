@@ -39,6 +39,7 @@ class ManagementDriver: public AlpacaDriver
 		//
 									ManagementDriver(const int argDevNum);
 		virtual						~ManagementDriver(void);
+		virtual int					UpdateProperties(void);
 
 		virtual	TYPE_ASCOM_STATUS	ProcessCommand(TYPE_GetPutRequestData *reqData);
 		virtual	void				OutputHTML(TYPE_GetPutRequestData *reqData);

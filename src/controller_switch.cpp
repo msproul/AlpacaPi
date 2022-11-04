@@ -52,7 +52,7 @@
 
 
 #define	kWindowWidth	535
-#define	kWindowHeight	700
+#define	kWindowHeight	725
 
 #include	"alpaca_defs.h"
 #include	"controller.h"
@@ -276,9 +276,7 @@ bool			myCanWriteFlag;
 	validData	=	AlpacaGetStringValue("switch", "description",	NULL,	alpacaString);
 	if (validData)
 	{
-		CONSOLE_DEBUG_W_STR("description\t=", alpacaString);
 		strcpy(cAlpacaVersionString, alpacaString);
-		SetWidgetText(kTab_Switch, kSwitchBox_AlpacaDrvrVersion, alpacaString);
 	}
 
 	//*	Start by getting the switch names and descriptions
@@ -412,7 +410,6 @@ int				boxNumber;
 	{
 		cSwitchTabObjPtr->SetActiveSwitchCount(cMaxSwitch);
 	}
-	SetWidgetText(kTab_Switch,	kSwitchBox_AlpacaDrvrVersion,	cAlpacaVersionString);
 
 	for (jjj=0; jjj<cMaxSwitch; jjj++)
 	{

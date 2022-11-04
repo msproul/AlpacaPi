@@ -14,7 +14,7 @@
 //*	that you agree that the author(s) have no warranty, obligations or liability.  You
 //*	must determine the suitability of this source code for your use.
 //*
-//*	Redistributions of this source code must retain this copyright notice.
+//*	Redistribution of this source code must retain this copyright notice.
 //*****************************************************************************
 //*	Edit History
 //*****************************************************************************
@@ -172,11 +172,14 @@ int		iii;
 
 	cFirstRead	=	true;
 
-	SetAlpacaLogo(kSwitchBox_AlpacaLogo, kSwitchBox_LastCmdString);
-
 	//=======================================================
-	//*	IP address
-	SetIPaddressBoxes(kSwitchBox_IPaddr, kSwitchBox_Readall, kSwitchBox_AlpacaDrvrVersion, -1);
+	//*	set up all the bottom stuff so that it is the same on all windowtabs
+	SetupWindowBottomBoxes(	kSwitchBox_IPaddr,
+							kSwitchBox_Readall,
+							kSwitchBox_AlpacaErrorMsg,
+							kSwitchBox_LastCmdString,
+							kSwitchBox_AlpacaLogo,
+							-1);
 }
 
 //*****************************************************************************

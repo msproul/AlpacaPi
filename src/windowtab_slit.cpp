@@ -140,13 +140,6 @@ int		yLoc;
 	SetWidgetFont(	kSlitTracker_LogDataCheckBox,	kFont_RadioBtn);
 
 
-
-	SetAlpacaLogo(kSlitTracker_AlpacaLogo, -1);
-
-	//=======================================================
-	//*	IP address
-	SetIPaddressBoxes(kSlitTracker_IPaddr, kSlitTracker_Readall, kSlitTracker_AlpacaDrvrVersion, -1);
-
 	//=======================================================
 	cDotColor[0]		=	CV_RGB(0,	255,	255);
 	cDotColor[1]		=	CV_RGB(255,	0,		255);
@@ -156,6 +149,14 @@ int		yLoc;
 	cDotColor[4]		=	CV_RGB(0,	255,	0);
 	cDotColor[5]		=	CV_RGB(0,	0,		255);
 
+	//=======================================================
+	//*	set up all the bottom stuff so that it is the same on all windowtabs
+	SetupWindowBottomBoxes(	kSlitTracker_IPaddr,
+							kSlitTracker_Readall,
+							kSlitTracker_AlpacaErrorMsg,
+							kSlitTracker_LastCmdString,
+							kSlitTracker_AlpacaLogo,
+							-1);
 }
 
 //*****************************************************************************

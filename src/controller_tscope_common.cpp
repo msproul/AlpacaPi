@@ -256,9 +256,6 @@ bool	dataWasHandled;
 	{
 		//*	"version": "AlpacaPi - V0.2.2-beta build #32",
 		strcpy(cAlpacaVersionString, valueString);
-
-		SetWidgetText(kTab_Control,		kTelescope_AlpacaDrvrVersion,		cAlpacaVersionString);
-		SetWidgetText(kTab_Settings,	kTeleSettings_AlpacaDrvrVersion,	cAlpacaVersionString);
 		dataWasHandled	=	true;
 	}
 #endif // _PARENT_IS_TELESCOPE_

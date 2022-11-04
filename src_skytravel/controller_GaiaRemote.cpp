@@ -20,6 +20,8 @@
 //*****************************************************************************
 //*	Jan  9,	2022	<MLS> Created controller_GaiaRemote.cpp
 //*****************************************************************************
+#ifdef _ENABLE_REMOTE_SQL_
+
 #include	<stdio.h>
 #include	<stdlib.h>
 #include	<unistd.h>
@@ -164,3 +166,4 @@ void	ControllerGaiaRemote::UpdateCommonProperties(void)
 
 }
 
+#endif // _ENABLE_REMOTE_SQL_

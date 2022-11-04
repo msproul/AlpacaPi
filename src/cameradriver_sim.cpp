@@ -29,7 +29,8 @@
 
 #if defined(_ENABLE_CAMERA_) && defined(_SIMULATE_CAMERA_)
 
-#include	<string>
+#include	<stdlib.h>
+#include	<string.h>
 
 
 #define _ENABLE_CONSOLE_DEBUG_
@@ -65,6 +66,7 @@ bool		isConnected;
 
 //	gVerbose				=	true;
 //	cVerboseDebug			=	true;
+	cCameraIsSiumlated		=	true;
 
 	cCameraID				=	deviceNum;
 	cSimulatedState			=   kExposure_Idle;

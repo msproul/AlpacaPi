@@ -128,6 +128,7 @@ int		myButtonWidth;
 char	numberString[32];
 int		logoWidth;
 int		logoHeight;
+int		connButtonWidgetIdx;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -319,19 +320,11 @@ int		logoHeight;
 	switch(cComMode)
 	{
 		case kNCcomMode_Alpaca:
-			SetAlpacaLogo(kMLsingle_AlpacaLogo, kMLsingle_LastCmdString);
-			SetIPaddressBoxes(kMLsingle_IPaddr, kMLsingle_Readall, kMLsingle_AlpacaDrvrVersion, -1);
+			connButtonWidgetIdx	=	-1;
 			break;
 
 		case kNCcomMode_USB:
-			SetAlpacaLogo(-1, kMLsingle_LastCmdString);
-			SetIPaddressBoxes(	kMLsingle_IPaddr,
-								kMLsingle_Readall,
-								kMLsingle_AlpacaDrvrVersion,
-								kMLsingle_Connect);
-
-//			SetWidgetText(	kMLsingle_AlpacaDrvrVersion,		gFullVersionString);
-
+			connButtonWidgetIdx	=	kMLsingle_Connect;
 			break;
 
 		default:
@@ -339,10 +332,16 @@ int		logoHeight;
 			CONSOLE_ABORT(__FUNCTION__);
 			break;
 	}
+	//=======================================================
+	//*	set up all the bottom stuff so that it is the same on all windowtabs
+	SetupWindowBottomBoxes(	kMLsingle_IPaddr,
+							kMLsingle_Readall,
+							kMLsingle_AlpacaErrorMsg,
+							kMLsingle_LastCmdString,
+							kMLsingle_AlpacaLogo,
+							connButtonWidgetIdx);
 
 }
-
-
 
 //*****************************************************************************
 void	WindowTabMLsingle::ProcessButtonClick(const int buttonIdx, const int flags)
@@ -480,10 +479,13 @@ int				setPointIdx;
 }
 
 //*****************************************************************************
-void	WindowTabMLsingle::ProcessDoubleClick(const int buttonIdx)
+void	WindowTabMLsingle::ProcessDoubleClick(	const int	widgetIdx,
+												const int	event,
+												const int	xxx,
+												const int	yyy,
+												const int	flags)
 {
-	CONSOLE_DEBUG_W_NUM("Double click on button #", buttonIdx);
-	//*	this routine should be overloaded
+	CONSOLE_DEBUG_W_NUM("Double click on button #", widgetIdx);
 }
 
 

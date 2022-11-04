@@ -236,12 +236,14 @@ char		buttonText[64];
 							kCamSet_FilenameTitle,
 							(kCamSet_FilenameOutline - 1));
 
-	SetAlpacaLogo(kCamSet_AlpacaLogo, kCamSet_LastCmdString);
-
 	//=======================================================
-	//*	IP address
-	SetIPaddressBoxes(kCamSet_IPaddr, kCamSet_Readall, kCamSet_AlpacaDrvrVersion);
-
+	//*	set up all the bottom stuff so that it is the same on all windowtabs
+	SetupWindowBottomBoxes(	kCamSet_IPaddr,
+							kCamSet_Readall,
+							kCamSet_AlpacaErrorMsg,
+							kCamSet_LastCmdString,
+							kCamSet_AlpacaLogo,
+							-1);
 }
 
 //**************************************************************************************

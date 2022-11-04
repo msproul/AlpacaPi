@@ -54,7 +54,7 @@
 
 
 //*****************************************************************************
-const TYPE_CmdEntry	gSlitTrackerCmdTable[]	=
+static TYPE_CmdEntry	gSlitTrackerCmdTable[]	=
 {
 //?	{	"setrate",				kCmd_SlitTracker_setrate,		kCmdType_PUT	},
 	{	"readall",				kCmd_SlitTracker_readall,		kCmdType_GET	},

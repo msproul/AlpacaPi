@@ -25,6 +25,8 @@
 //*	https://archive.stsci.edu/index.html
 //*	https://archive.stsci.edu/cgi-bin/dss_form
 //*	https://archive.stsci.edu/dss/script_usage.html
+//*
+//*	http://skyserver.sdss.org/dr16/en/help/docs/api.aspx
 //*****************************************************************************
 
 
@@ -247,11 +249,14 @@ int		mySourceID;
 	strcat(curlCmdLine, urlString);
 	strcat(curlCmdLine, "\"");
 
-	if (mySourceID == kRemoteSrc_stsci_fits)
+	switch(mySourceID)
 	{
-		strcat(curlCmdLine, ";./fitsview ");
-		strcat(curlCmdLine, fileName);
-		strcat(curlCmdLine, " >/dev/null &");
+		case kRemoteSrc_stsci_fits:
+		case kRemoteSrc_SDSS:
+			strcat(curlCmdLine, ";./fitsview ");
+			strcat(curlCmdLine, fileName);
+			strcat(curlCmdLine, " >/dev/null &");
+			break;
 	}
 
 	CONSOLE_DEBUG(curlCmdLine);

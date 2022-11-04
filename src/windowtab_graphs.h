@@ -19,7 +19,6 @@ enum
 	kGraphBox_VoltageLabel,
 
 	kGraphBox_AlpacaLogo,
-	kGraphBox_AlpacaDrvrVersion,
 	kGraphBox_IPaddr,
 	kGraphBox_Readall,
 

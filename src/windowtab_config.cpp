@@ -147,12 +147,14 @@ int		textBoxNum;
 	SetWidgetBGColor(iii++, Color16BitTo24Bit(0x8000));
 #endif
 
-
-	SetAlpacaLogo(kCongfigBox_AlpacaLogo, -1);
-
 	//=======================================================
-	//*	IP address
-	SetIPaddressBoxes(kCongfigBox_IPaddr, kCongfigBox_Readall, kCongfigBox_AlpacaDrvrVersion, -1);
+	//*	set up all the bottom stuff so that it is the same on all windowtabs
+	SetupWindowBottomBoxes(	kCongfigBox_IPaddr,
+							kCongfigBox_Readall,
+							kCongfigBox_AlpacaErrorMsg,
+							kCongfigBox_LastCmdString,
+							kCongfigBox_AlpacaLogo,
+							-1);
 
 }
 

@@ -38,6 +38,8 @@
 //*	Apr  2,	2020	<MLS> CONFORM-focuser -> PASSED!!!!!!!!!!!!!!!!!!!!!
 //*	Jan 24,	2021	<MLS> Converted FocuserDriver to use properties struct
 //*	Jun 23,	2021	<MLS> Updated FocuserDriver cCommonProp.InterfaceVersion to 3
+//*	Oct 10,	2022	<MLS> Started migrating NiteCrawler support to use TYPE_RotatorProperties
+//*	Oct 20,	2022	<MLS> Added DumpFocuserProperties()
 //*****************************************************************************
 
 #ifdef _ENABLE_FOCUSER_
@@ -72,7 +74,7 @@
 
 
 //*****************************************************************************
-const TYPE_CmdEntry	gFocuserCmdTable[]	=
+static TYPE_CmdEntry	gFocuserCmdTable[]	=
 {
 
 	{	"absolute",				kCmd_Focuser_absolute,			kCmdType_GET	},
@@ -108,8 +110,10 @@ FocuserDriver::FocuserDriver(const int argDevNum)
 	strcpy(cCommonProp.Name, "Focuser");
 	strcpy(cCommonProp.Description,	"Generic Focuser");
 	cCommonProp.InterfaceVersion	=	3;
+	cDriverCmdTablePtr				=	gFocuserCmdTable;
 
 	memset(&cFocuserProp, 0, sizeof(TYPE_FocuserProperties));
+	memset(&cRotatorProp, 0, sizeof(TYPE_RotatorProperties));
 
 	cFocuserProp.MaxStep		=	10;
 	cFocuserProp.MaxIncrement	=	10;
@@ -936,13 +940,29 @@ bool	FocuserDriver::GetRotatorIsMoving(void)
 {
 	if (cRotatorIsMoving == false)
 	{
-		CONSOLE_DEBUG("Calling RunStateMachine()");
+//		CONSOLE_DEBUG("Calling RunStateMachine()");
 		RunStateMachine();
-		CONSOLE_DEBUG_W_NUM("cRotatorIsMoving\t=", cRotatorIsMoving);
+//		CONSOLE_DEBUG_W_NUM("cRotatorIsMoving\t=", cRotatorIsMoving);
 	}
 	return(cRotatorIsMoving);
 }
 
+//*****************************************************************************
+void	FocuserDriver::DumpFocuserProperties(const char *callingFunctionName)
+{
+	DumpCommonProperties(callingFunctionName);
+
+	CONSOLE_DEBUG(			"------------------------------------");
+	CONSOLE_DEBUG_W_BOOL(	"cFocuserProp.Absolute         \t=",	cFocuserProp.Absolute);
+	CONSOLE_DEBUG_W_BOOL(	"cFocuserProp.IsMoving         \t=",	cFocuserProp.IsMoving);
+	CONSOLE_DEBUG_W_NUM(	"cFocuserProp.MaxIncrement     \t=",	cFocuserProp.MaxIncrement);
+	CONSOLE_DEBUG_W_NUM(	"cFocuserProp.MaxStep          \t=",	cFocuserProp.MaxStep);
+	CONSOLE_DEBUG_W_NUM(	"cFocuserProp.Position         \t=",	cFocuserProp.Position);
+	CONSOLE_DEBUG_W_DBL(	"cFocuserProp.StepSize         \t=",	cFocuserProp.StepSize);
+	CONSOLE_DEBUG_W_BOOL(	"cFocuserProp.TempComp         \t=",	cFocuserProp.TempComp);
+	CONSOLE_DEBUG_W_BOOL(	"cFocuserProp.TempCompAvailable\t=",	cFocuserProp.TempCompAvailable);
+	CONSOLE_DEBUG_W_DBL(	"cFocuserProp.Temperature      \t=",	cFocuserProp.Temperature);
+}
 
 
 

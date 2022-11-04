@@ -78,12 +78,14 @@ enum
 	bool	gUpdateSLitWindow	=	true;
 
 
+#define		kSlitWindowWidth	475
+#define		kSLitWindowHeight	750
 
 
 //**************************************************************************************
 ControllerSlit::ControllerSlit(	const char			*argWindowName,
 								TYPE_REMOTE_DEV		*alpacaDevice)
-	:Controller(argWindowName, kDomeWindowWidth,  kDomeWindowHeight)
+	:Controller(argWindowName, kSlitWindowWidth,  kSLitWindowHeight)
 {
 int		iii;
 char	ipAddrStr[32];
@@ -185,13 +187,11 @@ char	lineBuff[64];
 	SetTabText(kTab_DriverInfo,		"Driver Info");
 	SetTabText(kTab_About,			"About");
 
-	CONSOLE_DEBUG(__FUNCTION__);
 
 	//=============================================================
 	cSlitTrackerTabObjPtr		=	new WindowTabSlitTracker(	cWidth, cHeight, cBackGrndColor, cWindowName);
 	if (cSlitTrackerTabObjPtr != NULL)
 	{
-	CONSOLE_DEBUG(__FUNCTION__);
 		SetTabWindow(kTab_SlitTracker,	cSlitTrackerTabObjPtr);
 		cSlitTrackerTabObjPtr->SetParentObjectPtr(this);
 	}
@@ -205,7 +205,6 @@ char	lineBuff[64];
 	cSlitGraphTabObjPtr		=	new WindowTabSlitGraph(	cWidth, cHeight, cBackGrndColor, cWindowName);
 	if (cSlitGraphTabObjPtr != NULL)
 	{
-	CONSOLE_DEBUG(__FUNCTION__);
 		SetTabWindow(kTab_SlitGraph,	cSlitGraphTabObjPtr);
 		cSlitGraphTabObjPtr->SetParentObjectPtr(this);
 	}
@@ -358,9 +357,6 @@ bool		needToUpdate;
 	}
 }
 
-
-
-
 //*****************************************************************************
 bool	ControllerSlit::AlpacaGetStartupData(void)
 {
@@ -382,7 +378,6 @@ char			returnString[128];
 			if (validData)
 			{
 				strcpy(cAlpacaVersionString, returnString);
-				SetWidgetText(kTab_SlitTracker,		kSlitTracker_AlpacaDrvrVersion,		cAlpacaVersionString);
 			}
 		}
 	}
@@ -403,19 +398,18 @@ bool	ControllerSlit::AlpacaGetStatus(void)
 bool	validData;
 bool	previousOnLineState;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	validData			=	false;
 	previousOnLineState	=	cOnLine;
 	if (cHas_readall)
 	{
-		CONSOLE_DEBUG("Has readall");
+//		CONSOLE_DEBUG("Has readall");
 		validData	=	AlpacaGetStatus_ReadAll("slittracker", cAlpacaDevNum);
 	}
 	else
 	{
-		CONSOLE_DEBUG("No readall");
-//--		validData	=	AlpacaGetStatus_DomeOneAAT();
+//		CONSOLE_DEBUG("No readall");
 		validData	=	AlpacaGetCommonConnectedState("slittracker");
 	}
 
@@ -612,31 +606,8 @@ void	ControllerSlit::AlpacaProcessSupportedActions(	const char	*deviceType,
 //**************************************************************************************
 void	ControllerSlit::UpdateCapabilityList(void)
 {
-//int		boxID;
-//int		iii;
-//char	textString[80];
-//
-////	CONSOLE_DEBUG(__FUNCTION__);
-//
-//	iii	=	0;
-//	while (cCapabilitiesList[iii].capabilityName[0] != 0)
-//	{
-//		boxID	=	kCapabilities_TextBox1 + iii;
-//		strcpy(textString,	cCapabilitiesList[iii].capabilityName);
-//		strcat(textString,	":\t");
-//		strcat(textString,	cCapabilitiesList[iii].capabilityValue);
-//
-////		CONSOLE_DEBUG(textString);
-//
-//		if (boxID <= kCapabilities_TextBoxN)
-//		{
-//			SetWidgetText(kTab_Capabilities, boxID, textString);
-//		}
-//
-//		iii++;
-//	}
+//	UpdateCapabilityListID(kTab_Capabilities, kCapabilities_TextBox1, kCapabilities_TextBoxN);
 }
-
 
 ////*****************************************************************************
 //void	ControllerSlit::AlpacaGetSlitTrackerReadAll(void)

@@ -632,7 +632,6 @@ char			ipAddrStr[128];
 			if (validData)
 			{
 				strcpy(cAlpacaVersionString, returnString);
-				SetWidgetText(kTab_ST_Dome,		kDomeBox_AlpacaDrvrVersion,		cAlpacaVersionString);
 			}
 		}
 		validData	=	AlpacaGetBooleanValue(	"dome", "cansetazimuth",	NULL,	&cDomeProp.CanSetAzimuth);

@@ -69,7 +69,6 @@ class ControllerCamNormal: public ControllerCamera
 
 
 		virtual	void	UpdateSupportedActions(void);
-		virtual	void	UpdateRemoteAlpacaVersion(void);
 		virtual	void	UpdateReadoutModes(void);
 		virtual	void	UpdateFlipMode(void);
 		virtual	void	UpdateCurrReadoutMode(void);

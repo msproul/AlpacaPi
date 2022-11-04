@@ -246,7 +246,7 @@ bool			rulesFileOK;
 int	FilterwheelZWO::Read_CurrentFWstate(void)
 {
 
-	return(kFilterWheelState_OK);
+	return(cFilterWheelState);
 }
 
 //*****************************************************************************

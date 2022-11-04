@@ -607,12 +607,14 @@ int	imuHeight;
 	SetRemoteIMUdisplay(false);
 #endif	//	_SUPPORT_REMOTE_IMU_
 
-
-	SetAlpacaLogo(kCameraBox_AlpacaLogo, kCameraBox_LastCmdString);
-
 	//=======================================================
-	//*	IP address
-	SetIPaddressBoxes(kCameraBox_IPaddr, kCameraBox_Readall, kCameraBox_AlpacaDrvrVersion, -1);
+	//*	set up all the bottom stuff so that it is the same on all windowtabs
+	SetupWindowBottomBoxes(	kCameraBox_IPaddr,
+							kCameraBox_Readall,
+							kCameraBox_AlpacaErrorMsg,
+							kCameraBox_LastCmdString,
+							kCameraBox_AlpacaLogo,
+							-1);
 }
 
 //**************************************************************************************

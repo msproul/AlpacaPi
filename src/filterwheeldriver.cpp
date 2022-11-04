@@ -67,7 +67,7 @@
 
 
 //*****************************************************************************
-const TYPE_CmdEntry	gFilterwheelCmdTable[]	=
+TYPE_CmdEntry	gFilterwheelCmdTable[]	=
 {
 	{	"focusoffsets",			kCmd_Filterwheel_focusoffsets,	kCmdType_GET	},
 	{	"names",				kCmd_Filterwheel_names,			kCmdType_GET	},
@@ -101,6 +101,7 @@ FilterwheelDriver::FilterwheelDriver(const int argDevNum)
 	strcpy(cCommonProp.Name,		"Filterwheel");
 	strcpy(cCommonProp.Description,	"Generic filterwheel");
 	cCommonProp.InterfaceVersion	=	2;
+	cDriverCmdTablePtr				=	gFilterwheelCmdTable;
 
 	strcpy(cFilterWheelCurrName, "none");
 
@@ -462,7 +463,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 int					curState;
 int					myFilterPosition;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 	curState		=	Read_CurrentFWstate();
 	if (curState == kFilterWheelState_Moving)
 	{
@@ -496,6 +497,10 @@ int					myFilterPosition;
 							//	cFilterDef[myFilterPosition].filterDesciption,
 								cFilterWheelProp.Names[myFilterPosition].FilterName,
 								INCLUDE_COMMA);
+	}
+	if (alpacaErrCode != kASCOM_Err_Success)
+	{
+		CONSOLE_DEBUG_W_NUM("alpacaErrCode\t=", alpacaErrCode);
 	}
 
 	return(alpacaErrCode);
@@ -670,7 +675,7 @@ bool		isConnected;
 		}
 
 		SocketWriteData(mySocketFD,	"<TABLE BORDER=1>\r\n");
-		SocketWriteData(mySocketFD,	"<TR><TD><CENTER>Driver operations</TD><TD>%d</TD></TR>\r\n");
+		SocketWriteData(mySocketFD,	"<TR><TH COLSPAN=2><CENTER>Driver operations</TH></TR>\r\n");
 
 
 		sprintf(lineBuffer,	"\t<TR><TD><CENTER>Succesful Opens</TD><TD>%d</TD></TR>\r\n",	cSuccesfullOpens);
@@ -764,7 +769,6 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 bool	FilterwheelDriver::IsFilterwheelConnected(void)
 {
 	return(cFilterWheelConnected);
-
 }
 
 

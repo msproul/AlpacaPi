@@ -45,7 +45,7 @@
 //*	Sep 18,	2022	<MLS> Changed RunStateMachine() to return 100000 (100 ms) instead of 500 (.5 ms)
 //*****************************************************************************
 
-#ifdef _ENABLE_FOCUSER_
+#if defined(_ENABLE_FOCUSER_) && defined (_ENABLE_FOCUSER_MOONLITE_)
 
 #include	<stdlib.h>
 #include	<stdio.h>
@@ -355,7 +355,7 @@ uint32_t	currentSeconds;
 		if (cRotatorPosition != cPrevRotatorPosition)
 		{
 			cRotatorIsMoving	=	true;
-//			CONSOLE_DEBUG_W_NUM("pos2=", cRotatorPosition);
+			CONSOLE_DEBUG_W_NUM("pos2=", cRotatorPosition);
 		}
 		else
 		{
