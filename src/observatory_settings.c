@@ -448,23 +448,35 @@ int		linesRead;
 }
 
 //*****************************************************************************
+void	DumpTelescopeInfo(TYPE_TELESCOPE_INFO *ts_info)
+{
+	CONSOLE_DEBUG_W_STR("refID\t\t\t=",					ts_info->refID);
+	CONSOLE_DEBUG_W_STR("telescp_manufacturer\t=",		ts_info->telescp_manufacturer);
+	CONSOLE_DEBUG_W_STR("telescp_model\t\t=",			ts_info->telescp_model);
+	CONSOLE_DEBUG_W_DBL("aperature_mm\t\t=",			ts_info->aperature_mm);
+	CONSOLE_DEBUG_W_DBL("secondary_mm\t\t=",			ts_info->secondary_mm);
+	CONSOLE_DEBUG_W_DBL("focalLen_mm\t\t=",				ts_info->focalLen_mm);
+	CONSOLE_DEBUG_W_STR("filterwheel\t\t=",				ts_info->filterwheel);
+}
+
+//*****************************************************************************
 //*	refID is a string that was specified in the settings file.
 //*	refID can be NULL and if it is not found, settings for scope 0 are set
 //*	Optionally you can specify the index, in which case refID must be NULL
 //*****************************************************************************
 void	GetTelescopeSettingsByRefID(	const char			*refID,		//*	can be NULL
-										int					argIndex,
+										int					argIndex,	//*	ignored if refID is not null
 										TYPE_TELESCOPE_INFO *ts_info)
 {
 int		telescopeIdx;
 int		ii;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 
 	telescopeIdx	=	-1;	//*	set the default
 	if (refID != NULL)
 	{
-//		CONSOLE_DEBUG_W_STR("refID\t\t=",	refID);
+		CONSOLE_DEBUG_W_STR("refID\t\t=",	refID);
 		for (ii=0; ii<kMaxTelescopes; ii++)
 		{
 			if (strcasecmp(refID, gObseratorySettings.TS_info[ii].refID) == 0)
@@ -493,6 +505,9 @@ int		ii;
 	{
 		//*	copy the entire block over
 		*ts_info	=	gObseratorySettings.TS_info[telescopeIdx];
+		DumpTelescopeInfo(ts_info);
+//		CONSOLE_ABORT(__FUNCTION__);
+
 	#ifndef _ENABLE_SKYTRAVEL_
 		if (strlen(ts_info->telescp_manufacturer) > 0)
 		{

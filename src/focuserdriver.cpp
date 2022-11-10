@@ -40,6 +40,8 @@
 //*	Jun 23,	2021	<MLS> Updated FocuserDriver cCommonProp.InterfaceVersion to 3
 //*	Oct 10,	2022	<MLS> Started migrating NiteCrawler support to use TYPE_RotatorProperties
 //*	Oct 20,	2022	<MLS> Added DumpFocuserProperties()
+//*	Nov  4,	2022	<MLS> Added GetCommandArgumentString()
+//*	Nov  8,	2022	<MLS> Fixed bug in JSON for temperatureLog in all drivers.
 //*****************************************************************************
 
 #ifdef _ENABLE_FOCUSER_
@@ -325,9 +327,10 @@ int					mySocket;
 								alpacaErrMsg,
 								NO_COMMA);
 
+	//*	Nov  8,	2022	<MLS> Fixed bug in JSON for temperatureLog in all drivers.
 	JsonResponse_Add_Finish(	mySocket,
 								reqData->jsonTextBuffer,
-								kInclude_HTTP_Header);
+								(cHttpHeaderSent == false));		//*	required for long JSON output
 
 	//*	this is for the logging function
 	strcpy(reqData->alpacaErrMsg, alpacaErrMsg);
@@ -964,6 +967,38 @@ void	FocuserDriver::DumpFocuserProperties(const char *callingFunctionName)
 	CONSOLE_DEBUG_W_DBL(	"cFocuserProp.Temperature      \t=",	cFocuserProp.Temperature);
 }
 
+//*****************************************************************************
+void	FocuserDriver::GetCommandArgumentString(const int cmdENum, char *agumentString)
+{
+	switch(cmdENum)
+	{
+		case kCmd_Focuser_tempcomp:				strcpy(agumentString, "TempComp=BOOL");	break;
+
+		case kCmd_Focuser_move:
+		case kCmd_Focuser_moverelative:			strcpy(agumentString, "Position=INT");	break;
+
+
+
+		case kCmd_Focuser_absolute:				//*	Indicates whether the focuser is capable of absolute position.
+		case kCmd_Focuser_ismoving:				//*	Indicates whether the focuser is currently moving.
+		case kCmd_Focuser_maxincrement:			//*	Returns the focuser's maximum increment size.
+		case kCmd_Focuser_maxstep:				//*	Returns the focuser's maximum step size.
+		case kCmd_Focuser_position:				//*	Returns the focuser's current position.
+		case kCmd_Focuser_stepsize:				//*	Returns the focuser's step size.
+		case kCmd_Focuser_tempcompavailable:	//*	Indicates whether the focuser has temperature compensation.
+		case kCmd_Focuser_temperature:			//*	Returns the focuser's current temperature.
+		case kCmd_Focuser_halt:					//*	Immediately stops focuser motion.
+		case kCmd_Focuser_readall:				//*	Reads all of the values
+			strcpy(agumentString, "-none-");
+			break;
+
+
+		default:
+			strcpy(agumentString, "");
+			break;
+
+	}
+}
 
 
 #endif	//	_ENABLE_FOCUSER_

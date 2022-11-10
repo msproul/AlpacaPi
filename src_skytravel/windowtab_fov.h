@@ -101,6 +101,7 @@ enum
 	kFOVbox_SaveButton,
 	kFOVbox_EditButton,
 	kFOVbox_ReloadButton,
+	kFOVbox_RescanButton,
 
 	kFOVbox_AlpacaLogo,
 
@@ -142,6 +143,7 @@ class WindowTabFOV: public WindowTab
 
 				TYPE_CameraFOV	*GetCameraFOVptr(void);
 				void			WriteCameraFOVfile(void);
+				void			ResetFOVdata(void);
 
 				TYPE_REMOTE_DEV	cRemoteDeviceList[kMaxCamaeraFOVcnt];
 				TYPE_CameraFOV	cCameraData[kMaxCamaeraFOVcnt];

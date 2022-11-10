@@ -345,7 +345,7 @@ int					mySocket;
 
 	JsonResponse_Add_Finish(	mySocket,
 								reqData->jsonTextBuffer,
-								kInclude_HTTP_Header);
+								(cHttpHeaderSent == false));
 
 	//*	this is for the logging function
 	strcpy(reqData->alpacaErrMsg, alpacaErrMsg);

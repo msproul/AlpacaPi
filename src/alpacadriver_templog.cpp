@@ -99,6 +99,7 @@ char				httpHeader[500];
 
 	JsonResponse_FinishHeader(httpHeader, "");
 	JsonResponse_SendTextBuffer(mySocket, httpHeader);
+	cHttpHeaderSent	=	true;
 
 	//*	add the description of what the temperature log is logging
 	sprintf(lineBuff, "\t\t\"Description\":\"%s\",\r\n", cTempLogDescription);

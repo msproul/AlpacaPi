@@ -213,8 +213,11 @@ ASI_CAMERA_OBJECTS=												\
 				$(ASI_LIB_DIR)/lib/$(PLATFORM)/libASICamera2.a	\
 
 
+######################################################################################
 ZWO_EFW_OBJECTS=												\
 				$(EFW_LIB_DIR)/lib/$(PLATFORM)/libEFWFilter.a	\
+
+
 
 ######################################################################################
 SOCKET_OBJECTS=												\
@@ -311,6 +314,33 @@ DRIVER_OBJECTS=												\
 				$(OBJECT_DIR)slittracker.o					\
 				$(OBJECT_DIR)switchdriver.o					\
 				$(OBJECT_DIR)switchdriver_rpi.o				\
+
+######################################################################################
+# Camera objects
+CAMERA_OBJECTS=												\
+				$(OBJECT_DIR)cameradriver.o					\
+				$(OBJECT_DIR)cameradriverAnalysis.o			\
+				$(OBJECT_DIR)cameradriver_ASI.o				\
+				$(OBJECT_DIR)cameradriver_ATIK.o			\
+				$(OBJECT_DIR)cameradriver_fits.o			\
+				$(OBJECT_DIR)cameradriver_FLIR.o			\
+				$(OBJECT_DIR)cameradriver_jpeg.o			\
+				$(OBJECT_DIR)cameradriver_livewindow.o		\
+				$(OBJECT_DIR)cameradriver_opencv.o			\
+				$(OBJECT_DIR)cameradriver_png.o				\
+				$(OBJECT_DIR)cameradriver_QHY.o				\
+				$(OBJECT_DIR)cameradriver_QSI.o				\
+				$(OBJECT_DIR)cameradriver_SONY.o			\
+				$(OBJECT_DIR)cameradriver_save.o			\
+				$(OBJECT_DIR)cameradriver_sim.o				\
+				$(OBJECT_DIR)cameradriver_TOUP.o			\
+
+######################################################################################
+# Filterwheel objects
+FITLERWHEEL_OBJECTS=										\
+				$(OBJECT_DIR)filterwheeldriver.o			\
+				$(OBJECT_DIR)filterwheeldriver_ATIK.o		\
+				$(OBJECT_DIR)filterwheeldriver_ZWO.o		\
 
 
 ######################################################################################
@@ -482,14 +512,16 @@ camerasim		:	DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
 camerasim		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
 camerasim		:	DEFINEFLAGS		+=	-D_ENABLE_LIVE_CONTROLLER_
 camerasim		:	$(CPP_OBJECTS)				\
+					$(HELPER_OBJECTS)			\
 					$(DRIVER_OBJECTS)			\
 					$(SOCKET_OBJECTS)			\
 					$(LIVE_WINDOW_OBJECTS)		\
 
 
 		$(LINK)  								\
-					$(SOCKET_OBJECTS)			\
 					$(CPP_OBJECTS)				\
+					$(HELPER_OBJECTS)			\
+					$(SOCKET_OBJECTS)			\
 					$(DRIVER_OBJECTS)			\
 					$(LIVE_WINDOW_OBJECTS)		\
 					$(OPENCV_LINK)				\
@@ -527,14 +559,16 @@ picv4		:		DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
 picv4		:		DEFINEFLAGS		+=	-D_ENABLE_LIVE_CONTROLLER_
 #picv4		:		ATIK_LIB_DIR	=	$(ATIK_LIB_MASTER_DIR)/ARM/x86/NoFlyCapture
 picv4		:		$(CPP_OBJECTS)				\
+					$(HELPER_OBJECTS)			\
 					$(DRIVER_OBJECTS)			\
 					$(SOCKET_OBJECTS)			\
 					$(LIVE_WINDOW_OBJECTS)		\
 
 
 		$(LINK)  								\
-					$(SOCKET_OBJECTS)			\
 					$(CPP_OBJECTS)				\
+					$(HELPER_OBJECTS)			\
+					$(SOCKET_OBJECTS)			\
 					$(DRIVER_OBJECTS)			\
 					$(LIVE_WINDOW_OBJECTS)		\
 					$(OPENCV_LINK)				\
@@ -784,14 +818,16 @@ tele	:		DEFINEFLAGS		+=	-D_ENABLE_IMU_
 tele	:		INCLUDES		+=	-I$(SRC_IMU)
 #tele	:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_SKYWATCH_
 tele	:			$(CPP_OBJECTS)				\
+					$(HELPER_OBJECTS)			\
 					$(DRIVER_OBJECTS)			\
 					$(SOCKET_OBJECTS)			\
 					$(IMU_OBJECTS)				\
 
 
 		$(LINK)  								\
-					$(SOCKET_OBJECTS)			\
 					$(CPP_OBJECTS)				\
+					$(HELPER_OBJECTS)			\
+					$(SOCKET_OBJECTS)			\
 					$(DRIVER_OBJECTS)			\
 					$(IMU_OBJECTS)				\
 					$(OPENCV_LINK)				\
@@ -896,14 +932,16 @@ wo71		:		DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
 wo71		:		DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
 wo71		:		DEFINEFLAGS		+=	-D_ENABLE_LIVE_CONTROLLER_
 wo71		:		$(CPP_OBJECTS)				\
+					$(HELPER_OBJECTS)			\
 					$(DRIVER_OBJECTS)			\
 					$(SOCKET_OBJECTS)			\
 					$(LIVE_WINDOW_OBJECTS)		\
 
 
 		$(LINK)  								\
-					$(SOCKET_OBJECTS)			\
 					$(CPP_OBJECTS)				\
+					$(HELPER_OBJECTS)			\
+					$(SOCKET_OBJECTS)			\
 					$(DRIVER_OBJECTS)			\
 					$(LIVE_WINDOW_OBJECTS)		\
 					$(OPENCV_LINK)				\
@@ -942,14 +980,16 @@ wo102		:		DEFINEFLAGS		+=	-D_ENABLE_JPEGLIB_
 wo102		:		DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
 wo102		:		DEFINEFLAGS		+=	-D_ENABLE_LIVE_CONTROLLER_
 wo102		:		$(CPP_OBJECTS)				\
+					$(HELPER_OBJECTS)			\
 					$(DRIVER_OBJECTS)			\
 					$(SOCKET_OBJECTS)			\
 					$(LIVE_WINDOW_OBJECTS)		\
 
 
 		$(LINK)  								\
-					$(SOCKET_OBJECTS)			\
 					$(CPP_OBJECTS)				\
+					$(HELPER_OBJECTS)			\
+					$(SOCKET_OBJECTS)			\
 					$(DRIVER_OBJECTS)			\
 					$(LIVE_WINDOW_OBJECTS)		\
 					$(OPENCV_LINK)				\
@@ -1196,14 +1236,16 @@ flir		:		INCLUDES		+=	-I$(SRC_IMU)
 flir		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
 flir		:		DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
 flir		:		$(CPP_OBJECTS)				\
+					$(HELPER_OBJECTS)			\
 					$(DRIVER_OBJECTS)			\
 					$(SOCKET_OBJECTS)			\
 					$(IMU_OBJECTS)				\
 
 
 		$(LINK)  								\
-					$(SOCKET_OBJECTS)			\
 					$(CPP_OBJECTS)				\
+					$(HELPER_OBJECTS)			\
+					$(SOCKET_OBJECTS)			\
 					$(DRIVER_OBJECTS)			\
 					$(OPENCV_LINK)				\
 					$(IMU_OBJECTS)				\
@@ -1254,23 +1296,25 @@ phaseone	:		$(CPP_OBJECTS)				\
 ######################################################################################
 #pragma mark imu
 #make imu
-imu		:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
-imu		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
-imu		:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
-imu		:		DEFINEFLAGS		+=	-D_ENABLE_DISCOVERY_QUERRY_
-imu		:		DEFINEFLAGS		+=	-D_ENABLE_IMU_
-imu		:		INCLUDES		+=	-I$(SRC_IMU)
-imu		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
-imu		:		DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
-imu		:		$(CPP_OBJECTS)				\
+imu		:			DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
+imu		:			DEFINEFLAGS		+=	-D_ENABLE_ASI_
+imu		:			DEFINEFLAGS		+=	-D_ENABLE_FITS_
+imu		:			DEFINEFLAGS		+=	-D_ENABLE_DISCOVERY_QUERRY_
+imu		:			DEFINEFLAGS		+=	-D_ENABLE_IMU_
+imu		:			INCLUDES		+=	-I$(SRC_IMU)
+imu		:			DEFINEFLAGS		+=	-D_USE_OPENCV_
+imu		:			DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
+imu		:			$(CPP_OBJECTS)				\
+					$(HELPER_OBJECTS)			\
 					$(DRIVER_OBJECTS)			\
 					$(SOCKET_OBJECTS)			\
 					$(IMU_OBJECTS)				\
 
 
 		$(LINK)  								\
-					$(SOCKET_OBJECTS)			\
 					$(CPP_OBJECTS)				\
+					$(HELPER_OBJECTS)			\
+					$(SOCKET_OBJECTS)			\
 					$(DRIVER_OBJECTS)			\
 					$(OPENCV_LINK)				\
 					$(IMU_OBJECTS)				\
@@ -1326,13 +1370,13 @@ dome		:	DEFINEFLAGS		+=	-D_ENABLE_SLIT_TRACKER_REMOTE_
 dome		:	DEFINEFLAGS		+=	-D_ENABLE_REMOTE_SHUTTER_
 dome		:	DEFINEFLAGS		+=	-D_ENABLE_WIRING_PI_
 dome		:				$(CPP_OBJECTS)				\
-							$(SOCKET_OBJECTS)			\
 							$(HELPER_OBJECTS)			\
+							$(SOCKET_OBJECTS)			\
 
 				$(LINK)  								\
 							$(CPP_OBJECTS)				\
-							$(SOCKET_OBJECTS)			\
 							$(HELPER_OBJECTS)			\
+							$(SOCKET_OBJECTS)			\
 							-lusb-1.0					\
 							-lpthread					\
 							-lwiringPi					\
@@ -1745,14 +1789,16 @@ newt16		:		DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
 newt16		:		DEFINEFLAGS		+=	-D_ENABLE_LIVE_CONTROLLER_
 newt16		:		ATIK_LIB_DIR	=	$(ATIK_LIB_MASTER_DIR)/ARM/x86/NoFlyCapture
 newt16		:		$(CPP_OBJECTS)				\
+					$(HELPER_OBJECTS)			\
 					$(DRIVER_OBJECTS)			\
 					$(SOCKET_OBJECTS)			\
 					$(LIVE_WINDOW_OBJECTS)		\
 
 
 		$(LINK)  								\
-					$(SOCKET_OBJECTS)			\
 					$(CPP_OBJECTS)				\
+					$(HELPER_OBJECTS)			\
+					$(SOCKET_OBJECTS)			\
 					$(DRIVER_OBJECTS)			\
 					$(LIVE_WINDOW_OBJECTS)		\
 					$(OPENCV_LINK)				\
@@ -1803,33 +1849,28 @@ zwo		:			$(CPP_OBJECTS)				\
 ######################################################################################
 #pragma mark Switch - C++ Raspberry pi
 #	make finder
-#finder		:		DEFINEFLAGS		+=	-D_ENABLE_OBSERVINGCONDITIONS_
 finder		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
-#finder		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_ZWO_
-#finder		:		DEFINEFLAGS		+=	-D_ENABLE_SAFETYMONITOR_
 finder		:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_
 finder		:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
 finder		:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
 finder		:		DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_
 finder		:		DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_MOONLITE_
 finder		:		DEFINEFLAGS		+=	-D_ENABLE_ROTATOR_
-#finder		:		DEFINEFLAGS		+=	-D_ENABLE_MULTICAM_
 finder		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
-#finder		:		DEFINEFLAGS		+=	-D_ENABLE_QHY_
-#finder		:		DEFINEFLAGS		+=	-D_ENABLE_ATIK_
 finder		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
 finder		:		DEFINEFLAGS		+=	-D_ENABLE_WIRING_PI_
-finder		:		ATIK_LIB_DIR	=	$(ATIK_LIB_MASTER_DIR)/ARM/x86/NoFlyCapture
 
-finder		:	$(CPP_OBJECTS)				\
+finder		:		$(CPP_OBJECTS)				\
+					$(HELPER_OBJECTS)			\
 					$(DRIVER_OBJECTS)			\
 					$(SOCKET_OBJECTS)			\
 					$(LIVE_WINDOW_OBJECTS)		\
 
 
 		$(LINK)  								\
-					$(SOCKET_OBJECTS)			\
 					$(CPP_OBJECTS)				\
+					$(HELPER_OBJECTS)			\
+					$(SOCKET_OBJECTS)			\
 					$(DRIVER_OBJECTS)			\
 					$(LIVE_WINDOW_OBJECTS)		\
 					$(OPENCV_LINK)				\
@@ -1845,6 +1886,45 @@ finder		:	$(CPP_OBJECTS)				\
 					-lpthread					\
 					-o alpacapi
 
+######################################################################################
+#pragma mark Switch - C++ Raspberry pi
+#	make findercv4
+findercv4		:	DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
+findercv4		:	DEFINEFLAGS		+=	-D_ENABLE_SWITCH_
+findercv4		:	DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
+findercv4		:	DEFINEFLAGS		+=	-D_ENABLE_FITS_
+findercv4		:	DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_
+findercv4		:	DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_MOONLITE_
+findercv4		:	DEFINEFLAGS		+=	-D_ENABLE_ROTATOR_
+findercv4		:	DEFINEFLAGS		+=	-D_ENABLE_ASI_
+findercv4		:	DEFINEFLAGS		+=	-D_USE_OPENCV_
+findercv4		:	DEFINEFLAGS		+=	-D_ENABLE_WIRING_PI_
+
+findercv4		:	$(CPP_OBJECTS)				\
+					$(HELPER_OBJECTS)			\
+					$(DRIVER_OBJECTS)			\
+					$(SOCKET_OBJECTS)			\
+					$(LIVE_WINDOW_OBJECTS)		\
+
+
+		$(LINK)  								\
+					$(CPP_OBJECTS)				\
+					$(HELPER_OBJECTS)			\
+					$(SOCKET_OBJECTS)			\
+					$(DRIVER_OBJECTS)			\
+					$(LIVE_WINDOW_OBJECTS)		\
+					$(OPENCV_LINK)				\
+					-L$(ATIK_LIB_DIR_ARM32)/	\
+					$(ASI_CAMERA_OBJECTS)		\
+					$(ZWO_EFW_OBJECTS)			\
+					-latikcameras				\
+					-lqhyccd					\
+					-lcfitsio					\
+					-lusb-1.0					\
+					-ludev						\
+					-lwiringPi					\
+					-lpthread					\
+					-o alpacapi
 
 
 ######################################################################################

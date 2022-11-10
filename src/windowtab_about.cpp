@@ -196,7 +196,7 @@ char	lineBuffer[64];
 	sprintf(lineBuffer,	"OpenCV (include version) %s\r", CV_VERSION);
 	strcat(multiLineTextBuff,	lineBuffer);
 
-#if (CV_MAJOR_VERSION >= 3)
+#if (CV_MAJOR_VERSION >= 4)
 	sprintf(lineBuffer,	"OpenCV (library version) %s\r", cv::getVersionString().c_str());
 	strcat(multiLineTextBuff,	lineBuffer);
 //	printf("%s\r\n",	cv::getBuildInformation().c_str());

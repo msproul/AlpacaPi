@@ -177,6 +177,8 @@
 //*	Aug 14,	2022	<MLS> Fixed bug in Send_imagearray_raw16(), was sending 8 bit data
 //*	Sep 29,	2022	<MLS> Added gImageDataDir for specifying alternate save locations
 //*	Sep 29,	2022	<MLS> Added SetImageDataDirectory()
+//*	Nov  4,	2022	<MLS> Added GetCommandArgumentString()
+//*	Nov  4,	2022	<MLS> Added Telescope info to ReadAll output, SkyTravel uses it for FOV calculations
 //*****************************************************************************
 //*	Jan  1,	2119	<TODO> ----------------------------------------
 //*	Jun 26,	2119	<TODO> Add support for sub frames
@@ -257,7 +259,6 @@ const char	*gCameraStateStrings[]	=
 #define	kMaxCameraCnt	5
 
 
-
 //*****************************************************************************
 TYPE_CmdEntry	gCameraCmdTable[]	=
 {
@@ -325,6 +326,8 @@ TYPE_CmdEntry	gCameraCmdTable[]	=
 #ifdef _INCLUDE_ALPACA_EXTRAS_
 	//*	items added by MLS
 	{	"--extras",					kCmd_Camera_Extras,					kCmdType_GET	},
+
+
 	{	"autoexposure",				kCmd_Camera_autoexposure,			kCmdType_BOTH	},
 	{	"displayimage",				kCmd_Camera_displayimage,			kCmdType_BOTH	},
 	{	"exposuretime",				kCmd_Camera_exposuretime,			kCmdType_BOTH	},
@@ -529,12 +532,15 @@ int	mkdirErrCode;
 	strcpy(cAuxTextTag,			"");
 
 	//*	if there was a telescope refID specified on the command line, set it
+	CONSOLE_DEBUG_W_STR("gDefaultTelescopeRefID\t=", gDefaultTelescopeRefID);
 	if (strlen(gDefaultTelescopeRefID) > 0)
 	{
+		CONSOLE_DEBUG("Calling GetTelescopeSettingsByRefID");
 		GetTelescopeSettingsByRefID(gDefaultTelescopeRefID, 0, &cTS_info);
 	}
 	else
 	{
+		CONSOLE_DEBUG("Getting TelescopeSettings for index 0");
 		GetTelescopeSettingsByRefID(NULL, 0, &cTS_info);
 	}
 
@@ -1400,9 +1406,7 @@ char				httpHeader[500];
 			JsonResponse_FinishHeader(httpHeader, "");
 			JsonResponse_SendTextBuffer(mySocket, httpHeader);
 			cHttpHeaderSent	=	true;
-CONSOLE_DEBUG(__FUNCTION__);
 			alpacaErrCode	=	Get_Filelist(reqData, alpacaErrMsg);
-CONSOLE_DEBUG(__FUNCTION__);
 			break;
 
 		case kCmd_Camera_autoexposure:
@@ -5600,7 +5604,7 @@ double				deltaExp_secs;
 		//==============================================
 		if (sequenceCntFound)
 		{
-			sequenceCnt				=	AsciiToDouble(countString);
+			sequenceCnt				=	atoi(countString);
 		}
 		if (sequenceCnt <= 0)
 		{
@@ -7418,16 +7422,7 @@ bool				foundKeyWord;
 //	CONSOLE_DEBUG(__FUNCTION__);
 	if (reqData != NULL)
 	{
-		//*	look for filter
-		foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
-												"includefilter",
-												argumentString,
-												(sizeof(argumentString) -1));
-		if (foundKeyWord)
-		{
-			cFN_includeFilter	=	IsTrueFalse(argumentString);
-		}
-
+		//---------------------------------------------------------------------------
 		//*	look for camera
 		foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
 												"includecamera",
@@ -7437,7 +7432,17 @@ bool				foundKeyWord;
 		{
 			cFN_includeManuf	=	IsTrueFalse(argumentString);
 		}
-
+		//---------------------------------------------------------------------------
+		//*	look for filter
+		foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
+												"includefilter",
+												argumentString,
+												(sizeof(argumentString) -1));
+		if (foundKeyWord)
+		{
+			cFN_includeFilter	=	IsTrueFalse(argumentString);
+		}
+		//---------------------------------------------------------------------------
 		//*	look for serial number
 		foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
 												"includeserialnum",
@@ -7447,8 +7452,8 @@ bool				foundKeyWord;
 		{
 			cFN_includeSerialNum	=	IsTrueFalse(argumentString);
 		}
-
-		//*	look for serial number
+		//---------------------------------------------------------------------------
+		//*	look for RefID
 		foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
 												"includerefid",
 												argumentString,
@@ -7579,6 +7584,61 @@ TYPE_ASCOM_STATUS	CameraDriver::SetFlipMode(int newFlipMode)
 
 	return(kASCOM_Err_NotImplemented);
 }
+
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	CameraDriver::Get_ApertureArea(	TYPE_GetPutRequestData	*reqData,
+													char					*alpacaErrMsg,
+													const char				*responseString)
+{
+TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
+double					radius_meters;
+double                  aperatureArea;
+
+	radius_meters	=	(cTS_info.aperature_mm / 1000) / 2.0;
+	aperatureArea	=	M_PI * (radius_meters * radius_meters);
+	JsonResponse_Add_Double(reqData->socket,
+							reqData->jsonTextBuffer,
+							kMaxJsonBuffLen,
+							responseString,
+							aperatureArea,
+							INCLUDE_COMMA);
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	CameraDriver::Get_ApertureDiameter(	TYPE_GetPutRequestData *reqData,
+														char *alpacaErrMsg,
+														const char *responseString)
+{
+TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
+
+	JsonResponse_Add_Double(reqData->socket,
+							reqData->jsonTextBuffer,
+							kMaxJsonBuffLen,
+							responseString,
+							(cTS_info.aperature_mm / 1000),
+							INCLUDE_COMMA);
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	CameraDriver::Get_FocalLength(	TYPE_GetPutRequestData *reqData,
+													char *alpacaErrMsg,
+													const char *responseString)
+{
+TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
+
+	JsonResponse_Add_Double(reqData->socket,
+							reqData->jsonTextBuffer,
+							kMaxJsonBuffLen,
+							responseString,
+							(cTS_info.focalLen_mm / 1000),
+							INCLUDE_COMMA);
+	return(alpacaErrCode);
+}
+
+
 
 //*****************************************************************************
 TYPE_ASCOM_STATUS	CameraDriver::Get_Readall(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
@@ -8036,6 +8096,15 @@ char				textBuffer[128];
 															INCLUDE_COMMA);
 	#endif // _ENABLE_IMU_
 
+		//*	info about the telescope
+		if (cTS_info.aperature_mm > 0)
+		{
+			Get_ApertureArea(		reqData,	 alpacaErrMsg, "aperturearea");
+			Get_ApertureDiameter(	reqData,	 alpacaErrMsg, "aperturediameter");
+			Get_FocalLength(		reqData,	 alpacaErrMsg, "focallength");
+		}
+
+
 		//===============================================================
 		//*	all of the debugging stuff last
 		cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(mySocket,
@@ -8262,6 +8331,128 @@ int			pixelValueInt;
 				}
 			}
 		}
+	}
+}
+
+
+//*****************************************************************************
+void	CameraDriver::GetCommandArgumentString(const int cmdENum, char *agumentString)
+{
+	switch(cmdENum)
+	{
+		case kCmd_Camera_bayeroffsetX:			//*	Returns the X offset of the Bayer matrix.
+	case kCmd_Camera_bayeroffsetY:			//*	Returns the Y offset of the Bayer matrix.
+		case kCmd_Camera_binX:					//*	Returns the binning factor for the X axis.
+												//*	Sets the binning factor for the X axis.
+		case kCmd_Camera_binY:					//*	Returns the binning factor for the Y axis.
+												//*	Sets the binning factor for the Y axis.
+		case kCmd_Camera_camerastate:			//*	Returns the camera operational state.
+		case kCmd_Camera_cameraxsize:			//*	Returns the width of the CCD camera chip.
+		case kCmd_Camera_cameraysize:			//*	Returns the height of the CCD camera chip.
+		case kCmd_Camera_canabortexposure:		//*	Indicates whether the camera can abort exposures.
+		case kCmd_Camera_canasymmetricbin:		//*	Indicates whether the camera supports asymmetric binning
+		case kCmd_Camera_canfastreadout:		//*	Indicates whether the camera has a fast readout mode.
+		case kCmd_Camera_cangetcoolerpower:		//*	Indicates whether the camera's cooler power setting can be read.
+		case kCmd_Camera_canpulseguide:			//*	Returns a flag indicating whether this camera supports pulse guiding
+		case kCmd_Camera_cansetccdtemperature:	//*	Returns a flag indicating whether this camera supports setting the CCD temperature
+		case kCmd_Camera_canstopexposure:		//*	Returns a flag indicating whether this camera can stop an exposure that is in progress
+		case kCmd_Camera_ccdtemperature:		//*	Returns the current CCD temperature
+		case kCmd_Camera_cooleron:				//*	Returns the current cooler on/off state.
+												//*	Turns the camera cooler on and off
+		case kCmd_Camera_coolerpower:			//*	Returns the present cooler power level
+		case kCmd_Camera_electronsperadu:		//*	Returns the gain of the camera
+		case kCmd_Camera_exposuremax:			//*	Returns the maximum exposure time supported by StartExposure.
+		case kCmd_Camera_exposuremin:			//*	Returns the Minimium exposure time
+		case kCmd_Camera_exposureresolution:	//*	Returns the smallest increment in exposure time supported by StartExposure.
+		case kCmd_Camera_fastreadout:			//*	Returns whether Fast Readout Mode is enabled.
+												//*	Sets whether Fast Readout Mode is enabled.
+		case kCmd_Camera_fullwellcapacity:		//*	Reports the full well capacity of the camera
+		case kCmd_Camera_gain:					//*	Returns the camera's gain
+												//*	Sets the camera's gain.
+		case kCmd_Camera_gainmax:				//*	Maximum value of Gain
+		case kCmd_Camera_gainmin:				//*	Minimum value of Gain
+		case kCmd_Camera_gains:					//*	Gains supported by the camera
+		case kCmd_Camera_hasshutter:			//*	Indicates whether the camera has a mechanical shutter
+		case kCmd_Camera_heatsinktemperature:	//*	Returns the current heat sink temperature.
+		case kCmd_Camera_imagearray:			//*	Returns an array of integers containing the exposure pixel values
+		case kCmd_Camera_imagearrayvariant:		//*	Returns an array of int containing the exposure pixel values
+		case kCmd_Camera_imageready:			//*	Indicates that an image is ready to be downloaded
+		case kCmd_Camera_ispulseguiding:		//*	Indicates that the camera is pulse guideing.
+		case kCmd_Camera_lastexposureduration:	//*	Duration of the last exposure
+		case kCmd_Camera_lastexposurestarttime:	//*	Start time of the last exposure in FITS standard format.
+		case kCmd_Camera_maxadu:				//*	Camera's maximum ADU value
+		case kCmd_Camera_maxbinX:				//*	Maximum binning for the camera X axis
+		case kCmd_Camera_maxbinY:				//*	Maximum binning for the camera Y axis
+		case kCmd_Camera_numX:					//*	Returns the current subframe width
+												//*	Sets the current subframe width
+		case kCmd_Camera_numY:					//*	Returns the current subframe height
+												//*	Sets the current subframe height
+		case kCmd_Camera_offset:				//*	Returns the camera's offset
+												//*	Sets the camera's offset.
+		case kCmd_Camera_offsetmax:				//*	Returns the maximum value of offset.
+		case kCmd_Camera_offsetmin:				//*	Returns the Minimum value of offset.
+		case kCmd_Camera_offsets:				//*	Returns List of offset names supported by the camera
+		case kCmd_Camera_percentcompleted:		//*	Indicates percentage completeness of the current operation
+		case kCmd_Camera_pixelsizeX:			//*	Width of CCD chip pixels (microns)
+		case kCmd_Camera_pixelsizeY:			//*	Height of CCD chip pixels (microns)
+		case kCmd_Camera_readoutmode:			//*	Indicates the canera's readout mode as an index into the array ReadoutModes
+												//*	Set the camera's readout mode
+		case kCmd_Camera_readoutmodes:			//*	List of available readout modes
+		case kCmd_Camera_sensorname:			//*	Sensor name
+		case kCmd_Camera_sensortype:			//*	Type of information returned by the the camera sensor (monochrome or colour)
+		case kCmd_Camera_setccdtemperature:		//*	Returns the current camera cooler setpoint in degrees Celsius.
+												//*	Set the camera's cooler setpoint (degrees Celsius).
+		case kCmd_Camera_startX:				//*	Return the current subframe X axis start position
+												//*	Sets the current subframe X axis start position
+		case kCmd_Camera_startY:				//*	Return the current subframe Y axis start position
+												//*	Sets the current subframe Y axis start position
+		case kCmd_Camera_abortexposure:			//*	Aborts the current exposure
+		case kCmd_Camera_pulseguide:			//*	Pulse guide in the specified direction for the specified time.
+		case kCmd_Camera_startexposure:			//*	Starts an exposure
+		case kCmd_Camera_stopexposure:			//*	Stops the current exposure
+		case kCmd_Camera_subexposureduration:	//*	Camera's sub-exposure interval
+			strcpy(agumentString, "");
+			break;
+
+		//=================================================================
+		//*	commands added that are not part of Alpaca
+
+		case kCmd_Camera_autoexposure:		strcpy(agumentString, "autoexposure=BOOL");		break;
+		case kCmd_Camera_displayimage:		strcpy(agumentString, "displayImage=BOOL");		break;
+		case kCmd_Camera_exposuretime:		strcpy(agumentString, "Duration=FLOAT");		break;
+		case kCmd_Camera_filenameoptions:	strcpy(agumentString, "includecamera=BOOL");	break;
+		case kCmd_Camera_flip:				strcpy(agumentString, "flip=INT (0,1,2,3)");	break;
+		case kCmd_Camera_livemode:			strcpy(agumentString, "Livemode=BOOL");			break;
+
+//		case kCmd_Camera_settelescopeinfo:
+//		case kCmd_Camera_sidebar:
+		case kCmd_Camera_saveallimages:		strcpy(agumentString, "saveallimages=BOOL");		break;
+		case kCmd_Camera_startsequence:		strcpy(agumentString, "Count=INT, Delay=FLOAT, DeltaDuration=FLOAT");		break;
+		case kCmd_Camera_startvideo:		strcpy(agumentString, "recordtime=FLOAT");		break;
+			strcpy(agumentString, "");
+			break;
+
+
+
+#ifdef _ENABLE_FITS_
+		case kCmd_Camera_fitsheader:
+#endif
+		case kCmd_Camera_framerate:
+		case kCmd_Camera_filelist:
+		case kCmd_Camera_rgbarray:
+		case kCmd_Camera_savenextimage:
+		case kCmd_Camera_stopvideo:
+
+
+		case kCmd_Camera_readall:
+			strcpy(agumentString, "-none-");
+			break;
+
+
+		default:
+			strcpy(agumentString, "");
+			break;
+
 	}
 }
 

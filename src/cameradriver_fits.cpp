@@ -1887,11 +1887,11 @@ char			stringBuf[128];
 
 #ifdef _USE_OPENCV_
 
-#if (CV_MAJOR_VERSION >= 3)
-	sprintf(stringBuf,	"Using OpenCV library Version: %s", cv::getVersionString().c_str());
-#else
-	sprintf(stringBuf,	"Using OpenCV library Version: %s", CV_VERSION);
-#endif
+	#if (CV_MAJOR_VERSION >= 4)
+		sprintf(stringBuf,	"Using OpenCV library Version: %s", cv::getVersionString().c_str());
+	#else
+		sprintf(stringBuf,	"Using OpenCV library Version: %s", CV_VERSION);
+	#endif
 	fitsStatus	=	0;
 	fits_write_key(fitsFilePtr, TSTRING,	"COMMENT",
 											stringBuf,
@@ -1957,6 +1957,8 @@ double	fov_arcSeconds_Y;
 double	f_ratio;
 
 	CONSOLE_DEBUG(__FUNCTION__);
+
+	DumpTelescopeInfo(&cTS_info);
 
 	if (gObseratorySettings.ValidInfo || (strlen(cTelescopeModel) > 0))
 	{

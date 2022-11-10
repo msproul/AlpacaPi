@@ -258,37 +258,37 @@ int					mySocket;
 	RecordCmdStats(cmdEnumValue, reqData->get_putIndicator, alpacaErrCode);
 
 	//*	send the response information
-	JsonResponse_Add_Int32(		mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"ClientTransactionID",
-								gClientTransactionID,
-								INCLUDE_COMMA);
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	mySocket,
+														reqData->jsonTextBuffer,
+														kMaxJsonBuffLen,
+														"ClientTransactionID",
+														gClientTransactionID,
+														INCLUDE_COMMA);
 
-	JsonResponse_Add_Int32(		mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"ServerTransactionID",
-								gServerTransactionID,
-								INCLUDE_COMMA);
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	mySocket,
+														reqData->jsonTextBuffer,
+														kMaxJsonBuffLen,
+														"ServerTransactionID",
+														gServerTransactionID,
+														INCLUDE_COMMA);
 
-	JsonResponse_Add_Int32(		mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"ErrorNumber",
-								alpacaErrCode,
-								INCLUDE_COMMA);
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	mySocket,
+														reqData->jsonTextBuffer,
+														kMaxJsonBuffLen,
+														"ErrorNumber",
+														alpacaErrCode,
+														INCLUDE_COMMA);
 
-	JsonResponse_Add_String(	mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"ErrorMessage",
-								alpacaErrMsg,
-								NO_COMMA);
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(mySocket,
+														reqData->jsonTextBuffer,
+														kMaxJsonBuffLen,
+														"ErrorMessage",
+														alpacaErrMsg,
+														NO_COMMA);
 
-	JsonResponse_Add_Finish(	mySocket,
-								reqData->jsonTextBuffer,
-								kInclude_HTTP_Header);
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Finish(	mySocket,
+														reqData->jsonTextBuffer,
+														(cHttpHeaderSent == false));
 
 	//*	this is for the logging function
 	strcpy(reqData->alpacaErrMsg, alpacaErrMsg);

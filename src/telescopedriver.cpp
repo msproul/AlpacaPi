@@ -944,7 +944,7 @@ int					mySocket;
 
 	JsonResponse_Add_Finish(	mySocket,
 								reqData->jsonTextBuffer,
-								kInclude_HTTP_Header);
+								(cHttpHeaderSent == false));
 
 	//*	this is for the logging function
 	strcpy(reqData->alpacaErrMsg, alpacaErrMsg);
@@ -1045,8 +1045,8 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 
 //*****************************************************************************
 TYPE_ASCOM_STATUS	TelescopeDriver::Get_ApertureDiameter(	TYPE_GetPutRequestData *reqData,
-														char *alpacaErrMsg,
-														const char *responseString)
+															char *alpacaErrMsg,
+															const char *responseString)
 {
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 

@@ -307,19 +307,19 @@ char		gHostName[48]				=	"";
 #include	"managementdriver.h"
 
 
-AlpacaDriver		*gAlpacaDeviceList[kMaxDevices];
-bool				gKeepRunning				=	true;
-int					gDeviceCnt					=	0;
-bool				gLiveView					=	false;
-bool				gAutoExposure				=	false;
-bool				gDisplayImage				=	false;
-bool				gSimulateCameraImage		=	false;
-bool				gVerbose					=	false;
-bool				gDebugDiscovery				=	false;
-bool				gObservatorySettingsOK		=	false;
-const char			gValueString[]				=	"Value";
-char				gDefaultTelescopeRefID[kDefaultRefIdMaxLen]	=	"";
-char				gWebTitle[80]				=	"AlpacaPi";
+AlpacaDriver	*gAlpacaDeviceList[kMaxDevices];
+bool			gKeepRunning								=	true;
+int				gDeviceCnt									=	0;
+bool			gLiveView									=	false;
+bool			gAutoExposure								=	false;
+bool			gDisplayImage								=	false;
+bool			gSimulateCameraImage						=	false;
+bool			gVerbose									=	false;
+bool			gDebugDiscovery								=	false;
+bool			gObservatorySettingsOK						=	false;
+const char		gValueString[]								=	"Value";
+char			gDefaultTelescopeRefID[kDefaultRefIdMaxLen]	=	"";
+char			gWebTitle[80]								=	"AlpacaPi";
 
 char				gFullVersionString[128];
 
@@ -1192,15 +1192,19 @@ void	AlpacaDriver::OutputHTML_Part2(TYPE_GetPutRequestData *reqData)
 void	AlpacaDriver::OutputCommadTable(int mySocketFD, const char *title, const TYPE_CmdEntry *commandTable)
 {
 int		iii;
-char	lineBuff[128];
-char	cmdArgumentStr[128];
+char	lineBuff[512];
+char	cmdArgumentStr[256];
 
 	sprintf(lineBuff,	"<TR><TD COLSPAN=4><B><CENTER>%s</B></TD></TR>", title);
 	SocketWriteData(mySocketFD,	lineBuff);
 	iii=	0;
 	while (commandTable[iii].enumValue >= 0)
 	{
-		if (commandTable[iii].commandName[0] != '-')
+		if (commandTable[iii].commandName[0] == '-')
+		{
+			SocketWriteData(mySocketFD,	"<TR><TD COLSPAN=4><HR></TD></TR>\r\n");
+		}
+		else
 		{
 			sprintf(lineBuff,	"<TR><TD>%s</TD>",	commandTable[iii].commandName);
 			SocketWriteData(mySocketFD,	lineBuff);
@@ -1234,6 +1238,7 @@ char	cmdArgumentStr[128];
 //*****************************************************************************
 //*	the purpose of this routine is for self documenting code
 //*	it should return the parameter options for the command specified
+//*****************************************************************************
 void	AlpacaDriver::GetCommandArgumentString(const int cmdENum, char *agumentString)
 {
 	//*	this needs to be over-ridden
@@ -3034,15 +3039,15 @@ static void	PrintHelp(const char *appName)
 //*****************************************************************************
 static void	ProcessCmdLineArgs(int argc, char **argv)
 {
-int		ii;
+int		iii;
 char	theChar;
 int		newListenPort;
 
-	for (ii=1; ii<argc; ii++)
+	for (iii=1; iii<argc; iii++)
 	{
-		if (argv[ii][0] == '-')
+		if (argv[iii][0] == '-')
 		{
-			theChar	=	argv[ii][1];
+			theChar	=	argv[iii][1];
 			switch(theChar)
 			{
 				//	"-a" means auto adjust exposure
@@ -3082,8 +3087,8 @@ int		newListenPort;
 
 				//	-p specifies a port
 				case 'p':
-					ii++;
-					newListenPort		=	atoi(argv[ii]);
+					iii++;
+					newListenPort		=	atoi(argv[iii]);
 					if ((newListenPort > 1024) && (newListenPort <= 65535))
 					{
 						gAlpacaListenPort	=	newListenPort;
@@ -3109,19 +3114,19 @@ int		newListenPort;
 				//*	"-t" means which telescope profile to use
 				//*	either -tNEWT16 or -t Newt16
 				case 't':
-//					CONSOLE_DEBUG_W_STR("argv[ii]\t=", argv[ii]);
-					if (strlen(argv[ii]) > 2)
+					CONSOLE_DEBUG_W_STR("argv[iii]\t=", argv[iii]);
+					if (strlen(argv[iii]) > 2)
 					{
-						strncpy(gDefaultTelescopeRefID, &argv[ii][2], (kDefaultRefIdMaxLen - 2));
+						strncpy(gDefaultTelescopeRefID, &argv[iii][2], (kDefaultRefIdMaxLen - 2));
 						gDefaultTelescopeRefID[kDefaultRefIdMaxLen - 1]	=	0;
 					}
-					else if (argc > (ii+1))
+					else if (argc > (iii+1))
 					{
-						ii++;
-						strncpy(gDefaultTelescopeRefID, argv[ii], (kDefaultRefIdMaxLen - 2));
+						iii++;
+						strncpy(gDefaultTelescopeRefID, argv[iii], (kDefaultRefIdMaxLen - 2));
 						gDefaultTelescopeRefID[kDefaultRefIdMaxLen - 1]	=	0;
 					}
-//					CONSOLE_DEBUG_W_STR("gDefaultTelescopeRefID\t=", gDefaultTelescopeRefID);
+					CONSOLE_DEBUG_W_STR("gDefaultTelescopeRefID\t=", gDefaultTelescopeRefID);
 					break;
 
 				//	"-v" means verbose
@@ -3437,12 +3442,12 @@ uint64_t		deltaNanoSecs;
 
 #ifdef _USE_OPENCV_
 	//*	openCV version
-#if (CV_MAJOR_VERSION >= 3)
-	AddLibraryVersion("software", "opencv", cv::getVersionString().c_str());
-	CONSOLE_DEBUG_W_STR("opencv version (library)\t=", cv::getVersionString().c_str());
-#else
-	AddLibraryVersion("software", "opencv", CV_VERSION);
-#endif
+	#if (CV_MAJOR_VERSION >= 4)
+		AddLibraryVersion("software", "opencv", cv::getVersionString().c_str());
+		CONSOLE_DEBUG_W_STR("opencv version (library)\t=", cv::getVersionString().c_str());
+	#else
+		AddLibraryVersion("software", "opencv", CV_VERSION);
+	#endif
 	CONSOLE_DEBUG_W_STR("opencv version (include)\t=", CV_VERSION);
 #endif
 

@@ -355,9 +355,12 @@ void	WindowTab::SetWidgetHelpText(const int widgetIdx, const char *newText)
 		}
 		else
 		{
-			CONSOLE_DEBUG_W_LONG("Help text is to long, length=", strlen(newText));
+			strncpy(cWidgetList[widgetIdx].helpText, newText, (kMaxHelpTextStrLen - 2));
+			cWidgetList[widgetIdx].helpText[kMaxHelpTextStrLen -1]	=	0;
+
+			CONSOLE_DEBUG_W_LONG("Help text is to long, length=", (long)strlen(newText));
 			CONSOLE_DEBUG(newText);
-			CONSOLE_ABORT(__FUNCTION__);
+//			CONSOLE_ABORT(__FUNCTION__);
 		}
 	}
 	else

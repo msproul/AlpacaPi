@@ -23,6 +23,8 @@
 //*	Feb 12,	2021	<MLS> Added CloseAllExceptFirst()
 //*	Sep 28,	2021	<MLS> Added -v = gVerbose command line option
 //*	Jan  8,	2022	<MLS> Added support for remote Gaia SQL access
+//*	Nov  4,	2022	<MLS> Skytravel tested on Raspberry Pi Zero, 72 minutes to compile
+//*	Nov  4,	2022	<MLS> It is NOT recommended to run Skytravel on a Pi-Zero
 //*****************************************************************************
 
 

@@ -278,6 +278,12 @@ enum
 	//*	commands added that are not part of Alpaca
 	kCmd_Camera_Extras,
 
+	//*	commands borrowed from the telescope device
+	kCmd_Camera_aperturearea,			//*	Returns the telescope's aperture.
+	kCmd_Camera_aperturediameter,		//*	Returns the telescope's effective aperture.
+	kCmd_Camera_focallength,			//*	Returns the telescope's focal length in meters.
+
+
 	kCmd_Camera_autoexposure,
 	kCmd_Camera_displayimage,
 
@@ -332,6 +338,7 @@ class CameraDriver: public AlpacaDriver
 		virtual	TYPE_ASCOM_STATUS	ProcessCommand(TYPE_GetPutRequestData *reqData);
 		virtual	void				OutputHTML(TYPE_GetPutRequestData *reqData);
 		virtual	void				OutputHTML_Part2(TYPE_GetPutRequestData *reqData);
+		virtual void				GetCommandArgumentString(const int cmdNumber, char *agumentString);
 		virtual	int32_t	RunStateMachine(void);
 				int32_t	RunStateMachine_Idle(void);
 				int		RunStateMachine_TakingPicture(void);
@@ -483,6 +490,12 @@ class CameraDriver: public AlpacaDriver
 
 		TYPE_ASCOM_STATUS	Get_RGBarray(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 		TYPE_ASCOM_STATUS	Get_Readall(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
+
+		//*	these are borrowed from the telescope device
+		TYPE_ASCOM_STATUS	Get_ApertureArea(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+		TYPE_ASCOM_STATUS	Get_ApertureDiameter(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+		TYPE_ASCOM_STATUS	Get_FocalLength(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+
 
 
 				bool	AllcateImageBuffer(long bufferSize);

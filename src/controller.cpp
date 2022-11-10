@@ -1147,11 +1147,11 @@ int		myWidgitIdx;
 bool	widgetIsButton;
 int		wheelMovement;
 
-	if (event != 0)
-	{
-		CONSOLE_DEBUG(__FUNCTION__);
-		CONSOLE_DEBUG_W_NUM("EVENT=", event);
-	}
+//	if (event != 0)
+//	{
+//		CONSOLE_DEBUG(__FUNCTION__);
+//		CONSOLE_DEBUG_W_NUM("EVENT=", event);
+//	}
 	myWidgitIdx	=	FindClickedWidget(xxx,  yyy);
 	switch(event)
 	{

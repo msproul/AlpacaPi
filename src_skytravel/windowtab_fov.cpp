@@ -25,6 +25,8 @@
 //*	Mar 17,	2021	<MLS> Added RA and DEC offsets to cameraFOV data
 //*	Jun  4,	2022	<MLS> Added FOV Edit button
 //*	Jun 15,	2022	<MLS> Added FOV Reload button
+//*	Nov  4,	2022	<MLS> Added ResetFOVdata()
+//*	Nov  4,	2022	<MLS> Added FOV Rescan button
 //*****************************************************************************
 
 
@@ -217,7 +219,7 @@ char	textString[80];
 	buttonWidth	=	150;
 	iii			=	kFOVbox_SaveButton;
 	xLoc		=	1;
-	while (iii <= kFOVbox_ReloadButton)
+	while (iii <= kFOVbox_RescanButton)
 	{
 		SetWidget(				iii,	xLoc,	yLoc,	buttonWidth,	cBtnHeight);
 		SetWidgetType(			iii,	kWidgetType_Button);
@@ -232,6 +234,7 @@ char	textString[80];
 	SetWidgetText(			kFOVbox_SaveButton,		"Save");
 	SetWidgetText(			kFOVbox_EditButton,		"Edit");
 	SetWidgetText(			kFOVbox_ReloadButton,	"Reload");
+	SetWidgetText(			kFOVbox_RescanButton,	"Rescan");
 
 
 	SetAlpacaLogoBottomCorner(kFOVbox_AlpacaLogo);
@@ -422,7 +425,6 @@ bool	disableFOVdisplay;
 	}
 }
 
-
 //**************************************************************************************
 void	UpdateCameraData(TYPE_REMOTE_DEV *remoteDevice, TYPE_CameraFOV *cameraDataPtr)
 {
@@ -432,7 +434,7 @@ void	UpdateCameraData(TYPE_REMOTE_DEV *remoteDevice, TYPE_CameraFOV *cameraDataP
 	cameraDataPtr->ImgSizeY_microns	=	cameraDataPtr->CameraProp.CameraYsize
 										* cameraDataPtr->CameraProp.PixelSizeY;
 
-	ReadCameraFOVfile(remoteDevice, cameraDataPtr);
+//-	ReadCameraFOVfile(remoteDevice, cameraDataPtr);
 
 	//*	do we have a focal length?, calcualte FOV
 	if (cameraDataPtr->FocalLen_mm > 0)
@@ -443,13 +445,13 @@ void	UpdateCameraData(TYPE_REMOTE_DEV *remoteDevice, TYPE_CameraFOV *cameraDataP
 		}
 		cameraDataPtr->PixelScale		=	Calc_AngularResolutionPerPixel(	cameraDataPtr->FocalLen_mm,
 																			cameraDataPtr->CameraProp.PixelSizeX);
-		cameraDataPtr->FOV_X_arcSeconds	=	Calc_FieldOfView_arcSecs(	cameraDataPtr->FocalLen_mm,
-																		cameraDataPtr->CameraProp.PixelSizeX,
-																		cameraDataPtr->CameraProp.CameraXsize);
+		cameraDataPtr->FOV_X_arcSeconds	=	Calc_FieldOfView_arcSecs(		cameraDataPtr->FocalLen_mm,
+																			cameraDataPtr->CameraProp.PixelSizeX,
+																			cameraDataPtr->CameraProp.CameraXsize);
 
-		cameraDataPtr->FOV_Y_arcSeconds	=	Calc_FieldOfView_arcSecs(	cameraDataPtr->FocalLen_mm,
-																		cameraDataPtr->CameraProp.PixelSizeY,
-																		cameraDataPtr->CameraProp.CameraYsize);
+		cameraDataPtr->FOV_Y_arcSeconds	=	Calc_FieldOfView_arcSecs(		cameraDataPtr->FocalLen_mm,
+																			cameraDataPtr->CameraProp.PixelSizeY,
+																			cameraDataPtr->CameraProp.CameraYsize);
 	}
 }
 
@@ -463,10 +465,13 @@ bool				validData;
 ControllerSkytravel	*skyTravelController;
 bool				dataWasUpdated;
 char				ipAddrStr[32];
+int					updateCount;
+
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	dataWasUpdated		=	false;
 	currentMilliSecs	=	millis();
+	updateCount			=	0;
 	deltaMilliSecs		=	currentMilliSecs - cLastUpdateTime_ms;
 //	if (deltaMilliSecs > 3000)
 	if (deltaMilliSecs > 1000)
@@ -475,17 +480,22 @@ char				ipAddrStr[32];
 		//*	only do one each time through
 		for (iii=0; iii<kMaxCamaeraFOVcnt; iii++)
 		{
-			if ((cCameraData[iii].IsValid)
-				&& (cCameraData[iii].PropertyDataValid == false))
+			if ((cCameraData[iii].IsValid) && (cCameraData[iii].PropertyDataValid == false))
 			{
 				skyTravelController	=	(ControllerSkytravel *)cParentObjPtr;
 				if (skyTravelController != NULL)
 				{
-				//	CONSOLE_DEBUG("=================================================");
-					inet_ntop(AF_INET, &(cRemoteDeviceList[iii].deviceAddress.sin_addr), ipAddrStr, INET_ADDRSTRLEN);
-				//	CONSOLE_DEBUG_W_STR(ipAddrStr, cCameraData[iii].CameraName);
-					cCameraData[iii].HasReadAll	=	false;
+					CONSOLE_DEBUG("=================================================");
+
 					cCurrentCamera	=	&cCameraData[iii];
+
+					ReadCameraFOVfile(&cRemoteDeviceList[iii], &cCameraData[iii]);
+
+					inet_ntop(AF_INET, &(cRemoteDeviceList[iii].deviceAddress.sin_addr), ipAddrStr, INET_ADDRSTRLEN);
+					CONSOLE_DEBUG_W_STR(ipAddrStr, cCameraData[iii].CameraName);
+					cCameraData[iii].HasReadAll	=	false;
+
+
 
 					validData		=	skyTravelController->AlpacaGetSupportedActions(
 															&cRemoteDeviceList[iii].deviceAddress,
@@ -495,15 +505,14 @@ char				ipAddrStr[32];
 
 					if (cCameraData[iii].HasReadAll)
 					{
-					//	CONSOLE_DEBUG("Camera has READALL!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+						CONSOLE_DEBUG("Camera has READALL!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 						inet_ntop(AF_INET, &(cRemoteDeviceList[iii].deviceAddress.sin_addr), ipAddrStr, INET_ADDRSTRLEN);
-					//	CONSOLE_DEBUG_W_STR(ipAddrStr, cCameraData[iii].CameraName);
+						CONSOLE_DEBUG_W_STR(ipAddrStr, cCameraData[iii].CameraName);
 						validData		=	skyTravelController->AlpacaGetStatus_ReadAll(
 																	&cRemoteDeviceList[iii].deviceAddress,
 																	cRemoteDeviceList[iii].port,
 																	"camera",
 																	cRemoteDeviceList[iii].alpacaDeviceNum);
-
 					}
 					else
 					{
@@ -520,11 +529,16 @@ char				ipAddrStr[32];
 						UpdateCameraData(&cRemoteDeviceList[iii], &cCameraData[iii]);
 					}
 					dataWasUpdated		=	true;
+					updateCount++;
 				}
 				cCameraData[iii].PropertyDataValid	=	true;
 				break;
 			}
 			cCurrentCamera		=	NULL;
+		}
+		if (updateCount > 0)
+		{
+			CONSOLE_DEBUG_W_NUM("updateCount\t=", updateCount);
 		}
 
 		cLastUpdateTime_ms	=	currentMilliSecs;
@@ -541,9 +555,10 @@ char				ipAddrStr[32];
 //*****************************************************************************
 void	WindowTabFOV::ProcessButtonClick(const int buttonIdx, const int flags)
 {
-//	CONSOLE_DEBUG(__FUNCTION__);
 bool	forceUpdateFlg;
 int		cameraIdx;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	forceUpdateFlg	=	true;
 	switch(buttonIdx)
@@ -592,6 +607,7 @@ int		cameraIdx;
 			break;
 
 		case kFOVbox_ReloadButton:
+			CONSOLE_DEBUG("kFOVbox_ReloadButton");
 			{
 			int		iii;
 				for (iii=0; iii<kMaxCamaeraFOVcnt; iii++)
@@ -599,6 +615,10 @@ int		cameraIdx;
 					cCameraData[iii].PropertyDataValid	=	false;
 				}
 			}
+			break;
+
+		case kFOVbox_RescanButton:
+			ResetFOVdata();
 			break;
 
 		default:
@@ -814,6 +834,17 @@ bool	dataWasHandled;
 		{
 			cCurrentCamera->CameraProp.PixelSizeY	=	AsciiToDouble(valueString);
 		}
+		else if (strcasecmp(keywordString, "aperturediameter") == 0)
+		{
+			//*	the value is in meters
+			cCurrentCamera->Aperture_mm	=	AsciiToDouble(valueString) * 1000.0;
+		}
+		else if (strcasecmp(keywordString, "focallength") == 0)
+		{
+			//*	the value is in meters
+			cCurrentCamera->FocalLen_mm	=	AsciiToDouble(valueString) * 1000.0;
+		}
+
 	}
 	else
 	{
@@ -884,3 +915,16 @@ int		iii;
 	}
 }
 
+
+//*****************************************************************************
+void	WindowTabFOV::ResetFOVdata(void)
+{
+int	iii;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+
+	for (iii=0; iii<kMaxCamaeraFOVcnt; iii++)
+	{
+		cCameraData[iii].PropertyDataValid	=	false;
+	}
+}
