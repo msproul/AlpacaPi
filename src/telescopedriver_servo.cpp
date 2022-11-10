@@ -46,6 +46,7 @@
 //*	Jul 18,	2022	<RNS> Fixed the mount settings move-by-button functionality
 //*	Jul 20,	2022	<RNS> Fixed a hour/degs conversion error in SlewToRA_DEC
 //*	Jul 20,	2022	<RNS> Removed LST calcs, not needed afterall
+//*	Nov  9,	2022	<RNS> Fixed typos in some comments
 //*****************************************************************************
 //*	Roboclaw MC servo support
 //*****************************************************************************
@@ -626,9 +627,9 @@ int					servoStatus;
 	CONSOLE_DEBUG(__FUNCTION__);
 
 	//	RA axis - positive degsPerSec means decreasing RA direction (West)
-	//	RA axis - negative degsPerSec means increasing RA direction (West)
+	//	RA axis - negative degsPerSec means increasing RA direction (East)
 	//	Dec axis - positive degsPerSec means increasing Dec direction (North)
-	//	Dec axis - negative degsPerSec means decreasing Dec direction (Sout)
+	//	Dec axis - negative degsPerSec means decreasing Dec direction (South)
 	//	axisNum = 0 -> SERVO_RA_AXIS- maps correclty to "servo_std_defs.h"
 	//	axisNum = 1 -> SERVO_DEC_AXIS - maps to correctly "servo_std_defs.h"
 
