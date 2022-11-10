@@ -21,6 +21,7 @@
 #++	Jul  2,	2022	<RNS> Support for servo_motion test build
 #++	Jul  2,	2022	<RNS> Enabled gdb support in CFLAGS (-g)
 #++	Jul 20,	2022	<RNS> Support servo_move and servo_pos_step test progs
+#++	Nov  4,	2022	<RNS> Added missing servo_motion dependencies to existing
 ############################################################################
 
 CC			=	gcc -I$(MLS_LIB_DIR)
@@ -168,22 +169,22 @@ $(OBJECT_DIR)servo_motion_cfg.o: servo_motion_cfg.c servo_motion_cfg.h servo_std
 $(OBJECT_DIR)servo_observ_cfg.o: servo_observ_cfg.c servo_observ_cfg.h servo_std_defs.h
 	$(CC) $(CFLAGS) -c servo_observ_cfg.c -o $(OBJECT_DIR)servo_observ_cfg.o	
 
-$(OBJECT_DIR)servo_mount.o:		servo_mount.c servo_mount.h servo_rc_utils.h servo_rc_cmds.h servo_time.h servo_mc_core.h servo_std_defs.h
-	$(CC) $(CFLAGS) -c servo_mount.c -o $(OBJECT_DIR)servo_mount.o
-
 $(OBJECT_DIR)servo_motion.o:	servo_motion.c servo_motion.h servo_rc_utils.h servo_rc_cmds.h servo_time.h servo_mc_core.h servo_std_defs.h
 	$(CC) $(CFLAGS) -c servo_motion.c -o $(OBJECT_DIR)servo_motion.o
 
-$(OBJECT_DIR)test_cop.o:		test_cop.c servo_mount.c servo_mount.h servo_rc_utils.h servo_rc_cmds.h servo_time.h servo_mc_core.h servo_std_defs.h
+$(OBJECT_DIR)servo_mount.o:		servo_mount.c servo_mount.h servo_motion.h servo_rc_utils.h servo_rc_cmds.h servo_time.h servo_mc_core.h servo_std_defs.h
+	$(CC) $(CFLAGS) -c servo_mount.c -o $(OBJECT_DIR)servo_mount.o
+
+$(OBJECT_DIR)test_cop.o:		test_cop.c servo_mount.h servo_motion.h servo_rc_utils.h servo_rc_cmds.h servo_time.h servo_mc_core.h servo_std_defs.h
 	$(CC) $(CFLAGS) -c test_cop.c -o $(OBJECT_DIR)test_cop.o
 
-$(OBJECT_DIR)servo_test_tty.o:		servo_test_tty.c servo_mount.c servo_mount.h servo_rc_utils.h servo_rc_cmds.h servo_time.h servo_mc_core.h servo_std_defs.h
+$(OBJECT_DIR)servo_test_tty.o:		servo_test_tty.c servo_mount.h servo_motion.h servo_rc_utils.h servo_rc_cmds.h servo_time.h servo_mc_core.h servo_std_defs.h
 	$(CC) $(CFLAGS) -c servo_test_tty.c -o $(OBJECT_DIR)servo_test_tty.o
 
-$(OBJECT_DIR)servo_move.o:		servo_move.c servo_mount.c servo_mount.h servo_rc_utils.h servo_rc_cmds.h servo_time.h servo_mc_core.h servo_std_defs.h
+$(OBJECT_DIR)servo_move.o:		servo_move.c servo_mount.h servo_motion.h servo_rc_utils.h servo_rc_cmds.h servo_time.h servo_mc_core.h servo_std_defs.h
 	$(CC) $(CFLAGS) -c servo_move.c -o $(OBJECT_DIR)servo_move.o	
 
-$(OBJECT_DIR)servo_pos_step.o:		servo_pos_step.c servo_mount.c servo_mount.h servo_rc_utils.h servo_rc_cmds.h servo_time.h servo_mc_core.h servo_std_defs.h
+$(OBJECT_DIR)servo_pos_step.o:		servo_pos_step.c servo_mount.h servo_motion.h servo_rc_utils.h servo_rc_cmds.h servo_time.h servo_mc_core.h servo_std_defs.h
 	$(CC) $(CFLAGS) -c servo_pos_step.c -o $(OBJECT_DIR)servo_pos_step.o	
 
 ############################################################################

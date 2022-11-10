@@ -33,6 +33,9 @@
 //*	Jul 12,	2022	<RNS> Moved code around to help with the queue glitch
 //*	Oct 27,	2022	<RNS> Changed reset_motor() to use motion and not RC calls
 //*	Oct 28,	2022	<RNS> Added set/get calls for absZero motor field
+//*	Nov  1,	2022	<RNS> Added error checks for trackrate and absZero calls
+//*	Nov  8,	2022	<RNS> Added check for unbuffered moves, avoids RC timing issue
+//*	Nov  9,	2022	<RNS> Added a routine to check all moves for buffer write timing
 //*****************************************************************************
 
 #include <stdio.h>
@@ -153,61 +156,77 @@ TYPE_MOTION_MOTOR	*motor;
 // Sets the specified axis's velocity tracking speed field
 // Returns error if the axis ID is out of range, otherwise OK
 //*************************************************************************
-void Motion_set_axis_trackRate(uint8_t axis, int32_t track)
+int Motion_set_axis_trackRate(uint8_t axis, int32_t track)
 {
 TYPE_MOTION_MOTOR	*motor;
 
 	// find the correct motor data
 	motor	=	Motion_get_motor_ptr(axis);
-
+	if (motor == NULL)
+	{
+		return kERROR;
+	}
 	// set the trackRate data field
 	motor->trackRate	=	track;
-	return;
+	return kSTATUS_OK;
 }
 
 //*****************************************************************************
-// Returns the current tracking rate from motor controller axis in steps/sec
+// Gets the current tracking rate from motor controller axis in steps/sec
+// Returns error if the axis ID is out of range, otherwise OK
 //*****************************************************************************
-int32_t Motion_get_axis_trackRate(uint8_t axis)
+int Motion_get_axis_trackRate(uint8_t axis, int32_t *track)
 {
 TYPE_MOTION_MOTOR	*motor;
 
 	// find the correct motor data
 	motor	=	Motion_get_motor_ptr(axis);
-
+	if (motor == NULL)
+	{
+		return kERROR;
+	}
 	// return the tracking rate
-	return motor->trackRate;
+	*track = motor->trackRate;
+	return kSTATUS_OK;
 } // of Motion_get_axis_trackRate()
 
 
 //*************************************************************************
-// Sets the specified axis's velocity tracking speed field
+// Sets the specified axis's absolute zero position (eg. Park)
 // Returns error if the axis ID is out of range, otherwise OK
 //*************************************************************************
-void Motion_set_axis_absZero(uint8_t axis, int32_t count)
+int Motion_set_axis_absZero(uint8_t axis, int32_t count)
 {
 TYPE_MOTION_MOTOR	*motor;
 
 	// find the correct motor data
 	motor	=	Motion_get_motor_ptr(axis);
-
+	if (motor == NULL)
+	{
+		return kERROR;
+	}
 	// set the absolute zero position
 	motor->absZero	=	count;
-	return;
+	return kSTATUS_OK;
 }
 
 //*****************************************************************************
-// Returns the current tracking rate from motor controller axis in steps/sec
+// Gets the specified axis's absolute zero position (eg. Park)
+// Returns error if the axis ID is out of range, otherwise OK
 //*****************************************************************************
-int32_t Motion_get_axis_absZero(uint8_t axis)
+int Motion_get_axis_absZero(uint8_t axis, int32_t *zero)
 {
 TYPE_MOTION_MOTOR	*motor;
 
 	// find the correct motor data
 	motor	=	Motion_get_motor_ptr(axis);
-
+	if (motor == NULL)
+	{
+		return kERROR;
+	}
 	// return the absolute zero position
-	return motor->absZero;
+	*zero = motor->absZero;
+	return kSTATUS_OK;
 } // of Motion_get_axis_trackRate()
 
 //*************************************************************************
@@ -256,7 +275,7 @@ TYPE_MOTION_MOTOR	*motor;
 	{
 		return kERROR;
 	}
-	// set the axix buffered state to arg value
+	// set the axis buffered state to arg value
 	motor->buffered	=	state;
 	return kSTATUS_OK;
 }
@@ -287,6 +306,20 @@ TYPE_MOTION_MOTOR	*motor;
 	return motor->state;
  }
 
+//*************************************************************************
+// Returns the pending commands using RC notation... for now
+// TODO: Convert the RC notation to simple zero based numbering
+// TOTO: But that will break Servo_state()... so caution for now
+//*************************************************************************
+int Motion_get_pending_cmds(uint8_t *raState, uint8_t *decState)
+{
+	int status;
+
+	// just a wrapper for the RC call, use the RA or dec addr field, they are the same
+	status = RC_check_queue(gMotionConfig.motor0.addr, raState, decState);
+
+	return status;
+}
 //*************************************************************************
 // Set the MC specific data structures needed for operations, includes PID
 // and other required values specific to the motion controller
@@ -346,23 +379,63 @@ TYPE_MOTION_MOTOR	*motor;
 }
 
 //*************************************************************************
+// Check for axis buffer to be cleared when using unbuffered commands
+// This is a workaround for Roboclaw weirdness where it sometimes hangs
+// the axis movement when changing from tracking (buffered) to slew/move
+// (unbuffered).  Need to wait for the buffer to be cleared to avoid weirdness
+//*************************************************************************
+int Motion_wait_axis_buffer_clear(uint8_t axis)
+{
+TYPE_MOTION_MOTOR 	*motor;
+uint8_t 			raState, decState, motorState;
+int 				status; 
+
+	motor = Motion_get_motor_ptr(axis);
+	if (motor == NULL)
+	{
+		return kERROR;
+	}
+
+	// WORKAROUND! To RC Weirdness with adding unbuffered commands
+	if (motor->buffered == false)
+	{
+		// Wait to see the unbuffered cmd (which clears buffer) is executing (0x0) or executed (0x80)
+		// Roboclaw only supports up to a 127 deep buffer, so use lower 7bit mask of 0x7F
+		do
+		{
+			printf("(Motion_wait_axis_buffer_clear): SLEEPING....\n");
+			// wait for 1/100th of second then read both motor buffers
+			usleep(10000);
+			status = Motion_get_pending_cmds(&raState, &decState);
+			// if the input axis is RA return the RA buffer length, otherwise use Dec
+			motorState = (axis == SERVO_RA_AXIS) ? raState : decState;
+		} while ((motorState & 0x7F) != 0);
+	} // of if unbuffered
+
+	return (status == kSTATUS_OK) ? kSTATUS_OK : kERROR;
+}
+
+//*************************************************************************
 // Moves the specified axis by a signed number of steps, can be buffered
 // or unbuffered command depending the latest axis_dis/enable_buffer() call
 //*************************************************************************
 int Motion_move_axis_by_step(uint8_t axis, int32_t step)
 {
-TYPE_MOTION_MOTOR	*motor;
+TYPE_MOTION_MOTOR 	*motor;
+int 				status;
 
-	motor	=	Motion_get_motor_ptr(axis);
+	motor = Motion_get_motor_ptr(axis);
 	if (motor == NULL)
 	{
 		return kERROR;
 	}
 	// Update the motor state and send move cmd
-	motor->state	=	MOVING_BY_POS;
-	RC_move_by_posva(motor->addr, axis, step, motor->vel, motor->acc, motor->buffered);
+	motor->state = MOVING_BY_POS;
 	printf("!!! Motion_move_axis_by_step() motor-addr:%d axis:%d step:%d, motor->vel:%d motor->acc:%d motor->buffered:%d\n", motor->addr, axis, step, motor->vel, motor->acc, motor->buffered);
-	return kSTATUS_OK;
+	RC_move_by_posva(motor->addr, axis, step, motor->vel, motor->acc, motor->buffered);
+	status = Motion_wait_axis_buffer_clear(axis);
+
+	return (status == kSTATUS_OK) ? kSTATUS_OK : kERROR;
 }
 
 //*************************************************************************
@@ -373,6 +446,7 @@ TYPE_MOTION_MOTOR	*motor;
 int Motion_move_axis_by_vel(uint8_t axis, int32_t vel)
 {
 TYPE_MOTION_MOTOR	*motor;
+int					status;
 
 	motor	=	Motion_get_motor_ptr(axis);
 	if (motor == NULL)
@@ -382,8 +456,9 @@ TYPE_MOTION_MOTOR	*motor;
 	// Update the motor state and send move cmd
 	motor->state	=	MOVING_BY_VEL;
 	RC_move_by_vela(motor->addr, axis, vel, motor->acc, motor->buffered);
-	return kSTATUS_OK;
-}
+	status = Motion_wait_axis_buffer_clear(axis);
+
+	return (status == kSTATUS_OK) ? kSTATUS_OK : kERROR;}
 
 //*************************************************************************
 // Start the specified axis moving at a constant velocity after the acceleration
@@ -397,8 +472,8 @@ int Motion_move_axis_by_time(uint8_t axis, int32_t vel, double seconds)
 // int32_t			minP, maxP;
 int32_t				currPos, dist, startVel;
 uint32_t 			acc;
-int					status;
 TYPE_MOTION_MOTOR	*motor;
+int					status;
 
 	motor	=	Motion_get_motor_ptr(axis);
 	if (motor == NULL)
@@ -407,7 +482,7 @@ TYPE_MOTION_MOTOR	*motor;
 	}
 	// Update the motor state and send move cmd
 	motor->state	=	MOVING_BY_TIME;
-	startVel	=	Motion_get_axis_trackRate(axis);
+	Motion_get_axis_trackRate(axis, &startVel);
 	// printf("StartVel = %d\n", startVel); 
 	Motion_get_axis_acc(axis, &acc);
 
@@ -423,7 +498,9 @@ TYPE_MOTION_MOTOR	*motor;
 	RC_get_curr_pos(motor->addr, axis, &currPos);
 	dist += currPos; 
 	status	=	RC_move_by_posvad(motor->addr, axis, dist, abs(vel), motor->acc, 0, false);
+	status 	-= 	Motion_wait_axis_buffer_clear(axis);
 
+	return (status == kSTATUS_OK) ? kSTATUS_OK : kERROR;
 	// Do a 2nd buffered move by velocity if there was tracking rate
 	if (startVel != 0)
 	{
@@ -457,12 +534,18 @@ TYPE_MOTION_MOTOR	*motor;
 int Motion_set_axis_zero(uint8_t axis)
 {
 TYPE_MOTION_MOTOR	*motor;
+int32_t				currPos;
+
 
 	motor	=	Motion_get_motor_ptr(axis);
 	if (motor == NULL)
 	{
 		return kERROR;
 	}
+	// Get the current step position and subtract it from the current absZero
+	RC_get_curr_pos(motor->addr, axis, &currPos);
+	motor->absZero -= currPos; 
+	// Now set the current position to zero
 	RC_set_home(motor->addr, axis);
 	return kSTATUS_OK;
 
@@ -491,21 +574,6 @@ TYPE_MOTION_MOTOR	*motor;
 	Motion_set_axis_zero(axis);
 
 	return kSTATUS_OK;
-}
-
-//*************************************************************************
-// Returns the pending commands using RC notation... for now
-// TODO: Convert the RC notation to simple zero based numbering
-// TOTO: But that will break Servo_state()... so caution for now
-//*************************************************************************
-int Motion_get_pending_cmds(uint8_t *raState, uint8_t *decState)
-{
-	int status;
-
-	// just a wrapper for the RC call, use the RA or dec addr field, they are the same
-	status = RC_check_queue(gMotionConfig.motor0.addr, raState, decState);
-
-	return status;
 }
 
 //*************************************************************************
@@ -549,6 +617,7 @@ int main(void)
 	// int addr = 128; 
 	uint8_t raState, decState;
 	char buf[256];
+	int i; 
 
 	status = Motion_init("servo_motion.cfg");
 	if (status != kSTATUS_OK)
@@ -557,47 +626,80 @@ int main(void)
 	}
 
 
-	Motion_set_axis_acc(SERVO_RA_AXIS, 5000);
-	Motion_set_axis_vel(SERVO_RA_AXIS, 20000);
-	Motion_set_axis_acc(SERVO_DEC_AXIS, 5000);
-	Motion_set_axis_vel(SERVO_DEC_AXIS, 20000);
+	Motion_set_axis_acc(SERVO_RA_AXIS, 10000);
+	Motion_set_axis_vel(SERVO_RA_AXIS, 50000);
+	Motion_set_axis_acc(SERVO_DEC_AXIS, 10000);
+	Motion_set_axis_vel(SERVO_DEC_AXIS, 50000);
 
 	Motion_get_pending_cmds(&raState, &decState);
 	printf("raState:%d  decState:%d\n", raState, decState);
 
-	printf("Now testing move_by_time\n");
+	// printf("Now testing move_by_time\n");
 
-	printf("Move 1\n");
-	Motion_move_axis_by_time(SERVO_RA_AXIS, -15000, 10.0);
-	Motion_move_axis_by_time(SERVO_DEC_AXIS, -15000, 10.0);
-	printf("hit any key to continue\n");
-	fgets(buf, 256, stdin);
+	// printf("Move 1\n");
+	// Motion_move_axis_by_time(SERVO_RA_AXIS, -15000, 10.0);
+	// Motion_move_axis_by_time(SERVO_DEC_AXIS, -15000, 10.0);
+	// Motion_get_pending_cmds(&raState, &decState);
+	// printf("raState:%d  decState:%d\n", raState, decState);	printf("hit any key to continue\n");
+	// fgets(buf, 256, stdin);
 
-	printf("Move 2\n");
-	Motion_move_axis_by_time(SERVO_RA_AXIS, 5000, 1.0);
-	Motion_move_axis_by_time(SERVO_DEC_AXIS, 5000, 1.0);
-	printf("hit any key to continue\n");
-	fgets(buf, 256, stdin);
+	// printf("Move 2\n");
+	// Motion_move_axis_by_time(SERVO_RA_AXIS, 5000, 1.0);
+	// Motion_move_axis_by_time(SERVO_DEC_AXIS, 5000, 1.0);
+	// Motion_get_pending_cmds(&raState, &decState);
+	// printf("raState:%d  decState:%d\n", raState, decState);	printf("hit any key to continue\n");
+	// fgets(buf, 256, stdin);
 
-	printf("Move 3\n");
-	Motion_move_axis_by_time(SERVO_RA_AXIS, 5000, 0.5);
-	Motion_move_axis_by_time(SERVO_DEC_AXIS, 5000, 0.5);
-	printf("hit any key to continue\n");
-	fgets(buf, 256, stdin);
+	// printf("Move 3\n");
+	// Motion_move_axis_by_time(SERVO_RA_AXIS, 5000, 0.5);
+	// Motion_move_axis_by_time(SERVO_DEC_AXIS, 5000, 0.5);
+	// Motion_get_pending_cmds(&raState, &decState);
+	// printf("raState:%d  decState:%d\n", raState, decState);	printf("hit any key to continue\n");
+	// fgets(buf, 256, stdin);
 
-	printf("Move 4\n");
-	Motion_move_axis_by_time(SERVO_RA_AXIS, 5000, 0.25);
-	Motion_move_axis_by_time(SERVO_DEC_AXIS, 5000, 0.25);
-	printf("hit any key to continue\n");
-	fgets(buf, 256, stdin);
+	// printf("Move 4\n");
+	// Motion_move_axis_by_time(SERVO_RA_AXIS, 5000, 0.25);
+	// Motion_move_axis_by_time(SERVO_DEC_AXIS, 5000, 0.25);
+	// Motion_get_pending_cmds(&raState, &decState);
+	// printf("raState:%d  decState:%d\n", raState, decState);	printf("hit any key to continue\n");
+	// fgets(buf, 256, stdin);
 
-	printf("Move 5\n");
-	Motion_move_axis_by_time(SERVO_RA_AXIS, 5000, 0.1);
-	Motion_move_axis_by_time(SERVO_DEC_AXIS, 5000, 0.1);
+	// printf("Move 5\n");
+	// Motion_move_axis_by_time(SERVO_RA_AXIS, 5000, 0.1);
+	// Motion_move_axis_by_time(SERVO_DEC_AXIS, 5000, 0.1);
+	// Motion_get_pending_cmds(&raState, &decState);
+	// printf("raState:%d  decState:%d\n", raState, decState);
 
-		// printf("Now testing move_axis_by_step\n");
+	printf("Now testing move_axis_by_step\n");
 
-	// Motion_move_axis_by_step(SERVO_RA_AXIS, 5000);
+	for (i = 1; i < 5; i++)
+	{
+		printf("Performing a simple move #%d unbuffered\n", i);
+		Motion_set_axis_buffer(SERVO_RA_AXIS, false);
+		Motion_move_axis_by_step(SERVO_RA_AXIS, i * 5000);
+
+		Motion_get_pending_cmds(&raState, &decState);
+		printf("raState:%d  decState:%d\n", raState, decState);
+		printf("hit any key to continue\n");
+		fgets(buf, 256, stdin);
+	}
+
+	for (i = 1; i < 5; i++)
+	{
+
+		printf("Performing a simple move #%d buffered\n", i);
+		Motion_set_axis_buffer(SERVO_RA_AXIS, false);
+		Motion_move_axis_by_step(SERVO_RA_AXIS, i * 10000);
+		Motion_get_pending_cmds(&raState, &decState);
+		printf("raState:%d  decState:%d\n", raState, decState);
+
+		Motion_set_axis_buffer(SERVO_RA_AXIS, true);
+		Motion_move_axis_by_step(SERVO_RA_AXIS, i * -10000);
+		Motion_get_pending_cmds(&raState, &decState);
+		printf("raState:%d  decState:%d\n", raState, decState);
+		printf("hit any key to continue\n");
+		fgets(buf, 256, stdin);
+	}
 	// Motion_move_axis_by_step(SERVO_DEC_AXIS, 5000);
 
 	// if (RC_move_by_posva(addr, SERVO_RA_AXIS, -10000, 20000, 5000, true) == kERROR)		printf("RA RC_move_by_pos returned error\n");

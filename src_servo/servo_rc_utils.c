@@ -58,6 +58,8 @@
 //*	Jul  4,	2022	<RNS> Added calc_move_dist function
 //*	Jul  4,	2022	<RNS> Added RC_move_by_posvad to support pulse guiding
 //*	Jul  7,	2022	<RNS> Fixed move_by_pos* bugs with negative vel/acc/decel
+//*	Nov  7,	2022	<RNS> Fixed a duplicate local #define vs include file
+//*	Nov  7,	2022	<RNS> Simplifed move_by_vela routine while debug RC wierdness
 //*****************************************************************************
 // Notes:   M1 *MUST BE* connected to RA or Azimuth axis, M2 to Dec or Altitude
 //*****************************************************************************
@@ -78,8 +80,8 @@
 #include	"servo_rc_utils.h"
 #include	"servo_rc_cmds.h"
 
-// This is value used to make a buffered move_by_vel command
-#define kSTEP_FOREVER 0x3000000
+// This is override value used to make a buffered move_by_vel command
+// #define kSTEP_FOREVER 0x1000000
 
 // Global buffers for Notes and Receipts
 static uint8_t gNoteBuf[64];
@@ -1102,7 +1104,7 @@ uint16_t	crc;
 //uint32_t	ret;
 int			cmd;
 int			len;
-//int			i;
+	// printf("%%%%%% RC_mb_posv - Addr:%X Motor:%d Pos:%d Vel:%d Buff:%d\n", addr, motor, pos, vel, buffered);
 
 	// Select motor:  RA (0) means M1 and DEC (1) means M2
 	switch (motor)
@@ -1132,7 +1134,7 @@ int			len;
 	Note_init(gNoteBuf, addr, gRC[cmd].cmd, &ptrA);
 	Note_add_dword(ptrA, vel, &ptrB);
 	Note_add_dword(ptrB, pos, &ptrA);
-	// add buffer arg, 1 = stop any running cmds and execute it now
+	// add buffer arg, 1 = stop any running cmds and execute it *now*
 	Note_add_byte(ptrA, now, &ptrB);
 
 	// Get length and calc CRC then add it the note
@@ -1170,6 +1172,8 @@ int			cmd;
 int			len;
 //int			i;
 
+	// printf("%%%%%% RC_mb_posvad - Addr:%X Motor:%d Pos:%d Vel:%d Acc:%d Decel:%d Buff:%d\n", addr, motor, pos, vel, acc, decel, buffered);
+
 	// Select motor:  RA (0) means M1 and DEC (1) means M2
 	switch (motor)
 	{
@@ -1194,10 +1198,6 @@ int			len;
 	// printf("RC_move_by_posvad: addr = %X cmd = %d gRC[cmd].cmd = %d\n", addr, cmd, gRC[cmd].cmd);
 	// printf("RC_move_by_posvad: motor:%d, pos:%d vel:%d acc:%d decel:%d, buff:%d\n", motor, pos, vel, acc, decel, buffered);
 
-	// If requesting a buffered command (eg. TRUE) set variable now to 0
-	// otherwise, setting it to 1 means stop any running cmds and execute it now
-	now	=	(buffered == true) ? 0 : 1;
-
 	// Create the note for the comms and add vel, pos
 	Note_init(gNoteBuf, addr, gRC[cmd].cmd, &ptrA);
 	Note_add_dword(ptrA, acc, &ptrB);
@@ -1205,8 +1205,11 @@ int			len;
 	Note_add_dword(ptrA, decel, &ptrB);
 	Note_add_dword(ptrB, pos, &ptrA);
 
-	// add buffer arg, 1 = stop any running cmds and execute it now
-	// printf("RC_move_by_posvad: now=%d\n", now);
+	// If requesting a buffered command (eg. TRUE) set variable 'now' to 0
+	// otherwise, setting it to 1 means stop any running cmds and execute it *now*
+	now	=	(buffered == true) ? 0 : 1;
+	printf("RC_move_by_posvad: now=%d\n", now);
+	// add buffer arg	
 	Note_add_byte(ptrA, now, &ptrB);
 
 	// Get length and calc CRC then add it the note
@@ -1251,7 +1254,8 @@ int		status;
 	switch (motor)
 	{
 		case SERVO_RA_AXIS:
-			RC_get_curr_pos(addr, SERVO_RA_AXIS, &pos);
+		case SERVO_DEC_AXIS:
+			// RC_get_curr_pos(addr, SERVO_RA_AXIS, &pos);
 			if (vel < 0)
 			{
 				pos	=	- kSTEP_FOREVER;
@@ -1263,19 +1267,6 @@ int		status;
 			RC_move_by_posva(addr, SERVO_RA_AXIS, pos, vel, acc, buffered);
 			break;
 
-		case SERVO_DEC_AXIS:
-			RC_get_curr_pos(addr, SERVO_DEC_AXIS, &pos);
-			if (vel < 0)
-			{
-				pos	=	- kSTEP_FOREVER;
-			}
-			else
-			{
-				pos	=	kSTEP_FOREVER;
-			}
-			RC_move_by_posva(addr, SERVO_DEC_AXIS, pos, vel, acc, buffered);
-			break;
-
 		default:
 			// Neither RA or DEC selected, return error
 			status	=	kERROR;
@@ -1285,6 +1276,50 @@ int		status;
 	return(status);
 } // of RC_move_by_vela()
 
+// int RC_move_by_vela_old(uint8_t addr, uint8_t motor, int32_t vel, int32_t acc, bool buffered)
+// {
+// int32_t	pos;
+// int		status;
+
+
+// 	// if vel is negative, the subtract the faraway position from current
+// 	status	=	kSTATUS_OK;
+// 	switch (motor)
+// 	{
+// 		case SERVO_RA_AXIS:
+// 			RC_get_curr_pos(addr, SERVO_RA_AXIS, &pos);
+// 			if (vel < 0)
+// 			{
+// 				pos	=	- kSTEP_FOREVER;
+// 			}
+// 			else
+// 			{
+// 				pos	=	kSTEP_FOREVER;
+// 			}
+// 			RC_move_by_posva(addr, SERVO_RA_AXIS, pos, vel, acc, buffered);
+// 			break;
+
+// 		case SERVO_DEC_AXIS:
+// 			RC_get_curr_pos(addr, SERVO_DEC_AXIS, &pos);
+// 			if (vel < 0)
+// 			{
+// 				pos	=	- kSTEP_FOREVER;
+// 			}
+// 			else
+// 			{
+// 				pos	=	kSTEP_FOREVER;
+// 			}
+// 			RC_move_by_posva(addr, SERVO_DEC_AXIS, pos, vel, acc, buffered);
+// 			break;
+
+// 		default:
+// 			// Neither RA or DEC selected, return error
+// 			status	=	kERROR;
+// 			break;
+// 	}
+
+// 	return(status);
+// } // of RC_move_by_vela_old()
 //******************************************************************
 // Moves the axis by signed velocity, this is an UNBUFFERED command
 // and will clear our any current of pending actions in the command buffer
@@ -1359,6 +1394,8 @@ uint8_t		addr	=	0x80; // Default addr for RC MC
 double		propo, integ, deriv;
 uint32_t	iMax, deadZ;
 int32_t		minP, maxP;
+int 		i; 
+
 
 	// Mark, Ignore this one line if format, need to see more statements on one screen, it's just for testing
 
@@ -1367,7 +1404,7 @@ int32_t		minP, maxP;
 		printf("Error: mc_init_comm() failed\n");
 		return kERROR;
 	}
-	printf("Initializin RA and Dec Motors with unbuffered commands\n");
+	printf("Initializin RA and Dec Motors with buffered commands\n");
 
 	if (RC_set_home(addr, SERVO_RA_AXIS) == kERROR)			printf("RC_set_home returned error\n");
 	if (RC_get_curr_pos(addr, SERVO_RA_AXIS, &pos) == kERROR)		printf("RC_current_pos returned error\n");
@@ -1380,49 +1417,80 @@ int32_t		minP, maxP;
 	if (RC_check_queue(addr, &raDepth, &decDepth) == kERROR)		printf("RC_check_queue returned error\n");
 	printf("*** status = %X  RA queue = %X  Dec queue = %X\n", status, (uint8_t) raDepth, (uint8_t) decDepth);
 
-	printf("\nTesting PID commands\n");
-	//Get the current settings
-	RC_get_pos_pid(addr, SERVO_RA_AXIS,  &propo, &integ, &deriv, &iMax, &deadZ, &minP, &maxP);
+	// printf("\nTesting PID commands\n");
+	// //Get the current settings
+	// RC_get_pos_pid(addr, SERVO_RA_AXIS,  &propo, &integ, &deriv, &iMax, &deadZ, &minP, &maxP);
+	// // printf("P:%.2f I:%.2f D:%.2f iMax:%d: Dz%d Min:%d Max:%d\n", propo, integ, deriv, iMax, deadZ, minP, maxP);
+
+	// printf("Incrementing all values by 1\n");
+	// propo++;
+	// integ++;
+	// deriv++;
+	// iMax++;
+	// deadZ++;
+	// minP -= 16;
+	// maxP -= 16;
 	// printf("P:%.2f I:%.2f D:%.2f iMax:%d: Dz%d Min:%d Max:%d\n", propo, integ, deriv, iMax, deadZ, minP, maxP);
 
-	printf("Incrementing all values by 1\n");
-	propo++;
-	integ++;
-	deriv++;
-	iMax++;
-	deadZ++;
-	minP -= 16;
-	maxP -= 16;
-	printf("P:%.2f I:%.2f D:%.2f iMax:%d: Dz%d Min:%d Max:%d\n", propo, integ, deriv, iMax, deadZ, minP, maxP);
+	// printf("Setting the PID and then reading back\n");
+	// RC_set_pos_pid(addr, SERVO_RA_AXIS,  propo, integ, deriv, iMax, deadZ, -20000000, 20000000);
+	// // RC_set_pos_pid(addr, SERVO_RA_AXIS,  propo, integ, deriv, iMax, deadZ, minP, maxP);
+	// RC_get_pos_pid(addr, SERVO_RA_AXIS,  &propo, &integ, &deriv, &iMax, &deadZ, &minP, &maxP);
+	// printf("POS P:%.2f I:%.2f D:%.2f iMax:%d: Dz:%d Min:%d Max:%d\n", propo, integ, deriv, iMax, deadZ, minP, maxP);
 
-	printf("Setting the PID and then reading back\n");
-	RC_set_pos_pid(addr, SERVO_RA_AXIS,  propo, integ, deriv, iMax, deadZ, -20000000, 20000000);
-	// RC_set_pos_pid(addr, SERVO_RA_AXIS,  propo, integ, deriv, iMax, deadZ, minP, maxP);
-	RC_get_pos_pid(addr, SERVO_RA_AXIS,  &propo, &integ, &deriv, &iMax, &deadZ, &minP, &maxP);
-	printf("POS P:%.2f I:%.2f D:%.2f iMax:%d: Dz:%d Min:%d Max:%d\n", propo, integ, deriv, iMax, deadZ, minP, maxP);
+	// RC_get_vel_pid(addr, SERVO_RA_AXIS,  &propo, &integ, &deriv, &iMax);
+	// printf("VEL P:%.2f I:%.2f D:%.2f QPPS:%d\n", propo, integ, deriv, iMax);
 
-	RC_get_vel_pid(addr, SERVO_RA_AXIS,  &propo, &integ, &deriv, &iMax);
-	printf("VEL P:%.2f I:%.2f D:%.2f QPPS:%d\n", propo, integ, deriv, iMax);
+	// // printf("Writing new values to EEPROM\n");
+	// // RC_write_settings(addr);
+	// // printf("Reading values from EEPROM\n");
+	// // RC_read_settings(addr, &settings);
+
+	// //Get the current settings
+	// RC_get_pos_pid(addr, SERVO_DEC_AXIS,  &propo, &integ, &deriv, &iMax, &deadZ, &minP, &maxP);
+	// // printf("P:%.2f I:%.2f D:%.2f iMax:%d: Dz%d Min:%d Max:%d\n", propo, integ, deriv, iMax, deadZ, minP, maxP);
+
+	// printf("Setting the PID and then reading back\n");
+	// RC_set_pos_pid(addr, SERVO_DEC_AXIS,  propo, integ, deriv, iMax, deadZ, -20000000, 20000000);
+	// // RC_set_pos_pid(addr, SERVO_RA_AXIS,  propo, integ, deriv, iMax, deadZ, minP, maxP);
+	// RC_get_pos_pid(addr, SERVO_DEC_AXIS,  &propo, &integ, &deriv, &iMax, &deadZ, &minP, &maxP);
+	// printf("POS P:%.2f I:%.2f D:%.2f iMax:%d: Dz:%d Min:%d Max:%d\n", propo, integ, deriv, iMax, deadZ, minP, maxP);
+
+	// printf("Move #%d - Starting a slow slew on RA axis\n", i);
+	// // if (RC_move_by_vela(addr, SERVO_RA_AXIS, 5000, 15000, false) == kERROR)			printf("DEC RC_move_by_vela returned error\n");
+	// if (RC_move_by_posva(addr, SERVO_RA_AXIS, -1000000, 5000, 15000, true) == kERROR)
+	// 	printf("DEC RC_move_by_pos returned error\n");
+	// if (RC_check_queue(addr, &raDepth, &decDepth) == kERROR)
+	// 	printf("RC_check_queue returned error\n");
+	// printf("*** status = %X  RA queue = %X  Dec queue = %X\n", status, (uint8_t)raDepth, (uint8_t)decDepth);
 
 
-	// printf("Writing new values to EEPROM\n");
-	// RC_write_settings(addr);
-	// printf("Reading values from EEPROM\n");
-	// RC_read_settings(addr, &settings);
+	for (i = 1; i < 4; i++)
+	{
+		printf("\nMove #%d - Starting a intial velocity move  on RA axis buffered\n", i);
+		if (RC_move_by_vela(addr, SERVO_RA_AXIS, 5000, 15000, true) == kERROR)			printf("DEC RC_move_by_vela returned error\n");
+		// if (RC_move_by_posva(addr, SERVO_RA_AXIS, 1000000, 5000, 15000, true) == kERROR)	printf("DEC RC_move_by_pos returned error\n");
+		if (RC_check_queue(addr, &raDepth, &decDepth) == kERROR)						printf("RC_check_queue returned error\n");
+		printf("*** status = %X  RA queue = %X  Dec queue = %X\n", status, (uint8_t)raDepth, (uint8_t)decDepth);
+			printf("Hit return for next move\n");
+		fgets(buf, 256, stdin);
 
-	printf("Testing accuracy of dec encoder\n");
+		if (RC_check_queue(addr, &raDepth, &decDepth) == kERROR)						printf("RC_check_queue returned error\n");
+		printf("*** status = %X  RA queue = %X  Dec queue = %X\n", status, (uint8_t)raDepth, (uint8_t)decDepth);
 
-	//Get the current settings
-	RC_get_pos_pid(addr, SERVO_DEC_AXIS,  &propo, &integ, &deriv, &iMax, &deadZ, &minP, &maxP);
-	// printf("P:%.2f I:%.2f D:%.2f iMax:%d: Dz%d Min:%d Max:%d\n", propo, integ, deriv, iMax, deadZ, minP, maxP);
-
-	printf("Setting the PID and then reading back\n");
-	RC_set_pos_pid(addr, SERVO_DEC_AXIS,  propo, integ, deriv, iMax, deadZ, -20000000, 20000000);
-	// RC_set_pos_pid(addr, SERVO_RA_AXIS,  propo, integ, deriv, iMax, deadZ, minP, maxP);
-	RC_get_pos_pid(addr, SERVO_DEC_AXIS,  &propo, &integ, &deriv, &iMax, &deadZ, &minP, &maxP);
-	printf("POS P:%.2f I:%.2f D:%.2f iMax:%d: Dz:%d Min:%d Max:%d\n", propo, integ, deriv, iMax, deadZ, minP, maxP);
+		printf("Starting a short unbuffered position move to zero on RA axis with a buffered reverse velocity move after\n");
+		printf("THIS SHOULD CLEAR THE BUFFER!!\n");
+		if (RC_move_by_posva(addr, SERVO_RA_AXIS, 0, 60000, 15000, false) == kERROR)	printf("DEC RC_move_by_pos returned error\n");
+		printf("Hit return to end loop and add buffered move\n");
+		fgets(buf, 256, stdin);
 	
-	if (RC_move_by_posva(addr, SERVO_DEC_AXIS, 12960000, 60000, 15000, false) == kERROR)		printf("DEC RC_move_by_pos returned error\n");
+		if (RC_move_by_vela(addr, SERVO_RA_AXIS, 5000, 15000, true) == kERROR)			printf("DEC RC_move_by_vela returned error\n");
+		// if (RC_move_by_posva(addr, SERVO_RA_AXIS, 1000000, 5000, 15000, true) == kERROR)	printf("DEC RC_move_by_pos returned error\n");
+		// if (RC_check_queue(addr, &raDepth, &decDepth) == kERROR)						printf("RC_check_queue returned error\n");
+		printf("*** status = %X  RA queue = %X  Dec queue = %X\n", status, (uint8_t)raDepth, (uint8_t)decDepth);
+
+	}
+
 
 //////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////

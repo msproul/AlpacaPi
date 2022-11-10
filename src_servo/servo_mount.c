@@ -92,6 +92,7 @@
 //*	Jul 20,	2022	<RNS> Fixed if-else braces error in COP for Fork mount
 //*	Jul 22,	2022	<RNS> Fixed incorrect direction sign in flip_coordins 
 //*	Oct 28,	2022	<RNS> Added support to initilize motor absZero field
+//*	Nov 04,	2022	<RNS> Rewrote move_to_park to use absZero encoder values
 //*****************************************************************************
 
 //*****************************************************************************
@@ -1025,15 +1026,14 @@ int		status	=	kSTATUS_OK;
 
 		Motion_set_axis_buffer(SERVO_RA_AXIS, false);
 		status	-=	Motion_move_axis_by_step(SERVO_RA_AXIS, raStep);
-
+		
 		Motion_get_pending_cmds(&raState, &decState);
 		printf("S_mst: After RA M_mabs Qra:%d Qdec%d\n", raState, decState);
 		printf("!!! raStep = %d  vel = %d  acc = %d\n", raStep, gMountConfig.ra.vel, gMountConfig.ra.acc);
 
 		// This velocity command will start when the above pos cmd completes
 		// Buffered move by tracking velocity
-		Motion_set_axis_buffer(SERVO_RA_AXIS, true);
-		
+				
 		Motion_get_pending_cmds(&raState, &decState);
 		printf("S_mst: Before RA M_mabv Qra:%d Qdec:%d\n", raState, decState);
 
@@ -1642,7 +1642,8 @@ int		status	=	kSTATUS_OK;
 //*****************************************************************************
 int Servo_move_to_park(void)
 {
-double	ha, dec;
+int32_t	targetRaStep, targetDecStep;
+double 	currRa, currDec; 
 int		status;
 
 	// printf("@@@ Servo_move_to_park() gParkState = %d\n", gParkState);
@@ -1652,19 +1653,71 @@ int		status;
 		return kERROR;
 	}
 
-	// Get the park coordins set in mount config file
-	Servo_get_park_coordins(&ha, &dec);
+	// if the mount is inverted, then unflip the current coordinates
+	if (Servo_is_TTP() == true)
+	{
+		Servo_get_pos(&currRa, &currDec);
+		Servo_calc_flip_coordins(&currRa, &currDec, &gMountConfig.dec.direction, &gMountConfig.side);
+		Servo_set_pos(currRa, currDec);
+
+		// Now check to see if the mount got messed up some how
+		if (gMountConfig.side != gMountConfig.ra.parkInfo)
+		{
+			printf("ERROR: (Servo_move_to_park) ra.side is different from ra.parkInfo\n");
+		}
+		if (gMountConfig.dec.direction != gMountConfig.dec.parkInfo)
+		{
+			printf("ERROR: (Servo_move_to_park) dec.direction is different from dec.parkInfo\n");
+		}
+
+		// Set the mount coordins to the flipped position
+		Servo_set_pos(currRa, currDec);
+	} 
+	// Get the absolute zeros which is the original park position for the session
+	Motion_get_axis_absZero(SERVO_RA_AXIS, &targetRaStep);
+	Motion_get_axis_absZero(SERVO_DEC_AXIS, &targetDecStep);
+
 	// Allow a move to anywhere and set the action state, then  move to static pos
 	Servo_ignore_horizon(true);
 	gMountAction	=	PARKING;
-	// printf("@@@ Servo_move_to_park() ha:%.6f dec:%.6f\n", ha, dec);
 
-	status	=	Servo_move_to_static(ha, dec);
+	// Move to the orignal zeros of both axes and check status
+	status	=	Servo_move_step(targetRaStep, targetDecStep, false);
+
+	// Force flags back to original config file state for being parked, just in case
+	gMountConfig.side = gMountConfig.ra.parkInfo;
+	gMountConfig.dec.direction = gMountConfig.dec.parkInfo;
 
 	// printf("@@@ Servo_move_to_park() status = %d\n", status);
-	// If status is < zero, return error
+	// If status is not zero, return error
 	return (status == kSTATUS_OK) ? kSTATUS_OK : kERROR;
 } // of Servo_move_to_park()
+//******************************************************************************
+// int Servo_move_to_park_old(void)
+// {
+// double	ha, dec;
+// int		status;
+
+// 	// printf("@@@ Servo_move_to_park() gParkState = %d\n", gParkState);
+// 	// Make sure the mount is not Parked, but *if parked* then return error
+// 	if (gParkState == true)
+// 	{
+// 		return kERROR;
+// 	}
+
+// 	// Get the park coordins set in mount config file
+// 	Servo_get_park_coordins(&ha, &dec);
+// 	// Allow a move to anywhere and set the action state, then  move to static pos
+// 	Servo_ignore_horizon(true);
+// 	gMountAction	=	PARKING;
+// 	// printf("@@@ Servo_move_to_park() ha:%.6f dec:%.6f\n", ha, dec);
+
+// 	status	=	Servo_move_to_static(ha, dec);
+
+// 	// printf("@@@ Servo_move_to_park() status = %d\n", status);
+// 	// If status is < zero, return error
+// 	return (status == kSTATUS_OK) ? kSTATUS_OK : kERROR;
+// } // of Servo_move_to_park_old()
 
 //******************************************************************************
 //********************************************************************************************
