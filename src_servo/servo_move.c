@@ -37,7 +37,7 @@ case 3:
 	printf("** Current Pos  RA = %lf   Dec = %lf\n", currRa, currDec);
 	currRa += atof(argv[1]);
 	currDec += atof(argv[2]);
-	printf("** Move to Pos  RA = %lf   Dec = %lf\n", currRa, currDec);
+	printf("** Move to relative Pos delta RA = %lf  HA = %lf Dec = %lf\n", currRa, -currRa, currDec);
 	Servo_move_to_coordins(currRa, currDec, Servo_get_lat(), Servo_get_lon());
 	break;
 
