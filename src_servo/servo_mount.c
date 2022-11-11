@@ -93,6 +93,8 @@
 //*	Jul 22,	2022	<RNS> Fixed incorrect direction sign in flip_coordins 
 //*	Oct 28,	2022	<RNS> Added support to initilize motor absZero field
 //*	Nov 04,	2022	<RNS> Rewrote move_to_park to use absZero encoder values
+//*	Nov 11,	2022	<RNS> Fixed/toggled RA vs. HA relative direction in COP_type()
+//*	Nov 11,	2022	<RNS> Fixed comments, simplified code in _calc_short_vector
 //*****************************************************************************
 
 //*****************************************************************************
@@ -1141,9 +1143,9 @@ static void Servo_calc_flip_coordins(double *ra, double *dec, double *direction,
 
 //*****************************************************************************
 // This routine will find the shortest path between two points on a circle
-// Circle size is supplied by the 'max' arg, and for RA it is 24.0
-// It is only used the RA axis (Dec doesn't need it) and will return the
-// vector needed to move from the start position in hours.  This was a PITA
+// Circle size is supplied by the 'max' arg, and for RA it is 24.0, Dec is 360.0
+// It will return the vector needed to move from the start position in the 
+// selected units.  This was a PITA
 //*****************************************************************************
 double Servo_calc_short_vector(double begin, double end, double max)
 {
@@ -1156,7 +1158,7 @@ double	modDiff;
 	// set the rollover value from the args
 	modDiff	=	fmod(rawDiff, max);
 
-	// Split the circle and pick the shorter length
+	// Split the circle and look for the shorter length
 	if (modDiff > (max / 2.0))
 	{
 		// There is a shorter path in opposite direction
@@ -1164,7 +1166,7 @@ double	modDiff;
 		// if end larger toggle the sign
 		if (end > begin)
 		{
-			sDiff	=	sDiff * -1.0;
+			sDiff	=	-sDiff;
 		}
 	}
 	else
@@ -1173,7 +1175,7 @@ double	modDiff;
 		// if begin larger toggle the sign
 		if (begin > end)
 		{
-			sDiff	=	sDiff * -1.0;
+			sDiff	=	-sDiff;
 		}
 	}
 
@@ -1182,35 +1184,44 @@ double	modDiff;
 
 //*****************************************************************************
 // INTERNAL ROUNTINE: Determines the path/move type for an input, HA, path and
-// flipWin.  Flipwin is important for GEM mounts, allows for limited movement
+// flipWin.  raPath is a *relative* direction in RA (not HA) from the startRaHA
+// position. Flipwin is important for GEM mounts, allows for limited movement
 // past LST/meridian/0HA. Since one edge of the flip windows is alway 0.0 LST,
 // just need test against other edge. For FORK mount the flipwin should 0.0.
 // TODO: Need to flip to static once fully debugged
 //*****************************************************************************
 int Servo_COP_type(double startRaHa, double raPath, double flipWin)
 {
+	double haPath; 
+
+	// HA relative direction is versed from RA relative direction
+	haPath = -raPath; 
 	// If starting position is on the EAST side of the meridian
 	if (startRaHa < 0.0)
 	{
 		// If the raPath vector is positive enough to move past the west flip window edge of meridian
-		if ( (startRaHa + raPath) > flipWin )
+		if ( (startRaHa + haPath) > flipWin )
 		{
+			printf("&&& Servo_COP_type() East to West\n");
 			return EAST_TO_WEST;
 		}
 		else // stays on the east side within the meridian window
 		{
+			printf("&&& Servo_COP_type() East to East\n");
 			return EAST_TO_EAST;
 		}
 	}
 	else // start position is WEST of the meridian
 	{
 		// If the raPath vector is negative enough to move past the east flip window edge of meridian
-		if ( (startRaHa + raPath) < -flipWin )
+		if ( (startRaHa + haPath) < -flipWin )
 		{
+			printf("&&& Servo_COP_type() West to East\n");
 			return WEST_TO_EAST;
 		}
 		else // stays on the west side within the meridian window
 		{
+			printf("&&& Servo_COP_type() West to West\n");
 			return WEST_TO_WEST;
 		}
 	}
@@ -1258,6 +1269,7 @@ int8_t	side;		// not used
 
 	// This first check is for a simple move (no meridian crossing), works for both FORK and GEM mounts
 	raStdPathType	=	Servo_COP_type(startRaHa, raStdPath, gMountConfig.flipWin);
+
 	switch (raStdPathType)
 	{
 		case EAST_TO_EAST:
@@ -1277,11 +1289,11 @@ int8_t	side;		// not used
 	startRaFlip		=	startRa;
 	startDecFlip	=	startDec;
 	Servo_calc_flip_coordins(&startRaFlip, &startDecFlip, &direction, &side);
-	printf("&&& Servo_COP() LST:%.2lf startRaFlip:%.2lf endRa:%.2lf  startRaHaFlip:%.2lf\n", lst, startRaFlip, endRa, startRaHaFlip);
 
 	// Calc the the HA of the new flipped start position, but endRaHa remains the same
 	startRaHaFlip	=	lst - startRaFlip;
 	Time_normalize_HA(&startRaHaFlip);
+	printf("&&& Servo_COP() LST:%.2lf startRaFlip:%.2lf endRa:%.2lf  startRaHaFlip:%.2lf\n", lst, startRaFlip, endRa, startRaHaFlip);
 
 	// Note: if pathDec is neg, it means a move towards South, positive... a move towards North
 	decFlipPath	=	endDec - startDecFlip;

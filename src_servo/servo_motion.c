@@ -403,7 +403,7 @@ int 				status;
 		// Roboclaw only supports up to a 127 deep buffer, so use lower 7bit mask of 0x7F
 		do
 		{
-			printf("(Motion_wait_axis_buffer_clear): SLEEPING....\n");
+			// printf("(Motion_wait_axis_buffer_clear): SLEEPING....\n");
 			// wait for 1/100th of second then read both motor buffers
 			usleep(10000);
 			status = Motion_get_pending_cmds(&raState, &decState);
