@@ -1208,7 +1208,8 @@ int			len;
 	// If requesting a buffered command (eg. TRUE) set variable 'now' to 0
 	// otherwise, setting it to 1 means stop any running cmds and execute it *now*
 	now	=	(buffered == true) ? 0 : 1;
-	printf("RC_move_by_posvad: now=%d\n", now);
+	// printf("RC_move_by_posvad: now=%d\n", now);
+	
 	// add buffer arg	
 	Note_add_byte(ptrA, now, &ptrB);
 
