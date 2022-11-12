@@ -22,6 +22,7 @@
 #++	Jul  2,	2022	<RNS> Enabled gdb support in CFLAGS (-g)
 #++	Jul 20,	2022	<RNS> Support servo_move and servo_pos_step test progs
 #++	Nov  4,	2022	<RNS> Added missing servo_motion dependencies to existing
+#++	Nov 12,	2022	<RNS> Added servo_write_settings support
 ############################################################################
 
 CC			=	gcc -I$(MLS_LIB_DIR)
@@ -87,7 +88,14 @@ servo_move: 	$(SERVO_OBJECTS)	$(OBJECT_DIR)servo_move.o
 					$(SERVO_OBJECTS)				\
 					$(OBJECT_DIR)servo_move.o	\
 					-lm					
-	
+
+servo_write_settings:		CFLAGS	+=
+servo_write_settings: 	$(SERVO_OBJECTS)	$(OBJECT_DIR)servo_write_settings.o
+	$(CC) $(CFLAGS) -o servo_write_settings				\
+					$(SERVO_OBJECTS)				\
+					$(OBJECT_DIR)servo_write_settings.o	\
+					-lm		
+
 servo_pos_step:		CFLAGS	+=
 servo_pos_step: 	$(SERVO_OBJECTS)	$(OBJECT_DIR)servo_pos_step.o
 	$(CC) $(CFLAGS) -o servo_pos_step			\
@@ -184,6 +192,9 @@ $(OBJECT_DIR)servo_test_tty.o:		servo_test_tty.c servo_mount.h servo_motion.h se
 $(OBJECT_DIR)servo_move.o:		servo_move.c servo_mount.h servo_motion.h servo_rc_utils.h servo_rc_cmds.h servo_time.h servo_mc_core.h servo_std_defs.h
 	$(CC) $(CFLAGS) -c servo_move.c -o $(OBJECT_DIR)servo_move.o	
 
+$(OBJECT_DIR)servo_write_settings.o:		servo_write_settings.c servo_mount.h servo_motion.h servo_rc_utils.h servo_rc_cmds.h servo_time.h servo_mc_core.h servo_std_defs.h
+	$(CC) $(CFLAGS) -c servo_write_settings.c -o $(OBJECT_DIR)servo_write_settings.o	
+	
 $(OBJECT_DIR)servo_pos_step.o:		servo_pos_step.c servo_mount.h servo_motion.h servo_rc_utils.h servo_rc_cmds.h servo_time.h servo_mc_core.h servo_std_defs.h
 	$(CC) $(CFLAGS) -c servo_pos_step.c -o $(OBJECT_DIR)servo_pos_step.o	
 
