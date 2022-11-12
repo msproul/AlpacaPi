@@ -27,6 +27,7 @@
 //*	Oct 28,	2022	<RNS> Updated via cproto
 //*	Nov  1,	2022	<RNS> Updated via cproto
 //*	Nov  9,	2022	<RNS> Updated via cproto
+//*	Nov 12,	2022	<RNS> Updated via cproto
 //****************************************************************************
 //#include	"servo_motion.h"
 
@@ -59,10 +60,11 @@ int Motion_set_axis_absZero(uint8_t axis, int32_t count);
 int Motion_get_axis_absZero(uint8_t axis, int32_t *zero);
 int Motion_get_axis_curr_step(uint8_t axis, int32_t *step);
 int Motion_get_axis_curr_vel(uint8_t axis, int32_t *vel);
-int Motion_set_axis_buffer(uint8_t axis, _Bool state);
+int Motion_set_axis_buffer(uint8_t axis, bool state);
 TYPE_MOTION_STATE Motion_get_axis_state(uint8_t axis);
 int Motion_get_pending_cmds(uint8_t *raState, uint8_t *decState);
 int Motion_set_axis_profile(uint8_t axis);
+int Motion_write_settings(void);
 double Motion_calc_axis_move_time(uint8_t axis, int32_t start, int32_t end);
 int Motion_wait_axis_buffer_clear(uint8_t axis);
 int Motion_move_axis_by_step(uint8_t axis, int32_t step);

@@ -36,6 +36,8 @@
 //*	Nov  1,	2022	<RNS> Added error checks for trackrate and absZero calls
 //*	Nov  8,	2022	<RNS> Added check for unbuffered moves, avoids RC timing issue
 //*	Nov  9,	2022	<RNS> Added a routine to check all moves for buffer write timing
+//*	Nov 12,	2022	<RNS> Corrected unitialized status in _wait_axis_buffer_clear
+//*	Nov 12,	2022	<RNS> Added Motion_write_settings() to config RC HW EEPROM
 //*****************************************************************************
 
 #include <stdio.h>
@@ -320,6 +322,7 @@ int Motion_get_pending_cmds(uint8_t *raState, uint8_t *decState)
 
 	return status;
 }
+
 //*************************************************************************
 // Set the MC specific data structures needed for operations, includes PID
 // and other required values specific to the motion controller
@@ -361,10 +364,22 @@ TYPE_MOTION_MOTOR	*motor;
 					0.0, 	// zero out due to unpredictable behavior
 					0.0, 									// it's really a PI cmd so zero D as it's not needed
 					motor->encoderMaxRate );	// calc'd max step rate from above
-	// TODO: temporary
-	// RC_write_settings(axis);
+
 	return (status == kSTATUS_OK) ? kSTATUS_OK : kERROR;
 } // of Motion_set_axis_profile()
+
+//*************************************************************************
+// Writes the current axis profile settings into the controller's EEPROM
+//*************************************************************************
+int Motion_write_settings(void)
+{
+int	status;
+	// Write the current setting into the controller's HW EEPROM
+	status = RC_write_settings(gMotionConfig.motor0.addr);
+	printf("(Motion_write_axis_profile) status = %d\n", status);
+
+	return (status == kSTATUS_OK) ? kSTATUS_OK : kERROR;
+} // of Motion_write_axis_profile()
 
 //*************************************************************************
 // Calculates and return the duration time floating seconds for the axis
@@ -388,7 +403,7 @@ int Motion_wait_axis_buffer_clear(uint8_t axis)
 {
 TYPE_MOTION_MOTOR 	*motor;
 uint8_t 			raState, decState, motorState;
-int 				status; 
+int 				status = kSTATUS_OK; 
 
 	motor = Motion_get_motor_ptr(axis);
 	if (motor == NULL)
