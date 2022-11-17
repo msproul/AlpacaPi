@@ -95,6 +95,10 @@
 //*	Nov 04,	2022	<RNS> Rewrote move_to_park to use absZero encoder values
 //*	Nov 11,	2022	<RNS> Fixed/toggled RA vs. HA relative direction in COP_type()
 //*	Nov 11,	2022	<RNS> Fixed comments, simplified code in _calc_short_vector
+//*	Nov 13,	2022	<RNS> Added Servo_check_RA_axis_for_wrap routine
+//*	Nov 13,	2022	<RNS> Modified _optimal_path to check for RA wrap on FORK mounts
+//*	Nov 15,	2022	<RNS> Rewrote _calc_optimal_path to separate path calc from mount type
+//*	Nov 16,	2022	<RNS> Added Servo_check_german_for_upside_down() + COP check for it;
 //*****************************************************************************
 
 //*****************************************************************************
@@ -1194,7 +1198,7 @@ int Servo_COP_type(double startRaHa, double raPath, double flipWin)
 {
 	double haPath; 
 
-	// HA relative direction is versed from RA relative direction
+	// HA relative direction is reversed from RA relative direction
 	haPath = -raPath; 
 	// If starting position is on the EAST side of the meridian
 	if (startRaHa < 0.0)
@@ -1230,6 +1234,51 @@ int Servo_COP_type(double startRaHa, double raPath, double flipWin)
 } // of Servo_COP_move_type()
 
 //*****************************************************************************
+// INTERNAL ROUNTINE: Checks the RA path to avoid moving the RA axis more than 
+// 12H (180degs) from current LST using hour angle math.  We want to keep the 
+// mount 'upright' to avoid cable wrap issues. 
+// TODO: Need to flip to static once fully debugged
+//*****************************************************************************
+bool Servo_check_RA_axis_for_wrap(double startRaHa, double raPath)
+{
+	double haPath; 
+
+	// HA relative direction is reversed from RA relative direction
+	haPath = -raPath; 
+	// If the end path is outside the region of +/- 12.0 HA
+	if (fabs(startRaHa + haPath) > 12.0)
+	{
+		return true; 
+	}
+	else 
+	{
+		return false; 
+	}
+} // of Servo_check_RA_axis_for_wrap()
+
+//*****************************************************************************
+// INTERNAL ROUNTINE: Checks if a GERMAN mount would have the counterweight
+// higher then the telescope.  This uses 6H (90degs) from current LST using 
+// hour angle math.  We want to keep the mount 'upright' 
+// TODO: Need to flip to static once fully debugged
+//*****************************************************************************
+bool Servo_check_german_for_upside_down(double startRaHa, double raPath, double region)
+{
+	double haPath; 
+
+	// HA relative direction is reversed from RA relative direction
+	haPath = -raPath; 
+	// If the end path is beyond +/- 6.0 HA (90 degs from meridian) plus region
+	if (fabs(startRaHa + haPath) > (6.0 + region))
+	{
+		return true; 
+	}
+	else // start position is WEST of the meridian
+	{
+		return false; 
+	}
+} // of Servo_check_german_for_upside_down()
+//*****************************************************************************
 // INTERNAL ROUNTINE:  This is try-before-you-buy routine. It calcs the best path
 // for the mount to from start to end and returns the *relative direction* needed
 // to move the mount from the start position but makes *no changes*.  If you don't
@@ -1244,129 +1293,187 @@ int Servo_COP_type(double startRaHa, double raPath, double flipWin)
 //*****************************************************************************
 bool Servo_calc_optimal_path(double startRa, double startDec, double lst, double endRa, double endDec, double *raDirection, double *decDirection)
 {
-double	startRaHa, endRaHa;
-double	startRaFlip, startDecFlip, startRaHaFlip;
-double	decStdPath, decFlipPath, raStdPath, raFlipPath;
-int		raStdPathType;
-double	direction;	// not used
-int8_t	side;		// not used
-//int		raFlipPathType;
+	double startRaHa, endRaHa;
+	double startRaFlip, startDecFlip, startRaHaFlip;
+	double decStdPath, decFlipPath, raStdPath, raFlipPath;
+	bool raStdPathWraps;
+	// bool	raFlipPathWraps;
+	bool germanUpsideDown;
+	int raStdPathType;
+	double direction; // not used
+	int8_t side;	  // not used
+					  // int		raFlipPathType;
+
+	// *** Do all the possible path calcs upfront for standard and flipped path, even it they may not be used
 
 	// Converting the input start and end coordins to hour angle
-	startRaHa	=	lst - startRa;
-	endRaHa	=	lst - endRa;
+	startRaHa = lst - startRa;
+	endRaHa = lst - endRa;
 	Time_normalize_HA(&startRaHa);
 	Time_normalize_HA(&endRaHa);
 
 	// Do the simple Dec axis first, it just path = end - start;
 	// Note: if pathDec is neg, it means a move towards South, positive... a move towards North
-	decStdPath	=	endDec - startDec;
+	decStdPath = endDec - startDec;
 	printf("&&& Servo_COP()  decStdPath(%.2lf)  endDec(%.2lf)  startDec(%.2lf)\n", decStdPath, endDec, startDec);
 
 	// Find the short path for the Ra axis for a std move
-	raStdPath	=	Servo_calc_short_vector(startRa, endRa, 24.0);
+	raStdPath = Servo_calc_short_vector(startRa, endRa, 24.0);
 	printf("&&& Servo_COP() LST:%.2lf - StartRa = %.2lf  endRa = %.2lf  raStdPath = %.2lf  startRaHa = %.2lf  endRaHa = %.2lf\n", lst, startRa, endRa, raStdPath, startRaHa, endRaHa);
 
 	// This first check is for a simple move (no meridian crossing), works for both FORK and GEM mounts
-	raStdPathType	=	Servo_COP_type(startRaHa, raStdPath, gMountConfig.flipWin);
-
-	switch (raStdPathType)
-	{
-		case EAST_TO_EAST:
-		case WEST_TO_WEST:
-			// this move stays on it's side of the meridian and within the flip window
-			*raDirection = raStdPath;
-			*decDirection = decStdPath;
-			strcpy(gDebugInfoCOP, "X--SS");
-			return (false);
-			break;
-
-		default:
-			break;
-	}
+	raStdPathType = Servo_COP_type(startRaHa, raStdPath, gMountConfig.flipWin);
 
 	// Calc the alternate path if we were to flip the mount vs just keep the std path (above)
-	startRaFlip		=	startRa;
-	startDecFlip	=	startDec;
+	startRaFlip = startRa;
+	startDecFlip = startDec;
 	Servo_calc_flip_coordins(&startRaFlip, &startDecFlip, &direction, &side);
 
 	// Calc the the HA of the new flipped start position, but endRaHa remains the same
-	startRaHaFlip	=	lst - startRaFlip;
+	startRaHaFlip = lst - startRaFlip;
 	Time_normalize_HA(&startRaHaFlip);
 	printf("&&& Servo_COP() LST:%.2lf startRaFlip:%.2lf endRa:%.2lf  startRaHaFlip:%.2lf\n", lst, startRaFlip, endRa, startRaHaFlip);
 
 	// Note: if pathDec is neg, it means a move towards South, positive... a move towards North
-	decFlipPath	=	endDec - startDecFlip;
+	decFlipPath = endDec - startDecFlip;
 	printf("&&& Servo_COP() decFlipPath(%.2lf)  endDec(%.2lf)  startDecFlip(%.2lf)\n", decFlipPath, endDec, startDecFlip);
 
 	// Find the short path of the Ra axis for a flip move, endRa is same as std path
-	raFlipPath	=	Servo_calc_short_vector(startRaFlip, endRa, 24.0);
+	raFlipPath = Servo_calc_short_vector(startRaFlip, endRa, 24.0);
 	printf("&&& Servo_COP() LST:%.2lf startRaFlip:%.2lf endRa:%.2lf  raFlipPath:%.2lf startRaHaFlip:%.2lf\n", lst, startRaFlip, endRa, raFlipPath, startRaHaFlip);
 
-	// Not needed - Determine the move type of flipped path
+	// Not needed right now - Determine the rrap and move type of flipped path
+	// check if the std path will cause RA to wrap (12H/180deg past LST) on either side
+	// raFlipPathWraps = Servo_check_RA_axis_for_wrap(startRaHaFlip, raFlipPath);
 	// raFlipPathType	=	Servo_COP_move_type(startRaHaFlip, raFlipPath, gMountConfig.flipWin);
+	// Look for what hopefully should be a simple move (same side of meridian), with a possible exception of checking for FORK RA wrap
 
-	// Let's calc the path FORK mount type first
-	if (gMountConfig.mount == kFORK)
+	// *** Now determine Mount type and then start applying standard and flip path option, by mount type only, no sharing
+
+	switch (gMountConfig.mount)
 	{
-		// Check to see if a FORK allows TTP movement *and* RA path is at least 10% shorter with RA flip path vs RA std path
-		if ((gMountConfig.ttp == true) && (fabs(raFlipPath) < (fabs(raStdPath) * 0.9)))
+	// *** If a FORK mount, forks worry about wrapping the RA axis past +/-180degs from the meridian
+	case kFORK:
+		// This is a simplified fork move that prioritizes not wrapping the RA axis
+		// and currently just optimized the move for RA distance only
+		// TODO: Needs to also look for the shortest path for both axes for forks that do TTP
+		// check if the std path will cause RA to wrap (12H/180deg past LST) on either side
+		raStdPathWraps = Servo_check_RA_axis_for_wrap(startRaHa, raStdPath);
+		if (raStdPathWraps == true)
 		{
-			// the flip is shorter than the 'normal' path and will cross the meridian
-			*raDirection = raFlipPath;
-			*decDirection = decFlipPath;
-			strcpy(gDebugInfoCOP, "FFTTP");
-			return (true);
+			// The FORK move slews the RA axis past 180degs from LST
+			// If the fork mount does not allow thru-the-pole motion
+			if (gMountConfig.ttp == false)
+			{
+				// Need to send the RA axis the opposite directon and thru the meridian
+				// Add or sub 24.0H (360degs) from the RA standard path
+				*raDirection = (raStdPath > 0.0) ? (-24.0 + raStdPath) : (24 + raStdPath);
+				*decDirection = decStdPath;
+				strcpy(gDebugInfoCOP, "FW-SS");
+				return (false);
+			}
+			else
+			{
+				// The fork mount allows TTP motion, so just flip the mount
+				*raDirection = raFlipPath;
+				*decDirection = decFlipPath;
+				strcpy(gDebugInfoCOP, "FWTTP");
+				return (true);
+			}
 		}
 		else
 		{
-			// This is just a FORK std path move that crosses the meridian
-			*raDirection = raStdPath;
-			*decDirection = decStdPath;
-			strcpy(gDebugInfoCOP, "F--CM");
-			return (false);
+			// Check to see if the fork allows TTP movement, *and* RA path is at least 10% shorter with RA flip path vs RA std path
+			if ((gMountConfig.ttp == true) && (fabs(raFlipPath) < (fabs(raStdPath) * 0.9)))
+			{
+				// the flip is shorter than the 'normal' path and will cross the meridian
+				*raDirection = raFlipPath;
+				*decDirection = decFlipPath;
+				strcpy(gDebugInfoCOP, "FFTTP");
+				return (true);
+			}
+			else
+			{
+				// This is just a boring FORK std path move
+				*raDirection = raStdPath;
+				*decDirection = decStdPath;
+				strcpy(gDebugInfoCOP, "F--SS");
+				return (false);
+			}
 		}
-	}
-	// If you got here, the *mount is NOT a FORK* - just planning for Alt-azi support
+		break; // of switch gMountConfig.mount : case kFORK
 
-	// Check to see if a GEM move goes past the meridian flip window
-	if (gMountConfig.mount == kGERMAN)
-	{
-		// Check to see if a GEM mount must flip due to the RA path exceed the meridian window
+	// *** If a GERMAN mount, germans worry about crashing the scope into the mount pier
+	// *** A lesser worry is having the counterweigth higher than the scope, but that style points ;^)
+	case kGERMAN:
+		// check if a german mount would be upside down eg. counterweight higher than scope by 0.5H/7.5degs
+		germanUpsideDown = Servo_check_german_for_upside_down(startRaHa, raStdPath, 0.5);
+
+		// Determine the type of path the german mount will make regarding crossing the meridian
 		switch (raStdPathType)
 		{
-			// if starting on the west side and std path moves east past LST and flip window
-			case WEST_TO_EAST:
-				// this move crosses meridian from the west and goes past the GEM's meridian flip window, so flip and return
-				*raDirection	=	raFlipPath;
-				*decDirection	=	decFlipPath;
-				strcpy(gDebugInfoCOP, "GFW2E");
+		case EAST_TO_EAST:
+		case WEST_TO_WEST:
+			// this move stays on it's current side of the meridian plus the flip window
+			// but check to see if german mount goes "upside down"
+			if (germanUpsideDown == true)
+			{
+				// Mount would end up being upside down so do a flip
+				*raDirection = raFlipPath;
+				*decDirection = decFlipPath;
+				strcpy(gDebugInfoCOP, "GFUSD");
 				return (true);
-				break;
-
-			// if starting on the east side and std path moves west past LST and flip window
-			case EAST_TO_WEST:
-				// this move crosses meridian from the east and goes past the GEM's meridian flip window, so flip and return
-				*raDirection	=	raFlipPath;
-				*decDirection	=	decFlipPath;
-				strcpy(gDebugInfoCOP, "GFE2W");
-				return (true);
-				break;
-
-			default:
-				// Should never get here as it would be handled by "X--SS" case, but call me cautious
-				// the move does cross the meridian but stay within the meridian flip window, no flip needed
-				*raDirection	=	raStdPath;
-				*decDirection	=	decStdPath;
+			}
+			else
+			{
+				// The mount stays upright so it's a just a simple slew
+				*raDirection = raStdPath;
+				*decDirection = decStdPath;
 				strcpy(gDebugInfoCOP, "G--SS");
 				return (false);
-				break;
+			}
+			break;
+
+		// if starting on the west side and std path moves east past LST and flip window
+		case WEST_TO_EAST:
+			// this move crosses meridian from the west and goes past the GEM's meridian flip window, so flip and return
+			*raDirection = raFlipPath;
+			*decDirection = decFlipPath;
+			strcpy(gDebugInfoCOP, "GFW2E");
+			return (true);
+			break;
+
+		// if starting on the east side and std path moves west past LST and flip window
+		case EAST_TO_WEST:
+			// this move crosses meridian from the east and goes past the GEM's meridian flip window, so flip and return
+			*raDirection = raFlipPath;
+			*decDirection = decFlipPath;
+			strcpy(gDebugInfoCOP, "GFE2W");
+			return (true);
+			break;
+
+		default:
+			// Should never get here as it would be handled by the above cases
+			// Never should get here, but just-in-case, do the least amount of damage
+			*raDirection = 0.0;
+			*decDirection = 0.0;
+			strcpy(gDebugInfoCOP, "ERROR");
+			return (false);
+			break;
 		}
-	}
+		break; // of switch gMountConfig.mount : case kGERMAN
+
+		// TODO: case ALTAZI will go here
+
+	default:
+		// It should never get here since the config files error handling would have caught unsupported mount
+		printf("Error: (Servo_calc_optimal_path) - MOUNT TYPE %d NOT SUPPORTED\n", gMountConfig.mount);
+		break;
+	} // of switch gMountConfig.mount
 
 	// Never should get here, but just-in-case, do the least amount of damage
-	*raDirection	=	0.0;
-	*decDirection	=	0.0;
+	*raDirection = 0.0;
+	*decDirection = 0.0;
 	strcpy(gDebugInfoCOP, "ERROR");
 	return (false);
 } // of Servo_calc_optimal_path()
