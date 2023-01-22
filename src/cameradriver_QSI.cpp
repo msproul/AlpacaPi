@@ -65,8 +65,9 @@
 #define	_SIMULATE_CAMERA_
 
 //**************************************************************************************
-void	CreateQSI_CameraObjects(void)
+int	CreateQSI_CameraObjects(void)
 {
+int				cameraCreatedCount;
 unsigned int	qsi_Result;
 std::string		info	=	"";
 std::string		modelNumber("");
@@ -124,6 +125,7 @@ QSICamera		cQSIcam;
 		CONSOLE_DEBUG(lastError.c_str());
 		CONSOLE_ABORT(__FUNCTION__);
 	}
+	return(cameraCreatedCount);
 }
 
 //**************************************************************************************

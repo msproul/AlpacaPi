@@ -59,8 +59,9 @@
 
 
 //**************************************************************************************
-void	CreateQHY_CameraObjects(void)
+int	CreateQHY_CameraObjects(void)
 {
+int				cameraCount;
 uint32_t		qhyRetCode;
 uint32_t		year;
 uint32_t		month;
@@ -75,7 +76,7 @@ bool			rulesFileOK;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
-
+	cameraCount	=	0;
 	rulesFileOK	=	Check_udev_rulesFile(rulesFileName);
 	if (rulesFileOK)
 	{
@@ -138,6 +139,7 @@ bool			rulesFileOK;
 			{
 				CONSOLE_DEBUG_W_STR("Creating driver object for\t=",	qhyIDstring);
 				new CameraDriverQHY(0, qhyIDstring);
+				cameraCount++;
 			}
 			else
 			{
@@ -149,6 +151,7 @@ bool			rulesFileOK;
 	{
 		CONSOLE_DEBUG_W_INT32("InitQHYCCDResource() failed qhyRetCode\t\t=",		qhyRetCode);
 	}
+	return(cameraCount);
 }
 
 

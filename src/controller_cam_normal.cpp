@@ -241,7 +241,6 @@ void	ControllerCamNormal::UpdateCommonProperties(void)
 //*****************************************************************************
 void	ControllerCamNormal::UpdateSettings_Object(const char *filePrefix)
 {
-
 	if (cCamSettingsTabObjPtr != NULL)
 	{
 		cCamSettingsTabObjPtr->UpdateSettings_Object(filePrefix);
@@ -419,6 +418,13 @@ char			linebuff[64];
 		default:								strcpy(linebuff,	"unknown");		break;
 	}
 	SetWidgetText(		kTab_Camera, kCameraBox_State,			linebuff);
+
+	if (cCameraProp.CameraState == kALPACA_CameraState_Idle)
+	{
+		SetWidgetType(kTab_Camera,	kCameraBox_PercentCompleted,	kWidgetType_TextBox);
+		SetWidgetText(kTab_Camera,	kCameraBox_PercentCompleted,	"---");
+	}
+
 	if (cCameraState_imageready)
 	{
 		//*	image is ready, highlight the buttons
@@ -466,12 +472,15 @@ char			linebuff[128];
 //*****************************************************************************
 void	ControllerCamNormal::UpdatePercentCompleted(void)
 {
-char			linebuff[128];
 
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 
-	sprintf(linebuff, "%d %% ", cCameraProp.PercentCompleted);
-	SetWidgetText(kTab_Camera, kCameraBox_PercentCompleted, linebuff);
+	if (cCameraProp.CameraState == kALPACA_CameraState_Exposing)
+	{
+		SetWidgetProgress(kTab_Camera, kCameraBox_PercentCompleted, cCameraProp.PercentCompleted, 100);
+		cUpdateWindow	=	true;
+	}
+//	cv::waitKey(6);
 }
 
 //*****************************************************************************
@@ -542,10 +551,10 @@ int		jjj;
 //*****************************************************************************
 void	ControllerCamNormal::UpdateFileNameOptions(void)
 {
-	SetWidgetChecked(kTab_Settings,	kCamSet_FN_IncFilter,		cFN_includeFilter);
-	SetWidgetChecked(kTab_Settings,	kCamSet_FN_IncCamera,		cFN_includeManuf);
-	SetWidgetChecked(kTab_Settings,	kCamSet_FN_IncSerialNum,	cFN_includeSerialNum);
-	SetWidgetChecked(kTab_Settings,	kCamSet_FN_IncRefID,		cFN_includeRefID);
+	SetWidgetChecked(kTab_Settings,	kCamSet_FN_IncFilter,		cFN.IncludeFilter);
+	SetWidgetChecked(kTab_Settings,	kCamSet_FN_IncCamera,		cFN.IncludeManuf);
+	SetWidgetChecked(kTab_Settings,	kCamSet_FN_IncSerialNum,	cFN.IncludeSerialNum);
+	SetWidgetChecked(kTab_Settings,	kCamSet_FN_IncRefID,		cFN.IncludeRefID);
 }
 
 //*****************************************************************************

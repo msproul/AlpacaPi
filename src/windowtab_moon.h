@@ -65,7 +65,7 @@ class WindowTabMoon: public WindowTab
 								cv::Scalar	backGrndColor,
 								const char	*windowName);
 		virtual	~WindowTabMoon(void);
-		virtual	void	RunBackgroundTasks(void);
+		virtual	void	RunWindowBackgroundTasks(void);
 
 		virtual	void	SetupWindowControls(void);
 		virtual	void	ProcessButtonClick(const int buttonIdx, const int flags);

@@ -107,7 +107,7 @@ class WindowTabRemoteData: public WindowTab
 										const char	*windowName);
 		virtual	~WindowTabRemoteData(void);
 
-		virtual	void	RunBackgroundTasks(void);
+		virtual	void	RunWindowBackgroundTasks(void);
 		virtual	void	SetupWindowControls(void);
 		virtual	void	ActivateWindow(void);
 		virtual	void	ProcessButtonClick(const int buttonIdx, const int flags);

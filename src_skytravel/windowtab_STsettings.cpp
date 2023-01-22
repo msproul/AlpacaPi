@@ -428,7 +428,7 @@ int		radioBtnWidth;
 	SetWidgetText(		kSkyT_Settings_ConstOutLines_txt,	"Outlines");
 	SetWidgetNumber(	kSkyT_Settings_ConstOutLines_cnt,	gConstOutlineCount);
 
-#ifdef _ENABLE_ASTERIODS_
+#ifdef _ENABLE_ASTEROIDS_
 	strcpy(textString, "Asteroids");
 	if (strlen(gAsteroidDatbase) > 0)
 	{

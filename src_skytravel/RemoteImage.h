@@ -22,13 +22,16 @@ extern	TYPE_RemoteData	gRemoteDataStats[];
 extern	int				gRemoteSourceID;
 extern	char			gRemoteImageStatusMsg[];
 extern	int				gRemoteGetCounts[];
+extern	bool			gRemoteImageReady;
 
 
 //*	returns 0=OK, -1, failed to create, +1 busy
 int		GetRemoteImage(	double	ra_Radians,
 						double	dec_Radians,
 						double	arcSecondsPerPixel,
-						double	fieldOfView_deg);
+						double	fieldOfView_deg,
+						char	*objectName);
 bool	IsRemoteImageRunning(void);
 bool	RemoteDataMsgUpdated(void);
 void	ClearRemoteDataMsgFlag(void);
+void	RemoteImage_OpenLatest(void);

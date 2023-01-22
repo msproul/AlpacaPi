@@ -19,7 +19,7 @@
 #ifdef __cplusplus
 	extern "C" {
 #endif
-typedef	int (*SocketData_Callback)(int socket, char *htmlData, long bytesRead);
+typedef	int (*SocketData_Callback)(int socket, char *htmlData, long bytesRead, const char *ipAddressString);
 
 int		SocketListen_Init(const int listenPortNum);
 int		SocketListen_Poll(void);

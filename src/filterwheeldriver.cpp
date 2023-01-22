@@ -464,7 +464,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 int					curState;
 int					myFilterPosition;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	curState		=	Read_CurrentFWstate();
 	if (curState == kFilterWheelState_Moving)
 	{

@@ -1,4 +1,9 @@
 //*****************************************************************************
+//*****************************************************************************
+//*	Dec  7,	2022	<MLS> Changed kDefaultUpdateDelta from 4 to 5 (seconds)
+//*	Dec 20,	2022	<MLS> Added cHas_temperaturelog
+//*****************************************************************************
+
 //#include	"controller.h"
 //https://docs.opencv.org/3.4/examples.html
 
@@ -66,7 +71,7 @@
 #define	kMaxTabs	15
 #define	kButtonCnt	30
 
-#define	kDefaultUpdateDelta	4
+#define	kDefaultUpdateDelta	5
 #define	kLineBufSize		512
 
 //*****************************************************************************
@@ -348,6 +353,7 @@ class Controller
 		bool				cReadStartup;
 		bool				cOnLine;
 		bool				cHas_readall;
+		bool				cHas_temperaturelog;
 		bool				cForceAlpacaUpdate;
 		TYPE_ASCOM_STATUS	cLastAlpacaErrNum;
 		char				cLastAlpacaErrStr[512];
@@ -367,6 +373,7 @@ class Controller
 		bool				cFirstDataRead;
 		uint32_t			cLastUpdate_milliSecs;
 
+		//*	alpacapi extra information
 		char				cRemote_Platform[128];
 		char				cRemote_CPUinfo[128];
 		char				cRemote_OperatingSystem[128];
@@ -519,6 +526,10 @@ class Controller
 															const char	*propertyStr,
 															const char	*reportedStr,
 															bool		*booleanValue);
+
+				//------------------------------------------------
+				int		GetConfiguredDevices(void);
+		virtual	void	ProcessConfiguredDevices(const char *keyword, const char *valueString);
 
 #endif // _CONTROLLER_USES_ALPACA_
 

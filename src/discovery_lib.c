@@ -355,7 +355,7 @@ static void	PollAllDevices(void)
 {
 int		ii;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	for (ii=0; ii<gAlpacaUnitCnt; ii++)
 	{
 	//	SendGetRequest(&gAlpacaUnitList[ii], "/api/v1/management/0/configureddevices");
@@ -397,7 +397,7 @@ int		unitIdx;
 			//*	now find the alpaca port
 			for (ii=0; ii<jsonParser->tokenCount_Data; ii++)
 			{
-				if (strcmp(jsonParser->dataList[ii].keyword, "ALPACAPORT") == 0)
+				if (strcasecmp(jsonParser->dataList[ii].keyword, "ALPACAPORT") == 0)
 				{
 					gAlpacaUnitList[gAlpacaUnitCnt].port	=	atoi(jsonParser->dataList[ii].valueString);
 					unitIdx	=	gAlpacaUnitCnt;
@@ -411,6 +411,7 @@ int		unitIdx;
 	{
 		//*	set the last time we heard from it
 	}
+//	CONSOLE_ABORT(__FUNCTION__);
 }
 
 //*****************************************************************************

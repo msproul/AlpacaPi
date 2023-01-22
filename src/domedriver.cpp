@@ -320,6 +320,8 @@ DomeDriver::DomeDriver(const int argDevNum)
 	strcpy(cCommonProp.Name,		"Dome");
 	strcpy(cCommonProp.Description,	"Dome");
 
+	cUUID.part3					=	'DO';				//*	model number
+
 	Init_Hardware();
 
 #ifdef _ENABLE_SLIT_TRACKER_REMOTE_
@@ -990,8 +992,8 @@ time_t		deltaSeconds;
 			hours				=	minutes / 60;
 			minutes				=	minutes % 60;
 			seconds				=	deltaSeconds % 60;
-			sprintf(msgString, "Time since last move command %d:%02d:%02d", hours, minutes, seconds);
-			CONSOLE_DEBUG(msgString);
+//			sprintf(msgString, "Time since last move command %d:%02d:%02d", hours, minutes, seconds);
+//			CONSOLE_DEBUG(msgString);
 
 			//*	are we past the set time out for dome movement
 			if (deltaMinutes >= cIdleMoveTimeoutMinutes)

@@ -78,6 +78,10 @@
 //*	Oct 21,	2022	<MLS> Updated all windowtabs to use SetupWindowBottomBoxes()
 //*	Oct 21,	2022	<MLS> Removed SetIPaddressBoxes() use SetupWindowBottomBoxes() instead
 //*	Oct 21,	2022	<MLS> Removed SetAlpacaLogo()
+//*	Nov 16,	2022	<MLS> Changed RunBackgroundTasks() to RunWindowBackgroundTasks()
+//*	Dec 17,	2022	<MLS> Added DrawGraph()
+//*	Dec 18,	2022	<MLS> Added LLD_GetColor()
+//*	Dec 25,	2022	<MLS> Added SetWidgetAltText() (initially for progress bar text)
 //*****************************************************************************
 
 
@@ -91,6 +95,7 @@
 #include	"ConsoleDebug.h"
 
 #include	"commoncolor.h"
+#include	"helper_functions.h"
 #include	"widget.h"
 #include	"windowtab.h"
 #include	"controller.h"
@@ -191,7 +196,7 @@ void WindowTab::ComputeWidgetColumns(const int windowWitdh)
 }
 
 //**************************************************************************************
-void WindowTab::RunBackgroundTasks(void)
+void WindowTab::RunWindowBackgroundTasks(void)
 {
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 }
@@ -298,6 +303,28 @@ void	WindowTab::SetWidgetText(const int widgetIdx, const char *newText)
 		CONSOLE_DEBUG_W_NUM("widgetIdx out of range\t=", widgetIdx);
 	}
 }
+
+//**************************************************************************************
+void	WindowTab::SetWidgetAltText(const int widgetIdx, const char *newText)
+{
+	if ((widgetIdx >= 0) && (widgetIdx < kMaxWidgets))
+	{
+		if (strlen(newText) < kAltTextLen)
+		{
+			strcpy(cWidgetList[widgetIdx].alternateText, newText);
+		}
+		else
+		{
+			CONSOLE_DEBUG_W_STR("String to long\t=", newText);
+		//	CONSOLE_ABORT(__FUNCTION__);
+		}
+	}
+	else
+	{
+		CONSOLE_DEBUG_W_NUM("widgetIdx out of range\t=", widgetIdx);
+	}
+}
+
 
 //**************************************************************************************
 void	WindowTab::SetWidgetTextPtr(const int widgetIdx, char *textPtr)
@@ -1020,6 +1047,7 @@ void	WindowTab::SetupWindowControls(void)
 void	WindowTab::DrawWidgetCustomGraphic(cv::Mat *openCV_Image, TYPE_WIDGET *theWidget)
 {
 	//*	this routine should be overloaded
+	CONSOLE_DEBUG("This routine MUST be overloaded in the windowtab subclass");
 	CONSOLE_ABORT(__FUNCTION__);
 }
 
@@ -1040,6 +1068,8 @@ void	WindowTab::DrawWidgetCustomGraphic(cv::Mat *openCV_Image, const int widgetI
 void	WindowTab::DrawWidgetCustomGraphic(IplImage *openCV_Image, const int widgetIdx)
 {
 	//*	this routine should be overloaded
+	CONSOLE_DEBUG("This routine MUST be overloaded in the windowtab subclass");
+	CONSOLE_ABORT(__FUNCTION__);
 }
 #endif // _USE_OPENCV_CPP_
 
@@ -1646,6 +1676,96 @@ void	WindowTab::BumpColorScheme(void)
 	SetWindowTabColorScheme(gCurrWindowTabColorScheme);
 }
 
+#define	TRANSLATE_Y(rect, ddd)	((rect->y + rect->height - 4) - ddd)
+
+
+//**************************************************************************************
+void	WindowTab::DrawGraph(TYPE_WIDGET *theWidget, const int numEntries, double *graphArray, bool drawCurrentTimeMarker, const int stepX)
+{
+cv::Rect		myCVrect;
+int				jjj;
+int				previousX;
+int				pt1_X;
+int				pt1_Y;
+int				pt2_X;
+int				pt2_Y;
+int				currentYvalue;
+int				preivousYvalue;
+//double			avgTotal;
+//int				qqq;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	myCVrect.x		=	theWidget->left;
+	myCVrect.y		=	theWidget->top;
+	myCVrect.width	=	theWidget->width;
+	myCVrect.height	=	theWidget->height;
+
+	//=========================================================
+	//*	draw tick mark lines
+//	yLoc	=	50;
+//	while (yLoc < 325)
+//	{
+//		DrawTickLine(&myCVrect, yLoc);
+//		yLoc	+=	50;
+//	}
+//	//*	draw a special one at 30
+//	DrawTickLine(&myCVrect, 30);
+
+
+	previousX		=	theWidget->left;
+	preivousYvalue	=	graphArray[0];
+	for (jjj=0; jjj<numEntries; jjj += stepX)
+	{
+		if ((stepX == 1) || (jjj < stepX))
+		{
+			currentYvalue	=	graphArray[jjj];
+		}
+		else
+		{
+			currentYvalue	=	graphArray[jjj];
+			if (graphArray[jjj-1] > currentYvalue)
+			{
+				currentYvalue	=	graphArray[jjj-1];
+			}
+//			avgTotal	=	0.0;
+//			for (qqq=0; qqq<stepX; qqq++)
+//			{
+//				avgTotal	+=	graphArray[jjj - qqq];
+//			}
+//			currentYvalue	=	avgTotal / stepX;
+		}
+		//*	compute the x,y points for the line
+		pt1_X			=	previousX;
+		pt1_Y			=	TRANSLATE_Y((&myCVrect), preivousYvalue);
+		pt2_X			=	previousX + 1;
+		pt2_Y			=	TRANSLATE_Y((&myCVrect), currentYvalue);
+		LLD_MoveTo(pt1_X, pt1_Y);
+		LLD_LineTo(pt2_X, pt2_Y);
+
+		previousX		=	pt2_X;
+		preivousYvalue	=	currentYvalue;
+	}
+
+	//=========================================================
+	//*	now draw a vertical line for the CURRENT time
+	if (drawCurrentTimeMarker)
+	{
+	int	minutesSinceMidnight;
+	int	xValue;
+
+		minutesSinceMidnight	=	GetMinutesSinceMidnight();
+		xValue					=	minutesSinceMidnight / stepX;
+		pt1_X					=	theWidget->left + xValue;
+		pt1_Y					=	theWidget->top - 1;
+		pt2_X					=	pt1_X;
+		pt2_Y					=	(theWidget->top + theWidget->height) - 1;
+		LLD_SetColor(W_RED);
+		LLD_MoveTo(pt1_X, pt1_Y);
+		LLD_LineTo(pt2_X, pt2_Y);
+	}
+}
+
 
 //*****************************************************************************
 void	WindowTab::LLD_MoveTo(const int xx, const int yy)
@@ -1866,6 +1986,24 @@ cv::Scalar	gColorTable[]	=
 	CV_RGB(255,	85,		85),	//*	W_FILTER_SII,
 };
 
+
+//*****************************************************************************
+cv::Scalar	WindowTab::LLD_GetColor(const int theColor)
+{
+cv::Scalar	myColorScaler;
+
+	if ((theColor >= 0) && (theColor < W_COLOR_LAST))
+	{
+		myColorScaler	=	gColorTable[theColor];
+	}
+	else
+	{
+		myColorScaler	=	CV_RGB(255,	255,	255);
+	}
+	return(myColorScaler);
+}
+
+
 //*****************************************************************************
 void	WindowTab::LLD_SetColor(const int theColor)
 {
@@ -1877,6 +2015,12 @@ void	WindowTab::LLD_SetColor(const int theColor)
 	{
 		cCurrentColor	=	CV_RGB(255,	255,	255);
 	}
+}
+
+//*****************************************************************************
+void	WindowTab::LLD_SetColor(cv::Scalar newColor)
+{
+	cCurrentColor	=	newColor;
 }
 
 //*****************************************************************************

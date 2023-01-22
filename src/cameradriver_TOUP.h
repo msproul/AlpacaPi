@@ -25,7 +25,7 @@
 	#include	"toupcam.h"
 #endif // __toupcam_h__
 
-void	CreateTOUP_CameraObjects(void);
+int	CreateTOUP_CameraObjects(void);
 
 
 //**************************************************************************************

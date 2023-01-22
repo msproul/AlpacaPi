@@ -107,7 +107,7 @@ void	ControllerFocusGeneric::CreateWindowTabs(void)
 	SetTabCount(kTab_Count);
 
 	SetTabText(kTab_Focuser,	"Focuser");
-	SetTabText(kTab_DriverInfo,	"Drv Info");
+	SetTabText(kTab_DriverInfo,	"Driver Info");
 	SetTabText(kTab_About,		"About");
 
 	//================================================================

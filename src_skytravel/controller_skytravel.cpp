@@ -253,15 +253,6 @@ void	ControllerSkytravel::SetupWindowControls(void)
 		cMoonTabObjPtr->SetParentObjectPtr(this);
 	}
 
-	//=============================================================
-	SetTabText(kTab_ST_About,		"About");
-	cAboutBoxTabObjPtr		=	new WindowTabAbout(	cWidth, cHeight, cBackGrndColor, cWindowName);
-	if (cAboutBoxTabObjPtr != NULL)
-	{
-		SetTabWindow(kTab_ST_About,	cAboutBoxTabObjPtr);
-		cAboutBoxTabObjPtr->SetParentObjectPtr(this);
-	}
-
 #ifdef _ENABLE_CPU_STATS_
 	//=============================================================
 	SetTabText(kTab_CPU_STATS,		"CPU Stats");
@@ -274,7 +265,18 @@ void	ControllerSkytravel::SetupWindowControls(void)
 #endif
 
 
+	//=============================================================
+	SetTabText(kTab_ST_About,		"About");
+	cAboutBoxTabObjPtr		=	new WindowTabAbout(	cWidth, cHeight, cBackGrndColor, cWindowName);
+	if (cAboutBoxTabObjPtr != NULL)
+	{
+		SetTabWindow(kTab_ST_About,	cAboutBoxTabObjPtr);
+		cAboutBoxTabObjPtr->SetParentObjectPtr(this);
+		cAboutBoxTabObjPtr->SetLocalDeviceInfo();
+	}
+
 }
+
 
 //**************************************************************************************
 //*	returns true if found something new
@@ -522,7 +524,7 @@ bool		foundSomething;
 	//*	skytravel
 	if (cSkyTravelTabOjbPtr != NULL)
 	{
-		cSkyTravelTabOjbPtr->RunBackgroundTasks();
+		cSkyTravelTabOjbPtr->RunWindowBackgroundTasks();
 	}
 
 	if (deltaSeconds >= 2)
@@ -530,25 +532,25 @@ bool		foundSomething;
 		//*	moon window
 		if (cMoonTabObjPtr != NULL)
 		{
-			cMoonTabObjPtr->RunBackgroundTasks();
+			cMoonTabObjPtr->RunWindowBackgroundTasks();
 		}
 
 		//*	Field Of View window
 		if (cFOVTabObjPtr != NULL)
 		{
-			cFOVTabObjPtr->RunBackgroundTasks();
+			cFOVTabObjPtr->RunWindowBackgroundTasks();
 		}
 
 		//*	alpaca list window
 		if (cAlpacaListObjPtr != NULL)
 		{
-			cAlpacaListObjPtr->RunBackgroundTasks();
+			cAlpacaListObjPtr->RunWindowBackgroundTasks();
 		}
 
 		//*	Remote data window
 		if (cRemoteDataObjPtr != NULL)
 		{
-			cRemoteDataObjPtr->RunBackgroundTasks();
+			cRemoteDataObjPtr->RunWindowBackgroundTasks();
 		}
 	}
 }

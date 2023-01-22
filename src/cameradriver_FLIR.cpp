@@ -74,8 +74,9 @@ static	void	GetSpinnakerErrorString(_spinError errorCode, char *errorString);
 
 
 //**************************************************************************************
-void	CreateFLIR_CameraObjects(void)
+int		CreateFLIR_CameraObjects(void)
 {
+int				cameraCreatedCount;
 char			rulesFileName[]	=	"40-flir-spinnaker.rules";
 bool			rulesFileOK;
 unsigned int	iii;
@@ -84,8 +85,8 @@ size_t			numCameras;
 spinError		spinErr;
 
 	CONSOLE_DEBUG(__FUNCTION__);
-
-	numCameras	=	0;
+	cameraCreatedCount	=	0;
+	numCameras			=	0;
 
 	rulesFileOK	=	Check_udev_rulesFile(rulesFileName);
 	if (rulesFileOK)
@@ -145,6 +146,7 @@ spinError		spinErr;
 						if (spinErr == SPINNAKER_ERR_SUCCESS)
 						{
 							new CameraDriverFLIR(hCamera);
+							cameraCreatedCount++;
 						}
 						else
 						{
@@ -178,6 +180,7 @@ spinError		spinErr;
 
 
 	CONSOLE_DEBUG(__FUNCTION__);
+	return(cameraCreatedCount);
 }
 
 //**************************************************************************************
@@ -266,6 +269,10 @@ quickSpin			quickSpinStruct;
 
 	// Initialize camera
 	InitFlirCamera();
+
+
+	cUUID.part5					=	atoi(cDeviceSerialNum);			//*	serial number
+
 
 	strcpy(cCommonProp.Description, cDeviceManufacturer);
 	strcat(cCommonProp.Description, " spinnaker Version");

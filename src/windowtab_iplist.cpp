@@ -47,6 +47,7 @@
 #include	"windowtab_iplist.h"
 
 #include	"controller.h"
+#include	"controller_alpacaUnit.h"
 
 static  int CPUtempSortProc(const void *e1, const void *e2);
 
@@ -101,7 +102,7 @@ int		textBoxHt;
 int		textBoxWd;
 int		widgetWidth;
 int		iii;
-short	widthArray[kMaxTabStops]	=	{150, 100, 100, 63, 63, 63, 63, 63, 420, 0, 0, 0};
+short	widthArray[kMaxTabStops]	=	{150, 100, 100, 63, 63, 63, 63, 63, 325, 200, 0, 0, 0};
 short	tabArray[kMaxTabStops];
 int		clmnHdr_xLoc;
 int		clmnHdrWidth;
@@ -110,6 +111,8 @@ int		graphHeight;
 int		statusMsgWidth;
 int		statusMsgHeight;
 int		tempListWidth;
+int		myButtonWidth;
+
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	for (iii=0; iii<kMaxTabStops; iii++)
@@ -131,44 +134,46 @@ int		tempListWidth;
 
 	//------------------------------------------
 	SetWidget(kIPaddrList_Title,		0,			yLoc,		cWidth,		cTitleHeight);
-	SetWidgetText(kIPaddrList_Title, "AlpacaPi IP address List (This is primarily for debugging)");
+	SetWidgetText(kIPaddrList_Title, "AlpacaPi IP address List");
 	SetBGcolorFromWindowName(kIPaddrList_Title);
 	yLoc			+=	cTitleHeight;
 	yLoc			+=	2;
 
 	//------------------------------------------
-	xLoc	=	5;
-	SetWidget(		kIPaddrList_DiscoveryThrdStatus,		xLoc,		yLoc,	cBtnWidth * 2,	cTitleHeight);
+	xLoc			=	5;
+	myButtonWidth	=	cBtnWidth * 2;
+	SetWidget(		kIPaddrList_DiscoveryThrdStatus,		xLoc,		yLoc,	myButtonWidth,	cTitleHeight);
 	SetWidgetType(	kIPaddrList_DiscoveryThrdStatus,		kWidgetType_TextBox);
 	SetWidgetFont(	kIPaddrList_DiscoveryThrdStatus,		kFont_Medium);
 	SetWidgetText(	kIPaddrList_DiscoveryThrdStatus,		"Status");
-	xLoc	+=	cBtnWidth * 2;
+	xLoc	+=	myButtonWidth;
 	xLoc	+=	2;
 
-	SetWidget(			kIPaddrList_DiscoveryThrdStop,		xLoc,		yLoc,	cBtnWidth,	cTitleHeight);
-	SetWidgetType(		kIPaddrList_DiscoveryThrdStop,		kWidgetType_Button);
-	SetWidgetFont(		kIPaddrList_DiscoveryThrdStop,		kFont_Medium);
-	SetWidgetBGColor(	kIPaddrList_DiscoveryThrdStop,		CV_RGB(255,	255,	255));
+	myButtonWidth	=	cBtnWidth - 8;
+	CONSOLE_DEBUG_W_NUM("cBtnWidth    \t=",	cBtnWidth);
+	CONSOLE_DEBUG_W_NUM("myButtonWidth\t=",	myButtonWidth);
+	iii				=	kIPaddrList_DiscoveryThrdStop;
+	while (iii <= kIPaddrList_DiscoveryReScan)
+	{
+		SetWidget(			iii,		xLoc,	yLoc,	myButtonWidth,	cTitleHeight);
+		SetWidgetType(		iii,		kWidgetType_Button);
+		SetWidgetFont(		iii,		kFont_Medium);
+		SetWidgetBGColor(	iii,		CV_RGB(255,	255,	255));
+		xLoc	+=	myButtonWidth;
+		xLoc	+=	2;
+
+		iii++;
+	}
+	CONSOLE_DEBUG_W_NUM("cWidth    \t=",	cWidth);
+	CONSOLE_DEBUG_W_NUM("xLoc      \t=",	xLoc);
 	SetWidgetText(		kIPaddrList_DiscoveryThrdStop,		"Stop");
-	xLoc	+=	cBtnWidth;
-	xLoc	+=	2;
-
-	SetWidget(			kIPaddrList_DiscoveryThrdReStart,	xLoc,		yLoc,	cBtnWidth,	cTitleHeight);
-	SetWidgetType(		kIPaddrList_DiscoveryThrdReStart,	kWidgetType_Button);
-	SetWidgetFont(		kIPaddrList_DiscoveryThrdReStart,	kFont_Medium);
-	SetWidgetBGColor(	kIPaddrList_DiscoveryThrdReStart,	CV_RGB(255,	255,	255));
 	SetWidgetText(		kIPaddrList_DiscoveryThrdReStart,	"Restart");
-	xLoc	+=	cBtnWidth;
-	xLoc	+=	2;
+	SetWidgetText(		kIPaddrList_DiscoveryClear,			"Clear");
+	SetWidgetText(		kIPaddrList_DiscoveryReScan,		"Re-Scan");
 
-	SetWidget(			kIPaddrList_DiscoveryClear,	xLoc,		yLoc,		cBtnWidth,		cTitleHeight);
-	SetWidgetType(		kIPaddrList_DiscoveryClear,	kWidgetType_Button);
-	SetWidgetFont(		kIPaddrList_DiscoveryClear,	kFont_Medium);
-	SetWidgetBGColor(	kIPaddrList_DiscoveryClear,	CV_RGB(255,	255,	255));
-	SetWidgetText(		kIPaddrList_DiscoveryClear,	"Clear");
-	xLoc			+=	cBtnWidth;
 	statusMsgWidth	=	xLoc;
 	xLoc			+=	2;
+
 
 	yLoc	+=	cTitleHeight;
 	yLoc	+=	2;
@@ -275,13 +280,13 @@ int		tempListWidth;
 	SetWidgetText(		kIPaddrList_ClmTitle7,	"Cpu(F)");
 	SetWidgetText(		kIPaddrList_ClmTitle8,	"Max");
 	SetWidgetText(		kIPaddrList_ClmTitle9,	"Status");
+	SetWidgetText(		kIPaddrList_ClmTitle10,	"TimeStamp");
+
 	yLoc			+=	cRadioBtnHt;
 	yLoc			+=	2;
 	yLoc			+=	6;
 
 	SetWidgetOutlineBox(kIPaddrList_ClmOutline, kIPaddrList_DiscoveryThrdStatus, (kIPaddrList_ClmOutline - 1));
-
-
 
 	//=======================================================
 	xLoc		=	10;
@@ -338,12 +343,17 @@ bool	updateFlag;
 			{
 				SetWidgetText(	kIPaddrList_StatusMsg,	"Discovery thread already running");
 			}
+			WakeUpDiscoveryThread();
 			break;
-
 
 		case kIPaddrList_DiscoveryClear:
 			Discovery_ClearIPAddrList();
 			ClearIPaddrList();
+			WakeUpDiscoveryThread();
+			break;
+
+		case kIPaddrList_DiscoveryReScan:
+			WakeUpDiscoveryThread();
 			break;
 
 		case kIPaddrList_TempModeRaw:
@@ -385,8 +395,22 @@ void	WindowTabIPList::ProcessDoubleClick(const int	widgetIdx,
 											const int	yyy,
 											const int	flags)
 {
+int		deviceIdx;
+
 //	CONSOLE_DEBUG(__FUNCTION__);
-//	CONSOLE_DEBUG_W_NUM("buttonIdx\t=", buttonIdx);
+//	CONSOLE_DEBUG_W_NUM("widgetIdx\t=", widgetIdx);
+
+	deviceIdx	=	cFirstLineIdx + (widgetIdx - kIPaddrList_AlpacaDev_01);
+//	CONSOLE_DEBUG_W_NUM("deviceIdx\t=", deviceIdx);
+
+	if ((deviceIdx >= 0) && (deviceIdx < gAlpacaUnitCnt))
+	{
+		CreateAlpacaUnitWindow(&gAlpacaUnitList[deviceIdx]);
+	}
+	else
+	{
+		CONSOLE_DEBUG("Index out of range");
+	}
 }
 
 //*****************************************************************************
@@ -694,10 +718,22 @@ int		deviceIdx;
 			}
 			else
 			{
+				strcat(textString, "\t");
 				SetWidgetTextColor(		boxId,	CV_RGB(255,	255,	255));
 			}
-			SetWidgetText(boxId, textString);
 
+			//*	add the time stamp string
+			if (strlen(gAlpacaUnitList[deviceIdx].timeStampString) > 0)
+			{
+				strcat(textString, "\t");
+				strcat(textString, gAlpacaUnitList[deviceIdx].timeStampString);
+			}
+//			else
+//			{
+//				strcat(textString, "\tNo time");
+//			}
+
+			SetWidgetText(boxId, textString);
 		}
 		else if (boxId <= kIPaddrList_AlpacaDev_Last)
 		{

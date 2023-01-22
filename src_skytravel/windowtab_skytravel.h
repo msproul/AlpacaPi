@@ -55,7 +55,7 @@ enum
 	kSkyTravel_Btn_Draper,
 	kSkyTravel_Btn_SAO,
 	kSkyTravel_Btn_AAVSOalerts,
-#ifdef _ENABLE_ASTERIODS_
+#ifdef _ENABLE_ASTEROIDS_
 	kSkyTravel_Btn_Asteroids,
 #endif
 #if defined(_ENABLE_REMOTE_GAIA_)
@@ -126,7 +126,7 @@ class WindowTabSkyTravel: public WindowTab
 									const char	*windowName);
 		virtual	~WindowTabSkyTravel(void);
 
-		virtual	void	RunBackgroundTasks(void);
+		virtual	void	RunWindowBackgroundTasks(void);
 #ifdef _USE_OPENCV_CPP_
 		virtual void	DrawWidgetCustomGraphic(cv::Mat *openCV_Image, const int widgetIdx);
 #else
@@ -285,7 +285,7 @@ class WindowTabSkyTravel: public WindowTab
 				void	FindAltAz(		TYPE_LatLon *locptr, TYPE_Time *timeptr);
 				void	Compute_cursor(	TYPE_Time	*timeptr, TYPE_LatLon	*locptr);
 				void	DrawCursorLocationInfo(void);
-				void	FindObjectNearCursor(void);
+				void	FindObjectNearCursor(TYPE_CelestData *returnObject=NULL);
 				bool	GetXYfromRA_Decl(double argRA_radians, double argDecl_radians, short *xx, short *yy);
 				bool	GetXYfromAz_Elev(double azimuth_radians, double elev_radians, short *xx, short *yy);
 

@@ -123,7 +123,7 @@ class WindowTabFOV: public WindowTab
 								const char	*windowName);
 		virtual	~WindowTabFOV(void);
 
-		virtual	void	RunBackgroundTasks(void);
+		virtual	void	RunWindowBackgroundTasks(void);
 		virtual	void	SetupWindowControls(void);
 		virtual	void	ProcessButtonClick(const int buttonIdx, const int flags);
 		virtual	void	ProcessDoubleClick(	const int	widgetIdx,

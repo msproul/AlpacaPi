@@ -456,7 +456,7 @@ void	UpdateCameraData(TYPE_REMOTE_DEV *remoteDevice, TYPE_CameraFOV *cameraDataP
 }
 
 //**************************************************************************************
-void	WindowTabFOV::RunBackgroundTasks(void)
+void	WindowTabFOV::RunWindowBackgroundTasks(void)
 {
 uint32_t			currentMilliSecs;
 uint32_t			deltaMilliSecs;
@@ -485,14 +485,14 @@ int					updateCount;
 				skyTravelController	=	(ControllerSkytravel *)cParentObjPtr;
 				if (skyTravelController != NULL)
 				{
-					CONSOLE_DEBUG("=================================================");
+//					CONSOLE_DEBUG("=================================================");
 
 					cCurrentCamera	=	&cCameraData[iii];
 
 					ReadCameraFOVfile(&cRemoteDeviceList[iii], &cCameraData[iii]);
 
 					inet_ntop(AF_INET, &(cRemoteDeviceList[iii].deviceAddress.sin_addr), ipAddrStr, INET_ADDRSTRLEN);
-					CONSOLE_DEBUG_W_STR(ipAddrStr, cCameraData[iii].CameraName);
+//					CONSOLE_DEBUG_W_STR(ipAddrStr, cCameraData[iii].CameraName);
 					cCameraData[iii].HasReadAll	=	false;
 
 
@@ -505,9 +505,9 @@ int					updateCount;
 
 					if (cCameraData[iii].HasReadAll)
 					{
-						CONSOLE_DEBUG("Camera has READALL!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+//						CONSOLE_DEBUG("Camera has READALL!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 						inet_ntop(AF_INET, &(cRemoteDeviceList[iii].deviceAddress.sin_addr), ipAddrStr, INET_ADDRSTRLEN);
-						CONSOLE_DEBUG_W_STR(ipAddrStr, cCameraData[iii].CameraName);
+//						CONSOLE_DEBUG_W_STR(ipAddrStr, cCameraData[iii].CameraName);
 						validData		=	skyTravelController->AlpacaGetStatus_ReadAll(
 																	&cRemoteDeviceList[iii].deviceAddress,
 																	cRemoteDeviceList[iii].port,
@@ -536,10 +536,10 @@ int					updateCount;
 			}
 			cCurrentCamera		=	NULL;
 		}
-		if (updateCount > 0)
-		{
-			CONSOLE_DEBUG_W_NUM("updateCount\t=", updateCount);
-		}
+//		if (updateCount > 0)
+//		{
+//			CONSOLE_DEBUG_W_NUM("updateCount\t=", updateCount);
+//		}
 
 		cLastUpdateTime_ms	=	currentMilliSecs;
 		if (dataWasUpdated)

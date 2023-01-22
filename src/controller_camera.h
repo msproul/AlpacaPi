@@ -24,7 +24,9 @@
 	#include	"sendrequest_lib.h"
 #endif
 
-
+#ifndef _CAMERA_DEFS_H_
+	#include	"camera_defs.h"
+#endif
 
 
 //**************************************************************************************
@@ -53,6 +55,7 @@ typedef struct
 
 #define	kMaxRemoteFileCnt		200
 #define	kMaxTemperatureValues	(450)
+#define	kObjectNameMaxLen		31
 
 //**************************************************************************************
 class ControllerCamera: public Controller
@@ -83,30 +86,30 @@ class ControllerCamera: public Controller
 
 
 		//*	this is a large list of update routines, they should be implemented in the subclass
-		virtual	void	UpdateCameraGain(const TYPE_ASCOM_STATUS lastAlpacaErr = kASCOM_Err_Success);
-		virtual	void	UpdateCameraOffset(const TYPE_ASCOM_STATUS lastAlpacaErr = kASCOM_Err_Success);
+		//*	alphabetic order just for ease of finding things
+		virtual	void	UpdateBackgroundColor(const int redValue, const int grnValue, const int bluValue);
 		virtual	void	UpdateCameraExposure(void);
+		virtual	void	UpdateCameraGain(const TYPE_ASCOM_STATUS lastAlpacaErr = kASCOM_Err_Success);
 		virtual	void	UpdateCameraName(void);
+		virtual	void	UpdateCameraOffset(const TYPE_ASCOM_STATUS lastAlpacaErr = kASCOM_Err_Success);
 		virtual	void	UpdateCameraSize(void);
 		virtual	void	UpdateCameraState(void);
 		virtual	void	UpdateCameraTemperature(void);
-		virtual	void	UpdatePercentCompleted(void);
-
-		virtual	void	UpdateSupportedActions(void);
-		virtual	void	UpdateReadoutModes(void);
-		virtual	void	UpdateCurrReadoutMode(void);
+		virtual	void	UpdateConnectedStatusIndicator(void);
 		virtual	void	UpdateCoolerState(void);
+		virtual	void	UpdateCurrReadoutMode(void);
 		virtual	void	UpdateDisplayModes(void);
+		virtual	void	UpdateDownloadProgress(const int unitsRead, const int totalUnits);
 		virtual	void	UpdateFlipMode(void);
+		virtual	void	UpdateFreeDiskSpace(const double gigabytesFree);
 		virtual	void	UpdateFilterWheelInfo(void);
 		virtual	void	UpdateFilterWheelPosition(void);
 		virtual	void	UpdateFileNameOptions(void);
+		virtual	void	UpdatePercentCompleted(void);
+		virtual	void	UpdateReadoutModes(void);
 		virtual	void	UpdateReceivedFileName(const char *newFileName);
+		virtual	void	UpdateSupportedActions(void);
 		virtual	void	UpdateRemoteFileList(void);
-		virtual	void	UpdateDownloadProgress(const int unitsRead, const int totalUnits);
-		virtual	void	UpdateBackgroundColor(const int redValue, const int grnValue, const int bluValue);
-		virtual	void	UpdateFreeDiskSpace(const double gigabytesFree);
-		virtual	void	UpdateConnectedStatusIndicator(void);
 
 		//*	sub class specific routines
 		virtual	void	AlpacaProcessSupportedActions(	const char	*deviceTypeStr,
@@ -114,7 +117,8 @@ class ControllerCamera: public Controller
 														const char	*valueString);
 
 				void	SetErrorTextString(const char	*errorString);
-				void	GetConfiguredDevices(void);
+//-				void	GetConfiguredDevices(void);
+		virtual	void	ProcessConfiguredDevices(const char *keyword, const char *valueString);
 		virtual	bool	AlpacaGetStartupData(void);
 				bool	AlpacaGetStartupData_OneAAT(void);
 		virtual	void	AlpacaProcessReadAll(	const char	*deviceTypeStr,
@@ -264,10 +268,7 @@ class ControllerCamera: public Controller
 
 				//==========================================================
 				//*	File name information
-				bool					cFN_includeSerialNum;
-				bool					cFN_includeManuf;
-				bool					cFN_includeFilter;
-				bool					cFN_includeRefID;
+				TYPE_FilenameOptions	cFN;
 
 				//==========================================================
 				//*	filter wheel information

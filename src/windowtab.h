@@ -141,7 +141,7 @@ class WindowTab
 		virtual	~WindowTab(void);
 
 				//*	set up functions
-		virtual	void	RunBackgroundTasks(void);
+		virtual	void	RunWindowBackgroundTasks(void);
 		virtual	void	SetupWindowControls(void);
 //		virtual	void	DrawWindow(void);
 		virtual void	HandleKeyDown(const int keyPressed);
@@ -222,6 +222,7 @@ class WindowTab
 		virtual	void	UpdateSliderValue(		const int widgetIdx, double newSliderValue);
 
 				void	SetWidgetText(			const int widgetIdx, const char *newText);
+				void	SetWidgetAltText(		const int widgetIdx, const char *newText);
 				void	SetWidgetTextPtr(		const int widgetIdx, char *textPtr);
 				void	GetWidgetText(			const int widgetIdx, char *getText);
 				void	SetWidgetTabStops(		const int widgetIdx, const short *tabStopList);
@@ -277,6 +278,12 @@ class WindowTab
 				bool	DisplayButtonHelpText(const int buttonIdx);
 
 
+				void	DrawGraph(	TYPE_WIDGET	*theWidget,
+									const int	numEntries,
+									double		*graphArray,
+									bool		drawCurrentTimeMarker,
+									const		int stepX=1);
+
 		//=============================================================
 		//*	Drawing commands
 		//*	these are the beginning of an abstraction layer to make it easier to
@@ -300,6 +307,8 @@ class WindowTab
 		void		LLD_PenSize(		const int newLineWidth);
 		void		LLD_Putpixel(		const int xx, const int yy, const int theColor);
 		void		LLD_SetColor(		const int theColor);
+		void		LLD_SetColor(		cv::Scalar newColor);
+		cv::Scalar	LLD_GetColor(		const int theColor);
 #ifdef _USE_OPENCV_CPP_
 		cv::Mat		*cOpenCV_Image;
 #else

@@ -67,6 +67,7 @@
 #include	"telescopedriver_Rigel.h"
 #include	"telescopedriver_skywatch.h"
 #include	"telescopedriver_servo.h"
+#include	"telescopedriver_sim.h"
 
 static void	*Telescope_Comm_Thread(void *arg);
 
@@ -86,11 +87,13 @@ void	CreateTelescopeObjects(void)
 	new TelescopeDriverRigel();
 #endif
 
-
 #ifdef _ENABLE_TELESCOPE_SERVO_
 	new TelescopeDriverServo();
 #endif
 
+#ifdef _ENABLE_TELESCOPE_SIMULATOR_
+	CreateTelescopeObjects_Simulator();
+#endif
 }
 
 //**************************************************************************************
@@ -407,7 +410,7 @@ char				linuxErrorStr[256];
 			GetLinuxErrorString(errno, linuxErrorStr);
 			CONSOLE_DEBUG(linuxErrorStr);
 //+			gTelescopeThreadKeepRunning	=	false;
-			cNewTelescopeDataAvailble			=	true;
+			cNewTelescopeDataAvailble	=	true;
 		}
 	}
 	else
@@ -415,6 +418,7 @@ char				linuxErrorStr[256];
 		CONSOLE_DEBUG_W_NUM("socket_desc\t=", socket_desc);
 		CONSOLE_DEBUG_W_NUM("errno\t\t=", errno);
 	}
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, "Exit");
 	return(socket_desc);
 }
 
@@ -436,6 +440,7 @@ int					socket_desc;
 	socket_desc	=	OpenSocket(&deviceAddress, cTCPportNum);
 //	CONSOLE_DEBUG_W_NUM("socket_desc\t=",		socket_desc);
 
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, "Exit");
 	return(socket_desc);
 }
 
@@ -493,6 +498,7 @@ bool		sendOK;
 
 	while (cKeepRunningFlag)
 	{
+		CONSOLE_DEBUG_W_BOOL("cKeepRunningFlag\t=", cKeepRunningFlag);
 		//--------------------------------------------------------
 		//*	this is inside of the while loop so that we can re-open the connection if it drops.
 
@@ -504,14 +510,17 @@ bool		sendOK;
 			case kDevCon_Ethernet:
 				CONSOLE_DEBUG("Calling OpenSocket()");
 				cSocket_desc	=	OpenSocket(cDeviceIPaddress, cTCPportNum);
+				CONSOLE_DEBUG("Returned from OpenSocket()");
 				if (cSocket_desc > 0)
 				{
+					CONSOLE_DEBUG("Connection is open");
 					connectionOpen	=	true;
 				}
 				else
 				{
 					CONSOLE_DEBUG("Failed to open socket");
 				}
+				CONSOLE_DEBUG("!!!!!!!!!!!!!!!!!!!!!!!!!");
 				break;
 
 			case kDevCon_USB:
@@ -540,6 +549,8 @@ bool		sendOK;
 				break;
 		}
 
+		CONSOLE_DEBUG_W_BOOL("connectionOpen  \t=", connectionOpen);
+		CONSOLE_DEBUG_W_BOOL("cKeepRunningFlag\t=", cKeepRunningFlag);
 		//--------------------------------------------------------
 		//*	did we open the connection OK
 		if (connectionOpen)
@@ -550,6 +561,7 @@ bool		sendOK;
 			//*		send on going GET INFO commands
 			//*		parse the info coming back from the telescope
 			//*		update as appropriate
+			CONSOLE_DEBUG_W_BOOL("cKeepRunningFlag\t=", cKeepRunningFlag);
 			errorCount	=	0;
 			while (cKeepRunningFlag)
 			{
@@ -580,6 +592,7 @@ bool		sendOK;
 					break;
 				}
 			}
+			CONSOLE_DEBUG_W_BOOL("cKeepRunningFlag\t=", cKeepRunningFlag);
 			//########################################################
 			//*	close the connection
 			switch(cDeviceConnType)

@@ -25,17 +25,20 @@ class ControllerImage: public Controller
 		// Construction
 		//
 			#ifdef _USE_OPENCV_CPP_
-				ControllerImage(const char	*argWindowName,
-								cv::Mat		*downloadedImage,
-								TYPE_BinaryImageHdr	*binaryImageHdr = NULL);
+				ControllerImage(const char			*argWindowName,
+								cv::Mat				*downloadedImage,
+								TYPE_BinaryImageHdr	*binaryImageHdr);
 			#else
-				ControllerImage(const char	*argWindowName,
-								IplImage	*downloadedImage,
-								TYPE_BinaryImageHdr	*binaryImageHdr = NULL);
+				ControllerImage(const char			*argWindowName,
+								IplImage			*downloadedImage,
+								TYPE_BinaryImageHdr	*binaryImageHdr);
 			#endif
+				ControllerImage(const char			*argWindowName,
+								const char			*imageFilePath);
 
 		virtual	~ControllerImage(void);
 
+				void	InitClassVariables(void);
 
 		virtual	void	SetupWindowControls(void);
 //		virtual	void	ProcessButtonClick(const int buttonIdx);

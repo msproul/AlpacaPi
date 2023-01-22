@@ -435,7 +435,7 @@ void	WindowTabRemoteData::ActivateWindow(void)
 }
 
 //**************************************************************************************
-void WindowTabRemoteData::RunBackgroundTasks(void)
+void WindowTabRemoteData::RunWindowBackgroundTasks(void)
 {
 uint32_t			currentMilliSecs;
 uint32_t			deltaMilliSecs;
@@ -462,6 +462,7 @@ void	WindowTabRemoteData::ProcessButtonClick(const int buttonIdx, const int flag
 	bool				validGaiaData;
 	int					dbNumber;
 	int					databaseCnt;
+	char				errorMessage[256];
 #endif
 
 //	CONSOLE_DEBUG(__FUNCTION__);
@@ -537,15 +538,17 @@ void	WindowTabRemoteData::ProcessButtonClick(const int buttonIdx, const int flag
 		case kRemoteData_GaiaSearchBtn:
 			GetWidgetText(kRemoteData_GaiaSearchField, searchText);
 			CONSOLE_DEBUG_W_STR("Searching GAIA for", searchText);
-			validGaiaData	=	GetSQLdataFromIDnumber(searchText, &sqlStarData);
+			validGaiaData	=	GetSQLdataFromIDnumber(searchText, &sqlStarData, errorMessage);
 			if (validGaiaData)
 			{
-//				CONSOLE_DEBUG("SUCCESS!!!!!");
 				Center_CelestralObject(&sqlStarData);
+				strcpy(gRemoteImageStatusMsg, "");
 			}
 			else
 			{
 				CONSOLE_DEBUG("Gaia object not found!!!!!");
+				CONSOLE_DEBUG(errorMessage);
+				strcpy(gRemoteImageStatusMsg, errorMessage);
 			}
 			break;
 

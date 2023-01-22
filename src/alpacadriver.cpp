@@ -141,13 +141,23 @@
 //*	Oct 14,	2022	<MLS> Added OutputHTML_DriverDocs()
 //*	Oct 14,	2022	<MLS> Added OutputCommadTable()
 //*	Oct 16,	2022	<MLS> Added temperaturelog command
+//*	Nov 29,	2022	<MLS> Lots of work on UUID to make them unique
+//*	Dec  1,	2022	<MLS> Added OutputHTML_Form() for testing
+//*	Dec  1,	2022	<MLS> Added ProcessAlpacaSETUPrequest()
+//*	Dec  2,	2022	<MLS> Added ParseAlpacaRequest()
+//*	Dec  2,	2022	<MLS> Total re-write of Alpaca command parsing code
+//*	Dec  3,	2022	<MLS> Updated all camera drivers to return # of devices created
+//*	Dec  3,	2022	<MLS> Added ipAddressString to AlpacaCallback()
+//*	Dec  7,	2022	<MLS> Added LogRequest()
+//*	Dec 13,	2022	<MLS> Updated ascom/alpaca URL links in SendHtml_MainPage()
+//*	Dec 24,	2022	<MLS> Added User-Agent counts to stats web page
 //*****************************************************************************
 //*	to install code blocks 20
 //*	Step 1: sudo add-apt-repository ppa:codeblocks-devs/release
 //*	Step 2: sudo apt-get update
 //*	Step 3: sudo apt-get install codeblocks codeblocks-contrib
 //*****************************************************************************
-//		getrusage
+//		 getrusage() - get resource usage
 
 #include	<stdio.h>
 #include	<stdlib.h>
@@ -191,14 +201,6 @@
 //#define _DEBUG_CONFORM_
 
 
-int			gAlpacaListenPort			=	kAlpacaPiDefaultPORT;
-uint32_t	gClientID					=	0;
-uint32_t	gClientTransactionID		=	0;
-uint32_t	gServerTransactionID		=	0;		//*	we are the server, we will increment this each time a transaction occurs
-bool		gErrorLogging				=	false;	//*	write errors to log file if true
-bool		gConformLogging				=	false;	//*	log all commands to log file to match up with Conform
-bool		gImageDownloadInProgress	=	false;
-char		gHostName[48]				=	"";
 
 #if defined(_ENABLE_CAMERA_) && defined(_ENABLE_ASI_)
 	#include	"cameradriver_ASI.h"
@@ -320,8 +322,18 @@ bool			gObservatorySettingsOK						=	false;
 const char		gValueString[]								=	"Value";
 char			gDefaultTelescopeRefID[kDefaultRefIdMaxLen]	=	"";
 char			gWebTitle[80]								=	"AlpacaPi";
+char			gFullVersionString[128]						=	"";
+int				gAlpacaListenPort							=	kAlpacaPiDefaultPORT;
+uint32_t		gClientID									=	0;
+uint32_t		gClientTransactionID						=	0;
+uint32_t		gServerTransactionID						=	0;		//*	we are the server, we will increment this each time a transaction occurs
+bool			gErrorLogging								=	false;	//*	write errors to log file if true
+bool			gConformLogging								=	false;	//*	log all commands to log file to match up with Conform
+bool			gImageDownloadInProgress					=	false;
+char			gHostName[48]								=	"";
+char			gUserAgentAlpacaPiStr[80]					=	"";
+int				gUserAgentCounters[kHTTPclient_last];
 
-char				gFullVersionString[128];
 
 #ifdef _ENABLE_BANDWIDTH_LOGGING_
 	int				gTimeUnitsSinceTopOfHour	=	0;
@@ -330,6 +342,10 @@ char				gFullVersionString[128];
 #ifdef _ENABLE_LIVE_CONTROLLER_
 	static void	HandleContollerWindow(AlpacaDriver *alpacaObjPtr);
 #endif // _ENABLE_LIVE_CONTROLLER_
+
+
+static void	OutputHTML_Form(TYPE_GetPutRequestData *reqData);
+
 
 //*****************************************************************************
 static void	InitDeviceList(void)
@@ -434,11 +450,11 @@ int		iii;
 	cTotalBytesRcvd				=	0;
 	cTotalBytesSent				=	0;
 
-	cUniqueID.part1				=	'ALPA';				//*	4 byte manufacturer code
-	cUniqueID.part2				=	kBuildNumber;		//*	software version number
-	cUniqueID.part3				=	1;					//*	model number
-	cUniqueID.part4				=	0;
-	cUniqueID.part5				=	0;					//*	serial number
+	cUUID.part1					=	'ALPA';				//*	4 byte manufacturer code
+	cUUID.part2					=	kBuildNumber;		//*	software version number
+	cUUID.part3					=	1;					//*	model number
+	cUUID.part4					=	gDeviceCnt;
+	cUUID.part5					=	random();			//*	serial number
 
 	//========================================
 	//*	discovery stuff
@@ -463,6 +479,11 @@ int		iii;
 	cAccumilatedNanoSecs		=	0;
 	cTotalNanoSeconds			=	0;
 	cTotalMilliSeconds			=	0;
+
+	//========================================
+	//*	Setup support
+	cDriverSupportsSetup		=	false;
+
 
 	//========================================
 	//*	Temperature logging
@@ -549,6 +570,7 @@ uint32_t			currentMilliSecs;
 uint32_t			deltaMilliSecs;
 int32_t				delayMicroSeconds;
 
+
 	//*	5 * 1000 * 1000 means you might not get called again for 5 seconds
 	//*	you might get called earlier
 	delayMicroSeconds	=	5 *1000 * 1000;
@@ -581,12 +603,11 @@ TYPE_ASCOM_STATUS	AlpacaDriver::ProcessCommand(TYPE_GetPutRequestData *reqData)
 {
 TYPE_ASCOM_STATUS		alpacaErrCode;
 
-	CONSOLE_DEBUG("We should not be here, this routine needs to be over-ridden");
 	//*	do nothing, this routine should be overridden
+	CONSOLE_DEBUG_W_STR("We should not be here, this routine needs to be over-ridden:", cAlpacaName);
 	alpacaErrCode	=	kASCOM_Err_NotImplemented;
 
 	return(alpacaErrCode);
-
 }
 
 //**************************************************************************************
@@ -681,13 +702,15 @@ int					mySocket;
 			CONSOLE_DEBUG_W_STR("deviceCommand\t=", reqData->deviceCommand);
 
 			strcpy(reqData->alpacaErrMsg, alpacaErrMsg);
+			DumpRequestStructure(__FUNCTION__, reqData);
+//			CONSOLE_ABORT(__FUNCTION__);
 			break;
 	}
 	return(alpacaErrCode);
 }
 
 //*****************************************************************************
-TYPE_ASCOM_STATUS	AlpacaDriver::Get_Connected(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
+TYPE_ASCOM_STATUS	AlpacaDriver::Get_Connected(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
 {
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 
@@ -709,12 +732,12 @@ bool				foundKeyWord;
 bool				connectFlag;
 char				argumentString[32];
 
-	CONSOLE_DEBUG(__FUNCTION__);
-
+//	CONSOLE_DEBUG(__FUNCTION__);
 	foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
 											"Connected",
 											argumentString,
 											(sizeof(argumentString) -1));
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, argumentString);
 	if (foundKeyWord)
 	{
 		connectFlag	=	IsTrueFalse(argumentString);
@@ -1194,19 +1217,30 @@ void	AlpacaDriver::OutputCommadTable(int mySocketFD, const char *title, const TY
 int		iii;
 char	lineBuff[512];
 char	cmdArgumentStr[256];
+bool	useAlternateColor;
+bool	foundArgFlag;
 
+	useAlternateColor	=	false;
 	sprintf(lineBuff,	"<TR><TD COLSPAN=4><B><CENTER>%s</B></TD></TR>", title);
 	SocketWriteData(mySocketFD,	lineBuff);
-	iii=	0;
+	iii	=	0;
 	while (commandTable[iii].enumValue >= 0)
 	{
 		if (commandTable[iii].commandName[0] == '-')
 		{
 			SocketWriteData(mySocketFD,	"<TR><TD COLSPAN=4><HR></TD></TR>\r\n");
+			useAlternateColor	=	true;
 		}
 		else
 		{
-			sprintf(lineBuff,	"<TR><TD>%s</TD>",	commandTable[iii].commandName);
+			if (useAlternateColor)
+			{
+				sprintf(lineBuff,	"<TR><TD><FONT COLOR=#ff00ff>%s</TD>",	commandTable[iii].commandName);
+			}
+			else
+			{
+				sprintf(lineBuff,	"<TR><TD>%s</TD>",	commandTable[iii].commandName);
+			}
 			SocketWriteData(mySocketFD,	lineBuff);
 			if ((commandTable[iii].get_put == kCmdType_GET) || (commandTable[iii].get_put == kCmdType_BOTH))
 			{
@@ -1225,7 +1259,11 @@ char	cmdArgumentStr[256];
 				SocketWriteData(mySocketFD,	"<TD></TD>");
 			}
 
-			GetCommandArgumentString(commandTable[iii].enumValue, cmdArgumentStr);
+			foundArgFlag	=	GetCommandArgumentString(commandTable[iii].enumValue, cmdArgumentStr);
+			if (foundArgFlag == false)
+			{
+				AlpacaDriver::GetCommandArgumentString(commandTable[iii].enumValue, cmdArgumentStr);
+			}
 			sprintf(lineBuff,	"<TD>%s</TD>",	cmdArgumentStr);
 			SocketWriteData(mySocketFD,	lineBuff);
 
@@ -1238,16 +1276,52 @@ char	cmdArgumentStr[256];
 //*****************************************************************************
 //*	the purpose of this routine is for self documenting code
 //*	it should return the parameter options for the command specified
+//*
+//*	return TRUE if found, false otherwise
 //*****************************************************************************
-void	AlpacaDriver::GetCommandArgumentString(const int cmdENum, char *agumentString)
+bool	AlpacaDriver::GetCommandArgumentString(const int cmdENum, char *agumentString)
 {
+bool	foundFlag	=	true;
+
 	//*	this needs to be over-ridden
-	strcpy(agumentString, "");
+	switch(cmdENum)
+	{
+		case kCmd_Common_action:					//*	Invokes the specified device-specific action.
+		case kCmd_Common_commandblind:				//*	Transmits an arbitrary string to the device
+		case kCmd_Common_commandbool:				//*	Transmits an arbitrary string to the device and returns a boolean value from the device.
+		case kCmd_Common_commandstring:				//*	Transmits an arbitrary string to the device and returns a string value from the device.
+		case kCmd_Common_connected:					//*	GET--Retrieves the connected state of the device
+		case kCmd_Common_description:				//*	Device description
+		case kCmd_Common_driverinfo:				//*	Device driver description
+		case kCmd_Common_driverversion:				//*	Driver Version
+		case kCmd_Common_interfaceversion:			//*	The ASCOM Device interface version number that this device supports.
+		case kCmd_Common_name:						//*	Device name
+		case kCmd_Common_supportedactions:			//*	Returns the list of action names supported by this driver.
+			strcpy(agumentString, "");
+			break;
+
+#ifdef _INCLUDE_EXIT_COMMAND_
+		case kCmd_Common_exit:						strcpy(agumentString, "-none-, causes driver to terminate");	break;
+#endif
+		case kCmd_Common_Extras:
+		case kCmd_Common_LiveWindow:				strcpy(agumentString, "Live=BOOL");	break;
+
+		case kCmd_Common_TemperatureLog:
+			strcpy(agumentString, "returns 24 hour temperature log (24 * 60) entries");	break;
+			break;
+
+		default:
+			strcpy(agumentString, "");
+			foundFlag	=	false;
+			break;
+	}
+	return(foundFlag);
 }
 
 //*****************************************************************************
 //*	the purpose of this routine is to provide self documenting code
 //*	in the form of a command table for the device type
+//*****************************************************************************
 void	AlpacaDriver::OutputHTML_DriverDocs(TYPE_GetPutRequestData *reqData)
 {
 int		mySocketFD;
@@ -1615,29 +1689,26 @@ int		bytesWritten;
 	return(bytesWritten);
 }
 
-
-
-//*****************************************************************************
-static void	StrcpyToEOL(char *newString, const char *oldString, const int maxLen)
-{
-int		ii;
-
-	ii	=	0;
-	while ((oldString[ii] >= 0x20) && (ii < maxLen))
-	{
-		newString[ii]	=	oldString[ii];
-		ii++;
-	}
-	if (ii < maxLen)
-	{
-		newString[ii]	=	0;
-	}
-	else
-	{
-		newString[maxLen-1]	=	0;
-	}
-
-}
+////*****************************************************************************
+//static void	StrcpyToEOL(char *newString, const char *oldString, const int maxLen)
+//{
+//int		ii;
+//
+//	ii	=	0;
+//	while ((oldString[ii] >= 0x20) && (ii < maxLen))
+//	{
+//		newString[ii]	=	oldString[ii];
+//		ii++;
+//	}
+//	if (ii < maxLen)
+//	{
+//		newString[ii]	=	0;
+//	}
+//	else
+//	{
+//		newString[maxLen-1]	=	0;
+//	}
+//}
 
 //*****************************************************************************
 void	GetTimeString(char *timeString)
@@ -1689,6 +1760,7 @@ const char	gHtmlHeader[]	=
 	"HTTP/1.0 200 \r\n"
 //	"Server: alpaca\r\n"
 //	"Mime-Version: 1.0\r\n"
+	"User-Agent: AlpacaPi\r\n"
 	"Content-Type: text/html\r\n"
 	"Connection: close\r\n"
 	"\r\n"
@@ -1722,8 +1794,66 @@ const char	gHtmlNightMode[]	=
 };
 
 #pragma mark -
+
 //*****************************************************************************
-static void	SendHtmlResponse(TYPE_GetPutRequestData *reqData)
+static void	SendHtml_TopLevel(TYPE_GetPutRequestData *reqData)
+{
+char	lineBuffer[256];
+int		mySocketFD;
+
+		mySocketFD	=	reqData->socket;
+
+		SocketWriteData(mySocketFD,	gHtmlHeader);
+
+		sprintf(lineBuffer, "<TITLE>%s-%s</TITLE>\r\n", kApplicationName, kVersionString);
+		SocketWriteData(mySocketFD,	lineBuffer);
+		SocketWriteData(mySocketFD,	gHtmlNightMode);
+
+		SocketWriteData(mySocketFD,	"</HEAD><BODY>\r\n<CENTER>\r\n");
+		sprintf(lineBuffer, "<H1>%s<BR>%s Build #%d </H1>\r\n", kApplicationName, kVersionString, kBuildNumber);
+		SocketWriteData(mySocketFD,	lineBuffer);
+
+		SocketWriteData(mySocketFD,	"</CENTER>\r\n");
+
+		SocketWriteData(mySocketFD,	"<FONT SIZE=30>\r\n");
+		SocketWriteData(mySocketFD,	"<UL>\r\n");
+
+		SocketWriteData(mySocketFD,	"<LI><A HREF=setup>AlpacaPi Settings for this server</A>\r\n");
+		SocketWriteData(mySocketFD,	"<P>\r\n");
+
+		SocketWriteData(mySocketFD,	"<LI><A HREF=https://msproul.github.io/AlpacaPi/ target=github>AlpacaPi Documentation on github</A>\r\n");
+
+		SocketWriteData(mySocketFD,	"<LI><A HREF=https://github.com/msproul/AlpacaPi target=github>Download AlpacaPi from github</A>\r\n");
+
+
+
+		SocketWriteData(mySocketFD,	"</UL>\r\n");
+		SocketWriteData(mySocketFD,	"</FONT>\r\n");
+
+		SocketWriteData(mySocketFD,	"<P>\r\n");
+
+		sprintf(lineBuffer, "Your IP address is %s\r\n", reqData->clientIPaddr);
+		SocketWriteData(mySocketFD,	lineBuffer);
+}
+
+
+//*****************************************************************************
+static const char	*gURLlist[]	=
+{
+		"https://ascom-standards.org/AlpacaDeveloper/Index.htm",
+		"https://ascom-standards.org/api/",
+		"https://astronomy-imaging-camera.com/software-drivers",
+
+//		"https://agenaastro.com/zwo-astronomy-cameras-buyers-guide.html",
+//		"https://agenaastro.com/articles/guides/zwo-buyers-guide.html",
+		"https://agenaastro.com/articles/zwo-astronomy-cameras-buyers-guide.html",
+
+
+		""
+};
+
+//*****************************************************************************
+static void	SendHtml_MainPage(TYPE_GetPutRequestData *reqData)
 {
 char	lineBuffer[256];
 char	separaterLine[]	=	"<HR SIZE=4 COLOR=RED>\r\n";
@@ -1765,7 +1895,7 @@ int		iii;
 		SocketWriteData(mySocketFD,	"ROR support is enabled<BR>\r\n");
 	#endif
 
-#if defined(_ENABLE_FILTERWHEEL_) || defined(_ENABLE_FILTERWHEEL_ZWO_) || defined(_ENABLE_FILTERWHEEL_ATIK_)
+	#if defined(_ENABLE_FILTERWHEEL_) || defined(_ENABLE_FILTERWHEEL_ZWO_) || defined(_ENABLE_FILTERWHEEL_ATIK_)
 		SocketWriteData(mySocketFD,	"Filterwheel support is enabled<BR>\r\n");
 	#endif
 
@@ -1815,6 +1945,7 @@ int		iii;
 		SocketWriteData(mySocketFD,	"<TABLE BORDER=2>\r\n");
 		//*	do the header row
 		SocketWriteData(mySocketFD,	"\t<TR>\r\n");
+		SocketWriteData(mySocketFD,	"\t\t<TH><FONT COLOR=yellow>Setup</TH>\r\n");
 		SocketWriteData(mySocketFD,	"\t\t<TH><FONT COLOR=yellow>Device Type</TH>\r\n");
 		SocketWriteData(mySocketFD,	"\t\t<TH><FONT COLOR=yellow>Device Number</TH>\r\n");
 		SocketWriteData(mySocketFD,	"\t\t<TH><FONT COLOR=yellow>Device Name</TH>\r\n");
@@ -1829,6 +1960,21 @@ int		iii;
 			if (gAlpacaDeviceList[iii] != NULL)
 			{
 				SocketWriteData(mySocketFD,	"\t<TR>\r\n");
+
+				//*	is SETUP supported
+				SocketWriteData(mySocketFD,	"\t\t<TD>\r\n");
+				if (gAlpacaDeviceList[iii]->cDriverSupportsSetup)
+				{
+					//*	https://ascom-standards.org/api/?urls.primaryName=ASCOM%20Alpaca%20Management%20API#/
+					//*		/setup/v1/{device_type}/{device_number}/setup
+
+					sprintf(lineBuffer,	"<A HREF=/setup/v1/%s/%d/setup target=%s>Setup</A>",
+												gAlpacaDeviceList[iii]->cAlpacaName,
+												gAlpacaDeviceList[iii]->cDeviceNum,
+												gAlpacaDeviceList[iii]->cAlpacaName);
+					SocketWriteData(mySocketFD,	lineBuffer);
+				}
+				SocketWriteData(mySocketFD,	"\t\t</TD>\r\n");
 
 				SocketWriteData(mySocketFD,	"\t\t<TD>\r\n");
 					SocketWriteData(mySocketFD,	gAlpacaDeviceList[iii]->cAlpacaName);
@@ -2037,13 +2183,15 @@ int		iii;
 		SocketWriteData(mySocketFD,	"<H3>Links</H3>\r\n");
 		SocketWriteData(mySocketFD,	"<UL>\r\n");
 
-		SocketWriteData(mySocketFD,	"\t<LI><A HREF=https://ascom-standards.org/Developer/Alpaca.htm target=link>https://ascom-standards.org/Developer/Alpaca.htm</A>\r\n");
-		SocketWriteData(mySocketFD,	"\t<LI><A HREF=https://ascom-standards.org/api/ target=link>https://ascom-standards.org/api/</A>\r\n");
-//		SocketWriteData(mySocketFD,	"\t<LI><A HREF=https://agenaastro.com/zwo-astronomy-cameras-buyers-guide.html target=link>https://agenaastro.com/zwo-astronomy-cameras-buyers-guide.html</A>\r\n");
-		SocketWriteData(mySocketFD,	"\t<LI><A HREF=https://agenaastro.com/articles/zwo-astronomy-cameras-buyers-guide.html target=link>https://agenaastro.com/articles/zwo-astronomy-cameras-buyers-guide.html</A>\r\n");
-//		SocketWriteData(mySocketFD,	"\t<LI><A HREF=https://agenaastro.com/articles/guides/zwo-buyers-guide.html target=link>https://agenaastro.com/articles/guides/zwo-buyers-guide.html</A>\r\n");
-
-		SocketWriteData(mySocketFD,	"\t<LI><A HREF=https://astronomy-imaging-camera.com/software-drivers target=link>https://astronomy-imaging-camera.com/software-drivers</A>\r\n");
+		//*	print out the list of URLS
+		iii	=	0;
+		while (strlen(gURLlist[iii]) > 0)
+		{
+			sprintf(lineBuffer,	"\t<LI><A HREF=%s target=link>%s</A>\r\n",	gURLlist[iii], gURLlist[iii]);
+			SocketWriteData(mySocketFD,	lineBuffer);
+//			CONSOLE_DEBUG(lineBuffer);
+			iii++;
+		}
 
 		SocketWriteData(mySocketFD,	"</UL>\r\n");
 
@@ -2052,8 +2200,8 @@ int		iii;
 		SocketWriteData(mySocketFD,	"Compiled on ");
 		SocketWriteData(mySocketFD,	__DATE__);
 		SocketWriteData(mySocketFD,	"\r\n<BR>");
-		SocketWriteData(mySocketFD,	"C++ version\r\n<BR>");
-		SocketWriteData(mySocketFD,	"(C) 2019-2022 by Mark Sproul msproul@skychariot.com\r\n<BR>");
+		SocketWriteData(mySocketFD,	"Written in C/C++\r\n<BR>");
+		SocketWriteData(mySocketFD,	"(C) 2019-2023 by Mark Sproul msproul@skychariot.com\r\n<BR>");
 
 		SocketWriteData(mySocketFD,	"</BODY></HTML>\r\n");
 	}
@@ -2063,6 +2211,19 @@ int		iii;
 	}
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, "Exit");
 }
+
+//*****************************************************************************
+const char	*gUserAgentNames[]	=
+{
+	"NotSpecified",
+	"AlpacaPi",
+	"ASCOM_RestSharp",
+	"ConfomU",
+	"Curl",
+	"Mozilla",
+	"NotRecognized"
+};
+
 
 //*****************************************************************************
 static void	SendHtmlStats(TYPE_GetPutRequestData *reqData)
@@ -2086,6 +2247,22 @@ int		iii;
 		SocketWriteData(mySocketFD,	"</CENTER>\r\n");
 
 		OutPutObservatoryInfoHTML(mySocketFD);
+
+		//====================================================
+		//*	output the request counts by user agent
+		SocketWriteData(mySocketFD,	"<CENTER>\r\n");
+		SocketWriteData(mySocketFD,	"<H3>Requests by User-Agent</H3>\r\n");
+		SocketWriteData(mySocketFD,	"<TABLE BORDER=1>\r\n");
+		for (iii=0; iii<kHTTPclient_last; iii++)
+		{
+			SocketWriteData(mySocketFD,	"<TR>\r\n");
+			sprintf(lineBuffer, "<TD>%s</TD><TD>%d</TD>", gUserAgentNames[iii], gUserAgentCounters[iii]);
+			SocketWriteData(mySocketFD,	lineBuffer);
+			SocketWriteData(mySocketFD,	"</TR>\r\n");
+		}
+		SocketWriteData(mySocketFD,	"</TABLE>\r\n");
+		SocketWriteData(mySocketFD,	"</CENTER>\r\n");
+
 
 		for (iii=0; iii<gDeviceCnt; iii++)
 		{
@@ -2113,6 +2290,20 @@ int		iii;
 }
 
 //*****************************************************************************
+static char	gDocsIntro[]	=
+{
+	"<P>\r\n"
+	"This page documents the arguments for the Alpaca commands.\r\n"
+	"The purpose of this page is to document the extra stuff that I have added to Alpaca in AlpacaPi.\r\n"
+	"Most of the standard commands are not documented here because full documentation can be found on the Alpaca/ASCOM web site.\r\n"
+	"Commands that are <FONT COlOR=#ff00ff>magenta</FONT COLOR> are the ones that have been added and\r\n"
+	"are not part of the Alpaca standard definition.\r\n"
+//	"foo\r\n"
+//	"foo\r\n"
+	"<P>\r\n"
+};
+
+//*****************************************************************************
 static void	OutputHTML_DriverDocs(TYPE_GetPutRequestData *reqData)
 {
 char	lineBuffer[256];
@@ -2133,6 +2324,8 @@ int		iii;
 		SocketWriteData(mySocketFD,	"</CENTER>\r\n");
 
 		OutPutObservatoryInfoHTML(mySocketFD);
+
+		SocketWriteData(mySocketFD,	gDocsIntro);
 
 		for (iii=0; iii<gDeviceCnt; iii++)
 		{
@@ -2214,7 +2407,7 @@ const char	gJpegHeader[]	=
 };
 
 //*****************************************************************************
-static void	SendJpegResponse(int socket, char *jpegFileName)
+static void	SendJpegResponse(int socket, const char *jpegFileName)
 {
 FILE			*filePointer;
 int				numRead;
@@ -2233,7 +2426,7 @@ char			*myFilenamePtr;
 	{
 //		CONSOLE_DEBUG_W_STR("jpegFileName=", jpegFileName);
 
-		myFilenamePtr	=	jpegFileName;
+		myFilenamePtr	=	(char *)jpegFileName;
 		if (*myFilenamePtr == '/')
 		{
 			myFilenamePtr++;
@@ -2296,240 +2489,86 @@ char			*myFilenamePtr;
 
 //*****************************************************************************
 static TYPE_ASCOM_STATUS	ProcessAlpacaAPIrequest(TYPE_GetPutRequestData	*reqData,
-													char					*parseChrPtr,
 													long					byteCount)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
-//int				alpacaVerNum;
 int					deviceTypeEnum;
-int					cc;
 int					iii;
-int					slen;
-int					cmdBuffLen;
-char				deviceStringBuffer[kDevStrLen];
-char				*slashPtr;
-char				*httpPtr;
 bool				deviceFound;
-char				argumentString[64];
-bool				foundKeyWord;
 
-#ifdef _DEBUG_CONFORM_
-//	CONSOLE_DEBUG("/api/ found");
-//	CONSOLE_DEBUG_W_STR("parseChrPtr\t=", parseChrPtr);
-#endif // _DEBUG_CONFORM_
+//	CONSOLE_DEBUG(__FUNCTION__);
+//	DumpRequestStructure(__FUNCTION__, reqData);
 
-	deviceTypeEnum	=	-1;
-	//*	so far so good, now get the version
-	parseChrPtr	+=	5;
-	if (*parseChrPtr == 'v')
+	//*******************************************
+	//*	now do something with the data
+	deviceTypeEnum	=	FindDeviceTypeByString(reqData->deviceType);
+	deviceFound		=	false;
+	for (iii=0; iii<gDeviceCnt; iii++)
 	{
-		parseChrPtr++;
-	}
-	if (isdigit(*parseChrPtr))
-	{
-//		alpacaVerNum	=	atoi(parseChrPtr);
-//		CONSOLE_DEBUG_W_NUM("Alpaca version\t=", alpacaVerNum);
-
-		//*	now skip over the version number
-		while ((*parseChrPtr != '/') && (*parseChrPtr > 0))
+		if (gAlpacaDeviceList[iii] != NULL)
 		{
-			parseChrPtr++;
-		}
-		if (*parseChrPtr == '/')
-		{
-			parseChrPtr++;
-		}
+		#ifdef _DEBUG_CONFORM_
+		//	CONSOLE_DEBUG_W_NUM("gAlpacaDeviceList[iii]->cDeviceType\t=", gAlpacaDeviceList[iii]->cDeviceType);
+		//	CONSOLE_DEBUG_W_NUM("gAlpacaDeviceList[iii]->cDeviceNum\t=", gAlpacaDeviceList[iii]->cDeviceNum);
+		#endif // _DEBUG_CONFORM_
 
-		//*	we should now be to what really matters
-#ifdef _DEBUG_CONFORM_
-		CONSOLE_DEBUG_W_STR("Device data=", parseChrPtr);
-#endif // _DEBUG_CONFORM_
-		cc	=	0;
-		while ((*parseChrPtr >= 0x20) && (cc < kDevStrLen))
-		{
-			deviceStringBuffer[cc++]	=	*parseChrPtr;
-			deviceStringBuffer[cc]		=	0;
-
-			parseChrPtr++;
-		}
-
-		strncpy(reqData->deviceType, deviceStringBuffer, 60);
-		reqData->deviceType[59]	=	0;
-		slashPtr	=	strchr(reqData->deviceType, '/');
-		if (slashPtr != NULL)
-		{
-			*slashPtr	=	0;
-		}
-
-
-		//*	now get the device number
-		slashPtr	=	strchr(deviceStringBuffer, '/');
-		if (slashPtr != NULL)
-		{
-			slashPtr++;
-			reqData->deviceNumber	=	atoi(slashPtr);
-
-			//*	now skip the device number
-			while (isdigit(*slashPtr))
+			if ((gAlpacaDeviceList[iii]->cDeviceType == deviceTypeEnum) &&
+				(gAlpacaDeviceList[iii]->cDeviceNum == reqData->deviceNumber))
 			{
-				slashPtr++;
-			}
-			if (*slashPtr == '/')
-			{
-				slashPtr++;
-			}
-			StrcpyToEOL(reqData->cmdBuffer, slashPtr, kDevStrLen);
-			httpPtr	=	strstr(reqData->cmdBuffer, "HTTP");
-			if (httpPtr != NULL)
-			{
-				*httpPtr	=	0;
-				httpPtr--;
-				while (*httpPtr <= 0x20)
+				deviceFound		=	true;
+
+				gAlpacaDeviceList[iii]->cBytesWrittenForThisCmd	=	0;
+				gAlpacaDeviceList[iii]->cHttpHeaderSent			=	false;
+
+
+//				CONSOLE_DEBUG("Calling ProcessCommand() ---------------------------------------------");
+//				CONSOLE_DEBUG_W_STR("cAlpacaName         \t=",	gAlpacaDeviceList[iii]->cAlpacaName);
+//				CONSOLE_DEBUG_W_STR("deviceCommand       \t=",	reqData->deviceCommand);
+				alpacaErrCode	=	gAlpacaDeviceList[iii]->ProcessCommand(reqData);
+				if (alpacaErrCode == kASCOM_Err_Success)
 				{
-					*httpPtr	=	0;
-					httpPtr--;
+					//*	record the time of the last successful command
+					//*	this is for watch dog timing
+					gAlpacaDeviceList[iii]->cTimeOfLastValidCmd	=	time(NULL);
 				}
-			}
-
-			//*	check the command string make sure its terminated properly
-			slen	=	strlen(reqData->cmdBuffer);
-			for (iii=0; iii<slen; iii++)
-			{
-				if ((reqData->cmdBuffer[iii] == '%') || (reqData->cmdBuffer[iii] == '"'))
+				else
 				{
-					reqData->cmdBuffer[iii]	=	0;
-					break;
+					gAlpacaDeviceList[iii]->cTotalCmdErrors++;
 				}
-			}
-		}
+				gAlpacaDeviceList[iii]->cTotalCmdsProcessed++;
+				gAlpacaDeviceList[iii]->cTotalBytesRcvd	+=	byteCount;
 
-#ifdef _DEBUG_CONFORM_
-		CONSOLE_DEBUG_W_STR("Device type\t=",	reqData->deviceType);
-//		DumpRequestStructure(__FUNCTION__, reqData);
-#endif // _DEBUG_CONFORM_
-
-		//	curl -X PUT "https://virtserver.swaggerhub.com/ASCOMInitiative/api/v1/camera/0/cooleron"
-		//			-H  "accept: application/json"
-		//			-H  "Content-Type: application/x-www-form-urlencoded"
-		//			-d "CoolerOn=true&ClientID=223&ClientTransactionID=45"
-		//	filterwheel/0/interfaceversion?ClientTransactionID=2&ClientID=12498 HTTP/1.1
-
-		//*	Check for client ID
-		foundKeyWord	=	GetKeyWordArgument(reqData->contentData, "ClientID", argumentString, 31);
-		if (foundKeyWord)
-		{
-			gClientID	=	atoi(argumentString);
-		}
-#ifdef _DEBUG_CONFORM_
-		else
-		{
-//			CONSOLE_DEBUG("gClientID NOT FOUND");
-		}
-#endif // _DEBUG_CONFORM_
-
-		//*	Check for ClientTransactionID
-		foundKeyWord	=	GetKeyWordArgument(reqData->contentData, "ClientTransactionID", argumentString, 31);
-		if (foundKeyWord)
-		{
-			gClientTransactionID	=	atoi(argumentString);
-		}
-#ifdef _DEBUG_CONFORM_
-		else
-		{
-//			CONSOLE_DEBUG("gClientTransactionID NOT FOUND");
-		}
-		CONSOLE_DEBUG_W_NUM("gClientID\t=", gClientID);
-		CONSOLE_DEBUG_W_NUM("gClientTransactionID\t=", gClientTransactionID);
-
-#endif // _DEBUG_CONFORM_
-
-
-		//*	extract out the command itself for easier processing by the handlers
-		cmdBuffLen		=	strlen(reqData->cmdBuffer);
-		cc				=	0;
-		while (	(reqData->cmdBuffer[cc] > 0x20) &&
-				(reqData->cmdBuffer[cc] != '&') &&
-				(reqData->cmdBuffer[cc] != '?') &&
-				(cc < cmdBuffLen ))
-		{
-			reqData->deviceCommand[cc]	=	reqData->cmdBuffer[cc];
-			cc++;
-			reqData->deviceCommand[cc]	=	0;
-		}
-
-		//*******************************************
-		//*	now do something with the data
-		deviceTypeEnum	=	FindDeviceTypeByString(reqData->deviceType);
-		deviceFound	=	false;
-		for (iii=0; iii<gDeviceCnt; iii++)
-		{
-			if (gAlpacaDeviceList[iii] != NULL)
-			{
-			#ifdef _DEBUG_CONFORM_
-			//	CONSOLE_DEBUG_W_NUM("gAlpacaDeviceList[iii]->cDeviceType\t=", gAlpacaDeviceList[iii]->cDeviceType);
-			//	CONSOLE_DEBUG_W_NUM("gAlpacaDeviceList[iii]->cDeviceNum\t=", gAlpacaDeviceList[iii]->cDeviceNum);
-			#endif // _DEBUG_CONFORM_
-
-				if ((gAlpacaDeviceList[iii]->cDeviceType == deviceTypeEnum) &&
-					(gAlpacaDeviceList[iii]->cDeviceNum == reqData->deviceNumber))
+				reqData->alpacaErrCode	=	alpacaErrCode;
+				//*	are we conform logging
+				if (gConformLogging)
 				{
-					deviceFound		=	true;
-
-					gAlpacaDeviceList[iii]->cBytesWrittenForThisCmd	=	0;
-					gAlpacaDeviceList[iii]->cHttpHeaderSent			=	false;
-					alpacaErrCode	=	gAlpacaDeviceList[iii]->ProcessCommand(reqData);
-					if (alpacaErrCode == kASCOM_Err_Success)
-					{
-						//*	record the time of the last successful command
-						//*	this is for watch dog timing
-						gAlpacaDeviceList[iii]->cTimeOfLastValidCmd	=	time(NULL);
-					}
-					else
-					{
-						gAlpacaDeviceList[iii]->cTotalCmdErrors++;
-					}
-					gAlpacaDeviceList[iii]->cTotalCmdsProcessed++;
-					gAlpacaDeviceList[iii]->cTotalBytesRcvd	+=	byteCount;
-
-					reqData->alpacaErrCode	=	alpacaErrCode;
-					//*	are we conform logging
-					if (gConformLogging)
-					{
-						LogToDisk(kLog_Conform, reqData);
-					}
-					//*	are we error loggin
-					if ((alpacaErrCode != 0) && gErrorLogging)
-					{
-						LogToDisk(kLog_Error, reqData);
-					}
+					LogToDisk(kLog_Conform, reqData);
+				}
+				//*	are we error logging
+				if ((alpacaErrCode != 0) && gErrorLogging)
+				{
+					LogToDisk(kLog_Error, reqData);
+				}
 #ifdef _ENABLE_BANDWIDTH_LOGGING_
-					//*	this is for network stats
-					if (gTimeUnitsSinceTopOfHour < kMaxBandWidthSamples)
-					{
-						gAlpacaDeviceList[iii]->cBW_CmdsReceived[gTimeUnitsSinceTopOfHour]	+=	1;
-						gAlpacaDeviceList[iii]->cBW_BytesReceived[gTimeUnitsSinceTopOfHour]	+=	byteCount;
-						gAlpacaDeviceList[iii]->cBW_BytesSent[gTimeUnitsSinceTopOfHour]		+=	gAlpacaDeviceList[iii]->cBytesWrittenForThisCmd;
-					}
+				//*	this is for network stats
+				if (gTimeUnitsSinceTopOfHour < kMaxBandWidthSamples)
+				{
+					gAlpacaDeviceList[iii]->cBW_CmdsReceived[gTimeUnitsSinceTopOfHour]	+=	1;
+					gAlpacaDeviceList[iii]->cBW_BytesReceived[gTimeUnitsSinceTopOfHour]	+=	byteCount;
+					gAlpacaDeviceList[iii]->cBW_BytesSent[gTimeUnitsSinceTopOfHour]		+=	gAlpacaDeviceList[iii]->cBytesWrittenForThisCmd;
+				}
 #endif // _ENABLE_BANDWIDTH_LOGGING_
 
-					break;
-				}
+				break;
 			}
 		}
-
-		if (deviceFound == false)
-		{
-			CONSOLE_DEBUG_W_STR("Device not found: Device type\t=", reqData->deviceType);
-			SocketWriteData(reqData->socket,	gBadResponse400);
-			alpacaErrCode	=	kASCOM_Err_NotImplemented;
-		}
 	}
-	else
+
+	if (deviceFound == false)
 	{
-#ifdef _DEBUG_CONFORM_
-		CONSOLE_DEBUG_W_STR("kASCOM_Err_InvalidValue", parseChrPtr);
-#endif // _DEBUG_CONFORM_
-		alpacaErrCode	=	kASCOM_Err_InvalidValue;
+		CONSOLE_DEBUG_W_STR("Device not found: Device type\t=", reqData->deviceType);
+		SocketWriteData(reqData->socket,	gBadResponse400);
+		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 	}
 
 
@@ -2561,54 +2600,17 @@ bool				foundKeyWord;
 
 
 //*****************************************************************************
-static TYPE_ASCOM_STATUS	ProcessManagementRequest(TYPE_GetPutRequestData	*reqData,
-													char					*parseChrPtr,
-													long					byteCount)
+static TYPE_ASCOM_STATUS	ProcessManagementRequest(	TYPE_GetPutRequestData	*reqData,
+														long					byteCount)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
 int					iii;
-int					parseDataLen;
-int					cmdStrLen;
 
-	if (parseChrPtr != NULL)
-	{
-		if (strncmp(parseChrPtr, "/management/", 12) == 0)
-		{
-			parseChrPtr	+=	12;
-		}
-		if (*parseChrPtr == 'v')
-		{
-			parseChrPtr++;
-			while (*parseChrPtr != '/')
-			{
-				parseChrPtr++;
-			}
-		}
-		if (*parseChrPtr == '/')
-		{
-			parseChrPtr++;
-		}
+//	CONSOLE_DEBUG("MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM");
+//	CONSOLE_DEBUG(__FUNCTION__);
+//	DumpRequestStructure(__FUNCTION__, reqData);
 
-		parseDataLen	=	strlen(parseChrPtr);
-		cmdStrLen		=	0;
-		for (iii=0; iii<parseDataLen; iii++)
-		{
-			cmdStrLen++;
-			if (parseChrPtr[iii] <= 0x20)
-			{
-				break;
-			}
-		}
-		if (cmdStrLen < kMaxCommandLen)
-		{
-			strncpy(reqData->deviceCommand, parseChrPtr, cmdStrLen);
-			reqData->deviceCommand[cmdStrLen]	=	0;
-			StripTrailingSpaces(reqData->deviceCommand);
-		}
-//		CONSOLE_DEBUG_W_STR("reqData->deviceCommand\t=", reqData->deviceCommand);
-//		CONSOLE_DEBUG_W_NUM("cmdStrLent=", cmdStrLen);
-	}
-
+	//*	step thru the list looking for management devices
 	for (iii=0; iii<gDeviceCnt; iii++)
 	{
 		if (gAlpacaDeviceList[iii] != NULL)
@@ -2636,6 +2638,168 @@ int					cmdStrLen;
 		}
 	}
 	return(alpacaErrCode);
+}
+
+
+
+//*****************************************************************************
+static TYPE_ASCOM_STATUS	ProcessAlpacaSETUPrequest(	TYPE_GetPutRequestData	*reqData,
+														long					byteCount)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
+int					iii;
+int					deviceTypeEnum;
+bool				deviceFound;
+
+	CONSOLE_DEBUG("/setup/ found");
+//	CONSOLE_DEBUG_W_STR("httpCmdString\t=", reqData->httpCmdString);
+
+	//*	check to see if its
+	//		http://192.168.2.171:32323/setup/
+	//	or
+	//		http://192.168.2.171:32323/setup/v1/dome/0/setup
+
+
+	if ((reqData->alpacaVersion != 1) || (strlen(reqData->deviceCommand) <= 0))
+	{
+		SendHtml_MainPage(reqData);
+		alpacaErrCode	=	kASCOM_Err_Success;
+	}
+	else
+	{
+//		DumpRequestStructure(__FUNCTION__, reqData);
+
+		deviceTypeEnum	=	FindDeviceTypeByString(reqData->deviceType);
+		deviceFound		=	false;
+		for (iii=0; iii<gDeviceCnt; iii++)
+		{
+			if (gAlpacaDeviceList[iii] != NULL)
+			{
+				if ((gAlpacaDeviceList[iii]->cDeviceType == deviceTypeEnum) &&
+					(gAlpacaDeviceList[iii]->cDeviceNum == reqData->deviceNumber))
+				{
+					deviceFound		=	true;
+
+//					CONSOLE_DEBUG("Calling Setup_ProcessCommand() ---------------------------------------------");
+//					CONSOLE_DEBUG_W_STR("cAlpacaName         \t=",	gAlpacaDeviceList[iii]->cAlpacaName);
+//					CONSOLE_DEBUG_W_STR("deviceCommand       \t=",	reqData->deviceCommand);
+					gAlpacaDeviceList[iii]->Setup_ProcessCommand(reqData);
+					break;
+				}
+			}
+		}
+		if (deviceFound)
+		{
+			alpacaErrCode	=	kASCOM_Err_Success;
+		}
+	}
+	return(alpacaErrCode);
+}
+
+static	FILE	*gIPlogFilePointer		=	NULL;
+static	bool	gIPlogNeedsToBeOpened	=	true;
+static	long	gIPlogWriteCount		=	0;
+static	short	gCurrentDayOfMonth		=	-1;
+//*****************************************************************************
+static void	LogRequest(TYPE_GetPutRequestData	*reqData)
+{
+char		lineBuff[512];
+char		datestring[64];
+time_t		currentTime;
+struct tm	*linuxTime;
+int			bytesWritten;
+char		getPutStr[16];
+char		logFilename[64];
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+//2022/12/08 08:19:15	10.6.0.3          	Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:106.0) Gecko/20100101 Firefox/106.0	GET /setup/v1/camera/0/setup
+
+	gIPlogWriteCount++;
+
+	currentTime		=	time(NULL);
+	if (currentTime != -1)
+	{
+		linuxTime		=	localtime(&currentTime);
+		sprintf(datestring, "%d/%02d/%02d %02d:%02d:%02d",	(1900 + linuxTime->tm_year),
+															(1 + linuxTime->tm_mon),
+															linuxTime->tm_mday,
+															linuxTime->tm_hour,
+															linuxTime->tm_min,
+															linuxTime->tm_sec);
+	}
+	else
+	{
+		strcpy(datestring, "date-unknown");
+	}
+	if (reqData->get_putIndicator == 'G')
+	{
+		strcpy(getPutStr, "GET");
+	}
+	else if (reqData->get_putIndicator == 'P')
+	{
+		strcpy(getPutStr, "PUT");
+	}
+	else
+	{
+		strcpy(getPutStr, "xxx");
+	}
+
+	if (gIPlogNeedsToBeOpened)
+	{
+		//*	create a log filename with today's date
+		linuxTime		=	localtime(&currentTime);
+		sprintf(logFilename, "requestlog-%d-%02d-%02d.txt",	(1900 + linuxTime->tm_year),
+															(1 + linuxTime->tm_mon),
+															linuxTime->tm_mday);
+		CONSOLE_DEBUG("-------------------------------------------------------------------------");
+		CONSOLE_DEBUG_W_STR("Open log file:", logFilename);
+		gIPlogFilePointer		=	fopen(logFilename, "a");
+		gIPlogNeedsToBeOpened	=	false;
+		gCurrentDayOfMonth		=	linuxTime->tm_mday;
+
+		//*	record the fact that we opened the log file
+		sprintf(lineBuff,	"%-18s\tLog file opened --------------------------------------------------------\r\n", datestring);
+		bytesWritten	=	fprintf(gIPlogFilePointer,	"%s", lineBuff);
+	}
+
+
+	sprintf(lineBuff,	"%-18s\t%-18s\t%s\t%s %s\r\n",
+						datestring,
+						reqData->clientIPaddr,
+						reqData->httpUserAgent,
+						getPutStr,
+						reqData->cmdBuffer);
+//	CONSOLE_DEBUG(lineBuff);
+
+
+	if (gIPlogFilePointer != NULL)
+	{
+		bytesWritten	=	fprintf(gIPlogFilePointer, "%s", lineBuff);
+		if (bytesWritten >= 0)
+		{
+			fflush(gIPlogFilePointer);
+		}
+		else
+		{
+			CONSOLE_DEBUG("Error writing to logfile");
+			fclose(gIPlogFilePointer);
+			gIPlogFilePointer		=	NULL;
+			gIPlogNeedsToBeOpened	=	true;
+		}
+
+		//*	when ever the day changes, close the file and open a new one
+		if (linuxTime->tm_mday != gCurrentDayOfMonth)
+		{
+			CONSOLE_DEBUG("Closing log file");
+			fclose(gIPlogFilePointer);
+			gIPlogFilePointer		=	NULL;
+			gIPlogNeedsToBeOpened	=	true;
+		}
+	}
+	else
+	{
+		CONSOLE_DEBUG("Error: gIPlogFilePointer is NULL");
+	}
 }
 
 //*****************************************************************************
@@ -2666,10 +2830,16 @@ char			theChar;
 bool			isContent;
 bool			isFirstLine;
 char			*queMrkPtr;
+char			*userAgentPtr;
+//int				htmlDataLen;
+int				contentDataLen;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
+
 	if ((htmlData != NULL) && (reqData != NULL))
 	{
+//		htmlDataLen	=	strlen(htmlData);
+
 		if (strncasecmp(htmlData, "GET", 3) == 0)
 		{
 			reqData->get_putIndicator	=	'G';
@@ -2701,6 +2871,68 @@ char			*queMrkPtr;
 		//*	keep a copy of the entire thing
 		strcpy(reqData->htmlData, htmlData);
 
+		//========================================================================
+		//*	check for user agent
+		userAgentPtr	=	strcasestr((char *)htmlData, "User-Agent:");
+		if (userAgentPtr != NULL)
+		{
+			//*	extract the "User-Agent:"
+			userAgentPtr	+=	11;
+			while (*userAgentPtr == 0x20)	//*	skip spaces
+			{
+				userAgentPtr++;
+			}
+			ccc	=	0;
+			while ((userAgentPtr[ccc] >= 0x20) && (ccc < (kUserAgentLen - 2)))
+			{
+				reqData->httpUserAgent[ccc]	=	userAgentPtr[ccc];
+				ccc++;
+			}
+			reqData->httpUserAgent[ccc]	=	0;
+
+			//===========================================================================
+			//*	check to see who is talking to us so we can keep count.....................
+			if (strncasecmp(reqData->httpUserAgent, "AlpacaPi", 8) == 0)
+			{
+				reqData->clientIs_AlpacaPi	=	true;
+				reqData->cHTTPclientType	=   kHTTPclient_AlpacaPi;
+			}
+			else if (strncasecmp(reqData->httpUserAgent, "ConformU", 8) == 0)
+			{
+				reqData->clientIs_ConformU	=	true;
+				reqData->cHTTPclientType	=   kHTTPclient_ConfomU;
+			}
+			else if (strncasecmp(reqData->httpUserAgent, "curl", 4) == 0)
+			{
+				reqData->cHTTPclientType	=   kHTTPclient_Curl;
+			}
+			else if (strncasecmp(reqData->httpUserAgent, "Mozilla", 7) == 0)
+			{
+				reqData->cHTTPclientType	=   kHTTPclient_Mozilla;
+				CONSOLE_DEBUG_W_STR("User-Agent:\t=", reqData->httpUserAgent);
+			}
+			else if (strncasecmp(reqData->httpUserAgent, "RestSharp", 9) == 0)
+			{
+				reqData->cHTTPclientType	=   kHTTPclient_ASCOM_RestSharp;
+			}
+			else
+			{
+				reqData->cHTTPclientType	=   kHTTPclient_NotRecognized;
+				CONSOLE_DEBUG_W_STR("User-Agent:\t=", reqData->httpUserAgent);
+			}
+		}
+		else
+		{
+			reqData->cHTTPclientType	=   kHTTPclient_NotSpecified;
+			strcpy(reqData->httpUserAgent, "not-specified");
+//			CONSOLE_DEBUG("'User-Agent:' not found!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+//			CONSOLE_DEBUG_W_STR("htmlData:\r\n", htmlData);
+		}
+
+		if ((reqData->cHTTPclientType >= 0) && (reqData->cHTTPclientType < kHTTPclient_last))
+		{
+			gUserAgentCounters[reqData->cHTTPclientType]++;
+		}
 
 		//*	go through the entire data and treat them as separate lines of text
 		lineCnt		=	0;
@@ -2714,10 +2946,14 @@ char			*queMrkPtr;
 			theChar		=	htmlData[iii];
 			if ((theChar >= 0x20) || (theChar == 0x09))
 			{
-				if (ccc < sizeof(lineBuff))
+				if (ccc < (sizeof(lineBuff) - 1))
 				{
-					lineBuff[ccc]	=	theChar;
-					ccc++;
+					lineBuff[ccc++]	=	theChar;
+					lineBuff[ccc]	=	0;
+				}
+				else
+				{
+					CONSOLE_DEBUG_W_STR("Buffer overflow:", lineBuff);
 				}
 			}
 			else
@@ -2736,8 +2972,16 @@ char			*queMrkPtr;
 				{
 					if (isContent)
 					{
-						strcat(reqData->contentData, lineBuff);
-						strcat(reqData->contentData, "\r\n");
+						contentDataLen	=	strlen(reqData->contentData);
+						if (contentDataLen + strlen(lineBuff) < (kContentDataLen -2))
+						{
+							strcat(reqData->contentData, lineBuff);
+						//	strcat(reqData->contentData, "\r\n");
+						}
+						else
+						{
+							CONSOLE_DEBUG_W_STR("contentData overflow:", lineBuff);
+						}
 					}
 					else
 					{
@@ -2774,9 +3018,7 @@ char			*queMrkPtr;
 					iii++;
 				}
 			}
-
 			iii++;
-
 		}
 		if (reqData->get_putIndicator == 'G')
 		{
@@ -2795,20 +3037,289 @@ char			*queMrkPtr;
 	else
 	{
 		CONSOLE_DEBUG("args are NULL");
+		CONSOLE_ABORT(__FUNCTION__);
 	}
 }
 
+
 //*****************************************************************************
-static int	ProcessGetPutRequest(const int socket, char *htmlData, long byteCount)
+typedef enum
+{
+	kRequestType_Invalid	=	-1,
+	kRequestType_API		=	0,
+	kRequestType_Docs,
+	kRequestType_Log,
+	kRequestType_Managment,
+	kRequestType_Setup,
+	kRequestType_Stats,
+	kRequestType_Web,
+	kRequestType_TopLevel,
+
+	kRequestType_Form,
+
+	kRequestType_last
+} TYPE_REQUEST_TYPE;
+
+//*****************************************************************************
+typedef struct
+{
+	char				RequestString[16];
+	TYPE_REQUEST_TYPE	RequstType;
+} TYPE_Request;
+
+
+//*****************************************************************************
+static TYPE_Request	gRequestType[]	=
+{
+	{	"api",			kRequestType_API		},
+	{	"docs",			kRequestType_Docs		},
+	{	"log",			kRequestType_Log		},
+	{	"management",	kRequestType_Managment	},
+	{	"setup",		kRequestType_Setup		},
+	{	"stats",		kRequestType_Stats		},
+	{	"web",			kRequestType_Web		},
+
+	{	"form",			kRequestType_Form		},
+
+	{	"",				kRequestType_Invalid	},
+	{	"",				kRequestType_Invalid	},
+
+};
+
+//*****************************************************************************
+//*	returns ENUM of request type
+//*****************************************************************************
+TYPE_REQUEST_TYPE	FindRequestType(char *requestTypeString)
+{
+TYPE_REQUEST_TYPE	requestType;
+int					iii;
+int					commandLen;
+
+	//*	figure out the base type of the request (see enum list above)
+	requestType	=	kRequestType_Invalid;
+	if (strlen(requestTypeString) > 0)
+	{
+		iii			=	0;
+		while ((requestType < 0) && (iii < kRequestType_last))
+		{
+			commandLen	=	strlen(gRequestType[iii].RequestString);
+			if (strncasecmp(requestTypeString, gRequestType[iii].RequestString, commandLen) == 0)
+			{
+				requestType	=	gRequestType[iii].RequstType;
+			}
+			iii++;
+		}
+	}
+	else
+	{
+		requestType	=	kRequestType_TopLevel;
+	}
+	return(requestType);
+}
+
+//*****************************************************************************
+//*	Parse the full Alpaca request, trying to cover all variants
+//*	returns ENUM of request type
+//*****************************************************************************
+static int	ParseAlpacaRequest(TYPE_GetPutRequestData *reqData)
+{
+int		requestType;
+int		iii;
+int		ccc;
+bool	foundKeyWord;
+int		slashCounter;
+char	sLen;
+char	theChar;
+char	argumentString[256]			=	"";
+char	myRequestTypeString[64]		=	"";
+char	myAlpacaVersionString[64]	=	"";
+char	myDeviceString[64]			=	"";
+char	myDeviceNumString[64]		=	"";
+char	myDeviceCmdString[256]		=	"";
+int		cmdBuffLen;
+
+//	CONSOLE_DEBUG("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+//	CONSOLE_DEBUG(__FUNCTION__);
+//	DumpRequestStructure(__FUNCTION__, reqData);
+//	PUT /api/v1/camera/0/exposuretime HTTP/1.1
+
+	//*	copy the full command over
+	ccc		=	0;
+	iii		=	4;
+	sLen	=	strlen(reqData->httpCmdString);
+	while ((reqData->httpCmdString[iii] > 0x20) && (iii< sLen) && (ccc < (kMaxCommandLen - 1)))
+	{
+		reqData->cmdBuffer[ccc++]	=	reqData->httpCmdString[iii++];
+	}
+	reqData->cmdBuffer[ccc]	=	0;
+
+
+	slashCounter		=	0;
+	ccc					=	0;
+	iii					=	4;	//*	start after "GET " so that we can ignore the first space
+	argumentString[0]	=	0;
+	theChar				=	0;
+	while ((slashCounter < 6) && (iii < sLen) && (theChar != 0x20))
+	{
+		theChar	=	reqData->httpCmdString[iii++];
+		if ((theChar == '/') || (theChar == 0x20))
+		{
+			argumentString[ccc]		=	0;
+			switch(slashCounter)
+			{
+				case 1:
+					//*	the request type, i.e. api, or setup (see list above)
+					strcpy(myRequestTypeString, argumentString);
+					break;
+				case 2:
+					strcpy(myAlpacaVersionString, argumentString);
+					break;
+				case 3:
+					strcpy(myDeviceString, argumentString);
+					break;
+				case 4:
+					strcpy(myDeviceNumString, argumentString);
+					break;
+				case 5:
+					strcpy(myDeviceCmdString, argumentString);
+					break;
+			}
+			ccc					=	0;
+			argumentString[0]	=	0;
+			slashCounter++;
+		}
+		else
+		{
+			argumentString[ccc++]	=	theChar;
+			argumentString[ccc]		=	0;
+		}
+	}
+
+	//---------------------------------------------------
+	if (slashCounter >= 3)
+	{
+//		CONSOLE_DEBUG_W_STR("myAlpacaVersionString\t=",	myAlpacaVersionString);
+
+		if (myAlpacaVersionString[0] == 'v')
+		{
+			reqData->alpacaVersion		=	myAlpacaVersionString[1] & 0x0f;
+		}
+//		CONSOLE_DEBUG_W_NUM("reqData->alpacaVersion\t=",	reqData->alpacaVersion);
+	}
+
+	if (slashCounter > 5)
+	{
+		strcpy(reqData->deviceType,		myDeviceString);
+		reqData->deviceNumber		=	atoi(myDeviceNumString);
+
+		//*	extract out the command itself for easier processing by the handlers
+		cmdBuffLen		=	strlen(myDeviceCmdString);
+		ccc				=	0;
+		while (	(myDeviceCmdString[ccc] > 0x20) &&
+				(myDeviceCmdString[ccc] != '&') &&
+				(myDeviceCmdString[ccc] != '?') &&
+				(ccc < cmdBuffLen ))
+		{
+			reqData->deviceCommand[ccc]	=	myDeviceCmdString[ccc];
+			ccc++;
+		}
+		reqData->deviceCommand[ccc]	=	0;
+	}
+	else
+	{
+		strcpy(reqData->deviceType,		"unknown");
+		reqData->deviceCommand[0]	=	0;
+	}
+
+	//*	figure out the base type of the request (see enum list above)
+	requestType					=	FindRequestType(myRequestTypeString);
+	reqData->requestTypeEnum	=	requestType;
+
+	//	/management/v1/configureddevices
+	//	/management/apiversions
+	if (requestType == kRequestType_Managment)
+	{
+//		CONSOLE_DEBUG_W_NUM("slashCounter         \t=",	slashCounter);
+//		CONSOLE_DEBUG_W_STR("myRequestTypeString  \t=",	myRequestTypeString);
+//		CONSOLE_DEBUG_W_STR("myAlpacaVersionString\t=",	myAlpacaVersionString);
+//		CONSOLE_DEBUG_W_STR("myDeviceString       \t=",	myDeviceString);
+//		CONSOLE_DEBUG_W_STR("myDeviceNumString    \t=",	myDeviceNumString);
+//		CONSOLE_DEBUG_W_STR("myDeviceCmdString    \t=",	myDeviceCmdString);
+
+		if ((strlen(myAlpacaVersionString) > 3) && (strlen(myDeviceString) == 0))
+		{
+			strcpy(reqData->deviceCommand, myAlpacaVersionString);
+		}
+		else
+		{
+			strcpy(reqData->deviceCommand, myDeviceString);
+		}
+//		DumpRequestStructure(__FUNCTION__, reqData);
+	}
+
+	//------------------------------------------------------------------
+	//*	check contentData for "HTTP...." at the end
+	sLen	=	strlen(reqData->contentData);
+	iii		=	sLen -1;
+	while ((iii > 1) && (reqData->contentData[iii] != 0x20))
+	{
+		iii--;
+	}
+	iii++;
+	if (strncmp(&reqData->contentData[iii], "HTTP", 4) == 0)
+	{
+		reqData->contentData[iii-1]	=	0;
+	}
+
+	//------------------------------------------------------------------
+	//*	Check for client ID
+	foundKeyWord	=	GetKeyWordArgument(reqData->contentData, "ClientID", argumentString, 31);
+	if (foundKeyWord)
+	{
+		gClientID	=	atoi(argumentString);
+	}
+#ifdef _DEBUG_CONFORM_
+	else
+	{
+//			CONSOLE_DEBUG("gClientID NOT FOUND");
+	}
+#endif // _DEBUG_CONFORM_
+
+	//*	Check for ClientTransactionID
+	foundKeyWord	=	GetKeyWordArgument(reqData->contentData, "ClientTransactionID", argumentString, 31);
+	if (foundKeyWord)
+	{
+		gClientTransactionID	=	atoi(argumentString);
+	}
+#ifdef _DEBUG_CONFORM_
+	else
+	{
+//		CONSOLE_DEBUG("gClientTransactionID NOT FOUND");
+	}
+	CONSOLE_DEBUG_W_NUM("gClientID\t=", gClientID);
+	CONSOLE_DEBUG_W_NUM("gClientTransactionID\t=", gClientTransactionID);
+
+#endif // _DEBUG_CONFORM_
+
+//	DumpRequestStructure(__FUNCTION__, reqData);
+
+	return(requestType);
+}
+
+//*****************************************************************************
+static int	ProcessGetPutRequest(const int socket, char *htmlData, long byteCount, const char *ipAddressString)
 {
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_InternalError;
 char					*parseChrPtr;
 TYPE_GetPutRequestData	reqData;
+int						requestType;
 
 #ifdef _DEBUG_CONFORM_
 	CONSOLE_DEBUG("=========================================================================================");
 	CONSOLE_DEBUG("GET/PUT");
 	CONSOLE_DEBUG_W_STR("htmlData\t=", htmlData);
+#else
+//	CONSOLE_DEBUG(__FUNCTION__);
 #endif // _DEBUG_CONFORM_
 
 #ifdef _ENABLE_BANDWIDTH_LOGGING_
@@ -2833,98 +3344,115 @@ int	iii;
 		}
 	}
 #endif // _ENABLE_BANDWIDTH_LOGGING_
+
 	memset(&reqData, 0, sizeof(TYPE_GetPutRequestData));
 	//*	the TYPE_GetPutRequestData simplifies parsing and passing of the
 	//*	parsed data to subroutines
 	reqData.socket				=	socket;
 	reqData.get_putIndicator	=	htmlData[0];
-//	DumpRequestStructure(__FUNCTION__, &reqData);
+	reqData.requestTypeEnum		=	-1;
+	reqData.deviceNumber		=	-1;
+	strcpy(reqData.clientIPaddr, ipAddressString);
 
 	ParseHTMLdataIntoReqStruct(htmlData, &reqData);
-//	CONSOLE_DEBUG(reqData.httpCmdString);
-//	if (strstr(htmlData, "connected") != NULL)
-//	{
-//		CONSOLE_DEBUG(htmlData);
-//	}
-	parseChrPtr			=	(char *)htmlData;
+
+	requestType	=	ParseAlpacaRequest(&reqData);
+	LogRequest(&reqData);
+
+	parseChrPtr			=	htmlData;
 	parseChrPtr			+=	3;
 	while (*parseChrPtr == 0x20)
 	{
 		parseChrPtr++;
 	}
 
-#ifdef _DEBUG_CONFORM_
-//	CONSOLE_DEBUG_W_STR("Alpaca data=", parseChrPtr);
-#endif // _DEBUG_CONFORM_
+//	DumpRequestStructure(__FUNCTION__, &reqData);
 
-	//-------------------------------------------------------------------
-	//*	standard ALPACA api call
-	if (strncasecmp(parseChrPtr, "/api/", 5) == 0)
+	alpacaErrCode	=	kASCOM_Err_Success;
+	switch(requestType)
 	{
-		//*	if we are here, we are guaranteed to have either GET or PUT, so no need to check
-		alpacaErrCode	=	ProcessAlpacaAPIrequest(&reqData, parseChrPtr, byteCount);
+		//*	standard ALPACA api call
+		case kRequestType_API:
+			alpacaErrCode	=	ProcessAlpacaAPIrequest(&reqData, byteCount);
+			break;
+
+		//*	extra self docoumenting
+		case kRequestType_Docs:
+			OutputHTML_DriverDocs(&reqData);
+			break;
+
+		//*	extra - logging data
+		case kRequestType_Log:
+			SendHtmlLog(socket);
+			break;
+
+		//*	standard ALPACA management
+		case kRequestType_Managment:
+			alpacaErrCode	=	ProcessManagementRequest(&reqData, byteCount);
+			break;
+
+		//*	standard ALPACA setup
+		case kRequestType_Setup:
+			alpacaErrCode	=	ProcessAlpacaSETUPrequest(&reqData, byteCount);
+			break;
+
+		//*	extra - stats
+		case kRequestType_Stats:
+			SendHtmlStats(&reqData);
+			break;
+
+		case kRequestType_Web:
+			SendHtml_MainPage(&reqData);
+			break;
+
+		case kRequestType_TopLevel:
+			SendHtml_TopLevel(&reqData);
+			break;
+
+
+		//*	this is for testing, will be deleted later
+		case kRequestType_Form:
+			OutputHTML_Form(&reqData);
+			break;
+
+
+
+		default:
+			DumpRequestStructure(__FUNCTION__, &reqData);
+//			CONSOLE_DEBUG_W_STR("parseChrPtr\t=", parseChrPtr);
+			//-------------------------------------------------------------------
+			if (strncasecmp(parseChrPtr,	"/favicon.ico", 12) == 0)
+			{
+				CONSOLE_DEBUG("favicon.ico");
+				//*	do nothing, this is my web browser sends this
+				//		CONSOLE_DEBUG("Ignored");
+				SendJpegResponse(socket, "favicon.ico");
+			}
+			//-------------------------------------------------------------------
+			else if (strncasecmp(parseChrPtr,	"/image.jpg", 10) == 0)
+			{
+				CONSOLE_DEBUG("image.jpg");
+				SendJpegResponse(socket, NULL);
+			}
+			//-------------------------------------------------------------------
+			else if (strstr(parseChrPtr, ".jpg") != NULL)
+			{
+				CONSOLE_DEBUG(".....jpg");
+				SendJpegResponse(socket, parseChrPtr);
+			}
+			//-------------------------------------------------------------------
+			else if (strstr(parseChrPtr, ".png") != NULL)
+			{
+				SendJpegResponse(socket, parseChrPtr);
+			}
+			else
+			{
+				CONSOLE_DEBUG_W_STR("Incomplete alpaca command\t=",	htmlData);
+				SocketWriteData(socket,	gBadResponse400);
+			}
+			break;
 	}
-	//-------------------------------------------------------------------
-	//*	standard ALPACA setup
-	else if ((strncasecmp(parseChrPtr, "/setup", 6) == 0) || (strncmp(parseChrPtr, "/web", 4) == 0))
-	{
-		SendHtmlResponse(&reqData);
-	}
-	//-------------------------------------------------------------------
-	//*	standard ALPACA management
-	else if (strncasecmp(parseChrPtr, "/management", 11) == 0)
-	{
-		alpacaErrCode	=	ProcessManagementRequest(&reqData, parseChrPtr, byteCount);
-	}
-	//-------------------------------------------------------------------
-	//-------------------------------------------------------------------
-	//-------------------------------------------------------------------
-	//*	extra log interface
-	else if (strncasecmp(parseChrPtr,	"/log", 4) == 0)
-	{
-		SendHtmlLog(socket);
-	}
-	//-------------------------------------------------------------------
-	//*	docs interface
-	else if (strncasecmp(parseChrPtr,	"/docs", 5) == 0)
-	{
-		OutputHTML_DriverDocs(&reqData);
-	}
-	//-------------------------------------------------------------------
-	//*	Stats interface
-	else if (strncasecmp(parseChrPtr,	"/stats", 6) == 0)
-	{
-		SendHtmlStats(&reqData);
-	}
-	//-------------------------------------------------------------------
-	else if (strncasecmp(parseChrPtr,	"/favicon.ico", 12) == 0)
-	{
-		//*	do nothing, this is my web browser sends this
-//		CONSOLE_DEBUG("Ignored");
-	}
-	//-------------------------------------------------------------------
-	else if (strncasecmp(parseChrPtr,	"/image.jpg", 10) == 0)
-	{
-		CONSOLE_DEBUG("image.jpg");
-		SendJpegResponse(socket, NULL);
-	}
-	//-------------------------------------------------------------------
-	else if (strstr(parseChrPtr, ".jpg") != NULL)
-	{
-		CONSOLE_DEBUG(".....jpg");
-		SendJpegResponse(socket, parseChrPtr);
-	}
-	//-------------------------------------------------------------------
-	else if (strstr(parseChrPtr, ".png") != NULL)
-	{
-		SendJpegResponse(socket, parseChrPtr);
-	}
-	else
-	{
-		CONSOLE_DEBUG_W_STR("Incomplete alpaca command\t=",	htmlData);
-		SocketWriteData(socket,	gBadResponse400);
-	}
-//	CONSOLE_DEBUG_W_STR(__FUNCTION__, "Exit");
+
 	return(alpacaErrCode);
 }
 
@@ -2963,22 +3491,28 @@ int		bytesWritten;
 //*	It will parse through the data checking all of the normal alpaca requirements
 //*	and then call the appropriate function based on the device type
 //*****************************************************************************
-static int AlpacaCallback(const int socket, char *htmlData, long byteCount)
+static int AlpacaCallback(const int socket, char *htmlData, long byteCount,  const char *ipAddressString)
 {
 int		returnCode	=	-1;
 
 //	CONSOLE_DEBUG("Timing Start----------------------");
 //	SETUP_TIMING();
 
-	//*	we are looking for GET or PUT
-	if (strncmp(htmlData, "GET /favicon.ico", 16) == 0)
+	if (strstr(htmlData, "favicon.ico") != NULL)
 	{
-		//*	do nothing
+		CONSOLE_DEBUG("favicon.ico request !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 	}
-	else if ((strncmp(htmlData, "GET", 3) == 0) || (strncmp(htmlData, "PUT", 3) == 0))
+
+
+//	if (strncmp(htmlData, "GET /favicon.ico", 16) == 0)
+//	{
+//		//*	do nothing
+//	}
+//	else
+	if ((strncmp(htmlData, "GET", 3) == 0) || (strncmp(htmlData, "PUT", 3) == 0))
 	{
 //		CONSOLE_DEBUG("Calling ProcessGetPutRequest");
-		returnCode	=	ProcessGetPutRequest(socket, htmlData, byteCount);
+		returnCode	=	ProcessGetPutRequest(socket, htmlData, byteCount, ipAddressString);
 	}
 	else if (strncmp(htmlData, "POST", 4) == 0)
 	{
@@ -3257,7 +3791,7 @@ int		cameraCnt	=	0;
 //*	Cameras
 //-----------------------------------------------------------
 #if defined(_ENABLE_CAMERA_) && defined(_ENABLE_ATIK_)
-	CreateATIK_CameraObjects();
+	cameraCnt	+=	CreateATIK_CameraObjects();
 #endif
 
 //-----------------------------------------------------------
@@ -3267,24 +3801,24 @@ int		cameraCnt	=	0;
 //-----------------------------------------------------------
 //#if defined(_ENABLE_CAMERA_) && defined(_ENABLE_FLIR_) && (__GNUC__ > 5)
 #if defined(_ENABLE_CAMERA_) && defined(_ENABLE_FLIR_)
-	CreateFLIR_CameraObjects();
+	cameraCnt	+=	CreateFLIR_CameraObjects();
 #endif
 //-----------------------------------------------------------
 #if defined(_ENABLE_CAMERA_) && defined(_ENABLE_PHASEONE_)
-	CreatePhaseOne_CameraObjects();
+	cameraCnt	+=	CreatePhaseOne_CameraObjects();
 #endif
 
 //-----------------------------------------------------------
 #if defined(_ENABLE_CAMERA_) && defined(_ENABLE_QHY_)
-	CreateQHY_CameraObjects();
+	cameraCnt	+=	CreateQHY_CameraObjects();
 #endif
 //-----------------------------------------------------------
 #if defined(_ENABLE_CAMERA_) && defined(_ENABLE_QSI_)
-	CreateQSI_CameraObjects();
+	cameraCnt	+=	CreateQSI_CameraObjects();
 #endif
 //-----------------------------------------------------------
 #if defined(_ENABLE_CAMERA_) && defined(_ENABLE_TOUP_)
-	CreateTOUP_CameraObjects();
+	cameraCnt	+=	CreateTOUP_CameraObjects();
 #endif
 
 //-----------------------------------------------------------
@@ -3293,8 +3827,10 @@ int		cameraCnt	=	0;
 #endif
 
 #if defined(_ENABLE_CAMERA_) && defined(_SIMULATE_CAMERA_)
-	CreateSimulator_CameraObjects();
+	cameraCnt	+=	CreateSimulator_CameraObjects();
 #endif
+
+	CONSOLE_DEBUG_W_NUM("total cameras created\t=", cameraCnt);
 
 //*********************************************************
 //*	Multicam
@@ -3404,6 +3940,9 @@ int32_t			mainLoopCntr;
 uint64_t		startNanoSecs;
 uint64_t		endNanoSecs;
 uint64_t		deltaNanoSecs;
+time_t			currentTime;
+struct tm		*linuxTime;
+
 
 #if defined(_ENABLE_FITS_) || defined(_ENABLE_JPEGLIB_)
 	char			lineBuffer[64];
@@ -3412,7 +3951,8 @@ uint64_t		deltaNanoSecs;
 //int				errorCode;
 
 	printf("AlpacaPi driver\r\n");
-	sprintf(gFullVersionString, "%s - %s build #%d", kApplicationName, kVersionString, kBuildNumber);
+	sprintf(gFullVersionString,		"%s - %s build #%d", kApplicationName, kVersionString, kBuildNumber);
+	sprintf(gUserAgentAlpacaPiStr,	"User-Agent: AlpacaPi/%s-Build-%d\r\n", kVersionString,  kBuildNumber);
 
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG(gFullVersionString);
@@ -3479,6 +4019,16 @@ uint64_t		deltaNanoSecs;
 		CONSOLE_DEBUG_W_STR("Platform  \t=",	gPlatformString);
 	}
 
+	//-----------------------------------------------------
+	currentTime		=	time(NULL);
+	if (currentTime != -1)
+	{
+	unsigned int	randomSeed;
+
+		linuxTime		=	localtime(&currentTime);
+		randomSeed	=	linuxTime->tm_hour * linuxTime->tm_min * linuxTime->tm_sec;
+		srandom(randomSeed);
+	}
 
 	InitObsConditionGloblas();
 	ProcessCmdLineArgs(argc, argv);
@@ -3486,6 +4036,10 @@ uint64_t		deltaNanoSecs;
 //	CONSOLE_DEBUG_W_INT32("sizeof(int)\t=",		(long)sizeof(int));
 //	CONSOLE_DEBUG_W_INT32("sizeof(long)\t=",	(long)sizeof(long));
 
+	for (iii=0; iii<kHTTPclient_last; iii++)
+	{
+		gUserAgentCounters[iii]	=	0;
+	}
 	InitDeviceList();
 
 	LogEvent(	"AlpacaPi",
@@ -3612,7 +4166,8 @@ uint64_t		deltaNanoSecs;
 		}
 		usleep(delayTime_microSecs);
 	}
-
+	CONSOLE_DEBUG_W_BOOL("gKeepRunning\t=", gKeepRunning);
+	CONSOLE_DEBUG("Shutting down");
 
 	//*	the program has been told to quit, go through and delete the objects
 	for (iii=0; iii<kMaxDevices; iii++)
@@ -3624,6 +4179,7 @@ uint64_t		deltaNanoSecs;
 		}
 	}
 
+	CONSOLE_DEBUG("Clean exit");
 	return(0);
 }
 
@@ -4055,11 +4611,56 @@ void	InitObsConditionGloblas(void)
 //**************************************************************************
 void	DumpRequestStructure(const char *functionName, TYPE_GetPutRequestData	*reqData)
 {
-	printf("%s\r\n", functionName);
-	printf("Dev#=%d\tG/P=%c\r\n",	reqData->deviceNumber, reqData->get_putIndicator);
-	printf("HTML\t=%s\r\n",			reqData->htmlData);
-	printf("cmdBuffer\t=%s\r\n",	reqData->cmdBuffer);
-	printf("contentData\t=%s\r\n",	reqData->contentData);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, "*********************************");
+	CONSOLE_DEBUG_W_STR(	"called from         \t=",	functionName);
+	CONSOLE_DEBUG_W_STR(	"httpUserAgent       \t=",	reqData->httpUserAgent);
+	CONSOLE_DEBUG_W_NUM(	"cHTTPclientType     \t=",	reqData->cHTTPclientType);
+	CONSOLE_DEBUG_W_BOOL(	"clientIs_AlpacaPi   \t=",	reqData->clientIs_AlpacaPi);
+	CONSOLE_DEBUG_W_BOOL(	"clientIs_ConformU   \t=",	reqData->clientIs_ConformU);
 
-	printf("\r\n");
+	CONSOLE_DEBUG_W_STR(	"httpCmdString       \t=",	reqData->httpCmdString);
+	CONSOLE_DEBUG_W_NUM(	"requestTypeEnum     \t=",	reqData->requestTypeEnum);
+	CONSOLE_DEBUG_W_NUM(	"Alpaca Version      \t=",	reqData->alpacaVersion);
+
+	CONSOLE_DEBUG_W_STR(	"deviceType          \t=",	reqData->deviceType);
+	CONSOLE_DEBUG_W_NUM(	"Device Number       \t=",	reqData->deviceNumber);
+	CONSOLE_DEBUG_W_STR(	"cmdBuffer           \t=",	reqData->cmdBuffer);
+	CONSOLE_DEBUG_W_STR(	"deviceCommand       \t=",	reqData->deviceCommand);
+	CONSOLE_DEBUG_W_STR(	"contentData         \t=",	reqData->contentData);
+	CONSOLE_DEBUG_W_NUM(	"gClientID           \t=",	gClientID);
+	CONSOLE_DEBUG_W_NUM(	"gClientTransactionID\t=",	gClientTransactionID);
+	CONSOLE_DEBUG_W_NUM(	"gServerTransactionID\t=",	gServerTransactionID);
+
+
+//	printf("Dev#=%d\tG/P=%c\r\n",	reqData->deviceNumber, reqData->get_putIndicator);
+//	printf("HTML\t=%s\r\n",			reqData->htmlData);
+
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, "--------------exit---------------");
+}
+
+
+
+//**************************************************************************
+//*	https://www.w3schools.com/html/html_forms.asp
+//**************************************************************************
+static void	OutputHTML_Form(TYPE_GetPutRequestData *reqData)
+{
+int		mySocketFD;
+
+	mySocketFD	=	reqData->socket;
+	SocketWriteData(mySocketFD,	gHtmlHeader);
+
+	SocketWriteData(mySocketFD,	"<!DOCTYPE html>\r\n");
+	SocketWriteData(mySocketFD,	"<HTML>\r\n");
+	SocketWriteData(mySocketFD,	"<TITLE>Form Testing</TITLE>\r\n");
+	SocketWriteData(mySocketFD,	"<CENTER>\r\n");
+	SocketWriteData(mySocketFD,	"<H1>Form Testing</H1>\r\n");
+	SocketWriteData(mySocketFD,	"</CENTER>\r\n");
+	SocketWriteData(mySocketFD,	"<form action=\"/action_page.php\" target=\"_blank\">\r\n");
+	SocketWriteData(mySocketFD,	"  <label for=\"fname\">First name:</label><br>\r\n");
+	SocketWriteData(mySocketFD,	"  <input type=\"text\" id=\"fname\" name=\"fname\" value=\"John\"><br>\r\n");
+	SocketWriteData(mySocketFD,	"  <label for=\"lname\">Last name:</label><br>\r\n");
+	SocketWriteData(mySocketFD,	"  <input type=\"text\" id=\"lname\" name=\"lname\" value=\"Doe\"><br><br>\r\n");
+	SocketWriteData(mySocketFD,	"  <input type=\"submit\" value=\"Submit\">\r\n");
+	SocketWriteData(mySocketFD,	"</form>\r\n");
 }

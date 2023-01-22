@@ -21,6 +21,7 @@ enum
 	kIPaddrList_DiscoveryThrdStop,
 	kIPaddrList_DiscoveryThrdReStart,
 	kIPaddrList_DiscoveryClear,
+	kIPaddrList_DiscoveryReScan,
 
 	kIPaddrList_StatusMsg,
 	kIPaddrList_TemperatureGraph,
@@ -40,6 +41,7 @@ enum
 	kIPaddrList_ClmTitle7,
 	kIPaddrList_ClmTitle8,
 	kIPaddrList_ClmTitle9,
+	kIPaddrList_ClmTitle10,
 	kIPaddrList_ClmOutline,
 
 	kIPaddrList_AlpacaDev_01,

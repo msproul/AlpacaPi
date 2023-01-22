@@ -113,6 +113,8 @@ int		iii;
 	cCommonProp.InterfaceVersion	=	2;
 	cDriverCmdTablePtr				=	gSwitchCmdTable;
 
+	cUUID.part3						=	'SW';					//*	model number
+
 	memset((void *)&cSwitchProp, 0, sizeof(TYPE_SwitchProperties));
 
 	cSwitchProp.MaxSwitch			=	8;

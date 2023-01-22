@@ -95,7 +95,8 @@ enum
 
 #define	kMaxWidgetStrLen	512
 #define	kMaxHelpTextStrLen	96
-#define	kMaxTabStops		12
+#define	kAltTextLen			32
+#define	kMaxTabStops		15
 //*****************************************************************************
 typedef struct
 {
@@ -113,6 +114,7 @@ typedef struct
 	bool		hasTabs;
 	short		tabStops[kMaxTabStops];
 	char		textString[kMaxWidgetStrLen];
+	char		alternateText[kAltTextLen];		//*	used for progress bar message (can be used for other things)
 	char		helpText[kMaxHelpTextStrLen];
 	char		*textPtr;			//*	this is for large external text
 #ifdef _USE_OPENCV_CPP_

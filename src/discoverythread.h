@@ -35,6 +35,7 @@ int		StartDiscoveryListenThread(const int alpacaListenPort);
 int		StartDiscoveryQuerryThread(void);
 void	Discovery_ClearIPAddrList(void);
 void	ResetExternalIPaddress(void);
+void	WakeUpDiscoveryThread(void);
 
 //-bool	GetJsonResponse(	struct sockaddr_in	*deviceAddress,
 //-							const int			port,

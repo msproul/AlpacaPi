@@ -79,6 +79,7 @@ static int	gClientTransactionID	=	1;
 //*****************************************************************************
 bool	Controller::AlpacaGetStartupData(void)
 {
+	CONSOLE_ABORT("AlpacaGetStartupData() has not been implemented for this controller");
 	CONSOLE_ABORT(__FUNCTION__);
 }
 
@@ -185,6 +186,7 @@ bool	validData;
 bool	myOnLineFlag;
 bool	myConnectedFlag;
 int		validCnt;
+int		returnStrLen;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG_W_STR("Reading common properties for", cWindowName);
@@ -196,13 +198,13 @@ int		validCnt;
 	//-----------------------------------------------------------------------------------------
 	if (myOnLineFlag)
 	{
-		CONSOLE_DEBUG_W_STR("deviceTypeStr=", deviceTypeStr);
+		CONSOLE_DEBUG_W_STR("deviceTypeStr\t=", deviceTypeStr);
 		validData	=	AlpacaGetBooleanValue(	deviceTypeStr, "connected",	NULL,	&myConnectedFlag);
 		if (validData)
 		{
 			cCommonProp.Connected	=	myConnectedFlag;
 			validCnt++;
-			CONSOLE_DEBUG_W_NUM("cCommonProp.Connected\t=", cCommonProp.Connected);
+			CONSOLE_DEBUG_W_BOOL("cCommonProp.Connected\t=", cCommonProp.Connected);
 		}
 		else
 		{
@@ -214,9 +216,15 @@ int		validCnt;
 	if (myOnLineFlag)
 	{
 		validData	=	AlpacaGetStringValue(	deviceTypeStr, "description",	NULL,	returnString);
+		CONSOLE_DEBUG_W_STR("returnString    \t=", returnString);
+		CONSOLE_DEBUG_W_LONG("returnString-len\t=", strlen(returnString));
 		if (validData)
 		{
-			strcpy(cCommonProp.Description,	returnString);
+			returnStrLen	=	strlen(returnString);
+			if (returnStrLen < kCommonPropMaxStrLen)
+			{
+				strcpy(cCommonProp.Description,	returnString);
+			}
 			validCnt++;
 		}
 		else
@@ -229,9 +237,15 @@ int		validCnt;
 	if (myOnLineFlag)
 	{
 		validData	=	AlpacaGetStringValue(	deviceTypeStr, "driverinfo",	NULL,	returnString);
+		CONSOLE_DEBUG_W_STR("returnString    \t=", returnString);
+		CONSOLE_DEBUG_W_LONG("returnString-len\t=", strlen(returnString));
 		if (validData)
 		{
-			strcpy(cCommonProp.DriverInfo,	returnString);
+			returnStrLen	=	strlen(returnString);
+			if (returnStrLen < kCommonPropMaxStrLen)
+			{
+				strcpy(cCommonProp.DriverInfo,	returnString);
+			}
 			validCnt++;
 		}
 		else
@@ -239,14 +253,21 @@ int		validCnt;
 			myOnLineFlag	=	false;
 		}
 	}
+	CONSOLE_DEBUG(__FUNCTION__);
 
 	//-----------------------------------------------------------------------------------------
 	if (myOnLineFlag)
 	{
 		validData	=	AlpacaGetStringValue(	deviceTypeStr, "driverinfo",	NULL,	returnString);
+		CONSOLE_DEBUG_W_STR("returnString    \t=", returnString);
+		CONSOLE_DEBUG_W_LONG("returnString-len\t=", strlen(returnString));
 		if (validData)
 		{
-			strcpy(cCommonProp.DriverInfo,	returnString);
+			returnStrLen	=	strlen(returnString);
+			if (returnStrLen < kCommonPropMaxStrLen)
+			{
+				strcpy(cCommonProp.DriverInfo,	returnString);
+			}
 			validCnt++;
 		}
 		else
@@ -254,14 +275,21 @@ int		validCnt;
 			myOnLineFlag	=	false;
 		}
 	}
+	CONSOLE_DEBUG(__FUNCTION__);
 
 	//-----------------------------------------------------------------------------------------
 	if (myOnLineFlag)
 	{
 		validData	=	AlpacaGetStringValue(	deviceTypeStr, "interfaceversion",	NULL,	returnString);
+		CONSOLE_DEBUG_W_STR("returnString    \t=", returnString);
+		CONSOLE_DEBUG_W_LONG("returnString-len\t=", strlen(returnString));
 		if (validData)
 		{
-			cCommonProp.InterfaceVersion	=	atoi(returnString);
+			returnStrLen	=	strlen(returnString);
+			if (returnStrLen < kCommonPropMaxStrLen)
+			{
+				cCommonProp.InterfaceVersion	=	atoi(returnString);
+			}
 			validCnt++;
 		}
 		else
@@ -274,9 +302,15 @@ int		validCnt;
 	if (myOnLineFlag)
 	{
 		validData	=	AlpacaGetStringValue(	deviceTypeStr, "driverversion",	NULL,	returnString);
+		CONSOLE_DEBUG_W_STR("returnString    \t=", returnString);
+		CONSOLE_DEBUG_W_LONG("returnString-len\t=", strlen(returnString));
 		if (validData)
 		{
-			strcpy(cCommonProp.DriverVersion,	returnString);
+			returnStrLen	=	strlen(returnString);
+			if (returnStrLen < kCommonPropMaxStrLen)
+			{
+				strcpy(cCommonProp.DriverVersion,	returnString);
+			}
 			validCnt++;
 		}
 		else
@@ -289,9 +323,15 @@ int		validCnt;
 	if (myOnLineFlag)
 	{
 		validData	=	AlpacaGetStringValue(	deviceTypeStr, "name",	NULL,	returnString);
+		CONSOLE_DEBUG_W_STR("returnString    \t=", returnString);
+		CONSOLE_DEBUG_W_LONG("returnString-len\t=", strlen(returnString));
 		if (validData)
 		{
-			strcpy(cCommonProp.Name,	returnString);
+			returnStrLen	=	strlen(returnString);
+			if (returnStrLen < kCommonPropMaxStrLen)
+			{
+				strcpy(cCommonProp.Name,	returnString);
+			}
 			validCnt++;
 		}
 		else
@@ -420,9 +460,13 @@ void	Controller::AlpacaProcessSupportedActions(const char *deviceTypeStr, const 
 	{
 		cHas_readall	=	true;
 	}
+	else if (strcasecmp(valueString, "temperaturelog") == 0)
+	{
+		cHas_temperaturelog	=	true;
+	}
 	else if (strcasecmp(valueString, "foo") == 0)
 	{
-		//*	you get the idea
+		//*	you get the idega
 	}
 //	CONSOLE_ABORT(__FUNCTION__);
 }
@@ -1192,7 +1236,7 @@ int				returnCode;
 int				jjj;
 char			alpacaString[128];
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 	returnCode	=	-1;
 
 	if (cGetCPUinfoCallCnt > 0)
@@ -1299,6 +1343,7 @@ void	Controller::UpdateAboutBoxRemoteDevice(const int tabNumber, const int widge
 	}
 }
 
+#define		kTempLogBuffLen	10000
 
 //*****************************************************************************
 //*	returns number of data points read
@@ -1318,7 +1363,7 @@ bool			readingHttpHeader;
 int				ccc;
 char			keywordStr[kLineBufSize];
 char			valueStr[kLineBufSize];
-char			returnedData[kReadBuffLen + 10];
+char			returnedData[kTempLogBuffLen + 10];
 int				recvdByteCnt;
 int				totalBytesRead;
 int				linesProcessed;
@@ -1335,7 +1380,7 @@ int				braceCnt;
 double			myDoubleValue;
 
 
-	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, alpacaDeviceString);
 	if ((temperatureLog == NULL) || (maxBufferSize <= 0))
 	{
 		CONSOLE_DEBUG("No place to put data");
@@ -1349,7 +1394,7 @@ double			myDoubleValue;
 	sprintf(alpacaString,	"/api/v1/%s/%d/temperaturelog", alpacaDeviceString, alpacaDeviceNumber);
 
 	strcpy(cLastAlpacaCmdString, alpacaString);
-	CONSOLE_DEBUG_W_STR("alpacaString\t=",	alpacaString);
+//	CONSOLE_DEBUG_W_STR("alpacaString\t=",	alpacaString);
 
 	socket_desc	=	OpenSocketAndSendRequest(	&cDeviceAddress,
 												cPort,
@@ -1357,13 +1402,9 @@ double			myDoubleValue;
 												alpacaString,
 												"",
 												false);
-
-
-
 	if (socket_desc >= 0)
 	{
-
-		CONSOLE_DEBUG("Success: Connection open and data sent");
+//		CONSOLE_DEBUG("Success: Connection open and data sent");
 		valueFoundFlag		=	false;
 		keepReading			=	true;
 		readingHttpHeader	=	true;
@@ -1375,7 +1416,7 @@ double			myDoubleValue;
 		ccc					=	0;
 		while (keepReading)
 		{
-			recvdByteCnt	=	recv(socket_desc, returnedData , kReadBuffLen , 0);
+			recvdByteCnt	=	recv(socket_desc, returnedData , kTempLogBuffLen , 0);
 			if (recvdByteCnt > 0)
 			{
 				socketReadCnt++;
@@ -1384,8 +1425,8 @@ double			myDoubleValue;
 				returnedData[recvdByteCnt]	=	0;
 				data_iii					=	0;
 
-				CONSOLE_DEBUG_W_NUM("recvdByteCnt  \t=", recvdByteCnt);
-				CONSOLE_DEBUG_W_NUM("totalBytesRead\t=", totalBytesRead);
+//				CONSOLE_DEBUG_W_NUM("recvdByteCnt  \t=", recvdByteCnt);
+//				CONSOLE_DEBUG_W_NUM("totalBytesRead\t=", totalBytesRead);
 
 				//----------------------------------------------------------------
 				//*	this part reads and processes the HTTP header
@@ -1401,13 +1442,13 @@ double			myDoubleValue;
 						{
 							//*	process the header line
 							JSON_ExtractKeyword_Value(linebuf, keywordStr, valueStr);
-							CONSOLE_DEBUG_W_2STR("JSON:", keywordStr, valueStr);
+//							CONSOLE_DEBUG_W_2STR("JSON:", keywordStr, valueStr);
 						//	ProcessHTTPheaderLine(linebuf, &cHttpHdrStruct);
 						}
 						else
 						{
 							//*	Done with the header
-							CONSOLE_DEBUG("Done with the header");
+//							CONSOLE_DEBUG("Done with the header");
 							readingHttpHeader	=	false;
 						}
 
@@ -1416,7 +1457,6 @@ double			myDoubleValue;
 						linebuf[ccc]	=	0;
 
 						//*	check for the lf of cr/lf
-					//	if ((returnedData[data_iii + 1] == 0x0a) || (returnedData[data_iii + 1] == 0x0d))
 						if ((returnedData[data_iii + 1] == 0x0a))
 						{
 							data_iii++;
@@ -1429,7 +1469,7 @@ double			myDoubleValue;
 					}
 					data_iii++;
 				}
-				CONSOLE_DEBUG_W_NUM("data_iii    \t=", data_iii);
+//				CONSOLE_DEBUG_W_NUM("data_iii    \t=", data_iii);
 
 				//*	dont reset data_iii
 				for (; data_iii<recvdByteCnt; data_iii++)
@@ -1494,11 +1534,11 @@ double			myDoubleValue;
 						if ((strlen(linebuf) > 3) && (linebuf[0] != 0x30))
 						{
 							JSON_ExtractKeyword_Value(linebuf, keywordStr, valueStr);
-							CONSOLE_DEBUG_W_2STR("KW:VAL\t=", keywordStr, valueStr);
+//							CONSOLE_DEBUG_W_2STR("KW:VAL\t=", keywordStr, valueStr);
 
 							if (strcasecmp(keywordStr, "value") == 0)
 							{
-								CONSOLE_DEBUG("value found!!!!");
+//								CONSOLE_DEBUG("'value' found!!!!");
 								valueFoundFlag	=	true;
 							}
 						}
@@ -1555,8 +1595,54 @@ double			myDoubleValue;
 	{
 		returnDataCnt	=	dataIndex;
 	}
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, "EXIT");
 	return(returnDataCnt);
 }
+
+
+//*****************************************************************************
+void	Controller::ProcessConfiguredDevices(const char *keyword, const char *valueString)
+{
+
+}
+
+//*	Dec 17,	2022	<MLS> Added GetConfiguredDevices() (moved from controller_camera)
+//*	Dec 17,	2022	<MLS> Added ProcessConfiguredDevices()
+
+
+//*****************************************************************************
+//*	returns the number of data tokens
+//*****************************************************************************
+int	Controller::GetConfiguredDevices(void)
+{
+SJP_Parser_t	jsonParser;
+bool			validData;
+int				jjj;
+
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+
+	SJP_Init(&jsonParser);
+	validData	=	GetJsonResponse(	&cDeviceAddress,
+										cPort,
+										"/management/v1/configureddevices",
+										NULL,
+										&jsonParser);
+	if (validData)
+	{
+		for (jjj=0; jjj<jsonParser.tokenCount_Data; jjj++)
+		{
+			ProcessConfiguredDevices(jsonParser.dataList[jjj].keyword, jsonParser.dataList[jjj].valueString);
+		}
+	}
+	else
+	{
+		cReadFailureCnt++;
+		cOnLine	=	false;
+		SetWindowIPaddrInfo(NULL, cOnLine);
+	}
+	return(jsonParser.tokenCount_Data);
+}
+
 
 //*****************************************************************************
 void	JSON_ExtractKeyword_Value(const char *linebuf, char *keywordStr, char *valueStr)

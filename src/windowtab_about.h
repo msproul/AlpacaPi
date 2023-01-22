@@ -44,7 +44,7 @@ class WindowTabAbout: public WindowTab
 		virtual	~WindowTabAbout(void);
 
 		virtual	void	SetupWindowControls(void);
-
+				void	SetLocalDeviceInfo(void);
 };
 
 

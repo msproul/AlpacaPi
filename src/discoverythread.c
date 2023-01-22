@@ -31,6 +31,7 @@
 //*	Jun  2,	2022	<MLS> Added parsing for upTime_Days & cpuTemp_DegF
 //*	Aug  6,	2022	<MLS> Added CPU temp logging
 //*	Aug 23,	2022	<MLS> Added keeping track of max CPU temp
+//*	Dec 22,	2022	<MLS> Added WakeUpDiscoveryThread()
 //*****************************************************************************
 
 
@@ -91,6 +92,7 @@ int					gRemoteCnt		=	0;
 
 bool				gDiscoveryThreadIsRunning	=	false;
 bool				gDiscoveryThreadKeepRunning	=	true;
+bool				gDiscoveryWakeUp			=	false;
 
 static	int			gBroadcastSock;
 static	uint32_t	gMyIPaddress		=	0;
@@ -454,6 +456,10 @@ char			myVersionString[64];
 		{
 			myRemoteDevice.alpacaDeviceNum	=	atoi(jsonParser->dataList[iii].valueString);
 		}
+		else if (strcasecmp(jsonParser->dataList[iii].keyword, "TIMESTAMP") == 0)
+		{
+			strcpy(theDevice->timeStampString, jsonParser->dataList[iii].valueString);
+		}
 
 
 
@@ -556,7 +562,8 @@ char				errorString[64];
 
 			strcat(xmitBuffer, " HTTP/1.0\r\n");
 			strcat(xmitBuffer, "Host: 127.0.0.1:6800\r\n");
-			strcat(xmitBuffer, "User-Agent: AlpacaPi\r\n");
+//			strcat(xmitBuffer, "User-Agent: AlpacaPi\r\n");
+			strcat(xmitBuffer,	gUserAgentAlpacaPiStr);
 			strcat(xmitBuffer, "Accept: text/html,application/json\r\n");
 			strcat(xmitBuffer, "\r\n");
 
@@ -783,15 +790,16 @@ int		alpacaListenPort;
 	alpacaListenPort	=	12345;
 	for (iii=0; iii<jsonParser->tokenCount_Data; iii++)
 	{
-		if (strcmp(jsonParser->dataList[iii].keyword, "ALPACAPORT") == 0)
+//		CONSOLE_DEBUG_W_2STR("kw:val",	jsonParser->dataList[iii].keyword,
+//										jsonParser->dataList[iii].valueString);
+		if (strcasecmp(jsonParser->dataList[iii].keyword, "ALPACAPORT") == 0)
 		{
 			alpacaListenPort	=	atoi(jsonParser->dataList[iii].valueString);
 		}
 	}
 
-
-	newDevice		=	true;
-	theDeviceIdx	=	-1;
+	newDevice			=	true;
+	theDeviceIdx		=	-1;
 	for (iii=0; iii<gAlpacaUnitCnt; iii++)
 	{
 		if (	(deviceAddress->sin_addr.s_addr	==	gAlpacaUnitList[iii].deviceAddress.sin_addr.s_addr)
@@ -1063,6 +1071,7 @@ char				ipAddressStr[INET_ADDRSTRLEN];
 SJP_Parser_t		jsonParser;
 int					timeOutCntr;
 int					sockOptValue;
+int					sleepSecsCounter;
 
 //	CONSOLE_DEBUG("*********************************************************");
 //	CONSOLE_DEBUG(__FUNCTION__);
@@ -1184,8 +1193,15 @@ bool				validLocalAddress;
 		GetInformationFromOtherDevices();
 
 		//*	we dont need to do this very often
-	//	sleep(3000);
-		sleep(90);
+		sleepSecsCounter	=	0;
+		while ((sleepSecsCounter < 90) && (gDiscoveryWakeUp == false) && gDiscoveryThreadKeepRunning)
+		{
+		#define	kSleepTime	2
+
+			sleep(kSleepTime);
+			sleepSecsCounter	+=	kSleepTime;
+		}
+		gDiscoveryWakeUp	=	false;
 	//	CONSOLE_DEBUG("Done sleeping");
 	}
 
@@ -1194,6 +1210,13 @@ bool				validLocalAddress;
 	gDiscoveryThreadIsRunning	=	false;
 	return(NULL);
 }
+
+//*****************************************************************************
+void	WakeUpDiscoveryThread(void)
+{
+	gDiscoveryWakeUp	=	true;
+}
+
 //*****************************************************************************
 void	ResetExternalIPaddress(void)
 {

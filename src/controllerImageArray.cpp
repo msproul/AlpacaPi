@@ -376,7 +376,7 @@ int				progressUpdateCnt;
 	return(imgRank);
 }
 
-#if 0
+#if 1
 //*****************************************************************************
 static void	DumpHex(const char *dataPtr, const int numRows)
 {
@@ -552,21 +552,30 @@ uint32_t		binaryDataValue;
 	}
 	else if (cBinaryImageHdr.Rank == 2)
 	{
+//		CONSOLE_DEBUG(__FUNCTION__);
 		while ((cData_iii < cRecvdByteCnt))
 		{
 			binaryDataValue	=	0;
+		#if 1
+			binaryDataValue	+=	(cReturnedData[cData_iii++] & 0x00ff);
+			binaryDataValue	+=	(cReturnedData[cData_iii++] & 0x00ff) << 8;
+			binaryDataValue	+=	(cReturnedData[cData_iii++] & 0x00ff) << 16;
+			binaryDataValue	+=	(cReturnedData[cData_iii++] & 0x00ff) << 24;
+		#else
 			binaryDataValue	+=	(cReturnedData[cData_iii++] & 0x00ff) << 24;
 			binaryDataValue	+=	(cReturnedData[cData_iii++] & 0x00ff) << 16;
 			binaryDataValue	+=	(cReturnedData[cData_iii++] & 0x00ff) << 8;
 			binaryDataValue	+=	(cReturnedData[cData_iii++] & 0x00ff);
-
-			imageArray[cImageArrayIndex].RedValue	=	binaryDataValue;
-			imageArray[cImageArrayIndex].GrnValue	=	binaryDataValue;
-			imageArray[cImageArrayIndex].BluValue	=	binaryDataValue;
-//			imageArray[cImageArrayIndex].BluValue	=	0x7980;
+		#endif // 1
+//			CONSOLE_DEBUG_W_HEX("binaryDataValue\t=", binaryDataValue);
+			imageArray[cImageArrayIndex].RedValue	=	binaryDataValue >> 16;
+			imageArray[cImageArrayIndex].GrnValue	=	binaryDataValue >> 16;
+			imageArray[cImageArrayIndex].BluValue	=	binaryDataValue >> 16;
+//			imageArray[cImageArrayIndex].BluValue	=	0x8123;
 			cImageArrayIndex++;
 		}
 	}
+
 	else
 	{
 		CONSOLE_DEBUG_W_NUM("Unknown rank value", cBinaryImageHdr.Rank);
@@ -607,7 +616,7 @@ int				dataBlkCount;
 
 	CONSOLE_DEBUG("-----------------------------------------------------------");
 	CONSOLE_DEBUG(__FUNCTION__);
-	CONSOLE_DEBUG_W_NUM("imageArrayLen\t\t\t=",	imageArrayLen);
+	CONSOLE_DEBUG_W_NUM("imageArrayLen\t\t=",	imageArrayLen);
 
 	tStartMillisecs			=	millis();
 	tLastUpdateMillisecs	=	tStartMillisecs;
@@ -621,8 +630,8 @@ int				dataBlkCount;
 		dataBlkCount++;
 		if (cReadBinaryHeader)
 		{
-			CONSOLE_DEBUG_W_NUM("contentLength\t\t=",			cHttpHdrStruct.contentLength);
-			CONSOLE_DEBUG_W_NUM("cRecvdByteCnt\t\t=", cRecvdByteCnt);
+			CONSOLE_DEBUG_W_NUM("contentLength\t\t=",	cHttpHdrStruct.contentLength);
+			CONSOLE_DEBUG_W_NUM("cRecvdByteCnt\t\t=",	cRecvdByteCnt);
 	//		DumpHex(cReturnedData, 40);
 
 			WriteRawDataForDebug(cReturnedData, imageArrayLen);
@@ -631,15 +640,18 @@ int				dataBlkCount;
 			memset(&cBinaryImageHdr, 0, sizeof(TYPE_BinaryImageHdr));
 			binaryImgHdrPtr	=	(unsigned char *)&cBinaryImageHdr;
 
-			CONSOLE_DEBUG_W_NUM("cData_iii\t\t\t=", cData_iii);
+			CONSOLE_DEBUG_W_NUM("cData_iii                  \t=", cData_iii);
+			CONSOLE_DEBUG_W_LONG("sizeof(TYPE_BinaryImageHdr)\t=", sizeof(TYPE_BinaryImageHdr));
 			for (jjj=0; jjj < (int)sizeof(TYPE_BinaryImageHdr); jjj++)
 			{
 				binaryImgHdrPtr[jjj]	=	cReturnedData[cData_iii];
 				cData_iii++;
 			}
-//			CONSOLE_DEBUG_W_NUM("cData_iii=", cData_iii);
-//			CONSOLE_DEBUG("Imagebytes header");
-//			DumpHex((char *)binaryImgHdrPtr, 3);
+			CONSOLE_DEBUG_W_NUM("cData_iii                  \t=", cData_iii);
+			CONSOLE_DEBUG("Imagebytes header");
+			DumpHex((char *)binaryImgHdrPtr, 6);
+			CONSOLE_DEBUG("Raw data (cReturnedData)");
+			DumpHex((char *)cReturnedData, 100);
 
 			cReadBinaryHeader	=	false;
 			imgRank				=	cBinaryImageHdr.Rank;
@@ -663,12 +675,13 @@ int				dataBlkCount;
 			CONSOLE_DEBUG_W_NUM("Dimension2             \t=",	cBinaryImageHdr.Dimension2);
 			CONSOLE_DEBUG_W_NUM("Dimension3             \t=",	cBinaryImageHdr.Dimension3);
 
-			CONSOLE_DEBUG("Image data");
-	//		DumpHexRGB((char *)&cReturnedData[cData_iii], 8);
-			CONSOLE_DEBUG_W_NUM("cData_iii\t\t\t=",			cData_iii);
+//			CONSOLE_DEBUG("Image data");
+//			DumpHexRGB((char *)&cReturnedData[cData_iii], 8);
+//			CONSOLE_DEBUG_W_NUM("cData_iii\t\t\t=",			cData_iii);
 		}
 
 
+//		CONSOLE_DEBUG_W_NUM("cImageArrayIndex\t=",	cImageArrayIndex);
 		//*	put the data into a long word based on the TransmissionElementType
 		switch(cBinaryImageHdr.TransmissionElementType)
 		{
@@ -824,9 +837,9 @@ int				dataBlkCount;
 			cKeepReading		=	false;
 		}
 	}
-	CONSOLE_DEBUG_W_NUM("dataBlkCount\t=",	dataBlkCount);
-	CONSOLE_DEBUG_W_NUM("imgRank\t\t\t=",	imgRank);
-	CONSOLE_DEBUG_W_NUM("cImageArrayIndex\t=", cImageArrayIndex);
+	CONSOLE_DEBUG_W_NUM("dataBlkCount    \t=",	dataBlkCount);
+	CONSOLE_DEBUG_W_NUM("imgRank         \t=",	imgRank);
+	CONSOLE_DEBUG_W_NUM("cImageArrayIndex\t=",	cImageArrayIndex);
 	return(imgRank);
 }
 
@@ -1098,9 +1111,9 @@ int				ccc;
 
 	CONSOLE_DEBUG("------------------------------------------------------------------");
 	CONSOLE_DEBUG(__FUNCTION__);
-	CONSOLE_DEBUG_W_NUM("kReadBuffLen\t=", kReadBuffLen);
-	CONSOLE_DEBUG_W_NUM("imageArrayLen\t=", imageArrayLen);
-	CONSOLE_DEBUG_W_NUM("allowBinary\t=", allowBinary);
+	CONSOLE_DEBUG_W_NUM(	"kReadBuffLen \t=", kReadBuffLen);
+	CONSOLE_DEBUG_W_NUM(	"imageArrayLen\t=", imageArrayLen);
+	CONSOLE_DEBUG_W_BOOL(	"allowBinary  \t=", allowBinary);
 
 	cImgArrayType			=	-1;
 	imgRank					=	2;	//*	default to 2

@@ -81,16 +81,20 @@
 #define	kMaxCameraCnt	5
 
 //**************************************************************************************
-void	CreateATIK_CameraObjects(void)
+//*	returns the number of camera objects created
+//**************************************************************************************
+int	CreateATIK_CameraObjects(void)
 {
 int		devNum;
 int		atikDeviceCount;
+int		createdDevCount;
 bool	rulesOK;
 char	driverVersionString[64];
 int		atikVersionNum;
 char	rulesFileName[]	=	"99-atik.rules";
 bool	deviceIsCamera;
 
+	createdDevCount	=	0;
 	atikVersionNum	=	ArtemisAPIVersion();
 	sprintf(driverVersionString, "%d", atikVersionNum);
 	LogEvent(	"camera",
@@ -122,8 +126,10 @@ bool	deviceIsCamera;
 		if (deviceIsCamera)
 		{
 			new CameraDriverATIK(devNum);
+			createdDevCount++;
 		}
 	}
+	return(createdDevCount);
 }
 
 

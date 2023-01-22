@@ -131,8 +131,8 @@ char				ipString[32];
 int					setOptRetCode;
 int					so_oobinline;
 
-	CONSOLE_DEBUG(__FUNCTION__);
-	CONSOLE_DEBUG_W_NUM("includeImageBinary\t=", includeImageBinary);
+//	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG_W_NUM("includeImageBinary\t=", includeImageBinary);
 //	CONSOLE_DEBUG(sendData);
 	inet_ntop(AF_INET, &deviceAddress->sin_addr.s_addr, ipString, INET_ADDRSTRLEN);
 
@@ -177,7 +177,8 @@ int					so_oobinline;
 //			strcat(xmitBuffer,	"Host: 127.0.0.1:6800");
 			sprintf(linebuf,	"Host: %s:%d\r\n", ipString, port);
 			strcat(xmitBuffer,	linebuf);
-			strcat(xmitBuffer,	"User-Agent: AlpacaPi\r\n");
+//			strcat(xmitBuffer,	"User-Agent: AlpacaPi\r\n");
+			strcat(xmitBuffer,	gUserAgentAlpacaPiStr);
 
 			strcat(xmitBuffer,	"Accept: text/html,application/json");
 			if (includeImageBinary)
@@ -323,7 +324,8 @@ int					readSuccessCnt;		//*	for debugging
 //			strcat(xmitBuffer,	"Host: ascom:11111\r\n");
 			sprintf(linebuf,	"Host: %s:%d\r\n", ipString, port);
 			strcat(xmitBuffer,	linebuf);
-			strcat(xmitBuffer,	"User-Agent: AlpacaPi\r\n");
+//			strcat(xmitBuffer,	"User-Agent: AlpacaPi\r\n");
+			strcat(xmitBuffer,	gUserAgentAlpacaPiStr);
 			strcat(xmitBuffer,	"Accept: text/html,application/json\r\n");
 
 			strcat(xmitBuffer,	"Accept-Language: en-US,en;q=0.5\r\n");
@@ -549,7 +551,8 @@ int					setOptRetCode;
 //			strcat(xmitBuffer,	"Host: 192.168.1.156:32323\r\n");
 			sprintf(linebuf,	"Host: %s:%d\r\n", ipString, port);
 			strcat(xmitBuffer,	linebuf);
-			strcat(xmitBuffer,	"User-Agent: AlpacaPi\r\n");
+//			strcat(xmitBuffer,	"User-Agent: AlpacaPi\r\n");
+			strcat(xmitBuffer,	gUserAgentAlpacaPiStr);
 			strcat(xmitBuffer,	"Connection: close\r\n");
 			strcat(xmitBuffer,	"Accept: text/html,application/json\r\n");
 			strcat(xmitBuffer,	"Content-Type: application/x-www-form-urlencoded\r\n");

@@ -66,7 +66,7 @@ WindowTabImage::WindowTabImage(	const int	xSize,
 	cImageCenterY			=	500;
 
 	SetupWindowControls();
-
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, "EXIT");
 }
 
 //**************************************************************************************
@@ -203,8 +203,8 @@ char		buttonName[16];
 	SetWidget(		kImageDisplay_Histogram,	xLoc + 2,	yLoc,		boxWidth,		boxHeight);
 	SetWidgetType(	kImageDisplay_Histogram, 	kWidgetType_CustomGraphic);
 	SetWidgetText(	kImageDisplay_Histogram,	"Histogram");
-	CONSOLE_DEBUG_W_NUM("boxWidth\t=",	boxWidth);
-	CONSOLE_DEBUG_W_NUM("boxHeight\t=",	boxHeight);
+//	CONSOLE_DEBUG_W_NUM("boxWidth\t=",	boxWidth);
+//	CONSOLE_DEBUG_W_NUM("boxHeight\t=",	boxHeight);
 
 	SetWidgetOutlineBox(kImageDisplay_HistogramOutline, kImageDisplay_HistRedPerct, (kImageDisplay_HistogramOutline -1));
 //	CONSOLE_ABORT(__FUNCTION__);
@@ -248,7 +248,7 @@ char		buttonName[16];
 	CONSOLE_DEBUG_W_NUM("yLoc          \t=",	yLoc);
 	CONSOLE_DEBUG_W_NUM("imageBoxWidth \t=",	imageBoxWidth);
 	CONSOLE_DEBUG_W_NUM("imageBoxHeight\t=",	imageBoxHeight);
-
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, "EXIT");
 }
 
 //*****************************************************************************

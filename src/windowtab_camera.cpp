@@ -258,11 +258,13 @@ char		textBuff[32];
 	SetWidgetFont(				kCameraBox_State,	kFont_Small);
 	SetWidgetJustification  (	kCameraBox_State,	kJustification_Left);
 
-	SetWidget(					kCameraBox_PercentCompleted,	cClm3_offset + 5,	yLoc,	cClmWidth * 2,		cRadioBtnHt	);
+	SetWidget(					kCameraBox_PercentCompleted,	cClm3_offset + 5,	yLoc,	cClmWidth * 4,		cRadioBtnHt	);
 	SetWidgetFont(				kCameraBox_PercentCompleted,	kFont_Small);
 	SetWidgetJustification  (	kCameraBox_PercentCompleted,	kJustification_Center);
 	SetWidgetText(				kCameraBox_PercentCompleted,	"Percent complete");
-
+	SetWidgetBGColor(			kCameraBox_PercentCompleted,	CV_RGB(0,	0,	0));
+	SetWidgetTextColor(			kCameraBox_PercentCompleted,	CV_RGB(255,	0,	0));
+	SetWidgetAltText(			kCameraBox_PercentCompleted,	"Exposure");
 
 
 	yLoc			+=	cRadioBtnHt;

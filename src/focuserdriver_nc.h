@@ -46,6 +46,10 @@ class FocuserNiteCrawler: public FocuserDriver
 		int				ReadUntilChar(const int fd, char *readBuff, const int maxChars, const char terminator);
 		bool			GetPosition(const int axisNumber, int32_t *valueToUpdate);
 
+		//*	these get called from RunStateMachine()
+		void			ProcessQueuedCommands(void);
+		void			ProcessPeriodicRequests(void);
+
 		int				cFileDesc;	//*	port file descriptor
 		uint32_t		cLastTimeSecs_Temperature;
 		uint32_t		cLastTimeMilSecs_Position;
@@ -54,6 +58,13 @@ class FocuserNiteCrawler: public FocuserDriver
 
 		TYPE_MOONLITECOM	cMoonliteCom;
 
+		//*	command queue data
+		bool			cSendHaltCmd;
+		int				cHaltCmdAxis;
+
+		bool			cSendMoveCmd;
+		int				cMoveCmdAxis;
+		int				cMoveCmdPosition;
 
 };
 

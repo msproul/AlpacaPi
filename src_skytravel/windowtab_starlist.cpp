@@ -195,7 +195,7 @@ int		clmnHdrWidth;
 }
 
 //*****************************************************************************
-//void	WindowTabStarList::RunBackgroundTasks(void)
+//void	WindowTabStarList::RunWindowBackgroundTasks(void)
 //{
 
 

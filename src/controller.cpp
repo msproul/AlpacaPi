@@ -93,6 +93,7 @@
 //*	Oct  7,	2022	<MLS> Added UpdateCapabilityListID()
 //*	Oct 13,	2022	<MLS> Finished support for kJustification_Right
 //*	Oct 20,	2022	<MLS> Changing all controllers to use the same error msg box
+//*	Nov 17,	2022	<MLS> Added check for duplicate window names
 //*****************************************************************************
 
 
@@ -350,6 +351,8 @@ Controller::Controller(	const char	*argWindowName,
 {
 int			iii;
 int			objCntr;
+bool		windowExists;
+char		myWindowName[128];
 
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, argWindowName);
 //	CONSOLE_DEBUG_W_NUM("xSize        \t=",	xSize);
@@ -363,6 +366,7 @@ int			objCntr;
 	cDebugCounter				=	0;
 	cUpdateProtect				=	false;
 	cHas_readall				=	false;
+	cHas_temperaturelog			=	false;
 	cReadStartup				=	true;
 	cLeftButtonDown				=	false;
 	cRightButtonDown			=	false;
@@ -432,9 +436,22 @@ int			objCntr;
 
 	InitWindowTabs();
 
+	//--------------------------------------------------------------
+	//*	check to see if there is already a window open with this name
+	strcpy(myWindowName, argWindowName);
+	windowExists	=	CheckForOpenWindowByName(myWindowName);
+	iii				=	1;
+	while (windowExists)
+	{
+		sprintf(myWindowName, "%s-%d", argWindowName, iii);
+		windowExists	=	CheckForOpenWindowByName(myWindowName);
+
+		iii++;
+	}
+
 //	CONSOLE_DEBUG_W_NUM("xSize\t=",	xSize);
 //	CONSOLE_DEBUG_W_NUM("ySize\t=",	ySize);
-	strcpy(cWindowName, argWindowName);
+	strcpy(cWindowName, myWindowName);
 //	CONSOLE_DEBUG_W_STR("cWindowName\t=",	cWindowName);
 	cWidth				=	xSize;
 	cHeight				=	ySize;
@@ -1065,7 +1082,9 @@ void	Controller::ProcessButtonClick(const int buttonIdx, const int	flags)
 //	CONSOLE_DEBUG(__FUNCTION__);
 	if (cCurrentTabObjPtr != NULL)
 	{
+		cButtonClickInProgress	=	true;
 		cCurrentTabObjPtr->ProcessButtonClick(buttonIdx, flags);
+		cButtonClickInProgress	=	false;
 	}
 	else
 	{
@@ -1361,7 +1380,7 @@ int		wheelMovement;
 		//********************************************************************************
 		case cv::EVENT_MOUSEWHEEL:
 		case cv::EVENT_MOUSEHWHEEL:
-			CONSOLE_DEBUG_W_HEX("EVENT_MOUSEWHEEL: flags\t=", flags);
+//			CONSOLE_DEBUG_W_HEX("EVENT_MOUSEWHEEL: flags\t=", flags);
 			wheelMovement	=	flags & 0xffff0000;
 			wheelMovement	/=	65536;
 			if (cCurrentTabObjPtr != NULL)
@@ -1621,6 +1640,15 @@ int			textLoc_Y;
 				if (ccc < kMaxTextLineLen)
 				{
 					lineBuff[ccc++]	=	theChar;
+					lineBuff[ccc]	=	0;
+				}
+			}
+			else if (theChar == 0x09)
+			{
+				if (ccc < kMaxTextLineLen)
+				{
+					lineBuff[ccc++]	=	0x20;
+					lineBuff[ccc++]	=	0x20;
 					lineBuff[ccc]	=	0;
 				}
 			}
@@ -2053,20 +2081,31 @@ int		textLoc_Y;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 	percentComplete	=	theWidget->sliderValue / theWidget->sliderMax;
-	sprintf(textString, "Downloading - %3.1f%% complete", (percentComplete * 100.0));
+	if (theWidget->alternateText[0] >= 0x20)
+	{
+		sprintf(textString, "%s - %3.1f%% complete", theWidget->alternateText, (percentComplete * 100.0));
+	}
+	else
+	{
+		sprintf(textString, "Downloading - %3.1f%% complete", (percentComplete * 100.0));
+	}
 
 	DrawWidgetBackground(theWidget);
 
+	//*	erase using BACKGROUND color
 	cCurrentColor	=	theWidget->bgColor;
 	LLD_FillRect(theWidget->left,	theWidget->top,	theWidget->width,	theWidget->height);
 
+	//*	progress bar using TEXT color
 	newWidth		=	theWidget->width * percentComplete;
 	cCurrentColor	=	theWidget->textColor;
 	LLD_FillRect(theWidget->left,	theWidget->top,	newWidth,	theWidget->height);
 
+
 	cCurrentColor	=	theWidget->borderColor;
 	LLD_FrameRect(theWidget->left,	theWidget->top,	theWidget->width,	theWidget->height);
 
+	//*	text using BORDER color
 	textLoc_X	=	theWidget->left + 10;
 	textLoc_Y	=	theWidget->top + (theWidget->height / 2) + 5;
 	LLD_DrawCString(textLoc_X, textLoc_Y, textString, kFont_Medium);

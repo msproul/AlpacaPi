@@ -84,6 +84,8 @@
 	#include	"alpaca_defs.h"
 #endif
 
+#include	"camera_defs.h"
+
 #define	kDefaultImageDataDir	"imagedata"
 extern	char	gImageDataDir[];
 
@@ -323,6 +325,7 @@ enum
 	kFlip_Both
 };
 
+
 //**************************************************************************************
 class CameraDriver: public AlpacaDriver
 {
@@ -338,7 +341,7 @@ class CameraDriver: public AlpacaDriver
 		virtual	TYPE_ASCOM_STATUS	ProcessCommand(TYPE_GetPutRequestData *reqData);
 		virtual	void				OutputHTML(TYPE_GetPutRequestData *reqData);
 		virtual	void				OutputHTML_Part2(TYPE_GetPutRequestData *reqData);
-		virtual void				GetCommandArgumentString(const int cmdNumber, char *agumentString);
+		virtual bool				GetCommandArgumentString(const int cmdNumber, char *agumentString);
 		virtual	int32_t	RunStateMachine(void);
 				int32_t	RunStateMachine_Idle(void);
 				int		RunStateMachine_TakingPicture(void);
@@ -447,11 +450,13 @@ class CameraDriver: public AlpacaDriver
 
 		TYPE_ASCOM_STATUS	Get_Imagearray_JSON(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 		TYPE_ASCOM_STATUS	Get_Imagearray_Binary(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
-		int					BuildBinaryImage_Raw8(	unsigned char *binaryDataBuffer, int startOffset, int bufferSize);
-		int					BuildBinaryImage_Raw16(	unsigned char *binaryDataBuffer, int startOffset, int bufferSize);
-		int					BuildBinaryImage_Raw32(	unsigned char *binaryDataBuffer, int startOffset, int bufferSize);
-		int					BuildBinaryImage_RGB24(	unsigned char *binaryDataBuffer, int startOffset, int bufferSize);
-		int					BuildBinaryImage_RGBx16(unsigned char *binaryDataBuffer, int startOffset, int bufferSize);
+		int					BuildBinaryImage_Raw8(			unsigned char	*binaryDataBuffer, int startOffset, int bufferSize);
+		int					BuildBinaryImage_Raw8_32bit(	unsigned char	*binaryDataBuffer, int startOffset, int bufferSize);
+		int					BuildBinaryImage_Raw16(			unsigned char	*binaryDataBuffer, int startOffset, int bufferSize);
+		int					BuildBinaryImage_Raw32(			unsigned char	*binaryDataBuffer, int startOffset, int bufferSize);
+		int					BuildBinaryImage_RGB24(			unsigned char	*binaryDataBuffer, int startOffset, int bufferSize);
+		int					BuildBinaryImage_RGB24_32bit(	uint32_t		*binaryDataBuffer, int startOffset, int bufferSize);
+		int					BuildBinaryImage_RGBx16(		unsigned char	*binaryDataBuffer, int startOffset, int bufferSize);
 
 		//-------------------------------------------------------------------------------------------------
 		//*	Added by MLS
@@ -673,6 +678,16 @@ class CameraDriver: public AlpacaDriver
 				void				DumpCameraProperties(const char *callingFunctionName);
 				void				CreateFakeImageData(unsigned char *cameraDataPtr, int imageWith, int imageHeight, int bytesPerPixel);
 
+		//-------------------------------------------------------------------------
+		//*	this is for the setup function
+		virtual	bool					Setup_OutputForm(TYPE_GetPutRequestData *reqData, const char *formActionString);
+		virtual void					Setup_SaveInit(void);
+		virtual void					Setup_SaveFinish(void);
+		virtual	bool					Setup_ProcessKeyword(const char *keyword, const char *valueString);
+				TYPE_FilenameOptions	cSetupFileNameOptions;
+				char					cSetupOtherPrefix[32];
+
+
 	//*****************************************************************************
 public:
 //-	char					cSensorName[kMaxSensorNameLen];	//*	obtained from my table lookup
@@ -783,16 +798,13 @@ protected:
 
 	//==========================================================
 	//*	File name information
-	bool				cFN_includeSerialNum;
-	bool				cFN_includeManuf;
-	bool				cFN_includeFilter;
-	bool				cFN_includeRefID;
+	TYPE_FilenameOptions	cFN;
 
-	char				cObjectName[kObjectNameMaxLen + 1];
-	char				cFileNameRoot[256];
-	char				cLastJpegImageName[256];
-	char				cFileNamePrefix[kFileNamePrefixMaxLen + 1];
-	char				cFileNameSuffix[kFileNamePrefixMaxLen + 1];
+	char					cObjectName[kObjectNameMaxLen + 1];
+	char					cFileNameRoot[256];
+	char					cLastJpegImageName[256];
+	char					cFileNamePrefix[kFileNamePrefixMaxLen + 1];
+	char					cFileNameSuffix[kFileNamePrefixMaxLen + 1];
 
 	char				cAuxTextTag[kAuxiliaryTextMaxLen];		//*	auxiliary text information
 
@@ -930,8 +942,8 @@ typedef struct
 }	TYPE_SensorName;
 
 
-extern	TYPE_CmdEntry	gCameraCmdTable[];
-extern	const char		*gCameraStateStrings[];
+extern	const TYPE_CmdEntry	gCameraCmdTable[];
+extern	const char			*gCameraStateStrings[];
 
 void	GetImageTypeString(TYPE_IMAGE_TYPE imageType, char *imageTypeString);
 

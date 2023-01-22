@@ -46,13 +46,14 @@
 
 
 //**************************************************************************************
-void	CreateSimulator_CameraObjects(void)
+int	CreateSimulator_CameraObjects(void)
 {
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
 	//*	for debugging without a camera
 	new CameraDriverSIM(0);
+	return(1);
 }
 
 //**************************************************************************************
@@ -64,19 +65,16 @@ bool		isConnected;
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG_W_NUM("Creating Simulation device number ", deviceNum);
 
-//	gVerbose				=	true;
-//	cVerboseDebug			=	true;
-	cCameraIsSiumlated		=	true;
+//	gVerbose					=	true;
+//	cVerboseDebug				=	true;
 
-	cCameraID				=	deviceNum;
-	cSimulatedState			=   kExposure_Idle;
-	//*	set defaults
+	cCameraID					=	deviceNum;
+	cCameraIsSiumlated			=	true;
+	cSimulatedState				=   kExposure_Idle;
+	cIsColorCam					=	true;
 	strcpy(cDeviceManufAbrev,		"APi");
-	strcpy(cCommonProp.Name,		"AlpacaPi Simulator");
-	strcpy(cCommonProp.Description,	"AlpacaPi Simulator");
-	strcpy(cCommonProp.Name,		"AlpacaPi Simulator");
-
-
+	strcpy(cCommonProp.Name,		"AlpacaPi Camera Simulator");
+	strcpy(cCommonProp.Description,	"AlpacaPi Camera Simulator");
 	strcpy(cCameraProp.SensorName,	"Fake");
 
 
@@ -89,14 +87,11 @@ bool		isConnected;
 //	cCameraProp.CameraYsize	=	6388;
 
 	//*	In order to simulate a particular image size
-	cCameraProp.CameraXsize	=	5000;
-	cCameraProp.CameraYsize	=	4000;
-//	while ((cCameraProp.CameraXsize * cCameraProp.CameraYsize) < (48 * 1000000))
-//	{
-//		cCameraProp.CameraXsize	+=	100;
-//		cCameraProp.CameraYsize	=	cCameraProp.CameraXsize / 1.5;
-//	}
+	cCameraProp.CameraXsize	=	500;
+	cCameraProp.CameraYsize	=	400;
 
+
+	cCameraProp.SensorType		=   kSensorType_RGGB;
 	cCameraProp.NumX			=	cCameraProp.CameraXsize;
 	cCameraProp.NumY			=	cCameraProp.CameraYsize;
 
@@ -180,7 +175,7 @@ TYPE_ASCOM_STATUS	CameraDriverSIM::Write_BinX(const int newBinXvalue)
 {
 TYPE_ASCOM_STATUS		alpacaErrCode;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	cCameraProp.BinX	=	newBinXvalue;
 	alpacaErrCode		=	kASCOM_Err_Success;

@@ -28,6 +28,10 @@
 //*	for raspberry pi 4
 //wget https://project-downloads.drogon.net/wiringpi-latest.deb
 //sudo dpkg -i wiringpi-latest.deb
+//*****************************************************************************
+
+#if defined(_ENABLE_ROR_) || defined(_ENABLE_DOME_) || defined(_ENABLE_SWITCH_)
+
 
 #include	<stdio.h>
 #include	<stdbool.h>
@@ -223,6 +227,7 @@ bool	switchState;
 	}
 	return(switchState);
 }
+#endif // defined(_ENABLE_ROR_) || defined(_ENABLE_DOME_) || defineED(_ENABLE_SWITCH_)
 
 
 #ifdef _ENABLE_RELAY_TESTING_
@@ -253,3 +258,5 @@ int		relayNum;
 }
 
 #endif	//	_ENABLE_RELAY_TESTING_
+
+

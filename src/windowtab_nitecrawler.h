@@ -76,11 +76,6 @@ enum
 
 	kNiteCrawlerTab_Connect,
 
-//	kCameraBox_LastCmdString,
-//	kCameraBox_AlpacaLogo,
-//	kCameraBox_AlpacaErrorMsg,
-//	kCameraBox_IPaddr,
-//	kCameraBox_Readall,
 
 	kNiteCrawlerTab_last
 };

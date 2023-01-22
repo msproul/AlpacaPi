@@ -35,7 +35,7 @@
 	#include	"qsiapi.h"
 #endif
 
-void	CreateQSI_CameraObjects(void);
+int	CreateQSI_CameraObjects(void);
 
 
 //**************************************************************************************

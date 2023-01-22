@@ -25,8 +25,8 @@
 //*	May 31,	2022	<MLS> Added ability to determine if driver supports refraction
 //*	Jun  3,	2022	<MLS> Added MountData_SaveRA() & MountData_SaveDec()
 //*	Sep 28,	2022	<MLS> Consolidated 3 Save routines into one
-//*	Sep 28,	2002	<MLS> Added MountData_SaveData()
-//*	Sep 28,	2002	<MLS> Deleted MountData_SaveRA, MountData_SaveHA, MountData_SaveDec
+//*	Sep 28,	2022	<MLS> Added MountData_SaveData()
+//*	Sep 28,	2022	<MLS> Deleted MountData_SaveRA, MountData_SaveHA, MountData_SaveDec
 //*****************************************************************************
 
 //*****************************************************************************

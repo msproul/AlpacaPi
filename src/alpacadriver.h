@@ -29,6 +29,7 @@
 //*	Dec 11,	2020	<MLS> Added GENERATE_ALPACAPI_ERRMSG() macro to make error messages consistent
 //*	Feb 11,	2021	<MLS> Deleted cDriverVersion, use cCommonProp.InterfaceVersion
 //*	Sep  2,	2021	<MLS> Added _ENABLE_BANDWIDTH_LOGGING_
+//*	Nov 28,	2022	<MLS> Added cLastDeviceErrMsg
 //*****************************************************************************
 //#include	"alpacadriver.h"
 
@@ -248,7 +249,7 @@ class AlpacaDriver
 		virtual	void	OutputHTML_Part2(		TYPE_GetPutRequestData *reqData);
 				void	OutputHTML_DriverDocs(	TYPE_GetPutRequestData *reqData);
 				void	OutputCommadTable(int mySocketFD, const char *title, const TYPE_CmdEntry *commandTable);
-		virtual void	GetCommandArgumentString(const int cmdNumber, char *agumentString);
+		virtual bool	GetCommandArgumentString(const int cmdNumber, char *agumentString);
 
 				void	OutputHTMLrowData(int socketFD, const char *string1, const char *string2);
 				void	OutputHTML_CmdStats(	TYPE_GetPutRequestData *reqData);
@@ -260,7 +261,7 @@ class AlpacaDriver
 
 				//*	start with the Alpaca properties
 				TYPE_CommonProperties	cCommonProp;
-				TYPE_CmdEntry			*cDriverCmdTablePtr;
+				const TYPE_CmdEntry		*cDriverCmdTablePtr;
 
 				bool				cHttpHeaderSent;
 				bool				cRunStartupOperations;
@@ -278,8 +279,9 @@ class AlpacaDriver
 				char				cDeviceSerialNum[kDeviceSerialNumStrLen];
 				char				cDeviceVersion[kDeviceVersionStrLen];
 				char				cDeviceFirmwareVersStr[64];
-				TYPE_UniqueID		cUniqueID;
+				TYPE_UniqueID		cUUID;
 
+				char				cLastDeviceErrMsg[128];
 
 				//=========================================================
 				//*	bandwidth statistics
@@ -363,6 +365,26 @@ class AlpacaDriver
 		virtual	void					UpdateLiveWindow(void);
 				Controller				*cLiveController;
 	#endif // _USE_OPENCV_
+
+
+		//-------------------------------------------------------------------------
+		//*	this is for the setup function
+				bool					cDriverSupportsSetup;
+				bool					Setup_ProcessCommand(TYPE_GetPutRequestData *reqData);
+		virtual	bool					Setup_OutputForm(TYPE_GetPutRequestData *reqData, const char *formActionString);
+				int						Setup_Save(TYPE_GetPutRequestData *reqData);
+		virtual void					Setup_SaveInit(void);
+		virtual void					Setup_SaveFinish(void);
+		virtual	bool					Setup_ProcessKeyword(const char *keyword, const char *valueString);
+				void					Setup_OutputCheckBox(	const int	socketFD,
+																const char	*name,
+																const char	*displayedName,
+																const bool	checked);
+				void					Setup_OutputRadioBtn(	const int	socketFD,
+																const char	*groupName,
+																const char	*name,
+																const char	*displayedName,
+																const bool	checked);
 
 
 };

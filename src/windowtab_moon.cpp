@@ -64,7 +64,7 @@ WindowTabMoon::WindowTabMoon(	const int	xSize,
 
 	ReadMoonDirectory();
 
-	RunBackgroundTasks();
+	RunWindowBackgroundTasks();
 }
 
 //**************************************************************************************
@@ -201,7 +201,7 @@ int		myButtonWidth;
 }
 
 //**************************************************************************************
-void WindowTabMoon::RunBackgroundTasks(void)
+void WindowTabMoon::RunWindowBackgroundTasks(void)
 {
 uint32_t	currentMilliSecs;
 uint32_t	deltaMilliSecs;
@@ -267,7 +267,7 @@ int					errorCode;
 bool				keepGoing;
 int					fileIdx;
 
-//	CONSOLE_DEBUG_W_STR(__FUNCTION__, kMoonImageDir);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, kMoonImageDir);
 
 
 	directory	=	opendir(kMoonImageDir);

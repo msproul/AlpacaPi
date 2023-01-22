@@ -89,6 +89,7 @@
 //*	Oct  9,	2022	<MLS> Fixed bug in WriteFITS_MoonInfo(), Moon was always reported as visable
 //*	Oct 20,	2022	<MLS> Neon instructions now used for FITS De-interleave
 //*	Oct 25,	2022	<MLS> Now using cv::getVersionString().c_str() for openCV version string
+//*	Nov 26,	2022	<MLS> Added IMAGEW and IMAGEH for astrometry.net solver
 //*****************************************************************************
 
 #if defined(_ENABLE_CAMERA_) && defined(_ENABLE_FITS_)
@@ -919,6 +920,18 @@ char	instrumentString[128];
 	sprintf(stringBuf, "[1:%d,1:%d]", cCameraProp.CameraXsize, cCameraProp.CameraYsize);
 	fitsStatus	=	0;
 	fits_write_key(fitsFilePtr, TSTRING, "DETSIZE",	stringBuf,		"Detector size", &fitsStatus);
+
+	//-----------------------------------------------------------
+	//*	astrometry.net solver error "Must specify positive "IMAGEW" and "IMAGEH"."
+	fitsStatus	=	0;
+	fits_write_key(fitsFilePtr, TSTRING, "COMMENT",	(void *)"astrometry.net solver needs IMAGEW & IMAGEH",	NULL, &fitsStatus);
+
+	fitsStatus	=	0;
+	fits_write_key(fitsFilePtr, TINT,		"IMAGEW",	&cCameraProp.CameraXsize,	NULL, &fitsStatus);
+
+	fitsStatus	=	0;
+	fits_write_key(fitsFilePtr, TINT,		"IMAGEH",	&cCameraProp.CameraYsize,	NULL, &fitsStatus);
+
 
 	//*	image mode from camera
 	GetImageTypeString(cROIinfo.currentROIimageType, stringBuf);

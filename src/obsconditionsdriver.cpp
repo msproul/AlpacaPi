@@ -38,6 +38,7 @@
 //*	Mar  1,	2021	<MLS> Added Put_AveragePeriod()
 //*	Mar  1,	2021	<MLS> CONFORM-observingconditions -> PASSED!!!!!!!!!!!!!!!!!!!!!
 //*	Sep 26,	2022	<MLS> Major re-org of how sensors are enabled
+//*	Nov 27,	2022	<MLS> CONFORMU-observingconditions -> PASSED!!!!!!!!!!!!!!!!!!!!!
 //*****************************************************************************
 
 

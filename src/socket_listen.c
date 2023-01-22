@@ -24,6 +24,7 @@
 //*	Feb 10,	2021	<MLS> Reduced timeout from 150000 to 15000 (micro-secs)
 //*	Feb 10,	2021	<MLS> Reduced timeout to 10000 (micro-secs)
 //*	Feb 10,	2021	<MLS> Reduced timeout to 2500 (micro-secs)
+//*	Dec  3,	2022	<MLS> Added ipAddressString to SendDataToSocket()
 //*****************************************************************************
 
 
@@ -59,7 +60,7 @@ SocketData_Callback			gSocketCallbackProcPtr		=	NULL;
 //*	globals so we can make this code non-blocking
 static	int		gSocketFD;		//*	socket File Descriptor
 
-void SendDataToSocket(int sock);
+void SendDataToSocket(const int sock, const char *ipAddressString);
 
 
 //*****************************************************************************
@@ -122,18 +123,20 @@ unsigned int		clilen;
 struct	sockaddr_in	client_addr;
 int					closeRetCode;
 int					shutDownRetCode;
+char				ipAddrString[64];
 
 	//*	Started getting EINVAL (Invalid argument) errors on accept
 	//*	fixed the problem by cleared args first
 	memset(&client_addr, 0, sizeof(struct	sockaddr_in));
-	clilen	=	0;
 
+	clilen		=	sizeof(client_addr);
 	newsockfd	=	accept(gSocketFD, (struct sockaddr *) &client_addr, &clilen);
-//	CONSOLE_DEBUG_W_NUM("Accepted... on port", newsockfd);
-//	if (newsockfd > 0)
+
+	inet_ntop(AF_INET, &(client_addr.sin_addr), ipAddrString, INET_ADDRSTRLEN);
+//	CONSOLE_DEBUG_W_STR("Accepted from ", ipAddrString);
 	if (newsockfd >= 0)
 	{
-		SendDataToSocket(newsockfd);
+		SendDataToSocket(newsockfd, ipAddrString);
 
 		shutDownRetCode	=	shutdown(newsockfd, SHUT_RDWR);
 		if (shutDownRetCode != 0)
@@ -171,6 +174,8 @@ char	hi4bits;
 char	lo4bits;
 int		escCharCnt;
 
+//	CONSOLE_DEBUG("---------------------------------------------------------");
+//	CONSOLE_DEBUG_W_STR("buffer\t=", buffer);
 	ii			=	0;
 	cc			=	0;
 	escCharCnt	=	0;
@@ -203,10 +208,12 @@ int		escCharCnt;
 
 	sLen	=	strlen(buffer);
 
-	if (escCharCnt > 0)
-	{
-		printf("%s\tescCharCnt=%d\r\n", __FUNCTION__, escCharCnt);
-	}
+//	if (escCharCnt > 0)
+//	{
+//	//	printf("%s\tescCharCnt=%d\r\n", __FUNCTION__, escCharCnt);
+//		CONSOLE_DEBUG_W_STR("buffer\t=", buffer);
+//		CONSOLE_DEBUG_W_NUM("escCharCnt\t=", escCharCnt);
+//	}
 	return(sLen);
 }
 #endif // _FIX_ESCAPE_CHARS_
@@ -220,6 +227,7 @@ int	gMessageCnt	=	1;
 #ifdef _BANDWIDTH_
 
 #warning "_BANDWIDTH_ is defined"
+#error "_BANDWIDTH_ is defined"
 
 //*****************************************************************************
 //*	SendDataToSocket()
@@ -227,7 +235,7 @@ int	gMessageCnt	=	1;
 //*		for each connection.  It handles all communication
 //*		once a connection has been established.
 //*****************************************************************************
-void SendDataToSocket(int sock)
+void SendDataToSocket(const int sock, const char *ipAddressString)
 {
 int				bytesRead;
 char			readBuffer[kReadBuffLen];
@@ -276,7 +284,7 @@ int				setOptRetCode;
 //*		for each connection.  It handles all communication
 //*		once a connection has been established.
 //*****************************************************************************
-void SendDataToSocket(int sock)
+void SendDataToSocket(const int sock, const char *ipAddressString)
 {
 int				bytesRead;
 //int			bytesWritten;
@@ -304,11 +312,10 @@ int				setOptRetCode;
 		CONSOLE_DEBUG_W_NUM("setsockopt() returned", setOptRetCode);
 	}
 
-
 	do
 	{
 		bytesRead	=	read(sock, readBuffer, (kReadBuffLen - 2));
-		CONSOLE_DEBUG_W_NUM("bytesRead=", bytesRead);
+//		CONSOLE_DEBUG_W_NUM("bytesRead=", bytesRead);
 		if (bytesRead > 0)
 		{
 			readBuffer[bytesRead]	=	0;
@@ -326,8 +333,8 @@ int				setOptRetCode;
 #endif
 	if (gSocketCallbackProcPtr != NULL)
 	{
-		CONSOLE_DEBUG("Calling gSocketCallbackProcPtr");
-		gSocketCallbackProcPtr(sock, htmlBuffer, bytesRead);
+//		CONSOLE_DEBUG("Calling gSocketCallbackProcPtr");
+		gSocketCallbackProcPtr(sock, htmlBuffer, bytesRead, ipAddressString);
 	}
 
 //	printf("Here is the message (%d bytes long):\r\n%s\r\n", bytesRead, readBuffer);
@@ -338,6 +345,6 @@ int				setOptRetCode;
 
 
 	gMessageCnt++;
-	CONSOLE_DEBUG("EXIT");
+//	CONSOLE_DEBUG("EXIT");
 }
 #endif // _BANDWIDTH_

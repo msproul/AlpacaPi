@@ -62,6 +62,10 @@
 //*	Oct 16,	2022	<MLS> Build 153
 //*	Oct 21,	2022	<MLS> Build 154
 //*	Nov  5,	2022	<MLS> Build 155
+//*	Nov 27,	2022	<MLS> Build 156
+//*	Nov 30,	2022	<MLS> Build 157
+//*	Dec 18,	2022	<MLS> Build 158
+//*	Jan  1,	2023	-----------------------------------------------------------
 //*****************************************************************************
 //#include	"alpaca_defs.h"
 
@@ -86,7 +90,7 @@
 
 #define	kApplicationName	"AlpacaPi"
 #define	kVersionString		"V0.5.1-beta"
-#define	kBuildNumber		155
+#define	kBuildNumber		158
 
 
 #define kAlpacaDiscoveryPORT	32227
@@ -568,7 +572,7 @@ typedef struct
 	double			StepSize;			//	Returns the focuser's step size.
 	bool			TempComp;			//	Retrieves the state of temperature compensation mode
 	bool			TempCompAvailable;	//	Indicates whether the focuser has temperature compensation.
-	double			Temperature;		//	Returns the focuser's current temperature.
+	double			Temperature;		//	Returns the focuser's current temperature. (deg C)
 
 } TYPE_FocuserProperties;
 

@@ -21,6 +21,7 @@
 //*	Nov 13,	2021	<MLS> Created RemoteImage.cpp
 //*	Nov 13,	2021	<MLS> SDSS image retrieval working
 //*	Nov 13,	2021	<MLS> stsci.edu image retrieval working
+//*	Nov 16,	2022	<MLS> Added RemoteImage_OpenLatest()
 //*****************************************************************************
 //*	https://archive.stsci.edu/index.html
 //*	https://archive.stsci.edu/cgi-bin/dss_form
@@ -41,17 +42,23 @@
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
 
+#include	"controller_image.h"
 
 #include	"helper_functions.h"
 #include	"SkyStruc.h"
+
 #include	"RemoteImage.h"
 
 #define	DEGREES(radians)	((radians) * (180.0 / M_PI))
 #define	RADIANS(degrees)	((degrees) * (M_PI / 180.0))
 
 char	gRemoteImageStatusMsg[64]	=	"";
+bool	gRemoteImageReady			=	false;
 int		gRemoteSourceID				=   kRemoteSrc_stsci_fits;
-bool	gRemoteDataLogging			=	false;
+
+static char	gRemoteImageFilename[128]	=	"";
+static char	gRemoteImgaeObjectName[128]	=	"";
+static bool	gRemoteDataLogging			=	false;
 
 
 TYPE_RemoteData	gRemoteDataStats[kRemoteSrc_LAST];
@@ -219,6 +226,7 @@ double	deltaSeconds;
 int		mySourceID;
 
 	gRemoteImg_ThreadIsRunning	=	true;
+	strcpy(gRemoteImageFilename, "");
 
 
 	//*	save a copy of the source ID in case it gets changed while we are processing
@@ -252,6 +260,8 @@ int		mySourceID;
 	switch(mySourceID)
 	{
 		case kRemoteSrc_stsci_fits:
+			break;
+
 		case kRemoteSrc_SDSS:
 			strcat(curlCmdLine, ";./fitsview ");
 			strcat(curlCmdLine, fileName);
@@ -268,6 +278,9 @@ int		mySourceID;
 
 		//*	increment the counter
 		gRemoteDataStats[mySourceID].RequestCount++;
+
+		strcpy(gRemoteImageFilename, fileName);
+		gRemoteImageReady	=	true;
 	}
 	else
 	{
@@ -303,12 +316,13 @@ int		mySourceID;
 int	GetRemoteImage(		double	ra_Radians,
 						double	dec_Radians,
 						double	arcSecondsPerPixel,
-						double	fieldOfView_deg)
+						double	fieldOfView_deg,
+						char	*objectName)
 {
 int		threadStatus;
 int		threadErr;
 
-
+	CONSOLE_DEBUG_W_STR("objectName\t=", objectName);
 
 	threadStatus	=	-1;
 	if (gRemoteImg_ThreadIsRunning == false)
@@ -318,6 +332,7 @@ int		threadErr;
 		gRemoteImg_Dec_degrees			=	DEGREES(dec_Radians);
 		gRemoteImg_ArcSecondsPerPixel	=	arcSecondsPerPixel;
 		gRemoteImg_FieldOfView_deg		=	fieldOfView_deg;
+		strcpy(gRemoteImgaeObjectName, objectName);
 
 		CONSOLE_DEBUG("Staring Remote image Thread");
 		threadErr	=	pthread_create(	&gRemoteImg_GetData_ThreadID,
@@ -339,4 +354,36 @@ int		threadErr;
 		threadStatus	=	1;
 	}
 	return(threadStatus);
+}
+
+
+//*****************************************************************************
+void	RemoteImage_OpenLatest(void)
+{
+char	myOjbectName[128];
+
+	CONSOLE_DEBUG(__FUNCTION__);
+
+	if (strlen(gRemoteImageFilename) > 0)
+	{
+		CONSOLE_DEBUG_W_STR("Creating Image Window with image:", gRemoteImageFilename);
+
+		if (strlen(gRemoteImgaeObjectName) > 0)
+		{
+			strcpy(myOjbectName, gRemoteImgaeObjectName);
+		}
+		else
+		{
+			strcpy(myOjbectName, gRemoteImageFilename);
+		}
+		CONSOLE_DEBUG_W_STR("gRemoteImgaeObjectName\t=",	gRemoteImgaeObjectName);
+		CONSOLE_DEBUG_W_STR("gRemoteImageFilename  \t=",	gRemoteImageFilename);
+		CONSOLE_DEBUG_W_STR("myOjbectName          \t=",	myOjbectName);
+
+		new ControllerImage(myOjbectName, gRemoteImageFilename);
+
+		gRemoteImageReady	=	false;
+	}
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, "EXIT");
+
 }

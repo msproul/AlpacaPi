@@ -759,6 +759,7 @@ int					servoStatus;
 	else
 	{
 		//	Mount is moving to the RA/Dec coordinates
+		alpacaErrCode	=	kASCOM_Err_Success;
 	}
 	UpdateSlewingProperty();
 	return(alpacaErrCode);

@@ -22,7 +22,7 @@
 //#include	"cameradriver_QHY.h"
 
 
-void	CreateQHY_CameraObjects(void);
+int		CreateQHY_CameraObjects(void);
 
 
 #ifndef	_CAMERA_DRIVER_QHY_H_

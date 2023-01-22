@@ -14,6 +14,8 @@
 //*	Feb 25,	2022	<MLS> SetLiveWindowImage() working under C++ opencv
 //*	Mar 12,	2022	<MLS> Added SetImageWindowInfo()
 //*	Mar 12,	2022	<MLS> Added TYPE_BinaryImageHdr struct to Image controller
+//*	Nov 15,	2022	<MLS> Added ControllerImage(filePath);
+//*	Nov 15,	2022	<MLS> Added InitClassVariables()
 //*****************************************************************************
 
 #ifdef _ENABLE_CTRL_IMAGE_
@@ -41,6 +43,8 @@
 #include	"windowtab_image.h"
 #include	"windowtab_about.h"
 
+#include	"fits_opencv.h"
+
 
 #include	"controller.h"
 #include	"controller_image.h"
@@ -64,16 +68,16 @@ enum
 
 #ifdef _USE_OPENCV_CPP_
 //**************************************************************************************
-ControllerImage::ControllerImage(	const char	*argWindowName,
-									cv::Mat		*downloadedImage,
+ControllerImage::ControllerImage(	const char			*argWindowName,
+									cv::Mat				*downloadedImage,
 									TYPE_BinaryImageHdr	*binaryImageHdr)
 			:Controller(	argWindowName,
 							kWindowWidth,
 							kWindowHeight)
 #else
 //**************************************************************************************
-ControllerImage::ControllerImage(	const char	*argWindowName,
-									IplImage	*downloadedImage,
+ControllerImage::ControllerImage(	const char			*argWindowName,
+									IplImage			*downloadedImage,
 									TYPE_BinaryImageHdr	*binaryImageHdr)
 			:Controller(	argWindowName,
 							kWindowWidth,
@@ -83,15 +87,9 @@ ControllerImage::ControllerImage(	const char	*argWindowName,
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
-	cDownLoadedImage	=	NULL;
-	cDisplayedImage		=	NULL;
-	cColorImage			=	NULL;
-
-	cImageTabObjPtr		=	NULL;
-	cAboutBoxTabObjPtr	=	NULL;
+	InitClassVariables();
 
 	//*	deal with the binary image header if it was supplied
-	memset((void *)&cBinaryImageHdr, 0, sizeof(TYPE_BinaryImageHdr));
 	if (binaryImageHdr != NULL)
 	{
 	char	elementTypeStr[32];
@@ -116,8 +114,6 @@ ControllerImage::ControllerImage(	const char	*argWindowName,
 	}
 
 
-	SetupWindowControls();
-
 	//*	the downloaded image needs to be copied and/or resized to the displayed image
 	if (downloadedImage != NULL)
 	{
@@ -128,6 +124,38 @@ ControllerImage::ControllerImage(	const char	*argWindowName,
 		CONSOLE_DEBUG("No image was specfified");
 	}
 }
+
+
+//**************************************************************************************
+//*	this version reads a file from disk into the display window
+//**************************************************************************************
+ControllerImage::ControllerImage(	const char	*argWindowName,
+									const char *imageFilePath)
+			:Controller(	argWindowName,
+							kWindowWidth,
+							kWindowHeight)
+{
+#ifdef _USE_OPENCV_CPP_
+	cv::Mat		*imageFromDisk;
+#else
+	IplImage	*imageFromDisk;
+#endif // _USE_OPENCV_CPP_
+
+	CONSOLE_DEBUG(__FUNCTION__);
+	InitClassVariables();
+
+	imageFromDisk	=	ReadImageIntoOpenCVimage(imageFilePath);
+	if (imageFromDisk != NULL)
+	{
+		SetLiveWindowImage(imageFromDisk);
+	}
+	else
+	{
+		CONSOLE_DEBUG_W_STR("Failed to read image from disk:", imageFilePath);
+	}
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, "EXIT");
+}
+
 
 //**************************************************************************************
 // Destructor
@@ -173,6 +201,23 @@ ControllerImage::~ControllerImage(void)
 	DELETE_OBJ_IF_VALID(cAboutBoxTabObjPtr);
 }
 
+//**************************************************************************************
+void	ControllerImage::InitClassVariables(void)
+{
+	CONSOLE_DEBUG(__FUNCTION__);
+	cDownLoadedImage	=	NULL;
+	cDisplayedImage		=	NULL;
+	cColorImage			=	NULL;
+
+	cImageTabObjPtr		=	NULL;
+	cAboutBoxTabObjPtr	=	NULL;
+
+	CONSOLE_DEBUG_W_LONG("sizeof(TYPE_BinaryImageHdr)", sizeof(TYPE_BinaryImageHdr));
+	memset((void *)&cBinaryImageHdr, 0, sizeof(TYPE_BinaryImageHdr));
+
+	SetupWindowControls();
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, "EXIT");
+}
 
 //**************************************************************************************
 void	ControllerImage::SetupWindowControls(void)
@@ -184,7 +229,9 @@ void	ControllerImage::SetupWindowControls(void)
 	SetTabCount(kTab_Count);
 
 	SetTabText(kTab_Image,		"Image");
+	CONSOLE_DEBUG(__FUNCTION__);
 	cImageTabObjPtr		=	new WindowTabImage(	cWidth, cHeight, cBackGrndColor, cWindowName);
+	CONSOLE_DEBUG(__FUNCTION__);
 	if (cImageTabObjPtr != NULL)
 	{
 		SetTabWindow(kTab_Image,	cImageTabObjPtr);
@@ -198,6 +245,7 @@ void	ControllerImage::SetupWindowControls(void)
 		SetTabWindow(kTab_About,	cAboutBoxTabObjPtr);
 		cAboutBoxTabObjPtr->SetParentObjectPtr(this);
 	}
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, "EXIT");
 }
 
 //**************************************************************************************
@@ -237,7 +285,7 @@ bool		needToUpdate;
 
 	if (cImageTabObjPtr != NULL)
 	{
-		cImageTabObjPtr->RunBackgroundTasks();
+		cImageTabObjPtr->RunWindowBackgroundTasks();
 	}
 }
 

@@ -22,6 +22,7 @@
 //*	References:
 //*		https://ascom-standards.org/api/#/Dome%20Specific%20Methods/get_dome__device_number__athome
 //*		https://github.com/OpenPHDGuiding/phd2/tree/master/cameras/zwolibs
+//*		https://ascom-standards.org/Developer/AlpacaImageBytes.pdfs
 //*
 //*	Fits Info
 //*		http://tigra-astronomy.com/sbfitsext-guidelines-for-fits-keywords
@@ -179,6 +180,10 @@
 //*	Sep 29,	2022	<MLS> Added SetImageDataDirectory()
 //*	Nov  4,	2022	<MLS> Added GetCommandArgumentString()
 //*	Nov  4,	2022	<MLS> Added Telescope info to ReadAll output, SkyTravel uses it for FOV calculations
+//*	Dec 23,	2022	<MLS> Added BuildBinaryImage_RGB24_32bit()
+//*	Dec 24,	2022	<MLS> Added BuildBinaryImage_Raw8_32bit()
+//*	Dec 24,	2022	<MLS> Lots of work on imagebytes routines to work with NINA
+//*	Dec 26,	2022	<MLS> Now changing sensorType when image type gets set
 //*****************************************************************************
 //*	Jan  1,	2119	<TODO> ----------------------------------------
 //*	Jun 26,	2119	<TODO> Add support for sub frames
@@ -242,8 +247,8 @@
 #include	"cameradriver.h"
 #include	"observatory_settings.h"
 
-
-char	gImageDataDir[]	=	"imagedata";
+#define	kImageDataDir_Default		"imagedata"
+char	gImageDataDir[256]		=	kImageDataDir_Default;
 
 
 //*****************************************************************************
@@ -260,7 +265,7 @@ const char	*gCameraStateStrings[]	=
 
 
 //*****************************************************************************
-TYPE_CmdEntry	gCameraCmdTable[]	=
+const TYPE_CmdEntry	gCameraCmdTable[]	=
 {
 
 	{	"bayeroffsetx",				kCmd_Camera_bayeroffsetX,			kCmdType_GET	},
@@ -371,7 +376,7 @@ int			returnCode;
 	}
 	else
 	{
-		strcpy(gImageDataDir, "imagedata");
+		strcpy(gImageDataDir, kImageDataDir_Default);
 	}
 	CONSOLE_DEBUG_W_STR("gImageDataDir\t=", gImageDataDir);
 }
@@ -400,6 +405,8 @@ int	mkdirErrCode;
 	//*	set everything to false first
 	memset(&cCameraProp, 0, sizeof(TYPE_CameraProperties));
 
+	cUUID.part3						=	'CA';					//*	model number
+	cCameraProp.SensorType			=   kSensorType_Monochrome;
 	cCameraProp.BinX				=	1;
 	cCameraProp.BinY				=	1;
 	cCameraProp.MaxbinX				=	1;
@@ -413,6 +420,7 @@ int	mkdirErrCode;
 	cCameraProp.CanFastReadout		=	false;
 	strcpy(cCameraProp.SensorName,	"unknown");
 
+	cCameraProp.ElectronsPerADU		=	0.1;		//*	have to have something in here
 
 	//======================================================
 	cCameraIsSiumlated				=	false;
@@ -522,10 +530,10 @@ int	mkdirErrCode;
 	strcpy(cFileNamePrefix,		"TEST");
 	strcpy(cFileNameSuffix,		"");
 	strcpy(cFileNameRoot,		"");
-	cFN_includeSerialNum		=	false;	//*	include serial number in FileName
-	cFN_includeManuf			=	true;	//*	include Manufacturer in FileName
-	cFN_includeFilter			=	true;
-	cFN_includeRefID			=	true;
+	cFN.IncludeSerialNum		=	false;	//*	include serial number in FileName
+	cFN.IncludeManuf			=	true;	//*	include Manufacturer in FileName
+	cFN.IncludeFilter			=	true;
+	cFN.IncludeRefID			=	true;
 
 	strcpy(cTelescopeModel,		"");
 	strcpy(cObjectName,			"unknown");
@@ -599,6 +607,11 @@ int	iii;
 		CONSOLE_DEBUG_W_STR("mkdir returned error:", linexErrString);
 	}
 
+	//========================================
+	//*	Setup support
+	cDriverSupportsSetup		=	true;
+
+
 	SendDiscoveryQuery();
 }
 
@@ -636,8 +649,8 @@ bool	CameraDriver::AlpacaDisConnect(void)
 //**************************************************************************************
 void	CameraDriver::SetSerialNumInFileName(bool enable)
 {
-	cFN_includeSerialNum	=	enable;
-	cFN_includeManuf		=	enable;
+	cFN.IncludeSerialNum	=	enable;
+	cFN.IncludeManuf		=	enable;
 }
 
 
@@ -1774,7 +1787,7 @@ char				argumentString[32];
 bool				foundKeyWord;
 int					newBinValue;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	if (reqData != NULL)
 	{
 		foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
@@ -1783,7 +1796,7 @@ int					newBinValue;
 												(sizeof(argumentString) -1));
 		if (foundKeyWord)
 		{
-			CONSOLE_DEBUG_W_STR("argumentString\t=", argumentString);
+//			CONSOLE_DEBUG_W_STR("argumentString\t=", argumentString);
 			newBinValue	=	atoi(argumentString);
 			if ((newBinValue >= 1) && (newBinValue <= cCameraProp.MaxbinX))
 			{
@@ -1795,7 +1808,7 @@ int					newBinValue;
 				}
 				else
 				{
-					strcpy(alpacaErrMsg, cLastCameraErrMsg);
+					GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, cLastCameraErrMsg);
 					CONSOLE_DEBUG_W_STR("cLastCameraErrMsg\t=", cLastCameraErrMsg);
 					CONSOLE_DEBUG_W_STR("alpacaErrMsg\t=", alpacaErrMsg);
 				}
@@ -2089,6 +2102,10 @@ TYPE_ASCOM_STATUS	alpacaErrCode;
 
 	if (reqData != NULL)
 	{
+		if (cCameraProp.ElectronsPerADU <= 0.0)
+		{
+			cCameraProp.ElectronsPerADU		=	0.1;		//*	have to have something in here
+		}
 		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Double(reqData->socket,
 										reqData->jsonTextBuffer,
 										kMaxJsonBuffLen,
@@ -3090,6 +3107,22 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 	return(alpacaErrCode);
 }
 
+
+//*****************************************************************************
+void	GetSenorTypeString(TYPE_SensorType arSensorType, char *sensorTypeStr)
+{
+	switch(arSensorType)
+	{
+		case kSensorType_Monochrome:	strcpy(sensorTypeStr,	"Monochrome");	break;
+		case kSensorType_Color:			strcpy(sensorTypeStr,	"Color");		break;
+		case kSensorType_RGGB:			strcpy(sensorTypeStr,	"RGGB");		break;
+		case kSensorType_CMYG:			strcpy(sensorTypeStr,	"CMYG");		break;
+		case kSensorType_CMYG2:			strcpy(sensorTypeStr,	"CMYG2");		break;
+		case kSensorType_LRGB:			strcpy(sensorTypeStr,	"LRGB");		break;
+	}
+
+}
+
 //*****************************************************************************
 //*	Returns a value indicating whether the sensor is monochrome, or what Bayer matrix it encodes. Where:
 //*
@@ -3105,28 +3138,24 @@ TYPE_ASCOM_STATUS	CameraDriver::Get_Sensortype(TYPE_GetPutRequestData	*reqData,
 												const char				*responseString)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
-int					sensortType;
-
-	if (cIsColorCam)
-	{
-		sensortType	=	1;
-	}
-	else
-	{
-		sensortType	=	0;
-	}
-
+char				sensorTypeStr[32];
 
 	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	reqData->socket,
 									reqData->jsonTextBuffer,
 									kMaxJsonBuffLen,
 									responseString,				//	"Value",
-									sensortType,
+									cCameraProp.SensorType,
+									INCLUDE_COMMA);
+
+	GetSenorTypeString(cCameraProp.SensorType, sensorTypeStr);
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(reqData->socket,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									"sensortypeStr",
+									sensorTypeStr,
 									INCLUDE_COMMA);
 	return(alpacaErrCode);
 }
-
-
 
 //*****************************************************************************
 //	curl -X PUT "https://virtserver.swaggerhub.com/ASCOMInitiative/api/v1/camera/0/readoutmode"
@@ -3157,14 +3186,33 @@ TYPE_IMAGE_TYPE		newImageType;
 		if (isdigit(readOutModeString[0]))
 		{
 			CONSOLE_DEBUG("Processing digit");
-			alpacaReadOutModeIdx	=	(TYPE_IMAGE_TYPE)atoi(readOutModeString);
+			alpacaReadOutModeIdx	=	atoi(readOutModeString);
+			CONSOLE_DEBUG_W_NUM("alpacaReadOutModeIdx\t=", alpacaReadOutModeIdx);
 
+			//*	is the new image mode index within range
 			if ((alpacaReadOutModeIdx >= 0) && (alpacaReadOutModeIdx < kMaxReadOutModes))
 			{
+				//*	is this readout mode valid for this camera
 				if (cCameraProp.ReadOutModes[alpacaReadOutModeIdx].valid)
 				{
 					newImageType	=	(TYPE_IMAGE_TYPE)cCameraProp.ReadOutModes[alpacaReadOutModeIdx].internalImageType;
+					CONSOLE_DEBUG_W_NUM("newImageType\t=", newImageType);
 					alpacaErrCode	=	SetImageType(newImageType);
+					//*	now update the sensor type based on the image type
+					if (newImageType == kImageType_RGB24)
+					{
+						CONSOLE_DEBUG("Setting sensorType to kSensorType_Color");
+						cCameraProp.SensorType	=	kSensorType_Color;
+					}
+					else
+					{
+						CONSOLE_DEBUG("Setting sensorType to kSensorType_RGGB");
+						cCameraProp.SensorType	=	kSensorType_RGGB;
+					}
+				}
+				else
+				{
+					CONSOLE_DEBUG_W_NUM("INVALID alpacaReadOutModeIdx\t=", alpacaReadOutModeIdx);
 				}
 			}
 			else
@@ -3480,20 +3528,39 @@ bool				lightFrame;
 		}
 		else
 		{
-			CONSOLE_DEBUG_W_NUM("cCameraProp.StartX\t\t=",		cCameraProp.StartX);
-			CONSOLE_DEBUG_W_NUM("cCameraProp.StartY\t\t=",		cCameraProp.StartY);
-			CONSOLE_DEBUG_W_NUM("cCameraProp.CameraXsize\t=",	cCameraProp.CameraXsize);
-			CONSOLE_DEBUG_W_NUM("cCameraProp.CameraYsize\t=",	cCameraProp.CameraYsize);
-			CONSOLE_DEBUG_W_NUM("cCameraProp.NumX\t\t=",		cCameraProp.NumX);
-			CONSOLE_DEBUG_W_NUM("cCameraProp.NumY\t\t=",		cCameraProp.NumY);
-			CONSOLE_DEBUG_W_NUM("cCameraProp.BinX\t\t=",		cCameraProp.BinX);
-			CONSOLE_DEBUG_W_NUM("cCameraProp.BinY\t\t=",		cCameraProp.BinY);
-			CONSOLE_DEBUG_W_NUM("cCameraProp.MaxbinX\t=",		cCameraProp.MaxbinX);
-			CONSOLE_DEBUG_W_NUM("cCameraProp.MaxbinY\t=",		cCameraProp.MaxbinY);
-
 			alpacaErrCode	=	kASCOM_Err_InvalidValue;
 			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "num, start,or bin is out of range");
 			CONSOLE_DEBUG(alpacaErrMsg);
+
+			//*	show the offending value(s)
+			if ((cCameraProp.StartX< 0) || (cCameraProp.StartX >= cCameraProp.CameraXsize))
+			{
+				CONSOLE_DEBUG_W_NUM("cCameraProp.StartX\t\t=",		cCameraProp.StartX);
+				CONSOLE_DEBUG_W_NUM("cCameraProp.CameraXsize\t=",	cCameraProp.CameraXsize);
+			}
+			if ((cCameraProp.StartY< 0) || (cCameraProp.StartY >= cCameraProp.CameraYsize))
+			{
+				CONSOLE_DEBUG_W_NUM("cCameraProp.StartY\t\t=",		cCameraProp.StartY);
+				CONSOLE_DEBUG_W_NUM("cCameraProp.CameraYsize\t=",	cCameraProp.CameraYsize);
+			}
+			if ((cCameraProp.NumX < 1) || (cCameraProp.NumX > cCameraProp.CameraXsize))
+			{
+				CONSOLE_DEBUG_W_NUM("cCameraProp.NumX\t\t=",		cCameraProp.NumX);
+			}
+			if ((cCameraProp.NumY < 1) || (cCameraProp.NumY > cCameraProp.CameraYsize))
+			{
+				CONSOLE_DEBUG_W_NUM("cCameraProp.NumY\t\t=",		cCameraProp.NumY);
+			}
+			if ((cCameraProp.BinX < 1) || (cCameraProp.BinX > cCameraProp.MaxbinX))
+			{
+				CONSOLE_DEBUG_W_NUM("cCameraProp.BinX\t\t=",		cCameraProp.BinX);
+				CONSOLE_DEBUG_W_NUM("cCameraProp.MaxbinX\t=",		cCameraProp.MaxbinX);
+			}
+			if ((cCameraProp.BinY < 1) || (cCameraProp.BinY > cCameraProp.MaxbinY))
+			{
+				CONSOLE_DEBUG_W_NUM("cCameraProp.BinY\t\t=",		cCameraProp.BinY);
+				CONSOLE_DEBUG_W_NUM("cCameraProp.MaxbinY\t=",		cCameraProp.MaxbinY);
+			}
 		}
 	}
 	else
@@ -3672,6 +3739,9 @@ double				exposureTimeSecs;
 
 
 //*****************************************************************************
+//*	 Reports the actual exposure start in the FITS-standard                   CCYY-MM-DDThh:mm:ss[.sss...] format. The start time must be UTC.
+//*	./src/cameradriver.cpp                  :3692 [Get_Lastexposurestarttime] 2022-11-28T00:57:10.695Z
+//*****************************************************************************
 TYPE_ASCOM_STATUS	CameraDriver::Get_Lastexposurestarttime(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
@@ -3681,12 +3751,13 @@ char				timeString[64];
 
 	if (cCameraProp.Lastexposure_StartTime.tv_sec > 0)
 	{
-	//	FormatTimeString(	&cCameraProp.Lastexposure_StartTime.tv_sec,
-	//						timeString);
-		FormatTimeStringISO8601(	&cCameraProp.Lastexposure_StartTime,
+//		FormatTimeStringISO8601(	&cCameraProp.Lastexposure_StartTime,
+//									timeString);
+		FormatTimeStringISO8601_UTC(&cCameraProp.Lastexposure_StartTime,
 									timeString);
 
-	//	CONSOLE_DEBUG(timeString);
+
+//		CONSOLE_DEBUG_W_STR(responseString, timeString);
 		cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(reqData->socket,
 										reqData->jsonTextBuffer,
 										kMaxJsonBuffLen,
@@ -3701,6 +3772,7 @@ char				timeString[64];
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "No valid image");
 //		CONSOLE_DEBUG(alpacaErrMsg);
 	}
+//	CONSOLE_DEBUG_W_NUM("alpacaErrCode\t=", alpacaErrCode);
 	return(alpacaErrCode);
 }
 
@@ -3752,6 +3824,50 @@ int		pixelIndex;
 				if (ccc < bufferSize)
 				{
 					binaryDataBuffer[ccc++]	=	(cCameraDataBuffer[pixelIndex] & 0x00ff);
+				}
+				pixelIndex	+=	cLastExposure_ROIinfo.currentROIwidth;
+			}
+		}
+	}
+	else
+	{
+		CONSOLE_DEBUG("cCameraDataBuffer is NULL");
+	}
+	return(ccc);
+}
+
+//*****************************************************************************
+//*	returns byte count
+//*****************************************************************************
+int	CameraDriver::BuildBinaryImage_Raw8_32bit(	unsigned char	*binaryDataBuffer,
+												int				startOffset,
+												int				bufferSize)
+{
+int		xxx;
+int		yyy;
+int		ccc;
+int		pixelIndex;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+	ccc	=	startOffset;
+	if (cCameraDataBuffer != NULL)
+	{
+		for (xxx=0; xxx<cLastExposure_ROIinfo.currentROIwidth; xxx++)
+		{
+			pixelIndex	=	xxx;
+			for (yyy=0; yyy < cLastExposure_ROIinfo.currentROIheight; yyy++)
+			{
+				if (ccc < bufferSize)
+				{
+					//*	its little endian, 16 bit value in 32 bit word
+					binaryDataBuffer[ccc++]	=	0;
+					binaryDataBuffer[ccc++]	=	(cCameraDataBuffer[pixelIndex] & 0x00ff);
+					binaryDataBuffer[ccc++]	=	0;
+					binaryDataBuffer[ccc++]	=	0;
+				}
+				else
+				{
+					CONSOLE_DEBUG("Binary data buffer overflow");
 				}
 				pixelIndex	+=	cLastExposure_ROIinfo.currentROIwidth;
 			}
@@ -3895,6 +4011,52 @@ int		pixelIndex;
 //*****************************************************************************
 //*	returns byte count
 //*****************************************************************************
+int	CameraDriver::BuildBinaryImage_RGB24_32bit(	uint32_t 	*binaryDataBuffer,
+												int			startOffset,
+												int			bufferSize)
+{
+int		xxx;
+int		yyy;
+int		ccc;
+int		pixelIndex;
+int		pixelCntMax;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+
+	ccc	=	startOffset;
+	if (cCameraDataBuffer != NULL)
+	{
+		pixelCntMax	=	bufferSize / 4;
+		for (xxx=0; xxx<cLastExposure_ROIinfo.currentROIwidth; xxx++)
+		{
+			pixelIndex	=	xxx * 3;
+			for (yyy=0; yyy < cLastExposure_ROIinfo.currentROIheight; yyy++)
+			{
+				if (ccc < pixelCntMax)
+				{
+					//*	red data
+					binaryDataBuffer[ccc++]	=	(cCameraDataBuffer[pixelIndex + 2] & 0x00ff) << 24;
+
+					//*	green data
+					binaryDataBuffer[ccc++]	=	(cCameraDataBuffer[pixelIndex + 1] & 0x00ff) << 24;
+
+					//*	blue data
+					binaryDataBuffer[ccc++]	=	(cCameraDataBuffer[pixelIndex] & 0x00ff) << 24;
+				}
+				pixelIndex	+=	cLastExposure_ROIinfo.currentROIwidth * 3;
+			}
+		}
+	}
+	else
+	{
+		CONSOLE_DEBUG("cCameraDataBuffer is NULL");
+	}
+	return(ccc);
+}
+
+//*****************************************************************************
+//*	returns byte count
+//*****************************************************************************
 int	CameraDriver::BuildBinaryImage_RGBx16(	unsigned char 	*binaryDataBuffer,
 											int				startOffset,
 											int				bufferSize)
@@ -3952,7 +4114,9 @@ static void	GetAlpacaImageDataTypeString(int dataType, char *dataTypeString)
 }
 
 //*****************************************************************************
-TYPE_ASCOM_STATUS	CameraDriver::Get_Imagearray_Binary(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
+//*	https://ascom-standards.org/Developer/AlpacaImageBytes.pdf
+//*****************************************************************************
+TYPE_ASCOM_STATUS	CameraDriver::Get_Imagearray_Binary(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InvalidOperation;
 TYPE_BinaryImageHdr	binaryImageHdr;
@@ -3961,7 +4125,7 @@ int					totalPixels;
 size_t				dataPayloadSize;
 size_t				bufferSize;
 unsigned char 		*binaryDataBuffer;
-int					ccc;
+int					imgDataOffset;
 size_t				bytesWritten;
 char				httpHeader[1024];
 char				lineBuff[128];
@@ -3999,10 +4163,20 @@ bool	xmit16BitAs32Bit	=	true;
 		case kImageType_RAW8:
 		case kImageType_Y8:
 			CONSOLE_DEBUG("kImageType_RAW8");
-			bytesPerPixel							=	1;
-			binaryImageHdr.ImageElementType			=	kAlpacaImageData_Byte;		//	Element type of the source image array
 			binaryImageHdr.Dimension3				=	0;							//	(0 for 2D array)
-			binaryImageHdr.TransmissionElementType	=	kAlpacaImageData_Byte;		//	Element type as sent over the network
+		//	if (reqData->cHTTPclientType == kHTTPclient_AlpacaPi)
+			if (reqData->cHTTPclientType == kHTTPclient_last)
+			{
+				bytesPerPixel							=	1;
+				binaryImageHdr.ImageElementType			=	kAlpacaImageData_Byte;		//	Element type of the source image array
+				binaryImageHdr.TransmissionElementType	=	kAlpacaImageData_Byte;		//	Element type as sent over the network
+			}
+			else
+			{
+				bytesPerPixel							=	4;
+				binaryImageHdr.ImageElementType			=	kAlpacaImageData_Int32;		//	Element type of the source image array
+				binaryImageHdr.TransmissionElementType	=	kAlpacaImageData_Int32;		//	Element type as sent over the network
+			}
 			break;
 
 		case kImageType_RAW16:
@@ -4011,7 +4185,7 @@ bool	xmit16BitAs32Bit	=	true;
 			{
 				bytesPerPixel	=	4;
 				binaryImageHdr.ImageElementType			=	kAlpacaImageData_Int32;	//	Element type of the source image array
-				binaryImageHdr.Dimension3				=	0;							//	(0 for 2D array)
+				binaryImageHdr.Dimension3				=	0;						//	(0 for 2D array)
 				binaryImageHdr.TransmissionElementType	=	kAlpacaImageData_Int32;	//	Element type as sent over the network
 			}
 			else
@@ -4027,9 +4201,18 @@ bool	xmit16BitAs32Bit	=	true;
 			CONSOLE_DEBUG("kImageType_RGB24");
 			binaryImageHdr.Rank						=	3;	//	Image array rank
 			binaryImageHdr.Dimension3				=	3;	//	Length of image array third dimension (0 for 2D array)
-			binaryImageHdr.ImageElementType			=	kAlpacaImageData_Byte;		//	Element type as sent over the network
-			binaryImageHdr.TransmissionElementType	=	kAlpacaImageData_Byte;		//	Element type as sent over the network
-			bytesPerPixel	=	3;
+			if (reqData->cHTTPclientType == kHTTPclient_AlpacaPi)
+			{
+				binaryImageHdr.ImageElementType			=	kAlpacaImageData_Byte;		//	Element type of the source image array
+				binaryImageHdr.TransmissionElementType	=	kAlpacaImageData_Byte;		//	Element type as sent over the network
+				bytesPerPixel							=	3;
+			}
+			else
+			{
+				binaryImageHdr.ImageElementType			=	kAlpacaImageData_Int32;		//	Element type of the source image array
+				binaryImageHdr.TransmissionElementType	=	kAlpacaImageData_Int32;		//	Element type as sent over the network
+				bytesPerPixel							=	12;
+			}
 			break;
 
 		default:
@@ -4076,7 +4259,7 @@ bool	xmit16BitAs32Bit	=	true;
 	if ((cCameraDataBuffer != NULL) && (totalPixels > 0))
 	{
 		//*	allocate one big buffer and put the entire image into it
-		binaryDataBuffer	=	(unsigned char *)malloc(bufferSize + 100);
+		binaryDataBuffer	=	(unsigned char *)calloc((bufferSize + 1000), 1);
 		if (binaryDataBuffer != NULL)
 		{
 			//*	copy the HTTP header
@@ -4086,12 +4269,13 @@ bool	xmit16BitAs32Bit	=	true;
 			//*	copy over the header
 			memcpy(&binaryDataBuffer[httpHeaderSize], &binaryImageHdr, sizeof(TYPE_BinaryImageHdr));
 
-			//*	ccc is the index to put the image data
-			ccc			=	httpHeaderSize;
-			ccc			+=	sizeof(TYPE_BinaryImageHdr);
+			//*	imgDataOffset is the index to put the image data
+			imgDataOffset		=	httpHeaderSize;
+			imgDataOffset		+=	sizeof(TYPE_BinaryImageHdr);
 
-			CONSOLE_DEBUG_W_LONG("httpHeaderSize\t\t=",	httpHeaderSize);
-			CONSOLE_DEBUG_W_NUM("ccc\t\t\t=",			ccc);
+			CONSOLE_DEBUG_W_LONG("httpHeaderSize             \t=",	httpHeaderSize);
+			CONSOLE_DEBUG_W_LONG("sizeof(TYPE_BinaryImageHdr)\t=",	sizeof(TYPE_BinaryImageHdr));
+			CONSOLE_DEBUG_W_NUM("imgDataOffset               \t=",	imgDataOffset);
 
 			//*	now copy the image over
 			switch(cLastExposure_ROIinfo.currentROIimageType)
@@ -4099,7 +4283,15 @@ bool	xmit16BitAs32Bit	=	true;
 				case kImageType_RAW8:
 				case kImageType_Y8:
 					CONSOLE_DEBUG("kImageType_RAW8");
-					returnedDataLen	=	BuildBinaryImage_Raw8(binaryDataBuffer, ccc, bufferSize);
+					if (bytesPerPixel == 1)
+					{
+						returnedDataLen	=	BuildBinaryImage_Raw8(binaryDataBuffer, imgDataOffset, bufferSize);
+					}
+					else
+					{
+						returnedDataLen	=	BuildBinaryImage_Raw8_32bit(binaryDataBuffer, imgDataOffset, bufferSize);
+
+					}
 					CONSOLE_DEBUG_W_LONG("bufferSize     \t\t=",	(long)bufferSize);
 					CONSOLE_DEBUG_W_NUM( "returnedDataLen\t\t=",	returnedDataLen);
 					break;
@@ -4108,18 +4300,24 @@ bool	xmit16BitAs32Bit	=	true;
 					CONSOLE_DEBUG("kImageType_RAW16");
 					if (xmit16BitAs32Bit)
 					{
-						returnedDataLen	=	BuildBinaryImage_Raw32(binaryDataBuffer, ccc, bufferSize);
+						returnedDataLen	=	BuildBinaryImage_Raw32(binaryDataBuffer, imgDataOffset, bufferSize);
 					}
 					else
 					{
-						returnedDataLen	=	BuildBinaryImage_Raw16(binaryDataBuffer, ccc, bufferSize);
+						returnedDataLen	=	BuildBinaryImage_Raw16(binaryDataBuffer, imgDataOffset, bufferSize);
 					}
 					break;
 
 				case kImageType_RGB24:
 					CONSOLE_DEBUG("kImageType_RGB24");
-					returnedDataLen	=	BuildBinaryImage_RGB24(binaryDataBuffer, ccc, bufferSize);
-
+					if (bytesPerPixel == 3)
+					{
+						returnedDataLen	=	BuildBinaryImage_RGB24(binaryDataBuffer, imgDataOffset, bufferSize);
+					}
+					else
+					{
+						returnedDataLen	=	BuildBinaryImage_RGB24_32bit((uint32_t *)binaryDataBuffer, imgDataOffset, bufferSize);
+					}
 					break;
 
 				default:
@@ -4189,7 +4387,6 @@ bool	xmit16BitAs32Bit	=	true;
 	{
 		CONSOLE_DEBUG("Image does not exist");
 	}
-
 	return(alpacaErrCode);
 }
 
@@ -4206,8 +4403,8 @@ int					imgRank;
 char				httpHeader[500];
 
 	CONSOLE_DEBUG(__FUNCTION__);
-	CONSOLE_DEBUG_W_STR("htmlData\t=", reqData->htmlData);
-	CONSOLE_DEBUG_W_STR("httpCmdString\t=", reqData->httpCmdString);
+//	CONSOLE_DEBUG_W_STR("htmlData\t=",		reqData->htmlData);
+//	CONSOLE_DEBUG_W_STR("httpCmdString\t=",	reqData->httpCmdString);
 
 	mySocket	=	reqData->socket;
 
@@ -4215,7 +4412,6 @@ char				httpHeader[500];
 	JsonResponse_SendTextBuffer(mySocket, httpHeader);
 
 	gImageDownloadInProgress	=	true;
-
 
 	//========================================================================================
 	//*	record the time the image was taken
@@ -4381,6 +4577,8 @@ char				httpHeader[500];
 		CONSOLE_DEBUG(alpacaErrMsg);
 	}
 
+	DumpRequestStructure(__FUNCTION__, reqData);
+
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, "--exit");
 	gImageDownloadInProgress	=	false;
 	return(alpacaErrCode);
@@ -4459,7 +4657,6 @@ int				totalValuesWritten;
 			//*	step through the rows (going from top to bottom)
 			for (yyy=0; yyy < numRows; yyy++)
 			{
-
 				//*	openCV uses BGR instead of RGB
 				//*	https://docs.opencv.org/master/df/d24/tutorial_js_image_display.html
 				pixelValue_Red		=	((myPixelPtr[pixelIndex + 2] & 0x00ff) << 8);
@@ -7025,7 +7222,7 @@ char		fileNameDateString[64];
 	strcat(cFileNameRoot, fileNameDateString);
 //	CONSOLE_DEBUG_W_STR("cFileNameRoot\t=", cFileNameRoot);
 
-	if (cFN_includeManuf)
+	if (cFN.IncludeManuf)
 	{
 		strcat(cFileNameRoot, "-");
 		strcat(cFileNameRoot, cDeviceManufAbrev);
@@ -7033,7 +7230,7 @@ char		fileNameDateString[64];
 //	CONSOLE_DEBUG_W_STR("cFileNameRoot\t=", cFileNameRoot);
 
 	//*	are we supposed to include the serial number int the file name
-	if (cFN_includeSerialNum)
+	if (cFN.IncludeSerialNum)
 	{
 		if (strlen(cDeviceSerialNum) > 0)
 		{
@@ -7050,7 +7247,7 @@ char		fileNameDateString[64];
 	}
 //	CONSOLE_DEBUG_W_STR("cFileNameRoot\t=", cFileNameRoot);
 
-	if (cFN_includeRefID && (strlen(cTS_info.refID) > 0))
+	if (cFN.IncludeRefID && (strlen(cTS_info.refID) > 0))
 	{
 		strcat(cFileNameRoot, "-");
 		strcat(cFileNameRoot, cTS_info.refID);
@@ -7065,12 +7262,12 @@ char		fileNameDateString[64];
 
 #ifdef _ENABLE_FILTERWHEEL_
 	//*	are we suppose to include the filter name
-	if (cFN_includeFilter)
+	if (cFN.IncludeFilter)
 	{
 	char	filterName1stChar[8];
 	bool	addFilterName;
 
-//		CONSOLE_DEBUG("cFN_includeFilter");
+//		CONSOLE_DEBUG("cFN.IncludeFilter");
 
 		if (cConnectedFilterWheel != NULL)
 		{
@@ -7430,7 +7627,7 @@ bool				foundKeyWord;
 												(sizeof(argumentString) -1));
 		if (foundKeyWord)
 		{
-			cFN_includeManuf	=	IsTrueFalse(argumentString);
+			cFN.IncludeManuf	=	IsTrueFalse(argumentString);
 		}
 		//---------------------------------------------------------------------------
 		//*	look for filter
@@ -7440,7 +7637,7 @@ bool				foundKeyWord;
 												(sizeof(argumentString) -1));
 		if (foundKeyWord)
 		{
-			cFN_includeFilter	=	IsTrueFalse(argumentString);
+			cFN.IncludeFilter	=	IsTrueFalse(argumentString);
 		}
 		//---------------------------------------------------------------------------
 		//*	look for serial number
@@ -7450,7 +7647,7 @@ bool				foundKeyWord;
 												(sizeof(argumentString) -1));
 		if (foundKeyWord)
 		{
-			cFN_includeSerialNum	=	IsTrueFalse(argumentString);
+			cFN.IncludeSerialNum	=	IsTrueFalse(argumentString);
 		}
 		//---------------------------------------------------------------------------
 		//*	look for RefID
@@ -7460,7 +7657,7 @@ bool				foundKeyWord;
 												(sizeof(argumentString) -1));
 		if (foundKeyWord)
 		{
-			cFN_includeRefID	=	IsTrueFalse(argumentString);
+			cFN.IncludeRefID	=	IsTrueFalse(argumentString);
 		}
 	}
 	else
@@ -7560,11 +7757,20 @@ int					newFlipMode;
 			if ((newFlipMode >= kFlip_None) && (newFlipMode <= kFlip_Both))
 			{
 				alpacaErrCode	=	SetFlipMode(newFlipMode);
+				if (alpacaErrCode != kASCOM_Err_Success)
+				{
+					GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, cLastCameraErrMsg);
+				}
 			}
 			else
 			{
 				alpacaErrCode	=	kASCOM_Err_InvalidValue;
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Invalid flip value");
 			}
+		}
+		else
+		{
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Keyword 'flip' not found");
 		}
 	}
 	else
@@ -7581,7 +7787,7 @@ TYPE_ASCOM_STATUS	CameraDriver::SetFlipMode(int newFlipMode)
 	//*	this routine needs to be over ridden if you want to enable flip mode
 	//*	IT IS THE RESPONSIBILITY OF THIS ROUTINE TO ACTUALLY SET cFlipMode
 	//*	it should only set the flip mode value if it was successful
-
+	strcpy(cLastCameraErrMsg, "Flip not supported");
 	return(kASCOM_Err_NotImplemented);
 }
 
@@ -7593,7 +7799,7 @@ TYPE_ASCOM_STATUS	CameraDriver::Get_ApertureArea(	TYPE_GetPutRequestData	*reqDat
 {
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 double					radius_meters;
-double                  aperatureArea;
+double					aperatureArea;
 
 	radius_meters	=	(cTS_info.aperature_mm / 1000) / 2.0;
 	aperatureArea	=	M_PI * (radius_meters * radius_meters);
@@ -7693,6 +7899,9 @@ char				textBuffer[128];
 		Get_Readall_Common(			reqData, alpacaErrMsg);
 
 		//*	do them in alphabetical order
+
+		Get_BayerOffsetX(		reqData, alpacaErrMsg, "bayeroffsetx");
+		Get_BayerOffsetY(		reqData, alpacaErrMsg, "bayeroffsety");
 		Get_BinX(				reqData, alpacaErrMsg, "binx");
 		Get_BinY(				reqData, alpacaErrMsg, "biny");
 		Get_Camerastate(		reqData, alpacaErrMsg, "camerastate");
@@ -7947,28 +8156,28 @@ char				textBuffer[128];
 										reqData->jsonTextBuffer,
 										kMaxJsonBuffLen,
 										"filenameincludefilter",
-										cFN_includeFilter,
+										cFN.IncludeFilter,
 										INCLUDE_COMMA);
 
 		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	mySocket,
 										reqData->jsonTextBuffer,
 										kMaxJsonBuffLen,
 										"filenameincludecamera",
-										cFN_includeManuf,
+										cFN.IncludeManuf,
 										INCLUDE_COMMA);
 
 		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	mySocket,
 										reqData->jsonTextBuffer,
 										kMaxJsonBuffLen,
 										"filenameincludeserialnum",
-										cFN_includeSerialNum,
+										cFN.IncludeSerialNum,
 										INCLUDE_COMMA);
 
 		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	mySocket,
 										reqData->jsonTextBuffer,
 										kMaxJsonBuffLen,
 										"filenameincluderefid",
-										cFN_includeRefID,
+										cFN.IncludeRefID,
 										INCLUDE_COMMA);
 
 		cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(mySocket,
@@ -8284,7 +8493,7 @@ int			pixelValueInt;
 			pixelIndex	=	jjj * imageWith * bytesPerPixel;
 			for (iii = 0; iii< imageWith; iii++)
 			{
-				xFraction	=	(iii * 1.0) / periodWidth;
+				xFraction	=	((iii + jjj) * 1.0) / periodWidth;
 				sinValue	=	sin(xFraction * (2 * M_PI));
 				switch(bytesPerPixel)
 				{
@@ -8334,14 +8543,15 @@ int			pixelValueInt;
 	}
 }
 
-
 //*****************************************************************************
-void	CameraDriver::GetCommandArgumentString(const int cmdENum, char *agumentString)
+bool	CameraDriver::GetCommandArgumentString(const int cmdENum, char *agumentString)
 {
+bool	foundFlag	=	true;
+
 	switch(cmdENum)
 	{
 		case kCmd_Camera_bayeroffsetX:			//*	Returns the X offset of the Bayer matrix.
-	case kCmd_Camera_bayeroffsetY:			//*	Returns the Y offset of the Bayer matrix.
+		case kCmd_Camera_bayeroffsetY:			//*	Returns the Y offset of the Bayer matrix.
 		case kCmd_Camera_binX:					//*	Returns the binning factor for the X axis.
 												//*	Sets the binning factor for the X axis.
 		case kCmd_Camera_binY:					//*	Returns the binning factor for the Y axis.
@@ -8451,10 +8661,233 @@ void	CameraDriver::GetCommandArgumentString(const int cmdENum, char *agumentStri
 
 		default:
 			strcpy(agumentString, "");
+			foundFlag	=	false;
 			break;
-
 	}
+	return(foundFlag);
 }
+
+//**************************************************************************************
+typedef struct
+{
+	char	name[16];
+	char	prefix[16];
+
+} TYPE_Targets;
+
+//**************************************************************************************
+TYPE_Targets	gTargetNames[]		=
+{
+	{	"Test",		"Test",		},
+	{	"Dark",		"Dark",		},
+	{	"Flat",		"Flat",		},
+	{	"Bias",		"Bias",		},
+	{	"Moon",		"Moon",		},
+	{	"Sun",		"Sun",		},
+	{	"Mercury",	"Merc",		},
+	{	"Venus",	"Ven",		},
+	{	"Mars",		"Mars",		},
+	{	"Jupiter",	"Jup",		},
+	{	"Saturn",	"Sat",		},
+	{	"Uranus",	"Uran",		},
+	{	"Neptune",	"Nept",		},
+	{	"Pluto",	"Plut",		},
+	{	"Star",		"Star",		},
+	{	"Deepsky",	"DSO",		},
+	{	"Other",	"Other",	},
+	{	"",			"",			}
+};
+
+//*****************************************************************************
+const char	gHtmlHeader[]	=
+{
+	"HTTP/1.0 200 \r\n"
+//	"Server: alpaca\r\n"
+//	"Mime-Version: 1.0\r\n"
+	"User-Agent: AlpacaPi\r\n"
+	"Content-Type: text/html\r\n"
+	"Connection: close\r\n"
+	"\r\n"
+	"<!DOCTYPE html>\r\n"
+	"<HTML><HEAD>\r\n"
+
+
+
+};
+
+//*****************************************************************************
+//*	https://www.w3schools.com/html/html_forms.asp
+//*****************************************************************************
+bool	CameraDriver::Setup_OutputForm(TYPE_GetPutRequestData *reqData, const char *formActionString)
+{
+int			mySocketFD;
+char		lineBuff[256];
+int			iii;
+const char	cameraTitle[]	=	"AlpacaPi camera setup";
+bool		checkedFlag;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG_W_STR("The Action that will be preformed when save is pressed:", formActionString);
+
+	mySocketFD	=	reqData->socket;
+
+
+	SocketWriteData(mySocketFD,	gHtmlHeader);
+
+	SocketWriteData(mySocketFD,	"<!DOCTYPE html>\r\n");
+	SocketWriteData(mySocketFD,	"<HTML>\r\n");
+	sprintf(lineBuff,			"<TITLE>%s</TITLE>\r\n", cameraTitle);
+	SocketWriteData(mySocketFD,	lineBuff);
+	SocketWriteData(mySocketFD,	"<CENTER>\r\n");
+	sprintf(lineBuff,			"<H1>%s</H1>\r\n", cameraTitle);
+	SocketWriteData(mySocketFD,	lineBuff);
+	SocketWriteData(mySocketFD,	"</CENTER>\r\n");
+	SocketWriteData(mySocketFD,	"The AlpacaPi camera driver saves each image taken locally to the disk or SD card attached to the RaspberyPi.\r\n");
+	SocketWriteData(mySocketFD,	"The image is saved int FITS, JPG and sometimes PNG format.\r\n");
+	sprintf(lineBuff,			"<BR>The default location for the image storage is <B>%s</B><BR>\r\n", kImageDataDir_Default);
+	SocketWriteData(mySocketFD,	lineBuff);
+	sprintf(lineBuff,			"The currently configured location for the image storage is <B>%s</B><BR>\r\n", gImageDataDir);
+	SocketWriteData(mySocketFD,	lineBuff);
+	SocketWriteData(mySocketFD,	"<P>The settings below help configure the file naming options.<P>\r\n");
+
+	SocketWriteData(mySocketFD,	"<CENTER>\r\n");
+//	SocketWriteData(mySocketFD,	"<form action=\"/setup/common\" target=\"_blank\">\r\n");
+//	sprintf(lineBuff, "<form action=\"%s\" target=\"_blank\">\r\n", formActionString);
+	sprintf(lineBuff, "<form action=\"%s\">\r\n", formActionString);
+	SocketWriteData(mySocketFD,	lineBuff);
+
+	SocketWriteData(mySocketFD,	"<TABLE BORDER=1>\r\n");
+	//----------------------------------------------------
+	//*	table header
+	SocketWriteData(mySocketFD,	"<TR>\r\n");
+	SocketWriteData(mySocketFD,	"<TH>Observer name</TH>\r\n");
+	SocketWriteData(mySocketFD,	"<TH>Filename<BR>previx</TH>\r\n");
+	SocketWriteData(mySocketFD,	"<TH>Filename options</TH>\r\n");
+	SocketWriteData(mySocketFD,	"</TR>\r\n");
+
+
+	SocketWriteData(mySocketFD,	"<TR>\r\n");
+	SocketWriteData(mySocketFD,	"<TD>\r\n");
+
+	SocketWriteData(mySocketFD,	"<label for=\"name\">Name:</label><br>\r\n");
+	SocketWriteData(mySocketFD,	"<input type=\"text\" id=\"name\" name=\"name\" value=\"John Doe\"><br>\r\n");
+	SocketWriteData(mySocketFD,	"</TD>\r\n");
+
+	//----------------------------------------------------------------------
+	//*	target object list
+	SocketWriteData(mySocketFD,	"<TD>\r\n");
+
+	iii	=	0;
+	while (strlen(gTargetNames[iii].name) > 1)
+	{
+//		sprintf(lineBuff,	"<input type=\"radio\" id=\"%s\" name=\"target\" value=\"%s\">%s<BR>\r\n",
+//												gTargetNames[iii].name,
+//												gTargetNames[iii].prefix,
+//												gTargetNames[iii].name);
+//		SocketWriteData(mySocketFD,	lineBuff);
+
+		checkedFlag	=	false;
+		if (strcmp(gTargetNames[iii].prefix, cFileNamePrefix) == 0)
+		{
+			checkedFlag	=	true;
+		}
+		Setup_OutputRadioBtn(mySocketFD,	"target",	gTargetNames[iii].prefix,	gTargetNames[iii].name,	checkedFlag);
+		iii++;
+		//		<input type="radio" id="css" name="fav_language" value="CSS">
+		//		<label for="css">CSS</label><br>
+		//		<input type="radio" id="javascript" name="fav_language" value="JavaScript">
+		//		<label for="javascript">JavaScript</label>
+	}
+	SocketWriteData(mySocketFD,	"<input type=text name=other value=\"\"><br>\r\n");
+
+	SocketWriteData(mySocketFD,	"</TD>\r\n");
+
+	//----------------------------------------------------------------------
+	//*	target object list
+	SocketWriteData(mySocketFD,	"<TD>\r\n");
+
+	Setup_OutputCheckBox(mySocketFD,	"filter",			"Include filter",			cFN.IncludeFilter);
+	Setup_OutputCheckBox(mySocketFD,	"camera",			"Include Camera",			cFN.IncludeManuf);
+	Setup_OutputCheckBox(mySocketFD,	"serial_number",	"Include Serial Number",	cFN.IncludeSerialNum);
+	Setup_OutputCheckBox(mySocketFD,	"refid", 			"Include refid", 			cFN.IncludeRefID);
+
+
+//	SocketWriteData(mySocketFD,	"<input type=\"checkbox\" id=\"camera\" name=\"camera\" value=\"true\">Include Camera<BR>\r\n");
+//	SocketWriteData(mySocketFD,	"<input type=\"checkbox\" id=\"serial_number\" name=\"serial_number\" value=\"true\">Include Serial Number<BR>\r\n");
+//	SocketWriteData(mySocketFD,	"<input type=\"checkbox\" id=\"refid\" name=\"refID\" value=\"true\">Include refID<BR>\r\n");
+
+	SocketWriteData(mySocketFD,	"</TD>\r\n");
+
+	SocketWriteData(mySocketFD,	"</TR>\r\n");
+
+	SocketWriteData(mySocketFD,	"<TR>\r\n");
+	SocketWriteData(mySocketFD,	"<TD COLSPAN=3><CENTER>\r\n");
+	SocketWriteData(mySocketFD,	"<input type=\"submit\" value=\"Save\">\r\n");
+	SocketWriteData(mySocketFD,	"</TD>\r\n");
+	SocketWriteData(mySocketFD,	"</TR>\r\n");
+
+	SocketWriteData(mySocketFD,	"</TABLE>\r\n");
+	SocketWriteData(mySocketFD,	"</CENTER>\r\n");
+
+
+	SocketWriteData(mySocketFD,	"</form>\r\n");
+	return(true);
+}
+
+//*****************************************************************************
+void	CameraDriver::Setup_SaveInit(void)
+{
+	CONSOLE_DEBUG(__FUNCTION__);
+
+	//*	set all of the filename options to false
+	memset(&cSetupFileNameOptions, 0, sizeof(TYPE_FilenameOptions));
+}
+
+//*****************************************************************************
+void	CameraDriver::Setup_SaveFinish(void)
+{
+	//*	copy the filename options over
+	cFN	=	cSetupFileNameOptions;
+}
+
+//*****************************************************************************
+bool	CameraDriver::Setup_ProcessKeyword(const char *keyword, const char *valueString)
+{
+	CONSOLE_DEBUG_W_2STR("kw:value", keyword, valueString);
+
+	if (strcmp(keyword, "target") == 0)
+	{
+		strcpy(cFileNamePrefix, valueString);
+	}
+	else if (strcmp(keyword, "camera") == 0)
+	{
+		CONSOLE_DEBUG(keyword);
+		cSetupFileNameOptions.IncludeManuf	=	true;
+	}
+	else if (strcmp(keyword, "filter") == 0)
+	{
+		CONSOLE_DEBUG(keyword);
+		cSetupFileNameOptions.IncludeFilter	=	true;
+	}
+	else if (strcmp(keyword, "refid") == 0)
+	{
+		CONSOLE_DEBUG(keyword);
+		cSetupFileNameOptions.IncludeRefID	=	true;
+	}
+	else if (strcmp(keyword, "serial_number") == 0)
+	{
+		CONSOLE_DEBUG(keyword);
+		cSetupFileNameOptions.IncludeSerialNum	=	true;
+	}
+	else if (strcmp(keyword, "other") == 0)
+	{
+		CONSOLE_DEBUG(keyword);
+		strcpy(cSetupOtherPrefix, valueString);
+	}
+
+	return(true);
+}
+
 
 
 #endif	//	_ENABLE_CAMERA_

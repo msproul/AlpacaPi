@@ -52,8 +52,8 @@
 #include	"controller_dome.h"
 #include	"controller_focus.h"
 #include	"controller_focus_generic.h"
-#include	"controller_ml_nc.h"
-#include	"controller_ml_single.h"
+#include	"controller_focus_ml_nc.h"
+#include	"controller_focus_ml_hr.h"
 #include	"controller_switch.h"
 #include	"controller_image.h"
 
@@ -72,7 +72,8 @@
 bool	gKeepRunning;
 char	gFullVersionString[128];
 char	gFirstArgString[256];
-bool	gVerbose		=	false;
+bool	gVerbose					=	false;
+char	gUserAgentAlpacaPiStr[80]	=	"";
 
 
 

@@ -57,7 +57,7 @@
 #include	<unistd.h>
 
 
-
+#define _DEBUG_TIMING_
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
 
@@ -120,6 +120,7 @@ FocuserDriver::FocuserDriver(const int argDevNum)
 	cFocuserProp.MaxStep		=	10;
 	cFocuserProp.MaxIncrement	=	10;
 	cFocuserProp.Position		=	-1;
+	cFocuserProp.IsMoving		=	false;
 
 
 	cPrevFocuserPosition		=	-1;
@@ -131,7 +132,6 @@ FocuserDriver::FocuserDriver(const int argDevNum)
 	cRotatorPosition			=	-1;
 	cPrevRotatorPosition		=	-1;
 	cNewRotatorPosition			=	-1;
-	cRotatorIsMoving			=	false;
 
 	cFocuserSupportsAux			=	false;
 	cAuxPosition				=	-1;
@@ -142,7 +142,7 @@ FocuserDriver::FocuserDriver(const int argDevNum)
 	cFocuserHasVoltage			=	false;
 	cFocuserVoltage				=	0.0;
 	cFocuserHasTemperature		=	false;
-	cFocuserTemp				=	0.0;
+	cFocuserProp.Temperature	=	0.0;
 
 	cSwitchIN					=	false;
 	cSwitchOUT					=	false;
@@ -164,6 +164,7 @@ FocuserDriver::~FocuserDriver(void)
 //*****************************************************************************
 int32_t	FocuserDriver::RunStateMachine(void)
 {
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, "This routine should be over-ridden");
 	return(1000 * 1000);
 }
 
@@ -188,6 +189,8 @@ int					cmdType;
 int					mySocket;
 
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, reqData->deviceCommand);
+
+	strcpy(cLastDeviceErrMsg, "");
 
 	//*	make local copies of the data structure to make the code easier to read
 	mySocket	=	reqData->socket;
@@ -530,6 +533,8 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
 
 //*****************************************************************************
+//*	this relies on the the RunStateMachine to update the temperature on a regular basis
+//*****************************************************************************
 TYPE_ASCOM_STATUS	FocuserDriver::Get_Temperature(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
@@ -538,14 +543,14 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 								reqData->jsonTextBuffer,
 								kMaxJsonBuffLen,
 								responseString,
-								cFocuserTemp,
+								cFocuserProp.Temperature,
 								INCLUDE_COMMA);
 
 	JsonResponse_Add_Double(	reqData->socket,
 								reqData->jsonTextBuffer,
 								kMaxJsonBuffLen,
 								"Degrees-F",
-								DEGREES_F(cFocuserTemp),
+								DEGREES_F(cFocuserProp.Temperature),
 								INCLUDE_COMMA);
 
 
@@ -573,16 +578,18 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 //*****************************************************************************
 TYPE_ASCOM_STATUS	FocuserDriver::Put_Move(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
 {
-TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
+TYPE_ASCOM_STATUS	alpacaErrCode;
 bool				foundKeyWord;
 char				argumentString[32];
 int32_t				newPosition;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	SETUP_TIMING();
+
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, "**********************************************************");
 
 	if (reqData != NULL)
 	{
-		CONSOLE_DEBUG_W_STR("contentData\t=", reqData->contentData);
+//		CONSOLE_DEBUG_W_STR("contentData\t=", reqData->contentData);
 
 		foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
 												"Position",
@@ -591,7 +598,14 @@ int32_t				newPosition;
 		if (foundKeyWord)
 		{
 			newPosition		=	atoi(argumentString);
+//	DEBUG_TIMING(__FUNCTION__);
 			alpacaErrCode	=	SetFocuserPosition(newPosition, alpacaErrMsg);
+//	DEBUG_TIMING(__FUNCTION__);
+			if (alpacaErrCode != kASCOM_Err_Success)
+			{
+				CONSOLE_DEBUG_W_NUM("alpacaErrCode\t=",	alpacaErrCode);
+				CONSOLE_DEBUG_W_STR("alpacaErrMsg \t=",	alpacaErrMsg);
+			}
 		}
 		else
 		{
@@ -604,9 +618,11 @@ int32_t				newPosition;
 	{
 		alpacaErrCode	=	kASCOM_Err_InternalError;
 	}
+
+//	DEBUG_TIMING(__FUNCTION__);
+//	CONSOLE_DEBUG("EXIT **********************************************************");
 	return(alpacaErrCode);
 }
-
 
 //*****************************************************************************
 TYPE_ASCOM_STATUS	FocuserDriver::Put_MoveRelative(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
@@ -719,7 +735,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 									reqData->jsonTextBuffer,
 									kMaxJsonBuffLen,
 									"RotatorIsMoving",
-									cRotatorIsMoving,
+									cRotatorProp.IsMoving,
 									INCLUDE_COMMA);
 
 			JsonResponse_Add_Bool(	reqData->socket,
@@ -825,7 +841,7 @@ char		lineBuffer[128];
 		OutputHTMLrowData(mySocketFD,	"Aux position",	lineBuffer);
 
 		//*	Temperature
-		sprintf(lineBuffer, "%3.1f&deg;C / %3.1f&deg;F", cFocuserTemp,  DEGREES_F(cFocuserTemp));
+		sprintf(lineBuffer, "%3.1f&deg;C / %3.1f&deg;F", cFocuserProp.Temperature,  DEGREES_F(cFocuserProp.Temperature));
 		OutputHTMLrowData(mySocketFD,	"Temperature",	lineBuffer);
 
 
@@ -835,8 +851,6 @@ char		lineBuffer[128];
 		//*	error count
 		sprintf(lineBuffer, "%d", cInvalidStringErrCnt);
 		OutputHTMLrowData(mySocketFD,	"Error count",	lineBuffer);
-
-
 
 		SocketWriteData(mySocketFD,	"</TABLE>\r\n");
 		SocketWriteData(mySocketFD,	"</CENTER>\r\n");
@@ -869,7 +883,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 //	strcpy(lastCameraErrMsg, "Command not implemented: ");
 //	strcat(lastCameraErrMsg, __FUNCTION__);
 	alpacaErrCode	=	kASCOM_Err_NotImplemented;
-	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Keyword 'Position' not specified");
+	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "This routine needs to be over-ridden");
 	CONSOLE_DEBUG(alpacaErrMsg);
 
 	return(alpacaErrCode);
@@ -909,7 +923,7 @@ void	FocuserDriver::GetFocuserSerialNumber(char *serialNumString)
 //*****************************************************************************
 double	FocuserDriver::GetFocuserTemperature(void)
 {
-	return(cFocuserTemp);
+	return(cFocuserProp.Temperature);
 }
 
 //*****************************************************************************
@@ -941,13 +955,13 @@ int32_t	FocuserDriver::GetRotatorStepsPerRev(void)
 //*****************************************************************************
 bool	FocuserDriver::GetRotatorIsMoving(void)
 {
-	if (cRotatorIsMoving == false)
+	if (cRotatorProp.IsMoving == false)
 	{
 //		CONSOLE_DEBUG("Calling RunStateMachine()");
 		RunStateMachine();
-//		CONSOLE_DEBUG_W_NUM("cRotatorIsMoving\t=", cRotatorIsMoving);
+//		CONSOLE_DEBUG_W_NUM("cRotatorProp.IsMoving\t=", cRotatorProp.IsMoving);
 	}
-	return(cRotatorIsMoving);
+	return(cRotatorProp.IsMoving);
 }
 
 //*****************************************************************************
@@ -968,8 +982,10 @@ void	FocuserDriver::DumpFocuserProperties(const char *callingFunctionName)
 }
 
 //*****************************************************************************
-void	FocuserDriver::GetCommandArgumentString(const int cmdENum, char *agumentString)
+bool	FocuserDriver::GetCommandArgumentString(const int cmdENum, char *agumentString)
 {
+bool	foundFlag	=	true;
+
 	switch(cmdENum)
 	{
 		case kCmd_Focuser_tempcomp:				strcpy(agumentString, "TempComp=BOOL");	break;
@@ -995,9 +1011,10 @@ void	FocuserDriver::GetCommandArgumentString(const int cmdENum, char *agumentStr
 
 		default:
 			strcpy(agumentString, "");
+			foundFlag	=	false;
 			break;
-
 	}
+	return(foundFlag);
 }
 
 

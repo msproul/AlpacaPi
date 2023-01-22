@@ -144,7 +144,6 @@
 #include	"alpaca_defs.h"
 
 #include	"controller.h"
-#include	"controller_image.h"
 #include	"observatory_settings.h"
 #include	"helper_functions.h"
 #include	"julianTime.h"
@@ -574,11 +573,11 @@ int		iii;
 	}
 
 
-#ifdef _ENABLE_ASTERIODS_
+#ifdef _ENABLE_ASTEROIDS_
 	//==================================================================
 	//*	Read Asteroid data
 	gAsteroidPtr	=	ReadAsteroidData(NULL, &gAsteroidCnt, gAsteroidDatbase);
-#endif // _ENABLE_ASTERIODS_
+#endif // _ENABLE_ASTEROIDS_
 
 	Precess();		//*	make sure all of the data bases are sorted properly
 
@@ -812,7 +811,7 @@ int		buttonBoxWidth;
 	SetWidgetHelpText(	kSkyTravel_Btn_Equator,			"Toggle Equator display");
 	SetWidgetHelpText(	kSkyTravel_Btn_Ecliptic,		"Toggle Ecliptic display");
 	SetWidgetHelpText(	kSkyTravel_Btn_YaleCat,			"Toggle Yale display");
-	SetWidgetHelpText(	kSkyTravel_Btn_Messier,			"Toggle Missier display");
+	SetWidgetHelpText(	kSkyTravel_Btn_Messier,			"Toggle Messier display");
 	SetWidgetHelpText(	kSkyTravel_Btn_AAVSOalerts,		"Toggle AAVSO alerts");
 
 #ifdef _ENABLE_REMOTE_GAIA_
@@ -821,7 +820,7 @@ int		buttonBoxWidth;
 	SetWidgetFont(		kSkyTravel_SQL_database,		kFont_RadioBtn);
 	SetWidgetHelpText(	kSkyTravel_SQL_database,		"Currently selected database");
 #endif
-#ifdef _ENABLE_ASTERIODS_
+#ifdef _ENABLE_ASTEROIDS_
 	SetWidgetHelpText(	kSkyTravel_Btn_Asteroids,		"Toggle Asteroid display");
 #endif
 
@@ -876,7 +875,7 @@ int		buttonBoxWidth;
 #if defined(_ENABLE_REMOTE_GAIA_)
 	SetWidgetText(		kSkyTravel_Btn_Gaia,			"g");
 #endif
-#ifdef _ENABLE_ASTERIODS_
+#ifdef _ENABLE_ASTEROIDS_
 	SetWidgetText(		kSkyTravel_Btn_Asteroids,		",");
 #endif
 
@@ -956,7 +955,7 @@ void WindowTabSkyTravel::ActivateWindow(void)
 }
 
 //**************************************************************************************
-void WindowTabSkyTravel::RunBackgroundTasks(void)
+void WindowTabSkyTravel::RunWindowBackgroundTasks(void)
 {
 uint32_t			currentMilliSecs;
 uint32_t			deltaMilliSecs;
@@ -1123,6 +1122,7 @@ struct tm			siderealTime;
 			SetWidgetTextColor(	kSkyTravel_MsgTextBox, CV_RGB(0,	255, 0));
 			SetWidgetText(kSkyTravel_MsgTextBox, gRemoteImageStatusMsg);
 			ClearRemoteDataMsgFlag();
+
 		}
 		cLastRemoteImageUpdate_ms		=	millis();
 	}
@@ -1173,9 +1173,9 @@ void	WindowTabSkyTravel::UpdateButtonStatus(void)
 	SetWidgetChecked(		kSkyTravel_Btn_NGC,				cDispOptions.dispNGC);
 	SetWidgetChecked(		kSkyTravel_Btn_Messier,			cDispOptions.dispMessier);
 	SetWidgetChecked(		kSkyTravel_Btn_YaleCat,			cDispOptions.dispYale);
-#ifdef _ENABLE_ASTERIODS_
+#ifdef _ENABLE_ASTEROIDS_
 	SetWidgetChecked(		kSkyTravel_Btn_Asteroids,		cDispOptions.dispAsteroids);
-#endif // _ENABLE_ASTERIODS_
+#endif // _ENABLE_ASTEROIDS_
 #if defined(_ENABLE_REMOTE_GAIA_)
 	SetWidgetChecked(		kSkyTravel_Btn_Gaia,			cDispOptions.dispGaia);
 #endif
@@ -1389,12 +1389,12 @@ bool	controlKeyDown;
 			SetWidgetChecked(		kSkyTravel_Btn_MagnitudeDisp,	gST_DispOptions.DispMagnitude);
 			break;
 
-#ifdef _ENABLE_ASTERIODS_
+#ifdef _ENABLE_ASTEROIDS_
 		case ',':
 			cDispOptions.dispAsteroids		=	!cDispOptions.dispAsteroids;
 			SetWidgetChecked(		kSkyTravel_Btn_Asteroids,	cDispOptions.dispAsteroids);
 			break;
-#endif // _ENABLE_ASTERIODS_
+#endif // _ENABLE_ASTEROIDS_
 
 
 	//	case kLeftArrowKey:	//change azimuth
@@ -1789,7 +1789,7 @@ char	searchText[128];
 		case kSkyTravel_Btn_NightMode:			ProcessSingleCharCmd('!');	break;
 		case kSkyTravel_Btn_OrigDatabase:		ProcessSingleCharCmd('$');	break;
 		case kSkyTravel_Btn_MagnitudeDisp:		ProcessSingleCharCmd('.');	break;
-#ifdef _ENABLE_ASTERIODS_
+#ifdef _ENABLE_ASTEROIDS_
 		case kSkyTravel_Btn_Asteroids:			ProcessSingleCharCmd(',');	break;
 #endif
 		case kSkyTravel_Btn_Grid:				ProcessSingleCharCmd('#');	break;
@@ -2040,6 +2040,8 @@ double		degreesPerPixel;
 double		arcSecPerPixel;
 int			threadStatus;
 char		remoteThreadStatusMsg[64];
+TYPE_CelestData	closestObject;
+char			myObjectName[128];
 
 	CONSOLE_DEBUG(__FUNCTION__);
 	reDrawSky	=	true;
@@ -2076,10 +2078,27 @@ char		remoteThreadStatusMsg[64];
 
 			//*	returns 0=OK, -1, failed to create, +1 busy
 
+			memset(&closestObject,	0,	sizeof(TYPE_CelestData));
+			FindObjectNearCursor(&closestObject);
+			CONSOLE_DEBUG_W_STR("closestObject.longName \t=", closestObject.longName);
+			CONSOLE_DEBUG_W_STR("closestObject.shortName\t=", closestObject.shortName);
+
+			strcpy(myObjectName, "");
+			if (strlen(closestObject.shortName) > 0)
+			{
+				strcpy(myObjectName, closestObject.shortName);
+			}
+			if (strlen(closestObject.longName) > 0)
+			{
+				strcat(myObjectName, "-");
+				strcat(myObjectName, closestObject.longName);
+			}
+
 			threadStatus	=	GetRemoteImage(	cCursor_ra,
 												cCursor_decl,
 												arcSecPerPixel,
-												viewAngle_Deg);
+												viewAngle_Deg,
+												myObjectName);
 			if (threadStatus == 0)
 			{
 				SetWidgetTextColor(	kSkyTravel_MsgTextBox, CV_RGB(0,	255, 0));
@@ -2114,7 +2133,7 @@ char		remoteThreadStatusMsg[64];
 //*****************************************************************************
 void	WindowTabSkyTravel::ForceReDrawSky(void)
 {
-ControllerImage	*myControllerObj;
+Controller	*myControllerObj;
 
 	UpdateButtonStatus();
 
@@ -2126,7 +2145,7 @@ ControllerImage	*myControllerObj;
 	}
 
 	//*	now force the window to update
-	myControllerObj	=	(ControllerImage *)cParentObjPtr;
+	myControllerObj	=	(Controller *)cParentObjPtr;
 	if (myControllerObj != NULL)
 	{
 		myControllerObj->cUpdateWindow		=	true;
@@ -2883,7 +2902,7 @@ short		iii;
 		PlotObjectsByDataSource(cDispOptions.dispHipparcos,	gHipObjectPtr,		gHipObjectCount);
 		PlotObjectsByDataSource(cDispOptions.dispDraper,	gDraperObjectPtr,	gDraperObjectCount);
 
-	#ifdef _ENABLE_ASTERIODS_
+	#ifdef _ENABLE_ASTEROIDS_
 		//*--------------------------------------------------------------------------------
 		//*	check to see if the asteroids are loaded
 //		if (cDispOptions.dispAsteroids && ((cView_angle < 1.0) || (gST_DispOptions.MagnitudeMode == kMagnitudeMode_All)))
@@ -2891,7 +2910,7 @@ short		iii;
 		{
 			DrawAsteroids();
 		}
-	#endif // _ENABLE_ASTERIODS_
+	#endif // _ENABLE_ASTEROIDS_
 
 		PlotObjectsByDataSource(cDispOptions.dispNGC,	gNGCobjectPtr,		gNGCobjectCount);
 		PlotObjectsByDataSource(cDispOptions.dispSAO,	gSAOobjectPtr,		gSAOobjectCount);
@@ -4180,7 +4199,7 @@ bool			pressesOccurred;
 //		DisplayHelpMessage(ticksMsg);
 
 
-#ifdef _ENABLE_ASTERIODS_
+#ifdef _ENABLE_ASTEROIDS_
 		//----------------------------------------------------------
 		//*	now do the asteroids
 		if (gAsteroidPtr != NULL)
@@ -4223,7 +4242,7 @@ bool			pressesOccurred;
 //										solar_DEC,			//*	radians
 //										solar_Distance);	//*	AU
 		}
-#endif // _ENABLE_ASTERIODS_
+#endif // _ENABLE_ASTEROIDS_
 	}
 	else
 	{
@@ -7667,15 +7686,15 @@ long	deltaYY;
 }
 
 //*********************************************************************
-void	WindowTabSkyTravel::FindObjectNearCursor(void)
+void	WindowTabSkyTravel::FindObjectNearCursor(TYPE_CelestData *returnObject)
 {
 TYPE_CelestData	foundObject;
 TYPE_CelestData	closestObject;
 long			cloestDistance;
 long			pixDist;
 
-	memset(&foundObject, 0, sizeof(TYPE_CelestData));
-	memset(&closestObject, 0, sizeof(TYPE_CelestData));
+	memset(&foundObject,	0,	sizeof(TYPE_CelestData));
+	memset(&closestObject,	0,	sizeof(TYPE_CelestData));
 
 	cloestDistance	=	9999;
 
@@ -7928,6 +7947,11 @@ long			pixDist;
 //		CONSOLE_DEBUG_W_NUM("Length      \t=", strlen(cInform_name));
 //		CONSOLE_ABORT(__FUNCTION__);
 //	}
+
+	if (returnObject != NULL)
+	{
+		*returnObject	=	closestObject;
+	}
 }
 
 //*****************************************************************************

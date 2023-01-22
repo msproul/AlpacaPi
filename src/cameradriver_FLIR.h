@@ -39,12 +39,7 @@
 #endif
 
 
-void	CreateFLIR_CameraObjects(void);
-
-
-
-
-void	CreateFLIR_CameraObjects(void);
+int	CreateFLIR_CameraObjects(void);
 
 
 //**************************************************************************************

@@ -30,6 +30,9 @@
 //*	Apr 26,	2020	<MLS> Added MoonLite_FlushReadBuffer()
 //*	Jun 30,	2020	<MLS> Added _DEBUG_NITECRAWLER_DETECTION_
 //*	Dec 28,	2020	<MLS> Added MoonLite_SetCurrentPosition()
+//*	Nov 27,	2022	<MLS> Added more debugging to USB_SendCommand()
+//*	Nov 28,	2022	<MLS> Added MoonLite_GetMovingState()
+//*	Dec 11,	2022	<MLS> Fixed sign error for HiRes in MoonLite_GetTemperature()
 //*****************************************************************************
 
 #include	<stdlib.h>
@@ -61,7 +64,7 @@
 
 char	gLastCmdSent[48]	=	"";
 
-static void	USB_SendCommand(TYPE_MOONLITECOM *moonliteCom, const char *theCommand);
+static int	USB_SendCommand(TYPE_MOONLITECOM *moonliteCom, const char *theCommand);
 static int	ReadUntilChar(const int fileDesc, char *readBuff, const int maxChars, const char terminator);
 static int	gMoonLiteReadFailureCnt	=	0;
 
@@ -231,7 +234,7 @@ int		readCnt;
 		else
 		{
 			failureCnt++;
-			CONSOLE_DEBUG("Failed to read NiteCrawler model");
+		//	CONSOLE_DEBUG("Failed to read NiteCrawler model");
 		}
 		//*	read again because it gives out 2 "#"
 		readCnt	=	ReadUntilChar(moonliteCom->fileDesc, readBuffer, 40, '#');
@@ -381,7 +384,6 @@ bool	isHighRes;
 			Serial_Set_Attribs(moonliteCom->fileDesc, B9600, 0);
 		//	sleep(5);
 			isHighRes	=	MoonLite_CheckIfHighRes(moonliteCom);
-			CONSOLE_DEBUG_W_STR("moonliteCom->deviceModelString\t=",	moonliteCom->deviceModelString);
 		}
 
 		if (isNiteCrawler || isHighRes)
@@ -395,6 +397,9 @@ bool	isHighRes;
 		openOK	=	false;
 	}
 	CONSOLE_DEBUG_W_STR("moonliteCom->deviceModelString\t=",	moonliteCom->deviceModelString);
+	CONSOLE_DEBUG_W_STR("moonliteCom->deviceVersion    \t=",	moonliteCom->deviceVersion);
+	CONSOLE_DEBUG_W_STR("moonliteCom->deviceSerialNum  \t=",	moonliteCom->deviceSerialNum);
+
 	return(openOK);
 }
 
@@ -427,21 +432,51 @@ bool	closeOK;
 //*****************************************************************************
 //*	reads the buffer to make sure there is no trailing "#"
 //*****************************************************************************
-bool	MoonLite_FlushReadBuffer(			TYPE_MOONLITECOM *moonliteCom)
+bool	MoonLite_FlushReadBuffer(TYPE_MOONLITECOM *moonliteCom)
 {
+bool	successFlag	=	false;
+#if 1
+int		tcReturnCode;
+//int		readCnt;
+//char	databuffer[50];
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+	if (moonliteCom != NULL)
+	{
+		tcReturnCode	=	tcflush(moonliteCom->fileDesc, TCIFLUSH);
+		if (tcReturnCode == 0)
+		{
+			successFlag	=	true;
+		}
+		else
+		{
+			CONSOLE_DEBUG_W_NUM("tcflush had an error, errno=", errno);
+		}
+
+//		//*	now read data anyway
+//		readCnt	=	read(moonliteCom->fileDesc, databuffer, (sizeof(databuffer) - 2));
+//		if (readCnt > 0)
+//		{
+//			databuffer[readCnt]	=	0;
+//			CONSOLE_DEBUG_W_STR("We read:", databuffer);
+//		}
+	}
+#else
 char	readBuffer[48];
 
 	if (moonliteCom != NULL)
 	{
 		ReadUntilChar(moonliteCom->fileDesc, readBuffer, 40, '#');
 		ReadUntilChar(moonliteCom->fileDesc, readBuffer, 40, '#');
+		successFlag	=	true;
 	}
-	return(true);
+#endif // 1
+	return(successFlag);
 }
-
 
 //*****************************************************************************
 //*	returns true if valid
+//*****************************************************************************
 bool	MoonLite_SendCommand(	TYPE_MOONLITECOM	*moonliteCom,
 								const char			*commandString,
 								char				*returnString)
@@ -458,10 +493,10 @@ int		ii;
 	{
 		if (moonliteCom->fileDesc >= 0)
 		{
-			memset(readBuffer, 0, 40);
 //			CONSOLE_DEBUG_W_STR("commandString=", commandString);
 			USB_SendCommand(moonliteCom, commandString);
 
+			memset(readBuffer, 0, sizeof(readBuffer));
 			readCnt	=	ReadUntilChar(moonliteCom->fileDesc, readBuffer, 40, '#');
 			if (readCnt > 0)
 			{
@@ -549,28 +584,30 @@ bool	MoonLite_GetPosition(	TYPE_MOONLITECOM	*moonliteCom,
 char	resultsBuffer[48];
 bool	validFlag;
 char	cmdBuffer[8];
-int		cc;
+int		ccc;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
+	MoonLite_FlushReadBuffer(moonliteCom);
 
 	if ((moonliteCom->model == kMoonLite_NiteCrawler) ||
 		((moonliteCom->model == kMoonLite_HighRes) && (axisNumber == 1)))
 	{
 		//*	send GetPosition command
-		cc	=	0;
+		ccc	=	0;
 		if (moonliteCom->model == kMoonLite_NiteCrawler)
 		{
-			cmdBuffer[cc++]	=	0x30 + axisNumber;
+			cmdBuffer[ccc++]	=	0x30 + axisNumber;
 		}
-		cmdBuffer[cc++]	=	'G';
-		cmdBuffer[cc++]	=	'P';
-		cmdBuffer[cc++]	=	0;
+		//*	send GP
+		cmdBuffer[ccc++]	=	'G';
+		cmdBuffer[ccc++]	=	'P';
+		cmdBuffer[ccc++]	=	0;
 
 //		CONSOLE_DEBUG_W_STR("cmdBuffer\t=", cmdBuffer);
 		validFlag	=	MoonLite_SendCommand(moonliteCom, cmdBuffer, resultsBuffer);
 		if (validFlag)
 		{
-		//	CONSOLE_DEBUG_W_STR("resultsBuffer\t=", resultsBuffer);
+//			CONSOLE_DEBUG_W_STR("resultsBuffer\t=", resultsBuffer);
 			if (moonliteCom->model == kMoonLite_NiteCrawler)
 			{
 				*valueToUpdate	=	atoi(resultsBuffer);
@@ -595,7 +632,107 @@ int		cc;
 }
 
 //*****************************************************************************
+//*
+//*****************************************************************************
+//	---HiRes commands
+//	Command	Response	Description
+//	GI		XX			“01” if the motor is moving, otherwise “00”
+//*
+//*	returns true if valid
+//*****************************************************************************
+bool	MoonLite_GetMovingState(	TYPE_MOONLITECOM	*moonliteCom,
+									const int			axisNumber,
+									bool				*isMoving)
+{
+char	resultsBuffer[48];
+bool	validFlag;
+char	cmdBuffer[8];
+int		ccc;
+int		returnValue;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	if ((moonliteCom->model == kMoonLite_NiteCrawler) ||
+		((moonliteCom->model == kMoonLite_HighRes) && (axisNumber == 1)))
+	{
+		//*	send GetPosition command
+		ccc	=	0;
+		if (moonliteCom->model == kMoonLite_NiteCrawler)
+		{
+			cmdBuffer[ccc++]	=	0x30 + axisNumber;
+			cmdBuffer[ccc++]	=	'G';
+			cmdBuffer[ccc++]	=	'M';
+		}
+		else
+		{
+			cmdBuffer[ccc++]	=	'G';
+			cmdBuffer[ccc++]	=	'I';
+		}
+		//*	send GM or GI
+		cmdBuffer[ccc++]	=	0;
+
+		validFlag	=	MoonLite_SendCommand(moonliteCom, cmdBuffer, resultsBuffer);
+		if (validFlag)
+		{
+//			CONSOLE_DEBUG_W_STR("resultsBuffer\t=", resultsBuffer);
+			returnValue	=	atoi(resultsBuffer);
+
+			if (returnValue == 0)
+			{
+				*isMoving	=	false;
+			}
+			else
+			{
+//				CONSOLE_DEBUG("isMoving");
+				*isMoving	=	true;
+			}
+		}
+		else
+		{
+			gMoonLiteReadFailureCnt++;
+			CONSOLE_DEBUG_W_NUM("Failed to read position", gMoonLiteReadFailureCnt);
+		}
+	}
+	else
+	{
+		CONSOLE_DEBUG("Invalid request");
+		validFlag	=	false;
+	}
+	return(validFlag);
+}
+
+//*****************************************************************************
+//	---NightCrawler commands
+//	xSQ	Stops motor
+//	xSM	Starts motor to move to the “NEW” focus position
+//
+//	xSP“dddddddd”	Set the current position, 32 bit value, signedDEC
+//	xSN“dddddddd”	Set the New position count, 32 bit value, signedDEC
+//
+//	x is the axis number
+//
+//*****************************************************************************
+//	---HiRes commands
+//	Command	Response	Description
+//	GP		XXXX		Get Current Motor 1 Position, Unsigned Hexadecimal
+//	GN		XXXX		Get the New Motor 1 Position, Unsigned Hexadecimal
+//	GT		XXXX		Get the Current Temperature, Signed HexadecimalGDXXGet the Motor 1 speed, valid options are “02, 04, 08, 10, 20”
+//	GH		XX			“FF” if half step is set, otherwise “00”
+//	GI		XX			“01” if the motor is moving, otherwise “00”
+//	GB		XX			The current RED Led Backlight value, Unsigned Hexadecimal
+//	GV		XX			Code for current firmware version
+//
+//	SPxxxx				Set the Current Motor 1 Position, Unsigned Hexadecimal
+//	SNxxxx				Set the New Motor 1 Position, Unsigned Hexadecimal
+//	SF					Set Motor 1 to Full Step
+//	SH					Set Motor 1 to Half Step
+//	SDxx				Set the Motor 1 speed, valid options are “02, 04, 08, 10, 20”
+//	FG					Start a Motor 1 move, moves the motor to the New Position.
+//	FQ					Halt Motor 1 move, position is retained, motor is stopped.
+//
+//*****************************************************************************
 //*	returns true if success
+//*****************************************************************************
 bool	MoonLite_SetPosition(	TYPE_MOONLITECOM	*moonliteCom,
 								const int			axisNumber,
 								int32_t				newPosition)
@@ -605,14 +742,16 @@ char	readBuffer[48];
 int		readCnt;
 bool	successFlag;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
-
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, "----------------------");
+//*	data sent to NiteCrawler
+//*	< means data sent  > means data returned
 //	<1GN# >00058200 <1SN 63200# <1SM#
 	successFlag	=	false;
 	if (moonliteCom != NULL)
 	{
 		if (moonliteCom->fileDesc >= 0)
 		{
+			MoonLite_FlushReadBuffer(moonliteCom);
 			if (moonliteCom->model == kMoonLite_NiteCrawler)
 			{
 //				CONSOLE_DEBUG("Sending move command to NiteCrawler");
@@ -621,34 +760,47 @@ bool	successFlag;
 				{
 					sprintf(cmdBuffer, "%dSN %d", axisNumber, newPosition);
 					USB_SendCommand(moonliteCom, cmdBuffer);
+					usleep(1000);
+
 					readCnt	=	ReadUntilChar(moonliteCom->fileDesc, readBuffer, 40, '#');
+
 
 					sprintf(cmdBuffer, "%dSM", axisNumber);
 					USB_SendCommand(moonliteCom, cmdBuffer);
 
+					usleep(1000);
 					readCnt			=	ReadUntilChar(moonliteCom->fileDesc, readBuffer, 40, '#');
 					if (readCnt > 0)
 					{
 						successFlag	=	true;
 					}
-					else
-					{
-					}
 				}
 			}
 			else if ((moonliteCom->model == kMoonLite_HighRes) && (axisNumber == 1))
 			{
-//				CONSOLE_DEBUG("Sending move command to HighRes");
+				CONSOLE_DEBUG("Sending move command to HighRes");
 
-				//*	moonlite hirese stepper controller
+				//*	moonlite hi-res stepper controller
 				sprintf(cmdBuffer, "SN%04X", newPosition);
 				USB_SendCommand(moonliteCom, cmdBuffer);
+				usleep(1000);
+
 				readCnt	=	ReadUntilChar(moonliteCom->fileDesc, readBuffer, 40, '#');
+				if (readCnt > 0)
+				{
+					successFlag	=	true;
+				}
+				CONSOLE_DEBUG_W_STR("readBuffer\t=", readBuffer);
 
 				USB_SendCommand(moonliteCom, "FG");
+				usleep(1000);
 
 				readCnt	=	ReadUntilChar(moonliteCom->fileDesc, readBuffer, 40, '#');
-
+				if (readCnt > 0)
+				{
+					successFlag	=	true;
+				}
+				CONSOLE_DEBUG_W_STR("readBuffer\t=", readBuffer);
 			}
 		}
 	}
@@ -674,6 +826,7 @@ bool	successFlag;
 	{
 		if (moonliteCom->fileDesc >= 0)
 		{
+			MoonLite_FlushReadBuffer(moonliteCom);
 			if (moonliteCom->model == kMoonLite_NiteCrawler)
 			{
 				//*	NiteCrawler
@@ -704,6 +857,7 @@ bool	successFlag;
 
 //*****************************************************************************
 //*	returns true if valid
+//*****************************************************************************
 bool	MoonLite_GetTemperature(	TYPE_MOONLITECOM	*moonliteCom,
 									double				*returnTemp_degC)
 {
@@ -712,31 +866,40 @@ bool	validFlag;
 int		rawIntValue;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
+	MoonLite_FlushReadBuffer(moonliteCom);
 
 	if (moonliteCom->model == kMoonLite_HighRes)
 	{
 		//*	for the hi-res model, we have to do a temp conversion first
 		USB_SendCommand(moonliteCom, "C");	//*	send the command and dont wait for response
 		//*	and wait 1 second
-//		sleep(1);
+		usleep(50 * 1000);
 	}
 	validFlag	=	MoonLite_SendCommand(moonliteCom, "GT", resultsBuffer);
 	if (validFlag)
 	{
+//		CONSOLE_DEBUG_W_STR("resultsBuffer  \t=", resultsBuffer);
 		if (moonliteCom->model == kMoonLite_NiteCrawler)
 		{
 			rawIntValue			=	atof(resultsBuffer);
 			*returnTemp_degC	=	rawIntValue / 10.0;
-
 		}
 		else
 		{
+			//*	this is a 16 bit signed number
 			rawIntValue			=	hextoi(resultsBuffer);
+			if (rawIntValue & 0x8000)	//*	check  the sign big
+			{
+				//*	extend the sign bit to a 32 bit integer
+				rawIntValue	|=	0xffff0000;
+			}
 			*returnTemp_degC	=	rawIntValue / 2.0;
 //			CONSOLE_DEBUG_W_STR("resultsBuffer        \t=", resultsBuffer);
 //			CONSOLE_DEBUG_W_NUM("raw temperature value\t=", rawIntValue);
 //			CONSOLE_DEBUG_W_DBL("Adjusted temp value  \t=", *returnTemp_degC);
 		}
+//		CONSOLE_DEBUG_W_NUM("rawIntValue    \t=", rawIntValue);
+//		CONSOLE_DEBUG_W_DBL("returnTemp_degC\t=", *returnTemp_degC);
 	}
 	else
 	{
@@ -754,6 +917,8 @@ char	resultsBuffer[48];
 bool	validFlag;
 
 	validFlag	=	false;
+
+	MoonLite_FlushReadBuffer(moonliteCom);
 
 	//*	only the nitecrawler has voltage
 	if (moonliteCom->model == kMoonLite_NiteCrawler)
@@ -968,12 +1133,15 @@ int		ccc;
 
 
 //**************************************************************************************
-static void	USB_SendCommand(TYPE_MOONLITECOM *moonliteCom, const char *theCommand)
+//*	returns # of bytes written
+//**************************************************************************************
+static int	USB_SendCommand(TYPE_MOONLITECOM *moonliteCom, const char *theCommand)
 {
 char			cmdBuffer[32];
 int				sLen;
 int				bytesWritten;
 
+	bytesWritten	=	0;
 	if (moonliteCom->fileDesc >= 0)
 	{
 //		CONSOLE_DEBUG_W_NUM("moonliteCom->model\t=", moonliteCom->model);
@@ -996,47 +1164,54 @@ int				bytesWritten;
 		{
 			CONSOLE_DEBUG_W_NUM("Error occurred on write, errno=", errno);
 		}
-		tcflush(moonliteCom->fileDesc, TCOFLUSH);
 
 
-
-		usleep(5000);
+		usleep(1000);
 //		CONSOLE_DEBUG_W_NUM("bytesWritten=", bytesWritten);
 	}
+	else
+	{
+		CONSOLE_DEBUG("Invalid fileDesc");
+	}
+	return(bytesWritten);
 }
 
 
+//**************************************************************************
+//*	returns # chars read
 //**************************************************************************
 static int	ReadUntilChar(const int fileDesc, char *readBuff, const int maxChars, const char terminator)
 {
 int		readCnt;
 char	oneCharBuff[4];
 char	theChar;
-int		cc;
+int		ccc;
 int		noDataCnt;
 bool	keepGoing;
 
-	readBuff[0]	=	0;	//*	null out the response first
-	cc			=	0;
+	memset(readBuff, 0, maxChars);	//*	null out the response first
+	ccc			=	0;
 	noDataCnt	=	0;
 	keepGoing	=	true;
-	while (keepGoing && (cc < maxChars) && (noDataCnt < 4))
+	while (keepGoing && (ccc < maxChars) && (noDataCnt < 5))
 	{
 		readCnt	=	read(fileDesc, oneCharBuff, 1);
 		if (readCnt > 0)
 		{
 			theChar			=	oneCharBuff[0];
-			readBuff[cc++]	=	theChar;
-			readBuff[cc]	=	0;		//*	always terminate the string
+			readBuff[ccc++]	=	theChar;
+			readBuff[ccc]	=	0;		//*	always terminate the string
 			if (theChar == terminator)
 			{
 				keepGoing	=	false;
 			}
+			noDataCnt	=	0;
 		}
 		else
 		{
 			noDataCnt++;
-			usleep(25);
+			//*	Nov 28,	2022	<MLS> increased time delay from 25 to 50 ns
+			usleep(50);
 		}
 	}
 	if (strncmp(readBuff, "NAK", 3) == 0)
@@ -1051,5 +1226,5 @@ bool	keepGoing;
 					gLastCmdSent);
 	#endif
 	}
-	return(cc);
+	return(ccc);
 }

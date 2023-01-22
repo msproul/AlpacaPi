@@ -63,6 +63,11 @@ bool	MoonLite_SetCurrentPosition(TYPE_MOONLITECOM	*moonliteCom,
 									const int			axisNumber,
 									int32_t				newPosition);
 
+bool	MoonLite_GetMovingState(	TYPE_MOONLITECOM	*moonliteCom,
+									const int			axisNumber,
+									bool				*isMoving);
+
+
 bool	MoonLite_GetTemperature(TYPE_MOONLITECOM	*moonliteCom,
 								double				*returnTemp_degC);
 bool	MoonLite_GetVoltage(	TYPE_MOONLITECOM	*moonliteCom,

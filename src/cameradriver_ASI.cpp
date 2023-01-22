@@ -266,22 +266,31 @@ ASI_ERROR_CODE		asiErrorCode;
 		}
 
 		cCameraID						=	cAsiCameraInfo.CameraID;
-		cCameraProp.CameraXsize			=	cAsiCameraInfo.MaxWidth;
-		cCameraProp.CameraYsize			=	cAsiCameraInfo.MaxHeight;
 		cIsColorCam						=	cAsiCameraInfo.IsColorCam;
 		cBayerPattern					=	cAsiCameraInfo.BayerPattern;
-		cCameraProp.PixelSizeX			=	cAsiCameraInfo.PixelSize;
-		cCameraProp.PixelSizeY			=	cAsiCameraInfo.PixelSize;
-		cCameraProp.HasShutter			=	cAsiCameraInfo.MechanicalShutter;
 		cSt4Port						=	cAsiCameraInfo.ST4Port;
 		cIsCoolerCam					=	cAsiCameraInfo.IsCoolerCam;
 		cIsUSB3Host						=	cAsiCameraInfo.IsUSB3Host;
 		cIsUSB3Camera					=	cAsiCameraInfo.IsUSB3Camera;
-		cCameraProp.ElectronsPerADU		=	cAsiCameraInfo.ElecPerADU;
 		cBitDepth						=	cAsiCameraInfo.BitDepth;
 		cIsTriggerCam					=	cAsiCameraInfo.IsTriggerCam;
-		cCameraProp.ExposureResolution	=	0.000001;
 
+		cCameraProp.CameraXsize			=	cAsiCameraInfo.MaxWidth;
+		cCameraProp.CameraYsize			=	cAsiCameraInfo.MaxHeight;
+		cCameraProp.ElectronsPerADU		=	cAsiCameraInfo.ElecPerADU;
+		cCameraProp.ExposureResolution	=	0.000001;
+		cCameraProp.HasShutter			=	cAsiCameraInfo.MechanicalShutter;
+		cCameraProp.PixelSizeX			=	cAsiCameraInfo.PixelSize;
+		cCameraProp.PixelSizeY			=	cAsiCameraInfo.PixelSize;
+		if (cAsiCameraInfo.IsColorCam)
+		{
+			cCameraProp.SensorType		=   kSensorType_RGGB;
+			cCameraProp.BayerOffsetX	=	1;
+		}
+		else
+		{
+			cCameraProp.SensorType		=   kSensorType_Monochrome;
+		}
 		cCameraProp.NumX		=	cCameraProp.CameraXsize;
 		cCameraProp.NumY		=	cCameraProp.CameraYsize;
 
@@ -2215,8 +2224,6 @@ char				asiErrorMsgString[64];
 	return(alpacaErrCode);
 }
 
-
-
 //*****************************************************************************
 //*	this routine gets called by BOTH Write_BinX() & Write_BinY()
 //*****************************************************************************
@@ -2230,8 +2237,7 @@ int					currentROIbin;
 ASI_IMG_TYPE		currentASI_ROIimageType;
 char				asiErrorMsgString[64];
 
-	CONSOLE_DEBUG(__FUNCTION__);
-
+//	CONSOLE_DEBUG(__FUNCTION__);
 	asiErrorCode	=	OpenASIcameraIfNeeded(cCameraID);
 	if (asiErrorCode == ASI_SUCCESS)
 	{
@@ -2242,9 +2248,9 @@ char				asiErrorMsgString[64];
 											&currentASI_ROIimageType);
 		if (asiErrorCode == ASI_SUCCESS)
 		{
-			CONSOLE_DEBUG_W_NUM("currentROIbin\t=", currentROIbin);
-			CONSOLE_DEBUG_W_NUM("currentROIwidth\t=", currentROIwidth);
-			CONSOLE_DEBUG_W_NUM("currentROIheight\t=", currentROIheight);
+//			CONSOLE_DEBUG_W_NUM("currentROIbin   \t=", currentROIbin);
+//			CONSOLE_DEBUG_W_NUM("currentROIwidth \t=", currentROIwidth);
+//			CONSOLE_DEBUG_W_NUM("currentROIheight\t=", currentROIheight);
 		}
 		else
 		{
@@ -2276,7 +2282,6 @@ char				asiErrorMsgString[64];
 			strcat(cLastCameraErrMsg, __FUNCTION__);
 		}
 
-
 		asiErrorCode	=	ASIGetROIFormat(cCameraID,
 											&currentROIwidth,
 											&currentROIheight,
@@ -2284,9 +2289,9 @@ char				asiErrorMsgString[64];
 											&currentASI_ROIimageType);
 		if (asiErrorCode == ASI_SUCCESS)
 		{
-			CONSOLE_DEBUG_W_NUM("currentROIbin\t=", currentROIbin);
-			CONSOLE_DEBUG_W_NUM("currentROIwidth\t=", currentROIwidth);
-			CONSOLE_DEBUG_W_NUM("currentROIheight\t=", currentROIheight);
+//			CONSOLE_DEBUG_W_NUM("currentROIbin   \t=", currentROIbin);
+//			CONSOLE_DEBUG_W_NUM("currentROIwidth \t=", currentROIwidth);
+//			CONSOLE_DEBUG_W_NUM("currentROIheight\t=", currentROIheight);
 		}
 		else
 		{
@@ -2302,7 +2307,6 @@ char				asiErrorMsgString[64];
 		strcat(cLastCameraErrMsg, asiErrorMsgString);
 		alpacaErrCode	=	kASCOM_Err_FailedUnknown;
 	}
-
 	return(alpacaErrCode);
 }
 

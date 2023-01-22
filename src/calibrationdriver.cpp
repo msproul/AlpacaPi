@@ -122,6 +122,7 @@ CalibrationDriver::CalibrationDriver(void)
 
 	memset(&cCoverCalibrationProp, 0, sizeof(TYPE_CoverCalibrationProperties));
 
+	cUUID.part3								=	'CC';					//*	model number
 	cCoverCalibrationProp.Brightness		=	0;
 	cCoverCalibrationProp.CalibratorState	=	kCalibrator_NotPresent;
 	cCoverCalibrationProp.CoverState		=	kCover_NotPresent;

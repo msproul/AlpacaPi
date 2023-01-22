@@ -13,6 +13,7 @@
 //*****************************************************************************
 
 #ifdef _ENABLE_GAIA_
+#error "Not used any more"
 
 #include	<stdbool.h>
 #include	<string.h>

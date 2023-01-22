@@ -234,7 +234,8 @@ int				imageDataLen;
 
 		case kImageType_Y8:
 		default:
-			cOpenCV_ImagePtr	=	NULL;
+			cOpenCV_ImagePtr	=	new cv::Mat(height, width, CV_8UC1);
+			imageDataLen		=	width * height;
 			break;
 	}
 

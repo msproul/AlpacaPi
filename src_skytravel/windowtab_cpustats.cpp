@@ -171,7 +171,7 @@ int		clmnHdrWidth;
 }
 
 //*****************************************************************************
-//void	WindowTabCpuStats::RunBackgroundTasks(void)
+//void	WindowTabCpuStats::RunWindowBackgroundTasks(void)
 //{
 
 

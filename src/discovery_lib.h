@@ -44,6 +44,7 @@ typedef struct
 
 	//-------------------------------------------------------------------------------
 	//*	This data only works with AlpacaPi drivers, beyond the scope of normal Alpaca
+	char				timeStampString[48];
 	bool				upTimeValid;
 	int					upTimeDays;
 

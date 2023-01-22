@@ -114,8 +114,9 @@ void				LogFunctionCall(	const char		*callingFunc,
 
 
 //*****************************************************************************
-void	CreateSONY_CameraObjects(void)
+int		CreateSONY_CameraObjects(void)
 {
+int			cameraCreatedCount;
 CrInt32u	versionNumber;
 int			versionMaj;
 int			versionMin;
@@ -133,6 +134,7 @@ SCRSDK::ICrEnumCameraObjectInfo	*camera_list	=	NULL;
 ICrCameraObjectInfo				*camera_info	=	NULL;
 
 	CONSOLE_DEBUG(__FUNCTION__);
+	cameraCreatedCount	=	0;
 
 	//*	init the function call log
 	for (iii=0; iii<kFunctionLogSize; iii++)
@@ -201,6 +203,7 @@ ICrCameraObjectInfo				*camera_info	=	NULL;
 				#else
 					new CameraDriverSONY(0, camera_info);
 				#endif
+					cameraCreatedCount++;
 				}
 				else
 				{
@@ -223,6 +226,7 @@ ICrCameraObjectInfo				*camera_info	=	NULL;
 	{
 		CONSOLE_DEBUG("SCRSDK::Init(0) failed");
 	}
+	return(cameraCreatedCount);
 }
 
 

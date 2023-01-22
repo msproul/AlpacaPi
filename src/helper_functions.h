@@ -39,6 +39,7 @@ void		FormatTimeString_Local(struct timeval *tv, char *timeString);
 void		FormatDateTimeString_Local(struct timeval *tv, char *timeString);
 void		FormatTimeString_TM(struct tm *timeStruct, char *timeString);
 void		FormatTimeStringISO8601(struct timeval *tv, char *timeString);
+void		FormatTimeStringISO8601_UTC(struct timeval *tv, char *timeString);
 int			GetMinutesSinceMidnight(void);
 time_t		GetSecondsSinceEpoch(void);
 bool		IsTrueFalse(		const char *trueFalseString);

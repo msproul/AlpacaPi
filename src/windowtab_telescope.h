@@ -61,7 +61,6 @@ enum
 	kTelescope_Coord_Outline,
 
 
-
 	kTelescope_ErrorMsg,
 	kTelescope_LastCmdString,
 	kTelescope_AlpacaLogo,

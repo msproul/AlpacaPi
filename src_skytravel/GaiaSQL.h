@@ -23,7 +23,7 @@ double	CalcRA_DEC_Distance_Deg(const double	ra1_Deg,
 								const double	dec1_Deg,
 								const double	ra2_Deg,
 								const double	dec2Deg);
-bool	GetSQLdataFromIDnumber(const char *gaiaIDnumberStr, TYPE_CelestData *gaiaData);
+bool	GetSQLdataFromIDnumber(const char *gaiaIDnumberStr, TYPE_CelestData *gaiaData, char *rtnErrorMessage);
 
 int		UpdateDataBaseListFromServer(void);
 

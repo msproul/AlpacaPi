@@ -20,7 +20,7 @@
 //*	Jan 24,	2022	<MLS> Asteroids without magnitude now default to 10
 //*****************************************************************************
 
-#ifdef _ENABLE_ASTERIODS_
+#ifdef _ENABLE_ASTEROIDS_
 
 
 #include	<time.h>
@@ -1416,7 +1416,7 @@ TYPE_Asteroid	*asteroidData;
 	return(asteroidData);
 }
 
-#endif // _ENABLE_ASTERIODS_
+#endif // _ENABLE_ASTEROIDS_
 
 #ifdef _INCLUDE_ASTEROID_MAIN_
 

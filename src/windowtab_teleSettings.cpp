@@ -276,7 +276,9 @@ bool	update;
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	ClearLastAlpacaCommand();
-	SetWidgetText(kTeleSettings_ErrorMsg, "");
+	SetWidgetText(kTeleSettings_ErrorMsg,		"");
+	SetWidgetText(kTeleSettings_AlpacaErrorMsg,	"");
+
 	update		=	true;
 	validData	=	true;
 	switch(buttonIdx)

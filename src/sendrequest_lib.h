@@ -38,6 +38,8 @@ int		OpenSocketAndSendRequest(	struct sockaddr_in	*deviceAddress,
 									const char			*dataString,
 									const bool			includeImageBinary);
 
+extern	char		gUserAgentAlpacaPiStr[];
+
 #ifdef __cplusplus
 }
 #endif

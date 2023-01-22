@@ -200,7 +200,7 @@ char		buttonText[64];
 	yLoc		+=	2;
 
 	SetWidget(			kCamSet_FN_IncFilter,	clm1Xoffset,	yLoc,		clm1Width,	cRadioBtnHt);
-	SetWidgetType(		kCamSet_FN_IncFilter,	kWidgetType_RadioButton);
+	SetWidgetType(		kCamSet_FN_IncFilter,	kWidgetType_CheckBox);
 	SetWidgetFont(		kCamSet_FN_IncFilter,	kFont_RadioBtn);
 	SetWidgetText(		kCamSet_FN_IncFilter,	"Include filter");
 	SetWidgetTextColor(	kCamSet_FN_IncFilter,	CV_RGB(255,	255,	255));
@@ -208,7 +208,7 @@ char		buttonText[64];
 	yLoc	+=	2;
 
 	SetWidget(			kCamSet_FN_IncCamera,	clm1Xoffset,	yLoc,		clm1Width,	cRadioBtnHt);
-	SetWidgetType(		kCamSet_FN_IncCamera,	kWidgetType_RadioButton);
+	SetWidgetType(		kCamSet_FN_IncCamera,	kWidgetType_CheckBox);
 	SetWidgetFont(		kCamSet_FN_IncCamera,	kFont_RadioBtn);
 	SetWidgetText(		kCamSet_FN_IncCamera,	"Include camera");
 	SetWidgetTextColor(	kCamSet_FN_IncCamera,	CV_RGB(255,	255,	255));
@@ -216,7 +216,7 @@ char		buttonText[64];
 	yLoc	+=	2;
 
 	SetWidget(			kCamSet_FN_IncSerialNum,	clm1Xoffset,	yLoc,	clm1Width,	cRadioBtnHt);
-	SetWidgetType(		kCamSet_FN_IncSerialNum,	kWidgetType_RadioButton);
+	SetWidgetType(		kCamSet_FN_IncSerialNum,	kWidgetType_CheckBox);
 	SetWidgetFont(		kCamSet_FN_IncSerialNum,	kFont_RadioBtn);
 	SetWidgetText(		kCamSet_FN_IncSerialNum,	"Include serial number");
 	SetWidgetTextColor(	kCamSet_FN_IncSerialNum,	CV_RGB(255,	255,	255));
@@ -224,7 +224,7 @@ char		buttonText[64];
 	yLoc	+=	2;
 
 	SetWidget(			kCamSet_FN_IncRefID,	clm1Xoffset,	yLoc,	clm1Width,	cRadioBtnHt);
-	SetWidgetType(		kCamSet_FN_IncRefID,	kWidgetType_RadioButton);
+	SetWidgetType(		kCamSet_FN_IncRefID,	kWidgetType_CheckBox);
 	SetWidgetFont(		kCamSet_FN_IncRefID,	kFont_RadioBtn);
 	SetWidgetText(		kCamSet_FN_IncRefID,	"Include refID");
 	SetWidgetTextColor(	kCamSet_FN_IncRefID,	CV_RGB(255,	255,	255));

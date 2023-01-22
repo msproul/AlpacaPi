@@ -386,6 +386,7 @@ bool	updateButtons;
 
 	ClearLastAlpacaCommand();
 	SetWidgetText(kTelescope_ErrorMsg, "");
+	SetWidgetText(kTelescope_AlpacaErrorMsg, "");
 
 
 	update			=	true;

@@ -20,6 +20,7 @@
 //*****************************************************************************
 //*	Apr 23,	2020	<MLS> Created windowtab_usb.cpp
 //*	Apr 21,	2021	<MLS> Fixed bug in button setup
+//*	Jan 22,	2023	<MLS> Updated moonlite include files
 //*****************************************************************************
 
 #ifdef _ENABLE_USB_FOCUSERS_
@@ -40,8 +41,8 @@
 #include	"controller_usb.h"
 
 #include	"controller_focus.h"
-#include	"controller_ml_nc.h"
-#include	"controller_ml_single.h"
+#include	"controller_focus_ml_nc.h"
+#include	"controller_focus_ml_hr.h"
 
 #define	kAboutBoxHeight	100
 

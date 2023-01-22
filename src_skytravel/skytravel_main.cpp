@@ -48,10 +48,12 @@
 #include	"alpaca_defs.h"
 #include	"discoverythread.h"
 #include	"observatory_settings.h"
+#include	"sendrequest_lib.h"
 
 #include	"controller.h"
 #include	"controller_skytravel.h"
 #include	"OpenNGC.h"
+#include	"RemoteImage.h"
 
 #ifdef _ENABLE_REMOTE_GAIA_
 	#include	"GaiaSQL.h"
@@ -60,7 +62,8 @@
 bool	gKeepRunning;
 char	gFullVersionString[128];
 char	gFirstArgString[256];
-bool	gVerbose		=	false;
+bool	gVerbose					=	false;
+char	gUserAgentAlpacaPiStr[80]	=	"";
 
 //-----------------------------------------------------------
 //*	star information
@@ -227,7 +230,8 @@ unsigned long		deltaNanoSecs;
 	//*	deal with any options from the command line
 	ProcessCmdLineArgs(argc, argv);
 
-	sprintf(gFullVersionString, "%s - %s build #%d", kApplicationName, kVersionString, kBuildNumber);
+	sprintf(gFullVersionString,		"%s - %s build #%d", kApplicationName, kVersionString, kBuildNumber);
+	sprintf(gUserAgentAlpacaPiStr,	"User-Agent: AlpacaPi/%s-Build-%d\r\n", kVersionString,  kBuildNumber);
 
 
 	CPUstats_ReadOSreleaseVersion();
@@ -264,6 +268,7 @@ unsigned long		deltaNanoSecs;
 
 	StartDiscoveryQuerryThread();
 
+//-	new ControllerImage("Orion-2021-11-13T04_32_45.246-ZWO-NEWT16.fits");
 
 	gKeepRunning	=	true;
 	activeObjCnt	=	objectsCreated;
@@ -295,7 +300,7 @@ unsigned long		deltaNanoSecs;
 
 				if (gControllerList[iii]->cKeepRunning == false)
 				{
-				//	CONSOLE_DEBUG_W_NUM("Deleting control #", iii);
+				//	CONSOLE_DEBUG_W_NUM("Deleting controller #", iii);
 				//	CONSOLE_DEBUG_W_STR("Deleting window", gControllerList[iii]->cWindowName);
 					delete gControllerList[iii];
 					if (gControllerList[iii] != NULL)
@@ -314,6 +319,12 @@ unsigned long		deltaNanoSecs;
 				DumpControllerBackGroundTaskStatus();
 				lastDebugMillis	=	millis();
 			}
+		}
+
+		//*	check for remote image ready
+		if (gRemoteImageReady)
+		{
+			RemoteImage_OpenLatest();
 		}
 	}
 	CONSOLE_DEBUG("Closing all windows");

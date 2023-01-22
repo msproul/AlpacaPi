@@ -57,8 +57,8 @@
 #include	"moonlite_com.h"
 #include	"controller.h"
 #include	"controller_focus.h"
-#include	"controller_ml_nc.h"
-#include	"controller_ml_single.h"
+#include	"controller_focus_ml_nc.h"
+#include	"controller_focus_ml_hr.h"
 #include	"controller_focus_generic.h"
 #include	"focuser_common.h"
 #include	"nitecrawler_colors.h"
@@ -202,11 +202,16 @@ bool		needToUpdate;
 uint32_t	updateDelta;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
+	if (cButtonClickInProgress)
+	{
+		return;
+	}
 
 	if (cReadStartup)
 	{
 		if (cValidIPaddr)
 		{
+			CheckConnectedState();
 			AlpacaGetStartupData();
 		}
 		cReadStartup	=	false;
@@ -283,7 +288,9 @@ void	ControllerFocus::AlpacaProcessSupportedActions(const char *deviceTypeStr, c
 //*****************************************************************************
 void	ControllerFocus::AlpacaDisplayErrorMessage(const char *errorMsgString)
 {
-	CONSOLE_DEBUG_W_STR("Alpaca error=", errorMsgString);
+	CONSOLE_DEBUG_W_STR("Alpaca error\t=",	errorMsgString);
+	CONSOLE_DEBUG_W_STR("cWindowName \t=",	cWindowName);
+//	CONSOLE_ABORT(__FUNCTION__);
 }
 
 //*****************************************************************************
@@ -564,7 +571,6 @@ int			argInt;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
-
 	myFailureCount	=	0;
 	//========================================================
 	validData	=	AlpacaGetBooleanValue(	"focuser", "ismoving",	NULL,	&cIsMoving);
@@ -601,7 +607,6 @@ int			argInt;
 		cReadFailureCnt++;
 		myFailureCount++;
 	}
-
 
 	if (myFailureCount < 2)
 	{

@@ -93,8 +93,9 @@
 
 
 //**************************************************************************************
-void	CreateTOUP_CameraObjects(void)
+int	CreateTOUP_CameraObjects(void)
 {
+int				cameraCount;
 int				ii;
 bool			rulesFileOK;
 int				toupCameraCnt;
@@ -103,7 +104,7 @@ char			rulesFileName[]	=	"99-toupcam.rules";
 char			driverVersionString[64];
 
 	CONSOLE_DEBUG(__FUNCTION__);
-
+	cameraCount	=	0;
 	strcpy(driverVersionString, Toupcam_Version());
 	CONSOLE_DEBUG_W_STR("Toupcam_Version", driverVersionString);
 	LogEvent(	"camera",
@@ -139,9 +140,11 @@ char			driverVersionString[64];
 		for (ii=0; ii < toupCameraCnt; ii++)
 		{
 			new CameraDriverTOUP(ii);
+			cameraCount++;
 		}
 //		CONSOLE_ABORT(__FUNCTION__);
 	}
+	return(cameraCount);
 }
 
 

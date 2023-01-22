@@ -14,13 +14,15 @@
 //*	that you agree that the author(s) have no warranty, obligations or liability.  You
 //*	must determine the suitability of this source code for your use.
 //*
-//*	Redistributions of this source code must retain this copyright notice.
+//*	Redistribution of this source code must retain this copyright notice.
 //*****************************************************************************
 //*	Edit History
 //*****************************************************************************
 //*	Apr 21,	2020	<MLS> Created windowtab_about.cpp
 //*	Dec 14,	2020	<MLS> Updated web link in about box
 //*	Jan 17,	2021	<MLS> Added CPU info to about box
+//*	Nov 24,	2022	<MLS> Changed CPU info to show "REMOTE DEVICE: data not available" by default
+//*	Nov 24,	2022	<MLS> Added SetLocalDeviceInfo(), only called by SkyTravel Controller
 //*****************************************************************************
 
 #include	<fitsio.h>
@@ -32,8 +34,6 @@
 #include	"windowtab_about.h"
 #include	"controller.h"
 #include	"cpu_stats.h"
-
-
 
 #ifdef _ENABLE_REMOTE_GAIA_
 	#include	"RemoteGaia.h"
@@ -101,8 +101,6 @@ int		yLoc;
 int		availSpace;
 int		textBoxHt;
 int		iii;
-char	multiLineTextBuff[512];
-char	lineBuffer[64];
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -122,7 +120,6 @@ char	lineBuffer[64];
 	SetWidgetTextColor(kAboutBox_ControllerVersion,	CV_RGB(255,	255,	255));
 	yLoc			+=	cTitleHeight;
 	yLoc			+=	2;
-
 
 	SetAlpacaLogoBottomCorner(kAboutBox_AlpacaLogo);
 
@@ -147,10 +144,19 @@ char	lineBuffer[64];
 		yLoc			+=	textBoxHt;
 		yLoc			+=	2;
 	}
-
 	SetWidgetText(kAboutBox_TextBox1, gAlpacaPiTxt1);
 	SetWidgetText(kAboutBox_TextBox2, gAlpacaPiTxt2);
 	SetWidgetText(kAboutBox_TextBox3, gAlpacaPiTxt3);
+
+	SetWidgetText(kAboutBox_CPUinfo, "REMOTE DEVICE: data not available");
+}
+
+//**************************************************************************************
+void	WindowTabAbout::SetLocalDeviceInfo(void)
+{
+char	lineBuffer[64];
+char	multiLineTextBuff[512];
+
 
 	multiLineTextBuff[0]	=	0;
 
@@ -161,12 +167,6 @@ char	lineBuffer[64];
 	strcat(multiLineTextBuff,	"\r");
 	strcat(multiLineTextBuff,	gPlatformString);
 	strcat(multiLineTextBuff,	"\r");
-
-//	CONSOLE_DEBUG(gOsReleaseString);
-//	CONSOLE_DEBUG(gCpuInfoString);
-//	CONSOLE_DEBUG(gPlatformString);
-//	CONSOLE_DEBUG(multiLineTextBuff);
-//	CONSOLE_DEBUG_W_NUM("strlen()", strlen(multiLineTextBuff));
 
 #ifdef __ARM_NEON
 	strcat(multiLineTextBuff,	"ARM NEON instructions\r");
@@ -208,8 +208,5 @@ char	lineBuffer[64];
 	strcat(multiLineTextBuff,	"\r");
 #endif // _ENABLE_REMOTE_GAIA_
 
-
 	SetWidgetText(kAboutBox_CPUinfo, multiLineTextBuff);
 }
-
-

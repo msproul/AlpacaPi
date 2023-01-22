@@ -1175,6 +1175,8 @@ int				headerLineCnt;
 	draperData	=	NULL;
 	recordCount	=	0;
 
+	//*	Henry Draper catalog https://heasarc.gsfc.nasa.gov/FTP/heasarc/dbase/dump/
+
 	strcpy(myFilePath, folderPath);
 	strcat(myFilePath, "heasarc_hd.tdat");
 

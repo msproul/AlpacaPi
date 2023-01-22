@@ -63,7 +63,7 @@ uint8_t	*rgbRowPtr;
 			rgbImgRowStepSize	=	rgbOpenCVImage->step[0];
 
 			CONSOLE_DEBUG_W_NUM("oldImgBytesPerPixel\t=", oldImgBytesPerPixel);
-			CONSOLE_DEBUG_W_NUM("rgbImgRowStepSize\t=", rgbImgRowStepSize);
+			CONSOLE_DEBUG_W_NUM("rgbImgRowStepSize  \t=", rgbImgRowStepSize);
 
 			//*	copy the image data to OUR image
 			switch(oldImgBytesPerPixel)
@@ -145,6 +145,7 @@ uint8_t	*rgbRowPtr;
 //	newOpenCVImage->convertTo(*cDownLoadedImage, CV_8UC3);
 //	openCVerr	=	cv::imwrite("16bitdownload-8bit.png", *cDownLoadedImage);
 
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, "Exit");
 	return(rgbOpenCVImage);
 }
 

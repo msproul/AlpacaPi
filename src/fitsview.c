@@ -12,6 +12,7 @@
 //*	Nov 13,	2021	<MLS> Added -t title option
 //*	Sep 19,	2022	<MLS> fitsview now working with openCV C++ version
 //*	Oct  7,	2022	<MLS> Image scaling for large image display working w/ openCV C++
+//*	Nov 29,	2022	<MLS> Added ability to step backwards thru image list
 //*****************************************************************************
 
 #include	<string.h>
@@ -31,6 +32,7 @@
 
 //#include <opencv2/core/core.hpp>
 //#include <opencv2/highgui/highgui.hpp>
+
 
 #include	"fits_opencv.h"
 
@@ -374,8 +376,8 @@ bool			keepGoing;
 #ifdef _USE_OPENCV_CPP_
 	cv::Scalar		mean;
 	cv::Scalar		std_dev;
-	cv::Mat			*adjusted_Image;
-	cv::Mat			*normalized_Image;
+//	cv::Mat			*adjusted_Image;
+//	cv::Mat			*normalized_Image;
 #else
 	IplImage		*adjusted_Image;
 	IplImage		*normalized_Image;
@@ -417,6 +419,7 @@ bool			keepGoing;
 
 			case ' ':
 			case 'q':
+			case '-':
 				keepGoing	=	false;
 				break;
 
@@ -448,7 +451,8 @@ bool			keepGoing;
 char			firstChar;
 char			argChar;
 bool			keepLooping;
-bool			fileIsFits;
+bool			goBackOneImage;
+//bool			fileIsFits;
 #ifdef _USE_OPENCV_CPP_
 	cv::Mat			*openCV_Image;
 	cv::Mat			*smallCV_Image;
@@ -460,6 +464,7 @@ bool			fileIsFits;
 #endif
 
 	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_NUM("argc\t=", argc);
 //	CONSOLE_DEBUG_W_LONG("sizeof(gTranslationMap)\t=", sizeof(gTranslationMap));
 
 	strcpy(myWindowName, "fits file");
@@ -495,181 +500,210 @@ bool			fileIsFits;
 	fileIdx		=	1;
 	while ((fileIdx < argc) && keepGoing)
 	{
-		if (strstr(argv[fileIdx], "fits") != NULL)
+//		CONSOLE_DEBUG_W_NUM("fileIdx\t=", fileIdx);
+		firstChar	=	argv[fileIdx][0];
+		if (firstChar != '-')
 		{
-			fileIsFits	=	true;
-		}
-		else
-		{
-			fileIsFits	=	false;
-		}
-		smallCV_Image	=	NULL;
-		openCV_Image	=	ReadImageIntoOpenCVimage(argv[fileIdx]);
-		if (openCV_Image != NULL)
-		{
-//			CONSOLE_DEBUG(__FUNCTION__);
-			if (createWindow)
-			{
-				CONSOLE_DEBUG("Create Window");
-			#ifdef _USE_OPENCV_CPP_
-				cv::namedWindow(	myWindowName,
-									(cv::WINDOW_NORMAL | cv::WINDOW_KEEPRATIO)
-									);
-			#else
-				cvNamedWindow(	myWindowName,
-							//	(CV_WINDOW_NORMAL)
-							//	(CV_WINDOW_NORMAL | CV_WINDOW_FULLSCREEN | CV_WINDOW_KEEPRATIO | CV_GUI_NORMAL)
-							//+	(CV_WINDOW_NORMAL | CV_WINDOW_KEEPRATIO | CV_GUI_EXPANDED)
-								(CV_WINDOW_NORMAL | CV_WINDOW_KEEPRATIO | CV_GUI_NORMAL)
-							//	(CV_WINDOW_AUTOSIZE | CV_WINDOW_KEEPRATIO | CV_GUI_EXPANDED)
-							//	(CV_WINDOW_AUTOSIZE)
-								);
-			#endif
-			//	cvMoveWindow(myWindowName, -1025, 100);
-				createWindow	=	false;
-				CONSOLE_DEBUG(__FUNCTION__);
-			}
-//			if (fileIsFits && (openCV_Image->depth == 16))
+//			if (strstr(argv[fileIdx], "fits") != NULL)
 //			{
-//			//	CONSOLE_DEBUG("Calling Adjust16bitImge()");
-//			//	Adjust16bitImge(openCV_Image);
+//				fileIsFits	=	true;
 //			}
-//			CONSOLE_DEBUG(__FUNCTION__);
-
-		#ifdef _USE_OPENCV_CPP_
-			if (openCV_Image->cols > 2000)
+//			else
+//			{
+//				fileIsFits	=	false;
+//			}
+			smallCV_Image	=	NULL;
+			openCV_Image	=	ReadImageIntoOpenCVimage(argv[fileIdx]);
+			if (openCV_Image != NULL)
 			{
-			int	newImgWidth;
-			int	newImgHeight;
-			int	divideFactor;
-
-				//*	make it fit on the screen
-				divideFactor	=	1;
-				newImgWidth		=	openCV_Image->cols / divideFactor;
-				newImgHeight	=	openCV_Image->rows / divideFactor;
-				while (newImgWidth > 2000)
+	//			CONSOLE_DEBUG(__FUNCTION__);
+				if (createWindow)
 				{
-					divideFactor++;
+//					CONSOLE_DEBUG("Create Window");
+				#ifdef _USE_OPENCV_CPP_
+					cv::namedWindow(	myWindowName,
+										(cv::WINDOW_NORMAL | cv::WINDOW_KEEPRATIO)
+										);
+				#else
+					cvNamedWindow(	myWindowName,
+								//	(CV_WINDOW_NORMAL)
+								//	(CV_WINDOW_NORMAL | CV_WINDOW_FULLSCREEN | CV_WINDOW_KEEPRATIO | CV_GUI_NORMAL)
+								//+	(CV_WINDOW_NORMAL | CV_WINDOW_KEEPRATIO | CV_GUI_EXPANDED)
+									(CV_WINDOW_NORMAL | CV_WINDOW_KEEPRATIO | CV_GUI_NORMAL)
+								//	(CV_WINDOW_AUTOSIZE | CV_WINDOW_KEEPRATIO | CV_GUI_EXPANDED)
+								//	(CV_WINDOW_AUTOSIZE)
+									);
+				#endif
+				//	cvMoveWindow(myWindowName, -1025, 100);
+					createWindow	=	false;
+//					CONSOLE_DEBUG(__FUNCTION__);
+				}
+	//			if (fileIsFits && (openCV_Image->depth == 16))
+	//			{
+	//			//	CONSOLE_DEBUG("Calling Adjust16bitImge()");
+	//			//	Adjust16bitImge(openCV_Image);
+	//			}
+	//			CONSOLE_DEBUG(__FUNCTION__);
+
+			#ifdef _USE_OPENCV_CPP_
+				if (openCV_Image->cols > 2000)
+				{
+				int	newImgWidth;
+				int	newImgHeight;
+				int	divideFactor;
+
+					//*	make it fit on the screen
+					divideFactor	=	1;
 					newImgWidth		=	openCV_Image->cols / divideFactor;
 					newImgHeight	=	openCV_Image->rows / divideFactor;
-				}
-//				CONSOLE_DEBUG_W_NUM("divideFactor\t=",	divideFactor);
-//				CONSOLE_DEBUG_W_NUM("newImgWidth\t=",	newImgWidth);
-
-				//*	create the new smaller image
-				smallCV_Image		=	new cv::Mat(cv::Size(	newImgWidth,
-																newImgHeight),
-																CV_8UC3);
-
-				nChannels		=	openCV_Image->step[1];
-				if (nChannels == 3)
-				{
-					cv::resize(	*openCV_Image,
-								*smallCV_Image,
-								smallCV_Image->size(),
-								0,
-								0,
-								cv::INTER_LINEAR);
-				}
-				else
-				{
-					CONSOLE_DEBUG("convert gray scale to color");
-					//*	convert gray scale to color
-					cv::cvtColor(*openCV_Image, *smallCV_Image, cv::COLOR_GRAY2BGR);
-				}
-				cv::imshow(myWindowName, *smallCV_Image);
-			}
-			else
-			{
-				cv::imshow(myWindowName, *openCV_Image);
-			}
-		#else
-			if (openCV_Image->width > 2000)
-			{
-			int	newWidth;
-			int	newHeight;
-
-				CONSOLE_DEBUG(__FUNCTION__);
-
-				newWidth		=	openCV_Image->width / 4;
-				newHeight		=	openCV_Image->height / 4;
-				if (openCV_Image->depth == 16)
-				{
-					smallCV_Image	=	cvCreateImage(cvSize(newWidth, newHeight), IPL_DEPTH_16U, 1);
-				}
-				else
-				{
-					if (openCV_Image->nChannels == 3)
+					while (newImgWidth > 2000)
 					{
-						smallCV_Image	=	cvCreateImage(cvSize(newWidth, newHeight), IPL_DEPTH_8U, 3);
+						divideFactor++;
+						newImgWidth		=	openCV_Image->cols / divideFactor;
+						newImgHeight	=	openCV_Image->rows / divideFactor;
+					}
+	//				CONSOLE_DEBUG_W_NUM("divideFactor\t=",	divideFactor);
+	//				CONSOLE_DEBUG_W_NUM("newImgWidth\t=",	newImgWidth);
+
+					//*	create the new smaller image
+					smallCV_Image		=	new cv::Mat(cv::Size(	newImgWidth,
+																	newImgHeight),
+																	CV_8UC3);
+
+					nChannels		=	openCV_Image->step[1];
+					if (nChannels == 3)
+					{
+						cv::resize(	*openCV_Image,
+									*smallCV_Image,
+									smallCV_Image->size(),
+									0,
+									0,
+									cv::INTER_LINEAR);
 					}
 					else
 					{
-						smallCV_Image	=	cvCreateImage(cvSize(newWidth, newHeight), IPL_DEPTH_8U, 1);
+						CONSOLE_DEBUG("convert gray scale to color");
+						//*	convert gray scale to color
+						cv::cvtColor(*openCV_Image, *smallCV_Image, cv::COLOR_GRAY2BGR);
+					}
+					cv::imshow(myWindowName, *smallCV_Image);
+				}
+				else
+				{
+					cv::imshow(myWindowName, *openCV_Image);
+				}
+			#else
+				if (openCV_Image->width > 2000)
+				{
+				int	newWidth;
+				int	newHeight;
+
+					CONSOLE_DEBUG(__FUNCTION__);
+
+					newWidth		=	openCV_Image->width / 4;
+					newHeight		=	openCV_Image->height / 4;
+					if (openCV_Image->depth == 16)
+					{
+						smallCV_Image	=	cvCreateImage(cvSize(newWidth, newHeight), IPL_DEPTH_16U, 1);
+					}
+					else
+					{
+						if (openCV_Image->nChannels == 3)
+						{
+							smallCV_Image	=	cvCreateImage(cvSize(newWidth, newHeight), IPL_DEPTH_8U, 3);
+						}
+						else
+						{
+							smallCV_Image	=	cvCreateImage(cvSize(newWidth, newHeight), IPL_DEPTH_8U, 1);
+						}
+					}
+					cvResize(openCV_Image, smallCV_Image, CV_INTER_LINEAR);
+					cvShowImage(myWindowName, smallCV_Image);
+				}
+				else
+				{
+					cvShowImage(myWindowName, openCV_Image);
+				}
+			#endif
+	//			CONSOLE_DEBUG(__FUNCTION__);
+
+				goBackOneImage	=	false;
+				if (gAutomatic)
+				{
+				#ifdef _USE_OPENCV_CPP_
+					keyPressed	=	cv::waitKey(3000);
+				#else
+					keyPressed	=	cvWaitKey(3000);
+				#endif // _USE_OPENCV_CPP_
+				}
+				else
+				{
+					keyPressed	=	HandleKeyDownEvents(argv[fileIdx],
+														myWindowName,
+														openCV_Image);
+				}
+				CONSOLE_DEBUG_W_HEX("keyPressed\t=", keyPressed);
+				if (keyPressed > 0)
+				{
+					switch(keyPressed & 0x07f)
+					{
+						case 'a':
+							gAutomatic		=	!gAutomatic;
+							if (gAutomatic == false)
+							{
+								fileIdx	-=	1;
+							}
+							break;
+
+						case 'q':
+							keepGoing	=	false;
+							break;
+
+						case '-':
+							goBackOneImage	=	true;
+							gAutomatic		=	false;
+							break;
+
+						default:
+							CONSOLE_DEBUG_W_HEX("keyPressed\t=", keyPressed);
+							break;
+
 					}
 				}
-				cvResize(openCV_Image, smallCV_Image, CV_INTER_LINEAR);
-				cvShowImage(myWindowName, smallCV_Image);
-			}
-			else
-			{
-				cvShowImage(myWindowName, openCV_Image);
-			}
-		#endif
-//			CONSOLE_DEBUG(__FUNCTION__);
-
-			if (gAutomatic)
-			{
 			#ifdef _USE_OPENCV_CPP_
-				keyPressed	=	cv::waitKey(3000);
-			#else
-				keyPressed	=	cvWaitKey(3000);
-			#endif // _USE_OPENCV_CPP_
-			}
-			else
-			{
-				keyPressed	=	HandleKeyDownEvents(argv[fileIdx],
-													myWindowName,
-													openCV_Image);
-			}
-			if (keyPressed > 0)
-			{
-				switch(keyPressed & 0x07f)
+				delete openCV_Image;
+				openCV_Image	=	NULL;
+				if (smallCV_Image != NULL)
 				{
-					case 'a':
-						gAutomatic		=	!gAutomatic;
-						if (gAutomatic == false)
-						{
-							fileIdx	-=	1;
-						}
-						break;
-
-					case 'q':
-						keepGoing	=	false;
-						break;
-
+					delete smallCV_Image;
+					smallCV_Image	=	NULL;
 				}
+			#else
+				cvReleaseImage(&openCV_Image);
+				openCV_Image	=	NULL;
+				if (smallCV_Image != NULL)
+				{
+					cvReleaseImage(&smallCV_Image);
+					smallCV_Image	=	NULL;
+				}
+			#endif
 			}
-		#ifdef _USE_OPENCV_CPP_
-			delete openCV_Image;
-			openCV_Image	=	NULL;
-			if (smallCV_Image != NULL)
-			{
-				delete smallCV_Image;
-				smallCV_Image	=	NULL;
-			}
-		#else
-			cvReleaseImage(&openCV_Image);
-			openCV_Image	=	NULL;
-			if (smallCV_Image != NULL)
-			{
-				cvReleaseImage(&smallCV_Image);
-				smallCV_Image	=	NULL;
-			}
-		#endif
 		}
 
-		fileIdx++;
+		if (goBackOneImage)
+		{
+			fileIdx--;
+			if (fileIdx < 1)
+			{
+				fileIdx	=	argc - 1;
+			}
+	//		CONSOLE_DEBUG_W_NUM("goBackOneImage: fileIdx\t=", fileIdx);
+			goBackOneImage	=	false;
+		}
+		else
+		{
+			fileIdx++;
+		}
 		if (keepLooping)
 		{
 			if (fileIdx >= argc)
@@ -678,6 +712,7 @@ bool			fileIsFits;
 			}
 		}
 	}
+//	CONSOLE_DEBUG("Clean exit");
 	return(0);
 }
 

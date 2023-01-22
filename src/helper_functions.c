@@ -11,6 +11,7 @@
 //*	Aug  6,	2022	<MLS> Added GetMinutesSinceMidnight()
 //*	Sep 19,	2022	<MLS> Changed MSecTimer_getNanoSecs() to return uint64_t
 //*	Oct 16,	2022	<MLS> Added GetSecondsSinceEpoch()
+//*	Nov 27,	2022	<MLS> Added FormatTimeStringISO8601_UTC()
 //*****************************************************************************
 
 #include	<math.h>
@@ -303,6 +304,29 @@ long		milliSecs;
 		milliSecs		=	tv->tv_usec / 1000;
 
 		sprintf(timeString, "%d-%02d-%02dT%02d:%02d:%02d.%03ldZ",
+								(1900 + linuxTime->tm_year),
+								(1 + linuxTime->tm_mon),
+								linuxTime->tm_mday,
+								linuxTime->tm_hour,
+								linuxTime->tm_min,
+								linuxTime->tm_sec,
+								milliSecs);
+
+	}
+}
+
+//*****************************************************************************
+void	FormatTimeStringISO8601_UTC(struct timeval *tv, char *timeString)
+{
+struct tm	*linuxTime;
+long		milliSecs;
+
+	if ((tv != NULL) && (timeString != NULL))
+	{
+		linuxTime		=	gmtime(&tv->tv_sec);
+		milliSecs		=	tv->tv_usec / 1000;
+
+		sprintf(timeString, "%d-%02d-%02dT%02d:%02d:%02d.%03ld",
 								(1900 + linuxTime->tm_year),
 								(1 + linuxTime->tm_mon),
 								linuxTime->tm_mday,

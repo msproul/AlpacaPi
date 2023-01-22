@@ -43,7 +43,18 @@
 //*	Feb 29,	2020	<MLS> Switching over to using moonlite_com.c interface
 //*	Mar 17,	2020	<MLS> Fixed bug, /dev directory was not being closed
 //*	Sep 18,	2022	<MLS> Changed RunStateMachine() to return 100000 (100 ms) instead of 500 (.5 ms)
+//*	Nov 28,	2022	<MLS> Added _USE_QUEUED_CMDS_ compile flag (will probably become permanent)
+//*	Nov 28,	2022	<MLS> Changed commands to Moonlite focuser happen ONLY from RunStateMachine()
+//*	Nov 28,	2022	<MLS> CONFORMU-focuserdriver-Moonlite-HiRes -> PASSED!!!!!!!!!!!!!!!!!!!!!
+//*	Nov 28,	2022	<MLS> CONFORMU-focuserdriver-Moonlite-NiteCrawler -> PASSED!!!!!!!!!!!!!!!!!!!!!
+//*	Nov 30,	2022	<MLS> Made queued commands permanent
+//*	Nov 30,	2022	<MLS> Added ProcessQueuedCommands() & ProcessPeriodicRequests()
 //*****************************************************************************
+//	Full step size for the Ultra high res stepper motor is .00004" per step.
+//	The regular high res stepper motor runs as .00016" per step in Full step mode.
+//
+//*****************************************************************************
+
 
 #if defined(_ENABLE_FOCUSER_) && defined (_ENABLE_FOCUSER_MOONLITE_)
 
@@ -62,10 +73,12 @@
 	#include <wiringPi.h>
 #endif
 
+#define _DEBUG_TIMING_
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
 
 
+#include	"alpaca_defs.h"
 #include	"alpacadriver.h"
 #include	"alpacadriver_helper.h"
 #include	"helper_functions.h"
@@ -143,22 +156,26 @@ FocuserNiteCrawler::FocuserNiteCrawler(const int argDevNum, const char *devicePa
 		CONSOLE_DEBUG_W_STR("port is", gValidSerialPorts[argDevNum].deviceString);
 		OpenFocuserConnection(gValidSerialPorts[argDevNum].deviceString);
 	}
+	//	Full step size for the Ultra high res stepper motor is .00004" per step.
+	//	The regular high res stepper motor runs as .00016" per step in Full step mode.
 	switch (cMoonliteCom.model)
 	{
 		case kMoonLite_NiteCrawler:
-			strcpy(cCommonProp.Name,		"NiteCrawler Focuser");
+			strcpy(cCommonProp.Name,		"Moonlite NiteCrawler Focuser");
 			strcpy(cCommonProp.Description,	"Moonlite NiteCrawler Focuser");
 			cIsNiteCrawler				=	true;
 			cFocuserSupportsRotation	=	true;
 			cFocuserSupportsAux			=	true;
 			cFocuserHasVoltage			=	true;
 			cFocuserHasTemperature		=	true;
+			cFocuserProp.StepSize		=	0.2667;	//	Step size (microns) for the focuser.
 			break;
 
 		case kMoonLite_HighRes:
-			strcpy(cCommonProp.Name,		"Moonlite");
+			strcpy(cCommonProp.Name,		"Moonlite HiRes Focuser");
 			strcpy(cCommonProp.Description,	"Moonlite HiRes Focuser");
 			cFocuserHasTemperature		=	true;
+			cFocuserProp.StepSize		=	((0.00016 * 25.4) * 1000);	//	Step size (microns) for the focuser.
 			break;
 
 		default:
@@ -166,12 +183,20 @@ FocuserNiteCrawler::FocuserNiteCrawler(const int argDevNum, const char *devicePa
 			break;
 
 	}
-	cUniqueID.part1				=	'MOON';					//*	4 byte manufacturer code
-	cUniqueID.part2				=	kBuildNumber;			//*	software version number
-	cUniqueID.part3				=	1;						//*	model number
-	cUniqueID.part4				=	0;						//*	model number
-	cUniqueID.part5				=	atoi(cDeviceSerialNum);	//*	serial number
+	cUUID.part1				=	'MOON';					//*	4 byte manufacturer code
+	if (strlen(cDeviceSerialNum) > 0)
+	{
+		CONSOLE_DEBUG_W_STR("cDeviceSerialNum\t=", cDeviceSerialNum);
+		cUUID.part5			=	atoi(cDeviceSerialNum);	//*	serial number
+	}
 
+	//-------------------------------------------
+	//*	setup the command queue
+	cSendHaltCmd		=	false;
+	cHaltCmdAxis		=	0;
+	cSendMoveCmd		=	false;
+	cMoveCmdAxis		=	0;
+	cMoveCmdPosition	=	0;
 }
 
 //**************************************************************************************
@@ -213,17 +238,21 @@ bool	openOK;
 		char	modelVersionStr[64];
 			if (cMoonliteCom.model == kMoonLite_NiteCrawler)
 			{
-				strcpy(modelVersionStr, "NiteCrawler-");
+				strcpy(modelVersionStr, "NiteCrawler");
 			}
 			else if (cMoonliteCom.model == kMoonLite_HighRes)
 			{
-				strcpy(modelVersionStr, "HiRes-");
+				strcpy(modelVersionStr, "HiRes");
 			}
 			else
 			{
-				strcpy(modelVersionStr, "unknown?-");
+				strcpy(modelVersionStr, "unknown?");
 			}
-			strcat(modelVersionStr, cDeviceVersion);
+			if (strlen(cDeviceVersion) > 0)
+			{
+				strcat(modelVersionStr, "-V");
+				strcat(modelVersionStr, cDeviceVersion);
+			}
 			AddLibraryVersion("focuser", "MoonLite", modelVersionStr);
 
 			LogEvent(	"focuser",
@@ -272,48 +301,80 @@ bool	validFlag	=	false;
 
 
 //*****************************************************************************
-int32_t	FocuserNiteCrawler::RunStateMachine(void)
+void	FocuserNiteCrawler::ProcessQueuedCommands(void)
 {
-bool		validFlag;
-uint32_t	currentMillis;
-uint32_t	currentSeconds;
+TYPE_ASCOM_STATUS	alpacaErrCode;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, "+++++++++++++++++++++++++++++++++++++++++++");
 
-#if 0
-	//*	make sure the read buffer is empty
-	readCnt	=	1;
-	while (readCnt > 0)
+	if (cSendHaltCmd)
 	{
-		readCnt	=	ReadUntilChar(cFileDesc, readBuffer, 40, '#');
-		if (readCnt > 0)
+		CONSOLE_DEBUG_W_NUM("Sending Halt command to axis", cHaltCmdAxis);
+		alpacaErrCode	=	HaltStepper(cHaltCmdAxis);
+		if (alpacaErrCode != kASCOM_Err_Success)
 		{
-			CONSOLE_DEBUG_W_STR("NON-EMPTY BUFFER=", readBuffer);
+			CONSOLE_DEBUG_W_NUM("HaltStepper() returned", alpacaErrCode);
 		}
+		cSendHaltCmd	=	false;
 	}
-#endif
+	else if (cSendMoveCmd)
+	{
+		CONSOLE_DEBUG_W_NUM("Sending Move command to location", cMoveCmdPosition);
+		alpacaErrCode			=	SetStepperPosition(cMoveCmdAxis, cMoveCmdPosition);
+		if (alpacaErrCode != kASCOM_Err_Success)
+		{
+			CONSOLE_DEBUG_W_NUM("SetStepperPosition() returned", alpacaErrCode);
+		}
+		cSendMoveCmd			=	false;
+		cFocuserProp.IsMoving	=	true;
+	}
+	CONSOLE_DEBUG_W_STR("EXIT", "--------------------------------------");
+}
+
+
+//*****************************************************************************
+void	FocuserNiteCrawler::ProcessPeriodicRequests(void)
+{
+bool				validFlag;
+uint32_t			currentMillis;
+uint32_t			currentSeconds;
+bool				isMovingFlag;
+double				myFocusTemp;
+double				myFocusVoltage;
 
 	currentMillis	=	millis();
 	currentSeconds	=	currentMillis / 1000;
 
-	//*	check the temperature every 10 seconds
-	if ((currentSeconds - cLastTimeSecs_Temperature) > 10)
+	//===============================================================
+	//*	check the temperature every 15 seconds
+	if ((currentSeconds - cLastTimeSecs_Temperature) > 15)
 	{
-		//===============================================================
+		//-----------------------------------------------------------
 		if (cFocuserHasTemperature)
 		{
-			validFlag	=	MoonLite_GetTemperature(&cMoonliteCom,	&cFocuserTemp);
-			if (validFlag == false)
+			validFlag	=	MoonLite_GetTemperature(&cMoonliteCom,	&myFocusTemp);
+			if (validFlag)
+			{
+				cFocuserProp.Temperature	=	myFocusTemp;
+				TemperatureLog_AddEntry(cFocuserProp.Temperature);
+
+//				CONSOLE_DEBUG_W_DBL("cFocuserProp.Temperature\t=", cFocuserProp.Temperature);
+			}
+			else
 			{
 				CONSOLE_DEBUG("MoonLite_GetTemperature returned false");
 			}
 		}
 
-		//===============================================================
+		//-----------------------------------------------------------
 		if (cFocuserHasVoltage)
 		{
-			validFlag	=	MoonLite_GetVoltage(&cMoonliteCom,		&cFocuserVoltage);
-			if (validFlag == false)
+			validFlag	=	MoonLite_GetVoltage(&cMoonliteCom,		&myFocusVoltage);
+			if (validFlag)
+			{
+				cFocuserVoltage		=	myFocusVoltage;
+			}
+			else
 			{
 				CONSOLE_DEBUG("MoonLite_GetVoltage returned false");
 			}
@@ -321,8 +382,9 @@ uint32_t	currentSeconds;
 		cLastTimeSecs_Temperature	=	currentSeconds;
 	}
 
+	//===============================================================
 	//*	get the position information every 200 milliseconds (5 times a second)
-	if ((currentMillis - cLastTimeMilSecs_Position) > 200)
+	if ((currentMillis - cLastTimeMilSecs_Position) > 500)
 	{
 		GetPosition(1, &cFocuserProp.Position);
 		if (cFocuserSupportsRotation)
@@ -334,73 +396,97 @@ uint32_t	currentSeconds;
 			GetPosition(3, &cAuxPosition);
 		}
 
-//		CONSOLE_DEBUG_W_INT32("pos1=", cFocuserProp.Position);
-//		CONSOLE_DEBUG_W_INT32("pos2=", cRotatorPosition);
-//		CONSOLE_DEBUG_W_INT32("pos3=", cAuxPosition);
 
+		//-------------------------------------------------------
 		//*	check to see if the focuser is moving...
-		if (cFocuserProp.Position != cPrevFocuserPosition)
+		validFlag	=	MoonLite_GetMovingState(&cMoonliteCom,
+												1,
+												&isMovingFlag);
+		if (validFlag)
 		{
-			cFocuserProp.IsMoving	=	true;
-			CONSOLE_DEBUG_W_NUM("pos1=", cFocuserProp.Position);
+			if (isMovingFlag != cFocuserProp.IsMoving)
+			{
+				CONSOLE_DEBUG(			"isMoving Changed state");
+				CONSOLE_DEBUG_W_BOOL(	"Previous state\t=", cFocuserProp.IsMoving);
+				CONSOLE_DEBUG_W_BOOL(	"New state     \t=", isMovingFlag);
+			}
+			cFocuserProp.IsMoving	=	isMovingFlag;
 		}
-		else
-		{
-			cFocuserProp.IsMoving	=	false;
-		}
+
 		cPrevFocuserPosition	=	cFocuserProp.Position;
 
 
-		//*	check to see if the rotator moving...
-		if (cRotatorPosition != cPrevRotatorPosition)
+		//-------------------------------------------------------
+		if (cFocuserSupportsRotation)
 		{
-			cRotatorIsMoving	=	true;
-			CONSOLE_DEBUG_W_NUM("pos2=", cRotatorPosition);
+			//*	check to see if the rotator moving...
+			if (cRotatorPosition != cPrevRotatorPosition)
+			{
+				cRotatorProp.IsMoving	=	true;
+				CONSOLE_DEBUG_W_NUM("pos2=", cRotatorPosition);
+			}
+			else
+			{
+				cRotatorProp.IsMoving	=	false;
+			}
+			cPrevRotatorPosition		=	cRotatorPosition;
+
+			//*	check to see if the Aux moving...
+			if (cAuxPosition != cPrevAuxPosition)
+			{
+				cAuxIsMoving	=	true;
+				CONSOLE_DEBUG_W_NUM("pos3=", cAuxPosition);
+			}
+			else
+			{
+				cAuxIsMoving	=	false;
+			}
+			cPrevAuxPosition		=	cAuxPosition;
 		}
-		else
+		//===============================================================
+		if (cMoonliteCom.model == kMoonLite_NiteCrawler)
 		{
-			cRotatorIsMoving	=	false;
+			//*	if anything is moving, get the switch bits
+			//*	The GS query the switch status for the limit and rotation home switches:
+			//*	b0	=	Rotation switch
+			//*	b1	=	Out limit switch
+			//*	b2	=	In limit switch
+			//*
+			//*	GA is the AUX channel switch status:
+			//*	b0	=	Out limit
+			//*	b1	=	In lmit
+			if (cFocuserProp.IsMoving || cRotatorProp.IsMoving || cAuxIsMoving)
+			{
+			unsigned char	switchBits;
+
+				validFlag	=	MoonLite_GetSwiches(&cMoonliteCom,	&switchBits);
+	//			CONSOLE_DEBUG_W_HEX("switchBits\t=", switchBits);
+				cSwitchROT	=	((switchBits & 0x01) ? true : false);
+				cSwitchOUT	=	((switchBits & 0x02) ? true : false);
+				cSwitchIN	=	((switchBits & 0x04) ? true : false);
+
+				validFlag	=	MoonLite_GetAuxSwiches(&cMoonliteCom,	&switchBits);
+				cSwitchAUX1	=	((switchBits & 0x01) ? true : false);
+				cSwitchAUX2	=	((switchBits & 0x02) ? true : false);
+			}
 		}
-		cPrevRotatorPosition		=	cRotatorPosition;
-
-
-		//*	check to see if the Aux moving...
-		if (cAuxPosition != cPrevAuxPosition)
-		{
-			cAuxIsMoving	=	true;
-			CONSOLE_DEBUG_W_NUM("pos3=", cAuxPosition);
-		}
-		else
-		{
-			cAuxIsMoving	=	false;
-		}
-		cPrevAuxPosition		=	cAuxPosition;
-
-		//*	if anything is moving, get the switch bits
-		//*	The GS query the switch status for the limit and rotation home switches:
-		//*	b0=Rotation switch
-		//*	b1=Out limit switch
-		//*	b2= In limit switch
-		//*
-		//*	GA is the AUX channel switch status:
-		//*	b0= Out limit
-		//*	b1=In lmit
-		if (cFocuserProp.IsMoving || cRotatorIsMoving || cAuxIsMoving)
-		{
-		unsigned char	switchBits;
-
-			validFlag	=	MoonLite_GetSwiches(&cMoonliteCom,	&switchBits);
-//			CONSOLE_DEBUG_W_HEX("switchBits\t=", switchBits);
-			cSwitchROT	=	((switchBits & 0x01) ? true : false);
-			cSwitchOUT	=	((switchBits & 0x02) ? true : false);
-			cSwitchIN	=	((switchBits & 0x04) ? true : false);
-
-			validFlag	=	MoonLite_GetAuxSwiches(&cMoonliteCom,	&switchBits);
-			cSwitchAUX1	=	((switchBits & 0x01) ? true : false);
-			cSwitchAUX2	=	((switchBits & 0x02) ? true : false);
-		}
-
 		cLastTimeMilSecs_Position	=	currentMillis;
+	}
+}
+
+//*****************************************************************************
+int32_t	FocuserNiteCrawler::RunStateMachine(void)
+{
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	if (cSendHaltCmd || cSendMoveCmd)
+	{
+		ProcessQueuedCommands();
+	}
+	else
+	{
+		ProcessPeriodicRequests();
 	}
 
 	return(100 * 1000);
@@ -489,25 +575,55 @@ TYPE_ASCOM_STATUS	FocuserNiteCrawler::SetStepperPosition(const int axisNumber, c
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 bool				validFlag;
+int					loopCntr;
 //	<1GN# >00058200 <1SN 63200# <1SM#
 
 	CONSOLE_DEBUG(__FUNCTION__);
 	if ((axisNumber >= 1) && (axisNumber <= 3))
 	{
-		validFlag	=	MoonLite_SetPosition(&cMoonliteCom,	axisNumber, newPosition);
+		//*	lets try this 3 times
+		validFlag	=	false;
+		loopCntr	=	0;
+//		while ((validFlag == false) && (loopCntr < 3))
+		{
+			validFlag	=	MoonLite_SetPosition(&cMoonliteCom,	axisNumber, newPosition);
+			if (validFlag == false)
+			{
+				usleep(50 * 1000);
+			}
+			loopCntr++;
+		}
+
+
 		if (validFlag)
 		{
 			alpacaErrCode	=	kASCOM_Err_Success;
 		}
+		else if (cCommonProp.Connected == false)
+		{
+			GENERATE_ALPACAPI_ERRMSG(cLastDeviceErrMsg, "Not connected");
+
+			CONSOLE_DEBUG_W_BOOL("cCommonProp.Connected\t=", cCommonProp.Connected);
+			alpacaErrCode	=	kASCOM_Err_NotConnected;
+		}
 		else
 		{
-			alpacaErrCode	=	kASCOM_Err_NotConnected;
+			GENERATE_ALPACAPI_ERRMSG(cLastDeviceErrMsg, "MoonLite_SetPosition() failed!!!");
+			CONSOLE_DEBUG_W_NUM("MoonLite_SetPosition() failed!!!: loopCntr\t=", loopCntr);
+
+			alpacaErrCode	=	kASCOM_Err_UnspecifiedError;
 		}
 	}
 	else
 	{
 		alpacaErrCode	=	kASCOM_Err_InternalError;
 	}
+	if (alpacaErrCode != kASCOM_Err_Success)
+	{
+		CONSOLE_DEBUG_W_HEX("Returning error code\t=", alpacaErrCode);
+		CONSOLE_DEBUG_W_NUM("Returning error code\t=", alpacaErrCode);
+	}
+
 	return(alpacaErrCode);
 }
 
@@ -528,10 +644,17 @@ bool				validFlag;
 		{
 			alpacaErrCode	=	kASCOM_Err_Success;
 		}
+		else if (cCommonProp.Connected == false)
+		{
+			GENERATE_ALPACAPI_ERRMSG(cLastDeviceErrMsg, "Not connected");
+			CONSOLE_DEBUG_W_BOOL("cCommonProp.Connected\t=", cCommonProp.Connected);
+			alpacaErrCode	=	kASCOM_Err_NotConnected;
+		}
 		else
 		{
-			alpacaErrCode	=	kASCOM_Err_NotConnected;
-			CONSOLE_DEBUG("MoonLite_StopAxis returned false");
+			alpacaErrCode	=	kASCOM_Err_UnspecifiedError;
+			GENERATE_ALPACAPI_ERRMSG(cLastDeviceErrMsg, "MoonLite_StopAxis returned false");
+			CONSOLE_DEBUG(cLastDeviceErrMsg);
 		}
 	}
 	else
@@ -547,11 +670,15 @@ TYPE_ASCOM_STATUS		FocuserNiteCrawler::SetFocuserPosition(const int32_t newPosit
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
+	CONSOLE_DEBUG_W_NUM(__FUNCTION__, newPosition);
+
 //	<1GN# >00058200 <1SN 63200# <1SM#
 
-	CONSOLE_DEBUG(__FUNCTION__);
-
-	alpacaErrCode	=	SetStepperPosition(1, newPosition);
+	cSendMoveCmd			=	true;
+	cMoveCmdAxis			=	1;
+	cMoveCmdPosition		=	newPosition;
+	alpacaErrCode			=	kASCOM_Err_Success;
+	cFocuserProp.IsMoving	=	true;
 
 	return(alpacaErrCode);
 }
@@ -562,8 +689,9 @@ TYPE_ASCOM_STATUS		FocuserNiteCrawler::HaltFocuser(char *alpacaErrMsg)
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
 	CONSOLE_DEBUG(__FUNCTION__);
-
-	alpacaErrCode	=	HaltStepper(1);
+	cSendHaltCmd		=	true;
+	cHaltCmdAxis		=	1;
+	cSendMoveCmd		=	false;	//*	if we are doing a HALT, override any pending move
 
 	return(alpacaErrCode);
 }

@@ -46,7 +46,7 @@
 #++	Apr 26,	2021	<MLS> Added _ENABLE_FILTERWHEEL_ZWO_
 #++	Apr 26,	2021	<MLS> Added _ENABLE_FILTERWHEEL_ATIK_
 #++	Jan  6,	2022	<MLS> Added _ENABLE_REMOTE_SQL_  & _ENABLE_REMOTE_GAIA_
-#++	Jan 13,	2022	<MLS> Added _ENABLE_ASTERIODS_
+#++	Jan 13,	2022	<MLS> Added _ENABLE_ASTEROIDS_
 #++	Jan 18,	2022	<MLS> Added fitsview to makefile
 #++	Mar 24,	2022	<MLS> Added -fPIE to compile options
 #++	Mar 25,	2022	<MLS> Added _ENABLE_TELESCOPE_SERVO_
@@ -92,12 +92,14 @@ PHASEONE_LIB		=	/usr/local/lib/
 
 SRC_DIR				=	./src/
 SRC_IMGPROC			=	./src_imageproc/
+SRC_IMU				=	./src_imu/
 SRC_DISCOVERY		=	./src_discovery/
 SRC_MOONRISE		=	./src_MoonRise/
 SRC_SERVO			=	./src_servo/
+SRC_PDS				=	./src_pds/
+
 MLS_LIB_DIR			=	./src_mlsLib/
 OBJECT_DIR			=	./Objectfiles/
-SRC_IMU				=	./src_imu/
 
 
 GD_DIR				=	../gd/
@@ -190,15 +192,16 @@ LINK			=	g++
 INCLUDES		=	-I/usr/include					\
 					-I/usr/local/include			\
 					-I$(SRC_DIR)					\
-					-I$(EFW_LIB_DIR)				\
 					-I$(ASI_INCLUDE_DIR)			\
 					-I$(ATIK_INCLUDE_DIR)			\
 					-I$(ATIK_INCLUDE_DIR2)			\
-					-I$(TOUP_INCLUDE_DIR)			\
+					-I$(EFW_LIB_DIR)				\
 					-I$(FLIR_INCLUDE_DIR)			\
 					-I$(MLS_LIB_DIR)				\
 					-I$(QHY_INCLUDE_DIR)			\
 					-I$(SRC_IMGPROC)				\
+					-I$(SRC_PDS)					\
+					-I$(TOUP_INCLUDE_DIR)			\
 
 
 
@@ -236,6 +239,7 @@ DISCOVERY_LIB_OBJECTS=										\
 # CPP objects
 CPP_OBJECTS=												\
 				$(OBJECT_DIR)alpacadriver.o					\
+				$(OBJECT_DIR)alpacadriverSetup.o			\
 				$(OBJECT_DIR)alpacadriver_templog.o			\
 				$(OBJECT_DIR)alpacadriver_helper.o			\
 				$(OBJECT_DIR)alpaca_discovery.o				\
@@ -245,6 +249,8 @@ CPP_OBJECTS=												\
 				$(OBJECT_DIR)domedriver.o					\
 				$(OBJECT_DIR)domeshutter.o					\
 				$(OBJECT_DIR)domedriver_rpi.o				\
+				$(OBJECT_DIR)domedriver_ror_rpi.o			\
+				$(OBJECT_DIR)raspberrypi_relaylib.o			\
 				$(OBJECT_DIR)eventlogging.o					\
 				$(OBJECT_DIR)HostNames.o					\
 				$(OBJECT_DIR)JsonResponse.o					\
@@ -262,6 +268,7 @@ CPP_OBJECTS=												\
 				$(OBJECT_DIR)telescopedriver_lx200.o		\
 				$(OBJECT_DIR)telescopedriver_Rigel.o		\
 				$(OBJECT_DIR)telescopedriver_servo.o		\
+				$(OBJECT_DIR)telescopedriver_sim.o		\
 				$(OBJECT_DIR)telescopedriver_skywatch.o		\
 
 LIVE_WINDOW_OBJECTS=										\
@@ -271,6 +278,7 @@ LIVE_WINDOW_OBJECTS=										\
 				$(OBJECT_DIR)windowtab.o					\
 				$(OBJECT_DIR)windowtab_about.o				\
 				$(OBJECT_DIR)windowtab_image.o				\
+				$(OBJECT_DIR)fits_opencv.o					\
 
 
 #				$(OBJECT_DIR)controllerAlpaca.o				\
@@ -366,6 +374,7 @@ HELPER_OBJECTS=												\
 #	Roll Off Roof Objects
 ROR_OBJECTS=												\
 				$(OBJECT_DIR)alpacadriver.o					\
+				$(OBJECT_DIR)alpacadriverSetup.o			\
 				$(OBJECT_DIR)alpacadriver_helper.o			\
 				$(OBJECT_DIR)alpacadriverLogging.o			\
 				$(OBJECT_DIR)alpaca_discovery.o				\
@@ -526,10 +535,48 @@ camerasim		:	$(CPP_OBJECTS)				\
 					$(LIVE_WINDOW_OBJECTS)		\
 					$(OPENCV_LINK)				\
 					-lcfitsio					\
-					-lusb-1.0					\
-					-ludev						\
 					-lpthread					\
 					-o camerasim
+
+#					-lusb-1.0					\
+#					-ludev						\
+
+######################################################################################
+#        make pisim  Camera simulator
+
+pisim		:	DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
+pisim		:	DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
+pisim		:	DEFINEFLAGS		+=	-D_SIMULATE_CAMERA_
+pisim		:	DEFINEFLAGS		+=	-D_ENABLE_FITS_
+pisim		:	DEFINEFLAGS		+=	-D_ENABLE_DISCOVERY_QUERRY_
+pisim		:	DEFINEFLAGS		+=	-D_USE_OPENCV_
+pisim		:	DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
+pisim		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
+pisim		:	DEFINEFLAGS		+=	-D_ENABLE_LIVE_CONTROLLER_
+pisim		:	DEFINEFLAGS		+=	-D_ENABLE_ROR_
+pisim		:	DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
+pisim		:	DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_SIMULATOR_
+pisim		:		$(CPP_OBJECTS)				\
+					$(HELPER_OBJECTS)			\
+					$(DRIVER_OBJECTS)			\
+					$(SOCKET_OBJECTS)			\
+					$(LIVE_WINDOW_OBJECTS)		\
+
+
+		$(LINK)  								\
+					$(CPP_OBJECTS)				\
+					$(HELPER_OBJECTS)			\
+					$(SOCKET_OBJECTS)			\
+					$(DRIVER_OBJECTS)			\
+					$(LIVE_WINDOW_OBJECTS)		\
+					$(OPENCV_LINK)				\
+					-lcfitsio					\
+					-lpthread					\
+					-lwiringPi					\
+					-o alpacapi
+
+#					-lusb-1.0					\
+#					-ludev						\
 
 
 ######################################################################################
@@ -1003,10 +1050,56 @@ wo102		:		$(CPP_OBJECTS)				\
 					-lpthread					\
 					-o alpacapi
 
+######################################################################################
+#make newt16
+#pragma mark Newt 16 C++ Raspberry pi
+newt16		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
+newt16		:		DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_
+newt16		:		DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_MOONLITE_
+newt16		:		DEFINEFLAGS		+=	-D_ENABLE_ROTATOR_
+newt16		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_
+newt16		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_ZWO_
+newt16		:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
+newt16		:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
+newt16		:		DEFINEFLAGS		+=	-D_ENABLE_DISCOVERY_QUERRY_
+#newt16		:		DEFINEFLAGS		+=	-D_ENABLE_MULTICAM_
+newt16		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
+newt16		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
+newt16		:		DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
+newt16		:		DEFINEFLAGS		+=	-D_ENABLE_JPEGLIB_
+newt16		:		DEFINEFLAGS		+=	-D_ENABLE_SLIT_TRACKER_
+newt16		:		DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
+newt16		:		DEFINEFLAGS		+=	-D_ENABLE_LIVE_CONTROLLER_
+newt16		:		ATIK_LIB_DIR	=	$(ATIK_LIB_MASTER_DIR)/ARM/x86/NoFlyCapture
+newt16		:		$(CPP_OBJECTS)				\
+					$(HELPER_OBJECTS)			\
+					$(DRIVER_OBJECTS)			\
+					$(SOCKET_OBJECTS)			\
+					$(LIVE_WINDOW_OBJECTS)		\
+
+
+		$(LINK)  								\
+					$(CPP_OBJECTS)				\
+					$(HELPER_OBJECTS)			\
+					$(SOCKET_OBJECTS)			\
+					$(DRIVER_OBJECTS)			\
+					$(LIVE_WINDOW_OBJECTS)		\
+					$(OPENCV_LINK)				\
+					$(ASI_CAMERA_OBJECTS)		\
+					$(ZWO_EFW_OBJECTS)			\
+					-lcfitsio					\
+					-lusb-1.0					\
+					-ludev						\
+					-ljpeg						\
+					-lpthread					\
+					-o alpacapi
+
+#					-lwiringPi					\
 
 ######################################################################################
 TELESCOPE_OBJECTS=											\
 				$(OBJECT_DIR)alpacadriver.o					\
+				$(OBJECT_DIR)alpacadriverSetup.o			\
 				$(OBJECT_DIR)alpacadriver_helper.o			\
 				$(OBJECT_DIR)alpacadriver_templog.o			\
 				$(OBJECT_DIR)alpaca_discovery.o				\
@@ -1515,6 +1608,7 @@ calib		:		DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
 calib		:		DEFINEFLAGS		+=	-D_ENABLE_LIVE_CONTROLLER_
 #calib		:		DEFINEFLAGS		+=	-D_CONTROLLER_USES_ALPACA_
 calib		:		$(CPP_OBJECTS)				\
+					$(HELPER_OBJECTS)			\
 					$(DRIVER_OBJECTS)			\
 					$(SOCKET_OBJECTS)			\
 					$(LIVE_WINDOW_OBJECTS)		\
@@ -1523,6 +1617,7 @@ calib		:		$(CPP_OBJECTS)				\
 		$(LINK)  								\
 					$(SOCKET_OBJECTS)			\
 					$(CPP_OBJECTS)				\
+					$(HELPER_OBJECTS)			\
 					$(DRIVER_OBJECTS)			\
 					$(LIVE_WINDOW_OBJECTS)		\
 					$(OPENCV_LINK)				\
@@ -1756,62 +1851,19 @@ pizwo		:		$(CPP_OBJECTS)				\
 #make manag
 manag		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
 manag		:		$(CPP_OBJECTS)				\
+					$(HELPER_OBJECTS)			\
 					$(DRIVER_OBJECTS)			\
 					$(SOCKET_OBJECTS)			\
 
 
 		$(LINK)  								\
-					$(SOCKET_OBJECTS)			\
 					$(CPP_OBJECTS)				\
+					$(HELPER_OBJECTS)			\
 					$(DRIVER_OBJECTS)			\
+					$(SOCKET_OBJECTS)			\
 					-lpthread					\
 					-o alpacapi
 
-######################################################################################
-#make newt16
-#pragma mark Newt 16 C++ Raspberry pi
-newt16		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
-newt16		:		DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_
-newt16		:		DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_MOONLITE_
-newt16		:		DEFINEFLAGS		+=	-D_ENABLE_ROTATOR_
-newt16		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_
-newt16		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_ZWO_
-newt16		:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
-newt16		:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
-newt16		:		DEFINEFLAGS		+=	-D_ENABLE_DISCOVERY_QUERRY_
-#newt16		:		DEFINEFLAGS		+=	-D_ENABLE_MULTICAM_
-newt16		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
-newt16		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
-newt16		:		DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
-newt16		:		DEFINEFLAGS		+=	-D_ENABLE_JPEGLIB_
-newt16		:		DEFINEFLAGS		+=	-D_ENABLE_SLIT_TRACKER_
-newt16		:		DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
-newt16		:		DEFINEFLAGS		+=	-D_ENABLE_LIVE_CONTROLLER_
-newt16		:		ATIK_LIB_DIR	=	$(ATIK_LIB_MASTER_DIR)/ARM/x86/NoFlyCapture
-newt16		:		$(CPP_OBJECTS)				\
-					$(HELPER_OBJECTS)			\
-					$(DRIVER_OBJECTS)			\
-					$(SOCKET_OBJECTS)			\
-					$(LIVE_WINDOW_OBJECTS)		\
-
-
-		$(LINK)  								\
-					$(CPP_OBJECTS)				\
-					$(HELPER_OBJECTS)			\
-					$(SOCKET_OBJECTS)			\
-					$(DRIVER_OBJECTS)			\
-					$(LIVE_WINDOW_OBJECTS)		\
-					$(OPENCV_LINK)				\
-					$(ASI_CAMERA_OBJECTS)		\
-					$(ZWO_EFW_OBJECTS)			\
-					-lcfitsio					\
-					-lusb-1.0					\
-					-ludev						\
-					-ljpeg						\
-					-lpthread					\
-					-o alpacapi
-
-#					-lwiringPi					\
 
 ######################################################################################
 #pragma mark ZWO
@@ -2124,12 +2176,13 @@ jetson		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
 jetson		:	DEFINEFLAGS		+=	-D_ENABLE_LIVE_CONTROLLER_
 jetson		:	DEFINEFLAGS		+=	-D_ENABLE_STAR_SEARCH_
 jetson		:	DEFINEFLAGS		+=	-D_PLATFORM_STRING_=\"Nvidia-jetson\"
-jetson		:	DEFINEFLAGS		+=	-D_ENABLE_IMU_
+#jetson		:	DEFINEFLAGS		+=	-D_ENABLE_IMU_
 jetson		:	INCLUDES		+=	-I$(SRC_IMU)
 jetson		:	TOUP_LIB_DIR	=	$(TOUP_DIR)/linux/arm64
 jetson		:				$(DRIVER_OBJECTS)			\
 							$(SOCKET_OBJECTS)			\
 							$(CPP_OBJECTS)				\
+							$(HELPER_OBJECTS)			\
 							$(IMAGEPROC_OBJECTS)		\
 							$(JETSON_OBJECTS)			\
 							$(IMU_OBJECTS)				\
@@ -2140,6 +2193,7 @@ jetson		:				$(DRIVER_OBJECTS)			\
 							$(DRIVER_OBJECTS)			\
 							$(SOCKET_OBJECTS)			\
 							$(CPP_OBJECTS)				\
+							$(HELPER_OBJECTS)			\
 							$(IMAGEPROC_OBJECTS)		\
 							$(JETSON_OBJECTS)			\
 							$(IMU_OBJECTS)				\
@@ -2209,6 +2263,7 @@ smate		:				$(DRIVER_OBJECTS)			\
 # ATIK objects
 ATIK_OBJECTS=												\
 				$(OBJECT_DIR)alpacadriver.o					\
+				$(OBJECT_DIR)alpacadriverSetup.o			\
 				$(OBJECT_DIR)alpacadriver_helper.o			\
 				$(OBJECT_DIR)alpacadriverLogging.o			\
 				$(OBJECT_DIR)alpaca_discovery.o				\
@@ -2304,6 +2359,8 @@ CONTROLLER_OBJECTS=												\
 				$(OBJECT_DIR)controllerAlpaca.o					\
 				$(OBJECT_DIR)controller_focus.o					\
 				$(OBJECT_DIR)controller_focus_generic.o			\
+				$(OBJECT_DIR)controller_focus_ml_nc.o			\
+				$(OBJECT_DIR)controller_focus_ml_hr.o			\
 				$(OBJECT_DIR)controller_switch.o				\
 				$(OBJECT_DIR)controller_camera.o				\
 				$(OBJECT_DIR)controllerImageArray.o				\
@@ -2312,8 +2369,6 @@ CONTROLLER_OBJECTS=												\
 				$(OBJECT_DIR)controller_dome_common.o			\
 				$(OBJECT_DIR)controller_filterwheel.o			\
 				$(OBJECT_DIR)controller_image.o					\
-				$(OBJECT_DIR)controller_ml_nc.o					\
-				$(OBJECT_DIR)controller_ml_single.o				\
 				$(OBJECT_DIR)controller_obsconditions.o			\
 				$(OBJECT_DIR)controller_rotator.o				\
 				$(OBJECT_DIR)controller_usb.o					\
@@ -2381,6 +2436,9 @@ PREVIEW_OBJECTS=												\
 
 #				$(OBJECT_DIR)controller_cam_normal.o			\
 
+######################################################################################
+FITS_OBJECTS=													\
+				$(OBJECT_DIR)fits_opencv.o						\
 
 ######################################################################################
 #pragma mark mandelbrot
@@ -2412,7 +2470,7 @@ camera		:			$(CONTROLLER_OBJECTS)					\
 
 
 ######################################################################################
-#make camera
+#make cameracv4
 #pragma mark camera-controller
 cameracv4		:	DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
 cameracv4		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_CAMERA_
@@ -2420,13 +2478,16 @@ cameracv4		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
 cameracv4		:	DEFINEFLAGS		+=	-D_CONTROLLER_USES_ALPACA_
 cameracv4		:	DEFINEFLAGS		+=	-D_USE_OPENCV_
 cameracv4		:	DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
-cameracv4		:	OPENCV_COMPILE	=	$(shell pkg-config --cflags opencv4)
-cameracv4		:	OPENCV_LINK		=	$(shell pkg-config --libs opencv4)
-cameracv4		:	$(CONTROLLER_OBJECTS)					\
+#cameracv4		:	OPENCV_COMPILE	=	$(shell pkg-config --cflags opencv4)
+#cameracv4		:	OPENCV_LINK		=	$(shell pkg-config --libs opencv4)
+cameracv4		:			$(CONTROLLER_OBJECTS)				\
+							$(FITS_OBJECTS)						\
 
 				$(LINK)  										\
 							$(CONTROLLER_OBJECTS)				\
+							$(FITS_OBJECTS)						\
 							$(OPENCV_LINK)						\
+							-lcfitsio							\
 							-lpthread							\
 							-o camera
 
@@ -2555,6 +2616,7 @@ SKYTRAVEL_OBJECTS=											\
 				$(OBJECT_DIR)aavso_data.o					\
 				$(OBJECT_DIR)AsteroidData.o					\
 				$(OBJECT_DIR)ConstellationData.o			\
+				$(OBJECT_DIR)controller_alpacaUnit.o		\
 				$(OBJECT_DIR)controller_camera.o			\
 				$(OBJECT_DIR)controllerImageArray.o			\
 				$(OBJECT_DIR)controller_cam_normal.o		\
@@ -2565,9 +2627,9 @@ SKYTRAVEL_OBJECTS=											\
 				$(OBJECT_DIR)controller_filterwheel.o		\
 				$(OBJECT_DIR)controller_focus.o				\
 				$(OBJECT_DIR)controller_focus_generic.o		\
+				$(OBJECT_DIR)controller_focus_ml_hr.o		\
+				$(OBJECT_DIR)controller_focus_ml_nc.o		\
 				$(OBJECT_DIR)controller_image.o				\
-				$(OBJECT_DIR)controller_ml_nc.o				\
-				$(OBJECT_DIR)controller_ml_single.o			\
 				$(OBJECT_DIR)controller_obsconditions.o		\
 				$(OBJECT_DIR)controller_rotator.o			\
 				$(OBJECT_DIR)controller_skytravel.o			\
@@ -2599,6 +2661,7 @@ SKYTRAVEL_OBJECTS=											\
 				$(OBJECT_DIR)SkyTravelTimeRoutines.o		\
 				$(OBJECT_DIR)serialport.o					\
 				$(OBJECT_DIR)windowtab_alpacalist.o			\
+				$(OBJECT_DIR)windowtab_alpacaUnit.o			\
 				$(OBJECT_DIR)windowtab_auxmotor.o			\
 				$(OBJECT_DIR)windowtab_camera.o				\
 				$(OBJECT_DIR)windowtab_camsettings.o		\
@@ -2662,7 +2725,7 @@ sky		:	DEFINEFLAGS		+=	-D_CONTROLLER_USES_ALPACA_
 sky		:	DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_CONTROLLER_
 sky		:	DEFINEFLAGS		+=	-D_ENABLE_SLIT_TRACKER_
 sky		:	DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
-#sky		:	DEFINEFLAGS		+=	-D_ENABLE_ASTERIODS_
+#sky		:	DEFINEFLAGS		+=	-D_ENABLE_ASTEROIDS_
 sky		:	INCLUDES		+=	-I$(SRC_SKYTRAVEL)
 sky		:				$(SKYTRAVEL_OBJECTS)					\
 						$(CONTROLLER_BASE_OBJECTS)				\
@@ -2694,7 +2757,7 @@ skycv4			:	DEFINEFLAGS		+=	-D_CONTROLLER_USES_ALPACA_
 skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_CONTROLLER_
 skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_SLIT_TRACKER_
 skycv4			:	DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
-#skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_ASTERIODS_
+#skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_ASTEROIDS_
 skycv4			:	DEFINEFLAGS		+=	-D_USE_OPENCV_
 skycv4			:	DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
 skycv4			:	INCLUDES		+=	-I$(SRC_SKYTRAVEL)
@@ -2731,7 +2794,7 @@ skycv4sql			:	DEFINEFLAGS		+=	-D_CONTROLLER_USES_ALPACA_
 skycv4sql			:	DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_CONTROLLER_
 skycv4sql			:	DEFINEFLAGS		+=	-D_ENABLE_SLIT_TRACKER_
 skycv4sql			:	DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
-#skycv4sql			:	DEFINEFLAGS		+=	-D_ENABLE_ASTERIODS_
+#skycv4sql			:	DEFINEFLAGS		+=	-D_ENABLE_ASTEROIDS_
 skycv4sql			:	DEFINEFLAGS		+=	-D_ENABLE_REMOTE_SQL_
 skycv4sql			:	DEFINEFLAGS		+=	-D_ENABLE_REMOTE_GAIA_
 skycv4sql			:	DEFINEFLAGS		+=	-D_USE_OPENCV_
@@ -2778,7 +2841,7 @@ skysql		:	DEFINEFLAGS		+=	-D_CONTROLLER_USES_ALPACA_
 skysql		:	DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_CONTROLLER_
 skysql		:	DEFINEFLAGS		+=	-D_ENABLE_SLIT_TRACKER_
 skysql		:	DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
-skysql		:	DEFINEFLAGS		+=	-D_ENABLE_ASTERIODS_
+skysql		:	DEFINEFLAGS		+=	-D_ENABLE_ASTEROIDS_
 skysql		:	DEFINEFLAGS		+=	-D_ENABLE_REMOTE_SQL_
 skysql		:	DEFINEFLAGS		+=	-D_ENABLE_REMOTE_GAIA_
 skysql		:	INCLUDES		+=	-I$(SRC_SKYTRAVEL)
@@ -2870,6 +2933,7 @@ sss			:	DEFINEFLAGS		+=	-D_ENABLE_REMOTE_GAIA_
 sss			:	DEFINEFLAGS		+=	-D_USE_OPENCV_
 sss			:	DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
 sss			:	DEFINEFLAGS		+=	-D_ENABLE_CPU_STATS_
+#sss			:	DEFINEFLAGS		+=	-D_ENABLE_ASTEROIDS_
 sss			:	DEFINEFLAGS		+=	-D_SQL_$(SQL_VERSION)
 sss			:	INCLUDES		+=	-I$(SRC_SKYTRAVEL)
 sss			:	INCLUDES		+=	-I$(SRC_SPECTROGRAPH)
@@ -2961,6 +3025,11 @@ FITSVIEW_OBJECTS=												\
 				$(OBJECT_DIR)fits_opencv.o						\
 
 
+######################################################################################
+PDS_OBJECTS=													\
+				$(OBJECT_DIR)PDS_ReadNASAfiles.o				\
+				$(OBJECT_DIR)PDS_decompress.o					\
+
 DUMPFITS_OBJECTS=												\
 				$(OBJECT_DIR)dumpfits.o							\
 
@@ -2968,10 +3037,37 @@ DUMPFITS_OBJECTS=												\
 #pragma mark make fitsview
 fitsview	:		$(FITSVIEW_OBJECTS)
 
+				$(LINK)  										\
+							$(FITSVIEW_OBJECTS)					\
+							$(OPENCV_LINK)						\
+							-lcfitsio							\
+							-lm									\
+							-o fitsview
+
+
+######################################################################################
+#pragma mark make fitsviewcv4
+fitsviewcv4	:		DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
+fitsviewcv4	:		$(FITSVIEW_OBJECTS)
 
 				$(LINK)  										\
 							$(FITSVIEW_OBJECTS)					\
 							$(OPENCV_LINK)						\
+							-lcfitsio							\
+							-lm									\
+							-o fitsview
+
+######################################################################################
+#pragma mark make fitsviewcv4
+fv4	:			DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
+fv4	:			DEFINEFLAGS		+=	-D_ENABLE_NASA_PDS_
+fv4	:			$(FITSVIEW_OBJECTS)								\
+				$(PDS_OBJECTS)									\
+
+				$(LINK)  										\
+							$(FITSVIEW_OBJECTS)					\
+							$(OPENCV_LINK)						\
+							$(PDS_OBJECTS)						\
 							-lcfitsio							\
 							-lm									\
 							-o fitsview
@@ -2986,19 +3082,6 @@ dumpfits	:		$(DUMPFITS_OBJECTS)
 							-lcfitsio							\
 							-o dumpfits
 
-
-######################################################################################
-#pragma mark make fitsviewcv4
-fitsviewcv4	:		DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
-fitsviewcv4	:		$(FITSVIEW_OBJECTS)
-
-
-				$(LINK)  										\
-							$(FITSVIEW_OBJECTS)					\
-							$(OPENCV_LINK)						\
-							-lcfitsio							\
-							-lm									\
-							-o fitsview
 
 ######################################################################################
 #pragma mark make net
@@ -3091,11 +3174,22 @@ $(OBJECT_DIR)readconfigfile.o : $(SRC_DIR)readconfigfile.c $(SRC_DIR)readconfigf
 
 ######################################################################################
 # CPP objects
-$(OBJECT_DIR)alpacadriver.o :			$(SRC_DIR)alpacadriver.cpp			\
-										$(SRC_DIR)alpacadriver.h			\
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)alpacadriver.o :			$(SRC_DIR)alpacadriver.cpp				\
+										$(SRC_DIR)alpacadriver.h				\
+										$(SRC_DIR)alpaca_defs.h					\
 										Makefile
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)alpacadriver.cpp -o$(OBJECT_DIR)alpacadriver.o
 
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)alpacadriverSetup.o :		$(SRC_DIR)alpacadriverSetup.cpp			\
+										$(SRC_DIR)alpacadriver.h				\
+										$(SRC_DIR)alpaca_defs.h					\
+										Makefile
+	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)alpacadriverSetup.cpp -o$(OBJECT_DIR)alpacadriverSetup.o
+
+
+#-------------------------------------------------------------------------------------
 $(OBJECT_DIR)alpacadriver_helper.o :	$(SRC_DIR)alpacadriver_helper.c			\
 										$(SRC_DIR)alpacadriver_helper.h			\
 										Makefile
@@ -3407,6 +3501,14 @@ $(OBJECT_DIR)telescopedriver_servo.o :	$(SRC_DIR)telescopedriver_servo.cpp	\
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)telescopedriver_servo.cpp -o$(OBJECT_DIR)telescopedriver_servo.o
 
 #-------------------------------------------------------------------------------------
+$(OBJECT_DIR)telescopedriver_sim.o :	$(SRC_DIR)telescopedriver_sim.cpp	\
+										$(SRC_DIR)telescopedriver_sim.h	\
+										$(SRC_DIR)telescopedriver.h			\
+										$(SRC_DIR)alpacadriver.h
+	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)telescopedriver_sim.cpp -o$(OBJECT_DIR)telescopedriver_sim.o
+
+
+#-------------------------------------------------------------------------------------
 $(OBJECT_DIR)telescopedriver_skywatch.o :	$(SRC_DIR)telescopedriver_skywatch.cpp	\
 											$(SRC_DIR)telescopedriver_skywatch.h	\
 											$(SRC_DIR)telescopedriver.h				\
@@ -3602,21 +3704,23 @@ $(OBJECT_DIR)controller_focus_generic.o : 	$(SRC_DIR)controller_focus_generic.cp
 
 
 #-------------------------------------------------------------------------------------
-$(OBJECT_DIR)controller_ml_nc.o : 		$(SRC_DIR)controller_ml_nc.cpp		\
-										$(SRC_DIR)controller_ml_nc.h		\
-										$(SRC_DIR)windowtab_about.h			\
-										$(SRC_DIR)windowtab_nitecrawler.h	\
-										$(SRC_DIR)windowtab_graphs.h		\
+$(OBJECT_DIR)controller_focus_ml_nc.o : $(SRC_DIR)controller_focus_ml_nc.cpp	\
+										$(SRC_DIR)controller_focus_ml_nc.h		\
+										$(SRC_DIR)controller_focus.h			\
+										$(SRC_DIR)windowtab_about.h				\
+										$(SRC_DIR)windowtab_nitecrawler.h		\
+										$(SRC_DIR)windowtab_graphs.h			\
 										$(SRC_DIR)controller.h
-	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)controller_ml_nc.cpp -o$(OBJECT_DIR)controller_ml_nc.o
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)controller_focus_ml_nc.cpp -o$(OBJECT_DIR)controller_focus_ml_nc.o
 
 
 #-------------------------------------------------------------------------------------
-$(OBJECT_DIR)controller_ml_single.o : 	$(SRC_DIR)controller_ml_single.cpp	\
-										$(SRC_DIR)controller_ml_single.h	\
-										$(SRC_DIR)windowtab_about.h			\
+$(OBJECT_DIR)controller_focus_ml_hr.o : $(SRC_DIR)controller_focus_ml_hr.cpp	\
+										$(SRC_DIR)controller_focus_ml_hr.h		\
+										$(SRC_DIR)controller_focus.h			\
+										$(SRC_DIR)windowtab_about.h				\
 										$(SRC_DIR)controller.h
-	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)controller_ml_single.cpp -o$(OBJECT_DIR)controller_ml_single.o
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)controller_focus_ml_hr.cpp -o$(OBJECT_DIR)controller_focus_ml_hr.o
 
 
 
@@ -3998,6 +4102,18 @@ $(OBJECT_DIR)fitsview.o :				$(SRC_DIR)fitsview.c
 $(OBJECT_DIR)dumpfits.o :				$(SRC_DIR)dumpfits.c
 	$(COMPILE) $(INCLUDES) $(SRC_DIR)dumpfits.c -o$(OBJECT_DIR)dumpfits.o
 
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)PDS_ReadNASAfiles.o :		$(SRC_PDS)PDS_ReadNASAfiles.c			\
+										$(SRC_PDS)PDS_ReadNASAfiles.h
+	$(COMPILE) $(INCLUDES) $(SRC_PDS)PDS_ReadNASAfiles.c -o$(OBJECT_DIR)PDS_ReadNASAfiles.o
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)PDS_decompress.o :			$(SRC_PDS)PDS_decompress.c			\
+										$(SRC_PDS)PDS_decompress.h
+	$(COMPILE) $(INCLUDES) $(SRC_PDS)PDS_decompress.c -o$(OBJECT_DIR)PDS_decompress.o
+
+
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)discovery_lib.o :			$(SRC_DIR)discovery_lib.c			\
 										$(SRC_DIR)discovery_lib.h
@@ -4239,6 +4355,19 @@ $(OBJECT_DIR)controller_constList.o : 	$(SRC_SKYTRAVEL)controller_constList.cpp	
 $(OBJECT_DIR)RemoteImage.o : 			$(SRC_SKYTRAVEL)RemoteImage.cpp	\
 										$(SRC_SKYTRAVEL)RemoteImage.h
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYTRAVEL)RemoteImage.cpp -o$(OBJECT_DIR)RemoteImage.o
+
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)controller_alpacaUnit.o : 		$(SRC_DIR)controller_alpacaUnit.cpp		\
+											$(SRC_DIR)controller_alpacaUnit.h		\
+											$(SRC_DIR)controller.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)controller_alpacaUnit.cpp -o$(OBJECT_DIR)controller_alpacaUnit.o
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)windowtab_alpacaUnit.o : 		$(SRC_DIR)windowtab_alpacaUnit.cpp		\
+											$(SRC_DIR)windowtab_alpacaUnit.h		\
+											$(SRC_DIR)windowtab.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)windowtab_alpacaUnit.cpp -o$(OBJECT_DIR)windowtab_alpacaUnit.o
 
 
 #-------------------------------------------------------------------------------------

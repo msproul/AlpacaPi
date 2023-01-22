@@ -210,7 +210,7 @@ int		boxID;
 }
 
 //*****************************************************************************
-//void	WindowTabGaiaRemote::RunBackgroundTasks(void)
+//void	WindowTabGaiaRemote::RunWindowBackgroundTasks(void)
 //{
 
 

@@ -242,7 +242,6 @@ bool		readStartUpOK;
 		HandleWindowUpdate();
 		cv::waitKey(60);
 
-
 		GetConfiguredDevices();
 
 		readStartUpOK	=	AlpacaGetStartupData();
@@ -289,8 +288,7 @@ bool		readStartUpOK;
 		cForceAlpacaUpdate	=	false;
 	}
 
-
-
+	//---------------------------------------------------------
 	if (needToUpdate)
 	{
 //		CONSOLE_DEBUG_W_STR("Updating....", cWindowName);
@@ -407,43 +405,21 @@ void	ControllerCamera::UpdateFlipMode(void)
 
 
 //*****************************************************************************
-//*	this lets us see if there is a focuser present
-//*****************************************************************************
-void	ControllerCamera::GetConfiguredDevices(void)
+void	ControllerCamera::ProcessConfiguredDevices(const char *keyword, const char *valueString)
 {
-SJP_Parser_t	jsonParser;
-bool			validData;
-int				jjj;
+//	CONSOLE_DEBUG_W_2STR("kw:val", keyword, valueString);
 
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
-
-	SJP_Init(&jsonParser);
-	validData	=	GetJsonResponse(	&cDeviceAddress,
-										cPort,
-										"/management/v1/configureddevices",
-										NULL,
-										&jsonParser);
-	if (validData)
+	if (strcasecmp(keyword, "DEVICETYPE") == 0)
 	{
-		for (jjj=0; jjj<jsonParser.tokenCount_Data; jjj++)
+		if (strcasecmp(valueString, "Filterwheel") == 0)
 		{
-			if (strcasecmp(jsonParser.dataList[jjj].keyword, "DEVICETYPE") == 0)
-			{
-				if (strcasecmp(jsonParser.dataList[jjj].valueString, "Filterwheel") == 0)
-				{
-//					CONSOLE_DEBUG("FilterWheel - !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-					cHas_FilterWheel	=	true;
-				}
-			}
+//			CONSOLE_DEBUG("FilterWheel - !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+			cHas_FilterWheel	=	true;
 		}
 	}
-	else
-	{
-		cReadFailureCnt++;
-		cOnLine	=	false;
-		SetWindowIPaddrInfo(NULL, cOnLine);
-	}
+
 }
+
 
 #pragma mark -
 
@@ -877,19 +853,19 @@ void	ControllerCamera::AlpacaProcessReadAll(	const char	*deviceTypeStr,
 	}
 	else if (strcasecmp(keywordString, "filenameincludefilter") == 0)
 	{
-		cFN_includeFilter	=	IsTrueFalse(valueString);
+		cFN.IncludeFilter	=	IsTrueFalse(valueString);
 	}
 	else if (strcasecmp(keywordString, "filenameincludecamera") == 0)
 	{
-		cFN_includeManuf	=	IsTrueFalse(valueString);
+		cFN.IncludeManuf	=	IsTrueFalse(valueString);
 	}
 	else if (strcasecmp(keywordString, "filenameincludeserialnum") == 0)
 	{
-		cFN_includeSerialNum	=	IsTrueFalse(valueString);
+		cFN.IncludeSerialNum	=	IsTrueFalse(valueString);
 	}
 	else if (strcasecmp(keywordString, "filenameincluderefid") == 0)
 	{
-		cFN_includeRefID	=	IsTrueFalse(valueString);
+		cFN.IncludeRefID	=	IsTrueFalse(valueString);
 	}
 	else if (strcasecmp(keywordString, "freeDisk_Gigabytes") == 0)
 	{
@@ -1034,7 +1010,7 @@ int				failedCnt;
 double			myExposureTime;
 int				argInt;
 
-//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 
 	failedCnt			=	0;
 
@@ -1875,10 +1851,10 @@ int				imageDataLen;
 int				imageWidthStep;
 
 	CONSOLE_DEBUG(__FUNCTION__);
-	CONSOLE_DEBUG_W_NUM("cCameraProp.CameraXsize\t=",	cCameraProp.CameraXsize);
-	CONSOLE_DEBUG_W_NUM("cCameraProp.CameraYsize\t=",	cCameraProp.CameraYsize);
-	CONSOLE_DEBUG_W_NUM("force8BitRead\t\t=",	force8BitRead);
-	CONSOLE_DEBUG_W_NUM("allowBinary\t\t=",		allowBinary);
+	CONSOLE_DEBUG_W_NUM(	"cCameraProp.CameraXsize\t=",	cCameraProp.CameraXsize);
+	CONSOLE_DEBUG_W_NUM(	"cCameraProp.CameraYsize\t=",	cCameraProp.CameraYsize);
+	CONSOLE_DEBUG_W_BOOL(	"force8BitRead          \t=",	force8BitRead);
+	CONSOLE_DEBUG_W_BOOL(	"allowBinary            \t=",	allowBinary);
 
 	//*	set up default values for the binary image header in case we use JSON
 	memset((void *)&cBinaryImageHdr, 0, sizeof(TYPE_BinaryImageHdr));
@@ -2191,19 +2167,19 @@ bool	validData;
 	switch(fnOptionBtn)
 	{
 		case kCamSet_FN_IncFilter:
-			sprintf(dataString, "includefilter=%s",		(cFN_includeFilter ? "false" : "true"));
+			sprintf(dataString, "includefilter=%s",		(cFN.IncludeFilter ? "false" : "true"));
 			break;
 
 		case kCamSet_FN_IncCamera:
-			sprintf(dataString, "includecamera=%s",		(cFN_includeManuf ? "false" : "true"));
+			sprintf(dataString, "includecamera=%s",		(cFN.IncludeManuf ? "false" : "true"));
 			break;
 
 		case kCamSet_FN_IncSerialNum:
-			sprintf(dataString, "includeserialnum=%s",	(cFN_includeSerialNum ? "false" : "true"));
+			sprintf(dataString, "includeserialnum=%s",	(cFN.IncludeSerialNum ? "false" : "true"));
 			break;
 
 		case kCamSet_FN_IncRefID:
-			sprintf(dataString, "includerefid=%s",	(cFN_includeRefID ? "false" : "true"));
+			sprintf(dataString, "includerefid=%s",	(cFN.IncludeRefID ? "false" : "true"));
 			break;
 
 	}

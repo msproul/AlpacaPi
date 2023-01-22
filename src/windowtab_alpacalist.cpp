@@ -290,7 +290,7 @@ int				alpacaErrorCode;
 
 
 //*****************************************************************************
-void	WindowTabAlpacaList::RunBackgroundTasks(void)
+void	WindowTabAlpacaList::RunWindowBackgroundTasks(void)
 {
 int		iii;
 bool	interfaceVersOK;
