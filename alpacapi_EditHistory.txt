@@ -2470,7 +2470,7 @@ controller_camera.cpp:68 	//*	Jan  1,	2121	<TODO> finish exposure step options
 controller_camera.cpp:69 	//*	Feb  6,	2121	<TODO> Move downloading of images to a separate thread
 cameradriver_QHY.cpp:40  	//*	Oct 10,	2122	<TODO> Add support for percentcompleted to QHY camera driver
 History Comments found   = 2470 in 383 files
-Total lines              = 192800
+Total lines              = 192802
 Total comment Lines      = 29676 (15.4%)
 Total comments           = 33546 (17.4%)
 Total history comments   = 2470 (1.3%)
@@ -2478,8 +2478,8 @@ Total C files            = 58
 Total C++ files          = 135
 Total H files            = 188
 Preprocssor cnt          = 6008
-Total SLOC               = 124671
-Total SLOC-Logical       = 96094
+Total SLOC               = 124673
+Total SLOC-Logical       = 96096
 Programmer comment summary
 MLS             = 2086
 TODO            =   13

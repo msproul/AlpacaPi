@@ -1789,14 +1789,16 @@ pi64		:		CPLUSFLAGS		+=	-std=gnu++17
 pi64		:		$(CPP_OBJECTS)				\
 					$(DRIVER_OBJECTS)			\
 					$(SOCKET_OBJECTS)			\
+					$(HELPER_OBJECTS)			\
 
 
 		$(LINK)  								\
 					$(SOCKET_OBJECTS)			\
 					$(CPP_OBJECTS)				\
 					$(DRIVER_OBJECTS)			\
-					$(OPENCV_LINK)				\
+					$(HELPER_OBJECTS)			\
 					$(ASI_CAMERA_OBJECTS)		\
+					$(OPENCV_LINK)				\
 					-L$(ATIK_LIB_DIR)			\
 					-latikcameras				\
 					-lcfitsio					\
