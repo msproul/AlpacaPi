@@ -66,6 +66,7 @@
 //*	Nov 30,	2022	<MLS> Build 157
 //*	Dec 18,	2022	<MLS> Build 158
 //*	Jan  1,	2023	-----------------------------------------------------------
+//*	Feb 20,	2023	<MLS> Build 159
 //*****************************************************************************
 //#include	"alpaca_defs.h"
 
@@ -89,8 +90,8 @@
 #endif
 
 #define	kApplicationName	"AlpacaPi"
-#define	kVersionString		"V0.5.1-beta"
-#define	kBuildNumber		158
+#define	kVersionString		"V0.6.0-beta"
+#define	kBuildNumber		159
 
 
 #define kAlpacaDiscoveryPORT	32227

@@ -1310,6 +1310,7 @@ char				filePath[256];
 
 #ifdef _ENABLE_CTRL_IMAGE_
 ControllerCamera	*parentCameraController;
+			CONSOLE_DEBUG("Creating ControllerImage()")
 			//*	this will open a new window with the image displayed
 			parentCameraController	=	(ControllerCamera *)cParentObjPtr;
 			new ControllerImage(	cDownLoadedFileNameRoot,

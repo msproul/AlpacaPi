@@ -859,7 +859,8 @@ int				validCPUtempCount;
 			{
 				inet_ntop(AF_INET, &(gAlpacaUnitList[iii].deviceAddress.sin_addr), cCPU_NameList[validCPUtempCount].cpuName, INET_ADDRSTRLEN);
 			}
-			cCPU_NameList[validCPUtempCount].cpuTemp		=	gAlpacaUnitList[iii].cpuTemp_DegF;
+			cCPU_NameList[validCPUtempCount].cpuColor	=	cCurrentColor;
+			cCPU_NameList[validCPUtempCount].cpuTemp	=	gAlpacaUnitList[iii].cpuTemp_DegF;
 			validCPUtempCount++;
 
 			previousX		=	theWidget->left;

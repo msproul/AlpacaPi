@@ -162,9 +162,9 @@ int		connButtonWidgetIdx;
 						yLoc,
 						logoWidth,
 						logoHeight);
-			SetWidgetBorder(kMLsingle_logo, false);
-			SetWidgetType(kMLsingle_logo, kWidgetType_Image);
-			SetWidgetImage(kMLsingle_logo, gMoonLiteImage);
+			SetWidgetBorder(	kMLsingle_logo, false);
+			SetWidgetType(		kMLsingle_logo, kWidgetType_Image);
+			SetWidgetImage(		kMLsingle_logo, gMoonLiteImage);
 		}
 		else
 		{

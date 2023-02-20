@@ -184,6 +184,7 @@
 //*	Dec 24,	2022	<MLS> Added BuildBinaryImage_Raw8_32bit()
 //*	Dec 24,	2022	<MLS> Lots of work on imagebytes routines to work with NINA
 //*	Dec 26,	2022	<MLS> Now changing sensorType when image type gets set
+//*	Feb 13,	2023	<MLS> Fixed value string bug in Get_SensorName()
 //*****************************************************************************
 //*	Jan  1,	2119	<TODO> ----------------------------------------
 //*	Jun 26,	2119	<TODO> Add support for sub frames
@@ -3101,7 +3102,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 	cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(reqData->socket,
 														reqData->jsonTextBuffer,
 														kMaxJsonBuffLen,
-														gValueString,
+														responseString,
 														cCameraProp.SensorName,
 														INCLUDE_COMMA);
 	return(alpacaErrCode);
@@ -4175,7 +4176,8 @@ bool	xmit16BitAs32Bit	=	true;
 			{
 				bytesPerPixel							=	4;
 				binaryImageHdr.ImageElementType			=	kAlpacaImageData_Int32;		//	Element type of the source image array
-				binaryImageHdr.TransmissionElementType	=	kAlpacaImageData_Int32;		//	Element type as sent over the network
+//				binaryImageHdr.TransmissionElementType	=	kAlpacaImageData_Int32;		//	Element type as sent over the network
+				binaryImageHdr.TransmissionElementType	=	kAlpacaImageData_Int16;		//	Element type as sent over the network
 			}
 			break;
 
@@ -4290,7 +4292,6 @@ bool	xmit16BitAs32Bit	=	true;
 					else
 					{
 						returnedDataLen	=	BuildBinaryImage_Raw8_32bit(binaryDataBuffer, imgDataOffset, bufferSize);
-
 					}
 					CONSOLE_DEBUG_W_LONG("bufferSize     \t\t=",	(long)bufferSize);
 					CONSOLE_DEBUG_W_NUM( "returnedDataLen\t\t=",	returnedDataLen);

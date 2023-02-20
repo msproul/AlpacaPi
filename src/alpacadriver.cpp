@@ -2710,6 +2710,7 @@ struct tm	*linuxTime;
 int			bytesWritten;
 char		getPutStr[16];
 char		logFilename[64];
+int			returnCode;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 //2022/12/08 08:19:15	10.6.0.3          	Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:106.0) Gecko/20100101 Firefox/106.0	GET /setup/v1/camera/0/setup
@@ -2791,7 +2792,11 @@ char		logFilename[64];
 		if (linuxTime->tm_mday != gCurrentDayOfMonth)
 		{
 			CONSOLE_DEBUG("Closing log file");
-			fclose(gIPlogFilePointer);
+			returnCode	=	fclose(gIPlogFilePointer);
+			if (returnCode != 0)
+			{
+				CONSOLE_DEBUG("Error closing requestlog")
+			}
 			gIPlogFilePointer		=	NULL;
 			gIPlogNeedsToBeOpened	=	true;
 		}

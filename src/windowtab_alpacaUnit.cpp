@@ -76,11 +76,9 @@ int		yLoc;
 int		xLoc;
 int		yLocSave;
 int		graphHeight;
-int		availSpace;
 int		textBoxHt;
 int		textBoxWd;
 int		iii;
-int		logoHeight;
 short	tabArray[kMaxTabStops]	=	{200, 400, 600, 1000, 1199, 0};
 
 //	CONSOLE_DEBUG(__FUNCTION__);
@@ -95,7 +93,7 @@ short	tabArray[kMaxTabStops]	=	{200, 400, 600, 1000, 1199, 0};
 	yLoc			+=	cTitleHeight;
 	yLoc			+=	2;
 
-	logoHeight		=	SetAlpacaLogoBottomCorner(kAlpacaUnit_AlpacaLogo);
+	SetAlpacaLogoBottomCorner(kAlpacaUnit_AlpacaLogo);
 
 	//------------------------------------------
 	xLoc		=	5;
@@ -180,9 +178,9 @@ void	WindowAlpacaUnit::DrawWidgetCustomGraphic(cv::Mat *openCV_Image, const int 
 void	WindowAlpacaUnit::DrawWidgetCustomGraphic(IplImage *openCV_Image, const int widgetIdx)
 #endif // _USE_OPENCV_CPP_
 {
-//	CONSOLE_DEBUG(__FUNCTION__);
-
 ControllerAlpacaUnit	*myParentCtrlPtr;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	cOpenCV_Image	=	openCV_Image;
 	switch(widgetIdx)
@@ -192,22 +190,31 @@ ControllerAlpacaUnit	*myParentCtrlPtr;
 			myParentCtrlPtr	=	(ControllerAlpacaUnit *)cParentObjPtr;
 			if (myParentCtrlPtr != NULL)
 			{
-				//*	draw the temperature graph lines
-				if (myParentCtrlPtr->cHasCamera)
+				if (myParentCtrlPtr->cMagicCookie == kMagicCookieValue)
 				{
-					SetWidgetValid(kAlpacaUnit_Legend_Camera,	true);
-					LLD_SetColor(W_YELLOW);
-					DrawGraph(&cWidgetList[widgetIdx], myParentCtrlPtr->cCameraTempCnt, myParentCtrlPtr->cCameraTempLog, false, 2);
-				}
-				if (myParentCtrlPtr->cHasFocuser)
-				{
-					SetWidgetValid(kAlpacaUnit_Legend_Focuser,	true);
-					LLD_SetColor(W_GREEN);
-					DrawGraph(&cWidgetList[widgetIdx], myParentCtrlPtr->cFocusTempCnt, myParentCtrlPtr->cFocusTempLog, false, 2);
-				}
+					//*	draw the temperature graph lines
+					if (myParentCtrlPtr->cHasCamera)
+					{
+						SetWidgetValid(kAlpacaUnit_Legend_Camera,	true);
+						LLD_SetColor(W_YELLOW);
+						DrawGraph(	&cWidgetList[widgetIdx],
+									myParentCtrlPtr->cCameraTempCnt,
+									myParentCtrlPtr->cCameraTempLog, false, 2);
+					}
+					if (myParentCtrlPtr->cHasFocuser)
+					{
+						SetWidgetValid(kAlpacaUnit_Legend_Focuser,	true);
+						LLD_SetColor(W_GREEN);
+						DrawGraph(&cWidgetList[widgetIdx], myParentCtrlPtr->cFocusTempCnt, myParentCtrlPtr->cFocusTempLog, false, 2);
+					}
 
-				LLD_SetColor(W_MAGENTA);
-				DrawGraph(&cWidgetList[widgetIdx], myParentCtrlPtr->cCPUTtempCnt, myParentCtrlPtr->cCPUtempLog, true, 2);
+					LLD_SetColor(W_MAGENTA);
+					DrawGraph(&cWidgetList[widgetIdx], myParentCtrlPtr->cCPUTtempCnt, myParentCtrlPtr->cCPUtempLog, true, 2);
+				}
+				else
+				{
+					CONSOLE_DEBUG("Stack corruption !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+				}
 			}
 			break;
 

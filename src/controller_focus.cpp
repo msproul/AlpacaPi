@@ -12,7 +12,7 @@
 //*	that you agree that the author(s) have no warranty, obligations or liability.  You
 //*	must determine the suitability of this source code for your use.
 //*
-//*	Redistributions of this source code must retain this copyright notice.
+//*	Re-distributions of this source code must retain this copyright notice.
 //*****************************************************************************
 //*
 //*****************************************************************************
@@ -369,9 +369,6 @@ void	ControllerFocus::UpdateWindowTabs_Everything(void)
 	CONSOLE_DEBUG(__FUNCTION__);
 
 	//*	This function should be overloaded
-//-	SetWidgetNumber(kTab_Focuser,	kFocusTab_rotDesired,		cRotatorDesiredPos);
-//-	SetWidgetNumber(kTab_Focuser,	kFocusTab_focDesired,		cFocuserDesiredPos);
-//-	SetWidgetNumber(kTab_AuxMotor,	kAuxMotorBox_DesiredPos,	cAuxMotorDesiredPos);
 }
 
 //*****************************************************************************
@@ -379,7 +376,6 @@ void	ControllerFocus::UpdateWindowTabs_SwitchBits(unsigned char switchBits)
 {
 	//*	This function should be overloaded
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, "This function should be overloaded");
-
 }
 
 //*****************************************************************************
@@ -1227,6 +1223,11 @@ int	myFocuserTYpe;
 		{
 			sprintf(windowName, "Moonlite -%d", focuserNum);
 		}
+	}
+	else if (strcasestr(device->deviceNameStr, "Shelyak") != NULL)
+	{
+		myFocuserTYpe	=	kFocuserType_Shelyak;
+		sprintf(windowName, "%s -%d", device->deviceNameStr, focuserNum);
 	}
 	else
 	{

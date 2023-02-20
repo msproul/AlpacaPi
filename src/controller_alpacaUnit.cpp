@@ -15,6 +15,7 @@
 //*	<MLS>	=	Mark L Sproul
 //*****************************************************************************
 //*	Nov 30,	2022	<MLS> Created controller_alpacaUnit.cpp
+//*	Feb 10,	2023	<MLS> Fixed initialization bug for focuser temp log
 //*****************************************************************************
 
 #include	<stdio.h>
@@ -74,8 +75,10 @@ ControllerAlpacaUnit::ControllerAlpacaUnit(	const char			*argWindowName,
 
 	cCPUTtempCnt			=	0;
 	cCameraTempCnt			=	0;
+	cFocusTempCnt			=	0;
 	memset(cCPUtempLog,		0, sizeof(cCPUtempLog));
 	memset(cCameraTempLog,	0, sizeof(cCameraTempLog));
+	memset(cFocusTempLog,	0, sizeof(cFocusTempLog));
 
 	//*	copy the device address info
 	if (alpacaUnit != NULL)

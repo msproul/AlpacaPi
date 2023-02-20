@@ -620,7 +620,7 @@ int		boundingBoxHeight;
 		}
 		else
 		{
-			CONSOLE_DEBUG("ERROR!!!");
+			CONSOLE_DEBUG("ERROR!!!, bounding box size is messed up");
 		}
 	}
 }
@@ -729,7 +729,7 @@ int		logoHeight;
 	if (errorMsgBox > 0)
 	{
 		//*	for narrow screens we need 2 lines
-		CONSOLE_DEBUG_W_NUM("cWidth\t=",	cWidth);
+//		CONSOLE_DEBUG_W_NUM("cWidth\t=",	cWidth);
 		if (cWidth < 550)
 		{
 			errMsgBoxHeight	=	2 * cBtnHeight;
@@ -825,7 +825,7 @@ void	WindowTab::ClearLastAlpacaCommand(void)
 {
 Controller	*myControllerObj;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	myControllerObj	=	(Controller *)cParentObjPtr;
 	if (myControllerObj != NULL)
@@ -1680,7 +1680,11 @@ void	WindowTab::BumpColorScheme(void)
 
 
 //**************************************************************************************
-void	WindowTab::DrawGraph(TYPE_WIDGET *theWidget, const int numEntries, double *graphArray, bool drawCurrentTimeMarker, const int stepX)
+void	WindowTab::DrawGraph(	TYPE_WIDGET	*theWidget,
+								const int	numEntries,
+								double		*graphArray,
+								bool		drawCurrentTimeMarker,
+								const int	stepX)
 {
 cv::Rect		myCVrect;
 int				jjj;
@@ -1696,55 +1700,64 @@ int				preivousYvalue;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-	myCVrect.x		=	theWidget->left;
-	myCVrect.y		=	theWidget->top;
-	myCVrect.width	=	theWidget->width;
-	myCVrect.height	=	theWidget->height;
-
-	//=========================================================
-	//*	draw tick mark lines
-//	yLoc	=	50;
-//	while (yLoc < 325)
-//	{
-//		DrawTickLine(&myCVrect, yLoc);
-//		yLoc	+=	50;
-//	}
-//	//*	draw a special one at 30
-//	DrawTickLine(&myCVrect, 30);
-
-
-	previousX		=	theWidget->left;
-	preivousYvalue	=	graphArray[0];
-	for (jjj=0; jjj<numEntries; jjj += stepX)
+	if ((graphArray != NULL) && (numEntries > 0) && (numEntries < 3000))
 	{
-		if ((stepX == 1) || (jjj < stepX))
-		{
-			currentYvalue	=	graphArray[jjj];
-		}
-		else
-		{
-			currentYvalue	=	graphArray[jjj];
-			if (graphArray[jjj-1] > currentYvalue)
-			{
-				currentYvalue	=	graphArray[jjj-1];
-			}
-//			avgTotal	=	0.0;
-//			for (qqq=0; qqq<stepX; qqq++)
-//			{
-//				avgTotal	+=	graphArray[jjj - qqq];
-//			}
-//			currentYvalue	=	avgTotal / stepX;
-		}
-		//*	compute the x,y points for the line
-		pt1_X			=	previousX;
-		pt1_Y			=	TRANSLATE_Y((&myCVrect), preivousYvalue);
-		pt2_X			=	previousX + 1;
-		pt2_Y			=	TRANSLATE_Y((&myCVrect), currentYvalue);
-		LLD_MoveTo(pt1_X, pt1_Y);
-		LLD_LineTo(pt2_X, pt2_Y);
+		myCVrect.x		=	theWidget->left;
+		myCVrect.y		=	theWidget->top;
+		myCVrect.width	=	theWidget->width;
+		myCVrect.height	=	theWidget->height;
 
-		previousX		=	pt2_X;
-		preivousYvalue	=	currentYvalue;
+		//=========================================================
+		//*	draw tick mark lines
+	//	yLoc	=	50;
+	//	while (yLoc < 325)
+	//	{
+	//		DrawTickLine(&myCVrect, yLoc);
+	//		yLoc	+=	50;
+	//	}
+	//	//*	draw a special one at 30
+	//	DrawTickLine(&myCVrect, 30);
+
+	//	CONSOLE_DEBUG_W_NUM("numEntries\t=", numEntries);
+		previousX		=	theWidget->left;
+		preivousYvalue	=	graphArray[0];
+		for (jjj=0; jjj<numEntries; jjj += stepX)
+		{
+			if ((stepX == 1) || (jjj < stepX))
+			{
+				currentYvalue	=	graphArray[jjj];
+			}
+			else
+			{
+				currentYvalue	=	graphArray[jjj];
+				if (graphArray[jjj-1] > currentYvalue)
+				{
+					currentYvalue	=	graphArray[jjj-1];
+				}
+	//			avgTotal	=	0.0;
+	//			for (qqq=0; qqq<stepX; qqq++)
+	//			{
+	//				avgTotal	+=	graphArray[jjj - qqq];
+	//			}
+	//			currentYvalue	=	avgTotal / stepX;
+			}
+			//*	compute the x,y points for the line
+			pt1_X			=	previousX;
+			pt1_Y			=	TRANSLATE_Y((&myCVrect), preivousYvalue);
+			pt2_X			=	previousX + 1;
+			pt2_Y			=	TRANSLATE_Y((&myCVrect), currentYvalue);
+			LLD_MoveTo(pt1_X, pt1_Y);
+			LLD_LineTo(pt2_X, pt2_Y);
+
+			previousX		=	pt2_X;
+			preivousYvalue	=	currentYvalue;
+		}
+	}
+	else
+	{
+		CONSOLE_DEBUG("Something is wrong with input parameters");
+		CONSOLE_DEBUG_W_HEX("graphArray\t=",	graphArray);
+		CONSOLE_DEBUG_W_NUM("numEntries\t=",	numEntries);
 	}
 
 	//=========================================================

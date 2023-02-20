@@ -265,11 +265,15 @@ bool				keepReading;
 int					setOptRetCode;
 int					readLoopCnt;		//*	for debugging
 int					readSuccessCnt;		//*	for debugging
+int					parseReturnCode;
 
 	if (gEnableDebug)
 	{
 		CONSOLE_DEBUG_W_STR(__FUNCTION__, "------start-------");
 		CONSOLE_DEBUG(sendData);
+		CONSOLE_DEBUG_W_LONG("sizeof(xmitBuffer)  \t=", sizeof(xmitBuffer));
+		CONSOLE_DEBUG_W_LONG("sizeof(returnedData)\t=", sizeof(returnedData));
+		CONSOLE_DEBUG_W_LONG("sizeof(longBuffer)  \t=", sizeof(longBuffer));
 	}
 	inet_ntop(AF_INET, &deviceAddress->sin_addr.s_addr, ipString, INET_ADDRSTRLEN);
 
@@ -279,7 +283,10 @@ int					readSuccessCnt;		//*	for debugging
 	socket_desc	=	socket(AF_INET , SOCK_STREAM , 0);
 	if (socket_desc >= 0)
 	{
-//		CONSOLE_DEBUG("Setting Timeout");
+		if (gEnableDebug)
+		{
+			CONSOLE_DEBUG("Setting Timeout");
+		}
 		//*	set a timeout
 		setOptRetCode	=	SetSocketTimeouts(socket_desc, kTimeOutLenSeconds, 0);
 	//	setOptRetCode	=	SetSocketTimeouts(socket_desc, 0, 25000);
@@ -317,7 +324,10 @@ int					readSuccessCnt;		//*	for debugging
 //	Connection: keep-alive
 
 
-//			CONSOLE_DEBUG("Building xmitBuffer");
+			if (gEnableDebug)
+			{
+				CONSOLE_DEBUG("Building xmitBuffer");
+			}
 			strcpy(xmitBuffer,	"GET ");
 			strcat(xmitBuffer,	sendData);
 			strcat(xmitBuffer,	" HTTP/1.0\r\n");
@@ -330,6 +340,11 @@ int					readSuccessCnt;		//*	for debugging
 
 			strcat(xmitBuffer,	"Accept-Language: en-US,en;q=0.5\r\n");
 			strcat(xmitBuffer,	"Connection: close\r\n");
+
+			if (gEnableDebug)
+			{
+				CONSOLE_DEBUG_W_LONG("length xmitBuffer\t=", strlen(xmitBuffer));
+			}
 
 //			if (strstr(sendData, "switch") !=  NULL)
 //			{
@@ -350,12 +365,20 @@ int					readSuccessCnt;		//*	for debugging
 			//*	this EXTRA CR/LF is VERY important for Alpaca Remote Server
 			strcat(xmitBuffer, "\r\n");
 
+			if (gEnableDebug)
+			{
+				CONSOLE_DEBUG_W_LONG("length xmitBuffer\t=", strlen(xmitBuffer));
+			}
+
 //			CONSOLE_DEBUG(xmitBuffer);
 
 			sendRetCode	=	send(socket_desc , xmitBuffer , strlen(xmitBuffer) , MSG_NOSIGNAL);
 			if (sendRetCode >= 0)
 			{
-//				CONSOLE_DEBUG("Request sent");
+				if (gEnableDebug)
+				{
+					CONSOLE_DEBUG("Request sent");
+				}
 				keepReading		=	true;
 				longBuffer[0]	=	0;
 				readLoopCnt		=	0;
@@ -365,8 +388,11 @@ int					readSuccessCnt;		//*	for debugging
 					readLoopCnt++;
 				//	recvByteCnt	=	recv(socket_desc, returnedData, kReadBuffLen, 0);
 					recvByteCnt	=	recv(socket_desc, returnedData, kReadBuffLen, MSG_NOSIGNAL);
-//					CONSOLE_DEBUG_W_NUM("errno   \t=",	errno);
-//					CONSOLE_DEBUG_W_NUM("recvByteCnt\t=",	recvByteCnt);
+					if (gEnableDebug)
+					{
+						CONSOLE_DEBUG_W_NUM("errno      \t=",	errno);
+						CONSOLE_DEBUG_W_NUM("recvByteCnt\t=",	recvByteCnt);
+					}
 					if (recvByteCnt > 0)
 					{
 						readSuccessCnt++;
@@ -389,18 +415,24 @@ int					readSuccessCnt;		//*	for debugging
 				}
 				if (gEnableDebug)
 				{
-					CONSOLE_DEBUG_W_STR("longBuffer\t=",	longBuffer);
 					CONSOLE_DEBUG_W_NUM("readLoopCnt   \t=",	readLoopCnt);
 					CONSOLE_DEBUG_W_NUM("readSuccessCnt\t=",	readSuccessCnt);
-					CONSOLE_DEBUG_W_STR("longBuffer\t=",	longBuffer);
+					CONSOLE_DEBUG_W_STR("longBuffer    \t=",	longBuffer);
 				}
 				SJP_Init(jsonParser);
-				SJP_ParseData(jsonParser, longBuffer);
-//				CONSOLE_DEBUG(__FUNCTION__);
+				parseReturnCode	=	SJP_ParseData(jsonParser, longBuffer);
+				if ((parseReturnCode != 0) || gEnableDebug)
+				{
+					CONSOLE_DEBUG_W_NUM("parseReturnCode   \t=",	parseReturnCode);
+				}
 			}
 			else
 			{
 				CONSOLE_DEBUG_W_NUM("sendRetCode\t=", sendRetCode);
+			}
+			if (gEnableDebug)
+			{
+				CONSOLE_DEBUG("Calling shutdown");
 			}
 			shutDownRetCode	=	shutdown(socket_desc, SHUT_RDWR);
 			if (shutDownRetCode != 0)
@@ -448,7 +480,10 @@ int					readSuccessCnt;		//*	for debugging
 			CONSOLE_DEBUG_W_NUM("errno\t\t=", errno);
 		}
 	}
-//	CONSOLE_DEBUG(__FUNCTION__);
+	if (gEnableDebug)
+	{
+		CONSOLE_DEBUG_W_STR(__FUNCTION__, "EXIT");
+	}
 	DEBUG_TIMING("Delta time for GetJsonResponse()=");
 	return(validData);
 }

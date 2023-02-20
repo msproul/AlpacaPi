@@ -156,6 +156,11 @@ char	theChar;
 					}
 					break;
 
+				//*	-d debug
+				case 'd':
+					Set_SendRequestLibDebug(true);
+					break;
+
 				//*	-i ip address
 				case 'i':
 					break;

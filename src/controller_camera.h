@@ -232,6 +232,9 @@ class ControllerCamera: public Controller
 				void	AlpacaGetImageArray_Binary_Byte(	TYPE_ImageArray	*imageArray,
 															int				arrayLength);
 
+				void	AlpacaGetImageArray_Binary_Int16(	TYPE_ImageArray	*imageArray,
+															int				arrayLength);
+
 				void	AlpacaGetImageArray_Binary_Int32(	TYPE_ImageArray	*imageArray,
 															int				arrayLength);
 

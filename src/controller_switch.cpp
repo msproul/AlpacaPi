@@ -261,12 +261,12 @@ int				switchNum;
 double			myDoubleValue;
 bool			myCanWriteFlag;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	validData	=	AlpacaGetIntegerValue("switch", "maxswitch",	NULL,	&cMaxSwitch);
 	if (validData)
 	{
-		CONSOLE_DEBUG_W_NUM("cMaxSwitch\t=", cMaxSwitch);
+//		CONSOLE_DEBUG_W_NUM("cMaxSwitch\t=", cMaxSwitch);
 		if (cSwitchTabObjPtr != NULL)
 		{
 			cSwitchTabObjPtr->SetActiveSwitchCount(cMaxSwitch);
@@ -281,7 +281,7 @@ bool			myCanWriteFlag;
 
 	//*	Start by getting the switch names and descriptions
 	switchNum	=	0;
-	CONSOLE_DEBUG_W_NUM("cMaxSwitch\t=",	cMaxSwitch);
+//	CONSOLE_DEBUG_W_NUM("cMaxSwitch\t=",	cMaxSwitch);
 	while (switchNum < cMaxSwitch)
 	{
 //		CONSOLE_DEBUG(__FUNCTION__);
@@ -377,7 +377,7 @@ bool			validData;
 int				jjj;
 int				boxNumber;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	//===============================================================
 	//*	get supportedactions
 	validData	=	AlpacaGetSupportedActions("switch", cAlpacaDevNum);
@@ -404,7 +404,7 @@ int				boxNumber;
 
 	//===================================================================
 	//*	now update all of the data.
-	CONSOLE_DEBUG_W_NUM("cMaxSwitch\t=",	cMaxSwitch);
+//	CONSOLE_DEBUG_W_NUM("cMaxSwitch\t=",	cMaxSwitch);
 
 	if (cSwitchTabObjPtr != NULL)
 	{
@@ -413,7 +413,7 @@ int				boxNumber;
 
 	for (jjj=0; jjj<cMaxSwitch; jjj++)
 	{
-		CONSOLE_DEBUG_W_STR("switchName\t=",	cSwitchInfo[jjj].switchName);
+//		CONSOLE_DEBUG_W_STR("switchName\t=",	cSwitchInfo[jjj].switchName);
 		boxNumber	=	kSwitchBox_Name01 + (kBoxesPerSwitch * jjj);
 		SetWidgetText(kTab_Switch, boxNumber, cSwitchInfo[jjj].switchName);
 
@@ -454,8 +454,8 @@ int				boxNumber;
 int				myFailureCount;
 int				switchValue;
 
-	CONSOLE_DEBUG(__FUNCTION__);
-	CONSOLE_DEBUG_W_NUM("cMaxSwitch\t=", cMaxSwitch);
+//	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG_W_NUM("cMaxSwitch\t=", cMaxSwitch);
 
 	//*	Get switch status
 	myFailureCount	=	0;
@@ -551,7 +551,7 @@ int				switchValue;
 	{
 		validData	=	false;
 	}
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	return(validData);
 }
 
@@ -747,7 +747,7 @@ char			newStateString[16];
 			strcpy(newStateString, "true");
 		}
 		sprintf(dataString,		"Id=%d&State=%s", switchNum, newStateString);
-		CONSOLE_DEBUG_W_STR("dataString=", dataString);
+//		CONSOLE_DEBUG_W_STR("dataString=", dataString);
 		validData	=	AlpacaSendPutCmd(	"switch",	"setswitch",		dataString);
 
 		if (validData == false)

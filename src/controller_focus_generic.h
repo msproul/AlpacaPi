@@ -1,6 +1,9 @@
 //**************************************************************************************
 //#include	"controller_focus_generic.h"
 
+#ifndef _CONTROLLER_FOCUS_H_
+	#include	"controller_focus.h"
+#endif
 
 #ifndef	_WINDOWTAB_MOONLITE_SINGLE_H_
 	#include	"windowtab_ml_single.h"
@@ -20,7 +23,8 @@ class ControllerFocusGeneric: public ControllerFocus
 				ControllerFocusGeneric(	const char			*argWindowName,
 										struct sockaddr_in	*deviceAddress,
 										const int			port,
-										const int			deviceNum);
+										const int			deviceNum,
+										const int			focuserType = kFocuserType_Other);
 
 
 		virtual	~ControllerFocusGeneric(void);

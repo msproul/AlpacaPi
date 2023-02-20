@@ -59,7 +59,8 @@ enum
 ControllerFocusGeneric::ControllerFocusGeneric(	const char			*argWindowName,
 												struct sockaddr_in	*deviceAddress,
 												const int			port,
-												const int			deviceNum)
+												const int			deviceNum,
+												const int			focuserType)
 	:ControllerFocus(	argWindowName,
 						deviceAddress,
 						port,

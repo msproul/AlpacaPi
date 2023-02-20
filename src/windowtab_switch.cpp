@@ -161,8 +161,8 @@ int		iii;
 
 	yLoc			+=	4;
 
-	CONSOLE_DEBUG_W_NUM("boxLeft\t",	boxLeft);
-	CONSOLE_DEBUG_W_NUM("yLoc\t",		yLoc);
+//	CONSOLE_DEBUG_W_NUM("boxLeft\t",	boxLeft);
+//	CONSOLE_DEBUG_W_NUM("yLoc\t",		yLoc);
 	SetWidget(			kSwitchBox_AllOff,	boxLeft,			yLoc,		descWidth,		cBtnHeight);
 	SetWidgetType(		kSwitchBox_AllOff,	kWidgetType_Button);
 	SetWidgetFont(		kSwitchBox_AllOff,	kFont_Medium);
@@ -247,7 +247,7 @@ int		boxNum;
 			SetWidgetValid(boxNum++, true);
 		}
 	}
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 }
 
 //*****************************************************************************

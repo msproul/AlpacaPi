@@ -81,7 +81,11 @@ long		myFileSize;
 void	DumpCelestDataStruct(const char *functionName, TYPE_CelestData *objectStruct)
 {
 #ifdef _ENABLE_CONSOLE_DEBUG_
-int	myHexData;
+int		myHexData;
+char	spectralClassStr[4];
+
+	spectralClassStr[0]	=	objectStruct->spectralClass;
+	spectralClassStr[1]	=	0;
 
 	CONSOLE_DEBUG("---------------------------------------------------------");
 	CONSOLE_DEBUG_W_STR("Called from  \t=",	functionName);
@@ -102,6 +106,8 @@ int	myHexData;
 	CONSOLE_DEBUG_W_DBL("parallax     \t=",	objectStruct->parallax);
 	CONSOLE_DEBUG_W_STR("shortName    \t=",	objectStruct->shortName);
 	CONSOLE_DEBUG_W_STR("longName     \t=",	objectStruct->longName);
+	CONSOLE_DEBUG_W_STR("spectralClass\t=",	spectralClassStr);
+
 #endif // _ENABLE_CONSOLE_DEBUG_
 }
 

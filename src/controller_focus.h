@@ -1,6 +1,8 @@
 //*****************************************************************************
 //#include	"controller_focus.h"
 
+#ifndef _CONTROLLER_FOCUS_H_
+#define _CONTROLLER_FOCUS_H_
 
 #include	"controller.h"
 #ifndef _WINDOW_TAB_H
@@ -51,6 +53,7 @@ enum
 	kFocuserType_NiteCrawler	=	0,
 	kFocuserType_MoonliteSingle,
 	kFocuserType_MoonliteDouble,
+	kFocuserType_Shelyak,			//*	this is the focuser in the spectrograph
 
 	kFocuserType_Other,
 
@@ -172,3 +175,4 @@ class ControllerFocus: public Controller
 int		GenerateFocuserWindowName(TYPE_REMOTE_DEV *device, int focuserNum, char *windowName);
 int		CheckForFocuser(TYPE_REMOTE_DEV *remoteDevice);
 
+#endif // _CONTROLLER_FOCUS_H_

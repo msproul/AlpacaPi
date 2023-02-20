@@ -4946,6 +4946,10 @@ int		myLineSpacing;
 				labelString[1]	=	0;
 				LLD_DrawCString(myXcoord + 10, myYcoord, labelString, fontIndex);
 				myYcoord		+=	myLineSpacing;
+				if (!isalpha(theStar->spectralClass))
+				{
+					DumpCelestDataStruct(__FUNCTION__, theStar);
+				}
 			}
 		}
 	}

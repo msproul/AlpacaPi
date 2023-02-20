@@ -657,12 +657,16 @@ bool		masterArrayFlag;
 			}
 		}
 
+	//#ifndef _ENABLE_SKYTRAVEL_
+	#ifdef _REQUIRE_JSON_HEADER_
+		//*	skytravel does not use the HDR value
 		//*	did we fine a header?
 		if (headerFound == false)
 		{
 			//*	report the fact that we did not find a header
 			returnCode	=	SJP_NoHeader;
 		}
+	#endif
 	}
 	else
 	{

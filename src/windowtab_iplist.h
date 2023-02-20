@@ -102,8 +102,10 @@ enum
 //**************************************************************************************
 typedef struct
 {
-	char	cpuName[32];
-	double	cpuTemp;
+	char		cpuName[32];
+	double		cpuTemp;
+	cv::Scalar	cpuColor;
+
 } TYPE_CPU_SORT;
 #define	kMaxCPUs	32
 

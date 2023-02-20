@@ -188,9 +188,9 @@ bool	myConnectedFlag;
 int		validCnt;
 int		returnStrLen;
 
-	CONSOLE_DEBUG(__FUNCTION__);
-	CONSOLE_DEBUG_W_STR("Reading common properties for", cWindowName);
-	CONSOLE_DEBUG_W_BOOL("Has read all\t=", cHas_readall);
+//	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG_W_STR("Reading common properties for", cWindowName);
+//	CONSOLE_DEBUG_W_BOOL("Has read all\t=", cHas_readall);
 	validCnt		=	0;
 	myOnLineFlag	=	true;	//*	assume it is on line
 	validData		=	false;
@@ -198,13 +198,13 @@ int		returnStrLen;
 	//-----------------------------------------------------------------------------------------
 	if (myOnLineFlag)
 	{
-		CONSOLE_DEBUG_W_STR("deviceTypeStr\t=", deviceTypeStr);
+//		CONSOLE_DEBUG_W_STR("deviceTypeStr\t=", deviceTypeStr);
 		validData	=	AlpacaGetBooleanValue(	deviceTypeStr, "connected",	NULL,	&myConnectedFlag);
 		if (validData)
 		{
 			cCommonProp.Connected	=	myConnectedFlag;
 			validCnt++;
-			CONSOLE_DEBUG_W_BOOL("cCommonProp.Connected\t=", cCommonProp.Connected);
+//			CONSOLE_DEBUG_W_BOOL("cCommonProp.Connected\t=", cCommonProp.Connected);
 		}
 		else
 		{
@@ -216,8 +216,6 @@ int		returnStrLen;
 	if (myOnLineFlag)
 	{
 		validData	=	AlpacaGetStringValue(	deviceTypeStr, "description",	NULL,	returnString);
-		CONSOLE_DEBUG_W_STR("returnString    \t=", returnString);
-		CONSOLE_DEBUG_W_LONG("returnString-len\t=", strlen(returnString));
 		if (validData)
 		{
 			returnStrLen	=	strlen(returnString);
@@ -225,6 +223,11 @@ int		returnStrLen;
 			{
 				strcpy(cCommonProp.Description,	returnString);
 			}
+			else
+			{
+				CONSOLE_DEBUG_W_STR("returnString    \t=", returnString);
+				CONSOLE_DEBUG_W_LONG("returnString-len\t=", strlen(returnString));
+			}
 			validCnt++;
 		}
 		else
@@ -237,14 +240,17 @@ int		returnStrLen;
 	if (myOnLineFlag)
 	{
 		validData	=	AlpacaGetStringValue(	deviceTypeStr, "driverinfo",	NULL,	returnString);
-		CONSOLE_DEBUG_W_STR("returnString    \t=", returnString);
-		CONSOLE_DEBUG_W_LONG("returnString-len\t=", strlen(returnString));
 		if (validData)
 		{
 			returnStrLen	=	strlen(returnString);
 			if (returnStrLen < kCommonPropMaxStrLen)
 			{
 				strcpy(cCommonProp.DriverInfo,	returnString);
+			}
+			else
+			{
+				CONSOLE_DEBUG_W_STR("returnString    \t=", returnString);
+				CONSOLE_DEBUG_W_LONG("returnString-len\t=", strlen(returnString));
 			}
 			validCnt++;
 		}
@@ -253,20 +259,23 @@ int		returnStrLen;
 			myOnLineFlag	=	false;
 		}
 	}
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	//-----------------------------------------------------------------------------------------
 	if (myOnLineFlag)
 	{
 		validData	=	AlpacaGetStringValue(	deviceTypeStr, "driverinfo",	NULL,	returnString);
-		CONSOLE_DEBUG_W_STR("returnString    \t=", returnString);
-		CONSOLE_DEBUG_W_LONG("returnString-len\t=", strlen(returnString));
 		if (validData)
 		{
 			returnStrLen	=	strlen(returnString);
 			if (returnStrLen < kCommonPropMaxStrLen)
 			{
 				strcpy(cCommonProp.DriverInfo,	returnString);
+			}
+			else
+			{
+				CONSOLE_DEBUG_W_STR("returnString    \t=", returnString);
+				CONSOLE_DEBUG_W_LONG("returnString-len\t=", strlen(returnString));
 			}
 			validCnt++;
 		}
@@ -275,20 +284,23 @@ int		returnStrLen;
 			myOnLineFlag	=	false;
 		}
 	}
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	//-----------------------------------------------------------------------------------------
 	if (myOnLineFlag)
 	{
 		validData	=	AlpacaGetStringValue(	deviceTypeStr, "interfaceversion",	NULL,	returnString);
-		CONSOLE_DEBUG_W_STR("returnString    \t=", returnString);
-		CONSOLE_DEBUG_W_LONG("returnString-len\t=", strlen(returnString));
 		if (validData)
 		{
 			returnStrLen	=	strlen(returnString);
 			if (returnStrLen < kCommonPropMaxStrLen)
 			{
 				cCommonProp.InterfaceVersion	=	atoi(returnString);
+			}
+			else
+			{
+				CONSOLE_DEBUG_W_STR("returnString    \t=", returnString);
+				CONSOLE_DEBUG_W_LONG("returnString-len\t=", strlen(returnString));
 			}
 			validCnt++;
 		}
@@ -302,8 +314,6 @@ int		returnStrLen;
 	if (myOnLineFlag)
 	{
 		validData	=	AlpacaGetStringValue(	deviceTypeStr, "driverversion",	NULL,	returnString);
-		CONSOLE_DEBUG_W_STR("returnString    \t=", returnString);
-		CONSOLE_DEBUG_W_LONG("returnString-len\t=", strlen(returnString));
 		if (validData)
 		{
 			returnStrLen	=	strlen(returnString);
@@ -311,26 +321,10 @@ int		returnStrLen;
 			{
 				strcpy(cCommonProp.DriverVersion,	returnString);
 			}
-			validCnt++;
-		}
-		else
-		{
-			myOnLineFlag	=	false;
-		}
-	}
-
-	//-----------------------------------------------------------------------------------------
-	if (myOnLineFlag)
-	{
-		validData	=	AlpacaGetStringValue(	deviceTypeStr, "name",	NULL,	returnString);
-		CONSOLE_DEBUG_W_STR("returnString    \t=", returnString);
-		CONSOLE_DEBUG_W_LONG("returnString-len\t=", strlen(returnString));
-		if (validData)
-		{
-			returnStrLen	=	strlen(returnString);
-			if (returnStrLen < kCommonPropMaxStrLen)
+			else
 			{
-				strcpy(cCommonProp.Name,	returnString);
+				CONSOLE_DEBUG_W_STR("returnString    \t=", returnString);
+				CONSOLE_DEBUG_W_LONG("returnString-len\t=", strlen(returnString));
 			}
 			validCnt++;
 		}
@@ -339,13 +333,38 @@ int		returnStrLen;
 			myOnLineFlag	=	false;
 		}
 	}
-	CONSOLE_DEBUG_W_NUM("validCnt\t=", validCnt);
+	CONSOLE_DEBUG(__FUNCTION__);
 
-	CONSOLE_DEBUG_W_BOOL("Has read all\t=", cHas_readall);
+	//-----------------------------------------------------------------------------------------
+	if (myOnLineFlag)
+	{
+		validData	=	AlpacaGetStringValue(	deviceTypeStr, "name",	NULL,	returnString, NULL);
+		if (validData)
+		{
+			returnStrLen	=	strlen(returnString);
+			if (returnStrLen < kCommonPropMaxStrLen)
+			{
+				strcpy(cCommonProp.Name,	returnString);
+			}
+			else
+			{
+				CONSOLE_DEBUG_W_STR("returnString    \t=", returnString);
+				CONSOLE_DEBUG_W_LONG("returnString-len\t=", strlen(returnString));
+			}
+			validCnt++;
+		}
+		else
+		{
+			myOnLineFlag	=	false;
+		}
+	}
+//	CONSOLE_DEBUG_W_NUM("validCnt\t=", validCnt);
+//	CONSOLE_DEBUG_W_BOOL("Has read all\t=", cHas_readall);
+
 	Alpaca_GetRemoteCPUinfo();
 
 	UpdateCommonProperties();
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, "Exit");
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, "Exit");
 	return(validData);
 }
 
@@ -353,7 +372,7 @@ int		returnStrLen;
 //*****************************************************************************
 void	Controller::UpdateCommonProperties(void)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, "needs to be overloaded!!!!!!!!!!!!!!!!!!");
 	//*	needs to be overloaded
 }
 
@@ -853,14 +872,18 @@ char			alpacaString[128];
 int				jjj;
 bool			myReturnDataIsValid	=	true;
 
+//	CONSOLE_DEBUG(__FUNCTION__);
 	SJP_Init(&jsonParser);
 	sprintf(alpacaString,	"/api/v1/%s/%d/%s", alpacaDevice, cAlpacaDevNum, alpacaCmd);
+
+//	Set_SendRequestLibDebug(true);
 //	CONSOLE_DEBUG_W_STR("alpacaString\t=",	alpacaString);
 	validData	=	GetJsonResponse(	&cDeviceAddress,
 										cPort,
 										alpacaString,
 										dataString,
 										&jsonParser);
+//	CONSOLE_DEBUG_W_BOOL("validData\t=", validData);
 	if (validData)
 	{
 		for (jjj=0; jjj<jsonParser.tokenCount_Data; jjj++)
@@ -894,6 +917,7 @@ bool			myReturnDataIsValid	=	true;
 	{
 		*rtnValidData	=	myReturnDataIsValid;
 	}
+//	Set_SendRequestLibDebug(false);
 	return(validData);
 }
 
@@ -1120,8 +1144,8 @@ bool			myReturnDataIsValid	=	true;
 		cLastAlpacaErrNum	=	AlpacaCheckForErrors(&jsonParser, cLastAlpacaErrStr);
 		if (cLastAlpacaErrNum != kASCOM_Err_Success)
 		{
-			CONSOLE_DEBUG_W_NUM("cLastAlpacaErrNum\t=",	cLastAlpacaErrNum);
-			CONSOLE_DEBUG_W_STR("alpacaString     \t=",	alpacaString);
+//			CONSOLE_DEBUG_W_NUM("cLastAlpacaErrNum\t=",	cLastAlpacaErrNum);
+//			CONSOLE_DEBUG_W_STR("alpacaString     \t=",	alpacaString);
 			myReturnDataIsValid	=	false;
 		}
 	}
@@ -1283,10 +1307,10 @@ char			alpacaString[128];
 				}
 
 			}
-			CONSOLE_DEBUG(cRemote_Platform);
-			CONSOLE_DEBUG(cRemote_CPUinfo);
-			CONSOLE_DEBUG(cRemote_OperatingSystem);
-			CONSOLE_DEBUG(cRemote_Version);
+//			CONSOLE_DEBUG(cRemote_Platform);
+//			CONSOLE_DEBUG(cRemote_CPUinfo);
+//			CONSOLE_DEBUG(cRemote_OperatingSystem);
+//			CONSOLE_DEBUG(cRemote_Version);
 		}
 		else
 		{
@@ -1296,9 +1320,7 @@ char			alpacaString[128];
 	else
 	{
 		CONSOLE_DEBUG_W_STR("device does not have Readall", cWindowName);
-
 		cGetCPUinfoCallCnt	=	0;
-	//	CONSOLE_ABORT(__FUNCTION__);
 	}
 	return(returnCode);
 }
@@ -1379,8 +1401,7 @@ int				returnDataCnt;
 int				braceCnt;
 double			myDoubleValue;
 
-
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, alpacaDeviceString);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, alpacaDeviceString);
 	if ((temperatureLog == NULL) || (maxBufferSize <= 0))
 	{
 		CONSOLE_DEBUG("No place to put data");
@@ -1570,7 +1591,7 @@ double			myDoubleValue;
 				keepReading		=	false;
 			}
 		}
-		CONSOLE_DEBUG(__FUNCTION__);
+//		CONSOLE_DEBUG(__FUNCTION__);
 		shutDownRetCode	=	shutdown(socket_desc, SHUT_RDWR);
 		if (shutDownRetCode != 0)
 		{
@@ -1595,7 +1616,7 @@ double			myDoubleValue;
 	{
 		returnDataCnt	=	dataIndex;
 	}
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, "EXIT");
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, "EXIT");
 	return(returnDataCnt);
 }
 

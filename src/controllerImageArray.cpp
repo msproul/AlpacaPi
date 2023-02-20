@@ -24,6 +24,8 @@
 //*	Dec 18,	2021	<MLS> Proved that the simulators are sending column order first
 //*	Dec 18,	2021	<MLS> Spoke to Peter in the UK about it (peter@peterandjill.co.uk)
 //*	May 18,	2022	<MLS> Added AlpacaGetImageArray_Binary_Int32()
+//*	Feb 19,	2023	<MLS> Added AlpacaGetImageArray_Binary_Int16()
+//*	Feb 19, 2023	<MLS> Changed byte order in 32 bit integer image read
 //*****************************************************************************
 
 #include	<string.h>
@@ -509,13 +511,125 @@ int				binaryDataValue;
 }
 
 //*****************************************************************************
+void	ControllerCamera::AlpacaGetImageArray_Binary_Int16(	TYPE_ImageArray	*imageArray,
+															int				imageArrayLen)
+{
+int				binaryDataValue;
+int				dataByteIdx;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+
+	dataByteIdx		=	0;
+
+	if (cBinaryImageHdr.Rank == 2)
+	{
+		binaryDataValue	=	0;
+		while ((cData_iii < cRecvdByteCnt))
+		{
+			switch(dataByteIdx)
+			{
+				case 0:
+					binaryDataValue	=	cReturnedData[cData_iii] & 0x00ff;
+					dataByteIdx++;
+					break;
+
+				case 1:
+					binaryDataValue	+=	(((cReturnedData[cData_iii] & 0x00ff) << 8) & 0x00ff00);
+					if (cImageArrayIndex < imageArrayLen)
+					{
+						imageArray[cImageArrayIndex].RedValue	=	binaryDataValue;
+						imageArray[cImageArrayIndex].GrnValue	=	binaryDataValue;
+						imageArray[cImageArrayIndex].BluValue	=	binaryDataValue;
+						cImageArrayIndex++;
+					}
+					dataByteIdx	=	0;
+					break;
+
+				default:
+					CONSOLE_ABORT(__FUNCTION__);
+					break;
+			}
+			cData_iii++;
+		}
+	}
+	else if (cBinaryImageHdr.Rank == 3)
+	{
+		binaryDataValue	=	0;
+		while ((cData_iii < cRecvdByteCnt))
+		{
+			switch(dataByteIdx)
+			{
+				case 0:
+					binaryDataValue	=	cReturnedData[cData_iii] & 0x00ff;
+					dataByteIdx++;
+					break;
+
+				case 1:
+					binaryDataValue	+=	(((cReturnedData[cData_iii] & 0x00ff) << 8) & 0x00ff00);
+					if (cImageArrayIndex < imageArrayLen)
+					{
+						//*	deal with the individual R,G,B values
+						switch(cRGBidx)
+						{
+							case 0:
+								imageArray[cImageArrayIndex].RedValue	=	binaryDataValue & 0x00ffff;
+								break;
+
+							case 1:
+								imageArray[cImageArrayIndex].GrnValue	=	binaryDataValue & 0x00ffff;
+								break;
+
+							case 2:
+								imageArray[cImageArrayIndex].BluValue	=	binaryDataValue & 0x00ffff;
+//											if ((cImageArrayIndex >= 0) && (cImageArrayIndex < 25))
+//											{
+//												printf("#%6d=%6d\t%6d\t%6d\r\n",	cImageArrayIndex,
+//																				imageArray[cImageArrayIndex].RedValue,
+//																				imageArray[cImageArrayIndex].GrnValue,
+//																				imageArray[cImageArrayIndex].BluValue);
+//												printf("#%6d=%6X\t%6X\t%6X\r\n",	cImageArrayIndex,
+//																				imageArray[cImageArrayIndex].RedValue,
+//																				imageArray[cImageArrayIndex].GrnValue,
+//																				imageArray[cImageArrayIndex].BluValue);
+//											}
+								cImageArrayIndex++;
+								break;
+						}
+						cRGBidx++;
+						if (cRGBidx >= 3)
+						{
+							cRGBidx	=	0;
+						}
+					}
+					else
+					{
+						CONSOLE_DEBUG_W_NUM("cImageArrayIndex=", cImageArrayIndex);
+						CONSOLE_ABORT(__FUNCTION__);
+					}
+					dataByteIdx	=	0;
+					break;
+			}
+			cData_iii++;
+		}
+	}
+	else
+	{
+//					LogEvent(	"camera",
+//								"Binary Download",
+//								NULL,
+//								kASCOM_Err_Success,
+//								"Invalid RANK value");
+	}
+}
+
+//*****************************************************************************
 void	ControllerCamera::AlpacaGetImageArray_Binary_Int32(	TYPE_ImageArray	*imageArray,
 															int				imageArrayLen)
 {
 uint32_t		binaryDataValue;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
-//	CONSOLE_DEBUG_W_NUM("Rank\t=", cBinaryImageHdr.Rank);
+	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_NUM("Rank\t=", cBinaryImageHdr.Rank);
 
 	if (cBinaryImageHdr.Rank == 3)
 	{
@@ -556,12 +670,15 @@ uint32_t		binaryDataValue;
 		while ((cData_iii < cRecvdByteCnt))
 		{
 			binaryDataValue	=	0;
-		#if 1
+			//*	Feb 19, 2023	<MLS> Changed byte order in 32 bit integer image read
+		#if 0
+			//*	little endian
 			binaryDataValue	+=	(cReturnedData[cData_iii++] & 0x00ff);
 			binaryDataValue	+=	(cReturnedData[cData_iii++] & 0x00ff) << 8;
 			binaryDataValue	+=	(cReturnedData[cData_iii++] & 0x00ff) << 16;
 			binaryDataValue	+=	(cReturnedData[cData_iii++] & 0x00ff) << 24;
 		#else
+			//*	big endian
 			binaryDataValue	+=	(cReturnedData[cData_iii++] & 0x00ff) << 24;
 			binaryDataValue	+=	(cReturnedData[cData_iii++] & 0x00ff) << 16;
 			binaryDataValue	+=	(cReturnedData[cData_iii++] & 0x00ff) << 8;
@@ -711,6 +828,9 @@ int				dataBlkCount;
 
 			case kAlpacaImageData_Int16:
 			case kAlpacaImageData_UInt16:
+			#if 1
+				AlpacaGetImageArray_Binary_Int16(imageArray, imageArrayLen);
+			#else
 				if (cBinaryImageHdr.Rank == 2)
 				{
 					binaryDataValue	=	0;
@@ -811,6 +931,7 @@ int				dataBlkCount;
 //								kASCOM_Err_Success,
 //								"Invalid RANK value");
 				}
+			#endif // 1
 				break;
 
 			default:
