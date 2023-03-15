@@ -58,6 +58,35 @@
 #include	"alpacadriver.h"
 #include	"calibrationdriver.h"
 
+#ifdef _ENABLE_CALIBRATION_ALNITAK_
+	#include	"calibratio_Alnitak.h"
+#endif
+
+#ifdef _ENABLE_CALIBRATION_RPI_
+	#include	"calibrationdriver_rpi.h"
+#endif
+#ifdef _ENABLE_CALIBRATION_SIMULATOR_
+	#include	"calibration_sim.h"
+#endif
+
+//**************************************************************************************
+void	CreateCalibrationObjects(void)
+{
+#ifdef _ENABLE_CALIBRATION_ALNITAK_
+	CreateCalibrationObjects_Alnitak();
+#endif
+
+#ifdef _ENABLE_CALIBRATION_RPI_
+	CreateCalibrationObjects_RPi();
+#endif
+
+#ifdef _ENABLE_CALIBRATION_SIMULATOR_
+	CreateCalibrationObjects_SIM();
+#endif
+//	new CalibrationDriver();
+}
+
+
 
 //*****************************************************************************
 //calibration
@@ -103,13 +132,6 @@ static TYPE_CmdEntry	gCalibrationCmdTable[]	=
 
 	{	"",						-1,	0x00	}
 };
-
-//**************************************************************************************
-void	CreateCalibrationObjects(void)
-{
-	new CalibrationDriver();
-}
-
 
 //**************************************************************************************
 CalibrationDriver::CalibrationDriver(void)
@@ -290,6 +312,7 @@ bool	foundIt;
 	return(foundIt);
 }
 
+
 //*****************************************************************************
 void	CalibrationDriver::WatchDog_TimeOut(void)
 {
@@ -302,6 +325,10 @@ char				alpacaErrMsg[64];
 	{
 		LogEvent("CalibratorStatus",	"Turning off due to Timeout",	NULL,	kASCOM_Err_Success,	"");
 		alpacaErrCode	=	Calibrator_TurnOff(alpacaErrMsg);
+		if (alpacaErrCode != kASCOM_Err_Success)
+		{
+			CONSOLE_DEBUG_W_NUM("Calibrator_TurnOff() returned error:", alpacaErrCode);
+		}
 	}
 }
 
@@ -443,6 +470,7 @@ int					brightnessValue;
 	{
 		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Calibrator not present");
+		CONSOLE_DEBUG(alpacaErrMsg);
 	}
 	else
 	{
@@ -455,11 +483,19 @@ int					brightnessValue;
 
 		if (brightnessFound)
 		{
-			brightnessValue	=	atoi(brightnessString);
 //			CONSOLE_DEBUG_W_NUM("new brightnessValue\t=", brightnessValue);
-
-			alpacaErrCode	=	Calibrator_TurnOn(brightnessValue, alpacaErrMsg);
-			cCoverCalibrationProp.CalibratorState	=	kCalibrator_Ready;
+			brightnessValue	=	atoi(brightnessString);
+			if ((brightnessValue >= 0) && (brightnessValue <= cCoverCalibrationProp.MaxBrightness))
+			{
+				alpacaErrCode	=	Calibrator_TurnOn(brightnessValue, alpacaErrMsg);
+				cCoverCalibrationProp.CalibratorState	=	kCalibrator_Ready;
+			}
+			else
+			{
+				alpacaErrCode	=	kASCOM_Err_InvalidValue;
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Brightness out of range");
+				CONSOLE_DEBUG(alpacaErrMsg);
+			}
 		}
 		else
 		{
@@ -626,7 +662,7 @@ int		mySocketFD;
 		SocketWriteData(mySocketFD,	"</CENTER>\r\n");
 
 
-		GenerateHTMLcmdLinkTable(mySocketFD, "covercalibrator", cDeviceNum, gCalibrationCmdTable);
+		GenerateHTMLcmdLinkTable(mySocketFD, "covercalibrator", cAlpacaDeviceNum, gCalibrationCmdTable);
 	}
 }
 

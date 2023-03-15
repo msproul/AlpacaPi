@@ -40,7 +40,7 @@
 //	sudo dpkg -i wiringpi-latest.deb
 //*****************************************************************************
 
-#ifdef _ENABLE_SWITCH_
+#ifdef _ENABLE_SWITCH_RPI_
 
 #include	<string.h>
 #include	<unistd.h>
@@ -67,6 +67,14 @@
 	#define		kStatusPin2	24
 	#define		kStatusPin3	25
 #endif // _ENABLE_STATUS_SWITCH_
+
+
+//*****************************************************************************
+void	CreateSwitchObjects_RPi(void)
+{
+	CONSOLE_DEBUG(__FUNCTION__);
+	new SwitchDriverRPi();
+}
 
 //*****************************************************************************
 const int	gRelayControlPinNumbers[]	=
@@ -143,11 +151,6 @@ static void	digitalWrite(int pinNum, int digtialStte)
 
 
 
-//*****************************************************************************
-void	CreateSwitchObjectsRPi(void)
-{
-	new SwitchDriverRPi();
-}
 
 //**************************************************************************************
 SwitchDriverRPi::SwitchDriverRPi(void)
@@ -249,6 +252,7 @@ char	wiringPi_VerString[32];
 #ifdef _ENABLE_STATUS_SWITCH_
 	CONSOLE_DEBUG("_ENABLE_STATUS_SWITCH_");
 
+	//*	NOTE: cSwitchProp.MaxSwitch gets incremented in ConfigureSwitch()
 	ConfigureSwitch(cSwitchProp.MaxSwitch, kSwitchType_Status, kStatusPin1);
 	ConfigureSwitch(cSwitchProp.MaxSwitch, kSwitchType_Status, kStatusPin2);
 	ConfigureSwitch(cSwitchProp.MaxSwitch, kSwitchType_Status, kStatusPin3);
@@ -400,4 +404,4 @@ void	SwitchDriverRPi::SetSwitchValue(const int switchNumber, double switchValue)
 
 
 
-#endif // _ENABLE_SWITCH_
+#endif // _ENABLE_SWITCH_RPI_

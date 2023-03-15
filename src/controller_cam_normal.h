@@ -77,6 +77,7 @@ class ControllerCamNormal: public ControllerCamera
 		virtual	void	UpdateFilterWheelInfo(void);
 		virtual	void	UpdateFilterWheelPosition(void);
 		virtual	void	UpdateFileNameOptions(void);
+		virtual	void	UpdateLiveMode(void);
 		virtual	void	UpdateReceivedFileName(const char *newFileName);
 		virtual	void	UpdateRemoteFileList(void);
 		virtual	void	UpdateDownloadProgress(const int unitsRead, const int totalUnits);

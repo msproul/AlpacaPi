@@ -35,7 +35,7 @@
 	#include	"telescopedriver_comm.h"
 #endif
 
-void	CreateTelescopeLX200Objects(void);
+void	CreateTelescopeObjects_LX200(void);
 
 
 //**************************************************************************************

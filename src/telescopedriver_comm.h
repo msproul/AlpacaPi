@@ -29,7 +29,6 @@
 	#include	"telescopedriver.h"
 #endif
 
-void	CreateTelescopeObjects(void);
 
 
 //*****************************************************************************

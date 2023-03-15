@@ -42,6 +42,9 @@
 
 #include	"slittracker_data.h"
 
+#ifdef _SLIT_TRACKER_DIRECT_
+	#error "Slit Tracker Direct needs some work"
+#endif
 
 
 //**************************************************************************************
@@ -66,7 +69,7 @@ WindowTabSlitTracker::WindowTabSlitTracker(	const int	xSize,
 //**************************************************************************************
 WindowTabSlitTracker::~WindowTabSlitTracker(void)
 {
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 }
 
 
@@ -79,19 +82,10 @@ int		yLoc;
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	//------------------------------------------
-	yLoc			=	cTabVertOffset;
+	yLoc	=	cTabVertOffset;
 
 	//------------------------------------------
-	SetWidget(kSlitTracker_Title,		0,			yLoc,		cWidth,		cTitleHeight);
-	SetWidgetText(kSlitTracker_Title, "AlpacaPi Slit Tracker");
-	SetBGcolorFromWindowName(kSlitTracker_Title);
-
-	//*	setup the connected indicator
-   	SetUpConnectedIndicator(kSlitTracker_Connected, yLoc);
-
-	yLoc			+=	cTitleHeight;
-	yLoc			+=	2;
-
+	yLoc	=	SetTitleBox(kSlitTracker_Title, kSlitTracker_Connected, yLoc, "AlpacaPi Slit Tracker");
 
 	//==========================================
 	//*	create the clock face
@@ -104,10 +98,7 @@ int		yLoc;
 	SetWidgetBorder(		kSlitTracker_LastUpdate,	false);
 	SetWidgetJustification(	kSlitTracker_LastUpdate,	kJustification_Left);
 
-
-
 	yLoc			+=	2;
-
 	yLoc			+=	2;
 
 #ifndef _ENABLE_SKYTRAVEL_

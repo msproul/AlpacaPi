@@ -24,6 +24,7 @@
 //*	Oct  6,	2021	<MLS> Added support for Slittracker controller window
 //*	Dec  6,	2021	<MLS> Added scrolling to alpaca device list
 //*	Dec 18,	2021	<MLS> Added inverted sort order to alpaca device list
+//*	Mar  3,	2023	<MLS> Fixed displayed device count when management is not displayed
 //*****************************************************************************
 
 #include	<stdlib.h>
@@ -80,7 +81,7 @@ WindowTabAlpacaList::WindowTabAlpacaList(	const int	xSize,
 //**************************************************************************************
 WindowTabAlpacaList::~WindowTabAlpacaList(void)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 }
 
 //**************************************************************************************
@@ -103,14 +104,10 @@ int		clmnHdrWidth;
 	yLoc			=	cTabVertOffset;
 
 	//------------------------------------------
-	SetWidget(kAlpacaList_Title,		0,			yLoc,		cWidth,		cTitleHeight);
-	SetWidgetText(kAlpacaList_Title, "AlpacaPi Device List (double click on colored entries)");
-	SetBGcolorFromWindowName(kAlpacaList_Title);
-	yLoc			+=	cTitleHeight;
-	yLoc			+=	2;
+	yLoc	=	SetTitleBox(kAlpacaList_Title, -1, yLoc, "AlpacaPi Device List (double click on colored entries)");
 
-	clmnHdr_xLoc		=	1;
-	iii	=	kAlpacaList_ClmTitle1;
+	clmnHdr_xLoc	=	1;
+	iii				=	kAlpacaList_ClmTitle1;
 	while(iii <= kAlpacaList_ClmTitle5)
 	{
 		clmnHdrWidth	=	tabArray[iii - kAlpacaList_ClmTitle1] - clmnHdr_xLoc;
@@ -159,7 +156,7 @@ int		clmnHdrWidth;
 
 	//---------------------------------------------------------------------
 	xLoc		=	0;
-	widgetWidth	=	cWidth / 4;
+	widgetWidth	=	(cWidth / 4) + 40;
 	SetWidget(				kAlpacaList_AlpacaDev_Total,	xLoc,	yLoc,	widgetWidth,	cSmallBtnHt);
 	SetWidgetFont(			kAlpacaList_AlpacaDev_Total,	kFont_Medium);
 	SetWidgetText(			kAlpacaList_AlpacaDev_Total,	"Total units =?");
@@ -563,8 +560,8 @@ bool	windowExists;
 					}
 					break;
 
-			#ifdef _ENABLE_CTRL_SPECTROGRAPH_
 				case kDeviceType_Spectrograph:
+				#ifdef _ENABLE_CTRL_SPECTROGRAPH_
 					windowExists	=	CheckForOpenWindowByName(windowName);
 					if (windowExists)
 					{
@@ -577,12 +574,11 @@ bool	windowExists;
 													cRemoteDeviceList[deviceIdx].port,
 													cRemoteDeviceList[deviceIdx].alpacaDeviceNum);
 					}
+				#endif // _ENABLE_CTRL_SPECTROGRAPH_
 					break;
 
-			#endif // _ENABLE_CTRL_SPECTROGRAPH_
 
 				case kDeviceType_Multicam:
-	//			case kDeviceType_Shutter:
 				case kDeviceType_undefined:
 				case kDeviceType_last:
 					break;
@@ -823,7 +819,7 @@ TYPE_DEVICETYPE	deviceEnum;
 //	CONSOLE_DEBUG_W_NUM("gRemoteCnt\t\t=", gRemoteCnt);
 
 
-	sprintf(textString, "Total Alpaca Devices found=%d", gRemoteCnt);
+	sprintf(textString, "Total Alpaca Devices found=%d / %d", cAlpacaDevCnt, gRemoteCnt);
 	SetWidgetText(kAlpacaList_AlpacaDev_Total, textString);
 
 	SetWidgetBGColor(kAlpacaList_ClmTitle1,	((cSortColumn == 0) ? CV_RGB(255,	255,	255) : CV_RGB(128,	128,	128)));

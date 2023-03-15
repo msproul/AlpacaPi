@@ -64,10 +64,31 @@
 #include	"alpacadriver_helper.h"
 #include	"helper_functions.h"
 
-
 #include	"switchdriver.h"
+#if __arm__
+	#include	"switchdriver_rpi.h"
+#endif
+
+#ifdef _ENABLE_SWITCH_SIMULATOR_
+	#include	"switchdriver_sim.h"
+#endif
 
 //#define _DEBUG_CONFORM_
+
+//**************************************************************************************
+void	CreateSwitchObjects(void)
+{
+	CONSOLE_DEBUG(__FUNCTION__);
+#if defined(_ENABLE_SWITCH_RPI_) && defined(__arm__)
+	CreateSwitchObjects_RPi();
+#else
+//	#error "Somthings wrong here"
+#endif
+
+#ifdef _ENABLE_SWITCH_SIMULATOR_
+	CreateSwitchObjects_SIM();
+#endif
+}
 
 //*****************************************************************************
 static TYPE_CmdEntry	gSwitchCmdTable[]	=
@@ -94,11 +115,6 @@ static TYPE_CmdEntry	gSwitchCmdTable[]	=
 };
 
 
-//**************************************************************************************
-void	CreateSwitchObjects(void)
-{
-	new SwitchDriver();
-}
 
 //**************************************************************************************
 SwitchDriver::SwitchDriver(void)
@@ -1059,7 +1075,7 @@ char	lineBuffer[32];
 		SocketWriteData(mySocketFD,	"</CENTER>\r\n");
 		SocketWriteData(mySocketFD,	"<P>\r\n");
 
-		GenerateHTMLcmdLinkTable(mySocketFD, "switch", cDeviceNum, gSwitchCmdTable);
+		GenerateHTMLcmdLinkTable(mySocketFD, "switch", cAlpacaDeviceNum, gSwitchCmdTable);
 	}
 }
 

@@ -65,6 +65,15 @@
 #include	"eventlogging.h"
 #include	"filterwheeldriver.h"
 
+#ifdef _ENABLE_FILTERWHEEL_ATIK_
+	#include	"filterwheeldriver_ATIK.h"
+#endif
+#ifdef _ENABLE_FILTERWHEEL_SIMULATOR_
+	#include	"filterwheeldriver_SIM.h"
+#endif
+#ifdef _ENABLE_FILTERWHEEL_ZWO_
+	#include	"filterwheeldriver_ZWO.h"
+#endif
 
 //*****************************************************************************
 TYPE_CmdEntry	gFilterwheelCmdTable[]	=
@@ -81,12 +90,21 @@ TYPE_CmdEntry	gFilterwheelCmdTable[]	=
 
 
 //**************************************************************************************
-//*	this will get moved to the individual implentations later
+//*	this will get moved to the individual implementations later
 void	CreateFilterWheelObjects(void)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
+#ifdef _ENABLE_FILTERWHEEL_ZWO_
+	CreateFilterWheelObjects_ZWO();
+#endif
 
-	new FilterwheelDriver(0);
+#ifdef _ENABLE_FILTERWHEEL_SIMULATOR_
+	CreateFilterWheelObjects_SIM();
+#endif
+
+#ifdef _ENABLE_FILTERWHEEL_ATIK_
+	CreateFilterWheelObjects_ATIK();
+#endif
 }
 
 
@@ -175,9 +193,6 @@ int				slen;
 				{
 				//	strcpy(cFilterDef[filterIndex].filterDesciption, lineBuff);
 					strcpy(cFilterWheelProp.Names[filterIndex].FilterName, lineBuff);
-
-
-
 				}
 				filterIndex++;
 			}

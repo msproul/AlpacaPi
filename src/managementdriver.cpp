@@ -425,7 +425,7 @@ char		uniqueIDstring[64];
 							reqData->jsonTextBuffer,
 							kMaxJsonBuffLen,
 							"DeviceNumber",
-							devicePtr->cDeviceNum,
+							devicePtr->cAlpacaDeviceNum,
 							INCLUDE_COMMA);
 
 	sprintf(uniqueIDstring, "%08X-%04X-%04X-%04X-%012X",

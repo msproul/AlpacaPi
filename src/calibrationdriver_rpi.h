@@ -1,6 +1,6 @@
 
 
-void	CreateCalibrationObjectsRPi(void);
+void	CreateCalibrationObjects_RPi(void);
 
 //**************************************************************************************
 class CalibrationDriverRPI: public CalibrationDriver

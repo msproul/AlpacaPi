@@ -25,9 +25,10 @@
 //*	<MLS>	=	Mark L Sproul
 //*****************************************************************************
 //*	Apr 22,	2022	<MLS> Created cameradriver_sim.cpp
+//*	Mar  4,	2023	<MLS> CONFORMU-camera/simulator -> PASSED!!!!!!!!!!!!!!!!!!!!!
 //*****************************************************************************
 
-#if defined(_ENABLE_CAMERA_) && defined(_SIMULATE_CAMERA_)
+#if defined(_ENABLE_CAMERA_) && defined(_ENABLE_CAMERA_SIMULATOR_)
 
 #include	<stdlib.h>
 #include	<string.h>
@@ -46,7 +47,7 @@
 
 
 //**************************************************************************************
-int	CreateSimulator_CameraObjects(void)
+int	CreateCameraObjects_Sim(void)
 {
 
 	CONSOLE_DEBUG(__FUNCTION__);
@@ -72,7 +73,7 @@ bool		isConnected;
 	cCameraIsSiumlated			=	true;
 	cSimulatedState				=   kExposure_Idle;
 	cIsColorCam					=	true;
-	strcpy(cDeviceManufAbrev,		"APi");
+	strcpy(cDeviceManufAbrev,		"SIM");
 	strcpy(cCommonProp.Name,		"AlpacaPi Camera Simulator");
 	strcpy(cCommonProp.Description,	"AlpacaPi Camera Simulator");
 	strcpy(cCameraProp.SensorName,	"Fake");
@@ -87,9 +88,14 @@ bool		isConnected;
 //	cCameraProp.CameraYsize	=	6388;
 
 	//*	In order to simulate a particular image size
-	cCameraProp.CameraXsize	=	500;
-	cCameraProp.CameraYsize	=	400;
-
+#ifdef __arm__
+	cCameraProp.CameraXsize	=	1000;
+	cCameraProp.CameraYsize	=	800;
+#else
+	cCameraProp.CameraXsize	=	2500;
+	cCameraProp.CameraYsize	=	2000;
+#endif
+	cBitDepth				=	8;
 
 	cCameraProp.SensorType		=   kSensorType_RGGB;
 	cCameraProp.NumX			=	cCameraProp.CameraXsize;
@@ -242,16 +248,15 @@ TYPE_ASCOM_STATUS	alpacaErrCode;
 TYPE_ASCOM_STATUS		CameraDriverSIM::Start_CameraExposure(int32_t exposureMicrosecs, const bool lightFrame)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
-double				durationSeconds;
+//double				durationSeconds;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 	if (cCommonProp.Connected)
 	{
 		cCameraProp.ImageReady		=	false;
 
-		durationSeconds	=	(exposureMicrosecs * 1.0) / 1000000.0;
-
-		durationSeconds	=	2;
+//		durationSeconds	=	(exposureMicrosecs * 1.0) / 1000000.0;
+//		durationSeconds	=	2;
 
 		CONSOLE_DEBUG("Simulating camera");
 		cInternalCameraState	=	kCameraState_TakingPicture;
@@ -403,4 +408,4 @@ int					bytesPerPixel;
 }
 
 
-#endif // defined(_ENABLE_CAMERA_) && defined(_SIMULATE_CAMERA_)
+#endif // defined(_ENABLE_CAMERA_) && defined(_ENABLE_CAMERA_SIMULATOR_)

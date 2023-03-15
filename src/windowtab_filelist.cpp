@@ -53,7 +53,7 @@ WindowTabFileList::WindowTabFileList(	const int	xSize,
 //**************************************************************************************
 WindowTabFileList::~WindowTabFileList(void)
 {
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 }
 
 #define	kFileListHeight	200
@@ -71,16 +71,12 @@ int		scrollBarYLoc;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 	//------------------------------------------
-	yLoc			=	cTabVertOffset;
 	lineHeight		=	20;
 	scrollBarWidth	=	25;
 
 	//------------------------------------------
-	SetWidget(		kFileList_Title,		0,			yLoc,		cWidth,		cTitleHeight);
-	SetWidgetFont(	kFileList_Title, kFont_Medium);
-	SetBGcolorFromWindowName(kFileList_Title);
-	yLoc			+=	cTitleHeight;
-	yLoc			+=	2;
+	yLoc	=	cTabVertOffset;
+	yLoc	=	SetTitleBox(kFileList_Title, -1, yLoc, "File List");
 
 	//------------------------------------------
 	SetWidget(			kFileList_Refresh,		0,			yLoc,		cWidth/3,	cBtnHeight);

@@ -138,7 +138,7 @@ int			argInt;
 	if (validData)
 	{
 //		CONSOLE_DEBUG_W_NUM("argInt\t=",	argInt);
-		UpdateShutterStatus(argInt);
+		UpdateShutterStatus((TYPE_ShutterStatus)argInt);
 	}
 	else
 	{
@@ -202,12 +202,12 @@ double	argDouble;
 		cDomeProp.CanSlave		=	IsTrueFalse(valueString);
 		if (cDomeProp.CanSlave)
 		{
-			SetWidgetBGColor(kTab_Dome, kDomeBox_ToggleSlaveMode,	CV_RGB(255,	255,	255));
+			SetWidgetBGColor(	kTab_Dome, kDomeBox_ToggleSlaveMode,	CV_RGB(255,	255,	255));
 		}
 		else
 		{
-			SetWidgetText(kTab_Dome,	kDomeBox_SlavedStatus,	"N/A");
-			SetWidgetBGColor(kTab_Dome, kDomeBox_ToggleSlaveMode,	CV_RGB(128,	128,	128));
+			SetWidgetText(		kTab_Dome,	kDomeBox_SlavedStatus,	"N/A");
+			SetWidgetBGColor(	kTab_Dome, kDomeBox_ToggleSlaveMode,	CV_RGB(128,	128,	128));
 		}
 	}
 	else if (strcasecmp(keywordString, "cansyncazimuth") == 0)
@@ -257,9 +257,9 @@ double	argDouble;
 		//*	if we are talking to the shutter directly dont update from here
 //		if (cShutterInfoValid == false)
 		{
-		int		newShutterStatus;
+		TYPE_ShutterStatus	newShutterStatus;
 
-			newShutterStatus	=	atoi(valueString);
+			newShutterStatus	=	(TYPE_ShutterStatus)atoi(valueString);
 			UpdateShutterStatus(newShutterStatus);
 		}
 	}
@@ -284,7 +284,7 @@ void	PARENT_CLASS::AlpacaProcessSupportedActions_Dome(const int deviveNum, const
 	if (strcasecmp(valueString, "readall") == 0)
 	{
 #ifdef _ENABLE_SKYTRAVEL_
-		cDomeHas_readall	=	true;
+		cDomeHas_Readall	=	true;
 #else
 		cHas_readall	=	true;
 #endif
@@ -375,7 +375,7 @@ char	textString[32];
 }
 
 //*****************************************************************************
-void	PARENT_CLASS::UpdateShutterStatus(const int newShutterStatus)
+void	PARENT_CLASS::UpdateShutterStatus(const TYPE_ShutterStatus newShutterStatus)
 {
 char	statusString[16];
 
@@ -385,18 +385,7 @@ char	statusString[16];
 	if (newShutterStatus != cDomeProp.ShutterStatus)
 	{
 		cDomeProp.ShutterStatus	=	newShutterStatus;
-		switch(cDomeProp.ShutterStatus)
-		{
-			case kShutterStatus_Open:		strcpy(statusString,	"Open");	break;
-			case kShutterStatus_Closed:		strcpy(statusString,	"Closed");	break;
-			case kShutterStatus_Opening:	strcpy(statusString,	"Opening");	break;
-			case kShutterStatus_Closing:	strcpy(statusString,	"Closing");	break;
-			case kShutterStatus_Error:		strcpy(statusString,	"Error");	break;
-
-			case kShutterStatus_Unknown:
-			default:						strcpy(statusString,	"unknown");	break;
-		}
-
+		GetDomeShutterStatusString(cDomeProp.ShutterStatus, statusString);
 		SetWidgetText(kTab_Dome, kDomeBox_ShutterStatus, statusString);
 	}
 //	else

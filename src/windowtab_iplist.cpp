@@ -89,7 +89,7 @@ int		iii;
 //**************************************************************************************
 WindowTabIPList::~WindowTabIPList(void)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 }
 
 //**************************************************************************************
@@ -115,6 +115,12 @@ int		myButtonWidth;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
+	//------------------------------------------
+	yLoc	=	cTabVertOffset;
+	yLoc	=	SetTitleBox(kIPaddrList_Title, -1, yLoc, "IP address list of Alpaca devices");
+
+	//------------------------------------------
+	//*	set up the tab stops
 	for (iii=0; iii<kMaxTabStops; iii++)
 	{
 		tabArray[iii]	=	0;
@@ -129,15 +135,6 @@ int		myButtonWidth;
 		iii++;
 	}
 
-	//------------------------------------------
-	yLoc			=	cTabVertOffset;
-
-	//------------------------------------------
-	SetWidget(kIPaddrList_Title,		0,			yLoc,		cWidth,		cTitleHeight);
-	SetWidgetText(kIPaddrList_Title, "AlpacaPi IP address List");
-	SetBGcolorFromWindowName(kIPaddrList_Title);
-	yLoc			+=	cTitleHeight;
-	yLoc			+=	2;
 
 	//------------------------------------------
 	xLoc			=	5;

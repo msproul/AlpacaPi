@@ -465,7 +465,7 @@ bool			goBackOneImage;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG_W_NUM("argc\t=", argc);
-//	CONSOLE_DEBUG_W_LONG("sizeof(gTranslationMap)\t=", sizeof(gTranslationMap));
+//	CONSOLE_DEBUG_W_SIZE("sizeof(gTranslationMap)\t=", sizeof(gTranslationMap));
 
 	strcpy(myWindowName, "fits file");
 	gAutomatic	=	false;

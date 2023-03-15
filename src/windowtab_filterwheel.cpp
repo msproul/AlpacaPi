@@ -67,7 +67,7 @@ int		iii;
 //**************************************************************************************
 WindowTabFilterWheel::~WindowTabFilterWheel(void)
 {
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 }
 
 
@@ -83,12 +83,8 @@ int		yLoc;
 	yLoc			=	cTabVertOffset;
 
 	//------------------------------------------
-	SetWidget(					kFilterWheel_Title,		0,			yLoc,		cWidth,		cTitleHeight);
-	SetBGcolorFromWindowName(	kFilterWheel_Title);
-	SetWidgetText(				kFilterWheel_Title, "AlpacaPi Filter Wheel");
+	yLoc	=	SetTitleBox(kFilterWheel_Title, kFilterWheel_Connected, yLoc, "AlpacaPi Filter Wheel");
 
-	//*	setup the connected indicator
-   	SetUpConnectedIndicator(kFilterWheel_Connected, yLoc);
 
 	yLoc			+=	cTitleHeight;
 	yLoc			+=	2;

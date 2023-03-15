@@ -64,7 +64,6 @@
 //*****************************************************************************
 //*	Jan  1,	2121	<TODO> control key for different step size.
 //*	Jan  1,	2121	<TODO> add error list window
-//*	Jan  1,	2121	<TODO> save cross hair location
 //*	Jan  1,	2121	<TODO> finish exposure step options
 //*	Feb  6,	2121	<TODO> Move downloading of images to a separate thread
 //*****************************************************************************
@@ -379,6 +378,11 @@ void	ControllerCamera::UpdateFilterWheelPosition(void)
 }
 //*****************************************************************************
 void	ControllerCamera::UpdateFileNameOptions(void)
+{
+//	CONSOLE_DEBUG("this routine should be overloaded");
+}
+//*****************************************************************************
+void	ControllerCamera::UpdateLiveMode(void)
 {
 //	CONSOLE_DEBUG("this routine should be overloaded");
 }
@@ -897,9 +901,16 @@ void	ControllerCamera::AlpacaProcessReadAll(	const char	*deviceTypeStr,
 	}
 	else if (strcasecmp(keywordString, "livemode") == 0)
 	{
+	bool	previousLiveMode;
+
 		//=================================================================================
 		//*	livemode
-		cLiveMode	=	IsTrueFalse(valueString);
+		previousLiveMode	=	cLiveMode;
+		cLiveMode			=	IsTrueFalse(valueString);
+		if (cLiveMode != previousLiveMode)
+		{
+			UpdateLiveMode();
+		}
 	}
 	else if (strcasecmp(keywordString, "offset") == 0)
 	{
@@ -1010,7 +1021,7 @@ int				failedCnt;
 double			myExposureTime;
 int				argInt;
 
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 
 	failedCnt			=	0;
 
@@ -1858,13 +1869,13 @@ int				imageWidthStep;
 
 	//*	set up default values for the binary image header in case we use JSON
 	memset((void *)&cBinaryImageHdr, 0, sizeof(TYPE_BinaryImageHdr));
-	cBinaryImageHdr.MetadataVersion			=	1;
-	cBinaryImageHdr.ImageElementType		=	kAlpacaImageData_Byte;
-	cBinaryImageHdr.TransmissionElementType	=	kAlpacaImageData_Byte;
-	cBinaryImageHdr.Rank					=	2;
-	cBinaryImageHdr.Dimension1				=	cCameraProp.CameraXsize;
-	cBinaryImageHdr.Dimension2				=	cCameraProp.CameraYsize;
-	cBinaryImageHdr.Dimension3				=	0;
+	cBinaryImageHdr.MetadataVersion			=	-1;
+//	cBinaryImageHdr.ImageElementType		=	kAlpacaImageData_Byte;
+//	cBinaryImageHdr.TransmissionElementType	=	kAlpacaImageData_Byte;
+//	cBinaryImageHdr.Rank					=	2;
+//	cBinaryImageHdr.Dimension1				=	cCameraProp.CameraXsize;
+//	cBinaryImageHdr.Dimension2				=	cCameraProp.CameraYsize;
+//	cBinaryImageHdr.Dimension3				=	0;
 
 	imageArray		=	NULL;
 	pixelCount		=	cCameraProp.CameraXsize * cCameraProp.CameraYsize;

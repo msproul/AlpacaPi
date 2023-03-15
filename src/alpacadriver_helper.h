@@ -58,9 +58,13 @@ bool			Check_udev_rulesFile(const char *rulesFileName);
 void			LoadAlpacaImage(void);
 void			AddLibraryVersion(const char *device, const char *manuf, const char *versionString);
 TYPE_DEVICETYPE	FindDeviceTypeByString(const char *deviceTypeStr);
-void			GetDeviceTypeFromEnum(const int deviceEnum, char *deviceTypeString);
-int				StartExtraListenThread(int exposureListenPort);
+TYPE_DEVICETYPE	FindDeviceTypeByStringLowerCase(const char *deviceTypeStr);
+
 void			GetBinaryElementTypeString(const int elementType, char *typeString);
+void			GetDeviceTypeFromEnum(const int deviceEnum, char *deviceTypeString);
+void			GetDomeShutterStatusString(const int status, char *statusString);
+
+int				StartExtraListenThread(int exposureListenPort);
 void			DumpObservingconditionsProp(TYPE_ObsConditionProperties	*obsCondProp, const char *functionName);
 
 extern	char		gWebTitle[];

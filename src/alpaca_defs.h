@@ -67,6 +67,9 @@
 //*	Dec 18,	2022	<MLS> Build 158
 //*	Jan  1,	2023	-----------------------------------------------------------
 //*	Feb 20,	2023	<MLS> Build 159
+//*	Feb 27,	2023	<MLS> Build 160
+//*	Mar  2,	2023	<MLS> Build 161
+//*	Mar  7,	2023	<MLS> Build 162
 //*****************************************************************************
 //#include	"alpaca_defs.h"
 
@@ -91,7 +94,7 @@
 
 #define	kApplicationName	"AlpacaPi"
 #define	kVersionString		"V0.6.0-beta"
-#define	kBuildNumber		159
+#define	kBuildNumber		162
 
 
 #define kAlpacaDiscoveryPORT	32227
@@ -171,7 +174,7 @@ typedef enum
 //*	defined by the ascom standards
 //*	https://ascom-standards.org/api/#/Dome%20Specific%20Methods/get_dome__device_number__shutterstatus
 //*****************************************************************************
-enum
+typedef enum
 {
 	kShutterStatus_Unknown	=	-1,		//*	not part of the alpaca standard
 
@@ -181,7 +184,7 @@ enum
 	kShutterStatus_Closing	=	3,
 	kShutterStatus_Error	=	4
 
-};
+} TYPE_ShutterStatus;
 
 
 //*****************************************************************************
@@ -241,6 +244,8 @@ typedef enum
 	kCover_Error		=	5	//*	The device encountered an error when changing state
 } CoverStatus;
 
+//*****************************************************************************
+//*	https://ascom-standards.org/Help/Developer/html/T_ASCOM_DeviceInterface_AlignmentModes.htm
 //*****************************************************************************
 typedef enum
 {
@@ -405,7 +410,7 @@ typedef struct
 	double					SetCCDTemperature;		//*	The current camera cooler setpoint in degrees Celsius.
 
 	//*	currently ReadoutMode is implemented at execution time
-	int						ReadOutMode;					//*	Indicates the canera's readout mode as an index into the array ReadoutModes
+	int						ReadOutMode;					//*	Indicates the camera's readout mode as an index into the array ReadoutModes
 	READOUTMODE				ReadOutModes[kMaxReadOutModes];	//*	List of available readout modes
 
 	char					SensorName[kMaxSensorNameLen];	//	Sensor name
@@ -542,26 +547,30 @@ typedef struct
 
 
 //*****************************************************************************
+//*	Dome properties as described by ASCOM
+//*****************************************************************************
 typedef struct
 {
-	double			Altitude;			//*	Degrees;
-	bool			AtHome;
-	bool			AtPark;
-	double			Azimuth;			//*	Degrees
-	bool			CanFindHome;
-	bool			CanPark;
-	bool			CanSetAltitude;
-	bool			CanSetAzimuth;
-	bool			CanSetPark;
-	bool			CanSetShutter;
-	bool			CanSlave;
-	bool			CanSyncAzimuth;
-	int32_t			ShutterStatus;
-	bool			Slaved;
-	bool			Slewing;
+	double				Altitude;			//*	Degrees;
+	bool				AtHome;
+	bool				AtPark;
+	double				Azimuth;			//*	Degrees
+	bool				CanFindHome;
+	bool				CanPark;
+	bool				CanSetAltitude;
+	bool				CanSetAzimuth;
+	bool				CanSetPark;
+	bool				CanSetShutter;
+	bool				CanSlave;
+	bool				CanSyncAzimuth;
+	TYPE_ShutterStatus	ShutterStatus;
+	bool				Slaved;
+	bool				Slewing;
 } TYPE_DomeProperties;
 
 
+//*****************************************************************************
+//*	Focuser properties
 //*****************************************************************************
 typedef struct
 {
@@ -578,6 +587,8 @@ typedef struct
 } TYPE_FocuserProperties;
 
 //*****************************************************************************
+//*	Rotator properties
+//*****************************************************************************
 typedef struct
 {
 	bool	CanReverse;			//*	Indicates whether the Rotator supports the Reverse method.
@@ -586,6 +597,9 @@ typedef struct
 	double	Position;			//*	Current instantaneous Rotator position, allowing for any sync offset, in degrees.
 	bool	Reverse;			//*	Sets or Returns the rotator’s Reverse state.
 	double	StepSize;			//*	The minimum StepSize, in degrees.
+	double	SyncOffset;			//*	Once the Sync method has been called and the sync offset determined,
+								//*	both the MoveAbsolute(Single) method and the Position property must function in synced coordinates rather than mechanical coordinates. The sync offset must persist across driver starts and device reboots.
+
 	double	TargetPosition;		//*	The destination position angle for Move() and MoveAbsolute(). (in degrees)
 } TYPE_RotatorProperties;
 
@@ -664,7 +678,7 @@ typedef struct
 } TYPE_ImageArray;
 
 
-#define	kMaxAlpacaDeviceCnt	100
+#define	kMaxAlpacaDeviceCnt	128
 
 
 //*****************************************************************************
@@ -708,9 +722,21 @@ enum
 
 
 //*****************************************************************************
+//*	slit tracker properties, (NOT defined by ASCOM)
+//*****************************************************************************
+typedef struct
+{
+	char	DomeAddress[48];
+	bool	TrackingEnabled;
+} TYPE_SlittrackerProperties;
+
+
+//*****************************************************************************
 //*	this is for the temperature log used in both drivers and controllers
 //*	extra, not part of ASCOM/Alpaca specs
 #define	kTemperatureLogEntries	(24 * 60)
+
+
 
 
 #endif // _ALPACA_DEFS_H_

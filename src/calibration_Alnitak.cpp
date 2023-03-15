@@ -52,7 +52,7 @@
 //	Version		>V000CR		*ViivvvCR		Get firmware version
 
 //*****************************************************************************
-void	CreateCalibrationObjectsAlnitak(void)
+void	CreateCalibrationObjects_Alnitak(void)
 {
 	new CalibrationDriverAlnitak();
 }
@@ -64,7 +64,7 @@ CalibrationDriverAlnitak::CalibrationDriverAlnitak(void)
 	CONSOLE_DEBUG(__FUNCTION__);
 
 	strcpy(cCommonProp.Name,		"CoverCalibration-Alnitak");
-	strcpy(cCommonProp.Description,	"USB interface to Alnitak controler");
+	strcpy(cCommonProp.Description,	"USB interface to Alnitak controller");
 	strcpy(cUSBportPath,			"/dev/ttyUSB0");
 
 	cCoverCalibrationProp.Brightness		=	0;

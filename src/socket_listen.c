@@ -42,6 +42,8 @@
 #include	<sys/types.h>
 #include	<sys/socket.h>
 #include	<netinet/in.h>
+#include	<arpa/inet.h>
+
 
 #ifdef _BANDWIDTH_
 //	#define _ENABLE_CONSOLE_DEBUG_

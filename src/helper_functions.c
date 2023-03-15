@@ -12,6 +12,8 @@
 //*	Sep 19,	2022	<MLS> Changed MSecTimer_getNanoSecs() to return uint64_t
 //*	Oct 16,	2022	<MLS> Added GetSecondsSinceEpoch()
 //*	Nov 27,	2022	<MLS> Added FormatTimeStringISO8601_UTC()
+//*	Mar  3,	2023	<MLS> Added IsTrueFalseArgValid()
+//*	Mar 13,	2023	<MLS> Added CountCharsInString() (from multicam)
 //*****************************************************************************
 
 #include	<math.h>
@@ -31,6 +33,26 @@
 
 
 #include	"helper_functions.h"
+
+//*****************************************************************************
+//*	MUST be "true" or "false" to be valid
+//*****************************************************************************
+bool	IsTrueFalseArgValid(const char *trueFalseString)
+{
+bool	trueFalseValid;
+
+	trueFalseValid	=	false;
+	if (strcasecmp(trueFalseString, "true") == 0)
+	{
+		trueFalseValid	=	true;
+	}
+	else if (strcasecmp(trueFalseString, "false") == 0)
+	{
+		trueFalseValid	=	true;
+	}
+	return(trueFalseValid);
+}
+
 
 //*****************************************************************************
 bool	IsTrueFalse(const char *trueFalseString)
@@ -386,6 +408,27 @@ char	*asciiPtr;
 //	}
 	return(dblValue);
 }
+
+//*****************************************************************************
+int	CountCharsInString(const char *theString, char theChar)
+{
+int		charCnt;
+int		ii;
+int		sLen;
+
+	sLen	=	strlen(theString);
+	charCnt	=	0;
+	for (ii=0; ii<sLen; ii++)
+	{
+		if (theString[ii] == theChar)
+		{
+			charCnt++;
+		}
+	}
+
+	return(charCnt);
+}
+
 
 static uint64_t	gBaseSeconds		=	0;
 

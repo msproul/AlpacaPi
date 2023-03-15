@@ -30,7 +30,7 @@
 //sudo dpkg -i wiringpi-latest.deb
 //*****************************************************************************
 
-#if defined(_ENABLE_ROR_) || defined(_ENABLE_DOME_) || defined(_ENABLE_SWITCH_)
+#if defined(_ENABLE_DOME_ROR_) || defined(_ENABLE_SWITCH_RPI_)
 
 
 #include	<stdio.h>
@@ -227,7 +227,7 @@ bool	switchState;
 	}
 	return(switchState);
 }
-#endif // defined(_ENABLE_ROR_) || defined(_ENABLE_DOME_) || defineED(_ENABLE_SWITCH_)
+#endif // defined(_ENABLE_DOME_ROR_) || defined(_ENABLE_DOME_) || defineED(_ENABLE_SWITCH_)
 
 
 #ifdef _ENABLE_RELAY_TESTING_

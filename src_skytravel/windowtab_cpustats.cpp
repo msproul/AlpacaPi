@@ -81,6 +81,12 @@ int		clmnHdr_xLoc;
 int		clmnHdrWidth;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
+	//------------------------------------------
+	yLoc	=	cTabVertOffset;
+	yLoc	=	SetTitleBox(kCpuStats_Title, -1, yLoc, "CPU Usage Stats (not finished)");
+
+	//------------------------------------------
+	//*	set up tab stops
 	currentTabPos	=	0;
 	iii				=	0;
 	while ((iii < kMaxTabStops) && (tabSizes[iii] > 0))
@@ -91,15 +97,6 @@ int		clmnHdrWidth;
 	}
 
 	//------------------------------------------
-	yLoc			=	cTabVertOffset;
-
-	//------------------------------------------
-	SetWidget(kCpuStats_Title,		0,			yLoc,		cWidth,		cTitleHeight);
-	SetWidgetText(kCpuStats_Title, argWindowName);
-	SetBGcolorFromWindowName(kCpuStats_Title);
-	yLoc			+=	cTitleHeight;
-	yLoc			+=	2;
-
 	clmnHdr_xLoc	=	1;
 	iii				=	kCpuStats_ClmTitle1;
 	while (iii <= kCpuStats_ClmTitle6)

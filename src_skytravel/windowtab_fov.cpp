@@ -27,6 +27,7 @@
 //*	Jun 15,	2022	<MLS> Added FOV Reload button
 //*	Nov  4,	2022	<MLS> Added ResetFOVdata()
 //*	Nov  4,	2022	<MLS> Added FOV Rescan button
+//*	Mar 11,	2023	<MLS> Added aperture to FOV display
 //*****************************************************************************
 
 
@@ -114,22 +115,32 @@ int		chkBoxWidth;
 int		textBoxOffsetX;
 int		iii;
 int		clmnHdrWidth;
-short	tabArray[kMaxTabStops]	=	{250, 400, 500, 610, 750, 900, 1000, 1199, 0};
+short	tabValue;
+short	tabDeltas[kMaxTabStops]	=	{250, 145, 65, 65, 110, 140, 150, 100, 199, 0, 0};
+//short	tabArray[kMaxTabStops]	=	{250, 400, 500, 610, 750, 900, 1000, 1199, 0};
+short	tabArray[kMaxTabStops];
 int		clmTitleID;
 char	textString[80];
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-	//------------------------------------------
-	yLoc			=	cTabVertOffset;
+	//*	set up the tab array from the tab offsets
+	for (iii=0; iii<kMaxTabStops; iii++)
+	{
+		tabArray[iii]	=	0;
+	}
+	tabValue	=	0;
+	iii			=	0;
+	while ((iii < kMaxTabStops) && (tabDeltas[iii] > 0))
+	{
+		tabValue		+=	tabDeltas[iii];
+		tabArray[iii]	=	tabValue;
+		iii++;
+	}
 
 	//------------------------------------------
-	SetWidget(kFOVbox_Title,		0,			yLoc,		cWidth,		cTitleHeight);
-	SetWidgetText(kFOVbox_Title, "Camera Field of View");
-	SetBGcolorFromWindowName(kFOVbox_Title);
-	yLoc			+=	cTitleHeight;
-	yLoc			+=	2;
-
+	yLoc	=	cTabVertOffset;
+	yLoc	=	SetTitleBox(kFOVbox_Title, -1, yLoc, "Camera Field of View");
 
 	//------------------------------------------
 	textBoxHt		=	cRadioBtnHt;
@@ -149,7 +160,7 @@ char	textString[80];
 	//------------------------------------------
 	clmnHdr_xLoc	=	textBoxOffsetX;
 	iii				=	kFOVbox_ClmTitle1;
-	while(iii <= kFOVbox_ClmTitle8)
+	while(iii <= kFOVbox_ClmTitle9)
 	{
 		clmnHdrWidth	=	tabArray[iii - kFOVbox_ClmTitle1] - clmnHdr_xLoc;
 
@@ -166,13 +177,13 @@ char	textString[80];
 		clmnHdr_xLoc	=	tabArray[iii - kFOVbox_ClmTitle1];;
 		clmnHdr_xLoc	+=	2;
 
-
 		iii++;
 	}
 	clmTitleID	=	kFOVbox_ClmTitle1;
 	SetWidgetText(		clmTitleID++,	"Camera");
 	SetWidgetText(		clmTitleID++,	"Image Size (pixels)");
-	SetWidgetText(		clmTitleID++,	"Pixel Size");
+	SetWidgetText(		clmTitleID++,	"Pix Size");
+	SetWidgetText(		clmTitleID++,	"Aperture");
 //	SetWidgetText(		clmTitleID++,	"Image Size (microns)");
 	SetWidgetText(		clmTitleID++,	"Focal Len");
 	SetWidgetText(		clmTitleID++,	"FOV (degrees)");
@@ -277,7 +288,7 @@ double	fov_arcSeconds;
 }
 
 //**************************************************************************************
-//*	this is a little bit lame, we read the file in for EACH camera device
+//*	this is a little bit lame, we read the file for EACH camera device
 //*	we only do it ONCE at startup,
 //*	and it is a lot easier than trying to allocate and free a data structure
 //**************************************************************************************
@@ -724,6 +735,7 @@ int		iii;
 char	nameString[128];
 char	textString[512];
 char	offsetsString[64];
+char	tempString[64];
 //char	ipAddrStr[32];
 int		myDevCount;
 
@@ -758,12 +770,38 @@ int		myDevCount;
 
 //			inet_ntop(AF_INET, &(cRemoteDeviceList[iii].deviceAddress.sin_addr), ipAddrStr, INET_ADDRSTRLEN);
 
+		#if 1
+			strcpy(textString,	nameString);
+			strcat(textString,	"\t");
+			//------------------
+			sprintf(tempString,	"%4d x %4d\t%5.3f\t", 	cCameraData[iii].CameraProp.CameraXsize,
+														cCameraData[iii].CameraProp.CameraYsize,
+														cCameraData[iii].CameraProp.PixelSizeX);
+			strcat(textString,	tempString);
+			//------------------
+			sprintf(tempString,	"%4.1f\t%3.0f / F%3.2f\t",	cCameraData[iii].Aperture_mm,
+															cCameraData[iii].FocalLen_mm,
+															cCameraData[iii].F_Ratio);
+			strcat(textString,	tempString);
+			//------------------
+			sprintf(tempString,	"%3.2f x %3.2f\t",			(cCameraData[iii].FOV_X_arcSeconds / 3600.0),
+															(cCameraData[iii].FOV_Y_arcSeconds / 3600.0));
+			strcat(textString,	tempString);
+			//------------------
+			sprintf(tempString,	"%3.1f x %3.1f\t",			(cCameraData[iii].FOV_X_arcSeconds / 60.0),
+															(cCameraData[iii].FOV_Y_arcSeconds / 60.0));
+			strcat(textString,	tempString);
+			//------------------
+			sprintf(tempString,	"%6.4f",					cCameraData[iii].PixelScale);
+			strcat(textString,	tempString);
+		#else
 			sprintf(textString,
-					"%s\t%4d x %4d\t%5.3f\t%3.0f / F%3.2f\t%3.2f x %3.2f\t%3.1f x %3.1f\t%6.4f",
+					"%s\t%4d x %4d\t%5.3f\t%3.1f\t%3.0f / F%3.2f\t%3.2f x %3.2f\t%3.1f x %3.1f\t%6.4f",
 					nameString,
 					cCameraData[iii].CameraProp.CameraXsize,
 					cCameraData[iii].CameraProp.CameraYsize,
 					cCameraData[iii].CameraProp.PixelSizeX,
+					cCameraData[iii].Aperture_mm,
 					cCameraData[iii].FocalLen_mm,
 					cCameraData[iii].F_Ratio,
 					(cCameraData[iii].FOV_X_arcSeconds / 3600.0),
@@ -772,6 +810,7 @@ int		myDevCount;
 					(cCameraData[iii].FOV_Y_arcSeconds / 60.0),
 					cCameraData[iii].PixelScale
 					);
+		#endif // 1
 			if ((cCameraData[iii].RighttAscen_Offset != 0) || (cCameraData[iii].Declination_Offset != 0))
 			{
 				sprintf(offsetsString,	"\t%6.3f x %6.3f", cCameraData[iii].RighttAscen_Offset, cCameraData[iii].Declination_Offset);

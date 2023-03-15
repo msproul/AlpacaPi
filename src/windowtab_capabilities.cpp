@@ -51,7 +51,7 @@ WindowTabCapabilities::WindowTabCapabilities(	const int	xSize,
 //**************************************************************************************
 WindowTabCapabilities::~WindowTabCapabilities(void)
 {
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 }
 
 
@@ -69,11 +69,7 @@ short	tabStopList[]	=	{250, 300, 350, 400, 0 };
 	yLoc			=	cTabVertOffset;
 
 	//------------------------------------------
-	SetWidget(kCapabilities_Title,		0,			yLoc,		cWidth,		cTitleHeight);
-	SetWidgetText(kCapabilities_Title, "AlpacaPi project");
-	SetBGcolorFromWindowName(kCapabilities_Title);
-	yLoc			+=	cTitleHeight;
-	yLoc			+=	2;
+	yLoc	=	SetTitleBox(kCapabilities_Title, -1, yLoc, "Driver capabilites");
 
 	for (iii=kCapabilities_TextBox1; iii<=kCapabilities_TextBoxN; iii++)
 	{

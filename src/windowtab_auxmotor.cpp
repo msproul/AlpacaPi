@@ -53,7 +53,7 @@ WindowTabAuxMotor::WindowTabAuxMotor(	const int	xSize,
 //**************************************************************************************
 WindowTabAuxMotor::~WindowTabAuxMotor(void)
 {
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 }
 
 //**************************************************************************************
@@ -67,7 +67,8 @@ int		iii;
 
 
 	//------------------------------------------
-	yLoc			=	cTabVertOffset;
+	yLoc	=	cTabVertOffset;
+	yLoc	=	SetTitleBox(kAuxMotorBox_Title, -1, yLoc, "Auxiliary stepper");
 
 	//------------------------------------------
 	SetWidget(kAuxMotorBox_Position,	0,		yLoc,		cWidth / 2,		cBoxHeight);

@@ -29,7 +29,7 @@
 #endif
 
 
-void	CreateSwitchObjectsRPi(void);
+void	CreateSwitchObjects_RPi(void);
 
 //**************************************************************************************
 class SwitchDriverRPi: public SwitchDriver

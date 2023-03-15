@@ -151,10 +151,12 @@ uint8_t	*rgbRowPtr;
 
 
 //*****************************************************************************
-void	DumpCVMatStruct(cv::Mat *theImageMat, const char *message)
+void	DumpCVMatStruct(const char *calledFrom, cv::Mat *theImageMat, const char *message)
 {
 //		oldImgRowStepSize	=	myOpenCVimage->step[0];
 //		oldImgChannels		=	myOpenCVimage->step[1];
+
+	CONSOLE_DEBUG_W_STR("Called from", calledFrom);
 
 	if (message != NULL)
 	{
@@ -166,15 +168,15 @@ void	DumpCVMatStruct(cv::Mat *theImageMat, const char *message)
 	CONSOLE_DEBUG_W_NUM("theImageMat->dims\t\t=",		theImageMat->dims);
 	if (theImageMat->dims >= 1)
 	{
-		CONSOLE_DEBUG_W_LONG("step[0] (rowStepSize)\t=",	theImageMat->step[0]);
+		CONSOLE_DEBUG_W_SIZE("step[0] (rowStepSize)\t=",	theImageMat->step[0]);
 	}
 	if (theImageMat->dims >= 2)
 	{
-		CONSOLE_DEBUG_W_LONG("step[1] (nChannels)\t=",		theImageMat->step[1]);
+		CONSOLE_DEBUG_W_SIZE("step[1] (nChannels)\t=",		theImageMat->step[1]);
 	}
 	if (theImageMat->dims >= 3)
 	{
-		CONSOLE_DEBUG_W_LONG("theImageMat->step[2]\t=",		theImageMat->step[2]);
+		CONSOLE_DEBUG_W_SIZE("theImageMat->step[2]\t=",		theImageMat->step[2]);
 	}
 
 }

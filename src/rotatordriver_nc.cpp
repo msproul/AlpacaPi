@@ -22,10 +22,11 @@
 //*****************************************************************************
 //*	<MLS>	=	Mark L Sproul
 //*****************************************************************************
+//*	Dec 14,	2019	<MLS> Created rotatordriver_nc.cpp
 //*	Dec 14,	2019	<MLS> Started on NiteCrawler rotator driver
 //*****************************************************************************
 
-#ifdef _ENABLE_ROTATOR_
+#ifdef _ENABLE_ROTATOR_NITECRAWLER_
 
 #include	<string.h>
 
@@ -212,4 +213,4 @@ bool	isMoving;
 }
 
 
-#endif // _ENABLE_ROTATOR_
+#endif // _ENABLE_ROTATOR_NITECRAWLER_

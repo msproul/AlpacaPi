@@ -194,7 +194,7 @@ char		stateString[48];
 
 	if (cShutterStatus != cPreviousShutterStatus)
 	{
-		Shutter_GetStatusString(cShutterStatus, stateString);
+		GetDomeShutterStatusString(cShutterStatus, stateString);
 		LogEvent(	"shutter",
 					"StateChanged",
 					NULL,
@@ -218,15 +218,12 @@ int					cmdEnumValue;
 int					cmdType;
 TYPE_ASCOM_STATUS	alpacaErrCode;
 char				alpacaErrMsg[256];
-//int				myDeviceNum;
-int				mySocket;
+int					mySocket;
 
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, reqData->deviceCommand);
 
-
 	//*	make local copies of the data structure to make the code easier to read
 	mySocket	=	reqData->socket;
-//	myDeviceNum	=	reqData->deviceNumber;
 
 	strcpy(alpacaErrMsg, "");
 	alpacaErrCode	=	kASCOM_Err_Success;
@@ -456,7 +453,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 								INCLUDE_COMMA);
 
 //		CONSOLE_DEBUG_W_NUM("cShutterStatus=", cShutterStatus);
-		Shutter_GetStatusString(cShutterStatus, statusString);
+		GetDomeShutterStatusString(cShutterStatus, statusString);
 		JsonResponse_Add_String(	reqData->socket,
 									reqData->jsonTextBuffer,
 									kMaxJsonBuffLen,
@@ -659,7 +656,7 @@ char		lineBuffer[128];
 	//*-----------------------------------------------------------
 	SocketWriteData(mySocketFD,	"<TR>\r\n");
 	SocketWriteData(mySocketFD,	"\t<TD>Shutter status:</TD><TD>");
-	Shutter_GetStatusString(cShutterStatus, lineBuffer);
+	GetDomeShutterStatusString(cShutterStatus, lineBuffer);
 	SocketWriteData(mySocketFD,	lineBuffer);
 	SocketWriteData(mySocketFD,	"</TD></TR>\r\n");
 
@@ -722,23 +719,5 @@ bool	ShutterDriver::StopShutter(void)
 	CONSOLE_DEBUG(__FUNCTION__);
 	return(false);
 }
-
-
-//*****************************************************************************
-void	Shutter_GetStatusString(const int status, char *statusString)
-{
-	switch(status)
-	{
-		case kShutterStatus_Open:		strcpy(statusString,	"Open");	break;
-		case kShutterStatus_Closed:		strcpy(statusString,	"Closed");	break;
-		case kShutterStatus_Opening:	strcpy(statusString,	"Opening");	break;
-		case kShutterStatus_Closing:	strcpy(statusString,	"Closing");	break;
-		case kShutterStatus_Error:		strcpy(statusString,	"Error");	break;
-
-		case kShutterStatus_Unknown:
-		default:						strcpy(statusString,	"unknown");	break;
-	}
-}
-
 
 #endif	//	_ENABLE_DOME_

@@ -7,6 +7,9 @@
 #ifndef	_WINDOWTAB_IMAGE_H_
 	#include	"windowtab_image.h"
 #endif
+#ifndef	_WINDOWTAB_IMAGEINFO_H_
+	#include	"windowtab_imageinfo.h"
+#endif
 
 #ifndef	_WINDOWTAB_ABOUT_H_
 	#include	"windowtab_about.h"
@@ -73,18 +76,40 @@ class ControllerImage: public Controller
 				IplImage *cColorImage;
 			#endif // _USE_OPENCV_CPP_
 				void	SetImageWindowInfo(void);
+				void	SetDownloadInfo(double download_MBytes, double download_seconds);
 
+				char					cImageFileName[128];
 				TYPE_BinaryImageHdr		cBinaryImageHdr;
 
 				//*	tab information
 				WindowTabImage			*cImageTabObjPtr;
+				WindowTabImageInfo		*cImageInfoTabObjcPtr;
 				WindowTabAbout			*cAboutBoxTabObjPtr;
 
-				//----------------------------------------------------
+				//=======================================================
 				//*	image information
 				TYPE_CameraProperties	cCameraProp;
 //				TYPE_IMAGE_ROI_Info		cROIinfo;
 
+				//=======================================================
+				//*	image analysis data
+				//*	these are the same names as in cameradriver.h
+				void		CalculateHistogramArray(void);
+				void		SaveHistogram(void);
+
+				int32_t		cHistogramLum[256];
+				int32_t		cHistogramRed[256];
+				int32_t		cHistogramGrn[256];
+				int32_t		cHistogramBlu[256];
+				int32_t		cMinHistogramValue;
+				int32_t		cMaxHistogramValue;
+				int32_t		cPeakHistogramValue;
+				int32_t		cMaxHistogramPixCnt;
+
+				uint8_t		cMaxRedValue;
+				uint8_t		cMaxGrnValue;
+				uint8_t		cMaxBluValue;
+				uint8_t		cMaxGryValue;
 
 };
 

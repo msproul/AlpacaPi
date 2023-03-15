@@ -81,8 +81,12 @@ typedef struct
 //*	this is a list of IP addresses
 #define	kMaxAlpacaIPaddrCnt	32
 
-#define	kMaxAlpacaDeviceCnt	100
-
+#ifdef kMaxAlpacaDeviceCnt
+//	#warning "kMaxAlpacaDeviceCnt is already defined"
+#else
+	#error "kMaxAlpacaDeviceCnt was not defined"
+	#define	kMaxAlpacaDeviceCnt	100
+#endif
 
 #ifdef __cplusplus
 	extern "C" {

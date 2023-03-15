@@ -63,7 +63,7 @@ WindowTabUSB::WindowTabUSB(	const int	xSize,
 //**************************************************************************************
 WindowTabUSB::~WindowTabUSB(void)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 }
 
 //**************************************************************************************

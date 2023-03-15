@@ -144,12 +144,12 @@ bool	rulesFileOK;
 int		numCameras;
 
 	numCameras	=	0;
-//	CONSOLE_DEBUG_W_LONG("sizeof(CameraDriver)\t=",		(long)sizeof(CameraDriver));
-//	CONSOLE_DEBUG_W_LONG("sizeof(unsigned long)\t=",	(long)sizeof(unsigned long));
-//	CONSOLE_DEBUG_W_LONG("sizeof(long)\t\t=",			(long)sizeof( long));
-//	CONSOLE_DEBUG_W_LONG("sizeof(int)\t\t=",			(long)sizeof( int));
-//	CONSOLE_DEBUG_W_LONG("sizeof(uint32_t)\t=",			(long)sizeof( uint32_t));
-//	CONSOLE_DEBUG_W_LONG("sizeof(ASI_CAMERA_INFO)\t=",	(long)sizeof( ASI_CAMERA_INFO));
+//	CONSOLE_DEBUG_W_SIZE("sizeof(CameraDriver)\t=",		sizeof(CameraDriver));
+//	CONSOLE_DEBUG_W_SIZE("sizeof(unsigned long)\t=",	sizeof(unsigned long));
+//	CONSOLE_DEBUG_W_SIZE("sizeof(long)\t\t=",			sizeof( long));
+//	CONSOLE_DEBUG_W_SIZE("sizeof(int)\t\t=",			sizeof( int));
+//	CONSOLE_DEBUG_W_SIZE("sizeof(uint32_t)\t=",			sizeof( uint32_t));
+//	CONSOLE_DEBUG_W_SIZE("sizeof(ASI_CAMERA_INFO)\t=",	sizeof( ASI_CAMERA_INFO));
 
 	strcpy(driverVersionString,	ASIGetSDKVersion());
 	LogEvent(	"camera",
@@ -249,21 +249,7 @@ ASI_ERROR_CODE		asiErrorCode;
 		}
 		printf("\r\n");
 
-		//*	check if we have a valid RefId
-		if (strlen(gObseratorySettings.RefID) > 0)
-		{
-			//*	ASCOM only displays the name, having more than 1 of the same camera
-			//*	it became confusing as to which camera to select from the ASCOM list.
-			//*	this helps figure out when using a strictly ASCOM app on Windows
-			strcpy(cCommonProp.Name, gObseratorySettings.RefID);
-			strcat(cCommonProp.Name, "-");
-			strcat(cCommonProp.Name, cAsiCameraInfo.Name);
-			CONSOLE_DEBUG_W_STR("cCommonProp.Name", cCommonProp.Name);
-		}
-		else
-		{
-			strcpy(cCommonProp.Name, cAsiCameraInfo.Name);
-		}
+		SetCommonPropertyName(NULL, cAsiCameraInfo.Name);
 
 		cCameraID						=	cAsiCameraInfo.CameraID;
 		cIsColorCam						=	cAsiCameraInfo.IsColorCam;

@@ -15,8 +15,6 @@ enum
 {
 	kDriverInfo_Title	=	0,
 
-	kDriverInfo_SubTitle,
-
 	//*	label, name, & outline for each item
 	kDriverInfo_Name_Lbl,
 	kDriverInfo_Name,

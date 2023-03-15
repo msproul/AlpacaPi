@@ -76,6 +76,7 @@ typedef struct
 
 extern TYPE_OBSERVATORY_SETTINGS	gObseratorySettings;
 
+void	DumpObservatorySettings(void);
 void	DumpTelescopeInfo(TYPE_TELESCOPE_INFO *ts_info);
 
 void	ObservatorySettings_Init(void);

@@ -131,7 +131,7 @@ int		iii;
 //**************************************************************************************
 ControllerSwitch::~ControllerSwitch(void)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 	//-----------------------------
 	DELETE_OBJ_IF_VALID(cSwitchTabObjPtr);
 	DELETE_OBJ_IF_VALID(cDriverInfoTabObjPtr);

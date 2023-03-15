@@ -29,6 +29,7 @@
 	#include	"alpacadriver.h"
 #endif
 
+void	CreateShutterObjects(void);
 
 
 //**************************************************************************************
@@ -76,11 +77,6 @@ class ShutterDriver: public AlpacaDriver
 				int32_t		cIdleStateCnt;
 
 };
-
-
-
-void	CreateShutterObjects(void);
-void	Shutter_GetStatusString(const int status, char *statusString);
 
 
 #endif	//	_SHUTTER_DRIVER_H_

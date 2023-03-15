@@ -73,7 +73,7 @@ void	CreateShuterArduinoObjects(void)
 ShutterArduino::ShutterArduino(const int argDevNum)
 	:ShutterDriver(argDevNum)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	strcpy(cCommonProp.Name, "Arduino-shutter");
 	strcpy(gWebTitle, "Arduino-shutter");
 
@@ -99,7 +99,7 @@ ShutterArduino::~ShutterArduino(void)
 //*****************************************************************************
 void		ShutterArduino::ProcessArduinoState(char *stateString)
 {
-	CONSOLE_DEBUG_W_STR("stateString\t=", stateString);
+//	CONSOLE_DEBUG_W_STR("stateString\t=", stateString);
 
 	if (strncasecmp(stateString, "Idle", 4) != 0)
 	{
@@ -110,7 +110,7 @@ void		ShutterArduino::ProcessArduinoState(char *stateString)
 	if (strncasecmp(stateString, "Idle", 4) == 0)
 	{
 		cIdleStateCnt++;
-		CONSOLE_DEBUG("IDLE---");
+//		CONSOLE_DEBUG("IDLE---");
 		switch(cShutterStatus)
 		{
 			case kShutterStatus_Open:
@@ -135,7 +135,7 @@ void		ShutterArduino::ProcessArduinoState(char *stateString)
 
 			case kShutterStatus_Error:
 			case kShutterStatus_Unknown:
-				CONSOLE_DEBUG_W_DBL("cAltitude_Dbl\t=", cAltitude_Dbl);
+//				CONSOLE_DEBUG_W_DBL("cAltitude_Dbl\t=", cAltitude_Dbl);
 				if (cAltitude_Dbl > 30.0)
 				{
 					cShutterStatus	=	kShutterStatus_Open;
@@ -144,7 +144,7 @@ void		ShutterArduino::ProcessArduinoState(char *stateString)
 				{
 					cShutterStatus	=	kShutterStatus_Opening;
 				}
-				CONSOLE_DEBUG_W_NUM("cShutterStatus\t=", cShutterStatus);
+//				CONSOLE_DEBUG_W_NUM("cShutterStatus\t=", cShutterStatus);
 				break;
 		}
 	}
@@ -176,15 +176,23 @@ double		myPercentOpen;
 		{
 			equalsPtr++;
 			strcpy(doorStatusStr, equalsPtr);
-			CONSOLE_DEBUG_W_STR("Door Status\t=", doorStatusStr);
+//			CONSOLE_DEBUG_W_STR("Door Status\t=", doorStatusStr);
 			if (strcasecmp(doorStatusStr, "CLOSED") == 0)
 			{
-				CONSOLE_DEBUG("Door is CLOSED");
+				//*	check to see if there was a change
+				if (cShutterStatus != kShutterStatus_Closed)
+				{
+					CONSOLE_DEBUG("Door status CHANGED to  CLOSED");
+				}
 				cShutterStatus	=	kShutterStatus_Closed;
 			}
 			else if (strcasecmp(doorStatusStr, "OPEN") == 0)
 			{
-				CONSOLE_DEBUG("Door is OPEN");
+				//*	check to see if there was a change
+				if (cShutterStatus != kShutterStatus_Open)
+				{
+					CONSOLE_DEBUG("Door status CHANGED to  OPEN");
+				}
 				cShutterStatus	=	kShutterStatus_Open;
 			}
 			else if (strcasecmp(doorStatusStr, "UNKNOWN") == 0)
@@ -251,6 +259,10 @@ double		myPercentOpen;
 	{
 		//*	ignore
 	}
+	else if (strncasecmp(readBuffer, "TimeFormat", 10) == 0)
+	{
+		//*	ignore
+	}
 	else
 	{
 		//*	haven't figured out what to do with the data yet
@@ -306,7 +318,7 @@ int		charsRead;
 						cArduinoLineBuf[cArduinoByteCnt]	=	0;
 						if (strlen(cArduinoLineBuf) > 2)
 						{
-							CONSOLE_DEBUG_W_STR("Ard:", cArduinoLineBuf);
+//							CONSOLE_DEBUG_W_STR("Ard:", cArduinoLineBuf);
 							ProcessArduinoLine(cArduinoLineBuf);
 						}
 						cArduinoByteCnt		=	0;

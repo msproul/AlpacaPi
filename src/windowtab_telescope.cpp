@@ -81,7 +81,7 @@ WindowTabTelescope::WindowTabTelescope(	const int	xSize,
 //**************************************************************************************
 WindowTabTelescope::~WindowTabTelescope(void)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 }
 
 
@@ -137,21 +137,12 @@ int			coordHeight;
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	//------------------------------------------
-	yLoc			=	cTabVertOffset;
+	yLoc	=	cTabVertOffset;
 
 	//------------------------------------------
-	SetWidget(kTelescope_Title,		0,			yLoc,		cWidth,		cTitleHeight);
-	SetWidgetText(kTelescope_Title, "AlpacaPi project");
-	SetBGcolorFromWindowName(kTelescope_Title);
+	yLoc	=	SetTitleBox(kTelescope_Title, kTelescope_Connected, yLoc, "AlpacaPi Telescope");
 
-	//*	setup the connected indicator
-   	SetUpConnectedIndicator(kTelescope_Connected, yLoc);
-
-	yLoc			+=	cTitleHeight;
-	yLoc			+=	2;
-	yLocSave		=	yLoc;
-
-
+	yLocSave				=	yLoc;
 	directionBtnWidth		=	2 * myClmWidth;
 	directionBtnHeight		=	3 * cTitleHeight;
 	cBtnBGcolor_Normal		=	CV_RGB(32,	32,	128);

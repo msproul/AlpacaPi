@@ -94,7 +94,7 @@ ControllerFocusGeneric::ControllerFocusGeneric(	const char			*argWindowName,
 //**************************************************************************************
 ControllerFocusGeneric::~ControllerFocusGeneric(void)
 {
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 	//*	delete the windowtab objects
 	DELETE_OBJ_IF_VALID(cMLsingleTabObjPtr);
 	DELETE_OBJ_IF_VALID(cAboutBoxTabObjPtr);

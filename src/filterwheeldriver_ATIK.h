@@ -4,12 +4,14 @@
 //**************************************************************************
 //#include	"filterwheeldriver_ATIK.h"
 
-
-
+#ifndef _FILTERWHEELDRIVER_ATIK_H_
+	#define _FILTERWHEELDRIVER_ATIK_H_
 
 #ifndef _FILTERWHEELDRIVER_H_
 	#include	"filterwheeldriver.h"
 #endif
+
+#include	"AtikCameras.h"
 
 //**************************************************************************************
 class FilterwheelATIK: public FilterwheelDriver
@@ -38,4 +40,6 @@ class FilterwheelATIK: public FilterwheelDriver
 		int							cArtimisErrorCnt;
 };
 
-void	CreateATIKFilterWheelObjects(void);
+void	CreateFilterWheelObjects_ATIK(void);
+
+#endif // _FILTERWHEELDRIVER_ATIK_H_

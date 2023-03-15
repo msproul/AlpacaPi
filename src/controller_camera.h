@@ -105,6 +105,7 @@ class ControllerCamera: public Controller
 		virtual	void	UpdateFilterWheelInfo(void);
 		virtual	void	UpdateFilterWheelPosition(void);
 		virtual	void	UpdateFileNameOptions(void);
+		virtual	void	UpdateLiveMode(void);
 		virtual	void	UpdatePercentCompleted(void);
 		virtual	void	UpdateReadoutModes(void);
 		virtual	void	UpdateReceivedFileName(const char *newFileName);
@@ -162,6 +163,7 @@ class ControllerCamera: public Controller
 				void	StartExposure(void);
 				void	SetObjectText(const char *newObjectText, const char *newPrefixText);
 				void	LogCameraTemp(const double cameraTemp);
+
 
 
 //			#if defined(_USE_OPENCV_CPP_) &&  (CV_MAJOR_VERSION >= 4)

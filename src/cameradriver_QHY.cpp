@@ -59,7 +59,7 @@
 
 
 //**************************************************************************************
-int	CreateQHY_CameraObjects(void)
+int	CreateCameraObjects_QHY(void)
 {
 int				cameraCount;
 uint32_t		qhyRetCode;
@@ -229,8 +229,7 @@ double			controlStep;
 	{
 		CONSOLE_DEBUG_W_STR("qhyModelString\t=", qhyModelString);
 		strcpy(cDeviceModel,		qhyModelString);
-		strcpy(cCommonProp.Name,	"QHY-");
-		strcat(cCommonProp.Name,	qhyModelString);
+		SetCommonPropertyName("QHY-", qhyModelString);
 	}
 
 	cQHYcamHandle	=	OpenQHYCCD(cQHYidString);

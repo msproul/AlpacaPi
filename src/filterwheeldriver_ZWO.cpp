@@ -65,13 +65,12 @@ static	void	GetEFW_ErrorMsgString(EFW_ERROR_CODE errorCode, char *errorMsg);
 
 //**************************************************************************************
 //*	this will get moved to the individual implentations later
-void	CreateZWOFilterWheelObjects(void)
+void	CreateFilterWheelObjects_ZWO(void)
 {
 int			filterwheelCnt;
 int			devNum;
 bool		rulesFileOK;
 char		*efwVersionString;
-
 
 	CONSOLE_DEBUG(__FUNCTION__);
 

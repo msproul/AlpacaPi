@@ -191,14 +191,98 @@ double		colorDbl;
 	return(rgbColor);
 }
 
+
+//*******************************************************************************
+uint32_t	clut8ColorComponents(int x)
+
+    -> (red: Double, green: Double, blue: Double)
+{
+int			red;
+int			green;
+int			blue;
+int			which;
+int			values[16];
+int			iii;
+uint32_t	resultColor;
+#define	Double(x) (1.0 * x)
+
+	if (x < 215)
+	{
+		// Component-based colors, with RGB values in the range 0...5,
+		// stored in reverse order (i.e. color #0 is white, (1.0, 1.0, 1.0)).
+		// Note that x == 215 would normally produce black, (0.0, 0.0, 0.0),
+		// but the palette deliberately puts that at the end.
+		red		=	Double(5 - (x / 36))    / 5.0;
+		green	=	Double(5 - (x / 6 % 6)) / 5.0;
+		blue	=	Double(5 - (x % 6))     / 5.0;
+	//	return (red: red, green: green, blue: blue)
+
+	}
+	else if (x == 255
+	{
+		// Special case: black is last.
+		red		=	0;
+		green	=	0;
+		blue	=	0;
+	//	return (red: 0.0, green: 0.0, blue: 0.0)
+	}
+	else
+	{
+		// Extra shades of "primary" colors: red, green, blue, and grey.
+//		let values = (0...15).reversed()
+//					 .filter { $0 % 3 != 0 }
+//					 .map { Double($0) / 15.0 }
+//		assert(values.count == 10)
+		for (iii= 0; iii<15; iii++)
+		{
+			values[iii]	=	15 -iii;
+		}
+		which	=	(x - 215) % 10;
+		switch ((x - 215) / 10)
+		{
+			case 0:		//return (red: values[which], green: 0.0, blue: 0.0)
+				red		=	values[which];
+				green	=	0;
+				blue	=	0;
+				break;
+
+			case 1:		//return (red: 0.0, green: values[which], blue: 0.0)
+				red		=	0;
+				green	=	values[which];
+				blue	=	0;
+				break;
+
+			case 2:		//return (red: 0.0, green: 0.0, blue: values[which])
+				red		=	0;
+				green	=	0;
+				blue	=	values[which];
+				break;
+			case 3:		//return (red:   values[which],
+						//green: values[which],
+						//blue:  values[which])
+				red		=	values[which];
+				green	=	0;
+				blue	=	0;
+				break;
+
+//			default: fatalError("x must be out of range")
+		}
+	}
+	resultColor	=	red << 16;
+	resultColor	+=	green << 8;
+	resultColor	+=	blue;
+	return(resultColor);
+}
+
 //*******************************************************************************
 static void	SetMacColorTable(void)
 {
-int	ii;
+int	iii;
 
-	for (ii=0; ii<kMaxItterations; ii++)
+	for (iii=0; iii<kMaxItterations; iii++)
 	{
-		gColorTable[ii]	=	GetMacCLUT(ii & 0x00ff);
+//		gColorTable[ii]	=	GetMacCLUT(iii & 0x00ff);
+		gColorTable[ii]	=	clut8ColorComponents(iii & 0x00ff);
 	}
 	gColorTable[kMaxItterations - 1]	=	0;
 
@@ -280,7 +364,7 @@ long			myRGBcolor;
 		}
 		myRGBcolor	=	gColorTable[myColorIdx];
 
-		imgDataPtr[pixelIndex + 2]		=	(myRGBcolor >> 16) & 0x00ff;
+		imgDataPtr[pixelIndex + 2]	=	(myRGBcolor >> 16) & 0x00ff;
 		imgDataPtr[pixelIndex + 1]	=	(myRGBcolor >> 8) & 0x00ff;
 		imgDataPtr[pixelIndex + 0]	=	(myRGBcolor) & 0x00ff;
 	}
@@ -310,8 +394,8 @@ void	DoMandelBrot(	IplImage	*openCV_Image,
 						)
 {
 double		X, Y, Xsquare, Ysquare;
-double		QQtemp;
-double		QQ[kQmax + 10];
+double		QQQtemp;
+double		QQQ[kQmax + 10];
 double 		PP, deltaP, deltaQ;
 
 long		color;
@@ -320,7 +404,7 @@ int			maxcol;
 int			maxrow;
 bool		keepGoing;
 int			deltaColumn;
-int			ii;
+int			iii;
 int			keyPressed;
 #ifdef _USE_STAGGERED_
 	int			startOffset[]	=	{0,  16, 8,  4, 2, 1, 3, 0, 0, 0, 0};
@@ -339,18 +423,18 @@ int			keyPressed;
 	deltaP	=	(XMax - XMin) / (maxcol);
 	deltaQ	=	(YMax - YMin) / (maxrow);
 
-	QQ[0]	=	YMin;
+	QQQ[0]	=	YMin;
 	for (row=1; row<=maxrow; row++)
 	{
-		QQ[row]	=	QQ[row-1] + deltaQ;
+		QQQ[row]	=	QQQ[row-1] + deltaQ;
 	}
 
-	ii			=	0;
+	iii			=	0;
 	keepGoing	=	true;
-	while ((columnSteps[ii] > 0) && keepGoing)
+	while ((columnSteps[iii] > 0) && keepGoing)
 	{
-		deltaColumn	=	columnSteps[ii];
-		for (col=startOffset[ii]; col < maxcol; col += deltaColumn)
+		deltaColumn	=	columnSteps[iii];
+		for (col=startOffset[iii]; col < maxcol; col += deltaColumn)
 		{
 			PP	=	XMin + (deltaP * col);
 
@@ -358,13 +442,13 @@ int			keyPressed;
 			{
 				X		=	Y	=	Xsquare	=	Ysquare	=	0.0;
 				color	=	kStartColor;
-				QQtemp	=	QQ[row];
+				QQQtemp	=	QQQ[row];
 				while ((color < kMaxItterations)  && ((Xsquare + Ysquare) < 4))
 				{
 					Xsquare =	X * X;
 					Ysquare =	Y * Y;
 					Y		*=	X;
-					Y		+=	Y + QQtemp;
+					Y		+=	Y + QQQtemp;
 					X		=	Xsquare - Ysquare + PP;
 					color++;
 				}
@@ -379,7 +463,7 @@ int			keyPressed;
 		//	keyPressed	=	cvWaitKey(10);
 
 		}
-		ii++;
+		iii++;
 		cvShowImage(gWindowName, openCV_Image);
 		keyPressed	=	cvWaitKey(5);
 	}

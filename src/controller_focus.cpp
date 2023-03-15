@@ -135,7 +135,7 @@ ControllerFocus::ControllerFocus(	const char			*argWindowName,
 //**************************************************************************************
 ControllerFocus::~ControllerFocus(void)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 	if (cUSBportOpen)
 	{
 		CONSOLE_DEBUG("Closing USB port");
@@ -1174,7 +1174,8 @@ int	myFocuserTYpe;
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG(device->deviceNameStr);
 
-	if (strncasecmp(device->deviceNameStr, "NiteCrawler", 11) == 0)
+	//*	is "NiteCrawler" in the name???
+	if (strcasestr(device->deviceNameStr, "NiteCrawler") != NULL)
 	{
 		myFocuserTYpe	=	kFocuserType_NiteCrawler;
 		if (strlen(device->hostName) > 0)
@@ -1255,6 +1256,7 @@ int				myFocuserType;
 	{
 		//*	figure out a window name
 		myFocuserType	=	GenerateFocuserWindowName(remoteDevice, gFocuserNum, windowName);
+		CONSOLE_DEBUG_W_NUM("myFocuserType\t=", myFocuserType);
 
 		//*	create the controller window object
 		if (myFocuserType == kFocuserType_NiteCrawler)

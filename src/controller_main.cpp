@@ -1,5 +1,5 @@
 //*****************************************************************************
-//*		controller_main.cpp		(c) 2020-21 by Mark Sproul
+//*		controller_main.cpp		(c) 2020-23 by Mark Sproul
 //*
 //*		This is the main routine for creating controller windows
 //*
@@ -275,12 +275,6 @@ int				iii;
 				{
 					myDomeController->SetAlpacaShutterInfo(&gAlpacaDiscoveredList[iii]);
 				}
-			#ifdef _ENABLE_SLIT_TRACKER_
-				else if (strcasecmp(gAlpacaDiscoveredList[iii].deviceTypeStr, "SlitTracker") == 0)
-				{
-					myDomeController->SetAlpacaSlitTrackerInfo(&gAlpacaDiscoveredList[iii]);
-				}
-			#endif
 			}
 		}
 		objectsCreated++;

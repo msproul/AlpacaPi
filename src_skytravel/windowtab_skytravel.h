@@ -97,14 +97,12 @@ enum
 	kSkyTravel_Telescope_Sync,
 	kSkyTravel_Telescope_GoTo,
 
+	kSkyTravel_Help_Btn,
 
 
 	kSkyTravel_MsgTextBox,
 
-
 	kSkyTravel_CursorInfoTextBox,
-//	kSkyTravel_HelpTextBox,
-
 
 
 	kSkyTravel_NightSky,

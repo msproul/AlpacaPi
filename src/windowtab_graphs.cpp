@@ -60,7 +60,7 @@ int		iii;
 //**************************************************************************************
 WindowTabGraph::~WindowTabGraph(void)
 {
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 }
 
 #define	kGraphHeight	200

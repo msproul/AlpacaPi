@@ -64,7 +64,7 @@ WindowTabCoverCalib::WindowTabCoverCalib(	const int	xSize,
 //**************************************************************************************
 WindowTabCoverCalib::~WindowTabCoverCalib(void)
 {
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 }
 
 //**************************************************************************************
@@ -79,20 +79,13 @@ int		myButtonHt;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
-	//------------------------------------------
-	yLoc			=	cTabVertOffset;
+	//=======================================================
+	yLoc	=	cTabVertOffset;
 
 	//=======================================================
-	SetWidget(kCoverCalib_Title,		0,			yLoc,		cWidth,		cTitleHeight);
-	SetWidgetText(kCoverCalib_Title, "Cover Calibration");
-	SetBGcolorFromWindowName(kCoverCalib_Title);
-	//=======================================================
-	//*	setup the connected indicator
-   	SetUpConnectedIndicator(kCoverCalib_Connected, yLoc);
+	yLoc	=	SetTitleBox(kCoverCalib_Title, kCoverCalib_Connected, yLoc, "Cover Calibration");
 
-	yLoc			+=	cTitleHeight;
-	yLoc			+=	20;
-
+	yLoc	+=	20;
 
 	//=======================================================
 	xLoc		=	cClm2_offset;

@@ -54,7 +54,7 @@ WindowTabSwitch::WindowTabSwitch(	const int	xSize,
 //**************************************************************************************
 WindowTabSwitch::~WindowTabSwitch(void)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 }
 
 //**************************************************************************************
@@ -78,19 +78,10 @@ int		iii;
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	//------------------------------------------
-	yLoc			=	cTabVertOffset;
+	yLoc	=	cTabVertOffset;
 
 	//------------------------------------------
-	SetWidget(kSwitchBox_Title,		0,			yLoc,		cWidth,		cTitleHeight);
-	SetWidgetText(kSwitchBox_Title, "AlpacaPi Switches");
-	SetBGcolorFromWindowName(kSwitchBox_Title);
-
-	//*	setup the connected indicator
-	SetUpConnectedIndicator(kSwitchBox_Connected, yLoc);
-
-	yLoc			+=	cTitleHeight;
-	yLoc			+=	2;
-
+	yLoc	=	SetTitleBox(kSwitchBox_Title, kSwitchBox_Connected, yLoc, "AlpacaPi Switches");
 
 	yLoc			+=	10;
 	btnWidth		=	35;

@@ -98,7 +98,7 @@ WindowTabCamera::WindowTabCamera(	const int	xSize,
 //**************************************************************************************
 WindowTabCamera::~WindowTabCamera(void)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 }
 
 //**************************************************************************************
@@ -126,28 +126,16 @@ char		textBuff[32];
 	}
 
 	//------------------------------------------
-	yLoc			=	cTabVertOffset;
-
-
+	yLoc	=	cTabVertOffset;
 
 	//------------------------------------------
-	SetWidget(		kCameraBox_Title,		0,			yLoc,		cFullWidthBtn,	cTitleHeight);
-	SetWidgetFont(	kCameraBox_Title, kFont_Medium);
-
-	//*	setup the connected indicator
-   	SetUpConnectedIndicator(kCameraBox_Connected, yLoc);
-
-	yLoc			+=	cTitleHeight;
-	yLoc			+=	2;
-
-	SetBGcolorFromWindowName(kCameraBox_Title);
-
+	yLoc	=	SetTitleBox(kCameraBox_Title, kCameraBox_Connected, yLoc, "AlpacaPi project");
 
 	//------------------------------------------
-	SetWidget(			kCameraBox_Size,		0,			yLoc,	cFullWidthBtn,	cSmallBtnHt	);
+	SetWidget(			kCameraBox_Size,	0,	yLoc,	cFullWidthBtn,	cSmallBtnHt	);
 	SetWidgetFont(		kCameraBox_Size, 	kFont_Medium);
 	SetWidgetType(		kCameraBox_Size,	kWidgetType_RadioButton);
-	SetWidgetChecked(	kCameraBox_Size, true);
+	SetWidgetChecked(	kCameraBox_Size,	true);
 
 	//*	the logo goes the same vertical placement as the size button
 	SetWidget(		kCameraBox_Logo,	(cWidth - cLogoWidth),	yLoc,	cLogoWidth,	cLogoHeight	);
@@ -273,14 +261,15 @@ char		textBuff[32];
 	yLocRest	=	yLoc;
 	//=======================================================
 	//*	Readout modes
+	xLoc		=	5;
 	yLocSave	=	yLoc;
 	for (iii=0; iii<kMaxReadOutModes; iii++)
 	{
-		SetWidget(		(kCameraBox_ReadMode0 + iii),	2,			yLoc,		cWidth/3,		cRadioBtnHt	);
+//		SetWidget(		(kCameraBox_ReadMode0 + iii),	xLoc,	yLoc,	(cWidth / 3),	cRadioBtnHt);
+		SetWidget(		(kCameraBox_ReadMode0 + iii),	xLoc,	yLoc,	(cClmWidth * 2),	cRadioBtnHt);
 		SetWidgetFont(	(kCameraBox_ReadMode0 + iii),	kFont_RadioBtn);
 		SetWidgetType(	(kCameraBox_ReadMode0 + iii),	kWidgetType_RadioButton);
 		SetWidgetValid(	(kCameraBox_ReadMode0 + iii),	false);
-
 
 		yLoc			+=	cRadioBtnHt;
 		yLoc			+=	1;
@@ -290,7 +279,10 @@ char		textBuff[32];
 	SetWidgetText(	kCameraBox_ReadMode2,	"opt3");
 	SetWidgetText(	kCameraBox_ReadMode3,	"opt4");
 
-	SetWidgetOutlineBox(kCameraBox_ReadModeOutline, kCameraBox_ReadMode0, kCameraBox_ReadMode4);
+	SetWidgetOutlineBox(	kCameraBox_ReadModeOutline, kCameraBox_ReadMode0, kCameraBox_ReadMode4);
+	//*	we are setting these now because the widget type gets changed depending on live mode
+	SetWidgetTextColor(		kCameraBox_ReadModeOutline,	CV_RGB(255,	0,	0));
+	SetWidgetJustification(	kCameraBox_ReadModeOutline, kJustification_Left);
 	yLoc			+=	4;
 
 	//=======================================================
@@ -412,6 +404,7 @@ char		textBuff[32];
 
 
 	//=======================================================
+	//*	start exposure button
 	yLocExposure	=	yLoc;
 	SetWidget(			kCameraBox_StartExposure,	cClm1_offset,	yLoc,	((cClmWidth * 2) -4),	cLrgBtnHeight);
 	SetWidgetType(		kCameraBox_StartExposure,	kWidgetType_Button);
@@ -1308,19 +1301,6 @@ char				filePath[256];
 #endif // _USE_OPENCV_CPP_
 
 
-#ifdef _ENABLE_CTRL_IMAGE_
-ControllerCamera	*parentCameraController;
-			CONSOLE_DEBUG("Creating ControllerImage()")
-			//*	this will open a new window with the image displayed
-			parentCameraController	=	(ControllerCamera *)cParentObjPtr;
-			new ControllerImage(	cDownLoadedFileNameRoot,
-									myDownLoadedImage,
-									&parentCameraController->cBinaryImageHdr);
-#else
-			cvReleaseImage(&myDownLoadedImage);
-#endif // _ENABLE_CTRL_IMAGE_
-
-
 			download_MBytes		=	1.0 * myCameraController->cLastDownload_Bytes / (1024.0 * 1024.0);
 			download_seconds	=	1.0 * myCameraController->cLastDownload_Millisecs / 1000.0;
 			download_MB_per_sec	=	download_MBytes / download_seconds;
@@ -1330,10 +1310,26 @@ ControllerCamera	*parentCameraController;
 								download_seconds,
 								download_MB_per_sec
 								);
-
-
 			SetWidgetType(kCameraBox_ErrorMsg, kWidgetType_TextBox);
 			SetWidgetText(kCameraBox_ErrorMsg, textBuf);
+
+#ifdef _ENABLE_CTRL_IMAGE_
+ControllerCamera	*parentCameraController;
+ControllerImage		*imageWindowController;
+			CONSOLE_DEBUG("Creating ControllerImage()")
+			//*	this will open a new window with the image displayed
+			parentCameraController	=	(ControllerCamera *)cParentObjPtr;
+			imageWindowController	=	new ControllerImage(	cDownLoadedFileNameRoot,
+											myDownLoadedImage,
+											&parentCameraController->cBinaryImageHdr);
+			if (imageWindowController != NULL)
+			{
+				//*	set the image download data
+				imageWindowController->SetDownloadInfo(download_MBytes, download_seconds);
+			}
+#else
+			cvReleaseImage(&myDownLoadedImage);
+#endif // _ENABLE_CTRL_IMAGE_
 		}
 		else
 		{

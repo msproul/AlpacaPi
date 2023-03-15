@@ -40,6 +40,9 @@
 //*	Oct 10,	2022	<MLS> Added RunStateMachine() to Rotatordriver
 //*	Oct 10,	2022	<MLS> Added UpdateRotorPosition()
 //*	Oct 11,	2022	<MLS> Put_Move() now working properly (relative move)
+//*	Mar  1,	2023	<MLS> Added DumpRotatorProperties()
+//*	Mar  1,	2023	<MLS> Working on Reverse property to pass CONFORMU
+//*	Mar  2,	2023	<MLS> Working on Sync method to pass CONFORMU
 //*****************************************************************************
 
 #ifdef _ENABLE_ROTATOR_
@@ -53,12 +56,25 @@
 #include	"eventlogging.h"
 
 #include	"helper_functions.h"
+#include	"JsonResponse.h"
 
 #include	"alpacadriver.h"
 #include	"alpacadriver_helper.h"
 #include	"rotatordriver.h"
 
-#include	"JsonResponse.h"
+#ifdef _ENABLE_ROTATOR_SIMULATOR_
+	#include	"rotatordriver_sim.h"
+#endif
+
+//*****************************************************************************
+void	CreateRotatorObjects(void)
+{
+//*	the night crawler rotator is created from the focuser object because they have to be interlinked
+
+#ifdef _ENABLE_ROTATOR_SIMULATOR_
+	CreateRotatorObjects_SIM();
+#endif
+}
 
 
 //*****************************************************************************
@@ -125,13 +141,13 @@ RotatorDriver::RotatorDriver(const int argDevNum)
 	//-------------------------------------------------------
 	memset(&cRotatorProp, 0, sizeof(TYPE_RotatorProperties));
 	cRotatorProp.CanReverse		=	false;		//*	True if the rotation and angular direction must be reversed for the optics
-	cRotatorProp.Reverse		=	false;
 	cRotatorProp.IsMoving		=	false;
-	cRotatorProp.StepSize		=	1.0;
+	cRotatorProp.Reverse		=	false;
 	cRotatorProp.Position		=	0.0;
+	cRotatorProp.StepSize		=	1.0;
+	cRotatorProp.SyncOffset		=	0.0;
 	cRotatorProp.TargetPosition	=	0.0;
 
-	cRotatorReverseState		=	false;
 	cRotatorStepsPerRev			=	360;
 	cRotatorPosition_steps		=	0;
 //	cRotatorPosition_degs		=	0.0;
@@ -491,14 +507,22 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
 	if (reqData != NULL)
 	{
-		JsonResponse_Add_Bool(	reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								responseString,
-								cRotatorReverseState,
-								INCLUDE_COMMA);
+		if (cRotatorProp.CanReverse || (cCommonProp.InterfaceVersion >= 3))
+		{
+			JsonResponse_Add_Bool(	reqData->socket,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									responseString,
+									cRotatorProp.Reverse,
+									INCLUDE_COMMA);
 
-		alpacaErrCode	=	kASCOM_Err_Success;
+			alpacaErrCode	=	kASCOM_Err_Success;
+		}
+		else
+		{
+			alpacaErrCode	=	kASCOM_Err_PropertyNotImplemented;
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Reverse not implemented");
+		}
 	}
 	else
 	{
@@ -516,21 +540,29 @@ char				argumentString[32];
 
 	if (reqData != NULL)
 	{
-		foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
-												"Reverse",
-												argumentString,
-												(sizeof(argumentString) -1),
-												false);
-		if (foundKeyWord)
+		if (cRotatorProp.CanReverse || (cCommonProp.InterfaceVersion >= 3))
 		{
-			cRotatorProp.Reverse	=	IsTrueFalse(argumentString);
-			alpacaErrCode			=	kASCOM_Err_Success;
+			foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
+													"Reverse",
+													argumentString,
+													(sizeof(argumentString) -1),
+													false);
+			if (foundKeyWord)
+			{
+				cRotatorProp.Reverse	=	IsTrueFalse(argumentString);
+				alpacaErrCode			=	kASCOM_Err_Success;
+			}
+			else
+			{
+				alpacaErrCode	=	kASCOM_Err_InvalidValue;
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Keyword 'Reverse' not specified");
+				CONSOLE_DEBUG(alpacaErrMsg);
+			}
 		}
 		else
 		{
-			alpacaErrCode	=	kASCOM_Err_InvalidValue;
-			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Keyword 'Reverse' not specified");
-			CONSOLE_DEBUG(alpacaErrMsg);
+			alpacaErrCode	=	kASCOM_Err_PropertyNotImplemented;
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Reverse not implemented");
 		}
 	}
 	else
@@ -701,17 +733,63 @@ TYPE_ASCOM_STATUS	RotatorDriver::Put_MoveMechanical(TYPE_GetPutRequestData *reqD
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
 
+	CONSOLE_DEBUG(__FUNCTION__);
+
 	return(alpacaErrCode);
 }
 
 //*****************************************************************************
+//*	https://ascom-standards.org/Help/Developer/html/M_ASCOM_DeviceInterface_IRotatorV3_Sync.htm
+//*	Once this method has been called and the sync offset determined,
+//*	both the MoveAbsolute(Single) method and the Position property
+//*	must function in synced coordinates rather than mechanical coordinates.
+//*	The sync offset must persist across driver starts and device reboots.
+//*****************************************************************************
 TYPE_ASCOM_STATUS	RotatorDriver::Put_Sync(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
+bool				foundKeyWord;
+char				argumentString[32];
+double				newPosition;
+double				newPositionDelta;
 
+	CONSOLE_DEBUG(__FUNCTION__);
+
+	if (reqData != NULL)
+	{
+		foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
+												"Position",
+												argumentString,
+												(sizeof(argumentString) -1));
+		if (foundKeyWord)
+		{
+			newPosition			=	atoi(argumentString);
+			CONSOLE_DEBUG_W_DBL("newPosition\t=", newPosition);
+			if ((newPosition >= 0.0) && (newPosition < 360.0))
+			{
+				newPositionDelta	=	newPosition - cRotatorProp.Position;
+				alpacaErrCode		=	kASCOM_Err_Success;
+			}
+			else
+			{
+				alpacaErrCode	=	kASCOM_Err_InvalidValue;
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "'Position' out of range");
+				CONSOLE_DEBUG(alpacaErrMsg);
+			}
+		}
+		else
+		{
+			alpacaErrCode	=	kASCOM_Err_InvalidValue;
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Keyword 'Position' not specified");
+			CONSOLE_DEBUG(alpacaErrMsg);
+		}
+	}
+	else
+	{
+		alpacaErrCode	=	kASCOM_Err_InternalError;
+	}
 	return(alpacaErrCode);
 }
-
 
 //*****************************************************************************
 TYPE_ASCOM_STATUS	RotatorDriver::Put_Step(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
@@ -940,9 +1018,7 @@ TYPE_ASCOM_STATUS	RotatorDriver::HaltMovement(void)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
-	//*	this should be overloaded by the hardware implementation
-	alpacaErrCode	=	kASCOM_Err_NotImplemented;
-//	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented at this layer");
+
 	return(alpacaErrCode);
 }
 
@@ -951,6 +1027,22 @@ bool	RotatorDriver::IsRotatorMoving(void)
 {
 	//*	this should be overloaded by the hardware implementation
 	return(false);
+}
+
+//*****************************************************************************
+void	RotatorDriver::DumpRotatorProperties(const char *callingFunctionName)
+{
+	DumpCommonProperties(callingFunctionName);
+	CONSOLE_DEBUG(			"------------------------------------");
+	CONSOLE_DEBUG_W_BOOL(	"cRotatorProp.CanReverse        \t=",	cRotatorProp.CanReverse);
+	CONSOLE_DEBUG_W_BOOL(	"cRotatorProp.IsMoving          \t=",	cRotatorProp.IsMoving);
+	CONSOLE_DEBUG_W_DBL(	"cRotatorProp.MechanicalPosition\t=",	cRotatorProp.MechanicalPosition);
+	CONSOLE_DEBUG_W_DBL(	"cRotatorProp.Position          \t=",	cRotatorProp.Position);
+	CONSOLE_DEBUG_W_BOOL(	"cRotatorProp.Reverse           \t=",	cRotatorProp.Reverse);
+	CONSOLE_DEBUG_W_DBL(	"cRotatorProp.StepSize          \t=",	cRotatorProp.StepSize);
+	CONSOLE_DEBUG_W_DBL(	"cRotatorProp.SyncOffset          \t=",	cRotatorProp.SyncOffset);
+	CONSOLE_DEBUG_W_DBL(	"cRotatorProp.TargetPosition    \t=",	cRotatorProp.TargetPosition);
+	CONSOLE_DEBUG(			"*************************************************************");
 }
 
 

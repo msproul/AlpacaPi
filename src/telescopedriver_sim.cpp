@@ -72,7 +72,7 @@ TelescopeDriverSim::TelescopeDriverSim(void)
 {
 
 	CONSOLE_DEBUG(__FUNCTION__);
-	strcpy(cCommonProp.Name,		"Telescope-Simulator");
+	strcpy(cCommonProp.Name,		"AlpacaPi Telescope Simulator");
 	strcpy(cCommonProp.Description,	"AlpacaPi Telescope Simulator");
 
 

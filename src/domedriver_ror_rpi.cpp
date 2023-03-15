@@ -21,9 +21,11 @@
 //*	Jan 12,	2021	<MLS> CONFORM-dome/ror -> PASSED!!!!!!!!!!!!!!!!!!!!!
 //*	Jun 15,	2021	<MLS> Added GetPower() & GetAuxiliary()
 //*	Dec 23,	2021	<MLS> Added OutputHTML_Part2() to output hardware configuration
+//*	Mar  2,	2023	<MLS> Added _ENABLE_DOME_ROR_
 //*****************************************************************************
 
-#ifdef _ENABLE_ROR_
+#ifdef _ENABLE_DOME_ROR_
+//#error "Should not be enabled"
 
 #define	_CHRIS_A_ROLL_OFF_ROOF_
 
@@ -94,8 +96,8 @@ DomeDriverROR::DomeDriverROR(const int argDevNum)
 	:DomeDriver(argDevNum)
 {
 	CONSOLE_DEBUG(__FUNCTION__);
-	strcpy(cCommonProp.Name, "Dome-Roll-Off-Roof");
-	strcpy(gWebTitle, "Dome-Roll-Off-Roof");
+	strcpy(cCommonProp.Name,	"Dome-Roll-Off-Roof");
+	strcpy(gWebTitle,			"Dome-Roll-Off-Roof");
 
 	cDomeConfig					=	kIsRollOffRoof;
 	cDomeProp.AtPark			=	true;	//*	for testing
@@ -378,4 +380,4 @@ bool				relayOK;
 
 
 
-#endif // _ENABLE_ROR_
+#endif // _ENABLE_DOME_ROR_

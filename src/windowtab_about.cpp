@@ -58,14 +58,14 @@ WindowTabAbout::WindowTabAbout(	const int	xSize,
 //**************************************************************************************
 WindowTabAbout::~WindowTabAbout(void)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 }
 
 //**************************************************************************************
 static char	gAlpacaPiTxt1[]	=
 {
 	"AlpacaPi Project\r"
-	"(C) Mark Sproul 2019-2022\r"
+	"(C) Mark Sproul 2019-2023\r"
 	"msproul@skychariot.com\r"
 	"www.skychariot.com/dome\r"
 //	"www.skychariot.com/dome/alpacapi\r"
@@ -108,11 +108,7 @@ int		iii;
 	yLoc			=	cTabVertOffset;
 
 	//------------------------------------------
-	SetWidget(kAboutBox_Title,		0,			yLoc,		cWidth,		cTitleHeight);
-	SetWidgetText(kAboutBox_Title, "AlpacaPi project");
-	SetBGcolorFromWindowName(kAboutBox_Title);
-	yLoc			+=	cTitleHeight;
-	yLoc			+=	2;
+	yLoc	=	SetTitleBox(kAboutBox_Title, -1, yLoc, "AlpacaPi project");
 
 	SetWidget(		kAboutBox_ControllerVersion,	0,			yLoc,		cWidth,		cTitleHeight);
 	SetWidgetFont(	kAboutBox_ControllerVersion,	kFont_Medium);

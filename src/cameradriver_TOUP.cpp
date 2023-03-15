@@ -236,7 +236,7 @@ HRESULT			toupResult;
 	//	strcpy(cCommonProp.Name,			"ToupTek-");
 	//	strcat(cCommonProp.Name,			cToupDeviceInfo.displayname);
 
-		strcpy(cCommonProp.Name,			cToupDeviceInfo.displayname);
+		SetCommonPropertyName(NULL, cToupDeviceInfo.displayname);
 
 
 		cCameraProp.CameraXsize	=	cToupDeviceInfo.model->res[0].width;

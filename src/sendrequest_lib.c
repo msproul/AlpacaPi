@@ -271,9 +271,9 @@ int					parseReturnCode;
 	{
 		CONSOLE_DEBUG_W_STR(__FUNCTION__, "------start-------");
 		CONSOLE_DEBUG(sendData);
-		CONSOLE_DEBUG_W_LONG("sizeof(xmitBuffer)  \t=", sizeof(xmitBuffer));
-		CONSOLE_DEBUG_W_LONG("sizeof(returnedData)\t=", sizeof(returnedData));
-		CONSOLE_DEBUG_W_LONG("sizeof(longBuffer)  \t=", sizeof(longBuffer));
+		CONSOLE_DEBUG_W_SIZE("sizeof(xmitBuffer)  \t=", sizeof(xmitBuffer));
+		CONSOLE_DEBUG_W_SIZE("sizeof(returnedData)\t=", sizeof(returnedData));
+		CONSOLE_DEBUG_W_SIZE("sizeof(longBuffer)  \t=", sizeof(longBuffer));
 	}
 	inet_ntop(AF_INET, &deviceAddress->sin_addr.s_addr, ipString, INET_ADDRSTRLEN);
 
@@ -343,7 +343,7 @@ int					parseReturnCode;
 
 			if (gEnableDebug)
 			{
-				CONSOLE_DEBUG_W_LONG("length xmitBuffer\t=", strlen(xmitBuffer));
+				CONSOLE_DEBUG_W_SIZE("length xmitBuffer\t=", strlen(xmitBuffer));
 			}
 
 //			if (strstr(sendData, "switch") !=  NULL)
@@ -367,7 +367,7 @@ int					parseReturnCode;
 
 			if (gEnableDebug)
 			{
-				CONSOLE_DEBUG_W_LONG("length xmitBuffer\t=", strlen(xmitBuffer));
+				CONSOLE_DEBUG_W_SIZE("length xmitBuffer\t=", strlen(xmitBuffer));
 			}
 
 //			CONSOLE_DEBUG(xmitBuffer);
@@ -543,42 +543,42 @@ int					setOptRetCode;
 		connRetCode	=	connect(socket_desc , (struct sockaddr *)&remoteDev , sizeof(remoteDev));
 		if (connRetCode >= 0)
 		{
-			CONSOLE_DEBUG_W_STR("connect open", ipString);
+//			CONSOLE_DEBUG_W_STR("connect open", ipString);
 
-//	PUT /api/v1/dome/0/openshutter HTTP/1.1
-//	Host: test:6800
-//	User-Agent: curl/7.47.0
-//	accept: application/json
-//	Content-Type: application/x-www-form-urlencoded
-//	Content-Length: 32
+			//	PUT /api/v1/dome/0/openshutter HTTP/1.1
+			//	Host: test:6800
+			//	User-Agent: curl/7.47.0
+			//	accept: application/json
+			//	Content-Type: application/x-www-form-urlencoded
+			//	Content-Length: 32
 
-//	ClientID=2&ClientTransactionID=4
+			//	ClientID=2&ClientTransactionID=4
 
 
-//PUT /api/v1/camera/0/connected HTTP/1.1
-//Host: newt16:6800
-//User-Agent: curl/7.58.0
-//accept: application/json
-//Content-Length: 14
-//Content-Type: application/x-www-form-urlencoded
-//
-//Connected=true
+			//PUT /api/v1/camera/0/connected HTTP/1.1
+			//Host: newt16:6800
+			//User-Agent: curl/7.58.0
+			//accept: application/json
+			//Content-Length: 14
+			//Content-Type: application/x-www-form-urlencoded
+			//
+			//Connected=true
 
-//PUT /api/v1/camera/0/connected HTTP/1.0
-//Host: 127.0.0.1:6800
-//User-Agent: AlpacaPi
-//Accept: text/html,application/json
-//Content-Length: 47
-//
-//Connected=true&ClientID=1&ClientTransactionID=1
+			//PUT /api/v1/camera/0/connected HTTP/1.0
+			//Host: 127.0.0.1:6800
+			//User-Agent: AlpacaPi
+			//Accept: text/html,application/json
+			//Content-Length: 47
+			//
+			//Connected=true&ClientID=1&ClientTransactionID=1
 
-//PUT /api/v1/camera/0/connected HTTP/1.0
-//Host: 127.0.0.1:32323
-//User-Agent: AlpacaPi
-//Accept: text/html,application/json
-//Content-Length: 47
-//
-//Connected=true&ClientID=1&ClientTransactionID=1
+			//PUT /api/v1/camera/0/connected HTTP/1.0
+			//Host: 127.0.0.1:32323
+			//User-Agent: AlpacaPi
+			//Accept: text/html,application/json
+			//Content-Length: 47
+			//
+			//Connected=true&ClientID=1&ClientTransactionID=1
 
 			strcpy(xmitBuffer,	"PUT ");
 			strcat(xmitBuffer,	putCommand);
@@ -616,8 +616,8 @@ int					setOptRetCode;
 				recvByteCnt	=	recv(socket_desc, returnedData , kReadBuffLen , MSG_NOSIGNAL);
 				if (recvByteCnt >= 0)
 				{
-					CONSOLE_DEBUG("Setting validData to true");
-					validData	=	true;
+//					CONSOLE_DEBUG("Setting validData to true");
+					validData					=	true;
 					returnedData[recvByteCnt]	=	0;
 					SJP_Init(jsonParser);
 					SJP_ParseData(jsonParser, returnedData);
@@ -657,7 +657,7 @@ int					setOptRetCode;
 			CONSOLE_DEBUG_W_NUM("errno\t\t=", errno);
 		}
 	}
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, (validData ? "Valid Data" : "Not Valid"));
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, (validData ? "Valid Data" : "Not Valid"));
 	return(validData);
 }
 

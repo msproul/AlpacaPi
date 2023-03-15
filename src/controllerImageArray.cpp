@@ -378,7 +378,7 @@ int				progressUpdateCnt;
 	return(imgRank);
 }
 
-#if 1
+#if 0
 //*****************************************************************************
 static void	DumpHex(const char *dataPtr, const int numRows)
 {
@@ -726,8 +726,6 @@ int	ControllerCamera::AlpacaGetImageArray_Binary(	TYPE_ImageArray	*imageArray,
 unsigned char	*binaryImgHdrPtr;
 int				imgRank;
 int				jjj;
-int				binaryDataValue;
-int				dataByteIdx;
 char			dataTypeString[24];
 int				dataBlkCount;
 
@@ -740,7 +738,6 @@ int				dataBlkCount;
 
 	imgRank			=	0;
 	cRGBidx			=	0;
-	dataByteIdx		=	0;
 	dataBlkCount	=	0;
 	while (cKeepReading)
 	{
@@ -757,8 +754,8 @@ int				dataBlkCount;
 			memset(&cBinaryImageHdr, 0, sizeof(TYPE_BinaryImageHdr));
 			binaryImgHdrPtr	=	(unsigned char *)&cBinaryImageHdr;
 
-			CONSOLE_DEBUG_W_NUM("cData_iii                  \t=", cData_iii);
-			CONSOLE_DEBUG_W_LONG("sizeof(TYPE_BinaryImageHdr)\t=", sizeof(TYPE_BinaryImageHdr));
+			CONSOLE_DEBUG_W_NUM(	"cData_iii                  \t=", cData_iii);
+			CONSOLE_DEBUG_W_SIZE(	"sizeof(TYPE_BinaryImageHdr)\t=", sizeof(TYPE_BinaryImageHdr));
 			for (jjj=0; jjj < (int)sizeof(TYPE_BinaryImageHdr); jjj++)
 			{
 				binaryImgHdrPtr[jjj]	=	cReturnedData[cData_iii];
@@ -766,9 +763,9 @@ int				dataBlkCount;
 			}
 			CONSOLE_DEBUG_W_NUM("cData_iii                  \t=", cData_iii);
 			CONSOLE_DEBUG("Imagebytes header");
-			DumpHex((char *)binaryImgHdrPtr, 6);
+//			DumpHex((char *)binaryImgHdrPtr, 6);
 			CONSOLE_DEBUG("Raw data (cReturnedData)");
-			DumpHex((char *)cReturnedData, 100);
+//			DumpHex((char *)cReturnedData, 100);
 
 			cReadBinaryHeader	=	false;
 			imgRank				=	cBinaryImageHdr.Rank;
@@ -828,110 +825,7 @@ int				dataBlkCount;
 
 			case kAlpacaImageData_Int16:
 			case kAlpacaImageData_UInt16:
-			#if 1
 				AlpacaGetImageArray_Binary_Int16(imageArray, imageArrayLen);
-			#else
-				if (cBinaryImageHdr.Rank == 2)
-				{
-					binaryDataValue	=	0;
-					while ((cData_iii < cRecvdByteCnt))
-					{
-						switch(dataByteIdx)
-						{
-							case 0:
-								binaryDataValue	=	cReturnedData[cData_iii] & 0x00ff;
-								dataByteIdx++;
-								break;
-
-							case 1:
-								binaryDataValue	+=	(((cReturnedData[cData_iii] & 0x00ff) << 8) & 0x00ff00);
-								if (cImageArrayIndex < imageArrayLen)
-								{
-									imageArray[cImageArrayIndex].RedValue	=	binaryDataValue;
-									imageArray[cImageArrayIndex].GrnValue	=	binaryDataValue;
-									imageArray[cImageArrayIndex].BluValue	=	binaryDataValue;
-									cImageArrayIndex++;
-								}
-								dataByteIdx	=	0;
-								break;
-
-							default:
-								CONSOLE_ABORT(__FUNCTION__);
-								break;
-						}
-						cData_iii++;
-					}
-					break;
-				}
-				else if (cBinaryImageHdr.Rank == 3)
-				{
-					binaryDataValue	=	0;
-					while ((cData_iii < cRecvdByteCnt))
-					{
-						switch(dataByteIdx)
-						{
-							case 0:
-								binaryDataValue	=	cReturnedData[cData_iii] & 0x00ff;
-								dataByteIdx++;
-								break;
-
-							case 1:
-								binaryDataValue	+=	(((cReturnedData[cData_iii] & 0x00ff) << 8) & 0x00ff00);
-								if (cImageArrayIndex < imageArrayLen)
-								{
-									//*	deal with the individual R,G,B values
-									switch(cRGBidx)
-									{
-										case 0:
-											imageArray[cImageArrayIndex].RedValue	=	binaryDataValue & 0x00ffff;
-											break;
-
-										case 1:
-											imageArray[cImageArrayIndex].GrnValue	=	binaryDataValue & 0x00ffff;
-											break;
-
-										case 2:
-											imageArray[cImageArrayIndex].BluValue	=	binaryDataValue & 0x00ffff;
-//											if ((cImageArrayIndex >= 0) && (cImageArrayIndex < 25))
-//											{
-//												printf("#%6d=%6d\t%6d\t%6d\r\n",	cImageArrayIndex,
-//																				imageArray[cImageArrayIndex].RedValue,
-//																				imageArray[cImageArrayIndex].GrnValue,
-//																				imageArray[cImageArrayIndex].BluValue);
-//												printf("#%6d=%6X\t%6X\t%6X\r\n",	cImageArrayIndex,
-//																				imageArray[cImageArrayIndex].RedValue,
-//																				imageArray[cImageArrayIndex].GrnValue,
-//																				imageArray[cImageArrayIndex].BluValue);
-//											}
-											cImageArrayIndex++;
-											break;
-									}
-									cRGBidx++;
-									if (cRGBidx >= 3)
-									{
-										cRGBidx	=	0;
-									}
-								}
-								else
-								{
-									CONSOLE_DEBUG_W_NUM("cImageArrayIndex=", cImageArrayIndex);
-									CONSOLE_ABORT(__FUNCTION__);
-								}
-								dataByteIdx	=	0;
-								break;
-						}
-						cData_iii++;
-					}
-				}
-				else
-				{
-//					LogEvent(	"camera",
-//								"Binary Download",
-//								NULL,
-//								kASCOM_Err_Success,
-//								"Invalid RANK value");
-				}
-			#endif // 1
 				break;
 
 			default:

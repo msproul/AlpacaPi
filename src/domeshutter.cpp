@@ -31,11 +31,12 @@
 //*	Dec  8,	2020	<MLS> Added OpenRemoteShutter() & CloseRemoteShutter()
 //*	Dec  8,	2020	<MLS> Remote Shutter open/close working
 //*	Feb 25,	2021	<MLS> Added StopRemoteShutter()
+//*	Mar  2,	2023	<MLS> Added _ENABLE_DOME_SHUTTER_
 //*****************************************************************************
 
 
 
-#ifdef _ENABLE_DOME_
+#ifdef _ENABLE_DOME_SHUTTER_
 
 
 #include	<stdio.h>
@@ -320,4 +321,4 @@ int					jjj;
 }
 
 
-#endif // _ENABLE_DOME_
+#endif // _ENABLE_DOME_SHUTTER_

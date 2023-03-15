@@ -65,7 +65,7 @@ ControllerAlpacaUnit::ControllerAlpacaUnit(	const char			*argWindowName,
 											TYPE_ALPACA_UNIT	*alpacaUnit)
 	:Controller(argWindowName, kWindowWidth,  kWindowHeight)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	cAlpacaUnitTabObjPtr	=	NULL;
 	cAboutBoxTabObjPtr		=	NULL;
@@ -106,7 +106,7 @@ ControllerAlpacaUnit::ControllerAlpacaUnit(	const char			*argWindowName,
 //**************************************************************************************
 ControllerAlpacaUnit::~ControllerAlpacaUnit(void)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 	DELETE_OBJ_IF_VALID(cAlpacaUnitTabObjPtr);
 	DELETE_OBJ_IF_VALID(cAboutBoxTabObjPtr);
 }
@@ -115,13 +115,11 @@ ControllerAlpacaUnit::~ControllerAlpacaUnit(void)
 //**************************************************************************************
 void	ControllerAlpacaUnit::SetupWindowControls(void)
 {
-
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	SetTabCount(kTab_Unit_Count);
 	SetTabText(kTab_AlpacaUnit	,	"Alpaca-Unit");
 	SetTabText(kTab_About,			"About");
-
 
 	//--------------------------------------------
 	cAlpacaUnitTabObjPtr	=	new WindowAlpacaUnit(cWidth, cHeight, cBackGrndColor, cWindowName);
@@ -139,26 +137,11 @@ void	ControllerAlpacaUnit::SetupWindowControls(void)
 		SetTabWindow(kTab_About,	cAboutBoxTabObjPtr);
 		cAboutBoxTabObjPtr->SetParentObjectPtr(this);
 	}
-
-
-	//*	display the IPaddres/port
-//	if (cValidIPaddr)
-//	{
-//	char	ipString[32];
-//	char	lineBuff[64];
-//
-//		PrintIPaddressToString(cDeviceAddress.sin_addr.s_addr, ipString);
-//		sprintf(lineBuff, "%s:%d/%d", ipString, cPort, cAlpacaDevNum);
-//
-//		SetWindowIPaddrInfo(lineBuff, true);
-//	}
 }
 
 //*****************************************************************************
 void	ControllerAlpacaUnit::AlpacaDisplayErrorMessage(const char *errorMsgString)
 {
-//	CONSOLE_DEBUG_W_STR("Alpaca error=", errorMsgString);
-//	SetWidgetText(kTab_FilterWheel, kFilterWheel_AlpacaErrorMsg, errorMsgString);
 }
 
 //**************************************************************************************
@@ -208,10 +191,10 @@ bool	validData;
 			UpdateAboutBoxRemoteDevice(kTab_AlpacaUnit,	kAlpacaUnit_CPUinfo);
 			UpdateAboutBoxRemoteDevice(kTab_About,		kAboutBox_CPUinfo);
 		}
-		else
-		{
-			CONSOLE_DEBUG_W_STR("Failed to get managment data", cWindowName);
-		}
+//		else
+//		{
+//			CONSOLE_DEBUG_W_STR("Failed to get management data", cWindowName);
+//		}
 
 		GetTemperatureLogs();
 
@@ -233,7 +216,6 @@ bool	validData;
 bool	ControllerAlpacaUnit::AlpacaGetStartupData(void)
 {
 bool	validData;
-int		tokenCnt;
 int		iii;
 char	deviceListString[512];
 
@@ -251,13 +233,13 @@ char	deviceListString[512];
 		CONSOLE_DEBUG("Read failure - supportedactions");
 		cReadFailureCnt++;
 	}
-	CONSOLE_DEBUG_W_BOOL("cHas_readall\t=", cHas_readall);
+//	CONSOLE_DEBUG_W_BOOL("cHas_readall\t=", cHas_readall);
 
 	if (cHas_readall)
 	{
 		//*	use readall to get the startup data
-		CONSOLE_DEBUG("Calling AlpacaGetStatus_ReadAll()");
-		CONSOLE_DEBUG_W_NUM("cAlpacaDevNum\t=", cAlpacaDevNum);
+//		CONSOLE_DEBUG("Calling AlpacaGetStatus_ReadAll()");
+//		CONSOLE_DEBUG_W_NUM("cAlpacaDevNum\t=", cAlpacaDevNum);
 		validData	=	AlpacaGetStatus_ReadAll("management", cAlpacaDevNum);
 	}
 //-	else
@@ -280,7 +262,7 @@ char	deviceListString[512];
 	//------------------------------------------------------
 	//*	get the list of configured devices
 	cConfiguredDevIndex		=	0;
-	tokenCnt	=	GetConfiguredDevices();
+	GetConfiguredDevices();
 	if (cConfiguredDevIndex > 0)
 	{
 	int		txtBoxIdx;
@@ -316,6 +298,12 @@ void	ControllerAlpacaUnit::AlpacaProcessReadAll(	const char	*deviceTypeStr,
 }
 
 //*****************************************************************************
+void	ControllerAlpacaUnit::UpdateCommonProperties(void)
+{
+
+}
+
+//*****************************************************************************
 void	ControllerAlpacaUnit::ProcessConfiguredDevices(const char *keyword, const char *valueString)
 {
 //	CONSOLE_DEBUG_W_2STR("kw:val", keyword, valueString);
@@ -327,7 +315,7 @@ void	ControllerAlpacaUnit::ProcessConfiguredDevices(const char *keyword, const c
 			strcpy(cDeviceList[cConfiguredDevIndex].Type, valueString);
 		}
 
-		//*	look for special cases
+		//*	look for special cases that may have temperature logs
 		if (strcasecmp(valueString, "CAMERA") == 0)
 		{
 			cHasCamera				=	true;

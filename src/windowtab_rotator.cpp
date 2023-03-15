@@ -62,7 +62,7 @@ WindowTabRotator::WindowTabRotator(	const int	xSize,
 //**************************************************************************************
 WindowTabRotator::~WindowTabRotator(void)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 }
 
 //**************************************************************************************
@@ -83,18 +83,10 @@ char	valueText[32];
 	CONSOLE_DEBUG(__FUNCTION__);
 
 	//------------------------------------------
-	yLoc			=	cTabVertOffset;
+	yLoc	=	cTabVertOffset;
 
 	//------------------------------------------
-	SetWidget(kRotatorCtrl_Title,		0,			yLoc,		cWidth,		cTitleHeight);
-	SetWidgetText(kRotatorCtrl_Title, "AlpacaPi Rotator");
-	SetBGcolorFromWindowName(kRotatorCtrl_Title);
-
-	//*	setup the connected indicator
-	SetUpConnectedIndicator(kRotatorCtrl_Connected, yLoc);
-
-	yLoc			+=	cTitleHeight;
-	yLoc			+=	2;
+	yLoc	=	SetTitleBox(kRotatorCtrl_Title, kRotatorCtrl_Connected, yLoc, "AlpacaPi Rotator");
 
 	//------------------------------------------
 	//*	set up the rotor compass display

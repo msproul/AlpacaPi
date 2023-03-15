@@ -37,6 +37,7 @@ enum
 	kWidgetType_CheckBox,
 	kWidgetType_Graph,
 	kWidgetType_CustomGraphic,
+	kWidgetType_Custom,			//*	custom everything, does NOT erase the background
 	kWidgetType_Icon,
 	kWidgetType_Image,
 	kWidgetType_MultiLineText,
@@ -47,6 +48,8 @@ enum
 	kWidgetType_Slider,
 	kWidgetType_TextBox,
 	kWidgetType_TextInput,
+
+	kWidgetType_Disabled,
 
 	kWidgetType_Last
 };

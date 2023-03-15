@@ -65,7 +65,7 @@ WindowTabTeleSettings::WindowTabTeleSettings(	const int	xSize,
 //**************************************************************************************
 WindowTabTeleSettings::~WindowTabTeleSettings(void)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 }
 
 
@@ -79,10 +79,11 @@ int			iii;
 int			myBtnWidth;
 int			leftColmX;
 char		notAvailableStr[]	=	"---N/A---";
+int			yLoc_2ndColumn;
 	xLoc	=	5;
 	yLoc	=   cTabVertOffset;
-	yLoc	+=	2;
-
+	yLoc	=	SetTitleBox(kTeleSettings_Title, -1, yLoc, "Telescope settings");
+	yLoc_2ndColumn	=	yLoc;
 	//---------------------------------------------------------------------------------------
 	for (iii = kTeleSettings_TrackingRate_Title; iii <= kTeleSettings_TrackingRate_King; iii++)
 	{
@@ -207,7 +208,7 @@ char		notAvailableStr[]	=	"---N/A---";
 	//---------------------------------------------------------------------------------------
 	//*	2nd COLUMN
 	//---------------------------------------------------------------------------------------
-	yLoc	=   cTabVertOffset;
+	yLoc	=   yLoc_2ndColumn;
 	yLoc	+=	2;
 	iii		=   kTeleSettings_LatLabel;
 	while (iii < kTeleSettings_ElevValue)

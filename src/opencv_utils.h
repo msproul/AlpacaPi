@@ -9,6 +9,6 @@
 
 
 cv::Mat *ConvertImageToRGB(cv::Mat *openCVImage);
-void	DumpCVMatStruct(cv::Mat *theImageMat, const char *message=NULL);
+void	DumpCVMatStruct(const char *calledFrom, cv::Mat *theImageMat, const char *message= NULL);
 
 #endif // _OPENCV_UTILS_H_

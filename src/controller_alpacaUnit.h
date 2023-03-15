@@ -68,7 +68,7 @@ class ControllerAlpacaUnit: public Controller
 //														const int	deviveNum,
 //														const char	*valueString);
 //
-//		virtual	void	UpdateCommonProperties(void);
+		virtual	void	UpdateCommonProperties(void);
 //		virtual	void	UpdateCapabilityList(void);
 //
 		virtual	void	ProcessConfiguredDevices(const char *keyword, const char *valueString);

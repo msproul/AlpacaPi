@@ -53,7 +53,7 @@ WindowTabConfig::WindowTabConfig(	const int	xSize,
 //**************************************************************************************
 WindowTabConfig::~WindowTabConfig(void)
 {
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 }
 
 //**************************************************************************************

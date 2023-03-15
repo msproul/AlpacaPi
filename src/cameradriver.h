@@ -349,6 +349,7 @@ class CameraDriver: public AlpacaDriver
 
 				void	ProcessExposureOptions(TYPE_GetPutRequestData *reqData);
 
+				void	SetCommonPropertyName(const char *namePrefix, const char *newName);
 				void	SetSerialNumInFileName(bool enable);
 				void	SetObjectName(const char *newObjectName);
 				void	SetTelescopeName(const char *newTelescopeName);
@@ -451,6 +452,7 @@ class CameraDriver: public AlpacaDriver
 		TYPE_ASCOM_STATUS	Get_Imagearray_JSON(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 		TYPE_ASCOM_STATUS	Get_Imagearray_Binary(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 		int					BuildBinaryImage_Raw8(			unsigned char	*binaryDataBuffer, int startOffset, int bufferSize);
+		int					BuildBinaryImage_Raw8_16bit(	unsigned char	*binaryDataBuffer, int startOffset, int bufferSize);
 		int					BuildBinaryImage_Raw8_32bit(	unsigned char	*binaryDataBuffer, int startOffset, int bufferSize);
 		int					BuildBinaryImage_Raw16(			unsigned char	*binaryDataBuffer, int startOffset, int bufferSize);
 		int					BuildBinaryImage_Raw32(			unsigned char	*binaryDataBuffer, int startOffset, int bufferSize);
@@ -941,6 +943,7 @@ typedef struct
 
 }	TYPE_SensorName;
 
+int		CreateCameraObjects(void);
 
 extern	const TYPE_CmdEntry	gCameraCmdTable[];
 extern	const char			*gCameraStateStrings[];

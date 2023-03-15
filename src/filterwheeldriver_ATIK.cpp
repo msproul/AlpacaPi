@@ -56,10 +56,9 @@
 #include	"filterwheeldriver_ATIK.h"
 
 
-
 //**************************************************************************************
 //*	this will get moved to the individual implentations later
-void	CreateATIKFilterWheelObjects(void)
+void	CreateFilterWheelObjects_ATIK(void)
 {
 int		devNum;
 int		atikDeviceCount;
@@ -160,7 +159,6 @@ bool	FilterwheelATIK::AlpacaConnect(void)
 
 	return(false);
 }
-
 
 //**************************************************************************************
 void	FilterwheelATIK::ReadFilterWheelInfo(void)
@@ -264,92 +262,12 @@ bool			isMoving;
 			CONSOLE_DEBUG_W_NUM("artimisRetCode\t=",	artimisRetCode);
 			cArtimisErrorCnt++;
 		}
-
-
-//	int ArtemisEFWSetPosition(ArtemisHandle handle, int   iPosition);
+		//	int ArtemisEFWSetPosition(ArtemisHandle handle, int   iPosition);
 	}
 	else
 	{
 		CONSOLE_DEBUG("Failed to connect!!!!!!!!!!!!");
 	}
-
-
-#if 0
-//-EFW_ERROR_CODE	efwErrorCode;
-char			lineBuff[64];
-bool			rulesFileOK;
-
-//-	efwErrorCode	=	EFWGetID(cFilterWheelDevNum, &cFilterwheelInfo.ID);
-
-
-	CONSOLE_DEBUG(__FUNCTION__);
-//-	efwErrorCode	=	EFWOpen(cFilterWheelDevNum);
-//-	if (efwErrorCode == EFW_SUCCESS)
-	{
-		cSuccesfullOpens++;
-		cFilterWheelConnected	=	true;
-		efwErrorCode	=	EFWGetProperty(cFilterWheelDevNum, &cFilterwheelInfo);
-		if (efwErrorCode == EFW_SUCCESS)
-		{
-			LogEvent(	"filterwheel",
-						"ZWO EFW connected",
-						NULL,
-						kASCOM_Err_Success,
-						cFilterwheelInfo.Name);
-		//	strcpy(cCommonProp.Name, cFilterwheelInfo.Name);
-			cNumberOfPositions	=	cFilterwheelInfo.slotNum;
-
-			sprintf(cCommonProp.Name, "ZWO %s-%d", cFilterwheelInfo.Name, cNumberOfPositions);
-		}
-		else
-		{
-			CONSOLE_DEBUG_W_NUM("EFWGetProperty->efwErrorCode\t=", efwErrorCode);
-			GetEFW_ErrorMsgString(efwErrorCode, lineBuff);
-			LogEvent(	"filterwheel",
-						"ZWO EFW failed EFWGetProperty()",
-						NULL,
-						kASCOM_Err_Success,
-						lineBuff);
-		}
-		efwErrorCode	=	EFWClose(cFilterWheelDevNum);
-		if (efwErrorCode == EFW_SUCCESS)
-		{
-			cSuccesfullCloses++;
-		}
-		else
-		{
-			CONSOLE_DEBUG_W_NUM("EFWClose() failed: efwErrorCode\t=", efwErrorCode);
-			cCloseFailures++;
-		}
-	}
-	else
-	{
-		//*	failed to open
-		cOpenFailures++;
-		cFilterWheelConnected	=	false;
-		GetEFW_ErrorMsgString(efwErrorCode, lineBuff);
-		LogEvent(	"filterwheel",
-					"ZWO EFW failed to open",
-					NULL,
-					kASCOM_Err_Success,
-					lineBuff);
-
-		rulesFileOK	=	Check_udev_rulesFile(kEFW_rulesFile);
-		if (rulesFileOK == false)
-		{
-			LogEvent(	"filterwheel",
-						"ZWO EFW failed to open",
-						NULL,
-						kASCOM_Err_Success,
-						"ZWO EFW Rules file does not appear to be installed properly");
-		}
-
-		CONSOLE_DEBUG("Failed to open filter wheel");
-		CONSOLE_DEBUG_W_NUM("EFWOpen->efwErrorCode\t=", efwErrorCode);
-		CONSOLE_DEBUG_W_NUM("cFilterWheelDevNum\t=", cFilterWheelDevNum);
-		CONSOLE_DEBUG_W_STR("ErrMsg\t=", lineBuff);
-	}
-	#endif
 }
 
 //*****************************************************************************

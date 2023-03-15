@@ -30,6 +30,7 @@
 //*	Jan 29,	2022	<MLS> Added special list count display to settings window
 //*	Mar 29,	2022	<MLS> Added SaveSkyTravelSystemInfo()
 //*	May 31,	2022	<MLS> Added ability to open gedit for scripts and settings
+//*	Mar 14,	2023	<MLS> Added UpdateObservatorySettings()
 //*****************************************************************************
 
 #include	<pthread.h>
@@ -109,17 +110,11 @@ int		radioBtnWidth;
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	//------------------------------------------
-	yLoc			=	cTabVertOffset;
+	yLoc	=	cTabVertOffset;
+	yLoc	=	SetTitleBox(kSkyT_Settings_Title, -1, yLoc, "SkyTravel settings");
 
-	//------------------------------------------
-	SetWidget(kSkyT_Settings_Title,		0,			yLoc,		cWidth,		cTitleHeight);
-	SetWidgetText(kSkyT_Settings_Title, "SkyTravel settings");
-	SetBGcolorFromWindowName(kSkyT_Settings_Title);
-	yLoc			+=	cTitleHeight;
-	yLoc			+=	2;
-	yLoc			+=	2;
-	yLoc			+=	2;
-
+	yLoc	+=	2;
+	yLoc	+=	2;
 
 	//----------------------------------------------------------------------
 	labelWidth		=	150;
@@ -140,7 +135,7 @@ int		radioBtnWidth;
 
 	//--------------------------------------------------------------------------
 	iii	=	kSkyT_Settings_LatLable;
-	while (iii < (kSkyT_Settings_SiteInfoOutline -1))
+	while (iii < kSkyT_Settings_ObsSettingsBtn)
 	{
 		xLoc		=	5;
 		SetWidget(			iii,	xLoc,			yLoc,		labelWidth,		cTitleHeight);
@@ -161,7 +156,6 @@ int		radioBtnWidth;
 		SetWidgetFont(		iii,	kFont_Medium);
 		iii++;
 
-
 		yLoc			+=	cTitleHeight;
 		yLoc			+=	2;
 	}
@@ -172,55 +166,42 @@ int		radioBtnWidth;
 	SetWidgetText(		kSkyT_Settings_DownLoadPathLbl,	"Download path");
 
 	SetWidgetText(		kSkyT_Settings_DownLoadPath,	gDownloadFilePath);
-	SetWidgetValid(		kSkyT_Settings_unused,	false);
 	cWidgetList[kSkyT_Settings_DownLoadPath].width		=	valueWitdth1 + valueWitdth2 + 3;
 
 	xLoc			=	5;
-	SetWidget(			kSkyT_Settings_ObsSettingsText,	xLoc,	yLoc,	(labelWidth + valueWitdth1 + valueWitdth2),	cTitleHeight);
-	SetWidgetType(		kSkyT_Settings_ObsSettingsText,	kWidgetType_Button);
-	SetWidgetFont(		kSkyT_Settings_ObsSettingsText,	kFont_RadioBtn);
-	SetWidgetText(		kSkyT_Settings_ObsSettingsText,	"Edit observatorysettings.txt to change these values");
-	SetWidgetBorder(	kSkyT_Settings_ObsSettingsText, false);
-	SetWidgetBGColor(	kSkyT_Settings_ObsSettingsText,	CV_RGB(255,	255,	255));
-	SetWidgetTextColor(	kSkyT_Settings_ObsSettingsText,	CV_RGB(0,	0,	0));
+	SetWidget(			kSkyT_Settings_ObsSettingsBtn,	xLoc,	yLoc,	(labelWidth + valueWitdth1 + valueWitdth2),	cTitleHeight);
+	SetWidgetType(		kSkyT_Settings_ObsSettingsBtn,	kWidgetType_Button);
+	SetWidgetFont(		kSkyT_Settings_ObsSettingsBtn,	kFont_RadioBtn);
+	SetWidgetText(		kSkyT_Settings_ObsSettingsBtn,	"Edit observatorysettings.txt to change these values");
+	SetWidgetBorder(	kSkyT_Settings_ObsSettingsBtn,	false);
+	SetWidgetBGColor(	kSkyT_Settings_ObsSettingsBtn,	CV_RGB(255,	255,	255));
+	SetWidgetTextColor(	kSkyT_Settings_ObsSettingsBtn,	CV_RGB(0,	0,	0));
 	yLoc			+=	cTitleHeight;
 	yLoc			+=	2;
+
+	SetWidget(			kSkyT_Settings_ReloadSettingsBtn,	xLoc,	yLoc,	(labelWidth + valueWitdth1 + valueWitdth2),	cTitleHeight);
+	SetWidgetType(		kSkyT_Settings_ReloadSettingsBtn,	kWidgetType_Button);
+	SetWidgetFont(		kSkyT_Settings_ReloadSettingsBtn,	kFont_RadioBtn);
+	SetWidgetText(		kSkyT_Settings_ReloadSettingsBtn,	"Reload Settings");
+	SetWidgetBorder(	kSkyT_Settings_ReloadSettingsBtn,	false);
+	SetWidgetBGColor(	kSkyT_Settings_ReloadSettingsBtn,	CV_RGB(255,	255,	255));
+	SetWidgetTextColor(	kSkyT_Settings_ReloadSettingsBtn,	CV_RGB(0,	0,	0));
+	yLoc			+=	cTitleHeight;
+	yLoc			+=	2;
+
+
 
 	SetWidgetOutlineBox(kSkyT_Settings_SiteInfoOutline, kSkyT_Settings_LatLonTitle, (kSkyT_Settings_SiteInfoOutline -1));
 
 	//-----------------------------------------------------
-	if (gObseratorySettings.ValidLatLon)
-	{
-		SetWidgetNumber6F(kSkyT_Settings_LatValue1, gObseratorySettings.Latitude_deg);
-		SetWidgetNumber6F(kSkyT_Settings_LonValue1, gObseratorySettings.Longitude_deg);
-
-		FormatHHMMSS(gObseratorySettings.Latitude_deg,	textString, true);
-		SetWidgetText(		kSkyT_Settings_LatValue2,	textString);
-
-		FormatHHMMSS(gObseratorySettings.Longitude_deg, textString, true);
-		SetWidgetText(		kSkyT_Settings_LonValue2,	textString);
-
-		SetWidgetText(		kSkyT_Settings_TimeZoneTxt,	gObseratorySettings.TimeZone);
-		SetWidgetNumber(	kSkyT_Settings_UTCoffset,	gObseratorySettings.UTCoffset);
-
-		sprintf(textString, "%1.1f m", gObseratorySettings.Elevation_m);
-		SetWidgetText(		kSkyT_Settings_ElevValueMeters,	textString);
-
-		sprintf(textString, "%1.0f ft", gObseratorySettings.Elevation_ft);
-		SetWidgetText(		kSkyT_Settings_ElevValueFeet,	textString);
-	}
+	UpdateObservatorySettings();
 
 	//--------------------------------------------------------------------------
-	yLoc	+=	12;
+	yLoc	+=	8;
 	xLoc	=	5;
 	iii		=	kSkyT_Settings_EarthLable;
 	while (iii < kSkyT_Settings_EarthOutline)
 	{
-		if (iii == kSkyT_Settings_DayNightSky)
-		{
-			//*	leave some extra space
-			yLoc			+=	cRadioBtnHt;
-		}
 		SetWidget(		iii,	xLoc,			yLoc,		labelWidth,		cRadioBtnHt);
 		SetWidgetFont(	iii,	kFont_RadioBtn);
 		SetWidgetType(	iii,	kWidgetType_RadioButton);
@@ -229,22 +210,24 @@ int		radioBtnWidth;
 		yLoc			+=	2;
 		iii++;
 	}
-	SetWidgetType(		kSkyT_Settings_EarthLable,		kWidgetType_TextBox);
-	SetWidgetText(		kSkyT_Settings_EarthLable,		"Earth Display");
-	SetWidgetText(		kSkyT_Settings_EarthThin,		"Thin Lines");
-	SetWidgetText(		kSkyT_Settings_EarthThick,		"Thick Lines");
-	SetWidgetText(		kSkyT_Settings_EarthSolidBrn,	"Solid Brown");
-	SetWidgetText(		kSkyT_Settings_EarthSolidGrn,	"Solid Green");
+	SetWidgetType(			kSkyT_Settings_EarthLable,		kWidgetType_TextBox);
+	SetWidgetText(			kSkyT_Settings_EarthLable,		"Earth Display");
+	SetWidgetJustification(	kSkyT_Settings_EarthLable,		kJustification_Center);
+	SetWidgetBorder(		kSkyT_Settings_EarthLable,		false);
+	SetWidgetTextColor(		kSkyT_Settings_EarthLable,		CV_RGB(255,	255,	255));
 
-	SetWidgetText(		kSkyT_Settings_DayNightSky,		"Day/Night sky");
-	SetWidgetType(		kSkyT_Settings_DayNightSky,		kWidgetType_CheckBox);
+	SetWidgetText(			kSkyT_Settings_EarthThin,		"Thin Lines");
+	SetWidgetText(			kSkyT_Settings_EarthThick,		"Thick Lines");
+	SetWidgetText(			kSkyT_Settings_EarthSolidBrn,	"Solid Brown");
+	SetWidgetText(			kSkyT_Settings_EarthSolidGrn,	"Solid Green");
 
+	SetWidgetText(			kSkyT_Settings_DayNightSky,		"Day/Night sky");
+	SetWidgetType(			kSkyT_Settings_DayNightSky,		kWidgetType_CheckBox);
 
-	SetWidgetOutlineBox(kSkyT_Settings_EarthOutline, kSkyT_Settings_EarthLable, (kSkyT_Settings_EarthOutline -1));
-
+	SetWidgetOutlineBox(	kSkyT_Settings_EarthOutline, kSkyT_Settings_EarthLable, (kSkyT_Settings_EarthOutline -1));
 
 	//-----------------------------------------------------
-	yLoc	+=	12;
+	yLoc	+=	5;
 	xLoc	=	5;
 	iii		=	kSkyT_Settings_GridLable;
 	while (iii < kSkyT_Settings_GridOutline)
@@ -257,23 +240,29 @@ int		radioBtnWidth;
 		yLoc			+=	2;
 		iii++;
 	}
-	SetWidgetType(		kSkyT_Settings_GridLable,	kWidgetType_TextBox);
-	SetWidgetText(		kSkyT_Settings_GridLable,	"Grid Lines");
+	SetWidgetType(			kSkyT_Settings_GridLable,	kWidgetType_TextBox);
+	SetWidgetJustification(	kSkyT_Settings_GridLable,	kJustification_Center);
+	SetWidgetText(			kSkyT_Settings_GridLable,	"Grid Lines");
+	SetWidgetTextColor(		kSkyT_Settings_GridLable,	CV_RGB(255,	255,	255));
+
 	SetWidgetText(		kSkyT_Settings_GridSolid,	"Solid Lines");
 	SetWidgetText(		kSkyT_Settings_GridDashed,	"Dashed Lines");
 	SetWidgetOutlineBox(kSkyT_Settings_GridOutline, kSkyT_Settings_GridLable, (kSkyT_Settings_GridOutline -1));
 
-	yLoc			+=	cRadioBtnHt;
-	yLoc			+=	2;
-	yLoc			+=	2;
+	yLoc		+=	5;
+//	yLoc			+=	cRadioBtnHt;
+//	yLoc			+=	2;
+//	yLoc			+=	2;
 
 	//-----------------------------------------------------
 	//*	Line Width settings
 	labelWidth	=	225;
-	SetWidget(		kSkyT_Settings_LineWidthTitle,	xLoc,		yLoc,	labelWidth + (4 * cRadioBtnHt),	cBoxHeight);
-	SetWidgetFont(	kSkyT_Settings_LineWidthTitle,	kFont_Medium);
-	SetWidgetType(	kSkyT_Settings_LineWidthTitle,	kWidgetType_TextBox);
-	SetWidgetText(	kSkyT_Settings_LineWidthTitle,	"Line Widths");
+	SetWidget(			kSkyT_Settings_LineWidthTitle,	xLoc,	yLoc,	labelWidth + (4 * cRadioBtnHt),	cBoxHeight);
+	SetWidgetFont(		kSkyT_Settings_LineWidthTitle,	kFont_Medium);
+	SetWidgetType(		kSkyT_Settings_LineWidthTitle,	kWidgetType_TextBox);
+	SetWidgetBorder(	kSkyT_Settings_LineWidthTitle,	false);
+	SetWidgetText(		kSkyT_Settings_LineWidthTitle,	"Line Widths");
+	SetWidgetTextColor(	kSkyT_Settings_LineWidthTitle,	CV_RGB(255,	255,	255));
 	yLoc			+=	cBoxHeight;
 	yLoc			+=	2;
 
@@ -342,10 +331,11 @@ int		radioBtnWidth;
 	xLoc		=	saveXloc;
 	labelWidth	=	200;
 
-	SetWidget(		kSkyT_Settings_DataTitle,	xLoc,		yLoc,	(labelWidth + 75),		cBoxHeight);
-	SetWidgetFont(	kSkyT_Settings_DataTitle,	kFont_Medium);
-	SetWidgetType(	kSkyT_Settings_DataTitle,	kWidgetType_TextBox);
-	SetWidgetText(	kSkyT_Settings_DataTitle,	"Star Data counts");
+	SetWidget(			kSkyT_Settings_DataTitle,	xLoc,		yLoc,	(labelWidth + 75),		cBoxHeight);
+	SetWidgetFont(		kSkyT_Settings_DataTitle,	kFont_Medium);
+	SetWidgetType(		kSkyT_Settings_DataTitle,	kWidgetType_TextBox);
+	SetWidgetText(		kSkyT_Settings_DataTitle,	"Star Data counts");
+	SetWidgetTextColor(	kSkyT_Settings_DataTitle,	CV_RGB(255,	255,	255));
 	yLoc			+=	cBoxHeight;
 	yLoc			+=	2;
 
@@ -755,9 +745,13 @@ void	WindowTabSTsettings::ProcessButtonClick(const int buttonIdx, const int flag
 
 	switch(buttonIdx)
 	{
-		case kSkyT_Settings_ObsSettingsText:
-			CONSOLE_DEBUG("kSkyT_Settings_ObsSettingsText");
+		case kSkyT_Settings_ObsSettingsBtn:
 			EditTextFile("observatorysettings.txt");
+			break;
+
+		case kSkyT_Settings_ReloadSettingsBtn:
+			ObservatorySettings_ReadFile();
+			UpdateObservatorySettings();
 			break;
 
 		case kSkyT_Settings_EarthThin:
@@ -1010,6 +1004,33 @@ char	textString[32];
 	SetWidgetText(kSkyT_Settings_MagnitudeLimit, textString);
 
 	ForceWindowUpdate();
+}
+
+//*****************************************************************************
+void	WindowTabSTsettings::UpdateObservatorySettings(void)
+{
+char	textString[64];
+
+	if (gObseratorySettings.ValidLatLon)
+	{
+		SetWidgetNumber6F(kSkyT_Settings_LatValue1, gObseratorySettings.Latitude_deg);
+		SetWidgetNumber6F(kSkyT_Settings_LonValue1, gObseratorySettings.Longitude_deg);
+
+		FormatHHMMSS(gObseratorySettings.Latitude_deg,	textString, true);
+		SetWidgetText(		kSkyT_Settings_LatValue2,	textString);
+
+		FormatHHMMSS(gObseratorySettings.Longitude_deg, textString, true);
+		SetWidgetText(		kSkyT_Settings_LonValue2,	textString);
+
+		SetWidgetText(		kSkyT_Settings_TimeZoneTxt,	gObseratorySettings.TimeZone);
+		SetWidgetNumber(	kSkyT_Settings_UTCoffset,	gObseratorySettings.UTCoffset);
+
+		sprintf(textString, "%1.1f m", gObseratorySettings.Elevation_m);
+		SetWidgetText(		kSkyT_Settings_ElevValueMeters,	textString);
+
+		sprintf(textString, "%1.0f ft", gObseratorySettings.Elevation_ft);
+		SetWidgetText(		kSkyT_Settings_ElevValueFeet,	textString);
+	}
 }
 
 //**************************************************************************************

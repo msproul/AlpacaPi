@@ -99,9 +99,9 @@ double			exposure_Secs;
 	myImageController	=	(ControllerImage *)cLiveController;
 	if (myImageController != NULL)
 	{
-#if defined(_USE_OPENCV_CPP_) && (CV_MAJOR_VERSION >= 2)
-		DumpCVMatStruct(cOpenCV_ImagePtr, __FUNCTION__);
-#endif // _USE_OPENCV_CPP_
+//	#if defined(_USE_OPENCV_CPP_) && (CV_MAJOR_VERSION >= 2)
+//		DumpCVMatStruct(__FUNCTION__, cOpenCV_ImagePtr);
+//	#endif // _USE_OPENCV_CPP_
 		myImageController->UpdateLiveWindowImage(cOpenCV_ImagePtr, cFileNameRoot);
 
 		exposure_Secs	=	1.0 * cCurrentExposure_us / 1000000.0;

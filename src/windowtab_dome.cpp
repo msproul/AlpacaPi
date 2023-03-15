@@ -68,7 +68,7 @@ WindowTabDome::WindowTabDome(	const int	xSize,
 //**************************************************************************************
 WindowTabDome::~WindowTabDome(void)
 {
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 }
 
 //**************************************************************************************
@@ -83,6 +83,8 @@ int		myPlusMinusBtnWidth;
 int		my_cWidth;
 //	CONSOLE_DEBUG(__FUNCTION__);
 
+	//*	this is because there are 2 different options for the width of the dome controller
+	//*	one as the normal dome controller and one as the in the skytravel window pane
 	my_cWidth	=	cWidth;
 	if (cWidth > kDomeWindowWidth)
 	{
@@ -93,13 +95,9 @@ int		my_cWidth;
 	//============================================
 	yLoc			=	cTabVertOffset;
 	myButtonHt		=	cBtnHeight - 3;
-	//============================================
-	SetWidget(kDomeBox_Title,		0,			yLoc,		cWidth,		cTitleHeight);
-	SetWidgetText(kDomeBox_Title, "AlpacaPi Dome");
-	SetBGcolorFromWindowName(kDomeBox_Title);
 
-	//*	setup the connected indicator
-	SetUpConnectedIndicator(kDomeBox_Connected, yLoc);
+	//============================================
+	yLoc	=	SetTitleBox(kDomeBox_Title, kDomeBox_Connected, yLoc, "AlpacaPi Dome");
 
 	yLoc			+=	cTitleHeight;
 	yLoc			+=	2;
@@ -297,12 +295,14 @@ int		domeGraphic_yLoc;
 
 	//=======================================================
 	//*	set up all the bottom stuff so that it is the same on all windowtabs
-	SetupWindowBottomBoxes(	kDomeBox_IPaddr,
-							kDomeBox_Readall,
-							kDomeBox_AlpacaErrorMsg,
-							kDomeBox_LastCmdString,
-							kDomeBox_AlpacaLogo,
-							-1);
+	SetupWindowBottomBoxes(	kDomeBox_IPaddr,				//	ipaddrBox
+							kDomeBox_Readall,				//	readAllBox
+							kDomeBox_AlpacaErrorMsg,		//	errorMsgBox
+							kDomeBox_LastCmdString,			//	lastCmdWidgetIdx
+							-1, //kDomeBox_AlpacaLogo,		//	logoWidgetIdx
+							-1,								//	helpBtnBox
+							false,							//	logoSideOfScreen, false=left
+							-1);							//	connectBtnBox
 
 #ifdef _ENABLE_SKYTRAVEL_
 	if (cParentIsSkyTravel)

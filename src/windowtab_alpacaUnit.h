@@ -62,6 +62,12 @@ class WindowAlpacaUnit: public WindowTab
 		virtual	~WindowAlpacaUnit(void);
 
 		virtual	void	SetupWindowControls(void);
+//		virtual	void	ProcessButtonClick(const int buttonIdx, const int flags);
+//		virtual	void	ProcessDoubleClick(	const int	widgetIdx,
+//											const int	event,
+//											const int	xxx,
+//											const int	yyy,
+//											const int	flags);
 
 #ifdef _USE_OPENCV_CPP_
 		virtual	void	DrawWidgetCustomGraphic(cv::Mat *openCV_Image, const int widgetIdx);

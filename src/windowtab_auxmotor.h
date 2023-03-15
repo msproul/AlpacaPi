@@ -11,7 +11,8 @@
 //*****************************************************************************
 enum
 {
-	kAuxMotorBox_Position	=	0,
+	kAuxMotorBox_Title	=	0,
+	kAuxMotorBox_Position,
 	kAuxMotorBox_Label,
 	kAuxMotorBox_Button1,
 	kAuxMotorBox_DesiredPos,

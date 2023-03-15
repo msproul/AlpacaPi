@@ -66,7 +66,7 @@ ControllerUSB::ControllerUSB(	const char			*argWindowName,
 //**************************************************************************************
 ControllerUSB::~ControllerUSB(void)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 	DELETE_OBJ_IF_VALID(cUSBTabObjPtr);
 	DELETE_OBJ_IF_VALID(cAboutBoxTabObjPtr);
 }

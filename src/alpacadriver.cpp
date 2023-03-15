@@ -61,7 +61,7 @@
 //*	May 21,	2019	<MLS> Added logging
 //*	May 22,	2019	<MLS> Added logging HTML output
 //*	Aug 30,	2019	<MLS> Started on alpaca driver base class
-//*	Oct  4,	2019	<MLS> cDeviceNum is now set correctly on class creation
+//*	Oct  4,	2019	<MLS> cAlpacaDeviceNum is now set correctly on class creation
 //*	Oct  9,	2019	<MLS> Added ProcessCmdLineArgs()
 //*	Oct 20,	2019	<MLS> Added processing for "setup"
 //*	Oct 20,	2019	<MLS> Added processing for "management"
@@ -151,6 +151,13 @@
 //*	Dec  7,	2022	<MLS> Added LogRequest()
 //*	Dec 13,	2022	<MLS> Updated ascom/alpaca URL links in SendHtml_MainPage()
 //*	Dec 24,	2022	<MLS> Added User-Agent counts to stats web page
+//*	Feb 25,	2023	<MLS> Added SendHtmlCompiledInfo()
+//*	Mar  2,	2023	<MLS> Re-arranged creation of driver objects
+//*	Mar  3,	2023	<MLS> Added ProcessAlpacaCommand()
+//*	Mar 11,	2023	<MLS> Added kRequestType_HTML()
+//*	Mar 12,	2023	<MLS> Added OutputHTML_html()
+//*	Mar 12,	2023	<MLS> Added SendFileToSocket()
+//*	Mar 12,	2023	<MLS> Can now serve standard HTML files from folder "html"
 //*****************************************************************************
 //*	to install code blocks 20
 //*	Step 1: sudo add-apt-repository ppa:codeblocks-devs/release
@@ -167,7 +174,9 @@
 #include	<sys/resource.h>
 #include	<time.h>
 #include	<gnu/libc-version.h>
-
+#include	<sys/stat.h>
+#include	<sys/types.h>
+#include	<unistd.h>
 
 #ifdef _ENABLE_FITS_
 	#ifndef _FITSIO_H
@@ -200,54 +209,17 @@
 
 //#define _DEBUG_CONFORM_
 
-
-
-#if defined(_ENABLE_CAMERA_) && defined(_ENABLE_ASI_)
-	#include	"cameradriver_ASI.h"
+#ifdef _ENABLE_CAMERA_
+	#include	"cameradriver.h"
 #endif
-#if defined(_ENABLE_CAMERA_) && defined(_ENABLE_ATIK_)
-	#include	"cameradriver_ATIK.h"
-#endif
-#if defined(_ENABLE_CAMERA_) && defined(_ENABLE_TOUP_)
-	#include	"cameradriver_TOUP.h"
-#endif
-#if defined(_ENABLE_CAMERA_) && defined(_ENABLE_QHY_)
-	#include	"cameradriver_QHY.h"
-#endif
-#if defined(_ENABLE_CAMERA_) && defined(_ENABLE_QSI_)
-	#include	"cameradriver_QSI.h"
-#endif
-#if defined(_ENABLE_CAMERA_) && defined(_ENABLE_FLIR_)
-	#include	"cameradriver_FLIR.h"
-#endif
-#if defined(_ENABLE_CAMERA_) && defined(_ENABLE_SONY_)
-	#include	"cameradriver_SONY.h"
-#endif
-#if defined(_ENABLE_CAMERA_) && defined(_SIMULATE_CAMERA_)
-	#include	"cameradriver_sim.h"
-#endif
-#if defined(_ENABLE_CAMERA_) && defined(_ENABLE_PHASEONE_)
-	#include	"cameradriver_PhaseOne.h"
-#endif
-
 
 #ifdef	_ENABLE_DOME_
-//	#include	"domedriver.h"
-	#include	"domedriver_rpi.h"
-#endif
-#ifdef	_ENABLE_ROR_
-	#include	"domedriver_ror_rpi.h"
+	#include	"domedriver.h"
 #endif
 
 
-#if defined(_ENABLE_FILTERWHEEL_) || defined(_ENABLE_FILTERWHEEL_ZWO_)
+#ifdef	_ENABLE_FILTERWHEEL_
 	#include	"filterwheeldriver.h"
-	#include	"filterwheeldriver_ZWO.h"
-#endif
-
-#ifdef _ENABLE_FILTERWHEEL_ATIK_
-	#include	"filterwheeldriver.h"
-	#include	"filterwheeldriver_ATIK.h"
 #endif
 
 #ifdef _ENABLE_FOCUSER_
@@ -264,22 +236,15 @@
 #ifdef _ENABLE_OBSERVINGCONDITIONS_
 	#include	"obsconditionsdriver.h"
 #endif
-#if defined(_ENABLE_OBSERVINGCONDITIONS_) && defined(__arm__)
-	#include	"obsconditionsdriver_rpi.h"
-#endif
 
 #ifdef _ENABLE_CALIBRATION_
 	#include	"calibrationdriver.h"
-	#include	"calibrationdriver_rpi.h"
-	#ifdef _ENABLE_CALIBRATION_ALNITAK_
-		#include	"calibration_Alnitak.h"
-	#endif
-#endif // _ENABLE_CALIBRATION_
+#endif
 
 #ifdef _ENABLE_TELESCOPE_
 	#include	"telescopedriver.h"
-	#include	"telescopedriver_lx200.h"
-	#include	"telescopedriver_comm.h"
+//	#include	"telescopedriver_lx200.h"
+//	#include	"telescopedriver_comm.h"
 #endif
 
 
@@ -296,9 +261,6 @@
 #endif
 #ifdef _ENABLE_SPECTROGRAPH_
 	#include	"spectrodriver.h"
-	#include	"spectrodrvr_usis.h"
-	#include	"filterwheeldriver_usis.h"
-	#include	"focuserdriver_USIS.h"
 #endif
 
 #if defined(__arm__) && defined(_ENABLE_WIRING_PI_)
@@ -323,7 +285,7 @@ const char		gValueString[]								=	"Value";
 char			gDefaultTelescopeRefID[kDefaultRefIdMaxLen]	=	"";
 char			gWebTitle[80]								=	"AlpacaPi";
 char			gFullVersionString[128]						=	"";
-int				gAlpacaListenPort							=	kAlpacaPiDefaultPORT;
+int				gAlpacaListenPort							=	kAlpacaPiDefaultPORT;	//*	6800 is the default
 uint32_t		gClientID									=	0;
 uint32_t		gClientTransactionID						=	0;
 uint32_t		gServerTransactionID						=	0;		//*	we are the server, we will increment this each time a transaction occurs
@@ -345,6 +307,7 @@ int				gUserAgentCounters[kHTTPclient_last];
 
 
 static void	OutputHTML_Form(TYPE_GetPutRequestData *reqData);
+static void	OutputHTML_html(TYPE_GetPutRequestData *reqData);
 
 
 //*****************************************************************************
@@ -502,8 +465,8 @@ int		iii;
 			alpacaDeviceNum++;
 		}
 	}
-	cDeviceNum		=	alpacaDeviceNum;
-//	CONSOLE_DEBUG_W_NUM("cDeviceNum\t=", cDeviceNum);
+	cAlpacaDeviceNum		=	alpacaDeviceNum;
+//	CONSOLE_DEBUG_W_NUM("cAlpacaDeviceNum\t=", cAlpacaDeviceNum);
 
 
 	if (gDeviceCnt < kMaxDevices)
@@ -729,6 +692,7 @@ TYPE_ASCOM_STATUS	AlpacaDriver::Put_Connected(			TYPE_GetPutRequestData *reqData
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 bool				foundKeyWord;
+bool				validTruFalseArg;
 bool				connectFlag;
 char				argumentString[32];
 
@@ -737,29 +701,40 @@ char				argumentString[32];
 											"Connected",
 											argumentString,
 											(sizeof(argumentString) -1));
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, argumentString);
 	if (foundKeyWord)
 	{
-		connectFlag	=	IsTrueFalse(argumentString);
-		if (connectFlag)
+		CONSOLE_DEBUG_W_STR(__FUNCTION__, argumentString);
+		validTruFalseArg	=	IsTrueFalseArgValid(argumentString);
+		if (validTruFalseArg)
 		{
-			AlpacaConnect();
-			LogEvent(	reqData->deviceType,
-						"Connect",
-						NULL,
-						kASCOM_Err_Success,
-						"");
-			cCommonProp.Connected		=	true;
+			connectFlag			=	IsTrueFalse(argumentString);
+			if (connectFlag)
+			{
+				AlpacaConnect();
+				LogEvent(	reqData->deviceType,
+							"Connect",
+							NULL,
+							kASCOM_Err_Success,
+							"");
+				cCommonProp.Connected		=	true;
+			}
+			else
+			{
+				AlpacaDisConnect();
+				LogEvent(	reqData->deviceType,
+							"Dis-Connect",
+							NULL,
+							kASCOM_Err_Success,
+							"");
+				cCommonProp.Connected		=	false;
+			}
 		}
 		else
 		{
-			AlpacaDisConnect();
-			LogEvent(	reqData->deviceType,
-						"Dis-Connect",
-						NULL,
-						kASCOM_Err_Success,
-						"");
-			cCommonProp.Connected		=	false;
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "true/false not specified");
+			alpacaErrCode	=	kASCOM_Err_InvalidValue;
+			CONSOLE_DEBUG(alpacaErrMsg);
+			DumpRequestStructure(__FUNCTION__, reqData);
 		}
 	}
 	else
@@ -1594,7 +1569,6 @@ void	AlpacaDriver::OutputHTMLrowData(int socketFD, const char *string1, const ch
 }
 
 
-
 //*****************************************************************************
 void	AlpacaDriver::RecordCmdStats(int cmdNum, char getput, TYPE_ASCOM_STATUS alpacaErrCode)
 {
@@ -1642,6 +1616,9 @@ int		tblIdx;
 	else
 	{
 		CONSOLE_DEBUG("Command index out of bounds");
+		CONSOLE_DEBUG_W_NUM("cmdNum       \t=", cmdNum);
+		CONSOLE_DEBUG_W_STR("getput       \t=", ((getput == 'G') ? "GET" : "PUT"));
+		CONSOLE_DEBUG_W_NUM("alpacaErrCode\t=", alpacaErrCode);
 	}
 }
 
@@ -1840,24 +1817,32 @@ int		mySocketFD;
 //*****************************************************************************
 static const char	*gURLlist[]	=
 {
+		"https://github.com/msproul/AlpacaPi",
+		"https://msproul.github.io/AlpacaPi/",
+		"http://www.skychariot.com/dome/",
 		"https://ascom-standards.org/AlpacaDeveloper/Index.htm",
 		"https://ascom-standards.org/api/",
-		"https://astronomy-imaging-camera.com/software-drivers",
+
+//		"https://astronomy-imaging-camera.com/software-drivers",
 
 //		"https://agenaastro.com/zwo-astronomy-cameras-buyers-guide.html",
 //		"https://agenaastro.com/articles/guides/zwo-buyers-guide.html",
-		"https://agenaastro.com/articles/zwo-astronomy-cameras-buyers-guide.html",
+//		"https://agenaastro.com/articles/zwo-astronomy-cameras-buyers-guide.html",
 
 
 		""
 };
 
 //*****************************************************************************
+static void	SendSeparateLine(const int socketFD)
+{
+	SocketWriteData(socketFD,	"<HR SIZE=4 COLOR=RED>\r\n");
+}
+
+//*****************************************************************************
 static void	SendHtml_MainPage(TYPE_GetPutRequestData *reqData)
 {
 char	lineBuffer[256];
-char	separaterLine[]	=	"<HR SIZE=4 COLOR=RED>\r\n";
-//char	separaterLine[]	=	"<HR SIZE=4 COLOR=BLUE>\r\n";
 int		mySocketFD;
 int		iii;
 
@@ -1891,7 +1876,7 @@ int		iii;
 	#ifdef	_ENABLE_DOME_
 		SocketWriteData(mySocketFD,	"Dome support is enabled<BR>\r\n");
 	#endif
-	#ifdef	_ENABLE_ROR_
+	#ifdef	_ENABLE_DOME_ROR_
 		SocketWriteData(mySocketFD,	"ROR support is enabled<BR>\r\n");
 	#endif
 
@@ -1935,7 +1920,7 @@ int		iii;
 		SocketWriteData(mySocketFD,	"Slit Tracker is enabled<BR>\r\n");
 	#endif // _ENABLE_SLIT_TRACKER_
 
-		SocketWriteData(mySocketFD,	separaterLine);
+		SendSeparateLine(mySocketFD);
 		//=============================================================================
 		//*	print out a table of active devices
 		SocketWriteData(mySocketFD,	"<CENTER>\r\n");
@@ -1947,7 +1932,7 @@ int		iii;
 		SocketWriteData(mySocketFD,	"\t<TR>\r\n");
 		SocketWriteData(mySocketFD,	"\t\t<TH><FONT COLOR=yellow>Setup</TH>\r\n");
 		SocketWriteData(mySocketFD,	"\t\t<TH><FONT COLOR=yellow>Device Type</TH>\r\n");
-		SocketWriteData(mySocketFD,	"\t\t<TH><FONT COLOR=yellow>Device Number</TH>\r\n");
+		SocketWriteData(mySocketFD,	"\t\t<TH><FONT COLOR=yellow>Dev Num</TH>\r\n");
 		SocketWriteData(mySocketFD,	"\t\t<TH><FONT COLOR=yellow>Device Name</TH>\r\n");
 		SocketWriteData(mySocketFD,	"\t\t<TH><FONT COLOR=yellow>Description</TH>\r\n");
 		SocketWriteData(mySocketFD,	"\t\t<TH><FONT COLOR=yellow>Cmds / Errs</TH>\r\n");
@@ -1970,7 +1955,7 @@ int		iii;
 
 					sprintf(lineBuffer,	"<A HREF=/setup/v1/%s/%d/setup target=%s>Setup</A>",
 												gAlpacaDeviceList[iii]->cAlpacaName,
-												gAlpacaDeviceList[iii]->cDeviceNum,
+												gAlpacaDeviceList[iii]->cAlpacaDeviceNum,
 												gAlpacaDeviceList[iii]->cAlpacaName);
 					SocketWriteData(mySocketFD,	lineBuffer);
 				}
@@ -1980,7 +1965,7 @@ int		iii;
 					SocketWriteData(mySocketFD,	gAlpacaDeviceList[iii]->cAlpacaName);
 				SocketWriteData(mySocketFD,	"\t\t</TD>\r\n");
 
-				sprintf(lineBuffer, "<TD><CENTER>%d</TD>\r\n", gAlpacaDeviceList[iii]->cDeviceNum);
+				sprintf(lineBuffer, "<TD><CENTER>%d</TD>\r\n", gAlpacaDeviceList[iii]->cAlpacaDeviceNum);
 				SocketWriteData(mySocketFD,	lineBuffer);
 
 				SocketWriteData(mySocketFD,	"\t\t<TD>\r\n");
@@ -2018,14 +2003,14 @@ int		iii;
 //			CONSOLE_DEBUG_W_STR(__FUNCTION__, gAlpacaDeviceList[iii]->cCommonProp.Name);
 			if (gAlpacaDeviceList[iii] != NULL)
 			{
-				SocketWriteData(mySocketFD,	separaterLine);
+				SendSeparateLine(mySocketFD);
 				gAlpacaDeviceList[iii]->OutputHTML(reqData);
 				gAlpacaDeviceList[iii]->OutputHTML_Part2(reqData);
 			}
 		}
 
 		//**********************************************************
-		SocketWriteData(mySocketFD,	separaterLine);
+		SendSeparateLine(mySocketFD);
 
 		SocketWriteData(mySocketFD,	"<CENTER>\r\n");
 		SocketWriteData(mySocketFD,	"<H3>Versions</H3>\r\n");
@@ -2179,7 +2164,7 @@ int		iii;
 		SocketWriteData(mySocketFD,	"</CENTER>\r\n");
 
 		//**********************************************************
-		SocketWriteData(mySocketFD,	separaterLine);
+		SendSeparateLine(mySocketFD);
 		SocketWriteData(mySocketFD,	"<H3>Links</H3>\r\n");
 		SocketWriteData(mySocketFD,	"<UL>\r\n");
 
@@ -2196,7 +2181,7 @@ int		iii;
 		SocketWriteData(mySocketFD,	"</UL>\r\n");
 
 		//**********************************************************
-		SocketWriteData(mySocketFD,	separaterLine);
+		SendSeparateLine(mySocketFD);
 		SocketWriteData(mySocketFD,	"Compiled on ");
 		SocketWriteData(mySocketFD,	__DATE__);
 		SocketWriteData(mySocketFD,	"\r\n<BR>");
@@ -2224,12 +2209,22 @@ const char	*gUserAgentNames[]	=
 	"NotRecognized"
 };
 
+//*****************************************************************************
+static void	SendHtmlCompiledInfo(const int socketFD)
+{
+	SocketWriteData(socketFD,	"Compiled on ");
+	SocketWriteData(socketFD,	__DATE__);
+	SocketWriteData(socketFD,	"\r\n<BR>");
+	SocketWriteData(socketFD,	"C++ version\r\n<BR>");
+	SocketWriteData(socketFD,	"(C) 2020-23 by Mark Sproul msproul@skychariot.com\r\n<BR>");
+}
+
+
 
 //*****************************************************************************
 static void	SendHtmlStats(TYPE_GetPutRequestData *reqData)
 {
 char	lineBuffer[256];
-char	separaterLine[]	=	"<HR SIZE=4 COLOR=RED>\r\n";
 int		mySocketFD;
 int		iii;
 
@@ -2268,18 +2263,14 @@ int		iii;
 		{
 			if (gAlpacaDeviceList[iii] != NULL)
 			{
-				SocketWriteData(mySocketFD,	separaterLine);
+				SendSeparateLine(mySocketFD);
 				gAlpacaDeviceList[iii]->OutputHTML_CmdStats(reqData);
 			}
 		}
 
 
-		SocketWriteData(mySocketFD,	separaterLine);
-		SocketWriteData(mySocketFD,	"Compiled on ");
-		SocketWriteData(mySocketFD,	__DATE__);
-		SocketWriteData(mySocketFD,	"\r\n<BR>");
-		SocketWriteData(mySocketFD,	"C++ version\r\n<BR>");
-		SocketWriteData(mySocketFD,	"(C) 2020-21 by Mark Sproul msproul@skychariot.com\r\n<BR>");
+		SendSeparateLine(mySocketFD);
+		SendHtmlCompiledInfo(mySocketFD);
 
 		SocketWriteData(mySocketFD,	"</BODY></HTML>\r\n");
 	}
@@ -2307,7 +2298,6 @@ static char	gDocsIntro[]	=
 static void	OutputHTML_DriverDocs(TYPE_GetPutRequestData *reqData)
 {
 char	lineBuffer[256];
-char	separaterLine[]	=	"<HR SIZE=4 COLOR=RED>\r\n";
 int		mySocketFD;
 int		iii;
 
@@ -2331,18 +2321,13 @@ int		iii;
 		{
 			if (gAlpacaDeviceList[iii] != NULL)
 			{
-				SocketWriteData(mySocketFD,	separaterLine);
+				SendSeparateLine(mySocketFD);
 				gAlpacaDeviceList[iii]->OutputHTML_DriverDocs(reqData);
 			}
 		}
 
-
-		SocketWriteData(mySocketFD,	separaterLine);
-		SocketWriteData(mySocketFD,	"Compiled on ");
-		SocketWriteData(mySocketFD,	__DATE__);
-		SocketWriteData(mySocketFD,	"\r\n<BR>");
-		SocketWriteData(mySocketFD,	"C++ version\r\n<BR>");
-		SocketWriteData(mySocketFD,	"(C) 2020-21 by Mark Sproul msproul@skychariot.com\r\n<BR>");
+		SendSeparateLine(mySocketFD);
+		SendHtmlCompiledInfo(mySocketFD);
 
 		SocketWriteData(mySocketFD,	"</BODY></HTML>\r\n");
 	}
@@ -2407,14 +2392,62 @@ const char	gJpegHeader[]	=
 };
 
 //*****************************************************************************
-static void	SendJpegResponse(int socket, const char *jpegFileName)
+//*	returns bytes sent
+//*****************************************************************************
+static int	SendFileToSocket(int socket, const char *fileName)
 {
 FILE			*filePointer;
 int				numRead;
 int				bytesWritten;
 int				totalBytesWritten;
 bool			keepGoing;
-char			dataBuffer[1024];
+char			dataBuffer[1600];
+
+	totalBytesWritten	=	0;
+	filePointer	=	fopen(fileName, "r");
+	if (filePointer != NULL)
+	{
+//		CONSOLE_DEBUG_W_STR("File is open:", myJpegFileName);
+		keepGoing			=	true;
+		while (keepGoing)
+		{
+			numRead	=	fread(dataBuffer, 1, 1500, filePointer);
+			if ((numRead > 0) || (feof(filePointer)))
+			{
+//				CONSOLE_DEBUG_W_NUM("numRead=", numRead);
+				bytesWritten		=	write(socket, dataBuffer, numRead);
+				totalBytesWritten	+=	bytesWritten;
+			}
+			else
+			{
+				keepGoing	=	false;
+			}
+
+			if (feof(filePointer))
+			{
+				keepGoing	=	false;
+			}
+		}
+		fclose(filePointer);
+//		CONSOLE_DEBUG_W_STR("File is closed:", myJpegFileName);
+//		CONSOLE_DEBUG_W_NUM("totalBytesWritten\t=",	totalBytesWritten);
+	}
+	else
+	{
+		CONSOLE_DEBUG("Failed to open file");
+	}
+	return(totalBytesWritten);
+}
+
+//*****************************************************************************
+static void	SendJpegResponse(int socket, const char *jpegFileName)
+{
+//FILE			*filePointer;
+//int				numRead;
+//int				bytesWritten;
+int				totalBytesWritten;
+//bool			keepGoing;
+//char			dataBuffer[1024];
 char			myJpegFileName[128];
 char			*myFilenamePtr;
 
@@ -2449,7 +2482,9 @@ char			*myFilenamePtr;
 		strcpy(myJpegFileName, "image.jpg");
 	}
 //	CONSOLE_DEBUG_W_STR("myJpegFileName=", myJpegFileName);
-
+#if 1
+	totalBytesWritten	=	SendFileToSocket(socket, myJpegFileName);
+#else
 	filePointer	=	fopen(myJpegFileName, "r");
 	if (filePointer != NULL)
 	{
@@ -2483,9 +2518,64 @@ char			*myFilenamePtr;
 	{
 		CONSOLE_DEBUG("Failed to open file");
 	}
+#endif // 1
 //	CONSOLE_DEBUG(__FUNCTION__);
 }
 
+//*****************************************************************************
+static TYPE_ASCOM_STATUS	ProcessAlpacaCommand(	AlpacaDriver			*alpacaDevice,
+													TYPE_GetPutRequestData	*reqData,
+													long					byteCount)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
+
+	if ((alpacaDevice != NULL) && (reqData != NULL))
+	{
+
+		alpacaDevice->cBytesWrittenForThisCmd	=	0;
+		alpacaDevice->cHttpHeaderSent			=	false;
+
+//		CONSOLE_DEBUG("Calling ProcessCommand() ---------------------------------------------");
+//		CONSOLE_DEBUG_W_STR("cAlpacaName         \t=",	alpacaDevice->cAlpacaName);
+//		CONSOLE_DEBUG_W_STR("deviceCommand       \t=",	reqData->deviceCommand);
+		alpacaErrCode	=	alpacaDevice->ProcessCommand(reqData);
+		if (alpacaErrCode == kASCOM_Err_Success)
+		{
+			//*	record the time of the last successful command
+			//*	this is for watch dog timing
+			alpacaDevice->cTimeOfLastValidCmd	=	time(NULL);
+		}
+		else
+		{
+			alpacaDevice->cTotalCmdErrors++;
+		}
+		alpacaDevice->cTotalCmdsProcessed++;
+		alpacaDevice->cTotalBytesRcvd	+=	byteCount;
+
+		reqData->alpacaErrCode	=	alpacaErrCode;
+		//*	are we conform logging
+		if (gConformLogging)
+		{
+			LogToDisk(kLog_Conform, reqData);
+		}
+		//*	are we error logging
+		if ((alpacaErrCode != 0) && gErrorLogging)
+		{
+			LogToDisk(kLog_Error, reqData);
+		}
+#ifdef _ENABLE_BANDWIDTH_LOGGING_
+		//*	this is for network stats
+		if (gTimeUnitsSinceTopOfHour < kMaxBandWidthSamples)
+		{
+			alpacaDevice->cBW_CmdsReceived[gTimeUnitsSinceTopOfHour]	+=	1;
+			alpacaDevice->cBW_BytesReceived[gTimeUnitsSinceTopOfHour]	+=	byteCount;
+			alpacaDevice->cBW_BytesSent[gTimeUnitsSinceTopOfHour]		+=	alpacaDevice->cBytesWrittenForThisCmd;
+		}
+#endif // _ENABLE_BANDWIDTH_LOGGING_
+	}
+
+	return(alpacaErrCode);
+}
 
 //*****************************************************************************
 static TYPE_ASCOM_STATUS	ProcessAlpacaAPIrequest(TYPE_GetPutRequestData	*reqData,
@@ -2501,65 +2591,27 @@ bool				deviceFound;
 
 	//*******************************************
 	//*	now do something with the data
-	deviceTypeEnum	=	FindDeviceTypeByString(reqData->deviceType);
+	deviceTypeEnum	=	FindDeviceTypeByStringLowerCase(reqData->deviceType);
 	deviceFound		=	false;
-	for (iii=0; iii<gDeviceCnt; iii++)
+	if (deviceTypeEnum != kDeviceType_undefined)
 	{
-		if (gAlpacaDeviceList[iii] != NULL)
+		for (iii=0; iii<gDeviceCnt; iii++)
 		{
-		#ifdef _DEBUG_CONFORM_
-		//	CONSOLE_DEBUG_W_NUM("gAlpacaDeviceList[iii]->cDeviceType\t=", gAlpacaDeviceList[iii]->cDeviceType);
-		//	CONSOLE_DEBUG_W_NUM("gAlpacaDeviceList[iii]->cDeviceNum\t=", gAlpacaDeviceList[iii]->cDeviceNum);
-		#endif // _DEBUG_CONFORM_
-
-			if ((gAlpacaDeviceList[iii]->cDeviceType == deviceTypeEnum) &&
-				(gAlpacaDeviceList[iii]->cDeviceNum == reqData->deviceNumber))
+			if (gAlpacaDeviceList[iii] != NULL)
 			{
-				deviceFound		=	true;
+			#ifdef _DEBUG_CONFORM_
+			//	CONSOLE_DEBUG_W_NUM("gAlpacaDeviceList[iii]->cDeviceType\t=", gAlpacaDeviceList[iii]->cDeviceType);
+			//	CONSOLE_DEBUG_W_NUM("gAlpacaDeviceList[iii]->cAlpacaDeviceNum\t=", gAlpacaDeviceList[iii]->cAlpacaDeviceNum);
+			#endif // _DEBUG_CONFORM_
 
-				gAlpacaDeviceList[iii]->cBytesWrittenForThisCmd	=	0;
-				gAlpacaDeviceList[iii]->cHttpHeaderSent			=	false;
+				if ((gAlpacaDeviceList[iii]->cDeviceType == deviceTypeEnum) &&
+					(gAlpacaDeviceList[iii]->cAlpacaDeviceNum == reqData->deviceNumber))
+				{
+					deviceFound		=	true;
+					alpacaErrCode	=	ProcessAlpacaCommand(gAlpacaDeviceList[iii], reqData, byteCount);
 
-
-//				CONSOLE_DEBUG("Calling ProcessCommand() ---------------------------------------------");
-//				CONSOLE_DEBUG_W_STR("cAlpacaName         \t=",	gAlpacaDeviceList[iii]->cAlpacaName);
-//				CONSOLE_DEBUG_W_STR("deviceCommand       \t=",	reqData->deviceCommand);
-				alpacaErrCode	=	gAlpacaDeviceList[iii]->ProcessCommand(reqData);
-				if (alpacaErrCode == kASCOM_Err_Success)
-				{
-					//*	record the time of the last successful command
-					//*	this is for watch dog timing
-					gAlpacaDeviceList[iii]->cTimeOfLastValidCmd	=	time(NULL);
+					break;
 				}
-				else
-				{
-					gAlpacaDeviceList[iii]->cTotalCmdErrors++;
-				}
-				gAlpacaDeviceList[iii]->cTotalCmdsProcessed++;
-				gAlpacaDeviceList[iii]->cTotalBytesRcvd	+=	byteCount;
-
-				reqData->alpacaErrCode	=	alpacaErrCode;
-				//*	are we conform logging
-				if (gConformLogging)
-				{
-					LogToDisk(kLog_Conform, reqData);
-				}
-				//*	are we error logging
-				if ((alpacaErrCode != 0) && gErrorLogging)
-				{
-					LogToDisk(kLog_Error, reqData);
-				}
-#ifdef _ENABLE_BANDWIDTH_LOGGING_
-				//*	this is for network stats
-				if (gTimeUnitsSinceTopOfHour < kMaxBandWidthSamples)
-				{
-					gAlpacaDeviceList[iii]->cBW_CmdsReceived[gTimeUnitsSinceTopOfHour]	+=	1;
-					gAlpacaDeviceList[iii]->cBW_BytesReceived[gTimeUnitsSinceTopOfHour]	+=	byteCount;
-					gAlpacaDeviceList[iii]->cBW_BytesSent[gTimeUnitsSinceTopOfHour]		+=	gAlpacaDeviceList[iii]->cBytesWrittenForThisCmd;
-				}
-#endif // _ENABLE_BANDWIDTH_LOGGING_
-
-				break;
 			}
 		}
 	}
@@ -2676,7 +2728,7 @@ bool				deviceFound;
 			if (gAlpacaDeviceList[iii] != NULL)
 			{
 				if ((gAlpacaDeviceList[iii]->cDeviceType == deviceTypeEnum) &&
-					(gAlpacaDeviceList[iii]->cDeviceNum == reqData->deviceNumber))
+					(gAlpacaDeviceList[iii]->cAlpacaDeviceNum == reqData->deviceNumber))
 				{
 					deviceFound		=	true;
 
@@ -2749,9 +2801,10 @@ int			returnCode;
 	{
 		//*	create a log filename with today's date
 		linuxTime		=	localtime(&currentTime);
-		sprintf(logFilename, "requestlog-%d-%02d-%02d.txt",	(1900 + linuxTime->tm_year),
-															(1 + linuxTime->tm_mon),
-															linuxTime->tm_mday);
+		sprintf(logFilename, "requestlog-%d-%d-%02d-%02d.txt",	gAlpacaListenPort,
+																(1900 + linuxTime->tm_year),
+																(1 + linuxTime->tm_mon),
+																linuxTime->tm_mday);
 		CONSOLE_DEBUG("-------------------------------------------------------------------------");
 		CONSOLE_DEBUG_W_STR("Open log file:", logFilename);
 		gIPlogFilePointer		=	fopen(logFilename, "a");
@@ -2878,6 +2931,7 @@ int				contentDataLen;
 
 		//========================================================================
 		//*	check for user agent
+		reqData->cHTTPclientType	=   kHTTPclient_NotSpecified;
 		userAgentPtr	=	strcasestr((char *)htmlData, "User-Agent:");
 		if (userAgentPtr != NULL)
 		{
@@ -2930,13 +2984,15 @@ int				contentDataLen;
 		{
 			reqData->cHTTPclientType	=   kHTTPclient_NotSpecified;
 			strcpy(reqData->httpUserAgent, "not-specified");
-//			CONSOLE_DEBUG("'User-Agent:' not found!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-//			CONSOLE_DEBUG_W_STR("htmlData:\r\n", htmlData);
 		}
 
 		if ((reqData->cHTTPclientType >= 0) && (reqData->cHTTPclientType < kHTTPclient_last))
 		{
 			gUserAgentCounters[reqData->cHTTPclientType]++;
+		}
+		else
+		{
+			CONSOLE_DEBUG("reqData->cHTTPclientType out of range");
 		}
 
 		//*	go through the entire data and treat them as separate lines of text
@@ -3053,12 +3109,14 @@ typedef enum
 	kRequestType_Invalid	=	-1,
 	kRequestType_API		=	0,
 	kRequestType_Docs,
+	kRequestType_DriverDocs,
 	kRequestType_Log,
 	kRequestType_Managment,
 	kRequestType_Setup,
 	kRequestType_Stats,
 	kRequestType_Web,
 	kRequestType_TopLevel,
+	kRequestType_HTML,
 
 	kRequestType_Form,
 
@@ -3078,6 +3136,7 @@ static TYPE_Request	gRequestType[]	=
 {
 	{	"api",			kRequestType_API		},
 	{	"docs",			kRequestType_Docs		},
+	{	"driverdocs",	kRequestType_DriverDocs	},
 	{	"log",			kRequestType_Log		},
 	{	"management",	kRequestType_Managment	},
 	{	"setup",		kRequestType_Setup		},
@@ -3085,6 +3144,7 @@ static TYPE_Request	gRequestType[]	=
 	{	"web",			kRequestType_Web		},
 
 	{	"form",			kRequestType_Form		},
+	{	"html",			kRequestType_HTML		},
 
 	{	"",				kRequestType_Invalid	},
 	{	"",				kRequestType_Invalid	},
@@ -3215,7 +3275,21 @@ int		cmdBuffLen;
 	if (slashCounter > 5)
 	{
 		strcpy(reqData->deviceType,		myDeviceString);
-		reqData->deviceNumber		=	atoi(myDeviceNumString);
+		//*	check for valid device number,  CONFORMU throws -1 and "A"
+		if (isdigit(myDeviceNumString[0]))
+		{
+			reqData->deviceNumber		=	atoi(myDeviceNumString);
+		}
+		else
+		{
+			//*	the device number is not a valid number
+			CONSOLE_DEBUG("=====================================================");
+			CONSOLE_DEBUG_W_STR("Device number sting is invalid!!!", myDeviceNumString);
+			reqData->deviceNumber	=	-1;
+		}
+
+
+
 
 		//*	extract out the command itself for easier processing by the handlers
 		cmdBuffLen		=	strlen(myDeviceCmdString);
@@ -3378,11 +3452,21 @@ int	iii;
 	{
 		//*	standard ALPACA api call
 		case kRequestType_API:
-			alpacaErrCode	=	ProcessAlpacaAPIrequest(&reqData, byteCount);
+			//*	Mar  3,	2023	<MLS> Make CONFORMU happy, check for valid device number
+			if (reqData.deviceNumber >= 0)
+			{
+				alpacaErrCode	=	ProcessAlpacaAPIrequest(&reqData, byteCount);
+			}
+			else
+			{
+				CONSOLE_DEBUG_W_NUM("Invalid device number\t=",	reqData.deviceNumber);
+				DumpRequestStructure(__FUNCTION__, &reqData);
+				SocketWriteData(socket,	gBadResponse400);
+			}
 			break;
 
-		//*	extra self docoumenting
-		case kRequestType_Docs:
+		//*	extra self documentation
+		case kRequestType_DriverDocs:
 			OutputHTML_DriverDocs(&reqData);
 			break;
 
@@ -3414,6 +3498,11 @@ int	iii;
 			SendHtml_TopLevel(&reqData);
 			break;
 
+		//*	this outputs a real HTML file from folder html
+		case kRequestType_HTML:
+		case kRequestType_Docs:
+			OutputHTML_html(&reqData);
+			break;
 
 		//*	this is for testing, will be deleted later
 		case kRequestType_Form:
@@ -3421,9 +3510,7 @@ int	iii;
 			break;
 
 
-
 		default:
-			DumpRequestStructure(__FUNCTION__, &reqData);
 //			CONSOLE_DEBUG_W_STR("parseChrPtr\t=", parseChrPtr);
 			//-------------------------------------------------------------------
 			if (strncasecmp(parseChrPtr,	"/favicon.ico", 12) == 0)
@@ -3453,6 +3540,7 @@ int	iii;
 			else
 			{
 				CONSOLE_DEBUG_W_STR("Incomplete alpaca command\t=",	htmlData);
+				DumpRequestStructure(__FUNCTION__, &reqData);
 				SocketWriteData(socket,	gBadResponse400);
 			}
 			break;
@@ -3767,7 +3855,7 @@ char	titleLine[128];
 
 
 	CONSOLE_DEBUG_W_NUM(	"cDeviceType                    \t=",	cDeviceType);
-	CONSOLE_DEBUG_W_NUM(	"cDeviceNum                     \t=",	cDeviceNum);
+	CONSOLE_DEBUG_W_NUM(	"cAlpacaDeviceNum               \t=",	cAlpacaDeviceNum);
 	CONSOLE_DEBUG_W_BOOL(	"cCommonProp.Connected          \t=",	cCommonProp.Connected);
 	CONSOLE_DEBUG_W_STR(	"cCommonProp.Description        \t=",	cCommonProp.Description);
 	CONSOLE_DEBUG_W_STR(	"cCommonProp.DriverInfo         \t=",	cCommonProp.DriverInfo);
@@ -3789,55 +3877,18 @@ void	AlpacaDriver::ComputeCPUusage(void)
 //*****************************************************************************
 static void	CreateDriverObjects()
 {
-int		cameraCnt	=	0;
 
 
-//*********************************************************
+//------------------------------------------------------
 //*	Cameras
-//-----------------------------------------------------------
-#if defined(_ENABLE_CAMERA_) && defined(_ENABLE_ATIK_)
-	cameraCnt	+=	CreateATIK_CameraObjects();
-#endif
-
-//-----------------------------------------------------------
-#if defined(_ENABLE_CAMERA_) && defined(_ENABLE_ASI_)
-	cameraCnt	+=	CreateASI_CameraObjects();
-#endif
-//-----------------------------------------------------------
-//#if defined(_ENABLE_CAMERA_) && defined(_ENABLE_FLIR_) && (__GNUC__ > 5)
-#if defined(_ENABLE_CAMERA_) && defined(_ENABLE_FLIR_)
-	cameraCnt	+=	CreateFLIR_CameraObjects();
-#endif
-//-----------------------------------------------------------
-#if defined(_ENABLE_CAMERA_) && defined(_ENABLE_PHASEONE_)
-	cameraCnt	+=	CreatePhaseOne_CameraObjects();
-#endif
-
-//-----------------------------------------------------------
-#if defined(_ENABLE_CAMERA_) && defined(_ENABLE_QHY_)
-	cameraCnt	+=	CreateQHY_CameraObjects();
-#endif
-//-----------------------------------------------------------
-#if defined(_ENABLE_CAMERA_) && defined(_ENABLE_QSI_)
-	cameraCnt	+=	CreateQSI_CameraObjects();
-#endif
-//-----------------------------------------------------------
-#if defined(_ENABLE_CAMERA_) && defined(_ENABLE_TOUP_)
-	cameraCnt	+=	CreateTOUP_CameraObjects();
-#endif
-
-//-----------------------------------------------------------
-#if defined(_ENABLE_CAMERA_) && defined(_ENABLE_SONY_)
-	CreateSONY_CameraObjects();
-#endif
-
-#if defined(_ENABLE_CAMERA_) && defined(_SIMULATE_CAMERA_)
-	cameraCnt	+=	CreateSimulator_CameraObjects();
-#endif
-
+#ifdef _ENABLE_CAMERA_
+int		cameraCnt	=	0;
+	cameraCnt	=	CreateCameraObjects();
 	CONSOLE_DEBUG_W_NUM("total cameras created\t=", cameraCnt);
+#endif
 
-//*********************************************************
+
+//------------------------------------------------------
 //*	Multicam
 #ifdef _ENABLE_MULTICAM_
 	cameraCnt	=	CountDevicesByType(kDeviceType_Camera);
@@ -3847,85 +3898,80 @@ int		cameraCnt	=	0;
 	}
 #endif
 
-//*********************************************************
-//*	Focuser
-#ifdef _ENABLE_FOCUSER_MOONLITE_
-	CreateFocuserNiteCrawlerObjects();
-#endif
+//------------------------------------------------------
+#if _ENABLE_CALIBRATION_
+	CreateCalibrationObjects();
+#endif // _ENABLE_CALIBRATION_
 
-//*********************************************************
-//*	Filter wheel
-#ifdef _ENABLE_FILTERWHEEL_ZWO_
-	CreateZWOFilterWheelObjects();
-#endif
-#ifdef _ENABLE_FILTERWHEEL_ATIK_
-	CreateATIKFilterWheelObjects();
-#endif
-
-//*********************************************************
+//------------------------------------------------------
 //*	Dome
 #ifdef _ENABLE_DOME_
-	CreateDomeObjectsRPi();
+	CreateDomeObjects();
 #endif
-//*********************************************************
+
+//------------------------------------------------------
+//*	Filter wheel
+#ifdef _ENABLE_FILTERWHEEL_
+	CreateFilterWheelObjects();
+#endif
+
+//------------------------------------------------------
+//*	Focuser
+#ifdef _ENABLE_FOCUSER_
+	CreateFocuserObjects();
+#endif
+
+//------------------------------------------------------
+//*	Observing conditions
+#if defined(_ENABLE_OBSERVINGCONDITIONS_)
+	CreateObsConditionObjects();
+//	CreateObsConditionRpiObjects();
+#endif
+
+//------------------------------------------------------
+//*	rotator objects
+#ifdef _ENABLE_ROTATOR_
+	CreateRotatorObjects();
+#endif
+
+
+//------------------------------------------------------
 //*	Shutter
 #ifdef _ENABLE_SHUTTER_
 //	CreateShutterObjects();
 	CreateShuterArduinoObjects();
 #endif
-#ifdef	_ENABLE_ROR_
-	CreateDomeObjectsROR();
-#endif // _ENABLE_ROR_
-//*********************************************************
-//*	Switch
-#if defined(_ENABLE_SWITCH_) && defined(__arm__)
-	CreateSwitchObjectsRPi();
-#endif	//	_ENABLE_SWITCH_
 
-//*********************************************************
-//*	Observing conditions
-#if defined(_ENABLE_OBSERVINGCONDITIONS_) && defined(__arm__)
-	CreateObsConditionRpiObjects();
-#elif defined(_ENABLE_OBSERVINGCONDITIONS_)
-//	CreateObsConditionObjects();
-#endif
-
-
-#if _ENABLE_CALIBRATION_
-	#ifdef _ENABLE_CALIBRATION_RPI_
-		CreateCalibrationObjectsRPi();
-	#endif
-	#ifdef _ENABLE_CALIBRATION_ALNITAK_
-		CreateCalibrationObjectsAlnitak();
-	#endif
-#endif // _ENABLE_CALIBRATION_
-
-
-//*********************************************************
-//*	Telescope
-#ifdef _ENABLE_TELESCOPE_
-	CreateTelescopeObjects();
-#endif // _ENABLE_TELESCOPE_
-
-
-//*********************************************************
+//------------------------------------------------------
 //*	Slit tacker
 #ifdef _ENABLE_SLIT_TRACKER_
 	CreateSlitTrackerObjects();
 #endif // _ENABLE_SLIT_TRACKER_
 
-//*********************************************************
-#ifdef _ENABLE_SPECTROGRAPH_
-	CreateSpectrographObjects();
-	CreateFilterWheelObjects_USIS();
-	CreateFocuserObjects_USUS();
+//------------------------------------------------------
+//*	Switch
+#if defined(_ENABLE_SWITCH_)
+	CreateSwitchObjects();
 #endif
 
-	//*********************************************************
+//------------------------------------------------------
+//*	Telescope
+#ifdef _ENABLE_TELESCOPE_
+	CreateTelescopeObjects();
+#endif // _ENABLE_TELESCOPE_
+
+//------------------------------------------------------
+#ifdef _ENABLE_SPECTROGRAPH_
+	CreateSpectrographObjects();
+#endif
+
+//------------------------------------------------------
 	//*	Management
 	CreateManagementObject();
 
-
+#ifdef _ENABLE_CAMERA_SIMULATOR_
+	strcpy(gWebTitle, "AlpacaPi Simulator");
+#endif
 }
 
 
@@ -4197,8 +4243,8 @@ Controller	*myController;
 int			keyPressed;
 
 #ifdef _USE_OPENCV_
-#warning "Under test 4/11/2022"
-	//ProcessControllerWindows();
+//	#warning "Under test 4/11/2022"
+//	//ProcessControllerWindows();
 #if (CV_MAJOR_VERSION >= 3)
 	keyPressed	=	cv::waitKeyEx(5);
 #else
@@ -4463,7 +4509,7 @@ AlpacaDriver	*devicePtr;
 					//*	was a specific device number specified
 					if (alpacaDevNum >= 0)
 					{
-						if (gAlpacaDeviceList[iii]->cDeviceNum == alpacaDevNum)
+						if (gAlpacaDeviceList[iii]->cAlpacaDeviceNum == alpacaDevNum)
 						{
 							CONSOLE_DEBUG("Found matching device with matching device number");
 							devicePtr	=	gAlpacaDeviceList[iii];
@@ -4616,8 +4662,8 @@ void	InitObsConditionGloblas(void)
 //**************************************************************************
 void	DumpRequestStructure(const char *functionName, TYPE_GetPutRequestData	*reqData)
 {
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, "*********************************");
-	CONSOLE_DEBUG_W_STR(	"called from         \t=",	functionName);
+	CONSOLE_DEBUG("*******************************************");
+	CONSOLE_DEBUG_W_STR(	"Called from         \t=",	functionName);
 	CONSOLE_DEBUG_W_STR(	"httpUserAgent       \t=",	reqData->httpUserAgent);
 	CONSOLE_DEBUG_W_NUM(	"cHTTPclientType     \t=",	reqData->cHTTPclientType);
 	CONSOLE_DEBUG_W_BOOL(	"clientIs_AlpacaPi   \t=",	reqData->clientIs_AlpacaPi);
@@ -4669,3 +4715,89 @@ int		mySocketFD;
 	SocketWriteData(mySocketFD,	"  <input type=\"submit\" value=\"Submit\">\r\n");
 	SocketWriteData(mySocketFD,	"</form>\r\n");
 }
+
+//**************************************************************************************
+static void	ExtractFileExtension(const char *fileName, char *extension)
+{
+int		fnLength;
+int		ccc;
+
+	fnLength	=	strlen(fileName);
+	ccc			=	fnLength;
+	while ((fileName[ccc] != '.') && (ccc > 1))
+	{
+		ccc--;
+	}
+	strcpy(extension, &fileName[ccc]);
+}
+
+
+//**************************************************************************
+//*	look for the specified file in the "html" folder
+static void	OutputHTML_html(TYPE_GetPutRequestData *reqData)
+{
+char		filePath[256];
+char		fileExtension[128];
+char		*slashPtr;
+int			mySocketFD;
+int			slashCnt;
+int			ccc;
+struct stat	fileStatus;
+int			returnCode;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+	DumpRequestStructure(__FUNCTION__, reqData);
+	mySocketFD	=	reqData->socket;
+
+	slashPtr	=	strchr(reqData->httpCmdString, '/');
+	if (slashPtr != NULL)
+	{
+		//*	built the file path
+		slashPtr++;	//*	skip past the "/"
+		ccc	=	0;
+		while ((*slashPtr > 0x20) && (ccc < 100))
+		{
+			filePath[ccc++]	=	*slashPtr;
+			slashPtr++;
+		}
+		filePath[ccc]	=	0;
+		CONSOLE_DEBUG_W_STR("filePath\t=", filePath);
+
+		slashCnt	=	CountCharsInString(filePath, '/');
+		if ((slashCnt == 0) && (strcmp(filePath, "docs") == 0))
+		{
+			strcat(filePath, "/index.html");
+		}
+
+		//*	fstat - check for existence of file
+		returnCode	=	stat(filePath, &fileStatus);
+		if (returnCode == 0)
+		{
+			CONSOLE_DEBUG("File is OK");
+
+			//*	determine the extension
+			ExtractFileExtension(filePath, fileExtension);
+			CONSOLE_DEBUG_W_STR("fileExtension\t=", fileExtension);
+			if (strcasecmp(fileExtension, ".jpg") == 0)
+			{
+				SendJpegResponse(mySocketFD, filePath);
+			}
+			else
+			{
+				//*	send the file to the socket
+				SocketWriteData(mySocketFD,	gHtmlHeader);
+				SendFileToSocket(mySocketFD, filePath);
+			}
+		}
+		else
+		{
+			SocketWriteData(mySocketFD,	"File not found\r\n");
+		}
+	}
+	else
+	{
+		SocketWriteData(mySocketFD,	"File not found\r\n");
+	}
+}
+
+

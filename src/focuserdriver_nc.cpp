@@ -110,21 +110,22 @@ TYPE_SERIALPORTS	gValidSerialPorts[kMaxMoonliteFocusers];
 int					gValidPortCnt	=	0;
 
 //*****************************************************************************
-void	CreateFocuserNiteCrawlerObjects(void)
+int		CreateFocuserObjects_MoonLite(void)
 {
 int					moonliteCnt;
-int					ii;
+int					iii;
 TYPE_MOONLITECOM	myMoonliteDesc;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 	moonliteCnt	=	MoonLite_CountFocusers();
 
 	CONSOLE_DEBUG_W_NUM("moonliteCnt\t=", moonliteCnt);
-	for (ii=0; ii<moonliteCnt; ii++)
+	for (iii=0; iii<moonliteCnt; iii++)
 	{
-		MoonLite_InitCom(&myMoonliteDesc, ii);
-		new FocuserNiteCrawler(ii, myMoonliteDesc.usbPortPath);
+		MoonLite_InitCom(&myMoonliteDesc, iii);
+		new FocuserNiteCrawler(iii, myMoonliteDesc.usbPortPath);
 	}
+	return(moonliteCnt);
 }
 
 //**************************************************************************************
@@ -271,7 +272,7 @@ bool	openOK;
 	#ifdef	_ENABLE_ROTATOR_
 		if (cMoonliteCom.model == kMoonLite_NiteCrawler)
 		{
-			new RotatorDriver_NiteCrawler(cDeviceNum, this);
+			new RotatorDriver_NiteCrawler(cAlpacaDeviceNum, this);
 		}
 	#endif // _ENABLE_ROTATOR_
 

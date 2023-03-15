@@ -17,9 +17,9 @@
 //*****************************************************************************
 //*	<MLS>	=	Mark L Sproul
 //*****************************************************************************
-//*	Dec  2,	2020	<MLS> Created domedriver_ror.h
+//*	Dec  2,	2020	<MLS> Created domedriver_ror_rpi.h
 //*****************************************************************************
-//#include	"domedriver_rpi.h"
+//#include	"domedriver_ror_rpi.h"
 
 #ifndef _STDBOOL_H
 	#include	<stdbool.h>
@@ -32,6 +32,9 @@
 #ifndef _DOME_DRIVER_H_
 	#include	"domedriver.h"
 #endif
+
+void	CreateDomeObjectsROR(void);
+
 
 //**************************************************************************************
 class DomeDriverROR: public DomeDriver
@@ -74,5 +77,4 @@ class DomeDriverROR: public DomeDriver
 };
 
 
-void	CreateDomeObjectsROR(void);
 

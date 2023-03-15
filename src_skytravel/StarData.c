@@ -89,7 +89,7 @@ char	spectralClassStr[4];
 
 	CONSOLE_DEBUG("---------------------------------------------------------");
 	CONSOLE_DEBUG_W_STR("Called from  \t=",	functionName);
-	CONSOLE_DEBUG_W_LONG("sizeof(obj) \t=",	sizeof(TYPE_CelestData));
+	CONSOLE_DEBUG_W_SIZE("sizeof(obj) \t=",	sizeof(TYPE_CelestData));
 	CONSOLE_DEBUG_W_LONG("id          \t=",	objectStruct->id);
 	CONSOLE_DEBUG_W_NUM("magn         \t=",	objectStruct->magn);
 	CONSOLE_DEBUG_W_NUM("dataSrc      \t=",	objectStruct->dataSrc);
@@ -154,7 +154,7 @@ int					bytesRead;
 
 					myDiskObjectCount	=	fileSize / sizeof(TYPE_CelestDataDisk);
 
-	//				CONSOLE_DEBUG_W_LONG("TYPE_CelestDataDisk\t=", sizeof(TYPE_CelestDataDisk));
+	//				CONSOLE_DEBUG_W_SIZE("TYPE_CelestDataDisk\t=", sizeof(TYPE_CelestDataDisk));
 	//				CONSOLE_DEBUG_W_LONG("myDiskObjectCount\t=", myDiskObjectCount);
 
 				#ifdef _BIG_ENDIAN_

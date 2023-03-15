@@ -21,7 +21,7 @@
 	#include	"IDeviceCallback.h"
 #endif // IDEVICECALLBACK_H
 
-void	CreateSONY_CameraObjects(void);
+//int	CreateSONY_CameraObjects(void);
 
 
 

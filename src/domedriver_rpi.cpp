@@ -29,6 +29,7 @@
 //*	Mar  5,	2021	<MLS> Started working on commutator power on/off
 //*	Mar  5,	2021	<MLS> Added _ENABLE_COMMUTATOR_POWER_
 //*	Dec 23,	2021	<MLS> Added OutputHTML_Part2() to output hardware configuration
+//*	Mar  2,	2023	<MLS> Added _ENABLE_DOME_RPI_
 //*****************************************************************************
 //*	cd /home/pi/dev-mark/alpaca
 //*	LOGFILE=logfile.txt
@@ -45,7 +46,7 @@
 //*	fi
 //*****************************************************************************
 
-#ifdef _ENABLE_DOME_
+#ifdef _ENABLE_DOME_RPI_
 
 #include	<stdlib.h>
 #include	<stdio.h>
@@ -161,7 +162,7 @@ DomeDriverRPi::DomeDriverRPi(const int argDevNum)
 	cDomeProp.CanFindHome		=	true;
 	cDomeProp.CanPark			=	true;
 	cDomeProp.CanSetAzimuth		=	true;
-	cDomeProp.CanSyncAzimuth	=	true;
+	cDomeProp.CanSyncAzimuth	=	false;
 	cDomeProp.CanSetShutter		=	true;
 	cParkAzimuth				=	170.0;		//*	these are approximate for my dome
 	cHomeAzimuth				=	230.0;
@@ -665,4 +666,4 @@ int				switchUpDown;
 	return(newSwitchState);
 }
 
-#endif // _ENABLE_DOME_
+#endif // _ENABLE_DOME_RPI_

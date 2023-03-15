@@ -25,6 +25,7 @@
 //*	Jun 30,	2022	<MLS> Added capability list to camera controller
 //*	Sep 18,	2022	<MLS> Added DisableFilterWheel()
 //*	Sep 21,	2022	<MLS> Added ProcessReadAll_IMU()
+//*	Mar  5,	2023	<MLS> UpdateDisplayModes() now disables camera mode switching if live mode
 //*****************************************************************************
 //*	todo
 //*		control key for different step size.
@@ -316,16 +317,16 @@ int		jjj;
 //*****************************************************************************
 void	ControllerCamNormal::UpdateReadoutModes(void)
 {
-int		jjj;
+int		iii;
 
-	for (jjj=0; jjj<kMaxReadOutModes; jjj++)
+	for (iii=0; iii<kMaxReadOutModes; iii++)
 	{
-		if (strlen(cCameraProp.ReadOutModes[jjj].modeStr) > 0)
+		if (strlen(cCameraProp.ReadOutModes[iii].modeStr) > 0)
 		{
-			SetWidgetValid(	kTab_Camera, (kCameraBox_ReadMode0 + jjj), true);
+			SetWidgetValid(	kTab_Camera, (kCameraBox_ReadMode0 + iii), true);
 			SetWidgetText(	kTab_Camera,
-						(kCameraBox_ReadMode0 + jjj),
-						cCameraProp.ReadOutModes[jjj].modeStr);
+						(kCameraBox_ReadMode0 + iii),
+						cCameraProp.ReadOutModes[iii].modeStr);
 		}
 	}
 }
@@ -558,6 +559,41 @@ void	ControllerCamNormal::UpdateFileNameOptions(void)
 }
 
 //*****************************************************************************
+//*	this routine only gets called when live mode changes state
+//*****************************************************************************
+void	ControllerCamNormal::UpdateLiveMode(void)
+{
+int		iii;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+	SetWidgetChecked(kTab_Camera, kCameraBox_LiveMode,		cLiveMode);
+	if (cLiveMode)
+	{
+		//*	we in live mode, disable the ability to change camera modes
+		SetWidgetType(kTab_Camera, 	kCameraBox_ReadModeOutline,	kWidgetType_MultiLineText);
+		SetWidgetText(kTab_Camera, 	kCameraBox_ReadModeOutline,	"Dont change mode when live");
+		for (iii=0; iii<kMaxReadOutModes; iii++)
+		{
+			SetWidgetType(	kTab_Camera, (kCameraBox_ReadMode0 + iii),	kWidgetType_Disabled);
+			SetWidgetValid(	kTab_Camera, (kCameraBox_ReadMode0 + iii),	false);
+		}
+	}
+	else
+	{
+		//*	back to normal mode, re-enable the buttons
+		SetWidgetType(kTab_Camera, 	kCameraBox_ReadModeOutline,	kWidgetType_OutlineBox);
+		for (iii=0; iii<kMaxReadOutModes; iii++)
+		{
+			SetWidgetType(	kTab_Camera, (kCameraBox_ReadMode0 + iii),	kWidgetType_RadioButton);
+			if (strlen(cCameraProp.ReadOutModes[iii].modeStr) > 0)
+			{
+				SetWidgetValid(	kTab_Camera, (kCameraBox_ReadMode0 + iii), true);
+			}
+		}
+	}
+}
+
+//*****************************************************************************
 void	ControllerCamNormal::UpdateReceivedFileName(const char *newFileName)
 {
 	SetWidgetText(kTab_Camera, kCameraBox_Filename, newFileName);
@@ -597,13 +633,12 @@ int		jjj;
 //*****************************************************************************
 void	ControllerCamNormal::UpdateDisplayModes(void)
 {
+
 	SetWidgetChecked(kTab_Camera, kCameraBox_LiveMode,		cLiveMode);
 	SetWidgetChecked(kTab_Camera, kCameraBox_SideBar,		cSideBar);
 	SetWidgetChecked(kTab_Camera, kCameraBox_AutoExposure,	cAutoExposure);
 	SetWidgetChecked(kTab_Camera, kCameraBox_DisplayImage,	cDisplayImage);
 	SetWidgetChecked(kTab_Camera, kCameraBox_SaveAll,		cSaveAllImages);
-
-
 }
 
 //*****************************************************************************

@@ -52,7 +52,7 @@ WindowTabObsCond::WindowTabObsCond(	const int	xSize,
 //**************************************************************************************
 WindowTabObsCond::~WindowTabObsCond(void)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 }
 
 //**************************************************************************************
@@ -72,19 +72,10 @@ int		boxLeft;
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	//------------------------------------------
-	yLoc			=	cTabVertOffset;
+	yLoc	=	cTabVertOffset;
 
 	//------------------------------------------
-	SetWidget(kObsCond_Title,		0,			yLoc,		cWidth,		cTitleHeight);
-	SetWidgetText(kObsCond_Title, "Observing Conditions");
-	SetBGcolorFromWindowName(kObsCond_Title);
-
-	//*	setup the connected indicator
-	SetUpConnectedIndicator(kObsCond_Connected, yLoc);
-
-	yLoc			+=	cTitleHeight;
-	yLoc			+=	2;
-
+	yLoc	=	SetTitleBox(kObsCond_Title, kObsCond_Connected, yLoc, "Observing Conditions");
 
 	boxLeft			=	2;
 	yLoc			+=	10;

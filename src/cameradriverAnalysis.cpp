@@ -545,8 +545,8 @@ void	CameraDriver::CalculateHistogramArray(void)
 {
 int32_t			imageDataLen;
 int32_t			currPixValue;
-int32_t			ii;
-int32_t			cc;
+int32_t			iii;
+int32_t			ccc;
 uint16_t		*imageDataPtr16bit;
 uint8_t			*imageDataPtr8bit;
 int32_t			redValue;
@@ -587,9 +587,9 @@ bool			lookingForMin;
 			case kImageType_RAW8:
 			case kImageType_Y8:
 				imageDataPtr8bit	=	(uint8_t *)cCameraDataBuffer;
-				for (ii=0; ii<imageDataLen; ii++)
+				for (iii=0; iii<imageDataLen; iii++)
 				{
-					currPixValue	=	imageDataPtr8bit[ii] & 0x00ff;
+					currPixValue	=	imageDataPtr8bit[iii] & 0x00ff;
 
 					cHistogramLum[currPixValue]++;
 
@@ -602,10 +602,10 @@ bool			lookingForMin;
 
 			case kImageType_RAW16:
 				imageDataPtr16bit	=	(uint16_t *)cCameraDataBuffer;
-				for (ii=0; ii<imageDataLen; ii++)
+				for (iii=0; iii<imageDataLen; iii++)
 				{
 					//*	for 16 bit data, we shift it right 8 bits
-					currPixValue	=	imageDataPtr16bit[ii] & 0x00ffff;
+					currPixValue	=	imageDataPtr16bit[iii] & 0x00ffff;
 					currPixValue	=	(currPixValue >> 8) & 0x00ff;
 					cHistogramLum[currPixValue]++;
 				}
@@ -614,14 +614,14 @@ bool			lookingForMin;
 
 			case kImageType_RGB24:
 				imageDataPtr8bit	=	(uint8_t *)cCameraDataBuffer;
-				cc					=	0;
-				for (ii=0; ii<imageDataLen; ii++)
+				ccc					=	0;
+				for (iii=0; iii<imageDataLen; iii++)
 				{
 					//*	openCV uses BGR instead of RGB
 					//*	https://docs.opencv.org/master/df/d24/tutorial_js_image_display.html
-					bluValue	=	imageDataPtr8bit[cc + 0] & 0x00ff;
-					grnValue	=	imageDataPtr8bit[cc + 1] & 0x00ff;
-					redValue	=	imageDataPtr8bit[cc + 2] & 0x00ff;
+					bluValue	=	imageDataPtr8bit[ccc + 0] & 0x00ff;
+					grnValue	=	imageDataPtr8bit[ccc + 1] & 0x00ff;
+					redValue	=	imageDataPtr8bit[ccc + 2] & 0x00ff;
 					cHistogramRed[redValue]++;
 					cHistogramGrn[grnValue]++;
 					cHistogramBlu[bluValue]++;
@@ -638,18 +638,17 @@ bool			lookingForMin;
 					{
 						cMaxBluValue	=	bluValue;
 					}
-
-					cc	+=	3;
+					ccc	+=	3;
 				}
 				//*	now calculate the luminance
-				for (ii=0; ii<256; ii++)
+				for (iii=0; iii<256; iii++)
 				{
-					lumValue	=	cHistogramRed[ii];
-					lumValue	+=	cHistogramGrn[ii];
-					lumValue	+=	cHistogramBlu[ii];
+					lumValue	=	cHistogramRed[iii];
+					lumValue	+=	cHistogramGrn[iii];
+					lumValue	+=	cHistogramBlu[iii];
 					lumValue	=	(lumValue / 3);
 
-					cHistogramLum[ii]	=	lumValue;
+					cHistogramLum[iii]	=	lumValue;
 				}
 
 				break;
@@ -662,53 +661,51 @@ bool			lookingForMin;
 		peakPixelIdx		=	-1;
 		peakPixelCount		=	0;
 		lookingForMin		=	true;
-		for (ii=0; ii<256; ii++)
+		for (iii=0; iii<256; iii++)
 		{
 			//*	find the minimum value
-			if (lookingForMin && (cHistogramLum[ii] > 0))
+			if (lookingForMin && (cHistogramLum[iii] > 0))
 			{
-				cMinHistogramValue	=	ii;
+				cMinHistogramValue	=	iii;
 				lookingForMin		=	false;
 			}
 			//*	find the maximum value
-			if (cHistogramLum[ii] > 0)
+			if (cHistogramLum[iii] > 0)
 			{
-				cMaxHistogramValue	=	ii;
+				cMaxHistogramValue	=	iii;
 			}
-
 			//*	find the peak value
-			if (cHistogramLum[ii] > peakPixelCount)
+			if (cHistogramLum[iii] > peakPixelCount)
 			{
-				peakPixelIdx	=	ii;
-				peakPixelCount	=	cHistogramLum[ii];
+				peakPixelIdx	=	iii;
+				peakPixelCount	=	cHistogramLum[iii];
 			}
-
-
 		}
 		cPeakHistogramValue	=	peakPixelIdx;
 
 		//*	look for maximum pixel counts
-		//*	purposely skip the first and last
 		cMaxHistogramPixCnt	=	0;
-//		for (ii=5; ii<250; ii++)
-//		for (ii=1; ii<255; ii++)
-		for (ii=0; ii<256; ii++)
+
+		//*	purposely skip the first and last
+//		for (iii=1; iii<255; iii++)
+//		for (iii=5; iii<250; iii++)
+		for (iii=0; iii<256; iii++)
 		{
-			if (cHistogramLum[ii] > cMaxHistogramPixCnt)
+			if (cHistogramLum[iii] > cMaxHistogramPixCnt)
 			{
-				cMaxHistogramPixCnt	=	cHistogramLum[ii];
+				cMaxHistogramPixCnt	=	cHistogramLum[iii];
 			}
-			if (cHistogramRed[ii] > cMaxHistogramPixCnt)
+			if (cHistogramRed[iii] > cMaxHistogramPixCnt)
 			{
-				cMaxHistogramPixCnt	=	cHistogramRed[ii];
+				cMaxHistogramPixCnt	=	cHistogramRed[iii];
 			}
-			if (cHistogramGrn[ii] > cMaxHistogramPixCnt)
+			if (cHistogramGrn[iii] > cMaxHistogramPixCnt)
 			{
-				cMaxHistogramPixCnt	=	cHistogramGrn[ii];
+				cMaxHistogramPixCnt	=	cHistogramGrn[iii];
 			}
-			if (cHistogramBlu[ii] > cMaxHistogramPixCnt)
+			if (cHistogramBlu[iii] > cMaxHistogramPixCnt)
 			{
-				cMaxHistogramPixCnt	=	cHistogramBlu[ii];
+				cMaxHistogramPixCnt	=	cHistogramBlu[iii];
 			}
 		}
 

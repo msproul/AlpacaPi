@@ -1,3 +1,6 @@
+//**************************************************************************
+//*	Name:			focuserdriver_nc.h
+//*
 //*****************************************************************************
 //*	Edit History
 //*****************************************************************************
@@ -5,6 +8,7 @@
 //*****************************************************************************
 //*	Nov 28,	2020	<MLS> Updated return values to TYPE_ASCOM_STATUS
 //**************************************************************************
+//#include	"focuserdriver_nc.h"
 
 #ifndef _FOCUSER_MOONLITE_H_
 #define	_FOCUSER_MOONLITE_H_
@@ -20,6 +24,9 @@
 #define	_USE_MOONLITE_COM_
 
 #include	"moonlite_com.h"
+
+int	CreateFocuserObjects_MoonLite(void);
+
 
 //**************************************************************************************
 class FocuserNiteCrawler: public FocuserDriver
@@ -68,7 +75,6 @@ class FocuserNiteCrawler: public FocuserDriver
 
 };
 
-void	CreateFocuserNiteCrawlerObjects(void);
 
 
 #endif	//	_FOCUSER_MOONLITE_H_

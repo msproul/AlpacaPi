@@ -9,7 +9,9 @@
 //*****************************************************************************
 //*	Jan 16,	2021	<MLS> Created alpacadriver_helper.c
 //*	Mar 12,	2022	<MLS> Added GetBinaryElementTypeString()
-//*	Sep 25,	2022	<MLS> Added (DumpObservingconditionsProp)
+//*	Sep 25,	2022	<MLS> Added DumpObservingconditionsProp()
+//*	Mar  3,	2023	<MLS> Added FindDeviceTypeByStringLowerCase()
+//*	Mar  9,	2023	<MLS> Added GetDomeShutterStatusString()
 //*****************************************************************************
 
 #include	<string.h>
@@ -47,6 +49,30 @@ TYPE_DeviceTable	gDeviceTable[]	=
 	{	"",						kDeviceType_undefined			}
 };
 
+//*******************************************************
+TYPE_DeviceTable	gDeviceTableLowerCase[]	=
+{
+	{	"camera",				kDeviceType_Camera				},
+	{	"dome",					kDeviceType_Dome				},
+	{	"filterwheel",			kDeviceType_Filterwheel			},
+	{	"focuser",				kDeviceType_Focuser				},
+	{	"management",			kDeviceType_Management			},
+	{	"observingconditions",	kDeviceType_Observingconditions	},
+	{	"rotator",				kDeviceType_Rotator				},
+	{	"safetyMonitor",		kDeviceType_SafetyMonitor		},
+	{	"switch",				kDeviceType_Switch				},
+	{	"telescope",			kDeviceType_Telescope			},
+	{	"covercalibrator",		kDeviceType_CoverCalibrator		},
+
+	//*	extras defined by MLS
+	{	"multicam",				kDeviceType_Multicam			},
+	{	"shutter",				kDeviceType_Shutter				},
+	{	"slittracker",			kDeviceType_SlitTracker			},
+	{	"shutter",				kDeviceType_Shutter				},
+	{	"spectrograph",			kDeviceType_Spectrograph		},
+
+	{	"",						kDeviceType_undefined			}
+};
 
 
 
@@ -84,6 +110,44 @@ TYPE_DEVICETYPE		enumValue;
 	}
 	return(enumValue);
 }
+
+//*****************************************************************************
+//*	this is strict lower case to meet alpaca standards
+//*****************************************************************************
+TYPE_DEVICETYPE	FindDeviceTypeByStringLowerCase(const char *deviceTypeStr)
+{
+int					ii;
+TYPE_DEVICETYPE		enumValue;
+
+	enumValue	=	kDeviceType_undefined;
+	ii				=	0;
+	while ((gDeviceTableLowerCase[ii].deviceType[0] != 0) && (enumValue < 0))
+	{
+		if (strcmp(deviceTypeStr, gDeviceTableLowerCase[ii].deviceType) == 0)
+		{
+			enumValue	=	gDeviceTableLowerCase[ii].enumValue;
+		}
+		ii++;
+	}
+	return(enumValue);
+}
+
+//*****************************************************************************
+void	GetDomeShutterStatusString(const int status, char *statusString)
+{
+	switch(status)
+	{
+		case kShutterStatus_Open:		strcpy(statusString,	"Open");	break;
+		case kShutterStatus_Closed:		strcpy(statusString,	"Closed");	break;
+		case kShutterStatus_Opening:	strcpy(statusString,	"Opening");	break;
+		case kShutterStatus_Closing:	strcpy(statusString,	"Closing");	break;
+		case kShutterStatus_Error:		strcpy(statusString,	"Error");	break;
+
+		case kShutterStatus_Unknown:
+		default:						strcpy(statusString,	"unknown");	break;
+	}
+}
+
 
 //*****************************************************************************
 void	GetBinaryElementTypeString(const int elementType, char *typeString)

@@ -28,9 +28,11 @@
 #include	"ConsoleDebug.h"
 
 
+#include	"alpaca_defs.h"
 #include	"alpacadriver_helper.h"
 #include	"calibrationdriver.h"
 #include	"calibrationdriver_rpi.h"
+
 
 #if defined(__arm__)
 	#define	_ENABLE_WIRING_PI_
@@ -43,7 +45,7 @@
 
 
 //*****************************************************************************
-void	CreateCalibrationObjectsRPi(void)
+void	CreateCalibrationObjects_RPi(void)
 {
 	new CalibrationDriverRPI();
 }

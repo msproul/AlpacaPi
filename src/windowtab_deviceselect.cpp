@@ -59,7 +59,7 @@ WindowTabDeviceSelect::WindowTabDeviceSelect(	const int	xSize,
 //**************************************************************************************
 WindowTabDeviceSelect::~WindowTabDeviceSelect(void)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 }
 
 //**************************************************************************************
@@ -84,16 +84,12 @@ int		myRadioBtnWidth;
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	//------------------------------------------
-	yLoc			=	cTabVertOffset;
+	yLoc		=	cTabVertOffset;
 
 	//------------------------------------------
-	SetWidget(kDeviceSelect_Title,		0,			yLoc,		cWidth,		cTitleHeight);
-	SetWidgetText(kDeviceSelect_Title, "Alpaca Device Selection");
-	SetBGcolorFromWindowName(kDeviceSelect_Title);
-	yLoc			+=	cTitleHeight;
-	yLoc			+=	2;
+	yLoc		=	SetTitleBox(kDeviceSelect_Title, -1, yLoc, "Alpaca Device Selection");
 
-	textBoxHt		=	90;
+	textBoxHt	=	90;
 	SetWidget(				kDeviceSelect_TextBox1,	0,			yLoc,		cWidth,		textBoxHt);
 	SetWidgetType(			kDeviceSelect_TextBox1,	kWidgetType_MultiLineText);
 	SetWidgetJustification(	kDeviceSelect_TextBox1,	kJustification_Left);
@@ -183,6 +179,9 @@ ControllerSkytravel	*myControllerObj;
 		case kDeviceSelect_Dome3:
 		case kDeviceSelect_Dome4:
 		case kDeviceSelect_Dome5:
+		case kDeviceSelect_Dome6:
+		case kDeviceSelect_Dome7:
+		case kDeviceSelect_Dome8:
 			if (cDomeCnt > 1)
 			{
 				SetWidgetChecked(kDeviceSelect_Dome1, (buttonIdx == kDeviceSelect_Dome1));
@@ -190,6 +189,9 @@ ControllerSkytravel	*myControllerObj;
 				SetWidgetChecked(kDeviceSelect_Dome3, (buttonIdx == kDeviceSelect_Dome3));
 				SetWidgetChecked(kDeviceSelect_Dome4, (buttonIdx == kDeviceSelect_Dome4));
 				SetWidgetChecked(kDeviceSelect_Dome5, (buttonIdx == kDeviceSelect_Dome5));
+				SetWidgetChecked(kDeviceSelect_Dome6, (buttonIdx == kDeviceSelect_Dome6));
+				SetWidgetChecked(kDeviceSelect_Dome7, (buttonIdx == kDeviceSelect_Dome7));
+				SetWidgetChecked(kDeviceSelect_Dome8, (buttonIdx == kDeviceSelect_Dome8));
 				previousDevIdx	=	cSelectedDomeIdx;
 				newDevIdx		=	buttonIdx - kDeviceSelect_Dome1;
 				if (newDevIdx != previousDevIdx)
@@ -211,6 +213,9 @@ ControllerSkytravel	*myControllerObj;
 		case kDeviceSelect_Telescope3:
 		case kDeviceSelect_Telescope4:
 		case kDeviceSelect_Telescope5:
+		case kDeviceSelect_Telescope6:
+		case kDeviceSelect_Telescope7:
+		case kDeviceSelect_Telescope8:
 			if (cTelescopeCnt > 1)
 			{
 				SetWidgetChecked(kDeviceSelect_Telescope1, (buttonIdx == kDeviceSelect_Telescope1));
@@ -218,6 +223,9 @@ ControllerSkytravel	*myControllerObj;
 				SetWidgetChecked(kDeviceSelect_Telescope3, (buttonIdx == kDeviceSelect_Telescope3));
 				SetWidgetChecked(kDeviceSelect_Telescope4, (buttonIdx == kDeviceSelect_Telescope4));
 				SetWidgetChecked(kDeviceSelect_Telescope5, (buttonIdx == kDeviceSelect_Telescope5));
+				SetWidgetChecked(kDeviceSelect_Telescope6, (buttonIdx == kDeviceSelect_Telescope6));
+				SetWidgetChecked(kDeviceSelect_Telescope7, (buttonIdx == kDeviceSelect_Telescope7));
+				SetWidgetChecked(kDeviceSelect_Telescope8, (buttonIdx == kDeviceSelect_Telescope8));
 				previousDevIdx	=	cSelectedTelescopeIdx;
 				newDevIdx		=	buttonIdx - kDeviceSelect_Telescope1;
 				if (newDevIdx != previousDevIdx)

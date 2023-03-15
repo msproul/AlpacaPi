@@ -1291,7 +1291,8 @@ CrInt32u			currentValueSize;
 			//*	Sony_CameraRemoteSDK_API-Reference_v1.01.00.pdf		-	page 98
 			switch(currentPropValue)
 			{
-				case CrZoomOperation_Wide:	strcpy(propertyDisplayStr, "Wide");		break;
+//*	Mar  3,	2023	<MLS> this line caused a compile err
+//				case CrZoomOperation_Wide:	strcpy(propertyDisplayStr, "Wide");		break;
 				case CrZoomOperation_Stop:	strcpy(propertyDisplayStr, "Stop");		break;
 				case CrZoomOperation_Tele:	strcpy(propertyDisplayStr, "Tele");		break;
 				default:					strcpy(propertyDisplayStr, "UNKNOWN");	break;
@@ -1779,7 +1780,7 @@ void	CameraDriverSONY::ReadSONYcameraInfo(void)
 	if (cSonyCamera_info != NULL)
 	{
 		strcpy(cSONYidString,		cSonyCamera_info->GetModel());
-		strcpy(cCommonProp.Name,	cSonyCamera_info->GetModel());
+		SetCommonPropertyName("SONY-", cSONYidString);
 
 		CONSOLE_DEBUG_W_STR("Conn type\t\t=",	cSONYidString);
 		CONSOLE_DEBUG_W_STR("Camera model\t=",	cCommonProp.Name);

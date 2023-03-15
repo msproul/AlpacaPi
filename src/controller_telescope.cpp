@@ -109,7 +109,7 @@ ControllerTelescope::ControllerTelescope(	const char			*argWindowName,
 //**************************************************************************************
 ControllerTelescope::~ControllerTelescope(void)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 	//--------------------------------------------
 	DELETE_OBJ_IF_VALID(cTelescopeTabObjPtr);
 	DELETE_OBJ_IF_VALID(cTeleSettingsTabObjPtr);

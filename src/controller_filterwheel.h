@@ -41,7 +41,7 @@ class ControllerFilterWheel: public Controller
 
 		TYPE_FilterWheelProperties	cFilterWheelProp;
 				int					cPositionCount;
-				char				cFilterWheelName[32];
+				char				cFilterWheelName[kCommonPropMaxStrLen];
 
 				//*	tab information
 				WindowTabFilterWheel	*cFilterWheelTabObjPtr;

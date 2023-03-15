@@ -116,7 +116,7 @@ ControllerRotator::ControllerRotator(	const char			*argWindowName,
 //**************************************************************************************
 ControllerRotator::~ControllerRotator(void)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 	DELETE_OBJ_IF_VALID(cRotatorTabObjPtr);
 	DELETE_OBJ_IF_VALID(cCapabilitiesTabObjPtr);
 	DELETE_OBJ_IF_VALID(cDriverInfoTabObjPtr);

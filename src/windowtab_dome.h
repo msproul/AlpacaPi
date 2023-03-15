@@ -69,11 +69,9 @@ enum
 	kDomeBox_CloseShutter,
 	kDomeBox_StopShutter,
 
-//	kDomeBox_ErrorMsg,
-
 	kDomeBox_LastCmdString,
 
-	kDomeBox_AlpacaLogo,
+//	kDomeBox_AlpacaLogo,
 	kDomeBox_AlpacaErrorMsg,
 	kDomeBox_IPaddr,
 	kDomeBox_Readall,

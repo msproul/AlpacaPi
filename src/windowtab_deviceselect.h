@@ -36,6 +36,9 @@ enum
 	kDeviceSelect_Dome3,
 	kDeviceSelect_Dome4,
 	kDeviceSelect_Dome5,
+	kDeviceSelect_Dome6,
+	kDeviceSelect_Dome7,
+	kDeviceSelect_Dome8,
 	kDeviceSelect_DomeOutline,
 
 	kDeviceSelect_TelescopeTitle,
@@ -44,6 +47,9 @@ enum
 	kDeviceSelect_Telescope3,
 	kDeviceSelect_Telescope4,
 	kDeviceSelect_Telescope5,
+	kDeviceSelect_Telescope6,
+	kDeviceSelect_Telescope7,
+	kDeviceSelect_Telescope8,
 	kDeviceSelect_TelescopeOutline,
 
 
@@ -52,8 +58,8 @@ enum
 	kDeviceSelect_last
 };
 
-
-#define	kSelectionCnt	5
+//*	this number must match the number of boxes described above
+#define	kSelectionCnt	8
 //**************************************************************************************
 class WindowTabDeviceSelect: public WindowTab
 {

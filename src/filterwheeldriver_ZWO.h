@@ -5,6 +5,9 @@
 //#include	"filterwheeldriver_ZWO.h"
 
 
+#ifndef _FILTERWHEELDRIVER_ZWO_H_
+	#define	_FILTERWHEELDRIVER_ZWO_H_
+
 
 
 #ifndef EFW_FILTER_H
@@ -40,4 +43,5 @@ class FilterwheelZWO: public FilterwheelDriver
 
 };
 
-void	CreateZWOFilterWheelObjects(void);
+void	CreateFilterWheelObjects_ZWO(void);
+#endif // _FILTERWHEELDRIVER_ZWO_H_

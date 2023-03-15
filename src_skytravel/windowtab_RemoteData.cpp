@@ -92,20 +92,14 @@ int		iii;
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	//------------------------------------------
-	yLoc			=	cTabVertOffset;
+	yLoc	=	cTabVertOffset;
+	yLoc	=	SetTitleBox(kRemoteData_Title, -1, yLoc, "Remote Data Options");
 
-	//------------------------------------------
-	SetWidget(kRemoteData_Title,		0,			yLoc,		cWidth,		cTitleHeight);
-	SetWidgetText(kRemoteData_Title, "Remote Data Options");
-	SetBGcolorFromWindowName(kRemoteData_Title);
-	yLoc			+=	cTitleHeight;
-	yLoc			+=	2;
-	yLoc			+=	2;
-	yLoc			+=	2;
-
+	yLoc	+=	2;
+	yLoc	+=	2;
 
 	//----------------------------------------------------------------------
-	xLoc			=	5;
+	xLoc	=	5;
 
 	SetWidget(			kRemoteData_ControlDblClkTitle,	xLoc,	yLoc,	(cWidth - 15),		cTitleHeight);
 	SetWidgetText(		kRemoteData_ControlDblClkTitle, "Ctrl-DoubleClick image servers");

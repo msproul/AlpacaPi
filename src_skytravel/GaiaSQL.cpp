@@ -121,7 +121,7 @@ void	LogSqlTransaction(const char *dbName,const char *sqlCommand, const char *re
 
 
 //*****************************************************************************
-static void	ProcessSQLConfig(const char *keyword, const char *valueString)
+static void	ProcessSQLConfig(const char *keyword, const char *valueString, void *userDataPtr)
 {
 
 	//*	look for the supported keywords
@@ -209,7 +209,7 @@ int		linesRead;
 	}
 
 	//*	"sqlserver.txt"
-	linesRead	=	ReadGenericConfigFile(kSQLserverConfigFile, '=', &ProcessSQLConfig);
+	linesRead	=	ReadGenericConfigFile(kSQLserverConfigFile, '=', &ProcessSQLConfig, NULL);
 	if (linesRead > 2)
 	{
 		//*	check the configuration, makes sure that all the required parameters were specified
@@ -1415,7 +1415,7 @@ bool			successFlag;
 							gGaiaDataList[iii].sequenceNum		=	gGaiaSQLsequenceNum;
 							gGaiaSQLsequenceNum++;
 
-							sprintf(gSQLsever_StatusMsg, "SQL success, record count=%d", gaiaDataCount);
+							sprintf(gSQLsever_StatusMsg, "SQL success, record count=%ld", gaiaDataCount);
 							gSQLsever_MsgUpdated	=	true;
 						}
 						else

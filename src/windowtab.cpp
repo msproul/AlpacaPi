@@ -82,6 +82,13 @@
 //*	Dec 17,	2022	<MLS> Added DrawGraph()
 //*	Dec 18,	2022	<MLS> Added LLD_GetColor()
 //*	Dec 25,	2022	<MLS> Added SetWidgetAltText() (initially for progress bar text)
+//*	Feb 22,	2023	<MLS> Added SetTitleBox()
+//*	Feb 24,	2023	<MLS> Added connected box to SetTitleBox()
+//*	Feb 24,	2023	<MLS> Switched all window tabs to use SetTitleBox()
+//*	Feb 26,	2023	<MLS> Added DrawHistogram()
+//*	Feb 27,	2023	<MLS> Added default option to HandleSpecialKeys()
+//*	Mar 14,	2023	<MLS> Added LaunchWebHelp()
+//*	Mar 14,	2023	<MLS> Added helpbuttonbox and logo side of window to SetupWindowBottomBoxes()
 //*****************************************************************************
 
 
@@ -122,6 +129,7 @@ int		iii;
 	cWindowName[0]		=	0;
 	cLeftButtonDown		=	false;
 	cRightButtonDown	=	false;
+	cHistogramPenSize	=	2;
 
 	ComputeWidgetColumns(cWidth);
 
@@ -144,6 +152,7 @@ int		iii;
 	cCurrentYloc		=	0;
 	cCurrentColor		=	CV_RGB(255,	255,	255);
 	cCurrentLineWidth	=	1;
+	cWebURLstring[0]	=	0;
 
 	if (windowName != NULL)
 	{
@@ -173,8 +182,7 @@ int		iii;
 //**************************************************************************************
 WindowTab::~WindowTab(void)
 {
-//	CONSOLE_DEBUG(__FUNCTION__);
-
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 }
 
 //**************************************************************************************
@@ -661,6 +669,8 @@ void	WindowTab::SetupWindowBottomBoxes(	const int	ipaddrBox,
 											const int	errorMsgBox,
 											const int	lastCmdWidgetIdx,
 											const int	logoWidgetIdx,
+											const int	helpBtnBox ,
+											const bool	logoSideOfScreen,
 											const int	connectBtnBox)
 {
 int		xLoc;
@@ -775,7 +785,16 @@ int		logoHeight;
 			logoWidth	=	gAlpacaLogoPtr->width;
 			logoHeight	=	gAlpacaLogoPtr->height;
 		#endif // _USE_OPENCV_CPP_
-			xLoc		=	cWidth - logoWidth;
+			if (logoSideOfScreen)
+			{
+				//*	true means right side of screen
+				xLoc		=	cWidth - logoWidth;
+			}
+			else
+			{
+				//*	false means left side of screen
+				xLoc		=	1;
+			}
 			yLoc		-=	logoHeight;
 
 			SetWidget(		logoWidgetIdx,	xLoc,	yLoc,	logoWidth,	logoHeight);
@@ -1044,7 +1063,7 @@ void	WindowTab::SetupWindowControls(void)
 
 #ifdef _USE_OPENCV_CPP_
 //**************************************************************************************
-void	WindowTab::DrawWidgetCustomGraphic(cv::Mat *openCV_Image, TYPE_WIDGET *theWidget)
+void	WindowTab::DrawWidgetCustomGraphic(cv::Mat *openCV_Image, TYPE_WIDGET *theWidget, const int widgetIdx)
 {
 	//*	this routine should be overloaded
 	CONSOLE_DEBUG("This routine MUST be overloaded in the windowtab subclass");
@@ -1056,7 +1075,7 @@ void	WindowTab::DrawWidgetCustomGraphic(cv::Mat *openCV_Image, const int widgetI
 {
 	if ((widgetIdx >= 0) && (widgetIdx < kMaxWidgets))
 	{
-		DrawWidgetCustomGraphic(openCV_Image, &cWidgetList[widgetIdx]);
+		DrawWidgetCustomGraphic(openCV_Image, &cWidgetList[widgetIdx], widgetIdx);
 	}
 	else
 	{
@@ -1217,6 +1236,10 @@ void	WindowTab::HandleSpecialKeys(const int keyPressed)
 			break;
 
 		case 0x10FF57:	//*	end
+			break;
+
+		default:
+			HandleKeyDown(keyPressed);
 			break;
 	}
 	if (cFirstLineIdx < 0)
@@ -1404,12 +1427,71 @@ void	WindowTab::UpdateOnScreenWidgetList(void)
 }
 
 //*****************************************************************************
+void	WindowTab::LaunchWebHelp(const char *webpagestring)
+{
+char	urlString[128];
+
+	strcpy(urlString, gWebBrowserCmdString);
+	strcat(urlString, " ");
+	strcat(urlString, "docs/");
+	if (webpagestring != NULL)
+	{
+		strcat(urlString, webpagestring);
+	}
+	else if (strlen(cWebURLstring) > 0)
+	{
+		strcat(urlString, cWebURLstring);
+	}
+	else
+	{
+		strcat(urlString, "index.html");
+	}
+//	CONSOLE_DEBUG(urlString);
+	RunCommandLine(urlString);
+}
+
+
+//*****************************************************************************
+int	WindowTab::SetTitleBox(	const int	titleWidgetIdx,
+							const int	connectionWidgetIdx,
+							const int	yLoc,
+							const char *titleString)
+{
+	SetWidget(		titleWidgetIdx,	1,			yLoc,		cWidth-2,		cTitleHeight);
+	SetWidgetText(	titleWidgetIdx,	titleString);
+	SetWidgetFont(	titleWidgetIdx,	kFont_Medium);
+	SetBGcolorFromWindowName(titleWidgetIdx);
+
+//	SetWidgetBGColor(	titleWidgetIdx,	CV_RGB(128, 128, 128));
+
+	//*	was a connection widget index specified?
+	if (connectionWidgetIdx >= 0)
+	{
+		SetUpConnectedIndicator(connectionWidgetIdx, yLoc);
+	}
+	return(yLoc + cTitleHeight + 2);
+}
+
+
+//*****************************************************************************
 void	WindowTab::SetHelpTextBoxNumber(const int buttonIdx)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
 	cHelpTextBoxNumber	=	buttonIdx;
 }
 
+
+//*****************************************************************************
+void	WindowTab::SetUpConnectedIndicator(const int buttonIdx, const int yLoc)
+{
+	cConnectedStateBoxNumber	=	buttonIdx;
+	SetWidget(buttonIdx,		5,	(yLoc + 2),	(cTitleHeight - 4),	(cTitleHeight - 4));
+	SetWidgetText(				buttonIdx,	"?");
+	SetWidgetTextColor(			buttonIdx,	CV_RGB(255,	255,	0));
+	SetWidgetFont(				buttonIdx,	kFont_Medium);
+	SetBGcolorFromWindowName(	buttonIdx);
+	SetWidgetBorder(			buttonIdx,	false);
+}
 
 //*****************************************************************************
 //*	this is so that the box can be used for error messages that might set to red
@@ -1756,7 +1838,7 @@ int				preivousYvalue;
 	else
 	{
 		CONSOLE_DEBUG("Something is wrong with input parameters");
-		CONSOLE_DEBUG_W_HEX("graphArray\t=",	graphArray);
+//		CONSOLE_DEBUG_W_HEX("graphArray\t=",	graphArray);
 		CONSOLE_DEBUG_W_NUM("numEntries\t=",	numEntries);
 	}
 
@@ -1779,6 +1861,126 @@ int				preivousYvalue;
 	}
 }
 
+//**************************************************************************************
+void	WindowTab::DrawHistogram(	TYPE_WIDGET		*theWidget,
+									const int32_t	*graphArray,
+									const int		numEntries,
+									const int		yDivideFactor,
+									cv::Scalar		lineColor)
+{
+cv::Rect		myCVrect;
+int				jjj;
+int				xOffset;
+int				pt1_X;
+int				pt1_Y;
+int				pt2_X;
+int				pt2_Y;
+int				currArrayValue;
+double			adjustedArrayValueDbl;
+int				preivousYvalue;
+double			logOfPixlCntDbl;
+//int				logOfPixlCntInt;
+int				adjustedPixlCntLog;
+double			logOf255;
+int				graphHeight;
+int				graphBottom;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	if ((graphArray != NULL) && (numEntries > 0) && (numEntries < 3000))
+	{
+		myCVrect.x		=	theWidget->left;
+		myCVrect.y		=	theWidget->top;
+		myCVrect.width	=	theWidget->width;
+		myCVrect.height	=	theWidget->height;
+		graphHeight		=	theWidget->height;
+		graphBottom		=	theWidget->top + theWidget->height;
+
+		if (numEntries < theWidget->width)
+		{
+			xOffset	=	(theWidget->width - numEntries) / 2;
+		}
+		else
+		{
+			xOffset	=	0;
+		}
+
+		logOf255		=	log(255.0);
+//
+//			for (iii=0; iii<256; iii++)
+//			{
+//				histYvalue	=	theArray[iii] / yDivideFactor;
+//				if (histYvalue > 0)
+//				{
+//					logOfPixlCntDbl	=	log(histYvalue);
+//					histYvalue		=	(logOfPixlCnt * graphHeight) / logOf255;
+//					point1.x		=	xStart + iii;
+//					point1.y		=	windowHeight;
+//
+//					point2.x		=	xStart + iii;
+//					point2.y		=	windowHeight - histYvalue;
+
+#ifndef __arm__
+//		CONSOLE_DEBUG_W_NUM("xOffset      \t=", xOffset);
+//		CONSOLE_DEBUG_W_NUM("graphHeight  \t=", graphHeight);
+//		CONSOLE_DEBUG_W_NUM("yDivideFactor\t=", yDivideFactor);
+//		CONSOLE_DEBUG_W_DBL("logOf255     \t=",	logOf255);
+#endif
+		LLD_SetColor(lineColor);
+		preivousYvalue	=	0;
+
+		LLD_PenSize(cHistogramPenSize);
+		for (jjj=0; jjj<numEntries; jjj++)
+		{
+			currArrayValue			=	graphArray[jjj];
+			adjustedArrayValueDbl	=	(1.0 * currArrayValue) / yDivideFactor;
+			if (adjustedArrayValueDbl >= 0.0)
+			{
+				logOfPixlCntDbl		=	log(adjustedArrayValueDbl);
+//				logOfPixlCntInt		=	logOfPixlCntDbl;
+				adjustedPixlCntLog	=	(logOfPixlCntDbl * graphHeight) / logOf255;
+//			#ifndef __arm__
+//				if ((jjj < 20) || (adjustedPixlCntLog < 0))
+//				{
+//					CONSOLE_DEBUG_W_NUM("jjj                  \t=",	jjj);
+//					CONSOLE_DEBUG_W_NUM("currArrayValue       \t=",	currArrayValue);
+//					CONSOLE_DEBUG_W_DBL("adjustedArrayValueDbl\t=",	adjustedArrayValueDbl);
+//					CONSOLE_DEBUG_W_DBL("logOfPixlCntDbl      \t=",	logOfPixlCntDbl);
+//					CONSOLE_DEBUG_W_NUM("logOfPixlCntInt      \t=",	logOfPixlCntInt);
+//					CONSOLE_DEBUG_W_NUM("adjustedPixlCntLog   \t=",	adjustedPixlCntLog);
+//				}
+//			#endif // __arm__
+
+				if (adjustedPixlCntLog >= 0)
+				{
+					//*	compute the x,y points for the line
+					pt1_X			=	theWidget->left + xOffset + jjj;;
+					pt1_Y			=	graphBottom - preivousYvalue;
+					pt2_X			=	pt1_X + 1;
+					pt2_Y			=	graphBottom - adjustedPixlCntLog;
+					LLD_MoveTo(pt1_X, pt1_Y);
+					LLD_LineTo(pt2_X, pt2_Y);
+					preivousYvalue	=	adjustedPixlCntLog;
+				}
+				else
+				{
+					preivousYvalue	=	0;
+				}
+			}
+			else if (adjustedArrayValueDbl < 0.0)
+			{
+				CONSOLE_DEBUG_W_DBL("adjustedArrayValueDbl is NEGATIVE\t=", adjustedArrayValueDbl);
+			}
+		}
+		LLD_PenSize(1);
+	}
+	else
+	{
+		CONSOLE_DEBUG("Something is wrong with input parameters");
+//		CONSOLE_DEBUG_W_HEX("graphArray\t=",	graphArray);
+		CONSOLE_DEBUG_W_NUM("numEntries\t=",	numEntries);
+	}
+}
 
 //*****************************************************************************
 void	WindowTab::LLD_MoveTo(const int xx, const int yy)
@@ -1804,12 +2006,12 @@ void	WindowTab::LLD_LineTo(const int xx, const int yy)
 		pt2.x	=	xx;
 		pt2.y	=	yy;
 		cv::line(	*cOpenCV_Image,
-				pt1,
-				pt2,
-				cCurrentColor,		//	cv::Scalar color,
-				cCurrentLineWidth,	//	int thickness CV_DEFAULT(1),
-				8,					//	int line_type CV_DEFAULT(8),
-				0);					//	int shift CV_DEFAULT(0));
+					pt1,
+					pt2,
+					cCurrentColor,		//	cv::Scalar color,
+					cCurrentLineWidth,	//	int thickness CV_DEFAULT(1),
+					8,					//	int line_type CV_DEFAULT(8),
+					0);					//	int shift CV_DEFAULT(0));
 
 		cCurrentXloc	=	xx;
 		cCurrentYloc	=	yy;
@@ -1970,7 +2172,6 @@ cv::Scalar	gColorTable[]	=
 	CV_RGB(255,	255,	000),	//*	W_YELLOW
 
 	CV_RGB(96,	000,	000),	//*	W_DARKRED
-//	CV_RGB(000,	 64,	000),	//*	W_DARKGREEN
 	CV_RGB(000,	 110,	000),	//*	W_DARKGREEN
 	CV_RGB(000,	000,	150),	//*	W_DARKBLUE
 
@@ -1984,8 +2185,13 @@ cv::Scalar	gColorTable[]	=
 
 	CV_RGB(0x66, 0x3d,	0x14),	//*	W_BROWN
 	CV_RGB(231,		5,	254),	//*	W_PINK
-
 	CV_RGB(255,	100,	0),		//*	W_ORANGE,
+
+	//*	these are special case so that I can have cross hairs to match my scope colors
+	CV_RGB(255,	000,	255),	//*	W_PURPLE
+	CV_RGB(255,	255,	000),	//*	W_GOLD
+	CV_RGB(255,	000,	000),	//*	W_RED2
+
 
 	CV_RGB(0,	113,	193),	//*	W_STAR_O,
 	CV_RGB(152,	205,	255),	//*	W_STAR_B,
@@ -2146,6 +2352,10 @@ void	WindowTab::LLD_FrameRect(int left, int top, int width, int height, int line
 						cCurrentColor,
 						lineWidth);
 
+	}
+	else
+	{
+		CONSOLE_ABORT(__FUNCTION__);
 	}
 #else
 	if (cOpenCV_Image != NULL)
@@ -2642,18 +2852,6 @@ Controller	*myControllerObj;
 		CONSOLE_DEBUG_W_STR("cParentObjPtr is NULL, windowname=", cWindowName);
 	}
 	return(okFlag);
-}
-
-//*****************************************************************************
-void	WindowTab::SetUpConnectedIndicator(const int buttonIdx, const int yLoc)
-{
-	cConnectedStateBoxNumber	=	buttonIdx;
-	SetWidget(buttonIdx,		5,	(yLoc + 2),	(cTitleHeight - 4),	(cTitleHeight - 4));
-	SetWidgetText(				buttonIdx,	"?");
-	SetWidgetTextColor(			buttonIdx,	CV_RGB(255,	255,	0));
-	SetWidgetFont(				buttonIdx,	kFont_Medium);
-	SetBGcolorFromWindowName(	buttonIdx);
-	SetWidgetBorder(			buttonIdx,	false);
 }
 
 #endif	//	_CONTROLLER_USES_ALPACA_

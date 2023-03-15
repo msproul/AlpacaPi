@@ -10,8 +10,6 @@
 	#include	"alpaca_defs.h"
 #endif // _ALPACA_DEFS_H_
 
-#define	_ENABLE_EXTERNAL_SHUTTER_
-//#define	_ENABLE_SLIT_TRACKER_
 
 
 #ifndef _DISCOVERY_LIB_H_
@@ -19,6 +17,12 @@
 #endif
 
 #include	"controller.h"
+
+#ifndef	_WINDOWTAB_SLIT_DOME_H_
+	#include	"windowtab_slitdome.h"
+#endif
+
+
 
 
 //===========================================
@@ -68,7 +72,7 @@ class ControllerSlit: public Controller
 	//	virtual	void	DrawWidgetCustomGraphic(const int widgetIdx);
 		virtual	bool	AlpacaGetStartupData(void);
 				bool	AlpacaGetStatus(void);
-//?		virtual	void	AlpacaDisplayErrorMessage(const char *errorMsgString);
+		virtual	void	AlpacaDisplayErrorMessage(const char *errorMsgString);
 
 		virtual	void	AlpacaProcessReadAll(			const char	*deviceType,
 														const int	deviveNum,
@@ -81,29 +85,38 @@ class ControllerSlit: public Controller
 		virtual	void	UpdateCommonProperties(void);
 		virtual	void	UpdateCapabilityList(void);
 
-				void	ProcessOneReadAllEntry(	const char	*keywordString,
-												const char *valueString);
+				void	ProcessOneReadAllEntry(		const char	*keywordString,
+													const char *valueString);
+				void	ProcessOneReadAllEntryDome(	const char	*keywordString,
+													const char *valueString);
 
-				void	ToggleSwitchState(const int switchNum);
+				void	SetButtonOption(const int widgetBtnIdx, const bool newState);
+
+				bool	SetAlpacaEnableTracking(const bool newState);
 
 				//===================================================================
-//--				void	SetAlpacaSlitTrackerInfo(TYPE_REMOTE_DEV *alpacaDevice);
 				void	AlpacaGetSlitTrackerReadAll(void);
 				void	UpdateSlitLog(void);
 
 				void	CloseSlitTrackerDataFile(void);
 
+				void	GetDomeData_Startup(void);
+				void	GetDomeData_Periodic(void);
+
 				//===================================================================
 				//*	tab information
 				WindowTabSlitTracker	*cSlitTrackerTabObjPtr;
 				WindowTabSlitGraph		*cSlitGraphTabObjPtr;
+
+				WindowTabSlitDome		*cSlitDomeTabObjPtr;
 				WindowTabDriverInfo		*cDriverInfoTabObjPtr;
 				WindowTabAbout			*cAboutBoxTabObjPtr;
 
 
 
-				uint32_t			cUpdateDelta;
-
+				uint32_t			cUpdateDelta_Secs;
+				uint32_t			cDomeUpdateDelta_Secs;
+				uint32_t			cLastDomeUpdate_milliSecs;
 				bool				cSlitTrackerCommFailed;			//*	failed to communicate with shutter
 				struct timeval		cSlitTrackerLastUpdateTime;		//*	last time update
 				bool				cLogSlitData;
@@ -116,13 +129,22 @@ class ControllerSlit: public Controller
 				bool				cValidGravity;
 				double				cUpAngle_Rad;
 				double				cUpAngle_Deg;
+
+				//---------------------------------------------
+				//*	connection to dome for slaving
+				bool				cEnableAutomaticDomeUpdates;
+				bool				cEnableDomeTracking;
+//				bool				cSlaveEnabled;
+				char				cDomeIPaddressString[48];
+				int					cDomeAlpacaPort;
+				int					cDomeAlpacaDevNum;
+				bool				cDomeHas_Readall;
+				int					cDomeReadAllCount;	//*	used to verify read all
+				TYPE_DomeProperties			cDomeProp;
+				TYPE_SlittrackerProperties	cSlitProp;
+
 };
 
-
-
-#ifdef _SLIT_TRACKER_DIRECT_
-	void	SendSlitTrackerCmd(const char *cmdBuffer);
-#endif
 
 
 #endif // _CONTROLLER_SLITTRACKER_H_

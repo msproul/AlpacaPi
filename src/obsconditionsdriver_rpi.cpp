@@ -23,7 +23,7 @@
 //*	Dec 31,	2019	<MLS> The Temperature value on the R-Pi is not valid for use
 //*****************************************************************************
 
-#ifdef _ENABLE_OBSERVINGCONDITIONS_
+#ifdef _ENABLE_OBSERVINGCONDITIONS_RPI_
 
 
 #include	<stdlib.h>
@@ -56,13 +56,11 @@
 #include	"obsconditions_globals.h"
 
 //*****************************************************************************
-void	CreateObsConditionRpiObjects(void)
+void	CreateObsConditionObjects_RPi(void)
 {
 	CONSOLE_DEBUG(__FUNCTION__);
 	new ObsConditionsDriverRpi(0);
 }
-
-
 
 //**************************************************************************************
 ObsConditionsDriverRpi::ObsConditionsDriverRpi(const int argDevNum)
@@ -602,5 +600,5 @@ uint8_t	t_out_h;
 
 
 
-#endif	//	_ENABLE_OBSERVINGCONDITIONS_
+#endif	//	_ENABLE_OBSERVINGCONDITIONS_RPI_
 

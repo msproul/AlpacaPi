@@ -30,7 +30,7 @@
 	#include	"cameradriver.h"
 #endif
 
-int		CreateSimulator_CameraObjects(void);
+int		CreateCameraObjects_Sim(void);
 
 
 //**************************************************************************************

@@ -23,6 +23,7 @@
 //*	Apr 24,	2020	<MLS> Changed name to windowtab_ml_single.cpp
 //*	May 21,	2020	<MLS> Focuser store points working on MoonLite single controller
 //*	Jun 19,	2020	<MLS> Finished HOME button operation
+//*	Feb 23,	2020	<MLS> Re-arranged focuser title to be consistent with other windows
 //*****************************************************************************
 
 #ifdef _ENABLE_CTRL_FOCUSERS_
@@ -110,7 +111,7 @@ int		iii;
 //**************************************************************************************
 WindowTabMLsingle::~WindowTabMLsingle(void)
 {
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 }
 
 //**************************************************************************************
@@ -133,7 +134,8 @@ int		connButtonWidgetIdx;
 	CONSOLE_DEBUG(__FUNCTION__);
 
 	//------------------------------------------
-	yLoc			=	cTabVertOffset;
+	yLoc	=	cTabVertOffset;
+	yLoc	=	SetTitleBox(kMLsingle_Model, kMLsingle_Connected, yLoc, "Focuser");
 
 	//*	make sure it is a Moonlite focuser
 	if (cFocuserType <= kFocuserType_MoonliteDouble)
@@ -178,16 +180,6 @@ int		connButtonWidgetIdx;
 	yLoc			+=	kLogoHeight;
 	yLoc			+=	2;
 
-	//==========================================
-	SetWidget(		kMLsingle_Model,			0,				yLoc,		cWidth,	cBtnHeight);
-	SetWidgetFont(	kMLsingle_Model, kFont_Medium);
-
-   	SetUpConnectedIndicator(kMLsingle_Connected, yLoc);
-
-	yLoc	+=	cBtnHeight;
-	yLoc	+=	2;
-
-	SetBGcolorFromWindowName(kMLsingle_Model);
 
 	//==========================================
 	SetWidget(			kMLsingle_Temperature,	0,				yLoc,		cWidth,	cBtnHeight);

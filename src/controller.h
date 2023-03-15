@@ -188,7 +188,7 @@ class Controller
 				void	DrawOneWidget(const int widgetIdx);
 				void	DrawOneWidget(TYPE_WIDGET *widgetPtr, const int widgetIdx);
 				//*	alphabetic order
-				void	DrawWidgetBackground(TYPE_WIDGET *theWidget);
+				void	EraseWidgetBackground(TYPE_WIDGET *theWidget);
 				void	DrawWidgetButton(TYPE_WIDGET *theWidget);
 				void	DrawWidgetCheckBox(TYPE_WIDGET *theWidget);
 				void	DrawWidgetGraph(TYPE_WIDGET *theWidget);
@@ -227,6 +227,7 @@ class Controller
 
 				void	SetWidgetType(			const int tabNum, const int widgetIdx, const int widetType);
 				void	SetWidgetFont(			const int tabNum, const int widgetIdx, int fontNum);
+				void	SetWidgetJustification(const int tabNum, const int widgetIdx, int justification);
 			#ifdef _USE_OPENCV_CPP_
 				void	SetWidgetTextColor(		const int tabNum, const int widgetIdx, cv::Scalar newtextColor);
 				void	SetWidgetBGColor(		const int tabNum, const int widgetIdx, cv::Scalar newBGcolor);
@@ -410,12 +411,14 @@ class Controller
 															bool			reportError=false);
 
 
-				bool	AlpacaGetStatus_ReadAll(	const char	*deviceTypeStr, const int deviceNum);
+				bool	AlpacaGetStatus_ReadAll(	const char	*deviceTypeStr,
+													const int deviceNum);
 
 				bool	AlpacaGetStatus_ReadAll(	sockaddr_in	*deviceAddress,
 													int			devicePort,
 													const char	*deviceTypeStr,
-													const int	deviceNum);
+													const int	deviceNum,
+													const bool	enableDebug=false);
 
 
 		virtual	void	AlpacaProcessReadAll(		const char	*deviceTypeStr,
@@ -479,12 +482,30 @@ class Controller
 												double		*returnValue,
 												bool		*rtnValidData = NULL);
 
+				bool	AlpacaGetBooleanValue(	struct sockaddr_in	deviceAddress,
+												int					port,
+												int					alpacaDevNum,
+												const char			*alpacaDevice,
+												const char			*alpacaCmd,
+												const char			*dataString,
+												bool				*returnValue,
+												bool				*rtnValidData);
+
 				bool	AlpacaGetBooleanValue(	const char	*alpacaDevice,
 												const char	*alpacaCmd,
 												const char	*dataString,
 												bool		*returnValue,
 												bool		*rtnValidData = NULL,
 												bool		printDebug=false);
+
+				bool	AlpacaGetStringValue(	struct sockaddr_in	deviceAddress,
+												int					port,
+												int					alpacaDevNum,
+												const char			*alpacaDevice,
+												const char			*alpacaCmd,
+												const char			*dataString,
+												char				*returnString,
+												bool				*rtnValidData);
 				bool	AlpacaGetStringValue(	const char	*alpacaDevice,
 												const char	*alpacaCmd,
 												const char	*dataString,

@@ -101,7 +101,7 @@ ControllerSkytravel::ControllerSkytravel(	const char *argWindowName)
 	//*	dome specific stuff
 	//*	clear out all of the dome properties data
 	memset(&cDomeProp, 0, sizeof(TYPE_DomeProperties));
-	cDomeProp.ShutterStatus	=	-1;
+	cDomeProp.ShutterStatus	=	kShutterStatus_Unknown;
 
 	//*	clear all of the telescope specific properties
 	memset(&cTelescopeProp, 0, sizeof(TYPE_TelescopeProperties));
@@ -334,7 +334,7 @@ char	lineBuff[64];
 	cDomeAddressValid		=	true;
 
 	cReadStartup_Dome		=	true;
-	cDomeHas_readall		=	false;
+	cDomeHas_Readall		=	false;
 
 	PrintIPaddressToString(cDomeIpAddress.sin_addr.s_addr, ipAddrStr);
 	sprintf(lineBuff, "%s:%d/%d", ipAddrStr, cDomeIpPort, cDomeAlpacaDeviceNum);
@@ -627,8 +627,8 @@ char			ipAddrStr[128];
 		cPort			=	cDomeIpPort;
 		cAlpacaDevNum	=	cDomeAlpacaDeviceNum;
 
-		SetWidgetValid(kTab_ST_Dome,			kDomeBox_Readall,		cDomeHas_readall);
-		if (cDomeHas_readall == false)
+		SetWidgetValid(kTab_ST_Dome,			kDomeBox_Readall,		cDomeHas_Readall);
+		if (cDomeHas_Readall == false)
 		{
 			validData	=	AlpacaGetStringValue(	"dome", "driverversion",	NULL,	returnString);
 			if (validData)
@@ -703,7 +703,7 @@ bool	previousOnLineState;
 //	CONSOLE_DEBUG(__FUNCTION__);
 	validData			=	false;
 	previousOnLineState	=	cOnLine;
-	if (cDomeHas_readall)
+	if (cDomeHas_Readall)
 	{
 //		CONSOLE_DEBUG_W_STR(__FUNCTION__, "ReadAll");
 		validData	=	AlpacaGetStatus_ReadAll(&cDomeIpAddress, cDomeIpPort, "dome", cDomeAlpacaDeviceNum);

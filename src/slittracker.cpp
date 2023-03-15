@@ -16,7 +16,7 @@
 //*	that you agree that the author(s) have no warranty, obligations or liability.  You
 //*	must determine the suitability of this source code for your use.
 //*
-//*	Redistributions of this source code must retain this copyright notice.
+//*	Re-distributions of this source code must retain this copyright notice.
 //*****************************************************************************
 //*	Edit History
 //*****************************************************************************
@@ -25,6 +25,12 @@
 //*	May  2,	2020	<MLS> Created slittracker.cpp
 //*	May 30,	2020	<MLS> Added gravity vector parsing
 //*	May 30,	2020	<MLS> Added gravity to readall output
+//*	Mar  8,	2023	<MLS> Added ReadSlittrackerConfig()
+//*	Mar  8,	2023	<MLS> Added support for Web setup
+//*	Mar  8,	2023	<MLS> Added WriteConfigFile()
+//*	Mar  8,	2023	<MLS> Added domeaddress property
+//*	Mar  9,	2023	<MLS> Added trackingenabled property
+//*	Mar  9,	2023	<MLS> Added web docs support
 //*****************************************************************************
 
 #ifdef _ENABLE_SLIT_TRACKER_
@@ -43,22 +49,27 @@
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
 
-#include	"serialport.h"
+#include	"alpaca_defs.h"
 #include	"alpacadriver.h"
 #include	"alpacadriver_helper.h"
 #include	"helper_functions.h"
+#include	"serialport.h"
 #include	"JsonResponse.h"
 #include	"eventlogging.h"
-#include	"slittracker.h"
+#include	"readconfigfile.h"
 
+#include	"slittracker.h"
 
 
 //*****************************************************************************
 static TYPE_CmdEntry	gSlitTrackerCmdTable[]	=
 {
-//?	{	"setrate",				kCmd_SlitTracker_setrate,		kCmdType_PUT	},
-	{	"readall",				kCmd_SlitTracker_readall,		kCmdType_GET	},
+//?	{	"setrate",				kCmd_SlitTracker_setrate,			kCmdType_PUT	},
 
+	{	"domeaddress",			kCmd_SlitTracker_DomeAddress,		kCmdType_GET	},
+	{	"trackingenabled",		kCmd_SlitTracker_TrackingEnabled,	kCmdType_BOTH	},
+
+	{	"readall",				kCmd_SlitTracker_readall,			kCmdType_GET	},
 	{	"",						-1,	0x00	}
 };
 
@@ -71,9 +82,9 @@ typedef struct
 //**************************************************************************************
 void	CreateSlitTrackerObjects(void)
 {
-int		accessRC;
-int		iii;
-bool	keepGoing;
+int				accessRC;
+int				iii;
+bool			keepGoing;
 TYPE_USB_PATH	usbPathList[]	=
 {
 	"/dev/ttyACM0",
@@ -96,11 +107,9 @@ TYPE_USB_PATH	usbPathList[]	=
 		{
 			CONSOLE_DEBUG(__FUNCTION__);
 		}
-
 		iii++;
 	}
 }
-
 
 //**************************************************************************************
 SlitTrackerDriver::SlitTrackerDriver(const int argDevNum, const char *devicePath)
@@ -125,6 +134,7 @@ int	iii;
 				kASCOM_Err_Success,
 				cUSBpath);
 
+	cDriverCmdTablePtr		=	gSlitTrackerCmdTable;
 	cSlitTrackerfileDesc	=	-1;				//*	port file descriptor
 	cSlitTrackerByteCnt		=	0;
 	//*	initialize the slit distance detector
@@ -139,8 +149,24 @@ int	iii;
 	cGravity_Z	=	0.0;
 	cGravity_T	=	0.0;
 
+	//========================================
+	//*	dome configuration
+	cDomeAlpacaPort		=	0;
+	cDomeAlpacaDevNum	=	0;
+	strcpy(cDomeIPaddressString,		"");
+
+	memset(&cDomeProp, 0, sizeof(TYPE_DomeProperties));
+	memset(&cSlitProp, 0, sizeof(TYPE_SlittrackerProperties));
+
+	//========================================
+	//*	Setup support
+	cDriverSupportsSetup		=	true;
+
+	ReadSlittrackerConfig();
+
 	OpenSlitTrackerPort();
 }
+
 
 //**************************************************************************************
 // Destructor
@@ -210,6 +236,21 @@ int					mySocket;
 		//----------------------------------------------------------------------------------------
 		case kCmd_SlitTracker_setrate:
 //+			alpacaErrCode	=	Put_Setrate(reqData, alpacaErrMsg);
+			break;
+
+		case kCmd_SlitTracker_DomeAddress:
+			alpacaErrCode	=	Get_DomeAddress(reqData, alpacaErrMsg, gValueString);
+			break;
+
+		case kCmd_SlitTracker_TrackingEnabled:
+			if (reqData->get_putIndicator == 'G')
+			{
+				alpacaErrCode	=	Get_TrackingEnabled(reqData, alpacaErrMsg, gValueString);
+			}
+			else if (reqData->get_putIndicator == 'P')
+			{
+				alpacaErrCode	=	Put_TrackingEnabled(reqData, alpacaErrMsg);
+			}
 			break;
 
 		case kCmd_SlitTracker_readall:
@@ -348,6 +389,102 @@ char		lineBuffer[128];
 }
 
 //*****************************************************************************
+bool	SlitTrackerDriver::GetCommandArgumentString(const int cmdENum, char *agumentString)
+{
+bool	foundFlag	=	true;
+
+	switch(cmdENum)
+	{
+		case kCmd_SlitTracker_DomeAddress:		strcpy(agumentString, "-none-");		break;
+		case kCmd_SlitTracker_TrackingEnabled:	strcpy(agumentString, "tracking=BOOL");	break;
+		case kCmd_SlitTracker_readall:			strcpy(agumentString, "-none-");		break;
+
+
+		default:
+			strcpy(agumentString, "");
+			foundFlag	=	false;
+			break;
+	}
+	return(foundFlag);
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	SlitTrackerDriver::Get_DomeAddress(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
+char				domeAddrString[128];
+
+	if (reqData != NULL)
+	{
+		sprintf(domeAddrString, "%s:%d/%d", cDomeIPaddressString, cDomeAlpacaPort, cDomeAlpacaDevNum);
+		JsonResponse_Add_String(	reqData->socket,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									responseString,
+									domeAddrString,
+									INCLUDE_COMMA);
+
+		alpacaErrCode	=	kASCOM_Err_Success;
+	}
+	else
+	{
+		alpacaErrCode	=	kASCOM_Err_InternalError;
+	}
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	SlitTrackerDriver::Get_TrackingEnabled(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
+
+	if (reqData != NULL)
+	{
+		JsonResponse_Add_Bool(	reqData->socket,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									responseString,
+									cSlitProp.TrackingEnabled,
+									INCLUDE_COMMA);
+
+		alpacaErrCode	=	kASCOM_Err_Success;
+	}
+	else
+	{
+		alpacaErrCode	=	kASCOM_Err_UnspecifiedError;
+	}
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	SlitTrackerDriver::Put_TrackingEnabled(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_PropertyNotImplemented;
+bool				trackingFound;
+char				trackingString[32];
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+	trackingFound	=	GetKeyWordArgument(	reqData->contentData,
+											"tracking",
+											trackingString,
+											(sizeof(trackingString) -1));
+	if (trackingFound)
+	{
+		cSlitProp.TrackingEnabled	=	IsTrueFalse(trackingString);
+		alpacaErrCode				=	kASCOM_Err_Success;
+
+		CONSOLE_DEBUG_W_BOOL("cSlitProp.TrackingEnabled\t=", cSlitProp.TrackingEnabled);
+	}
+	else
+	{
+		alpacaErrCode	=	kASCOM_Err_InvalidValue;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Parameter incorrect");
+		CONSOLE_DEBUG(alpacaErrMsg);
+	}
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
 TYPE_ASCOM_STATUS	SlitTrackerDriver::Get_Readall(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
@@ -357,7 +494,10 @@ int					iii;
 	if (reqData != NULL)
 	{
 		//*	do the common ones first
-		Get_Readall_Common(			reqData, alpacaErrMsg);
+		Get_Readall_Common(		reqData, alpacaErrMsg);
+		Get_DomeAddress(		reqData, alpacaErrMsg, "domeaddress");
+		Get_TrackingEnabled(	reqData, alpacaErrMsg, "trackingenabled");
+
 
 		for (iii=0; iii<kSlitSensorCnt; iii++)
 		{
@@ -424,7 +564,7 @@ bool	foundIt;
 void	SlitTrackerDriver::OpenSlitTrackerPort(void)
 {
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	cSlitTrackerfileDesc	=	open(cUSBpath, O_RDWR);	//* connect to port
 	if (cSlitTrackerfileDesc >= 0)
@@ -517,6 +657,8 @@ char			gravityVectorChar;
 
 #define	kReadBufferSize		256
 
+//#define	_DEBUG_SLIT_TRACKER_DATA_
+
 //*****************************************************************************
 void	SlitTrackerDriver::GetSlitTrackerData(void)
 {
@@ -527,8 +669,9 @@ bool	keepGoing;
 int		iii;
 int		charsRead;
 
-
+#ifdef _DEBUG_SLIT_TRACKER_DATA_
 //	CONSOLE_DEBUG(__FUNCTION__);
+#endif
 	if (cSlitTrackerfileDesc >= 0)
 	{
 		keepGoing	=	true;
@@ -564,7 +707,9 @@ int		charsRead;
 					else if ((theChar == 0x0d) || (theChar == 0x0a))
 					{
 						cSlitTrackerLineBuf[cSlitTrackerByteCnt]	=	0;
-//						CONSOLE_DEBUG(cSlitTrackerLineBuf);
+					#ifdef _DEBUG_SLIT_TRACKER_DATA_
+						CONSOLE_DEBUG(cSlitTrackerLineBuf);
+					#endif
 						if (strlen(cSlitTrackerLineBuf) > 0)
 						{
 							ProcessSlitTrackerLine(cSlitTrackerLineBuf);
@@ -580,19 +725,20 @@ int		charsRead;
 				keepGoing	=	false;
 			}
 		}
-		if (readCnt > 0)
-		{
-	//		CONSOLE_DEBUG_W_NUM("readCnt\t=", readCnt);
-	//		if (readCnt > 9)
-	//		{
-	//			//*	slow the read rate down
-	//			SendSlitTrackerCmd("+");
-	//		}
-		}
+//		if (readCnt > 0)
+//		{
+//			CONSOLE_DEBUG_W_NUM("readCnt\t=", readCnt);
+//			if (readCnt > 9)
+//			{
+//				//*	slow the read rate down
+//				SendSlitTrackerCmd("+");
+//			}
+//		}
 	}
 	else
 	{
-//		CONSOLE_DEBUG("Slit tracker port not open");
+		CONSOLE_DEBUG("Slit tracker port not open");
+//		CONSOLE_ABORT(__FUNCTION__);
 	}
 }
 
@@ -615,5 +761,336 @@ int	bytesWritten;
 		}
 	}
 }
+
+//**************************************************************************************
+static void ProcessSlittrackerConfigEntry(const char *keyword, const char *value, void *userDataPtr)
+{
+SlitTrackerDriver	*slitTrackerObjPtr;
+
+//	CONSOLE_DEBUG_W_STR(keyword, value);
+	slitTrackerObjPtr	=	(SlitTrackerDriver *)userDataPtr;
+	if (slitTrackerObjPtr != NULL)
+	{
+		if (strcasecmp(keyword, "DOMEIP") == 0)
+		{
+			strcpy(slitTrackerObjPtr->cDomeIPaddressString, value);
+		}
+		else if (strcasecmp(keyword, "DOMEPORT") == 0)
+		{
+			slitTrackerObjPtr->cDomeAlpacaPort	=	atoi(value);
+		}
+		else if (strcasecmp(keyword, "DEVICENUM") == 0)
+		{
+			slitTrackerObjPtr->cDomeAlpacaDevNum	=	atoi(value);
+		}
+	}
+}
+
+static const char	gSlitConfigFileName[]	=	"slittracker-config.txt";
+
+
+//**************************************************************************************
+void	SlitTrackerDriver::ReadSlittrackerConfig(void)
+{
+int		linesRead;
+
+	//*	returns # of processed lines
+	//*	-1 means failed to open config file
+	linesRead	=	ReadGenericConfigFile(	gSlitConfigFileName,
+											'=',
+											&ProcessSlittrackerConfigEntry,
+											this);
+	if (linesRead > 0)
+	{
+//		CONSOLE_DEBUG_W_STR("Dome IP addr\t=",	cDomeIPaddressString);
+//		CONSOLE_DEBUG_W_NUM("Dome Port   \t=",	cDomeAlpacaPort);
+	}
+	else
+	{
+		CONSOLE_DEBUG_W_STR("Failed to read config file", gSlitConfigFileName);
+	}
+
+//	CONSOLE_ABORT(__FUNCTION__);
+}
+
+//*****************************************************************************
+static const char	gSlitTrackerInfo[]	=
+{
+	"The AlpacaPi SlitTracker allows the dome slit to follow the telescope.\r\n"
+	"This is down with acoustic sensors mounted around the aperature of the telescope\r\n"
+	"that ping the distance to the inside of the dome.\r\n"
+	"<P>\r\n"
+	"This page allows you to configure which Alpaca Dome device to send the commands to.\r\n"
+	"This can also be configured by editing 'slittracker-config.txt' on the unit that is running the SlitTracker drver."
+};
+
+//*****************************************************************************
+//*	https://www.w3schools.com/html/html_forms.asp
+//*****************************************************************************
+bool	SlitTrackerDriver::Setup_OutputForm(TYPE_GetPutRequestData *reqData, const char *formActionString)
+{
+FILE		*filePointer;
+int			mySocketFD;
+char		lineBuff[256];
+const char	webpageTitle[]	=	"AlpacaPi Slit-tracker setup";
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG_W_STR("The Action that will be preformed when save is pressed:", formActionString);
+	cSetupChangeOccured	=	false;
+	mySocketFD			=	reqData->socket;
+
+	SocketWriteData(mySocketFD,	gHtmlHeader);
+
+	SocketWriteData(mySocketFD,	"<!DOCTYPE html>\r\n");
+	SocketWriteData(mySocketFD,	"<HTML>\r\n");
+	sprintf(lineBuff,			"<TITLE>%s</TITLE>\r\n", webpageTitle);
+	SocketWriteData(mySocketFD,	lineBuff);
+	SocketWriteData(mySocketFD,	"<CENTER>\r\n");
+	sprintf(lineBuff,			"<H1>%s</H1>\r\n", webpageTitle);
+	SocketWriteData(mySocketFD,	lineBuff);
+	SocketWriteData(mySocketFD,	"</CENTER>\r\n");
+	SocketWriteData(mySocketFD,	gSlitTrackerInfo);
+
+	sprintf(lineBuff, "<form action=\"%s\">\r\n", formActionString);
+	SocketWriteData(mySocketFD,	lineBuff);
+
+	SocketWriteData(mySocketFD,	"<CENTER>\r\n");
+	SocketWriteData(mySocketFD,	"<TABLE BORDER=1>\r\n");
+	//----------------------------------------------------
+	//*	table header
+	SocketWriteData(mySocketFD,	"<TR>\r\n");
+	SocketWriteData(mySocketFD,	"<TH COLSPAN=3>Alpaca Dome connection</TH>\r\n");
+	SocketWriteData(mySocketFD,	"</TR>\r\n");
+
+	//----------------------------------------------------
+	SocketWriteData(mySocketFD,	"<TR>\r\n");
+
+	//---------------------
+	//*	IP address
+	SocketWriteData(mySocketFD,	"<TD>\r\n");
+	SocketWriteData(mySocketFD,	"<label for=\"name\">IP Address:</label><br>\r\n");
+	sprintf(	lineBuff,
+				"<input type=\"text\" id=\"ipaddr\" name=\"ipaddr\" value=\"%s\">\r\n",
+				cDomeIPaddressString);
+	SocketWriteData(mySocketFD,	lineBuff);
+	SocketWriteData(mySocketFD,	"</TD>\r\n");
+
+	//---------------------
+	//*	IP port
+	SocketWriteData(mySocketFD,	"<TD>\r\n");
+	SocketWriteData(mySocketFD,	"<label for=\"name\">Port:</label><br>\r\n");
+	sprintf(	lineBuff,
+				"<input type=\"text\" id=\"port\" name=\"port\" value=\"%d\">\r\n",
+				cDomeAlpacaPort);
+	SocketWriteData(mySocketFD,	lineBuff);
+	SocketWriteData(mySocketFD,	"</TD>\r\n");
+
+	//---------------------
+	//*	Alpaca device number (defaults to zero)
+	SocketWriteData(mySocketFD,	"<TD>\r\n");
+	SocketWriteData(mySocketFD,	"<label for=\"name\">DeviceNum:</label><br>\r\n");
+	sprintf(	lineBuff,
+				"<input type=\"text\" id=\"devnum\" name=\"devnum\" value=\"%d\">\r\n",
+				cDomeAlpacaDevNum);
+	SocketWriteData(mySocketFD,	lineBuff);
+	SocketWriteData(mySocketFD,	"</TD>\r\n");
+
+	//----------------------------------------------------------------------
+	SocketWriteData(mySocketFD,	"<TR>\r\n");
+	SocketWriteData(mySocketFD,	"<TD COLSPAN=3><CENTER>\r\n");
+	SocketWriteData(mySocketFD,	"<input type=\"submit\" value=\"Save\">\r\n");
+	SocketWriteData(mySocketFD,	"</TD>\r\n");
+	SocketWriteData(mySocketFD,	"</TR>\r\n");
+
+	SocketWriteData(mySocketFD,	"</TABLE>\r\n");
+	SocketWriteData(mySocketFD,	"</CENTER>\r\n");
+	SocketWriteData(mySocketFD,	"</form>\r\n");
+	SocketWriteData(mySocketFD,	"<P>\r\n");
+
+	//----------------------------------------------------------------------
+	//*	now display the current config file
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, gSlitConfigFileName);
+
+	//*	open the file specified
+	filePointer	=	fopen(gSlitConfigFileName, "r");
+	if (filePointer != NULL)
+	{
+	char	fileBuffer[2000];
+	size_t	byteCount;
+
+		byteCount				=	fread(fileBuffer, 1, (sizeof(fileBuffer)), filePointer);
+		fileBuffer[byteCount]	=	0;
+//		CONSOLE_DEBUG_W_SIZE("byteCount\t=", byteCount);
+
+		SocketWriteData(mySocketFD,	"<CENTER>\r\n");
+		SocketWriteData(mySocketFD,	"<TABLE BORDER=1>\r\n");
+		SocketWriteData(mySocketFD,	"<TR><TH>Current config file<BR>(");
+		SocketWriteData(mySocketFD,	gSlitConfigFileName);
+		SocketWriteData(mySocketFD,	")</TH></TR>\r\n");
+
+		SocketWriteData(mySocketFD,	"<TR>\r\n");
+		SocketWriteData(mySocketFD,	"<TD><PRE>\r\n");
+
+		SocketWriteData(mySocketFD,	fileBuffer);
+
+		SocketWriteData(mySocketFD,	"</PRE>\r\n");
+
+		SocketWriteData(mySocketFD,	"</TD>\r\n");
+		SocketWriteData(mySocketFD,	"</TR>\r\n");
+		SocketWriteData(mySocketFD,	"</TABLE>\r\n");
+		SocketWriteData(mySocketFD,	"</CENTER>\r\n");
+
+		fclose(filePointer);
+	}
+
+	sprintf(	lineBuff,
+				"<a href=http://%s:%d/ TARGET=DOME>Click to verify Dome connection</A>\r\n",
+				cDomeIPaddressString,
+				cDomeAlpacaPort);
+	SocketWriteData(mySocketFD,	lineBuff);
+
+
+	return(true);
+}
+
+//*****************************************************************************
+void	SlitTrackerDriver::Setup_SaveInit(void)
+{
+//	CONSOLE_DEBUG(__FUNCTION__);
+	cSetupChangeOccured	=	false;
+}
+
+//*****************************************************************************
+void	SlitTrackerDriver::Setup_SaveFinish(void)
+{
+	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_STR("cDomeIPaddressString\t=",	cDomeIPaddressString);
+	CONSOLE_DEBUG_W_NUM("cDomeAlpacaPort     \t=",	cDomeAlpacaPort);
+	CONSOLE_DEBUG_W_NUM("cDomeAlpacaDevNum   \t=",	cDomeAlpacaDevNum);
+	if (cSetupChangeOccured)
+	{
+		//*	write out a new config file
+		WriteConfigFile();
+		cSetupChangeOccured	=	false;
+	}
+	else
+	{
+		CONSOLE_DEBUG("No change occurred");
+	}
+}
+
+//*****************************************************************************
+void	SlitTrackerDriver::WriteConfigFile(void)
+{
+FILE				*filePointer;
+struct timeval		timeStamp;
+char				timeStampString[128];
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	filePointer	=	fopen(gSlitConfigFileName, "w");
+	if (filePointer != NULL)
+	{
+		gettimeofday(&timeStamp, NULL);
+		FormatDateTimeString_Local(&timeStamp, timeStampString);
+
+		fprintf(filePointer, "#####################################################################\n");
+		fprintf(filePointer, "#AlpacaPi Project - %s\n",	gFullVersionString);
+		fprintf(filePointer, "#Slit Tracker config file\n");
+		fprintf(filePointer, "#Created %s\n",				timeStampString);
+		fprintf(filePointer, "DOMEIP   \t=\t%s\n",			cDomeIPaddressString);
+		fprintf(filePointer, "DOMEPORT \t=\t%d\n",			cDomeAlpacaPort);
+		fprintf(filePointer, "DEVICENUM\t=\t%d\n",			cDomeAlpacaDevNum);
+
+		fclose(filePointer);
+	}
+}
+
+//*****************************************************************************
+bool	SlitTrackerDriver::Setup_ProcessKeyword(const char *keyword, const char *valueString)
+{
+int			newPortNumber;
+int			newDeviceNumber;
+uint32_t	iii;
+size_t		slen;
+int			dotCounter;
+
+//	CONSOLE_DEBUG_W_2STR("kw:value", keyword, valueString);
+
+	if (strcasecmp(keyword, "ipaddr") == 0)
+	{
+		//*	check for valid IP address
+		dotCounter	=	0;
+		slen		=	strlen(valueString);
+		if ((slen >= 7) && (slen < sizeof(cDomeIPaddressString)))
+		{
+			for (iii = 0; iii < slen; iii++)
+			{
+				if (valueString[iii] == '.')
+				{
+					dotCounter++;
+				}
+			}
+			if (dotCounter == 3)
+			{
+				if (strcmp(valueString, cDomeIPaddressString) != 0)
+				{
+					strcpy(cDomeIPaddressString, valueString);
+					cSetupChangeOccured	=	true;
+				}
+			}
+			else
+			{
+				CONSOLE_DEBUG_W_STR("Invalid ip address\t=", valueString);
+			}
+		}
+		else
+		{
+			CONSOLE_DEBUG_W_STR("Invalid ip address\t=", valueString);
+		}
+	}
+	else if (strcasecmp(keyword, "port") == 0)
+	{
+		newPortNumber	=	atoi(valueString);
+		//*	check for valid port number
+		if ((newPortNumber > 0) && (newPortNumber <= 65535))
+		{
+			if (newPortNumber != cDomeAlpacaPort)
+			{
+				cDomeAlpacaPort		=	newPortNumber;
+				cSetupChangeOccured	=	true;
+			}
+		}
+		else
+		{
+			CONSOLE_DEBUG_W_NUM("Invalid port number\t=", newPortNumber);
+		}
+	}
+	else if (strcasecmp(keyword, "devnum") == 0)
+	{
+		newDeviceNumber	=	atoi(valueString);
+		//*	check for valid device number
+		if ((newDeviceNumber >= 0) && (newDeviceNumber <= 64))
+		{
+			if (newDeviceNumber != cDomeAlpacaDevNum)
+			{
+				cDomeAlpacaDevNum	=	newDeviceNumber;
+				cSetupChangeOccured	=	true;
+			}
+		}
+		else
+		{
+			CONSOLE_DEBUG_W_NUM("Invalid device number\t=", newDeviceNumber);
+		}
+	}
+	else
+	{
+		CONSOLE_DEBUG_W_2STR("kw:value", keyword, valueString);
+//		CONSOLE_ABORT(__FUNCTION__);
+	}
+
+	return(true);
+}
+
 
 #endif	//	_ENABLE_SLIT_TRACKER_

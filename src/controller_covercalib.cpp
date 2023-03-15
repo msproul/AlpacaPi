@@ -103,7 +103,7 @@ ControllerCoverCalib::ControllerCoverCalib(	const char			*argWindowName,
 //**************************************************************************************
 ControllerCoverCalib::~ControllerCoverCalib(void)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 	DELETE_OBJ_IF_VALID(cCoverCalibTabObjPtr);
 	DELETE_OBJ_IF_VALID(cDriverInfoTabObjPtr);
 	DELETE_OBJ_IF_VALID(cAboutBoxTabObjPtr);

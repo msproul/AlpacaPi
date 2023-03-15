@@ -1,6 +1,7 @@
 //*****************************************************************************
 //*	Jan 12,	2021	<MLS> Added _ENABLE_EXTERNAL_SHUTTER_
 //*	Jan 12,	2021	<MLS> Added _ENABLE_SLIT_TRACKER_
+//*	Mar  9,	2023	<MLS> Removed _ENABLE_SLIT_TRACKER_
 //*****************************************************************************
 //#include	"controller_dome.h"
 
@@ -12,7 +13,6 @@
 #endif // _ALPACA_DEFS_H_
 
 #define	_ENABLE_EXTERNAL_SHUTTER_
-//#define	_ENABLE_SLIT_TRACKER_
 
 
 #ifndef _DISCOVERY_LIB_H_
@@ -44,19 +44,6 @@
 
 
 
-#ifdef _ENABLE_SLIT_TRACKER_
-	//===========================================
-	#ifndef	_WINDOWTAB_SLIT_H_
-		#include	"windowtab_slit.h"
-	#endif
-	//===========================================
-	#ifndef	_WINDOWTAB_SLIT_GRAPH_H_
-		#include	"windowtab_slitgraph.h"
-	#endif
-	extern	bool	gUpdateSLitWindow;
-#endif
-
-
 #define	kDomeWindowWidth	475
 #define	kDomeWindowHeight	720
 
@@ -65,10 +52,6 @@
 enum
 {
 	kTab_Dome	=	1,
-#ifdef _ENABLE_SLIT_TRACKER_
-	kTab_SlitTracker,
-	kTab_SlitGraph,
-#endif
 	kTab_Capabilities,
 
 	kTab_DriverInfo,
@@ -120,7 +103,7 @@ class ControllerDome: public Controller
 				void	ToggleSwitchState(const int switchNum);
 				void	UpdateDomeAzimuth(const double newAzimuth);
 
-				void	UpdateShutterStatus(const int newShutterStatus);
+				void	UpdateShutterStatus(const TYPE_ShutterStatus newShutterStatus);
 				void	UpdateShutterAltitude(const double newAltitude);
 
 			//===================================================================
@@ -132,18 +115,8 @@ class ControllerDome: public Controller
 											const char	*alpacaCmd,
 											const char	*dataString);
 			#endif
-			//===================================================================
-			#ifdef _ENABLE_SLIT_TRACKER_
-				void	SetAlpacaSlitTrackerInfo(TYPE_REMOTE_DEV *alpacaDevice);
-				void	AlpacaGetSlitTrackerReadAll(void);
-				void	UpdateSlitLog(void);
 
-				void	CloseSlitTrackerDataFile(void);
-
-				WindowTabSlitTracker	*cSlitTrackerTabObjPtr;
-				WindowTabSlitGraph		*cSlitGraphTabObjPtr;
-			#endif // _ENABLE_SLIT_TRACKER_
-
+				//===================================================================
 				//*	tab information
 				WindowTabDome			*cDomeTabObjPtr;
 				WindowTabCapabilities	*cCapabilitiesTabObjPtr;
@@ -164,32 +137,7 @@ class ControllerDome: public Controller
 				bool				cShutterCommFailed;			//*	failed to communicate with shutter
 				int					cShutterCommFailCnt;
 			#endif // _ENABLE_EXTERNAL_SHUTTER_
-
-			#ifdef _ENABLE_SLIT_TRACKER_
-				//*	Slit tracker device info
-				bool				cSlitTrackerInfoValid;
-				struct sockaddr_in	cSlitTrackerDeviceAddress;
-				int					cSlitTrackerPort;
-				int					cSlitTrackerAlpacaDevNum;
-				bool				cSlitTrackerCommFailed;			//*	failed to communicate with shutter
-				struct timeval		cSlitTrackerLastUpdateTime;		//*	last time update
-				bool				cLogSlitData;
-				FILE				*cSlitDataLogFilePtr;
-
-				double				cGravity_X;
-				double				cGravity_Y;
-				double				cGravity_Z;
-				double				cGravity_T;
-				bool				cValidGravity;
-				double				cUpAngle_Rad;
-				double				cUpAngle_Deg;
-			#endif
 };
-
-
-#ifdef _SLIT_TRACKER_DIRECT_
-	void	SendSlitTrackerCmd(const char *cmdBuffer);
-#endif
 
 
 #endif // _CONTROLLER_DOME_H_

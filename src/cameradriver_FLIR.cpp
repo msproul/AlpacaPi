@@ -263,7 +263,7 @@ quickSpin			quickSpinStruct;
 //	quickSpinInit(cSpinCameraHandle, &quickSpinStruct);
 //
 //	CONSOLE_DEBUG_W_LONG("quickSpinStruct.Width", (long)quickSpinStruct.Width);
-//	CONSOLE_DEBUG_W_LONG("sizeof(quickSpin)", sizeof(quickSpin));
+//	CONSOLE_DEBUG_W_SIZE("sizeof(quickSpin)", sizeof(quickSpin));
 //
 //	ReadFLIRcameraInfo();
 
@@ -278,8 +278,7 @@ quickSpin			quickSpinStruct;
 	strcat(cCommonProp.Description, " spinnaker Version");
 	strcat(cCommonProp.Description, gSpinakerVerString);
 
-	strcpy(cCommonProp.Name,	"FLIR-");
-	strcat(cCommonProp.Name,	cDeviceModel);
+	SetCommonPropertyName("FLIR-", cDeviceModel);
 
 
 	DumpCameraProperties(__FUNCTION__);
@@ -311,7 +310,7 @@ char				spinErrorString[64];
 	quickSpinInit(cSpinCameraHandle, &quickSpinStruct);
 
 	CONSOLE_DEBUG_W_LONG("quickSpinStruct.Width",	(long)quickSpinStruct.Width);
-	CONSOLE_DEBUG_W_LONG("sizeof(quickSpin)",		sizeof(quickSpin));
+	CONSOLE_DEBUG_W_SIZE("sizeof(quickSpin)",		sizeof(quickSpin));
 
 	ReadFLIRcameraInfo();
 

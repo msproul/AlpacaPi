@@ -52,7 +52,7 @@ WindowTabDriverInfo::WindowTabDriverInfo(	const int	xSize,
 //**************************************************************************************
 WindowTabDriverInfo::~WindowTabDriverInfo(void)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 }
 
 
@@ -69,23 +69,11 @@ int		lastItemID;
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	//------------------------------------------
-	yLoc			=	cTabVertOffset;
+	yLoc	=	cTabVertOffset;
+	yLoc	=	SetTitleBox(kDriverInfo_Title, -1, yLoc, "Remote device information");
 
-	//------------------------------------------
-	SetWidget(kDriverInfo_Title,		0,			yLoc,		cWidth,		cTitleHeight);
-	SetWidgetText(kDriverInfo_Title, "AlpacaPi project");
-	SetBGcolorFromWindowName(kDriverInfo_Title);
-	yLoc			+=	cTitleHeight;
-	yLoc			+=	2;
-
-	SetWidget(		kDriverInfo_SubTitle,	0,			yLoc,		cWidth,		cTitleHeight);
-	SetWidgetFont(	kDriverInfo_SubTitle,	kFont_Medium);
-	SetWidgetText(	kDriverInfo_SubTitle,	"Remote device information");
-	SetWidgetTextColor(kDriverInfo_SubTitle,	CV_RGB(255,	255,	0));
-	yLoc			+=	cTitleHeight;
-	yLoc			+=	2;
-	yLoc			+=	2;
-	yLoc			+=	2;
+	yLoc	+=	2;
+	yLoc	+=	2;
 
 
 	textBoxHt	=	cTitleHeight * 2;

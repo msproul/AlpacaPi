@@ -13,13 +13,15 @@
 //*	Jun 22,	2020	<MLS> Added debug timing to ConsoleDebug.h
 //*	Jun 30,	2020	<MLS> Added CONSOLE_ABORT()
 //*	Aug 10,	2021	<MLS> Added CONSOLE_DEBUG_W_LHEX()	long hex
-//*	Apr 18,	2022	<MLS> Added CONSOLE_DEBUG_W_BOOL
+//*	Apr 18,	2022	<MLS> Added CONSOLE_DEBUG_W_BOOL()
+//*	Mar  7,	2023	<MLS> Added CONSOLE_DEBUG_W_SIZE()
 //***************************************************************************************
 //#include	"ConsoleDebug.h"
 
 
 #ifndef	_CONSOLE_DEBUG_H_
 #define	_CONSOLE_DEBUG_H_
+
 //*	this prints out the file, line number function, and message to the console,
 //*	it also does a flush to insure the data goes out in case of a crash
 //*	when its time to make a production version, comment out _ENABLE_CONSOLE_DEBUG_
@@ -56,6 +58,12 @@
 	#define	CONSOLE_DEBUG_W_STR(msg, str)				printf("%-40s:%4d [%-20s] %s %s\n", 		__FILE__, __LINE__, __FUNCTION__, msg, str);	fflush(stdout);
 	#define	CONSOLE_DEBUG_W_2STR(msg, str1, str2)		printf("%-40s:%4d [%-20s] %s %s, %s\n",		__FILE__, __LINE__, __FUNCTION__, msg, str1, str2);	fflush(stdout);
 	#define	CONSOLE_DEBUG_W_3STR(msg, str1, str2, str3)	printf("%-40s:%4d [%-20s] %s %s, %s %s\n",	__FILE__, __LINE__, __FUNCTION__, msg, str1, str2, str3);	fflush(stdout);
+
+	#if (__SIZEOF_SIZE_T__ == 8)
+		#define	CONSOLE_DEBUG_W_SIZE(msg, num)			printf("%-40s:%4d [%-20s] %s %ld\n", 		__FILE__, __LINE__, __FUNCTION__, msg, num);	fflush(stdout);
+	#else
+		#define	CONSOLE_DEBUG_W_SIZE(msg, num)			printf("%-40s:%4d [%-20s] %s %d\n", 		__FILE__, __LINE__, __FUNCTION__, msg, num);	fflush(stdout);
+	#endif
 
 	#define	CONSOLE_ABORT(msg)							printf("%-40s:%4d [%-20s] %s\n",			__FILE__, __LINE__, __FUNCTION__, msg);			fflush(stdout); \
 														printf("!!!!!!!!ABORT!!!!!!!!\n"); exit(0);

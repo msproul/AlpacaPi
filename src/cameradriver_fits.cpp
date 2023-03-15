@@ -308,7 +308,7 @@ void	CameraDriver::UpdateFilterwheelLink(void)
 {
 	CONSOLE_DEBUG(__FUNCTION__);
 
-	cConnectedFilterWheel	=	(FilterwheelDriver *)FindDeviceByType(kDeviceType_Filterwheel, cDeviceNum);
+	cConnectedFilterWheel	=	(FilterwheelDriver *)FindDeviceByType(kDeviceType_Filterwheel, cAlpacaDeviceNum);
 	if (cConnectedFilterWheel != NULL)
 	{
 		cFilterWheelInfoValid	=	true;
@@ -1971,7 +1971,7 @@ double	f_ratio;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
-	DumpTelescopeInfo(&cTS_info);
+//	DumpTelescopeInfo(&cTS_info);
 
 	if (gObseratorySettings.ValidInfo || (strlen(cTelescopeModel) > 0))
 	{

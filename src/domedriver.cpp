@@ -76,6 +76,7 @@
 //*	Dec 13,	2021	<MLS> Added WatchDog_TimeOut() to domedriver
 //*	May 24,	2022	<MLS> Updated dome driver to count output data
 //*	Aug 29,	2022	<MLS> Added logic to keep track of last time any movement was made
+//*	Mar  9,	2023	<MLS> Removed all slit tracker code from dome driver
 //*****************************************************************************
 //*	cd /home/pi/dev-mark/alpaca
 //*	LOGFILE=logfile.txt
@@ -92,7 +93,7 @@
 //*	fi
 //*****************************************************************************
 
-#if defined(_ENABLE_DOME_) || defined(_ENABLE_ROR_)
+#if defined(_ENABLE_DOME_) || defined(_ENABLE_DOME_ROR_)
 
 #include	<stdlib.h>
 #include	<stdio.h>
@@ -117,6 +118,17 @@
 #include	"helper_functions.h"
 #include	"domedriver.h"
 
+#ifdef _ENABLE_DOME_RPI_
+	#include	"domedriver_rpi.h"
+#endif
+#ifdef	_ENABLE_DOME_ROR_
+	#include	"domedriver_ror_rpi.h"
+#endif
+#ifdef _ENABLE_DOME_SIMULATOR_
+	#include	"domedriver_sim.h"
+#endif
+
+
 #include	"json_parse.h"
 #include	"sendrequest_lib.h"
 
@@ -127,27 +139,29 @@
 	#define	HIGH	1
 #endif
 
-
 #define	kRotateDome_CW		0
 #define	kRotateDome_CCW		1
-
-
 
 #define	kStopRightNow	true
 #define	kStopNormal		false
 
 
-
-
-
 static void		GetStateString(DOME_STATE_TYPE domeState, char *stateString);
-static void		DomeControl_GetStatusString(const int status, char *statusString);
 
 //*****************************************************************************
 void	CreateDomeObjects(void)
 {
+#ifdef	_ENABLE_DOME_ROR_
+	CreateDomeObjectsROR();
+#endif
+#ifdef _ENABLE_DOME_RPI_
+	CreateDomeObjectsRPi();
+#endif
 
-	new DomeDriver(0);
+#ifdef _ENABLE_DOME_SIMULATOR_
+	CreateDomeObjectsSIM();
+#endif
+
 }
 
 
@@ -257,7 +271,7 @@ static TYPE_CmdEntry	gDomeCmdTable[]	=
 	{	"auxiliarystatus",  kCmd_Dome_auxiliarystatus,	kCmdType_GET	},
 
 
-#ifndef _ENABLE_ROR_
+#ifndef _ENABLE_DOME_ROR_
 	{	"goleft",			kCmd_Dome_goleft,			kCmdType_PUT	},
 	{	"goright",			kCmd_Dome_goright,			kCmdType_PUT	},
 
@@ -324,28 +338,13 @@ DomeDriver::DomeDriver(const int argDevNum)
 
 	Init_Hardware();
 
-#ifdef _ENABLE_SLIT_TRACKER_REMOTE_
-int	iii;
-
-	cSlitTrackerInfoValid			=	false;
-	cTimeOfLastSlitTrackerUpdate	=	0;
-
-	for (iii=0; iii<kSensorValueCnt; iii++)
-	{
-		cSlitDistance[iii].distanceInches	=	0;
-		cSlitDistance[iii].validData		=	false;
-		cSlitDistance[iii].updated			=	false;
-		cSlitDistance[iii].readCount		=	0;
-	}
-
-#endif // _ENABLE_SLIT_TRACKER_REMOTE_
 #ifdef _ENABLE_REMOTE_SHUTTER_
 	cShutterInfoValid				=	false;
 	cShutterPort					=	0;
 	cTimeOfLastShutterUpdate		=	0;
 #endif // _ENABLE_REMOTE_SHUTTER_
 
-#if defined(_ENABLE_SLIT_TRACKER_REMOTE_) || defined(_ENABLE_REMOTE_SHUTTER_) || defined(_TEST_DISCOVERQUERY_)
+#if defined(_ENABLE_REMOTE_SHUTTER_) || defined(_TEST_DISCOVERQUERY_)
 	SendDiscoveryQuery();
 #endif
 }
@@ -905,7 +904,7 @@ char		stateString[48];
 time_t		currentTimeEpoch;
 time_t		deltaSeconds;
 
-#if defined(_ENABLE_REMOTE_SHUTTER_) || defined(_ENABLE_SLIT_TRACKER_REMOTE_)
+#if defined(_ENABLE_REMOTE_SHUTTER_)
 	uint32_t	currentMilliSecs;
 	uint32_t	timeSinceLastWhatever;
 #endif
@@ -940,32 +939,6 @@ time_t		deltaSeconds;
 	}
 #endif // _ENABLE_REMOTE_SHUTTER_
 
-#ifdef _ENABLE_SLIT_TRACKER_REMOTE_
-	currentMilliSecs		=	millis();
-	//====================================================================
-	//*	check to see if its time to update the slit tracker
-	if (cSlitTrackerInfoValid)
-	{
-		timeSinceLastWhatever	=	currentMilliSecs - cTimeOfLastSlitTrackerUpdate;
-		if (timeSinceLastWhatever > (60 * 1000))
-		{
-			GetSlitTrackerData();
-			cTimeOfLastSlitTrackerUpdate	=	millis();
-		}
-	}
-	else
-	{
-		//*	if we don't have slit tracker data, check for it every 5 minutes
-		timeSinceLastWhatever	=	currentMilliSecs - cTimeOfLastSlitTrackerUpdate;
-		if (timeSinceLastWhatever > (5 * 60 * 1000))
-		{
-			CONSOLE_DEBUG("Calling SendDiscoveryQuery() !!!!!!!!!!!!!!!!!!");
-			SendDiscoveryQuery();
-			cTimeOfLastSlitTrackerUpdate	=	millis();
-		}
-
-	}
-#endif // _ENABLE_SLIT_TRACKER_REMOTE_
 
 	//----------------------------------------------------------
 	//*	check for dome activity, this is in addition to the watchdog stuff
@@ -973,34 +946,33 @@ time_t		deltaSeconds;
 	{
 	char	alpacaErrMsg[128];
 	char	msgString[64];
+	int		deltaMinutes;
+	int		hours;
+	int		minutes;
+	int		seconds;
 
 		currentTimeEpoch	=	time(NULL);
 		deltaSeconds		=	currentTimeEpoch - cTimeOfLastMoveCheck;
 		if (deltaSeconds >= 15)
 		{
-		int		deltaMinutes;
-		int		hours;
-		int		minutes;
-		int		seconds;
-
 			//*	compute how long it has been since a move command was received,
 			//*	this can be dome rotation OR shutter movement
 			deltaSeconds		=	currentTimeEpoch - cTimeOfLastMoveCmd;
 			deltaMinutes		=	deltaSeconds / 60;
-
-			minutes				=	deltaSeconds / 60;
-			hours				=	minutes / 60;
-			minutes				=	minutes % 60;
-			seconds				=	deltaSeconds % 60;
-//			sprintf(msgString, "Time since last move command %d:%02d:%02d", hours, minutes, seconds);
-//			CONSOLE_DEBUG(msgString);
 
 			//*	are we past the set time out for dome movement
 			if (deltaMinutes >= cIdleMoveTimeoutMinutes)
 			{
 				if ((cDomeProp.AtPark == false) || (cDomeProp.ShutterStatus != kShutterStatus_Closed))
 				{
-					LogEvent("dome",	"Shutting down dome",	msgString,	kASCOM_Err_Success,	msgString);
+					minutes			=	deltaSeconds / 60;
+					hours			=	minutes / 60;
+					minutes			=	minutes % 60;
+					seconds			=	deltaSeconds % 60;
+					sprintf(msgString, "Time since last move command %d:%02d:%02d", hours, minutes, seconds);
+					CONSOLE_DEBUG(msgString);
+					LogEvent("dome",	"WatchDog:Timeout",				NULL,		kASCOM_Err_Success,	NULL);
+					LogEvent("dome",	"WatchDog:Shutting down dome",	msgString,	kASCOM_Err_Success,	msgString);
 
 					if (cDomeProp.AtPark == false)
 					{
@@ -1034,20 +1006,6 @@ void	DomeDriver::ProcessDiscovery(	struct sockaddr_in	*deviceAddress,
 										const int			deviceNumber)
 {
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, deviceType);
-#ifdef _ENABLE_SLIT_TRACKER_REMOTE_
-	if (strcasecmp(deviceType, "slittracker") == 0)
-	{
-		//*	yeah!  we have a slit tracker
-		CONSOLE_DEBUG("slittracker!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-		cSlitTrackerInfoValid		=	true;
-		cSlitTrackerDeviceAddress	=	*deviceAddress;
-		cSlitTrackerPort			=	ipPortNumber;
-		cSlitTrackerAlpacaDevNum	=	deviceNumber;
-
-//		cCanSlave					=	true;
-		LogEvent("dome", "slittracker", NULL, kASCOM_Err_Success, "Discovered");
-	}
-#endif // _ENABLE_SLIT_TRACKER_REMOTE_
 
 
 #ifdef _ENABLE_REMOTE_SHUTTER_
@@ -1362,7 +1320,7 @@ char				statusString[32];
 															cDomeProp.ShutterStatus,
 															INCLUDE_COMMA);
 
-		DomeControl_GetStatusString(cDomeProp.ShutterStatus, statusString);
+		GetDomeShutterStatusString(cDomeProp.ShutterStatus, statusString);
 
 		cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(	reqData->socket,
 																reqData->jsonTextBuffer,
@@ -2144,7 +2102,6 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Remote shutter not detected");
 	}
 #else
-	CONSOLE_ABORT(__FUNCTION__);
 	alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
 	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Open shutter not implemented");
 
@@ -2205,10 +2162,9 @@ char		domeConfigStr[32];
 	//*-----------------------------------------------------------
 	SocketWriteData(mySocketFD,	"<TR>\r\n");
 	SocketWriteData(mySocketFD,	"\t<TD>Shutter status:</TD><TD>");
-	DomeControl_GetStatusString(cDomeProp.ShutterStatus, lineBuffer);
+	GetDomeShutterStatusString(cDomeProp.ShutterStatus, lineBuffer);
 	SocketWriteData(mySocketFD,	lineBuffer);
 	SocketWriteData(mySocketFD,	"</TD></TR>\r\n");
-
 
 	//*-----------------------------------------------------------
 	sprintf(lineBuffer,	"\t<TR><TD>At home</TD><TD>%s</TD></TR>\r\n",		(cDomeProp.AtHome)	? "Yes" : "No");
@@ -2275,21 +2231,6 @@ static void	GetStateString(DOME_STATE_TYPE domeState, char *stateString)
 
 
 //*****************************************************************************
-static void	DomeControl_GetStatusString(const int status, char *statusString)
-{
-	switch(status)
-	{
-		case kShutterStatus_Open:		strcpy(statusString,	"Open");	break;
-		case kShutterStatus_Closed:		strcpy(statusString,	"Closed");	break;
-		case kShutterStatus_Opening:	strcpy(statusString,	"Opening");	break;
-		case kShutterStatus_Closing:	strcpy(statusString,	"Closing");	break;
-		case kShutterStatus_Error:		strcpy(statusString,	"Error");	break;
-		default:						strcpy(statusString,	"unknown");	break;
-	}
-}
-
-
-//*****************************************************************************
 //*	returns true if at max or min
 //*	returns false otherwise
 //*****************************************************************************
@@ -2309,7 +2250,7 @@ bool		returnState;
 //*****************************************************************************
 void	DomeDriver::StartDomeMoving(const int direction)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, "This should be overridden");
 	cTimeOfLastSpeedChange	=	millis();
 	cTimeOfMovingStart		=	millis();
 }
@@ -2320,8 +2261,8 @@ void	DomeDriver::StartDomeMoving(const int direction)
 //*****************************************************************************
 void	DomeDriver::StopDomeMoving(bool rightNow)
 {
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, "This should be overridden");
 	cAzimuth_Destination	=	-1;
-	CONSOLE_DEBUG(__FUNCTION__);
 }
 
 //*****************************************************************************
@@ -2515,80 +2456,6 @@ char				alpacaErrMsg[64];
 }
 
 
-#ifdef _ENABLE_SLIT_TRACKER_REMOTE_
-//*****************************************************************************
-void	DomeDriver::GetSlitTrackerData(void)
-{
-SJP_Parser_t	jsonParser;
-bool			validData;
-char			alpacaString[128];
-int				jjj;
-int				clockValue;
-char			clockString[32];
-double			inchValue;
-
-//	CONSOLE_DEBUG(__FUNCTION__);
-
-	SJP_Init(&jsonParser);
-	sprintf(alpacaString,	"/api/v1/%s/%d/%s", "slittracker", cSlitTrackerAlpacaDevNum, "readall");
-
-	validData	=	GetJsonResponse(	&cSlitTrackerDeviceAddress,
-										cSlitTrackerPort,
-										alpacaString,
-										NULL,
-										&jsonParser);
-	if (validData)
-	{
-		if (cDomeProp.CanSlave == false)
-		{
-			//*	change of state from off line to on line
-			LogEvent("dome",	"slittracker",	NULL,	kASCOM_Err_Success,	"Online");
-		}
-
-		cDomeProp.CanSlave	=	true;
-		for (jjj=0; jjj<jsonParser.tokenCount_Data; jjj++)
-		{
-//			CONSOLE_DEBUG_W_STR("keyword\t=",	jsonParser.dataList[jjj].keyword);
-//			CONSOLE_DEBUG_W_STR(	jsonParser.dataList[jjj].valueString)
-			//	"sensor-0":28.310000,
-
-			if (strncasecmp(jsonParser.dataList[jjj].keyword, "sensor-", 6) == 0)
-			{
-				strcpy(clockString, &jsonParser.dataList[jjj].keyword[7]);
-				clockValue	=	atoi(clockString);
-				inchValue	=	AsciiToDouble(jsonParser.dataList[jjj].valueString);
-				if ((clockValue >= 0) && (clockValue < kSensorValueCnt))
-				{
-					cSlitDistance[clockValue].distanceInches	=	inchValue;
-					cSlitDistance[clockValue].validData			=	true;
-					cSlitDistance[clockValue].updated			=	true;
-					cSlitDistance[clockValue].readCount++;
-
-//					CONSOLE_DEBUG_W_DBL("distanceInches\t=",	inchValue);
-				}
-				else
-				{
-					CONSOLE_DEBUG_W_NUM("clockValue out of bounds\t=",	clockValue);
-				}
-			}
-		}
-	}
-	else
-	{
-		if (cDomeProp.CanSlave)
-		{
-			//*	change of state from on line to off line
-			LogEvent("dome",	"slittracker",	NULL,	kASCOM_Err_Success,	"Offline");
-		}
-		cDomeProp.CanSlave	=	false;
-		CONSOLE_DEBUG("Failed to get data from slit tracker");
-	}
-
-
-}
-#endif // _ENABLE_SLIT_TRACKER_REMOTE_
-
-
-#endif	//	defined(_ENABLE_DOME_) || defined(_ENABLE_ROR_)
+#endif	//	defined(_ENABLE_DOME_) || defined(_ENABLE_DOME_ROR_)
 
 

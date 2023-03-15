@@ -37,6 +37,8 @@
 //*	Dec 16,	2019	<MLS> Added ObservatorySettings_CreateTemplateFile()
 //*	Mar 18,	2021	<MLS> Added better error message if create template fails
 //*	Apr  6,	2022	<MLS> Switched to using generic config file read routines
+//*	Mar  2,	2023	<MLS> Added DumpObservatorySettings()
+//*	Mar  2,	2023	<MLS> Made sure RefID had something in it if available
 //*****************************************************************************
 
 #include	<errno.h>
@@ -248,12 +250,12 @@ int		ii;
 }
 
 //*****************************************************************************
-static void	ProcessObsSettingsConfig(const char *keyword, const char *valueString)
+static void	ProcessObsSettingsConfig(const char *keyword, const char *valueString, void *userDataPtr)
 {
 int					keywordEnumVal;
 TYPE_TELESCOPE_INFO	*ts_infoPtr;
 
-//	CONSOLE_DEBUG_W_STR(keyword, valueString);
+	CONSOLE_DEBUG_W_STR(keyword, valueString);
 
 	//*	this is kind of redundant to do it EVERY time, but it is the easiest to insure
 	//*	the telescope index is not out of bounds
@@ -394,6 +396,12 @@ TYPE_TELESCOPE_INFO	*ts_infoPtr;
 
 		case kObservatory_RefID:
 			strcpy(ts_infoPtr->refID,					valueString);
+			if (strlen(gObseratorySettings.RefID) == 0)
+			{
+				//*	this will set the RefID to the first one found in the file.
+				//*	it can be reset later by GetTelescopeSettingsByRefID()
+				strcpy(gObseratorySettings.RefID, valueString);
+			}
 			break;
 
 		case kObservatory_TelescopeNum:
@@ -429,7 +437,7 @@ int		linesRead;
 	CONSOLE_DEBUG(__FUNCTION__);
 	ObservatorySettings_Init();
 	configFileOK	=	false;
-	linesRead		=	ReadGenericConfigFile("observatorysettings.txt", '=', &ProcessObsSettingsConfig);
+	linesRead		=	ReadGenericConfigFile("observatorysettings.txt", '=', &ProcessObsSettingsConfig, NULL);
 	if (linesRead > 5)
 	{
 		configFileOK	=	true;
@@ -444,12 +452,51 @@ int		linesRead;
 		gObseratorySettings.ValidInfo	=	true;
 	}
 
+	DumpObservatorySettings();
+//	CONSOLE_ABORT(__FUNCTION__);
+
 	return(configFileOK);
+}
+
+//*****************************************************************************
+void	DumpObservatorySettings(void)
+{
+	CONSOLE_DEBUG(		"*************************************************************");
+	CONSOLE_DEBUG(		"*******************  Obseratory Settings ********************");
+//	sprintf(titleLine,	"************* Called from: %-20s *************", callingFunctionName);
+//	CONSOLE_DEBUG(titleLine);
+	CONSOLE_DEBUG(		"*************************************************************");
+
+	CONSOLE_DEBUG_W_BOOL(	"ValidInfo       \t=",	gObseratorySettings.ValidInfo);
+	CONSOLE_DEBUG_W_NUM(	"KeyWordCount    \t=",	gObseratorySettings.KeyWordCount);
+	CONSOLE_DEBUG_W_STR(	"RefID           \t=",	gObseratorySettings.RefID);
+	CONSOLE_DEBUG_W_STR(	"Name            \t=",	gObseratorySettings.Name);
+	CONSOLE_DEBUG_W_STR(	"Location        \t=",	gObseratorySettings.Location);
+	CONSOLE_DEBUG_W_STR(	"Website         \t=",	gObseratorySettings.Website);
+	CONSOLE_DEBUG_W_STR(	"AAVSO_ObserverID\t=",	gObseratorySettings.AAVSO_ObserverID);
+	CONSOLE_DEBUG_W_STR(	"Configuration   \t=",	gObseratorySettings.Configuration);
+	CONSOLE_DEBUG_W_STR(	"Owner           \t=",	gObseratorySettings.Owner);
+	CONSOLE_DEBUG_W_STR(	"Email           \t=",	gObseratorySettings.Email);
+	CONSOLE_DEBUG_W_STR(	"Observer        \t=",	gObseratorySettings.Observer);
+	CONSOLE_DEBUG_W_STR(	"TimeZone        \t=",	gObseratorySettings.TimeZone);
+//	int					UTCoffset;
+
+//	bool				ValidLatLon;
+	CONSOLE_DEBUG_W_STR(	"ElevationString \t=",	gObseratorySettings.ElevationString);
+	CONSOLE_DEBUG_W_STR(	"LatString       \t=",	gObseratorySettings.LatString);
+	CONSOLE_DEBUG_W_STR(	"LonString       \t=",	gObseratorySettings.LonString);
+//	double				Elevation_ft;				//*	feet above sea level
+//	double				Elevation_m;				//*	meters above sea level
+//	double				Latitude_deg;				//*	degrees
+//	double				Longitude_deg;				//*	degrees
+
+	DumpTelescopeInfo(gObseratorySettings.TS_info);
 }
 
 //*****************************************************************************
 void	DumpTelescopeInfo(TYPE_TELESCOPE_INFO *ts_info)
 {
+	CONSOLE_DEBUG(		"*************************************************************");
 	CONSOLE_DEBUG_W_STR("refID\t\t\t=",					ts_info->refID);
 	CONSOLE_DEBUG_W_STR("telescp_manufacturer\t=",		ts_info->telescp_manufacturer);
 	CONSOLE_DEBUG_W_STR("telescp_model\t\t=",			ts_info->telescp_model);
@@ -495,11 +542,15 @@ int		ii;
 		telescopeIdx	=	argIndex;
 	}
 
+	//================================================================
 	if ((telescopeIdx < 0) || (telescopeIdx >= kMaxTelescopes))
 	{
 		telescopeIdx	=	0;
 	}
 //	CONSOLE_DEBUG_W_NUM("telescopeIdx\t=",	telescopeIdx);
+
+	//*	set the global RefID
+	strcpy(gObseratorySettings.RefID, gObseratorySettings.TS_info[telescopeIdx].refID);
 
 	if (ts_info != NULL)
 	{

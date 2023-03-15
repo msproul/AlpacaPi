@@ -333,16 +333,16 @@ int		iii;
 	CONSOLE_DEBUG_W_STR("RemoteGAIAenabled is", (gST_DispOptions.RemoteGAIAenabled ? "enabled" : "disabled"));
 
 //#if defined(_USE_OPENCV_CPP_) &&  (CV_MAJOR_VERSION < 4)
-//	CONSOLE_DEBUG_W_LONG("sizeof(CvScalar)  \t=",	sizeof(CvScalar));
-//	CONSOLE_DEBUG_W_LONG("sizeof(cv::Scalar)\t=",	sizeof(cv::Scalar));
+//	CONSOLE_DEBUG_W_SIZE("sizeof(CvScalar)  \t=",	sizeof(CvScalar));
+//	CONSOLE_DEBUG_W_SIZE("sizeof(cv::Scalar)\t=",	sizeof(cv::Scalar));
 //
-//	CONSOLE_DEBUG_W_LONG("sizeof(CvFont)  \t=",	sizeof(CvFont));
+//	CONSOLE_DEBUG_W_SIZE("sizeof(CvFont)  \t=",		sizeof(CvFont));
 //
-//	CONSOLE_DEBUG_W_LONG("sizeof(CvRect)  \t=",	sizeof(CvRect));
-//	CONSOLE_DEBUG_W_LONG("sizeof(cv::rect)\t=",	sizeof(cv::Rect));
+//	CONSOLE_DEBUG_W_SIZE("sizeof(CvRect)  \t=",		sizeof(CvRect));
+//	CONSOLE_DEBUG_W_SIZE("sizeof(cv::rect)\t=",		sizeof(cv::Rect));
 //
-//	CONSOLE_DEBUG_W_LONG("sizeof(CvPoint) \t=",	sizeof(CvPoint));
-//	CONSOLE_DEBUG_W_LONG("sizeof(cv::point)\t=",	sizeof(cv::Point));
+//	CONSOLE_DEBUG_W_SIZE("sizeof(CvPoint) \t=",		sizeof(CvPoint));
+//	CONSOLE_DEBUG_W_SIZE("sizeof(cv::point)\t=",	sizeof(cv::Point));
 //
 ////	CONSOLE_ABORT(__FUNCTION__);
 //#endif // defined
@@ -408,11 +408,8 @@ int		iii;
 		cCurrLatLon.longitude		=	RADIANS(-74.980333);
 	}
 
-
 	Compute_Timezone(&cCurrLatLon, &cCurrentTime);
-
-	//	hometime(&gcCurrentTime);	//* default system Greenwich date/time
-	SetCurrentTime();
+	SetCurrentTime();		//* default system Greenwich date/time
 
 	cCurrentTime.strflag			=	true;		//* say 2000 data present
 	cCurrentTime.starDataModified	=	false;
@@ -428,7 +425,7 @@ int		iii;
 	CalanendarTime(&cCurrentTime);
 
 	memset(&cDispOptions,		0, sizeof(TYPE_SkyDispOptions));
-
+	strcpy(cWebURLstring, "skytravel.html");		//*	set the web help url string
 
 	gST_DispOptions.DisplayedMagnitudeLimit		=	15.0;
 	gST_DispOptions.EarthDispMode				=	0;
@@ -694,7 +691,7 @@ int		buttonBoxWidth;
 	//------------------------------------------------------------------------------
 	//*	set up all of the buttons
 	xLoc			=	labelWidth + 5;
-	for (iii = kSkyTravel_Btn_First; iii <= kSkyTravel_Telescope_GoTo; iii++)
+	for (iii = kSkyTravel_Btn_First; iii <= kSkyTravel_Help_Btn; iii++)
 	{
 		buttonBoxWidth	=	cTitleHeight - 2;
 
@@ -732,6 +729,7 @@ int		buttonBoxWidth;
 
 			case kSkyTravel_Telescope_Sync:
 			case kSkyTravel_Telescope_GoTo:
+			case kSkyTravel_Help_Btn:
 				buttonBoxWidth	=	(cBtnWidth / 2) - 30;
 				break;
 
@@ -792,6 +790,13 @@ int		buttonBoxWidth;
 	SetWidgetTextColor(	kSkyTravel_Telescope_GoTo,		CV_RGB(0,	0, 0));
 	SetWidgetBGColor(	kSkyTravel_Telescope_GoTo,		CV_RGB(255,	255,	255));
 	SetWidgetHelpText(	kSkyTravel_Telescope_GoTo,		"Slew telescope to center of screen");
+
+	//-----------------------------------------------
+	SetWidgetText(		kSkyTravel_Help_Btn,			"Help");
+	SetWidgetFont(		kSkyTravel_Help_Btn,			kFont_Medium);
+	SetWidgetTextColor(	kSkyTravel_Help_Btn,			CV_RGB(0,	0, 0));
+	SetWidgetBGColor(	kSkyTravel_Help_Btn,			CV_RGB(255,	255,	255));
+	SetWidgetHelpText(	kSkyTravel_Help_Btn,			"Click to launch web documentation");
 
 	//---------------------------------------------------------------------------
 	//*	set the help text for the rest of them
@@ -1838,6 +1843,10 @@ char	searchText[128];
 			SlewTelescopeToCenter();
 			break;
 
+		case kSkyTravel_Help_Btn:
+			LaunchWebHelp();
+			break;
+
 		default:
 			CONSOLE_DEBUG(__FUNCTION__);
 			CONSOLE_DEBUG_W_NUM("buttonIdx\t",	buttonIdx);
@@ -1972,7 +1981,14 @@ bool			reDrawSky;
 //    CV_EVENT_FLAG_SHIFTKEY  =16,
 //    CV_EVENT_FLAG_ALTKEY    =32
 //};
-
+//enum  	cv::MouseEventFlags {
+//  cv::EVENT_FLAG_LBUTTON = 1,
+//  cv::EVENT_FLAG_RBUTTON = 2,
+//  cv::EVENT_FLAG_MBUTTON = 4,
+//  cv::EVENT_FLAG_CTRLKEY = 8,
+//  cv::EVENT_FLAG_SHIFTKEY = 16,
+//  cv::EVENT_FLAG_ALTKEY = 32
+//}
 //	if (flags & CV_EVENT_FLAG_CTRLKEY)
 	if (flags & cv::EVENT_FLAG_CTRLKEY)
 	{

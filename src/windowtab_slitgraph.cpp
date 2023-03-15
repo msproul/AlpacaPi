@@ -14,7 +14,7 @@
 //*	that you agree that the author(s) have no warranty, obligations or liability.  You
 //*	must determine the suitability of this source code for your use.
 //*
-//*	Redistributions of this source code must retain this copyright notice.
+//*	Re-distributions of this source code must retain this copyright notice.
 //*****************************************************************************
 //*	Edit History
 //*****************************************************************************
@@ -76,7 +76,7 @@ int		iii;
 //**************************************************************************************
 WindowTabSlitGraph::~WindowTabSlitGraph(void)
 {
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 }
 
 
@@ -94,14 +94,8 @@ int		graphHeight;
 	CONSOLE_DEBUG(__FUNCTION__);
 
 	//------------------------------------------
-	yLoc			=	cTabVertOffset;
-
-	//------------------------------------------
-	SetWidget(kSlitGraph_Title,		0,			yLoc,		cWidth,		cTitleHeight);
-	SetWidgetText(kSlitGraph_Title, "AlpacaPi Slit Graph");
-	SetBGcolorFromWindowName(kSlitGraph_Title);
-	yLoc			+=	cTitleHeight;
-	yLoc			+=	2;
+	yLoc	=	cTabVertOffset;
+	yLoc	=	SetTitleBox(kSlitGraph_Title, -1, yLoc, "AlpacaPi Slit Graph");
 
 	graphHeight		=	350;
 	SetWidget(		kSlitGraph_Graph,		0,			yLoc,		cWidth,		graphHeight);
@@ -398,20 +392,20 @@ int		clockIdx;
 			{
 				cDisplayClockData[clockIdx]	=	!cDisplayClockData[clockIdx];
 				SetWidgetChecked(buttonIdx, cDisplayClockData[clockIdx]);
-				gUpdateSLitWindow	=	true;
+//				gUpdateSLitWindow	=	true;
 			}
 			break;
 
 		case kSlitGraph_DisplayRaw:
 			cDisplayRawData	=	!cDisplayRawData;
 			SetWidgetChecked(	kSlitGraph_DisplayRaw,		cDisplayRawData);
-			gUpdateSLitWindow	=	true;
+//			gUpdateSLitWindow	=	true;
 			break;
 
 		case kSlitGraph_DisplayAvg:
 			cDisplayAvgData	=	!cDisplayAvgData;
 			SetWidgetChecked(	kSlitGraph_DisplayAvg,		cDisplayAvgData);
-			gUpdateSLitWindow	=	true;
+//			gUpdateSLitWindow	=	true;
 			break;
 	}
 }

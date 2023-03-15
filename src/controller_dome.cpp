@@ -39,6 +39,8 @@
 //*	Feb 12,	2021	<MLS> Added driver info display to dome controller
 //*	Feb 20,	2021	<MLS> Added compile time option for slit tracker tabs
 //*	Feb 20,	2021	<MLS> Added capability list to dome controller
+//*	Mar  9,	2023	<MLS> Removed SlitTracker code from dome controller
+//*	Mar 10,	2023	<MLS> Removed SlitTracker Direct code from dome controller
 //*****************************************************************************
 
 
@@ -69,33 +71,6 @@
 #include	"windowtab_about.h"
 #include	"controller_dome.h"
 
-#ifdef _ENABLE_SLIT_TRACKER_
-	#include	"windowtab_slit.h"
-	#include	"windowtab_slitgraph.h"
-	#include	"slittracker_data.h"
-
-	#ifndef _ENABLE_SKYTRAVEL_
-	TYPE_SLITCLOCK	gSlitDistance[kSensorValueCnt];		//*	current reading
-	TYPE_SLIT_LOG	gSlitLog[kSlitLogCount];			//*	log of readings
-	int				gSlitLogIdx;
-	bool			gUpdateSLitWindow	=	true;
-	#endif // _ENABLE_SKYTRAVEL_
-
-#endif // _ENABLE_SLIT_TRACKER_
-
-//#define	_SLIT_TRACKER_DIRECT_
-
-#ifdef _SLIT_TRACKER_DIRECT_
-	#include	<termios.h>
-	#include	<fcntl.h>
-	#include	"serialport.h"
-
-	void	OpenSlitTrackerPort(void);
-	void	GetSLitTrackerData(void);
-	void	SendSlitTrackerCmd(const char *cmdBuffer);
-#endif // _SLIT_TRACKER_DIRECT_
-
-
 
 
 //**************************************************************************************
@@ -110,35 +85,11 @@ char	ipAddrStr[32];
 	memset(&cDomeProp, 0, sizeof(TYPE_DomeProperties));
 
 	strcpy(cAlpacaDeviceTypeStr,	"dome");
-	cDomeProp.ShutterStatus	=	-1;
+	cDomeProp.ShutterStatus	=	kShutterStatus_Unknown;
 
 #ifdef _ENABLE_EXTERNAL_SHUTTER_
 	cShutterInfoValid		=	false;
 #endif // _ENABLE_EXTERNAL_SHUTTER_
-#ifdef _ENABLE_SLIT_TRACKER_
-int		iii;
-
-	cSlitTrackerTabObjPtr	=	NULL;
-	cSlitTrackerInfoValid	=	false;
-	cLogSlitData			=	false;
-	cSlitDataLogFilePtr		=	NULL;
-	cValidGravity			=	false;
-
-	//*	initialize the slit distance detector
-	for (iii=0; iii<kSensorValueCnt; iii++)
-	{
-		gSlitDistance[iii].validData		=	false;
-		gSlitDistance[iii].distanceInches	=	0.0;
-		gSlitDistance[iii].readCount		=	0;
-	}
-
-	//*	initialize the slit distance log
-	for (iii=0; iii<kSlitLogCount; iii++)
-	{
-		memset(&gSlitLog[iii], 0, sizeof(TYPE_SLIT_LOG));
-	}
-	gSlitLogIdx	=	0;
-#endif // _ENABLE_SLIT_TRACKER_
 
 	//*	window object ptrs
 	cDomeTabObjPtr			=	NULL;
@@ -179,10 +130,6 @@ int		iii;
 
 	SetupWindowControls();
 
-#ifdef _SLIT_TRACKER_DIRECT_
-	OpenSlitTrackerPort();
-#endif // _SLIT_TRACKER_DIRECT_
-
 #ifdef _USE_BACKGROUND_THREAD_
 	StartBackgroundThread();
 #endif // _USE_BACKGROUND_THREAD_
@@ -193,20 +140,11 @@ int		iii;
 //**************************************************************************************
 ControllerDome::~ControllerDome(void)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 	DELETE_OBJ_IF_VALID(cDomeTabObjPtr);
 	DELETE_OBJ_IF_VALID(cDriverInfoTabObjPtr);
 	DELETE_OBJ_IF_VALID(cAboutBoxTabObjPtr);
 	DELETE_OBJ_IF_VALID(cCapabilitiesTabObjPtr);
-
-#ifdef _ENABLE_SLIT_TRACKER_
-	if (cLogSlitData)
-	{
-		CloseSlitTrackerDataFile();
-	}
-	DELETE_OBJ_IF_VALID(cSlitTrackerTabObjPtr);
-	DELETE_OBJ_IF_VALID(cSlitGraphTabObjPtr);
-#endif // _ENABLE_SLIT_TRACKER_
 }
 
 //**************************************************************************************
@@ -222,10 +160,6 @@ char	lineBuff[64];
 	SetTabText(kTab_DriverInfo,		"Driver Info");
 	SetTabText(kTab_About,			"About");
 
-#ifdef _ENABLE_SLIT_TRACKER_
-	SetTabText(kTab_SlitTracker,	"Slit Tracker");
-	SetTabText(kTab_SlitGraph,		"Slit Graph");
-#endif
 
 
 	//=============================================================
@@ -236,24 +170,6 @@ char	lineBuff[64];
 		cDomeTabObjPtr->SetParentObjectPtr(this);
 		cDomeTabObjPtr->SetDomePropertiesPtr(&cDomeProp);
 	}
-
-#ifdef _ENABLE_SLIT_TRACKER_
-	//=============================================================
-	cSlitTrackerTabObjPtr		=	new WindowTabSlitTracker(	cWidth, cHeight, cBackGrndColor, cWindowName);
-	if (cSlitTrackerTabObjPtr != NULL)
-	{
-		SetTabWindow(kTab_SlitTracker,	cSlitTrackerTabObjPtr);
-		cSlitTrackerTabObjPtr->SetParentObjectPtr(this);
-	}
-
-	//=============================================================
-	cSlitGraphTabObjPtr		=	new WindowTabSlitGraph(	cWidth, cHeight, cBackGrndColor, cWindowName);
-	if (cSlitGraphTabObjPtr != NULL)
-	{
-		SetTabWindow(kTab_SlitGraph,	cSlitGraphTabObjPtr);
-		cSlitGraphTabObjPtr->SetParentObjectPtr(this);
-	}
-#endif // _ENABLE_SLIT_TRACKER_
 
 	//--------------------------------------------
 	cCapabilitiesTabObjPtr		=	new WindowTabCapabilities(	cWidth, cHeight, cBackGrndColor, cWindowName);
@@ -318,37 +234,8 @@ void	ControllerDome::SetAlpacaShutterInfo(TYPE_REMOTE_DEV *alpacaDevice)
 
 		SetWidgetText(kTab_Dome,		kDomeBox_Readall,		"RS");
 #endif // _ENABLE_EXTERNAL_SHUTTER_
-#ifdef _ENABLE_SLIT_TRACKER_
-		SetWidgetText(kTab_SlitTracker,	kSlitTracker_Readall,	"RS");
-		SetWidgetText(kTab_SlitGraph,	kSlitGraph_Readall,		"RS");
-#endif
 	}
 }
-
-#ifdef _ENABLE_SLIT_TRACKER_
-//**************************************************************************************
-void	ControllerDome::SetAlpacaSlitTrackerInfo(TYPE_REMOTE_DEV *alpacaDevice)
-{
-char	ipString[64];
-char	lineBuff[128];
-
-	CONSOLE_DEBUG(__FUNCTION__);
-
-	if (alpacaDevice != NULL)
-	{
-		cSlitTrackerInfoValid		=	true;
-		cSlitTrackerDeviceAddress	=	alpacaDevice->deviceAddress;
-		cSlitTrackerPort			=	alpacaDevice->port;
-		cSlitTrackerAlpacaDevNum	=	alpacaDevice->alpacaDeviceNum;
-
-		PrintIPaddressToString(cSlitTrackerDeviceAddress.sin_addr.s_addr, ipString);
-		sprintf(lineBuff, "%s:%d/%d", ipString, cSlitTrackerPort, cSlitTrackerAlpacaDevNum);
-
-		SetWidgetText(kTab_SlitTracker,	kSlitTracker_RemoteAddress,	lineBuff);
-	}
-}
-#endif // _ENABLE_SLIT_TRACKER_
-
 
 //**************************************************************************************
 void	ControllerDome::RunBackgroundTasks(const char *callingFunction, bool enableDebug)
@@ -402,20 +289,7 @@ bool		needToUpdate;
 			UpdateConnectedIndicator(kTab_Dome,		kDomeBox_Connected);
 		}
 	}
-#ifdef _SLIT_TRACKER_DIRECT_
-	GetSLitTrackerData();
-#endif // _SLIT_TRACKER_DIRECT_
-#ifdef _ENABLE_SLIT_TRACKER_
-	if (gUpdateSLitWindow)
-	{
-		cUpdateWindow		=	true;
-		gUpdateSLitWindow	=	false;
-	}
-#endif // _ENABLE_SLIT_TRACKER_
 }
-
-
-
 
 //*****************************************************************************
 bool	ControllerDome::AlpacaGetStartupData(void)
@@ -431,10 +305,6 @@ char			returnString[128];
 	if (validData)
 	{
 		SetWidgetValid(kTab_Dome,			kDomeBox_Readall,		cHas_readall);
-#ifdef _ENABLE_SLIT_TRACKER_
-		SetWidgetValid(kTab_SlitTracker,	kSlitTracker_Readall,	cHas_readall);
-		SetWidgetValid(kTab_SlitGraph,		kSlitGraph_Readall,		cHas_readall);
-#endif // _ENABLE_SLIT_TRACKER_
 		if (cHas_readall == false)
 		{
 			validData	=	AlpacaGetStringValue(	cAlpacaDeviceTypeStr, "driverversion",	NULL,	returnString);
@@ -492,13 +362,6 @@ bool	previousOnLineState;
 		AlpacaGetShutterReadAll();
 	}
 #endif // _ENABLE_EXTERNAL_SHUTTER_
-#ifdef _ENABLE_SLIT_TRACKER_
-	//=================================================
-	if (cSlitTrackerInfoValid)
-	{
-		AlpacaGetSlitTrackerReadAll();
-	}
-#endif // _ENABLE_SLIT_TRACKER_
 
 	if (validData)
 	{
@@ -594,11 +457,11 @@ void	ControllerDome::UpdateCapabilityList(void)
 //*****************************************************************************
 void	ControllerDome::AlpacaGetShutterReadAll(void)
 {
-SJP_Parser_t	jsonParser;
-bool			validData;
-char			alpacaString[128];
-int				jjj;
-int				newShutterStatus;
+SJP_Parser_t		jsonParser;
+bool				validData;
+char				alpacaString[128];
+int					jjj;
+TYPE_ShutterStatus	newShutterStatus;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -620,7 +483,7 @@ int				newShutterStatus;
 
 			if (strcasecmp(jsonParser.dataList[jjj].keyword, "shutterstatus") == 0)
 			{
-				newShutterStatus	=	atoi(jsonParser.dataList[jjj].valueString);
+				newShutterStatus	=	(TYPE_ShutterStatus)atoi(jsonParser.dataList[jjj].valueString);
 				UpdateShutterStatus(newShutterStatus);
 			}
 			else if (strcasecmp(jsonParser.dataList[jjj].keyword, "altitude") == 0)
@@ -699,269 +562,6 @@ char			myDataString[512];
 }
 #endif // _ENABLE_EXTERNAL_SHUTTER_
 
-#ifdef _ENABLE_SLIT_TRACKER_
-//*****************************************************************************
-void	ControllerDome::AlpacaGetSlitTrackerReadAll(void)
-{
-SJP_Parser_t	jsonParser;
-bool			validData;
-char			alpacaString[128];
-int				jjj;
-int				clockValue;
-char			clockString[48];
-double			inchValue;
-struct tm		*linuxTime;
-char			slitLogFileName[48];
-double			gravityValue;
-char			gravityVectorChar;
-
-//	CONSOLE_DEBUG(__FUNCTION__);
-
-	SJP_Init(&jsonParser);
-	sprintf(alpacaString,	"/api/v1/%s/%d/%s", "slittracker", cSlitTrackerAlpacaDevNum, "readall");
-
-	validData	=	GetJsonResponse(	&cSlitTrackerDeviceAddress,
-										cSlitTrackerPort,
-										alpacaString,
-										NULL,
-										&jsonParser);
-	if (validData)
-	{
-		cLastAlpacaErrNum	=	kASCOM_Err_Success;
-		for (jjj=0; jjj<jsonParser.tokenCount_Data; jjj++)
-		{
-//			CONSOLE_DEBUG_W_STR(	jsonParser.dataList[jjj].keyword,
-//									jsonParser.dataList[jjj].valueString);
-			//	"sensor-0":28.310000,
-
-			if (strncasecmp(jsonParser.dataList[jjj].keyword, "sensor-", 6) == 0)
-			{
-				strcpy(clockString, &jsonParser.dataList[jjj].keyword[7]);
-				clockValue	=	atoi(clockString);
-				inchValue	=	AsciiToDouble(jsonParser.dataList[jjj].valueString);
-				if ((clockValue >= 0) && (clockValue < kSensorValueCnt))
-				{
-					gSlitDistance[clockValue].distanceInches	=	inchValue;
-					gSlitDistance[clockValue].validData			=	true;
-					gSlitDistance[clockValue].updated			=	true;
-					gSlitDistance[clockValue].readCount++;
-
-					gUpdateSLitWindow	=	true;
-				}
-			}
-			else if (strncasecmp(jsonParser.dataList[jjj].keyword, "gravity_", 8) == 0)
-			{
-			//	CONSOLE_DEBUG_W_STR("Gravity vector:", jsonParser.dataList[jjj].keyword);
-				gravityVectorChar	=	jsonParser.dataList[jjj].keyword[8];
-				gravityValue		=	AsciiToDouble(jsonParser.dataList[jjj].valueString);
-
-				switch(gravityVectorChar)
-				{
-					case 'X':
-						cGravity_X	=	gravityValue;
-						break;
-
-					case 'Y':
-						cGravity_Y	=	gravityValue;
-						break;
-
-					case 'Z':
-						cGravity_Z	=	gravityValue;
-						break;
-
-					case 'T':
-						cGravity_T	=	gravityValue;
-						if ((cGravity_T >= 9.7) && (cGravity_T <= 9.9))
-						{
-							cValidGravity	=	true;
-						}
-						else
-						{
-							cValidGravity	=	false;
-							CONSOLE_DEBUG_W_DBL("Gravity vector is invalid:", cGravity_T);
-						}
-
-						if (cValidGravity)
-						{
-						double	telescopeElev;
-						double	telescopeElev_deg;
-
-							cUpAngle_Rad	=	atan2(cGravity_Z, cGravity_X);
-						//	cUpAngle_Rad	=	atan2(cGravity_X, cGravity_Z);
-							cUpAngle_Deg	=	cUpAngle_Rad * 180.0 / M_PI;
-//							CONSOLE_DEBUG_W_DBL("cUpAngle_Deg\t=", cUpAngle_Deg);
-
-							cUpAngle_Deg	+=	102.858;
-
-//							CONSOLE_DEBUG_W_DBL("cUpAngle_Deg\t=", cUpAngle_Deg);
-
-						//	telescopeElev		=	atan2(cGravity_Z, cGravity_Y);
-							telescopeElev		=	atan2(cGravity_Y, cGravity_Z);
-							telescopeElev_deg	=	telescopeElev * 180.0 / M_PI;
-							telescopeElev_deg	+=	180.0;
-							telescopeElev_deg	=	360.0 - telescopeElev_deg;
-//							CONSOLE_DEBUG_W_DBL("telescopeElev_deg\t=", telescopeElev_deg);
-
-						}
-						break;
-
-					default:
-						CONSOLE_DEBUG_W_STR("Gravity vector error:", jsonParser.dataList[jjj].keyword);
-						break;
-				}
-			}
-		}
-		//*	update the time of the last data
-		gettimeofday(&cSlitTrackerLastUpdateTime, NULL);
-
-		UpdateSlitLog();
-
-		//===============================================================
-		//*	check for data logging to disk
-		if (cLogSlitData)
-		{
-			if (cSlitDataLogFilePtr == NULL)
-			{
-				linuxTime		=	localtime(&cSlitTrackerLastUpdateTime.tv_sec);
-				sprintf(slitLogFileName, "slitlog-%02d-%02d-%02d.csv",
-											(1900 + linuxTime->tm_year),
-											(1 +	linuxTime->tm_mon),
-													linuxTime->tm_mday);
-
-				cSlitDataLogFilePtr	=	fopen(slitLogFileName, "a");
-			}
-			if (cSlitDataLogFilePtr != NULL)
-			{
-				for (jjj=0; jjj<kSensorValueCnt; jjj++)
-				{
-					fprintf(cSlitDataLogFilePtr, "%1.2f,", gSlitDistance[jjj].distanceInches);
-				}
-				fprintf(cSlitDataLogFilePtr, "\n");
-				fflush(cSlitDataLogFilePtr);
-			}
-		}
-
-		if (cSlitTrackerCommFailed)
-		{
-			//*	set the indicators back to OK
-			SetWidgetText(		kTab_Dome, 			kDomeBox_AlpacaErrorMsg, "---");
-			SetWidgetBGColor(	kTab_SlitTracker,	kSlitTracker_RemoteAddress, CV_RGB(0,0,0));
-			SetWidgetTextColor(	kTab_SlitTracker,	kSlitTracker_RemoteAddress, CV_RGB(255,0,0));
-
-		}
-		cSlitTrackerCommFailed	=	false;
-	}
-	else
-	{
-		SetWidgetText(kTab_Dome,				kDomeBox_AlpacaErrorMsg, "Failed to read data from Slit Tracker");
-		SetWidgetBGColor(kTab_SlitTracker,		kSlitTracker_RemoteAddress, CV_RGB(255,0,0));
-		SetWidgetTextColor(kTab_SlitTracker,	kSlitTracker_RemoteAddress, CV_RGB(0,0,0));
-		cSlitTrackerCommFailed	=	true;
-	}
-}
-
-//*****************************************************************************
-void	ControllerDome::UpdateSlitLog(void)
-{
-double		totalInches;
-int			qqq;
-int			sampleCnt;
-int			jjj;
-char		clockString[48];
-struct tm	*linuxTime;
-
-	//===================================================
-	//*	update the log of the data
-	if ((gSlitLogIdx >= 0) && (gSlitLogIdx < kSlitLogCount))
-	{
-//		CONSOLE_DEBUG_W_NUM("Logging slit data, index\t=", gSlitLogIdx);
-
-		gSlitLog[gSlitLogIdx].validData		=	true;
-		for (jjj=0; jjj<kSensorValueCnt; jjj++)
-		{
-
-			gSlitLog[gSlitLogIdx].distanceInches[jjj]	=	gSlitDistance[jjj].distanceInches;
-
-			//*	compute the average over the last 20 values
-			#define	kAverageCnt	20
-			if (gSlitLogIdx < 2)
-			{
-				//*	cant average only one value
-				gSlitLog[gSlitLogIdx].average20pt[jjj]	=	gSlitLog[gSlitLogIdx].distanceInches[jjj];
-			}
-			else
-			{
-				totalInches	=	0.0;
-				sampleCnt	=	0;
-				qqq			=	gSlitLogIdx - kAverageCnt;
-				if (qqq < 0)
-				{
-					qqq	=	0;
-				}
-				while (qqq < gSlitLogIdx)
-				{
-					totalInches	+=	gSlitLog[qqq].distanceInches[jjj];
-					sampleCnt++;
-					qqq++;
-				}
-				gSlitLog[gSlitLogIdx].average20pt[jjj]	=	totalInches / sampleCnt;
-			}
-		}
-		gSlitLogIdx++;
-
-		//*	check to see if we are at the end
-		if (gSlitLogIdx >= kSlitLogCount)
-		{
-		const int	moveBack	=	100;
-
-			CONSOLE_DEBUG("Slit distance buffer is full, moving back");
-			//*	move everything back by 100
-			for (jjj=0; jjj< (kSlitLogCount - moveBack); jjj++)
-			{
-				gSlitLog[jjj]	=	gSlitLog[jjj + moveBack];
-			}
-			gSlitLogIdx	=	kSlitLogCount - moveBack;
-
-			//*	set the rest of the data back to zero
-			while (jjj < kSlitLogCount)
-			{
-				memset(&gSlitLog[jjj], 0, sizeof(TYPE_SLIT_LOG));
-				jjj++;
-			}
-			CONSOLE_DEBUG("Done with move back");
-		}
-	}
-	else
-	{
-		CONSOLE_DEBUG("No room in slit log table");
-//			exit(0);
-	}
-
-
-	linuxTime		=	localtime(&cSlitTrackerLastUpdateTime.tv_sec);
-
-	sprintf(clockString,	"Last update %02d:%02d:%02d",
-							linuxTime->tm_hour,
-							linuxTime->tm_min,
-							linuxTime->tm_sec);
-	SetWidgetText(kTab_SlitTracker, kSlitTracker_LastUpdate, clockString);
-}
-
-//*****************************************************************************
-void	ControllerDome::CloseSlitTrackerDataFile(void)
-{
-	CONSOLE_DEBUG(__FUNCTION__);
-
-	if (cSlitDataLogFilePtr != NULL)
-	{
-		fflush(cSlitDataLogFilePtr);
-		fclose(cSlitDataLogFilePtr);
-		cSlitDataLogFilePtr	=	NULL;
-	}
-	cLogSlitData	=	false;
-}
-#endif // _ENABLE_SLIT_TRACKER_
-
 
 //*****************************************************************************
 void	ControllerDome::SendShutterCommand(const char *shutterCmd)
@@ -1007,168 +607,6 @@ void	ControllerDome::ToggleSwitchState(const int switchNum)
 
 }
 
-#ifdef _SLIT_TRACKER_DIRECT_
-#define	kReadBufferSize		1024
-#define	kLineBuffSize		64
-int				gSlitTrackerfileDesc	=	-1;				//*	port file descriptor
-char			gSlitTrackerLineBuf[kLineBuffSize];
-int				gSLitTrackerByteCnt		=	0;
-unsigned long	gLastSlitUpdate_MS		=	0;
-//*****************************************************************************
-void	OpenSlitTrackerPort(void)
-{
-char	usbPortPath[32]	=	"/dev/ttyACM0";
-
-	CONSOLE_DEBUG(__FUNCTION__);
-
-	gLastSlitUpdate_MS		=	millis();
-	gSlitTrackerfileDesc	=	open(usbPortPath, O_RDWR);	//* connect to port
-	if (gSlitTrackerfileDesc >= 0)
-	{
-		Set_Serial_attribs(gSlitTrackerfileDesc, B9600, 0);
-	}
-	else
-	{
-		CONSOLE_DEBUG_W_STR("Failed to open port", usbPortPath);
-	}
-}
-
-//*****************************************************************************
-void	ProcessSlitTrackerLine(char *lineBuff)
-{
-int				clockValue;
-char			*inchesPtr;
-double			inchValue;
-unsigned long	deltaMilliSecs;
-
-	CONSOLE_DEBUG(lineBuff);
-
-	if ((lineBuff[0] == '=') && (isdigit(lineBuff[1])))
-	{
-		clockValue	=	atoi(&lineBuff[1]);
-		if ((clockValue >= 0) && (clockValue < 12))
-		{
-			//	0	Distance: 151.25 cm	Inches: 59.55 delta: -0.04
-			inchesPtr	=	strstr(lineBuff, "Inches");
-			if (inchesPtr != NULL)
-			{
-				inchesPtr	+=	7;
-				while ((*inchesPtr == 0x20) || (*inchesPtr == 0x09))
-				{
-					inchesPtr++;
-				}
-				inchValue	=	AsciiToDouble(inchesPtr);
-//				CONSOLE_DEBUG_W_DBL("inchValue\t=", inchValue);
-
-				gSlitDistance[clockValue].distanceInches	=	inchValue;
-				gSlitDistance[clockValue].validData			=	true;
-				gSlitDistance[clockValue].updated			=	true;
-				gSlitDistance[clockValue].readCount++;
-
-
-				deltaMilliSecs	=	millis() - gLastSlitUpdate_MS;
-				if (deltaMilliSecs > 1000)
-				{
-					gUpdateSLitWindow	=	true;
-					gLastSlitUpdate_MS	=	millis();
-				}
-			}
-			if (clockValue == 0)
-			{
-//				UpdateSlitLog();
-			}
-		}
-		else
-		{
-			CONSOLE_DEBUG_W_STR("clockValue error\t=", lineBuff);
-		}
-	}
-}
-
-
-//*****************************************************************************
-void	GetSLitTrackerData(void)
-{
-int		readCnt;
-char	readBuffer[kReadBufferSize];
-char	theChar;
-bool	keepGoing;
-int		iii;
-int		charsRead;
-
-
-//	CONSOLE_DEBUG(__FUNCTION__);
-	if (gSlitTrackerfileDesc >= 0)
-	{
-		keepGoing	=	true;
-		readCnt		=	0;
-		while (keepGoing && (readCnt < 10))
-		{
-			charsRead	=	read(gSlitTrackerfileDesc, readBuffer, (kReadBufferSize - 2));
-			if (charsRead > 0)
-			{
-				readCnt++;
-				for (iii=0; iii<charsRead; iii++)
-				{
-					theChar		=	readBuffer[iii];
-					if ((theChar >= 0x20) || (theChar == 0x09))
-					{
-						if (gSLitTrackerByteCnt < (kLineBuffSize - 2))
-						{
-							gSlitTrackerLineBuf[gSLitTrackerByteCnt++]	=	theChar;
-							gSlitTrackerLineBuf[gSLitTrackerByteCnt]	=	0;
-						}
-					}
-					else if (theChar == 0x0d)
-					{
-						gSlitTrackerLineBuf[gSLitTrackerByteCnt]	=	0;
-						if (strlen(gSlitTrackerLineBuf) > 0)
-						{
-							ProcessSlitTrackerLine(gSlitTrackerLineBuf);
-						}
-						gSLitTrackerByteCnt							=	0;
-						gSlitTrackerLineBuf[gSLitTrackerByteCnt]	=	0;
-					}
-				}
-			}
-			else
-			{
-				keepGoing	=	false;
-			}
-		}
-//		CONSOLE_DEBUG_W_NUM("readCnt\t=", readCnt);
-		if (readCnt > 9)
-		{
-			//*	slow the read rate down
-			SendSlitTrackerCmd("+");
-		}
-	}
-	else
-	{
-//		CONSOLE_DEBUG("Slit tracker port not open");
-	}
-}
-
-
-//*****************************************************************************
-void	SendSlitTrackerCmd(const char *cmdBuffer)
-{
-int	sLen;
-ssize_t	bytesWritten;
-
-	CONSOLE_DEBUG_W_STR("cmdBuffer\t=", cmdBuffer);
-
-	if (gSlitTrackerfileDesc >= 0)
-	{
-		sLen			=	strlen(cmdBuffer);
-		bytesWritten	=	write(gSlitTrackerfileDesc, cmdBuffer, sLen);
-		if (bytesWritten < 0)
-		{
-			CONSOLE_DEBUG("write returned error");
-		}
-	}
-}
-#endif // _SLIT_TRACKER_DIRECT_
 
 #ifdef _ENABLE_SKYTRAVEL_
 	#undef _ENABLE_SKYTRAVEL_

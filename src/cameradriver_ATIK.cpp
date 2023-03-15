@@ -187,7 +187,7 @@ char				tempDeviceName[64];
 	atikOK				=	ArtemisDeviceName(cCameraID, tempDeviceName);
 	if (atikOK)
 	{
-		strcpy(cCommonProp.Name, tempDeviceName);
+		SetCommonPropertyName(tempDeviceName);
 	}
 	CONSOLE_DEBUG_W_STR("cCommonProp.Name=", cCommonProp.Name);
 	LogEvent(	"camera",

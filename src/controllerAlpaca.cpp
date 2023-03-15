@@ -44,6 +44,8 @@
 //*	Sep 26,	2022	<MLS> Fixed return data valid bug in all routines
 //*	Oct 16,	2022	<MLS> Added Alpaca_GetTemperatureLog()
 //*	Oct 26,	2022	<MLS> Fixed return data valid bug in AlpacaGetStringValue()
+//*	Mar  8,	2023	<MLS> Added AlpacaGetStringValue() with ipaddr arg
+//*	Mar 10,	2023	<MLS> Added new version of  AlpacaGetBooleanValue()
 //*****************************************************************************
 
 #ifdef _CONTROLLER_USES_ALPACA_
@@ -225,8 +227,8 @@ int		returnStrLen;
 			}
 			else
 			{
-				CONSOLE_DEBUG_W_STR("returnString    \t=", returnString);
-				CONSOLE_DEBUG_W_LONG("returnString-len\t=", strlen(returnString));
+				CONSOLE_DEBUG_W_STR(	"returnString    \t=", returnString);
+				CONSOLE_DEBUG_W_SIZE(	"returnString-len\t=", strlen(returnString));
 			}
 			validCnt++;
 		}
@@ -249,8 +251,8 @@ int		returnStrLen;
 			}
 			else
 			{
-				CONSOLE_DEBUG_W_STR("returnString    \t=", returnString);
-				CONSOLE_DEBUG_W_LONG("returnString-len\t=", strlen(returnString));
+				CONSOLE_DEBUG_W_STR(	"returnString    \t=", returnString);
+				CONSOLE_DEBUG_W_SIZE(	"returnString-len\t=", strlen(returnString));
 			}
 			validCnt++;
 		}
@@ -274,8 +276,8 @@ int		returnStrLen;
 			}
 			else
 			{
-				CONSOLE_DEBUG_W_STR("returnString    \t=", returnString);
-				CONSOLE_DEBUG_W_LONG("returnString-len\t=", strlen(returnString));
+				CONSOLE_DEBUG_W_STR(	"returnString    \t=", returnString);
+				CONSOLE_DEBUG_W_SIZE(	"returnString-len\t=", strlen(returnString));
 			}
 			validCnt++;
 		}
@@ -299,8 +301,8 @@ int		returnStrLen;
 			}
 			else
 			{
-				CONSOLE_DEBUG_W_STR("returnString    \t=", returnString);
-				CONSOLE_DEBUG_W_LONG("returnString-len\t=", strlen(returnString));
+				CONSOLE_DEBUG_W_STR(	"returnString    \t=",	returnString);
+				CONSOLE_DEBUG_W_SIZE(	"returnString-len\t=",	strlen(returnString));
 			}
 			validCnt++;
 		}
@@ -323,8 +325,8 @@ int		returnStrLen;
 			}
 			else
 			{
-				CONSOLE_DEBUG_W_STR("returnString    \t=", returnString);
-				CONSOLE_DEBUG_W_LONG("returnString-len\t=", strlen(returnString));
+				CONSOLE_DEBUG_W_STR(	"returnString    \t=",	returnString);
+				CONSOLE_DEBUG_W_SIZE(	"returnString-len\t=",	strlen(returnString));
 			}
 			validCnt++;
 		}
@@ -348,8 +350,8 @@ int		returnStrLen;
 			}
 			else
 			{
-				CONSOLE_DEBUG_W_STR("returnString    \t=", returnString);
-				CONSOLE_DEBUG_W_LONG("returnString-len\t=", strlen(returnString));
+				CONSOLE_DEBUG_W_STR(	"returnString    \t=", returnString);
+				CONSOLE_DEBUG_W_SIZE(	"returnString-len\t=", strlen(returnString));
 			}
 			validCnt++;
 		}
@@ -407,16 +409,13 @@ int				jjj;
 //	SJP_DumpJsonData(&jsonParser);
 //	CONSOLE_DEBUG_W_NUM("tokenCount_Data\t=", jsonParser.tokenCount_Data);
 	sprintf(alpacaString,	"/api/v1/%s/%d/supportedactions", deviceTypeStr, deviceNum);
-//	CONSOLE_DEBUG_W_STR("Calling GetJsonResponse() with:", alpacaString);
 	validData	=	GetJsonResponse(	deviceAddress,
 										devicePort,
 										alpacaString,
 										NULL,
 										&jsonParser);
-//	CONSOLE_DEBUG("Returned from GetJsonResponse");
 	if (validData)
 	{
-		cHas_readall	=	false;
 		jjj	=	0;
 		while (jjj < jsonParser.tokenCount_Data)
 		{
@@ -461,10 +460,11 @@ bool	Controller::AlpacaGetSupportedActions(const char *deviceTypeStr, const int 
 bool			validData;
 
 	CONSOLE_DEBUG(__FUNCTION__);
-	validData	=	AlpacaGetSupportedActions(	&cDeviceAddress,
-												cPort,
-												deviceTypeStr,
-												deviceNum);
+	cHas_readall	=	false;
+	validData		=	AlpacaGetSupportedActions(	&cDeviceAddress,
+													cPort,
+													deviceTypeStr,
+													deviceNum);
 	return(validData);
 }
 
@@ -496,7 +496,8 @@ void	Controller::AlpacaProcessSupportedActions(const char *deviceTypeStr, const 
 bool	Controller::AlpacaGetStatus_ReadAll(	sockaddr_in	*deviceAddress,
 												int			devicePort,
 												const char	*deviceTypeStr,
-												const int	deviceNum)
+												const int	deviceNum,
+												const bool	enableDebug)
 {
 SJP_Parser_t	jsonParser;
 bool			validData;
@@ -516,6 +517,10 @@ int				jjj;
 										&jsonParser);
 	if (validData)
 	{
+		if (enableDebug)
+		{
+			SJP_DumpJsonData(&jsonParser);
+		}
 		cLastAlpacaErrNum	=	kASCOM_Err_Success;
 		for (jjj=0; jjj<jsonParser.tokenCount_Data; jjj++)
 		{
@@ -860,11 +865,72 @@ bool			myReturnDataIsValid	=	true;
 }
 
 //*****************************************************************************
-bool	Controller::AlpacaGetStringValue(	const char	*alpacaDevice,
-											const char	*alpacaCmd,
-											const char	*dataString,
-											char		*returnString,
-											bool		*rtnValidData)
+bool	Controller::AlpacaGetStringValue(	struct sockaddr_in	deviceAddress,
+											int					port,
+											int					alpacaDevNum,
+											const char			*alpacaDevice,
+											const char			*alpacaCmd,
+											const char			*dataString,
+											char				*returnString,
+											bool				*rtnValidData)
+{
+SJP_Parser_t	jsonParser;
+bool			validData;
+char			alpacaString[128];
+int				jjj;
+bool			myReturnDataIsValid	=	true;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+	SJP_Init(&jsonParser);
+	sprintf(alpacaString,	"/api/v1/%s/%d/%s", alpacaDevice, cAlpacaDevNum, alpacaCmd);
+
+	validData	=	GetJsonResponse(	&deviceAddress,
+										port,
+										alpacaString,
+										dataString,
+										&jsonParser);
+
+	if (validData)
+	{
+		for (jjj=0; jjj<jsonParser.tokenCount_Data; jjj++)
+		{
+
+			if (strcasecmp(jsonParser.dataList[jjj].keyword, "VALUE") == 0)
+			{
+				if (returnString != NULL)
+				{
+					strcpy(returnString, jsonParser.dataList[jjj].valueString);
+				}
+			}
+		}
+		cLastAlpacaErrNum	=	AlpacaCheckForErrors(&jsonParser, cLastAlpacaErrStr);
+		if (cLastAlpacaErrNum != kASCOM_Err_Success)
+		{
+			CONSOLE_DEBUG_W_NUM("cLastAlpacaErrNum        \t=",	cLastAlpacaErrNum);
+			CONSOLE_DEBUG_W_STR("alpacaString     \t=",	alpacaString);
+			myReturnDataIsValid	=	false;
+		}
+	}
+	else
+	{
+		myReturnDataIsValid	=	false;
+		cReadFailureCnt++;
+	}
+	//*	does the calling routine want to know if the data was good
+	if (rtnValidData != NULL)
+	{
+		*rtnValidData	=	myReturnDataIsValid;
+	}
+//	Set_SendRequestLibDebug(false);
+	return(validData);
+}
+
+//*****************************************************************************
+bool	Controller::AlpacaGetStringValue(	const char			*alpacaDevice,
+											const char			*alpacaCmd,
+											const char			*dataString,
+											char				*returnString,
+											bool				*rtnValidData)
 {
 SJP_Parser_t	jsonParser;
 bool			validData;
@@ -1010,7 +1076,6 @@ bool		validData;
 											dataString,
 											returnValue,
 											rtnValidData);
-
 	return(validData);
 }
 
@@ -1084,7 +1149,80 @@ bool			myReturnDataIsValid	=	true;
 	return(validData);
 }
 
+//*****************************************************************************
+bool	Controller::AlpacaGetBooleanValue(	struct sockaddr_in	deviceAddress,
+											int					port,
+											int					alpacaDevNum,
+											const char			*alpacaDevice,
+											const char			*alpacaCmd,
+											const char			*dataString,
+											bool				*returnValue,
+											bool				*rtnValidData)
+{
+SJP_Parser_t	jsonParser;
+bool			validData;
+char			alpacaString[128];
+int				jjj;
+bool			myBooleanValue;
+bool			myReturnDataIsValid	=	true;
 
+
+	SJP_Init(&jsonParser);
+	sprintf(alpacaString,	"/api/v1/%s/%d/%s", alpacaDevice, alpacaDevNum, alpacaCmd);
+//	if (printDebug)
+//	{
+//		CONSOLE_DEBUG_W_2STR(__FUNCTION__, alpacaDevice, alpacaCmd);
+//		CONSOLE_DEBUG(alpacaString);
+//	}
+
+	validData	=	GetJsonResponse(	&deviceAddress,
+										port,
+										alpacaString,
+										dataString,
+										&jsonParser);
+	if (validData)
+	{
+		for (jjj=0; jjj<jsonParser.tokenCount_Data; jjj++)
+		{
+			//*	is debugging enabled
+//			if (printDebug)
+//			{
+//				CONSOLE_DEBUG_W_2STR("json=",	jsonParser.dataList[jjj].keyword,
+//												jsonParser.dataList[jjj].valueString);
+//			}
+
+			if (strcasecmp(jsonParser.dataList[jjj].keyword, "VALUE") == 0)
+			{
+				myBooleanValue	=	IsTrueFalse(jsonParser.dataList[jjj].valueString);
+
+				if (returnValue != NULL)
+				{
+					*returnValue	=	myBooleanValue;
+				}
+			}
+		}
+		cLastAlpacaErrNum	=	AlpacaCheckForErrors(&jsonParser, cLastAlpacaErrStr);
+		if (cLastAlpacaErrNum != kASCOM_Err_Success)
+		{
+//			CONSOLE_DEBUG_W_NUM("cLastAlpacaErrNum\t=",	cLastAlpacaErrNum);
+//			CONSOLE_DEBUG_W_STR("alpacaString     \t=",	alpacaString);
+			myReturnDataIsValid	=	false;
+		}
+	}
+	else
+	{
+		myReturnDataIsValid	=	false;
+		cReadFailureCnt++;
+		CONSOLE_DEBUG_W_2STR("Failed", alpacaString, dataString);
+	}
+	//*	does the calling routine want to know if the data was good
+	if (rtnValidData != NULL)
+	{
+		*rtnValidData	=	myReturnDataIsValid;
+	}
+	return(validData);
+
+}
 
 //*****************************************************************************
 bool	Controller::AlpacaGetBooleanValue(	const char	*alpacaDevice,

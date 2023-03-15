@@ -16,6 +16,10 @@
 //*	Mar 12,	2022	<MLS> Added TYPE_BinaryImageHdr struct to Image controller
 //*	Nov 15,	2022	<MLS> Added ControllerImage(filePath);
 //*	Nov 15,	2022	<MLS> Added InitClassVariables()
+//*	Feb 25,	2023	<MLS> Added SetDownloadInfo()
+//*	Feb 26,	2023	<MLS> Added histogram to image window
+//*	Feb 26,	2023	<MLS> Added CalculateHistogramArray()
+//*	Feb 28,	2023	<MLS> Added SaveHistogram()
 //*****************************************************************************
 
 #ifdef _ENABLE_CTRL_IMAGE_
@@ -48,6 +52,7 @@
 
 #include	"controller.h"
 #include	"controller_image.h"
+#include	"windowtab_imageinfo.h"
 
 
 
@@ -59,6 +64,7 @@ extern char	gFullVersionString[];
 enum
 {
 	kTab_Image	=	1,
+	kTab_ImageInfo,
 	kTab_About,
 
 	kTab_Count
@@ -111,6 +117,18 @@ ControllerImage::ControllerImage(	const char			*argWindowName,
 		CONSOLE_DEBUG_W_NUM("Dimension1             \t=",	cBinaryImageHdr.Dimension1);
 		CONSOLE_DEBUG_W_NUM("Dimension2             \t=",	cBinaryImageHdr.Dimension2);
 		CONSOLE_DEBUG_W_NUM("Dimension3             \t=",	cBinaryImageHdr.Dimension3);
+
+		SetWidgetNumber(kTab_ImageInfo, kImageInfo_MetadataVersionVal,			cBinaryImageHdr.MetadataVersion);
+		SetWidgetNumber(kTab_ImageInfo, kImageInfo_ErrorNumberVal,				cBinaryImageHdr.ErrorNumber);
+		SetWidgetNumber(kTab_ImageInfo, kImageInfo_ClientTransactionIDVal,		(int32_t)cBinaryImageHdr.ClientTransactionID);
+		SetWidgetNumber(kTab_ImageInfo, kImageInfo_ServerTransactionIDVal,		(int32_t)cBinaryImageHdr.ServerTransactionID);
+		SetWidgetNumber(kTab_ImageInfo, kImageInfo_DataStartVal,				cBinaryImageHdr.DataStart);
+		SetWidgetText(	kTab_ImageInfo, kImageInfo_ImageElementTypeVal,			elementTypeStr);
+		SetWidgetText(	kTab_ImageInfo, kImageInfo_TransmissionElementTypeVal,	transmitTypeStr);
+		SetWidgetNumber(kTab_ImageInfo, kImageInfo_RankVal,						cBinaryImageHdr.Rank);
+		SetWidgetNumber(kTab_ImageInfo, kImageInfo_Dimension1Val,				cBinaryImageHdr.Dimension1);
+		SetWidgetNumber(kTab_ImageInfo, kImageInfo_Dimension2Val,				cBinaryImageHdr.Dimension2);
+		SetWidgetNumber(kTab_ImageInfo, kImageInfo_Dimension3Val,				cBinaryImageHdr.Dimension3);
 	}
 
 
@@ -162,7 +180,7 @@ ControllerImage::ControllerImage(	const char	*argWindowName,
 //**************************************************************************************
 ControllerImage::~ControllerImage(void)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 	SetWidgetImage(kTab_Image, kImageDisplay_ImageDisplay, NULL);
 #ifdef _USE_OPENCV_CPP_
 //++	#warning "OpenCV++ not tested"
@@ -198,6 +216,7 @@ ControllerImage::~ControllerImage(void)
 	//--------------------------------------------
 	//*	delete the window tab objects
 	DELETE_OBJ_IF_VALID(cImageTabObjPtr);
+	DELETE_OBJ_IF_VALID(cImageInfoTabObjcPtr);
 	DELETE_OBJ_IF_VALID(cAboutBoxTabObjPtr);
 }
 
@@ -209,10 +228,13 @@ void	ControllerImage::InitClassVariables(void)
 	cDisplayedImage		=	NULL;
 	cColorImage			=	NULL;
 
-	cImageTabObjPtr		=	NULL;
-	cAboutBoxTabObjPtr	=	NULL;
+	cImageTabObjPtr			=	NULL;
+	cImageInfoTabObjcPtr	=	NULL;
+	cAboutBoxTabObjPtr		=	NULL;
 
-	CONSOLE_DEBUG_W_LONG("sizeof(TYPE_BinaryImageHdr)", sizeof(TYPE_BinaryImageHdr));
+	strcpy(cImageFileName, "unkownimage");
+
+	CONSOLE_DEBUG_W_SIZE("sizeof(TYPE_BinaryImageHdr)", sizeof(TYPE_BinaryImageHdr));
 	memset((void *)&cBinaryImageHdr, 0, sizeof(TYPE_BinaryImageHdr));
 
 	SetupWindowControls();
@@ -228,6 +250,7 @@ void	ControllerImage::SetupWindowControls(void)
 
 	SetTabCount(kTab_Count);
 
+	//---------------------------------------------------------------------
 	SetTabText(kTab_Image,		"Image");
 	CONSOLE_DEBUG(__FUNCTION__);
 	cImageTabObjPtr		=	new WindowTabImage(	cWidth, cHeight, cBackGrndColor, cWindowName);
@@ -238,6 +261,18 @@ void	ControllerImage::SetupWindowControls(void)
 		cImageTabObjPtr->SetParentObjectPtr(this);
 	}
 
+	//---------------------------------------------------------------------
+	SetTabText(kTab_ImageInfo,		"Image Info");
+	CONSOLE_DEBUG(__FUNCTION__);
+	cImageInfoTabObjcPtr		=	new WindowTabImageInfo(	cWidth, cHeight, cBackGrndColor, cWindowName, &cBinaryImageHdr);
+	CONSOLE_DEBUG(__FUNCTION__);
+	if (cImageInfoTabObjcPtr != NULL)
+	{
+		SetTabWindow(kTab_ImageInfo,	cImageInfoTabObjcPtr);
+		cImageInfoTabObjcPtr->SetParentObjectPtr(this);
+	}
+
+	//---------------------------------------------------------------------
 	SetTabText(kTab_About,		"About");
 	cAboutBoxTabObjPtr		=	new WindowTabAbout(	cWidth, cHeight, cBackGrndColor, cWindowName);
 	if (cAboutBoxTabObjPtr != NULL)
@@ -316,15 +351,13 @@ void	ControllerImage::DrawWidgetImage(TYPE_WIDGET *theWidget)
 		if (cImageTabObjPtr->cImageZoomState)
 		{
 			CONSOLE_DEBUG(__FUNCTION__);
-			CONSOLE_DEBUG("Zoomed");
+//			CONSOLE_DEBUG("Zoomed");
 			cImageTabObjPtr->DrawFullScaleIamge();
 			Controller::DrawWidgetImage(theWidget, cImageTabObjPtr->cOpenCVdisplayedImage);
-
 		}
 		else
 		{
-
-			CONSOLE_DEBUG("Normal");
+//			CONSOLE_DEBUG("Normal");
 			Controller::DrawWidgetImage(theWidget);
 		}
 	}
@@ -344,11 +377,11 @@ int		smallDisplayHeight;
 int		reduceFactor;
 int		newImgWidth;
 int		newImgHeight;
-int		newImgBytesPerPixel;
+//int		newImgBytesPerPixel;
 int		openCVerr;
 bool	validImg;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	if (cDownLoadedImage != NULL)
 	{
@@ -370,7 +403,7 @@ bool	validImg;
 		//	https://docs.opencv.org/3.4/d3/d63/classcv_1_1Mat.html
 		newImgWidth			=	newOpenCVImage->cols;
 		newImgHeight		=	newOpenCVImage->rows;
-		newImgBytesPerPixel	=	newOpenCVImage->step[1];
+//		newImgBytesPerPixel	=	newOpenCVImage->step[1];
 		validImg			=	true;
 		if ((newImgWidth < 100) || (newImgWidth > 10000))
 		{
@@ -388,38 +421,38 @@ bool	validImg;
 		//--------------------------------------------------------------
 		if (validImg)
 		{
-			CONSOLE_DEBUG_W_NUM("newImgBytesPerPixel\t=", newImgBytesPerPixel);
+//			CONSOLE_DEBUG_W_NUM("newImgBytesPerPixel\t=", newImgBytesPerPixel);
 			cDownLoadedImage	=	ConvertImageToRGB(newOpenCVImage);
 
 			//*	the downloaded image needs to be copied and/or resized to the displayed image
 			if (cDownLoadedImage != NULL)
 			{
-				CONSOLE_DEBUG_W_LONG("cDownLoadedImage->step[0]\t=",	cDownLoadedImage->step[0]);
-				CONSOLE_DEBUG_W_LONG("cDownLoadedImage->step[1]\t=",	cDownLoadedImage->step[1]);
+//				CONSOLE_DEBUG_W_LONG("cDownLoadedImage->step[0]\t=",	cDownLoadedImage->step[0]);
+//				CONSOLE_DEBUG_W_LONG("cDownLoadedImage->step[1]\t=",	cDownLoadedImage->step[1]);
 
-				CONSOLE_DEBUG("Creating small image");
+//				CONSOLE_DEBUG("Creating small image");
 				reduceFactor		=	1;
 				smallDispalyWidth	=	cDownLoadedImage->cols;
 				smallDisplayHeight	=	cDownLoadedImage->rows;
 
-				CONSOLE_DEBUG_W_NUM("cDownLoadedImage->cols\t=",	cDownLoadedImage->cols);
-				CONSOLE_DEBUG_W_NUM("cDownLoadedImage->rows\t=",	cDownLoadedImage->rows);
+//				CONSOLE_DEBUG_W_NUM("cDownLoadedImage->cols\t=",	cDownLoadedImage->cols);
+//				CONSOLE_DEBUG_W_NUM("cDownLoadedImage->rows\t=",	cDownLoadedImage->rows);
 
 
 				int		maxWindowWidth	=	800;
 				int		maxWindowHeight	=	700;
 
-				CONSOLE_DEBUG_W_NUM("smallDisplayHeight\t=", smallDisplayHeight);
+//				CONSOLE_DEBUG_W_NUM("smallDisplayHeight\t=", smallDisplayHeight);
 				while ((smallDispalyWidth > maxWindowWidth) || (smallDisplayHeight > (maxWindowHeight - 50)))
 				{
 					reduceFactor++;
 					smallDispalyWidth	=	cDownLoadedImage->cols / reduceFactor;
 					smallDisplayHeight	=	cDownLoadedImage->rows / reduceFactor;
-					CONSOLE_DEBUG_W_NUM("smallDisplayHeight\t=", smallDisplayHeight);
+//					CONSOLE_DEBUG_W_NUM("smallDisplayHeight\t=", smallDisplayHeight);
 				}
-				CONSOLE_DEBUG_W_NUM("reduceFactor\t=", reduceFactor);
-				CONSOLE_DEBUG_W_NUM("smallDispalyWidth \t=",	smallDispalyWidth);
-				CONSOLE_DEBUG_W_NUM("smallDisplayHeight\t=",	smallDisplayHeight);
+//				CONSOLE_DEBUG_W_NUM("reduceFactor\t=", reduceFactor);
+//				CONSOLE_DEBUG_W_NUM("smallDispalyWidth \t=",	smallDispalyWidth);
+//				CONSOLE_DEBUG_W_NUM("smallDisplayHeight\t=",	smallDisplayHeight);
 
 				cDisplayedImage	=	new cv::Mat(cv::Size(	smallDispalyWidth,
 															smallDisplayHeight),
@@ -427,11 +460,11 @@ bool	validImg;
 
 				if (cDisplayedImage != NULL)
 				{
-					CONSOLE_DEBUG_W_LONG("cDisplayedImage->step[0]\t=",	cDisplayedImage->step[0]);
-					CONSOLE_DEBUG_W_LONG("cDisplayedImage->step[1]\t=",	cDisplayedImage->step[1]);
-					CONSOLE_DEBUG("Resizing image");
+//					CONSOLE_DEBUG_W_LONG("cDisplayedImage->step[0]\t=",	cDisplayedImage->step[0]);
+//					CONSOLE_DEBUG_W_LONG("cDisplayedImage->step[1]\t=",	cDisplayedImage->step[1]);
+//					CONSOLE_DEBUG("Resizing image");
 
-					CONSOLE_DEBUG("Original is 8 bit color (3 channels)");
+//					CONSOLE_DEBUG("Original is 8 bit color (3 channels)");
 					cv::resize(	*cDownLoadedImage,
 								*cDisplayedImage,
 								cDisplayedImage->size(),
@@ -474,6 +507,7 @@ bool	validImg;
 		CONSOLE_DEBUG("Image parameters invalid !!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 //		CONSOLE_ABORT(__FUNCTION__);
 	}
+	CalculateHistogramArray();
 }
 
 #else
@@ -631,6 +665,23 @@ int		imgChannels;
 	SetWidgetText(kTab_Image, kImageDisplay_Exposure, textString);
 }
 
+//**************************************************************************************
+void	ControllerImage::SetDownloadInfo(double download_MBytes, double download_seconds)
+{
+double	download_MB_per_sec;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+	download_MB_per_sec	=	0.0;
+	if (download_seconds > 0.0)
+	{
+		download_MB_per_sec	=	download_MBytes / download_seconds;
+	}
+	SetWidgetNumber(kTab_ImageInfo,	kImageInfo_DownLoadMBytesVal,	download_MBytes);
+	SetWidgetNumber(kTab_ImageInfo,	kImageInfo_DownLoadSecondsVal,	download_seconds);
+	SetWidgetNumber(kTab_ImageInfo,	kImageInfo_DownLoadSpeedVal,	download_MB_per_sec);
+
+}
+
 #ifdef _USE_OPENCV_CPP_
 //#warning "OpenCV++ not finished"
 //**************************************************************************************
@@ -638,10 +689,10 @@ void	ControllerImage::CopyImageToLiveImage(cv::Mat *newOpenCVImage)
 {
 size_t	byteCount_src;
 size_t	byteCount_old;
-int		newImgWidth;
+//int		newImgWidth;
 int		newImgHeight;
 int		newImgRowStepSize;
-int		newImgChannels;
+//int		newImgChannels;
 
 int		oldImgHeight;
 int		oldImgRowStepSize;
@@ -660,38 +711,32 @@ size_t	byteCount_dsp;
 	//*	this is just an extra check, it was crashing on testing
 	if ((cDownLoadedImage != NULL) && (newOpenCVImage != NULL))
 	{
-		DumpCVMatStruct(newOpenCVImage,		"newOpenCVImage");
-		DumpCVMatStruct(cDownLoadedImage,	"cDownLoadedImage");
-		newImgWidth			=	newOpenCVImage->cols;
+//		DumpCVMatStruct(__FUNCTION__, newOpenCVImage,	"newOpenCVImage");
+//		DumpCVMatStruct(__FUNCTION__, cDownLoadedImage,	"cDownLoadedImage");
+//		newImgWidth			=	newOpenCVImage->cols;
 		newImgHeight		=	newOpenCVImage->rows;
 		newImgRowStepSize	=	newOpenCVImage->step[0];
-		newImgChannels		=	newOpenCVImage->step[1];
+//		newImgChannels		=	newOpenCVImage->step[1];
 
 		byteCount_src		=	newImgHeight * newImgRowStepSize;
-
-		CONSOLE_DEBUG_W_NUM("newImgWidth\t=",		newImgWidth);
-		CONSOLE_DEBUG_W_NUM("newImgHeight\t=",		newImgHeight);
-		CONSOLE_DEBUG_W_NUM("newImgRowStepSize\t=",	newImgRowStepSize);
-		CONSOLE_DEBUG_W_NUM("newImgChannels\t=",	newImgChannels);
 
 		oldImgHeight		=	cDownLoadedImage->rows;
 		oldImgRowStepSize	=	cDownLoadedImage->step[0];
 
 		byteCount_old		=	oldImgHeight * oldImgRowStepSize;
-		CONSOLE_DEBUG_W_LONG("byteCount_src\t=",	byteCount_src);
-		CONSOLE_DEBUG_W_LONG("byteCount_old\t=",	byteCount_old);
-//		CONSOLE_ABORT(__FUNCTION__);
+//		CONSOLE_DEBUG_W_LONG("byteCount_src\t=",	byteCount_src);
+//		CONSOLE_DEBUG_W_LONG("byteCount_old\t=",	byteCount_old);
 
 		if (byteCount_src == byteCount_old)
 		{
-			CONSOLE_DEBUG("memcpy to cDownLoadedImage");
+//			CONSOLE_DEBUG("memcpy to cDownLoadedImage");
 			memcpy(cDownLoadedImage->data, newOpenCVImage->data, byteCount_src);
 		}
 
 		//*	double check the displayed image
 		if (cDisplayedImage != NULL)
 		{
-			DumpCVMatStruct(cDisplayedImage, "cDisplayedImage");
+//			DumpCVMatStruct(__FUNCTION__, cDisplayedImage, "cDisplayedImage");
 			dspImgHeight		=	cDisplayedImage->rows;
 			dspImgRowStepSize	=	cDisplayedImage->step[0];
 			byteCount_dsp		=	dspImgHeight * dspImgRowStepSize;
@@ -703,9 +748,10 @@ size_t	byteCount_dsp;
 			}
 			else
 			{
+				//*	now make a small copy that will fit on the screen.
 				CONSOLE_DEBUG("byteCount_dsp != byteCount_old");
-				CONSOLE_DEBUG_W_LONG("byteCount_dsp\t=",	byteCount_dsp);
-				CONSOLE_DEBUG_W_LONG("byteCount_old\t=",	byteCount_old);
+				CONSOLE_DEBUG_W_SIZE("byteCount_dsp\t=",	byteCount_dsp);
+				CONSOLE_DEBUG_W_SIZE("byteCount_old\t=",	byteCount_old);
 				cv::resize(	*newOpenCVImage,
 							*cDisplayedImage,
 							cDisplayedImage->size(),
@@ -723,6 +769,7 @@ size_t	byteCount_dsp;
 	{
 		CONSOLE_DEBUG("((cDownLoadedImage != NULL) && (newOpenCVImage != NULL))");
 	}
+	CalculateHistogramArray();
 }
 #else
 //**************************************************************************************
@@ -731,7 +778,7 @@ void	ControllerImage::CopyImageToLiveImage(IplImage *newOpenCVImage)
 size_t				byteCount_src;
 size_t				byteCount_dst;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	//*	this is just an extra check, it was crashing on testing
 	if ((cDownLoadedImage != NULL) && (newOpenCVImage != NULL))
 	{
@@ -796,9 +843,10 @@ void	ControllerImage::UpdateLiveWindowImage(IplImage *newOpenCVImage, const char
 #endif // _USE_OPENCV_CPP_
 {
 bool			imagesAreTheSame;
+#ifdef _USE_OPENCV_CPP_
 unsigned int	rowStepSize;
 unsigned int	nChannels;
-
+#endif
 
 	CONSOLE_DEBUG("-------------------Start");
 	CONSOLE_DEBUG(__FUNCTION__);
@@ -940,6 +988,7 @@ unsigned int	nChannels;
 	//*	was a file name supplied
 	if (imageFileName != NULL)
 	{
+		strcpy(cImageFileName, imageFileName);
 		SetWidgetText(kTab_Image, kImageDisplay_Title, imageFileName);
 	}
 
@@ -977,6 +1026,251 @@ char	lineBuff[64];
 	SetWidgetNumber(kTab_Image, kImageDisplay_FramesSaved,	0);
 
 	cUpdateWindow	=	true;
+}
+
+
+//*****************************************************************************
+void	ControllerImage::CalculateHistogramArray(void)
+{
+int32_t			imageDataLen;
+int32_t			currPixValue;
+int32_t			iii;
+int32_t			ccc;
+//uint16_t		*imageDataPtr16bit;
+uint8_t			*imageDataPtr8bit;
+int32_t			redValue;
+int32_t			grnValue;
+int32_t			bluValue;
+int32_t			lumValue;		//*	luminance value
+int32_t			peakPixelIdx;
+int32_t			peakPixelCount;
+bool			lookingForMin;
+int				imgWidth;
+int				imgHeight;
+int				imgChannels;
+//int				imgRowStepSize;
+uint8_t			*imgDataPtr;
+char			textString[32];
+
+//	SETUP_TIMING();
+//
+//	CONSOLE_DEBUG(__FUNCTION__);
+//	START_TIMING();
+
+	cPeakHistogramValue	=	0;
+	cMaxHistogramValue	=	0;
+	cMaxHistogramPixCnt	=	0;
+	cMaxRedValue		=	0;
+	cMaxGrnValue		=	0;
+	cMaxBluValue		=	0;
+	cMaxGryValue		=	0;
+
+	//*	clear out the histogram data array
+	memset(cHistogramLum,	0,	sizeof(cHistogramLum));
+	memset(cHistogramRed,	0,	sizeof(cHistogramRed));
+	memset(cHistogramGrn,	0,	sizeof(cHistogramGrn));
+	memset(cHistogramBlu,	0,	sizeof(cHistogramBlu));
+
+	if (cDownLoadedImage != NULL)
+	{
+
+	#ifdef _USE_OPENCV_CPP_
+		imgWidth		=	cDownLoadedImage->cols;
+		imgHeight		=	cDownLoadedImage->rows;
+//		imgRowStepSize	=	cDownLoadedImage->step[0];
+		imgChannels		=	cDownLoadedImage->step[1];
+		imgDataPtr		=	cDownLoadedImage->data;
+//		CONSOLE_DEBUG_W_LONG("cDownLoadedImage->step[0]\t=",	cDownLoadedImage->step[0]);
+//		CONSOLE_DEBUG_W_LONG("cDownLoadedImage->step[1]\t=",	cDownLoadedImage->step[1]);
+
+	#else
+		imgWidth		=	cDownLoadedImage->width;
+		imgHeight		=	cDownLoadedImage->height;
+		imgChannels		=	cDownLoadedImage->nChannels;
+		imgDataPtr		=	NULL;
+	#endif // _USE_OPENCV_CPP_
+		//*	calculate the size of the image
+		imageDataLen	=	imgWidth * imgHeight;
+
+//		CONSOLE_DEBUG_W_NUM("imgWidth      \t=",	imgWidth);
+//		CONSOLE_DEBUG_W_NUM("imgHeight     \t=",	imgHeight);
+//		CONSOLE_DEBUG_W_NUM("imgChannels   \t=",	imgChannels);
+//		CONSOLE_DEBUG_W_NUM("imgRowStepSize\t=",	imgRowStepSize);
+//		CONSOLE_DEBUG_W_NUM("imageDataLen  \t=",	imageDataLen);
+
+		if (imgDataPtr != NULL)
+		{
+			//*	figure out what type of image it is
+			switch(imgChannels)
+			{
+				case 1:
+					imageDataPtr8bit	=	(uint8_t *)imgDataPtr;
+					for (iii=0; iii<imageDataLen; iii++)
+					{
+						currPixValue	=	imageDataPtr8bit[iii] & 0x00ff;
+
+						cHistogramLum[currPixValue]++;
+
+						if (currPixValue > cMaxGryValue)
+						{
+							cMaxGryValue	=	currPixValue;
+						}
+					}
+					break;
+
+//				case kImageType_RAW16:
+//					imageDataPtr16bit	=	(uint16_t *)cCameraDataBuffer;
+//					for (iii=0; iii<imageDataLen; iii++)
+//					{
+//						//*	for 16 bit data, we shift it right 8 bits
+//						currPixValue	=	imageDataPtr16bit[iii] & 0x00ffff;
+//						currPixValue	=	(currPixValue >> 8) & 0x00ff;
+//						cHistogramLum[currPixValue]++;
+//					}
+//					break;
+
+
+				case 3:
+//					CONSOLE_DEBUG("Processing histogram for RGB image");
+					imageDataPtr8bit	=	(uint8_t *)imgDataPtr;
+					ccc					=	0;
+					for (iii=0; iii<imageDataLen; iii++)
+					{
+						//*	openCV uses BGR instead of RGB
+						//*	https://docs.opencv.org/master/df/d24/tutorial_js_image_display.html
+						bluValue	=	imageDataPtr8bit[ccc + 0] & 0x00ff;
+						grnValue	=	imageDataPtr8bit[ccc + 1] & 0x00ff;
+						redValue	=	imageDataPtr8bit[ccc + 2] & 0x00ff;
+						cHistogramRed[redValue]++;
+						cHistogramGrn[grnValue]++;
+						cHistogramBlu[bluValue]++;
+
+						if (redValue > cMaxRedValue)
+						{
+							cMaxRedValue	=	redValue;
+						}
+						if (grnValue > cMaxGrnValue)
+						{
+							cMaxGrnValue	=	grnValue;
+						}
+						if (bluValue > cMaxBluValue)
+						{
+							cMaxBluValue	=	bluValue;
+						}
+						lumValue	=	(redValue + grnValue + bluValue) / 3;
+						if (lumValue > cMaxGryValue)
+						{
+							cMaxGryValue	=	lumValue;
+						}
+						ccc	+=	3;
+					}
+					//*	now calculate the luminance
+					for (iii=0; iii<256; iii++)
+					{
+						lumValue	=	cHistogramRed[iii];
+						lumValue	+=	cHistogramGrn[iii];
+						lumValue	+=	cHistogramBlu[iii];
+						lumValue	=	(lumValue / 3);
+
+						cHistogramLum[iii]	=	lumValue;
+					}
+
+					break;
+
+				default:
+					break;
+
+			}
+		}
+		//*	now go through the array and find the peak value and max value
+		peakPixelIdx		=	-1;
+		peakPixelCount		=	0;
+		lookingForMin		=	true;
+		for (iii=0; iii<256; iii++)
+		{
+			//*	find the minimum value
+			if (lookingForMin && (cHistogramLum[iii] > 0))
+			{
+				cMinHistogramValue	=	iii;
+				lookingForMin		=	false;
+			}
+			//*	find the maximum value
+			if (cHistogramLum[iii] > 0)
+			{
+				cMaxHistogramValue	=	iii;
+			}
+			//*	find the peak value
+			if (cHistogramLum[iii] > peakPixelCount)
+			{
+				peakPixelIdx	=	iii;
+				peakPixelCount	=	cHistogramLum[iii];
+			}
+		}
+		cPeakHistogramValue	=	peakPixelIdx;
+
+		//*	look for maximum pixel counts
+		cMaxHistogramPixCnt	=	0;
+
+		//*	purposely skip the first and last
+//		for (iii=1; iii<255; iii++)
+//		for (iii=5; iii<250; iii++)
+		for (iii=0; iii<256; iii++)
+		{
+			if (cHistogramLum[iii] > cMaxHistogramPixCnt)
+			{
+				cMaxHistogramPixCnt	=	cHistogramLum[iii];
+			}
+			if (cHistogramRed[iii] > cMaxHistogramPixCnt)
+			{
+				cMaxHistogramPixCnt	=	cHistogramRed[iii];
+			}
+			if (cHistogramGrn[iii] > cMaxHistogramPixCnt)
+			{
+				cMaxHistogramPixCnt	=	cHistogramGrn[iii];
+			}
+			if (cHistogramBlu[iii] > cMaxHistogramPixCnt)
+			{
+				cMaxHistogramPixCnt	=	cHistogramBlu[iii];
+			}
+		}
+
+//		DEBUG_TIMING("Time to calculate histogram data (milliseconds)\t=");
+
+//		CONSOLE_DEBUG_W_NUM("cMinHistogramValue\t=",	cMinHistogramValue);
+//		CONSOLE_DEBUG_W_NUM("cMaxHistogramValue\t=",	cMaxHistogramValue);
+//		CONSOLE_DEBUG_W_NUM("cPeakHistogramValue\t=",	cPeakHistogramValue);
+//		CONSOLE_DEBUG_W_NUM("cMaxHistogramPixCnt\t=",	cMaxHistogramPixCnt);
+//
+//		CONSOLE_DEBUG_W_NUM("cMaxRedValue\t=",	cMaxRedValue);
+//		CONSOLE_DEBUG_W_NUM("cMaxGrnValue\t=",	cMaxGrnValue);
+//		CONSOLE_DEBUG_W_NUM("cMaxBluValue\t=",	cMaxBluValue);
+//		CONSOLE_DEBUG_W_NUM("cMaxGryValue\t=",	cMaxGryValue);
+
+		sprintf(textString,	"R=%3.0f%%", ((100.0 * cMaxRedValue) / 255));
+		SetWidgetText(		kTab_Image, kImageDisplay_HistRedPerct, textString);
+
+		sprintf(textString,	"G=%3.0f%%", ((100.0 * cMaxGrnValue) / 255));
+		SetWidgetText(		kTab_Image, kImageDisplay_HistGrnPerct, textString);
+
+		sprintf(textString,	"B=%3.0f%%", ((100.0 * cMaxBluValue) / 255));
+		SetWidgetText(		kTab_Image, kImageDisplay_HistBluPerct, textString);
+
+		SetWidgetProgress(	kTab_Image, kImageDisplay_LumBar, cMaxGryValue, 255);
+		SetWidgetProgress(	kTab_Image, kImageDisplay_RedBar, cMaxRedValue, 255);
+		SetWidgetProgress(	kTab_Image, kImageDisplay_GrnBar, cMaxGrnValue, 255);
+		SetWidgetProgress(	kTab_Image, kImageDisplay_BluBar, cMaxBluValue, 255);
+	}
+	else
+	{
+		CONSOLE_DEBUG("cDownLoadedImage is NULL");
+	}
+}
+
+//*****************************************************************************
+void	ControllerImage::SaveHistogram(void)
+{
+	CONSOLE_DEBUG(__FUNCTION__);
+
 }
 
 #endif // _ENABLE_CTRL_IMAGE_

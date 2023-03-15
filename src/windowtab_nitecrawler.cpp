@@ -27,6 +27,7 @@
 //*	Dec 28,	2020	<MLS> Added ZERO button to zero Rotator and Aux values
 //*	Feb 19,	2022	<MLS> Added DrawRotatorCompass()
 //*	Sep  5,	2022	<MLS> Made focuser controller wider, adjusted compass routine
+//*	Feb 23,	2020	<MLS> Re-arranged focuser title to be consistent with other windows
 //*****************************************************************************
 
 #ifdef _ENABLE_CTRL_FOCUSERS_
@@ -85,7 +86,7 @@ WindowTabNitecrawler::WindowTabNitecrawler(	const int	xSize,
 //**************************************************************************************
 WindowTabNitecrawler::~WindowTabNitecrawler(void)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 }
 
 //**************************************************************************************
@@ -109,7 +110,8 @@ int		alpacaLogoBottom;
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	//==========================================
-	yLoc			=	cTabVertOffset;
+	yLoc	=	cTabVertOffset;
+	yLoc	=	SetTitleBox(kNiteCrawlerTab_Model, kNiteCrawlerTab_Connected, yLoc, "NiteCrawler");
 
 	//==========================================
 	if (gNiteCrawlerImgPtr != NULL)
@@ -146,26 +148,15 @@ int		alpacaLogoBottom;
 		SetWidget(kNiteCrawlerTab_logo,		0,			yLoc,		cWidth,		kLogoHeight	);
 		yLoc			+=	kLogoHeight;
 	}
-	yLoc			+=	2;
-	SetWidgetType(kNiteCrawlerTab_logo, kWidgetType_Image);
-
-	//==========================================
-	SetWidget(		kNiteCrawlerTab_Model,	0,	yLoc,		cWidth,	cBtnHeight);
-	SetWidgetFont(	kNiteCrawlerTab_Model, kFont_Medium);
-
-   	SetUpConnectedIndicator(kNiteCrawlerTab_Connected, yLoc);
-
-	yLoc	+=	cBtnHeight;
 	yLoc	+=	2;
-
-	SetBGcolorFromWindowName(kNiteCrawlerTab_Model);
+	SetWidgetType(kNiteCrawlerTab_logo, kWidgetType_Image);
 
 	//==========================================
 	SetWidget(		kNiteCrawlerTab_rotValue,		0,			yLoc,		(cWidth/2),	40);
 	SetWidget(		kNiteCrawlerTab_focValue,		(cWidth/2),	yLoc,		(cWidth/2),	40);
 
-	yLoc			+=	40;
-	yLoc			+=	2;
+	yLoc	+=	40;
+	yLoc	+=	2;
 
 	//==========================================
 	SetWidget(kNiteCrawlerTab_rotLabel,	0,			yLoc,		(cFullWidthBtn/2),	30);
@@ -365,7 +356,8 @@ int		alpacaLogoBottom;
 		}
 		else
 		{
-			CONSOLE_ABORT(__FUNCTION__);
+			CONSOLE_DEBUG("Alpaca Logo is missing (logos/AlpacaLogo-vsmall.png)");
+			//CONSOLE_ABORT(__FUNCTION__);
 		}
 	}
 
@@ -382,12 +374,14 @@ int		alpacaLogoBottom;
 	}
 	//=======================================================
 	//*	set up all the bottom stuff so that it is the same on all windowtabs
-	SetupWindowBottomBoxes(	kNiteCrawlerTab_IPaddr,
-							kNiteCrawlerTab_Readall,
-							-1,							//kNiteCrawlerTab_AlpacaErrorMsg,
-							kNiteCrawlerTab_LastCmdString,
-							-1,							//	kNiteCrawlerTab_AlpacaLogo,
-							connectButtonIdx);
+	SetupWindowBottomBoxes(	kNiteCrawlerTab_IPaddr,			//	ipaddrBox
+							kNiteCrawlerTab_Readall,		//	readAllBox
+							-1,								//	errorMsgBox
+							kNiteCrawlerTab_LastCmdString,	//	lastCmdWidgetIdx
+							-1,								//	logoWidgetIdx,
+							-1,								//	helpBtnBox,
+							false,							//	logoSideOfScreen
+							connectButtonIdx);				//	connectBtnBox
 }
 
 //**************************************************************************************

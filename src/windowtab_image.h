@@ -48,15 +48,57 @@ enum
 	kImageDisplay_HistGrnPerct,
 	kImageDisplay_HistBluPerct,
 
+	kImageDisplay_LumBar,
+	kImageDisplay_RedBar,
+	kImageDisplay_GrnBar,
+	kImageDisplay_BluBar,
+
 	kImageDisplay_Histogram,
+	kImageDisplay_SaveHistBtn,
 	kImageDisplay_HistogramOutline,
+
+	//--------------------------------
+	kImageDisplay_CrossHairTitle,
+	kImageDisplay_CrossHairChkBox,
+	kImageDisplay_CrossHair1Chk,
+	kImageDisplay_CrossHair1X,
+	kImageDisplay_CrossHair1Y,
+
+	kImageDisplay_CrossHair2Chk,
+	kImageDisplay_CrossHair2X,
+	kImageDisplay_CrossHair2Y,
+
+	kImageDisplay_CrossHair3Chk,
+	kImageDisplay_CrossHair3X,
+	kImageDisplay_CrossHair3Y,
+	kImageDisplay_Reload,
+	kImageDisplay_Clear,
+	kImageDisplay_Save,
+
+	//*	color scheme radio buttons
+	kImageDisplay_RGB,	//*	Red, Green, Blue
+	kImageDisplay_CMY,	//*	Cyan, Magenta, Yellow
+	kImageDisplay_OHS,	//*	Oiii, HA, Sii
+	kImageDisplay_PGR,	//*	Purple, Gold, Red
+	kImageDisplay_BPO,	//*	Brown, Pink, Orange
+	kImageDisplay_GRY,	//*	gray scale
+
+	kImageDisplay_CrossHairOutline,
 
 	kImageDisplay_ImageDisplayInfo,
 	kImageDisplay_ImageDisplay,
+	kImageDisplay_ImageCrossHair,
 
 	kImageDisplay_last
 };
 
+#define	kCrossHairCnt	3
+//**************************************************************************************
+typedef struct
+{
+	int	XLocation;
+	int	YLocation;
+} TYPE_CROSSHAIR;
 
 //**************************************************************************************
 class WindowTabImage: public WindowTab
@@ -85,11 +127,12 @@ class WindowTabImage: public WindowTab
 		virtual void	ProcessMouseLeftButtonUp(const int widgetIdx, const int event, const int xxx, const int yyy, const int flags);
 		virtual void	ProcessMouseLeftButtonDragged(const int widgetIdx, const int event, const int xxx, const int yyy, const int flags);
 #ifdef _USE_OPENCV_CPP_
-		virtual	void	DrawWidgetCustomGraphic(cv::Mat *openCV_Image, TYPE_WIDGET *theWidget);
+		virtual	void	DrawWidgetCustomGraphic(cv::Mat *openCV_Image, TYPE_WIDGET *theWidget, const int widgetIdx);
 #else
 		virtual	void	DrawWidgetCustomGraphic(IplImage *openCV_Image, const int widgetIdx);
 #endif // _USE_OPENCV_CPP_
 
+				void	UpdateButtons(void);
 
 				void	ResetImage(void);
 				void	ZoomImage(	const int	event,
@@ -98,6 +141,11 @@ class WindowTabImage: public WindowTab
 									const int	flags);
 				void	DrawFullScaleIamge(void);
 				void	DrawFullScaleIamge(const int image_X, const int	image_Y);
+				void	DrawCrossHairs(TYPE_WIDGET *theWidget);
+
+				void	SaveHistogram(void);
+				void	SaveCrossHairList(void);
+				void	ReadCrossHairList(void);
 
 			#ifdef _USE_OPENCV_CPP_
 				void		SetImagePtrs(cv::Mat *originalImage, cv::Mat *displayedImage);
@@ -119,6 +167,12 @@ class WindowTabImage: public WindowTab
 				//*	these are for zooming in and scrolling
 				int			cImageZoomState;
 
+				//*	cross hair information
+				bool		cDisplayCrossHair;
+				//*	these are relative to the image box, not the image
+				int			cCurrCrossHairNum;
+				int			cCurrCrossHairColorSchm;
+				TYPE_CROSSHAIR	cCrossHairPos[kCrossHairCnt];
 
 };
 

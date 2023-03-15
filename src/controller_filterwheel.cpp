@@ -105,7 +105,7 @@ ControllerFilterWheel::ControllerFilterWheel(	const char			*argWindowName,
 //**************************************************************************************
 ControllerFilterWheel::~ControllerFilterWheel(void)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 	DELETE_OBJ_IF_VALID(cFilterWheelTabObjPtr);
 	DELETE_OBJ_IF_VALID(cDriverInfoTabObjPtr);
 	DELETE_OBJ_IF_VALID(cAboutBoxTabObjPtr);
@@ -131,6 +131,7 @@ void	ControllerFilterWheel::SetupWindowControls(void)
 		SetTabWindow(kTab_FilterWheel,	cFilterWheelTabObjPtr);
 		cFilterWheelTabObjPtr->SetParentObjectPtr(this);
 
+		CONSOLE_DEBUG("Calling SetPositonCount()");
 		cFilterWheelTabObjPtr->SetPositonCount(cPositionCount);
 		cFilterWheelTabObjPtr->SetFilterWheelPropPtr(&cFilterWheelProp);
 	}
@@ -234,10 +235,13 @@ bool			validData;
 //		validData	=	AlpacaGetStartupData_OneAAT();
 	}
 
+	CONSOLE_DEBUG("Calling AlpacaGetFilterWheelStartup()");
 	AlpacaGetFilterWheelStartup();
 	if (cFilterWheelTabObjPtr != NULL)
 	{
+		CONSOLE_DEBUG("Calling SetPositonCount()");
 		cFilterWheelTabObjPtr->SetPositonCount(cPositionCount);
+		CONSOLE_DEBUG("Returned from SetPositonCount()");
 	}
 
 	AlpacaGetFilterWheelStatus();

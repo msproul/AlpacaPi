@@ -75,7 +75,7 @@ TYPE_PRESETS	gPresets[]		=
 	{	"",			"",			0.0,		0.0,		0.0		}
 };
 
-int	gCurrentPresetExp	=	0;
+int	gCurrentPresetExposureIdx	=	0;
 
 
 
@@ -98,7 +98,7 @@ WindowTabCamSettings::WindowTabCamSettings(	const int	xSize,
 //**************************************************************************************
 WindowTabCamSettings::~WindowTabCamSettings(void)
 {
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 }
 
 #define	kFileListHeight	200
@@ -117,17 +117,10 @@ char		buttonText[64];
 
 	CONSOLE_DEBUG(__FUNCTION__);
 	//==========================================
-	yLoc			=	cTabVertOffset;
+	yLoc	=	cTabVertOffset;
+	yLoc	=	SetTitleBox(kCamSet_Title, -1, yLoc, "Camera Settings");
 
-	//==========================================
-	SetWidget(		kCamSet_Title,		0,			yLoc,		cWidth,		cTitleHeight);
-	SetWidgetFont(	kCamSet_Title, kFont_Medium);
-	SetBGcolorFromWindowName(kCamSet_Title);
-
-	yLoc			+=	cTitleHeight;
-	yLoc			+=	2;
-	saveYloc		=	yLoc;
-
+	saveYloc	=	yLoc;
 
 	SetWidget(		kCamSet_P_Title,	5,			yLoc,		cWidth/3,	cRadioBtnHt);
 	SetWidgetText(	kCamSet_P_Title,	"Object");
@@ -183,7 +176,7 @@ char		buttonText[64];
 	SetWidgetOutlineBox(	kCamSet_TimeOutline,
 							kCamSet_T_Title,
 							(kCamSet_TimeOutline - 1));
-	SetWidgetChecked((kCamSet_Time01 + gCurrentPresetExp), true);
+	SetWidgetChecked((kCamSet_Time01 + gCurrentPresetExposureIdx), true);
 
 
 	//==========================================
@@ -276,12 +269,13 @@ int	iii;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
-	gCurrentPresetExp	=	expTimeIdx;
+	gCurrentPresetExposureIdx	=	expTimeIdx;
 	for (iii=kCamSet_Time01; iii<=kCamSet_Time14; iii++)
 	{
 		SetWidgetChecked(iii, false);
 	}
-	SetWidgetChecked((kCamSet_Time01 + gCurrentPresetExp), true);
+	SetWidgetChecked((kCamSet_Time01 + gCurrentPresetExposureIdx), true);
+	ForceWindowUpdate();
 }
 
 

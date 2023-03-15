@@ -35,6 +35,8 @@
 //*	Dec 11,	2022	<MLS> Fixed sign error for HiRes in MoonLite_GetTemperature()
 //*****************************************************************************
 
+#if defined(_ENABLE_FOCUSER_MOONLITE_) || defined(_ENABLE_ROTATOR_NITECRAWLER_) || defined(_ENABLE_CTRL_FOCUSERS_)
+
 #include	<stdlib.h>
 #include	<stdio.h>
 #include	<string.h>
@@ -1228,3 +1230,6 @@ bool	keepGoing;
 	}
 	return(ccc);
 }
+
+#endif // defined(_ENABLE_FOCUSER_MOONLITE_) || defined(_ENABLE_ROTATOR_NITECRAWLER_)
+

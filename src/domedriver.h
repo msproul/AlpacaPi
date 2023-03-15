@@ -207,18 +207,6 @@ class DomeDriver: public AlpacaDriver
 				int						cIdleMoveTimeoutMinutes;
 
 
-#ifdef _ENABLE_SLIT_TRACKER_REMOTE_
-				//*	Slit tracker device info
-				void				GetSlitTrackerData(void);
-				bool				cSlitTrackerInfoValid;
-				struct sockaddr_in	cSlitTrackerDeviceAddress;
-				int					cSlitTrackerPort;
-				int					cSlitTrackerAlpacaDevNum;
-				int32_t				cTimeOfLastSlitTrackerUpdate;
-				TYPE_SLITCLOCK	cSlitDistance[kSensorValueCnt];
-#endif // _ENABLE_SLIT_TRACKER_REMOTE_
-
-
 #ifdef _ENABLE_REMOTE_SHUTTER_
 		//=====================================================
 		//*	this is for talking to the shutter as a separate device

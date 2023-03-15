@@ -39,11 +39,9 @@ enum
 
 	kSkyT_Settings_DownLoadPathLbl,
 	kSkyT_Settings_DownLoadPath,
-	kSkyT_Settings_unused,
 
-
-
-	kSkyT_Settings_ObsSettingsText,
+	kSkyT_Settings_ObsSettingsBtn,
+	kSkyT_Settings_ReloadSettingsBtn,
 
 	kSkyT_Settings_SiteInfoOutline,
 
@@ -185,6 +183,7 @@ class WindowTabSTsettings: public WindowTab
 				void	DrawOBAFGKM(IplImage *openCV_Image, TYPE_WIDGET *theWidget);
 #endif // _USE_OPENCV_CPP_
 				void	UpdateSettings(void);
+				void	UpdateObservatorySettings(void);
 
 };
 

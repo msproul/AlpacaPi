@@ -68,12 +68,32 @@
 
 #include	"JsonResponse.h"
 #include	"focuserdriver.h"
+#ifdef _ENABLE_FOCUSER_MOONLITE_
+	#include	"focuserdriver_nc.h"
+#endif
+#ifdef _ENABLE_FOCUSER_SIMULATOR_
+	#include	"focuserdriver_sim.h"
+#endif
 
 #ifdef	_ENABLE_ROTATOR_
 	#include	"rotatordriver.h"
-#endif // _ENABLE_ROTATOR_
+#endif
 
+//*****************************************************************************
+int	CreateFocuserObjects(void)
+{
+int		focuserCnt;
 
+	focuserCnt	=	0;
+#ifdef _ENABLE_FOCUSER_MOONLITE_
+	focuserCnt	+=	CreateFocuserObjects_MoonLite();
+#endif
+
+#ifdef _ENABLE_FOCUSER_SIMULATOR_
+	focuserCnt	+=	CreateFocuserObjects_SIM();
+#endif
+	return(focuserCnt);
+}
 
 //*****************************************************************************
 static TYPE_CmdEntry	gFocuserCmdTable[]	=
@@ -863,7 +883,7 @@ void	FocuserDriver::OutputHTML_Part2(TYPE_GetPutRequestData *reqData)
 {
 	CONSOLE_DEBUG(__FUNCTION__);
 		//*	now generate links to all of the commands
-	GenerateHTMLcmdLinkTable(reqData->socket, "focuser", cDeviceNum, gFocuserCmdTable);
+	GenerateHTMLcmdLinkTable(reqData->socket, "focuser", cAlpacaDeviceNum, gFocuserCmdTable);
 }
 
 //*****************************************************************************

@@ -94,6 +94,8 @@
 //*	Oct 13,	2022	<MLS> Finished support for kJustification_Right
 //*	Oct 20,	2022	<MLS> Changing all controllers to use the same error msg box
 //*	Nov 17,	2022	<MLS> Added check for duplicate window names
+//*	Feb 27,	2023	<MLS> Changed DrawWidgetBackground() to EraseWidgetBackground()
+//*	Mar  5,	2023	<MLS> Added SetWidgetJustification()
 //*****************************************************************************
 
 
@@ -527,8 +529,8 @@ Controller::~Controller(void)
 {
 int		iii;
 
-	CONSOLE_DEBUG(__FUNCTION__);
-	CONSOLE_DEBUG_W_STR("Deleting window:\t", cWindowName);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+//	CONSOLE_DEBUG_W_STR("Deleting window:\t", cWindowName);
 //	CONSOLE_DEBUG_W_NUM("gControllerCnt\t=:", gControllerCnt);
 
 #ifdef _USE_BACKGROUND_THREAD_
@@ -536,11 +538,11 @@ int		iii;
 	int		threadCancelErr;
 		if (cBackGroundThreadCreated)
 		{
-			CONSOLE_DEBUG("Canceling background thread");
+//			CONSOLE_DEBUG("Canceling background thread");
 			threadCancelErr	=	pthread_cancel(cBackgroundThreadID);
 			if (threadCancelErr == 0)
 			{
-				CONSOLE_DEBUG_W_STR("Thread canceled OK:\t", cWindowName);
+//				CONSOLE_DEBUG_W_STR("Thread canceled OK:\t", cWindowName);
 			}
 			else
 			{
@@ -558,13 +560,13 @@ int		iii;
 #ifdef _USE_OPENCV_CPP_
 	if (cOpenCV_matImage != NULL)
 	{
-		CONSOLE_DEBUG("Deleting cOpenCV_matImage");
+//		CONSOLE_DEBUG("Deleting cOpenCV_matImage");
 //		cv::(&cOpenCV_matImage);
 //		cOpenCV_matImage	=	NULL;
 		//---try------try------try------try------try------try---
 		try
 		{
-			CONSOLE_DEBUG("try delete cOpenCV_matImage");
+//			CONSOLE_DEBUG("try delete cOpenCV_matImage");
 			delete cOpenCV_matImage;
 			cOpenCV_matImage	=	NULL;
 		}
@@ -581,11 +583,11 @@ int		iii;
 	{
 	std::string	myWindowName(cWindowName);
 
-		CONSOLE_DEBUG_W_STR("try cv::destroyWindow", cWindowName);
-		CONSOLE_DEBUG_W_STR("myWindowName", myWindowName.c_str());
+//		CONSOLE_DEBUG_W_STR("try cv::destroyWindow", cWindowName);
+//		CONSOLE_DEBUG_W_STR("myWindowName", myWindowName.c_str());
 //		cv::destroyWindow(cWindowName);
 		cv::destroyWindow(myWindowName);
-		CONSOLE_DEBUG("Waiting");
+//		CONSOLE_DEBUG("Waiting");
 		cv::waitKey(200);
 	}
 	catch(cv::Exception& ex)
@@ -654,7 +656,7 @@ int		iii;
 			gControllerList[iii]	=	NULL;
 		}
 	}
-	CONSOLE_DEBUG("Done");
+//	CONSOLE_DEBUG("Done");
 }
 
 //**************************************************************************************
@@ -1268,11 +1270,11 @@ int		wheelMovement;
 
 		case cv::EVENT_RBUTTONDOWN:
 			cRightButtonDown	=	true;
-			CONSOLE_DEBUG("CV_EVENT_RBUTTONDOWN");
+//			CONSOLE_DEBUG("CV_EVENT_RBUTTONDOWN");
 			break;
 
 		case cv::EVENT_MBUTTONDOWN:
-			CONSOLE_DEBUG("CV_EVENT_MBUTTONDOWN");
+//			CONSOLE_DEBUG("CV_EVENT_MBUTTONDOWN");
 			break;
 
 		case cv::EVENT_LBUTTONUP:
@@ -1317,11 +1319,11 @@ int		wheelMovement;
 
 		case cv::EVENT_RBUTTONUP:
 			cRightButtonDown	=	false;
-			CONSOLE_DEBUG("CV_EVENT_RBUTTONUP");
+//			CONSOLE_DEBUG("CV_EVENT_RBUTTONUP");
 			break;
 
 		case cv::EVENT_MBUTTONUP:
-			CONSOLE_DEBUG("CV_EVENT_MBUTTONUP");
+//			CONSOLE_DEBUG("CV_EVENT_MBUTTONUP");
 			break;
 
 		case cv::EVENT_LBUTTONDBLCLK:
@@ -1345,17 +1347,17 @@ int		wheelMovement;
 			break;
 
 		case cv::EVENT_RBUTTONDBLCLK:
-			CONSOLE_DEBUG("CV_EVENT_RBUTTONDBLCLK");
+//			CONSOLE_DEBUG("CV_EVENT_RBUTTONDBLCLK");
 			clickedBtn		=	FindClickedTab(xxx,  yyy);
 			if (clickedBtn >= 0)
 			{
-				CONSOLE_DEBUG("CV_EVENT_RBUTTONDBLCLK");
+//				CONSOLE_DEBUG("CV_EVENT_RBUTTONDBLCLK");
 				//*	we have a double click in the tab bar
 				cv::resizeWindow(cWindowName, cWidth, cHeight);
 			}
 			else
 			{
-				CONSOLE_DEBUG("CV_EVENT_RBUTTONDBLCLK");
+//				CONSOLE_DEBUG("CV_EVENT_RBUTTONDBLCLK");
 				clickedBtn		=	FindClickedWidget(xxx,  yyy);
 //				CONSOLE_DEBUG_W_NUM("Double click on widget#\t",	clickedBtn);
 				if (clickedBtn >= 0)
@@ -1366,7 +1368,7 @@ int		wheelMovement;
 			break;
 
 		case cv::EVENT_MBUTTONDBLCLK:
-			CONSOLE_DEBUG("CV_EVENT_MBUTTONDBLCLK");
+//			CONSOLE_DEBUG("CV_EVENT_MBUTTONDBLCLK");
 			break;
 
 #if (CV_MAJOR_VERSION >= 3)
@@ -1414,7 +1416,7 @@ int		wheelMovement;
 }
 
 //**************************************************************************************
-void	Controller::DrawWidgetBackground(TYPE_WIDGET *theWidget)
+void	Controller::EraseWidgetBackground(TYPE_WIDGET *theWidget)
 {
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, theWidget->textString);
 	cCurrentColor	=	theWidget->bgColor;
@@ -1438,7 +1440,7 @@ void	Controller::DrawWidgetButton(TYPE_WIDGET *theWidget)
 #else
 	cv::Scalar	myGBcolor;
 #endif // _USE_OPENCV_CPP_
-	DrawWidgetBackground(theWidget);
+	EraseWidgetBackground(theWidget);
 
 	myGBcolor	=	theWidget->bgColor;
 	if (theWidget->highLighted)
@@ -1484,7 +1486,7 @@ int			textLoc_Y;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-	DrawWidgetBackground(theWidget);
+	EraseWidgetBackground(theWidget);
 
 	sLen	=	strlen(theWidget->textString);
 	if (sLen > 0)
@@ -1588,7 +1590,7 @@ int			textOffsetY;
 //**************************************************************************************
 void	Controller::DrawWidgetTextBox(TYPE_WIDGET *theWidget)
 {
-	DrawWidgetBackground(theWidget);
+	EraseWidgetBackground(theWidget);
 	DrawWidgetText(theWidget);
 }
 
@@ -1610,7 +1612,7 @@ int			textLoc_X;
 int			textLoc_Y;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
-	DrawWidgetBackground(theWidget);
+	EraseWidgetBackground(theWidget);
 	if (theWidget->textPtr != NULL)
 	{
 		myStringPtr	=	theWidget->textPtr;
@@ -1754,7 +1756,7 @@ int			pt1_Y;
 	pt1_Y		=	theWidget->top + (theWidget->height / 2);
 	radius		=	theWidget->height / 3;
 
-	DrawWidgetBackground(theWidget);
+	EraseWidgetBackground(theWidget);
 	//*	draw the radio button
 	cCurrentColor	=	theWidget->borderColor;
 	LLD_FrameEllipse(pt1_X, pt1_Y, radius, radius);
@@ -1778,7 +1780,7 @@ int			pt2_Y;
 
 #define	kInset	2
 
-	DrawWidgetBackground(theWidget);
+	EraseWidgetBackground(theWidget);
 	//*	draw the Check box
 
 	cCurrentColor	=	CV_RGB(128, 128, 128);
@@ -1824,6 +1826,8 @@ int			textWidthPixels;
 int			sliderLeft;
 int			sliderWidth;
 
+	EraseWidgetBackground(theWidget);
+
 	sliderDelata	=	theWidget->sliderMax - theWidget->sliderMin;
 	if (sliderDelata >= 10)
 	{
@@ -1841,7 +1845,6 @@ int			sliderWidth;
 		sprintf(rightString,	"%1.3f",	theWidget->sliderMax);
 	}
 
-	DrawWidgetBackground(theWidget);
 
 	textWidthPixels		=	LLD_GetTextSize(rightString, theWidget->fontNum);
 
@@ -1894,7 +1897,7 @@ int			scrollBar_width;
 int			scrollBar_height;
 int			scrollBar_Travel;
 
-	DrawWidgetBackground(theWidget);
+	EraseWidgetBackground(theWidget);
 
 	//*	figure out it if it is horizontal or veritcal
 	if (theWidget->height > theWidget->width)
@@ -1985,7 +1988,7 @@ int		pt1_Y;
 int		pt2_X;
 int		pt2_Y;
 
-	DrawWidgetBackground(theWidget);
+	EraseWidgetBackground(theWidget);
 	if (theWidget->graphArrayPtr != NULL)
 	{
 		cCurrentColor	=	CV_RGB(255,	0,	0);
@@ -2020,7 +2023,7 @@ int			pt1_Y;
 int			pt2_X;
 int			pt2_Y;
 
-	DrawWidgetBackground(theWidget);
+	EraseWidgetBackground(theWidget);
 	cCurrentColor	=	theWidget->textColor;
 	switch(theWidget->iconNum)
 	{
@@ -2081,16 +2084,8 @@ int		textLoc_Y;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 	percentComplete	=	theWidget->sliderValue / theWidget->sliderMax;
-	if (theWidget->alternateText[0] >= 0x20)
-	{
-		sprintf(textString, "%s - %3.1f%% complete", theWidget->alternateText, (percentComplete * 100.0));
-	}
-	else
-	{
-		sprintf(textString, "Downloading - %3.1f%% complete", (percentComplete * 100.0));
-	}
 
-	DrawWidgetBackground(theWidget);
+	EraseWidgetBackground(theWidget);
 
 	//*	erase using BACKGROUND color
 	cCurrentColor	=	theWidget->bgColor;
@@ -2101,14 +2096,28 @@ int		textLoc_Y;
 	cCurrentColor	=	theWidget->textColor;
 	LLD_FillRect(theWidget->left,	theWidget->top,	newWidth,	theWidget->height);
 
+	if (theWidget->includeBorder)
+	{
+		//*	frame the rectangle
+		cCurrentColor	=	theWidget->borderColor;
+		LLD_FrameRect(theWidget->left,	theWidget->top,	theWidget->width,	theWidget->height);
+	}
 
-	cCurrentColor	=	theWidget->borderColor;
-	LLD_FrameRect(theWidget->left,	theWidget->top,	theWidget->width,	theWidget->height);
-
-	//*	text using BORDER color
-	textLoc_X	=	theWidget->left + 10;
-	textLoc_Y	=	theWidget->top + (theWidget->height / 2) + 5;
-	LLD_DrawCString(textLoc_X, textLoc_Y, textString, kFont_Medium);
+	if (theWidget->height > 10)
+	{
+		if (theWidget->alternateText[0] >= 0x20)
+		{
+			sprintf(textString, "%s - %3.1f%% complete", theWidget->alternateText, (percentComplete * 100.0));
+		}
+		else
+		{
+			sprintf(textString, "Downloading - %3.1f%% complete", (percentComplete * 100.0));
+		}
+		//*	text using BORDER color
+		textLoc_X	=	theWidget->left + 10;
+		textLoc_Y	=	theWidget->top + (theWidget->height / 2) + 5;
+		LLD_DrawCString(textLoc_X, textLoc_Y, textString, kFont_Medium);
+	}
 }
 
 #ifdef _USE_OPENCV_CPP_
@@ -2421,9 +2430,11 @@ cv::Rect		widgetRect;
 			break;
 
 		case kWidgetType_CustomGraphic:
+			EraseWidgetBackground(theWidget);
+			//*	fall thru
+		case kWidgetType_Custom:
 			if (cCurrentTabObjPtr != NULL)
 			{
-				DrawWidgetBackground(theWidget);
 			#ifdef _USE_OPENCV_CPP_
 				cCurrentTabObjPtr->DrawWidgetCustomGraphic(cOpenCV_matImage, widgetIdx);
 			#else
@@ -2648,7 +2659,7 @@ char		currentTabName[64]	=	"";
 	}
 	if (stillNeedsHandled)
 	{
-//		CONSOLE_DEBUG(__FUNCTION__);
+		CONSOLE_DEBUG("stillNeedsHandled");
 		if (cCurTextInput_Widget >= 0)
 		{
 			HandleKeyDownInTextWidget(cCurrentTabNum, cCurTextInput_Widget, keyPressed);
@@ -2904,6 +2915,26 @@ void	Controller::SetWidgetFont(const int tabNum, const int widgetIdx, int fontNu
 		}
 	}
 }
+
+//**************************************************************************************
+void	Controller::SetWidgetJustification(const int tabNum, const int widgetIdx, int justification)
+{
+	if ((tabNum >= 0)  && (tabNum < kMaxTabs))
+	{
+		if (cWindowTabs[tabNum] != NULL)
+		{
+			cWindowTabs[tabNum]->SetWidgetJustification(widgetIdx, justification);
+			if (tabNum == cCurrentTabNum)
+			{
+				cUpdateWindow	=	true;
+			}
+		}
+		else
+		{
+		}
+	}
+}
+
 
 #ifdef _USE_OPENCV_CPP_
 //**************************************************************************************

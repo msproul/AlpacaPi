@@ -33,19 +33,23 @@
 double		AsciiToDouble(		const char *asciiString);
 void		FormatHHMMSS(		const double argDegreeValue, char *timeString, bool includeSign);
 void		FormatHHMMSSdd(		const double argDegreeValue, char *timeString, bool includeSign);
+
 void		FormatTimeString_time_t(time_t *time, char *timeString);
-void		FormatTimeString(	struct timeval *tv, char *timeString);
-void		FormatTimeString_Local(struct timeval *tv, char *timeString);
-void		FormatDateTimeString_Local(struct timeval *tv, char *timeString);
-void		FormatTimeString_TM(struct tm *timeStruct, char *timeString);
-void		FormatTimeStringISO8601(struct timeval *tv, char *timeString);
+void		FormatTimeString(			struct timeval *tv, char *timeString);
+void		FormatTimeString_Local(		struct timeval *tv, char *timeString);
+void		FormatDateTimeString_Local(	struct timeval *tv, char *timeString);
+void		FormatTimeStringISO8601(	struct timeval *tv, char *timeString);
 void		FormatTimeStringISO8601_UTC(struct timeval *tv, char *timeString);
+
+void		FormatTimeString_TM(struct tm *timeStruct, char *timeString);
 int			GetMinutesSinceMidnight(void);
 time_t		GetSecondsSinceEpoch(void);
+bool		IsTrueFalseArgValid(const char *trueFalseString);
 bool		IsTrueFalse(		const char *trueFalseString);
 uint64_t	MSecTimer_getNanoSecs(void);
 
 void		tolowerStr(char *theString);
+int			CountCharsInString(const char *theString, char theChar);
 
 uint32_t	millis(void);
 int			CountLinesInFile(FILE *filePointer);

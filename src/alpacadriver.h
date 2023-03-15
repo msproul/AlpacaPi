@@ -266,9 +266,9 @@ class AlpacaDriver
 				bool				cHttpHeaderSent;
 				bool				cRunStartupOperations;
 				bool				cVerboseDebug;
-				uint32_t			cMagicCookie;		//*	used to validate objects
+				uint32_t			cMagicCookie;			//*	used to validate objects
 				TYPE_DEVICETYPE		cDeviceType;
-				int					cDeviceNum;			//*	device index for alpaca
+				int					cAlpacaDeviceNum;		//*	device index for alpaca
 				uint32_t			cLastUpdate_milliSecs;
 
 
@@ -420,6 +420,7 @@ extern	bool			gErrorLogging;		//*	write errors to log file if true
 extern	bool			gConformLogging;	//*	log all commands to log file to match up with Conform
 extern	char			gFullVersionString[];
 extern	char			gHostName[];
+extern	const char		gHtmlHeader[];
 
 #ifdef __cplusplus
 	extern "C" {

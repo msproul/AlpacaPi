@@ -32,7 +32,7 @@
 	#include "RTIMULib.h"
 #endif
 
-void	CreateObsConditionRpiObjects(void);
+void	CreateObsConditionObjects_RPi(void);
 
 //**************************************************************************************
 class ObsConditionsDriverRpi: public ObsConditionsDriver

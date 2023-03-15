@@ -63,7 +63,7 @@ WindowAlpacaUnit::WindowAlpacaUnit(	const int	xSize,
 //**************************************************************************************
 WindowAlpacaUnit::~WindowAlpacaUnit(void)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 }
 
 
@@ -87,11 +87,7 @@ short	tabArray[kMaxTabStops]	=	{200, 400, 600, 1000, 1199, 0};
 	yLoc			=	cTabVertOffset;
 
 	//------------------------------------------
-	SetWidget(kAlpacaUnit_Title,		0,			yLoc,		cWidth,		cTitleHeight);
-	SetWidgetText(kAlpacaUnit_Title, "AlpacaPi project");
-	SetBGcolorFromWindowName(kAlpacaUnit_Title);
-	yLoc			+=	cTitleHeight;
-	yLoc			+=	2;
+	yLoc	=	SetTitleBox(kAlpacaUnit_Title, -1, yLoc, "AlpacaPi project");
 
 	SetAlpacaLogoBottomCorner(kAlpacaUnit_AlpacaLogo);
 
@@ -193,7 +189,7 @@ ControllerAlpacaUnit	*myParentCtrlPtr;
 				if (myParentCtrlPtr->cMagicCookie == kMagicCookieValue)
 				{
 					//*	draw the temperature graph lines
-					if (myParentCtrlPtr->cHasCamera)
+					if (myParentCtrlPtr->cHasCamera && (myParentCtrlPtr->cCameraTempCnt > 0))
 					{
 						SetWidgetValid(kAlpacaUnit_Legend_Camera,	true);
 						LLD_SetColor(W_YELLOW);
@@ -201,15 +197,21 @@ ControllerAlpacaUnit	*myParentCtrlPtr;
 									myParentCtrlPtr->cCameraTempCnt,
 									myParentCtrlPtr->cCameraTempLog, false, 2);
 					}
-					if (myParentCtrlPtr->cHasFocuser)
+					if (myParentCtrlPtr->cHasFocuser && (myParentCtrlPtr->cFocusTempCnt > 0))
 					{
 						SetWidgetValid(kAlpacaUnit_Legend_Focuser,	true);
 						LLD_SetColor(W_GREEN);
-						DrawGraph(&cWidgetList[widgetIdx], myParentCtrlPtr->cFocusTempCnt, myParentCtrlPtr->cFocusTempLog, false, 2);
+						DrawGraph(	&cWidgetList[widgetIdx],
+									myParentCtrlPtr->cFocusTempCnt,
+									myParentCtrlPtr->cFocusTempLog, false, 2);
 					}
-
-					LLD_SetColor(W_MAGENTA);
-					DrawGraph(&cWidgetList[widgetIdx], myParentCtrlPtr->cCPUTtempCnt, myParentCtrlPtr->cCPUtempLog, true, 2);
+					if (myParentCtrlPtr->cCPUTtempCnt > 0)
+					{
+						LLD_SetColor(W_MAGENTA);
+						DrawGraph(		&cWidgetList[widgetIdx],
+										myParentCtrlPtr->cCPUTtempCnt,
+										myParentCtrlPtr->cCPUtempLog, true, 2);
+					}
 				}
 				else
 				{

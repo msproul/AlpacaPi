@@ -107,6 +107,11 @@ enum
 		W_PINK,
 		W_ORANGE,
 
+		//*	these are special case so that I can have cross hairs to match my scope colors
+		W_PURPLE,
+		W_GOLD,
+		W_RED2,
+
 		W_STAR_O,
 		W_STAR_B,
 		W_STAR_A,
@@ -170,6 +175,8 @@ class WindowTab
 												const int	wheelMovement,
 												const int	flags);
 		virtual	void	UpdateOnScreenWidgetList(void);
+		virtual	void	LaunchWebHelp(const char *webpagestring = NULL);
+				char	cWebURLstring[64];
 
 				void	ComputeWidgetColumns(const int windowWitdh);
 				void	SetWidget(				const int widgetIdx, int left, int top, int width, int height);
@@ -188,6 +195,10 @@ class WindowTab
 				void	SetWidgetOutlineBox(	const int widgetIdx, const int firstItem, const int lastItem);
 				void	SetWidgetProgress(		const int widgetIdx, const int currPosition, const int totalValue);
 				void	DumpWidgetList(			const int startIdx, const int stopIdx);
+				int		SetTitleBox(const int	titleWidgetIdx,
+									const int	connectionWidgetIdx,
+									const int	yLoc,
+									const char *titleString);
 
 				void	SetCurrentTab(			const int tabIdx);
 
@@ -197,7 +208,9 @@ class WindowTab
 												const int	errorMsgBox,
 												const int	lastCmdWidgetIdx,
 												const int	logoWidgetIdx,
-												const int	connectBtnBox = -1);
+												const int	helpBtnBox 			= -1,
+												const bool	logoSideOfScreen	= true,
+												const int	connectBtnBox		= -1);
 
 
 				void	SetBGcolorFromWindowName(	const int	widgetIdx);
@@ -258,7 +271,7 @@ class WindowTab
 
 #ifdef _USE_OPENCV_CPP_
 
-		virtual	void	DrawWidgetCustomGraphic(cv::Mat *openCV_Image, TYPE_WIDGET *theWidget);
+		virtual	void	DrawWidgetCustomGraphic(cv::Mat *openCV_Image, TYPE_WIDGET *theWidget, const int widgetIdx = -1);
 		virtual	void	DrawWidgetCustomGraphic(cv::Mat *openCV_Image, const int widgetIdx);
 				void	SetHelpTextBoxColor(cv::Scalar newtextColor);
 #else
@@ -283,6 +296,12 @@ class WindowTab
 									double		*graphArray,
 									bool		drawCurrentTimeMarker,
 									const		int stepX=1);
+
+				void	DrawHistogram(	TYPE_WIDGET		*theWidget,
+										const int32_t	*graphArray,
+										const int		numEntries,
+										const int		yDivideFactor,
+										cv::Scalar		lineColor);
 
 		//=============================================================
 		//*	Drawing commands
@@ -405,6 +424,7 @@ class WindowTab
 		int					cPrevDisplayedHelpBox;
 		int					cConnectedStateBoxNumber;
 
+		int					cHistogramPenSize;
 
 		//*	alpaca stuff duplicated from controller class
 		int					cLastAlpacaErrNum;

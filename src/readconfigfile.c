@@ -26,6 +26,7 @@
 //*	Apr  5,	2022	<MLS> Created readconfigfile.c
 //*	Apr  6,	2022	<MLS> Added FindConfigKeywordFromTable()
 //*	Sep 20,	2022	<MLS> Fixed bug in ProcessConfigLine() when argument was empty
+//*	Mar  8,	2023	<MLS> Added user data pointer to config file
 //*****************************************************************************
 
 #include	<stdbool.h>
@@ -49,7 +50,8 @@
 //*****************************************************************************
 static	bool ProcessConfigLine(	const char			*lineBuff,
 								const char			separterChar,
-								ProcessConfigEntry	*configCallBack)
+								ProcessConfigEntry	*configCallBack,
+								void				*userDataPtr)
 {
 char	keyword[kMaxKeyWordLen];
 char	valueString[kMaxVakyeStrLen];
@@ -87,7 +89,7 @@ bool	validEntry;
 		//*	call the supplied callback function
 		if (configCallBack != NULL)
 		{
-			configCallBack(keyword, valueString);
+			configCallBack(keyword, valueString, userDataPtr);
 		}
 //		CallBackFunction(keyword, valueStrPtr);
 
@@ -101,8 +103,8 @@ bool	validEntry;
 //*****************************************************************************
 int	ReadGenericConfigFile(	const char	*configFilePath,
 							const char	separterChar,
-							ProcessConfigEntry *configCallBack
-							)
+							ProcessConfigEntry *configCallBack,
+							void				*userDataPtr)
 {
 FILE	*filePointer;
 char	lineBuff[256];
@@ -136,7 +138,7 @@ bool	validEntry;
 			slen	=	strlen(lineBuff);
 			if ((slen > 3) && (lineBuff[0] != '#'))
 			{
-				validEntry	=	ProcessConfigLine(lineBuff, separterChar, configCallBack);
+				validEntry	=	ProcessConfigLine(lineBuff, separterChar, configCallBack, userDataPtr);
 				if (validEntry == false)
 				{
 					CONSOLE_DEBUG_W_STR("Servo Config file contains invalid data:", lineBuff);

@@ -63,16 +63,18 @@ class CalibrationDriver: public AlpacaDriver
 		//*	Watchdog timer stuff
 		virtual	void					WatchDog_TimeOut(void);
 
-				//*	these routines should be implemented by the sub-classes
-				//*	all have to return an Alpaca Error code
-		virtual	TYPE_ASCOM_STATUS		Calibrator_TurnOn(const int brightnessValue, char *alpacaErrMsg);
-		virtual	TYPE_ASCOM_STATUS		Calibrator_TurnOff(char *alpacaErrMsg);
+		//*	these routines should be implemented by the sub-classes
+		//*	all have to return an Alpaca Error code
+		virtual	TYPE_ASCOM_STATUS	Calibrator_TurnOn(const int brightnessValue, char *alpacaErrMsg);
+		virtual	TYPE_ASCOM_STATUS	Calibrator_TurnOff(char *alpacaErrMsg);
 
-		virtual	TYPE_ASCOM_STATUS		Cover_Open(char *alpacaErrMsg);
-		virtual	TYPE_ASCOM_STATUS		Cover_Close(char *alpacaErrMsg);
-		virtual	TYPE_ASCOM_STATUS		Cover_Halt(char *alpacaErrMsg);
+		virtual	TYPE_ASCOM_STATUS	Cover_Open(char *alpacaErrMsg);
+		virtual	TYPE_ASCOM_STATUS	Cover_Close(char *alpacaErrMsg);
+		virtual	TYPE_ASCOM_STATUS	Cover_Halt(char *alpacaErrMsg);
 
 				TYPE_CoverCalibrationProperties	cCoverCalibrationProp;
+				CoverStatus						cCoverDesiredPostion;
+				uint32_t						cCoverMovementStartTime;	//*	milliseconds
 
 };
 

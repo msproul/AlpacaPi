@@ -1,7 +1,8 @@
+//**************************************************************************************
 //#include	"calibration_Alnitak.h"
 
 
-void	CreateCalibrationObjectsAlnitak(void);
+void	CreateCalibrationObjects_Alnitak(void);
 
 //**************************************************************************************
 class CalibrationDriverAlnitak: public CalibrationDriver

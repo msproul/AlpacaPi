@@ -91,10 +91,64 @@
 
 #include	"telescopedriver.h"
 
+#ifdef _ENABLE_TELESCOPE_LX200_
+	#include	"telescopedriver_lx200.h"
+#endif
+
+#ifdef _ENABLE_TELESCOPE_RIGEL_
+#endif
+
+#ifdef _ENABLE_TELESCOPE_SKYWATCH_
+	#include	"telescopedriver_skywatch.h"
+#endif
+
+#ifdef _ENABLE_TELESCOPE_SERVO_
+	#include	"telescopedriver_servo.h"
+#endif
+
+#ifdef _ENABLE_TELESCOPE_SIMULATOR_
+	#include	"telescopedriver_sim.h"
+#endif
+
 #ifdef _ENABLE_IMU_
 	#include "imu_lib.h"
 #endif
 
+//**************************************************************************************
+int	CreateTelescopeObjects(void)
+{
+int	telescopeCnt;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+
+	telescopeCnt	=	0;
+#ifdef _ENABLE_TELESCOPE_LX200_
+	new TelescopeDriverLX200(kDevCon_Ethernet, "192.168.1.104:49152");
+	telescopeCnt++;
+#endif
+
+#ifdef _ENABLE_TELESCOPE_RIGEL_
+//	new TelescopeDriverRigel(kDevCon_Custom, "");
+	new TelescopeDriverRigel();
+	telescopeCnt++;
+#endif
+
+#ifdef _ENABLE_TELESCOPE_SKYWATCH_
+	new TelescopeDriverSkyWatch(kDevCon_Serial, "/dev/ttyS0");
+	telescopeCnt++;
+#endif
+
+#ifdef _ENABLE_TELESCOPE_SERVO_
+	new TelescopeDriverServo();
+	telescopeCnt++;
+#endif
+
+#ifdef _ENABLE_TELESCOPE_SIMULATOR_
+	CreateTelescopeObjects_Simulator();
+	telescopeCnt++;
+#endif
+	return(telescopeCnt);
+}
 
 //*****************************************************************************
 //*	Telescope Specific Methods
@@ -3536,6 +3590,7 @@ TYPE_ASCOM_STATUS	TelescopeDriver::Get_PhysicalSideOfPier(TYPE_GetPutRequestData
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 char					extraString[64];
 
+//	CONSOLE_DEBUG(__FUNCTION__);
 	cTelescopeProp.PhysicalSideOfPier	=	Telescope_GetPhysicalSideOfPier();
 
 	JsonResponse_Add_Int32(	reqData->socket,
@@ -3701,7 +3756,7 @@ int		mySocketFD;
 
 		SocketWriteData(mySocketFD,	"</CENTER>\r\n");
 
-		GenerateHTMLcmdLinkTable(mySocketFD, "telescope", cDeviceNum, gTelescopeCmdTable);
+		GenerateHTMLcmdLinkTable(mySocketFD, "telescope", cAlpacaDeviceNum, gTelescopeCmdTable);
 	}
 }
 
@@ -3889,17 +3944,19 @@ TYPE_PierSide	TelescopeDriver::Telescope_GetPhysicalSideOfPier(void)
 TYPE_PierSide	physicalSideOfPier	=	kPierSide_NotAvailable;
 
 	//* this can be over-ridden
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 #ifdef _ENABLE_IMU_
-double					hourAngle_Degrees;
+double		imuRollAngle_Degrees;
 
+//	CONSOLE_DEBUG("_ENABLE_IMU_ is enabled");
 	//*	The sensor must be placed at the 12:00 position of the axis, that its
 	//*	When the counter weights are at the lowest point, the ROLL axis MUST read ZERO (or very near zero)
 	//*	Standing to the south of the telescope, looking along the RA axis at the North Celestial Poll
 	//*	When the telescope rotates to the right(clockwise / east), the ROLL angle must be NEGATIVE
 	//*	When the telescope rotates to the left (counter-clockwise /west ), the ROLL angle must be POSITIVE
-	hourAngle_Degrees	=	IMU_GetAverageRoll();
-	if (hourAngle_Degrees < 0.0)
+	imuRollAngle_Degrees	=	IMU_GetAverageRoll();
+	if (imuRollAngle_Degrees < 0.0)
 	{
 		physicalSideOfPier	=	kPierSide_pierEast;
 	}
@@ -3907,6 +3964,9 @@ double					hourAngle_Degrees;
 	{
 		physicalSideOfPier	=	kPierSide_pierWest;
 	}
+//	CONSOLE_DEBUG_W_DBL("imuRollAngle_Degrees\t=",	imuRollAngle_Degrees);
+//	CONSOLE_DEBUG_W_NUM("physicalSideOfPier\t=", physicalSideOfPier);
+
 #endif
 	return(physicalSideOfPier);
 }

@@ -71,30 +71,6 @@
 
 static void	*Telescope_Comm_Thread(void *arg);
 
-//**************************************************************************************
-void	CreateTelescopeObjects(void)
-{
-	CONSOLE_DEBUG(__FUNCTION__);
-#ifdef _ENABLE_TELESCOPE_LX200_
-	new TelescopeDriverLX200(kDevCon_Ethernet, "192.168.1.104:49152");
-#endif
-#ifdef _ENABLE_TELESCOPE_SKYWATCH_
-	new TelescopeDriverSkyWatch(kDevCon_Serial, "/dev/ttyS0");
-#endif
-
-#ifdef _ENABLE_TELESCOPE_RIGEL_
-//	new TelescopeDriverRigel(kDevCon_Custom, "");
-	new TelescopeDriverRigel();
-#endif
-
-#ifdef _ENABLE_TELESCOPE_SERVO_
-	new TelescopeDriverServo();
-#endif
-
-#ifdef _ENABLE_TELESCOPE_SIMULATOR_
-	CreateTelescopeObjects_Simulator();
-#endif
-}
 
 //**************************************************************************************
 //*	the device path is one of these options (or similar)

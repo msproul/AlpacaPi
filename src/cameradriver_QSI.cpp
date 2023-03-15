@@ -62,7 +62,7 @@
 #include	"QSIError.h"
 
 
-#define	_SIMULATE_CAMERA_
+#define	_ENABLE_CAMERA_SIMULATOR_
 
 //**************************************************************************************
 int	CreateQSI_CameraObjects(void)
@@ -185,7 +185,7 @@ int				numCamerasFound;
 	{
 		CONSOLE_DEBUG("Failed to Connect!!!!!!!!");
 	}
-#ifdef _SIMULATE_CAMERA_
+#ifdef _ENABLE_CAMERA_SIMULATOR_
 	if (gSimulateCameraImage)
 	{
 		strcpy(cDeviceManufacturer,	"QSI");
@@ -348,7 +348,7 @@ std::string		lastError("");
 		cQSIcam.get_LastError(lastError);
 		CONSOLE_DEBUG_W_STR("QSI Resul (get_Connected)\t=",	lastError.c_str());
 	}
-#ifdef _SIMULATE_CAMERA_
+#ifdef _ENABLE_CAMERA_SIMULATOR_
 	cCommonProp.Connected	=	true;
 	isConnected				=	true;
 #endif
@@ -402,7 +402,7 @@ std::string		lastError("");
 	qsi_Result	=	cQSIcam.get_ModelNumber(modelNumber);
 	if (qsi_Result == QSI_OK)
 	{
-		strcpy(cCommonProp.Name,		modelNumber.c_str());
+		SetCommonPropertyName("QSI-", modelNumber.c_str());
 		CONSOLE_DEBUG_W_STR("QSI-modelNumber\t=",	cCommonProp.Name);
 	}
 	else if (qsi_Result == QSI_NOTCONNECTED)
@@ -724,7 +724,7 @@ std::string			lastError("");
 
 	cLastCameraErrMsg[0]	=	0;
 
-#ifdef _SIMULATE_CAMERA_
+#ifdef _ENABLE_CAMERA_SIMULATOR_
 	if (gSimulateCameraImage)
 	{
 		cCameraProp.CCDtemperature	=	2.23;
@@ -776,7 +776,7 @@ std::string			lastError("");
 
 	cLastCameraErrMsg[0]	=	0;
 
-#ifdef _SIMULATE_CAMERA_
+#ifdef _ENABLE_CAMERA_SIMULATOR_
 	if (gSimulateCameraImage)
 	{
 		alpacaErrCode				=	kASCOM_Err_Success;
@@ -822,7 +822,7 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
-#ifdef _SIMULATE_CAMERA_
+#ifdef _ENABLE_CAMERA_SIMULATOR_
 	if (gSimulateCameraImage)
 	{
 		cCameraProp.BinX	=	newBinXvalue;
@@ -844,7 +844,7 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
-#ifdef _SIMULATE_CAMERA_
+#ifdef _ENABLE_CAMERA_SIMULATOR_
 	if (gSimulateCameraImage)
 	{
 		cCameraProp.BinY	=	newBinYvalue;
@@ -867,7 +867,7 @@ TYPE_ASCOM_STATUS	CameraDriverQSI::Write_Gain(const int newGainValue)
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_PropertyNotImplemented;
 
 	CONSOLE_DEBUG_W_NUM(__FUNCTION__, newGainValue);
-#ifdef _SIMULATE_CAMERA_
+#ifdef _ENABLE_CAMERA_SIMULATOR_
 	if (gSimulateCameraImage)
 	{
 		cCameraProp.Gain	=	newGainValue;
@@ -890,7 +890,7 @@ std::string				lastError("");
 QSICamera::CameraGain	qsiGainValue;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
-#ifdef _SIMULATE_CAMERA_
+#ifdef _ENABLE_CAMERA_SIMULATOR_
 	if (gSimulateCameraImage)
 	{
 		*cameraGainValue	=	cCameraProp.Gain;
@@ -936,7 +936,7 @@ std::string			lastError("");
 	CONSOLE_DEBUG_W_DBL("durationSeconds  \t=",	durationSeconds);
 	CONSOLE_DEBUG_W_BOOL("lightFrame      \t=",	lightFrame);
 
-#ifdef _SIMULATE_CAMERA_
+#ifdef _ENABLE_CAMERA_SIMULATOR_
 	if (gSimulateCameraImage)
 	{
 		CONSOLE_DEBUG("Simulating camera");
@@ -1114,7 +1114,7 @@ double				coolerPowerLevel;
 //	CONSOLE_DEBUG(__FUNCTION__);
 	if (cCameraProp.CanGetCoolerPower)
 	{
-	#ifdef _SIMULATE_CAMERA_
+	#ifdef _ENABLE_CAMERA_SIMULATOR_
 		if (gSimulateCameraImage)
 		{
 			cCameraProp.CoolerPower	=	52.34;
@@ -1160,7 +1160,7 @@ bool				myCoolerState;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-#ifdef _SIMULATE_CAMERA_
+#ifdef _ENABLE_CAMERA_SIMULATOR_
 	if (gSimulateCameraImage)
 	{
 		*coolerOnOff	=	true;
@@ -1198,7 +1198,7 @@ bool					imageReady;
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	myExposureStatus	=	kExposure_Failed;
-#ifdef _SIMULATE_CAMERA_
+#ifdef _ENABLE_CAMERA_SIMULATOR_
 	//--------------------------------------------
 	//*	simulate image
 	if (gSimulateCameraImage)
@@ -1271,7 +1271,7 @@ bool					imageReady;
 		strcat(cLastCameraErrMsg,	lastError.c_str());
 //		CONSOLE_DEBUG(cLastCameraErrMsg);
 	}
-#ifdef _SIMULATE_CAMERA_
+#ifdef _ENABLE_CAMERA_SIMULATOR_
 	//--------------------------------------------
 	//*	simulate image
 	if (gSimulateCameraImage)
@@ -1341,7 +1341,7 @@ std::string			lastError("");
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
-#ifdef _SIMULATE_CAMERA_
+#ifdef _ENABLE_CAMERA_SIMULATOR_
 	if (gSimulateCameraImage)
 	{
 		AllcateImageBuffer(-1);		//*	let it figure out how much

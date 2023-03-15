@@ -33,6 +33,8 @@
 	#include	"alpacadriver.h"
 #endif
 
+int	CreateTelescopeObjects(void);
+
 //**************************************************************************************
 //*	limit switch definitions
 typedef enum

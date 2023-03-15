@@ -58,7 +58,7 @@ WindowTabMount::WindowTabMount(	const int	xSize,
 //**************************************************************************************
 WindowTabMount::~WindowTabMount(void)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 }
 
 //**************************************************************************************
@@ -74,14 +74,8 @@ int		iii;
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	//------------------------------------------
-	yLoc			=	cTabVertOffset;
-
-	//------------------------------------------
-	SetWidget(kMount_Title,		0,			yLoc,		cWidth,		cTitleHeight);
-	SetWidgetText(kMount_Title, "RA/DEC/HA tracking");
-	SetBGcolorFromWindowName(kMount_Title);
-	yLoc			+=	cTitleHeight;
-	yLoc			+=	2;
+	yLoc	=	cTabVertOffset;
+	yLoc	=	SetTitleBox(kMount_Title, -1, yLoc, "RA/DEC/HA tracking");
 
 	graphHeight		=	cHeight - cTabVertOffset;
 	graphHeight		-=	cBtnHeight;

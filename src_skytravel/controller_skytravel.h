@@ -221,12 +221,12 @@ class ControllerSkytravel: public Controller
 				int					cDomeIpPort;
 				int					cDomeAlpacaDeviceNum;
 				bool				cReadStartup_Dome;
-				bool				cDomeHas_readall;
+				bool				cDomeHas_Readall;
 
 				//----------------------------------------------------------
 				//*	these are copied direct from controller_dome
 				void				UpdateDomeAzimuth(const double newAzimuth);
-				void				UpdateShutterStatus(const int newShutterStatus);
+				void				UpdateShutterStatus(const TYPE_ShutterStatus newShutterStatus);
 				void				UpdateShutterAltitude(const double newAltitude);
 
 

@@ -52,22 +52,6 @@
 #include	"alpacadriver.h"
 #include	"alpacadriver_helper.h"
 
-//*****************************************************************************
-const char	gHtmlHeader[]	=
-{
-	"HTTP/1.0 200 \r\n"
-//	"Server: alpaca\r\n"
-//	"Mime-Version: 1.0\r\n"
-	"User-Agent: AlpacaPi\r\n"
-	"Content-Type: text/html\r\n"
-	"Connection: close\r\n"
-	"\r\n"
-	"<!DOCTYPE html>\r\n"
-	"<HTML><HEAD>\r\n"
-
-
-
-};
 
 //*****************************************************************************
 //*	https://www.w3schools.com/html/html_forms.asp
@@ -192,7 +176,7 @@ char				formActionString[128];
 		//*		/setup/v1/{device_type}/{device_number}/setup
 		sprintf(formActionString,	"/setup/v1/%s/%d/save",
 									cAlpacaName,
-									cDeviceNum);
+									cAlpacaDeviceNum);
 		tolowerStr(formActionString);
 		Setup_OutputForm(reqData, formActionString);
 	}

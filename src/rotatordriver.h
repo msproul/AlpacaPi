@@ -103,6 +103,7 @@ class RotatorDriver: public AlpacaDriver
 				void					GetRotatorModel(char *modelName);
 				void					GetRotatorSerialNumber(char *serialNumber);
 
+				void					DumpRotatorProperties(const char *callingFunctionName);
 
 	protected:
 		TYPE_RotatorProperties	cRotatorProp;

@@ -185,6 +185,9 @@
 //*	Dec 24,	2022	<MLS> Lots of work on imagebytes routines to work with NINA
 //*	Dec 26,	2022	<MLS> Now changing sensorType when image type gets set
 //*	Feb 13,	2023	<MLS> Fixed value string bug in Get_SensorName()
+//*	Feb 24,	2023	<MLS> Added BuildBinaryImage_Raw8_16bit()
+//*	Mar  1,	2023	<MLS> Added DrawMandebrotToImageBuffer() for camera simulation
+//*	Mar  2,	2023	<MLS> Added CreateCameraObjects()
 //*****************************************************************************
 //*	Jan  1,	2119	<TODO> ----------------------------------------
 //*	Jun 26,	2119	<TODO> Add support for sub frames
@@ -248,9 +251,103 @@
 #include	"cameradriver.h"
 #include	"observatory_settings.h"
 
+
+#ifdef _ENABLE_ASI_
+	#include	"cameradriver_ASI.h"
+#endif
+
+#ifdef _ENABLE_ATIK_
+	#include	"cameradriver_ATIK.h"
+#endif
+
+#ifdef _ENABLE_FLIR_
+	#include	"cameradriver_FLIR.h"
+#endif
+
+#ifdef _ENABLE_PHASEONE_
+	#include	"cameradriver_PhaseOne.h"
+#endif
+
+#ifdef _ENABLE_QHY_
+	#include	"cameradriver_QHY.h"
+#endif
+
+#ifdef _ENABLE_QSI_
+	#include	"cameradriver_QSI.h"
+#endif
+
+#ifdef _ENABLE_CAMERA_SIMULATOR_
+	#include	"cameradriver_sim.h"
+#endif
+
+#ifdef _ENABLE_SONY_
+	#include	"cameradriver_SONY.h"
+#endif
+
+#ifdef _ENABLE_TOUP_
+	#include	"cameradriver_TOUP.h"
+#endif
+
+
+
 #define	kImageDataDir_Default		"imagedata"
 char	gImageDataDir[256]		=	kImageDataDir_Default;
 
+
+//*****************************************************************************
+//*	returns number of camera objects created
+//*****************************************************************************
+int	CreateCameraObjects(void)
+{
+int	cameraCnt;
+
+	cameraCnt	=	0;
+
+//-----------------------------------------------------------
+//*	ATIK needs to be before ASI for multiple camera starts
+#ifdef _ENABLE_ATIK_
+	cameraCnt	+=	CreateATIK_CameraObjects();
+#endif
+
+//-----------------------------------------------------------
+#ifdef _ENABLE_ASI_
+	cameraCnt	+=	CreateASI_CameraObjects();
+#endif
+//-----------------------------------------------------------
+//#ifdef _ENABLE_FLIR_) && (__GNUC__ > 5)
+#ifdef _ENABLE_FLIR_
+	cameraCnt	+=	CreateFLIR_CameraObjects();
+#endif
+//-----------------------------------------------------------
+#ifdef _ENABLE_PHASEONE_
+	cameraCnt	+=	CreatePhaseOne_CameraObjects();
+#endif
+
+//-----------------------------------------------------------
+#ifdef _ENABLE_QHY_
+	cameraCnt	+=	CreateCameraObjects_QHY();
+#endif
+//-----------------------------------------------------------
+#ifdef _ENABLE_QSI_
+	cameraCnt	+=	CreateQSI_CameraObjects();
+#endif
+//-----------------------------------------------------------
+#ifdef _ENABLE_TOUP_
+	cameraCnt	+=	CreateTOUP_CameraObjects();
+#endif
+
+//-----------------------------------------------------------
+#ifdef _ENABLE_SONY_
+	CreateSONY_CameraObjects();
+#endif
+
+#ifdef _ENABLE_CAMERA_SIMULATOR_
+	cameraCnt	+=	CreateCameraObjects_Sim();
+#endif
+
+
+	return(cameraCnt);
+}
 
 //*****************************************************************************
 const char	*gCameraStateStrings[]	=
@@ -612,7 +709,6 @@ int	iii;
 	//*	Setup support
 	cDriverSupportsSetup		=	true;
 
-
 	SendDiscoveryQuery();
 }
 
@@ -646,6 +742,37 @@ bool	CameraDriver::AlpacaDisConnect(void)
 	return(true);
 }
 
+//**************************************************************************************
+void	CameraDriver::SetCommonPropertyName(const char *namePrefix, const char *newName)
+{
+char	myNewName[128];
+
+	myNewName[0]	=	0;
+	if (namePrefix != NULL)
+	{
+		strcpy(myNewName, namePrefix);
+	}
+	if (newName != NULL)
+	{
+		strcat(myNewName, newName);
+	}
+
+	//*	check if we have a valid RefId
+	if (strlen(gObseratorySettings.RefID) > 0)
+	{
+		//*	ASCOM only displays the name, having more than 1 of the same camera
+		//*	it became confusing as to which camera to select from the ASCOM list.
+		//*	this helps figure out when using a strictly ASCOM app on Windows
+		strcpy(cCommonProp.Name, gObseratorySettings.RefID);
+		strcat(cCommonProp.Name, "-");
+		strcat(cCommonProp.Name, myNewName);
+		CONSOLE_DEBUG_W_STR("cCommonProp.Name", cCommonProp.Name);
+	}
+	else
+	{
+		strcpy(cCommonProp.Name, myNewName);
+	}
+}
 
 //**************************************************************************************
 void	CameraDriver::SetSerialNumInFileName(bool enable)
@@ -3840,6 +3967,48 @@ int		pixelIndex;
 //*****************************************************************************
 //*	returns byte count
 //*****************************************************************************
+int	CameraDriver::BuildBinaryImage_Raw8_16bit(	unsigned char	*binaryDataBuffer,
+												int				startOffset,
+												int				bufferSize)
+{
+int		xxx;
+int		yyy;
+int		ccc;
+int		pixelIndex;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+	ccc	=	startOffset;
+	if (cCameraDataBuffer != NULL)
+	{
+		for (xxx=0; xxx<cLastExposure_ROIinfo.currentROIwidth; xxx++)
+		{
+			pixelIndex	=	xxx;
+			for (yyy=0; yyy < cLastExposure_ROIinfo.currentROIheight; yyy++)
+			{
+				if (ccc < bufferSize)
+				{
+					//*	its little endian, 16 bit
+					binaryDataBuffer[ccc++]	=	0;
+					binaryDataBuffer[ccc++]	=	(cCameraDataBuffer[pixelIndex] & 0x00ff);
+				}
+				else
+				{
+					CONSOLE_DEBUG("Binary data buffer overflow");
+				}
+				pixelIndex	+=	cLastExposure_ROIinfo.currentROIwidth;
+			}
+		}
+	}
+	else
+	{
+		CONSOLE_DEBUG("cCameraDataBuffer is NULL");
+	}
+	return(ccc);
+}
+
+//*****************************************************************************
+//*	returns byte count
+//*****************************************************************************
 int	CameraDriver::BuildBinaryImage_Raw8_32bit(	unsigned char	*binaryDataBuffer,
 												int				startOffset,
 												int				bufferSize)
@@ -4123,7 +4292,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InvalidOperation;
 TYPE_BinaryImageHdr	binaryImageHdr;
 int					bytesPerPixel;
 int					totalPixels;
-size_t				dataPayloadSize;
+int					dataPayloadSize;
 size_t				bufferSize;
 unsigned char 		*binaryDataBuffer;
 int					imgDataOffset;
@@ -4140,6 +4309,7 @@ char				dataTypeString[32];
 
 	memset((void *)&binaryImageHdr, 0, sizeof(TYPE_BinaryImageHdr));
 
+	//*	set default values, the image types may change
 	binaryImageHdr.MetadataVersion			=	1;		//	Metadata version = 1
 	binaryImageHdr.ErrorNumber				=	0;		//	Alpaca error number or zero for success
 	binaryImageHdr.ClientTransactionID		=	0;		//	Client's transaction ID
@@ -4165,8 +4335,8 @@ bool	xmit16BitAs32Bit	=	true;
 		case kImageType_Y8:
 			CONSOLE_DEBUG("kImageType_RAW8");
 			binaryImageHdr.Dimension3				=	0;							//	(0 for 2D array)
-		//	if (reqData->cHTTPclientType == kHTTPclient_AlpacaPi)
-			if (reqData->cHTTPclientType == kHTTPclient_last)
+			if (reqData->cHTTPclientType == kHTTPclient_AlpacaPi)
+		//	if (reqData->cHTTPclientType == kHTTPclient_last)
 			{
 				bytesPerPixel							=	1;
 				binaryImageHdr.ImageElementType			=	kAlpacaImageData_Byte;		//	Element type of the source image array
@@ -4242,11 +4412,11 @@ bool	xmit16BitAs32Bit	=	true;
 
 	CONSOLE_DEBUG_W_NUM("bytesPerPixel\t\t=",			bytesPerPixel);
 	CONSOLE_DEBUG_W_NUM("totalPixels\t\t=",				totalPixels);
-	CONSOLE_DEBUG_W_LONG("dataPayloadSize\t\t=",		dataPayloadSize);
+	CONSOLE_DEBUG_W_NUM("dataPayloadSize\t\t=",			dataPayloadSize);
 
 	//*	time to build the HTTP header
 	strcpy(httpHeader,	"HTTP/1.0 200 OK\r\n");
-	sprintf(lineBuff,	"Content-Length: %ld\r\n", dataPayloadSize);
+	sprintf(lineBuff,	"Content-Length: %d\r\n", dataPayloadSize);
 	strcat(httpHeader,	lineBuff);
 	strcat(httpHeader,	"Content-type: application/imagebytes charset=utf-8\r\n");
 	strcat(httpHeader,	"Server: AlpacaPi\r\n");
@@ -4256,7 +4426,7 @@ bool	xmit16BitAs32Bit	=	true;
 
 	bufferSize		=	httpHeaderSize + dataPayloadSize;
 
-
+	//--------------------------------------------------------------------
 	//*	make sure we have valid data
 	if ((cCameraDataBuffer != NULL) && (totalPixels > 0))
 	{
@@ -4275,25 +4445,37 @@ bool	xmit16BitAs32Bit	=	true;
 			imgDataOffset		=	httpHeaderSize;
 			imgDataOffset		+=	sizeof(TYPE_BinaryImageHdr);
 
-			CONSOLE_DEBUG_W_LONG("httpHeaderSize             \t=",	httpHeaderSize);
-			CONSOLE_DEBUG_W_LONG("sizeof(TYPE_BinaryImageHdr)\t=",	sizeof(TYPE_BinaryImageHdr));
+			CONSOLE_DEBUG_W_SIZE("httpHeaderSize             \t=",	httpHeaderSize);
+			CONSOLE_DEBUG_W_SIZE("sizeof(TYPE_BinaryImageHdr)\t=",	sizeof(TYPE_BinaryImageHdr));
 			CONSOLE_DEBUG_W_NUM("imgDataOffset               \t=",	imgDataOffset);
 
 			//*	now copy the image over
+			returnedDataLen	=	0;
 			switch(cLastExposure_ROIinfo.currentROIimageType)
 			{
 				case kImageType_RAW8:
 				case kImageType_Y8:
 					CONSOLE_DEBUG("kImageType_RAW8");
-					if (bytesPerPixel == 1)
+					switch (binaryImageHdr.TransmissionElementType)
 					{
-						returnedDataLen	=	BuildBinaryImage_Raw8(binaryDataBuffer, imgDataOffset, bufferSize);
+						case kAlpacaImageData_Byte:
+							returnedDataLen	=	BuildBinaryImage_Raw8(binaryDataBuffer, imgDataOffset, bufferSize);
+							break;
+
+						case kAlpacaImageData_Int16:
+							returnedDataLen	=	BuildBinaryImage_Raw8_16bit(binaryDataBuffer, imgDataOffset, bufferSize);
+							break;
+
+						case kAlpacaImageData_Int32:
+							returnedDataLen	=	BuildBinaryImage_Raw8_32bit(binaryDataBuffer, imgDataOffset, bufferSize);
+							break;
+
+						default:
+							CONSOLE_DEBUG_W_NUM("Image type not handled:", binaryImageHdr.TransmissionElementType);
+							returnedDataLen	=	0;
+							break;
 					}
-					else
-					{
-						returnedDataLen	=	BuildBinaryImage_Raw8_32bit(binaryDataBuffer, imgDataOffset, bufferSize);
-					}
-					CONSOLE_DEBUG_W_LONG("bufferSize     \t\t=",	(long)bufferSize);
+					CONSOLE_DEBUG_W_SIZE("bufferSize     \t\t=",	bufferSize);
 					CONSOLE_DEBUG_W_NUM( "returnedDataLen\t\t=",	returnedDataLen);
 					break;
 
@@ -4329,14 +4511,15 @@ bool	xmit16BitAs32Bit	=	true;
 					returnedDataLen	=	0;
 					break;
 			}
-			CONSOLE_DEBUG_W_LONG("bufferSize\t\t=", bufferSize);
+
+			CONSOLE_DEBUG_W_SIZE("bufferSize\t\t=", bufferSize);
 			//*	if the data buffer is small, send it as one block
 		//	if (bufferSize < (20 * 1000000))
 			if (1)
 			{
-				CONSOLE_DEBUG_W_LONG("Writting to TCP socket, bufferSize\t=", bufferSize);
+				CONSOLE_DEBUG_W_SIZE("Writting to TCP socket, bufferSize\t=", bufferSize);
 				bytesWritten	=	write(reqData->socket, binaryDataBuffer, bufferSize);
-				CONSOLE_DEBUG_W_LONG("bytesWritten\t\t=", bytesWritten);
+				CONSOLE_DEBUG_W_SIZE("bytesWritten\t\t=", bytesWritten);
 				if (bytesWritten < bufferSize)
 				{
 					CONSOLE_DEBUG("FAILED!!! to transmit entire data block!!!!!!!!!!!!!!!");
@@ -4369,19 +4552,19 @@ bool	xmit16BitAs32Bit	=	true;
 					{
 						bytesPerBlock	=	dataLeftToSend;
 					}
-					CONSOLE_DEBUG_W_LONG("write() bytesPerBlock\t\t=", bytesPerBlock);
+					CONSOLE_DEBUG_W_SIZE("write() bytesPerBlock\t\t=", bytesPerBlock);
 					bytesWritten		=	write(reqData->socket, dataPointer, bytesPerBlock);
 					totalBytesWritten	+=	bytesWritten;
 					dataPointer			+=	bytesWritten;
 
-					CONSOLE_DEBUG_W_LONG("bytesWritten\t\t=", bytesWritten);
+					CONSOLE_DEBUG_W_SIZE("bytesWritten\t\t=", bytesWritten);
 				}
 			}
 			free(binaryDataBuffer);
 		}
 		else
 		{
-			CONSOLE_DEBUG_W_LONG("Failed to allocate data buffer of size", bufferSize);
+			CONSOLE_DEBUG_W_SIZE("Failed to allocate data buffer of size", bufferSize);
 		}
 	}
 	else
@@ -6404,7 +6587,7 @@ char	lineBuffer[512];
 	}
 //	CONSOLE_DEBUG(__FUNCTION__);
 //	CONSOLE_DEBUG_W_NUM("cCameraID\t=", cCameraID);
-	GenerateHTMLcmdLinkTable(reqData->socket, "camera", cDeviceNum, gCameraCmdTable);
+	GenerateHTMLcmdLinkTable(reqData->socket, "camera", cAlpacaDeviceNum, gCameraCmdTable);
 }
 
 #pragma mark -
@@ -7473,12 +7656,12 @@ int					iii;
 										reqData->jsonTextBuffer,
 										kMaxJsonBuffLen,
 										"\t\t\t\"END\"\r\n");
-//CONSOLE_DEBUG_W_LONG("len of jsonTextBuffer\t=", strlen(reqData->jsonTextBuffer));
+//CONSOLE_DEBUG_W_SIZE("len of jsonTextBuffer\t=", strlen(reqData->jsonTextBuffer));
 		cBytesWrittenForThisCmd	+=	JsonResponse_Add_ArrayEnd(	mySocketFD,
 										reqData->jsonTextBuffer,
 										kMaxJsonBuffLen,
 										INCLUDE_COMMA);
-//CONSOLE_DEBUG_W_LONG("len of jsonTextBuffer\t=", strlen(reqData->jsonTextBuffer));
+//CONSOLE_DEBUG_W_SIZE("len of jsonTextBuffer\t=", strlen(reqData->jsonTextBuffer));
 		errorCode	=	closedir(directory);
 		if (errorCode != 0)
 		{
@@ -8464,9 +8647,209 @@ void	CameraDriver::DumpCameraProperties(const char *callingFunctionName)
 	CONSOLE_DEBUG(			"*************************************************************");
 }
 
-//*****************************************************************************
-void	CameraDriver::CreateFakeImageData(unsigned char *cameraDataPtr, int imageWith, int imageHeight, int bytesPerPixel)
+#define		kMandel_FarLeft		-2.01
+#define		kMandel_FarRight	1.0
+#define		kMandel_FarTop		-1.2
+#define		kMandel_FarBottom	1.2
+#define		kMandel_Width		(kMandel_FarRight - kMandel_FarLeft)
+#define		kMandel_Height		(kMandel_FarBottom - kMandel_FarTop)
+#define		kQmax				3000
+#define		kStartColor			1
+#define		kMaxItterations		512
+
+static uint32_t	gColorTable[kMaxItterations];
+
+//*******************************************************************************
+static double	GetRandomInRange(const double lowValue, const double highValue)
 {
+int		myRandomNum;
+double	range;
+double	randDbl;
+
+	range		=	highValue - lowValue;
+	myRandomNum	=	rand();
+	randDbl		=	1.0 * (myRandomNum & 0x00ffff);	//*	limit to 16 bit number
+	randDbl		=	randDbl / 65536.0;
+	randDbl		=	randDbl * range;
+	randDbl		=	lowValue + randDbl;
+	return(randDbl);
+}
+
+//*******************************************************************************
+static void InitColorTable(void)
+{
+int		ii;
+int		redValue;
+int		grnValue;
+int		bluValue;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG_W_NUM("RAND_MAX\t=", RAND_MAX);
+
+	for (ii=0; ii<kMaxItterations; ii++)
+	{
+		redValue	=	rand() & 0x00ff;
+		grnValue	=	rand() & 0x00ff;
+		bluValue	=	rand() & 0x00ff;
+		gColorTable[ii]	=	(redValue << 16) + (grnValue << 8) + bluValue;
+	}
+	gColorTable[kMaxItterations - 1]	=	0;
+}
+
+
+//*******************************************************************************
+static long	CalculateMandlebrotPixel(double PPP, double QQQ)
+{
+long		color;
+double		X;
+double		Y;
+double		Xsquare;
+double		Ysquare;
+
+	X		=	0.0;
+	Y		=	0.0;
+	Xsquare	=	0.0;
+	Ysquare	=	0.0;
+	color	=	kStartColor;
+	while ((color < kMaxItterations)  && ((Xsquare + Ysquare) < 4))
+	{
+		Xsquare =	X * X;
+		Ysquare =	Y * Y;
+		Y		*=	X;
+		Y		+=	Y + QQQ;
+		X		=	Xsquare - Ysquare + PPP;
+		color++;
+	}
+	return(color);
+}
+
+//*******************************************************************************
+void	DrawMandebrotToImageBuffer(	unsigned char	*imaageDataPtr,
+									int				imageWidth,
+									int				imageHeight,
+									int				bytesPerPixel,
+									double			XMin,
+									double			XMax,
+									double			YMin,
+									double			YMax
+									)
+{
+double		QQQtemp;
+double		QQQ[kQmax + 10];
+double 		PPP;
+double		deltaP;
+double		deltaQ;
+long		color;
+int			row;
+int			col;
+int			pixelIndex;
+uint32_t	rgbColor;
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	InitColorTable();
+
+	deltaP	=	(XMax - XMin) / imageWidth;
+	deltaQ	=	(YMax - YMin) / imageHeight;
+
+	QQQ[0]	=	YMin;
+	for (row = 1; row <= imageHeight; row++)
+	{
+		QQQ[row]	=	QQQ[row-1] + deltaQ;
+	}
+
+	for (col=0; col < imageWidth; col++)
+	{
+		PPP	=	XMin + (deltaP * col);
+
+		for (row=0; row < imageHeight; row++)
+		{
+			QQQtemp	=	QQQ[row];
+			color	=	CalculateMandlebrotPixel(PPP, QQQtemp);
+
+			//*	set the pixel value
+			switch(bytesPerPixel)
+			{
+				case 1:
+					pixelIndex					=	(row * imageWidth) + col;
+					imaageDataPtr[pixelIndex]	=	color;
+					break;
+
+				case 3:
+					pixelIndex						=	(row * 3 * imageWidth) + (col * 3);
+					rgbColor						=	gColorTable[color];
+					imaageDataPtr[pixelIndex + 0]	=	(rgbColor >> 16) & 0x00ff;
+					imaageDataPtr[pixelIndex + 1]	=	(rgbColor >> 8) & 0x00ff;
+					imaageDataPtr[pixelIndex + 2]	=	(rgbColor) & 0x00ff;
+					break;
+			}
+		}
+	}
+}
+
+static int	gMandlebrotCount	=	0;
+//*****************************************************************************
+void	CameraDriver::CreateFakeImageData(unsigned char *cameraDataPtr, int imageWidth, int imageHeight, int bytesPerPixel)
+{
+
+#if 1
+double	leftEdge;
+double	rightEdge;
+double	topEdge;
+double	bottomEdge;
+double	centerX;
+double	centerY;
+long	pixelColor;
+double	mandleScale;
+
+	if ((gMandlebrotCount % 10) == 0)
+	{
+		DrawMandebrotToImageBuffer(	cameraDataPtr,
+									imageWidth,
+									imageHeight,
+									bytesPerPixel,
+									kMandel_FarLeft,
+									kMandel_FarRight,
+									kMandel_FarTop,
+									kMandel_FarBottom);
+
+	}
+	else
+	{
+		//*	this makes sure that the center is not black
+		pixelColor	=	kMaxItterations + 10;
+		while (pixelColor >= kMaxItterations)
+		{
+	//		centerX		=	GetRandomInRange(kMandel_FarLeft, kMandel_FarRight);
+			centerX		=	GetRandomInRange(-1.5, -0.5);
+	//		centerY		=	GetRandomInRange(kMandel_FarTop, kMandel_FarBottom);
+			centerY		=	GetRandomInRange(-0.15, 0.15);
+			CONSOLE_DEBUG_W_DBL("centerX\t=", centerX);
+			CONSOLE_DEBUG_W_DBL("centerY\t=", centerY);
+			pixelColor	=	CalculateMandlebrotPixel(centerX, centerY);
+		}
+		mandleScale	=	GetRandomInRange(2.0, 100.0);
+		leftEdge	=	centerX - (kMandel_Width / mandleScale);
+		rightEdge	=	centerX + (kMandel_Width / mandleScale);
+
+		topEdge		=	centerY - (kMandel_Height / mandleScale);
+		bottomEdge	=	centerY + (kMandel_Height / mandleScale);
+		CONSOLE_DEBUG_W_DBL("mandleScale\t=", mandleScale);
+		CONSOLE_DEBUG_W_DBL("leftEdge   \t=", leftEdge);
+		CONSOLE_DEBUG_W_DBL("rightEdge  \t=", rightEdge);
+		CONSOLE_DEBUG_W_DBL("topEdge    \t=", topEdge);
+		CONSOLE_DEBUG_W_DBL("bottomEdge \t=", bottomEdge);
+
+		DrawMandebrotToImageBuffer(	cameraDataPtr,
+									imageWidth,
+									imageHeight,
+									bytesPerPixel,
+									leftEdge,
+									rightEdge,
+									topEdge,
+									bottomEdge);
+	}
+	gMandlebrotCount++;
+#else
 int			iii;
 int			jjj;
 int			pixelIndex;
@@ -8474,12 +8857,9 @@ double		sinValue;
 double		periodWidth;
 double		xFraction;
 int			pixelValueInt;
-//int			redValue;
-//int			grnValue;
-//int			bluValue;
 
 	CONSOLE_DEBUG(__FUNCTION__);
-	CONSOLE_DEBUG_W_NUM("imageWith\t\t=",		imageWith);
+	CONSOLE_DEBUG_W_NUM("imageWidth\t\t=",		imageWidth);
 	CONSOLE_DEBUG_W_NUM("imageHeight\t=",		imageHeight);
 	CONSOLE_DEBUG_W_NUM("bytesPerPixel\t=",		bytesPerPixel);
 
@@ -8488,11 +8868,11 @@ int			pixelValueInt;
 
 	if (cameraDataPtr != NULL)
 	{
-		periodWidth		=	imageWith / 4;
+		periodWidth		=	imageWidth / 4;
 		for (jjj = 0; jjj< imageHeight; jjj++)
 		{
-			pixelIndex	=	jjj * imageWith * bytesPerPixel;
-			for (iii = 0; iii< imageWith; iii++)
+			pixelIndex	=	jjj * imageWidth * bytesPerPixel;
+			for (iii = 0; iii< imageWidth; iii++)
 			{
 				xFraction	=	((iii + jjj) * 1.0) / periodWidth;
 				sinValue	=	sin(xFraction * (2 * M_PI));
@@ -8542,6 +8922,7 @@ int			pixelValueInt;
 			}
 		}
 	}
+#endif // 1
 }
 
 //*****************************************************************************
@@ -8699,22 +9080,19 @@ TYPE_Targets	gTargetNames[]		=
 	{	"",			"",			}
 };
 
-//*****************************************************************************
-const char	gHtmlHeader[]	=
-{
-	"HTTP/1.0 200 \r\n"
-//	"Server: alpaca\r\n"
-//	"Mime-Version: 1.0\r\n"
-	"User-Agent: AlpacaPi\r\n"
-	"Content-Type: text/html\r\n"
-	"Connection: close\r\n"
-	"\r\n"
-	"<!DOCTYPE html>\r\n"
-	"<HTML><HEAD>\r\n"
-
-
-
-};
+////*****************************************************************************
+//const char	gHtmlHeader[]	=
+//{
+//	"HTTP/1.0 200 \r\n"
+////	"Server: alpaca\r\n"
+////	"Mime-Version: 1.0\r\n"
+//	"User-Agent: AlpacaPi\r\n"
+//	"Content-Type: text/html\r\n"
+//	"Connection: close\r\n"
+//	"\r\n"
+//	"<!DOCTYPE html>\r\n"
+//	"<HTML><HEAD>\r\n"
+//};
 
 //*****************************************************************************
 //*	https://www.w3schools.com/html/html_forms.asp

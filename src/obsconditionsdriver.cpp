@@ -77,11 +77,21 @@
 #include	"obsconditionsdriver.h"
 #include	"obsconditions_globals.h"
 
+#ifdef _ENABLE_OBSERVINGCONDITIONS_SIMULATOR_
+	#include	"obsconditionsdriver_sim.h"
+#endif
+
+
 //*****************************************************************************
 void	CreateObsConditionObjects(void)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
-	new ObsConditionsDriver(0);
+#if defined(__arm__) && defined(_ENABLE_OBSERVINGCONDITIONS_RPI_)
+	CreateObsConditionObjects_RPi();
+#endif
+
+#ifdef _ENABLE_OBSERVINGCONDITIONS_SIMULATOR_
+	CreateObsConditionObjects_SIM();
+#endif
 }
 
 
@@ -469,7 +479,7 @@ double	humidityTotal;
 //*****************************************************************************
 double	ObsConditionsDriver::ReadPressure_kPa(void)
 {
-	CONSOLE_DEBUG("Should not be here");
+//	CONSOLE_DEBUG("Should not be here");
 	//*	this routine should be overloaded by sub class
 	return(0.0);
 }
@@ -477,7 +487,7 @@ double	ObsConditionsDriver::ReadPressure_kPa(void)
 //*****************************************************************************
 double	ObsConditionsDriver::ReadTemperature(void)
 {
-	CONSOLE_DEBUG("Should not be here");
+//	CONSOLE_DEBUG("Should not be here");
 	//*	this routine should be overloaded by sub class
 	return(0.0);
 }
@@ -485,7 +495,7 @@ double	ObsConditionsDriver::ReadTemperature(void)
 //*****************************************************************************
 double	ObsConditionsDriver::ReadHumidity(void)
 {
-	CONSOLE_DEBUG("Should not be here");
+//	CONSOLE_DEBUG("Should not be here");
 	//*	this routine should be overloaded by sub class
 	return(0.0);
 }
@@ -1288,7 +1298,7 @@ double		pressure_PSI;
 			{
 				SocketWriteData(mySocketFD,	"<TR>\r\n");
 				SocketWriteData(mySocketFD,	"\t<TD>Humidity:</TD>");
-				sprintf(lineBuffer,	"\t<TD>%1.1f %%</TD>",	cObsConditionProp.Humidity);
+				sprintf(lineBuffer,	"\t<TD>%1.1f %%</TD>",	cObsConditionProp.Humidity.Value);
 				SocketWriteData(mySocketFD,	lineBuffer);
 				SocketWriteData(mySocketFD,	"</TR>\r\n");
 

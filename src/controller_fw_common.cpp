@@ -20,6 +20,7 @@
 //*****************************************************************************
 //*	May 28,	2021	<MLS> Created controller_fw_common.cpp
 //*	May 29,	2021	<MLS> Added AlpacaGetFilterWheelStatus()
+//*	Mar  1,	2022	<MLS> Added value string length checking to prevent crashes
 //*****************************************************************************
 
 //*	this file gets INCLUDED at the end of either controller_telescope OR controller_skytravel
@@ -41,11 +42,11 @@ bool			validData;
 char			alpacaString[128];
 int				jjj;
 int				filterWheelIdx;
+int				argStrLen;
 
-//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
-//	CONSOLE_DEBUG_W_NUM("cAlpacaDevNum\t=", cAlpacaDevNum);
-//	CONSOLE_DEBUG_W_NUM("cPort\t=", cPort);
-
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+	CONSOLE_DEBUG_W_NUM("cAlpacaDevNum\t=", cAlpacaDevNum);
+	CONSOLE_DEBUG_W_NUM("cPort\t=", cPort);
 
 	//*	Start by getting info about the filterwheel
 	//===============================================================
@@ -64,10 +65,18 @@ int				filterWheelIdx;
 		while (jjj<jsonParser.tokenCount_Data)
 		{
 //			CONSOLE_DEBUG_W_2STR("JSON:", jsonParser.dataList[jjj].keyword, jsonParser.dataList[jjj].valueString);
+			argStrLen	=	strlen(jsonParser.dataList[jjj].valueString);
 			if (strcasecmp(jsonParser.dataList[jjj].keyword, "DEVICE") == 0)
 			{
-				strcpy(cFilterWheelName,	"Filterwheel: ");
-				strcat(cFilterWheelName,	jsonParser.dataList[jjj].valueString);
+				if (argStrLen < kCommonPropMaxStrLen)
+				{
+					strcpy(cFilterWheelName,	jsonParser.dataList[jjj].valueString);
+				}
+				else
+				{
+					CONSOLE_DEBUG_W_STR("argument too long", jsonParser.dataList[jjj].valueString);
+					CONSOLE_DEBUG_W_NUM("argStrLen\t=", argStrLen);
+				}
 			}
 			if (strcasecmp(jsonParser.dataList[jjj].keyword, "ARRAY") == 0)
 			{
@@ -79,11 +88,23 @@ int				filterWheelIdx;
 				{
 					if (filterWheelIdx < kMaxFiltersPerWheel)
 					{
-						//*	save the filter name
-						strcpy(cFilterWheelProp.Names[filterWheelIdx].FilterName, jsonParser.dataList[jjj].valueString);
+						if (argStrLen < kMaxFWnameLen)
+						{
+							//*	save the filter name
+							strcpy(cFilterWheelProp.Names[filterWheelIdx].FilterName, jsonParser.dataList[jjj].valueString);
+							CONSOLE_DEBUG(cFilterWheelProp.Names[filterWheelIdx].FilterName);
+						}
+						else
+						{
+							CONSOLE_DEBUG_W_STR("argument too long", jsonParser.dataList[jjj].valueString);
+							CONSOLE_DEBUG_W_NUM("argStrLen\t=", argStrLen);
+						}
 
-//						CONSOLE_DEBUG(cFilterWheelProp.Names[filterWheelIdx].FilterName);
 						filterWheelIdx++;
+					}
+					else
+					{
+						CONSOLE_ABORT("Exceeded max filter count");
 					}
 					jjj++;
 				}

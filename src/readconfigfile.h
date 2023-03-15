@@ -18,14 +18,15 @@ typedef struct
 
 
 //*	call back function for processing config entry
-typedef void (ProcessConfigEntry)(const char *keyword, const char *value);
+typedef void (ProcessConfigEntry)(const char *keyword, const char *value, void *userDataPtr);
 
 
 //*	returns # of processed lines
 //*	-1 means failed to open config file
 int	ReadGenericConfigFile(	const char			*configFilePath,
 							const char			separterChar,
-							ProcessConfigEntry *configCallBack);
+							ProcessConfigEntry	*configCallBack,
+							void				*userDataPtr);
 //*	returns -1 if keyword not found
 int		FindKeywordFromTable(const char *keyword, const TYPE_KEYWORDS *keywordTable);
 

@@ -72,7 +72,7 @@ WindowTabMoon::WindowTabMoon(	const int	xSize,
 //**************************************************************************************
 WindowTabMoon::~WindowTabMoon(void)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 }
 
 //**************************************************************************************
@@ -89,17 +89,10 @@ int		myButtonWidth;
 
 
 	//------------------------------------------
-	yLoc			=	cTabVertOffset;
+	yLoc	=	cTabVertOffset;
+	yLoc	=	SetTitleBox(kMoon_Title, -1, yLoc, "Phase of the Moon");
 
-	//------------------------------------------
-	SetWidget(kMoon_Title,		0,			yLoc,		cWidth,		cTitleHeight);
-	SetWidgetText(kMoon_Title, "Phase of the Moon");
-	SetBGcolorFromWindowName(kMoon_Title);
-	yLoc			+=	cTitleHeight;
-	yLoc			+=	2;
-	saveYloc		=	yLoc;
-
-//	yLoc			+=	12;
+	saveYloc	=	yLoc;
 
 	iii	=	kMoon_AgeLbl;
 	while (iii <= kMoon_Illumination)
@@ -451,7 +444,7 @@ char			myMoonFilePath[128];
 	{
 		CONSOLE_DEBUG("ReadFITSimageIntoOpenCVimage() OK");
 	#ifdef _USE_OPENCV_CPP_
-		DumpCVMatStruct(myOpenCVimage);
+//		DumpCVMatStruct(__FUNCTION__, myOpenCVimage);
 
 		newWidth			=	myOpenCVimage->cols;
 		newHeight			=	myOpenCVimage->rows;

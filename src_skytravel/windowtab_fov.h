@@ -33,6 +33,7 @@ enum
 	kFOVbox_ClmTitle6,
 	kFOVbox_ClmTitle7,
 	kFOVbox_ClmTitle8,
+	kFOVbox_ClmTitle9,
 
 
 	kFOVbox_CamChkBox1,
