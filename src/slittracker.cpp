@@ -389,7 +389,7 @@ char		lineBuffer[128];
 }
 
 //*****************************************************************************
-bool	SlitTrackerDriver::GetCommandArgumentString(const int cmdENum, char *agumentString)
+bool	SlitTrackerDriver::GetCommandArgumentString(const int cmdENum, char *agumentString, char *commentString)
 {
 bool	foundFlag	=	true;
 
@@ -817,11 +817,12 @@ int		linesRead;
 static const char	gSlitTrackerInfo[]	=
 {
 	"The AlpacaPi SlitTracker allows the dome slit to follow the telescope.\r\n"
-	"This is down with acoustic sensors mounted around the aperature of the telescope\r\n"
+	"This is done with acoustic sensors mounted around the aperture of the telescope\r\n"
 	"that ping the distance to the inside of the dome.\r\n"
 	"<P>\r\n"
 	"This page allows you to configure which Alpaca Dome device to send the commands to.\r\n"
-	"This can also be configured by editing 'slittracker-config.txt' on the unit that is running the SlitTracker drver."
+	"This can also be configured by editing 'slittracker-config.txt'\r\n"
+	"on the unit that is running the SlitTracker driver."
 };
 
 //*****************************************************************************

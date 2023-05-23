@@ -153,21 +153,19 @@ class ControllerCamera: public Controller
 				void	BumpOffset(const int howMuch);
 				void	SetOffset(const int newOffset);
 
-				void	ToggleLiveMode(void);
-				void	ToggleSideBar(void);
-				void	ToggleAutoExposure(void);
-				void	ToggleDisplayImage(void);
-				void	ToggleSaveAll(void);
-				void	ToggleCooler(void);
-				void	ToggleFlipMode(bool toggleHorz, bool toggleVert);
-				void	StartExposure(void);
-				void	SetObjectText(const char *newObjectText, const char *newPrefixText);
-				void	LogCameraTemp(const double cameraTemp);
+				void				ToggleLiveMode(void);
+				void				ToggleSideBar(void);
+				void				ToggleAutoExposure(void);
+				void				ToggleDisplayImage(void);
+				void				ToggleSaveAll(void);
+				TYPE_ASCOM_STATUS	ToggleCooler(void);
+				void				ToggleFlipMode(bool toggleHorz, bool toggleVert);
+				TYPE_ASCOM_STATUS	SetCCDtargetTemperature(double newCCDtargetTemp);
+				void				StartExposure(void);
+				void				SetObjectText(const char *newObjectText, const char *newPrefixText);
+				void				LogCameraTemp(const double cameraTemp);
 
-
-
-//			#if defined(_USE_OPENCV_CPP_) &&  (CV_MAJOR_VERSION >= 4)
-			#if defined(_USE_OPENCV_CPP_)
+			#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 				cv::Mat		*DownloadImage_rgbarray(void);
 				cv::Mat		*DownloadImage_imagearray(const bool force8BitRead, const bool allowBinary);
 				cv::Mat		*DownloadImage(const bool force8BitRead,  const bool allowBinary);
@@ -176,7 +174,6 @@ class ControllerCamera: public Controller
 				IplImage	*DownloadImage_imagearray(const bool force8BitRead, const bool allowBinary);
 				IplImage	*DownloadImage(const bool force8BitRead,  const bool allowBinary);
 			#endif
-
 
 				TYPE_CameraProperties	cCameraProp;
 

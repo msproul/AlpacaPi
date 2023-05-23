@@ -53,7 +53,7 @@ WindowTabFileList::WindowTabFileList(	const int	xSize,
 //**************************************************************************************
 WindowTabFileList::~WindowTabFileList(void)
 {
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 }
 
 #define	kFileListHeight	200

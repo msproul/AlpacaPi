@@ -65,6 +65,7 @@ enum
 	kRemoteData_GaiaSearchBtn,
 
 	kRemoteData_UpdateDBlistBtn,
+	kRemoteData_SQLerrorMsgBox,
 
 	//*	2nd column for database list
 	kRemoteData_SQLdatabaseTxt,

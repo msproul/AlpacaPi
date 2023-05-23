@@ -20,9 +20,7 @@ class ControllerUSB: public Controller
 				ControllerUSB(	const char	*argWindowName,
 								const char	*usbPath);
 
-
 		virtual	~ControllerUSB(void);
-
 
 		virtual	void	SetupWindowControls(void);
 //		virtual	void	ProcessButtonClick(const int buttonIdx);

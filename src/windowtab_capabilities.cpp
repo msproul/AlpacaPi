@@ -51,7 +51,7 @@ WindowTabCapabilities::WindowTabCapabilities(	const int	xSize,
 //**************************************************************************************
 WindowTabCapabilities::~WindowTabCapabilities(void)
 {
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 }
 
 

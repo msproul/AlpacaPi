@@ -64,7 +64,7 @@ void	sphsss(TYPE_SpherTrig *sphptr)
 //*****************************************************************************
 //void eph(time_struct *timeptr,locn_struct *locptr,planet_struct **planptr,sun_moon_struct *sunmonptr)
 //*****************************************************************************
-void	eph(	TYPE_Time		*timeptr,
+void	eph(	TYPE_SkyTime	*timeptr,
 				TYPE_LatLon		*locptr,
 				planet_struct	*planptr,
 				sun_moon_struct	*sunmonptr)

@@ -79,7 +79,7 @@ class WindowTabMoon: public WindowTab
 		bool			cFirstRead;
 		uint32_t		cLastUpdateTime_ms;
 
-	#if defined(_USE_OPENCV_CPP_)
+	#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 		cv::Mat			*cMoonImage;
 	#else
 		IplImage		*cMoonImage;

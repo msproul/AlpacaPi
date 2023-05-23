@@ -846,8 +846,9 @@ bool			myReturnDataIsValid	=	true;
 		cLastAlpacaErrNum	=	AlpacaCheckForErrors(&jsonParser, cLastAlpacaErrStr);
 		if (cLastAlpacaErrNum != kASCOM_Err_Success)
 		{
-			CONSOLE_DEBUG_W_NUM("cLastAlpacaErrNum\t=",	cLastAlpacaErrNum);
+			CONSOLE_DEBUG("Alpaca error occured.................");
 			CONSOLE_DEBUG_W_STR("alpacaString     \t=",	alpacaString);
+			CONSOLE_DEBUG_W_NUM("cLastAlpacaErrNum\t=",	cLastAlpacaErrNum);
 			myReturnDataIsValid	=	false;
 		}
 	}

@@ -61,6 +61,7 @@
 //*	Dec 23,	2021	<MLS> Added UpdateFlipMode() & SetFlipMode()
 //*	Dec 26,	2021	<MLS> Update timeout is now 1 second if camera is anything but idle
 //*	Sep 21,	2022	<MLS> Added ProcessReadAll_IMU()
+//*	APr 30,	2023	<MLS> Added processing of "setccdtemperature" to readall
 //*****************************************************************************
 //*	Jan  1,	2121	<TODO> control key for different step size.
 //*	Jan  1,	2121	<TODO> add error list window
@@ -102,7 +103,7 @@ ControllerCamera::ControllerCamera(	const char			*argWindowName,
 {
 int		iii;
 
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 
 	memset(&cCameraProp, 0, sizeof(TYPE_CameraProperties));
 	strcpy(cAlpacaDeviceTypeStr,	"camera");
@@ -941,6 +942,13 @@ void	ControllerCamera::AlpacaProcessReadAll(	const char	*deviceTypeStr,
 		//*	save all images
 		cSaveAllImages	=	IsTrueFalse(valueString);
 	}
+	else if (strcasecmp(keywordString, "setccdtemperature") == 0)
+	{
+		//=================================================================================
+		//*	setccdtemperature
+		cCameraProp.SetCCDTemperature	=	atof(valueString);
+		UpdateCameraTemperature();
+	}
 	else if (strcasecmp(keywordString, "sidebar") == 0)
 	{
 		//=================================================================================
@@ -1649,7 +1657,7 @@ bool	validData;
 }
 
 //*****************************************************************************
-void	ControllerCamera::ToggleCooler(void)
+TYPE_ASCOM_STATUS	ControllerCamera::ToggleCooler(void)
 {
 char	dataString[48];
 bool	validData;
@@ -1661,7 +1669,35 @@ bool	validData;
 	{
 		CONSOLE_DEBUG_W_STR("Failed to get data, Req=", dataString)
 	}
+	if (cLastAlpacaErrNum != kASCOM_Err_Success)
+	{
+		CONSOLE_DEBUG(cLastAlpacaErrStr);
+	}
+	return(cLastAlpacaErrNum);
 }
+
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	ControllerCamera::SetCCDtargetTemperature(double newCCDtargetTemp)
+{
+char	dataString[48];
+bool	validData;
+
+	sprintf(dataString, "SetCCDTemperature=%3.3f", newCCDtargetTemp);
+	CONSOLE_DEBUG_W_STR("dataString\t=",	dataString);
+	validData	=	AlpacaSendPutCmd(	"camera", "SetCCDTemperature",	dataString);
+	if (validData == false)
+	{
+		CONSOLE_DEBUG_W_STR("Failed to set data, Req=", dataString)
+	}
+	if (cLastAlpacaErrNum != kASCOM_Err_Success)
+	{
+		CONSOLE_DEBUG(cLastAlpacaErrStr);
+	}
+	return(cLastAlpacaErrNum);
+}
+
+
 
 //*****************************************************************************
 void	ControllerCamera::StartExposure(void)
@@ -1763,7 +1799,7 @@ void	ControllerCamera::UpdateFreeDiskSpace(const double gigabytesFree)
 	//*	this is to be over loaded if needed
 }
 
-#if defined(_USE_OPENCV_CPP_)
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 //*****************************************************************************
 cv::Mat	*ControllerCamera::DownloadImage_rgbarray(void)
 {
@@ -1842,7 +1878,7 @@ int			pixIdx;
 }
 #endif // _USE_OPENCV_CPP_
 
-#if defined(_USE_OPENCV_CPP_)
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 //*****************************************************************************
 cv::Mat	*ControllerCamera::DownloadImage_imagearray(const bool force8BitRead, const bool allowBinary)
 {
@@ -2128,7 +2164,7 @@ int				buffSize;
 }
 #endif // _USE_OPENCV_CPP_
 
-#if defined(_USE_OPENCV_CPP_)
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 //*****************************************************************************
 cv::Mat	*ControllerCamera::DownloadImage(const bool force8BitRead,  const bool allowBinary)
 {

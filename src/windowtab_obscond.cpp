@@ -52,7 +52,7 @@ WindowTabObsCond::WindowTabObsCond(	const int	xSize,
 //**************************************************************************************
 WindowTabObsCond::~WindowTabObsCond(void)
 {
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 }
 
 //**************************************************************************************
@@ -192,7 +192,7 @@ void	WindowTabObsCond::ProcessButtonClick(const int buttonIdx, const int flags)
 //*****************************************************************************
 void	WindowTabObsCond::UpdateObservationValues(TYPE_ObsConditionProperties *obsCondProp)
 {
-TYPE_Sensor		temperatureDegF;
+TYPE_InstSensor		temperatureDegF;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 

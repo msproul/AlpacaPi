@@ -72,7 +72,7 @@ WindowTabMoon::WindowTabMoon(	const int	xSize,
 //**************************************************************************************
 WindowTabMoon::~WindowTabMoon(void)
 {
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 }
 
 //**************************************************************************************
@@ -170,7 +170,7 @@ int		myButtonWidth;
 //	SetWidgetBorderColor(	kMoon_Image,	CV_RGB(0,	0,	255));
 	SetWidgetOutlineBox(	kMoon_MoonImgOutline, kMoon_Image, kMoon_Image);
 
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 	cMoonImage		=	new cv::Mat();
 	if (cMoonImage != NULL)
 	{
@@ -260,8 +260,7 @@ int					errorCode;
 bool				keepGoing;
 int					fileIdx;
 
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, kMoonImageDir);
-
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, kMoonImageDir);
 
 	directory	=	opendir(kMoonImageDir);
 	if (directory != NULL)
@@ -398,7 +397,7 @@ bool		includeRecord;
 //**************************************************************************************
 void WindowTabMoon::ReadMoonImage(const char *moonFileName)
 {
-#if defined(_USE_OPENCV_CPP_)
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 	cv::Mat		*myOpenCVimage;
 	cv::Mat		*smallImg;
 #else
@@ -417,7 +416,7 @@ char			myMoonFilePath[128];
 	SetWidgetImage(kMoon_Image, NULL);
 	if (cMoonImage != NULL)
 	{
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 		try
 		{
 			delete cMoonImage;
@@ -443,7 +442,7 @@ char			myMoonFilePath[128];
 	if (myOpenCVimage != NULL)
 	{
 		CONSOLE_DEBUG("ReadFITSimageIntoOpenCVimage() OK");
-	#ifdef _USE_OPENCV_CPP_
+	#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 //		DumpCVMatStruct(__FUNCTION__, myOpenCVimage);
 
 		newWidth			=	myOpenCVimage->cols;
@@ -465,7 +464,7 @@ char			myMoonFilePath[128];
 			while ((newWidth > cMaxMoonImgSize) || (newHeight > cMaxMoonImgSize))
 			{
 				divideFactor++;
-			#ifdef _USE_OPENCV_CPP_
+			#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 				newWidth		=	myOpenCVimage->cols / divideFactor;
 				newHeight		=	myOpenCVimage->rows / divideFactor;
 			#else
@@ -477,7 +476,7 @@ char			myMoonFilePath[128];
 			CONSOLE_DEBUG_W_NUM("divideFactor\t=", divideFactor);
 			CONSOLE_DEBUG_W_NUM("New width   \t=", newWidth);
 			CONSOLE_DEBUG_W_NUM("New height  \t=", newHeight);
-		#ifdef _USE_OPENCV_CPP_
+		#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 			smallImg	=	new cv::Mat(newHeight, newWidth, CV_8UC3);
 			if (smallImg != NULL)
 			{

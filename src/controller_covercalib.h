@@ -12,6 +12,11 @@
 
 #include	"windowtab_covercalib.h"
 
+//===========================================
+#ifndef	_WINDOWTAB_CAPABILITIES_H_
+	#include	"windowtab_capabilities.h"
+#endif
+
 #ifndef	_WINDOWTAB_DRIVER_INFO_H_
 	#include	"windowtab_drvrInfo.h"
 #endif
@@ -44,6 +49,7 @@ class ControllerCoverCalib: public Controller
 		virtual	void	UpdateCommonProperties(void);
 		virtual	bool	AlpacaGetStartupData(void);
 		virtual	void	UpdateSupportedActions(void);
+		virtual void	UpdateCapabilityList(void);
 
 				bool	AlpacaGetStatus(void);
 
@@ -51,8 +57,9 @@ class ControllerCoverCalib: public Controller
 
 
 				//*	tab information
-				WindowTabCoverCalib	*cCoverCalibTabObjPtr;
-				WindowTabDriverInfo	*cDriverInfoTabObjPtr;
-				WindowTabAbout		*cAboutBoxTabObjPtr;
+				WindowTabCoverCalib		*cCoverCalibTabObjPtr;
+				WindowTabCapabilities	*cCapabilitiesTabObjPtr;
+				WindowTabDriverInfo		*cDriverInfoTabObjPtr;
+				WindowTabAbout			*cAboutBoxTabObjPtr;
 };
 

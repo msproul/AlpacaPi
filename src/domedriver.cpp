@@ -77,6 +77,7 @@
 //*	May 24,	2022	<MLS> Updated dome driver to count output data
 //*	Aug 29,	2022	<MLS> Added logic to keep track of last time any movement was made
 //*	Mar  9,	2023	<MLS> Removed all slit tracker code from dome driver
+//*	Apr  6,	2023	<MLS> Added GetCommandArgumentString() to domedriver
 //*****************************************************************************
 //*	cd /home/pi/dev-mark/alpaca
 //*	LOGFILE=logfile.txt
@@ -2209,6 +2210,78 @@ bool	foundIt;
 	return(foundIt);
 }
 
+
+//*****************************************************************************
+bool	DomeDriver::GetCommandArgumentString(const int cmdENum, char *agumentString, char *commentString)
+{
+bool	foundFlag	=	true;
+
+	switch(cmdENum)
+	{
+		case kCmd_Dome_altitude:		//*	The dome altitude
+		case kCmd_Dome_athome:			//*	Indicates whether the dome is in the home position.
+		case kCmd_Dome_atpark:			//*	Indicates whether the telescope is at the park position
+		case kCmd_Dome_azimuth:			//*	The dome azimuth
+		case kCmd_Dome_canfindhome:		//*	Indicates whether the dome can find the home position.
+		case kCmd_Dome_canpark:			//*	Indicates whether the dome can be parked.
+		case kCmd_Dome_cansetaltitude:	//*	Indicates whether the dome altitude can be set
+		case kCmd_Dome_cansetazimuth:	//*	Indicates whether the dome azimuth can be set
+		case kCmd_Dome_cansetpark:		//*	Indicates whether the dome park position can be set
+		case kCmd_Dome_cansetshutter:	//*	Indicates whether the dome shutter can be opened
+		case kCmd_Dome_canslave:		//*	Indicates whether the dome supports slaving to a telescope
+		case kCmd_Dome_cansyncazimuth:	//*	Indicates whether the dome azimuth position can be synched
+		case kCmd_Dome_shutterstatus:	//*	Status of the dome shutter or roll-off roof
+		case kCmd_Dome_slaved:			//*	GET--Indicates whether the dome is slaved to the telescope
+										//*	SET--Sets whether the dome is slaved to the telescope
+		case kCmd_Dome_slewing:			//*	Indicates whether the any part of the dome is moving
+		case kCmd_Dome_abortslew:		//*	Immediately cancel current dome operation.
+		case kCmd_Dome_closeshutter:	//*	Close the shutter or otherwise shield telescope from the sky.
+		case kCmd_Dome_findhome:		//*	Start operation to search for the dome home position.
+		case kCmd_Dome_openshutter:		//*	Open shutter or otherwise expose telescope to the sky.
+		case kCmd_Dome_park:			//*	Rotate dome in azimuth to park position.
+		case kCmd_Dome_setpark:			//*	Set the current azimuth, altitude position of dome to be the park position
+		case kCmd_Dome_slewtoaltitude:	//*	Slew the dome to the given altitude position.
+		case kCmd_Dome_slewtoazimuth:	//*	Slew the dome to the given azimuth position.
+		case kCmd_Dome_synctoazimuth:	//*	Synchronize the current position of the dome to the given azimuth.
+			strcpy(agumentString, "");
+			break;
+
+//==============================================================
+//*	extra commands added by MLS
+		case kCmd_Dome_Extras:
+
+		case kCmd_Dome_poweron:			//*	Turn dome power on
+		case kCmd_Dome_poweroff:		//*	Turn dome power off
+		case kCmd_Dome_powerstatus:		//*	Return power status
+
+		case kCmd_Dome_auxiliaryon:		//*	Turn auxiliary on
+		case kCmd_Dome_auxiliaryoff:	//*	Turn auxiliary off
+		case kCmd_Dome_auxiliarystatus:	//*	Return auxiliary status
+		case kCmd_Dome_goleft:			//*	Move the dome left (CCW)
+		case kCmd_Dome_goright:			//*	Move the dome right (CW)
+		case kCmd_Dome_bumpleft:		//*	Move the dome left (CCW)
+		case kCmd_Dome_bumpright:		//*	Move the dome right (CW)
+		case kCmd_Dome_slowleft:		//*	Move the dome left (CCW)
+		case kCmd_Dome_slowright:		//*	Move the dome right (CW)
+		case kCmd_Dome_currentstate:	//*	What is the current state of the state machine
+			strcpy(agumentString, "-none-");
+			break;
+
+
+		//*	make this one last for consistency
+		case kCmd_Dome_readall:			//*	Read all parameters
+			strcpy(agumentString, "-none-");
+			break;
+
+
+		default:
+			strcpy(agumentString, "");
+			foundFlag	=	false;
+			break;
+
+	}
+	return(foundFlag);
+}
 #pragma mark -
 
 

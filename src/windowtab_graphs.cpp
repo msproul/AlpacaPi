@@ -60,7 +60,7 @@ int		iii;
 //**************************************************************************************
 WindowTabGraph::~WindowTabGraph(void)
 {
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 }
 
 #define	kGraphHeight	200
@@ -111,7 +111,7 @@ int		yLoc;
 							-1);
 }
 
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 //**************************************************************************************
 void	WindowTabGraph::DrawWidgetCustomGraphic(cv::Mat *openCV_Image, const int widgetIdx)
 #else

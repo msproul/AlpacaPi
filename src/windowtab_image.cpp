@@ -92,7 +92,7 @@ int		iii;
 //**************************************************************************************
 WindowTabImage::~WindowTabImage(void)
 {
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 	if (cOpenCVdownLoadedImage != NULL)
 	{
 //		CONSOLE_DEBUG("destroy old image");
@@ -583,7 +583,7 @@ void	WindowTabImage::ProcessDoubleClick(	const int	widgetIdx,
 			{
 			int		iii;
 			int		myImageSize;
-		#ifdef _USE_OPENCV_CPP_
+		#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 				myImageSize	=	cOpenCVdisplayedImage->cols * cOpenCVdisplayedImage->rows * 3;
 				for (iii= 0; iii< myImageSize; iii+=3)
 				{
@@ -708,7 +708,7 @@ int		cursorYYoffset;
 	}
 }
 
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 //**************************************************************************************
 void	WindowTabImage::DrawWidgetCustomGraphic(cv::Mat *openCV_Image, TYPE_WIDGET *theWidget, const int widgetIdx)
 {
@@ -757,7 +757,7 @@ void	WindowTabImage::DrawWidgetCustomGraphic(IplImage *openCV_Image, const int w
 #endif // _USE_OPENCV_CPP_
 
 
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 //*****************************************************************************
 void	WindowTabImage::SetImagePtrs(cv::Mat *originalImage, cv::Mat *displayedImage)
 {
@@ -781,7 +781,7 @@ void	WindowTabImage::ResetImage(void)
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 	SetWidgetText(	kImageDisplay_ImageDisplayInfo,	"Full image");
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 int	bytesPerPixel;
 //	DumpCVMatStruct(__FUNCTION__, cOpenCVdownLoadedImage, __FUNCTION__);
 
@@ -850,7 +850,7 @@ int			imageCursorYY;
 			cursorXXoffset		=	xxx - cWidgetList[kImageDisplay_ImageDisplay].roiRect.x;
 			cursorYYoffset		=	yyy - cWidgetList[kImageDisplay_ImageDisplay].roiRect.y;
 
-		#ifdef _USE_OPENCV_CPP_
+		#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 			//*	get the size of the displayed image
 			displayedWidth		=	cOpenCVdisplayedImage->cols;
 			displayedHeight		=	cOpenCVdisplayedImage->rows;
@@ -915,7 +915,7 @@ char		imageInfoText[80];
 
 	if ((cOpenCVdownLoadedImage != NULL) && (cOpenCVdisplayedImage != NULL))
 	{
-	#ifdef _USE_OPENCV_CPP_
+	#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 
 		//*	get the size of the source image
 		sourceImageWidth		=	cOpenCVdownLoadedImage->cols;
@@ -980,7 +980,7 @@ char		imageInfoText[80];
 //			CONSOLE_DEBUG_W_NUM("displayedImgRect.width\t=",	displayedImgRect.width);
 //			CONSOLE_DEBUG_W_NUM("displayedImgRect.height\t=",	displayedImgRect.height);
 
-		#ifdef _USE_OPENCV_CPP_
+		#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 cv::Mat		image_roi;
 			CONSOLE_DEBUG("OpenCV++ not finished!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 

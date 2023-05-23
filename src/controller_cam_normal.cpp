@@ -26,6 +26,7 @@
 //*	Sep 18,	2022	<MLS> Added DisableFilterWheel()
 //*	Sep 21,	2022	<MLS> Added ProcessReadAll_IMU()
 //*	Mar  5,	2023	<MLS> UpdateDisplayModes() now disables camera mode switching if live mode
+//*	Apr 28,	2023	<MLS> Moved camera cooler settings to separate window tab
 //*****************************************************************************
 //*	todo
 //*		control key for different step size.
@@ -73,6 +74,7 @@ enum
 {
 	kTab_Camera	=	1,
 	kTab_Settings,
+	kTab_CamCooler,
 	kTab_Capabilities,
 //	kTab_Advanced,
 //	kTab_Graphs,
@@ -94,6 +96,7 @@ ControllerCamNormal::ControllerCamNormal(	const char			*argWindowName,
 	cIMUdetected	=	false;
 
 	SetupWindowControls();
+
 
 }
 
@@ -119,6 +122,8 @@ ControllerCamNormal::~ControllerCamNormal(void)
 	DELETE_OBJ_IF_VALID(cFileListTabObjPtr);
 	DELETE_OBJ_IF_VALID(cDriverInfoTabObjPtr);
 	DELETE_OBJ_IF_VALID(cAboutBoxTabObjPtr);
+	DELETE_OBJ_IF_VALID(cCamCoolerTabObjPtr);
+
 }
 
 //**************************************************************************************
@@ -131,6 +136,7 @@ char	lineBuff[64];
 	SetTabCount(kTab_Count);
 	SetTabText(kTab_Camera,			"Camera");
 	SetTabText(kTab_Settings,		"Settings");
+	SetTabText(kTab_CamCooler,		"Cooler");
 	SetTabText(kTab_Capabilities,	"Capabilities");
 //	SetTabText(kTab_Advanced,		"Adv");
 //	SetTabText(kTab_Graphs,			"Graphs");
@@ -162,6 +168,18 @@ char	lineBuff[64];
 	{
 		SetTabWindow(kTab_Settings,	cCamSettingsTabObjPtr);
 		cCamSettingsTabObjPtr->SetParentObjectPtr(this);
+	}
+
+
+	//--------------------------------------------
+	cCamCoolerTabObjPtr		=	new WindowTabCamCooler(	cWidth, cHeight, cBackGrndColor, cWindowName);
+	if (cCamCoolerTabObjPtr != NULL)
+	{
+		SetTabWindow(kTab_CamCooler,	cCamCoolerTabObjPtr);
+		cCamCoolerTabObjPtr->SetParentObjectPtr(this);
+		cCamCoolerTabObjPtr->SetTemperatureGraphPtrs(cCameraTempLog, kMaxTemperatureValues);
+
+
 	}
 
 	//--------------------------------------------
@@ -253,7 +271,8 @@ void	ControllerCamNormal::UpdateSettings_Object(const char *filePrefix)
 void	ControllerCamNormal::AlpacaDisplayErrorMessage(const char *errorMsgString)
 {
 //	CONSOLE_DEBUG_W_STR("Alpaca error=", errorMsgString);
-	SetWidgetText(kTab_Camera, kCameraBox_AlpacaErrorMsg, errorMsgString);
+	SetWidgetText(kTab_Camera,		kCameraBox_AlpacaErrorMsg, errorMsgString);
+	SetWidgetText(kTab_CamCooler,	kCamCooler_AlpacaErrorMsg, errorMsgString);
 }
 
 
@@ -457,16 +476,20 @@ void	ControllerCamNormal::UpdateCameraTemperature(void)
 {
 char			linebuff[128];
 
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 	sprintf(linebuff, "%1.1f C / %1.1f F", cCameraProp.CCDtemperature,
 											(cCameraProp.CCDtemperature * 9.0/5.0) +32.0);
-	SetWidgetText(kTab_Camera, kCameraBox_Temperature, linebuff);
+	SetWidgetText(kTab_CamCooler,	kCamCooler_Temperature, linebuff);
+	SetWidgetNumber(kTab_CamCooler, kCamCooler_TargetTemp, cCameraProp.SetCCDTemperature);
+
+	CONSOLE_DEBUG_W_BOOL("cHasCCDtemp\t=", cHasCCDtemp);
 
 	if (cHasCCDtemp	== false)
 	{
-		if (cCameraTabObjPtr != NULL)
+		if (cCamCoolerTabObjPtr != NULL)
 		{
 			//*	disable the display of the temperature items
-			cCameraTabObjPtr->SetTempartueDisplayEnable(false);
+			cCamCoolerTabObjPtr->SetTempartueDisplayEnable(false);
 		}
 	}
 }
@@ -487,8 +510,7 @@ void	ControllerCamNormal::UpdatePercentCompleted(void)
 //*****************************************************************************
 void	ControllerCamNormal::UpdateCoolerState(void)
 {
-	SetWidgetChecked(kTab_Camera, kCameraBox_CoolerChkBox, cCameraProp.CoolerOn);
-
+	SetWidgetChecked(kTab_CamCooler,	kCamCooler_CoolerChkBox, cCameraProp.CoolerOn);
 }
 
 //*****************************************************************************

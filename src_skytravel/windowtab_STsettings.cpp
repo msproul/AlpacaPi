@@ -31,6 +31,7 @@
 //*	Mar 29,	2022	<MLS> Added SaveSkyTravelSystemInfo()
 //*	May 31,	2022	<MLS> Added ability to open gedit for scripts and settings
 //*	Mar 14,	2023	<MLS> Added UpdateObservatorySettings()
+//*	Apr 10,	2023	<MLS> Added proper motion display settings
 //*****************************************************************************
 
 #include	<pthread.h>
@@ -482,23 +483,26 @@ int		radioBtnWidth;
 	yLoc			+=	myBoxHeight;
 	yLoc			+=	2;
 
-	//-------------------------------------------------------------------------
-	SetWidget(			kSkyT_Settings_DispMag,	xLoc,	yLoc,	450,	cSmallBtnHt);
-	SetWidgetType(		kSkyT_Settings_DispMag,	kWidgetType_CheckBox);
-	SetWidgetFont(		kSkyT_Settings_DispMag,	kFont_Medium);
-	SetWidgetText(		kSkyT_Settings_DispMag,		"Display Star Magnitude");
-
-	yLoc			+=	cSmallBtnHt;
-	yLoc			+=	2;
 
 	//-------------------------------------------------------------------------
-	SetWidget(			kSkyT_Settings_DispSpectral,	xLoc,	yLoc,	450,	cSmallBtnHt);
-	SetWidgetType(		kSkyT_Settings_DispSpectral,	kWidgetType_CheckBox);
-	SetWidgetFont(		kSkyT_Settings_DispSpectral,	kFont_Medium);
-	SetWidgetText(		kSkyT_Settings_DispSpectral,	"Display Star Spectral Class");
+	iii			=	kSkyT_Settings_DispMag;
+	while (iii <= kSkyT_Settings_DispPMvector)
+	{
+		SetWidget(			iii,		xLoc,	yLoc,	450,	cSmallBtnHt);
+		SetWidgetType(		iii,		kWidgetType_CheckBox);
+		SetWidgetFont(		iii,		kFont_Medium);
 
-	yLoc			+=	cSmallBtnHt;
-	yLoc			+=	2;
+		yLoc			+=	cSmallBtnHt;
+		yLoc			+=	2;
+		iii++;
+	}
+	SetWidgetText(		kSkyT_Settings_DispMag,				"Display Star Magnitude");
+	SetWidgetText(		kSkyT_Settings_DispSpectral,		"Display Star Spectral Class");
+	SetWidgetText(		kSkyT_Settings_DispProperMotion,	"Display Star Proper Motion");
+	SetWidgetText(		kSkyT_Settings_DispPMvector,		"Display Star Proper Motion Vector");
+
+//	yLoc			+=	cSmallBtnHt;
+//	yLoc			+=	2;
 	saveYloc		=	yLoc;
 	radioBtnWidth	=	300;
 	for (iii=kSkyT_Settings_DispDynMagnitude; iii<= kSkyT_Settings_DispAllMagnitude; iii++)
@@ -588,7 +592,7 @@ void	WindowTabSTsettings::ActivateWindow(void)
 }
 
 //**************************************************************************************
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 void	WindowTabSTsettings::DrawOBAFGKM(cv::Mat *openCV_Image, TYPE_WIDGET *theWidget)
 #else
 //**************************************************************************************
@@ -648,7 +652,7 @@ int				pt1_Y;
 
 
 //**************************************************************************************
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 void	WindowTabSTsettings::DrawWidgetCustomGraphic(cv::Mat *openCV_Image, const int widgetIdx)
 #else
 //**************************************************************************************
@@ -830,6 +834,16 @@ void	WindowTabSTsettings::ProcessButtonClick(const int buttonIdx, const int flag
 			gST_DispOptions.DispSpectralType	=	!gST_DispOptions.DispSpectralType;
 			break;
 
+		//*	display proper motion as numeric values if zoomed in
+		case kSkyT_Settings_DispProperMotion:
+			gST_DispOptions.DispProperMotion	=	!gST_DispOptions.DispProperMotion;
+			break;
+
+		//*	display proper motion as a vector
+		case kSkyT_Settings_DispPMvector:
+			gST_DispOptions.DispProperMotionVector	=	!gST_DispOptions.DispProperMotionVector;
+			break;
+
 		case kSkyT_Settings_DispDynMagnitude:
 			gST_DispOptions.MagnitudeMode	=	kMagnitudeMode_Dynamic;
 			break;
@@ -987,9 +1001,11 @@ char	textString[32];
 	SetWidgetChecked(	kSkyT_Settings_LineW_Grid1,				(gST_DispOptions.LineWidth_GridLines == 1));
 	SetWidgetChecked(	kSkyT_Settings_LineW_Grid2,				(gST_DispOptions.LineWidth_GridLines == 2));
 
+	//------------------------------------------------------
 	SetWidgetChecked(	kSkyT_Settings_DispMag,					gST_DispOptions.DispMagnitude);
 	SetWidgetChecked(	kSkyT_Settings_DispSpectral,			gST_DispOptions.DispSpectralType);
-
+	SetWidgetChecked(	kSkyT_Settings_DispProperMotion,		gST_DispOptions.DispProperMotion);
+	SetWidgetChecked(	kSkyT_Settings_DispPMvector,			gST_DispOptions.DispProperMotionVector);
 
 	SetWidgetChecked(	kSkyT_Settings_DispDynMagnitude,
 				(gST_DispOptions.MagnitudeMode == kMagnitudeMode_Dynamic));

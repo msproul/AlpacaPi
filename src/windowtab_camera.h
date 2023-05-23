@@ -106,13 +106,13 @@ enum
 
 	kCameraBox_FilterWheelOutline,
 
-	kCameraBox_Temp_Label,
-	kCameraBox_Temperature,
-	kCameraBox_CoolerChkBox,
-#if 0
-	kCameraBox_TempGraph,
-	kCameraBox_TempOutline,
-#endif
+//	kCameraBox_CoolerChkBox,
+//	kCameraBox_Temp_Label,
+//	kCameraBox_Temperature,
+//	kCameraBox_TargetTempLBL,
+//	kCameraBox_TargetTemp,
+//
+//	kCameraBox_TempOutline,
 
 #ifdef _SUPPORT_REMOTE_IMU_
 	kCameraBox_IMU_Title,
@@ -170,7 +170,6 @@ class WindowTabCamera: public WindowTab
 				void	ToggleCooler(void);
 				void	ToggleFlipMode(bool toggleHorz, bool toggleVert);
 				void	StartExposure(void);
-				void	SetTempartueDisplayEnable(bool enabled);
 				void	SetReceivedFileName(const char *newFileName);
 				void	DownloadImage(const bool useRGBarray);
 

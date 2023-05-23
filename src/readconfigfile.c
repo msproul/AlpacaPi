@@ -113,7 +113,7 @@ int		slen;
 int		valideLineCnt;
 bool	validEntry;
 
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, configFilePath);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, configFilePath);
 
 //	CheckDuplicates();
 

@@ -45,7 +45,7 @@
 #include	"focuser_common.h"
 
 
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 	cv::Mat	*gMoonLiteImage	=	NULL;
 #else
 	IplImage	*gMoonLiteImage	=	NULL;
@@ -72,7 +72,7 @@ int		iii;
 		if (gMoonLiteImage != NULL)
 		{
 			CONSOLE_DEBUG("GetMoonLiteImage() OK");
-		#ifdef _USE_OPENCV_CPP_
+		#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 			CONSOLE_DEBUG_W_NUM("Rows  \t=", gMoonLiteImage->rows);
 			CONSOLE_DEBUG_W_NUM("Cols  \t=", gMoonLiteImage->cols);
 		#endif // _USE_OPENCV_CPP_
@@ -111,7 +111,7 @@ int		iii;
 //**************************************************************************************
 WindowTabMLsingle::~WindowTabMLsingle(void)
 {
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 }
 
 //**************************************************************************************
@@ -142,7 +142,7 @@ int		connButtonWidgetIdx;
 	{
 		if (gMoonLiteImage != NULL)
 		{
-		#ifdef _USE_OPENCV_CPP_
+		#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 			logoWidth	=	gMoonLiteImage->cols;
 			logoHeight	=	gMoonLiteImage->rows;
 		#else

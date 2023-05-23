@@ -20,6 +20,7 @@
 //*****************************************************************************
 //*	Feb 12,	2021	<MLS> Created controller_covercalib.cpp
 //*	Feb 12,	2021	<MLS> CoverCalibration controller fully working
+//*	Mar 25,	2023	<MLS> Added capability list to cover/calibrator controller
 //*****************************************************************************
 
 #define _ENABLE_COVER_CALIBRATION_
@@ -57,6 +58,7 @@
 enum
 {
 	kTab_Cover	=	1,
+	kTab_Capabilities,
 	kTab_DriverInfo,
 	kTab_About,
 
@@ -105,6 +107,7 @@ ControllerCoverCalib::~ControllerCoverCalib(void)
 {
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 	DELETE_OBJ_IF_VALID(cCoverCalibTabObjPtr);
+	DELETE_OBJ_IF_VALID(cCapabilitiesTabObjPtr);
 	DELETE_OBJ_IF_VALID(cDriverInfoTabObjPtr);
 	DELETE_OBJ_IF_VALID(cAboutBoxTabObjPtr);
 }
@@ -116,9 +119,10 @@ void	ControllerCoverCalib::SetupWindowControls(void)
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	SetTabCount(kTab_Count);
-	SetTabText(kTab_Cover,		"Cover/Calib");
-	SetTabText(kTab_DriverInfo,	"Driver Info");
-	SetTabText(kTab_About,		"About");
+	SetTabText(kTab_Cover,			"Cover/Calib");
+	SetTabText(kTab_Capabilities,	"Capabilities");
+	SetTabText(kTab_DriverInfo,		"Driver Info");
+	SetTabText(kTab_About,			"About");
 
 
 	cCoverCalibTabObjPtr	=	new WindowTabCoverCalib(cWidth, cHeight, cBackGrndColor, cWindowName);
@@ -126,6 +130,14 @@ void	ControllerCoverCalib::SetupWindowControls(void)
 	{
 		SetTabWindow(kTab_Cover,	cCoverCalibTabObjPtr);
 		cCoverCalibTabObjPtr->SetParentObjectPtr(this);
+	}
+
+	//--------------------------------------------
+	cCapabilitiesTabObjPtr		=	new WindowTabCapabilities(	cWidth, cHeight, cBackGrndColor, cWindowName);
+	if (cCapabilitiesTabObjPtr != NULL)
+	{
+		SetTabWindow(kTab_Capabilities,	cCapabilitiesTabObjPtr);
+		cCapabilitiesTabObjPtr->SetParentObjectPtr(this);
 	}
 
 	//--------------------------------------------
@@ -223,6 +235,11 @@ int				integerValue;
 	{
 		//*	AlpacaGetSupportedActions() sets the cHas_readall appropriately
 		UpdateSupportedActions();
+
+		ReadOneDriverCapability(cAlpacaDeviceTypeStr,
+								"canadjustaperture",
+								"CanAdjustAperture",
+								&cCoverCalibrationProp.CanSetAperture);
 	}
 	else
 	{
@@ -306,6 +323,12 @@ void	ControllerCoverCalib::UpdateSupportedActions(void)
 	SetWidgetValid(kTab_Cover,		kCoverCalib_Readall,		cHas_readall);
 	SetWidgetValid(kTab_DriverInfo,	kDriverInfo_Readall,		cHas_readall);
 
+}
+
+//**************************************************************************************
+void	ControllerCoverCalib::UpdateCapabilityList(void)
+{
+	UpdateCapabilityListID(kTab_Capabilities, kCapabilities_TextBox1, kCapabilities_TextBoxN);
 }
 
 //*****************************************************************************

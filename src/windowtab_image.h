@@ -126,7 +126,7 @@ class WindowTabImage: public WindowTab
 		virtual void	ProcessMouseLeftButtonDown(const int widgetIdx, const int event, const int xxx, const int yyy, const int flags);
 		virtual void	ProcessMouseLeftButtonUp(const int widgetIdx, const int event, const int xxx, const int yyy, const int flags);
 		virtual void	ProcessMouseLeftButtonDragged(const int widgetIdx, const int event, const int xxx, const int yyy, const int flags);
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 		virtual	void	DrawWidgetCustomGraphic(cv::Mat *openCV_Image, TYPE_WIDGET *theWidget, const int widgetIdx);
 #else
 		virtual	void	DrawWidgetCustomGraphic(IplImage *openCV_Image, const int widgetIdx);
@@ -147,7 +147,7 @@ class WindowTabImage: public WindowTab
 				void	SaveCrossHairList(void);
 				void	ReadCrossHairList(void);
 
-			#ifdef _USE_OPENCV_CPP_
+			#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 				void		SetImagePtrs(cv::Mat *originalImage, cv::Mat *displayedImage);
 				cv::Mat		*cOpenCVdownLoadedImage;
 				cv::Mat		*cOpenCVdisplayedImage;

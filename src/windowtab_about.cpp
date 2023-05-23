@@ -38,7 +38,6 @@
 #ifdef _ENABLE_REMOTE_GAIA_
 	#include	"RemoteGaia.h"
 #endif
-#define	kAboutBoxHeight	100
 
 //**************************************************************************************
 WindowTabAbout::WindowTabAbout(	const int	xSize,
@@ -58,7 +57,7 @@ WindowTabAbout::WindowTabAbout(	const int	xSize,
 //**************************************************************************************
 WindowTabAbout::~WindowTabAbout(void)
 {
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 }
 
 //**************************************************************************************

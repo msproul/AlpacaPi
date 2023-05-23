@@ -14,8 +14,10 @@
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
 
-#include	"opencv2/opencv.hpp"
-#include	"opencv2/core.hpp"
+//#include	"opencv2/opencv.hpp"
+//#include	"opencv2/core.hpp"
+#include	<opencv2/opencv.hpp>
+#include	<opencv2/core.hpp>
 
 #include	"opencv_utils.h"
 

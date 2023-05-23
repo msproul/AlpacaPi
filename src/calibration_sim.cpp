@@ -59,6 +59,7 @@ CalibrationDriverSIM::CalibrationDriverSIM(void)
 	cCoverCalibrationProp.CalibratorState	=	kCalibrator_Ready;
 	cCoverCalibrationProp.CoverState		=	kCover_Closed;
 	cCoverCalibrationProp.MaxBrightness		=	255;
+	cCoverCalibrationProp.CanSetAperture	=	true;
 
 	Init_Hardware();
 }
@@ -84,6 +85,10 @@ uint32_t	deltaTime;
 
 	switch(cCoverCalibrationProp.CoverState)
 	{
+		case kCover_NotPresent:		//*	This device does not have a cover that can be closed independently
+		case kCover_Closed:			//*	The cover is closed
+			break;
+
 		//*	this is so there is an actual time delay
 		case kCover_Moving:
 			deltaTime	=	millis() - cCoverMovementStartTime;
@@ -91,6 +96,11 @@ uint32_t	deltaTime;
 			{
 				cCoverCalibrationProp.CoverState	=	cCoverDesiredPostion;
 			}
+			break;
+
+		case kCover_Open:		//*	The cover is open
+		case kCover_Unknown:	//*	The state of the cover is unknown
+		case kCover_Error:		//*	The device encountered an error when changing state
 			break;
 	}
 

@@ -69,7 +69,7 @@
 	#include	"filterwheeldriver_ATIK.h"
 #endif
 #ifdef _ENABLE_FILTERWHEEL_SIMULATOR_
-	#include	"filterwheeldriver_SIM.h"
+	#include	"filterwheeldriver_sim.h"
 #endif
 #ifdef _ENABLE_FILTERWHEEL_ZWO_
 	#include	"filterwheeldriver_ZWO.h"

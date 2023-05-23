@@ -49,6 +49,7 @@
 //*	sudo apt-get install libmariadb-dev			<<<< Use this for Raspberry-Pi
 //*****************************************************************************
 //*	https://www.cosmos.esa.int/web/gaia/earlydr3
+//*	https://gea.esac.esa.int/archive/documentation/GEDR3/Gaia_archive/chap_datamodel/sec_dm_main_tables/ssec_dm_gaia_source.html
 //*		GAIA ER3 is JD2016.0
 //*****************************************************************************
 
@@ -354,7 +355,7 @@ MYSQL	*mySQLConnection = NULL;
 	if (mySQLConnection != NULL)
 	{
 		//*	establish connection to the database
-		CONSOLE_DEBUG_W_STR("gSQLsever_Database\t", gSQLsever_Database);
+		CONSOLE_DEBUG_W_STR("dataBaseName\t", dataBaseName);
 		mySQLConnection	=	mysql_real_connect(	mySQLConnection,
 												gSQLsever_IPaddr,
 												gSQLsever_UserName,
@@ -366,13 +367,24 @@ MYSQL	*mySQLConnection = NULL;
 		if (mySQLConnection == NULL)
 		{
 			CONSOLE_DEBUG("mysql_real_connect() failed");
-			LogSqlTransaction(gSQLsever_Database, "mysql_real_connect() failed", __FUNCTION__, mysql_error(mySQLConnection));
+			CONSOLE_DEBUG_W_STR("gSQLsever_IPaddr  \t=",	gSQLsever_IPaddr);
+			CONSOLE_DEBUG_W_STR("gSQLsever_UserName\t=",	gSQLsever_UserName);
+			CONSOLE_DEBUG_W_STR("gSQLsever_Password\t=",	gSQLsever_Password);
+			CONSOLE_DEBUG_W_STR("dataBaseName      \t=",	dataBaseName);
+			CONSOLE_DEBUG_W_NUM("gSQLsever_Port    \t=",	gSQLsever_Port);
+			LogSqlTransaction(	dataBaseName,
+								"mysql_real_connect() failed",
+								__FUNCTION__,
+								mysql_error(mySQLConnection));
 		}
 	}
 	else
 	{
 		CONSOLE_DEBUG("mysql_init() failed");
-		LogSqlTransaction(gSQLsever_Database, "mysql_init() failed", __FUNCTION__, mysql_error(mySQLConnection));
+		LogSqlTransaction(	dataBaseName,
+							"mysql_init() failed",
+							__FUNCTION__,
+							mysql_error(mySQLConnection));
 	}
 	return(mySQLConnection);
 }
@@ -942,7 +954,7 @@ bool			foundIt;
 //2mass
 //
 //*****************************************************************************
-int		UpdateDataBaseListFromServer(void)
+int		UpdateDataBaseListFromServer(char *errorString)
 {
 int				dbaseCount;
 MYSQL 			*mySQLConnection = NULL;
@@ -963,6 +975,7 @@ unsigned int	endMilliSecs;
 	startMilliSecs	=	millis();
 
 	dbaseCount		=	0;
+	errorString[0]	=	0;
 
 	mySQLConnection	=	OpenMysql(starsDBname);
 	if (mySQLConnection != NULL)
@@ -1052,7 +1065,8 @@ unsigned int	endMilliSecs;
 	else
 	{
 		CONSOLE_DEBUG(__FUNCTION__);
-		LogSqlTransaction(starsDBname, "mysql_init() failed", __FUNCTION__, mysql_error(mySQLConnection));
+		LogSqlTransaction(starsDBname, "OpenMysql() failed", __FUNCTION__, mysql_error(mySQLConnection));
+		sprintf(errorString, "OpenMysql() failed: %s", mysql_error(mySQLConnection));
 	}
 	mysql_close(mySQLConnection);
 	mysql_library_end();
@@ -1555,9 +1569,10 @@ FILE			*filePointer;
 struct timeval	timeStamp;
 char			formatString[256];
 
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, sqlCommand);
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, results);
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, errorString);
+	CONSOLE_DEBUG_W_STR("dbName      \t=", dbName);
+	CONSOLE_DEBUG_W_STR("sqlCommand  \t=", sqlCommand);
+	CONSOLE_DEBUG_W_STR("results/FUNC\t=", results);
+	CONSOLE_DEBUG_W_STR("errorString \t=", errorString);
 
 	filePointer	=	fopen("SQL_log.txt", "a");
 	if (filePointer != NULL)
@@ -1572,7 +1587,7 @@ char			formatString[256];
 	{
 		CONSOLE_DEBUG("Failed to create sql log file");
 	}
-	CONSOLE_DEBUG("exit");
+//	CONSOLE_DEBUG("exit");
 }
 
 #ifdef _INCLUDE_GAIA_MAIN_

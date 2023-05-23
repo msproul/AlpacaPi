@@ -63,11 +63,8 @@ WindowAlpacaUnit::WindowAlpacaUnit(	const int	xSize,
 //**************************************************************************************
 WindowAlpacaUnit::~WindowAlpacaUnit(void)
 {
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 }
-
-
-
 
 //**************************************************************************************
 void	WindowAlpacaUnit::SetupWindowControls(void)
@@ -168,7 +165,7 @@ short	tabArray[kMaxTabStops]	=	{200, 400, 600, 1000, 1199, 0};
 
 
 //**************************************************************************************
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 void	WindowAlpacaUnit::DrawWidgetCustomGraphic(cv::Mat *openCV_Image, const int widgetIdx)
 #else
 void	WindowAlpacaUnit::DrawWidgetCustomGraphic(IplImage *openCV_Image, const int widgetIdx)

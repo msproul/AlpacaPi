@@ -64,7 +64,7 @@ WindowTabCoverCalib::WindowTabCoverCalib(	const int	xSize,
 //**************************************************************************************
 WindowTabCoverCalib::~WindowTabCoverCalib(void)
 {
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 }
 
 //**************************************************************************************

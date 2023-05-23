@@ -89,7 +89,7 @@ int		iii;
 //**************************************************************************************
 WindowTabIPList::~WindowTabIPList(void)
 {
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 }
 
 //**************************************************************************************
@@ -147,8 +147,8 @@ int		myButtonWidth;
 	xLoc	+=	2;
 
 	myButtonWidth	=	cBtnWidth - 8;
-	CONSOLE_DEBUG_W_NUM("cBtnWidth    \t=",	cBtnWidth);
-	CONSOLE_DEBUG_W_NUM("myButtonWidth\t=",	myButtonWidth);
+//	CONSOLE_DEBUG_W_NUM("cBtnWidth    \t=",	cBtnWidth);
+//	CONSOLE_DEBUG_W_NUM("myButtonWidth\t=",	myButtonWidth);
 	iii				=	kIPaddrList_DiscoveryThrdStop;
 	while (iii <= kIPaddrList_DiscoveryReScan)
 	{
@@ -161,8 +161,8 @@ int		myButtonWidth;
 
 		iii++;
 	}
-	CONSOLE_DEBUG_W_NUM("cWidth    \t=",	cWidth);
-	CONSOLE_DEBUG_W_NUM("xLoc      \t=",	xLoc);
+//	CONSOLE_DEBUG_W_NUM("cWidth    \t=",	cWidth);
+//	CONSOLE_DEBUG_W_NUM("xLoc      \t=",	xLoc);
 	SetWidgetText(		kIPaddrList_DiscoveryThrdStop,		"Stop");
 	SetWidgetText(		kIPaddrList_DiscoveryThrdReStart,	"Restart");
 	SetWidgetText(		kIPaddrList_DiscoveryClear,			"Clear");
@@ -580,7 +580,7 @@ void	WindowTabIPList::ProcessMouseWheelMoved(const int	widgetIdx,
 
 
 //**************************************************************************************
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 void	WindowTabIPList::DrawWidgetCustomGraphic(cv::Mat *openCV_Image, const int widgetIdx)
 #else
 void	WindowTabIPList::DrawWidgetCustomGraphic(IplImage *openCV_Image, const int widgetIdx)

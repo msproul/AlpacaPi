@@ -5,7 +5,6 @@
 //*	Jan 22,	2022	<MLS> Getting rid of leading digits in Yale star name
 //************************************************************************
 
-#include	<ctype.h>
 //************************************************************************
 //*
 //V/50           Bright Star Catalogue, 5th Revised Ed.     (Hoffleit+, 1991)
@@ -222,8 +221,8 @@
 #include	<stdlib.h>
 #include	<stdbool.h>
 #include	<string.h>
-
-
+#include	<ctype.h>
+#include	<math.h>
 
 
 //*	MLS Libraries
@@ -233,33 +232,34 @@
 
 #include	"SkyStruc.h"
 #include	"SkyTravelConstants.h"
+#include	"helper_functions.h"
 
 #include	"StarCatalogHelper.h"
 
 #include	"YaleStarCatalog.h"
 
-//************************************************************************
-static void	StripLeadingSpaces(char *theString)
-{
-int		iii;
-int		ccc;
-
-	ccc		=	0;
-	iii		=	0;
-	while (theString[iii] != 0)
-	{
-		if ((ccc == 0) && (theString[iii] == 0x20))
-		{
-			//*	do nothing
-		}
-		else
-		{
-			theString[ccc++]	=	theString[iii];
-		}
-		iii++;
-	}
-	theString[ccc]	=	0;
-}
+////************************************************************************
+//static void	StripLeadingSpaces(char *theString)
+//{
+//int		iii;
+//int		ccc;
+//
+//	ccc		=	0;
+//	iii		=	0;
+//	while (theString[iii] != 0)
+//	{
+//		if ((ccc == 0) && (theString[iii] == 0x20))
+//		{
+//			//*	do nothing
+//		}
+//		else
+//		{
+//			theString[ccc++]	=	theString[iii];
+//		}
+//		iii++;
+//	}
+//	theString[ccc]	=	0;
+//}
 
 //************************************************************************
 static void	StripMultipleSpaces(char *theString)
@@ -323,6 +323,15 @@ int		ccc;
 	starRec->realMagnitude	=	ParseFloatFromString(lineBuff,	103-1, 5);
 	starRec->parallax		=	ParseFloatFromString(lineBuff,	162-1, 5);
 
+	// 149-154  F6.3   arcsec/yr pmRA       ?Annual proper motion in RA J2000, FK5 system
+	// 155-160  F6.3   arcsec/yr pmDE       ?Annual proper motion in Dec J2000, FK5 system
+	starRec->propMotion_RA_mas_yr	=	ParseFloatFromString(lineBuff,	149-1, 6) * 1000.0;
+	starRec->propMotion_DEC_mas_yr	=	ParseFloatFromString(lineBuff,	155-1, 6) * 1000.0;
+	if ((fabs(starRec->propMotion_RA_mas_yr) > 0.0) || (fabs(starRec->propMotion_DEC_mas_yr) > 0.0))
+	{
+		//*	in testing, only 18 of them were not valid
+		starRec->propMotionValid	=	true;
+	}
 
 	//*	extract the name
 	strncpy(starName, &lineBuff[5-1], 10);
@@ -405,8 +414,11 @@ TYPE_CelestData	*yaleStarData;
 char			filePath[128];
 char			lineBuff[512];
 size_t			bufferSize;
+int				startupWidgetIdx;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
+
+	startupWidgetIdx	=	SetStartupText("Yale catalog:");
 
 	yaleStarData	=	NULL;
 	strcpy(filePath, kSkyTravelDataDirectory);
@@ -437,10 +449,13 @@ size_t			bufferSize;
 			*starCount	=	recordCount;
 		}
 		fclose(filePointer);
+
+		SetStartupTextStatus(startupWidgetIdx, "OK");
 	}
 	else
 	{
 		CONSOLE_DEBUG_W_STR("Failed to read:", filePath);
+		SetStartupTextStatus(startupWidgetIdx, "Failed");
 	}
 
 //	CONSOLE_ABORT(__FUNCTION__);

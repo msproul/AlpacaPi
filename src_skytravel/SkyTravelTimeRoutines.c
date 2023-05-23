@@ -2,14 +2,19 @@
 //	various functions to update time/date
 //**********************************************************************
 //*	Sep  1,	2021	<MLS> Added DumpTimeStruct()
+//*	Mar 25,	2023	<MLS> Added daylight savings time check to Compute_Timezone()
 //**********************************************************************
 
 
 #include	<math.h>
 #include	<stdlib.h>
+#include	<time.h>
+#include	<sys/time.h>
 
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
+
+#include	"helper_functions.h"
 
 #include	"SkyStruc.h"
 
@@ -19,7 +24,7 @@
 
 //* return the last day of the current month
 //**********************************************************************
-int Lastday(TYPE_Time *timeptr)
+int Lastday(TYPE_SkyTime *timeptr)
 {
 //						J	F	M	A	M	J	J	A	S	O	N	D
 int		lastd[12]	= {	31,	28,	31,	30,	31,	30,	31,	31,	30,	31,	30,	31};
@@ -72,7 +77,7 @@ int		numDays;
 }
 
 //**********************************************************************
-void Add_year(TYPE_Time *timeptr,int delta)
+void Add_year(TYPE_SkyTime *timeptr,int delta)
 {
 	timeptr->year	+=	delta;
 	if (timeptr->day > Lastday(timeptr))
@@ -82,7 +87,7 @@ void Add_year(TYPE_Time *timeptr,int delta)
 }
 
 //**********************************************************************
-void Add_month(TYPE_Time *timeptr)
+void Add_month(TYPE_SkyTime *timeptr)
 {
 	timeptr->month++;
 	if (timeptr->month > 12)
@@ -97,7 +102,7 @@ void Add_month(TYPE_Time *timeptr)
 }
 
 //**********************************************************************
-void Add_day(TYPE_Time *timeptr)
+void Add_day(TYPE_SkyTime *timeptr)
 {
 	timeptr->day++;
 	if (timeptr->day > Lastday(timeptr))
@@ -108,7 +113,7 @@ void Add_day(TYPE_Time *timeptr)
 }
 
 //**********************************************************************
-void Add_hour(TYPE_Time *timeptr)
+void Add_hour(TYPE_SkyTime *timeptr)
 {
 	timeptr->hour++;
 	if (timeptr->hour > 23)
@@ -120,7 +125,7 @@ void Add_hour(TYPE_Time *timeptr)
 }
 
 //**********************************************************************
-void Add_min(TYPE_Time *timeptr)
+void Add_min(TYPE_SkyTime *timeptr)
 {
 timeptr->min++;
 	if (timeptr->min > 59)
@@ -131,7 +136,7 @@ timeptr->min++;
 }
 
 //**********************************************************************
-void Add_sec(TYPE_Time *timeptr)
+void Add_sec(TYPE_SkyTime *timeptr)
 {
 	timeptr->sec++;
 	if (timeptr->sec > 59)
@@ -142,7 +147,7 @@ void Add_sec(TYPE_Time *timeptr)
 }
 
 //**********************************************************************
-void Sub_year(TYPE_Time *timeptr,int delta)
+void Sub_year(TYPE_SkyTime *timeptr,int delta)
 {
 	timeptr->year	-=	delta;
 	if (timeptr->day > Lastday(timeptr))
@@ -152,7 +157,7 @@ void Sub_year(TYPE_Time *timeptr,int delta)
 }
 
 //**********************************************************************
-void Sub_month(TYPE_Time *timeptr)
+void Sub_month(TYPE_SkyTime *timeptr)
 {
 	timeptr->month--;
 	if (timeptr->month<1)
@@ -168,7 +173,7 @@ void Sub_month(TYPE_Time *timeptr)
 
 
 //**********************************************************************
-void Sub_day(TYPE_Time *timeptr)
+void Sub_day(TYPE_SkyTime *timeptr)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -186,7 +191,7 @@ void Sub_day(TYPE_Time *timeptr)
 }
 
 //**********************************************************************
-void Sub_hour(TYPE_Time *timeptr)
+void Sub_hour(TYPE_SkyTime *timeptr)
 {
 	timeptr->hour--;
 	if (timeptr->hour<0)
@@ -197,7 +202,7 @@ void Sub_hour(TYPE_Time *timeptr)
 }
 
 //**********************************************************************
-void Sub_min(TYPE_Time *timeptr)
+void Sub_min(TYPE_SkyTime *timeptr)
 {
 	timeptr->min--;
 	if (timeptr->min<0)
@@ -208,7 +213,7 @@ void Sub_min(TYPE_Time *timeptr)
 }
 
 //**********************************************************************
-void Sub_sec(TYPE_Time *timeptr)
+void Sub_sec(TYPE_SkyTime *timeptr)
 {
 	timeptr->sec--;
 	if (timeptr->sec<0)
@@ -219,7 +224,7 @@ void Sub_sec(TYPE_Time *timeptr)
 }
 
 //**********************************************************************
-void Add_local_year(TYPE_Time *timeptr, int delta)
+void Add_local_year(TYPE_SkyTime *timeptr, int delta)
 {
 	timeptr->local_year	+=	delta;
 	if (timeptr->local_day > Lastday(timeptr))
@@ -229,7 +234,7 @@ void Add_local_year(TYPE_Time *timeptr, int delta)
 }
 
 //**********************************************************************
-void Add_local_month(TYPE_Time *timeptr)
+void Add_local_month(TYPE_SkyTime *timeptr)
 {
 	timeptr->local_month++;
 	if (timeptr->local_month>12)
@@ -244,7 +249,7 @@ void Add_local_month(TYPE_Time *timeptr)
 }
 
 //**********************************************************************
-void Add_local_day(TYPE_Time *timeptr)
+void Add_local_day(TYPE_SkyTime *timeptr)
 {
 	timeptr->local_day++;
 	if (timeptr->local_day > Lastday(timeptr))
@@ -255,7 +260,7 @@ void Add_local_day(TYPE_Time *timeptr)
 }
 
 //**********************************************************************
-void Sub_local_month(TYPE_Time *timeptr)
+void Sub_local_month(TYPE_SkyTime *timeptr)
 {
 	timeptr->local_month--;
 	if (timeptr->local_month<1)
@@ -270,7 +275,7 @@ void Sub_local_month(TYPE_Time *timeptr)
 }
 
 //**********************************************************************
-void Sub_local_day(TYPE_Time *timeptr)
+void Sub_local_day(TYPE_SkyTime *timeptr)
 {
 
 	timeptr->local_day--;
@@ -289,9 +294,28 @@ void Sub_local_day(TYPE_Time *timeptr)
 //**************************************************************************
 //* TIMEZONE(as a 0.0-1.0 fraction) = (24*.LONG+.5) IF >12 ZONE = ZONE -24
 //**************************************************************************
-void	Compute_Timezone(TYPE_LatLon *locptr, TYPE_Time *timeptr)
+void	Compute_Timezone(TYPE_LatLon *locptr, TYPE_SkyTime *timeptr)
 {
-double dtemp;
+double		dtemp;
+struct tm	*linuxTime;
+time_t		currentTime;
+
+
+	//*	determine daylight savings time
+	currentTime		=	time(NULL);
+	linuxTime		=	localtime(&currentTime);
+//	DumpLinuxTimeStruct(linuxTime, __FUNCTION__);
+	if (linuxTime->tm_isdst > 0)
+	{
+		timeptr->dstflag	=	true;
+	}
+	else
+	{
+		timeptr->dstflag	=	false;
+	}
+//	CONSOLE_DEBUG_W_BOOL("timeptr->dstflag\t=", timeptr->dstflag);
+
+
 
 	dtemp	=	locptr->longitude;
 	if (dtemp < 0.)
@@ -316,7 +340,7 @@ double dtemp;
 //* return the julian day from the gregorian calendar date
 //* using van flandern equation
 //*****************************************************************
-static	long	Gregorian(TYPE_Time *timeptr)
+static	long	Gregorian(TYPE_SkyTime *timeptr)
 {
 long	jd;
 long	yr,mo,day;
@@ -332,7 +356,7 @@ long	yr,mo,day;
 //*****************************************************************
 //* return the julian day from the julian calendar date
 //*****************************************************************
-static	long	Julian(TYPE_Time *timeptr)
+static	long	Julian(TYPE_SkyTime *timeptr)
 {
 int		a,b;
 long	jd;
@@ -357,7 +381,7 @@ int		yr,mo;
 //*****************************************************************************
 //	Do all the calendric and time stuff
 //*****************************************************************************
-void	CalanendarTime(TYPE_Time *timeptr)	//* compute dte and cent
+void	CalanendarTime(TYPE_SkyTime *timeptr)	//* compute dte and cent
 {
 int		julianFlag	=	0;	//* 0 = gregorian calendar default, >0 = julian calendar
 double	dtemp; 		//* floating point accumulator
@@ -431,7 +455,7 @@ double	sec;
 }
 
 //**********************************************************************
-void Local_Time(TYPE_Time *timeptr)
+void Local_Time(TYPE_SkyTime *timeptr)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
 //	DumpTimeStruct(timeptr, "BEFORE");
@@ -478,7 +502,7 @@ void Local_Time(TYPE_Time *timeptr)
 }
 
 //**********************************************************************
-void	DumpTimeStruct(TYPE_Time *timeptr, const char *callingFunctionName)
+void	DumpTimeStruct(TYPE_SkyTime *timeptr, const char *callingFunctionName)
 {
 	printf("-----------------------------%s\r\n", callingFunctionName);
 //	CONSOLE_ABORT(__FUNCTION__);
@@ -496,5 +520,7 @@ void	DumpTimeStruct(TYPE_Time *timeptr, const char *callingFunctionName)
 	printf("dmonth\t\t=%d\r\n",		timeptr->dmonth);
 	printf("dday  \t\t=%d\r\n",		timeptr->dday);
 	printf("dhour \t\t=%d\r\n",		timeptr->dhour);
+
+	printf("dstflag \t\t=%d\r\n",	timeptr->dstflag);
 
 }

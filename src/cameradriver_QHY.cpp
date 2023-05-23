@@ -39,13 +39,18 @@
 //*----------------------------------------------------------------------------
 //*	Oct 10,	2122	<TODO> Add support for percentcompleted to QHY camera driver
 //*****************************************************************************
+//	https://www.qhyccd.com/html/prepub/log_en.html#!log_en.md
+//	https://www.qhyccd.com/download/
+//*****************************************************************************
+
 
 #if defined(_ENABLE_CAMERA_) && defined(_ENABLE_QHY_)
 
 #include	<string>
 #include	<stdio.h>
 
-#include	"../QHY/include/qhyccd.h"
+//#include	"../QHY/include/qhyccd.h"
+#include	<qhyccd.h>
 
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"

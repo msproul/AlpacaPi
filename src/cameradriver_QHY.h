@@ -32,7 +32,8 @@
 #endif
 
 #ifndef __QHYCCD_H__
-	#include	"../QHY/include/qhyccd.h"
+//	#include	"../QHY/include/qhyccd.h"
+	#include	<qhyccd.h>
 #endif // __QHYCCD_H__
 
 int		CreateCameraObjects_QHY(void);

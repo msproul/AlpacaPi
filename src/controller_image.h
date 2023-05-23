@@ -27,7 +27,7 @@ class ControllerImage: public Controller
 		//
 		// Construction
 		//
-			#ifdef _USE_OPENCV_CPP_
+			#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 				ControllerImage(const char			*argWindowName,
 								cv::Mat				*downloadedImage,
 								TYPE_BinaryImageHdr	*binaryImageHdr);
@@ -58,7 +58,7 @@ class ControllerImage: public Controller
 												const char				*filterName,
 												const char				*objectName
 												);
-			#ifdef _USE_OPENCV_CPP_
+			#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 				void	SetLiveWindowImage(		cv::Mat *newOpenCVImage);
 				void	UpdateLiveWindowImage(	cv::Mat *newOpenCVImage, const char *imageFileName=NULL);
 				void	CopyImageToLiveImage(	cv::Mat *newOpenCVImage);

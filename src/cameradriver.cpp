@@ -188,6 +188,12 @@
 //*	Feb 24,	2023	<MLS> Added BuildBinaryImage_Raw8_16bit()
 //*	Mar  1,	2023	<MLS> Added DrawMandebrotToImageBuffer() for camera simulation
 //*	Mar  2,	2023	<MLS> Added CreateCameraObjects()
+//*	Apr 27,	2023	<MLS> Added Get_MaxBinX() & Get_MaxBinY()
+//*	Apr 27,	2023	<MLS> Added Get_CanAbortExposure(),Get_CanAsymmetricBin(),Get_CanFastReadout()
+//*	Apr 27,	2023	<MLS> Added Get_CanGetCoolerPower(),Get_CanPulseGuide(),Get_CanSetCCDtemperature()
+//*	Apr 27,	2023	<MLS> Added Get_CanStopExposure(),
+//*	Apr 30,	2023	<MLS> Fixed error handling in Put_SetCCDtemperature()
+//*	Apr 30,	2023	<MLS> Added Read_SensorTargetTemp() & Write_SensorTargetTemp()
 //*****************************************************************************
 //*	Jan  1,	2119	<TODO> ----------------------------------------
 //*	Jun 26,	2119	<TODO> Add support for sub frames
@@ -995,73 +1001,31 @@ char				httpHeader[500];
 			break;
 
 		case kCmd_Camera_canabortexposure:		//*	Indicates whether the camera can abort exposures.
-			cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	mySocket,
-											reqData->jsonTextBuffer,
-											kMaxJsonBuffLen,
-											gValueString,
-											cCameraProp.CanAbortExposure,
-											INCLUDE_COMMA);
-			alpacaErrCode	=	kASCOM_Err_Success;
+			alpacaErrCode	=	Get_CanAbortExposure(reqData, alpacaErrMsg, gValueString);
 			break;
 
 		case kCmd_Camera_canasymmetricbin:		//*	Indicates whether the camera supports asymmetric binning
-			cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	mySocket,
-											reqData->jsonTextBuffer,
-											kMaxJsonBuffLen,
-											gValueString,
-											cCameraProp.CanAsymmetricBin,
-											INCLUDE_COMMA);
-			alpacaErrCode	=	kASCOM_Err_Success;
+			alpacaErrCode	=	Get_CanAsymmetricBin(reqData, alpacaErrMsg, gValueString);
 			break;
 
 		case kCmd_Camera_canfastreadout:		//*	Indicates whether the camera has a fast readout mode.
-			cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	mySocket,
-											reqData->jsonTextBuffer,
-											kMaxJsonBuffLen,
-											gValueString,
-											cCameraProp.CanFastReadout,
-											INCLUDE_COMMA);
-			alpacaErrCode	=	kASCOM_Err_Success;
+			alpacaErrCode	=	Get_CanFastReadout(reqData, alpacaErrMsg, gValueString);
 			break;
 
 		case kCmd_Camera_cangetcoolerpower:		//*	Indicates whether the camera's cooler power setting can be read.
-			cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	mySocket,
-											reqData->jsonTextBuffer,
-											kMaxJsonBuffLen,
-											gValueString,
-											cCameraProp.CanGetCoolerPower,
-											INCLUDE_COMMA);
-			alpacaErrCode	=	kASCOM_Err_Success;
+			alpacaErrCode	=	Get_CanGetCoolerPower(reqData, alpacaErrMsg, gValueString);
 			break;
 
 		case kCmd_Camera_canpulseguide:			//*	Returns a flag indicating whether this camera supports pulse guiding
-			cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	mySocket,
-											reqData->jsonTextBuffer,
-											kMaxJsonBuffLen,
-											gValueString,
-											cCameraProp.CanPulseGuide,
-											INCLUDE_COMMA);
-			alpacaErrCode	=	kASCOM_Err_Success;
+			alpacaErrCode	=	Get_CanPulseGuide(reqData, alpacaErrMsg, gValueString);
 			break;
 
 		case kCmd_Camera_cansetccdtemperature:	//*	Returns a flag indicating whether this camera supports setting the CCD temperature
-			cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	mySocket,
-											reqData->jsonTextBuffer,
-											kMaxJsonBuffLen,
-											gValueString,
-											cCameraProp.CanSetCCDtemperature,
-											INCLUDE_COMMA);
-			alpacaErrCode	=	kASCOM_Err_Success;
+			alpacaErrCode	=	Get_CanSetCCDtemperature(reqData, alpacaErrMsg, gValueString);
 			break;
 
 		case kCmd_Camera_canstopexposure:		//*	Returns a flag indicating whether this camera can stop an exposure that is in progress
-			cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	mySocket,
-											reqData->jsonTextBuffer,
-											kMaxJsonBuffLen,
-											gValueString,
-											cCameraProp.CanStopExposure,
-											INCLUDE_COMMA);
-			alpacaErrCode	=	kASCOM_Err_Success;
+			alpacaErrCode	=	Get_CanStopExposure(reqData, alpacaErrMsg, gValueString);
 			break;
 
 		case kCmd_Camera_ccdtemperature:		//*	Returns the current CCD temperature
@@ -1220,25 +1184,12 @@ char				httpHeader[500];
 			break;
 
 		case kCmd_Camera_maxbinX:				//*	Maximum binning for the camera X axis
-			cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	mySocket,
-											reqData->jsonTextBuffer,
-											kMaxJsonBuffLen,
-											gValueString,
-											cCameraProp.MaxbinX,
-											INCLUDE_COMMA);
-			alpacaErrCode	=	kASCOM_Err_Success;
+			alpacaErrCode	=	Get_MaxBinX(reqData,  alpacaErrMsg, gValueString);
 			break;
 
 		case kCmd_Camera_maxbinY:				//*	Maximum binning for the camera Y axis
-			cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	mySocket,
-											reqData->jsonTextBuffer,
-											kMaxJsonBuffLen,
-											gValueString,
-											cCameraProp.MaxbinY,
-											INCLUDE_COMMA);
-			alpacaErrCode	=	kASCOM_Err_Success;
+			alpacaErrCode	=	Get_MaxBinY(reqData,  alpacaErrMsg, gValueString);
 			break;
-
 
 		case kCmd_Camera_numX:					//*	Returns the current subframe width
 			if (reqData->get_putIndicator == 'G')
@@ -2012,6 +1963,119 @@ int					newBinValue;
 }
 
 //*****************************************************************************
+TYPE_ASCOM_STATUS	CameraDriver::Get_CanAbortExposure(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
+{
+TYPE_ASCOM_STATUS		alpacaErrCode;
+
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	reqData->socket,
+														reqData->jsonTextBuffer,
+														kMaxJsonBuffLen,
+														responseString,
+														cCameraProp.CanAbortExposure,
+														INCLUDE_COMMA);
+	alpacaErrCode	=	kASCOM_Err_Success;
+
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	CameraDriver::Get_CanAsymmetricBin(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
+{
+TYPE_ASCOM_STATUS		alpacaErrCode;
+
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	reqData->socket,
+														reqData->jsonTextBuffer,
+														kMaxJsonBuffLen,
+														responseString,
+														cCameraProp.CanAsymmetricBin,
+														INCLUDE_COMMA);
+	alpacaErrCode	=	kASCOM_Err_Success;
+
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	CameraDriver::Get_CanFastReadout(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
+{
+TYPE_ASCOM_STATUS		alpacaErrCode;
+
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	reqData->socket,
+														reqData->jsonTextBuffer,
+														kMaxJsonBuffLen,
+														responseString,
+														cCameraProp.CanFastReadout,
+														INCLUDE_COMMA);
+	alpacaErrCode	=	kASCOM_Err_Success;
+
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	CameraDriver::Get_CanGetCoolerPower(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
+{
+TYPE_ASCOM_STATUS		alpacaErrCode;
+
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	reqData->socket,
+														reqData->jsonTextBuffer,
+														kMaxJsonBuffLen,
+														responseString,
+														cCameraProp.CanGetCoolerPower,
+														INCLUDE_COMMA);
+	alpacaErrCode	=	kASCOM_Err_Success;
+
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	CameraDriver::Get_CanPulseGuide(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
+{
+TYPE_ASCOM_STATUS		alpacaErrCode;
+
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	reqData->socket,
+														reqData->jsonTextBuffer,
+														kMaxJsonBuffLen,
+														responseString,
+														cCameraProp.CanPulseGuide,
+														INCLUDE_COMMA);
+	alpacaErrCode	=	kASCOM_Err_Success;
+
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	CameraDriver::Get_CanSetCCDtemperature(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
+{
+TYPE_ASCOM_STATUS		alpacaErrCode;
+
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	reqData->socket,
+														reqData->jsonTextBuffer,
+														kMaxJsonBuffLen,
+														responseString,
+														cCameraProp.CanSetCCDtemperature,
+														INCLUDE_COMMA);
+	alpacaErrCode	=	kASCOM_Err_Success;
+
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	CameraDriver::Get_CanStopExposure(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
+{
+TYPE_ASCOM_STATUS		alpacaErrCode;
+
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	reqData->socket,
+														reqData->jsonTextBuffer,
+														kMaxJsonBuffLen,
+														responseString,
+														cCameraProp.CanStopExposure,
+														INCLUDE_COMMA);
+	alpacaErrCode	=	kASCOM_Err_Success;
+
+	return(alpacaErrCode);
+}
+
+
+//*****************************************************************************
 TYPE_ASCOM_STATUS	CameraDriver::Get_CCDtemperature(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
 {
 TYPE_ASCOM_STATUS		alpacaErrCode;
@@ -2237,7 +2301,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode;
 		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Double(reqData->socket,
 										reqData->jsonTextBuffer,
 										kMaxJsonBuffLen,
-										gValueString,
+										responseString,
 										cCameraProp.ElectronsPerADU,
 										INCLUDE_COMMA);
 		alpacaErrCode	=	kASCOM_Err_Success;
@@ -2493,7 +2557,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode;
 	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	reqData->socket,
 									reqData->jsonTextBuffer,
 									kMaxJsonBuffLen,
-									gValueString,
+									responseString,
 									cCameraProp.IsPulseGuiding,
 									INCLUDE_COMMA);
 	alpacaErrCode	=	kASCOM_Err_Success;
@@ -2529,6 +2593,37 @@ TYPE_ASCOM_STATUS	alpacaErrCode;
 	{
 		alpacaErrCode	=	kASCOM_Err_InternalError;
 	}
+	return(alpacaErrCode);
+}
+
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	CameraDriver::Get_MaxBinX(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode;
+
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	reqData->socket,
+														reqData->jsonTextBuffer,
+														kMaxJsonBuffLen,
+														responseString,
+														cCameraProp.MaxbinX,
+														INCLUDE_COMMA);
+	alpacaErrCode	=	kASCOM_Err_Success;
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	CameraDriver::Get_MaxBinY(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode;
+
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	reqData->socket,
+														reqData->jsonTextBuffer,
+														kMaxJsonBuffLen,
+														responseString,
+														cCameraProp.MaxbinY,
+														INCLUDE_COMMA);
+	alpacaErrCode	=	kASCOM_Err_Success;
 	return(alpacaErrCode);
 }
 
@@ -3414,10 +3509,13 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
 
 	if (cCameraProp.CanSetCCDtemperature)
 	{
+		alpacaErrCode	=	Read_SensorTargetTemp();
+		CONSOLE_DEBUG_W_NUM("alpacaErrCode\t=",	alpacaErrCode);
+		CONSOLE_DEBUG_W_DBL("SetCCDTemperature\t=",	cCameraProp.SetCCDTemperature);
 		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Double(reqData->socket,
 										reqData->jsonTextBuffer,
 										kMaxJsonBuffLen,
-										gValueString,
+										responseString,
 										cCameraProp.SetCCDTemperature,
 										INCLUDE_COMMA);
 
@@ -3459,8 +3557,11 @@ double				newSetCCDvalue;
 			{
 				//*	The current camera cooler setpoint in degrees Celsius.
 				cCameraProp.SetCCDTemperature	=	newSetCCDvalue;
-				Write_SensorTemp(cCameraProp.SetCCDTemperature);
-				alpacaErrCode					=	kASCOM_Err_Success;
+				alpacaErrCode					=	Write_SensorTargetTemp(cCameraProp.SetCCDTemperature);
+				if (alpacaErrCode != kASCOM_Err_Success)
+				{
+					strcpy(alpacaErrMsg, cLastCameraErrMsg);
+				}
 			}
 			else
 			{
@@ -5908,10 +6009,10 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
 	if (reqData != NULL)
 	{
 		SaveNextImage();
-		CONSOLE_DEBUG_W_STR("cFileNameRoot before\t=",	cFileNameRoot);
-CONSOLE_DEBUG(__FUNCTION__);
+//		CONSOLE_DEBUG_W_STR("cFileNameRoot before\t=",	cFileNameRoot);
+//		CONSOLE_DEBUG(__FUNCTION__);
 		GenerateFileNameRoot();
-		CONSOLE_DEBUG_W_STR("cFileNameRoot after \t=",	cFileNameRoot);
+//		CONSOLE_DEBUG_W_STR("cFileNameRoot after \t=",	cFileNameRoot);
 		cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(reqData->socket,
 										reqData->jsonTextBuffer,
 										kMaxJsonBuffLen,
@@ -6626,7 +6727,7 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 }
 
 //*****************************************************************************
-TYPE_ASCOM_STATUS	CameraDriver::Write_BinX(const int newBinXvalue)
+TYPE_ASCOM_STATUS	CameraDriver::Write_BinXY(const int newBinXvalue)
 {
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 
@@ -6642,20 +6743,29 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 }
 
 //*****************************************************************************
+TYPE_ASCOM_STATUS	CameraDriver::Write_BinX(const int newBinXvalue)
+{
+TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	alpacaErrCode	=	Write_BinXY(newBinXvalue);
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
 TYPE_ASCOM_STATUS	CameraDriver::Write_BinY(const int newBinYvalue)
 {
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-	//*	this should be over ridden
-	strcpy(cLastCameraErrMsg, "AlpacaPi: Not implemented-");
-	strcat(cLastCameraErrMsg, __FILE__);
-	strcat(cLastCameraErrMsg, ":");
-	strcat(cLastCameraErrMsg, __FUNCTION__);
-	CONSOLE_DEBUG(cLastCameraErrMsg);
+	alpacaErrCode	=	Write_BinXY(newBinYvalue);
 	return(alpacaErrCode);
 }
+
+
+
 
 //*****************************************************************************
 TYPE_ASCOM_STATUS	CameraDriver::Read_Gain(int *cameraGainValue)
@@ -6970,29 +7080,30 @@ TYPE_ASCOM_STATUS	CameraDriver::Read_SensorTemp(void)
 {
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
-
-	strcpy(cLastCameraErrMsg, "AlpacaPi: Not implemented-");
-	strcat(cLastCameraErrMsg, __FILE__);
-	strcat(cLastCameraErrMsg, ":");
-	strcat(cLastCameraErrMsg, __FUNCTION__);
+	GENERATE_ALPACAPI_ERRMSG(cLastCameraErrMsg, "Not implemented");
+	CONSOLE_DEBUG(cLastCameraErrMsg);
 	return(alpacaErrCode);
 }
 
 //**************************************************************************
-TYPE_ASCOM_STATUS	CameraDriver::Write_SensorTemp(const double newCCDtemp)
+TYPE_ASCOM_STATUS	CameraDriver::Read_SensorTargetTemp(void)
 {
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
-
-	strcpy(cLastCameraErrMsg, "AlpacaPi: Not implemented-");
-	strcat(cLastCameraErrMsg, __FILE__);
-	strcat(cLastCameraErrMsg, ":");
-	strcat(cLastCameraErrMsg, __FUNCTION__);
+	GENERATE_ALPACAPI_ERRMSG(cLastCameraErrMsg, "Not implemented");
+	CONSOLE_DEBUG(cLastCameraErrMsg);
 	return(alpacaErrCode);
 }
 
+//**************************************************************************
+TYPE_ASCOM_STATUS	CameraDriver::Write_SensorTargetTemp(const double newCCDtargetTemp)
+{
+TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
+
+	GENERATE_ALPACAPI_ERRMSG(cLastCameraErrMsg, "Not implemented");
+	CONSOLE_DEBUG(cLastCameraErrMsg);
+	return(alpacaErrCode);
+}
 
 #pragma mark -
 #pragma mark Image data commands
@@ -7001,10 +7112,8 @@ TYPE_ASCOM_STATUS	CameraDriver::Read_ImageData(void)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
 
-	strcpy(cLastCameraErrMsg, "AlpacaPi: Not implemented-");
-	strcat(cLastCameraErrMsg, __FILE__);
-	strcat(cLastCameraErrMsg, ":");
-	strcat(cLastCameraErrMsg, __FUNCTION__);
+	GENERATE_ALPACAPI_ERRMSG(cLastCameraErrMsg, "Not implemented");
+	CONSOLE_DEBUG(cLastCameraErrMsg);
 	return(alpacaErrCode);
 }
 
@@ -7091,7 +7200,6 @@ uint32_t			elapsedMilliSecs;
 					cCurrentExposure_us	+=	cSeqDeltaExposure_us;
 					SaveNextImage();
 					alpacaErrCode		=	Start_CameraExposure(cCurrentExposure_us);
-CONSOLE_DEBUG(__FUNCTION__);
 					GenerateFileNameRoot();
 					cImageSeqNumber++;
 					cNumFramesToSave--;
@@ -8089,6 +8197,17 @@ char				textBuffer[128];
 		Get_BinX(				reqData, alpacaErrMsg, "binx");
 		Get_BinY(				reqData, alpacaErrMsg, "biny");
 		Get_Camerastate(		reqData, alpacaErrMsg, "camerastate");
+
+		Get_CanAbortExposure(	reqData, alpacaErrMsg,	"canabortexposure");
+		Get_CanAsymmetricBin(	reqData, alpacaErrMsg,	"canasymmetricbin");
+		Get_CanFastReadout(		reqData, alpacaErrMsg,	"canfastreadout");
+		Get_CanGetCoolerPower(	reqData, alpacaErrMsg,	"cangetcoolerpower");
+		Get_CanPulseGuide(		reqData, alpacaErrMsg,	"canpulseguide");
+		Get_CanSetCCDtemperature(reqData, alpacaErrMsg,	"cansetccdtemperature");
+		Get_CanStopExposure(	reqData, alpacaErrMsg,	"canstopexposure");
+
+
+
 		Get_CCDtemperature(		reqData, alpacaErrMsg, "ccdtemperature");
 		Get_Cooleron(			reqData, alpacaErrMsg, "cooleron");
 		Get_CoolerPower(		reqData, alpacaErrMsg, "coolerpower");
@@ -8112,70 +8231,9 @@ char				textBuffer[128];
 										INCLUDE_COMMA);
 
 
-		//*	Indicates whether the camera can abort exposures.
-		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	mySocket,
-										reqData->jsonTextBuffer,
-										kMaxJsonBuffLen,
-										"canabortexposure",
-										cCameraProp.CanAbortExposure,
-										INCLUDE_COMMA);
-
-		//*	Indicates whether the camera supports asymmetric binning
-		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	mySocket,
-										reqData->jsonTextBuffer,
-										kMaxJsonBuffLen,
-										"canasymmetricbin",
-										cCameraProp.CanAsymmetricBin,
-										INCLUDE_COMMA);
-
-		//*	Indicates whether the camera has a fast readout mode.
-		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	mySocket,
-										reqData->jsonTextBuffer,
-										kMaxJsonBuffLen,
-										"canfastreadout",
-										cCameraProp.CanFastReadout,
-										INCLUDE_COMMA);
-
-		//*	Indicates whether the camera's cooler power setting can be read.
-		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	mySocket,
-										reqData->jsonTextBuffer,
-										kMaxJsonBuffLen,
-										"cangetcoolerpower",
-										cCameraProp.CanGetCoolerPower,
-										INCLUDE_COMMA);
-
-		//*	Returns a flag indicating whether this camera supports pulse guiding
-		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	mySocket,
-										reqData->jsonTextBuffer,
-										kMaxJsonBuffLen,
-										"canpulseguide",
-										cCameraProp.CanPulseGuide,
-										INCLUDE_COMMA);
-
-		//*	Returns a flag indicating whether this camera supports setting the CCD temperature
-		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	mySocket,
-										reqData->jsonTextBuffer,
-										kMaxJsonBuffLen,
-										"CanSetCCDtemperature",
-										cCameraProp.CanSetCCDtemperature,
-										INCLUDE_COMMA);
-
-		//*	Returns a flag indicating whether this camera can stop an exposure that is in progress
-		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	mySocket,
-										reqData->jsonTextBuffer,
-										kMaxJsonBuffLen,
-										"canstopexposure",
-										true,
-										INCLUDE_COMMA);
 
 
-		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Double(mySocket,
-										reqData->jsonTextBuffer,
-										kMaxJsonBuffLen,
-										"electronsperadu",
-										cCameraProp.ElectronsPerADU,
-										INCLUDE_COMMA);
-
+		Get_ElectronsPerADU(		reqData,	alpacaErrMsg,	"electronsperadu");
 		Get_Exposuremax(			reqData,	alpacaErrMsg,	"exposuremax");
 		Get_Exposuremin(			reqData,	alpacaErrMsg,	"exposuremin");
 		Get_Fastreadout(			reqData,	alpacaErrMsg,	"fastreadout");
@@ -8187,6 +8245,9 @@ char				textBuffer[128];
 		Get_Lastexposureduration(	reqData, 	alpacaErrMsg,	"lastexposureduration");
 		Get_Lastexposurestarttime(	reqData,	alpacaErrMsg,	"lastexposurestarttime");
 		Get_MaxADU(					reqData,	alpacaErrMsg,	"maxadu");
+		Get_MaxBinX(				reqData,	alpacaErrMsg,	"maxbinx");
+		Get_MaxBinY(				reqData,	alpacaErrMsg,	"maxbiny");
+
 		Get_NumX(					reqData,	alpacaErrMsg,	"numx");
 		Get_NumY(					reqData,	alpacaErrMsg,	"numy");
 
@@ -8206,17 +8267,18 @@ char				textBuffer[128];
 
 		Read_Readoutmodes(textBuffer, false);
 		cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(mySocket,
-										reqData->jsonTextBuffer,
-										kMaxJsonBuffLen,
-										"readoutmodes-str",
-										textBuffer,
-										INCLUDE_COMMA);
+															reqData->jsonTextBuffer,
+															kMaxJsonBuffLen,
+															"readoutmodes-str",
+															textBuffer,
+															INCLUDE_COMMA);
 
 		//*	Sensor name
-		Get_SensorName(	reqData,	alpacaErrMsg,	"sensorname");
-		Get_Sensortype(	reqData,	alpacaErrMsg,	"sensortype");
-		Get_StartX(					reqData,	alpacaErrMsg,	"startx");
-		Get_StartY(					reqData,	alpacaErrMsg,	"starty");
+		Get_SensorName(			reqData,	alpacaErrMsg,	"sensorname");
+		Get_Sensortype(			reqData,	alpacaErrMsg,	"sensortype");
+		Get_SetCCDtemperature(	reqData,	alpacaErrMsg,	"setccdtemperature");
+		Get_StartX(				reqData,	alpacaErrMsg,	"startx");
+		Get_StartY(				reqData,	alpacaErrMsg,	"starty");
 
 		//===============================================================
 		cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(reqData->socket,
@@ -8926,7 +8988,9 @@ int			pixelValueInt;
 }
 
 //*****************************************************************************
-bool	CameraDriver::GetCommandArgumentString(const int cmdENum, char *agumentString)
+//*	GetCommandArgumentString returns the documentation string for driverdocs
+//*****************************************************************************
+bool	CameraDriver::GetCommandArgumentString(const int cmdENum, char *agumentString, char *commentString)
 {
 bool	foundFlag	=	true;
 
@@ -9016,14 +9080,16 @@ bool	foundFlag	=	true;
 		case kCmd_Camera_flip:				strcpy(agumentString, "flip=INT (0,1,2,3)");	break;
 		case kCmd_Camera_livemode:			strcpy(agumentString, "Livemode=BOOL");			break;
 
-//		case kCmd_Camera_settelescopeinfo:
-//		case kCmd_Camera_sidebar:
-		case kCmd_Camera_saveallimages:		strcpy(agumentString, "saveallimages=BOOL");		break;
-		case kCmd_Camera_startsequence:		strcpy(agumentString, "Count=INT, Delay=FLOAT, DeltaDuration=FLOAT");		break;
-		case kCmd_Camera_startvideo:		strcpy(agumentString, "recordtime=FLOAT");		break;
-			strcpy(agumentString, "");
+		case kCmd_Camera_settelescopeinfo:	strcpy(agumentString, "RefID,Telescope,Focuser,Filterwheel,Object,Prefix,Suffix,auxtext");
 			break;
-
+		case kCmd_Camera_sidebar:			strcpy(agumentString, "Sidebar=true/false/left/right");
+			break;
+		case kCmd_Camera_saveallimages:		strcpy(agumentString, "saveallimages=BOOL");
+			break;
+		case kCmd_Camera_startsequence:		strcpy(agumentString, "Count=INT, Delay=FLOAT, DeltaDuration=FLOAT");
+			break;
+		case kCmd_Camera_startvideo:		strcpy(agumentString, "recordtime=FLOAT");
+			break;
 
 
 #ifdef _ENABLE_FITS_
@@ -9034,8 +9100,6 @@ bool	foundFlag	=	true;
 		case kCmd_Camera_rgbarray:
 		case kCmd_Camera_savenextimage:
 		case kCmd_Camera_stopvideo:
-
-
 		case kCmd_Camera_readall:
 			strcpy(agumentString, "-none-");
 			break;

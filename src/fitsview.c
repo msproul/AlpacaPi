@@ -104,7 +104,7 @@ int			newHeight;
 int			keyPressed;
 double		a	=	1.0;
 double		b	=	0.0;
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 	cv::Mat		*adjusted_Image;
 	cv::Mat		*normalized_Image;
 #else
@@ -113,7 +113,7 @@ double		b	=	0.0;
 #endif
 
 
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 	newWidth			=	openCV_Image->cols / 4;
 	newHeight			=	openCV_Image->rows / 4;
 	adjusted_Image		=	cv::createImage(cvSize(newWidth, newHeight), IPL_DEPTH_16U, 1);
@@ -143,7 +143,7 @@ double		b	=	0.0;
 					NULL);				//	const CvArr* mask CV_DEFAULT(NULL) );
 	if (gCreateNormalWindow)
 	{
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 		cv::namedWindow(	gNormalWindowName,
 							(cv::WINDOW_NORMAL | cv::WINDOW_KEEPRATIO)
 							);
@@ -364,7 +364,7 @@ int				iii;
 //*****************************************************************************
 int	HandleKeyDownEvents(	const char	*fileName,
 							const char	*windowName,
-						#ifdef _USE_OPENCV_CPP_
+						#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 							cv::Mat		*openCV_Image
 						#else
 							IplImage	*openCV_Image
@@ -373,7 +373,7 @@ int	HandleKeyDownEvents(	const char	*fileName,
 {
 int				keyPressed;
 bool			keepGoing;
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 	cv::Scalar		mean;
 	cv::Scalar		std_dev;
 //	cv::Mat			*adjusted_Image;
@@ -386,7 +386,7 @@ bool			keepGoing;
 #endif
 
 //	CONSOLE_DEBUG(__FUNCTION__);
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 //?	cv::avgSdv(openCV_Image, &mean, &std_dev, NULL);
 #else
 	cvAvgSdv(openCV_Image, &mean, &std_dev, NULL);
@@ -400,7 +400,7 @@ bool			keepGoing;
 	keepGoing		=	true;
 	while (keepGoing)
 	{
-	#ifdef _USE_OPENCV_CPP_
+	#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 		keyPressed	=	cv::waitKey(0);
 	#else
 		keyPressed	=	cvWaitKey(0);
@@ -453,7 +453,7 @@ char			argChar;
 bool			keepLooping;
 bool			goBackOneImage;
 //bool			fileIsFits;
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 	cv::Mat			*openCV_Image;
 	cv::Mat			*smallCV_Image;
 	unsigned int	nChannels;
@@ -520,7 +520,7 @@ bool			goBackOneImage;
 				if (createWindow)
 				{
 //					CONSOLE_DEBUG("Create Window");
-				#ifdef _USE_OPENCV_CPP_
+				#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 					cv::namedWindow(	myWindowName,
 										(cv::WINDOW_NORMAL | cv::WINDOW_KEEPRATIO)
 										);
@@ -545,7 +545,7 @@ bool			goBackOneImage;
 	//			}
 	//			CONSOLE_DEBUG(__FUNCTION__);
 
-			#ifdef _USE_OPENCV_CPP_
+			#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 				if (openCV_Image->cols > 2000)
 				{
 				int	newImgWidth;
@@ -630,7 +630,7 @@ bool			goBackOneImage;
 				goBackOneImage	=	false;
 				if (gAutomatic)
 				{
-				#ifdef _USE_OPENCV_CPP_
+				#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 					keyPressed	=	cv::waitKey(3000);
 				#else
 					keyPressed	=	cvWaitKey(3000);
@@ -670,7 +670,7 @@ bool			goBackOneImage;
 
 					}
 				}
-			#ifdef _USE_OPENCV_CPP_
+			#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 				delete openCV_Image;
 				openCV_Image	=	NULL;
 				if (smallCV_Image != NULL)

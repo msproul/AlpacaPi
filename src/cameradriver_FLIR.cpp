@@ -179,7 +179,7 @@ spinError		spinErr;
 	CheckUSBFS_memory();
 
 
-	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, "Exit");
 	return(cameraCreatedCount);
 }
 

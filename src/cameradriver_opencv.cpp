@@ -62,7 +62,7 @@
 
 #define	FC_BLUE()	CV_RGB(0x64, 0x8c, 0xff)
 
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 //	#warning "OpenCV++ not finished"
 //*****************************************************************************
 void	LoadAlpacaImage(void)
@@ -260,7 +260,7 @@ CameraDriver	*myCameraDriver;
 //*****************************************************************************
 void	CameraDriver::SetOpenCVcallbackFunction(const char *windowName)
 {
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 	cv::setMouseCallback( windowName,
 						LiveWindowMouseCallbac,
 						(void *)this);
@@ -275,7 +275,7 @@ void	CameraDriver::SetOpenCVcallbackFunction(const char *windowName)
 //*****************************************************************************
 void	CameraDriver::OpenLiveImage(void)
 {
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 //	#warning "OpenCV++ not finished"
 #else
 	if (cOpenCV_LiveDisplayPtr == NULL)
@@ -315,7 +315,7 @@ int	iii;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 //	#warning "OpenCV++ not finished"
 #else
 	if (cOpenCV_LiveDisplayPtr != NULL)
@@ -342,7 +342,7 @@ int	iii;
 	CONSOLE_DEBUG(__FUNCTION__);
 }
 
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 //	#warning "OpenCV++ not finished"
 //*****************************************************************************
 void	CameraDriver::DisplayLiveImage(void)
@@ -473,7 +473,7 @@ int			keyPressed;
 }
 #endif // _USE_OPENCV_CPP_
 
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 //	#warning "OpenCV++ not finished"
 //*****************************************************************************
 void	CameraDriver::DisplayLiveImage_wSideBar(void)
@@ -717,7 +717,7 @@ CvRect		myCVrect;
 }
 #endif // _USE_OPENCV_CPP_
 
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 //	#warning "OpenCV++ not finished"
 //*****************************************************************************
 void	CameraDriver::DrawSidebar(cv::Mat *imageDisplay)
@@ -881,7 +881,7 @@ enum
 	kGraphTYpe_Log,
 };
 
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 //	#warning "OpenCV++ not finished"
 
 
@@ -1079,7 +1079,7 @@ int			baseLine;
 #endif // _USE_OPENCV_CPP_
 
 
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 //	#warning "OpenCV++ not finished"
 //*****************************************************************************
 void	CameraDriver::CreateHistogramGraph(cv::Mat *imageDisplay)
@@ -1217,7 +1217,7 @@ char		textStr3[32];
 #endif // _USE_OPENCV_CPP_
 
 
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 //	#warning "OpenCV++ not finished"
 //*****************************************************************************
 void	CameraDriver::SetOpenCVcolors(cv::Mat *imageDisplay)
@@ -1235,7 +1235,7 @@ RGBcolor	textColor;		//*	text color
 
 	if (imageDisplay != NULL)
 	{
-	#ifdef _USE_OPENCV_CPP_
+	#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 		if ((imageDisplay->size[1] == 3))
 	#else
 		if ((imageDisplay->depth == 8) && (imageDisplay->nChannels == 3))
@@ -1252,7 +1252,7 @@ RGBcolor	textColor;		//*	text color
 			cSideBarGry			=	CV_RGB(128,		128,	128);
 			cCrossHairColor		=	CV_RGB(255,		0,		0);
 		}
-	#ifdef _USE_OPENCV_CPP_
+	#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 	#else
 		else if ((imageDisplay->depth == 16) && (imageDisplay->nChannels == 3))
 		{

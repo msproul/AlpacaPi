@@ -19,13 +19,13 @@
 //	#include	"/usr/include/opencv4/opencv2/highgui.hpp"
 //=============================================================================
 #ifdef _USE_OPENCV_
-	#include	"opencv2/opencv.hpp"
-	#include	"opencv2/core.hpp"
+//	#include	"opencv2/opencv.hpp"
+//	#include	"opencv2/core.hpp"
+	#include	<opencv2/opencv.hpp>
+	#include	<opencv2/core.hpp>
 
-//	#include	"opencv4/opencv2/highgui.hpp"
 //EVENT_FLAG_CTRLKEY
-	#ifdef _USE_OPENCV_CPP_
-	#else
+	#ifndef _USE_OPENCV_CPP_
 		#include	"opencv2/highgui/highgui_c.h"
 		#include	"opencv2/imgproc/imgproc_c.h"
 		#include	"opencv2/core/version.hpp"
@@ -193,7 +193,8 @@ class Controller
 				void	DrawWidgetCheckBox(TYPE_WIDGET *theWidget);
 				void	DrawWidgetGraph(TYPE_WIDGET *theWidget);
 				void	DrawWidgetIcon(TYPE_WIDGET *theWidget);
-			#ifdef _USE_OPENCV_CPP_
+
+			#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 				void	DrawWidgetImage(TYPE_WIDGET *theWidget, cv::Mat *theOpenCVimage);
 			#else
 				void	DrawWidgetImage(TYPE_WIDGET *theWidget, IplImage *theOpenCVimage);
@@ -228,7 +229,7 @@ class Controller
 				void	SetWidgetType(			const int tabNum, const int widgetIdx, const int widetType);
 				void	SetWidgetFont(			const int tabNum, const int widgetIdx, int fontNum);
 				void	SetWidgetJustification(const int tabNum, const int widgetIdx, int justification);
-			#ifdef _USE_OPENCV_CPP_
+			#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 				void	SetWidgetTextColor(		const int tabNum, const int widgetIdx, cv::Scalar newtextColor);
 				void	SetWidgetBGColor(		const int tabNum, const int widgetIdx, cv::Scalar newBGcolor);
 				void	SetWidgetBorderColor(	const int tabNum, const int widgetIdx, cv::Scalar newBoarderColor);
@@ -300,7 +301,7 @@ class Controller
 //+		void		LLD_Putpixel(		const int xx, const int yy, const int theColor);
 //+		void		LLD_SetColor(		const int theColor);
 
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 		cv::Mat		*cOpenCV_matImage;
 		cv::Scalar	cBackGrndColor;
 		cv::Scalar	cCurrentColor;
@@ -602,7 +603,7 @@ extern	char		gFullVersionString[];	//*	this is version of the controller softwar
 extern	char		gFirstArgString[];
 extern	char		gWebBrowserCmdString[];
 
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 	extern	cv::Mat		*gAlpacaLogoPtr;
 #else
 	extern	IplImage	*gAlpacaLogoPtr;

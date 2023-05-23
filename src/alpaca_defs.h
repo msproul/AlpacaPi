@@ -70,6 +70,8 @@
 //*	Feb 27,	2023	<MLS> Build 160
 //*	Mar  2,	2023	<MLS> Build 161
 //*	Mar  7,	2023	<MLS> Build 162
+//*	Mar 30,	2023	<MLS> Build 163
+//*	May  9,	2023	<MLS> Changed TYPE_Sensor to TYPE_InstSensor to avoid confusion
 //*****************************************************************************
 //#include	"alpaca_defs.h"
 
@@ -94,7 +96,7 @@
 
 #define	kApplicationName	"AlpacaPi"
 #define	kVersionString		"V0.6.0-beta"
-#define	kBuildNumber		162
+#define	kBuildNumber		163
 
 
 #define kAlpacaDiscoveryPORT	32227
@@ -108,10 +110,10 @@
 
 
 #ifdef _USE_OPENCV_
-	#ifdef _USE_OPENCV_CPP_
-		#include	<opencv2/opencv.hpp>
-		#include	<opencv2/core.hpp>
-	#else
+	#include	<opencv2/opencv.hpp>
+	#include	<opencv2/core.hpp>
+
+	#ifndef _USE_OPENCV_CPP_
 		#include	<opencv2/highgui/highgui_c.h>
 	#endif // _USE_OPENCV_CPP_
 
@@ -477,6 +479,10 @@ typedef struct
 	CoverStatus			CoverState;
 	int					MaxBrightness;
 
+	//*	extras by MLS
+	double				Aperture;		//*	percentage value
+	bool				CanSetAperture;
+
 } 	TYPE_CoverCalibrationProperties;
 
 
@@ -604,6 +610,7 @@ typedef struct
 } TYPE_RotatorProperties;
 
 //*****************************************************************************
+//*	Instrument Sensor
 //*	this is for observing conditions and spectrograph
 //*****************************************************************************
 typedef struct
@@ -615,25 +622,25 @@ typedef struct
 	char		Description[128];
 	char		Info[128];
 	uint32_t	LastRead;
-} TYPE_Sensor;
+} TYPE_InstSensor;
 
 //*****************************************************************************
 typedef struct
 {
-	TYPE_Sensor		Averageperiod;		//*	Returns the time period over which observations will be averaged
-	TYPE_Sensor		Cloudcover;			//*	Returns the amount of sky obscured by cloud
-	TYPE_Sensor		Dewpoint;			//*	Returns the atmospheric dew point at the observatory
-	TYPE_Sensor		Humidity;			//*	Returns the atmospheric humidity at the observatory
-	TYPE_Sensor		Pressure;			//*	Returns the atmospheric pressure at the observatory. hectoPascals
-	TYPE_Sensor		RainRate;			//*	Returns the rain rate at the observatory.
-	TYPE_Sensor		SkyBrightness;		//*	Returns the sky brightness at the observatory
-	TYPE_Sensor		SkyQuality;			//*	Returns the sky quality at the observatory
-	TYPE_Sensor		SkyTemperature;		//*	Returns the sky temperature at the observatory
-	TYPE_Sensor		StarFWHM;			//*	Returns the seeing at the observatory
-	TYPE_Sensor		Temperature;		//*	Returns the temperature at the observatory
-	TYPE_Sensor		WindDirection;		//*	Returns the wind direction at the observatory
-	TYPE_Sensor		WindGust;			//*	Returns the peak 3 second wind gust at the observatory over the last 2 minutes
-	TYPE_Sensor		WindSpeed;			//*	Returns the wind speed at the observatory.
+	TYPE_InstSensor		Averageperiod;		//*	Returns the time period over which observations will be averaged
+	TYPE_InstSensor		Cloudcover;			//*	Returns the amount of sky obscured by cloud
+	TYPE_InstSensor		Dewpoint;			//*	Returns the atmospheric dew point at the observatory
+	TYPE_InstSensor		Humidity;			//*	Returns the atmospheric humidity at the observatory
+	TYPE_InstSensor		Pressure;			//*	Returns the atmospheric pressure at the observatory. hectoPascals
+	TYPE_InstSensor		RainRate;			//*	Returns the rain rate at the observatory.
+	TYPE_InstSensor		SkyBrightness;		//*	Returns the sky brightness at the observatory
+	TYPE_InstSensor		SkyQuality;			//*	Returns the sky quality at the observatory
+	TYPE_InstSensor		SkyTemperature;		//*	Returns the sky temperature at the observatory
+	TYPE_InstSensor		StarFWHM;			//*	Returns the seeing at the observatory
+	TYPE_InstSensor		Temperature;		//*	Returns the temperature at the observatory
+	TYPE_InstSensor		WindDirection;		//*	Returns the wind direction at the observatory
+	TYPE_InstSensor		WindGust;			//*	Returns the peak 3 second wind gust at the observatory over the last 2 minutes
+	TYPE_InstSensor		WindSpeed;			//*	Returns the wind speed at the observatory.
 
 //	double	sensordescription,		//*	Return a sensor description
 //	double	timesincelastupdate,	//*	Return the time since the sensor value was last updated

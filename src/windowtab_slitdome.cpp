@@ -57,10 +57,8 @@ WindowTabSlitDome::WindowTabSlitDome(	const int	xSize,
 //**************************************************************************************
 WindowTabSlitDome::~WindowTabSlitDome(void)
 {
-//	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 }
-
-
 
 //**************************************************************************************
 void	WindowTabSlitDome::SetupWindowControls(void)

@@ -30,6 +30,10 @@
 	extern "C" {
 #endif
 
+void	StripLeadingSpaces(char *theString);
+
+
+
 double		AsciiToDouble(		const char *asciiString);
 void		FormatHHMMSS(		const double argDegreeValue, char *timeString, bool includeSign);
 void		FormatHHMMSSdd(		const double argDegreeValue, char *timeString, bool includeSign);
@@ -55,6 +59,10 @@ uint32_t	millis(void);
 int			CountLinesInFile(FILE *filePointer);
 int			CelestObjDeclinationQsortProc(const void *e1, const void *e2);
 
+void		DumpLinuxTimeStruct(struct tm *linuxTimeStruct, const char *callingFunction);
+
+int			SetStartupText(const char *startupMsg);
+void		SetStartupTextStatus(const int widgetIdx, const char *statusText);
 
 #ifdef __cplusplus
 }

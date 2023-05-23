@@ -1002,7 +1002,7 @@ void	FocuserDriver::DumpFocuserProperties(const char *callingFunctionName)
 }
 
 //*****************************************************************************
-bool	FocuserDriver::GetCommandArgumentString(const int cmdENum, char *agumentString)
+bool	FocuserDriver::GetCommandArgumentString(const int cmdENum, char *agumentString, char *commentString)
 {
 bool	foundFlag	=	true;
 

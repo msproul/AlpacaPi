@@ -275,7 +275,7 @@ char	textString[256];
 char	formatString[64];
 int		lineIndex;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	lineIndex	=	0;
 

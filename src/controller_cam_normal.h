@@ -11,10 +11,11 @@
 #endif // _DISCOVERY_LIB_H_
 
 
+#include	"windowtab_about.h"
 #include	"windowtab_camera.h"
 #include	"windowtab_camsettings.h"
+#include	"windowtab_camcooler.h"
 #include	"windowtab_filelist.h"
-#include	"windowtab_about.h"
 
 #ifndef	_WINDOWTAB_CAPABILITIES_H_
 	#include	"windowtab_capabilities.h"
@@ -96,6 +97,7 @@ class ControllerCamNormal: public ControllerCamera
 
 				WindowTabCamera			*cCameraTabObjPtr;
 				WindowTabCamSettings	*cCamSettingsTabObjPtr;
+				WindowTabCamCooler		*cCamCoolerTabObjPtr;
 				WindowTabCapabilities	*cCapabilitiesTabObjPtr;
 				WindowTabFileList		*cFileListTabObjPtr;
 				WindowTabDriverInfo		*cDriverInfoTabObjPtr;

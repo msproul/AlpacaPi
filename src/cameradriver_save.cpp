@@ -176,7 +176,7 @@ int		fileNameLen;
 
 
 #if defined(_USE_OPENCV_)
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 //*****************************************************************************
 //*	using "C++" interface
 //*****************************************************************************

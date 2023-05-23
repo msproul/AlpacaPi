@@ -62,7 +62,7 @@ WindowTabRemoteData::WindowTabRemoteData(	const int	xSize,
 	:WindowTab(xSize, ySize, backGrndColor, windowName)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
-	CONSOLE_DEBUG_W_STR("RemoteGAIAenabled is", (gST_DispOptions.RemoteGAIAenabled ? "enabled" : "disabled"));
+//	CONSOLE_DEBUG_W_STR("RemoteGAIAenabled is", (gST_DispOptions.RemoteGAIAenabled ? "enabled" : "disabled"));
 
 	cLastRemoteImageUpdate_ms	=	0;
 
@@ -300,11 +300,22 @@ char	helpMsg[128];
 	yLoc			+=	cBtnHeight;
 	yLoc			+=	2;
 
+	//--------------------------------------------
 	SetWidget(			kRemoteData_UpdateDBlistBtn,	xLoc,	yLoc,	fullBoxWidth,		cBtnHeight);
 	SetWidgetType(		kRemoteData_UpdateDBlistBtn,	kWidgetType_Button);
 	SetWidgetText(		kRemoteData_UpdateDBlistBtn,	"Update database list from server");
 	SetWidgetBGColor(	kRemoteData_UpdateDBlistBtn,	CV_RGB(255,	255,	255));
 	SetWidgetTextColor(	kRemoteData_UpdateDBlistBtn,	CV_RGB(0,	0,	0));
+	yLoc			+=	cBtnHeight;
+	yLoc			+=	2;
+
+
+	//--------------------------------------------
+	SetWidget(			kRemoteData_SQLerrorMsgBox,		xLoc,	yLoc,	fullBoxWidth,		cBtnHeight);
+	SetWidgetType(		kRemoteData_SQLerrorMsgBox,		kWidgetType_Button);
+	SetWidgetText(		kRemoteData_SQLerrorMsgBox,		"SQL Errors");
+	SetWidgetFont(		kRemoteData_SQLerrorMsgBox,		kFont_Medium);
+	SetWidgetTextColor(	kRemoteData_SQLerrorMsgBox,		CV_RGB(255,	0,	0));
 	yLoc			+=	cBtnHeight;
 	yLoc			+=	2;
 
@@ -457,6 +468,9 @@ void	WindowTabRemoteData::ProcessButtonClick(const int buttonIdx, const int flag
 	int					dbNumber;
 	int					databaseCnt;
 	char				errorMessage[256];
+	char				fullErrMsg[256];
+
+	SetWidgetText(kRemoteData_SQLerrorMsgBox, "");
 #endif
 
 //	CONSOLE_DEBUG(__FUNCTION__);
@@ -542,18 +556,24 @@ void	WindowTabRemoteData::ProcessButtonClick(const int buttonIdx, const int flag
 			{
 				CONSOLE_DEBUG("Gaia object not found!!!!!");
 				CONSOLE_DEBUG(errorMessage);
-				strcpy(gRemoteImageStatusMsg, errorMessage);
+//				strcpy(gRemoteImageStatusMsg, errorMessage);
+				strcpy(fullErrMsg, "Failed to find object:");
+				strcat(fullErrMsg, errorMessage);
+				SetWidgetText(kRemoteData_SQLerrorMsgBox, fullErrMsg);
 			}
 			break;
 
 		case kRemoteData_UpdateDBlistBtn:
-			databaseCnt	=	UpdateDataBaseListFromServer();
+			databaseCnt	=	UpdateDataBaseListFromServer(errorMessage);
 			if (databaseCnt > 0)
 			{
 				UpdateDataBaseButtons();
 				UpdateSelectedDataBase(-1);	//*	set to default
 			}
-
+			else
+			{
+				SetWidgetText(kRemoteData_SQLerrorMsgBox, errorMessage);
+			}
 			break;
 
 	#endif // _ENABLE_REMOTE_GAIA_

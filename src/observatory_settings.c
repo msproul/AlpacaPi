@@ -255,13 +255,13 @@ static void	ProcessObsSettingsConfig(const char *keyword, const char *valueStrin
 int					keywordEnumVal;
 TYPE_TELESCOPE_INFO	*ts_infoPtr;
 
-	CONSOLE_DEBUG_W_STR(keyword, valueString);
+//	CONSOLE_DEBUG_W_STR(keyword, valueString);
 
 	//*	this is kind of redundant to do it EVERY time, but it is the easiest to insure
 	//*	the telescope index is not out of bounds
 	if ((gCurrTelescopeNum < 0) || (gCurrTelescopeNum >= kMaxTelescopes))
 	{
-		CONSOLE_DEBUG("Reseting gCurrTelescopeNum to 0");
+		CONSOLE_DEBUG("Resetting gCurrTelescopeNum to 0");
 		gCurrTelescopeNum	=	0;
 	}
 	//*	this is for the telescope specific information
@@ -428,31 +428,48 @@ TYPE_TELESCOPE_INFO	*ts_infoPtr;
 	}
 }
 
+#ifndef _ENABLE_SKYTRAVEL_
+//*****************************************************************************
+int		SetStartupText(const char *textMsg)	{ return(1);}
+void	SetStartupTextStatus(const int idx, const char *textMsg)	{ }
+#endif // _ENABLE_SKYTRAVEL_
+
 //*****************************************************************************
 bool	ObservatorySettings_ReadFile(void)
 {
 bool	configFileOK;
 int		linesRead;
+int		startupWidgetIdx;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	startupWidgetIdx	=	SetStartupText("Observatory settings:");
+
 	ObservatorySettings_Init();
 	configFileOK	=	false;
 	linesRead		=	ReadGenericConfigFile("observatorysettings.txt", '=', &ProcessObsSettingsConfig, NULL);
 	if (linesRead > 5)
 	{
 		configFileOK	=	true;
+		SetStartupTextStatus(startupWidgetIdx, "OK");
 	}
 	else
 	{
 		ObservatorySettings_CreateTemplateFile();
+		SetStartupTextStatus(startupWidgetIdx, "Failed");
 	}
 
 	if (gObseratorySettings.KeyWordCount > 10)
 	{
 		gObseratorySettings.ValidInfo	=	true;
 	}
+	else
+	{
+		ObservatorySettings_CreateTemplateFile();
+		SetStartupTextStatus(startupWidgetIdx, "Not enough data");
+	}
 
-	DumpObservatorySettings();
+//	DumpObservatorySettings();
 //	CONSOLE_ABORT(__FUNCTION__);
 
 	return(configFileOK);

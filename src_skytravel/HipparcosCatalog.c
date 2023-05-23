@@ -9,8 +9,6 @@
 //*	Feb 18,	2021	<MLS> Added support for common star names
 //*	Feb 18,	2021	<MLS> Added ReadCommonStarNames()
 //*****************************************************************************
-
-
 //--------------------------------------------------------------------------------
 //Byte-by-byte Description of file: hip_main.dat
 //--------------------------------------------------------------------------------
@@ -189,6 +187,9 @@
 #include	<string.h>
 #include	<ctype.h>
 #include	<stdio.h>
+#include	<math.h>
+#include	<string.h>
+
 
 //*	MLS Libraries
 #define _ENABLE_CONSOLE_DEBUG_
@@ -199,6 +200,7 @@
 #include	"SkyStruc.h"
 #include	"SkyTravelConstants.h"
 #include	"StarData.h"
+#include	"helper_functions.h"
 
 #include	"StarCatalogHelper.h"
 
@@ -254,8 +256,22 @@ char		spectralClass;
 	deMin						=	ParseLongFromString(lineBuff,		34-1, 2);
 	deSec						=	ParseFloatFromString(lineBuff,		37-1, 5);
 
-//	starRec->realMagnitude		=	ParseFloatFromString(lineBuff,		42-1, 5);
+	//  88- 95  F8.2 mas/yr   pmRA      ? Proper motion mu_alpha.cos(delta), ICRS(H12)
+	//  97-104  F8.2 mas/yr   pmDE      ? Proper motion mu_delta, ICRS           (H13)
+	starRec->propMotion_RA_mas_yr		=	ParseFloatFromString(lineBuff,	88-1, 8);
+	starRec->propMotion_DEC_mas_yr		=	ParseFloatFromString(lineBuff,	97-1, 8);
+	if ((fabs(starRec->propMotion_RA_mas_yr) > 0.0) || (fabs(starRec->propMotion_DEC_mas_yr) > 0.0))
+	{
+		//*	in testing only 263 did not have valid data
+		starRec->propMotionValid	=	true;
+	}
+//	else
+//	{
+//		CONSOLE_DEBUG_W_LONG("starRec->id\t=",	starRec->id);
+//	}
 
+
+//	starRec->realMagnitude		=	ParseFloatFromString(lineBuff,		42-1, 5);
 // 275-281  F7.4  mag     Hpmag    *? Median magnitude in Hipparcos system   (H44)
 	starRec->realMagnitude		=	ParseFloatFromString(lineBuff,		275-1, 7);
 
@@ -322,8 +338,11 @@ bool			validObject;
 char			lineBuff[512];
 char			filePath[128];
 size_t			bufferSize;
+int				startupWidgetIdx;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	startupWidgetIdx	=	SetStartupText("Hipparcos catalog:");
 
 	hipStarData	=	NULL;
 
@@ -337,8 +356,8 @@ size_t			bufferSize;
 		hipFileSize		=	GetFileSize(filePath);
 		hipLineCount	=	hipFileSize / kHIPrecordSize;
 
-		CONSOLE_DEBUG_W_LONG("hipFileSize\t=", hipFileSize);
-		CONSOLE_DEBUG_W_LONG("hipLineCount\t=", hipLineCount);
+//		CONSOLE_DEBUG_W_LONG("hipFileSize\t=", hipFileSize);
+//		CONSOLE_DEBUG_W_LONG("hipLineCount\t=", hipLineCount);
 
 		bufferSize	=	hipLineCount * sizeof(TYPE_CelestData);
 		hipStarData	=	(TYPE_CelestData *)malloc(bufferSize);
@@ -361,6 +380,11 @@ size_t			bufferSize;
 			*starCount	=	recordCount;
 		}
 		fclose(filePointer);
+		SetStartupTextStatus(startupWidgetIdx, "OK");
+	}
+	else
+	{
+		SetStartupTextStatus(startupWidgetIdx, "Failed");
 	}
 //	CONSOLE_DEBUG_W_DBL("gLargestMag\t=", gLargestMag);
 //	CONSOLE_DEBUG_W_DBL("gSmallestMag\t=", gSmallestMag);
@@ -383,8 +407,11 @@ char	hippNumberStr[48];
 long	hippStarNumber;
 long	hhh;
 int		foundCount;
+int		startupWidgetIdx;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	startupWidgetIdx	=	SetStartupText("Common star names:");
 	foundCount	=	0;
 	strcpy(filePath, kSkyTravelDataDirectory);
 	strcat(filePath, "/commonstars.txt");
@@ -437,6 +464,11 @@ int		foundCount;
 			}
 		}
 		fclose(filePointer);
+		SetStartupTextStatus(startupWidgetIdx, "OK");
+	}
+	else
+	{
+		SetStartupTextStatus(startupWidgetIdx, "Failed");
 	}
 //	CONSOLE_DEBUG_W_NUM("foundCount=", foundCount);
 

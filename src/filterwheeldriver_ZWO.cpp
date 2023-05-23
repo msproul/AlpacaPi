@@ -36,6 +36,7 @@
 //*	Apr 19,	2020	<MLS> Fixed close bug in ReadZWOfilterWheelInfo()
 //*	May  4,	2020	<MLS> Add EFW version number to log event
 //*	Mar 23,	2021	<MLS> Changed the way filter position is read, only read when changed
+//*	Apr 22,	2023	<MLS> Read_CurrentFWstate() now re-reads status if moving
 //*****************************************************************************
 
 #ifdef _ENABLE_FILTERWHEEL_ZWO_
@@ -55,6 +56,7 @@
 
 #define	kEFW_rulesFile	"efw.rules"
 
+#include	"alpaca_defs.h"
 #include	"alpacadriver.h"
 #include	"alpacadriver_helper.h"
 #include	"filterwheeldriver.h"
@@ -244,6 +246,10 @@ bool			rulesFileOK;
 //*****************************************************************************
 int	FilterwheelZWO::Read_CurrentFWstate(void)
 {
+	if (cFilterWheelState == kFilterWheelState_Moving)
+	{
+		Read_CurrentFilterPositon(NULL);
+	}
 
 	return(cFilterWheelState);
 }

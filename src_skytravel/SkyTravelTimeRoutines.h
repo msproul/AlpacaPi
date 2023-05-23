@@ -12,29 +12,29 @@
 	extern "C" {
 #endif
 
-int		Lastday(TYPE_Time *timeptr);
-void	Add_year(TYPE_Time *timeptr,int delta);
-void	Add_month(TYPE_Time *timeptr);
-void	Add_day(TYPE_Time *timeptr);
-void	Add_hour(TYPE_Time *timeptr);
-void	Add_min(TYPE_Time *timeptr);
-void	Add_sec(TYPE_Time *timeptr);
-void	Sub_year(TYPE_Time *timeptr,int delta);
-void	Sub_month(TYPE_Time *timeptr);
-void	Sub_day(TYPE_Time *timeptr);
-void	Sub_hour(TYPE_Time *timeptr);
-void	Sub_min(TYPE_Time *timeptr);
-void	Sub_sec(TYPE_Time *timeptr);
-void	Add_local_year(TYPE_Time *timeptr, int delta);
-void	Add_local_month(TYPE_Time *timeptr);
-void	Add_local_day(TYPE_Time *timeptr);
-void	Sub_local_month(TYPE_Time *timeptr);
-void	Sub_local_day(TYPE_Time *timeptr);
-void	Compute_Timezone(TYPE_LatLon *locptr, TYPE_Time *timeptr);
-void	Local_Time(TYPE_Time *timeptr);
-void	CalanendarTime(TYPE_Time *timeptr);	//* compute dte and cent
+int		Lastday(	TYPE_SkyTime *timeptr);
+void	Add_year(	TYPE_SkyTime *timeptr,int delta);
+void	Add_month(	TYPE_SkyTime *timeptr);
+void	Add_day(	TYPE_SkyTime *timeptr);
+void	Add_hour(	TYPE_SkyTime *timeptr);
+void	Add_min(	TYPE_SkyTime *timeptr);
+void	Add_sec(	TYPE_SkyTime *timeptr);
+void	Sub_year(	TYPE_SkyTime *timeptr,int delta);
+void	Sub_month(	TYPE_SkyTime *timeptr);
+void	Sub_day(	TYPE_SkyTime *timeptr);
+void	Sub_hour(	TYPE_SkyTime *timeptr);
+void	Sub_min(	TYPE_SkyTime *timeptr);
+void	Sub_sec(	TYPE_SkyTime *timeptr);
+void	Add_local_year(		TYPE_SkyTime *timeptr, int delta);
+void	Add_local_month(	TYPE_SkyTime *timeptr);
+void	Add_local_day(		TYPE_SkyTime *timeptr);
+void	Sub_local_month(	TYPE_SkyTime *timeptr);
+void	Sub_local_day(		TYPE_SkyTime *timeptr);
+void	Compute_Timezone(	TYPE_LatLon *locptr, TYPE_SkyTime *timeptr);
+void	Local_Time(			TYPE_SkyTime *timeptr);
+void	CalanendarTime(		TYPE_SkyTime *timeptr);	//* compute dte and cent
 
-void	DumpTimeStruct(TYPE_Time *timeptr, const char *callingFunctionName);
+void	DumpTimeStruct(		TYPE_SkyTime *timeptr, const char *callingFunctionName);
 
 #ifdef __cplusplus
 }

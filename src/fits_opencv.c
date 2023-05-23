@@ -24,10 +24,10 @@
 #include	<fitsio.h>
 #include	<stdbool.h>
 
-#ifdef _USE_OPENCV_CPP_
-	#include	<opencv2/opencv.hpp>
-	#include	<opencv2/core.hpp>
-#else
+#include	<opencv2/opencv.hpp>
+#include	<opencv2/core.hpp>
+
+#ifndef _USE_OPENCV_CPP_
 //	#include "opencv/highgui.h"
 	#include "opencv2/highgui/highgui_c.h"
 	#include "opencv2/imgproc/imgproc_c.h"
@@ -60,7 +60,7 @@ static void	GetFitsErrorString(int fitsRetCode, char *errorString)
 	}
 }
 
-#if defined(_USE_OPENCV_CPP_)
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 //*****************************************************************************
 cv::Mat	*ReadFITSimageIntoOpenCVimage(const char *fitsFileName)
 {
@@ -450,7 +450,7 @@ uint8_t			pixelValue;
 #endif // _ENABLE_NASA_PDS_
 
 
-#if defined(_USE_OPENCV_CPP_)
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 cv::Mat		gOpenCvImg;
 #endif
 
@@ -475,7 +475,8 @@ char		extension[8];
 		strcpy(extension, &imageFileName[fnameLen - 4]);
 		CONSOLE_DEBUG_W_STR("extension\t=", extension);
 		if ((strcasecmp(extension, "fits") == 0) ||
-			(strcasecmp(extension, ".fit") == 0))
+			(strcasecmp(extension, ".fit") == 0) ||
+			(strcasecmp(extension, ".fts") == 0))
 		{
 			openCvImgPtr	=	ReadFITSimageIntoOpenCVimage(imageFileName);
 		}
@@ -507,7 +508,7 @@ char		extension[8];
 		{
 			CONSOLE_DEBUG_W_STR("imageFileName\t=", imageFileName);
 			#warning "OpenCV++ not finished"
-		#if defined(_USE_OPENCV_CPP_)
+		#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 			gOpenCvImg		=	cv::imread(imageFileName);
 			openCvImgPtr	=	&gOpenCvImg;
 		#else
@@ -811,14 +812,14 @@ char				jpegFileName[64];
 
 			sprintf(jpegFileName, "image%dx%d.png", openCvImgPtr->width, openCvImgPtr->height);
 		#if (CV_MAJOR_VERSION <= 3)
-			#warning "CV_MAJOR_VERSION <= 3"
+//			#warning "CV_MAJOR_VERSION <= 3"
 			openCVerr	=	cvSaveImage(jpegFileName, openCvImgPtr, quality);
 			if (openCVerr != 1)
 			{
 				CONSOLE_DEBUG_W_NUM("cvSaveImage returned", openCVerr);
 			}
 		#elif (CV_MAJOR_VERSION <= 4)
-			#warning "CV_MAJOR_VERSION <= 4"
+//			#warning "CV_MAJOR_VERSION <= 4"
 		#endif
 		}
 		fclose(filePointer);
@@ -865,10 +866,11 @@ char		extension[8];
 		{
 			CONSOLE_DEBUG_W_STR("imageFileName\t=", imageFileName);
 		#if (CV_MAJOR_VERSION <= 3)
-			#warning "CV_MAJOR_VERSION <= 3"
+//			#warning "CV_MAJOR_VERSION <= 3"
 			openCvImgPtr	=	cvLoadImage(imageFileName, CV_LOAD_IMAGE_COLOR);
 		#elif (CV_MAJOR_VERSION <= 4)
 			#warning "CV_MAJOR_VERSION <= 4"
+			#warning "cvLoadImage not finished"
 		#endif
 		}
 	//	CONSOLE_DEBUG_W_HEX("openCvImgPtr\t=", openCvImgPtr);

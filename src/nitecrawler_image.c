@@ -18,7 +18,8 @@
 
 
 extern unsigned char	gNiteCrawlerImgData[];
-#ifdef _USE_OPENCV_CPP_
+
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 cv::Mat	*gNiteCrawlerImgPtr	=	NULL;
 
 cv::Mat	gMoonLiteImg;

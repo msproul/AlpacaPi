@@ -4,11 +4,10 @@
 #ifndef _NITECRAWLER_IMAGE_H_
 #define	_NITECRAWLER_IMAGE_H_
 
+#include	<opencv2/opencv.hpp>
+#include	<opencv2/core.hpp>
 
-#ifdef _USE_OPENCV_CPP_
-	#include	<opencv2/opencv.hpp>
-	#include	<opencv2/core.hpp>
-#else
+#ifndef _USE_OPENCV_CPP_
 	#include "opencv2/highgui/highgui_c.h"
 	#include "opencv2/imgproc/imgproc_c.h"
 	#include "opencv2/core/version.hpp"
@@ -18,7 +17,7 @@
 	extern "C" {
 #endif
 
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 	cv::Mat			*GetNiteCrawlerImage(void);
 	cv::Mat			*GetMoonLiteImage(void);
 	extern	cv::Mat	*gNiteCrawlerImgPtr;

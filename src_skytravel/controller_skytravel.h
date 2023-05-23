@@ -65,6 +65,9 @@
 	#include	"windowtab_cpustats.h"
 #endif
 
+#include	"windowtab_time.h"
+	#ifndef	_WINDOWTAB_TIME_H_
+#endif
 
 extern	double	gTelescopeRA_Hours;
 extern	double	gTelescopeRA_Radians;
@@ -99,6 +102,8 @@ typedef struct
 	int		LineWidth_NGCoutlines;
 	bool	DispMagnitude;			//*	display magnitude of stars if zoomed in
 	bool	DispSpectralType;		//*	display spectral type as a letter if zoomed in
+	bool	DispProperMotion;		//*	display proper motion as numeric values if zoomed in
+	bool	DispProperMotionVector;	//*	display proper motion as a vector
 
 	bool	DayNightSkyColor;		//*	if true, enables changing the sky color based on time of day
 
@@ -122,6 +127,7 @@ enum
 {
 	kTab_SkyTravel	=	1,
 	kTab_ST_Settings,
+	kTab_ST_Time,
 	kTab_ST_FOV,
 	kTab_ST_RemoteData,
 	kTab_ST_Dome,
@@ -201,6 +207,8 @@ class ControllerSkytravel: public Controller
 				WindowTabIPList			*cIPaddrListObjPtr;
 				WindowTabMoon			*cMoonTabObjPtr;
 				WindowTabAbout			*cAboutBoxTabObjPtr;
+
+				WindowTabTime			*cTimeTabObjPtr;
 
 		//====================================================
 		//*	CPU status stuff (primarily for debugging)

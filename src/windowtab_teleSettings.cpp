@@ -65,9 +65,8 @@ WindowTabTeleSettings::WindowTabTeleSettings(	const int	xSize,
 //**************************************************************************************
 WindowTabTeleSettings::~WindowTabTeleSettings(void)
 {
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 }
-
 
 //**************************************************************************************
 void	WindowTabTeleSettings::SetupWindowControls(void)

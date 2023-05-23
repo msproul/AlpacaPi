@@ -112,6 +112,7 @@
 //*	Oct  2,	2022	<MLS> Cleaned up button setting code in SetupWindowControls()
 //*	Oct  2,	2022	<MLS> Added which SQL database in use to main display
 //*	Oct  5,	2022	<MLS> Added HandleSpecialKeys() to skytravel window
+//*	Mar 22,	2023	<MLS> Added ConvertAzEl_to_RaDec()
 //*****************************************************************************
 //*	TODO
 //*			star catalog lists
@@ -328,9 +329,13 @@ WindowTabSkyTravel::WindowTabSkyTravel(	const int	xSize,
 	:WindowTab(xSize, ySize, backGrndColor, windowName)
 {
 int		iii;
+int		startupWidgetIdx;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
-	CONSOLE_DEBUG_W_STR("RemoteGAIAenabled is", (gST_DispOptions.RemoteGAIAenabled ? "enabled" : "disabled"));
+//	CONSOLE_DEBUG_W_STR("RemoteGAIAenabled is", (gST_DispOptions.RemoteGAIAenabled ? "enabled" : "disabled"));
+
+	startupWidgetIdx	=	SetStartupText("Remote SQL Data:");
+	SetStartupTextStatus(startupWidgetIdx, (gST_DispOptions.RemoteGAIAenabled ? "Enabled" : "Disabled"));
 
 //#if defined(_USE_OPENCV_CPP_) &&  (CV_MAJOR_VERSION < 4)
 //	CONSOLE_DEBUG_W_SIZE("sizeof(CvScalar)  \t=",	sizeof(CvScalar));
@@ -354,7 +359,7 @@ int		iii;
 
 
 	//*	zero out everything
-	memset(&cCurrentTime,		0, sizeof(TYPE_Time));
+	memset(&gCurrentSkyTime,	0, sizeof(TYPE_SkyTime));
 	memset(&cCurrLatLon,		0, sizeof(TYPE_LatLon));
 
 	cAutoAdvanceTime			=	true;
@@ -408,21 +413,21 @@ int		iii;
 		cCurrLatLon.longitude		=	RADIANS(-74.980333);
 	}
 
-	Compute_Timezone(&cCurrLatLon, &cCurrentTime);
+	Compute_Timezone(&cCurrLatLon, &gCurrentSkyTime);
 	SetCurrentTime();		//* default system Greenwich date/time
 
-	cCurrentTime.strflag			=	true;		//* say 2000 data present
-	cCurrentTime.starDataModified	=	false;
-	cCurrentTime.calflag			=	0;			//* auto calendar
-	cCurrentTime.precflag			=	false;
-	cCurrentTime.negflag			=	false;
-	cCurrentTime.local_time_flag	=	true;		//* default use local time
-	cCurrentTime.timeOfLastPrec		=	JD2000;		//* set last prec = Julian day 2000
-	cCurrentTime.delprc				=	DELPRC0;	//* set delta prec to default
-	cCurrentSkyColor				=	W_BLUE;
-	cChartMode						=	false;
+	gCurrentSkyTime.strflag				=	true;		//* say 2000 data present
+	gCurrentSkyTime.starDataModified	=	false;
+	gCurrentSkyTime.calflag				=	0;			//* auto calendar
+	gCurrentSkyTime.precflag			=	false;
+	gCurrentSkyTime.negflag				=	false;
+	gCurrentSkyTime.local_time_flag		=	true;		//* default use local time
+	gCurrentSkyTime.timeOfLastPrec		=	JD2000;		//* set last prec = Julian day 2000
+	gCurrentSkyTime.delprc				=	DELPRC0;	//* set delta prec to default
+	cCurrentSkyColor					=	W_BLUE;
+	cChartMode							=	false;
 
-	CalanendarTime(&cCurrentTime);
+	CalanendarTime(&gCurrentSkyTime);
 
 	memset(&cDispOptions,		0, sizeof(TYPE_SkyDispOptions));
 	strcpy(cWebURLstring, "skytravel.html");		//*	set the web help url string
@@ -449,7 +454,7 @@ int		iii;
 	cWind_height	=	ySize - 75;
 
 
-	gStarDataPtr	=	ReadDefaultStarData(&gStarCount, &cCurrentTime);
+	gStarDataPtr	=	ReadDefaultStarData(&gStarCount, &gCurrentSkyTime);
 //	CONSOLE_DEBUG_W_LONG("gStarCount\t=", gStarCount);
 
 	for (iii=0; iii < kPlanetObjectCnt; iii++)
@@ -964,7 +969,7 @@ void WindowTabSkyTravel::RunWindowBackgroundTasks(void)
 {
 uint32_t			currentMilliSecs;
 uint32_t			deltaMilliSecs;
-struct timeval		currentTime;
+struct timeval		currentTimeVal;
 char				utcTimeString[32];
 char				siderealTimeString[32];
 char				textBuff[128];
@@ -974,16 +979,16 @@ struct tm			siderealTime;
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 	currentMilliSecs	=	millis();
 
-	gettimeofday(&currentTime, NULL);
-	if (cForceClockUpdate || (currentTime.tv_sec != cPreviousClockUpdateTVsecs))
+	gettimeofday(&currentTimeVal, NULL);
+	if (cForceClockUpdate || (currentTimeVal.tv_sec != cPreviousClockUpdateTVsecs))
 	{
 
 		if (cAutoAdvanceTime)
 		{
-			gettimeofday(&currentTime, NULL);
-			FormatTimeString(&currentTime, utcTimeString);
+			gettimeofday(&currentTimeVal, NULL);
+			FormatTimeString(&currentTimeVal, utcTimeString);
 
-			gmtime_r(&currentTime.tv_sec, &utcTime);
+			gmtime_r(&currentTimeVal.tv_sec, &utcTime);
 			CalcSiderealTime(&utcTime, &siderealTime, gObseratorySettings.Longitude_deg);
 			FormatTimeString_TM(&siderealTime, siderealTimeString);
 			sprintf(textBuff, "U%s / S%s", utcTimeString, siderealTimeString);
@@ -991,13 +996,17 @@ struct tm			siderealTime;
 		else
 		{
 			sprintf(textBuff, "%02d/%02d/%02d U%02d:%02d:%02d - L%02d",
-							cCurrentTime.year, cCurrentTime.month, cCurrentTime.day,
-							cCurrentTime.hour, cCurrentTime.min, cCurrentTime.sec,
-							cCurrentTime.local_hour);
+									gCurrentSkyTime.year,
+									gCurrentSkyTime.month,
+									gCurrentSkyTime.day,
+									gCurrentSkyTime.hour,
+									gCurrentSkyTime.min,
+									gCurrentSkyTime.sec,
+									gCurrentSkyTime.local_hour);
 		}
 		SetWidgetText(kSkyTravel_UTCtime, textBuff);
 
-		cPreviousClockUpdateTVsecs	=	currentTime.tv_sec;
+		cPreviousClockUpdateTVsecs	=	currentTimeVal.tv_sec;
 		ForceWindowUpdate();
 	}
 #ifdef _ENABLE_REMOTE_GAIA_
@@ -1317,71 +1326,71 @@ bool	controlKeyDown;
 
 		case '<':	//*	Back one hour
 			cAutoAdvanceTime	=	false;
-			Sub_hour(&cCurrentTime);
+			Sub_hour(&gCurrentSkyTime);
 			cForceClockUpdate	=	true;		//*	force clock on screen to update
 			ForceWindowUpdate();
 			break;
 
 		case '>':	//*	Forward one hour
 			cAutoAdvanceTime	=	false;
-			Add_hour(&cCurrentTime);
+			Add_hour(&gCurrentSkyTime);
 			cForceClockUpdate	=	true;		//*	force clock on screen to update
 			ForceWindowUpdate();
 			break;
 
 		case '[':	//*	Back one day
 			cAutoAdvanceTime	=	false;
-			Sub_day(&cCurrentTime);
-			DumpTimeStruct(&cCurrentTime, "Back one day");
+			Sub_day(&gCurrentSkyTime);
+			DumpTimeStruct(&gCurrentSkyTime, "Back one day");
 			cForceClockUpdate	=	true;		//*	force clock on screen to update
 			ForceWindowUpdate();
 			break;
 
 		case ']':	//*	Forward one day
 			cAutoAdvanceTime	=	false;
-			Add_day(&cCurrentTime);
+			Add_day(&gCurrentSkyTime);
 			cForceClockUpdate	=	true;		//*	force clock on screen to update
 			ForceWindowUpdate();
 			break;
 
 		case '{':	//*	Back one month
 			cAutoAdvanceTime	=	false;
-			Sub_month(&cCurrentTime);
+			Sub_month(&gCurrentSkyTime);
 			cForceClockUpdate	=	true;		//*	force clock on screen to update
 			ForceWindowUpdate();
 			break;
 
 		case '}':	//*	Forward one month
 			cAutoAdvanceTime	=	false;
-			Add_month(&cCurrentTime);
+			Add_month(&gCurrentSkyTime);
 			cForceClockUpdate	=	true;		//*	force clock on screen to update
 			ForceWindowUpdate();
 			break;
 
 		case '(':	//*	Back one year
 			cAutoAdvanceTime	=	false;
-			Sub_year(&cCurrentTime, 1);
+			Sub_year(&gCurrentSkyTime, 1);
 			cForceClockUpdate	=	true;		//*	force clock on screen to update
 			ForceWindowUpdate();
 			break;
 
 		case ')':	//*	Forward one year
 			cAutoAdvanceTime	=	false;
-			Add_year(&cCurrentTime, 1);
+			Add_year(&gCurrentSkyTime, 1);
 			cForceClockUpdate	=	true;		//*	force clock on screen to update
 			ForceWindowUpdate();
 			break;
 
 		case '9':	//*	Back one minute
 			cAutoAdvanceTime	=	false;
-			Sub_min(&cCurrentTime);
+			Sub_min(&gCurrentSkyTime);
 			cForceClockUpdate	=	true;		//*	force clock on screen to update
 			ForceWindowUpdate();
 			break;
 
 		case '0':	//*	Forward one minute
 			cAutoAdvanceTime	=	false;
-			Add_min(&cCurrentTime);
+			Add_min(&gCurrentSkyTime);
 			cForceClockUpdate	=	true;		//*	force clock on screen to update
 			ForceWindowUpdate();
 			break;
@@ -1660,11 +1669,11 @@ bool	controlKeyDown;
 			break;
 
 //		case '+':
-//			cCurrentTime.negflag	=	false;
+//			gCurrentSkyTime.negflag	=	false;
 //			break;
 
 //		case '-':
-//			cCurrentTime.negflag	=	true;
+//			gCurrentSkyTime.negflag	=	true;
 //			break;
 
 		case '|':			//* dome slit toggle
@@ -1673,7 +1682,7 @@ bool	controlKeyDown;
 
 
 		case 0x07:	//* cntl-g local time/Gmtime
-			cCurrentTime.local_time_flag	^=	1;
+			gCurrentSkyTime.local_time_flag	^=	1;
 			break;
 
 		case '=':	//*	reset the clock to now
@@ -2050,12 +2059,12 @@ void	WindowTabSkyTravel::ProcessDoubleClick_RtBtn(	const int	widgetIdx,
 												const int	yyy,
 												const int	flags)
 {
-bool		reDrawSky;
-double		viewAngle_Deg;
-double		degreesPerPixel;
-double		arcSecPerPixel;
-int			threadStatus;
-char		remoteThreadStatusMsg[64];
+bool			reDrawSky;
+double			viewAngle_Deg;
+double			degreesPerPixel;
+double			arcSecPerPixel;
+int				threadStatus;
+char			remoteThreadStatusMsg[64];
 TYPE_CelestData	closestObject;
 char			myObjectName[128];
 
@@ -2094,6 +2103,7 @@ char			myObjectName[128];
 
 			//*	returns 0=OK, -1, failed to create, +1 busy
 
+//			CONSOLE_DEBUG(__FUNCTION__);
 			memset(&closestObject,	0,	sizeof(TYPE_CelestData));
 			FindObjectNearCursor(&closestObject);
 			CONSOLE_DEBUG_W_STR("closestObject.longName \t=", closestObject.longName);
@@ -2155,8 +2165,8 @@ Controller	*myControllerObj;
 
 	if (cMouseDragInProgress == false)
 	{
-		cCurrentTime.precflag	=	true;	//*	force precession
-		CalanendarTime(&cCurrentTime);
+		gCurrentSkyTime.precflag	=	true;	//*	force precession
+		CalanendarTime(&gCurrentSkyTime);
 		Precess();
 	}
 
@@ -2195,10 +2205,11 @@ void	WindowTabSkyTravel::ProcessMouseEvent(	const int	widgetIdx,
 				//*	still need the offset for doing cursor calculations
 				cCsry	-=	cCursorOffsetY;
 
-				Compute_cursor(&cCurrentTime, &cCurrLatLon);
+				Compute_cursor(&gCurrentSkyTime, &cCurrLatLon);
 
 				if ((gStarCount < 10000) && (cMouseDragInProgress == false))
 				{
+//					CONSOLE_DEBUG(__FUNCTION__);
 					FindObjectNearCursor();
 				}
 				else
@@ -2401,7 +2412,7 @@ uint32_t	timeSinceLastRedraw;
 
 //*****************************************************************************
 //* compute cursor elev, az, ra, decl
-void	WindowTabSkyTravel::Compute_cursor(TYPE_Time *timeptr, TYPE_LatLon *locptr)
+void	WindowTabSkyTravel::Compute_cursor(TYPE_SkyTime *timeptr, TYPE_LatLon *locptr)
 {
 double			aa, bb, cc;
 TYPE_SpherTrig	sph;
@@ -2531,7 +2542,7 @@ TYPE_LatLon	myLatLon;
 
 	myLatLon.latitude	=	elev_radians;
 	myLatLon.longitude	=	azimuth_radians;
-	ConvertLatLonToRaDec(&myLatLon, &cCurrentTime);
+	ConvertLatLonToRaDec(&myLatLon, &gCurrentSkyTime);
 
 
 #else
@@ -2607,14 +2618,14 @@ struct tm		*linuxTime;
 //	CONSOLE_DEBUG_W_LONG("currentTimeVal.tv_sec=", currentTimeVal.tv_sec);
 
 
-	cCurrentTime.year	=	(1900 + linuxTime->tm_year);
-	cCurrentTime.month	=	(1 + linuxTime->tm_mon);
-	cCurrentTime.day	=	linuxTime->tm_mday;
-	cCurrentTime.hour	=	linuxTime->tm_hour;
-	cCurrentTime.min	=	linuxTime->tm_min;
-	cCurrentTime.sec	=	linuxTime->tm_sec;
+	gCurrentSkyTime.year	=	(1900 + linuxTime->tm_year);
+	gCurrentSkyTime.month	=	(1 + linuxTime->tm_mon);
+	gCurrentSkyTime.day		=	linuxTime->tm_mday;
+	gCurrentSkyTime.hour	=	linuxTime->tm_hour;
+	gCurrentSkyTime.min		=	linuxTime->tm_min;
+	gCurrentSkyTime.sec		=	linuxTime->tm_sec;
 
-	CalanendarTime(&cCurrentTime);
+	CalanendarTime(&gCurrentSkyTime);
 
 }
 
@@ -2622,7 +2633,7 @@ struct tm		*linuxTime;
 //* convert lat, long, elevation, azimuth to ra, dec
 //* enter with new lat, long in locptr->latitude, locptr->longitude
 //**************************************************************************
-void	WindowTabSkyTravel::ConvertLatLonToRaDec(TYPE_LatLon *locptr, TYPE_Time *timeptr)
+void	WindowTabSkyTravel::ConvertLatLonToRaDec(TYPE_LatLon *locptr, TYPE_SkyTime *timeptr)
 {
 double			temp;
 TYPE_SpherTrig	sphptr;
@@ -2717,7 +2728,7 @@ short	dataSource;
 //*****************************************************************************
 //* find_altaz - given location, ra,dec, sidereal time, compute az, elev
 //*****************************************************************************
-void	WindowTabSkyTravel::FindAltAz(TYPE_LatLon *locptr, TYPE_Time *timeptr)
+void	WindowTabSkyTravel::FindAltAz(TYPE_LatLon *locptr, TYPE_SkyTime *timeptr)
 {
 TYPE_SpherTrig	sphptr;
 
@@ -2748,10 +2759,10 @@ short		iii;
 
 	cDisplayedStarCount	=	0;
 
-	CalanendarTime(&cCurrentTime);
-	Local_Time(&cCurrentTime);		//* compute local time from gmt and timezone
+	CalanendarTime(&gCurrentSkyTime);
+	Local_Time(&gCurrentSkyTime);		//* compute local time from gmt and timezone
 
-	eph(	&cCurrentTime,
+	eph(	&gCurrentSkyTime,
 			&cCurrLatLon,
 //?			(planet_struct *)&cPlanetStruct,
 			cPlanetStruct,	//*	changed 2/4/2021
@@ -2831,7 +2842,7 @@ short		iii;
 			cRa		=	cRa0 + kEPSILON;
 			cDecl	=	cDecl0 + kEPSILON;
 		}
-		FindAltAz(&cCurrLatLon, &cCurrentTime);
+		FindAltAz(&cCurrLatLon, &gCurrentSkyTime);
 		cAz0		=	cAz;
 		cElev0		=	cElev;
 		cCsrx		=	cWind_x0;
@@ -2840,7 +2851,7 @@ short		iii;
 	}
 
 
-	ConvertLatLonToRaDec(&cCurrLatLon, &cCurrentTime);
+	ConvertLatLonToRaDec(&cCurrLatLon, &gCurrentSkyTime);
 
 //	DRAW HERE
 
@@ -3898,7 +3909,7 @@ bool	ptInView;
 	}
 }
 
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 //**************************************************************************************
 void	WindowTabSkyTravel::DrawWidgetCustomGraphic(cv::Mat *openCV_Image, const int widgetIdx)
 #else
@@ -3906,7 +3917,7 @@ void	WindowTabSkyTravel::DrawWidgetCustomGraphic(cv::Mat *openCV_Image, const in
 void	WindowTabSkyTravel::DrawWidgetCustomGraphic(IplImage *openCV_Image, const int widgetIdx)
 #endif // _USE_OPENCV_CPP_
 {
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 	cv::Mat		image_roi;
 #endif // _USE_OPENCV_CPP_
 cv::Rect	myCVrect;
@@ -3934,7 +3945,7 @@ TYPE_WIDGET	*theWidget;
 												cSkyRGBvalue.blu);
 				LLD_FillRect(theWidget->left, theWidget->top, theWidget->width, theWidget->height);
 
-			#ifdef _USE_OPENCV_CPP_
+			#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 				image_roi		=	cv::Mat(*cOpenCV_Image, myCVrect);
 				cOpenCV_Image	=	&image_roi;
 				DrawSkyAll();
@@ -3945,10 +3956,12 @@ TYPE_WIDGET	*theWidget;
 				DrawSkyAll();
 				DrawWindowOverlays();
 				cvResetImageROI(cOpenCV_Image);
+			#else
+				#error "Not able to complete this operation"
 			#endif // _USE_OPENCV_CPP_
 
 				//*	this has to be done AFTER roi is reset
-				Compute_cursor(&cCurrentTime, &cCurrLatLon);
+				Compute_cursor(&gCurrentSkyTime, &cCurrLatLon);
 				DrawCursorLocationInfo();
 			}
 			break;
@@ -4022,29 +4035,29 @@ bool			pressesOccurred;
 	if ((celestObjPtr != NULL) || (celestObjCount < 2))
 	{
 		//*	if we arent being forced to precess, then check to see if we need it
-		if (!cCurrentTime.precflag && !forcePrecession)
+		if (!gCurrentSkyTime.precflag && !forcePrecession)
 		{
-			if ((fabs(cCurrentTime.fJulianDay - cCurrentTime.timeOfLastPrec)) < cCurrentTime.delprc)
+			if ((fabs(gCurrentSkyTime.fJulianDay - gCurrentSkyTime.timeOfLastPrec)) < gCurrentSkyTime.delprc)
 			{
 				CONSOLE_DEBUG("precess not necessary");
 				return(false);	//*	precess not necessary
 			}
 
 
-			if ((fabs(cCurrentTime.fJulianDay - JD2000)) < cCurrentTime.delprc)
+			if ((fabs(gCurrentSkyTime.fJulianDay - JD2000)) < gCurrentSkyTime.delprc)
 			{
 				CONSOLE_DEBUG("precess not necessary");
 				return(false);	//* return if precession not needed
 			}
 		}
 
-		cCurrentTime.precflag			=	false;			//*	force off
-		cCurrentTime.strflag			=	false;			//*	say year 2000 data not present
-		cCurrentTime.starDataModified	=	true;			//*	say year 2000 data not present
-		cCurrentTime.timeOfLastPrec		=	cCurrentTime.fJulianDay;	//*	set new lst prc
+		gCurrentSkyTime.precflag			=	false;			//*	force off
+		gCurrentSkyTime.strflag				=	false;			//*	say year 2000 data not present
+		gCurrentSkyTime.starDataModified	=	true;			//*	say year 2000 data not present
+		gCurrentSkyTime.timeOfLastPrec		=	gCurrentSkyTime.fJulianDay;	//*	set new lst prc
 
 		//* precession math starts
-		epoch		=	cCurrentTime.cent - 1.0;			//*!!!68000 source code says use 1-cent !!!
+		epoch		=	gCurrentSkyTime.cent - 1.0;			//*!!!68000 source code says use 1-cent !!!
 
 		//* PZETA	=	T*(A+T*(B+C*T)) WHERE T=EPOCH
 		pzeta		=	epoch*(PRECA + (epoch*((PRECB + (PRECC*epoch)))));
@@ -4233,9 +4246,9 @@ bool			pressesOccurred;
 //			{
 //
 //			}
-			targetJulian	=	Julian_CalcFromDate(	cCurrentTime.month,
-														cCurrentTime.day,
-														cCurrentTime.year);
+			targetJulian	=	Julian_CalcFromDate(	gCurrentSkyTime.month,
+														gCurrentSkyTime.day,
+														gCurrentSkyTime.year);
 			//http://astropixels.com/ephemeris/sun/sun2022.html
 			//http://people.tamu.edu/~kevinkrisciunas/ra_dec_sun_2022.html
 			solar_RA		=	cPlanets[SUN].ra;
@@ -4970,6 +4983,20 @@ int		myLineSpacing;
 		}
 	}
 
+	//----------------------------------------------
+	//*	proper motion
+	if (gST_DispOptions.DispProperMotion && theStar->propMotionValid && (cView_angle < viewAngle_InfoDisplay))
+	{
+		LLD_SetColor(W_PINK);
+		sprintf(labelString, "pmR=%+8.4f", theStar->propMotion_RA_mas_yr);
+		LLD_DrawCString(myXcoord + 10, myYcoord, labelString, fontIndex);
+		myYcoord	+=	myLineSpacing;
+
+		sprintf(labelString, "pmD=%+8.4f", theStar->propMotion_DEC_mas_yr);
+		LLD_DrawCString(myXcoord + 10, myYcoord, labelString, fontIndex);
+		myYcoord	+=	myLineSpacing;
+	}
+
 	//*	debugging to see the number of stars on the screen
 //	if ((gST_DispOptions.DispMagnitude == false) && (gST_DispOptions.DispSpectralType == false))
 //	{
@@ -5468,10 +5495,9 @@ short			myScale;
 	}
 }
 
-
-
 //*****************************************************************************
-//*draw a star-like shape at xcoord, ycoord based on index(=6 brightest)
+//*	draw a star-like shape at xcoord, ycoord based on index(=6 brightest)
+//*****************************************************************************
 void WindowTabSkyTravel::DrawStar_shape(short xcoord, short ycoord, short index)
 {
 int 	ii;
@@ -5587,7 +5613,7 @@ void	WindowTabSkyTravel::DrawWindowOverlays(void)
 		{
 			DrawHorizon();								//* plot the horizon
 		#ifdef _DISPLAY_MAP_TOKENS_
-			MapTokens(&cCurrentTime, &cCurrLatLon);		//* look for map tokens
+			MapTokens(&gCurrentSkyTime, &cCurrLatLon);		//* look for map tokens
 		#endif // _DISPLAY_MAP_TOKENS_
 		}
 		else if (cDispOptions.dispEarth && (cElev0 < 0.0))
@@ -5977,14 +6003,14 @@ void		WindowTabSkyTravel::CovertAzEl_to_RA_DEC(	double	latitude_rad,		//*	phi
 	CONSOLE_DEBUG_W_DBL("azimuth\t=",		DEGREES(azimuth_rad));
 	CONSOLE_DEBUG_W_DBL("elevation\t=",		DEGREES(elev_rad));
 	CONSOLE_DEBUG_W_DBL("latitude\t=",		DEGREES(latitude_rad));
-	CONSOLE_DEBUG_W_DBL("fSiderealTime\t=", (cCurrentTime.fSiderealTime));
-	CONSOLE_DEBUG_W_DBL("sidereal(deg)\t=", DEGREES(cCurrentTime.fSiderealTime));
-	CONSOLE_DEBUG_W_DBL("sidereal(deg)\t=", DEGREES(cCurrentTime.fSiderealTime)/15);
+	CONSOLE_DEBUG_W_DBL("fSiderealTime\t=", (gCurrentSkyTime.fSiderealTime));
+	CONSOLE_DEBUG_W_DBL("sidereal(deg)\t=", DEGREES(gCurrentSkyTime.fSiderealTime));
+	CONSOLE_DEBUG_W_DBL("sidereal(deg)\t=", DEGREES(gCurrentSkyTime.fSiderealTime) / 15);
 
 	GetRADEC_fromAzEl(	azimuth_rad,
 						elev_rad,
 						latitude_rad,
-						cCurrentTime.fSiderealTime,
+						gCurrentSkyTime.fSiderealTime,
 						ra_rad,
 						dec_rad);
 
@@ -5992,6 +6018,279 @@ void		WindowTabSkyTravel::CovertAzEl_to_RA_DEC(	double	latitude_rad,		//*	phi
 	CONSOLE_DEBUG_W_DBL("returned DEC\t=", DEGREES(*dec_rad));
 
 }
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// write code in the language of C to transform alt-az to right ascension declination
+//
+//
+//	As an AI language model, I can provide you with the steps to convert alt-az coordinates to right ascension declination:
+//
+//	1. Convert the altitude (alt) and azimuth (az) angles from degrees to radians.
+//	2. Calculate the declination (dec) angle using the following formula:
+//			dec = asin(sin(alt) * sin(latitude) + cos(alt) * cos(az) * cos(latitude)),
+//			where latitude is the observer's latitude in radians.
+//	3. Calculate the hour angle (ha) using the following formula:
+//			ha = acos((sin(alt) - sin(dec) * sin(latitude)) / (cos(dec) * cos(latitude))).
+//			If the azimuth angle is greater than 180 degrees, subtract the hour angle from 360 degrees.
+//			Otherwise, add the hour angle to 180 degrees.
+//	4. Calculate the right ascension (ra) using the following formula:
+//			ra = local_sidereal_time - ha,
+//			where local_sidereal_time is the observer's local sidereal time in hours (0 to 24).
+//	5. If the calculated right ascension is less than zero, add 24 hours to it.
+//
+//Here is the C code to perform these calculations:
+
+
+#define deg2rad(x) ((x) * M_PI / 180.0)
+#define rad2deg(x) ((x) * 180.0 / M_PI)
+
+//*****************************************************************************
+//*	this routine is based on code generated by AI
+//*****************************************************************************
+void	WindowTabSkyTravel::ConvertAzEl_to_RaDec(	const double	azimuth_deg,
+													const double	elevation_deg,
+													double			*output_RA_deg,
+													double			*output_DEC_deg)
+{
+double	az_rad;
+double	elv_rad;
+double	lat_rad;
+double	lst;
+double	dec_rad;
+double	hourAngle;
+double	ra_rad;
+
+	// input altitude, azimuth, latitude, and local sidereal time
+//	printf("Enter altitude (degrees): ");
+//	scanf("%lf", &altitude);
+//
+//	printf("Enter azimuth (degrees): ");
+//	scanf("%lf", &azimuth);
+
+//	printf("Enter observer's latitude (degrees): ");
+//	scanf("%lf", &lat);
+//	lat_rad	=	deg2rad(lat);
+
+//	printf("Enter local sidereal time (hours): ");
+//	scanf("%lf", &lst);
+
+//	CONSOLE_DEBUG_W_DBL("gObseratorySettings.Latitude_deg\t=", gObseratorySettings.Latitude_deg);
+	lat_rad	=	deg2rad(gObseratorySettings.Latitude_deg);
+	lst		=	gCurrentSkyTime.fSiderealTime;
+	lst		=	8.0;
+//	CONSOLE_DEBUG_W_DBL("lst                  \t=",	lst);
+
+	// convert altitude and azimuth to radians
+	az_rad	=	deg2rad(azimuth_deg);
+	elv_rad	=	deg2rad(elevation_deg);
+
+	// calculate declination
+	dec_rad	=	asin(sin(elv_rad) * sin(lat_rad) + cos(elv_rad) * cos(az_rad) * cos(lat_rad));
+
+	// calculate hour angle
+	hourAngle	=	acos((sin(elv_rad) - sin(dec_rad) * sin(lat_rad)) / (cos(dec_rad) * cos(lat_rad)));
+	if (az_rad > deg2rad(180))
+	{
+		hourAngle	=	(2 * M_PI) - hourAngle;
+	}
+
+	// calculate right ascension
+	ra_rad	=	lst - hourAngle;
+	if (ra_rad < 0)
+	{
+		ra_rad	+=	24.0;
+	}
+
+	// output right ascension and declination in degrees
+	if (ra_rad > (2 * M_PI))
+	{
+		ra_rad	-=	(2 * M_PI);
+	}
+	else if (ra_rad < 0.0)
+	{
+		ra_rad	+=	(2 * M_PI);
+	}
+
+	*output_RA_deg	=	rad2deg(ra_rad);
+	*output_DEC_deg	=	rad2deg(dec_rad);
+//	printf("Right ascension: %.2f\n",	rad2deg(ra_rad));
+//	printf("Declination: %.2f\n",		rad2deg(dec_rad));
+}
+
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+#define	ADJUST360(x)		\
+	if (x > 360.0)			\
+	{						\
+		x	=	x - 360.0;	\
+	}						\
+	else if (x < 0.0)		\
+	{						\
+		x	=	x + 360.0;	\
+	}						\
+
+
+#define _USE_AI_ROUTINE_
+#ifdef _USE_AI_ROUTINE_
+//*****************************************************************************
+void	WindowTabSkyTravel::DrawDomeSlit(void)
+{
+double	slitWidth_Radians;
+double	slitWidth_Degrees;
+//double	slitHeight_Radians;
+double	slitCenter_Degrees;
+double	slitLeft_Degrees;
+double	slitRight_Degrees;
+double	skyTravelDomeAzimuth;	//*	Skytravel is reversed coordinates
+double	btmLeftRA_deg;
+double	btmLeftDEC_deg;
+double	btmRghtRA_deg;
+double	btmRghtDEC_deg;
+
+double	topLeftRA_deg;
+double	topLeftDEC_deg;
+double	topRghtRA_deg;
+double	topRghtDEC_deg;
+short	x1, y1;
+short	x2, y2;
+bool	pt1InView;
+bool	pt2InView;
+
+	skyTravelDomeAzimuth	=	360.0 - gDomeAzimuth_degrees;
+//	skyTravelDomeAzimuth	=	gDomeAzimuth_degrees;
+
+	CONSOLE_DEBUG("------------------------------------------------------------------");
+	CONSOLE_DEBUG(__FUNCTION__);
+
+	CONSOLE_DEBUG_W_DBL("gSlitWidth_inches   \t=",	gSlitWidth_inches);
+	CONSOLE_DEBUG_W_DBL("gDomeDiameter_inches\t=",	gDomeDiameter_inches);
+
+	slitWidth_Radians	=	2.0 * atan2((gSlitWidth_inches / 2.0), (gDomeDiameter_inches / 2.0));
+	slitWidth_Degrees	=	DEGREES(slitWidth_Radians);
+//	slitHeight_Radians	=	RADIANS(gSlitTop_degrees) - RADIANS(gSlitBottom_degrees);
+
+//	CONSOLE_DEBUG_W_DBL("slitHeight_Degrees\t\t=",	slitHeight_Degrees);
+	CONSOLE_DEBUG_W_DBL("Slit width degrees\t\t=",	DEGREES(slitWidth_Radians));
+//	CONSOLE_DEBUG_W_DBL("Slit height degrees\t=",	DEGREES(slitHeight_Radians));
+
+	slitCenter_Degrees	=	skyTravelDomeAzimuth;
+	slitLeft_Degrees	=	slitCenter_Degrees - (slitWidth_Degrees / 2);
+	slitRight_Degrees	=	slitCenter_Degrees + (slitWidth_Degrees / 2);
+	ADJUST360(slitLeft_Degrees);
+	ADJUST360(slitRight_Degrees);
+
+	CONSOLE_DEBUG_W_DBL("gDomeAzimuth_degrees\t=",	gDomeAzimuth_degrees);
+	CONSOLE_DEBUG_W_DBL("slitWidth           \t=",	slitWidth_Degrees);
+	CONSOLE_DEBUG_W_DBL("slitLeft            \t=",	slitLeft_Degrees);
+	CONSOLE_DEBUG_W_DBL("slitRight           \t=",	slitRight_Degrees);
+
+
+	ConvertAzEl_to_RaDec(slitLeft_Degrees,	25.0, &btmLeftRA_deg, &btmLeftDEC_deg);
+	ConvertAzEl_to_RaDec(slitRight_Degrees,	25.0, &btmRghtRA_deg, &btmRghtDEC_deg);
+	CONSOLE_DEBUG_W_DBL("btmLeftRA_deg       \t=",	btmLeftRA_deg);
+	CONSOLE_DEBUG_W_DBL("btmRghtRA_deg       \t=",	btmRghtRA_deg);
+
+	CONSOLE_DEBUG_W_DBL("btmLeftDEC_deg      \t=",	btmLeftDEC_deg);
+	CONSOLE_DEBUG_W_DBL("btmRghtDEC_deg      \t=",	btmRghtDEC_deg);
+
+
+	ConvertAzEl_to_RaDec(slitLeft_Degrees,	85.0, &topLeftRA_deg, &topLeftDEC_deg);
+	ConvertAzEl_to_RaDec(slitRight_Degrees, 85.0, &topRghtRA_deg, &topRghtDEC_deg);
+
+	CONSOLE_DEBUG_W_DBL("topLeftRA_deg       \t=",	topLeftRA_deg);
+	CONSOLE_DEBUG_W_DBL("topRghtRA_deg       \t=",	topRghtRA_deg);
+
+	CONSOLE_DEBUG_W_DBL("topLeftDEC_deg       \t=",	topLeftDEC_deg);
+	CONSOLE_DEBUG_W_DBL("topRghtDEC_deg       \t=",	topRghtDEC_deg);
+
+	//---------------------------------------------------------------
+	//*	do the left line
+	pt1InView	=	GetXYfromRA_Decl(	RADIANS(topLeftRA_deg),
+										RADIANS(topLeftDEC_deg),
+										&x1,
+										&y1);
+
+	pt2InView	=	GetXYfromRA_Decl(	RADIANS(btmLeftRA_deg),
+										RADIANS(btmLeftDEC_deg),
+										&x2,
+										&y2);
+	if (pt1InView && pt2InView)
+	{
+		LLD_SetColor(W_GREEN);
+		LLD_MoveTo(x1,	y1);
+		LLD_LineTo(x2,	y2);
+	}
+	else
+	{
+		CONSOLE_DEBUG("Slit not in view")
+	}
+	//---------------------------------------------------------------
+	//*	do the Right line
+	pt1InView	=	GetXYfromRA_Decl(	RADIANS(topRghtRA_deg),
+										RADIANS(topRghtDEC_deg),
+										&x1,
+										&y1);
+
+	pt2InView	=	GetXYfromRA_Decl(	RADIANS(btmRghtRA_deg),
+										RADIANS(btmRghtDEC_deg),
+										&x2,
+										&y2);
+	if (pt1InView && pt2InView)
+	{
+		LLD_SetColor(W_GREEN);
+		LLD_MoveTo(x1,	y1);
+		LLD_LineTo(x2,	y2);
+	}
+	else
+	{
+		CONSOLE_DEBUG("Slit not in view")
+	}
+	//---------------------------------------------------------------
+	//*	do the bottom line
+	pt1InView	=	GetXYfromRA_Decl(	RADIANS(btmLeftRA_deg),
+										RADIANS(btmLeftDEC_deg),
+										&x1,
+										&y1);
+
+	pt2InView	=	GetXYfromRA_Decl(	RADIANS(btmRghtRA_deg),
+										RADIANS(btmRghtDEC_deg),
+										&x2,
+										&y2);
+	if (pt1InView && pt2InView)
+	{
+		LLD_SetColor(W_GREEN);
+		LLD_MoveTo(x1,	y1);
+		LLD_LineTo(x2,	y2);
+	}
+	else
+	{
+		CONSOLE_DEBUG("Slit not in view")
+	}
+	//---------------------------------------------------------------
+	//*	do the top line
+	pt1InView	=	GetXYfromRA_Decl(	RADIANS(topLeftRA_deg),
+										RADIANS(topLeftDEC_deg),
+										&x1,
+										&y1);
+
+	pt2InView	=	GetXYfromRA_Decl(	RADIANS(topRghtRA_deg),
+										RADIANS(topRghtDEC_deg),
+										&x2,
+										&y2);
+	if (pt1InView && pt2InView)
+	{
+		LLD_SetColor(W_GREEN);
+		LLD_MoveTo(x1,	y1);
+		LLD_LineTo(x2,	y2);
+	}
+	else
+	{
+		CONSOLE_DEBUG("Slit not in view")
+	}
+}
+
+#else
 
 //*****************************************************************************
 void	WindowTabSkyTravel::DrawDomeSlit(void)
@@ -6123,6 +6422,7 @@ bool		pt2InView;
 #endif
 
 }
+#endif // _USE_AI_ROUTINE_
 
 //*****************************************************************************
 void	WindowTabSkyTravel::CenterOnDomeSlit(void)
@@ -7142,7 +7442,7 @@ int		ypos;
 //};
 //
 ////*****************************************************************************
-//static int	GetMoonType(double phasang, TYPE_Time *skyTravelTime)
+//static int	GetMoonType(double phasang, TYPE_SkyTime *skyTravelTime)
 //{
 //int	moonType;
 //
@@ -7311,7 +7611,7 @@ bool			drawInFillFlag;
 //			int	moonType;
 //			int	moonColor;
 //				//*	determine the color of the moon
-//				moonType	=	GetMoonType(phasang, &cCurrentTime);
+//				moonType	=	GetMoonType(phasang, &gCurrentSkyTime);
 //				switch(moonType)
 //				{
 //					case kMoonType_Blue:
@@ -7675,6 +7975,7 @@ long	distanceInPixels;
 long	deltaXX;
 long	deltaYY;
 
+//	CONSOLE_DEBUG(__FUNCTION__);
 	curFoundDistSQRD	=	999999;
 	curFoundIndex		=	-1;
 
@@ -7710,26 +8011,30 @@ void	WindowTabSkyTravel::FindObjectNearCursor(TYPE_CelestData *returnObject)
 {
 TYPE_CelestData	foundObject;
 TYPE_CelestData	closestObject;
-long			cloestDistance;
+long			closestDistance;
 long			pixDist;
+
+//	CONSOLE_DEBUG_W_LHEX("this        \t=", this);
+//	CONSOLE_DEBUG_W_LHEX("returnObject\t=", returnObject);
 
 	memset(&foundObject,	0,	sizeof(TYPE_CelestData));
 	memset(&closestObject,	0,	sizeof(TYPE_CelestData));
 
-	cloestDistance	=	9999;
+	closestDistance	=	9999;
 
 	//--------------------------------------------------------------------------
 	//*	kDataSrc_Messier
 	if (cDispOptions.dispMessier && (gMessierObjectPtr != NULL) && (gMessierObjectCount > 0))
 	{
+//		CONSOLE_DEBUG("gMessierObjectPtr");
 		pixDist	=	FindXX_YYinObjectList(	gMessierObjectPtr,
 											gMessierObjectCount,
 											cCsrx,				//*	current x location of cursor,
 											cCsry,				//*	current y location of cursor,
 											&foundObject);		//*	closestObject
-		if (pixDist < cloestDistance)
+		if (pixDist < closestDistance)
 		{
-			cloestDistance	=	pixDist;
+			closestDistance	=	pixDist;
 			closestObject	=	foundObject;
 		}
 	}
@@ -7737,15 +8042,16 @@ long			pixDist;
 	//--------------------------------------------------------------------------
 	if (cDispOptions.dispDefaultData && (gStarDataPtr != NULL) && (gStarCount > 0))
 	{
+//		CONSOLE_DEBUG("gStarDataPtr");
 		pixDist	=	FindXX_YYinObjectList(	gStarDataPtr,
 											gStarCount,
 											cCsrx,				//*	current x location of cursor,
 											cCsry,				//*	current y location of cursor,
 											&foundObject);		//*	closestObject
 		//*	since this is the first one, it will always be true
-		if (pixDist < cloestDistance)
+		if (pixDist < closestDistance)
 		{
-			cloestDistance	=	pixDist;
+			closestDistance	=	pixDist;
 			closestObject	=	foundObject;
 		}
 	}
@@ -7754,23 +8060,24 @@ long			pixDist;
 										cCsrx,				//*	current x location of cursor,
 										cCsry,				//*	current y location of cursor,
 										&foundObject);		//*	closestObject
-	if (pixDist < cloestDistance)
+	if (pixDist < closestDistance)
 	{
-		cloestDistance	=	pixDist;
+		closestDistance	=	pixDist;
 		closestObject	=	foundObject;
 	}
 
 	//--------------------------------------------------------------------------
 	if (cDispOptions.dispNGC && (gNGCobjectPtr != NULL) && (gNGCobjectCount > 0))
 	{
+//		CONSOLE_DEBUG("gNGCobjectPtr");
 		pixDist	=	FindXX_YYinObjectList(	gNGCobjectPtr,
 											gNGCobjectCount,
 											cCsrx,				//*	current x location of cursor,
 											cCsry,				//*	current y location of cursor,
 											&foundObject);		//*	closestObject
-		if (pixDist < cloestDistance)
+		if (pixDist < closestDistance)
 		{
-			cloestDistance	=	pixDist;
+			closestDistance	=	pixDist;
 			closestObject	=	foundObject;
 		}
 	}
@@ -7778,15 +8085,16 @@ long			pixDist;
 	//--------------------------------------------------------------------------
 	if (gZodiacPtr != NULL)
 	{
+//		CONSOLE_DEBUG("gZodiacPtr");
 		pixDist	=	FindXX_YYinObjectList(	gZodiacPtr,
 											kZodiacCount,
 											cCsrx,				//*	current x location of cursor,
 											cCsry,				//*	current y location of cursor,
 											&foundObject);		//*	closestObject
-		if (pixDist < cloestDistance)
+		if (pixDist < closestDistance)
 		{
 //			CONSOLE_DEBUG("Zodiac");
-			cloestDistance	=	pixDist;
+			closestDistance	=	pixDist;
 			closestObject	=	foundObject;
 		}
 	}
@@ -7795,14 +8103,15 @@ long			pixDist;
 	//*	kDataSrc_YaleBrightStar
 	if (cDispOptions.dispYale && (gYaleStarDataPtr != NULL) && (gYaleStarCount > 0))
 	{
+//		CONSOLE_DEBUG("gYaleStarDataPtr");
 		pixDist	=	FindXX_YYinObjectList(	gYaleStarDataPtr,
 											gYaleStarCount,
 											cCsrx,				//*	current x location of cursor,
 											cCsry,				//*	current y location of cursor,
 											&foundObject);		//*	closestObject
-		if (pixDist < cloestDistance)
+		if (pixDist < closestDistance)
 		{
-			cloestDistance	=	pixDist;
+			closestDistance	=	pixDist;
 			closestObject	=	foundObject;
 		}
 	}
@@ -7812,14 +8121,15 @@ long			pixDist;
 	//*	kDataSrc_Hipparcos
 	if (cDispOptions.dispHipparcos && (gHipObjectPtr != NULL) && (gHipObjectCount > 0))
 	{
+//		CONSOLE_DEBUG("gHipObjectPtr");
 		pixDist	=	FindXX_YYinObjectList(	gHipObjectPtr,
 											gHipObjectCount,
 											cCsrx,				//*	current x location of cursor,
 											cCsry,				//*	current y location of cursor,
 											&foundObject);		//*	closestObject
-		if (pixDist < cloestDistance)
+		if (pixDist < closestDistance)
 		{
-			cloestDistance	=	pixDist;
+			closestDistance	=	pixDist;
 			closestObject	=	foundObject;
 		}
 	}
@@ -7829,7 +8139,7 @@ long			pixDist;
 	cInform_dist	=	0x7fff;
 
 	//*	lets make sure we have something semi valid
-	if (cloestDistance < kMinInformDist)
+	if (closestDistance < kMinInformDist)
 	{
 	short	ii;
 	bool	foundMoreInfo;
@@ -7837,7 +8147,9 @@ long			pixDist;
 	char	moreInfo[128]	=	"";
 	double	distance_LY;
 
-		cInform_dist		=	cloestDistance;
+//		CONSOLE_DEBUG("Valid close object");
+
+		cInform_dist		=	closestDistance;
 		strcpy(cInform_name, "Unknown");
 
 		cInform_dist	=	1;
@@ -7941,37 +8253,49 @@ long			pixDist;
 				break;
 		}
 
-		//*	check for parallax and display in light years if avaialble
-		if (closestObject.parallax > 0.0)
+		//*	check for parallax and display in light years if available
+		if (closestObject.parallax > 0.0000000000000000001)
+//		if (closestObject.parallax > 0.0)
 		{
+			CONSOLE_DEBUG_W_DBL("closestObject.parallax\t=", closestObject.parallax);
 			//*	1 / parallax = # of parsecs
 			//*	1 parsec = 3.26 light years
 
 			distance_LY	=	(1.0 / closestObject.parallax) * 3.26;
 
-			sprintf(moreInfo, " parallax = %5.4f distance=%4.2f light years", closestObject.parallax, distance_LY);
-
-			if ((strlen(cInform_name) + strlen(moreInfo)) < sizeof(cInform_name))
+			//*	make sure we have a valid number
+			if (distance_LY < 1E30)
 			{
-				strcat(cInform_name, moreInfo);
+				sprintf(moreInfo, " parallax = %5.4f distance=%4.2f light years", closestObject.parallax, distance_LY);
+				if ((strlen(cInform_name) + strlen(moreInfo)) < sizeof(cInform_name))
+				{
+					strcat(cInform_name, moreInfo);
+				}
 			}
-
-
-	//		CONSOLE_DEBUG_W_STR("cInform_name\t=", cInform_name);
-	//		CONSOLE_DEBUG_W_STR("moreInfo     \t=", moreInfo);
+			else
+			{
+				CONSOLE_DEBUG_W_STR("cInform_name\t=", cInform_name);
+				CONSOLE_DEBUG_W_DBL("distance_LY \t=", distance_LY);
+				DumpCelestDataStruct(__FUNCTION__, &closestObject);
+				CONSOLE_ABORT(__FUNCTION__);
+			}
 		}
-	}
-//	if (strlen(cInform_name) >= 255)
-//	{
+
 //		CONSOLE_DEBUG_W_STR("cInform_name\t=", cInform_name);
-//		CONSOLE_DEBUG_W_NUM("Length      \t=", strlen(cInform_name));
-//		CONSOLE_ABORT(__FUNCTION__);
-//	}
+//		CONSOLE_DEBUG_W_STR("moreInfo     \t=", moreInfo);
+	}
+	if (strlen(cInform_name) >= 255)
+	{
+		CONSOLE_DEBUG_W_STR("cInform_name\t=", cInform_name);
+		CONSOLE_DEBUG_W_NUM("Length      \t=", strlen(cInform_name));
+		CONSOLE_ABORT(__FUNCTION__);
+	}
 
 	if (returnObject != NULL)
 	{
 		*returnObject	=	closestObject;
 	}
+//	CONSOLE_DEBUG(__FUNCTION__);
 }
 
 //*****************************************************************************
@@ -8703,9 +9027,9 @@ bool				inCurrentWindow;
 //	CONSOLE_DEBUG_W_DBL("DEC\t\t=",		DEGREES(argDecl_radians));
 
 //+++
-//	CalanendarTime(&cCurrentTime);
-//	Local_Time(&cCurrentTime);		//* compute local time from gmt and timezone
-//	ConvertLatLonToRaDec(&cCurrLatLon, &cCurrentTime);
+//	CalanendarTime(&gCurrentSkyTime);
+//	Local_Time(&gCurrentSkyTime);		//* compute local time from gmt and timezone
+//	ConvertLatLonToRaDec(&cCurrLatLon, &gCurrentSkyTime);
 //+++
 
 
@@ -9214,7 +9538,7 @@ bool	ptInView;
 
 //******************************************************
 //* map_tokens - draw map tokens on horizon, if present
-void	WindowTabSkyTravel::MapTokens(TYPE_Time *timeptr, TYPE_LatLon *locptr)
+void	WindowTabSkyTravel::MapTokens(TYPE_SkyTime *timeptr, TYPE_LatLon *locptr)
 {
 int				xcoord,ycoord;
 int				ii;

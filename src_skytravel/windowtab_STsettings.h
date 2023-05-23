@@ -130,6 +130,8 @@ enum
 	kSkyT_Settings_OBAFGKM,
 	kSkyT_Settings_DispMag,
 	kSkyT_Settings_DispSpectral,
+	kSkyT_Settings_DispProperMotion,
+	kSkyT_Settings_DispPMvector,
 
 	kSkyT_Settings_DispDynMagnitude,
 	kSkyT_Settings_DispSpecifiedMagnitude,
@@ -175,7 +177,7 @@ class WindowTabSTsettings: public WindowTab
 											const int	xxx,
 											const int	yyy,
 											const int	flags);
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 		virtual	void	DrawWidgetCustomGraphic(cv::Mat *openCV_Image, const int widgetIdx);
 				void	DrawOBAFGKM(	cv::Mat *openCV_Image, TYPE_WIDGET *theWidget);
 #else

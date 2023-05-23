@@ -54,6 +54,7 @@
 #include	"windowtab_moon.h"
 #include	"windowtab_RemoteData.h"
 #include	"windowtab_skytravel.h"
+#include	"windowtab_time.h"
 
 
 #include	"controller.h"
@@ -154,6 +155,15 @@ void	ControllerSkytravel::SetupWindowControls(void)
 	{
 		SetTabWindow(kTab_SkyTravel,	cSkyTravelTabOjbPtr);
 		cSkyTravelTabOjbPtr->SetParentObjectPtr(this);
+	}
+
+	//=============================================================
+	SetTabText(kTab_ST_Time,	"Time");
+	cTimeTabObjPtr		=	new WindowTabTime(	cWidth, cHeight, cBackGrndColor, cWindowName);
+	if (cTimeTabObjPtr != NULL)
+	{
+		SetTabWindow(kTab_ST_Time,	cTimeTabObjPtr);
+		cTimeTabObjPtr->SetParentObjectPtr(this);
 	}
 
 	//=============================================================
@@ -553,6 +563,14 @@ bool		foundSomething;
 			cRemoteDataObjPtr->RunWindowBackgroundTasks();
 		}
 	}
+	if (deltaSeconds >= 1)
+	{
+		//*	Time window
+		if (cTimeTabObjPtr != NULL)
+		{
+			cTimeTabObjPtr->RunWindowBackgroundTasks();
+		}
+	}
 }
 
 //*****************************************************************************
@@ -598,6 +616,7 @@ bool			validData;
 //	validData	=	AlpacaGetIntegerValue("camera", "cameraxsize",	NULL,	&cCameraProp.CameraXsize);
 //	validData	=	AlpacaGetIntegerValue("camera", "cameraysize",	NULL,	&cCameraProp.CameraYsize);
 
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, "Exit");
 
 	return(validData);
 }

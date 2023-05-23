@@ -46,10 +46,10 @@
 //*****************************************************************************
 void	AlpacaDriver::TemperatureLog_Init(void)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
-	CONSOLE_DEBUG_W_SIZE("sizeof(cTemperatureLog)\t=", sizeof(cTemperatureLog));
-	CONSOLE_DEBUG_W_NUM("kTemperatureLogEntries  \t=", kTemperatureLogEntries);
-	CONSOLE_DEBUG_W_SIZE("sizeof(AlpacaDriver)   \t=", sizeof(AlpacaDriver));
+//	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG_W_SIZE("sizeof(cTemperatureLog)\t=", sizeof(cTemperatureLog));
+//	CONSOLE_DEBUG_W_NUM("kTemperatureLogEntries  \t=", kTemperatureLogEntries);
+//	CONSOLE_DEBUG_W_SIZE("sizeof(AlpacaDriver)   \t=", sizeof(AlpacaDriver));
 
 	memset((void *)cTemperatureLog, 0, sizeof(cTemperatureLog));
 	strcpy(cTempLogDescription, "unknown");

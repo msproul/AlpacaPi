@@ -341,7 +341,8 @@ class CameraDriver: public AlpacaDriver
 		virtual	TYPE_ASCOM_STATUS	ProcessCommand(TYPE_GetPutRequestData *reqData);
 		virtual	void				OutputHTML(TYPE_GetPutRequestData *reqData);
 		virtual	void				OutputHTML_Part2(TYPE_GetPutRequestData *reqData);
-		virtual bool				GetCommandArgumentString(const int cmdNumber, char *agumentString);
+		virtual bool				GetCommandArgumentString(const int cmdNumber, char *agumentString, char *commentString);
+		virtual bool				GetCmdNameFromMyCmdTable(const int cmdNumber, char *comandName, char *getPut);
 		virtual	int32_t	RunStateMachine(void);
 				int32_t	RunStateMachine_Idle(void);
 				int		RunStateMachine_TakingPicture(void);
@@ -362,7 +363,7 @@ class CameraDriver: public AlpacaDriver
 				void	SetLastExposureInfo(void);
 	protected:
 		//*	Camera routines for all cameras
-
+		//*	the functions starting with "Get" and "Put" generate the JSON msg
 		TYPE_ASCOM_STATUS	Get_BayerOffsetX(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
 		TYPE_ASCOM_STATUS	Get_BayerOffsetY(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
 
@@ -373,7 +374,15 @@ class CameraDriver: public AlpacaDriver
 		TYPE_ASCOM_STATUS	Put_BinY(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 		TYPE_ASCOM_STATUS	Get_Camerastate(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
 
-				//*	the functions starting with "Get" and "Put" generate the JSON msg
+		TYPE_ASCOM_STATUS	Get_CanAbortExposure(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+		TYPE_ASCOM_STATUS	Get_CanAsymmetricBin(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+		TYPE_ASCOM_STATUS	Get_CanFastReadout(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+		TYPE_ASCOM_STATUS	Get_CanGetCoolerPower(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+		TYPE_ASCOM_STATUS	Get_CanPulseGuide(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+		TYPE_ASCOM_STATUS	Get_CanSetCCDtemperature(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+		TYPE_ASCOM_STATUS	Get_CanStopExposure(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+
+
 		TYPE_ASCOM_STATUS	Get_CCDtemperature(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
 		TYPE_ASCOM_STATUS	Get_Cooleron(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
 		TYPE_ASCOM_STATUS	Put_Cooleron(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
@@ -400,6 +409,8 @@ class CameraDriver: public AlpacaDriver
 		TYPE_ASCOM_STATUS	Get_IsPulseGuiding(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
 
 		TYPE_ASCOM_STATUS	Get_MaxADU(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+		TYPE_ASCOM_STATUS	Get_MaxBinX(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+		TYPE_ASCOM_STATUS	Get_MaxBinY(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
 
 		TYPE_ASCOM_STATUS	Get_NumX(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
 		TYPE_ASCOM_STATUS	Get_NumY(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
@@ -601,7 +612,7 @@ class CameraDriver: public AlpacaDriver
 		void			ProcessMouseEvent(int event, int xxx, int yyy, int flags);
 		void			DrawOpenCVoverlay(void);
 
-	#ifdef _USE_OPENCV_CPP_
+	#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 		void			DrawSidebar(			cv::Mat *imageDisplay);
 		void			CreateHistogramGraph(	cv::Mat *imageDisplay);
 		void			SetOpenCVcolors(		cv::Mat *imageDisplay);
@@ -640,6 +651,8 @@ class CameraDriver: public AlpacaDriver
 		virtual	TYPE_ASCOM_STATUS		SetImageType(TYPE_IMAGE_TYPE newImageType);
 		virtual	TYPE_ASCOM_STATUS		SetImageType(char *newImageTypeString);
 
+		//*	write_binXY is for ease of implementation for those cameras that do not support asymmetric binning
+		virtual	TYPE_ASCOM_STATUS		Write_BinXY(const int newBinXvalue);
 		virtual	TYPE_ASCOM_STATUS		Write_BinX(const int newBinXvalue);
 		virtual	TYPE_ASCOM_STATUS		Write_BinY(const int newBinYvalue);
 
@@ -665,12 +678,15 @@ class CameraDriver: public AlpacaDriver
 		virtual	TYPE_ASCOM_STATUS		Cooler_TurnOn(void);
 		virtual	TYPE_ASCOM_STATUS		Cooler_TurnOff(void);
 		virtual	TYPE_ASCOM_STATUS		Read_SensorTemp(void);
-		virtual	TYPE_ASCOM_STATUS		Write_SensorTemp(const double newCCDtemp);
+
+		virtual	TYPE_ASCOM_STATUS		Read_SensorTargetTemp(void);
+		virtual	TYPE_ASCOM_STATUS		Write_SensorTargetTemp(const double newCCDtargetTemp);
+
+
 		virtual	TYPE_ASCOM_STATUS		Read_CoolerState(bool *coolerOnOff);
 		virtual	TYPE_ASCOM_STATUS		Read_CoolerPowerLevel(void);
 		virtual	TYPE_ASCOM_STATUS		Read_Fastreadout(void);
 		virtual	TYPE_ASCOM_STATUS		Read_ImageData(void);
-		virtual bool					GetCmdNameFromMyCmdTable(const int cmdNumber, char *comandName, char *getPut);
 
 
 
@@ -814,7 +830,7 @@ protected:
 #ifdef _USE_OPENCV_
 	//==========================================================
 	bool				cCreateOpenCVwindow;
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 	cv::Mat				*cOpenCV_ImagePtr;
 	cv::Mat				*cOpenCV_LiveDisplayPtr;
 	cv::Mat				*cOpenCV_Histogram;

@@ -104,6 +104,7 @@ char	spectralClassStr[4];
 	CONSOLE_DEBUG_W_DBL("org_decl     \t=",	DEGREES(objectStruct->org_decl));
 //	CONSOLE_DEBUG_W_DBL("maxSizeArcMinutes\t=",	objectStruct->maxSizeArcMinutes);
 	CONSOLE_DEBUG_W_DBL("parallax     \t=",	objectStruct->parallax);
+	CONSOLE_DEBUG_W_LHEX("parallax     \t=",	objectStruct->parallax);
 	CONSOLE_DEBUG_W_STR("shortName    \t=",	objectStruct->shortName);
 	CONSOLE_DEBUG_W_STR("longName     \t=",	objectStruct->longName);
 	CONSOLE_DEBUG_W_STR("spectralClass\t=",	spectralClassStr);
@@ -210,7 +211,7 @@ int					bytesRead;
 //*	returns number of objects
 //*	each window needs its own copy, so this routine creates a new copy of the data
 //**************************************************************************
-TYPE_CelestData	*ReadDefaultStarData(long *objectCount, TYPE_Time *timePtr)
+TYPE_CelestData	*ReadDefaultStarData(long *objectCount, TYPE_SkyTime *timePtr)
 {
 long			ii;
 TYPE_CelestData	*myObjectPtr;
@@ -403,8 +404,10 @@ int				recordCount;
 TYPE_CelestData	*tscStarData;
 char			lineBuff[256];
 size_t			bufferSize;
+int				startupWidgetIdx;
 
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, filePath);
+	startupWidgetIdx	=	SetStartupText("Messier-TSC catalog:");
 
 	tscStarData	=	NULL;
 	filePointer	=	fopen(filePath, "r");
@@ -445,10 +448,12 @@ size_t			bufferSize;
 			}
 		}
 		fclose(filePointer);
+		SetStartupTextStatus(startupWidgetIdx, "OK");
 	}
 	else
 	{
 		CONSOLE_DEBUG_W_STR("Failed to read:", filePath);
+		SetStartupTextStatus(startupWidgetIdx, "Failed");
 	}
 //	CONSOLE_DEBUG_W_NUM("gMaxArgLen\t=", gMaxArgLen);
 
@@ -589,8 +594,10 @@ int				recordCount;
 TYPE_CelestData	*messierData;
 char			lineBuff[256];
 size_t			bufferSize;
+int				startupWidgetIdx;
 
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, filePath);
+	startupWidgetIdx	=	SetStartupText("Messier catalog:");
 
 	messierData	=	NULL;
 
@@ -619,10 +626,12 @@ size_t			bufferSize;
 			*objectCount	=	recordCount;
 		}
 		fclose(filePointer);
+		SetStartupTextStatus(startupWidgetIdx, "OK");
 	}
 	else
 	{
 		CONSOLE_DEBUG_W_STR("Failed to read:", filePath);
+		SetStartupTextStatus(startupWidgetIdx, "Failed");
 	}
 //	CONSOLE_DEBUG_W_NUM("gMaxArgLen\t=", gMaxArgLen);
 
@@ -638,7 +647,7 @@ TYPE_CelestData	*ReadMessierData(const char *folderPath, int dataSource, long *o
 TYPE_CelestData	*messierData;
 char			myFilePath[256];
 
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, folderPath);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, folderPath);
 
 #ifdef _USE_ORIGNIAL_MESSIER_CATALOG_
 //	strcpy(myFilePath, folderPath);
@@ -655,7 +664,7 @@ char			myFilePath[256];
 		strcat(myFilePath, "Messier.tsc");
 		messierData	=	ReadTSCfile(myFilePath, dataSource, objectCount);
 	}
-	CONSOLE_DEBUG_W_LONG("Messier object count\t=", *objectCount);
+//	CONSOLE_DEBUG_W_LONG("Messier object count\t=", *objectCount);
 //	CONSOLE_ABORT(__FUNCTION__);
 	return(messierData);
 }
@@ -932,6 +941,9 @@ int				skippedCount;
 int				validMagCount;
 int				zeroMagCount;
 double			hightestMagValue;
+int				startupWidgetIdx;
+
+	startupWidgetIdx	=	SetStartupText("HYG catalog:");
 
 	hygData				=	NULL;
 	recordCount			=	0;
@@ -943,7 +955,7 @@ double			hightestMagValue;
 	strcat(myFilePath, "hygdata_v3.csv");
 
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, myFilePath);
-	CONSOLE_DEBUG_W_NUM("kHYG_Last\t=", kHYG_Last);
+//	CONSOLE_DEBUG_W_NUM("kHYG_Last\t=", kHYG_Last);
 
 	filePointer	=	fopen(myFilePath, "r");
 	if (filePointer != NULL)
@@ -1006,10 +1018,12 @@ double			hightestMagValue;
 			*objectCount	=	recordCount;
 		}
 		fclose(filePointer);
+		SetStartupTextStatus(startupWidgetIdx, "OK");
 	}
 	else
 	{
 		CONSOLE_DEBUG_W_STR("Failed to read:", myFilePath);
+		SetStartupTextStatus(startupWidgetIdx, "Failed");
 	}
 //	CONSOLE_DEBUG_W_NUM("HYG records read\t=", recordCount);
 //	CONSOLE_DEBUG_W_NUM("skippedCount    \t=", skippedCount);
@@ -1177,6 +1191,9 @@ size_t			bufferSize;
 char			myFilePath[256];
 int				linesRead;
 int				headerLineCnt;
+int				startupWidgetIdx;
+
+	startupWidgetIdx	=	SetStartupText("Henry Draper catalog:");
 
 	draperData	=	NULL;
 	recordCount	=	0;
@@ -1186,13 +1203,13 @@ int				headerLineCnt;
 	strcpy(myFilePath, folderPath);
 	strcat(myFilePath, "heasarc_hd.tdat");
 
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, myFilePath);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, myFilePath);
 
 	filePointer	=	fopen(myFilePath, "r");
 	if (filePointer != NULL)
 	{
 		specifiedLnCnt	=	CountLinesInFile(filePointer);
-		CONSOLE_DEBUG_W_NUM("Lines in file", specifiedLnCnt);
+//		CONSOLE_DEBUG_W_NUM("Lines in file", specifiedLnCnt);
 
 		bufferSize		=	(specifiedLnCnt + 2) * sizeof(TYPE_CelestData);
 		draperData		=	(TYPE_CelestData *)malloc(bufferSize);
@@ -1234,15 +1251,18 @@ int				headerLineCnt;
 			*objectCount	=	recordCount;
 		}
 		fclose(filePointer);
+
+		SetStartupTextStatus(startupWidgetIdx, "OK");
 	}
 	else
 	{
 		CONSOLE_DEBUG_W_STR("Failed to read:", myFilePath);
+		SetStartupTextStatus(startupWidgetIdx, "Failed");
 	}
-	CONSOLE_DEBUG_W_NUM("HGC records read\t\t=", recordCount);
-	CONSOLE_DEBUG_W_NUM("gPhotMagSubsitutionCnt\t=", gPhotMagSubsitutionCnt);
-	CONSOLE_DEBUG_W_DBL("percent substitutions\t=", (gPhotMagSubsitutionCnt * 100.0) / recordCount);
-	CONSOLE_DEBUG_W_DBL("percent without mag\t=", (gHDstarsWithoutMag * 100.0) / recordCount);
+//	CONSOLE_DEBUG_W_NUM("HGC records read\t\t=", recordCount);
+//	CONSOLE_DEBUG_W_NUM("gPhotMagSubsitutionCnt\t=", gPhotMagSubsitutionCnt);
+//	CONSOLE_DEBUG_W_DBL("percent substitutions\t=", (gPhotMagSubsitutionCnt * 100.0) / recordCount);
+//	CONSOLE_DEBUG_W_DBL("percent without mag\t=", (gHDstarsWithoutMag * 100.0) / recordCount);
 
 	return(draperData);
 }

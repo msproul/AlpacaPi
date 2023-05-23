@@ -1,4 +1,8 @@
 //*****************************************************************************
+//*	Edit History
+//*****************************************************************************
+//*	Mar 20,	2023	<MLS> Moved cCurrentSkyTime to skytravel_main.cpp and renamed it gCurrentSkyTime
+//*****************************************************************************
 //#include	"windowtab_skytravel.h"
 
 
@@ -125,7 +129,7 @@ class WindowTabSkyTravel: public WindowTab
 		virtual	~WindowTabSkyTravel(void);
 
 		virtual	void	RunWindowBackgroundTasks(void);
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 		virtual void	DrawWidgetCustomGraphic(cv::Mat *openCV_Image, const int widgetIdx);
 #else
 		virtual	void	DrawWidgetCustomGraphic(IplImage *openCV_Image, const int widgetIdx);
@@ -229,7 +233,7 @@ class WindowTabSkyTravel: public WindowTab
 									short	scale,
 									const char	*shape_data);
 
-				void	ConvertLatLonToRaDec(TYPE_LatLon *locptr, TYPE_Time *timeptr);
+				void	ConvertLatLonToRaDec(TYPE_LatLon *locptr, TYPE_SkyTime *timeptr);
 				void	DrawWindowOverlays(void);
 				void	DrawCompass(void);
 				void	DrawGrid(short theSkyColor);
@@ -280,12 +284,13 @@ class WindowTabSkyTravel: public WindowTab
 				void	DrawDomeSlit(void);
 				void	CenterOnDomeSlit(void);
 
-				void	FindAltAz(		TYPE_LatLon *locptr, TYPE_Time *timeptr);
-				void	Compute_cursor(	TYPE_Time	*timeptr, TYPE_LatLon	*locptr);
+				void	FindAltAz(		TYPE_LatLon *locptr, TYPE_SkyTime *timeptr);
+				void	Compute_cursor(	TYPE_SkyTime	*timeptr, TYPE_LatLon	*locptr);
 				void	DrawCursorLocationInfo(void);
 				void	FindObjectNearCursor(TYPE_CelestData *returnObject=NULL);
 				bool	GetXYfromRA_Decl(double argRA_radians, double argDecl_radians, short *xx, short *yy);
 				bool	GetXYfromAz_Elev(double azimuth_radians, double elev_radians, short *xx, short *yy);
+				void	ConvertAzEl_to_RaDec(const double azimuth_deg, const double elevation_deg, double *output_RA_deg, double *output_DEC_deg);
 
 				void	ForceReDrawSky(void);
 
@@ -300,7 +305,7 @@ class WindowTabSkyTravel: public WindowTab
 				int		DrawOpenNGC_Outlines(void);
 
 				//*	this routine draws cute little easter eggs along the horizon,
-				void	MapTokens(TYPE_Time *timeptr, TYPE_LatLon *locptr);
+				void	MapTokens(TYPE_SkyTime *timeptr, TYPE_LatLon *locptr);
 
 				//=====================================================================
 				//*	Stuff for searching
@@ -430,7 +435,7 @@ class WindowTabSkyTravel: public WindowTab
 
 			short				currentForeColor;
 
-			TYPE_Time			cCurrentTime;
+//			TYPE_SkyTime		cCurrentSkyTime;
 			TYPE_LatLon			cCurrLatLon;
 
 	//-		double				cDisplayedMagnitudeLimit;

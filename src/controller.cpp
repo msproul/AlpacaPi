@@ -96,6 +96,7 @@
 //*	Nov 17,	2022	<MLS> Added check for duplicate window names
 //*	Feb 27,	2023	<MLS> Changed DrawWidgetBackground() to EraseWidgetBackground()
 //*	Mar  5,	2023	<MLS> Added SetWidgetJustification()
+//*	Mar 28,	2023	<MLS> Refactored opencv++ ifdefs to include (CV_MAJOR_VERSION >= 4)
 //*****************************************************************************
 
 
@@ -118,6 +119,9 @@
 #include	"widget.h"
 #include	"controller.h"
 
+#ifdef _ENABLE_SKYTRAVEL_
+	#include	"controller_skytravel.h"
+#endif
 
 #ifdef _ENABLE_CVFONT_
 	CvFont		gTextFont[kFont_last];
@@ -199,11 +203,11 @@ static void	InitFonts(void)
 //*****************************************************************************
 static void	InitControllerList(void)
 {
-int		ii;
+int		iii;
 
-	for (ii=0; ii<kMaxControllers; ii++)
+	for (iii=0; iii<kMaxControllers; iii++)
 	{
-		gControllerList[ii]	=	NULL;
+		gControllerList[iii]	=	NULL;
 	}
 	gControllerCnt	=	0;
 
@@ -356,7 +360,7 @@ int			objCntr;
 bool		windowExists;
 char		myWindowName[128];
 
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, argWindowName);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, argWindowName);
 //	CONSOLE_DEBUG_W_NUM("xSize        \t=",	xSize);
 //	CONSOLE_DEBUG_W_NUM("ySize        \t=",	ySize);
 
@@ -462,7 +466,7 @@ char		myWindowName[128];
 
 	cBackGrndColor		=	CV_RGB(0,	0,	0);
 
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 	cOpenCV_matImage	=	new cv::Mat(cHeight, cWidth, CV_8UC3);
 //	DumpCVMatStruct(cOpenCV_matImage);
 #else
@@ -557,7 +561,7 @@ int		iii;
 		gCurrentActiveWindow	=	NULL;
 	}
 
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 	if (cOpenCV_matImage != NULL)
 	{
 //		CONSOLE_DEBUG("Deleting cOpenCV_matImage");
@@ -751,7 +755,7 @@ void	Controller::HandleWindow(void)
 void	Controller::HandleWindowUpdate(void)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 	if (cOpenCV_matImage != NULL)
 	{
 		//*	Do drawing
@@ -796,7 +800,7 @@ TYPE_WIDGET		*myWidgetPtr;
 	}
 	cUpdateProtect	=	true;
 //	CONSOLE_DEBUG_W_NUM(__FUNCTION__, cDebugCounter++);
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 	if (cOpenCV_matImage != NULL)
 #else
 	if (cOpenCV_Image != NULL)
@@ -829,7 +833,8 @@ TYPE_WIDGET		*myWidgetPtr;
 					updatedCnt++;
 				}
 			}
-		#ifdef _USE_OPENCV_CPP_
+
+		#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 			cv::imshow(cWindowName, *cOpenCV_matImage);
 		#else
 			cvShowImage(cWindowName, cOpenCV_Image);
@@ -1229,7 +1234,8 @@ int		wheelMovement;
 //				CONSOLE_DEBUG_W_NUM("cLastClicked_Tab\t=", cLastClicked_Tab);
 				cTabList[cLastClicked_Tab].highLighted	=	true;
 				DrawWidgetButton(&cTabList[cLastClicked_Tab]);
-			#ifdef _USE_OPENCV_CPP_
+
+			#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 				cv::imshow(cWindowName, *cOpenCV_matImage);
 			#else
 				cvShowImage(cWindowName, cOpenCV_Image);
@@ -1435,11 +1441,7 @@ void	Controller::DrawWidgetButton(TYPE_WIDGET *theWidget)
 {
 
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, theWidget->textString);
-#ifdef _USE_OPENCV_CPP_
 	cv::Scalar	myGBcolor;
-#else
-	cv::Scalar	myGBcolor;
-#endif // _USE_OPENCV_CPP_
 	EraseWidgetBackground(theWidget);
 
 	myGBcolor	=	theWidget->bgColor;
@@ -1994,10 +1996,10 @@ int		pt2_Y;
 		cCurrentColor	=	CV_RGB(255,	0,	0);
 		for (iii=0; iii<theWidget->graphArrayCnt; iii++)
 		{
-			pt1_X	=	iii + 3;
+			pt1_X	=	theWidget->left + iii + 1;
 			pt1_Y	=	theWidget->top + theWidget->height;
 
-			pt2_X	=	iii + 3;
+			pt2_X	=	theWidget->left + iii + 1;
 			pt2_Y	=	pt1_Y - (theWidget->graphArrayPtr[iii] * 3);
 			LLD_MoveTo(pt1_X, pt1_Y);
 			LLD_LineTo(pt2_X, pt2_Y);
@@ -2010,6 +2012,11 @@ int		pt2_Y;
 //						0);					//	int shift CV_DEFAULT(0));
 
 		}
+	}
+	else
+	{
+		CONSOLE_DEBUG("theWidget->graphArrayPtr is NULL");
+//		CONSOLE_ABORT(__FUNCTION__)
 	}
 }
 
@@ -2120,7 +2127,7 @@ int		textLoc_Y;
 	}
 }
 
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 //**************************************************************************************
 void	Controller::DrawWidgetImage(TYPE_WIDGET *theWidget, cv::Mat *theOpenCVimage)
 {
@@ -2378,7 +2385,7 @@ void	Controller::DrawOneWidget(const int widgetIdx)
 {
 TYPE_WIDGET		*myWidgetPtr;
 
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 	if (cOpenCV_matImage != NULL)
 	{
 		if (cCurrentTabObjPtr != NULL)
@@ -2435,7 +2442,8 @@ cv::Rect		widgetRect;
 		case kWidgetType_Custom:
 			if (cCurrentTabObjPtr != NULL)
 			{
-			#ifdef _USE_OPENCV_CPP_
+
+			#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 				cCurrentTabObjPtr->DrawWidgetCustomGraphic(cOpenCV_matImage, widgetIdx);
 			#else
 				cCurrentTabObjPtr->DrawWidgetCustomGraphic(cOpenCV_Image, widgetIdx);
@@ -2540,7 +2548,7 @@ void	Controller::DrawWindow(void)
 {
 
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 	if (cOpenCV_matImage != NULL)
 	{
 	cv::Rect	myCVrect;
@@ -2601,9 +2609,6 @@ void	Controller::HandleKeyDown(const int keyPressed)
 {
 int			openCVerr;
 char		imageFileName[512];
-#ifndef _USE_OPENCV_CPP_
-int			quality[3] = {16, 200, 0};
-#endif
 bool		stillNeedsHandled;
 char		currentTabName[64]	=	"";
 
@@ -2620,8 +2625,18 @@ char		currentTabName[64]	=	"";
 
 		switch(tolower(keyPressed & 0x007f))
 		{
+//			//*	^n
+//			case 'n':
+//				break;
+
 			case 'r':
 				RefreshWindow();
+				break;
+
+			//*	^q  ctrl-q
+			case 'q':
+//				CONSOLE_DEBUG_W_STR("Quit from  window \t=", cWindowName);
+				gKeepRunning	=	false;
 				break;
 
 			//	ctrl-s   ^s
@@ -2630,20 +2645,16 @@ char		currentTabName[64]	=	"";
 				CONSOLE_DEBUG("Save file");
 				GetCurrentTabName(currentTabName);
 				sprintf(imageFileName, "%s-%s-screenshot.jpg", cWindowName, currentTabName);
-			#ifdef _USE_OPENCV_CPP_
+
+			#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 				openCVerr	=	cv::imwrite(imageFileName, *cOpenCV_matImage);
-			#elif (CV_MAJOR_VERSION >= 4)
-				//*	do nothing because its not supported
 			#else
-				openCVerr	=	cvSaveImage(imageFileName, cOpenCV_Image, quality);
+				{
+				int		quality[3] = {16, 200, 0};
+					openCVerr	=	cvSaveImage(imageFileName, cOpenCV_Image, quality);
+				}
 			#endif
 				CONSOLE_DEBUG_W_NUM("openCVerr\t=", openCVerr);
-				break;
-
-			//*	^q  ctrl-q
-			case 'q':
-//				CONSOLE_DEBUG_W_STR("Quit from  window \t=", cWindowName);
-				gKeepRunning	=	false;
 				break;
 
 			//*	^w ctrl-w close window
@@ -2659,7 +2670,7 @@ char		currentTabName[64]	=	"";
 	}
 	if (stillNeedsHandled)
 	{
-		CONSOLE_DEBUG("stillNeedsHandled");
+		CONSOLE_DEBUG_W_HEX("stillNeedsHandled", keyPressed);
 		if (cCurTextInput_Widget >= 0)
 		{
 			HandleKeyDownInTextWidget(cCurrentTabNum, cCurTextInput_Widget, keyPressed);
@@ -2671,6 +2682,11 @@ char		currentTabName[64]	=	"";
 		else if (cCurrentTabObjPtr != NULL)
 		{
 			cCurrentTabObjPtr->HandleKeyDown(keyPressed);
+		}
+		else
+		{
+			//*	not handled
+			CONSOLE_DEBUG_W_HEX("stillNeedsHandled", keyPressed);
 		}
 	}
 }
@@ -2935,14 +2951,8 @@ void	Controller::SetWidgetJustification(const int tabNum, const int widgetIdx, i
 	}
 }
 
-
-#ifdef _USE_OPENCV_CPP_
 //**************************************************************************************
 void	Controller::SetWidgetTextColor(		const int tabNum, const int widgetIdx, cv::Scalar newtextColor)
-#else
-//**************************************************************************************
-void	Controller::SetWidgetTextColor(		const int tabNum, const int widgetIdx, cv::Scalar newtextColor)
-#endif
 {
 	if ((tabNum >= 0)  && (tabNum < kMaxTabs))
 	{
@@ -2960,13 +2970,8 @@ void	Controller::SetWidgetTextColor(		const int tabNum, const int widgetIdx, cv:
 	}
 }
 
-#ifdef _USE_OPENCV_CPP_
 //**************************************************************************************
 void	Controller::SetWidgetBGColor(const int tabNum, const int widgetIdx, cv::Scalar newBGcolor)
-#else
-//**************************************************************************************
-void	Controller::SetWidgetBGColor(const int tabNum, const int widgetIdx, cv::Scalar newBGcolor)
-#endif
 {
 	if ((tabNum >= 0)  && (tabNum < kMaxTabs))
 	{
@@ -2985,13 +2990,8 @@ void	Controller::SetWidgetBGColor(const int tabNum, const int widgetIdx, cv::Sca
 	}
 }
 
-#ifdef _USE_OPENCV_CPP_
 //**************************************************************************************
 void	Controller::SetWidgetBorderColor(	const int tabNum, const int widgetIdx, cv::Scalar newBorderColor)
-#else
-//**************************************************************************************
-void	Controller::SetWidgetBorderColor(	const int tabNum, const int widgetIdx, cv::Scalar newBorderColor)
-#endif
 {
 	if ((tabNum >= 0)  && (tabNum < kMaxTabs))
 	{
@@ -3009,7 +3009,7 @@ void	Controller::SetWidgetBorderColor(	const int tabNum, const int widgetIdx, cv
 	}
 }
 
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 //**************************************************************************************
 void	Controller::SetWidgetImage(	const int tabNum, const int widgetIdx, cv::Mat *argImagePtr)
 #else
@@ -3156,7 +3156,8 @@ TYPE_WIDGET		*myWidgetPtr;
 				if (myWidgetPtr != NULL)
 				{
 					DrawOneWidget(&myWidgetPtr[widgetIdx], widgetIdx);
-				#ifdef _USE_OPENCV_CPP_
+
+				#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 					cv::imshow(cWindowName, *cOpenCV_matImage);
 				#else
 					cvShowImage(cWindowName, cOpenCV_Image);
@@ -3243,22 +3244,14 @@ void	DumpWidget(TYPE_WIDGET *theWidget)
 //*	<C 11# >000f
 //*	<C 13# >f800
 //******************************************************************************
-#ifdef _USE_OPENCV_CPP_
+
 //******************************************************************************
 cv::Scalar	Color16BitTo24Bit(const unsigned int color16)
-#else
-//******************************************************************************
-cv::Scalar	Color16BitTo24Bit(const unsigned int color16)
-#endif
 {
 int			redValue;
 int			grnValue;
 int			bluValue;
-#ifdef _USE_OPENCV_CPP_
-	cv::Scalar	rgbValue;
-#else
-	cv::Scalar	rgbValue;
-#endif // _USE_OPENCV_CPP_
+cv::Scalar	rgbValue;
 
 	redValue	=	((color16 & 0x0ffff) >> 8)	& 0x00f8;
 	grnValue	=	((color16 & 0x0ffff) >> 3)	& 0x00fC;
@@ -3273,16 +3266,18 @@ int			bluValue;
 	return(rgbValue);
 }
 
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 	cv::Mat		*gAlpacaLogoPtr	=	NULL;
 	cv::Mat		gAlpacaLogo;
 #else
 	IplImage	*gAlpacaLogoPtr	=	NULL;
 #endif
+
+
 //*****************************************************************************
 void	LoadAlpacaLogo(void)
 {
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 //	gAlpacaLogoPtr	=	new cv::imread("logos/AlpacaLogo-vsmall.png", CV_LOAD_IMAGE_COLOR);
 //	gAlpacaLogoPtr	=	new cv::Mat("logos/AlpacaLogo-vsmall.png");
 	gAlpacaLogo		=	cv::imread("logos/AlpacaLogo-vsmall.png");
@@ -3458,8 +3453,8 @@ static void	*ControllerBackgroundThread(void *arg)
 {
 Controller	*myControllerPtr;
 
-	CONSOLE_DEBUG("*************************************************");
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG("*************************************************");
+//	CONSOLE_DEBUG(__FUNCTION__);
 	myControllerPtr	=	(Controller *)arg;
 	if (myControllerPtr != NULL)
 	{
@@ -3497,8 +3492,8 @@ int	Controller::StartBackgroundThread(void)
 {
 int			threadErr;
 
-	CONSOLE_DEBUG("***************************************************************");
-	CONSOLE_DEBUG_W_STR("Starting background thread for window:",	cWindowName);
+//	CONSOLE_DEBUG("***************************************************************");
+//	CONSOLE_DEBUG_W_STR("Starting background thread for window:",	cWindowName);
 	threadErr			=	pthread_create(&cBackgroundThreadID, NULL, &ControllerBackgroundThread, this);
 	if (threadErr == 0)
 	{
@@ -3522,7 +3517,7 @@ void	Controller::LLD_LineTo(const int xx, const int yy)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 	if (cOpenCV_matImage != NULL)
 	{
 	cv::Point		pt1;
@@ -3585,7 +3580,8 @@ void	Controller::LLD_FrameRect(int left, int top, int width, int height, int lin
 
 	if ((width > 0) && (height > 0))
 	{
-	#ifdef _USE_OPENCV_CPP_
+
+	#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 		if (cOpenCV_matImage != NULL)
 		{
 		cv::Rect	myCVrect;
@@ -3640,7 +3636,7 @@ void	Controller::LLD_FrameRect(cv::Rect *theRect)
 //**************************************************************************************
 void	Controller::LLD_FillRect(int left, int top, int width, int height)
 {
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 	if (cOpenCV_matImage != NULL)
 	{
 	cv::Rect	myCVrect;
@@ -3697,7 +3693,7 @@ void	Controller::LLD_DrawCString(	const int	xx,
 
 	if (strlen(textString) > 0)
 	{
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 		if (cOpenCV_matImage != NULL)
 		{
 		cv::Point		textLoc;
@@ -3742,7 +3738,7 @@ void	Controller::LLD_DrawCString(	const int	xx,
 //**************************************************************************************
 void	Controller::LLD_FrameEllipse(	int xCenter, int yCenter, int xRadius, int yRadius)
 {
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 	if (cOpenCV_matImage != NULL)
 	{
 	cv::Point	center;
@@ -3819,8 +3815,7 @@ void	Controller::LLD_FrameEllipse(	int xCenter, int yCenter, int xRadius, int yR
 //**************************************************************************************
 void	Controller::LLD_FillEllipse(	int xCenter, int yCenter, int xRadius, int yRadius)
 {
-
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 	if (cOpenCV_matImage != NULL)
 	{
 	cv::Point	center;
@@ -3912,7 +3907,7 @@ int	Controller::LLD_GetTextSize(const char *textString, const int fontIndex)
 {
 int		textWidthPixels;
 
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 cv::Size		textSize;
 	textSize	=	cv::getTextSize(textString,
 									gFontInfo[fontIndex].fontID,

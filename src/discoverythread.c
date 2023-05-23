@@ -118,7 +118,7 @@ bool				validAddress;
 int					slen;
 int					iii;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	validAddress	=	false;
 	//*	see if there is a file with the local IP address
@@ -130,7 +130,7 @@ int					iii;
 			slen	=	strlen(lineBuff);
 			if ((slen > 6) && (lineBuff[0] != '#'))
 			{
-				CONSOLE_DEBUG_W_STR("Local IP address\t=",		lineBuff);
+//				CONSOLE_DEBUG_W_STR("Local IP address\t=",		lineBuff);
 
 				if (isdigit(lineBuff[0]))
 				{
@@ -145,11 +145,11 @@ int					iii;
 					}
 					//*	extract the IP address
 					inet_pton(AF_INET, lineBuff, &gMyIPaddress);
-					CONSOLE_DEBUG_W_HEX("sin_addr\t\t=",		gMyIPaddress);
+//					CONSOLE_DEBUG_W_HEX("sin_addr\t\t=",		gMyIPaddress);
 
 					//*	this is just for debugging to make sure we got it right
 					inet_ntop(AF_INET, &gMyIPaddress, outputIPaddrStr, INET_ADDRSTRLEN);
-					CONSOLE_DEBUG_W_STR("outputIPaddrStr\t=",		outputIPaddrStr);
+//					CONSOLE_DEBUG_W_STR("outputIPaddrStr\t=",		outputIPaddrStr);
 
 					validAddress	=	true;
 				}
@@ -1040,13 +1040,16 @@ int				ii;
 int StartDiscoveryQuerryThread(void)
 {
 int			threadErr;
+int			startupWidgetIdx;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
+	startupWidgetIdx	=	SetStartupText("Starting Discovery Query Thread");
 
 	GetMyAddress();
 
 	gDiscoveryThreadKeepRunning	=	true;
 	threadErr			=	pthread_create(&gDiscoveryFindThreadID, NULL, &LookForAlpacaDevicesThread, NULL);
+	SetStartupTextStatus(startupWidgetIdx, ((threadErr == 0) ? "OK" : "Failed"));
 
 	return(threadErr);
 }
@@ -1338,6 +1341,7 @@ struct ifaddrs	*ifAddrStruct	=	NULL;
 struct ifaddrs	*ifa			=	NULL;
 void			*tmpAddrPtr		=	NULL;
 char			addressBuffer[256];
+//char			msgBuffer[256];
 uint32_t		ipAddress32;
 bool			keepGoing;
 
@@ -1418,6 +1422,10 @@ bool			keepGoing;
 	{
 		CONSOLE_DEBUG("getifaddrs() Failed!!!!!");
 	}
+//	inet_ntop(AF_INET, &gMyIPaddress, addressBuffer, INET_ADDRSTRLEN);
+//	sprintf(msgBuffer, "Local address:\t%s", addressBuffer);
+//	SetStartupText(msgBuffer);
+
 //	CONSOLE_DEBUG_W_HEX("gMyIPaddress\t=", gMyIPaddress);
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, "EXIT");
 }

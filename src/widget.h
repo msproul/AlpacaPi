@@ -16,10 +16,9 @@
 #ifndef	_WIDGET_H_
 #define	_WIDGET_H_
 
-#include	"opencv2/opencv.hpp"
+#include	<opencv2/opencv.hpp>
 
-#ifdef _USE_OPENCV_CPP_
-#else
+#ifndef _USE_OPENCV_CPP_
 	#include	"opencv2/highgui/highgui_c.h"
 	#include	"opencv2/imgproc/imgproc_c.h"
 #endif // _USE_OPENCV_CPP_
@@ -120,7 +119,7 @@ typedef struct
 	char		alternateText[kAltTextLen];		//*	used for progress bar message (can be used for other things)
 	char		helpText[kMaxHelpTextStrLen];
 	char		*textPtr;			//*	this is for large external text
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 	cv::Mat		*openCVimagePtr;
 	cv::Rect	roiRect;
 	cv::Scalar	bgColor;

@@ -20,6 +20,7 @@
 
 #include	"SkyStruc.h"
 #include	"SkyTravelConstants.h"
+#include	"helper_functions.h"
 
 #include	"StarCatalogHelper.h"
 #include	"NGCcatalog.h"
@@ -179,7 +180,7 @@ char			lineBuff[512];
 char			filePath[128];
 //size_t			bufferSize;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	ngcStarData	=	NULL;
 
@@ -210,10 +211,9 @@ char			filePath[128];
 			*starCount	=	recordCount;
 		}
 		fclose(filePointer);
+		SetStartupText("NGC catalog:\tOK");
 	}
 
-	CONSOLE_DEBUG_W_NUM("gICcount\t=", gICcount);
-//	CONSOLE_ABORT(__FUNCTION__);
 	return(ngcStarData);
 }
 

@@ -13,11 +13,10 @@
 	#include	<arpa/inet.h>
 #endif // _ARPA_INET_H
 
+#include	<opencv2/opencv.hpp>
+#include	<opencv2/core.hpp>
 
-#ifdef _USE_OPENCV_CPP_
-	#include	"opencv2/opencv.hpp"
-	#include	"opencv2/core.hpp"
-#else
+#ifndef _USE_OPENCV_CPP_
 	#include	"opencv2/highgui/highgui_c.h"
 	#include	"opencv2/imgproc/imgproc_c.h"
 	#include	"opencv2/core/version.hpp"
@@ -145,7 +144,6 @@ class WindowTab
 							const char	*windowName=NULL);
 		virtual	~WindowTab(void);
 
-				//*	set up functions
 		virtual	void	RunWindowBackgroundTasks(void);
 		virtual	void	SetupWindowControls(void);
 //		virtual	void	DrawWindow(void);
@@ -186,7 +184,7 @@ class WindowTab
 				void	SetWidgetTextColor(		const int widgetIdx, cv::Scalar newtextColor);
 				void	SetWidgetBGColor(		const int widgetIdx, cv::Scalar newtextColor);
 				void	SetWidgetBorderColor(	const int widgetIdx, cv::Scalar newtextColor);
-			#ifdef _USE_OPENCV_CPP_
+			#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 				void	SetWidgetImage(			const int widgetIdx, cv::Mat *argImagePtr);
 			#else
 				void	SetWidgetImage(			const int widgetIdx, IplImage *argImagePtr);
@@ -250,7 +248,7 @@ class WindowTab
 				void	SetWidgetHelpText(		const int widgetIdx, const char *newText);
 
 				void	SetWidgetHighlighted(	const int widgetIdx, bool highLighted);
-				void	SetWidgetSensorValue(	const int widgetNum, TYPE_Sensor *sensorData, const int decimalPlaces=4);
+				void	SetWidgetSensorValue(	const int widgetNum, TYPE_InstSensor *sensorData, const int decimalPlaces=4);
 
 
 				int		FindClickedWidget(const int xxx, const int yyy);
@@ -269,8 +267,8 @@ class WindowTab
 		virtual	void	UpdateColors(void);
 
 
-#ifdef _USE_OPENCV_CPP_
 
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 		virtual	void	DrawWidgetCustomGraphic(cv::Mat *openCV_Image, TYPE_WIDGET *theWidget, const int widgetIdx = -1);
 		virtual	void	DrawWidgetCustomGraphic(cv::Mat *openCV_Image, const int widgetIdx);
 				void	SetHelpTextBoxColor(cv::Scalar newtextColor);
@@ -328,7 +326,7 @@ class WindowTab
 		void		LLD_SetColor(		const int theColor);
 		void		LLD_SetColor(		cv::Scalar newColor);
 		cv::Scalar	LLD_GetColor(		const int theColor);
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 		cv::Mat		*cOpenCV_Image;
 #else
 		IplImage	*cOpenCV_Image;
@@ -431,7 +429,8 @@ class WindowTab
 		char				cLastAlpacaErrStr[512];
 };
 
-#ifdef _USE_OPENCV_CPP_
+
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 	void	SetRect(cv::Rect *theRect, const int top, const int left, const int bottom, const int right);
 	void	InsetRect(cv::Rect *theRect, const int xInset, const int yInset);
 #else

@@ -25,6 +25,7 @@
 //*	Jan  8,	2022	<MLS> Added support for remote Gaia SQL access
 //*	Nov  4,	2022	<MLS> Skytravel tested on Raspberry Pi Zero, 72 minutes to compile
 //*	Nov  4,	2022	<MLS> It is NOT recommended to run Skytravel on a Pi-Zero
+//*	Mar 20,	2023	<MLS> Made cCurrentSkyTime global (gCurrentSkyTime) so others could use it
 //*****************************************************************************
 
 
@@ -52,6 +53,7 @@
 
 #include	"controller.h"
 #include	"controller_skytravel.h"
+#include	"controller_startup.h"
 #include	"OpenNGC.h"
 #include	"RemoteImage.h"
 
@@ -129,6 +131,7 @@ char				gAsteroidDatbase[32]	=	"";
 
 char				gNGCDatbase[32]			=	"";
 
+TYPE_SkyTime		gCurrentSkyTime;
 
 //*****************************************************************************
 static void	ProcessCmdLineArgs(int argc, char **argv)
@@ -210,6 +213,7 @@ unsigned long		deltaNanoSecs;
 	lastDebugMillis		=	millis();
 //	lastTimingMillis	=	millis();
 
+	CreateStartupScreen();
 
 	fitsVersionRet		=	ffvers(&fitsVersionVal);
 #ifdef CFITSIO_MAJOR
@@ -255,7 +259,9 @@ unsigned long		deltaNanoSecs;
 #endif // _ENABLE_REMOTE_GAIA_
 //	CONSOLE_DEBUG_W_STR("RemoteGAIAenabled is", (gST_DispOptions.RemoteGAIAenabled ? "enabled" : "disabled"));
 
-#ifdef _USE_OPENCV_CPP_
+
+
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 	new ControllerSkytravel("SkyTravel++");
 #else
 	new ControllerSkytravel("SkyTravel");
@@ -278,6 +284,7 @@ unsigned long		deltaNanoSecs;
 	gKeepRunning	=	true;
 	activeObjCnt	=	objectsCreated;
 
+//	CloseStartupScreen();
 	while (gKeepRunning && (activeObjCnt > 0))
 	{
 		activeObjCnt	=	0;
@@ -296,8 +303,11 @@ unsigned long		deltaNanoSecs;
 				gControllerTime[iii].TotalNanoSecons	+=	deltaNanoSecs;
 				gControllerTime[iii].AverageNanoSecons	=	gControllerTime[iii].TotalNanoSecons / gControllerTime[iii].Count;
 
+			#if (CV_MAJOR_VERSION >= 3)
 				keyPressed	=	cv::waitKeyEx(5);
-
+			#else
+				keyPressed	=	cv::waitKey(5);
+			#endif
 				if (keyPressed > 0)
 				{
 					Controller_HandleKeyDown(keyPressed);

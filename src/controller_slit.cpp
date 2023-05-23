@@ -24,6 +24,7 @@
 //*	Mar  9,	2023	<MLS> Added GetDomeData_Periodic()
 //*	Mar 10,	2023	<MLS> Added AlpacaDisplayErrorMessage() to slittracker controller
 //*	Mar 10,	2023	<MLS> Changed dome update to 30 seconds
+//*	Apr  1,	2023	<MLS> Made improvements to dome update logic
 //*****************************************************************************
 
 
@@ -95,6 +96,7 @@ char	ipAddrStr[32];
 	cSlitDataLogFilePtr			=	NULL;
 	cValidGravity				=	false;
 	cEnableAutomaticDomeUpdates	=	false;
+	cForceDomeUpdate			=	false;
 
 	//*	window object ptrs
 	cSlitTrackerTabObjPtr		=	NULL;
@@ -344,7 +346,6 @@ bool		needToUpdate;
 		{
 			CONSOLE_ABORT("Invalid IP address")
 		}
-
 	}
 
 	//========================================================
@@ -354,10 +355,11 @@ bool		needToUpdate;
 		currentMillis	=	millis();
 		deltaSeconds	=	(currentMillis - cLastDomeUpdate_milliSecs) / 1000;
 
-		if (deltaSeconds > cDomeUpdateDelta_Secs)
+		if (cForceDomeUpdate || (deltaSeconds > cDomeUpdateDelta_Secs))
 		{
 			GetDomeData_Periodic();
 			cLastDomeUpdate_milliSecs	=	millis();
+			cForceDomeUpdate			=	false;
 		}
 	}
 
@@ -647,7 +649,8 @@ char		statusString[64];
 		cDomeProp.AtHome	=	IsTrueFalse(valueString);
 		if (cDomeProp.AtHome)
 		{
-			SetWidgetText(kTab_DomeInfo, kSlitDome_DomePosition, "Home");
+			SetWidgetText(		kTab_DomeInfo, kSlitDome_DomePosition, "Home");
+			SetWidgetTextColor(	kTab_DomeInfo, kSlitDome_DomePosition,	CV_RGB(0, 255, 0));
 		}
 		cDomeReadAllCount++;
 	}
@@ -656,7 +659,8 @@ char		statusString[64];
 		cDomeProp.AtPark	=	IsTrueFalse(valueString);
 		if (cDomeProp.AtPark)
 		{
-			SetWidgetText(kTab_DomeInfo, kSlitDome_DomePosition, "Park");
+			SetWidgetText(		kTab_DomeInfo, kSlitDome_DomePosition, "Park");
+			SetWidgetTextColor(	kTab_DomeInfo, kSlitDome_DomePosition,	CV_RGB(0, 255, 0));
 		}
 		cDomeReadAllCount++;
 	}
@@ -664,7 +668,8 @@ char		statusString[64];
 	{
 		cDomeProp.Azimuth	=	atof(valueString);
 		sprintf(statusString, "%1.1f", cDomeProp.Azimuth);
-		SetWidgetText(	kTab_DomeInfo, kSlitDome_DomeAzimuth, statusString);
+		SetWidgetText(		kTab_DomeInfo, kSlitDome_DomeAzimuth, statusString);
+		SetWidgetTextColor(	kTab_DomeInfo, kSlitDome_DomeAzimuth,	CV_RGB(0, 255, 0));
 		cDomeReadAllCount++;
 	}
 	else if (strcasecmp(keywordString, "slewing") == 0)
@@ -672,7 +677,8 @@ char		statusString[64];
 		cDomeProp.Slewing	=	IsTrueFalse(valueString);
 		if (cDomeProp.Slewing)
 		{
-			SetWidgetText(kTab_DomeInfo, kSlitDome_DomePosition, "Slewing");
+			SetWidgetText(		kTab_DomeInfo, kSlitDome_DomePosition, "Slewing");
+			SetWidgetTextColor(	kTab_DomeInfo, kSlitDome_DomePosition,	CV_RGB(0, 255, 0));
 		}
 		cDomeReadAllCount++;
 	}
@@ -682,7 +688,8 @@ char		statusString[64];
 		cDomeProp.ShutterStatus	=	(TYPE_ShutterStatus)atoi(valueString);
 		GetDomeShutterStatusString(cDomeProp.ShutterStatus, statusString);
 
-		SetWidgetText(kTab_DomeInfo, kSlitDome_DomeShutter, statusString);
+		SetWidgetText(		kTab_DomeInfo, kSlitDome_DomeShutter,	statusString);
+		SetWidgetTextColor(	kTab_DomeInfo, kSlitDome_DomeShutter,	CV_RGB(0, 255, 0));
 		cDomeReadAllCount++;
 	}
 }
@@ -856,6 +863,11 @@ void	ControllerSlit::SetButtonOption(const int widgetBtnIdx, const bool newState
 	{
 		case kSlitDome_DomeEnableData:
 			cEnableAutomaticDomeUpdates	=	newState;
+			if (cEnableAutomaticDomeUpdates)
+			{
+				//*	force it to read now
+				cForceDomeUpdate	=	true;
+			}
 			break;
 
 		default:
@@ -874,11 +886,11 @@ void	ControllerSlit::GetDomeData_Periodic(void)
 bool				validData;
 struct sockaddr_in	deviceAddress;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 	inet_pton(AF_INET, cDomeIPaddressString, &(deviceAddress.sin_addr));
 
 	//------------------------
-//	CONSOLE_DEBUG_W_BOOL("cDomeHas_Readall\t=",	cDomeHas_Readall);
+	CONSOLE_DEBUG_W_BOOL("cDomeHas_Readall\t=",	cDomeHas_Readall);
 	if (cDomeHas_Readall)
 	{
 //		CONSOLE_DEBUG("Calling AlpacaGetStatus_ReadAll()");
@@ -888,7 +900,7 @@ struct sockaddr_in	deviceAddress;
 												"dome",
 												cDomeAlpacaDevNum,
 												false);	//*	enable debug
-//		CONSOLE_DEBUG_W_NUM("cDomeReadAllCount\t=",	cDomeReadAllCount);
+		CONSOLE_DEBUG_W_NUM("cDomeReadAllCount\t=",	cDomeReadAllCount);
 		if (validData)
 		{
 			if ((cDomeProp.AtHome == false) && (cDomeProp.AtPark == false) && (cDomeProp.Slewing == false))
@@ -905,7 +917,7 @@ struct sockaddr_in	deviceAddress;
 	bool	returedBoolean;
 	char	statusString[32];
 
-//		CONSOLE_DEBUG("Dome does not have ReadAll!!!!");
+		CONSOLE_DEBUG("Dome does not have ReadAll!!!!");
 
 		//*	get data one at a time
 		//------------------------------------------------
@@ -923,7 +935,8 @@ struct sockaddr_in	deviceAddress;
 			cDomeProp.ShutterStatus	=	(TYPE_ShutterStatus)returedIntger;
 			GetDomeShutterStatusString(cDomeProp.ShutterStatus, statusString);
 
-			SetWidgetText(kTab_DomeInfo, kSlitDome_DomeShutter, statusString);
+			SetWidgetText(		kTab_DomeInfo, kSlitDome_DomeShutter,	statusString);
+			SetWidgetTextColor(	kTab_DomeInfo, kSlitDome_DomeShutter,	CV_RGB(255, 255, 0));
 		}
 		else
 		{
@@ -943,7 +956,8 @@ struct sockaddr_in	deviceAddress;
 		{
 			cDomeProp.Azimuth	=	returedDouble;
 			sprintf(statusString, "%1.1f", cDomeProp.Azimuth);
-			SetWidgetText(	kTab_DomeInfo, kSlitDome_DomeAzimuth, statusString);
+			SetWidgetText(		kTab_DomeInfo, kSlitDome_DomeAzimuth, statusString);
+			SetWidgetTextColor(	kTab_DomeInfo, kSlitDome_DomeAzimuth,	CV_RGB(255, 255, 0));
 		}
 		else
 		{
@@ -964,7 +978,8 @@ struct sockaddr_in	deviceAddress;
 			cDomeProp.AtHome	=	returedBoolean;
 			if (cDomeProp.AtHome)
 			{
-				SetWidgetText(kTab_DomeInfo, kSlitDome_DomePosition, "Home");
+				SetWidgetText(		kTab_DomeInfo, kSlitDome_DomePosition, "Home");
+				SetWidgetTextColor(	kTab_DomeInfo, kSlitDome_DomePosition,	CV_RGB(255, 255, 0));
 			}
 		}
 		else
@@ -986,7 +1001,8 @@ struct sockaddr_in	deviceAddress;
 			cDomeProp.AtPark	=	returedBoolean;
 			if (cDomeProp.AtPark)
 			{
-				SetWidgetText(kTab_DomeInfo, kSlitDome_DomePosition, "Park");
+				SetWidgetText(		kTab_DomeInfo, kSlitDome_DomePosition, "Park");
+				SetWidgetTextColor(	kTab_DomeInfo, kSlitDome_DomePosition,	CV_RGB(255, 255, 0));
 			}
 		}
 		else
@@ -1008,7 +1024,8 @@ struct sockaddr_in	deviceAddress;
 			cDomeProp.Slewing	=	returedBoolean;
 			if (cDomeProp.Slewing)
 			{
-				SetWidgetText(kTab_DomeInfo, kSlitDome_DomePosition, "Slewing");
+				SetWidgetText(		kTab_DomeInfo, kSlitDome_DomePosition, "Slewing");
+				SetWidgetTextColor(	kTab_DomeInfo, kSlitDome_DomePosition,	CV_RGB(255, 255, 0));
 			}
 		}
 		else
@@ -1017,7 +1034,8 @@ struct sockaddr_in	deviceAddress;
 		}
 		if ((cDomeProp.AtHome == false) && (cDomeProp.AtPark == false) && (cDomeProp.Slewing == false))
 		{
-			SetWidgetText(kTab_DomeInfo, kSlitDome_DomePosition, "Stopped");
+			SetWidgetText(		kTab_DomeInfo, kSlitDome_DomePosition, "Stopped");
+			SetWidgetTextColor(	kTab_DomeInfo, kSlitDome_DomePosition,	CV_RGB(255, 255, 0));
 		}
 	}
 }

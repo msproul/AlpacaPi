@@ -133,6 +133,7 @@ class ControllerSlit: public Controller
 				//---------------------------------------------
 				//*	connection to dome for slaving
 				bool				cEnableAutomaticDomeUpdates;
+				bool				cForceDomeUpdate;
 				bool				cEnableDomeTracking;
 //				bool				cSlaveEnabled;
 				char				cDomeIPaddressString[48];

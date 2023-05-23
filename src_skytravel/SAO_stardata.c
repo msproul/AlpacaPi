@@ -30,6 +30,7 @@
 
 #include	"SkyStruc.h"
 #include	"SAO_stardata.h"
+#include	"helper_functions.h"
 
 
 #define		kSkyTravelDataDirectory	"skytravel_data"
@@ -104,7 +105,8 @@ char	theChar;
 double	ra_Degrees;
 double	dec_Degrees;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_ABORT(__FUNCTION__);
 
 //	printf("*");
 //	fflush(stdout);
@@ -197,8 +199,27 @@ double	dec_Degrees;
 
 //				case kSAOarg_hd_component:				// HD Component and Multiple Code
 //				case kSAOarg_gc:						// Boss General Catalog (GC) Number
-//				case kSAOarg_proper_motion_ra_fk5:		// Annual RA Proper Motion (FK5 System)
-//				case kSAOarg_proper_motion_dec_fk5:		// Annual Declination Proper Motion (FK5 System)
+				case kSAOarg_proper_motion_ra_fk5:		// Annual RA Proper Motion (FK5 System)
+					CONSOLE_DEBUG_W_STR("kSAOarg_proper_motion_ra_fk5\t=",	argBuff);
+					if (strlen(argBuff) > 0)
+					{
+						objectStruct->propMotion_RA_mas_yr		=	atof(argBuff);
+					}
+					break;
+
+				case kSAOarg_proper_motion_dec_fk5:		// Annual Declination Proper Motion (FK5 System)
+					CONSOLE_DEBUG_W_STR("kSAOarg_proper_motion_dec_fk5\t=",	argBuff);
+					if (strlen(argBuff) > 0)
+					{
+						objectStruct->propMotion_DEC_mas_yr		=	atof(argBuff);
+						if ((fabs(objectStruct->propMotion_RA_mas_yr) > 0.0) || (fabs(objectStruct->propMotion_DEC_mas_yr) > 0.0))
+						{
+							objectStruct->propMotionValid	=	true;
+							CONSOLE_DEBUG_W_DBL("propMotion_RA_mas_yr \t=",	objectStruct->propMotion_RA_mas_yr);
+							CONSOLE_DEBUG_W_DBL("propMotion_DEC_mas_yr\t=",	objectStruct->propMotion_DEC_mas_yr);
+						}
+					}
+					break;
 //				case kSAOarg_class:						// Browse Object Classification
 			}
 
@@ -217,29 +238,28 @@ double	dec_Degrees;
 	objectStruct->dataSrc	=	kDataSrc_SAO;
 }
 
-//************************************************************************
-static void	StripLeadingSpaces(char *theString)
-{
-int		iii;
-int		ccc;
-
-	ccc		=	0;
-	iii		=	0;
-	while (theString[iii] != 0)
-	{
-		if ((ccc == 0) && (theString[iii] == 0x20))
-		{
-			//*	do nothing
-		}
-		else
-		{
-			theString[ccc++]	=	theString[iii];
-		}
-		iii++;
-	}
-	theString[ccc]	=	0;
-}
-
+////************************************************************************
+//static void	StripLeadingSpaces(char *theString)
+//{
+//int		iii;
+//int		ccc;
+//
+//	ccc		=	0;
+//	iii		=	0;
+//	while (theString[iii] != 0)
+//	{
+//		if ((ccc == 0) && (theString[iii] == 0x20))
+//		{
+//			//*	do nothing
+//		}
+//		else
+//		{
+//			theString[ccc++]	=	theString[iii];
+//		}
+//		iii++;
+//	}
+//	theString[ccc]	=	0;
+//}
 
 //**************************************************************************
 static void	ExtractTextField(	const char	*theLine,
@@ -269,7 +289,6 @@ int		ccc;
 	}
 }
 
-
 //*****************************************************************************
 static TYPE_CelestData	*SAO_ReadFile_heasarc(long *starCount)
 {
@@ -283,9 +302,11 @@ int				lineLen;
 int				maxLineLen;
 int				recordCount;
 TYPE_CelestData	*saoStarData;
+int				startupWidgetIdx;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
+	startupWidgetIdx	=	SetStartupText("SAO-heasarc catalog:");
 
 	strcpy(filePath, kSkyTravelDataDirectory);
 	strcat(filePath, kSAO_asciiFileName);
@@ -344,13 +365,15 @@ TYPE_CelestData	*saoStarData;
 		}
 
 		fclose(filePointer);
+		SetStartupTextStatus(startupWidgetIdx, "OK");
 	}
 	else
 	{
 		CONSOLE_DEBUG_W_STR("Failed to read star data:", filePath);
+		SetStartupTextStatus(startupWidgetIdx, "Failed");
 	}
 
-	CONSOLE_DEBUG_W_LONG("starCount\t=", *starCount);
+//	CONSOLE_DEBUG_W_LONG("starCount\t=", *starCount);
 
 	return(saoStarData);
 }
@@ -758,12 +781,25 @@ char	argString[64];
 	// 151-152  I2     h       RA2000h  Hours RA, equinox, epoch J2000.0
 	// 153-154  I2     min     RA2000m  Minutes RA, equinox, epoch J2000.0
 	// 155-160  F6.3   s       RA2000s  Seconds RA, equinox, epoch J2000.0
+
 	// 161-167  F7.4   s/a     pmRA2000 Annual proper motion in FK5 system
+	ExtractTextField(lineBuff,	(161 - 1),	7,	argString, true);
+	objectStruct->propMotion_RA_mas_yr		=	atof(argString) * 1000.0;
+
 	//     168  A1     ---     DE2000-  Sign Dec, equinox, epoch J2000.0
 	// 169-170  I2     deg     DE2000d  Degrees Dec, equinox, epoch J2000.0
 	// 171-172  I2     arcmin  DE2000m  Minutes Dec, equinox, epoch J2000.0
 	// 173-177  F5.2   arcsec  DE2000s  Seconds Dec, equinox, epoch J2000.0
+
 	// 178-183  F6.3  arcsec/a pmDE2000 ? Annual proper motion in FK5 system (10)
+	ExtractTextField(lineBuff,	(178 - 1),	7,	argString, true);
+	objectStruct->propMotion_DEC_mas_yr		=	atof(argString) * 1000.0;
+	if ((fabs(objectStruct->propMotion_RA_mas_yr) > 0.0) || (fabs(objectStruct->propMotion_DEC_mas_yr) > 0.0))
+	{
+		objectStruct->propMotionValid	=	true;
+//		CONSOLE_DEBUG_W_DBL("propMotion_RA_mas_yr \t=",	objectStruct->propMotion_RA_mas_yr);
+//		CONSOLE_DEBUG_W_DBL("propMotion_DEC_mas_yr\t=",	objectStruct->propMotion_DEC_mas_yr);
+	}
 
 	// 184-193  D10.8  rad    RA2000rad Right ascension, J2000.0, in radians
 	ExtractTextField(lineBuff,	(184 - 1),	10,	argString, true);
@@ -788,8 +824,11 @@ int				linesRead;
 int				recordCount;
 int				deletedCount;
 TYPE_CelestData	*saoStarData;
+int				startupWidgetIdx;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	startupWidgetIdx	=	SetStartupText("SAO-dat catalog:");
 
 	deletedCount	=	0;
 	linesRead		=	0;
@@ -833,14 +872,16 @@ TYPE_CelestData	*saoStarData;
 		}
 
 		fclose(filePointer);
+		SetStartupTextStatus(startupWidgetIdx, "OK");
 	}
 	else
 	{
 		CONSOLE_DEBUG_W_STR("Failed to read star data:", filePath);
+		SetStartupTextStatus(startupWidgetIdx, "Failed");
 	}
-
-	CONSOLE_DEBUG_W_NUM(	"deletedCount\t=", deletedCount);
-	CONSOLE_DEBUG_W_LONG(	"starCount   \t=", *starCount);
+//
+//	CONSOLE_DEBUG_W_NUM(	"deletedCount\t=", deletedCount);
+//	CONSOLE_DEBUG_W_LONG(	"starCount   \t=", *starCount);
 
 	return(saoStarData);
 }
@@ -853,21 +894,25 @@ int				returnCode;
 char			filePath[128];
 TYPE_CelestData	*saoStarData;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	strcpy(filePath, kSkyTravelDataDirectory);
 	strcat(filePath, "/sao/sao.dat");
 
 	//*	fstat - check for existence of file
-	CONSOLE_DEBUG_W_STR("Checking on:", filePath);
+//	CONSOLE_DEBUG_W_STR("Checking on:", filePath);
 	returnCode	=	stat(filePath, &fileStatus);
 	if (returnCode == 0)
 	{
-		CONSOLE_DEBUG_W_STR("file is present:", filePath);
+//		CONSOLE_DEBUG_W_STR("file is present:", filePath);
 		saoStarData	=	SAO_ReadFile_sao_dat(filePath, starCount);
 	}
 	else
 	{
 		saoStarData	=	SAO_ReadFile_heasarc(starCount);
+	}
+	if (saoStarData == NULL)
+	{
+		SetStartupText("SAO catalog:\tNot found");
 	}
 	return(saoStarData);
 }
@@ -880,7 +925,7 @@ int main(int argc, char *argv[])
 {
 long	starCount;
 
-	CONSOLE_DEBUG("SAO read test");
+//	CONSOLE_DEBUG("SAO read test");
 	starCount	=	0;
 
 	SAO_ReadFileEitherFile(&starCount);

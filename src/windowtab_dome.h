@@ -105,7 +105,7 @@ class WindowTabDome: public WindowTab
 		virtual	~WindowTabDome(void);
 
 		virtual	void	SetupWindowControls(void);
-	#ifdef _USE_OPENCV_CPP_
+	#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 		virtual	void	DrawWidgetCustomGraphic(cv::Mat *openCV_Image, const int widgetIdx);
 				void	DrawDomeGraphic(cv::Mat *openCV_Image, TYPE_WIDGET *theWidget);
 	#else

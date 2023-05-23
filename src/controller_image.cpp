@@ -72,7 +72,7 @@ enum
 };
 
 
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 //**************************************************************************************
 ControllerImage::ControllerImage(	const char			*argWindowName,
 									cv::Mat				*downloadedImage,
@@ -153,7 +153,7 @@ ControllerImage::ControllerImage(	const char	*argWindowName,
 							kWindowWidth,
 							kWindowHeight)
 {
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 	cv::Mat		*imageFromDisk;
 #else
 	IplImage	*imageFromDisk;
@@ -182,7 +182,7 @@ ControllerImage::~ControllerImage(void)
 {
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 	SetWidgetImage(kTab_Image, kImageDisplay_ImageDisplay, NULL);
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 //++	#warning "OpenCV++ not tested"
 	CONSOLE_DEBUG("OpenCV++ not finished!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 	//*	free up the image memory
@@ -367,8 +367,7 @@ void	ControllerImage::DrawWidgetImage(TYPE_WIDGET *theWidget)
 	}
 }
 
-#ifdef _USE_OPENCV_CPP_
-
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 //**************************************************************************************
 void	ControllerImage::SetLiveWindowImage(cv::Mat *newOpenCVImage)
 {
@@ -647,7 +646,7 @@ int		imgWidth;
 int		imgHeight;
 int		imgChannels;
 
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 	imgWidth	=	cDownLoadedImage->cols;
 	imgHeight	=	cDownLoadedImage->rows;
 	imgChannels	=	cDownLoadedImage->step[1];
@@ -682,8 +681,7 @@ double	download_MB_per_sec;
 
 }
 
-#ifdef _USE_OPENCV_CPP_
-//#warning "OpenCV++ not finished"
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 //**************************************************************************************
 void	ControllerImage::CopyImageToLiveImage(cv::Mat *newOpenCVImage)
 {
@@ -832,7 +830,7 @@ size_t				byteCount_dst;
 
 
 
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 //**************************************************************************************
 //*	this routine updates the existing image by copying the new image to the old image buffer
 //*	it checks to make sure they are compatible
@@ -843,9 +841,9 @@ void	ControllerImage::UpdateLiveWindowImage(IplImage *newOpenCVImage, const char
 #endif // _USE_OPENCV_CPP_
 {
 bool			imagesAreTheSame;
-#ifdef _USE_OPENCV_CPP_
-unsigned int	rowStepSize;
-unsigned int	nChannels;
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
+	unsigned int	rowStepSize;
+	unsigned int	nChannels;
 #endif
 
 	CONSOLE_DEBUG("-------------------Start");
@@ -862,7 +860,7 @@ unsigned int	nChannels;
 		{
 //			CONSOLE_DEBUG("Updating image");
 			imagesAreTheSame	=	true;
-	#ifdef _USE_OPENCV_CPP_
+	#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 		#warning "OpenCV++ not finished"
 			//*	check if width are the same
 			if (newOpenCVImage->cols != cDownLoadedImage->cols)
@@ -951,7 +949,7 @@ unsigned int	nChannels;
 				int		newImgWidth;
 				int		newImgHeight;
 
-			#ifdef _USE_OPENCV_CPP_
+			#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 					newImgWidth		=	newOpenCVImage->cols;
 					newImgHeight	=	newOpenCVImage->rows;
 					cColorImage		=	new cv::Mat(cv::Size(	newImgWidth,
@@ -968,7 +966,7 @@ unsigned int	nChannels;
 				}
 				if (cColorImage != NULL)
 				{
-				#ifdef _USE_OPENCV_CPP_
+				#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 					//*	convert gray scale to color
 					cv::cvtColor(*newOpenCVImage, *cColorImage, cv::COLOR_GRAY2BGR);
 				#else
@@ -1074,7 +1072,7 @@ char			textString[32];
 	if (cDownLoadedImage != NULL)
 	{
 
-	#ifdef _USE_OPENCV_CPP_
+	#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 		imgWidth		=	cDownLoadedImage->cols;
 		imgHeight		=	cDownLoadedImage->rows;
 //		imgRowStepSize	=	cDownLoadedImage->step[0];

@@ -10,6 +10,8 @@
 //*	Jul  9,	2021	<MLS> Finished converting all start data to globals
 //*	Oct 23,	2021	<MLS> Added spectralClass to star structure (O,B,A,F,G,K,M)
 //*	Aug  2,	2022	<MLS> Added kDataSrc_SAO
+//*	Mar 15,	2023	<MLS> Changed TYPE_Time to TYPE_SkyTime to avoid confusion
+//*	Apr  7,	2023	<MLS> Added proper motion to TYPE_CelestData
 //*****************************************************************************
 //#include	"SkyStruc.h"
 
@@ -105,6 +107,9 @@ typedef struct
 	double			org_ra;
 	double			org_decl;
 //	double			properMotion;	//	https://en.wikipedia.org/wiki/Proper_motion
+	bool			propMotionValid;
+	double			propMotion_RA_mas_yr;	//*	mill-arc-seconds per year
+	double			propMotion_DEC_mas_yr;		//*	mill-arc-seconds per year
 //	double			maxSizeArcMinutes;
 	double			parallax;
 	char			shortName[kShortNameMax];
@@ -157,7 +162,7 @@ typedef struct
 //*****************************************************************************
 typedef struct
 {
-	int				year;				//*	greenwich date
+	int				year;				//*	Greenwich date
 	int				day;
 	int				month;
 	int				hour;
@@ -185,7 +190,7 @@ typedef struct
 	bool			starDataModified;
 	bool			negflag;			//*	1= time decrements 0 = time increments
 	bool			local_time_flag;	//*	1=use local time 0=use gmt
-	bool			dstflag;			//*	1=use daylight savings
+	bool			dstflag;			//*	true=use daylight savings
 
 	double			fgmt;				//*	floating point form of gmt
 	double			fSiderealTime;		//*	sidereal time
@@ -203,7 +208,7 @@ typedef struct
 	short			screenUpdateInterval;	//*	seconds
 	short			simulationClockFactor;
 
-}	TYPE_Time;
+}	TYPE_SkyTime;
 
 //*****************************************************************************
 enum
@@ -434,7 +439,7 @@ enum
 	extern "C" {
 #endif
 
-long	ReadStarData(TYPE_CelestData **objptr,unsigned int *sort_index, TYPE_Time *timePtr);
+long	ReadStarData(TYPE_CelestData **objptr,unsigned int *sort_index, TYPE_SkyTime *timePtr);
 
 
 extern	TYPE_CelestData		*gStarDataPtr;
@@ -490,6 +495,7 @@ extern	long				gSAOobjectCount;
 
 extern	char				gNGCDatbase[];
 
+extern TYPE_SkyTime			gCurrentSkyTime;
 
 void		Center_RA_DEC(double argRA_radians, double argDecl_radians);
 void		Center_CelestralObject(TYPE_CelestData *starObject);

@@ -1,5 +1,5 @@
 //**************************************************************************
-//*	Name:			filterwheeldriver_SIM.cpp
+//*	Name:			filterwheeldriver_sim.cpp
 //*
 //*	Author:			Mark Sproul (C) 2023
 //*

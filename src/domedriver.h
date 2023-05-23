@@ -84,11 +84,12 @@ class DomeDriver: public AlpacaDriver
 		virtual	TYPE_ASCOM_STATUS	ProcessCommand(TYPE_GetPutRequestData *reqData);
 
 
-		virtual	int32_t				RunStateMachine(void);
-		virtual	int32_t				RunStateMachine_Dome(void);
-		virtual	int32_t				RunStateMachine_ROR(void);
-		virtual	void				OutputHTML(TYPE_GetPutRequestData *reqData);
-		virtual bool				GetCmdNameFromMyCmdTable(const int cmdNumber, char *comandName, char *getPut);
+		virtual	int32_t	RunStateMachine(void);
+		virtual	int32_t	RunStateMachine_Dome(void);
+		virtual	int32_t	RunStateMachine_ROR(void);
+		virtual	void	OutputHTML(TYPE_GetPutRequestData *reqData);
+		virtual bool	GetCmdNameFromMyCmdTable(const int cmdNumber, char *comandName, char *getPut);
+		virtual bool	GetCommandArgumentString(const int cmdNumber, char *agumentString, char *commentString);
 
 	protected:
 

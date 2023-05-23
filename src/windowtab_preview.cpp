@@ -64,7 +64,7 @@ WindowTabPreview::WindowTabPreview(	const int	xSize,
 //**************************************************************************************
 WindowTabPreview::~WindowTabPreview(void)
 {
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 	if (cOpenCVdownLoadedImage != NULL)
 	{
 		CONSOLE_DEBUG("destroy old image");

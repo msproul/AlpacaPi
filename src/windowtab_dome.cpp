@@ -68,7 +68,7 @@ WindowTabDome::WindowTabDome(	const int	xSize,
 //**************************************************************************************
 WindowTabDome::~WindowTabDome(void)
 {
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 }
 
 //**************************************************************************************
@@ -394,7 +394,7 @@ int		iii;
 //*****************************************************************************
 void	WindowTabDome::UpdateControls(void)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	SetWidgetValid(		kDomeBox_GoHome,	cDomePropPtr->CanSetAzimuth);
 	SetWidgetValid(		kDomeBox_GoPark,	cDomePropPtr->CanSetAzimuth);
@@ -422,10 +422,10 @@ void	WindowTabDome::UpdateControls(void)
 	SetWidgetValid(		kDomeBox_BumpLeft,	cDomePropPtr->CanSetAzimuth);
 	SetWidgetValid(		kDomeBox_BumpRight,	cDomePropPtr->CanSetAzimuth);
 
-	CONSOLE_DEBUG("exit");
+//	CONSOLE_DEBUG("exit");
 }
 
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 //**************************************************************************************
 void	WindowTabDome::DrawWidgetCustomGraphic(cv::Mat *openCV_Image, const int widgetIdx)
 #else
@@ -454,7 +454,8 @@ cv::Rect	myCVrect;
 	}
 }
 
-#ifdef _USE_OPENCV_CPP_
+
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 //*****************************************************************************
 void	WindowTabDome::DrawDomeGraphic(cv::Mat *openCV_Image, TYPE_WIDGET *theWidget)
 #else
@@ -543,7 +544,8 @@ cv::Scalar	domeOpeningColor;
 		//*	build the point list for the opening
 		pointCntr				=	0;
 
-	#ifdef _USE_OPENCV_CPP_
+
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 cv::Point	pt1;
 cv::Point	ptList[20];
 cv::Point	pointLoc;

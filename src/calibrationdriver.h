@@ -57,6 +57,10 @@ class CalibrationDriver: public AlpacaDriver
 		TYPE_ASCOM_STATUS	Put_HaltCover(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 		TYPE_ASCOM_STATUS	Put_OpenCover(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 
+		TYPE_ASCOM_STATUS	Get_Aperture(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+		TYPE_ASCOM_STATUS	Put_Aperture(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
+		TYPE_ASCOM_STATUS	Get_CanAdjustAperture(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+
 		TYPE_ASCOM_STATUS	Get_Readall(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 
 		//-------------------------------------------------------------------------

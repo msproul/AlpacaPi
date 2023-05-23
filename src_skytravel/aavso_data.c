@@ -51,6 +51,7 @@
 
 #include	"SkyStruc.h"
 #include	"aavso_data.h"
+#include	"helper_functions.h"
 
 #define		kAAVSO_starCnt	1000
 
@@ -314,8 +315,11 @@ int					alertIdx;
 int					iii;
 TYPE_CelestData		currentStarEntry;
 int					linesForCurrEntry;
+int					startupWidgetIdx;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	startupWidgetIdx	=	SetStartupText("AAVSO alert list:");
 
 	strcpy(filePath,	"aavso/");
 	strcat(filePath,	"alerts_json.txt");
@@ -425,10 +429,12 @@ int					linesForCurrEntry;
 			*objectCount	=	alertIdx;
 		}
 		fclose(filePointer);
+		SetStartupTextStatus(startupWidgetIdx, "OK");
 	}
 	else
 	{
 		CONSOLE_DEBUG_W_STR("Failed to read:", filePath);
+		SetStartupTextStatus(startupWidgetIdx, "Failed");
 	}
 	CONSOLE_DEBUG_W_NUM("linesRead		\t=",	linesRead);
 //	CONSOLE_DEBUG_W_NUM("maxStarNameLen\t=",	maxStarNameLen);

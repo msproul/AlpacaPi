@@ -45,6 +45,7 @@ class CameraDriverATIK: public CameraDriver
 		virtual	TYPE_EXPOSURE_STATUS	Check_Exposure(bool verboseFlag = false);
 		virtual	TYPE_ASCOM_STATUS		SetImageType(TYPE_IMAGE_TYPE newImageType);
 
+		virtual	TYPE_ASCOM_STATUS		Write_BinXY(const int newBinXvalue);
 		virtual	TYPE_ASCOM_STATUS		Write_Gain(const int newGainValue);
 		virtual	TYPE_ASCOM_STATUS		Read_Gain(int *cameraGainValue);
 
@@ -53,8 +54,12 @@ class CameraDriverATIK: public CameraDriver
 		virtual	TYPE_ASCOM_STATUS		Cooler_TurnOn(void);
 		virtual	TYPE_ASCOM_STATUS		Cooler_TurnOff(void);
 		virtual	TYPE_ASCOM_STATUS		Read_SensorTemp(void);
+		virtual	TYPE_ASCOM_STATUS		Read_SensorTargetTemp(void);
+		virtual	TYPE_ASCOM_STATUS		Write_SensorTargetTemp(const double newCCDtargetTemp);
+
 		virtual	TYPE_ASCOM_STATUS		Read_CoolerState(bool *coolerOnOff);
 		virtual	TYPE_ASCOM_STATUS		Read_CoolerPowerLevel(void);
+
 		virtual	TYPE_ASCOM_STATUS		Read_Fastreadout(void);
 		virtual	TYPE_ASCOM_STATUS		Read_ImageData(void);
 

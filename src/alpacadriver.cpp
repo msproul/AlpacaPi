@@ -158,6 +158,9 @@
 //*	Mar 12,	2023	<MLS> Added OutputHTML_html()
 //*	Mar 12,	2023	<MLS> Added SendFileToSocket()
 //*	Mar 12,	2023	<MLS> Can now serve standard HTML files from folder "html"
+//*	May  3,	2023	<MLS> Fixed jpg/png image requests to look in "docs" folder if not found
+//*	May  7,	2023	<MLS> Added comment argument to GetCommandArgumentString
+//*	May  7,	2023	<MLS> Added OuputCommandTableNotes()
 //*****************************************************************************
 //*	to install code blocks 20
 //*	Step 1: sudo add-apt-repository ppa:codeblocks-devs/release
@@ -308,16 +311,17 @@ int				gUserAgentCounters[kHTTPclient_last];
 
 static void	OutputHTML_Form(TYPE_GetPutRequestData *reqData);
 static void	OutputHTML_html(TYPE_GetPutRequestData *reqData);
+static void	SendHtmlCompiledInfo(const int socketFD);
 
 
 //*****************************************************************************
 static void	InitDeviceList(void)
 {
-int		ii;
+int		iii;
 
-	for (ii=0; ii<kMaxDevices; ii++)
+	for (iii=0; iii<kMaxDevices; iii++)
 	{
-		gAlpacaDeviceList[ii]	=	NULL;
+		gAlpacaDeviceList[iii]	=	NULL;
 	}
 	gDeviceCnt	=	0;
 }
@@ -1190,20 +1194,21 @@ void	AlpacaDriver::OutputHTML_Part2(TYPE_GetPutRequestData *reqData)
 void	AlpacaDriver::OutputCommadTable(int mySocketFD, const char *title, const TYPE_CmdEntry *commandTable)
 {
 int		iii;
-char	lineBuff[512];
+char	lineBuff[1024];
 char	cmdArgumentStr[256];
+char	commentString[256];
 bool	useAlternateColor;
 bool	foundArgFlag;
 
 	useAlternateColor	=	false;
-	sprintf(lineBuff,	"<TR><TD COLSPAN=4><B><CENTER>%s</B></TD></TR>", title);
+	sprintf(lineBuff,	"<TR><TD COLSPAN=5><B><CENTER>%s</B></TD></TR>", title);
 	SocketWriteData(mySocketFD,	lineBuff);
 	iii	=	0;
 	while (commandTable[iii].enumValue >= 0)
 	{
 		if (commandTable[iii].commandName[0] == '-')
 		{
-			SocketWriteData(mySocketFD,	"<TR><TD COLSPAN=4><HR></TD></TR>\r\n");
+			SocketWriteData(mySocketFD,	"<TR><TD COLSPAN=5><HR></TD></TR>\r\n");
 			useAlternateColor	=	true;
 		}
 		else
@@ -1234,12 +1239,15 @@ bool	foundArgFlag;
 				SocketWriteData(mySocketFD,	"<TD></TD>");
 			}
 
-			foundArgFlag	=	GetCommandArgumentString(commandTable[iii].enumValue, cmdArgumentStr);
+			cmdArgumentStr[0]	=	0;
+			commentString[0]	=	0;
+
+			foundArgFlag	=	GetCommandArgumentString(commandTable[iii].enumValue, cmdArgumentStr, commentString);
 			if (foundArgFlag == false)
 			{
-				AlpacaDriver::GetCommandArgumentString(commandTable[iii].enumValue, cmdArgumentStr);
+				AlpacaDriver::GetCommandArgumentString(commandTable[iii].enumValue, cmdArgumentStr, commentString);
 			}
-			sprintf(lineBuff,	"<TD>%s</TD>",	cmdArgumentStr);
+			sprintf(lineBuff,	"<TD>%s</TD>\r\n<TD>%s</TD>\r\n", cmdArgumentStr, commentString);
 			SocketWriteData(mySocketFD,	lineBuff);
 
 			SocketWriteData(mySocketFD,	"</TD>\r\n");
@@ -1254,7 +1262,7 @@ bool	foundArgFlag;
 //*
 //*	return TRUE if found, false otherwise
 //*****************************************************************************
-bool	AlpacaDriver::GetCommandArgumentString(const int cmdENum, char *agumentString)
+bool	AlpacaDriver::GetCommandArgumentString(const int cmdENum, char *agumentString, char *commentString)
 {
 bool	foundFlag	=	true;
 
@@ -1310,10 +1318,10 @@ char	lineBuff[128];
 		SocketWriteData(mySocketFD,	"<CENTER>\r\n");
 		SocketWriteData(mySocketFD,	"<TABLE BORDER=1>\r\n");
 
-		sprintf(lineBuff,	"<TR><TD COLSPAN=4><CENTER><H2>%s</H2></TD></TR>",	cAlpacaName);
+		sprintf(lineBuff,	"<TR><TD COLSPAN=5><CENTER><H2>%s</H2></TD></TR>",	cAlpacaName);
 		SocketWriteData(mySocketFD,	lineBuff);
 
-		SocketWriteData(mySocketFD,	"<TR><TH>command</TH><TH COLSPAN=2><CENTER>GET / PUT</TH><TH>Alpaca data sting</TH></TR>");
+		SocketWriteData(mySocketFD,	"<TR><TH>command</TH><TH COLSPAN=2><CENTER>GET / PUT</TH><TH>Alpaca data sting</TH><TH>Comments</TH></TR>");
 
 		//-----------------------------------------------
 		//*	first do the common commands
@@ -1324,9 +1332,16 @@ char	lineBuff[128];
 
 		SocketWriteData(mySocketFD,	"</TABLE>\r\n");
 		SocketWriteData(mySocketFD,	"</CENTER>\r\n");
+
+		OuputCommandTableNotes(mySocketFD);
 	}
 }
 
+//*****************************************************************************
+void	AlpacaDriver::OuputCommandTableNotes(int mySocketFD)
+{
+	//*	do nothing, can be over-ridden
+}
 
 //*****************************************************************************
 bool	AlpacaDriver::GetCmdNameFromMyCmdTable(const int cmdNumber, char *comandName, char *getPut)
@@ -1775,8 +1790,10 @@ const char	gHtmlNightMode[]	=
 //*****************************************************************************
 static void	SendHtml_TopLevel(TYPE_GetPutRequestData *reqData)
 {
-char	lineBuffer[256];
-int		mySocketFD;
+char		lineBuffer[256];
+int			mySocketFD;
+struct stat	fileStatus;
+int			returnCode;
 
 		mySocketFD	=	reqData->socket;
 
@@ -1792,15 +1809,28 @@ int		mySocketFD;
 
 		SocketWriteData(mySocketFD,	"</CENTER>\r\n");
 
-		SocketWriteData(mySocketFD,	"<FONT SIZE=30>\r\n");
+		SocketWriteData(mySocketFD,	"<FONT SIZE=5>\r\n");
 		SocketWriteData(mySocketFD,	"<UL>\r\n");
 
 		SocketWriteData(mySocketFD,	"<LI><A HREF=setup>AlpacaPi Settings for this server</A>\r\n");
 		SocketWriteData(mySocketFD,	"<P>\r\n");
 
-		SocketWriteData(mySocketFD,	"<LI><A HREF=https://msproul.github.io/AlpacaPi/ target=github>AlpacaPi Documentation on github</A>\r\n");
+		//*	check to see if the docs folder and index file are present
+		returnCode	=	stat("docs/index.html", &fileStatus);		//*	fstat - check for existence of file
+		if (returnCode == 0)
+		{
+			SocketWriteData(mySocketFD,
+				"<LI><A HREF=docs/index.html target=github>AlpacaPi Documentation on this server</A>\r\n");
+		}
+//		else
+//		{
+//			CONSOLE_DEBUG("docs/index.html NOT found");
+//		}
+		SocketWriteData(mySocketFD,
+				"<LI><A HREF=https://msproul.github.io/AlpacaPi/ target=github>AlpacaPi Documentation on github</A>\r\n");
 
-		SocketWriteData(mySocketFD,	"<LI><A HREF=https://github.com/msproul/AlpacaPi target=github>Download AlpacaPi from github</A>\r\n");
+		SocketWriteData(mySocketFD,
+				"<LI><A HREF=https://github.com/msproul/AlpacaPi target=github>Download AlpacaPi from github</A>\r\n");
 
 
 
@@ -2182,11 +2212,7 @@ int		iii;
 
 		//**********************************************************
 		SendSeparateLine(mySocketFD);
-		SocketWriteData(mySocketFD,	"Compiled on ");
-		SocketWriteData(mySocketFD,	__DATE__);
-		SocketWriteData(mySocketFD,	"\r\n<BR>");
-		SocketWriteData(mySocketFD,	"Written in C/C++\r\n<BR>");
-		SocketWriteData(mySocketFD,	"(C) 2019-2023 by Mark Sproul msproul@skychariot.com\r\n<BR>");
+		SendHtmlCompiledInfo(mySocketFD);
 
 		SocketWriteData(mySocketFD,	"</BODY></HTML>\r\n");
 	}
@@ -2215,11 +2241,9 @@ static void	SendHtmlCompiledInfo(const int socketFD)
 	SocketWriteData(socketFD,	"Compiled on ");
 	SocketWriteData(socketFD,	__DATE__);
 	SocketWriteData(socketFD,	"\r\n<BR>");
-	SocketWriteData(socketFD,	"C++ version\r\n<BR>");
-	SocketWriteData(socketFD,	"(C) 2020-23 by Mark Sproul msproul@skychariot.com\r\n<BR>");
+	SocketWriteData(socketFD,	"Written in C/C++\r\n<BR>");
+	SocketWriteData(socketFD,	"(C) 2019-2023 by Mark Sproul msproul@skychariot.com\r\n<BR>");
 }
-
-
 
 //*****************************************************************************
 static void	SendHtmlStats(TYPE_GetPutRequestData *reqData)
@@ -2392,6 +2416,7 @@ const char	gJpegHeader[]	=
 };
 
 //*****************************************************************************
+//*	Open and sends fileName to socket as a binary stream
 //*	returns bytes sent
 //*****************************************************************************
 static int	SendFileToSocket(int socket, const char *fileName)
@@ -2403,11 +2428,12 @@ int				totalBytesWritten;
 bool			keepGoing;
 char			dataBuffer[1600];
 
+	CONSOLE_DEBUG_W_STR("Sending file:", fileName);
 	totalBytesWritten	=	0;
 	filePointer	=	fopen(fileName, "r");
 	if (filePointer != NULL)
 	{
-//		CONSOLE_DEBUG_W_STR("File is open:", myJpegFileName);
+//		CONSOLE_DEBUG_W_STR("File is open:", fileName);
 		keepGoing			=	true;
 		while (keepGoing)
 		{
@@ -2429,8 +2455,8 @@ char			dataBuffer[1600];
 			}
 		}
 		fclose(filePointer);
-//		CONSOLE_DEBUG_W_STR("File is closed:", myJpegFileName);
-//		CONSOLE_DEBUG_W_NUM("totalBytesWritten\t=",	totalBytesWritten);
+		CONSOLE_DEBUG_W_STR("File is closed   \t=", fileName);
+		CONSOLE_DEBUG_W_NUM("totalBytesWritten\t=",	totalBytesWritten);
 	}
 	else
 	{
@@ -2440,31 +2466,64 @@ char			dataBuffer[1600];
 }
 
 //*****************************************************************************
+static void	StrcpyUntilChar(char *destString, const char *srcString, const char stopChar, const int maxLen)
+{
+int		iii;
+
+	iii	=	0;
+	while ((srcString[iii] != stopChar) && (srcString[iii] > 0) && (iii < (maxLen - 1)))
+	{
+		destString[iii]	=	srcString[iii];
+		iii++;
+	}
+	destString[iii]	=	0;
+}
+
+//*****************************************************************************
 static void	SendJpegResponse(int socket, const char *jpegFileName)
 {
-//FILE			*filePointer;
-//int				numRead;
-//int				bytesWritten;
 int				totalBytesWritten;
-//bool			keepGoing;
-//char			dataBuffer[1024];
-char			myJpegFileName[128];
+char			myJpegFileName[256];
+char			altJpegFileName[256];
 char			*myFilenamePtr;
+struct stat		fileStatus;
+int				returnCode;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 
 	SocketWriteData(socket,	gJpegHeader);
-
 	if (jpegFileName != NULL)
 	{
-//		CONSOLE_DEBUG_W_STR("jpegFileName=", jpegFileName);
-
-		myFilenamePtr	=	(char *)jpegFileName;
-		if (*myFilenamePtr == '/')
+		//*	check to see if the file is present
+		returnCode	=	stat(jpegFileName, &fileStatus);
+		CONSOLE_DEBUG_W_HEX("fileStatus.st_mode\t=", fileStatus.st_mode);
+		if (returnCode == 0)
 		{
-			myFilenamePtr++;
+			myFilenamePtr	=	(char *)jpegFileName;
+			if (*myFilenamePtr == '/')
+			{
+				myFilenamePtr++;
+			}
+			StrcpyUntilChar(myJpegFileName, jpegFileName, 0x20, sizeof(myJpegFileName));
 		}
-		strncpy(myJpegFileName, myFilenamePtr, 100);
+		else
+		{
+			//*	ok, the file is not there, lets look in docs
+			StrcpyUntilChar(altJpegFileName, jpegFileName, 0x20, sizeof(altJpegFileName));
+
+			CONSOLE_DEBUG("Looking for file in 'docs' folder");
+			strcpy(myJpegFileName, "docs");
+			strcat(myJpegFileName, altJpegFileName);
+			CONSOLE_DEBUG_W_STR("myJpegFileName\t=", myJpegFileName);
+			returnCode	=	stat(myJpegFileName, &fileStatus);
+			if ((returnCode == 0) && (fileStatus.st_mode & S_IFREG))
+			{
+				CONSOLE_DEBUG("File found")
+			}
+		}
+
+		CONSOLE_DEBUG_W_STR("myJpegFileName=", myJpegFileName);
+
 
 		myFilenamePtr	=	strstr(myJpegFileName, ".jpg");
 		if (myFilenamePtr != NULL)
@@ -2481,44 +2540,12 @@ char			*myFilenamePtr;
 	{
 		strcpy(myJpegFileName, "image.jpg");
 	}
-//	CONSOLE_DEBUG_W_STR("myJpegFileName=", myJpegFileName);
-#if 1
+	CONSOLE_DEBUG_W_STR("myJpegFileName=", myJpegFileName);
 	totalBytesWritten	=	SendFileToSocket(socket, myJpegFileName);
-#else
-	filePointer	=	fopen(myJpegFileName, "r");
-	if (filePointer != NULL)
+	if (totalBytesWritten <= 0)
 	{
-//		CONSOLE_DEBUG_W_STR("File is open:", myJpegFileName);
-		totalBytesWritten	=	0;
-		keepGoing			=	true;
-		while (keepGoing)
-		{
-			numRead	=	fread(dataBuffer, 1, 1000, filePointer);
-			if ((numRead > 0) || (feof(filePointer)))
-			{
-//				CONSOLE_DEBUG_W_NUM("numRead=", numRead);
-				bytesWritten		=	write(socket, dataBuffer, numRead);
-				totalBytesWritten	+=	bytesWritten;
-			}
-			else
-			{
-				keepGoing	=	false;
-			}
-
-			if (feof(filePointer))
-			{
-				keepGoing	=	false;
-			}
-		}
-		fclose(filePointer);
-//		CONSOLE_DEBUG_W_STR("File is closed:", myJpegFileName);
-//		CONSOLE_DEBUG_W_NUM("totalBytesWritten\t=",	totalBytesWritten);
+		CONSOLE_DEBUG_W_STR("Failed to send file:", myJpegFileName);
 	}
-	else
-	{
-		CONSOLE_DEBUG("Failed to open file");
-	}
-#endif // 1
 //	CONSOLE_DEBUG(__FUNCTION__);
 }
 
@@ -3591,10 +3618,10 @@ int		returnCode	=	-1;
 //	CONSOLE_DEBUG("Timing Start----------------------");
 //	SETUP_TIMING();
 
-	if (strstr(htmlData, "favicon.ico") != NULL)
-	{
-		CONSOLE_DEBUG("favicon.ico request !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-	}
+//	if (strstr(htmlData, "favicon.ico") != NULL)
+//	{
+//		CONSOLE_DEBUG("favicon.ico request !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+//	}
 
 
 //	if (strncmp(htmlData, "GET /favicon.ico", 16) == 0)
@@ -3984,7 +4011,6 @@ int				threadErr;
 uint32_t		delayTime_microSecs;
 uint32_t		delayTimeForThisTask;
 int				iii;
-int				cameraCnt;
 int				ram_Megabytes;
 double			freeDiskSpace_Gigs;
 int32_t			mainLoopCntr;
@@ -3993,6 +4019,9 @@ uint64_t		endNanoSecs;
 uint64_t		deltaNanoSecs;
 time_t			currentTime;
 struct tm		*linuxTime;
+#if defined(_ENABLE_CAMERA_)
+	int			cameraCnt;
+#endif
 
 
 #if defined(_ENABLE_FITS_) || defined(_ENABLE_JPEGLIB_)
@@ -4737,6 +4766,7 @@ int		ccc;
 static void	OutputHTML_html(TYPE_GetPutRequestData *reqData)
 {
 char		filePath[256];
+char		altFilePath[256];
 char		fileExtension[128];
 char		*slashPtr;
 int			mySocketFD;
@@ -4768,11 +4798,43 @@ int			returnCode;
 		{
 			strcat(filePath, "/index.html");
 		}
+		CONSOLE_DEBUG_W_STR("filePath\t=", filePath);
 
 		//*	fstat - check for existence of file
 		returnCode	=	stat(filePath, &fileStatus);
+		CONSOLE_DEBUG_W_HEX("fileStatus.st_mode\t=", fileStatus.st_mode);
+		if (returnCode != 0)
+		{
+			//*	ok, the file is not there, lets look in docs
+			strcpy(altFilePath, "docs");
+			strcat(altFilePath, filePath);
+			CONSOLE_DEBUG_W_STR("altFilePath\t=", altFilePath);
+			returnCode	=	stat(filePath, &fileStatus);
+			if ((returnCode == 0) && (fileStatus.st_mode & S_IFREG))
+			{
+				strcpy(filePath, altFilePath);
+			}
+		}
+		CONSOLE_DEBUG_W_STR("filePath\t=", filePath);
 		if (returnCode == 0)
 		{
+			if (fileStatus.st_mode & S_IFREG)
+			{
+				CONSOLE_DEBUG("File is S_IFREG (regular file)");
+			}
+			if (fileStatus.st_mode & S_IFDIR)
+			{
+			char	lastChar;
+
+				CONSOLE_DEBUG("File is S_IFDIR (Directory)");
+
+				lastChar	=	filePath[strlen(filePath) - 1];
+				if (lastChar == '/')
+				{
+					strcat(filePath, "index.html");
+				}
+			}
+
 			CONSOLE_DEBUG("File is OK");
 
 			//*	determine the extension

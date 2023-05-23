@@ -16,7 +16,7 @@
 //*	that you agree that the author(s) have no warranty, obligations or liability.  You
 //*	must determine the suitability of this source code for your use.
 //*
-//*	Redistributions of this source code must retain this copyright notice.
+//*	Re-distributions of this source code must retain this copyright notice.
 //*****************************************************************************
 //*
 //*	Usage notes:
@@ -51,6 +51,7 @@
 //*	Apr 15,	2022	<MLS> Installed ATIK 460ex on WO71 telescope, updating ATIK drivers
 //*	Apr 16,	2022	<MLS> Fixed bug in GetImage_ROI_info()
 //*	May 17,	2022	<MLS> Changed the way power level is reported
+//*	Apr 17,	2023	<MLS> Added Write_BinX() & Write_BinY() to ATIK driver
 //*****************************************************************************
 
 #if defined(_ENABLE_CAMERA_) && defined(_ENABLE_ATIK_)
@@ -187,7 +188,7 @@ char				tempDeviceName[64];
 	atikOK				=	ArtemisDeviceName(cCameraID, tempDeviceName);
 	if (atikOK)
 	{
-		SetCommonPropertyName(tempDeviceName);
+		SetCommonPropertyName("ATIK-", tempDeviceName);
 	}
 	CONSOLE_DEBUG_W_STR("cCommonProp.Name=", cCommonProp.Name);
 	LogEvent(	"camera",
@@ -699,6 +700,33 @@ bool				eightbit;
 }
 
 //*****************************************************************************
+//*	this routine gets called by BOTH Write_BinX() & Write_BinY()
+//*****************************************************************************
+TYPE_ASCOM_STATUS	CameraDriverATIK::Write_BinXY(const int newBinXvalue)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
+int					atikRetCode;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	if (hAtikCameraHandle != NULL)
+	{
+//	int  ArtemisBin(  ArtemisHandle hCam, int  x, int  y); // set the x,y binning factors
+		atikRetCode	=	ArtemisBin(hAtikCameraHandle, newBinXvalue, newBinXvalue);
+		if (atikRetCode == ARTEMIS_OK)
+		{
+
+		}
+		else
+		{
+			CONSOLE_DEBUG_W_NUM("ArtemisBin returned error\t=", atikRetCode)
+		}
+	}
+	return(alpacaErrCode);
+}
+
+
+//*****************************************************************************
 TYPE_ASCOM_STATUS	CameraDriverATIK::Write_Gain(const int newGainValue)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
@@ -894,7 +922,8 @@ int					atikRetCode;
 
 //**************************************************************************
 //*	returns error code,
-//*	sets class varible to current temp
+//*	sets class variable to current temp
+//**************************************************************************
 TYPE_ASCOM_STATUS	CameraDriverATIK::Read_SensorTemp(void)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
@@ -947,6 +976,34 @@ int					temperatureVal;
 	return(alpacaErrCode);
 }
 
+//**************************************************************************
+TYPE_ASCOM_STATUS	CameraDriverATIK::Read_SensorTargetTemp(void)
+{
+TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
+
+
+
+	GENERATE_ALPACAPI_ERRMSG(cLastCameraErrMsg, "Not implemented");
+	CONSOLE_DEBUG(cLastCameraErrMsg);
+	return(alpacaErrCode);
+}
+
+//**************************************************************************
+TYPE_ASCOM_STATUS	CameraDriverATIK::Write_SensorTargetTemp(const double newCCDtargetTemp)
+{
+TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
+
+//	int ArtemisSetCooling(			 ArtemisHandle hCam, int setpoint);
+//	The setpoint is in 1/100 of a degree (Celcius).
+//	So, to set the cooling to -10C, you need to call the function with setpoint = -1000
+
+
+	GENERATE_ALPACAPI_ERRMSG(cLastCameraErrMsg, "Not implemented");
+	CONSOLE_DEBUG(cLastCameraErrMsg);
+	return(alpacaErrCode);
+}
+
+
 //*****************************************************************************
 TYPE_ASCOM_STATUS	CameraDriverATIK::Read_CoolerState(bool *coolerOnOff)
 {
@@ -984,6 +1041,9 @@ int					setpoint;
 //					CONSOLE_DEBUG("Cooler is OFF");
 					*coolerOnOff	=	false;
 				}
+				#warning "This needs to be tested (5/1/2023)
+				cCameraProp.SetCCDTemperature	=	setpoint / 100.0;
+
 				alpacaErrCode		=	kASCOM_Err_Success;
 			}
 			else if (atikRetCode == ARTEMIS_NOT_IMPLEMENTED)

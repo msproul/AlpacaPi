@@ -20,7 +20,7 @@
 
 
 
-TYPE_CelestData		*ReadDefaultStarData(long *objectCount, TYPE_Time *timePtr);
+TYPE_CelestData		*ReadDefaultStarData(long *objectCount, TYPE_SkyTime *timePtr);
 long				GetFileSize(const char *filePath);
 
 TYPE_CelestData		*ReadTSCfile(const char *filePath, int dataSource, long *objectCount);

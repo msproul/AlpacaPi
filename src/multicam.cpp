@@ -16,10 +16,9 @@
 //*****************************************************************************
 //*	Nov  7,	2019	<MLS> Created multicam.cpp
 //*	Nov  8,	2019	<MLS> Multicam working with 2 cameras, a ZWO and ATIK
-//*	Nov 13,	2019	<MLS> Added setexposuretime, and setlivemode
+//*	Nov 13,	2019	<MLS> Added exposuretime, and livemode
 //*	Nov 13,	2019	<MLS> Added SetExposureTime() & ExtractDurationList()
-//==============================
-//*	Mar 29,	2120	<TODO> Change multicam commands to match updated camera commands
+//*	Apr 27,	2023	<MLS> Changed multicam commands to match camera commands
 //*****************************************************************************
 
 #ifdef _ENABLE_MULTICAM_
@@ -45,18 +44,11 @@
 #include	"cameradriver.h"
 #include	"multicam.h"
 
-
-
-
 #define	kRotateDome_CW		0
 #define	kRotateDome_CCW		1
 
-
-
 #define	kStopRightNow	true
 #define	kStopNormal		false
-
-
 
 //*****************************************************************************
 void	CreateMultiCamObject(void)
@@ -78,8 +70,8 @@ enum
 	kCmd_MultiCam_startexposure	=	0,	//*	Starts an exposure
 	kCmd_MultiCam_stopexposure,			//*	Stops the current exposure
 
-	kCmd_MultiCam_setexposuretime,
-	kCmd_MultiCam_setlivemode,
+	kCmd_MultiCam_exposuretime,
+	kCmd_MultiCam_livemode,
 
 
 	kCmd_MultiCam_last
@@ -91,10 +83,10 @@ enum
 static TYPE_CmdEntry	gMultiCamCmdTable[]	=
 {
 
-	{	"startexposure",			kCmd_MultiCam_startexposure,		kCmdType_GET	},
-	{	"stopexposure",				kCmd_MultiCam_stopexposure,			kCmdType_GET	},
-	{	"setexposuretime",			kCmd_MultiCam_setexposuretime,		kCmdType_BOTH	},
-	{	"setlivemode",				kCmd_MultiCam_setlivemode,			kCmdType_BOTH	},
+	{	"startexposure",		kCmd_MultiCam_startexposure,		kCmdType_GET	},
+	{	"stopexposure",			kCmd_MultiCam_stopexposure,			kCmdType_GET	},
+	{	"exposuretime",			kCmd_MultiCam_exposuretime,		kCmdType_BOTH	},
+	{	"livemode",				kCmd_MultiCam_livemode,			kCmdType_BOTH	},
 
 
 
@@ -109,6 +101,7 @@ MultiCam::MultiCam(const int argDevNum)
 	CONSOLE_DEBUG(__FUNCTION__);
 
 	strcpy(cCommonProp.Name, "MultiCam");
+	cDriverCmdTablePtr	=	gMultiCamCmdTable;
 
 }
 
@@ -200,19 +193,35 @@ int					mySocket;
 		//----------------------------------------------------------------------------------------
 		case kCmd_MultiCam_startexposure:		//*	Starts an exposure
 			CONSOLE_DEBUG("kCmd_MultiCam_startexposure");
-			alpacaErrCode	=	StartExposure(reqData, alpacaErrMsg);
+			if (reqData->get_putIndicator == 'P')
+			{
+				alpacaErrCode	=	Put_StartExposure(reqData, alpacaErrMsg);
+			}
+			else
+			{
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "GEt not allowed for startexposure");
+				alpacaErrCode	=	kASCOM_Err_InvalidOperation;
+			}
 			break;
 
 		case kCmd_MultiCam_stopexposure:		//*	Stops the current exposure
 			CONSOLE_DEBUG("kCmd_MultiCam_stopexposure");
 			break;
 
-
-		case kCmd_MultiCam_setexposuretime:
-			alpacaErrCode	=	SetExposureTime(reqData, alpacaErrMsg);
+		case kCmd_MultiCam_exposuretime:
+			if (reqData->get_putIndicator == 'P')
+			{
+				alpacaErrCode	=	Put_ExposureTime(reqData, alpacaErrMsg);
+			}
+			else
+			{
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "GEt not allowed for startexposure");
+//				alpacaErrCode	=	Get_ExposureTime(reqData, alpacaErrMsg);
+			}
 			break;
 
-		case kCmd_MultiCam_setlivemode:
+		case kCmd_MultiCam_livemode:
+			alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
 			break;
 
 
@@ -362,7 +371,7 @@ int			sLen;
 }
 
 //*****************************************************************************
-TYPE_ASCOM_STATUS	MultiCam::StartExposure(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
+TYPE_ASCOM_STATUS	MultiCam::Put_StartExposure(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
 double				exposureDuration_usecs;
@@ -520,7 +529,7 @@ char				myFileNameSuffix[kFileNamePrefixMaxLen];
 }
 
 //*****************************************************************************
-TYPE_ASCOM_STATUS	MultiCam::SetExposureTime(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
+TYPE_ASCOM_STATUS	MultiCam::Put_ExposureTime(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
 double				exposureDuration_usecs;
@@ -628,5 +637,29 @@ CameraDriver	*cameraObj;
 		//*	now generate links to all of the commands
 		GenerateHTMLcmdLinkTable(mySocketFD, "multicam", 0, gMultiCamCmdTable);
 	}
+}
+
+//*****************************************************************************
+//*	GetCommandArgumentString returns the documentation string for driverdocs
+//*****************************************************************************
+bool	MultiCam::GetCommandArgumentString(const int cmdENum, char *agumentString, char *commentString)
+{
+bool	foundFlag	=	true;
+
+	switch(cmdENum)
+	{
+		case kCmd_MultiCam_startexposure:
+		case kCmd_MultiCam_stopexposure:
+			break;
+
+		case kCmd_MultiCam_exposuretime:	strcpy(agumentString, "Duration=FLOAT");		break;
+		case kCmd_MultiCam_livemode:		strcpy(agumentString, "Livemode=BOOL");			break;
+
+		default:
+			strcpy(agumentString, "");
+			foundFlag	=	false;
+			break;
+	}
+	return(foundFlag);
 }
 #endif	//	_ENABLE_MULTICAM_

@@ -14,6 +14,8 @@
 //*	Nov 27,	2022	<MLS> Added FormatTimeStringISO8601_UTC()
 //*	Mar  3,	2023	<MLS> Added IsTrueFalseArgValid()
 //*	Mar 13,	2023	<MLS> Added CountCharsInString() (from multicam)
+//*	Mar 25,	2023	<MLS> Added DumpLinuxTimeStruct()
+//*	Apr 30,	2023	<MLS> Added StripLeadingSpaces()
 //*****************************************************************************
 
 #include	<math.h>
@@ -69,6 +71,30 @@ bool	trueFalseFlag;
 	}
 	return(trueFalseFlag);
 }
+
+//************************************************************************
+void	StripLeadingSpaces(char *theString)
+{
+int		iii;
+int		ccc;
+
+	ccc		=	0;
+	iii		=	0;
+	while (theString[iii] != 0)
+	{
+		if ((ccc == 0) && (theString[iii] == 0x20))
+		{
+			//*	do nothing
+		}
+		else
+		{
+			theString[ccc++]	=	theString[iii];
+		}
+		iii++;
+	}
+	theString[ccc]	=	0;
+}
+
 
 ////*****************************************************************************
 ////*	returns sign char "+" or "-"
@@ -482,6 +508,21 @@ struct timeval	currentTime;
 	return(currentTime.tv_sec);
 }
 
+//*****************************************************************************
+void	DumpLinuxTimeStruct(struct tm *linuxTimeStruct, const char *callingFunction)
+{
+	CONSOLE_DEBUG_W_STR("Called from",		callingFunction);
+	CONSOLE_DEBUG_W_LONG("tm_gmtoff\t=",	linuxTimeStruct->tm_gmtoff);
+	CONSOLE_DEBUG_W_NUM("tm_hour  \t=",		linuxTimeStruct->tm_hour);
+	CONSOLE_DEBUG_W_NUM("tm_isdst \t=",		linuxTimeStruct->tm_isdst);
+	CONSOLE_DEBUG_W_NUM("tm_mday  \t=",		linuxTimeStruct->tm_mday);
+	CONSOLE_DEBUG_W_NUM("tm_min   \t=",		linuxTimeStruct->tm_min);
+	CONSOLE_DEBUG_W_NUM("tm_mon   \t=",		linuxTimeStruct->tm_mon);
+	CONSOLE_DEBUG_W_NUM("tm_sec   \t=",		linuxTimeStruct->tm_sec);
+	CONSOLE_DEBUG_W_NUM("tm_wday  \t=",		linuxTimeStruct->tm_wday);
+	CONSOLE_DEBUG_W_NUM("tm_yday  \t=",		linuxTimeStruct->tm_yday);
+	CONSOLE_DEBUG_W_STR("tm_zone  \t=",		linuxTimeStruct->tm_zone);
+}
 
 #if !defined(__arm__) || defined(_INCLUDE_MILLIS_)
 

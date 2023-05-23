@@ -58,7 +58,7 @@ class SlitTrackerDriver: public AlpacaDriver
 //		virtual	void				OutputHTML_Part2(TYPE_GetPutRequestData *reqData);
 		virtual	int32_t				RunStateMachine(void);
 		virtual bool				GetCmdNameFromMyCmdTable(const int cmdNumber, char *comandName, char *getPut);
-		virtual bool				GetCommandArgumentString(const int cmdNumber, char *agumentString);
+		virtual bool				GetCommandArgumentString(const int cmdNumber, char *agumentString, char *commentString);
 
 
 		TYPE_ASCOM_STATUS	Put_Setrate(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);

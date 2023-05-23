@@ -81,7 +81,7 @@ WindowTabTelescope::WindowTabTelescope(	const int	xSize,
 //**************************************************************************************
 WindowTabTelescope::~WindowTabTelescope(void)
 {
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 }
 
 

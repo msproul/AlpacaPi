@@ -43,6 +43,7 @@
 //*	Sep 18,	2022	<MLS> Added DisableFilterWheel()
 //*	Sep 21,	2022	<MLS> Added display of remote IMU data
 //*	Sep 21,	2022	<MLS> Added SetRemoteIMUdisplay()
+//*	Apr 30,	2023	<MLS> Moved all camera cooling stuff to its own window tab
 //*****************************************************************************
 
 #ifdef _ENABLE_CTRL_CAMERA_
@@ -98,7 +99,7 @@ WindowTabCamera::WindowTabCamera(	const int	xSize,
 //**************************************************************************************
 WindowTabCamera::~WindowTabCamera(void)
 {
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 }
 
 //**************************************************************************************
@@ -530,48 +531,14 @@ char		textBuff[32];
 	yLoc			+=	4;
 	yLoc			+=	4;
 
-	//=======================================================
-	//*	Temperature
-	SetWidget(		kCameraBox_Temp_Label,	cClm4_offset,	yLocClm4,		cClmWidth,		cRadioBtnHt	);
-	SetWidget(		kCameraBox_Temperature,	cClm5_offset,	yLocClm4,		cClmWidth * 2,	cRadioBtnHt	);
-	SetWidgetFont(	kCameraBox_Temp_Label,	kFont_Small);
-	SetWidgetFont(	kCameraBox_Temperature,	kFont_Small);
-	SetWidgetText(	kCameraBox_Temp_Label,	"Temp");
-	yLocClm4	+=	cRadioBtnHt;
-	yLocClm4	+=	2;
-	//*	Cooler check box
-	SetWidget(		kCameraBox_CoolerChkBox,	cClm4_offset + 2,	yLocClm4,	cClmWidth,	cRadioBtnHt	);
-	SetWidgetType(	kCameraBox_CoolerChkBox,	kWidgetType_CheckBox);
-	SetWidgetText(	kCameraBox_CoolerChkBox,	"Camera Cooler");
-	SetWidgetFont(	kCameraBox_CoolerChkBox,	kFont_Medium);
-	yLocClm4	+=	cRadioBtnHt;
-	yLocClm4	+=	2;
-
-	yLoc			+=	cRadioBtnHt;
-	yLoc			+=	2;
-	if (yLocClm4 > yLoc)
-	{
-		yLoc	=	yLocClm4;
-	}
-
-
-#ifdef _TEMP_GRAPH_
-	SetWidget(		kCameraBox_TempGraph,	cClm1_offset+ 3,	yLoc,		cWidth - 8,		75	);
-	SetWidgetType(	kCameraBox_TempGraph,	kWidgetType_Graph);
-
-	SetWidgetOutlineBox(kCameraBox_TempOutline, kCameraBox_Temp_Label, kCameraBox_TempGraph);
-
-	yLoc			+=	100;
-	yLoc			+=	4;
-#endif // _TEMP_GRAPH_
-
-
 #ifdef _SUPPORT_REMOTE_IMU_
 int imuClmWidth;
 int	imuHeight;
 
 	//=======================================================
-	xLoc		=	cClm4_offset + 2;
+//	xLoc		=	cClm4_offset + 2;
+	xLoc		=	cClm1_offset + 2;
+	yLoc		=	yLocClm4;
 	yLoc		+=	5;
 	imuClmWidth	=	cClmWidth * 2;
 	imuHeight	=	25;
@@ -602,6 +569,51 @@ int	imuHeight;
 	SetRemoteIMUdisplay(false);
 #endif	//	_SUPPORT_REMOTE_IMU_
 
+#ifdef _INCLUDE_COOLER_ON_CAM_WINDOW_
+	//=======================================================
+	//*	Cooler check box
+	int	cooler_xLoc;
+	cooler_xLoc	=	cClm4_offset + 6;
+	SetWidget(		kCameraBox_CoolerChkBox,	cooler_xLoc,	yLocClm4,	cClmWidth,	cRadioBtnHt	);
+	SetWidgetType(	kCameraBox_CoolerChkBox,	kWidgetType_CheckBox);
+	SetWidgetText(	kCameraBox_CoolerChkBox,	"Camera Cooler");
+	SetWidgetFont(	kCameraBox_CoolerChkBox,	kFont_Medium);
+	yLocClm4	+=	cRadioBtnHt;
+	yLocClm4	+=	2;
+
+	//*	Temperature
+	iii	=	kCameraBox_Temp_Label;
+	while (iii < kCameraBox_TargetTemp)
+	{
+
+		SetWidget(		iii,	cooler_xLoc,	yLocClm4,		cClmWidth,		cRadioBtnHt);
+		SetWidgetFont(	iii,	kFont_Small);
+		iii++;
+
+		SetWidget(		iii,	(cClm5_offset + 6),	yLocClm4,		cClmWidth * 2,	cRadioBtnHt);
+		SetWidgetFont(	iii,	kFont_Small);
+		iii++;
+
+		yLocClm4	+=	cRadioBtnHt;
+		yLocClm4	+=	2;
+	}
+	SetWidgetText(	kCameraBox_Temp_Label,		"Temp");
+	SetWidgetText(	kCameraBox_TargetTempLBL,	"Target");
+	SetWidgetType(	kCameraBox_TargetTemp,		kWidgetType_TextInput);
+	SetWidgetBGColor(kCameraBox_TargetTemp,		CV_RGB(128,	128,	128));
+
+	SetWidgetJustification(	kCameraBox_TargetTemp,	kJustification_Center);
+
+	SetWidgetOutlineBox(kCameraBox_TempOutline, kCameraBox_CoolerChkBox, (kCameraBox_TempOutline -1));
+#endif // 0
+
+	yLoc			+=	cRadioBtnHt;
+	yLoc			+=	2;
+	if (yLocClm4 > yLoc)
+	{
+		yLoc	=	yLocClm4;
+	}
+
 	//=======================================================
 	//*	set up all the bottom stuff so that it is the same on all windowtabs
 	SetupWindowBottomBoxes(	kCameraBox_IPaddr,
@@ -626,7 +638,8 @@ int		iii;
 
 #define	kCameraLogoCount	8
 
-#ifdef _USE_OPENCV_CPP_
+
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 	cv::Mat		gCameraLogoImage[kCameraLogoCount];
 #endif
 
@@ -636,7 +649,8 @@ void	WindowTabCamera::SetCameraLogo(void)
 {
 char	logoImagePath[32];
 int		camLogoIdx;
-#ifdef _USE_OPENCV_CPP_
+
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 	cv::Mat		*logoImagePtr;
 #else
 	IplImage	*logoImagePtr;
@@ -689,7 +703,7 @@ int		camLogoIdx;
 
 	if ((camLogoIdx >= 0) && (camLogoIdx < kCameraLogoCount))
 	{
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 		gCameraLogoImage[camLogoIdx]	=	cv::imread(logoImagePath);
 		logoImagePtr					=	&gCameraLogoImage[camLogoIdx];
 #else
@@ -707,19 +721,6 @@ int		camLogoIdx;
 		SetWidgetImage(kCameraBox_Logo, logoImagePtr);
 	}
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, "Exit");
-}
-
-//**************************************************************************************
-void	WindowTabCamera::SetTempartueDisplayEnable(bool enabled)
-{
-
-	SetWidgetValid(kCameraBox_Temp_Label,	enabled);
-	SetWidgetValid(kCameraBox_Temperature,	enabled);
-	SetWidgetValid(kCameraBox_CoolerChkBox,	enabled);
-#ifdef _TEMP_GRAPH_
-	SetWidgetValid(kCameraBox_TempGraph,	enabled);
-	SetWidgetValid(kCameraBox_TempOutline,	enabled);
-#endif // _TEMP_GRAPH_
 }
 
 //*****************************************************************************
@@ -815,9 +816,11 @@ int					loopCntr;
 			ToggleSaveAll();
 			break;
 
+#ifdef _INCLUDE_COOLER_ON_CAM_WINDOW_
 		case kCameraBox_CoolerChkBox:
 			ToggleCooler();
 			break;
+#endif // _INCLUDE_COOLER_ON_CAM_WINDOW_
 
 		case kCameraBox_Reset:
 			validData	=	AlpacaSendPutCmd(	"camera", "abortexposure",	NULL);
@@ -1207,7 +1210,7 @@ ControllerCamera	*myCameraController;
 void	WindowTabCamera::DownloadImage(const bool useRGBarray)
 {
 ControllerCamera	*myCameraController;
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 	cv::Mat			*myDownLoadedImage;
 #else
 	IplImage		*myDownLoadedImage;
@@ -1242,7 +1245,8 @@ char				filePath[256];
 		if (myDownLoadedImage != NULL)
 		{
 			CONSOLE_DEBUG("Download complete");
-#ifdef _USE_OPENCV_CPP_
+
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 			CONSOLE_DEBUG_W_NUM("myDownLoadedImage->cols\t=",	myDownLoadedImage->cols);
 			CONSOLE_DEBUG_W_NUM("myDownLoadedImage->rows\t=",	myDownLoadedImage->rows);
 #else
@@ -1257,7 +1261,8 @@ char				filePath[256];
 			strcat(filePath, ".jpg");
 
 			CONSOLE_DEBUG_W_STR("Saving image as", filePath);
-#ifdef _USE_OPENCV_CPP_
+
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 			try
 			{
 				cv::imwrite(filePath, *myDownLoadedImage);
@@ -1320,8 +1325,8 @@ ControllerImage		*imageWindowController;
 			//*	this will open a new window with the image displayed
 			parentCameraController	=	(ControllerCamera *)cParentObjPtr;
 			imageWindowController	=	new ControllerImage(	cDownLoadedFileNameRoot,
-											myDownLoadedImage,
-											&parentCameraController->cBinaryImageHdr);
+																myDownLoadedImage,
+																&parentCameraController->cBinaryImageHdr);
 			if (imageWindowController != NULL)
 			{
 				//*	set the image download data

@@ -142,9 +142,9 @@ ControllerDome::~ControllerDome(void)
 {
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 	DELETE_OBJ_IF_VALID(cDomeTabObjPtr);
+	DELETE_OBJ_IF_VALID(cCapabilitiesTabObjPtr);
 	DELETE_OBJ_IF_VALID(cDriverInfoTabObjPtr);
 	DELETE_OBJ_IF_VALID(cAboutBoxTabObjPtr);
-	DELETE_OBJ_IF_VALID(cCapabilitiesTabObjPtr);
 }
 
 //**************************************************************************************
@@ -178,7 +178,6 @@ char	lineBuff[64];
 		SetTabWindow(kTab_Capabilities,	cCapabilitiesTabObjPtr);
 		cCapabilitiesTabObjPtr->SetParentObjectPtr(this);
 	}
-
 
 	//=============================================================
 	cDriverInfoTabObjPtr		=	new WindowTabDriverInfo(	cWidth, cHeight, cBackGrndColor, cWindowName);

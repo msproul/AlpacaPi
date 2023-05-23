@@ -61,11 +61,10 @@
 
 //=============================================================================
 #ifdef _USE_OPENCV_
-	#include	"opencv2/opencv.hpp"
-	#include	"opencv2/core.hpp"
+	#include	<opencv2/opencv.hpp>
+	#include	<opencv2/core.hpp>
 
-	#ifdef _USE_OPENCV_CPP_
-	#else
+	#ifndef _USE_OPENCV_CPP_
 		#include	"opencv2/highgui/highgui_c.h"
 		#include	"opencv2/imgproc/imgproc_c.h"
 		#include	"opencv2/core/version.hpp"
@@ -249,7 +248,9 @@ class AlpacaDriver
 		virtual	void	OutputHTML_Part2(		TYPE_GetPutRequestData *reqData);
 				void	OutputHTML_DriverDocs(	TYPE_GetPutRequestData *reqData);
 				void	OutputCommadTable(int mySocketFD, const char *title, const TYPE_CmdEntry *commandTable);
-		virtual bool	GetCommandArgumentString(const int cmdNumber, char *agumentString);
+		virtual bool	GetCommandArgumentString(const int cmdNumber, char *agumentString, char *commentString);
+		virtual bool	GetCmdNameFromMyCmdTable(const int cmdNumber, char *comandName, char *getPut);
+		virtual	void	OuputCommandTableNotes(int mySocketFD);
 
 				void	OutputHTMLrowData(int socketFD, const char *string1, const char *string2);
 				void	OutputHTML_CmdStats(	TYPE_GetPutRequestData *reqData);
@@ -303,7 +304,6 @@ class AlpacaDriver
 				int					cTotalCmdsProcessed;
 				int					cTotalCmdErrors;
 				void				RecordCmdStats(int cmdNum, char getput, TYPE_ASCOM_STATUS alpacaErrCode);
-		virtual bool				GetCmdNameFromMyCmdTable(const int cmdNumber, char *comandName, char *getPut);
 
 //				bool				cDeviceConnected;		//*	normally always true
 				TYPE_CMD_STATS		cCommonCmdStats[kCmd_Common_last];

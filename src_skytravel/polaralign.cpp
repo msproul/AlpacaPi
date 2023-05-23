@@ -27,6 +27,7 @@
 #include	<math.h>
 #include	<string.h>
 #include	<stdio.h>
+#include	<stdlib.h>
 
 //*	MLS Libraries
 //#define _ENABLE_CONSOLE_DEBUG_

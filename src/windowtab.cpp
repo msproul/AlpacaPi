@@ -182,7 +182,7 @@ int		iii;
 //**************************************************************************************
 WindowTab::~WindowTab(void)
 {
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 }
 
 //**************************************************************************************
@@ -495,8 +495,7 @@ char	lineBuff[64];
 	SetWidgetText(widgetIdx, lineBuff);
 }
 
-#ifdef _USE_OPENCV_CPP_
-
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 //**************************************************************************************
 void	WindowTab::SetWidgetImage(const int widgetIdx, cv::Mat *argImagePtr)
 {
@@ -778,7 +777,7 @@ int		logoHeight;
 		LoadAlpacaLogo();
 		if (gAlpacaLogoPtr != NULL)
 		{
-		#ifdef _USE_OPENCV_CPP_
+		#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 			logoWidth	=	gAlpacaLogoPtr->cols;
 			logoHeight	=	gAlpacaLogoPtr->rows;
 		#else
@@ -821,7 +820,7 @@ int	yLoc;
 		LoadAlpacaLogo();
 		if (gAlpacaLogoPtr != NULL)
 		{
-		#ifdef _USE_OPENCV_CPP_
+		#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 			logoWidth	=	gAlpacaLogoPtr->cols;
 			logoHeight	=	gAlpacaLogoPtr->rows;
 		#else
@@ -1020,7 +1019,7 @@ void	WindowTab::SetWidgetProgress(const int widgetIdx, const int currPosition, c
 }
 
 //*****************************************************************************
-void	WindowTab::SetWidgetSensorValue(const int widgetNum, TYPE_Sensor *sensorData, const int decimalPlaces)
+void	WindowTab::SetWidgetSensorValue(const int widgetNum, TYPE_InstSensor *sensorData, const int decimalPlaces)
 {
 
 	if (sensorData->ValidData)
@@ -1061,7 +1060,7 @@ void	WindowTab::SetupWindowControls(void)
 
 }
 
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 //**************************************************************************************
 void	WindowTab::DrawWidgetCustomGraphic(cv::Mat *openCV_Image, TYPE_WIDGET *theWidget, const int widgetIdx)
 {
@@ -1106,7 +1105,7 @@ Controller	*myControllerObj;
 	}
 	else
 	{
-		CONSOLE_DEBUG_W_STR("cParentObjPtr is NULL, windowname=", cWindowName);
+//		CONSOLE_DEBUG_W_STR("cParentObjPtr is NULL, windowname=", cWindowName);
 	}
 }
 
@@ -1495,13 +1494,8 @@ void	WindowTab::SetUpConnectedIndicator(const int buttonIdx, const int yLoc)
 
 //*****************************************************************************
 //*	this is so that the box can be used for error messages that might set to red
-#ifdef _USE_OPENCV_CPP_
 //*****************************************************************************
 void	WindowTab::SetHelpTextBoxColor(cv::Scalar newtextColor)
-#else
-//*****************************************************************************
-void	WindowTab::SetHelpTextBoxColor(cv::Scalar newtextColor)
-#endif // _USE_OPENCV_CPP_
 {
 	cHelpTextBoxColor	=	newtextColor;
 }
@@ -1994,7 +1988,7 @@ void	WindowTab::LLD_LineTo(const int xx, const int yy)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 	if (cOpenCV_Image != NULL)
 	{
 	cv::Point		pt1;
@@ -2055,7 +2049,7 @@ void	WindowTab::LLD_DrawCString(	const int	xx,
 									const char	*theString,
 									const int	fontIndex)
 {
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 	if (cOpenCV_Image != NULL)
 	{
 	cv::Point		textLoc;
@@ -2119,7 +2113,7 @@ int	WindowTab::LLD_GetTextSize(const char *textString, const int fontIndex)
 {
 int	textWidthPixels;
 
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 cv::Size		textSize;
 	textSize	=	cv::getTextSize(textString,
 									gFontInfo[fontIndex].fontID,
@@ -2246,7 +2240,8 @@ void	WindowTab::LLD_SetColor(cv::Scalar newColor)
 void	WindowTab::LLD_Putpixel(const int xx, const int yy, const int theColor)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
-#ifdef _USE_OPENCV_CPP_
+
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 	if (cOpenCV_Image != NULL)
 	{
 	cv::Point		pt1;
@@ -2337,7 +2332,8 @@ void	WindowTab::LLD_FrameRect(int left, int top, int width, int height, int line
 		CONSOLE_DEBUG_W_NUM("height\t=", height);
 		CONSOLE_ABORT(__FUNCTION__);
 	}
-#ifdef _USE_OPENCV_CPP_
+
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 	if (cOpenCV_Image != NULL)
 	{
 	cv::Rect	myCVrect;
@@ -2382,7 +2378,8 @@ void	WindowTab::LLD_FrameRect(int left, int top, int width, int height, int line
 //**************************************************************************************
 void	WindowTab::LLD_FillRect(int left, int top, int width, int height)
 {
-#ifdef _USE_OPENCV_CPP_
+
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 	if (cOpenCV_Image != NULL)
 	{
 	cv::Rect	myCVrect;
@@ -2427,7 +2424,7 @@ void	WindowTab::LLD_FillRect(int left, int top, int width, int height)
 void	WindowTab::LLD_FillEllipse(int xCenter, int yCenter, int xRadius, int yRadius)
 {
 
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 	if (cOpenCV_Image != NULL)
 	{
 	cv::Point	center;
@@ -2515,7 +2512,7 @@ void	WindowTab::LLD_FrameEllipse(int xCenter, int yCenter, int xRadius, int yRad
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 	if (cOpenCV_Image != NULL)
 	{
 	cv::Point	center;
@@ -2605,7 +2602,7 @@ cv::Scalar	cvScalarAll;
 
 	if (cOpenCV_Image != NULL)
 	{
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 		cvScalarAll.all(0.0);
 		//---try------try------try------try------try------try---
 		try
@@ -2644,7 +2641,7 @@ cv::Scalar	cvScalarAll;
 	}
 }
 
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 //*********************************************************************
 void	SetRect(cv::Rect *theRect, const int top, const int left, const int bottom, const int right)
 #else
@@ -2659,7 +2656,7 @@ void	SetRect(CvRect *theRect, const int top, const int left, const int bottom, c
 }
 
 
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 //*********************************************************************
 void	InsetRect(cv::Rect *theRect, const int xInset, const int yInset)
 #else

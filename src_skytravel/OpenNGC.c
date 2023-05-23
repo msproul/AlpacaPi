@@ -347,8 +347,11 @@ bool			validObject;
 char			lineBuff[512];
 char			filePath[128];
 char			*firstLinePtr;
+int				startupWidgetIdx;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
+
+	startupWidgetIdx	=	SetStartupText("Open-NGC catalog:");
 
 	ngcStarData	=	NULL;
 
@@ -386,10 +389,12 @@ char			*firstLinePtr;
 			strcpy(gNGCDatbase, "OpenNGC");
 		}
 		fclose(filePointer);
+		SetStartupTextStatus(startupWidgetIdx, "OK");
 	}
 	else
 	{
 		CONSOLE_DEBUG_W_STR("File not found\t=", filePath);
+		SetStartupTextStatus(startupWidgetIdx, "Not found");
 	}
 	return(ngcStarData);
 }

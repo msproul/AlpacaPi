@@ -34,6 +34,9 @@
 //*	Feb 12,	2021	<MLS> Added GetCalibrationStateString()
 //*	Apr  6,	2021	<MLS> CONFORM-covercalibrator -> PASSED!!!!!!!!!!!!!!!!!!!!!
 //*	Dec 16,	2021	<MLS> Added WatchDog_TimeOut() to calibrationdriver
+//*	Mar 25,	2023	<MLS> Added aperture setting to Alpaca definition
+//*	Mar 25,	2023	<MLS> Added Get_Aperture() & Put_Aperture()
+//*	Mar 25,	2023	<MLS> Added Get_CanAdjustAperture()
 //*****************************************************************************
 
 
@@ -106,6 +109,8 @@ enum
 
 	//*	added by MLS
 	kCmd_Calibration_Extras,
+	kCmd_Calibration_aperture,				//*	GET/PUT aperture opening in percentage
+	kCmd_Calibration_canadjustaperture,		//*	true if adjustable aperture is available
 	kCmd_Calibration_readall,
 
 	kCmd_Calibration_last
@@ -128,6 +133,8 @@ static TYPE_CmdEntry	gCalibrationCmdTable[]	=
 
 	//*	added by MLS
 	{	"--extras",			kCmd_Calibration_Extras,			kCmdType_GET	},
+	{	"aperture",			kCmd_Calibration_aperture,			kCmdType_BOTH	},
+	{	"canadjustaperture",kCmd_Calibration_canadjustaperture,	kCmdType_GET	},
 	{	"readall",			kCmd_Calibration_readall,			kCmdType_GET	},
 
 	{	"",						-1,	0x00	}
@@ -149,6 +156,11 @@ CalibrationDriver::CalibrationDriver(void)
 	cCoverCalibrationProp.CalibratorState	=	kCalibrator_NotPresent;
 	cCoverCalibrationProp.CoverState		=	kCover_NotPresent;
 	cCoverCalibrationProp.MaxBrightness		=	1;
+
+	//*	extras by MLS
+	cCoverCalibrationProp.Aperture			=	100.0;
+	cCoverCalibrationProp.CanSetAperture	=	false;
+
 
 	cDriverCmdTablePtr	=	gCalibrationCmdTable;
 
@@ -250,6 +262,22 @@ int					mySocket;
 
 		case kCmd_Calibration_opencover:		//*	Initiates cover opening
 			alpacaErrCode	=	Put_OpenCover(reqData, alpacaErrMsg);
+			break;
+
+		//---------------------------------------------------------------------
+		case kCmd_Calibration_aperture:				//*	GET/PUT aperture opening in percentage
+			if (reqData->get_putIndicator == 'G')
+			{
+				alpacaErrCode	=	Get_Aperture(reqData, alpacaErrMsg, gValueString);
+			}
+			else if (reqData->get_putIndicator == 'P')
+			{
+				alpacaErrCode	=	Put_Aperture(reqData, alpacaErrMsg);
+			}
+			break;
+
+		case kCmd_Calibration_canadjustaperture:	//*	true if adjustable aperture is available
+			alpacaErrCode	=	Get_CanAdjustAperture(reqData, alpacaErrMsg, gValueString);
 			break;
 
 		case kCmd_Calibration_readall:
@@ -588,6 +616,61 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 	return(alpacaErrCode);
 }
 
+//*****************************************************************************
+TYPE_ASCOM_STATUS	CalibrationDriver::Get_Aperture(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode;
+
+	if (reqData != NULL)
+	{
+		if (cCoverCalibrationProp.CanSetAperture)
+		{
+			cBytesWrittenForThisCmd	+=	JsonResponse_Add_Double(reqData->socket,
+											reqData->jsonTextBuffer,
+											kMaxJsonBuffLen,
+											gValueString,
+											cCoverCalibrationProp.Aperture,
+											INCLUDE_COMMA);
+			alpacaErrCode	=	kASCOM_Err_Success;
+		}
+		else
+		{
+			alpacaErrCode	=	kASCOM_Err_PropertyNotImplemented;
+		}
+	}
+	else
+	{
+		alpacaErrCode	=	kASCOM_Err_InternalError;
+	}
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	CalibrationDriver::Put_Aperture(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode;
+
+	alpacaErrCode	=	kASCOM_Err_PropertyNotImplemented;
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	CalibrationDriver::Get_CanAdjustAperture(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode;
+
+	//*	needs to be updated when we implement pulse guiding
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	reqData->socket,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									gValueString,
+									cCoverCalibrationProp.CanSetAperture,
+									INCLUDE_COMMA);
+	alpacaErrCode	=	kASCOM_Err_Success;
+
+	return(alpacaErrCode);
+}
+
 
 //*****************************************************************************
 TYPE_ASCOM_STATUS	CalibrationDriver::Get_Readall(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
@@ -613,7 +696,7 @@ int		mySocket;
 		alpacaErrCode	=	Get_Calibratorstate(reqData, alpacaErrMsg, "calibratorstate");
 		alpacaErrCode	=	Get_Coverstate(		reqData, alpacaErrMsg, "coverstate");
 		alpacaErrCode	=	Get_Maxbrightness(	reqData, alpacaErrMsg, "maxbrightness");
-
+		alpacaErrCode	=	Get_CanAdjustAperture(reqData, alpacaErrMsg, "canadjustaperture");
 
 		//===============================================================
 		JsonResponse_Add_String(mySocket,

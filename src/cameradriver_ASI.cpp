@@ -80,6 +80,7 @@
 //*	Oct 13,	2021	<MLS> Added Write_BinX() & Write_BinY() to ASI driver
 //*	May 17,	2022	<MLS> Changed the way power level is reported
 //*	Oct  1,	2022	<MLS> Changed CreateASI_CameraObjects() to return camera count
+//*	Apr 30,	2023	<MLS> Added Read_SensorTargetTemp() & Write_SensorTargetTemp()
 //*****************************************************************************
 //*	Length: unspecified [text/plain]
 //*	Saving to: "imagearray.1"
@@ -297,9 +298,9 @@ ASI_ERROR_CODE		asiErrorCode;
 			}
 			iii++;
 		}
-		//*	for now, we dont support binning, so make CONFORM happy
-		cCameraProp.MaxbinX	=	1;
-		cCameraProp.MaxbinY	=	1;
+//		//*	for now, we dont support binning, so make CONFORM happy
+//		cCameraProp.MaxbinX	=	1;
+//		cCameraProp.MaxbinY	=	1;
 
 		//*	get the supported image formats
 		iii	=	0;
@@ -996,7 +997,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
 
 #ifdef _USE_OPENCV_
 
-#ifdef _USE_OPENCV_CPP_
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 	#warning "OpenCV++ not finished"
 	alpacaErrCode	=		kASCOM_Err_MethodNotImplemented;
 #else
@@ -2162,7 +2163,7 @@ char				asiErrorMsgString[64];
 		asiErrorCode	=	OpenASIcameraIfNeeded(cCameraID);
 		if (asiErrorCode == ASI_SUCCESS)
 		{
-			cameraTemperature	=	-600;
+			cameraTemperature	=	-600;	//*	set to invalid value so we know we got a valid value back
 			bAuto				=	ASI_FALSE;
 			asiErrorCode		=	ASIGetControlValue(cCameraID, ASI_TEMPERATURE, &cameraTemperature, &bAuto);
 //			CONSOLE_DEBUG_W_NUM("ASIGetControlValue->asiErrorCode\t=",	asiErrorCode);
@@ -2209,6 +2210,142 @@ char				asiErrorMsgString[64];
 	}
 	return(alpacaErrCode);
 }
+
+//**************************************************************************
+//*	Reads the current target temperature
+//**************************************************************************
+TYPE_ASCOM_STATUS	CameraDriverASI::Read_SensorTargetTemp(void)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
+long				targetTemperature;
+ASI_BOOL			bAuto;
+ASI_ERROR_CODE		asiErrorCode;
+char				asiErrorMsgString[64];
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	cLastCameraErrMsg[0]	=	0;
+	if (cTempReadSupported)
+	{
+		asiErrorCode	=	OpenASIcameraIfNeeded(cCameraID);
+		if (asiErrorCode == ASI_SUCCESS)
+		{
+			targetTemperature	=	-600;	//*	set to invalid value so we know we got a valid value back
+			bAuto				=	ASI_FALSE;
+			asiErrorCode		=	ASIGetControlValue(cCameraID, ASI_TARGET_TEMP, &targetTemperature, &bAuto);
+			CONSOLE_DEBUG_W_NUM("ASIGetControlValue->asiErrorCode\t=",	asiErrorCode);
+			switch (asiErrorCode)
+			{
+				case ASI_SUCCESS:
+				//	cCameraProp.SetCCDTemperature	=	targetTemperature / 10.0;
+					cCameraProp.SetCCDTemperature	=	targetTemperature;
+					CONSOLE_DEBUG_W_LONG(	"targetTemperature\t=",	targetTemperature);
+					CONSOLE_DEBUG_W_DBL(	"SetCCDTemperature\t=",	cCameraProp.SetCCDTemperature);
+					alpacaErrCode	=	kASCOM_Err_Success;
+					break;
+
+				case  ASI_ERROR_INVALID_CONTROL_TYPE:
+					alpacaErrCode	=	kASCOM_Err_NotImplemented;
+					strcpy(cLastCameraErrMsg, "Coolor not supported on this camera");
+					CONSOLE_DEBUG(cLastCameraErrMsg);
+					break;
+
+				default:
+					CONSOLE_DEBUG_W_NUM("ASIGetControlValue->asiErrorCode\t=",	asiErrorCode);
+					CheckForClosedError(asiErrorCode);
+					Get_ASI_ErrorMsg(asiErrorCode, asiErrorMsgString);
+					strcpy(cLastCameraErrMsg, "Failed on ASIGetControlValue:, asiErr=");
+					strcat(cLastCameraErrMsg, asiErrorMsgString);
+					CONSOLE_DEBUG(cLastCameraErrMsg);
+					alpacaErrCode	=	kASCOM_Err_Unknown;
+					break;
+			}
+		}
+		else
+		{
+			alpacaErrCode	=	kASCOM_Err_NotConnected;
+			CONSOLE_DEBUG_W_NUM("ASIOpenCamera->asiErrorCode\t=",	asiErrorCode);
+			Get_ASI_ErrorMsg(asiErrorCode, asiErrorMsgString);
+			strcpy(cLastCameraErrMsg, "Failed to open ASI camera:, asiErr=");
+			strcat(cLastCameraErrMsg, asiErrorMsgString);
+		}
+	}
+	else
+	{
+		alpacaErrCode	=	kASCOM_Err_NotImplemented;
+		strcpy(cLastCameraErrMsg, "Temperature not supported on this camera");
+//		CONSOLE_DEBUG(cLastCameraErrMsg);
+	}
+	return(alpacaErrCode);
+}
+
+
+
+//**************************************************************************
+TYPE_ASCOM_STATUS	CameraDriverASI::Write_SensorTargetTemp(const double newCCDtemp)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
+long				targetTemperature;
+ASI_BOOL			bAuto;
+ASI_ERROR_CODE		asiErrorCode;
+char				asiErrorMsgString[64];
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	cLastCameraErrMsg[0]	=	0;
+	if (cTempReadSupported)
+	{
+		asiErrorCode	=	OpenASIcameraIfNeeded(cCameraID);
+		if (asiErrorCode == ASI_SUCCESS)
+		{
+//			targetTemperature	=	cCameraProp.SetCCDTemperature * 10;
+			targetTemperature	=	cCameraProp.SetCCDTemperature;
+			bAuto				=	ASI_FALSE;
+			asiErrorCode		=	ASISetControlValue(cCameraID, ASI_TARGET_TEMP, targetTemperature, bAuto);
+			CONSOLE_DEBUG_W_DBL(	"SetCCDTemperature\t=",	cCameraProp.SetCCDTemperature);
+			CONSOLE_DEBUG_W_LONG(	"targetTemperature\t=",	targetTemperature);
+			CONSOLE_DEBUG_W_NUM(	"asiErrorCode     \t=",	asiErrorCode);
+			switch (asiErrorCode)
+			{
+				case ASI_SUCCESS:
+					alpacaErrCode	=	kASCOM_Err_Success;
+					break;
+
+				case  ASI_ERROR_INVALID_CONTROL_TYPE:
+					alpacaErrCode	=	kASCOM_Err_NotImplemented;
+					strcpy(cLastCameraErrMsg, "Coolor not supported on this camera");
+					CONSOLE_DEBUG(cLastCameraErrMsg);
+					break;
+
+				default:
+					CONSOLE_DEBUG_W_NUM("ASISetControlValue->asiErrorCode\t=",	asiErrorCode);
+					CheckForClosedError(asiErrorCode);
+					Get_ASI_ErrorMsg(asiErrorCode, asiErrorMsgString);
+					strcpy(cLastCameraErrMsg, "Failed on ASIGetControlValue:, asiErr=");
+					strcat(cLastCameraErrMsg, asiErrorMsgString);
+					CONSOLE_DEBUG(cLastCameraErrMsg);
+					alpacaErrCode	=	kASCOM_Err_Unknown;
+					break;
+			}
+		}
+		else
+		{
+			alpacaErrCode	=	kASCOM_Err_NotConnected;
+			CONSOLE_DEBUG_W_NUM("ASIOpenCamera->asiErrorCode\t=",	asiErrorCode);
+			Get_ASI_ErrorMsg(asiErrorCode, asiErrorMsgString);
+			strcpy(cLastCameraErrMsg, "Failed to open ASI camera:, asiErr=");
+			strcat(cLastCameraErrMsg, asiErrorMsgString);
+		}
+	}
+	else
+	{
+		alpacaErrCode	=	kASCOM_Err_NotImplemented;
+		strcpy(cLastCameraErrMsg, "Temperature not supported on this camera");
+//		CONSOLE_DEBUG(cLastCameraErrMsg);
+	}
+	return(alpacaErrCode);
+}
+
 
 //*****************************************************************************
 //*	this routine gets called by BOTH Write_BinX() & Write_BinY()
@@ -2293,28 +2430,6 @@ char				asiErrorMsgString[64];
 		strcat(cLastCameraErrMsg, asiErrorMsgString);
 		alpacaErrCode	=	kASCOM_Err_FailedUnknown;
 	}
-	return(alpacaErrCode);
-}
-
-//*****************************************************************************
-TYPE_ASCOM_STATUS	CameraDriverASI::Write_BinX(const int newBinXvalue)
-{
-TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
-
-//	CONSOLE_DEBUG(__FUNCTION__);
-
-	alpacaErrCode	=	Write_BinXY(newBinXvalue);
-	return(alpacaErrCode);
-}
-
-//*****************************************************************************
-TYPE_ASCOM_STATUS	CameraDriverASI::Write_BinY(const int newBinYvalue)
-{
-TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
-
-//	CONSOLE_DEBUG(__FUNCTION__);
-
-	alpacaErrCode	=	Write_BinXY(newBinYvalue);
 	return(alpacaErrCode);
 }
 
