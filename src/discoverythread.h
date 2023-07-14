@@ -7,12 +7,12 @@
 
 #ifndef _DISCOVERY_LIB_H_
 	#include	"discovery_lib.h"
-#endif // _DISCOVERY_LIB_H_
+#endif
 
 
 #ifndef _JSON_PARSE_H_
 //-	#include	"json_parse.h"
-#endif // _JSON_PARSE_H_
+#endif
 
 //*	this is a list of IP addresses
 extern	TYPE_ALPACA_UNIT	gAlpacaUnitList[];

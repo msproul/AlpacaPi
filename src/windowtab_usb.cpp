@@ -109,13 +109,15 @@ int		iii;
 
 	//=======================================================
 	//*	set up all the bottom stuff so that it is the same on all windowtabs
-	SetupWindowBottomBoxes(	kUSBselect_IPaddr,
-							-1,	//	kUSBselect_Readall,
-							-1,	//	kUSBselect_AlpacaErrorMsg,
-							-1,	//	kUSBselect_LastCmdString,
-							kUSBselect_AlpacaLogo,
-							-1);
-
+	SetupWindowBottomBoxes(	kUSBselect_IPaddr,		//const int	ipaddrBox,
+							-1,						//const int	readAllBox,
+							-1,						//const int	deviceStateBox,
+							-1,						//const int	errorMsgBox,
+							-1,						//const int	lastCmdWidgetIdx,
+							kUSBselect_AlpacaLogo,	//const int	logoWidgetIdx,
+							-1,						//const int	helpBtnBox ,
+							-1,						//const bool	logoSideOfScreen,
+							-1);					//const int	connectBtnBox
 }
 
 //*****************************************************************************

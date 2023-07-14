@@ -130,6 +130,7 @@ enum
 	kSkyT_Settings_OBAFGKM,
 	kSkyT_Settings_DispMag,
 	kSkyT_Settings_DispSpectral,
+	kSkyT_Settings_DispParallax,
 	kSkyT_Settings_DispProperMotion,
 	kSkyT_Settings_DispPMvector,
 

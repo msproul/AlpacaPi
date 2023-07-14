@@ -159,10 +159,10 @@ int		widgetIdx;
 	{
 //		CONSOLE_DEBUG(cReadOutModes[iii].mode);
 		widgetIdx	=	kPreviewBox_ReadMode0 + iii;
-		if (strlen(cCameraProp.ReadOutModes[iii].mode) > 0)
+		if (strlen(cCameraProp.ReadOutModes[iii].modeStr) > 0)
 		{
 			SetWidgetValid(	kTab_Preview,	widgetIdx, true);
-			SetWidgetText(	kTab_Preview,	widgetIdx, cCameraProp.ReadOutModes[iii].mode);
+			SetWidgetText(	kTab_Preview,	widgetIdx, cCameraProp.ReadOutModes[iii].modeStr);
 		}
 		else
 		{

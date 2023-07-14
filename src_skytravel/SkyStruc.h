@@ -39,7 +39,7 @@ void	ConvertRadiansToDegMinSec(	double	radianValue,
 //*	fortunately the FLOAT format is the same for PPC/68K as for intel.
 //*	The bytes have to be swapped for big endian machines
 //*****************************************************************************
-typedef struct
+typedef struct	//	TYPE_CelestDataDisk
 {
 	float			decl;
 	float			ra;
@@ -91,7 +91,7 @@ enum
 
 
 //*****************************************************************************
-typedef struct
+typedef struct	//	TYPE_CelestData
 {
 	long			id;
 	unsigned short	magn;
@@ -106,18 +106,18 @@ typedef struct
 	double			decl;
 	double			org_ra;
 	double			org_decl;
-//	double			properMotion;	//	https://en.wikipedia.org/wiki/Proper_motion
+//	double			properMotion;			//	https://en.wikipedia.org/wiki/Proper_motion
 	bool			propMotionValid;
 	double			propMotion_RA_mas_yr;	//*	mill-arc-seconds per year
-	double			propMotion_DEC_mas_yr;		//*	mill-arc-seconds per year
+	double			propMotion_DEC_mas_yr;	//*	mill-arc-seconds per year
 //	double			maxSizeArcMinutes;
-	double			parallax;
+	double			parallax;				//*	arc-seconds????
 	char			shortName[kShortNameMax];
 	char			longName[kLongNameMax];
 }	TYPE_CelestData;
 
 //*****************************************************************************
-typedef struct
+typedef struct	//	TYPE_ObjectInfo
 {
 	char			dataSrc;		//*	see enum table above
 	long			id;
@@ -128,7 +128,7 @@ typedef struct
 
 
 //*****************************************************************************
-typedef struct
+typedef struct	//	TYPE_Constelation
 {
 	char	 		shortName[6];
 	char	 		name[32];
@@ -139,7 +139,7 @@ typedef struct
 
 
 //*****************************************************************************
-typedef struct
+typedef struct	//	TYPE_SpherTrig
 {
 	double	aside;
 	double	bside;
@@ -151,7 +151,7 @@ typedef struct
 
 
 //*****************************************************************************
-typedef struct
+typedef struct	//	TYPE_LatLon
 {
 	double	latitude;
 	double	longitude;
@@ -160,7 +160,7 @@ typedef struct
 
 
 //*****************************************************************************
-typedef struct
+typedef struct	//	TYPE_SkyTime
 {
 	int				year;				//*	Greenwich date
 	int				day;
@@ -221,7 +221,7 @@ enum
 };
 
 //*****************************************************************************
-typedef struct
+typedef struct	//	xy_struct
 {
 	int				xpos;
 	int				ypos;
@@ -229,7 +229,7 @@ typedef struct
 } xy_struct;
 
 //*****************************************************************************
-typedef struct
+typedef struct	//	sun_moon_struct
 {
 	double		sun_elev;				//*	for sky color
 	double		sun_az;
@@ -275,7 +275,7 @@ typedef struct
 #define		PLUN	4
 
 //*****************************************************************************
-typedef struct
+typedef struct	//	mon_series_struct
 {
 	float	coeff;
 	int8_t	pwr_of_t;
@@ -284,7 +284,7 @@ typedef struct
 }	mon_series_struct;
 
 //*****************************************************************************
-typedef struct
+typedef struct	//	sun_series_struct
 {
 	float	coeff;
 	int8_t	pwr_of_t;
@@ -293,7 +293,7 @@ typedef struct
 }	sun_series_struct;
 
 //*****************************************************************************
-typedef struct
+typedef struct	//	mer_series_struct
 {
 	float	coeff;
 	int8_t	pwr_of_t;
@@ -302,7 +302,7 @@ typedef struct
 }	mer_series_struct;
 
 //*****************************************************************************
-typedef struct
+typedef struct	//	ven_series_struct
 {
 	float	coeff;
 	int8_t	pwr_of_t;
@@ -311,7 +311,7 @@ typedef struct
 }	ven_series_struct;
 
 //*****************************************************************************
-typedef struct
+typedef struct	//	mar_series_struct
 {
 	float	coeff;
 	int8_t	pwr_of_t;
@@ -320,7 +320,7 @@ typedef struct
 }	mar_series_struct;
 
 //*****************************************************************************
-typedef struct
+typedef struct	//	jup_series_struct
 {
 	float	coeff;
 	int8_t	pwr_of_t;
@@ -329,7 +329,7 @@ typedef struct
 }	jup_series_struct;
 
 //*****************************************************************************
-typedef struct
+typedef struct	//	sat_series_struct
 {
 	float	coeff;
 	int8_t	pwr_of_t;
@@ -338,7 +338,7 @@ typedef struct
 }	sat_series_struct;
 
 //*****************************************************************************
-typedef struct
+typedef struct	//	ura_series_struct
 {
 	float	coeff;
 	int8_t	pwr_of_t;
@@ -347,7 +347,7 @@ typedef struct
 }	ura_series_struct;
 
 //*****************************************************************************
-typedef struct
+typedef struct	//	nep_series_struct
 {
 	float	coeff;
 	int8_t	pwr_of_t;
@@ -356,7 +356,7 @@ typedef struct
 }	nep_series_struct;
 
 //*****************************************************************************
-typedef struct
+typedef struct	//	plu_series_struct
 {
 	float	coeff;
 	int8_t	pwr_of_t;
@@ -365,7 +365,7 @@ typedef struct
 }	plu_series_struct;
 
 //*****************************************************************************
-typedef struct
+typedef struct	//	map_token_struct
 {
 	float		map_lat;		//*	latitude of object
 	float		map_long;		//*	longitude of object
@@ -378,7 +378,7 @@ typedef struct
 //*	data structure for each planet
 
 //*****************************************************************************
-typedef struct
+typedef struct	//	planet_struct
 {
 	double			decl;		//*	in radians
 	double			ra;			//*	in radians

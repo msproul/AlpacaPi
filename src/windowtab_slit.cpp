@@ -22,6 +22,7 @@
 //*	May  1,	2020	<MLS> Slit display clock face working
 //*	May  9,	2020	<MLS> Added ToggleLogData()
 //*	May 31,	2020	<MLS> Added up vector from gravity data
+//*	Jun 19,	2023	<MLS> Added DeviceState to slit window
 //*****************************************************************************
 
 
@@ -34,11 +35,7 @@
 #include	"windowtab_slit.h"
 #include	"controller.h"
 
-#ifdef _ENABLE_SKYTRAVEL_
-	#include	"controller_slit.h"
-#else
-	#include	"controller_dome.h"
-#endif
+#include	"controller_slit.h"
 
 #include	"slittracker_data.h"
 
@@ -99,13 +96,6 @@ int		yLoc;
 	yLoc			+=	2;
 	yLoc			+=	2;
 
-#ifndef _ENABLE_SKYTRAVEL_
-	//==========================================
-	SetWidget(		kSlitTracker_RemoteAddress,	cClm3_offset+ 8,		yLoc,		(cClmWidth * 4),	cBtnHeight);
-	SetWidgetText(	kSlitTracker_RemoteAddress,	"Slit tracker not available");
-	SetWidgetFont(	kSlitTracker_RemoteAddress,	kFont_Medium);
-#endif // _ENABLE_SKYTRAVEL_
-
 	//==========================================
 	SetWidget(		kSlitTracker_RadioBtnSlit,	0,		yLoc,		(cWidth / 3),	cRadioBtnHt);
 	SetWidgetText(	kSlitTracker_RadioBtnSlit,	"Slit");
@@ -142,6 +132,7 @@ int		yLoc;
 	//*	set up all the bottom stuff so that it is the same on all windowtabs
 	SetupWindowBottomBoxes(	kSlitTracker_IPaddr,
 							kSlitTracker_Readall,
+							kSlitTracker_DeviceState,
 							kSlitTracker_AlpacaErrorMsg,
 							kSlitTracker_LastCmdString,
 							kSlitTracker_AlpacaLogo,
@@ -209,12 +200,7 @@ void	WindowTabSlitTracker::DrawWidgetCustomGraphic(IplImage *openCV_Image, const
 //**************************************************************************************
 void	WindowTabSlitTracker::DrawClockFace(TYPE_WIDGET *theWidget)
 {
-#ifdef _ENABLE_SKYTRAVEL_
-	ControllerSlit	*myControllerObj;
-#else
-	ControllerDome	*myControllerObj;
-#endif // _ENABLE_SKYTRAVEL_
-
+ControllerSlit	*myControllerObj;
 int				center_X;
 int				center_Y;
 int				radius1;
@@ -291,23 +277,23 @@ int				textWidthPixels;
 		pt2_Y	=	center_Y + (sin(radians) * radius2);
 
 #define	kRadius1	40
-		LLD_SetColor(fillColor_Wnum);
-		LLD_FillEllipse(pt1_X, pt1_Y, kRadius1, kRadius1);
-		LLD_SetColor(W_WHITE);
-		LLD_FrameEllipse(pt1_X, pt1_Y, kRadius1, kRadius1);
+		LLG_SetColor(fillColor_Wnum);
+		LLG_FillEllipse(pt1_X, pt1_Y, kRadius1, kRadius1);
+		LLG_SetColor(W_WHITE);
+		LLG_FrameEllipse(pt1_X, pt1_Y, kRadius1, kRadius1);
 
-		textWidthPixels	=   LLD_GetTextSize(textString, kFont_Medium);
+		textWidthPixels	=   LLG_GetTextSize(textString, kFont_Medium);
 		pt1_X	-=	(textWidthPixels / 2);
 		pt1_Y	+=	5;
-		LLD_SetColor(W_BLACK);
-		LLD_DrawCString(pt1_X, pt1_Y, textString, kFont_Medium);
+		LLG_SetColor(W_BLACK);
+		LLG_DrawCString(pt1_X, pt1_Y, textString, kFont_Medium);
 
 
 		//*	this puts a little dot to indicate it recently got updated
 		if (gSlitDistance[clockPosition].updated)
 		{
-			LLD_SetColor(cUpdateColorIdx);
-			LLD_FillEllipse(pt2_X, pt2_Y, 5, 5);
+			LLG_SetColor(cUpdateColorIdx);
+			LLG_FillEllipse(pt2_X, pt2_Y, 5, 5);
 
 			gSlitDistance[clockPosition].updated	=	false;
 		}
@@ -325,11 +311,7 @@ int				textWidthPixels;
 
 	//============================================================
 	//*	draw the UP vector
-#ifdef _ENABLE_SKYTRAVEL_
 	myControllerObj	=	(ControllerSlit *)cParentObjPtr;
-#else
-	myControllerObj	=	(ControllerDome *)cParentObjPtr;
-#endif // _ENABLE_SKYTRAVEL_
 	if (myControllerObj != NULL)
 	{
 	double	upDegrees;
@@ -348,26 +330,26 @@ int				textWidthPixels;
 			pt1_Y	=	center_Y + (sin(upRadians) * upAngleRadius);
 			pt2_X	=	center_X + (cos(upRadians) * radius2);
 			pt2_Y	=	center_Y + (sin(upRadians) * radius2);
-			LLD_SetColor(W_RED);
-			LLD_MoveTo(pt1_X, pt1_Y);
-			LLD_LineTo(pt2_X, pt2_Y);
+			LLG_SetColor(W_RED);
+			LLG_MoveTo(pt1_X, pt1_Y);
+			LLG_LineTo(pt2_X, pt2_Y);
 
 			pt1_X	=	center_X;
 			pt1_Y	=	center_Y;
 
-			LLD_SetColor(W_WHITE);
-			LLD_FrameEllipse(pt1_X, pt1_Y, upAngleRadius, upAngleRadius);
+			LLG_SetColor(W_WHITE);
+			LLG_FrameEllipse(pt1_X, pt1_Y, upAngleRadius, upAngleRadius);
 
 			while (upDegrees > 360.0)
 			{
 				upDegrees	-=	360.0;
 			}
 			sprintf(textString, "%1.1f", upDegrees);
-			textWidthPixels	=   LLD_GetTextSize(textString, kFont_Medium);
+			textWidthPixels	=   LLG_GetTextSize(textString, kFont_Medium);
 			pt1_X	-=	(textWidthPixels / 2);
 			pt1_Y	+=	5;
-			LLD_SetColor(W_WHITE);
-			LLD_DrawCString(pt1_X, pt1_Y, textString, kFont_Medium);
+			LLG_SetColor(W_WHITE);
+			LLG_DrawCString(pt1_X, pt1_Y, textString, kFont_Medium);
 		}
 	}
 	else
@@ -381,24 +363,14 @@ int				textWidthPixels;
 //**************************************************************************************
 void	WindowTabSlitTracker::UpdateClockRadioBtns(void)
 {
-#ifdef _ENABLE_SKYTRAVEL_
-	ControllerSlit	*myControllerObj;
-#else
-	ControllerDome	*myControllerObj;
-#endif // _ENABLE_SKYTRAVEL_
+ControllerSlit	*myControllerObj;
 
-
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	SetWidgetChecked(kSlitTracker_RadioBtnSlit,		(cClockDisplayMode == kClockDisplay_Slit));
 	SetWidgetChecked(kSlitTracker_RadioBtnCalib,	(cClockDisplayMode == kClockDisplay_Calib));
 
-
-#ifdef _ENABLE_SKYTRAVEL_
 	myControllerObj	=	(ControllerSlit *)cParentObjPtr;
-#else
-	myControllerObj	=	(ControllerDome *)cParentObjPtr;
-#endif // _ENABLE_SKYTRAVEL_
 	if (myControllerObj != NULL)
 	{
 		myControllerObj->cUpdateWindow		=	true;
@@ -415,20 +387,11 @@ void	WindowTabSlitTracker::UpdateClockRadioBtns(void)
 void	WindowTabSlitTracker::ToggleLogData(void)
 {
 bool			currentLogState;
-#ifdef _ENABLE_SKYTRAVEL_
 	ControllerSlit	*myControllerObj;
-#else
-	ControllerDome	*myControllerObj;
-#endif // _ENABLE_SKYTRAVEL_
 
+//	CONSOLE_DEBUG(__FUNCTION__);
 
-	CONSOLE_DEBUG(__FUNCTION__);
-
-#ifdef _ENABLE_SKYTRAVEL_
 	myControllerObj	=	(ControllerSlit *)cParentObjPtr;
-#else
-	myControllerObj	=	(ControllerDome *)cParentObjPtr;
-#endif // _ENABLE_SKYTRAVEL_
 	if (myControllerObj != NULL)
 	{
 		currentLogState	=	myControllerObj->cLogSlitData;

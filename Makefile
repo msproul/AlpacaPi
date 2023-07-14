@@ -172,6 +172,8 @@ CFLAGS			+=	-Wno-implicit-fallthrough
 
 CPLUSFLAGS		=	-Wall -Wno-multichar -Wno-unknown-pragmas
 CPLUSFLAGS		+=	-Wextra
+CPLUSFLAGS		+=	-Wuninitialized
+CPLUSFLAGS		+=	-Wmaybe-uninitialized
 CPLUSFLAGS		+=	-Wno-unused-parameter
 #CPLUSFLAGS		+=	-Wno-class-memaccess
 #CPLUSFLAGS		+=	-O2
@@ -276,6 +278,7 @@ LIVE_WINDOW_OBJECTS=										\
 #	Driver Objects
 DRIVER_OBJECTS=												\
 				$(OBJECT_DIR)alpacadriver.o					\
+				$(OBJECT_DIR)alpacadriverConnect.o			\
 				$(OBJECT_DIR)alpacadriverSetup.o			\
 				$(OBJECT_DIR)alpacadriver_templog.o			\
 				$(OBJECT_DIR)alpacadriver_helper.o			\
@@ -321,6 +324,7 @@ CAMERA_DRIVER_OBJECTS=										\
 CALIBRATION_DRIVER_OBJECTS=									\
 				$(OBJECT_DIR)calibrationdriver.o			\
 				$(OBJECT_DIR)calibrationdriver_rpi.o		\
+				$(OBJECT_DIR)calibration_Alnitak.o		\
 				$(OBJECT_DIR)calibration_sim.o				\
 
 ######################################################################################
@@ -385,10 +389,10 @@ TELESCOPE_DRIVER_OBJECTS=									\
 ######################################################################################
 SERIAL_OBJECTS=												\
 				$(OBJECT_DIR)serialport.o					\
+				$(OBJECT_DIR)usbmanager.o					\
 
 ######################################################################################
 TEST_OBJECTS=												\
-				$(OBJECT_DIR)calibration_Alnitak.o			\
 				$(OBJECT_DIR)cameradriver_PhaseOne.o		\
 
 ######################################################################################
@@ -409,6 +413,7 @@ HELPER_OBJECTS=												\
 #	Roll Off Roof Objects
 ROR_OBJECTS=												\
 				$(OBJECT_DIR)alpacadriver.o					\
+				$(OBJECT_DIR)alpacadriverConnect.o			\
 				$(OBJECT_DIR)alpacadriverSetup.o			\
 				$(OBJECT_DIR)alpacadriver_helper.o			\
 				$(OBJECT_DIR)alpacadriverLogging.o			\
@@ -644,11 +649,11 @@ mulc		:		DEFINEFLAGS		+=	-D_ENABLE_DISCOVERY_QUERRY_
 mulc		:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
 mulc		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_
 mulc		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_ZWO_
-mulc		:		DEFINEFLAGS		+=	-D_ENABLE_FLIR_
+#mulc		:		DEFINEFLAGS		+=	-D_ENABLE_FLIR_
 mulc		:		DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_
 mulc		:		DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_MOONLITE_
 mulc		:		DEFINEFLAGS		+=	-D_ENABLE_MULTICAM_
-mulc		:		DEFINEFLAGS		+=	-D_ENABLE_QHY_
+#mulc		:		DEFINEFLAGS		+=	-D_ENABLE_QHY_
 mulc		:		DEFINEFLAGS		+=	-D_ENABLE_ROTATOR_
 mulc		:		DEFINEFLAGS		+=	-D_ENABLE_ROTATOR_NITECRAWLER_
 #mulc	:		DEFINEFLAGS		+=	-D_ENABLE_TOUP_
@@ -681,15 +686,15 @@ mulc		:									\
 					$(ASI_CAMERA_OBJECTS)			\
 					$(ZWO_EFW_OBJECTS)				\
 					-L$(ATIK_LIB_DIR)/				\
-					-lSpinnaker_C					\
 					-latikcameras					\
-					-lqhyccd						\
 					-ludev							\
 					-lusb-1.0						\
 					-lpthread						\
 					-lcfitsio						\
 					-o alpacapi
 
+#					-lqhyccd						\
+#					-lSpinnaker_C					\
 
 
 ######################################################################################
@@ -1075,6 +1080,8 @@ wo102		:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
 wo102		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
 wo102		:		DEFINEFLAGS		+=	-D_ENABLE_QHY_
 wo102		:		DEFINEFLAGS		+=	-D_ENABLE_MULTICAM_
+wo102		:		DEFINEFLAGS		+=	-D_ENABLE_CALIBRATION_
+wo102		:		DEFINEFLAGS		+=	-D_ENABLE_CALIBRATION_ALNITAK_
 wo102		:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
 wo102		:		DEFINEFLAGS		+=	-D_ENABLE_DISCOVERY_QUERRY_
 wo102		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
@@ -1088,6 +1095,7 @@ wo102		:										\
 					$(FITLERWHEEL_DRIVER_OBJECTS)	\
 					$(FOCUSER_DRIVER_OBJECTS)		\
 					$(TELESCOPE_DRIVER_OBJECTS)		\
+					$(CALIBRATION_DRIVER_OBJECTS)	\
 					$(HELPER_OBJECTS)				\
 					$(SERIAL_OBJECTS)				\
 					$(SOCKET_OBJECTS)				\
@@ -1099,6 +1107,7 @@ wo102		:										\
 					$(FITLERWHEEL_DRIVER_OBJECTS)	\
 					$(FOCUSER_DRIVER_OBJECTS)		\
 					$(TELESCOPE_DRIVER_OBJECTS)		\
+					$(CALIBRATION_DRIVER_OBJECTS)	\
 					$(HELPER_OBJECTS)				\
 					$(SERIAL_OBJECTS)				\
 					$(SOCKET_OBJECTS)				\
@@ -1119,6 +1128,7 @@ wo102		:										\
 ######################################################################################
 TELESCOPE_OBJECTS=											\
 				$(OBJECT_DIR)alpacadriver.o					\
+				$(OBJECT_DIR)alpacadriverConnect.o			\
 				$(OBJECT_DIR)alpacadriverSetup.o			\
 				$(OBJECT_DIR)alpacadriver_helper.o			\
 				$(OBJECT_DIR)alpacadriver_templog.o			\
@@ -1139,7 +1149,6 @@ TELESCOPE_OBJECTS=											\
 				$(OBJECT_DIR)telescopedriver_Rigel.o		\
 				$(OBJECT_DIR)telescopedriver_servo.o		\
 				$(OBJECT_DIR)cpu_stats.o					\
-				$(OBJECT_DIR)helper_functions.o				\
 
 
 ######################################################################################
@@ -1608,21 +1617,22 @@ calib		:										\
 					-o alpacapi-calib
 
 
+
 ######################################################################################
 #pragma mark Raspberry pi - calibration
 #make calibcv4
-calibcv4	:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
-calibcv4	:		DEFINEFLAGS		+=	-D_ENABLE_CALIBRATION_
-calibcv4	:		DEFINEFLAGS		+=	-D_ENABLE_CALIBRATION_RPI_
-calibcv4	:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
-calibcv4	:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
-calibcv4	:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
-calibcv4	:		DEFINEFLAGS		+=	-D_USE_OPENCV_
-calibcv4	:		DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
-#calibcv4	:		DEFINEFLAGS		+=	-D_ENABLE_WIRING_PI_
-calibcv4	:		DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
-calibcv4	:		DEFINEFLAGS		+=	-D_ENABLE_LIVE_CONTROLLER_
-calibcv4	:										\
+calibcv4		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
+calibcv4		:		DEFINEFLAGS		+=	-D_ENABLE_CALIBRATION_
+calibcv4		:		DEFINEFLAGS		+=	-D_ENABLE_CALIBRATION_RPI_
+calibcv4		:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
+calibcv4		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
+calibcv4		:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
+calibcv4		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
+calibcv4		:		DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
+#calibcv4		:		DEFINEFLAGS		+=	-D_ENABLE_WIRING_PI_
+calibcv4		:		DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
+calibcv4		:		DEFINEFLAGS		+=	-D_ENABLE_LIVE_CONTROLLER_
+calibcv4		:										\
 					$(DRIVER_OBJECTS)				\
 					$(CALIBRATION_DRIVER_OBJECTS)	\
 					$(CAMERA_DRIVER_OBJECTS)		\
@@ -1646,28 +1656,35 @@ calibcv4	:										\
 					-o alpacapi-calib
 
 
+
 ######################################################################################
 #pragma mark Alnitak - calibration
 #make alnitak
 alnitak		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
 alnitak		:		DEFINEFLAGS		+=	-D_ENABLE_CALIBRATION_
 alnitak		:		DEFINEFLAGS		+=	-D_ENABLE_CALIBRATION_ALNITAK_
-alnitak		:									\
-					$(CPP_OBJECTS)				\
-					$(DRIVER_OBJECTS)			\
-					$(SOCKET_OBJECTS)			\
-					$(TEST_OBJECTS)				\
+alnitak		:										\
+					$(DRIVER_OBJECTS)				\
+					$(CALIBRATION_DRIVER_OBJECTS)	\
+					$(SOCKET_OBJECTS)				\
+					$(TEST_OBJECTS)					\
+					$(SERIAL_OBJECTS)				\
+					$(HELPER_OBJECTS)				\
 
 
-		$(LINK)  								\
-					$(CPP_OBJECTS)				\
-					$(DRIVER_OBJECTS)			\
-					$(SOCKET_OBJECTS)			\
-					$(TEST_OBJECTS)				\
-					-lpthread					\
-					-lusb-1.0					\
+		$(LINK)  									\
+					$(DRIVER_OBJECTS)				\
+					$(CALIBRATION_DRIVER_OBJECTS)	\
+					$(SOCKET_OBJECTS)				\
+					$(TEST_OBJECTS)					\
+					$(SERIAL_OBJECTS)				\
+					$(HELPER_OBJECTS)				\
+					-lpthread						\
 					-o alpacapi-alnitak
 
+#					-lusb-1.0					\
+#					$(CPP_OBJECTS)				\
+#					$(CPP_OBJECTS)				\
 
 ######################################################################################
 #	Camera Objects
@@ -2432,9 +2449,10 @@ jetson		:											\
 #make wx
 #wx			:	DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
 #wx			:	DEFINEFLAGS		+=	-D_ENABLE_DOME_
-wx			:	DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_
-wx			:	DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_MOONLITE_
+#wx			:	DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_
+#wx			:	DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_MOONLITE_
 wx			:	DEFINEFLAGS		+=	-D_ENABLE_OBSERVINGCONDITIONS_
+wx			:	DEFINEFLAGS		+=	-D_ENABLE_OBSERVINGCONDITIONS_RPI_
 wx			:	DEFINEFLAGS		+=	-D_ENABLE_PI_HAT_SESNSOR_BOARD_
 wx			:										\
 					$(DRIVER_OBJECTS)				\
@@ -2485,6 +2503,7 @@ smate		:				$(DRIVER_OBJECTS)			\
 # ATIK objects
 ATIK_OBJECTS=												\
 				$(OBJECT_DIR)alpacadriver.o					\
+				$(OBJECT_DIR)alpacadriverConnect.o			\
 				$(OBJECT_DIR)alpacadriverSetup.o			\
 				$(OBJECT_DIR)alpacadriver_helper.o			\
 				$(OBJECT_DIR)alpacadriverLogging.o			\
@@ -2601,7 +2620,6 @@ CONTROLLER_OBJECTS=												\
 				$(OBJECT_DIR)controller_usb.o					\
 				$(OBJECT_DIR)cpu_stats.o						\
 				$(OBJECT_DIR)HostNames.o						\
-				$(OBJECT_DIR)helper_functions.o					\
 				$(OBJECT_DIR)json_parse.o						\
 				$(OBJECT_DIR)linuxerrors.o						\
 				$(OBJECT_DIR)moonlite_com.o						\
@@ -2615,8 +2633,10 @@ CONTROLLER_OBJECTS=												\
 				$(OBJECT_DIR)windowtab_camera.o					\
 				$(OBJECT_DIR)windowtab_camsettings.o			\
 				$(OBJECT_DIR)windowtab_camcooler.o				\
+				$(OBJECT_DIR)windowtab_camvideo.o				\
 				$(OBJECT_DIR)windowtab_capabilities.o			\
 				$(OBJECT_DIR)windowtab_config.o					\
+				$(OBJECT_DIR)windowtab_DeviceState.o			\
 				$(OBJECT_DIR)windowtab_dome.o					\
 				$(OBJECT_DIR)windowtab_drvrInfo.o				\
 				$(OBJECT_DIR)windowtab_filelist.o				\
@@ -2632,20 +2652,23 @@ CONTROLLER_OBJECTS=												\
 				$(OBJECT_DIR)windowtab_usb.o					\
 
 VIDEO_OBJECTS=													\
+				$(OBJECT_DIR)alpacadriver_helper.o				\
+				$(OBJECT_DIR)commoncolor.o						\
 				$(OBJECT_DIR)controller.o						\
 				$(OBJECT_DIR)controllerAlpaca.o					\
 				$(OBJECT_DIR)controller_camera.o				\
 				$(OBJECT_DIR)controller_video.o					\
 				$(OBJECT_DIR)controller_preview.o				\
+				$(OBJECT_DIR)controllerImageArray.o				\
+				$(OBJECT_DIR)cpu_stats.o						\
 				$(OBJECT_DIR)discovery_lib.o					\
 				$(OBJECT_DIR)json_parse.o						\
-				$(OBJECT_DIR)commoncolor.o						\
+				$(OBJECT_DIR)linuxerrors.o						\
 				$(OBJECT_DIR)sendrequest_lib.o					\
 				$(OBJECT_DIR)windowtab.o						\
 				$(OBJECT_DIR)windowtab_about.o					\
 				$(OBJECT_DIR)windowtab_video.o					\
 				$(OBJECT_DIR)windowtab_preview.o				\
-				$(OBJECT_DIR)cpu_stats.o						\
 
 
 PREVIEW_OBJECTS=												\
@@ -2688,18 +2711,21 @@ camera		:	DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
 camera		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_CAMERA_
 camera		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
 camera		:	DEFINEFLAGS		+=	-D_CONTROLLER_USES_ALPACA_
+camera		:	DEFINEFLAGS		+=	-D_ENABLE_FITS_
 camera		:	DEFINEFLAGS		+=	-D_USE_OPENCV_
 camera		:										\
 					$(CONTROLLER_MAIN_OBJECTS)		\
 					$(CONTROLLER_OBJECTS)			\
 					$(DISCOVERY_LIB_OBJECTS)		\
 					$(FITS_OBJECTS)					\
+					$(HELPER_OBJECTS)				\
 
 				$(LINK)  							\
 					$(CONTROLLER_MAIN_OBJECTS)		\
 					$(CONTROLLER_OBJECTS)			\
 					$(DISCOVERY_LIB_OBJECTS)		\
 					$(FITS_OBJECTS)					\
+					$(HELPER_OBJECTS)				\
 					$(OPENCV_LINK)					\
 					-lcfitsio						\
 					-lpthread						\
@@ -2713,18 +2739,21 @@ cameracv4		:	DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
 cameracv4		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_CAMERA_
 cameracv4		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
 cameracv4		:	DEFINEFLAGS		+=	-D_CONTROLLER_USES_ALPACA_
+cameracv4		:	DEFINEFLAGS		+=	-D_ENABLE_FITS_
 cameracv4		:	DEFINEFLAGS		+=	-D_USE_OPENCV_
 cameracv4		:	DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
 cameracv4		:									\
 					$(CONTROLLER_MAIN_OBJECTS)		\
 					$(CONTROLLER_OBJECTS)			\
 					$(DISCOVERY_LIB_OBJECTS)		\
+					$(HELPER_OBJECTS)				\
 					$(FITS_OBJECTS)					\
 
 				$(LINK)  							\
 					$(CONTROLLER_MAIN_OBJECTS)		\
 					$(CONTROLLER_OBJECTS)			\
 					$(DISCOVERY_LIB_OBJECTS)		\
+					$(HELPER_OBJECTS)				\
 					$(FITS_OBJECTS)					\
 					$(OPENCV_LINK)					\
 					-lcfitsio						\
@@ -2743,11 +2772,13 @@ domectrl		:									\
 					$(CONTROLLER_MAIN_OBJECTS)		\
 					$(CONTROLLER_OBJECTS)			\
 					$(DISCOVERY_LIB_OBJECTS)		\
+					$(HELPER_OBJECTS)				\
 
 				$(LINK)  							\
 					$(CONTROLLER_MAIN_OBJECTS)		\
 					$(CONTROLLER_OBJECTS)			\
 					$(DISCOVERY_LIB_OBJECTS)		\
+					$(HELPER_OBJECTS)				\
 							$(OPENCV_LINK)			\
 							-lpthread				\
 							-o domectrl
@@ -2765,11 +2796,13 @@ domectrlcv4		:									\
 					$(CONTROLLER_MAIN_OBJECTS)		\
 					$(CONTROLLER_OBJECTS)			\
 					$(DISCOVERY_LIB_OBJECTS)		\
+					$(HELPER_OBJECTS)				\
 
 				$(LINK)  							\
 					$(CONTROLLER_MAIN_OBJECTS)		\
 					$(CONTROLLER_OBJECTS)			\
 					$(DISCOVERY_LIB_OBJECTS)		\
+					$(HELPER_OBJECTS)				\
 							$(OPENCV_LINK)			\
 							-lpthread				\
 							-o domectrl
@@ -2787,11 +2820,13 @@ focuser		:										\
 					$(CONTROLLER_MAIN_OBJECTS)		\
 					$(CONTROLLER_OBJECTS)			\
 					$(DISCOVERY_LIB_OBJECTS)		\
+					$(HELPER_OBJECTS)				\
 
 				$(LINK)  							\
 					$(CONTROLLER_MAIN_OBJECTS)		\
 					$(CONTROLLER_OBJECTS)			\
 					$(DISCOVERY_LIB_OBJECTS)		\
+					$(HELPER_OBJECTS)				\
 					$(OPENCV_LINK)					\
 					-lpthread						\
 					-o focuser
@@ -2812,11 +2847,13 @@ focusercv4		:									\
 					$(CONTROLLER_MAIN_OBJECTS)		\
 					$(CONTROLLER_OBJECTS)			\
 					$(DISCOVERY_LIB_OBJECTS)		\
+					$(HELPER_OBJECTS)				\
 
 				$(LINK)  							\
 					$(CONTROLLER_MAIN_OBJECTS)		\
 					$(CONTROLLER_OBJECTS)			\
 					$(DISCOVERY_LIB_OBJECTS)		\
+					$(HELPER_OBJECTS)				\
 					$(OPENCV_LINK)					\
 					-lpthread						\
 					-o focuser
@@ -2834,11 +2871,13 @@ switch		:										\
 					$(CONTROLLER_MAIN_OBJECTS)		\
 					$(CONTROLLER_OBJECTS)			\
 					$(DISCOVERY_LIB_OBJECTS)		\
+					$(HELPER_OBJECTS)				\
 
 				$(LINK)  							\
 					$(CONTROLLER_MAIN_OBJECTS)		\
 					$(CONTROLLER_OBJECTS)			\
 					$(DISCOVERY_LIB_OBJECTS)		\
+					$(HELPER_OBJECTS)				\
 							$(OPENCV_LINK)			\
 							-lpthread				\
 							-o switch
@@ -2858,11 +2897,13 @@ switchcv4		:									\
 					$(CONTROLLER_MAIN_OBJECTS)		\
 					$(CONTROLLER_OBJECTS)			\
 					$(DISCOVERY_LIB_OBJECTS)		\
+					$(HELPER_OBJECTS)				\
 
 				$(LINK)  							\
 					$(CONTROLLER_MAIN_OBJECTS)		\
 					$(CONTROLLER_OBJECTS)			\
 					$(DISCOVERY_LIB_OBJECTS)		\
+					$(HELPER_OBJECTS)				\
 							$(OPENCV_LINK)			\
 							-lpthread				\
 							-o switch
@@ -2879,6 +2920,7 @@ SKYTRAVEL_OBJECTS=											\
 				$(OBJECT_DIR)controller_alpacaUnit.o		\
 				$(OBJECT_DIR)controller_constList.o			\
 				$(OBJECT_DIR)controller_covercalib.o		\
+				$(OBJECT_DIR)controller_multicam.o			\
 				$(OBJECT_DIR)controller_skytravel.o			\
 				$(OBJECT_DIR)controller_slit.o				\
 				$(OBJECT_DIR)controller_starlist.o			\
@@ -2914,6 +2956,7 @@ SKYTRAVEL_OBJECTS=											\
 				$(OBJECT_DIR)windowtab_moon.o				\
 				$(OBJECT_DIR)windowtab_mount.o				\
 				$(OBJECT_DIR)windowtab_obscond.o			\
+				$(OBJECT_DIR)windowtab_multicam.o			\
 				$(OBJECT_DIR)windowtab_RemoteData.o			\
 				$(OBJECT_DIR)windowtab_rotator.o			\
 				$(OBJECT_DIR)windowtab_skytravel.o			\
@@ -3012,11 +3055,13 @@ sky		:	INCLUDES		+=	-I$(SRC_SKYTRAVEL)
 sky		:												\
 						$(CONTROLLER_OBJECTS)			\
 						$(SKYTRAVEL_OBJECTS)			\
+						$(HELPER_OBJECTS)				\
 
 
 				$(LINK)  								\
 						$(CONTROLLER_OBJECTS)			\
 						$(SKYTRAVEL_OBJECTS)			\
+						$(HELPER_OBJECTS)				\
 						-L/usr/local/lib				\
 						$(OPENCV_LINK)					\
 						-lpthread						\
@@ -3045,17 +3090,19 @@ skycv4			:	DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
 skycv4			:	DEFINEFLAGS		+=	-D_USE_OPENCV_
 skycv4			:	DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
 skycv4			:	INCLUDES		+=	-I$(SRC_SKYTRAVEL)
-skycv4			:											\
-						$(CONTROLLER_OBJECTS)				\
-						$(SKYTRAVEL_OBJECTS)				\
+skycv4			:										\
+						$(CONTROLLER_OBJECTS)			\
+						$(SKYTRAVEL_OBJECTS)			\
+						$(HELPER_OBJECTS)				\
 
-				$(LINK)  									\
-						$(CONTROLLER_OBJECTS)				\
-						$(SKYTRAVEL_OBJECTS)				\
-						-L/usr/local/lib					\
-						$(OPENCV_LINK)						\
-						-lpthread							\
-						-lcfitsio							\
+				$(LINK)  								\
+						$(CONTROLLER_OBJECTS)			\
+						$(SKYTRAVEL_OBJECTS)			\
+						$(HELPER_OBJECTS)				\
+						-L/usr/local/lib				\
+						$(OPENCV_LINK)					\
+						-lpthread						\
+						-lcfitsio						\
 						-o skytravel
 
 ######################################################################################
@@ -3178,12 +3225,14 @@ sss			:										\
 					$(SKYTRAVEL_OBJECTS)			\
 					$(GAIA_SQL_OBJECTS)				\
 					$(SPECTROGRAPH_OBJECTS)			\
+					$(HELPER_OBJECTS)				\
 
 			$(LINK)  								\
 					$(CONTROLLER_OBJECTS)			\
 					$(SKYTRAVEL_OBJECTS)			\
 					$(GAIA_SQL_OBJECTS)				\
 					$(SPECTROGRAPH_OBJECTS)			\
+					$(HELPER_OBJECTS)				\
 					-L/usr/local/lib				\
 					$(OPENCV_LINK)					\
 					-l$(SQL_VERSION)				\
@@ -3387,17 +3436,21 @@ $(OBJECT_DIR)windowtab_nettest.o :		$(SRC_NETTEST)windowtab_nettest.cpp		\
 
 ######################################################################################
 #pragma mark video-controller
+#	make video
 video			:	DEFINEFLAGS		+=	-D_INCLUDE_CTRL_MAIN_
 video			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_VIDEO_
 video			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_CAMERA_
 video			:	DEFINEFLAGS		+=	-D_VIDEO_CONTROLLER_WORK_
+video			:	DEFINEFLAGS		+=	-D_USE_OPENCV_
+video			:	DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
+video			:	DEFINEFLAGS		+=	-D_CONTROLLER_USES_ALPACA_
+video			:			$(VIDEO_OBJECTS)				\
+							$(HELPER_OBJECTS)				\
 
-
-video			:			$(VIDEO_OBJECTS)
-
-				$(LINK)  										\
-							$(VIDEO_OBJECTS)					\
-							$(OPENCV_LINK)						\
+				$(LINK)  									\
+							$(VIDEO_OBJECTS)				\
+							$(HELPER_OBJECTS)				\
+							$(OPENCV_LINK)					\
 							-o video
 
 
@@ -3455,6 +3508,12 @@ $(OBJECT_DIR)alpacadriver.o :			$(SRC_DIR)alpacadriver.cpp				\
 										$(SRC_DIR)alpaca_defs.h					\
 										Makefile
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)alpacadriver.cpp -o$(OBJECT_DIR)alpacadriver.o
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)alpacadriverConnect.o :	$(SRC_DIR)alpacadriverConnect.cpp		\
+										$(SRC_DIR)alpaca_defs.h					\
+										Makefile
+	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)alpacadriverConnect.cpp -o$(OBJECT_DIR)alpacadriverConnect.o
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)alpacadriverSetup.o :		$(SRC_DIR)alpacadriverSetup.cpp			\
@@ -3914,6 +3973,11 @@ $(OBJECT_DIR)calibration_Alnitak.o :		$(SRC_DIR)calibration_Alnitak.cpp 	\
 											Makefile
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)calibration_Alnitak.cpp -o$(OBJECT_DIR)calibration_Alnitak.o
 
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)usbmanager.o :					$(SRC_DIR)usbmanager.cpp 			\
+											$(SRC_DIR)usbmanager.h				\
+											Makefile
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)usbmanager.cpp -o$(OBJECT_DIR)usbmanager.o
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)discoverythread.o :		$(SRC_DIR)discoverythread.c 		\
@@ -4025,6 +4089,7 @@ $(OBJECT_DIR)controller_filterwheel.o : $(SRC_DIR)controller_filterwheel.cpp	\
 $(OBJECT_DIR)controller_focus.o : 		$(SRC_DIR)controller_focus.cpp		\
 										$(SRC_DIR)controller_focus.h		\
 										$(SRC_DIR)controller.h				\
+										$(SRC_DIR)focuser_AlpacaCmds.cpp	\
 										$(SRC_DIR)windowtab_auxmotor.h		\
 										$(SRC_DIR)windowtab_config.h		\
 										$(SRC_DIR)windowtab_ml_single.h		\
@@ -4098,7 +4163,6 @@ $(OBJECT_DIR)controller_camera.o : 		$(SRC_DIR)controller_camera.cpp		\
 										$(SRC_DIR)controller.h
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)controller_camera.cpp -o$(OBJECT_DIR)controller_camera.o
 
-
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)controller_cam_normal.o : 	$(SRC_DIR)controller_cam_normal.cpp	\
 										$(SRC_DIR)controller_cam_normal.h	\
@@ -4133,6 +4197,14 @@ $(OBJECT_DIR)controller_dome.o : 		$(SRC_DIR)controller_dome.cpp		\
 										$(SRC_DIR)windowtab_about.h			\
 										$(SRC_DIR)controller.h
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)controller_dome.cpp -o$(OBJECT_DIR)controller_dome.o
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)controller_multicam.o : 	$(SRC_DIR)controller_multicam.cpp	\
+										$(SRC_DIR)controller_multicam.h		\
+										$(SRC_DIR)windowtab_about.h			\
+										$(SRC_DIR)controller.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)controller_multicam.cpp -o$(OBJECT_DIR)controller_multicam.o
+
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)controller_startup.o : 	$(SRC_DIR)controller_startup.cpp	\
@@ -4171,8 +4243,6 @@ $(OBJECT_DIR)controller_telescope.o :	$(SRC_DIR)controller_telescope.cpp		\
 										$(SRC_DIR)windowtab_about.h				\
 										$(SRC_DIR)controller.h
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)controller_telescope.cpp -o$(OBJECT_DIR)controller_telescope.o
-
-
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)windowtab_alpacalist.o :	$(SRC_DIR)windowtab_alpacalist.cpp		\
@@ -4266,6 +4336,13 @@ $(OBJECT_DIR)windowtab_camcooler.o : 	$(SRC_DIR)windowtab_camcooler.cpp	\
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)windowtab_camcooler.cpp -o$(OBJECT_DIR)windowtab_camcooler.o
 
 #-------------------------------------------------------------------------------------
+$(OBJECT_DIR)windowtab_camvideo.o : 	$(SRC_DIR)windowtab_camvideo.cpp	\
+										$(SRC_DIR)windowtab_camvideo.h		\
+										$(SRC_DIR)windowtab.h				\
+										$(SRC_DIR)controller.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)windowtab_camvideo.cpp -o$(OBJECT_DIR)windowtab_camvideo.o
+
+#-------------------------------------------------------------------------------------
 $(OBJECT_DIR)windowtab_filelist.o : 	$(SRC_DIR)windowtab_filelist.cpp	\
 										$(SRC_DIR)controller_camera.h		\
 										$(SRC_DIR)windowtab_filelist.h		\
@@ -4318,6 +4395,13 @@ $(OBJECT_DIR)windowtab_capabilities.o : $(SRC_DIR)windowtab_capabilities.cpp	\
 										$(SRC_DIR)controller.h
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)windowtab_capabilities.cpp -o$(OBJECT_DIR)windowtab_capabilities.o
 
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)windowtab_DeviceState.o :	$(SRC_DIR)windowtab_DeviceState.cpp		\
+										$(SRC_DIR)windowtab_DeviceState.h		\
+										$(SRC_DIR)windowtab.h					\
+										$(SRC_DIR)controller.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)windowtab_DeviceState.cpp -o$(OBJECT_DIR)windowtab_DeviceState.o
+
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)windowtab_moon.o : 		$(SRC_DIR)windowtab_moon.cpp		\
@@ -4334,6 +4418,14 @@ $(OBJECT_DIR)windowtab_obscond.o : 		$(SRC_DIR)windowtab_obscond.cpp		\
 										$(SRC_DIR)alpaca_defs.h				\
 										$(SRC_DIR)controller.h
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)windowtab_obscond.cpp -o$(OBJECT_DIR)windowtab_obscond.o
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)windowtab_multicam.o : 	$(SRC_DIR)windowtab_multicam.cpp	\
+										$(SRC_DIR)windowtab_multicam.h		\
+										$(SRC_DIR)windowtab.h				\
+										$(SRC_DIR)alpaca_defs.h				\
+										$(SRC_DIR)controller.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)windowtab_multicam.cpp -o$(OBJECT_DIR)windowtab_multicam.o
 
 
 #-------------------------------------------------------------------------------------

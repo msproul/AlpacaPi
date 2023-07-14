@@ -44,6 +44,7 @@
 //*	Sep 21,	2022	<MLS> Added display of remote IMU data
 //*	Sep 21,	2022	<MLS> Added SetRemoteIMUdisplay()
 //*	Apr 30,	2023	<MLS> Moved all camera cooling stuff to its own window tab
+//*	Jun 18,	2023	<MLS> Added DeviceState to camera
 //*****************************************************************************
 
 #ifdef _ENABLE_CTRL_CAMERA_
@@ -294,16 +295,6 @@ char		textBuff[32];
 	SetWidgetFont(	kCameraBox_LiveMode,	kFont_Medium);
 	yLocSave	+=	cRadioBtnHt;
 	yLocSave	+=	2;
-
-	//=======================================================
-	//*	Live mode
-	SetWidget(		kCameraBox_SideBar,	cClm4_offset,	yLocSave,		cWidth/4,		cRadioBtnHt	);
-	SetWidgetType(	kCameraBox_SideBar,	kWidgetType_CheckBox);
-	SetWidgetText(	kCameraBox_SideBar,	"SideBar");
-	SetWidgetFont(	kCameraBox_SideBar,	kFont_Medium);
-	yLocSave	+=	cRadioBtnHt;
-	yLocSave	+=	2;
-
 
 	//=======================================================
 	//*	Auto exposure
@@ -618,10 +609,17 @@ int	imuHeight;
 	//*	set up all the bottom stuff so that it is the same on all windowtabs
 	SetupWindowBottomBoxes(	kCameraBox_IPaddr,
 							kCameraBox_Readall,
+							kCameraBox_DeviceState,
 							kCameraBox_AlpacaErrorMsg,
 							kCameraBox_LastCmdString,
 							kCameraBox_AlpacaLogo,
 							-1);
+}
+
+//**************************************************************************************
+void	WindowTabCamera::ActivateWindow(void)
+{
+	DumpWidgetList(0, kCameraBox_last-1, __FILE__);
 }
 
 //**************************************************************************************
@@ -698,8 +696,8 @@ int		camLogoIdx;
 	}
 
 
-	CONSOLE_DEBUG_W_NUM("camLogoIdx   \t=",	camLogoIdx);
-	CONSOLE_DEBUG_W_STR("logoImagePath\t=",	logoImagePath);
+//	CONSOLE_DEBUG_W_NUM("camLogoIdx   \t=",	camLogoIdx);
+//	CONSOLE_DEBUG_W_STR("logoImagePath\t=",	logoImagePath);
 
 	if ((camLogoIdx >= 0) && (camLogoIdx < kCameraLogoCount))
 	{
@@ -720,7 +718,7 @@ int		camLogoIdx;
 	{
 		SetWidgetImage(kCameraBox_Logo, logoImagePtr);
 	}
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, "Exit");
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, "Exit");
 }
 
 //*****************************************************************************
@@ -730,8 +728,8 @@ bool				validData;
 char				dataString[64];
 int					fwPosition;
 bool				weHadToWait;
+bool				alpacaUpdateNeeded;
 ControllerCamera	*myCameraController;
-//uint32_t			currentMillis;
 uint32_t			startMillis;
 uint32_t			deltaMilliSecs;
 int					loopCntr;
@@ -741,6 +739,7 @@ int					loopCntr;
 
 	myCameraController	=	(ControllerCamera *)cParentObjPtr;
 	weHadToWait			=	false;
+	alpacaUpdateNeeded	=	true;
 	loopCntr			=	0;
 	deltaMilliSecs		=	0;
 	startMillis			=	millis();
@@ -793,15 +792,10 @@ int					loopCntr;
 		case kCameraBox_ReadMode4:
 			sprintf(dataString, "ReadoutMode=%d", (buttonIdx - kCameraBox_ReadMode0));
 			validData	=	AlpacaSendPutCmd(	"camera", "readoutmode",	dataString);
-			ForceAlpacaUpdate();
 			break;
 
 		case kCameraBox_LiveMode:
 			ToggleLiveMode();
-			break;
-
-		case kCameraBox_SideBar:
-			ToggleSideBar();
 			break;
 
 		case kCameraBox_AutoExposure:
@@ -836,17 +830,17 @@ int					loopCntr;
 			break;
 
 		case kCameraBox_StopExposure:
-//++			StopExposure();
+//++		StopExposure();
 			break;
 
 		case kCameraBox_Btn_8Bit:
 			cForce8BitRead	=	!cForce8BitRead;
-			ForceAlpacaUpdate();
+			alpacaUpdateNeeded	=	false;
 			break;
 
 		case kCameraBox_EnableBinary:
 			cAllowBinaryDownload	=	!cAllowBinaryDownload;
-			ForceAlpacaUpdate();
+			alpacaUpdateNeeded	=	false;
 			break;
 
 		case kCameraBox_DownloadImage:
@@ -856,8 +850,6 @@ int					loopCntr;
 		case kCameraBox_DownloadRGBarray:
 			DownloadImage(true);	//*	true -> Use RGBarray
 			break;
-
-
 
 		case kCameraBox_FilterWheel1:
 		case kCameraBox_FilterWheel2:
@@ -873,11 +865,7 @@ int					loopCntr;
 			sprintf(dataString, "Position=%d", fwPosition);
 	//		CONSOLE_DEBUG_W_STR("dataString\t=",	dataString);
 			validData	=	AlpacaSendPutCmd(	"filterwheel", "position",	dataString);
-			if (validData)
-			{
-				ForceAlpacaUpdate();
-			}
-			else
+			if (validData == false)
 			{
 				CONSOLE_DEBUG("Error setting filter wheel position");
 			}
@@ -894,9 +882,14 @@ int					loopCntr;
 		default:
 			CONSOLE_DEBUG(__FUNCTION__);
 			CONSOLE_DEBUG_W_NUM("buttonIdx\t",	buttonIdx);
+			alpacaUpdateNeeded	=	false;
 			break;
 	}
 	DisplayLastAlpacaCommand();
+	if (alpacaUpdateNeeded)
+	{
+		ForceAlpacaUpdate();
+	}
 }
 
 //*****************************************************************************
@@ -942,7 +935,7 @@ int					newSliderValue_int;
 			{
 				if (myCameraController != NULL)
 				{
-	//				CONSOLE_DEBUG_W_DBL("newSliderValue\t=", newSliderValue);
+//					CONSOLE_DEBUG_W_DBL("newSliderValue\t=", newSliderValue);
 					myCameraController->SetExposure(newSliderValue);
 
 				}
@@ -977,28 +970,6 @@ int					newSliderValue_int;
 			break;
 	}
 	ForceAlpacaUpdate();
-}
-
-
-//*****************************************************************************
-void	WindowTabCamera::ForceAlpacaUpdate(void)
-{
-ControllerCamera	*myCameraController;
-
-//	CONSOLE_DEBUG(__FUNCTION__);
-	SetWidgetChecked(kCameraBox_Btn_8Bit,		cForce8BitRead);
-	SetWidgetChecked(kCameraBox_EnableBinary,	cAllowBinaryDownload);
-
-	myCameraController	=	(ControllerCamera *)cParentObjPtr;
-
-	if (myCameraController != NULL)
-	{
-		myCameraController->cForceAlpacaUpdate	=	true;
-	}
-	else
-	{
-		CONSOLE_DEBUG("myCameraController is NULL");
-	}
 }
 
 //*****************************************************************************
@@ -1072,26 +1043,6 @@ ControllerCamera	*myCameraController;
 		CONSOLE_DEBUG("myCameraController is NULL");
 	}
 }
-
-//*****************************************************************************
-void	WindowTabCamera::ToggleSideBar(void)
-{
-ControllerCamera	*myCameraController;
-
-//	CONSOLE_DEBUG(__FUNCTION__);
-	myCameraController	=	(ControllerCamera *)cParentObjPtr;
-
-	if (myCameraController != NULL)
-	{
-		myCameraController->ToggleSideBar();
-	}
-	else
-	{
-		CONSOLE_DEBUG("myCameraController is NULL");
-	}
-}
-
-
 
 //*****************************************************************************
 void	WindowTabCamera::ToggleAutoExposure(void)

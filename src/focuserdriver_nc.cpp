@@ -49,6 +49,8 @@
 //*	Nov 28,	2022	<MLS> CONFORMU-focuserdriver-Moonlite-NiteCrawler -> PASSED!!!!!!!!!!!!!!!!!!!!!
 //*	Nov 30,	2022	<MLS> Made queued commands permanent
 //*	Nov 30,	2022	<MLS> Added ProcessQueuedCommands() & ProcessPeriodicRequests()
+//*	Jun 10,	2023	<MLS> Modified to use usbmanager functions to get the right /dev/ttyUSBn port
+//*	Jun 16,	2023	<MLS> Using old moonlite discover method as backup to usbmanager method
 //*****************************************************************************
 //	Full step size for the Ultra high res stepper motor is .00004" per step.
 //	The regular high res stepper motor runs as .00016" per step in Full step mode.
@@ -86,6 +88,7 @@
 #include	"focuserdriver_nc.h"
 #include	"eventlogging.h"
 #include	"serialport.h"
+#include	"usbmanager.h"
 
 
 
@@ -113,24 +116,46 @@ int					gValidPortCnt	=	0;
 int		CreateFocuserObjects_MoonLite(void)
 {
 int					moonliteCnt;
-int					iii;
+bool				validUSBpath;
+char				usbPath[64];
 TYPE_MOONLITECOM	myMoonliteDesc;
+int					iii;
 
-	CONSOLE_DEBUG(__FUNCTION__);
-	moonliteCnt	=	MoonLite_CountFocusers();
+//	CONSOLE_DEBUG(__FUNCTION__);
+	USB_InitTable();
 
-	CONSOLE_DEBUG_W_NUM("moonliteCnt\t=", moonliteCnt);
-	for (iii=0; iii<moonliteCnt; iii++)
+	moonliteCnt		=	0;
+	validUSBpath	=	true;
+	while (validUSBpath)
 	{
-		MoonLite_InitCom(&myMoonliteDesc, iii);
-		new FocuserNiteCrawler(iii, myMoonliteDesc.usbPortPath);
+		validUSBpath	=	USB_GetPathFromID("FTDI", usbPath);
+		if (validUSBpath)
+		{
+			CONSOLE_DEBUG_W_STR("usbPath\t=", usbPath);
+			new FocuserMoonLite(usbPath);
+			moonliteCnt++;
+		}
+	}
+	CONSOLE_DEBUG_W_NUM("moonliteCnt\t=", moonliteCnt);
+
+	//*	this is the old way, if we did not find any the new way, try this
+	if (moonliteCnt == 0)
+	{
+		moonliteCnt	=	MoonLite_CountFocusers();
+
+		CONSOLE_DEBUG_W_NUM("moonliteCnt\t=", moonliteCnt);
+		for (iii=0; iii<moonliteCnt; iii++)
+		{
+			MoonLite_InitCom(&myMoonliteDesc, iii);
+			new FocuserMoonLite(myMoonliteDesc.usbPortPath);
+		}
 	}
 	return(moonliteCnt);
 }
 
 //**************************************************************************************
-FocuserNiteCrawler::FocuserNiteCrawler(const int argDevNum, const char *devicePath)
-	:FocuserDriver(argDevNum)
+FocuserMoonLite::FocuserMoonLite(const char *devicePath)
+	:FocuserDriver()
 {
 
 	CONSOLE_DEBUG(__FUNCTION__);
@@ -146,17 +171,9 @@ FocuserNiteCrawler::FocuserNiteCrawler(const int argDevNum, const char *devicePa
 	cLastTimeMilSecs_Position	=	0;
 	cInvalidStringErrCnt		=	0;
 
-	CONSOLE_DEBUG_W_NUM("argDevNum", argDevNum);
-	if (devicePath != NULL)
-	{
-		CONSOLE_DEBUG_W_STR("port is", devicePath);
-		OpenFocuserConnection(devicePath);
-	}
-	else
-	{
-		CONSOLE_DEBUG_W_STR("port is", gValidSerialPorts[argDevNum].deviceString);
-		OpenFocuserConnection(gValidSerialPorts[argDevNum].deviceString);
-	}
+	CONSOLE_DEBUG_W_STR("port is", devicePath);
+	OpenFocuserConnection(devicePath);
+
 	//	Full step size for the Ultra high res stepper motor is .00004" per step.
 	//	The regular high res stepper motor runs as .00016" per step in Full step mode.
 	switch (cMoonliteCom.model)
@@ -203,22 +220,22 @@ FocuserNiteCrawler::FocuserNiteCrawler(const int argDevNum, const char *devicePa
 //**************************************************************************************
 // Destructor
 //**************************************************************************************
-FocuserNiteCrawler::~FocuserNiteCrawler(void)
+FocuserMoonLite::~FocuserMoonLite(void)
 {
 	CONSOLE_DEBUG(__FUNCTION__);
 	MoonLite_CloseFocuserConnection(&cMoonliteCom);
 }
 
 //*****************************************************************************
-bool	FocuserNiteCrawler::OpenFocuserConnection(const char *usbPortPath)
+bool	FocuserMoonLite::OpenFocuserConnection(const char *usbPortPath)
 {
 bool	openOK;
 
-	CONSOLE_DEBUG_W_STR("port is", usbPortPath);
+//	CONSOLE_DEBUG_W_STR("port is", usbPortPath);
 
-	MoonLite_InitCom(&cMoonliteCom, -1);
+	memset(&cMoonliteCom, 0, sizeof(TYPE_MOONLITECOM));
 	strcpy(cMoonliteCom.usbPortPath, usbPortPath);
-	CONSOLE_DEBUG_W_STR("port is", cMoonliteCom.usbPortPath);
+
 	openOK	=	MoonLite_OpenFocuserConnection(&cMoonliteCom, true);
 	if (openOK)
 	{
@@ -288,7 +305,7 @@ bool	openOK;
 
 //*****************************************************************************
 //*	returns true if valid
-bool	FocuserNiteCrawler::GetPosition(const int axisNumber, int32_t *valueToUpdate)
+bool	FocuserMoonLite::GetPosition(const int axisNumber, int32_t *valueToUpdate)
 {
 bool	validFlag	=	false;
 
@@ -302,7 +319,7 @@ bool	validFlag	=	false;
 
 
 //*****************************************************************************
-void	FocuserNiteCrawler::ProcessQueuedCommands(void)
+void	FocuserMoonLite::ProcessQueuedCommands(void)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode;
 
@@ -334,7 +351,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode;
 
 
 //*****************************************************************************
-void	FocuserNiteCrawler::ProcessPeriodicRequests(void)
+void	FocuserMoonLite::ProcessPeriodicRequests(void)
 {
 bool				validFlag;
 uint32_t			currentMillis;
@@ -356,10 +373,10 @@ double				myFocusVoltage;
 			validFlag	=	MoonLite_GetTemperature(&cMoonliteCom,	&myFocusTemp);
 			if (validFlag)
 			{
-				cFocuserProp.Temperature	=	myFocusTemp;
-				TemperatureLog_AddEntry(cFocuserProp.Temperature);
+				cFocuserProp.Temperature_DegC	=	myFocusTemp;
+				TemperatureLog_AddEntry(cFocuserProp.Temperature_DegC);
 
-//				CONSOLE_DEBUG_W_DBL("cFocuserProp.Temperature\t=", cFocuserProp.Temperature);
+//				CONSOLE_DEBUG_W_DBL("cFocuserProp.Temperature_DegC\t=", cFocuserProp.Temperature_DegC);
 			}
 			else
 			{
@@ -476,7 +493,7 @@ double				myFocusVoltage;
 }
 
 //*****************************************************************************
-int32_t	FocuserNiteCrawler::RunStateMachine(void)
+int32_t	FocuserMoonLite::RunStateMachine(void)
 {
 
 //	CONSOLE_DEBUG(__FUNCTION__);
@@ -495,7 +512,7 @@ int32_t	FocuserNiteCrawler::RunStateMachine(void)
 
 
 //**************************************************************************************
-void	FocuserNiteCrawler::SendCommand(const char *theCommand)
+void	FocuserMoonLite::SendCommand(const char *theCommand)
 {
 char			cmdBuffer[32];
 int				sLen;
@@ -522,7 +539,7 @@ int				bytesWritten;
 }
 
 //**************************************************************************
-int	FocuserNiteCrawler::ReadUntilChar(const int fd, char *readBuff, const int maxChars, const char terminator)
+int	FocuserMoonLite::ReadUntilChar(const int fd, char *readBuff, const int maxChars, const char terminator)
 {
 int		readCnt;
 char	oneCharBuff[4];
@@ -572,7 +589,7 @@ bool	keepGoing;
 
 
 //*****************************************************************************
-TYPE_ASCOM_STATUS	FocuserNiteCrawler::SetStepperPosition(const int axisNumber, const int32_t newPosition)
+TYPE_ASCOM_STATUS	FocuserMoonLite::SetStepperPosition(const int axisNumber, const int32_t newPosition)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 bool				validFlag;
@@ -631,7 +648,7 @@ int					loopCntr;
 //*****************************************************************************
 //*	Stop the motor
 //*****************************************************************************
-TYPE_ASCOM_STATUS		FocuserNiteCrawler::HaltStepper(const int axisNumber)
+TYPE_ASCOM_STATUS		FocuserMoonLite::HaltStepper(const int axisNumber)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 bool				validFlag;
@@ -667,7 +684,7 @@ bool				validFlag;
 
 
 //*****************************************************************************
-TYPE_ASCOM_STATUS		FocuserNiteCrawler::SetFocuserPosition(const int32_t newPosition, char *alpacaErrMsg)
+TYPE_ASCOM_STATUS		FocuserMoonLite::SetFocuserPosition(const int32_t newPosition, char *alpacaErrMsg)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
@@ -685,7 +702,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 }
 
 //*****************************************************************************
-TYPE_ASCOM_STATUS		FocuserNiteCrawler::HaltFocuser(char *alpacaErrMsg)
+TYPE_ASCOM_STATUS		FocuserMoonLite::HaltFocuser(char *alpacaErrMsg)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 

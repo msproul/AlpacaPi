@@ -11,12 +11,13 @@
 
 #ifndef _ARPA_INET_H
 	#include	<arpa/inet.h>
-#endif // _ARPA_INET_H
+#endif
 
-#include	<opencv2/opencv.hpp>
-#include	<opencv2/core.hpp>
 
-#ifndef _USE_OPENCV_CPP_
+#ifdef _USE_OPENCV_CPP_
+	#include	<opencv2/opencv.hpp>
+	#include	<opencv2/core.hpp>
+#else
 	#include	"opencv2/highgui/highgui_c.h"
 	#include	"opencv2/imgproc/imgproc_c.h"
 	#include	"opencv2/core/version.hpp"
@@ -24,15 +25,15 @@
 	#if (CV_MAJOR_VERSION >= 3)
 		#include	"opencv2/imgproc/imgproc.hpp"
 	#endif
-#endif // _USE_OPENCV_CPP_
+#endif
 
 #ifndef _JSON_PARSE_H_
 	#include	"json_parse.h"
-#endif // _JSON_PARSE_H_
+#endif
 
 #ifndef	_WIDGET_H_
 	#include	"widget.h"
-#endif // _WIDGET_H_
+#endif
 
 #ifndef	_ALPACA_DEFS_H_
 	#include	"alpaca_defs.h"
@@ -40,7 +41,7 @@
 
 
 //*****************************************************************************
-typedef struct
+typedef struct	//	TYPE_WINDOWTAB_COLORSCHEME
 {
 	cv::Scalar	bgColor;
 	cv::Scalar	fontColor;
@@ -176,6 +177,7 @@ class WindowTab
 		virtual	void	LaunchWebHelp(const char *webpagestring = NULL);
 				char	cWebURLstring[64];
 
+				void	CloseWindow(void);
 				void	ComputeWidgetColumns(const int windowWitdh);
 				void	SetWidget(				const int widgetIdx, int left, int top, int width, int height);
 				void	SetWidgetType(			const int widgetIdx, const int widetType);
@@ -192,7 +194,8 @@ class WindowTab
 
 				void	SetWidgetOutlineBox(	const int widgetIdx, const int firstItem, const int lastItem);
 				void	SetWidgetProgress(		const int widgetIdx, const int currPosition, const int totalValue);
-				void	DumpWidgetList(			const int startIdx, const int stopIdx);
+				void	DumpWidgetList(			const int startIdx, const int stopIdx, const char *callingFunctionName=NULL);
+				void	DumpWidget(TYPE_WIDGET *theWidget);
 				int		SetTitleBox(const int	titleWidgetIdx,
 									const int	connectionWidgetIdx,
 									const int	yLoc,
@@ -203,13 +206,13 @@ class WindowTab
 				//*	special purpose routines
 				void	SetupWindowBottomBoxes(	const int	ipaddrBox,
 												const int	readAllBox,
+												const int	deviceStateBox,
 												const int	errorMsgBox,
 												const int	lastCmdWidgetIdx,
 												const int	logoWidgetIdx,
 												const int	helpBtnBox 			= -1,
 												const bool	logoSideOfScreen	= true,
 												const int	connectBtnBox		= -1);
-
 
 				void	SetBGcolorFromWindowName(	const int	widgetIdx);
 				int		SetAlpacaLogoBottomCorner(const int logoWidgetIdx);
@@ -309,23 +312,23 @@ class WindowTab
 		//=============================================================
 //		void		SetColor(const int theColor);
 
-		void		LLD_DrawCString(	const int xx, const int yy, const char *textString, const int fontIndex=1);
-		void		LLD_FillEllipse(	const int xCenter, const int yCenter, const int xRadius, const int yRadius);
-		void		LLD_FrameEllipse(	const int xCenter, const int yCenter, const int xRadius, const int yRadius);
-		void		LLD_FrameRect(		const int left, const int top, const int width, const int height, const int lineWidth=1);
-		void		LLD_FrameRect(		cv::Rect *theRect);
-		void		LLD_FillRect(		const int left, const int top, const int width, const int height);
-		void		LLD_FillRect(		cv::Rect *theRect);
+		void		LLG_DrawCString(	const int xx, const int yy, const char *textString, const int fontIndex=1);
+		void		LLG_FillEllipse(	const int xCenter, const int yCenter, const int xRadius, const int yRadius);
+		void		LLG_FrameEllipse(	const int xCenter, const int yCenter, const int xRadius, const int yRadius);
+		void		LLG_FrameRect(		const int left, const int top, const int width, const int height, const int lineWidth=1);
+		void		LLG_FrameRect(		cv::Rect *theRect);
+		void		LLG_FillRect(		const int left, const int top, const int width, const int height);
+		void		LLG_FillRect(		cv::Rect *theRect);
 
-		void		LLD_FloodFill(		const int xxx, const int yyy, const int color);
-		int			LLD_GetTextSize(	const char *textString, const int fontIndex);
-		void		LLD_LineTo(			const int xx, const int yy);
-		void		LLD_MoveTo(			const int xx, const int yy);
-		void		LLD_PenSize(		const int newLineWidth);
-		void		LLD_Putpixel(		const int xx, const int yy, const int theColor);
-		void		LLD_SetColor(		const int theColor);
-		void		LLD_SetColor(		cv::Scalar newColor);
-		cv::Scalar	LLD_GetColor(		const int theColor);
+		void		LLG_FloodFill(		const int xxx, const int yyy, const int color);
+		int			LLG_GetTextSize(	const char *textString, const int fontIndex);
+		void		LLG_LineTo(			const int xx, const int yy);
+		void		LLG_MoveTo(			const int xx, const int yy);
+		void		LLG_PenSize(		const int newLineWidth);
+		void		LLG_Putpixel(		const int xx, const int yy, const int theColor);
+		void		LLG_SetColor(		const int theColor);
+		void		LLG_SetColor(		cv::Scalar newColor);
+		cv::Scalar	LLG_GetColor(		const int theColor);
 #if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 		cv::Mat		*cOpenCV_Image;
 #else

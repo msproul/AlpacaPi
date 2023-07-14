@@ -171,6 +171,7 @@ int		iii;
 	//*	set up all the bottom stuff so that it is the same on all windowtabs
 	SetupWindowBottomBoxes(	kMount_IPaddr,
 							kMount_Readall,
+							kMount_DeviceState,
 							kMount_HelpMsgTextBox,
 							-1,		//	kMount_LastCmdString,
 							-1,		//	kMount_AlpacaLogo,
@@ -439,11 +440,11 @@ int			pt2_Y;
 
 	if (yLoc == 0)
 	{
-		LLD_SetColor(W_RED);
+		LLG_SetColor(W_RED);
 	}
 	else
 	{
-		LLD_SetColor(W_WHITE);
+		LLG_SetColor(W_WHITE);
 	}
 #define	kDashWidth	4
 	xx		=	5;
@@ -460,8 +461,8 @@ int			pt2_Y;
 		{
 			pt1_X	=	xx;
 			pt2_X	=	xx + kDashWidth;
-			LLD_MoveTo(pt1_X, pt1_Y);
-			LLD_LineTo(pt2_X, pt2_Y);
+			LLG_MoveTo(pt1_X, pt1_Y);
+			LLG_LineTo(pt2_X, pt2_Y);
 
 			xx	+=	(5 * kDashWidth);
 		}
@@ -469,8 +470,8 @@ int			pt2_Y;
 		pt2_X	+=	2;
 		pt2_Y	+=	5;
 		sprintf(tickLable, "%3d", yLoc);
-		LLD_SetColor(W_MAGENTA);
-		LLD_DrawCString(pt2_X, pt2_Y, tickLable, kFont_Medium);
+		LLG_SetColor(W_MAGENTA);
+		LLG_DrawCString(pt2_X, pt2_Y, tickLable, kFont_Medium);
 	}
 }
 
@@ -527,8 +528,8 @@ int			rightMostPoint;
 			}
 			if (okToDraw)
 			{
-				LLD_MoveTo(pt1_X, pt1_Y);
-				LLD_LineTo(pt2_X, pt2_Y);
+				LLG_MoveTo(pt1_X, pt1_Y);
+				LLG_LineTo(pt2_X, pt2_Y);
 			}
 			previousX		=	xLoc;
 			previousY		=	pt2_Y;
@@ -536,7 +537,7 @@ int			rightMostPoint;
 		xLoc++;
 		iii	+=	cHorizontalMagnification;
 	}
-	LLD_DrawCString(previousX + 2, previousY, labelString, kFont_RadioBtn);
+	LLG_DrawCString(previousX + 2, previousY, labelString, kFont_RadioBtn);
 }
 
 
@@ -608,8 +609,8 @@ double		averageValue;
 			}
 			if (okToDraw)
 			{
-				LLD_MoveTo(pt1_X, pt1_Y);
-				LLD_LineTo(pt2_X, pt2_Y);
+				LLG_MoveTo(pt1_X, pt1_Y);
+				LLG_LineTo(pt2_X, pt2_Y);
 			}
 			previousX		=	xLoc;
 			previousY		=	pt2_Y;
@@ -693,20 +694,20 @@ int			tickLineDelta;
 	//*	draw the averages first, so that the real line goes on top
 	if (cDisplayAverage)
 	{
-		LLD_SetColor(W_LIGHTGRAY);
+		LLG_SetColor(W_LIGHTGRAY);
 		DrawWidgetCustomGraphicAvg(theWidget,	gHourAngleData,		firstDataPtIdx,	50);
 	}
-	LLD_SetColor(W_GREEN);
+	LLG_SetColor(W_GREEN);
 	DrawOneGraphSegment(theWidget,	gHourAngleData,		firstDataPtIdx,	"HA");
 
 	//----------------------------------------------------------------
 	//*	set up to draw the Declination Line
-	LLD_SetColor(W_LIGHTMAGENTA);
+	LLG_SetColor(W_LIGHTMAGENTA);
 	DrawOneGraphSegment(theWidget,	gDeclinationData,	firstDataPtIdx,	"Dec");
 
 	//----------------------------------------------------------------
 	//*	set up to draw the RA Line
-	LLD_SetColor(W_ORANGE);
+	LLG_SetColor(W_ORANGE);
 	DrawOneGraphSegment(theWidget,	gRightAsceData,		firstDataPtIdx,	"RA");
 }
 

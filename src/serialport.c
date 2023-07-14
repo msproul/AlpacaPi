@@ -3,6 +3,7 @@
 //*	Mar 31,	2021	<MLS> Added Serial_Set_Blocking()
 //*	Mar 31,	2021	<MLS> Changed Set_Serial_attribs() to Serial_Set_Attribs()
 //*	Mar 31,	2021	<MLS> Added Serial_Send_Data()
+//*	Jun  7,	2023	<MLS> Added Serial_Set_RTS()
 //*****************************************************************************
 
 #include	<errno.h>
@@ -12,6 +13,7 @@
 #include	<stdbool.h>
 #include	<string.h>
 #include	<unistd.h>
+#include	<sys/ioctl.h> //ioctl() call defenitions
 
 
 #define _ENABLE_CONSOLE_DEBUG_
@@ -52,12 +54,13 @@ int				myReturnCode;
 
 	tty.c_iflag		&=	~(IXON | IXOFF | IXANY);	// shut off xocn/xoff ctrl
 
-	tty.c_cflag		|=	(CLOCAL | CREAD);			// ignore modem controls,
-													// enable reading
-	tty.c_cflag		&=	~(PARENB | PARODD);			// shut off parity
+	tty.c_cflag		|=	(CLOCAL | CREAD);			//*	ignore modem controls,
+													//*	enable reading
+	tty.c_cflag		&=	~(PARENB | PARODD);			//*	shut off parity
 	tty.c_cflag		|=	parity;
-	tty.c_cflag		&=	~CSTOPB;
-	tty.c_cflag		&=	~CRTSCTS;
+	tty.c_cflag		&=	~CSTOPB;					//* only need 1 stop bit
+	tty.c_cflag		&=	~CRTSCTS;					//* no hardware flowcontrol
+
 
 	myReturnCode	=	0;
 
@@ -101,6 +104,27 @@ struct termios tty;
 }
 
 //*****************************************************************************
+//*	Request To Send
+//*	https://www.xanthium.in/Controlling-RTS-and-DTR-pins-SerialPort-in-Linux
+//*****************************************************************************
+void	Serial_Set_RTS(int fd, bool rtsState)
+{
+int	rts_flag;
+
+	CONSOLE_DEBUG_W_BOOL("Setting RTS to\t=", rtsState);
+
+	rts_flag	=	TIOCM_RTS;
+	if (rtsState)
+	{
+		ioctl(fd,TIOCMBIS,&rts_flag);	//Set RTS pin
+	}
+	else
+	{
+		ioctl(fd,TIOCMBIC,&rts_flag);	//Clear RTS pin
+	}
+}
+
+//*****************************************************************************
 int	Serial_Send_Data(int fd, const char *xmitData, bool waitFlag)
 {
 ssize_t	bytesWritten;
@@ -110,6 +134,7 @@ size_t	byteCount;
 
 	byteCount		=	strlen(xmitData);
 	bytesWritten	=	write (fd, xmitData, byteCount);	// send 7 character greeting
+	tcflush(fd, TCOFLUSH);
 
 	if (waitFlag)
 	{

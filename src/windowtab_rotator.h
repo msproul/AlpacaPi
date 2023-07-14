@@ -78,6 +78,7 @@ enum
 	kRotatorCtrl_AlpacaErrorMsg,
 	kRotatorCtrl_IPaddr,
 	kRotatorCtrl_Readall,
+	kRotatorCtrl_DeviceState,
 
 
 	kRotatorCtrl_last

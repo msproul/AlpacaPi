@@ -28,7 +28,7 @@ enum
 	kFilterWheel_AlpacaErrorMsg,
 	kFilterWheel_IPaddr,
 	kFilterWheel_Readall,
-
+	kFilterWheel_DeviceState,
 
 	kFilterWheel_last
 
@@ -36,10 +36,10 @@ enum
 
 #ifndef kSensorValueCnt
 	#define		kSensorValueCnt	12
-#endif // kSensorValueCnt
+#endif
 
 //**************************************************************************************
-typedef struct
+typedef struct	//	Point
 {
 	int		x;
 	int		y;

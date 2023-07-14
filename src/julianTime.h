@@ -2,11 +2,11 @@
 
 #ifndef	_STDLIB_H
 	#include	<stdlib.h>
-#endif // _STDLIB_H
+#endif
 
 #ifndef _SYS_TIME_H
 	#include	<sys/time.h>
-#endif // _SYS_TIME_H
+#endif
 
 double	Julian_CalcDate(struct timeval *timeStruct);
 double	Julian_GetCurrentDate(void);

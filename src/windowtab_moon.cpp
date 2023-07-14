@@ -14,7 +14,7 @@
 //*	that you agree that the author(s) have no warranty, obligations or liability.  You
 //*	must determine the suitability of this source code for your use.
 //*
-//*	Redistributions of this source code must retain this copyright notice.
+//*	Re-distributions of this source code must retain this copyright notice.
 //*****************************************************************************
 //*	Edit History
 //*****************************************************************************
@@ -23,6 +23,7 @@
 //*	Mar 25,	2021	<MLS> Added support for multiple moon FITS images to step through
 //*	Mar 25,	2021	<MLS> Added ReadMoonDirectory() & ReadMoonImage()
 //*	Sep 19,	2022	<MLS> Finished openCV C++ conversion for moon display
+//*	May 28,	2023	<MLS> Added MoonDirQsortProc() to sort the file names
 //*****************************************************************************
 
 #include	<dirent.h>
@@ -158,7 +159,7 @@ int		myButtonWidth;
 	yLoc			+=	2;
 
 
-	cMaxMoonImgSize	=   675;
+	cMaxMoonImgSize	=   650;
 	availablePixels	=	cWidth - cClm3_offset;
 	moonXloc		=	cClm3_offset + ((availablePixels - cMaxMoonImgSize) / 2);
 	yLoc			+=	5;
@@ -251,6 +252,21 @@ void	WindowTabMoon::ProcessButtonClick(const int buttonIdx, const int flags)
 	}
 }
 
+
+//**************************************************************************************
+static  int MoonDirQsortProc(const void *e1, const void *e2)
+{
+TYPE_MoonFileEntry	*obj1, *obj2;
+int					returnValue;
+
+	obj1		=	(TYPE_MoonFileEntry *)e1;
+	obj2		=	(TYPE_MoonFileEntry *)e2;
+
+	returnValue	=	strcasecmp(obj1->fitsFileName, obj2->fitsFileName);
+	return(returnValue);
+}
+
+
 //**************************************************************************************
 void WindowTabMoon::ReadMoonDirectory(void)
 {
@@ -312,6 +328,7 @@ int					fileIdx;
 		cMoonFileCnt	=	fileIdx;
 
 		errorCode		=	closedir(directory);
+		qsort(cMoonFileList, cMoonFileCnt, sizeof(TYPE_MoonFileEntry), MoonDirQsortProc);
 
 		if (errorCode != 0)
 		{

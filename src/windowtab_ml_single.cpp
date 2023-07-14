@@ -14,7 +14,7 @@
 //*	that you agree that the author(s) have no warranty, obligations or liability.  You
 //*	must determine the suitability of this source code for your use.
 //*
-//*	Redistributions of this source code must retain this copyright notice.
+//*	Re-distributions of this source code must retain this copyright notice.
 //*****************************************************************************
 //*	Edit History
 //*****************************************************************************
@@ -24,6 +24,8 @@
 //*	May 21,	2020	<MLS> Focuser store points working on MoonLite single controller
 //*	Jun 19,	2020	<MLS> Finished HOME button operation
 //*	Feb 23,	2020	<MLS> Re-arranged focuser title to be consistent with other windows
+//*	May 29,	2023	<MLS> Added +/- 50 to movement buttons
+//*	Jun 19,	2023	<MLS> Added DeviceState to moonlite single
 //*****************************************************************************
 
 #ifdef _ENABLE_CTRL_FOCUSERS_
@@ -95,10 +97,12 @@ int		iii;
 	cButtonNumValues[iii++]	=	5000;
 	cButtonNumValues[iii++]	=	1000;
 	cButtonNumValues[iii++]	=	100;
+	cButtonNumValues[iii++]	=	50;
 	cButtonNumValues[iii++]	=	10;
 	cButtonNumValues[iii++]	=	1;
 	cButtonNumValues[iii++]	=	-1;
 	cButtonNumValues[iii++]	=	-10;
+	cButtonNumValues[iii++]	=	-50;
 	cButtonNumValues[iii++]	=	-100;
 	cButtonNumValues[iii++]	=	-1000;
 	cButtonNumValues[iii++]	=	-5000;
@@ -206,7 +210,7 @@ int		connButtonWidgetIdx;
 	//==========================================
 	myButtonWidth	=	(cClmWidth * 2) - 5;
 	btnIdx			=	kMLsingle_Store;
-	while (btnIdx <= kMLsingle_SP09)
+	while (btnIdx <= kMLsingle_SP11)
 	{
 		SetWidget(				btnIdx,		cClm1_offset + 5,	yLoc,	myButtonWidth,	cSmallBtnHt);
 		SetWidgetType(			btnIdx,		kWidgetType_Button);
@@ -247,7 +251,7 @@ int		connButtonWidgetIdx;
 
 		btnIdx++;
 	}
-//	CONSOLE_DEBUG_W_NUM("btnIdx\t",	btnIdx);
+	CONSOLE_DEBUG_W_NUM("btnIdx\t",	btnIdx);
 
 	SetWidgetOutlineBox(kMLsingle_GOTO_outline, kMLsingle_focValue, kMLsingle_Foc_m5000);
 
@@ -328,6 +332,7 @@ int		connButtonWidgetIdx;
 	//*	set up all the bottom stuff so that it is the same on all windowtabs
 	SetupWindowBottomBoxes(	kMLsingle_IPaddr,
 							kMLsingle_Readall,
+							kMLsingle_DeviceState,
 							kMLsingle_AlpacaErrorMsg,
 							kMLsingle_LastCmdString,
 							kMLsingle_AlpacaLogo,
@@ -353,7 +358,7 @@ int				setPointIdx;
 	{
 		focusController				=	(ControllerFocus*)cParentObjPtr;
 		prevDesiredFocusPosition	=	focusController->cFocuserDesiredPos;
-		currFocuserPosition			=	focusController->cFocuserPosition;
+		currFocuserPosition			=	focusController->cFocuserProp.Position;
 
 		myFocuserDesiredPotion		=	prevDesiredFocusPosition;
 		switch(buttonIdx)
@@ -398,16 +403,19 @@ int				setPointIdx;
 				}
 				break;
 
-			case kMLsingle_Foc_m1:
-			case kMLsingle_Foc_p1:
-			case kMLsingle_Foc_m10:
-			case kMLsingle_Foc_p10:
-			case kMLsingle_Foc_m100:
-			case kMLsingle_Foc_p100:
-			case kMLsingle_Foc_m1000:
-			case kMLsingle_Foc_p1000:
-			case kMLsingle_Foc_m5000:
 			case kMLsingle_Foc_p5000:
+			case kMLsingle_Foc_p1000:
+			case kMLsingle_Foc_p100:
+			case kMLsingle_Foc_p50:
+			case kMLsingle_Foc_p10:
+			case kMLsingle_Foc_p1:
+
+			case kMLsingle_Foc_m1:
+			case kMLsingle_Foc_m10:
+			case kMLsingle_Foc_m50:
+			case kMLsingle_Foc_m100:
+			case kMLsingle_Foc_m1000:
+			case kMLsingle_Foc_m5000:
 				btnValueIdx	=	buttonIdx - kMLsingle_Foc_p5000;
 				if (btnValueIdx >= 0)
 				{

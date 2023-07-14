@@ -23,14 +23,11 @@
 //*	Mar  1,	2022	<MLS> Added value string length checking to prevent crashes
 //*****************************************************************************
 
-//*	this file gets INCLUDED at the end of either controller_telescope OR controller_skytravel
+//*	this file gets INCLUDED at the end of either controller_filterwheel.cpp OR controller_camera.cpp
 
 #ifndef	_ALPACA_DEFS_H_
 	#include	"alpaca_defs.h"
 #endif
-
-
-
 
 //*****************************************************************************
 //http://newt16:6800/api/v1/filterwheel/0/names
@@ -44,9 +41,9 @@ int				jjj;
 int				filterWheelIdx;
 int				argStrLen;
 
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
-	CONSOLE_DEBUG_W_NUM("cAlpacaDevNum\t=", cAlpacaDevNum);
-	CONSOLE_DEBUG_W_NUM("cPort\t=", cPort);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+//	CONSOLE_DEBUG_W_NUM("cAlpacaDevNum\t=", cAlpacaDevNum);
+//	CONSOLE_DEBUG_W_NUM("cPort\t=", cPort);
 
 	//*	Start by getting info about the filterwheel
 	//===============================================================
@@ -92,7 +89,7 @@ int				argStrLen;
 						{
 							//*	save the filter name
 							strcpy(cFilterWheelProp.Names[filterWheelIdx].FilterName, jsonParser.dataList[jjj].valueString);
-							CONSOLE_DEBUG(cFilterWheelProp.Names[filterWheelIdx].FilterName);
+//							CONSOLE_DEBUG(cFilterWheelProp.Names[filterWheelIdx].FilterName);
 						}
 						else
 						{
@@ -177,3 +174,4 @@ bool	rtnValidData;
 	SetWindowIPaddrInfo(NULL, cOnLine);
 	return(validData);
 }
+

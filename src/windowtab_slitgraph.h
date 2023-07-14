@@ -38,6 +38,7 @@ enum
 	kSlitGraph_AlpacaErrorMsg,
 	kSlitGraph_IPaddr,
 	kSlitGraph_Readall,
+	kSlitGraph_DeviceState,
 
 
 	kSlitGraph_last

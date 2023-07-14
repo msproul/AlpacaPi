@@ -8,11 +8,11 @@
 
 #ifndef	_CONTROLLER_H_
 //	#include	"controller.h"
-#endif // _CONTROLLER_H_
+#endif
 
 #ifndef _WINDOW_TAB_H_
 	#include	"windowtab.h"
-#endif // _WINDOW_TAB_H
+#endif
 
 #define	_SUPPORT_REMOTE_IMU_
 
@@ -55,7 +55,6 @@ enum
 	kCameraBox_ReadModeOutline,
 
 	kCameraBox_LiveMode,
-	kCameraBox_SideBar,
 	kCameraBox_AutoExposure,
 	kCameraBox_DisplayImage,
 	kCameraBox_SaveAll,
@@ -128,6 +127,7 @@ enum
 	kCameraBox_AlpacaErrorMsg,
 	kCameraBox_IPaddr,
 	kCameraBox_Readall,
+	kCameraBox_DeviceState,
 
 	kCameraBox_last
 };
@@ -148,6 +148,7 @@ class WindowTabCamera: public WindowTab
 		virtual	~WindowTabCamera(void);
 
 		virtual	void	SetupWindowControls(void);
+		virtual	void	ActivateWindow(void);
 		virtual	void	ProcessButtonClick(const int buttonIdx, const int flags);
 		virtual	void	ProcessDoubleClick(	const int	widgetIdx,
 											const int	event,
@@ -158,12 +159,10 @@ class WindowTabCamera: public WindowTab
 
 				void	DisableFilterWheel(void);
 				void	SetCameraLogo(void);
-				void	ForceAlpacaUpdate(void);
 				void	BumpGain(const int howMuch);
 				void	BumpExposure(const double howMuch);
 				void	BumpOffset(const int howMuch);
 				void	ToggleLiveMode(void);
-				void	ToggleSideBar(void);
 				void	ToggleAutoExposure(void);
 				void	ToggleDisplayImage(void);
 				void	ToggleSaveAll(void);

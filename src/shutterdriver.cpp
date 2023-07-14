@@ -669,15 +669,8 @@ char		lineBuffer[128];
 	SocketWriteData(mySocketFD,	"</TABLE>\r\n");
 	SocketWriteData(mySocketFD,	"<P>\r\n");
 
-
 	SocketWriteData(mySocketFD,	"</CENTER>\r\n");
-
-	//*	now generate links to all of the commands
-	GenerateHTMLcmdLinkTable(mySocketFD, "shutter", 0, gShutterCmdTable);
-
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, "Exit");
 }
-
 
 //*****************************************************************************
 bool	ShutterDriver::GetCmdNameFromMyCmdTable(const int cmdNumber, char *comandName, char *getPut)
@@ -693,7 +686,6 @@ void	ShutterDriver::WatchDog_TimeOut(void)
 {
 	//*	do nothing, this should be overridden
 }
-
 
 #pragma mark -
 

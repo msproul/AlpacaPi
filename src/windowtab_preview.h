@@ -103,10 +103,13 @@ class WindowTabPreview: public WindowTab
 				void	DownloadImage(void);
 
 				char			cAlpacaDeviceName[64];
-				TYPE_REMOTE_DEV	cAlpacaDevInfo;
-
-				IplImage		*cOpenCVdownLoadedImage;
 				char			cDownLoadedFileNameRoot[256];
+				TYPE_REMOTE_DEV	cAlpacaDevInfo;
+			#ifdef _USE_OPENCV_CPP_
+				cv::Mat			*cOpenCVdownLoadedImage;
+			#else
+				IplImage		*cOpenCVdownLoadedImage;
+			#endif
 
 				TYPE_ALPACA_CAMERASTATE		cAlpacaCameraState;
 

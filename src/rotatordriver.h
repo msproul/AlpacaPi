@@ -24,34 +24,8 @@
 	#include	"alpacadriver.h"
 #endif
 
+#include	"rotator_AlpacaCmds.h"
 
-
-//*****************************************************************************
-//*	Rotator Specific Methods
-//*****************************************************************************
-enum
-{
-	kCmd_Rotator_canreverse=	0,		//*	Indicates whether the Rotator supports the Reverse method.
-	kCmd_Rotator_ismoving,				//*	Indicates whether the rotator is currently moving.
-	kCmd_Rotator_mechanicalposition,	//*	Returns the rotator's mechanical current position.
-	kCmd_Rotator_position,				//*	Returns the rotator's current position.
-	kCmd_Rotator_reverse,				//*	Returns the rotator's Reverse state.
-										//*	Sets the rotator's Reverse state.
-	kCmd_Rotator_stepsize,				//*	Returns the minimum StepSize
-	kCmd_Rotator_targetposition,		//*	Returns the destination position angle.
-	kCmd_Rotator_halt,					//*	Immediately stops rotator motion.
-	kCmd_Rotator_move,					//*	Moves the rotator to a new relative position.
-	kCmd_Rotator_moveabsolute,			//*	Moves the rotator to a new absolute position.
-	kCmd_Rotator_movemechanical,		//*	Moves the rotator to a new raw mechanical position.
-	kCmd_Rotator_sync,					//*	Syncs the rotator to the specified position angle without moving it.
-
-	//*	added by MLS
-	kCmd_Rotator_Extras,
-	kCmd_Rotator_step,					//*	Moves the rotator to a new relative position.
-	kCmd_Rotator_stepabsolute,			//*	Moves the rotator to a new absolute position.
-
-	kCmd_Rotator_readall,				//*
-};
 
 //**************************************************************************************
 class RotatorDriver: public AlpacaDriver
@@ -89,6 +63,7 @@ class RotatorDriver: public AlpacaDriver
 		TYPE_ASCOM_STATUS	Put_Stepabsolute(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 		TYPE_ASCOM_STATUS	Get_Readall(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 
+		virtual	bool					DeviceState_Add_Content(const int socketFD, char *jsonTextBuffer, const int maxLen);
 		virtual	int32_t					ReadCurrentPoisiton_steps(void);
 		virtual	double					ReadCurrentPoisiton_degs(void);
 		virtual	TYPE_ASCOM_STATUS		SetCurrentPoisiton_steps(const int32_t newPosition);

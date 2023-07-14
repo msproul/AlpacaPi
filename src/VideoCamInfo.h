@@ -5,7 +5,7 @@
 #define _VIDEOCAMINFO_H_
 
 //**************************************************************************************
-typedef struct
+typedef struct	//	TYPE_CAMERA_INFO
 {
 	bool	onLine;
 	int		userNum;

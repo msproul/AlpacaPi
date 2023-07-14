@@ -24,6 +24,9 @@
 //*	Mar 22,	2020	<MLS> Added SetFileNameOptions()
 //*	Apr  7,	2020	<MLS> Added Dark, Flat and Bias to settings options
 //*	Jul  2,	2020	<MLS> Added filename include refID radio button
+//*	May 29,	2023	<MLS> Working on exposure settings
+//*	Jun  4,	2023	<MLS> Added SetFileSaveOptions()
+//*	Jun 18,	2023	<MLS> Added DeviceState to camsettings
 //*****************************************************************************
 
 
@@ -34,10 +37,12 @@
 
 
 
+#include	"windowtab.h"
 #include	"windowtab_camsettings.h"
 
 #include	"controller.h"
 #include	"controller_camera.h"
+#include	"controller_cam_normal.h"
 
 //**************************************************************************************
 typedef struct
@@ -53,23 +58,23 @@ typedef struct
 //**************************************************************************************
 TYPE_PRESETS	gPresets[]		=
 {
-	{	"Test",		"Test",		0.00001,	20000.0,	0.001	},
-	{	"Dark",		"Dark",		0.000032,	5.0,		0.00001	},
-	{	"Flat",		"Flat",		0.000032,	5.0,		0.00001	},
-	{	"Bias",		"Bias",		0.000032,	5.0,		0.00001	},
-	{	"Moon",		"Moon",		0.000032,	5.0,		0.00001	},
-	{	"Sun",		"Sun",		0.000032,	1.0,		0.00001	},
-	{	"Mercury",	"Merc",		0.000032,	20000.0,	0.001	},
-	{	"Venus",	"Ven",		0.000032,	20000.0,	0.001	},
-	{	"Mars",		"Mars",		0.000032,	20000.0,	0.001	},
-	{	"Jupiter",	"Jup",		0.000032,	20000.0,	0.001	},
-	{	"Saturn",	"Sat",		0.000032,	20000.0,	0.001	},
-	{	"Uranus",	"Uran",		0.000032,	20000.0,	0.001	},
-	{	"Neptune",	"Nept",		0.000032,	20000.0,	0.001	},
-	{	"Pluto",	"Plut",		0.000032,	20000.0,	0.001	},
-	{	"Star",		"Star",		0.000032,	20000.0,	0.001	},
-	{	"Deepsky",	"DSO",		0.000032,	20000.0,	0.01	},
-	{	"Other",	"Other",	0.000032,	20000.0,	0.001	},
+	{	"Test",		"Test",		0.00001,	2000.0,		0.001		},
+	{	"Dark",		"Dark",		0.000032,	5.0,		0.00001		},
+	{	"Flat",		"Flat",		0.000032,	5.0,		0.00001		},
+	{	"Bias",		"Bias",		0.000032,	5.0,		0.00001		},
+	{	"Moon",		"Moon",		0.001000,	0.010000,	0.000001	},
+	{	"Sun",		"Sun",		0.000032,	0.005000,	0.000001	},
+	{	"Mercury",	"Merc",		0.001000,	0.100000,	0.001		},
+	{	"Venus",	"Ven",		0.001000,	0.100000,	0.001		},
+	{	"Mars",		"Mars",		0.001000,	0.100000,	0.001		},
+	{	"Jupiter",	"Jup",		0.001000,	0.100000,	0.001		},
+	{	"Saturn",	"Sat",		0.001000,	0.100000,	0.001		},
+	{	"Uranus",	"Uran",		0.001000,	9.100000,	0.001		},
+	{	"Neptune",	"Nept",		0.001000,	9.100000,	0.001		},
+	{	"Pluto",	"Plut",		0.001000,	9.100000,	0.001		},
+	{	"Star",		"Star",		0.000032,	2000.0,		0.001		},
+	{	"Deepsky",	"DSO",		0.000032,	2000.0,		0.01		},
+	{	"Other",	"Other",	0.000032,	2000.0,		0.001		},
 
 
 	{	"",			"",			0.0,		0.0,		0.0		}
@@ -183,56 +188,70 @@ char		buttonText[64];
 	//*	set up filename options
 	yLoc		+=	cRadioBtnHt;
 	yLoc		+=	2;
+	saveYloc	=	yLoc;
 	clm1Xoffset	=	2;
-	clm1Width	=	cWidth / 2;
+	clm1Width	=	(cWidth / 2) -12 ;
 
-	SetWidget(			kCamSet_FilenameTitle,	clm1Xoffset,	yLoc,		clm1Width,	cRadioBtnHt);
-	SetWidgetFont(		kCamSet_FilenameTitle,	kFont_RadioBtn);
-	SetWidgetText(		kCamSet_FilenameTitle,	"Filename options");
-	yLoc		+=	cRadioBtnHt;
-	yLoc		+=	2;
+	for (iii=kCamSet_FilenameTitle; iii<kCamSet_FilenameOutline; iii++)
+	{
 
-	SetWidget(			kCamSet_FN_IncFilter,	clm1Xoffset,	yLoc,		clm1Width,	cRadioBtnHt);
-	SetWidgetType(		kCamSet_FN_IncFilter,	kWidgetType_CheckBox);
-	SetWidgetFont(		kCamSet_FN_IncFilter,	kFont_RadioBtn);
-	SetWidgetText(		kCamSet_FN_IncFilter,	"Include filter");
-	SetWidgetTextColor(	kCamSet_FN_IncFilter,	CV_RGB(255,	255,	255));
-	yLoc	+=	cRadioBtnHt;
-	yLoc	+=	2;
+		SetWidget(			iii,	clm1Xoffset,	yLoc,		clm1Width,	cRadioBtnHt);
+		SetWidgetType(		iii,	kWidgetType_CheckBox);
+		SetWidgetFont(		iii,	kFont_RadioBtn);
+		SetWidgetTextColor(	iii,	CV_RGB(255,	255,	255));
+		yLoc		+=	cRadioBtnHt;
+		yLoc		+=	2;
+	}
+	SetWidgetType(			kCamSet_FilenameTitle,		kWidgetType_TextBox);
+	SetWidgetTextColor(		kCamSet_FilenameTitle,		CV_RGB(255,	0,	0));
+	SetWidgetJustification(	kCamSet_FilenameTitle,		kJustification_Center);
 
-	SetWidget(			kCamSet_FN_IncCamera,	clm1Xoffset,	yLoc,		clm1Width,	cRadioBtnHt);
-	SetWidgetType(		kCamSet_FN_IncCamera,	kWidgetType_CheckBox);
-	SetWidgetFont(		kCamSet_FN_IncCamera,	kFont_RadioBtn);
-	SetWidgetText(		kCamSet_FN_IncCamera,	"Include camera");
-	SetWidgetTextColor(	kCamSet_FN_IncCamera,	CV_RGB(255,	255,	255));
-	yLoc	+=	cRadioBtnHt;
-	yLoc	+=	2;
-
-	SetWidget(			kCamSet_FN_IncSerialNum,	clm1Xoffset,	yLoc,	clm1Width,	cRadioBtnHt);
-	SetWidgetType(		kCamSet_FN_IncSerialNum,	kWidgetType_CheckBox);
-	SetWidgetFont(		kCamSet_FN_IncSerialNum,	kFont_RadioBtn);
-	SetWidgetText(		kCamSet_FN_IncSerialNum,	"Include serial number");
-	SetWidgetTextColor(	kCamSet_FN_IncSerialNum,	CV_RGB(255,	255,	255));
-	yLoc	+=	cRadioBtnHt;
-	yLoc	+=	2;
-
-	SetWidget(			kCamSet_FN_IncRefID,	clm1Xoffset,	yLoc,	clm1Width,	cRadioBtnHt);
-	SetWidgetType(		kCamSet_FN_IncRefID,	kWidgetType_CheckBox);
-	SetWidgetFont(		kCamSet_FN_IncRefID,	kFont_RadioBtn);
-	SetWidgetText(		kCamSet_FN_IncRefID,	"Include refID");
-	SetWidgetTextColor(	kCamSet_FN_IncRefID,	CV_RGB(255,	255,	255));
-	yLoc	+=	cRadioBtnHt;
-	yLoc	+=	2;
-
+	SetWidgetText(			kCamSet_FilenameTitle,		"Filename options");
+	SetWidgetText(			kCamSet_FN_IncCamera,		"Include camera");
+	SetWidgetText(			kCamSet_FN_IncFilter,		"Include filter");
+	SetWidgetText(			kCamSet_FN_IncRefID,		"Include refID");
+	SetWidgetText(			kCamSet_FN_IncSerialNum,	"Include serial number");
 
 	SetWidgetOutlineBox(	kCamSet_FilenameOutline,
 							kCamSet_FilenameTitle,
 							(kCamSet_FilenameOutline - 1));
 
+
+
+	//==========================================
+	//*	set up Save As options
+	yLoc	=	saveYloc;
+	for (iii=kCamSet_SaveAsTitle; iii<kCamSet_SaveAsOutline; iii++)
+	{
+
+		SetWidget(			iii,	cClm4_offset + 5,	yLoc,	clm1Width,	cRadioBtnHt);
+		SetWidgetType(		iii,	kWidgetType_CheckBox);
+		SetWidgetFont(		iii,	kFont_RadioBtn);
+		SetWidgetTextColor(	iii,	CV_RGB(255,	255,	255));
+		yLoc		+=	cRadioBtnHt;
+		yLoc		+=	2;
+	}
+	SetWidgetType(			kCamSet_SaveAsTitle,	kWidgetType_TextBox);
+	SetWidgetTextColor(		kCamSet_SaveAsTitle,	CV_RGB(255,	0,	0));
+	SetWidgetJustification(	kCamSet_SaveAsTitle,	kJustification_Center);
+	SetWidgetText(			kCamSet_SaveAsTitle,	"File save options");
+
+	SetWidgetText(			kCamSet_SaveAsFITS,		"Save as FITS");
+	SetWidgetText(			kCamSet_SaveAsJPEG,		"Save as JPEG");
+	SetWidgetText(			kCamSet_SaveAsPNG,		"Save as PNG");
+	SetWidgetText(			kCamSet_SaveAsRAW,		"Save as Raw");
+
+	SetWidgetOutlineBox(	kCamSet_SaveAsOutline,
+							kCamSet_SaveAsTitle,
+							(kCamSet_SaveAsOutline - 1));
+
+
+
 	//=======================================================
 	//*	set up all the bottom stuff so that it is the same on all windowtabs
 	SetupWindowBottomBoxes(	kCamSet_IPaddr,
 							kCamSet_Readall,
+							kCamSet_DeviceState,
 							kCamSet_AlpacaErrorMsg,
 							kCamSet_LastCmdString,
 							kCamSet_AlpacaLogo,
@@ -265,7 +284,8 @@ char				prefixString[32];
 //**************************************************************************************
 void	WindowTabCamSettings::SetExposureRange(const int expTimeIdx)
 {
-int	iii;
+int					iii;
+ControllerCamera	*myCameraController;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -275,12 +295,27 @@ int	iii;
 		SetWidgetChecked(iii, false);
 	}
 	SetWidgetChecked((kCamSet_Time01 + gCurrentPresetExposureIdx), true);
+
+	//*	now tell the parent controller about the new value
+	myCameraController	=	(ControllerCamera *)cParentObjPtr;
+
+	if (myCameraController != NULL)
+	{
+		myCameraController->SetExposureRange(	gPresets[gCurrentPresetExposureIdx].name,
+												gPresets[gCurrentPresetExposureIdx].exposureMin,
+												gPresets[gCurrentPresetExposureIdx].exposureMax,
+												gPresets[gCurrentPresetExposureIdx].exposureStep);
+	}
+	else
+	{
+		CONSOLE_DEBUG("myCameraController is NULL");
+	}
+
 	ForceWindowUpdate();
 }
 
-
 //**************************************************************************************
-void	WindowTabCamSettings::SetFileNameOptions(const int fnOptionBtn)
+void	WindowTabCamSettings::SetFileNameOptions(const int fileSaveOptions)
 {
 ControllerCamera	*myCameraController;
 
@@ -290,7 +325,7 @@ ControllerCamera	*myCameraController;
 
 	if (myCameraController != NULL)
 	{
-		myCameraController->SetFileNameOptions(fnOptionBtn);
+		myCameraController->SetFileNameOptions(fileSaveOptions);
 	}
 	else
 	{
@@ -298,10 +333,30 @@ ControllerCamera	*myCameraController;
 	}
 }
 
+//**************************************************************************************
+void	WindowTabCamSettings::SetFileSaveOptions(const int fileSaveOptions)
+{
+ControllerCamNormal	*myCameraController;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+
+	myCameraController	=	(ControllerCamNormal *)cParentObjPtr;
+
+	if (myCameraController != NULL)
+	{
+		myCameraController->SetFileSaveOptions(fileSaveOptions);
+	}
+	else
+	{
+		CONSOLE_DEBUG("myCameraController is NULL");
+	}
+}
 
 //**************************************************************************************
 void	WindowTabCamSettings::ProcessButtonClick(const int buttonIdx, const int flags)
 {
+bool		alpacaUpdateNeeded;
+
 //	CONSOLE_DEBUG(__FUNCTION__);
 	switch(buttonIdx)
 	{
@@ -352,14 +407,26 @@ void	WindowTabCamSettings::ProcessButtonClick(const int buttonIdx, const int fla
 			SetFileNameOptions(buttonIdx);
 			break;
 
+		case kCamSet_SaveAsFITS:
+		case kCamSet_SaveAsJPEG:
+		case kCamSet_SaveAsPNG:
+		case kCamSet_SaveAsRAW:
+			SetFileSaveOptions(buttonIdx);
+			break;
+
 
 		case kCamSet_Title:
 		case kCamSet_IPaddr:
 		default:
 			//*	do nothing
+			alpacaUpdateNeeded	=	false;
 			break;
 	}
 	DisplayLastAlpacaCommand();
+	if (alpacaUpdateNeeded)
+	{
+		ForceAlpacaUpdate();
+	}
 }
 
 //**************************************************************************************

@@ -53,7 +53,7 @@ class DomeDriverSIM: public DomeDriver
 //		virtual	void	CheckSensors(void);
 //		virtual	void	UpdateDomePosition(void);
 //		virtual	void 	ProcessButtonPressed(const int pressedButton);
-//		virtual	void	StartDomeMoving(const int direction);
+		virtual	void	StartDomeMoving(const int direction);
 //		virtual	void	StopDomeMoving(bool rightNow);
 
 //		virtual	TYPE_ASCOM_STATUS 	OpenShutter(void);

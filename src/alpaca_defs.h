@@ -72,13 +72,20 @@
 //*	Mar  7,	2023	<MLS> Build 162
 //*	Mar 30,	2023	<MLS> Build 163
 //*	May  9,	2023	<MLS> Changed TYPE_Sensor to TYPE_InstSensor to avoid confusion
+//*	May 26,	2023	<MLS> Build 164
+//*	May 26,	2023	<MLS> Version V0.7.0
+//*	May 27,	2023	<MLS> Added SavedImageCnt to Camera Properties
+//*	Jun  9,	2023	<MLS> Build 165
+//*	Jun 18,	2023	<MLS> Added Connecting property to common properties
+//*	Jun 18,	2023	<MLS> Added CalibratorChanging & CoverMoving to calibrator properties
+//*	Jun 18,	2023	<MLS> Version V0.7.1
+//*	Jun 18,	2023	<MLS> Build 166
+//*	JUl  2,	2023	<MLS> Build 167
 //*****************************************************************************
 //#include	"alpaca_defs.h"
 
-
 #ifndef	_ALPACA_DEFS_H_
 #define	_ALPACA_DEFS_H_
-
 
 #include	<stdint.h>
 
@@ -95,8 +102,8 @@
 #endif
 
 #define	kApplicationName	"AlpacaPi"
-#define	kVersionString		"V0.6.0-beta"
-#define	kBuildNumber		163
+#define	kVersionString		"V0.7.1"
+#define	kBuildNumber		167
 
 
 #define kAlpacaDiscoveryPORT	32227
@@ -130,7 +137,7 @@
 //*	enum for the various driver types
 //*	ordered alphabetically, no particular order required
 //*****************************************************************************
-typedef enum
+typedef enum	//	TYPE_DEVICETYPE
 {
 	kDeviceType_undefined	=	-1,
 	kDeviceType_Camera,
@@ -308,7 +315,7 @@ typedef enum
 
 #define	kImgTypeStrMaxLen	64
 //**************************************************************************************
-typedef struct
+typedef struct	//	READOUTMODE
 {
 	bool	valid;
 	int		internalImageType;		//*	this is my INTERNAL image mode, having nothing to do with Alpaca
@@ -319,10 +326,11 @@ typedef struct
 
 //*****************************************************************************
 #define	kCommonPropMaxStrLen	256
-typedef struct
+typedef struct	//	TYPE_CommonProperties
 {
 	//*	ASCOM common properties
 	bool	Connected;
+	bool	Connecting;
 	char	Description[kCommonPropMaxStrLen];
 	char	DriverInfo[kCommonPropMaxStrLen];
 	char	DriverVersion[kCommonPropMaxStrLen];
@@ -336,12 +344,12 @@ typedef struct
 //*****************************************************************************
 //*	these are the exact properties from ASCOM Camera V3
 //*****************************************************************************
-typedef struct
+typedef struct	//	TYPE_CameraProperties
 {
 	//*	ASCOM variables (properties)
 	//*	the ones commented out with //+ need to be implemented.....
-	short					BayerOffsetX;			//*	The X offset of the Bayer matrix.
-	short					BayerOffsetY;			//*	The Y offset of the Bayer matrix.
+	int						BayerOffsetX;			//*	The X offset of the Bayer matrix.
+	int						BayerOffsetY;			//*	The Y offset of the Bayer matrix.
 	int						BinX;					//*	The binning factor for the X axis.
 	int						BinY;					//*	The binning factor for the Y axis.
 	int						CameraXsize;			//*	The width of the CCD camera chip.
@@ -397,9 +405,6 @@ typedef struct
 	int						NumX;					//*	The current subframe width
 	int						NumY;					//*	The current subframe height
 
-	int						StartX;					//*	The current subframe X axis start position
-	int						StartY;					//*	The current subframe Y axis start position
-
 	int						Offset;					//*	The camera's offset
 	int						OffsetMax;				//*	Maximum offset value of that this camera supports
 	int						OffsetMin;				//*	Minimum offset value of that this camera supports
@@ -408,20 +413,24 @@ typedef struct
 	double					PixelSizeX;				//*	the pixel size of the camera, unit is um. (microns) such as 5.6um
 	double					PixelSizeY;				//*	the pixel size of the camera, unit is um. (microns) such as 5.6um
 
-
-	double					SetCCDTemperature;		//*	The current camera cooler setpoint in degrees Celsius.
-
 	//*	currently ReadoutMode is implemented at execution time
 	int						ReadOutMode;					//*	Indicates the camera's readout mode as an index into the array ReadoutModes
 	READOUTMODE				ReadOutModes[kMaxReadOutModes];	//*	List of available readout modes
 
+	double					SetCCDTemperature;		//*	The current camera cooler setpoint in degrees Celsius.
+
 	char					SensorName[kMaxSensorNameLen];	//	Sensor name
 	TYPE_SensorType			SensorType;						//*	Type of information returned by the the camera sensor (monochrome or colour)
+
+	int						StartX;					//*	The current subframe X axis start position
+	int						StartY;					//*	The current subframe Y axis start position
+	double					SubExposureDuration;	//*	Camera's sub-exposure interval
 
 	//=======================================================================
 	//=======================================================================
 	//*	Extra stuff, not defined by Alpaca standard
 	int						FlipMode;
+	int						SavedImageCnt;					//*	replaces cNumFramesSaved
 
 } TYPE_CameraProperties;
 
@@ -435,7 +444,7 @@ typedef struct
 //*	Filter wheel properties
 #define	kMaxFWnameLen	32
 //*****************************************************************************
-typedef struct
+typedef struct	//	TYPE_FilterName
 {
 	char	FilterName[kMaxFWnameLen];
 } TYPE_FilterName;
@@ -443,7 +452,7 @@ typedef struct
 #define	kMaxFiltersPerWheel	10
 
 //*****************************************************************************
-typedef struct
+typedef struct	//	TYPE_FilterWheelProperties
 {
 	int				FocusOffsets[kMaxFiltersPerWheel];	//	Focus offset of each filter in the wheel
 	TYPE_FilterName	Names[kMaxFiltersPerWheel];			//	Name of each filter in the wheel
@@ -463,21 +472,24 @@ typedef enum
 
 
 //*****************************************************************************
-typedef struct
+typedef struct	//	TYPE_AxisRates
 {
 	//*	The rate of motion (deg/sec) about the specified axis
 	double	Minimum;
 	double	Maximum;
 } TYPE_AxisRates;
 
-
 //*****************************************************************************
-typedef struct
+typedef struct	//	TYPE_CoverCalibrationProperties
 {
 	int					Brightness;
 	CalibratorStatus	CalibratorState;
 	CoverStatus			CoverState;
 	int					MaxBrightness;
+	//*	new properties as of June 18, 2023
+	//*	for the new DeviceState
+	bool				CalibratorReady;
+	bool				CoverMoving;
 
 	//*	extras by MLS
 	double				Aperture;		//*	percentage value
@@ -489,7 +501,7 @@ typedef struct
 //*****************************************************************************
 //*	these are the exact properties from ASCOM Telescope V3
 //*****************************************************************************
-typedef struct
+typedef struct	//	TYPE_TelescopeProperties
 {
 	TYPE_AlignmentModes				AlginmentMode;
 	double							Altitude;
@@ -555,7 +567,7 @@ typedef struct
 //*****************************************************************************
 //*	Dome properties as described by ASCOM
 //*****************************************************************************
-typedef struct
+typedef struct	//	TYPE_DomeProperties
 {
 	double				Altitude;			//*	Degrees;
 	bool				AtHome;
@@ -578,7 +590,7 @@ typedef struct
 //*****************************************************************************
 //*	Focuser properties
 //*****************************************************************************
-typedef struct
+typedef struct	//	TYPE_FocuserProperties
 {
 	bool			Absolute;			//	Indicates whether the focuser is capable of absolute position.
 	bool			IsMoving;			//	Indicates whether the focuser is currently moving.
@@ -588,14 +600,14 @@ typedef struct
 	double			StepSize;			//	Returns the focuser's step size.
 	bool			TempComp;			//	Retrieves the state of temperature compensation mode
 	bool			TempCompAvailable;	//	Indicates whether the focuser has temperature compensation.
-	double			Temperature;		//	Returns the focuser's current temperature. (deg C)
+	double			Temperature_DegC;	//	Returns the focuser's current temperature. (deg C)
 
 } TYPE_FocuserProperties;
 
 //*****************************************************************************
 //*	Rotator properties
 //*****************************************************************************
-typedef struct
+typedef struct	//	TYPE_RotatorProperties
 {
 	bool	CanReverse;			//*	Indicates whether the Rotator supports the Reverse method.
 	bool	IsMoving;			//*	Indicates whether the rotator is currently moving
@@ -613,23 +625,23 @@ typedef struct
 //*	Instrument Sensor
 //*	this is for observing conditions and spectrograph
 //*****************************************************************************
-typedef struct
+typedef struct	//	TYPE_InstSensor
 {
 	bool		IsSupported;
 	bool		ValidData;
 	double		Value;
-	double		ValueInteger;
+	int			ValueInteger;
 	char		Description[128];
 	char		Info[128];
 	uint32_t	LastRead;
 } TYPE_InstSensor;
 
 //*****************************************************************************
-typedef struct
+typedef struct	//	TYPE_ObsConditionProperties
 {
 	TYPE_InstSensor		Averageperiod;		//*	Returns the time period over which observations will be averaged
-	TYPE_InstSensor		Cloudcover;			//*	Returns the amount of sky obscured by cloud
-	TYPE_InstSensor		Dewpoint;			//*	Returns the atmospheric dew point at the observatory
+	TYPE_InstSensor		CloudCover;			//*	Returns the amount of sky obscured by cloud
+	TYPE_InstSensor		DewPoint;			//*	Returns the atmospheric dew point at the observatory
 	TYPE_InstSensor		Humidity;			//*	Returns the atmospheric humidity at the observatory
 	TYPE_InstSensor		Pressure;			//*	Returns the atmospheric pressure at the observatory. hectoPascals
 	TYPE_InstSensor		RainRate;			//*	Returns the rain rate at the observatory.
@@ -653,35 +665,43 @@ typedef struct
 //*	not finished
 #define	kMaxSwitchCnt			16
 #define	kMaxSwitchNameLen		32
-#define	kMaxSwitchDescLen		64
+#define	kMaxSwitchDescLen		128
 
-//*****************************************************************************
+////*****************************************************************************
+//typedef struct	//	TYPE_SwitchInfo
+//{
+//	char	switchName[kMaxSwitchNameLen];
+//	char	switchDescription[kMaxSwitchDescLen];
+//
+//} TYPE_SwitchInfo;
+//**************************************************************************************
 typedef struct
 {
 	char	switchName[kMaxSwitchNameLen];
-	char	switchDesciption[kMaxSwitchDescLen];
+	char	switchDescription[kMaxSwitchDescLen];
+	bool	canWrite;
+	bool	switchState;
+	double	minswitchvalue;
+	double	maxswitchvalue;
+	double	switchvalue;
 
 } TYPE_SwitchInfo;
+#define	kMaxSwitches	32
 
 //*****************************************************************************
-typedef struct
+typedef struct	//	TYPE_SwitchProperties
 {
 	int					MaxSwitch;
 	TYPE_SwitchInfo		SwitchTable[kMaxSwitchCnt];
 
 } TYPE_SwitchProperties;
 
-
-
-
 //*****************************************************************************
-typedef struct
+typedef struct	//	TYPE_ImageArray
 {
 	int32_t		RedValue;
 	int32_t		GrnValue;
 	int32_t		BluValue;
-
-
 } TYPE_ImageArray;
 
 
@@ -695,7 +715,7 @@ typedef struct
 //	Version 0.3 5-December 2021
 //*****************************************************************************
 //*****************************************************************************
-typedef struct
+typedef struct	//	TYPE_BinaryImageHdr
 {
 	//Metadata Structure
 	//The following structure describes the returned data
@@ -731,7 +751,7 @@ enum
 //*****************************************************************************
 //*	slit tracker properties, (NOT defined by ASCOM)
 //*****************************************************************************
-typedef struct
+typedef struct	//	TYPE_SlittrackerProperties
 {
 	char	DomeAddress[48];
 	bool	TrackingEnabled;

@@ -20,6 +20,7 @@
 //*****************************************************************************
 //*	Mar  8,	2023	<MLS> Created windowtab_slitdome.cpp
 //*	Mar  8,	2023	<MLS> Added GetDomeData()
+//*	Jun 19,	2023	<MLS> Added DeviceState to slitdome
 //*****************************************************************************
 
 #if defined(_ENABLE_SLIT_TRACKER_)
@@ -176,6 +177,7 @@ int		iii;
 	//*	set up all the bottom stuff so that it is the same on all windowtabs
 	SetupWindowBottomBoxes(	kSlitDome_IPaddr,
 							kSlitDome_Readall,
+							kSlitDome_DeviceState,
 							kSlitDome_AlpacaErrorMsg,
 							kSlitDome_LastCmdString,
 							kSlitDome_AlpacaLogo,
@@ -204,7 +206,9 @@ ControllerSlit	*mySlitController;
 		case kSlitDome_DomeEnableData:
 			if (mySlitController != NULL)
 			{
-				mySlitController->SetButtonOption(buttonIdx, !cEnableAutomaticDomeUpdates);
+				cEnableAutomaticDomeUpdates	=	!cEnableAutomaticDomeUpdates;
+				mySlitController->SetButtonOption(buttonIdx, cEnableAutomaticDomeUpdates);
+				SetWidgetChecked(kSlitDome_DomeEnableData,	cEnableAutomaticDomeUpdates);
 			}
 			break;
 
@@ -238,6 +242,7 @@ ControllerSlit	*mySlitController;
 		default:
 			break;
 	}
+	ForceWindowUpdate();
 }
 
 //*****************************************************************************
@@ -251,30 +256,27 @@ void	WindowTabSlitDome::SetDomePropertiesPtr(TYPE_DomeProperties *domePropPtr)
 //*	yes, ProcessButtonClick calls the controller object which turns around
 //*	and calls this routine, it is important to make sure everything is synced up
 //*****************************************************************************
-void	WindowTabSlitDome::UpdateButtons(const int widgetBtnIdx, const bool newState)
-{
-//ControllerSlit	*mySlitController;
+//void	WindowTabSlitDome::UpdateButtons(const int widgetBtnIdx, const bool newState)
+//{
 //
-//	mySlitController	=	(ControllerSlit *)cParentObjPtr;
-
-	switch(widgetBtnIdx)
-	{
-		case kSlitDome_DomeEnableData:
-			cEnableAutomaticDomeUpdates	=	newState;
-			SetWidgetChecked(kSlitDome_DomeEnableData, cEnableAutomaticDomeUpdates);
-			break;
-
-		case kSlitDome_DomeEnableTracking:
-			cSlitProp.TrackingEnabled	=	newState;
-			SetWidgetChecked(kSlitDome_DomeEnableTracking, cSlitProp.TrackingEnabled);
-			break;
-
-		default:
-			CONSOLE_ABORT(__FUNCTION__);
-			break;
-	}
-	ForceWindowUpdate();
-}
+//	switch(widgetBtnIdx)
+//	{
+//		case kSlitDome_DomeEnableData:
+//			cEnableAutomaticDomeUpdates	=	newState;
+//			SetWidgetChecked(kSlitDome_DomeEnableData, cEnableAutomaticDomeUpdates);
+//			break;
+//
+//		case kSlitDome_DomeEnableTracking:
+//			cSlitProp.TrackingEnabled	=	newState;
+//			SetWidgetChecked(kSlitDome_DomeEnableTracking, cSlitProp.TrackingEnabled);
+//			break;
+//
+//		default:
+//			CONSOLE_ABORT(__FUNCTION__);
+//			break;
+//	}
+//	ForceWindowUpdate();
+//}
 
 //*****************************************************************************
 void	WindowTabSlitDome::GetDomeData(void)

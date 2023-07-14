@@ -26,6 +26,7 @@
 //*	May  5,	2022	<MLS> Added cOffsetSupported flag
 //*	May 15,	2022	<MLS> Added cSubDurationSupported flag
 //*	Oct  9,	2022	<MLS> Added cCameraIsSiumlated flag
+//*	Jun  4,	2023	<MLS> Added cSaveAsFITS, cSaveAsJPEG, cSaveAsPNG, cSaveAsRAW
 //*****************************************************************************
 //#include	"cameradriver.h"
 
@@ -34,17 +35,13 @@
 
 #define _INCLUDE_ALPACA_EXTRAS_
 
-
 #include	<sys/time.h>
 #include	<time.h>
-
-
 
 //*	moved to make file
 //	#define		_ENABLE_FITS_
 
 #define		_INCLUDE_HISTOGRAM_
-
 
 #ifdef _ENABLE_FITS_
 	#ifndef _FITSIO_H
@@ -53,7 +50,7 @@
 	#define	kMaxFitsRecLen	90
 	#define	kMaxFitsRecords	200
 	//*****************************************************************************
-	typedef struct
+	typedef struct	//	TYPE_FITS_RECORD
 	{
 		char	fitsRec[kMaxFitsRecLen];
 	} TYPE_FITS_RECORD;
@@ -71,13 +68,12 @@
 
 #ifdef _ENABLE_FOCUSER_
 	#include	"focuserdriver.h"
-#endif // _ENABLE_FOCUSER_
+#endif
 
 
 #ifdef _ENABLE_ROTATOR_
 	#include	"rotatordriver.h"
-#endif // _ENABLE_ROTATOR_
-
+#endif
 
 #include	"observatory_settings.h"
 #ifndef	_ALPACA_DEFS_H_
@@ -166,7 +162,7 @@ typedef enum
 
 
 //*****************************************************************************
-typedef struct
+typedef struct	//	TYPE_IMAGE_ROI_Info
 {
 	TYPE_IMAGE_TYPE	currentROIimageType;
 	int				currentROIwidth;
@@ -180,7 +176,7 @@ typedef struct
 #define		kMaxFileNameLen		128
 #define		kMaxFNcommentLen	32
 #define		kMaxDataProducts	6
-typedef struct
+typedef struct	//	TYPE_FILENAME
 {
 	char			filename[kMaxFileNameLen];
 	char			comment[kMaxFNcommentLen];
@@ -198,121 +194,6 @@ typedef struct
 #define	SAVE_AVI	true
 
 
-
-//*****************************************************************************
-//*	Camera commands
-enum
-{
-	kCmd_Camera_bayeroffsetX	=	0,	//*	Returns the X offset of the Bayer matrix.
-	kCmd_Camera_bayeroffsetY,			//*	Returns the Y offset of the Bayer matrix.
-	kCmd_Camera_binX,					//*	Returns the binning factor for the X axis.
-										//*	Sets the binning factor for the X axis.
-	kCmd_Camera_binY,					//*	Returns the binning factor for the Y axis.
-										//*	Sets the binning factor for the Y axis.
-	kCmd_Camera_camerastate,			//*	Returns the camera operational state.
-	kCmd_Camera_cameraxsize,			//*	Returns the width of the CCD camera chip.
-	kCmd_Camera_cameraysize,			//*	Returns the height of the CCD camera chip.
-	kCmd_Camera_canabortexposure,		//*	Indicates whether the camera can abort exposures.
-	kCmd_Camera_canasymmetricbin,		//*	Indicates whether the camera supports asymmetric binning
-	kCmd_Camera_canfastreadout,			//*	Indicates whether the camera has a fast readout mode.
-	kCmd_Camera_cangetcoolerpower,		//*	Indicates whether the camera's cooler power setting can be read.
-	kCmd_Camera_canpulseguide,			//*	Returns a flag indicating whether this camera supports pulse guiding
-	kCmd_Camera_cansetccdtemperature,	//*	Returns a flag indicating whether this camera supports setting the CCD temperature
-	kCmd_Camera_canstopexposure,		//*	Returns a flag indicating whether this camera can stop an exposure that is in progress
-	kCmd_Camera_ccdtemperature,			//*	Returns the current CCD temperature
-	kCmd_Camera_cooleron,				//*	Returns the current cooler on/off state.
-										//*	Turns the camera cooler on and off
-	kCmd_Camera_coolerpower,			//*	Returns the present cooler power level
-	kCmd_Camera_electronsperadu,		//*	Returns the gain of the camera
-	kCmd_Camera_exposuremax,			//*	Returns the maximum exposure time supported by StartExposure.
-	kCmd_Camera_exposuremin,			//*	Returns the Minimium exposure time
-	kCmd_Camera_exposureresolution,		//*	Returns the smallest increment in exposure time supported by StartExposure.
-	kCmd_Camera_fastreadout,			//*	Returns whether Fast Readout Mode is enabled.
-										//*	Sets whether Fast Readout Mode is enabled.
-	kCmd_Camera_fullwellcapacity,		//*	Reports the full well capacity of the camera
-	kCmd_Camera_gain,					//*	Returns the camera's gain
-										//*	Sets the camera's gain.
-	kCmd_Camera_gainmax,				//*	Maximum value of Gain
-	kCmd_Camera_gainmin,				//*	Minimum value of Gain
-	kCmd_Camera_gains,					//*	Gains supported by the camera
-	kCmd_Camera_hasshutter,				//*	Indicates whether the camera has a mechanical shutter
-	kCmd_Camera_heatsinktemperature,	//*	Returns the current heat sink temperature.
-	kCmd_Camera_imagearray,				//*	Returns an array of integers containing the exposure pixel values
-	kCmd_Camera_imagearrayvariant,		//*	Returns an array of int containing the exposure pixel values
-	kCmd_Camera_imageready,				//*	Indicates that an image is ready to be downloaded
-	kCmd_Camera_ispulseguiding,			//*	Indicates that the camera is pulse guideing.
-	kCmd_Camera_lastexposureduration,	//*	Duration of the last exposure
-	kCmd_Camera_lastexposurestarttime,	//*	Start time of the last exposure in FITS standard format.
-	kCmd_Camera_maxadu,					//*	Camera's maximum ADU value
-	kCmd_Camera_maxbinX,				//*	Maximum binning for the camera X axis
-	kCmd_Camera_maxbinY,				//*	Maximum binning for the camera Y axis
-	kCmd_Camera_numX,					//*	Returns the current subframe width
-										//*	Sets the current subframe width
-	kCmd_Camera_numY,					//*	Returns the current subframe height
-										//*	Sets the current subframe height
-	kCmd_Camera_offset,					//*	Returns the camera's offset
-										//*	Sets the camera's offset.
-	kCmd_Camera_offsetmax,				//*	Returns the maximum value of offset.
-	kCmd_Camera_offsetmin,				//*	Returns the Minimum value of offset.
-	kCmd_Camera_offsets,				//*	Returns List of offset names supported by the camera
-	kCmd_Camera_percentcompleted,		//*	Indicates percentage completeness of the current operation
-	kCmd_Camera_pixelsizeX,				//*	Width of CCD chip pixels (microns)
-	kCmd_Camera_pixelsizeY,				//*	Height of CCD chip pixels (microns)
-	kCmd_Camera_readoutmode,			//*	Indicates the canera's readout mode as an index into the array ReadoutModes
-										//*	Set the camera's readout mode
-	kCmd_Camera_readoutmodes,			//*	List of available readout modes
-	kCmd_Camera_sensorname,				//*	Sensor name
-	kCmd_Camera_sensortype,				//*	Type of information returned by the the camera sensor (monochrome or colour)
-	kCmd_Camera_setccdtemperature,		//*	Returns the current camera cooler setpoint in degrees Celsius.
-										//*	Set the camera's cooler setpoint (degrees Celsius).
-	kCmd_Camera_startX,					//*	Return the current subframe X axis start position
-										//*	Sets the current subframe X axis start position
-	kCmd_Camera_startY,					//*	Return the current subframe Y axis start position
-										//*	Sets the current subframe Y axis start position
-	kCmd_Camera_abortexposure,			//*	Aborts the current exposure
-	kCmd_Camera_pulseguide,				//*	Pulse guide in the specified direction for the specified time.
-	kCmd_Camera_startexposure,			//*	Starts an exposure
-	kCmd_Camera_stopexposure,			//*	Stops the current exposure
-	kCmd_Camera_subexposureduration,	//*	Camera's sub-exposure interval
-
-//#ifdef _INCLUDE_ALPACA_EXTRAS_
-	//=================================================================
-	//*	commands added that are not part of Alpaca
-	kCmd_Camera_Extras,
-
-	//*	commands borrowed from the telescope device
-	kCmd_Camera_aperturearea,			//*	Returns the telescope's aperture.
-	kCmd_Camera_aperturediameter,		//*	Returns the telescope's effective aperture.
-	kCmd_Camera_focallength,			//*	Returns the telescope's focal length in meters.
-
-
-	kCmd_Camera_autoexposure,
-	kCmd_Camera_displayimage,
-
-	kCmd_Camera_exposuretime,
-	kCmd_Camera_filelist,
-	kCmd_Camera_filenameoptions,
-#ifdef _ENABLE_FITS_
-	kCmd_Camera_fitsheader,
-#endif
-	kCmd_Camera_flip,
-	kCmd_Camera_framerate,
-	kCmd_Camera_livemode,
-	kCmd_Camera_rgbarray,
-	kCmd_Camera_settelescopeinfo,
-	kCmd_Camera_sidebar,
-	kCmd_Camera_saveallimages,
-	kCmd_Camera_savenextimage,
-	kCmd_Camera_startsequence,
-	kCmd_Camera_startvideo,
-	kCmd_Camera_stopvideo,
-
-	//*	keep this one last for consistency with other drivers
-	kCmd_Camera_readall,
-//#endif // _INCLUDE_ALPACA_EXTRAS_
-	kCmd_Camera_last
-
-};
 
 //**************************************************************************************
 //*	image flip, this is the ZWO definition, we will adopt that
@@ -347,6 +228,8 @@ class CameraDriver: public AlpacaDriver
 				int32_t	RunStateMachine_Idle(void);
 				int		RunStateMachine_TakingPicture(void);
 		virtual	void	RunStateMachine_Device(void);
+
+		virtual	bool	DeviceState_Add_Content(const int socketFD, char *jsonTextBuffer, const int maxLen);
 
 				void	ProcessExposureOptions(TYPE_GetPutRequestData *reqData);
 
@@ -486,7 +369,26 @@ class CameraDriver: public AlpacaDriver
 		TYPE_ASCOM_STATUS	Get_ExposureTime(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
 		TYPE_ASCOM_STATUS	Put_ExposureTime(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 
+		TYPE_ASCOM_STATUS	Get_SaveAllImages(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
 		TYPE_ASCOM_STATUS	Put_SaveAllImages(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
+
+		//------------------------------------------
+		//*	Save as routines
+		TYPE_ASCOM_STATUS	Get_SaveAsFITS(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+		TYPE_ASCOM_STATUS	Put_SaveAsFITS(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
+
+		TYPE_ASCOM_STATUS	Get_SaveAsJPEG(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+		TYPE_ASCOM_STATUS	Put_SaveAsJPEG(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
+
+		TYPE_ASCOM_STATUS	Get_SaveAsPNG(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+		TYPE_ASCOM_STATUS	Put_SaveAsPNG(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
+
+		TYPE_ASCOM_STATUS	Get_SaveAsRAW(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+		TYPE_ASCOM_STATUS	Put_SaveAsRAW(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
+
+		TYPE_ASCOM_STATUS	Get_SavedImages(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+
+
 
 		TYPE_ASCOM_STATUS	Put_SaveNextImage(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 		TYPE_ASCOM_STATUS	Put_StartSequence(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
@@ -709,6 +611,7 @@ class CameraDriver: public AlpacaDriver
 	//*****************************************************************************
 public:
 //-	char					cSensorName[kMaxSensorNameLen];	//*	obtained from my table lookup
+	char		cLastCameraErrMsg[128];
 
 	//*****************************************************************************
 protected:
@@ -737,7 +640,6 @@ protected:
 	bool		cOffsetSupported;				//*	true pixel value offset is supported
 	bool		cSubDurationSupported;
 	long		cCoolerState;
-	char		cLastCameraErrMsg[128];
 
 
 	int			cCameraID;						//*	this is used to control everything of the camera in other functions.Start from 0.
@@ -793,9 +695,13 @@ protected:
 	long				cFramesRead;
 	double				cFrameRate;					//*	primarily used in live mode
 	//*****************************************************************************
+	bool				cSaveAsFITS;
+	bool				cSaveAsJPEG;
+	bool				cSaveAsPNG;
+	bool				cSaveAsRAW;
 	int					cNumFramesRequested;
 	int					cNumFramesToSave;
-	int					cNumFramesSaved;
+//	int					cNumFramesSaved;
 
 	int					cTotalFramesSaved;
 
@@ -834,23 +740,23 @@ protected:
 	cv::Mat				*cOpenCV_ImagePtr;
 	cv::Mat				*cOpenCV_LiveDisplayPtr;
 	cv::Mat				*cOpenCV_Histogram;
+	cv::VideoWriter		*cOpenCV_videoWriter;
 #else
 	IplImage			*cOpenCV_ImagePtr;
 	IplImage			*cOpenCV_LiveDisplayPtr;
 	IplImage			*cOpenCV_Histogram;
+	CvVideoWriter		*cOpenCV_videoWriter;
 #endif // _USE_OPENCV_CPP_
 #ifdef _ENABLE_CVFONT_
 	CvFont				cTextFont;
 	CvFont				cOverlayTextFont;
 #endif // _ENABLE_CVFONT_
 	bool				cCreateHistogramWindow;
-	CvVideoWriter		*cOpenCV_videoWriter;
 	cv::Scalar			cVideoOverlayColor;
 
 	char				cOpenCV_ImgWindowName[128];
 	bool				cOpenCV_ImgWindowValid;
 
-	int					cDisplaySideBar;
 	const static int	cSideBarWidth	=	290;
 	const static int	cSideFrameWidth	=	16;
 	int					cLiveDisplayWidth;
@@ -943,16 +849,7 @@ protected:
 
 
 //*****************************************************************************
-enum
-{
-	kSideBar_None	=	0,
-	kSideBar_Left,
-	kSideBar_Right
-};
-
-
-//*****************************************************************************
-typedef struct
+typedef struct	//	TYPE_SensorName
 {
 	char	cameraModel[16];
 	char	sensorName[kMaxSensorNameLen];
@@ -961,7 +858,7 @@ typedef struct
 
 int		CreateCameraObjects(void);
 
-extern	const TYPE_CmdEntry	gCameraCmdTable[];
+//extern	const TYPE_CmdEntry	gCameraCmdTable[];
 extern	const char			*gCameraStateStrings[];
 
 void	GetImageTypeString(TYPE_IMAGE_TYPE imageType, char *imageTypeString);

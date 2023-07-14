@@ -105,7 +105,7 @@ int		clmnHdrWidth;
 	//	SetWidgetTextColor(		iii,	CV_RGB(255,	255,	255));
 		SetWidgetTextColor(		iii,	CV_RGB(0,	0,	0));
 
-		clmnHdr_xLoc	=	tabArray[iii - kConstList_ClmTitle1];;
+		clmnHdr_xLoc	=	tabArray[iii - kConstList_ClmTitle1];
 		clmnHdr_xLoc	+=	2;
 
 

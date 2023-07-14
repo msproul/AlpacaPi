@@ -55,6 +55,9 @@
 #ifdef _ENABLE_CTRL_SPECTROGRAPH_
 	#include	"controller_spectrograph.h"
 #endif
+//#ifdef _ENABLE_MULTICAM_
+	#include	"controller_multicam.h"
+//#endif
 
 //**************************************************************************************
 WindowTabAlpacaList::WindowTabAlpacaList(	const int	xSize,
@@ -122,7 +125,7 @@ int		clmnHdrWidth;
 		//	SetWidgetTextColor(		iii,	CV_RGB(255,	255,	255));
 		SetWidgetTextColor(		iii,	CV_RGB(0,	0,	0));
 
-		clmnHdr_xLoc	=	tabArray[iii - kAlpacaList_ClmTitle1];;
+		clmnHdr_xLoc	=	tabArray[iii - kAlpacaList_ClmTitle1];
 		clmnHdr_xLoc	+=	2;
 
 
@@ -416,172 +419,168 @@ bool	windowExists;
 				switch(cRemoteDeviceList[deviceIdx].deviceTypeEnum)
 				{
 
-				case kDeviceType_Camera:
-					windowExists	=	CheckForOpenWindowByName(windowName);
-					if (windowExists)
-					{
-						CONSOLE_DEBUG_W_STR("Window already open:", windowName);
-					}
-					else
-					{
-						new ControllerCamNormal(windowName, &cRemoteDeviceList[deviceIdx]);
-					}
-					break;
+					case kDeviceType_Camera:
+						windowExists	=	CheckForOpenWindowByName(windowName);
+						if (windowExists)
+						{
+							CONSOLE_DEBUG_W_STR("Window already open:", windowName);
+						}
+						else
+						{
+							new ControllerCamNormal(windowName, &cRemoteDeviceList[deviceIdx]);
+						}
+						break;
 
-				case kDeviceType_CoverCalibrator:
-					windowExists	=	CheckForOpenWindowByName(windowName);
-					if (windowExists)
-					{
-						CONSOLE_DEBUG_W_STR("Window already open:", windowName);
-					}
-					else
-					{
-						new ControllerCoverCalib(	windowName,
-													&cRemoteDeviceList[deviceIdx].deviceAddress,
-													cRemoteDeviceList[deviceIdx].port,
-													cRemoteDeviceList[deviceIdx].alpacaDeviceNum);
-					}
-					break;
+					case kDeviceType_CoverCalibrator:
+						windowExists	=	CheckForOpenWindowByName(windowName);
+						if (windowExists)
+						{
+							CONSOLE_DEBUG_W_STR("Window already open:", windowName);
+						}
+						else
+						{
+							new ControllerCoverCalib(	windowName, &cRemoteDeviceList[deviceIdx]);
+						}
+						break;
 
-				case kDeviceType_Dome:
-				case kDeviceType_Shutter:
-					windowExists	=	CheckForOpenWindowByName(windowName);
-					if (windowExists)
-					{
-						CONSOLE_DEBUG_W_STR("Window already open:", windowName);
-					}
-					else
-					{
-						new ControllerDome(windowName, &cRemoteDeviceList[deviceIdx]);
-					}
-					break;
+					case kDeviceType_Dome:
+					case kDeviceType_Shutter:
+						windowExists	=	CheckForOpenWindowByName(windowName);
+						if (windowExists)
+						{
+							CONSOLE_DEBUG_W_STR("Window already open:", windowName);
+						}
+						else
+						{
+							new ControllerDome(windowName, &cRemoteDeviceList[deviceIdx]);
+						}
+						break;
 
-				case kDeviceType_Filterwheel:
-					windowExists	=	CheckForOpenWindowByName(windowName);
-					if (windowExists)
-					{
-						CONSOLE_DEBUG_W_STR("Window already open:", windowName);
-					}
-					else
-					{
-						new ControllerFilterWheel(windowName, &cRemoteDeviceList[deviceIdx]);
-					}
-					break;
+					case kDeviceType_Filterwheel:
+						windowExists	=	CheckForOpenWindowByName(windowName);
+						if (windowExists)
+						{
+							CONSOLE_DEBUG_W_STR("Window already open:", windowName);
+						}
+						else
+						{
+							new ControllerFilterWheel(windowName, &cRemoteDeviceList[deviceIdx]);
+						}
+						break;
 
-				case kDeviceType_Focuser:
-					GenerateFocuserWindowName(&cRemoteDeviceList[deviceIdx], 1, windowName);
-					windowExists	=	CheckForOpenWindowByName(windowName);
-					if (windowExists)
-					{
-						CONSOLE_DEBUG_W_STR("Window already open:", windowName);
-					}
-					else
-					{
-						CheckForFocuser(&cRemoteDeviceList[deviceIdx]);
-					}
-					break;
+					case kDeviceType_Focuser:
+						GenerateFocuserWindowName(&cRemoteDeviceList[deviceIdx], 1, windowName);
+						windowExists	=	CheckForOpenWindowByName(windowName);
+						if (windowExists)
+						{
+							CONSOLE_DEBUG_W_STR("Window already open:", windowName);
+						}
+						else
+						{
+							CheckForFocuser(&cRemoteDeviceList[deviceIdx]);
+						}
+						break;
 
-				case kDeviceType_Management:
-					break;
+					case kDeviceType_Management:
+						break;
 
-				case kDeviceType_Observingconditions:
-					windowExists	=	CheckForOpenWindowByName(windowName);
-					if (windowExists)
-					{
-						CONSOLE_DEBUG_W_STR("Window already open:", windowName);
-					}
-					else
-					{
-						new ControllerObsCond(	windowName,
-												&cRemoteDeviceList[deviceIdx].deviceAddress,
-												cRemoteDeviceList[deviceIdx].port,
-												cRemoteDeviceList[deviceIdx].alpacaDeviceNum);
-					}
-					break;
+					case kDeviceType_Observingconditions:
+						windowExists	=	CheckForOpenWindowByName(windowName);
+						if (windowExists)
+						{
+							CONSOLE_DEBUG_W_STR("Window already open:", windowName);
+						}
+						else
+						{
+							new ControllerObsCond(windowName, &cRemoteDeviceList[deviceIdx]);
+						}
+						break;
 
-				case kDeviceType_Rotator:
-					windowExists	=	CheckForOpenWindowByName(windowName);
-					if (windowExists)
-					{
-						CONSOLE_DEBUG_W_STR("Window already open:", windowName);
-					}
-					else
-					{
-						new ControllerRotator(	windowName,
-												&cRemoteDeviceList[deviceIdx].deviceAddress,
-												cRemoteDeviceList[deviceIdx].port,
-												cRemoteDeviceList[deviceIdx].alpacaDeviceNum);
-					}
-					break;
+					case kDeviceType_Rotator:
+						windowExists	=	CheckForOpenWindowByName(windowName);
+						if (windowExists)
+						{
+							CONSOLE_DEBUG_W_STR("Window already open:", windowName);
+						}
+						else
+						{
+							new ControllerRotator(windowName, &cRemoteDeviceList[deviceIdx]);
+						}
+						break;
 
-				case kDeviceType_Telescope:
-					windowExists	=	CheckForOpenWindowByName(windowName);
-					if (windowExists)
-					{
-						CONSOLE_DEBUG_W_STR("Window already open:", windowName);
-					}
-					else
-					{
-						new ControllerTelescope(	windowName,
-													&cRemoteDeviceList[deviceIdx].deviceAddress,
-													cRemoteDeviceList[deviceIdx].port,
-													cRemoteDeviceList[deviceIdx].alpacaDeviceNum);
-					}
-					break;
+					case kDeviceType_Telescope:
+						windowExists	=	CheckForOpenWindowByName(windowName);
+						if (windowExists)
+						{
+							CONSOLE_DEBUG_W_STR("Window already open:", windowName);
+						}
+						else
+						{
+							new ControllerTelescope(windowName, &cRemoteDeviceList[deviceIdx]);
+						}
+						break;
 
-				case kDeviceType_SafetyMonitor:
-					break;
+					case kDeviceType_SafetyMonitor:
+						break;
 
-				case kDeviceType_Switch:
-					windowExists	=	CheckForOpenWindowByName(windowName);
-					if (windowExists)
-					{
-						CONSOLE_DEBUG_W_STR("Window already open:", windowName);
-					}
-					else
-					{
-						new ControllerSwitch(	windowName,
-												&cRemoteDeviceList[deviceIdx].deviceAddress,
-												cRemoteDeviceList[deviceIdx].port,
-												cRemoteDeviceList[deviceIdx].alpacaDeviceNum);
-					}
-					break;
+					case kDeviceType_Switch:
+						windowExists	=	CheckForOpenWindowByName(windowName);
+						if (windowExists)
+						{
+							CONSOLE_DEBUG_W_STR("Window already open:", windowName);
+						}
+						else
+						{
+							new ControllerSwitch(windowName, &cRemoteDeviceList[deviceIdx]);
+						}
+						break;
 
-				//*	extras defined by MLS
-				case kDeviceType_SlitTracker:
-					windowExists	=	CheckForOpenWindowByName(windowName);
-					if (windowExists)
-					{
-						CONSOLE_DEBUG_W_STR("Window already open:", windowName);
-					}
-					else
-					{
-						new ControllerSlit(windowName, &cRemoteDeviceList[deviceIdx]);
-					}
-					break;
+					//*	extras defined by MLS
+					case kDeviceType_SlitTracker:
+						windowExists	=	CheckForOpenWindowByName(windowName);
+						if (windowExists)
+						{
+							CONSOLE_DEBUG_W_STR("Window already open:", windowName);
+						}
+						else
+						{
+							new ControllerSlit(windowName, &cRemoteDeviceList[deviceIdx]);
+						}
+						break;
 
-				case kDeviceType_Spectrograph:
-				#ifdef _ENABLE_CTRL_SPECTROGRAPH_
-					windowExists	=	CheckForOpenWindowByName(windowName);
-					if (windowExists)
-					{
-						CONSOLE_DEBUG_W_STR("Window already open:", windowName);
-					}
-					else
-					{
-						new ControllerSpectrograph(	windowName,
-													&cRemoteDeviceList[deviceIdx].deviceAddress,
-													cRemoteDeviceList[deviceIdx].port,
-													cRemoteDeviceList[deviceIdx].alpacaDeviceNum);
-					}
-				#endif // _ENABLE_CTRL_SPECTROGRAPH_
-					break;
+					case kDeviceType_Spectrograph:
+					#ifdef _ENABLE_CTRL_SPECTROGRAPH_
+						windowExists	=	CheckForOpenWindowByName(windowName);
+						if (windowExists)
+						{
+							CONSOLE_DEBUG_W_STR("Window already open:", windowName);
+						}
+						else
+						{
+							new ControllerSpectrograph(	windowName,
+														&cRemoteDeviceList[deviceIdx].deviceAddress,
+														cRemoteDeviceList[deviceIdx].port,
+														cRemoteDeviceList[deviceIdx].alpacaDeviceNum);
+						}
+					#endif // _ENABLE_CTRL_SPECTROGRAPH_
+						break;
 
 
-				case kDeviceType_Multicam:
-				case kDeviceType_undefined:
-				case kDeviceType_last:
-					break;
+					case kDeviceType_Multicam:
+						windowExists	=	CheckForOpenWindowByName(windowName);
+						if (windowExists)
+						{
+							CONSOLE_DEBUG_W_STR("Window already open:", windowName);
+						}
+						else
+						{
+							new ControllerMulticam(	windowName, &cRemoteDeviceList[deviceIdx]);
+						}
+						break;
+
+					case kDeviceType_undefined:
+					case kDeviceType_last:
+						break;
 				}
 			}
 		}
@@ -735,10 +734,10 @@ static	cv::Scalar	gDeviceColorsRGBscalar[]	=
 	CV_RGB(0x64,	0x64,	0xff),		//*	kDeviceType_Telescope		blue
 
 //	//*	extras defined by MLS
-	CV_RGB(0xff,	0xff,	0xff),		//*	kDeviceType_Multicam
+	CV_RGB(0xff,	0xff,	0x1A),		//*	kDeviceType_Multicam
 	CV_RGB(0xCF,	0x0E,	0xF2),		//*	kDeviceType_Shutter			pink
 	CV_RGB(0x91,	0x30,	0xFA),		//* kDeviceType_SlitTracker		purple
-	CV_RGB(0xff,	0xff,	0xff),		//*	kDeviceType_Spectrograph
+	CV_RGB(0x99,	0xff,	0x66),		//*	kDeviceType_Spectrograph
 	CV_RGB(0xff,	0xff,	0xff),
 	CV_RGB(0xff,	0xff,	0xff),
 	CV_RGB(0xff,	0xff,	0xff),

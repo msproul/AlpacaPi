@@ -18,6 +18,7 @@
 //*	Nov 14,	2021	<MLS> Added remote data window tab
 //*	Jun  4,	2022	<MLS> Updated SetTelescopeIPaddress() to handle mount graph window
 //*	Jul 14,	2022	<MLS> Started on CPU stats, skytravel is using too much CPU time
+//*	Jun 30,	2023	<MLS> Added AlpacaProcessReadAllIdx() to skytravel controller
 //*****************************************************************************
 
 #ifndef _ENABLE_SKYTRAVEL_
@@ -59,6 +60,8 @@
 
 #include	"controller.h"
 #include	"controller_skytravel.h"
+#include	"dome_AlpacaCmds.h"
+#include	"telescope_AlpacaCmds.h"
 
 
 extern char	gFullVersionString[];
@@ -74,10 +77,12 @@ double	gTelescopeDecl_Radians	=	0.0;
 ControllerSkytravel::ControllerSkytravel(	const char *argWindowName)
 				:Controller(	argWindowName,
 								kWindowWidth,
-								kWindowHeight)
+								kWindowHeight,
+								false)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
 
+	cWindowType				=	'SKYT';
 	cSkyTravelTabOjbPtr		=	NULL;
 	cSkySettingsTabObjPtr	=	NULL;
 	cDomeTabObjPtr			=	NULL;
@@ -119,9 +124,10 @@ ControllerSkytravel::ControllerSkytravel(	const char *argWindowName)
 //**************************************************************************************
 ControllerSkytravel::~ControllerSkytravel(void)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	DELETE_OBJ_IF_VALID(cSkyTravelTabOjbPtr);
+	DELETE_OBJ_IF_VALID(cTimeTabObjPtr);
 	DELETE_OBJ_IF_VALID(cSkySettingsTabObjPtr);
 	DELETE_OBJ_IF_VALID(cFOVTabObjPtr);
 	DELETE_OBJ_IF_VALID(cRemoteDataObjPtr);
@@ -138,7 +144,6 @@ ControllerSkytravel::~ControllerSkytravel(void)
 	DELETE_OBJ_IF_VALID(cCpuStatsTabObjPtr);
 #endif
 }
-
 
 //**************************************************************************************
 void	ControllerSkytravel::SetupWindowControls(void)
@@ -517,10 +522,10 @@ bool		foundSomething;
 			if (telescope_deltaSeconds >= 2)
 			{
 //				CONSOLE_DEBUG("Updating TELESCOPE status");
-				validData	=	AlpacaGetTelescopeStatus();
+				validData	=	AlpacaGetStatus_Telescope();
 				if (validData == false)
 				{
-					CONSOLE_DEBUG("AlpacaGetTelescopeStatus failed");
+					CONSOLE_DEBUG("AlpacaGetStatus_Telescope failed");
 				}
 				cLastTelescopeUpdate_milliSecs	=	millis();
 			}
@@ -579,7 +584,7 @@ bool	ControllerSkytravel::AlpacaGetStartupData_Camera(	TYPE_REMOTE_DEV			*remote
 {
 bool			validData;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	validData	=	AlpacaGetDoubleValue(	remoteDevice->deviceAddress,
 											remoteDevice->port,
 											remoteDevice->alpacaDeviceNum,
@@ -613,10 +618,7 @@ bool			validData;
 											NULL,
 											&cameraProp->CameraYsize);
 
-//	validData	=	AlpacaGetIntegerValue("camera", "cameraxsize",	NULL,	&cCameraProp.CameraXsize);
-//	validData	=	AlpacaGetIntegerValue("camera", "cameraysize",	NULL,	&cCameraProp.CameraYsize);
-
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, "Exit");
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, "Exit");
 
 	return(validData);
 }
@@ -725,7 +727,9 @@ bool	previousOnLineState;
 	if (cDomeHas_Readall)
 	{
 //		CONSOLE_DEBUG_W_STR(__FUNCTION__, "ReadAll");
+		SetCommandLookupTable(gDomeCmdTable);
 		validData	=	AlpacaGetStatus_ReadAll(&cDomeIpAddress, cDomeIpPort, "dome", cDomeAlpacaDeviceNum);
+		SetCommandLookupTable((TYPE_CmdEntry*)NULL);
 	}
 	else
 	{
@@ -801,7 +805,7 @@ bool	previousOnLineState;
 }
 
 //*****************************************************************************
-bool	ControllerSkytravel::AlpacaGetTelescopeStatus(void)
+bool	ControllerSkytravel::AlpacaGetStatus_Telescope(void)
 {
 bool	validData;
 char	raString[64];
@@ -813,10 +817,12 @@ char	textBuff[64];
 	if (cTelescopeHas_readall)
 	{
 //		CONSOLE_DEBUG("cTelescopeHas_readall");
+		SetCommandLookupTable(gTelescopeCmdTable);
 		validData	=	AlpacaGetStatus_ReadAll(&cTelescopeIpAddress,
 												cTelescopeIpPort,
 												"telescope",
 												cTelescopeAlpacaDeviceNum);
+		SetCommandLookupTable((TYPE_CmdEntry*)NULL);
 	}
 	else
 	{
@@ -846,31 +852,35 @@ char	textBuff[64];
 	return(validData);
 }
 
-
 //*****************************************************************************
-void	ControllerSkytravel::AlpacaProcessReadAll(	const char	*deviceType,
-													const int	deviceNum,
-													const char	*keywordString,
-													const char *valueString)
+bool	ControllerSkytravel::AlpacaProcessReadAllIdx(	const char	*deviceTypeStr,
+														const int	deviceNum,
+														const int	keywordEnum,
+														const char	*valueString)
 {
-//	CONSOLE_DEBUG_W_2STR("json=",	keywordString, valueString);
-//	CONSOLE_DEBUG_W_STR(__FUNCTION__, deviceType);
-	if (strcasecmp(deviceType, "Dome") == 0)
+bool		dataWasHandled	=	false;
+
+	if (strcasecmp(deviceTypeStr, "Dome") == 0)
 	{
-		AlpacaProcessReadAll_Dome(deviceNum, keywordString, valueString);
+//		dataWasHandled	=	AlpacaProcessReadAll_Dome(deviceNum, keywordString, valueString);
+		dataWasHandled	=	AlpacaProcessReadAllIdx_Dome(deviceNum, keywordEnum, valueString);
 	}
-	else if (strcasecmp(deviceType, "Telescope") == 0)
+	else if (strcasecmp(deviceTypeStr, "Telescope") == 0)
 	{
-		AlpacaProcessReadAll_Telescope(deviceNum, keywordString, valueString);
+		dataWasHandled	=	AlpacaProcessReadAll_TelescopeIdx(deviceNum, keywordEnum, valueString);
 	}
-	else if (strcasecmp(deviceType, "Camera") == 0)
+	else if (strcasecmp(deviceTypeStr, "Camera") == 0)
 	{
 	//	AlpacaProcessReadAll_Camera(deviceNum, keywordString, valueString);
 		if (cFOVTabObjPtr != NULL)
 		{
-			cFOVTabObjPtr->AlpacaProcessReadAll_Camera(deviceNum, keywordString, valueString);
+//			dataWasHandled	=	cFOVTabObjPtr->AlpacaProcessReadAll_Camera(deviceNum, keywordString, valueString);
+			dataWasHandled	=	cFOVTabObjPtr->AlpacaProcessReadAllIdx_Camera(deviceNum, keywordEnum, valueString);
+//			CONSOLE_DEBUG_W_BOOL("dataWasHandled\t=", dataWasHandled);
 		}
 	}
+
+	return(dataWasHandled);
 }
 
 //*****************************************************************************

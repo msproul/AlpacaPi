@@ -76,7 +76,7 @@ WindowTabRemoteData::WindowTabRemoteData(	const int	xSize,
 //**************************************************************************************
 WindowTabRemoteData::~WindowTabRemoteData(void)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 }
 
 //**************************************************************************************
@@ -362,7 +362,7 @@ void	WindowTabRemoteData::UpdateDataBaseButtons(void)
 int		dbNumber;
 int		iii;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	//*	now go through and set the names of the valid databases
 	dbNumber		=	0;
 	iii				=	kRemoteData_SQLdatabase1;

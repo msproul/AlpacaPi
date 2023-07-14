@@ -21,6 +21,12 @@
 //*	Feb 12,	2021	<MLS> Created controller_covercalib.cpp
 //*	Feb 12,	2021	<MLS> CoverCalibration controller fully working
 //*	Mar 25,	2023	<MLS> Added capability list to cover/calibrator controller
+//*	Jun 18,	2023	<MLS> Added UpdateSupportedActions() to CoverCalib controller
+//*	Jun 19,	2023	<MLS> Updated constructor to use TYPE_REMOTE_DEV
+//*	Jun 22,	2023	<MLS> Removed RunBackgroundTasks(), using default in parent class
+//*	Jun 25,	2023	<ADD> Add brightness to DeviceState
+//*	Jun 25,	2023	<MLS> Added DeviceState window to covercalibration controller
+//*	Jun 28,	2023	<MLS> Updated from AlpacaProcessReadAll() to AlpacaProcessReadAllIdx()
 //*****************************************************************************
 
 #define _ENABLE_COVER_CALIBRATION_
@@ -48,17 +54,23 @@
 #include	"alpaca_defs.h"
 #include	"helper_functions.h"
 #include	"windowtab_covercalib.h"
+#include	"windowtab_DeviceState.h"
 #include	"windowtab_drvrInfo.h"
 #include	"windowtab_about.h"
 
 #include	"controller.h"
 #include	"controller_covercalib.h"
 
+#include	"covercalib_AlpacaCmds.h"
+#include	"covercalib_AlpacaCmds.cpp"
+
+
 //**************************************************************************************
 enum
 {
 	kTab_Cover	=	1,
 	kTab_Capabilities,
+	kTab_DeviceState,
 	kTab_DriverInfo,
 	kTab_About,
 
@@ -68,26 +80,19 @@ enum
 
 //**************************************************************************************
 ControllerCoverCalib::ControllerCoverCalib(	const char			*argWindowName,
-											struct sockaddr_in	*deviceAddress,
-											const int			port,
-											const int			deviceNum)
-	:Controller(argWindowName, kWindowWidth,  kWindowHeight)
+											TYPE_REMOTE_DEV		*alpacaDevice)
+	:Controller(argWindowName, kWindowWidth,  kWindowHeight, true, alpacaDevice)
 {
 	memset(&cCoverCalibrationProp, 0, sizeof(TYPE_CoverCalibrationProperties));
 	strcpy(cAlpacaDeviceTypeStr,	"covercalibrator");
 
+	cDriverInfoTabNum		=	kTab_DriverInfo;
 	cCoverCalibTabObjPtr	=	NULL;
 	cDriverInfoTabObjPtr	=	NULL;
 	cAboutBoxTabObjPtr		=	NULL;
+	cForceAlpacaUpdate		=	true;
 
-	cAlpacaDevNum			=	deviceNum;
-	if (deviceAddress != NULL)
-	{
-		cDeviceAddress	=	*deviceAddress;
-		cPort			=	port;
-		cValidIPaddr	=	true;
-		CheckConnectedState();		//*	check connected and connect if not already connected
-	}
+	SetCommandLookupTable(gCalibrationCmdTable);
 
 	SetupWindowControls();
 
@@ -95,6 +100,7 @@ ControllerCoverCalib::ControllerCoverCalib(	const char			*argWindowName,
 	{
 		cCoverCalibTabObjPtr->SetCoverCalibPropPtr(&cCoverCalibrationProp);
 	}
+
 #ifdef _USE_BACKGROUND_THREAD_
 	StartBackgroundThread();
 #endif // _USE_BACKGROUND_THREAD_
@@ -108,6 +114,7 @@ ControllerCoverCalib::~ControllerCoverCalib(void)
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 	DELETE_OBJ_IF_VALID(cCoverCalibTabObjPtr);
 	DELETE_OBJ_IF_VALID(cCapabilitiesTabObjPtr);
+	DELETE_OBJ_IF_VALID(cDeviceStateTabObjPtr);
 	DELETE_OBJ_IF_VALID(cDriverInfoTabObjPtr);
 	DELETE_OBJ_IF_VALID(cAboutBoxTabObjPtr);
 }
@@ -121,6 +128,7 @@ void	ControllerCoverCalib::SetupWindowControls(void)
 	SetTabCount(kTab_Count);
 	SetTabText(kTab_Cover,			"Cover/Calib");
 	SetTabText(kTab_Capabilities,	"Capabilities");
+	SetTabText(kTab_DeviceState,	"Dev State");
 	SetTabText(kTab_DriverInfo,		"Driver Info");
 	SetTabText(kTab_About,			"About");
 
@@ -138,6 +146,15 @@ void	ControllerCoverCalib::SetupWindowControls(void)
 	{
 		SetTabWindow(kTab_Capabilities,	cCapabilitiesTabObjPtr);
 		cCapabilitiesTabObjPtr->SetParentObjectPtr(this);
+	}
+
+	//--------------------------------------------
+	cDeviceStateTabObjPtr		=	new WindowTabDeviceState(	cWidth, cHeight, cBackGrndColor, cWindowName);
+	if (cDeviceStateTabObjPtr != NULL)
+	{
+		SetTabWindow(kTab_DeviceState,	cDeviceStateTabObjPtr);
+		cDeviceStateTabObjPtr->SetParentObjectPtr(this);
+		SetDeviceStateTabInfo(kTab_DeviceState, kDeviceState_FirstBoxName, kDeviceState_FirstBoxValue, kDeviceState_Stats);
 	}
 
 	//--------------------------------------------
@@ -172,97 +189,52 @@ void	ControllerCoverCalib::SetupWindowControls(void)
 }
 
 //**************************************************************************************
-void	ControllerCoverCalib::RunBackgroundTasks(const char *callingFunction, bool enableDebug)
+void	ControllerCoverCalib::UpdateStartupData(void)
 {
-uint32_t	currentMillis;
-uint32_t	deltaSeconds;
-bool		validData;
-bool		needToUpdate;
-
-//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
-	if (cReadStartup)
+	UpdateAboutBoxRemoteDevice(kTab_About, kAboutBox_CPUinfo);
+	if (cCoverCalibrationProp.CoverState == kCover_NotPresent)
 	{
-		CONSOLE_DEBUG_W_STR("Reading startup information for", cWindowName);
-		AlpacaGetStartupData();
-		AlpacaGetCommonProperties_OneAAT("covercalibrator");
-
-		UpdateAboutBoxRemoteDevice(kTab_About, kAboutBox_CPUinfo);
-		cReadStartup	=	false;
+		SetWidgetText(		kTab_Cover,	kCoverCalib_Cover_State,	"Not Present");
+		SetWidgetBGColor(	kTab_Cover,	kCoverCalib_Cover_Open,		CV_RGB(100, 100, 100));
+		SetWidgetBGColor(	kTab_Cover,	kCoverCalib_Cover_Close,	CV_RGB(100, 100, 100));
+		SetWidgetBGColor(	kTab_Cover,	kCoverCalib_Cover_Halt,		CV_RGB(100, 100, 100));
 	}
-
-	needToUpdate	=	false;
-	currentMillis	=	millis();
-	deltaSeconds	=	(currentMillis - cLastUpdate_milliSecs) / 1000;
-
-	if (deltaSeconds >= 5)
+	if (cCoverCalibrationProp.CalibratorState == kCalibrator_NotPresent)
 	{
-		needToUpdate	=	true;
+
 	}
-	if (cForceAlpacaUpdate)	//*	force update is set when a switch is clicked
+	else
 	{
-		needToUpdate		=	true;
-		cForceAlpacaUpdate	=	false;
-	}
-
-	if (needToUpdate)
-	{
-		//*	is the IP address valid
-		if (cValidIPaddr)
-		{
-			validData	=	AlpacaGetStatus();
-
-			if (validData == false)
-			{
-			//	CONSOLE_DEBUG("Failed to get data")
-			}
-			UpdateConnectedIndicator(kTab_Cover,		kCoverCalib_Connected);
-		}
+		SetWidgetSliderLimits(	kTab_Cover,	kCoverCalib_Brightness_Slider,	0.0, cCoverCalibrationProp.MaxBrightness);
 	}
 }
 
 //*****************************************************************************
-bool	ControllerCoverCalib::AlpacaGetStartupData(void)
+void	ControllerCoverCalib::UpdateConnectedStatusIndicator(void)
+{
+	UpdateConnectedIndicator(kTab_Cover,	kCoverCalib_Connected);
+}
+
+//**************************************************************************************
+void	ControllerCoverCalib::UpdateStatusData(void)
+{
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+	UpdateConnectedIndicator(kTab_Cover,	kCoverCalib_Connected);
+}
+
+//*****************************************************************************
+bool	ControllerCoverCalib::AlpacaGetStartupData_OneAAT(void)
 {
 bool			validData;
 int				integerValue;
 
 	CONSOLE_DEBUG(__FUNCTION__);
-	CONSOLE_DEBUG_W_BOOL("Has read all\t=", cHas_readall);
-	//===============================================================
-	//*	get supportedactions
-	validData	=	AlpacaGetSupportedActions("covercalibrator", cAlpacaDevNum);
-	if (validData)
-	{
-		//*	AlpacaGetSupportedActions() sets the cHas_readall appropriately
-		UpdateSupportedActions();
-
-		ReadOneDriverCapability(cAlpacaDeviceTypeStr,
-								"canadjustaperture",
-								"CanAdjustAperture",
-								&cCoverCalibrationProp.CanSetAperture);
-	}
-	else
-	{
-		CONSOLE_DEBUG("Read failure - supportedactions");
-		cReadFailureCnt++;
-	}
-
-	CONSOLE_DEBUG(__FUNCTION__);
-	CONSOLE_DEBUG_W_BOOL("Has read all\t=", cHas_readall);
-//	CONSOLE_ABORT(__FUNCTION__);
+	validData	=	false;
 	//------------------------------------------------------------------
 	validData	=	AlpacaGetIntegerValue("covercalibrator", "coverstate",	NULL,	&integerValue);
 	if (validData)
 	{
 		cCoverCalibrationProp.CoverState	=	(CoverStatus)integerValue;
-		if (cCoverCalibrationProp.CoverState == kCover_NotPresent)
-		{
-		//	SetWidgetText(		kTab_Cover,	kCoverCalib_Cover_Label,	"No Cover available");
-			SetWidgetText(kTab_Cover,	kCoverCalib_Cover_State,	"Not Present");
-			SetWidgetBGColor(	kTab_Cover,	kCoverCalib_Cover_Open,		CV_RGB(100, 100, 100));
-			SetWidgetBGColor(	kTab_Cover,	kCoverCalib_Cover_Close,	CV_RGB(100, 100, 100));
-			SetWidgetBGColor(	kTab_Cover,	kCoverCalib_Cover_Halt,		CV_RGB(100, 100, 100));
-		}
 	}
 	else
 	{
@@ -270,7 +242,6 @@ int				integerValue;
 		cReadFailureCnt++;
 	}
 
-	CONSOLE_DEBUG(__FUNCTION__);
 	//------------------------------------------------------------------
 	validData	=	AlpacaGetIntegerValue("covercalibrator", "calibratorstate",	NULL,	&integerValue);
 	if (validData)
@@ -282,13 +253,6 @@ int				integerValue;
 		}
 		else
 		{
-			//------------------------------------------------------------------
-			validData	=	AlpacaGetIntegerValue("covercalibrator", "maxbrightness",	NULL,	&integerValue);
-			if (validData)
-			{
-				cCoverCalibrationProp.MaxBrightness	=	integerValue;
-				SetWidgetSliderLimits(	kTab_Cover,	kCoverCalib_Brightness_Slider,	0.0, integerValue);
-			}
 		}
 	}
 	else
@@ -296,33 +260,46 @@ int				integerValue;
 		CONSOLE_DEBUG("Read failure - calibratorstate");
 		cReadFailureCnt++;
 	}
-	UpdateCommonProperties();
-	CONSOLE_DEBUG(__FUNCTION__);
+	//------------------------------------------------------------------
+	validData	=	AlpacaGetIntegerValue("covercalibrator", "maxbrightness",	NULL,	&integerValue);
+	if (validData)
+	{
+		cCoverCalibrationProp.MaxBrightness	=	integerValue;
+	}
 	return(validData);
 }
 
 //*****************************************************************************
-void	ControllerCoverCalib::UpdateCommonProperties(void)
+void	ControllerCoverCalib::AlpacaGetCapabilities(void)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
-
-	SetWidgetText(	kTab_DriverInfo,	kDriverInfo_Name,				cCommonProp.Name);
-	SetWidgetText(	kTab_DriverInfo,	kDriverInfo_Description,		cCommonProp.Description);
-	SetWidgetText(	kTab_DriverInfo,	kDriverInfo_DriverInfo,			cCommonProp.DriverInfo);
-	SetWidgetText(	kTab_DriverInfo,	kDriverInfo_DriverVersion,		cCommonProp.DriverVersion);
-	SetWidgetNumber(kTab_DriverInfo,	kDriverInfo_InterfaceVersion,	cCommonProp.InterfaceVersion);
-
-//	CONSOLE_ABORT(__FUNCTION__);
+	ReadOneDriverCapability(cAlpacaDeviceTypeStr,
+							"canadjustaperture",
+							"CanAdjustAperture",
+							&cCoverCalibrationProp.CanSetAperture);
 }
+
 
 //*****************************************************************************
 void	ControllerCoverCalib::UpdateSupportedActions(void)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
-	SetWidgetValid(kTab_Cover,		kCoverCalib_Readall,		cHas_readall);
-	SetWidgetValid(kTab_DriverInfo,	kDriverInfo_Readall,		cHas_readall);
+	SetWidgetValid(kTab_Cover,			kCoverCalib_Readall,		cHas_readall);
+	SetWidgetValid(kTab_Cover,			kCoverCalib_DeviceSelect,	cHas_DeviceState);
 
+	SetWidgetValid(kTab_Capabilities,	kCapabilities_Readall,		cHas_readall);
+	SetWidgetValid(kTab_Capabilities,	kCapabilities_DeviceState,	cHas_DeviceState);
+
+	SetWidgetValid(kTab_DeviceState,	kDeviceState_Readall,		cHas_readall);
+	SetWidgetValid(kTab_DeviceState,	kDeviceState_DeviceState,	cHas_DeviceState);
+
+	SetWidgetValid(kTab_DriverInfo,		kDriverInfo_Readall,		cHas_readall);
+	SetWidgetValid(kTab_DriverInfo,		kDriverInfo_DeviceState,	cHas_DeviceState);
+
+	if (cHas_DeviceState == false)
+	{
+		cDeviceStateTabObjPtr->SetDeviceStateNotSupported();
+	}
 }
 
 //**************************************************************************************
@@ -407,6 +384,63 @@ char	stateString[32];
 	cLastUpdate_milliSecs	=	millis();
 	return(validData);
 }
+
+
+//*****************************************************************************
+bool	ControllerCoverCalib::AlpacaProcessReadAllIdx(	const char	*deviceTypeStr,
+														const int	deviceNum,
+														const int	keywordEnum,
+														const char	*valueString)
+{
+int		integerValue;
+bool	dataWasHandled;
+
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+
+	dataWasHandled	=	true;
+	integerValue	=	atoi(valueString);
+	switch(keywordEnum)
+	{
+		case kCmd_Calibration_brightness:			//*	Returns the current calibrator brightness
+			cCoverCalibrationProp.Brightness		=	integerValue;
+			break;
+
+		case kCmd_Calibration_calibratorstate:		//*	Returns the state of the calibration device
+			cCoverCalibrationProp.CalibratorState	=	(CalibratorStatus)integerValue;
+			break;
+
+		case kCmd_Calibration_coverstate:			//*	Returns the state of the device cover"
+			cCoverCalibrationProp.CoverState		=	(CoverStatus)integerValue;
+			break;
+
+		case kCmd_Calibration_maxbrightness:		//*	Returns the calibrator's maximum Brightness value.
+			cCoverCalibrationProp.MaxBrightness		=	integerValue;
+			break;
+
+		case kCmd_Calibration_CalibratorReady:
+			cCoverCalibrationProp.CalibratorReady	=	IsTrueFalse(valueString);
+			break;
+
+		case kCmd_Calibration_CoverMoving:
+			cCoverCalibrationProp.CoverMoving	=	IsTrueFalse(valueString);
+			break;
+
+		case kCmd_Calibration_aperture:				//*	GET/PUT aperture opening in percentage
+			cCoverCalibrationProp.Aperture		=	atof(valueString);
+			break;
+
+		case kCmd_Calibration_canadjustaperture:	//*	true if adjustable aperture is available
+			cCoverCalibrationProp.CanSetAperture	=	IsTrueFalse(valueString);
+			break;
+
+		default:
+			dataWasHandled	=	true;
+			break;
+
+	}
+	return(dataWasHandled);
+}
+
 
 #endif // _ENABLE_COVER_CALIBRATION_
 

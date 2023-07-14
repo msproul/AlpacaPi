@@ -43,10 +43,12 @@ class MultiCam: public AlpacaDriver
 		virtual	TYPE_ASCOM_STATUS	ProcessCommand(TYPE_GetPutRequestData *reqData);
 		virtual	int32_t				RunStateMachine(void);
 		virtual	void				OutputHTML(TYPE_GetPutRequestData *reqData);
+		virtual bool				GetCmdNameFromMyCmdTable(const int cmdNumber, char *comandName, char *getPut);
 		virtual bool				GetCommandArgumentString(const int cmdNumber, char *agumentString, char *commentString);
 
 			TYPE_ASCOM_STATUS		Put_StartExposure(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 			TYPE_ASCOM_STATUS		Put_ExposureTime(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
+			TYPE_ASCOM_STATUS		Get_Readall(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 
 	protected:
 				int		cCameraCnt;

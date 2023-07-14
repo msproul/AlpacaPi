@@ -8,7 +8,7 @@
 
 #ifndef	_CONTROLLER_H_
 	#include	"controller.h"
-#endif // _CONTROLLER_H_
+#endif
 
 //*****************************************************************************
 enum
@@ -30,6 +30,7 @@ enum
 
 	kFileList_IPaddr,
 	kFileList_Readall,
+	kFileList_DeviceState,
 
 
 	kFileList_last

@@ -36,6 +36,7 @@
 //*	Jul  7,	2022	<MLS> Added Quaternion data to WriteIMUtextFile()
 //*	Jul 25,	2022	<MLS> Increased # of decimal points in WriteIMUtextFile()
 //*	Oct  5,	2022	<MLS> Added ReadIMUdata()
+//*	Jun 13,	2023	<MLS> Added checking for valid IMU
 //*****************************************************************************
 
 #ifdef _ENABLE_CAMERA_
@@ -77,9 +78,9 @@ int	ii;
 
 	CONSOLE_DEBUG_W_NUM("cSaveNextImage\t=", cSaveNextImage);
 	CONSOLE_DEBUG_W_NUM("cSaveAllImages\t=", cSaveAllImages);
-	cNumFramesSaved++;
+	cCameraProp.SavedImageCnt++;
 	cTotalFramesSaved++;
-	CONSOLE_DEBUG_W_NUM("cNumFramesSaved=", cNumFramesSaved);
+	CONSOLE_DEBUG_W_NUM("cCameraProp.SavedImageCnt=", cCameraProp.SavedImageCnt);
 
 	for (ii=0; ii<kMaxDataProducts; ii++)
 	{
@@ -91,8 +92,11 @@ int	ii;
 	{
 	#ifdef _ENABLE_IMU_
 		//*	we want to do this first so the readings are closest to the time we took the picture
-		ReadIMUdata();
-		WriteIMUtextFile();
+		if (IMU_IsAvailable())
+		{
+			ReadIMUdata();
+			WriteIMUtextFile();
+		}
 	#endif
 
 	#ifdef _INCLUDE_HISTOGRAM_
@@ -103,18 +107,27 @@ int	ii;
 
 
 	#ifdef _USE_OPENCV_
-		SaveOpenCVImage();
+		if (cSaveAsJPEG || cSaveAsPNG)
+		{
+			SaveOpenCVImage();
+		}
 	#endif	//	_USE_OPENCV_
 
 
 	#if defined(_ENABLE_JPEGLIB_) && !defined(_USE_OPENCV_)
-		SaveUsingJpegLib();
+		if (cSaveAsJPEG)
+		{
+			SaveUsingJpegLib();
+		}
 	#endif	//	_ENABLE_JPEGLIB_
 
 
 	//*	we want FITS to be last so it can include info about other save data products
 	#ifdef _ENABLE_FITS_
-		SaveImageAsFITS();
+		if (cSaveAsFITS)
+		{
+			SaveImageAsFITS();
+		}
 	#endif // _ENABLE_FITS_
 	#if defined(_JETSON_) && defined(_FIND_STARS_)
 		long	keyPointCnt;
@@ -212,9 +225,9 @@ int				imageDataLen;
 	switch(cROIinfo.currentROIimageType)
 	{
 		case kImageType_RAW8:
-		//	CONSOLE_DEBUG("kImageType_RAW8");
-//	9/20/2022
-//			cOpenCV_ImagePtr	=	new cv::Mat(height, width, CV_8UC3);
+			CONSOLE_DEBUG("kImageType_RAW8");
+			//	9/20/2022
+			//cOpenCV_ImagePtr	=	new cv::Mat(height, width, CV_8UC3);
 			cOpenCV_ImagePtr	=	new cv::Mat(height, width, CV_8UC1);
 			imageDataLen		=	width * height;
 			break;
@@ -227,7 +240,7 @@ int				imageDataLen;
 
 
 		case kImageType_RGB24:
-		//	CONSOLE_DEBUG("kImageType_RGB24");
+			CONSOLE_DEBUG("kImageType_RGB24");
 			cOpenCV_ImagePtr	=	new cv::Mat(height, width, CV_8UC3);
 			imageDataLen		=	width * height * 3;
 			break;
@@ -299,8 +312,8 @@ int				imageDataLen;
 	}
 	else
 	{
-		CONSOLE_DEBUG("Image data is NULL");
-		CONSOLE_ABORT(__FUNCTION__);
+		CONSOLE_DEBUG("Image data is NULL (imageDataPtr)");
+//		CONSOLE_ABORT(__FUNCTION__);
 	}
 //
 	return(returnCode);
@@ -320,40 +333,42 @@ char		imageFilePath[128];
 
 	if (cOpenCV_ImagePtr != NULL)
 	{
+
 		bytesPerPixel		=	cOpenCV_ImagePtr->step[1];
 		CONSOLE_DEBUG_W_NUM("bytesPerPixel\t=",	bytesPerPixel);
 //		if (bytesPerPixel != 2)
 		if (bytesPerPixel != 0)
 		{
 			//--------------------------------------------------------------------------------------------
-			//*	save as JPEG
-			strcpy(imageFileName, cFileNameRoot);
-			strcat(imageFileName, ".jpg");
-
-			strcpy(imageFilePath, gImageDataDir);
-			strcat(imageFilePath, "/");
-			strcat(imageFilePath, imageFileName);
-
-			strcpy(cLastJpegImageName, imageFilePath);	//*	save the full image path for the web server
-
-			openCVerr	=	cv::imwrite(imageFilePath, *cOpenCV_ImagePtr);
-			if (openCVerr == 1)
+			if (cSaveAsJPEG)
 			{
-				AddToDataProductsList(imageFileName, "JPEG image-openCV");
-			}
-			else
-			{
-				CONSOLE_DEBUG_W_NUM("cvSaveImage (jpg) failed, returned\t=", openCVerr);
+				//*	save as JPEG
+				strcpy(imageFileName, cFileNameRoot);
+				strcat(imageFileName, ".jpg");
+
+				strcpy(imageFilePath, gImageDataDir);
+				strcat(imageFilePath, "/");
+				strcat(imageFilePath, imageFileName);
+
+				strcpy(cLastJpegImageName, imageFilePath);	//*	save the full image path for the web server
+
+				openCVerr	=	cv::imwrite(imageFilePath, *cOpenCV_ImagePtr);
+				if (openCVerr == 1)
+				{
+					AddToDataProductsList(imageFileName, "JPEG image-openCV");
+				}
+				else
+				{
+					CONSOLE_DEBUG_W_NUM("cvSaveImage (jpg) failed, returned\t=", openCVerr);
+				}
 			}
 
-
-//		#ifdef _ENABLE_PNG_
 			//--------------------------------------------------------------------------------------------
-			if (1)
+			if (cSaveAsPNG)
 			{
-				SETUP_TIMING();
-				//*	OpenCV png file creation takes WAY too long, use caution
-				START_TIMING();
+//				SETUP_TIMING();
+//				//*	OpenCV png file creation takes WAY too long, use caution
+//				START_TIMING();
 
 				//*	save as png
 				strcpy(imageFileName, cFileNameRoot);
@@ -372,9 +387,8 @@ char		imageFilePath[128];
 				{
 					CONSOLE_DEBUG_W_NUM("cvSaveImage (PNG) failed, returned\t=", openCVerr);
 				}
-				DEBUG_TIMING("Time to create PNG file=");
+//				DEBUG_TIMING("Time to create PNG file=");
 			}
-//		#endif
 		}
 		else
 		{
@@ -727,7 +741,7 @@ int		gainPercent;
 //		fprintf(filePointer, "Date_format=%s\r\n",				foo);ddMMyy
 //		fprintf(filePointer, "Time_format=%s\r\n",				foo);HHmmss
 		fprintf(filePointer, "LT=UT %d\r\n",					gObseratorySettings.UTCoffset);
-		fprintf(filePointer, "Frames captured=%d\r\n",			cNumFramesSaved);
+		fprintf(filePointer, "Frames captured=%d\r\n",			cCameraProp.SavedImageCnt);
 		fprintf(filePointer, "Video Frames captured=%d\r\n",	cNumVideoFramesSaved);
 
 		fprintf(filePointer, "File type=%s\r\n",				"AVI");

@@ -8,7 +8,7 @@
 
 #ifndef	_WINDOW_TAB_H_
 	#include	"windowtab.h"
-#endif // _CONTROLLER_H_
+#endif
 
 //*****************************************************************************
 enum
@@ -81,7 +81,7 @@ enum
 	kTeleSettings_AlpacaErrorMsg,
 	kTeleSettings_IPaddr,
 	kTeleSettings_Readall,
-
+	kTeleSettings_DeviceState,
 
 	kTeleSettings_last
 };

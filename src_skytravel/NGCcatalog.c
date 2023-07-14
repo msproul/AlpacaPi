@@ -21,6 +21,7 @@
 #include	"SkyStruc.h"
 #include	"SkyTravelConstants.h"
 #include	"helper_functions.h"
+#include	"controller_startup.h"
 
 #include	"StarCatalogHelper.h"
 #include	"NGCcatalog.h"
@@ -240,24 +241,6 @@ char			filePath[128];
 static	TYPE_ObjectInfo	*gNGCobjectInfo		=	NULL;
 static	long			gNGCobjectInfoCount	=	0;
 
-//************************************************************************
-static void	StripTrailingSpaces(char *theString)
-{
-short	ii, slen;
-
-	slen	=	strlen(theString);
-	for (ii=slen-1; ii>0; ii--)
-	{
-		if (theString[ii] <= 0x20)
-		{
-			theString[ii]	=	0;
-		}
-		else
-		{
-			break;
-		}
-	}
-}
 
 //************************************************************************
 static bool	ParseOneLineOfNGCnameFile(char *lineBuff, TYPE_ObjectInfo *objectInfo)

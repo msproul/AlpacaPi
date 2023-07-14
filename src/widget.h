@@ -21,7 +21,7 @@
 #ifndef _USE_OPENCV_CPP_
 	#include	"opencv2/highgui/highgui_c.h"
 	#include	"opencv2/imgproc/imgproc_c.h"
-#endif // _USE_OPENCV_CPP_
+#endif
 
 
 #define	kMaxWidgets	150
@@ -100,7 +100,7 @@ enum
 #define	kAltTextLen			32
 #define	kMaxTabStops		15
 //*****************************************************************************
-typedef struct
+typedef struct	//	TYPE_WIDGET
 {
 	bool		valid;
 	bool		crossedOut;
@@ -145,11 +145,10 @@ typedef struct
 	int			scrollBarMax;
 	int			scrollBarLines;
 
-
 	double		*graphArrayPtr;
 	int			graphArrayCnt;
 } TYPE_WIDGET;
 
 bool	PointInWidget(const int xPoint, const int yPoint, TYPE_WIDGET *theWidget);
-void	DumpWidget(TYPE_WIDGET *theWidget);
+void	DumpWidget(TYPE_WIDGET *theWidget, const char *callingFunction);
 #endif // _WIDGET_H_

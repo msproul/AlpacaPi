@@ -1,5 +1,5 @@
 //*****************************************************************************
-//*		controller_obsconditions.cpp		(c) 2022 by Mark Sproul
+//*		controller_obsconditions.cpp		(c) 2022-2023 by Mark Sproul
 //*
 //*
 //*
@@ -20,26 +20,25 @@
 //*****************************************************************************
 //*	Sep 25,	2022	<MLS> Created controller_obsconditions.cpp
 //*	Oct  3,	2022	<MLS> Fixed connection status for observing conditions window
+//*	Jun 18,	2023	<MLS> Added UpdateSupportedActions() to observing conditions
+//*	Jun 19,	2023	<MLS> Updated constructor to use TYPE_REMOTE_DEV
+//*	Jun 23,	2023	<MLS> Removed RunBackgroundTasks(), using default in parent class
+//*	Jun 24,	2023	<MLS> Added DeviceState window to obsconditions controller
+//*	Jun 29,	2023	<MLS> Added AlpacaProcessReadAllIdx() to obsconditions controller
 //*****************************************************************************
-
-
 #ifdef _ENABLE_CTRL_OBS_CONDITIONS_
-
 
 #include	<stdio.h>
 #include	<stdlib.h>
 #include	<unistd.h>
 
-
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
-
-
-
 
 #include	"alpaca_defs.h"
 #include	"alpacadriver_helper.h"
 #include	"windowtab_obscond.h"
+#include	"windowtab_DeviceState.h"
 #include	"windowtab_drvrInfo.h"
 #include	"windowtab_about.h"
 
@@ -48,15 +47,17 @@
 
 #include	"controller.h"
 #include	"controller_obsconditions.h"
+#include	"obscond_AlpacaCmds.h"
+#include	"obscond_AlpacaCmds.cpp"
 
 #define	kWindowWidth	450
 #define	kWindowHeight	700
-
 
 //**************************************************************************************
 enum
 {
 	kTab_ObsCond	=	1,
+	kTab_DeviceState,
 	kTab_DriverInfo,
 	kTab_About,
 
@@ -66,29 +67,20 @@ enum
 
 //**************************************************************************************
 ControllerObsCond::ControllerObsCond(	const char			*argWindowName,
-										struct sockaddr_in	*deviceAddress,
-										const int			port,
-										const int			deviceNum)
-
-	:Controller(argWindowName, kWindowWidth,  kWindowHeight)
+										TYPE_REMOTE_DEV		*alpacaDevice)
+	:Controller(argWindowName, kWindowWidth,  kWindowHeight, true, alpacaDevice)
 {
 
-	cAlpacaDevNum			=	deviceNum;
 	cFirstDataRead			=	true;
+	cDriverInfoTabNum		=	kTab_DriverInfo;
+	SetCommandLookupTable(gObsCondCmdTable);
 
 	memset((void *)&cObsCondProp, 0, sizeof(TYPE_ObsConditionProperties));
 
 	cLastUpdate_milliSecs	=	millis();
 
-
 	strcpy(cAlpacaDeviceTypeStr,	"observingconditions");
 
-	if (deviceAddress != NULL)
-	{
-		cDeviceAddress	=	*deviceAddress;
-		cPort			=	port;
-		cValidIPaddr	=	true;
-	}
 	SetupWindowControls();
 
 	//*	display the IPaddres/port
@@ -116,6 +108,7 @@ ControllerObsCond::~ControllerObsCond(void)
 {
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 	DELETE_OBJ_IF_VALID(cObsConditionsTabObjPtr);
+	DELETE_OBJ_IF_VALID(cDeviceStateTabObjPtr);
 	DELETE_OBJ_IF_VALID(cDriverInfoTabObjPtr);
 	DELETE_OBJ_IF_VALID(cAboutBoxTabObjPtr);
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, "Exit");
@@ -128,16 +121,25 @@ void	ControllerObsCond::SetupWindowControls(void)
 	CONSOLE_DEBUG(__FUNCTION__);
 
 	SetTabCount(kTab_Count);
-	SetTabText(kTab_ObsCond,	"Obs Conditions");
-	SetTabText(kTab_DriverInfo,	"Driver Info");
-	SetTabText(kTab_About,		"About");
-
+	SetTabText(kTab_ObsCond,		"Obs Conditions");
+	SetTabText(kTab_DeviceState,	"Dev State");
+	SetTabText(kTab_DriverInfo,		"Driver Info");
+	SetTabText(kTab_About,			"About");
 
 	cObsConditionsTabObjPtr	=	new WindowTabObsCond(cWidth, cHeight, cBackGrndColor, cWindowName);
 	if (cObsConditionsTabObjPtr != NULL)
 	{
 		SetTabWindow(kTab_ObsCond,	cObsConditionsTabObjPtr);
 		cObsConditionsTabObjPtr->SetParentObjectPtr(this);
+	}
+
+	//--------------------------------------------
+	cDeviceStateTabObjPtr		=	new WindowTabDeviceState(	cWidth, cHeight, cBackGrndColor, cWindowName);
+	if (cDeviceStateTabObjPtr != NULL)
+	{
+		SetTabWindow(kTab_DeviceState,	cDeviceStateTabObjPtr);
+		cDeviceStateTabObjPtr->SetParentObjectPtr(this);
+		SetDeviceStateTabInfo(kTab_DeviceState, kDeviceState_FirstBoxName, kDeviceState_FirstBoxValue, kDeviceState_Stats);
 	}
 
 	//--------------------------------------------
@@ -157,51 +159,23 @@ void	ControllerObsCond::SetupWindowControls(void)
 }
 
 //**************************************************************************************
-void	ControllerObsCond::RunBackgroundTasks(const char *callingFunction, bool enableDebug)
+void	ControllerObsCond::UpdateStartupData(void)
 {
-uint32_t	currentMillis;
-uint32_t	deltaSeconds;
-bool		validData;
-bool		needToUpdate;
+	UpdateAboutBoxRemoteDevice(kTab_About, kAboutBox_CPUinfo);
+}
 
-	if (cReadStartup)
-	{
-		AlpacaGetStartupData();
-		AlpacaGetCommonProperties_OneAAT(cAlpacaDeviceTypeStr);
-		UpdateAboutBoxRemoteDevice(kTab_About, kAboutBox_CPUinfo);
+//*****************************************************************************
+void	ControllerObsCond::UpdateConnectedStatusIndicator(void)
+{
+	UpdateConnectedIndicator(kTab_ObsCond,		kObsCond_Connected);
+}
 
-		cReadStartup	=	false;
-	}
+//**************************************************************************************
+void	ControllerObsCond::UpdateStatusData(void)
+{
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+	UpdateConnectedIndicator(kTab_ObsCond,		kObsCond_Connected);
 
-
-	needToUpdate	=	false;
-	currentMillis	=	millis();
-	deltaSeconds	=	(currentMillis - cLastUpdate_milliSecs) / 1000;
-
-	if (cFirstDataRead || (deltaSeconds > 10))
-	{
-		needToUpdate	=	true;
-	}
-	if (cForceAlpacaUpdate)	//*	force update is set when a switch is clicked
-	{
-		needToUpdate		=	true;
-		cForceAlpacaUpdate	=	false;
-	}
-
-	if (needToUpdate)
-	{
-		//*	is the IP address valid
-		if (cValidIPaddr)
-		{
-			validData	=	AlpacaGetStatus();
-			if (validData == false)
-			{
-				CONSOLE_DEBUG("Failed to get data");
-			}
-
-			UpdateConnectedIndicator(kTab_ObsCond,		kObsCond_Connected);
-		}
-	}
 }
 
 //*****************************************************************************
@@ -225,59 +199,30 @@ void	ControllerObsCond::AlpacaProcessSupportedActions(const char	*deviceTypeStr,
 //*****************************************************************************
 bool	ControllerObsCond::AlpacaGetStartupData_OneAAT(void)
 {
-//SJP_Parser_t	jsonParser;
 bool			validData;
-char			alpacaString[128];
+//char			alpacaString[128];
+//SJP_Parser_t	jsonParser;
 //char			dataString[128];
 //int				jjj;
 //double			myDoubleValue;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
+	validData	=	true;
 
-
-	validData	=	AlpacaGetStringValue(cAlpacaDeviceTypeStr, "description",	NULL,	alpacaString);
-	if (validData)
-	{
-		CONSOLE_DEBUG_W_STR("description\t=", alpacaString);
-		strcpy(cAlpacaVersionString, alpacaString);
-	}
+//	validData	=	AlpacaGetStringValue(cAlpacaDeviceTypeStr, "description",	NULL,	alpacaString);
+//	if (validData)
+//	{
+//		CONSOLE_DEBUG_W_STR("description\t=", alpacaString);
+//		strcpy(cAlpacaVersionString, alpacaString);
+//	}
 	return(validData);
 }
 
 //*****************************************************************************
-bool	ControllerObsCond::AlpacaGetStartupData(void)
+void	ControllerObsCond::AlpacaGetCapabilities(void)
 {
-bool			validData;
-//int				jjj;
-
-	CONSOLE_DEBUG(__FUNCTION__);
-	//===============================================================
-	//*	get supportedactions
-	validData	=	AlpacaGetSupportedActions(cAlpacaDeviceTypeStr, cAlpacaDevNum);
-
-	if (validData)
-	{
-//		SetWidgetValid(kTab_ObsCond,		kSwitchBox_Readall,		cHas_readall);
-	}
-	else
-	{
-		CONSOLE_DEBUG("Read failure - supportedactions");
-		cReadFailureCnt++;
-	}
-
-	if (cHas_readall)
-	{
-		//*	use readall to get the startup data
-		validData	=	AlpacaGetStatus_ReadAll(cAlpacaDeviceTypeStr, cAlpacaDevNum);
-	}
-//-	else
-	{
-		validData	=	AlpacaGetStartupData_OneAAT();
-	}
-
-	cLastUpdate_milliSecs	=	millis();
-
-	return(validData);
+	//*	obs conditions does not have any "Capabilities"
+	//*	required for base class
 }
 
 //*****************************************************************************
@@ -308,8 +253,8 @@ bool			returnValueIsValid;
 	validData	=	AlpacaGetDoubleValue(cAlpacaDeviceTypeStr,	"cloudcover",		NULL,	&argDouble, &returnValueIsValid);
 	if (validData)
 	{
-		cObsCondProp.Cloudcover.ValidData	=	returnValueIsValid;
-		cObsCondProp.Cloudcover.Value		=	argDouble;
+		cObsCondProp.CloudCover.ValidData	=	returnValueIsValid;
+		cObsCondProp.CloudCover.Value		=	argDouble;
 	}
 	else
 	{
@@ -319,8 +264,8 @@ bool			returnValueIsValid;
 	validData	=	AlpacaGetDoubleValue(cAlpacaDeviceTypeStr,	"dewpoint",		NULL,	&argDouble, &returnValueIsValid);
 	if (validData)
 	{
-		cObsCondProp.Dewpoint.ValidData	=	returnValueIsValid;
-		cObsCondProp.Dewpoint.Value		=	argDouble;
+		cObsCondProp.DewPoint.ValidData	=	returnValueIsValid;
+		cObsCondProp.DewPoint.Value		=	argDouble;
 	}
 	else
 	{
@@ -521,124 +466,121 @@ bool	previousOnLineState;
 }
 
 //*****************************************************************************
-void	ControllerObsCond::AlpacaProcessReadAll(	const char	*deviceTypeStr,
+bool	ControllerObsCond::AlpacaProcessReadAllIdx(	const char	*deviceTypeStr,
 													const int	deviceNum,
-													const char	*keywordString,
+													const int	keywordEnum,
 													const char	*valueString)
 {
+bool	dataWasHandled;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
-//	CONSOLE_DEBUG_W_STR(keywordString, valueString);
-	if (strcasecmp(keywordString, "connected") == 0)
+	dataWasHandled	=	true;
+	switch(keywordEnum)
 	{
-		cCommonProp.Connected	=  IsTrueFalse(valueString);
+		case kCmd_ObservCond_averageperiod:			//*	Returns the time period over which observations will be averaged
+			cObsCondProp.Averageperiod.Value		=	atof(valueString);
+			cObsCondProp.Averageperiod.ValidData	=	true;
+			break;
+
+		case kCmd_ObservCond_cloudcover:			//*	Returns the amount of sky obscured by cloud
+			cObsCondProp.CloudCover.Value		=	atof(valueString);
+			cObsCondProp.CloudCover.ValidData	=	true;
+			break;
+
+		case kCmd_ObservCond_dewpoint:				//*	Returns the atmospheric dew point at the observatory
+			cObsCondProp.DewPoint.Value		=	atof(valueString);
+			cObsCondProp.DewPoint.ValidData	=	true;
+			break;
+
+		case kCmd_ObservCond_humidity:				//*	Returns the atmospheric humidity at the observatory
+			cObsCondProp.Humidity.Value		=	atof(valueString);
+			cObsCondProp.Humidity.ValidData	=	true;
+			break;
+
+		case kCmd_ObservCond_pressure:				//*	Returns the atmospheric pressure at the observatory.
+			cObsCondProp.Pressure.Value		=	atof(valueString);
+			cObsCondProp.Pressure.ValidData	=	true;
+			break;
+
+		case kCmd_ObservCond_rainrate:				//*	Returns the rain rate at the observatory.
+			cObsCondProp.RainRate.Value	=	atof(valueString);
+			cObsCondProp.RainRate.ValidData	=	true;
+			break;
+
+		case kCmd_ObservCond_skybrightness:			//*	Returns the sky brightness at the observatory
+			cObsCondProp.SkyBrightness.Value	=	atof(valueString);
+			cObsCondProp.SkyBrightness.ValidData	=	true;
+			break;
+
+		case kCmd_ObservCond_skyquality:			//*	Returns the sky quality at the observatory
+			cObsCondProp.SkyQuality.Value		=	atof(valueString);
+			cObsCondProp.SkyQuality.ValidData	=	true;
+			break;
+
+		case kCmd_ObservCond_skytemperature:		//*	Returns the sky temperature at the observatory
+			cObsCondProp.SkyTemperature.Value		=	atof(valueString);
+			cObsCondProp.SkyTemperature.ValidData	=	true;
+			break;
+
+		case kCmd_ObservCond_starfwhm:				//*	Returns the seeing at the observatory
+			cObsCondProp.StarFWHM.Value		=	atof(valueString);
+			cObsCondProp.StarFWHM.ValidData	=	true;
+			break;
+
+		case kCmd_ObservCond_temperature:			//*	Returns the temperature at the observatory
+			cObsCondProp.Temperature.Value		=	atof(valueString);
+			cObsCondProp.Temperature.ValidData	=	true;
+			break;
+
+		case kCmd_ObservCond_winddirection:			//*	Returns the wind direction at the observatory
+			cObsCondProp.WindDirection.Value		=	atof(valueString);
+			cObsCondProp.WindDirection.ValidData	=	true;
+			break;
+
+		case kCmd_ObservCond_windgust:				//*	Returns the peak 3 second wind gust at the observatory over the last 2 minutes
+			cObsCondProp.WindGust.Value		=	atof(valueString);
+			cObsCondProp.WindGust.ValidData	=	true;
+			break;
+
+		case kCmd_ObservCond_windspeed:				//*	Returns the wind speed at the observatory.
+			cObsCondProp.WindSpeed.Value		=	atof(valueString);
+			cObsCondProp.WindSpeed.ValidData	=	true;
+			break;
+
+		case kCmd_ObservCond_refresh:				//*	Refreshes sensor values from hardware.
+			break;
+
+		case kCmd_ObservCond_sensordescription:		//*	Return a sensor description
+			break;
+
+		case kCmd_ObservCond_timesincelastupdate:	//*	Return the time since the sensor value was last updated
+			break;
+
+
+		default:
+			dataWasHandled	=	true;
+			break;
 	}
-	else if (strcasecmp(keywordString, "version") == 0)
+	return(dataWasHandled);
+}
+
+
+//*****************************************************************************
+void	ControllerObsCond::UpdateSupportedActions(void)
+{
+	CONSOLE_DEBUG(__FUNCTION__);
+
+	SetWidgetValid(kTab_ObsCond,		kObsCond_Readall,		cHas_readall);
+	SetWidgetValid(kTab_DriverInfo,		kDriverInfo_Readall,	cHas_readall);
+
+	SetWidgetValid(kTab_DeviceState,	kDeviceState_Readall,		cHas_readall);
+	SetWidgetValid(kTab_DeviceState,	kDeviceState_DeviceState,	cHas_DeviceState);
+
+	SetWidgetValid(kTab_ObsCond,		kObsCond_DeviceState,			cHas_DeviceState);
+	SetWidgetValid(kTab_DriverInfo,		kDriverInfo_DeviceState,		cHas_DeviceState);
+
+	if (cHas_DeviceState == false)
 	{
-		//*	"version": "AlpacaPi - V0.2.2-beta build #32",
-		strcpy(cAlpacaVersionString, valueString);
-	}
-	//	double	Averageperiod;			//*	Returns the time period over which observations will be averaged
-	else if (strcasecmp(keywordString, "Averageperiod") == 0)
-	{
-		cObsCondProp.Averageperiod.Value		=	atof(valueString);
-		cObsCondProp.Averageperiod.ValidData	=	true;
-	}
-	//	double	Cloudcover;				//*	Returns the amount of sky obscured by cloud
-	else if (strcasecmp(keywordString, "Cloudcover") == 0)
-	{
-		cObsCondProp.Cloudcover.Value		=	atof(valueString);
-		cObsCondProp.Cloudcover.ValidData	=	true;
-	}
-	//	double	Dewpoint;				//*	Returns the atmospheric dew point at the observatory
-	else if (strcasecmp(keywordString, "Dewpoint") == 0)
-	{
-		cObsCondProp.Dewpoint.Value		=	atof(valueString);
-		cObsCondProp.Dewpoint.ValidData	=	true;
-	}
-	//	double	Humidity;				//*	Returns the atmospheric humidity at the observatory
-	else if (strcasecmp(keywordString, "Humidity") == 0)
-	{
-		cObsCondProp.Humidity.Value		=	atof(valueString);
-		cObsCondProp.Humidity.ValidData	=	true;
-	}
-	//	double	Pressure_hPa;			//*	Returns the atmospheric pressure at the observatory.
-	//									//*	hectoPascals
-	else if (strcasecmp(keywordString, "Pressure") == 0)
-	{
-		cObsCondProp.Pressure.Value		=	atof(valueString);
-		cObsCondProp.Pressure.ValidData	=	true;
-	}
-	//	double	RainRate;				//*	Returns the rain rate at the observatory.
-	else if (strcasecmp(keywordString, "RainRate") == 0)
-	{
-		cObsCondProp.RainRate.Value	=	atof(valueString);
-		cObsCondProp.RainRate.ValidData	=	true;
-	}
-	//	double	SkyBrightness;			//*	Returns the sky brightness at the observatory
-	else if (strcasecmp(keywordString, "SkyBrightness") == 0)
-	{
-		cObsCondProp.SkyBrightness.Value	=	atof(valueString);
-		cObsCondProp.Cloudcover.ValidData	=	true;
-	}
-	//	double	SkyQuality;				//*	Returns the sky quality at the observatory
-	else if (strcasecmp(keywordString, "SkyQuality") == 0)
-	{
-		cObsCondProp.SkyQuality.Value		=	atof(valueString);
-		cObsCondProp.SkyQuality.ValidData	=	true;
-	}
-	//	double	SkyTemperature_DegC;	//*	Returns the sky temperature at the observatory
-	else if (strcasecmp(keywordString, "SkyTemperature") == 0)
-	{
-		cObsCondProp.SkyTemperature.Value		=	atof(valueString);
-		cObsCondProp.SkyTemperature.ValidData	=	true;
-	}
-	//	double	StarFWHM;				//*	Returns the seeing at the observatory
-	else if (strcasecmp(keywordString, "StarFWHM") == 0)
-	{
-		cObsCondProp.StarFWHM.Value		=	atof(valueString);
-		cObsCondProp.StarFWHM.ValidData	=	true;
-	}
-	//	double	Temperature_DegC;		//*	Returns the temperature at the observatory
-	else if (strcasecmp(keywordString, "Temperature") == 0)
-	{
-		cObsCondProp.Temperature.Value	=	atof(valueString);
-		cObsCondProp.Temperature.ValidData	=	true;
-	}
-	//	double	WindDirection;			//*	Returns the wind direction at the observatory
-	else if (strcasecmp(keywordString, "WindDirection") == 0)
-	{
-		cObsCondProp.WindDirection.Value		=	atof(valueString);
-		cObsCondProp.WindDirection.ValidData	=	true;
-	}
-	//	double	WindGust;				//*	Returns the peak 3 second wind gust at the observatory over the last 2 minutes
-	else if (strcasecmp(keywordString, "WindGust") == 0)
-	{
-		cObsCondProp.WindGust.Value		=	atof(valueString);
-		cObsCondProp.WindGust.ValidData	=	true;
-	}
-	//	double	WindSpeed;				//*	Returns the wind speed at the observatory.
-	else if (strcasecmp(keywordString, "WindSpeed") == 0)
-	{
-		cObsCondProp.WindSpeed.Value		=	atof(valueString);
-		cObsCondProp.WindSpeed.ValidData	=	true;
-	}
-	////	double	sensordescription,		//*	Return a sensor description
-	else if (strcasecmp(keywordString, "sensordescription") == 0)
-	{
-//		cObsCondProp.sensordescription	=	atof(valueString);
-	}
-	////	double	timesincelastupdate,	//*	Return the time since the sensor value was last updated
-	else if (strcasecmp(keywordString, "timesincelastupdate") == 0)
-	{
-//		cObsCondProp.timesincelastupdate	=	atof(valueString);
-	}
-	else
-	{
-		AlpacaProcessReadAll_Common(	deviceTypeStr,
-										deviceNum,
-										keywordString,
-										valueString);
+		cDeviceStateTabObjPtr->SetDeviceStateNotSupported();
 	}
 }
 

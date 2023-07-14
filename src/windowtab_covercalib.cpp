@@ -20,6 +20,7 @@
 //*****************************************************************************
 //*	Feb 12,	2021	<MLS> Created windowtab_covercalib.cpp
 //*	Feb 13,	2021	<MLS> Added SetBrightness()
+//*	Jun 19,	2023	<MLS> Added DeviceState to covercalib
 //*****************************************************************************
 
 #define _ENABLE_COVER_CALIBRATION_
@@ -192,6 +193,7 @@ int		myButtonHt;
 	//*	set up all the bottom stuff so that it is the same on all windowtabs
 	SetupWindowBottomBoxes(	kCoverCalib_IPaddr,
 							kCoverCalib_Readall,
+							kCoverCalib_DeviceSelect,
 							kCoverCalib_AlpacaErrorMsg,
 							kCoverCalib_LastCmdString,
 							kCoverCalib_AlpacaLogo,
@@ -320,11 +322,11 @@ void	WindowTabCoverCalib::ProcessMouseLeftButtonUp(const int	widgetIdx,
 												const int	yyy,
 												const int	flags)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	switch(widgetIdx)
 	{
 		case kCoverCalib_Brightness_Slider:
-			CONSOLE_DEBUG("kCoverCalib_Brightness_Slider");
+//			CONSOLE_DEBUG("kCoverCalib_Brightness_Slider");
 			ForceWindowUpdate();
 			break;
 	}

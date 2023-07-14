@@ -31,6 +31,7 @@
 //*	Mar  8,	2023	<MLS> Added domeaddress property
 //*	Mar  9,	2023	<MLS> Added trackingenabled property
 //*	Mar  9,	2023	<MLS> Added web docs support
+//*	Jul 10,	2023	<MLS> Switched SlitTracker to use command table
 //*****************************************************************************
 
 #ifdef _ENABLE_SLIT_TRACKER_
@@ -60,18 +61,8 @@
 
 #include	"slittracker.h"
 
-
-//*****************************************************************************
-static TYPE_CmdEntry	gSlitTrackerCmdTable[]	=
-{
-//?	{	"setrate",				kCmd_SlitTracker_setrate,			kCmdType_PUT	},
-
-	{	"domeaddress",			kCmd_SlitTracker_DomeAddress,		kCmdType_GET	},
-	{	"trackingenabled",		kCmd_SlitTracker_TrackingEnabled,	kCmdType_BOTH	},
-
-	{	"readall",				kCmd_SlitTracker_readall,			kCmdType_GET	},
-	{	"",						-1,	0x00	}
-};
+#include	"slittracker_AlpacaCmds.h"
+#include	"slittracker_AlpacaCmds.cpp"
 
 //**************************************************************************************
 typedef struct
@@ -234,7 +225,7 @@ int					mySocket;
 		//----------------------------------------------------------------------------------------
 		//*	SlitTracker specific commands
 		//----------------------------------------------------------------------------------------
-		case kCmd_SlitTracker_setrate:
+		case kCmd_SlitTracker_SetRate:
 //+			alpacaErrCode	=	Put_Setrate(reqData, alpacaErrMsg);
 			break;
 
@@ -382,9 +373,6 @@ char		lineBuffer[128];
 
 		SocketWriteData(mySocketFD,	"</TABLE>\r\n");
 		SocketWriteData(mySocketFD,	"</CENTER>\r\n");
-
-		//*	now generate links to all of the commands
-		GenerateHTMLcmdLinkTable(mySocketFD, "slittracker", 0, gSlitTrackerCmdTable);
 	}
 }
 

@@ -29,29 +29,27 @@ class ControllerObsCond: public Controller
 		// Construction
 		//
 				ControllerObsCond(	const char			*argWindowName,
-									struct sockaddr_in	*deviceAddress = NULL,
-									const int			port = 0,
-									const int			deviceNum = 0);
-
-
+									TYPE_REMOTE_DEV		*alpacaDevice);
 		virtual	~ControllerObsCond(void);
 
 	//-			void	ControllerSwitchInit(void);
 
 		virtual	void	SetupWindowControls(void);
 	//	virtual	void	ProcessButtonClick(const int buttonIdx);
-		virtual	void	RunBackgroundTasks(const char *callingFunction=NULL, bool enableDebug=false);
-	//	virtual	void	DrawWidgetCustomGraphic(const int widgetIdx);
-		virtual	bool	AlpacaGetStartupData(void);
-				bool	AlpacaGetStartupData_OneAAT(void);
-				bool	AlpacaGetStatus(void);
+		virtual	void	AlpacaGetCapabilities(void);
+		virtual	bool	AlpacaGetStartupData_OneAAT(void);
+		virtual	bool	AlpacaGetStatus(void);
+		virtual	void	UpdateStartupData(void);
+		virtual	void	UpdateConnectedStatusIndicator(void);
+		virtual	void	UpdateStatusData(void);
 		virtual	void	AlpacaProcessSupportedActions(	const char	*deviceTypeStr,
 														const int	deviveNum,
 														const char	*valueString);
-		virtual	void	AlpacaProcessReadAll(	const char	*deviceTypeStr,
+		virtual	bool	AlpacaProcessReadAllIdx(const char	*deviceTypeStr,
 												const int	deviceNum,
-												const char	*keywordString,
+												const int	keywordEnum,
 												const char	*valueString);
+		virtual	void	UpdateSupportedActions(void);
 		virtual	void	UpdateCommonProperties(void);
 				bool	AlpacaGetStatus_OneAAT(void);	//*	One At A Time
 
@@ -59,8 +57,9 @@ class ControllerObsCond: public Controller
 				TYPE_ObsConditionProperties	cObsCondProp;
 
 			//*	tab information
-				WindowTabObsCond	*cObsConditionsTabObjPtr;
-				WindowTabDriverInfo	*cDriverInfoTabObjPtr;
-				WindowTabAbout		*cAboutBoxTabObjPtr;
+				WindowTabObsCond		*cObsConditionsTabObjPtr;
+				WindowTabDeviceState	*cDeviceStateTabObjPtr;
+				WindowTabDriverInfo		*cDriverInfoTabObjPtr;
+				WindowTabAbout			*cAboutBoxTabObjPtr;
 };
 

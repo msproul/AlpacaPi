@@ -1041,7 +1041,7 @@ int					setpoint;
 //					CONSOLE_DEBUG("Cooler is OFF");
 					*coolerOnOff	=	false;
 				}
-				#warning "This needs to be tested (5/1/2023)
+				#warning "This needs to be tested (5/1/2023)"
 				cCameraProp.SetCCDTemperature	=	setpoint / 100.0;
 
 				alpacaErrCode		=	kASCOM_Err_Success;

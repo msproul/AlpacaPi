@@ -14,7 +14,7 @@
 //*****************************************************************************
 //*	<MLS>	=	Mark L Sproul
 //*****************************************************************************
-//*	Feb 14,	2019	<MLS> Started on socket_listen.c
+//*	Feb 14,	2019	<MLS> Created socket_listen.c
 //*	Apr  9,	2019	<MLS> Added SocketListen_SetCallback()
 //*	Apr  9,	2019	<MLS> Got polling version to work
 //*	May 25,	2019	<MLS> Fixed EIVAL errors on accept

@@ -124,12 +124,9 @@ int	deltaMouse;
 				cDisplayCrossHairs	=	true;
 				cCrossHairX			=	xxx;
 				cCrossHairY			=	yyy;
-				if (cDisplaySideBar)
-				{
-					//*	adjust the cross hair point
-					cCrossHairX		-=	cSideBarWidth + cSideFrameWidth;
-					cCrossHairY		-=	cSideFrameWidth;
-				}
+				//*	adjust the cross hair point
+				cCrossHairX		-=	cSideBarWidth + cSideFrameWidth;
+				cCrossHairY		-=	cSideFrameWidth;
 			}
 			else
 			{
@@ -342,136 +339,136 @@ int	iii;
 	CONSOLE_DEBUG(__FUNCTION__);
 }
 
-#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
-//	#warning "OpenCV++ not finished"
-//*****************************************************************************
-void	CameraDriver::DisplayLiveImage(void)
-{
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, "OpenCV++ not finished");
-}
-#else
-//*****************************************************************************
-void	CameraDriver::DisplayLiveImage(void)
-{
-int			keyPressed;
-
-	if (cNewImageReadyToDisplay)
-	{
-		if (cCreateOpenCVwindow)
-		{
-			cvNamedWindow(	cOpenCV_ImgWindowName,
-						//	(CV_WINDOW_AUTOSIZE)
-						//	(CV_WINDOW_NORMAL)
-							(CV_WINDOW_NORMAL | CV_WINDOW_KEEPRATIO | CV_GUI_EXPANDED)
-						//	(CV_WINDOW_AUTOSIZE | CV_WINDOW_KEEPRATIO | CV_GUI_EXPANDED)
-						//	(CV_WINDOW_AUTOSIZE)
-							);
-			SetOpenCVcallbackFunction(cOpenCV_ImgWindowName);
-			cCreateOpenCVwindow		=	false;
-			cOpenCV_ImgWindowValid	=	true;
-		}
-#define	kLimitWidth	1000
-
-		//**************************************************************
-		//*	make sure the existing live display is compatible
-		//*	if the format of the image is changed (i.e. RAW8 -> RGB24
-		//*	while live image is being displayed, opencv aborts on resize
-		//*	Feb 18,	2020	<MLS> Fixed bug in live view when image format gets changed
-		if (cOpenCV_LiveDisplayPtr != NULL)
-		{
-			if ((cOpenCV_LiveDisplayPtr->nChannels != cOpenCV_ImagePtr->nChannels) ||
-				(cOpenCV_LiveDisplayPtr->depth != cOpenCV_ImagePtr->depth))
-			{
-				CONSOLE_DEBUG("Image format has changed!!! re-creating live view image");
-				cvReleaseImage(&cOpenCV_LiveDisplayPtr);
-				cOpenCV_LiveDisplayPtr	=	NULL;
-			}
-
-		}
-		//*	we have to create a liveDisp image to display
-		if (cOpenCV_LiveDisplayPtr == NULL)
-		{
-			//*	create the display image (reduced size)
-			cLiveDisplayWidth	=	cOpenCV_ImagePtr->width;
-			cLiveDisplayHeight	=	cOpenCV_ImagePtr->height;
-			while (cLiveDisplayWidth > kLimitWidth)
-			{
-				cLiveDisplayWidth	=	cLiveDisplayWidth / 2;
-				cLiveDisplayHeight	=	cLiveDisplayHeight / 2;
-			}
-			switch(cROIinfo.currentROIimageType)
-			{
-				case kImageType_RAW8:
-				case kImageType_Y8:
-					CONSOLE_DEBUG("Creating cOpenCV_LiveDisplayPtr - kImageType_RAW8")
-					cOpenCV_LiveDisplayPtr	=	cvCreateImage(cvSize(cLiveDisplayWidth, cLiveDisplayHeight), IPL_DEPTH_8U, 1);
-					break;
-
-				case kImageType_RAW16:
-					CONSOLE_DEBUG("Creating cOpenCV_LiveDisplayPtr - kImageType_RAW16")
-					cOpenCV_LiveDisplayPtr	=	cvCreateImage(cvSize(cLiveDisplayWidth, cLiveDisplayHeight), IPL_DEPTH_16U, 1);
-					break;
-
-				case kImageType_RGB24:
-					CONSOLE_DEBUG("Creating cOpenCV_LiveDisplayPtr - kImageType_RGB24")
-					cOpenCV_LiveDisplayPtr	=	cvCreateImage(cvSize(cLiveDisplayWidth, cLiveDisplayHeight), IPL_DEPTH_8U, 3);
-					break;
-
-				default:
-					cOpenCV_LiveDisplayPtr	=	NULL;
-					break;
-
-			}
-			SetOpenCVcolors(cOpenCV_LiveDisplayPtr);
-		}
-		if (cOpenCV_LiveDisplayPtr != NULL)
-		{
-		CvPoint			point1;
-		char			imageNumBuff[32];
-
-			cvResize(cOpenCV_ImagePtr, cOpenCV_LiveDisplayPtr, CV_INTER_LINEAR);
-			if (cDisplayCrossHairs || cDrawRectangle)
-			{
-				DrawOpenCVoverlay();
-			}
-
-			point1.x	=	20;
-			point1.y	=	20;
-			sprintf(imageNumBuff, "#%ld %d-bit, EXP=%f",
-											cFramesRead,
-											cOpenCV_LiveDisplayPtr->depth,
-											(cCurrentExposure_us / 1000000.0));
-//				CONSOLE_DEBUG_W_STR("imageNumBuff\t=", imageNumBuff);
-			cvPutText(	cOpenCV_LiveDisplayPtr,
-						imageNumBuff,
-						point1,
-						&cTextFont,
-						cSideBarTXTcolor
-						);
-
-			cvShowImage(cOpenCV_ImgWindowName, cOpenCV_LiveDisplayPtr);
-		}
-
-		cNewImageReadyToDisplay	=	false;
-	}
-
-	keyPressed	=	cv::waitKey(10);	//*	required to allow opencv to update the window
-	if (keyPressed > 0)
-	{
-	//	CONSOLE_DEBUG_W_HEX("Key pressed =", keyPressed);
-		switch(tolower(keyPressed & 0x007f))
-		{
-			case 'r':
-				CONSOLE_DEBUG_W_STR("Reseting window:", cOpenCV_ImgWindowName);
-				cvMoveWindow(cOpenCV_ImgWindowName, 25, 100);
-				cvResizeWindow(cOpenCV_ImgWindowName, 500, 500);
-				keyPressed	=	cv::waitKey(5000);
-				break;
-
-		}
-	}
-}
-#endif // _USE_OPENCV_CPP_
+//#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
+////	#warning "OpenCV++ not finished"
+////*****************************************************************************
+//void	CameraDriver::DisplayLiveImage(void)
+//{
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, "OpenCV++ not finished");
+//}
+//#else
+////*****************************************************************************
+//void	CameraDriver::DisplayLiveImage(void)
+//{
+//int			keyPressed;
+//
+//	if (cNewImageReadyToDisplay)
+//	{
+//		if (cCreateOpenCVwindow)
+//		{
+//			cvNamedWindow(	cOpenCV_ImgWindowName,
+//						//	(CV_WINDOW_AUTOSIZE)
+//						//	(CV_WINDOW_NORMAL)
+//							(CV_WINDOW_NORMAL | CV_WINDOW_KEEPRATIO | CV_GUI_EXPANDED)
+//						//	(CV_WINDOW_AUTOSIZE | CV_WINDOW_KEEPRATIO | CV_GUI_EXPANDED)
+//						//	(CV_WINDOW_AUTOSIZE)
+//							);
+//			SetOpenCVcallbackFunction(cOpenCV_ImgWindowName);
+//			cCreateOpenCVwindow		=	false;
+//			cOpenCV_ImgWindowValid	=	true;
+//		}
+//#define	kLimitWidth	1000
+//
+//		//**************************************************************
+//		//*	make sure the existing live display is compatible
+//		//*	if the format of the image is changed (i.e. RAW8 -> RGB24
+//		//*	while live image is being displayed, opencv aborts on resize
+//		//*	Feb 18,	2020	<MLS> Fixed bug in live view when image format gets changed
+//		if (cOpenCV_LiveDisplayPtr != NULL)
+//		{
+//			if ((cOpenCV_LiveDisplayPtr->nChannels != cOpenCV_ImagePtr->nChannels) ||
+//				(cOpenCV_LiveDisplayPtr->depth != cOpenCV_ImagePtr->depth))
+//			{
+//				CONSOLE_DEBUG("Image format has changed!!! re-creating live view image");
+//				cvReleaseImage(&cOpenCV_LiveDisplayPtr);
+//				cOpenCV_LiveDisplayPtr	=	NULL;
+//			}
+//
+//		}
+//		//*	we have to create a liveDisp image to display
+//		if (cOpenCV_LiveDisplayPtr == NULL)
+//		{
+//			//*	create the display image (reduced size)
+//			cLiveDisplayWidth	=	cOpenCV_ImagePtr->width;
+//			cLiveDisplayHeight	=	cOpenCV_ImagePtr->height;
+//			while (cLiveDisplayWidth > kLimitWidth)
+//			{
+//				cLiveDisplayWidth	=	cLiveDisplayWidth / 2;
+//				cLiveDisplayHeight	=	cLiveDisplayHeight / 2;
+//			}
+//			switch(cROIinfo.currentROIimageType)
+//			{
+//				case kImageType_RAW8:
+//				case kImageType_Y8:
+//					CONSOLE_DEBUG("Creating cOpenCV_LiveDisplayPtr - kImageType_RAW8")
+//					cOpenCV_LiveDisplayPtr	=	cvCreateImage(cvSize(cLiveDisplayWidth, cLiveDisplayHeight), IPL_DEPTH_8U, 1);
+//					break;
+//
+//				case kImageType_RAW16:
+//					CONSOLE_DEBUG("Creating cOpenCV_LiveDisplayPtr - kImageType_RAW16")
+//					cOpenCV_LiveDisplayPtr	=	cvCreateImage(cvSize(cLiveDisplayWidth, cLiveDisplayHeight), IPL_DEPTH_16U, 1);
+//					break;
+//
+//				case kImageType_RGB24:
+//					CONSOLE_DEBUG("Creating cOpenCV_LiveDisplayPtr - kImageType_RGB24")
+//					cOpenCV_LiveDisplayPtr	=	cvCreateImage(cvSize(cLiveDisplayWidth, cLiveDisplayHeight), IPL_DEPTH_8U, 3);
+//					break;
+//
+//				default:
+//					cOpenCV_LiveDisplayPtr	=	NULL;
+//					break;
+//
+//			}
+//			SetOpenCVcolors(cOpenCV_LiveDisplayPtr);
+//		}
+//		if (cOpenCV_LiveDisplayPtr != NULL)
+//		{
+//		CvPoint			point1;
+//		char			imageNumBuff[32];
+//
+//			cvResize(cOpenCV_ImagePtr, cOpenCV_LiveDisplayPtr, CV_INTER_LINEAR);
+//			if (cDisplayCrossHairs || cDrawRectangle)
+//			{
+//				DrawOpenCVoverlay();
+//			}
+//
+//			point1.x	=	20;
+//			point1.y	=	20;
+//			sprintf(imageNumBuff, "#%ld %d-bit, EXP=%f",
+//											cFramesRead,
+//											cOpenCV_LiveDisplayPtr->depth,
+//											(cCurrentExposure_us / 1000000.0));
+////				CONSOLE_DEBUG_W_STR("imageNumBuff\t=", imageNumBuff);
+//			cvPutText(	cOpenCV_LiveDisplayPtr,
+//						imageNumBuff,
+//						point1,
+//						&cTextFont,
+//						cSideBarTXTcolor
+//						);
+//
+//			cvShowImage(cOpenCV_ImgWindowName, cOpenCV_LiveDisplayPtr);
+//		}
+//
+//		cNewImageReadyToDisplay	=	false;
+//	}
+//
+//	keyPressed	=	cv::waitKey(10);	//*	required to allow opencv to update the window
+//	if (keyPressed > 0)
+//	{
+//	//	CONSOLE_DEBUG_W_HEX("Key pressed =", keyPressed);
+//		switch(tolower(keyPressed & 0x007f))
+//		{
+//			case 'r':
+//				CONSOLE_DEBUG_W_STR("Reseting window:", cOpenCV_ImgWindowName);
+//				cvMoveWindow(cOpenCV_ImgWindowName, 25, 100);
+//				cvResizeWindow(cOpenCV_ImgWindowName, 500, 500);
+//				keyPressed	=	cv::waitKey(5000);
+//				break;
+//
+//		}
+//	}
+//}
+//#endif // _USE_OPENCV_CPP_
 
 #if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 //	#warning "OpenCV++ not finished"
@@ -541,12 +538,9 @@ CvRect		myCVrect;
 				windowWidth		=	cLiveDisplayWidth;
 				windowHeight	=	cLiveDisplayHeight;
 
-				if (cDisplaySideBar)
-				{
-					//*	add the room for the side bar
-					windowWidth		+=	cSideBarWidth + (2 * cSideFrameWidth);
-					windowHeight	+=	(2 * cSideFrameWidth);
-				}
+				//*	add the room for the side bar
+				windowWidth		+=	cSideBarWidth + (2 * cSideFrameWidth);
+				windowHeight	+=	(2 * cSideFrameWidth);
 				switch (cOpenCV_ImagePtr->depth)
 				{
 					case 8:

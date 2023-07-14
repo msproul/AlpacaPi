@@ -8,9 +8,6 @@
 	#include	"alpaca_defs.h"
 #endif
 
-
-
-
 #ifndef _DISCOVERY_LIB_H_
 	#include	"discovery_lib.h"
 #endif
@@ -18,7 +15,6 @@
 #ifndef	_CONTROLLER_H_
 	#include	"controller.h"
 #endif
-
 
 #ifndef _SENDREQUEST_LIB_H
 	#include	"sendrequest_lib.h"
@@ -76,18 +72,14 @@ class ControllerCamera: public Controller
 
 		virtual	~ControllerCamera(void);
 
-	//-			void	ControllerCameraInit(void);
-
 		virtual	void	SetupWindowControls(void);
-	//	virtual	void	ProcessButtonClick(const int buttonIdx);
-		virtual	void	RunBackgroundTasks(const char *callingFunction=NULL, bool enableDebug=false);
-	//	virtual	void	DrawWidgetCustomGraphic(const int widgetIdx);
 
-
+		virtual	void	UpdateStatusData(void);
 
 		//*	this is a large list of update routines, they should be implemented in the subclass
 		//*	alphabetic order just for ease of finding things
 		virtual	void	UpdateBackgroundColor(const int redValue, const int grnValue, const int bluValue);
+		virtual	void	UpdateCameraExposureStartup(void);
 		virtual	void	UpdateCameraExposure(void);
 		virtual	void	UpdateCameraGain(const TYPE_ASCOM_STATUS lastAlpacaErr = kASCOM_Err_Success);
 		virtual	void	UpdateCameraName(void);
@@ -112,6 +104,8 @@ class ControllerCamera: public Controller
 		virtual	void	UpdateSupportedActions(void);
 		virtual	void	UpdateRemoteFileList(void);
 
+		virtual	void	SetExposureRange(char *name, double exposureMin, double exposureMax, double exposureStep);
+
 		//*	sub class specific routines
 		virtual	void	AlpacaProcessSupportedActions(	const char	*deviceTypeStr,
 														const int	deviveNum,
@@ -120,9 +114,15 @@ class ControllerCamera: public Controller
 				void	SetErrorTextString(const char	*errorString);
 //-				void	GetConfiguredDevices(void);
 		virtual	void	ProcessConfiguredDevices(const char *keyword, const char *valueString);
-		virtual	bool	AlpacaGetStartupData(void);
-				bool	AlpacaGetStartupData_OneAAT(void);
-		virtual	void	AlpacaProcessReadAll(	const char	*deviceTypeStr,
+		virtual	void	GetStartUpData_SubClass(void);
+		virtual	void	GetStatus_SubClass(void);
+
+		virtual	bool	AlpacaGetStartupData_OneAAT(void);
+		virtual	bool	AlpacaProcessReadAllIdx(	const char	*deviceTypeStr,
+													const int	deviceNum,
+													const int	keywordEnum,
+													const char	*valueString);
+		virtual	bool	AlpacaProcessReadAll(	const char	*deviceTypeStr,
 												const int	deviceNum,
 												const char	*keywordString,
 												const char	*valueString);
@@ -130,10 +130,17 @@ class ControllerCamera: public Controller
 												const int	deviceNum,
 												const char	*keywordString,
 												const char	*valueString);
-				bool	AlpacaGetStatus_OneAAT(void);	//*	One At A Time
+		virtual	void	ProcessReadAll_SaveAs(	const char	*deviceTypeStr,
+												const int	deviceNum,
+												const char	*keywordString,
+												const char	*valueString);
+
+
+//		virtual	bool	AlpacaGetStatus(void);
+		virtual	void	AlpacaGetCapabilities(void);
+		virtual	bool	AlpacaGetStatus_OneAAT(void);	//*	One At A Time
 				bool	AlpacaGetStatus_Gain(void);
 				bool	AlpacaGetStatus_Exposure(void);
-				bool	AlpacaGetStatus(void);
 				bool	AlpacaGetFileList(void);
 				bool	AlpacaGetFilterWheelStartup(void);
 				bool	AlpacaGetFilterWheelStatus(void);
@@ -154,7 +161,6 @@ class ControllerCamera: public Controller
 				void	SetOffset(const int newOffset);
 
 				void				ToggleLiveMode(void);
-				void				ToggleSideBar(void);
 				void				ToggleAutoExposure(void);
 				void				ToggleDisplayImage(void);
 				void				ToggleSaveAll(void);
@@ -190,7 +196,6 @@ class ControllerCamera: public Controller
 				double					cExposure;
 				bool					cDarkExposure;
 				bool					cLiveMode;
-				bool					cSideBar;
 				bool					cAutoExposure;
 				bool					cDisplayImage;
 				bool					cSaveAllImages;
@@ -203,9 +208,14 @@ class ControllerCamera: public Controller
 				bool					cHas_filenameoptions;
 				bool					cHas_livemode;
 				bool					cHas_rgbarray;
-				bool					cHas_sidebar;
 				bool					cHas_SaveAll;
 				bool					cHas_Flip;
+
+				bool					cSaveAsFITS;
+				bool					cSaveAsJPEG;
+				bool					cSaveAsPNG;
+				bool					cSaveAsRaw;
+
 
 				//==========================================================
 				//*	Image array downloading routines

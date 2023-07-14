@@ -7,7 +7,7 @@
 #include	"windowtab_usb.h"
 #ifndef	_WINDOWTAB_ABOUT_H_
 	#include	"windowtab_about.h"
-#endif // _WINDOWTAB_ABOUT_H_
+#endif
 
 
 //**************************************************************************************

@@ -52,6 +52,7 @@
 #include	"SkyStruc.h"
 #include	"aavso_data.h"
 #include	"helper_functions.h"
+#include	"controller_startup.h"
 
 #define		kAAVSO_starCnt	1000
 
@@ -429,12 +430,13 @@ int					startupWidgetIdx;
 			*objectCount	=	alertIdx;
 		}
 		fclose(filePointer);
-		SetStartupTextStatus(startupWidgetIdx, "OK");
+		sprintf(lineBuff, "OK cnt=%d", alertIdx);
+		SetStartupTextStatus(startupWidgetIdx, lineBuff);
 	}
 	else
 	{
 		CONSOLE_DEBUG_W_STR("Failed to read:", filePath);
-		SetStartupTextStatus(startupWidgetIdx, "Failed");
+		SetStartupTextStatus(startupWidgetIdx, "Not found");
 	}
 	CONSOLE_DEBUG_W_NUM("linesRead		\t=",	linesRead);
 //	CONSOLE_DEBUG_W_NUM("maxStarNameLen\t=",	maxStarNameLen);

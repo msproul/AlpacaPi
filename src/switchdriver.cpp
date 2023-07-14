@@ -41,6 +41,7 @@
 //*	Jan  2,	2022	<MLS> Read-only switches did not pass CONFORM the first try
 //*	Jan  2,	2022	<MLS> CONFORM-switch -> PASSED!!!!!!!!!!!!!!!!!!!!!
 //*	Jul  3,	2022	<MLS> Started converting to using switch property structure
+//*	Jun 19,	2023	<MLS> Added DeviceState_Add_Content() to switch driver
 //*****************************************************************************
 
 #ifdef _ENABLE_SWITCH_
@@ -65,13 +66,15 @@
 #include	"helper_functions.h"
 
 #include	"switchdriver.h"
-#if __arm__
+#ifdef __arm__
 	#include	"switchdriver_rpi.h"
 #endif
 
 #ifdef _ENABLE_SWITCH_SIMULATOR_
 	#include	"switchdriver_sim.h"
 #endif
+
+#include	"switch_AlpacaCmds.cpp"
 
 //#define _DEBUG_CONFORM_
 
@@ -89,32 +92,6 @@ void	CreateSwitchObjects(void)
 	CreateSwitchObjects_SIM();
 #endif
 }
-
-//*****************************************************************************
-static TYPE_CmdEntry	gSwitchCmdTable[]	=
-{
-	{	"maxswitch",			kCmd_Switch_maxswitch,				kCmdType_GET	},
-	{	"canwrite",				kCmd_Switch_canwrite,				kCmdType_GET	},
-	{	"getswitch",			kCmd_Switch_getswitch,				kCmdType_GET	},
-	{	"getswitchdescription",	kCmd_Switch_getswitchdescription,	kCmdType_GET	},
-	{	"getswitchname",		kCmd_Switch_getswitchname,			kCmdType_GET	},
-	{	"getswitchvalue",		kCmd_Switch_getswitchvalue,			kCmdType_GET	},
-	{	"minswitchvalue",		kCmd_Switch_minswitchvalue,			kCmdType_GET	},
-	{	"maxswitchvalue",		kCmd_Switch_maxswitchvalue,			kCmdType_GET	},
-	{	"setswitch",			kCmd_Switch_setswitch,				kCmdType_PUT	},
-	{	"setswitchname",		kCmd_Switch_setswitchname,			kCmdType_PUT	},
-	{	"setswitchvalue",		kCmd_Switch_setswitchvalue,			kCmdType_PUT	},
-	{	"switchstep",			kCmd_Switch_switchstep,				kCmdType_GET	},
-
-	//*	added by MLS
-	{	"--extras",				kCmd_Switch_Extras,					kCmdType_GET	},
-	{	"setswitchdescription",	kCmd_Switch_setswitchdescription,	kCmdType_GET	},
-	{	"readall",				kCmd_Switch_readall,				kCmdType_GET	},
-
-	{	"",						-1,	0x00	}
-};
-
-
 
 //**************************************************************************************
 SwitchDriver::SwitchDriver(void)
@@ -141,14 +118,13 @@ int		iii;
 		memset(&cSwitchTable[iii], 0, sizeof(TYPE_SwitchDescription));
 
 		sprintf(cSwitchTable[iii].switchName, "Switch#%d", iii);
-		strcpy(cSwitchTable[iii].switchDesciption, "Not defined");
+		strcpy(cSwitchTable[iii].switchDescription, "Not defined");
 
 		cSwitchTable[iii].switchType	=	kSwitchType_Relay;
 		cMinSwitchValue[iii]			=	0.0;
 		cMaxSwitchValue[iii]			=	1.0;
 		cCurSwitchValue[iii]			=	0.0;
 	}
-
 	ReadSwitchDataFile();
 }
 
@@ -159,8 +135,6 @@ SwitchDriver::~SwitchDriver(void)
 {
 	CONSOLE_DEBUG(__FUNCTION__);
 }
-
-
 
 //*****************************************************************************
 TYPE_ASCOM_STATUS	SwitchDriver::ProcessCommand(TYPE_GetPutRequestData *reqData)
@@ -339,7 +313,6 @@ int		switchNum;
 	return(switchNum);
 }
 
-
 //*****************************************************************************
 //*	The number of switch devices managed by this driver
 //*****************************************************************************
@@ -409,7 +382,6 @@ bool				canWriteSwitch;
 	}
 	return(alpacaErrCode);
 }
-
 
 //*****************************************************************************
 //*	Return the state of switch device id as a boolean
@@ -485,7 +457,7 @@ int					switchNum;
 										reqData->jsonTextBuffer,
 										kMaxJsonBuffLen,
 										gValueString,
-										cSwitchTable[switchNum].switchDesciption,
+										cSwitchTable[switchNum].switchDescription,
 										INCLUDE_COMMA);
 
 
@@ -545,7 +517,6 @@ int					switchNum;
 	}
 	return(alpacaErrCode);
 }
-
 
 //*****************************************************************************
 //*	Gets the value of the specified switch device as a double
@@ -908,6 +879,41 @@ int					switchNum;
 }
 
 //*****************************************************************************
+//GetSwitch0 (Assumes that the number of available
+//GetSwitch1 switches (N) has already been determined by
+//GetSwitch2 the application)
+//...
+//GetSwitchN
+//GetSwitchValue0
+//GetSwitchValue1
+//GetSwitchValue2
+//...
+//GetSwitchValueN
+//*****************************************************************************
+bool	SwitchDriver::DeviceState_Add_Content(const int socketFD, char *jsonTextBuffer, const int maxLen)
+{
+int		iii;
+char	switchNameStr[48];
+bool	switchState;
+
+	for (iii=0; iii<cSwitchProp.MaxSwitch; iii++)
+	{
+		sprintf(switchNameStr,	"GetSwitch%d", iii);
+		switchState	=	GetSwitchState(iii);
+		DeviceState_Add_Bool(socketFD,	jsonTextBuffer, maxLen,	switchNameStr,	switchState);
+	}
+
+	for (iii=0; iii<cSwitchProp.MaxSwitch; iii++)
+	{
+		sprintf(switchNameStr,	"GetSwitchValue%d", iii);
+		DeviceState_Add_Dbl(socketFD,	jsonTextBuffer, maxLen,	switchNameStr,	cCurSwitchValue[iii]);
+	}
+
+	return(true);
+}
+
+
+//*****************************************************************************
 TYPE_ASCOM_STATUS	SwitchDriver::Get_Readall(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
@@ -948,7 +954,7 @@ bool				switchState;
 										reqData->jsonTextBuffer,
 										kMaxJsonBuffLen,
 										textBuffer,
-										cSwitchTable[iii].switchDesciption,
+										cSwitchTable[iii].switchDescription,
 										INCLUDE_COMMA);
 
 			switchState	=	GetSwitchState(iii);
@@ -1055,7 +1061,7 @@ char	lineBuffer[32];
 			SocketWriteData(mySocketFD,	"</TD>\r\n\t<TD>");
 			SocketWriteData(mySocketFD,	cSwitchTable[ii].switchName);
 			SocketWriteData(mySocketFD,	"</TD>\r\n\t<TD>");
-			SocketWriteData(mySocketFD,	cSwitchTable[ii].switchDesciption);
+			SocketWriteData(mySocketFD,	cSwitchTable[ii].switchDescription);
 			SocketWriteData(mySocketFD,	"</TD>\r\n\t<TD>");
 			mySwitchState	=	GetSwitchState(ii);
 			if (mySwitchState)
@@ -1070,12 +1076,9 @@ char	lineBuffer[32];
 			SocketWriteData(mySocketFD,	lineBuffer);
 			SocketWriteData(mySocketFD,	"</TD>\r\n</TR>\r\n");
 		}
-
 		SocketWriteData(mySocketFD,	"</TABLE>\r\n");
 		SocketWriteData(mySocketFD,	"</CENTER>\r\n");
 		SocketWriteData(mySocketFD,	"<P>\r\n");
-
-		GenerateHTMLcmdLinkTable(mySocketFD, "switch", cAlpacaDeviceNum, gSwitchCmdTable);
 	}
 }
 
@@ -1108,9 +1111,7 @@ void	SwitchDriver::ConfigureSwitch(	const int	switchNumber,
 	}
 }
 
-
 #define	kSwitchDataFileName	"switchdescription.txt"
-
 //**************************************************************************
 void	SwitchDriver::ReadSwitchDataFile(void)
 {
@@ -1174,7 +1175,7 @@ int		argNum;
 
 									case 2:
 										//*	this is the switch description
-										strcpy(cSwitchTable[switchNum].switchDesciption, argBuf);
+										strcpy(cSwitchTable[switchNum].switchDescription, argBuf);
 										break;
 
 								}
@@ -1205,7 +1206,6 @@ int		argNum;
 	}
 }
 
-
 //**************************************************************************
 void	SwitchDriver::WriteSwitchDataFile(void)
 {
@@ -1225,7 +1225,7 @@ FILE	*filePointer;
 		{
 			fprintf(filePointer, "%d\t",	ii);
 			fprintf(filePointer, "%s\t",	cSwitchTable[ii].switchName);
-			fprintf(filePointer, "%s\t",	cSwitchTable[ii].switchDesciption);
+			fprintf(filePointer, "%s\t",	cSwitchTable[ii].switchDescription);
 			fprintf(filePointer, "\r\n");
 		}
 		fclose(filePointer);
@@ -1283,8 +1283,6 @@ double	switchValue;
 	}
 	return(switchValue);
 }
-
-
 
 #endif	//*	_ENABLE_SWITCH_
 

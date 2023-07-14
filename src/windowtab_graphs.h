@@ -8,7 +8,7 @@
 
 #ifndef	_CONTROLLER_H_
 	#include	"controller.h"
-#endif // _CONTROLLER_H_
+#endif
 
 //*****************************************************************************
 enum
@@ -21,6 +21,7 @@ enum
 	kGraphBox_AlpacaLogo,
 	kGraphBox_IPaddr,
 	kGraphBox_Readall,
+	kGraphBox_DeviceState,
 
 
 	kGraphBox_last

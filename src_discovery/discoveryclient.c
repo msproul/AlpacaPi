@@ -35,7 +35,7 @@ TYPE_ALPACA_UNIT	gAlpacaUnitList[kMaxAlpacaDeviceCnt];
 int					gAlpacaUnitCnt	=	0;
 
 TYPE_REMOTE_DEV		gAlpacaDiscoveredList[kMaxAlpacaDeviceCnt];
-int					gAlpacaDiscoveredCnt	=	0;;
+int					gAlpacaDiscoveredCnt	=	0;
 
 static	int			gBroadcastSock;
 
@@ -493,11 +493,11 @@ int					bytesWritten;
 			//	perror("recvfrom");
 				timeOutCntr++;
 			}
-	//		CONSOLE_DEBUG_W_HEX("from.sin_addr=", from.sin_addr.s_addr);
-	//		CONSOLE_DEBUG_W_NUM("from.sin_addr=", ((from.sin_addr.s_addr >> 24) & 0x0ff));
-	//		CONSOLE_DEBUG_W_NUM("from.sin_addr=", ((from.sin_addr.s_addr >> 16) & 0x0ff));
-	//		CONSOLE_DEBUG_W_NUM("from.sin_addr=", ((from.sin_addr.s_addr >> 8) & 0x0ff));
-	//		CONSOLE_DEBUG_W_NUM("from.sin_addr=", ((from.sin_addr.s_addr) & 0x0ff));
+//			CONSOLE_DEBUG_W_HEX("from.sin_addr=", from.sin_addr.s_addr);
+//			CONSOLE_DEBUG_W_NUM("from.sin_addr=", ((from.sin_addr.s_addr >> 24) & 0x0ff));
+//			CONSOLE_DEBUG_W_NUM("from.sin_addr=", ((from.sin_addr.s_addr >> 16) & 0x0ff));
+//			CONSOLE_DEBUG_W_NUM("from.sin_addr=", ((from.sin_addr.s_addr >> 8) & 0x0ff));
+//			CONSOLE_DEBUG_W_NUM("from.sin_addr=", ((from.sin_addr.s_addr) & 0x0ff));
 
 		}
 

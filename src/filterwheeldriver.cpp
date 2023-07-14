@@ -43,6 +43,7 @@
 //*	Jun 15,	2021	<MLS> Fixed filterwheel ifdefs
 //*	Jun 22,	2021	<MLS> Updated filtwheel driver cCommonProp.InterfaceVersion to 2
 //*	AUg  5,	2022	<MLS> Added Get_Readall() to filterwheel driver
+//*	Jun 18,	2023	<MLS> Added DeviceState_Add_Content() to filterwheel driver
 //*****************************************************************************
 
 #if defined(_ENABLE_FILTERWHEEL_) || defined(_ENABLE_FILTERWHEEL_ZWO_) || defined(_ENABLE_FILTERWHEEL_ATIK_)
@@ -75,18 +76,8 @@
 	#include	"filterwheeldriver_ZWO.h"
 #endif
 
-//*****************************************************************************
-TYPE_CmdEntry	gFilterwheelCmdTable[]	=
-{
-	{	"focusoffsets",			kCmd_Filterwheel_focusoffsets,	kCmdType_GET	},
-	{	"names",				kCmd_Filterwheel_names,			kCmdType_GET	},
-	{	"position",				kCmd_Filterwheel_position,		kCmdType_BOTH	},
-	//*	items added by MLS
-	{	"--extras",				kCmd_Filterwheel_Extras,		kCmdType_GET	},
-	{	"readall",				kCmd_Filterwheel_readall,		kCmdType_GET	},
-
-	{	"",						-1,	0x00	}
-};
+#include	"filterwheel_AlpacaCmds.h"
+#include	"filterwheel_AlpacaCmds.cpp"
 
 
 //**************************************************************************************
@@ -115,7 +106,6 @@ FilterwheelDriver::FilterwheelDriver(const int argDevNum)
 {
 
 //	CONSOLE_DEBUG(__FUNCTION__);
-
 	strcpy(cCommonProp.Name,		"Filterwheel");
 	strcpy(cCommonProp.Description,	"Generic filterwheel");
 	cCommonProp.InterfaceVersion	=	2;
@@ -351,14 +341,10 @@ char				lineBuffer[256];
 
 		if (cNumberOfPositions > 0)
 		{
-		//	JsonResponse_Add_RawText(mySocketFD,
-		//							reqData->jsonTextBuffer,
-		//							kMaxJsonBuffLen,
-		//							"\t\"Value\": \r\n\t[\r\n");
 			JsonResponse_Add_ArrayStart(mySocketFD,
 										reqData->jsonTextBuffer,
 										kMaxJsonBuffLen,
-										gValueString);
+										responseString);
 
 			JsonResponse_Add_RawText(	mySocketFD,
 										reqData->jsonTextBuffer,
@@ -422,7 +408,7 @@ char				filterNameBuff[32];
 			JsonResponse_Add_ArrayStart(mySocketFD,
 										reqData->jsonTextBuffer,
 										kMaxJsonBuffLen,
-										"Value");
+										responseString);
 			JsonResponse_Add_RawText(	mySocketFD,
 										reqData->jsonTextBuffer,
 										kMaxJsonBuffLen,
@@ -602,6 +588,13 @@ char				commentString[128];
 	return(alpacaErrCode);
 }
 
+//*****************************************************************************
+bool	FilterwheelDriver::DeviceState_Add_Content(const int socketFD, char *jsonTextBuffer, const int maxLen)
+{
+	DeviceState_Add_Int(socketFD,	jsonTextBuffer, maxLen,	"Position",	cFilterWheelProp.Position,	true);
+
+	return(true);
+}
 
 //*****************************************************************************
 TYPE_ASCOM_STATUS	FilterwheelDriver::Get_Readall(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
@@ -709,9 +702,6 @@ bool		isConnected;
 		SocketWriteData(mySocketFD,	"<P>\r\n");
 
 		SocketWriteData(mySocketFD,	"</CENTER>\r\n");
-
-		//*	now generate links to all of the commands
-		GenerateHTMLcmdLinkTable(mySocketFD, "filterwheel", 0, gFilterwheelCmdTable);
 	}
 }
 

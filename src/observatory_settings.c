@@ -56,6 +56,7 @@
 #include	"linuxerrors.h"
 #include	"readconfigfile.h"
 #include	"helper_functions.h"
+#include	"controller_startup.h"
 
 #include	"alpacadriver_helper.h"
 #include	"observatory_settings.h"

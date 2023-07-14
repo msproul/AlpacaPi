@@ -22,6 +22,7 @@
 //*	Feb 24,	2020	<MLS> Created windowtab_auxmotor.cpp
 //*	Feb 25,	2020	<MLS> Buttons working in aux motor window
 //*	Mar 17,	2020	<MLS> Added IP box to bottom of AuxMotor tab
+//*	Jun 19,	2023	<MLS> Added DeviceState to AuxMotor
 //*****************************************************************************
 
 #ifdef _ENABLE_CTRL_FOCUSERS_
@@ -141,6 +142,7 @@ int		iii;
 	//*	set up all the bottom stuff so that it is the same on all windowtabs
 	SetupWindowBottomBoxes(	kAuxMotorBox_IPaddr,
 							kAuxMotorBox_Readall,
+							kAuxMotorBox_DeviceState,
 							kAuxMotorBox_AlpacaErrorMsg,
 							kAuxMotorBox_LastCmdString,
 							kAuxMotorBox_AlpacaLogo,

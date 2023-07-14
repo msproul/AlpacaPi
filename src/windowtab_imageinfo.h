@@ -14,7 +14,7 @@
 
 #ifndef	_WINDOW_TAB_H_
 	#include	"windowtab.h"
-#endif // _CONTROLLER_H_
+#endif
 
 
 //*****************************************************************************

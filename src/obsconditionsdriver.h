@@ -17,7 +17,7 @@
 
 #ifndef	_ALPACA_DEFS_H_
 	#include	"alpaca_defs.h"
-#endif // _ALPACA_DEFS_H_
+#endif
 
 #ifndef _ALPACA_DRIVER_H_
 	#include	"alpacadriver.h"
@@ -79,28 +79,29 @@ class ObsConditionsDriver: public AlpacaDriver
 	protected:
 		TYPE_ASCOM_STATUS	Get_AveragePeriod(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
 		TYPE_ASCOM_STATUS	Put_AveragePeriod(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
-		TYPE_ASCOM_STATUS	Get_Cloudcover(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
-		TYPE_ASCOM_STATUS	Get_Dewpoint(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+		TYPE_ASCOM_STATUS	Get_CloudCover(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+		TYPE_ASCOM_STATUS	Get_DewPoint(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
 		TYPE_ASCOM_STATUS	Get_Humidity(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
 		TYPE_ASCOM_STATUS	Get_Pressure(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
-		TYPE_ASCOM_STATUS	Get_Rainrate(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
-		TYPE_ASCOM_STATUS	Get_Skybrightness(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
-		TYPE_ASCOM_STATUS	Get_Skyquality(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
-		TYPE_ASCOM_STATUS	Get_Skytemperature(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
-		TYPE_ASCOM_STATUS	Get_Starfwhm(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+		TYPE_ASCOM_STATUS	Get_RainRate(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+		TYPE_ASCOM_STATUS	Get_SkyBrightness(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+		TYPE_ASCOM_STATUS	Get_SkyQuality(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+		TYPE_ASCOM_STATUS	Get_SkyTemperature(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+		TYPE_ASCOM_STATUS	Get_StarFWHM(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
 		TYPE_ASCOM_STATUS	Get_Temperature(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
 		TYPE_ASCOM_STATUS	Get_TimeSinceLastUpdate(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
 
 
-		TYPE_ASCOM_STATUS	Get_Winddirection(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
-		TYPE_ASCOM_STATUS	Get_Windgust(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
-		TYPE_ASCOM_STATUS	Get_Windspeed(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+		TYPE_ASCOM_STATUS	Get_WindDirection(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+		TYPE_ASCOM_STATUS	Get_WindGust(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+		TYPE_ASCOM_STATUS	Get_WindSpeed(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
 		TYPE_ASCOM_STATUS	Put_Refresh(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 		TYPE_ASCOM_STATUS	Get_SensorDescription(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
 
 
 
 		TYPE_ASCOM_STATUS	Get_Readall(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
+virtual	bool				DeviceState_Add_Content(const int socketFD, char *jsonTextBuffer, const int maxLen);
 virtual	TYPE_ASCOM_STATUS	GetSensorInfo(			TYPE_ObsConSensorType sensorType,
 													char	*description,
 													double	*timeSinceLastUpdate);

@@ -7,6 +7,7 @@
 //*	<MLS>	=	Mark L Sproul
 //*****************************************************************************
 //*	Nov 28,	2020	<MLS> Updated return values to TYPE_ASCOM_STATUS
+//*	Jun 10,	2023	<MLS> Changed class name from FocuserNiteCrawler to FocuserMoonLite
 //**************************************************************************
 //#include	"focuserdriver_nc.h"
 
@@ -29,16 +30,15 @@ int	CreateFocuserObjects_MoonLite(void);
 
 
 //**************************************************************************************
-class FocuserNiteCrawler: public FocuserDriver
+class FocuserMoonLite: public FocuserDriver
 {
 	public:
 
 		//
 		// Construction
 		//
-		//				FocuserNiteCrawler(const int argDevNum);
-						FocuserNiteCrawler(const int argDevNum, const char *devicePath = NULL);
-		virtual			~FocuserNiteCrawler(void);
+						FocuserMoonLite(const char *devicePath);
+		virtual			~FocuserMoonLite(void);
 		virtual	int32_t	RunStateMachine(void);
 
 		virtual	TYPE_ASCOM_STATUS	SetFocuserPosition(const int32_t newPosition, char *alpacaErrMsg);

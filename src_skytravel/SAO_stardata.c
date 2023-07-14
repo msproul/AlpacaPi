@@ -31,6 +31,7 @@
 #include	"SkyStruc.h"
 #include	"SAO_stardata.h"
 #include	"helper_functions.h"
+#include	"controller_startup.h"
 
 
 #define		kSkyTravelDataDirectory	"skytravel_data"
@@ -105,8 +106,7 @@ char	theChar;
 double	ra_Degrees;
 double	dec_Degrees;
 
-	CONSOLE_DEBUG(__FUNCTION__);
-	CONSOLE_ABORT(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 //	printf("*");
 //	fflush(stdout);
@@ -200,7 +200,7 @@ double	dec_Degrees;
 //				case kSAOarg_hd_component:				// HD Component and Multiple Code
 //				case kSAOarg_gc:						// Boss General Catalog (GC) Number
 				case kSAOarg_proper_motion_ra_fk5:		// Annual RA Proper Motion (FK5 System)
-					CONSOLE_DEBUG_W_STR("kSAOarg_proper_motion_ra_fk5\t=",	argBuff);
+//					CONSOLE_DEBUG_W_STR("kSAOarg_proper_motion_ra_fk5\t=",	argBuff);
 					if (strlen(argBuff) > 0)
 					{
 						objectStruct->propMotion_RA_mas_yr		=	atof(argBuff);
@@ -208,15 +208,15 @@ double	dec_Degrees;
 					break;
 
 				case kSAOarg_proper_motion_dec_fk5:		// Annual Declination Proper Motion (FK5 System)
-					CONSOLE_DEBUG_W_STR("kSAOarg_proper_motion_dec_fk5\t=",	argBuff);
+//					CONSOLE_DEBUG_W_STR("kSAOarg_proper_motion_dec_fk5\t=",	argBuff);
 					if (strlen(argBuff) > 0)
 					{
 						objectStruct->propMotion_DEC_mas_yr		=	atof(argBuff);
 						if ((fabs(objectStruct->propMotion_RA_mas_yr) > 0.0) || (fabs(objectStruct->propMotion_DEC_mas_yr) > 0.0))
 						{
 							objectStruct->propMotionValid	=	true;
-							CONSOLE_DEBUG_W_DBL("propMotion_RA_mas_yr \t=",	objectStruct->propMotion_RA_mas_yr);
-							CONSOLE_DEBUG_W_DBL("propMotion_DEC_mas_yr\t=",	objectStruct->propMotion_DEC_mas_yr);
+//							CONSOLE_DEBUG_W_DBL("propMotion_RA_mas_yr \t=",	objectStruct->propMotion_RA_mas_yr);
+//							CONSOLE_DEBUG_W_DBL("propMotion_DEC_mas_yr\t=",	objectStruct->propMotion_DEC_mas_yr);
 						}
 					}
 					break;
@@ -307,6 +307,7 @@ int				startupWidgetIdx;
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	startupWidgetIdx	=	SetStartupText("SAO-heasarc catalog:");
+	saoStarData			=	NULL;
 
 	strcpy(filePath, kSkyTravelDataDirectory);
 	strcat(filePath, kSAO_asciiFileName);

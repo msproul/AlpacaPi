@@ -26,6 +26,7 @@
 //*****************************************************************************
 //*	Apr 22,	2022	<MLS> Created cameradriver_sim.cpp
 //*	Mar  4,	2023	<MLS> CONFORMU-camera/simulator -> PASSED!!!!!!!!!!!!!!!!!!!!!
+//*	Jun 18,	2023	<MLS> Added Read_CoolerPowerLevel()
 //*****************************************************************************
 
 #if defined(_ENABLE_CAMERA_) && defined(_ENABLE_CAMERA_SIMULATOR_)
@@ -73,19 +74,19 @@ bool		isConnected;
 	cCameraIsSiumlated			=	true;
 	cSimulatedState				=   kExposure_Idle;
 	cIsColorCam					=	true;
+	cIsCoolerCam				=	true;
 	strcpy(cDeviceManufAbrev,		"SIM");
 	strcpy(cCommonProp.Name,		"AlpacaPi Camera Simulator");
 	strcpy(cCommonProp.Description,	"AlpacaPi Camera Simulator");
-	strcpy(cCameraProp.SensorName,	"Fake");
+	strcpy(cCameraProp.SensorName,	"Fake-ASI2600");
 
 
-	cTempReadSupported	=	true;
-	cOffsetSupported	=	true;
+	cTempReadSupported		=	true;
+	cOffsetSupported		=	true;
+	cBitDepth				=	8;
 	//*	set some defaults for testing
 	strcpy(cDeviceManufacturer,	"AlpacaPi");
 
-//	cCameraProp.CameraXsize	=	9576;
-//	cCameraProp.CameraYsize	=	6388;
 
 	//*	In order to simulate a particular image size
 #ifdef __arm__
@@ -95,17 +96,21 @@ bool		isConnected;
 	cCameraProp.CameraXsize	=	2500;
 	cCameraProp.CameraYsize	=	2000;
 #endif
-	cBitDepth				=	8;
+	//*	faking an ASI2600
+	cCameraProp.CameraXsize	=	6248;
+	cCameraProp.CameraYsize	=	4176;
 
-	cCameraProp.SensorType		=   kSensorType_RGGB;
-	cCameraProp.NumX			=	cCameraProp.CameraXsize;
-	cCameraProp.NumY			=	cCameraProp.CameraYsize;
 
-	cCameraProp.GainMin			=	0;
-	cCameraProp.GainMax			=	10;
-	cCameraProp.ElectronsPerADU	=	65000;
-	cCameraProp.PixelSizeX		=	3.7;
-	cCameraProp.PixelSizeY		=	3.7;
+	cCameraProp.SensorType			=   kSensorType_RGGB;
+	cCameraProp.NumX				=	cCameraProp.CameraXsize;
+	cCameraProp.NumY				=	cCameraProp.CameraYsize;
+
+	cCameraProp.GainMin				=	0;
+	cCameraProp.GainMax				=	10;
+	cCameraProp.ElectronsPerADU		=	65000;
+	cCameraProp.PixelSizeX			=	3.76;
+	cCameraProp.PixelSizeY			=	3.76;
+	cCameraProp.FullWellCapacity	=	50000;
 
 	AddReadoutModeToList(kImageType_RAW8);
 	AddReadoutModeToList(kImageType_RAW16);
@@ -173,6 +178,18 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 		alpacaErrCode	=	kASCOM_Err_NotSupported;
 		strcpy(cLastCameraErrMsg, "Temperature not supported on this camera");
 	}
+	return(alpacaErrCode);
+}
+
+//**************************************************************************
+TYPE_ASCOM_STATUS	CameraDriverSIM::Read_CoolerPowerLevel(void)
+{
+TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	cCameraProp.CoolerPower		=	45.0;
+
 	return(alpacaErrCode);
 }
 

@@ -8,22 +8,20 @@
 
 #ifndef	_ALPACA_DEFS_H_
 	#include	"alpaca_defs.h"
-#endif // _ALPACA_DEFS_H_
-
-
+#endif
 
 #ifndef _DISCOVERY_LIB_H_
 	#include	"discovery_lib.h"
 #endif
 
-#include	"controller.h"
+#ifndef	_CONTROLLER_H_
+	#include	"controller.h"
+#endif
 
+//===========================================
 #ifndef	_WINDOWTAB_SLIT_DOME_H_
 	#include	"windowtab_slitdome.h"
 #endif
-
-
-
 
 //===========================================
 #ifndef	_WINDOWTAB_DRIVER_INFO_H_
@@ -39,8 +37,6 @@
 #ifndef	_WINDOWTAB_ABOUT_H_
 	#include	"windowtab_about.h"
 #endif
-
-
 
 //===========================================
 #ifndef	_WINDOWTAB_SLIT_H_
@@ -66,30 +62,35 @@ class ControllerSlit: public Controller
 
 		virtual			~ControllerSlit(void);
 
-
 		virtual	void	SetupWindowControls(void);
-		virtual	void	RunBackgroundTasks(const char *callingFunction=NULL, bool enableDebug=false);
-	//	virtual	void	DrawWidgetCustomGraphic(const int widgetIdx);
-		virtual	bool	AlpacaGetStartupData(void);
-				bool	AlpacaGetStatus(void);
+		virtual	void	GetStartUpData_SubClass(void);
+		virtual	void	GetStatus_SubClass(void);
+		virtual	void	UpdateStartupData(void);
+		virtual	void	UpdateStatusData(void);
 		virtual	void	AlpacaDisplayErrorMessage(const char *errorMsgString);
 
-		virtual	void	AlpacaProcessReadAll(			const char	*deviceType,
-														const int	deviveNum,
-														const char	*keywordString,
+		virtual	bool	AlpacaProcessReadAllIdx(		const char	*deviceTypeStr,
+														const int	deviceNum,
+														const int	keywordEnum,
 														const char	*valueString);
 		virtual	void	AlpacaProcessSupportedActions(	const char	*deviceType,
 														const int	deviveNum,
 														const char	*valueString);
 
+		virtual	void	UpdateSupportedActions(void);
 		virtual	void	UpdateCommonProperties(void);
 		virtual	void	UpdateCapabilityList(void);
 
-				void	ProcessOneReadAllEntry(		const char	*keywordString,
+				bool	ProcessOneReadAllEntry(		const char	*keywordString,
 													const char *valueString);
-				void	ProcessOneReadAllEntryDome(	const char	*keywordString,
+				bool	AlpacaProcessReadAllIdx_Dome(	const int	deviceNum,
+														const int	keywordEnum,
+														const char	*valueString);
+				bool	AlpacaProcessReadAllIdx_Slit(	const int	deviceNum,
+														const int	keywordEnum,
+														const char	*valueString);
+				void	ProcessGravityVector(		const int	gravityVecIndex,
 													const char *valueString);
-
 				void	SetButtonOption(const int widgetBtnIdx, const bool newState);
 
 				bool	SetAlpacaEnableTracking(const bool newState);
@@ -97,6 +98,7 @@ class ControllerSlit: public Controller
 				//===================================================================
 				void	AlpacaGetSlitTrackerReadAll(void);
 				void	UpdateSlitLog(void);
+				void	LogSlitDataToDisk(void);
 
 				void	CloseSlitTrackerDataFile(void);
 

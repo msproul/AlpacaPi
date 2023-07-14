@@ -43,6 +43,7 @@ enum
 	kSlitDome_AlpacaErrorMsg,
 	kSlitDome_IPaddr,
 	kSlitDome_Readall,
+	kSlitDome_DeviceState,
 
 
 	kSlitDome_last
@@ -67,7 +68,7 @@ class WindowTabSlitDome: public WindowTab
 		virtual	void	ProcessButtonClick(const int buttonIdx, const int flags);
 
 				void	SetDomePropertiesPtr(TYPE_DomeProperties *domePropPtr);
-				void	UpdateButtons(const int widgetBtnIdx, const bool newState);
+//				void	UpdateButtons(const int widgetBtnIdx, const bool newState);
 
 				void	GetDomeData(void);
 

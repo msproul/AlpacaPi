@@ -107,8 +107,8 @@ typedef struct
 	TYPE_MOTION_MOTOR	motor0;
 	TYPE_MOTION_MOTOR	motor1;
 	TYPE_MOTION_STATE	state;
-	char			    port[kMAX_STR_LEN];
-	int				    baud;
+	char				port[kMAX_STR_LEN];
+	int					baud;
 } TYPE_MOTION_CONFIG;
 
 extern TYPE_MOTION_CONFIG	gMotionConfig;

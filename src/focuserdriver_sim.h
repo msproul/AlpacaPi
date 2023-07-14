@@ -32,11 +32,11 @@ class FocuserDriverSIM: public FocuserDriver
 		//
 		// Construction
 		//
-						FocuserDriverSIM(const int argDevNum);
+						FocuserDriverSIM(void);
 		virtual			~FocuserDriverSIM(void);
 		virtual	int32_t	RunStateMachine(void);
 //
-//		virtual	TYPE_ASCOM_STATUS	SetFocuserPosition(const int32_t newPosition, char *alpacaErrMsg);
+		virtual	TYPE_ASCOM_STATUS	SetFocuserPosition(const int32_t newPosition, char *alpacaErrMsg);
 //		virtual	TYPE_ASCOM_STATUS	HaltFocuser(char *alpacaErrMsg);
 //
 //		virtual	TYPE_ASCOM_STATUS	SetStepperPosition(const int axisNumber, const int32_t newPosition);

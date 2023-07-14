@@ -88,7 +88,7 @@ class CameraDriverSIM: public CameraDriver
 //		virtual	TYPE_ASCOM_STATUS		Cooler_TurnOff(void);
 		virtual	TYPE_ASCOM_STATUS		Read_SensorTemp(void);
 //		virtual	TYPE_ASCOM_STATUS		Read_CoolerState(bool *coolerOnOff);
-//		virtual	TYPE_ASCOM_STATUS		Read_CoolerPowerLevel(void);
+		virtual	TYPE_ASCOM_STATUS		Read_CoolerPowerLevel(void);
 //		virtual	TYPE_ASCOM_STATUS		Read_Fastreadout(void);
 		virtual	TYPE_ASCOM_STATUS		Read_ImageData(void);
 

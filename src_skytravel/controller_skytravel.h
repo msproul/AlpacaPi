@@ -14,7 +14,9 @@
 #endif
 
 
-#include	"controller.h"
+#ifndef	_CONTROLLER_H_
+	#include	"controller.h"
+#endif
 
 #ifndef	_WINDOWTAB_IMAGE_H_
 	#include	"windowtab_image.h"
@@ -102,6 +104,7 @@ typedef struct
 	int		LineWidth_NGCoutlines;
 	bool	DispMagnitude;			//*	display magnitude of stars if zoomed in
 	bool	DispSpectralType;		//*	display spectral type as a letter if zoomed in
+	bool	DispParallax;
 	bool	DispProperMotion;		//*	display proper motion as numeric values if zoomed in
 	bool	DispProperMotionVector;	//*	display proper motion as a vector
 
@@ -164,9 +167,9 @@ class ControllerSkytravel: public Controller
 //		virtual	void	ProcessButtonClick(const int buttonIdx);
 		virtual	void	RunBackgroundTasks(const char *callingFunction=NULL, bool enableDebug=false);
 		virtual	void	AlpacaDisplayErrorMessage(const char *errorMsgString);
-		virtual	void	AlpacaProcessReadAll(			const char	*deviceType,
-														const int	deviveNum,
-														const char	*keywordString,
+				bool	AlpacaProcessReadAllIdx(		const char	*deviceTypeStr,
+														const int	deviceNum,
+														const int	keywordEnum,
 														const char	*valueString);
 		virtual	void	AlpacaProcessSupportedActions(	const char	*deviceType,
 														const int	deviveNum,
@@ -175,13 +178,21 @@ class ControllerSkytravel: public Controller
 				void	AlpacaProcessSupportedActions_Camera(	const int deviveNum, const char *valueString);
 				void	AlpacaProcessSupportedActions_Dome(		const int deviveNum, const char *valueString);
 				void	AlpacaProcessSupportedActions_Telescope(const int deviveNum, const char *valueString);
-				void	AlpacaProcessReadAll_Dome(		const int	deviceNum,
+				bool	AlpacaProcessReadAll_Dome(		const int	deviceNum,
 														const char	*keywordString,
 														const char	*valueString);
-				bool	AlpacaProcessReadAll_Telescope(	const int	deviceNum,
-														const char	*keywordString,
+				bool	AlpacaProcessReadAllIdx_Dome(	const int	deviceNum,
+														const int	keywordEnum,
 														const char	*valueString);
 
+				bool	AlpacaProcessReadAll_TelescopeIdx(	const int	deviceNum,
+															const int	keywordEnum,
+															const char *valueString);
+
+				bool	AlpacaProcessReadAll_Telescope(		const int	deviceNum,
+															const char	*keywordString,
+															const char	*valueString);
+		virtual	void	AlpacaGetCapabilities(void);
 				bool	AlpacaGetStartupData_Camera(TYPE_REMOTE_DEV *remoteDevice, TYPE_CameraProperties *cameraProp);
 				bool	AlpacaGetStartupData_Dome(void);
 				bool	AlpacaGetStartupData_Telescope(void);
@@ -239,7 +250,8 @@ class ControllerSkytravel: public Controller
 
 
 
-				bool				AlpacaGetTelescopeStatus(void);
+				bool				AlpacaGetStatus_Telescope(void);
+//-				bool				AlpacaGetTelescopeStatus(void);
 
 				bool				cTelescopeAddressValid;
 				sockaddr_in			cTelescopeIpAddress;

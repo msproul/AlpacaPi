@@ -7,7 +7,7 @@
 
 #ifndef _STDBOOL_H
 	#include	<stdbool.h>
-#endif // _STDBOOL_H
+#endif
 
 #ifdef __cplusplus
 	extern "C" {

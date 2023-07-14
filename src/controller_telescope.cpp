@@ -23,6 +23,10 @@
 //*	Jan 23,	2021	<MLS> Added Update_TelescopeDeclination()
 //*	Jan 24,	2021	<MLS> Converted TelescopeControler to use properties struct
 //*	May 29,	2022	<MLS> Added telescope settings tab
+//*	Jun 18,	2023	<MLS> Added UpdateSupportedActions() to Telescope controller
+//*	Jun 19,	2023	<MLS> Updated constructor to use TYPE_REMOTE_DEV
+//*	Jun 21,	2023	<MLS> Added DeviceState window to telescope controller
+//*	Jun 18,	2023	<MLS> Added UpdateSupportedActions() to Slittracker controller
 //*****************************************************************************
 
 #ifdef _ENABLE_CTRL_TELESCOPE_
@@ -45,19 +49,23 @@
 #include	"windowtab_telescope.h"
 #include	"windowtab_teleSettings.h"
 #include	"windowtab_capabilities.h"
+#include	"windowtab_DeviceState.h"
 #include	"windowtab_drvrInfo.h"
 #include	"windowtab_about.h"
 
 #include	"controller.h"
 #include	"controller_telescope.h"
+#include	"telescope_AlpacaCmds.h"
+#include	"telescope_AlpacaCmds.cpp"
 
 
 //**************************************************************************************
 enum
 {
-	kTab_Control	=	1,
+	kTab_TelescopCtl	=	1,
 	kTab_Settings,
 	kTab_Capabilities,
+	kTab_DeviceState,
 	kTab_DriverInfo,
 	kTab_About,
 
@@ -67,35 +75,26 @@ enum
 
 //**************************************************************************************
 ControllerTelescope::ControllerTelescope(	const char			*argWindowName,
-											struct sockaddr_in	*deviceAddress,
-											const int			port,
-											const int			deviceNum)
-	:Controller(argWindowName, kWindowWidth,  kWindowHeight)
+											TYPE_REMOTE_DEV		*alpacaDevice)
+	:Controller(argWindowName, kWindowWidth,  kWindowHeight, true, alpacaDevice)
 {
 
 	//*	zero out all of the Telescope ASCOM properties
 	memset(&cTelescopeProp, 0, sizeof(TYPE_TelescopeProperties));
 	strcpy(cAlpacaDeviceTypeStr,	"telescope");
 
-	cTelescopeProp.PhysicalSideOfPier	=	kPierSide_NotAvailable;
-
-	cAlpacaDevNum			=	deviceNum;
+	SetCommandLookupTable(gTelescopeCmdTable);
+	cDriverInfoTabNum		=	kTab_DriverInfo;
+	cDriverInfoTabNum		=	kTab_DriverInfo;
 	cFirstDataRead			=	true;
 	cLastUpdate_milliSecs	=	millis();
-
 	cTelescopeTabObjPtr		=	NULL;
 	cTeleSettingsTabObjPtr	=	NULL;
 	cDriverInfoTabObjPtr	=	NULL;
 	cAboutBoxTabObjPtr		=	NULL;
-
-	if (deviceAddress != NULL)
-	{
-		cDeviceAddress	=	*deviceAddress;
-		cPort			=	port;
-		cValidIPaddr	=	true;
-
-	}
 	cLastUpdate_milliSecs	=	0;
+	cTelescopeProp.PhysicalSideOfPier	=	kPierSide_NotAvailable;
+
 	SetupWindowControls();
 
 #ifdef _USE_BACKGROUND_THREAD_
@@ -103,6 +102,7 @@ ControllerTelescope::ControllerTelescope(	const char			*argWindowName,
 #endif // _USE_BACKGROUND_THREAD_
 
 }
+
 
 //**************************************************************************************
 // Destructor
@@ -115,6 +115,8 @@ ControllerTelescope::~ControllerTelescope(void)
 	DELETE_OBJ_IF_VALID(cTeleSettingsTabObjPtr);
 	DELETE_OBJ_IF_VALID(cDriverInfoTabObjPtr);
 	DELETE_OBJ_IF_VALID(cAboutBoxTabObjPtr);
+	DELETE_OBJ_IF_VALID(cCapabilitiesTabObjPtr);
+	DELETE_OBJ_IF_VALID(cDeviceStateTabObjPtr);
 
 	//*	check to see if we are slewing
 	if (cTelescopeProp.Slewing)
@@ -138,9 +140,10 @@ void	ControllerTelescope::SetupWindowControls(void)
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	SetTabCount(kTab_Count);
-	SetTabText(kTab_Control,		"Control");
+	SetTabText(kTab_TelescopCtl,	"Control");
 	SetTabText(kTab_Settings,		"Settings");
 	SetTabText(kTab_Capabilities,	"Capabilities");
+	SetTabText(kTab_DeviceState,	"Dev State");
 	SetTabText(kTab_DriverInfo,		"Driver Info");
 	SetTabText(kTab_About,			"About");
 
@@ -149,7 +152,7 @@ void	ControllerTelescope::SetupWindowControls(void)
 	cTelescopeTabObjPtr	=	new WindowTabTelescope(cWidth, cHeight, cBackGrndColor, cWindowName);
 	if (cTelescopeTabObjPtr != NULL)
 	{
-		SetTabWindow(kTab_Control,	cTelescopeTabObjPtr);
+		SetTabWindow(kTab_TelescopCtl,	cTelescopeTabObjPtr);
 		cTelescopeTabObjPtr->SetParentObjectPtr(this);
 	}
 
@@ -170,6 +173,15 @@ void	ControllerTelescope::SetupWindowControls(void)
 	}
 
 	//--------------------------------------------
+	cDeviceStateTabObjPtr		=	new WindowTabDeviceState(	cWidth, cHeight, cBackGrndColor, cWindowName);
+	if (cDeviceStateTabObjPtr != NULL)
+	{
+		SetTabWindow(kTab_DeviceState,	cDeviceStateTabObjPtr);
+		cDeviceStateTabObjPtr->SetParentObjectPtr(this);
+		SetDeviceStateTabInfo(kTab_DeviceState, kDeviceState_FirstBoxName, kDeviceState_FirstBoxValue, kDeviceState_Stats);
+	}
+
+	//--------------------------------------------
 	cDriverInfoTabObjPtr		=	new WindowTabDriverInfo(	cWidth, cHeight, cBackGrndColor, cWindowName);
 	if (cDriverInfoTabObjPtr != NULL)
 	{
@@ -185,7 +197,7 @@ void	ControllerTelescope::SetupWindowControls(void)
 		cAboutBoxTabObjPtr->SetParentObjectPtr(this);
 	}
 
-	SetWidgetFont(kTab_Control,	kTelescope_IPaddr, kFont_Medium);
+	SetWidgetFont(kTab_TelescopCtl,	kTelescope_IPaddr, kFont_Medium);
 
 	//*	display the IPaddres/port
 	if (cValidIPaddr)
@@ -200,46 +212,36 @@ void	ControllerTelescope::SetupWindowControls(void)
 		SetWindowIPaddrInfo(lineBuff, true);
 	}
 }
+//*****************************************************************************
+void	ControllerTelescope::UpdateCommonProperties(void)
+{
+	CONSOLE_DEBUG(__FUNCTION__);
+
+	SetWidgetText(kTab_DriverInfo,		kDriverInfo_Name,				cCommonProp.Name);
+	SetWidgetText(kTab_DriverInfo,		kDriverInfo_Description,		cCommonProp.Description);
+	SetWidgetText(kTab_DriverInfo,		kDriverInfo_DriverInfo,			cCommonProp.DriverInfo);
+	SetWidgetText(kTab_DriverInfo,		kDriverInfo_DriverVersion,		cCommonProp.DriverVersion);
+	SetWidgetNumber(kTab_DriverInfo,	kDriverInfo_InterfaceVersion,	cCommonProp.InterfaceVersion);
+}
 
 //**************************************************************************************
-void	ControllerTelescope::RunBackgroundTasks(const char *callingFunction, bool enableDebug)
+void	ControllerTelescope::UpdateStartupData(void)
 {
-uint32_t	currentMilliSecs;
-uint32_t	deltaMilliSecs;
-bool		validData;
+	UpdateAboutBoxRemoteDevice(kTab_About, kAboutBox_CPUinfo);
 
-//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
-	if (cReadStartup)
-	{
-		CheckConnectedState();		//*	check connected and connect if not already connected
-		AlpacaGetStartupData();
-		AlpacaGetCommonProperties_OneAAT("telescope");
+}
 
-		UpdateAboutBoxRemoteDevice(kTab_About, kAboutBox_CPUinfo);
+//**************************************************************************************
+void	ControllerTelescope::UpdateConnectedStatusIndicator(void)
+{
+	UpdateConnectedIndicator(kTab_TelescopCtl,	kTelescope_Connected);
+}
 
-		SetWidgetText(kTab_DriverInfo,		kDriverInfo_Name,				cCommonProp.Name);
-		SetWidgetText(kTab_DriverInfo,		kDriverInfo_Description,		cCommonProp.Description);
-		SetWidgetText(kTab_DriverInfo,		kDriverInfo_DriverInfo,			cCommonProp.DriverInfo);
-		SetWidgetText(kTab_DriverInfo,		kDriverInfo_DriverVersion,		cCommonProp.DriverVersion);
-		SetWidgetNumber(kTab_DriverInfo,	kDriverInfo_InterfaceVersion,	cCommonProp.InterfaceVersion);
-
-		cReadStartup	=	false;
-	}
-
-	currentMilliSecs	=	millis();
-	deltaMilliSecs		=	currentMilliSecs - cLastUpdate_milliSecs;
-	if (cForceAlpacaUpdate || (deltaMilliSecs > 2000))
-	{
-		validData	=	AlpacaGetStatus();
-		if (validData == false)
-		{
-			CONSOLE_DEBUG("AlpacaGetStatus() fialed")
-		}
-		cLastUpdate_milliSecs	=	millis();
-
-		UpdateConnectedIndicator(kTab_Control,	kTelescope_Connected);
-		cForceAlpacaUpdate	=	false;
-	}
+//**************************************************************************************
+void	ControllerTelescope::UpdateStatusData(void)
+{
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+	UpdateConnectedIndicator(kTab_TelescopCtl,	kTelescope_Connected);
 }
 
 //*****************************************************************************
@@ -258,7 +260,7 @@ bool	validData;
 	if (validData)
 	{
 		CONSOLE_DEBUG_W_STR("Valid supported actions:", cWindowName);
-//		UpdateSupportedActions();
+		UpdateSupportedActions();
 	}
 	else
 	{
@@ -288,51 +290,61 @@ bool	validData;
 		CONSOLE_ABORT(__FUNCTION__);
 	}
 
-	SetWidgetValid(kTab_Control,	kTelescope_Readall,		cHas_readall);
 	return(validData);
+}
+
+//*****************************************************************************
+void	ControllerTelescope::AlpacaGetCapabilities(void)
+{
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+
+	ReadOneTelescopeCapability("canfindhome",			"CanFindHome",			&cTelescopeProp.CanFindHome);
+	ReadOneTelescopeCapability("canmoveaxis?Axis=0",	"CanMoveAxis-RA",		&cTelescopeProp.CanMoveAxis[0]);
+	ReadOneTelescopeCapability("canmoveaxis?Axis=1",	"CanMoveAxis-DEC",		&cTelescopeProp.CanMoveAxis[1]);
+	ReadOneTelescopeCapability("canmoveaxis?Axis=2",	"CanMoveAxis-3",		&cTelescopeProp.CanMoveAxis[2]);
+	ReadOneTelescopeCapability("canpark",				"CanPark",				&cTelescopeProp.CanPark);
+	ReadOneTelescopeCapability("canpulseguide",			"CanPulseGuide",		&cTelescopeProp.CanPulseGuide);
+	ReadOneTelescopeCapability("cansetdeclinationrate",	"CanSetDeclinationRate",
+																				&cTelescopeProp.CanSetDeclinationRate);
+	ReadOneTelescopeCapability("cansetguiderates",		"CanSetGuideRates",		&cTelescopeProp.CanSetGuideRates);
+	ReadOneTelescopeCapability("cansetpark",			"CanSetPark",			&cTelescopeProp.CanSetPark);
+
+	ReadOneTelescopeCapability("cansetpierside",		"CanSetPierSide",		&cTelescopeProp.CanSetPierSide);
+	ReadOneTelescopeCapability("cansetrightascensionrate",
+														"CanSetRightAscensionRate",
+																				&cTelescopeProp.CanSetRightAscensionRate);
+	ReadOneTelescopeCapability("cansettracking",		"CanSetTracking",		&cTelescopeProp.CanSetTracking);
+	ReadOneTelescopeCapability("canslew",				"CanSlew",				&cTelescopeProp.CanSlew);
+	ReadOneTelescopeCapability("canslewaltaz",			"CanSlewAltAz",			&cTelescopeProp.CanSlewAltAz);
+	ReadOneTelescopeCapability("canslewaltazasync",		"CanSlewAltAzAsync",	&cTelescopeProp.CanSlewAltAzAsync);
+	ReadOneTelescopeCapability("canslewasync",			"CanSlewAsync",			&cTelescopeProp.CanSlewAsync);
+	ReadOneTelescopeCapability("cansync",				"CanSync",				&cTelescopeProp.CanSync);
+	ReadOneTelescopeCapability("cansyncaltaz",			"CanSyncAltAz",			&cTelescopeProp.CanSyncAltAz);
+	ReadOneTelescopeCapability("canunpark",				"CanUnpark",			&cTelescopeProp.CanUnpark);
+	ReadOneTelescopeCapability("doesrefraction",		"DoesRefraction",		&cTelescopeProp.DoesRefraction);
 }
 
 //*****************************************************************************
 void	ControllerTelescope::AlpacaDisplayErrorMessage(const char *errorMsgString)
 {
 	CONSOLE_DEBUG_W_STR("Alpaca error=", errorMsgString);
-	SetWidgetText(kTab_Control,		kTelescope_AlpacaErrorMsg,		errorMsgString);
+	SetWidgetText(kTab_TelescopCtl,	kTelescope_AlpacaErrorMsg,		errorMsgString);
 	SetWidgetText(kTab_Settings,	kTeleSettings_AlpacaErrorMsg,	errorMsgString);
 }
 
 //*****************************************************************************
-void	ControllerTelescope::AlpacaProcessReadAll(	const char	*deviceTypeStr,
-													const int	deviceNum,
-													const char	*keywordString,
-													const char *valueString)
+bool	ControllerTelescope::AlpacaProcessReadAllIdx(		const char	*deviceTypeStr,
+															const int	deviceNum,
+															const int	keywordEnum,
+															const char	*valueString)
 {
-bool	dataWasHandled;
+bool		dataWasHandled;
 
-//	CONSOLE_DEBUG_W_2STR("json=",	keywordString, valueString);
-	if (strcasecmp(deviceTypeStr, "Telescope") == 0)
-	{
-		dataWasHandled	=	AlpacaProcessReadAll_Common(deviceTypeStr,
-														deviceNum,
-														keywordString,
-														valueString);
-		if (dataWasHandled)
-		{
-			//*	we are done, skip the rest
-		//	CONSOLE_DEBUG("Data handled by AlpacaProcessReadAll_Common()");
-		}
-		else
-		{
-			dataWasHandled	=	AlpacaProcessReadAll_Telescope(deviceNum, keywordString, valueString);
-		}
-	}
-#ifdef _ENABLE_SKYTRAVEL_
-	else if (strcasecmp(deviceTypeStr, "somthingelse") == 0)
-	{
-		//*	you get the idea
-	}
-#endif // _ENABLE_SKYTRAVEL_
+	CONSOLE_DEBUG(__FUNCTION__);
+	dataWasHandled	=	AlpacaProcessReadAll_TelescopeIdx(deviceNum, keywordEnum, valueString);
+
+	return(dataWasHandled);
 }
-
 
 //*****************************************************************************
 void	ControllerTelescope::AlpacaProcessSupportedActions(	const char	*deviceType,
@@ -344,7 +356,6 @@ void	ControllerTelescope::AlpacaProcessSupportedActions(	const char	*deviceType,
 	AlpacaProcessSupportedActions_Telescope(deviveNum, valueString);
 }
 
-
 //*****************************************************************************
 bool	ControllerTelescope::AlpacaGetStatus(void)
 {
@@ -352,6 +363,7 @@ bool	validData;
 bool	previousOnLineState;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
+
 
 	previousOnLineState	=	cOnLine;
 	if (cHas_readall)
@@ -363,6 +375,7 @@ bool	previousOnLineState;
 		validData	=	AlpacaGetStatus_TelescopeOneAAT();
 		validData	=	AlpacaGetCommonConnectedState("telescope");
 	}
+
 
 	if (validData)
 	{
@@ -393,6 +406,13 @@ bool	previousOnLineState;
 	{
 		SetWindowIPaddrInfo(NULL, cOnLine);
 	}
+
+	//*	does this device have "DeviceState"
+	if (cOnLine && cHas_DeviceState)
+	{
+	//	AlpacaGetStatus_DeviceState();
+	}
+
 	cLastUpdate_milliSecs	=	millis();
 	cFirstDataRead			=	false;
 	return(validData);
@@ -404,7 +424,7 @@ void	ControllerTelescope::Update_TelescopeRtAscension(void)
 char	hhmmssString[64];
 
 	FormatHHMMSS(cTelescopeProp.RightAscension, hhmmssString, false);
-	SetWidgetText(kTab_Control,	kTelescope_RA_value,		hhmmssString);
+	SetWidgetText(kTab_TelescopCtl,	kTelescope_RA_value,		hhmmssString);
 }
 
 //**************************************************************************************
@@ -413,9 +433,35 @@ void	ControllerTelescope::Update_TelescopeDeclination(void)
 char	hhmmssString[64];
 
 	FormatHHMMSS(cTelescopeProp.Declination, hhmmssString, true);
-	SetWidgetText(kTab_Control,	kTelescope_DEC_value,		hhmmssString);
+	SetWidgetText(kTab_TelescopCtl,	kTelescope_DEC_value,		hhmmssString);
 }
 
+
+//*****************************************************************************
+void	ControllerTelescope::UpdateSupportedActions(void)
+{
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	SetWidgetValid(kTab_TelescopCtl,	kTelescope_Readall,			cHas_readall);
+	SetWidgetValid(kTab_TelescopCtl,	kTelescope_DeviceState,		cHas_DeviceState);
+
+	SetWidgetValid(kTab_Settings,		kTeleSettings_Readall,		cHas_readall);
+	SetWidgetValid(kTab_Settings,		kTeleSettings_DeviceState,	cHas_DeviceState);
+
+	SetWidgetValid(kTab_Capabilities,	kCapabilities_Readall,		cHas_readall);
+	SetWidgetValid(kTab_Capabilities,	kCapabilities_DeviceState,	cHas_DeviceState);
+
+	SetWidgetValid(kTab_DeviceState,	kDeviceState_Readall,		cHas_readall);
+	SetWidgetValid(kTab_DeviceState,	kDeviceState_DeviceState,	cHas_DeviceState);
+
+	SetWidgetValid(kTab_DriverInfo,		kDriverInfo_Readall,		cHas_readall);
+	SetWidgetValid(kTab_DriverInfo,		kDriverInfo_DeviceState,	cHas_DeviceState);
+
+	if (cHas_DeviceState == false)
+	{
+		cDeviceStateTabObjPtr->SetDeviceStateNotSupported();
+	}
+}
 
 //**************************************************************************************
 void	ControllerTelescope::UpdateCapabilityList(void)
@@ -423,6 +469,12 @@ void	ControllerTelescope::UpdateCapabilityList(void)
 	UpdateCapabilityListID(kTab_Capabilities, kCapabilities_TextBox1, kCapabilities_TextBoxN);
 }
 
+//#define	_PARENT_IS_TELESCOPE_
+//#ifdef _ENABLE_SKYTRAVEL_
+//	#undef _ENABLE_SKYTRAVEL_
+//	#define	PARENT_CLASS	ControllerTelescope
+//	#include	"controller_tscope_common.cpp"
+//#endif
 
 
 #define	_PARENT_IS_TELESCOPE_

@@ -262,7 +262,7 @@ int		myButtonWidth;
 		SetWidgetBGColor(		iii,	CV_RGB(192,	192,	192));
 		SetWidgetTextColor(		iii,	CV_RGB(0,	0,		0));
 
-		clmnHdr_xLoc	=	tabArray[iii - kIPaddrList_ClmTitle1];;
+		clmnHdr_xLoc	=	tabArray[iii - kIPaddrList_ClmTitle1];
 		clmnHdr_xLoc	+=	2;
 
 
@@ -331,6 +331,7 @@ bool	updateFlag;
 			break;
 
 		case kIPaddrList_DiscoveryThrdReStart:
+//			CONSOLE_DEBUG("kIPaddrList_DiscoveryThrdReStart");
 			if (gDiscoveryThreadIsRunning == false)
 			{
 				StartDiscoveryQuerryThread();
@@ -546,7 +547,7 @@ int		box_YYY;
 			break;
 #endif
 		default:
-			CONSOLE_DEBUG_W_NUM("UNKNOWN EVENT", event);
+//			CONSOLE_DEBUG_W_NUM("UNKNOWN EVENT", event);
 			break;
 	}
 }
@@ -907,8 +908,8 @@ int				validCPUtempCount;
 				pt1_Y			=	TranslateYvalue((&myCVrect), previousCPUtemp);
 				pt2_X			=	previousX + 1;
 				pt2_Y			=	TranslateYvalue((&myCVrect), cpuTemp);
-				LLD_MoveTo(pt1_X, pt1_Y);
-				LLD_LineTo(pt2_X, pt2_Y);
+				LLG_MoveTo(pt1_X, pt1_Y);
+				LLG_LineTo(pt2_X, pt2_Y);
 
 				previousX		=	pt2_X;
 				previousCPUtemp	=	cpuTemp;
@@ -923,9 +924,9 @@ int				validCPUtempCount;
 	pt1_Y					=	theWidget->top - 1;
 	pt2_X					=	pt1_X;
 	pt2_Y					=	(theWidget->top + theWidget->height) - 1;
-	LLD_SetColor(W_RED);
-	LLD_MoveTo(pt1_X, pt1_Y);
-	LLD_LineTo(pt2_X, pt2_Y);
+	LLG_SetColor(W_RED);
+	LLG_MoveTo(pt1_X, pt1_Y);
+	LLG_LineTo(pt2_X, pt2_Y);
 
 	//=========================================================
 	//*	were there any valid temperatures

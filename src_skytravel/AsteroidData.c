@@ -1444,7 +1444,7 @@ double			targetJulian;
 	asteroidData.MeanAnomaly		=	0.0;
 	asteroidData.ArgOfPerihelion	=	231.4871;
 	asteroidData.Longitude			=	242.5518;
-	asteroidData.Inclination		=	1.1012;;
+	asteroidData.Inclination		=	1.1012;
 	asteroidData.Eccentricity		=	0.15186;
 	asteroidData.SemimajorAxis		=	4.037397;
 //	asteroidData.AbsValueCEU;		//*	arc seconds		(CEU = current ephemeris uncertainty)

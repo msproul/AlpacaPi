@@ -43,7 +43,7 @@
 
 
 //**************************************************************************************
-RotatorDriver_NiteCrawler::RotatorDriver_NiteCrawler(const int argDevNum, FocuserNiteCrawler *focuserObject)
+RotatorDriver_NiteCrawler::RotatorDriver_NiteCrawler(const int argDevNum, FocuserMoonLite *focuserObject)
 	:RotatorDriver(argDevNum)
 {
 

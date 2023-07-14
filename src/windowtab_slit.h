@@ -26,13 +26,12 @@ enum
 
 	kSlitTracker_LogDataCheckBox,
 
-	kSlitTracker_RemoteAddress,
-
 	kSlitTracker_LastCmdString,
 	kSlitTracker_AlpacaLogo,
 	kSlitTracker_AlpacaErrorMsg,
 	kSlitTracker_IPaddr,
 	kSlitTracker_Readall,
+	kSlitTracker_DeviceState,
 
 
 	kSlitTracker_last

@@ -79,9 +79,7 @@ ControllerStarlist::ControllerStarlist(	const char		*argWindowName,
 
 	CONSOLE_DEBUG_W_NUM("argStarListCount\t=", argStarListCount);
 
-
 	SetupWindowControls();
-
 
 	if (cStarListTabObjPtr != NULL)
 	{
@@ -108,7 +106,6 @@ ControllerStarlist::~ControllerStarlist(void)
 //**************************************************************************************
 void	ControllerStarlist::SetupWindowControls(void)
 {
-
 	CONSOLE_DEBUG(__FUNCTION__);
 
 	SetTabCount(kTab_Count);
@@ -130,34 +127,6 @@ void	ControllerStarlist::SetupWindowControls(void)
 		SetTabWindow(kTab_About,	cAboutBoxTabObjPtr);
 		cAboutBoxTabObjPtr->SetParentObjectPtr(this);
 	}
-
-}
-
-//**************************************************************************************
-void	ControllerStarlist::RunBackgroundTasks(const char *callingFunction, bool enableDebug)
-{
-long	delteaMillSecs;
-
-//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
-	if (cReadStartup)
-	{
-		CONSOLE_DEBUG_W_STR("cReadStartup", cWindowName);
-
-		//*	so the window shows up
-		HandleWindowUpdate();
-		cv::waitKey(60);
-
-
-
-		cReadStartup	=	false;
-	}
-
-	delteaMillSecs	=	millis() - cLastUpdate_milliSecs;
-	if (delteaMillSecs > 5000)
-	{
-		//*	do what needs to be done here
-		cLastUpdate_milliSecs	=	millis();
-	}
 }
 
 //*****************************************************************************
@@ -176,7 +145,6 @@ void	ControllerStarlist::UpdateCommonProperties(void)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
 //	SetWidgetText(	kTab_DriverInfo,	kDriverInfo_Name,				cCommonProp.Name);
-
 }
 
 #endif // _ENABLE_STARLIST_

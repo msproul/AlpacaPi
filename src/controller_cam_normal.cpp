@@ -25,8 +25,10 @@
 //*	Jun 30,	2022	<MLS> Added capability list to camera controller
 //*	Sep 18,	2022	<MLS> Added DisableFilterWheel()
 //*	Sep 21,	2022	<MLS> Added ProcessReadAll_IMU()
-//*	Mar  5,	2023	<MLS> UpdateDisplayModes() now disables camera mode switching if live mode
+//*	Mar  5,	2023	<MLS> UpdateLiveMode() now disables camera mode switching if live mode
 //*	Apr 28,	2023	<MLS> Moved camera cooler settings to separate window tab
+//*	May 30,	2023	<MLS> Added UpdateCameraExposureStartup()
+//*	Jun 20,	2023	<MLS> Added DeviceState window to camera controller
 //*****************************************************************************
 //*	todo
 //*		control key for different step size.
@@ -47,13 +49,15 @@
 #include	"sendrequest_lib.h"
 
 #include	"alpaca_defs.h"
+#include	"helper_functions.h"
 
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
 
 
 //#define	kCamWindowWidth		456
-#define	kCamWindowWidth		500
+//#define	kCamWindowWidth		500
+#define	kCamWindowWidth		530
 #define	kCamWindowHeight	800
 
 
@@ -63,6 +67,8 @@
 #include	"windowtab_filelist.h"
 #include	"windowtab_camsettings.h"
 #include	"windowtab_about.h"
+#include	"windowtab_DeviceState.h"
+#include	"windowtab_camvideo.h"
 
 #include	"controller.h"
 #include	"controller_camera.h"
@@ -75,9 +81,11 @@ enum
 	kTab_Camera	=	1,
 	kTab_Settings,
 	kTab_CamCooler,
+	kTab_CamVideo,
 	kTab_Capabilities,
 //	kTab_Advanced,
 //	kTab_Graphs,
+	kTab_DeviceState,
 	kTab_FileList,
 	kTab_DriverInfo,
 	kTab_About,
@@ -96,11 +104,7 @@ ControllerCamNormal::ControllerCamNormal(	const char			*argWindowName,
 	cIMUdetected	=	false;
 
 	SetupWindowControls();
-
-
 }
-
-
 
 //**************************************************************************************
 // Destructor
@@ -119,6 +123,8 @@ ControllerCamNormal::~ControllerCamNormal(void)
 	DELETE_OBJ_IF_VALID(cCameraTabObjPtr);
 	DELETE_OBJ_IF_VALID(cCamSettingsTabObjPtr);
 	DELETE_OBJ_IF_VALID(cCapabilitiesTabObjPtr);
+	DELETE_OBJ_IF_VALID(cDeviceStateTabObjPtr);
+	DELETE_OBJ_IF_VALID(cCamVideoTabObjPtr);
 	DELETE_OBJ_IF_VALID(cFileListTabObjPtr);
 	DELETE_OBJ_IF_VALID(cDriverInfoTabObjPtr);
 	DELETE_OBJ_IF_VALID(cAboutBoxTabObjPtr);
@@ -137,11 +143,14 @@ char	lineBuff[64];
 	SetTabText(kTab_Camera,			"Camera");
 	SetTabText(kTab_Settings,		"Settings");
 	SetTabText(kTab_CamCooler,		"Cooler");
-	SetTabText(kTab_Capabilities,	"Capabilities");
+	SetTabText(kTab_CamVideo,		"Video");
+	SetTabText(kTab_Capabilities,	"Caps");
 //	SetTabText(kTab_Advanced,		"Adv");
 //	SetTabText(kTab_Graphs,			"Graphs");
-	SetTabText(kTab_FileList,		"File List");
-	SetTabText(kTab_DriverInfo,		"Driver Info");
+
+	SetTabText(kTab_DeviceState,	"State");
+	SetTabText(kTab_FileList,		"Files");
+	SetTabText(kTab_DriverInfo,		"Info");
 	SetTabText(kTab_About,			"About");
 
 	//--------------------------------------------
@@ -178,8 +187,14 @@ char	lineBuff[64];
 		SetTabWindow(kTab_CamCooler,	cCamCoolerTabObjPtr);
 		cCamCoolerTabObjPtr->SetParentObjectPtr(this);
 		cCamCoolerTabObjPtr->SetTemperatureGraphPtrs(cCameraTempLog, kMaxTemperatureValues);
+	}
 
-
+	//--------------------------------------------
+	cCamVideoTabObjPtr		=	new WindowTabCamVideo(	cWidth, cHeight, cBackGrndColor, cWindowName);
+	if (cCamVideoTabObjPtr != NULL)
+	{
+		SetTabWindow(kTab_CamVideo,	cCamVideoTabObjPtr);
+		cCamVideoTabObjPtr->SetParentObjectPtr(this);
 	}
 
 	//--------------------------------------------
@@ -188,6 +203,15 @@ char	lineBuff[64];
 	{
 		SetTabWindow(kTab_Capabilities,	cCapabilitiesTabObjPtr);
 		cCapabilitiesTabObjPtr->SetParentObjectPtr(this);
+	}
+
+	//--------------------------------------------
+	cDeviceStateTabObjPtr		=	new WindowTabDeviceState(	cWidth, cHeight, cBackGrndColor, cWindowName);
+	if (cDeviceStateTabObjPtr != NULL)
+	{
+		SetTabWindow(kTab_DeviceState,	cDeviceStateTabObjPtr);
+		cDeviceStateTabObjPtr->SetParentObjectPtr(this);
+		SetDeviceStateTabInfo(kTab_DeviceState, kDeviceState_FirstBoxName, kDeviceState_FirstBoxValue, kDeviceState_Stats);
 	}
 
 	//--------------------------------------------
@@ -225,6 +249,50 @@ char	lineBuff[64];
 		SetWindowIPaddrInfo(lineBuff, true);
 	}
 }
+
+////*****************************************************************************
+//void	ControllerCamNormal::UpdateDeviceStateEntry(const int index, const char *nameString, const char *valueString)
+//{
+//int			nameBoxNum;
+//int			valueBoxNum;
+//uint32_t	deltaTime_ms;
+//double		deltaTime_secs;
+//double		deltaTime_mins;
+//double		dsUpdatesPerSec;
+//double		dsUpdatesPerMin;
+//char		textBuf[64];
+//
+////	CONSOLE_DEBUG(__FUNCTION__);
+//
+//	nameBoxNum	=   kDeviceState_FirstBoxName + (index * 2);
+//	valueBoxNum	=   kDeviceState_FirstBoxValue + (index * 2);
+//	SetWidgetText(kTab_DeviceState,	nameBoxNum,		nameString);
+//	SetWidgetText(kTab_DeviceState,	valueBoxNum,	valueString);
+//
+//	SetWidgetValid(	kTab_DeviceState,	nameBoxNum,		true);
+//	SetWidgetValid(	kTab_DeviceState,	valueBoxNum,	true);
+//
+//	deltaTime_ms	=	millis() - cContlerCreated_milliSecs;
+//	deltaTime_secs	=	deltaTime_ms / 1000.0;
+//	deltaTime_mins	=	deltaTime_secs / 60.0;
+//	if (deltaTime_mins > 2.0)
+//	{
+//		dsUpdatesPerMin	=	cDeviceStateReadCnt / deltaTime_mins;
+//		sprintf(textBuf, "DS read Cnt=%d, rate=%2.1f / min", cDeviceStateReadCnt, dsUpdatesPerMin);
+//	}
+//	else if (deltaTime_secs > 2.0)
+//	{
+//		dsUpdatesPerSec	=	cDeviceStateReadCnt / deltaTime_secs;
+//		sprintf(textBuf, "DS read Cnt=%d, rate=%2.1f / sec", cDeviceStateReadCnt, dsUpdatesPerSec);
+//	}
+//	else
+//	{
+//		sprintf(textBuf, "DS read Cnt=%d", cDeviceStateReadCnt);
+//
+//	}
+//	SetWidgetText(	kTab_DeviceState,	kDeviceState_Stats, textBuf);
+//	SetWidgetValid(	kTab_DeviceState,	kDeviceState_Stats,	true);
+//}
 
 //**************************************************************************************
 void	ControllerCamNormal::DisableFilterWheel(void)
@@ -281,18 +349,39 @@ void	ControllerCamNormal::UpdateSupportedActions(void)
 {
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 
-	SetWidgetValid(kTab_Camera,		kCameraBox_Readall,				cHas_readall);
+	SetWidgetValid(kTab_Camera,			kCameraBox_Readall,			cHas_readall);
+	SetWidgetValid(kTab_Camera,			kCameraBox_DeviceState,		cHas_DeviceState);
+
+	SetWidgetValid(kTab_Settings,		kCamSet_Readall,			cHas_readall);
+	SetWidgetValid(kTab_Settings,		kCamSet_DeviceState,		cHas_DeviceState);
+
+	SetWidgetValid(kTab_CamCooler,		kCamCooler_Readall,			cHas_readall);
+	SetWidgetValid(kTab_CamCooler,		kCamCooler_DeviceSelect,	cHas_DeviceState);
+
+	SetWidgetValid(kTab_Capabilities,	kCapabilities_Readall,		cHas_readall);
+	SetWidgetValid(kTab_Capabilities,	kCapabilities_DeviceState,	cHas_DeviceState);
+
+	SetWidgetValid(kTab_FileList,		kFileList_Readall,			cHas_readall);
+	SetWidgetValid(kTab_FileList,		kFileList_DeviceState,		cHas_DeviceState);
+
+	SetWidgetValid(kTab_DriverInfo,		kDriverInfo_Readall,		cHas_readall);
+	SetWidgetValid(kTab_DriverInfo,		kDriverInfo_DeviceState,	cHas_DeviceState);
+
+	SetWidgetValid(kTab_DeviceState,	kDeviceState_Readall,		cHas_readall);
+	SetWidgetValid(kTab_DeviceState,	kDeviceState_DeviceState,	cHas_DeviceState);
+
+	SetWidgetValid(kTab_CamVideo,		kCamVideo_Readall,			cHas_readall);
+	SetWidgetValid(kTab_CamVideo,		kCamVideo_DeviceSelect,		cHas_DeviceState);
+
+	if (cHas_DeviceState == false)
+	{
+		cDeviceStateTabObjPtr->SetDeviceStateNotSupported();
+	}
+
 	SetWidgetValid(kTab_Camera,		kCameraBox_FlipText,			cHas_Flip);
 	SetWidgetValid(kTab_Camera,		kCameraBox_FlipValue,			cHas_Flip);
 	SetWidgetValid(kTab_Camera,		kCameraBox_FlipHorzCheckBox,	cHas_Flip);
 	SetWidgetValid(kTab_Camera,		kCameraBox_FlipVertCheckBox,	cHas_Flip);
-
-
-	SetWidgetValid(kTab_Settings,	kCamSet_Readall,		cHas_readall);
-//	SetWidgetValid(kTab_Graphs,		kHistogram_Readall,		cHas_readall);
-	SetWidgetValid(kTab_FileList,	kFileList_Readall,		cHas_readall);
-
-
 
 	if (cHas_readall == false)
 	{
@@ -305,7 +394,6 @@ void	ControllerCamNormal::UpdateSupportedActions(void)
 	SetWidgetValid(kTab_Camera,	kCameraBox_AutoExposure,		cHas_autoexposure);
 	SetWidgetValid(kTab_Camera,	kCameraBox_DisplayImage,		cHas_displayimage);
 	SetWidgetValid(kTab_Camera,	kCameraBox_LiveMode,			cHas_livemode);
-	SetWidgetValid(kTab_Camera,	kCameraBox_SideBar,				cHas_sidebar);
 	SetWidgetValid(kTab_Camera,	kCameraBox_DownloadRGBarray,	cHas_rgbarray);
 	SetWidgetValid(kTab_Camera,	kCameraBox_SaveAll,				cHas_SaveAll);
 
@@ -313,10 +401,44 @@ void	ControllerCamNormal::UpdateSupportedActions(void)
 }
 
 //*****************************************************************************
+void	ControllerCamNormal::UpdateStartupData(void)
+{
+	UpdateCameraName();
+
+	UpdateCameraExposureStartup();
+	UpdateCameraOffset();
+	UpdateCurrReadoutMode();
+	UpdateFileNameOptions();
+	UpdateFileSaveOptions();
+	UpdateReadoutModes();
+	cUpdateWindow	=	true;
+}
+
+//*****************************************************************************
+void	ControllerCamNormal::UpdateStatusData(void)
+{
+	CONSOLE_DEBUG(__FUNCTION__);
+
+
+	UpdateCameraExposure();
+	UpdateCameraGain();
+	UpdateCameraOffset();
+	UpdateCurrReadoutMode();
+	UpdateDisplayModes();
+	UpdateFileNameOptions();
+	UpdateFileSaveOptions();
+	UpdateReadoutModes();
+	cUpdateWindow	=	true;
+}
+
+//*****************************************************************************
 void	ControllerCamNormal::UpdateCameraName(void)
 {
 int		jjj;
 
+//	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG_W_STR("cCommonProp.Name", cCommonProp.Name);
+//	CONSOLE_ABORT(__FUNCTION__);
 	SetWidgetText(kTab_Camera,		kCameraBox_Title,	cCommonProp.Name);
 	SetWidgetText(kTab_Settings,	kCamSet_Title,		cCommonProp.Name);
 	SetWidgetText(kTab_FileList,	kFileList_Title,	cCommonProp.Name);
@@ -338,6 +460,8 @@ void	ControllerCamNormal::UpdateReadoutModes(void)
 {
 int		iii;
 
+//	CONSOLE_DEBUG(__FUNCTION__);
+
 	for (iii=0; iii<kMaxReadOutModes; iii++)
 	{
 		if (strlen(cCameraProp.ReadOutModes[iii].modeStr) > 0)
@@ -353,6 +477,8 @@ int		iii;
 //*****************************************************************************
 void	ControllerCamNormal::UpdateCurrReadoutMode(void)
 {
+//	CONSOLE_DEBUG(__FUNCTION__);
+
 	SetWidgetChecked(kTab_Camera, kCameraBox_ReadMode0, (cCameraProp.ReadOutMode == 0));
 	SetWidgetChecked(kTab_Camera, kCameraBox_ReadMode1, (cCameraProp.ReadOutMode == 1));
 	SetWidgetChecked(kTab_Camera, kCameraBox_ReadMode2, (cCameraProp.ReadOutMode == 2));
@@ -371,6 +497,7 @@ void	ControllerCamNormal::UpdateCameraGain(const TYPE_ASCOM_STATUS lastAlpacaErr
 	}
 	else
 	{
+//		CONSOLE_DEBUG("Gain not implemented");
 		SetWidgetType(	kTab_Camera, kCameraBox_Gain_Slider, kWidgetType_TextBox);
 		SetWidgetText(	kTab_Camera, kCameraBox_Gain_Slider, "Gain not implemented");
 	}
@@ -378,13 +505,21 @@ void	ControllerCamNormal::UpdateCameraGain(const TYPE_ASCOM_STATUS lastAlpacaErr
 }
 
 //*****************************************************************************
-void	ControllerCamNormal::UpdateCameraExposure(void)
+void	ControllerCamNormal::UpdateCameraExposureStartup(void)
 {
+//	CONSOLE_DEBUG(__FUNCTION__);
 	SetWidgetSliderLimits(	kTab_Camera, kCameraBox_Exposure_Slider,	cCameraProp.ExposureMin_seconds,
 																		cCameraProp.ExposureMax_seconds);
 	SetWidgetSliderValue(	kTab_Camera, kCameraBox_Exposure_Slider,	cExposure);
 	SetWidgetNumber(		kTab_Camera, kCameraBox_Exposure,			cExposure);
+	cUpdateWindow	=	true;
+}
 
+//*****************************************************************************
+void	ControllerCamNormal::UpdateCameraExposure(void)
+{
+	SetWidgetSliderValue(	kTab_Camera, kCameraBox_Exposure_Slider,	cExposure);
+	SetWidgetNumber(		kTab_Camera, kCameraBox_Exposure,			cExposure);
 	cUpdateWindow	=	true;
 }
 
@@ -392,6 +527,9 @@ void	ControllerCamNormal::UpdateCameraExposure(void)
 void	ControllerCamNormal::UpdateCameraOffset(const TYPE_ASCOM_STATUS lastAlpacaErr)
 {
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+//	CONSOLE_DEBUG_W_NUM("cCameraProp.OffsetMin\t=", cCameraProp.OffsetMin);
+//	CONSOLE_DEBUG_W_NUM("cCameraProp.OffsetMax\t=", cCameraProp.OffsetMax);
+//	CONSOLE_DEBUG_W_NUM("cCameraProp.Offset   \t=", cCameraProp.Offset);
 
 	if (lastAlpacaErr == kASCOM_Err_Success)
 	{
@@ -453,7 +591,7 @@ char			linebuff[64];
 	}
 	else
 	{
-		//*	not ready, grey the buttons
+		//*	not ready, gray the buttons
 		SetWidgetBGColor(kTab_Camera, kCameraBox_DownloadImage, CV_RGB(100, 100, 100));
 		SetWidgetBGColor(kTab_Camera, kCameraBox_DownloadRGBarray, CV_RGB(100, 100, 100));
 	}
@@ -476,13 +614,13 @@ void	ControllerCamNormal::UpdateCameraTemperature(void)
 {
 char			linebuff[128];
 
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 	sprintf(linebuff, "%1.1f C / %1.1f F", cCameraProp.CCDtemperature,
 											(cCameraProp.CCDtemperature * 9.0/5.0) +32.0);
 	SetWidgetText(kTab_CamCooler,	kCamCooler_Temperature, linebuff);
 	SetWidgetNumber(kTab_CamCooler, kCamCooler_TargetTemp, cCameraProp.SetCCDTemperature);
 
-	CONSOLE_DEBUG_W_BOOL("cHasCCDtemp\t=", cHasCCDtemp);
+//	CONSOLE_DEBUG_W_BOOL("cHasCCDtemp\t=", cHasCCDtemp);
 
 	if (cHasCCDtemp	== false)
 	{
@@ -578,7 +716,18 @@ void	ControllerCamNormal::UpdateFileNameOptions(void)
 	SetWidgetChecked(kTab_Settings,	kCamSet_FN_IncCamera,		cFN.IncludeManuf);
 	SetWidgetChecked(kTab_Settings,	kCamSet_FN_IncSerialNum,	cFN.IncludeSerialNum);
 	SetWidgetChecked(kTab_Settings,	kCamSet_FN_IncRefID,		cFN.IncludeRefID);
+
 }
+
+//*****************************************************************************
+void	ControllerCamNormal::UpdateFileSaveOptions(void)
+{
+	SetWidgetChecked(kTab_Settings,	kCamSet_SaveAsFITS,			cSaveAsFITS);
+	SetWidgetChecked(kTab_Settings,	kCamSet_SaveAsJPEG,			cSaveAsJPEG);
+	SetWidgetChecked(kTab_Settings,	kCamSet_SaveAsPNG,			cSaveAsPNG);
+	SetWidgetChecked(kTab_Settings,	kCamSet_SaveAsRAW,			cSaveAsRaw);
+}
+
 
 //*****************************************************************************
 //*	this routine only gets called when live mode changes state
@@ -636,8 +785,8 @@ int		jjj;
 	jjj	=	kFileList_FistEntry;
 	while ((jjj <= kFileList_LastEntry) && (iii < kMaxRemoteFileCnt))
 	{
-		CONSOLE_DEBUG_W_NUM("Widget Index\t\t=", jjj);
-		CONSOLE_DEBUG_W_STR("cRemoteFiles[iii].filename\t=", cRemoteFiles[iii].filename);
+//		CONSOLE_DEBUG_W_NUM("Widget Index\t\t=", jjj);
+//		CONSOLE_DEBUG_W_STR("cRemoteFiles[iii].filename\t=", cRemoteFiles[iii].filename);
 
 		if (cRemoteFiles[iii].validData)
 		{
@@ -653,11 +802,24 @@ int		jjj;
 }
 
 //*****************************************************************************
+void	ControllerCamNormal::SetExposureRange(char *name, double exposureMin, double exposureMax, double exposureStep)
+{
+	CONSOLE_DEBUG("this routine should be overloaded");
+	CONSOLE_DEBUG_W_STR("name        \t=", name);
+	CONSOLE_DEBUG_W_DBL("exposureMin \t=", exposureMin);
+	CONSOLE_DEBUG_W_DBL("exposureMax \t=", exposureMax);
+	CONSOLE_DEBUG_W_DBL("exposureStep\t=", exposureStep);
+
+
+	SetWidgetSliderLimits(kTab_Camera,	kCameraBox_Exposure_Slider,	exposureMin, exposureMax);
+
+//	CONSOLE_ABORT(__FUNCTION__);
+}
+
+//*****************************************************************************
 void	ControllerCamNormal::UpdateDisplayModes(void)
 {
-
 	SetWidgetChecked(kTab_Camera, kCameraBox_LiveMode,		cLiveMode);
-	SetWidgetChecked(kTab_Camera, kCameraBox_SideBar,		cSideBar);
 	SetWidgetChecked(kTab_Camera, kCameraBox_AutoExposure,	cAutoExposure);
 	SetWidgetChecked(kTab_Camera, kCameraBox_DisplayImage,	cDisplayImage);
 	SetWidgetChecked(kTab_Camera, kCameraBox_SaveAll,		cSaveAllImages);
@@ -684,7 +846,6 @@ void	ControllerCamNormal::UpdateBackgroundColor(const int redValue, const int gr
 		SetWidgetTextColor(kTab_Camera, kCameraBox_Title, CV_RGB(0,	0,	0));
 	}
 }
-
 
 //*****************************************************************************
 void	ControllerCamNormal::UpdateDownloadProgress(const int unitsRead, const int totalUnits)
@@ -726,7 +887,11 @@ double	newProgressValue;
 //*****************************************************************************
 void	ControllerCamNormal::UpdateConnectedStatusIndicator(void)
 {
+	//*	this needs to be over-ridden, it should call
+	//*	UpdateConnectedIndicator for each windowtab that has a connected indicator
+	//	i.e. UpdateConnectedIndicator(kTab_Camera,		kCameraBox_Connected);
 	UpdateConnectedIndicator(kTab_Camera,		kCameraBox_Connected);
+	UpdateConnectedIndicator(kTab_CamVideo,		kCamVideo_Connected);
 }
 
 
@@ -745,6 +910,7 @@ int			valueInt;
 char		textString[64];
 cv::Scalar	textColor;
 
+	CONSOLE_DEBUG(__FUNCTION__);
 //	CONSOLE_DEBUG_W_STR(keywordString,valueString);
 
 	if (cIMUdetected == false)
@@ -806,6 +972,83 @@ cv::Scalar	textColor;
 #endif // _SUPPORT_REMOTE_IMU_
 }
 
+//*****************************************************************************
+void	ControllerCamNormal::ProcessReadAll_SaveAs(	const char	*deviceTypeStr,
+													const int	deviceNum,
+													const char	*keywordString,
+													const char	*valueString)
+{
+bool		valueBool;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG_W_STR(keywordString,valueString);
+
+	valueBool	=	IsTrueFalse(valueString);
+
+
+	if (strcasecmp(keywordString, "saveasfits") == 0)
+	{
+		cSaveAsFITS	=	valueBool;
+		SetWidgetChecked(kTab_Settings, kCamSet_SaveAsFITS, cSaveAsFITS);
+	}
+	else if (strcasecmp(keywordString, "saveasjpeg") == 0)
+	{
+		cSaveAsJPEG	=	valueBool;
+		SetWidgetChecked(kTab_Settings, kCamSet_SaveAsJPEG, cSaveAsJPEG);
+	}
+	else if (strcasecmp(keywordString, "saveaspng") == 0)
+	{
+		cSaveAsPNG	=	valueBool;
+		SetWidgetChecked(kTab_Settings, kCamSet_SaveAsPNG, cSaveAsPNG);
+	}
+	else if (strcasecmp(keywordString, "saveasraw") == 0)
+	{
+		cSaveAsRaw	=	valueBool;
+		SetWidgetChecked(kTab_Settings, kCamSet_SaveAsRAW, cSaveAsRaw);
+	}
+}
+
+
+//**************************************************************************************
+void	ControllerCamNormal::SetFileSaveOptions(const int saveOptionBtn)
+{
+char	commandString[48];
+char	dataString[48];
+bool	validData;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG_W_NUM("saveOptionBtn\t=", saveOptionBtn);
+	switch(saveOptionBtn)
+	{
+		case kCamSet_SaveAsFITS:
+			strcpy(commandString, "saveasfits");
+			sprintf(dataString, "saveasfits=%s",	(cSaveAsFITS ? "false" : "true"));
+			break;
+
+		case kCamSet_SaveAsJPEG:
+			strcpy(commandString, "saveasjpeg");
+			sprintf(dataString, "saveasjpeg=%s",	(cSaveAsJPEG ? "false" : "true"));
+			break;
+
+		case kCamSet_SaveAsPNG:
+			strcpy(commandString, "saveaspng");
+			sprintf(dataString, "saveaspng=%s",		(cSaveAsPNG ? "false" : "true"));
+			break;
+
+		case kCamSet_SaveAsRAW:
+			strcpy(commandString, "saveasraw");
+			sprintf(dataString, "saveasraw=%s",		(cSaveAsRaw ? "false" : "true"));
+			break;
+
+	}
+//	CONSOLE_DEBUG_W_STR("commandString\t=",	commandString);
+//	CONSOLE_DEBUG_W_STR("dataString\t=",	dataString);
+	validData	=	AlpacaSendPutCmd(	"camera", commandString,	dataString);
+	if (validData == false)
+	{
+		CONSOLE_DEBUG_W_STR("Failed to get data, Req=", dataString)
+	}
+}
 
 #endif // _ENABLE_CTRL_CAMERA_
 

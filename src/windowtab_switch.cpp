@@ -20,6 +20,7 @@
 //*****************************************************************************
 //*	Feb 29,	2020	<MLS> Created windowtab_switch.cpp
 //*	Feb 28,	2021	<MLS> Added TurnAllSwitchesOff()
+//*	Jun 19,	2023	<MLS> Added DeviceState to Switch
 //*****************************************************************************
 
 #ifdef _ENABLE_CTRL_SWITCHES_
@@ -167,6 +168,7 @@ int		iii;
 	//*	set up all the bottom stuff so that it is the same on all windowtabs
 	SetupWindowBottomBoxes(	kSwitchBox_IPaddr,
 							kSwitchBox_Readall,
+							kSwitchBox_DeviceState,
 							kSwitchBox_AlpacaErrorMsg,
 							kSwitchBox_LastCmdString,
 							kSwitchBox_AlpacaLogo,

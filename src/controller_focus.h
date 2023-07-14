@@ -7,41 +7,39 @@
 #include	"controller.h"
 #ifndef _WINDOW_TAB_H
 	#include	"windowtab.h"
-#endif // _WINDOW_TAB_H
+#endif
 
 #ifndef	_WINDOWTAB_FOCUSER_H_
 //	#include	"windowtab_focuser.h"
-#endif // _WINDOWTAB_FOCUSER_H_
+#endif
 
 #ifndef _WINDOWTAB_NITECRAWLER_H_
 	#include	"windowtab_nitecrawler.h"
-#endif // _WINDOWTAB_NITECRAWLER_H_
+#endif
 
 #ifndef	_WINDOWTAB_AUXMOTOR_H_
 	#include	"windowtab_auxmotor.h"
-#endif // _WINDOWTAB_AUXMOTOR_H_
+#endif
 
 #ifndef	_WINDOWTAB_GRAPHS_H_
 	#include	"windowtab_graphs.h"
-#endif // _WINDOWTAB_GRAPHS_H_
+#endif
 
 #ifndef _WINDOWTAB_CONFIG_H_
 	#include	"windowtab_config.h"
-#endif // _WINDOWTAB_CONFIG_H_
+#endif
 
 #ifndef	_WINDOWTAB_ABOUT_H_
 	#include	"windowtab_about.h"
-#endif // _WINDOWTAB_ABOUT_H_
+#endif
 
 #ifndef	_MOONLITE_COM_H_
 	#include	"moonlite_com.h"
 #endif
 
-
 #ifndef _DISCOVERY_LIB_H_
 	#include	"discovery_lib.h"
 #endif
-
 
 #define	kFocuserBoxWidth	400
 #define	kFocuserBoxHeight	750
@@ -77,9 +75,7 @@ class ControllerFocus: public Controller
 		// Construction
 		//
 				ControllerFocus(	const char			*argWindowName,
-									struct sockaddr_in	*deviceAddress,
-									const int			port,
-									const int			deviceNum,
+									TYPE_REMOTE_DEV		*alpacaDevice,
 									const int			focuserType);
 
 				ControllerFocus(	const char			*argWindowName,
@@ -93,19 +89,23 @@ class ControllerFocus: public Controller
 		virtual	void	CreateWindowTabs(void);
 
 //		virtual	void	ProcessButtonClick(const int buttonIdx);
-		virtual	void	RunBackgroundTasks(const char *callingFunction=NULL, bool enableDebug=false);
 		virtual	void	AlpacaDisplayErrorMessage(const char *errorMsgString);
 
 		//*	sub class specific routines
+		virtual	void	AlpacaGetCapabilities(void);
+		virtual	void	GetStartUpData_SubClass(void);
+		virtual	void	GetStatus_SubClass(void);
 
+		virtual	void	UpdateSupportedActions(void);
+		virtual	void	UpdateConnectedStatusIndicator(void);
 
-		virtual	void	UpdateFocuserPosition(const int newFocuserPosition);
-		virtual	void	UpdateRotatorPosition(const int newRotatorPosition);
-		virtual	void	UpdateAuxMotorPosition(const int newAuxMotorPosition);
+		virtual	void	UpdateStartupData(void);
+		virtual	void	UpdateStatusData(void);
+		virtual	void	UpdateOnlineStatus(void);
+
+		virtual	void	UpdateRotatorPosition(void);
 		virtual	void	UpdateStepsPerRev(const int newStepsPerRev);
-		virtual	void	UpdateTemperature(const double newTemperature);
 		virtual	void	UpdateVoltage(const double newVoltage);
-		virtual	void	UpdateFromFirstRead(void);
 
 		virtual	void	UpdateWindowTabs_Everything(void);
 		virtual	void	UpdateWindowTabs_ReadAll(bool hasReadAll);
@@ -119,15 +119,15 @@ class ControllerFocus: public Controller
 
 		virtual	void	UpdateWindowTabs_SwitchState(int switchId, bool onOffState);
 
-		virtual	bool	AlpacaGetStartupData(void);
 		virtual	bool	AlpacaGetStatus(void);
-		virtual	void	AlpacaProcessReadAll(	const char	*deviceType,
+		virtual	bool	AlpacaProcessReadAllIdx(const char	*deviceTypeStr,
 												const int	deviceNum,
-												const char	*keywordString,
+												const int	keywordEnum,
 												const char	*valueString);
 		virtual	void	AlpacaProcessSupportedActions(	const char	*deviceTypeStr,
 														const int	deviveNum,
 														const char	*valueString);
+				bool	AlpacaGetStartupData_OneAAT(void);
 				bool	AlpacaGetStatus_OneAAT(void);	//*	One At A Time
 
 				void	SendMoveFocuserCommand(int newDesiredPosition);
@@ -142,8 +142,6 @@ class ControllerFocus: public Controller
 				void	CloseUSBport(void);
 				bool	USBGetStatus(void);
 
-				bool				cReadStartup;
-				bool				cOnLine;
 				int					cFocuserType;		//*	i.e. nitecrawler, etc
 				int					cCommMode;			//*	Alpaca or USB
 				char				cUSBpath[48];
@@ -155,7 +153,9 @@ class ControllerFocus: public Controller
 				char				cSerialNumber[48];
 				char				cUnitVersion[48];
 
-				int					cFocuserPosition;
+				TYPE_FocuserProperties	cFocuserProp;
+
+//				int					cFocuserPosition;
 				int					cRotatorPosition;
 				int					cFocuserDesiredPos;
 				int					cRotatorDesiredPos;
@@ -164,9 +164,8 @@ class ControllerFocus: public Controller
 				int					cStepsPerRev;			//*	steps per revolution
 
 				uint32_t			cLastTimeSecs_Temperature;
-				double				cTemperature_DegC;
+//				double				cTemperature_DegC;
 				double				cVoltage;
-				bool				cIsMoving;
 
 
 };

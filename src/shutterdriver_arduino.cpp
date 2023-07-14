@@ -31,6 +31,7 @@
 //*	May  8,	2020	<MLS> Updated Arduino communications code to handle new format
 //*	Feb 26,	2021	<MLS> Added logic to look for different USB ports ttyACM0 -> ttyACM4
 //*	Dec 13,	2021	<MLS> Added WatchDog_TimeOut() to shutterdriver_arduino
+//*	Jun  9,	2023	<MLS> Fixed call to GetDomeShutterStatusString()
 //*****************************************************************************
 
 #ifdef _ENABLE_SHUTTER_
@@ -354,7 +355,7 @@ char		stateString[48];
 
 		if (cShutterStatus != cPreviousShutterStatus)
 		{
-			Shutter_GetStatusString(cShutterStatus, stateString);
+			GetDomeShutterStatusString(cShutterStatus, stateString);
 			LogEvent(	"shutter",
 						"StateChanged",
 						NULL,
@@ -362,7 +363,7 @@ char		stateString[48];
 						stateString);
 			cPreviousShutterStatus	=	cShutterStatus;
 		}
-		cArduinoSkipCnt	=	0;;
+		cArduinoSkipCnt	=	0;
 	}
 	else
 	{

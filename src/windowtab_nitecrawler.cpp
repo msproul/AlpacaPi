@@ -183,8 +183,8 @@ int		alpacaLogoBottom;
 	//*	create the compass wheel
 	compassWidth	=	cWidth / 2;
 	compassHeight	=	151;
-	CONSOLE_DEBUG_W_NUM("compassWidth\t=",	compassWidth);
-	CONSOLE_DEBUG_W_NUM("compassHeight\t=",	compassHeight);
+//	CONSOLE_DEBUG_W_NUM("compassWidth\t=",	compassWidth);
+//	CONSOLE_DEBUG_W_NUM("compassHeight\t=",	compassHeight);
 	SetWidget(		kNiteCrawlerTab_RotatorCompass,	0,		yLoc,	compassWidth,	compassHeight);
 	SetWidgetType(	kNiteCrawlerTab_RotatorCompass, kWidgetType_CustomGraphic);
 
@@ -361,6 +361,8 @@ int		alpacaLogoBottom;
 		}
 	}
 
+	CONSOLE_DEBUG_W_NUM("cComMode\t=",	cComMode);
+
 	switch(cComMode)
 	{
 		case kNCcomMode_USB:
@@ -372,10 +374,12 @@ int		alpacaLogoBottom;
 			connectButtonIdx	=	-1;
 			break;
 	}
+	CONSOLE_DEBUG_W_NUM("connectButtonIdx\t=",	connectButtonIdx);
 	//=======================================================
 	//*	set up all the bottom stuff so that it is the same on all windowtabs
 	SetupWindowBottomBoxes(	kNiteCrawlerTab_IPaddr,			//	ipaddrBox
 							kNiteCrawlerTab_Readall,		//	readAllBox
+							kNiteCrawlerTab_DeviceState,	//	deviceState
 							-1,								//	errorMsgBox
 							kNiteCrawlerTab_LastCmdString,	//	lastCmdWidgetIdx
 							-1,								//	logoWidgetIdx,
@@ -403,8 +407,8 @@ char		lineBuff[32];
 	center_Y	=	theWidget->top + (theWidget->height / 2);
 	radius1		=	theWidget->width / 5;
 
-	LLD_SetColor(W_WHITE);
-	LLD_FrameEllipse(center_X, center_Y, radius1, radius1);
+	LLG_SetColor(W_WHITE);
+	LLG_FrameEllipse(center_X, center_Y, radius1, radius1);
 
 	//*	now draw the tick marks every 10 degrees
 	radius1	=	(theWidget->height / 2) - 8;
@@ -419,8 +423,8 @@ char		lineBuff[32];
 		pt2_X	=	center_X + (cos(radians) * radius2);
 		pt2_Y	=	center_Y + (sin(radians) * radius2);
 
-		LLD_MoveTo(pt1_X, pt1_Y);
-		LLD_LineTo(pt2_X, pt2_Y);
+		LLG_MoveTo(pt1_X, pt1_Y);
+		LLG_LineTo(pt2_X, pt2_Y);
 
 		degrees	+=	10.0;
 	}
@@ -437,7 +441,7 @@ char		lineBuff[32];
 	{
 		pt1_X	+=	5;
 	}
-	LLD_DrawCString(pt1_X, pt1_Y, lineBuff, kFont_Medium);
+	LLG_DrawCString(pt1_X, pt1_Y, lineBuff, kFont_Medium);
 
 
 	//*	determine dimensions for red/green indicators
@@ -452,10 +456,10 @@ char		lineBuff[32];
 	pt2_X	=	center_X + (cos(radians) * radius2);
 	pt2_Y	=	center_Y + (sin(radians) * radius2);
 
-	LLD_PenSize(2);
-	LLD_SetColor(W_RED);
-	LLD_MoveTo(pt1_X, pt1_Y);
-	LLD_LineTo(pt2_X, pt2_Y);
+	LLG_PenSize(2);
+	LLG_SetColor(W_RED);
+	LLG_MoveTo(pt1_X, pt1_Y);
+	LLG_LineTo(pt2_X, pt2_Y);
 
 	//*	now draw a small green line where we WANT to be
 	degrees	=	(cRotatorDesiredPos * 360.0) / cStepsPerRev;
@@ -469,12 +473,12 @@ char		lineBuff[32];
 
 	pt2_X	=	center_X + (cos(radians) * radius2);
 	pt2_Y	=	center_Y + (sin(radians) * radius2);
-	LLD_SetColor(W_GREEN);
-	LLD_MoveTo(pt1_X, pt1_Y);
-	LLD_LineTo(pt2_X, pt2_Y);
+	LLG_SetColor(W_GREEN);
+	LLG_MoveTo(pt1_X, pt1_Y);
+	LLG_LineTo(pt2_X, pt2_Y);
 
 	//*	reset back to normal
-	LLD_PenSize(1);
+	LLG_PenSize(1);
 }
 
 #if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
@@ -615,7 +619,7 @@ ControllerFocus	*focusController;
 		case kNiteCrawlerTab_focLabel:
 			if (focusController != NULL)
 			{
-				focusController->UpdateFromFirstRead();
+				focusController->UpdateStartupData();
 			}
 			break;
 

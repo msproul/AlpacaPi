@@ -112,7 +112,6 @@ void	ControllerGaiaRemote::SetupWindowControls(void)
 		SetTabWindow(kTab_About,	cAboutBoxTabObjPtr);
 		cAboutBoxTabObjPtr->SetParentObjectPtr(this);
 	}
-
 }
 
 //**************************************************************************************
@@ -128,8 +127,6 @@ long	delteaMillSecs;
 		//*	so the window shows up
 		HandleWindowUpdate();
 		cv::waitKey(60);
-
-
 
 		cReadStartup	=	false;
 	}

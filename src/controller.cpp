@@ -84,7 +84,7 @@
 //*	Feb 17,	2022	<MLS> Started working on opencv C++ support
 //*	Feb 17,	2022	<MLS> Added SetFontInfo() and TYPE_FontInfo
 //*	Feb 18,	2022	<MLS> Added DrawWidgetBackground()
-//*	Feb 20,	2022	<MLS> Added a bunch of Low Level Drawing commands LLD_....
+//*	Feb 20,	2022	<MLS> Added a bunch of Low Level Drawing commands LLG_....
 //*	Apr  9,	2022	<MLS> Made some changes to be compatible with openCV ver 2
 //*	Apr 11,	2022	<MLS> Added ProcessControllerWindows()
 //*	May 31,	2022	<MLS> Added RunCommandLine()
@@ -97,6 +97,19 @@
 //*	Feb 27,	2023	<MLS> Changed DrawWidgetBackground() to EraseWidgetBackground()
 //*	Mar  5,	2023	<MLS> Added SetWidgetJustification()
 //*	Mar 28,	2023	<MLS> Refactored opencv++ ifdefs to include (CV_MAJOR_VERSION >= 4)
+//*	May 26,	2023	<MLS> Added ShowWindow() & HideWindow()
+//*	Jun  2,	2023	<MLS> Changed LLD_ to LLG_  Low Level Graphics
+//*	Jun 19,	2023	<MLS> Added TYPE_REMOTE_DEV to Controller constructor
+//*	Jun 19,	2023	<MLS> Added more valid widget checking
+//*	Jun 22,	2023	<MLS> Moving background tasks into controller class for consistency
+//*	Jun 22,	2023	<MLS> Fixed speed problem by added waitkey to UpdateWindowAsNeeded()
+//*	Jun 22,	2023	<MLS> Added UpdateStartupData() & UpdateStatusData()
+//*	Jun 24,	2023	<MLS> Added memory leak check to destructor, found 3
+//*	Jun 24,	2023	<MLS> Added SetDeviceStateTabInfo()
+//*	Jun 25,	2023	<MLS> Added UpdateConnectedStatusIndicator() base class
+//*	Jun 26,	2023	<MLS> Started on common command table lookup structure
+//*	Jun 27,	2023	<MLS> Added UpdateOnlineStatus()
+//*	Jul  1,	2023	<MLS> Added GetStatus_SubClass()
 //*****************************************************************************
 
 
@@ -107,6 +120,7 @@
 
 
 
+#include	"alpaca_defs.h"
 #include	"discovery_lib.h"
 #include	"helper_functions.h"
 #include	"sendrequest_lib.h"
@@ -133,8 +147,12 @@ bool		gFontsNeedInit				=	true;
 char		gColorOverRide				=	0;
 Controller	*gCurrentActiveWindow		=	NULL;
 bool		gDebugBackgroundThread		=	false;
-char		gWebBrowserCmdString[32]	=	"firefox";
-char		gDownloadFilePath[64]		=	"imagedata";
+#ifdef __arm__
+	char		gWebBrowserCmdString[32]	=	"chromium-browser";
+#else
+	char		gWebBrowserCmdString[32]	=	"firefox";
+#endif
+char		gDownloadFilePath[64]			=	"imagedata";
 
 
 TYPE_FontInfo	gFontInfo[kFont_last];
@@ -351,27 +369,31 @@ void	Controller_HandleKeyDown(const int keyPressed)
 
 
 //*****************************************************************************
-Controller::Controller(	const char	*argWindowName,
-						const int	xSize,
-						const int	ySize)
+Controller::Controller(	const char		*argWindowName,
+						const int		xSize,
+						const int		ySize,
+						bool			showWindow,
+						TYPE_REMOTE_DEV	*alpacaDevice)
 {
 int			iii;
 int			objCntr;
 bool		windowExists;
 char		myWindowName[128];
 
-//	CONSOLE_DEBUG_W_STR(__FUNCTION__, argWindowName);
-//	CONSOLE_DEBUG_W_NUM("xSize        \t=",	xSize);
-//	CONSOLE_DEBUG_W_NUM("ySize        \t=",	ySize);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, argWindowName);
 
 	memset(&cCommonProp, 0, sizeof(TYPE_CommonProperties));
 
+	cAlpacaDeviceType			=	kDeviceType_undefined;
+	cWindowType					=	'UNKN';
 	cMagicCookie				=	kMagicCookieValue;
 
 	cKeepRunning				=	true;
 	cDebugCounter				=	0;
 	cUpdateProtect				=	false;
 	cHas_readall				=	false;
+	cHas_DeviceState			=	false;
+	cDeviceStateReadCnt			=	0;
 	cHas_temperaturelog			=	false;
 	cReadStartup				=	true;
 	cLeftButtonDown				=	false;
@@ -380,6 +402,7 @@ char		myWindowName[128];
 	cLastClicked_Tab			=	-1;
 	cHighlightedBtn				=	-1;
 	cCurTextInput_Widget		=	-1;
+	cDriverInfoTabNum			=	-1;
 
 	//*	thread stuff
 	cButtonClickInProgress		=	false;
@@ -387,19 +410,31 @@ char		myWindowName[128];
 	cBackGroundThreadCreated	=	false;
 	cBackgroundThreadID			=	-1;
 
+	//*	alpaca IP address etc
+	cValidIPaddr				=	false;
+	cPort						=	0;
+
 	cOnLine						=	true;		//*	assume its online, if it wasnt, we wouldnt be here
+	cAlpacaDevNum				=	0;
 	cAlpacaVersionString[0]		=	0;
 	cLastAlpacaCmdString[0]		=	0;
 	cLastAlpacaErrStr[0]		=	0;
 	cAlpacaDeviceTypeStr[0]		=	0;
 	cAlpacaDeviceNameStr[0]		=	0;
+	cContlerCreated_milliSecs	=	millis();
 	cLastUpdate_milliSecs		=	millis();
+	cUpdateDelta_secs			=	kDefaultUpdateDelta;	//*	update delay default value
+	cDeviceStateTabNum			=	-1;
+	cDeviceStateNameStart		=	-1;
+	cDeviceStateValueStart		=	-1;
+	cDeviceStateStats			=	-1;
 
 	cRemote_Platform[0]			=	0;
 	cRemote_CPUinfo[0]			=	0;
 	cRemote_OperatingSystem[0]	=	0;
 	cRemote_Version[0]			=	0;
-
+	cCommandEntryPtr			=	NULL;
+	cAlternateEntryPtr			=	NULL;
 	//*	low level drawing stuff
 	cCurrentLineWidth	=	1;
 
@@ -455,10 +490,7 @@ char		myWindowName[128];
 		iii++;
 	}
 
-//	CONSOLE_DEBUG_W_NUM("xSize\t=",	xSize);
-//	CONSOLE_DEBUG_W_NUM("ySize\t=",	ySize);
 	strcpy(cWindowName, myWindowName);
-//	CONSOLE_DEBUG_W_STR("cWindowName\t=",	cWindowName);
 	cWidth				=	xSize;
 	cHeight				=	ySize;
 	cUpdateWindow		=	true;
@@ -490,8 +522,16 @@ char		myWindowName[128];
 				//	(CV_WINDOW_AUTOSIZE)
 					);
 
-	cv::resizeWindow(	cWindowName, cWidth, cHeight);
-	cv::moveWindow(		cWindowName, (20 + ((gControllerCnt - 1) * (150))), 10);
+	if (showWindow)
+	{
+		cv::resizeWindow(	cWindowName, cWidth, cHeight);
+		cv::moveWindow(cWindowName, (20 + ((gControllerCnt - 1) * (150))), 10);
+	}
+	else
+	{
+		cv::moveWindow(cWindowName, 1000, 1000);
+		cv::waitKey(10);
+	}
 
 //	CONSOLE_DEBUG("Setting mouse call back routine!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 	cv::setMouseCallback(	cWindowName,
@@ -518,8 +558,38 @@ char		myWindowName[128];
 	}
 	cTabCount		=	0;
 	cCurrentTabNum	=	0;
+	cTabsDeleted	=	0;
 
 	SetupWindowControls();
+
+	if (alpacaDevice != NULL)
+	{
+	char	ipString[32];
+
+//		DumpRemoteDevice(alpacaDevice, __FUNCTION__);
+		cValidIPaddr		=	true;
+		cAlpacaDeviceType	=	alpacaDevice->deviceTypeEnum;
+		cAlpacaDevNum		=	alpacaDevice->alpacaDeviceNum;
+		cDeviceAddress		=	alpacaDevice->deviceAddress;
+		cPort				=	alpacaDevice->port;
+
+		strcpy(cAlpacaDeviceNameStr,	alpacaDevice->deviceNameStr);
+		strcpy(cAlpacaDeviceTypeStr,	alpacaDevice->deviceTypeStr);
+
+		tolowerStr(cAlpacaDeviceTypeStr);
+		inet_ntop(AF_INET, &cDeviceAddress.sin_addr.s_addr, ipString, INET_ADDRSTRLEN);
+
+		CheckConnectedState();		//*	check connected and connect if not already connected
+//		GetConfiguredDevices();
+	#ifdef _CONTROLLER_USES_ALPACA_
+		AlpacaCheckForDeviceState();
+	#endif
+	}
+	else
+	{
+		cValidIPaddr		=	false;
+		cOnLine				=	false;
+	}
 
 	gCurrentActiveWindow	=	this;
 
@@ -534,9 +604,14 @@ Controller::~Controller(void)
 int		iii;
 
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
-//	CONSOLE_DEBUG_W_STR("Deleting window:\t", cWindowName);
-//	CONSOLE_DEBUG_W_NUM("gControllerCnt\t=:", gControllerCnt);
+	CONSOLE_DEBUG_W_STR("Deleting window:\t", cWindowName);
+	CONSOLE_DEBUG_W_NUM("gControllerCnt\t=:", gControllerCnt);
 
+	gControllerCnt--;
+	if (gControllerCnt <= 0)
+	{
+		CONSOLE_DEBUG_W_NUM("Something is wrong, gControllerCnt is too low\t=:", gControllerCnt);
+	}
 #ifdef _USE_BACKGROUND_THREAD_
 	//*	we have to kill the background thread
 	int		threadCancelErr;
@@ -651,7 +726,7 @@ int		iii;
 	//---end------end------end------end------end------end---
 #endif // _USE_OPENCV_CPP_
 
-//	CONSOLE_DEBUG("Removing from list");
+	CONSOLE_DEBUG("Removing from list");
 	for (iii=0; iii<kMaxControllers; iii++)
 	{
 		if (gControllerList[iii] == this)
@@ -660,7 +735,33 @@ int		iii;
 			gControllerList[iii]	=	NULL;
 		}
 	}
+
+	//--------------------------------------------------
+	//*	check for memory leaks
+	if (cTabsDeleted < (cTabCount -1))
+	{
+		CONSOLE_DEBUG("Possible memory leak!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+		CONSOLE_DEBUG_W_STR("Check window\t=",	cWindowName);
+		CONSOLE_DEBUG_W_NUM("cTabCount   \t=",	cTabCount-1);
+		CONSOLE_DEBUG_W_NUM("cTabsDeleted\t=",	cTabsDeleted);
+//		CONSOLE_ABORT(__FUNCTION__);
+	}
+
 //	CONSOLE_DEBUG("Done");
+}
+
+
+//**************************************************************************************
+void	Controller::ShowWindow(void)
+{
+	cv::resizeWindow(	cWindowName, cWidth, cHeight);
+	cv::moveWindow(cWindowName, (20 + ((gControllerCnt - 1) * (150))), 10);
+}
+
+//**************************************************************************************
+void	Controller::HideWindow(void)
+{
+	cv::moveWindow(cWindowName, 1000, 1000);
 }
 
 //**************************************************************************************
@@ -669,30 +770,38 @@ void	Controller::CheckConnectedState(void)
 #ifdef _CONTROLLER_USES_ALPACA_
 bool		validData;
 
-	CONSOLE_DEBUG(__FUNCTION__);
-	if (strlen(cAlpacaDeviceTypeStr) > 0)
+//	CONSOLE_DEBUG(__FUNCTION__);
+	if (cValidIPaddr)
 	{
-		//*	see if its connected
-		validData	=	AlpacaGetCommonConnectedState(cAlpacaDeviceTypeStr);
-		if (validData == false)
+		if (strlen(cAlpacaDeviceTypeStr) > 0)
 		{
-			CONSOLE_DEBUG("No valid data from AlpacaGetCommonConnectedState()");
-		}
-		CONSOLE_DEBUG_W_NUM("cCommonProp.Connected\t=", cCommonProp.Connected);
-
-		//*	if its not connected, send the connect command
-		if (cCommonProp.Connected == false)
-		{
-			validData	=	AlpacaSetConnected(cAlpacaDeviceTypeStr, true);
-			if (validData)
+			//*	see if its connected
+			validData	=	AlpacaGetCommonConnectedState(cAlpacaDeviceTypeStr);
+			if (validData == false)
 			{
-				cReadStartup	=	true;
+				CONSOLE_DEBUG("No valid data from AlpacaGetCommonConnectedState()");
 			}
+			CONSOLE_DEBUG_W_BOOL("cCommonProp.Connected\t=", cCommonProp.Connected);
+
+			//*	if its not connected, send the connect command
+			if (cCommonProp.Connected == false)
+			{
+				validData	=	AlpacaSetConnected(cAlpacaDeviceTypeStr, true);
+				if (validData)
+				{
+					cReadStartup	=	true;
+				}
+			}
+		}
+		else
+		{
+//			CONSOLE_DEBUG("cAlpacaDeviceTypeStr is empty, we dont now what this is");
+//			CONSOLE_ABORT(__FUNCTION__);
 		}
 	}
 	else
 	{
-		CONSOLE_ABORT(__FUNCTION__);
+		CONSOLE_DEBUG("cValidIPaddr == false");
 	}
 #endif // _CONTROLLER_USES_ALPACA_
 }
@@ -707,6 +816,18 @@ void	Controller::AlpacaDisplayErrorMessage(const char *errorMsgString)
 void	Controller::SetupWindowControls(void)
 {
 //	CONSOLE_DEBUG("SetupWindowControls must be overloaded");
+}
+
+//**************************************************************************************
+void	Controller::SetDeviceStateTabInfo(	const int	tabNumber,
+											const int	nameStartWidgetIdx,
+											const int	valueStartWidgetIdx,
+											const int	statusWidgetIdx)
+{
+	cDeviceStateTabNum		=	tabNumber;
+	cDeviceStateNameStart	=	nameStartWidgetIdx;
+	cDeviceStateValueStart	=	valueStartWidgetIdx;
+	cDeviceStateStats		=	statusWidgetIdx;
 }
 
 //*****************************************************************************
@@ -727,10 +848,231 @@ int		iii;
 	cUpdateWindow	=	true;
 }
 
+
+#ifdef _CONTROLLER_USES_ALPACA_
+//*****************************************************************************
+void	Controller::GetStartUpData_SubClass(void)
+{
+	CONSOLE_DEBUG(__FUNCTION__);
+	//*	this is ONLY to be implemented at the subclass level
+}
+
+//*****************************************************************************
+void	Controller::GetStatus_SubClass(void)
+{
+	CONSOLE_DEBUG(__FUNCTION__);
+	//*	this is ONLY to be implemented at the subclass level
+}
+
+//*****************************************************************************
+//*	this does NOT get over-ridden
+//*	this routine gets called one time to get the info on the camera that does not change
+//*****************************************************************************
+void	Controller::GetStartUpData(void)
+{
+bool	validData;
+bool	enableReadAllDebug	=	false;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG_W_STR("Reading startup information for", cWindowName);
+//	CONSOLE_DEBUG_W_NUM("cAlpacaDeviceType\t=", cAlpacaDeviceType);
+//	CONSOLE_DEBUG_W_BOOL("cValidIPaddr    \t=", cValidIPaddr);
+//	CONSOLE_DEBUG_W_BOOL("cHas_readall    \t=", cHas_readall);
+//	CONSOLE_DEBUG_W_BOOL("cHas_DeviceState\t=", cHas_DeviceState);
+
+//	if (cAlpacaDeviceType == kDeviceType_Management)
+//	{
+//		enableReadAllDebug	=	true;
+//	}
+	if (cValidIPaddr)
+	{
+		//===============================================================
+		//*	get supportedactions
+		//*	AlpacaGetSupportedActions() sets the cHas_readall appropriately
+		validData	=	AlpacaGetSupportedActions(cAlpacaDeviceTypeStr, cAlpacaDevNum);
+		if (validData == false)
+		{
+			CONSOLE_DEBUG("Read failure - supportedactions");
+			cReadFailureCnt++;
+		}
+//		CONSOLE_DEBUG_W_BOOL("cHas_readall      \t=", cHas_readall);
+//		CONSOLE_DEBUG_W_BOOL("cHas_DeviceState  \t=", cHas_DeviceState);
+//		CONSOLE_DEBUG_W_BOOL("enableReadAllDebug\t=", enableReadAllDebug);
+		//*	AlpacaGetSupportedActions() sets the cHas_readall appropriately
+		if (cHas_readall)
+		{
+			CONSOLE_DEBUG("Calling AlpacaGetStatus_ReadAll()");
+//			CONSOLE_DEBUG_W_STR("cAlpacaDeviceTypeStr\t=", cAlpacaDeviceTypeStr);
+//			CONSOLE_DEBUG_W_NUM("cAlpacaDevNum       \t=", cAlpacaDevNum);
+			validData	=	AlpacaGetStatus_ReadAll(cAlpacaDeviceTypeStr, cAlpacaDevNum, enableReadAllDebug);
+//			CONSOLE_DEBUG_W_BOOL("AlpacaGetStatus_ReadAll() returned\t=", validData);
+		}
+		else
+		{
+			validData	=	AlpacaGetCommonProperties_OneAAT(cAlpacaDeviceTypeStr);
+			validData	=	AlpacaGetStartupData_OneAAT();
+		}
+		AlpacaGetCapabilities();
+		AlpacaGetStartupData();	//*	to be deleted/removed once GetStartUpData_SubClass() is fully implemented
+	}
+	GetStartUpData_SubClass();
+	UpdateSupportedActions();
+	UpdateStartupData();
+}
+
+//*****************************************************************************
+bool	Controller::AlpacaGetStatus_OneAAT(void)
+{
+	return(false);
+}
+
+//*****************************************************************************
+bool	Controller::AlpacaGetStatus(void)
+{
+bool	validData;
+bool	previousOnLineState;
+
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+	previousOnLineState	=   cOnLine;
+	if (cHas_readall)
+	{
+		validData	=	AlpacaGetStatus_ReadAll(cAlpacaDeviceTypeStr, cAlpacaDevNum);
+	}
+	else
+	{
+		validData	=	AlpacaGetCommonConnectedState(cAlpacaDeviceTypeStr);
+		validData	=	AlpacaGetStatus_OneAAT();	//*	One At A Time
+	}
+	GetStatus_SubClass();
+	if (validData)
+	{
+		cOnLine	=	true;
+	}
+	else
+	{
+		cOnLine	=	false;
+	}
+	if (cOnLine != previousOnLineState)
+	{
+		UpdateOnlineStatus();
+	}
+	return(validData);
+}
+#endif // _CONTROLLER_USES_ALPACA_
+
+
+//**************************************************************************************
+void	Controller::UpdateStartupData(void)
+{
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, "needs to be over-ridden");
+}
+
+//**************************************************************************************
+void	Controller::UpdateStatusData(void)
+{
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, "needs to be over-ridden");
+}
+
+//**************************************************************************************
+void	Controller::UpdateOnlineStatus(void)
+{
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, "needs to be over-ridden");
+//	CONSOLE_ABORT(__FUNCTION__);
+}
+
+
 //**************************************************************************************
 void	Controller::RunBackgroundTasks(const char *callingFunction, bool enableDebug)
 {
-//	CONSOLE_DEBUG(__FUNCTION__);
+uint32_t	currentMillis;
+uint32_t	deltaSeconds;
+bool		validData;
+bool		needToUpdate;
+
+//	CONSOLE_DEBUG_W_2STR(__FUNCTION__, callingFunction, cWindowName);
+//	CONSOLE_DEBUG_W_BOOL("cReadStartup\t=", cReadStartup);
+
+	if (cButtonClickInProgress)
+	{
+		return;
+	}
+
+	if (enableDebug)
+	{
+		CONSOLE_DEBUG_W_BOOL("cReadStartup\t=", cReadStartup);
+	}
+
+	if (cReadStartup)
+	{
+		CONSOLE_DEBUG_W_BOOL("cReadStartup\t=", cReadStartup);
+	#ifdef _CONTROLLER_USES_ALPACA_
+		CheckConnectedState();
+		GetStartUpData();
+		UpdateCommonProperties();
+		//*	if we have DeviceState support
+		if (cHas_DeviceState)
+		{
+			//*	read the device state on first pass
+			AlpacaGetStatus_DeviceState();
+		}
+	#endif
+		cReadStartup	=	false;
+	}
+
+	needToUpdate	=	false;
+	currentMillis	=	millis();
+	deltaSeconds	=	(currentMillis - cLastUpdate_milliSecs) / 1000;
+
+#ifdef _CONTROLLER_USES_ALPACA_
+	if ((deltaSeconds >= cUpdateDelta_secs) || cForceAlpacaUpdate)	//*	force update is set when a switch is clicked
+	{
+		needToUpdate		=	true;
+		cForceAlpacaUpdate	=	false;
+	}
+
+	if (needToUpdate)
+	{
+		if (cHas_readall == false)
+		{
+			CONSOLE_DEBUG_W_NUM("Updating..........................cUpdateDelta_secs=", cUpdateDelta_secs);
+		}
+		//*	is the IP address valid
+		if (cValidIPaddr)
+		{
+			//*	does this device have "DeviceState"
+			if (cOnLine && cHas_DeviceState)
+			{
+				validData	=	AlpacaGetStatus_DeviceState();
+			}
+//			else if (cAlpacaDeviceType != kDeviceType_Management)
+//			{
+//				CONSOLE_DEBUG_W_BOOL("cOnLine         \t=", cOnLine);
+//				CONSOLE_DEBUG_W_BOOL("cHas_DeviceState\t=", cHas_DeviceState);
+//				CONSOLE_DEBUG_W_BOOL("cValidIPaddr    \t=", cValidIPaddr);
+//			}
+			//----------------------------------
+			validData		=	AlpacaGetStatus();
+
+			if (validData == false)
+			{
+			//	CONSOLE_DEBUG("Failed to get data");
+			}
+//			CONSOLE_DEBUG("Calling UpdateStatusData()");
+			UpdateStatusData();
+			UpdateConnectedStatusIndicator();
+		}
+		else
+		{
+		#ifdef _INCLUDE_CTRL_MAIN_
+			GetStatus_SubClass();
+			UpdateStatusData();
+		#else
+			CONSOLE_DEBUG_W_BOOL("cValidIPaddr    \t=", cValidIPaddr);
+		#endif // _INCLUDE_CTRL_MAIN_
+		}
+		cLastUpdate_milliSecs	=	millis();
+	}
+#endif // _CONTROLLER_USES_ALPACA_
 }
 
 //**************************************************************************************
@@ -822,15 +1164,15 @@ TYPE_WIDGET		*myWidgetPtr;
 			//*	draw the widgets
 			for (iii=0; iii<kMaxWidgets; iii++)
 			{
-				if (myWidgetPtr[iii].needsUpdated)
+				if (myWidgetPtr[iii].valid)
 				{
-					//*	first erase that rectangle with background color
-
-
-					//*	draw the widget that needs updating
-					DrawOneWidget(&myWidgetPtr[iii], iii);
-					myWidgetPtr[iii].needsUpdated	=	false;
-					updatedCnt++;
+					if (myWidgetPtr[iii].needsUpdated)
+					{
+						myWidgetPtr[iii].needsUpdated	=	false;
+						//*	draw the widget that needs updating
+						DrawOneWidget(&myWidgetPtr[iii], iii);
+						updatedCnt++;
+					}
 				}
 			}
 
@@ -839,7 +1181,7 @@ TYPE_WIDGET		*myWidgetPtr;
 		#else
 			cvShowImage(cWindowName, cOpenCV_Image);
 		#endif
-//waitKey			cv::waitKey(15);
+			cv::waitKey(15);
 //			CONSOLE_DEBUG_W_NUM("updatedCnt\t=", updatedCnt);
 		}
 		else
@@ -1426,13 +1768,18 @@ void	Controller::EraseWidgetBackground(TYPE_WIDGET *theWidget)
 {
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, theWidget->textString);
 	cCurrentColor	=	theWidget->bgColor;
-	LLD_FillRect(theWidget->left,	theWidget->top,	theWidget->width,	theWidget->height);
+	LLG_FillRect(theWidget->left,	theWidget->top,	theWidget->width,	theWidget->height);
 
 
 	if (theWidget->includeBorder)
 	{
 		cCurrentColor	=	theWidget->borderColor;
-		LLD_FrameRect(theWidget->left,	theWidget->top,	theWidget->width,	theWidget->height);
+		LLG_FrameRect(theWidget->left,	theWidget->top,	theWidget->width,	theWidget->height);
+		if ((theWidget->width == 0) || (theWidget->height == 0))
+		{
+			CONSOLE_DEBUG_W_NUM("cCurrentTabNum\t=", cCurrentTabNum);
+			DumpWidget(theWidget, __FUNCTION__);
+		}
 	}
 }
 
@@ -1452,13 +1799,13 @@ void	Controller::DrawWidgetButton(TYPE_WIDGET *theWidget)
 		myGBcolor.val[1]	*=	0.75;
 		myGBcolor.val[2]	*=	0.75;
 		myGBcolor.val[3]	*=	0.75;
-		cCurrentColor	=	myGBcolor;
-		LLD_FillRect(theWidget->left,	theWidget->top,	theWidget->width,	theWidget->height);
+		cCurrentColor		=	myGBcolor;
+		LLG_FillRect(theWidget->left,	theWidget->top,	theWidget->width,	theWidget->height);
 	}
 	if (theWidget->selected)
 	{
 		cCurrentColor	=	theWidget->borderColor;
-		LLD_FillRect(	theWidget->left		+ 3,
+		LLG_FillRect(	theWidget->left		+ 3,
 						theWidget->top		+ 3,
 						theWidget->width	- 6,
 						theWidget->height	- 6);
@@ -1467,7 +1814,7 @@ void	Controller::DrawWidgetButton(TYPE_WIDGET *theWidget)
 	if (theWidget->includeBorder)
 	{
 		cCurrentColor	=	theWidget->borderColor;
-		LLD_FrameRect(theWidget->left,	theWidget->top,	theWidget->width,	theWidget->height);
+		LLG_FrameRect(theWidget->left,	theWidget->top,	theWidget->width,	theWidget->height);
 	}
 	DrawWidgetText(theWidget);
 }
@@ -1488,12 +1835,13 @@ int			textLoc_Y;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-	EraseWidgetBackground(theWidget);
+//	EraseWidgetBackground(theWidget);
+	textBuffer[0]		=	0;
 
 	sLen	=	strlen(theWidget->textString);
 	if (sLen > 0)
 	{
-		LLD_GetTextSize("test", theWidget->fontNum);
+		LLG_GetTextSize("test", theWidget->fontNum);
 		curFontNum		=	theWidget->fontNum;
 
 		textLoc_X	=	theWidget->left + 7;
@@ -1503,6 +1851,7 @@ int			textLoc_Y;
 		ccc				=	0;
 		currentTabStop	=	-1;
 		cCurrentColor	=	theWidget->textColor;
+		//*	step thru the string looking for tabs
 		for (iii=0; iii<=sLen; iii++)
 		{
 			theChar	=	theWidget->textString[iii];
@@ -1514,7 +1863,16 @@ int			textLoc_Y;
 				{
 					textLoc_X	+=	theWidget->tabStops[currentTabStop];
 				}
-				LLD_DrawCString(textLoc_X, textLoc_Y, textBuffer, curFontNum);
+				if (ccc > 0)
+				{
+					LLG_DrawCString(textLoc_X, textLoc_Y, textBuffer, curFontNum);
+				}
+//				else
+//				{
+//					CONSOLE_DEBUG_W_NUM("textLoc_X \t=", textLoc_X);
+//					CONSOLE_DEBUG_W_STR("textBuffer\t=", textBuffer);
+//					CONSOLE_ABORT(__FUNCTION__);
+//				}
 
 				currentTabStop++;
 				ccc			=	0;
@@ -1544,7 +1902,7 @@ int			textOffsetY;
 //	CONSOLE_DEBUG(__FUNCTION__);
 	if (strlen(theWidget->textString) > 0)
 	{
-		textWidthPixels		=	LLD_GetTextSize(theWidget->textString, theWidget->fontNum);
+		textWidthPixels		=	LLG_GetTextSize(theWidget->textString, theWidget->fontNum);
 		switch (theWidget->justification)
 		{
 			case kJustification_Left:
@@ -1585,15 +1943,24 @@ int			textOffsetY;
 		}
 		cCurrentColor	=	theWidget->textColor;
 
-		LLD_DrawCString(textLoc_X, textLoc_Y, theWidget->textString, theWidget->fontNum);
+		LLG_DrawCString(textLoc_X, textLoc_Y, theWidget->textString, theWidget->fontNum);
 	}
 }
 
 //**************************************************************************************
 void	Controller::DrawWidgetTextBox(TYPE_WIDGET *theWidget)
 {
-	EraseWidgetBackground(theWidget);
-	DrawWidgetText(theWidget);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, theWidget->textString);
+	if ((theWidget->width == 0) || (theWidget->height == 0))
+	{
+		CONSOLE_DEBUG_W_NUM("cCurrentTabNum\t=", cCurrentTabNum);
+		DumpWidget(theWidget, __FUNCTION__);
+	}
+	else
+	{
+		EraseWidgetBackground(theWidget);
+		DrawWidgetText(theWidget);
+	}
 }
 
 #define	kMaxTextLineLen	512
@@ -1627,7 +1994,7 @@ int			textLoc_Y;
 	if (strlen(myStringPtr) > 0)
 	{
 		previousChar	=	0;
-		textWidthPixels	=	LLD_GetTextSize("test", theWidget->fontNum);
+		textWidthPixels	=	LLG_GetTextSize("test", theWidget->fontNum);
 
 		textLoc_X	=	theWidget->left + 10;
 		textLoc_Y	=	theWidget->top + cCurrentFontHeight + cCurrentFontBaseLine;
@@ -1665,7 +2032,7 @@ int			textLoc_Y;
 				}
 
 				//*	check the width of the line to make sure its going to fit
-				textWidthPixels	=	LLD_GetTextSize(lineBuff, theWidget->fontNum);
+				textWidthPixels	=	LLG_GetTextSize(lineBuff, theWidget->fontNum);
 				if (textWidthPixels > (theWidget->width - 150))
 				{
 				int		jjj;
@@ -1683,7 +2050,7 @@ int			textLoc_Y;
 						jjj++;
 					}
 					nextWord[qqq]		=	0;
-					textWidthNextWord	=	LLD_GetTextSize(nextWord, theWidget->fontNum);
+					textWidthNextWord	=	LLG_GetTextSize(nextWord, theWidget->fontNum);
 					if ((textWidthPixels + textWidthNextWord) >= theWidget->width)
 					{
 						drawTextFlg	=	true;
@@ -1702,7 +2069,7 @@ int			textLoc_Y;
 
 			if (drawTextFlg)
 			{
-				textWidthPixels	=	LLD_GetTextSize(lineBuff, theWidget->fontNum);
+				textWidthPixels	=	LLG_GetTextSize(lineBuff, theWidget->fontNum);
 
 				//*	this allows for blank lines
 				if (strlen(lineBuff) > 0)
@@ -1734,7 +2101,7 @@ int			textLoc_Y;
 
 					}
 					cCurrentColor	=	theWidget->textColor;
-					LLD_DrawCString(textLoc_X, textLoc_Y, lineBuff, theWidget->fontNum);
+					LLG_DrawCString(textLoc_X, textLoc_Y, lineBuff, theWidget->fontNum);
 				}
 				ccc				=	0;
 				lineBuff[ccc]	=	0;
@@ -1761,12 +2128,12 @@ int			pt1_Y;
 	EraseWidgetBackground(theWidget);
 	//*	draw the radio button
 	cCurrentColor	=	theWidget->borderColor;
-	LLD_FrameEllipse(pt1_X, pt1_Y, radius, radius);
+	LLG_FrameEllipse(pt1_X, pt1_Y, radius, radius);
 	//*	check to see if its selected
 	if (theWidget->selected)
 	{
 		cCurrentColor	=	theWidget->borderColor;
-		LLD_FillEllipse(pt1_X, pt1_Y, radius - 2, radius - 2);
+		LLG_FillEllipse(pt1_X, pt1_Y, radius - 2, radius - 2);
 	}
 
 	DrawWidgetText(theWidget, ((2 * radius) + 8));
@@ -1782,11 +2149,12 @@ int			pt2_Y;
 
 #define	kInset	2
 
+//	CONSOLE_DEBUG(__FUNCTION__);
 	EraseWidgetBackground(theWidget);
 	//*	draw the Check box
 
 	cCurrentColor	=	CV_RGB(128, 128, 128);
-	LLD_FillRect(theWidget->left,	theWidget->top,	theWidget->height,	theWidget->height);
+	LLG_FillRect(theWidget->left,	theWidget->top,	theWidget->height,	theWidget->height);
 
 	//*	check to see if its selected
 	if (theWidget->selected)
@@ -1797,16 +2165,16 @@ int			pt2_Y;
 		pt2_X	=	theWidget->left + theWidget->height - kInset;
 		pt2_Y	=	theWidget->top + theWidget->height - kInset;
 		cCurrentColor	=	theWidget->borderColor;
-		LLD_MoveTo(pt1_X, pt1_Y);
-		LLD_LineTo(pt2_X, pt2_Y);
+		LLG_MoveTo(pt1_X, pt1_Y);
+		LLG_LineTo(pt2_X, pt2_Y);
 
 		pt1_X	=	theWidget->left + theWidget->height - kInset;
 		pt1_Y	=	theWidget->top + kInset;
 
 		pt2_X	=	theWidget->left + kInset;
 		pt2_Y	=	theWidget->top + theWidget->height - kInset;
-		LLD_MoveTo(pt1_X, pt1_Y);
-		LLD_LineTo(pt2_X, pt2_Y);
+		LLG_MoveTo(pt1_X, pt1_Y);
+		LLG_LineTo(pt2_X, pt2_Y);
 
 	}
 	DrawWidgetText(theWidget, (theWidget->height + 8), 0);
@@ -1848,7 +2216,7 @@ int			sliderWidth;
 	}
 
 
-	textWidthPixels		=	LLD_GetTextSize(rightString, theWidget->fontNum);
+	textWidthPixels		=	LLG_GetTextSize(rightString, theWidget->fontNum);
 
 	//*	calculate location for left string
 	textLoc_X	=	theWidget->left + 7;
@@ -1856,18 +2224,18 @@ int			sliderWidth;
 	textLoc_Y	=	theWidget->top + textOffsetY;
 
 
-	LLD_DrawCString(textLoc_X, textLoc_Y, leftString, theWidget->fontNum);
+	LLG_DrawCString(textLoc_X, textLoc_Y, leftString, theWidget->fontNum);
 
 	//*	calculate location for right string
 	textLoc_X	=	(theWidget->left + theWidget->width)- textWidthPixels;
 	textLoc_X	-=	5;
-	LLD_DrawCString(textLoc_X, textLoc_Y, rightString, theWidget->fontNum);
+	LLG_DrawCString(textLoc_X, textLoc_Y, rightString, theWidget->fontNum);
 
 	//*	now draw the slider itself
 	vertCenter		=	theWidget->top + (theWidget->height / 2);
 	sliderLeft		=	theWidget->left + 50;
 	sliderWidth		=	theWidget->width - 100;
-	LLD_FrameRect(	sliderLeft,
+	LLG_FrameRect(	sliderLeft,
 					vertCenter - 1,
 					sliderWidth,
 					3);
@@ -1880,7 +2248,7 @@ int			sliderWidth;
 
 //		cCurrentColor	=	theWidget->textColor;
 	cCurrentColor	=	CV_RGB(255, 0, 0);
-	LLD_FillEllipse(textLoc_X, textLoc_Y, radius, radius);
+	LLG_FillEllipse(textLoc_X, textLoc_Y, radius, radius);
 }
 
 //**************************************************************************************
@@ -1939,7 +2307,7 @@ int			scrollBar_Travel;
 //		cCurrentColor	=	theWidget->textColor;
 	cCurrentColor	=	CV_RGB(0, 255, 255);
 
-	LLD_FillRect(scrollBar_left,	scrollBar_top,	scrollBar_width,	scrollBar_height);
+	LLG_FillRect(scrollBar_left,	scrollBar_top,	scrollBar_width,	scrollBar_height);
 }
 
 
@@ -1954,7 +2322,7 @@ int			pt2_Y;
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	cCurrentColor	=	theWidget->borderColor;
-	LLD_FrameRect(theWidget->left,	theWidget->top,	theWidget->width,	theWidget->height);
+	LLG_FrameRect(theWidget->left,	theWidget->top,	theWidget->width,	theWidget->height);
 
 	if (theWidget->crossedOut)
 	{
@@ -1966,8 +2334,8 @@ int			pt2_Y;
 		cCurrentColor		=	CV_RGB(255, 0, 0);
 		cCurrentLineWidth	=	2;
 
-		LLD_MoveTo(pt1_X, pt1_Y);
-		LLD_LineTo(pt2_X, pt2_Y);
+		LLG_MoveTo(pt1_X, pt1_Y);
+		LLG_LineTo(pt2_X, pt2_Y);
 
 
 		pt1_X	=	theWidget->left + theWidget->width;
@@ -1975,8 +2343,8 @@ int			pt2_Y;
 
 		pt2_X	=	theWidget->left;
 		pt2_Y	=	theWidget->top + theWidget->height;
-		LLD_MoveTo(pt1_X, pt1_Y);
-		LLD_LineTo(pt2_X, pt2_Y);
+		LLG_MoveTo(pt1_X, pt1_Y);
+		LLG_LineTo(pt2_X, pt2_Y);
 		cCurrentLineWidth	=	1;
 	}
 }
@@ -2001,8 +2369,8 @@ int		pt2_Y;
 
 			pt2_X	=	theWidget->left + iii + 1;
 			pt2_Y	=	pt1_Y - (theWidget->graphArrayPtr[iii] * 3);
-			LLD_MoveTo(pt1_X, pt1_Y);
-			LLD_LineTo(pt2_X, pt2_Y);
+			LLG_MoveTo(pt1_X, pt1_Y);
+			LLG_LineTo(pt2_X, pt2_Y);
 //				cvLine(	cOpenCV_Image,
 //						pt1,
 //						pt2,
@@ -2040,18 +2408,18 @@ int			pt2_Y;
 
 			pt2_X	=	theWidget->left + (theWidget->width / 2);
 			pt2_Y	=	theWidget->top + theWidget->height;
-			LLD_MoveTo(pt1_X, pt1_Y);
-			LLD_LineTo(pt2_X, pt2_Y);
+			LLG_MoveTo(pt1_X, pt1_Y);
+			LLG_LineTo(pt2_X, pt2_Y);
 
 			pt2_X	=	theWidget->left;
 			pt2_Y	=	theWidget->top + (theWidget->width / 2);
-			LLD_MoveTo(pt1_X, pt1_Y);
-			LLD_LineTo(pt2_X, pt2_Y);
+			LLG_MoveTo(pt1_X, pt1_Y);
+			LLG_LineTo(pt2_X, pt2_Y);
 
 			pt2_X	=	theWidget->left + theWidget->width;
 			pt2_Y	=	theWidget->top + (theWidget->width / 2);
-			LLD_MoveTo(pt1_X, pt1_Y);
-			LLD_LineTo(pt2_X, pt2_Y);
+			LLG_MoveTo(pt1_X, pt1_Y);
+			LLG_LineTo(pt2_X, pt2_Y);
 			break;
 
 		case kIcon_DownArrow:
@@ -2060,8 +2428,8 @@ int			pt2_Y;
 
 			pt2_X	=	theWidget->left + (theWidget->width / 2);
 			pt2_Y	=	theWidget->top + theWidget->height - 1;
-			LLD_MoveTo(pt1_X, pt1_Y);
-			LLD_LineTo(pt2_X, pt2_Y);
+			LLG_MoveTo(pt1_X, pt1_Y);
+			LLG_LineTo(pt2_X, pt2_Y);
 
 
 			pt1_X	=	theWidget->left + (theWidget->width / 2);
@@ -2069,13 +2437,13 @@ int			pt2_Y;
 
 			pt2_X	=	theWidget->left;
 			pt2_Y	=	theWidget->top + (theWidget->width / 2);
-			LLD_MoveTo(pt1_X, pt1_Y);
-			LLD_LineTo(pt2_X, pt2_Y);
+			LLG_MoveTo(pt1_X, pt1_Y);
+			LLG_LineTo(pt2_X, pt2_Y);
 
 			pt2_X	=	theWidget->left + theWidget->width;
 			pt2_Y	=	theWidget->top + (theWidget->width / 2);
-			LLD_MoveTo(pt1_X, pt1_Y);
-			LLD_LineTo(pt2_X, pt2_Y);
+			LLG_MoveTo(pt1_X, pt1_Y);
+			LLG_LineTo(pt2_X, pt2_Y);
 			break;
 	}
 }
@@ -2096,18 +2464,18 @@ int		textLoc_Y;
 
 	//*	erase using BACKGROUND color
 	cCurrentColor	=	theWidget->bgColor;
-	LLD_FillRect(theWidget->left,	theWidget->top,	theWidget->width,	theWidget->height);
+	LLG_FillRect(theWidget->left,	theWidget->top,	theWidget->width,	theWidget->height);
 
 	//*	progress bar using TEXT color
 	newWidth		=	theWidget->width * percentComplete;
 	cCurrentColor	=	theWidget->textColor;
-	LLD_FillRect(theWidget->left,	theWidget->top,	newWidth,	theWidget->height);
+	LLG_FillRect(theWidget->left,	theWidget->top,	newWidth,	theWidget->height);
 
 	if (theWidget->includeBorder)
 	{
 		//*	frame the rectangle
 		cCurrentColor	=	theWidget->borderColor;
-		LLD_FrameRect(theWidget->left,	theWidget->top,	theWidget->width,	theWidget->height);
+		LLG_FrameRect(theWidget->left,	theWidget->top,	theWidget->width,	theWidget->height);
 	}
 
 	if (theWidget->height > 10)
@@ -2123,7 +2491,7 @@ int		textLoc_Y;
 		//*	text using BORDER color
 		textLoc_X	=	theWidget->left + 10;
 		textLoc_Y	=	theWidget->top + (theWidget->height / 2) + 5;
-		LLD_DrawCString(textLoc_X, textLoc_Y, textString, kFont_Medium);
+		LLG_DrawCString(textLoc_X, textLoc_Y, textString, kFont_Medium);
 	}
 }
 
@@ -2139,7 +2507,7 @@ cv::Mat		image_roi;
 //	if (theWidget->left == 272)
 //	{
 //		CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
-//		DumpWidget(theWidget);
+//		DumpWidget(theWidget, __FUNCTION__);
 //	}
 
 	if (cOpenCV_matImage != NULL)
@@ -2216,8 +2584,7 @@ cv::Mat		image_roi;
 			//*	draw the border if enabled
 			if (theWidget->includeBorder)
 			{
-			//	CONSOLE_DEBUG(__FUNCTION__);
-				LLD_FrameRect(&theWidget->roiRect);
+				LLG_FrameRect(&theWidget->roiRect);
 			}
 		}
 		else
@@ -2230,7 +2597,7 @@ cv::Mat		image_roi;
 				widgetRoiRect.width		=	theWidget->width;
 				widgetRoiRect.height	=	theWidget->height;
 
-				LLD_FrameRect(&widgetRoiRect);
+				LLG_FrameRect(&widgetRoiRect);
 			}
 		}
 	}
@@ -2343,7 +2710,7 @@ void	Controller::DrawWidgetImage(TYPE_WIDGET *theWidget)
 	{
 //		CONSOLE_DEBUG("theWidget->openCVimagePtr is null");
 		cCurrentColor	=	CV_RGB(100, 100, 100);
-		LLD_FillRect(theWidget->left, theWidget->top, theWidget->width, theWidget->height);
+		LLG_FillRect(theWidget->left, theWidget->top, theWidget->width, theWidget->height);
 	}
 }
 
@@ -2393,8 +2760,11 @@ TYPE_WIDGET		*myWidgetPtr;
 			myWidgetPtr	=	cCurrentTabObjPtr->cWidgetList;
 			if (myWidgetPtr != NULL)
 			{
-				DrawOneWidget(&myWidgetPtr[widgetIdx], widgetIdx);
-				cv::imshow(cWindowName, *cOpenCV_matImage);
+				if (myWidgetPtr[widgetIdx].valid)
+				{
+					DrawOneWidget(&myWidgetPtr[widgetIdx], widgetIdx);
+					cv::imshow(cWindowName, *cOpenCV_matImage);
+				}
 			}
 		}
 	}
@@ -2420,89 +2790,97 @@ void	Controller::DrawOneWidget(TYPE_WIDGET *theWidget, const int widgetIdx)
 cv::Rect		widgetRect;
 
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
-	theWidget->needsUpdated	=	false;	//*	record the fact that this widget has been updated
-	switch(theWidget->widgetType)
+	if (theWidget->valid && (theWidget->width > 0) && (theWidget->height > 0))
 	{
-		case kWidgetType_Button:
-			DrawWidgetButton(theWidget);
-			break;
+		theWidget->needsUpdated	=	false;	//*	record the fact that this widget has been updated
+		switch(theWidget->widgetType)
+		{
+			case kWidgetType_Button:
+				DrawWidgetButton(theWidget);
+				break;
 
-		case kWidgetType_Graph:
-			DrawWidgetGraph(theWidget);
-			if (theWidget->includeBorder)
-			{
-				cCurrentColor	=	theWidget->borderColor;
-				LLD_FrameRect(theWidget->left,	theWidget->top,	theWidget->width,	theWidget->height);
-			}
-			break;
+			case kWidgetType_Graph:
+				DrawWidgetGraph(theWidget);
+				if (theWidget->includeBorder)
+				{
+					cCurrentColor	=	theWidget->borderColor;
+					LLG_FrameRect(theWidget->left,	theWidget->top,	theWidget->width,	theWidget->height);
+				}
+				break;
 
-		case kWidgetType_CustomGraphic:
-			EraseWidgetBackground(theWidget);
-			//*	fall thru
-		case kWidgetType_Custom:
-			if (cCurrentTabObjPtr != NULL)
-			{
+			case kWidgetType_CustomGraphic:
+				EraseWidgetBackground(theWidget);
+				//*	fall thru
+			case kWidgetType_Custom:
+				if (cCurrentTabObjPtr != NULL)
+				{
 
-			#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
-				cCurrentTabObjPtr->DrawWidgetCustomGraphic(cOpenCV_matImage, widgetIdx);
-			#else
-				cCurrentTabObjPtr->DrawWidgetCustomGraphic(cOpenCV_Image, widgetIdx);
-			#endif
-			}
-			else
-			{
-				CONSOLE_DEBUG("cCurrentTabObjPtr is NULL");
-			}
-			break;
+				#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
+					cCurrentTabObjPtr->DrawWidgetCustomGraphic(cOpenCV_matImage, widgetIdx);
+				#else
+					cCurrentTabObjPtr->DrawWidgetCustomGraphic(cOpenCV_Image, widgetIdx);
+				#endif
+				}
+				else
+				{
+					CONSOLE_DEBUG("cCurrentTabObjPtr is NULL");
+				}
+				break;
 
-		case kWidgetType_Image:
-			DrawWidgetImage(theWidget);
-			break;
+			case kWidgetType_Image:
+				DrawWidgetImage(theWidget);
+				break;
 
-		case kWidgetType_MultiLineText:
-			DrawWidgetMultiLineText(theWidget);
-			break;
+			case kWidgetType_MultiLineText:
+				DrawWidgetMultiLineText(theWidget);
+				break;
 
-		case kWidgetType_RadioButton:
-			DrawWidgetRadioButton(theWidget);
-			break;
+			case kWidgetType_RadioButton:
+				DrawWidgetRadioButton(theWidget);
+				break;
 
-		case kWidgetType_CheckBox:
-			DrawWidgetCheckBox(theWidget);
-			break;
+			case kWidgetType_CheckBox:
+				DrawWidgetCheckBox(theWidget);
+				break;
 
-		case kWidgetType_Slider:
-			DrawWidgetSlider(theWidget);
-			break;
+			case kWidgetType_Slider:
+				DrawWidgetSlider(theWidget);
+				break;
 
-		case kWidgetType_ScrollBar:
-			DrawWidgetScrollBar(theWidget);
-			break;
+			case kWidgetType_ScrollBar:
+				DrawWidgetScrollBar(theWidget);
+				break;
 
-		case kWidgetType_OutlineBox:
-			DrawWidgetOutlineBox(theWidget);
-			break;
+			case kWidgetType_OutlineBox:
+				DrawWidgetOutlineBox(theWidget);
+				break;
 
-		case kWidgetType_Icon:
-			DrawWidgetIcon(theWidget);
-			break;
+			case kWidgetType_Icon:
+				DrawWidgetIcon(theWidget);
+				break;
 
-		case kWidgetType_ProessBar:
-			DrawWidgetProgressBar(theWidget);
-			break;
+			case kWidgetType_ProessBar:
+				DrawWidgetProgressBar(theWidget);
+				break;
 
-		case kWidgetType_TextBox:
-		default:
-			if (theWidget->hasTabs)
-			{
-				DrawWidgetTextWithTabs(theWidget);
-			}
-			else
-			{
-				DrawWidgetTextBox(theWidget);
-			}
-			break;
+			case kWidgetType_TextBox:
+			default:
+				if (theWidget->hasTabs)
+				{
+					DrawWidgetTextWithTabs(theWidget);
+				}
+				else
+				{
+					DrawWidgetTextBox(theWidget);
+				}
+				break;
+		}
 	}
+	else  if (theWidget->valid)
+	{
+		DumpWidget(theWidget, __FUNCTION__);
+	}
+
 }
 
 
@@ -2542,30 +2920,21 @@ TYPE_WIDGET		*myWidgetPtr;
 	}
 }
 
+//#include	"/usr/local/include/opencv4/opencv2/core/types.hpp"
 
 //**************************************************************************************
 void	Controller::DrawWindow(void)
 {
-
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
-#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 	if (cOpenCV_matImage != NULL)
 	{
-	cv::Rect	myCVrect;
-		myCVrect.x		=	0;
-		myCVrect.y		=	0;
-		myCVrect.width	=	cWidth;
-		myCVrect.height	=	cHeight;
-
-		cv::rectangle(	*cOpenCV_matImage,
-						myCVrect,
-						cBackGrndColor,			//	color,
-					#if (CV_MAJOR_VERSION >= 3)
-						cv::FILLED				//	int thickness CV_DEFAULT(1),
-					#else
-						CV_FILLED
-					#endif
-						);
+		cCurrentColor	=	cBackGrndColor;
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
+//		CONSOLE_DEBUG_W_DBL("cCurrentColor.B\t=",	cCurrentColor.val[0]);
+//		CONSOLE_DEBUG_W_DBL("cCurrentColor.G\t=",	cCurrentColor.val[1]);
+//		CONSOLE_DEBUG_W_DBL("cCurrentColor.R\t=",	cCurrentColor.val[2]);
+#endif // _USE_OPENCV_CPP_
+		LLG_FillRect(0,	0,	cWidth,	cHeight);
 
 		DrawWindowTabs();
 
@@ -2576,31 +2945,6 @@ void	Controller::DrawWindow(void)
 	{
 		CONSOLE_ABORT(__FUNCTION__);
 	}
-#else
-	if (cOpenCV_Image != NULL)
-	{
-	CvRect		myCVrect;
-		myCVrect.x		=	0;
-		myCVrect.y		=	0;
-		myCVrect.width	=	cWidth;
-		myCVrect.height	=	cHeight;
-		cvRectangleR(	cOpenCV_Image,
-						myCVrect,
-						cBackGrndColor,			//	color,
-					#if (CV_MAJOR_VERSION >= 3)
-						cv::FILLED,				//	int thickness CV_DEFAULT(1),
-					#else
-						CV_FILLED,
-					#endif
-						8,						//	int line_type CV_DEFAULT(8),
-						0);						//	int shift CV_DEFAULT(0));
-
-		DrawWindowTabs();
-
-		//*	draw the widgets
-		DrawWindowWidgets();
-	}
-#endif // _USE_OPENCV_CPP_
 }
 
 
@@ -3078,6 +3422,8 @@ void	Controller::SetWidgetSliderLimits(	const int	tabNum,
 											double		sliderMin,
 											double		sliderMax)
 {
+//	CONSOLE_DEBUG_W_DBL("sliderMin\t=", sliderMin);
+//	CONSOLE_DEBUG_W_DBL("sliderMax\t=", sliderMax);
 	if ((tabNum >= 0)  && (tabNum < kMaxTabs))
 	{
 		if (cWindowTabs[tabNum] != NULL)
@@ -3099,6 +3445,7 @@ void	Controller::SetWidgetSliderValue(	const int	tabNum,
 											const int	widgetIdx,
 											double		sliderValue)
 {
+//	CONSOLE_DEBUG_W_DBL("sliderValuen\t=", sliderValue);
 	if ((tabNum >= 0)  && (tabNum < kMaxTabs))
 	{
 		if (cWindowTabs[tabNum] != NULL)
@@ -3171,7 +3518,15 @@ TYPE_WIDGET		*myWidgetPtr;
 	}
 }
 
-
+//*****************************************************************************
+void	Controller::UpdateConnectedStatusIndicator(void)
+{
+	//*	this needs to be over-ridden, it should call
+	//*	UpdateConnectedIndicator for each windowtab that has a connected indicator
+	//	i.e. UpdateConnectedIndicator(kTab_Camera,		kCameraBox_Connected);
+//	CONSOLE_DEBUG_W_STR("This needs to be implemented for", cWindowName);
+//	CONSOLE_ABORT(__FUNCTION__);
+}
 
 //**************************************************************************************
 void	Controller::UpdateWindowTabColors(void)
@@ -3213,20 +3568,23 @@ bool	inRect;
 
 
 //*****************************************************************************
-void	DumpWidget(TYPE_WIDGET *theWidget)
+void	DumpWidget(TYPE_WIDGET *theWidget, const char *callingFunction)
 {
-	CONSOLE_DEBUG_W_NUM("theWidget->valid\t\t=",		theWidget->valid);
-	CONSOLE_DEBUG_W_NUM("theWidget->widgetType\t=",		theWidget->widgetType);
-	CONSOLE_DEBUG_W_NUM("theWidget->left\t\t=",			theWidget->left);
-	CONSOLE_DEBUG_W_NUM("theWidget->top\t\t=",			theWidget->top);
-	CONSOLE_DEBUG_W_NUM("theWidget->width\t\t=",		theWidget->width);
-	CONSOLE_DEBUG_W_NUM("theWidget->height\t\t=",		theWidget->height);
-	CONSOLE_DEBUG_W_NUM("theWidget->includeBorder\t=",	theWidget->includeBorder);
-	CONSOLE_DEBUG_W_NUM("theWidget->fontNum\t\t=",		theWidget->fontNum);
-	CONSOLE_DEBUG_W_NUM("theWidget->selected\t=",		theWidget->selected);
+//	CONSOLE_DEBUG_W_HEX(	"theWidget               \t=",	theWidget);
+	CONSOLE_DEBUG_W_BOOL(	"theWidget->valid        \t=",	theWidget->valid);
+	CONSOLE_DEBUG_W_BOOL(	"theWidget->needsUpdated \t=",	theWidget->needsUpdated);
+	CONSOLE_DEBUG_W_NUM(	"theWidget->widgetType   \t=",	theWidget->widgetType);
+	CONSOLE_DEBUG_W_NUM(	"theWidget->left         \t=",	theWidget->left);
+	CONSOLE_DEBUG_W_NUM(	"theWidget->top          \t=",	theWidget->top);
+	CONSOLE_DEBUG_W_NUM(	"theWidget->width        \t=",	theWidget->width);
+	CONSOLE_DEBUG_W_NUM(	"theWidget->height       \t=",	theWidget->height);
+	CONSOLE_DEBUG_W_BOOL(	"theWidget->includeBorder\t=",	theWidget->includeBorder);
+	CONSOLE_DEBUG_W_NUM(	"theWidget->fontNum      \t=",	theWidget->fontNum);
+	CONSOLE_DEBUG_W_BOOL(	"theWidget->selected     \t=",	theWidget->selected);
+	CONSOLE_DEBUG_W_STR(	"theWidget->textString   \t=",	theWidget->textString);
+	CONSOLE_DEBUG_W_STR(	"theWidget->alternateText\t=",	theWidget->alternateText);
+	CONSOLE_DEBUG_W_STR(	"theWidget->helpText     \t=",	theWidget->helpText);
 }
-
-
 
 
 //******************************************************************************
@@ -3324,8 +3682,6 @@ bool	windowExists;
 
 
 #ifdef _CONTROLLER_USES_ALPACA_
-
-
 //*****************************************************************************
 //*****************************************************************************
 //*****************************************************************************
@@ -3440,8 +3796,16 @@ char	textString[80];
 //*****************************************************************************
 void	Controller::UpdateSupportedActions(void)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG("this routine should be overloaded");
 }
+
+
+//**************************************************************************************
+void	Controller::ForceAlpacaUpdate(void)
+{
+	cForceAlpacaUpdate	=	true;
+}
+
 
 #endif // _CONTROLLER_USES_ALPACA_
 
@@ -3505,7 +3869,7 @@ int			threadErr;
 //**************************************************************************************
 //*	Low level drawing routines
 //**************************************************************************************
-void	Controller::LLD_MoveTo(const int xx, const int yy)
+void	Controller::LLG_MoveTo(const int xx, const int yy)
 {
 	cCurrentXloc	=	xx;
 	cCurrentYloc	=	yy;
@@ -3513,7 +3877,7 @@ void	Controller::LLD_MoveTo(const int xx, const int yy)
 }
 
 //**************************************************************************************
-void	Controller::LLD_LineTo(const int xx, const int yy)
+void	Controller::LLG_LineTo(const int xx, const int yy)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -3575,7 +3939,7 @@ void	Controller::LLD_LineTo(const int xx, const int yy)
 //**************************************************************************************
 //*	Low Level FrameRect
 //**************************************************************************************
-void	Controller::LLD_FrameRect(int left, int top, int width, int height, int lineWidth)
+void	Controller::LLG_FrameRect(int left, int top, int width, int height, int lineWidth)
 {
 
 	if ((width > 0) && (height > 0))
@@ -3625,16 +3989,16 @@ void	Controller::LLD_FrameRect(int left, int top, int width, int height, int lin
 }
 
 //**************************************************************************************
-void	Controller::LLD_FrameRect(cv::Rect *theRect)
+void	Controller::LLG_FrameRect(cv::Rect *theRect)
 {
-	LLD_FrameRect(theRect->x, theRect->y, theRect->width, theRect->height);
+	LLG_FrameRect(theRect->x, theRect->y, theRect->width, theRect->height);
 }
 
 
 //**************************************************************************************
 //*	Low Level FrameRect
 //**************************************************************************************
-void	Controller::LLD_FillRect(int left, int top, int width, int height)
+void	Controller::LLG_FillRect(int left, int top, int width, int height)
 {
 #if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 	if (cOpenCV_matImage != NULL)
@@ -3684,7 +4048,7 @@ void	Controller::LLD_FillRect(int left, int top, int width, int height)
 //**************************************************************************************
 //*	Low Level FrameRect
 //**************************************************************************************
-void	Controller::LLD_DrawCString(	const int	xx,
+void	Controller::LLG_DrawCString(	const int	xx,
 										const int	yy,
 										const char	*textString,
 										const int	fontIndex)
@@ -3736,7 +4100,7 @@ void	Controller::LLD_DrawCString(	const int	xx,
 }
 
 //**************************************************************************************
-void	Controller::LLD_FrameEllipse(	int xCenter, int yCenter, int xRadius, int yRadius)
+void	Controller::LLG_FrameEllipse(	int xCenter, int yCenter, int xRadius, int yRadius)
 {
 #if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 	if (cOpenCV_matImage != NULL)
@@ -3813,7 +4177,7 @@ void	Controller::LLD_FrameEllipse(	int xCenter, int yCenter, int xRadius, int yR
 }
 
 //**************************************************************************************
-void	Controller::LLD_FillEllipse(	int xCenter, int yCenter, int xRadius, int yRadius)
+void	Controller::LLG_FillEllipse(	int xCenter, int yCenter, int xRadius, int yRadius)
 {
 #if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 	if (cOpenCV_matImage != NULL)
@@ -3903,7 +4267,7 @@ void	Controller::LLD_FillEllipse(	int xCenter, int yCenter, int xRadius, int yRa
 }
 
 //*****************************************************************************
-int	Controller::LLD_GetTextSize(const char *textString, const int fontIndex)
+int	Controller::LLG_GetTextSize(const char *textString, const int fontIndex)
 {
 int		textWidthPixels;
 

@@ -30,6 +30,9 @@
 //*	Jun 19,	2020	<MLS> USB port now gets closed by destructor
 //*	Dec 28,	2020	<MLS> Added ZeroMotorValues()
 //*	Jan 26,	2021	<MLS> Updated several routine names
+//*	Jun 19,	2023	<MLS> Updated constructor to use TYPE_REMOTE_DEV
+//*	Jul  1,	2023	<MLS> Added cFocuserProp to focus controller
+//*	Jul  8,	2023	<MLS> Changing the way property updates are handled
 //*****************************************************************************
 //*	From the Nitecrawler web site
 //*	Rotating drawtube .001 degree resolution
@@ -53,6 +56,7 @@
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
 
+#include	"alpaca_defs.h"
 
 #include	"moonlite_com.h"
 #include	"controller.h"
@@ -63,44 +67,27 @@
 #include	"focuser_common.h"
 #include	"nitecrawler_colors.h"
 
+#include	"focuser_AlpacaCmds.h"
+#include	"focuser_AlpacaCmds.cpp"
 
 
 #pragma mark -
 
-//**************************************************************************************
-//**************************************************************************************
-//**************************************************************************************
-//**************************************************************************************
-
 
 //**************************************************************************************
 ControllerFocus::ControllerFocus(	const char			*argWindowName,
-									struct sockaddr_in	*deviceAddress,
-									const int			port,
-									const int			deviceNum,
+									TYPE_REMOTE_DEV		*alpacaDevice,
 									const int			focuserType)
-	:Controller(	argWindowName,
-					kFocuserBoxWidth,
-					kFocuserBoxHeight)
+	:Controller(argWindowName, kFocuserBoxWidth,  kFocuserBoxHeight, true, alpacaDevice)
 {
+
 
 	strcpy(cAlpacaDeviceTypeStr,	"focuser");
 
 	//*	moved all init stuff to separate routine so we can have multiple constructors
 	ControllerFocusInit(kComMode_Alpaca, focuserType);
 
-
-	cAlpacaDevNum	=	deviceNum;
-	if (deviceAddress != NULL)
-	{
-		cDeviceAddress	=	*deviceAddress;
-		cPort			=	port;
-		cValidIPaddr	=	true;
-
-		CheckConnectedState();		//*	check connected and connect if not already connected
-	}
 	SetupWindowControls();
-
 
 #ifdef _USE_BACKGROUND_THREAD_
 	StartBackgroundThread();
@@ -115,20 +102,19 @@ ControllerFocus::ControllerFocus(	const char			*argWindowName,
 {
 	CONSOLE_DEBUG(__FUNCTION__);
 
+	cValidUSB		=	true;
+	cValidIPaddr	=	false;
+	cOnLine			=	false;
 
 	//*	moved all init stuff to separate routine so we can have multiple constructors
 	ControllerFocusInit(kComMode_USB, focuserType);
 
-
 	strcpy(cUSBpath, usbPortPath);
-	cValidUSB	=	true;
 
 	SetupWindowControls();
 
 	SetWindowIPaddrInfo(cUSBpath, true);
-
 }
-
 
 //**************************************************************************************
 // Destructor
@@ -146,19 +132,27 @@ ControllerFocus::~ControllerFocus(void)
 //**************************************************************************************
 void	ControllerFocus::ControllerFocusInit(const int comMode, const int focuserType)
 {
-
 	CONSOLE_DEBUG(__FUNCTION__);
+
+	SetCommandLookupTable(gFocuserCmdTable);
+	SetAlternateLookupTable(gFocuserExtrasTable);
+
+	memset(&cFocuserProp, 0, sizeof(TYPE_FocuserProperties));
+	cFocuserProp.IsMoving	=	false;
+	cFocuserProp.Position	=	0;
+
 	cCommMode			=	comMode;
-	cOnLine				=	true;		//*	assume its online, if it wasnt, we wouldnt be here
+	cFocuserType		=	focuserType;
+
+	cOnLine				=	true;		//*	assume its online, if it wasn't, we wouldn't be here
 	cReadStartup		=	true;
-	cFocuserPosition	=	0;
 	cRotatorPosition	=	0;
+//	cFocuserPosition	=	0;
 	cFocuserDesiredPos	=	0;
 	cRotatorDesiredPos	=	0;
 	cAuxMotorPosition	=	0;
 	cAuxMotorDesiredPos	=	0;
 	cReadFailureCnt		=	0;
-	cValidIPaddr		=	false;
 	cValidUSB			=	false;
 	cUSBportOpen		=	false;
 	cFirstDataRead		=	true;
@@ -166,21 +160,11 @@ void	ControllerFocus::ControllerFocusInit(const int comMode, const int focuserTy
 	cSerialNumber[0]	=	0;
 	cUnitVersion[0]		=	0;
 	cStepsPerRev		=	kStepsPerRev_WR30;
-	cAlpacaDevNum		=	0;
 
 	cLastUpdate_milliSecs		=	millis();
 	cLastTimeSecs_Temperature	=	0;
 
 	memset(&cMoonliteCom, 0, sizeof(TYPE_MOONLITECOM));
-
-//	cNiteCrawlerTabObjPtr	=	NULL;
-//	cFocuserTabObjPtr		=	NULL;
-//	cAuxTabObjPtr			=	NULL;
-//	cConfigTabObjPtr		=	NULL;
-//	cGraphTabObjPtr			=	NULL;
-
-	//*	create the tab objects
-	cFocuserType			=	focuserType;
 }
 
 
@@ -188,85 +172,60 @@ void	ControllerFocus::ControllerFocusInit(const int comMode, const int focuserTy
 void	ControllerFocus::CreateWindowTabs(void)
 {
 	CONSOLE_DEBUG(__FUNCTION__);
-
 }
 
-
-//**************************************************************************************
-void	ControllerFocus::RunBackgroundTasks(const char *callingFunction, bool enableDebug)
+//*****************************************************************************
+void	ControllerFocus::GetStartUpData_SubClass(void)
 {
-uint32_t	currentMillis;
-uint32_t	deltaSeconds;
-bool		validData;
-bool		needToUpdate;
-uint32_t	updateDelta;
+bool	validData;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
-	if (cButtonClickInProgress)
-	{
-		return;
-	}
+	CONSOLE_DEBUG(__FUNCTION__);
 
-	if (cReadStartup)
-	{
-		if (cValidIPaddr)
-		{
-			CheckConnectedState();
-			AlpacaGetStartupData();
-		}
-		cReadStartup	=	false;
-
-	}
-
-	needToUpdate	=	false;
-	currentMillis	=	millis();
-	deltaSeconds	=	(currentMillis - cLastUpdate_milliSecs) / 1000;
-
-	if (cFirstDataRead || (deltaSeconds > 5))
-	{
-//		CONSOLE_DEBUG(__FUNCTION__);
-		needToUpdate	=	true;
-	}
 	if (cUSBportOpen)
 	{
-		//*	USB? only update once a second
-		updateDelta	=	400;
-//		updateDelta	=	5000;		//*	slow down for debugging
+		//*	the usb port is open, get data that way
+		validData	=	USBGetStatus();
+		if (validData != true)
+		{
+			CONSOLE_DEBUG("USBGetStatus() failed!!");
+		}
+	}
+
+	CONSOLE_DEBUG_W_NUM("cFocuserProp.Position\t=",	cFocuserProp.Position);
+	CONSOLE_DEBUG_W_NUM("cRotatorPosition\t=",		cRotatorPosition);
+	CONSOLE_DEBUG_W_NUM("cAuxMotorPosition\t=",		cAuxMotorPosition);
+
+	cFocuserDesiredPos	=	cFocuserProp.Position;
+	cRotatorDesiredPos	=	cRotatorPosition;
+	cAuxMotorDesiredPos	=	cAuxMotorPosition;
+
+	CONSOLE_DEBUG_W_NUM("cFocuserDesiredPos\t=",	cFocuserDesiredPos);
+	CONSOLE_DEBUG_W_NUM("cRotatorDesiredPos\t=",	cRotatorDesiredPos);
+	CONSOLE_DEBUG_W_NUM("cAuxMotorDesiredPos\t=",	cAuxMotorDesiredPos);
+}
+
+//*****************************************************************************
+void	ControllerFocus::GetStatus_SubClass(void)
+{
+bool	validData;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG_W_BOOL("cUSBportOpen\t=", cUSBportOpen);
+	if (cFocuserProp.IsMoving)
+	{
+		cUpdateDelta_secs	=	1;
 	}
 	else
 	{
-		//*	if we are moving, then update 5 times a second
-		updateDelta	=	200;
+		cUpdateDelta_secs	=	5;
 	}
-	if (cIsMoving && ((currentMillis - cLastUpdate_milliSecs) > updateDelta))
+	if (cUSBportOpen)
 	{
-		needToUpdate	=	true;
-	}
-	if (needToUpdate)
-	{
-//		CONSOLE_DEBUG(__FUNCTION__);
-		//*	is the IP address valid
-		if (cValidIPaddr)
+		//*	the usb port is open, get data that way
+		validData	=	USBGetStatus();
+		if (validData != true)
 		{
-			validData	=	AlpacaGetStatus();
-		}
-		else if (cUSBportOpen)
-		{
-			//*	the usb port is open, get data that way
-			validData	=	USBGetStatus();
-		}
-		else
-		{
-			validData	=	false;
-		}
-		if (validData == false)
-		{
-			cIsMoving	=	false;
-		}
-
-		if (cFirstDataRead)
-		{
-			UpdateFromFirstRead();
+			CONSOLE_DEBUG("USBGetStatus() failed!!");
 		}
 	}
 }
@@ -274,6 +233,7 @@ uint32_t	updateDelta;
 //*****************************************************************************
 void	ControllerFocus::AlpacaProcessSupportedActions(const char *deviceTypeStr, const int deviveNum, const char *valueString)
 {
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	if (strcasecmp(valueString, "readall") == 0)
 	{
@@ -294,35 +254,11 @@ void	ControllerFocus::AlpacaDisplayErrorMessage(const char *errorMsgString)
 }
 
 //*****************************************************************************
-void	ControllerFocus::UpdateFocuserPosition(const int newFocuserPosition)
+void	ControllerFocus::UpdateRotatorPosition(void)
 {
 	//*	This function should be overloaded
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, "This function should be overloaded");
-
-	cFocuserPosition	=	newFocuserPosition;
-}
-
-//*****************************************************************************
-void	ControllerFocus::UpdateRotatorPosition(const int newRotatorPosition)
-{
-	//*	This function should be overloaded
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, "This function should be overloaded");
-//	CONSOLE_ABORT(__FUNCTION__);
-}
-
-//*****************************************************************************
-void	ControllerFocus::UpdateAuxMotorPosition(const int newAuxMotorPosition)
-{
-	//*	This function should be overloaded
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, "This function should be overloaded");
-//	CONSOLE_ABORT(__FUNCTION__);
-}
-
-//*****************************************************************************
-void	ControllerFocus::UpdateTemperature(const double newTemperature)
-{
-	//*	This function should be overloaded
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, "This function should be overloaded");
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, "This function should be overloaded");
+//	CONSOLE_DEBUG_W_STR("cWindowName \t=",	cWindowName);
 //	CONSOLE_ABORT(__FUNCTION__);
 }
 
@@ -331,7 +267,8 @@ void	ControllerFocus::UpdateVoltage(const double newVoltage)
 {
 	//*	This function should be overloaded
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, "This function should be overloaded");
-//	CONSOLE_ABORT(__FUNCTION__);
+	CONSOLE_DEBUG_W_STR("cWindowName \t=",	cWindowName);
+	CONSOLE_ABORT(__FUNCTION__);
 }
 
 //*****************************************************************************
@@ -339,221 +276,273 @@ void	ControllerFocus::UpdateStepsPerRev(const int newStepsPerRev)
 {
 	//*	This function should be overloaded
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, "This function should be overloaded");
-//	CONSOLE_ABORT(__FUNCTION__);
+	CONSOLE_DEBUG_W_STR("cWindowName \t=",	cWindowName);
+	CONSOLE_ABORT(__FUNCTION__);
 }
 
 //*****************************************************************************
-void	ControllerFocus::UpdateFromFirstRead(void)
+void	ControllerFocus::UpdateStartupData(void)
 {
 	CONSOLE_DEBUG(__FUNCTION__);
 
-	CONSOLE_DEBUG_W_NUM("cFocuserPosition\t=",		cFocuserPosition);
+	CONSOLE_DEBUG_W_NUM("cFocuserProp.Position\t=",	cFocuserProp.Position);
 	CONSOLE_DEBUG_W_NUM("cRotatorPosition\t=",		cRotatorPosition);
 	CONSOLE_DEBUG_W_NUM("cAuxMotorPosition\t=",		cAuxMotorPosition);
 
-	cFocuserDesiredPos	=	cFocuserPosition;
+	cFocuserDesiredPos	=	cFocuserProp.Position;
 	cRotatorDesiredPos	=	cRotatorPosition;
 	cAuxMotorDesiredPos	=	cAuxMotorPosition;
 
-//	CONSOLE_DEBUG_W_NUM("cFocuserDesiredPos\t=",	cFocuserDesiredPos);
-
+	CONSOLE_DEBUG_W_NUM("cFocuserDesiredPos\t=",	cFocuserDesiredPos);
+	CONSOLE_DEBUG_W_NUM("cRotatorDesiredPos\t=",	cRotatorDesiredPos);
+	CONSOLE_DEBUG_W_NUM("cAuxMotorDesiredPos\t=",	cAuxMotorDesiredPos);
 
 	UpdateWindowTabs_Everything();
 
 	cFirstDataRead		=	false;
 }
 
+//**************************************************************************************
+void	ControllerFocus::UpdateStatusData(void)
+{
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, "needs to be over-ridden");
+	CONSOLE_DEBUG_W_STR("cWindowName \t=",	cWindowName);
+	CONSOLE_ABORT(__FUNCTION__);
+}
+
+//**************************************************************************************
+void	ControllerFocus::UpdateOnlineStatus(void)
+{
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, "needs to be over-ridden");
+	CONSOLE_DEBUG_W_STR("cWindowName \t=",	cWindowName);
+	CONSOLE_ABORT(__FUNCTION__);
+}
+
 //*****************************************************************************
 void	ControllerFocus::UpdateWindowTabs_Everything(void)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
-
-	//*	This function should be overloaded
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, "needs to be over-ridden");
+	CONSOLE_DEBUG_W_STR("cWindowName \t=",	cWindowName);
+	CONSOLE_ABORT(__FUNCTION__);
 }
 
 //*****************************************************************************
 void	ControllerFocus::UpdateWindowTabs_SwitchBits(unsigned char switchBits)
 {
-	//*	This function should be overloaded
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, "This function should be overloaded");
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, "needs to be over-ridden");
+	CONSOLE_DEBUG_W_STR("cWindowName \t=",	cWindowName);
+	CONSOLE_ABORT(__FUNCTION__);
 }
 
 //*****************************************************************************
 void	ControllerFocus::UpdateWindowTabs_AuxSwitchBits(unsigned char auxSwitchBits)
 {
-	//*	This function should be overloaded
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, "This function should be overloaded");
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, "needs to be over-ridden");
+	CONSOLE_DEBUG_W_STR("cWindowName \t=",	cWindowName);
+	CONSOLE_ABORT(__FUNCTION__);
 }
 
 //*****************************************************************************
 void	ControllerFocus::UpdateWindowTabs_DesiredFocusPos(const int newDesiredPoistion)
 {
-	//*	This function should be overloaded
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, "This function should be overloaded");
-//	CONSOLE_ABORT(__FUNCTION__);
-
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, "needs to be over-ridden");
+	CONSOLE_DEBUG_W_STR("cWindowName \t=",	cWindowName);
+	CONSOLE_ABORT(__FUNCTION__);
 }
 
 //*****************************************************************************
 void	ControllerFocus::UpdateWindowTabs_DesiredRotatorPos(const int newDesiredPoistion)
 {
-	//*	This function should be overloaded
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, "This function should be overloaded");
-//	CONSOLE_ABORT(__FUNCTION__);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, "needs to be over-ridden");
+	CONSOLE_DEBUG_W_STR("cWindowName \t=",	cWindowName);
+	CONSOLE_ABORT(__FUNCTION__);
 }
 
 //*****************************************************************************
 void	ControllerFocus::UpdateWindowTabs_DesiredAuxPos(const int newDesiredPoistion)
 {
-	//*	This function should be overloaded
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, "This function should be overloaded");
-//	CONSOLE_ABORT(__FUNCTION__);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, "needs to be over-ridden");
+	CONSOLE_DEBUG_W_STR("cWindowName \t=",	cWindowName);
+	CONSOLE_ABORT(__FUNCTION__);
 }
-
 
 //*****************************************************************************
 void	ControllerFocus::UpdateWindowTabs_ConnectState(bool connectedState)
 {
-	//*	This function should be overloaded
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, "This function should be overloaded");
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, "needs to be over-ridden");
+	CONSOLE_DEBUG_W_STR("cWindowName \t=",	cWindowName);
+	CONSOLE_ABORT(__FUNCTION__);
 }
 
 //*****************************************************************************
 void	ControllerFocus::UpdateWindowTabs_SwitchState(int switchId, bool onOffState)
 {
-	//*	This function should be overloaded
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, "This function should be overloaded");
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, "needs to be over-ridden");
+	CONSOLE_DEBUG_W_STR("cWindowName \t=",	cWindowName);
+	CONSOLE_ABORT(__FUNCTION__);
 }
-
 
 //*****************************************************************************
-bool	ControllerFocus::AlpacaGetStartupData(void)
+void	ControllerFocus::UpdateSupportedActions(void)
 {
-bool			validData;
-
-	validData	=	false;
-
-	//===============================================================
-	//*	get supportedactions
-	validData	=	AlpacaGetSupportedActions("focuser", cAlpacaDevNum);
-	if (validData)
-	{
-		UpdateWindowTabs_ReadAll(cHas_readall);
-	}
-	else
-	{
-		CONSOLE_DEBUG("Read failure - supportedactions");
-		cReadFailureCnt++;
-	}
-	AlpacaGetCommonProperties_OneAAT("focuser");
-
-	return(validData);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, "needs to be over-ridden");
+	CONSOLE_DEBUG_W_STR("cWindowName \t=",	cWindowName);
+	CONSOLE_ABORT(__FUNCTION__);
 }
-
 
 //*****************************************************************************
 void	ControllerFocus::UpdateWindowTabs_ReadAll(bool hasReadAll)
 {
-	//*	This function should be overloaded
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, "This function should be overloaded");
-//	CONSOLE_ABORT(__FUNCTION__);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, "needs to be over-ridden");
+	CONSOLE_DEBUG_W_STR("cWindowName \t=",	cWindowName);
+	CONSOLE_ABORT(__FUNCTION__);
 }
-
 
 //*****************************************************************************
-void	ControllerFocus::AlpacaProcessReadAll(	const char	*deviceType,
-												const int	deviceNum,
-												const char	*keywordString,
-												const char	*valueString)
+bool	ControllerFocus::AlpacaProcessReadAllIdx(	const char	*deviceTypeStr,
+													const int	deviceNum,
+													const int	keywordEnum,
+													const char	*valueString)
 {
-int			argValue;
 double		argDouble;
 bool		switchStatus;
+bool		dataWasHandled	=	true;
 
-//	CONSOLE_DEBUG_W_STR("deviceType\t=", deviceType);
-//	CONSOLE_DEBUG_W_STR(keywordString, valueString);
+	switch(keywordEnum)
+	{
+		case kCmd_Focuser_absolute:				//*	Indicates whether the focuser is capable of absolute position.
+			cFocuserProp.Absolute		=	IsTrueFalse(valueString);
+			break;
 
-	if (strcasecmp(keywordString, "ismoving") == 0)
-	{
-		cIsMoving	=	IsTrueFalse(valueString);
+		case kCmd_Focuser_ismoving:				//*	Indicates whether the focuser is currently moving.
+			cFocuserProp.IsMoving		=	IsTrueFalse(valueString);
+			break;
+
+		case kCmd_Focuser_maxincrement:			//*	Returns the focuser's maximum increment size.
+			cFocuserProp.MaxIncrement	=	atoi(valueString);
+			break;
+
+		case kCmd_Focuser_maxstep:				//*	Returns the focuser's maximum step size.
+			cFocuserProp.MaxStep		=	atoi(valueString);
+			break;
+
+		case kCmd_Focuser_position:				//*	Returns the focuser's current position.
+			cFocuserProp.Position		=	atoi(valueString);
+			break;
+
+		case kCmd_Focuser_stepsize:				//*	Returns the focuser's step size.
+			cFocuserProp.StepSize		=	atoi(valueString);
+			break;
+
+		case kCmd_Focuser_tempcomp:				//*	Retrieves the state of temperature compensation mode
+			cFocuserProp.TempComp		=	IsTrueFalse(valueString);
+			break;
+
+		case kCmd_Focuser_tempcompavailable:	//*	Indicates whether the focuser has temperature compensation.
+			cFocuserProp.TempCompAvailable	=	IsTrueFalse(valueString);
+			break;
+
+		case kCmd_Focuser_temperature:			//*	Returns the focuser's current temperature.
+			cFocuserProp.Temperature_DegC	=	AsciiToDouble(valueString);
+			break;
+
+		//-------------------------------------------------
+		//*	extras stuff from readall
+		case kCmd_Focuser_AuxPosition:
+			cAuxMotorPosition	=	atoi(valueString);
+			break;
+
+		case kCmd_Focuser_AuxIsMoving:
+			cFocuserProp.IsMoving	=	IsTrueFalse(valueString);
+			break;
+
+		case kCmd_Focuser_DegreesF:
+			break;
+
+		case kCmd_Focuser_Model:
+			strcpy(cModelName, valueString);
+			//*	set the steps per revolution based on the model
+			if (strstr(cModelName, "2.5") != NULL)
+			{
+				UpdateStepsPerRev(kStepsPerRev_WR25);
+			}
+			else if (strstr(cModelName, "3.0") != NULL)
+			{
+				UpdateStepsPerRev(kStepsPerRev_WR30);
+			}
+			else if (strstr(cModelName, "3.5") != NULL)
+			{
+				UpdateStepsPerRev(kStepsPerRev_WR35);
+			}
+			break;
+
+		case kCmd_Focuser_RotatorIsMoving:
+			cFocuserProp.IsMoving	=	IsTrueFalse(valueString);
+			break;
+
+		case kCmd_Focuser_RotatorPosition:
+			cRotatorPosition	=	atoi(valueString);
+			UpdateRotatorPosition();
+			break;
+
+		case kCmd_Focuser_SerialNum:
+			strcpy(cSerialNumber, valueString);
+			break;
+
+		case kCmd_Focuser_SwitchAux1:
+			break;
+
+		case kCmd_Focuser_SwitchAux2:
+			break;
+
+		case kCmd_Focuser_SwitchIn:
+			switchStatus	=	IsTrueFalse(valueString);
+			UpdateWindowTabs_SwitchState(kSwitch_In, switchStatus);
+			break;
+
+		case kCmd_Focuser_SwitchOut:
+			switchStatus	=	IsTrueFalse(valueString);
+			UpdateWindowTabs_SwitchState(kSwitch_Out, switchStatus);
+			break;
+
+		case kCmd_Focuser_SwitchRot:
+			switchStatus	=	IsTrueFalse(valueString);
+			UpdateWindowTabs_SwitchState(kSwitch_Rot, switchStatus);
+			break;
+
+		case kCmd_Focuser_Voltage:
+			argDouble	=	AsciiToDouble(valueString);
+			UpdateVoltage(argDouble);
+			break;
+
+		default:
+			dataWasHandled	=	false;
+			break;
 	}
-	else if (strcasecmp(keywordString, "position") == 0)
-	{
-		argValue	=	atoi(valueString);
-		UpdateFocuserPosition(argValue);
-	}
-	else if (strcasecmp(keywordString, "temperature") == 0)
-	{
-		argDouble	=	AsciiToDouble(valueString);
-		UpdateTemperature(argDouble);
-	}
-	//===============================================================
-	//*	the ones below here are not in the alpaca standard definition
-	else if (strcasecmp(keywordString, "version") == 0)
-	{
-		//*	"version": "AlpacaPi - V0.2.2-beta build #32",
-		strcpy(cAlpacaVersionString, valueString);
-	}
-	else if (strcasecmp(keywordString, "Model") == 0)
-	{
-		strcpy(cModelName, valueString);
-		//*	set the steps per revolution based on the model
-		if (strstr(cModelName, "2.5") != NULL)
-		{
-			UpdateStepsPerRev(kStepsPerRev_WR25);
-		}
-		else if (strstr(cModelName, "3.0") != NULL)
-		{
-			UpdateStepsPerRev(kStepsPerRev_WR30);
-		}
-		else if (strstr(cModelName, "3.5") != NULL)
-		{
-			UpdateStepsPerRev(kStepsPerRev_WR35);
-		}
-	}
-	else if (strcasecmp(keywordString, "SerialNum") == 0)
-	{
-		strcpy(cSerialNumber, valueString);
-	}
-	else if (strcasecmp(keywordString, "RotatorPosition") == 0)
-	{
-		argValue	=	atoi(valueString);
-		UpdateRotatorPosition(argValue);
-	}
-	else if (strcasecmp(keywordString, "AuxPosition") == 0)
-	{
-		argValue	=	atoi(valueString);
-		UpdateAuxMotorPosition(argValue);
-	}
-	else if (strcasecmp(keywordString, "Voltage") == 0)
-	{
-		argDouble	=	AsciiToDouble(valueString);
-		UpdateVoltage(argDouble);
-	}
-	else if (strcasecmp(keywordString, "RotatorIsMoving") == 0)
-	{
-		cIsMoving	=	IsTrueFalse(valueString);
-	}
-	else if (strcasecmp(keywordString, "AuxIsMoving") == 0)
-	{
-		cIsMoving	=	IsTrueFalse(valueString);
-	}
-	else if (strcasecmp(keywordString, "SwitchOUT") == 0)
-	{
-		switchStatus	=	IsTrueFalse(valueString);
-		UpdateWindowTabs_SwitchState(kSwitch_Out, switchStatus);
-	}
-	else if (strcasecmp(keywordString, "SwitchIN") == 0)
-	{
-		switchStatus	=	IsTrueFalse(valueString);
-		UpdateWindowTabs_SwitchState(kSwitch_In, switchStatus);
-	}
-	else if (strcasecmp(keywordString, "SwitchROT") == 0)
-	{
-		switchStatus	=	IsTrueFalse(valueString);
-		UpdateWindowTabs_SwitchState(kSwitch_Rot, switchStatus);
-	}
+	return(dataWasHandled);
 }
+
+//*****************************************************************************
+bool	ControllerFocus::AlpacaGetStartupData_OneAAT(void)
+{
+bool		validData;
+int			argInt;
+
+	//========================================================
+	validData	=	AlpacaGetIntegerValue(	"focuser", "position",	NULL,	&argInt);
+	if (validData)
+	{
+		CONSOLE_DEBUG_W_NUM("new focuser position\t=",	argInt);
+		cFocuserProp.Position		=	argInt;
+	}
+	else
+	{
+		cReadFailureCnt++;
+	}
+
+	return(validData);
+}
+
 
 //*****************************************************************************
 //*	Get Status, One At A Time
@@ -564,15 +553,17 @@ bool		validData;
 int			myFailureCount;
 double		argDouble;
 int			argInt;
+bool		argBool;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
 	myFailureCount	=	0;
 	//========================================================
-	validData	=	AlpacaGetBooleanValue(	"focuser", "ismoving",	NULL,	&cIsMoving);
+	validData	=	AlpacaGetBooleanValue(	"focuser", "ismoving",	NULL,	&argBool);
 	if (validData)
 	{
-		CONSOLE_DEBUG_W_NUM("cIsMoving\t=",	cIsMoving);
+		cFocuserProp.IsMoving	=	argBool;
+		CONSOLE_DEBUG_W_BOOL("cFocuserProp.IsMoving\t=",	cFocuserProp.IsMoving);
 	}
 	else
 	{
@@ -583,8 +574,8 @@ int			argInt;
 	validData	=	AlpacaGetIntegerValue(	"focuser", "position",	NULL,	&argInt);
 	if (validData)
 	{
-		CONSOLE_DEBUG_W_NUM("argInt\t=",	argInt);
-		UpdateFocuserPosition(argInt);
+		CONSOLE_DEBUG_W_NUM("new focuser position\t=",	argInt);
+		cFocuserProp.Position		=	argInt;
 	}
 	else
 	{
@@ -595,8 +586,8 @@ int			argInt;
 	validData	=	AlpacaGetDoubleValue(	"focuser", "temperature",	NULL,	&argDouble);
 	if (validData)
 	{
-		CONSOLE_DEBUG_W_DBL("argDouble\t=",	argDouble);
-		UpdateTemperature(argDouble);
+		CONSOLE_DEBUG_W_DBL("new focuser temp\t=",	argDouble);
+		cFocuserProp.Temperature_DegC		=	argDouble;
 	}
 	else
 	{
@@ -616,14 +607,27 @@ int			argInt;
 }
 
 //*****************************************************************************
+void	ControllerFocus::AlpacaGetCapabilities(void)
+{
+	//*	Focuser does not have any "Capabilities"
+	//*	required for base class
+}
+
+//**************************************************************************************
+void	ControllerFocus::UpdateConnectedStatusIndicator(void)
+{
+	//*	needs to be over-ridden by subclass
+}
+
+//*****************************************************************************
 bool	ControllerFocus::AlpacaGetStatus(void)
 {
 bool	validData;
 char	lineBuff[128];
 
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
-	cIsMoving	=	false;
-	validData	=	false;
+	cFocuserProp.IsMoving	=	false;
+	validData				=	false;
 	if (cHas_readall)
 	{
 		validData	=	AlpacaGetStatus_ReadAll("focuser", cAlpacaDevNum);
@@ -632,13 +636,13 @@ char	lineBuff[128];
 
 		SetWindowIPaddrInfo(NULL, true);
 
-		if (cFocuserPosition != cFocuserDesiredPos)
+		if (cFocuserProp.Position != cFocuserDesiredPos)
 		{
-			cIsMoving	=	true;
+			cFocuserProp.IsMoving	=	true;
 		}
 		if (cRotatorPosition != cRotatorDesiredPos)
 		{
-			cIsMoving	=	true;
+			cFocuserProp.IsMoving	=	true;
 		}
 		cLastUpdate_milliSecs	=	millis();
 	}
@@ -685,19 +689,19 @@ unsigned char	previousSwitchBits;
 
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 
-	cIsMoving	=	false;
+	cFocuserProp.IsMoving	=	false;
 	//=================================================================
 	validUSBdata	=	MoonLite_GetPosition(	&cMoonliteCom,
 												1,
 												&newPositionValue);
 	if (validUSBdata)
 	{
-		if (newPositionValue != cFocuserPosition)
+		if (newPositionValue != cFocuserProp.Position)
 		{
-			cIsMoving	=	true;
+			cFocuserProp.IsMoving	=	true;
 		}
 //		CONSOLE_DEBUG_W_NUM("newPositionValue\t=",		newPositionValue);
-		UpdateFocuserPosition(newPositionValue);
+		cFocuserProp.Position		=	newPositionValue;
 	}
 	else
 	{
@@ -714,9 +718,10 @@ unsigned char	previousSwitchBits;
 		{
 			if (newPositionValue != cRotatorPosition)
 			{
-				cIsMoving	=	true;
+				cFocuserProp.IsMoving	=	true;
 			}
-			UpdateRotatorPosition(newPositionValue);
+			cRotatorPosition	=	newPositionValue;
+			UpdateRotatorPosition();
 		}
 		else
 		{
@@ -731,9 +736,9 @@ unsigned char	previousSwitchBits;
 		{
 			if (newPositionValue != cAuxMotorPosition)
 			{
-				cIsMoving	=	true;
+				cFocuserProp.IsMoving	=	true;
 			}
-			UpdateAuxMotorPosition(newPositionValue);
+			cAuxMotorPosition	=	newPositionValue;
 		}
 		else
 		{
@@ -790,9 +795,9 @@ unsigned char	previousSwitchBits;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 	//*	Do NOT check the temperature if its moving
-	if (cIsMoving == false)
+	if (cFocuserProp.IsMoving == false)
 	{
-//		CONSOLE_DEBUG("cIsMoving is false");
+//		CONSOLE_DEBUG("cFocuserProp.IsMoving is false");
 		//*	check the temperature every 10 seconds
 		if (cFirstDataRead ||  ((currentSeconds - cLastTimeSecs_Temperature) > 5))
 		{
@@ -800,7 +805,7 @@ unsigned char	previousSwitchBits;
 			validUSBdata	=	MoonLite_GetTemperature(&cMoonliteCom, &newValeDbl);
 			if (validUSBdata)
 			{
-				UpdateTemperature(newValeDbl);
+				cFocuserProp.Temperature_DegC		=	newValeDbl;
 			}
 			//*	only the NiteCrawler has voltage
 			if (cMoonliteCom.model == kMoonLite_NiteCrawler)
@@ -852,7 +857,7 @@ bool		validData;
 		CONSOLE_DEBUG("We do not have a valid IP address to query");
 	}
 
-	cIsMoving	=	true;
+	cFocuserProp.IsMoving	=	true;
 }
 
 
@@ -865,7 +870,7 @@ double			newDegreesValue;
 
 	cRotatorDesiredPos	=	newDesiredPosition;
 	UpdateWindowTabs_DesiredRotatorPos(cRotatorDesiredPos);
-	cIsMoving	=	true;
+	cFocuserProp.IsMoving	=	true;
 
 	if (cValidIPaddr)
 	{
@@ -907,7 +912,7 @@ double			newDegreesValue;
 	}
 	else
 	{
-		cIsMoving	=	false;
+		cFocuserProp.IsMoving	=	false;
 		CONSOLE_DEBUG("We do not have a valid IP address to query");
 	}
 }
@@ -923,7 +928,7 @@ bool			validData;
 	cAuxMotorDesiredPos	=	newDesiredPosition;
 	UpdateWindowTabs_DesiredAuxPos(cAuxMotorDesiredPos);
 
-	cIsMoving	=	true;
+	cFocuserProp.IsMoving	=	true;
 	if (cValidIPaddr)
 	{
 		sprintf(dataString, "Position=%d", cRotatorDesiredPos);
@@ -942,7 +947,7 @@ bool			validData;
 	}
 	else
 	{
-		cIsMoving	=	false;
+		cFocuserProp.IsMoving	=	false;
 		CONSOLE_DEBUG("We do not have a valid IP address to query");
 	}
 }
@@ -974,7 +979,7 @@ bool		validData;
 	{
 		CONSOLE_DEBUG("We do not have a valid IP/usb port address to query");
 	}
-	UpdateFromFirstRead();
+	UpdateStartupData();
 }
 
 //*****************************************************************************
@@ -1033,9 +1038,8 @@ unsigned char	switchBits;
 	{
 		CONSOLE_DEBUG("We do not have a valid IP/usb port address to query");
 	}
-	UpdateFromFirstRead();
+	UpdateStartupData();
 }
-
 
 //*****************************************************************************
 void	ControllerFocus::ReadNiteCrawlerColors(void)
@@ -1044,7 +1048,7 @@ bool		validData;
 int			iii;
 uint16_t	colorValue16Bit;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	if (cValidIPaddr)
 	{
@@ -1064,16 +1068,16 @@ uint16_t	colorValue16Bit;
 				if (validData)
 				{
 					gNiteCrawlerColors[iii].color16bit	=	colorValue16Bit;
-					printf("Color %2d=\t%04X\tDef=%04X\t%s",	gNiteCrawlerColors[iii].colorNumber,
-																gNiteCrawlerColors[iii].color16bit,
-																gNiteCrawlerColors[iii].color16bitDefault,
-																gNiteCrawlerColors[iii].name);
-
-					if (gNiteCrawlerColors[iii].color16bit != gNiteCrawlerColors[iii].color16bitDefault)
-					{
-						printf("\t<--- error");
-					}
-					printf("\r\n");
+//					printf("Color %2d=\t%04X\tDef=%04X\t%s",	gNiteCrawlerColors[iii].colorNumber,
+//																gNiteCrawlerColors[iii].color16bit,
+//																gNiteCrawlerColors[iii].color16bitDefault,
+//																gNiteCrawlerColors[iii].name);
+//
+//					if (gNiteCrawlerColors[iii].color16bit != gNiteCrawlerColors[iii].color16bitDefault)
+//					{
+//						printf("\t<--- error");
+//					}
+//					printf("\r\n");
 				}
 				else
 				{
@@ -1105,8 +1109,10 @@ char	lineBuff[128];
 	openOk	=	MoonLite_OpenFocuserConnection(&cMoonliteCom, (cFocuserType == kMoonLite_NiteCrawler));
 	if (openOk)
 	{
+		gDebugBackgroundThread	=	true;
 		cUSBportOpen		=	true;
 		cFirstDataRead		=	true;
+		cReadStartup		=	true;
 		cFocuserType		=	cMoonliteCom.model;
 		strcpy(cModelName,		cMoonliteCom.deviceModelString);
 		strcpy(cUnitVersion,	cMoonliteCom.deviceVersion);
@@ -1143,6 +1149,8 @@ char	lineBuff[128];
 	{
 		CONSOLE_DEBUG("Failed to get moonlite data");
 	}
+	CONSOLE_DEBUG_W_BOOL("cReadStartup          \t=", cReadStartup);
+	CONSOLE_DEBUG_W_BOOL("gDebugBackgroundThread\t=", gDebugBackgroundThread);
 }
 
 
@@ -1262,27 +1270,34 @@ int				myFocuserType;
 		if (myFocuserType == kFocuserType_NiteCrawler)
 		{
 			CONSOLE_DEBUG("Focuser is Moonlite NiteCrawler");
+//			myController	=	new ControllerNiteCrawler(	windowName,
+//															&remoteDevice->deviceAddress,
+//															remoteDevice->port,
+//															remoteDevice->alpacaDeviceNum);
 			myController	=	new ControllerNiteCrawler(	windowName,
-															&remoteDevice->deviceAddress,
-															remoteDevice->port,
-															remoteDevice->alpacaDeviceNum);
+															remoteDevice);
 
 		}
 		else if (myFocuserType == kFocuserType_MoonliteSingle)
 		{
 			CONSOLE_DEBUG("Focuser is Moonlite Single");
 			myController	=	new ControllerMLsingle(		windowName,
-															&remoteDevice->deviceAddress,
-															remoteDevice->port,
-															remoteDevice->alpacaDeviceNum);
+															remoteDevice);
+
+//			myController	=	new ControllerMLsingle(		windowName,
+//															&remoteDevice->deviceAddress,
+//															remoteDevice->port,
+//															remoteDevice->alpacaDeviceNum);
 		}
 		else
 		{
 			CONSOLE_DEBUG("Focuser is Generic");
 			myController	=	new ControllerFocusGeneric(	windowName,
-															&remoteDevice->deviceAddress,
-															remoteDevice->port,
-															remoteDevice->alpacaDeviceNum);
+															remoteDevice);
+//			myController	=	new ControllerFocusGeneric(	windowName,
+//															&remoteDevice->deviceAddress,
+//															remoteDevice->port,
+//															remoteDevice->alpacaDeviceNum);
 
 		}
 		if (myController != NULL)

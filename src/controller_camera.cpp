@@ -61,11 +61,22 @@
 //*	Dec 23,	2021	<MLS> Added UpdateFlipMode() & SetFlipMode()
 //*	Dec 26,	2021	<MLS> Update timeout is now 1 second if camera is anything but idle
 //*	Sep 21,	2022	<MLS> Added ProcessReadAll_IMU()
-//*	APr 30,	2023	<MLS> Added processing of "setccdtemperature" to readall
+//*	Apr 30,	2023	<MLS> Added processing of "setccdtemperature" to readall
+//*	May 29,	2023	<MLS> Added SetExposureRange()
+//*	May 30,	2023	<MLS> Added UpdateCameraExposureStartup()
+//*	May 30,	2023	<MLS> Exposure step options finally finished
+//*	Jun  4,	2023	<MLS> Added ProcessReadAll_SaveAs()
+//*	Jun  4,	2023	<MLS> Added SetFileSaveOptions()
+//*	Jun 25,	2023	<ADD> Add binx and biny to DeviceState
+//*	Jun 25,	2023	<ADD> Add gain to DeviceState
+//*	Jun 25,	2023	<ADD> Add cooleron to DeviceState
+//*	Jun 25,	2023	<ADD> Add offset to DeviceState
+//*	Jun 25,	2023	<ADD> Add readoutmode to DeviceState
+//*	Jun 25,	2023	<ADD> Add startx and starty to DeviceState
+//*	Jul  1,	2023	<MLS> Added GetStatus_SubClass() to camera controller
 //*****************************************************************************
 //*	Jan  1,	2121	<TODO> control key for different step size.
 //*	Jan  1,	2121	<TODO> add error list window
-//*	Jan  1,	2121	<TODO> finish exposure step options
 //*	Feb  6,	2121	<TODO> Move downloading of images to a separate thread
 //*****************************************************************************
 
@@ -92,6 +103,10 @@
 
 #include	"controller.h"
 #include	"controller_camera.h"
+#include	"camera_AlpacaCmds.h"
+#include	"camera_AlpacaCmds.cpp"
+
+
 
 //**************************************************************************************
 ControllerCamera::ControllerCamera(	const char			*argWindowName,
@@ -99,7 +114,7 @@ ControllerCamera::ControllerCamera(	const char			*argWindowName,
 									const int			xSize,
 									const int			ySize)
 
-	:Controller(argWindowName, xSize,  ySize)
+	:Controller(argWindowName, xSize,  ySize, true, alpacaDevice)
 {
 int		iii;
 
@@ -108,6 +123,8 @@ int		iii;
 	memset(&cCameraProp, 0, sizeof(TYPE_CameraProperties));
 	strcpy(cAlpacaDeviceTypeStr,	"camera");
 
+	SetCommandLookupTable(gCameraCmdTable);
+	SetAlternateLookupTable(gCameraExtrasTable);
 
 	cFirstDataRead			=	true;
 	cLastUpdate_milliSecs	=	millis();
@@ -123,10 +140,7 @@ int		iii;
 	cExposure				=	0.001;
 	cDarkExposure			=	false;
 	cCameraState_imageready	=	false;
-
 	cLiveMode				=	false;
-	cSideBar				=	false;
-
 	cHas_autoexposure		=	false;
 	cHas_displayimage		=	false;
 	cHas_exposuretime		=	false;
@@ -134,7 +148,6 @@ int		iii;
 	cHas_filenameoptions	=	false;
 	cHas_livemode			=	false;
 	cHas_rgbarray			=	false;
-	cHas_sidebar			=	false;
 	cHas_SaveAll			=	false;
 	cHas_Flip				=	false;
 
@@ -221,191 +234,165 @@ void	ControllerCamera::SetupWindowControls(void)
 	CONSOLE_DEBUG("This routine should be overridden");
 }
 
-//**************************************************************************************
-void	ControllerCamera::RunBackgroundTasks(const char *callingFunction, bool enableDebug)
+//*****************************************************************************
+void	ControllerCamera::GetStatus_SubClass(void)
 {
-uint32_t	currentMillis;
-uint32_t	deltaSeconds;
-bool		validData;
-bool		needToUpdate;
-bool		readStartUpOK;
-
-	if (cButtonClickInProgress)
+	//=================================================================================
+	//*	get the filter wheel position
+	if (cHas_FilterWheel)
 	{
-		return;
-	}
-//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
-	if (cReadStartup)
-	{
-		CONSOLE_DEBUG_W_STR("cReadStartup == true", cWindowName);
-		//*	so the window shows up
-		HandleWindowUpdate();
-		cv::waitKey(60);
+		//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		//*	this routine is in controller_fw_common.cpp
+		//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		AlpacaGetFilterWheelStatus();
 
-		GetConfiguredDevices();
-
-		readStartUpOK	=	AlpacaGetStartupData();
-		if (readStartUpOK)
+		if (cHas_FilterWheel == false)
 		{
-			cReadStartup	=	false;
-			if (cHas_FilterWheel)
-			{
-				AlpacaSetConnected("filterwheel", true);
-				AlpacaGetFilterWheelStartup();
-			}
-		}
-		else
-		{
-			CONSOLE_DEBUG_W_STR("Failed to read startup data", cWindowName);
-		//	CONSOLE_ABORT(__FUNCTION__);
-		}
-//		CONSOLE_DEBUG_W_STR("cReadStartup == ", (cReadStartup ? "TRUE" : "false"));
-	}
-
-	needToUpdate	=	false;
-	currentMillis	=	millis();
-	deltaSeconds	=	(currentMillis - cLastUpdate_milliSecs) / 1000;
-
-	if (cFirstDataRead)
-	{
-		cFirstDataRead	=	false;
-		needToUpdate	=	true;
-	}
-
-	//*	if we are anything other than idle, we want to update more often
-	if ((cCameraProp.CameraState != kALPACA_CameraState_Idle) && (deltaSeconds >= 1))
-	{
-		needToUpdate	=	true;
-	}
-	else if (deltaSeconds >= 5)
-	{
-		needToUpdate	=	true;
-	}
-
-	if (cForceAlpacaUpdate)	//*	force update is set when a switch is clicked
-	{
-		needToUpdate		=	true;
-		cForceAlpacaUpdate	=	false;
-	}
-
-	//---------------------------------------------------------
-	if (needToUpdate)
-	{
-//		CONSOLE_DEBUG_W_STR("Updating....", cWindowName);
-		//*	is the IP address valid
-		if (cValidIPaddr)
-		{
-			validData	=	AlpacaGetStatus();
-
-			if (validData == false)
-			{
-			//	CONSOLE_DEBUG("Failed to get data")
-			}
-			UpdateConnectedStatusIndicator();
+			CONSOLE_DEBUG("FilterWheel is now disabled");
 		}
 	}
-//	CONSOLE_DEBUG_W_STR(__FUNCTION__, "Exit");
 }
 
 //*****************************************************************************
 void	ControllerCamera::UpdateSupportedActions(void)
 {
 	CONSOLE_DEBUG("this routine should be overloaded");
+	CONSOLE_ABORT(__FUNCTION__);
 }
+
+//**************************************************************************************
+void	ControllerCamera::UpdateStatusData(void)
+{
+	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_ABORT(__FUNCTION__);
+}
+
 //*****************************************************************************
 void	ControllerCamera::UpdateCameraName(void)
 {
 	CONSOLE_DEBUG("this routine should be overloaded");
+	CONSOLE_ABORT(__FUNCTION__);
 }
 //*****************************************************************************
 void	ControllerCamera::UpdateReadoutModes(void)
 {
 	CONSOLE_DEBUG("this routine should be overloaded");
+	CONSOLE_ABORT(__FUNCTION__);
 }
 //*****************************************************************************
 void	ControllerCamera::UpdateCurrReadoutMode(void)
 {
 	CONSOLE_DEBUG("this routine should be overloaded");
+	CONSOLE_ABORT(__FUNCTION__);
 }
 //*****************************************************************************
 void	ControllerCamera::UpdateCameraGain(const TYPE_ASCOM_STATUS lastAlpacaErr)
 {
 	CONSOLE_DEBUG("this routine should be overloaded");
+	CONSOLE_ABORT(__FUNCTION__);
 }
 //*****************************************************************************
 void	ControllerCamera::UpdateCameraOffset(const TYPE_ASCOM_STATUS lastAlpacaErr)
 {
 	CONSOLE_DEBUG("this routine should be overloaded");
+	CONSOLE_ABORT(__FUNCTION__);
+}
+
+//*****************************************************************************
+void	ControllerCamera::UpdateCameraExposureStartup(void)
+{
+	CONSOLE_DEBUG("this routine should be overloaded");
+	CONSOLE_ABORT(__FUNCTION__);
 }
 //*****************************************************************************
 void	ControllerCamera::UpdateCameraExposure(void)
 {
 	CONSOLE_DEBUG("this routine should be overloaded");
+	CONSOLE_ABORT(__FUNCTION__);
 }
 //*****************************************************************************
 void	ControllerCamera::UpdateCameraSize(void)
 {
 	CONSOLE_DEBUG("this routine should be overloaded");
+	CONSOLE_ABORT(__FUNCTION__);
 }
 //*****************************************************************************
 void	ControllerCamera::UpdateCameraState(void)
 {
 	CONSOLE_DEBUG("this routine should be overloaded");
+	CONSOLE_ABORT(__FUNCTION__);
 }
 //*****************************************************************************
 void	ControllerCamera::UpdateCameraTemperature(void)
 {
-//	CONSOLE_DEBUG("this routine should be overloaded");
+	CONSOLE_DEBUG("this routine should be overloaded");
+	CONSOLE_ABORT(__FUNCTION__);
 }
 //*****************************************************************************
 void	ControllerCamera::UpdatePercentCompleted(void)
 {
-//	CONSOLE_DEBUG("this routine should be overloaded");
+	CONSOLE_DEBUG("this routine should be overloaded");
+	CONSOLE_ABORT(__FUNCTION__);
 }
 //*****************************************************************************
 void	ControllerCamera::UpdateCoolerState(void)
 {
-//	CONSOLE_DEBUG("this routine should be overloaded");
+	CONSOLE_ABORT(__FUNCTION__);
+	CONSOLE_DEBUG("this routine should be overloaded");
 }
 //*****************************************************************************
 void	ControllerCamera::UpdateFilterWheelInfo(void)
 {
-//	CONSOLE_DEBUG("this routine should be overloaded");
+	CONSOLE_DEBUG("this routine should be overloaded");
+	CONSOLE_ABORT(__FUNCTION__);
 }
 //*****************************************************************************
 void	ControllerCamera::UpdateFilterWheelPosition(void)
 {
-//	CONSOLE_DEBUG("this routine should be overloaded");
+	CONSOLE_DEBUG("this routine should be overloaded");
+	CONSOLE_ABORT(__FUNCTION__);
 }
 //*****************************************************************************
 void	ControllerCamera::UpdateFileNameOptions(void)
 {
-//	CONSOLE_DEBUG("this routine should be overloaded");
+	CONSOLE_DEBUG("this routine should be overloaded");
+	CONSOLE_ABORT(__FUNCTION__);
 }
 //*****************************************************************************
 void	ControllerCamera::UpdateLiveMode(void)
 {
-//	CONSOLE_DEBUG("this routine should be overloaded");
+	CONSOLE_DEBUG("this routine should be overloaded");
+	CONSOLE_ABORT(__FUNCTION__);
 }
 //*****************************************************************************
 void	ControllerCamera::UpdateReceivedFileName(const char *newFileName)
 {
 	CONSOLE_DEBUG("this routine should be overloaded");
+	CONSOLE_ABORT(__FUNCTION__);
 }
 //*****************************************************************************
 void	ControllerCamera::UpdateRemoteFileList(void)
 {
 	CONSOLE_DEBUG("this routine should be overloaded");
+	CONSOLE_ABORT(__FUNCTION__);
+}
+//*****************************************************************************
+void	ControllerCamera::SetExposureRange(char *name, double exposureMin, double exposureMax, double exposureStep)
+{
+	CONSOLE_DEBUG("this routine should be overloaded");
+	CONSOLE_ABORT(__FUNCTION__);
 }
 //*****************************************************************************
 void	ControllerCamera::UpdateDisplayModes(void)
 {
-//	CONSOLE_DEBUG("this routine should be overloaded");
+	CONSOLE_DEBUG("this routine should be overloaded");
+	CONSOLE_ABORT(__FUNCTION__);
 }
 //*****************************************************************************
 void	ControllerCamera::UpdateFlipMode(void)
 {
-//	CONSOLE_DEBUG("this routine should be overloaded");
+	CONSOLE_DEBUG("this routine should be overloaded");
+	CONSOLE_ABORT(__FUNCTION__);
 }
 
 
@@ -438,56 +425,56 @@ char			alpacaString[128];
 int				jjj;
 int				readOutModeIdx;
 
-//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 	validData	=	false;
 
-	//*	get the camera description
-	if (cOnLine)
-	{
-		SJP_Init(&jsonParser);
+//	//*	get the camera description
+//	if (cOnLine)
+//	{
+//		SJP_Init(&jsonParser);
+//		sprintf(alpacaString,	"/api/v1/camera/%d/description", cAlpacaDevNum);
+//		validData	=	GetJsonResponse(	&cDeviceAddress,
+//											cPort,
+//											alpacaString,
+//											NULL,
+//											&jsonParser);
+//		if (validData)
+//		{
+//			for (jjj=0; jjj<jsonParser.tokenCount_Data; jjj++)
+//			{
+//	//			CONSOLE_DEBUG_W_2STR("json=",	jsonParser.dataList[jjj].keyword,
+//	//											jsonParser.dataList[jjj].valueString);
+//
+//				//*	this is an extra in AlpacaPi only
+//				if (strcasecmp(jsonParser.dataList[jjj].keyword, "DEVICE") == 0)
+//				{
+//					strcpy(cCommonProp.Name,	jsonParser.dataList[jjj].valueString);
+//				}
+//
+//				if (strcasecmp(jsonParser.dataList[jjj].keyword, "VALUE") == 0)
+//				{
+//					if (strlen(jsonParser.dataList[jjj].valueString) >= kCommonPropMaxStrLen)
+//					{
+//						jsonParser.dataList[jjj].valueString[kCommonPropMaxStrLen - 1]	=	0;
+//					}
+//					strcpy(cCommonProp.Description,	jsonParser.dataList[jjj].valueString);
+//				}
+//			}
+//			UpdateCameraName();
+//
+//		}
+//		else
+//		{
+//			cReadFailureCnt++;
+//			cOnLine	=	false;
+//		}
+////		CONSOLE_DEBUG_W_STR("cCommonProp.Name\t=", cCommonProp.Name);
+//
+//	}
 
-//		CONSOLE_DEBUG_W_STR(__FUNCTION__, "description");
-		sprintf(alpacaString,	"/api/v1/camera/%d/description", cAlpacaDevNum);
-		validData	=	GetJsonResponse(	&cDeviceAddress,
-											cPort,
-											alpacaString,
-											NULL,
-											&jsonParser);
-		if (validData)
-		{
-//			CONSOLE_DEBUG_W_STR(__FUNCTION__, "validData");
-			for (jjj=0; jjj<jsonParser.tokenCount_Data; jjj++)
-			{
-	//			CONSOLE_DEBUG_W_2STR("json=",	jsonParser.dataList[jjj].keyword,
-	//											jsonParser.dataList[jjj].valueString);
-
-				//*	this is an extra in AlpacaPi only
-				if (strcasecmp(jsonParser.dataList[jjj].keyword, "DEVICE") == 0)
-				{
-					strcpy(cCommonProp.Name,	jsonParser.dataList[jjj].valueString);
-				}
-
-				if (strcasecmp(jsonParser.dataList[jjj].keyword, "VALUE") == 0)
-				{
-					if (strlen(jsonParser.dataList[jjj].valueString) >= kCommonPropMaxStrLen)
-					{
-						jsonParser.dataList[jjj].valueString[kCommonPropMaxStrLen - 1]	=	0;
-					}
-					strcpy(cCommonProp.Description,	jsonParser.dataList[jjj].valueString);
-				}
-			}
-			UpdateCameraName();
-
-		}
-		else
-		{
-			cReadFailureCnt++;
-			cOnLine	=	false;
-		}
-//		CONSOLE_DEBUG_W_STR("cCommonProp.Name\t=", cCommonProp.Name);
-
-	}
-
+	UpdateCameraName();
+	CONSOLE_DEBUG_W_BOOL("cOnLine  \t=",	cOnLine);
+	CONSOLE_DEBUG_W_BOOL("validData\t=",	validData);
 	//===============================================================
 	//*	get the readout modes
 	if (cOnLine)
@@ -545,11 +532,9 @@ int				readOutModeIdx;
 
 		//-----------------------------------------------------------------
 		//*	deal with the GAIN information
-		validData	=	AlpacaGetIntegerValue("camera", "gain",			NULL,	&cCameraProp.Gain);
 		validData	=	AlpacaGetIntegerValue("camera", "gainmin",		NULL,	&cCameraProp.GainMin);
 		validData	=	AlpacaGetIntegerValue("camera", "gainmax",		NULL,	&cCameraProp.GainMax);
-	//	CONSOLE_DEBUG_W_NUM("cLastAlpacaErrNum\t", cLastAlpacaErrNum);
-	//	CONSOLE_DEBUG_W_STR("cLastAlpacaErrStr\t", cLastAlpacaErrStr);
+		validData	=	AlpacaGetIntegerValue("camera", "gain",			NULL,	&cCameraProp.Gain);
 		UpdateCameraGain(cLastAlpacaErrNum);
 
 		//-----------------------------------------------------------------
@@ -561,17 +546,8 @@ int				readOutModeIdx;
 
 		validData	=	AlpacaGetDoubleValue("camera", "exposuremin",	NULL,	&cCameraProp.ExposureMin_seconds);
 		validData	=	AlpacaGetDoubleValue("camera", "exposuremax",	NULL,	&cCameraProp.ExposureMax_seconds);
-		UpdateCameraExposure();
+		UpdateCameraExposureStartup();
 
-//-		validData	=	AlpacaGetBooleanValue(	"camera", "canstopexposure",	NULL,	&cCameraProp.CanStopExposure);
-
-		ReadOneDriverCapability("camera",	"canabortexposure",		"CanAbortExposure",		&cCameraProp.CanAbortExposure);
-		ReadOneDriverCapability("camera",	"canasymmetricbin",		"CanAsymmetricBin",		&cCameraProp.CanAsymmetricBin);
-		ReadOneDriverCapability("camera",	"canfastreadout",		"CanFastreadout",		&cCameraProp.CanFastReadout);
-		ReadOneDriverCapability("camera",	"cangetcoolerpower",	"CanGetCoolerPower",	&cCameraProp.CanGetCoolerPower);
-		ReadOneDriverCapability("camera",	"canpulseguide",		"CanPulseguide",		&cCameraProp.CanPulseGuide);
-		ReadOneDriverCapability("camera",	"cansetccdtemperature",	"CanSetCCDtemperature",	&cCameraProp.CanSetCCDtemperature);
-		ReadOneDriverCapability("camera",	"canstopexposure",		"CanStopExposure",		&cCameraProp.CanStopExposure);
 
 		UpdateCameraState();
 	}
@@ -580,58 +556,78 @@ int				readOutModeIdx;
 
 }
 
-
 //*****************************************************************************
-//*	this routine gets called one time to get the info on the camera that does not change
-//*****************************************************************************
-bool	ControllerCamera::AlpacaGetStartupData(void)
+void	ControllerCamera::AlpacaGetCapabilities(void)
 {
+	ReadOneDriverCapability("camera",	"canabortexposure",		"CanAbortExposure",		&cCameraProp.CanAbortExposure);
+	ReadOneDriverCapability("camera",	"canasymmetricbin",		"CanAsymmetricBin",		&cCameraProp.CanAsymmetricBin);
+	ReadOneDriverCapability("camera",	"canfastreadout",		"CanFastreadout",		&cCameraProp.CanFastReadout);
+	ReadOneDriverCapability("camera",	"cangetcoolerpower",	"CanGetCoolerPower",	&cCameraProp.CanGetCoolerPower);
+	ReadOneDriverCapability("camera",	"canpulseguide",		"CanPulseguide",		&cCameraProp.CanPulseGuide);
+	ReadOneDriverCapability("camera",	"cansetccdtemperature",	"CanSetCCDtemperature",	&cCameraProp.CanSetCCDtemperature);
+	ReadOneDriverCapability("camera",	"canstopexposure",		"CanStopExposure",		&cCameraProp.CanStopExposure);
+}
+
+//*****************************************************************************
+void	ControllerCamera::GetStartUpData_SubClass(void)
+{
+SJP_Parser_t	jsonParser;
 bool			validData;
-
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
-
-//	CONSOLE_DEBUG("Timing Start----------------------");
-//	SETUP_TIMING();
+char			alpacaString[128];
+int				jjj;
+int				readOutModeIdx;
 
 	//===============================================================
-	//*	get supportedactions
-	validData	=	AlpacaGetSupportedActions("camera", cAlpacaDevNum);
-	if (validData)
+	//*	get the readout modes
+	if (cOnLine)
 	{
-		//*	AlpacaGetSupportedActions() sets the cHas_readall appropriately
-		UpdateSupportedActions();
+		CONSOLE_DEBUG_W_STR(__FUNCTION__, "readoutmodes");
+		SJP_Init(&jsonParser);
+		sprintf(alpacaString,	"/api/v1/camera/%d/readoutmodes", cAlpacaDevNum);
+		validData	=	GetJsonResponse(	&cDeviceAddress,
+											cPort,
+											alpacaString,
+											NULL,
+											&jsonParser);
+		if (validData)
+		{
+			jjj	=	0;
+			while (jjj<jsonParser.tokenCount_Data)
+			{
+				if (strcasecmp(jsonParser.dataList[jjj].keyword, "ARRAY") == 0)
+				{
+					readOutModeIdx	=	0;
+					jjj++;
+					while ((jjj<jsonParser.tokenCount_Data) &&
+							(jsonParser.dataList[jjj].keyword[0] != ']'))
+					{
+						if (readOutModeIdx < kMaxReadOutModes)
+						{
+							strcpy(cCameraProp.ReadOutModes[readOutModeIdx].modeStr,
+										jsonParser.dataList[jjj].valueString);
+
+	//						CONSOLE_DEBUG(cCameraProp.ReadOutModes[readOutModeIdx].modeStr);
+							readOutModeIdx++;
+						}
+						jjj++;
+					}
+					UpdateReadoutModes();
+				}
+				jjj++;
+			}
+		}
+		else
+		{
+			CONSOLE_DEBUG("Read failure - readoutmodes");
+			cReadFailureCnt++;
+			cOnLine	=	false;
+		}
 	}
-	else
+	if (cHas_FilterWheel)
 	{
-		CONSOLE_DEBUG("Read failure - supportedactions");
-		cReadFailureCnt++;
-		cOnLine	=	false;
+		AlpacaSetConnected("filterwheel", true);
+		AlpacaGetFilterWheelStartup();
 	}
-//	DEBUG_TIMING("Timing for supportedactions=");
-
-	AlpacaGetCommonProperties_OneAAT("camera");
-
-	//===============================================================
-	//*	Start by getting info about the camera
-	if (cHas_readall)
-	{
-		validData	=	AlpacaGetStatus_ReadAll("camera", cAlpacaDevNum);
-	}
-//	else
-	{
-		validData	=	AlpacaGetStartupData_OneAAT();
-	}
-
-
-	cLastUpdate_milliSecs	=	millis();
-
-//	DEBUG_TIMING("camera specs");
-
-	SetWindowIPaddrInfo(NULL, cOnLine);
-
-//	CONSOLE_DEBUG_W_STR(__FUNCTION__, "EXIT");
-
-	return(validData);
 }
 
 //*****************************************************************************
@@ -667,6 +663,10 @@ void	ControllerCamera::AlpacaProcessSupportedActions(const char	*deviceTypeStr,
 	{
 		cHas_readall	=	true;
 	}
+	else if (strcasecmp(valueString, "devicestate") == 0)
+	{
+		cHas_DeviceState	=	true;
+	}
 	else if (strcasecmp(valueString,	"rgbarray") == 0)
 	{
 		cHas_rgbarray	=	true;
@@ -675,18 +675,11 @@ void	ControllerCamera::AlpacaProcessSupportedActions(const char	*deviceTypeStr,
 	{
 		cHas_SaveAll	=	true;
 	}
-	else if (strcasecmp(valueString,	"sidebar") == 0)
-	{
-		cHas_sidebar	=	true;
-	}
 	else if (strcasecmp(valueString,	"flip") == 0)
 	{
 		cHas_Flip	=	true;
 	}
 }
-
-
-
 
 //*****************************************************************************
 void	ControllerCamera::UpdateSettings_Object(const char *filePrefix)
@@ -735,236 +728,487 @@ void	ControllerCamera::ProcessReadAll_IMU(	const char	*deviceTypeStr,
 											const char	*keywordString,
 											const char	*valueString)
 {
+	CONSOLE_DEBUG(__FUNCTION__);
 	//*	this should be over ridden if it is needed
 }
 
-
 //*****************************************************************************
-void	ControllerCamera::AlpacaProcessReadAll(	const char	*deviceTypeStr,
+void	ControllerCamera::ProcessReadAll_SaveAs(const char	*deviceTypeStr,
 												const int	deviceNum,
 												const char	*keywordString,
 												const char	*valueString)
 {
+	CONSOLE_DEBUG(__FUNCTION__);
+	//*	this should be over ridden if it is needed
+}
 
-//	CONSOLE_DEBUG_W_2STR("json=",	keywordString, valueString);
+//*****************************************************************************
+bool	ControllerCamera::AlpacaProcessReadAllIdx(	const char	*deviceTypeStr,
+													const int	deviceNum,
+													const int	keywordEnum,
+													const char	*valueString)
+{
+bool	dataWasHandled	=	true;
 
-	//*	these are supposed to be in alphabetic order for ease of reading the code
-
-	if (strcasecmp(keywordString, "autoexposure") == 0)
+//	CONSOLE_DEBUG(__FUNCTION__);
+	switch(keywordEnum)
 	{
 		//=================================================================================
-		//*	auto exposure
-		cAutoExposure	=	IsTrueFalse(valueString);
-	}
-	else if (strcasecmp(keywordString, "backgroundcolor") == 0)
-	{
-	uint16_t	myRed;
-	uint16_t	myGrn;
-	uint16_t	myBlu;
-	char		colorStr[8];
+		case kCmd_Camera_bayeroffsetX:
+			cCameraProp.BayerOffsetX	=	atoi(valueString);
+			break;
 
-//		CONSOLE_DEBUG_W_STR("valueString\t=",	valueString);
-		if (valueString[0] == '#')
-		{
-			colorStr[0]		=	valueString[1];
-			colorStr[1]		=	valueString[2];
-			colorStr[2]		=	0;
-			myRed			=	hextoi(colorStr);
+		case kCmd_Camera_bayeroffsetY:
+			cCameraProp.BayerOffsetY	=	atoi(valueString);
+			break;
 
-			colorStr[0]		=	valueString[3];
-			colorStr[1]		=	valueString[4];
-			myGrn			=	hextoi(colorStr);
+		case kCmd_Camera_binX:
+			cCameraProp.BinX	=	atoi(valueString);
+			break;
 
-			colorStr[0]		=	valueString[5];
-			colorStr[1]		=	valueString[6];
-			myBlu			=	hextoi(colorStr);
+		case kCmd_Camera_binY:
+			cCameraProp.BinY	=	atoi(valueString);
+			break;
 
-//-			SetWidgetBGColor(kTab_Camera, kCameraBox_Title, CV_RGB(myRed,	myGrn,	myBlu));
-			if ((myRed + myGrn + myBlu) < (128 * 3))
+		case kCmd_Camera_camerastate:
+			//=================================================================================
+			cCameraProp.CameraState	=	(TYPE_ALPACA_CAMERASTATE)atoi(valueString);
+			UpdateCameraState();
+			break;
+
+		case kCmd_Camera_cameraxsize:
+			cCameraProp.CameraXsize	=	atoi(valueString);
+			break;
+
+		case kCmd_Camera_cameraysize:
+			cCameraProp.CameraYsize	=	atoi(valueString);
+			UpdateCameraSize();
+			break;
+
+		//*	Indicates whether the camera can abort exposures.
+		case kCmd_Camera_canabortexposure:
+			cCameraProp.CanAbortExposure	=	IsTrueFalse(valueString);
+			break;
+
+		//*	Indicates whether the camera supports asymmetric binning
+		case kCmd_Camera_canasymmetricbin:
+			cCameraProp.CanAsymmetricBin	=	IsTrueFalse(valueString);
+			break;
+
+		//*	Indicates whether the camera has a fast readout mode.
+		case kCmd_Camera_canfastreadout:
+			cCameraProp.CanFastReadout	=	IsTrueFalse(valueString);
+			break;
+
+		//*	Indicates whether the camera's cooler power setting can be read.
+		case kCmd_Camera_cangetcoolerpower:
+			cCameraProp.CanGetCoolerPower	=	IsTrueFalse(valueString);
+			break;
+
+		//*	Indicates whether this camera supports pulse guiding
+		case kCmd_Camera_canpulseguide:
+			cCameraProp.CanPulseGuide	=	IsTrueFalse(valueString);
+			break;
+
+		//*	Indicates whether this camera supports setting the CCD temperature
+		case kCmd_Camera_cansetccdtemperature:
+			cCameraProp.CanSetCCDtemperature	=	IsTrueFalse(valueString);
+			break;
+
+		//*	Returns a flag indicating whether this camera can stop an exposure that is in progress
+		case kCmd_Camera_canstopexposure:
+			cCameraProp.CanStopExposure	=	IsTrueFalse(valueString);
+			UpdateCommonProperties();
+			break;
+
+		case kCmd_Camera_ccdtemperature:
+			//=================================================================================
+			//*	ccdtemperature
+			cCameraProp.CCDtemperature	=	AsciiToDouble(valueString);
+			UpdateCameraTemperature();
+			LogCameraTemp(cCameraProp.CCDtemperature);
+			break;
+
+		case kCmd_Camera_cooleron:
+			//=================================================================================
+			//*	cooler state
+			cCameraProp.CoolerOn	=	IsTrueFalse(valueString);
+			UpdateCoolerState();
+			break;
+
+		case kCmd_Camera_CoolerPower:
+			cCameraProp.CoolerPower	=	atof(valueString);
+			break;
+
+		case kCmd_Camera_electronsperadu:
+			cCameraProp.ElectronsPerADU	=	atof(valueString);
+			break;
+
+		case kCmd_Camera_exposuremax:
+			cCameraProp.ExposureMax_seconds	=	atof(valueString);
+			break;
+
+		case kCmd_Camera_exposuremin:
+			cCameraProp.ExposureMin_seconds	=	atof(valueString);
+			break;
+
+		case kCmd_Camera_exposureresolution:
+			cCameraProp.ExposureResolution	=	atof(valueString);
+			break;
+
+		case kCmd_Camera_fastreadout:
+			cCameraProp.FastReadout	=	IsTrueFalse(valueString);
+			break;
+
+		case kCmd_Camera_FullWellCapacity:
+			cCameraProp.FullWellCapacity	=	atof(valueString);
+			break;
+
+		case kCmd_Camera_gain:
+			cCameraProp.Gain	=	atoi(valueString);
+			CONSOLE_DEBUG_W_NUM("cCameraProp.Gain\t=", cCameraProp.Gain);
+			break;
+
+		case kCmd_Camera_gainmax:
+			cCameraProp.GainMax	=	atoi(valueString);
+			CONSOLE_DEBUG_W_NUM("cCameraProp.GainMax\t=", cCameraProp.GainMax);
+			break;
+
+		case kCmd_Camera_gainmin:
+			cCameraProp.GainMin	=	atoi(valueString);
+			CONSOLE_DEBUG_W_NUM("cCameraProp.GainMin\t=", cCameraProp.GainMin);
+			break;
+
+		case kCmd_Camera_gains:
+			break;
+
+		case kCmd_Camera_hasshutter:
+			cCameraProp.HasShutter	=	IsTrueFalse(valueString);
+			break;
+
+		case kCmd_Camera_heatsinktemperature:
+			cCameraProp.HeatSinkTemperature	=	atof(valueString);
+			break;
+
+		case kCmd_Camera_imagearray:
+			break;
+
+		case kCmd_Camera_imagearrayvariant:
+			break;
+
+		//*	stored in microseconds, ASCOM wants seconds, convert on the fly
+		case kCmd_Camera_lastexposureduration:
+			cCameraProp.Lastexposure_duration_us	=	1000000 * atof(valueString);
+			break;
+
+		case kCmd_Camera_lastexposurestarttime:
+			break;
+
+		case kCmd_Camera_imageready:
+			cCameraState_imageready	=	IsTrueFalse(valueString);
+			UpdateCameraState();
+			break;
+
+		case kCmd_Camera_IsPulseGuiding:
+			cCameraProp.IsPulseGuiding	=	IsTrueFalse(valueString);
+			break;
+
+		case kCmd_Camera_maxadu:
+			cCameraProp.MaxADU	=	atoi(valueString);
+			break;
+
+		case kCmd_Camera_maxbinX:
+			cCameraProp.MaxbinX	=	atoi(valueString);
+			break;
+
+		case kCmd_Camera_maxbinY:
+			cCameraProp.MaxbinY	=	atoi(valueString);
+			break;
+
+
+		case kCmd_Camera_numX:	//*	The current subframe width
+			cCameraProp.NumX	=	atoi(valueString);
+			break;
+
+		case kCmd_Camera_numY:	//*	The current subframe height
+			cCameraProp.NumY	=	atoi(valueString);
+			break;
+
+		case kCmd_Camera_offset:
+			//*	offset
+			cCameraProp.Offset	=	atoi(valueString);
+			UpdateCameraOffset();
+			break;
+
+		case kCmd_Camera_offsetmax:
+			cCameraProp.OffsetMax	=	atoi(valueString);
+			break;
+
+		case kCmd_Camera_offsetmin:
+			cCameraProp.OffsetMin	=	atoi(valueString);
+			break;
+
+		case kCmd_Camera_offsets:
+			break;
+
+		case kCmd_Camera_percentcompleted:
+			cCameraProp.PercentCompleted	=	atoi(valueString);
+			UpdatePercentCompleted();
+			break;
+
+		//*	the pixel size of the camera, unit is um. (microns) such as 5.6um
+		case kCmd_Camera_PixelSizeX:
+			cCameraProp.PixelSizeX	=	atof(valueString);
+			break;
+
+		//*	the pixel size of the camera, unit is um. (microns) such as 5.6um
+		case kCmd_Camera_PixelSizeY:
+			cCameraProp.PixelSizeY	=	atof(valueString);
+			break;
+
+		case kCmd_Camera_readoutmode:
+			cCameraProp.ReadOutMode	=	atoi(valueString);
+			UpdateCurrReadoutMode();
+			break;
+
+		case kCmd_Camera_readoutmodes:
+			break;
+
+		case kCmd_Camera_sensorname:
+			strcpy(cCameraProp.SensorName, valueString);
+			break;
+
+		//*	Type of information returned by the the camera sensor (monochrome or colour)
+		case kCmd_Camera_sensortype:
+			cCameraProp.SensorType	=	(TYPE_SensorType)atoi(valueString);
+			break;
+
+		case kCmd_Camera_setccdtemperature:
+			//=================================================================================
+			//*	setccdtemperature
+			cCameraProp.SetCCDTemperature	=	atof(valueString);
+			UpdateCameraTemperature();
+			break;
+
+		case kCmd_Camera_startX:
+			cCameraProp.StartX	=	atoi(valueString);
+			break;
+
+		case kCmd_Camera_startY:
+			cCameraProp.StartY	=	atoi(valueString);
+			break;
+
+		case kCmd_Camera_subexposureduration:
+			cCameraProp.SubExposureDuration	=	atof(valueString);
+			break;
+
+		//=================================================================================
+		//*	non standard commands
+		//=================================================================================
+		case kCmd_Camera_autoexposure:
+			cAutoExposure	=	IsTrueFalse(valueString);
+			break;
+
+		case kCmd_Camera_BackGroundColor:
 			{
-//-				SetWidgetTextColor(kTab_Camera, kCameraBox_Title, CV_RGB(255,	255,	255));
+			uint16_t	myRed;
+			uint16_t	myGrn;
+			uint16_t	myBlu;
+			char		colorStr[8];
+
+		//		CONSOLE_DEBUG_W_STR("valueString\t=",	valueString);
+				if (valueString[0] == '#')
+				{
+					colorStr[0]		=	valueString[1];
+					colorStr[1]		=	valueString[2];
+					colorStr[2]		=	0;
+					myRed			=	hextoi(colorStr);
+
+					colorStr[0]		=	valueString[3];
+					colorStr[1]		=	valueString[4];
+					myGrn			=	hextoi(colorStr);
+
+					colorStr[0]		=	valueString[5];
+					colorStr[1]		=	valueString[6];
+					myBlu			=	hextoi(colorStr);
+
+					UpdateBackgroundColor(myRed,	myGrn,	myBlu);
+
+					cUpdateWindow	=	true;
+				}
+			}
+			break;
+
+		case kCmd_Camera_displayimage:
+			cDisplayImage	=	IsTrueFalse(valueString);
+			break;
+
+		case kCmd_Camera_ExposureTime:		//*	exposure time in ?
+			cExposure	=	AsciiToDouble(valueString);
+
+			UpdateCameraExposure();
+			break;
+
+		case kCmd_Camera_filelist:
+			break;
+
+		case kCmd_Camera_FileNamePrefix:
+			UpdateSettings_Object(valueString);
+			break;
+
+		case kCmd_Camera_FileNameSuffix:
+			break;
+
+		case kCmd_Camera_FilenameRoot:
+			if (strlen(valueString) > 0)
+			{
+				UpdateReceivedFileName(valueString);
+			}
+			break;
+
+		case kCmd_Camera_FilenameIncludeFilter:
+			cFN.IncludeFilter	=	IsTrueFalse(valueString);
+			break;
+
+		case kCmd_Camera_FilenameIncludeCamera:
+			cFN.IncludeManuf	=	IsTrueFalse(valueString);
+			break;
+
+		case kCmd_Camera_FilenameIncludeSerialnum:
+			cFN.IncludeSerialNum	=	IsTrueFalse(valueString);
+			break;
+
+		case kCmd_Camera_FilenameIncludeRefid:
+			cFN.IncludeRefID	=	IsTrueFalse(valueString);
+			break;
+
+		case kCmd_Camera_fitsheader:
+			break;
+
+		case kCmd_Camera_framerate:
+			break;
+
+		case kCmd_Camera_FreeDisk_Gigabytes:
+			{
+			double	gigabytesFree;
+
+				gigabytesFree	=	AsciiToDouble(valueString);
+				UpdateFreeDiskSpace(gigabytesFree);
+			}
+			break;
+
+		case kCmd_Camera_flip:
+			//=================================================================================
+			//*	flip mode
+			cCameraProp.FlipMode	=	atoi(valueString);
+			UpdateFlipMode();
+			break;
+
+
+		case kCmd_Camera_livemode:
+			{
+			bool	previousLiveMode;
+
+				//=================================================================================
+				//*	livemode
+				previousLiveMode	=	cLiveMode;
+				cLiveMode			=	IsTrueFalse(valueString);
+				if (cLiveMode != previousLiveMode)
+				{
+					UpdateLiveMode();
+				}
+			}
+			break;
+
+		case kCmd_Camera_REFID:
+			break;
+
+		case kCmd_Camera_rgbarray:
+			break;
+
+		case kCmd_Camera_saveasFITS:
+			cSaveAsFITS	=	IsTrueFalse(valueString);;
+			break;
+
+		case kCmd_Camera_saveasJPEG:
+			cSaveAsJPEG	=	IsTrueFalse(valueString);;
+			break;
+
+		case kCmd_Camera_saveasPNG:
+			cSaveAsPNG	=	IsTrueFalse(valueString);;
+			break;
+
+		case kCmd_Camera_saveasRAW:
+			cSaveAsRaw	=	IsTrueFalse(valueString);;
+			break;
+
+		case kCmd_Camera_saveallimages:
+			//=================================================================================
+			//*	save all images
+			cSaveAllImages	=	IsTrueFalse(valueString);
+			break;
+
+		case kCmd_Camera_savedimages:
+			//=================================================================================
+			//*	saved image count
+			cCameraProp.SavedImageCnt	=	atoi(valueString);
+			break;
+
+		case kCmd_Camera_savenextimage:
+			break;
+
+		default:
+			dataWasHandled	=	false;
+			break;
+	}
+	return(dataWasHandled);
+}
+
+
+//*****************************************************************************
+bool	ControllerCamera::AlpacaProcessReadAll(	const char	*deviceTypeStr,
+												const int	deviceNum,
+												const char	*keywordString,
+												const char	*valueString)
+{
+int		enumValue;
+bool	dataWasHandled	=	false;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	if (strlen(keywordString) > 0)
+	{
+		enumValue		=	LookupStringInCmdTable(keywordString, gCameraCmdTable);
+		if (enumValue >= 0)
+		{
+			dataWasHandled	=	AlpacaProcessReadAllIdx(deviceTypeStr, deviceNum, enumValue, valueString);
+		}
+		if (dataWasHandled == false)
+		{
+			if (strncasecmp(keywordString, "IMU", 3) == 0)
+			{
+				ProcessReadAll_IMU(deviceTypeStr, deviceNum, keywordString, valueString);
+			}
+			else if (strncasecmp(keywordString, "saveas", 6) == 0)
+			{
+				ProcessReadAll_SaveAs(deviceTypeStr, deviceNum, keywordString, valueString);
+			}
+			else if (strncasecmp(keywordString, "comment", 7) == 0)
+			{
+				//*	ignore comments
 			}
 			else
 			{
-//-				SetWidgetTextColor(kTab_Camera, kCameraBox_Title, CV_RGB(0,	0,	0));
+//				CONSOLE_DEBUG_W_2STR("Not Found:",	keywordString, valueString);
+				dataWasHandled	=	false;
 			}
-
-			UpdateBackgroundColor(myRed,	myGrn,	myBlu);
-
-			cUpdateWindow	=	true;
 		}
 	}
-	else if (strcasecmp(keywordString, "camerastate") == 0)
+	else
 	{
-		//=================================================================================
-		//*	camerastate
-		cCameraProp.CameraState	=	(TYPE_ALPACA_CAMERASTATE)atoi(valueString);
-		UpdateCameraState();
+		dataWasHandled	=	false;
 	}
-	else if (strcasecmp(keywordString, "cameraxsize") == 0)
-	{
-		cCameraProp.CameraXsize	=	atoi(valueString);
-	}
-	else if (strcasecmp(keywordString, "cameraysize") == 0)
-	{
-		cCameraProp.CameraYsize	=	atoi(valueString);
-		UpdateCameraSize();
-	}
-	else if (strcasecmp(keywordString, "canstopexposure") == 0)
-	{
-		cCameraProp.CanStopExposure	=	IsTrueFalse(valueString);
-		UpdateCommonProperties();
-	}
-	else if (strcasecmp(keywordString, "ccdtemperature") == 0)
-	{
-//		CONSOLE_DEBUG("ccdtemperature");
-		//=================================================================================
-		//*	ccdtemperature
-		cCameraProp.CCDtemperature	=	AsciiToDouble(valueString);
-		UpdateCameraTemperature();
-		LogCameraTemp(cCameraProp.CCDtemperature);
-	}
-	else if (strcasecmp(keywordString, "cooleron") == 0)
-	{
-		//=================================================================================
-		//*	cooler state
-		cCameraProp.CoolerOn	=	IsTrueFalse(valueString);
-		UpdateCoolerState();
-	}
-	else if (strcasecmp(keywordString, "displayImage") == 0)
-	{
-		cDisplayImage	=	IsTrueFalse(valueString);
-	}
-	else if (strcasecmp(keywordString, "exposuretime") == 0)
-	{
-		//=================================================================================
-		//*	exposure
-		cExposure	=	AsciiToDouble(valueString);
-
-		UpdateCameraExposure();
-	}
-	else if (strcasecmp(keywordString, "fileNamePrefix") == 0)
-	{
-		UpdateSettings_Object(valueString);
-	}
-	else if (strcasecmp(keywordString, "filenameroot") == 0)
-	{
-		//=================================================================================
-		//*	filenameroot
-		if (strlen(valueString) > 0)
-		{
-			UpdateReceivedFileName(valueString);
-		}
-	}
-	else if (strcasecmp(keywordString, "filenameincludefilter") == 0)
-	{
-		cFN.IncludeFilter	=	IsTrueFalse(valueString);
-	}
-	else if (strcasecmp(keywordString, "filenameincludecamera") == 0)
-	{
-		cFN.IncludeManuf	=	IsTrueFalse(valueString);
-	}
-	else if (strcasecmp(keywordString, "filenameincludeserialnum") == 0)
-	{
-		cFN.IncludeSerialNum	=	IsTrueFalse(valueString);
-	}
-	else if (strcasecmp(keywordString, "filenameincluderefid") == 0)
-	{
-		cFN.IncludeRefID	=	IsTrueFalse(valueString);
-	}
-	else if (strcasecmp(keywordString, "freeDisk_Gigabytes") == 0)
-	{
-	double	gigabytesFree;
-
-		gigabytesFree	=	AsciiToDouble(valueString);
-		UpdateFreeDiskSpace(gigabytesFree);
-	}
-	else if (strcasecmp(keywordString, "flip") == 0)
-	{
-		//=================================================================================
-		//*	flip mode
-		cCameraProp.FlipMode	=	atoi(valueString);
-		UpdateFlipMode();
-	}
-	else if (strcasecmp(keywordString, "gain") == 0)
-	{
-		//=================================================================================
-		//*	gain
-		cCameraProp.Gain	=	atoi(valueString);
-		UpdateCameraGain();
-	}
-	else if (strcasecmp(keywordString, "imageready") == 0)
-	{
-		//=================================================================================
-		//*	imageready
-		cCameraState_imageready	=	IsTrueFalse(valueString);
-		UpdateCameraState();
-	}
-	else if (strcasecmp(keywordString, "livemode") == 0)
-	{
-	bool	previousLiveMode;
-
-		//=================================================================================
-		//*	livemode
-		previousLiveMode	=	cLiveMode;
-		cLiveMode			=	IsTrueFalse(valueString);
-		if (cLiveMode != previousLiveMode)
-		{
-			UpdateLiveMode();
-		}
-	}
-	else if (strcasecmp(keywordString, "offset") == 0)
-	{
-		//=================================================================================
-		//*	offset
-		cCameraProp.Offset	=	atoi(valueString);
-		UpdateCameraOffset();
-	}
-	else if (strcasecmp(keywordString, "percentcompleted") == 0)
-	{
-		//=================================================================================
-		//*	percentcompleted
-//		CONSOLE_DEBUG("percentcompleted");
-		cCameraProp.PercentCompleted	=	atoi(valueString);
-		UpdatePercentCompleted();
-	}
-	else if (strcasecmp(keywordString, "readoutmode") == 0)
-	{
-//		CONSOLE_DEBUG("readoutmode");
-		//=================================================================================
-		//*	readoutmode
-		cCameraProp.ReadOutMode	=	atoi(valueString);
-		UpdateCurrReadoutMode();
-	}
-	else if (strcasecmp(keywordString, "saveallimages") == 0)
-	{
-		//=================================================================================
-		//*	save all images
-		cSaveAllImages	=	IsTrueFalse(valueString);
-	}
-	else if (strcasecmp(keywordString, "setccdtemperature") == 0)
-	{
-		//=================================================================================
-		//*	setccdtemperature
-		cCameraProp.SetCCDTemperature	=	atof(valueString);
-		UpdateCameraTemperature();
-	}
-	else if (strcasecmp(keywordString, "sidebar") == 0)
-	{
-		//=================================================================================
-		//*	sidebar
-		cSideBar	=	IsTrueFalse(valueString);
-	}
-	else if (strcasecmp(keywordString, "version") == 0)
-	{
-		//*	"version": "AlpacaPi - V0.2.2-beta build #32",
-		strcpy(cAlpacaVersionString, valueString);
-	}
-	else if (strncasecmp(keywordString, "IMU", 3) == 0)
-	{
-		ProcessReadAll_IMU(deviceTypeStr, deviceNum, keywordString, valueString);
-
-	}
+	return(dataWasHandled);
 }
 
 //*****************************************************************************
@@ -1260,82 +1504,6 @@ int				argInt;
 	return(validData);
 }
 
-
-//*****************************************************************************
-bool	ControllerCamera::AlpacaGetStatus(void)
-{
-bool	validData;
-bool	previousOnLineState;
-
-//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
-
-	previousOnLineState	=	cOnLine;
-	if (cHas_readall)
-	{
-		validData	=	AlpacaGetStatus_ReadAll("camera", cAlpacaDevNum);
-	}
-	else
-	{
-//		CONSOLE_DEBUG("Calling AlpacaGetCommonConnectedState()");
-		validData	=	AlpacaGetCommonConnectedState("camera");
-
-//		CONSOLE_DEBUG("Calling AlpacaGetStatus_OneAAT()");
-		validData	=	AlpacaGetStatus_OneAAT();	//*	One At A Time
-	}
-//	CONSOLE_DEBUG_W_STR("ValidData", (validData ? "True" : "FALSE"));
-
-	if (validData)
-	{
-		UpdateDisplayModes();
-		UpdateFileNameOptions();
-
-
-		//*	check to see if we were online before
-		if (cOnLine == false)
-		{
-			CONSOLE_DEBUG("Back on line, resetting read startup flag !!!!!!!!!!!!!!!!");
-			//*	if we go from offline back to online, re-do the startup info
-			cReadStartup	=	true;
-			CONSOLE_DEBUG_W_STR("cReadStartup == ", (cReadStartup ? "TRUE" : "false"));
-		}
-		cOnLine	=	true;
-#if 0
-		cLastAlpacaErrNum	=	AlpacaCheckForErrors(&jsonParser, cLastAlpacaErrStr);
-		if (cLastAlpacaErrNum != 0)
-		{
-		}
-#endif // 0
-	}
-	else
-	{
-		cReadFailureCnt++;
-		CONSOLE_DEBUG_W_STR("Offline-", cWindowName);
-		cOnLine	=	false;
-	}
-	if (cOnLine != previousOnLineState)
-	{
-		SetWindowIPaddrInfo(NULL, cOnLine);
-	}
-
-	//=================================================================================
-	//*	get the filter wheel position
-	if (cHas_FilterWheel)
-	{
-		//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-		//*	this routine is in controller_fw_common.cpp
-		//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-		AlpacaGetFilterWheelStatus();
-
-		if (cHas_FilterWheel == false)
-		{
-			CONSOLE_DEBUG("FilterWheel is now disabled");
-		}
-	}
-
-	cLastUpdate_milliSecs	=	millis();
-	return(validData);
-}
-
 //*****************************************************************************
 bool	ControllerCamera::AlpacaGetFileList(void)
 {
@@ -1586,20 +1754,6 @@ bool	validData;
 	sprintf(dataString, "Livemode=%s", (cLiveMode ? "false" : "true"));
 //	CONSOLE_DEBUG_W_STR("dataString\t=",	dataString);
 	validData	=	AlpacaSendPutCmd(	"camera", "livemode",	dataString);
-	if (validData == false)
-	{
-		CONSOLE_DEBUG_W_STR("Failed to get data, Req=", dataString)
-	}
-}
-
-//*****************************************************************************
-void	ControllerCamera::ToggleSideBar(void)
-{
-char	dataString[48];
-bool	validData;
-
-	sprintf(dataString, "Sidebar=%s", (cSideBar ? "false" : "true"));
-	validData	=	AlpacaSendPutCmd(	"camera", "sidebar",	dataString);
 	if (validData == false)
 	{
 		CONSOLE_DEBUG_W_STR("Failed to get data, Req=", dataString)
@@ -2214,6 +2368,7 @@ bool	validData;
 	switch(fnOptionBtn)
 	{
 		case kCamSet_FN_IncFilter:
+			//		NOTE:  The state we send is OPPOSITE of the current setting
 			sprintf(dataString, "includefilter=%s",		(cFN.IncludeFilter ? "false" : "true"));
 			break;
 
@@ -2237,6 +2392,7 @@ bool	validData;
 	}
 }
 
+
 //*****************************************************************************
 void	ControllerCamera::SetFlipMode(const int newFlipMode)
 {
@@ -2253,7 +2409,7 @@ bool	validData;
 	{
 		CONSOLE_DEBUG_W_STR("Failed to send data, Req=", dataString);
 	}
-	cForceAlpacaUpdate	=	true;
+	ForceAlpacaUpdate();
 }
 
 //*****************************************************************************

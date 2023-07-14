@@ -25,7 +25,7 @@
 //*	Dec 18,	2021	<MLS> Spoke to Peter in the UK about it (peter@peterandjill.co.uk)
 //*	May 18,	2022	<MLS> Added AlpacaGetImageArray_Binary_Int32()
 //*	Feb 19,	2023	<MLS> Added AlpacaGetImageArray_Binary_Int16()
-//*	Feb 19, 2023	<MLS> Changed byte order in 32 bit integer image read
+//*	Feb 19,	2023	<MLS> Changed byte order in 32 bit integer image read
 //*****************************************************************************
 
 #include	<string.h>
@@ -670,7 +670,7 @@ uint32_t		binaryDataValue;
 		while ((cData_iii < cRecvdByteCnt))
 		{
 			binaryDataValue	=	0;
-			//*	Feb 19, 2023	<MLS> Changed byte order in 32 bit integer image read
+			//*	Feb 19,	2023	<MLS> Changed byte order in 32 bit integer image read
 		#if 0
 			//*	little endian
 			binaryDataValue	+=	(cReturnedData[cData_iii++] & 0x00ff);

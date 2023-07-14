@@ -8,6 +8,7 @@
 //*	Jan  1,	2021	<MLS> Hipparcos stars catalog working in SkyTravel
 //*	Feb 18,	2021	<MLS> Added support for common star names
 //*	Feb 18,	2021	<MLS> Added ReadCommonStarNames()
+//*	Jun  3,	2023	<MLS> Added parsing of parallax to Hipparcos
 //*****************************************************************************
 //--------------------------------------------------------------------------------
 //Byte-by-byte Description of file: hip_main.dat
@@ -201,6 +202,7 @@
 #include	"SkyTravelConstants.h"
 #include	"StarData.h"
 #include	"helper_functions.h"
+#include	"controller_startup.h"
 
 #include	"StarCatalogHelper.h"
 
@@ -292,8 +294,9 @@ char		spectralClass;
 
 	spectralClass				=	lineBuff[436-1];
 
-//  80- 86  F7.2  mas     Plx       ? Trigonometric parallax                 (H11)
-//	starRec->parallax			=	ParseFloatFromString(lineBuff,		80-1, 7);
+	//  80- 86  F7.2  mas     Plx       ? Trigonometric parallax                 (H11)
+	//*	it is specified in "mas" milli-arc-seconds, conver to arc-seconds
+	starRec->parallax			=	ParseFloatFromString(lineBuff, 80-1, 7) / 1000.0;
 
 
 	raHours			=	raHour + (raMin / 60.0) + (raSec / 3600.0);

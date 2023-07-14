@@ -16,6 +16,8 @@
 //*****************************************************************************
 //*	Nov 30,	2022	<MLS> Created controller_alpacaUnit.cpp
 //*	Feb 10,	2023	<MLS> Fixed initialization bug for focuser temp log
+//*	Jul  1,	2023	<MLS> Added GetStatus_SubClass() to AlpacaUnit
+//*	Jul  1,	2023	<MLS> Added GetStartUpData_SubClass() to AlpacaUnit
 //*****************************************************************************
 
 #include	<stdio.h>
@@ -27,6 +29,7 @@
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
 
+#include	"alpaca_defs.h"
 #include	"helper_functions.h"
 #include	"windowtab_alpacaUnit.h"
 #include	"controller_alpacaUnit.h"
@@ -67,6 +70,12 @@ ControllerAlpacaUnit::ControllerAlpacaUnit(	const char			*argWindowName,
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
 
+	strcpy(cAlpacaDeviceNameStr,	"management");
+	strcpy(cAlpacaDeviceTypeStr,	"management");
+
+	cAlpacaDeviceType		=	kDeviceType_Management;
+	CONSOLE_DEBUG_W_NUM("cAlpacaDeviceType    \t=", cAlpacaDeviceType);
+
 	cAlpacaUnitTabObjPtr	=	NULL;
 	cAboutBoxTabObjPtr		=	NULL;
 	cConfiguredDevIndex		=	0;
@@ -83,6 +92,7 @@ ControllerAlpacaUnit::ControllerAlpacaUnit(	const char			*argWindowName,
 	//*	copy the device address info
 	if (alpacaUnit != NULL)
 	{
+		cValidIPaddr	=	true;
 		cAlpacaUnit		=	*alpacaUnit;
 		cDeviceAddress	=	alpacaUnit->deviceAddress;
 		cPort			=	alpacaUnit->port;
@@ -94,8 +104,6 @@ ControllerAlpacaUnit::ControllerAlpacaUnit(	const char			*argWindowName,
 	}
 
 	SetupWindowControls();
-
-
 #ifdef _USE_BACKGROUND_THREAD_
 	StartBackgroundThread();
 #endif // _USE_BACKGROUND_THREAD_
@@ -110,7 +118,6 @@ ControllerAlpacaUnit::~ControllerAlpacaUnit(void)
 	DELETE_OBJ_IF_VALID(cAlpacaUnitTabObjPtr);
 	DELETE_OBJ_IF_VALID(cAboutBoxTabObjPtr);
 }
-
 
 //**************************************************************************************
 void	ControllerAlpacaUnit::SetupWindowControls(void)
@@ -140,132 +147,36 @@ void	ControllerAlpacaUnit::SetupWindowControls(void)
 }
 
 //*****************************************************************************
-void	ControllerAlpacaUnit::AlpacaDisplayErrorMessage(const char *errorMsgString)
+void	ControllerAlpacaUnit::UpdateSupportedActions(void)
 {
-}
-
-//**************************************************************************************
-void	ControllerAlpacaUnit::GetTemperatureLogs(void)
-{
-int		iii;
-
-	CONSOLE_DEBUG(__FUNCTION__);
-
-	cCPUTtempCnt	=	Alpaca_GetTemperatureLog("management", 0, cCPUtempLog, kTemperatureLogEntries);
-
-	if (cHasCamera)
-	{
-//		CONSOLE_DEBUG("Requesting camera temperature log");
-		cCameraTempCnt	=	Alpaca_GetTemperatureLog("camera", 0, cCameraTempLog, kTemperatureLogEntries);
-		for (iii=0; iii<cCameraTempCnt; iii++)
-		{
-			cCameraTempLog[iii]	=	DEGREES_F(cCameraTempLog[iii]);
-		}
-	}
-	if (cHasFocuser)
-	{
-//		CONSOLE_DEBUG("Requesting focuser temperature log");
-		cFocusTempCnt	=	Alpaca_GetTemperatureLog("focuser", 0, cFocusTempLog, kTemperatureLogEntries);
-		for (iii=0; iii<cFocusTempCnt; iii++)
-		{
-			cFocusTempLog[iii]	=	DEGREES_F(cFocusTempLog[iii]);
-		}
-	}
-}
-
-//**************************************************************************************
-void	ControllerAlpacaUnit::RunBackgroundTasks(const char *callingFunction, bool enableDebug)
-{
-long	deltaMillSecs;
-bool	validData;
-
-//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
-	if (cReadStartup)
-	{
-		CONSOLE_DEBUG_W_STR("cReadStartup", cWindowName);
-
-		AlpacaGetStartupData();
-		validData	=	AlpacaGetCommonProperties_OneAAT("management");
-		if (validData)
-		{
-			UpdateAboutBoxRemoteDevice(kTab_AlpacaUnit,	kAlpacaUnit_CPUinfo);
-			UpdateAboutBoxRemoteDevice(kTab_About,		kAboutBox_CPUinfo);
-		}
-//		else
-//		{
-//			CONSOLE_DEBUG_W_STR("Failed to get management data", cWindowName);
-//		}
-
-		GetTemperatureLogs();
-
-		cReadStartup	=	false;
-		cUpdateWindow	=	true;
-	}
-
-	deltaMillSecs	=	millis() - cLastUpdate_milliSecs;
-	if (deltaMillSecs > (1 * 60 * 1000))
-	{
-//		CONSOLE_DEBUG_W_STR(__FUNCTION__, "Running timed background tasks");
-		GetTemperatureLogs();
-		cLastUpdate_milliSecs	=	millis();
-		cUpdateWindow			=	true;
-	}
-}
-
-//*****************************************************************************
-bool	ControllerAlpacaUnit::AlpacaGetStartupData(void)
-{
-bool	validData;
-int		iii;
-char	deviceListString[512];
-
-//	CONSOLE_DEBUG(__FUNCTION__);
-	//===============================================================
-	//*	get supportedactions
-	validData	=	AlpacaGetSupportedActions("management", cAlpacaDevNum);
-
-	if (validData)
-	{
-	//	SetWidgetValid(kTab_Switch,		kSwitchBox_Readall,		cHas_readall);
-	}
-	else
-	{
-		CONSOLE_DEBUG("Read failure - supportedactions");
-		cReadFailureCnt++;
-	}
-//	CONSOLE_DEBUG_W_BOOL("cHas_readall\t=", cHas_readall);
-
-	if (cHas_readall)
-	{
-		//*	use readall to get the startup data
-//		CONSOLE_DEBUG("Calling AlpacaGetStatus_ReadAll()");
-//		CONSOLE_DEBUG_W_NUM("cAlpacaDevNum\t=", cAlpacaDevNum);
-		validData	=	AlpacaGetStatus_ReadAll("management", cAlpacaDevNum);
-	}
-//-	else
-	{
-//		validData	=	AlpacaGetStartupData_OneAAT();
-	}
-
-	if (cHas_temperaturelog)
-	{
-
-	}
-	else
+	if (cHas_temperaturelog == false)
 	{
 		SetWidgetType(kTab_AlpacaUnit, kAlpacaUnit_CPUtempGraph, kWidgetType_TextBox);
 		SetWidgetFont(kTab_AlpacaUnit, kAlpacaUnit_CPUtempGraph, kFont_Large);
 		SetWidgetText(kTab_AlpacaUnit, kAlpacaUnit_CPUtempGraph, "Temperature data not available");
 	}
+	cHas_DeviceState	=	false;
+}
 
+//*****************************************************************************
+void	ControllerAlpacaUnit::AlpacaDisplayErrorMessage(const char *errorMsgString)
+{
+}
 
+//*****************************************************************************
+void	ControllerAlpacaUnit::GetStartUpData_SubClass(void)
+{
+int		txtBoxIdx;
+int		iii;
+char	deviceListString[512];
+
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 	//------------------------------------------------------
 	//*	get the list of configured devices
 	cConfiguredDevIndex		=	0;
 	GetConfiguredDevices();
 	if (cConfiguredDevIndex > 0)
 	{
-	int		txtBoxIdx;
 
 		for (iii=0; iii<cConfiguredDevIndex; iii++)
 		{
@@ -284,23 +195,33 @@ char	deviceListString[512];
 			}
 		}
 	}
-	return(validData);
+	GetTemperatureLogs();
+}
+
+//**************************************************************************************
+void	ControllerAlpacaUnit::GetStatus_SubClass(void)
+{
+	GetTemperatureLogs();
+	cUpdateWindow		=	true;
+	cUpdateDelta_secs	=	120;
 }
 
 //*****************************************************************************
-void	ControllerAlpacaUnit::AlpacaProcessReadAll(	const char	*deviceTypeStr,
+bool	ControllerAlpacaUnit::AlpacaProcessReadAll(	const char	*deviceTypeStr,
 													const int	deviceNum,
 													const char	*keywordString,
 													const char	*valueString)
 {
 //	CONSOLE_DEBUG(cWindowName);
-//	CONSOLE_DEBUG_W_2STR("json=",	keywordString, valueString);
+	CONSOLE_DEBUG_W_2STR("json=",	keywordString, valueString);
+	return(false);
 }
 
 //*****************************************************************************
 void	ControllerAlpacaUnit::UpdateCommonProperties(void)
 {
-
+	UpdateAboutBoxRemoteDevice(kTab_About, kAboutBox_CPUinfo);
+	UpdateAboutBoxRemoteDevice(kTab_AlpacaUnit,	kAlpacaUnit_CPUinfo);
 }
 
 //*****************************************************************************
@@ -339,5 +260,34 @@ void	ControllerAlpacaUnit::ProcessConfiguredDevices(const char *keyword, const c
 	else if (strcasecmp(keyword, "ARRAY-NEXT") == 0)
 	{
 		cConfiguredDevIndex++;
+	}
+}
+
+//**************************************************************************************
+void	ControllerAlpacaUnit::GetTemperatureLogs(void)
+{
+int		iii;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+
+	cCPUTtempCnt	=	Alpaca_GetTemperatureLog("management", 0, cCPUtempLog, kTemperatureLogEntries);
+
+	if (cHasCamera)
+	{
+//		CONSOLE_DEBUG("Requesting camera temperature log");
+		cCameraTempCnt	=	Alpaca_GetTemperatureLog("camera", 0, cCameraTempLog, kTemperatureLogEntries);
+		for (iii=0; iii<cCameraTempCnt; iii++)
+		{
+			cCameraTempLog[iii]	=	DEGREES_F(cCameraTempLog[iii]);
+		}
+	}
+	if (cHasFocuser)
+	{
+//		CONSOLE_DEBUG("Requesting focuser temperature log");
+		cFocusTempCnt	=	Alpaca_GetTemperatureLog("focuser", 0, cFocusTempLog, kTemperatureLogEntries);
+		for (iii=0; iii<cFocusTempCnt; iii++)
+		{
+			cFocusTempLog[iii]	=	DEGREES_F(cFocusTempLog[iii]);
+		}
 	}
 }

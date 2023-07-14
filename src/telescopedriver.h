@@ -24,7 +24,7 @@
 
 #ifndef	_ALPACA_DEFS_H_
 	#include	"alpaca_defs.h"
-#endif // _ALPACA_DEFS_H_
+#endif
 
 
 
@@ -192,6 +192,7 @@ class TelescopeDriver: public AlpacaDriver
 		TYPE_ASCOM_STATUS	Get_PhysicalSideOfPier(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
 		TYPE_ASCOM_STATUS	Get_Readall(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 
+virtual	bool				DeviceState_Add_Content(const int socketFD, char *jsonTextBuffer, const int maxLen);
 
 		//*************************************************************************
 		//*	DO NOT IMPLEMENT THE SYNCHRONOUS METHODS

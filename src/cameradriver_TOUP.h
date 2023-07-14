@@ -23,7 +23,7 @@
 
 #ifndef __toupcam_h__
 	#include	"toupcam.h"
-#endif // __toupcam_h__
+#endif
 
 int	CreateTOUP_CameraObjects(void);
 

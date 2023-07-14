@@ -7,8 +7,7 @@
 
 #ifndef	_ALPACA_DEFS_H_
 	#include	"alpaca_defs.h"
-#endif // _ALPACA_DEFS_H_
-
+#endif
 
 #ifndef _DISCOVERY_LIB_H_
 	#include	"discovery_lib.h"
@@ -25,9 +24,6 @@
 #ifndef	_WINDOWTAB_ABOUT_H_
 	#include	"windowtab_about.h"
 #endif
-
-
-
 
 #define	kDomeWindowWidth	475
 #define	kDomeWindowHeight	720
@@ -56,11 +52,9 @@ class ControllerAlpacaUnit: public Controller
 
 		virtual	void	SetupWindowControls(void);
 		virtual	void	AlpacaDisplayErrorMessage(const char *errorMsgString);
-		virtual	void	RunBackgroundTasks(const char *callingFunction=NULL, bool enableDebug=false);
-		virtual	bool	AlpacaGetStartupData(void);
 //				bool	AlpacaGetStatus(void);
 //
-		virtual	void	AlpacaProcessReadAll(			const char	*deviceType,
+		virtual	bool	AlpacaProcessReadAll(			const char	*deviceType,
 														const int	deviveNum,
 														const char	*keywordString,
 														const char	*valueString);
@@ -68,7 +62,10 @@ class ControllerAlpacaUnit: public Controller
 //														const int	deviveNum,
 //														const char	*valueString);
 //
+		virtual	void	GetStartUpData_SubClass(void);
+		virtual	void	GetStatus_SubClass(void);
 		virtual	void	UpdateCommonProperties(void);
+		virtual	void	UpdateSupportedActions(void);
 //		virtual	void	UpdateCapabilityList(void);
 //
 		virtual	void	ProcessConfiguredDevices(const char *keyword, const char *valueString);
@@ -100,8 +97,6 @@ class ControllerAlpacaUnit: public Controller
 };
 
 void	CreateAlpacaUnitWindow(TYPE_ALPACA_UNIT	*alpacaUnit);
-
-
 
 #endif // _CONTROLLER_ALPACAUNIT_H_
 

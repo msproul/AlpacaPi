@@ -8,7 +8,7 @@
 
 #ifndef	_CONTROLLER_H_
 	#include	"controller.h"
-#endif // _CONTROLLER_H_
+#endif
 
 
 #define	kBoxesPerSwitch	5
@@ -126,7 +126,7 @@ enum
 	kSwitchBox_AlpacaErrorMsg,
 	kSwitchBox_IPaddr,
 	kSwitchBox_Readall,
-
+	kSwitchBox_DeviceState,
 
 	kSwitchBox_last
 };

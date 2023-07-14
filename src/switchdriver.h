@@ -22,33 +22,9 @@
 	#include	"alpacadriver.h"
 #endif
 
+#include	"switch_AlpacaCmds.h"
 
 
-//*****************************************************************************
-//switch
-//*****************************************************************************
-enum
-{
-	kCmd_Switch_maxswitch	=	0,		//*	The number of switch devices managed by this driver
-	kCmd_Switch_canwrite,				//*	Indicates whether the specified switch device can be written to
-	kCmd_Switch_getswitch,				//*	Return the state of switch device id as a boolean
-	kCmd_Switch_getswitchdescription,	//*	Gets the description of the specified switch device
-	kCmd_Switch_getswitchname,			//*	Gets the name of the specified switch device
-	kCmd_Switch_getswitchvalue,			//*	Gets the value of the specified switch device as a double
-	kCmd_Switch_minswitchvalue,			//*	Gets the minimum value of the specified switch device as a double
-	kCmd_Switch_maxswitchvalue,			//*	Gets the maximum value of the specified switch device as a double
-	kCmd_Switch_setswitch,				//*	Sets a switch controller device to the specified state, true or false
-	kCmd_Switch_setswitchname,			//*	Sets a switch device name to the specified value
-	kCmd_Switch_setswitchvalue,			//*	Sets a switch device value to the specified value
-	kCmd_Switch_switchstep,				//*	Returns the step size that this device supports (the difference between successive values of the device).
-
-	//*	added by MLS
-	kCmd_Switch_Extras,
-	kCmd_Switch_setswitchdescription,
-	kCmd_Switch_readall,
-
-	kCmd_Switch_last
-};
 
 //*****************************************************************************
 enum
@@ -63,11 +39,11 @@ enum
 void	CreateSwitchObjects(void);
 
 //*****************************************************************************
-typedef struct
+typedef struct	//	TYPE_SwitchDescription
 {
 	int		switchType;
 	char	switchName[kMaxSwitchNameLen];
-	char	switchDesciption[kMaxSwitchDescLen];
+	char	switchDescription[kMaxSwitchDescLen];
 	int		hwPinNumber;							//*	hardware pin number
 	int		valueForTrue;
 } TYPE_SwitchDescription;
@@ -106,6 +82,7 @@ class SwitchDriver: public AlpacaDriver
 				TYPE_ASCOM_STATUS	Get_Switchstep(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
 
 				TYPE_ASCOM_STATUS	Get_Readall(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
+		virtual	bool				DeviceState_Add_Content(const int socketFD, char *jsonTextBuffer, const int maxLen);
 
 				void	ReadSwitchDataFile(void);
 				void	WriteSwitchDataFile(void);

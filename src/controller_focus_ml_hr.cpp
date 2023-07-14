@@ -25,8 +25,9 @@
 //*	Jun 15,	2020	<MLS> Got ML Hi-Res Stepper and Mini Controller V2 from Cloudy Nights
 //*	Jun 19,	2020	<MLS> Tested with Mini Controller V2
 //*	Jul 16,	2020	<MLS> Moonlite focuser tested on 64bit Raspberry Pi OS
+//*	Jun 19,	2023	<MLS> Updated constructor to use TYPE_REMOTE_DEV
+//*	Jul  9,	2023	<MLS> Added device-state window to Focuser-ML-HR
 //*****************************************************************************
-
 
 #if defined(_ENABLE_USB_FOCUSERS_) || defined(_ENABLE_CTRL_FOCUSERS_)
 
@@ -59,6 +60,7 @@ enum
 {
 	kTab_MLsingle	=	1,
 	kTab_Config,
+	kTab_DeviceState,
 	kTab_DriverInfo,
 	kTab_About,
 
@@ -66,33 +68,31 @@ enum
 
 };
 
-
 //**************************************************************************************
 ControllerMLsingle::ControllerMLsingle(	const char			*argWindowName,
-										struct sockaddr_in	*deviceAddress,
-										const int			port,
-										const int			deviceNum)
-	:ControllerFocus(	argWindowName,
-						deviceAddress,
-						port,
-						deviceNum,
-						kFocuserType_MoonliteSingle)
-{
+										TYPE_REMOTE_DEV		*alpacaDevice)
+					:ControllerFocus(	argWindowName,
+										alpacaDevice,
+										kFocuserType_MoonliteSingle)
 
+{
+	CONSOLE_DEBUG(__FUNCTION__);
+
+	cDriverInfoTabNum		=	kTab_DriverInfo;
 
 	//*	moved all init stuff to separate routine so we can have multiple constructors
 	ControllerFocusInit(kComMode_Alpaca, kFocuserType_MoonliteSingle);
 
-
-	cAlpacaDevNum	=	deviceNum;
-	if (deviceAddress != NULL)
-	{
-		cDeviceAddress	=	*deviceAddress;
-		cPort			=	port;
-		cValidIPaddr	=	true;
-
-		CheckConnectedState();		//*	check connected and connect if not already connected
-	}
+//
+//	cAlpacaDevNum	=	deviceNum;
+//	if (deviceAddress != NULL)
+//	{
+//		cDeviceAddress	=	*deviceAddress;
+//		cPort			=	port;
+//		cValidIPaddr	=	true;
+//
+//		CheckConnectedState();		//*	check connected and connect if not already connected
+//	}
 
 	CreateWindowTabs();
 
@@ -104,7 +104,7 @@ ControllerMLsingle::ControllerMLsingle(	const char			*argWindowName,
 										const char			*usbPortPath)
 	:ControllerFocus(argWindowName, usbPortPath,  kFocuserType_MoonliteSingle)
 {
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 
 
 	//*	moved all init stuff to separate routine so we can have multiple constructors
@@ -129,6 +129,7 @@ ControllerMLsingle::~ControllerMLsingle(void)
 	//*	delete the windowtab objects
 	DELETE_OBJ_IF_VALID(cMLsingleTabObjPtr);
 	DELETE_OBJ_IF_VALID(cConfigTabObjPtr);
+	DELETE_OBJ_IF_VALID(cDeviceStateTabObjPtr);
 	DELETE_OBJ_IF_VALID(cDriverInfoTabObjPtr);
 	DELETE_OBJ_IF_VALID(cAboutBoxTabObjPtr);
 }
@@ -142,6 +143,7 @@ void	ControllerMLsingle::CreateWindowTabs(void)
 
 	SetTabText(kTab_MLsingle,	"Focuser");
 	SetTabText(kTab_Config,		"Config");
+	SetTabText(kTab_DeviceState,"Dev State");
 	SetTabText(kTab_DriverInfo,	"Driver Info");
 	SetTabText(kTab_About,		"About");
 
@@ -164,6 +166,15 @@ void	ControllerMLsingle::CreateWindowTabs(void)
 	{
 		SetTabWindow(kTab_Config,	cConfigTabObjPtr);
 		cConfigTabObjPtr->SetParentObjectPtr(this);
+	}
+
+	//================================================================
+	cDeviceStateTabObjPtr		=	new WindowTabDeviceState(	cWidth, cHeight, cBackGrndColor, cWindowName);
+	if (cDeviceStateTabObjPtr != NULL)
+	{
+		SetTabWindow(kTab_DeviceState,	cDeviceStateTabObjPtr);
+		cDeviceStateTabObjPtr->SetParentObjectPtr(this);
+		SetDeviceStateTabInfo(kTab_DeviceState, kDeviceState_FirstBoxName, kDeviceState_FirstBoxValue, kDeviceState_Stats);
 	}
 
 	//================================================================
@@ -219,32 +230,44 @@ void	ControllerMLsingle::UpdateCommonProperties(void)
 }
 
 //**************************************************************************************
-void	ControllerMLsingle::UpdateFocuserPosition(const int newFocuserPosition)
+void	ControllerMLsingle::UpdateStartupData(void)
 {
-	cFocuserPosition	=	newFocuserPosition;
-
-	SetWidgetNumber(kTab_MLsingle,	kMLsingle_focValue,		cFocuserPosition);
-
+	UpdateAboutBoxRemoteDevice(kTab_About, kAboutBox_CPUinfo);
 }
 
 //**************************************************************************************
-void	ControllerMLsingle::UpdateTemperature(const double newTemperature)
+void	ControllerMLsingle::UpdateStatusData(void)
 {
 char	lineBuff[64];
 
-	cTemperature_DegC	=	newTemperature;
-	sprintf(lineBuff, "%1.1f C / %1.1f F", cTemperature_DegC, ((cTemperature_DegC * (9.0/5.0)) + 32));
+	UpdateConnectedIndicator(	kTab_MLsingle,	kMLsingle_Connected);
+	SetWidgetNumber(			kTab_MLsingle,	kMLsingle_focValue,		cFocuserProp.Position);
+	SetWidgetNumber(			kTab_MLsingle,	kMLsingle_focDesired,	cFocuserDesiredPos);
+
+	sprintf(lineBuff, "%1.1f C / %1.1f F", cFocuserProp.Temperature_DegC, ((cFocuserProp.Temperature_DegC * (9.0/5.0)) + 32));
 	SetWidgetText(kTab_MLsingle, kMLsingle_Temperature, lineBuff);
+}
 
-//-	if (cGraphTabObjPtr != NULL)
-//-	{
-//-		cGraphTabObjPtr->LogTemperature(cTemperature_DegC);
-//-		if (cCurrentTabNum == kTab_Graphs)
-//-		{
-//-			cUpdateWindow	=	true;
-//-		}
-//-	}
+//*****************************************************************************
+void	ControllerMLsingle::UpdateSupportedActions(void)
+{
+//	CONSOLE_DEBUG(__FUNCTION__);
+	SetWidgetValid(kTab_MLsingle,	kMLsingle_Readall,			cHas_readall);
+	SetWidgetValid(kTab_MLsingle,	kMLsingle_DeviceState,		cHas_DeviceState);
 
+	SetWidgetValid(kTab_Config,		kCongfigBox_Readall,		cHas_readall);
+	SetWidgetValid(kTab_Config,		kCongfigBox_DeviceState,	cHas_DeviceState);
+
+	SetWidgetValid(kTab_DriverInfo,	kDriverInfo_Readall,		cHas_readall);
+	SetWidgetValid(kTab_DriverInfo,	kDriverInfo_DeviceState,	cHas_DeviceState);
+
+	SetWidgetValid(kTab_DriverInfo,	kDriverInfo_Readall,		cHas_readall);
+	SetWidgetValid(kTab_DriverInfo,	kDriverInfo_DeviceState,	cHas_DeviceState);
+
+	if (cHas_DeviceState == false)
+	{
+		cDeviceStateTabObjPtr->SetDeviceStateNotSupported();
+	}
 }
 
 
@@ -252,14 +275,13 @@ char	lineBuff[64];
 void	ControllerMLsingle::UpdateWindowTabs_Everything(void)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
-//	CONSOLE_DEBUG_W_NUM("cFocuserPosition\t=",		cFocuserPosition);
+//	CONSOLE_DEBUG_W_NUM("cFocuserProp.Position\t=",		cFocuserProp.Position);
 //	CONSOLE_DEBUG_W_NUM("cFocuserDesiredPos\t=",	cFocuserDesiredPos);
 
-	SetWidgetNumber(kTab_MLsingle,	kMLsingle_focValue,		cFocuserPosition);
-	SetWidgetNumber(kTab_MLsingle,	kMLsingle_focDesired,	cFocuserDesiredPos);
-
-	UpdateConnectedIndicator(kTab_MLsingle,		kMLsingle_Connected);
-
+//	UpdateConnectedIndicator(kTab_MLsingle,		kMLsingle_Connected);
+//
+//	SetWidgetNumber(kTab_MLsingle,	kMLsingle_focValue,		cFocuserProp.Position);
+//	SetWidgetNumber(kTab_MLsingle,	kMLsingle_focDesired,	cFocuserDesiredPos);
 }
 
 //*****************************************************************************
@@ -267,8 +289,9 @@ void	ControllerMLsingle::UpdateWindowTabs_ReadAll(bool hasReadAll)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-	SetWidgetValid(kTab_MLsingle,	kMLsingle_Readall,		cHas_readall);
-	SetWidgetValid(kTab_Config,		kCongfigBox_Readall,	cHas_readall);
+	SetWidgetValid(kTab_MLsingle,	kMLsingle_Readall,		hasReadAll);
+	SetWidgetValid(kTab_Config,		kCongfigBox_Readall,	hasReadAll);
+	SetWidgetValid(kTab_DriverInfo,	kDriverInfo_Readall,	hasReadAll);
 }
 
 //*****************************************************************************

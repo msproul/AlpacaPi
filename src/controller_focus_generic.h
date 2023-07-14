@@ -7,7 +7,11 @@
 
 #ifndef	_WINDOWTAB_MOONLITE_SINGLE_H_
 	#include	"windowtab_ml_single.h"
-#endif // _WINDOWTAB_MOONLITE_SINGLE_H_
+#endif
+
+#ifndef	_WINDOWTAB_DEVICESTATE_H_
+	#include	"windowtab_DeviceState.h"
+#endif
 
 #ifndef	_WINDOWTAB_DRIVER_INFO_H_
 	#include	"windowtab_drvrInfo.h"
@@ -21,11 +25,8 @@ class ControllerFocusGeneric: public ControllerFocus
 		// Construction
 		//
 				ControllerFocusGeneric(	const char			*argWindowName,
-										struct sockaddr_in	*deviceAddress,
-										const int			port,
-										const int			deviceNum,
+										TYPE_REMOTE_DEV		*alpacaDevice,
 										const int			focuserType = kFocuserType_Other);
-
 
 		virtual	~ControllerFocusGeneric(void);
 
@@ -33,13 +34,14 @@ class ControllerFocusGeneric: public ControllerFocus
 		virtual	void	CreateWindowTabs(void);
 
 
+		virtual	void	UpdateSupportedActions(void);
 		virtual	void	UpdateCommonProperties(void);
-		virtual	void	UpdateFocuserPosition(	const int newFocuserPosition);
-		virtual	void	UpdateTemperature(		const double newTemperature);
-//		virtual	void	UpdateVoltage(			const double newVoltage);
+		virtual	void	UpdateStartupData(void);
+		virtual	void	UpdateStatusData(void);
+
+		virtual	void	UpdateFocuserPosition(void);
 
 		virtual	void	UpdateWindowTabs_Everything(void);
-		virtual	void	UpdateWindowTabs_ReadAll(		bool hasReadAll);
 //		virtual	void	UpdateWindowTabs_SwitchBits(	unsigned char switchBits);
 //		virtual	void	UpdateWindowTabs_AuxSwitchBits(	unsigned char auxSwitchBits);
 		virtual	void	UpdateWindowTabs_DesiredFocusPos(const int newDesiredPoistion);
@@ -51,6 +53,7 @@ class ControllerFocusGeneric: public ControllerFocus
 
 				//*	tab information
 				WindowTabMLsingle		*cMLsingleTabObjPtr;
+				WindowTabDeviceState	*cDeviceStateTabObjPtr;
 				WindowTabDriverInfo		*cDriverInfoTabObjPtr;
 				WindowTabAbout			*cAboutBoxTabObjPtr;
 

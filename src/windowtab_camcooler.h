@@ -15,7 +15,7 @@ enum
 {
 	kCamCooler_Title	=	0,
 
-	kCamCooler_ControllerVersion,
+//	kCamCooler_ControllerVersion,
 
 	//-------------------------------
 	kCamCooler_CoolerChkBox,
@@ -38,6 +38,7 @@ enum
 	kCamCooler_AlpacaErrorMsg,
 	kCamCooler_IPaddr,
 	kCamCooler_Readall,
+	kCamCooler_DeviceSelect,
 
 
 	kCamCooler_last
@@ -58,6 +59,7 @@ class WindowTabCamCooler: public WindowTab
 		virtual	~WindowTabCamCooler(void);
 
 		virtual	void	SetupWindowControls(void);
+		virtual	void	ActivateWindow(void);
 		virtual	void	ProcessButtonClick(const int buttonIdx, const int flags);
 		virtual	void	ProcessDoubleClick(	const int	widgetIdx,
 											const int	event,

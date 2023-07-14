@@ -63,7 +63,7 @@ char	hostName[48];
 char	hostsFileName[]	=	"/etc/hosts";
 struct sockaddr_in	myIPaddress;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	for (iii=0; iii<kMaxHostNames; iii++)
 	{

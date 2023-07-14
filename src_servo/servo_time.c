@@ -446,10 +446,10 @@ double latRad	=	RADIANS(lat);
 	// Convert lst to radians and use hour angle to calc ra position
 	raRad	=	((lst * M_PI / 12.0) - hourAngle);
 
-	/* make sure ra is positive */
+	//*	make sure ra is positive
 	raRad	=	(raRad < 0.0) ? raRad + 2.0 * M_PI : raRad;
 
-	/* convert to degrees */
+	//* convert to degrees
 	*ra		=	DEGREES(raRad);
 	*dec	=	DEGREES(decRad);
 

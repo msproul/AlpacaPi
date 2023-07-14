@@ -77,7 +77,7 @@ DomeDriverSIM::DomeDriverSIM(const int argDevNum)
 	cHomeAzimuth				=	230.0;
 	Init_Hardware();
 	LogEvent(	"dome",
-				"R-Pi Dome created",
+				"Dome simulator created",
 				NULL,
 				kASCOM_Err_Success,
 				"");
@@ -99,6 +99,12 @@ void	DomeDriverSIM::Init_Hardware(void)
 }
 
 
+//*****************************************************************************
+void	DomeDriverSIM::StartDomeMoving(const int direction)
+{
+	cTimeOfLastSpeedChange	=	millis();
+	cTimeOfMovingStart		=	millis();
+}
 
 
 #endif // _ENABLE_DOME_SIMULATOR_

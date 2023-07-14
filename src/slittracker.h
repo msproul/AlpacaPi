@@ -31,7 +31,7 @@ void	CreateSlitTrackerObjects(void);
 #define	kLineBuffSize		64
 
 //*****************************************************************************
-typedef struct
+typedef struct	//	TYPE_SLITCLOCK
 {
 	bool	validData;
 	bool	updated;
@@ -108,20 +108,4 @@ class SlitTrackerDriver: public AlpacaDriver
 				TYPE_SlittrackerProperties	cSlitProp;
 
 };
-
-
-//*****************************************************************************
-//*	Slit Tracker commands
-//*****************************************************************************
-//*****************************************************************************
-enum
-{
-	kCmd_SlitTracker_setrate	=	0,
-	kCmd_SlitTracker_DomeAddress,
-	kCmd_SlitTracker_TrackingEnabled,
-	kCmd_SlitTracker_readall
-};
-
-
 #endif // _SLIT_TRACKER_H_
-

@@ -42,7 +42,7 @@ enum
 };
 
 //**************************************************************************************
-typedef struct
+typedef struct	//	TYPE_MoonFileEntry
 {
 	char	fitsFileName[64];
 	double	moonAge;

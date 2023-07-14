@@ -49,6 +49,7 @@ enum
 	kCongfigBox_AlpacaErrorMsg,
 	kCongfigBox_IPaddr,
 	kCongfigBox_Readall,
+	kCongfigBox_DeviceState,
 
 	kCongfigBox_last
 };

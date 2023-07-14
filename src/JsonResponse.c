@@ -461,7 +461,7 @@ int		bytesWritten	=	0;
 
 		bytesWritten	=	JsonRespnse_XmitIfFull(socketFD, jsonTextBuffer, maxLen, payloadLen, false);
 
-		strcat(jsonTextBuffer, "]");
+		strcat(jsonTextBuffer, "\t\t]");
 		if (includeTrailingComma)
 		{
 			strcat(jsonTextBuffer, ",");

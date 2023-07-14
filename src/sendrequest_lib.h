@@ -6,7 +6,7 @@
 
 #ifndef _JSON_PARSE_H_
 	#include	"json_parse.h"
-#endif // _JSON_PARSE_H_
+#endif
 
 #ifdef __cplusplus
 	extern "C" {

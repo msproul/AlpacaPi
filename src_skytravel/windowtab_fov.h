@@ -138,6 +138,10 @@ class WindowTabFOV: public WindowTab
 				void	UpdateRemoteDeviceList(void);
 				void	UpdateSortOrder(void);
 
+				bool	AlpacaProcessReadAllIdx_Camera(	const int	deviceNum,
+														const int	keywordEnum,
+														const char *valueString);
+
 				bool	AlpacaProcessReadAll_Camera(	const int	deviceNum,
 														const char	*keywordString,
 														const char *valueString);

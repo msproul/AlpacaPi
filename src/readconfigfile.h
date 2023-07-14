@@ -10,7 +10,7 @@
 #define	kMaxVakyeStrLen	256
 
 //*****************************************************************************
-typedef struct
+typedef struct	//	TYPE_KEYWORDS
 {
 	char	keyword[kMaxKeyWordLen];
 	int		enumValue;

@@ -39,6 +39,8 @@
 //*	Mar  1,	2021	<MLS> CONFORM-observingconditions -> PASSED!!!!!!!!!!!!!!!!!!!!!
 //*	Sep 26,	2022	<MLS> Major re-org of how sensors are enabled
 //*	Nov 27,	2022	<MLS> CONFORMU-observingconditions -> PASSED!!!!!!!!!!!!!!!!!!!!!
+//*	Jun  4,	2023	<MLS> Updated compile time ifdefs
+//*	Jun 18,	2023	<MLS> Added DeviceState_Add_Content() to obsConditions driver
 //*****************************************************************************
 
 
@@ -59,7 +61,7 @@
 
 #ifdef __arm__
 	#include <wiringPi.h>
-	#define	_ENABLE_PI_HAT_SESNSOR_BOARD_	//*	moved to Makefile
+//	#define	_ENABLE_PI_HAT_SESNSOR_BOARD_	//*	moved to Makefile
 #endif
 
 #ifdef _ENABLE_PI_HAT_SESNSOR_BOARD_
@@ -77,14 +79,22 @@
 #include	"obsconditionsdriver.h"
 #include	"obsconditions_globals.h"
 
+#ifndef _OBSERVINGCONDITIONSDRIVER_RPI_H_
+	#include	"obsconditionsdriver_rpi.h"
+#endif
+
 #ifdef _ENABLE_OBSERVINGCONDITIONS_SIMULATOR_
 	#include	"obsconditionsdriver_sim.h"
 #endif
 
+#include	"obscond_AlpacaCmds.h"
+#include	"obscond_AlpacaCmds.cpp"
 
 //*****************************************************************************
 void	CreateObsConditionObjects(void)
 {
+	CONSOLE_DEBUG(__FUNCTION__);
+
 #if defined(__arm__) && defined(_ENABLE_OBSERVINGCONDITIONS_RPI_)
 	CreateObsConditionObjects_RPi();
 #endif
@@ -95,68 +105,6 @@ void	CreateObsConditionObjects(void)
 }
 
 
-//*****************************************************************************
-//*	Observingconditions
-enum
-{
-
-	kCmd_ObservCond_averageperiod	=	0,	//*	Returns the time period over which observations will be averaged
-											//*	Sets the time period over which observations will be averaged
-	kCmd_ObservCond_cloudcover,				//*	Returns the amount of sky obscured by cloud
-	kCmd_ObservCond_dewpoint,				//*	Returns the atmospheric dew point at the observatory
-	kCmd_ObservCond_humidity,				//*	Returns the atmospheric humidity at the observatory
-	kCmd_ObservCond_pressure,				//*	Returns the atmospheric pressure at the observatory.
-	kCmd_ObservCond_rainrate,				//*	Returns the rain rate at the observatory.
-	kCmd_ObservCond_skybrightness,			//*	Returns the sky brightness at the observatory
-	kCmd_ObservCond_skyquality,				//*	Returns the sky quality at the observatory
-	kCmd_ObservCond_skytemperature,			//*	Returns the sky temperature at the observatory
-	kCmd_ObservCond_starfwhm,				//*	Returns the seeing at the observatory
-	kCmd_ObservCond_temperature,			//*	Returns the temperature at the observatory
-	kCmd_ObservCond_winddirection,			//*	Returns the wind direction at the observatory
-	kCmd_ObservCond_windgust,				//*	Returns the peak 3 second wind gust at the observatory over the last 2 minutes
-	kCmd_ObservCond_windspeed,				//*	Returns the wind speed at the observatory.
-	kCmd_ObservCond_refresh,				//*	Refreshes sensor values from hardware.
-	kCmd_ObservCond_sensordescription,		//*	Return a sensor description
-	kCmd_ObservCond_timesincelastupdate,	//*	Return the time since the sensor value was last updated
-
-	//=================================================================
-	//*	commands added that are not part of Alpaca
-	//*	added by MLS
-	kCmd_ObservCond_Extras,
-	kCmd_ObservCond_readall
-};
-
-
-//*****************************************************************************
-static TYPE_CmdEntry	gObsCondCmdTable[]	=
-{
-	{	"averageperiod",		kCmd_ObservCond_averageperiod,			kCmdType_BOTH	},
-	{	"cloudcover",			kCmd_ObservCond_cloudcover,				kCmdType_GET	},
-	{	"dewpoint",				kCmd_ObservCond_dewpoint,				kCmdType_GET	},
-	{	"humidity",				kCmd_ObservCond_humidity,				kCmdType_GET	},
-	{	"pressure",				kCmd_ObservCond_pressure,				kCmdType_GET	},
-	{	"rainrate",				kCmd_ObservCond_rainrate,				kCmdType_GET	},
-	{	"skybrightness",		kCmd_ObservCond_skybrightness,			kCmdType_GET	},
-	{	"skyquality",			kCmd_ObservCond_skyquality,				kCmdType_GET	},
-	{	"skytemperature",		kCmd_ObservCond_skytemperature,			kCmdType_GET	},
-	{	"starfwhm",				kCmd_ObservCond_starfwhm,				kCmdType_GET	},
-	{	"temperature",			kCmd_ObservCond_temperature,			kCmdType_GET	},
-	{	"winddirection",		kCmd_ObservCond_winddirection,			kCmdType_GET	},
-	{	"windgust",				kCmd_ObservCond_windgust,				kCmdType_GET	},
-	{	"windspeed",			kCmd_ObservCond_windspeed,				kCmdType_GET	},
-	{	"refresh",				kCmd_ObservCond_refresh,				kCmdType_PUT	},
-	{	"sensordescription",	kCmd_ObservCond_sensordescription,		kCmdType_GET	},
-	{	"timesincelastupdate",	kCmd_ObservCond_timesincelastupdate,	kCmdType_GET	},
-
-	//*	added by MLS
-	{	"--extras",				kCmd_ObservCond_Extras,					kCmdType_GET	},
-	{	"readall",				kCmd_ObservCond_readall,				kCmdType_GET	},
-
-
-	{	"",						-1,	0x00	}
-};
-
-
 //**************************************************************************************
 ObsConditionsDriver::ObsConditionsDriver(const int argDevNum)
 	:AlpacaDriver(kDeviceType_Observingconditions)
@@ -165,7 +113,9 @@ int	ii;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
-	strcpy(cCommonProp.Name,	"ObsConditionsDriver");
+	strcpy(cCommonProp.Name,		"ObsConditionsDriver");
+	strcpy(cCommonProp.Description,	"AlpacaPi Observing Condition");
+
 	cDriverCmdTablePtr			=	gObsCondCmdTable;
 
 	//--------------------------------------------------------
@@ -233,6 +183,14 @@ int					mySocket;
 	JsonResponse_Add_String(	mySocket,
 								reqData->jsonTextBuffer,
 								kMaxJsonBuffLen,
+								"Device",
+								cCommonProp.Name,
+								INCLUDE_COMMA);
+
+	//*	this is not part of the protocol, I am using it for testing
+	JsonResponse_Add_String(	mySocket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
 								"Command",
 								reqData->deviceCommand,
 								INCLUDE_COMMA);
@@ -264,11 +222,11 @@ int					mySocket;
 			break;
 
 		case kCmd_ObservCond_cloudcover:	//*	Returns the amount of sky obscured by cloud
-			alpacaErrCode	=	Get_Cloudcover(reqData, alpacaErrMsg, gValueString);
+			alpacaErrCode	=	Get_CloudCover(reqData, alpacaErrMsg, gValueString);
 			break;
 
 		case kCmd_ObservCond_dewpoint:		//*	Returns the atmospheric dew point at the observatory
-			alpacaErrCode	=	Get_Dewpoint(reqData, alpacaErrMsg, gValueString);
+			alpacaErrCode	=	Get_DewPoint(reqData, alpacaErrMsg, gValueString);
 			break;
 
 
@@ -282,23 +240,23 @@ int					mySocket;
 			break;
 
 		case kCmd_ObservCond_rainrate:				//*	Returns the rain rate at the observatory.
-			alpacaErrCode	=	Get_Rainrate(reqData, alpacaErrMsg, gValueString);
+			alpacaErrCode	=	Get_RainRate(reqData, alpacaErrMsg, gValueString);
 			break;
 
 		case kCmd_ObservCond_skybrightness:			//*	Returns the sky brightness at the observatory
-			alpacaErrCode	=	Get_Skybrightness(reqData, alpacaErrMsg, gValueString);
+			alpacaErrCode	=	Get_SkyBrightness(reqData, alpacaErrMsg, gValueString);
 			break;
 
 		case kCmd_ObservCond_skyquality:				//*	Returns the sky quality at the observatory
-			alpacaErrCode	=	Get_Skyquality(reqData, alpacaErrMsg, gValueString);
+			alpacaErrCode	=	Get_SkyQuality(reqData, alpacaErrMsg, gValueString);
 			break;
 
 		case kCmd_ObservCond_skytemperature:			//*	Returns the sky temperature at the observatory
-			alpacaErrCode	=	Get_Skytemperature(reqData, alpacaErrMsg, gValueString);
+			alpacaErrCode	=	Get_SkyTemperature(reqData, alpacaErrMsg, gValueString);
 			break;
 
 		case kCmd_ObservCond_starfwhm:				//*	Returns the seeing at the observatory
-			alpacaErrCode	=	Get_Starfwhm(reqData, alpacaErrMsg, gValueString);
+			alpacaErrCode	=	Get_StarFWHM(reqData, alpacaErrMsg, gValueString);
 			break;
 
 		case kCmd_ObservCond_temperature:			//*	Returns the temperature at the observatory
@@ -306,15 +264,15 @@ int					mySocket;
 			break;
 
 		case kCmd_ObservCond_winddirection:			//*	Returns the wind direction at the observatory
-			alpacaErrCode	=	Get_Winddirection(reqData, alpacaErrMsg, gValueString);
+			alpacaErrCode	=	Get_WindDirection(reqData, alpacaErrMsg, gValueString);
 			break;
 
 		case kCmd_ObservCond_windgust:				//*	Returns the peak 3 second wind gust at the observatory over the last 2 minutes
-			alpacaErrCode	=	Get_Windgust(reqData, alpacaErrMsg, gValueString);
+			alpacaErrCode	=	Get_WindGust(reqData, alpacaErrMsg, gValueString);
 			break;
 
 		case kCmd_ObservCond_windspeed:				//*	Returns the wind speed at the observatory.
-			alpacaErrCode	=	Get_Windspeed(reqData, alpacaErrMsg, gValueString);
+			alpacaErrCode	=	Get_WindSpeed(reqData, alpacaErrMsg, gValueString);
 			break;
 
 		case kCmd_ObservCond_refresh:				//*	Refreshes sensor values from hardware.
@@ -570,20 +528,20 @@ double					avgPeriodValue;
 }
 
 //*****************************************************************************
-TYPE_ASCOM_STATUS	ObsConditionsDriver::Get_Cloudcover(	TYPE_GetPutRequestData	*reqData,
+TYPE_ASCOM_STATUS	ObsConditionsDriver::Get_CloudCover(	TYPE_GetPutRequestData	*reqData,
 															char					*alpacaErrMsg,
 															const char				*responseString)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
 	CONSOLE_DEBUG(__FUNCTION__);
-	if (cObsConditionProp.Cloudcover.IsSupported)
+	if (cObsConditionProp.CloudCover.IsSupported)
 	{
 		JsonResponse_Add_Double(reqData->socket,
 								reqData->jsonTextBuffer,
 								kMaxJsonBuffLen,
 								responseString,
-								cObsConditionProp.Cloudcover.Value,
+								cObsConditionProp.CloudCover.Value,
 								INCLUDE_COMMA);
 	}
 	else
@@ -595,7 +553,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 }
 
 //*****************************************************************************
-TYPE_ASCOM_STATUS	ObsConditionsDriver::Get_Dewpoint(	TYPE_GetPutRequestData	*reqData,
+TYPE_ASCOM_STATUS	ObsConditionsDriver::Get_DewPoint(	TYPE_GetPutRequestData	*reqData,
 														char					*alpacaErrMsg,
 														const char				*responseString)
 {
@@ -697,7 +655,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 }
 
 //*****************************************************************************
-TYPE_ASCOM_STATUS	ObsConditionsDriver::Get_Rainrate(	TYPE_GetPutRequestData	*reqData,
+TYPE_ASCOM_STATUS	ObsConditionsDriver::Get_RainRate(	TYPE_GetPutRequestData	*reqData,
 														char					*alpacaErrMsg,
 														const char				*responseString)
 {
@@ -722,7 +680,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 }
 
 //*****************************************************************************
-TYPE_ASCOM_STATUS	ObsConditionsDriver::Get_Skybrightness(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
+TYPE_ASCOM_STATUS	ObsConditionsDriver::Get_SkyBrightness(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
@@ -745,7 +703,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 }
 
 //*****************************************************************************
-TYPE_ASCOM_STATUS	ObsConditionsDriver::Get_Skyquality(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
+TYPE_ASCOM_STATUS	ObsConditionsDriver::Get_SkyQuality(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
@@ -768,7 +726,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 }
 
 //*****************************************************************************
-TYPE_ASCOM_STATUS	ObsConditionsDriver::Get_Skytemperature(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
+TYPE_ASCOM_STATUS	ObsConditionsDriver::Get_SkyTemperature(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
@@ -791,7 +749,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 }
 
 //*****************************************************************************
-TYPE_ASCOM_STATUS	ObsConditionsDriver::Get_Starfwhm(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
+TYPE_ASCOM_STATUS	ObsConditionsDriver::Get_StarFWHM(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
@@ -858,7 +816,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
 
 //*****************************************************************************
-TYPE_ASCOM_STATUS	ObsConditionsDriver::Get_Winddirection(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
+TYPE_ASCOM_STATUS	ObsConditionsDriver::Get_WindDirection(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
@@ -881,7 +839,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 }
 
 //*****************************************************************************
-TYPE_ASCOM_STATUS	ObsConditionsDriver::Get_Windgust(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
+TYPE_ASCOM_STATUS	ObsConditionsDriver::Get_WindGust(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
@@ -904,7 +862,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 }
 
 //*****************************************************************************
-TYPE_ASCOM_STATUS	ObsConditionsDriver::Get_Windspeed(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
+TYPE_ASCOM_STATUS	ObsConditionsDriver::Get_WindSpeed(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
@@ -1205,6 +1163,39 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 }
 
 //*****************************************************************************
+//CloudCover
+//DewPoint
+//Humidity
+//Pressure
+//RainRate
+//SkyBrightness
+//SkyQuality
+//SkyTemperature
+//StarFWHM
+//Temperature
+//WindDirection
+//WindGust
+//WindSpeed
+//*****************************************************************************
+bool	ObsConditionsDriver::DeviceState_Add_Content(const int socketFD, char *jsonTextBuffer, const int maxLen)
+{
+	DeviceState_Add_Dbl(socketFD,	jsonTextBuffer, maxLen,	"CloudCover",		cObsConditionProp.CloudCover.Value);
+	DeviceState_Add_Dbl(socketFD,	jsonTextBuffer, maxLen,	"DewPoint",			cObsConditionProp.DewPoint.Value);
+	DeviceState_Add_Dbl(socketFD,	jsonTextBuffer, maxLen,	"Humidity",			cObsConditionProp.Humidity.Value);
+	DeviceState_Add_Dbl(socketFD,	jsonTextBuffer, maxLen,	"Pressure",			cObsConditionProp.Pressure.Value);
+	DeviceState_Add_Dbl(socketFD,	jsonTextBuffer, maxLen,	"RainRate",			cObsConditionProp.RainRate.Value);
+	DeviceState_Add_Dbl(socketFD,	jsonTextBuffer, maxLen,	"SkyBrightness",	cObsConditionProp.SkyBrightness.Value);
+	DeviceState_Add_Dbl(socketFD,	jsonTextBuffer, maxLen,	"SkyQuality",		cObsConditionProp.SkyQuality.Value);
+	DeviceState_Add_Dbl(socketFD,	jsonTextBuffer, maxLen,	"StarFWHM",			cObsConditionProp.StarFWHM.Value);
+	DeviceState_Add_Dbl(socketFD,	jsonTextBuffer, maxLen,	"Temperature",		cObsConditionProp.Temperature.Value);
+	DeviceState_Add_Dbl(socketFD,	jsonTextBuffer, maxLen,	"WindDirection",	cObsConditionProp.WindDirection.Value);
+	DeviceState_Add_Dbl(socketFD,	jsonTextBuffer, maxLen,	"WindGust",			cObsConditionProp.WindGust.Value);
+	DeviceState_Add_Dbl(socketFD,	jsonTextBuffer, maxLen,	"WindSpeed",		cObsConditionProp.WindSpeed.Value);
+
+	return(true);
+}
+
+//*****************************************************************************
 TYPE_ASCOM_STATUS	ObsConditionsDriver::Get_Readall(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
@@ -1217,15 +1208,15 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
 
 		Get_AveragePeriod(		reqData, alpacaErrMsg, "averageperiod");
-		Get_Cloudcover(			reqData, alpacaErrMsg, "cloudcover");
-		Get_Dewpoint(			reqData, alpacaErrMsg, "dewpoint");
+		Get_CloudCover(			reqData, alpacaErrMsg, "cloudcover");
+		Get_DewPoint(			reqData, alpacaErrMsg, "dewpoint");
 		Get_Humidity(			reqData, alpacaErrMsg, "humidity");
 		Get_Pressure(			reqData, alpacaErrMsg, "pressure");
-		Get_Rainrate(			reqData, alpacaErrMsg, "rainrate");
-		Get_Skybrightness(		reqData, alpacaErrMsg, "skybrightness");
-		Get_Skyquality(			reqData, alpacaErrMsg, "skyquality");
-		Get_Skytemperature(		reqData, alpacaErrMsg, "skytemperature");
-		Get_Starfwhm(			reqData, alpacaErrMsg, "starfwhm");
+		Get_RainRate(			reqData, alpacaErrMsg, "rainrate");
+		Get_SkyBrightness(		reqData, alpacaErrMsg, "skybrightness");
+		Get_SkyQuality(			reqData, alpacaErrMsg, "skyquality");
+		Get_SkyTemperature(		reqData, alpacaErrMsg, "skytemperature");
+		Get_StarFWHM(			reqData, alpacaErrMsg, "starfwhm");
 		Get_Temperature(		reqData, alpacaErrMsg, "temperature");
 //		Get_TimeSinceLastUpdate(reqData, alpacaErrMsg, "timesincelastupdate");
 
@@ -1307,11 +1298,8 @@ double		pressure_PSI;
 				SocketWriteData(mySocketFD,	"</CENTER>\r\n");
 			}
 		}
-		//*	now generate links to all of the commands
-		GenerateHTMLcmdLinkTable(mySocketFD, "observingconditions", 0, gObsCondCmdTable);
 	}
 }
-
 
 //*****************************************************************************
 bool	ObsConditionsDriver::GetCmdNameFromMyCmdTable(const int cmdNumber, char *comandName, char *getPut)

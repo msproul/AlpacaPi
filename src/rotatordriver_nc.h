@@ -15,17 +15,13 @@
 #ifndef _ROTOR_DRIVER__NC_H_
 #define	_ROTOR_DRIVER__NC_H_
 
-
 #ifndef	_ROTOR_DRIVER_H_
 	#include	"rotatordriver.h"
-#endif // _ROTOR_DRIVER_H_
-
+#endif
 
 #ifndef	_FOCUSER_MOONLITE_H_
 	#include	"focuserdriver_nc.h"
-#endif // _FOCUSER_MOONLITE_H_
-
-
+#endif
 
 //**************************************************************************************
 class RotatorDriver_NiteCrawler: public RotatorDriver
@@ -35,7 +31,7 @@ class RotatorDriver_NiteCrawler: public RotatorDriver
 		//
 		// Construction
 		//
-						RotatorDriver_NiteCrawler(const int argDevNum, FocuserNiteCrawler *focuserObject = NULL);
+						RotatorDriver_NiteCrawler(const int argDevNum, FocuserMoonLite *focuserObject = NULL);
 		virtual			~RotatorDriver_NiteCrawler(void);
 //		virtual	void	OutputHTML(TYPE_GetPutRequestData *reqData);
 //		virtual	void	OutputHTML_Part2(TYPE_GetPutRequestData *reqData);
@@ -52,7 +48,7 @@ class RotatorDriver_NiteCrawler: public RotatorDriver
 
 
 	protected:
-		FocuserNiteCrawler		*cFocuserObject;
+		FocuserMoonLite		*cFocuserObject;
 
 };
 

@@ -455,6 +455,25 @@ int		sLen;
 	return(charCnt);
 }
 
+//************************************************************************
+void	StripTrailingSpaces(char *theString)
+{
+short	ii, slen;
+
+	slen	=	strlen(theString);
+	for (ii=slen-1; ii>0; ii--)
+	{
+		if (theString[ii] <= 0x20)
+		{
+			theString[ii]	=	0;
+		}
+		else
+		{
+			break;
+		}
+	}
+}
+
 
 static uint64_t	gBaseSeconds		=	0;
 

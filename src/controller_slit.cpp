@@ -25,8 +25,15 @@
 //*	Mar 10,	2023	<MLS> Added AlpacaDisplayErrorMessage() to slittracker controller
 //*	Mar 10,	2023	<MLS> Changed dome update to 30 seconds
 //*	Apr  1,	2023	<MLS> Made improvements to dome update logic
+//*	Jun 18,	2023	<MLS> Added UpdateSupportedActions() to Slittracker controller
+//*	Jul  3,	2023	<MLS> Added LogSlitDataToDisk()
+//*	Jul  3,	2023	<MLS> Cleaned up to use parent methods
+//*	Jul  8,	2023	<MLS> Added AlpacaProcessReadAllIdx() to SlitTracker controller
+//*	Jul 10,	2023	<MLS> Added alternate command table
+//*	Jul 10,	2023	<MLS> Added ProcessGravityVector()
+//*	Jul 10,	2023	<MLS> Added AlpacaProcessReadAllIdx_Dome()
+//*	Jul 10,	2023	<MLS> Added AlpacaProcessReadAllIdx_Slit()
 //*****************************************************************************
-
 
 #include	<math.h>
 #include	<stdio.h>
@@ -40,24 +47,26 @@
 //#include	"discovery_lib.h"
 #include	"sendrequest_lib.h"
 
-
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
-
-
 
 #include	"controller.h"
 #include	"controller_slit.h"
 #include	"windowtab_slit.h"
 #include	"windowtab_slitgraph.h"
+#include	"windowtab_slitdome.h"
+#include	"windowtab_drvrInfo.h"
 #include	"windowtab_about.h"
 
 #include	"slittracker_data.h"
+#include	"slittracker_AlpacaCmds.h"
+#include	"slittracker_AlpacaCmds.cpp"
+
+#include	"dome_AlpacaCmds.h"
 
 TYPE_SLITCLOCK	gSlitDistance[kSensorValueCnt];		//*	current reading
 TYPE_SLIT_LOG	gSlitLog[kSlitLogCount];			//*	log of readings
 int				gSlitLogIdx;
-
 
 //**************************************************************************************
 enum
@@ -72,13 +81,10 @@ enum
 
 };
 
-
-	bool	gUpdateSLitWindow	=	true;
-
+bool	gUpdateSlitWindow	=	true;
 
 #define		kSlitWindowWidth	475
 #define		kSLitWindowHeight	750
-
 
 //**************************************************************************************
 ControllerSlit::ControllerSlit(	const char			*argWindowName,
@@ -91,7 +97,10 @@ char	ipAddrStr[32];
 	CONSOLE_DEBUG(__FUNCTION__);
 
 	strcpy(cAlpacaDeviceTypeStr,	"slittracker");
+	SetCommandLookupTable(gSlitTrackerCmdTable);
+	SetAlternateLookupTable(gSlitTrackerExtrasTable);
 
+	cDriverInfoTabNum			=	kTab_DriverInfo;
 	cLogSlitData				=	false;
 	cSlitDataLogFilePtr			=	NULL;
 	cValidGravity				=	false;
@@ -107,7 +116,7 @@ char	ipAddrStr[32];
 	cLastUpdate_milliSecs		=	millis();
 	cLastDomeUpdate_milliSecs	=	millis();
 	cUpdateDelta_Secs			=	kDefaultUpdateDelta;
-	cDomeUpdateDelta_Secs		=	30;
+	cDomeUpdateDelta_Secs		=	10;
 
 	if (alpacaDevice != NULL)
 	{
@@ -118,12 +127,6 @@ char	ipAddrStr[32];
 		cPort			=	alpacaDevice->port;
 
 		strcpy(cAlpacaDeviceNameStr,	alpacaDevice->deviceNameStr);
-	#ifdef _ENABLE_SKYTRAVEL_
-		//*	make a 2nd copy if we are in SKYTRAVEL
-	//	cDomeIpAddress			=	cDeviceAddress;
-	//	cDomeIpPort				=	cPort;
-	//	cDomeAlpacaDeviceNum	=	cPort;
-	#endif
 
 		CheckConnectedState();		//*	check connected and connect if not already connected
 	}
@@ -157,7 +160,6 @@ char	ipAddrStr[32];
 	memset(&cDomeProp, 0, sizeof(TYPE_DomeProperties));
 	cDomeProp.ShutterStatus	=	kShutterStatus_Unknown;
 
-
 #ifdef _SLIT_TRACKER_DIRECT_
 	OpenSlitTrackerPort();
 #endif // _SLIT_TRACKER_DIRECT_
@@ -177,9 +179,8 @@ ControllerSlit::~ControllerSlit(void)
 	{
 		CloseSlitTrackerDataFile();
 	}
-
-
 	DELETE_OBJ_IF_VALID(cSlitTrackerTabObjPtr);
+	DELETE_OBJ_IF_VALID(cSlitDomeTabObjPtr);
 	DELETE_OBJ_IF_VALID(cSlitGraphTabObjPtr);
 	DELETE_OBJ_IF_VALID(cDriverInfoTabObjPtr);
 	DELETE_OBJ_IF_VALID(cAboutBoxTabObjPtr);
@@ -190,8 +191,7 @@ void	ControllerSlit::SetupWindowControls(void)
 {
 char	lineBuff[64];
 
-	CONSOLE_DEBUG(__FUNCTION__);
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	SetTabCount(kTab_Slit_Count);
 	SetTabText(kTab_SlitTracker,	"Slit Tracker");
@@ -244,7 +244,6 @@ char	lineBuff[64];
 	cDriverInfoTabObjPtr		=	new WindowTabDriverInfo(	cWidth, cHeight, cBackGrndColor, cWindowName);
 	if (cDriverInfoTabObjPtr != NULL)
 	{
-	CONSOLE_DEBUG(__FUNCTION__);
 		SetTabWindow(kTab_DriverInfo,	cDriverInfoTabObjPtr);
 		cDriverInfoTabObjPtr->SetParentObjectPtr(this);
 	}
@@ -258,7 +257,6 @@ char	lineBuff[64];
 	cAboutBoxTabObjPtr		=	new WindowTabAbout(	cWidth, cHeight, cBackGrndColor, cWindowName);
 	if (cAboutBoxTabObjPtr != NULL)
 	{
-	CONSOLE_DEBUG(__FUNCTION__);
 		SetTabWindow(kTab_About,	cAboutBoxTabObjPtr);
 		cAboutBoxTabObjPtr->SetParentObjectPtr(this);
 	}
@@ -278,7 +276,6 @@ char	lineBuff[64];
 
 		SetWindowIPaddrInfo(lineBuff, true);
 	}
-	CONSOLE_DEBUG(__FUNCTION__);
 }
 
 //*****************************************************************************
@@ -293,60 +290,37 @@ void	ControllerSlit::UpdateCommonProperties(void)
 	SetWidgetNumber(kTab_DriverInfo,	kDriverInfo_InterfaceVersion,	cCommonProp.InterfaceVersion);
 }
 
+//**************************************************************************************
+void	ControllerSlit::UpdateStartupData(void)
+{
+	UpdateAboutBoxRemoteDevice(kTab_About, kAboutBox_CPUinfo);
+
+}
 
 //**************************************************************************************
-void	ControllerSlit::RunBackgroundTasks(const char *callingFunction, bool enableDebug)
+void	ControllerSlit::UpdateStatusData(void)
+{
+	UpdateConnectedIndicator(kTab_SlitTracker,		kSlitTracker_Connected);
+}
+
+//**************************************************************************************
+void	ControllerSlit::GetStartUpData_SubClass(void)
+{
+	AlpacaGetCommonProperties_OneAAT("slittracker");
+	UpdateAboutBoxRemoteDevice(kTab_About, kAboutBox_CPUinfo);
+
+//	GetDomeData_Startup();
+}
+
+//*****************************************************************************
+void	ControllerSlit::GetStatus_SubClass(void)
 {
 uint32_t	currentMillis;
 uint32_t	deltaSeconds;
-bool		validData;
-bool		needToUpdate;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
-
-	if (cReadStartup)
-	{
-		CONSOLE_DEBUG(__FUNCTION__);
-		AlpacaGetStartupData();
-		AlpacaGetCommonProperties_OneAAT("slittracker");
-		UpdateAboutBoxRemoteDevice(kTab_About, kAboutBox_CPUinfo);
-		cReadStartup	=	false;
-
-	}
-
-
-	needToUpdate	=	false;
-	currentMillis	=	millis();
-	deltaSeconds	=	(currentMillis - cLastUpdate_milliSecs) / 1000;
-
-	if (cFirstDataRead || (deltaSeconds >= cUpdateDelta_Secs))
-	{
-		needToUpdate	=	true;
-	}
-	if (cForceAlpacaUpdate)	//*	force update is set when a switch is clicked
-	{
-		needToUpdate		=	true;
-		cForceAlpacaUpdate	=	false;
-	}
-
-	if (needToUpdate)
-	{
-//		CONSOLE_DEBUG("Updating");
-		//*	is the IP address valid
-		if (cValidIPaddr)
-		{
-			validData	=	AlpacaGetStatus();
-			if (validData == false)
-			{
-				CONSOLE_DEBUG("Failed to get data")
-			}
-			UpdateConnectedIndicator(kTab_SlitTracker,		kSlitTracker_Connected);
-		}
-		else
-		{
-			CONSOLE_ABORT("Invalid IP address")
-		}
-	}
+#ifdef _SLIT_TRACKER_DIRECT_
+	GetSLitTrackerData();
+#endif // _SLIT_TRACKER_DIRECT_
 
 	//========================================================
 	//*	now check on the dome updates
@@ -354,6 +328,7 @@ bool		needToUpdate;
 	{
 		currentMillis	=	millis();
 		deltaSeconds	=	(currentMillis - cLastDomeUpdate_milliSecs) / 1000;
+		CONSOLE_DEBUG_W_NUM("deltaSeconds\t=", deltaSeconds);
 
 		if (cForceDomeUpdate || (deltaSeconds > cDomeUpdateDelta_Secs))
 		{
@@ -362,16 +337,17 @@ bool		needToUpdate;
 			cForceDomeUpdate			=	false;
 		}
 	}
+	//===============================================================
+	//*	check for data logging to disk
+	if (cLogSlitData)
+	{
+		LogSlitDataToDisk();
+	}
 
-#ifdef _SLIT_TRACKER_DIRECT_
-	GetSLitTrackerData();
-#endif // _SLIT_TRACKER_DIRECT_
-
-
-	if (gUpdateSLitWindow)
+	if (gUpdateSlitWindow)
 	{
 		cUpdateWindow		=	true;
-		gUpdateSLitWindow	=	false;
+		gUpdateSlitWindow	=	false;
 	}
 }
 
@@ -387,332 +363,262 @@ void	ControllerSlit::AlpacaDisplayErrorMessage(const char *errorMsgString)
 }
 
 //*****************************************************************************
-bool	ControllerSlit::AlpacaGetStartupData(void)
+bool	ControllerSlit::AlpacaProcessReadAllIdx(	const char	*deviceTypeStr,
+													const int	deviceNum,
+													const int	keywordEnum,
+													const char	*valueString)
 {
-bool			validData;
-char			returnString[128];
+bool	dataWasHandled;
 
-	CONSOLE_DEBUG(__FUNCTION__);
-	//===============================================================
-	//*	get supportedactions
-	validData	=	AlpacaGetSupportedActions("slittracker", cAlpacaDevNum);
-	if (validData)
+	dataWasHandled	=	false;
+	if (strcasecmp(deviceTypeStr, "slittracker") == 0)
 	{
-		SetWidgetValid(kTab_SlitTracker,	kSlitTracker_Readall,	cHas_readall);
-		SetWidgetValid(kTab_DomeInfo,		kSlitDome_Readall,		cHas_readall);
-		SetWidgetValid(kTab_SlitGraph,		kSlitGraph_Readall,		cHas_readall);
-
-		if (cHas_readall == false)
-		{
-			validData	=	AlpacaGetStringValue(	"slittracker", "driverversion",	NULL,	returnString);
-			if (validData)
-			{
-				strcpy(cAlpacaVersionString, returnString);
-			}
-		}
+		dataWasHandled	=	AlpacaProcessReadAllIdx_Slit(deviceNum, keywordEnum, valueString);
+	}
+	else if (strcasecmp(deviceTypeStr, "dome") == 0)
+	{
+		dataWasHandled	=	AlpacaProcessReadAllIdx_Dome(deviceNum, keywordEnum, valueString);
 	}
 	else
 	{
-		CONSOLE_DEBUG("Read failure - supportedactions");
-		cReadFailureCnt++;
+		CONSOLE_DEBUG_W_STR("Invalid deviceTypeStr:", deviceTypeStr);
+		CONSOLE_ABORT(__FUNCTION__);
 	}
-	cLastUpdate_milliSecs	=	millis();
 
-	return(validData);
+	return(dataWasHandled);
 }
 
-
 //*****************************************************************************
-bool	ControllerSlit::AlpacaGetStatus(void)
+bool	ControllerSlit::AlpacaProcessReadAllIdx_Slit(	const int	deviceNum,
+														const int	keywordEnum,
+														const char	*valueString)
 {
-bool	validData;
-bool	previousOnLineState;
+bool	dataWasHandled;
+int		clockValue;
+double	inchValue;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-	validData			=	false;
-	previousOnLineState	=	cOnLine;
-//	CONSOLE_DEBUG_W_BOOL("cHas_readall\t=", cHas_readall);
-	if (cHas_readall)
+	dataWasHandled	=	true;
+	switch(keywordEnum)
 	{
-//		CONSOLE_DEBUG("Has readall");
-		validData	=	AlpacaGetStatus_ReadAll("slittracker", cAlpacaDevNum);
-	}
-	else
-	{
-		CONSOLE_DEBUG("No readall");
-		validData	=	AlpacaGetCommonConnectedState("slittracker");
-	}
+		case kCmd_SlitTracker_SetRate:
+				break;
 
-	if (validData)
-	{
-		if (cOnLine == false)
-		{
-			//*	if we were previously off line, force reading startup again
-			cReadStartup	=	true;
-		}
-		cOnLine	=	true;
-
-		//======================================================================
-		cUpdateDelta_Secs	=	kDefaultUpdateDelta;
-	}
-	else
-	{
-		cOnLine	=	false;
-	}
-	if (cOnLine != previousOnLineState)
-	{
-		SetWindowIPaddrInfo(NULL, cOnLine);
-	}
-
-	//===============================================================
-	//*	check for data logging to disk
-	if (cLogSlitData)
-	{
-	struct tm		*linuxTime;
-	char			slitLogFileName[48];
-	int				jjj;
-
-		linuxTime		=	localtime(&cSlitTrackerLastUpdateTime.tv_sec);
-		if (cSlitDataLogFilePtr == NULL)
-		{
-			sprintf(slitLogFileName, "slitlog-%02d-%02d-%02d.csv",
-										(1900 + linuxTime->tm_year),
-										(1 +	linuxTime->tm_mon),
-												linuxTime->tm_mday);
-
-			cSlitDataLogFilePtr	=	fopen(slitLogFileName, "a");
-		}
-		if (cSlitDataLogFilePtr != NULL)
-		{
-			fprintf(cSlitDataLogFilePtr, "%02d:%02d:%02d,",	linuxTime->tm_hour,
-															linuxTime->tm_min,
-															linuxTime->tm_sec);
-			for (jjj=0; jjj<kSensorValueCnt; jjj++)
+		case kCmd_SlitTracker_DomeAddress:
 			{
-				fprintf(cSlitDataLogFilePtr, "%1.2f,", gSlitDistance[jjj].distanceInches);
+			char *colonPtr;
+			char *slashPtr;
+
+				if (strlen(valueString) < 45)
+				{
+					strcpy(cDomeIPaddressString, valueString);
+					//*	look for the IP port number
+					colonPtr	=	strchr(cDomeIPaddressString, ':');
+					if (colonPtr != NULL)
+					{
+						*colonPtr	=	0;	//*	terminate the IP address
+						colonPtr++;
+						cDomeAlpacaPort	=	atoi(colonPtr);
+
+						SetWidgetText(	kTab_DomeInfo, kSlitDome_DomeIPaddr,	cDomeIPaddressString);
+						SetWidgetNumber(kTab_DomeInfo, kSlitDome_DomeAlpacaPort,cDomeAlpacaPort);
+					}
+					//*	now look for the Alpaca device number
+					slashPtr	=	strchr(cDomeIPaddressString, '/');
+					if (slashPtr != NULL)
+					{
+						slashPtr++;
+						cDomeAlpacaDevNum	=	atoi(colonPtr);
+						SetWidgetNumber(kTab_DomeInfo, kSlitDome_DomeDevNum,	cDomeAlpacaDevNum);
+					}
+				}
 			}
-			fprintf(cSlitDataLogFilePtr, "\n");
-			fflush(cSlitDataLogFilePtr);
-		}
+			break;
+
+		case kCmd_SlitTracker_TrackingEnabled:
+			cSlitProp.TrackingEnabled	=	IsTrueFalse(valueString);
+			if (cSlitDomeTabObjPtr != NULL)
+			{
+//				cSlitDomeTabObjPtr->UpdateButtons(kSlitDome_DomeEnableTracking,	cSlitProp.TrackingEnabled);
+				SetWidgetChecked(kTab_DomeInfo, kSlitDome_DomeEnableTracking,	cSlitProp.TrackingEnabled);
+			}
+			break;
+
+		case kCmd_SlitTracker_Sesnsor0:
+		case kCmd_SlitTracker_Sesnsor1:
+		case kCmd_SlitTracker_Sesnsor2:
+		case kCmd_SlitTracker_Sesnsor3:
+		case kCmd_SlitTracker_Sesnsor4:
+		case kCmd_SlitTracker_Sesnsor5:
+		case kCmd_SlitTracker_Sesnsor6:
+		case kCmd_SlitTracker_Sesnsor7:
+		case kCmd_SlitTracker_Sesnsor8:
+		case kCmd_SlitTracker_Sesnsor9:
+		case kCmd_SlitTracker_Sesnsor10:
+		case kCmd_SlitTracker_Sesnsor11:
+			//*	compute which entry based on offset from sensor 0
+			inchValue	=	AsciiToDouble(valueString);
+			clockValue	=	keywordEnum - kCmd_SlitTracker_Sesnsor0;
+			if ((clockValue >= 0) && (clockValue < kSensorValueCnt))
+			{
+				gSlitDistance[clockValue].distanceInches	=	inchValue;
+				gSlitDistance[clockValue].validData			=	true;
+				gSlitDistance[clockValue].updated			=	true;
+				gSlitDistance[clockValue].readCount++;
+
+				gUpdateSlitWindow	=	true;
+			}
+			break;
+
+		case kCmd_SlitTracker_gravity_x:
+		case kCmd_SlitTracker_gravity_y:
+		case kCmd_SlitTracker_gravity_z:
+		case kCmd_SlitTracker_gravity_t:
+			//*	compute which entry based on offset from gravity X
+			ProcessGravityVector((keywordEnum- kCmd_SlitTracker_gravity_x), valueString);
+			break;
+
+		default:
+			dataWasHandled	=	false;
+			break;
+
 	}
-
-
-	cLastUpdate_milliSecs	=	millis();
-	cFirstDataRead			=	false;
-	return(validData);
+	return(dataWasHandled);
 }
 
 //*****************************************************************************
-void	ControllerSlit::ProcessOneReadAllEntry(	const char	*keywordString,
+void	ControllerSlit::ProcessGravityVector(	const int	gravityVecIndex,
 												const char *valueString)
 {
-int				clockValue;
-char			clockString[48];
-double			inchValue;
-double			gravityValue;
-char			gravityVectorChar;
+double	gravityValue;
 
-//	CONSOLE_DEBUG_W_STR(__FUNCTION__, keywordString);
-//	CONSOLE_ABORT(__FUNCTION__);
-
-
-	if (strcasecmp(keywordString, "trackingenabled") == 0)
+//	CONSOLE_DEBUG_W_STR("Gravity value:", valueString);
+	gravityValue		=	AsciiToDouble(valueString);
+	switch(gravityVecIndex)
 	{
-		cSlitProp.TrackingEnabled	=	IsTrueFalse(valueString);
-		if (cSlitDomeTabObjPtr != NULL)
-		{
-			cSlitDomeTabObjPtr->UpdateButtons(kSlitDome_DomeEnableTracking,	cSlitProp.TrackingEnabled);
-		}
-	}
-	else if (strncasecmp(keywordString, "sensor-", 6) == 0)
-	{
-		strcpy(clockString, &keywordString[7]);
-		clockValue	=	atoi(clockString);
-		inchValue	=	AsciiToDouble(valueString);
-		if ((clockValue >= 0) && (clockValue < kSensorValueCnt))
-		{
-			gSlitDistance[clockValue].distanceInches	=	inchValue;
-			gSlitDistance[clockValue].validData			=	true;
-			gSlitDistance[clockValue].updated			=	true;
-			gSlitDistance[clockValue].readCount++;
+		//case 'X':
+		case 0:
+			cGravity_X	=	gravityValue;
+			break;
 
-			gUpdateSLitWindow	=	true;
-		}
-	}
-	else if (strncasecmp(keywordString, "gravity_", 8) == 0)
-	{
-	//	CONSOLE_DEBUG_W_STR("Gravity vector:", keywordString);
-		gravityVectorChar	=	keywordString[8];
-		gravityValue		=	AsciiToDouble(valueString);
+		//case 'Y':
+		case 1:
+			cGravity_Y	=	gravityValue;
+			break;
 
-		switch(gravityVectorChar)
-		{
-			case 'X':
-				cGravity_X	=	gravityValue;
-				break;
+		//case 'Z':
+		case 2:
+			cGravity_Z	=	gravityValue;
+			break;
 
-			case 'Y':
-				cGravity_Y	=	gravityValue;
-				break;
-
-			case 'Z':
-				cGravity_Z	=	gravityValue;
-				break;
-
-			case 'T':
-				cGravity_T	=	gravityValue;
-				if ((cGravity_T >= 9.7) && (cGravity_T <= 9.9))
-				{
-					cValidGravity	=	true;
-				}
-				else
-				{
-					cValidGravity	=	false;
-					CONSOLE_DEBUG_W_DBL("Gravity vector is invalid:", cGravity_T);
-				}
-
-				if (cValidGravity)
-				{
-				double	telescopeElev;
-				double	telescopeElev_deg;
-
-					cUpAngle_Rad	=	atan2(cGravity_Z, cGravity_X);
-				//	cUpAngle_Rad	=	atan2(cGravity_X, cGravity_Z);
-					cUpAngle_Deg	=	cUpAngle_Rad * 180.0 / M_PI;
-//					CONSOLE_DEBUG_W_DBL("cUpAngle_Deg\t=", cUpAngle_Deg);
-
-					cUpAngle_Deg	+=	102.858;
-
-//					CONSOLE_DEBUG_W_DBL("cUpAngle_Deg\t=", cUpAngle_Deg);
-
-				//	telescopeElev		=	atan2(cGravity_Z, cGravity_Y);
-					telescopeElev		=	atan2(cGravity_Y, cGravity_Z);
-					telescopeElev_deg	=	telescopeElev * 180.0 / M_PI;
-					telescopeElev_deg	+=	180.0;
-					telescopeElev_deg	=	360.0 - telescopeElev_deg;
-//					CONSOLE_DEBUG_W_DBL("telescopeElev_deg\t=", telescopeElev_deg);
-
-				}
-				break;
-
-			default:
-				CONSOLE_DEBUG_W_STR("Gravity vector error:", keywordString);
-				break;
-		}
-	}
-	else if (strcasecmp(keywordString, "domeaddress") == 0)
-	{
-	char *colonPtr;
-	char *slashPtr;
-
-		if (strlen(valueString) < 45)
-		{
-			strcpy(cDomeIPaddressString, valueString);
-			//*	look for the IP port number
-			colonPtr	=	strchr(cDomeIPaddressString, ':');
-			if (colonPtr != NULL)
+		//case 'T':
+		case 3:
+			cGravity_T	=	gravityValue;
+			if ((cGravity_T >= 9.7) && (cGravity_T <= 9.9))
 			{
-				*colonPtr	=	0;	//*	terminate the IP address
-				colonPtr++;
-				cDomeAlpacaPort	=	atoi(colonPtr);
-
-				SetWidgetText(	kTab_DomeInfo, kSlitDome_DomeIPaddr,	cDomeIPaddressString);
-				SetWidgetNumber(kTab_DomeInfo, kSlitDome_DomeAlpacaPort,cDomeAlpacaPort);
+				cValidGravity	=	true;
 			}
-			//*	now look for the Alpaca device number
-			slashPtr	=	strchr(cDomeIPaddressString, '/');
-			if (slashPtr != NULL)
+			else
 			{
-				slashPtr++;
-				cDomeAlpacaDevNum	=	atoi(colonPtr);
-				SetWidgetNumber(kTab_DomeInfo, kSlitDome_DomeDevNum,	cDomeAlpacaDevNum);
+				cValidGravity	=	false;
+				CONSOLE_DEBUG_W_DBL("Gravity vector is invalid:", cGravity_T);
 			}
-		}
-		else
-		{
-			CONSOLE_DEBUG_W_STR("Argument string too long:", valueString);
-		}
+
+			if (cValidGravity)
+			{
+			double	telescopeElev;
+			double	telescopeElev_deg;
+
+				cUpAngle_Rad	=	atan2(cGravity_Z, cGravity_X);
+			//	cUpAngle_Rad	=	atan2(cGravity_X, cGravity_Z);
+				cUpAngle_Deg	=	cUpAngle_Rad * 180.0 / M_PI;
+//				CONSOLE_DEBUG_W_DBL("cUpAngle_Deg\t=", cUpAngle_Deg);
+
+				cUpAngle_Deg	+=	102.858;
+
+//				CONSOLE_DEBUG_W_DBL("cUpAngle_Deg\t=", cUpAngle_Deg);
+
+			//	telescopeElev		=	atan2(cGravity_Z, cGravity_Y);
+				telescopeElev		=	atan2(cGravity_Y, cGravity_Z);
+				telescopeElev_deg	=	telescopeElev * 180.0 / M_PI;
+				telescopeElev_deg	+=	180.0;
+				telescopeElev_deg	=	360.0 - telescopeElev_deg;
+//				CONSOLE_DEBUG_W_DBL("telescopeElev_deg\t=", telescopeElev_deg);
+			}
+			break;
+
+		default:
+			CONSOLE_DEBUG_W_NUM("Gravity vector error:", gravityVecIndex);
+			break;
 	}
 }
 
 //*****************************************************************************
-void	ControllerSlit::ProcessOneReadAllEntryDome(	const char	*keywordString,
-													const char *valueString)
+bool	ControllerSlit::AlpacaProcessReadAllIdx_Dome(	const int	deviceNum,
+														const int	keywordEnum,
+														const char	*valueString)
 {
+bool		dataWasHandled	=	true;
 char		statusString[64];
 
-//	CONSOLE_DEBUG_W_STR(keywordString, valueString);
+	CONSOLE_DEBUG_W_NUM(__FUNCTION__, keywordEnum);
+	dataWasHandled	=	true;
+	switch(keywordEnum)
+	{
+		case kCmd_Dome_athome:
+			cDomeProp.AtHome	=	IsTrueFalse(valueString);
+			if (cDomeProp.AtHome)
+			{
+				SetWidgetText(		kTab_DomeInfo, kSlitDome_DomePosition, "Home");
+				SetWidgetTextColor(	kTab_DomeInfo, kSlitDome_DomePosition,	CV_RGB(0, 255, 0));
+			}
+			cDomeReadAllCount++;
+			break;
 
-	if (strcasecmp(keywordString, "athome") == 0)
-	{
-		cDomeProp.AtHome	=	IsTrueFalse(valueString);
-		if (cDomeProp.AtHome)
-		{
-			SetWidgetText(		kTab_DomeInfo, kSlitDome_DomePosition, "Home");
-			SetWidgetTextColor(	kTab_DomeInfo, kSlitDome_DomePosition,	CV_RGB(0, 255, 0));
-		}
-		cDomeReadAllCount++;
-	}
-	else if (strcasecmp(keywordString, "atpark") == 0)
-	{
-		cDomeProp.AtPark	=	IsTrueFalse(valueString);
-		if (cDomeProp.AtPark)
-		{
-			SetWidgetText(		kTab_DomeInfo, kSlitDome_DomePosition, "Park");
-			SetWidgetTextColor(	kTab_DomeInfo, kSlitDome_DomePosition,	CV_RGB(0, 255, 0));
-		}
-		cDomeReadAllCount++;
-	}
-	else if (strcasecmp(keywordString, "azimuth") == 0)
-	{
-		cDomeProp.Azimuth	=	atof(valueString);
-		sprintf(statusString, "%1.1f", cDomeProp.Azimuth);
-		SetWidgetText(		kTab_DomeInfo, kSlitDome_DomeAzimuth, statusString);
-		SetWidgetTextColor(	kTab_DomeInfo, kSlitDome_DomeAzimuth,	CV_RGB(0, 255, 0));
-		cDomeReadAllCount++;
-	}
-	else if (strcasecmp(keywordString, "slewing") == 0)
-	{
-		cDomeProp.Slewing	=	IsTrueFalse(valueString);
-		if (cDomeProp.Slewing)
-		{
-			SetWidgetText(		kTab_DomeInfo, kSlitDome_DomePosition, "Slewing");
-			SetWidgetTextColor(	kTab_DomeInfo, kSlitDome_DomePosition,	CV_RGB(0, 255, 0));
-		}
-		cDomeReadAllCount++;
-	}
+		case kCmd_Dome_atpark:
+			cDomeProp.AtPark	=	IsTrueFalse(valueString);
+			if (cDomeProp.AtPark)
+			{
+				SetWidgetText(		kTab_DomeInfo, kSlitDome_DomePosition, "Park");
+				SetWidgetTextColor(	kTab_DomeInfo, kSlitDome_DomePosition,	CV_RGB(0, 255, 0));
+			}
+			cDomeReadAllCount++;
+			break;
 
-	else if (strcasecmp(keywordString, "shutterstatus") == 0)
-	{
-		cDomeProp.ShutterStatus	=	(TYPE_ShutterStatus)atoi(valueString);
-		GetDomeShutterStatusString(cDomeProp.ShutterStatus, statusString);
+		case kCmd_Dome_azimuth:
+			cDomeProp.Azimuth	=	atof(valueString);
+			sprintf(statusString, "%1.1f", cDomeProp.Azimuth);
+			SetWidgetText(		kTab_DomeInfo, kSlitDome_DomeAzimuth, statusString);
+			SetWidgetTextColor(	kTab_DomeInfo, kSlitDome_DomeAzimuth,	CV_RGB(0, 255, 0));
+			cDomeReadAllCount++;
+			break;
 
-		SetWidgetText(		kTab_DomeInfo, kSlitDome_DomeShutter,	statusString);
-		SetWidgetTextColor(	kTab_DomeInfo, kSlitDome_DomeShutter,	CV_RGB(0, 255, 0));
-		cDomeReadAllCount++;
-	}
-}
+		case kCmd_Dome_slewing:
+			cDomeProp.Slewing	=	IsTrueFalse(valueString);
+			if (cDomeProp.Slewing)
+			{
+				SetWidgetText(		kTab_DomeInfo, kSlitDome_DomePosition, "Slewing");
+				SetWidgetTextColor(	kTab_DomeInfo, kSlitDome_DomePosition,	CV_RGB(0, 255, 0));
+			}
+			cDomeReadAllCount++;
+			break;
 
-//*****************************************************************************
-void	ControllerSlit::AlpacaProcessReadAll(	const char	*deviceType,
-												const int	deviceNum,
-												const char	*keywordString,
-												const char *valueString)
-{
-//	CONSOLE_DEBUG_W_2STR(deviceType,	keywordString, valueString);
-	if (strcasecmp(deviceType, "slittracker") == 0)
-	{
-		ProcessOneReadAllEntry(keywordString, valueString);
+		case kCmd_Dome_shutterstatus:
+			cDomeProp.ShutterStatus	=	(TYPE_ShutterStatus)atoi(valueString);
+			GetDomeShutterStatusString(cDomeProp.ShutterStatus, statusString);
+
+			SetWidgetText(		kTab_DomeInfo, kSlitDome_DomeShutter,	statusString);
+			SetWidgetTextColor(	kTab_DomeInfo, kSlitDome_DomeShutter,	CV_RGB(0, 255, 0));
+			cDomeReadAllCount++;
+			break;
+
+		default:
+			dataWasHandled	=	false;
+			break;
+
 	}
-	else if (strcasecmp(deviceType, "dome") == 0)
-	{
-		ProcessOneReadAllEntryDome(keywordString, valueString);
-	}
-	else
-	{
-		CONSOLE_ABORT(__FUNCTION__);
-	}
+	return(dataWasHandled);
 }
 
 //*****************************************************************************
@@ -744,10 +650,56 @@ void	ControllerSlit::AlpacaProcessSupportedActions(	const char	*deviceType,
 	}
 }
 
+//*****************************************************************************
+void	ControllerSlit::UpdateSupportedActions(void)
+{
+//	CONSOLE_DEBUG(__FUNCTION__);
+	SetWidgetValid(kTab_SlitTracker,	kSlitTracker_Readall,	cHas_readall);
+	SetWidgetValid(kTab_SlitGraph,		kSlitGraph_Readall,		cHas_readall);
+	SetWidgetValid(kTab_DomeInfo,		kSlitDome_Readall,		cHas_readall);
+	SetWidgetValid(kTab_DriverInfo,		kDriverInfo_Readall,	cHas_readall);
+}
+
 //**************************************************************************************
 void	ControllerSlit::UpdateCapabilityList(void)
 {
 //	UpdateCapabilityListID(kTab_Capabilities, kCapabilities_TextBox1, kCapabilities_TextBoxN);
+}
+
+//*****************************************************************************
+void	ControllerSlit::LogSlitDataToDisk(void)
+{
+	//===============================================================
+	//*	check for data logging to disk
+	if (cLogSlitData)
+	{
+	struct tm		*linuxTime;
+	char			slitLogFileName[48];
+	int				jjj;
+
+		linuxTime		=	localtime(&cSlitTrackerLastUpdateTime.tv_sec);
+		if (cSlitDataLogFilePtr == NULL)
+		{
+			sprintf(slitLogFileName, "slitlog-%02d-%02d-%02d.csv",
+										(1900 + linuxTime->tm_year),
+										(1 +	linuxTime->tm_mon),
+												linuxTime->tm_mday);
+
+			cSlitDataLogFilePtr	=	fopen(slitLogFileName, "a");
+		}
+		if (cSlitDataLogFilePtr != NULL)
+		{
+			fprintf(cSlitDataLogFilePtr, "%02d:%02d:%02d,",	linuxTime->tm_hour,
+															linuxTime->tm_min,
+															linuxTime->tm_sec);
+			for (jjj=0; jjj<kSensorValueCnt; jjj++)
+			{
+				fprintf(cSlitDataLogFilePtr, "%1.2f,", gSlitDistance[jjj].distanceInches);
+			}
+			fprintf(cSlitDataLogFilePtr, "\n");
+			fflush(cSlitDataLogFilePtr);
+		}
+	}
 }
 
 //*****************************************************************************
@@ -851,17 +803,15 @@ void	ControllerSlit::CloseSlitTrackerDataFile(void)
 	cLogSlitData	=	false;
 }
 
-
 //*****************************************************************************
 //*****************************************************************************
 void	ControllerSlit::SetButtonOption(const int widgetBtnIdx, const bool newState)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
-//	CONSOLE_DEBUG_W_NUM("widgetBtnIdx\t=",	widgetBtnIdx);
-//	CONSOLE_DEBUG_W_BOOL("newState   \t=",	newState);
 	switch(widgetBtnIdx)
 	{
 		case kSlitDome_DomeEnableData:
+			//*	make this class match the subclass
 			cEnableAutomaticDomeUpdates	=	newState;
 			if (cEnableAutomaticDomeUpdates)
 			{
@@ -873,10 +823,6 @@ void	ControllerSlit::SetButtonOption(const int widgetBtnIdx, const bool newState
 		default:
 			CONSOLE_ABORT(__FUNCTION__);
 			break;
-	}
-	if (cSlitDomeTabObjPtr != NULL)
-	{
-		cSlitDomeTabObjPtr->UpdateButtons(kSlitDome_DomeEnableData,		cEnableAutomaticDomeUpdates);
 	}
 }
 
@@ -895,12 +841,21 @@ struct sockaddr_in	deviceAddress;
 	{
 //		CONSOLE_DEBUG("Calling AlpacaGetStatus_ReadAll()");
 		cDomeReadAllCount	=	0;
+
+		//*	set the command tables to point to the dome commands
+		SetCommandLookupTable(gDomeCmdTable);
+		SetAlternateLookupTable(gDomeExtrasTable);
 		validData	=	AlpacaGetStatus_ReadAll(&deviceAddress,
 												cDomeAlpacaPort,
 												"dome",
 												cDomeAlpacaDevNum,
 												false);	//*	enable debug
 		CONSOLE_DEBUG_W_NUM("cDomeReadAllCount\t=",	cDomeReadAllCount);
+
+		//*	set the command tables back to point to the slit tracker commands
+		SetCommandLookupTable(gSlitTrackerCmdTable);
+		SetAlternateLookupTable(gSlitTrackerExtrasTable);
+
 		if (validData)
 		{
 			if ((cDomeProp.AtHome == false) && (cDomeProp.AtPark == false) && (cDomeProp.Slewing == false))
@@ -1065,9 +1020,9 @@ char				returnDataString[128];
 	//*	first lets get supported actions
 	cDomeHas_Readall	=	false;
 	validData			=	AlpacaGetSupportedActions(	&deviceAddress,
-												cDomeAlpacaPort,
-												"dome",
-												cAlpacaDevNum);
+														cDomeAlpacaPort,
+														"dome",
+														cAlpacaDevNum);
 //	if (validData)
 //	{
 //
@@ -1123,14 +1078,9 @@ bool	ControllerSlit::SetAlpacaEnableTracking(const bool newState)
 {
 bool			validData;
 SJP_Parser_t	jsonParser;
-//int				jjj;
 char			parameterString[128];
-//int				returnedAlpacaErrNum;
-//char			returnedAlpacaErrStr[256];
-bool			myReturnDataIsValid;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
-	myReturnDataIsValid	=	true;
 
 	sprintf(parameterString, "tracking=%s", (newState ? "True" : "False"));
 	validData	=	AlpacaSendPutCmdwResponse(	&cDeviceAddress,
@@ -1144,9 +1094,7 @@ bool			myReturnDataIsValid;
 	if (cLastAlpacaErrNum != kASCOM_Err_Success)
 	{
 		CONSOLE_DEBUG_W_NUM("cLastAlpacaErrNum        \t=",	cLastAlpacaErrNum);
-		myReturnDataIsValid	=	false;
 	}
-
 	return(validData);
 }
 

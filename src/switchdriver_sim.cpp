@@ -63,7 +63,7 @@ int		iii;
 
 	for (iii = 0; iii < kMaxSwitchCnt; iii++)
 	{
-		cSwitchValues[iii]	=	false;;
+		cSwitchValues[iii]	=	false;
 	}
 
 	Init_Hardware();
@@ -96,8 +96,6 @@ void	SwitchDriverSIM::Init_Hardware(void)
 //*****************************************************************************
 bool	SwitchDriverSIM::GetSwitchState(const int switchNumber)
 {
-int		pinNumber;
-int		pinValue;
 bool	switchState;
 
 //	CONSOLE_DEBUG(__FUNCTION__);

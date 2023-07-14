@@ -61,10 +61,12 @@ WindowTabStartup::~WindowTabStartup(void)
 //**************************************************************************************
 void	WindowTabStartup::SetupWindowControls(void)
 {
+int			xLoc;
 int			yLoc;
 int			iii;
 short		tabStopList[]	=	{300, 350, 400, 0 };
 int			boxHeight;
+int			buttonWidth;
 cv::Scalar	spashColor;
 //time_t		secsSinceEpoch;
 //
@@ -98,8 +100,11 @@ cv::Scalar	spashColor;
 		yLoc			+=	boxHeight;
 //		yLoc			+=	2;
 	}
-	SetWidgetFont(kStartup_Title1,	kFont_Script_Large);
-	SetWidgetText(kStartup_Title1, "SkyTravel");
+	SetWidgetFont(		kStartup_Title1,	kFont_Script_Large);
+//	SetWidgetTextColor(	kStartup_Title1,	CV_RGB(0x91,	0x30,	0xFA));
+	SetWidgetTextColor(	kStartup_Title1,	CV_RGB(0xA1,	0x40,	0xFA));
+//	SetWidgetTextColor(	kStartup_Title1,	CV_RGB(255,		0,		0));
+	SetWidgetText(		kStartup_Title1, "SkyTravel");
 
 	SetWidgetFont(kStartup_Title2,	kFont_Triplex_Small);
 	SetWidgetText(kStartup_Title2, "(C) Mark Sproul msproul@skychariot.com");
@@ -114,18 +119,57 @@ cv::Scalar	spashColor;
 		SetWidget(				iii,	0,			yLoc,		cWidth,		cRadioBtnHt);
 		SetWidgetType(			iii,	kWidgetType_TextBox);
 		SetWidgetTabStops(		iii,	tabStopList);
-		SetWidgetBorder(		iii,	false);
 		SetWidgetJustification(	iii,	kJustification_Left);
 		SetWidgetFont(			iii,	kFont_TextList);
 		SetWidgetTextColor(		iii,	CV_RGB(255,	255,	255));
+		SetWidgetBorder(		iii,	false);
 
 		yLoc			+=	cRadioBtnHt;
 //		yLoc			+=	2;
 	}
+	yLoc			+=	2;
 
-//	SetAlpacaLogoBottomCorner(kStartup_AlpacaLogo);
+	//--------------------------------------------
+	yLoc			=	cHeight - cBtnHeight;
+	yLoc			-=	10;
+	buttonWidth		=	100;
+	xLoc			=	(cWidth - buttonWidth) / 2;
+	SetWidget(			kStartup_CloseBtn,	xLoc,			yLoc,	buttonWidth,	cBtnHeight);
+	SetWidgetType(		kStartup_CloseBtn,	kWidgetType_Button);
+	SetWidgetBGColor(	kStartup_CloseBtn,	CV_RGB(255,	255,	255));
+	SetWidgetTextColor(	kStartup_CloseBtn,	CV_RGB(0,	0,	0));
+	SetWidgetText(		kStartup_CloseBtn, "Close");
+	SetWidgetValid(		kStartup_CloseBtn, false);
+	xLoc	+=	buttonWidth;
+	xLoc	+=	2;
+
+	SetWidget(			kStartup_DumpBtn,	xLoc,			yLoc,	buttonWidth,	cBtnHeight);
+	SetWidgetType(		kStartup_DumpBtn,	kWidgetType_Button);
+	SetWidgetBGColor(	kStartup_DumpBtn,	CV_RGB(255,	255,	255));
+	SetWidgetTextColor(	kStartup_DumpBtn,	CV_RGB(0,	0,	0));
+	SetWidgetText(		kStartup_DumpBtn, "Dump");
+
+
+	SetAlpacaLogoBottomCorner(kStartup_AlpacaLogo);
+	LLG_SetColor(W_BLACK);
 }
 
+//*****************************************************************************
+void	WindowTabStartup::ProcessButtonClick(const int buttonIdx, const int flags)
+{
+//	CONSOLE_DEBUG(__FUNCTION__);
 
+	switch(buttonIdx)
+	{
+		case kStartup_CloseBtn:
+			CloseWindow();
+			break;
 
+		case kStartup_DumpBtn:
+			DumpWidgetList(kStartup_Title1, kStartup_AlpacaLogo, __FILE__);
+			break;
+
+	}
+	ForceWindowUpdate();
+}
 

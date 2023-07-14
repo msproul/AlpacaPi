@@ -17,8 +17,6 @@ enum
 
 	kMLsingle_Temperature,
 
-
-
 	//*	these MUST be in this order
 	kMLsingle_focValue,
 	kMLsingle_focDesired,
@@ -34,23 +32,25 @@ enum
 	kMLsingle_SP07,
 	kMLsingle_SP08,
 	kMLsingle_SP09,
-//	kMLsingle_SP10,
+	kMLsingle_SP10,
+	kMLsingle_SP11,
 
 	kMLsingle_Foc_p5000,
 	kMLsingle_Foc_p1000,
 	kMLsingle_Foc_p100,
+	kMLsingle_Foc_p50,
+	kMLsingle_Foc_p10,
 	kMLsingle_Foc_p1,
 
 	kMLsingle_Foc_m1,
 	kMLsingle_Foc_m10,
-	kMLsingle_Foc_p10,
+	kMLsingle_Foc_m50,
 	kMLsingle_Foc_m100,
 	kMLsingle_Foc_m1000,
 	kMLsingle_Foc_m5000,
 	//*	end of order restriction
 
 	kMLsingle_GOTO_outline,
-
 
 //*	right hand side
 	kMLsingle_CurPosLabel,
@@ -59,14 +59,13 @@ enum
 
 	kMLsingle_Home,
 
-
 	kMLsingle_LastCmdString,
 	kMLsingle_AlpacaLogo,
 	kMLsingle_AlpacaErrorMsg,
 	kMLsingle_IPaddr,
 	kMLsingle_Readall,
+	kMLsingle_DeviceState,
 	kMLsingle_Connect,
-
 
 	kMLsingle_last
 };
@@ -76,7 +75,8 @@ enum
 
 #define	kLogoHeight	120
 
-#define	kStorePtCnt	10
+#define	kStorePtCnt		12
+#define	kMaxFocusBtns	16
 //**************************************************************************************
 class WindowTabMLsingle: public WindowTab
 {
@@ -105,7 +105,7 @@ class WindowTabMLsingle: public WindowTab
 				int		cFocuserType;
 
 //-				int		cButtonNumValues[10]	=	{5000, 1000, 100, 10, 1, -1, -10, -100, -1000, -5000};
-				int		cButtonNumValues[10];
+				int		cButtonNumValues[kMaxFocusBtns];
 				int		cPreviousBtnClicked;
 				int		cStorePoints[kStorePtCnt];
 

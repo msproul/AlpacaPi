@@ -33,6 +33,7 @@ enum
 	kMount_HelpMsgTextBox,
 	kMount_IPaddr,
 	kMount_Readall,
+	kMount_DeviceState,
 
 	kMount_last
 };

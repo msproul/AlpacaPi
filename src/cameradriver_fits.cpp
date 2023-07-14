@@ -90,6 +90,7 @@
 //*	Oct 20,	2022	<MLS> Neon instructions now used for FITS De-interleave
 //*	Oct 25,	2022	<MLS> Now using cv::getVersionString().c_str() for openCV version string
 //*	Nov 26,	2022	<MLS> Added IMAGEW and IMAGEH for astrometry.net solver
+//*	Jun 13,	2023	<MLS> Added checking for valid IMU
 //*****************************************************************************
 
 #if defined(_ENABLE_CAMERA_) && defined(_ENABLE_FITS_)
@@ -306,7 +307,7 @@ double	fov_arcSeconds;
 //*****************************************************************************
 void	CameraDriver::UpdateFilterwheelLink(void)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	cConnectedFilterWheel	=	(FilterwheelDriver *)FindDeviceByType(kDeviceType_Filterwheel, cAlpacaDeviceNum);
 	if (cConnectedFilterWheel != NULL)
@@ -401,7 +402,7 @@ uint32_t		stopMillisecs;
 uint32_t		deltaMillisecs;
 int				iii;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	startMillisecs	=	millis();
 
 	GenerateFileNameRoot();
@@ -475,7 +476,7 @@ int				iii;
 	fitsRetCode	=	fits_create_file(&fitsFilePtr, imageFilePath, &fitsStatus);
 	if (fitsRetCode == 0)
 	{
-		CONSOLE_DEBUG("fits_create_file = SUCCESS");
+//		CONSOLE_DEBUG("fits_create_file = SUCCESS");
 		//************************************************************
 		//*	this MUST be first
 		//************************************************************
@@ -561,7 +562,10 @@ int				iii;
 #ifdef _ENABLE_IMU_
 		//************************************************************
 		//*	Telescope info
-		WriteFITS_IMUinfo(fitsFilePtr);
+		if (IMU_IsAvailable())
+		{
+			WriteFITS_IMUinfo(fitsFilePtr);
+		}
 #endif
 
 		//************************************************************
@@ -655,10 +659,10 @@ int				iii;
 
 			if (fitsRetCode != 0)
 			{
-				CONSOLE_DEBUG_W_NUM("fits_write_pix returned:", fitsRetCode);
-				CONSOLE_DEBUG_W_NUM("fitsStatus:", fitsStatus);
+//				CONSOLE_DEBUG_W_NUM("fits_write_pix returned:", fitsRetCode);
+//				CONSOLE_DEBUG_W_NUM("fitsStatus:", fitsStatus);
 				GetFitsErrorString(fitsRetCode, errorString);
-				CONSOLE_DEBUG_W_STR("fits_write_pix returned:", errorString);
+//				CONSOLE_DEBUG_W_STR("fits_write_pix returned:", errorString);
 				fitsStatus	=	0;
 				fits_write_key(fitsFilePtr, TSTRING,
 											"ERROR",
@@ -712,7 +716,7 @@ int				iii;
 		fitsRetCode	=	fits_close_file(fitsFilePtr, &fitsStatus);
 		if (fitsRetCode == 0)
 		{
-			CONSOLE_DEBUG("fits_close_file = SUCCESS");
+//			CONSOLE_DEBUG("fits_close_file = SUCCESS");
 		}
 		else
 		{
@@ -863,7 +867,7 @@ int		intValue;
 int		ccdTempErrCode;
 char	instrumentString[128];
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	WriteFITS_Seperator(fitsFilePtr, "Camera Info");
 	if (gSimulateCameraImage || cCameraIsSiumlated)
@@ -1120,7 +1124,7 @@ double		modifiedJulianDate;
 bool		dataSrcStringsAreSame;
 bool		printDomeDataSrc;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 #ifdef _FAKE_ENVIRO_DATA_
 	gEnvData.siteDataValid	=	true;
@@ -1243,7 +1247,7 @@ void	CameraDriver::WriteFITS_FilterwheelInfo(fitsfile *fitsFilePtr)
 {
 int		fitsStatus;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 #ifdef _ENABLE_FILTERWHEEL_
 	if (cConnectedFilterWheel == NULL)
@@ -1263,8 +1267,8 @@ int		fitsStatus;
 		int		filterPosition;
 		char	filterPositionName[48];
 
-			CONSOLE_DEBUG("We have valid filterwheel info");
-			CONSOLE_DEBUG("Calling Read_CurrentFilterPositon");
+//			CONSOLE_DEBUG("We have valid filterwheel info");
+//			CONSOLE_DEBUG("Calling Read_CurrentFilterPositon");
 //			CONSOLE_DEBUG_W_STR("cAlpacaName           \t=", cConnectedFilterWheel->cAlpacaName);
 //			CONSOLE_DEBUG_W_STR("cDeviceModel          \t=", cConnectedFilterWheel->cDeviceModel);
 //			CONSOLE_DEBUG_W_STR("cDeviceManufAbrev     \t=", cConnectedFilterWheel->cDeviceManufAbrev);
@@ -1302,7 +1306,7 @@ int		fitsStatus;
 			{
 				CONSOLE_DEBUG_W_NUM("cConnectedFilterWheel->Read_CurrentFilterPositon returned ERROR:", fwAlpacaErr);
 			}
-			CONSOLE_DEBUG("Calling Read_CurrentFilterName");
+//			CONSOLE_DEBUG("Calling Read_CurrentFilterName");
 			fwAlpacaErr	=	cConnectedFilterWheel->Read_CurrentFilterName(filterPositionName);
 			if (fwAlpacaErr == kASCOM_Err_Success)
 			{
@@ -1315,7 +1319,7 @@ int		fitsStatus;
 			{
 				CONSOLE_DEBUG_W_NUM("cConnectedFilterWheel->Read_CurrentFilterName returned ERROR:", fwAlpacaErr);
 			}
-			CONSOLE_DEBUG("Done with filter wheel stuff");
+//			CONSOLE_DEBUG("Done with filter wheel stuff");
 		}
 		else
 	#endif // _ENABLE_FILTERWHEEL_
@@ -1345,7 +1349,7 @@ void	CameraDriver::WriteFITS_FocuserInfo(fitsfile *fitsFilePtr)
 //int		fitsRetCode;
 int		fitsStatus;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 #ifdef _ENABLE_FOCUSER_
 
@@ -1471,7 +1475,7 @@ void	CameraDriver::WriteFITS_ObservatoryInfo(fitsfile *fitsFilePtr)
 int		fitsStatus;
 char	stringBuf[128];
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	if (gObseratorySettings.ValidInfo)
 	{
@@ -1604,7 +1608,7 @@ float			saturationPrcnt;
 double			modifiedJulianDate;
 struct tm		*localTime;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	WriteFITS_Seperator(fitsFilePtr, "Observation Info");
 
@@ -1682,9 +1686,9 @@ struct tm		*localTime;
 												stringBuf,
 												&fitsStatus);
 	}
-	else if (cNumFramesSaved > 1)
+	else if (cCameraProp.SavedImageCnt > 1)
 	{
-		sprintf(stringBuf, "Frames saved: %d", cNumFramesSaved);
+		sprintf(stringBuf, "Frames saved: %d", cCameraProp.SavedImageCnt);
 		fitsStatus	=	0;
 		fits_write_key(fitsFilePtr, TSTRING,	"COMMENT",
 												stringBuf,
@@ -1740,7 +1744,7 @@ struct tm		*localTime;
 
 
 		saturationPrcnt	=	CalculateSaturation();
-		CONSOLE_DEBUG_W_DBL("saturationPrcnt\t: ",		saturationPrcnt);
+//		CONSOLE_DEBUG_W_DBL("saturationPrcnt\t: ",		saturationPrcnt);
 		fitsStatus	=	0;
 		fits_write_key(fitsFilePtr, TFLOAT,	"SATUPRCT",
 											&saturationPrcnt,
@@ -1788,7 +1792,7 @@ struct tm		*localTime;
 void	CameraDriver::WriteFITS_RotatorInfo(fitsfile *fitsFilePtr)
 {
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 #ifdef _ENABLE_ROTATOR_
 	if (cConnectedRotator == NULL)
@@ -1864,7 +1868,7 @@ void	CameraDriver::WriteFITS_SoftwareInfo(fitsfile *fitsFilePtr)
 int				fitsStatus;
 char			stringBuf[128];
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	WriteFITS_Seperator(fitsFilePtr, "Software Info");
 	fitsStatus	=	0;
@@ -1969,7 +1973,7 @@ double	fov_arcSeconds_X;
 double	fov_arcSeconds_Y;
 double	f_ratio;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 //	DumpTelescopeInfo(&cTS_info);
 
@@ -2091,7 +2095,7 @@ void	CameraDriver::WriteFITS_VersionInfo(fitsfile *fitsFilePtr)
 {
 int		fitsStatus;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	WriteFITS_Seperator(fitsFilePtr, "Version Info");
 	fitsStatus	=	0;
@@ -2122,7 +2126,7 @@ float		moonAge;
 float		moonIllumination;
 char		moonPhaseStr[64];
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	WriteFITS_Seperator(fitsFilePtr, "Moon Info");
 	GetCurrentMoonPhase(moonPhaseStr);
@@ -2250,7 +2254,7 @@ void	CameraDriver::WriteFITS_IMUinfo(fitsfile *fitsFilePtr)
 int		fitsStatus;
 char	lineBuff[80];
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	WriteFITS_Seperator(fitsFilePtr, "IMU Info");
 
@@ -2364,14 +2368,15 @@ int				num8x16;
 uint8x16x3_t	intlv_rgb;
 int				iii;
 int				leftOverCount;
-	CONSOLE_DEBUG(__FUNCTION__);
+
+//	CONSOLE_DEBUG(__FUNCTION__);
 	//*
 	//*	Take the elements of "rgb" and store the individual colors "r", "g", and "b"
 	//*
 	SETUP_TIMING();
 	num8x16	=	len_color / 16;
-	CONSOLE_DEBUG_W_NUM("len_color\t=", len_color);
-	CONSOLE_DEBUG_W_NUM("num8x16  \t=",	num8x16);
+//	CONSOLE_DEBUG_W_NUM("len_color\t=", len_color);
+//	CONSOLE_DEBUG_W_NUM("num8x16  \t=",	num8x16);
 	for (iii = 0; iii < num8x16; iii++)
 	{
 		intlv_rgb	=	vld3q_u8(rgb + (3 * 16 * iii));
@@ -2398,7 +2403,7 @@ unsigned char	*redBufPtr;
 unsigned char	*grnBufPtr;
 unsigned char	*bluBufPtr;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	frameBufSize	=	cCameraProp.CameraXsize * cCameraProp.CameraYsize;
 	if (cCameraDataBuffer != NULL)
@@ -2451,7 +2456,7 @@ unsigned char	*bluBufPtr;
 		}
 
 	}
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 }
 

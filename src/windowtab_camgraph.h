@@ -8,11 +8,11 @@
 
 #ifndef	_CONTROLLER_H_
 //	#include	"controller.h"
-#endif // _CONTROLLER_H_
+#endif
 
 #ifndef _WINDOW_TAB_H
 	#include	"windowtab.h"
-#endif // _WINDOW_TAB_H
+#endif
 
 
 

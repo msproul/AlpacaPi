@@ -21,23 +21,20 @@
 //#include	"cameradriver_SONY.h"
 
 
-
-
 #ifndef	_CAMERA_DRIVER_SONY_H_
 #define	_CAMERA_DRIVER_SONY_H_
 
-
 #ifndef CAMERAREMOTE_SDK_H
 	#include	"CameraRemote_SDK.h"
-#endif // CAMERAREMOTE_SDK_H
+#endif
 
 #ifndef ICRCAMERAOBJECTINFO_H
 	#include "ICrCameraObjectInfo.h"
-#endif // ICRCAMERAOBJECTINFO_H
+#endif
 
 #ifndef IDEVICECALLBACK_H
 	#include	"IDeviceCallback.h"
-#endif // IDEVICECALLBACK_H
+#endif
 
 int		CreateSONY_CameraObjects(void);
 

@@ -17,6 +17,10 @@
 	#include	"windowtab_capabilities.h"
 #endif
 
+#ifndef	_WINDOWTAB_DEVICESTATE_H_
+	#include	"windowtab_DeviceState.h"
+#endif
+
 #ifndef	_WINDOWTAB_DRIVER_INFO_H_
 	#include	"windowtab_drvrInfo.h"
 #endif
@@ -34,9 +38,7 @@ class ControllerCoverCalib: public Controller
 		// Construction
 		//
 				ControllerCoverCalib(	const char			*argWindowName,
-										struct sockaddr_in	*deviceAddress,
-										const int			port,
-										const int			deviceNum);
+										TYPE_REMOTE_DEV		*alpacaDevice);
 
 
 		virtual	~ControllerCoverCalib(void);
@@ -45,13 +47,21 @@ class ControllerCoverCalib: public Controller
 		virtual	void	SetupWindowControls(void);
 		virtual	void	AlpacaDisplayErrorMessage(const char *errorMsgString);
 //		virtual	void	ProcessButtonClick(const int buttonIdx);
-		virtual	void	RunBackgroundTasks(const char *callingFunction=NULL, bool enableDebug=false);
-		virtual	void	UpdateCommonProperties(void);
-		virtual	bool	AlpacaGetStartupData(void);
+//		virtual	bool	AlpacaGetStartupData(void);
+		virtual	bool	AlpacaGetStartupData_OneAAT(void);
+		virtual	void	AlpacaGetCapabilities(void);
 		virtual	void	UpdateSupportedActions(void);
 		virtual void	UpdateCapabilityList(void);
 
-				bool	AlpacaGetStatus(void);
+		virtual	void	UpdateConnectedStatusIndicator(void);
+		virtual	void	UpdateStartupData(void);
+		virtual	void	UpdateStatusData(void);
+
+		virtual	bool	AlpacaGetStatus(void);
+		virtual	bool	AlpacaProcessReadAllIdx(const char	*deviceTypeStr,
+												const int	deviceNum,
+												const int	keywordEnum,
+												const char	*valueString);
 
 				TYPE_CoverCalibrationProperties	cCoverCalibrationProp;
 
@@ -59,6 +69,7 @@ class ControllerCoverCalib: public Controller
 				//*	tab information
 				WindowTabCoverCalib		*cCoverCalibTabObjPtr;
 				WindowTabCapabilities	*cCapabilitiesTabObjPtr;
+				WindowTabDeviceState	*cDeviceStateTabObjPtr;
 				WindowTabDriverInfo		*cDriverInfoTabObjPtr;
 				WindowTabAbout			*cAboutBoxTabObjPtr;
 };

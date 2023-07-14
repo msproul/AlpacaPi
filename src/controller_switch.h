@@ -2,9 +2,22 @@
 //#include	"controller_switch.h"
 
 
-#include	"controller.h"
+#ifndef	_ALPACA_DEFS_H_
+	#include	"alpaca_defs.h"
+#endif
 
-#include	"windowtab_switch.h"
+#ifndef	_CONTROLLER_H_
+	#include	"controller.h"
+#endif
+
+#ifndef	_WINDOWTAB_SWITCH_H_
+	#include	"windowtab_switch.h"
+#endif
+
+#ifndef	_WINDOWTAB_DEVICESTATE_H_
+	#include	"windowtab_DeviceState.h"
+#endif
+
 #ifndef	_WINDOWTAB_DRIVER_INFO_H_
 	#include	"windowtab_drvrInfo.h"
 #endif
@@ -13,19 +26,6 @@
 	#include	"windowtab_about.h"
 #endif
 
-//**************************************************************************************
-typedef struct
-{
-	char	switchName[64];
-	char	switchDescription[256];
-	bool	canWrite;
-	bool	switchState;
-	double	minswitchvalue;
-	double	maxswitchvalue;
-	double	switchvalue;
-
-} TYPE_SWITCH_INFO;
-#define	kMaxSwitches	32
 
 //**************************************************************************************
 class ControllerSwitch: public Controller
@@ -35,40 +35,48 @@ class ControllerSwitch: public Controller
 		// Construction
 		//
 				ControllerSwitch(	const char			*argWindowName,
-									struct sockaddr_in	*deviceAddress = NULL,
-									const int			port = 0,
-									const int			deviceNum = 0);
+									TYPE_REMOTE_DEV		*alpacaDevice);
+
+//				ControllerSwitch(	const char			*argWindowName,
+//									struct sockaddr_in	*deviceAddress = NULL,
+//									const int			port = 0,
+//									const int			deviceNum = 0);
 
 
 		virtual	~ControllerSwitch(void);
 
-	//-			void	ControllerSwitchInit(void);
 
 		virtual	void	SetupWindowControls(void);
-	//	virtual	void	ProcessButtonClick(const int buttonIdx);
-		virtual	void	RunBackgroundTasks(const char *callingFunction=NULL, bool enableDebug=false);
-	//	virtual	void	DrawWidgetCustomGraphic(const int widgetIdx);
-		virtual	bool	AlpacaGetStartupData(void);
-				bool	AlpacaGetStartupData_OneAAT(void);
-				bool	AlpacaGetStatus(void);
+		virtual	void	GetStartUpData_SubClass(void);
+		virtual	void	GetStatus_SubClass(void);
+		virtual	void	AlpacaGetCapabilities(void);
+		virtual	bool	AlpacaGetStartupData_OneAAT(void);
+		virtual	void	UpdateConnectedStatusIndicator(void);
 		virtual	void	AlpacaProcessSupportedActions(	const char	*deviceTypeStr,
 														const int	deviveNum,
 														const char	*valueString);
-		virtual	void	AlpacaProcessReadAll(	const char	*deviceTypeStr,
+		virtual	bool	AlpacaProcessReadAll(	const char	*deviceTypeStr,
 												const int	deviceNum,
 												const char	*keywordString,
 												const char	*valueString);
-		virtual	void	UpdateCommonProperties(void);
+
+		virtual	void	UpdateSupportedActions(void);
+		virtual	void	UpdateStartupData(void);
+		virtual	void	UpdateStatusData(void);
+		virtual	void	UpdateOnlineStatus(void);
+
 				bool	AlpacaGetStatus_OneAAT(void);	//*	One At A Time
 				void	ToggleSwitchState(const int switchNum);
 				void	TurnAllSwitchesOff(void);
 
 			//*	tab information
-				WindowTabSwitch		*cSwitchTabObjPtr;
-				WindowTabDriverInfo	*cDriverInfoTabObjPtr;
-				WindowTabAbout		*cAboutBoxTabObjPtr;
-				int					cMaxSwitch;
+				WindowTabSwitch			*cSwitchTabObjPtr;
+				WindowTabDeviceState	*cDeviceStateTabObjPtr;
+				WindowTabDriverInfo		*cDriverInfoTabObjPtr;
+				WindowTabAbout			*cAboutBoxTabObjPtr;
 
-				TYPE_SWITCH_INFO	cSwitchInfo[kMaxSwitches];
+//				TYPE_SwitchInfo			cSwitchInfo[kMaxSwitches];
+				TYPE_SwitchProperties	cSwitchProp;
+
 };
 

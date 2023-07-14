@@ -86,9 +86,20 @@ short	tabStopList[]	=	{250, 300, 350, 400, 0 };
 //		yLoc			+=	2;
 	}
 
-	SetAlpacaLogoBottomCorner(kCapabilities_AlpacaLogo);
+	//=======================================================
+	//*	set up all the bottom stuff so that it is the same on all windowtabs
+//	SetAlpacaLogoBottomCorner(kCapabilities_AlpacaLogo);
+	SetupWindowBottomBoxes(	kCapabilities_IPaddr,
+							kCapabilities_Readall,
+							kCapabilities_DeviceState,
+							-1,
+							-1,
+							kCapabilities_AlpacaLogo,
+							-1);
 }
 
-
-
-
+//**************************************************************************************
+void	WindowTabCapabilities::ActivateWindow(void)
+{
+//	DumpWidgetList(kCapabilities_Title, kCapabilities_last-1, __FILE__);
+}

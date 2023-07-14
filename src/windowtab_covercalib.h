@@ -54,6 +54,7 @@ enum
 	kCoverCalib_AlpacaErrorMsg,
 	kCoverCalib_IPaddr,
 	kCoverCalib_Readall,
+	kCoverCalib_DeviceSelect,
 
 
 	kCoverCalib_last

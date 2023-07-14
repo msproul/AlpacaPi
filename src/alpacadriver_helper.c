@@ -12,6 +12,7 @@
 //*	Sep 25,	2022	<MLS> Added DumpObservingconditionsProp()
 //*	Mar  3,	2023	<MLS> Added FindDeviceTypeByStringLowerCase()
 //*	Mar  9,	2023	<MLS> Added GetDomeShutterStatusString()
+//*	Jun 18,	2023	<MLS> Added LookupStringInTable()
 //*****************************************************************************
 
 #include	<string.h>
@@ -74,19 +75,16 @@ TYPE_DeviceTable	gDeviceTableLowerCase[]	=
 	{	"",						kDeviceType_undefined			}
 };
 
-
-
-
 //*****************************************************************************
 void	GetDeviceTypeFromEnum(const int deviceEnum, char *deviceTypeString)
 {
 int		ii;
 	ii	=	0;
-	while ((gDeviceTable[ii].deviceType[0] > 0x20 ) && (gDeviceTable[ii].enumValue >= 0))
+	while ((gDeviceTable[ii].deviceTypeStr[0] > 0x20 ) && (gDeviceTable[ii].enumValue >= 0))
 	{
 		if (deviceEnum == gDeviceTable[ii].enumValue)
 		{
-			strcpy(deviceTypeString, gDeviceTable[ii].deviceType);
+			strcpy(deviceTypeString, gDeviceTable[ii].deviceTypeStr);
 		}
 		ii++;
 	}
@@ -100,9 +98,9 @@ TYPE_DEVICETYPE		enumValue;
 
 	enumValue	=	kDeviceType_undefined;
 	ii				=	0;
-	while ((gDeviceTable[ii].deviceType[0] != 0) && (enumValue < 0))
+	while ((gDeviceTable[ii].deviceTypeStr[0] != 0) && (enumValue < 0))
 	{
-		if (strcasecmp(deviceTypeStr, gDeviceTable[ii].deviceType) == 0)
+		if (strcasecmp(deviceTypeStr, gDeviceTable[ii].deviceTypeStr) == 0)
 		{
 			enumValue	=	gDeviceTable[ii].enumValue;
 		}
@@ -121,13 +119,53 @@ TYPE_DEVICETYPE		enumValue;
 
 	enumValue	=	kDeviceType_undefined;
 	ii				=	0;
-	while ((gDeviceTableLowerCase[ii].deviceType[0] != 0) && (enumValue < 0))
+	while ((gDeviceTableLowerCase[ii].deviceTypeStr[0] != 0) && (enumValue < 0))
 	{
-		if (strcmp(deviceTypeStr, gDeviceTableLowerCase[ii].deviceType) == 0)
+		if (strcmp(deviceTypeStr, gDeviceTableLowerCase[ii].deviceTypeStr) == 0)
 		{
 			enumValue	=	gDeviceTableLowerCase[ii].enumValue;
 		}
 		ii++;
+	}
+	return(enumValue);
+}
+
+//*****************************************************************************
+int	LookupStringInTable(const char *lookupString, TYPE_LookupTable *lookupTable)
+{
+int		iii;
+int		enumValue;
+
+//	CONSOLE_DEBUG_W_STR("lookupString\t=", lookupString);
+	enumValue	=	-1;
+	iii			=	0;
+	while ((lookupTable[iii].keyword[0] != 0) && (enumValue < 0))
+	{
+		if (strcasecmp(lookupString, lookupTable[iii].keyword) == 0)
+		{
+			enumValue	=	lookupTable[iii].enumValue;
+		}
+		iii++;
+	}
+	return(enumValue);
+}
+
+//*****************************************************************************
+int	LookupStringInCmdTable(const char *lookupString, TYPE_CmdEntry *commandTable)
+{
+int		iii;
+int		enumValue;
+
+//	CONSOLE_DEBUG_W_STR("lookupString\t=", lookupString);
+	enumValue	=	-1;
+	iii			=	0;
+	while ((commandTable[iii].commandName[0] != 0) && (enumValue < 0))
+	{
+		if (strcasecmp(lookupString, commandTable[iii].commandName) == 0)
+		{
+			enumValue	=	commandTable[iii].enumValue;
+		}
+		iii++;
 	}
 	return(enumValue);
 }
@@ -181,8 +219,8 @@ char	titleLine[128];
 
 
 	CONSOLE_DEBUG_W_DBL(	"obsCondProp->Averageperiod      \t=",	obsCondProp->Averageperiod.Value);
-	CONSOLE_DEBUG_W_DBL(	"obsCondProp->Cloudcover         \t=",	obsCondProp->Cloudcover.Value);
-	CONSOLE_DEBUG_W_DBL(	"obsCondProp->Dewpoint           \t=",	obsCondProp->Dewpoint.Value);
+	CONSOLE_DEBUG_W_DBL(	"obsCondProp->CloudCover         \t=",	obsCondProp->CloudCover.Value);
+	CONSOLE_DEBUG_W_DBL(	"obsCondProp->Dewpoint           \t=",	obsCondProp->DewPoint.Value);
 	CONSOLE_DEBUG_W_DBL(	"obsCondProp->Humidity           \t=",	obsCondProp->Humidity.Value);
 	CONSOLE_DEBUG_W_DBL(	"obsCondProp->Pressure_hPa       \t=",	obsCondProp->Pressure.Value);
 	CONSOLE_DEBUG_W_DBL(	"obsCondProp->RainRate           \t=",	obsCondProp->RainRate.Value);

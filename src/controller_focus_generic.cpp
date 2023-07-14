@@ -20,6 +20,8 @@
 //*****************************************************************************
 //*	Jan 14,	2021	<MLS> Created controller_focus_generic.cpp
 //*	Jan 14,	2021	<MLS> Focuser controller working with ASCOM/Remote
+//*	Jun 19,	2023	<MLS> Updated constructor to use TYPE_REMOTE_DEV
+//*	Jul  9,	2023	<MLS> Added device-state window to Focuser-generic
 //*****************************************************************************
 
 #if defined(_ENABLE_CTRL_FOCUSERS_)
@@ -47,6 +49,7 @@
 enum
 {
 	kTab_Focuser	=	1,
+	kTab_DeviceState,
 	kTab_DriverInfo,
 	kTab_About,
 
@@ -54,40 +57,24 @@ enum
 
 };
 
-
 //**************************************************************************************
 ControllerFocusGeneric::ControllerFocusGeneric(	const char			*argWindowName,
-												struct sockaddr_in	*deviceAddress,
-												const int			port,
-												const int			deviceNum,
+												TYPE_REMOTE_DEV		*alpacaDevice,
 												const int			focuserType)
 	:ControllerFocus(	argWindowName,
-						deviceAddress,
-						port,
-						deviceNum,
+						alpacaDevice,
 						kFocuserType_MoonliteSingle)
 {
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 
+
+	cDriverInfoTabNum		=	kTab_DriverInfo;
 
 	//*	moved all init stuff to separate routine so we can have multiple constructors
 	ControllerFocusInit(kComMode_Alpaca, kFocuserType_MoonliteSingle);
 
-
-	cAlpacaDevNum	=	deviceNum;
-	if (deviceAddress != NULL)
-	{
-		cDeviceAddress	=	*deviceAddress;
-		cPort			=	port;
-		cValidIPaddr	=	true;
-
-		CheckConnectedState();		//*	check connected and connect if not already connected
-	}
-
 	CreateWindowTabs();
-
 }
-
 
 //**************************************************************************************
 // Destructor
@@ -97,6 +84,8 @@ ControllerFocusGeneric::~ControllerFocusGeneric(void)
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 	//*	delete the windowtab objects
 	DELETE_OBJ_IF_VALID(cMLsingleTabObjPtr);
+	DELETE_OBJ_IF_VALID(cDeviceStateTabObjPtr);
+	DELETE_OBJ_IF_VALID(cDriverInfoTabObjPtr);
 	DELETE_OBJ_IF_VALID(cAboutBoxTabObjPtr);
 }
 
@@ -107,9 +96,10 @@ void	ControllerFocusGeneric::CreateWindowTabs(void)
 
 	SetTabCount(kTab_Count);
 
-	SetTabText(kTab_Focuser,	"Focuser");
-	SetTabText(kTab_DriverInfo,	"Driver Info");
-	SetTabText(kTab_About,		"About");
+	SetTabText(kTab_Focuser,		"Focuser");
+	SetTabText(kTab_DeviceState,	"Dev State");
+	SetTabText(kTab_DriverInfo,		"Driver Info");
+	SetTabText(kTab_About,			"About");
 
 	//================================================================
 	cMLsingleTabObjPtr		=	new WindowTabMLsingle(	cWidth,
@@ -122,6 +112,15 @@ void	ControllerFocusGeneric::CreateWindowTabs(void)
 	{
 		SetTabWindow(kTab_Focuser,	cMLsingleTabObjPtr);
 		cMLsingleTabObjPtr->SetParentObjectPtr(this);
+	}
+
+	//================================================================
+	cDeviceStateTabObjPtr		=	new WindowTabDeviceState(	cWidth, cHeight, cBackGrndColor, cWindowName);
+	if (cDeviceStateTabObjPtr != NULL)
+	{
+		SetTabWindow(kTab_DeviceState,	cDeviceStateTabObjPtr);
+		cDeviceStateTabObjPtr->SetParentObjectPtr(this);
+		SetDeviceStateTabInfo(kTab_DeviceState, kDeviceState_FirstBoxName, kDeviceState_FirstBoxValue, kDeviceState_Stats);
 	}
 
 	//================================================================
@@ -174,45 +173,63 @@ void	ControllerFocusGeneric::UpdateCommonProperties(void)
 }
 
 //**************************************************************************************
-void	ControllerFocusGeneric::UpdateFocuserPosition(const int newFocuserPosition)
+void	ControllerFocusGeneric::UpdateStartupData(void)
 {
-	cFocuserPosition	=	newFocuserPosition;
-
-	SetWidgetNumber(kTab_Focuser,	kMLsingle_focValue,		cFocuserPosition);
-
+	UpdateAboutBoxRemoteDevice(kTab_About, kAboutBox_CPUinfo);
 }
 
 //**************************************************************************************
-void	ControllerFocusGeneric::UpdateTemperature(const double newTemperature)
+void	ControllerFocusGeneric::UpdateStatusData(void)
 {
 char	lineBuff[64];
 
-	cTemperature_DegC	=	newTemperature;
-	sprintf(lineBuff, "%1.1f C / %1.1f F", cTemperature_DegC, ((cTemperature_DegC * (9.0/5.0)) + 32));
-	SetWidgetText(kTab_Focuser, kMLsingle_Temperature, lineBuff);
+	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_NUM("cFocuserProp.Position\t=",	cFocuserProp.Position);
+	CONSOLE_DEBUG_W_NUM("cFocuserDesiredPos   \t=",	cFocuserDesiredPos);
+	UpdateConnectedIndicator(	kTab_Focuser,	kMLsingle_Connected);
+	SetWidgetNumber(			kTab_Focuser,	kMLsingle_focValue,		cFocuserProp.Position);
+	SetWidgetNumber(			kTab_Focuser,	kMLsingle_focDesired,	cFocuserDesiredPos);
 
+	sprintf(lineBuff, "%1.1f C / %1.1f F", cFocuserProp.Temperature_DegC, ((cFocuserProp.Temperature_DegC * (9.0/5.0)) + 32));
+	SetWidgetText(kTab_Focuser, kMLsingle_Temperature, lineBuff);
 }
 
+//**************************************************************************************
+void	ControllerFocusGeneric::UpdateFocuserPosition(void)
+{
+	SetWidgetNumber(			kTab_Focuser,	kMLsingle_focValue,		cFocuserProp.Position);
+}
+
+//*****************************************************************************
+void	ControllerFocusGeneric::UpdateSupportedActions(void)
+{
+	SetWidgetValid(kTab_Focuser,		kMLsingle_Readall,			cHas_readall);
+	SetWidgetValid(kTab_Focuser,		kMLsingle_DeviceState,		cHas_DeviceState);
+
+	SetWidgetValid(kTab_DeviceState,	kDeviceState_Readall,		cHas_readall);
+	SetWidgetValid(kTab_DeviceState,	kDeviceState_DeviceState,	cHas_DeviceState);
+
+	SetWidgetValid(kTab_DriverInfo,		kDriverInfo_Readall,		cHas_readall);
+	SetWidgetValid(kTab_DriverInfo,		kDriverInfo_DeviceState,	cHas_DeviceState);
+
+	if (cHas_DeviceState == false)
+	{
+		cDeviceStateTabObjPtr->SetDeviceStateNotSupported();
+	}
+
+}
 
 //*****************************************************************************
 void	ControllerFocusGeneric::UpdateWindowTabs_Everything(void)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
-//	CONSOLE_DEBUG_W_NUM("cFocuserPosition\t=",		cFocuserPosition);
-//	CONSOLE_DEBUG_W_NUM("cFocuserDesiredPos\t=",	cFocuserDesiredPos);
+//	CONSOLE_DEBUG_W_NUM("cFocuserProp.Position\t=",	cFocuserProp.Position);
+//	CONSOLE_DEBUG_W_NUM("cFocuserDesiredPos   \t=",	cFocuserDesiredPos);
 
-	SetWidgetNumber(kTab_Focuser,	kMLsingle_focValue,		cFocuserPosition);
+	SetWidgetNumber(kTab_Focuser,	kMLsingle_focValue,		cFocuserProp.Position);
 	SetWidgetNumber(kTab_Focuser,	kMLsingle_focDesired,	cFocuserDesiredPos);
 
 	UpdateConnectedIndicator(kTab_Focuser,		kMLsingle_Connected);
-}
-
-//*****************************************************************************
-void	ControllerFocusGeneric::UpdateWindowTabs_ReadAll(bool hasReadAll)
-{
-//	CONSOLE_DEBUG(__FUNCTION__);
-
-	SetWidgetValid(kTab_Focuser,	kMLsingle_Readall,		cHas_readall);
 }
 
 //*****************************************************************************

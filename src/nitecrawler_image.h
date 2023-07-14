@@ -11,7 +11,7 @@
 	#include "opencv2/highgui/highgui_c.h"
 	#include "opencv2/imgproc/imgproc_c.h"
 	#include "opencv2/core/version.hpp"
-#endif // _USE_OPENCV_CPP_
+#endif
 
 #ifdef __cplusplus
 	extern "C" {

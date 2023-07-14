@@ -4,18 +4,17 @@
 #ifndef _CONTROLLER_CAM_NORMAL_H_
 #define _CONTROLLER_CAM_NORMAL_H_
 
-
-
 #ifndef _DISCOVERY_LIB_H_
 	#include	"discovery_lib.h"
-#endif // _DISCOVERY_LIB_H_
-
+#endif
 
 #include	"windowtab_about.h"
 #include	"windowtab_camera.h"
 #include	"windowtab_camsettings.h"
 #include	"windowtab_camcooler.h"
 #include	"windowtab_filelist.h"
+#include	"windowtab_DeviceState.h"
+#include	"windowtab_camvideo.h"
 
 #ifndef	_WINDOWTAB_CAPABILITIES_H_
 	#include	"windowtab_capabilities.h"
@@ -30,7 +29,7 @@
 
 #ifndef _CONTROLLER_CAMERA_H_
 	#include	"controller_camera.h"
-#endif // _CONTROLLER_CAMERA_H_
+#endif
 
 //**************************************************************************************
 class ControllerCamNormal: public ControllerCamera
@@ -54,13 +53,19 @@ class ControllerCamNormal: public ControllerCamera
 
 		virtual	void	AlpacaDisplayErrorMessage(const char *errorMsgString);
 		virtual	void	UpdateSettings_Object(const char *filePrefix);
+//		virtual	void	UpdateDeviceStateEntry(const int index, const char *nameString, const char *valueString);
 
 		//*	this is a large list of update routines, they should be implemented in the subclass
 		virtual	void	UpdateCommonProperties(void);
 		virtual	void	UpdateCapabilityList(void);
 
+		virtual	void	UpdateStartupData(void);
+		virtual	void	UpdateStatusData(void);
+//		virtual	void	UpdateOnlineStatus(void);
+
 		virtual	void	UpdateCameraGain(const TYPE_ASCOM_STATUS lastAlpacaErr = kASCOM_Err_Success);
 		virtual	void	UpdateCameraOffset(const TYPE_ASCOM_STATUS lastAlpacaErr = kASCOM_Err_Success);
+		virtual	void	UpdateCameraExposureStartup(void);
 		virtual	void	UpdateCameraExposure(void);
 		virtual	void	UpdateCameraName(void);
 		virtual	void	UpdateCameraSize(void);
@@ -78,11 +83,13 @@ class ControllerCamNormal: public ControllerCamera
 		virtual	void	UpdateFilterWheelInfo(void);
 		virtual	void	UpdateFilterWheelPosition(void);
 		virtual	void	UpdateFileNameOptions(void);
+		virtual	void	UpdateFileSaveOptions(void);
 		virtual	void	UpdateLiveMode(void);
 		virtual	void	UpdateReceivedFileName(const char *newFileName);
 		virtual	void	UpdateRemoteFileList(void);
 		virtual	void	UpdateDownloadProgress(const int unitsRead, const int totalUnits);
 		virtual	void	UpdateConnectedStatusIndicator(void);
+		virtual	void	SetExposureRange(char *name, double exposureMin, double exposureMax, double exposureStep);
 
 		virtual	void	UpdateBackgroundColor(const int redValue, const int grnValue, const int bluValue);
 
@@ -90,6 +97,11 @@ class ControllerCamNormal: public ControllerCamera
 												const int	deviceNum,
 												const char	*keywordString,
 												const char	*valueString);
+		virtual	void	ProcessReadAll_SaveAs(	const char	*deviceTypeStr,
+												const int	deviceNum,
+												const char	*keywordString,
+												const char	*valueString);
+				void	SetFileSaveOptions(const int saveOptionBtn);
 
 				void	DisableFilterWheel(void);
 
@@ -102,7 +114,8 @@ class ControllerCamNormal: public ControllerCamera
 				WindowTabFileList		*cFileListTabObjPtr;
 				WindowTabDriverInfo		*cDriverInfoTabObjPtr;
 				WindowTabAbout			*cAboutBoxTabObjPtr;
-
+				WindowTabDeviceState	*cDeviceStateTabObjPtr;
+				WindowTabCamVideo		*cCamVideoTabObjPtr;
 };
 
 

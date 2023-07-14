@@ -19,6 +19,7 @@
 //*	Edit History
 //*****************************************************************************
 //*	Apr 28,	2023	<MLS> Created windowtab_camcooler.cpp
+//*	Jun 18,	2023	<MLS> Added DeviceState to cam cooler
 //*****************************************************************************
 
 #ifdef _ENABLE_CTRL_CAMERA_
@@ -153,6 +154,7 @@ int		graphHieght;
 	//*	set up all the bottom stuff so that it is the same on all windowtabs
 	SetupWindowBottomBoxes(	kCamCooler_IPaddr,
 							kCamCooler_Readall,
+							kCamCooler_DeviceSelect,
 							kCamCooler_AlpacaErrorMsg,
 							kCamCooler_LastCmdString,
 							kCamCooler_AlpacaLogo,
@@ -160,10 +162,21 @@ int		graphHieght;
 }
 
 //**************************************************************************************
+void	WindowTabCamCooler::ActivateWindow(void)
+{
+	DumpWidgetList(kCamCooler_Title, kCamCooler_last-1, __FUNCTION__);
+}
+
+//**************************************************************************************
 void	WindowTabCamCooler::SetTemperatureGraphPtrs(double *arrayPtr, int arrayCnt)
 {
 	cWidgetList[kCamCooler_TempGraph].graphArrayPtr	=	arrayPtr;
 	cWidgetList[kCamCooler_TempGraph].graphArrayCnt	=	arrayCnt;
+
+	//*	this is redundant for now, to make the graph code happy
+	cWidgetList[kCamCooler_PowerGraph].graphArrayPtr	=	arrayPtr;
+	cWidgetList[kCamCooler_PowerGraph].graphArrayCnt	=	arrayCnt;
+
 }
 
 //**************************************************************************************

@@ -1021,7 +1021,7 @@ char	lineBuff[64];
 		SetWidgetText(	kTab_Image, kImageDisplay_Filter,	filterName);
 	}
 
-	SetWidgetNumber(kTab_Image, kImageDisplay_FramesSaved,	0);
+	SetWidgetNumber(kTab_Image, kImageDisplay_FramesSaved,	cameraProp->SavedImageCnt);
 
 	cUpdateWindow	=	true;
 }

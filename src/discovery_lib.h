@@ -9,17 +9,17 @@
 
 #ifndef _ARPA_INET_H
 	#include	<arpa/inet.h>
-#endif // _ARPA_INET_H
+#endif
 
 
 
 #ifndef _JSON_PARSE_H_
 	#include	"json_parse.h"
-#endif // _JSON_PARSE_H_
+#endif
 
 #ifndef _ALPACA_HELPER_H_
 	#include	"alpacadriver_helper.h"
-#endif // _ALPACA_HELPER_H_
+#endif
 
 #define	kAlpacaDiscoveryMsg	"alpacadiscovery1"
 
@@ -105,6 +105,7 @@ int		SendAlpacaQueryBroadcast(void);
 void	ExtractDevicesFromJSON(SJP_Parser_t *jsonParser, TYPE_ALPACA_UNIT *theDevice);
 void	ReadExternalIPlist(void);
 
+void	DumpRemoteDevice(TYPE_REMOTE_DEV *alpacaDevice, const char *callingFunction);
 
 #ifdef __cplusplus
 }

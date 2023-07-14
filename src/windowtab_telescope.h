@@ -8,7 +8,7 @@
 
 #ifndef	_WINDOW_TAB_H_
 	#include	"windowtab.h"
-#endif // _CONTROLLER_H_
+#endif
 
 //*****************************************************************************
 enum
@@ -68,6 +68,7 @@ enum
 	kTelescope_AlpacaErrorMsg,
 	kTelescope_IPaddr,
 	kTelescope_Readall,
+	kTelescope_DeviceState,
 
 	kTelescope_last
 };

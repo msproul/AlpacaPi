@@ -23,6 +23,8 @@
 //*	Aug 13,	2020	<MLS> Added ReadExternalIPlist()
 //*	Aug 13,	2020	<MLS> Added Added ability to read external IP address from text file
 //*	Jun 24,	2020	<MLS> Removed _INCLUDE_WIRELESS_SUBNET_
+//*	Jun 29,	2023	<MLS> Fixed bug AddUnitToList(): 2 ports on same IP not recognized
+//*	Jul  8,	2023	<MLS> Added DumpRemoteDevice()
 //*****************************************************************************
 
 
@@ -53,7 +55,7 @@
 #include	"sendrequest_lib.h"
 
 
-#define		kMaxUnitCount	32
+#define		kMaxUnitCount	64
 
 //*	this is IP addresses:ports
 TYPE_ALPACA_UNIT	gAlpacaUnitList[kMaxUnitCount];
@@ -61,7 +63,7 @@ int					gAlpacaUnitCnt	=	0;
 
 //*	this is alpaca devices
 TYPE_REMOTE_DEV		gAlpacaDiscoveredList[kMaxAlpacaDeviceCnt];
-int					gAlpacaDiscoveredCnt	=	0;;
+int					gAlpacaDiscoveredCnt	=	0;
 
 static	int					gBroadcastSock;
 static	struct sockaddr_in	gServer_addr;
@@ -72,7 +74,7 @@ static void	InitArrays(void)
 {
 int		iii;
 
-	CONSOLE_DEBUG_W_NUM("kMaxUnitCount\t=", kMaxUnitCount);
+	CONSOLE_DEBUG_W_NUM("kMaxUnitCount      \t=", kMaxUnitCount);
 	CONSOLE_DEBUG_W_NUM("kMaxAlpacaDeviceCnt\t=", kMaxAlpacaDeviceCnt);
 	for (iii=0; iii<kMaxUnitCount; iii++)
 	{
@@ -369,24 +371,37 @@ int		ii;
 //*****************************************************************************
 static void	AddUnitToList(struct sockaddr_in *deviceAddress, SJP_Parser_t *jsonParser)
 {
-int		ii;
+int		iii;
 bool	newUnit;
-int		unitIdx;
+int		alpacaListenPort;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
-	newUnit		=	true;
-	unitIdx		=	-1;
-	//*	check to see if this IP address is already in the list
-	for (ii=0; ii<gAlpacaUnitCnt; ii++)
+
+	//------------------------------------------------
+	//*	find the alpaca port
+	alpacaListenPort	=	12345;
+	for (iii=0; iii<jsonParser->tokenCount_Data; iii++)
 	{
-		if (deviceAddress->sin_addr.s_addr == gAlpacaUnitList[ii].deviceAddress.sin_addr.s_addr)
+		if (strcasecmp(jsonParser->dataList[iii].keyword, "ALPACAPORT") == 0)
+		{
+			alpacaListenPort	=	atoi(jsonParser->dataList[iii].valueString);
+		}
+	}
+
+
+	newUnit		=	true;
+	//*	check to see if this IP address is already in the list
+	for (iii=0; iii<gAlpacaUnitCnt; iii++)
+	{
+		if ((deviceAddress->sin_addr.s_addr == gAlpacaUnitList[iii].deviceAddress.sin_addr.s_addr) &&
+			(alpacaListenPort				==	gAlpacaUnitList[iii].port))
 		{
 			//*	yep, its already here, dont bother
 			newUnit	=	false;
-			unitIdx	=	ii;
 			break;
 		}
 	}
+
 	if (newUnit)
 	{
 		//*	add the new devices to our list
@@ -395,22 +410,17 @@ int		unitIdx;
 		{
 			gAlpacaUnitList[gAlpacaUnitCnt].deviceAddress	=	*deviceAddress;
 			//*	now find the alpaca port
-			for (ii=0; ii<jsonParser->tokenCount_Data; ii++)
+			for (iii=0; iii<jsonParser->tokenCount_Data; iii++)
 			{
-				if (strcasecmp(jsonParser->dataList[ii].keyword, "ALPACAPORT") == 0)
+				if (strcasecmp(jsonParser->dataList[iii].keyword, "ALPACAPORT") == 0)
 				{
-					gAlpacaUnitList[gAlpacaUnitCnt].port	=	atoi(jsonParser->dataList[ii].valueString);
-					unitIdx	=	gAlpacaUnitCnt;
+					gAlpacaUnitList[gAlpacaUnitCnt].port	=	atoi(jsonParser->dataList[iii].valueString);
 				}
 			}
 			gAlpacaUnitCnt++;
 		}
 	}
 
-	if ((unitIdx >= 0) && (unitIdx < kMaxUnitCount))
-	{
-		//*	set the last time we heard from it
-	}
 //	CONSOLE_ABORT(__FUNCTION__);
 }
 
@@ -623,15 +633,14 @@ struct sockaddr_in	from;
 int					rcvCnt;
 unsigned int		fromlen;
 int					sendtoRetCode;
-char				buf[kReceiveBufferSize + 1];
-char				str[INET_ADDRSTRLEN];
+char				readBuffer[kReceiveBufferSize + 1];
+char				ipAddressStr[INET_ADDRSTRLEN];
 SJP_Parser_t		jsonParser;
 int					timeOutCntr;
 int					alpacaIPaddrCnt;
-int					bytesWritten;
+//int					bytesWritten;
 
 	CONSOLE_DEBUG(__FUNCTION__);
-
 
 	alpacaIPaddrCnt	=	0;
 
@@ -651,25 +660,26 @@ int					bytesWritten;
 	fromlen	=	sizeof(struct sockaddr_in);
 	while (timeOutCntr < 2)
 	{
-		rcvCnt	=	recvfrom(gBroadcastSock, buf, kReceiveBufferSize, 0, (struct sockaddr *)&from, &fromlen);
+		rcvCnt	=	recvfrom(gBroadcastSock, readBuffer, kReceiveBufferSize, 0, (struct sockaddr *)&from, &fromlen);
 		if (rcvCnt > 0)
 		{
-			buf[rcvCnt]	=	0;
+			readBuffer[rcvCnt]	=	0;
 //				CONSOLE_DEBUG("We have data");
-//				CONSOLE_DEBUG_W_STR("buf=", buf);
+//				CONSOLE_DEBUG_W_STR("readBuffer=", readBuffer);
 			SJP_Init(&jsonParser);
-			SJP_ParseData(&jsonParser, buf);
+			SJP_ParseData(&jsonParser, readBuffer);
 //			SJP_DumpJsonData(&jsonParser);
 
 			AddUnitToList(&from, &jsonParser);
 
-			inet_ntop(AF_INET, &(from.sin_addr), str, INET_ADDRSTRLEN);
+			inet_ntop(AF_INET, &(from.sin_addr), ipAddressStr, INET_ADDRSTRLEN);
 
-			bytesWritten	=	0;
-			bytesWritten	+=	write(1, buf, rcvCnt);
-			bytesWritten	+=	write(1, " ", 1);
-			bytesWritten	+=	write(1, str, strlen(str));
-			bytesWritten	+=	write(1, "\n", 1);
+//			bytesWritten	=	0;
+//			bytesWritten	+=	write(1, readBuffer, rcvCnt);
+//			bytesWritten	+=	write(1, " ", 1);
+//			bytesWritten	+=	write(1, ipAddressStr, strlen(ipAddressStr));
+//			bytesWritten	+=	write(1, "\n", 1);
+			printf("%s %s\n", readBuffer, ipAddressStr);
 		}
 		else if (rcvCnt == 0)
 		{
@@ -752,6 +762,24 @@ struct sockaddr_in	from;
 		}
 		fclose(filePointer);
 	}
+}
+
+//*****************************************************************************
+void	DumpRemoteDevice(TYPE_REMOTE_DEV *alpacaDevice, const char *callingFunction)
+{
+	CONSOLE_DEBUG("----------------------------------------------");
+	CONSOLE_DEBUG_W_STR("Called from:", callingFunction);
+	CONSOLE_DEBUG_W_BOOL("validEntry     \t=",	alpacaDevice->validEntry);
+	CONSOLE_DEBUG_W_BOOL("onLine         \t=",	alpacaDevice->onLine);
+	CONSOLE_DEBUG_W_NUM("port            \t=",	alpacaDevice->port);
+	CONSOLE_DEBUG_W_STR("hostName        \t=",	alpacaDevice->hostName);
+	CONSOLE_DEBUG_W_NUM("deviceTypeEnum  \t=",	alpacaDevice->deviceTypeEnum);
+	CONSOLE_DEBUG_W_STR("deviceNameStr   \t=",	alpacaDevice->deviceTypeStr);
+	CONSOLE_DEBUG_W_STR("deviceTypeStr   \t=",	alpacaDevice->deviceNameStr);
+	CONSOLE_DEBUG_W_STR("versionString   \t=",	alpacaDevice->versionString);
+	CONSOLE_DEBUG_W_NUM("alpacaDeviceNum \t=",	alpacaDevice->interfaceVersion);
+	CONSOLE_DEBUG_W_NUM("interfaceVersion\t=",	alpacaDevice->alpacaDeviceNum);
+	CONSOLE_DEBUG_W_NUM("notSeenCounter  \t=",	alpacaDevice->notSeenCounter);
 }
 
 

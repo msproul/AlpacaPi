@@ -124,7 +124,6 @@ int		sLen;
 				gLibraryVersions[gLibraryIndex].versionString[iii]	=	'\'';
 			}
 		}
-
 		gLibraryIndex++;
 	}
 }
@@ -135,8 +134,6 @@ void	CreateManagementObject(void)
 {
 	new ManagementDriver(0);
 }
-
-
 
 //**************************************************************************************
 ManagementDriver::ManagementDriver(const int argDevNum)
@@ -709,22 +706,13 @@ int					mySocket;
 void	ManagementDriver::OutputHTML(TYPE_GetPutRequestData *reqData)
 {
 int			mySocketFD;
-//char		lineBuffer[128];
-
-//	CONSOLE_DEBUG(__FUNCTION__);
 
 	if (reqData != NULL)
 	{
 		mySocketFD		=	reqData->socket;
 		SocketWriteData(mySocketFD,	"<CENTER>\r\n");
-
 		SocketWriteData(mySocketFD,	"<H2>Management</H2>\r\n");
-
-
 		SocketWriteData(mySocketFD,	"</CENTER>\r\n");
-
-		//*	now generate links to all of the commands
-		GenerateHTMLcmdLinkTable(mySocketFD, "management", 0, gManagementCmdTable);
 	}
 }
 

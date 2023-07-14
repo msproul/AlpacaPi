@@ -40,18 +40,20 @@
 
 #ifndef _STDINT_H
 	#include	<stdint.h>
-#endif // _STDINT_H
+#endif
 
 #ifndef	_UNISTD_H
 	#include	<unistd.h>
-#endif // _UNISTD_H
+#endif
 
 #ifndef _PTHREAD_H
 	#include	<pthread.h>
-#endif // _PTHREAD_H
+#endif
+
 #ifndef _ARPA_INET_H
 	#include	<arpa/inet.h>
-#endif // _ARPA_INET_H
+#endif
+
 #ifndef _SYS_TIME_H
 	#include	<sys/time.h>
 #endif
@@ -63,6 +65,9 @@
 #ifdef _USE_OPENCV_
 	#include	<opencv2/opencv.hpp>
 	#include	<opencv2/core.hpp>
+	#if (CV_MAJOR_VERSION >= 3)
+		#include	<opencv2/videoio.hpp>
+	#endif
 
 	#ifndef _USE_OPENCV_CPP_
 		#include	"opencv2/highgui/highgui_c.h"
@@ -80,15 +85,15 @@
 
 #ifndef _REQUESTDATA_H_
 	#include	"RequestData.h"
-#endif // _REQUESTDATA_H_
+#endif
 
 #ifndef _ALPACA_HELPER_H_
 	#include	"alpacadriver_helper.h"
-#endif // _ALPACA_HELPER_H_
+#endif
 
 #ifndef	_ALPACA_DEFS_H_
 	#include	"alpaca_defs.h"
-#endif // _ALPACA_DEFS_H_
+#endif
 
 
 
@@ -103,61 +108,14 @@
 	#define __arm__
 #endif // defined
 
-#define	kMaxDevices			20
+#define	kMaxDevices			30
 
 //#define _DEBUG_CONFORM_
 #define		_ENABLE_BANDWIDTH_LOGGING_
 
-
-//*****************************************************************************
-//*	common commands
-enum
-{
-	//*	these enums start at 1000 to stay out of the way of the device specific commands.
-	//*	this allows the driver to have a single switch statement for all the implemented commands
-
-	kCmd_Common_action			=	1000,	//*	Invokes the specified device-specific action.
-	kCmd_Common_commandblind,				//*	Transmits an arbitrary string to the device
-	kCmd_Common_commandbool,				//*	Transmits an arbitrary string to the device and returns a boolean value from the device.
-	kCmd_Common_commandstring,				//*	Transmits an arbitrary string to the device and returns a string value from the device.
-	kCmd_Common_connected,					//*	GET--Retrieves the connected state of the device
-											//*	PUT--Sets the connected state of the device
-	kCmd_Common_description,				//*	Device description
-	kCmd_Common_driverinfo,					//*	Device driver description
-	kCmd_Common_driverversion,				//*	Driver Version
-	kCmd_Common_interfaceversion,			//*	The ASCOM Device interface version number that this device supports.
-	kCmd_Common_name,						//*	Device name
-	kCmd_Common_supportedactions,			//*	Returns the list of action names supported by this driver.
-
-#ifdef _INCLUDE_EXIT_COMMAND_
-	//*	Added by MLS 7/20/2020
-	kCmd_Common_exit,
-#endif // _INCLUDE_EXIT_COMMAND_
-	kCmd_Common_Extras,
-	kCmd_Common_LiveWindow,
-	kCmd_Common_TemperatureLog,
-
-	kCmd_Common_last
-};
-
-
-//*****************************************************************************
-enum
-{
-	kCmdType_PUT	=	'P',
-	kCmdType_GET	=	'G',
-	kCmdType_BOTH	=	'B'
-};
-
-//*****************************************************************************
-#define	kMaxCmdLen	32
-typedef struct
-{
-	char		commandName[kMaxCmdLen];
-	int16_t		enumValue;
-	char		get_put;
-
-} TYPE_CmdEntry;
+#ifndef _COMMON_ALPACA_CMDS_H_
+	#include	"common_AlpacaCmds.h"
+#endif
 
 
 
@@ -166,7 +124,8 @@ typedef struct
 //*	https://en.wikipedia.org/wiki/Universally_unique_identifier
 //*	128 bit number
 //*	This is my own concoction of a UUID, not from any standard
-typedef struct
+//*****************************************************************************
+typedef struct	//	TYPE_UniqueID
 {
 	uint32_t	part1;		//*	4 byte manufacturer code
 	uint32_t	part2;		//*	software version number
@@ -178,7 +137,7 @@ typedef struct
 
 //*****************************************************************************
 #define	kDeviceCmdCnt	100
-typedef struct
+typedef struct	//	TYPE_CMD_STATS
 {
 	int		connCnt;
 	int		getCnt;
@@ -237,15 +196,30 @@ class AlpacaDriver
 
 				TYPE_ASCOM_STATUS		Get_SupportedActions(TYPE_GetPutRequestData *reqData, const TYPE_CmdEntry *theCmdTable);
 
+
+				//*	New commands as of Jun 18, 2023
+				TYPE_ASCOM_STATUS		Get_Connecting(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+				TYPE_ASCOM_STATUS		Put_Connect(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
+				TYPE_ASCOM_STATUS		Put_Disconnect(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
+				TYPE_ASCOM_STATUS		Get_DeviceState(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
+
+
 				TYPE_ASCOM_STATUS		Put_LiveWindow(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 
 				TYPE_ASCOM_STATUS		Get_Readall_Common(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 				TYPE_ASCOM_STATUS		Get_Readall_CPUstats(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 
 
+		virtual	bool	DeviceState_Add_Content(const int socketFD, char *jsonTextBuffer, const int maxLen);
+				void	DeviceState_Add_Bool(const int socketFD, char *jsonTextBuffer, const int maxLen, const char *name, const bool boolValue, const bool includeComa=true);
+				void	DeviceState_Add_Dbl(const int socketFD, char *jsonTextBuffer, const int maxLen, const char *name, const double dblValue, const bool includeComa=true);
+				void	DeviceState_Add_Int(const int socketFD, char *jsonTextBuffer, const int maxLen, const char *name, const int intValue, const bool includeComa=true);
+				void	DeviceState_Add_Str(const int socketFD, char *jsonTextBuffer, const int maxLen, const char *name, const char *valueStr, const bool includeComa=true);
+
 
 		virtual	void	OutputHTML(				TYPE_GetPutRequestData *reqData);
 		virtual	void	OutputHTML_Part2(		TYPE_GetPutRequestData *reqData);
+				void	OutputHTML_CmdTable(	TYPE_GetPutRequestData *reqData);
 				void	OutputHTML_DriverDocs(	TYPE_GetPutRequestData *reqData);
 				void	OutputCommadTable(int mySocketFD, const char *title, const TYPE_CmdEntry *commandTable);
 		virtual bool	GetCommandArgumentString(const int cmdNumber, char *agumentString, char *commentString);
@@ -269,6 +243,7 @@ class AlpacaDriver
 				bool				cVerboseDebug;
 				uint32_t			cMagicCookie;			//*	used to validate objects
 				TYPE_DEVICETYPE		cDeviceType;
+				char				cAlpacaDeviceString[32];
 				int					cAlpacaDeviceNum;		//*	device index for alpaca
 				uint32_t			cLastUpdate_milliSecs;
 
@@ -410,6 +385,7 @@ extern	bool			gDebugDiscovery;
 extern	bool			gObservatorySettingsOK;
 extern	const char		gValueString[];
 extern	bool			gImageDownloadInProgress;
+extern	bool			gIMUisOnLine;
 
 extern	uint32_t		gClientTransactionID;
 extern	uint32_t		gServerTransactionID;

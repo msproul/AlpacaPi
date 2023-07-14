@@ -23,7 +23,7 @@
 
 #ifndef _STDBOOL_H
 	#include	<stdbool.h>
-#endif // _STDBOOL_H
+#endif
 
 #ifndef _ALPACA_DRIVER_H_
 	#include	"alpacadriver.h"

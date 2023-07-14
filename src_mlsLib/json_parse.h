@@ -99,7 +99,7 @@ void	SJP_Init(SJP_Parser_t *theParserDataStruct);
 long	SJP_GetVersion(void);
 int		SJP_ParseData(SJP_Parser_t *theParser, const char  *jsonDataPtr);
 bool	SJP_FindKeyWordString(const char *keyWord, SJP_token_t *tokenList, const short tokenCnt, char *valueString);
-void	SJP_DumpJsonData(SJP_Parser_t *theParser);
+void	SJP_DumpJsonData(SJP_Parser_t *theParser, const char *callingFunctionName);
 
 
 //*	routines for processing the data

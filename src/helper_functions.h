@@ -14,7 +14,7 @@
 
 #ifndef _SYS_TIME_H
 	#include	<sys/time.h>
-#endif // _SYS_TIME_H
+#endif
 
  #ifndef	_TIME_H
 	#include <time.h>
@@ -30,7 +30,6 @@
 	extern "C" {
 #endif
 
-void	StripLeadingSpaces(char *theString);
 
 
 
@@ -52,6 +51,9 @@ bool		IsTrueFalseArgValid(const char *trueFalseString);
 bool		IsTrueFalse(		const char *trueFalseString);
 uint64_t	MSecTimer_getNanoSecs(void);
 
+//*	string routines
+void		StripLeadingSpaces(char *theString);
+void		StripTrailingSpaces(char *theString);
 void		tolowerStr(char *theString);
 int			CountCharsInString(const char *theString, char theChar);
 
@@ -61,8 +63,6 @@ int			CelestObjDeclinationQsortProc(const void *e1, const void *e2);
 
 void		DumpLinuxTimeStruct(struct tm *linuxTimeStruct, const char *callingFunction);
 
-int			SetStartupText(const char *startupMsg);
-void		SetStartupTextStatus(const int widgetIdx, const char *statusText);
 
 #ifdef __cplusplus
 }

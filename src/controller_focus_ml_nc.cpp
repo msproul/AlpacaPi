@@ -40,6 +40,9 @@
 //*	Apr 24,	2020	<MLS> This will be a subclass from the controller_focuser class
 //*	Apr 24,	2020	<MLS> Moonlite nitecrawler focuser working as subclass
 //*	Nov 28,	2022	<MLS> Changed name to controller_focus_ml_nc.cpp
+//*	Jun 19,	2023	<MLS> Updated constructor to use TYPE_REMOTE_DEV
+//*	Jul  1,	2023	<MLS> Added DeviceState window to NiteCrawler controller
+//*	Jul  8,	2023	<MLS> Simplified Update routines
 //*****************************************************************************
 //*	From the Nitecrawler web site
 //*	Rotating drawtube .001 degree resolution
@@ -66,6 +69,7 @@
 
 #include	"windowtab_nitecrawler.h"
 #include	"windowtab_auxmotor.h"
+#include	"windowtab_DeviceState.h"
 #include	"windowtab_graphs.h"
 #include	"windowtab_config.h"
 
@@ -90,6 +94,7 @@ enum
 	kTab_Config,
 #endif // _ENABLE_CONFIG_TAB_
 	kTab_Graphs,
+	kTab_DeviceState,
 	kTab_DriverInfo,
 	kTab_About,
 
@@ -140,20 +145,10 @@ TYPE_NC_COLORS	gNiteCrawlerColors[]	=
 #pragma mark -
 
 //**************************************************************************************
-//**************************************************************************************
-//**************************************************************************************
-//**************************************************************************************
-
-
-//**************************************************************************************
 ControllerNiteCrawler::ControllerNiteCrawler(	const char			*argWindowName,
-												struct sockaddr_in	*deviceAddress,
-												const int			port,
-												const int			deviceNum)
+												TYPE_REMOTE_DEV		*alpacaDevice)
 					:ControllerFocus(		argWindowName,
-											deviceAddress,
-											port,
-											deviceNum,
+											alpacaDevice,
 											kFocuserType_NiteCrawler)
 {
 
@@ -162,14 +157,6 @@ ControllerNiteCrawler::ControllerNiteCrawler(	const char			*argWindowName,
 	//*	moved all init stuff to separate routine so we can have multiple constructors
 	ControllerFocusInit(kComMode_Alpaca, kFocuserType_NiteCrawler);
 
-
-	cAlpacaDevNum	=	deviceNum;
-	if (deviceAddress != NULL)
-	{
-		cDeviceAddress	=	*deviceAddress;
-		cPort			=	port;
-		cValidIPaddr	=	true;
-	}
 	CreateWindowTabs();
 }
 
@@ -180,6 +167,8 @@ ControllerNiteCrawler::ControllerNiteCrawler(	const char			*argWindowName,
 {
 	CONSOLE_DEBUG(__FUNCTION__);
 
+	cDriverInfoTabNum	=	kTab_DriverInfo;
+	cValidIPaddr		=	false;
 
 	//*	moved all init stuff to separate routine so we can have multiple constructors
 	ControllerFocusInit(kComMode_USB, kFocuserType_NiteCrawler);
@@ -209,6 +198,8 @@ ControllerNiteCrawler::~ControllerNiteCrawler(void)
 	DELETE_OBJ_IF_VALID(cConfigTabObjPtr);
 #endif // _ENABLE_CONFIG_TAB_
 	DELETE_OBJ_IF_VALID(cGraphTabObjPtr);
+	DELETE_OBJ_IF_VALID(cDeviceStateTabObjPtr);
+	DELETE_OBJ_IF_VALID(cDriverInfoTabObjPtr);
 	DELETE_OBJ_IF_VALID(cAboutBoxTabObjPtr);
 }
 
@@ -227,14 +218,15 @@ void	ControllerNiteCrawler::CreateWindowTabs(void)
 
 
 	SetTabCount(kTab_Count);
-	SetTabText(kTab_Focuser,	"Focuser");
-	SetTabText(kTab_AuxMotor,	"Aux Motor");
+	SetTabText(kTab_Focuser,		"Focuser");
+	SetTabText(kTab_AuxMotor,		"Aux Motor");
 #ifdef _ENABLE_CONFIG_TAB_
-	SetTabText(kTab_Config,		"Config");
+	SetTabText(kTab_Config,			"Config");
 #endif // _ENABLE_CONFIG_TAB_
-	SetTabText(kTab_Graphs,		"Graphs");
-	SetTabText(kTab_DriverInfo,	"Driver Info");
-	SetTabText(kTab_About,		"About");
+	SetTabText(kTab_Graphs,			"Graphs");
+	SetTabText(kTab_DeviceState,	"Dev State");
+	SetTabText(kTab_DriverInfo,		"Driver Info");
+	SetTabText(kTab_About,			"About");
 
 	//================================================================
 	cNiteCrawlerTabObjPtr	=	new WindowTabNitecrawler(	cWidth,
@@ -286,6 +278,15 @@ void	ControllerNiteCrawler::CreateWindowTabs(void)
 	}
 
 	//================================================================
+	cDeviceStateTabObjPtr		=	new WindowTabDeviceState(	cWidth, cHeight, cBackGrndColor, cWindowName);
+	if (cDeviceStateTabObjPtr != NULL)
+	{
+		SetTabWindow(kTab_DeviceState,	cDeviceStateTabObjPtr);
+		cDeviceStateTabObjPtr->SetParentObjectPtr(this);
+		SetDeviceStateTabInfo(kTab_DeviceState, kDeviceState_FirstBoxName, kDeviceState_FirstBoxValue, kDeviceState_Stats);
+	}
+
+	//================================================================
 	cDriverInfoTabObjPtr		=	new WindowTabDriverInfo(	cWidth, cHeight, cBackGrndColor, cWindowName);
 	if (cDriverInfoTabObjPtr != NULL)
 	{
@@ -334,57 +335,56 @@ void	ControllerNiteCrawler::UpdateCommonProperties(void)
 	UpdateAboutBoxRemoteDevice(kTab_About, kAboutBox_CPUinfo);
 }
 
-
-//*****************************************************************************
-void	ControllerNiteCrawler::UpdateFocuserPosition(const int newFocuserPosition)
+//**************************************************************************************
+void	ControllerNiteCrawler::UpdateStartupData(void)
 {
-//	CONSOLE_DEBUG_W_NUM(__FUNCTION__, newFocuserPosition);
-	cFocuserPosition	=	newFocuserPosition;
-	SetWidgetNumber(kTab_Focuser, kNiteCrawlerTab_focValue, cFocuserPosition);
+	UpdateAboutBoxRemoteDevice(kTab_About, kAboutBox_CPUinfo);
+}
 
+//**************************************************************************************
+void	ControllerNiteCrawler::UpdateStatusData(void)
+{
+char			lineBuff[128];
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG_W_NUM("cFocuserProp.Position\t=",	cFocuserProp.Position);
+//	CONSOLE_DEBUG_W_NUM("cFocuserDesiredPos   \t=",	cFocuserDesiredPos);
+
+	UpdateConnectedIndicator(	kTab_Focuser,	kNiteCrawlerTab_Connected);
+	SetWidgetNumber(			kTab_Focuser,	kNiteCrawlerTab_focValue,	cFocuserProp.Position);
+	SetWidgetNumber(			kTab_Focuser,	kNiteCrawlerTab_focDesired, cFocuserDesiredPos);
+
+	SetWidgetNumber(			kTab_Focuser,	kNiteCrawlerTab_rotValue,	cRotatorPosition);
+	SetWidgetNumber(			kTab_Focuser,	kNiteCrawlerTab_rotDesired, cRotatorDesiredPos);
+
+	SetWidgetNumber(			kTab_AuxMotor,	kAuxMotorBox_Position,		cAuxMotorPosition);
+	SetWidgetNumber(			kTab_AuxMotor,	kAuxMotorBox_DesiredPos,	cAuxMotorDesiredPos);
+
+	sprintf(lineBuff, "%1.1f C / %1.1f F", cFocuserProp.Temperature_DegC, ((cFocuserProp.Temperature_DegC * (9.0/5.0)) + 32));
+	SetWidgetText(kTab_Focuser, kNiteCrawlerTab_Temperature, lineBuff);
+	if (cGraphTabObjPtr != NULL)
+	{
+		cGraphTabObjPtr->LogTemperature(cFocuserProp.Temperature_DegC);
+		if (cCurrentTabNum == kTab_Graphs)
+		{
+			cUpdateWindow	=	true;
+		}
+	}
+
+	UpdateWindowTabs_Everything();
 }
 
 //*****************************************************************************
-void	ControllerNiteCrawler::UpdateRotatorPosition(const int newRotatorPosition)
+void	ControllerNiteCrawler::UpdateRotatorPosition(void)
 {
 //	CONSOLE_DEBUG_W_NUM(__FUNCTION__, newRotatorPosition);
-	cRotatorPosition	=	newRotatorPosition;
 	SetWidgetNumber(kTab_Focuser, kNiteCrawlerTab_rotValue, cRotatorPosition);
 
 	//*	tell the window tabs the new information
 	if (cNiteCrawlerTabObjPtr != NULL)
 	{
-		cNiteCrawlerTabObjPtr->cRotatorPosition		=	newRotatorPosition;
+		cNiteCrawlerTabObjPtr->cRotatorPosition		=	cRotatorPosition;
 		cNiteCrawlerTabObjPtr->cRotatorDesiredPos	=	cRotatorDesiredPos;
-	}
-}
-
-//*****************************************************************************
-void	ControllerNiteCrawler::UpdateAuxMotorPosition(const int newAuxMotorPosition)
-{
-//	CONSOLE_DEBUG(__FUNCTION__);
-	cAuxMotorPosition	=	newAuxMotorPosition;
-	SetWidgetNumber(kTab_AuxMotor, kAuxMotorBox_Position, newAuxMotorPosition);
-
-}
-
-//*****************************************************************************
-void	ControllerNiteCrawler::UpdateTemperature(const double newTemperature)
-{
-char			lineBuff[128];
-//	CONSOLE_DEBUG(__FUNCTION__);
-
-	cTemperature_DegC	=	newTemperature;
-	sprintf(lineBuff, "%1.1f C / %1.1f F", cTemperature_DegC, ((cTemperature_DegC * (9.0/5.0)) + 32));
-	SetWidgetText(kTab_Focuser, kNiteCrawlerTab_Temperature, lineBuff);
-
-	if (cGraphTabObjPtr != NULL)
-	{
-		cGraphTabObjPtr->LogTemperature(cTemperature_DegC);
-		if (cCurrentTabNum == kTab_Graphs)
-		{
-			cUpdateWindow	=	true;
-		}
 	}
 }
 
@@ -400,7 +400,7 @@ char			lineBuff[128];
 
 	if (cGraphTabObjPtr != NULL)
 	{
-		cGraphTabObjPtr->LogVoltage(cVoltage);;
+		cGraphTabObjPtr->LogVoltage(cVoltage);
 		if (cCurrentTabNum == kTab_Graphs)
 		{
 			cUpdateWindow	=	true;
@@ -419,30 +419,44 @@ void	ControllerNiteCrawler::UpdateStepsPerRev(const int newStepsPerRev)
 	}
 }
 
-
 //*****************************************************************************
 void	ControllerNiteCrawler::UpdateWindowTabs_Everything(void)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
-	SetWidgetNumber(kTab_Focuser,	kNiteCrawlerTab_rotDesired,		cRotatorDesiredPos);
 	SetWidgetNumber(kTab_Focuser,	kNiteCrawlerTab_focDesired,		cFocuserDesiredPos);
+	SetWidgetNumber(kTab_Focuser,	kNiteCrawlerTab_rotDesired,		cRotatorDesiredPos);
 	SetWidgetNumber(kTab_AuxMotor,	kAuxMotorBox_DesiredPos,		cAuxMotorDesiredPos);
 
 	UpdateConnectedIndicator(kTab_Focuser,		kNiteCrawlerTab_Connected);
-
 }
 
 //*****************************************************************************
-void	ControllerNiteCrawler::UpdateWindowTabs_ReadAll(bool hasReadAll)
+void	ControllerNiteCrawler::UpdateSupportedActions(void)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
-	SetWidgetValid(kTab_Focuser,	kNiteCrawlerTab_Readall,	hasReadAll);
-	SetWidgetValid(kTab_AuxMotor,	kAuxMotorBox_Readall,		hasReadAll);
+	SetWidgetValid(kTab_Focuser,	kNiteCrawlerTab_Readall,		cHas_readall);
+	SetWidgetValid(kTab_Focuser,	kNiteCrawlerTab_DeviceState,	cHas_DeviceState);
+
+	SetWidgetValid(kTab_AuxMotor,	kAuxMotorBox_Readall,			cHas_readall);
+	SetWidgetValid(kTab_AuxMotor,	kAuxMotorBox_DeviceState,		cHas_DeviceState);
 #ifdef _ENABLE_CONFIG_TAB_
-	SetWidgetValid(kTab_Config,		kCongfigBox_Readall,		hasReadAll);
+	SetWidgetValid(kTab_Config,		kCongfigBox_Readall,			cHas_readall);
+	SetWidgetValid(kTab_Config,		kCongfigBox_DeviceState,		cHas_DeviceState);
 #endif
 
-	SetWidgetValid(kTab_Graphs,		kGraphBox_Readall,			hasReadAll);
+	SetWidgetValid(kTab_Graphs,		kGraphBox_Readall,				cHas_readall);
+	SetWidgetValid(kTab_Graphs,		kGraphBox_DeviceState,			cHas_DeviceState);
+
+	SetWidgetValid(kTab_DeviceState,	kDeviceState_Readall,		cHas_readall);
+	SetWidgetValid(kTab_DeviceState,	kDeviceState_DeviceState,	cHas_DeviceState);
+
+	SetWidgetValid(kTab_DriverInfo,	kDriverInfo_Readall,			cHas_readall);
+	SetWidgetValid(kTab_DriverInfo,	kDriverInfo_DeviceState,		cHas_DeviceState);
+
+	if (cHas_DeviceState == false)
+	{
+		cDeviceStateTabObjPtr->SetDeviceStateNotSupported();
+	}
 }
 
 //*****************************************************************************
@@ -599,27 +613,27 @@ bool	validData;
 char	lineBuff[128];
 
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
-	cIsMoving	=	false;
+	cFocuserProp.IsMoving	=	false;
 	validData	=	false;
 	if (cHas_readall)
 	{
 		validData	=	AlpacaGetStatus_ReadAll("focuser", cAlpacaDevNum);
 		if (cFirstDataRead)
 		{
-			UpdateFromFirstRead();
+			UpdateStartupData();
 		}
 		sprintf(lineBuff, "%s-%s", cModelName, cSerialNumber);
 		SetWidgetText(kTab_Focuser, kNiteCrawlerTab_Model, lineBuff);
 
 		SetWindowIPaddrInfo(NULL, true);
 
-		if (cFocuserPosition != cFocuserDesiredPos)
+		if (cFocuserProp.Position != cFocuserDesiredPos)
 		{
-			cIsMoving	=	true;
+			cFocuserProp.IsMoving	=	true;
 		}
 		if (cRotatorPosition != cRotatorDesiredPos)
 		{
-			cIsMoving	=	true;
+			cFocuserProp.IsMoving	=	true;
 		}
 		cLastUpdate_milliSecs	=	millis();
 	}

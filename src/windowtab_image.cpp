@@ -1059,16 +1059,16 @@ int		firstColor;
 			crossHairXloc	=	theWidget->left + cCrossHairPos[iii].XLocation;
 			crossHairYloc	=	theWidget->top + cCrossHairPos[iii].YLocation;
 
-			LLD_SetColor(firstColor + iii);
+			LLG_SetColor(firstColor + iii);
 			//*	draw the vertical line
-			LLD_MoveTo(crossHairXloc, theWidget->top);
-			LLD_LineTo(crossHairXloc, theWidget->top + theWidget->height);
+			LLG_MoveTo(crossHairXloc, theWidget->top);
+			LLG_LineTo(crossHairXloc, theWidget->top + theWidget->height);
 
 			//*	draw the horizontal line
-			LLD_MoveTo(theWidget->left, crossHairYloc);
-			LLD_LineTo(theWidget->left + theWidget->width, crossHairYloc);
+			LLG_MoveTo(theWidget->left, crossHairYloc);
+			LLG_LineTo(theWidget->left + theWidget->width, crossHairYloc);
 
-			LLD_FrameEllipse(crossHairXloc, crossHairYloc, 20, 20);
+			LLG_FrameEllipse(crossHairXloc, crossHairYloc, 20, 20);
 		}
 	}
 

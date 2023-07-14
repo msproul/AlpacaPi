@@ -56,6 +56,7 @@ class FilterwheelDriver: public AlpacaDriver
 			TYPE_ASCOM_STATUS		Get_Focusoffsets(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
 			TYPE_ASCOM_STATUS		Get_Names(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
 			TYPE_ASCOM_STATUS		Get_Readall(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
+		virtual	bool				DeviceState_Add_Content(const int socketFD, char *jsonTextBuffer, const int maxLen);
 
 		virtual void				ReadFilterNamesTextFile(void);
 		virtual	int					Read_CurrentFWstate(void);
@@ -83,18 +84,6 @@ class FilterwheelDriver: public AlpacaDriver
 };
 
 
-//*****************************************************************************
-//Filter wheel commands
-//*****************************************************************************
-enum
-{
-	kCmd_Filterwheel_focusoffsets	=	0,	//*	Filter focus offsets
-	kCmd_Filterwheel_names,					//*	Filter wheel filter names
-	kCmd_Filterwheel_position,				//*	GET-Returns the current filter wheel position
-											//*	PUT-Sets the filter wheel position
-	kCmd_Filterwheel_Extras,
-	kCmd_Filterwheel_readall
-};
 
 
 #endif // _FILTERWHEELDRIVER_H_

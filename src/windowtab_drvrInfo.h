@@ -38,6 +38,7 @@ enum
 
 	kDriverInfo_IPaddr,
 	kDriverInfo_Readall,
+	kDriverInfo_DeviceState,
 
 	kDriverInfo_LaunchWeb,
 

@@ -73,6 +73,7 @@ enum
 //	kNiteCrawlerTab_AlpacaErrorMsg,
 	kNiteCrawlerTab_IPaddr,
 	kNiteCrawlerTab_Readall,
+	kNiteCrawlerTab_DeviceState,
 
 	kNiteCrawlerTab_Connect,
 

@@ -45,6 +45,7 @@
 
 #include	"alpacadriver_helper.h"
 #include	"helper_functions.h"
+#include	"controller_startup.h"
 
 #include	"SkyStruc.h"
 #include	"SkyTravelConstants.h"
@@ -88,26 +89,26 @@ char	spectralClassStr[4];
 	spectralClassStr[1]	=	0;
 
 	CONSOLE_DEBUG("---------------------------------------------------------");
-	CONSOLE_DEBUG_W_STR("Called from  \t=",	functionName);
-	CONSOLE_DEBUG_W_SIZE("sizeof(obj) \t=",	sizeof(TYPE_CelestData));
-	CONSOLE_DEBUG_W_LONG("id          \t=",	objectStruct->id);
-	CONSOLE_DEBUG_W_NUM("magn         \t=",	objectStruct->magn);
-	CONSOLE_DEBUG_W_NUM("dataSrc      \t=",	objectStruct->dataSrc);
+	CONSOLE_DEBUG_W_STR(	"Called from  \t=",	functionName);
+	CONSOLE_DEBUG_W_SIZE(	"sizeof(obj) \t=",	sizeof(TYPE_CelestData));
+	CONSOLE_DEBUG_W_LONG(	"id          \t=",	objectStruct->id);
+	CONSOLE_DEBUG_W_NUM(	"magn         \t=",	objectStruct->magn);
+	CONSOLE_DEBUG_W_NUM(	"dataSrc      \t=",	objectStruct->dataSrc);
 	myHexData	=	objectStruct->type;
-	CONSOLE_DEBUG_W_HEX("type         \t=",	myHexData);
-//	CONSOLE_DEBUG_W_LONG("curXX       \t=",	objectStruct->curXX);
-//	CONSOLE_DEBUG_W_NUM("curYY        \t=",	objectStruct->curYY);
-	CONSOLE_DEBUG_W_DBL("realMagnitude\t=",	objectStruct->realMagnitude);
-	CONSOLE_DEBUG_W_DBL("ra           \t=",	DEGREES(objectStruct->ra / 15.0));
-	CONSOLE_DEBUG_W_DBL("decl         \t=",	DEGREES(objectStruct->decl));
-	CONSOLE_DEBUG_W_DBL("org_ra       \t=",	DEGREES(objectStruct->org_ra / 15.0));
-	CONSOLE_DEBUG_W_DBL("org_decl     \t=",	DEGREES(objectStruct->org_decl));
-//	CONSOLE_DEBUG_W_DBL("maxSizeArcMinutes\t=",	objectStruct->maxSizeArcMinutes);
-	CONSOLE_DEBUG_W_DBL("parallax     \t=",	objectStruct->parallax);
-	CONSOLE_DEBUG_W_LHEX("parallax     \t=",	objectStruct->parallax);
-	CONSOLE_DEBUG_W_STR("shortName    \t=",	objectStruct->shortName);
-	CONSOLE_DEBUG_W_STR("longName     \t=",	objectStruct->longName);
-	CONSOLE_DEBUG_W_STR("spectralClass\t=",	spectralClassStr);
+	CONSOLE_DEBUG_W_HEX(	"type         \t=",	myHexData);
+//	CONSOLE_DEBUG_W_LONG(	"curXX       \t=",	objectStruct->curXX);
+//	CONSOLE_DEBUG_W_NUM(	"curYY        \t=",	objectStruct->curYY);
+	CONSOLE_DEBUG_W_DBL(	"realMagnitude\t=",	objectStruct->realMagnitude);
+	CONSOLE_DEBUG_W_DBL(	"ra           \t=",	DEGREES(objectStruct->ra / 15.0));
+	CONSOLE_DEBUG_W_DBL(	"decl         \t=",	DEGREES(objectStruct->decl));
+	CONSOLE_DEBUG_W_DBL(	"org_ra       \t=",	DEGREES(objectStruct->org_ra / 15.0));
+	CONSOLE_DEBUG_W_DBL(	"org_decl     \t=",	DEGREES(objectStruct->org_decl));
+//	CONSOLE_DEBUG_W_DBL(	"maxSizeArcMinutes\t=",	objectStruct->maxSizeArcMinutes);
+	CONSOLE_DEBUG_W_DBL(	"parallax     \t=",	objectStruct->parallax);
+//	CONSOLE_DEBUG_W_LHEX(	"parallax     \t=",	objectStruct->parallax);
+	CONSOLE_DEBUG_W_STR(	"shortName    \t=",	objectStruct->shortName);
+	CONSOLE_DEBUG_W_STR(	"longName     \t=",	objectStruct->longName);
+	CONSOLE_DEBUG_W_STR(	"spectralClass\t=",	spectralClassStr);
 
 #endif // _ENABLE_CONSOLE_DEBUG_
 }

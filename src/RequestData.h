@@ -25,11 +25,11 @@
 
 #ifndef	_ALPACA_DEFS_H_
 	#include	"alpaca_defs.h"
-#endif // _ALPACA_DEFS_H_
+#endif
 
 #ifndef _JSON_DEFS_H_
 	#include 	"JsonDefs.h"
-#endif // _JSON_DEFS_H_
+#endif
 
 //*****************************************************************************
 //*	the TYPE_GetPutRequestData simplifies parsing and passing of the
@@ -57,7 +57,7 @@ typedef enum
 
 
 //*****************************************************************************
-typedef struct
+typedef struct	//	TYPE_GetPutRequestData
 {
 	char				clientIPaddr[48];
 	int					socket;

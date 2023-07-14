@@ -10,10 +10,7 @@
 
 #ifndef	_ALPACA_DEFS_H_
 	#include	"alpaca_defs.h"
-#endif // _ALPACA_DEFS_H_
-
-#define	_ENABLE_EXTERNAL_SHUTTER_
-
+#endif
 
 #ifndef _DISCOVERY_LIB_H_
 	#include	"discovery_lib.h"
@@ -26,40 +23,34 @@
 	#include	"windowtab_dome.h"
 #endif
 
-
-//===========================================
-#ifndef	_WINDOWTAB_DRIVER_INFO_H_
-	#include	"windowtab_drvrInfo.h"
-#endif
-
 //===========================================
 #ifndef	_WINDOWTAB_CAPABILITIES_H_
 	#include	"windowtab_capabilities.h"
 #endif
 
 //===========================================
+#ifndef	_WINDOWTAB_DEVICESTATE_H_
+	#include	"windowtab_DeviceState.h"
+#endif
+
+//===========================================
+#ifndef	_WINDOWTAB_DRIVER_INFO_H_
+	#include	"windowtab_drvrInfo.h"
+#endif
+
+
+//===========================================
 #ifndef	_WINDOWTAB_ABOUT_H_
 	#include	"windowtab_about.h"
 #endif
 
+#define	_ENABLE_EXTERNAL_SHUTTER_
 
 
 #define	kDomeWindowWidth	475
 #define	kDomeWindowHeight	720
 
 
-//**************************************************************************************
-enum
-{
-	kTab_Dome	=	1,
-	kTab_Capabilities,
-
-	kTab_DriverInfo,
-	kTab_About,
-
-	kTab_Dome_Count
-
-};
 
 //**************************************************************************************
 class ControllerDome: public Controller
@@ -77,30 +68,30 @@ class ControllerDome: public Controller
 
 		virtual	void	SetupWindowControls(void);
 		virtual	void	AlpacaDisplayErrorMessage(const char *errorMsgString);
-		virtual	void	RunBackgroundTasks(const char *callingFunction=NULL, bool enableDebug=false);
-	//	virtual	void	DrawWidgetCustomGraphic(const int widgetIdx);
-		virtual	bool	AlpacaGetStartupData(void);
-				bool	AlpacaGetStatus(void);
+		virtual	void	UpdateConnectedStatusIndicator(void);
+		virtual	void	GetStartUpData_SubClass(void);
+		virtual	bool	AlpacaGetStartupData_OneAAT(void);
+		virtual	void	UpdateStartupData(void);
+		virtual	void	UpdateStatusData(void);
+		virtual	void	AlpacaGetCapabilities(void);
 
-		virtual	void	AlpacaProcessReadAll(			const char	*deviceType,
-														const int	deviveNum,
-														const char	*keywordString,
-														const char	*valueString);
 		virtual	void	AlpacaProcessSupportedActions(	const char	*deviceType,
 														const int	deviveNum,
 														const char	*valueString);
 
-		virtual	void	UpdateCommonProperties(void);
+		virtual	void	UpdateSupportedActions(void);
 		virtual	void	UpdateCapabilityList(void);
 
-				void	AlpacaProcessSupportedActions_Dome(const int deviveNum, const char *valueString);
-				void	AlpacaProcessReadAll_Dome(		const int	deviceNum,
-														const char	*keywordString,
+		virtual	void	AlpacaProcessSupportedActions_Dome(const int deviveNum, const char *valueString);
+		virtual	bool	AlpacaProcessReadAllIdx(		const char	*deviceTypeStr,
+														const int	deviceNum,
+														const int	keywordEnum,
+														const char	*valueString);
+				bool	AlpacaProcessReadAllIdx_Dome(	const int	deviceNum,
+														const int	keywordEnum,
 														const char	*valueString);
 
-
 				bool	AlpacaGetStatus_DomeOneAAT(void);	//*	One At A Time
-				void	ToggleSwitchState(const int switchNum);
 				void	UpdateDomeAzimuth(const double newAzimuth);
 
 				void	UpdateShutterStatus(const TYPE_ShutterStatus newShutterStatus);
@@ -109,27 +100,24 @@ class ControllerDome: public Controller
 			//===================================================================
 				void	SetAlpacaShutterInfo(TYPE_REMOTE_DEV *alpacaDevice);
 				void	SendShutterCommand(const char *shutterCmd);
-			#ifdef _ENABLE_EXTERNAL_SHUTTER_
-				void	AlpacaGetShutterReadAll(void);
-				bool	ShutterSendPutCmd(	const char	*alpacaDevice,
-											const char	*alpacaCmd,
-											const char	*dataString);
-			#endif
 
 				//===================================================================
 				//*	tab information
 				WindowTabDome			*cDomeTabObjPtr;
 				WindowTabCapabilities	*cCapabilitiesTabObjPtr;
+				WindowTabDeviceState	*cDeviceStateTabObjPtr;
 				WindowTabDriverInfo		*cDriverInfoTabObjPtr;
 				WindowTabAbout			*cAboutBoxTabObjPtr;
 
-				TYPE_DomeProperties	cDomeProp;
-
-
-				uint32_t			cDomeUpdateDelta;
+				TYPE_DomeProperties		cDomeProp;
 
 			#ifdef _ENABLE_EXTERNAL_SHUTTER_
 				//*	shutter device info
+				void	AlpacaGetShutterReadAll(void);
+				bool	ShutterSendPutCmd(	const char	*alpacaDevice,
+											const char	*alpacaCmd,
+											const char	*dataString);
+
 				bool				cShutterInfoValid;
 				struct sockaddr_in	cShutterDeviceAddress;
 				int					cShutterPort;

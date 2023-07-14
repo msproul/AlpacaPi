@@ -78,6 +78,7 @@
 //*	Aug 29,	2022	<MLS> Added logic to keep track of last time any movement was made
 //*	Mar  9,	2023	<MLS> Removed all slit tracker code from dome driver
 //*	Apr  6,	2023	<MLS> Added GetCommandArgumentString() to domedriver
+//*	Jun 18,	2023	<MLS> Added DeviceState_Add_Content() to domedriver
 //*****************************************************************************
 //*	cd /home/pi/dev-mark/alpaca
 //*	LOGFILE=logfile.txt
@@ -133,6 +134,11 @@
 #include	"json_parse.h"
 #include	"sendrequest_lib.h"
 
+#include	"dome_AlpacaCmds.h"
+#include	"dome_AlpacaCmds.cpp"
+
+
+
 #if defined(__arm__) && !defined(_ENABLE_PI_HAT_SESNSOR_BOARD_)
 	#include <wiringPi.h>
 #else
@@ -165,145 +171,16 @@ void	CreateDomeObjects(void)
 
 }
 
-
-//*****************************************************************************
-//*	dome commands
-enum
-{
-	kCmd_Dome_altitude	=	0,	//*	The dome altitude
-	kCmd_Dome_athome,			//*	Indicates whether the dome is in the home position.
-	kCmd_Dome_atpark,			//*	Indicates whether the telescope is at the park position
-	kCmd_Dome_azimuth,			//*	The dome azimuth
-	kCmd_Dome_canfindhome,		//*	Indicates whether the dome can find the home position.
-	kCmd_Dome_canpark,			//*	Indicates whether the dome can be parked.
-	kCmd_Dome_cansetaltitude,	//*	Indicates whether the dome altitude can be set
-	kCmd_Dome_cansetazimuth,	//*	Indicates whether the dome azimuth can be set
-	kCmd_Dome_cansetpark,		//*	Indicates whether the dome park position can be set
-	kCmd_Dome_cansetshutter,	//*	Indicates whether the dome shutter can be opened
-	kCmd_Dome_canslave,			//*	Indicates whether the dome supports slaving to a telescope
-	kCmd_Dome_cansyncazimuth,	//*	Indicates whether the dome azimuth position can be synched
-	kCmd_Dome_shutterstatus,	//*	Status of the dome shutter or roll-off roof
-	kCmd_Dome_slaved,			//*	GET--Indicates whether the dome is slaved to the telescope
-								//*	SET--Sets whether the dome is slaved to the telescope
-	kCmd_Dome_slewing,			//*	Indicates whether the any part of the dome is moving
-	kCmd_Dome_abortslew,		//*	Immediately cancel current dome operation.
-	kCmd_Dome_closeshutter,		//*	Close the shutter or otherwise shield telescope from the sky.
-	kCmd_Dome_findhome,			//*	Start operation to search for the dome home position.
-	kCmd_Dome_openshutter,		//*	Open shutter or otherwise expose telescope to the sky.
-	kCmd_Dome_park,				//*	Rotate dome in azimuth to park position.
-	kCmd_Dome_setpark,			//*	Set the current azimuth, altitude position of dome to be the park position
-	kCmd_Dome_slewtoaltitude,	//*	Slew the dome to the given altitude position.
-	kCmd_Dome_slewtoazimuth,	//*	Slew the dome to the given azimuth position.
-	kCmd_Dome_synctoazimuth,	//*	Synchronize the current position of the dome to the given azimuth.
-
-	//==============================================================
-	//*	extra commands added by MLS
-	kCmd_Dome_Extras,
-
-	kCmd_Dome_poweron,			//*	Turn dome power on
-	kCmd_Dome_poweroff,			//*	Turn dome power off
-	kCmd_Dome_powerstatus,		//*	Return power status
-
-	kCmd_Dome_auxiliaryon,		//*	Turn auxiliary   on
-	kCmd_Dome_auxiliaryoff,		//*	Turn auxiliary off
-	kCmd_Dome_auxiliarystatus,	//*	Return auxiliary status
-
-
-	kCmd_Dome_goleft,			//*	Move the dome left (CCW)
-	kCmd_Dome_goright,			//*	Move the dome right (CW)
-
-	kCmd_Dome_bumpleft,			//*	Move the dome left (CCW)
-	kCmd_Dome_bumpright,		//*	Move the dome right (CW)
-
-	kCmd_Dome_slowleft,			//*	Move the dome left (CCW)
-	kCmd_Dome_slowright,		//*	Move the dome right (CW)
-
-	kCmd_Dome_currentstate,		//*	What is the current state of the state machine
-
-	//*	make this one last for consistency
-	kCmd_Dome_readall,			//*	Read all parameters
-
-
-	kCmd_Dome_last
-};
-
-
-
-//*****************************************************************************
-static TYPE_CmdEntry	gDomeCmdTable[]	=
-{
-
-	{	"altitude",			kCmd_Dome_altitude,			kCmdType_GET	},
-	{	"athome",			kCmd_Dome_athome,			kCmdType_GET	},
-	{	"atpark",			kCmd_Dome_atpark,			kCmdType_GET	},
-	{	"azimuth",			kCmd_Dome_azimuth,			kCmdType_GET	},
-	{	"canfindhome",		kCmd_Dome_canfindhome,		kCmdType_GET	},
-	{	"canpark",			kCmd_Dome_canpark,			kCmdType_GET	},
-	{	"cansetaltitude",	kCmd_Dome_cansetaltitude,	kCmdType_GET	},
-	{	"cansetazimuth",	kCmd_Dome_cansetazimuth,	kCmdType_GET	},
-	{	"cansetpark",		kCmd_Dome_cansetpark,		kCmdType_GET	},
-	{	"cansetshutter",	kCmd_Dome_cansetshutter,	kCmdType_GET	},
-	{	"canslave",			kCmd_Dome_canslave,			kCmdType_GET	},
-	{	"cansyncazimuth",	kCmd_Dome_cansyncazimuth,	kCmdType_GET	},
-	{	"shutterstatus",	kCmd_Dome_shutterstatus,	kCmdType_GET	},
-	{	"slaved",			kCmd_Dome_slaved,			kCmdType_BOTH	},
-	{	"slewing",			kCmd_Dome_slewing,			kCmdType_GET	},
-	{	"abortslew",		kCmd_Dome_abortslew,		kCmdType_BOTH	},
-	{	"closeshutter",		kCmd_Dome_closeshutter,		kCmdType_PUT	},
-	{	"findhome",			kCmd_Dome_findhome,			kCmdType_PUT	},
-	{	"openshutter",		kCmd_Dome_openshutter,		kCmdType_PUT	},
-	{	"park",				kCmd_Dome_park,				kCmdType_PUT	},
-	{	"setpark",			kCmd_Dome_setpark,			kCmdType_PUT	},
-	{	"slewtoaltitude",	kCmd_Dome_slewtoaltitude,	kCmdType_PUT	},
-	{	"slewtoazimuth",	kCmd_Dome_slewtoazimuth,	kCmdType_PUT	},
-	{	"synctoazimuth",	kCmd_Dome_synctoazimuth,	kCmdType_PUT	},
-
-	//==============================================================
-	//*	extra commands added by MLS
-	{	"--extras",			kCmd_Dome_Extras,			kCmdType_GET	},
-
-
-	{	"poweron",			kCmd_Dome_poweron,			kCmdType_PUT	},
-	{	"poweroff",			kCmd_Dome_poweroff,			kCmdType_PUT	},
-	{	"powerstatus",		kCmd_Dome_powerstatus,		kCmdType_GET	},
-
-	{	"auxiliaryon",		kCmd_Dome_auxiliaryon,		kCmdType_PUT	},
-	{	"auxiliaryoff",		kCmd_Dome_auxiliaryoff,		kCmdType_PUT	},
-	{	"auxiliarystatus",  kCmd_Dome_auxiliarystatus,	kCmdType_GET	},
-
-
-#ifndef _ENABLE_DOME_ROR_
-	{	"goleft",			kCmd_Dome_goleft,			kCmdType_PUT	},
-	{	"goright",			kCmd_Dome_goright,			kCmdType_PUT	},
-
-	{	"bumpleft",			kCmd_Dome_bumpleft,			kCmdType_PUT	},
-	{	"bumpright",		kCmd_Dome_bumpright,		kCmdType_PUT	},
-
-	{	"slowleft",			kCmd_Dome_slowleft,			kCmdType_PUT	},
-	{	"slowright",		kCmd_Dome_slowright,		kCmdType_PUT	},
-#endif
-
-
-
-	{	"currentstate",		kCmd_Dome_currentstate,		kCmdType_GET	},
-	{	"readall",			kCmd_Dome_readall,			kCmdType_GET	},
-
-
-	{	"",					-1,		0	}
-};
-
 //*****************************************************************************
 DomeDriver::DomeDriver(const int argDevNum)
 	:AlpacaDriver(kDeviceType_Dome)
 {
-
 	CONSOLE_DEBUG(__FUNCTION__);
 
 	strcpy(cCommonProp.Name,		"Dome");
 	strcpy(cCommonProp.Description,	"Generic Dome");
 	cCommonProp.InterfaceVersion	=	2;
 	cDriverCmdTablePtr				=	gDomeCmdTable;
-
 
 	cDomeConfig						=	kIsDome;
 	cAzimuth_Destination			=	-1.0;		//*	must be >= to 0 to be valid
@@ -523,6 +400,7 @@ int					mySocket;
 			{
 				alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
 				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Get not supported");
+				CONSOLE_DEBUG(alpacaErrMsg);
 			}
 			break;
 
@@ -534,7 +412,8 @@ int					mySocket;
 			else
 			{
 				alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
-				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Get not supported");
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Get not supported for 'openshutter'");
+				CONSOLE_DEBUG(alpacaErrMsg);
 			}
 			break;
 
@@ -547,6 +426,7 @@ int					mySocket;
 			{
 				alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
 				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Get not supported");
+				CONSOLE_DEBUG(alpacaErrMsg);
 			}
 			break;
 
@@ -559,6 +439,7 @@ int					mySocket;
 			{
 				alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
 				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Get not supported");
+				CONSOLE_DEBUG(alpacaErrMsg);
 			}
 			break;
 
@@ -571,6 +452,7 @@ int					mySocket;
 			{
 				alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
 				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Get not supported");
+				CONSOLE_DEBUG(alpacaErrMsg);
 			}
 			break;
 
@@ -583,6 +465,7 @@ int					mySocket;
 			{
 				alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
 				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Get not supported");
+				CONSOLE_DEBUG(alpacaErrMsg);
 			}
 			break;
 
@@ -594,7 +477,8 @@ int					mySocket;
 			else
 			{
 				alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
-				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Get not supported");
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Get not supported for synctoazimuth");
+				CONSOLE_DEBUG(alpacaErrMsg);
 			}
 			break;
 
@@ -606,7 +490,8 @@ int					mySocket;
 			else
 			{
 				alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
-				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Get not supported");
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Get not supported for poweron");
+				CONSOLE_DEBUG(alpacaErrMsg);
 			}
 			break;
 
@@ -619,6 +504,7 @@ int					mySocket;
 			{
 				alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
 				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Get not supported");
+				CONSOLE_DEBUG(alpacaErrMsg);
 			}
 			break;
 
@@ -635,6 +521,7 @@ int					mySocket;
 			{
 				alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
 				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Get not supported");
+				CONSOLE_DEBUG(alpacaErrMsg);
 			}
 			break;
 
@@ -647,6 +534,7 @@ int					mySocket;
 			{
 				alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
 				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Get not supported");
+				CONSOLE_DEBUG(alpacaErrMsg);
 			}
 			break;
 
@@ -663,6 +551,7 @@ int					mySocket;
 			{
 				alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
 				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Get not supported");
+				CONSOLE_DEBUG(alpacaErrMsg);
 			}
 			break;
 
@@ -675,6 +564,7 @@ int					mySocket;
 			{
 				alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
 				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Get not supported");
+				CONSOLE_DEBUG(alpacaErrMsg);
 			}
 			break;
 
@@ -687,6 +577,7 @@ int					mySocket;
 			{
 				alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
 				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Get not supported");
+				CONSOLE_DEBUG(alpacaErrMsg);
 			}
 			break;
 
@@ -699,6 +590,7 @@ int					mySocket;
 			{
 				alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
 				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Get not supported");
+				CONSOLE_DEBUG(alpacaErrMsg);
 			}
 			break;
 
@@ -711,6 +603,7 @@ int					mySocket;
 			{
 				alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
 				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Get not supported");
+				CONSOLE_DEBUG(alpacaErrMsg);
 			}
 			break;
 
@@ -1568,6 +1461,7 @@ double				deltaDegrees;
 	{
 		alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "FindHome Not supported");
+		CONSOLE_DEBUG(alpacaErrMsg);
 	}
 	return(alpacaErrCode);
 }
@@ -1577,6 +1471,7 @@ TYPE_ASCOM_STATUS	DomeDriver::Put_SetPark(	TYPE_GetPutRequestData *reqData, char
 {
 
 	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Set park not supported");
+	CONSOLE_DEBUG(alpacaErrMsg);
 	return(kASCOM_Err_NotImplemented);
 }
 
@@ -1588,7 +1483,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
 
 	alpacaErrCode	=	kASCOM_Err_NotImplemented;
 	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "SlewToAltitude not finished");
-
+	CONSOLE_DEBUG(alpacaErrMsg);
 	return(alpacaErrCode);
 }
 
@@ -1654,6 +1549,7 @@ bool				foundKeyWord;
 			{
 				alpacaErrCode	=	kASCOM_Err_InvalidValue;
 				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Invalid Value 'Azimuth=' was not found");
+				CONSOLE_DEBUG(alpacaErrMsg);
 				CONSOLE_DEBUG_W_STR("contentData\t=", reqData->contentData);
 			}
 		}
@@ -1673,6 +1569,7 @@ bool				foundKeyWord;
 		{
 			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "slewtoazimuth Not implemented");
 		}
+		CONSOLE_DEBUG(alpacaErrMsg);
 	}
 	return(alpacaErrCode);
 }
@@ -1710,12 +1607,14 @@ bool				foundKeyWord;
 				{
 					alpacaErrCode	=	kASCOM_Err_InvalidValue;
 					GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Invalid Value");
+					CONSOLE_DEBUG(alpacaErrMsg);
 				}
 			}
 			else
 			{
 				alpacaErrCode	=	kASCOM_Err_InvalidValue;
 				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Invalid Value 'Azimuth=' was not found");
+				CONSOLE_DEBUG(alpacaErrMsg);
 				CONSOLE_DEBUG_W_STR("contentData\t=", reqData->contentData);
 			}
 		}
@@ -1735,6 +1634,7 @@ bool				foundKeyWord;
 		{
 			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "synctoazimuth Not implemented");
 		}
+		CONSOLE_DEBUG(alpacaErrMsg);
 	}
 	return(alpacaErrCode);
 }
@@ -1771,6 +1671,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 	{
 		alpacaErrCode	=	kASCOM_Err_ActionNotImplemented;
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "ROR doesnt support dome rotation");
+		CONSOLE_DEBUG(alpacaErrMsg);
 	}
 	return(alpacaErrCode);
 }
@@ -1804,6 +1705,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 	{
 		alpacaErrCode	=	kASCOM_Err_ActionNotImplemented;
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "ROR doesnt support dome rotation");
+		CONSOLE_DEBUG(alpacaErrMsg);
 	}
 	return(alpacaErrCode);
 }
@@ -1822,6 +1724,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 			if (cDomeProp.Slewing)
 			{
 				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Dome already in motion, command ignored");
+				CONSOLE_DEBUG(alpacaErrMsg);
 			}
 			else
 			{
@@ -1840,6 +1743,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 	{
 		alpacaErrCode	=	kASCOM_Err_ActionNotImplemented;
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "ROR doesnt support dome rotation");
+		CONSOLE_DEBUG(alpacaErrMsg);
 	}
 	return(alpacaErrCode);
 }
@@ -1907,10 +1811,12 @@ bool				powerState;
 		if (alpacaErrCode == kASCOM_Err_PropertyNotImplemented)
 		{
 			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Property Not Implemented");
+			CONSOLE_DEBUG(alpacaErrMsg);
 		}
 		else if (alpacaErrCode != kASCOM_Err_Success)
 		{
 			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Power state unknown");
+			CONSOLE_DEBUG(alpacaErrMsg);
 		}
 	}
 	else
@@ -1961,10 +1867,12 @@ bool				auxiliaryState;
 		if (alpacaErrCode == kASCOM_Err_PropertyNotImplemented)
 		{
 			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Property Not Implemented");
+			CONSOLE_DEBUG(alpacaErrMsg);
 		}
 		else if (alpacaErrCode != kASCOM_Err_Success)
 		{
 			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Auxiliary state unknown");
+			CONSOLE_DEBUG(alpacaErrMsg);
 		}
 	}
 	else
@@ -1974,6 +1882,25 @@ bool				auxiliaryState;
 	return(alpacaErrCode);
 }
 
+//*****************************************************************************
+//Altitude
+//AtHome
+//AtPark
+//Azimuth
+//ShutterStatus
+//Slewing
+//*****************************************************************************
+bool	DomeDriver::DeviceState_Add_Content(const int socketFD, char *jsonTextBuffer, const int maxLen)
+{
+	DeviceState_Add_Dbl(socketFD,	jsonTextBuffer, maxLen,	"Altitude",		cDomeProp.Altitude);
+	DeviceState_Add_Bool(socketFD,	jsonTextBuffer, maxLen,	"AtHome",		cDomeProp.AtHome);
+	DeviceState_Add_Bool(socketFD,	jsonTextBuffer, maxLen,	"AtPark",		cDomeProp.AtPark);
+	DeviceState_Add_Dbl(socketFD,	jsonTextBuffer, maxLen,	"Azimuth",		cDomeProp.Azimuth);
+	DeviceState_Add_Int(socketFD,	jsonTextBuffer, maxLen,	"ShutterStatus",cDomeProp.ShutterStatus);
+	DeviceState_Add_Bool(socketFD,	jsonTextBuffer, maxLen,	"Slewing",		cDomeProp.Slewing);
+
+	return(true);
+}
 
 //*****************************************************************************
 TYPE_ASCOM_STATUS	DomeDriver::Get_Readall(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
@@ -2032,14 +1959,14 @@ char				stateString[48];
 		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(reqData->socket,
 															reqData->jsonTextBuffer,
 															kMaxJsonBuffLen,
-															"Idle Timeout Enabled",
+															"IdleTimeoutEnabled",
 															cEnableIdleMoveTimeout,
 															INCLUDE_COMMA);
 
 		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(reqData->socket,
 															reqData->jsonTextBuffer,
 															kMaxJsonBuffLen,
-															"Idle Timeout (minutes)",
+															"IdleTimeout_minutes",
 															cIdleMoveTimeoutMinutes,
 															INCLUDE_COMMA);
 
@@ -2101,10 +2028,12 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 	{
 		alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Remote shutter not detected");
+		CONSOLE_DEBUG(alpacaErrMsg);
 	}
 #else
 	alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
 	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Open shutter not implemented");
+	CONSOLE_DEBUG(alpacaErrMsg);
 
 #endif // _ENABLE_REMOTE_SHUTTER_
 	return(alpacaErrCode);
@@ -2124,10 +2053,12 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 	{
 		alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Remote shutter not detected");
+		CONSOLE_DEBUG(alpacaErrMsg);
 	}
 #else
 	alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
 	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Close shutter not implemented");
+	CONSOLE_DEBUG(alpacaErrMsg);
 #endif // _ENABLE_REMOTE_SHUTTER_
 	return(alpacaErrCode);
 }
@@ -2194,11 +2125,7 @@ char		domeConfigStr[32];
 
 	SocketWriteData(mySocketFD,	"</CENTER>\r\n");
 
-	//*	now generate links to all of the commands
-	GenerateHTMLcmdLinkTable(mySocketFD, "dome", 0, gDomeCmdTable);
-
 	CONSOLE_DEBUG("exit");
-
 }
 
 //*****************************************************************************
@@ -2209,7 +2136,6 @@ bool	foundIt;
 	foundIt	=	GetCmdNameFromTable(cmdNumber, comandName, gDomeCmdTable, getPut);
 	return(foundIt);
 }
-
 
 //*****************************************************************************
 bool	DomeDriver::GetCommandArgumentString(const int cmdENum, char *agumentString, char *commentString)

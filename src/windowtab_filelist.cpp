@@ -19,6 +19,7 @@
 //*	Edit History
 //*****************************************************************************
 //*	Mar  4,	2020	<MLS> Created windowtab_filelist.cpp
+//*	Jun 19,	2023	<MLS> Added DeviceState to filelist
 //*****************************************************************************
 
 
@@ -122,6 +123,7 @@ int		scrollBarYLoc;
 	//*	set up all the bottom stuff so that it is the same on all windowtabs
 	SetupWindowBottomBoxes(	kFileList_IPaddr,
 							kFileList_Readall,
+							kFileList_DeviceState,
 							kFileList_AlpacaErrorMsg,
 							-1,
 							kFileList_AlpacaLogo,
@@ -167,7 +169,7 @@ void	WindowTabFileList::ProcessDoubleClick(	const int	widgetIdx,
 			break;
 
 		case kFileList_CountText:
-			DumpWidgetList(0, 20);
+			DumpWidgetList(kFileList_Title, 20, __FUNCTION__);
 			break;
 
 		default:

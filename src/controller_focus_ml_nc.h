@@ -3,36 +3,38 @@
 
 //#define		_ENABLE_CONFIG_TAB_
 
-
 #include	"controller.h"
 #ifndef _WINDOW_TAB_H
 	#include	"windowtab.h"
-#endif // _WINDOW_TAB_H
-
+#endif
 
 #ifndef _WINDOWTAB_NITECRAWLER_H_
 	#include	"windowtab_nitecrawler.h"
-#endif // _WINDOWTAB_NITECRAWLER_H_
+#endif
 
 #ifndef	_WINDOWTAB_AUXMOTOR_H_
 	#include	"windowtab_auxmotor.h"
-#endif // _WINDOWTAB_AUXMOTOR_H_
+#endif
 
 #ifndef	_WINDOWTAB_GRAPHS_H_
 	#include	"windowtab_graphs.h"
-#endif // _WINDOWTAB_GRAPHS_H_
+#endif
 
 #ifndef _WINDOWTAB_CONFIG_H_
 	#include	"windowtab_config.h"
-#endif // _WINDOWTAB_CONFIG_H_
+#endif
+
+#ifndef	_WINDOWTAB_DEVICESTATE_H_
+	#include	"windowtab_DeviceState.h"
+#endif
 
 #ifndef	_WINDOWTAB_DRIVER_INFO_H_
 	#include	"windowtab_drvrInfo.h"
-#endif // _WINDOWTAB_DRIVER_INFO_H_
+#endif
 
 #ifndef	_WINDOWTAB_ABOUT_H_
 	#include	"windowtab_about.h"
-#endif // _WINDOWTAB_ABOUT_H_
+#endif
 
 
 
@@ -45,9 +47,7 @@ class ControllerNiteCrawler: public ControllerFocus
 		// Construction
 		//
 				ControllerNiteCrawler(	const char			*argWindowName,
-										struct sockaddr_in	*deviceAddress,
-										const int			port,
-										const int			deviceNum);
+										TYPE_REMOTE_DEV		*alpacaDevice);
 
 				ControllerNiteCrawler(	const char			*argWindowName,
 										const char			*usbPortPath);
@@ -57,19 +57,21 @@ class ControllerNiteCrawler: public ControllerFocus
 
 		virtual	void	CreateWindowTabs(void);
 		virtual	void	AlpacaDisplayErrorMessage(const char *errorMsgString);
+		virtual	void	UpdateStartupData(void);
+		virtual	void	UpdateStatusData(void);
 
 		//*	sub class specific routines
 
+		virtual void	UpdateSupportedActions(void);
 		virtual void	UpdateCommonProperties(void);
-		virtual	void	UpdateFocuserPosition(const int newFocuserPosition);
-		virtual	void	UpdateRotatorPosition(const int newRotatorPosition);
-		virtual	void	UpdateAuxMotorPosition(const int newAuxMotorPosition);
+
+//		virtual	void	UpdateFocuserPosition(void);
+		virtual	void	UpdateRotatorPosition(void);
+//		virtual	void	UpdateAuxMotorPosition(const int newAuxMotorPosition);
 		virtual	void	UpdateStepsPerRev(const int newStepsPerRev);
-		virtual	void	UpdateTemperature(const double newTemperature);
 		virtual	void	UpdateVoltage(const double newVoltage);
 
 		virtual	void	UpdateWindowTabs_Everything(void);
-		virtual	void	UpdateWindowTabs_ReadAll(bool hasReadAll);
 		virtual	void	UpdateWindowTabs_SwitchBits(unsigned char switchBits);
 		virtual	void	UpdateWindowTabs_AuxSwitchBits(unsigned char auxSwitchBits);
 		virtual	void	UpdateWindowTabs_DesiredFocusPos(const int newDesiredPoistion);
@@ -87,6 +89,7 @@ class ControllerNiteCrawler: public ControllerFocus
 				WindowTabConfig			*cConfigTabObjPtr;
 		#endif // _ENABLE_CONFIG_TAB_
 				WindowTabGraph			*cGraphTabObjPtr;
+				WindowTabDeviceState	*cDeviceStateTabObjPtr;
 				WindowTabDriverInfo		*cDriverInfoTabObjPtr;
 				WindowTabAbout			*cAboutBoxTabObjPtr;
 

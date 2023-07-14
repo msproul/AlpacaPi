@@ -54,6 +54,7 @@
 #include	"controller_focus_generic.h"
 #include	"controller_focus_ml_nc.h"
 #include	"controller_focus_ml_hr.h"
+#include	"controller_slit.h"
 #include	"controller_switch.h"
 #include	"controller_image.h"
 
@@ -189,9 +190,10 @@ Controller	*myController;
 	if (strcasecmp(remoteDevice->deviceTypeStr, "switch") == 0)
 	{
 		GenerateSwitchWindowName(remoteDevice, gSwitchNum, windowName);
-		myController	=	new ControllerSwitch(windowName,
-												&remoteDevice->deviceAddress,
-												remoteDevice->port);
+//		myController	=	new ControllerSwitch(windowName,
+//												&remoteDevice->deviceAddress,
+//												remoteDevice->port);
+		myController	=	new ControllerSwitch(windowName, remoteDevice);
 		if (myController != NULL)
 		{
 			//*	force window update
@@ -250,7 +252,7 @@ char			ipAddressStr[32];
 int				objectsCreated;
 int				iii;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	objectsCreated	=	0;
 	if (strcasecmp(remoteDevice->deviceTypeStr, "dome") == 0)
 	{
@@ -293,9 +295,10 @@ static void	ProcessCmdLineArgs(int argc, char **argv)
 int		ii;
 char	theChar;
 
+//	CONSOLE_DEBUG(__FUNCTION__);
+
 	strcpy(gFirstArgString, "");
 
-	CONSOLE_DEBUG(__FUNCTION__);
 	ii	=	1;
 	while (ii<argc)
 	{
@@ -338,7 +341,7 @@ int		activeObjCnt;
 	objectsCreated	=	0;
 	gColorOverRide	=	0;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	ProcessCmdLineArgs(argc, argv);
 
@@ -348,6 +351,7 @@ int		activeObjCnt;
 	CPUstats_ReadInfo();
 
 #ifdef _ENABLE_ALPACA_QUERY_
+
 
 #ifdef _ENABLE_USB_FOCUSERS_
 	objectsCreated	+=	OpenUSBFocusers();
@@ -359,9 +363,14 @@ int		activeObjCnt;
 
 	CONSOLE_DEBUG_W_NUM("gAlpacaDiscoveredCnt\t=", gAlpacaDiscoveredCnt);
 
-	//*	step through the alpaca devices and see if there are any focusers
+	//*	step through the alpaca devices and look for devices to create
 	for (iii=0; iii<gAlpacaDiscoveredCnt; iii++)
 	{
+//		CONSOLE_DEBUG_W_NUM("iii          \t=", iii);
+//		CONSOLE_DEBUG_W_STR("hostName     \t=", gAlpacaDiscoveredList[iii].hostName);
+//		CONSOLE_DEBUG_W_NUM("port         \t=", gAlpacaDiscoveredList[iii].port);
+//		CONSOLE_DEBUG_W_STR("deviceTypeStr\t=", gAlpacaDiscoveredList[iii].deviceTypeStr);
+
 		#ifdef _ENABLE_CTRL_FOCUSERS_
 			objectsCreated	+=	CheckForFocuser(&gAlpacaDiscoveredList[iii]);
 		#endif // _ENABLE_CTRL_FOCUSERS_
@@ -369,6 +378,7 @@ int		activeObjCnt;
 		#ifdef _ENABLE_CTRL_SWITCHES_
 			objectsCreated	+=	CheckForSwitch(&gAlpacaDiscoveredList[iii]);
 		#endif // _ENABLE_CTRL_SWITCHES_
+
 		#ifdef _ENABLE_CTRL_CAMERA_
 			objectsCreated	+=	CheckForCamera(&gAlpacaDiscoveredList[iii]);
 		#endif // _ENABLE_CTRL_CAMERA_
@@ -378,7 +388,6 @@ int		activeObjCnt;
 		#endif // _ENABLE_CTRL_DOME_
 
 	}
-
 #ifdef _ENABLE_USB_FOCUSERS_
 //	//*	did not find any, create one for testing
 //	if (objectsCreated == 0)

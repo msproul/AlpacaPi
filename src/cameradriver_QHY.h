@@ -22,8 +22,6 @@
 //#include	"cameradriver_QHY.h"
 
 
-
-
 #ifndef	_CAMERA_DRIVER_QHY_H_
 #define	_CAMERA_DRIVER_QHY_H_
 
@@ -34,7 +32,7 @@
 #ifndef __QHYCCD_H__
 //	#include	"../QHY/include/qhyccd.h"
 	#include	<qhyccd.h>
-#endif // __QHYCCD_H__
+#endif
 
 int		CreateCameraObjects_QHY(void);
 

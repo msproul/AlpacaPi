@@ -8,11 +8,11 @@
 
 #ifndef	_CONTROLLER_H_
 	#include	"controller.h"
-#endif // _CONTROLLER_H_
+#endif
 
 #ifndef _WINDOW_TAB_H_
 	#include	"windowtab.h"
-#endif // _WINDOW_TAB_H_
+#endif
 
 #define	kBoxesPerSwitch	5
 //*****************************************************************************
@@ -30,9 +30,9 @@ enum
 	kObsCond_Cloudcover,
 	kObsCond_Cloudcover_Units,
 
-	kObsCond_Dewpoint_Title,
-	kObsCond_Dewpoint,
-	kObsCond_Dewpoint_Units,
+	kObsCond_DewPoint_Title,
+	kObsCond_DewPoint,
+	kObsCond_DewPoint_Units,
 
 	kObsCond_Humidity_Title,
 	kObsCond_Humidity,
@@ -87,7 +87,7 @@ enum
 	kObsCond_AlpacaErrorMsg,
 	kObsCond_IPaddr,
 	kObsCond_Readall,
-
+	kObsCond_DeviceState,
 
 	kObsCond_last
 };
@@ -119,4 +119,4 @@ class WindowTabObsCond: public WindowTab
 };
 
 
-#endif // _WINDOWTAB_SWITCH_H_
+#endif // _WINDOWTAB_OBSCOND_H_

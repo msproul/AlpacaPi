@@ -89,6 +89,12 @@
 //*	Feb 27,	2023	<MLS> Added default option to HandleSpecialKeys()
 //*	Mar 14,	2023	<MLS> Added LaunchWebHelp()
 //*	Mar 14,	2023	<MLS> Added helpbuttonbox and logo side of window to SetupWindowBottomBoxes()
+//*	May 25,	2023	<MLS> Added CloseWindow()
+//*	Jun  2,	2023	<MLS> Changed LLD_ to LLG_  Low Level Graphics
+//*	Jun 18,	2023	<MLS> Added DeviceSelect to SetupWindowBottomBoxes()
+//*	Jun 18,	2023	<MLS> Adding DS indicator next to Readall indicator on all windowtabs
+//*	Jun 19,	2023	<MLS> Added DumpWidget()
+//*	Jun 23,	2023	<MLS> Improvements to DumpWidget()
 //*****************************************************************************
 
 
@@ -184,6 +190,21 @@ WindowTab::~WindowTab(void)
 {
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 }
+
+//**************************************************************************************
+void WindowTab::CloseWindow(void)
+{
+Controller	*myControllerObj;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	myControllerObj	=	(Controller *)cParentObjPtr;
+	if (myControllerObj != NULL)
+	{
+		myControllerObj->cKeepRunning	=	false;
+	}
+}
+
 
 //**************************************************************************************
 void WindowTab::ComputeWidgetColumns(const int windowWitdh)
@@ -644,10 +665,6 @@ RGBcolor	txColor;
 	SetWidgetTextColor(	widgetIdx,	CV_RGB(txColor.red,		txColor.grn,		txColor.blu));
 }
 
-
-
-
-
 //**************************************************************************************
 //*	this is for consistency between window tabs
 //*	setup the
@@ -665,6 +682,7 @@ RGBcolor	txColor;
 //**************************************************************************************
 void	WindowTab::SetupWindowBottomBoxes(	const int	ipaddrBox,
 											const int	readAllBox,
+											const int	deviceStateBox,
 											const int	errorMsgBox,
 											const int	lastCmdWidgetIdx,
 											const int	logoWidgetIdx,
@@ -678,6 +696,8 @@ int		connBtnWidth;
 int		errMsgBoxHeight;
 int		logoWidth;
 int		logoHeight;
+int		indicatorBoxWid;
+int		indicatorBoxHgt;
 
 	cIpAddrTextBox	=	ipaddrBox;
 	//*	start at the bottom and work our way up
@@ -717,15 +737,36 @@ int		logoHeight;
 	//=======================================================
 	//*	this is ON TOP of the IP box on purpose
 	//*	this is an indicator, "R" to signify that the alpaca driver supports READALL
+	xLoc				=	2;
+	indicatorBoxWid		=	cBtnHeight - 10;
+	indicatorBoxHgt		=	cBtnHeight - 4;
 	if (readAllBox >= 0)
 	{
-		SetWidget(				readAllBox,	4,	(yLoc - cBtnHeight)+2,		cBtnHeight-4,	cBtnHeight-4);
+		SetWidget(				readAllBox,	xLoc,	(yLoc - cBtnHeight)+2,		indicatorBoxWid,	indicatorBoxHgt);
 		SetWidgetBorderColor(	readAllBox,	CV_RGB(0,	0,	0));
-		SetWidgetValid(			readAllBox,	false);		//*	will only be enabled if READALL command exists
 		SetWidgetText(			readAllBox,	"R");
 		SetWidgetFont(			readAllBox,	kFont_Medium);
 		SetWidgetTextColor(		readAllBox,	CV_RGB(0,255,	0));
+		SetWidgetValid(			readAllBox,	false);		//*	will only be enabled if READALL command exists
+		SetWidgetBorder(		readAllBox,	false);
 	}
+
+	//=======================================================
+	//*	this is ON TOP of the IP box on purpose
+	//*	this is an indicator, "DS" to signify that the alpaca driver supports DeviceState
+	xLoc			+=	indicatorBoxWid;
+	indicatorBoxWid	+=	2;
+	if (deviceStateBox >= 0)
+	{
+		SetWidget(				deviceStateBox,	xLoc,	(yLoc - cBtnHeight)+2,		indicatorBoxWid,	indicatorBoxHgt);
+		SetWidgetBorderColor(	deviceStateBox,	CV_RGB(0,	0,	0));
+		SetWidgetText(			deviceStateBox,	"DS");
+		SetWidgetFont(			deviceStateBox,	kFont_Medium);
+		SetWidgetTextColor(		deviceStateBox,	CV_RGB(0,255,	0));
+		SetWidgetValid(			deviceStateBox,	false);		//*	will only be enabled if READALL command exists
+		SetWidgetBorder(		deviceStateBox,	false);
+	}
+
 
 	if ((ipaddrBox >= 0) || (readAllBox >= 0))
 	{
@@ -774,6 +815,7 @@ int		logoHeight;
 	if (logoWidgetIdx >= 0)
 	{
 		//*	now set the Alpaca Logo
+		SetWidgetText(logoWidgetIdx,	"logo");	//*	this is for debugging
 		LoadAlpacaLogo();
 		if (gAlpacaLogoPtr != NULL)
 		{
@@ -801,7 +843,6 @@ int		logoHeight;
 		}
 	}
 }
-
 
 //**************************************************************************************
 //*	returns logo height
@@ -893,7 +934,7 @@ Controller	*myControllerObj;
 	}
 	else
 	{
-//		CONSOLE_DEBUG("cLastCmdTextBox not set");
+		CONSOLE_DEBUG("cLastCmdTextBox not set");
 //		CONSOLE_ABORT(__FUNCTION__);
 	}
 }
@@ -1342,7 +1383,9 @@ void	WindowTab::UpdateSliderValue(const int	widgetIdx, double newSliderValue)
 }
 
 //*****************************************************************************
+//*	handle dragging of the mouse in a slider widget
 //*	this routine can be overloaded
+//*****************************************************************************
 void	WindowTab::ProcessMouseLeftButtonDragged(	const int	widgetIdx,
 													const int	event,
 													const int	xxx,
@@ -1360,7 +1403,8 @@ double	newSliderValue;
 
 	if (cWidgetList[widgetIdx].widgetType == kWidgetType_Slider)
 	{
-//		CONSOLE_DEBUG_W_NUM("WE have a slider", xxx);
+//		CONSOLE_DEBUG("WE have a slider -------------------------------------------------");
+//		CONSOLE_DEBUG_W_NUM("xxx  \t=", xxx);
 		if (cWidgetList[widgetIdx].width > cWidgetList[widgetIdx].height)
 		{
 			sliderIsHorizontal	=	true;
@@ -1378,6 +1422,7 @@ double	newSliderValue;
 			pixelRange			=	maximumPixelValue - minimumPixelValue;
 
 			myPixelOffset		=	xxx - minimumPixelValue;
+//			CONSOLE_DEBUG_W_NUM("myPixelOffset    \t=", myPixelOffset);
 			if (myPixelOffset < 0)
 			{
 				myPixelOffset	=	0;
@@ -1387,17 +1432,26 @@ double	newSliderValue;
 				myPixelOffset	=	pixelRange;
 			}
 			mySliderValuePercent	=	(1.0 * myPixelOffset) / (1.0 * pixelRange);
-//			CONSOLE_DEBUG_W_NUM("minimumPixelValue\t=", minimumPixelValue);
-//			CONSOLE_DEBUG_W_NUM("myPixelOffset    \t=", myPixelOffset);
-//			CONSOLE_DEBUG_W_NUM("maximumPixelValue\t=", maximumPixelValue);
-
+//			CONSOLE_DEBUG_W_DBL("sliderMin           \t=",	cWidgetList[widgetIdx].sliderMin);
+//			CONSOLE_DEBUG_W_DBL("sliderMax           \t=",	cWidgetList[widgetIdx].sliderMax);
+//			CONSOLE_DEBUG_W_NUM("minimumPixelValue   \t=",	minimumPixelValue);
+//			CONSOLE_DEBUG_W_NUM("maximumPixelValue   \t=",	maximumPixelValue);
+//			CONSOLE_DEBUG_W_NUM("myPixelOffset       \t=",	myPixelOffset);
+//			CONSOLE_DEBUG_W_NUM("pixelRange          \t=",	pixelRange);
 //			CONSOLE_DEBUG_W_DBL("mySliderValuePercent\t=", mySliderValuePercent);
 
 			//*	now translate this to a range within the sliders min/max
 			sliderRange		=	cWidgetList[widgetIdx].sliderMax - cWidgetList[widgetIdx].sliderMin;
-			newSliderValue	=	mySliderValuePercent * sliderRange;
-//			CONSOLE_DEBUG_W_DBL("newSliderValue\t=", newSliderValue);
+			newSliderValue	=	cWidgetList[widgetIdx].sliderMin;		//*	minimum value
+			newSliderValue	+=	(mySliderValuePercent * sliderRange);	//*	plus slider value
+//			CONSOLE_DEBUG_W_DBL("sliderRange      \t=", sliderRange);
+//			CONSOLE_DEBUG_W_DBL("newSliderValue   \t=", newSliderValue);
 			UpdateSliderValue(widgetIdx, newSliderValue);
+		}
+		else
+		{
+			//*	vertical slider not finished
+			CONSOLE_DEBUG("Vertical slider not finished");
 		}
 	}
 	else
@@ -1566,19 +1620,73 @@ void	WindowTab::SetWindowIPaddrInfo(	const char	*textString,
 }
 
 //*****************************************************************************
-void	WindowTab::DumpWidgetList(const int startIdx, const int stopIdx)
+void	WindowTab::DumpWidget(TYPE_WIDGET *theWidget)
+{
+	printf("%s\t",	(theWidget->valid ? "T" : "F"));
+
+	switch(theWidget->widgetType)
+	{
+		case kWidgetType_Default:
+
+		case kWidgetType_Button:		printf("BTN\t");	break;
+		case kWidgetType_CheckBox:		printf("CBX\t");	break;
+		case kWidgetType_Graph:			printf("GRP\t");	break;
+		case kWidgetType_CustomGraphic:	printf("CG\t");		break;
+		case kWidgetType_Custom:		printf("CUS\t");	break;
+		case kWidgetType_Icon:			printf("ICN\t");	break;
+		case kWidgetType_Image:			printf("IMG\t");	break;
+		case kWidgetType_MultiLineText:	printf("MLT\t");	break;
+		case kWidgetType_OutlineBox:	printf("OLB\t");	break;
+		case kWidgetType_RadioButton:	printf("RDB\t");	break;
+		case kWidgetType_ProessBar:		printf("PB\t");		break;
+		case kWidgetType_ScrollBar:		printf("SB\t");		break;
+		case kWidgetType_Slider:		printf("SLD\t");	break;
+		case kWidgetType_TextBox:		printf("TXB\t");	break;
+		case kWidgetType_TextInput:		printf("TXI\t");	break;
+
+		case kWidgetType_Disabled:		printf("DIS\t");	break;
+
+		case kWidgetType_Last:
+		default:	printf("%d\t", theWidget->widgetType);
+		break;
+	}
+	printf("%d\t%d\t%d\t%d\t",
+						theWidget->left,
+						theWidget->top,
+						theWidget->width,
+						theWidget->height
+						);
+
+	printf("%s\t",	(theWidget->hasTabs ? "T" : "F"));
+	printf("%s\r\n", theWidget->textString);
+}
+
+
+//*****************************************************************************
+void	WindowTab::DumpWidgetList(const int startIdx, const int stopIdx, const char *callingFunctionName)
 {
 int		iii;
 
 	CONSOLE_DEBUG(__FUNCTION__);
+	if (callingFunctionName != NULL)
+	{
+		printf("Called from %s\r\n", callingFunctionName);
+	}
+	printf("idx\t");
+	printf("val\t");
+	printf("typ\t");
+	printf("lft\t");
+	printf("top\t");
+	printf("wid\t");
+	printf("hgt\t");
+	printf("tab\t");
+	printf("txt\t");
+	printf("\r\n");
+	printf("------------------------------------------------------------------------------------------------\r\n");
 	for (iii=startIdx; ((iii<=stopIdx) && (iii < kMaxWidgets)); iii++)
 	{
-		printf("%2d\t%d\t%d\t%s\r\n",
-							iii,
-							cWidgetList[iii].valid,
-							cWidgetList[iii].widgetType,
-							cWidgetList[iii].textString
-							);
+		printf("%2d\t", iii);
+		DumpWidget(&cWidgetList[iii]);
 	}
 }
 
@@ -1822,8 +1930,8 @@ int				preivousYvalue;
 			pt1_Y			=	TRANSLATE_Y((&myCVrect), preivousYvalue);
 			pt2_X			=	previousX + 1;
 			pt2_Y			=	TRANSLATE_Y((&myCVrect), currentYvalue);
-			LLD_MoveTo(pt1_X, pt1_Y);
-			LLD_LineTo(pt2_X, pt2_Y);
+			LLG_MoveTo(pt1_X, pt1_Y);
+			LLG_LineTo(pt2_X, pt2_Y);
 
 			previousX		=	pt2_X;
 			preivousYvalue	=	currentYvalue;
@@ -1849,9 +1957,9 @@ int				preivousYvalue;
 		pt1_Y					=	theWidget->top - 1;
 		pt2_X					=	pt1_X;
 		pt2_Y					=	(theWidget->top + theWidget->height) - 1;
-		LLD_SetColor(W_RED);
-		LLD_MoveTo(pt1_X, pt1_Y);
-		LLD_LineTo(pt2_X, pt2_Y);
+		LLG_SetColor(W_RED);
+		LLG_MoveTo(pt1_X, pt1_Y);
+		LLG_LineTo(pt2_X, pt2_Y);
 	}
 }
 
@@ -1920,10 +2028,10 @@ int				graphBottom;
 //		CONSOLE_DEBUG_W_NUM("yDivideFactor\t=", yDivideFactor);
 //		CONSOLE_DEBUG_W_DBL("logOf255     \t=",	logOf255);
 #endif
-		LLD_SetColor(lineColor);
+		LLG_SetColor(lineColor);
 		preivousYvalue	=	0;
 
-		LLD_PenSize(cHistogramPenSize);
+		LLG_PenSize(cHistogramPenSize);
 		for (jjj=0; jjj<numEntries; jjj++)
 		{
 			currArrayValue			=	graphArray[jjj];
@@ -1948,12 +2056,12 @@ int				graphBottom;
 				if (adjustedPixlCntLog >= 0)
 				{
 					//*	compute the x,y points for the line
-					pt1_X			=	theWidget->left + xOffset + jjj;;
+					pt1_X			=	theWidget->left + xOffset + jjj;
 					pt1_Y			=	graphBottom - preivousYvalue;
 					pt2_X			=	pt1_X + 1;
 					pt2_Y			=	graphBottom - adjustedPixlCntLog;
-					LLD_MoveTo(pt1_X, pt1_Y);
-					LLD_LineTo(pt2_X, pt2_Y);
+					LLG_MoveTo(pt1_X, pt1_Y);
+					LLG_LineTo(pt2_X, pt2_Y);
 					preivousYvalue	=	adjustedPixlCntLog;
 				}
 				else
@@ -1966,7 +2074,7 @@ int				graphBottom;
 				CONSOLE_DEBUG_W_DBL("adjustedArrayValueDbl is NEGATIVE\t=", adjustedArrayValueDbl);
 			}
 		}
-		LLD_PenSize(1);
+		LLG_PenSize(1);
 	}
 	else
 	{
@@ -1977,14 +2085,14 @@ int				graphBottom;
 }
 
 //*****************************************************************************
-void	WindowTab::LLD_MoveTo(const int xx, const int yy)
+void	WindowTab::LLG_MoveTo(const int xx, const int yy)
 {
 	cCurrentXloc	=	xx;
 	cCurrentYloc	=	yy;
 }
 
 //*****************************************************************************
-void	WindowTab::LLD_LineTo(const int xx, const int yy)
+void	WindowTab::LLG_LineTo(const int xx, const int yy)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -2044,7 +2152,7 @@ void	WindowTab::LLD_LineTo(const int xx, const int yy)
 }
 
 //*****************************************************************************
-void	WindowTab::LLD_DrawCString(	const int	xx,
+void	WindowTab::LLG_DrawCString(	const int	xx,
 									const int	yy,
 									const char	*theString,
 									const int	fontIndex)
@@ -2109,7 +2217,7 @@ void	WindowTab::LLD_DrawCString(	const int	xx,
 }
 
 //*****************************************************************************
-int	WindowTab::LLD_GetTextSize(const char *textString, const int fontIndex)
+int	WindowTab::LLG_GetTextSize(const char *textString, const int fontIndex)
 {
 int	textWidthPixels;
 
@@ -2135,7 +2243,7 @@ CvSize		textSize;
 }
 
 //*****************************************************************************
-void	WindowTab::LLD_PenSize(const int newLineWidth)
+void	WindowTab::LLG_PenSize(const int newLineWidth)
 {
 	if ((newLineWidth >= 0) && (newLineWidth < 10))
 	{
@@ -2201,7 +2309,7 @@ cv::Scalar	gColorTable[]	=
 
 
 //*****************************************************************************
-cv::Scalar	WindowTab::LLD_GetColor(const int theColor)
+cv::Scalar	WindowTab::LLG_GetColor(const int theColor)
 {
 cv::Scalar	myColorScaler;
 
@@ -2218,7 +2326,7 @@ cv::Scalar	myColorScaler;
 
 
 //*****************************************************************************
-void	WindowTab::LLD_SetColor(const int theColor)
+void	WindowTab::LLG_SetColor(const int theColor)
 {
 	if ((theColor >= 0) && (theColor < W_COLOR_LAST))
 	{
@@ -2231,13 +2339,13 @@ void	WindowTab::LLD_SetColor(const int theColor)
 }
 
 //*****************************************************************************
-void	WindowTab::LLD_SetColor(cv::Scalar newColor)
+void	WindowTab::LLG_SetColor(cv::Scalar newColor)
 {
 	cCurrentColor	=	newColor;
 }
 
 //*****************************************************************************
-void	WindowTab::LLD_Putpixel(const int xx, const int yy, const int theColor)
+void	WindowTab::LLG_Putpixel(const int xx, const int yy, const int theColor)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -2323,7 +2431,7 @@ void	WindowTab::LLD_Putpixel(const int xx, const int yy, const int theColor)
 //**************************************************************************************
 //*	Low Level FrameRect
 //**************************************************************************************
-void	WindowTab::LLD_FrameRect(int left, int top, int width, int height, int lineWidth)
+void	WindowTab::LLG_FrameRect(int left, int top, int width, int height, int lineWidth)
 {
 
 	if ((width <= 0) || (height <= 0))
@@ -2376,7 +2484,7 @@ void	WindowTab::LLD_FrameRect(int left, int top, int width, int height, int line
 //**************************************************************************************
 //*	Low Level FrameRect
 //**************************************************************************************
-void	WindowTab::LLD_FillRect(int left, int top, int width, int height)
+void	WindowTab::LLG_FillRect(int left, int top, int width, int height)
 {
 
 #if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
@@ -2421,7 +2529,7 @@ void	WindowTab::LLD_FillRect(int left, int top, int width, int height)
 }
 
 //*********************************************************************
-void	WindowTab::LLD_FillEllipse(int xCenter, int yCenter, int xRadius, int yRadius)
+void	WindowTab::LLG_FillEllipse(int xCenter, int yCenter, int xRadius, int yRadius)
 {
 
 #if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
@@ -2508,7 +2616,7 @@ void	WindowTab::LLD_FillEllipse(int xCenter, int yCenter, int xRadius, int yRadi
 }
 
 //*********************************************************************
-void	WindowTab::LLD_FrameEllipse(int xCenter, int yCenter, int xRadius, int yRadius)
+void	WindowTab::LLG_FrameEllipse(int xCenter, int yCenter, int xRadius, int yRadius)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -2588,7 +2696,7 @@ void	WindowTab::LLD_FrameEllipse(int xCenter, int yCenter, int xRadius, int yRad
 
 
 //*********************************************************************
-void	WindowTab::LLD_FloodFill(const int xxx, const int yyy, const int color)
+void	WindowTab::LLG_FloodFill(const int xxx, const int yyy, const int color)
 {
 cv::Point	center;
 cv::Scalar	newColor;

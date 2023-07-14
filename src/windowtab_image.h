@@ -8,7 +8,7 @@
 
 #ifndef	_WINDOW_TAB_H_
 	#include	"windowtab.h"
-#endif // _CONTROLLER_H_
+#endif
 
 //*****************************************************************************
 enum
@@ -94,7 +94,7 @@ enum
 
 #define	kCrossHairCnt	3
 //**************************************************************************************
-typedef struct
+typedef struct	//	TYPE_CROSSHAIR
 {
 	int	XLocation;
 	int	YLocation;

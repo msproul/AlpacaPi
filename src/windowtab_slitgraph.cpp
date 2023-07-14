@@ -21,6 +21,7 @@
 //*	May 10,	2020	<MLS> Created windowtab_slitgraph.cpp
 //*	May 10,	2020	<MLS> Added graph of slit distance values
 //*	Feb 20,	2022	<MLS> Slitgraph working with OpenCV++
+//*	Jun 19,	2023	<MLS> Added DeviceState to slitgraph
 //*****************************************************************************
 
 #if defined(_ENABLE_CTRL_DOME_) && defined(_ENABLE_SLIT_TRACKER_)
@@ -163,6 +164,7 @@ int		graphHeight;
 	//*	set up all the bottom stuff so that it is the same on all windowtabs
 	SetupWindowBottomBoxes(	kSlitGraph_IPaddr,
 							kSlitGraph_Readall,
+							kSlitGraph_DeviceState,
 							kSlitGraph_AlpacaErrorMsg,
 							kSlitGraph_LastCmdString,
 							kSlitGraph_AlpacaLogo,
@@ -227,8 +229,8 @@ int			pt2_Y;
 	{
 		pt1_X	=	xx;
 		pt2_X	=	xx + kDashWidth;
-		LLD_MoveTo(pt1_X, pt1_Y);
-		LLD_LineTo(pt2_X, pt2_Y);
+		LLG_MoveTo(pt1_X, pt1_Y);
+		LLG_LineTo(pt2_X, pt2_Y);
 
 		xx	+=	(5 * kDashWidth);
 	}
@@ -237,14 +239,14 @@ int			pt2_Y;
 	pt1_Y	=	TRANSLATE_Y(widgetRect, yLoc);
 	pt2_X	=	widgetRect->width - 40;
 	pt2_Y	=	TRANSLATE_Y(widgetRect, yLoc);
-	LLD_MoveTo(pt1_X, pt1_Y);
-	LLD_LineTo(pt2_X, pt2_Y);
+	LLG_MoveTo(pt1_X, pt1_Y);
+	LLG_LineTo(pt2_X, pt2_Y);
 
 #endif // _DASHED_LINES_
 	pt2_X	+=	2;
 	pt2_Y	+=	5;
 	sprintf(tickLable, "%3d", yLoc);
-	LLD_DrawCString(pt2_X, pt2_Y, tickLable, kFont_Medium);
+	LLG_DrawCString(pt2_X, pt2_Y, tickLable, kFont_Medium);
 }
 
 //**************************************************************************************
@@ -305,8 +307,8 @@ int			pt2_Y;
 						pt2_X			=	previousX + 1;
 						pt2_Y			=	TRANSLATE_Y((&myCVrect), distanceInches);
 						cCurrentColor	=	cSLitTrackColors[clockIdx];
-						LLD_MoveTo(pt1_X, pt1_Y);
-						LLD_LineTo(pt2_X, pt2_Y);
+						LLG_MoveTo(pt1_X, pt1_Y);
+						LLG_LineTo(pt2_X, pt2_Y);
 
 						previousX			=	pt2.x;
 						previousDistance	=	distanceInches;
@@ -341,8 +343,8 @@ int			pt2_Y;
 						pt2_X			=	previousX + 1;
 						pt2_Y			=	TRANSLATE_Y((&myCVrect), distanceInches);
 						cCurrentColor	=	cSLitTrackColors[clockIdx];
-						LLD_MoveTo(pt1_X, pt1_Y);
-						LLD_LineTo(pt2_X, pt2_Y);
+						LLG_MoveTo(pt1_X, pt1_Y);
+						LLG_LineTo(pt2_X, pt2_Y);
 
 						previousX			=	pt2.x;
 						previousDistance	=	distanceInches;
@@ -359,7 +361,7 @@ int			pt2_Y;
 	pt1_X	=	myCVrect.width - 100;
 	pt1_Y	=	myCVrect.y + myCVrect.height - 10;
 
-	LLD_DrawCString(pt1_X, pt1_Y, textStr, kFont_Small);
+	LLG_DrawCString(pt1_X, pt1_Y, textStr, kFont_Small);
 }
 
 

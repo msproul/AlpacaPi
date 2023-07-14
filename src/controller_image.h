@@ -1,7 +1,6 @@
 //*****************************************************************************
 //#include	"controller_image.h"
 
-
 #include	"controller.h"
 
 #ifndef	_WINDOWTAB_IMAGE_H_
@@ -13,7 +12,7 @@
 
 #ifndef	_WINDOWTAB_ABOUT_H_
 	#include	"windowtab_about.h"
-#endif // _WINDOWTAB_ABOUT_H_
+#endif
 
 #ifndef	_ALPACA_DEFS_H_
 	#include	"alpaca_defs.h"
@@ -44,9 +43,7 @@ class ControllerImage: public Controller
 				void	InitClassVariables(void);
 
 		virtual	void	SetupWindowControls(void);
-//		virtual	void	ProcessButtonClick(const int buttonIdx);
 		virtual	void	RunBackgroundTasks(const char *callingFunction=NULL, bool enableDebug=false);
-//		virtual	void	AlpacaProcessReadAll(const char *deviceType, const char *keywordString, const char *valueString);
 		virtual	void	RefreshWindow(void);
 
 		virtual	void	DrawWidgetImage(TYPE_WIDGET *theWidget);

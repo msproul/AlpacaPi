@@ -108,6 +108,7 @@ int		yLoc;
 	//*	set up all the bottom stuff so that it is the same on all windowtabs
 	SetupWindowBottomBoxes(	kFilterWheel_IPaddr,
 							kFilterWheel_Readall,
+							kFilterWheel_DeviceState,
 							kFilterWheel_AlpacaErrorMsg,
 							kFilterWheel_LastCmdString,
 							kFilterWheel_AlpacaLogo,
@@ -237,8 +238,8 @@ int			textWidthPixels;
 	center_Y	=	theWidget->top + (theWidget->height / 2);
 	radius1		=	((theWidget->width / 2) -2);
 
-	LLD_SetColor(W_WHITE);
-	LLD_FrameEllipse(center_X, center_Y, radius1, radius1);
+	LLG_SetColor(W_WHITE);
+	LLG_FrameEllipse(center_X, center_Y, radius1, radius1);
 
 	if (cFilterWheelPropPtr != NULL)
 	{
@@ -251,11 +252,11 @@ int			textWidthPixels;
 			strcpy(textString, "Double click to change filter");
 		}
 
-		textWidthPixels	=   LLD_GetTextSize(textString, kFont_Medium);
+		textWidthPixels	=   LLG_GetTextSize(textString, kFont_Medium);
 		pt1_X			=	center_X;
 		pt1_X			-=	textWidthPixels / 2;
 		pt1_Y			=	center_Y;
-		LLD_DrawCString(pt1_X, pt1_Y, textString, kFont_Medium);
+		LLG_DrawCString(pt1_X, pt1_Y, textString, kFont_Medium);
 	}
 
 
@@ -331,35 +332,35 @@ int			textWidthPixels;
 			cFilterCirleCenterPt[filterPosition].x	=	pt1_X;
 			cFilterCirleCenterPt[filterPosition].y	=	pt1_Y;
 
-			LLD_SetColor(fillColor_Wnum);
-			LLD_FillEllipse(pt1_X, pt1_Y, kFilterCirleRadius, kFilterCirleRadius);
+			LLG_SetColor(fillColor_Wnum);
+			LLG_FillEllipse(pt1_X, pt1_Y, kFilterCirleRadius, kFilterCirleRadius);
 
-			LLD_SetColor(W_WHITE);
-			LLD_FrameEllipse(pt1_X, pt1_Y, kFilterCirleRadius, kFilterCirleRadius);
+			LLG_SetColor(W_WHITE);
+			LLG_FrameEllipse(pt1_X, pt1_Y, kFilterCirleRadius, kFilterCirleRadius);
 
 			//*	make position zero distinct
 			if (filterPosition == 0)
 			{
-				LLD_PenSize(4);
-				LLD_FrameEllipse(pt1_X, pt1_Y, kFilterCirleRadius, kFilterCirleRadius);
-				LLD_PenSize(1);
+				LLG_PenSize(4);
+				LLG_FrameEllipse(pt1_X, pt1_Y, kFilterCirleRadius, kFilterCirleRadius);
+				LLG_PenSize(1);
 			}
 
 			//*	now work on the names and numbers
-			textWidthPixels	=   LLD_GetTextSize(myFilterName, kFont_Medium);
+			textWidthPixels	=   LLG_GetTextSize(myFilterName, kFont_Medium);
 			pt2_X			=	pt1_X - (textWidthPixels / 2);
 			pt2_Y			=	pt1_Y + 5;
-			LLD_SetColor(textColor_Wnum);
-			LLD_DrawCString(pt2_X, pt2_Y, myFilterName, kFont_Medium);
+			LLG_SetColor(textColor_Wnum);
+			LLG_DrawCString(pt2_X, pt2_Y, myFilterName, kFont_Medium);
 
 			//*	now print the number of the filter above the name
 			sprintf(textString, "-%d-", (myFilterOffset + 1));
 
-			textWidthPixels	=   LLD_GetTextSize(myFilterName, kFont_Medium);
+			textWidthPixels	=   LLG_GetTextSize(myFilterName, kFont_Medium);
 			pt2_X			=	pt1_X - (textWidthPixels / 2);
 			pt2_Y			-=	15;
 
-			LLD_DrawCString(pt2_X, pt2_Y, textString, kFont_Medium);
+			LLG_DrawCString(pt2_X, pt2_Y, textString, kFont_Medium);
 
 			degrees	+=	deltaDegrees;
 		}

@@ -27,7 +27,13 @@
 //*	Sep 28,	2022	<MLS> Consolidated 3 Save routines into one
 //*	Sep 28,	2022	<MLS> Added MountData_SaveData()
 //*	Sep 28,	2022	<MLS> Deleted MountData_SaveRA, MountData_SaveHA, MountData_SaveDec
+//*	Jun 25,	2023	<MLS> Added AlpacaGetCapabilities()
+//*	Jun 29,	2023	<MLS> Added AlpacaProcessReadAll_TelescopeIdx()
 //*****************************************************************************
+
+#ifndef _TELESCOPE_CMDS_H_
+	#include	"telescope_AlpacaCmds.h"
+#endif
 
 //*****************************************************************************
 //!!!!!!!!!!!!!!!!!!!! NOTE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -36,105 +42,13 @@
 //*	PARENT_CLASS is defined in those files
 //*****************************************************************************
 
+
+//*****************************************************************************
 #if defined(_PARENT_IS_SKYTRAVEL_) && !defined( __ARM_ARCH )
-#include	"MountData.h"
+	#include	"MountData.h"
+	static void	MountData_SaveData(const int whichData, const double newEntryInDegrees);
+#endif
 
-double	gHourAngleData[kMaxMountData + 10];
-double	gRightAsceData[kMaxMountData + 10];
-double	gDeclinationData[kMaxMountData + 10];
-
-//-static int	gSecsSinceMidnight	=	0;
-static bool	gInitMountData		=	true;
-
-//*****************************************************************************
-void	MountData_Init(void)
-{
-int		iii;
-
-	for (iii=0; iii<kMaxMountData; iii++)
-	{
-		gHourAngleData[iii]	=	0.0;
-		gRightAsceData[iii]	=	0.0;
-		gDeclinationData[iii]	=	0.0;
-	}
-}
-
-//*****************************************************************************
-enum
-{
-	kMountData_HA	=	0,
-	kMountData_RA,
-	kMountData_DEC
-};
-
-//*****************************************************************************
-//*	to make this cleaner, all three data points are saved by the same routine into different buffers
-//*****************************************************************************
-static void	MountData_SaveData(const int whichData, const double newEntryInDegrees)
-{
-time_t		currentTime;
-int			secsPastMignight;
-int			tableIndex;
-int			jjj;
-double		myDataDegrees;
-double		*arrayPointer;
-
-//	CONSOLE_DEBUG_W_DBL("newEntryInDegrees\t\t=", newEntryInDegrees);
-	if (gInitMountData)
-	{
-		MountData_Init();
-		gInitMountData	=	false;
-	}
-
-
-	myDataDegrees	=	newEntryInDegrees;
-	if (myDataDegrees > 180.0)
-	{
-		myDataDegrees	-=	360.0;
-	}
-//	CONSOLE_DEBUG_W_DBL("myDataDegrees\t\t=", myDataDegrees);
-	currentTime			=	time(NULL);
-
-	secsPastMignight	=	currentTime % kSecondsPerDay;
-	tableIndex			=	secsPastMignight / 4;
-	if (tableIndex < kMaxMountData)
-	{
-
-		switch(whichData)
-		{
-			case kMountData_HA:
-				arrayPointer	=	gHourAngleData;
-				break;
-
-			case kMountData_RA:
-				arrayPointer	=	gRightAsceData;
-				break;
-
-			case kMountData_DEC:
-				arrayPointer	=	gDeclinationData;
-				break;
-
-			default:
-				CONSOLE_ABORT("Invalid data index");
-				break;
-		}
-		arrayPointer[tableIndex]	=	myDataDegrees;
-
-		//*	there is a possibility that a value might not be filled in in the table.
-		//*	to protect against that, we are going to put the next 5 values the same as this one
-		//*	the buffer is 10 values larger so we wont over flow the buffer
-		for (jjj=0; jjj<5; jjj++)
-		{
-			arrayPointer[tableIndex + jjj]	=	myDataDegrees;
-		}
-	}
-	else
-	{
-		CONSOLE_DEBUG_W_NUM("tableIndex      \t=", tableIndex);
-	}
-}
-
-#endif //	defined(_PARENT_IS_SKYTRAVEL_) && !defined( __ARM_ARCH )
 
 //*****************************************************************************
 void	PARENT_CLASS::AlpacaProcessSupportedActions_Telescope(	const int	deviveNum,
@@ -154,112 +68,239 @@ void	PARENT_CLASS::AlpacaProcessSupportedActions_Telescope(	const int	deviveNum,
 
 
 //*****************************************************************************
-bool	PARENT_CLASS::AlpacaProcessReadAll_Telescope(	const int	deviceNum,
-														const char	*keywordString,
+bool	PARENT_CLASS::AlpacaProcessReadAll_TelescopeIdx(const int	deviceNum,
+														const int	keywordEnum,
 														const char *valueString)
 {
 bool	dataWasHandled;
 
+//	CONSOLE_DEBUG(__FUNCTION__);
 //	CONSOLE_DEBUG_W_2STR("json=",	keywordString, valueString);
 	dataWasHandled	=	true;
-	//=================================================================================
-	if (strcasecmp(keywordString,			"AlginmentMode") == 0)
+	switch(keywordEnum)
 	{
-	//+	cTelescopeProp.AlginmentMode	=	IsTrueFalse(valueString);
-	}
-	//=================================================================================
-	else if (strcasecmp(keywordString,		"AtHome") == 0)
-	{
-		cTelescopeProp.AtHome	=	IsTrueFalse(valueString);
-	}
-	//=================================================================================
-	else if (strcasecmp(keywordString,		"AtPark") == 0)
-	{
-		cTelescopeProp.AtPark	=	IsTrueFalse(valueString);
-	}
-	//=================================================================================
-	else if (strcasecmp(keywordString,		"Declination") == 0)
-	{
-		cTelescopeProp.Declination	=	AsciiToDouble(valueString);
-		Update_TelescopeDeclination();
-#if defined(_PARENT_IS_SKYTRAVEL_) && !defined( __ARM_ARCH )
-		MountData_SaveData(kMountData_DEC, cTelescopeProp.Declination);
-#endif
-	}
-	//=================================================================================
-	else if (strcasecmp(keywordString,		"DoesRefraction") == 0)
-	{
-		cTelescopeProp.DoesRefraction	=	IsTrueFalse(valueString);
-		Update_TelescopeDeclination();
-	}
-	//=================================================================================
-	else if (strcasecmp(keywordString,		"PhysicalSideOfPier") == 0)
-	{
-		cTelescopeProp.PhysicalSideOfPier	=	(TYPE_PierSide)atoi(valueString);
-	}
-	//=================================================================================
-	else if (strcasecmp(keywordString,		"HourAngle") == 0)
-	{
-		cTelescopeProp.hourAngleIsValid	=	true;
-		cTelescopeProp.HourAngle		=	AsciiToDouble(valueString);
-		if (cTelescopeProp.HourAngle < 0.0)
-		{
-			cTelescopeProp.HourAngle	+=	24.0;
-		}
-	}
-#if defined(_PARENT_IS_SKYTRAVEL_) && !defined( __ARM_ARCH )
-	//=================================================================================
-	else if (strcasecmp(keywordString,		"HourAngle-degrees") == 0)
-	{
-		cTelescopeProp.HourAngle_deg	=	AsciiToDouble(valueString);
-		MountData_SaveData(kMountData_HA, cTelescopeProp.HourAngle_deg);
-	}
-#endif // _PARENT_IS_SKYTRAVEL_
-	//=================================================================================
-	else if (strcasecmp(keywordString,		"RightAscension") == 0)
-	{
-		cTelescopeProp.RightAscension	=	AsciiToDouble(valueString);
-		Update_TelescopeRtAscension();
-#if defined(_PARENT_IS_SKYTRAVEL_) && !defined( __ARM_ARCH )
-		MountData_SaveData(kMountData_RA, cTelescopeProp.RightAscension * 15.0);
-#endif
-	}
-	//=================================================================================
-	else if (strcasecmp(keywordString,		"SideOfPier") == 0)
-	{
-		cTelescopeProp.SideOfPier	=	(TYPE_PierSide)atoi(valueString);
-	}
-	//=================================================================================
-	else if (strcasecmp(keywordString,		"Slewing") == 0)
-	{
-		cTelescopeProp.Slewing	=	IsTrueFalse(valueString);
-	}
-	//=================================================================================
-	else if (strcasecmp(keywordString,		"Tracking") == 0)
-	{
-		cTelescopeProp.Tracking	=	IsTrueFalse(valueString);
-	}
-	//=================================================================================
-	else if (strcasecmp(keywordString,		"TrackingRate") == 0)
-	{
-		cTelescopeProp.TrackingRate	=	(TYPE_DriveRates)atoi(valueString);
-	}
-	//=================================================================================
-	else
-	{
-//		CONSOLE_DEBUG_W_2STR("ignored=",	keywordString, valueString);
-		dataWasHandled	=	false;
-	}
+		case kCmd_Telescope_alignmentmode:			//*	Returns the current mount alignment mode
+			cTelescopeProp.AlginmentMode	=	(TYPE_AlignmentModes)atoi(valueString);
+			break;
 
-#ifdef _PARENT_IS_TELESCOPE_
-	if (strcasecmp(keywordString, "version") == 0)
-	{
-		//*	"version": "AlpacaPi - V0.2.2-beta build #32",
-		strcpy(cAlpacaVersionString, valueString);
-		dataWasHandled	=	true;
-	}
-#endif // _PARENT_IS_TELESCOPE_
+		case kCmd_Telescope_altitude:				//*	Returns the mount's Altitude above the horizon.
+			cTelescopeProp.Altitude	=	atof(valueString);
+			break;
 
+		case kCmd_Telescope_aperturearea:			//*	Returns the telescope's aperture.
+			cTelescopeProp.ApertureArea	=	atof(valueString);
+			break;
+
+		case kCmd_Telescope_aperturediameter:		//*	Returns the telescope's effective aperture.
+			cTelescopeProp.ApertureDiameter	=	atof(valueString);
+			break;
+
+		case kCmd_Telescope_athome:					//*	Indicates whether the mount is at the home position.
+			cTelescopeProp.AtHome	=	IsTrueFalse(valueString);
+			break;
+
+		case kCmd_Telescope_atpark:					//*	Indicates whether the telescope is at the park position.
+			cTelescopeProp.AtPark	=	IsTrueFalse(valueString);
+			break;
+
+		case kCmd_Telescope_azimuth:				//*	Returns the telescope's azimuth.
+			break;
+
+		case kCmd_Telescope_canfindhome:			//*	Indicates whether the mount can find the home position.
+			cTelescopeProp.CanFindHome	=	IsTrueFalse(valueString);
+			break;
+
+		case kCmd_Telescope_canpark:				//*	Indicates whether the telescope can be parked.
+			cTelescopeProp.CanPark	=	IsTrueFalse(valueString);
+			break;
+
+		case kCmd_Telescope_canpulseguide:			//*	Indicates whether the telescope can be pulse guided.
+			cTelescopeProp.CanPulseGuide	=	IsTrueFalse(valueString);
+			break;
+
+		case kCmd_Telescope_cansetdeclinationrate:	//*	Indicates whether the DeclinationRate property can be changed.
+			cTelescopeProp.CanSetDeclinationRate	=	IsTrueFalse(valueString);
+			break;
+
+		case kCmd_Telescope_cansetguiderates:		//*	Indicates whether the DeclinationRate property can be changed.
+			cTelescopeProp.CanSetGuideRates	=	IsTrueFalse(valueString);
+			break;
+
+		case kCmd_Telescope_cansetpark:				//*	Indicates whether the telescope park position can be set.
+			cTelescopeProp.CanSetPark	=	IsTrueFalse(valueString);
+			break;
+
+		case kCmd_Telescope_cansetpierside:			//*	Indicates whether the telescope SideOfPier can be set.
+			cTelescopeProp.CanSetPierSide	=	IsTrueFalse(valueString);
+			break;
+
+		case kCmd_Telescope_cansetrightascensionrate://*	Indicates whether the RightAscensionRate property can be changed.
+			cTelescopeProp.CanSetRightAscensionRate	=	IsTrueFalse(valueString);
+			break;
+
+		case kCmd_Telescope_cansettracking:			//*	Indicates whether the Tracking property can be changed.
+			cTelescopeProp.CanSetTracking	=	IsTrueFalse(valueString);
+			break;
+
+		case kCmd_Telescope_canslew:				//*	Indicates whether the telescope can slew synchronously.
+			cTelescopeProp.CanSlew	=	IsTrueFalse(valueString);
+			break;
+
+		case kCmd_Telescope_canslewaltaz:			//*	Indicates whether the telescope can slew synchronously to AltAz coordinates.
+			cTelescopeProp.CanSlewAltAz	=	IsTrueFalse(valueString);
+			break;
+
+		case kCmd_Telescope_canslewaltazasync:		//*	Indicates whether the telescope can slew asynchronously to AltAz coordinates.
+			cTelescopeProp.CanSlewAltAzAsync	=	IsTrueFalse(valueString);
+			break;
+
+		case kCmd_Telescope_canslewasync:			//*	Indicates whether the telescope can slew asynchronously.
+			cTelescopeProp.CanSlewAsync	=	IsTrueFalse(valueString);
+			break;
+
+		case kCmd_Telescope_cansync:				//*	Indicates whether the telescope can sync to equatorial coordinates.
+			cTelescopeProp.CanSync	=	IsTrueFalse(valueString);
+			break;
+
+		case kCmd_Telescope_cansyncaltaz:			//*	Indicates whether the telescope can sync to local horizontal coordinates.
+			cTelescopeProp.CanSyncAltAz	=	IsTrueFalse(valueString);
+			break;
+
+		case kCmd_Telescope_canunpark:				//*	True if this telescope is capable of programmed unparking (Unpark() method).
+			cTelescopeProp.CanUnpark	=	IsTrueFalse(valueString);
+			break;
+
+		case kCmd_Telescope_declination:			//*	Returns the telescope's declination.
+			cTelescopeProp.Declination	=	AsciiToDouble(valueString);
+			Update_TelescopeDeclination();
+		#if defined(_PARENT_IS_SKYTRAVEL_) && !defined( __ARM_ARCH )
+			MountData_SaveData(kMountData_DEC, cTelescopeProp.Declination);
+		#endif
+			break;
+
+		case kCmd_Telescope_declinationrate:		//*	Returns the telescope's declination tracking rate.
+			cTelescopeProp.DeclinationRate	=	atof(valueString);
+			break;
+
+		case kCmd_Telescope_doesrefraction:			//*	Indicates whether atmospheric refraction is applied to coordinates.
+			cTelescopeProp.DoesRefraction	=	IsTrueFalse(valueString);
+			Update_TelescopeDeclination();
+			break;
+
+		case kCmd_Telescope_equatorialsystem:		//*	Returns the current equatorial coordinate system used by this telescope.
+			break;
+
+		case kCmd_Telescope_focallength:			//*	Returns the telescope's focal length in meters.
+			cTelescopeProp.FocalLength		=	atof(valueString);
+			break;
+
+		case kCmd_Telescope_guideratedeclination:	//*	Returns the current Declination rate offset for telescope guiding
+			cTelescopeProp.GuideRateDeclination		=	atof(valueString);
+			break;
+
+		case kCmd_Telescope_guideraterightascension://*	Returns the current RightAscension rate offset for telescope guiding
+			cTelescopeProp.GuideRateRightAscension		=	atof(valueString);
+			break;
+
+		case kCmd_Telescope_ispulseguiding:			//*	Indicates whether the telescope is currently executing a PulseGuide command
+			cTelescopeProp.IsPulseGuiding	=	IsTrueFalse(valueString);
+			break;
+
+		case kCmd_Telescope_rightascension:			//*	Returns the telescope's right ascension coordinate.
+			cTelescopeProp.RightAscension	=	AsciiToDouble(valueString);
+			Update_TelescopeRtAscension();
+		#if defined(_PARENT_IS_SKYTRAVEL_) && !defined( __ARM_ARCH )
+			MountData_SaveData(kMountData_RA, cTelescopeProp.RightAscension * 15.0);
+		#endif
+			break;
+
+		case kCmd_Telescope_rightascensionrate:		//*	Returns the telescope's right ascension tracking rate.
+			cTelescopeProp.RightAscensionRate		=	atof(valueString);
+			break;
+
+		case kCmd_Telescope_sideofpier:				//*	Returns the mount's pointing state.
+			cTelescopeProp.SideOfPier	=	(TYPE_PierSide)atoi(valueString);
+			break;
+
+		case kCmd_Telescope_siderealtime:			//*	Returns the local apparent sidereal time.
+			break;
+
+		case kCmd_Telescope_siteelevation:			//*	Returns the observing site's elevation above mean sea level.
+			cTelescopeProp.SiteElevation		=	atof(valueString);
+			break;
+
+		case kCmd_Telescope_sitelatitude:			//*	Returns the observing site's latitude.
+			cTelescopeProp.SiteLatitude		=	atof(valueString);
+			break;
+
+		case kCmd_Telescope_sitelongitude:			//*	Returns the observing site's longitude.
+			cTelescopeProp.SiteLongitude		=	atof(valueString);
+			break;
+
+		case kCmd_Telescope_slewing:				//*	Indicates whether the telescope is currently slewing.
+			cTelescopeProp.Slewing	=	IsTrueFalse(valueString);
+			break;
+
+		case kCmd_Telescope_slewsettletime:			//*	Returns the post-slew settling time.
+			break;
+
+		case kCmd_Telescope_targetdeclination:		//*	Returns the current target declination.
+			break;
+
+		case kCmd_Telescope_targetrightascension:	//*	Returns the current target right ascension.
+			break;
+
+		case kCmd_Telescope_tracking:				//*	Indicates whether the telescope is tracking.
+			cTelescopeProp.Tracking	=	IsTrueFalse(valueString);
+			break;
+
+		case kCmd_Telescope_trackingrate:			//*	Returns the current tracking rate.
+			cTelescopeProp.TrackingRate	=	(TYPE_DriveRates)atoi(valueString);
+			break;
+
+		case kCmd_Telescope_trackingrates:			//*	Returns a collection of supported DriveRates values.
+			break;
+
+		case kCmd_Telescope_utcdate:				//*	Returns the UTC date/time of the telescope's internal clock.
+			break;
+
+
+		//*	these are the methods
+		case kCmd_Telescope_axisrates:				//*	Returns the rates at which the telescope may be moved about the specified axis.
+			break;
+
+		case kCmd_Telescope_canmoveaxis:			//*	Indicates whether the telescope can move the requested axis.
+			break;
+
+		case kCmd_Telescope_destinationsideofpier:	//*	Predicts the pointing state after a German equatorial mount slews to given coordinates.
+			break;
+
+		//---------------------------------------------------------------
+		//*	added by MLS
+		case kCmd_Telescope_hourangle:
+			cTelescopeProp.hourAngleIsValid	=	true;
+			cTelescopeProp.HourAngle		=	AsciiToDouble(valueString);
+			if (cTelescopeProp.HourAngle < 0.0)
+			{
+				cTelescopeProp.HourAngle	+=	24.0;
+			}
+			break;
+
+		case kCmd_Telescope_physicalsideofpier:
+			cTelescopeProp.PhysicalSideOfPier	=	(TYPE_PierSide)atoi(valueString);
+			break;
+
+		default:
+			CONSOLE_DEBUG_W_NUM("keywordEnum\t=",	keywordEnum);
+			CONSOLE_DEBUG_W_STR("valueString\t=",	valueString);
+			dataWasHandled	=	false;
+			break;
+//	else if (strcasecmp(keywordString,		"HourAngle-degrees") == 0)
+//	{
+//		cTelescopeProp.HourAngle_deg	=	AsciiToDouble(valueString);
+//		MountData_SaveData(kMountData_HA, cTelescopeProp.HourAngle_deg);
+//	}
+	}
 	return(dataWasHandled);
 }
 
@@ -270,6 +311,17 @@ void	PARENT_CLASS::ReadOneTelescopeCapability(	const char	*propertyStr,
 {
 	ReadOneDriverCapability("telescope", propertyStr, reportedStr, booleanValue);
 }
+
+#ifdef _PARENT_IS_SKYTRAVEL_
+//*****************************************************************************
+void	PARENT_CLASS::AlpacaGetCapabilities(void)
+{
+	//*	this is a dummy place holder, the real one is in controller_telescope.cpp
+	//*	this one is for the skytravel controller
+	CONSOLE_DEBUG(__FUNCTION__);
+}
+#endif // _PARENT_IS_SKYTRAVEL_
+
 
 //*****************************************************************************
 bool	PARENT_CLASS::AlpacaGetStartupData_TelescopeOneAAT(void)
@@ -290,31 +342,7 @@ bool			argBoolean;
 	cPort			=	cTelescopeIpPort;
 	cAlpacaDevNum	=	cTelescopeAlpacaDeviceNum;
 #endif
-
-	ReadOneTelescopeCapability("canfindhome",			"CanFindHome",			&cTelescopeProp.CanFindHome);
-	ReadOneTelescopeCapability("canmoveaxis?Axis=0",	"CanMoveAxis-RA",		&cTelescopeProp.CanMoveAxis[0]);
-	ReadOneTelescopeCapability("canmoveaxis?Axis=1",	"CanMoveAxis-DEC",		&cTelescopeProp.CanMoveAxis[1]);
-	ReadOneTelescopeCapability("canmoveaxis?Axis=2",	"CanMoveAxis-3",		&cTelescopeProp.CanMoveAxis[2]);
-	ReadOneTelescopeCapability("canpark",				"CanPark",				&cTelescopeProp.CanPark);
-	ReadOneTelescopeCapability("canpulseguide",			"CanPulseGuide",		&cTelescopeProp.CanPulseGuide);
-	ReadOneTelescopeCapability("cansetdeclinationrate",	"CanSetDeclinationRate",
-																				&cTelescopeProp.CanSetDeclinationRate);
-	ReadOneTelescopeCapability("cansetguiderates",		"CanSetGuideRates",		&cTelescopeProp.CanSetGuideRates);
-	ReadOneTelescopeCapability("cansetpark",			"CanSetPark",			&cTelescopeProp.CanSetPark);
-
-	ReadOneTelescopeCapability("cansetpierside",		"CanSetPierSide",		&cTelescopeProp.CanSetPierSide);
-	ReadOneTelescopeCapability("cansetrightascensionrate",
-														"CanSetRightAscensionRate",
-																				&cTelescopeProp.CanSetRightAscensionRate);
-	ReadOneTelescopeCapability("cansettracking",		"CanSetTracking",		&cTelescopeProp.CanSetTracking);
-	ReadOneTelescopeCapability("canslew",				"CanSlew",				&cTelescopeProp.CanSlew);
-	ReadOneTelescopeCapability("canslewaltaz",			"CanSlewAltAz",			&cTelescopeProp.CanSlewAltAz);
-	ReadOneTelescopeCapability("canslewaltazasync",		"CanSlewAltAzAsync",	&cTelescopeProp.CanSlewAltAzAsync);
-	ReadOneTelescopeCapability("canslewasync",			"CanSlewAsync",			&cTelescopeProp.CanSlewAsync);
-	ReadOneTelescopeCapability("cansync",				"CanSync",				&cTelescopeProp.CanSync);
-	ReadOneTelescopeCapability("cansyncaltaz",			"CanSyncAltAz",			&cTelescopeProp.CanSyncAltAz);
-	ReadOneTelescopeCapability("canunpark",				"CanUnpark",			&cTelescopeProp.CanUnpark);
-	ReadOneTelescopeCapability("doesrefraction",		"DoesRefraction",		&cTelescopeProp.DoesRefraction);
+	SetCommandLookupTable(gTelescopeCmdTable);
 
 	//========================================================
 	//*	we have to look at DoesRefraction again, to see if it is supported
@@ -326,8 +354,7 @@ bool			argBoolean;
 			cTelescopeProp.driverSupportsRefraction	=	true;
 		}
 	}
-
-
+	AlpacaGetCapabilities();
 
 	myFailureCount	=	0;
 	//*	There are supposed to be 3 axis, but we only use 2 and the simulator only reports 2
@@ -398,6 +425,7 @@ bool			argBoolean;
 		cReadFailureCnt++;
 		myFailureCount++;
 	}
+	CONSOLE_DEBUG("exit");
 
 	return(true);
 }
@@ -412,7 +440,7 @@ int				myFailureCount;
 double			argDouble;
 bool			argBoolean;
 int				argInt;
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 #ifndef _PARENT_IS_TELESCOPE_
 //	CONSOLE_DEBUG("NOT   _PARENT_IS_TELESCOPE_");
 	cDeviceAddress	=	cTelescopeIpAddress;
@@ -579,3 +607,95 @@ int				argInt;
 	return(validData);
 }
 
+
+#if defined(_PARENT_IS_SKYTRAVEL_) && !defined( __ARM_ARCH )
+
+double	gHourAngleData[kMaxMountData + 10];
+double	gRightAsceData[kMaxMountData + 10];
+double	gDeclinationData[kMaxMountData + 10];
+
+//-static int	gSecsSinceMidnight	=	0;
+static bool	gInitMountData		=	true;
+
+//*****************************************************************************
+void	MountData_Init(void)
+{
+int		iii;
+
+	for (iii=0; iii<kMaxMountData; iii++)
+	{
+		gHourAngleData[iii]	=	0.0;
+		gRightAsceData[iii]	=	0.0;
+		gDeclinationData[iii]	=	0.0;
+	}
+}
+
+
+//*****************************************************************************
+//*	to make this cleaner, all three data points are saved by the same routine into different buffers
+//*****************************************************************************
+static void	MountData_SaveData(const int whichData, const double newEntryInDegrees)
+{
+time_t		currentTime;
+int			secsPastMignight;
+int			tableIndex;
+int			jjj;
+double		myDataDegrees;
+double		*arrayPointer;
+
+//	CONSOLE_DEBUG_W_DBL("newEntryInDegrees\t\t=", newEntryInDegrees);
+	if (gInitMountData)
+	{
+		MountData_Init();
+		gInitMountData	=	false;
+	}
+
+
+	myDataDegrees	=	newEntryInDegrees;
+	if (myDataDegrees > 180.0)
+	{
+		myDataDegrees	-=	360.0;
+	}
+//	CONSOLE_DEBUG_W_DBL("myDataDegrees\t\t=", myDataDegrees);
+	currentTime			=	time(NULL);
+
+	secsPastMignight	=	currentTime % kSecondsPerDay;
+	tableIndex			=	secsPastMignight / 4;
+	if (tableIndex < kMaxMountData)
+	{
+
+		switch(whichData)
+		{
+			case kMountData_HA:
+				arrayPointer	=	gHourAngleData;
+				break;
+
+			case kMountData_RA:
+				arrayPointer	=	gRightAsceData;
+				break;
+
+			case kMountData_DEC:
+				arrayPointer	=	gDeclinationData;
+				break;
+
+			default:
+				CONSOLE_ABORT("Invalid data index");
+				break;
+		}
+		arrayPointer[tableIndex]	=	myDataDegrees;
+
+		//*	there is a possibility that a value might not be filled in in the table.
+		//*	to protect against that, we are going to put the next 5 values the same as this one
+		//*	the buffer is 10 values larger so we wont over flow the buffer
+		for (jjj=0; jjj<5; jjj++)
+		{
+			arrayPointer[tableIndex + jjj]	=	myDataDegrees;
+		}
+	}
+	else
+	{
+		CONSOLE_DEBUG_W_NUM("tableIndex      \t=", tableIndex);
+	}
+}
+
+#endif //	defined(_PARENT_IS_SKYTRAVEL_) && !defined( __ARM_ARCH )

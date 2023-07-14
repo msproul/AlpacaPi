@@ -848,17 +848,17 @@ char		extension[8];
 		fnameLen		=	strlen(imageFileName);
 		strcpy(extension, &imageFileName[fnameLen - 4]);
 		CONSOLE_DEBUG_W_STR("extension\t=", extension);
-		if ((strcmp(extension, "fits") == 0) ||
-			(strcmp(extension, ".fit") == 0))
+		if ((strcasecmp(extension, "fits") == 0) ||
+			(strcasecmp(extension, ".fit") == 0))
 		{
 			openCvImgPtr	=	ReadFITSimageIntoOpenCVimage(imageFileName);
 		}
-		else if ((strcmp(extension, "csv") == 0) ||
-				(strcmp(extension, ".csv") == 0))
+		else if ((strcasecmp(extension, "csv") == 0) ||
+				(strcasecmp(extension, ".csv") == 0))
 		{
 			openCvImgPtr	=	NULL;
 		}
-		else if (strcmp(extension, ".bin") == 0)
+		else if (strcasecmp(extension, ".bin") == 0)
 		{
 			openCvImgPtr	=	ReadAlpacaBinaryIntoOpenCVimage(imageFileName);
 		}

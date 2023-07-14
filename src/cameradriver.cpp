@@ -104,7 +104,7 @@
 //*	Apr  4,	2020	<MLS> Added Get_Sensortype() & Get_Exposuremax()
 //*	Apr  5,	2020	<MLS> Added Get_DisplayImage() & Put_DisplayImage()
 //*	Apr 10,	2020	<MLS> Added sidebar to image display
-//*	Apr 11,	2020	<MLS> Get_Sidebar Put_Sidebar() & Put_Sidebar()
+//*	Apr 11,	2020	<MLS> Added Get_Sidebar() Put_Sidebar() & Put_Sidebar()
 //*	Apr 11,	2020	<MLS> Get_Exposuremin()
 //*	Apr 27,	2020	<MLS> Added cpu stats readall output
 //*	Apr 28,	2020	<MLS> Added sidebar background color to readall output
@@ -194,6 +194,16 @@
 //*	Apr 27,	2023	<MLS> Added Get_CanStopExposure(),
 //*	Apr 30,	2023	<MLS> Fixed error handling in Put_SetCCDtemperature()
 //*	Apr 30,	2023	<MLS> Added Read_SensorTargetTemp() & Write_SensorTargetTemp()
+//*	May 26,	2023	<MLS> Added SavedImages command
+//*	May 26,	2023	<MLS> Added Get_SavedImages()
+//*	May 27,	2023	<MLS> Removed all references to sidebar option, always enabled
+//*	Jun  4,	2023	<MLS> Added Get_SaveAsFITS() & Put_SaveAsFITS()
+//*	Jun  4,	2023	<MLS> Added Get_SaveAsJPEG() & Put_SaveAsJPEG()
+//*	Jun  4,	2023	<MLS> Added Get_SaveAsPNG() & Put_SaveAsPNG()
+//*	Jun  4,	2023	<MLS> Added Get_SaveAsRAW() & Put_SaveAsRAW()
+//*	Jun 12,	2023	<MLS> Increased size of Mandlebrot QQQ table to handle larger image simulation
+//*	Jun 18,	2023	<MLS> Added DeviceState_Add_Content()
+//*	Jul 13,	2023	<MLS> Added error messages for invalid GET commands
 //*****************************************************************************
 //*	Jan  1,	2119	<TODO> ----------------------------------------
 //*	Jun 26,	2119	<TODO> Add support for sub frames
@@ -294,6 +304,8 @@
 	#include	"cameradriver_TOUP.h"
 #endif
 
+#include	"camera_AlpacaCmds.h"
+#include	"camera_AlpacaCmds.cpp"
 
 
 #define	kImageDataDir_Default		"imagedata"
@@ -368,102 +380,6 @@ const char	*gCameraStateStrings[]	=
 #define	kMaxCameraCnt	5
 
 
-//*****************************************************************************
-const TYPE_CmdEntry	gCameraCmdTable[]	=
-{
-
-	{	"bayeroffsetx",				kCmd_Camera_bayeroffsetX,			kCmdType_GET	},
-	{	"bayeroffsety",				kCmd_Camera_bayeroffsetY,			kCmdType_GET	},
-	{	"binx",						kCmd_Camera_binX,					kCmdType_BOTH	},
-	{	"biny",						kCmd_Camera_binY,					kCmdType_BOTH	},
-	{	"camerastate",				kCmd_Camera_camerastate,			kCmdType_GET	},
-	{	"cameraxsize",				kCmd_Camera_cameraxsize,			kCmdType_GET	},
-	{	"cameraysize",				kCmd_Camera_cameraysize,			kCmdType_GET	},
-	{	"canabortexposure",			kCmd_Camera_canabortexposure,		kCmdType_GET	},
-	{	"canasymmetricbin",			kCmd_Camera_canasymmetricbin,		kCmdType_GET	},
-	{	"canfastreadout",			kCmd_Camera_canfastreadout,			kCmdType_GET	},
-	{	"cangetcoolerpower",		kCmd_Camera_cangetcoolerpower,		kCmdType_GET	},
-	{	"canpulseguide",			kCmd_Camera_canpulseguide,			kCmdType_GET	},
-	{	"cansetccdtemperature",		kCmd_Camera_cansetccdtemperature,	kCmdType_GET	},
-	{	"canstopexposure",			kCmd_Camera_canstopexposure,		kCmdType_GET	},
-	{	"ccdtemperature",			kCmd_Camera_ccdtemperature,			kCmdType_GET	},
-	{	"cooleron",					kCmd_Camera_cooleron,				kCmdType_BOTH	},
-	{	"coolerpower",				kCmd_Camera_coolerpower,			kCmdType_GET	},
-	{	"electronsperadu",			kCmd_Camera_electronsperadu,		kCmdType_GET	},
-	{	"exposuremax",				kCmd_Camera_exposuremax,			kCmdType_GET	},
-	{	"exposuremin",				kCmd_Camera_exposuremin,			kCmdType_GET	},
-	{	"exposureresolution",		kCmd_Camera_exposureresolution,		kCmdType_GET	},
-	{	"fastreadout",				kCmd_Camera_fastreadout,			kCmdType_BOTH	},
-	{	"fullwellcapacity",			kCmd_Camera_fullwellcapacity,		kCmdType_GET	},
-	{	"gain",						kCmd_Camera_gain,					kCmdType_BOTH	},
-	{	"gainmax",					kCmd_Camera_gainmax,				kCmdType_GET	},
-	{	"gainmin",					kCmd_Camera_gainmin,				kCmdType_GET	},
-	{	"gains",					kCmd_Camera_gains,					kCmdType_GET	},
-	{	"hasshutter",				kCmd_Camera_hasshutter,				kCmdType_GET	},
-	{	"heatsinktemperature",		kCmd_Camera_heatsinktemperature,	kCmdType_GET	},
-	{	"imagearray",				kCmd_Camera_imagearray,				kCmdType_GET	},
-	{	"imagearrayvariant",		kCmd_Camera_imagearrayvariant,		kCmdType_GET	},
-	{	"imageready",				kCmd_Camera_imageready,				kCmdType_GET	},
-	{	"ispulseguiding",			kCmd_Camera_ispulseguiding,			kCmdType_GET	},
-	{	"lastexposureduration",		kCmd_Camera_lastexposureduration,	kCmdType_GET	},
-	{	"lastexposurestarttime",	kCmd_Camera_lastexposurestarttime,	kCmdType_GET	},
-	{	"maxadu",					kCmd_Camera_maxadu,					kCmdType_GET	},
-	{	"maxbinx",					kCmd_Camera_maxbinX,				kCmdType_GET	},
-	{	"maxbiny",					kCmd_Camera_maxbinY,				kCmdType_GET	},
-	{	"numx",						kCmd_Camera_numX,					kCmdType_BOTH	},
-	{	"numy",						kCmd_Camera_numY,					kCmdType_BOTH	},
-	{	"offset",					kCmd_Camera_offset,					kCmdType_BOTH	},
-	{	"offsetmax",				kCmd_Camera_offsetmax,				kCmdType_GET	},
-	{	"offsetmin",				kCmd_Camera_offsetmin,				kCmdType_GET	},
-	{	"offsets",					kCmd_Camera_offsets,				kCmdType_GET	},
-	{	"percentcompleted",			kCmd_Camera_percentcompleted,		kCmdType_GET	},
-	{	"pixelsizex",				kCmd_Camera_pixelsizeX,				kCmdType_GET	},
-	{	"pixelsizey",				kCmd_Camera_pixelsizeY,				kCmdType_GET	},
-	{	"readoutmode",				kCmd_Camera_readoutmode,			kCmdType_BOTH	},
-	{	"readoutmodes",				kCmd_Camera_readoutmodes,			kCmdType_GET	},
-	{	"sensorname",				kCmd_Camera_sensorname,				kCmdType_GET	},
-	{	"sensortype",				kCmd_Camera_sensortype,				kCmdType_GET	},
-	{	"setccdtemperature",		kCmd_Camera_setccdtemperature,		kCmdType_BOTH	},
-	{	"startx",					kCmd_Camera_startX,					kCmdType_BOTH	},
-	{	"starty",					kCmd_Camera_startY,					kCmdType_BOTH	},
-	{	"abortexposure",			kCmd_Camera_abortexposure,			kCmdType_PUT	},
-	{	"pulseguide",				kCmd_Camera_pulseguide,				kCmdType_PUT	},
-	{	"startexposure",			kCmd_Camera_startexposure,			kCmdType_PUT	},
-	{	"stopexposure",				kCmd_Camera_stopexposure,			kCmdType_PUT	},
-	{	"subexposureduration",		kCmd_Camera_subexposureduration,	kCmdType_BOTH	},
-
-#ifdef _INCLUDE_ALPACA_EXTRAS_
-	//*	items added by MLS
-	{	"--extras",					kCmd_Camera_Extras,					kCmdType_GET	},
-
-
-	{	"autoexposure",				kCmd_Camera_autoexposure,			kCmdType_BOTH	},
-	{	"displayimage",				kCmd_Camera_displayimage,			kCmdType_BOTH	},
-	{	"exposuretime",				kCmd_Camera_exposuretime,			kCmdType_BOTH	},
-#ifdef _ENABLE_FITS_
-	{	"fitsheader",				kCmd_Camera_fitsheader,				kCmdType_GET	},
-#endif
-	{	"filelist",					kCmd_Camera_filelist,				kCmdType_GET	},
-	{	"filenameoptions",			kCmd_Camera_filenameoptions,		kCmdType_PUT	},
-	{	"flip",						kCmd_Camera_flip,					kCmdType_BOTH	},
-	{	"framerate",				kCmd_Camera_framerate,				kCmdType_GET	},
-	{	"livemode",					kCmd_Camera_livemode,				kCmdType_BOTH	},
-	{	"rgbarray",					kCmd_Camera_rgbarray,				kCmdType_GET	},
-	{	"saveallimages",			kCmd_Camera_saveallimages,			kCmdType_PUT	},
-	{	"savenextimage",			kCmd_Camera_savenextimage,			kCmdType_PUT	},
-	{	"settelescopeinfo",			kCmd_Camera_settelescopeinfo,		kCmdType_PUT	},
-	{	"sidebar",					kCmd_Camera_sidebar,				kCmdType_BOTH	},
-	{	"startsequence",			kCmd_Camera_startsequence,			kCmdType_PUT	},
-
-	{	"startvideo",				kCmd_Camera_startvideo,				kCmdType_PUT	},
-	{	"stopvideo",				kCmd_Camera_stopvideo,				kCmdType_PUT	},
-
-	{	"readall",					kCmd_Camera_readall,				kCmdType_GET	},
-#endif // _INCLUDE_ALPACA_EXTRAS_
-
-	{	"",							-1,									0x00			}
-};
-
 //**************************************************************************************
 void	SetImageDataDirectory(const char *newImageDir)
 {
@@ -498,7 +414,6 @@ int	mkdirErrCode;
 
 	//======================================================
 	//*	Start with the ASCOM properties
-
 	strcpy(cCommonProp.Name,		"CameraDriver");
 	strcpy(cCommonProp.Description,	"Camera");
 	cCommonProp.InterfaceVersion	=	3;
@@ -525,6 +440,10 @@ int	mkdirErrCode;
 	strcpy(cCameraProp.SensorName,	"unknown");
 
 	cCameraProp.ElectronsPerADU		=	0.1;		//*	have to have something in here
+
+	//======================================================
+	//*	extra stuff not defined in Alpaca
+	cCameraProp.SavedImageCnt		=	0;
 
 	//======================================================
 	cCameraIsSiumlated				=	false;
@@ -555,9 +474,12 @@ int	mkdirErrCode;
 	cDesiredImageType				=	kImageType_RAW8;
 //	CONSOLE_DEBUG_W_NUM("cDesiredImageType\t=",		cDesiredImageType);
 
+	cSaveAsFITS						=	true;
+	cSaveAsJPEG						=	true;
+	cSaveAsPNG						=	true;
+	cSaveAsRAW						=	false;
 	cNumFramesRequested				=	200;		//*	the number of frames requested
 	cNumFramesToSave				=	200;		//*	the number of frames left to go, 0 means none
-	cNumFramesSaved					=	0;			//*	in constructor
 	cNumVideoFramesSaved			=	0;
 	cVideoDuration_secs				=	0;
 	cTotalFramesSaved				=	0;
@@ -612,7 +534,6 @@ int	mkdirErrCode;
 
 	cVideoCreateTimeStampFile		=	true;
 	cVideoTimeStampFilePtr			=	NULL;
-	cDisplaySideBar					=	kSideBar_Left;
 
 	LoadAlpacaImage();
 #endif // _USE_OPENCV_
@@ -1044,7 +965,7 @@ char				httpHeader[500];
 			}
 			break;
 
-		case kCmd_Camera_coolerpower:			//*	Returns the present cooler power level
+		case kCmd_Camera_CoolerPower:			//*	Returns the present cooler power level
 			alpacaErrCode	=	Get_CoolerPower(reqData, alpacaErrMsg, gValueString);
 			break;
 
@@ -1088,7 +1009,7 @@ char				httpHeader[500];
 			}
 			break;
 
-		case kCmd_Camera_fullwellcapacity:		//*	Reports the full well capacity of the camera
+		case kCmd_Camera_FullWellCapacity:		//*	Reports the full well capacity of the camera
 			alpacaErrCode	=	Get_Fullwellcapacity(reqData, alpacaErrMsg, gValueString);
 			break;
 
@@ -1167,7 +1088,7 @@ char				httpHeader[500];
 			}
 			break;
 
-		case kCmd_Camera_ispulseguiding:		//*	Indicates that the camera is pulse guideing.
+		case kCmd_Camera_IsPulseGuiding:		//*	Indicates that the camera is pulse guideing.
 			alpacaErrCode	=	Get_IsPulseGuiding(reqData, alpacaErrMsg, gValueString);
 			break;
 
@@ -1243,11 +1164,11 @@ char				httpHeader[500];
 			alpacaErrCode	=	Get_PercentCompleted(reqData, alpacaErrMsg, gValueString);
 			break;
 
-		case kCmd_Camera_pixelsizeX:			//*	Width of CCD chip pixels (microns)
+		case kCmd_Camera_PixelSizeX:			//*	Width of CCD chip pixels (microns)
 			alpacaErrCode	=	Get_PixelSizeX(reqData, alpacaErrMsg, gValueString);
 			break;
 
-		case kCmd_Camera_pixelsizeY:			//*	Height of CCD chip pixels (microns)
+		case kCmd_Camera_PixelSizeY:			//*	Height of CCD chip pixels (microns)
 			alpacaErrCode	=	Get_PixelSizeY(reqData, alpacaErrMsg, gValueString);
 			break;
 
@@ -1333,8 +1254,9 @@ char				httpHeader[500];
 			}
 			else
 			{
-				CONSOLE_DEBUG("invalid request")
 				alpacaErrCode	=	kASCOM_Err_InvalidOperation;
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Get not supported");
+				CONSOLE_DEBUG(alpacaErrMsg);
 			}
 			break;
 
@@ -1345,13 +1267,23 @@ char				httpHeader[500];
 			}
 			else
 			{
-				CONSOLE_DEBUG("invalid request")
 				alpacaErrCode	=	kASCOM_Err_InvalidOperation;
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Get not supported");
+				CONSOLE_DEBUG(alpacaErrMsg);
 			}
 			break;
 
 		case kCmd_Camera_stopexposure:			//*	Stops the current exposure
-			alpacaErrCode	=	Put_StopExposure(reqData, alpacaErrMsg);
+			if (reqData->get_putIndicator == 'P')
+			{
+				alpacaErrCode	=	Put_StopExposure(reqData, alpacaErrMsg);
+			}
+			else
+			{
+				alpacaErrCode	=	kASCOM_Err_InvalidOperation;
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Get not supported for stopexposure");
+				CONSOLE_DEBUG(alpacaErrMsg);
+			}
 			break;
 
 		case kCmd_Camera_subexposureduration:
@@ -1375,12 +1307,13 @@ char				httpHeader[500];
 			}
 			else
 			{
-				CONSOLE_DEBUG("invalid request");
 				alpacaErrCode	=	kASCOM_Err_InvalidOperation;
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Get not supported");
+				CONSOLE_DEBUG(alpacaErrMsg);
 			}
 			break;
 
-		case kCmd_Camera_exposuretime:
+		case kCmd_Camera_ExposureTime:
 			if (reqData->get_putIndicator == 'G')
 			{
 				alpacaErrCode	=	Get_ExposureTime(reqData, alpacaErrMsg, gValueString);
@@ -1403,23 +1336,6 @@ char				httpHeader[500];
 			}
 			break;
 
-#ifdef _USE_OPENCV_
-		case kCmd_Camera_sidebar:
-			if (reqData->get_putIndicator == 'G')
-			{
-				alpacaErrCode	=	Get_Sidebar(reqData, alpacaErrMsg, gValueString);
-			}
-			else if (reqData->get_putIndicator == 'P')
-			{
-				alpacaErrCode	=	Put_Sidebar(reqData, alpacaErrMsg);
-			}
-			else
-			{
-				CONSOLE_DEBUG("invalid request")
-			}
-			break;
-#endif // _USE_OPENCV_
-
 		case kCmd_Camera_saveallimages:
 			if (reqData->get_putIndicator == 'P')
 			{
@@ -1427,10 +1343,60 @@ char				httpHeader[500];
 			}
 			else
 			{
-				CONSOLE_DEBUG("invalid request");
-				alpacaErrCode	=	kASCOM_Err_InvalidOperation;
+				alpacaErrCode	=	Get_SaveAllImages(reqData, alpacaErrMsg, gValueString);
 			}
 			break;
+
+		case kCmd_Camera_saveasFITS:
+			if (reqData->get_putIndicator == 'P')
+			{
+				alpacaErrCode	=	Put_SaveAsFITS(reqData, alpacaErrMsg);
+			}
+			else
+			{
+				alpacaErrCode	=	Get_SaveAsFITS(reqData, alpacaErrMsg, gValueString);
+			}
+			break;
+
+		case kCmd_Camera_saveasJPEG:
+			if (reqData->get_putIndicator == 'P')
+			{
+				alpacaErrCode	=	Put_SaveAsJPEG(reqData, alpacaErrMsg);
+			}
+			else
+			{
+				alpacaErrCode	=	Get_SaveAsJPEG(reqData, alpacaErrMsg, gValueString);
+			}
+			break;
+
+		case kCmd_Camera_saveasPNG:
+			if (reqData->get_putIndicator == 'P')
+			{
+				alpacaErrCode	=	Put_SaveAsPNG(reqData, alpacaErrMsg);
+			}
+			else
+			{
+				alpacaErrCode	=	Get_SaveAsPNG(reqData, alpacaErrMsg, gValueString);
+			}
+			break;
+
+		case kCmd_Camera_saveasRAW:
+			if (reqData->get_putIndicator == 'P')
+			{
+				alpacaErrCode	=	Put_SaveAsRAW(reqData, alpacaErrMsg);
+			}
+			else
+			{
+				alpacaErrCode	=	Get_SaveAsRAW(reqData, alpacaErrMsg, gValueString);
+			}
+			break;
+
+			break;
+
+		case kCmd_Camera_savedimages:
+			alpacaErrCode	=	Get_SavedImages(reqData, alpacaErrMsg, gValueString);
+			break;
+
 
 		case kCmd_Camera_savenextimage:
 			if (reqData->get_putIndicator == 'P')
@@ -1439,8 +1405,9 @@ char				httpHeader[500];
 			}
 			else
 			{
-				CONSOLE_DEBUG("invalid request");
 				alpacaErrCode	=	kASCOM_Err_InvalidOperation;
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Get not supported");
+				CONSOLE_DEBUG(alpacaErrMsg)
 			}
 			break;
 
@@ -1451,8 +1418,9 @@ char				httpHeader[500];
 			}
 			else
 			{
-				CONSOLE_DEBUG("invalid request");
 				alpacaErrCode	=	kASCOM_Err_InvalidOperation;
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Get not supported");
+				CONSOLE_DEBUG(alpacaErrMsg);
 			}
 			break;
 
@@ -1463,8 +1431,9 @@ char				httpHeader[500];
 			}
 			else
 			{
-				CONSOLE_DEBUG("invalid request");
 				alpacaErrCode	=	kASCOM_Err_InvalidOperation;
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Get not supported");
+				CONSOLE_DEBUG(alpacaErrMsg);
 			}
 			break;
 
@@ -1475,8 +1444,9 @@ char				httpHeader[500];
 			}
 			else
 			{
-				CONSOLE_DEBUG("invalid request");
 				alpacaErrCode	=	kASCOM_Err_InvalidOperation;
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Get not supported");
+				CONSOLE_DEBUG(alpacaErrMsg);
 			}
 			break;
 
@@ -1551,8 +1521,9 @@ char				httpHeader[500];
 			}
 			else
 			{
-				CONSOLE_DEBUG("invalid request")
 				alpacaErrCode	=	kASCOM_Err_InvalidOperation;
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Put not supported");
+				CONSOLE_DEBUG(alpacaErrMsg);
 			}
 			break;
 #endif
@@ -2539,14 +2510,18 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 //*****************************************************************************
 TYPE_ASCOM_STATUS	CameraDriver::Get_HeatSinkTemperature(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
 {
-TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
+TYPE_ASCOM_STATUS	alpacaErrCode;
 
-	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
-	alpacaErrCode	=	kASCOM_Err_NotImplemented;
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Double(reqData->socket,
+														reqData->jsonTextBuffer,
+														kMaxJsonBuffLen,
+														responseString,
+														cCameraProp.HeatSinkTemperature,
+														INCLUDE_COMMA);
+	alpacaErrCode	=	kASCOM_Err_Success;
 
 	return(alpacaErrCode);
 }
-
 
 //*****************************************************************************
 TYPE_ASCOM_STATUS	CameraDriver::Get_IsPulseGuiding(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
@@ -3374,7 +3349,7 @@ char				sensorTypeStr[32];
 	cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(reqData->socket,
 									reqData->jsonTextBuffer,
 									kMaxJsonBuffLen,
-									"sensortypeStr",
+									"sensortype-Str",
 									sensorTypeStr,
 									INCLUDE_COMMA);
 	return(alpacaErrCode);
@@ -3510,8 +3485,11 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
 	if (cCameraProp.CanSetCCDtemperature)
 	{
 		alpacaErrCode	=	Read_SensorTargetTemp();
-		CONSOLE_DEBUG_W_NUM("alpacaErrCode\t=",	alpacaErrCode);
-		CONSOLE_DEBUG_W_DBL("SetCCDTemperature\t=",	cCameraProp.SetCCDTemperature);
+		if (alpacaErrCode != kASCOM_Err_Success)
+		{
+			CONSOLE_DEBUG_W_NUM("alpacaErrCode\t=",	alpacaErrCode);
+			CONSOLE_DEBUG_W_DBL("SetCCDTemperature\t=",	cCameraProp.SetCCDTemperature);
+		}
 		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Double(reqData->socket,
 										reqData->jsonTextBuffer,
 										kMaxJsonBuffLen,
@@ -3717,7 +3695,6 @@ bool				lightFrame;
 				cAVIfourCC					=	0;
 				cFrameRate					=	0;
 				SaveNextImage();
-		//?		cNumFramesSaved				=	0;
 
 				//======================================================================================
 				//*	Save all of the info about this exposure for reference
@@ -3746,6 +3723,7 @@ bool				lightFrame;
 				else
 				{
 					GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, cLastCameraErrMsg);
+					CONSOLE_DEBUG(alpacaErrMsg);
 				}
 			}
 			else
@@ -5559,7 +5537,7 @@ char				stateString[16];
 	cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(	mySocketFD,
 									reqData->jsonTextBuffer,
 									kMaxJsonBuffLen,
-									"camerastate-string",
+									"camerastate-str",
 									stateString,
 									INCLUDE_COMMA);
 	if (cVerboseDebug)
@@ -5805,80 +5783,6 @@ bool				newLiveModeState;
 	return(alpacaErrCode);
 }
 
-#ifdef _USE_OPENCV_
-//*****************************************************************************
-TYPE_ASCOM_STATUS	CameraDriver::Get_Sidebar(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
-{
-TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
-
-//	CONSOLE_DEBUG_W_NUM("cDisplaySideBar\t=",		cDisplaySideBar);
-	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	reqData->socket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									responseString,
-									cDisplaySideBar,
-									INCLUDE_COMMA);
-
-	return(alpacaErrCode);
-}
-
-//*****************************************************************************
-TYPE_ASCOM_STATUS	CameraDriver::Put_Sidebar(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
-{
-TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
-bool				keywordFound;
-char				keywordString[64];
-
-//	CONSOLE_DEBUG(__FUNCTION__);
-//	CONSOLE_DEBUG_W_NUM("cDisplaySideBar\t=",		cDisplaySideBar);
-
-	if (reqData != NULL)
-	{
-		keywordFound		=	GetKeyWordArgument(	reqData->contentData,
-													"Sidebar",
-													keywordString,
-													(sizeof(keywordString) -1));
-		if (keywordFound)
-		{
-			alpacaErrCode	=	kASCOM_Err_Success;
-			if (strcasecmp(keywordString, "true") == 0)
-			{
-				cDisplaySideBar	=	kSideBar_Left;
-			}
-			else if (strcasecmp(keywordString, "left") == 0)
-			{
-				cDisplaySideBar	=	kSideBar_Left;
-			}
-			else if (strcasecmp(keywordString, "right") == 0)
-			{
-				cDisplaySideBar	=	kSideBar_Right;
-			}
-			else
-			{
-				cDisplaySideBar	=	false;
-			}
-		}
-		else
-		{
-			alpacaErrCode	=	kASCOM_Err_InvalidValue;
-			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "'Sidebar' argument not found");
-			CONSOLE_DEBUG(alpacaErrMsg);
-		}
-		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	reqData->socket,
-										reqData->jsonTextBuffer,
-										kMaxJsonBuffLen,
-										gValueString,
-										cDisplaySideBar,
-										INCLUDE_COMMA);
-	}
-	else
-	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
-	}
-	return(alpacaErrCode);
-}
-#endif // _USE_OPENCV_
-
 
 //*****************************************************************************
 TYPE_ASCOM_STATUS	CameraDriver::Get_ExposureTime(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
@@ -5963,6 +5867,29 @@ void	CameraDriver::SaveNextImage(void)
 	cSaveNextImage		=	true;
 }
 
+//*****************************************************************************
+TYPE_ASCOM_STATUS	CameraDriver::Get_SaveAllImages(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	if (reqData != NULL)
+	{
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(reqData->socket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										responseString,			//gValueString,
+										cSaveAllImages,
+										INCLUDE_COMMA);
+		alpacaErrCode	=	kASCOM_Err_Success;
+	}
+	else
+	{
+		alpacaErrCode	=	kASCOM_Err_InternalError;
+	}
+	return(alpacaErrCode);
+}
 
 //*****************************************************************************
 TYPE_ASCOM_STATUS	CameraDriver::Put_SaveAllImages(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
@@ -5996,6 +5923,233 @@ char				saveAllFoundString[32];
 	{
 		alpacaErrCode	=	kASCOM_Err_InternalError;
 	}
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	CameraDriver::Get_SaveAsFITS(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	reqData->socket,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									"saveasfits",
+									cSaveAsFITS,
+									INCLUDE_COMMA);
+
+	alpacaErrCode	=	kASCOM_Err_Success;
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	CameraDriver::Put_SaveAsFITS(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
+bool				saveAsFitsFound;
+char				saveAsFitsString[32];
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	if (reqData != NULL)
+	{
+		saveAsFitsFound		=	GetKeyWordArgument(	reqData->contentData,
+													"saveasfits",
+													saveAsFitsString,
+													(sizeof(saveAsFitsString) -1));
+		if (saveAsFitsFound)
+		{
+			cSaveAsFITS		=	IsTrueFalse(saveAsFitsString);
+			alpacaErrCode	=	kASCOM_Err_Success;
+		}
+		else
+		{
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "saveasfits argument not specified");
+			alpacaErrCode	=	kASCOM_Err_InvalidValue;
+			CONSOLE_DEBUG(alpacaErrMsg);
+			CONSOLE_DEBUG(reqData->contentData);
+		}
+	}
+	else
+	{
+		alpacaErrCode	=	kASCOM_Err_InternalError;
+	}
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	CameraDriver::Get_SaveAsJPEG(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	reqData->socket,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									"saveasjpeg",
+									cSaveAsJPEG,
+									INCLUDE_COMMA);
+
+	alpacaErrCode	=	kASCOM_Err_Success;
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	CameraDriver::Put_SaveAsJPEG(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
+bool				saveAsJPEGFound;
+char				saveAsJPEGString[32];
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	if (reqData != NULL)
+	{
+		saveAsJPEGFound		=	GetKeyWordArgument(	reqData->contentData,
+													"saveasJPEG",
+													saveAsJPEGString,
+													(sizeof(saveAsJPEGString) -1));
+		if (saveAsJPEGFound)
+		{
+			cSaveAsJPEG		=	IsTrueFalse(saveAsJPEGString);
+			alpacaErrCode	=	kASCOM_Err_Success;
+		}
+		else
+		{
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "saveasjpeg argument not specified");
+			alpacaErrCode	=	kASCOM_Err_InvalidValue;
+			CONSOLE_DEBUG(alpacaErrMsg);
+			CONSOLE_DEBUG(reqData->contentData);
+		}
+	}
+	else
+	{
+		alpacaErrCode	=	kASCOM_Err_InternalError;
+	}
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	CameraDriver::Get_SaveAsPNG(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	reqData->socket,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									"saveaspng",
+									cSaveAsPNG,
+									INCLUDE_COMMA);
+
+	alpacaErrCode	=	kASCOM_Err_Success;
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	CameraDriver::Put_SaveAsPNG(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
+bool				saveAsPNGFound;
+char				saveAsPNGString[32];
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	if (reqData != NULL)
+	{
+		saveAsPNGFound		=	GetKeyWordArgument(	reqData->contentData,
+													"saveasPNG",
+													saveAsPNGString,
+													(sizeof(saveAsPNGString) -1));
+		if (saveAsPNGFound)
+		{
+			cSaveAsPNG		=	IsTrueFalse(saveAsPNGString);
+			alpacaErrCode	=	kASCOM_Err_Success;
+		}
+		else
+		{
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "saveasfits argument not specified");
+			alpacaErrCode	=	kASCOM_Err_InvalidValue;
+			CONSOLE_DEBUG(alpacaErrMsg);
+			CONSOLE_DEBUG(reqData->contentData);
+		}
+	}
+	else
+	{
+		alpacaErrCode	=	kASCOM_Err_InternalError;
+	}
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	CameraDriver::Get_SaveAsRAW(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	reqData->socket,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									"saveasraw",
+									cSaveAsRAW,
+									INCLUDE_COMMA);
+
+	alpacaErrCode	=	kASCOM_Err_Success;
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	CameraDriver::Put_SaveAsRAW(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
+bool				saveAsRawFound;
+char				saveAsRawString[32];
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	if (reqData != NULL)
+	{
+		saveAsRawFound		=	GetKeyWordArgument(	reqData->contentData,
+													"saveasraw",
+													saveAsRawString,
+													(sizeof(saveAsRawString) -1));
+		if (saveAsRawFound)
+		{
+			cSaveAsRAW		=	IsTrueFalse(saveAsRawString);
+			alpacaErrCode	=	kASCOM_Err_Success;
+		}
+		else
+		{
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "saveasfits argument not specified");
+			alpacaErrCode	=	kASCOM_Err_InvalidValue;
+			CONSOLE_DEBUG(alpacaErrMsg);
+			CONSOLE_DEBUG(reqData->contentData);
+		}
+	}
+	else
+	{
+		alpacaErrCode	=	kASCOM_Err_InternalError;
+	}
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	CameraDriver::Get_SavedImages(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
+
+	if (reqData != NULL)
+	{
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	reqData->socket,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									responseString,
+									cCameraProp.SavedImageCnt,
+									INCLUDE_COMMA);
+		alpacaErrCode	=	kASCOM_Err_Success;
+	}
+
 	return(alpacaErrCode);
 }
 
@@ -6114,11 +6268,11 @@ double				deltaExp_secs;
 		}
 
 
-		cNumFramesRequested	=	sequenceCnt;
-		cNumFramesToSave	=	sequenceCnt;
-		cNumFramesSaved		=	0;				//*	start sequence
-		cImageMode			=	kImageMode_Sequence;
-		cImageSeqNumber		=	0;
+		cNumFramesRequested			=	sequenceCnt;
+		cNumFramesToSave			=	sequenceCnt;
+		cCameraProp.SavedImageCnt	=	0;				//*	start sequence
+		cImageMode					=	kImageMode_Sequence;
+		cImageSeqNumber				=	0;
 		SaveNextImage();
 
 		alpacaErrCode		=	kASCOM_Err_Success;
@@ -6221,9 +6375,9 @@ bool				recTimeFound;
 		{
 			case kCameraState_Idle:
 				CONSOLE_DEBUG("kCameraState_Idle");
-				cNumFramesSaved			=	0;		//*	start video
-				cNumVideoFramesSaved	=	0;
-				cFrameRate				=	0;
+				cCameraProp.SavedImageCnt	=	0;		//*	start video
+				cNumVideoFramesSaved		=	0;
+				cFrameRate					=	0;
 
 				if (recTimeFound)
 				{
@@ -6232,7 +6386,7 @@ bool				recTimeFound;
 				}
 				else
 				{
-					cNumFramesToSave	=	300;
+					cNumFramesToSave	=	500;
 					cVideoDuration_secs	=	0;
 				}
 				CONSOLE_DEBUG_W_DBL("cVideoDuration_secs\t=", cVideoDuration_secs);
@@ -6241,7 +6395,6 @@ bool				recTimeFound;
 				alpacaErrCode			=	Start_Video();
 				if (alpacaErrCode == 0)
 				{
-			#ifdef _USE_OPENCV_
 					videoIsColor		=	1;
 CONSOLE_DEBUG(__FUNCTION__);
 					GenerateFileNameRoot();
@@ -6280,13 +6433,19 @@ CONSOLE_DEBUG(__FUNCTION__);
 							videoIsColor		=	0;
 							break;
 					}
-				//	fourCC	=	-1;
 					CONSOLE_DEBUG_W_HEX("fourCC\t=", fourCC);
+					fourCC				=	cv::VideoWriter::fourcc('M', 'J', 'P', 'G'),
 					cAVIfourCC			=	fourCC;
 				#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 					cOpenCV_videoWriter	=	NULL;
 					//*	make the compiler happy
 					CONSOLE_DEBUG_W_NUM("videoIsColor\t=", videoIsColor);
+
+					cOpenCV_videoWriter	=	new cv::VideoWriter(	filePath,
+																	fourCC,
+																	30.0,
+																	cv::Size(cCameraProp.CameraXsize, cCameraProp.CameraYsize),
+																	videoIsColor);
 				#else
 					cOpenCV_videoWriter	=	cvCreateVideoWriter(	filePath,
 																	fourCC,
@@ -6321,7 +6480,6 @@ CONSOLE_DEBUG(__FUNCTION__);
 							fprintf(cVideoTimeStampFilePtr, "#FrameNum,TimeStamp\r\n");
 						}
 					}
-			#endif // _USE_OPENCV_
 				}
 				break;
 
@@ -6363,6 +6521,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
 		CONSOLE_DEBUG_W_NUM("cNumFramesToSave\t=", cNumFramesToSave);
 		cNumFramesToSave	=	1;
 		CONSOLE_DEBUG_W_NUM("cNumFramesToSave\t=", cNumFramesToSave);
+		alpacaErrCode	=	kASCOM_Err_Success;
 	}
 	else
 	{
@@ -6686,9 +6845,6 @@ char	lineBuffer[512];
 		SocketWriteData(reqData->socket,	lineBuffer);
 		SocketWriteData(reqData->socket,	"</CENTER>\r\n");
 	}
-//	CONSOLE_DEBUG(__FUNCTION__);
-//	CONSOLE_DEBUG_W_NUM("cCameraID\t=", cCameraID);
-	GenerateHTMLcmdLinkTable(reqData->socket, "camera", cAlpacaDeviceNum, gCameraCmdTable);
 }
 
 #pragma mark -
@@ -7411,14 +7567,8 @@ time_t		currentSeconds;
 		{
 			if ((cImageMode == kImageMode_Live) || cDisplayImage)
 			{
-				if (cDisplaySideBar)
-				{
-					DisplayLiveImage_wSideBar();
-				}
-				else
-				{
-					DisplayLiveImage();
-				}
+				DisplayLiveImage_wSideBar();
+//-----					DisplayLiveImage();
 			}
 			else if (cOpenCV_LiveDisplayPtr != NULL)
 			{
@@ -7932,16 +8082,6 @@ bool				foundKeyWord;
 			cFN.IncludeFilter	=	IsTrueFalse(argumentString);
 		}
 		//---------------------------------------------------------------------------
-		//*	look for serial number
-		foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
-												"includeserialnum",
-												argumentString,
-												(sizeof(argumentString) -1));
-		if (foundKeyWord)
-		{
-			cFN.IncludeSerialNum	=	IsTrueFalse(argumentString);
-		}
-		//---------------------------------------------------------------------------
 		//*	look for RefID
 		foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
 												"includerefid",
@@ -7950,6 +8090,16 @@ bool				foundKeyWord;
 		if (foundKeyWord)
 		{
 			cFN.IncludeRefID	=	IsTrueFalse(argumentString);
+		}
+		//---------------------------------------------------------------------------
+		//*	look for serial number
+		foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
+												"includeserialnum",
+												argumentString,
+												(sizeof(argumentString) -1));
+		if (foundKeyWord)
+		{
+			cFN.IncludeSerialNum	=	IsTrueFalse(argumentString);
 		}
 	}
 	else
@@ -8136,6 +8286,27 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 	return(alpacaErrCode);
 }
 
+//*****************************************************************************
+//				{"Name":"CameraState","Value":0},
+//				{"Name":"CCDTemperature","Value":10},
+//				{"Name":"CoolerPower","Value":0},
+//				{"Name":"HeatSinkTemperature","Value":10},
+//				{"Name":"ImageReady","Value":false},
+//				{"Name":"IsPulseGuiding","Value":false},
+//				{"Name":"PercentCompleted","Value":0},
+//*****************************************************************************
+bool	CameraDriver::DeviceState_Add_Content(const int socketFD, char *jsonTextBuffer, const int maxLen)
+{
+	DeviceState_Add_Int(socketFD,	jsonTextBuffer, maxLen,	"CameraState",			cCameraProp.CameraState);
+	DeviceState_Add_Dbl(socketFD,	jsonTextBuffer, maxLen,	"CCDTemperature",		cCameraProp.CCDtemperature);
+	DeviceState_Add_Dbl(socketFD,	jsonTextBuffer, maxLen,	"CoolerPower",			cCameraProp.CoolerPower);
+	DeviceState_Add_Dbl(socketFD,	jsonTextBuffer, maxLen,	"HeatSinkTemperature",	cCameraProp.HeatSinkTemperature);
+	DeviceState_Add_Bool(socketFD,	jsonTextBuffer, maxLen,	"ImageReady",			cCameraProp.ImageReady);
+	DeviceState_Add_Bool(socketFD,	jsonTextBuffer, maxLen,	"IsPulseGuiding",		cCameraProp.IsPulseGuiding);
+	DeviceState_Add_Int(socketFD,	jsonTextBuffer, maxLen,	"PercentCompleted",		cCameraProp.PercentCompleted);
+
+	return(true);
+}
 
 
 //*****************************************************************************
@@ -8183,7 +8354,6 @@ char				textBuffer[128];
 		case kExposure_Failed:	strcpy(exposureStateString,	"Failed");		break;
 		default:				strcpy(exposureStateString,	"UNKNOWN");		break;
 	}
-
 
 	if (reqData != NULL)
 	{
@@ -8241,7 +8411,9 @@ char				textBuffer[128];
 		Get_Gain(					reqData,	alpacaErrMsg,	"gain");
 		Get_GainMax(				reqData,	alpacaErrMsg,	"gainmax");
 		Get_GainMin(				reqData,	alpacaErrMsg,	"gainmin");
+		Get_HeatSinkTemperature(	reqData,	alpacaErrMsg,	"heatsinktemperature");
 		Get_ImageReady(				reqData,	alpacaErrMsg,	"imageready");
+		Get_IsPulseGuiding(			reqData,	alpacaErrMsg,	"ispulseguiding");
 		Get_Lastexposureduration(	reqData, 	alpacaErrMsg,	"lastexposureduration");
 		Get_Lastexposurestarttime(	reqData,	alpacaErrMsg,	"lastexposurestarttime");
 		Get_MaxADU(					reqData,	alpacaErrMsg,	"maxadu");
@@ -8280,7 +8452,9 @@ char				textBuffer[128];
 		Get_StartX(				reqData,	alpacaErrMsg,	"startx");
 		Get_StartY(				reqData,	alpacaErrMsg,	"starty");
 
-		//===============================================================
+		//============================================================================
+		//= NON-Standard commands
+		//============================================================================
 		cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(reqData->socket,
 										reqData->jsonTextBuffer,
 										kMaxJsonBuffLen,
@@ -8313,12 +8487,9 @@ char				textBuffer[128];
 										cSaveNextImage,
 										INCLUDE_COMMA);
 
-		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	mySocket,
-										reqData->jsonTextBuffer,
-										kMaxJsonBuffLen,
-										"saveAllImages",
-										cSaveAllImages,
-										INCLUDE_COMMA);
+
+		Get_SaveAllImages(	reqData, alpacaErrMsg, "saveallimages");
+		Get_SavedImages(	reqData, alpacaErrMsg, "savedimages");
 
 		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	mySocket,
 										reqData->jsonTextBuffer,
@@ -8392,37 +8563,33 @@ char				textBuffer[128];
 
 		//===============================================================
 		Get_LiveMode(		reqData,	alpacaErrMsg,	"livemode");
-#ifdef _USE_OPENCV_
-		Get_Sidebar(		reqData,	alpacaErrMsg,	"sidebar");
-#endif // _USE_OPENCV_
-
 		Get_DisplayImage(	reqData,	alpacaErrMsg,	"displayImage");
 
 		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	mySocket,
 										reqData->jsonTextBuffer,
 										kMaxJsonBuffLen,
-										"filenameincludefilter",
+										"filename_includefilter",
 										cFN.IncludeFilter,
 										INCLUDE_COMMA);
 
 		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	mySocket,
 										reqData->jsonTextBuffer,
 										kMaxJsonBuffLen,
-										"filenameincludecamera",
+										"filename_includecamera",
 										cFN.IncludeManuf,
 										INCLUDE_COMMA);
 
 		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	mySocket,
 										reqData->jsonTextBuffer,
 										kMaxJsonBuffLen,
-										"filenameincludeserialnum",
+										"filename_includeserialnum",
 										cFN.IncludeSerialNum,
 										INCLUDE_COMMA);
 
 		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	mySocket,
 										reqData->jsonTextBuffer,
 										kMaxJsonBuffLen,
-										"filenameincluderefid",
+										"filename_includerefid",
 										cFN.IncludeRefID,
 										INCLUDE_COMMA);
 
@@ -8432,6 +8599,13 @@ char				textBuffer[128];
 										"refid",
 										cTS_info.refID,
 										INCLUDE_COMMA);
+
+
+		Get_SaveAsFITS(	reqData, alpacaErrMsg, "saveasfits");
+		Get_SaveAsJPEG(	reqData, alpacaErrMsg, "saveasjpeg");
+		Get_SaveAsPNG(	reqData, alpacaErrMsg, "saveaspng");
+		Get_SaveAsRAW(	reqData, alpacaErrMsg, "saveasraw");
+
 		if (strlen(cAuxTextTag) > 0)
 		{
 			cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(mySocket,
@@ -8484,71 +8658,75 @@ char				textBuffer[128];
 
 	#ifdef _ENABLE_IMU_
 		//===============================================================
+		//*	make sure its plugged in and working
+		if (IMU_IsAvailable())
+		{
 		int		imuRetCode;
 		double	imuHeading;
 		double	imuRoll;
 		double	imuPitch;
 
-		imuRetCode	=	IMU_Read_Euler(&imuHeading, &imuRoll, &imuPitch);
-		if (imuRetCode == 0)
-		{
-			cBytesWrittenForThisCmd	+=	JsonResponse_Add_Double(	mySocket,
+			imuRetCode	=	IMU_Read_Euler(&imuHeading, &imuRoll, &imuPitch);
+			if (imuRetCode == 0)
+			{
+				cBytesWrittenForThisCmd	+=	JsonResponse_Add_Double(	mySocket,
+																		reqData->jsonTextBuffer,
+																		kMaxJsonBuffLen,
+																		"IMU-Heading",
+																		imuHeading,
+																		INCLUDE_COMMA);
+				cBytesWrittenForThisCmd	+=	JsonResponse_Add_Double(	mySocket,
+																		reqData->jsonTextBuffer,
+																		kMaxJsonBuffLen,
+																		"IMU-Roll",
+																		imuRoll,
+																		INCLUDE_COMMA);
+				cBytesWrittenForThisCmd	+=	JsonResponse_Add_Double(	mySocket,
+																		reqData->jsonTextBuffer,
+																		kMaxJsonBuffLen,
+																		"IMU-Pitch",
+																		imuPitch,
+																		INCLUDE_COMMA);
+			}
+			else
+			{
+				cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(mySocket,
 																	reqData->jsonTextBuffer,
 																	kMaxJsonBuffLen,
-																	"IMU-Heading",
-																	imuHeading,
+																	"IMU-Failure",
+																	"Failed to read IMU Euler data",
 																	INCLUDE_COMMA);
-			cBytesWrittenForThisCmd	+=	JsonResponse_Add_Double(	mySocket,
-																	reqData->jsonTextBuffer,
-																	kMaxJsonBuffLen,
-																	"IMU-Roll",
-																	imuRoll,
-																	INCLUDE_COMMA);
-			cBytesWrittenForThisCmd	+=	JsonResponse_Add_Double(	mySocket,
-																	reqData->jsonTextBuffer,
-																	kMaxJsonBuffLen,
-																	"IMU-Pitch",
-																	imuPitch,
-																	INCLUDE_COMMA);
-		}
-		else
-		{
-			cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(mySocket,
+			}
+
+			//*	now do the calibration status
+			cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	mySocket,
 																reqData->jsonTextBuffer,
 																kMaxJsonBuffLen,
-																"IMU-Failure",
-																"Failed to read IMU Euler data",
+																"IMU-Cal-Gyro",
+																IMU_Get_Calibration(kIMU_Gyro),
+																INCLUDE_COMMA);
+
+			cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	mySocket,
+																reqData->jsonTextBuffer,
+																kMaxJsonBuffLen,
+																"IMU-Cal-Accel",
+																IMU_Get_Calibration(kIMU_Accelerometer),
+																INCLUDE_COMMA);
+
+			cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	mySocket,
+																reqData->jsonTextBuffer,
+																kMaxJsonBuffLen,
+																"IMU-Cal-Magn",
+																IMU_Get_Calibration(kIMU_Magnetometer),
+																INCLUDE_COMMA);
+
+			cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	mySocket,
+																reqData->jsonTextBuffer,
+																kMaxJsonBuffLen,
+																"IMU-Cal-Sys",
+																IMU_Get_Calibration(kIMU_System),
 																INCLUDE_COMMA);
 		}
-
-		//*	now do the calibration status
-		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	mySocket,
-															reqData->jsonTextBuffer,
-															kMaxJsonBuffLen,
-															"IMU-Cal-Gyro",
-															IMU_Get_Calibration(kIMU_Gyro),
-															INCLUDE_COMMA);
-
-		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	mySocket,
-															reqData->jsonTextBuffer,
-															kMaxJsonBuffLen,
-															"IMU-Cal-Accel",
-															IMU_Get_Calibration(kIMU_Accelerometer),
-															INCLUDE_COMMA);
-
-		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	mySocket,
-															reqData->jsonTextBuffer,
-															kMaxJsonBuffLen,
-															"IMU-Cal-Magn",
-															IMU_Get_Calibration(kIMU_Magnetometer),
-															INCLUDE_COMMA);
-
-		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	mySocket,
-															reqData->jsonTextBuffer,
-															kMaxJsonBuffLen,
-															"IMU-Cal-Sys",
-															IMU_Get_Calibration(kIMU_System),
-															INCLUDE_COMMA);
 	#endif // _ENABLE_IMU_
 
 		//*	info about the telescope
@@ -8636,6 +8814,7 @@ char				textBuffer[128];
 	return(alpacaErrCode);
 }
 
+
 //*****************************************************************************
 bool	CameraDriver::GetCmdNameFromMyCmdTable(const int cmdNumber, char *comandName, char *getPut)
 {
@@ -8715,7 +8894,7 @@ void	CameraDriver::DumpCameraProperties(const char *callingFunctionName)
 #define		kMandel_FarBottom	1.2
 #define		kMandel_Width		(kMandel_FarRight - kMandel_FarLeft)
 #define		kMandel_Height		(kMandel_FarBottom - kMandel_FarTop)
-#define		kQmax				3000
+#define		kQmax				8000
 #define		kStartColor			1
 #define		kMaxItterations		512
 
@@ -8806,45 +8985,61 @@ int			row;
 int			col;
 int			pixelIndex;
 uint32_t	rgbColor;
-//	CONSOLE_DEBUG(__FUNCTION__);
 
-	InitColorTable();
-
-	deltaP	=	(XMax - XMin) / imageWidth;
-	deltaQ	=	(YMax - YMin) / imageHeight;
-
-	QQQ[0]	=	YMin;
-	for (row = 1; row <= imageHeight; row++)
+	CONSOLE_DEBUG(__FUNCTION__);
+	if (imaageDataPtr != NULL)
 	{
-		QQQ[row]	=	QQQ[row-1] + deltaQ;
-	}
 
-	for (col=0; col < imageWidth; col++)
-	{
-		PPP	=	XMin + (deltaP * col);
+		InitColorTable();
 
-		for (row=0; row < imageHeight; row++)
+		deltaP	=	(XMax - XMin) / imageWidth;
+		deltaQ	=	(YMax - YMin) / imageHeight;
+
+		QQQ[0]	=	YMin;
+		for (row = 1; row <= imageHeight; row++)
 		{
-			QQQtemp	=	QQQ[row];
-			color	=	CalculateMandlebrotPixel(PPP, QQQtemp);
+			QQQ[row]	=	QQQ[row-1] + deltaQ;
+		}
 
-			//*	set the pixel value
-			switch(bytesPerPixel)
+		for (col=0; col < imageWidth; col++)
+		{
+			PPP	=	XMin + (deltaP * col);
+
+			for (row=0; row < imageHeight; row++)
 			{
-				case 1:
-					pixelIndex					=	(row * imageWidth) + col;
-					imaageDataPtr[pixelIndex]	=	color;
-					break;
+				QQQtemp	=	QQQ[row];
+				color	=	CalculateMandlebrotPixel(PPP, QQQtemp);
 
-				case 3:
-					pixelIndex						=	(row * 3 * imageWidth) + (col * 3);
-					rgbColor						=	gColorTable[color];
-					imaageDataPtr[pixelIndex + 0]	=	(rgbColor >> 16) & 0x00ff;
-					imaageDataPtr[pixelIndex + 1]	=	(rgbColor >> 8) & 0x00ff;
-					imaageDataPtr[pixelIndex + 2]	=	(rgbColor) & 0x00ff;
-					break;
+				//*	set the pixel value
+				switch(bytesPerPixel)
+				{
+					case 1:
+						pixelIndex					=	(row * imageWidth) + col;
+						imaageDataPtr[pixelIndex]	=	color;
+						break;
+
+
+					//*	16 bit mono
+					case 2:
+						pixelIndex					=	(row * 2 * imageWidth) + (col * 3);
+						imaageDataPtr[pixelIndex++]	=	(color & 0x00ff);
+						imaageDataPtr[pixelIndex++]	=	((color & 0x00ffff) >> 8) & 0x00ff;
+						break;
+
+					case 3:
+						pixelIndex						=	(row * 3 * imageWidth) + (col * 3);
+						rgbColor						=	gColorTable[color];
+						imaageDataPtr[pixelIndex + 0]	=	(rgbColor >> 16) & 0x00ff;
+						imaageDataPtr[pixelIndex + 1]	=	(rgbColor >> 8) & 0x00ff;
+						imaageDataPtr[pixelIndex + 2]	=	(rgbColor) & 0x00ff;
+						break;
+				}
 			}
 		}
+	}
+	else
+	{
+		CONSOLE_DEBUG("imaageDataPtr is NULL!!!!!!!!!!!!!!!!!!!!!!!")
 	}
 }
 
@@ -8852,8 +9047,6 @@ static int	gMandlebrotCount	=	0;
 //*****************************************************************************
 void	CameraDriver::CreateFakeImageData(unsigned char *cameraDataPtr, int imageWidth, int imageHeight, int bytesPerPixel)
 {
-
-#if 1
 double	leftEdge;
 double	rightEdge;
 double	topEdge;
@@ -8911,80 +9104,6 @@ double	mandleScale;
 									bottomEdge);
 	}
 	gMandlebrotCount++;
-#else
-int			iii;
-int			jjj;
-int			pixelIndex;
-double		sinValue;
-double		periodWidth;
-double		xFraction;
-int			pixelValueInt;
-
-	CONSOLE_DEBUG(__FUNCTION__);
-	CONSOLE_DEBUG_W_NUM("imageWidth\t\t=",		imageWidth);
-	CONSOLE_DEBUG_W_NUM("imageHeight\t=",		imageHeight);
-	CONSOLE_DEBUG_W_NUM("bytesPerPixel\t=",		bytesPerPixel);
-
-//	grnValue	=	rand() % 64;
-//	bluValue	=	rand() % 64;
-
-	if (cameraDataPtr != NULL)
-	{
-		periodWidth		=	imageWidth / 4;
-		for (jjj = 0; jjj< imageHeight; jjj++)
-		{
-			pixelIndex	=	jjj * imageWidth * bytesPerPixel;
-			for (iii = 0; iii< imageWidth; iii++)
-			{
-				xFraction	=	((iii + jjj) * 1.0) / periodWidth;
-				sinValue	=	sin(xFraction * (2 * M_PI));
-				switch(bytesPerPixel)
-				{
-					//*	8 bit mono
-					case 1:
-						pixelValueInt				=	128 + (127 * sinValue);
-						cameraDataPtr[pixelIndex++]	=	pixelValueInt & 0x00ff;
-						break;
-
-					//*	16 bit mono
-					case 2:
-					//	pixelValueInt				=	32768 + (32700 * sinValue);
-						if (iii < 10)
-						{
-							pixelValueInt			=	65530;
-						}
-						else
-						{
-							//*	this one puts a vertical skew on the image
-						//	pixelValueInt			=	32768 + ((100 * iii) + jjj);
-
-							//*	this one makes the image variation straight up and down
-							pixelValueInt			=	32768 + ((100 * iii));
-						}
-						cameraDataPtr[pixelIndex++]	=	(pixelValueInt & 0x00ff);
-						cameraDataPtr[pixelIndex++]	=	((pixelValueInt & 0x00ffff) >> 8) & 0x00ff;
-						break;
-
-					//*	RGB
-					case 3:
-						pixelValueInt				=	128 + (127 * sinValue);
-//						cameraDataPtr[pixelIndex++]	=	pixelValueInt & 0x00ff;
-//						cameraDataPtr[pixelIndex++]	=	(255 - pixelValueInt) & 0x00ff;
-//						cameraDataPtr[pixelIndex++]	=	0;
-//
-						cameraDataPtr[pixelIndex++]	=	(iii / 2) & 0x00ff;
-						cameraDataPtr[pixelIndex++]	=	(iii / 4) & 0x00ff;
-						cameraDataPtr[pixelIndex++]	=	(jjj / 2) & 0x00ff;
-						break;
-
-					default:
-						CONSOLE_ABORT(__FUNCTION__);
-						break;
-				}
-			}
-		}
-	}
-#endif // 1
 }
 
 //*****************************************************************************
@@ -9015,14 +9134,14 @@ bool	foundFlag	=	true;
 		case kCmd_Camera_ccdtemperature:		//*	Returns the current CCD temperature
 		case kCmd_Camera_cooleron:				//*	Returns the current cooler on/off state.
 												//*	Turns the camera cooler on and off
-		case kCmd_Camera_coolerpower:			//*	Returns the present cooler power level
+		case kCmd_Camera_CoolerPower:			//*	Returns the present cooler power level
 		case kCmd_Camera_electronsperadu:		//*	Returns the gain of the camera
 		case kCmd_Camera_exposuremax:			//*	Returns the maximum exposure time supported by StartExposure.
 		case kCmd_Camera_exposuremin:			//*	Returns the Minimium exposure time
 		case kCmd_Camera_exposureresolution:	//*	Returns the smallest increment in exposure time supported by StartExposure.
 		case kCmd_Camera_fastreadout:			//*	Returns whether Fast Readout Mode is enabled.
 												//*	Sets whether Fast Readout Mode is enabled.
-		case kCmd_Camera_fullwellcapacity:		//*	Reports the full well capacity of the camera
+		case kCmd_Camera_FullWellCapacity:		//*	Reports the full well capacity of the camera
 		case kCmd_Camera_gain:					//*	Returns the camera's gain
 												//*	Sets the camera's gain.
 		case kCmd_Camera_gainmax:				//*	Maximum value of Gain
@@ -9033,7 +9152,7 @@ bool	foundFlag	=	true;
 		case kCmd_Camera_imagearray:			//*	Returns an array of integers containing the exposure pixel values
 		case kCmd_Camera_imagearrayvariant:		//*	Returns an array of int containing the exposure pixel values
 		case kCmd_Camera_imageready:			//*	Indicates that an image is ready to be downloaded
-		case kCmd_Camera_ispulseguiding:		//*	Indicates that the camera is pulse guideing.
+		case kCmd_Camera_IsPulseGuiding:		//*	Indicates that the camera is pulse guideing.
 		case kCmd_Camera_lastexposureduration:	//*	Duration of the last exposure
 		case kCmd_Camera_lastexposurestarttime:	//*	Start time of the last exposure in FITS standard format.
 		case kCmd_Camera_maxadu:				//*	Camera's maximum ADU value
@@ -9049,8 +9168,8 @@ bool	foundFlag	=	true;
 		case kCmd_Camera_offsetmin:				//*	Returns the Minimum value of offset.
 		case kCmd_Camera_offsets:				//*	Returns List of offset names supported by the camera
 		case kCmd_Camera_percentcompleted:		//*	Indicates percentage completeness of the current operation
-		case kCmd_Camera_pixelsizeX:			//*	Width of CCD chip pixels (microns)
-		case kCmd_Camera_pixelsizeY:			//*	Height of CCD chip pixels (microns)
+		case kCmd_Camera_PixelSizeX:			//*	Width of CCD chip pixels (microns)
+		case kCmd_Camera_PixelSizeY:			//*	Height of CCD chip pixels (microns)
 		case kCmd_Camera_readoutmode:			//*	Indicates the canera's readout mode as an index into the array ReadoutModes
 												//*	Set the camera's readout mode
 		case kCmd_Camera_readoutmodes:			//*	List of available readout modes
@@ -9072,24 +9191,20 @@ bool	foundFlag	=	true;
 
 		//=================================================================
 		//*	commands added that are not part of Alpaca
-
 		case kCmd_Camera_autoexposure:		strcpy(agumentString, "autoexposure=BOOL");		break;
 		case kCmd_Camera_displayimage:		strcpy(agumentString, "displayImage=BOOL");		break;
-		case kCmd_Camera_exposuretime:		strcpy(agumentString, "Duration=FLOAT");		break;
+		case kCmd_Camera_ExposureTime:		strcpy(agumentString, "duration=FLOAT");		break;
 		case kCmd_Camera_filenameoptions:	strcpy(agumentString, "includecamera=BOOL");	break;
 		case kCmd_Camera_flip:				strcpy(agumentString, "flip=INT (0,1,2,3)");	break;
-		case kCmd_Camera_livemode:			strcpy(agumentString, "Livemode=BOOL");			break;
-
-		case kCmd_Camera_settelescopeinfo:	strcpy(agumentString, "RefID,Telescope,Focuser,Filterwheel,Object,Prefix,Suffix,auxtext");
-			break;
-		case kCmd_Camera_sidebar:			strcpy(agumentString, "Sidebar=true/false/left/right");
-			break;
-		case kCmd_Camera_saveallimages:		strcpy(agumentString, "saveallimages=BOOL");
-			break;
-		case kCmd_Camera_startsequence:		strcpy(agumentString, "Count=INT, Delay=FLOAT, DeltaDuration=FLOAT");
-			break;
-		case kCmd_Camera_startvideo:		strcpy(agumentString, "recordtime=FLOAT");
-			break;
+		case kCmd_Camera_livemode:			strcpy(agumentString, "livemode=BOOL");			break;
+		case kCmd_Camera_settelescopeinfo:	strcpy(agumentString, "RefID,Telescope,Focuser,Filterwheel,Object,Prefix,Suffix,auxtext");			break;
+		case kCmd_Camera_saveallimages:		strcpy(agumentString, "saveallimages=BOOL");						break;
+		case kCmd_Camera_saveasFITS:		strcpy(agumentString, "saveasfits=BOOL");							break;
+		case kCmd_Camera_saveasJPEG:		strcpy(agumentString, "saveasjpeg=BOOL");							break;
+		case kCmd_Camera_saveasPNG:			strcpy(agumentString, "saveaspng=BOOL");							break;
+		case kCmd_Camera_saveasRAW:			strcpy(agumentString, "saveasraw=BOOL");							break;
+		case kCmd_Camera_startsequence:		strcpy(agumentString, "count=INT, delay=FLOAT, deltaduration=FLOAT");	break;
+		case kCmd_Camera_startvideo:		strcpy(agumentString, "recordtime=FLOAT");								break;
 
 
 #ifdef _ENABLE_FITS_
@@ -9098,6 +9213,7 @@ bool	foundFlag	=	true;
 		case kCmd_Camera_framerate:
 		case kCmd_Camera_filelist:
 		case kCmd_Camera_rgbarray:
+		case kCmd_Camera_savedimages:
 		case kCmd_Camera_savenextimage:
 		case kCmd_Camera_stopvideo:
 		case kCmd_Camera_readall:

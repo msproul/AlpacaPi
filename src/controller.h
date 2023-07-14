@@ -14,7 +14,7 @@
 
 #ifndef _ARPA_INET_H
 	#include	<arpa/inet.h>
-#endif // _ARPA_INET_H
+#endif
 
 //	#include	"/usr/include/opencv4/opencv2/highgui.hpp"
 //=============================================================================
@@ -23,6 +23,7 @@
 //	#include	"opencv2/core.hpp"
 	#include	<opencv2/opencv.hpp>
 	#include	<opencv2/core.hpp>
+//	#include	<opencv2/highgui.hpp>
 
 //EVENT_FLAG_CTRLKEY
 	#ifndef _USE_OPENCV_CPP_
@@ -39,20 +40,25 @@
 
 #include	"json_parse.h"
 
-
+//-------------------------------------
 #ifndef	_ALPACA_DEFS_H_
 	#include	"alpaca_defs.h"
 #endif
-
-
-
+//-------------------------------------
+#ifndef _DISCOVERY_LIB_H_
+	#include	"discovery_lib.h"
+#endif
+//-------------------------------------
 #ifndef _WINDOW_TAB_H
 	#include	"windowtab.h"
-#endif // _WINDOW_TAB_H
-
-
+#endif
+//-------------------------------------
 #ifndef	_WIDGET_H_
 	#include	"widget.h"
+#endif
+//-------------------------------------
+#ifndef _ALPACA_HELPER_H_
+	#include	"alpacadriver_helper.h"
 #endif
 
 
@@ -102,7 +108,9 @@ extern	char	gDownloadFilePath[];
 	{									\
 		delete objectPtr;				\
 		objectPtr	=	NULL;			\
+		cTabsDeleted++;					\
 	}
+
 
 
 #define	kMaxCapabilities	50
@@ -163,10 +171,14 @@ class Controller
 		//
 		// Construction
 		//
-				Controller(	const char	*argWindowName,
-							const int	xSize,
-							const int	ySize);
+				Controller(	const char		*argWindowName,
+							const int		xSize,
+							const int		ySize,
+							bool			showWindow = true,
+							TYPE_REMOTE_DEV	*alpacaDevice=NULL);
 		virtual	~Controller(void);
+				void	ShowWindow(void);
+				void	HideWindow(void);
 				void	CheckConnectedState(void);
 		virtual	void	AlpacaDisplayErrorMessage(const char *errorMsgString);
 
@@ -183,6 +195,10 @@ class Controller
 				void	ProcessTabClick(const int tabIdx);
 
 				void	SetCurrentTab(const int tabIdx);
+				void	SetDeviceStateTabInfo(	const int	tabNumber,
+												const int	nameStartWidgetIdx,
+												const int	valueStartWidgetIdx,
+												const int	statusWidgetIdx);
 
 
 				void	DrawOneWidget(const int widgetIdx);
@@ -252,6 +268,7 @@ class Controller
 				void	SetWidgetHighlighted(	const int tabNum, const int widgetIdx, bool highlighted);
 				void	SetWidgetProgress(		const int tabNum, const int widgetIdx, const int currPosition, const int totalValue);
 
+		virtual	void	UpdateConnectedStatusIndicator(void);
 		virtual	void	UpdateWindowTabColors(void);
 
 
@@ -285,21 +302,24 @@ class Controller
 		virtual	void	RefreshWindow(void);
 		//======================================================================
 		//*	Low Level draw routines
-		void		LLD_DrawCString(	const int xx, const int yy, const char *textString, const int fontIndex=1);
-		void		LLD_FrameEllipse(	const int xCenter, int yCenter, int xRadius, int yRadius);
-		void		LLD_FrameRect(		const int left, const int top, const int width, const int height, const int lineWidth=1);
-		void		LLD_FrameRect(		cv::Rect *theRect);
-		void		LLD_FillRect(		const int left, const int top, const int width, const int height);
-		void		LLD_FillRect(		cv::Rect *theRect);
+		void		LLG_DrawCString(	const int xx, const int yy, const char *textString, const int fontIndex=1);
+		void		LLG_FrameEllipse(	const int xCenter, int yCenter, int xRadius, int yRadius);
+		void		LLG_FrameRect(		const int left, const int top, const int width, const int height, const int lineWidth=1);
+		void		LLG_FrameRect(		cv::Rect *theRect);
+		void		LLG_FillRect(		const int left, const int top, const int width, const int height);
+		void		LLG_FillRect(		cv::Rect *theRect);
 
-		void		LLD_FillEllipse(	const int xCenter, const int yCenter, const int xRadius, int const yRadius);
-		void		LLD_FloodFill(		const int xxx, const int yyy, const int color);
-		int			LLD_GetTextSize(	const char *textString, const int fontIndex);
-		void		LLD_LineTo(			const int xx, const int yy);
-		void		LLD_MoveTo(			const int xx, const int yy);
-		void		LLD_PenSize(		const int newLineWidth);
-//+		void		LLD_Putpixel(		const int xx, const int yy, const int theColor);
-//+		void		LLD_SetColor(		const int theColor);
+		void		LLG_FillEllipse(	const int xCenter, const int yCenter, const int xRadius, int const yRadius);
+		void		LLG_FloodFill(		const int xxx, const int yyy, const int color);
+		int			LLG_GetTextSize(	const char *textString, const int fontIndex);
+		void		LLG_LineTo(			const int xx, const int yy);
+		void		LLG_MoveTo(			const int xx, const int yy);
+		void		LLG_PenSize(		const int newLineWidth);
+//+		void		LLG_Putpixel(		const int xx, const int yy, const int theColor);
+//+		void		LLG_SetColor(		const int theColor);
+
+		TYPE_DEVICETYPE	cAlpacaDeviceType;
+		uint32_t		cWindowType;		//*	4 letter hex value
 
 #if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 		cv::Mat		*cOpenCV_matImage;
@@ -327,8 +347,11 @@ class Controller
 		WindowTab	*cCurrentTabObjPtr;
 		WindowTab	*cWindowTabs[kMaxTabs];
 
+		int			cDriverInfoTabNum;
+
 		TYPE_WIDGET	cTabList[kMaxTabs];
 		int			cTabCount;
+		int			cTabsDeleted;		//*	used for checking for memory leaks
 
 		bool		cUpdateWindow;
 		char		cWindowName[256];
@@ -349,16 +372,23 @@ class Controller
 		int			cCurrentMouseX;
 		int			cCurrentMouseY;
 
-
 		//**********************************************
 		//*	Alpaca stuff
 		bool				cReadStartup;
 		bool				cOnLine;
 		bool				cHas_readall;
+		bool				cHas_DeviceState;
 		bool				cHas_temperaturelog;
 		bool				cForceAlpacaUpdate;
+		int					cDeviceStateReadCnt;
 		TYPE_ASCOM_STATUS	cLastAlpacaErrNum;
 		char				cLastAlpacaErrStr[512];
+
+		//*	these are numbers for updating DeviceStatWindow
+		int					cDeviceStateTabNum;
+		int					cDeviceStateNameStart;
+		int					cDeviceStateValueStart;
+		int					cDeviceStateStats;
 
 		TYPE_CommonProperties	cCommonProp;
 
@@ -373,7 +403,9 @@ class Controller
 		int					cAlpacaDevNum;
 		int					cReadFailureCnt;
 		bool				cFirstDataRead;
+		uint32_t			cContlerCreated_milliSecs;
 		uint32_t			cLastUpdate_milliSecs;
+		uint32_t			cUpdateDelta_secs;		//*	time between updates for this controller
 
 		//*	alpacapi extra information
 		char				cRemote_Platform[128];
@@ -386,24 +418,43 @@ class Controller
 		uint32_t			cLastDownload_Millisecs;
 		double				cLastDownload_MegaBytesPerSec;
 
+		virtual	void	UpdateStartupData(void);
+		virtual	void	UpdateStatusData(void);
+		virtual	void	UpdateOnlineStatus(void);
 
-#ifdef _CONTROLLER_USES_ALPACA_
+
+
+				void	SetCommandLookupTable(TYPE_CmdEntry *newLookupTable);
+				void	SetAlternateLookupTable(TYPE_CmdEntry *newLookupTable);
+	TYPE_CmdEntry		*cCommandEntryPtr;
+	TYPE_CmdEntry		*cAlternateEntryPtr;
+
 
 //------------------------------------------------------------
-				bool	AlpacaSetConnected(const char *deviceTypeStr, const bool newConnectedState=true);
-		virtual	void	UpdateSupportedActions(void);
-
-				bool	AlpacaGetCommonProperties_OneAAT(const char *deviceTypeStr);
-				bool	AlpacaGetCommonConnectedState(const char *deviceTypeStr);
-		virtual	void	UpdateCommonProperties(void);
-
-
-		virtual	bool	AlpacaGetStartupData(void);
+#ifdef _CONTROLLER_USES_ALPACA_
+	private:
+				void	GetStartUpData(void);
+				bool	AlpacaGetStatus(void);
+	public:
 				bool	AlpacaGetSupportedActions(		sockaddr_in	*deviceAddress,
 														int			devicePort,
 														const char	*deviceTypeStr,
 														const int	deviceNum);
 				bool	AlpacaGetSupportedActions(		const char *deviceTypeStr, const int deviceNum);
+//	public:
+				void	ForceAlpacaUpdate(void);
+		virtual	void	GetStartUpData_SubClass(void);
+		virtual	void	GetStatus_SubClass(void);
+
+				bool	AlpacaSetConnected(const char *deviceTypeStr, const bool newConnectedState=true);
+		virtual	void	UpdateSupportedActions(void);
+				bool	AlpacaGetCommonProperties_OneAAT(const char *deviceTypeStr);
+		virtual	bool	AlpacaGetStartupData_OneAAT(void);
+				bool	AlpacaGetCommonConnectedState(const char *deviceTypeStr);
+		virtual	void	UpdateCommonProperties(void);
+
+
+		virtual	bool	AlpacaGetStartupData(void);
 		virtual	void	AlpacaProcessSupportedActions(	const char	*deviceTypeStr,
 														const int	deviveNum,
 														const char	*valueString);
@@ -411,9 +462,22 @@ class Controller
 															char			*errorMsg,
 															bool			reportError=false);
 
+				bool	AlpacaCheckForDeviceState(void);
+				bool	AlpacaGetStatus_DeviceState(void);
+				bool	AlpacaGetStatus_DeviceState(	const char	*deviceTypeStr,
+														const int deviceNum);
 
+				bool	AlpacaGetStatus_DeviceState(	sockaddr_in	*deviceAddress,
+														int			devicePort,
+														const char	*deviceTypeStr,
+														const int	deviceNum,
+														const bool	enableDebug=false);
+		virtual	void	UpdateDeviceStateEntry(const int index, const char *nameString, const char *valueString);
+
+				int		LookupCmdInCmdTable(const char *commandString, TYPE_CmdEntry *commandTable, TYPE_CmdEntry *alternateTable = NULL);
 				bool	AlpacaGetStatus_ReadAll(	const char	*deviceTypeStr,
-													const int deviceNum);
+													const int	deviceNum,
+													const bool	enableDebug=false);
 
 				bool	AlpacaGetStatus_ReadAll(	sockaddr_in	*deviceAddress,
 													int			devicePort,
@@ -422,15 +486,24 @@ class Controller
 													const bool	enableDebug=false);
 
 
-		virtual	void	AlpacaProcessReadAll(		const char	*deviceTypeStr,
+		virtual	bool	AlpacaProcessReadAll(		const char	*deviceTypeStr,
 													const int	deviceNum,
 													const char	*keywordString,
+													const char	*valueString);
+
+		virtual	bool	AlpacaProcessReadAllIdx(	const char	*deviceTypeStr,
+													const int	deviceNum,
+													const int	keywordEnum,
 													const char	*valueString);
 
 				bool	AlpacaProcessReadAll_Common(const char	*deviceTypeStr,
 													const int	deviceNum,
 													const char	*keywordString,
 													const char	*valueString);
+				bool	AlpacaProcessReadAll_CommonIdx(const char	*deviceTypeStr,
+														const int	deviceNum,
+														const int	keywordEnum,
+														const char	*valueString);
 		virtual	void	UpdateDownloadProgress(const int unitsRead, const int totalUnits);
 
 				void	UpdateConnectedIndicator(const int tabNum, const int widgetNum);
@@ -532,6 +605,8 @@ class Controller
 													const int	alpacaDeviceNumber,
 													double		*temperatureLog,
 													const int	maxBufferSize);
+				void	Alpaca_ProcessTempLogData(const char *returnedData);
+
 
 				int		cGetCPUinfoCallCnt;		//*	mainly for debugging
 				void	UpdateAboutBoxRemoteDevice(const int tabNumber, const int widgetNumber);
@@ -544,6 +619,8 @@ class Controller
 				void				AddCapability(const char *capability, const char *value);
 		virtual	void				UpdateCapabilityList(void);
 				void				UpdateCapabilityListID(const int tabID, const int startBoxID, const int lastBoxID);
+		virtual	void				AlpacaGetCapabilities(void);
+		virtual	bool				AlpacaGetStatus_OneAAT(void);	//*	One At A Time
 				void				ReadOneDriverCapability(const char	*driverNameStr,
 															const char	*propertyStr,
 															const char	*reportedStr,
@@ -602,6 +679,7 @@ extern	char		gFullVersionString[];	//*	this is version of the controller softwar
 											//*	which may be different from the remote software
 extern	char		gFirstArgString[];
 extern	char		gWebBrowserCmdString[];
+extern	bool		gDebugBackgroundThread;
 
 #if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 	extern	cv::Mat		*gAlpacaLogoPtr;

@@ -22,12 +22,13 @@
 //*	May  1,	2020	<MLS> Added shutter and slaved to dome control display
 //*	May  1,	2020	<MLS> Added OpenShutter() & CloseShutter()
 //*	May  4,	2020	<MLS> Slave mode set/unset logic working now
-//*	May  7,	2020	<MLS> Added SendShutterCommand() to repleace multiple other cmds
+//*	May  7,	2020	<MLS> Added SendShutterCommand() to replace multiple other cmds
 //*	Jan 15,	2021	<MLS> Got clarification of SUPPORTEDACTIONS cmd, fixed hidden controls
 //*	Jan 24,	2021	<MLS> Added ParentIsSkyTravel flag
 //*	Jan 28,	2021	<MLS> Added -20,-10,-5,-1,+1,+5,+10,+20 buttons
 //*	Jan 28,	2021	<MLS> Added MoveDomeByAmount()
 //*	Jan 31,	2021	<MLS> Added graphical representation of dome position
+//*	Jun 19,	2023	<MLS> Added DeviceState to dome
 //*****************************************************************************
 
 #ifdef _ENABLE_CTRL_DOME_
@@ -99,8 +100,8 @@ int		my_cWidth;
 	//============================================
 	yLoc	=	SetTitleBox(kDomeBox_Title, kDomeBox_Connected, yLoc, "AlpacaPi Dome");
 
-	yLoc			+=	cTitleHeight;
-	yLoc			+=	2;
+//	yLoc			+=	cTitleHeight;
+//	yLoc			+=	2;
 
 #ifdef _ENABLE_SKYTRAVEL_
 int		domeGraphic_yLoc;
@@ -297,6 +298,7 @@ int		domeGraphic_yLoc;
 	//*	set up all the bottom stuff so that it is the same on all windowtabs
 	SetupWindowBottomBoxes(	kDomeBox_IPaddr,				//	ipaddrBox
 							kDomeBox_Readall,				//	readAllBox
+							kDomeBox_DeviceState,
 							kDomeBox_AlpacaErrorMsg,		//	errorMsgBox
 							kDomeBox_LastCmdString,			//	lastCmdWidgetIdx
 							-1, //kDomeBox_AlpacaLogo,		//	logoWidgetIdx
@@ -499,11 +501,11 @@ cv::Scalar	domeOpeningColor;
 	if (openCV_Image != NULL)
 	{
 		cOpenCV_Image	=	openCV_Image;
-		LLD_SetColor(W_WHITE);
+		LLG_SetColor(W_WHITE);
 		centerX		=	theWidget->left + (theWidget->height / 2);
 		centerY		=	theWidget->top + (theWidget->height / 2);
 		radius		=	theWidget->height / 3;
-		LLD_FillEllipse(centerX, centerY, radius, radius);
+		LLG_FillEllipse(centerX, centerY, radius, radius);
 
 		domeAzimuth_radians	=	RADIANS(domeAzimuth_degrees - 90.0);
 
@@ -521,10 +523,10 @@ cv::Scalar	domeOpeningColor;
 		pt2_X					=	centerLoc.x + (cos(doorEdgeAzimuth + M_PI) * radius);
 		pt2_Y					=	centerLoc.y + (sin(doorEdgeAzimuth + M_PI) * radius);
 
-		LLD_PenSize(2);
-		LLD_MoveTo(pt1_X, pt1_Y);
-		LLD_SetColor(W_DARKGRAY);
-		LLD_LineTo(pt2_X, pt2_Y);
+		LLG_PenSize(2);
+		LLG_MoveTo(pt1_X, pt1_Y);
+		LLG_SetColor(W_DARKGRAY);
+		LLG_LineTo(pt2_X, pt2_Y);
 
 
 		doorEdgeAzimuth			=	domeAzimuth_radians - doorOpeningHalfAngle;
@@ -536,10 +538,10 @@ cv::Scalar	domeOpeningColor;
 		pt2_X					=	centerLoc.x + (cos(doorEdgeAzimuth + M_PI) * radius);
 		pt2_Y					=	centerLoc.y + (sin(doorEdgeAzimuth + M_PI) * radius);
 
-		LLD_PenSize(3);
-		LLD_MoveTo(pt1_X, pt1_Y);
-		LLD_SetColor(W_DARKGRAY);
-		LLD_LineTo(pt2_X, pt2_Y);
+		LLG_PenSize(3);
+		LLG_MoveTo(pt1_X, pt1_Y);
+		LLG_SetColor(W_DARKGRAY);
+		LLG_LineTo(pt2_X, pt2_Y);
 
 		//*	build the point list for the opening
 		pointCntr				=	0;
@@ -689,10 +691,10 @@ CvPoint	pointLoc;
 		#endif
 	#endif // _USE_OPENCV_CPP_
 		//*	put the dark border around the dome
-		LLD_PenSize(5);
-		LLD_SetColor(W_DARKGRAY);
-		LLD_FrameEllipse(centerX, centerY, radius, radius);
-		LLD_PenSize(1);
+		LLG_PenSize(5);
+		LLG_SetColor(W_DARKGRAY);
+		LLG_FrameEllipse(centerX, centerY, radius, radius);
+		LLG_PenSize(1);
 	}
 
 }

@@ -51,9 +51,9 @@ WindowAlpacaUnit::WindowAlpacaUnit(	const int	xSize,
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-	cColor_CPU		=	LLD_GetColor(W_MAGENTA);
-	cColor_Camera	=	LLD_GetColor(W_YELLOW);
-	cColor_Focuser	=	LLD_GetColor(W_GREEN);
+	cColor_CPU		=	LLG_GetColor(W_MAGENTA);
+	cColor_Camera	=	LLG_GetColor(W_YELLOW);
+	cColor_Focuser	=	LLG_GetColor(W_GREEN);
 
 	SetupWindowControls();
 }
@@ -189,7 +189,7 @@ ControllerAlpacaUnit	*myParentCtrlPtr;
 					if (myParentCtrlPtr->cHasCamera && (myParentCtrlPtr->cCameraTempCnt > 0))
 					{
 						SetWidgetValid(kAlpacaUnit_Legend_Camera,	true);
-						LLD_SetColor(W_YELLOW);
+						LLG_SetColor(W_YELLOW);
 						DrawGraph(	&cWidgetList[widgetIdx],
 									myParentCtrlPtr->cCameraTempCnt,
 									myParentCtrlPtr->cCameraTempLog, false, 2);
@@ -197,14 +197,14 @@ ControllerAlpacaUnit	*myParentCtrlPtr;
 					if (myParentCtrlPtr->cHasFocuser && (myParentCtrlPtr->cFocusTempCnt > 0))
 					{
 						SetWidgetValid(kAlpacaUnit_Legend_Focuser,	true);
-						LLD_SetColor(W_GREEN);
+						LLG_SetColor(W_GREEN);
 						DrawGraph(	&cWidgetList[widgetIdx],
 									myParentCtrlPtr->cFocusTempCnt,
 									myParentCtrlPtr->cFocusTempLog, false, 2);
 					}
 					if (myParentCtrlPtr->cCPUTtempCnt > 0)
 					{
-						LLD_SetColor(W_MAGENTA);
+						LLG_SetColor(W_MAGENTA);
 						DrawGraph(		&cWidgetList[widgetIdx],
 										myParentCtrlPtr->cCPUTtempCnt,
 										myParentCtrlPtr->cCPUtempLog, true, 2);

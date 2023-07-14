@@ -28,6 +28,7 @@
 //*	Nov  4,	2022	<MLS> Added ResetFOVdata()
 //*	Nov  4,	2022	<MLS> Added FOV Rescan button
 //*	Mar 11,	2023	<MLS> Added aperture to FOV display
+//*	Jun 30,	2023	<MLS> Added AlpacaProcessReadAllIdx_Camera()
 //*****************************************************************************
 
 
@@ -48,7 +49,7 @@
 #include	"windowtab_fov.h"
 #include	"controller.h"
 #include	"controller_skytravel.h"
-
+#include	"camera_AlpacaCmds.h"
 
 
 #define	kFOVboxHeight	100
@@ -92,7 +93,7 @@ WindowTabFOV::~WindowTabFOV(void)
 struct stat	fileStatus;
 int			returnCode;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	//*	fstat - check for existence of file
 	returnCode	=	stat(kCameraFOVfileName, &fileStatus);
@@ -174,7 +175,7 @@ char	textString[80];
 	//	SetWidgetTextColor(		iii,	CV_RGB(255,	255,	255));
 		SetWidgetTextColor(		iii,	CV_RGB(0,	0,	0));
 
-		clmnHdr_xLoc	=	tabArray[iii - kFOVbox_ClmTitle1];;
+		clmnHdr_xLoc	=	tabArray[iii - kFOVbox_ClmTitle1];
 		clmnHdr_xLoc	+=	2;
 
 		iii++;
@@ -508,22 +509,26 @@ int					updateCount;
 
 
 
-					validData		=	skyTravelController->AlpacaGetSupportedActions(
-															&cRemoteDeviceList[iii].deviceAddress,
-															cRemoteDeviceList[iii].port,
-															"camera",
-															cRemoteDeviceList[iii].alpacaDeviceNum);
+					validData	=	skyTravelController->AlpacaGetSupportedActions(
+																	&cRemoteDeviceList[iii].deviceAddress,
+																	cRemoteDeviceList[iii].port,
+																	"camera",
+																	cRemoteDeviceList[iii].alpacaDeviceNum);
 
 					if (cCameraData[iii].HasReadAll)
 					{
 //						CONSOLE_DEBUG("Camera has READALL!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 						inet_ntop(AF_INET, &(cRemoteDeviceList[iii].deviceAddress.sin_addr), ipAddrStr, INET_ADDRSTRLEN);
 //						CONSOLE_DEBUG_W_STR(ipAddrStr, cCameraData[iii].CameraName);
+						skyTravelController->SetCommandLookupTable(gCameraCmdTable);
+						skyTravelController->SetAlternateLookupTable(gCameraExtrasTable);
 						validData		=	skyTravelController->AlpacaGetStatus_ReadAll(
 																	&cRemoteDeviceList[iii].deviceAddress,
 																	cRemoteDeviceList[iii].port,
 																	"camera",
 																	cRemoteDeviceList[iii].alpacaDeviceNum);
+						skyTravelController->SetCommandLookupTable(NULL);
+						skyTravelController->SetAlternateLookupTable(NULL);
 					}
 					else
 					{
@@ -844,53 +849,58 @@ int		myDevCount;
 //	SetWidgetBGColor(kAlpacaList_ClmTitle5,	((cSortColumn == 4) ? CV_RGB(255,	255,	255) : CV_RGB(128,	128,	128)));
 }
 
-
 //*****************************************************************************
-bool	WindowTabFOV::AlpacaProcessReadAll_Camera(	const int	deviceNum,
-													const char	*keywordString,
-													const char *valueString)
+bool	WindowTabFOV::AlpacaProcessReadAllIdx_Camera(	const int	deviceNum,
+														const int	keywordEnum,
+														const char *valueString)
 {
 bool	dataWasHandled;
 
-//	CONSOLE_DEBUG_W_2STR("json=",	keywordString, valueString);
+//	CONSOLE_DEBUG_W_NUM(__FUNCTION__, keywordEnum);
 	dataWasHandled	=	true;
-	if (cCurrentCamera != NULL)
+	switch(keywordEnum)
 	{
-		if (strcasecmp(keywordString, "cameraxsize") == 0)
-		{
+		case kCmd_Camera_camerastate:			//*	Returns the camera operational state.
+			break;
+
+		case kCmd_Camera_cameraxsize:			//*	Returns the width of the CCD camera chip.
 			cCurrentCamera->HasReadAll	=	true;
 			cCurrentCamera->CameraProp.CameraXsize	=	atoi(valueString);
-		}
-		else if (strcasecmp(keywordString, "cameraysize") == 0)
-		{
+			break;
+
+		case kCmd_Camera_cameraysize:			//*	Returns the height of the CCD camera chip.
 			cCurrentCamera->CameraProp.CameraYsize	=	atoi(valueString);
-		}
-		else if (strcasecmp(keywordString, "PixelSizeX") == 0)
-		{
+			break;
+
+		case kCmd_Camera_PixelSizeX:			//*	Width of CCD chip pixels (microns)
 			cCurrentCamera->CameraProp.PixelSizeX	=	AsciiToDouble(valueString);
-		}
-		else if (strcasecmp(keywordString, "PixelSizeY") == 0)
-		{
+			break;
+
+		case kCmd_Camera_PixelSizeY:			//*	Height of CCD chip pixels (microns)
 			cCurrentCamera->CameraProp.PixelSizeY	=	AsciiToDouble(valueString);
-		}
-		else if (strcasecmp(keywordString, "aperturediameter") == 0)
-		{
+			break;
+
+		//*	commands borrowed from the telescope device
+		case kCmd_Camera_ApertureArea:			//*	Returns the telescope's aperture.
+			break;
+
+		case kCmd_Camera_ApertureDiameter:		//*	Returns the telescope's effective aperture.
 			//*	the value is in meters
 			cCurrentCamera->Aperture_mm	=	AsciiToDouble(valueString) * 1000.0;
-		}
-		else if (strcasecmp(keywordString, "focallength") == 0)
-		{
+			break;
+
+		case kCmd_Camera_FocalLength:			//*	Returns the telescope's focal length in meters.
 			//*	the value is in meters
 			cCurrentCamera->FocalLen_mm	=	AsciiToDouble(valueString) * 1000.0;
-		}
+			break;
 
-	}
-	else
-	{
-		CONSOLE_ABORT(__FUNCTION__);
+		default:
+			dataWasHandled	=	true;
+			break;
 	}
 	return(dataWasHandled);
 }
+
 
 
 //*****************************************************************************

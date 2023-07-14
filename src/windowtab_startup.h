@@ -18,7 +18,11 @@ enum
 	kStartup_TitleOutline,
 
 	kStartup_TextBox1,
-	kStartup_TextBoxN = 22,
+	kStartup_TextBoxN = 23,
+	kStartup_CloseBtn,
+
+	kStartup_DumpBtn,
+
 	kStartup_AlpacaLogo,
 	kStartup_last
 };
@@ -38,6 +42,7 @@ class WindowTabStartup: public WindowTab
 		virtual	~WindowTabStartup(void);
 
 		virtual	void	SetupWindowControls(void);
+		virtual	void	ProcessButtonClick(const int buttonIdx, const int	flags);
 
 };
 

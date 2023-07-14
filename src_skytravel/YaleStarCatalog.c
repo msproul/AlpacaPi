@@ -233,6 +233,7 @@
 #include	"SkyStruc.h"
 #include	"SkyTravelConstants.h"
 #include	"helper_functions.h"
+#include	"controller_startup.h"
 
 #include	"StarCatalogHelper.h"
 

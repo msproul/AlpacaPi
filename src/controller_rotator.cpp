@@ -1,5 +1,5 @@
 //*****************************************************************************
-//*		controller_rotator.cpp		(c) 2022 by Mark Sproul
+//*		controller_rotator.cpp		(c) 2022-2023 by Mark Sproul
 //*
 //*
 //*
@@ -19,27 +19,26 @@
 //*	Edit History
 //*****************************************************************************
 //*	Oct  7,	2022	<MLS> Created controller_rotator.cpp
+//*	Jun 18,	2023	<MLS> Added UpdateSupportedActions() to rotator
+//*	Jun 23,	2023	<MLS> Removed RunBackgroundTasks(), using default in parent class
+//*	Jun 24,	2023	<MLS> Added DeviceState window to rotator controller
+//*	Jun 25,	2023	<MLS> Added AlpacaGetCapabilities() to rotator controller
 //*****************************************************************************
 
-
 #ifdef _ENABLE_CTRL_ROTATOR_
-
 
 #include	<stdio.h>
 #include	<stdlib.h>
 #include	<unistd.h>
 
-
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
-
-
-
 
 #include	"alpaca_defs.h"
 #include	"alpacadriver_helper.h"
 #include	"windowtab_rotator.h"
 #include	"windowtab_capabilities.h"
+#include	"windowtab_DeviceState.h"
 #include	"windowtab_drvrInfo.h"
 #include	"windowtab_about.h"
 
@@ -48,16 +47,18 @@
 
 #include	"controller.h"
 #include	"controller_rotator.h"
+#include	"rotator_AlpacaCmds.h"
+#include	"rotator_AlpacaCmds.cpp"
 
 #define	kWindowWidth	450
 #define	kWindowHeight	725
-
 
 //**************************************************************************************
 enum
 {
 	kTab_Rotator	=	1,
 	kTab_Capabilities,
+	kTab_DeviceState,
 	kTab_DriverInfo,
 	kTab_About,
 
@@ -67,29 +68,16 @@ enum
 
 //**************************************************************************************
 ControllerRotator::ControllerRotator(	const char			*argWindowName,
-										struct sockaddr_in	*deviceAddress,
-										const int			port,
-										const int			deviceNum)
-
-	:Controller(argWindowName, kWindowWidth,  kWindowHeight)
+										TYPE_REMOTE_DEV		*alpacaDevice)
+	:Controller(argWindowName, kWindowWidth,  kWindowHeight, true, alpacaDevice)
 {
 
-	cAlpacaDevNum			=	deviceNum;
-	cFirstDataRead			=	true;
-
 	memset((void *)&cRotatorProp, 0, sizeof(TYPE_RotatorProperties));
-
+	cFirstDataRead			=	true;
 	cLastUpdate_milliSecs	=	millis();
+	cDriverInfoTabNum		=	kTab_DriverInfo;
+	SetCommandLookupTable(gRotatorCmdTable);
 
-
-	strcpy(cAlpacaDeviceTypeStr,	"rotator");
-
-	if (deviceAddress != NULL)
-	{
-		cDeviceAddress	=	*deviceAddress;
-		cPort			=	port;
-		cValidIPaddr	=	true;
-	}
 	SetupWindowControls();
 
 	//*	display the IPaddres/port
@@ -119,6 +107,7 @@ ControllerRotator::~ControllerRotator(void)
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 	DELETE_OBJ_IF_VALID(cRotatorTabObjPtr);
 	DELETE_OBJ_IF_VALID(cCapabilitiesTabObjPtr);
+	DELETE_OBJ_IF_VALID(cDeviceStateTabObjPtr);
 	DELETE_OBJ_IF_VALID(cDriverInfoTabObjPtr);
 	DELETE_OBJ_IF_VALID(cAboutBoxTabObjPtr);
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, "Exit");
@@ -127,15 +116,14 @@ ControllerRotator::~ControllerRotator(void)
 //**************************************************************************************
 void	ControllerRotator::SetupWindowControls(void)
 {
-
 	CONSOLE_DEBUG(__FUNCTION__);
 
 	SetTabCount(kTab_Count);
 	SetTabText(kTab_Rotator,		"Rotator");
 	SetTabText(kTab_Capabilities,	"Capabilities");
+	SetTabText(kTab_DeviceState,	"Dev State");
 	SetTabText(kTab_DriverInfo,		"Driver Info");
 	SetTabText(kTab_About,			"About");
-
 
 	cRotatorTabObjPtr	=	new WindowTabRotator(cWidth, cHeight, cBackGrndColor, cWindowName);
 	if (cRotatorTabObjPtr != NULL)
@@ -150,6 +138,15 @@ void	ControllerRotator::SetupWindowControls(void)
 	{
 		SetTabWindow(kTab_Capabilities,	cCapabilitiesTabObjPtr);
 		cCapabilitiesTabObjPtr->SetParentObjectPtr(this);
+	}
+
+	//--------------------------------------------
+	cDeviceStateTabObjPtr		=	new WindowTabDeviceState(	cWidth, cHeight, cBackGrndColor, cWindowName);
+	if (cDeviceStateTabObjPtr != NULL)
+	{
+		SetTabWindow(kTab_DeviceState,	cDeviceStateTabObjPtr);
+		cDeviceStateTabObjPtr->SetParentObjectPtr(this);
+		SetDeviceStateTabInfo(kTab_DeviceState, kDeviceState_FirstBoxName, kDeviceState_FirstBoxValue, kDeviceState_Stats);
 	}
 
 	//--------------------------------------------
@@ -169,64 +166,39 @@ void	ControllerRotator::SetupWindowControls(void)
 }
 
 //**************************************************************************************
-void	ControllerRotator::RunBackgroundTasks(const char *callingFunction, bool enableDebug)
+void	ControllerRotator::UpdateStartupData(void)
 {
-uint32_t	currentMillis;
-uint32_t	deltaSeconds;
-bool		validData;
-bool		needToUpdate;
-
-	if (cReadStartup)
+	SetWidgetText(				kTab_Rotator,	kRotatorCtrl_Title,	cCommonProp.Name);
+	UpdateAboutBoxRemoteDevice(	kTab_About,		kAboutBox_CPUinfo);
+	if (cRotatorTabObjPtr != NULL)
 	{
-		CONSOLE_DEBUG_W_STR("cAlpacaDeviceTypeStr\t=", cAlpacaDeviceTypeStr);
-		AlpacaGetStartupData();
-		AlpacaGetCommonProperties_OneAAT(cAlpacaDeviceTypeStr);
-		UpdateAboutBoxRemoteDevice(kTab_About, kAboutBox_CPUinfo);
-
-		cReadStartup	=	false;
+		cRotatorTabObjPtr->UpdateProperties_Rotator(&cRotatorProp);
 	}
+	cUpdateWindow	=	true;
+}
 
+//**************************************************************************************
+void	ControllerRotator::UpdateConnectedStatusIndicator(void)
+{
+	UpdateConnectedIndicator(kTab_Rotator,		kRotatorCtrl_Connected);
+}
 
-	needToUpdate	=	false;
-	currentMillis	=	millis();
-	deltaSeconds	=	(currentMillis - cLastUpdate_milliSecs) / 1000;
-
-	if (cFirstDataRead || (deltaSeconds >= 5))
+//**************************************************************************************
+void	ControllerRotator::UpdateStatusData(void)
+{
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+	UpdateConnectedIndicator(kTab_Rotator,		kRotatorCtrl_Connected);
+	if (cRotatorTabObjPtr != NULL)
 	{
-		needToUpdate	=	true;
-	}
-	if (cRotatorProp.IsMoving && (deltaSeconds >= 1))
-	{
-		needToUpdate	=	true;
-	}
-	if (cForceAlpacaUpdate)
-	{
-		needToUpdate		=	true;
-		cForceAlpacaUpdate	=	false;
-	}
-
-	if (needToUpdate)
-	{
-		//*	is the IP address valid
-		if (cValidIPaddr)
-		{
-			validData	=	AlpacaGetStatus();
-			if (validData == false)
-			{
-				CONSOLE_DEBUG("Failed to get data");
-			}
-
-			UpdateConnectedIndicator(kTab_Rotator,		kRotatorCtrl_Connected);
-		}
+		cRotatorTabObjPtr->UpdateProperties_Rotator(&cRotatorProp);
 	}
 }
 
 //*****************************************************************************
-void	ControllerRotator::AlpacaProcessSupportedActions(const char	*deviceTypeStr,
-														const int	deviveNum,
-														const char	*valueString)
+void	ControllerRotator::AlpacaProcessSupportedActions(	const char	*deviceTypeStr,
+															const int	deviveNum,
+															const char	*valueString)
 {
-
 	if (strcasecmp(valueString, "readall") == 0)
 	{
 		cHas_readall	=	true;
@@ -242,16 +214,11 @@ void	ControllerRotator::AlpacaProcessSupportedActions(const char	*deviceTypeStr,
 //*****************************************************************************
 bool	ControllerRotator::AlpacaGetStartupData_OneAAT(void)
 {
-//SJP_Parser_t	jsonParser;
 bool			validData;
 char			alpacaString[128];
-//char			dataString[128];
-//int				jjj;
-//double			myDoubleValue;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG_W_STR("cAlpacaDeviceTypeStr\t=", cAlpacaDeviceTypeStr);
-
 
 	validData	=	AlpacaGetStringValue(cAlpacaDeviceTypeStr, "description",	NULL,	alpacaString);
 	if (validData)
@@ -259,47 +226,13 @@ char			alpacaString[128];
 		CONSOLE_DEBUG_W_STR("description\t=", alpacaString);
 		strcpy(cAlpacaVersionString, alpacaString);
 	}
-
-	ReadOneDriverCapability("rotator", "canreverse", "CanReverse", &cRotatorProp.CanReverse);
-
-
 	return(validData);
 }
 
 //*****************************************************************************
-bool	ControllerRotator::AlpacaGetStartupData(void)
+void	ControllerRotator::AlpacaGetCapabilities(void)
 {
-bool			validData;
-//int				jjj;
-
-	CONSOLE_DEBUG(__FUNCTION__);
-	//===============================================================
-	//*	get supportedactions
-	validData	=	AlpacaGetSupportedActions(cAlpacaDeviceTypeStr, cAlpacaDevNum);
-
-	if (validData)
-	{
-		SetWidgetValid(kTab_Rotator,	kRotatorCtrl_Readall,		cHas_readall);
-	}
-	else
-	{
-		CONSOLE_DEBUG("Read failure - supportedactions");
-		cReadFailureCnt++;
-	}
-
-	if (cHas_readall)
-	{
-		//*	use readall to get the startup data
-		validData	=	AlpacaGetStatus_ReadAll(cAlpacaDeviceTypeStr, cAlpacaDevNum);
-	}
-//-	else
-	{
-		validData	=	AlpacaGetStartupData_OneAAT();
-	}
-
-	cLastUpdate_milliSecs	=	millis();
-
-	return(validData);
+	ReadOneDriverCapability("rotator", "canreverse", "CanReverse", &cRotatorProp.CanReverse);
 }
 
 //*****************************************************************************
@@ -459,29 +392,73 @@ bool	previousOnLineState;
 }
 
 //*****************************************************************************
-void	ControllerRotator::AlpacaProcessReadAll(	const char	*deviceTypeStr,
+bool	ControllerRotator::AlpacaProcessReadAllIdx(	const char	*deviceTypeStr,
 													const int	deviceNum,
-													const char	*keywordString,
+													const int	keywordEnum,
 													const char	*valueString)
 {
+bool	dataWasHandled;
 
+	CONSOLE_DEBUG_W_NUM(__FUNCTION__, keywordEnum);
+	dataWasHandled	=	true;
+	switch(keywordEnum)
+	{
+		case kCmd_Rotator_canreverse:			//*	Indicates whether the Rotator supports the Reverse method.
+			cRotatorProp.CanReverse	=	IsTrueFalse(valueString);
+			break;
+
+		case kCmd_Rotator_ismoving:				//*	Indicates whether the focuser is currently moving.
+			cRotatorProp.IsMoving	=	IsTrueFalse(valueString);
+			break;
+
+		case kCmd_Rotator_mechanicalposition:	//*	Returns the rotator's mechanical current position.
+			cRotatorProp.MechanicalPosition	=	atof(valueString);
+			break;
+
+		case kCmd_Rotator_position:				//*	Returns the focuser's current position.
+			cRotatorProp.Position		=	atof(valueString);
+			break;
+
+		case kCmd_Rotator_reverse:				//*	Returns the rotator's Reverse state.
+			break;
+
+		case kCmd_Rotator_stepsize:				//*	Returns the minimum StepSize
+			cRotatorProp.StepSize		=	atof(valueString);
+			break;
+
+		case kCmd_Rotator_targetposition:		//*	Returns the destination position angle.
+			cRotatorProp.TargetPosition	=	atof(valueString);
+			break;
+
+		default:
+			dataWasHandled	=	false;
+			break;
+
+	}
+	CONSOLE_DEBUG_W_BOOL("dataWasHandled\t=", dataWasHandled);
+	return(dataWasHandled);
+}
+
+//*****************************************************************************
+void	ControllerRotator::UpdateSupportedActions(void)
+{
 //	CONSOLE_DEBUG(__FUNCTION__);
-//	CONSOLE_DEBUG_W_STR(keywordString, valueString);
-	if (strcasecmp(keywordString, "connected") == 0)
+
+	SetWidgetValid(kTab_Rotator,		kRotatorCtrl_Readall,		cHas_readall);
+	SetWidgetValid(kTab_Rotator,		kRotatorCtrl_DeviceState,	cHas_DeviceState);
+
+	SetWidgetValid(kTab_Capabilities,	kCapabilities_Readall,		cHas_readall);
+	SetWidgetValid(kTab_Capabilities,	kCapabilities_DeviceState,	cHas_DeviceState);
+
+	SetWidgetValid(kTab_DeviceState,	kDeviceState_Readall,		cHas_readall);
+	SetWidgetValid(kTab_DeviceState,	kDeviceState_DeviceState,	cHas_DeviceState);
+
+	SetWidgetValid(kTab_DriverInfo,		kDriverInfo_Readall,		cHas_readall);
+	SetWidgetValid(kTab_DriverInfo,		kDriverInfo_DeviceState,	cHas_DeviceState);
+
+	if (cHas_DeviceState == false)
 	{
-		cCommonProp.Connected	=  IsTrueFalse(valueString);
-	}
-	else if (strcasecmp(keywordString, "version") == 0)
-	{
-		//*	"version": "AlpacaPi - V0.2.2-beta build #32",
-		strcpy(cAlpacaVersionString, valueString);
-	}
-	else
-	{
-		AlpacaProcessReadAll_Common(	deviceTypeStr,
-										deviceNum,
-										keywordString,
-										valueString);
+		cDeviceStateTabObjPtr->SetDeviceStateNotSupported();
 	}
 }
 
@@ -493,7 +470,6 @@ void	ControllerRotator::UpdateCommonProperties(void)
 	SetWidgetText(kTab_DriverInfo,		kDriverInfo_DriverInfo,			cCommonProp.DriverInfo);
 	SetWidgetText(kTab_DriverInfo,		kDriverInfo_DriverVersion,		cCommonProp.DriverVersion);
 	SetWidgetNumber(kTab_DriverInfo,	kDriverInfo_InterfaceVersion,	cCommonProp.InterfaceVersion);
-
 }
 
 //**************************************************************************************
@@ -532,7 +508,7 @@ double			newDesiredPosition;
 		{
 			CONSOLE_DEBUG("AlpacaSendPutCmd(moveabsolute) failed!!!");
 		}
-		cForceAlpacaUpdate	=	true;
+		ForceAlpacaUpdate();
 	}
 	else
 	{
@@ -560,7 +536,7 @@ bool			validData;
 			CONSOLE_DEBUG("AlpacaSendPutCmd(move) failed!!!");
 		}
 
-		cForceAlpacaUpdate	=	true;
+		ForceAlpacaUpdate();
 	}
 	else
 	{

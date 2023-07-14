@@ -71,7 +71,6 @@ ControllerUSB::~ControllerUSB(void)
 	DELETE_OBJ_IF_VALID(cAboutBoxTabObjPtr);
 }
 
-
 //**************************************************************************************
 void	ControllerUSB::SetupWindowControls(void)
 {
@@ -106,7 +105,6 @@ void	ControllerUSB::SetupWindowControls(void)
 void	ControllerUSB::RunBackgroundTasks(const char *callingFunction, bool enableDebug)
 {
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
-
 }
 
 

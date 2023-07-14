@@ -54,7 +54,7 @@
 #define	kRC_OK				0xFF		//*	RC's successful one byte return status
 
 // This is value used to make a buffered move_by_vel command
-#define kSTEP_FOREVER       0x3000000
+#define	kSTEP_FOREVER		0x3000000
 
 // RC_get_status() return masks below:
 // Normal 0x00000000
@@ -83,7 +83,7 @@
 // Speed Error Limit Warning 0x01000000
 // Position Error Limit Warning 0x02000000
 
-/* servo_rc_utils.c */
+//* servo_rc_utils.c
 int RC_converse(uint8_t *cmdBuf, size_t cmdLen, uint8_t *retBuf, size_t retLen);
 int RC_get_curr_pos(uint8_t addr, uint8_t motor, int32_t *pos);
 int RC_get_curr_vel(uint8_t addr, uint8_t motor, int32_t *vel);

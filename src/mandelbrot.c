@@ -195,7 +195,7 @@ double		colorDbl;
 //*******************************************************************************
 uint32_t	clut8ColorComponents(int x)
 
-    -> (red: Double, green: Double, blue: Double)
+//	-> (red: Double, green: Double, blue: Double)
 {
 int			red;
 int			green;
@@ -212,9 +212,9 @@ uint32_t	resultColor;
 		// stored in reverse order (i.e. color #0 is white, (1.0, 1.0, 1.0)).
 		// Note that x == 215 would normally produce black, (0.0, 0.0, 0.0),
 		// but the palette deliberately puts that at the end.
-		red		=	Double(5 - (x / 36))    / 5.0;
+		red		=	Double(5 - (x / 36))	/ 5.0;
 		green	=	Double(5 - (x / 6 % 6)) / 5.0;
-		blue	=	Double(5 - (x % 6))     / 5.0;
+		blue	=	Double(5 - (x % 6))		/ 5.0;
 	//	return (red: red, green: green, blue: blue)
 
 	}

@@ -15,10 +15,13 @@
 //*	<MLS>	=	Mark L Sproul
 //*****************************************************************************
 //*	Nov  7,	2019	<MLS> Created multicam.cpp
+//*	Nov  7,	2019	<MLS> Multicam was created for Dr Larsen at the Naval Academy for asteroid work
 //*	Nov  8,	2019	<MLS> Multicam working with 2 cameras, a ZWO and ATIK
 //*	Nov 13,	2019	<MLS> Added exposuretime, and livemode
 //*	Nov 13,	2019	<MLS> Added SetExposureTime() & ExtractDurationList()
 //*	Apr 27,	2023	<MLS> Changed multicam commands to match camera commands
+//*	Jun 16,	2023	<MLS> Added readall to multicam
+//*	Jun 23,	2023	<MLS> Added GetCmdNameFromMyCmdTable() to multicam
 //*****************************************************************************
 
 #ifdef _ENABLE_MULTICAM_
@@ -32,8 +35,6 @@
 
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
-
-
 
 #include	"RequestData.h"
 #include	"JsonResponse.h"
@@ -72,6 +73,7 @@ enum
 
 	kCmd_MultiCam_exposuretime,
 	kCmd_MultiCam_livemode,
+	kCmd_MultiCam_readall,
 
 
 	kCmd_MultiCam_last
@@ -83,10 +85,11 @@ enum
 static TYPE_CmdEntry	gMultiCamCmdTable[]	=
 {
 
-	{	"startexposure",		kCmd_MultiCam_startexposure,		kCmdType_GET	},
-	{	"stopexposure",			kCmd_MultiCam_stopexposure,			kCmdType_GET	},
+	{	"startexposure",		kCmd_MultiCam_startexposure,	kCmdType_PUT	},
+	{	"stopexposure",			kCmd_MultiCam_stopexposure,		kCmdType_PUT	},
 	{	"exposuretime",			kCmd_MultiCam_exposuretime,		kCmdType_BOTH	},
 	{	"livemode",				kCmd_MultiCam_livemode,			kCmdType_BOTH	},
+	{	"readall",				kCmd_MultiCam_readall,			kCmdType_GET	},
 
 
 
@@ -132,12 +135,10 @@ int					cmdEnumValue;
 int					cmdType;
 int					mySocket;
 
-	CONSOLE_DEBUG(__FUNCTION__);
-
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	//*	make local copies of the data structure to make the code easier to read
 	mySocket	=	reqData->socket;
-//	myDeviceNum	=	reqData->deviceNumber;
 
 	strcpy(alpacaErrMsg, "");
 	alpacaErrCode	=	kASCOM_Err_Success;
@@ -199,7 +200,7 @@ int					mySocket;
 			}
 			else
 			{
-				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "GEt not allowed for startexposure");
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Get not allowed for startexposure");
 				alpacaErrCode	=	kASCOM_Err_InvalidOperation;
 			}
 			break;
@@ -224,6 +225,10 @@ int					mySocket;
 			alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
 			break;
 
+
+		case kCmd_MultiCam_readall:
+			alpacaErrCode	=	Get_Readall(reqData, alpacaErrMsg);
+			break;
 
 		//----------------------------------------------------------------------------------------
 		//*	let anything undefined go to the common command processor
@@ -376,8 +381,8 @@ TYPE_ASCOM_STATUS	MultiCam::Put_StartExposure(TYPE_GetPutRequestData *reqData, c
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
 double				exposureDuration_usecs;
 double				expDurationValues_secs[kMaxDevices];
-int					ii;
-int					cc;
+int					iii;
+int					ccc;
 CameraDriver		*cameraObj;
 struct timeval		currentTime;
 long				curr_millisec;
@@ -440,9 +445,9 @@ char				myFileNameSuffix[kFileNamePrefixMaxLen];
 		else
 		{
 			//*	have to have a fallback default
-			for (ii=0; ii<kMaxDevices; ii++)
+			for (iii=0; iii<kMaxDevices; iii++)
 			{
-				expDurationValues_secs[ii]	=	0.01;
+				expDurationValues_secs[iii]	=	0.01;
 			}
 		}
 		//****************************************************
@@ -451,13 +456,13 @@ char				myFileNameSuffix[kFileNamePrefixMaxLen];
 		//*		Set the object name if it was specified
 		//*		Set the telescope name if it was specified
 		//****************************************************
-		for (ii=0; ii<gDeviceCnt; ii++)
+		for (iii=0; iii<gDeviceCnt; iii++)
 		{
-			if (gAlpacaDeviceList[ii] != NULL)
+			if (gAlpacaDeviceList[iii] != NULL)
 			{
-				if (gAlpacaDeviceList[ii]->cDeviceType == kDeviceType_Camera)
+				if (gAlpacaDeviceList[iii]->cDeviceType == kDeviceType_Camera)
 				{
-					cameraObj		=	(CameraDriver *)gAlpacaDeviceList[ii];
+					cameraObj		=	(CameraDriver *)gAlpacaDeviceList[iii];
 					//*	in order to use multiple camers,
 					//*	we need the serial number included in the file name
 					cameraObj->SetSerialNumInFileName(true);
@@ -496,26 +501,31 @@ char				myFileNameSuffix[kFileNamePrefixMaxLen];
 		//****************************************************
 		//*	now start the exposures
 		//****************************************************
-		cc	=	0;		//*	set the camera counter to zero
-		for (ii=0; ii<gDeviceCnt; ii++)
+		ccc	=	0;		//*	set the camera counter to zero
+		for (iii=0; iii<gDeviceCnt; iii++)
 		{
-			if (gAlpacaDeviceList[ii] != NULL)
+			if (gAlpacaDeviceList[iii] != NULL)
 			{
-				if (gAlpacaDeviceList[ii]->cDeviceType == kDeviceType_Camera)
+				if (gAlpacaDeviceList[iii]->cDeviceType == kDeviceType_Camera)
 				{
-				//	CONSOLE_DEBUG("We have a camera");
+					cameraObj				=	(CameraDriver *)gAlpacaDeviceList[iii];
+					CONSOLE_DEBUG("---------------------------------------------------------");
+					CONSOLE_DEBUG_W_STR("We have a camera:", cameraObj->cCommonProp.Name);
+
 				//	exposureDuration_usecs	=	exposureDuration_secs * 1000 * 1000;
-					exposureDuration_usecs	=	expDurationValues_secs[cc] * 1000 * 1000;
-					cameraObj		=	(CameraDriver *)gAlpacaDeviceList[ii];
-					alpacaErrCode	=	cameraObj->Start_CameraExposure(exposureDuration_usecs);
+					exposureDuration_usecs	=	expDurationValues_secs[ccc] * 1000 * 1000;
+					alpacaErrCode			=	cameraObj->Start_CameraExposure(exposureDuration_usecs);
 					cameraObj->SaveNextImage();
+
 
 					if (alpacaErrCode != 0)
 					{
 						CONSOLE_DEBUG_W_NUM("Start_CameraExposure->alpacaErrCode\t=",	alpacaErrCode);
+						GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, cameraObj->cLastCameraErrMsg);
+						CONSOLE_DEBUG(alpacaErrMsg);
 					}
 
-					cc++;
+					ccc++;
 				}
 			}
 		}
@@ -534,8 +544,8 @@ TYPE_ASCOM_STATUS	MultiCam::Put_ExposureTime(TYPE_GetPutRequestData *reqData, ch
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
 double				exposureDuration_usecs;
 double				expDurationValues_secs[kMaxDevices];
-int					ii;
-int					cc;
+int					iii;
+int					ccc;
 CameraDriver		*cameraObj;
 bool				durationFound;
 char				durationString[128];
@@ -558,18 +568,18 @@ char				durationString[128];
 			//****************************************************
 			//*	Step through all the cameras and set the exposure
 			//****************************************************
-			cc	=	0;		//*	set the camera counter to zero
-			for (ii=0; ii<gDeviceCnt; ii++)
+			ccc	=	0;		//*	set the camera counter to zero
+			for (iii=0; iii<gDeviceCnt; iii++)
 			{
-				if (gAlpacaDeviceList[ii] != NULL)
+				if (gAlpacaDeviceList[iii] != NULL)
 				{
-					if (gAlpacaDeviceList[ii]->cDeviceType == kDeviceType_Camera)
+					if (gAlpacaDeviceList[iii]->cDeviceType == kDeviceType_Camera)
 					{
-						exposureDuration_usecs	=	expDurationValues_secs[cc] * 1000 * 1000;
+						exposureDuration_usecs	=	expDurationValues_secs[ccc] * 1000 * 1000;
 
-						cameraObj		=	(CameraDriver *)gAlpacaDeviceList[ii];
+						cameraObj		=	(CameraDriver *)gAlpacaDeviceList[iii];
 						cameraObj->Start_CameraExposure(exposureDuration_usecs);
-						cc++;
+						ccc++;
 					}
 				}
 			}
@@ -587,20 +597,15 @@ void	MultiCam::OutputHTML(TYPE_GetPutRequestData *reqData)
 {
 int				mySocketFD;
 char			lineBuffer[512];
-int				ii;
+int				iii;
 CameraDriver	*cameraObj;
-
-	CONSOLE_DEBUG(__FUNCTION__);
 
 	if (reqData != NULL)
 	{
-
 		mySocketFD	=	reqData->socket;
 
 		SocketWriteData(mySocketFD,	"<CENTER>\r\n");
-
 		SocketWriteData(mySocketFD,	"<TABLE BORDER=1>\r\n");
-
 		//*-----------------------------------------------------------
 		SocketWriteData(mySocketFD,	"<TR>\r\n");
 		SocketWriteData(mySocketFD,	"\t<TD COLSPAN=3><CENTER>Multicam</TD>");
@@ -612,13 +617,13 @@ CameraDriver	*cameraObj;
 
 		SocketWriteData(mySocketFD,	"<TR><TH>Manuf</TH><TH>Model</TH><TH>Serial #</TH></TR>\r\n");
 
-		for (ii=0; ii<gDeviceCnt; ii++)
+		for (iii=0; iii<gDeviceCnt; iii++)
 		{
-			if (gAlpacaDeviceList[ii] != NULL)
+			if (gAlpacaDeviceList[iii] != NULL)
 			{
-				if (gAlpacaDeviceList[ii]->cDeviceType == kDeviceType_Camera)
+				if (gAlpacaDeviceList[iii]->cDeviceType == kDeviceType_Camera)
 				{
-					cameraObj	=	(CameraDriver *)gAlpacaDeviceList[ii];
+					cameraObj	=	(CameraDriver *)gAlpacaDeviceList[iii];
 
 					sprintf(lineBuffer, "\t<TR><TD>%s</TD><TD>%s</TD><TD>%s</TD></TR>",
 												cameraObj->cDeviceManufacturer,
@@ -630,13 +635,17 @@ CameraDriver	*cameraObj;
 		}
 		SocketWriteData(mySocketFD,	"</TABLE>\r\n");
 		SocketWriteData(mySocketFD,	"<P>\r\n");
-
-
 		SocketWriteData(mySocketFD,	"</CENTER>\r\n");
-
-		//*	now generate links to all of the commands
-		GenerateHTMLcmdLinkTable(mySocketFD, "multicam", 0, gMultiCamCmdTable);
 	}
+}
+
+//*****************************************************************************
+bool	MultiCam::GetCmdNameFromMyCmdTable(const int cmdNumber, char *comandName, char *getPut)
+{
+bool	foundIt;
+
+	foundIt	=	GetCmdNameFromTable(cmdNumber, comandName, gMultiCamCmdTable, getPut);
+	return(foundIt);
 }
 
 //*****************************************************************************
@@ -662,4 +671,64 @@ bool	foundFlag	=	true;
 	}
 	return(foundFlag);
 }
+
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	MultiCam::Get_Readall(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode;
+int					iii;
+int					ccc;
+char				cameraSring[32];
+CameraDriver		*cameraObj;
+
+	if (reqData != NULL)
+	{
+		//*	do the common ones first
+		Get_Readall_Common(	reqData,	alpacaErrMsg);
+
+		//---------------------------------------------------
+		//*	output a list of cameras
+		ccc	=	0;		//*	set the camera counter to zero
+		for (iii=0; iii<gDeviceCnt; iii++)
+		{
+			if (gAlpacaDeviceList[iii] != NULL)
+			{
+				if (gAlpacaDeviceList[iii]->cDeviceType == kDeviceType_Camera)
+				{
+					cameraObj		=	(CameraDriver *)gAlpacaDeviceList[iii];
+
+					sprintf(cameraSring, "camera-%d", ccc);
+					cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(reqData->socket,
+																		reqData->jsonTextBuffer,
+																		kMaxJsonBuffLen,
+																		cameraSring,
+																		cameraObj->cCommonProp.Name,
+																		INCLUDE_COMMA);
+
+					ccc++;
+				}
+			}
+		}
+
+
+		//===============================================================
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(reqData->socket,
+															reqData->jsonTextBuffer,
+															kMaxJsonBuffLen,
+															"version",
+															gFullVersionString,
+															INCLUDE_COMMA);
+
+
+		alpacaErrCode	=	kASCOM_Err_Success;
+		strcpy(alpacaErrMsg, "");
+	}
+	else
+	{
+		alpacaErrCode	=	kASCOM_Err_InternalError;
+	}
+	return(alpacaErrCode);
+}
+
 #endif	//	_ENABLE_MULTICAM_

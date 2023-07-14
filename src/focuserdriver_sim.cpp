@@ -25,6 +25,7 @@
 //*	<MLS>	=	Mark L Sproul
 //*****************************************************************************
 //*	Mar  3,	2023	<MLS> Created focuserdriver_sim.cpp
+//*	Jul  8,	2023	<MLS> Added SetFocuserPosition() to simulator
 //*****************************************************************************
 
 #ifdef _ENABLE_FOCUSER_SIMULATOR_
@@ -58,14 +59,14 @@
 //*****************************************************************************
 int		CreateFocuserObjects_SIM(void)
 {
-	new FocuserDriverSIM(0);
+	new FocuserDriverSIM();
 
 	return(1);
 }
 
 //**************************************************************************************
-FocuserDriverSIM::FocuserDriverSIM(const int argDevNum)
-	:FocuserDriver(argDevNum)
+FocuserDriverSIM::FocuserDriverSIM(void)
+	:FocuserDriver()
 {
 
 	CONSOLE_DEBUG(__FUNCTION__);
@@ -76,10 +77,12 @@ FocuserDriverSIM::FocuserDriverSIM(const int argDevNum)
 	cFocuserProp.StepSize		=	((0.00016 * 25.4) * 1000);	//	Step size (microns) for the focuser.
 	strcpy(cDeviceManufacturer,	"AlpacaPi");
 
-	cFocuserProp.Absolute		=	true;
-	cFocuserProp.MaxIncrement	=	10000;
-	cFocuserProp.MaxStep		=	87000;
-	cFocuserProp.StepSize		=	0.2667;	//	Step size (microns) for the focuser.
+	cFocuserProp.Position			=	4570;
+	cFocuserProp.Temperature_DegC	=	22.3;
+	cFocuserProp.Absolute			=	true;
+	cFocuserProp.MaxIncrement		=	10000;
+	cFocuserProp.MaxStep			=	87000;
+	cFocuserProp.StepSize			=	0.2667;	//	Step size (microns) for the focuser.
 
 
 	cUUID.part1				=	'ALPI';					//*	4 byte manufacturer code
@@ -111,6 +114,15 @@ int32_t	FocuserDriverSIM::RunStateMachine(void)
 
 	return(1000 * 1000);
 }
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	FocuserDriverSIM::SetFocuserPosition(const int32_t newPosition, char *alpacaErrMsg)
+{
+	cFocuserProp.Position	=	newPosition;
+
+	return(kASCOM_Err_Success);
+}
+
 
 #endif	//	_ENABLE_FOCUSER_SIMULATOR_
 

@@ -19,6 +19,7 @@
 //*	Edit History
 //*****************************************************************************
 //*	Oct  8,	2022	<MLS> Created windowtab_rotator.cpp
+//*	Jun 19,	2023	<MLS> Added DeviceState to rotator
 //*****************************************************************************
 
 #ifdef _ENABLE_CTRL_ROTATOR_
@@ -178,6 +179,7 @@ char	valueText[32];
 	//*	set up all the bottom stuff so that it is the same on all windowtabs
 	SetupWindowBottomBoxes(	kRotatorCtrl_IPaddr,
 							kRotatorCtrl_Readall,
+							kRotatorCtrl_DeviceState,
 							kRotatorCtrl_AlpacaErrorMsg,
 							kRotatorCtrl_LastCmdString,
 							kRotatorCtrl_AlpacaLogo,
@@ -273,8 +275,8 @@ char		lineBuff[32];
 	center_Y	=	theWidget->top + (theWidget->height / 2);
 	radius1		=	theWidget->width / 5;
 
-	LLD_SetColor(W_WHITE);
-	LLD_FrameEllipse(center_X, center_Y, radius1, radius1);
+	LLG_SetColor(W_WHITE);
+	LLG_FrameEllipse(center_X, center_Y, radius1, radius1);
 
 	//*	now draw the tick marks every 10 degrees
 	radius1		=	(theWidget->height / 2) - 8;
@@ -290,8 +292,8 @@ char		lineBuff[32];
 		pt2_X	=	center_X + (cos(radians) * radius2);
 		pt2_Y	=	center_Y + (sin(radians) * radius2);
 
-		LLD_MoveTo(pt1_X, pt1_Y);
-		LLD_LineTo(pt2_X, pt2_Y);
+		LLG_MoveTo(pt1_X, pt1_Y);
+		LLG_LineTo(pt2_X, pt2_Y);
 
 		degrees	+=	10.0;
 	}
@@ -311,7 +313,7 @@ char		lineBuff[32];
 		pt1_Y	=	center_Y + (sin(radians) * radiusTxt);
 
 		sprintf(lineBuff, "%2.0f", degrees);
-		LLD_DrawCString(pt1_X, pt1_Y, lineBuff, kFont_Medium);
+		LLG_DrawCString(pt1_X, pt1_Y, lineBuff, kFont_Medium);
 
 		degrees	+=	45.0;
 	}
@@ -329,7 +331,7 @@ char		lineBuff[32];
 	{
 		pt1_X	+=	5;
 	}
-	LLD_DrawCString(pt1_X, pt1_Y, lineBuff, kFont_Medium);
+	LLG_DrawCString(pt1_X, pt1_Y, lineBuff, kFont_Medium);
 
 
 	//*	determine dimensions for red/green indicators
@@ -348,10 +350,10 @@ char		lineBuff[32];
 	pt1_Y	=	center_Y + (sin(radians) * radius1);
 	pt2_Y	=	center_Y + (sin(radians) * radius2);
 
-	LLD_PenSize(2);
-	LLD_SetColor(W_RED);
-	LLD_MoveTo(pt1_X, pt1_Y);
-	LLD_LineTo(pt2_X, pt2_Y);
+	LLG_PenSize(2);
+	LLG_SetColor(W_RED);
+	LLG_MoveTo(pt1_X, pt1_Y);
+	LLG_LineTo(pt2_X, pt2_Y);
 
 	//*	now draw a small green line where we WANT to be
 	degrees	=	cTargetPosition_deg;
@@ -370,12 +372,12 @@ char		lineBuff[32];
 
 	pt1_Y	=	center_Y + (sin(radians) * radius1);
 	pt2_Y	=	center_Y + (sin(radians) * radius2);
-	LLD_SetColor(W_GREEN);
-	LLD_MoveTo(pt1_X, pt1_Y);
-	LLD_LineTo(pt2_X, pt2_Y);
+	LLG_SetColor(W_GREEN);
+	LLG_MoveTo(pt1_X, pt1_Y);
+	LLG_LineTo(pt2_X, pt2_Y);
 
 	//*	reset back to normal
-	LLD_PenSize(1);
+	LLG_PenSize(1);
 }
 
 #if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)

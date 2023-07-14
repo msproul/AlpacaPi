@@ -8,7 +8,7 @@
 
 #ifndef	_CONTROLLER_H_
 	#include	"controller.h"
-#endif // _CONTROLLER_H_
+#endif
 
 //*****************************************************************************
 enum

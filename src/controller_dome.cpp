@@ -41,12 +41,15 @@
 //*	Feb 20,	2021	<MLS> Added capability list to dome controller
 //*	Mar  9,	2023	<MLS> Removed SlitTracker code from dome controller
 //*	Mar 10,	2023	<MLS> Removed SlitTracker Direct code from dome controller
+//*	Jun 19,	2023	<MLS> Updated constructor to use TYPE_REMOTE_DEV
+//*	Jun 23,	2023	<MLS> Removed RunBackgroundTasks(), using default in parent class
+//*	Jun 25,	2023	<MLS> Added AlpacaGetCapabilities()
+//*	Jun 25,	2123	<ADD> Add slaved to DeviceState
+//*	Jun 27,	2023	<MLS> Added AlpacaProcessReadAllIdx() to dome controller
+//*	Jun 28,	2023	<MLS> Added DeviceState window to dome controller
+//*	Jul 14,	2023	<MLS> Fixed Dome controller title
 //*****************************************************************************
-
-
 #ifdef _ENABLE_CTRL_DOME_
-
-
 
 #include	<math.h>
 #include	<stdio.h>
@@ -64,19 +67,32 @@
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
 
-
-
 #include	"controller.h"
 #include	"windowtab_dome.h"
+#include	"windowtab_DeviceState.h"
+#include	"windowtab_drvrInfo.h"
 #include	"windowtab_about.h"
 #include	"controller_dome.h"
+#include	"alpacadriver_helper.h"
+#include	"dome_AlpacaCmds.h"
 
+//**************************************************************************************
+enum
+{
+	kTab_Dome	=	1,
+	kTab_Capabilities,
+	kTab_DeviceState,
+	kTab_DriverInfo,
+	kTab_About,
 
+	kTab_Dome_Count
+
+};
 
 //**************************************************************************************
 ControllerDome::ControllerDome(	const char			*argWindowName,
 								TYPE_REMOTE_DEV		*alpacaDevice)
-	:Controller(argWindowName, kDomeWindowWidth,  kDomeWindowHeight)
+	:Controller(argWindowName, kDomeWindowWidth,  kDomeWindowHeight, true, alpacaDevice)
 {
 char	ipAddrStr[32];
 
@@ -84,21 +100,22 @@ char	ipAddrStr[32];
 
 	memset(&cDomeProp, 0, sizeof(TYPE_DomeProperties));
 
+	SetCommandLookupTable(gDomeCmdTable);
+	SetAlternateLookupTable(gDomeExtrasTable);
+
 	strcpy(cAlpacaDeviceTypeStr,	"dome");
 	cDomeProp.ShutterStatus	=	kShutterStatus_Unknown;
-
 #ifdef _ENABLE_EXTERNAL_SHUTTER_
 	cShutterInfoValid		=	false;
 #endif // _ENABLE_EXTERNAL_SHUTTER_
 
+	cDriverInfoTabNum		=	kTab_DriverInfo;
 	//*	window object ptrs
 	cDomeTabObjPtr			=	NULL;
 	cCapabilitiesTabObjPtr	=	NULL;
 	cAboutBoxTabObjPtr		=	NULL;
-
 	cFirstDataRead			=	true;
 	cLastUpdate_milliSecs	=	millis();
-	cDomeUpdateDelta		=	kDefaultUpdateDelta;
 
 	if (alpacaDevice != NULL)
 	{
@@ -143,6 +160,7 @@ ControllerDome::~ControllerDome(void)
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 	DELETE_OBJ_IF_VALID(cDomeTabObjPtr);
 	DELETE_OBJ_IF_VALID(cCapabilitiesTabObjPtr);
+	DELETE_OBJ_IF_VALID(cDeviceStateTabObjPtr);
 	DELETE_OBJ_IF_VALID(cDriverInfoTabObjPtr);
 	DELETE_OBJ_IF_VALID(cAboutBoxTabObjPtr);
 }
@@ -157,10 +175,9 @@ char	lineBuff[64];
 	SetTabCount(kTab_Dome_Count);
 	SetTabText(kTab_Dome,			"Dome");
 	SetTabText(kTab_Capabilities,	"Capabilities");
+	SetTabText(kTab_DeviceState,	"Dev State");
 	SetTabText(kTab_DriverInfo,		"Driver Info");
 	SetTabText(kTab_About,			"About");
-
-
 
 	//=============================================================
 	cDomeTabObjPtr	=	new WindowTabDome(cWidth, cHeight, cBackGrndColor, cWindowName);
@@ -171,12 +188,21 @@ char	lineBuff[64];
 		cDomeTabObjPtr->SetDomePropertiesPtr(&cDomeProp);
 	}
 
-	//--------------------------------------------
+	//=============================================================
 	cCapabilitiesTabObjPtr		=	new WindowTabCapabilities(	cWidth, cHeight, cBackGrndColor, cWindowName);
 	if (cCapabilitiesTabObjPtr != NULL)
 	{
 		SetTabWindow(kTab_Capabilities,	cCapabilitiesTabObjPtr);
 		cCapabilitiesTabObjPtr->SetParentObjectPtr(this);
+	}
+
+	//=============================================================
+	cDeviceStateTabObjPtr		=	new WindowTabDeviceState(	cWidth, cHeight, cBackGrndColor, cWindowName);
+	if (cDeviceStateTabObjPtr != NULL)
+	{
+		SetTabWindow(kTab_DeviceState,	cDeviceStateTabObjPtr);
+		cDeviceStateTabObjPtr->SetParentObjectPtr(this);
+		SetDeviceStateTabInfo(kTab_DeviceState, kDeviceState_FirstBoxName, kDeviceState_FirstBoxValue, kDeviceState_Stats);
 	}
 
 	//=============================================================
@@ -207,14 +233,44 @@ char	lineBuff[64];
 }
 
 //*****************************************************************************
-void	ControllerDome::UpdateCommonProperties(void)
+bool	ControllerDome::AlpacaProcessReadAllIdx(	const char	*deviceTypeStr,
+													const int	deviceNum,
+													const int	keywordEnum,
+													const char	*valueString)
 {
-	SetWidgetText(kTab_DriverInfo,		kDriverInfo_Name,				cCommonProp.Name);
-	SetWidgetText(kTab_DriverInfo,		kDriverInfo_Description,		cCommonProp.Description);
-	SetWidgetText(kTab_DriverInfo,		kDriverInfo_DriverInfo,			cCommonProp.DriverInfo);
-	SetWidgetText(kTab_DriverInfo,		kDriverInfo_DriverVersion,		cCommonProp.DriverVersion);
-	SetWidgetNumber(kTab_DriverInfo,	kDriverInfo_InterfaceVersion,	cCommonProp.InterfaceVersion);
+bool	dataWasHandled;
+//	CONSOLE_DEBUG_W_2STR("json=",	keywordString, valueString);
+	dataWasHandled	=	false;
+	if (strcasecmp(deviceTypeStr, "dome") == 0)
+	{
+		dataWasHandled	=	AlpacaProcessReadAllIdx_Dome(deviceNum, keywordEnum, valueString);
+	}
+	else
+	{
+		CONSOLE_ABORT(__FUNCTION__);
+	}
+	return(dataWasHandled);
+}
 
+//*****************************************************************************
+void	ControllerDome::UpdateSupportedActions(void)
+{
+	SetWidgetValid(kTab_Dome,			kDomeBox_Readall,			cHas_readall);
+	SetWidgetValid(kTab_Dome,			kDomeBox_DeviceState,		cHas_DeviceState);
+
+	SetWidgetValid(kTab_Capabilities,	kCapabilities_Readall,		cHas_readall);
+	SetWidgetValid(kTab_Capabilities,	kCapabilities_DeviceState,	cHas_DeviceState);
+
+	SetWidgetValid(kTab_DeviceState,	kDeviceState_Readall,		cHas_readall);
+	SetWidgetValid(kTab_DeviceState,	kDeviceState_DeviceState,	cHas_DeviceState);
+
+	SetWidgetValid(kTab_DriverInfo,		kDriverInfo_Readall,		cHas_readall);
+	SetWidgetValid(kTab_DriverInfo,		kDriverInfo_DeviceState,	cHas_DeviceState);
+
+	if (cHas_DeviceState == false)
+	{
+		cDeviceStateTabObjPtr->SetDeviceStateNotSupported();
+	}
 }
 
 //**************************************************************************************
@@ -231,129 +287,85 @@ void	ControllerDome::SetAlpacaShutterInfo(TYPE_REMOTE_DEV *alpacaDevice)
 		cShutterPort			=	alpacaDevice->port;
 		cShutterAlpacaDevNum	=	alpacaDevice->alpacaDeviceNum;
 
-		SetWidgetText(kTab_Dome,		kDomeBox_Readall,		"RS");
+		SetWidgetText(kTab_Dome,	kDomeBox_Readall,		"RS");
 #endif // _ENABLE_EXTERNAL_SHUTTER_
 	}
 }
 
 //**************************************************************************************
-void	ControllerDome::RunBackgroundTasks(const char *callingFunction, bool enableDebug)
+void	ControllerDome::AlpacaGetCapabilities(void)
 {
-uint32_t	currentMillis;
-uint32_t	deltaSeconds;
-bool		validData;
-bool		needToUpdate;
-
-//	CONSOLE_DEBUG(__FUNCTION__);
-
-	if (cReadStartup)
-	{
-		CONSOLE_DEBUG(__FUNCTION__);
-		AlpacaGetStartupData();
-		AlpacaGetCommonProperties_OneAAT(cAlpacaDeviceTypeStr);
-		UpdateAboutBoxRemoteDevice(kTab_About, kAboutBox_CPUinfo);
-
-		cDomeTabObjPtr->UpdateControls();
-
-		cReadStartup	=	false;
-	}
-
-//	CONSOLE_DEBUG_W_NUM("cDomeUpdateDelta\t=", cDomeUpdateDelta);
-
-	needToUpdate	=	false;
-	currentMillis	=	millis();
-	deltaSeconds	=	(currentMillis - cLastUpdate_milliSecs) / 1000;
-
-	if (cFirstDataRead || (deltaSeconds >= cDomeUpdateDelta))
-	{
-		needToUpdate	=	true;
-	}
-	if (cForceAlpacaUpdate)	//*	force update is set when a switch is clicked
-	{
-		needToUpdate		=	true;
-		cForceAlpacaUpdate	=	false;
-	}
-
-	if (needToUpdate)
-	{
-	//	CONSOLE_DEBUG_W_NUM("Updating Dome info: cDomeUpdateDelta\t=", cDomeUpdateDelta);
-		//*	is the IP address valid
-		if (cValidIPaddr)
-		{
-			validData	=	AlpacaGetStatus();
-			if (validData == false)
-			{
-				CONSOLE_DEBUG("Failed to get data")
-			}
-			UpdateConnectedIndicator(kTab_Dome,		kDomeBox_Connected);
-		}
-	}
+	ReadOneDriverCapability(cAlpacaDeviceTypeStr,	"canfindhome",		"CanFindHome",		&cDomeProp.CanFindHome);
+	ReadOneDriverCapability(cAlpacaDeviceTypeStr,	"canpark",			"CanPark",			&cDomeProp.CanPark);
+	ReadOneDriverCapability(cAlpacaDeviceTypeStr,	"cansetaltitude",	"CanSetAltitude",	&cDomeProp.CanSetAltitude);
+	ReadOneDriverCapability(cAlpacaDeviceTypeStr,	"cansetazimuth",	"CanSetAzimuth",	&cDomeProp.CanSetAzimuth);
+	ReadOneDriverCapability(cAlpacaDeviceTypeStr,	"cansetpark",		"CanSetPark",		&cDomeProp.CanSetPark);
+	ReadOneDriverCapability(cAlpacaDeviceTypeStr,	"cansetshutter",	"CanSetShutter",	&cDomeProp.CanSetShutter);
+	ReadOneDriverCapability(cAlpacaDeviceTypeStr,	"canslave",			"CanSlave",			&cDomeProp.CanSlave);
+	ReadOneDriverCapability(cAlpacaDeviceTypeStr,	"cansyncazimuth",	"CanSyncAzimuth",	&cDomeProp.CanSyncAzimuth);
 }
 
-//*****************************************************************************
-bool	ControllerDome::AlpacaGetStartupData(void)
+//**************************************************************************************
+void	ControllerDome::UpdateConnectedStatusIndicator(void)
 {
-bool			validData;
-char			returnString[128];
+	UpdateConnectedIndicator(kTab_Dome,		kDomeBox_Connected);
+}
 
-//	CONSOLE_DEBUG(__FUNCTION__);
-//	CONSOLE_DEBUG_W_STR("cAlpacaDeviceTypeStr\t=",	cAlpacaDeviceTypeStr);
-	//===============================================================
-	//*	get supportedactions
-	validData	=	AlpacaGetSupportedActions(cAlpacaDeviceTypeStr, cAlpacaDevNum);
-	if (validData)
+//**************************************************************************************
+void	ControllerDome::UpdateStartupData(void)
+{
+	SetWidgetText(				kTab_Dome,	kDomeBox_Title,	cCommonProp.Name);
+	UpdateAboutBoxRemoteDevice(	kTab_About, kAboutBox_CPUinfo);
+}
+
+//**************************************************************************************
+void	ControllerDome::UpdateStatusData(void)
+{
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+	UpdateConnectedIndicator(kTab_Dome,		kDomeBox_Connected);
+	//======================================================================
+	cUpdateDelta_secs	=	kDefaultUpdateDelta;
+	if (cDomeProp.Slewing)
 	{
-		SetWidgetValid(kTab_Dome,			kDomeBox_Readall,		cHas_readall);
-		if (cHas_readall == false)
-		{
-			validData	=	AlpacaGetStringValue(	cAlpacaDeviceTypeStr, "driverversion",	NULL,	returnString);
-			if (validData)
-			{
-				strcpy(cAlpacaVersionString, returnString);
-			}
-		}
-//		CONSOLE_DEBUG_W_NUM("cDomeProp.CanSyncAzimuth\t=",	cDomeProp.CanSyncAzimuth);
-		ReadOneDriverCapability(cAlpacaDeviceTypeStr,	"canfindhome",		"CanFindHome",		&cDomeProp.CanFindHome);
-		ReadOneDriverCapability(cAlpacaDeviceTypeStr,	"canpark",			"CanPark",			&cDomeProp.CanPark);
-		ReadOneDriverCapability(cAlpacaDeviceTypeStr,	"cansetaltitude",	"CanSetAltitude",	&cDomeProp.CanSetAltitude);
-		ReadOneDriverCapability(cAlpacaDeviceTypeStr,	"cansetazimuth",	"CanSetAzimuth",	&cDomeProp.CanSetAzimuth);
-		ReadOneDriverCapability(cAlpacaDeviceTypeStr,	"cansetpark",		"CanSetPark",		&cDomeProp.CanSetPark);
-		ReadOneDriverCapability(cAlpacaDeviceTypeStr,	"cansetshutter",	"CanSetShutter",	&cDomeProp.CanSetShutter);
-		ReadOneDriverCapability(cAlpacaDeviceTypeStr,	"canslave",			"CanSlave",			&cDomeProp.CanSlave);
-		ReadOneDriverCapability(cAlpacaDeviceTypeStr,	"cansyncazimuth",	"CanSyncAzimuth",	&cDomeProp.CanSyncAzimuth);
-//		CONSOLE_DEBUG_W_NUM("cDomeProp.CanSyncAzimuth\t=",	cDomeProp.CanSyncAzimuth);
-//		CONSOLE_ABORT(__FUNCTION__);
-
+		//*	if we slewing, we want to update more often
+		cUpdateDelta_secs	=	1;
+		SetWidgetText(kTab_Dome, kDomeBox_CurPosition, "Slewing");
+	}
+	else if (cDomeProp.AtHome)
+	{
+		SetWidgetText(kTab_Dome, kDomeBox_CurPosition, "Home");
+	}
+	else if (cDomeProp.AtPark)
+	{
+		SetWidgetText(kTab_Dome, kDomeBox_CurPosition, "Park");
 	}
 	else
 	{
-		CONSOLE_DEBUG("Read failure - supportedactions");
-		cReadFailureCnt++;
+		SetWidgetText(kTab_Dome, kDomeBox_CurPosition, "Stopped");
 	}
-	cLastUpdate_milliSecs	=	millis();
 
+	//*	if we shutter is opening or closing, we want to update more often
+	if ((cDomeProp.ShutterStatus == kShutterStatus_Opening) || (cDomeProp.ShutterStatus == kShutterStatus_Closing))
+	{
+		cUpdateDelta_secs	=	1;
+	}
+}
+
+
+//*****************************************************************************
+bool	ControllerDome::AlpacaGetStartupData_OneAAT(void)
+{
+bool	validData;
+
+	//*	nested so that the dome window in SkyTravel works
+	validData	=	AlpacaGetStatus_DomeOneAAT();
 	return(validData);
 }
 
-
 //*****************************************************************************
-bool	ControllerDome::AlpacaGetStatus(void)
+void	ControllerDome::GetStartUpData_SubClass(void)
 {
-bool	validData;
-bool	previousOnLineState;
-
-//	CONSOLE_DEBUG_W_NUM(__FUNCTION__, cDebugCounter++);
-
-	previousOnLineState	=	cOnLine;
-	if (cHas_readall)
-	{
-		validData	=	AlpacaGetStatus_ReadAll(cAlpacaDeviceTypeStr, cAlpacaDevNum);
-	}
-	else
-	{
-		validData	=	AlpacaGetStatus_DomeOneAAT();
-		validData	=	AlpacaGetCommonConnectedState(cAlpacaDeviceTypeStr);
-	}
+	//*	this is ONLY to be implemented at the subclss level
 #ifdef _ENABLE_EXTERNAL_SHUTTER_
 	//=================================================
 	if (cShutterInfoValid)
@@ -361,72 +373,6 @@ bool	previousOnLineState;
 		AlpacaGetShutterReadAll();
 	}
 #endif // _ENABLE_EXTERNAL_SHUTTER_
-
-	if (validData)
-	{
-		if (cOnLine == false)
-		{
-			//*	if we were previously off line, force reading startup again
-			cReadStartup	=	true;
-		}
-		cOnLine	=	true;
-
-		//======================================================================
-		cDomeUpdateDelta	=	kDefaultUpdateDelta;
-		if (cDomeProp.Slewing)
-		{
-			//*	if we slewing, we want to update more often
-			cDomeUpdateDelta	=	1;
-			SetWidgetText(kTab_Dome, kDomeBox_CurPosition, "Slewing");
-		}
-		else if (cDomeProp.AtHome)
-		{
-			SetWidgetText(kTab_Dome, kDomeBox_CurPosition, "Home");
-		}
-		else if (cDomeProp.AtPark)
-		{
-			SetWidgetText(kTab_Dome, kDomeBox_CurPosition, "Park");
-		}
-		else
-		{
-			SetWidgetText(kTab_Dome, kDomeBox_CurPosition, "Stopped");
-		}
-
-		//*	if we shutter is opening or closing, we want to update more often
-		if ((cDomeProp.ShutterStatus == kShutterStatus_Opening) || (cDomeProp.ShutterStatus == kShutterStatus_Closing))
-		{
-			cDomeUpdateDelta	=	1;
-		}
-	}
-	else
-	{
-		cOnLine	=	false;
-	}
-	if (cOnLine != previousOnLineState)
-	{
-		SetWindowIPaddrInfo(NULL, cOnLine);
-	}
-
-	cLastUpdate_milliSecs	=	millis();
-	cFirstDataRead			=	false;
-	return(validData);
-}
-
-//*****************************************************************************
-void	ControllerDome::AlpacaProcessReadAll(	const char	*deviceType,
-											const int	deviceNum,
-											const char	*keywordString,
-											const char *valueString)
-{
-//	CONSOLE_DEBUG_W_2STR("json=",	keywordString, valueString);
-	if (strcasecmp(deviceType, cAlpacaDeviceTypeStr) == 0)
-	{
-		AlpacaProcessReadAll_Dome(deviceNum, keywordString, valueString);
-	}
-	else
-	{
-		CONSOLE_ABORT(__FUNCTION__);
-	}
 }
 
 //*****************************************************************************
@@ -556,11 +502,10 @@ char			myDataString[512];
 	strcpy(cLastAlpacaCmdString, alpacaString);
 	gClientTransactionID++;
 
-	cForceAlpacaUpdate	=	true;
+	ForceAlpacaUpdate();
 	return(sucessFlag);
 }
 #endif // _ENABLE_EXTERNAL_SHUTTER_
-
 
 //*****************************************************************************
 void	ControllerDome::SendShutterCommand(const char *shutterCmd)
@@ -580,7 +525,7 @@ void	ControllerDome::SendShutterCommand(const char *shutterCmd)
 		}
 
 		//*	any time we send a command to the shutter, increase the update rate
-		cDomeUpdateDelta	=	2;
+		cUpdateDelta_secs	=	2;
 	}
 	else
 	{
@@ -593,19 +538,6 @@ void	ControllerDome::SendShutterCommand(const char *shutterCmd)
 
 #endif
 }
-
-
-//*****************************************************************************
-void	ControllerDome::ToggleSwitchState(const int switchNum)
-{
-//SJP_Parser_t	jsonParser;
-//bool			validData;
-//char			alpacaString[128];
-//char			dataString[128];
-
-
-}
-
 
 #ifdef _ENABLE_SKYTRAVEL_
 	#undef _ENABLE_SKYTRAVEL_

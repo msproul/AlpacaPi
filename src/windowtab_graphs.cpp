@@ -20,6 +20,7 @@
 //*****************************************************************************
 //*	Feb 24,	2020	<MLS> Created windowtab_graphs.cpp
 //*	Feb 24,	2020	<MLS> Added LogVoltage() & LogTemperature()
+//*	Jun 19,	2023	<MLS> Added DeviceState to graphs window
 //*****************************************************************************
 
 
@@ -105,6 +106,7 @@ int		yLoc;
 	//*	set up all the bottom stuff so that it is the same on all windowtabs
 	SetupWindowBottomBoxes(	kGraphBox_IPaddr,
 							kGraphBox_Readall,
+							kGraphBox_DeviceState,
 							-1,		//	kGraphBox_AlpacaErrorMsg,
 							-1,		//	kGraphBox_LastCmdString,
 							kGraphBox_AlpacaLogo,
@@ -150,7 +152,7 @@ int		iii;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG_W_NUM("arrayCount\t=", arrayCount);
-	LLD_SetColor(W_RED);
+	LLG_SetColor(W_RED);
 	for (iii=0; iii<arrayCount; iii++)
 	{
 		pt1_X	=	iii;
@@ -158,8 +160,8 @@ int		iii;
 
 		pt2_X	=	iii;
 		pt2_Y	=	pt1_Y - arrayData[iii];
-		LLD_MoveTo(pt1_X, pt1_Y);
-		LLD_LineTo(pt2_X, pt2_Y);
+		LLG_MoveTo(pt1_X, pt1_Y);
+		LLG_LineTo(pt2_X, pt2_Y);
 	}
 }
 

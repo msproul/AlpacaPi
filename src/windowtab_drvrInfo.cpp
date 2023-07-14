@@ -20,6 +20,7 @@
 //*****************************************************************************
 //*	Feb  9,	2021	<MLS> Created windowtab_drvrInfo.cpp
 //*	Jun  1,	2022	<MLS> Added "Launch Web" button
+//*	Jun 18,	2023	<MLS> Added DeviceState to driver info
 //*****************************************************************************
 
 
@@ -124,6 +125,7 @@ int		lastItemID;
 	//*	set up all the bottom stuff so that it is the same on all windowtabs
 	SetupWindowBottomBoxes(	kDriverInfo_IPaddr,
 							kDriverInfo_Readall,
+							kDriverInfo_DeviceState,
 							-1,
 							-1,
 							-1,

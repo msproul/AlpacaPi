@@ -22,6 +22,7 @@
 //*	May 30,	2022	<MLS> Added buttons for FindHome, Park
 //*	May 31,	2022	<MLS> Added support for DoesRefraction
 //*	Jun 14,	2022	<MLS> DoesRefraction button now working properly
+//*	Jun 19,	2023	<MLS> Added DeviceState to TeleSettings
 //*****************************************************************************
 
 #ifdef _ENABLE_CTRL_TELESCOPE_
@@ -258,6 +259,7 @@ int			yLoc_2ndColumn;
 	//*	set up all the bottom stuff so that it is the same on all windowtabs
 	SetupWindowBottomBoxes(	kTeleSettings_IPaddr,
 							kTeleSettings_Readall,
+							kTeleSettings_DeviceState,
 							kTeleSettings_AlpacaErrorMsg,
 							kTeleSettings_LastCmdString,
 							kTeleSettings_AlpacaLogo,

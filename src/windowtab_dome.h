@@ -8,11 +8,11 @@
 
 #ifndef _WINDOW_TAB_H_
 	#include	"windowtab.h"
-#endif // _WINDOW_TAB_H_
+#endif
 
 #ifndef	_CONTROLLER_H_
 	#include	"controller.h"
-#endif // _CONTROLLER_H_
+#endif
 
 
 //*****************************************************************************
@@ -75,6 +75,7 @@ enum
 	kDomeBox_AlpacaErrorMsg,
 	kDomeBox_IPaddr,
 	kDomeBox_Readall,
+	kDomeBox_DeviceState,
 #ifdef _ENABLE_SKYTRAVEL_
 	kDomeBox_Outline,
 

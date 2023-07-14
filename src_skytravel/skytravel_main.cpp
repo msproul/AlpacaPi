@@ -197,15 +197,15 @@ int					iii;
 int					objectsCreated;
 int					activeObjCnt;
 int					keyPressed;
-float				fitsVersionRet;
-float				fitsVersionVal;
 unsigned int		currentMillis;
 unsigned int		lastDebugMillis;
 unsigned int		deltaSecs;
 unsigned long		startNanoSecs;
 unsigned long		endNanoSecs;
 unsigned long		deltaNanoSecs;
-//unsigned long		lastTimingMillis;
+ControllerSkytravel	*skyTravelCtrlObj;
+int 				startupWidgetIdx;
+
 
 	CONSOLE_DEBUG(__FUNCTION__);
 //	CONSOLE_DEBUG_W_NUM("sizeof(TYPE_CelestData)", sizeof(TYPE_CelestData));
@@ -215,20 +215,30 @@ unsigned long		deltaNanoSecs;
 
 	CreateStartupScreen();
 
+#define _DISPLAY_CFITSIO_VERSION_
+#ifdef _DISPLAY_CFITSIO_VERSION_
+float				fitsVersionRet;
+float				fitsVersionVal;
+char				versionBuff[64];
 	fitsVersionRet		=	ffvers(&fitsVersionVal);
 #ifdef CFITSIO_MAJOR
+
+	startupWidgetIdx	=	SetStartupText("cfitsio version:");
+
 	#if (CFITSIO_MAJOR >= 4)
-		printf("cfitsio version %d.%d.%d\r\n", CFITSIO_MAJOR, CFITSIO_MINOR, CFITSIO_MICRO);
+		sprintf(versionBuff, "%d.%d.%d", CFITSIO_MAJOR, CFITSIO_MINOR, CFITSIO_MICRO);
 	#else
-		printf("cfitsio version %3.2f\r\n", CFITSIO_VERSION);
+		sprintf(versionBuff, "%3.2f", CFITSIO_VERSION);
 	#endif
 #else
-	printf("cfitsio version %3.2f\r\n", fitsVersionVal);
+	sprintf(versionBuff, "%3.2f", fitsVersionVal);
 #endif
 	if (fitsVersionRet != fitsVersionVal)
 	{
-		printf("cfitsio version %3.2f\r\n", fitsVersionRet);
+		sprintf(versionBuff, "%3.2f", fitsVersionRet);
 	}
+	SetStartupTextStatus(startupWidgetIdx, versionBuff);
+#endif // _DISPLAY_CFITSIO_VERSION_
 
 	memset(&gST_DispOptions,	0, sizeof(SkyTravelDispOptions));
 
@@ -261,12 +271,14 @@ unsigned long		deltaNanoSecs;
 
 
 
+//	startupWidgetIdx	=	SetStartupText("Creating SkyTravel window:");
 #if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
-	new ControllerSkytravel("SkyTravel++");
+	skyTravelCtrlObj	=	new ControllerSkytravel("SkyTravel++");
 #else
-	new ControllerSkytravel("SkyTravel");
+	skyTravelCtrlObj	=	new ControllerSkytravel("SkyTravel");
 #endif
 	objectsCreated++;
+//	SetStartupTextStatus(startupWidgetIdx, "OK");
 
 	//*	set the time to all zeros
 	for (iii=0; iii<kMaxControllers; iii++)
@@ -285,6 +297,11 @@ unsigned long		deltaNanoSecs;
 	activeObjCnt	=	objectsCreated;
 
 //	CloseStartupScreen();
+	SetStartupUpdate();
+//	cv::waitKey(2000);
+
+
+	skyTravelCtrlObj->ShowWindow();
 	while (gKeepRunning && (activeObjCnt > 0))
 	{
 		activeObjCnt	=	0;
@@ -342,12 +359,12 @@ unsigned long		deltaNanoSecs;
 			RemoteImage_OpenLatest();
 		}
 	}
-	CONSOLE_DEBUG("Closing all windows");
+//	CONSOLE_DEBUG("Closing all windows");
 	for (iii=0; iii<kMaxControllers; iii++)
 	{
 		if (gControllerList[iii] != NULL)
 		{
-			CONSOLE_DEBUG_W_STR("Deleting window", gControllerList[iii]->cWindowName);
+//			CONSOLE_DEBUG_W_STR("Deleting window", gControllerList[iii]->cWindowName);
 			delete gControllerList[iii];
 			cv::waitKey(10);
 		//	sleep(2);
@@ -363,12 +380,15 @@ int		iii;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-	for (iii=1; iii<kMaxControllers; iii++)
+	for (iii=0; iii<kMaxControllers; iii++)
 	{
 		if (gControllerList[iii] != NULL)
 		{
-//			CONSOLE_DEBUG_W_STR("Closing ", gControllerList[iii]->cWindowName);
-			gControllerList[iii]->cKeepRunning	=	false;
+			if (gControllerList[iii]->cWindowType != 'SKYT')
+			{
+	//			CONSOLE_DEBUG_W_STR("Closing ", gControllerList[iii]->cWindowName);
+				gControllerList[iii]->cKeepRunning	=	false;
+			}
 		}
 	}
 }

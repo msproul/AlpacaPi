@@ -60,8 +60,7 @@ WindowTabCpuStats::WindowTabCpuStats(	const int	xSize,
 //**************************************************************************************
 WindowTabCpuStats::~WindowTabCpuStats(void)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
-
+//	CONSOLE_DEBUG(__FUNCTION__);
 }
 
 //**************************************************************************************
@@ -113,7 +112,7 @@ int		clmnHdrWidth;
 	//	SetWidgetTextColor(		iii,	CV_RGB(255,	255,	255));
 		SetWidgetTextColor(		iii,	CV_RGB(0,	0,	0));
 
-		clmnHdr_xLoc	=	tabArray[iii - kCpuStats_ClmTitle1];;
+		clmnHdr_xLoc	=	tabArray[iii - kCpuStats_ClmTitle1];
 		clmnHdr_xLoc	+=	2;
 
 

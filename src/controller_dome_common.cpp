@@ -12,17 +12,18 @@
 //*	that you agree that the author(s) have no warranty, obligations or liability.  You
 //*	must determine the suitability of this source code for your use.
 //*
-//*	Redistributions of this source code must retain this copyright notice.
+//*	Re-distributions of this source code must retain this copyright notice.
 //*****************************************************************************
 //*
 //*****************************************************************************
 //*	Edit History
 //*****************************************************************************
 //*	Jan 10,	2021	<MLS> Created controller_dome_common.cpp
+//*	Jun 28,	2023	<MLS> Switched to table based processall
+//*	Jun 28,	2023	<MLS> Added AlpacaProcessReadAllIdx_Dome()
 //*****************************************************************************
 
 #if defined(_ENABLE_SKYTRAVEL_) || defined(_ENABLE_CTRL_DOME_)
-
 
 
 #ifndef PARENT_CLASS
@@ -33,8 +34,6 @@
 	#include	"alpacadriver_helper.h"
 	#include	"helper_functions.h"
 	#include	"controller.h"
-
-
 
 	#ifdef _ENABLE_SKYTRAVEL_
 		#define	PARENT_CLASS	ControllerSkytravel
@@ -48,11 +47,23 @@
 	#endif
 #endif
 
+#ifndef	_WINDOWTAB_DOME_H_
+	#include	"windowtab_dome.h"
+#endif
+
+#ifndef kTab_Dome
+	#define	kTab_Dome	1
+#endif
 
 #ifndef _HELPER_FUNCTIONS_H_
 	#include	"helper_functions.h"
 #endif
 
+#include	"dome_AlpacaCmds.h"
+
+#ifndef _ENABLE_SKYTRAVEL_
+	#include	"dome_AlpacaCmds.cpp"
+#endif
 
 //*****************************************************************************
 //*	Get Status, One At A Time
@@ -159,122 +170,120 @@ int			argInt;
 }
 
 //*****************************************************************************
-void	PARENT_CLASS::AlpacaProcessReadAll_Dome(const int	deviceNum,
-												const char	*keywordString,
-												const char	*valueString)
+bool	PARENT_CLASS::AlpacaProcessReadAllIdx_Dome(	const int	deviceNum,
+													const int	keywordEnum,
+													const char	*valueString)
 {
+bool	dataWasHandled	=	true;
 double	argDouble;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
-//	CONSOLE_DEBUG_W_STR(keywordString, valueString);
+	switch(keywordEnum)
+	{
+		case kCmd_Dome_altitude:		//*	The dome altitude
+			{
+			double	myNewAltitude;
 
-	if (strcasecmp(keywordString, "version") == 0)
-	{
-		//*	"version": "AlpacaPi - V0.2.2-beta build #32",
-		strcpy(cAlpacaVersionString, valueString);
-	}
-	else if (strcasecmp(keywordString, "canfindhome") == 0)
-	{
-		cDomeProp.CanFindHome	=	IsTrueFalse(valueString);
-	}
-	else if (strcasecmp(keywordString, "canpark") == 0)
-	{
-		cDomeProp.CanPark		=	IsTrueFalse(valueString);
-	}
-	else if (strcasecmp(keywordString, "cansetaltitude") == 0)
-	{
-		cDomeProp.CanSetAltitude	=	IsTrueFalse(valueString);
-	}
-	else if (strcasecmp(keywordString, "cansetazimuth") == 0)
-	{
-		cDomeProp.CanSetAzimuth	=	IsTrueFalse(valueString);
-	}
-	else if (strcasecmp(keywordString, "cansetpark") == 0)
-	{
-		cDomeProp.CanSetPark		=	IsTrueFalse(valueString);
-	}
-	else if (strcasecmp(keywordString, "cansetshutter") == 0)
-	{
-		cDomeProp.CanSetShutter	=	IsTrueFalse(valueString);
-	}
-	else if (strcasecmp(keywordString, "canslave") == 0)
-	{
-		cDomeProp.CanSlave		=	IsTrueFalse(valueString);
-		if (cDomeProp.CanSlave)
-		{
-			SetWidgetBGColor(	kTab_Dome, kDomeBox_ToggleSlaveMode,	CV_RGB(255,	255,	255));
-		}
-		else
-		{
-			SetWidgetText(		kTab_Dome,	kDomeBox_SlavedStatus,	"N/A");
-			SetWidgetBGColor(	kTab_Dome, kDomeBox_ToggleSlaveMode,	CV_RGB(128,	128,	128));
-		}
-	}
-	else if (strcasecmp(keywordString, "cansyncazimuth") == 0)
-	{
-//		CONSOLE_DEBUG_W_STR(keywordString, valueString);
-		cDomeProp.CanSyncAzimuth	=	IsTrueFalse(valueString);
-	}
-	else if (strcasecmp(keywordString, "slaved") == 0)
-	{
-		cDomeProp.Slaved			=	IsTrueFalse(valueString);
-		if (cDomeProp.CanSlave)
-		{
-			SetWidgetText(kTab_Dome,	kDomeBox_SlavedStatus,		(cDomeProp.Slaved ? "Yes" : "No"));
-			SetWidgetText(kTab_Dome,	kDomeBox_ToggleSlaveMode, 	(cDomeProp.Slaved ? "Disable Slave mode" : "Enable Slave mode"));
-		}
-	}
-	else if (strcasecmp(keywordString, "athome") == 0)
-	{
-		cDomeProp.AtHome			=	IsTrueFalse(valueString);
-	}
-	else if (strcasecmp(keywordString, "atpark") == 0)
-	{
-		cDomeProp.AtPark			=	IsTrueFalse(valueString);
-	}
-	else if (strcasecmp(keywordString, "azimuth") == 0)
-	{
-		argDouble	=	AsciiToDouble(valueString);
-		UpdateDomeAzimuth(argDouble);
-	}
-	else if (strcasecmp(keywordString, "altitude") == 0)
-	{
-		//*	if we are talking to the shutter directly dont update from here
-//		if (cShutterInfoValid == false)
-		{
-		double	myNewAltitude;
+				myNewAltitude	=	AsciiToDouble(valueString);
+				UpdateShutterAltitude(myNewAltitude);
+			}
+			break;
 
-			myNewAltitude	=	AsciiToDouble(valueString);
-			UpdateShutterAltitude(myNewAltitude);
-		}
-	}
-	else if (strcasecmp(keywordString, "slewing") == 0)
-	{
-		cDomeProp.Slewing		=	IsTrueFalse(valueString);
-	}
-	else if (strcasecmp(keywordString, "shutterstatus") == 0)
-	{
-		//*	if we are talking to the shutter directly dont update from here
-//		if (cShutterInfoValid == false)
-		{
-		TYPE_ShutterStatus	newShutterStatus;
+		case kCmd_Dome_athome:			//*	Indicates whether the dome is in the home position.
+			cDomeProp.AtHome		=	IsTrueFalse(valueString);
+			break;
 
-			newShutterStatus	=	(TYPE_ShutterStatus)atoi(valueString);
-			UpdateShutterStatus(newShutterStatus);
-		}
+		case kCmd_Dome_atpark:			//*	Indicates whether the telescope is at the park position
+			cDomeProp.AtPark		=	IsTrueFalse(valueString);
+			break;
+
+		case kCmd_Dome_azimuth:			//*	The dome azimuth
+			argDouble	=	AsciiToDouble(valueString);
+			UpdateDomeAzimuth(argDouble);
+			break;
+
+		case kCmd_Dome_canfindhome:		//*	Indicates whether the dome can find the home position.
+			cDomeProp.CanFindHome	=	IsTrueFalse(valueString);
+			break;
+
+		case kCmd_Dome_canpark:			//*	Indicates whether the dome can be parked.
+			cDomeProp.CanPark		=	IsTrueFalse(valueString);
+			break;
+
+		case kCmd_Dome_cansetaltitude:	//*	Indicates whether the dome altitude can be set
+			cDomeProp.CanSetAltitude	=	IsTrueFalse(valueString);
+			break;
+
+		case kCmd_Dome_cansetazimuth:	//*	Indicates whether the dome azimuth can be set
+			cDomeProp.CanSetAzimuth	=	IsTrueFalse(valueString);
+			break;
+
+		case kCmd_Dome_cansetpark:		//*	Indicates whether the dome park position can be set
+			cDomeProp.CanSetPark		=	IsTrueFalse(valueString);
+			break;
+
+		case kCmd_Dome_cansetshutter:	//*	Indicates whether the dome shutter can be opened
+			cDomeProp.CanSetShutter		=	IsTrueFalse(valueString);
+			break;
+
+		case kCmd_Dome_canslave:		//*	Indicates whether the dome supports slaving to a telescope
+			cDomeProp.CanSlave			=	IsTrueFalse(valueString);
+			if (cDomeProp.CanSlave)
+			{
+				SetWidgetBGColor(	kTab_Dome, kDomeBox_ToggleSlaveMode,	CV_RGB(255,	255,	255));
+			}
+			else
+			{
+				SetWidgetText(		kTab_Dome,	kDomeBox_SlavedStatus,	"N/A");
+				SetWidgetBGColor(	kTab_Dome, kDomeBox_ToggleSlaveMode,	CV_RGB(128,	128,	128));
+			}
+			break;
+
+		case kCmd_Dome_cansyncazimuth:	//*	Indicates whether the dome azimuth position can be synched
+			cDomeProp.CanSyncAzimuth	=	IsTrueFalse(valueString);
+			break;
+
+		case kCmd_Dome_shutterstatus:	//*	Status of the dome shutter or roll-off roof
+			{
+			TYPE_ShutterStatus	newShutterStatus;
+
+				newShutterStatus	=	(TYPE_ShutterStatus)atoi(valueString);
+				UpdateShutterStatus(newShutterStatus);
+			}
+			break;
+
+		case kCmd_Dome_slaved:			//*	GET--Indicates whether the dome is slaved to the telescope
+			cDomeProp.Slaved			=	IsTrueFalse(valueString);
+			if (cDomeProp.CanSlave)
+			{
+				SetWidgetText(kTab_Dome,	kDomeBox_SlavedStatus,		(cDomeProp.Slaved ? "Yes" : "No"));
+				SetWidgetText(kTab_Dome,	kDomeBox_ToggleSlaveMode, 	(cDomeProp.Slaved ? "Disable Slave mode" : "Enable Slave mode"));
+			}
+			break;
+
+		case kCmd_Dome_slewing:			//*	Indicates whether the any part of the dome is moving
+			cDomeProp.Slewing		=	IsTrueFalse(valueString);
+			break;
+
+		//==============================================================
+		//*	extra commands added by MLS
+		case kCmd_Dome_powerstatus:		//*	Return power status
+			break;
+
+		case kCmd_Dome_auxiliarystatus:	//*	Return auxiliary status
+			break;
+
+		case kCmd_Dome_currentstate:	//*	What is the current state of the state machine
+			break;
+
+		default:
+			dataWasHandled	=	false;
+			CONSOLE_DEBUG_W_NUM("keywordEnum\t=", keywordEnum);
+			CONSOLE_DEBUG_W_STR("valueString\t=", valueString);
+			break;
+
 	}
-	else
-	{
-		//*	process the common stuff
-		AlpacaProcessReadAll_Common(	"dome",
-										deviceNum,
-										keywordString,
-										valueString);
-	}
+	return(dataWasHandled);
 }
-
-
-
 
 //*****************************************************************************
 void	PARENT_CLASS::AlpacaProcessSupportedActions_Dome(const int deviveNum, const char *valueString)

@@ -8,6 +8,14 @@ extern double	gHourAngleData[];
 extern double	gRightAsceData[];
 extern double	gDeclinationData[];
 
+//*****************************************************************************
+enum
+{
+	kMountData_HA	=	0,
+	kMountData_RA,
+	kMountData_DEC
+};
+
 #ifdef __cplusplus
 	extern "C" {
 #endif

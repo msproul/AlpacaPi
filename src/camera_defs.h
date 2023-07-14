@@ -5,13 +5,13 @@
 #define _CAMERA_DEFS_H_
 
 //**************************************************************************************
-typedef struct
+typedef struct	//	TYPE_FilenameOptions
 {
 	//*	File name information
-	bool	IncludeSerialNum;
-	bool	IncludeManuf;
 	bool	IncludeFilter;
+	bool	IncludeManuf;
 	bool	IncludeRefID;
+	bool	IncludeSerialNum;
 
 } TYPE_FilenameOptions;
 

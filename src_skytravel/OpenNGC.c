@@ -38,6 +38,7 @@
 
 #include	"SkyStruc.h"
 #include	"helper_functions.h"
+#include	"controller_startup.h"
 
 #include	"OpenNGC.h"
 

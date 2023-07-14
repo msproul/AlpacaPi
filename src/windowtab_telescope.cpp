@@ -27,6 +27,7 @@
 //*	May 12,	2022	<MLS> Added up/down east/west Normal,Slewing,Disabled colors
 //*	May 12,	2022	<MLS> Added Tracking rate button handling
 //*	Jun 13,	2022	<MLS> Added ProcessMovementButtons() to simplify code
+//*	Jun 19,	2023	<MLS> Added DeviceState to Telescope
 //*****************************************************************************
 
 #ifdef _ENABLE_CTRL_TELESCOPE_
@@ -359,6 +360,7 @@ int			coordHeight;
 	//*	set up all the bottom stuff so that it is the same on all windowtabs
 	SetupWindowBottomBoxes(	kTelescope_IPaddr,
 							kTelescope_Readall,
+							kTelescope_DeviceState,
 							kTelescope_AlpacaErrorMsg,
 							kTelescope_LastCmdString,
 							kTelescope_AlpacaLogo,
@@ -835,7 +837,7 @@ char	dataString[64];
 		{
 		double	axisRateDelta;
 		double	axisRateStep;
-		double	slewValue;;
+		double	slewValue;
 		int		iii;
 		char	valueString[48];
 
@@ -849,10 +851,10 @@ char	dataString[64];
 				axisRateDelta	=	cSlewRate_RAmax - cSlewRate_RAmin;
 				axisRateStep	=	axisRateDelta / kSupportedSlewRates;
 
-				CONSOLE_DEBUG_W_DBL("cSlewRate_RAmin\t=", cSlewRate_RAmin);
-				CONSOLE_DEBUG_W_DBL("cSlewRate_RAmax\t=", cSlewRate_RAmax);
-				CONSOLE_DEBUG_W_DBL("axisRateDelta  \t=", axisRateDelta);
-				CONSOLE_DEBUG_W_DBL("axisRateStep   \t=", axisRateStep);
+//				CONSOLE_DEBUG_W_DBL("cSlewRate_RAmin\t=", cSlewRate_RAmin);
+//				CONSOLE_DEBUG_W_DBL("cSlewRate_RAmax\t=", cSlewRate_RAmax);
+//				CONSOLE_DEBUG_W_DBL("axisRateDelta  \t=", axisRateDelta);
+//				CONSOLE_DEBUG_W_DBL("axisRateStep   \t=", axisRateStep);
 
 				slewValue	=	cSlewRate_RAmin + axisRateStep;
 				for (iii=0; iii<kSupportedSlewRates; iii++)
@@ -873,10 +875,10 @@ char	dataString[64];
 				axisRateDelta		=	cSlewRate_RAmax - cSlewRate_DECmin;
 				axisRateStep		=	axisRateDelta / kSupportedSlewRates;
 
-				CONSOLE_DEBUG_W_DBL("cSlewRate_DECmin\t=", cSlewRate_DECmin);
-				CONSOLE_DEBUG_W_DBL("cSlewRate_DECmax\t=", cSlewRate_DECmax);
-				CONSOLE_DEBUG_W_DBL("axisRateDelta  \t=", axisRateDelta);
-				CONSOLE_DEBUG_W_DBL("axisRateStep   \t=", axisRateStep);
+//				CONSOLE_DEBUG_W_DBL("cSlewRate_DECmin\t=", cSlewRate_DECmin);
+//				CONSOLE_DEBUG_W_DBL("cSlewRate_DECmax\t=", cSlewRate_DECmax);
+//				CONSOLE_DEBUG_W_DBL("axisRateDelta  \t=", axisRateDelta);
+//				CONSOLE_DEBUG_W_DBL("axisRateStep   \t=", axisRateStep);
 
 				slewValue	=	cSlewRate_DECmin + axisRateStep;
 				for (iii=0; iii<kSupportedSlewRates; iii++)
@@ -898,11 +900,11 @@ char	dataString[64];
 				}
 				else
 				{
-					CONSOLE_DEBUG_W_DBL("cRA_slewRates[iii] \t=",	cRA_slewRates[iii]);
-					CONSOLE_DEBUG_W_DBL("cDEC_slewRates[iii]\t=",	cDEC_slewRates[iii]);
+//					CONSOLE_DEBUG_W_DBL("cRA_slewRates[iii] \t=",	cRA_slewRates[iii]);
+//					CONSOLE_DEBUG_W_DBL("cDEC_slewRates[iii]\t=",	cDEC_slewRates[iii]);
 					strcpy(valueString, "-N/A-");
 				}
-				CONSOLE_DEBUG_W_STR("valueString\t=", valueString);
+//				CONSOLE_DEBUG_W_STR("valueString\t=", valueString);
 				SetWidgetText((kTelescope_SlewRate_VerySlow_Val + iii), valueString);
 			}
 		}

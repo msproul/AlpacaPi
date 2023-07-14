@@ -42,6 +42,7 @@
 //*	Oct 20,	2022	<MLS> Added DumpFocuserProperties()
 //*	Nov  4,	2022	<MLS> Added GetCommandArgumentString()
 //*	Nov  8,	2022	<MLS> Fixed bug in JSON for temperatureLog in all drivers.
+//*	Jun 18,	2023	<MLS> Added DeviceState_Add_Content() to focuser dirver
 //*****************************************************************************
 
 #ifdef _ENABLE_FOCUSER_
@@ -68,6 +69,7 @@
 
 #include	"JsonResponse.h"
 #include	"focuserdriver.h"
+
 #ifdef _ENABLE_FOCUSER_MOONLITE_
 	#include	"focuserdriver_nc.h"
 #endif
@@ -78,6 +80,10 @@
 #ifdef	_ENABLE_ROTATOR_
 	#include	"rotatordriver.h"
 #endif
+
+#include	"focuser_AlpacaCmds.h"
+#include	"focuser_AlpacaCmds.cpp"
+
 
 //*****************************************************************************
 int	CreateFocuserObjects(void)
@@ -95,41 +101,15 @@ int		focuserCnt;
 	return(focuserCnt);
 }
 
-//*****************************************************************************
-static TYPE_CmdEntry	gFocuserCmdTable[]	=
-{
-
-	{	"absolute",				kCmd_Focuser_absolute,			kCmdType_GET	},
-	{	"ismoving",				kCmd_Focuser_ismoving,			kCmdType_GET	},
-	{	"maxincrement",			kCmd_Focuser_maxincrement,		kCmdType_GET	},
-	{	"maxstep",				kCmd_Focuser_maxstep,			kCmdType_GET	},
-	{	"position",				kCmd_Focuser_position,			kCmdType_GET	},
-	{	"stepsize",				kCmd_Focuser_stepsize,			kCmdType_GET	},
-	{	"tempcomp",				kCmd_Focuser_tempcomp,			kCmdType_BOTH	},
-	{	"tempcompavailable",	kCmd_Focuser_tempcompavailable,	kCmdType_GET	},
-	{	"temperature",			kCmd_Focuser_temperature,		kCmdType_GET	},
-	{	"halt",					kCmd_Focuser_halt,				kCmdType_PUT	},
-	{	"move",					kCmd_Focuser_move,				kCmdType_PUT	},
-
-	//*	items added by MLS
-	{	"--extras",				kCmd_Focuser_Extras,			kCmdType_GET	},
-	{	"moverelative",			kCmd_Focuser_moverelative,		kCmdType_PUT	},
-	{	"readall",				kCmd_Focuser_readall,			kCmdType_GET	},
-
-
-	{	"",						-1,	0x00	}
-};
-
 
 
 //**************************************************************************************
-FocuserDriver::FocuserDriver(const int argDevNum)
+FocuserDriver::FocuserDriver(void)
 	:AlpacaDriver(kDeviceType_Focuser)
 {
-
 	CONSOLE_DEBUG(__FUNCTION__);
 
-	strcpy(cCommonProp.Name, "Focuser");
+	strcpy(cCommonProp.Name,		"Focuser");
 	strcpy(cCommonProp.Description,	"Generic Focuser");
 	cCommonProp.InterfaceVersion	=	3;
 	cDriverCmdTablePtr				=	gFocuserCmdTable;
@@ -137,39 +117,37 @@ FocuserDriver::FocuserDriver(const int argDevNum)
 	memset(&cFocuserProp, 0, sizeof(TYPE_FocuserProperties));
 	memset(&cRotatorProp, 0, sizeof(TYPE_RotatorProperties));
 
-	cFocuserProp.MaxStep		=	10;
-	cFocuserProp.MaxIncrement	=	10;
-	cFocuserProp.Position		=	-1;
-	cFocuserProp.IsMoving		=	false;
+	cFocuserProp.MaxStep			=	10;
+	cFocuserProp.MaxIncrement		=	10;
+	cFocuserProp.Position			=	-1;
+	cFocuserProp.IsMoving			=	false;
 
-
-	cPrevFocuserPosition		=	-1;
-	cNewFocuserPosition			=	-1;
+	cPrevFocuserPosition			=	-1;
+	cNewFocuserPosition				=	-1;
 
 	//*	all of the following is for support of Moonlite NiteCrawler
-	cIsNiteCrawler				=	false;
-	cFocuserSupportsRotation	=	false;
-	cRotatorPosition			=	-1;
-	cPrevRotatorPosition		=	-1;
-	cNewRotatorPosition			=	-1;
+	cIsNiteCrawler					=	false;
+	cFocuserSupportsRotation		=	false;
+	cRotatorPosition				=	-1;
+	cPrevRotatorPosition			=	-1;
+	cNewRotatorPosition				=	-1;
 
-	cFocuserSupportsAux			=	false;
-	cAuxPosition				=	-1;
-	cPrevAuxPosition			=	-1;
-	cNewAuxPosition				=	-1;
-	cAuxIsMoving				=	false;
+	cFocuserSupportsAux				=	false;
+	cAuxPosition					=	-1;
+	cPrevAuxPosition				=	-1;
+	cNewAuxPosition					=	-1;
+	cAuxIsMoving					=	false;
 
-	cFocuserHasVoltage			=	false;
-	cFocuserVoltage				=	0.0;
-	cFocuserHasTemperature		=	false;
-	cFocuserProp.Temperature	=	0.0;
+	cFocuserHasVoltage				=	false;
+	cFocuserVoltage					=	0.0;
+	cFocuserHasTemperature			=	false;
+	cFocuserProp.Temperature_DegC	=	0.0;
 
-	cSwitchIN					=	false;
-	cSwitchOUT					=	false;
-	cSwitchROT					=	false;
-	cSwitchAUX1					=	false;
-	cSwitchAUX2					=	false;
-
+	cSwitchIN						=	false;
+	cSwitchOUT						=	false;
+	cSwitchROT						=	false;
+	cSwitchAUX1						=	false;
+	cSwitchAUX2						=	false;
 }
 
 //**************************************************************************************
@@ -511,7 +489,7 @@ char				argumentString[32];
 													(sizeof(argumentString) -1));
 			if (foundKeyWord)
 			{
-				cFocuserProp.TempComp	=	IsTrueFalse(argumentString);;
+				cFocuserProp.TempComp	=	IsTrueFalse(argumentString);
 				alpacaErrCode			=	kASCOM_Err_Success;
 			}
 			else
@@ -563,14 +541,14 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 								reqData->jsonTextBuffer,
 								kMaxJsonBuffLen,
 								responseString,
-								cFocuserProp.Temperature,
+								cFocuserProp.Temperature_DegC,
 								INCLUDE_COMMA);
 
 	JsonResponse_Add_Double(	reqData->socket,
 								reqData->jsonTextBuffer,
 								kMaxJsonBuffLen,
 								"Degrees-F",
-								DEGREES_F(cFocuserProp.Temperature),
+								DEGREES_F(cFocuserProp.Temperature_DegC),
 								INCLUDE_COMMA);
 
 
@@ -678,7 +656,21 @@ int32_t				newPosition;
 	return(alpacaErrCode);
 }
 
+//*****************************************************************************
+//IsMoving
+//Position
+//Temperature
+//*****************************************************************************
+bool	FocuserDriver::DeviceState_Add_Content(const int socketFD, char *jsonTextBuffer, const int maxLen)
+{
+//	CONSOLE_DEBUG(__FUNCTION__);
 
+	DeviceState_Add_Bool(socketFD,	jsonTextBuffer, maxLen,	"IsMoving",		cFocuserProp.IsMoving);
+	DeviceState_Add_Int(socketFD,	jsonTextBuffer, maxLen,	"Position",		cFocuserProp.Position);
+	DeviceState_Add_Dbl(socketFD,	jsonTextBuffer, maxLen,	"Temperature",	cFocuserProp.Temperature_DegC);
+
+	return(true);
+}
 
 //*****************************************************************************
 TYPE_ASCOM_STATUS	FocuserDriver::Get_Readall(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
@@ -861,7 +853,7 @@ char		lineBuffer[128];
 		OutputHTMLrowData(mySocketFD,	"Aux position",	lineBuffer);
 
 		//*	Temperature
-		sprintf(lineBuffer, "%3.1f&deg;C / %3.1f&deg;F", cFocuserProp.Temperature,  DEGREES_F(cFocuserProp.Temperature));
+		sprintf(lineBuffer, "%3.1f&deg;C / %3.1f&deg;F", cFocuserProp.Temperature_DegC,  DEGREES_F(cFocuserProp.Temperature_DegC));
 		OutputHTMLrowData(mySocketFD,	"Temperature",	lineBuffer);
 
 
@@ -881,9 +873,7 @@ char		lineBuffer[128];
 //*****************************************************************************
 void	FocuserDriver::OutputHTML_Part2(TYPE_GetPutRequestData *reqData)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
-		//*	now generate links to all of the commands
-	GenerateHTMLcmdLinkTable(reqData->socket, "focuser", cAlpacaDeviceNum, gFocuserCmdTable);
+//	CONSOLE_DEBUG(__FUNCTION__);
 }
 
 //*****************************************************************************
@@ -943,7 +933,7 @@ void	FocuserDriver::GetFocuserSerialNumber(char *serialNumString)
 //*****************************************************************************
 double	FocuserDriver::GetFocuserTemperature(void)
 {
-	return(cFocuserProp.Temperature);
+	return(cFocuserProp.Temperature_DegC);
 }
 
 //*****************************************************************************
@@ -998,7 +988,7 @@ void	FocuserDriver::DumpFocuserProperties(const char *callingFunctionName)
 	CONSOLE_DEBUG_W_DBL(	"cFocuserProp.StepSize         \t=",	cFocuserProp.StepSize);
 	CONSOLE_DEBUG_W_BOOL(	"cFocuserProp.TempComp         \t=",	cFocuserProp.TempComp);
 	CONSOLE_DEBUG_W_BOOL(	"cFocuserProp.TempCompAvailable\t=",	cFocuserProp.TempCompAvailable);
-	CONSOLE_DEBUG_W_DBL(	"cFocuserProp.Temperature      \t=",	cFocuserProp.Temperature);
+	CONSOLE_DEBUG_W_DBL(	"cFocuserProp.Temperature_DegC \t=",	cFocuserProp.Temperature_DegC);
 }
 
 //*****************************************************************************

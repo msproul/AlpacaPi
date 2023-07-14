@@ -69,7 +69,22 @@ WindowTabPreview::~WindowTabPreview(void)
 	{
 		CONSOLE_DEBUG("destroy old image");
 		SetWidgetImage(kPreviewBox_ImageDisplay, NULL);
+	#ifdef _USE_OPENCV_CPP_
+		//---try------try------try------try------try------try---
+		try
+		{
+//			CONSOLE_DEBUG("try delete cOpenCVdownLoadedImage");
+			delete cOpenCVdownLoadedImage;
+			cOpenCVdownLoadedImage	=	NULL;
+		}
+		catch(cv::Exception& ex)
+		{
+			CONSOLE_DEBUG("delete cOpenCVdownLoadedImage; had an exception");
+			CONSOLE_DEBUG_W_NUM("openCV error code\t=",	ex.code);
+		}
+	#else
 		cvReleaseImage(&cOpenCVdownLoadedImage);
+	#endif
 		cOpenCVdownLoadedImage	=	NULL;
 	}
 }
@@ -81,7 +96,11 @@ void	WindowTabPreview::SetupWindowControls(void)
 int			yLoc;
 int			yLocSave;
 int			iii;
-IplImage	*logoImage;
+#ifdef _USE_OPENCV_CPP_
+	cv::Mat		*logoImage;
+#else
+	IplImage	*logoImage;
+#endif
 
 //*	create our own set of column offsets
 int		myClm1_offset;
@@ -140,22 +159,22 @@ int		myClmWidth;
 	//*	now figure out which logo belongs
 	logoImage	=	NULL;
 	CONSOLE_DEBUG_W_STR("cAlpacaDeviceName=", cAlpacaDeviceName);
-	if (strcasestr(cAlpacaDeviceName, "ZWO") != NULL)
-	{
-		logoImage		=	cvLoadImage("logos/zwo-logo.png",		CV_LOAD_IMAGE_COLOR);
-	}
-	else if (strcasestr(cAlpacaDeviceName, "Atik") != NULL)
-	{
-		logoImage		=	cvLoadImage("logos/atik-logo.png",	CV_LOAD_IMAGE_COLOR);
-	}
-	else if ((strcasestr(cAlpacaDeviceName, "toup") != NULL) || (strcasestr(cAlpacaDeviceName, "GCMOS") != NULL))
-	{
-		logoImage		=	cvLoadImage("logos/touptek-logo.png",	CV_LOAD_IMAGE_COLOR);
-	}
-	else if (strcasestr(cAlpacaDeviceName, "QHY") != NULL)
-	{
-		logoImage		=	cvLoadImage("logos/qhy-logo.png",		CV_LOAD_IMAGE_COLOR);
-	}
+//	if (strcasestr(cAlpacaDeviceName, "ZWO") != NULL)
+//	{
+//		logoImage		=	cvLoadImage("logos/zwo-logo.png",		CV_LOAD_IMAGE_COLOR);
+//	}
+//	else if (strcasestr(cAlpacaDeviceName, "Atik") != NULL)
+//	{
+//		logoImage		=	cvLoadImage("logos/atik-logo.png",	CV_LOAD_IMAGE_COLOR);
+//	}
+//	else if ((strcasestr(cAlpacaDeviceName, "toup") != NULL) || (strcasestr(cAlpacaDeviceName, "GCMOS") != NULL))
+//	{
+//		logoImage		=	cvLoadImage("logos/touptek-logo.png",	CV_LOAD_IMAGE_COLOR);
+//	}
+//	else if (strcasestr(cAlpacaDeviceName, "QHY") != NULL)
+//	{
+//		logoImage		=	cvLoadImage("logos/qhy-logo.png",		CV_LOAD_IMAGE_COLOR);
+//	}
 	if (logoImage != NULL)
 	{
 		SetWidgetImage(kPreviewBox_Logo, logoImage);
@@ -422,7 +441,11 @@ char		dataString[64];
 //*****************************************************************************
 void	WindowTabPreview::SetDeviceInfo(TYPE_REMOTE_DEV *alpacaDevice)
 {
-IplImage	*logoImage;
+#ifdef _USE_OPENCV_CPP_
+	cv::Mat		*logoImage;
+#else
+	IplImage	*logoImage;
+#endif
 
 	cAlpacaDevInfo	=	*alpacaDevice;
 	CONSOLE_DEBUG_W_STR("hostName\t\t=",	alpacaDevice->hostName);
@@ -433,22 +456,22 @@ IplImage	*logoImage;
 	strcpy(cAlpacaDeviceName, alpacaDevice->deviceNameStr);
 	logoImage	=	NULL;
 	CONSOLE_DEBUG_W_STR("cAlpacaDeviceName=", cAlpacaDeviceName);
-	if (strcasestr(cAlpacaDeviceName, "ZWO") != NULL)
-	{
-		logoImage		=	cvLoadImage("logos/zwo-logo.png",		CV_LOAD_IMAGE_COLOR);
-	}
-	else if (strcasestr(cAlpacaDeviceName, "Atik") != NULL)
-	{
-		logoImage		=	cvLoadImage("logos/atik-logo.png",	CV_LOAD_IMAGE_COLOR);
-	}
-	else if ((strcasestr(cAlpacaDeviceName, "toup") != NULL) || (strcasestr(cAlpacaDeviceName, "GCMOS") != NULL))
-	{
-		logoImage		=	cvLoadImage("logos/touptek-logo.png",	CV_LOAD_IMAGE_COLOR);
-	}
-	else if (strcasestr(cAlpacaDeviceName, "QHY") != NULL)
-	{
-		logoImage		=	cvLoadImage("logos/qhy-logo.png",		CV_LOAD_IMAGE_COLOR);
-	}
+//	if (strcasestr(cAlpacaDeviceName, "ZWO") != NULL)
+//	{
+//		logoImage		=	cvLoadImage("logos/zwo-logo.png",		CV_LOAD_IMAGE_COLOR);
+//	}
+//	else if (strcasestr(cAlpacaDeviceName, "Atik") != NULL)
+//	{
+//		logoImage		=	cvLoadImage("logos/atik-logo.png",	CV_LOAD_IMAGE_COLOR);
+//	}
+//	else if ((strcasestr(cAlpacaDeviceName, "toup") != NULL) || (strcasestr(cAlpacaDeviceName, "GCMOS") != NULL))
+//	{
+//		logoImage		=	cvLoadImage("logos/touptek-logo.png",	CV_LOAD_IMAGE_COLOR);
+//	}
+//	else if (strcasestr(cAlpacaDeviceName, "QHY") != NULL)
+//	{
+//		logoImage		=	cvLoadImage("logos/qhy-logo.png",		CV_LOAD_IMAGE_COLOR);
+//	}
 	if (logoImage != NULL)
 	{
 		SetWidgetImage(kPreviewBox_Logo, logoImage);
@@ -556,7 +579,11 @@ ControllerPreview	*myPreviewController;
 void	WindowTabPreview::DownloadImage(void)
 {
 ControllerPreview	*myPreviewController;
-IplImage			*originalImage;
+#ifdef _USE_OPENCV_CPP_
+	cv::Mat			*originalImage;
+#else
+	IplImage		*originalImage;
+#endif
 int					liveDispalyWidth;
 int					liveDisplayHeight;
 int					reduceFactor;
@@ -574,7 +601,22 @@ int					openCVerr;
 	{
 		CONSOLE_DEBUG("destroy old image");
 		SetWidgetImage(kPreviewBox_ImageDisplay, NULL);
+	#ifdef _USE_OPENCV_CPP_
+		//---try------try------try------try------try------try---
+		try
+		{
+//			CONSOLE_DEBUG("try delete cOpenCVdownLoadedImage");
+			delete cOpenCVdownLoadedImage;
+			cOpenCVdownLoadedImage	=	NULL;
+		}
+		catch(cv::Exception& ex)
+		{
+			CONSOLE_DEBUG("delete cOpenCVdownLoadedImage; had an exception");
+			CONSOLE_DEBUG_W_NUM("openCV error code\t=",	ex.code);
+		}
+	#else
 		cvReleaseImage(&cOpenCVdownLoadedImage);
+	#endif
 		cOpenCVdownLoadedImage	=	NULL;
 	}
 
@@ -584,12 +626,23 @@ int					openCVerr;
 	{
 //		CONSOLE_DEBUG("Starting download");
 
-		originalImage	=	myPreviewController->DownloadImage();
+//		originalImage	=	myPreviewController->DownloadImage();
+		originalImage	=	myPreviewController->DownloadImage(false, true);
 		if (originalImage != NULL)
 		{
 			CONSOLE_DEBUG("Download complete");
 //			CONSOLE_DEBUG("Creating small image");
 			reduceFactor		=	1;
+		#ifdef _USE_OPENCV_CPP_
+			liveDispalyWidth	=	originalImage->cols;
+			liveDisplayHeight	=	originalImage->rows;
+			while (liveDispalyWidth > 700)
+			{
+				reduceFactor++;
+				liveDispalyWidth	=	originalImage->cols / reduceFactor;
+				liveDisplayHeight	=	originalImage->rows / reduceFactor;
+			}
+		#else
 			liveDispalyWidth	=	originalImage->width;
 			liveDisplayHeight	=	originalImage->height;
 			while (liveDispalyWidth > 700)
@@ -598,17 +651,32 @@ int					openCVerr;
 				liveDispalyWidth	=	originalImage->width / reduceFactor;
 				liveDisplayHeight	=	originalImage->height / reduceFactor;
 			}
+		#endif
 			CONSOLE_DEBUG_W_NUM("reduceFactor\t=", reduceFactor);
 			CONSOLE_DEBUG_W_NUM("liveDispalyWidth\t=", liveDispalyWidth);
 			CONSOLE_DEBUG_W_NUM("liveDisplayHeight\t=", liveDisplayHeight);
+		#ifdef _USE_OPENCV_CPP_
+			cOpenCVdownLoadedImage	=	new cv::Mat(liveDisplayHeight, liveDispalyWidth, CV_8UC3);
+		#else
 			cOpenCVdownLoadedImage	=	cvCreateImage(cvSize(	liveDispalyWidth,
 																liveDisplayHeight),
 																IPL_DEPTH_8U,
 																3);
+		#endif
 			if (cOpenCVdownLoadedImage != NULL)
 			{
 //				CONSOLE_DEBUG("Resizing image");
+			#ifdef _USE_OPENCV_CPP_
+				cv::resize(	*originalImage,
+							*cOpenCVdownLoadedImage,
+							cOpenCVdownLoadedImage->size(),
+							0,
+							0,
+							cv::INTER_LINEAR);
+			#else
 				cvResize(originalImage, cOpenCVdownLoadedImage, CV_INTER_LINEAR);
+			#endif
+
 				SetWidgetImage(kPreviewBox_ImageDisplay, cOpenCVdownLoadedImage);
 			}
 			//======================================
@@ -617,19 +685,41 @@ int					openCVerr;
 			strcat(fileName, ".jpg");
 
 			CONSOLE_DEBUG_W_STR("Saving image as", fileName);
+		#ifdef _USE_OPENCV_CPP_
+			openCVerr	=	cv::imwrite(fileName, *originalImage);
+		#else
 			openCVerr	=	cvSaveImage(fileName, originalImage, quality);
+		#endif
 			if (openCVerr == 0)
 			{
 			int		openCVerrorCode;
 			char	*errorMsgPtr;
 
 				CONSOLE_DEBUG_W_NUM("Error saving file\t=", openCVerr);
+			#ifdef _USE_OPENCV_CPP_
+			#else
 				openCVerrorCode	=	cvGetErrStatus();
 				CONSOLE_DEBUG_W_NUM("openCVerrorCode\t=", openCVerrorCode);
 				errorMsgPtr	=	(char *)cvErrorStr(openCVerrorCode);
 				CONSOLE_DEBUG_W_STR("errorMsgPtr\t=", errorMsgPtr);
+			#endif
 			}
+		#ifdef _USE_OPENCV_CPP_
+			//---try------try------try------try------try------try---
+			try
+			{
+	//			CONSOLE_DEBUG("try delete cOpenCVdownLoadedImage");
+				delete originalImage;
+				originalImage	=	NULL;
+			}
+			catch(cv::Exception& ex)
+			{
+				CONSOLE_DEBUG("delete originalImage; had an exception");
+				CONSOLE_DEBUG_W_NUM("openCV error code\t=",	ex.code);
+			}
+		#else
 			cvReleaseImage(&originalImage);
+		#endif
 
 
 			download_MBytes		=	1.0 * myPreviewController->cLastDownload_Bytes / (1024.0 * 1024.0);

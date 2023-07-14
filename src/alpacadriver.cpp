@@ -1,7 +1,7 @@
 //**************************************************************************
 //*	Name:			alpacadriver.cpp
 //*
-//*	Author:			Mark Sproul (C) 2019, 2020
+//*	Author:			Mark Sproul (C) 2019-2023
 //*					msproul@skychariot.com
 //*
 //*	Description:	C++ Driver for Alpaca protocol
@@ -32,7 +32,7 @@
 //*	<MLS>	=	Mark L Sproul msproul@skychariot.com
 //*****************************************************************************
 //*	Apr  5,	2019	<MLS> Attended lecture by Bob Denny introducing Alpaca protocol
-//*	Apr  9,	2019	<MLS> Created alpaca_driver.c
+//*	Apr  9,	2019	<MLS> Created alpacadriver.c
 //*	Apr 12,	2019	<MLS> Parsing of the get/put command working
 //*	Apr 12,	2019	<MLS> Added _ENABLE_CAMERA_
 //*	Apr 12,	2019	<MLS> Added _ENABLE_DOME_
@@ -60,6 +60,7 @@
 //*	May 14,	2019	<MLS> Added GenerateHTMLcmdLinkTable()
 //*	May 21,	2019	<MLS> Added logging
 //*	May 22,	2019	<MLS> Added logging HTML output
+//*	Aug 30,	2019	<MLS> Switching to C++
 //*	Aug 30,	2019	<MLS> Started on alpaca driver base class
 //*	Oct  4,	2019	<MLS> cAlpacaDeviceNum is now set correctly on class creation
 //*	Oct  9,	2019	<MLS> Added ProcessCmdLineArgs()
@@ -161,6 +162,15 @@
 //*	May  3,	2023	<MLS> Fixed jpg/png image requests to look in "docs" folder if not found
 //*	May  7,	2023	<MLS> Added comment argument to GetCommandArgumentString
 //*	May  7,	2023	<MLS> Added OuputCommandTableNotes()
+//*	Jun 13,	2023	<MLS> IMU support now allows failure to initialize, i.e. cable disconnected
+//*	Jun 18,	2023	<MLS> Peter Simpson published new commands for better async operation
+//*	Jun 18,	2023	<MLS> https://download.ascom-standards.org/AsyncInterfaceChanges-Proposal1.pdf
+//*	Jun 18,	2023	<MLS> Started implementing new commands
+//*	Jun 18,	2023	<MLS> Added Get_DeviceState()
+//*	Jun 18,	2023	<MLS> Moved all "connect" related routines to alpacadriverConnect.cpp
+//*	Jun 18,	2023	<MLS> Added DeviceState_Add_Content()
+//*	Jun 18,	2023	<MLS> Added log event if IMU fails to initialize
+//*	Jul 14,	2023	<MLS> Added OutputHTML_CmdTable()
 //*****************************************************************************
 //*	to install code blocks 20
 //*	Step 1: sudo add-apt-repository ppa:codeblocks-devs/release
@@ -261,6 +271,7 @@
 
 #ifdef _ENABLE_IMU_
 	#include "imu_lib.h"
+	bool	gIMUisOnLine	=	false;
 #endif
 #ifdef _ENABLE_SPECTROGRAPH_
 	#include	"spectrodriver.h"
@@ -272,6 +283,8 @@
 
 
 #include	"managementdriver.h"
+#include	"common_AlpacaCmds.h"
+#include	"common_AlpacaCmds.cpp"
 
 
 AlpacaDriver	*gAlpacaDeviceList[kMaxDevices];
@@ -326,41 +339,6 @@ int		iii;
 	gDeviceCnt	=	0;
 }
 
-
-//*****************************************************************************
-const TYPE_CmdEntry	gCommonCmdTable[]	=
-{
-
-	{	"action",				kCmd_Common_action,				kCmdType_PUT	},
-	{	"commandblind",			kCmd_Common_commandblind,		kCmdType_PUT	},
-	{	"commandbool",			kCmd_Common_commandbool,		kCmdType_PUT	},
-	{	"commandstring",		kCmd_Common_commandstring,		kCmdType_PUT	},
-	{	"connected",			kCmd_Common_connected,			kCmdType_BOTH	},
-	{	"description",			kCmd_Common_description,		kCmdType_GET	},
-	{	"driverinfo",			kCmd_Common_driverinfo,			kCmdType_GET	},
-	{	"driverversion",		kCmd_Common_driverversion,		kCmdType_GET	},
-	{	"interfaceversion",		kCmd_Common_interfaceversion,	kCmdType_GET	},
-	{	"name",					kCmd_Common_name,				kCmdType_GET	},
-	{	"supportedactions",		kCmd_Common_supportedactions,	kCmdType_GET	},
-
-	//*	extras added by MLS
-	{	"--extras",				kCmd_Common_Extras,				kCmdType_GET	},
-	{	"livewindow",			kCmd_Common_LiveWindow,			kCmdType_PUT	},
-	{	"temperaturelog",		kCmd_Common_TemperatureLog,		kCmdType_GET	},
-
-
-
-#ifdef _INCLUDE_EXIT_COMMAND_
-	//*	the exit command was implemented for a special case application, it is not intended
-	//*	to be used in the normal astronomy community
-	{	"exit",					kCmd_Common_exit,				kCmdType_GET	},
-#endif // _INCLUDE_EXIT_COMMAND_
-
-	{	"",						-1,	0x00	}
-};
-
-
-
 //*****************************************************************************
 bool	GetCmdNameFromTable(const int cmdNumber, char *comandName, const TYPE_CmdEntry *cmdTable, char *getPut)
 {
@@ -397,9 +375,16 @@ int		iii;
 	//*	set the common property defaults
 	memset((void *)&cCommonProp, 0, sizeof(TYPE_CommonProperties));
 	cCommonProp.InterfaceVersion	=	1;
-	strcpy(cCommonProp.Name,			"unknown");
+
+	GetDeviceTypeFromEnum(argDeviceType, cAlpacaDeviceString);
+	CONSOLE_DEBUG_W_STR("cAlpacaDeviceString\t=", cAlpacaDeviceString);
+	ToLowerStr(cAlpacaDeviceString);
+	CONSOLE_DEBUG_W_STR("cAlpacaDeviceString\t=", cAlpacaDeviceString);
+
+	strcpy(cCommonProp.Name,		cAlpacaDeviceString);
 	sprintf(cCommonProp.DriverVersion, "%s Build %d", kVersionString, kBuildNumber);
 	cCommonProp.Connected		=	false;
+	cCommonProp.Connecting		=	false;
 
 	cRunStartupOperations		=	true;
 	cVerboseDebug				=	false;
@@ -619,10 +604,45 @@ int					mySocket;
 			}
 			break;
 
+		//--------------------------------------------------------------------------------------------------------
+		//*	New commands as of Jun 18, 2023
+		case kCmd_Common_Connect:
+			if (reqData->get_putIndicator == 'P')
+			{
+				alpacaErrCode	=	Put_Connect(reqData, alpacaErrMsg);
+			}
+			else
+			{
+				alpacaErrCode	=	kASCOM_Err_InvalidOperation;
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Connect does not allow GET");
+				CONSOLE_DEBUG(alpacaErrMsg);
+			}
+			break;
+
+		case kCmd_Common_Connecting:
+			alpacaErrCode	=	Get_Connecting(reqData, alpacaErrMsg, gValueString);
+			break;
+
+		case kCmd_Common_Disconnect:
+			if (reqData->get_putIndicator == 'P')
+			{
+				alpacaErrCode	=	Put_Disconnect(reqData, alpacaErrMsg);
+			}
+			else
+			{
+				alpacaErrCode	=	kASCOM_Err_InvalidOperation;
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Disconnect does not allow GET");
+				CONSOLE_DEBUG(alpacaErrMsg);
+			}
+			break;
+
+		case kCmd_Common_DeviceState:
+			alpacaErrCode	=	Get_DeviceState(reqData, alpacaErrMsg);
+			break;
+
 		case kCmd_Common_description:		//*	Device description
 			alpacaErrCode	=	Get_Description(reqData, alpacaErrMsg, gValueString);
 			break;
-
 
 		case kCmd_Common_driverinfo:		//*	Device driver description
 			alpacaErrCode	=	Get_Driverinfo(reqData, alpacaErrMsg, gValueString);
@@ -674,102 +694,6 @@ int					mySocket;
 			break;
 	}
 	return(alpacaErrCode);
-}
-
-//*****************************************************************************
-TYPE_ASCOM_STATUS	AlpacaDriver::Get_Connected(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
-{
-TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
-
-	JsonResponse_Add_Bool(	reqData->socket,
-							reqData->jsonTextBuffer,
-							kMaxJsonBuffLen,
-							responseString,
-							cCommonProp.Connected,
-							INCLUDE_COMMA);
-
-	return(alpacaErrCode);
-}
-
-//*****************************************************************************
-TYPE_ASCOM_STATUS	AlpacaDriver::Put_Connected(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
-{
-TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
-bool				foundKeyWord;
-bool				validTruFalseArg;
-bool				connectFlag;
-char				argumentString[32];
-
-//	CONSOLE_DEBUG(__FUNCTION__);
-	foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
-											"Connected",
-											argumentString,
-											(sizeof(argumentString) -1));
-	if (foundKeyWord)
-	{
-		CONSOLE_DEBUG_W_STR(__FUNCTION__, argumentString);
-		validTruFalseArg	=	IsTrueFalseArgValid(argumentString);
-		if (validTruFalseArg)
-		{
-			connectFlag			=	IsTrueFalse(argumentString);
-			if (connectFlag)
-			{
-				AlpacaConnect();
-				LogEvent(	reqData->deviceType,
-							"Connect",
-							NULL,
-							kASCOM_Err_Success,
-							"");
-				cCommonProp.Connected		=	true;
-			}
-			else
-			{
-				AlpacaDisConnect();
-				LogEvent(	reqData->deviceType,
-							"Dis-Connect",
-							NULL,
-							kASCOM_Err_Success,
-							"");
-				cCommonProp.Connected		=	false;
-			}
-		}
-		else
-		{
-			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "true/false not specified");
-			alpacaErrCode	=	kASCOM_Err_InvalidValue;
-			CONSOLE_DEBUG(alpacaErrMsg);
-			DumpRequestStructure(__FUNCTION__, reqData);
-		}
-	}
-	else
-	{
-		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Keyword 'Connected' not found");
-		alpacaErrCode	=	kASCOM_Err_InvalidValue;
-		CONSOLE_DEBUG(alpacaErrMsg);
-	}
-
-	JsonResponse_Add_Bool(	reqData->socket,
-							reqData->jsonTextBuffer,
-							kMaxJsonBuffLen,
-							gValueString,
-							true,
-							INCLUDE_COMMA);
-
-	return(alpacaErrCode);
-}
-
-//*****************************************************************************
-bool	AlpacaDriver::AlpacaConnect(void)
-{
-//	CONSOLE_DEBUG(__FUNCTION__);
-	return(false);
-}
-
-//*****************************************************************************
-bool	AlpacaDriver::AlpacaDisConnect(void)
-{
-//	CONSOLE_DEBUG(__FUNCTION__);
-	return(false);
 }
 
 
@@ -879,6 +803,152 @@ TYPE_ASCOM_STATUS	AlpacaDriver::Get_Readall_Common(TYPE_GetPutRequestData *reqDa
 //	CONSOLE_DEBUG("exit");
 	return(kASCOM_Err_Success);
 }
+
+
+//*****************************************************************************
+//{
+//	"Value":[
+//				{"Name":"CameraState","Value":0},
+//				{"Name":"CCDTemperature","Value":10},
+//				{"Name":"CoolerPower","Value":0},
+//				{"Name":"HeatSinkTemperature","Value":10},
+//				{"Name":"ImageReady","Value":false},
+//				{"Name":"IsPulseGuiding","Value":false},
+//				{"Name":"PercentCompleted","Value":0},
+//				{"Name":"TimeStamp","Value":"2023-06-14T11:17:50.0Z"}
+//			],
+//	"ClientTransactionID":123,
+//	"ServerTransactionID":456,
+//	"ErrorNumber":0,
+//	"ErrorMessage":""
+//}
+
+//*****************************************************************************
+//*	returns the number of true if implemented
+//*	this is so the Get_DeviceState knows if it is finished
+//*****************************************************************************
+bool	AlpacaDriver::DeviceState_Add_Content(const int socketFD, char *jsonTextBuffer, const int maxLen)
+{
+	CONSOLE_DEBUG("This should be over-loaded");
+	return(false);
+}
+
+
+//*****************************************************************************
+void	AlpacaDriver::DeviceState_Add_Bool(	const int		socketFD,
+											char			*jsonTextBuffer,
+											const int		maxLen,
+											const char		*name,
+											const bool		boolValue,
+											const bool		includeComa)
+{
+char	jsonLineBuff[128];
+
+	sprintf(jsonLineBuff, "\t\t\t{\"Name\":\"%s\",\"Value\":%s}", name, (boolValue ? "true" : "false"));
+	if (includeComa)
+	{
+		strcat(jsonLineBuff, ",");
+	}
+//	CONSOLE_DEBUG(jsonLineBuff);
+	strcat(jsonLineBuff, "\r\n");
+	JsonResponse_Add_RawText(socketFD, jsonTextBuffer, maxLen, jsonLineBuff);
+}
+
+//*****************************************************************************
+void	AlpacaDriver::DeviceState_Add_Dbl(const int socketFD, char *jsonTextBuffer, const int maxLen, const char *name, const double dblValue, const bool includeComa)
+{
+char	jsonLineBuff[128];
+
+	sprintf(jsonLineBuff, "\t\t\t{\"Name\":\"%s\",\"Value\":%f}", name, dblValue);
+	if (includeComa)
+	{
+		strcat(jsonLineBuff, ",");
+	}
+//	CONSOLE_DEBUG(jsonLineBuff);
+	strcat(jsonLineBuff, "\r\n");
+	JsonResponse_Add_RawText(socketFD, jsonTextBuffer, maxLen, jsonLineBuff);
+}
+
+//*****************************************************************************
+void	AlpacaDriver::DeviceState_Add_Int(const int socketFD, char *jsonTextBuffer, const int maxLen, const char *name, const int intValue, const bool includeComa)
+{
+char	jsonLineBuff[128];
+
+	sprintf(jsonLineBuff, "\t\t\t{\"Name\":\"%s\",\"Value\":%d}", name, intValue);
+	if (includeComa)
+	{
+		strcat(jsonLineBuff, ",");
+	}
+//	CONSOLE_DEBUG(jsonLineBuff);
+	strcat(jsonLineBuff, "\r\n");
+	JsonResponse_Add_RawText(socketFD, jsonTextBuffer, maxLen, jsonLineBuff);
+}
+
+//*****************************************************************************
+void	AlpacaDriver::DeviceState_Add_Str(	const int		socketFD,
+											char			*jsonTextBuffer,
+											const int		maxLen,
+											const char		*name,
+											const char		*valueStr,
+											const bool		includeComa)
+{
+char	jsonLineBuff[128];
+
+	sprintf(jsonLineBuff, "\t\t\t{\"Name\":\"%s\",\"Value\":\"%s\"}", name, valueStr);
+	if (includeComa)
+	{
+		strcat(jsonLineBuff, ",");
+	}
+//	CONSOLE_DEBUG(jsonLineBuff);
+	strcat(jsonLineBuff, "\r\n");
+	JsonResponse_Add_RawText(socketFD, jsonTextBuffer, maxLen, jsonLineBuff);
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	AlpacaDriver::Get_DeviceState(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
+char				timeStampString[64];
+struct timeval		currentTime;		//*	time exposure or video was started for frame rate calculations
+bool				contentFinished;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_ArrayStart(	reqData->socket,
+																reqData->jsonTextBuffer,
+																kMaxJsonBuffLen,
+																gValueString);
+	strcat(reqData->jsonTextBuffer, "\r\n");	//*	make it look pretty
+
+	//*	now let the driver add it's specific information
+	contentFinished	=	DeviceState_Add_Content(reqData->socket, reqData->jsonTextBuffer, kMaxJsonBuffLen);
+
+	gettimeofday(&currentTime, NULL);
+	FormatTimeStringISO8601(&currentTime, timeStampString);
+	DeviceState_Add_Str(reqData->socket,
+						reqData->jsonTextBuffer,
+						kMaxJsonBuffLen,
+						"TimeStamp",
+						timeStampString,
+						false);
+
+
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_ArrayEnd(		reqData->socket,
+																reqData->jsonTextBuffer,
+																kMaxJsonBuffLen,
+																INCLUDE_COMMA);
+	if (contentFinished)
+	{
+		alpacaErrCode	=	kASCOM_Err_Success;
+	}
+	else
+	{
+		alpacaErrCode	=	kASCOM_Err_NotImplemented;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "DeviceState not finished");
+	}
+	return(alpacaErrCode);
+}
+
 
 //*****************************************************************************
 TYPE_ASCOM_STATUS	AlpacaDriver::Get_Readall_CPUstats(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
@@ -1008,12 +1078,21 @@ int			percentCPU;
 	hasUSBfs	=	ReadUSBfsMemorySetting(textBuff);
 	if (hasUSBfs)
 	{
-		JsonResponse_Add_String(reqData->socket,
+	int	usbMemoryMB;
+
+		usbMemoryMB	=	atoi(textBuff);
+		JsonResponse_Add_Int32(reqData->socket,
 								reqData->jsonTextBuffer,
 								kMaxJsonBuffLen,
 								"usbfs_memory_mb",
-								textBuff,
+								usbMemoryMB,
 								INCLUDE_COMMA);
+//		JsonResponse_Add_String(reqData->socket,
+//								reqData->jsonTextBuffer,
+//								kMaxJsonBuffLen,
+//								"usbfs_memory_mb",
+//								textBuff,
+//								INCLUDE_COMMA);
 	}
 
 	//====================================================
@@ -1191,6 +1270,16 @@ void	AlpacaDriver::OutputHTML_Part2(TYPE_GetPutRequestData *reqData)
 }
 
 //*****************************************************************************
+void	AlpacaDriver::OutputHTML_CmdTable(TYPE_GetPutRequestData *reqData)
+{
+	if (cDriverCmdTablePtr != NULL)
+	{
+		//*	now generate links to all of the commands
+		GenerateHTMLcmdLinkTable(reqData->socket, cAlpacaDeviceString, 0, cDriverCmdTablePtr);
+	}
+}
+
+//*****************************************************************************
 void	AlpacaDriver::OutputCommadTable(int mySocketFD, const char *title, const TYPE_CmdEntry *commandTable)
 {
 int		iii;
@@ -1346,7 +1435,8 @@ void	AlpacaDriver::OuputCommandTableNotes(int mySocketFD)
 //*****************************************************************************
 bool	AlpacaDriver::GetCmdNameFromMyCmdTable(const int cmdNumber, char *comandName, char *getPut)
 {
-	CONSOLE_DEBUG("This function should be over-ridden");
+	CONSOLE_DEBUG_W_STR("This function should be over-ridden", cAlpacaName);
+	CONSOLE_DEBUG_W_STR("This function should be over-ridden", cDeviceModel);
 //	GetCmdNameFromMyCmdTable(cmdNumber, cmdName, gCommonCmdTable, getPut);
 	strcpy(comandName, "----");
 	CONSOLE_ABORT(__FUNCTION__);
@@ -2036,6 +2126,7 @@ int		iii;
 				SendSeparateLine(mySocketFD);
 				gAlpacaDeviceList[iii]->OutputHTML(reqData);
 				gAlpacaDeviceList[iii]->OutputHTML_Part2(reqData);
+				gAlpacaDeviceList[iii]->OutputHTML_CmdTable(reqData);
 			}
 		}
 
@@ -2377,25 +2468,40 @@ char	lineBuffer[256];
 	iii	=	0;
 	while (gCommonCmdTable[iii].commandName[0] != 0)
 	{
-		sprintf(lineBuffer,	"\t<LI><A HREF=../api/v1/%s/%d/%s target=cmd>%s</A>\r\n",
-									deviceName,
-									deviceNum,
-									gCommonCmdTable[iii].commandName,
-									gCommonCmdTable[iii].commandName);
+		if (gCommonCmdTable[iii].get_put == kCmdType_PUT)
+		{
+			sprintf(lineBuffer,	"\t<LI>%s\r\n", gCommonCmdTable[iii].commandName);
+		}
+		else
+		{
+			sprintf(lineBuffer,	"\t<LI><A HREF=../api/v1/%s/%d/%s target=cmd>%s</A>\r\n",
+										deviceName,
+										deviceNum,
+										gCommonCmdTable[iii].commandName,
+										gCommonCmdTable[iii].commandName);
+		}
 		SocketWriteData(socketFD,	lineBuffer);
 		iii++;
 	}
 
 	SocketWriteData(socketFD,	"<P>\r\n");
-
+	//----------------------------------------------------------------
+	//*	now do the device specific command table
 	iii	=	0;
 	while (cmdTable[iii].commandName[0] != 0)
 	{
-		sprintf(lineBuffer,	"\t<LI><A HREF=../api/v1/%s/%d/%s target=cmd>%s</A>\r\n",
-									deviceName,
-									deviceNum,
-									cmdTable[iii].commandName,
-									cmdTable[iii].commandName);
+		if (cmdTable[iii].get_put == kCmdType_PUT)
+		{
+			sprintf(lineBuffer,	"\t<LI>%s\r\n", cmdTable[iii].commandName);
+		}
+		else
+		{
+			sprintf(lineBuffer,	"\t<LI><A HREF=../api/v1/%s/%d/%s target=cmd>%s</A>\r\n",
+										deviceName,
+										deviceNum,
+										cmdTable[iii].commandName,
+										cmdTable[iii].commandName);
+		}
 		SocketWriteData(socketFD,	lineBuffer);
 //		CONSOLE_DEBUG(lineBuffer);
 		iii++;
@@ -3151,7 +3257,7 @@ typedef enum
 } TYPE_REQUEST_TYPE;
 
 //*****************************************************************************
-typedef struct
+typedef struct	//	TYPE_Request
 {
 	char				RequestString[16];
 	TYPE_REQUEST_TYPE	RequstType;
@@ -4137,9 +4243,24 @@ struct tm		*linuxTime;
 	gObservatorySettingsOK	=	ObservatorySettings_ReadFile();
 
 #ifdef _ENABLE_IMU_
-	IMU_Init();
-	IMU_Print_Calibration();
-	IMU_SetDebug(false);
+int	imu_ReturnCode;
+	CONSOLE_DEBUG("Calling IMU_Init()");
+	imu_ReturnCode	=	IMU_Init();
+	if (imu_ReturnCode == 0)
+	{
+		IMU_Print_Calibration();
+		IMU_SetDebug(false);
+		gIMUisOnLine	=	true;
+	}
+	else
+	{
+		CONSOLE_DEBUG("IMU_Init() failed, now disabled");
+		LogEvent(	"AlpacaPi",
+					"IMU",
+					NULL,
+					kASCOM_Err_Success,
+					"IMU Failed to initialize");
+	}
 #endif
 
 
@@ -4323,8 +4444,6 @@ uint32_t	milliSecs;
 	return(milliSecs);
 }
 
-
-
 //*****************************************************************************
 //*	returns -1 if not found
 //*****************************************************************************
@@ -4340,6 +4459,10 @@ int		cmdEnumValue;
 		if (strcasecmp(theCmd, theCmdTable[iii].commandName) == 0)
 		{
 			cmdEnumValue	=	theCmdTable[iii].enumValue;
+			if (cmdType != NULL)
+			{
+				*cmdType	=	theCmdTable[iii].get_put;
+			}
 		}
 		iii++;
 	}
@@ -4353,14 +4476,16 @@ int		cmdEnumValue;
 			if (strcasecmp(theCmd, gCommonCmdTable[iii].commandName) == 0)
 			{
 				cmdEnumValue	=	gCommonCmdTable[iii].enumValue;
+				if (cmdType != NULL)
+				{
+					*cmdType	=	theCmdTable[iii].get_put;
+				}
 			}
 			iii++;
 		}
 	}
 	return(cmdEnumValue);
 }
-
-
 
 //*****************************************************************************
 //*	This finds the unique keyword in the data string.
@@ -4569,29 +4694,6 @@ int		ii;
 	}
 }
 
-//*****************************************************************************
-void	StripTrailingSpaces(char *theString)
-{
-int		ii;
-int		sLen;
-
-	sLen	=	strlen(theString);
-	ii		=	sLen - 1;
-	while (ii > 0)
-	{
-		if (theString[ii] <= 0x20)
-		{
-			theString[ii]	=	0;
-		}
-		else
-		{
-			break;
-		}
-		ii--;
-	}
-}
-
-
 //**************************************************************************************
 bool	Check_udev_rulesFile(const char *rulesFileName)
 {
@@ -4713,7 +4815,7 @@ void	DumpRequestStructure(const char *functionName, TYPE_GetPutRequestData	*reqD
 
 
 //	printf("Dev#=%d\tG/P=%c\r\n",	reqData->deviceNumber, reqData->get_putIndicator);
-//	printf("HTML\t=%s\r\n",			reqData->htmlData);
+	printf("HTML\t=%s\r\n",			reqData->htmlData);
 
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, "--------------exit---------------");
 }

@@ -114,7 +114,7 @@ int		boxLeft;
 	}
 	SetWidgetText(	kObsCond_Averageperiod_Title,	"Averageperiod");
 	SetWidgetText(	kObsCond_Cloudcover_Title,		"Cloudcover");
-	SetWidgetText(	kObsCond_Dewpoint_Title,		"Dewpoint");
+	SetWidgetText(	kObsCond_DewPoint_Title,		"DewPoint");
 	SetWidgetText(	kObsCond_Humidity_Title,		"Humidity");
 	SetWidgetText(	kObsCond_Pressure_hPa_Title,	"Pressure");
 	SetWidgetText(	kObsCond_RainRate_Title,		"RainRate");
@@ -145,7 +145,7 @@ int		boxLeft;
 
 	SetWidgetText(	kObsCond_Averageperiod_Units,	"Hours");
 	SetWidgetText(	kObsCond_Cloudcover_Units,		"Percent");
-	SetWidgetText(	kObsCond_Dewpoint_Units,		"Deg C");
+	SetWidgetText(	kObsCond_DewPoint_Units,		"Deg C");
 	SetWidgetText(	kObsCond_Humidity_Units,		"Percent");
 	SetWidgetText(	kObsCond_Pressure_hPa_Units,	"hPa");
 	SetWidgetText(	kObsCond_RainRate_Units,		"mm/hr");
@@ -168,6 +168,7 @@ int		boxLeft;
 	//*	set up all the bottom stuff so that it is the same on all windowtabs
 	SetupWindowBottomBoxes(	kObsCond_IPaddr,
 							kObsCond_Readall,
+							kObsCond_DeviceState,
 							kObsCond_AlpacaErrorMsg,
 							kObsCond_LastCmdString,
 							kObsCond_AlpacaLogo,
@@ -202,8 +203,8 @@ TYPE_InstSensor		temperatureDegF;
 
 	//*	last argument is decimal places											***
 	SetWidgetSensorValue(	kObsCond_Averageperiod,		&obsCondProp->Averageperiod,	5);
-	SetWidgetSensorValue(	kObsCond_Cloudcover,		&obsCondProp->Cloudcover,		1);
-	SetWidgetSensorValue(	kObsCond_Dewpoint,			&obsCondProp->Dewpoint,			1);
+	SetWidgetSensorValue(	kObsCond_Cloudcover,		&obsCondProp->CloudCover,		1);
+	SetWidgetSensorValue(	kObsCond_DewPoint,			&obsCondProp->DewPoint,			1);
 	SetWidgetSensorValue(	kObsCond_Humidity,			&obsCondProp->Humidity,			1);
 	SetWidgetSensorValue(	kObsCond_Pressure_hPa,		&obsCondProp->Pressure, 		0);
 	SetWidgetSensorValue(	kObsCond_RainRate,			&obsCondProp->RainRate, 		1);

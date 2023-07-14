@@ -32,6 +32,7 @@
 //*	May 31,	2022	<MLS> Added ability to open gedit for scripts and settings
 //*	Mar 14,	2023	<MLS> Added UpdateObservatorySettings()
 //*	Apr 10,	2023	<MLS> Added proper motion display settings
+//*	May 27,	2023	<MLS> Added Parallax display option
 //*****************************************************************************
 
 #include	<pthread.h>
@@ -88,7 +89,7 @@ WindowTabSTsettings::WindowTabSTsettings(	const int	xSize,
 //**************************************************************************************
 WindowTabSTsettings::~WindowTabSTsettings(void)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 }
 
 //**************************************************************************************
@@ -498,6 +499,7 @@ int		radioBtnWidth;
 	}
 	SetWidgetText(		kSkyT_Settings_DispMag,				"Display Star Magnitude");
 	SetWidgetText(		kSkyT_Settings_DispSpectral,		"Display Star Spectral Class");
+	SetWidgetText(		kSkyT_Settings_DispParallax,		"Display Star Parallax");
 	SetWidgetText(		kSkyT_Settings_DispProperMotion,	"Display Star Proper Motion");
 	SetWidgetText(		kSkyT_Settings_DispPMvector,		"Display Star Proper Motion Vector");
 
@@ -615,12 +617,12 @@ int				pt1_Y;
 
 //	//*	Erase the rectangle
 //	cCurrentColor	=	theWidget->bgColor;
-//	LLD_FillRect(theWidget->left,	theWidget->top,	theWidget->width,	theWidget->height);
+//	LLG_FillRect(theWidget->left,	theWidget->top,	theWidget->width,	theWidget->height);
 //
 //
 //	//*	draw the boarder
 //	cCurrentColor	=	theWidget->borderColor;
-//	LLD_FrameRect(theWidget->left,	theWidget->top,	theWidget->width,	theWidget->height);
+//	LLG_FrameRect(theWidget->left,	theWidget->top,	theWidget->width,	theWidget->height);
 
 	center_X		=	theWidget->left + (theWidget->height / 2);
 	center_Y		=	theWidget->top + (theWidget->height / 2);
@@ -631,8 +633,8 @@ int				pt1_Y;
 
 	while (obafkgmLetters[iii] > 0)
 	{
-		LLD_SetColor(colourNum);
-		LLD_FillEllipse(center_X, center_Y, radius1, radius1);
+		LLG_SetColor(colourNum);
+		LLG_FillEllipse(center_X, center_Y, radius1, radius1);
 
 		textString[0]	=	obafkgmLetters[iii];
 		textString[1]	=	0;
@@ -640,7 +642,7 @@ int				pt1_Y;
 		pt1_Y			=	center_Y + 7;
 
 		cCurrentColor	=	theWidget->textColor;
-		LLD_DrawCString(pt1_X, pt1_Y, textString, kFont_Triplex_Large);
+		LLG_DrawCString(pt1_X, pt1_Y, textString, kFont_Triplex_Large);
 
 		center_X		+=	2 * radius1;
 		center_X		+=	10;
@@ -834,6 +836,10 @@ void	WindowTabSTsettings::ProcessButtonClick(const int buttonIdx, const int flag
 			gST_DispOptions.DispSpectralType	=	!gST_DispOptions.DispSpectralType;
 			break;
 
+		case kSkyT_Settings_DispParallax:
+			gST_DispOptions.DispParallax	=	!gST_DispOptions.DispParallax;
+			break;
+
 		//*	display proper motion as numeric values if zoomed in
 		case kSkyT_Settings_DispProperMotion:
 			gST_DispOptions.DispProperMotion	=	!gST_DispOptions.DispProperMotion;
@@ -1004,6 +1010,7 @@ char	textString[32];
 	//------------------------------------------------------
 	SetWidgetChecked(	kSkyT_Settings_DispMag,					gST_DispOptions.DispMagnitude);
 	SetWidgetChecked(	kSkyT_Settings_DispSpectral,			gST_DispOptions.DispSpectralType);
+	SetWidgetChecked(	kSkyT_Settings_DispParallax,			gST_DispOptions.DispParallax);
 	SetWidgetChecked(	kSkyT_Settings_DispProperMotion,		gST_DispOptions.DispProperMotion);
 	SetWidgetChecked(	kSkyT_Settings_DispPMvector,			gST_DispOptions.DispProperMotionVector);
 

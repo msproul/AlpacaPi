@@ -122,6 +122,7 @@
 #include	"alpacadriver_helper.h"
 #include	"cameradriver.h"
 #include	"cameradriver_ASI.h"
+#include	"camera_AlpacaCmds.h"
 
 
 #define	kMaxCameraCnt	5
@@ -650,7 +651,6 @@ bool				cameraIsBusy;
 
 	}
 
-//-?	cNumFramesSaved	=	0;
 	asiErrorCode	=	OpenASIcameraIfNeeded(cCameraID);
 	if (asiErrorCode == ASI_SUCCESS)
 	{
@@ -879,10 +879,6 @@ ASI_EXPOSURE_STATUS		exposureStatatus;
 
 
 
-//#ifdef _TEMP_DISABLE_
-#if 1
-
-
 
 #pragma mark -
 #pragma mark Video commands
@@ -921,10 +917,7 @@ ASI_BOOL			bAuto		=	ASI_FALSE;
 
 			gettimeofday(&cCameraProp.Lastexposure_StartTime, NULL);
 
-
-		#ifdef _USE_OPENCV_
 			CreateOpenCVImage(NULL);
-		#endif
 			cInternalCameraState	=	kCameraState_TakingVideo;
 		}
 		else
@@ -939,8 +932,6 @@ ASI_BOOL			bAuto		=	ASI_FALSE;
 		CONSOLE_DEBUG("Failed to open ASI camera");
 		alpacaErrCode	=	kASCOM_Err_InternalError;
 	}
-
-
 	return(alpacaErrCode);
 }
 
@@ -986,26 +977,248 @@ char				asiErrorMsgString[64];
 	return(alpacaErrCode);
 }
 
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
+	#warning "OpenCV++ not finished  (Take_Video)"
+//*****************************************************************************
+TYPE_ASCOM_STATUS	CameraDriverASI::Take_Video(void)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
+ASI_ERROR_CODE		asiErrorCode;
+int					deltaSecs;
+bool				timeToStop;
+int					videoWriteRC;
+int					imageSize;
+int					bytesPerPixel;
+int					bytesPerRow;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	alpacaErrCode	=		kASCOM_Err_MethodNotImplemented;
+	strcpy(cLastCameraErrMsg, "Not Finished for OpenCV++");
+
+	deltaSecs	=	0;
+
+	if (cOpenCV_ImagePtr != NULL)
+	{
+		bytesPerRow		=	cOpenCV_ImagePtr->step[0];
+		bytesPerPixel	=	cOpenCV_ImagePtr->step[1];
+		imageSize		=	bytesPerRow * cOpenCV_ImagePtr->rows;
+
+		CONSOLE_DEBUG_W_NUM("cOpenCV_ImagePtr->size\t=", imageSize);
+
+//		memset(cOpenCV_ImagePtr->imageData, 0, cOpenCV_ImagePtr->imageSize);
+		memset(cOpenCV_ImagePtr->data, 0, imageSize);
+
+//		asiErrorCode	=	ASIGetVideoData(cCameraID,
+//											(unsigned char*)cOpenCV_ImagePtr->imageData,
+//											cOpenCV_ImagePtr->imageSize,
+//											-1);
+		asiErrorCode	=	ASIGetVideoData(cCameraID,
+											(unsigned char*)cOpenCV_ImagePtr->data,
+											imageSize,
+											-1);
+		if (asiErrorCode == ASI_SUCCESS)
+		{
+
+			cNumVideoFramesSaved++;
+//#define _DEBUG_VIDEO_
+		#ifdef _DEBUG_VIDEO_
+			char	imageFilePath[64];
+			int		openCVerr;
+			int		quality[3] = {16, 200, 0};
+
+			sprintf(imageFilePath, "%s/DEBUG_IMG%03d.jpg", gImageDataDir, cNumVideoFramesSaved);
+			CONSOLE_DEBUG(imageFilePath);
+			openCVerr	=	cvSaveImage(imageFilePath, cOpenCV_ImagePtr, quality);
+
+			CONSOLE_DEBUG_W_NUM("openCVerr\t=", openCVerr);
+		#endif // _DEBUG_VIDEO_
+
+			//*	calculate frames per sec
+			gettimeofday(&cCameraProp.Lastexposure_EndTime, NULL);
+			deltaSecs	=	cCameraProp.Lastexposure_EndTime.tv_sec - cCameraProp.Lastexposure_StartTime.tv_sec;
+			if (deltaSecs > 0)
+			{
+				cFrameRate	=	(cNumVideoFramesSaved * 1.0) / deltaSecs;
+			}
+			if (cOpenCV_videoWriter != NULL)
+			{
+				//*	if we want a time stamp
+				//*	change to preference/setting latter
+				//*	Jun 29,	2120	<TODO> Change video timestamp to an option
+				if (1)
+				{
+				cv::Point	point1;
+				cv::Point	topLeft;
+				cv::Point	btmRght;
+				cv::Rect	myCVrect;
+				char		timeStampString[256];
+				char		testDataString[256];
+
+					#define	kTextBoxHeight	35
+					//*	first erase the text area
+					myCVrect.x		=	0;
+//					myCVrect.y		=	cOpenCV_ImagePtr->height - kTextBoxHeight;
+//					myCVrect.width	=	cOpenCV_ImagePtr->width;
+					myCVrect.y		=	cOpenCV_ImagePtr->rows - kTextBoxHeight;
+					myCVrect.width	=	cOpenCV_ImagePtr->cols;
+					myCVrect.height	=	kTextBoxHeight;
+//					cvRectangleR(	cOpenCV_ImagePtr,
+//									myCVrect,
+//									cSideBarBlk,				//	color,
+//									CV_FILLED,					//	int thickness CV_DEFAULT(1),
+//									8,							//	int line_type CV_DEFAULT(8),
+//									0);							//	int shift CV_DEFAULT(0));
+					topLeft.x		=	0;
+					topLeft.y		=	cOpenCV_ImagePtr->rows - kTextBoxHeight;
+					btmRght.x		=	cOpenCV_ImagePtr->cols;
+					btmRght.y		=	cOpenCV_ImagePtr->rows;
+					cv::rectangle(	*cOpenCV_ImagePtr,
+									topLeft,
+									btmRght,
+									cSideBarBlk,				//	color,
+									cv::FILLED,					//	int thickness CV_DEFAULT(1),
+									8,							//	int line_type CV_DEFAULT(8),
+									0);							//	int shift CV_DEFAULT(0));
+
+					FormatTimeStringISO8601(&cCameraProp.Lastexposure_EndTime, timeStampString);
+					point1.x	=	5;
+//					point1.y	=	cOpenCV_ImagePtr->height - 10;
+					point1.y	=	cOpenCV_ImagePtr->rows - 10;
+//					cvPutText(	cOpenCV_ImagePtr,	timeStampString,	point1,	&cOverlayTextFont,	cVideoOverlayColor);
+					cv::putText(	*cOpenCV_ImagePtr,
+									timeStampString,
+									point1,
+									cv::FONT_HERSHEY_DUPLEX,
+									1.0,					//*	font scale
+									cVideoOverlayColor);
+
+//					point1.x	=	cOpenCV_ImagePtr->width / 2;
+					point1.x	=	cOpenCV_ImagePtr->cols / 2;
+					sprintf(testDataString, "S-%s,%s", cObjectName, cAuxTextTag);
+//					cvPutText(	cOpenCV_ImagePtr,	testDataString,	point1,	&cOverlayTextFont,	cVideoOverlayColor);
+					cv::putText(	*cOpenCV_ImagePtr,
+									testDataString,
+									point1,
+									cv::FONT_HERSHEY_DUPLEX,
+									1.0,					//*	font scale
+									cVideoOverlayColor);
+
+					if (cVideoTimeStampFilePtr != NULL)
+					{
+					double	lastExposureTimeSecs;
+
+						lastExposureTimeSecs	=	cCameraProp.Lastexposure_EndTime.tv_sec;
+						lastExposureTimeSecs	+=	cCameraProp.Lastexposure_EndTime.tv_usec / 1000000.0;
+
+						fprintf(cVideoTimeStampFilePtr, "%d,%s,%1.3f\r\n",	cNumVideoFramesSaved,
+																			timeStampString,
+																			lastExposureTimeSecs);
+					}
+				}
+//				videoWriteRC	=	cvWriteFrame(cOpenCV_videoWriter, cOpenCV_ImagePtr);
+				cOpenCV_videoWriter->write(*cOpenCV_ImagePtr);
+
+//				if (videoWriteRC != 1)
+//				{
+//					CONSOLE_DEBUG_W_NUM("videoWriteRC\t=", videoWriteRC);
+//				}
+				//============================================================
+				//*	Aug 11,	2020	<MLS> Added auto exposure to video output
+				//*	check to see if we are in auto exposure adjustment
+				if (cAutoAdjustExposure)
+				{
+					if ((cNumVideoFramesSaved % 10) == 0)
+					{
+						AutoAdjustExposure();
+					}
+				}
+			}
+			else
+			{
+				CONSOLE_DEBUG("cOpenCV_videoWriter is NULL");
+//				CONSOLE_ABORT(__FUNCTION__);
+			}
+		}
+		else
+		{
+			CONSOLE_DEBUG_W_NUM("ASIGetVideoData() returned asiErrorCode\t=", asiErrorCode);
+			alpacaErrCode	=	kASCOM_Err_FailedUnknown;
+		}
+	}
+	else
+	{
+		CONSOLE_DEBUG("cOpenCV_ImagePtr == NULL");
+		cInternalCameraState	=	kCameraState_Idle;
+		CONSOLE_ABORT(__FUNCTION__);
+	}
+	if ((cNumVideoFramesSaved % 100) == 0)
+	{
+		CONSOLE_DEBUG_W_NUM("cNumVideoFramesSaved\t=", cNumVideoFramesSaved);
+	}
+
+	timeToStop	=	false;
+
+	//*	do we have a limit on the number of frames
+	if (cNumFramesToSave > 0)
+	{
+		//*	check to see if its time to stop
+		if (cNumVideoFramesSaved >= cNumFramesToSave)
+		{
+			timeToStop	=	true;
+		}
+	}
+	if (deltaSecs >= cVideoDuration_secs)
+	{
+		timeToStop	=	true;
+	}
+	if (timeToStop)
+	{
+		CONSOLE_DEBUG("time to stop taking video");
+		asiErrorCode	=	ASIStopVideoCapture(cCameraID);
+		CONSOLE_DEBUG_W_NUM("ASI Video capture stopped, asiErrorCode\t=", asiErrorCode);
+
+		gettimeofday(&cCameraProp.Lastexposure_EndTime, NULL);
+
+
+		//*	time to stop taking video
+//		cvReleaseVideoWriter(&cOpenCV_videoWriter);
+		cOpenCV_videoWriter->release();
+//		CONSOLE_DEBUG_W_HEX("cOpenCV_videoWriter\t=", (unsigned long)cOpenCV_videoWriter);
+
+		cOpenCV_videoWriter	=	NULL;
+		CONSOLE_DEBUG("cOpenCV_videoWriter released");
+	#ifdef _ENABLE_FITS_
+		SaveImageAsFITS(SAVE_AVI);
+	#endif // _ENABLE_FITS_
+
+		if (cVideoTimeStampFilePtr != NULL)
+		{
+			fclose(cVideoTimeStampFilePtr);
+			cVideoTimeStampFilePtr	=	NULL;
+		}
+		cInternalCameraState	=	kCameraState_Idle;
+
+		WriteFireCaptureTextFile();
+	}
+	return(alpacaErrCode);
+}
+#else
 
 
 //*****************************************************************************
 TYPE_ASCOM_STATUS	CameraDriverASI::Take_Video(void)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
-
-//	CONSOLE_DEBUG(__FUNCTION__);
-
-#ifdef _USE_OPENCV_
-
-#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
-	#warning "OpenCV++ not finished"
-	alpacaErrCode	=		kASCOM_Err_MethodNotImplemented;
-#else
 ASI_ERROR_CODE	asiErrorCode;
 int				deltaSecs;
 bool			timeToStop;
 
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+
 	deltaSecs	=	0;
+
 	if (cOpenCV_ImagePtr != NULL)
 	{
 	int		videoWriteRC;
@@ -1168,13 +1381,9 @@ bool			timeToStop;
 
 		WriteFireCaptureTextFile();
 	}
-#endif // _USE_OPENCV_CPP_
-
-#endif	//	_USE_OPENCV_
 	return(alpacaErrCode);
 }
-
-#endif //	_TEMP_DISABLE_
+#endif // _USE_OPENCV_CPP_
 
 #pragma mark -
 
@@ -1402,11 +1611,7 @@ int					mySocketFD;
 	SocketWriteData(mySocketFD,	"</TABLE>\r\n");
 	SocketWriteData(mySocketFD,	"</CENTER>\r\n");
 	SocketWriteData(mySocketFD,	"<P>\r\n");
-
-	//*	now generate links to all of the commands
-	GenerateHTMLcmdLinkTable(mySocketFD, "camera", cCameraID, gCameraCmdTable);
 }
-
 
 #pragma mark -
 
@@ -2233,14 +2438,14 @@ char				asiErrorMsgString[64];
 			targetTemperature	=	-600;	//*	set to invalid value so we know we got a valid value back
 			bAuto				=	ASI_FALSE;
 			asiErrorCode		=	ASIGetControlValue(cCameraID, ASI_TARGET_TEMP, &targetTemperature, &bAuto);
-			CONSOLE_DEBUG_W_NUM("ASIGetControlValue->asiErrorCode\t=",	asiErrorCode);
+//			CONSOLE_DEBUG_W_NUM("ASIGetControlValue->asiErrorCode\t=",	asiErrorCode);
 			switch (asiErrorCode)
 			{
 				case ASI_SUCCESS:
 				//	cCameraProp.SetCCDTemperature	=	targetTemperature / 10.0;
 					cCameraProp.SetCCDTemperature	=	targetTemperature;
-					CONSOLE_DEBUG_W_LONG(	"targetTemperature\t=",	targetTemperature);
-					CONSOLE_DEBUG_W_DBL(	"SetCCDTemperature\t=",	cCameraProp.SetCCDTemperature);
+//					CONSOLE_DEBUG_W_LONG(	"targetTemperature\t=",	targetTemperature);
+//					CONSOLE_DEBUG_W_DBL(	"SetCCDTemperature\t=",	cCameraProp.SetCCDTemperature);
 					alpacaErrCode	=	kASCOM_Err_Success;
 					break;
 

@@ -749,14 +749,14 @@ char	upperCaseKeword[kSJP_MaxKeyLen];
 }
 
 //**************************************************************************************
-void	SJP_DumpJsonData(SJP_Parser_t *theParser)
+void	SJP_DumpJsonData(SJP_Parser_t *theParser, const char *callingFunctionName)
 {
 short		ii;
 
 	if (theParser != NULL)
 	{
 		printf("*Start*********************************************\r\n");
-		printf("Dumping JSON parser data\r\n");
+		printf("Dumping JSON parser data, called from %s\r\n", callingFunctionName);
 		for (ii=0; ii<theParser->tokenCount_Data; ii++)
 		{
 			if ((strlen(theParser->dataList[ii].keyword) > 0) || (strlen(theParser->dataList[ii].valueString) > 0))

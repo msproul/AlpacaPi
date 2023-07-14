@@ -4,26 +4,21 @@
 #ifndef _CONTROLLER_PREVIEW_H_
 #define _CONTROLLER_PREVIEW_H_
 
-
-
 #ifndef _DISCOVERY_LIB_H_
 	#include	"discovery_lib.h"
-#endif // _DISCOVERY_LIB_H_
+#endif
 
 #ifndef	_WINDOWTAB_PREVIEW_H_
 	#include	"windowtab_preview.h"
-#endif // _WINDOWTAB_PREVIEW_H_
-
+#endif
 
 #ifndef	_WINDOWTAB_ABOUT_H_
 	#include	"windowtab_about.h"
-#endif // _WINDOWTAB_ABOUT_H_
-
-
+#endif
 
 #ifndef _CONTROLLER_CAMERA_H_
 	#include	"controller_camera.h"
-#endif // _CONTROLLER_CAMERA_H_
+#endif
 
 //**************************************************************************************
 class ControllerPreview: public ControllerCamera

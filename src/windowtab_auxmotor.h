@@ -6,7 +6,7 @@
 
 #ifndef _WINDOW_TAB_H
 	#include	"windowtab.h"
-#endif // _WINDOW_TAB_H
+#endif
 
 //*****************************************************************************
 enum
@@ -42,6 +42,7 @@ enum
 	kAuxMotorBox_AlpacaErrorMsg,
 	kAuxMotorBox_IPaddr,
 	kAuxMotorBox_Readall,
+	kAuxMotorBox_DeviceState,
 
 	kAuxMotorBox_last
 };

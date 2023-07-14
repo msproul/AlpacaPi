@@ -43,6 +43,7 @@
 //*	Mar  1,	2023	<MLS> Added DumpRotatorProperties()
 //*	Mar  1,	2023	<MLS> Working on Reverse property to pass CONFORMU
 //*	Mar  2,	2023	<MLS> Working on Sync method to pass CONFORMU
+//*	Jun 18,	2023	<MLS> Added DeviceState_Add_Content() to rotor driver
 //*****************************************************************************
 
 #ifdef _ENABLE_ROTATOR_
@@ -66,6 +67,11 @@
 	#include	"rotatordriver_sim.h"
 #endif
 
+
+#include	"rotator_AlpacaCmds.h"
+#include	"rotator_AlpacaCmds.cpp"
+
+
 //*****************************************************************************
 void	CreateRotatorObjects(void)
 {
@@ -77,33 +83,6 @@ void	CreateRotatorObjects(void)
 }
 
 
-//*****************************************************************************
-static TYPE_CmdEntry	gRotatorCmdTable[]	=
-{
-
-	{	"canreverse",			kCmd_Rotator_canreverse,		kCmdType_GET	},
-	{	"ismoving",				kCmd_Rotator_ismoving,			kCmdType_GET	},
-	{	"mechanicalposition",	kCmd_Rotator_mechanicalposition,kCmdType_GET	},
-	{	"position",				kCmd_Rotator_position,			kCmdType_GET	},
-	{	"reverse",				kCmd_Rotator_reverse,			kCmdType_BOTH	},
-	{	"stepsize",				kCmd_Rotator_stepsize,			kCmdType_GET	},
-	{	"targetposition",		kCmd_Rotator_targetposition,	kCmdType_GET	},
-
-	{	"halt",					kCmd_Rotator_halt,				kCmdType_PUT	},
-	{	"move",					kCmd_Rotator_move,				kCmdType_PUT	},
-	{	"moveabsolute",			kCmd_Rotator_moveabsolute,		kCmdType_PUT	},
-	{	"movemechanical",		kCmd_Rotator_movemechanical,	kCmdType_PUT	},
-	{	"sync",					kCmd_Rotator_sync,				kCmdType_PUT	},
-
-
-	//*	added by MLS
-	{	"--extras",				kCmd_Rotator_Extras,			kCmdType_GET	},
-	{	"step",					kCmd_Rotator_step,				kCmdType_PUT	},
-	{	"stepabsolute",			kCmd_Rotator_stepabsolute,		kCmdType_PUT	},
-	{	"readall",				kCmd_Rotator_readall,			kCmdType_GET	},
-
-	{	"",						-1,	0x00	}
-};
 
 //*****************************************************************************
 static double	AdjustDegrees0_360(const double degreeValue)
@@ -867,6 +846,21 @@ int32_t				newPosition;
 }
 
 //*****************************************************************************
+//IsMoving
+//MechanicalPosition
+//Position
+//*****************************************************************************
+bool	RotatorDriver::DeviceState_Add_Content(const int socketFD, char *jsonTextBuffer, const int maxLen)
+{
+	DeviceState_Add_Bool(socketFD,	jsonTextBuffer, maxLen,	"IsMoving",				cRotatorProp.IsMoving);
+	DeviceState_Add_Int(socketFD,	jsonTextBuffer, maxLen,	"MechanicalPosition",	cRotatorProp.MechanicalPosition);
+	DeviceState_Add_Dbl(socketFD,	jsonTextBuffer, maxLen,	"Position",				cRotatorProp.Position);
+
+	return(true);
+}
+
+
+//*****************************************************************************
 TYPE_ASCOM_STATUS	RotatorDriver::Get_Readall(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
@@ -880,9 +874,9 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 		Get_Ismoving(			reqData, alpacaErrMsg, "ismoving");
 		Get_MechanicalPosition(	reqData, alpacaErrMsg, "mechanicalposition");
 		Get_Position(			reqData, alpacaErrMsg, "position");
-		Get_Targetposition(		reqData, alpacaErrMsg, "targetposition");
-		Get_Stepsize(			reqData, alpacaErrMsg, "stepsize");
 		Get_Reverse(			reqData, alpacaErrMsg, "reverse");
+		Get_Stepsize(			reqData, alpacaErrMsg, "stepsize");
+		Get_Targetposition(		reqData, alpacaErrMsg, "targetposition");
 
 		strcpy(alpacaErrMsg, "");
 	}
@@ -917,7 +911,7 @@ void	RotatorDriver::UpdateRotorPosition(bool updateTargetPosition)
 double		currPositionDeg;
 
 	cRotatorPosition_steps			=	ReadCurrentPoisiton_steps();
-	currPositionDeg					=	ReadCurrentPoisiton_degs();;
+	currPositionDeg					=	ReadCurrentPoisiton_degs();
 	currPositionDeg					=	AdjustDegrees0_360(currPositionDeg);
 
 	cRotatorProp.MechanicalPosition	=	currPositionDeg;
@@ -942,8 +936,6 @@ char		lineBuffer[128];
 		SocketWriteData(mySocketFD,	"<CENTER>\r\n");
 		SocketWriteData(mySocketFD,	"<TABLE BORDER=1>\r\n");
 
-
-
 		OutputHTMLrowData(mySocketFD,	"Rotator",		cCommonProp.Name);
 		OutputHTMLrowData(mySocketFD,	"Model",		cRotatorModel);
 
@@ -959,9 +951,6 @@ char		lineBuffer[128];
 		SocketWriteData(mySocketFD,	"</TABLE>\r\n");
 		SocketWriteData(mySocketFD,	"</CENTER>\r\n");
 		SocketWriteData(mySocketFD,	"<P>\r\n");
-
-		//*	now generate links to all of the commands
-		GenerateHTMLcmdLinkTable(mySocketFD, "rotator", 0, gRotatorCmdTable);
 	}
 }
 
@@ -973,7 +962,6 @@ bool	foundIt;
 	foundIt	=	GetCmdNameFromTable(cmdNumber, comandName, gRotatorCmdTable, getPut);
 	return(foundIt);
 }
-
 
 //*****************************************************************************
 int32_t	RotatorDriver::ReadCurrentPoisiton_steps(void)

@@ -27,17 +27,15 @@
 
 #ifndef	_ALPACA_DEFS_H_
 	#include	"alpaca_defs.h"
-#endif // _ALPACA_DEFS_H_
+#endif
 
 #ifndef _ALPACA_DRIVER_H_
 	#include	"alpacadriver.h"
 #endif
 
-
 #ifndef _SLIT_TRACKER_H_
 	#include	"slittracker.h"
-#endif // _SLIT_TRACKER_H_
-
+#endif
 
 //*****************************************************************************
 //*	dome states
@@ -136,6 +134,7 @@ class DomeDriver: public AlpacaDriver
 
 				TYPE_ASCOM_STATUS	Get_Currentstate(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 				TYPE_ASCOM_STATUS	Get_Readall(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
+		virtual	bool				DeviceState_Add_Content(const int socketFD, char *jsonTextBuffer, const int maxLen);
 
 		virtual	void				StartDomeMoving(const int direction);
 		virtual	void				StopDomeMoving(bool rightNow);

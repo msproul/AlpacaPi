@@ -4,34 +4,59 @@
 #ifndef _ALPACA_HELPER_H_
 #define	_ALPACA_HELPER_H_
 
-
 #ifndef _SYS_TIME_H
 	#include	<sys/time.h>
-#endif // _SYS_TIME_H
+#endif
 
 #ifndef _STDINT_H
 	#include	<stdint.h>
-#endif // _STDINT_H
-
+#endif
 
 #if defined(__ARM_ARCH) && !defined(__arm__)
 	#define __arm__
 #endif
 
-
 #ifndef	_ALPACA_DEFS_H_
 	#include	"alpaca_defs.h"
 #endif
 
-
 //*****************************************************************************
 #define	kMaxDeviceLen	32
-typedef struct
+typedef struct	//	TYPE_DeviceTable
 {
-	char				deviceType[kMaxDeviceLen];
+	char				deviceTypeStr[kMaxDeviceLen];
 	TYPE_DEVICETYPE		enumValue;
 
 } TYPE_DeviceTable;
+
+//*****************************************************************************
+#define	kMaxLookupName	32
+typedef struct	//	TYPE_LookupTable
+{
+	char	keyword[kMaxLookupName];
+	int		enumValue;
+
+} TYPE_LookupTable;
+
+
+//*****************************************************************************
+enum
+{
+	kCmdType_PUT	=	'P',
+	kCmdType_GET	=	'G',
+	kCmdType_BOTH	=	'B'
+};
+
+//*****************************************************************************
+#define	kMaxCmdLen	32
+typedef struct	//	TYPE_CmdEntry
+{
+	char		commandName[kMaxCmdLen];
+	int16_t		enumValue;
+	char		get_put;
+
+} TYPE_CmdEntry;
+
 
 
 #ifdef __cplusplus
@@ -69,6 +94,8 @@ void			DumpObservingconditionsProp(TYPE_ObsConditionProperties	*obsCondProp, con
 
 extern	char		gWebTitle[];
 
+int	LookupStringInTable(const char *lookupString, TYPE_LookupTable *lookupTable);
+int	LookupStringInCmdTable(const char *lookupString, TYPE_CmdEntry *commandTable);
 
 #define	DEGREES_F(x)	((x * (9.0/5.0) ) + 32.0)
 

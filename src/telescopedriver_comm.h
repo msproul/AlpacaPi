@@ -32,7 +32,7 @@
 
 
 //*****************************************************************************
-typedef struct
+typedef struct	//	TYPE_TelescopeCmdQue
 {
 	int		cmdID;			//*	this is so the drive can keep track of what the command was
 							//*	so the response can be processed properly

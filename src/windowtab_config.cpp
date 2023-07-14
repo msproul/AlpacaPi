@@ -20,6 +20,7 @@
 //*	Edit History
 //*****************************************************************************
 //*	Feb 24,	2020	<MLS> Created windowtab_config.cpp
+//*	Jun 19,	2023	<MLS> Added DeviceState to focus config
 //*****************************************************************************
 
 #ifdef _ENABLE_CTRL_FOCUSERS_
@@ -151,6 +152,7 @@ int		textBoxNum;
 	//*	set up all the bottom stuff so that it is the same on all windowtabs
 	SetupWindowBottomBoxes(	kCongfigBox_IPaddr,
 							kCongfigBox_Readall,
+							kCongfigBox_DeviceState,
 							kCongfigBox_AlpacaErrorMsg,
 							kCongfigBox_LastCmdString,
 							kCongfigBox_AlpacaLogo,

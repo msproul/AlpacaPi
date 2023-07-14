@@ -1,18 +1,16 @@
 //*****************************************************************************
 //#include	"windowtab_camsettings.h"
 
-
-
 #ifndef	_WINDOWTAB_CAMSETTINGS_H_
 #define	_WINDOWTAB_CAMSETTINGS_H_
 
 #ifndef	_CONTROLLER_H_
 //	#include	"controller.h"
-#endif // _CONTROLLER_H_
+#endif
 
 #ifndef _WINDOW_TAB_H
 	#include	"windowtab.h"
-#endif // _WINDOW_TAB_H
+#endif
 
 
 
@@ -66,18 +64,27 @@ enum
 
 
 	kCamSet_FilenameTitle,
-	kCamSet_FN_IncFilter,
 	kCamSet_FN_IncCamera,
-	kCamSet_FN_IncSerialNum,
+	kCamSet_FN_IncFilter,
 	kCamSet_FN_IncRefID,
+	kCamSet_FN_IncSerialNum,
 
 	kCamSet_FilenameOutline,
+
+	kCamSet_SaveAsTitle,
+	kCamSet_SaveAsFITS,
+	kCamSet_SaveAsJPEG,
+	kCamSet_SaveAsPNG,
+	kCamSet_SaveAsRAW,
+	kCamSet_SaveAsOutline,
+
 
 	kCamSet_LastCmdString,
 	kCamSet_AlpacaLogo,
 	kCamSet_AlpacaErrorMsg,
 	kCamSet_IPaddr,
 	kCamSet_Readall,
+	kCamSet_DeviceState,
 
 	kCamSet_last
 };
@@ -110,6 +117,7 @@ class WindowTabCamSettings: public WindowTab
 				void	SetObjectText(const int presetIndex);
 				void	SetExposureRange(const int expTimeIdx);
 				void	SetFileNameOptions(const int fnOptionBtn);
+				void	SetFileSaveOptions(const int fileSaveOptions);
 
 };
 

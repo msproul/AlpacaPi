@@ -57,15 +57,21 @@ class CalibrationDriver: public AlpacaDriver
 		TYPE_ASCOM_STATUS	Put_HaltCover(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 		TYPE_ASCOM_STATUS	Put_OpenCover(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 
+		TYPE_ASCOM_STATUS	Get_CalibratorReady(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+		TYPE_ASCOM_STATUS	Get_CoverMoving(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+
+		//*	extras defined by MLS
 		TYPE_ASCOM_STATUS	Get_Aperture(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
 		TYPE_ASCOM_STATUS	Put_Aperture(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 		TYPE_ASCOM_STATUS	Get_CanAdjustAperture(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
 
 		TYPE_ASCOM_STATUS	Get_Readall(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 
+virtual	bool	DeviceState_Add_Content(const int socketFD, char *jsonTextBuffer, const int maxLen);
+
 		//-------------------------------------------------------------------------
 		//*	Watchdog timer stuff
-		virtual	void					WatchDog_TimeOut(void);
+		virtual	void				WatchDog_TimeOut(void);
 
 		//*	these routines should be implemented by the sub-classes
 		//*	all have to return an Alpaca Error code
@@ -75,10 +81,13 @@ class CalibrationDriver: public AlpacaDriver
 		virtual	TYPE_ASCOM_STATUS	Cover_Open(char *alpacaErrMsg);
 		virtual	TYPE_ASCOM_STATUS	Cover_Close(char *alpacaErrMsg);
 		virtual	TYPE_ASCOM_STATUS	Cover_Halt(char *alpacaErrMsg);
+		virtual	TYPE_ASCOM_STATUS	Cover_GetStatus(char *alpacaErrMsg);
+		virtual	TYPE_ASCOM_STATUS	GetBrightness(char *alpacaErrMsg);
 
 				TYPE_CoverCalibrationProperties	cCoverCalibrationProp;
 				CoverStatus						cCoverDesiredPostion;
 				uint32_t						cCoverMovementStartTime;	//*	milliseconds
+				uint32_t						cCoverLastUpdateTime;		//*	milliseconds
 
 };
 

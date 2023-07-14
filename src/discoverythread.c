@@ -67,6 +67,7 @@
 #include	"sendrequest_lib.h"
 #include	"linuxerrors.h"
 #include	"helper_functions.h"
+#include	"controller_startup.h"
 
 #include	"obsconditions_globals.h"
 #include	"HostNames.h"
@@ -110,21 +111,26 @@ static bool		gNeedToReadExternalList	=	true;	//*	we only need to do this once
 //*****************************************************************************
 static bool	ReadLocalIPaddress(void)
 {
-FILE				*filePointer;
-char				lineBuff[256];
-char				fileName[]	=	"local_ip_addr.txt";
-char				outputIPaddrStr[64];
-bool				validAddress;
-int					slen;
-int					iii;
+FILE		*filePointer;
+char		lineBuff[256];
+char		fileName[]	=	"local_ip_addr.txt";
+char		outputIPaddrStr[64];
+bool		validAddress;
+int			slen;
+int			iii;
+int			startupWidgetIdx;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-	validAddress	=	false;
+	validAddress		=	false;
+	startupWidgetIdx	=	-1;
 	//*	see if there is a file with the local IP address
 	filePointer	=	fopen(fileName, "r");
 	if (filePointer != NULL)
 	{
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+		startupWidgetIdx	=	SetStartupText("Local IP address:");
 		while (fgets(lineBuff, 200, filePointer))
 		{
 			slen	=	strlen(lineBuff);
@@ -156,6 +162,7 @@ int					iii;
 			}
 		}
 		fclose(filePointer);
+		SetStartupTextStatus(startupWidgetIdx, (validAddress ? "OK" : "Failed"));
 	}
 	return(validAddress);
 }
@@ -543,8 +550,9 @@ char				errorString[64];
 	if (socket_desc >= 0)
 	{
 		//*	Mar 13,	2021	<MLS> Added timeout to GetJsonResponse()
+		//*	Jun 25,	2023	<MLS> Increased GetJsonResponse() to 5 seconds (was 3)
 		//*	set a timeout
-		setOptRetCode	=	SetSocketTimeouts(socket_desc, 3);
+		setOptRetCode	=	SetSocketTimeouts(socket_desc, 5);
 		if (setOptRetCode != 0)
 		{
 			CONSOLE_DEBUG("SetSocketTimeouts() returned error");
@@ -636,7 +644,8 @@ char				errMsgString[64];
 										&jsonParser);
 	if (validData)
 	{
-//		SJP_DumpJsonData(&jsonParser);
+//		CONSOLE_DEBUG(sendData);
+//		SJP_DumpJsonData(&jsonParser, __FUNCTION__);
 
 		ExtractDevicesFromJSON(&jsonParser, theDevice);
 		theDevice->queryOKcnt++;
@@ -1199,7 +1208,7 @@ bool				validLocalAddress;
 		sleepSecsCounter	=	0;
 		while ((sleepSecsCounter < 90) && (gDiscoveryWakeUp == false) && gDiscoveryThreadKeepRunning)
 		{
-		#define	kSleepTime	2
+		#define	kSleepTime	1
 
 			sleep(kSleepTime);
 			sleepSecsCounter	+=	kSleepTime;
@@ -1242,7 +1251,7 @@ struct sockaddr_in	from;
 char				portNumStr[32];
 char				*colonPtr;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	//*	see if there is a file listing extra IP address
 	filePointer	=	fopen(fileName, "r");
@@ -1263,14 +1272,14 @@ char				*colonPtr;
 			slen	=	strlen(lineBuff);
 			if ((slen > 6) && (lineBuff[0] != '#'))
 			{
-				CONSOLE_DEBUG_W_STR("External IP address\t=",		lineBuff);
+//				CONSOLE_DEBUG_W_STR("External IP address\t=",		lineBuff);
 				//*	look to see if there is a port number specified
 				colonPtr	=	strchr(lineBuff, ':');
 				if (colonPtr != NULL)
 				{
 					colonPtr++;
 					strcpy(portNumStr, colonPtr);
-					CONSOLE_DEBUG_W_STR("External Port\t\t=",		portNumStr);
+//					CONSOLE_DEBUG_W_STR("External Port\t\t=",		portNumStr);
 				}
 				else
 				{
@@ -1291,7 +1300,7 @@ char				*colonPtr;
 
 				//*	this is just for debugging to make sure we got it right
 				inet_ntop(AF_INET, &(from.sin_addr), outputIPaddrStr, INET_ADDRSTRLEN);
-				CONSOLE_DEBUG_W_STR("outputIPaddrStr\t\t=",		outputIPaddrStr);
+//				CONSOLE_DEBUG_W_STR("outputIPaddrStr\t\t=",		outputIPaddrStr);
 
 				SJP_Init(&jsonParser);
 				strcpy(jsonParser.dataList[0].keyword, "ALPACAPORT");

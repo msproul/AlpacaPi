@@ -19,6 +19,11 @@ enum
 	kCapabilities_TextBox1,
 	kCapabilities_TextBoxN = 22,
 	kCapabilities_AlpacaLogo,
+	kCapabilities_IPaddr,
+	kCapabilities_Readall,
+	kCapabilities_DeviceState,
+
+
 	kCapabilities_last
 };
 
@@ -37,6 +42,7 @@ class WindowTabCapabilities: public WindowTab
 		virtual	~WindowTabCapabilities(void);
 
 		virtual	void	SetupWindowControls(void);
+		virtual	void	ActivateWindow(void);
 
 };
 

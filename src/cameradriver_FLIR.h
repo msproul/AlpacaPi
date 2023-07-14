@@ -20,27 +20,26 @@
 //*****************************************************************************
 //#include	"cameradriver_FLIR.h"
 
-
 #ifndef	_CAMERA_DRIVER_FLIR_H_
 #define	_CAMERA_DRIVER_FLIR_H_
 
-
 #ifndef _STDIO_H
 	#include	<stdio.h>
-#endif // _STDIO_H
+#endif
+
 #ifndef	_STRING_H
 	#include	<string.h>
-#endif // _STRING_H
+#endif
+
 #ifndef FLIR_SPINNAKER_C_H
 	#include	<spinnaker/spinc/SpinnakerC.h>
-#endif // FLIR_SPINNAKER_C_H
+#endif
+
 #ifndef	_CAMERA_DRIVER_H_
 	#include	"cameradriver.h"
 #endif
 
-
 int	CreateFLIR_CameraObjects(void);
-
 
 //**************************************************************************************
 class CameraDriverFLIR: public CameraDriver

@@ -6,11 +6,11 @@
 
 #ifndef _STDBOOL_H
 	#include	<stdbool.h>
-#endif // _STDBOOL_H
+#endif
 
 #if defined(__ARM_ARCH) && !defined(__arm__)
 	#define __arm__
-#endif // defined
+#endif
 
 
 #ifdef _ENABLE_4REALY_BOARD

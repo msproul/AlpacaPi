@@ -467,6 +467,9 @@ bool			goBackOneImage;
 	CONSOLE_DEBUG_W_NUM("argc\t=", argc);
 //	CONSOLE_DEBUG_W_SIZE("sizeof(gTranslationMap)\t=", sizeof(gTranslationMap));
 
+	openCV_Image	=	NULL;
+	smallCV_Image	=	NULL;
+
 	strcpy(myWindowName, "fits file");
 	gAutomatic	=	false;
 	keepLooping	=	false;
@@ -670,23 +673,33 @@ bool			goBackOneImage;
 
 					}
 				}
-			#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
-				delete openCV_Image;
-				openCV_Image	=	NULL;
-				if (smallCV_Image != NULL)
+				if (openCV_Image != NULL)
 				{
-					delete smallCV_Image;
-					smallCV_Image	=	NULL;
+				#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
+					CONSOLE_DEBUG("delete openCV_Image");
+
+					delete openCV_Image;
+					openCV_Image	=	NULL;
+					if (smallCV_Image != NULL)
+					{
+						CONSOLE_DEBUG("delete smallCV_Image");
+						delete smallCV_Image;
+						smallCV_Image	=	NULL;
+					}
+				#else
+					cvReleaseImage(&openCV_Image);
+					openCV_Image	=	NULL;
+					if (smallCV_Image != NULL)
+					{
+						cvReleaseImage(&smallCV_Image);
+						smallCV_Image	=	NULL;
+					}
+				#endif
 				}
-			#else
-				cvReleaseImage(&openCV_Image);
-				openCV_Image	=	NULL;
-				if (smallCV_Image != NULL)
+				else
 				{
-					cvReleaseImage(&smallCV_Image);
-					smallCV_Image	=	NULL;
+					CONSOLE_DEBUG("openCV_Image is NULL");
 				}
-			#endif
 			}
 		}
 

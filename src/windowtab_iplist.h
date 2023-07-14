@@ -6,11 +6,11 @@
 
 #ifndef _DISCOVERY_LIB_H_
 	#include	"discovery_lib.h"
-#endif // _DISCOVERY_LIB_H_
+#endif
 
 #ifndef _WINDOW_TAB_H_
 	#include	"windowtab.h"
-#endif // _WINDOW_TAB_H
+#endif
 
 //*****************************************************************************
 enum
@@ -100,7 +100,7 @@ enum
 
 #define	kCpuColorCnt	12
 //**************************************************************************************
-typedef struct
+typedef struct	//	TYPE_CPU_SORT
 {
 	char		cpuName[32];
 	double		cpuTemp;

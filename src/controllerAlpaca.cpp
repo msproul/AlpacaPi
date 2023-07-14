@@ -44,8 +44,20 @@
 //*	Sep 26,	2022	<MLS> Fixed return data valid bug in all routines
 //*	Oct 16,	2022	<MLS> Added Alpaca_GetTemperatureLog()
 //*	Oct 26,	2022	<MLS> Fixed return data valid bug in AlpacaGetStringValue()
+//*	Dec 17,	2022	<MLS> Added GetConfiguredDevices() (moved from controller_camera)
+//*	Dec 17,	2022	<MLS> Added ProcessConfiguredDevices()
 //*	Mar  8,	2023	<MLS> Added AlpacaGetStringValue() with ipaddr arg
 //*	Mar 10,	2023	<MLS> Added new version of  AlpacaGetBooleanValue()
+//*	May 29,	2023	<MLS> Fixed bug in Alpaca_GetTemperatureLog(), un-initialized variable
+//*	Jun 18,	2023	<MLS> Added AlpacaCheckForDeviceState() & AlpacaGetStatus_DeviceState()
+//*	Jun 23,	2023	<MLS> Added UpdateDeviceStateEntry()
+//*	Jun 23,	2023	<MLS> Added SetCommandLookupTable()
+//*	Jun 25,	2023	<MLS> Added AlpacaGetStartupData_OneAAT() to controller class
+//*	Jun 25,	2023	<MLS> Added AlpacaGetCapabilities()
+//*	Jun 26,	2023	<MLS> Added AlpacaProcessReadAllIdx()
+//*	Jul  1,	2023	<MLS> Added SetCommandLookupTable() with TYPE_CmdEntry
+//*	Jul  1,	2023	<MLS> Added LookupCmdInCmdTable()
+//*	Jul  1,	2023	<MLS> Added SetAlternateLookupTable()
 //*****************************************************************************
 
 #ifdef _CONTROLLER_USES_ALPACA_
@@ -71,18 +83,44 @@
 #include	"helper_functions.h"
 #include	"widget.h"
 #include	"controller.h"
+#include	"windowtab_drvrInfo.h"
 
 static int	gClientID				=	1;
 static int	gClientTransactionID	=	1;
 
+#include	"common_AlpacaCmds.h"
+#include	"common_AlpacaCmds.cpp"
+
+//*****************************************************************************
+void	Controller::SetCommandLookupTable(TYPE_CmdEntry *newLookupTable)
+{
+	cCommandEntryPtr	=	newLookupTable;
+}
+//*****************************************************************************
+void	Controller::SetAlternateLookupTable(TYPE_CmdEntry *newLookupTable)
+{
+	cAlternateEntryPtr	=	newLookupTable;
+}
 
 //*****************************************************************************
 //*	this should be over-ridden
 //*****************************************************************************
 bool	Controller::AlpacaGetStartupData(void)
 {
-	CONSOLE_ABORT("AlpacaGetStartupData() has not been implemented for this controller");
-	CONSOLE_ABORT(__FUNCTION__);
+//	CONSOLE_DEBUG("AlpacaGetStartupData() has not been implemented for this controller");
+//	CONSOLE_DEBUG("This routine has been replaced with GetStartUpData_SubClass()");
+//	CONSOLE_ABORT(__FUNCTION__);
+	return(false);
+}
+
+//*****************************************************************************
+//*	this should be over-ridden
+//*****************************************************************************
+void	Controller::AlpacaGetCapabilities(void)
+{
+//	CONSOLE_DEBUG("AlpacaGetCapabilities() has not been implemented for this controller");
+//	CONSOLE_DEBUG(cWindowName);
+//	CONSOLE_ABORT(__FUNCTION__);
 }
 
 //*****************************************************************************
@@ -370,12 +408,32 @@ int		returnStrLen;
 	return(validData);
 }
 
+//*****************************************************************************
+bool	Controller::AlpacaGetStartupData_OneAAT(void)
+{
+	//*	needs to be overloaded
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, "needs to be overloaded!!!!!!!!!!!!!!!!!!");
+	CONSOLE_DEBUG(cWindowName);
+//	CONSOLE_ABORT(__FUNCTION__);
+	return(false);
+}
 
 //*****************************************************************************
 void	Controller::UpdateCommonProperties(void)
 {
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, "needs to be overloaded!!!!!!!!!!!!!!!!!!");
-	//*	needs to be overloaded
+	if (cDriverInfoTabNum >= 0)
+	{
+		SetWidgetText(		cDriverInfoTabNum,	kDriverInfo_Name,				cCommonProp.Name);
+		SetWidgetText(		cDriverInfoTabNum,	kDriverInfo_Description,		cCommonProp.Description);
+		SetWidgetText(		cDriverInfoTabNum,	kDriverInfo_DriverInfo,			cCommonProp.DriverInfo);
+		SetWidgetText(		cDriverInfoTabNum,	kDriverInfo_DriverVersion,		cCommonProp.DriverVersion);
+		SetWidgetNumber(	cDriverInfoTabNum,	kDriverInfo_InterfaceVersion,	cCommonProp.InterfaceVersion);
+	}
+	else
+	{
+		//*	needs to be overloaded
+		CONSOLE_DEBUG_W_STR(__FUNCTION__, "needs to be overloaded!!!!!!!!!!!!!!!!!!");
+	}
 }
 
 
@@ -393,7 +451,7 @@ int				jjj;
 	if (gVerbose)
 	{
 	char			ipAddrStr[32];
-		CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+		CONSOLE_DEBUG_W_STR("Windowname\t=", cWindowName);
 		CONSOLE_DEBUG_W_STR(__FUNCTION__, deviceTypeStr);
 
 		inet_ntop(AF_INET, &(deviceAddress->sin_addr), ipAddrStr, INET_ADDRSTRLEN);
@@ -459,7 +517,7 @@ bool	Controller::AlpacaGetSupportedActions(const char *deviceTypeStr, const int 
 {
 bool			validData;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, deviceTypeStr);
 	cHas_readall	=	false;
 	validData		=	AlpacaGetSupportedActions(	&cDeviceAddress,
 													cPort,
@@ -474,10 +532,15 @@ bool			validData;
 void	Controller::AlpacaProcessSupportedActions(const char *deviceTypeStr, const int deviveNum, const char *valueString)
 {
 //	CONSOLE_DEBUG(cWindowName);
+//	CONSOLE_DEBUG_W_STR(deviceTypeStr, valueString);
 
 	if (strcasecmp(valueString, "readall") == 0)
 	{
 		cHas_readall	=	true;
+	}
+	else if (strcasecmp(valueString, "devicestate") == 0)
+	{
+		cHas_DeviceState	=	true;
 	}
 	else if (strcasecmp(valueString, "temperaturelog") == 0)
 	{
@@ -489,6 +552,40 @@ void	Controller::AlpacaProcessSupportedActions(const char *deviceTypeStr, const 
 	}
 //	CONSOLE_ABORT(__FUNCTION__);
 }
+
+//*****************************************************************************
+int	Controller::LookupCmdInCmdTable(const char *commandString, TYPE_CmdEntry *commandTable, TYPE_CmdEntry *alternateTable)
+{
+int		iii;
+int		enumValue;
+
+//	CONSOLE_DEBUG_W_STR("commandString\t=", commandString);
+	enumValue	=	-1;
+	iii			=	0;
+	while ((commandTable[iii].commandName[0] != 0) && (enumValue < 0))
+	{
+		if (strcasecmp(commandString, commandTable[iii].commandName) == 0)
+		{
+			enumValue	=	commandTable[iii].enumValue;
+		}
+		iii++;
+	}
+
+	if ((enumValue < 0) && (alternateTable != NULL))
+	{
+		iii			=	0;
+		while ((alternateTable[iii].commandName[0] != 0) && (enumValue < 0))
+		{
+			if (strcasecmp(commandString, alternateTable[iii].commandName) == 0)
+			{
+				enumValue	=	alternateTable[iii].enumValue;
+			}
+			iii++;
+		}
+	}
+	return(enumValue);
+}
+
 
 //*****************************************************************************
 //*	added new version of this 1/9/2021 to allow multiple devices
@@ -503,13 +600,18 @@ SJP_Parser_t	jsonParser;
 bool			validData;
 char			alpacaString[128];
 int				jjj;
+bool			dataWasHandled	=	true;
+int				keywordEnum;
+int				notHandledCnt;
 
-//	CONSOLE_DEBUG(cWindowName);
-//	CONSOLE_DEBUG_W_STR("Requesting 'readall' for", deviceTypeStr);
+#ifdef _DEBUG_READALL_
+	CONSOLE_DEBUG("-----------------------------------------------------------------");
+	CONSOLE_DEBUG(cWindowName);
+	CONSOLE_DEBUG_W_STR("Requesting 'readall' for", deviceTypeStr);
+#endif
 
 	SJP_Init(&jsonParser);
-	sprintf(alpacaString,	"/api/v1/%s/%d/%s", deviceTypeStr, deviceNum, "readall");
-
+	sprintf(alpacaString,	"/api/v1/%s/%d/readall", deviceTypeStr, deviceNum);
 	validData	=	GetJsonResponse(	deviceAddress,
 										devicePort,
 										alpacaString,
@@ -519,23 +621,107 @@ int				jjj;
 	{
 		if (enableDebug)
 		{
-			SJP_DumpJsonData(&jsonParser);
+			SJP_DumpJsonData(&jsonParser, __FUNCTION__);
 		}
 		cLastAlpacaErrNum	=	kASCOM_Err_Success;
+
+		//----------------------------------------------------------------
+		//*	there are 2 ways of doing this, the 2nd way was added Jun 26,2023
+		//*	this new way looks up in pre-defined table the command
+		//*	and passes the enum value for the keyword instead of the keyword string.
+		//*	this makes the subclass readall parser easier to read
+		//*	each subclass should only implement ONE of these methods.
+		//*	however there is nothing stopping the subclass from doing the lookup itself
+		//----------------------------------------------------------------
+//		SJP_DumpJsonData(&jsonParser, __FUNCTION__);
+		notHandledCnt	=	0;
 		for (jjj=0; jjj<jsonParser.tokenCount_Data; jjj++)
 		{
-			AlpacaProcessReadAll(	deviceTypeStr,
-									deviceNum,
-									jsonParser.dataList[jjj].keyword,
-									jsonParser.dataList[jjj].valueString);
+			//*	check for valid string
+			if (strlen(jsonParser.dataList[jjj].keyword) > 0)
+			{
+				//*	special debugging
+//				if (cAlpacaDeviceType == kDeviceType_Telescope)
+//				{
+//					CONSOLE_DEBUG_W_2STR(	deviceTypeStr,
+//											jsonParser.dataList[jjj].keyword,
+//											jsonParser.dataList[jjj].valueString);
+//				}
+				dataWasHandled	=	false;
+				//-------------------------------------------------------------------------------------
+				//*	Look for the command in the COMMON command list AND the Extras list
+				keywordEnum		=	LookupCmdInCmdTable(jsonParser.dataList[jjj].keyword, gCommonCmdTable, gExtrasCmdTable);
+				if (keywordEnum >= 0)
+				{
+					dataWasHandled	=	AlpacaProcessReadAll_CommonIdx(	deviceTypeStr,
+																		deviceNum,
+																		keywordEnum,
+																		jsonParser.dataList[jjj].valueString);
+				}
+				else if (cCommandEntryPtr != NULL)
+				{
+					keywordEnum	=	LookupCmdInCmdTable(jsonParser.dataList[jjj].keyword, cCommandEntryPtr, cAlternateEntryPtr);
+				}
+
+				if (dataWasHandled == false)
+				{
+					if (keywordEnum >= 0)
+					{
+						dataWasHandled	=	AlpacaProcessReadAllIdx(deviceTypeStr,
+																	deviceNum,
+																	keywordEnum,
+																	jsonParser.dataList[jjj].valueString);
+					}
+					else if (strncasecmp(jsonParser.dataList[jjj].keyword, "COMMENT", 7) == 0)
+					{
+						dataWasHandled	=	true;
+					}
+					else if (strcasestr(jsonParser.dataList[jjj].keyword, "-STR") != NULL)
+					{
+						dataWasHandled	=	true;
+					}
+					else
+					{
+//						CONSOLE_DEBUG_W_NUM("cAlpacaDeviceType    \t=", cAlpacaDeviceType);
+//						if (cAlpacaDeviceType == kDeviceType_Management)
+//						{
+//							CONSOLE_DEBUG_W_STR("deviceTypeStr\t=", deviceTypeStr);
+//							CONSOLE_DEBUG_W_2STR(	"Calling AlpacaProcessReadAll():",
+//													jsonParser.dataList[jjj].keyword,
+//													jsonParser.dataList[jjj].valueString);
+//						}
+						dataWasHandled	=	AlpacaProcessReadAll(	deviceTypeStr,
+																	deviceNum,
+																	jsonParser.dataList[jjj].keyword,
+																	jsonParser.dataList[jjj].valueString);
+//						CONSOLE_DEBUG_W_BOOL("dataWasHandled\t=", dataWasHandled);
+					}
+					if (dataWasHandled == false)
+					{
+						notHandledCnt++;
+					#ifdef _DEBUG_READALL_
+						CONSOLE_DEBUG_W_2STR(	"NOT HANDLED:",
+												jsonParser.dataList[jjj].keyword,
+												jsonParser.dataList[jjj].valueString);
+					#endif
+					}
+				}
+//				CONSOLE_DEBUG_W_BOOL("dataWasHandled\t=",	dataWasHandled);
+			}
 		}
 	}
+	else
+	{
+		dataWasHandled	=	false;
+	}
+#ifdef _DEBUG_READALL_
+	CONSOLE_DEBUG_W_NUM("notHandledCnt\t=", notHandledCnt);
+#endif
 	return(validData);
 }
 
-
 //*****************************************************************************
-bool	Controller::AlpacaGetStatus_ReadAll(const char *deviceTypeStr, const int deviceNum)
+bool	Controller::AlpacaGetStatus_ReadAll(const char *deviceTypeStr, const int deviceNum, const bool	enableDebug)
 {
 bool			validData;
 
@@ -544,20 +730,131 @@ bool			validData;
 	validData	=	AlpacaGetStatus_ReadAll(&cDeviceAddress,
 											cPort,
 											deviceTypeStr,
-											deviceNum);
+											deviceNum,
+											enableDebug);
 	return(validData);
 }
 
 //*****************************************************************************
-void	Controller::AlpacaProcessReadAll(	const char	*deviceTypeStr,
+bool	Controller::AlpacaProcessReadAll(	const char	*deviceTypeStr,
 											const int	deviceNum,
 											const char	*keywordString,
 											const char	*valueString)
 {
 	//*	this function should be overloaded
-	CONSOLE_DEBUG(cWindowName);
-	CONSOLE_DEBUG_W_2STR("json=",	keywordString, valueString);
+//	CONSOLE_DEBUG(cWindowName);
+//	CONSOLE_DEBUG_W_2STR(deviceTypeStr,	keywordString, valueString);
 //	CONSOLE_ABORT(cWindowName)
+	return(false);
+}
+
+//*****************************************************************************
+bool	Controller::AlpacaProcessReadAllIdx(const char	*deviceTypeStr,
+											const int	deviceNum,
+											const int	keywordEnum,
+											const char	*valueString)
+{
+	//*	this function should be overloaded
+	CONSOLE_DEBUG("New version of AlpacaProcessReadAll(), with enum");
+	CONSOLE_ABORT(cWindowName);
+	return(false);
+}
+
+
+//*****************************************************************************
+bool	Controller::AlpacaProcessReadAll_CommonIdx(const char	*deviceTypeStr,
+													const int	deviceNum,
+													const int	keywordEnum,
+													const char	*valueString)
+{
+bool	dataWasHandled;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	dataWasHandled	=	true;
+	switch(keywordEnum)
+	{
+		case kCmd_Common_action:	//*	Invokes the specified device-specific action.
+			break;
+
+		case kCmd_Common_commandblind:				//*	Transmits an arbitrary string to the device
+			break;
+
+		case kCmd_Common_commandbool:				//*	Transmits an arbitrary string to the device and returns a boolean value from the device.
+			break;
+
+		case kCmd_Common_commandstring:				//*	Transmits an arbitrary string to the device and returns a string value from the device.
+			break;
+
+		case kCmd_Common_connected:					//*	GET--Retrieves the connected state of the device
+			cCommonProp.Connected	=	IsTrueFalse(valueString);
+			break;
+
+		case kCmd_Common_Connect:
+			break;
+
+		case kCmd_Common_Connecting:
+			cCommonProp.Connecting	=	IsTrueFalse(valueString);
+			break;
+
+		case kCmd_Common_Disconnect:
+			break;
+
+		case kCmd_Common_DeviceState:
+			break;
+
+		case kCmd_Common_description:				//*	Device description
+			strcpy(cCommonProp.Description,		valueString);
+			break;
+
+		case kCmd_Common_driverinfo:				//*	Device driver description
+			strcpy(cCommonProp.DriverInfo,		valueString);
+			break;
+
+		case kCmd_Common_driverversion:				//*	Driver Version
+			strcpy(cCommonProp.DriverVersion,	valueString);
+			break;
+
+		case kCmd_Common_interfaceversion:			//*	The ASCOM Device interface version number that this device supports.
+			cCommonProp.InterfaceVersion	=	atoi(valueString);
+			break;
+
+		case kCmd_Common_name:						//*	Device name
+			strcpy(cCommonProp.Name,			valueString);
+			break;
+
+		case kCmd_Common_supportedactions:			//*	Returns the list of action names supported by this driver.
+			break;
+
+
+		//*	Extra commands
+		//*	these are data values that I have added to the alpaca json stream NOT in the standard Alpaca spec
+		case kCmd_Extra_Version:
+			strcpy(cAlpacaVersionString, valueString);	//*	"version": "AlpacaPi - V0.2.2-beta build #32",
+			break;
+
+		case kCmd_Extra_ClientTransactionID:
+		case kCmd_Extra_Command:
+		case kCmd_Extra_Comment:
+		case kCmd_Extra_Device:
+		case kCmd_Extra_ErrorMessage:
+		case kCmd_Extra_ErrorNumber:
+		case kCmd_Extra_ReadAll:
+		case kCmd_Extra_ServerTransactionID:
+		case kCmd_Extra_Array:
+		case kCmd_Extra_UTCDate:
+		case kCmd_Extra_Bracket:
+//			CONSOLE_DEBUG("Extras processed correctly");
+			dataWasHandled	=	true;
+			break;
+
+		default:
+			CONSOLE_DEBUG_W_NUM("Not handled, keywordEnum\t=", keywordEnum);
+			CONSOLE_DEBUG_W_STR("valueString=", valueString);
+			dataWasHandled	=	false;
+	}
+
+	return(dataWasHandled);
 }
 
 //*****************************************************************************
@@ -567,49 +864,19 @@ bool	Controller::AlpacaProcessReadAll_Common(const char	*deviceTypeStr,
 												const char	*valueString)
 {
 bool	dataWasHandled;
+int		keywordEnum;
 
-//	CONSOLE_DEBUG(cWindowName);
-//	CONSOLE_DEBUG_W_2STR("json=",	keywordString, valueString);
+	CONSOLE_DEBUG(cWindowName);
+	CONSOLE_DEBUG_W_STR("json=", valueString);
 
-	dataWasHandled	=	true;
-	//=================================================================================
-	if (strcasecmp(keywordString, "connected") == 0)
+	dataWasHandled	=	false;
+	keywordEnum		=	LookupCmdInCmdTable(keywordString, gCommonCmdTable, gExtrasCmdTable);
+	if (keywordEnum >= 0)
 	{
-		cCommonProp.Connected	=	IsTrueFalse(valueString);
-	}
-	//=================================================================================
-	else if (strcasecmp(keywordString, "description") == 0)
-	{
-		strcpy(cCommonProp.Description,	valueString);
-	}
-	//=================================================================================
-	else if (strcasecmp(keywordString, "driverinfo") == 0)
-	{
-		strcpy(cCommonProp.DriverInfo,	valueString);
-	}
-	//=================================================================================
-	else if (strcasecmp(keywordString, "driverversion") == 0)
-	{
-		strcpy(cCommonProp.DriverVersion,	valueString);
-	}
-	//=================================================================================
-	else if (strcasecmp(keywordString, "interfaceversion") == 0)
-	{
-		cCommonProp.InterfaceVersion	=	atoi(valueString);
-	}
-	//=================================================================================
-	else if (strcasecmp(keywordString, "name") == 0)
-	{
-		strcpy(cCommonProp.Name,	valueString);
-	}
-	else
-	{
-//		CONSOLE_DEBUG("Not handled");
-		dataWasHandled	=	false;
+		dataWasHandled	=	AlpacaProcessReadAll_CommonIdx(deviceTypeStr, deviceNum, keywordEnum, valueString);
 	}
 	return(dataWasHandled);
 }
-
 
 //*****************************************************************************
 bool	Controller::AlpacaSendPutCmdwResponse(	sockaddr_in		*deviceAddress,
@@ -668,11 +935,13 @@ int			dataStrLen;
 		cLastAlpacaErrNum	=	AlpacaCheckForErrors(jsonParser, cLastAlpacaErrStr, true);
 		if (cLastAlpacaErrNum != kASCOM_Err_Success)
 		{
-			CONSOLE_DEBUG_W_NUM("cLastAlpacaErrNum        \t=",	cLastAlpacaErrNum);
+			CONSOLE_DEBUG_W_STR("alpacaString       \t=",	alpacaString);
+			CONSOLE_DEBUG_W_NUM("cLastAlpacaErrNum  \t=",	cLastAlpacaErrNum);
+			SJP_DumpJsonData(jsonParser, __FUNCTION__);
 //			myReturnDataIsValid	=	false;
 		}
 
-		cForceAlpacaUpdate	=	true;
+		ForceAlpacaUpdate();
 		gClientTransactionID++;
 
 		strcpy(cLastAlpacaCmdString, alpacaString);
@@ -842,7 +1111,7 @@ bool			myReturnDataIsValid	=	true;
 				}
 			}
 		}
-//		SJP_DumpJsonData(&jsonParser);
+//		SJP_DumpJsonData(&jsonParser, __FUNCTION__);
 		cLastAlpacaErrNum	=	AlpacaCheckForErrors(&jsonParser, cLastAlpacaErrStr);
 		if (cLastAlpacaErrNum != kASCOM_Err_Success)
 		{
@@ -969,7 +1238,8 @@ bool			myReturnDataIsValid	=	true;
 		cLastAlpacaErrNum	=	AlpacaCheckForErrors(&jsonParser, cLastAlpacaErrStr);
 		if (cLastAlpacaErrNum != kASCOM_Err_Success)
 		{
-			CONSOLE_DEBUG_W_NUM("cLastAlpacaErrNum        \t=",	cLastAlpacaErrNum);
+			CONSOLE_DEBUG_W_NUM("cLastAlpacaErrNum\t=",	cLastAlpacaErrNum);
+			CONSOLE_DEBUG_W_NUM("cLastAlpacaErrStr\t=",	cLastAlpacaErrStr);
 			CONSOLE_DEBUG_W_STR("alpacaString     \t=",	alpacaString);
 			myReturnDataIsValid	=	false;
 		}
@@ -1399,7 +1669,7 @@ int				returnCode;
 int				jjj;
 char			alpacaString[128];
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	returnCode	=	-1;
 
 	if (cGetCPUinfoCallCnt > 0)
@@ -1424,7 +1694,7 @@ char			alpacaString[128];
 		if (validData)
 		{
 			returnCode	=	0;
-//			SJP_DumpJsonData(&jsonParser);
+//			SJP_DumpJsonData(&jsonParser, __FUNCTION__);
 			for (jjj=0; jjj<jsonParser.tokenCount_Data; jjj++)
 			{
 
@@ -1467,7 +1737,7 @@ char			alpacaString[128];
 //*****************************************************************************
 void	Controller::UpdateAboutBoxRemoteDevice(const int tabNumber, const int widgetNumber)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	if (cHas_readall)
 	{
@@ -1475,7 +1745,7 @@ void	Controller::UpdateAboutBoxRemoteDevice(const int tabNumber, const int widge
 
 		if (cGetCPUinfoCallCnt == 0)
 		{
-			CONSOLE_DEBUG("Calling Alpaca_GetRemoteCPUinfo()");
+//			CONSOLE_DEBUG("Calling Alpaca_GetRemoteCPUinfo()");
 			Alpaca_GetRemoteCPUinfo();
 		}
 
@@ -1495,11 +1765,11 @@ void	Controller::UpdateAboutBoxRemoteDevice(const int tabNumber, const int widge
 	}
 	else
 	{
-		CONSOLE_DEBUG_W_STR("device does not have Readall", cWindowName);
-		CONSOLE_DEBUG(cRemote_Platform);
-		CONSOLE_DEBUG(cRemote_CPUinfo);
-		CONSOLE_DEBUG(cRemote_OperatingSystem);
-		CONSOLE_DEBUG(cRemote_Version);
+//		CONSOLE_DEBUG_W_STR("device does not have Readall", cWindowName);
+//		CONSOLE_DEBUG(cRemote_Platform);
+//		CONSOLE_DEBUG(cRemote_CPUinfo);
+//		CONSOLE_DEBUG(cRemote_OperatingSystem);
+//		CONSOLE_DEBUG(cRemote_Version);
 //		CONSOLE_ABORT(__FUNCTION__);
 	}
 }
@@ -1536,9 +1806,9 @@ int				socket_desc;
 bool			valueFoundFlag;
 int				dataIndex;
 int				firstCharNotDigitCnt	=	0;
-int				returnDataCnt;
 int				braceCnt;
 double			myDoubleValue;
+int				commaCounter;
 
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, alpacaDeviceString);
 	if ((temperatureLog == NULL) || (maxBufferSize <= 0))
@@ -1547,10 +1817,9 @@ double			myDoubleValue;
 		return(-1);
 	}
 
-
-	returnDataCnt	=	-1;
 	dataIndex		=	0;
-
+	commaCounter	=	0;
+	braceCnt		=	0;
 	sprintf(alpacaString,	"/api/v1/%s/%d/temperaturelog", alpacaDeviceString, alpacaDeviceNumber);
 
 	strcpy(cLastAlpacaCmdString, alpacaString);
@@ -1585,9 +1854,15 @@ double			myDoubleValue;
 				returnedData[recvdByteCnt]	=	0;
 				data_iii					=	0;
 
-//				CONSOLE_DEBUG_W_NUM("recvdByteCnt  \t=", recvdByteCnt);
-//				CONSOLE_DEBUG_W_NUM("totalBytesRead\t=", totalBytesRead);
+//				CONSOLE_DEBUG_W_NUM("recvdByteCnt      	\t=", recvdByteCnt);
+//				CONSOLE_DEBUG_W_NUM("totalBytesRead     \t=", totalBytesRead);
+//				CONSOLE_DEBUG_W_BOOL("readingHttpHeader\t=", readingHttpHeader);
+//				CONSOLE_DEBUG_W_BOOL("valueFoundFlag    \t=", valueFoundFlag);
+//				CONSOLE_DEBUG(returnedData);
 
+			#if 0
+				Alpaca_ProcessTempLogData(returnedData);
+			#else
 				//----------------------------------------------------------------
 				//*	this part reads and processes the HTTP header
 				while (readingHttpHeader && (data_iii < recvdByteCnt))
@@ -1597,6 +1872,7 @@ double			myDoubleValue;
 					{
 						//*	null terminate the line
 						linebuf[ccc]	=	0;
+//						CONSOLE_DEBUG_W_STR("linebuf     \t=", linebuf);
 
 						if (strlen(linebuf) > 0)
 						{
@@ -1630,6 +1906,7 @@ double			myDoubleValue;
 					data_iii++;
 				}
 //				CONSOLE_DEBUG_W_NUM("data_iii    \t=", data_iii);
+//				CONSOLE_DEBUG_W_NUM("recvdByteCnt\t=", recvdByteCnt);
 
 				//*	dont reset data_iii
 				for (; data_iii<recvdByteCnt; data_iii++)
@@ -1670,27 +1947,27 @@ double			myDoubleValue;
 						}
 						else
 						{
-						//	CONSOLE_DEBUG_W_STR("First char not digit=", linebuf);
+//							CONSOLE_DEBUG_W_STR("First char not digit=", linebuf);
 							firstCharNotDigitCnt++;
 						}
 						ccc				=	0;
 						linebuf[ccc]	=	0;
 
-						if ((theChar == ']') || (returnedData[data_iii+1] == ','))
+						if ((theChar == ']') || (returnedData[data_iii + 1] == ','))
 						{
-		//					CONSOLE_DEBUG_W_NUM("Skipping at \t=", data_iii);
+//							CONSOLE_DEBUG_W_NUM("Skipping at \t=", data_iii);
 							data_iii++;
 						}
 					}
-
-			//		else
+					else
 					if (theChar == ',')
 					{
+						commaCounter++;
 						linebuf[ccc]	=	0;
-						if (ccc > 0)
-						{
-						//	CONSOLE_DEBUG_W_STR("linebuf\t=", linebuf);
-						}
+//						if (strlen(linebuf) > 0)
+//						{
+//							CONSOLE_DEBUG_W_STR("linebuf     \t=", linebuf);
+//						}
 						if ((strlen(linebuf) > 3) && (linebuf[0] != 0x30))
 						{
 							JSON_ExtractKeyword_Value(linebuf, keywordStr, valueStr);
@@ -1707,6 +1984,7 @@ double			myDoubleValue;
 					else if ((theChar == 0x0d) || (theChar == 0x0a))
 					{
 						linesProcessed++;
+//						CONSOLE_DEBUG_W_NUM("linesProcessed\t=", linesProcessed);
 					}
 					else if (braceCnt > 0)
 					{
@@ -1721,16 +1999,18 @@ double			myDoubleValue;
 						else
 						{
 							CONSOLE_DEBUG("Line to long");
+//							CONSOLE_ABORT(__FUNCTION__);
 						}
 					}
 				}
+//				CONSOLE_DEBUG_W_NUM("dataIndex\t=", dataIndex);
+		#endif
 			}
 			else
 			{
 				keepReading		=	false;
 			}
 		}
-//		CONSOLE_DEBUG(__FUNCTION__);
 		shutDownRetCode	=	shutdown(socket_desc, SHUT_RDWR);
 		if (shutDownRetCode != 0)
 		{
@@ -1743,31 +2023,25 @@ double			myDoubleValue;
 		{
 			CONSOLE_DEBUG("Close error");
 		}
+//		CONSOLE_ABORT(__FUNCTION__);
 	}
 	else
 	{
 		CONSOLE_DEBUG("Failed");
 		cReadFailureCnt++;
 	}
+//	CONSOLE_DEBUG_W_NUM("commaCounter\t=", commaCounter);
 
-	//*	if we actually got some data, return the count
-	if (returnDataCnt)
-	{
-		returnDataCnt	=	dataIndex;
-	}
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, "EXIT");
-	return(returnDataCnt);
+	return(dataIndex);
 }
-
 
 //*****************************************************************************
 void	Controller::ProcessConfiguredDevices(const char *keyword, const char *valueString)
 {
-
+	//*	this routine is meant to be over-ridden
 }
 
-//*	Dec 17,	2022	<MLS> Added GetConfiguredDevices() (moved from controller_camera)
-//*	Dec 17,	2022	<MLS> Added ProcessConfiguredDevices()
 
 
 //*****************************************************************************
@@ -1779,7 +2053,7 @@ SJP_Parser_t	jsonParser;
 bool			validData;
 int				jjj;
 
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 
 	SJP_Init(&jsonParser);
 	validData	=	GetJsonResponse(	&cDeviceAddress,
@@ -1803,6 +2077,227 @@ int				jjj;
 	return(jsonParser.tokenCount_Data);
 }
 
+//*****************************************************************************
+bool	Controller::AlpacaCheckForDeviceState(void)
+{
+SJP_Parser_t	jsonParser;
+char			alpacaString[128];
+bool			validData;
+bool			has_devicestate;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG_W_STR("cAlpacaDeviceTypeStr\t=", cAlpacaDeviceTypeStr);
+//	CONSOLE_DEBUG_W_NUM("cAlpacaDevNum        \t=", cAlpacaDevNum);
+	has_devicestate	=	false;
+	SJP_Init(&jsonParser);
+	sprintf(alpacaString,	"/api/v1/%s/%d/devicestate", cAlpacaDeviceTypeStr, cAlpacaDevNum);
+//	CONSOLE_DEBUG(alpacaString);
+	validData	=	GetJsonResponse(	&cDeviceAddress,
+										cPort,
+										alpacaString,
+										NULL,
+										&jsonParser);
+	if (validData)
+	{
+//		SJP_DumpJsonData(&jsonParser, __FUNCTION__);
+		cLastAlpacaErrNum	=	AlpacaCheckForErrors(&jsonParser, cLastAlpacaErrStr, true);
+		CONSOLE_DEBUG_W_NUM("devicestate returned", cLastAlpacaErrNum);
+		if (cLastAlpacaErrNum == kASCOM_Err_Success)
+		{
+			cHas_DeviceState	=	true;
+		}
+	}
+	CONSOLE_DEBUG_W_BOOL("cHas_DeviceState   \t=",	cHas_DeviceState);
+	return(has_devicestate);
+}
+
+//*****************************************************************************
+//*	returns true if data is received
+//*****************************************************************************
+bool	Controller::AlpacaGetStatus_DeviceState(	sockaddr_in	*deviceAddress,
+													int			devicePort,
+													const char	*deviceTypeStr,
+													const int	deviceNum,
+													const bool	enableDebug)
+{
+SJP_Parser_t	jsonParser;
+bool			validData;
+char			alpacaString[128];
+int				jjj;
+bool			foundName;
+bool			foundValue;
+char			nameString[64];
+char			valueString[128];
+int				valuePairIdx;
+int				keywordEnum;
+bool			dataWasHandled;
+
+//	CONSOLE_DEBUG(cWindowName);
+//	CONSOLE_DEBUG_W_STR("Requesting 'DeviceState' for", deviceTypeStr);
+//	CONSOLE_DEBUG_W_NUM("on port                     ", devicePort);
+//	CONSOLE_DEBUG_W_BOOL("enableDebug                ", enableDebug);
+
+	SJP_Init(&jsonParser);
+	sprintf(alpacaString,	"/api/v1/%s/%d/devicestate", deviceTypeStr, deviceNum);
+//	CONSOLE_DEBUG_W_STR("alpacaString\t=", alpacaString);
+
+	validData	=	GetJsonResponse(	deviceAddress,
+										devicePort,
+										alpacaString,
+										NULL,
+										&jsonParser);
+	if (validData)
+	{
+		cDeviceStateReadCnt++;
+		if (enableDebug)
+		{
+			SJP_DumpJsonData(&jsonParser, __FUNCTION__);
+		}
+		foundName		=	false;
+		foundValue		=	false;
+		valuePairIdx	=	0;
+		cLastAlpacaErrNum	=	kASCOM_Err_Success;
+		for (jjj=0; jjj<jsonParser.tokenCount_Data; jjj++)
+		{
+//			CONSOLE_DEBUG_W_STR(jsonParser.dataList[jjj].keyword, jsonParser.dataList[jjj].valueString);
+			if (strncasecmp(jsonParser.dataList[jjj].keyword, "ARRAY", 5) == 0)
+			{
+				foundName	=	false;
+				foundValue	=	false;
+			}
+			else if (strcasecmp(jsonParser.dataList[jjj].keyword, "NAME") == 0)
+			{
+				foundName	=	true;
+				strcpy(nameString, jsonParser.dataList[jjj].valueString);
+			}
+			else if (strcasecmp(jsonParser.dataList[jjj].keyword, "VALUE") == 0)
+			{
+				foundValue	=	true;
+				strcpy(valueString, jsonParser.dataList[jjj].valueString);
+			}
+			if (foundName && foundValue)
+			{
+				//*	is the command table present
+				if (cCommandEntryPtr != NULL)
+				{
+					keywordEnum	=	LookupCmdInCmdTable(jsonParser.dataList[jjj].keyword, cCommandEntryPtr);
+					if (keywordEnum >= 0)
+					{
+						dataWasHandled	=	AlpacaProcessReadAllIdx(deviceTypeStr,
+																	deviceNum,
+																	keywordEnum,
+																	jsonParser.dataList[jjj].valueString);
+						if (dataWasHandled == false)
+						{
+							CONSOLE_DEBUG_W_STR("NOT HANDLED", jsonParser.dataList[jjj].keyword);
+						}
+					}
+				}
+				else
+				{
+	//				CONSOLE_DEBUG_W_STR(nameString, valueString);
+					AlpacaProcessReadAll(	deviceTypeStr,
+											deviceNum,
+											nameString,
+											valueString);
+
+				}
+				//*	this will allow the controller to update the DeviceState window if it wants to
+				UpdateDeviceStateEntry(valuePairIdx, nameString, valueString);
+				valuePairIdx++;
+
+				foundName	=	false;
+				foundValue	=	false;
+			}
+		}
+	}
+	else
+	{
+		CONSOLE_DEBUG("GetJsonResponse failed")
+	}
+	return(validData);
+}
+
+
+//*****************************************************************************
+bool	Controller::AlpacaGetStatus_DeviceState(const char *deviceTypeStr, const int deviceNum)
+{
+bool			validData;
+
+//	CONSOLE_DEBUG(cWindowName);
+
+	validData	=	AlpacaGetStatus_DeviceState(&cDeviceAddress,
+												cPort,
+												deviceTypeStr,
+												deviceNum);
+	return(validData);
+}
+
+//*****************************************************************************
+bool	Controller::AlpacaGetStatus_DeviceState(void)
+{
+bool			validData;
+
+//	CONSOLE_DEBUG(cWindowName);
+
+	validData	=	AlpacaGetStatus_DeviceState(&cDeviceAddress,
+												cPort,
+												cAlpacaDeviceTypeStr,
+												cAlpacaDevNum);
+	return(validData);
+}
+
+//*****************************************************************************
+void	Controller::UpdateDeviceStateEntry(const int index, const char *nameString, const char *valueString)
+{
+int			nameBoxNum;
+int			valueBoxNum;
+uint32_t	deltaTime_ms;
+double		deltaTime_secs;
+double		deltaTime_mins;
+double		dsUpdatesPerSec;
+double		dsUpdatesPerMin;
+char		textBuf[64];
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	if (cDeviceStateTabNum > 0)
+	{
+		if ((cDeviceStateNameStart > 0) && (cDeviceStateValueStart > 0))
+		{
+			nameBoxNum	=   cDeviceStateNameStart + (index * 2);
+			valueBoxNum	=   cDeviceStateValueStart + (index * 2);
+			SetWidgetText(cDeviceStateTabNum,	nameBoxNum,		nameString);
+			SetWidgetText(cDeviceStateTabNum,	valueBoxNum,	valueString);
+
+			SetWidgetValid(	cDeviceStateTabNum,	nameBoxNum,		true);
+			SetWidgetValid(	cDeviceStateTabNum,	valueBoxNum,	true);
+		}
+		if (cDeviceStateStats > 0)
+		{
+			deltaTime_ms	=	millis() - cContlerCreated_milliSecs;
+			deltaTime_secs	=	deltaTime_ms / 1000.0;
+			deltaTime_mins	=	deltaTime_secs / 60.0;
+			if (deltaTime_mins > 2.0)
+			{
+				dsUpdatesPerMin	=	cDeviceStateReadCnt / deltaTime_mins;
+				sprintf(textBuf, "DeviceState read Cnt=%d, rate=%2.1f / min", cDeviceStateReadCnt, dsUpdatesPerMin);
+			}
+			else if (deltaTime_secs > 2.0)
+			{
+				dsUpdatesPerSec	=	cDeviceStateReadCnt / deltaTime_secs;
+				sprintf(textBuf, "DeviceState read Cnt=%d, rate=%2.1f / sec", cDeviceStateReadCnt, dsUpdatesPerSec);
+			}
+			else
+			{
+				sprintf(textBuf, "DeviceState read Cnt=%d", cDeviceStateReadCnt);
+
+			}
+			SetWidgetText(	cDeviceStateTabNum,	cDeviceStateStats, textBuf);
+			SetWidgetValid(	cDeviceStateTabNum,	cDeviceStateStats,	true);
+		}
+	}
+}
 
 //*****************************************************************************
 void	JSON_ExtractKeyword_Value(const char *linebuf, char *keywordStr, char *valueStr)
