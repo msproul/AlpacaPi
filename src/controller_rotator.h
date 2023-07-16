@@ -50,6 +50,7 @@ class ControllerRotator: public Controller
 		virtual	bool	AlpacaGetStartupData_OneAAT(void);
 		virtual	bool	AlpacaGetStatus(void);
 		virtual	void	UpdateStartupData(void);
+		virtual	void	UpdateOnlineStatus(void);
 		virtual	void	UpdateConnectedStatusIndicator(void);
 		virtual	void	UpdateStatusData(void);
 		virtual	void	AlpacaProcessSupportedActions(	const char	*deviceTypeStr,

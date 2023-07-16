@@ -206,6 +206,12 @@ class DomeDriver: public AlpacaDriver
 				bool					cEnableIdleMoveTimeout;
 				int						cIdleMoveTimeoutMinutes;
 
+		//-------------------------------------------------------------------------
+		//*	this is for the setup function
+		virtual	bool					Setup_OutputForm(TYPE_GetPutRequestData *reqData, const char *formActionString);
+		virtual void					Setup_SaveInit(void);
+		virtual void					Setup_SaveFinish(void);
+		virtual	bool					Setup_ProcessKeyword(const char *keyword, const char *valueString);
 
 #ifdef _ENABLE_REMOTE_SHUTTER_
 		//=====================================================
@@ -222,6 +228,10 @@ class DomeDriver: public AlpacaDriver
 				int32_t				cTimeOfLastShutterUpdate;
 #endif // _ENABLE_REMOTE_SHUTTER_
 
+		//=====================================================
+		//*	this is for the Roll Off Roof option
+		//*	it has to be here at the base class so that the HTML setup works properly
+				int					cRORrelayDelay_secs;
 };
 
 

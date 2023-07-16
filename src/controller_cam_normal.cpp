@@ -29,6 +29,7 @@
 //*	Apr 28,	2023	<MLS> Moved camera cooler settings to separate window tab
 //*	May 30,	2023	<MLS> Added UpdateCameraExposureStartup()
 //*	Jun 20,	2023	<MLS> Added DeviceState window to camera controller
+//*	Jul 14,	2023	<MLS> Added UpdateOnlineStatus() to camera controller
 //*****************************************************************************
 //*	todo
 //*		control key for different step size.
@@ -412,6 +413,41 @@ void	ControllerCamNormal::UpdateStartupData(void)
 	UpdateFileSaveOptions();
 	UpdateReadoutModes();
 	cUpdateWindow	=	true;
+}
+
+//**************************************************************************************
+void	ControllerCamNormal::UpdateOnlineStatus(void)
+{
+cv::Scalar	bgColor;
+cv::Scalar	txtColor;
+
+	bgColor		=	cOnLine ? CV_RGB(0,		0,	0)	: CV_RGB(255,	0,	0);
+	txtColor	=	cOnLine ? CV_RGB(255,	0,	0)	: CV_RGB(0,		0,	0);
+
+	SetWidgetBGColor(	kTab_Camera,		kCameraBox_IPaddr,		bgColor);
+	SetWidgetTextColor(	kTab_Camera,		kCameraBox_IPaddr,		txtColor);
+
+	SetWidgetBGColor(	kTab_Settings,		kCamSet_IPaddr,			bgColor);
+	SetWidgetTextColor(	kTab_Settings,		kCamSet_IPaddr,			txtColor);
+
+	SetWidgetBGColor(	kTab_CamCooler,		kCamCooler_IPaddr,		bgColor);
+	SetWidgetTextColor(	kTab_CamCooler,		kCamCooler_IPaddr,		txtColor);
+
+	SetWidgetBGColor(	kTab_CamVideo,		kCamVideo_IPaddr,		bgColor);
+	SetWidgetTextColor(	kTab_CamVideo,		kCamVideo_IPaddr,		txtColor);
+
+	SetWidgetBGColor(	kTab_Capabilities,	kCapabilities_IPaddr,	bgColor);
+	SetWidgetTextColor(	kTab_Capabilities,	kCapabilities_IPaddr,	txtColor);
+
+	SetWidgetBGColor(	kTab_FileList,		kFileList_IPaddr,		bgColor);
+	SetWidgetTextColor(	kTab_FileList,		kFileList_IPaddr,		txtColor);
+
+	SetWidgetBGColor(	kTab_DeviceState,	kDeviceState_IPaddr,	bgColor);
+	SetWidgetTextColor(	kTab_DeviceState,	kDeviceState_IPaddr,	txtColor);
+
+	SetWidgetBGColor(	kTab_DriverInfo,	kDriverInfo_IPaddr,		bgColor);
+	SetWidgetTextColor(	kTab_DriverInfo,	kDriverInfo_IPaddr,		txtColor);
+
 }
 
 //*****************************************************************************

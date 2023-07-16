@@ -636,16 +636,16 @@ protected:
 	int			cFlipMode;
 	long		cExposureDefault_us;	//*	micro-seconds
 	//=========================================================================================
-	bool		cTempReadSupported;				//*	true if temperature can be read from device
-	bool		cOffsetSupported;				//*	true pixel value offset is supported
+	bool		cTempReadSupported;		//*	true if temperature can be read from device
+	bool		cOffsetSupported;		//*	true pixel value offset is supported
 	bool		cSubDurationSupported;
 	long		cCoolerState;
 
 
-	int			cCameraID;						//*	this is used to control everything of the camera in other functions.Start from 0.
-	bool		cCameraIsOpen;					//*	flag to tell us the camera is open
+	int			cCameraID;				//*	this is used to control everything of the camera in other functions.Start from 0.
+	bool		cCameraIsOpen;			//*	flag to tell us the camera is open
 	int			cBayerPattern;
-	bool		cIsColorCam;					//*	false= monochrome, true = color
+	bool		cIsColorCam;			//*	false= monochrome, true = color
 	bool		cIsCoolerCam;
 	bool		cIsUSB3Host;
 	bool		cIsUSB3Camera;

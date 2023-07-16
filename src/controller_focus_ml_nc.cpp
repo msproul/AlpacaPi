@@ -43,6 +43,7 @@
 //*	Jun 19,	2023	<MLS> Updated constructor to use TYPE_REMOTE_DEV
 //*	Jul  1,	2023	<MLS> Added DeviceState window to NiteCrawler controller
 //*	Jul  8,	2023	<MLS> Simplified Update routines
+//*	Jul 14,	2023	<MLS> Added UpdateOnlineStatus() to NiteCrawler Controller
 //*****************************************************************************
 //*	From the Nitecrawler web site
 //*	Rotating drawtube .001 degree resolution
@@ -83,7 +84,6 @@
 
 
 #define	_INCLUDE_GRAPHS_
-
 
 //**************************************************************************************
 enum
@@ -333,6 +333,31 @@ void	ControllerNiteCrawler::UpdateCommonProperties(void)
 	SetWidgetNumber(kTab_DriverInfo,	kDriverInfo_InterfaceVersion,	cCommonProp.InterfaceVersion);
 
 	UpdateAboutBoxRemoteDevice(kTab_About, kAboutBox_CPUinfo);
+}
+
+//**************************************************************************************
+void	ControllerNiteCrawler::UpdateOnlineStatus(void)
+{
+cv::Scalar	bgColor;
+cv::Scalar	txtColor;
+
+	bgColor		=	cOnLine ? CV_RGB(0,		0,	0)	: CV_RGB(255,	0,	0);
+	txtColor	=	cOnLine ? CV_RGB(255,	0,	0)	: CV_RGB(0,		0,	0);
+
+	SetWidgetBGColor(	kTab_Focuser,		kNiteCrawlerTab_IPaddr,	bgColor);
+	SetWidgetTextColor(	kTab_Focuser,		kNiteCrawlerTab_IPaddr,	txtColor);
+
+	SetWidgetBGColor(	kTab_AuxMotor,		kAuxMotorBox_IPaddr,	bgColor);
+	SetWidgetTextColor(	kTab_AuxMotor,		kAuxMotorBox_IPaddr,	txtColor);
+
+	SetWidgetBGColor(	kTab_Graphs,		kGraphBox_IPaddr,	bgColor);
+	SetWidgetTextColor(	kTab_Graphs,		kGraphBox_IPaddr,	txtColor);
+
+	SetWidgetBGColor(	kTab_DeviceState,	kDeviceState_IPaddr,	bgColor);
+	SetWidgetTextColor(	kTab_DeviceState,	kDeviceState_IPaddr,	txtColor);
+
+	SetWidgetBGColor(	kTab_DriverInfo,	kDriverInfo_IPaddr,	bgColor);
+	SetWidgetTextColor(	kTab_DriverInfo,	kDriverInfo_IPaddr,	txtColor);
 }
 
 //**************************************************************************************

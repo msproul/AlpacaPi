@@ -38,6 +38,7 @@ class ControllerFocusGeneric: public ControllerFocus
 		virtual	void	UpdateCommonProperties(void);
 		virtual	void	UpdateStartupData(void);
 		virtual	void	UpdateStatusData(void);
+		virtual	void	UpdateOnlineStatus(void);
 
 		virtual	void	UpdateFocuserPosition(void);
 

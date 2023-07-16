@@ -48,6 +48,7 @@
 //*	Jun 27,	2023	<MLS> Added AlpacaProcessReadAllIdx() to dome controller
 //*	Jun 28,	2023	<MLS> Added DeviceState window to dome controller
 //*	Jul 14,	2023	<MLS> Fixed Dome controller title
+//*	Jul 14,	2023	<MLS> Added UpdateOnlineStatus() to dome controller
 //*****************************************************************************
 #ifdef _ENABLE_CTRL_DOME_
 
@@ -351,6 +352,27 @@ void	ControllerDome::UpdateStatusData(void)
 	}
 }
 
+//**************************************************************************************
+void	ControllerDome::UpdateOnlineStatus(void)
+{
+cv::Scalar	bgColor;
+cv::Scalar	txtColor;
+
+	bgColor		=	cOnLine ? CV_RGB(0,		0,	0)	: CV_RGB(255,	0,	0);
+	txtColor	=	cOnLine ? CV_RGB(255,	0,	0)	: CV_RGB(0,		0,	0);
+
+	SetWidgetBGColor(	kTab_Dome,			kDomeBox_IPaddr,		bgColor);
+	SetWidgetTextColor(	kTab_Dome,			kDomeBox_IPaddr,		txtColor);
+
+	SetWidgetBGColor(	kTab_Capabilities,	kCapabilities_IPaddr,	bgColor);
+	SetWidgetTextColor(	kTab_Capabilities,	kCapabilities_IPaddr,	txtColor);
+
+	SetWidgetBGColor(	kTab_DeviceState,	kDeviceState_IPaddr,	bgColor);
+	SetWidgetTextColor(	kTab_DeviceState,	kDeviceState_IPaddr,	txtColor);
+
+	SetWidgetBGColor(	kTab_DriverInfo,	kDriverInfo_IPaddr,		bgColor);
+	SetWidgetTextColor(	kTab_DriverInfo,	kDriverInfo_IPaddr,		txtColor);
+}
 
 //*****************************************************************************
 bool	ControllerDome::AlpacaGetStartupData_OneAAT(void)

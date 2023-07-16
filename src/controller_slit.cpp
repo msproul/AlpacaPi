@@ -33,6 +33,7 @@
 //*	Jul 10,	2023	<MLS> Added ProcessGravityVector()
 //*	Jul 10,	2023	<MLS> Added AlpacaProcessReadAllIdx_Dome()
 //*	Jul 10,	2023	<MLS> Added AlpacaProcessReadAllIdx_Slit()
+//*	Jul 14,	2023	<MLS> Added UpdateOnlineStatus() to slittracker controller
 //*****************************************************************************
 
 #include	<math.h>
@@ -304,6 +305,28 @@ void	ControllerSlit::UpdateStatusData(void)
 }
 
 //**************************************************************************************
+void	ControllerSlit::UpdateOnlineStatus(void)
+{
+cv::Scalar	bgColor;
+cv::Scalar	txtColor;
+
+	bgColor		=	cOnLine ? CV_RGB(0,	0,	0)		: CV_RGB(255,	0,	0);
+	txtColor	=	cOnLine ? CV_RGB(255,	0,	0)	: CV_RGB(0,	0,	0);
+
+	SetWidgetBGColor(	kTab_SlitTracker,	kSlitTracker_IPaddr,	bgColor);
+	SetWidgetTextColor(	kTab_SlitTracker,	kSlitTracker_IPaddr,	txtColor);
+
+	SetWidgetBGColor(	kTab_DomeInfo,		kSlitDome_IPaddr,		bgColor);
+	SetWidgetTextColor(	kTab_DomeInfo,		kSlitDome_IPaddr,		txtColor);
+
+	SetWidgetBGColor(	kTab_SlitGraph,		kSlitGraph_IPaddr,		bgColor);
+	SetWidgetTextColor(	kTab_SlitGraph,		kSlitGraph_IPaddr,		txtColor);
+
+	SetWidgetBGColor(	kTab_DriverInfo,	kDriverInfo_IPaddr,		bgColor);
+	SetWidgetTextColor(	kTab_DriverInfo,	kDriverInfo_IPaddr,		txtColor);
+}
+
+//**************************************************************************************
 void	ControllerSlit::GetStartUpData_SubClass(void)
 {
 	AlpacaGetCommonProperties_OneAAT("slittracker");
@@ -328,7 +351,7 @@ uint32_t	deltaSeconds;
 	{
 		currentMillis	=	millis();
 		deltaSeconds	=	(currentMillis - cLastDomeUpdate_milliSecs) / 1000;
-		CONSOLE_DEBUG_W_NUM("deltaSeconds\t=", deltaSeconds);
+//		CONSOLE_DEBUG_W_NUM("deltaSeconds\t=", deltaSeconds);
 
 		if (cForceDomeUpdate || (deltaSeconds > cDomeUpdateDelta_Secs))
 		{
@@ -562,7 +585,7 @@ bool	ControllerSlit::AlpacaProcessReadAllIdx_Dome(	const int	deviceNum,
 bool		dataWasHandled	=	true;
 char		statusString[64];
 
-	CONSOLE_DEBUG_W_NUM(__FUNCTION__, keywordEnum);
+//	CONSOLE_DEBUG_W_NUM(__FUNCTION__, keywordEnum);
 	dataWasHandled	=	true;
 	switch(keywordEnum)
 	{
@@ -832,11 +855,12 @@ void	ControllerSlit::GetDomeData_Periodic(void)
 bool				validData;
 struct sockaddr_in	deviceAddress;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
+	//*	convert the IP address string to a sockaddr
 	inet_pton(AF_INET, cDomeIPaddressString, &(deviceAddress.sin_addr));
 
 	//------------------------
-	CONSOLE_DEBUG_W_BOOL("cDomeHas_Readall\t=",	cDomeHas_Readall);
+//	CONSOLE_DEBUG_W_BOOL("cDomeHas_Readall\t=",	cDomeHas_Readall);
 	if (cDomeHas_Readall)
 	{
 //		CONSOLE_DEBUG("Calling AlpacaGetStatus_ReadAll()");
@@ -850,7 +874,7 @@ struct sockaddr_in	deviceAddress;
 												"dome",
 												cDomeAlpacaDevNum,
 												false);	//*	enable debug
-		CONSOLE_DEBUG_W_NUM("cDomeReadAllCount\t=",	cDomeReadAllCount);
+//		CONSOLE_DEBUG_W_NUM("cDomeReadAllCount\t=",	cDomeReadAllCount);
 
 		//*	set the command tables back to point to the slit tracker commands
 		SetCommandLookupTable(gSlitTrackerCmdTable);

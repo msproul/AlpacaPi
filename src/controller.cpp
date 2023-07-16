@@ -918,11 +918,13 @@ bool	enableReadAllDebug	=	false;
 	GetStartUpData_SubClass();
 	UpdateSupportedActions();
 	UpdateStartupData();
+	UpdateOnlineStatus();
 }
 
 //*****************************************************************************
 bool	Controller::AlpacaGetStatus_OneAAT(void)
 {
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 	return(false);
 }
 
@@ -984,10 +986,6 @@ void	Controller::UpdateOnlineStatus(void)
 //**************************************************************************************
 void	Controller::RunBackgroundTasks(const char *callingFunction, bool enableDebug)
 {
-uint32_t	currentMillis;
-uint32_t	deltaSeconds;
-bool		validData;
-bool		needToUpdate;
 
 //	CONSOLE_DEBUG_W_2STR(__FUNCTION__, callingFunction, cWindowName);
 //	CONSOLE_DEBUG_W_BOOL("cReadStartup\t=", cReadStartup);
@@ -1019,11 +1017,17 @@ bool		needToUpdate;
 		cReadStartup	=	false;
 	}
 
+
+#ifdef _CONTROLLER_USES_ALPACA_
+uint32_t	deltaSeconds;
+bool		validData;
+bool		needToUpdate;
+uint32_t	currentMillis;
+
 	needToUpdate	=	false;
 	currentMillis	=	millis();
 	deltaSeconds	=	(currentMillis - cLastUpdate_milliSecs) / 1000;
 
-#ifdef _CONTROLLER_USES_ALPACA_
 	if ((deltaSeconds >= cUpdateDelta_secs) || cForceAlpacaUpdate)	//*	force update is set when a switch is clicked
 	{
 		needToUpdate		=	true;
@@ -2926,14 +2930,16 @@ TYPE_WIDGET		*myWidgetPtr;
 void	Controller::DrawWindow(void)
 {
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 	if (cOpenCV_matImage != NULL)
+#else
+	if (cOpenCV_Image != NULL)
+#endif // _USE_OPENCV_CPP_
 	{
 		cCurrentColor	=	cBackGrndColor;
-#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 //		CONSOLE_DEBUG_W_DBL("cCurrentColor.B\t=",	cCurrentColor.val[0]);
 //		CONSOLE_DEBUG_W_DBL("cCurrentColor.G\t=",	cCurrentColor.val[1]);
 //		CONSOLE_DEBUG_W_DBL("cCurrentColor.R\t=",	cCurrentColor.val[2]);
-#endif // _USE_OPENCV_CPP_
 		LLG_FillRect(0,	0,	cWidth,	cHeight);
 
 		DrawWindowTabs();

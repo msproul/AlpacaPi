@@ -26,6 +26,7 @@
 //*	Jun 23,	2023	<MLS> Removed RunBackgroundTasks(), using default in parent class
 //*	Jun 25,	2023	<MLS> Added AlpacaProcessReadAll() to filterwheel controller
 //*	Jun 30,	2023	<MLS> Added DeviceState window to filterwheel controller
+//*	Jul 14,	2023	<MLS> Added UpdateOnlineStatus() to filterwheel controller
 //*****************************************************************************
 #ifdef _ENABLE_FILTERWHEEL_CONTROLLER_
 
@@ -236,6 +237,25 @@ bool	validData;
 	cLastUpdate_milliSecs	=	millis();
 	UpdateConnectedIndicator(kTab_FilterWheel,		kFilterWheel_Connected);
 	return(validData);
+}
+
+//**************************************************************************************
+void	ControllerFilterWheel::UpdateOnlineStatus(void)
+{
+cv::Scalar	bgColor;
+cv::Scalar	txtColor;
+
+	bgColor		=	cOnLine ? CV_RGB(0,		0,	0)	: CV_RGB(255,	0,	0);
+	txtColor	=	cOnLine ? CV_RGB(255,	0,	0)	: CV_RGB(0,		0,	0);
+
+	SetWidgetBGColor(	kTab_FilterWheel,	kFilterWheel_IPaddr,	bgColor);
+	SetWidgetTextColor(	kTab_FilterWheel,	kFilterWheel_IPaddr,	txtColor);
+
+	SetWidgetBGColor(	kTab_DeviceState,	kDeviceState_IPaddr,	bgColor);
+	SetWidgetTextColor(	kTab_DeviceState,	kDeviceState_IPaddr,	txtColor);
+
+	SetWidgetBGColor(	kTab_DriverInfo,	kDriverInfo_IPaddr,		bgColor);
+	SetWidgetTextColor(	kTab_DriverInfo,	kDriverInfo_IPaddr,		txtColor);
 }
 
 //*****************************************************************************

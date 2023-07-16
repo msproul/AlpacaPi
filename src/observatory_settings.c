@@ -56,7 +56,12 @@
 #include	"linuxerrors.h"
 #include	"readconfigfile.h"
 #include	"helper_functions.h"
-#include	"controller_startup.h"
+#ifdef _INCLUDE_CTRL_MAIN_
+	#include	"controller_startup.h"
+#else
+	static int	SetStartupText(const char *textMsg)	{ return(1);}
+	static void	SetStartupTextStatus(const int idx, const char *textMsg)	{ }
+#endif
 
 #include	"alpacadriver_helper.h"
 #include	"observatory_settings.h"
@@ -428,12 +433,6 @@ TYPE_TELESCOPE_INFO	*ts_infoPtr;
 			break;
 	}
 }
-
-#ifndef _ENABLE_SKYTRAVEL_
-//*****************************************************************************
-int		SetStartupText(const char *textMsg)	{ return(1);}
-void	SetStartupTextStatus(const int idx, const char *textMsg)	{ }
-#endif // _ENABLE_SKYTRAVEL_
 
 //*****************************************************************************
 bool	ObservatorySettings_ReadFile(void)

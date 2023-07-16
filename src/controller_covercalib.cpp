@@ -27,6 +27,9 @@
 //*	Jun 25,	2023	<ADD> Add brightness to DeviceState
 //*	Jun 25,	2023	<MLS> Added DeviceState window to covercalibration controller
 //*	Jun 28,	2023	<MLS> Updated from AlpacaProcessReadAll() to AlpacaProcessReadAllIdx()
+//*	Jul 14,	2023	<MLS> Added UpdateOnlineStatus() to covercalibration controller
+//*	Jul 16,	2023	<MLS> More work on UpdateStatusData()
+//*	Jul 16,	2023	<MLS> AlpacaGetStatus_OneAAT() &&  UpdateStatusData() now working with simulator
 //*****************************************************************************
 
 #define _ENABLE_COVER_CALIBRATION_
@@ -216,10 +219,49 @@ void	ControllerCoverCalib::UpdateConnectedStatusIndicator(void)
 }
 
 //**************************************************************************************
+void	ControllerCoverCalib::UpdateOnlineStatus(void)
+{
+cv::Scalar	bgColor;
+cv::Scalar	txtColor;
+
+	bgColor		=	cOnLine ? CV_RGB(0,		0,	0)	: CV_RGB(255,	0,	0);
+	txtColor	=	cOnLine ? CV_RGB(255,	0,	0)	: CV_RGB(0,		0,	0);
+
+	SetWidgetBGColor(	kTab_Cover,			kCoverCalib_IPaddr,		bgColor);
+	SetWidgetTextColor(	kTab_Cover,			kCoverCalib_IPaddr,		txtColor);
+
+	SetWidgetBGColor(	kTab_Capabilities,	kCapabilities_IPaddr,	bgColor);
+	SetWidgetTextColor(	kTab_Capabilities,	kCapabilities_IPaddr,	txtColor);
+
+	SetWidgetBGColor(	kTab_DeviceState,	kDeviceState_IPaddr,	bgColor);
+	SetWidgetTextColor(	kTab_DeviceState,	kDeviceState_IPaddr,	txtColor);
+
+	SetWidgetBGColor(	kTab_DriverInfo,	kDriverInfo_IPaddr,		bgColor);
+	SetWidgetTextColor(	kTab_DriverInfo,	kDriverInfo_IPaddr,		txtColor);
+}
+
+//**************************************************************************************
 void	ControllerCoverCalib::UpdateStatusData(void)
 {
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+char	stateString[32];
+
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+//	DumpCoverCalibProp(&cCoverCalibrationProp, __FUNCTION__);
 	UpdateConnectedIndicator(kTab_Cover,	kCoverCalib_Connected);
+	SetWidgetSliderValue(	kTab_Cover,	kCoverCalib_Brightness_Slider,	cCoverCalibrationProp.Brightness);
+	SetWidgetNumber(		kTab_Cover,	kCoverCalib_Brightness_Value,	cCoverCalibrationProp.Brightness);
+
+	switch(cCoverCalibrationProp.CoverState)
+	{
+		case kCover_NotPresent:	strcpy(stateString,	"Not Present");	break;
+		case kCover_Closed:		strcpy(stateString,	"Closed");		break;
+		case kCover_Moving:		strcpy(stateString,	"Moving");		break;
+		case kCover_Open:		strcpy(stateString,	"Open");		break;
+		case kCover_Unknown:	strcpy(stateString,	"Unknown");		break;
+		case kCover_Error:		strcpy(stateString,	"Error");		break;
+	}
+	SetWidgetText(kTab_Cover,	kCoverCalib_Cover_State,	stateString);
+	cUpdateWindow	=	true;
 }
 
 //*****************************************************************************
@@ -228,9 +270,30 @@ bool	ControllerCoverCalib::AlpacaGetStartupData_OneAAT(void)
 bool			validData;
 int				integerValue;
 
-	CONSOLE_DEBUG(__FUNCTION__);
-	validData	=	false;
+//	CONSOLE_DEBUG(__FUNCTION__);
 	//------------------------------------------------------------------
+	validData	=	AlpacaGetStatus_OneAAT();
+
+	//------------------------------------------------------------------
+	validData	=	AlpacaGetIntegerValue("covercalibrator", "maxbrightness",	NULL,	&integerValue);
+	if (validData)
+	{
+		cCoverCalibrationProp.MaxBrightness	=	integerValue;
+	}
+	return(validData);
+}
+
+//*****************************************************************************
+bool	ControllerCoverCalib::AlpacaGetStatus_OneAAT(void)
+{
+bool	validData;
+bool	previousOnLineState;
+int		integerValue;
+char	stateString[32];
+
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+	//------------------------------------------------------------------
+	previousOnLineState	=	cOnLine;
 	validData	=	AlpacaGetIntegerValue("covercalibrator", "coverstate",	NULL,	&integerValue);
 	if (validData)
 	{
@@ -240,6 +303,7 @@ int				integerValue;
 	{
 		CONSOLE_DEBUG("Read failure - coverstate");
 		cReadFailureCnt++;
+		cOnLine	=	false;
 	}
 
 	//------------------------------------------------------------------
@@ -259,13 +323,21 @@ int				integerValue;
 	{
 		CONSOLE_DEBUG("Read failure - calibratorstate");
 		cReadFailureCnt++;
+		cOnLine	=	false;
 	}
-	//------------------------------------------------------------------
-	validData	=	AlpacaGetIntegerValue("covercalibrator", "maxbrightness",	NULL,	&integerValue);
+	validData	=	AlpacaGetIntegerValue("covercalibrator", "brightness",	NULL,	&integerValue);
 	if (validData)
 	{
-		cCoverCalibrationProp.MaxBrightness	=	integerValue;
+		cCoverCalibrationProp.Brightness	=	integerValue;
 	}
+	else
+	{
+		CONSOLE_DEBUG("Read failure - brightness");
+		cReadFailureCnt++;
+		cOnLine	=	false;
+	}
+
+//	DumpCoverCalibProp(&cCoverCalibrationProp, __FUNCTION__);
 	return(validData);
 }
 
@@ -277,7 +349,6 @@ void	ControllerCoverCalib::AlpacaGetCapabilities(void)
 							"CanAdjustAperture",
 							&cCoverCalibrationProp.CanSetAperture);
 }
-
 
 //*****************************************************************************
 void	ControllerCoverCalib::UpdateSupportedActions(void)
@@ -314,77 +385,6 @@ void	ControllerCoverCalib::AlpacaDisplayErrorMessage(const char *errorMsgString)
 //	CONSOLE_DEBUG_W_STR("Alpaca error=", errorMsgString);
 	SetWidgetText(kTab_Cover, kCoverCalib_AlpacaErrorMsg, errorMsgString);
 }
-
-//*****************************************************************************
-bool	ControllerCoverCalib::AlpacaGetStatus(void)
-{
-bool	validData;
-bool	previousOnLineState;
-int		integerValue;
-char	stateString[32];
-
-//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
-
-	previousOnLineState	=	cOnLine;
-
-	validData	=	AlpacaGetCommonConnectedState("covercalibrator");
-	validData	=	AlpacaGetIntegerValue("covercalibrator", "brightness",	NULL,	&integerValue);
-	if (validData)
-	{
-		cCoverCalibrationProp.Brightness	=	integerValue;
-		SetWidgetSliderValue(	kTab_Cover,	kCoverCalib_Brightness_Slider,	integerValue);
-		SetWidgetNumber(		kTab_Cover,	kCoverCalib_Brightness_Value,	integerValue);
-
-		//*	check to see if we were one line before
-		if (cOnLine == false)
-		{
-			//*	if we go from offline back to online, re-do the startup info
-			cReadStartup	=	true;
-		}
-		cOnLine	=	true;
-	}
-	else
-	{
-		cReadFailureCnt++;
-		CONSOLE_DEBUG_W_STR("Offline-", cWindowName);
-		cOnLine	=	false;
-	}
-
-	//*	dont bother checking if we determined its off line above
-	if (cOnLine && (cCoverCalibrationProp.CoverState != kCover_NotPresent))
-	{
-		validData	=	AlpacaGetIntegerValue("covercalibrator", "coverstate",	NULL,	&integerValue);
-		if (validData)
-		{
-			cCoverCalibrationProp.CoverState	=	(CoverStatus)integerValue;
-			switch(cCoverCalibrationProp.CoverState)
-			{
-				case kCover_NotPresent:	strcpy(stateString,	"Not Present");	break;
-				case kCover_Closed:		strcpy(stateString,	"Closed");		break;
-				case kCover_Moving:		strcpy(stateString,	"Moving");		break;
-				case kCover_Open:		strcpy(stateString,	"Open");		break;
-				case kCover_Unknown:	strcpy(stateString,	"Unknown");		break;
-				case kCover_Error:		strcpy(stateString,	"Error");		break;
-			}
-			SetWidgetText(kTab_Cover,	kCoverCalib_Cover_State,	stateString);
-		}
-		else
-		{
-			cReadFailureCnt++;
-			CONSOLE_DEBUG_W_STR("Offline-", cWindowName);
-			cOnLine	=	false;
-		}
-	}
-
-	if (cOnLine != previousOnLineState)
-	{
-		SetWindowIPaddrInfo(NULL, cOnLine);
-	}
-
-	cLastUpdate_milliSecs	=	millis();
-	return(validData);
-}
-
 
 //*****************************************************************************
 bool	ControllerCoverCalib::AlpacaProcessReadAllIdx(	const char	*deviceTypeStr,

@@ -37,6 +37,7 @@ class ControllerMLsingle: public ControllerFocus
 
 		virtual	void	UpdateStartupData(void);
 		virtual	void	UpdateStatusData(void);
+		virtual	void	UpdateOnlineStatus(void);
 
 		virtual	void	UpdateWindowTabs_Everything(void);
 		virtual	void	UpdateWindowTabs_ReadAll(		bool hasReadAll);

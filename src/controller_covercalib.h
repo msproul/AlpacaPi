@@ -49,15 +49,18 @@ class ControllerCoverCalib: public Controller
 //		virtual	void	ProcessButtonClick(const int buttonIdx);
 //		virtual	bool	AlpacaGetStartupData(void);
 		virtual	bool	AlpacaGetStartupData_OneAAT(void);
+		virtual	bool	AlpacaGetStatus_OneAAT(void);
 		virtual	void	AlpacaGetCapabilities(void);
-		virtual	void	UpdateSupportedActions(void);
 		virtual void	UpdateCapabilityList(void);
 
 		virtual	void	UpdateConnectedStatusIndicator(void);
+
 		virtual	void	UpdateStartupData(void);
 		virtual	void	UpdateStatusData(void);
+		virtual	void	UpdateOnlineStatus(void);
+//		virtual	void	UpdateCommonProperties(void);
+		virtual	void	UpdateSupportedActions(void);
 
-		virtual	bool	AlpacaGetStatus(void);
 		virtual	bool	AlpacaProcessReadAllIdx(const char	*deviceTypeStr,
 												const int	deviceNum,
 												const int	keywordEnum,

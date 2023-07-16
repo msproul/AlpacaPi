@@ -26,7 +26,8 @@
 //*	Jun 18,	2023	<MLS> Added UpdateSupportedActions() to Telescope controller
 //*	Jun 19,	2023	<MLS> Updated constructor to use TYPE_REMOTE_DEV
 //*	Jun 21,	2023	<MLS> Added DeviceState window to telescope controller
-//*	Jun 18,	2023	<MLS> Added UpdateSupportedActions() to Slittracker controller
+//*	Jun 18,	2023	<MLS> Added UpdateSupportedActions() to Telescope controller
+//*	Jul 14,	2023	<MLS> Added UpdateOnlineStatus() to Telescope controller
 //*****************************************************************************
 
 #ifdef _ENABLE_CTRL_TELESCOPE_
@@ -291,6 +292,31 @@ bool	validData;
 	}
 
 	return(validData);
+}
+
+//**************************************************************************************
+void	ControllerTelescope::UpdateOnlineStatus(void)
+{
+cv::Scalar	bgColor;
+cv::Scalar	txtColor;
+
+	bgColor		=	cOnLine ? CV_RGB(0,		0,	0)	: CV_RGB(255,	0,	0);
+	txtColor	=	cOnLine ? CV_RGB(255,	0,	0)	: CV_RGB(0,		0,	0);
+
+	SetWidgetBGColor(	kTab_TelescopCtl,	kTelescope_IPaddr,		bgColor);
+	SetWidgetTextColor(	kTab_TelescopCtl,	kTelescope_IPaddr,		txtColor);
+
+	SetWidgetBGColor(	kTab_Settings,		kTeleSettings_IPaddr,	bgColor);
+	SetWidgetTextColor(	kTab_Settings,		kTeleSettings_IPaddr,	txtColor);
+
+	SetWidgetBGColor(	kTab_Capabilities,	kCapabilities_IPaddr,	bgColor);
+	SetWidgetTextColor(	kTab_Capabilities,	kCapabilities_IPaddr,	txtColor);
+
+	SetWidgetBGColor(	kTab_DeviceState,	kDeviceState_IPaddr,	bgColor);
+	SetWidgetTextColor(	kTab_DeviceState,	kDeviceState_IPaddr,	txtColor);
+
+	SetWidgetBGColor(	kTab_DriverInfo,	kDriverInfo_IPaddr,		bgColor);
+	SetWidgetTextColor(	kTab_DriverInfo,	kDriverInfo_IPaddr,		txtColor);
 }
 
 //*****************************************************************************

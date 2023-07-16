@@ -79,6 +79,8 @@
 //*	Mar  9,	2023	<MLS> Removed all slit tracker code from dome driver
 //*	Apr  6,	2023	<MLS> Added GetCommandArgumentString() to domedriver
 //*	Jun 18,	2023	<MLS> Added DeviceState_Add_Content() to domedriver
+//*	Jul 16,	2023	<MLS> Added Setup web page for domedriver
+//*	Jul 16,	2023	<MLS> Added cRORrelayDelay_secs into Setup for ChrisA
 //*****************************************************************************
 //*	cd /home/pi/dev-mark/alpaca
 //*	LOGFILE=logfile.txt
@@ -107,8 +109,6 @@
 
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
-
-
 
 #include	"RequestData.h"
 #include	"JsonResponse.h"
@@ -191,11 +191,13 @@ DomeDriver::DomeDriver(const int argDevNum)
 	cBumpSpeedAmount				=	1;
 	cTimeOfLastSpeedChange			=	0;
 	cTimeOfMovingStart				=	0;
+	cDriverSupportsSetup			=	true;			//*	enable setup web page
 
 	cTimeOfLastMoveCmd				=	time(NULL);		//*	these need to be set or it will do a shutdown before it even starts
 	cTimeOfLastMoveCheck			=	time(NULL);
 	cEnableIdleMoveTimeout			=	true;
 	cIdleMoveTimeoutMinutes			=	2 * 60;
+	cRORrelayDelay_secs				=	20;				//*	used by Roll Off Roof ONLY
 
 	//*	clear out all of the properties data
 	memset(&cDomeProp, 0, sizeof(TYPE_DomeProperties));
@@ -1970,7 +1972,12 @@ char				stateString[48];
 															cIdleMoveTimeoutMinutes,
 															INCLUDE_COMMA);
 
-
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(reqData->socket,
+															reqData->jsonTextBuffer,
+															kMaxJsonBuffLen,
+															"ROR_relay_delay_secs",
+															cRORrelayDelay_secs,
+															INCLUDE_COMMA);
 		alpacaErrCode	=	kASCOM_Err_Success;
 		strcpy(alpacaErrMsg, "");
 	}
@@ -2454,6 +2461,171 @@ char				alpacaErrMsg[64];
 	}
 }
 
+//*****************************************************************************
+//*	https://www.w3schools.com/html/html_forms.asp
+//*****************************************************************************
+bool	DomeDriver::Setup_OutputForm(TYPE_GetPutRequestData *reqData, const char *formActionString)
+{
+int			mySocketFD;
+char		lineBuff[256];
+//int			iii;
+const char	domeTitle[]	=	"AlpacaPi Dome Driver setup";
+//bool		checkedFlag;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG_W_STR("The Action that will be preformed when save is pressed:", formActionString);
+
+	mySocketFD	=	reqData->socket;
+
+
+	SocketWriteData(mySocketFD,	gHtmlHeader);
+
+	SocketWriteData(mySocketFD,	"<!DOCTYPE html>\r\n");
+	SocketWriteData(mySocketFD,	"<HTML>\r\n");
+	sprintf(lineBuff,			"<TITLE>%s</TITLE>\r\n", domeTitle);
+	SocketWriteData(mySocketFD,	lineBuff);
+	SocketWriteData(mySocketFD,	"<CENTER>\r\n");
+	sprintf(lineBuff,			"<H1>%s</H1>\r\n", domeTitle);
+	SocketWriteData(mySocketFD,	lineBuff);
+	SocketWriteData(mySocketFD,	"</CENTER>\r\n");
+
+
+	SocketWriteData(mySocketFD,	"<CENTER>\r\n");
+//	SocketWriteData(mySocketFD,	"<form action=\"/setup/common\" target=\"_blank\">\r\n");
+//	sprintf(lineBuff, "<form action=\"%s\" target=\"_blank\">\r\n", formActionString);
+	sprintf(lineBuff, "<form action=\"%s\">\r\n", formActionString);
+	SocketWriteData(mySocketFD,	lineBuff);
+
+	SocketWriteData(mySocketFD,	"<TABLE BORDER=1>\r\n");
+	//----------------------------------------------------
+	//*	table header
+	SocketWriteData(mySocketFD,	"<TR>\r\n");
+	SocketWriteData(mySocketFD,	"<TH>Property</TH>\r\n");
+	SocketWriteData(mySocketFD,	"<TH>Value</TH>\r\n");
+	SocketWriteData(mySocketFD,	"</TR>\r\n");
+
+	//-----------------------------------
+	//*	first row
+	SocketWriteData(mySocketFD,	"<TR>\r\n");
+	SocketWriteData(mySocketFD,	"<TD>Movement Timeout</TD>\r\n");
+
+	SocketWriteData(mySocketFD,	"<TD>\r\n");
+	Setup_OutputRadioBtn(mySocketFD,	"timeout",	"enabled",	"enabled",	cEnableIdleMoveTimeout);
+	Setup_OutputRadioBtn(mySocketFD,	"timeout",	"disabled",	"disabled",	!cEnableIdleMoveTimeout);
+	SocketWriteData(mySocketFD,	"</TD>\r\n");
+	SocketWriteData(mySocketFD,	"</TR>\r\n");
+	//-----------------------------------
+	//*	2nd row
+	SocketWriteData(mySocketFD,	"<TR>\r\n");
+	SocketWriteData(mySocketFD,	"<TD>\r\n");
+
+	SocketWriteData(mySocketFD,	"<label for=\"length\">Timeout (mins):</label>\r\n");
+	SocketWriteData(mySocketFD,	"</TD>\r\n");
+
+	SocketWriteData(mySocketFD,	"<TD>\r\n");
+
+	sprintf(lineBuff,	"<input type=\"text\" id=\"length\" name=\"idletimeout\" value=\"%d\">\r\n", cIdleMoveTimeoutMinutes);
+	SocketWriteData(mySocketFD,	lineBuff);
+
+	SocketWriteData(mySocketFD,	"</TD>\r\n");
+	SocketWriteData(mySocketFD,	"</TR>\r\n");
+
+	//-----------------------------------
+	//*	3rd row
+	SocketWriteData(mySocketFD,	"<TR>\r\n");
+	SocketWriteData(mySocketFD,	"<TD>\r\n");
+
+	SocketWriteData(mySocketFD,	"<label for=\"length\">ROR delay (secs):</label>\r\n");
+	SocketWriteData(mySocketFD,	"</TD>\r\n");
+
+	SocketWriteData(mySocketFD,	"<TD>\r\n");
+	sprintf(lineBuff,	"<input type=\"text\" id=\"length\" name=\"rordelay\" value=\"%d\">\r\n", cRORrelayDelay_secs);
+	SocketWriteData(mySocketFD,	lineBuff);
+
+	SocketWriteData(mySocketFD,	"</TD>\r\n");
+	SocketWriteData(mySocketFD,	"</TR>\r\n");
+
+	//-----------------------------------
+	//*	SAVE row
+	SocketWriteData(mySocketFD,	"<TR>\r\n");
+	SocketWriteData(mySocketFD,	"<TD COLSPAN=3><CENTER>\r\n");
+	SocketWriteData(mySocketFD,	"<input type=\"submit\" value=\"Save\">\r\n");
+	SocketWriteData(mySocketFD,	"</TD>\r\n");
+	SocketWriteData(mySocketFD,	"</TR>\r\n");
+
+	SocketWriteData(mySocketFD,	"</TABLE>\r\n");
+	SocketWriteData(mySocketFD,	"</CENTER>\r\n");
+
+
+	SocketWriteData(mySocketFD,	"</form>\r\n");
+	return(true);
+}
+
+//*****************************************************************************
+void	DomeDriver::Setup_SaveInit(void)
+{
+	CONSOLE_DEBUG(__FUNCTION__);
+
+}
+
+//*****************************************************************************
+void	DomeDriver::Setup_SaveFinish(void)
+{
+	CONSOLE_DEBUG(__FUNCTION__);
+	//*	copy the filename options over
+}
+
+//*****************************************************************************
+bool	DomeDriver::Setup_ProcessKeyword(const char *keyword, const char *valueString)
+{
+	CONSOLE_DEBUG_W_2STR("kw:value", keyword, valueString);
+//[Setup_ProcessKeyword] kw:value timeout, enabled
+//[Setup_ProcessKeyword] kw:value length, 223
+//[Setup_ProcessKeyword] kw:value rordelay, 44
+
+
+	if (strcasecmp(keyword, "timeout") == 0)
+	{
+		if (strcasecmp(valueString, "enabled") == 0)
+		{
+			cEnableIdleMoveTimeout	=	true;
+		}
+		else if (strcasecmp(valueString, "disabled") == 0)
+		{
+			cEnableIdleMoveTimeout	=	false;
+		}
+		else
+		{
+			CONSOLE_DEBUG_W_STR("invalid valueString:", valueString);
+		}
+		CONSOLE_DEBUG_W_BOOL("cEnableIdleMoveTimeout", cEnableIdleMoveTimeout);
+	}
+	else if (strcmp(keyword, "idletimeout") == 0)
+	{
+		if (isdigit(valueString[0]))
+		{
+			cIdleMoveTimeoutMinutes	=	atoi(valueString);
+		}
+		else
+		{
+			CONSOLE_DEBUG_W_STR("invalid valueString:", valueString);
+		}
+		CONSOLE_DEBUG_W_NUM("cIdleMoveTimeoutMinutes", cIdleMoveTimeoutMinutes);
+	}
+	else if (strcmp(keyword, "rordelay") == 0)
+	{
+		if (isdigit(valueString[0]))
+		{
+			cRORrelayDelay_secs	=	atoi(valueString);
+		}
+		else
+		{
+			CONSOLE_DEBUG_W_STR("invalid valueString:", valueString);
+		}
+		CONSOLE_DEBUG_W_NUM("cRORrelayDelay_secs", cRORrelayDelay_secs);
+	}
+	return(true);
+}
 
 #endif	//	defined(_ENABLE_DOME_) || defined(_ENABLE_DOME_ROR_)
 

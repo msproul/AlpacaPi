@@ -45,6 +45,7 @@
 //*	Sep 21,	2022	<MLS> Added SetRemoteIMUdisplay()
 //*	Apr 30,	2023	<MLS> Moved all camera cooling stuff to its own window tab
 //*	Jun 18,	2023	<MLS> Added DeviceState to camera
+//*	Jul 14,	2023	<MLS> Added UpdateDownloadOptions()
 //*****************************************************************************
 
 #ifdef _ENABLE_CTRL_CAMERA_
@@ -93,6 +94,7 @@ WindowTabCamera::WindowTabCamera(	const int	xSize,
 
 	SetupWindowControls();
 	ForceAlpacaUpdate();
+	UpdateDownloadOptions();
 }
 
 //**************************************************************************************
@@ -834,13 +836,15 @@ int					loopCntr;
 			break;
 
 		case kCameraBox_Btn_8Bit:
-			cForce8BitRead	=	!cForce8BitRead;
+			cForce8BitRead		=	!cForce8BitRead;
 			alpacaUpdateNeeded	=	false;
+			UpdateDownloadOptions();
 			break;
 
 		case kCameraBox_EnableBinary:
 			cAllowBinaryDownload	=	!cAllowBinaryDownload;
-			alpacaUpdateNeeded	=	false;
+			alpacaUpdateNeeded		=	false;
+			UpdateDownloadOptions();
 			break;
 
 		case kCameraBox_DownloadImage:
@@ -971,6 +975,29 @@ int					newSliderValue_int;
 	}
 	ForceAlpacaUpdate();
 }
+
+
+//*****************************************************************************
+void	WindowTabCamera::UpdateDownloadOptions(void)
+{
+ControllerCamera	*myCameraController;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+	SetWidgetChecked(kCameraBox_Btn_8Bit,		cForce8BitRead);
+	SetWidgetChecked(kCameraBox_EnableBinary,	cAllowBinaryDownload);
+
+	myCameraController	=	(ControllerCamera *)cParentObjPtr;
+
+	if (myCameraController != NULL)
+	{
+		myCameraController->cForceAlpacaUpdate	=	true;
+	}
+	else
+	{
+		CONSOLE_DEBUG("myCameraController is NULL");
+	}
+}
+
 
 //*****************************************************************************
 void	WindowTabCamera::BumpExposure(const double howMuch)

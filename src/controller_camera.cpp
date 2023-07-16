@@ -866,17 +866,17 @@ bool	dataWasHandled	=	true;
 
 		case kCmd_Camera_gain:
 			cCameraProp.Gain	=	atoi(valueString);
-			CONSOLE_DEBUG_W_NUM("cCameraProp.Gain\t=", cCameraProp.Gain);
+//			CONSOLE_DEBUG_W_NUM("cCameraProp.Gain\t=", cCameraProp.Gain);
 			break;
 
 		case kCmd_Camera_gainmax:
 			cCameraProp.GainMax	=	atoi(valueString);
-			CONSOLE_DEBUG_W_NUM("cCameraProp.GainMax\t=", cCameraProp.GainMax);
+//			CONSOLE_DEBUG_W_NUM("cCameraProp.GainMax\t=", cCameraProp.GainMax);
 			break;
 
 		case kCmd_Camera_gainmin:
 			cCameraProp.GainMin	=	atoi(valueString);
-			CONSOLE_DEBUG_W_NUM("cCameraProp.GainMin\t=", cCameraProp.GainMin);
+//			CONSOLE_DEBUG_W_NUM("cCameraProp.GainMin\t=", cCameraProp.GainMin);
 			break;
 
 		case kCmd_Camera_gains:

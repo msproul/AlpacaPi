@@ -43,6 +43,7 @@
 //*	Jun 27,	2023	<MLS> Switch class updated to use more base class methods
 //*	Jul  3,	2023	<MLS> Added GetStartUpData_SubClass() & GetStatus_SubClass() to switch controller
 //*	Jul  3,	2023	<MLS> Converted to using switch properties structure TYPE_SwitchProperties
+//*	Jul 14,	2023	<MLS> Added UpdateOnlineStatus() to switch controller
 //*****************************************************************************
 
 #ifdef _ENABLE_CTRL_SWITCHES_
@@ -535,20 +536,21 @@ void	ControllerSwitch::UpdateStatusData(void)
 //**************************************************************************************
 void	ControllerSwitch::UpdateOnlineStatus(void)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
-	CONSOLE_DEBUG_W_BOOL("cOnLine\t=", cOnLine);
-	if (cOnLine)
-	{
-		SetWidgetBGColor(	kTab_Switch,	kSwitchBox_IPaddr,	CV_RGB(0,	0,	0));
-		SetWidgetTextColor(	kTab_Switch,	kSwitchBox_IPaddr,	CV_RGB(255,	0,	0));
-	}
-	else
-	{
-		SetWidgetBGColor(	kTab_Switch,	kSwitchBox_IPaddr,	CV_RGB(255,	0,	0));
-		SetWidgetTextColor(	kTab_Switch,	kSwitchBox_IPaddr,	CV_RGB(0,	0,	0));
-	}
-}
+cv::Scalar	bgColor;
+cv::Scalar	txtColor;
 
+	bgColor		=	cOnLine ? CV_RGB(0,		0,	0)	: CV_RGB(255,	0,	0);
+	txtColor	=	cOnLine ? CV_RGB(255,	0,	0)	: CV_RGB(0,		0,	0);
+
+	SetWidgetBGColor(	kTab_Switch,		kSwitchBox_IPaddr,		bgColor);
+	SetWidgetTextColor(	kTab_Switch,		kSwitchBox_IPaddr,		txtColor);
+
+	SetWidgetBGColor(	kTab_DeviceState,	kDeviceState_IPaddr,	bgColor);
+	SetWidgetTextColor(	kTab_DeviceState,	kDeviceState_IPaddr,	txtColor);
+
+	SetWidgetBGColor(	kTab_DriverInfo,	kDriverInfo_IPaddr,		bgColor);
+	SetWidgetTextColor(	kTab_DriverInfo,	kDriverInfo_IPaddr,		txtColor);
+}
 
 //*****************************************************************************
 bool	ControllerSwitch::AlpacaProcessReadAll(	const char	*deviceTypeStr,

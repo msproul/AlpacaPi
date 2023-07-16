@@ -13,6 +13,7 @@
 //*	Mar  3,	2023	<MLS> Added FindDeviceTypeByStringLowerCase()
 //*	Mar  9,	2023	<MLS> Added GetDomeShutterStatusString()
 //*	Jun 18,	2023	<MLS> Added LookupStringInTable()
+//*	Jul 16,	2023	<MLS> Added DumpCoverCalibProp()
 //*****************************************************************************
 
 #include	<string.h>
@@ -233,4 +234,25 @@ char	titleLine[128];
 	CONSOLE_DEBUG_W_DBL(	"obsCondProp->WindGust           \t=",	obsCondProp->WindGust.Value);
 	CONSOLE_DEBUG_W_DBL(	"obsCondProp->WindSpeed          \t=",	obsCondProp->WindSpeed.Value);
 
+}
+
+//*****************************************************************************
+void	DumpCoverCalibProp(TYPE_CoverCalibrationProperties	*coverCalibProp, const char *callingFunctionName)
+{
+char	titleLine[128];
+
+	CONSOLE_DEBUG(		"*************************************************************");
+	CONSOLE_DEBUG(		"*************** CoverCalibration properties *****************");
+	sprintf(titleLine,	"************* Called from: %-20s *************", callingFunctionName);
+	CONSOLE_DEBUG(titleLine);
+	CONSOLE_DEBUG(		"*************************************************************");
+
+	CONSOLE_DEBUG_W_NUM(	"coverCalibProp->Brightness     \t=",	coverCalibProp->Brightness);
+	CONSOLE_DEBUG_W_NUM(	"coverCalibProp->CalibratorState\t=",	coverCalibProp->CalibratorState);
+	CONSOLE_DEBUG_W_NUM(	"coverCalibProp->CoverState     \t=",	coverCalibProp->CoverState);
+	CONSOLE_DEBUG_W_NUM(	"coverCalibProp->MaxBrightness  \t=",	coverCalibProp->MaxBrightness);
+	CONSOLE_DEBUG_W_NUM(	"coverCalibProp->CalibratorReady\t=",	coverCalibProp->CalibratorReady);
+	CONSOLE_DEBUG_W_NUM(	"coverCalibProp->CoverMoving    \t=",	coverCalibProp->CoverMoving);
+	CONSOLE_DEBUG_W_DBL(	"coverCalibProp->Aperture        \t=",	coverCalibProp->Aperture);
+	CONSOLE_DEBUG_W_BOOL(	"coverCalibProp->CanSetAperture  \t=",	coverCalibProp->CanSetAperture);
 }

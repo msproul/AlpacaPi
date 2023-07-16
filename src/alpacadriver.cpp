@@ -2993,6 +2993,8 @@ int			returnCode;
 	}
 }
 
+//#define	_DEBUG_HTML_
+
 //*****************************************************************************
 //*
 //*	PUT /api/v1/filterwheel/0/connected HTTP/1.1
@@ -3025,7 +3027,9 @@ char			*userAgentPtr;
 //int				htmlDataLen;
 int				contentDataLen;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+#ifdef _DEBUG_HTML_
+	CONSOLE_DEBUG(__FUNCTION__);
+#endif
 
 	if ((htmlData != NULL) && (reqData != NULL))
 	{
@@ -3055,9 +3059,10 @@ int				contentDataLen;
 		reqData->httpCmdString[ccc]	=	0;
 
 		sLen		=	strlen(htmlData);
-//		CONSOLE_DEBUG_W_NUM("htmlData length\t=", sLen);
-//		CONSOLE_DEBUG_W_NUM("sizeof(lineBuff)\t=", sizeof(lineBuff));
-
+#ifdef _DEBUG_HTML_
+		CONSOLE_DEBUG_W_NUM("htmlData length\t=", sLen);
+		CONSOLE_DEBUG_W_NUM("sizeof(lineBuff)\t=", sizeof(lineBuff));
+#endif
 
 		//*	keep a copy of the entire thing
 		strcpy(reqData->htmlData, htmlData);
@@ -3233,6 +3238,9 @@ int				contentDataLen;
 		CONSOLE_DEBUG("args are NULL");
 		CONSOLE_ABORT(__FUNCTION__);
 	}
+#ifdef _DEBUG_HTML_
+	DumpRequestStructure(__FUNCTION__, reqData);
+#endif
 }
 
 
@@ -3293,6 +3301,10 @@ TYPE_REQUEST_TYPE	requestType;
 int					iii;
 int					commandLen;
 
+#ifdef _DEBUG_HTML_
+	CONSOLE_DEBUG_W_STR("requestTypeString\t=", requestTypeString);
+#endif
+
 	//*	figure out the base type of the request (see enum list above)
 	requestType	=	kRequestType_Invalid;
 	if (strlen(requestTypeString) > 0)
@@ -3312,6 +3324,9 @@ int					commandLen;
 	{
 		requestType	=	kRequestType_TopLevel;
 	}
+#ifdef _DEBUG_HTML_
+	CONSOLE_DEBUG_W_NUM("requestType      \t=", requestType);
+#endif
 	return(requestType);
 }
 
@@ -3321,20 +3336,20 @@ int					commandLen;
 //*****************************************************************************
 static int	ParseAlpacaRequest(TYPE_GetPutRequestData *reqData)
 {
-int		requestType;
-int		iii;
-int		ccc;
-bool	foundKeyWord;
-int		slashCounter;
-char	sLen;
-char	theChar;
-char	argumentString[256]			=	"";
-char	myRequestTypeString[64]		=	"";
-char	myAlpacaVersionString[64]	=	"";
-char	myDeviceString[64]			=	"";
-char	myDeviceNumString[64]		=	"";
-char	myDeviceCmdString[256]		=	"";
-int		cmdBuffLen;
+TYPE_REQUEST_TYPE	requestType;
+int					iii;
+int					ccc;
+bool				foundKeyWord;
+int					slashCounter;
+char				sLen;
+char				theChar;
+char				argumentString[256]			=	"";
+char				myRequestTypeString[64]		=	"";
+char				myAlpacaVersionString[64]	=	"";
+char				myDeviceString[64]			=	"";
+char				myDeviceNumString[64]		=	"";
+char				myDeviceCmdString[256]		=	"";
+int					cmdBuffLen;
 
 //	CONSOLE_DEBUG("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 //	CONSOLE_DEBUG(__FUNCTION__);
@@ -3420,9 +3435,6 @@ int		cmdBuffLen;
 			CONSOLE_DEBUG_W_STR("Device number sting is invalid!!!", myDeviceNumString);
 			reqData->deviceNumber	=	-1;
 		}
-
-
-
 
 		//*	extract out the command itself for easier processing by the handlers
 		cmdBuffLen		=	strlen(myDeviceCmdString);
@@ -4877,8 +4889,8 @@ int			ccc;
 struct stat	fileStatus;
 int			returnCode;
 
-	CONSOLE_DEBUG(__FUNCTION__);
-	DumpRequestStructure(__FUNCTION__, reqData);
+//	CONSOLE_DEBUG(__FUNCTION__);
+//	DumpRequestStructure(__FUNCTION__, reqData);
 	mySocketFD	=	reqData->socket;
 
 	slashPtr	=	strchr(reqData->httpCmdString, '/');

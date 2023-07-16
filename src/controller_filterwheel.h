@@ -30,6 +30,7 @@ class ControllerFilterWheel: public Controller
 		virtual	void	UpdateConnectedStatusIndicator(void);
 		virtual	bool	AlpacaGetStatus(void);
 		virtual	void	AlpacaGetCapabilities(void);
+		virtual	void	UpdateOnlineStatus(void);
 		virtual	bool	AlpacaProcessReadAllIdx(	const char	*deviceTypeStr,
 													const int	deviceNum,
 													const int	keywordEnum,

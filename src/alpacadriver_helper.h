@@ -91,6 +91,7 @@ void			GetDomeShutterStatusString(const int status, char *statusString);
 
 int				StartExtraListenThread(int exposureListenPort);
 void			DumpObservingconditionsProp(TYPE_ObsConditionProperties	*obsCondProp, const char *functionName);
+void			DumpCoverCalibProp(TYPE_CoverCalibrationProperties	*coverCalibProp, const char *callingFunctionName);
 
 extern	char		gWebTitle[];
 

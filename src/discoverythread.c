@@ -67,7 +67,13 @@
 #include	"sendrequest_lib.h"
 #include	"linuxerrors.h"
 #include	"helper_functions.h"
-#include	"controller_startup.h"
+
+#ifdef _INCLUDE_CTRL_MAIN_
+	#include	"controller_startup.h"
+#else
+	static	int		SetStartupText(const char *textMsg)	{ return(1);}
+	static	void	SetStartupTextStatus(const int idx, const char *textMsg)	{ }
+#endif
 
 #include	"obsconditions_globals.h"
 #include	"HostNames.h"
@@ -118,18 +124,15 @@ char		outputIPaddrStr[64];
 bool		validAddress;
 int			slen;
 int			iii;
-int			startupWidgetIdx;
+int			startupWidgetIdx	=	-1;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	validAddress		=	false;
-	startupWidgetIdx	=	-1;
 	//*	see if there is a file with the local IP address
 	filePointer	=	fopen(fileName, "r");
 	if (filePointer != NULL)
 	{
-
-//	CONSOLE_DEBUG(__FUNCTION__);
 		startupWidgetIdx	=	SetStartupText("Local IP address:");
 		while (fgets(lineBuff, 200, filePointer))
 		{
@@ -467,10 +470,6 @@ char			myVersionString[64];
 		{
 			strcpy(theDevice->timeStampString, jsonParser->dataList[iii].valueString);
 		}
-
-
-
-
 //		else
 //		{
 //			CONSOLE_DEBUG_W_STR("keyword\t=",	jsonParser->dataList[iii].keyword);
@@ -1051,15 +1050,12 @@ int StartDiscoveryQuerryThread(void)
 int			threadErr;
 int			startupWidgetIdx;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
 	startupWidgetIdx	=	SetStartupText("Starting Discovery Query Thread");
-
 	GetMyAddress();
 
 	gDiscoveryThreadKeepRunning	=	true;
 	threadErr			=	pthread_create(&gDiscoveryFindThreadID, NULL, &LookForAlpacaDevicesThread, NULL);
 	SetStartupTextStatus(startupWidgetIdx, ((threadErr == 0) ? "OK" : "Failed"));
-
 	return(threadErr);
 }
 

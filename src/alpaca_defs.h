@@ -81,6 +81,7 @@
 //*	Jun 18,	2023	<MLS> Version V0.7.1
 //*	Jun 18,	2023	<MLS> Build 166
 //*	JUl  2,	2023	<MLS> Build 167
+//*	JUl 16,	2023	<MLS> Build 168
 //*****************************************************************************
 //#include	"alpaca_defs.h"
 
@@ -103,7 +104,7 @@
 
 #define	kApplicationName	"AlpacaPi"
 #define	kVersionString		"V0.7.1"
-#define	kBuildNumber		167
+#define	kBuildNumber		168
 
 
 #define kAlpacaDiscoveryPORT	32227

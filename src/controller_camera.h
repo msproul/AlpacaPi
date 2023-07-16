@@ -135,8 +135,6 @@ class ControllerCamera: public Controller
 												const char	*keywordString,
 												const char	*valueString);
 
-
-//		virtual	bool	AlpacaGetStatus(void);
 		virtual	void	AlpacaGetCapabilities(void);
 		virtual	bool	AlpacaGetStatus_OneAAT(void);	//*	One At A Time
 				bool	AlpacaGetStatus_Gain(void);

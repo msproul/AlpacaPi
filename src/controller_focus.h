@@ -42,7 +42,7 @@
 #endif
 
 #define	kFocuserBoxWidth	400
-#define	kFocuserBoxHeight	750
+#define	kFocuserBoxHeight	775
 
 
 //**************************************************************************************

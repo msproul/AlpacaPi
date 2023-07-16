@@ -196,7 +196,6 @@ void	WindowTabSlitGraph::DrawWidgetCustomGraphic(IplImage *openCV_Image, const i
 #define	TRANSLATE_Y(rect, yyy)	((rect->y + rect->height - 4) - yyy)
 
 //**************************************************************************************
-//void	WindowTabSlitGraph::DrawTickLine(CvRect *widgetRect, int yLoc)
 void	WindowTabSlitGraph::DrawTickLine(cv::Rect *widgetRect, int yLoc)
 {
 char		tickLable[16];

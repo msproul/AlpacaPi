@@ -49,6 +49,7 @@ class ControllerTelescope: public Controller
 		virtual	void	UpdateStartupData(void);
 		virtual	void	UpdateConnectedStatusIndicator(void);
 		virtual	void	UpdateStatusData(void);
+		virtual	void	UpdateOnlineStatus(void);
 		virtual	bool	AlpacaGetStartupData(void);
 		virtual	void	AlpacaGetCapabilities(void);
 		virtual	void	AlpacaProcessSupportedActions(	const char	*deviceType,

@@ -52,7 +52,6 @@ class ControllerAlpacaUnit: public Controller
 
 		virtual	void	SetupWindowControls(void);
 		virtual	void	AlpacaDisplayErrorMessage(const char *errorMsgString);
-//				bool	AlpacaGetStatus(void);
 //
 		virtual	bool	AlpacaProcessReadAll(			const char	*deviceType,
 														const int	deviveNum,

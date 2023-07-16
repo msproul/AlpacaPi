@@ -25,6 +25,7 @@
 //*	Jun 23,	2023	<MLS> Removed RunBackgroundTasks(), using default in parent class
 //*	Jun 24,	2023	<MLS> Added DeviceState window to obsconditions controller
 //*	Jun 29,	2023	<MLS> Added AlpacaProcessReadAllIdx() to obsconditions controller
+//*	Jul 14,	2023	<MLS> Added UpdateOnlineStatus() to obsconditions controller
 //*****************************************************************************
 #ifdef _ENABLE_CTRL_OBS_CONDITIONS_
 
@@ -176,6 +177,25 @@ void	ControllerObsCond::UpdateStatusData(void)
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 	UpdateConnectedIndicator(kTab_ObsCond,		kObsCond_Connected);
 
+}
+
+//**************************************************************************************
+void	ControllerObsCond::UpdateOnlineStatus(void)
+{
+cv::Scalar	bgColor;
+cv::Scalar	txtColor;
+
+	bgColor		=	cOnLine ? CV_RGB(0,		0,	0)	: CV_RGB(255,	0,	0);
+	txtColor	=	cOnLine ? CV_RGB(255,	0,	0)	: CV_RGB(0,		0,	0);
+
+	SetWidgetBGColor(	kTab_ObsCond,		kObsCond_IPaddr,		bgColor);
+	SetWidgetTextColor(	kTab_ObsCond,		kObsCond_IPaddr,		txtColor);
+
+	SetWidgetBGColor(	kTab_DeviceState,	kDeviceState_IPaddr,	bgColor);
+	SetWidgetTextColor(	kTab_DeviceState,	kDeviceState_IPaddr,	txtColor);
+
+	SetWidgetBGColor(	kTab_DriverInfo,	kDriverInfo_IPaddr,		bgColor);
+	SetWidgetTextColor(	kTab_DriverInfo,	kDriverInfo_IPaddr,		txtColor);
 }
 
 //*****************************************************************************

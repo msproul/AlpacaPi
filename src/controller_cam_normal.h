@@ -61,7 +61,7 @@ class ControllerCamNormal: public ControllerCamera
 
 		virtual	void	UpdateStartupData(void);
 		virtual	void	UpdateStatusData(void);
-//		virtual	void	UpdateOnlineStatus(void);
+		virtual	void	UpdateOnlineStatus(void);
 
 		virtual	void	UpdateCameraGain(const TYPE_ASCOM_STATUS lastAlpacaErr = kASCOM_Err_Success);
 		virtual	void	UpdateCameraOffset(const TYPE_ASCOM_STATUS lastAlpacaErr = kASCOM_Err_Success);

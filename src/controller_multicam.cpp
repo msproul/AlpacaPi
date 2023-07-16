@@ -20,7 +20,8 @@
 //*****************************************************************************
 //*	Jun 16,	2023	<MLS> Created controller_multicam.cpp
 //*	Jun 17,	2023	<MLS> Multicam controller finished and working
-//*	Jun 18,	2023	<MLS> Added UpdateSupportedActions() to CoverCalib controller
+//*	Jun 18,	2023	<MLS> Added UpdateSupportedActions() to Multicam controller
+//*	Jul 14,	2023	<MLS> Added UpdateOnlineStatus() to Multicam controller
 //*****************************************************************************
 
 #include	<stdio.h>
@@ -195,55 +196,21 @@ void	ControllerMulticam::UpdateCommonProperties(void)
 	SetWidgetNumber(kTab_DriverInfo,	kDriverInfo_InterfaceVersion,	cCommonProp.InterfaceVersion);
 }
 
-////**************************************************************************************
-//void	ControllerMulticam::RunBackgroundTasks(const char *callingFunction, bool enableDebug)
-//{
-//uint32_t	currentMillis;
-//uint32_t	deltaSeconds;
-//bool		needToUpdate;
-//bool		validData;
-//
-////	CONSOLE_DEBUG(__FUNCTION__);
-//	if (cReadStartup)
-//	{
-//		AlpacaGetStartupData();
-//		AlpacaGetCommonProperties_OneAAT("multicam");
-//		UpdateAboutBoxRemoteDevice(kTab_About, kAboutBox_CPUinfo);
-//
-//		cReadStartup	=	false;
-//	}
-//
-//
-//	needToUpdate	=	false;
-//	currentMillis	=	millis();
-//	deltaSeconds	=	(currentMillis - cLastUpdate_milliSecs) / 1000;
-//
-//	if (cFirstDataRead || (deltaSeconds > 10))
-//	{
-//		needToUpdate	=	true;
-//		cFirstDataRead	=	false;
-//	}
-//	if (cForceAlpacaUpdate)	//*	force update is set when a switch is clicked
-//	{
-//		needToUpdate		=	true;
-//		cForceAlpacaUpdate	=	false;
-//	}
-//
-//	if (needToUpdate)
-//	{
-//		//*	is the IP address valid
-//		if (cValidIPaddr)
-//		{
-//			validData	=	AlpacaGetStatus();
-//			if (validData == false)
-//			{
-//				CONSOLE_DEBUG("Failed to get data");
-//			}
-//
-//			UpdateConnectedIndicator(kTab_Multicam,		kMultiCam_Connected);
-//		}
-//	}
-//}
+//**************************************************************************************
+void	ControllerMulticam::UpdateOnlineStatus(void)
+{
+cv::Scalar	bgColor;
+cv::Scalar	txtColor;
+
+	bgColor		=	cOnLine ? CV_RGB(0,		0,	0)	: CV_RGB(255,	0,	0);
+	txtColor	=	cOnLine ? CV_RGB(255,	0,	0)	: CV_RGB(0,		0,	0);
+
+	SetWidgetBGColor(	kTab_Multicam,	kMultiCam_IPaddr,	bgColor);
+	SetWidgetTextColor(	kTab_Multicam,	kMultiCam_IPaddr,	txtColor);
+
+	SetWidgetBGColor(	kTab_DriverInfo,	kDriverInfo_IPaddr,		bgColor);
+	SetWidgetTextColor(	kTab_DriverInfo,	kDriverInfo_IPaddr,		txtColor);
+}
 
 
 //*****************************************************************************

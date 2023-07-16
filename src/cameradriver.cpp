@@ -8894,7 +8894,7 @@ void	CameraDriver::DumpCameraProperties(const char *callingFunctionName)
 #define		kMandel_FarBottom	1.2
 #define		kMandel_Width		(kMandel_FarRight - kMandel_FarLeft)
 #define		kMandel_Height		(kMandel_FarBottom - kMandel_FarTop)
-#define		kQmax				8000
+#define		kQmax				16000
 #define		kStartColor			1
 #define		kMaxItterations		512
 
@@ -8987,6 +8987,13 @@ int			pixelIndex;
 uint32_t	rgbColor;
 
 	CONSOLE_DEBUG(__FUNCTION__);
+
+	if (imageHeight >= kQmax)
+	{
+		CONSOLE_DEBUG("Image is too big");
+		return;
+	}
+
 	if (imaageDataPtr != NULL)
 	{
 

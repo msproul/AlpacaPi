@@ -73,6 +73,7 @@ class ControllerDome: public Controller
 		virtual	bool	AlpacaGetStartupData_OneAAT(void);
 		virtual	void	UpdateStartupData(void);
 		virtual	void	UpdateStatusData(void);
+		virtual	void	UpdateOnlineStatus(void);
 		virtual	void	AlpacaGetCapabilities(void);
 
 		virtual	void	AlpacaProcessSupportedActions(	const char	*deviceType,

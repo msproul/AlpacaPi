@@ -27,6 +27,7 @@
 //*	Jul 16,	2020	<MLS> Moonlite focuser tested on 64bit Raspberry Pi OS
 //*	Jun 19,	2023	<MLS> Updated constructor to use TYPE_REMOTE_DEV
 //*	Jul  9,	2023	<MLS> Added device-state window to Focuser-ML-HR
+//*	Jul 14,	2023	<MLS> Added UpdateOnlineStatus() to Focuser-ML-HR
 //*****************************************************************************
 
 #if defined(_ENABLE_USB_FOCUSERS_) || defined(_ENABLE_CTRL_FOCUSERS_)
@@ -41,10 +42,6 @@
 
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
-
-
-#define	kWindowWidth	450
-#define	kWindowHeight	700
 
 #include	"windowtab_ml_single.h"
 #include	"windowtab_config.h"
@@ -246,6 +243,28 @@ char	lineBuff[64];
 
 	sprintf(lineBuff, "%1.1f C / %1.1f F", cFocuserProp.Temperature_DegC, ((cFocuserProp.Temperature_DegC * (9.0/5.0)) + 32));
 	SetWidgetText(kTab_MLsingle, kMLsingle_Temperature, lineBuff);
+}
+
+//**************************************************************************************
+void	ControllerMLsingle::UpdateOnlineStatus(void)
+{
+cv::Scalar	bgColor;
+cv::Scalar	txtColor;
+
+	bgColor		=	cOnLine ? CV_RGB(0,		0,	0)	: CV_RGB(255,	0,	0);
+	txtColor	=	cOnLine ? CV_RGB(255,	0,	0)	: CV_RGB(0,		0,	0);
+
+	SetWidgetBGColor(	kTab_MLsingle,		kMLsingle_IPaddr,		bgColor);
+	SetWidgetTextColor(	kTab_MLsingle,		kMLsingle_IPaddr,		txtColor);
+
+	SetWidgetBGColor(	kTab_Config,		kCongfigBox_IPaddr,		bgColor);
+	SetWidgetTextColor(	kTab_Config,		kCongfigBox_IPaddr,		txtColor);
+
+	SetWidgetBGColor(	kTab_DeviceState,	kDeviceState_IPaddr,	bgColor);
+	SetWidgetTextColor(	kTab_DeviceState,	kDeviceState_IPaddr,	txtColor);
+
+	SetWidgetBGColor(	kTab_DriverInfo,	kDriverInfo_IPaddr,		bgColor);
+	SetWidgetTextColor(	kTab_DriverInfo,	kDriverInfo_IPaddr,		txtColor);
 }
 
 //*****************************************************************************

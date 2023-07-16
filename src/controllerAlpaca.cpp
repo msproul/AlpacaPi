@@ -436,7 +436,6 @@ void	Controller::UpdateCommonProperties(void)
 	}
 }
 
-
 //*****************************************************************************
 bool	Controller::AlpacaGetSupportedActions(	sockaddr_in	*deviceAddress,
 												int			devicePort,

@@ -171,6 +171,7 @@ class WindowTabCamera: public WindowTab
 				void	StartExposure(void);
 				void	SetReceivedFileName(const char *newFileName);
 				void	DownloadImage(const bool useRGBarray);
+				void	UpdateDownloadOptions(void);
 
 				bool	cForce8BitRead;
 				bool	cAllowBinaryDownload;

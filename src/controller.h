@@ -418,10 +418,6 @@ class Controller
 		uint32_t			cLastDownload_Millisecs;
 		double				cLastDownload_MegaBytesPerSec;
 
-		virtual	void	UpdateStartupData(void);
-		virtual	void	UpdateStatusData(void);
-		virtual	void	UpdateOnlineStatus(void);
-
 
 
 				void	SetCommandLookupTable(TYPE_CmdEntry *newLookupTable);
@@ -429,9 +425,14 @@ class Controller
 	TYPE_CmdEntry		*cCommandEntryPtr;
 	TYPE_CmdEntry		*cAlternateEntryPtr;
 
-
+		virtual	void	UpdateStartupData(void);
+		virtual	void	UpdateOnlineStatus(void);
+		virtual	void	UpdateStatusData(void);
 //------------------------------------------------------------
 #ifdef _CONTROLLER_USES_ALPACA_
+		virtual	void	UpdateCommonProperties(void);
+		virtual	void	UpdateSupportedActions(void);
+
 	private:
 				void	GetStartUpData(void);
 				bool	AlpacaGetStatus(void);
@@ -447,11 +448,9 @@ class Controller
 		virtual	void	GetStatus_SubClass(void);
 
 				bool	AlpacaSetConnected(const char *deviceTypeStr, const bool newConnectedState=true);
-		virtual	void	UpdateSupportedActions(void);
 				bool	AlpacaGetCommonProperties_OneAAT(const char *deviceTypeStr);
 		virtual	bool	AlpacaGetStartupData_OneAAT(void);
 				bool	AlpacaGetCommonConnectedState(const char *deviceTypeStr);
-		virtual	void	UpdateCommonProperties(void);
 
 
 		virtual	bool	AlpacaGetStartupData(void);

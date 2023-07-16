@@ -23,6 +23,7 @@
 //*	Jun 23,	2023	<MLS> Removed RunBackgroundTasks(), using default in parent class
 //*	Jun 24,	2023	<MLS> Added DeviceState window to rotator controller
 //*	Jun 25,	2023	<MLS> Added AlpacaGetCapabilities() to rotator controller
+//*	Jul 14,	2023	<MLS> Added UpdateOnlineStatus() to rotator controller
 //*****************************************************************************
 
 #ifdef _ENABLE_CTRL_ROTATOR_
@@ -192,6 +193,28 @@ void	ControllerRotator::UpdateStatusData(void)
 	{
 		cRotatorTabObjPtr->UpdateProperties_Rotator(&cRotatorProp);
 	}
+}
+
+//**************************************************************************************
+void	ControllerRotator::UpdateOnlineStatus(void)
+{
+cv::Scalar	bgColor;
+cv::Scalar	txtColor;
+
+	bgColor		=	cOnLine ? CV_RGB(0,	0,	0)		: CV_RGB(255,	0,	0);
+	txtColor	=	cOnLine ? CV_RGB(255,	0,	0)	: CV_RGB(0,	0,	0);
+
+	SetWidgetBGColor(	kTab_Rotator,		kRotatorCtrl_IPaddr,	bgColor);
+	SetWidgetTextColor(	kTab_Rotator,		kRotatorCtrl_IPaddr,	txtColor);
+
+	SetWidgetBGColor(	kTab_Capabilities,	kCapabilities_IPaddr,	bgColor);
+	SetWidgetTextColor(	kTab_Capabilities,	kCapabilities_IPaddr,	txtColor);
+
+	SetWidgetBGColor(	kTab_DeviceState,	kDeviceState_IPaddr,	bgColor);
+	SetWidgetTextColor(	kTab_DeviceState,	kDeviceState_IPaddr,	txtColor);
+
+	SetWidgetBGColor(	kTab_DriverInfo,	kDriverInfo_IPaddr,		bgColor);
+	SetWidgetTextColor(	kTab_DriverInfo,	kDriverInfo_IPaddr,		txtColor);
 }
 
 //*****************************************************************************

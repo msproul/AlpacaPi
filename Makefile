@@ -1399,16 +1399,15 @@ phaseone	:		DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
 phaseone	:		DEFINEFLAGS		+=	-D_ENABLE_PHASEONE_
 phaseone	:		INCLUDES		+=	-I$(PHASEONE_INC)
 phaseone	:									\
-					$(CPP_OBJECTS)				\
+					$(CAMERA_DRIVER_OBJECTS)	\
 					$(HELPER_OBJECTS)			\
 					$(TEST_OBJECTS)				\
 					$(DRIVER_OBJECTS)			\
 					$(SOCKET_OBJECTS)			\
 					$(IMU_OBJECTS)				\
 
-
 		$(LINK)  								\
-					$(CPP_OBJECTS)				\
+					$(CAMERA_DRIVER_OBJECTS)	\
 					$(HELPER_OBJECTS)			\
 					$(TEST_OBJECTS)				\
 					$(SOCKET_OBJECTS)			\
@@ -1422,6 +1421,7 @@ phaseone	:									\
 
 #					-lusb-1.0					\
 #					-ludev						\
+#					$(CPP_OBJECTS)				\
 
 
 
@@ -1518,7 +1518,7 @@ dome		:									\
 					-lusb-1.0					\
 					-lpthread					\
 					-lwiringPi					\
-					-o domecontroller
+					-o domedriver
 
 #							-ludev						\
 #							$(ASI_CAMERA_OBJECTS)		\

@@ -38,7 +38,7 @@
 	#define		kRelay_RoofClose	3
 	#define		kRelay_FlatScren	4
 
-
+	//*	this is the default value, it can be changed from the web setup interface
 	#define		kSwitchDelaySeconds	20
 
 	#include	"raspberrypi_relaylib.h"
@@ -60,8 +60,6 @@
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
 
-
-
 #include	"RequestData.h"
 #include	"JsonResponse.h"
 #include	"eventlogging.h"
@@ -71,8 +69,6 @@
 #include	"helper_functions.h"
 #include	"domedriver.h"
 #include	"domedriver_ror_rpi.h"
-
-
 
 #if defined(__arm__)
 	#define	_ENABLE_DOME_HARDWARE_
@@ -105,9 +101,12 @@ DomeDriverROR::DomeDriverROR(const int argDevNum)
 	cDomeProp.CanSyncAzimuth	=	false;
 	cDomeProp.CanSetShutter		=	true;
 
+	cEnableIdleMoveTimeout		=	false;
+	cRORrelayDelay_secs			=	kSwitchDelaySeconds;	//*	used by Roll Off Roof ONLY
+
 	//*	local stuff
-	cRORisOpening			=	false;
-	cRORisClosing			=	false;
+	cRORisOpening				=	false;
+	cRORisClosing				=	false;
 
 	Init_Hardware();
 
@@ -218,7 +217,7 @@ bool		relayOK;
 
 	currentMilliSecs	=	millis();
 	deltaMilliSecs		=	currentMilliSecs - cTimeOfLastOpenClose;
-	if (cRORisOpening && (deltaMilliSecs > (kSwitchDelaySeconds * 1000)))
+	if (cRORisOpening && (deltaMilliSecs > (cRORrelayDelay_secs * 1000)))
 	{
 		CONSOLE_DEBUG("Done with OPEN switch contact");
 		relayOK		=	RpiRelay_SetRelay(kRelay_RoofOpen, false);
@@ -231,7 +230,7 @@ bool		relayOK;
 		cRORisOpening			=	false;
 	}
 
-	if (cRORisClosing && (deltaMilliSecs > (kSwitchDelaySeconds * 1000)))
+	if (cRORisClosing && (deltaMilliSecs > (cRORrelayDelay_secs * 1000)))
 	{
 		CONSOLE_DEBUG("Done with CLOSE switch contact");
 		relayOK		=	RpiRelay_SetRelay(kRelay_RoofClose, false);

@@ -22,6 +22,7 @@
 //*	Jan 14,	2021	<MLS> Focuser controller working with ASCOM/Remote
 //*	Jun 19,	2023	<MLS> Updated constructor to use TYPE_REMOTE_DEV
 //*	Jul  9,	2023	<MLS> Added device-state window to Focuser-generic
+//*	Jul 14,	2023	<MLS> Added UpdateOnlineStatus() to Focuser-generic controller
 //*****************************************************************************
 
 #if defined(_ENABLE_CTRL_FOCUSERS_)
@@ -37,6 +38,7 @@
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
 
+#include	"windowtab_ml_single.h"
 #include	"windowtab_config.h"
 #include	"windowtab_about.h"
 #include	"focuser_common.h"
@@ -192,6 +194,25 @@ char	lineBuff[64];
 
 	sprintf(lineBuff, "%1.1f C / %1.1f F", cFocuserProp.Temperature_DegC, ((cFocuserProp.Temperature_DegC * (9.0/5.0)) + 32));
 	SetWidgetText(kTab_Focuser, kMLsingle_Temperature, lineBuff);
+}
+
+//**************************************************************************************
+void	ControllerFocusGeneric::UpdateOnlineStatus(void)
+{
+cv::Scalar	bgColor;
+cv::Scalar	txtColor;
+
+	bgColor		=	cOnLine ? CV_RGB(0,		0,	0)	: CV_RGB(255,	0,	0);
+	txtColor	=	cOnLine ? CV_RGB(255,	0,	0)	: CV_RGB(0,		0,	0);
+
+	SetWidgetBGColor(	kTab_Focuser,		kMLsingle_IPaddr,		bgColor);
+	SetWidgetTextColor(	kTab_Focuser,		kMLsingle_IPaddr,		txtColor);
+
+	SetWidgetBGColor(	kTab_DeviceState,	kDeviceState_IPaddr,	bgColor);
+	SetWidgetTextColor(	kTab_DeviceState,	kDeviceState_IPaddr,	txtColor);
+
+	SetWidgetBGColor(	kTab_DriverInfo,	kDriverInfo_IPaddr,		bgColor);
+	SetWidgetTextColor(	kTab_DriverInfo,	kDriverInfo_IPaddr,		txtColor);
 }
 
 //**************************************************************************************

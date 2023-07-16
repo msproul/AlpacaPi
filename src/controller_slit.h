@@ -67,6 +67,7 @@ class ControllerSlit: public Controller
 		virtual	void	GetStatus_SubClass(void);
 		virtual	void	UpdateStartupData(void);
 		virtual	void	UpdateStatusData(void);
+		virtual	void	UpdateOnlineStatus(void);
 		virtual	void	AlpacaDisplayErrorMessage(const char *errorMsgString);
 
 		virtual	bool	AlpacaProcessReadAllIdx(		const char	*deviceTypeStr,

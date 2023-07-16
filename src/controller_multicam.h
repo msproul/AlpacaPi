@@ -49,6 +49,8 @@ class ControllerMulticam: public Controller
 
 		virtual	void	UpdateSupportedActions(void);
 		virtual	void	UpdateCommonProperties(void);
+		virtual	void	UpdateOnlineStatus(void);
+
 		virtual	bool	AlpacaProcessReadAll(		const char	*deviceTypeStr,
 													const int	deviceNum,
 													const char	*keywordString,

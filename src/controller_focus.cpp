@@ -315,7 +315,7 @@ void	ControllerFocus::UpdateOnlineStatus(void)
 {
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, "needs to be over-ridden");
 	CONSOLE_DEBUG_W_STR("cWindowName \t=",	cWindowName);
-	CONSOLE_ABORT(__FUNCTION__);
+//	CONSOLE_ABORT(__FUNCTION__);
 }
 
 //*****************************************************************************
