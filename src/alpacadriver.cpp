@@ -2074,7 +2074,7 @@ int		iii;
 					//*		/setup/v1/{device_type}/{device_number}/setup
 
 					sprintf(lineBuffer,	"<A HREF=/setup/v1/%s/%d/setup target=%s>Setup</A>",
-												gAlpacaDeviceList[iii]->cAlpacaName,
+												gAlpacaDeviceList[iii]->cAlpacaDeviceString,
 												gAlpacaDeviceList[iii]->cAlpacaDeviceNum,
 												gAlpacaDeviceList[iii]->cAlpacaName);
 					SocketWriteData(mySocketFD,	lineBuffer);
