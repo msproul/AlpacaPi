@@ -81,6 +81,8 @@
 //*	Jun 18,	2023	<MLS> Added DeviceState_Add_Content() to domedriver
 //*	Jul 16,	2023	<MLS> Added Setup web page for domedriver
 //*	Jul 16,	2023	<MLS> Added cRORrelayDelay_secs into Setup for ChrisA
+//*	Jul 17,	2023	<MLS> Added better logic for remote shutter check when shutter is moving
+//*	Jul 17,	2023	<MLS> Added watchdog timer enable/disable to dome setup web page
 //*****************************************************************************
 //*	cd /home/pi/dev-mark/alpaca
 //*	LOGFILE=logfile.txt
@@ -262,7 +264,7 @@ int					mySocket;
 
 //	CONSOLE_DEBUG_W_STR("htmlData\t=",	reqData->htmlData);
 
-	if (strcmp(reqData->deviceCommand, "readall") != 0)
+	if ((strcmp(reqData->deviceCommand, "readall") != 0) && (strcmp(reqData->deviceCommand, "devicestate") != 0))
 	{
 		CONSOLE_DEBUG_W_STR("deviceCommand\t=",	reqData->deviceCommand);
 	}
@@ -803,6 +805,7 @@ time_t		deltaSeconds;
 #if defined(_ENABLE_REMOTE_SHUTTER_)
 	uint32_t	currentMilliSecs;
 	uint32_t	timeSinceLastWhatever;
+	bool		timeToCheckShutter;
 #endif
 
 
@@ -819,15 +822,24 @@ time_t		deltaSeconds;
 		minDealy_microSecs	=	RunStateMachine_ROR();
 	}
 
-
 #ifdef _ENABLE_REMOTE_SHUTTER_
 	//====================================================================
 	//*	check to see if its time to update the shutter status
 	if (cShutterInfoValid)
 	{
+		timeToCheckShutter		=	false;
 		currentMilliSecs		=	millis();
 		timeSinceLastWhatever	=	currentMilliSecs - cTimeOfLastShutterUpdate;
 		if (timeSinceLastWhatever > (15 * 1000))
+		{
+			timeToCheckShutter		=	true;
+		}
+		else if ((cDomeProp.ShutterStatus >= kShutterStatus_Opening) && (timeSinceLastWhatever > (5 * 1000)))
+		{
+			//*	if the shutter is moving, update more often
+			timeToCheckShutter		=	true;
+		}
+		if (timeToCheckShutter)
 		{
 			GetRemoteShutterStatus();
 			cTimeOfLastShutterUpdate	=	millis();
@@ -846,6 +858,8 @@ time_t		deltaSeconds;
 	int		hours;
 	int		minutes;
 	int		seconds;
+
+		CONSOLE_DEBUG("Idle move is ENABLED");
 
 		currentTimeEpoch	=	time(NULL);
 		deltaSeconds		=	currentTimeEpoch - cTimeOfLastMoveCheck;
@@ -2451,6 +2465,7 @@ char				alpacaErrMsg[64];
 
 	if (cDomeProp.ShutterStatus != kShutterStatus_Closed)
 	{
+		CONSOLE_DEBUG("Closing dome shutter due to Timeout");
 		LogEvent("dome",	"Closing due to Timeout",	NULL,	kASCOM_Err_Success,	"");
 		cDomeProp.ShutterStatus	=	kShutterStatus_Closing;
 		alpacaErrCode			=	CloseShutter(alpacaErrMsg);
@@ -2507,11 +2522,22 @@ const char	domeTitle[]	=	"AlpacaPi Dome Driver setup";
 	//-----------------------------------
 	//*	first row
 	SocketWriteData(mySocketFD,	"<TR>\r\n");
-	SocketWriteData(mySocketFD,	"<TD>Movement Timeout</TD>\r\n");
+	SocketWriteData(mySocketFD,	"<TD>Watchdog Timeout</TD>\r\n");
 
 	SocketWriteData(mySocketFD,	"<TD>\r\n");
-	Setup_OutputRadioBtn(mySocketFD,	"timeout",	"enabled",	"enabled",	cEnableIdleMoveTimeout);
-	Setup_OutputRadioBtn(mySocketFD,	"timeout",	"disabled",	"disabled",	!cEnableIdleMoveTimeout);
+	Setup_OutputRadioBtn(mySocketFD,	"wdtimeout",	"enabled",	"enabled",	cWatchDogEnabled);
+	Setup_OutputRadioBtn(mySocketFD,	"wdtimeout",	"disabled",	"disabled",	!cWatchDogEnabled);
+	SocketWriteData(mySocketFD,	"</TD>\r\n");
+	SocketWriteData(mySocketFD,	"</TR>\r\n");
+
+	//-----------------------------------
+	//*	first row
+	SocketWriteData(mySocketFD,	"<TR>\r\n");
+	SocketWriteData(mySocketFD,	"<TD>Dome Movement Timeout</TD>\r\n");
+
+	SocketWriteData(mySocketFD,	"<TD>\r\n");
+	Setup_OutputRadioBtn(mySocketFD,	"dometimeout",	"enabled",	"enabled",	cEnableIdleMoveTimeout);
+	Setup_OutputRadioBtn(mySocketFD,	"dometimeout",	"disabled",	"disabled",	!cEnableIdleMoveTimeout);
 	SocketWriteData(mySocketFD,	"</TD>\r\n");
 	SocketWriteData(mySocketFD,	"</TR>\r\n");
 	//-----------------------------------
@@ -2583,8 +2609,23 @@ bool	DomeDriver::Setup_ProcessKeyword(const char *keyword, const char *valueStri
 //[Setup_ProcessKeyword] kw:value length, 223
 //[Setup_ProcessKeyword] kw:value rordelay, 44
 
-
-	if (strcasecmp(keyword, "timeout") == 0)
+	if (strcasecmp(keyword, "wdtimeout") == 0)
+	{
+		if (strcasecmp(valueString, "enabled") == 0)
+		{
+			cWatchDogEnabled	=	true;
+		}
+		else if (strcasecmp(valueString, "disabled") == 0)
+		{
+			cWatchDogEnabled	=	false;
+		}
+		else
+		{
+			CONSOLE_DEBUG_W_STR("invalid valueString:", valueString);
+		}
+		CONSOLE_DEBUG_W_BOOL("cEnableIdleMoveTimeout", cEnableIdleMoveTimeout);
+	}
+	else if (strcasecmp(keyword, "dometimeout") == 0)
 	{
 		if (strcasecmp(valueString, "enabled") == 0)
 		{

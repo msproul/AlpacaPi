@@ -27,6 +27,7 @@
 //*	Jun 25,	2023	<MLS> Added AlpacaProcessReadAll() to filterwheel controller
 //*	Jun 30,	2023	<MLS> Added DeviceState window to filterwheel controller
 //*	Jul 14,	2023	<MLS> Added UpdateOnlineStatus() to filterwheel controller
+//*	Jul 16,	2023	<MLS> Added AlpacaGetStatus_OneAAT() to filterwheel controller
 //*****************************************************************************
 #ifdef _ENABLE_FILTERWHEEL_CONTROLLER_
 
@@ -229,13 +230,11 @@ void	ControllerFilterWheel::UpdateConnectedStatusIndicator(void)
 }
 
 //*****************************************************************************
-bool	ControllerFilterWheel::AlpacaGetStatus(void)
+bool	ControllerFilterWheel::AlpacaGetStatus_OneAAT(void)
 {
 bool	validData;
 
 	validData	=	AlpacaGetFilterWheelStatus();
-	cLastUpdate_milliSecs	=	millis();
-	UpdateConnectedIndicator(kTab_FilterWheel,		kFilterWheel_Connected);
 	return(validData);
 }
 
@@ -356,7 +355,7 @@ void	ControllerFilterWheel::UpdateFilterWheelInfo(void)
 {
 
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
-	CONSOLE_DEBUG_W_STR("cFilterWheelName\t=", cFilterWheelName);
+//	CONSOLE_DEBUG_W_STR("cFilterWheelName\t=", cFilterWheelName);
 	SetWidgetText(	kTab_FilterWheel,	kFilterWheel_Name,	cFilterWheelName);
 	cUpdateWindow	=	true;
 //	CONSOLE_ABORT(__FUNCTION__);

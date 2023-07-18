@@ -49,7 +49,6 @@
 
 #endif // _CHRIS_A_ROLL_OFF_ROOF_
 
-
 #include	<stdlib.h>
 #include	<stdio.h>
 #include	<string.h>
@@ -85,8 +84,6 @@ void	CreateDomeObjectsROR(void)
 	new DomeDriverROR(0);
 }
 
-
-
 //**************************************************************************************
 DomeDriverROR::DomeDriverROR(const int argDevNum)
 	:DomeDriver(argDevNum)
@@ -102,6 +99,7 @@ DomeDriverROR::DomeDriverROR(const int argDevNum)
 	cDomeProp.CanSetShutter		=	true;
 
 	cEnableIdleMoveTimeout		=	false;
+	cWatchDogEnabled			=	false;
 	cRORrelayDelay_secs			=	kSwitchDelaySeconds;	//*	used by Roll Off Roof ONLY
 
 	//*	local stuff

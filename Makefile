@@ -1541,6 +1541,7 @@ rortest		:								\
 
 ######################################################################################
 #pragma mark rorpi
+#	make rorpi
 rorpi		:	DEFINEFLAGS		+=	-D_ENABLE_DOME_
 rorpi		:	DEFINEFLAGS		+=	-D_ENABLE_DOME_ROR_
 rorpi		:	DEFINEFLAGS		+=	-D_ENABLE_WIRING_PI_

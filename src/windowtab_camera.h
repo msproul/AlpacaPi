@@ -70,8 +70,8 @@ enum
 
 	kCameraBox_StartExposure,
 	kCameraBox_StopExposure,
-	kCameraBox_Rank2,
-	kCameraBox_Rank3,
+//	kCameraBox_Rank2,
+//	kCameraBox_Rank3,
 
 	kCameraBox_EnableBinary,
 	kCameraBox_Btn_8Bit,

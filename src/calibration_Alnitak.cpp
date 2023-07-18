@@ -218,6 +218,7 @@ uint32_t			deltaTime_ms;
 		{
 			alpacaErrCode						=	Alnitak_Cover_Close(alpacaErrMsg);
 			cCoverCalibrationProp.CoverState	=	kCover_Moving;
+			cCoverCalibrationProp.CoverMoving	=	true;
 			cCloseCover							=	false;
 			usleep(350 * 1000);
 		}
@@ -225,6 +226,7 @@ uint32_t			deltaTime_ms;
 		{
 			alpacaErrCode						=	Alnitak_Cover_Open(alpacaErrMsg);
 			cCoverCalibrationProp.CoverState	=	kCover_Moving;
+			cCoverCalibrationProp.CoverMoving	=	true;
 			cOpenCover							=	false;
 			usleep(350 * 1000);
 		}
@@ -815,12 +817,16 @@ char				status_S;
 					cCoverCalibrationProp.CoverState	=	kCover_Unknown;
 //					cCoverCalibrationProp.CoverState	=	kCover_Moving;
 					break;
+
 				case '1':
 					cCoverCalibrationProp.CoverState	=	kCover_Closed;
+					cCoverCalibrationProp.CoverMoving	=	false;
 					break;
 				case '2':
 					cCoverCalibrationProp.CoverState	=	kCover_Open;
+					cCoverCalibrationProp.CoverMoving	=	false;
 					break;
+
 				case '3':
 					cCoverCalibrationProp.CoverState	=	kCover_Unknown;
 					break;

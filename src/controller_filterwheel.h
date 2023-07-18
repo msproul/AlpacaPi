@@ -27,8 +27,8 @@ class ControllerFilterWheel: public Controller
 //		virtual	void	ProcessButtonClick(const int buttonIdx);
 		virtual	bool	AlpacaGetStartupData(void);
 		virtual	bool	AlpacaGetStartupData_OneAAT(void);
+		virtual	bool	AlpacaGetStatus_OneAAT(void);
 		virtual	void	UpdateConnectedStatusIndicator(void);
-		virtual	bool	AlpacaGetStatus(void);
 		virtual	void	AlpacaGetCapabilities(void);
 		virtual	void	UpdateOnlineStatus(void);
 		virtual	bool	AlpacaProcessReadAllIdx(	const char	*deviceTypeStr,

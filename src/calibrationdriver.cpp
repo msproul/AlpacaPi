@@ -122,6 +122,7 @@ CalibrationDriver::CalibrationDriver(void)
 
 	cCoverMovementStartTime						=	0;
 	cCoverLastUpdateTime						=	0;
+	cWatchDogEnabled							=	true;
 
 	cDriverCmdTablePtr	=	gCalibrationCmdTable;
 

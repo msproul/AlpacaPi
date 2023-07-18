@@ -171,6 +171,8 @@
 //*	Jun 18,	2023	<MLS> Added DeviceState_Add_Content()
 //*	Jun 18,	2023	<MLS> Added log event if IMU fails to initialize
 //*	Jul 14,	2023	<MLS> Added OutputHTML_CmdTable()
+//*	Jul 17,	2023	<MLS> Added Get_WatchDogEnabled()
+//*	Jul 17,	2023	<MLS> Made WatchDog timer optional and defaults to OFF
 //*****************************************************************************
 //*	to install code blocks 20
 //*	Step 1: sudo add-apt-repository ppa:codeblocks-devs/release
@@ -422,6 +424,7 @@ int		iii;
 #endif // _USE_OPENCV_
 	//========================================
 	//*	Watchdog timer stuff
+	cWatchDogEnabled			=	false;
 	cTimeOfLastValidCmd			=	time(NULL);		//*	these need to be set or it will do a shutdown before it even starts
 	cTimeOfLastWatchDogCheck	=	time(NULL);
 	cWatchDogTimeOut_Minutes	=	5;				//*	default timeout, can be overridden
@@ -790,6 +793,20 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 }
 
 //*****************************************************************************
+TYPE_ASCOM_STATUS	AlpacaDriver::Get_WatchDogEnabled(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
+{
+TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
+
+	JsonResponse_Add_Bool(	reqData->socket,
+							reqData->jsonTextBuffer,
+							kMaxJsonBuffLen,
+							responseString,
+							cWatchDogEnabled,
+							INCLUDE_COMMA);
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
 TYPE_ASCOM_STATUS	AlpacaDriver::Get_Readall_Common(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
@@ -799,6 +816,7 @@ TYPE_ASCOM_STATUS	AlpacaDriver::Get_Readall_Common(TYPE_GetPutRequestData *reqDa
 	Get_Driverversion(		reqData, alpacaErrMsg, "driverversion");
 	Get_Interfaceversion(	reqData, alpacaErrMsg, "interfaceversion");
 	Get_Name(				reqData, alpacaErrMsg, "name");
+	Get_WatchDogEnabled(	reqData, alpacaErrMsg, "watchdogenabled");
 
 //	CONSOLE_DEBUG("exit");
 	return(kASCOM_Err_Success);
@@ -3969,21 +3987,24 @@ void	AlpacaDriver::CheckWatchDogTimeout(void)
 time_t		currentTimeEpoch;
 time_t		deltaSeconds;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
-	//*	we only want to check this once a minute
-	currentTimeEpoch	=	time(NULL);
-	deltaSeconds		=	currentTimeEpoch - cTimeOfLastWatchDogCheck;
-
-	if (deltaSeconds >= 60)
+	//	CONSOLE_DEBUG(__FUNCTION__);
+	if (cWatchDogEnabled)
 	{
-		//*	now check to see how long it has been since a valid command
-		deltaSeconds		=	currentTimeEpoch - cTimeOfLastValidCmd;
-		if (deltaSeconds > (cWatchDogTimeOut_Minutes * 60))
-		{
-			WatchDog_TimeOut();
-		}
+		//*	we only want to check this once a minute
+		currentTimeEpoch	=	time(NULL);
+		deltaSeconds		=	currentTimeEpoch - cTimeOfLastWatchDogCheck;
 
-		cTimeOfLastWatchDogCheck	=	time(NULL);
+		if (deltaSeconds >= 60)
+		{
+			//*	now check to see how long it has been since a valid command
+			deltaSeconds		=	currentTimeEpoch - cTimeOfLastValidCmd;
+			if (deltaSeconds > (cWatchDogTimeOut_Minutes * 60))
+			{
+				WatchDog_TimeOut();
+			}
+
+			cTimeOfLastWatchDogCheck	=	time(NULL);
+		}
 	}
 }
 
@@ -4358,7 +4379,7 @@ int	imu_ReturnCode;
 				#endif // _ENABLE_LIVE_CONTROLLER_
 
 					//*	we dont need to do these every time through
-					if ((mainLoopCntr % 5) == 0)
+					if ((mainLoopCntr % 10) == 0)
 					{
 						gAlpacaDeviceList[iii]->CheckWatchDogTimeout();
 						gAlpacaDeviceList[iii]->ComputeCPUusage();

@@ -1036,10 +1036,10 @@ uint32_t	currentMillis;
 
 	if (needToUpdate)
 	{
-		if (cHas_readall == false)
-		{
-			CONSOLE_DEBUG_W_NUM("Updating..........................cUpdateDelta_secs=", cUpdateDelta_secs);
-		}
+//		if (cHas_readall == false)
+//		{
+//			CONSOLE_DEBUG_W_NUM("Updating..........................cUpdateDelta_secs=", cUpdateDelta_secs);
+//		}
 		//*	is the IP address valid
 		if (cValidIPaddr)
 		{

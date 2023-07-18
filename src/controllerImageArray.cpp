@@ -1268,15 +1268,13 @@ int				ccc;
 //		CONSOLE_DEBUG_W_NUM("crCnt\t=", crCnt);
 //		CONSOLE_DEBUG_W_NUM("lfCnt\t=", lfCnt);
 
-		CONSOLE_DEBUG_W_NUM("cRanOutOfRoomCnt\t=", cRanOutOfRoomCnt);
-		CONSOLE_DEBUG_W_NUM("imageArrayLen\t=", imageArrayLen);
-
-		CONSOLE_DEBUG_W_NUM("cImgArrayType\t=", cImgArrayType);
-		CONSOLE_DEBUG_W_NUM("imgRank\t\t=", imgRank);
+		CONSOLE_DEBUG_W_NUM("cRanOutOfRoomCnt     \t=", cRanOutOfRoomCnt);
+		CONSOLE_DEBUG_W_NUM("imageArrayLen        \t=", imageArrayLen);
+		CONSOLE_DEBUG_W_NUM("cImgArrayType        \t=", cImgArrayType);
+		CONSOLE_DEBUG_W_NUM("imgRank              \t=",	imgRank);
 		CONSOLE_DEBUG_W_NUM("cTotalBytesRead      \t=", cTotalBytesRead);
-
 		CONSOLE_DEBUG_W_NUM("cLinesProcessed      \t=", cLinesProcessed);
-		CONSOLE_DEBUG_W_NUM("cImageArrayIndex \t=", cImageArrayIndex);
+		CONSOLE_DEBUG_W_NUM("cImageArrayIndex     \t=", cImageArrayIndex);
 		CONSOLE_DEBUG_W_NUM("cFirstCharNotDigitCnt\t=", cFirstCharNotDigitCnt);
 
 		shutDownRetCode	=	shutdown(cSocket_desc, SHUT_RDWR);

@@ -384,19 +384,6 @@ char		textBuff[32];
 	yLoc			+=	cRadioBtnHt * 2;
 	yLoc			+=	2;
 
-
-//	kCameraBox_StartExposure,
-//	kCameraBox_Rank2,
-//	kCameraBox_Rank3,
-//
-//	kCameraBox_DownloadImage,
-//	kCameraBox_Btn_8Bit,
-//	kCameraBox_DownloadRGBarray,
-//
-//	kCameraBox_SaveOutline,
-//
-
-
 	//=======================================================
 	//*	start exposure button
 	yLocExposure	=	yLoc;
@@ -439,17 +426,17 @@ char		textBuff[32];
 	yLocSave		=	yLoc;
 	//=======================================================
 	yLoc			=	yLocExposure;
-	SetWidget(			kCameraBox_Rank2,	cClm3_offset,	yLoc,	((cClmWidth) -4),	cRadioBtnHt);
-	SetWidgetType(		kCameraBox_Rank2,	kWidgetType_RadioButton);
-	SetWidgetFont(		kCameraBox_Rank2,	kFont_RadioBtn);
-	SetWidgetText(		kCameraBox_Rank2,	"R2");
-
-	SetWidget(			kCameraBox_Rank3,	cClm4_offset,	yLoc,	((cClmWidth) -4),	cRadioBtnHt);
-	SetWidgetType(		kCameraBox_Rank3,	kWidgetType_RadioButton);
-	SetWidgetFont(		kCameraBox_Rank3,	kFont_RadioBtn);
-	SetWidgetText(		kCameraBox_Rank3,	"R3");
-	yLoc			+=	cRadioBtnHt;
-	yLoc			+=	4;
+//	SetWidget(			kCameraBox_Rank2,	cClm3_offset,	yLoc,	((cClmWidth) -4),	cRadioBtnHt);
+//	SetWidgetType(		kCameraBox_Rank2,	kWidgetType_RadioButton);
+//	SetWidgetFont(		kCameraBox_Rank2,	kFont_RadioBtn);
+//	SetWidgetText(		kCameraBox_Rank2,	"R2");
+//
+//	SetWidget(			kCameraBox_Rank3,	cClm4_offset,	yLoc,	((cClmWidth) -4),	cRadioBtnHt);
+//	SetWidgetType(		kCameraBox_Rank3,	kWidgetType_RadioButton);
+//	SetWidgetFont(		kCameraBox_Rank3,	kFont_RadioBtn);
+//	SetWidgetText(		kCameraBox_Rank3,	"R3");
+//	yLoc			+=	cRadioBtnHt;
+//	yLoc			+=	4;
 
 	SetWidget(			kCameraBox_EnableBinary,	cClm3_offset,	yLoc,	((cClmWidth * 2) -4),	cRadioBtnHt);
 	SetWidgetType(		kCameraBox_EnableBinary,	kWidgetType_CheckBox);
@@ -457,7 +444,6 @@ char		textBuff[32];
 	SetWidgetText(		kCameraBox_EnableBinary,	"Allow Binary");
 	yLoc			+=	cRadioBtnHt;
 	yLoc			+=	4;
-
 
 	//=======================================================
 	SetWidget(			kCameraBox_Btn_8Bit,	cClm3_offset,	yLoc,	((cClmWidth * 2) -4),	cRadioBtnHt);
@@ -512,8 +498,6 @@ char		textBuff[32];
 			SetWidgetFont(	foWidgetNum,	kFont_RadioBtn);
 			SetWidgetTextColor(foWidgetNum, CV_RGB(255,	255,	255));
 			SetWidgetNumber(foWidgetNum, 0);
-
-
 			yLoc			+=	cRadioBtnHt;
 			yLoc			+=	1;
 		}
@@ -578,7 +562,6 @@ int	imuHeight;
 	iii	=	kCameraBox_Temp_Label;
 	while (iii < kCameraBox_TargetTemp)
 	{
-
 		SetWidget(		iii,	cooler_xLoc,	yLocClm4,		cClmWidth,		cRadioBtnHt);
 		SetWidgetFont(	iii,	kFont_Small);
 		iii++;
@@ -621,7 +604,7 @@ int	imuHeight;
 //**************************************************************************************
 void	WindowTabCamera::ActivateWindow(void)
 {
-	DumpWidgetList(0, kCameraBox_last-1, __FILE__);
+//	DumpWidgetList(0, kCameraBox_last-1, __FILE__);
 }
 
 //**************************************************************************************
@@ -635,14 +618,11 @@ int		iii;
 	}
 }
 
-
 #define	kCameraLogoCount	8
-
 
 #if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 	cv::Mat		gCameraLogoImage[kCameraLogoCount];
 #endif
-
 
 //**************************************************************************************
 void	WindowTabCamera::SetCameraLogo(void)

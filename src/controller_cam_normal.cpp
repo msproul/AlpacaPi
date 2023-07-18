@@ -389,8 +389,8 @@ void	ControllerCamNormal::UpdateSupportedActions(void)
 		SetWidgetCrossedout(kTab_Settings, kCamSet_ObjOutline,		true);
 		SetWidgetCrossedout(kTab_Settings, kCamSet_FilenameOutline, true);
 
-		SetWidgetText(kTab_Camera,		kCamSet_AlpacaErrorMsg,	"readall not supported");
-		SetWidgetText(kTab_Settings,	kCamSet_AlpacaErrorMsg,	"readall not supported");
+		SetWidgetText(kTab_Camera,		kCameraBox_AlpacaErrorMsg,	"readall not supported");
+		SetWidgetText(kTab_Settings,	kCamSet_AlpacaErrorMsg,		"readall not supported");
 	}
 	SetWidgetValid(kTab_Camera,	kCameraBox_AutoExposure,		cHas_autoexposure);
 	SetWidgetValid(kTab_Camera,	kCameraBox_DisplayImage,		cHas_displayimage);
@@ -453,8 +453,7 @@ cv::Scalar	txtColor;
 //*****************************************************************************
 void	ControllerCamNormal::UpdateStatusData(void)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
-
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	UpdateCameraExposure();
 	UpdateCameraGain();

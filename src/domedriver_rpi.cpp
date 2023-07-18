@@ -166,6 +166,8 @@ DomeDriverRPi::DomeDriverRPi(const int argDevNum)
 	cDomeProp.CanSetShutter		=	true;
 	cParkAzimuth				=	170.0;		//*	these are approximate for my dome
 	cHomeAzimuth				=	230.0;
+	cWatchDogEnabled			=	true;
+
 	Init_Hardware();
 	LogEvent(	"dome",
 				"R-Pi Dome created",

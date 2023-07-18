@@ -193,6 +193,7 @@ class AlpacaDriver
 				TYPE_ASCOM_STATUS		Get_Driverversion(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
 				TYPE_ASCOM_STATUS		Get_Interfaceversion(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
 				TYPE_ASCOM_STATUS		Get_Name(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+				TYPE_ASCOM_STATUS		Get_WatchDogEnabled(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
 
 				TYPE_ASCOM_STATUS		Get_SupportedActions(TYPE_GetPutRequestData *reqData, const TYPE_CmdEntry *theCmdTable);
 
@@ -305,12 +306,15 @@ class AlpacaDriver
 
 		//-------------------------------------------------------------------------
 		//*	Watchdog timer stuff
-				void					CheckWatchDogTimeout(void);
-		virtual	void					WatchDog_TimeOut(void);
-				time_t					cTimeOfLastValidCmd;
+	private:
 				time_t					cTimeOfLastWatchDogCheck;
 				int						cWatchDogTimeOut_Minutes;
-
+	protected:
+				bool					cWatchDogEnabled;		//*	defaults to FALSE
+		virtual	void					WatchDog_TimeOut(void);
+	public:
+				void					CheckWatchDogTimeout(void);
+				time_t					cTimeOfLastValidCmd;
 		//-------------------------------------------------------------------------
 		//*	CPU usage information
 				uint64_t				cAccumilatedNanoSecs;

@@ -201,6 +201,8 @@ class DomeDriver: public AlpacaDriver
 		//-------------------------------------------------------------------------
 		//*	Watchdog timer stuff
 		virtual	void					WatchDog_TimeOut(void);
+
+		//*	this stuff is JUST for domes
 				time_t					cTimeOfLastMoveCmd;
 				time_t					cTimeOfLastMoveCheck;
 				bool					cEnableIdleMoveTimeout;

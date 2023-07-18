@@ -608,8 +608,8 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
 		Get_Readall_Common(	reqData, alpacaErrMsg);
 
 		alpacaErrCode	=	Get_Position(reqData,		alpacaErrMsg,	"position");
-		alpacaErrCode	=	Get_Focusoffsets(reqData,	alpacaErrMsg,	"focusoffsets");
 		alpacaErrCode	=	Get_Names(reqData,			alpacaErrMsg,	"names");
+		alpacaErrCode	=	Get_Focusoffsets(reqData,	alpacaErrMsg,	"focusoffsets");
 
 		alpacaErrCode	=	kASCOM_Err_Success;
 		strcpy(alpacaErrMsg, "");
