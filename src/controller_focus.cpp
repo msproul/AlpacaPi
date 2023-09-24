@@ -280,6 +280,7 @@ void	ControllerFocus::UpdateStepsPerRev(const int newStepsPerRev)
 	CONSOLE_ABORT(__FUNCTION__);
 }
 
+
 //*****************************************************************************
 void	ControllerFocus::UpdateStartupData(void)
 {
@@ -298,6 +299,8 @@ void	ControllerFocus::UpdateStartupData(void)
 	CONSOLE_DEBUG_W_NUM("cAuxMotorDesiredPos\t=",	cAuxMotorDesiredPos);
 
 	UpdateWindowTabs_Everything();
+
+	UpdateWindowTabs_ConnectState(true);
 
 	cFirstDataRead		=	false;
 }
@@ -617,6 +620,7 @@ void	ControllerFocus::AlpacaGetCapabilities(void)
 void	ControllerFocus::UpdateConnectedStatusIndicator(void)
 {
 	//*	needs to be over-ridden by subclass
+//	CONSOLE_ABORT(__FUNCTION__);
 }
 
 //*****************************************************************************
@@ -669,11 +673,9 @@ char	lineBuff[128];
 //	CONSOLE_DEBUG(__FUNCTION__);
 	SetWindowIPaddrInfo(NULL, cOnLine);
 
-
 	cLastUpdate_milliSecs	=	millis();
 	return(validData);
 }
-
 
 //*****************************************************************************
 bool	ControllerFocus::USBGetStatus(void)

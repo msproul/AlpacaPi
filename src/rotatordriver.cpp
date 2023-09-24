@@ -152,9 +152,9 @@ uint32_t	deltaMilliSecs;
 		CONSOLE_DEBUG(__FUNCTION__);
 		UpdateRotorPosition(true);
 
-		CONSOLE_DEBUG_W_DBL("cRotatorProp.MechanicalPosition\t=",	cRotatorProp.MechanicalPosition);
-		CONSOLE_DEBUG_W_DBL("cRotatorProp.Position          \t=",	cRotatorProp.Position);
-		CONSOLE_DEBUG_W_DBL("cRotatorProp.TargetPosition    \t=",	cRotatorProp.TargetPosition);
+//		CONSOLE_DEBUG_W_DBL("cRotatorProp.MechanicalPosition\t=",	cRotatorProp.MechanicalPosition);
+//		CONSOLE_DEBUG_W_DBL("cRotatorProp.Position          \t=",	cRotatorProp.Position);
+//		CONSOLE_DEBUG_W_DBL("cRotatorProp.TargetPosition    \t=",	cRotatorProp.TargetPosition);
 
 		cRunStartupOperations		=	false;
 	}
@@ -934,6 +934,7 @@ char		lineBuffer[128];
 	{
 		mySocketFD		=	reqData->socket;
 		SocketWriteData(mySocketFD,	"<CENTER>\r\n");
+		SocketWriteData(mySocketFD,	"<H2>AlpacaPi Rotator</H2>\r\n");
 		SocketWriteData(mySocketFD,	"<TABLE BORDER=1>\r\n");
 
 		OutputHTMLrowData(mySocketFD,	"Rotator",		cCommonProp.Name);

@@ -176,14 +176,16 @@ int	deltaMouse;
 //*****************************************************************************
 void	CameraDriver::DrawOpenCVoverlay(void)
 {
-cv::Point			point1;
-cv::Point			point2;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-#if defined(_USE_OPENCV_CPP_) &&  (CV_MAJOR_VERSION >= 4)
+#if defined(_USE_OPENCV_CPP_) ||  (CV_MAJOR_VERSION >= 4)
+cv::Point			point1;
+cv::Point			point2;
 //	#warning "OpenCV++ not finished"
 #else
+CvPoint	point1;
+CvPoint	point2;
 	if (cOpenCV_LiveDisplayPtr != NULL)
 	{
 		if (cDisplayCrossHairs)

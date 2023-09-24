@@ -16,7 +16,7 @@
 //*	that you agree that the author(s) have no warranty, obligations or liability.  You
 //*	must determine the suitability of this source code for your use.
 //*
-//*	Redistributions of this source code must retain this copyright notice.
+//*	Re-distributions of this source code must retain this copyright notice.
 //*****************************************************************************
 //*
 //*	References:
@@ -29,6 +29,7 @@
 //*	Jan 29,	2020	<MLS> Created cameradriver_jpeg.cpp
 //*	Jan 29,	2020	<MLS> Can save jpegs using libjpeg instead of opencv
 //*	Jan 29,	2020	<MLS> Successfully saving jpegs on NVidia/jetson
+//*	Sep 10,	2023	<MLS> Test lib jpeg routines again, working fine
 //*****************************************************************************
 
 
@@ -62,6 +63,7 @@ char						imageFilePath[128];
 
 
 	strcpy(imageFileName, cFileNameRoot);
+	strcat(imageFileName, "-libjpeg");
 	strcat(imageFileName, ".jpg");
 
 	strcpy(imageFilePath, gImageDataDir);
@@ -100,8 +102,7 @@ char						imageFilePath[128];
 
 		fclose(outputFile);
 
-		AddToDataProductsList(imageFileName, "JPEG image-jpeglib");
-
+		AddToDataProductsList(imageFileName, "jpeglib");
 	}
 	else
 	{

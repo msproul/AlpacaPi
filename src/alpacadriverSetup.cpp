@@ -23,7 +23,7 @@
 //*****************************************************************************
 //*	<MLS>	=	Mark L Sproul msproul@skychariot.com
 //*****************************************************************************
-//*	Dec  1,	2022	<MLS> Created alpacadriverSetup.c
+//*	Dec  1,	2022	<MLS> Created alpacadriverSetup.cpp
 //*	Dec  2,	2022	<MLS> Added Setup_OutputForm(), Setup_Save(), Setup_ProcessCommand()
 //*	Dec  2,	2022	<MLS> HTML form generation and processing working
 //*	Dec  4,	2022	<MLS> Added Setup_SaveInit()

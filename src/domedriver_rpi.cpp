@@ -16,7 +16,7 @@
 //*	that you agree that the author(s) have no warranty, obligations or liability.  You
 //*	must determine the suitability of this source code for your use.
 //*
-//*	Redistributions of this source code must retain this copyright notice.
+//*	Re-distributions of this source code must retain this copyright notice.
 //*****************************************************************************
 //*	Edit History
 //*****************************************************************************
@@ -30,6 +30,7 @@
 //*	Mar  5,	2021	<MLS> Added _ENABLE_COMMUTATOR_POWER_
 //*	Dec 23,	2021	<MLS> Added OutputHTML_Part2() to output hardware configuration
 //*	Mar  2,	2023	<MLS> Added _ENABLE_DOME_RPI_
+//*	Sep 12,	2023	<MLS> Installed Arduino dev platform on Dome R-Pi
 //*****************************************************************************
 //*	cd /home/pi/dev-mark/alpaca
 //*	LOGFILE=logfile.txt
@@ -167,6 +168,7 @@ DomeDriverRPi::DomeDriverRPi(const int argDevNum)
 	cParkAzimuth				=	170.0;		//*	these are approximate for my dome
 	cHomeAzimuth				=	230.0;
 	cWatchDogEnabled			=	true;
+	strcpy(cWatchDogTimeOutAction, "Close shutter");
 
 	Init_Hardware();
 	LogEvent(	"dome",
@@ -284,6 +286,7 @@ char	wiringPi_VerString[32];
 	pinMode(kHWpin_HomeSensor,	INPUT);
 	pinMode(kHWpin_ParkSensor,	INPUT);
 
+	//*	set the internal pullup resisters
 	pullUpDnControl(kHWpin_ButtonCW,	PUD_UP);
 	pullUpDnControl(kHWpin_ButtonCCW,	PUD_UP);
 	pullUpDnControl(kHWpin_Stop,		PUD_UP);
@@ -491,7 +494,7 @@ uint32_t	currentlTics;
 	currentlTics	=	initialTics;
 	//*	I know this looks a little weird,
 	//*	this is an attempt to get consistent times
-	while(currentlTics == initialTics)
+	while (currentlTics == initialTics)
 	{
 		currentlTics	=	millis();
 	}

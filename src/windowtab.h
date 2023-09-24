@@ -313,8 +313,8 @@ class WindowTab
 //		void		SetColor(const int theColor);
 
 		void		LLG_DrawCString(	const int xx, const int yy, const char *textString, const int fontIndex=1);
-		void		LLG_FillEllipse(	const int xCenter, const int yCenter, const int xRadius, const int yRadius);
-		void		LLG_FrameEllipse(	const int xCenter, const int yCenter, const int xRadius, const int yRadius);
+		void		LLG_FillEllipse(	const int xCenter, const int yCenter, const int xRadius, const int yRadius, const double angle_deg=0.0);
+		void		LLG_FrameEllipse(	const int xCenter, const int yCenter, const int xRadius, const int yRadius, const double angle_deg=0.0);
 		void		LLG_FrameRect(		const int left, const int top, const int width, const int height, const int lineWidth=1);
 		void		LLG_FrameRect(		cv::Rect *theRect);
 		void		LLG_FillRect(		const int left, const int top, const int width, const int height);

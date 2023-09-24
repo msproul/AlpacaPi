@@ -421,6 +421,7 @@ bool	Controller::AlpacaGetStartupData_OneAAT(void)
 //*****************************************************************************
 void	Controller::UpdateCommonProperties(void)
 {
+	CONSOLE_DEBUG(__FUNCTION__);
 	if (cDriverInfoTabNum >= 0)
 	{
 		SetWidgetText(		cDriverInfoTabNum,	kDriverInfo_Name,				cCommonProp.Name);
@@ -1175,8 +1176,8 @@ bool			myReturnDataIsValid	=	true;
 		cLastAlpacaErrNum	=	AlpacaCheckForErrors(&jsonParser, cLastAlpacaErrStr);
 		if (cLastAlpacaErrNum != kASCOM_Err_Success)
 		{
-			CONSOLE_DEBUG_W_NUM("cLastAlpacaErrNum        \t=",	cLastAlpacaErrNum);
-			CONSOLE_DEBUG_W_STR("alpacaString     \t=",	alpacaString);
+			CONSOLE_DEBUG_W_NUM("cLastAlpacaErrNum  \t=",	cLastAlpacaErrNum);
+			CONSOLE_DEBUG_W_STR("alpacaString       \t=",	alpacaString);
 			myReturnDataIsValid	=	false;
 		}
 	}
@@ -1238,7 +1239,7 @@ bool			myReturnDataIsValid	=	true;
 		if (cLastAlpacaErrNum != kASCOM_Err_Success)
 		{
 			CONSOLE_DEBUG_W_NUM("cLastAlpacaErrNum\t=",	cLastAlpacaErrNum);
-			CONSOLE_DEBUG_W_NUM("cLastAlpacaErrStr\t=",	cLastAlpacaErrStr);
+			CONSOLE_DEBUG_W_STR("cLastAlpacaErrStr\t=",	cLastAlpacaErrStr);
 			CONSOLE_DEBUG_W_STR("alpacaString     \t=",	alpacaString);
 			myReturnDataIsValid	=	false;
 		}
@@ -1323,8 +1324,6 @@ bool			myReturnDataIsValid	=	true;
 //	CONSOLE_DEBUG(__FUNCTION__);
 	return(validData);
 }
-
-
 
 //*****************************************************************************
 //*	return value is true if the message was sent and a response was received
@@ -2082,15 +2081,15 @@ bool	Controller::AlpacaCheckForDeviceState(void)
 SJP_Parser_t	jsonParser;
 char			alpacaString[128];
 bool			validData;
-bool			has_devicestate;
 
 	CONSOLE_DEBUG(__FUNCTION__);
-//	CONSOLE_DEBUG_W_STR("cAlpacaDeviceTypeStr\t=", cAlpacaDeviceTypeStr);
-//	CONSOLE_DEBUG_W_NUM("cAlpacaDevNum        \t=", cAlpacaDevNum);
-	has_devicestate	=	false;
 	SJP_Init(&jsonParser);
 	sprintf(alpacaString,	"/api/v1/%s/%d/devicestate", cAlpacaDeviceTypeStr, cAlpacaDevNum);
-//	CONSOLE_DEBUG(alpacaString);
+
+	CONSOLE_DEBUG_W_STR("cAlpacaDeviceTypeStr\t=", cAlpacaDeviceTypeStr);
+	CONSOLE_DEBUG_W_NUM("cAlpacaDevNum        \t=", cAlpacaDevNum);
+	CONSOLE_DEBUG(alpacaString);
+
 	validData	=	GetJsonResponse(	&cDeviceAddress,
 										cPort,
 										alpacaString,
@@ -2100,14 +2099,14 @@ bool			has_devicestate;
 	{
 //		SJP_DumpJsonData(&jsonParser, __FUNCTION__);
 		cLastAlpacaErrNum	=	AlpacaCheckForErrors(&jsonParser, cLastAlpacaErrStr, true);
-		CONSOLE_DEBUG_W_NUM("devicestate returned", cLastAlpacaErrNum);
+		CONSOLE_DEBUG_W_NUM("devicestate returned: cLastAlpacaErrNum\t=", cLastAlpacaErrNum);
 		if (cLastAlpacaErrNum == kASCOM_Err_Success)
 		{
 			cHas_DeviceState	=	true;
 		}
 	}
 	CONSOLE_DEBUG_W_BOOL("cHas_DeviceState   \t=",	cHas_DeviceState);
-	return(has_devicestate);
+	return(cHas_DeviceState);
 }
 
 //*****************************************************************************
@@ -2369,7 +2368,6 @@ char	*colonPtr;
 //		CONSOLE_DEBUG_W_2STR("kw:value=", keywordStr, valueStr);
 	}
 }
-
 
 #endif // _CONTROLLER_USES_ALPACA_
 

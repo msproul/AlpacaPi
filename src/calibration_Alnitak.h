@@ -5,6 +5,9 @@
 #ifndef _PTHREAD_H
 	#include	<pthread.h>
 #endif
+#ifndef _ALPACA_DRIVER_H_
+	#include	"alpacadriver.h"
+#endif
 
 #ifndef _CALIBRATION_DRIVER_H_
 	#include	"calibrationdriver.h"
@@ -39,12 +42,11 @@ class CalibrationDriverAlnitak: public CalibrationDriver
 				char				cUSBportPath[32];
 				int					cFileDesc;				//*	port file descriptor
 				bool				cCalibrationIsOn;
-
-	public:
-				void				RunThread(void);
+	protected:
+		virtual	void				RunThread_Startup(void);
+		virtual	void				RunThread_Loop(void);
 	private:
-				pthread_t			cThreadID;
-				bool				cThreadKeepRunning;
+
 				//*	these are used to tell the thread what to do
 				bool				cOpenCover;
 				bool				cCloseCover;

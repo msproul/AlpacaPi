@@ -35,6 +35,8 @@
 //*	Dec  7,	2019	<MLS> Talking to NiteCrawler with /dev/ttyUSBx, no longer using libusb
 //*	Dec  7,	2019	<MLS> Reading NiteCrawler focuser position values
 //*	Dec 13,	2019	<MLS> Successfully sending set position commands to NiteCrawler
+//*	Dec 13,	2019	<MLS> SUPPORTED: Moonlite NiteCrawler focuser
+//*	Dec 13,	2019	<MLS> SUPPORTED: Moonlite HiRes focuser
 //*	Dec 16,	2019	<MLS> Added SetStepperPosition()
 //*	Dec 19,	2019	<MLS> Added HaltStepper()
 //*	Dec 19,	2019	<MLS> Halt working, command is "nSQ0"

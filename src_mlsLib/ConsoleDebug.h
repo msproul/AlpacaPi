@@ -15,6 +15,7 @@
 //*	Aug 10,	2021	<MLS> Added CONSOLE_DEBUG_W_LHEX()	long hex
 //*	Apr 18,	2022	<MLS> Added CONSOLE_DEBUG_W_BOOL()
 //*	Mar  7,	2023	<MLS> Added CONSOLE_DEBUG_W_SIZE()
+//*	Sep  5,	2023	<MLS> Added CONSOLE_DEBUG_W_SIZE() to quite mode
 //***************************************************************************************
 //#include	"ConsoleDebug.h"
 
@@ -84,6 +85,7 @@
 	#define	CONSOLE_DEBUG_W_LONG(msg, num)
 	#define	CONSOLE_DEBUG_W_DBL(msg, num)
 	#define	CONSOLE_DEBUG_W_HEX(msg, num)
+	#define	CONSOLE_DEBUG_W_SIZE(msg, num)
 	#define	CONSOLE_DEBUG_W_STR(msg, str)
 	#define	CONSOLE_DEBUG_W_2STR(msg, str1, str2)
 	#define	CONSOLE_DEBUG_W_3STR(msg, str1, str2, str3)

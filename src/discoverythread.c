@@ -537,12 +537,14 @@ int					sendRetCode;
 int					closeRetCode;
 int					shutdownRetCode;
 int					recvByteCnt;
-char				returnedData[2000];
-char				xmitBuffer[2000];
+char				returnedData[kReadBuffLen];
+char				xmitBuffer[kReadBuffLen];
 int					setOptRetCode;
 char				errorString[64];
 
 //	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG_W_NUM(	"kReadBuffLen        \t=",	kReadBuffLen);
+//	CONSOLE_DEBUG_W_SIZE(	"sizeof(returnedData)\t=",	sizeof(returnedData));
 
 	validData	=	false;
 	socket_desc	=	socket(AF_INET , SOCK_STREAM , 0);
@@ -577,10 +579,10 @@ char				errorString[64];
 			sendRetCode	=	send(socket_desc , xmitBuffer , strlen(xmitBuffer) , 0);
 			if (sendRetCode >= 0)
 			{
-				recvByteCnt	=	recv(socket_desc, returnedData , 2000 , 0);
+				recvByteCnt	=	recv(socket_desc, returnedData, kReadBuffLen , 0);
 				if (recvByteCnt >= 0)
 				{
-					validData	=	true;
+					validData					=	true;
 					returnedData[recvByteCnt]	=	0;
 //					printf("%s\r\n", returnedData);
 					SJP_Init(jsonParser);
@@ -1468,7 +1470,7 @@ int	main(int argc, char **argv)
 
 	StartDiscoveryThread(kAlpacaPiDefaultPORT);
 
-	while(1)
+	while (1)
 	{
 		sleep(1);
 	}

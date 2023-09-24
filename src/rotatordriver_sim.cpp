@@ -55,7 +55,7 @@ RotatorDriver_Sim::RotatorDriver_Sim(const int argDevNum)
 	//*	save the object pointer to the focuser
 
 	strcpy(cCommonProp.Name,		"AlpacaPi Rotator Simulator");
-	strcpy(cCommonProp.Description,	"Rotator Simulator");
+	strcpy(cCommonProp.Description,	"AlpacaPi Rotator Simulator");
 	strcpy(cRotatorManufacturer,	"AlpacaPi");
 
 	//*	for IRotatorV3, this must be TRUE, for now we are using version 2

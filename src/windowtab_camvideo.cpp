@@ -14,7 +14,7 @@
 //*	that you agree that the author(s) have no warranty, obligations or liability.  You
 //*	must determine the suitability of this source code for your use.
 //*
-//*	Redistributions of this source code must retain this copyright notice.
+//*	Re-distributions of this source code must retain this copyright notice.
 //*****************************************************************************
 //*	Edit History
 //*****************************************************************************
@@ -126,14 +126,15 @@ int		btnWidth;
 //**************************************************************************************
 void	WindowTabCamVideo::ActivateWindow(void)
 {
-	DumpWidgetList(kCamVideo_Title, kCamVideo_last-1, __FILE__);
+//	DumpWidgetList(kCamVideo_Title, kCamVideo_last-1, __FILE__);
 }
 
 //*****************************************************************************
 void	WindowTabCamVideo::ProcessButtonClick(const int buttonIdx, const int flags)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
-	CONSOLE_DEBUG_W_NUM("buttonIdx\t",	buttonIdx);
+//	CONSOLE_DEBUG_W_NUM("buttonIdx\t",	buttonIdx);
+	SetWidgetText(kCamVideo_AlpacaErrorMsg, "");
 
 	switch(buttonIdx)
 	{
@@ -165,7 +166,10 @@ ControllerCamNormal	*parrentCamController;
 	parrentCamController	=	(ControllerCamNormal*)cParentObjPtr;
 	if (parrentCamController != NULL)
 	{
-		validData	=	parrentCamController->AlpacaSendPutCmdwResponse(	"camera", "startvideo",	NULL, &jsonParser);
+		validData	=	parrentCamController->AlpacaSendPutCmdwResponse(	"camera",
+																			"startvideo",
+																			NULL,
+																			&jsonParser);
 		if (validData)
 		{
 			SetWidgetText(	kCamVideo_RecordingStatus,	"Recording");
@@ -174,15 +178,35 @@ ControllerCamNormal	*parrentCamController;
 		{
 			SetWidgetText(	kCamVideo_RecordingStatus,	"failed");
 		}
-		SJP_DumpJsonData(&jsonParser, __FUNCTION__);
+//		SJP_DumpJsonData(&jsonParser, __FUNCTION__);
 	}
-
 }
 
 //*****************************************************************************
 void	WindowTabCamVideo::StopVideo(void)
 {
+bool				validData;
+SJP_Parser_t		jsonParser;
+ControllerCamNormal	*parrentCamController;
+
 	CONSOLE_DEBUG(__FUNCTION__);
-	SetWidgetText(		kCamVideo_RecordingStatus,	"Stopped");
+
+	parrentCamController	=	(ControllerCamNormal*)cParentObjPtr;
+	if (parrentCamController != NULL)
+	{
+		validData	=	parrentCamController->AlpacaSendPutCmdwResponse(	"camera",
+																			"stopvideo",
+																			NULL,
+																			&jsonParser);
+		if (validData)
+		{
+			SetWidgetText(	kCamVideo_RecordingStatus,	"Stopped");
+		}
+		else
+		{
+			SetWidgetText(	kCamVideo_RecordingStatus,	"failed");
+		}
+		SJP_DumpJsonData(&jsonParser, __FUNCTION__);
+	}
 }
 

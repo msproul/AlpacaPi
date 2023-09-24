@@ -54,6 +54,7 @@ uint64_t	MSecTimer_getNanoSecs(void);
 //*	string routines
 void		StripLeadingSpaces(char *theString);
 void		StripTrailingSpaces(char *theString);
+void		StripCRLF(char *theString);
 void		tolowerStr(char *theString);
 int			CountCharsInString(const char *theString, char theChar);
 

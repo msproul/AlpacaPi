@@ -201,6 +201,8 @@ DomeDriver::DomeDriver(const int argDevNum)
 	cIdleMoveTimeoutMinutes			=	2 * 60;
 	cRORrelayDelay_secs				=	20;				//*	used by Roll Off Roof ONLY
 
+	strcpy(cWatchDogTimeOutAction, "Close shutter");
+
 	//*	clear out all of the properties data
 	memset(&cDomeProp, 0, sizeof(TYPE_DomeProperties));
 	cDomeProp.ShutterStatus		=	kShutterStatus_Closed;
@@ -859,7 +861,7 @@ time_t		deltaSeconds;
 	int		minutes;
 	int		seconds;
 
-		CONSOLE_DEBUG("Idle move is ENABLED");
+//		CONSOLE_DEBUG("Idle move is ENABLED");
 
 		currentTimeEpoch	=	time(NULL);
 		deltaSeconds		=	currentTimeEpoch - cTimeOfLastMoveCheck;
@@ -2505,11 +2507,23 @@ const char	domeTitle[]	=	"AlpacaPi Dome Driver setup";
 	SocketWriteData(mySocketFD,	"</CENTER>\r\n");
 
 
-	SocketWriteData(mySocketFD,	"<CENTER>\r\n");
 //	SocketWriteData(mySocketFD,	"<form action=\"/setup/common\" target=\"_blank\">\r\n");
 //	sprintf(lineBuff, "<form action=\"%s\" target=\"_blank\">\r\n", formActionString);
 	sprintf(lineBuff, "<form action=\"%s\">\r\n", formActionString);
 	SocketWriteData(mySocketFD,	lineBuff);
+
+
+
+	SocketWriteData(mySocketFD,	"<CENTER>\r\n");
+#ifdef _ENABLE_DOME_RPI_
+	SocketWriteData(mySocketFD,	"<H2>Dome with Raspberry Pi and DC motor controller</H2>\r\n");
+#endif
+#ifdef	_ENABLE_DOME_ROR_
+	SocketWriteData(mySocketFD,	"<H2>Roll Off Roof with Raspberry Pi and relays</H2>\r\n");
+#endif
+#ifdef _ENABLE_DOME_SIMULATOR_
+	SocketWriteData(mySocketFD,	"<H2>Dome Simulator</H2>\r\n");
+#endif
 
 	SocketWriteData(mySocketFD,	"<TABLE BORDER=1>\r\n");
 	//----------------------------------------------------
@@ -2519,10 +2533,11 @@ const char	domeTitle[]	=	"AlpacaPi Dome Driver setup";
 	SocketWriteData(mySocketFD,	"<TH>Value</TH>\r\n");
 	SocketWriteData(mySocketFD,	"</TR>\r\n");
 
+
 	//-----------------------------------
 	//*	first row
 	SocketWriteData(mySocketFD,	"<TR>\r\n");
-	SocketWriteData(mySocketFD,	"<TD>Watchdog Timeout</TD>\r\n");
+	SocketWriteData(mySocketFD,	"<TD>Watchdog Timeout<SUP>(*1)</SUP></TD>\r\n");
 
 	SocketWriteData(mySocketFD,	"<TD>\r\n");
 	Setup_OutputRadioBtn(mySocketFD,	"wdtimeout",	"enabled",	"enabled",	cWatchDogEnabled);
@@ -2531,21 +2546,39 @@ const char	domeTitle[]	=	"AlpacaPi Dome Driver setup";
 	SocketWriteData(mySocketFD,	"</TR>\r\n");
 
 	//-----------------------------------
-	//*	first row
+	//*	2nd row
 	SocketWriteData(mySocketFD,	"<TR>\r\n");
-	SocketWriteData(mySocketFD,	"<TD>Dome Movement Timeout</TD>\r\n");
+	SocketWriteData(mySocketFD,	"<TD>\r\n");
+
+	SocketWriteData(mySocketFD,	"<label for=\"watchdogtime\">Watchdog Timeout (mins):</label>\r\n");
+	SocketWriteData(mySocketFD,	"</TD>\r\n");
+
+	SocketWriteData(mySocketFD,	"<TD>\r\n");
+
+	sprintf(lineBuff,	"<input type=\"text\" id=\"watchdogtime\" name=\"watchdogtime\" value=\"%d\">\r\n", cWatchDogTimeOut_Minutes);
+	SocketWriteData(mySocketFD,	lineBuff);
+
+	SocketWriteData(mySocketFD,	"</TD>\r\n");
+	SocketWriteData(mySocketFD,	"</TR>\r\n");
+
+	//-----------------------------------
+	//*	3rd row
+	SocketWriteData(mySocketFD,	"<TR>\r\n");
+	SocketWriteData(mySocketFD,	"<TD>Dome Movement Timeout<SUP>(*2)</SUP></TD>\r\n");
 
 	SocketWriteData(mySocketFD,	"<TD>\r\n");
 	Setup_OutputRadioBtn(mySocketFD,	"dometimeout",	"enabled",	"enabled",	cEnableIdleMoveTimeout);
 	Setup_OutputRadioBtn(mySocketFD,	"dometimeout",	"disabled",	"disabled",	!cEnableIdleMoveTimeout);
 	SocketWriteData(mySocketFD,	"</TD>\r\n");
 	SocketWriteData(mySocketFD,	"</TR>\r\n");
+
 	//-----------------------------------
-	//*	2nd row
+	//*	4th row
+
 	SocketWriteData(mySocketFD,	"<TR>\r\n");
 	SocketWriteData(mySocketFD,	"<TD>\r\n");
 
-	SocketWriteData(mySocketFD,	"<label for=\"length\">Timeout (mins):</label>\r\n");
+	SocketWriteData(mySocketFD,	"<label for=\"length\">Dome Movement Timeout (mins):</label>\r\n");
 	SocketWriteData(mySocketFD,	"</TD>\r\n");
 
 	SocketWriteData(mySocketFD,	"<TD>\r\n");
@@ -2556,12 +2589,13 @@ const char	domeTitle[]	=	"AlpacaPi Dome Driver setup";
 	SocketWriteData(mySocketFD,	"</TD>\r\n");
 	SocketWriteData(mySocketFD,	"</TR>\r\n");
 
+#if defined(_ENABLE_DOME_ROR_) || defined(_ENABLE_DOME_SIMULATOR_)
 	//-----------------------------------
-	//*	3rd row
+	//*	5th row
 	SocketWriteData(mySocketFD,	"<TR>\r\n");
 	SocketWriteData(mySocketFD,	"<TD>\r\n");
 
-	SocketWriteData(mySocketFD,	"<label for=\"length\">ROR delay (secs):</label>\r\n");
+	SocketWriteData(mySocketFD,	"<label for=\"length\">ROR relay delay (secs):<SUP>(*3)</SUP></label>\r\n");
 	SocketWriteData(mySocketFD,	"</TD>\r\n");
 
 	SocketWriteData(mySocketFD,	"<TD>\r\n");
@@ -2570,6 +2604,7 @@ const char	domeTitle[]	=	"AlpacaPi Dome Driver setup";
 
 	SocketWriteData(mySocketFD,	"</TD>\r\n");
 	SocketWriteData(mySocketFD,	"</TR>\r\n");
+#endif // _ENABLE_DOME_ROR_ || _ENABLE_DOME_SIMULATOR_
 
 	//-----------------------------------
 	//*	SAVE row
@@ -2584,6 +2619,35 @@ const char	domeTitle[]	=	"AlpacaPi Dome Driver setup";
 
 
 	SocketWriteData(mySocketFD,	"</form>\r\n");
+
+	//---------------------------------------------------------------------------
+	//	Documentation
+	SocketWriteData(mySocketFD,	"<UL>\r\n");
+	SocketWriteData(mySocketFD,	"<LI><B>Note 1:</B>");
+	SocketWriteData(mySocketFD,	"\tThe watchdog timeout occurs if no commands have been received for the specified time.\r\n");
+	SocketWriteData(mySocketFD,	"\t(default is 5 minutes).\r\n");
+	SocketWriteData(mySocketFD,	"\tIf SkyTravel is being used, it queries the dome driver every few seconds for status\r\n");
+	SocketWriteData(mySocketFD,	"\tthus resetting the timeout.\r\n");
+	SocketWriteData(mySocketFD,	"\tThe Dome watchdog timer controls the dome shutter. If the timeout occurs, the shutter will close.\r\n");
+	SocketWriteData(mySocketFD,	"<P><LI><B>Note 2:</B>");
+	SocketWriteData(mySocketFD,	"\tThe Dome movement timeout occurs if no MOVE command is received in the specified time\r\n");
+	SocketWriteData(mySocketFD,	"\t(default is 2 hours).\r\n");
+	SocketWriteData(mySocketFD,	"\tThe Dome movement timer controls the dome position.\r\n");
+	SocketWriteData(mySocketFD,	"\tIf the timeout occurs, the dome will be sent back to the PARK position\r\n");
+#if defined(_ENABLE_DOME_ROR_) || defined(_ENABLE_DOME_SIMULATOR_)
+	SocketWriteData(mySocketFD,	"<P><LI><B>Note 3:</B>");
+	SocketWriteData(mySocketFD,	"\tThe ROR delay applies to the ROR controller only, this is the delay for the relay timing.\r\n");
+	SocketWriteData(mySocketFD,	"<P><LI>");
+	SocketWriteData(mySocketFD,	"\tThese settings are NOT persistent and revert back to the default when the program is restarted.\r\n");
+	SocketWriteData(mySocketFD,	"<P><LI>");
+	SocketWriteData(mySocketFD,	"\tFor the Roll Off Roof, the dome movement is not defined and the 'shutter' is the 'roof'.\r\n");
+	SocketWriteData(mySocketFD,	"\tTherefore they both default to FALSE.\r\n");
+#endif // _ENABLE_DOME_ROR_
+
+	SocketWriteData(mySocketFD,	"</UL>\r\n");
+
+	SocketWriteData(mySocketFD,	"<P>\r\n");
+
 	return(true);
 }
 
@@ -2604,7 +2668,7 @@ void	DomeDriver::Setup_SaveFinish(void)
 //*****************************************************************************
 bool	DomeDriver::Setup_ProcessKeyword(const char *keyword, const char *valueString)
 {
-	CONSOLE_DEBUG_W_2STR("kw:value", keyword, valueString);
+//	CONSOLE_DEBUG_W_2STR("kw:value", keyword, valueString);
 //[Setup_ProcessKeyword] kw:value timeout, enabled
 //[Setup_ProcessKeyword] kw:value length, 223
 //[Setup_ProcessKeyword] kw:value rordelay, 44
@@ -2664,6 +2728,23 @@ bool	DomeDriver::Setup_ProcessKeyword(const char *keyword, const char *valueStri
 			CONSOLE_DEBUG_W_STR("invalid valueString:", valueString);
 		}
 		CONSOLE_DEBUG_W_NUM("cRORrelayDelay_secs", cRORrelayDelay_secs);
+	}
+	else if (strcmp(keyword, "watchdogtime") == 0)
+	{
+		if (isdigit(valueString[0]))
+		{
+			cWatchDogTimeOut_Minutes	=	atoi(valueString);
+		}
+		else
+		{
+			CONSOLE_DEBUG_W_STR("invalid valueString:", valueString);
+		}
+		CONSOLE_DEBUG_W_NUM("cRORrelayDelay_secs", cRORrelayDelay_secs);
+	}
+	else
+	{
+		CONSOLE_DEBUG("Unhandled data");
+		CONSOLE_DEBUG_W_2STR("kw:value", keyword, valueString);
 	}
 	return(true);
 }

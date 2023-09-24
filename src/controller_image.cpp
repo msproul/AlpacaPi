@@ -35,8 +35,8 @@
 
 #include	"opencv_utils.h"
 
-#define _ENABLE_CONSOLE_DEBUG_
-#define	_DEBUG_TIMING_
+//#define _ENABLE_CONSOLE_DEBUG_
+//#define	_DEBUG_TIMING_
 #include	"ConsoleDebug.h"
 
 
@@ -101,6 +101,7 @@ ControllerImage::ControllerImage(	const char			*argWindowName,
 	char	elementTypeStr[32];
 	char	transmitTypeStr[32];
 
+		CONSOLE_DEBUG("Setting binary image header data");
 		cBinaryImageHdr	=	*binaryImageHdr;
 
 		GetBinaryElementTypeString(cBinaryImageHdr.ImageElementType,		elementTypeStr);
@@ -129,6 +130,16 @@ ControllerImage::ControllerImage(	const char			*argWindowName,
 		SetWidgetNumber(kTab_ImageInfo, kImageInfo_Dimension1Val,				cBinaryImageHdr.Dimension1);
 		SetWidgetNumber(kTab_ImageInfo, kImageInfo_Dimension2Val,				cBinaryImageHdr.Dimension2);
 		SetWidgetNumber(kTab_ImageInfo, kImageInfo_Dimension3Val,				cBinaryImageHdr.Dimension3);
+
+
+		SetWidgetText(		kTab_Image, kImageDisplay_LiveOrDownLoad,	"Downloaded image");
+		SetWidgetBGColor(	kTab_Image, kImageDisplay_LiveOrDownLoad,	CV_RGB(0,	200, 0));
+	}
+	else
+	{
+		CONSOLE_DEBUG("Setting Live image");
+		SetWidgetText(		kTab_Image, kImageDisplay_LiveOrDownLoad,	"LIVE image!!!!!!!");
+		SetWidgetBGColor(	kTab_Image, kImageDisplay_LiveOrDownLoad,	CV_RGB(255,	255, 77));
 	}
 
 
@@ -160,16 +171,28 @@ ControllerImage::ControllerImage(	const char	*argWindowName,
 #endif // _USE_OPENCV_CPP_
 
 	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_STR("Setting image from disk", imageFilePath);;
 	InitClassVariables();
 
-	imageFromDisk	=	ReadImageIntoOpenCVimage(imageFilePath);
-	if (imageFromDisk != NULL)
+	if (imageFilePath != NULL)
 	{
-		SetLiveWindowImage(imageFromDisk);
+		imageFromDisk	=	ReadImageIntoOpenCVimage(imageFilePath);
+		if (imageFromDisk != NULL)
+		{
+			SetLiveWindowImage(imageFromDisk);
+			SetWidgetText(		kTab_Image, kImageDisplay_LiveOrDownLoad,	imageFilePath);
+			SetWidgetBGColor(	kTab_Image, kImageDisplay_LiveOrDownLoad,	CV_RGB(0,	200, 0));
+		}
+		else
+		{
+			CONSOLE_DEBUG_W_STR("Failed to read image from disk:", imageFilePath);
+		}
 	}
 	else
 	{
-		CONSOLE_DEBUG_W_STR("Failed to read image from disk:", imageFilePath);
+		CONSOLE_DEBUG("Setting Live image");
+		SetWidgetText(		kTab_Image, kImageDisplay_LiveOrDownLoad,	"LIVE image!!!!!!!");
+		SetWidgetBGColor(	kTab_Image, kImageDisplay_LiveOrDownLoad,	CV_RGB(255,	255, 77));
 	}
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, "EXIT");
 }
@@ -188,11 +211,13 @@ ControllerImage::~ControllerImage(void)
 	//*	free up the image memory
 	if (cDownLoadedImage != NULL)
 	{
+		CONSOLE_DEBUG("Deleting cDownLoadedImage!!!!!!!!!!!!!!!!!!!!!!!!");
 		delete cDownLoadedImage;
 		cDownLoadedImage	=	NULL;
 	}
 	if (cDisplayedImage != NULL)
 	{
+		CONSOLE_DEBUG("Deleting cDisplayedImage!!!!!!!!!!!!!!!!!!!!!!!!");
 		delete cDisplayedImage;
 		cDisplayedImage	=	NULL;
 	}
@@ -376,20 +401,22 @@ int		smallDisplayHeight;
 int		reduceFactor;
 int		newImgWidth;
 int		newImgHeight;
-//int		newImgBytesPerPixel;
+int		newImgBytesPerPixel;
 int		openCVerr;
 bool	validImg;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 
 	if (cDownLoadedImage != NULL)
 	{
+		CONSOLE_DEBUG("Deleting cDownLoadedImage!!!!!!!!!!!!!!!!!!!!!!!!");
 	//	cvReleaseImage(&cDownLoadedImage);
 		delete cDownLoadedImage;
 		cDownLoadedImage	=	NULL;
 	}
 	if (cDisplayedImage != NULL)
 	{
+		CONSOLE_DEBUG("Deleting cDisplayedImage!!!!!!!!!!!!!!!!!!!!!!!!");
 	//	cvReleaseImage(&cDisplayedImage);
 		delete cDisplayedImage;
 		cDisplayedImage	=	NULL;
@@ -402,7 +429,8 @@ bool	validImg;
 		//	https://docs.opencv.org/3.4/d3/d63/classcv_1_1Mat.html
 		newImgWidth			=	newOpenCVImage->cols;
 		newImgHeight		=	newOpenCVImage->rows;
-//		newImgBytesPerPixel	=	newOpenCVImage->step[1];
+		newImgBytesPerPixel	=	newOpenCVImage->step[1];
+		CONSOLE_DEBUG_W_NUM("newImgBytesPerPixel\t=", newImgBytesPerPixel);
 		validImg			=	true;
 		if ((newImgWidth < 100) || (newImgWidth > 10000))
 		{
@@ -420,7 +448,7 @@ bool	validImg;
 		//--------------------------------------------------------------
 		if (validImg)
 		{
-//			CONSOLE_DEBUG_W_NUM("newImgBytesPerPixel\t=", newImgBytesPerPixel);
+			CONSOLE_DEBUG_W_NUM("newImgBytesPerPixel\t=", newImgBytesPerPixel);
 			cDownLoadedImage	=	ConvertImageToRGB(newOpenCVImage);
 
 			//*	the downloaded image needs to be copied and/or resized to the displayed image
@@ -471,15 +499,15 @@ bool	validImg;
 								0,
 								cv::INTER_LINEAR);
 
-					openCVerr	=	cv::imwrite("displayed-resized.png", *cDisplayedImage);
-					if (openCVerr != 0)
-					{
-						CONSOLE_DEBUG_W_NUM("openCVerr               \t=",	openCVerr);
-						CONSOLE_DEBUG_W_NUM("cDisplayedImage->cols   \t=",	cDisplayedImage->cols);
-						CONSOLE_DEBUG_W_NUM("cDisplayedImage->rows   \t=",	cDisplayedImage->rows);
-						CONSOLE_DEBUG_W_LONG("cDisplayedImage->step[0]\t=",	cDisplayedImage->step[0]);
-						CONSOLE_DEBUG_W_LONG("cDisplayedImage->step[1]\t=",	cDisplayedImage->step[1]);
-					}
+//					openCVerr	=	cv::imwrite("displayed-resized.png", *cDisplayedImage);
+//					if (openCVerr != 0)
+//					{
+//						CONSOLE_DEBUG_W_NUM("openCVerr               \t=",	openCVerr);
+//						CONSOLE_DEBUG_W_NUM("cDisplayedImage->cols   \t=",	cDisplayedImage->cols);
+//						CONSOLE_DEBUG_W_NUM("cDisplayedImage->rows   \t=",	cDisplayedImage->rows);
+//						CONSOLE_DEBUG_W_LONG("cDisplayedImage->step[0]\t=",	cDisplayedImage->step[0]);
+//						CONSOLE_DEBUG_W_LONG("cDisplayedImage->step[1]\t=",	cDisplayedImage->step[1]);
+//					}
 
 					SetWidgetImage(kTab_Image, kImageDisplay_ImageDisplay, cDisplayedImage);
 				}
@@ -499,6 +527,10 @@ bool	validImg;
 			}
 			//*	Update the image size on the screen
 			SetImageWindowInfo();
+		}
+		else
+		{
+			CONSOLE_DEBUG("Invalid image (size to big or to small)");
 		}
 	}
 	else
@@ -682,6 +714,9 @@ double	download_MB_per_sec;
 }
 
 #if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
+int		gImgNumber	=	1;
+char	gImageFileName[64];
+
 //**************************************************************************************
 void	ControllerImage::CopyImageToLiveImage(cv::Mat *newOpenCVImage)
 {
@@ -699,6 +734,10 @@ int		oldImgRowStepSize;
 int		dspImgHeight;
 int		dspImgRowStepSize;
 size_t	byteCount_dsp;
+
+//	sprintf(gImageFileName, "debugimg/A-newOpenCVImage%02d.png", gImgNumber);
+//	cv::imwrite(gImageFileName, *newOpenCVImage);
+
 
 	CONSOLE_DEBUG("OpenCV++ not finished!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 	CONSOLE_DEBUG("++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
@@ -727,9 +766,24 @@ size_t	byteCount_dsp;
 
 		if (byteCount_src == byteCount_old)
 		{
-//			CONSOLE_DEBUG("memcpy to cDownLoadedImage");
+			CONSOLE_DEBUG("memcpy to cDownLoadedImage");
+			//*	copy FROM newOpenCVImage to cDownLoadedImage
+			//*	cDownLoadedImage  <<= newOpenCVImage
 			memcpy(cDownLoadedImage->data, newOpenCVImage->data, byteCount_src);
 		}
+		else
+		{
+			CONSOLE_DEBUG("byteCount_src != byteCount_old");
+			CONSOLE_DEBUG("Calling cv::resize");
+			cv::resize(	*newOpenCVImage,
+						*cDownLoadedImage,
+						cDownLoadedImage->size(),
+						0,
+						0,
+						cv::INTER_LINEAR);
+		}
+//		sprintf(gImageFileName, "debugimg/B-cDownLoadedImage%02d.png", gImgNumber);
+//		cv::imwrite(gImageFileName, *cDownLoadedImage);
 
 		//*	double check the displayed image
 		if (cDisplayedImage != NULL)
@@ -742,6 +796,7 @@ size_t	byteCount_dsp;
 			if (byteCount_dsp == byteCount_old)
 			{
 				CONSOLE_DEBUG("memcpy to cDisplayedImage");
+				//*	cDisplayedImage <<= cDownLoadedImage
 				memcpy(cDisplayedImage->data, cDownLoadedImage->data, byteCount_dsp);
 			}
 			else
@@ -757,6 +812,9 @@ size_t	byteCount_dsp;
 							0,
 							cv::INTER_LINEAR);
 			}
+//			sprintf(gImageFileName, "debugimg/C-cDisplayedImage%02d.png", gImgNumber);
+//			cv::imwrite(gImageFileName, *cDisplayedImage);
+			gImgNumber++;
 		}
 		else
 		{
@@ -766,6 +824,7 @@ size_t	byteCount_dsp;
 	else
 	{
 		CONSOLE_DEBUG("((cDownLoadedImage != NULL) && (newOpenCVImage != NULL))");
+		CONSOLE_ABORT(__FUNCTION__);
 	}
 	CalculateHistogramArray();
 }
@@ -843,7 +902,7 @@ void	ControllerImage::UpdateLiveWindowImage(IplImage *newOpenCVImage, const char
 bool			imagesAreTheSame;
 #if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 	unsigned int	rowStepSize;
-	unsigned int	nChannels;
+	unsigned int	bytesPerPixel;
 #endif
 
 	CONSOLE_DEBUG("-------------------Start");
@@ -879,17 +938,21 @@ bool			imagesAreTheSame;
 				CONSOLE_DEBUG_W_NUM("cDownLoadedImage->rows\t=",	cDownLoadedImage->rows);
 			}
 			rowStepSize	=	newOpenCVImage->step[0];
-			nChannels	=	newOpenCVImage->step[1];
+			bytesPerPixel	=	newOpenCVImage->step[1];
 			if (rowStepSize != cDownLoadedImage->step[0])
 			{
 				imagesAreTheSame	=	false;
 				CONSOLE_DEBUG("Failed on rowStepSize");
+				CONSOLE_DEBUG_W_NUM("rowStepSize              \t=",	rowStepSize);
+				CONSOLE_DEBUG_W_NUM("cDownLoadedImage->step[0]\t=",	cDownLoadedImage->step[0]);
 			}
 
-			if (nChannels != cDownLoadedImage->step[1])
+			if (bytesPerPixel != cDownLoadedImage->step[1])
 			{
 				imagesAreTheSame	=	false;
-				CONSOLE_DEBUG("Failed on nChannels");
+				CONSOLE_DEBUG("Failed on bytesPerPixel");
+				CONSOLE_DEBUG_W_NUM("bytesPerPixel            \t=",	bytesPerPixel);
+				CONSOLE_DEBUG_W_NUM("cDownLoadedImage->step[1]\t=",	cDownLoadedImage->step[1]);
 			}
 	#else
 			//*	check if width are the same
@@ -897,7 +960,7 @@ bool			imagesAreTheSame;
 			{
 				imagesAreTheSame	=	false;
 				CONSOLE_DEBUG("Failed on width");
-				CONSOLE_DEBUG_W_NUM("newOpenCVImage->width  \t=",		newOpenCVImage->width);
+				CONSOLE_DEBUG_W_NUM("newOpenCVImage->width  \t=",	newOpenCVImage->width);
 				CONSOLE_DEBUG_W_NUM("cDownLoadedImage->width\t=",	cDownLoadedImage->width);
 
 			}
@@ -966,13 +1029,20 @@ bool			imagesAreTheSame;
 				}
 				if (cColorImage != NULL)
 				{
+					CONSOLE_DEBUG("Converting to color cv::cvtColor/cvCvtColor");
 				#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 					//*	convert gray scale to color
 					cv::cvtColor(*newOpenCVImage, *cColorImage, cv::COLOR_GRAY2BGR);
+//					cv::imwrite("newColorImg.png", *newOpenCVImage);
+//					cv::imwrite("cColorImage.png", *cColorImage);
 				#else
 					cvCvtColor(newOpenCVImage, cColorImage, CV_GRAY2RGB);
 				#endif // _USE_OPENCV_CPP_
 					CopyImageToLiveImage(cColorImage);
+				}
+				else
+				{
+					CONSOLE_DEBUG("Failed to create new color image");
 				}
 			}
 			cUpdateWindow	=	true;
@@ -991,7 +1061,7 @@ bool			imagesAreTheSame;
 	}
 
 
-//	CONSOLE_DEBUG("-------------------exit");
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, "-------------------exit");
 }
 
 //**************************************************************************************

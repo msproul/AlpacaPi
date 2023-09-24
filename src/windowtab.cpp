@@ -95,6 +95,7 @@
 //*	Jun 18,	2023	<MLS> Adding DS indicator next to Readall indicator on all windowtabs
 //*	Jun 19,	2023	<MLS> Added DumpWidget()
 //*	Jun 23,	2023	<MLS> Improvements to DumpWidget()
+//*	Aug 24,	2023	<MLS> Added angle to ellipse functions
 //*****************************************************************************
 
 
@@ -564,7 +565,7 @@ void	WindowTab::SetWidgetBGColor(const int widgetIdx, cv::Scalar newtextColor)
 {
 	if ((widgetIdx >= 0) && (widgetIdx < kMaxWidgets))
 	{
-		cWidgetList[widgetIdx].bgColor	=	newtextColor;
+		cWidgetList[widgetIdx].bgColor		=	newtextColor;
 		cWidgetList[widgetIdx].needsUpdated	=	true;
 	}
 }
@@ -2529,7 +2530,7 @@ void	WindowTab::LLG_FillRect(int left, int top, int width, int height)
 }
 
 //*********************************************************************
-void	WindowTab::LLG_FillEllipse(int xCenter, int yCenter, int xRadius, int yRadius)
+void	WindowTab::LLG_FillEllipse(int xCenter, int yCenter, int xRadius, int yRadius, const double angle_deg)
 {
 
 #if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
@@ -2548,10 +2549,10 @@ void	WindowTab::LLG_FillEllipse(int xCenter, int yCenter, int xRadius, int yRadi
 			cv::ellipse(	*cOpenCV_Image,
 							center,
 							axes,
-							0.0,			//*	angle
-							0.0,			//*	start_angle
-							360.0,			//*	end_angle
-							cCurrentColor,	//	cv::Scalar color,
+							angle_deg,			//*	angle
+							0.0,				//*	start_angle
+							360.0,				//*	end_angle
+							cCurrentColor,		//	cv::Scalar color,
 						#if (CV_MAJOR_VERSION >= 3)
 							cv::FILLED
 						#else
@@ -2591,7 +2592,7 @@ void	WindowTab::LLG_FillEllipse(int xCenter, int yCenter, int xRadius, int yRadi
 			cvEllipse(	cOpenCV_Image,
 						center,
 						axes,
-						0.0,			//*	angle
+						angle_deg,		//*	angle
 						0.0,			//*	start_angle
 						360.0,			//*	end_angle
 						cCurrentColor,	//	cv::Scalar color,
@@ -2616,7 +2617,7 @@ void	WindowTab::LLG_FillEllipse(int xCenter, int yCenter, int xRadius, int yRadi
 }
 
 //*********************************************************************
-void	WindowTab::LLG_FrameEllipse(int xCenter, int yCenter, int xRadius, int yRadius)
+void	WindowTab::LLG_FrameEllipse(int xCenter, int yCenter, int xRadius, int yRadius, const double angle_deg)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -2636,7 +2637,7 @@ void	WindowTab::LLG_FrameEllipse(int xCenter, int yCenter, int xRadius, int yRad
 			cv::ellipse(	*cOpenCV_Image,
 							center,
 							axes,
-							0.0,				//*	angle
+							angle_deg,			//*	angle
 							0.0,				//*	start_angle
 							360.0,				//*	end_angle
 							cCurrentColor,		//	cv::Scalar color,
@@ -2646,11 +2647,12 @@ void	WindowTab::LLG_FrameEllipse(int xCenter, int yCenter, int xRadius, int yRad
 		}
 		else
 		{
-			CONSOLE_ABORT("Invalid arguments");
+			CONSOLE_DEBUG("Invalid arguments");
 			CONSOLE_DEBUG_W_NUM("xCenter\t=", xCenter);
 			CONSOLE_DEBUG_W_NUM("yCenter\t=", yCenter);
 			CONSOLE_DEBUG_W_NUM("xRadius\t=", xRadius);
 			CONSOLE_DEBUG_W_NUM("yRadius\t=", yRadius);
+			CONSOLE_ABORT("Invalid arguments");
 		}
 	}
 	else
@@ -2673,7 +2675,7 @@ void	WindowTab::LLG_FrameEllipse(int xCenter, int yCenter, int xRadius, int yRad
 			cvEllipse(	cOpenCV_Image,
 						center,
 						axes,
-						0.0,				//*	angle
+						angle_deg,			//*	angle
 						0.0,				//*	start_angle
 						360.0,				//*	end_angle
 						cCurrentColor,		//	cv::Scalar color,

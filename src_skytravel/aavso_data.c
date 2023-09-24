@@ -32,6 +32,9 @@
 //*	Apr 10,	2021	<MLS> AAVSO TargetTool objects displayed
 //*	Apr 11,	2021	<MLS> Working on AAVSO TargetTool read logic
 //*	Aug  9,	2021	<MLS> Fixed bug in alert count
+//*	Aug 22,	2023	<MLS> Increased JSON line buffer sizes from 100 to 512
+//*	Aug 22,	2023	<MLS> Some data has "-otice-" instead of "-notice-", added work around
+//*	Aug 22,	2023	<MLS> George Silva fixed the "-otice-" in the database
 //*****************************************************************************
 
 #include	<string.h>
@@ -42,10 +45,9 @@
 #include	<fcntl.h>
 #include	<math.h>
 #include	<stdbool.h>
-#include	<ctype.h>
 
 //*	MLS Libraries
-//#define _ENABLE_CONSOLE_DEBUG_
+#define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
 
 
@@ -91,7 +93,7 @@
 //			"filter": "B",
 //			"priority": true},
 //************************************************************************
-static void ParseOneLineOfJson(char *jsonLine, char *keyWordStr, char *valueStr)
+static void ParseOneLineOfJson(char *jsonLine, char *keyWordStr, char *valueStr, int maxDataLen)
 {
 int		sLen;
 int		iii;
@@ -112,7 +114,7 @@ char	theChar;
 			{
 				if ((jsonLine[iii] != '{') && (jsonLine[iii] != '"') && (jsonLine[iii] > 0x20))
 				{
-					if (ccc < 100)
+					if (ccc < maxDataLen)
 					{
 						keyWordStr[ccc++]	=	jsonLine[iii];
 						keyWordStr[ccc]		=	0;
@@ -133,7 +135,7 @@ char	theChar;
 					{
 						//*	ignore leading spaces
 					}
-					else if (ccc < 100)
+					else if (ccc < maxDataLen)
 					{
 						valueStr[ccc++]	=	theChar;
 						valueStr[ccc]	=	0;
@@ -191,17 +193,18 @@ char	myStarName[kLongNameMax + 10];
 	return(foundIdx);
 }
 
+#define	kMaxJsonDataLen	512
 //************************************************************************
 static void	ProcessOneLine(char *lineBuff, TYPE_CelestData *currentStarEntry)
 {
-char		keyWordStr[128];
-char		valueStr[128];
+char		keyWordStr[kMaxJsonDataLen];
+char		valueStr[kMaxJsonDataLen];
 double		ra_Degrees;
 double		dec_Degrees;
 char		*alertNoticePtr;
 int			alertID;
 
-	ParseOneLineOfJson(lineBuff, keyWordStr, valueStr);
+	ParseOneLineOfJson(lineBuff, keyWordStr, valueStr, (kMaxJsonDataLen - 2));
 	if (strcasecmp(keyWordStr, "star_name") == 0)
 	{
 //		CONSOLE_DEBUG_W_STR("starname\t=", valueStr);
@@ -227,12 +230,17 @@ int			alertID;
 #if 1
 	else if (strcasecmp(keyWordStr, "other_info") == 0)
 	{
-		char		*noticePtr;
+	char		*noticePtr;
 	//	"other_info": "[[Alert Notice 614 https://www.aavso.org/aavso-alert-notice-614]]",
 
 //		CONSOLE_DEBUG_W_STR(keyWordStr, valueStr);
 //		printf("other_info=%s\r\n", valueStr);
 		noticePtr	=	strstr(valueStr, "notice-");
+//		if (noticePtr == NULL)
+//		{
+//			CONSOLE_DEBUG_W_STR(keyWordStr, valueStr);
+//			noticePtr	=	strstr(valueStr, "otice-");
+//		}
 		if (noticePtr != NULL)
 		{
 			while ((*noticePtr != '-') && ((*noticePtr != 0)))
@@ -304,8 +312,8 @@ TYPE_CelestData	*ReadAAVSO_TargetData(long *objectCount)
 {
 FILE				*filePointer;
 TYPE_CelestData		*targetData;
-char				readBuff[256];
-char				lineBuff[256];
+char				readBuff[kMaxJsonDataLen];
+char				lineBuff[kMaxJsonDataLen];
 size_t				bufferSize;
 int					lineLength;
 int					linesRead;
@@ -324,7 +332,7 @@ int					startupWidgetIdx;
 
 	strcpy(filePath,	"aavso/");
 	strcat(filePath,	"alerts_json.txt");
-	CONSOLE_DEBUG_W_STR("Reading:", filePath);
+//	CONSOLE_DEBUG_W_STR("Reading:", filePath);
 
 	targetData			=	NULL;
 	linesRead			=	0;
@@ -346,13 +354,12 @@ int					startupWidgetIdx;
 
 			linesRead	=	0;
 			alertIdx	=	-1;
-			while (fgets(readBuff, 100, filePointer) && (alertIdx < kAAVSO_starCnt))
+			while (fgets(readBuff, (kMaxJsonDataLen - 2), filePointer) && (alertIdx < kAAVSO_starCnt))
 			{
 				linesRead++;
 				lineLength	=	strlen(readBuff);
 				if (lineLength > 0)
 				{
-
 					//*	get rid of leading spaces
 					ccc		=	0;
 					sLen	=	strlen(readBuff);
@@ -408,7 +415,6 @@ int					startupWidgetIdx;
 						}
 						linesForCurrEntry	=	0;
 						memset(&currentStarEntry, 0, sizeof(TYPE_CelestData));
-
 					}
 					else
 					{

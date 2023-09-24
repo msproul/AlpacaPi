@@ -268,7 +268,6 @@ class Controller
 				void	SetWidgetHighlighted(	const int tabNum, const int widgetIdx, bool highlighted);
 				void	SetWidgetProgress(		const int tabNum, const int widgetIdx, const int currPosition, const int totalValue);
 
-		virtual	void	UpdateConnectedStatusIndicator(void);
 		virtual	void	UpdateWindowTabColors(void);
 
 
@@ -428,6 +427,7 @@ class Controller
 		virtual	void	UpdateStartupData(void);
 		virtual	void	UpdateOnlineStatus(void);
 		virtual	void	UpdateStatusData(void);
+		virtual	void	UpdateConnectedStatusIndicator(void);
 //------------------------------------------------------------
 #ifdef _CONTROLLER_USES_ALPACA_
 		virtual	void	UpdateCommonProperties(void);

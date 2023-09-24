@@ -16,7 +16,7 @@
 //*	that you agree that the author(s) have no warranty, obligations or liability.  You
 //*	must determine the suitability of this source code for your use.
 //*
-//*	Redistributions of this source code must retain this copyright notice.
+//*	Re-distributions of this source code must retain this copyright notice.
 //*****************************************************************************
 //*	Edit History
 //*****************************************************************************
@@ -380,7 +380,14 @@ int			objCntr;
 bool		windowExists;
 char		myWindowName[128];
 
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, argWindowName);
+	if (alpacaDevice != NULL)
+	{
+		CONSOLE_DEBUG_W_STR(alpacaDevice->deviceTypeStr, argWindowName);
+	}
+	else
+	{
+		CONSOLE_DEBUG_W_STR(__FUNCTION__, argWindowName);
+	}
 
 	memset(&cCommonProp, 0, sizeof(TYPE_CommonProperties));
 
@@ -770,7 +777,7 @@ void	Controller::CheckConnectedState(void)
 #ifdef _CONTROLLER_USES_ALPACA_
 bool		validData;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 	if (cValidIPaddr)
 	{
 		if (strlen(cAlpacaDeviceTypeStr) > 0)
@@ -874,11 +881,11 @@ bool	validData;
 bool	enableReadAllDebug	=	false;
 
 	CONSOLE_DEBUG(__FUNCTION__);
-//	CONSOLE_DEBUG_W_STR("Reading startup information for", cWindowName);
-//	CONSOLE_DEBUG_W_NUM("cAlpacaDeviceType\t=", cAlpacaDeviceType);
-//	CONSOLE_DEBUG_W_BOOL("cValidIPaddr    \t=", cValidIPaddr);
-//	CONSOLE_DEBUG_W_BOOL("cHas_readall    \t=", cHas_readall);
-//	CONSOLE_DEBUG_W_BOOL("cHas_DeviceState\t=", cHas_DeviceState);
+	CONSOLE_DEBUG_W_STR("Reading startup information for", cWindowName);
+	CONSOLE_DEBUG_W_NUM("cAlpacaDeviceType\t=", cAlpacaDeviceType);
+	CONSOLE_DEBUG_W_BOOL("cValidIPaddr    \t=", cValidIPaddr);
+	CONSOLE_DEBUG_W_BOOL("cHas_readall    \t=", cHas_readall);
+	CONSOLE_DEBUG_W_BOOL("cHas_DeviceState\t=", cHas_DeviceState);
 
 //	if (cAlpacaDeviceType == kDeviceType_Management)
 //	{
@@ -902,10 +909,10 @@ bool	enableReadAllDebug	=	false;
 		if (cHas_readall)
 		{
 			CONSOLE_DEBUG("Calling AlpacaGetStatus_ReadAll()");
-//			CONSOLE_DEBUG_W_STR("cAlpacaDeviceTypeStr\t=", cAlpacaDeviceTypeStr);
-//			CONSOLE_DEBUG_W_NUM("cAlpacaDevNum       \t=", cAlpacaDevNum);
+			CONSOLE_DEBUG_W_STR("cAlpacaDeviceTypeStr\t=", cAlpacaDeviceTypeStr);
+			CONSOLE_DEBUG_W_NUM("cAlpacaDevNum       \t=", cAlpacaDevNum);
 			validData	=	AlpacaGetStatus_ReadAll(cAlpacaDeviceTypeStr, cAlpacaDevNum, enableReadAllDebug);
-//			CONSOLE_DEBUG_W_BOOL("AlpacaGetStatus_ReadAll() returned\t=", validData);
+			CONSOLE_DEBUG_W_BOOL("AlpacaGetStatus_ReadAll() returned\t=", validData);
 		}
 		else
 		{
@@ -2937,9 +2944,6 @@ void	Controller::DrawWindow(void)
 #endif // _USE_OPENCV_CPP_
 	{
 		cCurrentColor	=	cBackGrndColor;
-//		CONSOLE_DEBUG_W_DBL("cCurrentColor.B\t=",	cCurrentColor.val[0]);
-//		CONSOLE_DEBUG_W_DBL("cCurrentColor.G\t=",	cCurrentColor.val[1]);
-//		CONSOLE_DEBUG_W_DBL("cCurrentColor.R\t=",	cCurrentColor.val[2]);
 		LLG_FillRect(0,	0,	cWidth,	cHeight);
 
 		DrawWindowTabs();
@@ -3829,7 +3833,7 @@ Controller	*myControllerPtr;
 	if (myControllerPtr != NULL)
 	{
 //		CONSOLE_DEBUG("Valid Controller ptr");
-		while(myControllerPtr->cMagicCookie == kMagicCookieValue)
+		while (myControllerPtr->cMagicCookie == kMagicCookieValue)
 		{
 			if (gDebugBackgroundThread)
 			{
@@ -4328,22 +4332,24 @@ int	iii;
 
 
 static	pthread_t	gShellScript_ThreadID;
-static	char		gShellCmdLine[128];
 static	bool		gShellThreadIsRunning	=	false;
+static	char		gShellCmdString[256];
 
 //*****************************************************************************
 static void	*RunCommandLine_Thead(void *arg)
 {
 int		systemRetCode;
+char	myCommandLine[256];
+char	*myCharPtr;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
+	myCharPtr	=	(char *)arg;
+
 
 	if (arg != NULL)
 	{
-		CONSOLE_DEBUG((char *)arg);
-
-		CONSOLE_DEBUG_W_STR("cmdLine\t=",	(char *)arg);
-		systemRetCode	=	system((char *)arg);
+		strcpy(myCommandLine, myCharPtr);
+		systemRetCode	=	system(myCommandLine);
 		if (systemRetCode == 0)
 		{
 		}
@@ -4356,27 +4362,30 @@ int		systemRetCode;
 	{
 		CONSOLE_DEBUG("arg is NULL");
 	}
-	CONSOLE_DEBUG("Thread exiting");
+//	CONSOLE_DEBUG("Thread exiting");
 
 	return(NULL);
 }
 
 //*****************************************************************************
-void	RunCommandLine(const char *commandLine)
+void	RunCommandLine(const char *commandLineArg)
 {
 int		threadErr;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	//*	the data has to be in stable memory, not something that is going to get de-allocated
+	strcpy(gShellCmdString, commandLineArg);
 
 	if (gShellThreadIsRunning == false)
 	{
-		strcpy(gShellCmdLine, commandLine);
-		CONSOLE_DEBUG_W_STR("gShellCmdLine\t=",	gShellCmdLine);
+		CONSOLE_DEBUG_W_STR("commandLineArg\t=",	commandLineArg);
+		CONSOLE_DEBUG_W_STR("gShellCmdString \t=",	gShellCmdString);
 
 		threadErr	=	pthread_create(	&gShellScript_ThreadID,
 										NULL,
 										&RunCommandLine_Thead,
-										(void *)gShellCmdLine);
+										(void *)gShellCmdString);
 		if (threadErr == 0)
 		{
 			CONSOLE_DEBUG("Shell script thread created successfully");
@@ -4392,7 +4401,6 @@ int		threadErr;
 		CONSOLE_DEBUG("Thread currently busy!!!!");
 	}
 }
-
 
 //*****************************************************************************
 void	EditTextFile(const char *filename)

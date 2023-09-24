@@ -674,7 +674,6 @@ void	WindowTabSTsettings::DrawWidgetCustomGraphic(IplImage *openCV_Image, const 
 }
 
 static	pthread_t	gShellScript_ThreadID;
-static	char		gShellCmdLine[64];
 static	bool		gShellThreadIsRunning	=	false;
 
 //*****************************************************************************
@@ -682,15 +681,13 @@ static void	*RunShellScript_Thead(void *arg)
 {
 int		systemRetCode;
 
+//	CONSOLE_DEBUG(__FUNCTION__);
+
 	gShellThreadIsRunning	=	true;
-	CONSOLE_DEBUG(__FUNCTION__);
 
 	if (arg != NULL)
 	{
-
-		CONSOLE_DEBUG((char *)arg);
-
-		CONSOLE_DEBUG_W_STR("cmdLine\t=",	(char *)arg);
+//		CONSOLE_DEBUG_W_STR("cmdLine\t=",	(char *)arg);
 		systemRetCode	=	system((char *)arg);
 		if (systemRetCode == 0)
 		{
@@ -704,7 +701,7 @@ int		systemRetCode;
 	{
 		CONSOLE_DEBUG("arg is NULL");
 	}
-	CONSOLE_DEBUG("Thread exiting");
+//	CONSOLE_DEBUG("Thread exiting");
 
 	gShellThreadIsRunning	=	false;
 	return(NULL);
@@ -715,17 +712,16 @@ void	RunShellScript(const char *commandLine)
 {
 int		threadErr;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	if (gShellThreadIsRunning == false)
 	{
-		strcpy(gShellCmdLine, commandLine);
-		CONSOLE_DEBUG_W_STR("gShellCmdLine\t=",	gShellCmdLine);
+//		CONSOLE_DEBUG_W_STR("commandLine\t=",	commandLine);
 
 		threadErr	=	pthread_create(	&gShellScript_ThreadID,
 										NULL,
 										&RunShellScript_Thead,
-										(void *)gShellCmdLine);
+										(void *)commandLine);
 		if (threadErr == 0)
 		{
 			CONSOLE_DEBUG("Shell script thread created successfully");
@@ -734,7 +730,7 @@ int		threadErr;
 		{
 			CONSOLE_DEBUG_W_NUM("Error on thread creation, Error number:", threadErr);
 		}
-		CONSOLE_DEBUG("EXIT");
+//		CONSOLE_DEBUG("EXIT");
 	}
 	else
 	{

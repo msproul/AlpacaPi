@@ -27,7 +27,7 @@
 /* ------------------------------------------------------------ *
  * Global variables and defaults                                *
  * ------------------------------------------------------------ */
-int		gBNO_verbose	=	0;
+//bool	gBNO_verbose	=	0;
 int		outflag			=	0;
 int		argflag			=	0; // 1 dump, 2 reset, 3 load calib, 4 write calib
 char	opr_mode[9]		=	{0};
@@ -101,101 +101,101 @@ Usage examples:\n\
  * ------------------------------------------------------------ */
 void parseargs(int argc, char* argv[])
 {
-   int arg;
-   opterr	=	0;
+	int arg;
+	opterr	=	0;
 
-   if(argc == 1) { usage(); exit(-1); }
+	if(argc == 1) { usage(); exit(-1); }
 
-   while ((arg = (int) getopt (argc, argv, "a:b:dm:p:rt:l:w:o:hv")) != -1)
+	while ((arg = (int) getopt (argc, argv, "a:b:dm:p:rt:l:w:o:hv")) != -1)
 	{
-      switch (arg)
-      {
-         // arg -v verbose, type: flag, optional
-         case 'v':
-            gBNO_verbose = 1; break;
+		switch (arg)
+		{
+			// arg -v verbose, type: flag, optional
+			case 'v':
+				gBNO_verbose = 1; break;
 
-         // arg -a + sensor address, type: string
-         // mandatory, example: 0x29
-         case 'a':
-            if(gBNO_verbose == 1) printf("Debug: arg -a, value %s\n", optarg);
-            if (strlen(optarg) != 4)
-			{
-               printf("Error: Cannot get valid -a sensor address argument.\n");
-               exit(-1);
-            }
-            strncpy(senaddr, optarg, sizeof(senaddr));
-            break;
+			// arg -a + sensor address, type: string
+			// mandatory, example: 0x29
+			case 'a':
+				if(gBNO_verbose == 1) printf("Debug: arg -a, value %s\n", optarg);
+				if (strlen(optarg) != 4)
+				{
+					printf("Error: Cannot get valid -a sensor address argument.\n");
+					exit(-1);
+				}
+				strncpy(senaddr, optarg, sizeof(senaddr));
+				break;
 
-         // arg -b + I2C bus, type: string
-         // optional, example: "/dev/i2c-1"
-         case 'b':
-            if(gBNO_verbose == 1) printf("Debug: arg -b, value %s\n", optarg);
-            if (strlen(optarg) >= sizeof(i2c_bus))
-			{
-               printf("Error: invalid i2c bus argument.\n");
-               exit(-1);
-            }
-            strncpy(i2c_bus, optarg, sizeof(i2c_bus));
-            break;
+			// arg -b + I2C bus, type: string
+			// optional, example: "/dev/i2c-1"
+			case 'b':
+				if(gBNO_verbose == 1) printf("Debug: arg -b, value %s\n", optarg);
+				if (strlen(optarg) >= sizeof(i2c_bus))
+				{
+					printf("Error: invalid i2c bus argument.\n");
+						exit(-1);
+				}
+				strncpy(i2c_bus, optarg, sizeof(i2c_bus));
+				break;
 
-         // arg -d
-         // optional, dumps the complete register map data
-         case 'd':
-            if(gBNO_verbose == 1) printf("Debug: arg -d, value %s\n", optarg);
-            argflag = 1;
-            break;
+			// arg -d
+			// optional, dumps the complete register map data
+			case 'd':
+				if(gBNO_verbose == 1) printf("Debug: arg -d, value %s\n", optarg);
+				argflag = 1;
+				break;
 
-         // arg -m sets operations mode, type: string
-         case 'm':
-            if(gBNO_verbose == 1) printf("Debug: arg -m, value %s\n", optarg);
-            if (strlen(optarg) >= sizeof(opr_mode))
-			{
-               printf("Error: invalid opr_mode argument.\n");
-               exit(-1);
-            }
-            strncpy(opr_mode, optarg, sizeof(opr_mode));
-            break;
+			// arg -m sets operations mode, type: string
+			case 'm':
+				if(gBNO_verbose == 1) printf("Debug: arg -m, value %s\n", optarg);
+				if (strlen(optarg) >= sizeof(opr_mode))
+				{
+					printf("Error: invalid opr_mode argument.\n");
+					exit(-1);
+				}
+				strncpy(opr_mode, optarg, sizeof(opr_mode));
+				break;
 
-         // arg -p sets power mode, type: string
-         case 'p':
-            if(gBNO_verbose == 1) printf("Debug: arg -p, value %s\n", optarg);
-            if (strlen(optarg) >= sizeof(pwr_mode))
-			{
-               printf("Error: invalid pwr_mode argument.\n");
-               exit(-1);
-            }
-            strncpy(pwr_mode, optarg, sizeof(pwr_mode));
-            break;
+			// arg -p sets power mode, type: string
+			case 'p':
+				if(gBNO_verbose == 1) printf("Debug: arg -p, value %s\n", optarg);
+				if (strlen(optarg) >= sizeof(pwr_mode))
+				{
+					printf("Error: invalid pwr_mode argument.\n");
+					exit(-1);
+				}
+				strncpy(pwr_mode, optarg, sizeof(pwr_mode));
+				break;
 
-         // arg -r
-         // optional, resets sensor
-         case 'r':
-            if(gBNO_verbose == 1) printf("Debug: arg -r, value %s\n", optarg);
-            argflag = 2;
-            break;
+			// arg -r
+			// optional, resets sensor
+			case 'r':
+				if(gBNO_verbose == 1) printf("Debug: arg -r, value %s\n", optarg);
+				   argflag = 2;
+				break;
 
-         // arg -t + sensor component, type: string
-         // mandatory, example: mag (magnetometer)
-         case 't':
-            if(gBNO_verbose == 1) printf("Debug: arg -t, value %s\n", optarg);
-            if (strlen(optarg) != 3)
-			{
-               printf("Error: Cannot get valid -t data type argument.\n");
-               exit(-1);
-            }
-            strncpy(datatype, optarg, sizeof(datatype));
-            break;
+			// arg -t + sensor component, type: string
+			// mandatory, example: mag (magnetometer)
+			case 't':
+				if(gBNO_verbose == 1) printf("Debug: arg -t, value %s\n", optarg);
+				if (strlen(optarg) != 3)
+				{
+					printf("Error: Cannot get valid -t data type argument.\n");
+					exit(-1);
+				}
+				strncpy(datatype, optarg, sizeof(datatype));
+				break;
 
-         // arg -l + calibration file name, type: string
-         // loads the sensor calibration from file. example: ./bno055.cal
-         case 'l':
-            argflag = 3;
-            if(gBNO_verbose == 1) printf("Debug: arg -l, value %s\n", optarg);
-            if (strlen(optarg) >= sizeof(calfile))
-			{
-               printf("Error: invalid calfile argument.\n");
-               exit(-1);
-            }
+			// arg -l + calibration file name, type: string
+			// loads the sensor calibration from file. example: ./bno055.cal
+			case 'l':
+				argflag = 3;
+				if(gBNO_verbose == 1) printf("Debug: arg -l, value %s\n", optarg);
+				if (strlen(optarg) >= sizeof(calfile))
+				{
+					printf("Error: invalid calfile argument.\n");
+					exit(-1);
+				}
             strncpy(calfile, optarg, sizeof(calfile));
             break;
 
@@ -251,62 +251,62 @@ void parseargs(int argc, char* argv[])
  * ----------------------------------------------------------- */
 void print_calstat()
 {
-   struct bnocal bnoc;
+struct bnocal bnoc;
    /* -------------------------------------------------------- *
-    *  Check the sensors calibration state                     *
-    * -------------------------------------------------------- */
+	*  Check the sensors calibration state                     *
+	* -------------------------------------------------------- */
    int res = get_calstatus(&bnoc);
    if(res != 0)
 	{
-      printf("Error: Cannot read calibration state.\n");
-      exit(-1);
-   }
+		printf("Error: Cannot read calibration state.\n");
+		exit(-1);
+	}
 
-   /* -------------------------------------------------------- *
-    *  Convert the status code into a status message           *
-    * -------------------------------------------------------- */
-    printf("Sensor System Calibration = ");
+	/* -------------------------------------------------------- *
+	*  Convert the status code into a status message           *
+	* -------------------------------------------------------- */
+	printf("Sensor System Calibration = ");
     switch(bnoc.scal_st)
-    {
-      case 0:
-         printf("Uncalibrated\n");
-         break;
-      case 1:
-         printf("Minimal Calibrated\n");
-         break;
-      case 2:
-         printf("Mostly Calibrated\n");
-         break;
-      case 3:
-         printf("Fully calibrated\n");
-         break;
+	{
+	  case 0:
+		 printf("Uncalibrated\n");
+		 break;
+	  case 1:
+		 printf("Minimal Calibrated\n");
+	     break;
+	  case 2:
+		 printf("Mostly Calibrated\n");
+		 break;
+	  case 3:
+		 printf("Fully calibrated\n");
+	     break;
    }
 
    printf("    Gyroscope Calibration = ");
    switch(bnoc.gcal_st)
    {
-      case 0:
-         printf("Uncalibrated\n");
-         break;
-      case 1:
-         printf("Minimal Calibrated\n");
-         break;
-      case 2:
-         printf("Mostly Calibrated\n");
-         break;
-      case 3:
-         printf("Fully calibrated\n");
-         break;
+	  case 0:
+		 printf("Uncalibrated\n");
+		 break;
+	  case 1:
+		 printf("Minimal Calibrated\n");
+		 break;
+	  case 2:
+		 printf("Mostly Calibrated\n");
+		 break;
+	  case 3:
+		 printf("Fully calibrated\n");
+		 break;
    }
 
    printf("Accelerometer Calibration = ");
    switch(bnoc.acal_st)
    {
-      case 0:
-         printf("Uncalibrated\n");
-         break;
-      case 1:
-         printf("Minimal Calibrated\n");
+	  case 0:
+		 printf("Uncalibrated\n");
+		 break;
+	  case 1:
+	     printf("Minimal Calibrated\n");
          break;
       case 2:
          printf("Mostly Calibrated\n");
@@ -338,7 +338,8 @@ void print_calstat()
 //**************************************************************************************
 int main(int argc, char *argv[])
 {
-	int res = -1;       // res = function retcode: 0=OK, -1 = Error
+struct bnocal	bnoc;
+int				res = -1;       // res = function retcode: 0=OK, -1 = Error
 
 	/* ---------------------------------------------------------- *
 	* Process the cmdline parameters                             *
@@ -459,7 +460,6 @@ int main(int argc, char *argv[])
 	* ----------------------------------------------------------- */
 	if(strcmp(datatype, "cal") == 0)
 	{
-		struct bnocal bnoc;
 		/* -------------------------------------------------------- *
 		*  Read the sensors calibration state                      *
 		* -------------------------------------------------------- */
@@ -500,9 +500,8 @@ int main(int argc, char *argv[])
 	/* ----------------------------------------------------------- *
 	*  "-w" writes sensor calibration data to file.               *
 	* ----------------------------------------------------------- */
-	if(argflag == 4)
+	if (argflag == 4)
 	{
-		struct bnocal bnoc;
 		/* -------------------------------------------------------- *
 		*  Check the sensors calibration state                     *
 		* -------------------------------------------------------- */
@@ -636,17 +635,17 @@ int main(int argc, char *argv[])
 			exit(-1);
 		}
 
-		/* ----------------------------------------------------------- *
-		* print the formatted output string to stdout (Example below) *
-		* ACC -45.00 264.00 939.00 (ACC X Y Z)                        *
-		* ----------------------------------------------------------- */
+		//* -----------------------------------------------------------
+		//* print the formatted output string to stdout (Example below)
+		//* ACC -45.00 264.00 939.00 (ACC X Y Z)
+		//* -----------------------------------------------------------
 		printf("ACC %3.2f %3.2f %3.2f\n", bnod.adata_x, bnod.adata_y, bnod.adata_z);
 
 		if(outflag == 1)
 		{
-			/* -------------------------------------------------------- *
-			*  Open the html file for writing accelerometer data       *
-			* -------------------------------------------------------- */
+			//* --------------------------------------------------------
+			//*  Open the html file for writing accelerometer data
+			//* --------------------------------------------------------
 			FILE *html;
 			if(! (html=fopen(htmfile, "w")))
 			{
@@ -677,17 +676,17 @@ int main(int argc, char *argv[])
 			exit(-1);
 		}
 
-		/* ----------------------------------------------------------- *
-		* print the formatted output string to stdout (Example below) *
-		* GYR 0.00 0.06 -0.12 (GYR X Y Z)                             *
-		* ----------------------------------------------------------- */
+		//* -----------------------------------------------------------
+		//* print the formatted output string to stdout (Example below)
+		//* GYR 0.00 0.06 -0.12 (GYR X Y Z)
+		//* -----------------------------------------------------------
 		printf("GYR %3.2f %3.2f %3.2f\n", bnod.gdata_x, bnod.gdata_y, bnod.gdata_z);
 
 		if(outflag == 1)
 		{
-			/* -------------------------------------------------------- *
-			*  Open the html file for writing gyroscope data           *
-			* -------------------------------------------------------- */
+			//* --------------------------------------------------------
+			//*  Open the html file for writing gyroscope data
+			//* --------------------------------------------------------
 			FILE *html;
 			if(! (html=fopen(htmfile, "w")))
 			{
@@ -831,31 +830,31 @@ int main(int argc, char *argv[])
 
         if(outflag == 1)
 		{
-         /* -------------------------------------------------------- *
-          *  Open the html file for writing Euler Orientation data   *
-          * -------------------------------------------------------- */
-         FILE *html;
-         if(! (html=fopen(htmfile, "w")))
-         {
-            printf("Error open %s for writing.\n", htmfile);
-            exit(-1);
-         }
-         fprintf(html, "<table><tr>\n");
-         fprintf(html, "<td class=\"sensordata\">Euler Heading:<span class=\"sensorvalue\">%f</span></td>\n", bnod.eul_head);
-         fprintf(html, "<td class=\"sensorspace\"></td>\n");
-         fprintf(html, "<td class=\"sensordata\">Euler Roll:<span class=\"sensorvalue\">%f</span></td>\n", bnod.eul_roll);
-         fprintf(html, "<td class=\"sensorspace\"></td>\n");
-         fprintf(html, "<td class=\"sensordata\">Euler Pitch:<span class=\"sensorvalue\">%f</span></td>\n", bnod.eul_pitc);
-         fprintf(html, "</tr></table>\n");
-         fclose(html);
-        }
+			/* -------------------------------------------------------- *
+			*  Open the html file for writing Euler Orientation data   *
+			* -------------------------------------------------------- */
+			FILE *html;
+			if(! (html=fopen(htmfile, "w")))
+			{
+				printf("Error open %s for writing.\n", htmfile);
+				exit(-1);
+			}
+			fprintf(html, "<table><tr>\n");
+			fprintf(html, "<td class=\"sensordata\">Euler Heading:<span class=\"sensorvalue\">%f</span></td>\n", bnod.eul_head);
+			fprintf(html, "<td class=\"sensorspace\"></td>\n");
+			fprintf(html, "<td class=\"sensordata\">Euler Roll:<span class=\"sensorvalue\">%f</span></td>\n", bnod.eul_roll);
+			fprintf(html, "<td class=\"sensorspace\"></td>\n");
+			fprintf(html, "<td class=\"sensordata\">Euler Pitch:<span class=\"sensorvalue\">%f</span></td>\n", bnod.eul_pitc);
+			fprintf(html, "</tr></table>\n");
+			fclose(html);
+			}
 
-        t = clock() - t;
-        double time_taken = ((double)t)/CLOCKS_PER_SEC; // in seconds
-        printf("Sensor reading took %f seconds \n", time_taken);
-      }
+//			t = clock() - t;
+//			double time_taken = ((double)t)/CLOCKS_PER_SEC; // in seconds
+//			printf("Sensor reading took %f seconds \n", time_taken);
+		}
 
-   } /* End reading continuous data */
+	} /* End reading continuous data */
 
    /* ----------------------------------------------------------- *
     *  "-t qua" reads the Quaternation data from the sensor.      *

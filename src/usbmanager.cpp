@@ -28,6 +28,7 @@
 //*	Jun 10,	2023	<MLS> Added USB_BuildTable()
 //*	Jun 10,	2023	<MLS> Added USB_GetPathFromID()
 //*	Jun 14,	2023	<MLS> Added event logging if errors with usbquerry.sh
+//*	Sep 20,	2023	<MLS> Added USB_DumpTable()
 //*****************************************************************************
 
 #include	<stdlib.h>
@@ -66,7 +67,8 @@ static void	RunUSBprofile(void);
 int	USB_InitTable(void)
 {
 //int		iii;
-//	CONSOLE_DEBUG(__FUNCTION__);
+
+	CONSOLE_DEBUG(__FUNCTION__);
 
 	if (gUSBcount <= 0)
 	{
@@ -76,14 +78,22 @@ int	USB_InitTable(void)
 			RunUSBprofile();
 		}
 	}
-//	CONSOLE_DEBUG_W_NUM("gUSBcount\t=", gUSBcount);
-//	for (iii=0; iii<gUSBcount; iii++)
-//	{
-//		CONSOLE_DEBUG_W_STR(gUSBtable[iii].usbPath, gUSBtable[iii].usbIDstring);
-//	}
 
 	return(gUSBcount);
 }
+
+//*****************************************************************************
+void	USB_DumpTable(void)
+{
+int		iii;
+
+	CONSOLE_DEBUG_W_NUM("gUSBcount\t=", gUSBcount);
+	for (iii=0; iii<gUSBcount; iii++)
+	{
+		CONSOLE_DEBUG_W_STR(gUSBtable[iii].usbPath, gUSBtable[iii].usbIDstring);
+	}
+}
+
 
 //*****************************************************************************
 //*	Build list of USB serial devices and determine the type
@@ -192,7 +202,7 @@ bool	foundIt;
 		//*	check for a match
 		if (strstr(gUSBtable[iii].usbIDstring, idString) != NULL)
 		{
-			//*	make sure it hasnt been claimed already
+			//*	make sure it has not been claimed already
 			if (gUSBtable[iii].hasBeenClaimed == false)
 			{
 				strcpy(usbPath, gUSBtable[iii].usbPath);
@@ -205,7 +215,6 @@ bool	foundIt;
 	}
 	return(foundIt);
 }
-
 
 //*****************************************************************************
 //*	run the script "usbquerry.sh" and parse the results
@@ -226,11 +235,11 @@ struct stat	fileStatus;
 char		usbQuerryStr[]	=	"usbquerry.sh";
 char		usbIDfileName[]	=	"usb_id.txt";
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 	returnCode	=	stat(usbQuerryStr, &fileStatus);		//*	fstat - check for existence of file
 	if (returnCode == 0)
 	{
-		strcpy(commandString,	"./");
+		strcpy(commandString,	"bash ");
 		strcat(commandString,	usbQuerryStr);
 		strcat(commandString,	" > ");
 		strcat(commandString,	usbIDfileName);
@@ -262,6 +271,7 @@ char		usbIDfileName[]	=	"usb_id.txt";
 				{
 					*eolPtr	=	0;
 				}
+				CONSOLE_DEBUG(lineBuff);
 
 				//*	make sure its a valid tty device
 				if (strncasecmp(lineBuff, "/dev/tty", 8) == 0)

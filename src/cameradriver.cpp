@@ -16,7 +16,7 @@
 //*	that you agree that the author(s) have no warranty, obligations or liability.  You
 //*	must determine the suitability of this source code for your use.
 //*
-//*	Redistributions of this source code must retain this copyright notice.
+//*	Re-distributions of this source code must retain this copyright notice.
 //*****************************************************************************
 //*
 //*	References:
@@ -32,13 +32,13 @@
 //*****************************************************************************
 //*	<MLS>	=	Mark L Sproul
 //*****************************************************************************
-//*	Apr 14,	2019	<MLS> Created cameradriver.c
+//*	Apr 14,	2019	<MLS> Created cameradriver.cpp
 //*	Apr 15,	2019	<MLS> Added command table for camera
 //*	Apr 17,	2019	<MLS> Added Camera_OutputHTML()
 //*	Aug 26,	2019	<MLS> Started on C++ version of alpaca camera driver
 //*	Sep  3,	2019	<MLS> Added initialization to class constructor
 //*	Sep 26,	2019	<MLS> Working on organizing camera C++ class
-//*	Oct  2,	2019	<MLS> Added AllcateImageBuffer()
+//*	Oct  2,	2019	<MLS> Added AllocateImageBuffer()
 //*	Oct 26,	2019	<MLS> Added IsCameraIDvalid()
 //*	Nov  2,	2019	<MLS> Downloaded and installed cfitsio-3.47 library
 //*	Nov  3,	2019	<MLS> Added cameraSerialNum
@@ -204,6 +204,8 @@
 //*	Jun 12,	2023	<MLS> Increased size of Mandlebrot QQQ table to handle larger image simulation
 //*	Jun 18,	2023	<MLS> Added DeviceState_Add_Content()
 //*	Jul 13,	2023	<MLS> Added error messages for invalid GET commands
+//*	Sep  1,	2023	<MLS> 16 bit binary transfer working AlpacaPi client
+//*	Sep  9,	2023	<MLS> Added _USE_CAMERA_READ_THREAD_
 //*****************************************************************************
 //*	Jan  1,	2119	<TODO> ----------------------------------------
 //*	Jun 26,	2119	<TODO> Add support for sub frames
@@ -252,6 +254,7 @@
 
 #ifdef _ENABLE_IMU_
 	#include "imu_lib.h"
+	#include "imu_lib_bno055.h"
 #endif
 
 #include	"JsonResponse.h"
@@ -326,7 +329,6 @@ int	cameraCnt;
 #ifdef _ENABLE_ATIK_
 	cameraCnt	+=	CreateATIK_CameraObjects();
 #endif
-
 //-----------------------------------------------------------
 #ifdef _ENABLE_ASI_
 	cameraCnt	+=	CreateASI_CameraObjects();
@@ -340,7 +342,6 @@ int	cameraCnt;
 #ifdef _ENABLE_PHASEONE_
 	cameraCnt	+=	CreatePhaseOne_CameraObjects();
 #endif
-
 //-----------------------------------------------------------
 #ifdef _ENABLE_QHY_
 	cameraCnt	+=	CreateCameraObjects_QHY();
@@ -353,7 +354,6 @@ int	cameraCnt;
 #ifdef _ENABLE_TOUP_
 	cameraCnt	+=	CreateTOUP_CameraObjects();
 #endif
-
 //-----------------------------------------------------------
 #ifdef _ENABLE_SONY_
 	CreateSONY_CameraObjects();
@@ -362,8 +362,6 @@ int	cameraCnt;
 #ifdef _ENABLE_CAMERA_SIMULATOR_
 	cameraCnt	+=	CreateCameraObjects_Sim();
 #endif
-
-
 	return(cameraCnt);
 }
 
@@ -634,9 +632,44 @@ int	iii;
 
 	//========================================
 	//*	Setup support
-	cDriverSupportsSetup		=	true;
+	cDriverSupportsSetup	=	true;
 
-	SendDiscoveryQuery();
+	//===========================================================================
+	//*	Overlay info
+	//*	this is for overlaying GPS data onto the image primarily for occultation use
+	//*	however, it could have other uses as well
+	cOverlayMode		=	0;		//*	0 = none
+	cOverlayPosition	=	0;
+	cOverlayColor		=	0;
+
+	//========================================
+	//*	GPS data QHY174-GPS
+	memset(&cGPS, 0, sizeof(TYPE_GPSdata));
+//	cGPSpresent					=	false;
+//	cGPS_DateValid				=	false;
+//	cGPS_TimeValid				=	false;
+//	cGPS_LaLoValid				=	false;
+//	cGPScameraName[0]			=	0;
+////	cGPS_SystemTime				=	0;		//*	Used for calculating GPS/SYS time offset
+//	cGPSdataIdx					=	0;
+//	cGPS_SequenceNumber			=	0;
+//	cGPS_Lat					=	0;
+//	cGPS_Long					=	0;
+//	cGPS_Altitude				=	0;		//*	in meters
+//	cGPS_Status					=	0;		//	0 = not valid, 1 = locked
+//	cGPS_PPSC					=	0;
+//	cGPS_ShutterStartTimeStr[0]	=	0;
+//	cGPS_SU						=	0;		//*	start time micro seconds
+//	cGPS_ShutterEndTimeStr[0]	=	0;
+//	cGPS_EU						=	0;		//*	End time micro seconds
+//	cGPS_NowTimeStr[0]			=	0;
+//	cGPS_NU						=	0;		//*	Now time micro seconds
+//	cGPS_Exposure_us			=	0;		//*	exposure time in micro seconds
+//	cGPS_ClockDeltaSecs			=	0;
+//	cGPS_SatsInView				=	0;		//*	Number of satellites in view
+//	cGPS_SatMode1				=	0;
+//	cGPS_SatMode2				=	0;
+
 }
 
 //**************************************************************************************
@@ -2091,6 +2124,7 @@ TYPE_ASCOM_STATUS		alpacaErrCode;
 		else
 		{
 			alpacaErrCode	=	kASCOM_Err_NotImplemented;
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "CCDtemperature Not implemented:");
 		}
 	}
 	else
@@ -3370,14 +3404,14 @@ char				readOutModeString[32];
 int					alpacaReadOutModeIdx;
 TYPE_IMAGE_TYPE		newImageType;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 
 	readOutFound		=	GetKeyWordArgument(	reqData->contentData,
 												"ReadoutMode",
 												readOutModeString,
 												(sizeof(readOutModeString) -1));
 
-	CONSOLE_DEBUG_W_STR("readOutModeString\t=", readOutModeString);
+	CONSOLE_DEBUG_W_STR("readOutModeString\t\t=", readOutModeString);
 
 	if (readOutFound)
 	{
@@ -3394,7 +3428,7 @@ TYPE_IMAGE_TYPE		newImageType;
 				if (cCameraProp.ReadOutModes[alpacaReadOutModeIdx].valid)
 				{
 					newImageType	=	(TYPE_IMAGE_TYPE)cCameraProp.ReadOutModes[alpacaReadOutModeIdx].internalImageType;
-					CONSOLE_DEBUG_W_NUM("newImageType\t=", newImageType);
+					CONSOLE_DEBUG_W_NUM("newImageType\t\t=", newImageType);
 					alpacaErrCode	=	SetImageType(newImageType);
 					//*	now update the sensor type based on the image type
 					if (newImageType == kImageType_RGB24)
@@ -3404,8 +3438,8 @@ TYPE_IMAGE_TYPE		newImageType;
 					}
 					else
 					{
-						CONSOLE_DEBUG("Setting sensorType to kSensorType_RGGB");
-						cCameraProp.SensorType	=	kSensorType_RGGB;
+						CONSOLE_DEBUG("Setting sensorType to kSensorType_Monochrome");
+						cCameraProp.SensorType	=	kSensorType_Monochrome;
 					}
 				}
 				else
@@ -3417,6 +3451,7 @@ TYPE_IMAGE_TYPE		newImageType;
 			{
 				alpacaErrCode	=	kASCOM_Err_InvalidValue;
 				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Value out of range");
+				CONSOLE_DEBUG(alpacaErrMsg);
 			}
 		}
 		else
@@ -3436,6 +3471,7 @@ TYPE_IMAGE_TYPE		newImageType;
 	{
 		alpacaErrCode	=	kASCOM_Err_InvalidValue;
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Mode not specified");
+		CONSOLE_DEBUG(alpacaErrMsg);
 	}
 	mySocketFD	=	reqData->socket;
 
@@ -3913,7 +3949,6 @@ TYPE_EXPOSURE_STATUS	internalCameraState;
 			alpacaCameraState	=	kALPACA_CameraState_Idle;
 			break;
 	}
-
 	return(alpacaCameraState);
 }
 
@@ -4407,7 +4442,7 @@ char				dataTypeString[32];
 	totalPixels		=	cLastExposure_ROIinfo.currentROIwidth * cLastExposure_ROIinfo.currentROIheight;
 	bytesPerPixel	=	6;
 
-bool	xmit16BitAs32Bit	=	true;
+bool	xmit16BitAs32Bit	=	false;
 	switch(cLastExposure_ROIinfo.currentROIimageType)
 	{
 		case kImageType_RAW8:
@@ -4470,21 +4505,21 @@ bool	xmit16BitAs32Bit	=	true;
 			break;
 	}
 
-	CONSOLE_DEBUG_W_NUM("MetadataVersion\t\t=",			binaryImageHdr.MetadataVersion);
-	CONSOLE_DEBUG_W_NUM("ErrorNumber\t\t=",				binaryImageHdr.ErrorNumber);
-	CONSOLE_DEBUG_W_NUM("ClientTransactionID\t=",		binaryImageHdr.ClientTransactionID);
-	CONSOLE_DEBUG_W_NUM("ServerTransactionID\t=",		binaryImageHdr.ServerTransactionID);
-	CONSOLE_DEBUG_W_NUM("DataStart\t\t\t=",				binaryImageHdr.DataStart);
-	GetAlpacaImageDataTypeString(binaryImageHdr.ImageElementType, dataTypeString);
-	CONSOLE_DEBUG_W_NUM("ImageElementType\t\t=",		binaryImageHdr.ImageElementType);
-	CONSOLE_DEBUG_W_STR("ImageElementType\t\t=",		dataTypeString);
-	GetAlpacaImageDataTypeString(binaryImageHdr.TransmissionElementType, dataTypeString);
-	CONSOLE_DEBUG_W_NUM("TransmissionElementType\t=",	binaryImageHdr.TransmissionElementType);
-	CONSOLE_DEBUG_W_STR("TransmissionElementType\t=",	dataTypeString);
-	CONSOLE_DEBUG_W_NUM("Rank\t\t\t=",					binaryImageHdr.Rank);
-	CONSOLE_DEBUG_W_NUM("Dimension1\t\t=",				binaryImageHdr.Dimension1);
-	CONSOLE_DEBUG_W_NUM("Dimension2\t\t=",				binaryImageHdr.Dimension2);
-	CONSOLE_DEBUG_W_NUM("Dimension3\t\t=",				binaryImageHdr.Dimension3);
+//	CONSOLE_DEBUG_W_NUM("MetadataVersion\t\t=",			binaryImageHdr.MetadataVersion);
+//	CONSOLE_DEBUG_W_NUM("ErrorNumber\t\t=",				binaryImageHdr.ErrorNumber);
+//	CONSOLE_DEBUG_W_NUM("ClientTransactionID\t=",		binaryImageHdr.ClientTransactionID);
+//	CONSOLE_DEBUG_W_NUM("ServerTransactionID\t=",		binaryImageHdr.ServerTransactionID);
+//	CONSOLE_DEBUG_W_NUM("DataStart\t\t\t=",				binaryImageHdr.DataStart);
+//	GetAlpacaImageDataTypeString(binaryImageHdr.ImageElementType, dataTypeString);
+//	CONSOLE_DEBUG_W_NUM("ImageElementType\t\t=",		binaryImageHdr.ImageElementType);
+//	CONSOLE_DEBUG_W_STR("ImageElementType\t\t=",		dataTypeString);
+//	GetAlpacaImageDataTypeString(binaryImageHdr.TransmissionElementType, dataTypeString);
+//	CONSOLE_DEBUG_W_NUM("TransmissionElementType\t=",	binaryImageHdr.TransmissionElementType);
+//	CONSOLE_DEBUG_W_STR("TransmissionElementType\t=",	dataTypeString);
+//	CONSOLE_DEBUG_W_NUM("Rank\t\t\t=",					binaryImageHdr.Rank);
+//	CONSOLE_DEBUG_W_NUM("Dimension1\t\t=",				binaryImageHdr.Dimension1);
+//	CONSOLE_DEBUG_W_NUM("Dimension2\t\t=",				binaryImageHdr.Dimension2);
+//	CONSOLE_DEBUG_W_NUM("Dimension3\t\t=",				binaryImageHdr.Dimension3);
 
 	dataPayloadSize		=	totalPixels * bytesPerPixel;
 	dataPayloadSize		+=	sizeof(TYPE_BinaryImageHdr);		//*	this should be 44 for version 1.
@@ -6284,11 +6319,10 @@ double				deltaExp_secs;
 	return(alpacaErrCode);
 }
 
-
 //*****************************************************************************
 //*	if buffer size is <= zero, figure out the size
 //*****************************************************************************
-bool	CameraDriver::AllcateImageBuffer(long bufferSize)
+bool	CameraDriver::AllocateImageBuffer(long bufferSize)
 {
 int32_t		myBufferSize;
 bool		successFlag;
@@ -6393,10 +6427,10 @@ bool				recTimeFound;
 				CONSOLE_DEBUG_W_NUM("cNumFramesToSave\t=", cNumFramesToSave);
 
 				alpacaErrCode			=	Start_Video();
+				CONSOLE_DEBUG_W_NUM("Start_Video() returned:\t=", alpacaErrCode);
 				if (alpacaErrCode == 0)
 				{
 					videoIsColor		=	1;
-CONSOLE_DEBUG(__FUNCTION__);
 					GenerateFileNameRoot();
 					strcpy(filePath, gImageDataDir);
 					strcat(filePath, "/");
@@ -6415,7 +6449,7 @@ CONSOLE_DEBUG(__FUNCTION__);
 						//	fourCC	=	CV_FOURCC('M', 'P', '4', '2');		//*	MP42 -> MPEG-4  WORKS!!
 						//
 						//	-1,									//*	user selectable dialog box
-						#if (CV_MAJOR_VERSION >= 4)
+						#if (CV_MAJOR_VERSION >= 3)
 							fourCC	=	cv::VideoWriter::fourcc('R', 'G', 'B', 'T');
 						#else
 							fourCC	=	CV_FOURCC('R', 'G', 'B', 'T');
@@ -6425,7 +6459,7 @@ CONSOLE_DEBUG(__FUNCTION__);
 
 						default:
 						//	fourCC	=	CV_FOURCC('Y', '8', '0', '0');		//*	writes, but cant be read
-						#if (CV_MAJOR_VERSION >= 4)
+						#if (CV_MAJOR_VERSION >= 3)
 							fourCC	=	cv::VideoWriter::fourcc('Y', '8', ' ', ' ');		//*	writes, but cant be read
 						#else
 							fourCC	=	CV_FOURCC('Y', '8', ' ', ' ');		//*	writes, but cant be read
@@ -6433,11 +6467,14 @@ CONSOLE_DEBUG(__FUNCTION__);
 							videoIsColor		=	0;
 							break;
 					}
-					CONSOLE_DEBUG_W_HEX("fourCC\t=", fourCC);
-					fourCC				=	cv::VideoWriter::fourcc('M', 'J', 'P', 'G'),
-					cAVIfourCC			=	fourCC;
-				#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 					cOpenCV_videoWriter	=	NULL;
+				#if (CV_MAJOR_VERSION >= 3)
+					fourCC				=	cv::VideoWriter::fourcc('M', 'J', 'P', 'G'),
+				#else
+					fourCC				=	CV_FOURCC('M', 'J', 'P', 'G'),
+				#endif
+
+				#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 					//*	make the compiler happy
 					CONSOLE_DEBUG_W_NUM("videoIsColor\t=", videoIsColor);
 
@@ -6453,6 +6490,8 @@ CONSOLE_DEBUG(__FUNCTION__);
 																	cvSize(cCameraProp.CameraXsize, cCameraProp.CameraYsize),
 																	videoIsColor);
 				#endif
+					CONSOLE_DEBUG_W_HEX("fourCC\t=", fourCC);
+					cAVIfourCC			=	fourCC;
 					if (cOpenCV_videoWriter == NULL)
 					{
 						CONSOLE_DEBUG("Failed to create video writer");
@@ -6465,7 +6504,6 @@ CONSOLE_DEBUG(__FUNCTION__);
 					//=============================================
 					if (cVideoCreateTimeStampFile)
 					{
-CONSOLE_DEBUG(__FUNCTION__);
 						GenerateFileNameRoot();
 						strcpy(filePath, gImageDataDir);
 						strcat(filePath, "/");
@@ -6480,6 +6518,13 @@ CONSOLE_DEBUG(__FUNCTION__);
 							fprintf(cVideoTimeStampFilePtr, "#FrameNum,TimeStamp\r\n");
 						}
 					}
+				}
+				else
+				{
+					CONSOLE_DEBUG_W_NUM("Start_Video() failed with error\t=", alpacaErrCode);
+					CONSOLE_DEBUG_W_STR("cLastCameraErrMsg              \t=", cLastCameraErrMsg);
+					strcpy(alpacaErrMsg, cLastCameraErrMsg);
+					CONSOLE_DEBUG_W_STR("alpacaErrMsg                   \t=", alpacaErrMsg);
 				}
 				break;
 
@@ -7284,7 +7329,6 @@ uint32_t		deltaSecs;
 	//*	are we pulse guiding, if we are, turn it off after 1 second
 	if (cCameraProp.IsPulseGuiding)
 	{
-
 		gettimeofday(&currentTime, NULL);
 		deltaSecs	=	currentTime.tv_sec - cPulseGuideStartTime.tv_sec;
 
@@ -7320,6 +7364,7 @@ uint32_t			elapsedMilliSecs;
 		#ifdef _ENABLE_FILTERWHEEL_
 			UpdateFilterwheelLink();
 		#endif
+		CONSOLE_DEBUG("Done with updating links");
 	#endif
 		cUpdateOtherDevices	=	false;
 	}
@@ -7370,10 +7415,10 @@ uint32_t			elapsedMilliSecs;
 			break;
 
 		case kImageMode_Live:
+			CONSOLE_DEBUG("kImageMode_Live");
 			{
 				SetLastExposureInfo();
 				alpacaErrCode	=	Start_CameraExposure(cCurrentExposure_us);
-CONSOLE_DEBUG(__FUNCTION__);
 				GenerateFileNameRoot();
 				if (alpacaErrCode != 0)
 				{
@@ -7422,7 +7467,8 @@ TYPE_ASCOM_STATUS	alpacaErrCode;
 
 		case kExposure_Working:
 			cWorkingLoopCnt++;
-			if (cWorkingLoopCnt > 70000)
+//			if (cWorkingLoopCnt > 70000)
+			if (cWorkingLoopCnt > 20000)
 			{
 //				CONSOLE_DEBUG("kExposure_Working");
 				Check_Exposure(true);
@@ -7467,7 +7513,10 @@ TYPE_ASCOM_STATUS	alpacaErrCode;
 				}
 			#ifdef _USE_OPENCV_
 				CreateOpenCVImage(cCameraDataBuffer);
-	//			CONSOLE_DEBUG("Done with jpg and png");
+				if (cOverlayMode)
+				{
+					DrawOverlayOntoImage();
+				}
 			#endif
 
 				if (cSaveNextImage || cSaveAllImages)
@@ -7524,8 +7573,6 @@ TYPE_ASCOM_STATUS	alpacaErrCode;
 int32_t	CameraDriver::RunStateMachine(void)
 {
 int32_t		delayMicroSecs;
-time_t		deltaSeconds;
-time_t		currentSeconds;
 
 
 //	if (cInternalCameraState != kCameraState_Idle)
@@ -7543,6 +7590,7 @@ time_t		currentSeconds;
 		case kCameraState_TakingPicture:
 			RunStateMachine_TakingPicture();
 			delayMicroSecs	=	25000;
+			delayMicroSecs	=	1000000 / 50;
 			break;
 
 		case kCameraState_StartVideo:
@@ -7560,13 +7608,17 @@ time_t		currentSeconds;
 			break;
 
 	}
-#ifdef _USE_OPENCV_
+#if defined(_USE_OPENCV_) && !defined(_ENABLE_LIVE_CONTROLLER_)
 //	if (delayMicroSecs > 500)
 	{
 		if (cOpenCV_ImagePtr != NULL)
 		{
 			if ((cImageMode == kImageMode_Live) || cDisplayImage)
 			{
+				if (gVerbose)
+				{
+					CONSOLE_DEBUG("Updating live window");
+				}
 				DisplayLiveImage_wSideBar();
 //-----					DisplayLiveImage();
 			}
@@ -7583,8 +7635,13 @@ time_t		currentSeconds;
 	}
 #endif // _USE_OPENCV_
 
+#ifndef _USE_CAMERA_READ_THREAD_
+	//*	if the read thread is enabled, this operation is handled there
 	if (cTempReadSupported)
 	{
+	time_t		deltaSeconds;
+	time_t		currentSeconds;
+
 		//*	if we support camera temperature, log it every 30 seconds
 		currentSeconds	=   GetSecondsSinceEpoch();
 		deltaSeconds	=	currentSeconds - cLastTempUpdate_Secs;
@@ -7600,6 +7657,8 @@ time_t		currentSeconds;
 			cLastTempUpdate_Secs	=	currentSeconds;
 		}
 	}
+#endif // _USE_CAMERA_READ_THREAD_
+
 	CheckPulseGuiding();
 	RunStateMachine_Device();
 	return(delayMicroSecs);
@@ -7792,10 +7851,9 @@ int					iii;
 #endif // _SORT_FILENAMES_
 
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, gImageDataDir);
-	DumpRequestStructure(__FUNCTION__, reqData);
+//	DumpRequestStructure(__FUNCTION__, reqData);
 
 	mySocketFD	=	reqData->socket;
-	CONSOLE_DEBUG_W_NUM("mySocketFD    \t=", mySocketFD);
 
 	directory	=	opendir(gImageDataDir);
 	if (directory != NULL)
@@ -7871,7 +7929,7 @@ int					iii;
 					fileCount++;
 					if ((fileCount % 25) == 0)
 					{
-						CONSOLE_DEBUG_W_NUM("Delay, fileCount\t=", fileCount);
+//						CONSOLE_DEBUG_W_NUM("Delay, fileCount\t=", fileCount);
 						usleep(5000);
 					}
 				}
@@ -8666,7 +8724,7 @@ char				textBuffer[128];
 		double	imuRoll;
 		double	imuPitch;
 
-			imuRetCode	=	IMU_Read_Euler(&imuHeading, &imuRoll, &imuPitch);
+			imuRetCode	=	IMU_BNO055_Read_Euler(&imuHeading, &imuRoll, &imuPitch);
 			if (imuRetCode == 0)
 			{
 				cBytesWrittenForThisCmd	+=	JsonResponse_Add_Double(	mySocket,
@@ -8703,28 +8761,28 @@ char				textBuffer[128];
 																reqData->jsonTextBuffer,
 																kMaxJsonBuffLen,
 																"IMU-Cal-Gyro",
-																IMU_Get_Calibration(kIMU_Gyro),
+																IMU_BNO055_Get_Calibration(kIMU_Gyro),
 																INCLUDE_COMMA);
 
 			cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	mySocket,
 																reqData->jsonTextBuffer,
 																kMaxJsonBuffLen,
 																"IMU-Cal-Accel",
-																IMU_Get_Calibration(kIMU_Accelerometer),
+																IMU_BNO055_Get_Calibration(kIMU_Accelerometer),
 																INCLUDE_COMMA);
 
 			cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	mySocket,
 																reqData->jsonTextBuffer,
 																kMaxJsonBuffLen,
 																"IMU-Cal-Magn",
-																IMU_Get_Calibration(kIMU_Magnetometer),
+																IMU_BNO055_Get_Calibration(kIMU_Magnetometer),
 																INCLUDE_COMMA);
 
 			cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	mySocket,
 																reqData->jsonTextBuffer,
 																kMaxJsonBuffLen,
 																"IMU-Cal-Sys",
-																IMU_Get_Calibration(kIMU_System),
+																IMU_BNO055_Get_Calibration(kIMU_System),
 																INCLUDE_COMMA);
 		}
 	#endif // _ENABLE_IMU_

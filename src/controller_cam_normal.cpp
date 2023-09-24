@@ -340,10 +340,12 @@ void	ControllerCamNormal::UpdateSettings_Object(const char *filePrefix)
 void	ControllerCamNormal::AlpacaDisplayErrorMessage(const char *errorMsgString)
 {
 //	CONSOLE_DEBUG_W_STR("Alpaca error=", errorMsgString);
-	SetWidgetText(kTab_Camera,		kCameraBox_AlpacaErrorMsg, errorMsgString);
-	SetWidgetText(kTab_CamCooler,	kCamCooler_AlpacaErrorMsg, errorMsgString);
+	SetWidgetText(kTab_Camera,		kCameraBox_AlpacaErrorMsg,	errorMsgString);
+	SetWidgetText(kTab_Settings,	kCamSet_AlpacaErrorMsg,		errorMsgString);
+	SetWidgetText(kTab_CamCooler,	kCamCooler_AlpacaErrorMsg,	errorMsgString);
+	SetWidgetText(kTab_CamVideo,	kCamVideo_AlpacaErrorMsg,	errorMsgString);
+	SetWidgetText(kTab_FileList,	kFileList_AlpacaErrorMsg,	errorMsgString);
 }
-
 
 //*****************************************************************************
 void	ControllerCamNormal::UpdateSupportedActions(void)
@@ -476,6 +478,8 @@ int		jjj;
 //	CONSOLE_ABORT(__FUNCTION__);
 	SetWidgetText(kTab_Camera,		kCameraBox_Title,	cCommonProp.Name);
 	SetWidgetText(kTab_Settings,	kCamSet_Title,		cCommonProp.Name);
+	SetWidgetText(kTab_CamCooler,	kCamCooler_Title,	cCommonProp.Name);
+
 	SetWidgetText(kTab_FileList,	kFileList_Title,	cCommonProp.Name);
 	//*	check for ATIK cameras, they do not support GAIN
 	if (strcasestr(cCommonProp.Name, "ATIK") != NULL)

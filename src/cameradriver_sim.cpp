@@ -402,7 +402,7 @@ int					bytesPerPixel;
 		}
 		CONSOLE_DEBUG_W_NUM("bytesPerPixel\t=",			bytesPerPixel);
 
-		AllcateImageBuffer(-1);		//*	let it figure out how much
+		AllocateImageBuffer(-1);		//*	let it figure out how much
 		if (cCameraDataBuffer != NULL)
 		{
 			//--------------------------------------------

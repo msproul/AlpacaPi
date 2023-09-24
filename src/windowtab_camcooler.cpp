@@ -270,6 +270,7 @@ void	WindowTabCamCooler::ProcessButtonClick(const int buttonIdx, const int flags
 			break;
 	}
 	DisplayLastAlpacaCommand();
+	ForceWindowUpdate();
 }
 
 //*****************************************************************************

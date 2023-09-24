@@ -55,6 +55,7 @@
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
 
+#include	"alpaca_defs.h"
 #include	"helper_functions.h"
 #include	"controller.h"
 #include	"controller_camera.h"
@@ -174,7 +175,7 @@ char		textBuff[32];
 	SetWidgetTextColor(		kCameraBox_Exposure_Up,		CV_RGB(255,	0,	0));
 	SetWidgetTextColor(		kCameraBox_Exposure_Down,	CV_RGB(255,	0,	0));
 
-
+#define	kSliderVertGap	1
 
 	SetWidgetType(	kCameraBox_Exposure_Slider,	kWidgetType_Slider);
 	SetWidgetFont(	kCameraBox_Exposure_Label,	kFont_Small);
@@ -185,7 +186,7 @@ char		textBuff[32];
 	SetWidgetSliderValue(	kCameraBox_Exposure_Slider,	123.0);
 	yLoc			+=	cSmIconSize * 2;
 	yLoc			+=	2;
-	yLoc			+=	8;
+	yLoc			+=	kSliderVertGap;
 
 	//=======================================================
 	//*	gain with slider
@@ -212,7 +213,7 @@ char		textBuff[32];
 	SetWidgetFont(	kCameraBox_Gain,		kFont_Small);
 	SetWidgetText(	kCameraBox_Gain_Label,	"Gain");
 	yLoc			+=	cSmIconSize * 2;
-	yLoc			+=	5;
+	yLoc			+=	kSliderVertGap;
 
 
 	//=======================================================
@@ -240,7 +241,7 @@ char		textBuff[32];
 	SetWidgetFont(		kCameraBox_Offset,			kFont_Small);
 	SetWidgetText(		kCameraBox_Offset_Label,	"Offset");
 	yLoc			+=	cSmIconSize * 2;
-	yLoc			+=	5;
+	yLoc			+=	kSliderVertGap;
 
 
 
@@ -362,9 +363,9 @@ char		textBuff[32];
 	SetWidgetType(	kCameraBox_FlipVertCheckBox,	kWidgetType_CheckBox);
 	SetWidgetFont(	kCameraBox_FlipVertCheckBox,	kFont_RadioBtn);
 	SetWidgetText(	kCameraBox_FlipVertCheckBox,	"Flip Ver");
+	yLocRest	+=	2;
 
 
-	yLoc			+=	10;
 	//=======================================================
 	//*	Filename
 	SetWidget(		kCameraBox_Filename,	cClm1_offset,	yLoc,		cFullWidthBtn,		cRadioBtnHt	);
@@ -404,7 +405,7 @@ char		textBuff[32];
 	SetWidgetTextColor(	kCameraBox_DownloadImage,	CV_RGB(255,	0,	0));
 
 	yLoc			+=	cLrgBtnHeight;
-	yLoc			+=	4;
+	yLoc			+=	2;
 
 	SetWidget(			kCameraBox_StopExposure,	cClm1_offset,	yLoc,	((cClmWidth * 2) -4),	cLrgBtnHeight);
 	SetWidgetType(		kCameraBox_StopExposure,	kWidgetType_Button);
@@ -412,7 +413,6 @@ char		textBuff[32];
 	SetWidgetFont(		kCameraBox_StopExposure,	kFont_Medium);
 	SetWidgetBGColor(	kCameraBox_StopExposure,	CV_RGB(255,	255,	255));
 	SetWidgetTextColor(	kCameraBox_StopExposure,	CV_RGB(255,	0,	0));
-
 
 	SetWidget(			kCameraBox_DownloadRGBarray,	cClm5_offset,	yLoc,	((cClmWidth * 2) -4),	cLrgBtnHeight);
 	SetWidgetType(		kCameraBox_DownloadRGBarray,	kWidgetType_Button);
@@ -422,7 +422,7 @@ char		textBuff[32];
 	SetWidgetTextColor(	kCameraBox_DownloadRGBarray,	CV_RGB(255,	0,	0));
 
 	yLoc			+=	cLrgBtnHeight;
-	yLoc			+=	4;
+	yLoc			+=	2;
 	yLocSave		=	yLoc;
 	//=======================================================
 	yLoc			=	yLocExposure;
@@ -443,7 +443,7 @@ char		textBuff[32];
 	SetWidgetFont(		kCameraBox_EnableBinary,	kFont_RadioBtn);
 	SetWidgetText(		kCameraBox_EnableBinary,	"Allow Binary");
 	yLoc			+=	cRadioBtnHt;
-	yLoc			+=	4;
+	yLoc			+=	2;
 
 	//=======================================================
 	SetWidget(			kCameraBox_Btn_8Bit,	cClm3_offset,	yLoc,	((cClmWidth * 2) -4),	cRadioBtnHt);
@@ -458,7 +458,7 @@ char		textBuff[32];
 							(kCameraBox_SaveOutline - 1));
 
 	yLoc			+=	cRadioBtnHt;
-	yLoc			+=	4;
+	yLoc			+=	2;
 
 	yLoc			=	yLocSave;
 	yLocClm4		=	yLoc;

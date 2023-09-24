@@ -367,7 +367,7 @@ class WindowTabSkyTravel: public WindowTab
 
 			int					cMagmin;
 			int					cView_index;		//*	used in original program, only used as display indicator
-			double				cView_angle;		//*	in radians
+			double				cView_angle_Rads;	//*	in radians
 
 			//*	these are used for the drawing of stars
 			double				cLN_view_angle;		//*	natural log of view angle, speed up drawing

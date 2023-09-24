@@ -26,6 +26,8 @@
 //*	Jun 24,	2023	<MLS> Added DeviceState window to obsconditions controller
 //*	Jun 29,	2023	<MLS> Added AlpacaProcessReadAllIdx() to obsconditions controller
 //*	Jul 14,	2023	<MLS> Added UpdateOnlineStatus() to obsconditions controller
+//*	Aug  9,	2023	<MLS> Switched to using parent AlpacaGetStatus()
+//*	Aug  9,	2023	<MLS> Fixed UpdateStatusData()
 //*****************************************************************************
 #ifdef _ENABLE_CTRL_OBS_CONDITIONS_
 
@@ -177,6 +179,12 @@ void	ControllerObsCond::UpdateStatusData(void)
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 	UpdateConnectedIndicator(kTab_ObsCond,		kObsCond_Connected);
 
+	//*	the data was valid,update the display
+	if (cObsConditionsTabObjPtr != NULL)
+	{
+		cObsConditionsTabObjPtr->UpdateObservationValues(&cObsCondProp);
+	}
+//	DumpObservingconditionsProp(&cObsCondProp, __FUNCTION__);
 }
 
 //**************************************************************************************
@@ -424,64 +432,6 @@ bool			returnValueIsValid;
 		validData	=	false;
 	}
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, "exit");
-	return(validData);
-}
-
-//*****************************************************************************
-bool	ControllerObsCond::AlpacaGetStatus(void)
-{
-bool			validData;
-
-bool	previousOnLineState;
-
-//	CONSOLE_DEBUG(__FUNCTION__);
-
-	previousOnLineState	=	cOnLine;
-	if (cHas_readall)
-	{
-		validData	=	AlpacaGetStatus_ReadAll(cAlpacaDeviceTypeStr, cAlpacaDevNum);
-	}
-	else
-	{
-		validData	=	AlpacaGetStatus_OneAAT();
-		AlpacaGetCommonConnectedState(cAlpacaDeviceTypeStr);
-	}
-//	DumpObservingconditionsProp(&cObsCondProp, __FUNCTION__);
-
-	if (validData)
-	{
-		if (cOnLine == false)
-		{
-			//*	if we were previously off line, force reading startup again
-			cReadStartup	=	true;
-		}
-//		SetWidgetBGColor(	kTab_Switch,	kSwitchBox_IPaddr,	CV_RGB(0,	0,	0));
-//		SetWidgetTextColor(	kTab_Switch,	kSwitchBox_IPaddr,	CV_RGB(255,	0,	0));
-
-		cOnLine	=	true;
-
-		//*	the data was valid,update the display
-		if (cObsConditionsTabObjPtr != NULL)
-		{
-			cObsConditionsTabObjPtr->UpdateObservationValues(&cObsCondProp);
-		}
-	}
-	else
-	{
-//		SetWidgetBGColor(	kTab_Switch,	kSwitchBox_IPaddr,	CV_RGB(255,	0,	0));
-//		SetWidgetTextColor(	kTab_Switch,	kSwitchBox_IPaddr,	CV_RGB(0,	0,	0));
-		cOnLine	=	false;
-	}
-
-
-
-	if (cOnLine != previousOnLineState)
-	{
-		SetWindowIPaddrInfo(NULL, cOnLine);
-	}
-
-	cLastUpdate_milliSecs	=	millis();
-	cFirstDataRead			=	false;
 	return(validData);
 }
 

@@ -358,7 +358,7 @@ int			sLen;
 		sLen	=	strlen(durationString);
 		ii		=	0;
 		cc		=	1;	//*	index into the value array
-		while((ii < sLen) && (cc < kMaxDevices))
+		while ((ii < sLen) && (cc < kMaxDevices))
 		{
 			if (durationString[ii] == ',')
 			{

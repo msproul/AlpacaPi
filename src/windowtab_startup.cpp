@@ -68,16 +68,10 @@ short		tabStopList[]	=	{300, 350, 400, 0 };
 int			boxHeight;
 int			buttonWidth;
 cv::Scalar	spashColor;
-//time_t		secsSinceEpoch;
-//
-//	secsSinceEpoch	=	GetSecondsSinceEpoch();
-//	srand(secsSinceEpoch);
-//	spashColor		=	CV_RGB(	(0 + (rand() & 0x00ff)),
-//								(0 + (rand() & 0x00ff)),
-//								(0 + (rand() & 0x00ff)));
-	spashColor		=	CV_RGB(0,	255,	0);
 
 //	CONSOLE_DEBUG(__FUNCTION__);
+
+	spashColor		=	CV_RGB(0,	255,	0);
 
 	//------------------------------------------
 	yLoc			=	cTabVertOffset;
@@ -101,9 +95,7 @@ cv::Scalar	spashColor;
 //		yLoc			+=	2;
 	}
 	SetWidgetFont(		kStartup_Title1,	kFont_Script_Large);
-//	SetWidgetTextColor(	kStartup_Title1,	CV_RGB(0x91,	0x30,	0xFA));
 	SetWidgetTextColor(	kStartup_Title1,	CV_RGB(0xA1,	0x40,	0xFA));
-//	SetWidgetTextColor(	kStartup_Title1,	CV_RGB(255,		0,		0));
 	SetWidgetText(		kStartup_Title1, "SkyTravel");
 
 	SetWidgetFont(kStartup_Title2,	kFont_Triplex_Small);

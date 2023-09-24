@@ -75,17 +75,6 @@ class TelescopeDriverComm: public TelescopeDriver
 		virtual	TYPE_ASCOM_STATUS	Telescope_TrackingOnOff(const bool newTrackingState,
 															char *alpacaErrMsg);
 
-
-		//####################################################################
-		//*	communications to a telescope device
-		virtual	bool	StartThread(void);
-		virtual	void	StopThread(void);
-		virtual	void	*RunThread(void);
-		virtual	void	AddCmdToQueue(const char *cmdString);
-		virtual	bool	SendCmdsFromQueue(void);
-		virtual	bool	SendCmdsPeriodic(void);
-
-
 		int		OpenSocket(struct sockaddr_in *deviceAddress, const int port);
 		int		OpenSocket(const char *ipAddress, const int port);
 
@@ -98,16 +87,23 @@ class TelescopeDriverComm: public TelescopeDriver
 				int						cTCPportNum;
 				int						cSocket_desc;
 				int						cBaudRate;
-				bool					cThreadIsActive;
-				bool					cKeepRunningFlag;
-				pthread_t				cThreadID;
 				char					cTelescopeErrorString[256];
 				bool					cNewTelescopeDataAvailble;
+		//-----------------------------------------------------------------------
+		virtual	void					RunThread_Startup(void);
+		virtual	void					RunThread_Loop(void);
+				bool					cTelescopeConnectionOpen;
+				int						cTelescopeCommErrCnt;
 
-				//---------------------------------
+		//-----------------------------------------------------------------------
+		//*	communications to a telescope device
+		virtual	void	AddCmdToQueue(const char *cmdString);
+		virtual	bool	SendCmdsFromQueue(void);
+		virtual	bool	SendCmdsPeriodic(void);
 				//*	command queue
-				int						cQueuedCmdCnt;
 				TYPE_TelescopeCmdQue	cCmdQueue[kMaxTelescopeCmds];
+				int						cQueuedCmdCnt;
+		//-----------------------------------------------------------------------
 
 };
 

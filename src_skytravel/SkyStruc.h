@@ -98,7 +98,7 @@ typedef struct	//	TYPE_CelestData
 	char			dataSrc;		//*	see enum table above
 	char			spectralClass;	//*	O,B,A,F,G,K,M
 	char			variability;	//*	Variability Flag: 0=not variable, 1=variable, 2=uncertain
-	long			type;			//*	NGC = 3 char field
+	long			NGCtype;		//*	NGC = 3 char field
 	short			curXX;			//*	current plot location on the screen
 	short			curYY;			//*	this is used for finding the object the cursor is pointing to
 	double			realMagnitude;
@@ -111,10 +111,21 @@ typedef struct	//	TYPE_CelestData
 	double			propMotion_RA_mas_yr;	//*	mill-arc-seconds per year
 	double			propMotion_DEC_mas_yr;	//*	mill-arc-seconds per year
 //	double			maxSizeArcMinutes;
+	double			distance_LY;			//*	distance in light years
 	double			parallax;				//*	arc-seconds????
 	char			shortName[kShortNameMax];
 	char			longName[kLongNameMax];
+
+	//*	OpenNGC data
+	double			oNGC_MajAxis_arcmin;	//- MajAx: Major axis, expressed in arcmin
+	double			oNGC_MinAxis_arcmin;	//- MinAx: Minor axis, expressed in arcmin
+	double			oNGC_PosAng_degs;		//- PosAng: Major axis position angle (North Eastwards)
 }	TYPE_CelestData;
+
+
+
+
+
 
 //*****************************************************************************
 typedef struct	//	TYPE_ObjectInfo

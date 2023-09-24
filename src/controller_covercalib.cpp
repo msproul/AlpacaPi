@@ -287,13 +287,13 @@ int				integerValue;
 bool	ControllerCoverCalib::AlpacaGetStatus_OneAAT(void)
 {
 bool	validData;
-bool	previousOnLineState;
 int		integerValue;
-char	stateString[32];
+//bool	previousOnLineState;
+//char	stateString[32];
 
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 	//------------------------------------------------------------------
-	previousOnLineState	=	cOnLine;
+//	previousOnLineState	=	cOnLine;
 	validData	=	AlpacaGetIntegerValue("covercalibrator", "coverstate",	NULL,	&integerValue);
 	if (validData)
 	{

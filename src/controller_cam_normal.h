@@ -39,7 +39,7 @@ class ControllerCamNormal: public ControllerCamera
 		// Construction
 		//
 
-				ControllerCamNormal(	const char			*argWindowName,
+				ControllerCamNormal(const char			*argWindowName,
 									TYPE_REMOTE_DEV		*alpacaDevice);
 
 		virtual	~ControllerCamNormal(void);

@@ -372,6 +372,8 @@ MYSQL	*mySQLConnection = NULL;
 			CONSOLE_DEBUG_W_STR("gSQLsever_Password\t=",	gSQLsever_Password);
 			CONSOLE_DEBUG_W_STR("dataBaseName      \t=",	dataBaseName);
 			CONSOLE_DEBUG_W_NUM("gSQLsever_Port    \t=",	gSQLsever_Port);
+			CONSOLE_DEBUG_W_STR("mysql_error       \t=",	mysql_error(mySQLConnection));
+
 			LogSqlTransaction(	dataBaseName,
 								"mysql_real_connect() failed",
 								__FUNCTION__,

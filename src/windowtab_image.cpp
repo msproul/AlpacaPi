@@ -33,6 +33,7 @@
 //*	Feb 28,	2023	<MLS> Expanded 1 cross hair to 3
 //*	Feb 28,	2023	<MLS> Added color schemes to cross hairs
 //*	Mar  4,	2023	<MLS> Added PGR (Purple, Gold, Red) cross hair color option
+//*	Sep  7,	2023	<MLS> Added Live vs Downloaded label to make it obvious
 //*****************************************************************************
 
 #ifdef _ENABLE_CTRL_IMAGE_
@@ -59,9 +60,9 @@ WindowTabImage::WindowTabImage(	const int	xSize,
 	:WindowTab(xSize, ySize, backGrndColor, windowName)
 {
 int		iii;
-	CONSOLE_DEBUG(__FUNCTION__);
-	CONSOLE_DEBUG_W_NUM("xSize        \t=",	xSize);
-	CONSOLE_DEBUG_W_NUM("ySize        \t=",	ySize);
+//	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG_W_NUM("xSize        \t=",	xSize);
+//	CONSOLE_DEBUG_W_NUM("ySize        \t=",	ySize);
 
 	cOpenCVdownLoadedImage	=	NULL;
 	cOpenCVdisplayedImage	=	NULL;
@@ -124,6 +125,7 @@ char	buttonName[16];
 int		crossHairBoxWidth;
 int		crossH_Xloc;
 int		crossH_Yloc;
+int		btnCnt;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -138,9 +140,10 @@ int		crossH_Yloc;
 	xLoc			=	5;
 	buttonName[0]	=	'A';
 	buttonName[1]	=	0;
-	for (iii=kImageDisplay_Btn_1; iii<kImageDisplay_Btn_N; iii++)
+	btnCnt			=	0;
+	for (iii=kImageDisplay_Btn_1; iii<=kImageDisplay_Btn_N; iii++)
 	{
-		SetWidget(				iii,	xLoc,	yLoc,		cTitleHeight,		cTitleHeight);
+		SetWidget(				iii,	xLoc, yLoc, cTitleHeight, cTitleHeight);
 		SetWidgetType(			iii, 	kWidgetType_Button);
 		SetWidgetText(			iii,	buttonName);
 
@@ -148,7 +151,17 @@ int		crossH_Yloc;
 		xLoc	+=	2;
 
 		buttonName[0]++;
+		btnCnt++;
 	}
+	//*	Live or Downloaded indicator
+	labelWidth	=	cWidth - (btnCnt * (cTitleHeight + 2));
+	labelWidth	-=	10;
+	SetWidget(				kImageDisplay_LiveOrDownLoad,	xLoc,	yLoc,	labelWidth, cTitleHeight);
+	SetWidgetType(			kImageDisplay_LiveOrDownLoad, 	kWidgetType_TextBox);
+	SetWidgetText(			kImageDisplay_LiveOrDownLoad,	"---");
+	SetWidgetTextColor(		kImageDisplay_LiveOrDownLoad,	CV_RGB(0, 0, 0));
+	SetWidgetJustification(	kImageDisplay_LiveOrDownLoad, 	kJustification_Center);
+
 	yLoc			+=	cTitleHeight;
 	yLoc			+=	2;
 	save_yLoc		=	yLoc;
@@ -170,8 +183,6 @@ int		crossH_Yloc;
 		SetWidgetType(			iii, 	kWidgetType_TextBox);
 		SetWidgetFont(			iii, 	kFont_TextList);
 		SetWidgetJustification(	iii, 	kJustification_Center);
-
-
 
 		yLoc	+=	cSmallBtnHt;
 		yLoc	+=	2;

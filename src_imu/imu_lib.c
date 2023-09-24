@@ -5,109 +5,148 @@
 //*****************************************************************************
 //*	<MLS>	=	Mark L Sproul
 //*****************************************************************************
-//*	May  2,	2022	<MLS> Created imu_lib.c
-//*	May  3,	2022	<MLS> Added IMU_SetDebug()
+//*	Aug  4,	2023	<MLS> Created imu_lib.c
+//*	Sep 11,	2023	<MLS> Added IMU_Print_Calibration()
+//*	Sep 11,	2023	<MLS> Added IMU_IsAvailable(), IMU_GetAverageRoll()
 //*****************************************************************************
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <stdbool.h>
 
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
 
-#include "i2c_bno055.h"
 
-#include "imu_lib.h"
+#include	"imu_lib.h"
+#include	"imu_lib_bno055.h"
+#include	"imu_lib_LIS2DH12.h"
 
-		int		gBNO_verbose	=	0;
-static	char	gSendAddr[256]	=	"0x28";
-static	char	gI2C_bus[256]	=	I2CBUS;
-static	bool	gIMU_needsInit	=	true;
 
+static int	gIMU_TypePresent	=	kIMU_type_None;
 
 //*****************************************************************************
 int	IMU_Init(void)
 {
-int				returnCode;
+int		returnCode;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
-	get_i2cbus(gI2C_bus, gSendAddr);
-
-	returnCode	=	set_mode(imu);
+	returnCode	=   IMU_BNO055_Init();
+	CONSOLE_DEBUG_W_NUM("IMU_BNO055_Init returned\t=", returnCode);
 	if (returnCode == 0)
 	{
-		gIMU_needsInit	=	false;
+		gIMU_TypePresent	=   kIMU_type_BNO055;
 	}
+
+	//*	if that didnt work, check the next one
+	if (gIMU_TypePresent == kIMU_type_None)
+	{
+		returnCode	=	IMU_LIS2DH12_Init();
+		if (returnCode == 0)
+		{
+			gIMU_TypePresent	=   kIMU_type_LIS2DH12;
+		}
+	}
+
+
 
 	return(returnCode);
 }
 
 
 //*****************************************************************************
-void	IMU_SetDebug(const int debugLevel)
+int		IMU_Print_Calibration(void)
 {
-	gBNO_verbose	=	debugLevel;
-}
-
-//*****************************************************************************
-int	IMU_Read_EUL(double *heading, double *roll, double *pitch)
-{
-int				returnCode;
-struct bnoeul	bnod;
-
+int		returnCode	=	0;
 	CONSOLE_DEBUG(__FUNCTION__);
-	if (gIMU_needsInit)
+
+	switch(gIMU_TypePresent)
 	{
-		IMU_Init();
+		case kIMU_type_BNO055:
+			returnCode	=	IMU_BNO055_Print_Calibration();
+			break;
+
+		case kIMU_type_LIS2DH12:
+			returnCode	=	-11;
+			break;
+
+		default:
+			returnCode	=	-11;
+			break;
 	}
 
-	returnCode	=	get_eul(&bnod);
-	if (returnCode == 0)
-	{
-		*heading	=	bnod.eul_head;
-		*roll		=	bnod.eul_roll;
-		*pitch		=	bnod.eul_pitc;
-	}
 	return(returnCode);
 }
 
-#ifdef _INCLUDE_IMU_MAIN_
+//*****************************************************************************
+void	IMU_SetDebug(const bool debugOnOff)
+{
+	CONSOLE_DEBUG(__FUNCTION__);
+	BNO055__SetDebug(debugOnOff);
+}
 
 //*****************************************************************************
-int main(int argc, char *argv[])
+bool	IMU_IsAvailable(void)
 {
-int				imu_mode;
-int				returnCode;
-struct bnoeul	bnod;
-double			heading;
-double			roll;
-double			pitch;
-
-	printf("IMU test\r\n");
-
-	returnCode	=	IMU_Init();
-
-	imu_mode	=	get_mode();
-
-	printf("IMU mode = %d \n", imu_mode);
-
-	if (imu_mode < 8)
-	{
-		printf("Error getting Euler data, sensor mode %d is not a fusion mode.\n", imu_mode);
-		exit(-1);
-	}
-
-	while (returnCode == 0)
-	{
-		returnCode	=	IMU_Read_EUL(&heading, &roll, &pitch);
-
-		//*EUL 66.06 -3.00 -15.56 (EUL H R P in Degrees)
-		printf("EUL %3.4f %3.4f %3.4f\n", heading, roll, pitch);
-
-		usleep(5000);
-	}
+	return(gIMU_TypePresent != 0);
 }
-#endif // _INCLUDE_IMU_MAIN_
+
+
+//*****************************************************************************
+double	IMU_GetAverageRoll(void)
+{
+double	averageRoll;
+
+//	IMU_BNO055_ComputeAverage();
+//	return(gIMUaverage.roll);
+	switch(gIMU_TypePresent)
+	{
+		case kIMU_type_BNO055:
+			averageRoll	=	IMU_BNO055_GetAverageRoll();
+			break;
+
+		case kIMU_type_LIS2DH12:
+			averageRoll	=	0.0;
+			break;
+
+		default:
+			averageRoll	=	0.0;
+			break;
+	}
+	return(averageRoll);
+}
+
+
+
+//*****************************************************************************
+bool	IMU_StartBackgroundThread(void)
+{
+int			threadErr	=	-1;
+int			returnCode;
+bool		okToStartThread;
+
+//	CONSOLE_DEBUG("***************************************************************");
+//	CONSOLE_DEBUG(__FUNCTION__);
+////	CONSOLE_ABORT(__FUNCTION__);
+//
+//	memset((void *)gIMUdata, 0, (kAverageCount * sizeof(TYPE_IMU_DATA)));
+//	gIMUdataIdx		=	0;
+//	okToStartThread	=	true;
+//	//*	check to see if the IMU needs to be initialized
+//	if (gIMU_needsInit)
+//	{
+//		returnCode	=	IMU_BNO055_Init();
+//		if (returnCode != 0)
+//		{
+//			okToStartThread	=	false;
+//		}
+//	}
+//
+//	if (okToStartThread)
+//	{
+//
+//		//*	only start the thread if init was successful
+//		threadErr		=	pthread_create(&gIMUthreadID, NULL, &IMU_BNO055_BackgroundThread, NULL);
+//	}
+	return(threadErr);
+}
+
+
+

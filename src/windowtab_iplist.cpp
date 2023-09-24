@@ -251,7 +251,7 @@ int		myButtonWidth;
 
 	clmnHdr_xLoc		=	1;
 	iii	=	kIPaddrList_ClmTitle1;
-	while(iii < kIPaddrList_ClmOutline)
+	while (iii < kIPaddrList_ClmOutline)
 	{
 		clmnHdrWidth	=	tabArray[iii - kIPaddrList_ClmTitle1] - clmnHdr_xLoc;
 

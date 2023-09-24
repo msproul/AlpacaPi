@@ -1,9 +1,14 @@
 //*****************************************************************************
+//*	serialport.c
+//*
+//*****************************************************************************
 //*	Feb 11,	2020	<MLS> Created serialport.c
 //*	Mar 31,	2021	<MLS> Added Serial_Set_Blocking()
 //*	Mar 31,	2021	<MLS> Changed Set_Serial_attribs() to Serial_Set_Attribs()
 //*	Mar 31,	2021	<MLS> Added Serial_Send_Data()
 //*	Jun  7,	2023	<MLS> Added Serial_Set_RTS()
+//*	Aug  3,	2023	<MLS> Added return code to Serial_Set_RTS()
+//*	Aug 10,	2023	<MLS> removed tcflush() from Serial_Send_Data()
 //*****************************************************************************
 
 #include	<errno.h>
@@ -32,14 +37,14 @@ struct termios	tty;
 int				tcReturnCode;
 int				myReturnCode;
 
-	if (tcgetattr (fd, &tty) != 0)
+	if (tcgetattr(fd, &tty) != 0)
 	{
-		CONSOLE_DEBUG_W_NUM ("error from tcgetattr", errno);
+		CONSOLE_DEBUG_W_NUM("error from tcgetattr", errno);
 		return -1;
 	}
 
-	cfsetospeed (&tty, speed);
-	cfsetispeed (&tty, speed);
+	cfsetospeed(&tty, speed);
+	cfsetispeed(&tty, speed);
 
 	tty.c_cflag		=	(tty.c_cflag & ~CSIZE) | CS8;		// 8-bit chars
 	// disable IGNBRK for mismatched speed tests; otherwise receive break
@@ -64,7 +69,7 @@ int				myReturnCode;
 
 	myReturnCode	=	0;
 
-	tcReturnCode	=	tcsetattr (fd, TCSANOW, &tty);
+	tcReturnCode	=	tcsetattr(fd, TCSANOW, &tty);
 	if (tcReturnCode != 0)
 	{
 		CONSOLE_DEBUG_W_NUM("error from tcsetattr", errno);
@@ -79,17 +84,15 @@ int				myReturnCode;
 	return(myReturnCode);
 }
 
-
-
 //*****************************************************************************
 void	Serial_Set_Blocking(int fd, int should_block)
 {
 struct termios tty;
 
-	memset (&tty, 0, sizeof tty);
-	if (tcgetattr (fd, &tty) != 0)
+	memset(&tty, 0, sizeof tty);
+	if (tcgetattr(fd, &tty) != 0)
 	{
-		CONSOLE_DEBUG_W_NUM ("error %d from tggetattr", errno);
+		CONSOLE_DEBUG_W_NUM("error %d from tggetattr", errno);
 		return;
 	}
 
@@ -99,7 +102,7 @@ struct termios tty;
 
 	if (tcsetattr(fd, TCSANOW, &tty) != 0)
 	{
-		CONSOLE_DEBUG_W_NUM ("error %d setting term attributes", errno);
+		CONSOLE_DEBUG_W_NUM("error %d setting term attributes", errno);
 	}
 }
 
@@ -107,21 +110,23 @@ struct termios tty;
 //*	Request To Send
 //*	https://www.xanthium.in/Controlling-RTS-and-DTR-pins-SerialPort-in-Linux
 //*****************************************************************************
-void	Serial_Set_RTS(int fd, bool rtsState)
+int	Serial_Set_RTS(int fd, bool rtsState)
 {
-int	rts_flag;
+int		rts_flag;
+int		myReturnCode;
 
 	CONSOLE_DEBUG_W_BOOL("Setting RTS to\t=", rtsState);
 
 	rts_flag	=	TIOCM_RTS;
 	if (rtsState)
 	{
-		ioctl(fd,TIOCMBIS,&rts_flag);	//Set RTS pin
+		myReturnCode	=	ioctl(fd,TIOCMBIS,&rts_flag);	//Set RTS pin
 	}
 	else
 	{
-		ioctl(fd,TIOCMBIC,&rts_flag);	//Clear RTS pin
+		myReturnCode	=	ioctl(fd,TIOCMBIC,&rts_flag);	//Clear RTS pin
 	}
+	return(myReturnCode);
 }
 
 //*****************************************************************************
@@ -133,13 +138,20 @@ size_t	byteCount;
 //	CONSOLE_DEBUG_W_STR("Sending\t=", xmitData);
 
 	byteCount		=	strlen(xmitData);
-	bytesWritten	=	write (fd, xmitData, byteCount);	// send 7 character greeting
-	tcflush(fd, TCOFLUSH);
-
-	if (waitFlag)
+	if (byteCount > 0)
 	{
-		usleep (byteCount * 100);	// sleep enough to transmit the data, approx 100 uS per char transmit
+		bytesWritten	=	write(fd, xmitData, byteCount);	// send sata
+		if (waitFlag)
+		{
+			usleep(byteCount * 100);	// sleep enough to transmit the data, approx 100 uS per char transmit
+		}
 	}
+	else
+	{
+		CONSOLE_DEBUG("Invalid data");
+		bytesWritten	=	-1;
+	}
+
 	return(bytesWritten);
 }
 
@@ -148,7 +160,7 @@ int	Serial_Read_Data(int fd, char *recvData, size_t maxDataLen)
 {
 ssize_t	bytesRead;
 
-	bytesRead	=	read (fd, recvData, maxDataLen);
+	bytesRead	=	read(fd, recvData, maxDataLen);
 
 	return(bytesRead);
 }

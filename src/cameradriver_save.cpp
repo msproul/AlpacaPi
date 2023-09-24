@@ -69,12 +69,15 @@
 #endif
 #ifdef _ENABLE_IMU_
 	#include "imu_lib.h"
+	#include "imu_lib_bno055.h"
 #endif
 
 //*****************************************************************************
 void	CameraDriver::SaveImageData(void)
 {
-int	ii;
+int		iii;
+int		bytesPerPixel;
+
 
 	CONSOLE_DEBUG_W_NUM("cSaveNextImage\t=", cSaveNextImage);
 	CONSOLE_DEBUG_W_NUM("cSaveAllImages\t=", cSaveAllImages);
@@ -82,9 +85,10 @@ int	ii;
 	cTotalFramesSaved++;
 	CONSOLE_DEBUG_W_NUM("cCameraProp.SavedImageCnt=", cCameraProp.SavedImageCnt);
 
-	for (ii=0; ii<kMaxDataProducts; ii++)
+
+	for (iii=0; iii<kMaxDataProducts; iii++)
 	{
-		memset(&cOtherDataProducts[ii], 0, sizeof(TYPE_FILENAME));
+		memset(&cOtherDataProducts[iii], 0, sizeof(TYPE_FILENAME));
 	}
 	cOtherDataCnt	=	0;
 
@@ -114,8 +118,9 @@ int	ii;
 	#endif	//	_USE_OPENCV_
 
 
-	#if defined(_ENABLE_JPEGLIB_) && !defined(_USE_OPENCV_)
-		if (cSaveAsJPEG)
+	#if defined(_ENABLE_JPEGLIB_)
+		bytesPerPixel		=	cOpenCV_ImagePtr->step[1];
+		if (cSaveAsJPEG && (bytesPerPixel!= 2))
 		{
 			SaveUsingJpegLib();
 		}
@@ -336,11 +341,11 @@ char		imageFilePath[128];
 
 		bytesPerPixel		=	cOpenCV_ImagePtr->step[1];
 		CONSOLE_DEBUG_W_NUM("bytesPerPixel\t=",	bytesPerPixel);
-//		if (bytesPerPixel != 2)
 		if (bytesPerPixel != 0)
 		{
 			//--------------------------------------------------------------------------------------------
-			if (cSaveAsJPEG)
+			//*	JPEG does not work on 16 bit images
+			if (cSaveAsJPEG && (bytesPerPixel != 2))
 			{
 				//*	save as JPEG
 				strcpy(imageFileName, cFileNameRoot);
@@ -816,7 +821,7 @@ int		imuRetCode;
 	cIMU_xxx		=	0.0;
 	cIMU_yyy		=	0.0;
 	cIMU_zzz		=	0.0;
-	imuRetCode	=	IMU_Read_Euler(&imuHeading, &imuRoll, &imuPitch);
+	imuRetCode		=	IMU_BNO055_Read_Euler(&imuHeading, &imuRoll, &imuPitch);
 	if (imuRetCode == 0)
 	{
 		cIMU_EulerValid	=	true;
@@ -824,7 +829,7 @@ int		imuRetCode;
 		cIMU_Roll		=	imuRoll;
 		cIMU_Pitch		=	imuPitch;
 	}
-	imuRetCode	=	IMU_Read_Quaternion(&imuwww, &imuxxx, &imuyyy, &imuzzz);
+	imuRetCode	=	IMU_BNO055_Read_Quaternion(&imuwww, &imuxxx, &imuyyy, &imuzzz);
 	if (imuRetCode == 0)
 	{
 		cIMU_QuatValid	=	true;
@@ -833,10 +838,10 @@ int		imuRetCode;
 		cIMU_yyy		=	imuyyy;
 		cIMU_zzz		=	imuzzz;
 	}
-	cIMU_Cal_Gyro	=	IMU_Get_Calibration(kIMU_Gyro);
-	cIMU_Cal_Acce	=	IMU_Get_Calibration(kIMU_Accelerometer);
-	cIMU_Cal_Magn	=	IMU_Get_Calibration(kIMU_Magnetometer);
-	cIMU_Cal_Syst	=	IMU_Get_Calibration(kIMU_System);
+	cIMU_Cal_Gyro	=	IMU_BNO055_Get_Calibration(kIMU_Gyro);
+	cIMU_Cal_Acce	=	IMU_BNO055_Get_Calibration(kIMU_Accelerometer);
+	cIMU_Cal_Magn	=	IMU_BNO055_Get_Calibration(kIMU_Magnetometer);
+	cIMU_Cal_Syst	=	IMU_BNO055_Get_Calibration(kIMU_System);
 }
 
 //**************************************************************************

@@ -36,6 +36,7 @@
 //*	Feb  7,	2021	<MLS> Started adding Telescope_comm support
 //*	Feb  7,	2021	<MLS> Added _USE_TELESCOPE_COM_OBJECT_
 //*	Feb 15,	2021	<MLS> Working on telescope commands Telescope_*()
+//*	Feb 15,	2021	<MLS> SUPPORTED: LX200 telescope mount
 //*****************************************************************************
 
 

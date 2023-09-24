@@ -30,6 +30,7 @@
 //*	Feb 11,	2021	<MLS> Deleted cDriverVersion, use cCommonProp.InterfaceVersion
 //*	Sep  2,	2021	<MLS> Added _ENABLE_BANDWIDTH_LOGGING_
 //*	Nov 28,	2022	<MLS> Added cLastDeviceErrMsg
+//*	Sep 20,	2023	<MLS> Moved camera read thread to base class
 //*****************************************************************************
 //#include	"alpacadriver.h"
 
@@ -170,7 +171,7 @@ class AlpacaDriver
 {
 	public:
 
-		//
+		//alpaca
 		// Construction
 		//
 						AlpacaDriver(TYPE_DEVICETYPE argDeviceType);
@@ -194,6 +195,7 @@ class AlpacaDriver
 				TYPE_ASCOM_STATUS		Get_Interfaceversion(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
 				TYPE_ASCOM_STATUS		Get_Name(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
 				TYPE_ASCOM_STATUS		Get_WatchDogEnabled(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+				TYPE_ASCOM_STATUS		Get_WatchDogTimeout(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
 
 				TYPE_ASCOM_STATUS		Get_SupportedActions(TYPE_GetPutRequestData *reqData, const TYPE_CmdEntry *theCmdTable);
 
@@ -308,13 +310,14 @@ class AlpacaDriver
 		//*	Watchdog timer stuff
 	private:
 				time_t					cTimeOfLastWatchDogCheck;
-				int						cWatchDogTimeOut_Minutes;
 	protected:
-				bool					cWatchDogEnabled;		//*	defaults to FALSE
 		virtual	void					WatchDog_TimeOut(void);
 	public:
+				bool					cWatchDogEnabled;		//*	defaults to FALSE
+				int						cWatchDogTimeOut_Minutes;
 				void					CheckWatchDogTimeout(void);
 				time_t					cTimeOfLastValidCmd;
+				char					cWatchDogTimeOutAction[64];
 		//-------------------------------------------------------------------------
 		//*	CPU usage information
 				uint64_t				cAccumilatedNanoSecs;
@@ -346,6 +349,8 @@ class AlpacaDriver
 	#endif // _USE_OPENCV_
 
 
+
+
 		//-------------------------------------------------------------------------
 		//*	this is for the setup function
 				bool					cDriverSupportsSetup;
@@ -366,6 +371,18 @@ class AlpacaDriver
 																const bool	checked);
 
 
+		//-------------------------------------------------------------------------
+		//*	this is for driver thread
+				void				RunThread(void);
+	protected:
+				void				StartDriverThread(void);
+				void				StopDriverThread(void);
+		virtual	void				RunThread_Startup(void);
+		virtual	void				RunThread_Loop(void);
+				bool				cDriverThreadIsActive;
+				bool				cDriverThreadKeepRunning;
+				long				cDriverThreadLoopCnt;
+				pthread_t			cDriverThreadID;
 };
 
 //**************************************************************************************

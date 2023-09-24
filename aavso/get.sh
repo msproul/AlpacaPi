@@ -5,6 +5,7 @@
 #**	Jul  2,	2021	<MLS> obs_section=all now working with curl command
 #**	Aug 12,	2021	<MLS> Added checking for token file, abort if not present
 #**	Sep 26,	2021	<MLS> Added logging to text file
+#**	Aug 22,	2022	<MLS> Updated URL to point to targettool.aavso.org
 ###############################################################################
 clear
 
@@ -13,6 +14,11 @@ clear
 AAVSO_TOKEN_FILE="aavso_targettool_token.txt"
 
 LOG_FILE="aavso_retrevial_log.txt"
+
+TARGET_TOOL_URL="https://targettool.aavso.org/TargetTool/api/v1"
+
+#this was the URL used during development
+#TARGET_TOOL_URL="https://filtergraph.com/aavso/api/v1"
 
 
 ###############################################################################
@@ -43,7 +49,8 @@ else
 		echo "$AAVSO_TOKEN_FILE is present, proceeding"
 	else
 		echo "You must create an account and put the aavso login token in a file called $AAVSO_TOKEN_FILE"
-		echo "Refer to https://filtergraph.com/aavso/api/index# for how to create an account."
+#		echo "Refer to https://filtergraph.com/aavso/api/index# for how to create an account."
+		echo "Refer to https://targettool.aavso.org/TargetTool/default/user/register?_next=/TargetTool/default/index to create an account"
 		exit
 	fi
 fi
@@ -77,6 +84,8 @@ function Request
 	if [ $# -eq 2 ]
 	then
 		DATA=$2
+		echo "#URL: $URL"
+		echo "#Data: $DATA"
 		# add "-D headers.txt"  to save the received headers
 		curl -X GET "$URL" 							\
 				-d "$DATA"							\
@@ -89,8 +98,7 @@ function Request
 		# add "-D headers.txt"  to save the received headers
 		curl -X GET "$URL" 							\
 				-H "Authorization: $AUTH_STRING"	\
-				-H "accept: application/json"   	\
-
+				-H "accept: application/json"
 	fi
 	echo
 }
@@ -99,12 +107,18 @@ function Request
 function GetAlertList
 {
 	OUTPUTFILE="alerts_json.txt"
-	Request	"https://filtergraph.com/aavso/api/v1/nighttime"	| ./replaceCRLF	> $OUTPUTFILE
-	Request	"https://filtergraph.com/aavso/api/v1/telescope"	| ./replaceCRLF	>> $OUTPUTFILE
+	OUTPUTFILEALL="alerts_json_all.txt"
+	Request	"$TARGET_TOOL_URL/nighttime"	| ./replaceCRLF	> $OUTPUTFILE
+	Request	"$TARGET_TOOL_URL/telescope"	| ./replaceCRLF	>> $OUTPUTFILE
 
-	Request	"https://filtergraph.com/aavso/api/v1/targets"		| ./replaceCRLF	>> $OUTPUTFILE
-#	Request	"https://filtergraph.com/aavso/api/v1/targets?obs_section=all"	\
-#																| ./replaceCRLF	>> $OUTPUTFILE
+	Request	"$TARGET_TOOL_URL/targets"		| ./replaceCRLF	>> $OUTPUTFILE
+
+	Request	"$TARGET_TOOL_URL/nighttime"	| ./replaceCRLF	> $OUTPUTFILEALL
+	Request	"$TARGET_TOOL_URL/telescope"	| ./replaceCRLF	>> $OUTPUTFILEALL
+	Request	"$TARGET_TOOL_URL/targets?obs_section=all"	\
+																| ./replaceCRLF	>> $OUTPUTFILEALL
+
+#	Request	"$TARGET_TOOL_URL/targets"		 > raw-json.txt
 
 	echo -n "Total lines in JSON response ="
 	wc -l $OUTPUTFILE

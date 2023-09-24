@@ -361,9 +361,25 @@ cv::Scalar	txtColor;
 }
 
 //**************************************************************************************
+void	ControllerNiteCrawler::UpdateConnectedStatusIndicator(void)
+{
+}
+
+//**************************************************************************************
 void	ControllerNiteCrawler::UpdateStartupData(void)
 {
+char	lineBuff[128];
+
 	UpdateAboutBoxRemoteDevice(kTab_About, kAboutBox_CPUinfo);
+	if (strlen(cSerialNumber) > 0)
+	{
+		sprintf(lineBuff, "%s-%s", cModelName, cSerialNumber);
+	}
+	else
+	{
+		strcpy(lineBuff,		cModelName);
+	}
+	SetWidgetText(kTab_Focuser, kNiteCrawlerTab_Model, lineBuff);
 }
 
 //**************************************************************************************
@@ -590,7 +606,7 @@ char	lineBuff[128];
 	}
 	else
 	{
-		SetWidgetText(kTab_Focuser, kNiteCrawlerTab_Connect,		 "Connect");
+		SetWidgetText(kTab_Focuser, kNiteCrawlerTab_Connect,		"Connect");
 		SetWidgetText(kTab_Focuser, kNiteCrawlerTab_Model,			"-----");
 		SetWidgetText(kTab_Focuser, kNiteCrawlerTab_focValue,		"-----");
 		SetWidgetText(kTab_Focuser, kNiteCrawlerTab_rotValue,		"-----");
@@ -599,6 +615,7 @@ char	lineBuff[128];
 		SetWidgetText(kTab_Focuser, kNiteCrawlerTab_Temperature,	"-----");
 		SetWidgetText(kTab_Focuser, kNiteCrawlerTab_Voltage,		"-----");
 	}
+	CONSOLE_ABORT(__FUNCTION__);
 }
 
 //*****************************************************************************

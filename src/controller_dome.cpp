@@ -49,6 +49,7 @@
 //*	Jun 28,	2023	<MLS> Added DeviceState window to dome controller
 //*	Jul 14,	2023	<MLS> Fixed Dome controller title
 //*	Jul 14,	2023	<MLS> Added UpdateOnlineStatus() to dome controller
+//*	Aug  9,	2023	<MLS> Add shutter support to AlpacaProcessReadAllIdx()
 //*****************************************************************************
 #ifdef _ENABLE_CTRL_DOME_
 
@@ -243,6 +244,10 @@ bool	dataWasHandled;
 //	CONSOLE_DEBUG_W_2STR("json=",	keywordString, valueString);
 	dataWasHandled	=	false;
 	if (strcasecmp(deviceTypeStr, "dome") == 0)
+	{
+		dataWasHandled	=	AlpacaProcessReadAllIdx_Dome(deviceNum, keywordEnum, valueString);
+	}
+	else if (strcasecmp(deviceTypeStr, "shutter") == 0)
 	{
 		dataWasHandled	=	AlpacaProcessReadAllIdx_Dome(deviceNum, keywordEnum, valueString);
 	}

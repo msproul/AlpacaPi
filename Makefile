@@ -157,7 +157,7 @@ QSI_INCLUDE_DIR		=	./qsiapi-7.6.0
 DEFINEFLAGS		+=	-D_INCLUDE_HTTP_HEADER_
 DEFINEFLAGS		+=	-D_INCLUDE_ALPACA_EXTENSIONS_
 DEFINEFLAGS		+=	-D_ALPACA_PI_
-
+DEFINEFLAGS		+=	-D_USE_CAMERA_READ_THREAD_
 CFLAGS			=	-Wall -Wno-multichar -Wno-unknown-pragmas -Wstrict-prototypes
 CFLAGS			+=	-Wextra
 #CFLAGS			+=	-Werror
@@ -280,6 +280,7 @@ DRIVER_OBJECTS=												\
 				$(OBJECT_DIR)alpacadriver.o					\
 				$(OBJECT_DIR)alpacadriverConnect.o			\
 				$(OBJECT_DIR)alpacadriverSetup.o			\
+				$(OBJECT_DIR)alpacadriverThread.o			\
 				$(OBJECT_DIR)alpacadriver_templog.o			\
 				$(OBJECT_DIR)alpacadriver_helper.o			\
 				$(OBJECT_DIR)alpaca_discovery.o				\
@@ -307,18 +308,24 @@ CAMERA_DRIVER_OBJECTS=										\
 				$(OBJECT_DIR)cameradriver_ASI.o				\
 				$(OBJECT_DIR)cameradriver_ATIK.o			\
 				$(OBJECT_DIR)cameradriver_fits.o			\
+				$(OBJECT_DIR)cameradriver_gps.o				\
 				$(OBJECT_DIR)cameradriver_FLIR.o			\
 				$(OBJECT_DIR)cameradriver_jpeg.o			\
 				$(OBJECT_DIR)cameradriver_livewindow.o		\
 				$(OBJECT_DIR)cameradriver_opencv.o			\
+				$(OBJECT_DIR)cameradriver_overlay.o			\
 				$(OBJECT_DIR)cameradriver_png.o				\
 				$(OBJECT_DIR)cameradriver_QHY.o				\
 				$(OBJECT_DIR)cameradriver_QSI.o				\
+				$(OBJECT_DIR)cameradriver_readthread.o		\
 				$(OBJECT_DIR)cameradriver_SONY.o			\
 				$(OBJECT_DIR)cameradriver_save.o			\
 				$(OBJECT_DIR)cameradriver_sim.o				\
 				$(OBJECT_DIR)cameradriver_TOUP.o			\
 				$(OBJECT_DIR)multicam.o						\
+				$(OBJECT_DIR)ParseNMEA.o					\
+				$(OBJECT_DIR)NMEA_helper.o					\
+
 
 ######################################################################################
 CALIBRATION_DRIVER_OBJECTS=									\
@@ -346,6 +353,7 @@ SHUTTER_DRIVER_OBJECTS=										\
 FITLERWHEEL_DRIVER_OBJECTS=									\
 				$(OBJECT_DIR)filterwheeldriver.o			\
 				$(OBJECT_DIR)filterwheeldriver_ATIK.o		\
+				$(OBJECT_DIR)filterwheeldriver_QHY.o		\
 				$(OBJECT_DIR)filterwheeldriver_ZWO.o		\
 				$(OBJECT_DIR)filterwheeldriver_sim.o		\
 
@@ -415,6 +423,7 @@ ROR_OBJECTS=												\
 				$(OBJECT_DIR)alpacadriver.o					\
 				$(OBJECT_DIR)alpacadriverConnect.o			\
 				$(OBJECT_DIR)alpacadriverSetup.o			\
+				$(OBJECT_DIR)alpacadriverThread.o			\
 				$(OBJECT_DIR)alpacadriver_helper.o			\
 				$(OBJECT_DIR)alpacadriverLogging.o			\
 				$(OBJECT_DIR)alpaca_discovery.o				\
@@ -434,6 +443,8 @@ ROR_OBJECTS=												\
 # CPP objects
 IMU_OBJECTS=												\
 				$(OBJECT_DIR)imu_lib.o						\
+				$(OBJECT_DIR)imu_lib_bno055.o				\
+				$(OBJECT_DIR)imu_lib_LIS2DH12.o				\
 				$(OBJECT_DIR)i2c_bno055.o					\
 
 ######################################################################################
@@ -525,7 +536,7 @@ alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_
 alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_MOONLITE_
 #alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_MULTICAM_
 #alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_OBSERVINGCONDITIONS_
-#alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_QHY_
+alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_QHY_
 alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_ROTATOR_
 alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_ROTATOR_NITECRAWLER_
 #alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_SAFETYMONITOR_
@@ -883,6 +894,7 @@ tele	:										\
 					$(ASI_CAMERA_OBJECTS)		\
 					-lusb-1.0					\
 					-lcfitsio					\
+					-li2c						\
 					-lpthread					\
 					-o alpacapi-telescope
 
@@ -974,7 +986,7 @@ newt16		:		DEFINEFLAGS		+=	-D_ENABLE_DISCOVERY_QUERRY_
 newt16		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
 newt16		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
 newt16		:		DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
-newt16		:		DEFINEFLAGS		+=	-D_ENABLE_JPEGLIB_
+#newt16		:		DEFINEFLAGS		+=	-D_ENABLE_JPEGLIB_
 newt16		:		DEFINEFLAGS		+=	-D_ENABLE_SLIT_TRACKER_
 newt16		:		DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
 newt16		:		DEFINEFLAGS		+=	-D_ENABLE_LIVE_CONTROLLER_
@@ -1086,7 +1098,7 @@ wo102		:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
 wo102		:		DEFINEFLAGS		+=	-D_ENABLE_DISCOVERY_QUERRY_
 wo102		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
 wo102		:		DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
-wo102		:		DEFINEFLAGS		+=	-D_ENABLE_JPEGLIB_
+#wo102		:		DEFINEFLAGS		+=	-D_ENABLE_JPEGLIB_
 wo102		:		DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
 wo102		:		DEFINEFLAGS		+=	-D_ENABLE_LIVE_CONTROLLER_
 wo102		:										\
@@ -1130,6 +1142,7 @@ TELESCOPE_OBJECTS=											\
 				$(OBJECT_DIR)alpacadriver.o					\
 				$(OBJECT_DIR)alpacadriverConnect.o			\
 				$(OBJECT_DIR)alpacadriverSetup.o			\
+				$(OBJECT_DIR)alpacadriverThread.o			\
 				$(OBJECT_DIR)alpacadriver_helper.o			\
 				$(OBJECT_DIR)alpacadriver_templog.o			\
 				$(OBJECT_DIR)alpaca_discovery.o				\
@@ -1242,15 +1255,17 @@ toup	:		DEFINEFLAGS		+=	-D_ENABLE_TOUP_
 toup	:		DEFINEFLAGS		+=	-D_USE_OPENCV_
 toup	:		DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
 toup	:										\
-					$(CPP_OBJECTS)				\
 					$(DRIVER_OBJECTS)			\
+					$(CAMERA_DRIVER_OBJECTS)	\
 					$(SOCKET_OBJECTS)			\
+					$(HELPER_OBJECTS)			\
 
 
 		$(LINK)  								\
-					$(SOCKET_OBJECTS)			\
-					$(CPP_OBJECTS)				\
 					$(DRIVER_OBJECTS)			\
+					$(CAMERA_DRIVER_OBJECTS)	\
+					$(SOCKET_OBJECTS)			\
+					$(HELPER_OBJECTS)			\
 					$(OPENCV_LINK)				\
 					-L$(TOUP_LIB_DIR)/			\
 					-ltoupcam					\
@@ -1280,16 +1295,19 @@ touppi	:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
 #touppi	:		DEFINEFLAGS		+=	-D_ENABLE_SAFETYMONITOR_
 touppi	:		DEFINEFLAGS		+=	-D_ENABLE_TOUP_
 touppi	:		DEFINEFLAGS		+=	-D_USE_OPENCV_
+touppi	:		DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
+touppi	:		TOUP_LIB_DIR	=	$(TOUP_DIR)/linux/arm64
 touppi	:										\
-					$(CPP_OBJECTS)				\
 					$(DRIVER_OBJECTS)			\
+					$(CAMERA_DRIVER_OBJECTS)	\
 					$(SOCKET_OBJECTS)			\
-
+					$(HELPER_OBJECTS)			\
 
 		$(LINK)  								\
-					$(SOCKET_OBJECTS)			\
-					$(CPP_OBJECTS)				\
 					$(DRIVER_OBJECTS)			\
+					$(CAMERA_DRIVER_OBJECTS)	\
+					$(SOCKET_OBJECTS)			\
+					$(HELPER_OBJECTS)			\
 					$(OPENCV_LINK)				\
 					-L$(TOUP_LIB_DIR)/			\
 					-ltoupcam					\
@@ -1300,6 +1318,7 @@ touppi	:										\
 					-o alpacapi
 
 
+#					$(CPP_OBJECTS)				\
 
 ######################################################################################
 #pragma mark C++ linux-x86
@@ -1471,7 +1490,7 @@ nousb		:		DEFINEFLAGS		+=	-D_ENABLE_OBSERVINGCONDITIONS_
 nousb		:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_
 #nousb		:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
 nousb		:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
-nousb		:		DEFINEFLAGS		+=	-D_ENABLE_JPEGLIB_
+#nousb		:		DEFINEFLAGS		+=	-D_ENABLE_JPEGLIB_
 nousb		:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
 #nousb		:		DEFINEFLAGS		+=	-D_ENABLE_DOME_
 nousb		:		DEFINEFLAGS		+=	-D_ENABLE_MULTICAM_
@@ -1546,7 +1565,32 @@ rorpi		:	DEFINEFLAGS		+=	-D_ENABLE_DOME_
 rorpi		:	DEFINEFLAGS		+=	-D_ENABLE_DOME_ROR_
 rorpi		:	DEFINEFLAGS		+=	-D_ENABLE_WIRING_PI_
 rorpi		:	DEFINEFLAGS		+=	-D_ENABLE_4REALY_BOARD
+rorpi		:	DEFINEFLAGS		+=	-D_CHRIS_A_ROLL_OFF_ROOF_
 rorpi		:									\
+					$(DRIVER_OBJECTS)			\
+					$(DOME_DRIVER_OBJECTS)		\
+					$(HELPER_OBJECTS)			\
+					$(SOCKET_OBJECTS)			\
+
+				$(LINK)  						\
+					$(DRIVER_OBJECTS)			\
+					$(DOME_DRIVER_OBJECTS)		\
+					$(HELPER_OBJECTS)			\
+					$(SOCKET_OBJECTS)			\
+					-lpthread					\
+					-lwiringPi					\
+					-o ror
+
+
+######################################################################################
+#pragma mark topens
+#	make topens
+topens		:	DEFINEFLAGS		+=	-D_ENABLE_DOME_
+topens		:	DEFINEFLAGS		+=	-D_ENABLE_DOME_ROR_
+topens		:	DEFINEFLAGS		+=	-D_ENABLE_WIRING_PI_
+topens		:	DEFINEFLAGS		+=	-D_ENABLE_4REALY_BOARD
+topens		:	DEFINEFLAGS		+=	-D_TOPENS_ROLL_OFF_ROOF_
+topens		:									\
 					$(DRIVER_OBJECTS)			\
 					$(DOME_DRIVER_OBJECTS)		\
 					$(HELPER_OBJECTS)			\
@@ -1946,7 +1990,12 @@ piqhy		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS
 piqhy		:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
 piqhy		:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
 piqhy		:		DEFINEFLAGS		+=	-D_ENABLE_QHY_
+piqhy		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_
+piqhy		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_QHY_
 piqhy		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
+piqhy		:		DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
+piqhy		:		DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
+piqhy		:		DEFINEFLAGS		+=	-D_ENABLE_LIVE_CONTROLLER_
 piqhy		:		ATIK_LIB_DIR	=	$(ATIK_LIB_MASTER_DIR)/ARM/x86/NoFlyCapture
 piqhy		:									\
 					$(DRIVER_OBJECTS)				\
@@ -1954,19 +2003,24 @@ piqhy		:									\
 					$(HELPER_OBJECTS)				\
 					$(SOCKET_OBJECTS)				\
 					$(LIVE_WINDOW_OBJECTS)			\
+					$(FITLERWHEEL_DRIVER_OBJECTS)	\
+					$(SERIAL_OBJECTS)				\
 
-		$(LINK)  								\
+
+		$(LINK)  									\
 					$(DRIVER_OBJECTS)				\
 					$(CAMERA_DRIVER_OBJECTS)		\
 					$(HELPER_OBJECTS)				\
 					$(SOCKET_OBJECTS)				\
 					$(LIVE_WINDOW_OBJECTS)			\
-					$(OPENCV_LINK)				\
-					-lcfitsio					\
-					-lusb-1.0					\
-					-ludev						\
-					-lpthread					\
-					-lqhyccd					\
+					$(OPENCV_LINK)					\
+					$(FITLERWHEEL_DRIVER_OBJECTS)	\
+					$(SERIAL_OBJECTS)				\
+					-lcfitsio						\
+					-lusb-1.0						\
+					-ludev							\
+					-lpthread						\
+					-lqhyccd						\
 					-o alpacapi
 
 
@@ -2082,7 +2136,7 @@ zwo		:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
 zwo		:		DEFINEFLAGS		+=	-D_ENABLE_DISCOVERY_QUERRY_
 zwo		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
 #zwo		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
-zwo		:		DEFINEFLAGS		+=	-D_ENABLE_JPEGLIB_
+#zwo		:		DEFINEFLAGS		+=	-D_ENABLE_JPEGLIB_
 zwo		:			$(CPP_OBJECTS)				\
 					$(DRIVER_OBJECTS)			\
 					$(SOCKET_OBJECTS)			\
@@ -2410,7 +2464,6 @@ jetson		:	DEFINEFLAGS		+=	-D_ENABLE_STAR_SEARCH_
 jetson		:	DEFINEFLAGS		+=	-D_PLATFORM_STRING_=\"Nvidia-jetson\"
 #jetson		:	DEFINEFLAGS		+=	-D_ENABLE_IMU_
 jetson		:	INCLUDES		+=	-I$(SRC_IMU)
-jetson		:	TOUP_LIB_DIR	=	$(TOUP_DIR)/linux/arm64
 jetson		:											\
 					$(DRIVER_OBJECTS)				\
 					$(CAMERA_DRIVER_OBJECTS)		\
@@ -2506,6 +2559,7 @@ ATIK_OBJECTS=												\
 				$(OBJECT_DIR)alpacadriver.o					\
 				$(OBJECT_DIR)alpacadriverConnect.o			\
 				$(OBJECT_DIR)alpacadriverSetup.o			\
+				$(OBJECT_DIR)alpacadriverThread.o			\
 				$(OBJECT_DIR)alpacadriver_helper.o			\
 				$(OBJECT_DIR)alpacadriverLogging.o			\
 				$(OBJECT_DIR)alpaca_discovery.o				\
@@ -2514,12 +2568,14 @@ ATIK_OBJECTS=												\
 				$(OBJECT_DIR)json_parse.o					\
 				$(OBJECT_DIR)filterwheeldriver_ATIK.o		\
 				$(OBJECT_DIR)cameradriver.o					\
+				$(OBJECT_DIR)cameradriver_readthread.o		\
 				$(OBJECT_DIR)cameradriverAnalysis.o			\
 				$(OBJECT_DIR)cameradriver_fits.o			\
 				$(OBJECT_DIR)cameradriver_save.o			\
 				$(OBJECT_DIR)cameradriver_opencv.o			\
 				$(OBJECT_DIR)cameradriver_jpeg.o			\
 				$(OBJECT_DIR)cameradriver_livewindow.o		\
+				$(OBJECT_DIR)cameradriver_overlay.o			\
 				$(OBJECT_DIR)cameradriver_png.o				\
 				$(OBJECT_DIR)cameradriver_ATIK.o			\
 				$(OBJECT_DIR)filterwheeldriver.o			\
@@ -2922,6 +2978,7 @@ SKYTRAVEL_OBJECTS=											\
 				$(OBJECT_DIR)controller_constList.o			\
 				$(OBJECT_DIR)controller_covercalib.o		\
 				$(OBJECT_DIR)controller_multicam.o			\
+				$(OBJECT_DIR)controller_remoteview.o		\
 				$(OBJECT_DIR)controller_skytravel.o			\
 				$(OBJECT_DIR)controller_slit.o				\
 				$(OBJECT_DIR)controller_starlist.o			\
@@ -2944,6 +3001,7 @@ SKYTRAVEL_OBJECTS=											\
 				$(OBJECT_DIR)skytravel_main.o				\
 				$(OBJECT_DIR)SAO_stardata.o					\
 				$(OBJECT_DIR)StarData.o						\
+				$(OBJECT_DIR)MessierData.o					\
 				$(OBJECT_DIR)SkyTravelTimeRoutines.o		\
 				$(OBJECT_DIR)windowtab_alpacalist.o			\
 				$(OBJECT_DIR)windowtab_alpacaUnit.o			\
@@ -3517,6 +3575,14 @@ $(OBJECT_DIR)alpacadriverConnect.o :	$(SRC_DIR)alpacadriverConnect.cpp		\
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)alpacadriverConnect.cpp -o$(OBJECT_DIR)alpacadriverConnect.o
 
 #-------------------------------------------------------------------------------------
+$(OBJECT_DIR)alpacadriverThread.o :		$(SRC_DIR)alpacadriverThread.cpp		\
+										$(SRC_DIR)alpacadriver.h				\
+										$(SRC_DIR)alpaca_defs.h					\
+										Makefile
+	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)alpacadriverThread.cpp -o$(OBJECT_DIR)alpacadriverThread.o
+
+
+#-------------------------------------------------------------------------------------
 $(OBJECT_DIR)alpacadriverSetup.o :		$(SRC_DIR)alpacadriverSetup.cpp			\
 										$(SRC_DIR)alpacadriver.h				\
 										$(SRC_DIR)alpaca_defs.h					\
@@ -3559,6 +3625,13 @@ $(OBJECT_DIR)cameradriver.o :			$(SRC_DIR)cameradriver.cpp			\
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)cameradriver.cpp -o$(OBJECT_DIR)cameradriver.o
 
 #-------------------------------------------------------------------------------------
+$(OBJECT_DIR)cameradriver_readthread.o :$(SRC_DIR)cameradriver_readthread.cpp	\
+										$(SRC_DIR)cameradriver.h				\
+										$(SRC_DIR)alpacadriver.h				\
+										Makefile
+	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)cameradriver_readthread.cpp -o$(OBJECT_DIR)cameradriver_readthread.o
+
+#-------------------------------------------------------------------------------------
 $(OBJECT_DIR)cameradriverAnalysis.o :	$(SRC_DIR)cameradriverAnalysis.cpp	\
 										$(SRC_DIR)cameradriver.h			\
 										$(SRC_DIR)alpacadriver.h			\
@@ -3571,6 +3644,14 @@ $(OBJECT_DIR)cameradriver_fits.o :		$(SRC_DIR)cameradriver_fits.cpp		\
 										$(SRC_DIR)alpacadriver.h			\
 										Makefile
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)cameradriver_fits.cpp -I$(SRC_MOONRISE) -o$(OBJECT_DIR)cameradriver_fits.o
+
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)cameradriver_gps.o :		$(SRC_DIR)cameradriver_gps.cpp		\
+										$(SRC_DIR)cameradriver.h			\
+										$(SRC_DIR)alpacadriver.h			\
+										Makefile
+	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)cameradriver_gps.cpp -o$(OBJECT_DIR)cameradriver_gps.o
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)cameradriver_ASI.o :		$(SRC_DIR)cameradriver_ASI.cpp		\
@@ -3589,12 +3670,29 @@ $(OBJECT_DIR)cameradriver_ATIK.o :		$(SRC_DIR)cameradriver_ATIK.cpp		\
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)cameradriver_ATIK.cpp -o$(OBJECT_DIR)cameradriver_ATIK.o
 
 #-------------------------------------------------------------------------------------
+$(OBJECT_DIR)cameradriver_overlay.o :	$(SRC_DIR)cameradriver_overlay.cpp	\
+										$(SRC_DIR)cameradriver.h			\
+										$(SRC_DIR)alpacadriver.h			\
+										Makefile
+	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)cameradriver_overlay.cpp -o$(OBJECT_DIR)cameradriver_overlay.o
+
+
+#-------------------------------------------------------------------------------------
 $(OBJECT_DIR)filterwheeldriver_ATIK.o :	$(SRC_DIR)filterwheeldriver_ATIK.cpp	\
 										$(SRC_DIR)filterwheeldriver_ATIK.h		\
 										$(SRC_DIR)filterwheeldriver.h			\
 										$(SRC_DIR)alpacadriver.h				\
 										Makefile
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)filterwheeldriver_ATIK.cpp -o$(OBJECT_DIR)filterwheeldriver_ATIK.o
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)filterwheeldriver_QHY.o :	$(SRC_DIR)filterwheeldriver_QHY.cpp		\
+										$(SRC_DIR)filterwheeldriver_QHY.h		\
+										$(SRC_DIR)filterwheeldriver.h			\
+										$(SRC_DIR)alpacadriver.h				\
+										Makefile
+	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)filterwheeldriver_QHY.cpp -o$(OBJECT_DIR)filterwheeldriver_QHY.o
+
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)filterwheeldriver_sim.o :	$(SRC_DIR)filterwheeldriver_sim.cpp		\
@@ -3611,6 +3709,17 @@ $(OBJECT_DIR)cameradriver_QHY.o :		$(SRC_DIR)cameradriver_QHY.cpp		\
 										$(SRC_DIR)alpacadriver.h			\
 										Makefile
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)cameradriver_QHY.cpp -o$(OBJECT_DIR)cameradriver_QHY.o
+
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)ParseNMEA.o :				$(MLS_LIB_DIR)ParseNMEA.c 	\
+										$(MLS_LIB_DIR)ParseNMEA.h
+	$(COMPILEPLUS) $(INCLUDES)			$(MLS_LIB_DIR)ParseNMEA.c -o$(OBJECT_DIR)ParseNMEA.o
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)NMEA_helper.o :			$(MLS_LIB_DIR)NMEA_helper.c 	\
+										$(MLS_LIB_DIR)NMEA_helper.h
+	$(COMPILEPLUS) $(INCLUDES)			$(MLS_LIB_DIR)NMEA_helper.c -o$(OBJECT_DIR)NMEA_helper.o
 
 
 #-------------------------------------------------------------------------------------
@@ -4647,6 +4756,13 @@ $(OBJECT_DIR)controller_skytravel.o :	$(SRC_SKYTRAVEL)controller_skytravel.cpp	\
 										$(SRC_SKYTRAVEL)SkyStruc.h
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYTRAVEL)controller_skytravel.cpp -o$(OBJECT_DIR)controller_skytravel.o
 
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)controller_remoteview.o :	$(SRC_DIR)controller_remoteview.cpp		\
+										$(SRC_DIR)controller_remoteview.cpp		\
+										$(SRC_DIR)controller.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)controller_remoteview.cpp -o$(OBJECT_DIR)controller_remoteview.o
+
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)windowtab_time.o : 			$(SRC_SKYTRAVEL)windowtab_time.cpp			\
 											$(SRC_SKYTRAVEL)windowtab_time.h			\
@@ -4666,6 +4782,13 @@ $(OBJECT_DIR)windowtab_fov.o : 			$(SRC_SKYTRAVEL)windowtab_fov.cpp			\
 $(OBJECT_DIR)StarData.o :				$(SRC_SKYTRAVEL)StarData.c	\
 										$(SRC_SKYTRAVEL)StarData.h
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYTRAVEL)StarData.c -o$(OBJECT_DIR)StarData.o
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)MessierData.o :			$(SRC_SKYTRAVEL)MessierData.c	\
+										$(SRC_SKYTRAVEL)StarData.h		\
+										$(SRC_SKYTRAVEL)SkyStruc.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYTRAVEL)MessierData.c -o$(OBJECT_DIR)MessierData.o
+
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)SAO_stardata.o :			$(SRC_SKYTRAVEL)SAO_stardata.c	\
@@ -4924,10 +5047,22 @@ $(OBJECT_DIR)servo_mc_core.o : 			$(SRC_SERVO)servo_mc_core.c	\
 #		IMU source code
 ##################################################################################
 #-------------------------------------------------------------------------------------
-$(OBJECT_DIR)imu_lib.o : 				$(SRC_IMU)imu_lib.c	\
-										$(SRC_IMU)imu_lib.h	\
+$(OBJECT_DIR)imu_lib.o : 				$(SRC_IMU)imu_lib.c			\
+										$(SRC_IMU)imu_lib.h			\
+										$(SRC_IMU)imu_lib_bno055.h	\
 										$(SRC_IMU)getbno055.h
 	$(COMPILE) $(INCLUDES) $(SRC_IMU)imu_lib.c -o$(OBJECT_DIR)imu_lib.o
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)imu_lib_LIS2DH12.o : 		$(SRC_IMU)imu_lib_LIS2DH12.c		\
+										$(SRC_IMU)imu_lib_LIS2DH12.h
+	$(COMPILE) $(INCLUDES) $(SRC_IMU)imu_lib_LIS2DH12.c -o$(OBJECT_DIR)imu_lib_LIS2DH12.o
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)imu_lib_bno055.o : 		$(SRC_IMU)imu_lib_bno055.c	\
+										$(SRC_IMU)imu_lib_bno055.h	\
+										$(SRC_IMU)getbno055.h
+	$(COMPILE) $(INCLUDES) $(SRC_IMU)imu_lib_bno055.c -o$(OBJECT_DIR)imu_lib_bno055.o
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)i2c_bno055.o : 			$(SRC_IMU)i2c_bno055.c	\

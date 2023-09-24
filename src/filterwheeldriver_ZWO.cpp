@@ -30,6 +30,7 @@
 //*	Nov 10,	2019	<MLS> Created filterwheeldriver_ZWO.cpp
 //*	Nov 10,	2019	<MLS> Started on C++ version of ZWO filter wheel
 //*	Nov 10,	2019	<MLS> C++ version of ZWQ EFW filterwheel working
+//*	Nov 10,	2019	<MLS> SUPPORTED: ZWO filter wheel
 //*	Dec 15,	2019	<MLS> Added CheckZWOrulesFile()
 //*	Apr  1,	2020	<MLS> Updated to zero based indexing as per ASCOM
 //*	Apr 19,	2020	<MLS> ZWO Filterwheel keeps hanging in Read_CurrentFilterPositon

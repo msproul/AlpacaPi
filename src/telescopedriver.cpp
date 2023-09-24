@@ -114,6 +114,7 @@
 
 #ifdef _ENABLE_IMU_
 	#include "imu_lib.h"
+	#include "imu_lib_bno055.h"
 #endif
 
 #include	"telescope_AlpacaCmds.h"
@@ -258,6 +259,7 @@ int		iii;
 	}
 
 #ifdef _ENABLE_IMU_
+//	IMU_BNO055_StartBackgroundThread();
 	IMU_StartBackgroundThread();
 #endif // _ENABLE_IMU_
 }
@@ -3346,6 +3348,7 @@ double					hourAngle_Degrees;
 
 #ifdef _ENABLE_IMU_
 
+//	hourAngle_Degrees			=	IMU_BNO055_GetAverageRoll();
 	hourAngle_Degrees			=	IMU_GetAverageRoll();
 	if (hourAngle_Degrees <= 0.0)
 	{
@@ -3603,7 +3606,7 @@ int		mySocketFD;
 		mySocketFD		=	reqData->socket;
 		SocketWriteData(mySocketFD,	"<CENTER>\r\n");
 
-		SocketWriteData(mySocketFD,	"<H2>Telescope</H2>\r\n");
+		SocketWriteData(mySocketFD,	"<H2>AlpacaPi Telescope</H2>\r\n");
 
 		SocketWriteData(mySocketFD,	"</CENTER>\r\n");
 	}
@@ -3806,6 +3809,7 @@ double		imuRollAngle_Degrees;
 	//*	When the telescope rotates to the left (counter-clockwise /west ), the ROLL angle must be POSITIVE
 	if (gIMUisOnLine)
 	{
+//		imuRollAngle_Degrees	=	IMU_BNO055_GetAverageRoll();
 		imuRollAngle_Degrees	=	IMU_GetAverageRoll();
 		if (imuRollAngle_Degrees < 0.0)
 		{

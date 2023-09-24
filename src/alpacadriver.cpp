@@ -173,6 +173,12 @@
 //*	Jul 14,	2023	<MLS> Added OutputHTML_CmdTable()
 //*	Jul 17,	2023	<MLS> Added Get_WatchDogEnabled()
 //*	Jul 17,	2023	<MLS> Made WatchDog timer optional and defaults to OFF
+//*	Jul 18,	2023	<MLS> Added watchdog table to main web page
+//*	Jul 22,	2023	<MLS> Added Get_WatchDogTimeout()
+//*	Sep  6,	2023	<MLS> Added all the device version info to Get_Readall_Common()
+//*	Sep 12,	2023	<MLS> Added OutputHTML_ClassDocs()
+//*	Sep 13,	2023	<MLS> Fixed HTML header bug when sending PNG file SendJpegResponse()
+//*	Sep 20,	2023	<MLS> Adding optional thread to driver base class
 //*****************************************************************************
 //*	to install code blocks 20
 //*	Step 1: sudo add-apt-repository ppa:codeblocks-devs/release
@@ -180,6 +186,7 @@
 //*	Step 3: sudo apt-get install codeblocks codeblocks-contrib
 //*****************************************************************************
 //		 getrusage() - get resource usage
+//*****************************************************************************
 
 #include	<stdio.h>
 #include	<stdlib.h>
@@ -258,10 +265,7 @@
 
 #ifdef _ENABLE_TELESCOPE_
 	#include	"telescopedriver.h"
-//	#include	"telescopedriver_lx200.h"
-//	#include	"telescopedriver_comm.h"
 #endif
-
 
 #ifdef _ENABLE_SHUTTER_
 	#include	"shutterdriver_arduino.h"
@@ -425,9 +429,10 @@ int		iii;
 	//========================================
 	//*	Watchdog timer stuff
 	cWatchDogEnabled			=	false;
+	cWatchDogTimeOut_Minutes	=	5;				//*	default timeout, can be overridden
 	cTimeOfLastValidCmd			=	time(NULL);		//*	these need to be set or it will do a shutdown before it even starts
 	cTimeOfLastWatchDogCheck	=	time(NULL);
-	cWatchDogTimeOut_Minutes	=	5;				//*	default timeout, can be overridden
+	strcpy(cWatchDogTimeOutAction, "-not defined-");
 
 	//========================================
 	//*	CPU usage information
@@ -489,6 +494,11 @@ int		iii;
 				NULL,
 				kASCOM_Err_Success,
 				"");
+
+	//-----------------------------------------------------------------
+	cDriverThreadIsActive		=	false;
+	cDriverThreadKeepRunning	=	false;
+	cDriverThreadID				=	0;
 
 #ifdef _ENABLE_BANDWIDTH_LOGGING_
 	BandWidthStatsInit();
@@ -807,6 +817,20 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 }
 
 //*****************************************************************************
+TYPE_ASCOM_STATUS	AlpacaDriver::Get_WatchDogTimeout(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
+{
+TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
+
+	JsonResponse_Add_Int32(	reqData->socket,
+							reqData->jsonTextBuffer,
+							kMaxJsonBuffLen,
+							responseString,
+							cWatchDogTimeOut_Minutes,
+							INCLUDE_COMMA);
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
 TYPE_ASCOM_STATUS	AlpacaDriver::Get_Readall_Common(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
@@ -817,6 +841,50 @@ TYPE_ASCOM_STATUS	AlpacaDriver::Get_Readall_Common(TYPE_GetPutRequestData *reqDa
 	Get_Interfaceversion(	reqData, alpacaErrMsg, "interfaceversion");
 	Get_Name(				reqData, alpacaErrMsg, "name");
 	Get_WatchDogEnabled(	reqData, alpacaErrMsg, "watchdogenabled");
+	Get_WatchDogTimeout(	reqData, alpacaErrMsg, "watchdogtimeout");
+
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(reqData->socket,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									"Alpaca-Name",
+									cAlpacaName,
+									INCLUDE_COMMA);
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(reqData->socket,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									"DeviceModel",
+									cDeviceModel,
+									INCLUDE_COMMA);
+
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(reqData->socket,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									"DeviceManufacturer",
+									cDeviceManufacturer,
+									INCLUDE_COMMA);
+
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(reqData->socket,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									"DeviceSerialNum",
+									cDeviceSerialNum,
+									INCLUDE_COMMA);
+
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(reqData->socket,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									"DeviceVersion",
+									cDeviceVersion,
+									INCLUDE_COMMA);
+
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(reqData->socket,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									"DeviceFirmwareVersStr",
+									cDeviceFirmwareVersStr,
+									INCLUDE_COMMA);
+
+
 
 //	CONSOLE_DEBUG("exit");
 	return(kASCOM_Err_Success);
@@ -1978,6 +2046,20 @@ static void	SendSeparateLine(const int socketFD)
 }
 
 //*****************************************************************************
+static const char	gWatchDogHelpMsg[]	=
+{
+	"<P>"
+	"The watchdog timeout is triggered when no commands are received by the "
+	"driver for the time period specifed. "
+	"The primary intent of this is to go safe-mode if communications is lost to the controlling system. "
+	"The only drivers currently utilizing this feature are Dome_RPI and coverCalibration "
+	"The dome watchdog can be disabled in the dome setup page. "
+	"<P>"
+
+};
+
+
+//*****************************************************************************
 static void	SendHtml_MainPage(TYPE_GetPutRequestData *reqData)
 {
 char	lineBuffer[256];
@@ -2078,6 +2160,8 @@ int		iii;
 		SocketWriteData(mySocketFD,	"\t\t<TH><FONT COLOR=yellow>CPU (nano-secs)</TH>\r\n");
 		SocketWriteData(mySocketFD,	"\t</TR>\r\n");
 
+		//------------------------------------------------------------------------
+		//*	output the main device grid listing
 		for (iii=0; iii<gDeviceCnt; iii++)
 		{
 			if (gAlpacaDeviceList[iii] != NULL)
@@ -2134,7 +2218,55 @@ int		iii;
 		SocketWriteData(mySocketFD,	"</TABLE>\r\n");
 		SocketWriteData(mySocketFD,	"</CENTER>\r\n");
 
-		//**********************************************************
+		//-------------------------------------------------------------
+		//*	output html showing watchdog status
+		SocketWriteData(mySocketFD,	"<P>\r\n");
+		SocketWriteData(mySocketFD,	"<CENTER>\r\n");
+		SocketWriteData(mySocketFD,	"WatchDog settings<P>\r\n");
+		SocketWriteData(mySocketFD,	"<TABLE BORDER=2>\r\n");
+		SocketWriteData(mySocketFD,	"\t\t<TH><FONT COLOR=yellow>Device</TH>\r\n");
+		SocketWriteData(mySocketFD,	"\t\t<TH><FONT COLOR=yellow>Watchdog</TH>\r\n");
+		SocketWriteData(mySocketFD,	"\t\t<TH><FONT COLOR=yellow>Timeout (minutes)</TH>\r\n");
+		SocketWriteData(mySocketFD,	"\t\t<TH><FONT COLOR=yellow>Timeout Action</TH>\r\n");
+		for (iii=0; iii<gDeviceCnt; iii++)
+		{
+			if (gAlpacaDeviceList[iii] != NULL)
+			{
+				if (gAlpacaDeviceList[iii]->cDeviceType != kDeviceType_Management)
+				{
+					SocketWriteData(mySocketFD,	"\t<TR>\r\n");
+					SocketWriteData(mySocketFD,	"\t\t<TD>\r\n");
+						SocketWriteData(mySocketFD,	gAlpacaDeviceList[iii]->cAlpacaName);
+					SocketWriteData(mySocketFD,	"\t\t</TD>\r\n");
+
+					//*	is Watchdog enabled
+					if (gAlpacaDeviceList[iii]->cWatchDogEnabled)
+					{
+						SocketWriteData(mySocketFD,	"\t\t<TD><FONT COLOR=GREEN>Enabled</TD>\r\n");
+					}
+					else
+					{
+						SocketWriteData(mySocketFD,	"\t\t<TD><FONT COLOR=RED>Disabled</TD>\r\n");
+					}
+					sprintf(lineBuffer, "<TD><CENTER>%d</TD>\r\n",
+												gAlpacaDeviceList[iii]->cWatchDogTimeOut_Minutes);
+					SocketWriteData(mySocketFD,	lineBuffer);
+					SocketWriteData(mySocketFD,	"\t\t<TD>\r\n");
+						SocketWriteData(mySocketFD,	gAlpacaDeviceList[iii]->cWatchDogTimeOutAction);
+					SocketWriteData(mySocketFD,	"\t\t</TD>\r\n");
+
+
+					SocketWriteData(mySocketFD,	"\t</TR>\r\n");
+				}
+			}
+		}
+
+		SocketWriteData(mySocketFD,	"</TABLE>\r\n");
+		SocketWriteData(mySocketFD,	"</CENTER>\r\n");
+		SocketWriteData(mySocketFD,	gWatchDogHelpMsg);
+
+
+		//-------------------------------------------------------------
 		//*	Output the html for each device
 		for (iii=0; iii<gDeviceCnt; iii++)
 		{
@@ -2471,6 +2603,121 @@ int		iii;
 }
 
 //*****************************************************************************
+static void	OutputHTML_ClassSize(int socketFD, const char *className, size_t classSize)
+{
+char	lineBuffer[256];
+long	deltaSize;
+
+	deltaSize	=	classSize - sizeof(AlpacaDriver);
+	if (deltaSize > 0)
+	{
+		sprintf(lineBuffer,	"<TR><TD>%s</TD><TD><CENTER>%ld</TD><TD><CENTER>%ld</TD></TR>\r\n",	className, classSize, deltaSize);
+	}
+	else
+	{
+		sprintf(lineBuffer,	"<TR><TD>%s</TD><TD><CENTER>%ld</TD></TR>\r\n",	className, classSize);
+	}
+	SocketWriteData(socketFD,	lineBuffer);
+
+}
+
+//*****************************************************************************
+static void	OutputHTML_ClassDocs(TYPE_GetPutRequestData *reqData)
+{
+char	lineBuffer[256];
+int		mySocketFD;
+
+	if (reqData != NULL)
+	{
+		mySocketFD	=	reqData->socket;
+		SocketWriteData(mySocketFD,	gHtmlHeader);
+		sprintf(lineBuffer, "<TITLE>%s</TITLE>\r\n", gWebTitle);
+		SocketWriteData(mySocketFD,	lineBuffer);
+		SocketWriteData(mySocketFD,	gHtmlNightMode);
+		SocketWriteData(mySocketFD,	"</HEAD><BODY>\r\n<CENTER>\r\n");
+		SocketWriteData(mySocketFD,	"<H1>Alpaca device driver Web server</H1>\r\n");
+		sprintf(lineBuffer, "<H3>%s</H3>\r\n", "AlpacaPi Class object size");
+		SocketWriteData(mySocketFD,	lineBuffer);
+		SocketWriteData(mySocketFD,	"</CENTER>\r\n");
+
+
+		SocketWriteData(mySocketFD,	"<CENTER>\r\n");
+		SocketWriteData(mySocketFD,	"<TABLE BORDER=1>\r\n");
+
+		SocketWriteData(mySocketFD,	"<TR><TH>Class Name</TH><TH>Size</TH><TH>Delta</TH></TD>\r\n");
+
+		//----------------------------------------
+		OutputHTML_ClassSize(mySocketFD, "AlpacaDriver (base class)",	sizeof(AlpacaDriver));
+#ifdef _ENABLE_CALIBRATION_
+		OutputHTML_ClassSize(mySocketFD, "CalibrationDriver",	sizeof(CalibrationDriver));
+#endif
+#ifdef _ENABLE_CAMERA_
+		OutputHTML_ClassSize(mySocketFD, "CameraDriver",		sizeof(CameraDriver));
+#endif
+#ifdef	_ENABLE_DOME_
+		OutputHTML_ClassSize(mySocketFD, "DomeDriver",			sizeof(DomeDriver));
+#endif
+#ifdef	_ENABLE_FILTERWHEEL_
+		OutputHTML_ClassSize(mySocketFD, "FilterwheelDriver",	sizeof(FilterwheelDriver));
+#endif
+#ifdef _ENABLE_FOCUSER_
+		OutputHTML_ClassSize(mySocketFD, "FocuserDriver",		sizeof(FocuserDriver));
+#endif
+#ifdef _ENABLE_MULTICAM_
+		OutputHTML_ClassSize(mySocketFD, "MultiCam",			sizeof(MultiCam));
+#endif
+#ifdef _ENABLE_OBSERVINGCONDITIONS_
+		OutputHTML_ClassSize(mySocketFD, "ObsConditionsDriver",	sizeof(ObsConditionsDriver));
+#endif
+#ifdef _ENABLE_SWITCH_
+		OutputHTML_ClassSize(mySocketFD, "SwitchDriver",		sizeof(SwitchDriver));
+#endif
+#ifdef _ENABLE_TELESCOPE_
+		OutputHTML_ClassSize(mySocketFD, "TelescopeDriver",		sizeof(TelescopeDriver));
+#endif
+#ifdef _ENABLE_SHUTTER_
+		OutputHTML_ClassSize(mySocketFD, "ShutterDriver",		sizeof(ShutterDriver));
+#endif
+#ifdef _ENABLE_SLIT_TRACKER_
+		OutputHTML_ClassSize(mySocketFD, "SlitTrackerDriver",	sizeof(SlitTrackerDriver));
+#endif
+#ifdef _ENABLE_SPECTROGRAPH_
+		OutputHTML_ClassSize(mySocketFD, "SpectrographDriver",	sizeof(SpectrographDriver));
+#endif
+
+		SocketWriteData(mySocketFD,	"<TR><TH>Other structures</TH><TH>Size</TH></TD>\r\n");
+
+		OutputHTML_ClassSize(mySocketFD, "TYPE_CommonProperties",			sizeof(TYPE_CommonProperties));
+		OutputHTML_ClassSize(mySocketFD, "TYPE_CameraProperties",			sizeof(TYPE_CameraProperties));
+		OutputHTML_ClassSize(mySocketFD, "TYPE_CoverCalibrationProperties",	sizeof(TYPE_CoverCalibrationProperties));
+		OutputHTML_ClassSize(mySocketFD, "TYPE_FilterWheelProperties",		sizeof(TYPE_FilterWheelProperties));
+		OutputHTML_ClassSize(mySocketFD, "TYPE_FocuserProperties",			sizeof(TYPE_FocuserProperties));
+		OutputHTML_ClassSize(mySocketFD, "TYPE_RotatorProperties",			sizeof(TYPE_RotatorProperties));
+		OutputHTML_ClassSize(mySocketFD, "TYPE_ObsConditionProperties",		sizeof(TYPE_ObsConditionProperties));
+		OutputHTML_ClassSize(mySocketFD, "TYPE_DomeProperties",				sizeof(TYPE_DomeProperties));
+		OutputHTML_ClassSize(mySocketFD, "TYPE_SwitchProperties",			sizeof(TYPE_SwitchProperties));
+		OutputHTML_ClassSize(mySocketFD, "TYPE_TelescopeProperties",		sizeof(TYPE_TelescopeProperties));
+
+#ifdef _ENABLE_CAMERA_
+		OutputHTML_ClassSize(mySocketFD, "TYPE_GPSdata",					sizeof(TYPE_GPSdata));
+#endif
+		OutputHTML_ClassSize(mySocketFD, "TYPE_BinaryImageHdr",				sizeof(TYPE_BinaryImageHdr));
+
+		SocketWriteData(mySocketFD,	"</TABLE>\r\n");
+		SocketWriteData(mySocketFD,	"</CENTER>\r\n");
+
+		SendSeparateLine(mySocketFD);
+		SendHtmlCompiledInfo(mySocketFD);
+
+		SocketWriteData(mySocketFD,	"</BODY></HTML>\r\n");
+	}
+	else
+	{
+	//	CONSOLE_DEBUG("reqData is NULL");
+	}
+}
+
+//*****************************************************************************
 void	GenerateHTMLcmdLinkTable(	int			socketFD,
 									const char	*deviceName,
 									const int	deviceNum,
@@ -2528,12 +2775,25 @@ char	lineBuffer[256];
 }
 
 //*****************************************************************************
-const char	gJpegHeader[]	=
+const char	gHTML_HeaderJpeg[]	=
 {
 	"HTTP/1.0 200 ok\r\n"
 //	"Server: alpaca\r\n"
 	"Mime-Version: 1.0\r\n"
 	"Content-Type: image/jpeg\r\n"
+	"Connection: close\r\n"
+	"\r\n"
+
+};
+
+
+//*****************************************************************************
+const char	gHTML_HeaderPNG[]	=
+{
+	"HTTP/1.0 200 ok\r\n"
+//	"Server: alpaca\r\n"
+	"Mime-Version: 1.0\r\n"
+	"Content-Type: image/png\r\n"
 	"Connection: close\r\n"
 	"\r\n"
 
@@ -2615,9 +2875,19 @@ int				returnCode;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
-	SocketWriteData(socket,	gJpegHeader);
+	if (strcasestr(jpegFileName, ".png") != NULL)
+	{
+		CONSOLE_DEBUG("Sending PNG file!!!!!!!!!!!!!!");
+		SocketWriteData(socket,	gHTML_HeaderPNG);
+	}
+	else
+	{
+		CONSOLE_DEBUG("Sending JPEG file!!!!!!!!!!!!!!");
+		SocketWriteData(socket,	gHTML_HeaderJpeg);
+	}
 	if (jpegFileName != NULL)
 	{
+		CONSOLE_DEBUG_W_STR("jpegFileName\t=", jpegFileName);
 		//*	check to see if the file is present
 		returnCode	=	stat(jpegFileName, &fileStatus);
 		CONSOLE_DEBUG_W_HEX("fileStatus.st_mode\t=", fileStatus.st_mode);
@@ -3268,6 +3538,7 @@ typedef enum
 	kRequestType_Invalid	=	-1,
 	kRequestType_API		=	0,
 	kRequestType_Docs,
+	kRequestType_ClassDocs,
 	kRequestType_DriverDocs,
 	kRequestType_Log,
 	kRequestType_Managment,
@@ -3295,6 +3566,7 @@ static TYPE_Request	gRequestType[]	=
 {
 	{	"api",			kRequestType_API		},
 	{	"docs",			kRequestType_Docs		},
+	{	"classdocs",	kRequestType_ClassDocs	},
 	{	"driverdocs",	kRequestType_DriverDocs	},
 	{	"log",			kRequestType_Log		},
 	{	"management",	kRequestType_Managment	},
@@ -3628,6 +3900,11 @@ int	iii;
 			}
 			break;
 
+		//*	statistics on class structure size
+		case kRequestType_ClassDocs:
+			OutputHTML_ClassDocs(&reqData);
+			break;
+
 		//*	extra self documentation
 		case kRequestType_DriverDocs:
 			OutputHTML_DriverDocs(&reqData);
@@ -3679,8 +3956,6 @@ int	iii;
 			if (strncasecmp(parseChrPtr,	"/favicon.ico", 12) == 0)
 			{
 				CONSOLE_DEBUG("favicon.ico");
-				//*	do nothing, this is my web browser sends this
-				//		CONSOLE_DEBUG("Ignored");
 				SendJpegResponse(socket, "favicon.ico");
 			}
 			//-------------------------------------------------------------------
@@ -4175,6 +4450,12 @@ struct tm		*linuxTime;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG(gFullVersionString);
+
+//	CONSOLE_DEBUG_W_SIZE("sizeof(AlpacaDriver)\t=",	sizeof(AlpacaDriver));
+//	CONSOLE_DEBUG_W_SIZE("sizeof(CameraDriver)\t=",	sizeof(CameraDriver));
+//	CONSOLE_DEBUG_W_SIZE("sizeof(TYPE_GPSdata)\t=",	sizeof(TYPE_GPSdata));
+//	CONSOLE_ABORT(__FUNCTION__);
+
 //	CONSOLE_DEBUG_W_STR("gcc version:", __VERSION__);
 
 	AddLibraryVersion("software", "gcc", __VERSION__);
@@ -4344,6 +4625,7 @@ int	imu_ReturnCode;
 				//*	this helps verify that it is a valid object and nothing is corrupted
 				if (gAlpacaDeviceList[iii]->cMagicCookie == kMagicCookieValue)
 				{
+//					CONSOLE_DEBUG(gAlpacaDeviceList[iii]->cAlpacaDeviceString);
 					startNanoSecs			=	MSecTimer_getNanoSecs();
 
 					delayTimeForThisTask	=	gAlpacaDeviceList[iii]->RunStateMachine();
@@ -4398,6 +4680,7 @@ int	imu_ReturnCode;
 		{
 			delayTime_microSecs	=	50;
 		}
+//		CONSOLE_DEBUG_W_INT32("Delay microsecs\t=", delayTime_microSecs);
 		usleep(delayTime_microSecs);
 	}
 	CONSOLE_DEBUG_W_BOOL("gKeepRunning\t=", gKeepRunning);
@@ -4976,6 +5259,10 @@ int			returnCode;
 			ExtractFileExtension(filePath, fileExtension);
 			CONSOLE_DEBUG_W_STR("fileExtension\t=", fileExtension);
 			if (strcasecmp(fileExtension, ".jpg") == 0)
+			{
+				SendJpegResponse(mySocketFD, filePath);
+			}
+			else if (strcasecmp(fileExtension, ".png") == 0)
 			{
 				SendJpegResponse(mySocketFD, filePath);
 			}

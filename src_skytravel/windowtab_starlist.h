@@ -18,6 +18,8 @@ enum
 {
 	kStarList_Title	=	0,
 
+	kStarList_MsgBox,
+
 	kStarList_ClmTitle1,
 	kStarList_ClmTitle2,
 	kStarList_ClmTitle3,
@@ -99,6 +101,7 @@ class WindowTabStarList: public WindowTab
 		virtual	void	UpdateSliderValue(	const int widgetIdx, double newSliderValue);
 		virtual	void	UpdateOnScreenWidgetList(void);
 
+				void	ProcessCtrlDblClick(TYPE_CelestData	*theStarData);
 				void	UpdateSettings(void);
 				void	UpdateSortOrder(void);
 

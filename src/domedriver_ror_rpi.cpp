@@ -22,13 +22,67 @@
 //*	Jun 15,	2021	<MLS> Added GetPower() & GetAuxiliary()
 //*	Dec 23,	2021	<MLS> Added OutputHTML_Part2() to output hardware configuration
 //*	Mar  2,	2023	<MLS> Added _ENABLE_DOME_ROR_
+//*	Sep 24,	2023	<MLS> Adding support for Topens door opener
+//*	Sep 24,	2023	<MLS> Added _TOPENS_ROLL_OFF_ROOF_
+//*	Sep 24,	2023	<MLS> Started migrating to using background thread
+//*****************************************************************************
+//*****************************************************************************
+//	After doing some experimenting with AlpacaPi,
+//	I tried to operate the ROR Driver with a 4-relay module I had around.
+//	This is where I discovered my one line to open and Open/Stop/Close the roof.
+//	I think there is no sensor inputs (switch I mention above) in the code to tell that the roof is closed.
+//	Think this code works with timing for opening and closing.
+//
+//	To start of, is there a driver embedded in AlpacaPi to perform the following:
+//
+//	Inputs from Mag Switch.
+//
+//		Mag Switch 1:
+//			HIGH when Roof is closed
+//			LOW when Roof is starting to open
+//
+//		Mag Switch 2:
+//			HIGH when Roof is open
+//			LOW when Roof is starting to close
+//
+//	Output to Relay
+//
+//		Trigger O/S/C 3 seconds receive API from client (PUT / 192.168.4.204:6800/api/v1/dome/0/openshutter
+//		Trigger O/S/C 3 seconds receive API from client (PUT / 192.168.4.204:6800/api/v1/dome/0/closeshutter
+//
+//	Roof Status
+//
+//		Depending on the Mag switches the client will request for status on state of the roof.
+//		Open/Closing/Close and Close/Opening/Open
+//
+//	192.168.4.204:6800/api/v1/dome/0/shutterstatus
+//
+//	If there is such driver, what driver is closest and the location in the code to modify it?
+//
+//	I deeply appreciate if you can help me out and point me in the right direction.
+//
+//	Thanks
 //*****************************************************************************
 
+
 #ifdef _ENABLE_DOME_ROR_
-//#error "Should not be enabled"
+#include	<stdlib.h>
+#include	<stdio.h>
+#include	<string.h>
+#include	<stdbool.h>
+#include	<ctype.h>
+#include	<stdint.h>
 
-#define	_CHRIS_A_ROLL_OFF_ROOF_
+//*	these are defined in the makefile
+//#define	_CHRIS_A_ROLL_OFF_ROOF_
+//#define	_TOPENS_ROLL_OFF_ROOF_
 
+
+#if defined(_CHRIS_A_ROLL_OFF_ROOF_) && defined(_TOPENS_ROLL_OFF_ROOF_)
+	#error "_CHRIS_A_ROLL_OFF_ROOF_ & _TOPENS_ROLL_OFF_ROOF_ cannot both enabled at the same time"
+#endif
+
+//*****************************************************************************
 #ifdef _CHRIS_A_ROLL_OFF_ROOF_
 
 	//*	this is a specific implementation for Chris A of the Netherlands
@@ -36,7 +90,6 @@
 	#define		kRelay_RoofPower	1
 	#define		kRelay_RoofOpen		2
 	#define		kRelay_RoofClose	3
-	#define		kRelay_FlatScren	4
 
 	//*	this is the default value, it can be changed from the web setup interface
 	#define		kSwitchDelaySeconds	20
@@ -49,12 +102,23 @@
 
 #endif // _CHRIS_A_ROLL_OFF_ROOF_
 
-#include	<stdlib.h>
-#include	<stdio.h>
-#include	<string.h>
-#include	<stdbool.h>
-#include	<ctype.h>
-#include	<stdint.h>
+//*****************************************************************************
+#ifdef _TOPENS_ROLL_OFF_ROOF_
+	#define		kRelay_OpenStopClose	1
+
+	//*	from Steven
+	//*	You can use Pin 29 (GPIO 5) & pin 31 (GPIO 6)
+	#define		kRelay_RoofOpenSensor	5
+	#define		kRelay_RoofCloseSensor	6
+
+	//*	this is the default value, it can be changed from the web setup interface
+	#define		kSwitchDelaySeconds		3
+
+	#include	"raspberrypi_relaylib.h"
+
+#endif // _TOPENS_ROLL_OFF_ROOF_
+
+
 
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
@@ -93,7 +157,7 @@ DomeDriverROR::DomeDriverROR(const int argDevNum)
 	strcpy(gWebTitle,			"Dome-Roll-Off-Roof");
 
 	cDomeConfig					=	kIsRollOffRoof;
-	cDomeProp.AtPark			=	true;	//*	for testing
+	cDomeProp.AtPark			=	false;
 	cDomeProp.Azimuth			=	0.0;	//*	Azimuth is meaningless for a ROR
 	cDomeProp.CanSyncAzimuth	=	false;
 	cDomeProp.CanSetShutter		=	true;
@@ -105,6 +169,8 @@ DomeDriverROR::DomeDriverROR(const int argDevNum)
 	//*	local stuff
 	cRORisOpening				=	false;
 	cRORisClosing				=	false;
+	cCmdRcvd_OpenRoof			=	false;
+	cCmdRcvd_CloseRoof			=	false;
 
 	Init_Hardware();
 
@@ -112,7 +178,10 @@ DomeDriverROR::DomeDriverROR(const int argDevNum)
 
 	strcpy(cCommonProp.Name,		"AlpacaPi-ROR");
 	strcpy(cCommonProp.Description,	"Roll Off Roof");
-
+#ifdef _TOPENS_ROLL_OFF_ROOF_
+	strcpy(cCommonProp.Description,	"Roll Off Roof - TOPENS controller");
+#endif
+	StartDriverThread();
 	CONSOLE_DEBUG(__FUNCTION__);
 }
 
@@ -142,47 +211,63 @@ int					mySocketFD;
 	SocketWriteData(mySocketFD,	"<TABLE BORDER=1>\r\n");
 	SocketWriteData(mySocketFD,	"<TR>\r\n");
 	SocketWriteData(mySocketFD,	"<TH COLSPAN=3>Raspberry-Pi Roll Off Roof Driver</TH>\r\n");
-	SocketWriteData(mySocketFD,	"</TR>\r\n<TR>\r\n");
+	SocketWriteData(mySocketFD,	"</TR>\r\n");
+
+	SocketWriteData(mySocketFD,	"<TR>\r\n");
 	SocketWriteData(mySocketFD,	"<TH COLSPAN=3>Hardware configuration</TH>\r\n");
-	SocketWriteData(mySocketFD,	"</TR>\r\n<TR>\r\n");
+	SocketWriteData(mySocketFD,	"</TR>\r\n");
 
 #ifdef _USE_BCM_PIN_NUMBERS_
+	SocketWriteData(mySocketFD,	"<TR>\r\n");
 	SocketWriteData(mySocketFD,	"<TD COLSPAN=3><CENTER>Using BCM Pin numbering</TH>\r\n");
-	SocketWriteData(mySocketFD,	"</TR>\r\n<TR>\r\n");
+	SocketWriteData(mySocketFD,	"</TR>\r\n");
 
 #endif // _USE_BCM_PIN_NUMBERS_
 
 #ifdef _ENABLE_4REALY_BOARD
+	SocketWriteData(mySocketFD,	"<TR>\r\n");
 	SocketWriteData(mySocketFD,	"<TD COLSPAN=3><CENTER>Using Raspberry Pi 4 Relay board</TH>\r\n");
-	SocketWriteData(mySocketFD,	"</TR>\r\n<TR>\r\n");
+	SocketWriteData(mySocketFD,	"</TR>\r\n");
 
-#endif // _USE_BCM_PIN_NUMBERS_
+#endif // _ENABLE_4REALY_BOARD
 
 
-	sprintf(lineBuffer,	"\t<TD>Relay #1 pin</TD><TD>%d</TD><TD>Input</TD>\r\n", kHWpin_Channel1);
+	SocketWriteData(mySocketFD,	"<TR>\r\n");
+	sprintf(lineBuffer,	"\t<TD>Relay #1 pin</TD><TD>%d</TD><TD>Output</TD>\r\n", kHWpin_Channel1);
 	SocketWriteData(mySocketFD,	lineBuffer);
-	SocketWriteData(mySocketFD,	"</TR>\r\n<TR>\r\n");
+	SocketWriteData(mySocketFD,	"</TR>\r\n");
 
-	sprintf(lineBuffer,	"\t<TD>Relay #2 pin</TD><TD>%d</TD><TD>Input</TD>\r\n", kHWpin_Channel2);
+	SocketWriteData(mySocketFD,	"<TR>\r\n");
+	sprintf(lineBuffer,	"\t<TD>Relay #2 pin</TD><TD>%d</TD><TD>Output</TD>\r\n", kHWpin_Channel2);
 	SocketWriteData(mySocketFD,	lineBuffer);
-	SocketWriteData(mySocketFD,	"</TR>\r\n<TR>\r\n");
+	SocketWriteData(mySocketFD,	"</TR>\r\n");
 
-	sprintf(lineBuffer,	"\t<TD>Relay #3 pin</TD><TD>%d</TD><TD>Input</TD>\r\n", kHWpin_Channel3);
+	SocketWriteData(mySocketFD,	"<TR>\r\n");
+	sprintf(lineBuffer,	"\t<TD>Relay #3 pin</TD><TD>%d</TD><TD>Output</TD>\r\n", kHWpin_Channel3);
 	SocketWriteData(mySocketFD,	lineBuffer);
-	SocketWriteData(mySocketFD,	"</TR>\r\n<TR>\r\n");
+	SocketWriteData(mySocketFD,	"</TR>\r\n");
 
-	sprintf(lineBuffer,	"\t<TD>Relay #4 pin</TD><TD>%d</TD><TD>Input</TD>\r\n", kHWpin_Channel4);
+	SocketWriteData(mySocketFD,	"<TR>\r\n");
+	sprintf(lineBuffer,	"\t<TD>Relay #4 pin</TD><TD>%d</TD><TD>Output</TD>\r\n", kHWpin_Channel4);
 	SocketWriteData(mySocketFD,	lineBuffer);
-	SocketWriteData(mySocketFD,	"</TR>\r\n<TR>\r\n");
+	SocketWriteData(mySocketFD,	"</TR>\r\n");
+#ifdef _TOPENS_ROLL_OFF_ROOF_
+	SocketWriteData(mySocketFD,	"<TR>\r\n");
+	sprintf(lineBuffer,	"\t<TD>Open Sensor</TD><TD>%d</TD><TD>Input</TD>\r\n", kRelay_RoofOpenSensor);
+	SocketWriteData(mySocketFD,	lineBuffer);
+	SocketWriteData(mySocketFD,	"</TR>\r\n");
 
-
+	SocketWriteData(mySocketFD,	"<TR>\r\n");
+	sprintf(lineBuffer,	"\t<TD>Close Sensor</TD><TD>%d</TD><TD>Input</TD>\r\n", kRelay_RoofCloseSensor);
+	SocketWriteData(mySocketFD,	lineBuffer);
+	SocketWriteData(mySocketFD,	"</TR>\r\n");
+#endif // _TOPENS_ROLL_OFF_ROOF_
 
 	SocketWriteData(reqData->socket,	"</TABLE>\r\n");
 	SocketWriteData(reqData->socket,	"</CENTER>\r\n");
 	SocketWriteData(reqData->socket,	"<P>\r\n");
 
 }
-
 
 //*****************************************************************************
 void	DomeDriverROR::Init_Hardware(void)
@@ -193,6 +278,20 @@ void	DomeDriverROR::Init_Hardware(void)
 	cRelayCount	=	RpiRelay_Init();
 
 	CONSOLE_DEBUG_W_NUM("cRelayCount\t=", cRelayCount);
+
+#endif // _CHRIS_A_ROLL_OFF_ROOF_
+
+#ifdef _TOPENS_ROLL_OFF_ROOF_
+	cRelayCount	=	RpiRelay_Init();
+	CONSOLE_DEBUG_W_NUM("cRelayCount\t=", cRelayCount);
+
+	pinMode(kRelay_RoofOpenSensor,		INPUT);
+	pinMode(kRelay_RoofCloseSensor,		INPUT);
+
+	//*	set the internal pullup resisters
+	pullUpDnControl(kRelay_RoofOpenSensor,	PUD_UP);
+	pullUpDnControl(kRelay_RoofCloseSensor,	PUD_UP);
+
 
 #endif // _CHRIS_A_ROLL_OFF_ROOF_
 
@@ -248,6 +347,7 @@ bool		relayOK;
 //*****************************************************************************
 TYPE_ASCOM_STATUS	DomeDriverROR::SetPower(bool onOffFlag)
 {
+#ifdef _CHRIS_A_ROLL_OFF_ROOF_
 bool				relayOK;
 
 	relayOK		=	RpiRelay_SetRelay(kRelay_RoofPower, onOffFlag);
@@ -255,20 +355,24 @@ bool				relayOK;
 	{
 		CONSOLE_DEBUG("RpiRelay_SetRelay returned false");
 	}
+#endif // _CHRIS_A_ROLL_OFF_ROOF_
 	return(kASCOM_Err_Success);
 }
 
 //*****************************************************************************
 TYPE_ASCOM_STATUS	DomeDriverROR::GetPower(bool *onOffFlag)
 {
+#ifdef _CHRIS_A_ROLL_OFF_ROOF_
 
 	*onOffFlag	=	RpiRelay_GetRelay(kRelay_RoofPower);
+#endif // _CHRIS_A_ROLL_OFF_ROOF_
 	return(kASCOM_Err_Success);
 }
 
 //*****************************************************************************
 TYPE_ASCOM_STATUS	DomeDriverROR::SetAuxiliary(bool onOffFlag)
 {
+#ifdef _CHRIS_A_ROLL_OFF_ROOF_
 bool				relayOK;
 
 	relayOK		=	RpiRelay_SetRelay(kRelay_FlatScren, onOffFlag);
@@ -276,14 +380,16 @@ bool				relayOK;
 	{
 		CONSOLE_DEBUG("RpiRelay_SetRelay returned false");
 	}
+#endif // _CHRIS_A_ROLL_OFF_ROOF_
 	return(kASCOM_Err_Success);
 }
 
 //*****************************************************************************
 TYPE_ASCOM_STATUS	DomeDriverROR::GetAuxiliary(bool *onOffFlag)
 {
-
+#ifdef _CHRIS_A_ROLL_OFF_ROOF_
 	*onOffFlag	=	RpiRelay_GetRelay(kRelay_FlatScren);
+#endif // _CHRIS_A_ROLL_OFF_ROOF_
 	return(kASCOM_Err_Success);
 }
 
@@ -294,9 +400,9 @@ TYPE_ASCOM_STATUS	alpacaErrCode;
 bool				relayOK;
 
 	CONSOLE_DEBUG(__FUNCTION__);
+	alpacaErrCode	=	kASCOM_Err_ActionNotImplemented;
 
 #ifdef _CHRIS_A_ROLL_OFF_ROOF_
-
 	//*	turn the power on
 //	relayOK					=	RpiRelay_SetRelay(kRelay_RoofPower,	true);
 	relayOK					=	RpiRelay_SetRelay(kRelay_RoofOpen,	true);
@@ -310,8 +416,15 @@ bool				relayOK;
 	cRORisOpening			=	true;
 	cDomeProp.Slewing		=	true;
 	cDomeProp.ShutterStatus	=	kShutterStatus_Opening;
-
-
+#elif defined(_TOPENS_ROLL_OFF_ROOF_)
+	//*	let the background thread do the real work
+	cCmdRcvd_OpenRoof		=	true;
+	cCmdRcvd_CloseRoof		=	false;
+	alpacaErrCode			=	kASCOM_Err_Success;
+	cTimeOfLastOpenClose	=	millis();
+	cRORisOpening			=	true;
+	cDomeProp.Slewing		=	true;
+	cDomeProp.ShutterStatus	=	kShutterStatus_Opening;
 #else
 	alpacaErrCode	=	kASCOM_Err_ActionNotImplemented;
 	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Open shutter not implemented");
@@ -342,7 +455,9 @@ bool				relayOK;
 	cRORisClosing			=	true;
 	cDomeProp.Slewing		=	true;
 	cDomeProp.ShutterStatus	=	kShutterStatus_Closing;
-
+#elif defined(_TOPENS_ROLL_OFF_ROOF_)
+	cCmdRcvd_CloseRoof		=	true;
+	cCmdRcvd_OpenRoof		=	false;
 #else
 	alpacaErrCode	=	kASCOM_Err_ActionNotImplemented;
 	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Open shutter not implemented");
@@ -375,6 +490,113 @@ bool				relayOK;
 #endif
 }
 
+//*****************************************************************************
+void	DomeDriverROR::RunThread_Startup(void)
+{
+	CONSOLE_DEBUG(__FUNCTION__);
+}
+
+//*****************************************************************************
+void	DomeDriverROR::RunThread_Loop(void)
+{
+uint32_t			currentTime_ms;
+uint32_t			deltaTime_ms;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+
+#ifdef _TOPENS_ROLL_OFF_ROOF_
+bool	sensorState;
+bool	relayOK;
+	//--------------------------------------------
+	//*	read the current ror state
+	//-----------------------------------------------------------
+	//		Mag Switch 1:
+	//			HIGH when Roof is closed
+	//			LOW when Roof is starting to open
+	sensorState		=	digitalRead(kRelay_RoofCloseSensor);
+	CONSOLE_DEBUG_W_BOOL("kRelay_RoofCloseSensor\t=",	sensorState)
+	if (sensorState)
+	{
+		cDomeProp.ShutterStatus	=	kShutterStatus_Closed;
+		cDomeProp.Slewing		=	false;
+		cRORisOpening			=	false;
+		cRORisClosing			=	false;
+	}
+	//-----------------------------------------------------------
+	//		Mag Switch 2:
+	//			HIGH when Roof is open
+	//			LOW when Roof is starting to close
+	sensorState		=	digitalRead(kRelay_RoofOpenSensor);
+	CONSOLE_DEBUG_W_BOOL("kRelay_RoofOpenSensor\t=",	sensorState)
+	if (sensorState)
+	{
+		cDomeProp.ShutterStatus	=	kShutterStatus_Open;
+		cDomeProp.Slewing		=	false;
+		cRORisOpening			=	false;
+		cRORisClosing			=	false;
+	}
+
+	//*	check for an open command
+	if (cCmdRcvd_OpenRoof)
+	{
+		if (cDomeProp.ShutterStatus == kShutterStatus_Closed)
+		{
+			cDomeProp.Slewing		=	true;
+			cRORisOpening			=	true;
+			//*	set the line HIGH to turn the relay on and connect the signal to ground
+			relayOK		=	RpiRelay_SetRelay(kRelay_OpenStopClose, true);
+			sleep(3);
+			relayOK		=	RpiRelay_SetRelay(kRelay_OpenStopClose, false);
+
+		}
+		else if (cDomeProp.ShutterStatus == kShutterStatus_Open)
+		{
+			CONSOLE_DEBUG("ROR is already open")
+		}
+		else
+		{
+			CONSOLE_DEBUG_W_NUM("Unknown state, cDomeProp.ShutterStatus\t=", cDomeProp.ShutterStatus);
+		}
+		cCmdRcvd_OpenRoof	=	false;
+	}
+
+	//*	check for an open command
+	if (cCmdRcvd_CloseRoof)
+	{
+		if (cDomeProp.ShutterStatus == kShutterStatus_Open)
+		{
+			cDomeProp.Slewing		=	true;
+			cRORisClosing			=	true;
+			//*	set the line HIGH to turn the relay on and connect the signal to ground
+			relayOK		=	RpiRelay_SetRelay(kRelay_OpenStopClose, true);
+			sleep(3);
+			relayOK		=	RpiRelay_SetRelay(kRelay_OpenStopClose, false);
+		}
+		else if (cDomeProp.ShutterStatus == kShutterStatus_Closed)
+		{
+			CONSOLE_DEBUG("ROR is already closed")
+		}
+		else
+		{
+			CONSOLE_DEBUG_W_NUM("Unknown state, cDomeProp.ShutterStatus\t=", cDomeProp.ShutterStatus);
+		}
+
+		cCmdRcvd_CloseRoof	=	false;
+	}
+
+#endif // _TOPENS_ROLL_OFF_ROOF_
+
+//	//*	check if time to update
+//	currentTime_ms	=	millis();
+//	deltaTime_ms	=	currentTime_ms - cLastUpdate_ms;
+//	if (deltaTime_ms > 2000)
+//	{
+//
+//
+//	}
+
+	usleep(500 * 1000);
+}
 
 
 #endif // _ENABLE_DOME_ROR_

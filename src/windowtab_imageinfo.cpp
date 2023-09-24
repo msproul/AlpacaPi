@@ -44,12 +44,12 @@ WindowTabImageInfo::WindowTabImageInfo(	const int	xSize,
 										TYPE_BinaryImageHdr	*binaryImageHdr)
 	:WindowTab(xSize, ySize, backGrndColor, windowName)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
-	CONSOLE_DEBUG_W_NUM("xSize        \t=",	xSize);
-	CONSOLE_DEBUG_W_NUM("ySize        \t=",	ySize);
+//	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG_W_NUM("xSize        \t=",	xSize);
+//	CONSOLE_DEBUG_W_NUM("ySize        \t=",	ySize);
 
 	SetupWindowControls();
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, "EXIT");
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, "EXIT");
 }
 
 //**************************************************************************************
@@ -71,8 +71,8 @@ int			iii;
 int			textBoxWidth;
 int			valueBoxWidth;
 
-	CONSOLE_DEBUG(__FUNCTION__);
-	CONSOLE_DEBUG_W_NUM("cWidth        \t=",	cWidth);
+//	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG_W_NUM("cWidth        \t=",	cWidth);
 	//------------------------------------------
 	xLoc			=	5;
 	yLoc			=	cTabVertOffset;
@@ -93,9 +93,9 @@ int			valueBoxWidth;
 
 	textBoxWidth	=	225;
 	valueBoxWidth	=	100;
-	CONSOLE_DEBUG("kImageInfo_AlpacaBinaryTitle");
-	CONSOLE_DEBUG_W_NUM("xLoc\t=",	xLoc);
-	CONSOLE_DEBUG_W_NUM("yLoc\t=",	yLoc);
+//	CONSOLE_DEBUG("kImageInfo_AlpacaBinaryTitle");
+//	CONSOLE_DEBUG_W_NUM("xLoc\t=",	xLoc);
+//	CONSOLE_DEBUG_W_NUM("yLoc\t=",	yLoc);
 
 	SetWidget(				kImageInfo_AlpacaBinaryTitle,	xLoc,	yLoc,	(textBoxWidth + valueBoxWidth),	cSmallBtnHt);
 	SetWidgetType(			kImageInfo_AlpacaBinaryTitle, 	kWidgetType_TextBox);

@@ -32,6 +32,7 @@
 //*	Apr  3,	2020	<MLS> FLIR C++ examples wont compile with GCC 5
 //*	Apr 22,	2020	<MLS> Switched over to use FLIR C example
 //*	Apr 23,	2020	<MLS> Finally can read image data from FLIR camera
+//*	Apr 23,	2020	<MLS> SUPPORTED: FLIR cameras
 //*	Apr 29,	2020	<MLS> Added image processing
 //*	Feb 13,	2021	<MLS> Added ExtractColorImage()
 //*	Feb 13,	2021	<MLS> Working on FLIR color image support
@@ -1133,7 +1134,7 @@ int				imageSize;
 	if (cSpinImageHandle != NULL)
 	{
 
-		buffOk	=	AllcateImageBuffer(0);
+		buffOk	=	AllocateImageBuffer(0);
 		if (buffOk && (cCameraDataBuffer != NULL) && (cCameraDataBuffLen > 0))
 		{
 		void	 	**data;
@@ -1278,7 +1279,7 @@ bool					buffOk;
 				cROIinfo.currentROIheight		=	spinnakerHeight;
 
 
-				buffOk	=	AllcateImageBuffer(0);
+				buffOk	=	AllocateImageBuffer(0);
 				if (buffOk && (cCameraDataBuffer != NULL) && (cCameraDataBuffLen > 0))
 				{
 				void	 	**data;

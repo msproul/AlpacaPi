@@ -73,6 +73,14 @@ class DomeDriverROR: public DomeDriver
 		bool		cRORisOpening;
 		bool		cRORisClosing;
 
+		//-----------------------------------------------------------------
+		//*	background thread operations
+		bool						cCmdRcvd_OpenRoof;
+		bool						cCmdRcvd_CloseRoof;
+
+	protected:
+		virtual	void				RunThread_Startup(void);
+		virtual	void				RunThread_Loop(void);
 
 };
 

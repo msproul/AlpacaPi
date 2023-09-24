@@ -57,9 +57,11 @@ class ControllerNiteCrawler: public ControllerFocus
 
 		virtual	void	CreateWindowTabs(void);
 		virtual	void	AlpacaDisplayErrorMessage(const char *errorMsgString);
+
 		virtual	void	UpdateStartupData(void);
 		virtual	void	UpdateStatusData(void);
 		virtual	void	UpdateOnlineStatus(void);
+		virtual	void	UpdateConnectedStatusIndicator(void);
 
 		//*	sub class specific routines
 

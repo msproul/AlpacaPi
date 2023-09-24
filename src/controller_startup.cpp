@@ -98,7 +98,7 @@ void	CreateStartupScreen(void)
 ControllerStartup::ControllerStartup(void)
 	:Controller("SkyTravel", kWindowWidth,  kWindowHeight)
 {
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 
 	gStartupController	=	this;
 	cCurrentMsgIdx		=   kStartup_TextBox1;
@@ -145,13 +145,12 @@ void	ControllerStartup::SetupWindowControls(void)
 	}
 }
 
-
 //**************************************************************************************
 int	ControllerStartup::SetStartupText(const char *startupMsg)
 {
 int		widgetIdx;
 
-	CONSOLE_DEBUG_W_STR("startupMsg\t=",	startupMsg);
+//	CONSOLE_DEBUG_W_STR("startupMsg\t=",	startupMsg);
 	if ((cCurrentMsgIdx >= kStartup_TextBox1) && (cCurrentMsgIdx <= kStartup_TextBoxN))
 	{
 		SetWidgetText(kTab_Startup, cCurrentMsgIdx, startupMsg);

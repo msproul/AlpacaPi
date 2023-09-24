@@ -42,6 +42,7 @@
 //*	Jan  2,	2022	<MLS> CONFORM-switch -> PASSED!!!!!!!!!!!!!!!!!!!!!
 //*	Jul  3,	2022	<MLS> Started converting to using switch property structure
 //*	Jun 19,	2023	<MLS> Added DeviceState_Add_Content() to switch driver
+//*	Sep 12,	2023	<MLS> Changed routine names to CamelCase
 //*****************************************************************************
 
 #ifdef _ENABLE_SWITCH_
@@ -84,8 +85,6 @@ void	CreateSwitchObjects(void)
 	CONSOLE_DEBUG(__FUNCTION__);
 #if defined(_ENABLE_SWITCH_RPI_) && defined(__arm__)
 	CreateSwitchObjects_RPi();
-#else
-//	#error "Somthings wrong here"
 #endif
 
 #ifdef _ENABLE_SWITCH_SIMULATOR_
@@ -197,43 +196,47 @@ int					mySocket;
 			break;
 
 		case kCmd_Switch_getswitch:				//*	Return the state of switch device id as a boolean
-			alpacaErrCode	=	Get_Getswitch(reqData, alpacaErrMsg);
+			alpacaErrCode	=	Get_GetSwitch(reqData, alpacaErrMsg);
 			break;
 
 		case kCmd_Switch_getswitchdescription:	//*	Gets the description of the specified switch device
-			alpacaErrCode	=	Get_Getswitchdescription(reqData, alpacaErrMsg);
+			alpacaErrCode	=	Get_GetSwitchDescription(reqData, alpacaErrMsg);
 			break;
 
 		case kCmd_Switch_getswitchname:			//*	Gets the name of the specified switch device
-			alpacaErrCode	=	Get_Getswitchname(reqData, alpacaErrMsg);
+			alpacaErrCode	=	Get_GetSwitchName(reqData, alpacaErrMsg);
 			break;
 
 		case kCmd_Switch_getswitchvalue:		//*	Gets the value of the specified switch device as a double
-			alpacaErrCode	=	Get_Getswitchvalue(reqData, alpacaErrMsg);
+			alpacaErrCode	=	Get_GetSwitchValue(reqData, alpacaErrMsg);
 			break;
 
 		case kCmd_Switch_minswitchvalue:		//*	Gets the minimum value of the specified switch device as a double
-			alpacaErrCode	=	Get_Minswitchvalue(reqData, alpacaErrMsg);
+			alpacaErrCode	=	Get_MinSwitchValue(reqData, alpacaErrMsg);
 			break;
 
 		case kCmd_Switch_maxswitchvalue:		//*	Gets the maximum value of the specified switch device as a double
-			alpacaErrCode	=	Get_Maxswitchvalue(reqData, alpacaErrMsg);
+			alpacaErrCode	=	Get_MaxSwitchValue(reqData, alpacaErrMsg);
 			break;
 
 		case kCmd_Switch_setswitch:				//*	Sets a switch controller device to the specified state, true or false
-			alpacaErrCode	=	Put_Setswitch(reqData, alpacaErrMsg);
+			alpacaErrCode	=	Put_SetSwitch(reqData, alpacaErrMsg);
 			break;
 
 		case kCmd_Switch_setswitchname:			//*	Sets a switch device name to the specified value
-			alpacaErrCode	=	Put_Setswitchname(reqData, alpacaErrMsg);
+			alpacaErrCode	=	Put_SetSwitchName(reqData, alpacaErrMsg);
 			break;
 
 		case kCmd_Switch_setswitchvalue:		//*	Sets a switch device value to the specified value
-			alpacaErrCode	=	Put_Setswitchvalue(reqData, alpacaErrMsg);
+			alpacaErrCode	=	Put_SetSwitchValue(reqData, alpacaErrMsg);
 			break;
 
 		case kCmd_Switch_switchstep:			//*	Returns the step size that this device supports (the difference between successive values of the device).
-			alpacaErrCode	=	Get_Switchstep(reqData, alpacaErrMsg, gValueString);
+			alpacaErrCode	=	Get_SwitchStep(reqData, alpacaErrMsg, gValueString);
+			break;
+
+		case kCmd_Switch_setswitchdescription:
+//			alpacaErrCode	=	Put_SetSwitchDescription(reqData, alpacaErrMsg);
 			break;
 
 		case kCmd_Switch_readall:
@@ -386,7 +389,7 @@ bool				canWriteSwitch;
 //*****************************************************************************
 //*	Return the state of switch device id as a boolean
 //*****************************************************************************
-TYPE_ASCOM_STATUS	SwitchDriver::Get_Getswitch(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
+TYPE_ASCOM_STATUS	SwitchDriver::Get_GetSwitch(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 int					switchNum;
@@ -437,7 +440,7 @@ bool				switchState;
 //*****************************************************************************
 //*	Gets the description of the specified switch device
 //*****************************************************************************
-TYPE_ASCOM_STATUS	SwitchDriver::Get_Getswitchdescription(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
+TYPE_ASCOM_STATUS	SwitchDriver::Get_GetSwitchDescription(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 int					switchNum;
@@ -480,7 +483,7 @@ int					switchNum;
 //*****************************************************************************
 //*	Gets the name of the specified switch device
 //*****************************************************************************
-TYPE_ASCOM_STATUS	SwitchDriver::Get_Getswitchname(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
+TYPE_ASCOM_STATUS	SwitchDriver::Get_GetSwitchName(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 int					switchNum;
@@ -521,7 +524,7 @@ int					switchNum;
 //*****************************************************************************
 //*	Gets the value of the specified switch device as a double
 //*****************************************************************************
-TYPE_ASCOM_STATUS	SwitchDriver::Get_Getswitchvalue(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
+TYPE_ASCOM_STATUS	SwitchDriver::Get_GetSwitchValue(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 int					switchNum;
@@ -564,7 +567,7 @@ int					switchNum;
 //*****************************************************************************
 //*	Gets the minimum value of the specified switch device as a double
 //*****************************************************************************
-TYPE_ASCOM_STATUS	SwitchDriver::Get_Minswitchvalue(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
+TYPE_ASCOM_STATUS	SwitchDriver::Get_MinSwitchValue(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 int					switchNum;
@@ -604,7 +607,7 @@ int					switchNum;
 //*****************************************************************************
 //*	Gets the maximum value of the specified switch device as a double
 //*****************************************************************************
-TYPE_ASCOM_STATUS	SwitchDriver::Get_Maxswitchvalue(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
+TYPE_ASCOM_STATUS	SwitchDriver::Get_MaxSwitchValue(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 int					switchNum;
@@ -651,7 +654,7 @@ int					switchNum;
 //*****************************************************************************
 //*	Sets a switch controller device to the specified state, true or false
 //*****************************************************************************
-TYPE_ASCOM_STATUS	SwitchDriver::Put_Setswitch(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
+TYPE_ASCOM_STATUS	SwitchDriver::Put_SetSwitch(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 bool				foundState;
@@ -725,7 +728,7 @@ int					switchNum;
 //*****************************************************************************
 //*	Sets a switch device name to the specified value
 //*****************************************************************************
-TYPE_ASCOM_STATUS	SwitchDriver::Put_Setswitchname(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
+TYPE_ASCOM_STATUS	SwitchDriver::Put_SetSwitchName(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 bool				foundName;
@@ -782,7 +785,7 @@ int					switchNum;
 //*****************************************************************************
 //*	Sets a switch device value to the specified value as a double
 //*****************************************************************************
-TYPE_ASCOM_STATUS	SwitchDriver::Put_Setswitchvalue(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
+TYPE_ASCOM_STATUS	SwitchDriver::Put_SetSwitchValue(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_ActionNotImplemented;
 bool				foundValue;
@@ -847,7 +850,7 @@ double				newSwitchValue;
 //*****************************************************************************
 //*	Returns the step size that this device supports (the difference between successive values of the device).
 //*****************************************************************************
-TYPE_ASCOM_STATUS	SwitchDriver::Get_Switchstep(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
+TYPE_ASCOM_STATUS	SwitchDriver::Get_SwitchStep(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 int					switchNum;
@@ -1039,6 +1042,7 @@ char	lineBuffer[32];
 		mySocketFD	=	reqData->socket;
 
 		SocketWriteData(mySocketFD,	"<CENTER>\r\n");
+		SocketWriteData(mySocketFD,	"<H2>AlpacaPi Switch</H2>\r\n");
 		SocketWriteData(mySocketFD,	"<TABLE BORDER=1>\r\n");
 
 

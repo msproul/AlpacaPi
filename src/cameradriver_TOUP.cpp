@@ -25,6 +25,7 @@
 //*	Edit History
 //*****************************************************************************
 //*	<MLS>	=	Mark L Sproul
+//*	<PDB>	=	Paul De Barker
 //*****************************************************************************
 //*	Jan  8,	2020	<MLS> Received ToupTek Guidecam from Cloudy Nights
 //*	Jan  9,	2020	<MLS> Created cameradriver_TOUP.cpp
@@ -32,6 +33,7 @@
 //*	Jan 14,	2020	<MLS> Successfully saving files from ToupTek camera
 //*	Jan 29,	2020	<MLS> Toupcam is working on NVIDIA Jetson board
 //*	Mar  5,	2020	<MLS> Working on Toupcam image readout modes
+//*	Mar  5,	2020	<MLS> SUPPORTED: ToupTek cameras
 //*	Jan 15,	2021	<PDB> Found bug in GetImage_ROI_info()
 //*	Jan 24,	2021	<PDB> Working on Read_ImageData()
 //*	Jan 24,	2021	<PDB> Added Read_Gain()
@@ -40,6 +42,8 @@
 //*	Mar  1,	2021	<PDB> Changed to RAW8 for now
 //*	Mar  1,	2021	<PDB> Updated ToupTech code
 //*	Mar  1,	2021	<PDB> Camera working in 16bit mode, reading image properly
+//*	Aug 27,	2023	<MLS> Updated Makefile to compile toup and touppi properly
+//*	Aug 27,	2023	<MLS> Changed to if (SUCCEEDED(toupResult)) as per .h file
 //-----------------------------------------------------------------------------
 //*	Feb  4,	2120	<TODO> Add 16 bit readout to Toupcam
 //*	Feb 16,	2120	<TODO> Add gain setting to Toupcam
@@ -219,6 +223,10 @@ unsigned int	ii;
 int				toupCameraCnt;
 ToupcamDeviceV2	toupCamList[TOUPCAM_MAX];
 HRESULT			toupResult;
+char			hardwareVer[16];
+char			productionDate[10];
+char			fpgaVersion[16];
+int				bAutoExposure;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 	strcpy(cDeviceVersion, Toupcam_Version());
@@ -249,7 +257,7 @@ HRESULT			toupResult;
 
 		if ((cCameraProp.CameraXsize > 0) && (cCameraProp.CameraYsize > 0))
 		{
-			AllcateImageBuffer(0);
+			AllocateImageBuffer(0);
 		}
 
 		CONSOLE_DEBUG_W_STR("Display name\t=",	cToupDeviceInfo.displayname);
@@ -326,7 +334,7 @@ HRESULT			toupResult;
 
 			CONSOLE_DEBUG("Toupcam_Open OK");
 #ifdef _USE_PDB_ADDITIONS_
-			toupResult  =   Toupcam_put_Option (cToupCamH, TOUPCAM_OPTION_RAW, 1);
+			toupResult  =   Toupcam_put_Option(cToupCamH, TOUPCAM_OPTION_RAW, 1);
 			CONSOLE_DEBUG_W_HEX("toupResult\t\t=",		toupResult);
 			if (FAILED(toupResult))
 			{
@@ -349,6 +357,7 @@ HRESULT			toupResult;
 
 			if (nFourCC == 'GRBG')
 			{
+				CONSOLE_DEBUG("nFourCC == 'GRBG'");
 				AddReadoutModeToList(kImageType_RGB24);
 			}
 			fourCCstring[0]	=	(nFourCC >> 24) & 0x0ff;
@@ -366,36 +375,35 @@ HRESULT			toupResult;
 
 			toupResult	=	Toupcam_get_FwVersion(cToupCamH,	firmWareVersion);
 			CONSOLE_DEBUG_W_STR("firmWareVersion\t=",			firmWareVersion);
-			if (toupResult == S_OK)
+			if (SUCCEEDED(toupResult))
 			{
 				strcpy(cDeviceFirmwareVersStr, firmWareVersion);
 			}
-char	hwver[16];
-char	pdate[10];
-char	fpgaver[16];
-int		bAutoExposure;
 
 			//*	get the camera hardware version, such as: 3.12
-			toupResult	=	Toupcam_get_HwVersion(cToupCamH, hwver);
-			CONSOLE_DEBUG_W_STR("hardware version\t=",			hwver);
+			toupResult	=	Toupcam_get_HwVersion(cToupCamH, hardwareVer);
+			CONSOLE_DEBUG_W_STR("hardware version\t=",		hardwareVer);
 
 			//*	get the production date, such as: 20150327, YYYYMMDD, (YYYY: year, MM: month, DD: day)
-			toupResult	=	Toupcam_get_ProductionDate(cToupCamH, pdate);
-			CONSOLE_DEBUG_W_STR("production date\t=",			pdate);
+			toupResult	=	Toupcam_get_ProductionDate(cToupCamH, productionDate);
+			CONSOLE_DEBUG_W_STR("production date\t=",			productionDate);
 
 			//*	get the FPGA version, such as: 1.13
-			toupResult	=	Toupcam_get_FpgaVersion(cToupCamH, fpgaver);
-			//CONSOLE_DEBUG_W_HEX("toupResult\t\t=",		toupResult);
-			if (toupResult == S_OK)
+			toupResult	=	Toupcam_get_FpgaVersion(cToupCamH, fpgaVersion);
+			if (SUCCEEDED(toupResult))
 			{
-				CONSOLE_DEBUG_W_STR("FPGA version\t=",				fpgaver);
+				CONSOLE_DEBUG_W_STR("FPGA version\t=",			fpgaVersion);
 			}
 
 			toupResult	=	Toupcam_get_MonoMode(cToupCamH);
 			//CONSOLE_DEBUG_W_HEX("toupResult\t\t=",		toupResult);
-			if (toupResult == S_OK)
+			if (SUCCEEDED(toupResult))
 			{
-				cIsColorCam	=	false;
+				if (toupResult == S_OK)
+				{
+					cIsColorCam	=	false;
+				}
+				CONSOLE_DEBUG_W_BOOL("cIsColorCam\t=", cIsColorCam);
 			}
 #ifdef _USE_PDB_ADDITIONS_
 			// Disable AutoExposure
@@ -403,7 +411,7 @@ int		bAutoExposure;
 #endif // _USE_PDB_ADDITIONS_
 
 			toupResult	=	Toupcam_get_AutoExpoEnable(cToupCamH, &bAutoExposure);
-			if (toupResult == S_OK)
+			if (SUCCEEDED(toupResult))
 			{
 				CONSOLE_DEBUG_W_NUM("Auto Exposure enabled\t=",	bAutoExposure);
 				if (bAutoExposure != 0)
@@ -422,7 +430,7 @@ int		bAutoExposure;
 		//	CONSOLE_DEBUG_W_NUM("finalHeight\t=",	finalHeight);
 		//	int		testPattern;
 		//	toupResult	=	Toupcam_get_Option(cToupCamH, TOUPCAM_OPTION_TESTPATTERN, &testPattern);
-		//	if (toupResult == S_OK)
+		//	if (SUCCEEDED(toupResult))
 		//	{
 		//		CONSOLE_DEBUG_W_NUM("testPattern\t=",	testPattern);
 		//		toupResult	=	Toupcam_put_Option(cToupCamH, TOUPCAM_OPTION_TESTPATTERN, 9);
@@ -581,8 +589,6 @@ int		bAutoExposure;
 	}
 }
 
-
-
 //*****************************************************************************
 //*	the camera must already be open when this is called
 //*****************************************************************************
@@ -696,43 +702,61 @@ TYPE_EXPOSURE_STATUS	exposureState;
 TYPE_ASCOM_STATUS	CameraDriverTOUP::SetImageType(TYPE_IMAGE_TYPE newImageType)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
-int					bitDepth;
+int					toupTek_bitDepth;
+int					rgbMode;
 HRESULT				toupResult;
-if (cToupCamH != NULL)
+
+	CONSOLE_DEBUG(__FUNCTION__);
+	if (cToupCamH != NULL)
 	{
-		bitDepth	=	-1;
-		toupResult	=	Toupcam_get_Option(cToupCamH, TOUPCAM_OPTION_BITDEPTH, &bitDepth);
-		if (toupResult == S_OK)
+		toupTek_bitDepth	=	-1;
+		toupResult	=	Toupcam_get_Option(cToupCamH, TOUPCAM_OPTION_BITDEPTH, &toupTek_bitDepth);
+		if (SUCCEEDED(toupResult))
 		{
-			CONSOLE_DEBUG_W_NUM("bitDepth (0 = 8 bits mode, 1 = 16 bits mode)\t=", bitDepth);
+			CONSOLE_DEBUG_W_NUM("toupTek_bitDepth (0 = 8 bits mode, 1 = 16 bits mode)\t=", toupTek_bitDepth);
 			switch(newImageType)
 			{
 				case kImageType_RAW8:
 				case kImageType_RGB24:
 				case kImageType_Y8:
-					bitDepth	=	0;
+					toupTek_bitDepth	=	0;
 					break;
 
 				case kImageType_RAW16:
-					bitDepth	=	1;
+					toupTek_bitDepth	=	1;
 					break;
 
 				default:
-					bitDepth	=	0;
+					toupTek_bitDepth	=	0;
 					break;
 			}
-			toupResult	=	Toupcam_put_Option(cToupCamH, TOUPCAM_OPTION_BITDEPTH, bitDepth);
-			if (toupResult == S_OK)
+			toupResult	=	Toupcam_put_Option(cToupCamH, TOUPCAM_OPTION_BITDEPTH, toupTek_bitDepth);
+			if (SUCCEEDED(toupResult))
 			{
 				cROIinfo.currentROIimageType	=	newImageType;
+				cDesiredImageType				=	newImageType;
+				alpacaErrCode					=   kASCOM_Err_Success;
 			}
-			toupResult	=	Toupcam_get_Option(cToupCamH, TOUPCAM_OPTION_BITDEPTH, &bitDepth);
-			CONSOLE_DEBUG_W_NUM("bitDepth (0 = 8 bits mode, 1 = 16 bits mode)\t=", bitDepth);
+			else
+			{
+				CONSOLE_DEBUG_W_HEX("Toupcam_put_Option failed, toupResult\t=", toupResult);
+			}
+			toupResult	=	Toupcam_get_Option(cToupCamH, TOUPCAM_OPTION_BITDEPTH, &toupTek_bitDepth);
+			CONSOLE_DEBUG_W_NUM("bitDepth (0 = 8 bits mode, 1 = 16 bits mode)\t=", toupTek_bitDepth);
+
+			toupResult	=	Toupcam_get_Option(cToupCamH, TOUPCAM_OPTION_RGB, &rgbMode);
+			CONSOLE_DEBUG("0 => RGB24;");
+			CONSOLE_DEBUG("1 => enable RGB48 format when bitdepth > 8;");
+			CONSOLE_DEBUG("2 => RGB32;");
+			CONSOLE_DEBUG("3 => 8 Bits Gray (only for mono camera); 4 => 16 Bits Gray (only for mono camera when bitdepth > 8)");
+			CONSOLE_DEBUG("4 => 16 Bits Gray (only for mono camera when bitdepth > 8)");
+			CONSOLE_DEBUG_W_NUM("rgbMode\t=", rgbMode);
+
 		}
 		else if ((unsigned int)toupResult == E_NOTIMPL)
 		{
 			alpacaErrCode	=	kASCOM_Err_NotImplemented;
-			strcpy(cLastCameraErrMsg, "Camera does not support specfied pixel depth");
+			strcpy(cLastCameraErrMsg, "Camera does not support specified pixel depth");
 		}
 		else
 		{
@@ -744,12 +768,9 @@ if (cToupCamH != NULL)
 		alpacaErrCode	=	kASCOM_Err_NotConnected;
 	}
 
+	CONSOLE_DEBUG_W_NUM("alpacaErrCode\t=", alpacaErrCode);
 	return(alpacaErrCode);
 }
-
-
-
-
 
 #pragma mark -
 #pragma mark Virtual functions
@@ -766,7 +787,7 @@ HRESULT				toupResult;
 	{
 //		CONSOLE_DEBUG("reading gain");
 		toupResult	=	Toupcam_get_ExpoAGain(cToupCamH, &gain);
-		if (toupResult == S_OK)
+		if (SUCCEEDED(toupResult))
 		{
 //			CONSOLE_DEBUG("found gain");
 			*cameraGainValue	=	gain;
@@ -846,7 +867,7 @@ HRESULT				toupResult;
 	if (cToupCamH != NULL)
 	{
 		toupResult	=	Toupcam_get_Temperature(cToupCamH, &temperature);
-		if (toupResult == S_OK)
+		if (SUCCEEDED(toupResult))
 		{
 			cCameraProp.CCDtemperature	=	(temperature * 1.0) / 10.0;
 		}

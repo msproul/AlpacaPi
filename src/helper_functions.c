@@ -16,6 +16,7 @@
 //*	Mar 13,	2023	<MLS> Added CountCharsInString() (from multicam)
 //*	Mar 25,	2023	<MLS> Added DumpLinuxTimeStruct()
 //*	Apr 30,	2023	<MLS> Added StripLeadingSpaces()
+//*	Aug  6,	2023	<MLS> Added StripCRLF()
 //*****************************************************************************
 
 #include	<math.h>
@@ -93,6 +94,27 @@ int		ccc;
 		iii++;
 	}
 	theString[ccc]	=	0;
+}
+
+//********************************************************************
+void	StripCRLF(char *theString)
+{
+int		sLen;
+
+	sLen		=	strlen(theString);
+
+	while (sLen > 0)
+	{
+		if ((theString[sLen - 1] == 0x0d) || (theString[sLen - 1] == 0x0a))
+		{
+			theString[sLen - 1]	=	0;
+		}
+		else
+		{
+			break;
+		}
+		sLen	=	strlen(theString);
+	}
 }
 
 

@@ -34,6 +34,8 @@
 //*	Feb  7,	2021	<MLS> Created telescopedriver_comm.cpp
 //*	Feb  9,	2021	<MLS> Moved device comm variables from main class to comm class
 //*	Mar 31,	2021	<MLS> Moved command queue buffer to comm class
+//*	Sep 21,	2023	<MLS> Switching telescope comm thread to use driver class threads
+//*	Sep 21,	2023	<MLS> Added RunThread_Startup() & RunThread_Loop()
 //*****************************************************************************
 
 
@@ -69,7 +71,7 @@
 #include	"telescopedriver_servo.h"
 #include	"telescopedriver_sim.h"
 
-static void	*Telescope_Comm_Thread(void *arg);
+//static void	*Telescope_Comm_Thread(void *arg);
 
 
 //**************************************************************************************
@@ -87,8 +89,6 @@ char	*colonPtr;
 	//*	set default conditions
 	strcpy(cDeviceIPaddress,	"0.0.0.0-Not set");
 	cIPaddrValid			=	false;
-	cThreadIsActive			=	false;
-	cKeepRunningFlag		=	false;
 
 	//*	set the parameters
 	strcpy(cCommonProp.Name,		"Telescope-Comm");
@@ -138,7 +138,7 @@ int32_t	TelescopeDriverComm::RunStateMachine(void)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-	if (cThreadIsActive)
+	if (cDriverThreadIsActive)
 	{
 		if (cCommonProp.Connected == false)
 		{
@@ -210,9 +210,9 @@ bool	connectionOKflag;
 	}
 	if (connectionOKflag)
 	{
-		if (cThreadIsActive == false)
+		if (cDriverThreadIsActive == false)
 		{
-			StartThread();
+			StartDriverThread();
 		}
 	}
 	else
@@ -227,7 +227,7 @@ bool	TelescopeDriverComm::AlpacaDisConnect(void)
 {
 	CONSOLE_DEBUG(__FUNCTION__);
 
-	StopThread();
+	StopDriverThread();
 
 	return(true);
 }
@@ -284,50 +284,6 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
 	return(alpacaErrCode);
 }
-
-
-//*****************************************************************************
-bool	TelescopeDriverComm::StartThread(void)
-{
-int		threadErr;
-bool	successFlag;
-char	errorMsg[64];
-
-	CONSOLE_DEBUG(__FUNCTION__);
-	//*	check to make sure a thread is not already running
-	successFlag	=	false;
-	if (cThreadIsActive == false)
-	{
-		cKeepRunningFlag	=	true;
-		threadErr			=	pthread_create(&cThreadID, NULL, &Telescope_Comm_Thread, this);
-		if (threadErr == 0)
-		{
-			successFlag	=	true;
-		}
-		else
-		{
-			sprintf(errorMsg, "Error creating thread err=%d", threadErr);
-			CONSOLE_DEBUG(errorMsg);
-		}
-	}
-	else
-	{
-		strcpy(errorMsg, "Thread already running");
-		CONSOLE_DEBUG(errorMsg);
-		threadErr	=	-1;
-		CONSOLE_ABORT(__FUNCTION__);
-	}
-	return(successFlag);
-}
-
-
-//*****************************************************************************
-void	TelescopeDriverComm::StopThread(void)
-{
-	cKeepRunningFlag	=	false;
-
-}
-
 
 //*****************************************************************************
 int	TelescopeDriverComm::OpenSocket(struct sockaddr_in	*deviceAddress,
@@ -450,125 +406,116 @@ bool	TelescopeDriverComm::SendCmdsPeriodic(void)
 	return(false);
 }
 
-
 //*****************************************************************************
-//*	This gets called by the "C" thread routine,
-//*	The real work is done here so that it can be in the class instead of outside
-//*
-//*	this can be over ridden but should be able to handle most cases
-//*****************************************************************************
-void	*TelescopeDriverComm::RunThread(void)
+void	TelescopeDriverComm::RunThread_Startup(void)
 {
-bool		connectionOpen;
 int			shutDownRetCode;
 int			closeRetCode;
-int			errorCount;
 bool		sendOK;
-
-	cThreadIsActive	=	true;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG_W_STR("cDeviceIPaddress\t=",	cDeviceIPaddress);
 	CONSOLE_DEBUG_W_NUM("cTCPportNum\t=",	cTCPportNum);
 
-
-	while (cKeepRunningFlag)
+	//--------------------------------------------------------
+	//*	open the connection
+	cTelescopeConnectionOpen	=	false;
+	cTelescopeCommErrCnt		=	0;
+	switch(cDeviceConnType)
 	{
-		CONSOLE_DEBUG_W_BOOL("cKeepRunningFlag\t=", cKeepRunningFlag);
-		//--------------------------------------------------------
-		//*	this is inside of the while loop so that we can re-open the connection if it drops.
-
-		//--------------------------------------------------------
-		//*	open the connection
-		connectionOpen	=	false;
-		switch(cDeviceConnType)
-		{
-			case kDevCon_Ethernet:
-				CONSOLE_DEBUG("Calling OpenSocket()");
-				cSocket_desc	=	OpenSocket(cDeviceIPaddress, cTCPportNum);
-				CONSOLE_DEBUG("Returned from OpenSocket()");
-				if (cSocket_desc > 0)
-				{
-					CONSOLE_DEBUG("Connection is open");
-					connectionOpen	=	true;
-				}
-				else
-				{
-					CONSOLE_DEBUG("Failed to open socket");
-				}
-				CONSOLE_DEBUG("!!!!!!!!!!!!!!!!!!!!!!!!!");
-				break;
-
-			case kDevCon_USB:
-				connectionOpen		=	false;
-				break;
-
-			case kDevCon_Serial:
-				cDeviceConnFileDesc	=	open(cDeviceConnPath, O_RDWR);	//* connect to port
-				if (cDeviceConnFileDesc >= 0)
-				{
-					CONSOLE_DEBUG_W_STR("Serial port opened OK", cDeviceConnPath);
-
-					Serial_Set_Attribs(cDeviceConnFileDesc, B9600, 0);	//*	set the baud rate
-					Serial_Set_Blocking (cDeviceConnFileDesc, false);
-
-					connectionOpen	=	true;
-				}
-				else
-				{
-					CONSOLE_DEBUG_W_STR("failed to open", cDeviceConnPath);
-					connectionOpen	=	false;
-				}
-				break;
-
-			case kDevCon_Custom:
-				break;
-		}
-
-		CONSOLE_DEBUG_W_BOOL("connectionOpen  \t=", connectionOpen);
-		CONSOLE_DEBUG_W_BOOL("cKeepRunningFlag\t=", cKeepRunningFlag);
-		//--------------------------------------------------------
-		//*	did we open the connection OK
-		if (connectionOpen)
-		{
-			//*	this is our main loop for the communications thread
-			//*	we will do the following
-			//*		check for and send queued commands
-			//*		send on going GET INFO commands
-			//*		parse the info coming back from the telescope
-			//*		update as appropriate
-			CONSOLE_DEBUG_W_BOOL("cKeepRunningFlag\t=", cKeepRunningFlag);
-			errorCount	=	0;
-			while (cKeepRunningFlag)
+		case kDevCon_Ethernet:
+			CONSOLE_DEBUG("Calling OpenSocket()");
+			cSocket_desc	=	OpenSocket(cDeviceIPaddress, cTCPportNum);
+			CONSOLE_DEBUG("Returned from OpenSocket()");
+			if (cSocket_desc > 0)
 			{
-				//*	now we are going to send commands to the telescope
-				if (cQueuedCmdCnt > 0)
-				{
-					sendOK	=	SendCmdsFromQueue();
-					if (sendOK == false)
-					{
-						errorCount++;
-					}
-				}
-				else
-				{
-					//*	send periodic commands
-					sendOK	=	SendCmdsPeriodic();
-					if (sendOK == false)
-					{
-						errorCount++;
-					}
-				}
-				usleep(500000);
-
-				//*	if the error count gets too big, shut down and re-open the connection
-				if (errorCount > 20)
-				{
-					CONSOLE_DEBUG("Closing connection due to error count, will try to re-open");
-					break;
-				}
+				CONSOLE_DEBUG("Connection is open");
+				cTelescopeConnectionOpen	=	true;
 			}
-			CONSOLE_DEBUG_W_BOOL("cKeepRunningFlag\t=", cKeepRunningFlag);
+			else
+			{
+				CONSOLE_DEBUG("Failed to open socket");
+			}
+			CONSOLE_DEBUG("!!!!!!!!!!!!!!!!!!!!!!!!!");
+			break;
+
+		case kDevCon_USB:
+			cTelescopeConnectionOpen		=	false;
+			break;
+
+		case kDevCon_Serial:
+			cDeviceConnFileDesc	=	open(cDeviceConnPath, O_RDWR);	//* connect to port
+			if (cDeviceConnFileDesc >= 0)
+			{
+				CONSOLE_DEBUG_W_STR("Serial port opened OK", cDeviceConnPath);
+
+				Serial_Set_Attribs(cDeviceConnFileDesc, B9600, 0);	//*	set the baud rate
+				Serial_Set_Blocking (cDeviceConnFileDesc, false);
+
+				cTelescopeConnectionOpen	=	true;
+			}
+			else
+			{
+				CONSOLE_DEBUG_W_STR("failed to open", cDeviceConnPath);
+				cTelescopeConnectionOpen	=	false;
+			}
+			break;
+
+		case kDevCon_Custom:
+			break;
+	}
+
+	CONSOLE_DEBUG_W_BOOL("cTelescopeConnectionOpen  \t=", cTelescopeConnectionOpen);
+	CONSOLE_DEBUG_W_BOOL("cDriverThreadKeepRunning\t=", cDriverThreadKeepRunning);
+}
+
+//*****************************************************************************
+//*	The real work is done here so that it can be in the class instead of outside
+//*	this can be over ridden but should be able to handle most cases
+//*****************************************************************************
+void	TelescopeDriverComm::RunThread_Loop(void)
+{
+int			shutDownRetCode;
+int			closeRetCode;
+bool		sendOK;
+
+	//--------------------------------------------------------
+	//*	this is inside of the while loop so that we can re-open the connection if it drops.
+
+	//--------------------------------------------------------
+	//*	did we open the connection OK
+	if (cTelescopeConnectionOpen)
+	{
+		//*	this is our main loop for the communications thread
+		//*	we will do the following
+		//*		check for and send queued commands
+		//*		send on going GET INFO commands
+		//*		parse the info coming back from the telescope
+		//*		update as appropriate
+		//*	now we are going to send commands to the telescope
+		if (cQueuedCmdCnt > 0)
+		{
+			sendOK	=	SendCmdsFromQueue();
+			if (sendOK == false)
+			{
+				cTelescopeCommErrCnt++;
+			}
+		}
+		else
+		{
+			//*	send periodic commands
+			sendOK	=	SendCmdsPeriodic();
+			if (sendOK == false)
+			{
+				cTelescopeCommErrCnt++;
+			}
+		}
+		usleep(500000);
+
+		//*	if the error count gets too big, shut down and re-open the connection
+		if (cTelescopeCommErrCnt > 20)
+		{
+			CONSOLE_DEBUG("Closing connection due to error count, will try to re-open");
 			//########################################################
 			//*	close the connection
 			switch(cDeviceConnType)
@@ -587,7 +534,8 @@ bool		sendOK;
 						CONSOLE_DEBUG_W_NUM("closeRetCode\t=", closeRetCode);
 						CONSOLE_DEBUG_W_NUM("errno\t=", errno);
 					}
-					cSocket_desc	=	-1;
+					cSocket_desc				=	-1;
+					cTelescopeConnectionOpen	=	false;
 					break;
 
 				case kDevCon_USB:
@@ -600,45 +548,13 @@ bool		sendOK;
 					break;
 			}
 		}
-		else
-		{
-			CONSOLE_DEBUG("Failed to open connection");
-		//	cKeepRunningFlag	=	false;
-
-			//*	try sleeping a bit to see if the problem fixes itself
-			CONSOLE_DEBUG("Going to sleep, will try again");
-			sleep(5);
-		}
-	}
-	CONSOLE_DEBUG("Thread EXIT!!!!!!!!!!!!!!!!!!");
-
-	cThreadIsActive	=	false;
-	return(NULL);
-}
-
-//*****************************************************************************
-static void	*Telescope_Comm_Thread(void *arg)
-{
-TelescopeDriverComm	*telscopeCommPtr;
-void				*returnValue;
-
-	CONSOLE_DEBUG(__FUNCTION__);
-
-	returnValue		=	NULL;
-	telscopeCommPtr	=	(TelescopeDriverComm *)arg;
-	if (telscopeCommPtr != NULL)
-	{
-		//*	normally this never returns
-		returnValue	=	telscopeCommPtr->RunThread();
 	}
 	else
 	{
-		CONSOLE_DEBUG("telscopeCommPtr is NULL");
-		CONSOLE_ABORT(__FUNCTION__);
+		CONSOLE_DEBUG("Telescope connection is not open!!!!!!!!!!!!!!!!!!!");
+		//*	this will close the thread and the background routine will restart it.
+		StopDriverThread();
 	}
-
-	return(returnValue);
 }
-
 
 #endif // _ENABLE_TELESCOPE_LX200_

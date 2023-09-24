@@ -525,7 +525,8 @@ bool			goBackOneImage;
 //					CONSOLE_DEBUG("Create Window");
 				#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 					cv::namedWindow(	myWindowName,
-										(cv::WINDOW_NORMAL | cv::WINDOW_KEEPRATIO)
+										(cv::WINDOW_NORMAL)
+//										(cv::WINDOW_NORMAL |  cv::WINDOW_AUTOSIZE | cv::WINDOW_KEEPRATIO | cv::WINDOW_GUI_NORMAL)
 										);
 				#else
 					cvNamedWindow(	myWindowName,

@@ -28,7 +28,10 @@
 //*	Jun  8,	2023	<MLS> Everything seems to be working properly
 //*	Jun  8,	2023	<MLS> conform does like the delay of status updates
 //*	Jun  9,	2023	<MLS> CONFORM-covercalibrarion-Alnitak -> PASSED!!!!!!!!!!!!!!!!!!!!!
+//*	Jun  9,	2023	<MLS> SUPPORTED: Alnitak FlipFlat
 //*	Jun  9,	2023	<MLS> CONFORM-1 issue, halt not supported
+//*	Sep 21,	2023	<MLS> Switching to base class threads
+//*	Sep 21,	2023	<MLS> Added RunThread_Startup() & RunThread_Loop()
 //*****************************************************************************
 //*	Vendor documenation
 //*		https://optecinc.com/astronomy/catalog/alnitak/flipflat.htm
@@ -89,9 +92,6 @@
 #include	<string.h>
 #include	<termios.h>
 #include	<fcntl.h>
-#include	<pthread.h>
-
-
 
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
@@ -126,21 +126,11 @@ bool	keepGoing;
 	}
 }
 
-//**************************************************************************************
-static void	*AlnitakCommThread(void *arg)
-{
-CalibrationDriverAlnitak	*objectPtr;
-
-	objectPtr	=	(CalibrationDriverAlnitak *)arg;
-	objectPtr->RunThread();
-	return(NULL);
-}
 
 //**************************************************************************************
 CalibrationDriverAlnitak::CalibrationDriverAlnitak(const char *argUSBpath)
 	:CalibrationDriver()
 {
-int			threadErr;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -175,29 +165,20 @@ int			threadErr;
 	cLastUpdate_ms							=	0;
 	cLastUpdate_milliSecs					=	0;
 
-	cThreadKeepRunning	=	true;
-	threadErr			=	pthread_create(&cThreadID, NULL, &AlnitakCommThread, this);
-	if (threadErr != 0)
-	{
-		CONSOLE_DEBUG("Error created thread");
-	}
+	StartDriverThread();
 }
 
 //**************************************************************************************
 CalibrationDriverAlnitak::~CalibrationDriverAlnitak(void)
 {
-	cThreadKeepRunning	=	false;
 	CONSOLE_DEBUG(__FUNCTION__);
 }
 
 //**************************************************************************************
-void	CalibrationDriverAlnitak::RunThread(void)
+void	CalibrationDriverAlnitak::RunThread_Startup(void)
 {
 char				alpacaErrMsg[128];
-TYPE_ASCOM_STATUS	alpacaErrCode;
 bool				openOK;
-uint32_t			currentTime_ms;
-uint32_t			deltaTime_ms;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 	openOK	=	Init_Hardware();
@@ -208,65 +189,69 @@ uint32_t			deltaTime_ms;
 	//*	get the status on startup
 	Alnitak_Cover_GetStatus(alpacaErrMsg);
 	Alnitak_GetBrightness(alpacaErrMsg);
+}
 
-	//*	loop forever
-	while (cThreadKeepRunning)
+//**************************************************************************************
+void	CalibrationDriverAlnitak::RunThread_Loop(void)
+{
+char				alpacaErrMsg[128];
+TYPE_ASCOM_STATUS	alpacaErrCode;
+uint32_t			currentTime_ms;
+uint32_t			deltaTime_ms;
+
+	alpacaErrCode	=	kASCOM_Err_Success;
+	//*	close cover takes priority over open
+	if (cCloseCover)
 	{
-		alpacaErrCode	=	kASCOM_Err_Success;
-		//*	close cover takes priority over open
-		if (cCloseCover)
-		{
-			alpacaErrCode						=	Alnitak_Cover_Close(alpacaErrMsg);
-			cCoverCalibrationProp.CoverState	=	kCover_Moving;
-			cCoverCalibrationProp.CoverMoving	=	true;
-			cCloseCover							=	false;
-			usleep(350 * 1000);
-		}
-		else if (cOpenCover)
-		{
-			alpacaErrCode						=	Alnitak_Cover_Open(alpacaErrMsg);
-			cCoverCalibrationProp.CoverState	=	kCover_Moving;
-			cCoverCalibrationProp.CoverMoving	=	true;
-			cOpenCover							=	false;
-			usleep(350 * 1000);
-		}
-		if (alpacaErrCode != kASCOM_Err_Success)
-		{
-			CONSOLE_DEBUG_W_NUM("open/close failure; Error=", alpacaErrCode);
-		}
-		//-----------------------------------
-		if (cTurnOff)
-		{
-			alpacaErrCode	=	Alnitak_TurnOff(alpacaErrMsg);
-			cTurnOff		=	false;
-		}
-		else if (cTurnOn)
-		{
-			alpacaErrCode	=	Alnitak_TurnOn(cNewBrightnessValue, alpacaErrMsg);
-			cTurnOn			=	false;
-		}
-		currentTime_ms	=	millis();
-		deltaTime_ms	=	currentTime_ms - cLastUpdate_ms;
-		if ((deltaTime_ms > 2000) || cForceUpdate)
-		{
-//			CONSOLE_DEBUG("Updating..........");
-			Alnitak_Cover_GetStatus(alpacaErrMsg);
-			Alnitak_GetBrightness(alpacaErrMsg);
-			cLastUpdate_ms	=	millis();
-			cForceUpdate	=	false;
-		}
-		//*	if we are moving, delay for a short time
-		if (cCoverCalibrationProp.CoverState == kCover_Moving)
-		{
-			usleep(5 * 1000);
-			cForceUpdate	=	true;
-		}
-		else
-		{
-			usleep(250 * 1000);
-		}
+		alpacaErrCode						=	Alnitak_Cover_Close(alpacaErrMsg);
+		cCoverCalibrationProp.CoverState	=	kCover_Moving;
+		cCoverCalibrationProp.CoverMoving	=	true;
+		cCloseCover							=	false;
+		usleep(350 * 1000);
 	}
-	CONSOLE_DEBUG("Thread Exit");
+	else if (cOpenCover)
+	{
+		alpacaErrCode						=	Alnitak_Cover_Open(alpacaErrMsg);
+		cCoverCalibrationProp.CoverState	=	kCover_Moving;
+		cCoverCalibrationProp.CoverMoving	=	true;
+		cOpenCover							=	false;
+		usleep(350 * 1000);
+	}
+	if (alpacaErrCode != kASCOM_Err_Success)
+	{
+		CONSOLE_DEBUG_W_NUM("open/close failure; Error=", alpacaErrCode);
+	}
+	//-----------------------------------
+	if (cTurnOff)
+	{
+		alpacaErrCode	=	Alnitak_TurnOff(alpacaErrMsg);
+		cTurnOff		=	false;
+	}
+	else if (cTurnOn)
+	{
+		alpacaErrCode	=	Alnitak_TurnOn(cNewBrightnessValue, alpacaErrMsg);
+		cTurnOn			=	false;
+	}
+	currentTime_ms	=	millis();
+	deltaTime_ms	=	currentTime_ms - cLastUpdate_ms;
+	if ((deltaTime_ms > 2000) || cForceUpdate)
+	{
+//		CONSOLE_DEBUG("Updating..........");
+		Alnitak_Cover_GetStatus(alpacaErrMsg);
+		Alnitak_GetBrightness(alpacaErrMsg);
+		cLastUpdate_ms	=	millis();
+		cForceUpdate	=	false;
+	}
+	//*	if we are moving, delay for a short time
+	if (cCoverCalibrationProp.CoverState == kCover_Moving)
+	{
+		usleep(5 * 1000);
+		cForceUpdate	=	true;
+	}
+	else
+	{
+		usleep(250 * 1000);
+	}
 }
 
 //*****************************************************************************
@@ -305,17 +290,19 @@ TYPE_ASCOM_STATUS	CalibrationDriverAlnitak::Calibrator_TurnOff(char *alpacaErrMs
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 	if (cCommonProp.Connected)
 	{
-		cTurnOff							=	true;
 		alpacaErrCode						=	kASCOM_Err_Success;
+		cTurnOff							=	true;
 		cCoverCalibrationProp.Brightness	=	0;
 		cNewBrightnessValue					=	0;
 	}
 	else
 	{
 		alpacaErrCode	=	kASCOM_Err_NotConnected;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not connected");
+		CONSOLE_DEBUG(alpacaErrMsg);
 	}
 	return(alpacaErrCode);
 }
@@ -626,7 +613,7 @@ int					readCnt;
 	readCnt	=	SendCmd_GetResponse('C', 0, readBuffer);
 	if (readCnt > 0)
 	{
-		CONSOLE_DEBUG(readBuffer);
+//		CONSOLE_DEBUG(readBuffer);
 		cCoverCalibrationProp.CoverState	=	kCover_Moving;
 		alpacaErrCode						=	kASCOM_Err_Success;
 	}
@@ -669,7 +656,7 @@ char				status_R;
 		readCnt	=	SendCmd_GetResponse('L', 0, readBuffer);
 		if (readCnt > 0)
 		{
-			CONSOLE_DEBUG(readBuffer);
+//			CONSOLE_DEBUG(readBuffer);
 			alpacaErrCode		=	kASCOM_Err_Success;
 			cCalibrationIsOn	=	true;
 		}
@@ -684,9 +671,9 @@ char				status_R;
 	readCnt	=	SendCmd_GetResponse('S', 0, readBuffer);
 	if (readCnt > 0)
 	{
-		CONSOLE_DEBUG(readBuffer);
+//		CONSOLE_DEBUG(readBuffer);
 		status_R		=	readBuffer[5];
-		CONSOLE_DEBUG_W_HEX("status_R\t=", status_R);
+//		CONSOLE_DEBUG_W_HEX("status_R\t=", status_R);
 	}
 	if (cCalibrationIsOn == true)
 	{
@@ -705,7 +692,7 @@ char				status_R;
 		if (readCnt > 0)
 		{
 			cCoverCalibrationProp.Brightness	=	myBrightnessVal;
-			CONSOLE_DEBUG(readBuffer);
+//			CONSOLE_DEBUG(readBuffer);
 		}
 		else
 		{
@@ -720,10 +707,8 @@ char				status_R;
 		CONSOLE_DEBUG("cCalibrationIsOn is false")
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "L command failed");
 	}
-
 	return(alpacaErrCode);
 }
-
 
 //*****************************************************************************
 TYPE_ASCOM_STATUS	CalibrationDriverAlnitak::Alnitak_TurnOff(char *alpacaErrMsg)
@@ -738,7 +723,7 @@ int					readCnt;
 	readCnt	=	SendCmd_GetResponse('B', 0, readBuffer);
 	if (readCnt > 0)
 	{
-		CONSOLE_DEBUG(readBuffer);
+//		CONSOLE_DEBUG(readBuffer);
 		alpacaErrCode					=	kASCOM_Err_Success;
 	}
 	else
@@ -755,7 +740,7 @@ int					readCnt;
 	readCnt	=	SendCmd_GetResponse('D', 0, readBuffer);
 	if (readCnt > 0)
 	{
-		CONSOLE_DEBUG(readBuffer);
+//		CONSOLE_DEBUG(readBuffer);
 		alpacaErrCode					=	kASCOM_Err_Success;
 		cCalibrationIsOn				=	false;
 	}
@@ -765,7 +750,6 @@ int					readCnt;
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "D command failed");
 		CONSOLE_DEBUG(alpacaErrMsg);
 	}
-
 	return(alpacaErrCode);
 }
 

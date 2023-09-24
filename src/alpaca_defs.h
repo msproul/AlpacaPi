@@ -80,9 +80,10 @@
 //*	Jun 18,	2023	<MLS> Added CalibratorChanging & CoverMoving to calibrator properties
 //*	Jun 18,	2023	<MLS> Version V0.7.1
 //*	Jun 18,	2023	<MLS> Build 166
-//*	JUl  2,	2023	<MLS> Build 167
-//*	JUl 16,	2023	<MLS> Build 168
-//*	JUl 18,	2023	<MLS> Build 169
+//*	Jul  2,	2023	<MLS> Build 167
+//*	Jul 16,	2023	<MLS> Build 168
+//*	Jul 18,	2023	<MLS> Build 169
+//*	Sep  7,	2023	<MLS> Build 170
 //*****************************************************************************
 //#include	"alpaca_defs.h"
 
@@ -105,7 +106,7 @@
 
 #define	kApplicationName	"AlpacaPi"
 #define	kVersionString		"V0.7.1"
-#define	kBuildNumber		169
+#define	kBuildNumber		170
 
 #define kAlpacaDiscoveryPORT	32227
 
@@ -158,6 +159,10 @@ typedef enum	//	TYPE_DEVICETYPE
 	kDeviceType_Shutter,
 	kDeviceType_SlitTracker,
 	kDeviceType_Spectrograph,
+
+	//*	these are window types, not actually device types
+	kDeviceType_SkyTravel,
+	kDeviceType_Startup,
 
 	kDeviceType_last
 
@@ -297,6 +302,8 @@ typedef enum
 	kDriveRate_driveKing		=	3	//*	King tracking rate (15.0369 arcseconds per second).
 } TYPE_DriveRates;
 
+//*****************************************************************************
+//*	https://ascom-standards.org/Help/Platform/html/T_ASCOM_DeviceInterface_SensorType.htm
 //*****************************************************************************
 typedef enum
 {

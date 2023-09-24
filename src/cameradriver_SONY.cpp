@@ -32,6 +32,7 @@
 //*	Jul 17,	2020	<MLS> Added GetSonyErrorString()
 //*	Jul 20,	2020	<MLS> Sony call back functions working
 //*	Jul 20,	2020	<MLS> Able to retrieve SONY live view jpg image
+//*	Jul 20,	2020	<MLS> SUPPORTED: SONY cameras
 //*	Jul 22,	2020	<MLS> Added ProcessProperty()
 //*	Jul 27,	2020	<MLS> Started on interactive command line interface
 //*	Jul 28,	2020	<MLS> Cleaned up warnings in Sony driver code

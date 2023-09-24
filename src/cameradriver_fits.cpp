@@ -16,7 +16,7 @@
 //*	that you agree that the author(s) have no warranty, obligations or liability.  You
 //*	must determine the suitability of this source code for your use.
 //*
-//*	Redistributions of this source code must retain this copyright notice.
+//*	Re-distributions of this source code must retain this copyright notice.
 //*****************************************************************************
 //*
 //*	References:
@@ -91,6 +91,8 @@
 //*	Oct 25,	2022	<MLS> Now using cv::getVersionString().c_str() for openCV version string
 //*	Nov 26,	2022	<MLS> Added IMAGEW and IMAGEH for astrometry.net solver
 //*	Jun 13,	2023	<MLS> Added checking for valid IMU
+//*	Sep  1,	2023	<MLS> Added WriteFitsDoubleValue()
+//*	Sep 10,	2023	<MLS> Added FLIP mode to FITS camera info
 //*****************************************************************************
 
 #if defined(_ENABLE_CAMERA_) && defined(_ENABLE_FITS_)
@@ -389,8 +391,8 @@ int				fitsRetCode;
 int				fitsStatus;
 long			naxes[3];
 int				axisCnt;
-float			bzero;
-float			bscale;
+double			bzero;
+double			bscale;
 char			imageFileName[128];
 char			aviFileName[128];
 char			imageFilePath[128];
@@ -477,9 +479,9 @@ int				iii;
 	if (fitsRetCode == 0)
 	{
 //		CONSOLE_DEBUG("fits_create_file = SUCCESS");
-		//************************************************************
+		//============================================================
 		//*	this MUST be first
-		//************************************************************
+		//============================================================
 		fitsStatus	=	0;
 		fitsRetCode	=	fits_create_img(fitsFilePtr, fits_bitpix, axisCnt, naxes, &fitsStatus);
 		if (fitsRetCode != 0)
@@ -490,10 +492,10 @@ int				iii;
 		WriteFITS_Seperator(fitsFilePtr, "");
 
 		fitsStatus	=	0;
-		fits_write_key(fitsFilePtr, TFLOAT,		"BSCALE",		&bscale,		NULL, &fitsStatus);
+		fits_write_key(fitsFilePtr, TDOUBLE,	"BSCALE",		&bscale,		NULL, &fitsStatus);
 
 		fitsStatus	=	0;
-		fits_write_key(fitsFilePtr, TFLOAT,		"BZERO",		&bzero,			NULL, &fitsStatus);
+		fits_write_key(fitsFilePtr, TDOUBLE,	"BZERO",		&bzero,			NULL, &fitsStatus);
 
 //		WriteFITS_Seperator(fitsFilePtr, NULL);
 
@@ -504,7 +506,7 @@ int				iii;
 
 
 
-		//************************************************************
+		//============================================================
 		//*	output info about the observation
 		WriteFITS_ObservationInfo(fitsFilePtr, (headerOnly == false));
 
@@ -551,16 +553,16 @@ int				iii;
 													"Filename of .avi data", &fitsStatus);
 		}
 
-		//************************************************************
+		//============================================================
 		//*	Camera info
 		WriteFITS_CameraInfo(fitsFilePtr);
 
-		//************************************************************
+		//============================================================
 		//*	Telescope info
 		WriteFITS_TelescopeInfo(fitsFilePtr);
 
 #ifdef _ENABLE_IMU_
-		//************************************************************
+		//============================================================
 		//*	Telescope info
 		if (IMU_IsAvailable())
 		{
@@ -568,36 +570,43 @@ int				iii;
 		}
 #endif
 
-		//************************************************************
+		//============================================================
 		//*	Focuser info
 		WriteFITS_FocuserInfo(fitsFilePtr);
 
-		//************************************************************
+		//============================================================
 		//*	Rotator info
 		WriteFITS_RotatorInfo(fitsFilePtr);
 
-		//************************************************************
+		//============================================================
 		//*	Filterwheel info
 		WriteFITS_FilterwheelInfo(fitsFilePtr);
 
-		//************************************************************
+		//============================================================
 		//*	Observatory info
 		WriteFITS_ObservatoryInfo(fitsFilePtr);
 
-		//************************************************************
+		//============================================================
 		//*	Environment/weather info
 		WriteFITS_EnvironmentInfo(fitsFilePtr);
 
-		//************************************************************
+		//============================================================
 		//*	Moon information
 		WriteFITS_MoonInfo(fitsFilePtr);
 
-		//************************************************************
+		//============================================================
+		//*	GPS information
+		if (cGPS.Present)
+		{
+			WriteFITS_GPSinfo(fitsFilePtr);
+		}
+
+		//============================================================
 		//*	Software info
 		WriteFITS_SoftwareInfo(fitsFilePtr);
 
 
-		//************************************************************
+		//============================================================
 		//*	FITS version info
 		WriteFITS_VersionInfo(fitsFilePtr);
 
@@ -797,37 +806,32 @@ int			fitsHdrIdx;
 
 
 //*****************************************************************************
-static void	WriteFitsFloatValue(fitsfile		*fitsFilePtr,
+static void	WriteFitsDoubleValue(fitsfile		*fitsFilePtr,
 								const char		*keyword,
-								const double	value,
+								double			value,
 								const char		*comment)
 {
-float	floatValue;
 int		fitsStatus;
 
-	floatValue	=	value;
 	fitsStatus	=	0;
-	fits_write_key(fitsFilePtr, TFLOAT,		keyword,
-											&floatValue,
+	fits_write_key(fitsFilePtr, TDOUBLE,	keyword,
+											&value,
 											comment, &fitsStatus);
 }
 
-
 //*****************************************************************************
-static void	WriteFitsFloatValueIfGtZero(	fitsfile		*fitsFilePtr,
+static void	WriteFitsDoubleValueIfGtZero(	fitsfile		*fitsFilePtr,
 											const char		*keyword,
-											const double	value,
+											double			value,
 											const char		*comment)
 {
-float	floatValue;
 int		fitsStatus;
 
 	if (value > 0.0)
 	{
-		floatValue	=	value;
 		fitsStatus	=	0;
-		fits_write_key(fitsFilePtr, TFLOAT,		keyword,
-												&floatValue,
+		fits_write_key(fitsFilePtr, TDOUBLE,	keyword,
+												&value,
 												comment, &fitsStatus);
 	}
 }
@@ -997,7 +1001,7 @@ char	instrumentString[128];
 	{
 		sprintf(stringBuf, "Camera offset [%d:%d]", cCameraProp.OffsetMin, cCameraProp.OffsetMax);
 		fitsStatus	=	0;
-		fits_write_key(fitsFilePtr,		TINT,		"OFFSET",
+		fits_write_key(fitsFilePtr,		TSTRING,	"OFFSET",
 													&cCameraProp.Offset,
 													stringBuf,
 													&fitsStatus);
@@ -1006,7 +1010,6 @@ char	instrumentString[128];
 
 
 	//*	ATIK dusk software uses this keyword
-	fitsStatus	=	0;
 	intValue	=	cIsColorCam;
 	if (cROIinfo.currentROIimageType == kImageType_RGB24)
 	{
@@ -1016,10 +1019,18 @@ char	instrumentString[128];
 	{
 		intValue	=	false;
 	}
+	fitsStatus	=	0;
 	fits_write_key(fitsFilePtr, TLOGICAL,	"ISCOLOUR",
 											&intValue,
 											"True if image is a color image",
 											&fitsStatus);
+	//*	flip mode, used primarily with ZWO cameras, hope to add more later
+	fitsStatus	=	0;
+	fits_write_key(fitsFilePtr,		TINT,		"FLIP",
+												&cFlipMode,
+												"0=None, 1=Horz, 2=Vert, 3=Both",
+												&fitsStatus);
+
 	//*	camera manufacturer
 	if (strlen(cDeviceManufacturer) > 0)
 	{
@@ -1184,17 +1195,17 @@ bool		printDomeDataSrc;
 		}
 		if (gEnvData.siteTemperature_valid)
 		{
-			WriteFitsFloatValue(		fitsFilePtr,
+			WriteFitsDoubleValue(		fitsFilePtr,
 										"ENVTEM",
 										gEnvData.siteTemperature_degC,
 										"Site temperature (degrees C)");
 		}
-		WriteFitsFloatValueIfGtZero(fitsFilePtr,
+		WriteFitsDoubleValueIfGtZero(fitsFilePtr,
 									"ENVHUM",
 									gEnvData.siteHumidity,
 									"Site humidity (percent)");
 
-		WriteFitsFloatValueIfGtZero(fitsFilePtr,
+		WriteFitsDoubleValueIfGtZero(fitsFilePtr,
 									"ENVPRE",
 									gEnvData.sitePressure_kPa,
 									"Site air pressure (kPascals)");
@@ -1225,17 +1236,17 @@ bool		printDomeDataSrc;
 
 		if (gEnvData.domeTemperature_valid)
 		{
-			WriteFitsFloatValue(		fitsFilePtr,
+			WriteFitsDoubleValue(		fitsFilePtr,
 										"DMETEM",
 										gEnvData.domeTemperature_degC,
 										"Dome temperature inside (degrees C)");
 		}
-		WriteFitsFloatValueIfGtZero(fitsFilePtr,
+		WriteFitsDoubleValueIfGtZero(fitsFilePtr,
 									"DMEHUM",
 									gEnvData.domeHumidity,
 									"Dome humidity (percent)");
 
-		WriteFitsFloatValueIfGtZero(fitsFilePtr,
+		WriteFitsDoubleValueIfGtZero(fitsFilePtr,
 									"DMEPRE",
 									gEnvData.domePressure_kPa,
 									"Dome air pressure (kPascals)");
@@ -1604,7 +1615,7 @@ struct tm		siderealTime;
 char			stringBuf[128];
 unsigned long	minmaxPixelValue;
 int				staurationValue;
-float			saturationPrcnt;
+double			saturationPrcnt;
 double			modifiedJulianDate;
 struct tm		*localTime;
 
@@ -1707,7 +1718,7 @@ struct tm		*localTime;
 
 	if (includeAnalysis)
 	{
-		//************************************************************
+		//============================================================
 		//*	Image analysis stuff
 
 		minmaxPixelValue	=	CalculateMinPixValue();
@@ -1746,9 +1757,9 @@ struct tm		*localTime;
 		saturationPrcnt	=	CalculateSaturation();
 //		CONSOLE_DEBUG_W_DBL("saturationPrcnt\t: ",		saturationPrcnt);
 		fitsStatus	=	0;
-		fits_write_key(fitsFilePtr, TFLOAT,	"SATUPRCT",
-											&saturationPrcnt,
-											"Percentage of pixels at saturation", &fitsStatus);
+		fits_write_key(fitsFilePtr, TDOUBLE,	"SATUPRCT",
+												&saturationPrcnt,
+												"Percentage of pixels at saturation", &fitsStatus);
 
 		//---------------------------------------------------------------------------------------
 		//*	Histogram information
@@ -2116,14 +2127,24 @@ int		fitsStatus;
 											(char *)"http://iraf.nao.ac.jp/projects/ccdmosaic/imagedef/fitsdic.html",
 											NULL, &fitsStatus);
 
+	fitsStatus	=	0;
+	fits_write_key(fitsFilePtr, TSTRING,	"COMMENT",
+											(char *)"https://iraf.net/irafdocs/Imagedef/mosaic/MosaicV1.html",
+											NULL, &fitsStatus);
+	fitsStatus	=	0;
+	fits_write_key(fitsFilePtr, TSTRING,	"COMMENT",
+											(char *)"https://fits.gsfc.nasa.gov/fits_dictionary.html",
+											NULL, &fitsStatus);
+
+
 }
 
 //*****************************************************************************
 void	CameraDriver::WriteFITS_MoonInfo(fitsfile *fitsFilePtr)
 {
 int			fitsStatus;
-float		moonAge;
-float		moonIllumination;
+double		moonAge;
+double		moonIllumination;
 char		moonPhaseStr[64];
 
 //	CONSOLE_DEBUG(__FUNCTION__);
@@ -2137,13 +2158,13 @@ char		moonPhaseStr[64];
 
 	moonAge		=	CalcDaysSinceNewMoon(0, 0, 0);	//*	zero -> current time
 	fitsStatus	=	0;
-	fits_write_key(fitsFilePtr, TFLOAT,		"MOONAGE",
+	fits_write_key(fitsFilePtr, TDOUBLE,	"MOONAGE",
 											&moonAge,
 											"Number of days since new moon", &fitsStatus);
 
 	moonIllumination	=	CalcMoonIllumination(0, 0, 0);	//*	zero -> current time
 	fitsStatus			=	0;
-	fits_write_key(fitsFilePtr, TFLOAT,		"MOONILUM",
+	fits_write_key(fitsFilePtr, TDOUBLE,	"MOONILUM",
 											&moonIllumination,
 											"Percent illumination", &fitsStatus);
 
@@ -2348,6 +2369,7 @@ char	lineBuff[80];
 //	https://developer.arm.com/documentation/101028/0012/3--C-language-extensions?lang=en
 //	https://developer.arm.com/architectures/instruction-sets/simd-isas/neon/intrinsics
 //	https://developer.arm.com/architectures/instruction-sets/simd-isas/neon/neon-programmers-guide-for-armv8-a/optimizing-c-code-with-neon-intrinsics/rgb-deinterleaving
+//	https://fits.gsfc.nasa.gov/fits_dictionary.html
 //*****************************************************************************
 //*****************************************************************************
 //*	this routine uses ARM NEON SIMD instructions to do the interleaving of the RGB image

@@ -32,7 +32,7 @@ TYPE_CmdEntry	gSwitchCmdTable[]	=
 
 	//*	added by MLS
 	{	"--extras",				kCmd_Switch_Extras,					kCmdType_GET	},
-	{	"setswitchdescription",	kCmd_Switch_setswitchdescription,	kCmdType_GET	},
+	{	"setswitchdescription",	kCmd_Switch_setswitchdescription,	kCmdType_PUT	},
 	{	"readall",				kCmd_Switch_readall,				kCmdType_GET	},
 
 	{	"",						-1,	0x00	}

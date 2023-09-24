@@ -257,142 +257,140 @@ void	ControllerCamera::GetStatus_SubClass(void)
 void	ControllerCamera::UpdateSupportedActions(void)
 {
 	CONSOLE_DEBUG("this routine should be overloaded");
-	CONSOLE_ABORT(__FUNCTION__);
+//	CONSOLE_ABORT(__FUNCTION__);
 }
-
 //**************************************************************************************
 void	ControllerCamera::UpdateStatusData(void)
 {
 	CONSOLE_DEBUG(__FUNCTION__);
-	CONSOLE_ABORT(__FUNCTION__);
+//	CONSOLE_ABORT(__FUNCTION__);
 }
-
 //*****************************************************************************
 void	ControllerCamera::UpdateCameraName(void)
 {
 	CONSOLE_DEBUG("this routine should be overloaded");
-	CONSOLE_ABORT(__FUNCTION__);
+//	CONSOLE_ABORT(__FUNCTION__);
 }
 //*****************************************************************************
 void	ControllerCamera::UpdateReadoutModes(void)
 {
 	CONSOLE_DEBUG("this routine should be overloaded");
-	CONSOLE_ABORT(__FUNCTION__);
+//	CONSOLE_ABORT(__FUNCTION__);
 }
 //*****************************************************************************
 void	ControllerCamera::UpdateCurrReadoutMode(void)
 {
 	CONSOLE_DEBUG("this routine should be overloaded");
-	CONSOLE_ABORT(__FUNCTION__);
+//	CONSOLE_ABORT(__FUNCTION__);
 }
 //*****************************************************************************
 void	ControllerCamera::UpdateCameraGain(const TYPE_ASCOM_STATUS lastAlpacaErr)
 {
 	CONSOLE_DEBUG("this routine should be overloaded");
-	CONSOLE_ABORT(__FUNCTION__);
+//	CONSOLE_ABORT(__FUNCTION__);
 }
 //*****************************************************************************
 void	ControllerCamera::UpdateCameraOffset(const TYPE_ASCOM_STATUS lastAlpacaErr)
 {
 	CONSOLE_DEBUG("this routine should be overloaded");
-	CONSOLE_ABORT(__FUNCTION__);
+//	CONSOLE_ABORT(__FUNCTION__);
 }
 
 //*****************************************************************************
 void	ControllerCamera::UpdateCameraExposureStartup(void)
 {
 	CONSOLE_DEBUG("this routine should be overloaded");
-	CONSOLE_ABORT(__FUNCTION__);
+//	CONSOLE_ABORT(__FUNCTION__);
 }
 //*****************************************************************************
 void	ControllerCamera::UpdateCameraExposure(void)
 {
 	CONSOLE_DEBUG("this routine should be overloaded");
-	CONSOLE_ABORT(__FUNCTION__);
+//	CONSOLE_ABORT(__FUNCTION__);
 }
 //*****************************************************************************
 void	ControllerCamera::UpdateCameraSize(void)
 {
 	CONSOLE_DEBUG("this routine should be overloaded");
-	CONSOLE_ABORT(__FUNCTION__);
+//	CONSOLE_ABORT(__FUNCTION__);
 }
 //*****************************************************************************
 void	ControllerCamera::UpdateCameraState(void)
 {
 	CONSOLE_DEBUG("this routine should be overloaded");
-	CONSOLE_ABORT(__FUNCTION__);
+//	CONSOLE_ABORT(__FUNCTION__);
 }
 //*****************************************************************************
 void	ControllerCamera::UpdateCameraTemperature(void)
 {
 	CONSOLE_DEBUG("this routine should be overloaded");
-	CONSOLE_ABORT(__FUNCTION__);
+//	CONSOLE_ABORT(__FUNCTION__);
 }
 //*****************************************************************************
 void	ControllerCamera::UpdatePercentCompleted(void)
 {
 	CONSOLE_DEBUG("this routine should be overloaded");
-	CONSOLE_ABORT(__FUNCTION__);
+//	CONSOLE_ABORT(__FUNCTION__);
 }
 //*****************************************************************************
 void	ControllerCamera::UpdateCoolerState(void)
 {
-	CONSOLE_ABORT(__FUNCTION__);
 	CONSOLE_DEBUG("this routine should be overloaded");
+//	CONSOLE_ABORT(__FUNCTION__);
 }
 //*****************************************************************************
 void	ControllerCamera::UpdateFilterWheelInfo(void)
 {
 	CONSOLE_DEBUG("this routine should be overloaded");
-	CONSOLE_ABORT(__FUNCTION__);
+//	CONSOLE_ABORT(__FUNCTION__);
 }
 //*****************************************************************************
 void	ControllerCamera::UpdateFilterWheelPosition(void)
 {
 	CONSOLE_DEBUG("this routine should be overloaded");
-	CONSOLE_ABORT(__FUNCTION__);
+//	CONSOLE_ABORT(__FUNCTION__);
 }
 //*****************************************************************************
 void	ControllerCamera::UpdateFileNameOptions(void)
 {
 	CONSOLE_DEBUG("this routine should be overloaded");
-	CONSOLE_ABORT(__FUNCTION__);
+//	CONSOLE_ABORT(__FUNCTION__);
 }
 //*****************************************************************************
 void	ControllerCamera::UpdateLiveMode(void)
 {
 	CONSOLE_DEBUG("this routine should be overloaded");
-	CONSOLE_ABORT(__FUNCTION__);
+//	CONSOLE_ABORT(__FUNCTION__);
 }
 //*****************************************************************************
 void	ControllerCamera::UpdateReceivedFileName(const char *newFileName)
 {
 	CONSOLE_DEBUG("this routine should be overloaded");
-	CONSOLE_ABORT(__FUNCTION__);
+//	CONSOLE_ABORT(__FUNCTION__);
 }
 //*****************************************************************************
 void	ControllerCamera::UpdateRemoteFileList(void)
 {
 	CONSOLE_DEBUG("this routine should be overloaded");
-	CONSOLE_ABORT(__FUNCTION__);
+//	CONSOLE_ABORT(__FUNCTION__);
 }
 //*****************************************************************************
 void	ControllerCamera::SetExposureRange(char *name, double exposureMin, double exposureMax, double exposureStep)
 {
 	CONSOLE_DEBUG("this routine should be overloaded");
-	CONSOLE_ABORT(__FUNCTION__);
+//	CONSOLE_ABORT(__FUNCTION__);
 }
 //*****************************************************************************
 void	ControllerCamera::UpdateDisplayModes(void)
 {
 	CONSOLE_DEBUG("this routine should be overloaded");
-	CONSOLE_ABORT(__FUNCTION__);
+//	CONSOLE_ABORT(__FUNCTION__);
 }
 //*****************************************************************************
 void	ControllerCamera::UpdateFlipMode(void)
 {
 	CONSOLE_DEBUG("this routine should be overloaded");
-	CONSOLE_ABORT(__FUNCTION__);
+//	CONSOLE_ABORT(__FUNCTION__);
 }
 
 

@@ -105,7 +105,7 @@ double		magnitude;
 	validObject					=	true;
 	icSourceDesignator			=	lineBuff[0];
 	starRec->id					=	ParseLongFromString(lineBuff,		 2-1, 4);
-	starRec->type				=	ParseCharValueFromString(lineBuff,	 7-1, 3);
+	starRec->NGCtype			=	ParseCharValueFromString(lineBuff,	 7-1, 3);
 	raHour						=	ParseLongFromString(lineBuff,		11-1, 2);
 	raMin						=	ParseFloatFromString(lineBuff,		14-1, 4);
 	magnitude					=	ParseFloatFromString(lineBuff,		41-1, 4);
@@ -160,7 +160,7 @@ double		magnitude;
 		sprintf(starRec->longName, "NGC%ld", starRec->id);
 	}
 //	CONSOLE_DEBUG_W_STR("longName\t=", starRec->longName);
-	if (starRec->type == '  PD')
+	if (starRec->NGCtype == '  PD')
 	{
 		validObject	=	false;
 	}

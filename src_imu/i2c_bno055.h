@@ -18,6 +18,11 @@
 #define	_I2C_BNO055_H_
 
 
+#ifndef _STDBOOL_H
+	#include	<stdbool.h>
+#endif
+
+
 #define I2CBUS				"/dev/i2c-1"
 #define BNO055_ID			0xA0
 #define POWER_MODE_NORMAL	0x00
@@ -181,7 +186,9 @@
 //*	------------------------------------------------------------
 //*	 global variables
 //*	 ------------------------------------------------------------
-extern int gBNO_verbose;	// debug flag, 0 = normal, 1 = debug mode
+#ifdef _GETBNO055_APP_
+	extern bool gBNO_verbose;	// debug flag, 0 = normal, 1 = debug mode
+#endif // _GETBNO055_APP_
 
 //*	------------------------------------------------------------
 //*	 BNO055 versions, status data and other infos struct
@@ -336,46 +343,54 @@ typedef enum
 //* ------------------------------------------------------------
 //*	 external function prototypes for I2C bus communication code
 //*	 ------------------------------------------------------------
-int		get_i2cbus(char*, char*);		// get the I2C bus file handle
-int		set_page0(void);				// set register map page 0
-int		set_page1(void);				// set register map page 1
-int		get_calstatus(struct bnocal*);	// read calibration status
-int		get_caloffset(struct bnocal*);	// read calibration values
-int		get_inf(struct bnoinf*);		// read sensor information
-int		get_acc(struct bnoacc*);		// read accelerometer data
-int		get_mag(struct bnomag*);		// read magnetometer data
-int		get_gyr(struct bnogyr*);		// read gyroscope data
-int		get_eul(struct bnoeul*);		// read euler orientation
-int		get_qua(struct bnoqua*);		// read quaternation data
-int		get_gra(struct bnogra*);		// read gravity data
-int		get_lin(struct bnolin*);		// read linar acceleration data
-int		get_clksrc(void);				// get the clock source setting
-void	print_clksrc(void);				// print clock source setting
-int		set_mode(opmode_t);				// set the sensor ops mode
-int		get_mode(void);					// get the sensor ops mode
-int		print_mode(int);				// print ops mode string
-void	print_unit(int);				// print SI unit configuration
-int		set_power(power_t);				// set the sensor power mode
-int		get_power(void);				// get the sensor power mode
-int		print_power(int);				// print power mode string
-int		get_sstat(void);				// get system status code
-int		print_sstat(int);				// print system status string
-int		get_remap(char);				// get the axis remap values
-int		print_remap_conf(int);			// print axis configuration
-int		print_remap_sign(int);			// print the axis remap +/-
-int		bno_dump(void);					// dump the register map data
-int		bno_reset(void);				// reset the sensor
-int		save_cal(char*);				// write calibration to file
-int		load_cal(char*);				// load calibration from file
-int		get_acc_conf(struct bnoaconf*);	// get accelerometer config
-int		get_mag_conf(struct bnomconf*);	// get magnetometer config
-int		get_gyr_conf(struct bnogconf*);	// get gyroscope config
-int		set_acc_conf(void);				// set accelerometer config
-int		set_mag_conf(void);				// set magnetometer config
-int		set_gyr_conf(void);				// set gyroscope config
-void	print_acc_conf(struct bnoaconf *bnoc_ptr);		// print accelerometer config
-void	print_mag_conf(void);			// print magnetometer config
-void	print_gyr_conf(void);			// print gyroscope config
+//*	added routines to make the IMU layer independent
+int			BNO055_Init(void);
+void		BNO055__SetDebug(const bool debugOnOff);
+void		BNO055_Print_info(void);
+void		BNO055_Print_calstat(void);
+
+
+//*	original routines
+int			get_i2cbus(char*, char*);		// get the I2C bus file handle
+int			set_page0(void);				// set register map page 0
+int			set_page1(void);				// set register map page 1
+int			get_calstatus(struct bnocal*);	// read calibration status
+int			get_caloffset(struct bnocal*);	// read calibration values
+int			get_inf(struct bnoinf*);		// read sensor information
+int			get_acc(struct bnoacc*);		// read accelerometer data
+int			get_mag(struct bnomag*);		// read magnetometer data
+int			get_gyr(struct bnogyr*);		// read gyroscope data
+int			get_eul(struct bnoeul*);		// read euler orientation
+int			get_qua(struct bnoqua*);		// read quaternation data
+int			get_gra(struct bnogra*);		// read gravity data
+int			get_lin(struct bnolin*);		// read linar acceleration data
+int			get_clksrc(void);				// get the clock source setting
+void		print_clksrc(void);				// print clock source setting
+int			set_mode(opmode_t);				// set the sensor ops mode
+opmode_t	get_mode(void);					// get the sensor ops mode
+int			print_mode(int);				// print ops mode string
+void		print_unit(int);				// print SI unit configuration
+int			set_power(power_t);				// set the sensor power mode
+int			get_power(void);				// get the sensor power mode
+int			print_power(int);				// print power mode string
+int			get_sstat(void);				// get system status code
+int			print_sstat(int);				// print system status string
+int			get_remap(char);				// get the axis remap values
+int			print_remap_conf(int);			// print axis configuration
+int			print_remap_sign(int);			// print the axis remap +/-
+int			bno_dump(void);					// dump the register map data
+int			bno_reset(void);				// reset the sensor
+int			save_cal(char*);				// write calibration to file
+int			load_cal(char*);				// load calibration from file
+int			get_acc_conf(struct bnoaconf*);	// get accelerometer config
+int			get_mag_conf(struct bnomconf*);	// get magnetometer config
+int			get_gyr_conf(struct bnogconf*);	// get gyroscope config
+int			set_acc_conf(void);				// set accelerometer config
+int			set_mag_conf(void);				// set magnetometer config
+int			set_gyr_conf(void);				// set gyroscope config
+void		print_acc_conf(struct bnoaconf *bnoc_ptr);		// print accelerometer config
+void		print_mag_conf(void);			// print magnetometer config
+void		print_gyr_conf(void);			// print gyroscope config
 
 
 #endif // _I2C_BNO055_H_

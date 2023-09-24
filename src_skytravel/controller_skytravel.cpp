@@ -82,25 +82,26 @@ ControllerSkytravel::ControllerSkytravel(	const char *argWindowName)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-	cWindowType				=	'SKYT';
-	cSkyTravelTabOjbPtr		=	NULL;
-	cSkySettingsTabObjPtr	=	NULL;
-	cDomeTabObjPtr			=	NULL;
-	cDeviceSelectObjPtr		=	NULL;
-	cAlpacaListObjPtr		=	NULL;
-	cIPaddrListObjPtr		=	NULL;
-	cAboutBoxTabObjPtr		=	NULL;
-	cFOVTabObjPtr			=	NULL;
+	cWindowType						=	'SKYT';
+	cAlpacaDeviceType				=	kDeviceType_SkyTravel;
+	cSkyTravelTabOjbPtr				=	NULL;
+	cSkySettingsTabObjPtr			=	NULL;
+	cDomeTabObjPtr					=	NULL;
+	cDeviceSelectObjPtr				=	NULL;
+	cAlpacaListObjPtr				=	NULL;
+	cIPaddrListObjPtr				=	NULL;
+	cAboutBoxTabObjPtr				=	NULL;
+	cFOVTabObjPtr					=	NULL;
 #ifndef __ARM_ARCH
-	cMountTabObjPtr			=	NULL;
+	cMountTabObjPtr					=	NULL;
 #endif
 #ifdef _ENABLE_CPU_STATS_
-	cCpuStatsTabObjPtr		=	NULL;
+	cCpuStatsTabObjPtr				=	NULL;
 #endif
 
-	cDomeAddressValid		=	false;
-	cTelescopeAddressValid	=	false;
-	cUpdateDelta			=	kDefaultUpdateDelta;
+	cDomeAddressValid				=	false;
+	cTelescopeAddressValid			=	false;
+	cUpdateDelta					=	kDefaultUpdateDelta;
 	cLastDomeUpdate_milliSecs		=	0;
 	cLastTelescopeUpdate_milliSecs	=	0;
 
@@ -544,29 +545,46 @@ bool		foundSomething;
 
 	if (deltaSeconds >= 2)
 	{
+	uint32_t	updateStartMillis;
+	uint32_t	updateEndMillis;
+	uint32_t	updateDeltaMills;
+
+		updateStartMillis	=	millis();
+		//---------------------------------------------
 		//*	moon window
 		if (cMoonTabObjPtr != NULL)
 		{
 			cMoonTabObjPtr->RunWindowBackgroundTasks();
 		}
 
+		//---------------------------------------------
 		//*	Field Of View window
 		if (cFOVTabObjPtr != NULL)
 		{
 			cFOVTabObjPtr->RunWindowBackgroundTasks();
 		}
 
+		//---------------------------------------------
 		//*	alpaca list window
 		if (cAlpacaListObjPtr != NULL)
 		{
 			cAlpacaListObjPtr->RunWindowBackgroundTasks();
 		}
 
+		//---------------------------------------------
 		//*	Remote data window
 		if (cRemoteDataObjPtr != NULL)
 		{
 			cRemoteDataObjPtr->RunWindowBackgroundTasks();
 		}
+		//---------------------------------------------
+		//*	check the time
+		updateEndMillis		=	millis();
+		updateDeltaMills	=	updateEndMillis - updateStartMillis;
+//		if (updateDeltaMills > 0)
+//		{
+//			CONSOLE_DEBUG_W_NUM("Millisecs required to update windows:", updateDeltaMills);
+//		}
 	}
 	if (deltaSeconds >= 1)
 	{

@@ -829,7 +829,7 @@ char		lineBuffer[128];
 
 
 		SocketWriteData(mySocketFD,	"<CENTER>\r\n");
-		SocketWriteData(mySocketFD,	"<H2>Focuser</H2>\r\n");
+		SocketWriteData(mySocketFD,	"<H2>AlpacaPi Focuser</H2>\r\n");
 
 		SocketWriteData(mySocketFD,	"<TABLE BORDER=1>\r\n");
 

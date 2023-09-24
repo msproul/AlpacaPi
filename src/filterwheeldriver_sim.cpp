@@ -69,7 +69,7 @@ int		filterIndex;
 	cFilterWheelConnected	=	true;
 
 	strcpy(cCommonProp.Name,		"AlpacaPi FilterWheel Simulator");	//*	put something there in case of failure to open
-	strcpy(cCommonProp.Description, "AlpacaPi Simulator");
+	strcpy(cCommonProp.Description, "AlpacaPi FilterWheel Simulator");
 	ReadFilterWheelInfo();
 
 //	DumpCommonProperties(__FUNCTION__);

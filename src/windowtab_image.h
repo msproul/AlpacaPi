@@ -28,6 +28,8 @@ enum
 
 	kImageDisplay_Btn_N,
 
+	kImageDisplay_LiveOrDownLoad,
+
 	kImageDisplay_FrameCnt_Lbl,
 	kImageDisplay_FrameCnt,
 
@@ -168,10 +170,10 @@ class WindowTabImage: public WindowTab
 				int			cImageZoomState;
 
 				//*	cross hair information
-				bool		cDisplayCrossHair;
+				bool			cDisplayCrossHair;
 				//*	these are relative to the image box, not the image
-				int			cCurrCrossHairNum;
-				int			cCurrCrossHairColorSchm;
+				int				cCurrCrossHairNum;
+				int				cCurrCrossHairColorSchm;
 				TYPE_CROSSHAIR	cCrossHairPos[kCrossHairCnt];
 
 };

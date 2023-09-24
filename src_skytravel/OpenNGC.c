@@ -22,6 +22,7 @@
 //*	Feb  3,	2022	<MLS> OpenNGC star data working
 //*	Feb  4,	2022	<MLS> Added Read_OpenNGC_Outline_catgen()
 //*	Jun 17,	2022	<MLS> Added error checking to ParseOneLine_OpenNGC()
+//*	Aug 22,	2023	<MLS> Added axis and angle parsing
 //*****************************************************************************
 //*	git clone https://github.com/mattiaverga/OpenNGC
 //*****************************************************************************
@@ -61,8 +62,8 @@ enum
 	kOpenNGC_RA,
 	kOpenNGC_Dec,
 	kOpenNGC_Const,
-	kOpenNGC_MajAx,
-	kOpenNGC_MinAx,
+	kOpenNGC_MajAxis,
+	kOpenNGC_MinAxis,
 	kOpenNGC_PosAng,
 	kOpenNGC_B_Mag,
 	kOpenNGC_V_Mag,
@@ -98,6 +99,8 @@ enum
 		}
 
 //************************************************************************
+//*	NGC0224;G;00:42:44.35;+41:16:08.6;And;177.83;69.66;35;4.29;3.44;2.09;1.28;0.98;23.63;Sb;6.0000;;;-300;-0.001000;;;;031;;;;2MASX J00424433+4116074,IRAS 00400+4059,MCG +07-02-016,PGC 002557,UGC 00454;Andromeda Galaxy;;V-Mag taken from SIMBAD.
+//************************************************************************
 static bool	ParseOneLine_OpenNGC(char *lineBuff, TYPE_CelestData *starRec)
 {
 bool	validData;
@@ -123,6 +126,9 @@ double	degrees;
 double	minutes;
 double	seconds;
 char	*idPtr;
+double	majorAxis;
+double	minorAxis;
+double	positionAngle;
 
 //	CONSOLE_DEBUG("-------------------------------------------------");
 //	CONSOLE_DEBUG(__FUNCTION__);
@@ -136,8 +142,11 @@ char	*idPtr;
 	parallax		=	0;
 	rightAscen_Deg	=	0.0;
 	declination_Deg	=	0.0;
+	majorAxis		=	0.0;
+	minorAxis		=	0.0;
+	positionAngle	=	0.0;
 	strcpy(designation, "");
-
+	memset(starRec, 0, sizeof(TYPE_CelestData));
 
 	for (iii=0; iii <= sLen; iii++)
 	{
@@ -198,9 +207,17 @@ char	*idPtr;
 					break;
 
 //				case kOpenNGC_Const:
-//				case kOpenNGC_MajAx:
-//				case kOpenNGC_MinAx:
-//				case kOpenNGC_PosAng:
+				case kOpenNGC_MajAxis:
+					majorAxis		=	AsciiToDouble(argString);
+					break;
+
+				case kOpenNGC_MinAxis:
+					minorAxis		=	AsciiToDouble(argString);
+					break;
+
+				case kOpenNGC_PosAng:
+					positionAngle	=	AsciiToDouble(argString);
+					break;
 
 				case kOpenNGC_B_Mag:
 					if (strlen(argString) > 0)
@@ -318,12 +335,19 @@ char	*idPtr;
 		}
 		starRec->id				=	atoi(idPtr);
 		starRec->dataSrc		=	kDataSrc_OpenNGC;
-		starRec->decl			=	RADIANS(declination_Deg);
-		starRec->org_decl		=	RADIANS(declination_Deg);
+
 		starRec->org_ra			=	RADIANS(rightAscen_Deg);
 		starRec->ra				=	RADIANS(rightAscen_Deg);
+
+		starRec->decl			=	RADIANS(declination_Deg);
+		starRec->org_decl		=	RADIANS(declination_Deg);
 		starRec->realMagnitude	=	magnitude;
 		starRec->parallax		=	parallax;
+
+
+		starRec->oNGC_MajAxis_arcmin	=	majorAxis;
+		starRec->oNGC_MinAxis_arcmin	=	minorAxis;
+		starRec->oNGC_PosAng_degs		=	positionAngle;
 
 		validData	=	true;
 	}

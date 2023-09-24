@@ -37,6 +37,7 @@
 //*	May 15,	2022	<MLS> Finished Read_CoolerPowerLevel()
 //*	May 17,	2022	<MLS> Implemented Read_CoolerState() for QSI camera
 //*	May 18,	2022	<MLS> Added Write_SensorTemp()
+//*	May 18,	2022	<MLS> SUPPORTED: QSI cameras
 //*	Jun  7,	2022	<MLS> Added maxbinx/y override until binning is implemented
 //*****************************************************************************
 
@@ -1344,7 +1345,7 @@ std::string			lastError("");
 #ifdef _ENABLE_CAMERA_SIMULATOR_
 	if (gSimulateCameraImage)
 	{
-		AllcateImageBuffer(-1);		//*	let it figure out how much
+		AllocateImageBuffer(-1);		//*	let it figure out how much
 		if (cCameraDataBuffer != NULL)
 		{
 			//--------------------------------------------
@@ -1362,7 +1363,7 @@ std::string			lastError("");
 		{
 			//*	make sure the buffer is allocated
 			imgBufferSize	=	xSize * ySize * elementSize;
-			AllcateImageBuffer(imgBufferSize);
+			AllocateImageBuffer(imgBufferSize);
 			if (cCameraDataBuffer != NULL)
 			{
 				//*	get the data

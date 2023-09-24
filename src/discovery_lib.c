@@ -259,7 +259,8 @@ char				ipAddrSt[32];
 struct timeval		timeoutLength;
 int					setOptRetCode;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_NUM("kReadBuffLen\t=", kReadBuffLen);
 
 	if (theUnit->deviceAddress.sin_addr.s_addr != 0)
 	{
@@ -269,7 +270,6 @@ int					setOptRetCode;
 		socket_desc	=	socket(AF_INET , SOCK_STREAM , 0);
 		if (socket_desc >= 0)
 		{
-
 			//*	set a timeout
 			timeoutLength.tv_sec	=	1;
 			timeoutLength.tv_usec	=	0;
@@ -282,7 +282,6 @@ int					setOptRetCode;
 			{
 				perror("setsockopt(SO_BROADCAST) failed");
 			}
-
 
 			remoteDev.sin_addr.s_addr	=	theUnit->deviceAddress.sin_addr.s_addr;
 			remoteDev.sin_family		=	AF_INET;
@@ -351,17 +350,16 @@ int					setOptRetCode;
 	}
 }
 
-
 //*****************************************************************************
 static void	PollAllDevices(void)
 {
-int		ii;
+int		iii;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
-	for (ii=0; ii<gAlpacaUnitCnt; ii++)
+	for (iii=0; iii<gAlpacaUnitCnt; iii++)
 	{
-	//	SendGetRequest(&gAlpacaUnitList[ii], "/api/v1/management/0/configureddevices");
-		SendGetRequest(&gAlpacaUnitList[ii], "/management/v1/configureddevices");
+	//	SendGetRequest(&gAlpacaUnitList[iii], "/api/v1/management/0/configureddevices");
+		SendGetRequest(&gAlpacaUnitList[iii], "/management/v1/configureddevices");
 	//	usleep(100);
 	}
 }
@@ -387,7 +385,6 @@ int		alpacaListenPort;
 			alpacaListenPort	=	atoi(jsonParser->dataList[iii].valueString);
 		}
 	}
-
 
 	newUnit		=	true;
 	//*	check to see if this IP address is already in the list

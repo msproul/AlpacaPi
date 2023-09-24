@@ -161,7 +161,7 @@ char	textString[80];
 	//------------------------------------------
 	clmnHdr_xLoc	=	textBoxOffsetX;
 	iii				=	kFOVbox_ClmTitle1;
-	while(iii <= kFOVbox_ClmTitle9)
+	while (iii <= kFOVbox_ClmTitle9)
 	{
 		clmnHdrWidth	=	tabArray[iii - kFOVbox_ClmTitle1] - clmnHdr_xLoc;
 

@@ -69,6 +69,9 @@
 #ifdef _ENABLE_FILTERWHEEL_ATIK_
 	#include	"filterwheeldriver_ATIK.h"
 #endif
+#ifdef _ENABLE_FILTERWHEEL_QHY_
+	#include	"filterwheeldriver_QHY.h"
+#endif
 #ifdef _ENABLE_FILTERWHEEL_SIMULATOR_
 	#include	"filterwheeldriver_sim.h"
 #endif
@@ -85,6 +88,14 @@
 void	CreateFilterWheelObjects(void)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
+#ifdef _ENABLE_FILTERWHEEL_ATIK_
+	CreateFilterWheelObjects_ATIK();
+#endif
+
+#ifdef _ENABLE_FILTERWHEEL_QHY_
+	CreateFilterWheelObjects_QHY();
+#endif
+
 #ifdef _ENABLE_FILTERWHEEL_ZWO_
 	CreateFilterWheelObjects_ZWO();
 #endif
@@ -93,9 +104,6 @@ void	CreateFilterWheelObjects(void)
 	CreateFilterWheelObjects_SIM();
 #endif
 
-#ifdef _ENABLE_FILTERWHEEL_ATIK_
-	CreateFilterWheelObjects_ATIK();
-#endif
 }
 
 

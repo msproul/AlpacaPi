@@ -28,6 +28,13 @@
 //*	Oct 23,	2021	<MLS> Added SetColumnOneTitle()
 //*	Oct 26,	2021	<MLS> Added magnitude to star list display
 //*	Mar 28,	2022	<MLS> Now we copy the data so we can sort properly
+//*	Aug 22,	2023	<MLS> Added ctrl double click to star list window
+//*	Aug 23,	2023	<MLS> Added ProcessCtrlDblClick()
+//*	Aug 23,	2023	<MLS> Ctrl DoubleClick opens AAVSO alert web page
+//*	Sep 19,	2023	<MLS> Added msg box to star list
+//*	Sep 19,	2023	<MLS> Ctrl-double-click brings up wikipedia page for Messier objects
+//*	Sep 19,	2023	<MLS> Ctrl-double-click brings up wikipedia page for NGC objects
+//*	Sep 19,	2023	<MLS> Note: wikipedia does not have all of the NGC objects defined
 //*****************************************************************************
 
 #include	<stdlib.h>
@@ -39,7 +46,9 @@
 #include	"alpaca_defs.h"
 #include	"SkyStruc.h"
 #include	"helper_functions.h"
+#include	"StarData.h"
 
+#include	"controller.h"
 #include	"windowtab.h"
 #include	"windowtab_starlist.h"
 
@@ -53,7 +62,7 @@ WindowTabStarList::WindowTabStarList(	const int	xSize,
 										const char	*windowName)
 										:WindowTab(xSize, ySize, backGrndColor, windowName)
 {
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 
 	cSortColumn			=	-1;
 	cFirstLineIdx		=	0;
@@ -87,7 +96,6 @@ void	WindowTabStarList::SetupWindowControls(const char *argWindowName)
 {
 int		xLoc;
 int		yLoc;
-int		yLoc2;
 int		textBoxHt;
 int		textBoxWd;
 int		widgetWidth;
@@ -95,6 +103,7 @@ int		iii;
 short	tabArray[kMaxTabStops]	=	{100, 400, 550, 700, 900, 950, 0, 0};
 int		clmnHdr_xLoc;
 int		clmnHdrWidth;
+int		verScrollBarTop;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -107,6 +116,18 @@ int		clmnHdrWidth;
 	SetBGcolorFromWindowName(kStarList_Title);
 	yLoc			+=	cTitleHeight;
 	yLoc			+=	2;
+
+
+	//------------------------------------------
+	//*	msg box for list specific information
+	SetWidget(			kStarList_MsgBox,	0,		yLoc,	cWidth,		cTitleHeight);
+	SetWidgetType(		kStarList_MsgBox,	kWidgetType_TextBox);
+	SetWidgetFont(		kStarList_MsgBox,	kFont_Medium);
+	SetWidgetText(		kStarList_MsgBox,	"");
+	SetWidgetTextColor(	kStarList_MsgBox,	CV_RGB(0, 255,	0));
+	yLoc			+=	cTitleHeight;
+	yLoc			+=	2;
+	verScrollBarTop	=	yLoc;	//*	save the location of the top of the scroll bar
 
 	clmnHdr_xLoc	=	1;
 	iii				=	kStarList_ClmTitle1;
@@ -130,7 +151,7 @@ int		clmnHdrWidth;
 
 		iii++;
 	}
-	SetWidgetText(		kStarList_ClmTitle1,	"AlertID");
+	SetWidgetText(		kStarList_ClmTitle1,	"--");
 	SetWidgetText(		kStarList_ClmTitle2,	"Star Name");
 	SetWidgetText(		kStarList_ClmTitle3,	"Right Ascension");
 	SetWidgetText(		kStarList_ClmTitle4,	"Declination");
@@ -161,10 +182,7 @@ int		clmnHdrWidth;
 	}
 	//---------------------------------------------------------------------
 	//*	set up the vertical scroll bar
-	yLoc2			=	cTabVertOffset;
-	yLoc2			+=	cTitleHeight;
-	yLoc2			+=	2;
-	SetWidget(		kStarList_ScrollBar,	(xLoc + textBoxWd + 2),		yLoc2,		15,		600);
+	SetWidget(		kStarList_ScrollBar,	(xLoc + textBoxWd + 2),		verScrollBarTop,	15,	600);
 	SetWidgetType(	kStarList_ScrollBar,	kWidgetType_ScrollBar);
 	SetWidgetFont(	kStarList_ScrollBar,	kFont_Small);
 //	CONSOLE_DEBUG_W_NUM("kStarList_ScrollBar\t=", kStarList_ScrollBar);
@@ -231,6 +249,7 @@ int	newSortColumn;
 			break;
 
 		case kStarList_ExportCSV:
+			CONSOLE_DEBUG("kStarList_ExportCSV");
 			if ((cStarListPtr != NULL) && (cStarListCount > 0))
 			{
 			int		iii;
@@ -239,6 +258,9 @@ int	newSortColumn;
 				{
 					printf("%ld\t%s",	cStarListPtr[iii].id,
 										cStarListPtr[iii].longName);
+					printf("\t%3.4f",	DEGREES(cStarListPtr[iii].ra) / 15.0);
+					printf("\t%3.4f",	DEGREES(cStarListPtr[iii].decl));
+					printf("\t%3.1f",	cStarListPtr[iii].realMagnitude);
 					printf("\r\n");
 				}
 			}
@@ -248,11 +270,71 @@ int	newSortColumn;
 }
 
 //*****************************************************************************
+void	WindowTabStarList::ProcessCtrlDblClick(	TYPE_CelestData	*theStarData)
+{
+char	urlString[128];
+char	cmdLineString[256];
+
+	switch(theStarData->dataSrc)
+	{
+		case kDataSrc_AAVSOalert:
+			sprintf(urlString,	"https://www.aavso.org/aavso-alert-notice-%d", theStarData->id);
+			strcpy(cmdLineString, gWebBrowserCmdString);
+			strcat(cmdLineString, " ");
+			strcat(cmdLineString, urlString);
+			RunCommandLine(cmdLineString);
+			break;
+
+		case kDataSrc_Messier:
+			sprintf(urlString,	"https://en.wikipedia.org/wiki/Messier_%d", theStarData->id);
+			strcpy(cmdLineString, gWebBrowserCmdString);
+			strcat(cmdLineString, " ");
+			strcat(cmdLineString, urlString);
+			CONSOLE_DEBUG_W_STR("urlString\t=", urlString);
+
+//			DumpCelestDataStruct(__FUNCTION__, theStarData);
+//			CONSOLE_ABORT(__FUNCTION__);
+
+			RunCommandLine(cmdLineString);
+
+			break;
+
+		case kDataSrc_OpenNGC:		//https://en.wikipedia.org/wiki/NGC_7838
+		case kDataSrc_NGC2000:
+			if (strncmp(theStarData->longName, "IC", 2) == 0)
+			{
+				sprintf(urlString,	"https://en.wikipedia.org/wiki/IC_%d", theStarData->id);
+			}
+			else
+			{
+				sprintf(urlString,	"https://en.wikipedia.org/wiki/NGC_%d", theStarData->id);
+			}
+			strcpy(cmdLineString, gWebBrowserCmdString);
+			strcat(cmdLineString, " ");
+			strcat(cmdLineString, urlString);
+			CONSOLE_DEBUG_W_STR("urlString\t=", urlString);
+
+			DumpCelestDataStruct(__FUNCTION__, theStarData);
+//			CONSOLE_ABORT(__FUNCTION__);
+
+			RunCommandLine(cmdLineString);
+
+			break;
+
+
+		default:
+			CONSOLE_DEBUG("Nothing to do for ctrl-double-click");
+			break;
+
+	}
+}
+
+//*****************************************************************************
 void	WindowTabStarList::ProcessDoubleClick(	const int	widgetIdx,
-													const int	event,
-													const int	xxx,
-													const int	yyy,
-													const int	flags)
+												const int	event,
+												const int	xxx,
+												const int	yyy,
+												const int	flags)
 {
 int		screenLineNum;
 int		starDataIdx;
@@ -271,12 +353,19 @@ int		starDataIdx;
 			{
 				CONSOLE_DEBUG_W_STR("Double clicked on: ", cStarListPtr[starDataIdx].shortName);
 				CONSOLE_DEBUG_W_STR("Double clicked on: ", cStarListPtr[starDataIdx].longName);
-				Center_CelestralObject(&cStarListPtr[starDataIdx]);
+				if (flags & cv::EVENT_FLAG_CTRLKEY)
+				{
+					CONSOLE_DEBUG("Control key is down");
+					ProcessCtrlDblClick(&cStarListPtr[starDataIdx]);
+				}
+				else
+				{
+					Center_CelestralObject(&cStarListPtr[starDataIdx]);
+				}
 			}
 			else
 			{
 				CONSOLE_DEBUG_W_NUM("invalid starDataIdx\t=", starDataIdx);
-				CONSOLE_ABORT(__FUNCTION__);
 			}
 		}
 	}
@@ -466,6 +555,22 @@ size_t	memorySize;
 			memcpy(cStarListPtr, argStarList, memorySize);
 			cStarListCount	=	argStarListCount;
 			cDataSource		=	cStarListPtr[0].dataSrc;
+
+			switch(cDataSource)
+			{
+				case kDataSrc_AAVSOalert:
+					SetWidgetText(	kStarList_MsgBox,		"ctrl-double click to bring up AAVSO Alert web page");
+					SetWidgetText(	kStarList_ClmTitle1,	"AlertID");
+					break;
+
+				case kDataSrc_Messier:
+				case kDataSrc_OpenNGC:
+					SetWidgetText(	kStarList_MsgBox,		"ctrl-double click to bring up wikipedia web page");
+					break;
+
+				default:
+					break;
+			}
 		}
 	}
 	UpdateOnScreenWidgetList();

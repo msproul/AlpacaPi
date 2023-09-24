@@ -6,4 +6,5 @@
 #endif
 
 int		USB_InitTable(void);
+void	USB_DumpTable(void);
 bool	USB_GetPathFromID(const char *idString, char *usbPath);

@@ -70,16 +70,16 @@ class SwitchDriver: public AlpacaDriver
 
 				TYPE_ASCOM_STATUS	Get_Maxswitch(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
 				TYPE_ASCOM_STATUS	Get_Canwrite(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
-				TYPE_ASCOM_STATUS	Get_Getswitch(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
-				TYPE_ASCOM_STATUS	Get_Getswitchdescription(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
-				TYPE_ASCOM_STATUS	Get_Getswitchname(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
-				TYPE_ASCOM_STATUS	Get_Getswitchvalue(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
-				TYPE_ASCOM_STATUS	Get_Minswitchvalue(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
-				TYPE_ASCOM_STATUS	Get_Maxswitchvalue(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
-				TYPE_ASCOM_STATUS	Put_Setswitch(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
-				TYPE_ASCOM_STATUS	Put_Setswitchname(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
-				TYPE_ASCOM_STATUS	Put_Setswitchvalue(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
-				TYPE_ASCOM_STATUS	Get_Switchstep(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+				TYPE_ASCOM_STATUS	Get_GetSwitch(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
+				TYPE_ASCOM_STATUS	Get_GetSwitchDescription(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
+				TYPE_ASCOM_STATUS	Get_GetSwitchName(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
+				TYPE_ASCOM_STATUS	Get_GetSwitchValue(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
+				TYPE_ASCOM_STATUS	Get_MinSwitchValue(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
+				TYPE_ASCOM_STATUS	Get_MaxSwitchValue(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
+				TYPE_ASCOM_STATUS	Put_SetSwitch(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
+				TYPE_ASCOM_STATUS	Put_SetSwitchName(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
+				TYPE_ASCOM_STATUS	Put_SetSwitchValue(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
+				TYPE_ASCOM_STATUS	Get_SwitchStep(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
 
 				TYPE_ASCOM_STATUS	Get_Readall(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 		virtual	bool				DeviceState_Add_Content(const int socketFD, char *jsonTextBuffer, const int maxLen);

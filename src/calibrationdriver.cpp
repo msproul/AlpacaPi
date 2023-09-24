@@ -123,9 +123,10 @@ CalibrationDriver::CalibrationDriver(void)
 	cCoverMovementStartTime						=	0;
 	cCoverLastUpdateTime						=	0;
 	cWatchDogEnabled							=	true;
+	cWatchDogTimeOut_Minutes					=	5;
+	strcpy(cWatchDogTimeOutAction, "Turn off calibration lamp");
 
 	cDriverCmdTablePtr	=	gCalibrationCmdTable;
-
 }
 
 //**************************************************************************************
@@ -322,6 +323,7 @@ char				alpacaErrMsg[64];
 	if (cCoverCalibrationProp.Brightness > 0)
 	{
 		LogEvent("CalibratorStatus",	"Turning off due to Timeout",	NULL,	kASCOM_Err_Success,	"");
+		CONSOLE_DEBUG_W_STR(__FUNCTION__, "Turning off due to Timeout");
 		alpacaErrCode	=	Calibrator_TurnOff(alpacaErrMsg);
 		if (alpacaErrCode != kASCOM_Err_Success)
 		{
@@ -509,7 +511,7 @@ TYPE_ASCOM_STATUS	CalibrationDriver::Put_CalibratorOff(TYPE_GetPutRequestData *r
 {
 TYPE_ASCOM_STATUS		alpacaErrCode;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 	if (cCoverCalibrationProp.CalibratorState == kCalibrator_NotPresent)
 	{
 		alpacaErrCode	=	kASCOM_Err_NotImplemented;
@@ -518,8 +520,8 @@ TYPE_ASCOM_STATUS		alpacaErrCode;
 	}
 	else
 	{
-		cCoverCalibrationProp.CalibratorState	=	kCalibrator_Off;
 		alpacaErrCode	=	Calibrator_TurnOff(alpacaErrMsg);
+		cCoverCalibrationProp.CalibratorState	=	kCalibrator_Off;
 	}
 	return(alpacaErrCode);
 }

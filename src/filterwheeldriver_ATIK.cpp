@@ -32,6 +32,7 @@
 //*	Apr 28,	2021	<MLS> Received ATIK EFW2 from asl547
 //*	Apr 29,	2021	<MLS> ATIK filter wheel working
 //*	Apr 30,	2021	<MLS> CONFORM-filterwheel/atik -> PASSED!!!!!!!!!!!!!!!!!!!!!
+//*	Apr 30,	2021	<MLS> SUPPORTED: ATIK filter wheel
 //*****************************************************************************
 
 #ifdef _ENABLE_FILTERWHEEL_ATIK_

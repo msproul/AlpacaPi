@@ -27,16 +27,22 @@
 //*	May 15,	2022	<MLS> Added cSubDurationSupported flag
 //*	Oct  9,	2022	<MLS> Added cCameraIsSiumlated flag
 //*	Jun  4,	2023	<MLS> Added cSaveAsFITS, cSaveAsJPEG, cSaveAsPNG, cSaveAsRAW
+//*	Aug 31,	2023	<MLS> Adding support for GPS, specifically the QHY174-GPS
 //*****************************************************************************
 //#include	"cameradriver.h"
 
 #ifndef	_CAMERA_DRIVER_H_
 #define	_CAMERA_DRIVER_H_
 
+//#define _USE_CAMERA_READ_THREAD_
+
 #define _INCLUDE_ALPACA_EXTRAS_
 
 #include	<sys/time.h>
 #include	<time.h>
+#ifndef _STDBOOL_H
+	#include	<stdbool.h>
+#endif
 
 //*	moved to make file
 //	#define		_ENABLE_FITS_
@@ -206,6 +212,51 @@ enum
 	kFlip_Both
 };
 
+#define	kMaxNMEAlen	80
+
+
+//*****************************************************************************
+typedef struct	//	TYPE_GPSnmea
+{
+	char	nmeaString[kMaxNMEAlen];
+
+}	TYPE_GPSnmea;
+#define	kMaxNMEAstrings	20
+
+//*****************************************************************************
+typedef struct	//	TYPE_GPSdata
+{
+	bool			Present;
+	char			CameraName[48];
+	char			LibraryVersion[48];
+	char			FPGAversion[48];
+	struct timeval	SystemTime;			//*	Used for calculating GPS/SYS time offset
+	TYPE_GPSnmea	NMEAdata[kMaxNMEAstrings];
+	int				NMEAdataIdx;
+	int				NMEAerrCnt;			//*	number of bad NMEA packets (invalid checksum)
+	bool			Status;				//	0 = not valid, 1 = locked
+	bool			DateValid;
+	bool			TimeValid;
+	bool			LaLoValid;
+	bool			AltValid;
+
+	uint32_t		SequenceNumber;
+	double			Lat;
+	double			Long;
+	double			Altitude;			//*	in meters
+	uint32_t		PPSC;
+	char			ShutterStartTimeStr[48];
+	uint32_t		SU;					//*	start time micro seconds
+	char			ShutterEndTimeStr[48];
+	uint32_t		EU;					//*	End time micro seconds
+	char			NowTimeStr[48];
+	uint32_t		NU;					//*	Now time micro seconds
+	double			Exposure_us;		//*	exposure time in micro seconds
+	double			ClockDeltaSecs;
+	uint32_t		SatsInView;			//*	Number of satellites in view
+	char			SatMode1;
+	char			SatMode2;
+} TYPE_GPSdata;
 
 //**************************************************************************************
 class CameraDriver: public AlpacaDriver
@@ -418,7 +469,7 @@ class CameraDriver: public AlpacaDriver
 
 
 
-				bool	AllcateImageBuffer(long bufferSize);
+				bool	AllocateImageBuffer(long bufferSize);
 
 				void	GenerateFileNameRoot(void);
 				void	WriteFireCaptureTextFile(void);
@@ -460,6 +511,8 @@ class CameraDriver: public AlpacaDriver
 				void	WriteFITS_TelescopeInfo(	fitsfile *fitsFilePtr);
 				void	WriteFITS_VersionInfo(		fitsfile *fitsFilePtr);
 				void	WriteFITS_MoonInfo(			fitsfile *fitsFilePtr);
+				void	WriteFITS_GPSinfo(			fitsfile *fitsFilePtr);
+
 			#ifdef _ENABLE_IMU_
 				void	WriteFITS_IMUinfo(			fitsfile *fitsFilePtr);
 			#endif
@@ -705,6 +758,7 @@ protected:
 
 	int					cTotalFramesSaved;
 
+	//===========================================================================
 	//*	data for taking video
 	int					cNumVideoFramesSaved;
 	double				cVideoDuration_secs;		//*	how many seconds to record
@@ -720,7 +774,7 @@ protected:
 
 	char				cTelescopeModel[kTelescopeNameMaxLen + 1];
 
-	//==========================================================
+	//===========================================================================
 	//*	File name information
 	TYPE_FilenameOptions	cFN;
 
@@ -734,7 +788,7 @@ protected:
 
 
 #ifdef _USE_OPENCV_
-	//==========================================================
+	//===========================================================================
 	bool				cCreateOpenCVwindow;
 #if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 	cv::Mat				*cOpenCV_ImagePtr;
@@ -789,11 +843,12 @@ protected:
 #endif // _USE_OPENCV_
 
 
-#ifdef _USE_THREADS_FOR_ASI_CAMERA_
-	bool				cThreadIsActive;
-	bool				cKeepRunning;
-	pthread_t			cThreadID;
-#endif // _USE_THREADS_FOR_ASI_CAMERA_
+#ifdef _USE_CAMERA_READ_THREAD_
+protected:
+	virtual	void				RunThread_Startup(void);
+	virtual	void				RunThread_Loop(void);
+public:
+#endif // _USE_CAMERA_READ_THREAD_
 
 
 #if defined(_ENABLE_FILTERWHEEL_) || defined(_ENABLE_FILTERWHEEL_ZWO_) || defined(_ENABLE_FILTERWHEEL_ATIK_)
@@ -844,6 +899,21 @@ protected:
 	uint8_t		cMaxGryValue;
 
 #endif // _INCLUDE_HISTOGRAM_
+	//===========================================================================
+	//*	Overlay info
+	//*	this is for overlaying GPS data onto the image primarily for occultation use
+	//*	however, it could have other uses as well
+	uint8_t		cOverlayMode;	//*	0 = none
+	uint8_t		cOverlayPosition;
+	uint8_t		cOverlayColor;
+	void		DrawOverlayOntoImage(void);
+
+	//===========================================================================
+	//*	GPS info
+	//*	currently the only camera that has a GPS is the QHY174-GPS
+	void			GPS_ResetNMEAbuffer(void);
+	void			GPS_AddNMEAstring(const char *nmeaString);
+	TYPE_GPSdata	cGPS;
 
 };
 
@@ -862,5 +932,6 @@ int		CreateCameraObjects(void);
 extern	const char			*gCameraStateStrings[];
 
 void	GetImageTypeString(TYPE_IMAGE_TYPE imageType, char *imageTypeString);
+void	*StartCameraReadThread(void *arg);
 
 #endif		//	_CAMERA_DRIVER_H_

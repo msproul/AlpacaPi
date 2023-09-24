@@ -16,7 +16,7 @@
 //*	that you agree that the author(s) have no warranty, obligations or liability.  You
 //*	must determine the suitability of this source code for your use.
 //*
-//*	Redistributions of this source code must retain this copyright notice.
+//*	Re-distributions of this source code must retain this copyright notice.
 //*****************************************************************************
 //*
 //*	References:
@@ -36,6 +36,7 @@
 //*	Apr 17,	2019	<MLS> Read temperature working on ASI1600
 //*	Apr 27,	2019	<MLS> Added error messages for ASI failures
 //*	Apr 29,	2019	<MLS> Reading images from ASI camera
+//*	Apr 29,	2019	<MLS> SUPPORTED: ZWO ASI cameras
 //*	Apr 29,	2019	<MLS> Started using openCV for the image
 //*	Apr 29,	2019	<MLS> OpenCV image saving working
 //*	Apr 30,	2019	<MLS> Got openCV installed on the Stellarmate
@@ -81,6 +82,8 @@
 //*	May 17,	2022	<MLS> Changed the way power level is reported
 //*	Oct  1,	2022	<MLS> Changed CreateASI_CameraObjects() to return camera count
 //*	Apr 30,	2023	<MLS> Added Read_SensorTargetTemp() & Write_SensorTargetTemp()
+//*	Sep  9,	2023	<MLS> Moved read thread stuff to parent class
+//*	Sep  9,	2023	<MLS> Deleted _USE_THREADS_FOR_ASI_CAMERA_
 //*****************************************************************************
 //*	Length: unspecified [text/plain]
 //*	Saving to: "imagearray.1"
@@ -93,7 +96,6 @@
 //*	this table was obtained from
 //*	https://agenaastro.com/zwo-astronomy-cameras-buyers-guide.html
 //*****************************************************************************
-
 
 
 #if defined(_ENABLE_CAMERA_) && defined(_ENABLE_ASI_)
@@ -378,18 +380,6 @@ ASI_ERROR_CODE		asiErrorCode;
 	{
 
 	}
-
-#ifdef _USE_THREADS_FOR_ASI_CAMERA_
-	if (cThreadIsActive == false)
-	{
-	int	threadErr;
-
-		cKeepRunning	=	true;
-		threadErr		=	pthread_create(&threadID, NULL, &CameraThread, this);
-		cThreadIsActive	=	true;
-	}
-#endif // _USE_THREADS_FOR_ASI_CAMERA_
-
 }
 
 //*****************************************************************************
@@ -846,7 +836,7 @@ ASI_EXPOSURE_STATUS		exposureStatatus;
 
 				case ASI_EXP_FAILED:		//*	exposure failed, you need to start exposure again
 					exposureState	=	kExposure_Failed;
-					CONSOLE_DEBUG_W_NUM("Exposure failed:ASI exposureStatatus\t=",		exposureStatatus);
+//					CONSOLE_DEBUG_W_NUM("Exposure failed:ASI exposureStatatus\t=",		exposureStatatus);
 					break;
 
 				default:
@@ -1077,7 +1067,11 @@ int					bytesPerRow;
 									topLeft,
 									btmRght,
 									cSideBarBlk,				//	color,
-									cv::FILLED,					//	int thickness CV_DEFAULT(1),
+								#if (CV_MAJOR_VERSION >= 3)
+									cv::FILLED,
+								#else
+									CV_FILLED,
+								#endif
 									8,							//	int line_type CV_DEFAULT(8),
 									0);							//	int shift CV_DEFAULT(0));
 
@@ -1613,10 +1607,9 @@ int					mySocketFD;
 	SocketWriteData(mySocketFD,	"<P>\r\n");
 }
 
-#pragma mark -
+#ifdef _USE_CAMERA_READ_THREAD_foo
 
-#ifdef _USE_THREADS_FOR_ASI_CAMERA_
-
+//#error "I dont think we should be here at this time"
 
 //*****************************************************************************
 //*	this is where we set up all of the OpenCV stuff to save the video file
@@ -1801,49 +1794,7 @@ long			ltemp		=	0;
 #endif	//	_USE_OPENCV_
 	}
 }
-
-//*****************************************************************************
-static void	*CameraThread(void *arg)
-{
-TYPE_CameraDef	*theCamera;
-
-	CONSOLE_DEBUG(__FUNCTION__);
-
-	theCamera	=	(TYPE_CameraDef *)arg;
-
-	if (IsValidCamera(theCamera))
-	{
-		while (theCamera->keepRunning)
-		{
-			switch(theCamera->cInternalCameraState)
-			{
-				case kCameraState_Idle:
-					sleep(1);
-					break;
-
-				case kCameraState_TakingPicture:
-					break;
-
-
-				case kCameraState_StartVideo:
-					CameraThread_StartVideo(theCamera);
-					theCamera->cInternalCameraState++;	//*	bump to the next state
-					break;
-
-				case kCameraState_TakingVideo:
-					CameraThread_GetVideo(theCamera);
-					break;
-
-				default:
-					//*	we should never get here
-					break;
-			}
-		}
-	}
-	CONSOLE_DEBUG("CameraThread -- exit --");
-	return(NULL);
-}
-#endif // _USE_THREADS_FOR_ASI_CAMERA_
+#endif // _USE_CAMERA_READ_THREAD_
 
 
 
@@ -2675,7 +2626,7 @@ char				asiErrorMsgString[64];
 								cCameraProp.CameraYsize;
 				bufferSize	=	(pixelCount * 3) + 100;
 
-				AllcateImageBuffer(-1);		//*	let it figure out how much
+				AllocateImageBuffer(-1);		//*	let it figure out how much
 
 				if (cCameraDataBuffer != NULL)
 				{

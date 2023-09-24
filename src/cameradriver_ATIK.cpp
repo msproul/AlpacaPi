@@ -37,6 +37,7 @@
 //*	Oct  4,	2019	<MLS> Received Atik 460ex from Cloudy Nights
 //*	Oct 20,	2019	<MLS> Copied ATIK library to /usr/lib
 //*	Oct 20,	2019	<MLS> ATIK camera working partly on RaspberryPi
+//*	Oct 20,	2019	<MLS> SUPPORTED: ATIK cameras
 //*	Oct 20,	2019	<MLS> Have to install 99-atik.rules into /lib/udev/rules.d/ and reboot
 //*	Nov  5,	2019	<MLS> Most of the ATIK cooler functions implemented, not yet tested
 //*	Nov 16,	2019	<MLS> Live view working on ATIK camera
@@ -1187,7 +1188,7 @@ int					atikImageSize;
 	//				CONSOLE_DEBUG_W_NUM("atikImageSize\t=",		atikImageSize);
 
 				//	CONSOLE_DEBUG(__FUNCTION__);
-					AllcateImageBuffer(-1);		//*	let it figure out how much
+					AllocateImageBuffer(-1);		//*	let it figure out how much
 					if (cCameraDataBuffer != NULL)
 					{
 					//	CONSOLE_DEBUG_W_INT32("cCameraDataBuffLen\t=", cCameraDataBuffLen);

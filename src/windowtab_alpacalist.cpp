@@ -41,17 +41,22 @@
 #include	"windowtab_alpacalist.h"
 
 #include	"controller.h"
+
 #include	"controller_cam_normal.h"
 #include	"controller_covercalib.h"
 #include	"controller_dome.h"
 #include	"controller_filterwheel.h"
 #include	"controller_focus.h"
 #include	"controller_obsconditions.h"
+#include	"controller_remoteview.h"
 #include	"controller_rotator.h"
 #include	"controller_switch.h"
 #include	"controller_telescope.h"
 #include	"controller_skytravel.h"
 #include	"controller_slit.h"
+
+
+
 #ifdef _ENABLE_CTRL_SPECTROGRAPH_
 	#include	"controller_spectrograph.h"
 #endif
@@ -111,7 +116,7 @@ int		clmnHdrWidth;
 
 	clmnHdr_xLoc	=	1;
 	iii				=	kAlpacaList_ClmTitle1;
-	while(iii <= kAlpacaList_ClmTitle5)
+	while (iii <= kAlpacaList_ClmTitle5)
 	{
 		clmnHdrWidth	=	tabArray[iii - kAlpacaList_ClmTitle1] - clmnHdr_xLoc;
 
@@ -427,6 +432,7 @@ bool	windowExists;
 						}
 						else
 						{
+//							new ControllerRemote(windowName, &cRemoteDeviceList[deviceIdx]);
 							new ControllerCamNormal(windowName, &cRemoteDeviceList[deviceIdx]);
 						}
 						break;
