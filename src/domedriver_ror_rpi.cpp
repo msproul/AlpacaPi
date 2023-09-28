@@ -568,14 +568,18 @@ bool	relayOK;
 	//*	check for an open command
 	if (cCmdRcvd_OpenRoof)
 	{
+		CONSOLE_DEBUG("command to open roof has been received");
 		if (cDomeProp.ShutterStatus == kShutterStatus_Closed)
 		{
+			CONSOLE_DEBUG_W_NUM("Turning on relay #", kRelay_OpenStopClose);
 			cDomeProp.Slewing		=	true;
 			cRORisOpening			=	true;
 			//*	set the line HIGH to turn the relay on and connect the signal to ground
 			relayOK		=	RpiRelay_SetRelay(kRelay_OpenStopClose, true);
+			CONSOLE_DEBUG("Waiting 3 seconds");
 			sleep(3);
 			relayOK		=	RpiRelay_SetRelay(kRelay_OpenStopClose, false);
+			CONSOLE_DEBUG_W_NUM("Turning off relay #", kRelay_OpenStopClose);
 
 		}
 		else if (cDomeProp.ShutterStatus == kShutterStatus_Open)
@@ -592,14 +596,18 @@ bool	relayOK;
 	//*	check for an open command
 	if (cCmdRcvd_CloseRoof)
 	{
+		CONSOLE_DEBUG("command to close roof has been received");
 		if (cDomeProp.ShutterStatus == kShutterStatus_Open)
 		{
+			CONSOLE_DEBUG_W_NUM("Turning on relay #", kRelay_OpenStopClose);
 			cDomeProp.Slewing		=	true;
 			cRORisClosing			=	true;
 			//*	set the line HIGH to turn the relay on and connect the signal to ground
 			relayOK		=	RpiRelay_SetRelay(kRelay_OpenStopClose, true);
+			CONSOLE_DEBUG("Waiting 3 seconds");
 			sleep(3);
 			relayOK		=	RpiRelay_SetRelay(kRelay_OpenStopClose, false);
+			CONSOLE_DEBUG_W_NUM("Turning off relay #", kRelay_OpenStopClose);
 		}
 		else if (cDomeProp.ShutterStatus == kShutterStatus_Closed)
 		{
