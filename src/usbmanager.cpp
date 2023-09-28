@@ -239,6 +239,12 @@ char		usbIDfileName[]	=	"usb_id.txt";
 	returnCode	=	stat(usbQuerryStr, &fileStatus);		//*	fstat - check for existence of file
 	if (returnCode == 0)
 	{
+		LogEvent(	__FUNCTION__,
+					usbQuerryStr,
+					NULL,
+					kASCOM_Err_Success,
+					"Is present");
+
 		strcpy(commandString,	"bash ");
 		strcat(commandString,	usbQuerryStr);
 		strcat(commandString,	" > ");

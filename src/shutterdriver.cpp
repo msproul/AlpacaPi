@@ -220,7 +220,10 @@ TYPE_ASCOM_STATUS	alpacaErrCode;
 char				alpacaErrMsg[256];
 int					mySocket;
 
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, reqData->deviceCommand);
+	if (strcmp(reqData->deviceCommand, "readall") != 0)
+	{
+		CONSOLE_DEBUG_W_STR(__FUNCTION__, reqData->deviceCommand);
+	}
 
 	//*	make local copies of the data structure to make the code easier to read
 	mySocket	=	reqData->socket;

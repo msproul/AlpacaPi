@@ -23,6 +23,7 @@
 //*	Feb  4,	2022	<MLS> Added Read_OpenNGC_Outline_catgen()
 //*	Jun 17,	2022	<MLS> Added error checking to ParseOneLine_OpenNGC()
 //*	Aug 22,	2023	<MLS> Added axis and angle parsing
+//*	Sep 27,	2023	<MLS> The latest version of OpenNGC changed file location
 //*****************************************************************************
 //*	git clone https://github.com/mattiaverga/OpenNGC
 //*****************************************************************************
@@ -36,6 +37,7 @@
 #include	<pthread.h>
 #include	<unistd.h>
 #include	<stdbool.h>
+#include	<sys/stat.h>
 
 #include	"SkyStruc.h"
 #include	"helper_functions.h"
@@ -373,6 +375,8 @@ char			lineBuff[512];
 char			filePath[128];
 char			*firstLinePtr;
 int				startupWidgetIdx;
+struct stat		fileStatus;
+int				returnCode;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -381,6 +385,17 @@ int				startupWidgetIdx;
 	ngcStarData	=	NULL;
 
 	strcpy(filePath, "OpenNGC/NGC.csv");
+	returnCode	=	stat(filePath, &fileStatus);		//*	fstat - check for existence of file
+	if (returnCode != 0)
+	{
+		strcpy(filePath, "OpenNGC/database_files/NGC.csv");
+		returnCode	=	stat(filePath, &fileStatus);		//*	fstat - check for existence of file
+	}
+
+	if (returnCode == 0)
+	{
+		CONSOLE_DEBUG_W_STR("NGC File found at", filePath);
+	}
 
 	filePointer	=	fopen(filePath, "r");
 	if (filePointer != NULL)

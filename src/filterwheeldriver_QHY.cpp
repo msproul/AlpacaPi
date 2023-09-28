@@ -310,7 +310,7 @@ void	FilterwheelQHY::RunThread_Loop(void)
 char	cmdString[16];
 char	readBuffer[256];
 
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, "Filterwheel-QHY");
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, "Filterwheel-QHY");
 
 	//*	did we get the number of positions correctly
 	if (cNumberOfPositions < 5)

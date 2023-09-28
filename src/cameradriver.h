@@ -49,6 +49,11 @@
 
 #define		_INCLUDE_HISTOGRAM_
 
+#ifndef	_ALPACA_DEFS_H_
+	#include	"alpaca_defs.h"
+#endif
+
+
 #ifdef _ENABLE_FITS_
 	#ifndef _FITSIO_H
 		#include <fitsio.h>
@@ -82,9 +87,6 @@
 #endif
 
 #include	"observatory_settings.h"
-#ifndef	_ALPACA_DEFS_H_
-	#include	"alpaca_defs.h"
-#endif
 
 #include	"camera_defs.h"
 

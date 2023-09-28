@@ -84,6 +84,7 @@
 //*	Jul 16,	2023	<MLS> Build 168
 //*	Jul 18,	2023	<MLS> Build 169
 //*	Sep  7,	2023	<MLS> Build 170
+//*	Sep 25,	2023	<MLS> Build 171
 //*****************************************************************************
 //#include	"alpaca_defs.h"
 
@@ -106,7 +107,7 @@
 
 #define	kApplicationName	"AlpacaPi"
 #define	kVersionString		"V0.7.1"
-#define	kBuildNumber		170
+#define	kBuildNumber		171
 
 #define kAlpacaDiscoveryPORT	32227
 
@@ -439,6 +440,9 @@ typedef struct	//	TYPE_CameraProperties
 	//*	Extra stuff, not defined by Alpaca standard
 	int						FlipMode;
 	int						SavedImageCnt;					//*	replaces cNumFramesSaved
+	char					FPGAversion[48];
+	char					ProductionDate[48];
+
 
 } TYPE_CameraProperties;
 

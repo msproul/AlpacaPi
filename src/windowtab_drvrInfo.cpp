@@ -21,6 +21,7 @@
 //*	Feb  9,	2021	<MLS> Created windowtab_drvrInfo.cpp
 //*	Jun  1,	2022	<MLS> Added "Launch Web" button
 //*	Jun 18,	2023	<MLS> Added DeviceState to driver info
+//*	Sep 26,	2023	<MLS> Added Restart to info window
 //*****************************************************************************
 
 
@@ -65,6 +66,8 @@ int		boxWidth;
 int		boxID;
 int		firstItemID;
 int		lastItemID;
+char	restartInfoText[]	=	"Restart will cause the device driver instance to be deleted and recreated, this should only be used if the driver stops working";
+
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	//------------------------------------------
@@ -121,6 +124,30 @@ int		lastItemID;
 	SetWidgetText(	kDriverInfo_DriverVersion_Lbl,		"DriverVersion");
 	SetWidgetText(	kDriverInfo_InterfaceVersion_Lbl,	"InterfaceVersion");
 
+
+	SetWidget(				kDriverInfo_Restart_Info,	0,			yLoc,		boxWidth,		textBoxHt);
+	SetWidgetType(			kDriverInfo_Restart_Info,	kWidgetType_MultiLineText);
+	SetWidgetJustification(	kDriverInfo_Restart_Info,	kJustification_Left);
+	SetWidgetFont(			kDriverInfo_Restart_Info,	kFont_TextList);
+	SetWidgetTextColor(		kDriverInfo_Restart_Info,	CV_RGB(255,	255, 255));
+	SetWidgetBorderColor(	kDriverInfo_Restart_Info,	CV_RGB(255,	255,	0));
+	SetWidgetBorder(		kDriverInfo_Restart_Info, false);
+	SetWidgetText(			kDriverInfo_Restart_Info,	restartInfoText);
+	yLoc			+=	textBoxHt;
+	yLoc			+=	2;
+
+	SetWidget(				kDriverInfo_Restart_Button,	5,	yLoc,	150,	cBtnHeight);
+	SetWidgetType(			kDriverInfo_Restart_Button,	kWidgetType_Button);
+	SetWidgetText(			kDriverInfo_Restart_Button,	"Restart");
+	SetWidgetTextColor(		kDriverInfo_Restart_Button,	CV_RGB(0,	0, 0));
+	SetWidgetBGColor(		kDriverInfo_Restart_Button,	CV_RGB(255,	255, 255));
+	yLoc			+=	cBtnHeight;
+	yLoc			+=	2;
+	//*	setup the outline
+	SetWidgetOutlineBox(kDriverInfo_Restart_Outline, kDriverInfo_Restart_Info, (kDriverInfo_Restart_Outline - 1));
+	yLoc			+=	2;
+
+
 	//=======================================================
 	//*	set up all the bottom stuff so that it is the same on all windowtabs
 	SetupWindowBottomBoxes(	kDriverInfo_IPaddr,
@@ -155,11 +182,27 @@ void	WindowTabDriverInfo::ProcessButtonClick(const int buttonIdx, const int flag
 char		ipAddrStr[64];
 char		dataString[256];
 Controller	*myControllerPtr;
+bool		validData;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
 	switch(buttonIdx)
 	{
+		case kDriverInfo_Restart_Button:
+			if (strlen(cAlpacaDeviceTypeStr) > 0)
+			{
+				validData	=	AlpacaSendPutCmd(	cAlpacaDeviceTypeStr, "restart",	NULL);
+				if (validData == false)
+				{
+					CONSOLE_DEBUG("restart failed");
+				}
+			}
+			else
+			{
+				CONSOLE_DEBUG("cAlpacaDeviceTypeStr not set");
+			}
+			break;
+
 		case kDriverInfo_LaunchWeb:
 			myControllerPtr	=   (Controller *)cParentObjPtr;
 			if (myControllerPtr != NULL)

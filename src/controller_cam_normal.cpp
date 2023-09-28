@@ -165,6 +165,7 @@ char	lineBuff[64];
 	{
 		SetTabWindow(kTab_Camera,	cCameraTabObjPtr);
 		cCameraTabObjPtr->SetParentObjectPtr(this);
+		cCameraTabObjPtr->SetAlpacaDeviceType("camera");
 	}
 
 	//--------------------------------------------
@@ -178,6 +179,7 @@ char	lineBuff[64];
 	{
 		SetTabWindow(kTab_Settings,	cCamSettingsTabObjPtr);
 		cCamSettingsTabObjPtr->SetParentObjectPtr(this);
+		cCamSettingsTabObjPtr->SetAlpacaDeviceType("camera");
 	}
 
 
@@ -188,6 +190,7 @@ char	lineBuff[64];
 		SetTabWindow(kTab_CamCooler,	cCamCoolerTabObjPtr);
 		cCamCoolerTabObjPtr->SetParentObjectPtr(this);
 		cCamCoolerTabObjPtr->SetTemperatureGraphPtrs(cCameraTempLog, kMaxTemperatureValues);
+		cCamCoolerTabObjPtr->SetAlpacaDeviceType("camera");
 	}
 
 	//--------------------------------------------
@@ -204,6 +207,7 @@ char	lineBuff[64];
 	{
 		SetTabWindow(kTab_Capabilities,	cCapabilitiesTabObjPtr);
 		cCapabilitiesTabObjPtr->SetParentObjectPtr(this);
+		cCapabilitiesTabObjPtr->SetAlpacaDeviceType("camera");
 	}
 
 	//--------------------------------------------
@@ -212,6 +216,7 @@ char	lineBuff[64];
 	{
 		SetTabWindow(kTab_DeviceState,	cDeviceStateTabObjPtr);
 		cDeviceStateTabObjPtr->SetParentObjectPtr(this);
+		cDeviceStateTabObjPtr->SetAlpacaDeviceType("camera");
 		SetDeviceStateTabInfo(kTab_DeviceState, kDeviceState_FirstBoxName, kDeviceState_FirstBoxValue, kDeviceState_Stats);
 	}
 
@@ -221,6 +226,7 @@ char	lineBuff[64];
 	{
 		SetTabWindow(kTab_FileList,	cFileListTabObjPtr);
 		cFileListTabObjPtr->SetParentObjectPtr(this);
+		cFileListTabObjPtr->SetAlpacaDeviceType("camera");
 	}
 
 	//--------------------------------------------
@@ -229,6 +235,7 @@ char	lineBuff[64];
 	{
 		SetTabWindow(kTab_DriverInfo,	cDriverInfoTabObjPtr);
 		cDriverInfoTabObjPtr->SetParentObjectPtr(this);
+		cDriverInfoTabObjPtr->SetAlpacaDeviceType("camera");
 	}
 
 	//--------------------------------------------

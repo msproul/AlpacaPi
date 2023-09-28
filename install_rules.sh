@@ -32,9 +32,10 @@ RULES_FILE=$2
 
 #asi.rules
 
-installRules	"ASI_lib/lib"			"asi.rules"
-installRules	"EFW_linux_mac_SDK/lib"	"efw.rules"
-installRules	"AtikCamerasSDK"		"99-atik.rules"
-installRules	"toupcamsdk/linux/udev"	"99-toupcam.rules"
-installRules	FLIR-SDK				"40-flir-spinnaker.rules"
+installRules	"ASI_lib/lib"				"asi.rules"
+installRules	"EFW_linux_mac_SDK/lib"		"efw.rules"
+installRules	"AtikCamerasSDK"			"99-atik.rules"
+installRules	"toupcamsdk/linux/udev"		"99-toupcam.rules"
+installRules	FLIR-SDK					"40-flir-spinnaker.rules"
+installRules	"QHY/etc/udev/rules.d/"		"85-qhyccd.rules"
 

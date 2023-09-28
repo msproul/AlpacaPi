@@ -29,6 +29,7 @@
 //*	Jan 28,	2021	<MLS> Added MoveDomeByAmount()
 //*	Jan 31,	2021	<MLS> Added graphical representation of dome position
 //*	Jun 19,	2023	<MLS> Added DeviceState to dome
+//*	Sep 27,	2023	<MLS> Fixed bug that was sending "dome" when it should have been "shutter"
 //*****************************************************************************
 
 #ifdef _ENABLE_CTRL_DOME_
@@ -59,9 +60,11 @@ WindowTabDome::WindowTabDome(	const int	xSize,
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
 
+	SetAlpacaDeviceType("dome");
 	cParentIsSkyTravel	=	parentIsSkyTravel;
 	cDomePropPtr		=	NULL;
 	SetupWindowControls();
+	CONSOLE_DEBUG_W_STR("cAlpacaDeviceTypeStr\t=", cAlpacaDeviceTypeStr);
 }
 
 //**************************************************************************************
@@ -745,7 +748,7 @@ bool	validData	=	false;
 #endif
 	{
 		CONSOLE_DEBUG("NORMAL");
-		validData	=	AlpacaSendPutCmd(	"dome",	theCommand,	dataString, jsonParser);
+		validData	=	AlpacaSendPutCmd(	cAlpacaDeviceTypeStr,	theCommand,	dataString, jsonParser);
 	}
 	return(validData);
 }

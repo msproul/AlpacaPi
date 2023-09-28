@@ -75,6 +75,9 @@ DomeDriverSIM::DomeDriverSIM(const int argDevNum)
 	cDomeProp.CanSetShutter		=	true;
 	cParkAzimuth				=	170.0;		//*	these are approximate for my dome
 	cHomeAzimuth				=	230.0;
+	cDomeProp.AtPark			=	true;
+
+
 	Init_Hardware();
 	LogEvent(	"dome",
 				"Dome simulator created",

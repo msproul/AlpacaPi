@@ -58,7 +58,7 @@ void	CameraDriver::RunThread_Loop(void)
 time_t		deltaSeconds;
 time_t		currentSeconds;
 
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, "Camera");
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, "Camera");
 	switch(cInternalCameraState)
 	{
 		case kCameraState_Idle:

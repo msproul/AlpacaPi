@@ -225,7 +225,7 @@ ToupcamDeviceV2	toupCamList[TOUPCAM_MAX];
 HRESULT			toupResult;
 char			hardwareVer[16];
 char			productionDate[10];
-char			fpgaVersion[16];
+char			fpgaVersion[32];
 int				bAutoExposure;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
@@ -386,13 +386,17 @@ int				bAutoExposure;
 
 			//*	get the production date, such as: 20150327, YYYYMMDD, (YYYY: year, MM: month, DD: day)
 			toupResult	=	Toupcam_get_ProductionDate(cToupCamH, productionDate);
-			CONSOLE_DEBUG_W_STR("production date\t=",			productionDate);
-
+			if (SUCCEEDED(toupResult))
+			{
+				CONSOLE_DEBUG_W_STR("production date\t=",		productionDate);
+				strcpy(cCameraProp.ProductionDate,				productionDate);
+			}
 			//*	get the FPGA version, such as: 1.13
 			toupResult	=	Toupcam_get_FpgaVersion(cToupCamH, fpgaVersion);
 			if (SUCCEEDED(toupResult))
 			{
-				CONSOLE_DEBUG_W_STR("FPGA version\t=",			fpgaVersion);
+				CONSOLE_DEBUG_W_STR("FPGA version\t=",		fpgaVersion);
+				strcpy(cCameraProp.FPGAversion,				fpgaVersion);
 			}
 
 			toupResult	=	Toupcam_get_MonoMode(cToupCamH);

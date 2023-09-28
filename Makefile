@@ -82,11 +82,13 @@ SQL_VERSION			=	$(shell ./make_checksql.sh)
 USR_HOME			=	$(HOME)/
 GCC_DIR				=	/usr/bin/
 INCLUDE_BASE		=	/usr/include/
-LIB_BASE			=	/usr/lib/
+#LIB_BASE			=	/usr/lib/
 
 #	/usr/local/lib/pkgconfig/opencv.pc
 OPENCV_COMPILE		=	$(shell pkg-config --cflags $(OPENCV_VERSION))
 OPENCV_LINK			=	$(shell pkg-config --libs $(OPENCV_VERSION))
+OPENCV_LIB			=	/usr/local/lib
+
 
 PHASEONE_INC		=	/usr/local/include/phaseone/include/
 PHASEONE_LIB		=	/usr/local/lib/
@@ -973,17 +975,19 @@ eq6		:										\
 #make newt16
 #pragma mark Newt 16 C++ Raspberry pi
 newt16		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
+newt16		:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
+newt16		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
+newt16		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_
+newt16		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_ZWO_
+newt16		:		DEFINEFLAGS		+=	-D_ENABLE_QHY_
+newt16		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_QHY_
+newt16		:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
 newt16		:		DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_
 newt16		:		DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_MOONLITE_
 newt16		:		DEFINEFLAGS		+=	-D_ENABLE_ROTATOR_
 newt16		:		DEFINEFLAGS		+=	-D_ENABLE_ROTATOR_NITECRAWLER_
-newt16		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_
-newt16		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_ZWO_
-newt16		:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
-newt16		:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
 newt16		:		DEFINEFLAGS		+=	-D_ENABLE_DISCOVERY_QUERRY_
 #newt16		:		DEFINEFLAGS		+=	-D_ENABLE_MULTICAM_
-newt16		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
 newt16		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
 newt16		:		DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
 #newt16		:		DEFINEFLAGS		+=	-D_ENABLE_JPEGLIB_
@@ -1019,6 +1023,7 @@ newt16		:										\
 					-ludev							\
 					-ljpeg							\
 					-lpthread						\
+					-lqhyccd						\
 					-o alpacapi
 
 #					-lwiringPi					\
@@ -2494,6 +2499,7 @@ jetson		:											\
 					-lcfitsio						\
 					-lpthread						\
 					-lSpinnaker_C					\
+					-li2c							\
 					-o alpacapi
 
 
@@ -3121,7 +3127,6 @@ sky		:												\
 						$(CONTROLLER_OBJECTS)			\
 						$(SKYTRAVEL_OBJECTS)			\
 						$(HELPER_OBJECTS)				\
-						-L/usr/local/lib				\
 						$(OPENCV_LINK)					\
 						-lpthread						\
 						-lcfitsio						\
@@ -3158,7 +3163,6 @@ skycv4			:										\
 						$(CONTROLLER_OBJECTS)			\
 						$(SKYTRAVEL_OBJECTS)			\
 						$(HELPER_OBJECTS)				\
-						-L/usr/local/lib				\
 						$(OPENCV_LINK)					\
 						-lpthread						\
 						-lcfitsio						\

@@ -236,7 +236,7 @@ class AlpacaDriver
 				void					DumpCommonProperties(const char *callingFunctionName);
 
 				//*	class variables start with "c"
-
+				bool					cDeleteMe;
 				//*	start with the Alpaca properties
 				TYPE_CommonProperties	cCommonProp;
 				const TYPE_CmdEntry		*cDriverCmdTablePtr;

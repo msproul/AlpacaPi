@@ -145,6 +145,7 @@ class WindowTab
 							const char	*windowName=NULL);
 		virtual	~WindowTab(void);
 
+				void	SetAlpacaDeviceType(const char *deviceTypeString);
 		virtual	void	RunWindowBackgroundTasks(void);
 		virtual	void	SetupWindowControls(void);
 //		virtual	void	DrawWindow(void);
@@ -270,7 +271,6 @@ class WindowTab
 		virtual	void	UpdateColors(void);
 
 
-
 #if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 		virtual	void	DrawWidgetCustomGraphic(cv::Mat *openCV_Image, TYPE_WIDGET *theWidget, const int widgetIdx = -1);
 		virtual	void	DrawWidgetCustomGraphic(cv::Mat *openCV_Image, const int widgetIdx);
@@ -351,6 +351,7 @@ class WindowTab
 		int			cHeight;
 		void		*cParentObjPtr;
 //		Controller	*cParentObjPtr;
+		char		cAlpacaDeviceTypeStr[48];
 
 		//------------------------------------------------------------
 		//*	for windows that have a list

@@ -96,6 +96,7 @@
 //*	Jun 19,	2023	<MLS> Added DumpWidget()
 //*	Jun 23,	2023	<MLS> Improvements to DumpWidget()
 //*	Aug 24,	2023	<MLS> Added angle to ellipse functions
+//*	Sep 26,	2023	<MLS> Added SetAlpacaDeviceType()
 //*****************************************************************************
 
 
@@ -148,18 +149,19 @@ int		iii;
 	cPrevDisplayedHelpBox		=	-1;
 
 	//*	for windows that have a list
-	cLinesOnScreen		=	0;
-	cSortColumn			=	-1;
-	cFirstLineIdx		=	0;
-	cTotalLines			=	0;
+	cLinesOnScreen			=	0;
+	cSortColumn				=	-1;
+	cFirstLineIdx			=	0;
+	cTotalLines				=	0;
 
 	//*	openCV stuff
-	cOpenCV_Image		=	NULL;
-	cCurrentXloc		=	0;
-	cCurrentYloc		=	0;
-	cCurrentColor		=	CV_RGB(255,	255,	255);
-	cCurrentLineWidth	=	1;
-	cWebURLstring[0]	=	0;
+	cOpenCV_Image			=	NULL;
+	cCurrentXloc			=	0;
+	cCurrentYloc			=	0;
+	cCurrentColor			=	CV_RGB(255,	255,	255);
+	cCurrentLineWidth		=	1;
+	cWebURLstring[0]		=	0;
+	cAlpacaDeviceTypeStr[0]	=	0;
 
 	if (windowName != NULL)
 	{
@@ -206,6 +208,11 @@ Controller	*myControllerObj;
 	}
 }
 
+//**************************************************************************************
+void WindowTab::SetAlpacaDeviceType(const char *deviceTypeString)
+{
+	strcpy(cAlpacaDeviceTypeStr, deviceTypeString);
+}
 
 //**************************************************************************************
 void WindowTab::ComputeWidgetColumns(const int windowWitdh)

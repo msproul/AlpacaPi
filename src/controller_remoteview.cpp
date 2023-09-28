@@ -186,18 +186,18 @@ ControllerRemote::~ControllerRemote(void)
 #else
 	//--------------------------------------------
 	//*	free up the image memory
-	if (cDownLoadedImage != NULL)
-	{
-//		CONSOLE_DEBUG_W_LHEX("Release cDownLoadedImage", (unsigned long)cDownLoadedImage);
-		cvReleaseImage(&cDownLoadedImage);
-		cDownLoadedImage	=	NULL;
-	}
-	if (cDisplayedImage != NULL)
-	{
-//		CONSOLE_DEBUG_W_LHEX("Release cDisplayedImage", (unsigned long)cDisplayedImage);
-		cvReleaseImage(&cDisplayedImage);
-		cDisplayedImage	=	NULL;
-	}
+//	if (cDownLoadedImage != NULL)
+//	{
+////		CONSOLE_DEBUG_W_LHEX("Release cDownLoadedImage", (unsigned long)cDownLoadedImage);
+//		cvReleaseImage(&cDownLoadedImage);
+//		cDownLoadedImage	=	NULL;
+//	}
+//	if (cDisplayedImage != NULL)
+//	{
+////		CONSOLE_DEBUG_W_LHEX("Release cDisplayedImage", (unsigned long)cDisplayedImage);
+//		cvReleaseImage(&cDisplayedImage);
+//		cDisplayedImage	=	NULL;
+//	}
 #endif // _USE_OPENCV_CPP_
 
 	//--------------------------------------------

@@ -45,6 +45,7 @@ TYPE_CmdEntry	gCommonCmdTable[]	=
 	{	"--extras",				kCmd_Common_Extras,				kCmdType_GET	},
 	{	"livewindow",			kCmd_Common_LiveWindow,			kCmdType_PUT	},
 	{	"temperaturelog",		kCmd_Common_TemperatureLog,		kCmdType_GET	},
+	{	"restart",				kCmd_Common_Restart,			kCmdType_PUT	},
 
 #ifdef _INCLUDE_EXIT_COMMAND_
 	//*	the exit command was implemented for a special case application, it is not intended

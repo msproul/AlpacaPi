@@ -93,6 +93,7 @@
 //*	Jun 13,	2023	<MLS> Added checking for valid IMU
 //*	Sep  1,	2023	<MLS> Added WriteFitsDoubleValue()
 //*	Sep 10,	2023	<MLS> Added FLIP mode to FITS camera info
+//*	Sep 25,	2023	<MLS> Added FPGA version and Production date to FITS header
 //*****************************************************************************
 
 #if defined(_ENABLE_CAMERA_) && defined(_ENABLE_FITS_)
@@ -907,7 +908,8 @@ char	instrumentString[128];
 									cDeviceVersion,
 									"Camera Driver version", &fitsStatus);
 	}
-
+	//-----------------------------------------------
+	//*	Camera firmware version
 	if (strlen(cDeviceFirmwareVersStr) > 0)
 	{
 		fitsStatus	=	0;
@@ -916,8 +918,28 @@ char	instrumentString[128];
 									cDeviceFirmwareVersStr,
 									"Camera Firmware version", &fitsStatus);
 	}
+	//-----------------------------------------------
+	//*	Camera FPGA version (QHY, TOUPTEK)
+	if (strlen(cCameraProp.FPGAversion) > 0)
+	{
+		fitsStatus	=	0;
+		fits_write_key(fitsFilePtr,	TSTRING,
+									"CAMFPGA",
+									cCameraProp.FPGAversion,
+									"Camera FPGA version", &fitsStatus);
+	}
+	//-----------------------------------------------
+	//*	Camera production date (TOUPTEK)
+	if (strlen(cCameraProp.ProductionDate) > 0)
+	{
+		fitsStatus	=	0;
+		fits_write_key(fitsFilePtr,	TSTRING,
+									"CAMPROD",
+									cCameraProp.ProductionDate,
+									"Camera Production Date", &fitsStatus);
+	}
 
-	//***************************************************
+	//-----------------------------------------------
 	//*	output info about the sensor
 	if (strlen(cCameraProp.SensorName) > 0)
 	{

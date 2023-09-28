@@ -128,7 +128,7 @@ char	wiringPi_VerString[32];
 #endif	//	_ENABLE_WIRING_PI_
 
 	pinState	=	0;
-	CONSOLE_DEBUG("Setting up hardware io pins");
+	CONSOLE_DEBUG("Setting up relay hardware io pins");
 	//*	step through the pin list and set them all to outputs
 	for (ii=0; ii < kR_Pi_RelayCount; ii++)
 	{

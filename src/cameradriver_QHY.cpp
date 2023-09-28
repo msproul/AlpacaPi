@@ -47,6 +47,7 @@
 //*	Sep  8,	2023	<MLS> Added ConfigureGPS()
 //*	Sep  8,	2023	<MLS> Added CheckColorCamOptions()
 //*	Sep 23,	2023	<MLS> Fixed bug interpreting camera temperature availability
+//*	Sep 26,	2023	<MLS> Added closing of QHY camera to class destructor
 //*----------------------------------------------------------------------------
 //*	Oct 10,	2122	<TODO> Add support for percentcompleted to QHY camera driver
 //*****************************************************************************
@@ -307,7 +308,18 @@ CameraDriverQHY::CameraDriverQHY(const int deviceNum, const char *qhyIDstring)
 //**************************************************************************************
 CameraDriverQHY::~CameraDriverQHY(void)
 {
+uint32_t		qhyRetCode;
+
 	CONSOLE_DEBUG(__FUNCTION__);
+
+	if (cQHYcamHandle != NULL)
+	{
+		qhyRetCode	=	CloseQHYCCD(cQHYcamHandle);
+		if (qhyRetCode != QHYCCD_SUCCESS)
+		{
+			CONSOLE_DEBUG_W_NUM("CloseQHYCCD returned ERROR:", qhyRetCode);
+		}
+	}
 }
 
 //*****************************************************************************
@@ -420,7 +432,8 @@ double			controlStep;
 		if (qhyRetCode == QHYCCD_SUCCESS)
 		{
 			sprintf(qhyFPGAstring, "%d-%d-%d-%d", fpgaVer[0],fpgaVer[1],fpgaVer[2],fpgaVer[3]);
-			strcpy(cGPS.FPGAversion, qhyFPGAstring);
+			strcpy(cGPS.FPGAversion,		qhyFPGAstring);
+			strcpy(cCameraProp.FPGAversion,	qhyFPGAstring);
 		}
 		else
 		{

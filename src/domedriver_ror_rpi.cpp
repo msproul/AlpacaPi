@@ -142,6 +142,25 @@
 #endif
 
 
+#ifndef __arm__
+#define	PUD_UP	1
+#define	INPUT	0
+#define	OUTPUT	1
+//*****************************************************************************
+void pinMode(int pinNumber, int inputoutput)
+{
+}
+//*****************************************************************************
+int	digitalRead(int pinNumber)
+{
+	return(0);
+}
+//*****************************************************************************
+void pullUpDnControl(int pinNumber, int pullupState)
+{
+}
+#endif
+
 //*****************************************************************************
 void	CreateDomeObjectsROR(void)
 {
@@ -153,6 +172,13 @@ DomeDriverROR::DomeDriverROR(const int argDevNum)
 	:DomeDriver(argDevNum)
 {
 	CONSOLE_DEBUG(__FUNCTION__);
+#ifdef _TOPENS_ROLL_OFF_ROOF_
+	CONSOLE_DEBUG("_TOPENS_ROLL_OFF_ROOF_");
+#elif defined(_CHRIS_A_ROLL_OFF_ROOF_)
+	CONSOLE_DEBUG("_CHRIS_A_ROLL_OFF_ROOF_");
+#else
+	CONSOLE_DEBUG("Noting defined, ERROR!!!!!!!!");
+#endif
 	strcpy(cCommonProp.Name,	"Dome-Roll-Off-Roof");
 	strcpy(gWebTitle,			"Dome-Roll-Off-Roof");
 
@@ -274,7 +300,7 @@ void	DomeDriverROR::Init_Hardware(void)
 {
 	CONSOLE_DEBUG(__FUNCTION__);
 
-#ifdef _CHRIS_A_ROLL_OFF_ROOF_
+#if defined(_CHRIS_A_ROLL_OFF_ROOF_) || defined(_TOPENS_ROLL_OFF_ROOF_)
 	cRelayCount	=	RpiRelay_Init();
 
 	CONSOLE_DEBUG_W_NUM("cRelayCount\t=", cRelayCount);
@@ -282,18 +308,21 @@ void	DomeDriverROR::Init_Hardware(void)
 #endif // _CHRIS_A_ROLL_OFF_ROOF_
 
 #ifdef _TOPENS_ROLL_OFF_ROOF_
-	cRelayCount	=	RpiRelay_Init();
-	CONSOLE_DEBUG_W_NUM("cRelayCount\t=", cRelayCount);
-
+	//*	set the I/O pins
 	pinMode(kRelay_RoofOpenSensor,		INPUT);
 	pinMode(kRelay_RoofCloseSensor,		INPUT);
+	CONSOLE_DEBUG_W_NUM("kRelay_RoofOpenSensor  (INPUT)\t=", kRelay_RoofOpenSensor);
+	CONSOLE_DEBUG_W_NUM("kRelay_RoofCloseSensor (INPUT)\t=", kRelay_RoofCloseSensor);
 
+	pinMode(kRelay_RoofCloseSensor,		INPUT);
 	//*	set the internal pullup resisters
 	pullUpDnControl(kRelay_RoofOpenSensor,	PUD_UP);
 	pullUpDnControl(kRelay_RoofCloseSensor,	PUD_UP);
 
+	CONSOLE_DEBUG_W_NUM("Open/Stop/Close uses relay#", kRelay_OpenStopClose);
 
 #endif // _CHRIS_A_ROLL_OFF_ROOF_
+
 
 }
 
@@ -502,7 +531,7 @@ void	DomeDriverROR::RunThread_Loop(void)
 uint32_t			currentTime_ms;
 uint32_t			deltaTime_ms;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 #ifdef _TOPENS_ROLL_OFF_ROOF_
 bool	sensorState;
@@ -514,7 +543,7 @@ bool	relayOK;
 	//			HIGH when Roof is closed
 	//			LOW when Roof is starting to open
 	sensorState		=	digitalRead(kRelay_RoofCloseSensor);
-	CONSOLE_DEBUG_W_BOOL("kRelay_RoofCloseSensor\t=",	sensorState)
+//	CONSOLE_DEBUG_W_BOOL("kRelay_RoofCloseSensor\t=",	sensorState)
 	if (sensorState)
 	{
 		cDomeProp.ShutterStatus	=	kShutterStatus_Closed;
@@ -527,7 +556,7 @@ bool	relayOK;
 	//			HIGH when Roof is open
 	//			LOW when Roof is starting to close
 	sensorState		=	digitalRead(kRelay_RoofOpenSensor);
-	CONSOLE_DEBUG_W_BOOL("kRelay_RoofOpenSensor\t=",	sensorState)
+//	CONSOLE_DEBUG_W_BOOL("kRelay_RoofOpenSensor\t=",	sensorState)
 	if (sensorState)
 	{
 		cDomeProp.ShutterStatus	=	kShutterStatus_Open;

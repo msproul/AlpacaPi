@@ -377,7 +377,6 @@ int		iii;
 //	CONSOLE_DEBUG("---------------------------------------");
 //	CONSOLE_DEBUG_W_NUM(__FUNCTION__, argDeviceType);
 
-
 	//*	set the common property defaults
 	memset((void *)&cCommonProp, 0, sizeof(TYPE_CommonProperties));
 	cCommonProp.InterfaceVersion	=	1;
@@ -392,6 +391,7 @@ int		iii;
 	cCommonProp.Connected		=	false;
 	cCommonProp.Connecting		=	false;
 
+	cDeleteMe					=	false;
 	cRunStartupOperations		=	true;
 	cVerboseDebug				=	false;
 	cMagicCookie				=	kMagicCookieValue;
@@ -510,18 +510,22 @@ int		iii;
 //**************************************************************************************
 AlpacaDriver::~AlpacaDriver( void )
 {
-int	ii;
+int	iii;
 
 	CONSOLE_DEBUG(__FUNCTION__);
-
-	cMagicCookie	=	0;
-
-	//*	remove this device from the list
-	for (ii=0; ii<kMaxDevices; ii++)
+	if (cDriverThreadIsActive || cDriverThreadKeepRunning)
 	{
-		if (gAlpacaDeviceList[ii] == this)
+		cDriverThreadKeepRunning	=	false;
+		usleep(500 * 1000);	//*	give the thread time to quit
+	}
+
+	cMagicCookie				=	0;
+	//*	remove this device from the list
+	for (iii=0; iii<kMaxDevices; iii++)
+	{
+		if (gAlpacaDeviceList[iii] == this)
 		{
-			gAlpacaDeviceList[ii]	=	NULL;
+			gAlpacaDeviceList[iii]	=	NULL;
 		}
 	}
 }
@@ -3064,7 +3068,7 @@ bool				deviceFound;
 		//*	log the event
 		LogEvent(	reqData->deviceType,
 					myCommandString,
-					NULL,
+					__FUNCTION__,
 					alpacaErrCode,
 					reqData->alpacaErrMsg);
 	}
@@ -4044,6 +4048,7 @@ int		returnCode	=	-1;
 	{
 //		CONSOLE_DEBUG("Calling ProcessGetPutRequest");
 		returnCode	=	ProcessGetPutRequest(socket, htmlData, byteCount, ipAddressString);
+		gServerTransactionID++;	//*	we are the "server"
 	}
 	else if (strncmp(htmlData, "POST", 4) == 0)
 	{
@@ -4051,6 +4056,7 @@ int		returnCode	=	-1;
 		CONSOLE_DEBUG_W_STR("htmlData\t=",	htmlData);
 		CONSOLE_DEBUG_W_LONG("byteCount\t=",	byteCount);
 		ProcessPostCommand(socket);
+		gServerTransactionID++;	//*	we are the "server"
 	}
 	else if (byteCount > 0)
 	{
@@ -4058,7 +4064,6 @@ int		returnCode	=	-1;
 		CONSOLE_DEBUG_W_LONG("byteCount\t=",	byteCount);
 	}
 
-	gServerTransactionID++;	//*	we are the "server"
 
 //	DEBUG_TIMING(__FUNCTION__);
 
@@ -4667,6 +4672,14 @@ int	imu_ReturnCode;
 						gAlpacaDeviceList[iii]->ComputeCPUusage();
 					}
 
+					//==================================================================================
+					//*	does the device driver need to be deleted
+					//*	this occurs when the RESTART command is issued, NON-ALPACA
+					if (gAlpacaDeviceList[iii]->cDeleteMe)
+					{
+						delete gAlpacaDeviceList[iii];
+					}
+
 					//*	put a little delay in between each device
 					usleep(10);
 				}
@@ -4833,7 +4846,7 @@ char	theChar;
 #ifdef _DEBUG_CONFORM_
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG_W_STR("dataSource\t=", dataSource);
-	CONSOLE_DEBUG_W_STR("keyword\t=", keyword);
+	CONSOLE_DEBUG_W_STR("keyword   \t=", keyword);
 #endif // _DEBUG_CONFORM_
 
 
@@ -4842,71 +4855,74 @@ char	theChar;
 	{
 		//*	this steps through the string looking for keywords
 		//*	Once the keyword is found, it MUST be followed by an "="
-		argument[0]	=	0;
 		dataSrcLen	=	strlen(dataSource);
-		iii			=	0;
-		ccc			=	0;
-		while ((foundKeyWord == false) && (iii <= dataSrcLen))
+		if (dataSrcLen > 0)
 		{
-			theChar	=	dataSource[iii];
-//-			CONSOLE_DEBUG_W_HEX("theChar\t=", theChar);
-			if ((theChar == '=') || (theChar == '&') || (theChar < 0x20))
+			argument[0]	=	0;
+			iii			=	0;
+			ccc			=	0;
+			while ((foundKeyWord == false) && (iii <= dataSrcLen))
 			{
-				//*	we have a keyword, lets see what it is
-				myKeyWord[ccc]		=	0;
+				theChar	=	dataSource[iii];
+	//-			CONSOLE_DEBUG_W_HEX("theChar\t=", theChar);
+				if ((theChar == '=') || (theChar == '&') || (theChar < 0x20))
+				{
+					//*	we have a keyword, lets see what it is
+					myKeyWord[ccc]		=	0;
 
-				//*	now extract the argument
-				if (dataSource[iii] == '=')
-				{
-					iii			+=	1;			//*	skip the "="
-				}
-				jjj				=	0;
-				myArgString[0]	=	0;
-				//*	leave room for the null termination
-		//		while ((dataSource[iii] >= 0x20) && (dataSource[iii] != '&') && (jjj < (maxArgLen - 2)))
-				while ((dataSource[iii] > 0x20) && (dataSource[iii] != '&') && (jjj < (maxArgLen - 2)))
-				{
-					myArgString[jjj]	=	dataSource[iii];
-					myArgString[jjj+1]	=	0;
-					iii++;
-					jjj++;
-				}
-			#ifdef _DEBUG_CONFORM_
-				CONSOLE_DEBUG_W_STR("myKeyWord\t\t=", myKeyWord);
-				CONSOLE_DEBUG_W_STR("myArgString\t=", myArgString);
-			#endif // _DEBUG_CONFORM_
-
-				if (strcasecmp(myKeyWord, keyword) == 0)
-				{
-					foundKeyWord	=	true;
-					//==================================================================
-					//*	in order to handle the comma char as a decimal point for Europe
-					if (argIsNumeric)
+					//*	now extract the argument
+					if (dataSource[iii] == '=')
 					{
-						myArgLength	=	strlen(myArgString);
-						for (jjj=0; jjj<myArgLength; jjj++)
+						iii			+=	1;			//*	skip the "="
+					}
+					jjj				=	0;
+					myArgString[0]	=	0;
+					//*	leave room for the null termination
+			//		while ((dataSource[iii] >= 0x20) && (dataSource[iii] != '&') && (jjj < (maxArgLen - 2)))
+					while ((dataSource[iii] > 0x20) && (dataSource[iii] != '&') && (jjj < (maxArgLen - 2)))
+					{
+						myArgString[jjj]	=	dataSource[iii];
+						myArgString[jjj+1]	=	0;
+						iii++;
+						jjj++;
+					}
+				#ifdef _DEBUG_CONFORM_
+					CONSOLE_DEBUG_W_STR("myKeyWord\t\t=", myKeyWord);
+					CONSOLE_DEBUG_W_STR("myArgString\t=", myArgString);
+				#endif // _DEBUG_CONFORM_
+
+					if (strcasecmp(myKeyWord, keyword) == 0)
+					{
+						foundKeyWord	=	true;
+						//==================================================================
+						//*	in order to handle the comma char as a decimal point for Europe
+						if (argIsNumeric)
 						{
-							//*	check for comma
-							if (myArgString[jjj] == ',')
+							myArgLength	=	strlen(myArgString);
+							for (jjj=0; jjj<myArgLength; jjj++)
 							{
-								myArgString[jjj]	=	'.';	//*	replace with period
+								//*	check for comma
+								if (myArgString[jjj] == ',')
+								{
+									myArgString[jjj]	=	'.';	//*	replace with period
+								}
 							}
 						}
+						//==================================================================
+	//					CONSOLE_DEBUG_W_NUM("maxArgLen\t=", maxArgLen);
+	//					CONSOLE_DEBUG_W_STR("myArgString\t=", myArgString);
+						strcpy(argument, myArgString);
 					}
-					//==================================================================
-//					CONSOLE_DEBUG_W_NUM("maxArgLen\t=", maxArgLen);
-//					CONSOLE_DEBUG_W_STR("myArgString\t=", myArgString);
-					strcpy(argument, myArgString);
+					ccc	=	0;
 				}
-				ccc	=	0;
+				else
+				{
+					myKeyWord[ccc]		=	theChar;
+					myKeyWord[ccc+1]	=	0;
+					ccc++;
+				}
+				iii++;
 			}
-			else
-			{
-				myKeyWord[ccc]		=	theChar;
-				myKeyWord[ccc+1]	=	0;
-				ccc++;
-			}
-			iii++;
 		}
 
 	}

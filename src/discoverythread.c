@@ -1352,7 +1352,7 @@ char			addressBuffer[256];
 uint32_t		ipAddress32;
 bool			keepGoing;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 
 	getifaddrs(&ifAddrStruct);
 

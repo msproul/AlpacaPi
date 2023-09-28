@@ -36,6 +36,10 @@ enum
 	kDriverInfo_InterfaceVersion,
 	kDriverInfo_InterfaceVersion_Outline,
 
+	kDriverInfo_Restart_Info,
+	kDriverInfo_Restart_Button,
+	kDriverInfo_Restart_Outline,
+
 	kDriverInfo_IPaddr,
 	kDriverInfo_Readall,
 	kDriverInfo_DeviceState,

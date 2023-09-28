@@ -67,13 +67,13 @@ int				gLogIndex	=	0;
 //*	if the log files up, we will dump the first half and continue
 static void	FlushHalfLog(void)
 {
-int		ii;
+int		iii;
 int		halfSize;
 
 	halfSize	=	kMaxLogEntries / 2;
-	for (ii=0; ii<halfSize; ii++)
+	for (iii=0; iii<halfSize; iii++)
 	{
-		gEventLog[ii]	=	gEventLog[ii + halfSize];
+		gEventLog[iii]	=	gEventLog[iii + halfSize];
 	}
 	gLogIndex	=	halfSize;
 
@@ -88,6 +88,7 @@ void	LogEvent(	const char				*eventName,
 {
 	if (gLogIndex < kMaxLogEntries)
 	{
+		memset(&gEventLog[gLogIndex], 0, sizeof(TYPE_EVENTLOG));
 		gEventLog[gLogIndex].eventTime		=	time(NULL);
 		gEventLog[gLogIndex].alpacaErrCode	=	alpacaErrCode;
 

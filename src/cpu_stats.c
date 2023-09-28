@@ -148,6 +148,10 @@ bool	stillNeedModelName;
 	strcpy(gPlatformString,	"32 bit x86");
 #elif defined(__x86_64__)
 	strcpy(gPlatformString,	"64 bit x86");
+#elif defined(__ARM_ARCH_8A) && defined(__ARM_64BIT_STATE)
+	strcpy(gPlatformString,	"Jetson TX2");
+#elif defined(__ARM_ARCH_8A) || defined(__ARM_ARCH_8)
+	strcpy(gPlatformString,	"ARM");
 #else
 	strcpy(gPlatformString,	"Unknown platform");
 #endif

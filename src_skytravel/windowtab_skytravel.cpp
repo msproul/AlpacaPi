@@ -4217,10 +4217,10 @@ bool			pressesOccurred;
 
 
 //*	special objects should not be precessed
-//		if ((gSpecialObjectPtr != NULL) && (gSpecialObjectCount > 0))
-//		{
-//			Precess(gSpecialObjectPtr, gSpecialObjectCount, kSortData, kForcePression);
-//		}
+		if ((gSpecialObjectPtr != NULL) && (gSpecialObjectCount > 0))
+		{
+			Precess(gSpecialObjectPtr, gSpecialObjectCount, kSortData, kForcePression);
+		}
 
 		if ((gConstStarPtr != NULL) && (gConstStarCount > 0))
 		{

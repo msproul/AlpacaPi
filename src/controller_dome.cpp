@@ -97,11 +97,12 @@ ControllerDome::ControllerDome(	const char			*argWindowName,
 	:Controller(argWindowName, kDomeWindowWidth,  kDomeWindowHeight, true, alpacaDevice)
 {
 char	ipAddrStr[32];
+char	localDeviceTypeStr[48];
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
 	memset(&cDomeProp, 0, sizeof(TYPE_DomeProperties));
-
+	strcpy(localDeviceTypeStr, "dome");
 	SetCommandLookupTable(gDomeCmdTable);
 	SetAlternateLookupTable(gDomeExtrasTable);
 
@@ -133,7 +134,10 @@ char	ipAddrStr[32];
 		{
 			CONSOLE_DEBUG("Switching to SHUTTER!!!!!!!!!!!!!!!!");
 			strcpy(cAlpacaDeviceTypeStr,	"shutter");
+			strcpy(localDeviceTypeStr,	"shutter");
+			strcpy(cAlpacaDeviceTypeStr,	localDeviceTypeStr);
 		}
+		CONSOLE_DEBUG_W_STR("cAlpacaDeviceTypeStr\t=", cAlpacaDeviceTypeStr);
 	#ifdef _ENABLE_SKYTRAVEL_
 		//*	make a 2nd copy if we are in SKYTRAVEL
 	//	cDomeIpAddress			=	cDeviceAddress;
@@ -148,6 +152,8 @@ char	ipAddrStr[32];
 	CONSOLE_DEBUG_W_STR("IP address=", ipAddrStr);
 
 	SetupWindowControls();
+	strcpy(cAlpacaDeviceTypeStr,	localDeviceTypeStr);
+	CONSOLE_DEBUG_W_STR("cAlpacaDeviceTypeStr\t=", cAlpacaDeviceTypeStr);
 
 #ifdef _USE_BACKGROUND_THREAD_
 	StartBackgroundThread();
@@ -188,6 +194,7 @@ char	lineBuff[64];
 		SetTabWindow(kTab_Dome,	cDomeTabObjPtr);
 		cDomeTabObjPtr->SetParentObjectPtr(this);
 		cDomeTabObjPtr->SetDomePropertiesPtr(&cDomeProp);
+		cDomeTabObjPtr->SetAlpacaDeviceType(cAlpacaDeviceTypeStr);
 	}
 
 	//=============================================================
@@ -196,6 +203,7 @@ char	lineBuff[64];
 	{
 		SetTabWindow(kTab_Capabilities,	cCapabilitiesTabObjPtr);
 		cCapabilitiesTabObjPtr->SetParentObjectPtr(this);
+		cCapabilitiesTabObjPtr->SetAlpacaDeviceType(cAlpacaDeviceTypeStr);
 	}
 
 	//=============================================================
@@ -204,6 +212,7 @@ char	lineBuff[64];
 	{
 		SetTabWindow(kTab_DeviceState,	cDeviceStateTabObjPtr);
 		cDeviceStateTabObjPtr->SetParentObjectPtr(this);
+		cDeviceStateTabObjPtr->SetAlpacaDeviceType(cAlpacaDeviceTypeStr);
 		SetDeviceStateTabInfo(kTab_DeviceState, kDeviceState_FirstBoxName, kDeviceState_FirstBoxValue, kDeviceState_Stats);
 	}
 
@@ -213,6 +222,7 @@ char	lineBuff[64];
 	{
 		SetTabWindow(kTab_DriverInfo,	cDriverInfoTabObjPtr);
 		cDriverInfoTabObjPtr->SetParentObjectPtr(this);
+		cDriverInfoTabObjPtr->SetAlpacaDeviceType(cAlpacaDeviceTypeStr);
 	}
 	//=============================================================
 	cAboutBoxTabObjPtr		=	new WindowTabAbout(	cWidth, cHeight, cBackGrndColor, cWindowName);
@@ -220,6 +230,7 @@ char	lineBuff[64];
 	{
 		SetTabWindow(kTab_About,	cAboutBoxTabObjPtr);
 		cAboutBoxTabObjPtr->SetParentObjectPtr(this);
+		cAboutBoxTabObjPtr->SetAlpacaDeviceType(cAlpacaDeviceTypeStr);
 	}
 
 	//*	display the IPaddres/port
@@ -502,6 +513,7 @@ bool			sucessFlag;
 char			alpacaString[128];
 char			myDataString[512];
 
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, alpacaDevice);
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, alpacaCmd);
 
 	SJP_Init(&jsonParser);
