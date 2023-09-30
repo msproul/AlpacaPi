@@ -43,6 +43,7 @@
 //*	Jul 18,	2021	<MLS> Added _DEBUG_JSON_RESPONSE_
 //*	Sep  5,	2021	<MLS> Added enableDebug arg to JsonRespnse_XmitIfFull()
 //*	Jun  1,	2022	<MLS> Increased decimal places for double output from 6 to 12
+//*	Sep 30,	2023	<MLS> Added ";" to Content-type: as per Peter Simpson
 //*****************************************************************************
 
 
@@ -118,7 +119,7 @@ char	lineBuff[64];
 		//	sprintf(lineBuff,		"Content-Length: %d\r\n", -1);
 		//	strcat(jsonHdrBUffer,	lineBuff);
 		}
-		strcat(jsonHdrBUffer,	"Content-type: application/json charset=utf-8\r\n");
+		strcat(jsonHdrBUffer,	"Content-type: application/json; charset=utf-8\r\n");
 		strcat(jsonHdrBUffer,	"Server: AlpacaPi\r\n");
 //		strcat(jsonHdrBUffer,	"Accept: text/html,application/json\r\n");
 //		strcat(jsonHdrBUffer,	"Accept-Language:en-US,en;q=0.8\r\n");

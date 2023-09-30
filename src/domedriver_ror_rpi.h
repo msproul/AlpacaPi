@@ -77,7 +77,10 @@ class DomeDriverROR: public DomeDriver
 		//*	background thread operations
 		bool						cCmdRcvd_OpenRoof;
 		bool						cCmdRcvd_CloseRoof;
-
+	#ifdef _TOPENS_ROLL_OFF_ROOF_
+		bool						cClosedSensorState;
+		bool						cOpenSensorState;
+	#endif
 	protected:
 		virtual	void				RunThread_Startup(void);
 		virtual	void				RunThread_Loop(void);

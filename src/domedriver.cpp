@@ -142,7 +142,7 @@
 
 
 #if defined(__arm__) && !defined(_ENABLE_PI_HAT_SESNSOR_BOARD_)
-	#include <wiringPi.h>
+//	#include <wiringPi.h>
 #else
 	#define	LOW		0
 	#define	HIGH	1
@@ -282,21 +282,23 @@ int					mySocket;
 	//*	set up the json response
 	JsonResponse_CreateHeader(reqData->jsonTextBuffer);
 
-	//*	this is not part of the protocol, I am using it for testing
-	cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(	mySocket,
-															reqData->jsonTextBuffer,
-															kMaxJsonBuffLen,
-															"Device",
-															cCommonProp.Name,
-															INCLUDE_COMMA);
+	if (reqData->clientIs_ConformU == false)
+	{
+		//*	this is not part of the protocol, I am using it for testing
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(	mySocket,
+																reqData->jsonTextBuffer,
+																kMaxJsonBuffLen,
+																"Device",
+																cCommonProp.Name,
+																INCLUDE_COMMA);
 
-	cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(	mySocket,
-															reqData->jsonTextBuffer,
-															kMaxJsonBuffLen,
-															"Command",
-															reqData->deviceCommand,
-															INCLUDE_COMMA);
-
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(	mySocket,
+																reqData->jsonTextBuffer,
+																kMaxJsonBuffLen,
+																"Command",
+																reqData->deviceCommand,
+																INCLUDE_COMMA);
+	}
 //	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(		mySocket,
 //								reqData->jsonTextBuffer,
 //								kMaxJsonBuffLen,

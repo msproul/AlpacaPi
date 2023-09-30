@@ -2211,6 +2211,8 @@ finder		:										\
 					-lpthread						\
 					-o alpacapi
 
+
+
 ######################################################################################
 #pragma mark Switch - C++ Raspberry pi
 #	make findercv4
@@ -2260,6 +2262,38 @@ findercv4		:								\
 					-lpthread						\
 					-o alpacapi
 
+######################################################################################
+#pragma mark Switch - C++ Raspberry pi
+#	make attic
+attic		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
+#attic		:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
+#attic		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
+#attic		:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
+#attic		:		DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_
+#attic		:		DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_MOONLITE_
+#attic		:		DEFINEFLAGS		+=	-D_ENABLE_ROTATOR_
+#attic		:		DEFINEFLAGS		+=	-D_ENABLE_ROTATOR_NITECRAWLER_
+attic		:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_
+attic		:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_RPI_
+attic		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
+attic		:		DEFINEFLAGS		+=	-D_ENABLE_WIRING_PI_
+attic		:										\
+					$(DRIVER_OBJECTS)				\
+					$(SWITCH_DRIVER_OBJECTS)		\
+					$(HELPER_OBJECTS)				\
+					$(SERIAL_OBJECTS)				\
+					$(SOCKET_OBJECTS)				\
+
+			$(LINK)  								\
+					$(DRIVER_OBJECTS)				\
+					$(HELPER_OBJECTS)				\
+					$(SERIAL_OBJECTS)				\
+					$(SOCKET_OBJECTS)				\
+					$(SWITCH_DRIVER_OBJECTS)		\
+					$(OPENCV_LINK)					\
+					-lwiringPi						\
+					-lpthread						\
+					-o alpacapi
 
 ######################################################################################
 #pragma mark Switch - C++ Raspberry pi64

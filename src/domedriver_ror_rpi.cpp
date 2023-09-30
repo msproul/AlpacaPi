@@ -127,6 +127,7 @@
 #include	"JsonResponse.h"
 #include	"eventlogging.h"
 
+#include	"alpaca_defs.h"
 #include	"alpacadriver.h"
 #include	"alpacadriver_helper.h"
 #include	"helper_functions.h"
@@ -174,6 +175,8 @@ DomeDriverROR::DomeDriverROR(const int argDevNum)
 	CONSOLE_DEBUG(__FUNCTION__);
 #ifdef _TOPENS_ROLL_OFF_ROOF_
 	CONSOLE_DEBUG("_TOPENS_ROLL_OFF_ROOF_");
+	cClosedSensorState	=	0;
+	cOpenSensorState	=	0;
 #elif defined(_CHRIS_A_ROLL_OFF_ROOF_)
 	CONSOLE_DEBUG("_CHRIS_A_ROLL_OFF_ROOF_");
 #else
@@ -279,12 +282,16 @@ int					mySocketFD;
 	SocketWriteData(mySocketFD,	"</TR>\r\n");
 #ifdef _TOPENS_ROLL_OFF_ROOF_
 	SocketWriteData(mySocketFD,	"<TR>\r\n");
-	sprintf(lineBuffer,	"\t<TD>Open Sensor</TD><TD>%d</TD><TD>Input</TD>\r\n", kRelay_RoofOpenSensor);
+	sprintf(lineBuffer,	"\t<TD>Open Sensor</TD><TD>%d</TD><TD>Input</TD><TD>%d</TD>\r\n",
+												kRelay_RoofOpenSensor,
+												cOpenSensorState);
 	SocketWriteData(mySocketFD,	lineBuffer);
 	SocketWriteData(mySocketFD,	"</TR>\r\n");
 
 	SocketWriteData(mySocketFD,	"<TR>\r\n");
-	sprintf(lineBuffer,	"\t<TD>Close Sensor</TD><TD>%d</TD><TD>Input</TD>\r\n", kRelay_RoofCloseSensor);
+	sprintf(lineBuffer,	"\t<TD>Close Sensor</TD><TD>%d</TD><TD>Input</TD><TD>%d</TD>\r\n",
+												kRelay_RoofCloseSensor,
+												cClosedSensorState);
 	SocketWriteData(mySocketFD,	lineBuffer);
 	SocketWriteData(mySocketFD,	"</TR>\r\n");
 #endif // _TOPENS_ROLL_OFF_ROOF_
@@ -534,7 +541,6 @@ uint32_t			deltaTime_ms;
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 #ifdef _TOPENS_ROLL_OFF_ROOF_
-bool	sensorState;
 bool	relayOK;
 	//--------------------------------------------
 	//*	read the current ror state
@@ -542,29 +548,50 @@ bool	relayOK;
 	//		Mag Switch 1:
 	//			HIGH when Roof is closed
 	//			LOW when Roof is starting to open
-	sensorState		=	digitalRead(kRelay_RoofCloseSensor);
-//	CONSOLE_DEBUG_W_BOOL("kRelay_RoofCloseSensor\t=",	sensorState)
-	if (sensorState)
+	//-----------------------------------------------------------
+	//		Mag Switch 2:
+	//			HIGH when Roof is open
+	//			LOW when Roof is starting to close
+
+
+	cClosedSensorState	=	digitalRead(kRelay_RoofCloseSensor);
+	cOpenSensorState	=	digitalRead(kRelay_RoofOpenSensor);
+
+//	CONSOLE_DEBUG_W_BOOL("cClosedSensorState\t=",	cClosedSensorState)
+//	CONSOLE_DEBUG_W_BOOL("cOpenSensorState  \t=",	cOpenSensorState)
+
+
+	if (cClosedSensorState == 0)
 	{
 		cDomeProp.ShutterStatus	=	kShutterStatus_Closed;
 		cDomeProp.Slewing		=	false;
 		cRORisOpening			=	false;
 		cRORisClosing			=	false;
 	}
-	//-----------------------------------------------------------
-	//		Mag Switch 2:
-	//			HIGH when Roof is open
-	//			LOW when Roof is starting to close
-	sensorState		=	digitalRead(kRelay_RoofOpenSensor);
-//	CONSOLE_DEBUG_W_BOOL("kRelay_RoofOpenSensor\t=",	sensorState)
-	if (sensorState)
+	else if (cOpenSensorState == 0)
 	{
 		cDomeProp.ShutterStatus	=	kShutterStatus_Open;
 		cDomeProp.Slewing		=	false;
 		cRORisOpening			=	false;
 		cRORisClosing			=	false;
 	}
-
+	else
+	{
+		if (cCmdRcvd_OpenRoof)
+		{
+			cDomeProp.ShutterStatus	=	kShutterStatus_Opening;
+			cDomeProp.Slewing		=	true;
+			cRORisOpening			=	true;
+			cRORisClosing			=	false;
+		}
+		else if (cCmdRcvd_CloseRoof)
+		{
+			cDomeProp.ShutterStatus	=	kShutterStatus_Closing;
+			cDomeProp.Slewing		=	true;
+			cRORisOpening			=	false;
+			cRORisClosing			=	true;
+		}
+	}
 	//*	check for an open command
 	if (cCmdRcvd_OpenRoof)
 	{

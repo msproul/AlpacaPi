@@ -199,21 +199,24 @@ int					mySocket;
 	//*	set up the json response
 	JsonResponse_CreateHeader(reqData->jsonTextBuffer);
 
-	//*	this is not part of the protocol, I am using it for testing
-	JsonResponse_Add_String(	mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"Device",
-								cCommonProp.Name,
-								INCLUDE_COMMA);
+	if (reqData->clientIs_ConformU == false)
+	{
+		//*	this is not part of the protocol, I am using it for testing
+		JsonResponse_Add_String(	mySocket,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									"Device",
+									cCommonProp.Name,
+									INCLUDE_COMMA);
 
-	JsonResponse_Add_String(	mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"Command",
-								reqData->deviceCommand,
-								INCLUDE_COMMA);
+		JsonResponse_Add_String(	mySocket,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									"Command",
+									reqData->deviceCommand,
+									INCLUDE_COMMA);
 
+	}
 	//*	look up the command
 	cmdEnumValue	=	FindCmdFromTable(reqData->deviceCommand, gManagementCmdTable, &cmdType);
 

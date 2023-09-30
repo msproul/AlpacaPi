@@ -308,9 +308,9 @@ char			gDefaultTelescopeRefID[kDefaultRefIdMaxLen]	=	"";
 char			gWebTitle[80]								=	"AlpacaPi";
 char			gFullVersionString[128]						=	"";
 int				gAlpacaListenPort							=	kAlpacaPiDefaultPORT;	//*	6800 is the default
-uint32_t		gClientID									=	0;
-uint32_t		gClientTransactionID						=	0;
-uint32_t		gServerTransactionID						=	0;		//*	we are the server, we will increment this each time a transaction occurs
+uint32_t		gClientID									=	1;
+uint32_t		gClientTransactionID						=	1;
+uint32_t		gServerTransactionID						=	1;		//*	we are the server, we will increment this each time a transaction occurs
 bool			gErrorLogging								=	false;	//*	write errors to log file if true
 bool			gConformLogging								=	false;	//*	log all commands to log file to match up with Conform
 bool			gImageDownloadInProgress					=	false;
@@ -586,6 +586,7 @@ TYPE_ASCOM_STATUS		AlpacaDriver::ProcessCommand_Common(	TYPE_GetPutRequestData	*
 {
 TYPE_ASCOM_STATUS	alpacaErrCode;
 int					mySocket;
+char				tempString[64];
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -701,7 +702,10 @@ int					mySocket;
 
 		default:
 			alpacaErrCode	=	kASCOM_Err_InvalidOperation;
-			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Unrecognized command");
+			strcpy(tempString,	"Unrecognized command:");
+			strcat(tempString,	reqData->deviceCommand);
+
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, tempString);
 			CONSOLE_DEBUG(alpacaErrMsg);
 			CONSOLE_DEBUG_W_STR("deviceCommand\t=", reqData->deviceCommand);
 
@@ -2208,10 +2212,10 @@ int		iii;
 				SocketWriteData(mySocketFD,	lineBuffer);
 
 				//*	cpu usage, this may get moved to a different page later
-				sprintf(lineBuffer, "<TD><CENTER>%lu</TD>\r\n", gAlpacaDeviceList[iii]->cTotalMilliSeconds);
+				sprintf(lineBuffer, "<TD><CENTER>%llu</TD>\r\n", gAlpacaDeviceList[iii]->cTotalMilliSeconds);
 				SocketWriteData(mySocketFD,	lineBuffer);
 
-				sprintf(lineBuffer, "<TD><CENTER>%lu</TD>\r\n", gAlpacaDeviceList[iii]->cTotalNanoSeconds);
+				sprintf(lineBuffer, "<TD><CENTER>%llu</TD>\r\n", gAlpacaDeviceList[iii]->cTotalNanoSeconds);
 				SocketWriteData(mySocketFD,	lineBuffer);
 
 				SocketWriteData(mySocketFD,	"\t</TR>\r\n");
@@ -2611,15 +2615,17 @@ static void	OutputHTML_ClassSize(int socketFD, const char *className, size_t cla
 {
 char	lineBuffer[256];
 long	deltaSize;
+long	myClassSize;
 
 	deltaSize	=	classSize - sizeof(AlpacaDriver);
+	myClassSize	=	classSize;
 	if (deltaSize > 0)
 	{
-		sprintf(lineBuffer,	"<TR><TD>%s</TD><TD><CENTER>%ld</TD><TD><CENTER>%ld</TD></TR>\r\n",	className, classSize, deltaSize);
+		sprintf(lineBuffer,	"<TR><TD>%s</TD><TD><CENTER>%ld</TD><TD><CENTER>%ld</TD></TR>\r\n",	className, myClassSize, deltaSize);
 	}
 	else
 	{
-		sprintf(lineBuffer,	"<TR><TD>%s</TD><TD><CENTER>%ld</TD></TR>\r\n",	className, classSize);
+		sprintf(lineBuffer,	"<TR><TD>%s</TD><TD><CENTER>%ld</TD></TR>\r\n",	className, myClassSize);
 	}
 	SocketWriteData(socketFD,	lineBuffer);
 
@@ -3012,7 +3018,7 @@ int					iii;
 bool				deviceFound;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
-//	DumpRequestStructure(__FUNCTION__, reqData);
+	DumpRequestStructure(__FUNCTION__, reqData);
 
 	//*******************************************
 	//*	now do something with the data

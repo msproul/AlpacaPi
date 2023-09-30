@@ -780,8 +780,10 @@ bool		validData;
 	CONSOLE_DEBUG(__FUNCTION__);
 	if (cValidIPaddr)
 	{
+		CONSOLE_DEBUG(__FUNCTION__);
 		if (strlen(cAlpacaDeviceTypeStr) > 0)
 		{
+			CONSOLE_DEBUG(__FUNCTION__);
 			//*	see if its connected
 			validData	=	AlpacaGetCommonConnectedState(cAlpacaDeviceTypeStr);
 			if (validData == false)

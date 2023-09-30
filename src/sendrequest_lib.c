@@ -621,6 +621,7 @@ int					setOptRetCode;
 					returnedData[recvByteCnt]	=	0;
 					SJP_Init(jsonParser);
 					SJP_ParseData(jsonParser, returnedData);
+					CONSOLE_DEBUG_W_STR("returnedData=\r\n", returnedData);
 				}
 			}
 			shutDownRetCode	=	shutdown(socket_desc, SHUT_RDWR);

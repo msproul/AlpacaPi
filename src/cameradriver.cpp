@@ -4532,7 +4532,7 @@ bool	xmit16BitAs32Bit	=	false;
 	strcpy(httpHeader,	"HTTP/1.0 200 OK\r\n");
 	sprintf(lineBuff,	"Content-Length: %d\r\n", dataPayloadSize);
 	strcat(httpHeader,	lineBuff);
-	strcat(httpHeader,	"Content-type: application/imagebytes charset=utf-8\r\n");
+	strcat(httpHeader,	"Content-type: application/imagebytes; charset=utf-8\r\n");
 	strcat(httpHeader,	"Server: AlpacaPi\r\n");
 	strcat(httpHeader, "\r\n");
 

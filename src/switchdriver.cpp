@@ -43,6 +43,7 @@
 //*	Jul  3,	2022	<MLS> Started converting to using switch property structure
 //*	Jun 19,	2023	<MLS> Added DeviceState_Add_Content() to switch driver
 //*	Sep 12,	2023	<MLS> Changed routine names to CamelCase
+//*	Sep 30,	2023	<MLS> Adding debugging code in verbose mode
 //*****************************************************************************
 
 #ifdef _ENABLE_SWITCH_
@@ -144,10 +145,14 @@ int					cmdEnumValue;
 int					cmdType;
 int					mySocket;
 
-#ifdef _DEBUG_CONFORM_
-	CONSOLE_DEBUG(__FUNCTION__);
-	CONSOLE_DEBUG_W_STR("contentData\t=", reqData->contentData);
-#endif
+//#ifdef _DEBUG_CONFORM_
+	if (gVerbose)
+	{
+		CONSOLE_DEBUG(__FUNCTION__);
+		CONSOLE_DEBUG_W_STR("contentData\t=", reqData->contentData);
+		DumpRequestStructure(__FUNCTION__, reqData);
+	}
+//#endif
 
 	//*	make local copies of the data structure to make the code easier to read
 	mySocket	=	reqData->socket;
@@ -537,8 +542,8 @@ int					switchNum;
 	if (reqData != NULL)
 	{
 		switchNum	=	GetSwitchID(reqData);
-		CONSOLE_DEBUG_W_NUM("switchNum\t\t=",		switchNum);
-		CONSOLE_DEBUG_W_DBL("cCurSwitchValue\t=",	cCurSwitchValue[switchNum]);
+//		CONSOLE_DEBUG_W_NUM("switchNum\t\t=",		switchNum);
+//		CONSOLE_DEBUG_W_DBL("cCurSwitchValue\t=",	cCurSwitchValue[switchNum]);
 		if ((switchNum >= 0) && (switchNum < cSwitchProp.MaxSwitch))
 		{
 			JsonResponse_Add_Double(reqData->socket,
@@ -661,6 +666,7 @@ bool				foundState;
 char				stateString[32];
 int					switchNum;
 
+	CONSOLE_DEBUG(__FUNCTION__);
 #ifdef _DEBUG_CONFORM_
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG_W_STR("contentData\t=", reqData->contentData);

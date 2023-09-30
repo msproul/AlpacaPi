@@ -169,11 +169,11 @@ bool	myConnectedFlag;
 bool	prevConnectedState;
 bool	returnedValid;
 
-//	CONSOLE_DEBUG_W_STR(__FUNCTION__, deviceTypeStr);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, deviceTypeStr);
 	validData		=	false;
 
 	//-----------------------------------------------------------------------------------------
-//	CONSOLE_DEBUG_W_STR("deviceTypeStr=", deviceTypeStr);
+	CONSOLE_DEBUG_W_STR("deviceTypeStr=", deviceTypeStr);
 	validData	=	AlpacaGetBooleanValue(	deviceTypeStr,
 											"connected",
 											NULL,
@@ -182,7 +182,7 @@ bool	returnedValid;
 											false);
 	if (validData)
 	{
-	//	CONSOLE_DEBUG(__FUNCTION__);
+		CONSOLE_DEBUG(__FUNCTION__);
 		//*	keep track of the previous state
 		prevConnectedState		=	cCommonProp.Connected;
 		cCommonProp.Connected	=	myConnectedFlag;
@@ -940,6 +940,7 @@ int			dataStrLen;
 			SJP_DumpJsonData(jsonParser, __FUNCTION__);
 //			myReturnDataIsValid	=	false;
 		}
+		SJP_DumpJsonData(jsonParser, __FUNCTION__);
 
 		ForceAlpacaUpdate();
 		gClientTransactionID++;
@@ -1438,11 +1439,11 @@ bool			myReturnDataIsValid	=	true;
 
 	SJP_Init(&jsonParser);
 	sprintf(alpacaString,	"/api/v1/%s/%d/%s", alpacaDevice, alpacaDevNum, alpacaCmd);
-//	if (printDebug)
-//	{
-//		CONSOLE_DEBUG_W_2STR(__FUNCTION__, alpacaDevice, alpacaCmd);
-//		CONSOLE_DEBUG(alpacaString);
-//	}
+	if (gVerbose)
+	{
+		CONSOLE_DEBUG_W_2STR(__FUNCTION__, alpacaDevice, alpacaCmd);
+		CONSOLE_DEBUG(alpacaString);
+	}
 
 	validData	=	GetJsonResponse(	&deviceAddress,
 										port,
@@ -1454,11 +1455,11 @@ bool			myReturnDataIsValid	=	true;
 		for (jjj=0; jjj<jsonParser.tokenCount_Data; jjj++)
 		{
 			//*	is debugging enabled
-//			if (printDebug)
-//			{
-//				CONSOLE_DEBUG_W_2STR("json=",	jsonParser.dataList[jjj].keyword,
-//												jsonParser.dataList[jjj].valueString);
-//			}
+			if (gVerbose)
+			{
+				CONSOLE_DEBUG_W_2STR("json=",	jsonParser.dataList[jjj].keyword,
+												jsonParser.dataList[jjj].valueString);
+			}
 
 			if (strcasecmp(jsonParser.dataList[jjj].keyword, "VALUE") == 0)
 			{
