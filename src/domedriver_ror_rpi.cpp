@@ -592,6 +592,7 @@ bool	relayOK;
 			cRORisClosing			=	true;
 		}
 	}
+	//----------------------------------------------------------
 	//*	check for an open command
 	if (cCmdRcvd_OpenRoof)
 	{
@@ -602,10 +603,10 @@ bool	relayOK;
 			cDomeProp.Slewing		=	true;
 			cRORisOpening			=	true;
 			//*	set the line HIGH to turn the relay on and connect the signal to ground
-			relayOK		=	RpiRelay_SetRelay(kRelay_OpenStopClose, true);
+			relayOK		=	RpiRelay_SetRelay(kRelay_OpenStopClose, false);
 			CONSOLE_DEBUG("Waiting 3 seconds");
 			sleep(3);
-			relayOK		=	RpiRelay_SetRelay(kRelay_OpenStopClose, false);
+			relayOK		=	RpiRelay_SetRelay(kRelay_OpenStopClose, true);
 			CONSOLE_DEBUG_W_NUM("Turning off relay #", kRelay_OpenStopClose);
 
 		}
@@ -620,6 +621,7 @@ bool	relayOK;
 		cCmdRcvd_OpenRoof	=	false;
 	}
 
+	//----------------------------------------------------------
 	//*	check for an open command
 	if (cCmdRcvd_CloseRoof)
 	{
@@ -630,10 +632,10 @@ bool	relayOK;
 			cDomeProp.Slewing		=	true;
 			cRORisClosing			=	true;
 			//*	set the line HIGH to turn the relay on and connect the signal to ground
-			relayOK		=	RpiRelay_SetRelay(kRelay_OpenStopClose, true);
+			relayOK		=	RpiRelay_SetRelay(kRelay_OpenStopClose, false);
 			CONSOLE_DEBUG("Waiting 3 seconds");
 			sleep(3);
-			relayOK		=	RpiRelay_SetRelay(kRelay_OpenStopClose, false);
+			relayOK		=	RpiRelay_SetRelay(kRelay_OpenStopClose, true);
 			CONSOLE_DEBUG_W_NUM("Turning off relay #", kRelay_OpenStopClose);
 		}
 		else if (cDomeProp.ShutterStatus == kShutterStatus_Closed)
