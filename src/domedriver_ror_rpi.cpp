@@ -453,6 +453,7 @@ bool				relayOK;
 	cDomeProp.Slewing		=	true;
 	cDomeProp.ShutterStatus	=	kShutterStatus_Opening;
 #elif defined(_TOPENS_ROLL_OFF_ROOF_)
+	CONSOLE_DEBUG("_TOPENS_ROLL_OFF_ROOF_");
 	//*	let the background thread do the real work
 	cCmdRcvd_OpenRoof		=	true;
 	cCmdRcvd_CloseRoof		=	false;
@@ -597,7 +598,11 @@ bool	relayOK;
 	if (cCmdRcvd_OpenRoof)
 	{
 		CONSOLE_DEBUG("command to open roof has been received");
-		if (cDomeProp.ShutterStatus == kShutterStatus_Closed)
+		if (cDomeProp.ShutterStatus == kShutterStatus_Open)
+		{
+			CONSOLE_DEBUG("ROR is already open")
+		}
+		else
 		{
 			CONSOLE_DEBUG_W_NUM("Turning on relay #", kRelay_OpenStopClose);
 			cDomeProp.Slewing		=	true;
@@ -610,14 +615,6 @@ bool	relayOK;
 			CONSOLE_DEBUG_W_NUM("Turning off relay #", kRelay_OpenStopClose);
 
 		}
-		else if (cDomeProp.ShutterStatus == kShutterStatus_Open)
-		{
-			CONSOLE_DEBUG("ROR is already open")
-		}
-		else
-		{
-			CONSOLE_DEBUG_W_NUM("Unknown state, cDomeProp.ShutterStatus\t=", cDomeProp.ShutterStatus);
-		}
 		cCmdRcvd_OpenRoof	=	false;
 	}
 
@@ -626,7 +623,11 @@ bool	relayOK;
 	if (cCmdRcvd_CloseRoof)
 	{
 		CONSOLE_DEBUG("command to close roof has been received");
-		if (cDomeProp.ShutterStatus == kShutterStatus_Open)
+		if (cDomeProp.ShutterStatus == kShutterStatus_Closed)
+		{
+			CONSOLE_DEBUG("ROR is already closed")
+		}
+		else
 		{
 			CONSOLE_DEBUG_W_NUM("Turning on relay #", kRelay_OpenStopClose);
 			cDomeProp.Slewing		=	true;
@@ -637,14 +638,6 @@ bool	relayOK;
 			sleep(3);
 			relayOK		=	RpiRelay_SetRelay(kRelay_OpenStopClose, true);
 			CONSOLE_DEBUG_W_NUM("Turning off relay #", kRelay_OpenStopClose);
-		}
-		else if (cDomeProp.ShutterStatus == kShutterStatus_Closed)
-		{
-			CONSOLE_DEBUG("ROR is already closed")
-		}
-		else
-		{
-			CONSOLE_DEBUG_W_NUM("Unknown state, cDomeProp.ShutterStatus\t=", cDomeProp.ShutterStatus);
 		}
 
 		cCmdRcvd_CloseRoof	=	false;
