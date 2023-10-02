@@ -70,6 +70,7 @@ typedef struct	//	TYPE_GetPutRequestData
 	TYPE_Client			cHTTPclientType;
 	bool				clientIs_AlpacaPi;		//*	flags for which client is in use
 	bool				clientIs_ConformU;
+	bool				clientIs_Conform;		//*	regular windows CONFORM
 	int					alpacaVersion;
 	int					requestTypeEnum;
 	char				deviceType[kDeviceTypeMaxLen];

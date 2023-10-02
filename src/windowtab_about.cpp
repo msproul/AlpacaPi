@@ -23,9 +23,15 @@
 //*	Jan 17,	2021	<MLS> Added CPU info to about box
 //*	Nov 24,	2022	<MLS> Changed CPU info to show "REMOTE DEVICE: data not available" by default
 //*	Nov 24,	2022	<MLS> Added SetLocalDeviceInfo(), only called by SkyTravel Controller
+//*	Oct  2,	2023	<MLS> Fixed fitsio dependency
 //*****************************************************************************
 
-#include	<fitsio.h>
+#include	<stdio.h>
+#include	<stdlib.h>
+
+#ifdef _ENABLE_FITS_
+	#include	<fitsio.h>
+#endif // _ENABLE_FITS_
 
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"

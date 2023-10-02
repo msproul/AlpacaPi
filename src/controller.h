@@ -660,7 +660,7 @@ int			ProcessControllerWindows(void);
 void		Controller_HandleKeyDown(const int keyPressed);
 void		LoadAlpacaLogo(void);
 bool		CheckForOpenWindowByName(const char *windowName);
-void		DumpControllerBackGroundTaskStatus(void);
+void		DumpControllerBackGroundTaskStatus(const char *callingFunction);
 void		RunCommandLine(const char *commandLine);
 void		EditTextFile(const char *filename);
 void		JSON_ExtractKeyword_Value(const char *linebuf, char *keywordStr, char *valueStr);

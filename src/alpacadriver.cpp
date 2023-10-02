@@ -3018,7 +3018,11 @@ int					iii;
 bool				deviceFound;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
-	DumpRequestStructure(__FUNCTION__, reqData);
+	if (strncmp(reqData->httpCmdString, "PUT", 3) == 0)
+	{
+		CONSOLE_DEBUG(__FUNCTION__);
+		DumpRequestStructure(__FUNCTION__, reqData);
+	}
 
 	//*******************************************
 	//*	now do something with the data
@@ -3397,6 +3401,11 @@ int				contentDataLen;
 				reqData->clientIs_ConformU	=	true;
 				reqData->cHTTPclientType	=   kHTTPclient_ConfomU;
 			}
+			else if (strncasecmp(reqData->httpUserAgent, "Conform", 7) == 0)
+			{
+				reqData->clientIs_Conform	=	true;
+				reqData->cHTTPclientType	=   kHTTPclient_ConfomU;
+			}
 			else if (strncasecmp(reqData->httpUserAgent, "curl", 4) == 0)
 			{
 				reqData->cHTTPclientType	=   kHTTPclient_Curl;
@@ -3404,11 +3413,12 @@ int				contentDataLen;
 			else if (strncasecmp(reqData->httpUserAgent, "Mozilla", 7) == 0)
 			{
 				reqData->cHTTPclientType	=   kHTTPclient_Mozilla;
-				CONSOLE_DEBUG_W_STR("User-Agent:\t=", reqData->httpUserAgent);
+//				CONSOLE_DEBUG_W_STR("User-Agent:\t=", reqData->httpUserAgent);
 			}
 			else if (strncasecmp(reqData->httpUserAgent, "RestSharp", 9) == 0)
 			{
 				reqData->cHTTPclientType	=   kHTTPclient_ASCOM_RestSharp;
+				reqData->clientIs_Conform	=	true;
 			}
 			else
 			{
@@ -3421,14 +3431,15 @@ int				contentDataLen;
 			reqData->cHTTPclientType	=   kHTTPclient_NotSpecified;
 			strcpy(reqData->httpUserAgent, "not-specified");
 		}
-
+		//-----------------------------------------------------------
+		//*	bump the counters
 		if ((reqData->cHTTPclientType >= 0) && (reqData->cHTTPclientType < kHTTPclient_last))
 		{
 			gUserAgentCounters[reqData->cHTTPclientType]++;
 		}
 		else
 		{
-			CONSOLE_DEBUG("reqData->cHTTPclientType out of range");
+			CONSOLE_DEBUG_W_NUM("reqData->cHTTPclientType out of range", reqData->cHTTPclientType);
 		}
 
 		//*	go through the entire data and treat them as separate lines of text

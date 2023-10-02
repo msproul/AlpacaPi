@@ -348,7 +348,7 @@ char				versionBuff[64];
 			deltaSecs		=	(currentMillis - lastDebugMillis) / 1000;
 			if (deltaSecs > 15)
 			{
-				DumpControllerBackGroundTaskStatus();
+				DumpControllerBackGroundTaskStatus(__FUNCTION__);
 				lastDebugMillis	=	millis();
 			}
 		}
