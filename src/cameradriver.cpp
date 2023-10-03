@@ -7652,7 +7652,12 @@ int32_t		delayMicroSecs;
 			alpacaErrCode	=	Read_SensorTemp();
 			if (alpacaErrCode == kASCOM_Err_Success)
 			{
+				CONSOLE_DEBUG_W_DBL("cCameraProp.CCDtemperature\t=",	cCameraProp.CCDtemperature);
 				TemperatureLog_AddEntry(cCameraProp.CCDtemperature);
+			}
+			else
+			{
+				CONSOLE_DEBUG_W_NUM("Read_SensorTemp() failed,  alpacaErrCode\t=",	alpacaErrCode);
 			}
 			cLastTempUpdate_Secs	=	currentSeconds;
 		}

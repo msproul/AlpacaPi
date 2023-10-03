@@ -3548,7 +3548,7 @@ int				contentDataLen;
 		CONSOLE_ABORT(__FUNCTION__);
 	}
 #ifdef _DEBUG_HTML_
-	DumpRequestStructure(__FUNCTION__, reqData);
+//	DumpRequestStructure(__FUNCTION__, reqData);
 #endif
 }
 

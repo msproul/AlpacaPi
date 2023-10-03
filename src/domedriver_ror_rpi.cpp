@@ -25,6 +25,7 @@
 //*	Sep 24,	2023	<MLS> Adding support for Topens door opener
 //*	Sep 24,	2023	<MLS> Added _TOPENS_ROLL_OFF_ROOF_
 //*	Sep 24,	2023	<MLS> Started migrating to using background thread
+//*	Oct  2,	2023	<MLS> Updated background thread open/close logic
 //*****************************************************************************
 //*****************************************************************************
 //	After doing some experimenting with AlpacaPi,
@@ -493,6 +494,7 @@ bool				relayOK;
 	cDomeProp.Slewing		=	true;
 	cDomeProp.ShutterStatus	=	kShutterStatus_Closing;
 #elif defined(_TOPENS_ROLL_OFF_ROOF_)
+	CONSOLE_DEBUG("_TOPENS_ROLL_OFF_ROOF_");
 	cCmdRcvd_CloseRoof		=	true;
 	cCmdRcvd_OpenRoof		=	false;
 #else
