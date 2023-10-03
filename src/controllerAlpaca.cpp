@@ -921,7 +921,10 @@ int			dataStrLen;
 													gClientID,
 													gClientTransactionID);
 		}
-//		CONSOLE_DEBUG_W_STR("Sending:", myDataString);
+		if (gVerbose)
+		{
+			CONSOLE_DEBUG_W_STR("Sending:", myDataString);
+		}
 		sucessFlag	=	SendPutCommand(	deviceAddress,
 										devicePort,
 										alpacaString,
@@ -989,7 +992,10 @@ bool	Controller::AlpacaSendPutCmd(	const char	*alpacaDevice,
 SJP_Parser_t	jsonParser;
 bool			sucessFlag;
 
-//	CONSOLE_DEBUG_W_STR(__FUNCTION__, alpacaCmd);
+	if (gVerbose)
+	{
+		CONSOLE_DEBUG_W_STR(__FUNCTION__, alpacaCmd);
+	}
 
 	sucessFlag	=	AlpacaSendPutCmdwResponse(alpacaDevice, alpacaCmd, dataString, &jsonParser);
 

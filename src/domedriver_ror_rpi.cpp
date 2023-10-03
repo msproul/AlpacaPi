@@ -473,7 +473,7 @@ bool				relayOK;
 //*****************************************************************************
 TYPE_ASCOM_STATUS	DomeDriverROR::CloseShutter(char *alpacaErrMsg)
 {
-TYPE_ASCOM_STATUS	alpacaErrCode;
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_ActionNotImplemented;
 bool				relayOK;
 
 	CONSOLE_DEBUG(__FUNCTION__);
@@ -497,6 +497,7 @@ bool				relayOK;
 	CONSOLE_DEBUG("_TOPENS_ROLL_OFF_ROOF_");
 	cCmdRcvd_CloseRoof		=	true;
 	cCmdRcvd_OpenRoof		=	false;
+	alpacaErrCode			=	kASCOM_Err_Success;
 #else
 	alpacaErrCode	=	kASCOM_Err_ActionNotImplemented;
 	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Open shutter not implemented");

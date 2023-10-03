@@ -949,9 +949,7 @@ SJP_Parser_t	jsonResponse;
 	{
 		CONSOLE_DEBUG_W_STR("failed shutter command - ", shutterCmd);
 	}
-
 #endif
-
 }
 
 

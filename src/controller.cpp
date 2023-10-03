@@ -862,15 +862,13 @@ int		iii;
 //*****************************************************************************
 void	Controller::GetStartUpData_SubClass(void)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
-	//*	this is ONLY to be implemented at the subclass level
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, "this is ONLY to be implemented at the subclass level");
 }
 
 //*****************************************************************************
 void	Controller::GetStatus_SubClass(void)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
-	//*	this is ONLY to be implemented at the subclass level
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, "this is ONLY to be implemented at the subclass level");
 }
 
 //*****************************************************************************

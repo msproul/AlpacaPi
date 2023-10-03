@@ -277,8 +277,8 @@ double	argDouble;
 
 		default:
 			dataWasHandled	=	false;
-			CONSOLE_DEBUG_W_NUM("keywordEnum\t=", keywordEnum);
-			CONSOLE_DEBUG_W_STR("valueString\t=", valueString);
+//			CONSOLE_DEBUG_W_NUM("keywordEnum\t=", keywordEnum);
+//			CONSOLE_DEBUG_W_STR("valueString\t=", valueString);
 			break;
 
 	}

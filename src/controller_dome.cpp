@@ -549,33 +549,35 @@ char			myDataString[512];
 //*****************************************************************************
 void	ControllerDome::SendShutterCommand(const char *shutterCmd)
 {
+bool	sucessFlag;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 #ifdef _ENABLE_EXTERNAL_SHUTTER_
 	//*	this is for a separate alpaca device called "shutter"
 	if (cShutterInfoValid)
 	{
-	bool	sucessFlag;
-
+		if (gVerbose)
+		{
+			CONSOLE_DEBUG("Using external shutter")
+		}
 		sucessFlag	=	ShutterSendPutCmd("shutter", shutterCmd, "");
 		if (sucessFlag == false)
 		{
 			CONSOLE_DEBUG_W_STR("ShutterSendPutCmd failed", shutterCmd);
 		}
-
-		//*	any time we send a command to the shutter, increase the update rate
-		cUpdateDelta_secs	=	2;
 	}
 	else
-	{
-		CONSOLE_DEBUG("No shutter info");
-		SetWidgetText(kTab_Dome, kDomeBox_AlpacaErrorMsg, "Shutter controller not found");
-	}
-#else
-	//*	normal, send command to the dome controller.
-	#warning "SendShutterCommand needs to be finished"
-
 #endif
+	{
+		//*	normal, send command to the dome controller.
+		sucessFlag	=	AlpacaSendPutCmd("dome", shutterCmd, "");
+		if (sucessFlag == false)
+		{
+			CONSOLE_DEBUG_W_STR("AlpacaSendPutCmd failed", shutterCmd);
+		}
+	}
+	//*	any time we send a command to the shutter, increase the update rate
+	cUpdateDelta_secs	=	2;
 }
 
 #ifdef _ENABLE_SKYTRAVEL_

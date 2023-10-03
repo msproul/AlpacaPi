@@ -345,7 +345,8 @@ int		activeObjCnt;
 
 	ProcessCmdLineArgs(argc, argv);
 
-	sprintf(gFullVersionString, "%s - %s build #%d", kApplicationName, kVersionString, kBuildNumber);
+	sprintf(gFullVersionString,		"%s - %s build #%d", kApplicationName, kVersionString, kBuildNumber);
+	sprintf(gUserAgentAlpacaPiStr,	"User-Agent: AlpacaPi/%s-Build-%d\r\n", kVersionString,  kBuildNumber);
 
 	CPUstats_ReadOSreleaseVersion();
 	CPUstats_ReadInfo();

@@ -44,7 +44,7 @@
 	#include	"windowtab_about.h"
 #endif
 
-#define	_ENABLE_EXTERNAL_SHUTTER_
+//#define	_ENABLE_EXTERNAL_SHUTTER_
 
 
 #define	kDomeWindowWidth	475

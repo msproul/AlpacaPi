@@ -177,9 +177,11 @@ int					so_oobinline;
 //			strcat(xmitBuffer,	"Host: 127.0.0.1:6800");
 			sprintf(linebuf,	"Host: %s:%d\r\n", ipString, port);
 			strcat(xmitBuffer,	linebuf);
-//			strcat(xmitBuffer,	"User-Agent: AlpacaPi\r\n");
-			strcat(xmitBuffer,	gUserAgentAlpacaPiStr);
-
+			if (strlen(gUserAgentAlpacaPiStr))
+			{
+				//*	add User-Agent:
+				strcat(xmitBuffer,	gUserAgentAlpacaPiStr);
+			}
 			strcat(xmitBuffer,	"Accept: text/html,application/json");
 			if (includeImageBinary)
 			{
@@ -335,7 +337,11 @@ int					parseReturnCode;
 			sprintf(linebuf,	"Host: %s:%d\r\n", ipString, port);
 			strcat(xmitBuffer,	linebuf);
 //			strcat(xmitBuffer,	"User-Agent: AlpacaPi\r\n");
-			strcat(xmitBuffer,	gUserAgentAlpacaPiStr);
+			if (strlen(gUserAgentAlpacaPiStr))
+			{
+				//*	add User-Agent:
+				strcat(xmitBuffer,	gUserAgentAlpacaPiStr);
+			}
 			strcat(xmitBuffer,	"Accept: text/html,application/json\r\n");
 
 			strcat(xmitBuffer,	"Accept-Language: en-US,en;q=0.5\r\n");
@@ -587,7 +593,11 @@ int					setOptRetCode;
 			sprintf(linebuf,	"Host: %s:%d\r\n", ipString, port);
 			strcat(xmitBuffer,	linebuf);
 //			strcat(xmitBuffer,	"User-Agent: AlpacaPi\r\n");
-			strcat(xmitBuffer,	gUserAgentAlpacaPiStr);
+			if (strlen(gUserAgentAlpacaPiStr))
+			{
+				//*	add User-Agent:
+				strcat(xmitBuffer,	gUserAgentAlpacaPiStr);
+			}
 			strcat(xmitBuffer,	"Connection: close\r\n");
 			strcat(xmitBuffer,	"Accept: text/html,application/json\r\n");
 			strcat(xmitBuffer,	"Content-Type: application/x-www-form-urlencoded\r\n");
