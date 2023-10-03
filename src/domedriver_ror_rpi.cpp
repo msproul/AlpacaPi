@@ -120,7 +120,7 @@
 #endif // _TOPENS_ROLL_OFF_ROOF_
 
 
-#define _DEBUG_TIMING_
+//#define _DEBUG_TIMING_
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
 
@@ -546,7 +546,10 @@ uint32_t			deltaTime_ms;
 
 #ifdef _TOPENS_ROLL_OFF_ROOF_
 bool	relayOK;
-	SETUP_TIMING();
+uint32_t	relayStartMilliSecs;
+uint32_t	currentStartMilliSecs;
+uint32_t	deltaMilliSecs;
+
 	//--------------------------------------------
 	//*	read the current ror state
 	//-----------------------------------------------------------
@@ -611,14 +614,29 @@ bool	relayOK;
 			CONSOLE_DEBUG_W_NUM("Turning on relay #", kRelay_OpenStopClose);
 			cDomeProp.Slewing		=	true;
 			cRORisOpening			=	true;
+			relayStartMilliSecs	=	millis();
 			//*	set the line HIGH to turn the relay on and connect the signal to ground
-			START_TIMING();
-			relayOK		=	RpiRelay_SetRelay(kRelay_OpenStopClose, false);
-			CONSOLE_DEBUG("Waiting 3 seconds");
-			sleep(3);
 			relayOK		=	RpiRelay_SetRelay(kRelay_OpenStopClose, true);
+			//*	now wait 3 seconds or until the open sensor goes false;
+			CONSOLE_DEBUG("Waiting 3 seconds");
+			deltaMilliSecs	=	0;
+			while (deltaMilliSecs < 3000)
+			{
+				//*	check the open sensor
+				cOpenSensorState	=	digitalRead(kRelay_RoofOpenSensor);
+				if (cOpenSensorState != 0)
+				{
+					break;
+				}
+				currentStartMilliSecs	=	millis();
+				deltaMilliSecs			=	currentStartMilliSecs - relayStartMilliSecs;
+				//*	wait 50 milliseconds
+				usleep(50 * 1000);
+			}
+
+			relayOK		=	RpiRelay_SetRelay(kRelay_OpenStopClose, false);
 			CONSOLE_DEBUG_W_NUM("Turning off relay #", kRelay_OpenStopClose);
-			DEBUG_TIMING("elapsed time (milliseconds)");
+			CONSOLE_DEBUG_W_NUM("elapsed time (milliseconds)", deltaMilliSecs);
 
 		}
 		cCmdRcvd_OpenRoof	=	false;
@@ -639,13 +657,25 @@ bool	relayOK;
 			cDomeProp.Slewing		=	true;
 			cRORisClosing			=	true;
 			//*	set the line HIGH to turn the relay on and connect the signal to ground
-			START_TIMING();
-			relayOK		=	RpiRelay_SetRelay(kRelay_OpenStopClose, false);
-			CONSOLE_DEBUG("Waiting 3 seconds");
-			sleep(3);
 			relayOK		=	RpiRelay_SetRelay(kRelay_OpenStopClose, true);
+			CONSOLE_DEBUG("Waiting 3 seconds");
+			deltaMilliSecs	=	0;
+			while (deltaMilliSecs < 3000)
+			{
+				//*	check the close sensor
+				cClosedSensorState	=	digitalRead(kRelay_RoofOpenSensor);
+				if (cClosedSensorState != 0)
+				{
+					break;
+				}
+				currentStartMilliSecs	=	millis();
+				deltaMilliSecs			=	currentStartMilliSecs - relayStartMilliSecs;
+				//*	wait 50 milliseconds
+				usleep(50 * 1000);
+			}
+			relayOK		=	RpiRelay_SetRelay(kRelay_OpenStopClose, false);
 			CONSOLE_DEBUG_W_NUM("Turning off relay #", kRelay_OpenStopClose);
-			DEBUG_TIMING("elapsed time (milliseconds)");
+			CONSOLE_DEBUG_W_NUM("elapsed time (milliseconds)", deltaMilliSecs);
 		}
 
 		cCmdRcvd_CloseRoof	=	false;

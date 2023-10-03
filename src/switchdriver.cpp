@@ -665,6 +665,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 bool				foundState;
 char				stateString[32];
 int					switchNum;
+bool				newSwitchState;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 #ifdef _DEBUG_CONFORM_
@@ -675,6 +676,7 @@ int					switchNum;
 	if (reqData != NULL)
 	{
 		switchNum	=	GetSwitchID(reqData);
+		CONSOLE_DEBUG_W_NUM("switchNum\t\t=", switchNum);
 
 		if ((switchNum >= 0) && (switchNum < cSwitchProp.MaxSwitch))
 		{
@@ -684,20 +686,21 @@ int					switchNum;
 				foundState	=	GetKeyWordArgument(	reqData->contentData,
 													"State",
 													stateString,
-													31);
+													sizeof(stateString)-1);
 				if (foundState)
 				{
-					if (strcasecmp(stateString, "true") == 0)
-					{
-						//*	turn the relay ON
-						SetSwitchState(switchNum, true);
+					newSwitchState	=	IsTrueFalse(stateString);
+					SetSwitchState(switchNum, newSwitchState);
 
+					CONSOLE_DEBUG_W_STR(	"stateString   \t=", stateString);
+					CONSOLE_DEBUG_W_BOOL(	"newSwitchState\t=", newSwitchState);
+
+					if (newSwitchState)
+					{
 						cCurSwitchValue[switchNum]	=	cMaxSwitchValue[switchNum];
 					}
 					else
 					{
-						//*	turn the relay OFF
-						SetSwitchState(switchNum, false);
 						cCurSwitchValue[switchNum]	=	cMinSwitchValue[switchNum];
 					}
 					alpacaErrCode	=	kASCOM_Err_Success;

@@ -136,6 +136,7 @@ char	wiringPi_VerString[32];
 		if ((pinNumber >= 0) && (pinNumber < 50))
 		{
 			//*	set to output
+			digitalWrite(pinNumber,	TURN_PIN_OFF);
 			pinMode(pinNumber,		OUTPUT);
 
 			//*	on some boards, HIGH is off
