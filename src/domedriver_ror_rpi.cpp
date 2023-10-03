@@ -308,8 +308,8 @@ void	DomeDriverROR::Init_Hardware(void)
 {
 	CONSOLE_DEBUG(__FUNCTION__);
 
-#if defined(_CHRIS_A_ROLL_OFF_ROOF_) || defined(_TOPENS_ROLL_OFF_ROOF_)
-	cRelayCount	=	RpiRelay_Init();
+#if defined(_CHRIS_A_ROLL_OFF_ROOF_)
+	cRelayCount	=	RpiRelay_Init(0);
 
 	CONSOLE_DEBUG_W_NUM("cRelayCount\t=", cRelayCount);
 
@@ -317,6 +317,7 @@ void	DomeDriverROR::Init_Hardware(void)
 
 #ifdef _TOPENS_ROLL_OFF_ROOF_
 bool		relayOK;
+	cRelayCount	=	RpiRelay_Init(1);
 	relayOK		=	RpiRelay_SetRelay(kRelay_OpenStopClose, true);
 	relayOK		=	RpiRelay_SetRelay(2, true);
 	relayOK		=	RpiRelay_SetRelay(3, true);

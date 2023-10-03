@@ -24,6 +24,7 @@
 //*	Jan 12,	2021	<MLS> Created raspberrypi_relaylib.c
 //*	Jan 12,	2021	<MLS> Relay library working on 4 relay R-Pi hat
 //*	Jan 15,	2021	<MLS> Raspberry Pi 64 bit gcc/g++ does not define __arm__
+//*	Oct  3,	2023	<MLS> Added initial state to RpiRelay_Init()
 //*****************************************************************************
 //*	for raspberry pi 4
 //wget https://project-downloads.drogon.net/wiringpi-latest.deb
@@ -104,7 +105,7 @@ static void	digitalWrite(int pinNum, int digtialStte)
 //*	returns the number of configured relays
 //*	currently this is either 4 or 8, depending on which relay board is selected
 //*****************************************************************************
-int	RpiRelay_Init(void)
+int	RpiRelay_Init(const int intialState)
 {
 int		ii;
 char	debugString[64];
@@ -135,12 +136,12 @@ char	wiringPi_VerString[32];
 		pinNumber		=	gRelayControlPinNumbers[ii];
 		if ((pinNumber >= 0) && (pinNumber < 50))
 		{
-			//*	set to output
-			digitalWrite(pinNumber,	TURN_PIN_OFF);
+			//*	First set the state so it doesnt send a pusle
+			digitalWrite(pinNumber,	intialState);
 			pinMode(pinNumber,		OUTPUT);
 
-			//*	on some boards, HIGH is off
-			digitalWrite(pinNumber,	TURN_PIN_OFF);
+			//*	Now set it again, just to make sure
+			digitalWrite(pinNumber,	intialState);
 
 			pinState	=	digitalRead(pinNumber);
 			sprintf(debugString, "Switch#%d is pin#%2d state=%d", ii+1, pinNumber, pinState);

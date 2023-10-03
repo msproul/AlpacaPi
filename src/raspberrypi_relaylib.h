@@ -84,7 +84,7 @@
 
 
 
-int		RpiRelay_Init(void);	//*	returns the number of configured relays
+int		RpiRelay_Init(const int intialState);	//*	returns the number of configured relays
 bool	RpiRelay_SetRelay(const int relayNum, bool newState);	//*	returns true if OK
 bool	RpiRelay_GetRelay(const int relayNumber);
 
