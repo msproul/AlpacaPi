@@ -37,7 +37,7 @@ double		AsciiToDouble(		const char *asciiString);
 void		FormatHHMMSS(		const double argDegreeValue, char *timeString, bool includeSign);
 void		FormatHHMMSSdd(		const double argDegreeValue, char *timeString, bool includeSign);
 
-void		FormatTimeString_time_t(time_t *time, char *timeString);
+void		FormatTimeString_time_t(	time_t *time, char *timeString);
 void		FormatTimeString(			struct timeval *tv, char *timeString);
 void		FormatTimeString_Local(		struct timeval *tv, char *timeString);
 void		FormatDateTimeString_Local(	struct timeval *tv, char *timeString);
