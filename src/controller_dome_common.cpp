@@ -416,4 +416,6 @@ void	PARENT_CLASS::AlpacaDisplayErrorMessage(const char *errorMsgString)
 }
 
 
+
+
 #endif // defined(_ENABLE_SKYTRAVEL_) || defined(_ENABLE_CTRL_DOME_)

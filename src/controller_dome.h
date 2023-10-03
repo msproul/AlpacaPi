@@ -70,6 +70,8 @@ class ControllerDome: public Controller
 		virtual	void	AlpacaDisplayErrorMessage(const char *errorMsgString);
 		virtual	void	UpdateConnectedStatusIndicator(void);
 		virtual	void	GetStartUpData_SubClass(void);
+		virtual	void	GetStatus_SubClass(void);
+
 		virtual	bool	AlpacaGetStartupData_OneAAT(void);
 		virtual	void	UpdateStartupData(void);
 		virtual	void	UpdateStatusData(void);
@@ -88,6 +90,8 @@ class ControllerDome: public Controller
 														const int	deviceNum,
 														const int	keywordEnum,
 														const char	*valueString);
+
+
 				bool	AlpacaProcessReadAllIdx_Dome(	const int	deviceNum,
 														const int	keywordEnum,
 														const char	*valueString);
@@ -98,9 +102,11 @@ class ControllerDome: public Controller
 				void	UpdateShutterStatus(const TYPE_ShutterStatus newShutterStatus);
 				void	UpdateShutterAltitude(const double newAltitude);
 
-			//===================================================================
+				//===================================================================
 				void	SetAlpacaShutterInfo(TYPE_REMOTE_DEV *alpacaDevice);
 				void	SendShutterCommand(const char *shutterCmd);
+
+
 
 				//===================================================================
 				//*	tab information

@@ -403,7 +403,7 @@ bool	validData;
 //*****************************************************************************
 void	ControllerDome::GetStartUpData_SubClass(void)
 {
-	//*	this is ONLY to be implemented at the subclss level
+	//*	this is ONLY to be implemented at the subclass level
 #ifdef _ENABLE_EXTERNAL_SHUTTER_
 	//=================================================
 	if (cShutterInfoValid)
@@ -411,6 +411,13 @@ void	ControllerDome::GetStartUpData_SubClass(void)
 		AlpacaGetShutterReadAll();
 	}
 #endif // _ENABLE_EXTERNAL_SHUTTER_
+}
+
+//*****************************************************************************
+void	ControllerDome::GetStatus_SubClass(void)
+{
+	#warning "GetStatus_SubClass() not finished for Dome Controller"
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, "Not finished");
 }
 
 //*****************************************************************************
