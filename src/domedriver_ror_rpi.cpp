@@ -316,13 +316,19 @@ void	DomeDriverROR::Init_Hardware(void)
 #endif // _CHRIS_A_ROLL_OFF_ROOF_
 
 #ifdef _TOPENS_ROLL_OFF_ROOF_
+bool		relayOK;
+	relayOK		=	RpiRelay_SetRelay(kRelay_OpenStopClose, true);
+	relayOK		=	RpiRelay_SetRelay(2, true);
+	relayOK		=	RpiRelay_SetRelay(3, true);
+	relayOK		=	RpiRelay_SetRelay(4, true);
+	CONSOLE_DEBUG("all relays set to TRUE");
+
 	//*	set the I/O pins
 	pinMode(kRelay_RoofOpenSensor,		INPUT);
 	pinMode(kRelay_RoofCloseSensor,		INPUT);
 	CONSOLE_DEBUG_W_NUM("kRelay_RoofOpenSensor  (INPUT)\t=", kRelay_RoofOpenSensor);
 	CONSOLE_DEBUG_W_NUM("kRelay_RoofCloseSensor (INPUT)\t=", kRelay_RoofCloseSensor);
 
-	pinMode(kRelay_RoofCloseSensor,		INPUT);
 	//*	set the internal pullup resisters
 	pullUpDnControl(kRelay_RoofOpenSensor,	PUD_UP);
 	pullUpDnControl(kRelay_RoofCloseSensor,	PUD_UP);
@@ -616,7 +622,7 @@ uint32_t	deltaMilliSecs;
 			cRORisOpening			=	true;
 			relayStartMilliSecs	=	millis();
 			//*	set the line HIGH to turn the relay on and connect the signal to ground
-			relayOK		=	RpiRelay_SetRelay(kRelay_OpenStopClose, true);
+			relayOK		=	RpiRelay_SetRelay(kRelay_OpenStopClose, false);
 			//*	now wait 3 seconds or until the open sensor goes false;
 			CONSOLE_DEBUG("Waiting 3 seconds");
 			deltaMilliSecs	=	0;
@@ -634,7 +640,7 @@ uint32_t	deltaMilliSecs;
 				usleep(50 * 1000);
 			}
 
-			relayOK		=	RpiRelay_SetRelay(kRelay_OpenStopClose, false);
+			relayOK		=	RpiRelay_SetRelay(kRelay_OpenStopClose, true);
 			CONSOLE_DEBUG_W_NUM("Turning off relay #", kRelay_OpenStopClose);
 			CONSOLE_DEBUG_W_NUM("elapsed time (milliseconds)", deltaMilliSecs);
 
@@ -657,7 +663,7 @@ uint32_t	deltaMilliSecs;
 			cDomeProp.Slewing		=	true;
 			cRORisClosing			=	true;
 			//*	set the line HIGH to turn the relay on and connect the signal to ground
-			relayOK		=	RpiRelay_SetRelay(kRelay_OpenStopClose, true);
+			relayOK		=	RpiRelay_SetRelay(kRelay_OpenStopClose, false);
 			CONSOLE_DEBUG("Waiting 3 seconds");
 			deltaMilliSecs	=	0;
 			while (deltaMilliSecs < 3000)
@@ -673,7 +679,7 @@ uint32_t	deltaMilliSecs;
 				//*	wait 50 milliseconds
 				usleep(50 * 1000);
 			}
-			relayOK		=	RpiRelay_SetRelay(kRelay_OpenStopClose, false);
+			relayOK		=	RpiRelay_SetRelay(kRelay_OpenStopClose, true);
 			CONSOLE_DEBUG_W_NUM("Turning off relay #", kRelay_OpenStopClose);
 			CONSOLE_DEBUG_W_NUM("elapsed time (milliseconds)", deltaMilliSecs);
 		}

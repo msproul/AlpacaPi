@@ -155,6 +155,8 @@ char	wiringPi_VerString[32];
 }
 
 //*****************************************************************************
+//*	Relay numbers start at 1
+//*****************************************************************************
 static int TranslateSwitchToPin(const int relayNumber)
 {
 int		pinNumber;
