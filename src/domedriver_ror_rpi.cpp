@@ -224,86 +224,6 @@ DomeDriverROR::~DomeDriverROR( void )
 
 
 //*****************************************************************************
-void	DomeDriverROR::OutputHTML_Part2(TYPE_GetPutRequestData *reqData)
-{
-char				lineBuffer[256];
-int					mySocketFD;
-
-//	CONSOLE_DEBUG(__FUNCTION__);
-
-	mySocketFD	=	reqData->socket;
-
-	SocketWriteData(mySocketFD,	"<P>\r\n");
-
-	SocketWriteData(mySocketFD,	"<CENTER>\r\n");
-	SocketWriteData(mySocketFD,	"<H2>Raspberry-Pi Roll Off Roof Driver</H2>\r\n");
-	//===============================================================
-	SocketWriteData(mySocketFD,	"<TABLE BORDER=1>\r\n");
-	SocketWriteData(mySocketFD,	"<TR>\r\n");
-	SocketWriteData(mySocketFD,	"<TH COLSPAN=3>Raspberry-Pi Roll Off Roof Driver</TH>\r\n");
-	SocketWriteData(mySocketFD,	"</TR>\r\n");
-
-	SocketWriteData(mySocketFD,	"<TR>\r\n");
-	SocketWriteData(mySocketFD,	"<TH COLSPAN=3>Hardware configuration</TH>\r\n");
-	SocketWriteData(mySocketFD,	"</TR>\r\n");
-
-#ifdef _USE_BCM_PIN_NUMBERS_
-	SocketWriteData(mySocketFD,	"<TR>\r\n");
-	SocketWriteData(mySocketFD,	"<TD COLSPAN=3><CENTER>Using BCM Pin numbering</TH>\r\n");
-	SocketWriteData(mySocketFD,	"</TR>\r\n");
-
-#endif // _USE_BCM_PIN_NUMBERS_
-
-#ifdef _ENABLE_4REALY_BOARD
-	SocketWriteData(mySocketFD,	"<TR>\r\n");
-	SocketWriteData(mySocketFD,	"<TD COLSPAN=3><CENTER>Using Raspberry Pi 4 Relay board</TH>\r\n");
-	SocketWriteData(mySocketFD,	"</TR>\r\n");
-
-#endif // _ENABLE_4REALY_BOARD
-
-
-	SocketWriteData(mySocketFD,	"<TR>\r\n");
-	sprintf(lineBuffer,	"\t<TD>Relay #1 pin</TD><TD>%d</TD><TD>Output</TD>\r\n", kHWpin_Channel1);
-	SocketWriteData(mySocketFD,	lineBuffer);
-	SocketWriteData(mySocketFD,	"</TR>\r\n");
-
-	SocketWriteData(mySocketFD,	"<TR>\r\n");
-	sprintf(lineBuffer,	"\t<TD>Relay #2 pin</TD><TD>%d</TD><TD>Output</TD>\r\n", kHWpin_Channel2);
-	SocketWriteData(mySocketFD,	lineBuffer);
-	SocketWriteData(mySocketFD,	"</TR>\r\n");
-
-	SocketWriteData(mySocketFD,	"<TR>\r\n");
-	sprintf(lineBuffer,	"\t<TD>Relay #3 pin</TD><TD>%d</TD><TD>Output</TD>\r\n", kHWpin_Channel3);
-	SocketWriteData(mySocketFD,	lineBuffer);
-	SocketWriteData(mySocketFD,	"</TR>\r\n");
-
-	SocketWriteData(mySocketFD,	"<TR>\r\n");
-	sprintf(lineBuffer,	"\t<TD>Relay #4 pin</TD><TD>%d</TD><TD>Output</TD>\r\n", kHWpin_Channel4);
-	SocketWriteData(mySocketFD,	lineBuffer);
-	SocketWriteData(mySocketFD,	"</TR>\r\n");
-#ifdef _TOPENS_ROLL_OFF_ROOF_
-	SocketWriteData(mySocketFD,	"<TR>\r\n");
-	sprintf(lineBuffer,	"\t<TD>Open Sensor</TD><TD>%d</TD><TD>Input</TD><TD>%d</TD>\r\n",
-												kRelay_RoofOpenSensor,
-												cOpenSensorState);
-	SocketWriteData(mySocketFD,	lineBuffer);
-	SocketWriteData(mySocketFD,	"</TR>\r\n");
-
-	SocketWriteData(mySocketFD,	"<TR>\r\n");
-	sprintf(lineBuffer,	"\t<TD>Close Sensor</TD><TD>%d</TD><TD>Input</TD><TD>%d</TD>\r\n",
-												kRelay_RoofCloseSensor,
-												cClosedSensorState);
-	SocketWriteData(mySocketFD,	lineBuffer);
-	SocketWriteData(mySocketFD,	"</TR>\r\n");
-#endif // _TOPENS_ROLL_OFF_ROOF_
-
-	SocketWriteData(reqData->socket,	"</TABLE>\r\n");
-	SocketWriteData(reqData->socket,	"</CENTER>\r\n");
-	SocketWriteData(reqData->socket,	"<P>\r\n");
-
-}
-
-//*****************************************************************************
 void	DomeDriverROR::Init_Hardware(void)
 {
 	CONSOLE_DEBUG(__FUNCTION__);
@@ -569,8 +489,8 @@ uint32_t	deltaMilliSecs;
 	//			LOW when Roof is starting to close
 
 
-	cClosedSensorState	=	digitalRead(kRelay_RoofCloseSensor);
 	cOpenSensorState	=	digitalRead(kRelay_RoofOpenSensor);
+	cClosedSensorState	=	digitalRead(kRelay_RoofCloseSensor);
 
 //	CONSOLE_DEBUG_W_BOOL("cClosedSensorState\t=",	cClosedSensorState)
 //	CONSOLE_DEBUG_W_BOOL("cOpenSensorState  \t=",	cOpenSensorState)
@@ -670,7 +590,7 @@ uint32_t	deltaMilliSecs;
 			while (deltaMilliSecs < 3000)
 			{
 				//*	check the close sensor
-				cClosedSensorState	=	digitalRead(kRelay_RoofOpenSensor);
+				cClosedSensorState	=	digitalRead(kRelay_RoofCloseSensor);
 				if (cClosedSensorState != 0)
 				{
 					break;
@@ -702,5 +622,85 @@ uint32_t	deltaMilliSecs;
 	usleep(500 * 1000);
 }
 
+
+//*****************************************************************************
+void	DomeDriverROR::OutputHTML_Part2(TYPE_GetPutRequestData *reqData)
+{
+char				lineBuffer[256];
+int					mySocketFD;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	mySocketFD	=	reqData->socket;
+
+	SocketWriteData(mySocketFD,	"<P>\r\n");
+
+	SocketWriteData(mySocketFD,	"<CENTER>\r\n");
+	SocketWriteData(mySocketFD,	"<H2>Raspberry-Pi Roll Off Roof Driver</H2>\r\n");
+	//===============================================================
+	SocketWriteData(mySocketFD,	"<TABLE BORDER=1>\r\n");
+	SocketWriteData(mySocketFD,	"<TR>\r\n");
+	SocketWriteData(mySocketFD,	"<TH COLSPAN=3>Raspberry-Pi Roll Off Roof Driver</TH>\r\n");
+	SocketWriteData(mySocketFD,	"</TR>\r\n");
+
+	SocketWriteData(mySocketFD,	"<TR>\r\n");
+	SocketWriteData(mySocketFD,	"<TH COLSPAN=3>Hardware configuration</TH>\r\n");
+	SocketWriteData(mySocketFD,	"</TR>\r\n");
+
+#ifdef _USE_BCM_PIN_NUMBERS_
+	SocketWriteData(mySocketFD,	"<TR>\r\n");
+	SocketWriteData(mySocketFD,	"<TD COLSPAN=3><CENTER>Using BCM Pin numbering</TH>\r\n");
+	SocketWriteData(mySocketFD,	"</TR>\r\n");
+
+#endif // _USE_BCM_PIN_NUMBERS_
+
+#ifdef _ENABLE_4REALY_BOARD
+	SocketWriteData(mySocketFD,	"<TR>\r\n");
+	SocketWriteData(mySocketFD,	"<TD COLSPAN=3><CENTER>Using Raspberry Pi 4 Relay board</TH>\r\n");
+	SocketWriteData(mySocketFD,	"</TR>\r\n");
+
+#endif // _ENABLE_4REALY_BOARD
+
+
+	SocketWriteData(mySocketFD,	"<TR>\r\n");
+	sprintf(lineBuffer,	"\t<TD>Relay #1 pin</TD><TD>%d</TD><TD>Output</TD>\r\n", kHWpin_Channel1);
+	SocketWriteData(mySocketFD,	lineBuffer);
+	SocketWriteData(mySocketFD,	"</TR>\r\n");
+
+	SocketWriteData(mySocketFD,	"<TR>\r\n");
+	sprintf(lineBuffer,	"\t<TD>Relay #2 pin</TD><TD>%d</TD><TD>Output</TD>\r\n", kHWpin_Channel2);
+	SocketWriteData(mySocketFD,	lineBuffer);
+	SocketWriteData(mySocketFD,	"</TR>\r\n");
+
+	SocketWriteData(mySocketFD,	"<TR>\r\n");
+	sprintf(lineBuffer,	"\t<TD>Relay #3 pin</TD><TD>%d</TD><TD>Output</TD>\r\n", kHWpin_Channel3);
+	SocketWriteData(mySocketFD,	lineBuffer);
+	SocketWriteData(mySocketFD,	"</TR>\r\n");
+
+	SocketWriteData(mySocketFD,	"<TR>\r\n");
+	sprintf(lineBuffer,	"\t<TD>Relay #4 pin</TD><TD>%d</TD><TD>Output</TD>\r\n", kHWpin_Channel4);
+	SocketWriteData(mySocketFD,	lineBuffer);
+	SocketWriteData(mySocketFD,	"</TR>\r\n");
+#ifdef _TOPENS_ROLL_OFF_ROOF_
+	SocketWriteData(mySocketFD,	"<TR>\r\n");
+	sprintf(lineBuffer,	"\t<TD>Open Sensor</TD><TD>%d</TD><TD>Input</TD><TD>%d</TD>\r\n",
+												kRelay_RoofOpenSensor,
+												cOpenSensorState);
+	SocketWriteData(mySocketFD,	lineBuffer);
+	SocketWriteData(mySocketFD,	"</TR>\r\n");
+
+	SocketWriteData(mySocketFD,	"<TR>\r\n");
+	sprintf(lineBuffer,	"\t<TD>Close Sensor</TD><TD>%d</TD><TD>Input</TD><TD>%d</TD>\r\n",
+												kRelay_RoofCloseSensor,
+												cClosedSensorState);
+	SocketWriteData(mySocketFD,	lineBuffer);
+	SocketWriteData(mySocketFD,	"</TR>\r\n");
+#endif // _TOPENS_ROLL_OFF_ROOF_
+
+	SocketWriteData(reqData->socket,	"</TABLE>\r\n");
+	SocketWriteData(reqData->socket,	"</CENTER>\r\n");
+	SocketWriteData(reqData->socket,	"<P>\r\n");
+
+}
 
 #endif // _ENABLE_DOME_ROR_
