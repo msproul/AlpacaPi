@@ -17,6 +17,7 @@
 //*	Mar 25,	2023	<MLS> Added DumpLinuxTimeStruct()
 //*	Apr 30,	2023	<MLS> Added StripLeadingSpaces()
 //*	Aug  6,	2023	<MLS> Added StripCRLF()
+//*	Oct  3,	2023	<MLS> Added Millis() because millis() on R-Pi was behaving strangly
 //*****************************************************************************
 
 #include	<math.h>
@@ -29,7 +30,6 @@
 #include	<sys/time.h>
 #include	<unistd.h>
 #include	<time.h>
-
 
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
@@ -565,9 +565,32 @@ void	DumpLinuxTimeStruct(struct tm *linuxTimeStruct, const char *callingFunction
 	CONSOLE_DEBUG_W_STR("tm_zone  \t=",		linuxTimeStruct->tm_zone);
 }
 
+static uint32_t	gSystemStartSecs = 0;
+
+//*****************************************************************************
+uint32_t	Millis(void)
+{
+uint32_t	elapsedSecs;
+uint32_t	milliSecs;
+struct timeval	currentTime;
+
+//	CONSOLE_DEBUG_W_SIZE("sizeof(currentTime.tv_sec)\t=",  sizeof(currentTime.tv_sec));
+//	CONSOLE_ABORT(__FUNCTION__);
+//	#if (__SIZEOF_SIZE_T__ == 8)
+
+	gettimeofday(&currentTime, NULL);
+
+	if (gSystemStartSecs == 0)
+	{
+		gSystemStartSecs	=	currentTime.tv_sec;
+	}
+	elapsedSecs	=	currentTime.tv_sec - gSystemStartSecs;
+	milliSecs	=	(elapsedSecs * 1000) + (currentTime.tv_usec / 1000);
+	return(milliSecs);
+}
+
 #if !defined(__arm__) || defined(_INCLUDE_MILLIS_)
 
-static uint32_t	gSystemStartSecs = 0;
 
 //*****************************************************************************
 uint32_t	millis(void)
@@ -575,6 +598,10 @@ uint32_t	millis(void)
 uint32_t	elapsedSecs;
 uint32_t	milliSecs;
 struct timeval	currentTime;
+
+//	CONSOLE_DEBUG_W_SIZE("sizeof(currentTime.tv_sec)\t=",  sizeof(currentTime.tv_sec));
+//	CONSOLE_ABORT(__FUNCTION__);
+//	#if (__SIZEOF_SIZE_T__ == 8)
 
 	gettimeofday(&currentTime, NULL);
 

@@ -59,6 +59,7 @@ void		tolowerStr(char *theString);
 int			CountCharsInString(const char *theString, char theChar);
 
 uint32_t	millis(void);
+uint32_t	Millis(void);
 int			CountLinesInFile(FILE *filePointer);
 int			CelestObjDeclinationQsortProc(const void *e1, const void *e2);
 

@@ -126,26 +126,29 @@
 	extern "C" {
 #endif
 	uint32_t	millis(void);
+	uint32_t	Millis(void);
 #ifdef __cplusplus
 }
 #endif
 
 	#define		SETUP_TIMING()					\
-		uint32_t		tStartMillisecs;		\
-		uint32_t		tStopMillisecs;			\
-		uint32_t		tDeltaMillisecs;		\
-		tStartMillisecs	=	millis();
+		unsigned long		tStartMillisecs;	\
+		unsigned long		tStopMillisecs;		\
+		unsigned long		tDeltaMillisecs;	\
+		tStartMillisecs	=	Millis();
 
 
 	#define		START_TIMING()					\
-		tStartMillisecs	=	millis();
+		tStartMillisecs	=	Millis();
 
 
 	//*	this macro calculates delta milliseconds for timing testing
-	#define		DEBUG_TIMING(string)									\
-				tStopMillisecs	=	millis();							\
-				tDeltaMillisecs	=	tStopMillisecs - tStartMillisecs;	\
-				CONSOLE_DEBUG_W_NUM(string,	tDeltaMillisecs);
+	#define		DEBUG_TIMING(string)										\
+				tStopMillisecs	=	Millis();								\
+				tDeltaMillisecs	=	tStopMillisecs - tStartMillisecs;		\
+				CONSOLE_DEBUG_W_LONG(string,	tDeltaMillisecs);
+
+//				CONSOLE_DEBUG_W_LONG("tStartMillisecs=", tStartMillisecs);	\
 
 #else
 	#define		SETUP_TIMING()

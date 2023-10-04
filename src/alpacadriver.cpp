@@ -212,7 +212,7 @@
 
 #include <pthread.h>
 
-//#define _DEBUG_TIMING_
+#define _DEBUG_TIMING_
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
 
@@ -3242,6 +3242,7 @@ int			returnCode;
 																linuxTime->tm_mday);
 		CONSOLE_DEBUG("-------------------------------------------------------------------------");
 		CONSOLE_DEBUG_W_STR("Open log file:", logFilename);
+		SETUP_TIMING();
 		gIPlogFilePointer		=	fopen(logFilename, "a");
 		gIPlogNeedsToBeOpened	=	false;
 		gCurrentDayOfMonth		=	linuxTime->tm_mday;
@@ -3249,6 +3250,7 @@ int			returnCode;
 		//*	record the fact that we opened the log file
 		sprintf(lineBuff,	"%-18s\tLog file opened --------------------------------------------------------\r\n", datestring);
 		bytesWritten	=	fprintf(gIPlogFilePointer,	"%s", lineBuff);
+		DEBUG_TIMING("Time to open log file (ms)\t=");
 	}
 
 
@@ -3293,6 +3295,7 @@ int			returnCode;
 	{
 		CONSOLE_DEBUG("Error: gIPlogFilePointer is NULL");
 	}
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, "Exit");
 }
 
 //#define	_DEBUG_HTML_
@@ -4340,7 +4343,7 @@ void	AlpacaDriver::ComputeCPUusage(void)
 //*****************************************************************************
 static void	CreateDriverObjects()
 {
-
+	SETUP_TIMING();
 
 //------------------------------------------------------
 //*	Cameras
@@ -4348,6 +4351,7 @@ static void	CreateDriverObjects()
 int		cameraCnt	=	0;
 	cameraCnt	=	CreateCameraObjects();
 	CONSOLE_DEBUG_W_NUM("total cameras created\t=", cameraCnt);
+	DEBUG_TIMING("Time to create camera objects (ms)=");
 #endif
 
 
@@ -4359,29 +4363,34 @@ int		cameraCnt	=	0;
 	{
 		CreateMultiCamObject();
 	}
+	DEBUG_TIMING("Time to create multicam objects (ms)=");
 #endif
 
 //------------------------------------------------------
 #if _ENABLE_CALIBRATION_
 	CreateCalibrationObjects();
+	DEBUG_TIMING("Time to create calibration objects (ms)=");
 #endif // _ENABLE_CALIBRATION_
 
 //------------------------------------------------------
 //*	Dome
 #ifdef _ENABLE_DOME_
 	CreateDomeObjects();
+	DEBUG_TIMING("Time to create dome objects (ms)=");
 #endif
 
 //------------------------------------------------------
 //*	Filter wheel
 #ifdef _ENABLE_FILTERWHEEL_
 	CreateFilterWheelObjects();
+	DEBUG_TIMING("Time to create filterhweel objects (ms)=");
 #endif
 
 //------------------------------------------------------
 //*	Focuser
 #ifdef _ENABLE_FOCUSER_
 	CreateFocuserObjects();
+	DEBUG_TIMING("Time to create focuser objects (ms)=");
 #endif
 
 //------------------------------------------------------
@@ -4389,12 +4398,14 @@ int		cameraCnt	=	0;
 #if defined(_ENABLE_OBSERVINGCONDITIONS_)
 	CreateObsConditionObjects();
 //	CreateObsConditionRpiObjects();
+	DEBUG_TIMING("Time to create obs-condition objects (ms)=");
 #endif
 
 //------------------------------------------------------
 //*	rotator objects
 #ifdef _ENABLE_ROTATOR_
 	CreateRotatorObjects();
+	DEBUG_TIMING("Time to create rotator objects (ms)=");
 #endif
 
 
@@ -4403,29 +4414,34 @@ int		cameraCnt	=	0;
 #ifdef _ENABLE_SHUTTER_
 //	CreateShutterObjects();
 	CreateShuterArduinoObjects();
+	DEBUG_TIMING("Time to create shutter objects (ms)=");
 #endif
 
 //------------------------------------------------------
 //*	Slit tacker
 #ifdef _ENABLE_SLIT_TRACKER_
 	CreateSlitTrackerObjects();
+	DEBUG_TIMING("Time to create slit-tracker objects (ms)=");
 #endif // _ENABLE_SLIT_TRACKER_
 
 //------------------------------------------------------
 //*	Switch
 #if defined(_ENABLE_SWITCH_)
 	CreateSwitchObjects();
+	DEBUG_TIMING("Time to create switch objects (ms)=");
 #endif
 
 //------------------------------------------------------
 //*	Telescope
 #ifdef _ENABLE_TELESCOPE_
 	CreateTelescopeObjects();
+	DEBUG_TIMING("Time to create telescope objects (ms)=");
 #endif // _ENABLE_TELESCOPE_
 
 //------------------------------------------------------
 #ifdef _ENABLE_SPECTROGRAPH_
 	CreateSpectrographObjects();
+	DEBUG_TIMING("Time to create spectrograph objects (ms)=");
 #endif
 
 //------------------------------------------------------
@@ -4435,6 +4451,8 @@ int		cameraCnt	=	0;
 #ifdef _ENABLE_CAMERA_SIMULATOR_
 	strcpy(gWebTitle, "AlpacaPi Simulator");
 #endif
+	DEBUG_TIMING("Time to create driver objects (ms)=");
+
 }
 
 
@@ -4459,6 +4477,13 @@ struct tm		*linuxTime;
 	int			cameraCnt;
 #endif
 
+	SETUP_TIMING();
+
+//	while (1)
+//	{
+//		sleep(1);
+//		DEBUG_TIMING(__FUNCTION__);
+//	}
 
 #if defined(_ENABLE_FITS_) || defined(_ENABLE_JPEGLIB_)
 	char			lineBuffer[64];
@@ -4576,6 +4601,7 @@ struct tm		*linuxTime;
 				kASCOM_Err_Success,
 				gFullVersionString);
 
+	DEBUG_TIMING(__FUNCTION__);
 	gObservatorySettingsOK	=	ObservatorySettings_ReadFile();
 
 #ifdef _ENABLE_IMU_
@@ -4599,14 +4625,15 @@ int	imu_ReturnCode;
 	}
 #endif
 
-
+	DEBUG_TIMING(__FUNCTION__);
 	//--------------------------------------------------------
 	//*	create the various driver objects
 	CreateDriverObjects();
-
+	DEBUG_TIMING(__FUNCTION__);
 
 	//*********************************************************
 	StartDiscoveryListenThread(gAlpacaListenPort);
+	DEBUG_TIMING(__FUNCTION__);
 #ifdef _JETSON_
 	StartExtraListenThread(4520);
 #endif
@@ -4629,8 +4656,10 @@ int	imu_ReturnCode;
 		CONSOLE_DEBUG_W_NUM("threadErr=", threadErr);
 	}
 
+	DEBUG_TIMING(__FUNCTION__);
 
 	//========================================================================================
+	CONSOLE_DEBUG("Starting main loop --------------------------------------------------------");
 	gKeepRunning	=	true;
 	mainLoopCntr	=	0;
 	while (gKeepRunning)

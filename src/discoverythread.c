@@ -48,7 +48,7 @@
 #include	<pthread.h>
 #include	<ifaddrs.h>
 
-
+#define _DEBUG_TIMING_
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
 
@@ -1449,6 +1449,7 @@ int			threadErr;
 	GetMyAddress();
 
 	CONSOLE_DEBUG_W_NUM("Staring discovery listen thread on port", gAlpacaListenPort);
+	SETUP_TIMING();
 	threadErr			=	pthread_create(&gDiscoveryListenThreadID, NULL, &DiscoveryListenThread, NULL);
 	if (threadErr == 0)
 	{
@@ -1458,6 +1459,7 @@ int			threadErr;
 	{
 		CONSOLE_DEBUG_W_NUM("Error on thread creation, Error number:", threadErr);
 	}
+	DEBUG_TIMING("Time to create thread (ms)\t=");
 	return(threadErr);
 }
 

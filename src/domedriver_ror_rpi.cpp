@@ -276,7 +276,7 @@ int32_t		minDealy_microSecs;
 #ifdef _CHRIS_A_ROLL_OFF_ROOF_
 bool		relayOK;
 
-	currentMilliSecs	=	millis();
+	currentMilliSecs	=	Millis();
 	deltaMilliSecs		=	currentMilliSecs - cTimeOfLastOpenClose;
 	if (cRORisOpening && (deltaMilliSecs > (cRORrelayDelay_secs * 1000)))
 	{
@@ -376,7 +376,7 @@ bool				relayOK;
 		CONSOLE_DEBUG("RpiRelay_SetRelay returned false");
 	}
 	alpacaErrCode			=	kASCOM_Err_Success;
-	cTimeOfLastOpenClose	=	millis();
+	cTimeOfLastOpenClose	=	Millis();
 	cRORisOpening			=	true;
 	cDomeProp.Slewing		=	true;
 	cDomeProp.ShutterStatus	=	kShutterStatus_Opening;
@@ -386,7 +386,7 @@ bool				relayOK;
 	cCmdRcvd_OpenRoof		=	true;
 	cCmdRcvd_CloseRoof		=	false;
 	alpacaErrCode			=	kASCOM_Err_Success;
-	cTimeOfLastOpenClose	=	millis();
+	cTimeOfLastOpenClose	=	Millis();
 	cRORisOpening			=	true;
 	cDomeProp.Slewing		=	true;
 	cDomeProp.ShutterStatus	=	kShutterStatus_Opening;
@@ -416,7 +416,7 @@ bool				relayOK;
 		CONSOLE_DEBUG("RpiRelay_SetRelay returned false");
 	}
 	alpacaErrCode			=	kASCOM_Err_Success;
-	cTimeOfLastOpenClose	=	millis();
+	cTimeOfLastOpenClose	=	Millis();
 	cRORisClosing			=	true;
 	cDomeProp.Slewing		=	true;
 	cDomeProp.ShutterStatus	=	kShutterStatus_Closing;
@@ -466,8 +466,8 @@ void	DomeDriverROR::RunThread_Startup(void)
 //*****************************************************************************
 void	DomeDriverROR::RunThread_Loop(void)
 {
-uint32_t			currentTime_ms;
-uint32_t			deltaTime_ms;
+//uint32_t			currentTime_ms;
+//uint32_t			deltaTime_ms;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -498,6 +498,7 @@ uint32_t	deltaMilliSecs;
 
 	if (cClosedSensorState == 0)
 	{
+		//*	cClosedSensorState == 0 means the shutter is closed
 		cDomeProp.ShutterStatus	=	kShutterStatus_Closed;
 		cDomeProp.Slewing		=	false;
 		cRORisOpening			=	false;
@@ -505,27 +506,19 @@ uint32_t	deltaMilliSecs;
 	}
 	else if (cOpenSensorState == 0)
 	{
+		//*	cOpenSensorState == 0 means the shutter is open
 		cDomeProp.ShutterStatus	=	kShutterStatus_Open;
 		cDomeProp.Slewing		=	false;
 		cRORisOpening			=	false;
 		cRORisClosing			=	false;
 	}
+	else if ((cClosedSensorState != 0) && (cOpenSensorState != 0))
+	{
+		cDomeProp.Slewing		=	true;
+	}
 	else
 	{
-		if (cCmdRcvd_OpenRoof)
-		{
-			cDomeProp.ShutterStatus	=	kShutterStatus_Opening;
-			cDomeProp.Slewing		=	true;
-			cRORisOpening			=	true;
-			cRORisClosing			=	false;
-		}
-		else if (cCmdRcvd_CloseRoof)
-		{
-			cDomeProp.ShutterStatus	=	kShutterStatus_Closing;
-			cDomeProp.Slewing		=	true;
-			cRORisOpening			=	false;
-			cRORisClosing			=	true;
-		}
+
 	}
 	//----------------------------------------------------------
 	//*	check for an open command
@@ -538,10 +531,11 @@ uint32_t	deltaMilliSecs;
 		}
 		else
 		{
-			CONSOLE_DEBUG_W_NUM("Turning on relay #", kRelay_OpenStopClose);
+			CONSOLE_DEBUG_W_NUM("Turning on relay # (setting value to 0)", kRelay_OpenStopClose);
+			cDomeProp.ShutterStatus	=	kShutterStatus_Opening;
 			cDomeProp.Slewing		=	true;
 			cRORisOpening			=	true;
-			relayStartMilliSecs	=	millis();
+			relayStartMilliSecs		=	Millis();
 			//*	set the line HIGH to turn the relay on and connect the signal to ground
 			relayOK		=	RpiRelay_SetRelay(kRelay_OpenStopClose, false);
 			//*	now wait 3 seconds or until the open sensor goes false;
@@ -549,20 +543,24 @@ uint32_t	deltaMilliSecs;
 			deltaMilliSecs	=	0;
 			while (deltaMilliSecs < 3000)
 			{
-				//*	check the open sensor
-				cOpenSensorState	=	digitalRead(kRelay_RoofOpenSensor);
-				if (cOpenSensorState != 0)
+				//*	we want the switch to activate for at least 1 second
+				if (deltaMilliSecs > 1000)
 				{
-					break;
+					//*	check the open sensor
+					cOpenSensorState	=	digitalRead(kRelay_RoofOpenSensor);
+					if (cOpenSensorState != 0)
+					{
+						break;
+					}
 				}
-				currentStartMilliSecs	=	millis();
+				currentStartMilliSecs	=	Millis();
 				deltaMilliSecs			=	currentStartMilliSecs - relayStartMilliSecs;
 				//*	wait 50 milliseconds
 				usleep(50 * 1000);
 			}
 
 			relayOK		=	RpiRelay_SetRelay(kRelay_OpenStopClose, true);
-			CONSOLE_DEBUG_W_NUM("Turning off relay #", kRelay_OpenStopClose);
+			CONSOLE_DEBUG_W_NUM("Turning off relay # (setting value to 1)", kRelay_OpenStopClose);
 			CONSOLE_DEBUG_W_NUM("elapsed time (milliseconds)", deltaMilliSecs);
 
 		}
@@ -586,16 +584,21 @@ uint32_t	deltaMilliSecs;
 			//*	set the line HIGH to turn the relay on and connect the signal to ground
 			relayOK		=	RpiRelay_SetRelay(kRelay_OpenStopClose, false);
 			CONSOLE_DEBUG("Waiting 3 seconds");
-			deltaMilliSecs	=	0;
+			deltaMilliSecs		=	0;
+			cClosedSensorState	=	0;
 			while (deltaMilliSecs < 3000)
 			{
-				//*	check the close sensor
-				cClosedSensorState	=	digitalRead(kRelay_RoofCloseSensor);
-				if (cClosedSensorState != 0)
+				//*	we want the switch to activate for at least 1 second
+				if (deltaMilliSecs > 1000)
 				{
-					break;
+					//*	check the close sensor
+					cClosedSensorState	=	digitalRead(kRelay_RoofCloseSensor);
+					if (cClosedSensorState != 0)
+					{
+						break;
+					}
 				}
-				currentStartMilliSecs	=	millis();
+				currentStartMilliSecs	=	Millis();
 				deltaMilliSecs			=	currentStartMilliSecs - relayStartMilliSecs;
 				//*	wait 50 milliseconds
 				usleep(50 * 1000);
@@ -611,7 +614,7 @@ uint32_t	deltaMilliSecs;
 #endif // _TOPENS_ROLL_OFF_ROOF_
 
 //	//*	check if time to update
-//	currentTime_ms	=	millis();
+//	currentTime_ms	=	Millis();
 //	deltaTime_ms	=	currentTime_ms - cLastUpdate_ms;
 //	if (deltaTime_ms > 2000)
 //	{
