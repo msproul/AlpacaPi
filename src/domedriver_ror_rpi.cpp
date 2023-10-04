@@ -496,7 +496,11 @@ uint32_t	deltaMilliSecs;
 //	CONSOLE_DEBUG_W_BOOL("cOpenSensorState  \t=",	cOpenSensorState)
 
 
-	if (cClosedSensorState == 0)
+	if ((cClosedSensorState != 0) && (cOpenSensorState != 0))
+	{
+		cDomeProp.Slewing		=	true;
+	}
+	else if (cClosedSensorState == 0)
 	{
 		//*	cClosedSensorState == 0 means the shutter is closed
 		cDomeProp.ShutterStatus	=	kShutterStatus_Closed;
@@ -512,13 +516,13 @@ uint32_t	deltaMilliSecs;
 		cRORisOpening			=	false;
 		cRORisClosing			=	false;
 	}
-	else if ((cClosedSensorState != 0) && (cOpenSensorState != 0))
+	else if ((cClosedSensorState == 0) && (cOpenSensorState == 0))
 	{
-		cDomeProp.Slewing		=	true;
+		CONSOLE_DEBUG("HARDWARE ERROR!!!!! Open and Close sensors both are active")
 	}
 	else
 	{
-
+		CONSOLE_DEBUG("Have no idea what state we are in")
 	}
 	//----------------------------------------------------------
 	//*	check for an open command
