@@ -456,7 +456,7 @@ int		startupWidgetIdx;
 	else
 	{
 		ObservatorySettings_CreateTemplateFile();
-		SetStartupTextStatus(startupWidgetIdx, "Failed");
+		SetStartupTextStatus(startupWidgetIdx, "Not found");
 	}
 
 	if (gObseratorySettings.KeyWordCount > 10)
@@ -466,7 +466,6 @@ int		startupWidgetIdx;
 	else
 	{
 		ObservatorySettings_CreateTemplateFile();
-		SetStartupTextStatus(startupWidgetIdx, "Not enough data");
 	}
 
 //	DumpObservatorySettings();
