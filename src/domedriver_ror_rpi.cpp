@@ -572,7 +572,7 @@ uint32_t	deltaMilliSecs;
 	}
 
 	//----------------------------------------------------------
-	//*	check for an open command
+	//*	check for an close command
 	if (cCmdRcvd_CloseRoof)
 	{
 		CONSOLE_DEBUG("command to close roof has been received");
@@ -585,6 +585,7 @@ uint32_t	deltaMilliSecs;
 			CONSOLE_DEBUG_W_NUM("Turning on relay #", kRelay_OpenStopClose);
 			cDomeProp.Slewing		=	true;
 			cRORisClosing			=	true;
+			currentStartMilliSecs	=	Millis();
 			//*	set the line HIGH to turn the relay on and connect the signal to ground
 			relayOK		=	RpiRelay_SetRelay(kRelay_OpenStopClose, false);
 			CONSOLE_DEBUG("Waiting 3 seconds");
