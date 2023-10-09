@@ -12,13 +12,13 @@ PKGCFG_LINECNT_CV3=`pkg-config --cflags opencv 2> /dev/null  | wc -l`
 PKGCFG_LINECNT_CV4=`pkg-config --cflags opencv4 2> /dev/null | wc -l`
 
 #based on the number of lines returned, pick out the version,
-#prefence given to "opencv" which is opencv3
-if [ $PKGCFG_LINECNT_CV3 -eq 1 ]
-then
-	OPENCV_VERSION=opencv
-elif [ $PKGCFG_LINECNT_CV4 -eq 1 ]
+#prefence given to "opencv" which is opencv4
+if [ $PKGCFG_LINECNT_CV4 -eq 1 ]
 then
 	OPENCV_VERSION=opencv4
+elif [ $PKGCFG_LINECNT_CV3 -eq 1 ]
+then
+	OPENCV_VERSION=opencv
 fi
 
 echo "$OPENCV_VERSION"

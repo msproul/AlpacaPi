@@ -539,6 +539,7 @@ uint32_t	deltaMilliSecs;
 			cDomeProp.ShutterStatus	=	kShutterStatus_Opening;
 			cDomeProp.Slewing		=	true;
 			cRORisOpening			=	true;
+			cRORisClosing			=	false;
 			relayStartMilliSecs		=	Millis();
 			//*	set the line HIGH to turn the relay on and connect the signal to ground
 			relayOK		=	RpiRelay_SetRelay(kRelay_OpenStopClose, false);
@@ -563,8 +564,8 @@ uint32_t	deltaMilliSecs;
 				usleep(50 * 1000);
 			}
 
-			relayOK		=	RpiRelay_SetRelay(kRelay_OpenStopClose, true);
 			CONSOLE_DEBUG_W_NUM("Turning off relay # (setting value to 1)", kRelay_OpenStopClose);
+			relayOK		=	RpiRelay_SetRelay(kRelay_OpenStopClose, true);
 			CONSOLE_DEBUG_W_NUM("elapsed time (milliseconds)", deltaMilliSecs);
 
 		}
@@ -586,6 +587,7 @@ uint32_t	deltaMilliSecs;
 			cDomeProp.Slewing		=	true;
 			cRORisClosing			=	true;
 			currentStartMilliSecs	=	Millis();
+			cRORisOpening			=	false;
 			//*	set the line HIGH to turn the relay on and connect the signal to ground
 			relayOK		=	RpiRelay_SetRelay(kRelay_OpenStopClose, false);
 			CONSOLE_DEBUG("Waiting 3 seconds");
@@ -608,8 +610,8 @@ uint32_t	deltaMilliSecs;
 				//*	wait 50 milliseconds
 				usleep(50 * 1000);
 			}
-			relayOK		=	RpiRelay_SetRelay(kRelay_OpenStopClose, true);
 			CONSOLE_DEBUG_W_NUM("Turning off relay #", kRelay_OpenStopClose);
+			relayOK		=	RpiRelay_SetRelay(kRelay_OpenStopClose, true);
 			CONSOLE_DEBUG_W_NUM("elapsed time (milliseconds)", deltaMilliSecs);
 		}
 

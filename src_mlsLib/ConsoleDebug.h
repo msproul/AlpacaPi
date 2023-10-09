@@ -148,7 +148,7 @@
 				tDeltaMillisecs	=	tStopMillisecs - tStartMillisecs;		\
 				CONSOLE_DEBUG_W_LONG(string,	tDeltaMillisecs);
 
-//				CONSOLE_DEBUG_W_LONG("tStartMillisecs=", tStartMillisecs);	\
+//				CONSOLE_DEBUG_W_LONG("tStartMillisecs=", tStartMillisecs);
 
 #else
 	#define		SETUP_TIMING()
