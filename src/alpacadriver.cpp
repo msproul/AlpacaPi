@@ -2966,9 +2966,9 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
 		alpacaDevice->cBytesWrittenForThisCmd	=	0;
 		alpacaDevice->cHttpHeaderSent			=	false;
 
-//		CONSOLE_DEBUG("Calling ProcessCommand() ---------------------------------------------");
-//		CONSOLE_DEBUG_W_STR("cAlpacaName         \t=",	alpacaDevice->cAlpacaName);
-//		CONSOLE_DEBUG_W_STR("deviceCommand       \t=",	reqData->deviceCommand);
+		CONSOLE_DEBUG("Calling ProcessCommand() ---------------------------------------------");
+		CONSOLE_DEBUG_W_STR("cAlpacaName         \t=",	alpacaDevice->cAlpacaName);
+		CONSOLE_DEBUG_W_STR("deviceCommand       \t=",	reqData->deviceCommand);
 		alpacaErrCode	=	alpacaDevice->ProcessCommand(reqData);
 		if (alpacaErrCode == kASCOM_Err_Success)
 		{
@@ -3664,10 +3664,11 @@ char				myDeviceString[64]			=	"";
 char				myDeviceNumString[64]		=	"";
 char				myDeviceCmdString[256]		=	"";
 int					cmdBuffLen;
+char				*delimPtr;
 
-//	CONSOLE_DEBUG("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-//	CONSOLE_DEBUG(__FUNCTION__);
-//	DumpRequestStructure(__FUNCTION__, reqData);
+	CONSOLE_DEBUG("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+	CONSOLE_DEBUG(__FUNCTION__);
+	DumpRequestStructure(__FUNCTION__, reqData);
 //	PUT /api/v1/camera/0/exposuretime HTTP/1.1
 
 	//*	copy the full command over
@@ -3722,6 +3723,7 @@ int					cmdBuffLen;
 		}
 	}
 
+	CONSOLE_DEBUG_W_NUM("slashCounter\t=",	slashCounter);
 	//---------------------------------------------------
 	if (slashCounter >= 3)
 	{
@@ -3732,24 +3734,12 @@ int					cmdBuffLen;
 			reqData->alpacaVersion		=	myAlpacaVersionString[1] & 0x0f;
 		}
 //		CONSOLE_DEBUG_W_NUM("reqData->alpacaVersion\t=",	reqData->alpacaVersion);
+		strcpy(reqData->deviceType,		myDeviceString);
 	}
 
-	if (slashCounter > 5)
+	if (slashCounter >= 4)
 	{
-		strcpy(reqData->deviceType,		myDeviceString);
-		//*	check for valid device number,  CONFORMU throws -1 and "A"
-		if (isdigit(myDeviceNumString[0]))
-		{
-			reqData->deviceNumber		=	atoi(myDeviceNumString);
-		}
-		else
-		{
-			//*	the device number is not a valid number
-			CONSOLE_DEBUG("=====================================================");
-			CONSOLE_DEBUG_W_STR("Device number sting is invalid!!!", myDeviceNumString);
-			reqData->deviceNumber	=	-1;
-		}
-
+		CONSOLE_DEBUG("Extracting command string");
 		//*	extract out the command itself for easier processing by the handlers
 		cmdBuffLen		=	strlen(myDeviceCmdString);
 		ccc				=	0;
@@ -3762,11 +3752,33 @@ int					cmdBuffLen;
 			ccc++;
 		}
 		reqData->deviceCommand[ccc]	=	0;
+		CONSOLE_DEBUG_W_NUM("cmdBuffLen            \t=",	cmdBuffLen);
+		CONSOLE_DEBUG_W_STR("myDeviceCmdString     \t=",	myDeviceCmdString);
+		CONSOLE_DEBUG_W_STR("reqData->deviceCommand\t=",	reqData->deviceCommand);
+
+	}
+
+	if (slashCounter > 5)
+	{
+		//*	check for valid device number,  CONFORMU throws -1 and "A"
+		if (isdigit(myDeviceNumString[0]))
+		{
+			reqData->deviceNumber		=	atoi(myDeviceNumString);
+		}
+		else
+		{
+			//*	the device number is not a valid number
+			CONSOLE_DEBUG("=====================================================");
+			CONSOLE_DEBUG_W_STR("Device number sting is invalid!!!", myDeviceNumString);
+			reqData->deviceNumber	=	-1;
+		}
 	}
 	else
 	{
 		strcpy(reqData->deviceType,		"unknown");
 		reqData->deviceCommand[0]	=	0;
+		CONSOLE_DEBUG("Unknown device type");
+//		CONSOLE_ABORT(__FUNCTION__);
 	}
 
 	//*	figure out the base type of the request (see enum list above)
@@ -3777,12 +3789,13 @@ int					cmdBuffLen;
 	//	/management/apiversions
 	if (requestType == kRequestType_Managment)
 	{
-//		CONSOLE_DEBUG_W_NUM("slashCounter         \t=",	slashCounter);
-//		CONSOLE_DEBUG_W_STR("myRequestTypeString  \t=",	myRequestTypeString);
-//		CONSOLE_DEBUG_W_STR("myAlpacaVersionString\t=",	myAlpacaVersionString);
-//		CONSOLE_DEBUG_W_STR("myDeviceString       \t=",	myDeviceString);
-//		CONSOLE_DEBUG_W_STR("myDeviceNumString    \t=",	myDeviceNumString);
-//		CONSOLE_DEBUG_W_STR("myDeviceCmdString    \t=",	myDeviceCmdString);
+		CONSOLE_DEBUG_W_NUM("slashCounter          \t=",	slashCounter);
+//		CONSOLE_DEBUG_W_STR("myRequestTypeString   \t=",	myRequestTypeString);
+		CONSOLE_DEBUG_W_STR("myAlpacaVersionString \t=",	myAlpacaVersionString);
+		CONSOLE_DEBUG_W_STR("myDeviceString        \t=",	myDeviceString);
+//		CONSOLE_DEBUG_W_STR("myDeviceNumString     \t=",	myDeviceNumString);
+//		CONSOLE_DEBUG_W_STR("myDeviceCmdString     \t=",	myDeviceCmdString);
+		CONSOLE_DEBUG_W_STR("reqData->deviceCommand\t=",	reqData->deviceCommand);
 
 		if ((strlen(myAlpacaVersionString) > 3) && (strlen(myDeviceString) == 0))
 		{
@@ -3792,6 +3805,26 @@ int					cmdBuffLen;
 		{
 			strcpy(reqData->deviceCommand, myDeviceString);
 		}
+		//------------------------------------------------
+		//*	https://github.com/msproul/AlpacaPi/issues
+		//*	issue #29
+		//*	look for delimiter characters
+		delimPtr	=	strchr(reqData->deviceCommand, '?');
+		if (delimPtr != NULL)
+		{
+			*delimPtr	=	0;
+		}
+		delimPtr	=	strchr(reqData->deviceCommand, '&');
+		if (delimPtr != NULL)
+		{
+			*delimPtr	=	0;
+		}
+		delimPtr	=	strchr(reqData->deviceCommand, 0x20);
+		if (delimPtr != NULL)
+		{
+			*delimPtr	=	0;
+		}
+		CONSOLE_DEBUG_W_STR("reqData->deviceCommand\t=",	reqData->deviceCommand);
 //		DumpRequestStructure(__FUNCTION__, reqData);
 	}
 

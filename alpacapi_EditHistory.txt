@@ -1648,7 +1648,7 @@ widget.h:10              	//*	Feb 21,	2022	<MLS> Changed kWidgetType_Graphic to 
 widget.h:11              	//*	Feb 21,	2022	<MLS> Deleted kWidgetType_Custom
 windowtab.cpp:63         	//*	Feb 21,	2022	<MLS> Changed all references of CvScalar to cv::Scalar
 GaiaSQL.cpp:32           	//*	Feb 22,	2022	<KAS> Fixed dangling result that caused the server to log an error
-GaiaSQL.cpp:751          	//*	Feb 22,	2022	<KAS> Fixed dangling result Bug
+GaiaSQL.cpp:758          	//*	Feb 22,	2022	<KAS> Fixed dangling result Bug
 cameradriver_opencv.cpp:42	//*	Feb 23,	2022	<MLS> Working on converting C++ versions of opencv
 controller_image.cpp:14  	//*	Feb 25,	2022	<MLS> SetLiveWindowImage() working under C++ opencv
 windowtab_camera.cpp:40  	//*	Feb 25,	2022	<MLS> Downloading image working with C++ opencv
@@ -2533,7 +2533,7 @@ rotatordriver_sim.cpp:26 	//*	Mar  2,	2023	<MLS> CONFORMU-rotatordriver_sim -> P
 switchdriver_sim.cpp:25  	//*	Mar  2,	2023	<MLS> Created switchdriver_sim.cpp
 switchdriver_sim.h:11    	//*	Mar  2,	2023	<MLS> Created switchdriver_sim.h
 alpacadriver.cpp:157     	//*	Mar  3,	2023	<MLS> Added ProcessAlpacaCommand()
-alpacadriver.cpp:3914    	//*	Mar  3,	2023	<MLS> Make CONFORMU happy, check for valid device number
+alpacadriver.cpp:3947    	//*	Mar  3,	2023	<MLS> Make CONFORMU happy, check for valid device number
 alpacadriver_helper.c:13 	//*	Mar  3,	2023	<MLS> Added FindDeviceTypeByStringLowerCase()
 calibration_sim.cpp:20   	//*	Mar  3,	2023	<MLS> Created calibration_sim.cpp
 cameradriver_SONY.cpp:1295	//*	Mar  3,	2023	<MLS> this line caused a compile err
@@ -3027,16 +3027,16 @@ cameradriver_QHY.cpp:52  	//*	Oct 10,	2122	<TODO> Add support for percentcomplet
 spectrodriver.cpp:33     	//*	May  7,	2123	<TODO> Add support for SlitID, SlitAngle, SlitWidth
 controller_dome.cpp:47   	//*	Jun 25,	2123	<ADD> Add slaved to DeviceState
 History Comments found   = 3027 in 459 files
-Total lines              = 212778
-Total comment Lines      = 34262 (16.1%)
-Total comments           = 38482 (18.1%)
+Total lines              = 212827
+Total comment Lines      = 34254 (16.1%)
+Total comments           = 38474 (18.1%)
 Total history comments   = 3027 (1.4%)
 Total C files            = 62
 Total C++ files          = 173
 Total H files            = 222
-Preprocssor cnt          = 6765
-Total SLOC               = 135892
-Total SLOC-Logical       = 104983
+Preprocssor cnt          = 6766
+Total SLOC               = 135946
+Total SLOC-Logical       = 105027
 Programmer comment summary
 MLS             = 2636
 TODO            =   11
