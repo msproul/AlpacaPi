@@ -97,9 +97,9 @@
 
 	#include	"raspberrypi_relaylib.h"
 
-	#ifndef _ENABLE_4REALY_BOARD
-//		#error	"_ENABLE_4REALY_BOARD should be enabled"
-	#endif // _ENABLE_4REALY_BOARD
+	#ifndef _ENABLE_4REALY_BOARD_
+//		#error	"_ENABLE_4REALY_BOARD_ should be enabled"
+	#endif // _ENABLE_4REALY_BOARD_
 
 #endif // _CHRIS_A_ROLL_OFF_ROOF_
 
@@ -663,12 +663,12 @@ int					mySocketFD;
 
 #endif // _USE_BCM_PIN_NUMBERS_
 
-#ifdef _ENABLE_4REALY_BOARD
+#ifdef _ENABLE_4REALY_BOARD_
 	SocketWriteData(mySocketFD,	"<TR>\r\n");
 	SocketWriteData(mySocketFD,	"<TD COLSPAN=3><CENTER>Using Raspberry Pi 4 Relay board</TH>\r\n");
 	SocketWriteData(mySocketFD,	"</TR>\r\n");
 
-#endif // _ENABLE_4REALY_BOARD
+#endif // _ENABLE_4REALY_BOARD_
 
 
 	SocketWriteData(mySocketFD,	"<TR>\r\n");

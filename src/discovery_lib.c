@@ -469,6 +469,7 @@ static	void PrintDeviceList(void)
 int		ii;
 char	ipAddrSt[32];
 
+	CONSOLE_DEBUG(__FUNCTION__);
 	qsort(gAlpacaDiscoveredList, gAlpacaDiscoveredCnt, sizeof(TYPE_REMOTE_DEV), DeviceSort);
 
 	for (ii=0; ii<gAlpacaDiscoveredCnt; ii++)
@@ -704,7 +705,7 @@ int					alpacaIPaddrCnt;
 	PollAllDevices();
 //	AddAlpacaTestSiteToList();
 
-	PrintDeviceList();
+//	PrintDeviceList();
 
 	return(alpacaIPaddrCnt);
 }

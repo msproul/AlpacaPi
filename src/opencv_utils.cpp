@@ -303,8 +303,8 @@ void	LLG_DrawCString(	IplImage	*openCV_Image,
 	if (openCV_Image != NULL)
 	{
 	CvPoint		textLoc;
-	int			myFontIdx;
-		myFontIdx	=	1;
+//	int			myFontIdx;
+//		myFontIdx	=	1;
 //		if ((fontIndex >= 0) && (fontIndex < 10))
 //		{
 //			myFontIdx	=	fontIndex;

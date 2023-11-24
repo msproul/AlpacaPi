@@ -179,6 +179,8 @@
 //*	Sep 12,	2023	<MLS> Added OutputHTML_ClassDocs()
 //*	Sep 13,	2023	<MLS> Fixed HTML header bug when sending PNG file SendJpegResponse()
 //*	Sep 20,	2023	<MLS> Adding optional thread to driver base class
+//*	Nov  1,	2023	<MLS> Fixed git hub issue #29 - issues with
+//*	Nov  1,	2023	<MLS>	/management/v1/description?ClientID=1&ClientTransactionID=2
 //*****************************************************************************
 //*	to install code blocks 20
 //*	Step 1: sudo add-apt-repository ppa:codeblocks-devs/release
@@ -2849,8 +2851,8 @@ char			dataBuffer[1600];
 			}
 		}
 		fclose(filePointer);
-		CONSOLE_DEBUG_W_STR("File is closed   \t=", fileName);
-		CONSOLE_DEBUG_W_NUM("totalBytesWritten\t=",	totalBytesWritten);
+//		CONSOLE_DEBUG_W_STR("File is closed   \t=", fileName);
+//		CONSOLE_DEBUG_W_NUM("totalBytesWritten\t=",	totalBytesWritten);
 	}
 	else
 	{
@@ -2883,7 +2885,7 @@ char			*myFilenamePtr;
 struct stat		fileStatus;
 int				returnCode;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	if (strcasestr(jpegFileName, ".png") != NULL)
 	{
@@ -2966,9 +2968,9 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
 		alpacaDevice->cBytesWrittenForThisCmd	=	0;
 		alpacaDevice->cHttpHeaderSent			=	false;
 
-		CONSOLE_DEBUG("Calling ProcessCommand() ---------------------------------------------");
-		CONSOLE_DEBUG_W_STR("cAlpacaName         \t=",	alpacaDevice->cAlpacaName);
-		CONSOLE_DEBUG_W_STR("deviceCommand       \t=",	reqData->deviceCommand);
+//		CONSOLE_DEBUG("Calling ProcessCommand() ---------------------------------------------");
+//		CONSOLE_DEBUG_W_STR("cAlpacaName         \t=",	alpacaDevice->cAlpacaName);
+//		CONSOLE_DEBUG_W_STR("deviceCommand       \t=",	reqData->deviceCommand);
 		alpacaErrCode	=	alpacaDevice->ProcessCommand(reqData);
 		if (alpacaErrCode == kASCOM_Err_Success)
 		{
@@ -3018,11 +3020,11 @@ int					iii;
 bool				deviceFound;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
-	if (strncmp(reqData->httpCmdString, "PUT", 3) == 0)
-	{
-		CONSOLE_DEBUG(__FUNCTION__);
-		DumpRequestStructure(__FUNCTION__, reqData);
-	}
+//	if (strncmp(reqData->httpCmdString, "PUT", 3) == 0)
+//	{
+//		CONSOLE_DEBUG(__FUNCTION__);
+//		DumpRequestStructure(__FUNCTION__, reqData);
+//	}
 
 	//*******************************************
 	//*	now do something with the data
@@ -3240,9 +3242,9 @@ int			returnCode;
 																(1900 + linuxTime->tm_year),
 																(1 + linuxTime->tm_mon),
 																linuxTime->tm_mday);
-		CONSOLE_DEBUG("-------------------------------------------------------------------------");
-		CONSOLE_DEBUG_W_STR("Open log file:", logFilename);
-		SETUP_TIMING();
+//		CONSOLE_DEBUG("-------------------------------------------------------------------------");
+//		CONSOLE_DEBUG_W_STR("Open log file:", logFilename);
+//		SETUP_TIMING();
 		gIPlogFilePointer		=	fopen(logFilename, "a");
 		gIPlogNeedsToBeOpened	=	false;
 		gCurrentDayOfMonth		=	linuxTime->tm_mday;
@@ -3250,7 +3252,7 @@ int			returnCode;
 		//*	record the fact that we opened the log file
 		sprintf(lineBuff,	"%-18s\tLog file opened --------------------------------------------------------\r\n", datestring);
 		bytesWritten	=	fprintf(gIPlogFilePointer,	"%s", lineBuff);
-		DEBUG_TIMING("Time to open log file (ms)\t=");
+//		DEBUG_TIMING("Time to open log file (ms)\t=");
 	}
 
 
@@ -3666,9 +3668,9 @@ char				myDeviceCmdString[256]		=	"";
 int					cmdBuffLen;
 char				*delimPtr;
 
-	CONSOLE_DEBUG("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-	CONSOLE_DEBUG(__FUNCTION__);
-	DumpRequestStructure(__FUNCTION__, reqData);
+//	CONSOLE_DEBUG("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+//	CONSOLE_DEBUG(__FUNCTION__);
+//	DumpRequestStructure(__FUNCTION__, reqData);
 //	PUT /api/v1/camera/0/exposuretime HTTP/1.1
 
 	//*	copy the full command over
@@ -3723,7 +3725,7 @@ char				*delimPtr;
 		}
 	}
 
-	CONSOLE_DEBUG_W_NUM("slashCounter\t=",	slashCounter);
+//	CONSOLE_DEBUG_W_NUM("slashCounter\t=",	slashCounter);
 	//---------------------------------------------------
 	if (slashCounter >= 3)
 	{
@@ -3739,7 +3741,7 @@ char				*delimPtr;
 
 	if (slashCounter >= 4)
 	{
-		CONSOLE_DEBUG("Extracting command string");
+//		CONSOLE_DEBUG("Extracting command string");
 		//*	extract out the command itself for easier processing by the handlers
 		cmdBuffLen		=	strlen(myDeviceCmdString);
 		ccc				=	0;
@@ -3752,9 +3754,9 @@ char				*delimPtr;
 			ccc++;
 		}
 		reqData->deviceCommand[ccc]	=	0;
-		CONSOLE_DEBUG_W_NUM("cmdBuffLen            \t=",	cmdBuffLen);
-		CONSOLE_DEBUG_W_STR("myDeviceCmdString     \t=",	myDeviceCmdString);
-		CONSOLE_DEBUG_W_STR("reqData->deviceCommand\t=",	reqData->deviceCommand);
+//		CONSOLE_DEBUG_W_NUM("cmdBuffLen            \t=",	cmdBuffLen);
+//		CONSOLE_DEBUG_W_STR("myDeviceCmdString     \t=",	myDeviceCmdString);
+//		CONSOLE_DEBUG_W_STR("reqData->deviceCommand\t=",	reqData->deviceCommand);
 
 	}
 
@@ -3789,13 +3791,13 @@ char				*delimPtr;
 	//	/management/apiversions
 	if (requestType == kRequestType_Managment)
 	{
-		CONSOLE_DEBUG_W_NUM("slashCounter          \t=",	slashCounter);
+//		CONSOLE_DEBUG_W_NUM("slashCounter          \t=",	slashCounter);
 //		CONSOLE_DEBUG_W_STR("myRequestTypeString   \t=",	myRequestTypeString);
-		CONSOLE_DEBUG_W_STR("myAlpacaVersionString \t=",	myAlpacaVersionString);
-		CONSOLE_DEBUG_W_STR("myDeviceString        \t=",	myDeviceString);
+//		CONSOLE_DEBUG_W_STR("myAlpacaVersionString \t=",	myAlpacaVersionString);
+//		CONSOLE_DEBUG_W_STR("myDeviceString        \t=",	myDeviceString);
 //		CONSOLE_DEBUG_W_STR("myDeviceNumString     \t=",	myDeviceNumString);
 //		CONSOLE_DEBUG_W_STR("myDeviceCmdString     \t=",	myDeviceCmdString);
-		CONSOLE_DEBUG_W_STR("reqData->deviceCommand\t=",	reqData->deviceCommand);
+//		CONSOLE_DEBUG_W_STR("reqData->deviceCommand\t=",	reqData->deviceCommand);
 
 		if ((strlen(myAlpacaVersionString) > 3) && (strlen(myDeviceString) == 0))
 		{
@@ -3824,7 +3826,7 @@ char				*delimPtr;
 		{
 			*delimPtr	=	0;
 		}
-		CONSOLE_DEBUG_W_STR("reqData->deviceCommand\t=",	reqData->deviceCommand);
+//		CONSOLE_DEBUG_W_STR("reqData->deviceCommand\t=",	reqData->deviceCommand);
 //		DumpRequestStructure(__FUNCTION__, reqData);
 	}
 

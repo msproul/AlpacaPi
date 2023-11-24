@@ -13,7 +13,7 @@
 #endif
 
 
-#ifdef _ENABLE_4REALY_BOARD
+#ifdef _ENABLE_4REALY_BOARD_
 	//==============================================================
 	//	https://smile.amazon.com/gp/product/B077LV4F1B/ref=ppx_yo_dt_b_asin_title_o01_s00?ie=UTF8&psc=1
 	//	https://shop.sb-components.co.uk/products/pirelay-relay-board-shield-for-raspberry-pi
@@ -53,8 +53,9 @@
 	#define		TURN_PIN_ON		1
 	#define		TURN_PIN_OFF	0
 
-#else	// _ENABLE_4REALY_BOARD
+#else	// _ENABLE_4REALY_BOARD_
 
+	//==============================================================
 	//	8 port relay on DIN rail 	5,	6,	13,	16,	19,	20,	21,	26
 	//==============================================================
 	#define	kR_Pi_RelayCount	8

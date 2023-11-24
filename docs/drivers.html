@@ -1,0 +1,159 @@
+<HTML>
+<TITLE>AlpacaPi - Drivers</TITLE>
+<!-------------------------------------------->
+
+<BODY bgcolor=#777777>
+<FONT COLOR=white>
+<BODY link=red>
+<BODY vlink=BLUE><P>
+
+<CENTER>
+<TABLE BORDER=1 BGCOLOR=BLACK>
+	<TR>
+	<TH width=700>
+		<FONT COLOR=PURPLE>
+		<H1>AlpacaPi</H1>
+		<H1>Drivers</H1>
+	</TH>
+	</TR>
+</TABLE>
+<P>
+<TABLE BORDER=1>
+	</TR>
+		<TH><A HREF=index.html>Home</A>
+		</TH>
+
+		<TH><A HREF=skytravel.html>SkyTravel</A>
+		</TH>
+
+		<TH><A HREF=drivers.html>Drivers</A>
+		</TH>
+
+		<TH><A HREF=clientapps.html>Client Apps</A>
+		</TH>
+	</TR>
+</TABLE>
+</CENTER>
+<!-------------------------------------------->
+The drivers are probably the most important piece to the puzzle.
+Once the driver is running for a particular device, then any program that specs Alpaca can utilize that devices.
+This also inlcudes a web browser.  However you can not send action commands to the driver from a web browser.
+You can read all of the status.
+<P>
+The alpaca drives run on Linux and were designed with the Raspberry-Pi in mind.
+They will run on most any flavor of linux.
+<P>
+AlpacaPi drivers currently support the following devices.
+<UL>
+	<LI>Cameras
+		<UL>
+			<LI>ATIK cameras
+			<LI>FLIR grasshopper series cameras
+			<LI>QHY cameras
+			<LI>QSI cameras
+			<LI>SONY A7 R IV DLSR camera
+			<LI>TOUPTECH cameras
+			<LI>ZWO cameras
+		</UL>
+	<LI>Domes
+		<UL>
+			<LI>Raspberry Pi w/Motor control board for dome
+			<LI>Raspberry Pi w/Motor control board for Roll Off Roof
+		</UL>
+	<LI>Filter Wheels
+		<UL>
+			<LI>Atik filterwheel
+			<LI>QHY filterwheel
+			<LI>ZWO filterwheel
+		</UL>
+	<LI>Focusers
+		<UL>
+			<LI>Moonlite NiteCrawler
+			<LI>Moonlite High Speed Stepper
+		</UL>
+	<LI>Observing Conditions
+		<UL>
+			<LI>Raspberry Pi with sensors
+		</UL>
+	<LI>Rotator
+		<UL>
+			<LI>Moonlite NiteCrawler
+		</UL>
+	<LI>Switches
+		<UL>
+			<LI>Raspberry Pi with a  4 Relay board
+			<LI>Raspberry Pi with a  8 Relay board
+		</UL>
+	<LI>Telescope (Mounts)
+		<UL>
+			<LI>Talks LX200 via TCP/IP to tsc mount contoller
+			<LI>Rigel -	Custom driver for Jim H.
+			<LI>Raspberry Pi with Servo controller
+			<LI>Skywatch
+		</UL>
+
+</UL>
+<HR size=4 color=white>
+<H3>Client and server operation</H3>
+To utilize any of the drivers, first you have to build the driver and run it.
+Then you run the appropriate client program to access that driver.
+In my environment, there are normally on separate machines, the driver running on a Raspberry-Pi
+and the client program running on my linux desktop computer.
+They can also be on the SAME machine.
+<P>
+For exmple, if you want to utilize the 4 port switch (described below), follows these steps:
+<UL>
+	<LI>On the driver machine
+	<OL>
+		<LI>make piswitch4
+		<LI>./piswitch4
+	</OL>
+	<LI>On the client machine (can be the same as the driver machine)
+	<OL>
+		<LI>make switch or makeswitchcv4
+		<LI>./switch
+	</OL>
+</UL>
+You should then get a screen like this
+<CENTER>
+<IMG SRC=images/Switch-door-screenshot.jpg width=200>
+</CENTER>
+
+<HR size=4 color=white>
+<H3>Switch driver</H3>
+The switch driver on the Raspberry Pi requires the wiringpi library to be installed.
+At present, the wiringpi library only works on the 32 bit versions of Raspberry Pi linux.
+
+<P>
+<CENTER>
+<TABLE BORDER=1 >
+	<TR>
+		<TH><FONT COLOR=white>Description</TH>
+		<TH><FONT COLOR=white>Relay board</TH>
+		<TH><FONT COLOR=white>build / run commands</TH>
+
+	<TR>
+		<TD><FONT COLOR=white>8 Relay DIN mount</TD>
+		<TD>
+			<CENTER>
+			<FONT COLOR=white>
+			<IMG SRC=images/RaspberryPi_DIN8portRelay-small.jpg><BR>
+			<A HREF=https://www.amazon.com/Mount-Power-Relay-Module-Raspberry/dp/B084G9GLJG/ target=amazon>
+			Click here for amazon description</A>
+		</TD>
+		<TD><FONT COLOR=white><pre>make piswitch8<P>./piswitch8</pre></TD>
+	</TR>
+	<TR>
+		<TD><FONT COLOR=white>4 Relay </TD>
+		<TD>
+			<CENTER>
+			<IMG SRC=images/RaspberryPi_4portRelay.jpg><BR>
+			<A HREF=https://www.amazon.com/gp/product/B077LV4F1B/ target=amazon>
+			Click here for amazon description</A>
+		</TD>
+		<TD><FONT COLOR=white><pre>make piswitch4<P>./piswitch4</pre></TD>
+	</TR>
+
+</TABLE>
+
+
