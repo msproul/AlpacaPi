@@ -26,6 +26,7 @@
 //*	Sep 24,	2023	<MLS> Added _TOPENS_ROLL_OFF_ROOF_
 //*	Sep 24,	2023	<MLS> Started migrating to using background thread
 //*	Oct  2,	2023	<MLS> Updated background thread open/close logic
+//*	Nov 24,	2023	<MLS> Fixed bug in RunThread_Loop() as per pull request #28
 //*****************************************************************************
 //*****************************************************************************
 //	After doing some experimenting with AlpacaPi,

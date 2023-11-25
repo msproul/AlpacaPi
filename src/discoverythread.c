@@ -207,7 +207,7 @@ int					socketOption;
 int					setSocketRtnCde;
 bool				validDiscoveryRequest;
 char				ipAddrSt[48];
-
+char				errnoString[128];
 
 //	CONSOLE_DEBUG("Starting discovery listen thread");
 
@@ -220,6 +220,7 @@ char				ipAddrSt[48];
 		serverAddress.sin_addr.s_addr		=	INADDR_ANY;
 		serverAddress.sin_port				=	htons(kAlpacaDiscoveryPORT);
 
+		//*	the SO_REUSEPORT option should allow more than one program to use the same port
 		socketOption	=	1;
 		setSocketRtnCde	=	setsockopt(	mySocket,
 										SOL_SOCKET,
@@ -229,10 +230,14 @@ char				ipAddrSt[48];
 
 		if (setSocketRtnCde < 0)
 		{
+			GetLinuxErrorString(errno, errnoString);
+			CONSOLE_DEBUG_W_STR("setsockopt() Failed; error=", errnoString);
 			perror("setsockopt(SO_REUSEPORT) failed");
 		}
 		if (bind(mySocket, (struct sockaddr *)&serverAddress, sizeof(struct sockaddr_in)) < 0)
 		{
+			GetLinuxErrorString(errno, errnoString);
+			CONSOLE_DEBUG_W_STR("Binding Failed; error=", errnoString);
 			perror("binding");
 		}
 		while (1)

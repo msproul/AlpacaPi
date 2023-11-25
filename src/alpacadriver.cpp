@@ -4511,6 +4511,11 @@ struct tm		*linuxTime;
 #if defined(_ENABLE_CAMERA_)
 	int			cameraCnt;
 #endif
+#if defined(_ENABLE_FITS_) || defined(_ENABLE_JPEGLIB_)
+	char			lineBuffer[64];
+#endif
+//struct rlimit	myRlimit;
+//int				errorCode;
 
 	SETUP_TIMING();
 
@@ -4520,11 +4525,6 @@ struct tm		*linuxTime;
 //		DEBUG_TIMING(__FUNCTION__);
 //	}
 
-#if defined(_ENABLE_FITS_) || defined(_ENABLE_JPEGLIB_)
-	char			lineBuffer[64];
-#endif
-//struct rlimit	myRlimit;
-//int				errorCode;
 
 	printf("AlpacaPi driver\r\n");
 	sprintf(gFullVersionString,		"%s - %s build #%d", kApplicationName, kVersionString, kBuildNumber);
