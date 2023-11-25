@@ -584,6 +584,7 @@ uint32_t	deltaMilliSecs;
 		else
 		{
 			CONSOLE_DEBUG_W_NUM("Turning on relay #", kRelay_OpenStopClose);
+
 			cDomeProp.Slewing		=	true;
 			cRORisClosing			=	true;
 			currentStartMilliSecs	=	Millis();
