@@ -436,9 +436,16 @@ int		activeObjCnt;
 		{
 			if (gControllerList[iii] != NULL)
 			{
-				CONSOLE_DEBUG_W_STR("Deleting window", gControllerList[iii]->cWindowName);
-				delete gControllerList[iii];
-				cv::waitKey(10);
+				if (gControllerList[iii]->cMagicCookie == kMagicCookieValue)
+				{
+					CONSOLE_DEBUG_W_STR("Deleting window", gControllerList[iii]->cWindowName);
+					delete gControllerList[iii];
+					cv::waitKey(10);
+				}
+				else
+				{
+					CONSOLE_DEBUG_W_STR("Magic cookie is wrong!", gControllerList[iii]->cWindowName);
+				}
 			//	sleep(2);
 			}
 		}

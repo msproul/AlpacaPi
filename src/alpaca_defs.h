@@ -86,6 +86,8 @@
 //*	Sep  7,	2023	<MLS> Build 170
 //*	Sep 25,	2023	<MLS> Build 171	working on TOPENS ROR driver
 //*	Sep 28,	2023	<MLS> Build 172
+//*	Nov  1,	2023	<MLS> Pushed Build 172
+//*	Nov  1,	2023	<MLS> Build 173
 //*****************************************************************************
 //#include	"alpaca_defs.h"
 
@@ -105,7 +107,7 @@
 
 #define	kApplicationName		"AlpacaPi"
 #define	kVersionString			"V0.7.1"
-#define	kBuildNumber			172
+#define	kBuildNumber			173
 #define kAlpacaDiscoveryPORT	32227
 #define kAlpacaPiDefaultPORT	6800
 

@@ -1,0 +1,99 @@
+<HTML>
+<TITLE>AlpacaPi - Client Apps</TITLE>
+<!-------------------------------------------->
+
+<BODY bgcolor=#777777>
+<FONT COLOR=white>
+<BODY link=red>
+<BODY vlink=BLUE><P>
+
+<CENTER>
+<TABLE BORDER=1 BGCOLOR=BLACK>
+	<TR>
+	<TH width=700>
+		<FONT COLOR=PURPLE>
+		<H1>AlpacaPi</H1>
+		<H1>Client Apps</H1>
+	</TH>
+	</TR>
+</TABLE>
+<P>
+<TABLE BORDER=1>
+	</TR>
+		<TH><A HREF=index.html>Home</A>
+		</TH>
+
+		<TH><A HREF=skytravel.html>SkyTravel</A>
+		</TH>
+
+		<TH><A HREF=drivers.html>Drivers</A>
+		</TH>
+
+		<TH><A HREF=clientapps.html>Client Apps</A>
+		</TH>
+	</TR>
+</TABLE>
+</CENTER>
+<!-------------------------------------------->
+
+
+<H2>Client applications</H2>
+</CENTER>
+Once you have drivers running, you need an application to control it.
+The drivers have no direct user interface are designed to be only talked to through a network connection.
+You can use a web browser to read data but a web browser will not let you send commands.
+<P>
+AlpacaPi includes stand alone client applications for the following devices.
+<UL>
+	<LI>Camera
+	<LI>Dome
+	<LI>Filter Wheel
+	<LI>Focuser
+	<LI>Switch
+</UL>
+As stated above, a client application needs to know what device to talk to.
+You could specify the exact IP address and port if you know it, or use the discovery protocol.
+One thing to note, the discovery protocol only works on your local subnet.
+For most people this is fine, but if you want to control a REMOTE device, you will need to specify the IP and port.
+<P>
+	The client would issue a discovery protocol query and look for the devices it knows how to talk to.
+	In this example we are running my camera Gui program. As you can see from the client dump above,
+	it has found a camera at IP 192.168.1.164 on port 6800.
+	It also noticed that there was a filter wheel on the same device.
+	This camera application is smart enough to know how to talk to both of them.
+	If a filter wheel does not exist, that interface is not displayed as in the 2nd image.
+	<HR size=4 color=white>
+
+
+	To build the client apps, you have to have opencv installed. (refer to the software installation documentation).
+	There are two versions of opencv that are currently supported, version 3.2.2 and before and after 3.2.2.
+	To build the camera client app:
+<PRE>
+	>make cameracv4
+		or
+	>make camera
+</PRE>
+<P>
+<CENTER>
+<IMG SRC=images/Camera-newt16-screenshot.jpg>
+
+<IMG SRC=images/Camera-wo71-screenshot.jpg>
+<P>
+</CENTER>
+My focuser application is specifically designed to look exactly like the MoonLite NiteCrawler application.
+As in the case of the camera and the filter wheel.
+This app recognizes that there is both a focuser and a rotator on the same device.
+It will also work with the normal MoonLite focuser controller that does not have the rotator.
+
+<P>
+The image on the right is for a focuser that does not have an integrated rotator.
+Again, designed to look just like the MoonLite application.
+
+<P>
+<CENTER>
+<IMG SRC=images/NiteCrawler-newt16-screenshot.jpg>
+
+<IMG SRC=images/Moonlite-jetson-screenshot.jpg>
+
+</CENTER>
+

@@ -75,7 +75,7 @@
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
 
-//#define	_VERBOSE_SQL_DEBUG_
+#define	_VERBOSE_SQL_DEBUG_
 
 #include	"controller_skytravel.h"
 #include	"helper_functions.h"
@@ -347,6 +347,7 @@ static void	BuildSQLlogString(int whichString, char *logCommentString)
 static MYSQL	*OpenMysql(char *dataBaseName)
 {
 MYSQL	*mySQLConnection = NULL;
+char	sqlErrorString[256];
 
 #ifdef _VERBOSE_SQL_DEBUG_
 	CONSOLE_DEBUG(__FUNCTION__);
@@ -356,7 +357,9 @@ MYSQL	*mySQLConnection = NULL;
 	{
 		//*	establish connection to the database
 		CONSOLE_DEBUG_W_STR("dataBaseName\t", dataBaseName);
-		mySQLConnection	=	mysql_real_connect(	mySQLConnection,
+		CONSOLE_DEBUG_W_HEX("mySQLConnection\t", mySQLConnection);
+		//mySQLConnection	=
+		mysql_real_connect(	mySQLConnection,
 												gSQLsever_IPaddr,
 												gSQLsever_UserName,
 												gSQLsever_Password,
@@ -364,20 +367,23 @@ MYSQL	*mySQLConnection = NULL;
 												gSQLsever_Port,
 												NULL,
 												0);
+		CONSOLE_DEBUG_W_HEX("mySQLConnection\t", mySQLConnection);
 		if (mySQLConnection == NULL)
 		{
+
+			strcpy(sqlErrorString, mysql_error(mySQLConnection));
 			CONSOLE_DEBUG("mysql_real_connect() failed");
 			CONSOLE_DEBUG_W_STR("gSQLsever_IPaddr  \t=",	gSQLsever_IPaddr);
 			CONSOLE_DEBUG_W_STR("gSQLsever_UserName\t=",	gSQLsever_UserName);
 			CONSOLE_DEBUG_W_STR("gSQLsever_Password\t=",	gSQLsever_Password);
 			CONSOLE_DEBUG_W_STR("dataBaseName      \t=",	dataBaseName);
 			CONSOLE_DEBUG_W_NUM("gSQLsever_Port    \t=",	gSQLsever_Port);
-			CONSOLE_DEBUG_W_STR("mysql_error       \t=",	mysql_error(mySQLConnection));
+			CONSOLE_DEBUG_W_STR("mysql_error       \t=",	sqlErrorString);
 
 			LogSqlTransaction(	dataBaseName,
 								"mysql_real_connect() failed",
 								__FUNCTION__,
-								mysql_error(mySQLConnection));
+								sqlErrorString);
 		}
 	}
 	else
@@ -516,7 +522,8 @@ int		returnCode;
 	else
 	{
 		LogSqlTransaction(gSQLsever_Database, "mysql_select_db() failed", __FUNCTION__, mysql_error(myCon));
-		CONSOLE_DEBUG_W_NUM("mysql_select_db failed with returnCode\t=", returnCode);
+		CONSOLE_DEBUG_W_NUM("mysql_select_db failed with returnCode  \t=", returnCode);
+		CONSOLE_DEBUG_W_STR("mysql_select_db failed with error string\t=", mysql_error(myCon));
 	}
 
 	return(num_fields);
@@ -987,10 +994,10 @@ unsigned int	endMilliSecs;
 
 		CONSOLE_DEBUG("Trying to establish connection to the database");
 		CONSOLE_DEBUG_W_STR("gSQLsever_IPaddr  \t=",	gSQLsever_IPaddr);
+		CONSOLE_DEBUG_W_NUM("gSQLsever_Port    \t=",	gSQLsever_Port);
 		CONSOLE_DEBUG_W_STR("gSQLsever_UserName\t=",	gSQLsever_UserName);
 		CONSOLE_DEBUG_W_STR("gSQLsever_Password\t=",	gSQLsever_Password);
 		CONSOLE_DEBUG_W_STR("gSQLsever_Database\t=",	starsDBname);
-		CONSOLE_DEBUG_W_NUM("gSQLsever_Port    \t=",	gSQLsever_Port);
 #endif
 		strcpy(mySQLCmd, "call GetStarCatalogs();");
 #ifdef _VERBOSE_SQL_DEBUG_
@@ -1570,11 +1577,11 @@ void	LogSqlTransaction(	const char	*dbName,
 FILE			*filePointer;
 struct timeval	timeStamp;
 char			formatString[256];
-
-	CONSOLE_DEBUG_W_STR("dbName      \t=", dbName);
-	CONSOLE_DEBUG_W_STR("sqlCommand  \t=", sqlCommand);
-	CONSOLE_DEBUG_W_STR("results/FUNC\t=", results);
-	CONSOLE_DEBUG_W_STR("errorString \t=", errorString);
+//
+//	CONSOLE_DEBUG_W_STR("dbName      \t=", dbName);
+//	CONSOLE_DEBUG_W_STR("sqlCommand  \t=", sqlCommand);
+//	CONSOLE_DEBUG_W_STR("results/FUNC\t=", results);
+//	CONSOLE_DEBUG_W_STR("errorString \t=", errorString);
 
 	filePointer	=	fopen("SQL_log.txt", "a");
 	if (filePointer != NULL)

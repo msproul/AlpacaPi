@@ -110,6 +110,7 @@
 //*	Jun 26,	2023	<MLS> Started on common command table lookup structure
 //*	Jun 27,	2023	<MLS> Added UpdateOnlineStatus()
 //*	Jul  1,	2023	<MLS> Added GetStatus_SubClass()
+//*	Nov 21,	2023	<MLS> Fixed HandleKeyDown() control functions, tolower is NOT working
 //*****************************************************************************
 
 
@@ -117,7 +118,7 @@
 #include	<stdlib.h>
 #include	<unistd.h>
 #include	<sys/time.h>
-
+#include	<ctype.h>
 
 
 #include	"alpaca_defs.h"
@@ -615,10 +616,11 @@ int		iii;
 	CONSOLE_DEBUG_W_NUM("gControllerCnt\t=:", gControllerCnt);
 
 	gControllerCnt--;
-	if (gControllerCnt <= 0)
+	if (gControllerCnt < 0)
 	{
 		CONSOLE_DEBUG_W_NUM("Something is wrong, gControllerCnt is too low\t=:", gControllerCnt);
 	}
+	CONSOLE_DEBUG_W_NUM("gControllerCnt\t=:", gControllerCnt);
 #ifdef _USE_BACKGROUND_THREAD_
 	//*	we have to kill the background thread
 	int		threadCancelErr;
@@ -706,6 +708,7 @@ int		iii;
 	}
 	//---end------end------end------end------end------end---
 #endif	//	(CV_MAJOR_VERSION >= 4)
+
 
 #else
 	//*	release the image
@@ -2965,6 +2968,9 @@ int			openCVerr;
 char		imageFileName[512];
 bool		stillNeedsHandled;
 char		currentTabName[64]	=	"";
+int			singleChar;
+//int			lowerCaseChar;
+//int			upperCaseChar;
 
 //	CONSOLE_DEBUG_W_HEX("keyPressed\t=", keyPressed);
 
@@ -2974,34 +2980,54 @@ char		currentTabName[64]	=	"";
 	if (keyPressed & 0x040000)
 	{
 		//*	we have a control key
-//		CONSOLE_DEBUG("Control is down");
+		CONSOLE_DEBUG("Control is down");
 		stillNeedsHandled	=	false;
 
-		switch(tolower(keyPressed & 0x007f))
+		singleChar		=	keyPressed & 0x007f;
+//		lowerCaseChar	=	tolower(singleChar);
+//		upperCaseChar	=	toupper(singleChar);
+		CONSOLE_DEBUG_W_HEX("keyPressed   \t=",	keyPressed);
+		CONSOLE_DEBUG_W_HEX("singleChar   \t=",	singleChar);
+//		CONSOLE_DEBUG_W_HEX("lowerCaseChar\t=",	lowerCaseChar);
+//		CONSOLE_DEBUG_W_HEX("upperCaseChar\t=",	upperCaseChar);
+
+		switch (singleChar)
 		{
 //			//*	^n
 //			case 'n':
 //				break;
 
 			case 'r':
+			case 'R':
 				RefreshWindow();
 				break;
 
 			//*	^q  ctrl-q
 			case 'q':
-//				CONSOLE_DEBUG_W_STR("Quit from  window \t=", cWindowName);
+			case 'Q':
+				CONSOLE_DEBUG_W_STR("Quit from  window \t=", cWindowName);
 				gKeepRunning	=	false;
 				break;
 
 			//	ctrl-s   ^s
 			case 'd':
+			case 'D':
 			case 's':
+			case 'S':
 				CONSOLE_DEBUG("Save file");
 				GetCurrentTabName(currentTabName);
 				sprintf(imageFileName, "%s-%s-screenshot.jpg", cWindowName, currentTabName);
 
 			#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
-				openCVerr	=	cv::imwrite(imageFileName, *cOpenCV_matImage);
+				if (cOpenCV_matImage != NULL)
+				{
+					openCVerr	=	cv::imwrite(imageFileName, *cOpenCV_matImage);
+					CONSOLE_DEBUG_W_NUM("openCVerr\t=", openCVerr);
+				}
+				else
+				{
+					CONSOLE_DEBUG("cOpenCV_matImage is NULL");
+				}
 			#else
 				{
 				int		quality[3] = {16, 200, 0};
@@ -3013,6 +3039,7 @@ char		currentTabName[64]	=	"";
 
 			//*	^w ctrl-w close window
 			case 'w':
+			case 'W':
 //				CONSOLE_DEBUG_W_STR("Close window \t=", cWindowName);
 				cKeepRunning	=	false;
 				break;
@@ -3043,6 +3070,7 @@ char		currentTabName[64]	=	"";
 			CONSOLE_DEBUG_W_HEX("stillNeedsHandled", keyPressed);
 		}
 	}
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, "exit");
 }
 
 //**************************************************************************************

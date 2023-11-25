@@ -40,7 +40,7 @@
 #include	<unistd.h>
 
 //*	this should be defined in the Makefile
-//#define	_ENABLE_4REALY_BOARD
+//#define	_ENABLE_4REALY_BOARD_
 
 #include	"raspberrypi_relaylib.h"
 
