@@ -586,6 +586,7 @@ uint32_t	deltaMilliSecs;
 			CONSOLE_DEBUG_W_NUM("Turning on relay #", kRelay_OpenStopClose);
 			cDomeProp.Slewing		=	true;
 			cRORisClosing			=	true;
+			currentStartMilliSecs	=	Millis();
 			cRORisOpening			=	false;
 			currentStartMilliSecs	=	Millis();
 			//*	set the line HIGH to turn the relay on and connect the signal to ground

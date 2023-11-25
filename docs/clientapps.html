@@ -56,18 +56,18 @@ You could specify the exact IP address and port if you know it, or use the disco
 One thing to note, the discovery protocol only works on your local subnet.
 For most people this is fine, but if you want to control a REMOTE device, you will need to specify the IP and port.
 <P>
-The client would issue a discovery protocol query and look for the devices it knows how to talk to.
-In this example we are running my camera gui program. As you can see from the client dump above,
-it has found a camera at ip 192.168.1.164 on port 6800.
-It also noticed that there was a filter wheel on the same device.
-This camera application is smart enough to know how to talk to both of them.
-If a filter wheel does not exist, that interface is not displayed as in the 2nd image.
-<HR size=4 color=white>
+	The client would issue a discovery protocol query and look for the devices it knows how to talk to.
+	In this example we are running my camera Gui program. As you can see from the client dump above,
+	it has found a camera at IP 192.168.1.164 on port 6800.
+	It also noticed that there was a filter wheel on the same device.
+	This camera application is smart enough to know how to talk to both of them.
+	If a filter wheel does not exist, that interface is not displayed as in the 2nd image.
+	<HR size=4 color=white>
 
 
-To build the client apps, you have to have opencv installed. (refer to the software installation documentaiton).
-There are two versions of opencv that are currently supported, version 3.2.2 and before and after 3.2.2.
-To build the camera client app:
+	To build the client apps, you have to have opencv installed. (refer to the software installation documentation).
+	There are two versions of opencv that are currently supported, version 3.2.2 and before and after 3.2.2.
+	To build the camera client app:
 <PRE>
 	>make cameracv4
 		or

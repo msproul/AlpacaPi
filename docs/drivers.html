@@ -7,41 +7,45 @@
 <BODY link=red>
 <BODY vlink=BLUE><P>
 
-<CENTER>
-<TABLE BORDER=1 BGCOLOR=BLACK>
-	<TR>
-	<TH width=700>
-		<FONT COLOR=PURPLE>
-		<H1>AlpacaPi</H1>
-		<H1>Drivers</H1>
-	</TH>
-	</TR>
-</TABLE>
-<P>
-<TABLE BORDER=1>
-	</TR>
-		<TH><A HREF=index.html>Home</A>
-		</TH>
+	<CENTER>
+		<TABLE BORDER=1 BGCOLOR=BLACK>
+			<TR>
+				<TH width=700>
+					<FONT COLOR=PURPLE>
+						<H1>AlpacaPi</H1>
+						<H1>Drivers</H1>
+				</TH>
+			</TR>
+		</TABLE>
+		<P>
+			<TABLE BORDER=1>
+				</TR>
+				<TH>
+					<A HREF=index.html>Home</A>
+				</TH>
 
-		<TH><A HREF=skytravel.html>SkyTravel</A>
-		</TH>
+				<TH>
+					<A HREF=skytravel.html>SkyTravel</A>
+				</TH>
 
-		<TH><A HREF=drivers.html>Drivers</A>
-		</TH>
+				<TH>
+					<A HREF=drivers.html>Drivers</A>
+				</TH>
 
-		<TH><A HREF=clientapps.html>Client Apps</A>
-		</TH>
-	</TR>
-</TABLE>
-</CENTER>
-<!-------------------------------------------->
-The drivers are probably the most important piece to the puzzle.
-Once the driver is running for a particular device, then any program that specs Alpaca can utilize that devices.
-This also inlcudes a web browser.  However you can not send action commands to the driver from a web browser.
-You can read all of the status.
+				<TH>
+					<A HREF=clientapps.html>Client Apps</A>
+				</TH>
+				</TR>
+			</TABLE>
+	</CENTER>
+	<!-------------------------------------------->
+	The drivers are probably the most important piece to the puzzle.
+	Once the driver is running for a particular device, then any program that specs Alpaca can utilize those devices.
+	This also includes a web browser.  However you can not send action commands to the driver from a web browser.
+	You can read their status.
 <P>
 The alpaca drives run on Linux and were designed with the Raspberry-Pi in mind.
-They will run on most any flavor of linux.
+They will run on most any flavor of Linux.
 <P>
 AlpacaPi drivers currently support the following devices.
 <UL>
@@ -86,7 +90,7 @@ AlpacaPi drivers currently support the following devices.
 		</UL>
 	<LI>Telescope (Mounts)
 		<UL>
-			<LI>Talks LX200 via TCP/IP to tsc mount contoller
+			<LI>Talks LX200 via TCP/IP to tsc mount controller
 			<LI>Rigel -	Custom driver for Jim H.
 			<LI>Raspberry Pi with Servo controller
 			<LI>Skywatch
@@ -98,10 +102,10 @@ AlpacaPi drivers currently support the following devices.
 To utilize any of the drivers, first you have to build the driver and run it.
 Then you run the appropriate client program to access that driver.
 In my environment, there are normally on separate machines, the driver running on a Raspberry-Pi
-and the client program running on my linux desktop computer.
+and the client program running on my Linux desktop computer.
 They can also be on the SAME machine.
 <P>
-For exmple, if you want to utilize the 4 port switch (described below), follows these steps:
+For example, if you want to utilize the 4 port switch (described below), follows these steps:
 <UL>
 	<LI>On the driver machine
 	<OL>
@@ -122,7 +126,7 @@ You should then get a screen like this
 <HR size=4 color=white>
 <H3>Switch driver</H3>
 The switch driver on the Raspberry Pi requires the wiringpi library to be installed.
-At present, the wiringpi library only works on the 32 bit versions of Raspberry Pi linux.
+At present, the wiringpi library only works on the 32-bit versions of Raspberry Pi Linux.
 
 <P>
 <CENTER>

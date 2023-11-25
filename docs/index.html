@@ -35,32 +35,32 @@
 </CENTER>
 <!-------------------------------------------->
 <P>
-<I>Alpaca</I> is the new protocol from the ASCOM community for controling astronomy equipment.
-Alpaca is 100% backwards comptaible with ASCOM but instead of using COM (Component Object Mode) which is
-exclusive to Windows, Alpaca uses HTTP and JSON for data comunitatiosn.
+<I>Alpaca</I> is the new protocol from the ASCOM community for controlling  astronomy equipment.
+Alpaca is 100% backwards compatible  with ASCOM but instead of using COM (Component Object Mode) which is
+exclusive to Windows, Alpaca uses HTTP and JSON for data communications.
 This allows it to run across multiple machines in a client/server or user/driver mode.
 It also allows you to use any platform you want and no longer are tied to Windows.
 In fact you can run the system with no Windows machines at all.
 <P>
-<I>AlpacaPi</I> is my implementation of the Alpaca protocol to run on linux,
-specifically it was desgined to run on the Raspberry-Pi, which is why I call it AlpacaPi.
-It will run on just about any flavor of linux and will run on both 32 bit and 64 bit linux.
+<I>AlpacaPi</I> is my implementation of the Alpaca protocol to run on Linux,
+specifically it was designed to run on the Raspberry-Pi, which is why I call it AlpacaPi.
+It will run on just about any flavor of Linux and will run on both 32-bit and 64-bit Linux.
 
 
 <P>
 <I>AlpacaPi</I> implements all of the drivers in one application.
-On startup, it looks to see what is attached, for example if it discovered 2 ZWO cameras and 1 ATIK CameraDriver,
+On startup, it looks to see what is attached, for example if it discovered 2 ZWO cameras and 1 ATIK Camera Driver,
 it would create 3 camera drivers (0,1,2) that could be used interdependently.
 I have actually done this and it works just fine.
 <P>
-My normal configuration in my observatory is 3 imaging scopes on one mount, each of a different size.
-Each one has one Raspberry-Pi to control it.
-Each imaging setup has
-a camera,
-a filter wheel,
-a Moonlite NiteCrawler focuser which is implemnted as a focuser AND a rotator.
-<BR>
-This only requires one copy of the alpacapi driver, which handles all of 4 of the above listed devices.
+	My normal configuration in my observatory is 3 imaging scopes on one mount, each of a different size.
+	Each one has one Raspberry-Pi to control it.
+	Each imaging setup has
+	a camera,
+	a filter wheel,
+	a Moonlite NiteCrawler focuser which is implemented as a focuser and a rotator.
+	<BR>
+	This only requires one copy of the AlpacaPi driver, which handles all of 4 of the above listed devices.
 
 
 <P>

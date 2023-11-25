@@ -3,10 +3,10 @@ Astronomy control software using Alpaca protocol on the Raspberry Pi
 
 (C) 2019-2022 by Mark Sproul msproul@skychariot.com
 
-AlpacaPi is an open source project written in C/C++
+AlpacaPi is an open-source project written in C/C++
 
 This project was intended primarily for use on the Raspberry Pi but will work
-on most any linux platform.  I do my development and testing on desktop Ubuntu
+on most any Linux platform.  I do my development and testing on desktop Ubuntu
 
 Use of this source code for private or individual use is granted
 Use of this source code, in whole or in part for commercial purpose requires
@@ -25,7 +25,7 @@ More documentation can be found at  https://msproul.github.io/AlpacaPi/
 
 ## Getting started:
 
-If you haven''t already downloaded the git repository,
+If you haven't already downloaded the git repository,
 
 	connect to the directory you want the installation to be in
 	(you can move it later if desired)
@@ -80,7 +80,7 @@ The "Present" indicator means that the folder is there and can be installed.
 It does NOT mean it is installed.  The script will ask you for each library
 that is present if you want to install it or not.
 As with everything, this script still has more work needed.
-For example, touptec script is only finished for 32bit Arm as of 3/19/2021
+For example, ToupTek script is only finished for 32-bit Arm as of 3/19/2021
 
 
 		**********************************************
@@ -125,7 +125,7 @@ Dependencies:
 As of build 131, AlpacaPI requires openCV 3.3.1 however, support for newer versions is almost complete.
 
 On the Raspberry Pi, some of the drivers require the wiringPi library.
-wiringPi is pre-installed on Raspberrian.
+wiringPi is pre-installed on Raspbian.
 
 
 There is a lot of documentation that needs to be written and I am working on it
@@ -197,7 +197,7 @@ msproul@skychariot.com
 
 I program embedded systems for a living, I have been programming for over 40 years.
 AlpacaPi is open source, but if you find it useful and care to make a donation to my efforts.
-A paypal donation to the above address would be appreciated.
+A PayPal donation to the above address would be appreciated.
 
 I have developed this for the purpose of running my own observatory which I put a lot of money
 and time into.
