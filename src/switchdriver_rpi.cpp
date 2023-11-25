@@ -159,7 +159,7 @@ SwitchDriverRPi::SwitchDriverRPi(void)
 	CONSOLE_DEBUG(__FUNCTION__);
 
 	strcpy(cCommonProp.Name, "Switch-Raspberry-Pi");
-#ifdef _ENABLE_4REALY_BOARD
+#ifdef _ENABLE_4REALY_BOARD_
 	strcpy(cCommonProp.Description,	"Switch utilizing R-Pi 4 channel relay board");
 #else
 	strcpy(cCommonProp.Description,	"Switch utilizing R-Pi 8 channel relay board");

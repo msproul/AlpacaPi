@@ -169,11 +169,11 @@ bool	myConnectedFlag;
 bool	prevConnectedState;
 bool	returnedValid;
 
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, deviceTypeStr);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, deviceTypeStr);
 	validData		=	false;
 
 	//-----------------------------------------------------------------------------------------
-	CONSOLE_DEBUG_W_STR("deviceTypeStr=", deviceTypeStr);
+//	CONSOLE_DEBUG_W_STR("deviceTypeStr=", deviceTypeStr);
 	validData	=	AlpacaGetBooleanValue(	deviceTypeStr,
 											"connected",
 											NULL,
@@ -182,7 +182,7 @@ bool	returnedValid;
 											false);
 	if (validData)
 	{
-		CONSOLE_DEBUG(__FUNCTION__);
+//		CONSOLE_DEBUG(__FUNCTION__);
 		//*	keep track of the previous state
 		prevConnectedState		=	cCommonProp.Connected;
 		cCommonProp.Connected	=	myConnectedFlag;

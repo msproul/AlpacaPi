@@ -179,6 +179,8 @@
 //*	Sep 12,	2023	<MLS> Added OutputHTML_ClassDocs()
 //*	Sep 13,	2023	<MLS> Fixed HTML header bug when sending PNG file SendJpegResponse()
 //*	Sep 20,	2023	<MLS> Adding optional thread to driver base class
+//*	Nov  1,	2023	<MLS> Fixed git hub issue #29 - issues with
+//*	Nov  1,	2023	<MLS>	/management/v1/description?ClientID=1&ClientTransactionID=2
 //*****************************************************************************
 //*	to install code blocks 20
 //*	Step 1: sudo add-apt-repository ppa:codeblocks-devs/release
@@ -2849,8 +2851,8 @@ char			dataBuffer[1600];
 			}
 		}
 		fclose(filePointer);
-		CONSOLE_DEBUG_W_STR("File is closed   \t=", fileName);
-		CONSOLE_DEBUG_W_NUM("totalBytesWritten\t=",	totalBytesWritten);
+//		CONSOLE_DEBUG_W_STR("File is closed   \t=", fileName);
+//		CONSOLE_DEBUG_W_NUM("totalBytesWritten\t=",	totalBytesWritten);
 	}
 	else
 	{
@@ -2883,7 +2885,7 @@ char			*myFilenamePtr;
 struct stat		fileStatus;
 int				returnCode;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	if (strcasestr(jpegFileName, ".png") != NULL)
 	{
@@ -3018,11 +3020,11 @@ int					iii;
 bool				deviceFound;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
-	if (strncmp(reqData->httpCmdString, "PUT", 3) == 0)
-	{
-		CONSOLE_DEBUG(__FUNCTION__);
-		DumpRequestStructure(__FUNCTION__, reqData);
-	}
+//	if (strncmp(reqData->httpCmdString, "PUT", 3) == 0)
+//	{
+//		CONSOLE_DEBUG(__FUNCTION__);
+//		DumpRequestStructure(__FUNCTION__, reqData);
+//	}
 
 	//*******************************************
 	//*	now do something with the data
@@ -3240,9 +3242,9 @@ int			returnCode;
 																(1900 + linuxTime->tm_year),
 																(1 + linuxTime->tm_mon),
 																linuxTime->tm_mday);
-		CONSOLE_DEBUG("-------------------------------------------------------------------------");
-		CONSOLE_DEBUG_W_STR("Open log file:", logFilename);
-		SETUP_TIMING();
+//		CONSOLE_DEBUG("-------------------------------------------------------------------------");
+//		CONSOLE_DEBUG_W_STR("Open log file:", logFilename);
+//		SETUP_TIMING();
 		gIPlogFilePointer		=	fopen(logFilename, "a");
 		gIPlogNeedsToBeOpened	=	false;
 		gCurrentDayOfMonth		=	linuxTime->tm_mday;
@@ -3250,7 +3252,7 @@ int			returnCode;
 		//*	record the fact that we opened the log file
 		sprintf(lineBuff,	"%-18s\tLog file opened --------------------------------------------------------\r\n", datestring);
 		bytesWritten	=	fprintf(gIPlogFilePointer,	"%s", lineBuff);
-		DEBUG_TIMING("Time to open log file (ms)\t=");
+//		DEBUG_TIMING("Time to open log file (ms)\t=");
 	}
 
 
@@ -3664,6 +3666,7 @@ char				myDeviceString[64]			=	"";
 char				myDeviceNumString[64]		=	"";
 char				myDeviceCmdString[256]		=	"";
 int					cmdBuffLen;
+char				*delimPtr;
 
 //	CONSOLE_DEBUG("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 //	CONSOLE_DEBUG(__FUNCTION__);
@@ -3722,6 +3725,7 @@ int					cmdBuffLen;
 		}
 	}
 
+//	CONSOLE_DEBUG_W_NUM("slashCounter\t=",	slashCounter);
 	//---------------------------------------------------
 	if (slashCounter >= 3)
 	{
@@ -3732,24 +3736,12 @@ int					cmdBuffLen;
 			reqData->alpacaVersion		=	myAlpacaVersionString[1] & 0x0f;
 		}
 //		CONSOLE_DEBUG_W_NUM("reqData->alpacaVersion\t=",	reqData->alpacaVersion);
+		strcpy(reqData->deviceType,		myDeviceString);
 	}
 
-	if (slashCounter > 5)
+	if (slashCounter >= 4)
 	{
-		strcpy(reqData->deviceType,		myDeviceString);
-		//*	check for valid device number,  CONFORMU throws -1 and "A"
-		if (isdigit(myDeviceNumString[0]))
-		{
-			reqData->deviceNumber		=	atoi(myDeviceNumString);
-		}
-		else
-		{
-			//*	the device number is not a valid number
-			CONSOLE_DEBUG("=====================================================");
-			CONSOLE_DEBUG_W_STR("Device number sting is invalid!!!", myDeviceNumString);
-			reqData->deviceNumber	=	-1;
-		}
-
+//		CONSOLE_DEBUG("Extracting command string");
 		//*	extract out the command itself for easier processing by the handlers
 		cmdBuffLen		=	strlen(myDeviceCmdString);
 		ccc				=	0;
@@ -3762,11 +3754,33 @@ int					cmdBuffLen;
 			ccc++;
 		}
 		reqData->deviceCommand[ccc]	=	0;
+//		CONSOLE_DEBUG_W_NUM("cmdBuffLen            \t=",	cmdBuffLen);
+//		CONSOLE_DEBUG_W_STR("myDeviceCmdString     \t=",	myDeviceCmdString);
+//		CONSOLE_DEBUG_W_STR("reqData->deviceCommand\t=",	reqData->deviceCommand);
+
+	}
+
+	if (slashCounter > 5)
+	{
+		//*	check for valid device number,  CONFORMU throws -1 and "A"
+		if (isdigit(myDeviceNumString[0]))
+		{
+			reqData->deviceNumber		=	atoi(myDeviceNumString);
+		}
+		else
+		{
+			//*	the device number is not a valid number
+			CONSOLE_DEBUG("=====================================================");
+			CONSOLE_DEBUG_W_STR("Device number sting is invalid!!!", myDeviceNumString);
+			reqData->deviceNumber	=	-1;
+		}
 	}
 	else
 	{
 		strcpy(reqData->deviceType,		"unknown");
 		reqData->deviceCommand[0]	=	0;
+		CONSOLE_DEBUG("Unknown device type");
+//		CONSOLE_ABORT(__FUNCTION__);
 	}
 
 	//*	figure out the base type of the request (see enum list above)
@@ -3777,12 +3791,13 @@ int					cmdBuffLen;
 	//	/management/apiversions
 	if (requestType == kRequestType_Managment)
 	{
-//		CONSOLE_DEBUG_W_NUM("slashCounter         \t=",	slashCounter);
-//		CONSOLE_DEBUG_W_STR("myRequestTypeString  \t=",	myRequestTypeString);
-//		CONSOLE_DEBUG_W_STR("myAlpacaVersionString\t=",	myAlpacaVersionString);
-//		CONSOLE_DEBUG_W_STR("myDeviceString       \t=",	myDeviceString);
-//		CONSOLE_DEBUG_W_STR("myDeviceNumString    \t=",	myDeviceNumString);
-//		CONSOLE_DEBUG_W_STR("myDeviceCmdString    \t=",	myDeviceCmdString);
+//		CONSOLE_DEBUG_W_NUM("slashCounter          \t=",	slashCounter);
+//		CONSOLE_DEBUG_W_STR("myRequestTypeString   \t=",	myRequestTypeString);
+//		CONSOLE_DEBUG_W_STR("myAlpacaVersionString \t=",	myAlpacaVersionString);
+//		CONSOLE_DEBUG_W_STR("myDeviceString        \t=",	myDeviceString);
+//		CONSOLE_DEBUG_W_STR("myDeviceNumString     \t=",	myDeviceNumString);
+//		CONSOLE_DEBUG_W_STR("myDeviceCmdString     \t=",	myDeviceCmdString);
+//		CONSOLE_DEBUG_W_STR("reqData->deviceCommand\t=",	reqData->deviceCommand);
 
 		if ((strlen(myAlpacaVersionString) > 3) && (strlen(myDeviceString) == 0))
 		{
@@ -3792,6 +3807,26 @@ int					cmdBuffLen;
 		{
 			strcpy(reqData->deviceCommand, myDeviceString);
 		}
+		//------------------------------------------------
+		//*	https://github.com/msproul/AlpacaPi/issues
+		//*	issue #29
+		//*	look for delimiter characters
+		delimPtr	=	strchr(reqData->deviceCommand, '?');
+		if (delimPtr != NULL)
+		{
+			*delimPtr	=	0;
+		}
+		delimPtr	=	strchr(reqData->deviceCommand, '&');
+		if (delimPtr != NULL)
+		{
+			*delimPtr	=	0;
+		}
+		delimPtr	=	strchr(reqData->deviceCommand, 0x20);
+		if (delimPtr != NULL)
+		{
+			*delimPtr	=	0;
+		}
+//		CONSOLE_DEBUG_W_STR("reqData->deviceCommand\t=",	reqData->deviceCommand);
 //		DumpRequestStructure(__FUNCTION__, reqData);
 	}
 

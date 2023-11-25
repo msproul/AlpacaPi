@@ -132,9 +132,9 @@
 #endif
 
 	#define		SETUP_TIMING()					\
-		unsigned long		tStartMillisecs;	\
-		unsigned long		tStopMillisecs;		\
-		unsigned long		tDeltaMillisecs;	\
+		uint32_t			tStartMillisecs;	\
+		uint32_t			tStopMillisecs;		\
+		uint32_t			tDeltaMillisecs;	\
 		tStartMillisecs	=	Millis();
 
 
@@ -146,9 +146,11 @@
 	#define		DEBUG_TIMING(string)										\
 				tStopMillisecs	=	Millis();								\
 				tDeltaMillisecs	=	tStopMillisecs - tStartMillisecs;		\
-				CONSOLE_DEBUG_W_LONG(string,	tDeltaMillisecs);
+				CONSOLE_DEBUG_W_INT32(string,	tDeltaMillisecs);
+
 
 //				CONSOLE_DEBUG_W_LONG("tStartMillisecs=", tStartMillisecs);
+
 
 #else
 	#define		SETUP_TIMING()

@@ -185,16 +185,16 @@ char				alpacaErrMsg[256];
 int					mySocket;
 
 
+	CONSOLE_DEBUG("------------------------------------------");
+	CONSOLE_DEBUG(__FUNCTION__);
 //	CONSOLE_DEBUG_W_STR("htmlData\t=", reqData->htmlData);
-//	CONSOLE_DEBUG("------------------------------------------");
+	DumpRequestStructure(__FUNCTION__, reqData);
 
 	strcpy(alpacaErrMsg, "");
 
 	//*	make local copies of the data structure to make the code easier to read
-	mySocket	=	reqData->socket;
-
+	mySocket		=	reqData->socket;
 	alpacaErrCode	=	kASCOM_Err_Success;
-
 
 	//*	set up the json response
 	JsonResponse_CreateHeader(reqData->jsonTextBuffer);
@@ -220,14 +220,14 @@ int					mySocket;
 	//*	look up the command
 	cmdEnumValue	=	FindCmdFromTable(reqData->deviceCommand, gManagementCmdTable, &cmdType);
 
-//	CONSOLE_DEBUG_W_NUM("cmdEnumValue\t\t=", cmdEnumValue);
-//	if (cmdEnumValue == kCmd_Managment_configureddevices)
-//	{
-//		CONSOLE_DEBUG_W_STR("reqData->htmlData     \t=",	reqData->htmlData);
-//		CONSOLE_DEBUG_W_STR("reqData->deviceCommand\t=",	reqData->deviceCommand);
-//		CONSOLE_DEBUG_W_STR("reqData->cmdBuffer    \t=",	reqData->cmdBuffer);
-//		CONSOLE_DEBUG_W_STR("reqData->contentData  \t=",	reqData->contentData);
-//	}
+	CONSOLE_DEBUG_W_NUM("cmdEnumValue\t\t=", cmdEnumValue);
+	if (cmdEnumValue == kCmd_Managment_configureddevices)
+	{
+		CONSOLE_DEBUG_W_STR("reqData->htmlData     \t=",	reqData->htmlData);
+		CONSOLE_DEBUG_W_STR("reqData->deviceCommand\t=",	reqData->deviceCommand);
+		CONSOLE_DEBUG_W_STR("reqData->cmdBuffer    \t=",	reqData->cmdBuffer);
+		CONSOLE_DEBUG_W_STR("reqData->contentData  \t=",	reqData->contentData);
+	}
 
 	switch(cmdEnumValue)
 	{
@@ -318,6 +318,8 @@ TYPE_ASCOM_STATUS	ManagementDriver::Get_Apiversions(TYPE_GetPutRequestData *reqD
 {
 TYPE_ASCOM_STATUS			alpacaErrCode	=	kASCOM_Err_Success;
 
+	CONSOLE_DEBUG(__FUNCTION__);
+
 	JsonResponse_Add_ArrayStart(reqData->socket,
 								reqData->jsonTextBuffer,
 								kMaxJsonBuffLen,
@@ -352,6 +354,8 @@ TYPE_ASCOM_STATUS			alpacaErrCode	=	kASCOM_Err_Success;
 TYPE_ASCOM_STATUS	ManagementDriver::Get_Description(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
 {
 TYPE_ASCOM_STATUS				alpacaErrCode	=	kASCOM_Err_Success;
+
+	CONSOLE_DEBUG(__FUNCTION__);
 
 	JsonResponse_Add_RawText(	reqData->socket,
 								reqData->jsonTextBuffer,
@@ -400,6 +404,7 @@ void	ManagementDriver::ReportOneDevice(TYPE_GetPutRequestData *reqData, AlpacaDr
 char		deviceTypeString[32];
 char		uniqueIDstring[64];
 
+	CONSOLE_DEBUG(__FUNCTION__);
 	GetDeviceTypeFromEnum(devicePtr->cDeviceType, deviceTypeString);
 
 	JsonResponse_Add_RawText(	reqData->socket,
@@ -479,6 +484,8 @@ bool				displayNonStandardDevices;
 int					displayedCnt;
 struct timeval		timeStamp;
 char				timeStampString[128];
+
+	CONSOLE_DEBUG(__FUNCTION__);
 
 	if (reqData != NULL)
 	{
@@ -635,6 +642,8 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 int					iii;
 char				lineBuff1[32];
 char				lineBuff2[128];
+
+	CONSOLE_DEBUG(__FUNCTION__);
 
 	for (iii=0; iii<gLibraryIndex; iii++)
 	{

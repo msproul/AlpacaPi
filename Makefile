@@ -1569,7 +1569,7 @@ rortest		:								\
 rorpi		:	DEFINEFLAGS		+=	-D_ENABLE_DOME_
 rorpi		:	DEFINEFLAGS		+=	-D_ENABLE_DOME_ROR_
 rorpi		:	DEFINEFLAGS		+=	-D_ENABLE_WIRING_PI_
-rorpi		:	DEFINEFLAGS		+=	-D_ENABLE_4REALY_BOARD
+rorpi		:	DEFINEFLAGS		+=	-D_ENABLE_4REALY_BOARD_
 rorpi		:	DEFINEFLAGS		+=	-D_CHRIS_A_ROLL_OFF_ROOF_
 rorpi		:									\
 					$(DRIVER_OBJECTS)			\
@@ -1593,7 +1593,7 @@ rorpi		:									\
 topens		:	DEFINEFLAGS		+=	-D_ENABLE_DOME_
 topens		:	DEFINEFLAGS		+=	-D_ENABLE_DOME_ROR_
 topens		:	DEFINEFLAGS		+=	-D_ENABLE_WIRING_PI_
-topens		:	DEFINEFLAGS		+=	-D_ENABLE_4REALY_BOARD
+topens		:	DEFINEFLAGS		+=	-D_ENABLE_4REALY_BOARD_
 topens		:	DEFINEFLAGS		+=	-D_TOPENS_ROLL_OFF_ROOF_
 topens		:									\
 					$(DRIVER_OBJECTS)			\
@@ -1615,7 +1615,7 @@ topens		:									\
 #rorpi2		:	DEFINEFLAGS		+=	-D_ENABLE_DOME_
 rorpi2		:	DEFINEFLAGS		+=	-D_ENABLE_DOME_ROR_
 rorpi2		:	DEFINEFLAGS		+=	-D_ENABLE_WIRING_PI_
-rorpi2		:	DEFINEFLAGS		+=	-D_ENABLE_4REALY_BOARD
+rorpi2		:	DEFINEFLAGS		+=	-D_ENABLE_4REALY_BOARD_
 rorpi2		:	DEFINEFLAGS		+=	-D_TEST_DISCOVERQUERY_
 rorpi2		:									\
 						$(ROR_OBJECTS)			\
@@ -1950,42 +1950,48 @@ pizwo		:		$(CPP_OBJECTS)				\
 
 ######################################################################################
 #pragma mark Raspberry pi - switch
-#make piswitch4
+#make piswitch4 using 4 relay board
 piswitch4	:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
-piswitch4	:		DEFINEFLAGS		+=	-D_ENABLE_CALIBRATION_
-#piswitch4	:		DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_
-#piswitch4	:		DEFINEFLAGS		+=	-D_ENABLE_ROTATOR_
-#piswitch4	:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_ZWO_
-#piswitch4	:		DEFINEFLAGS		+=	-D_ENABLE_SAFETYMONITOR_
 piswitch4	:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_
-piswitch4	:		DEFINEFLAGS		+=	-D_ENABLE_4REALY_BOARD
-#piswitch4	:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
-#piswitch4	:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
-#piswitch4	:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
-#piswitch4	:		DEFINEFLAGS		+=	-D_ENABLE_DISCOVERY_QUERRY_
-#piswitch4	:		DEFINEFLAGS		+=	-D_ENABLE_MULTICAM_
-#piswitch4	:		DEFINEFLAGS		+=	-D_ENABLE_DOME_
-#piswitch4	:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
-#piswitch4	:		DEFINEFLAGS		+=	-D_ENABLE_ATIK_
-#piswitch4	:		DEFINEFLAGS		+=	-D_USE_OPENCV_
-#piswitch4	:		DEFINEFLAGS		+=	-D_ENABLE_TOUP_
-#piswitch4	:		DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
+piswitch4	:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_RPI_
+piswitch4	:		DEFINEFLAGS		+=	-D_ENABLE_4REALY_BOARD_
 piswitch4	:		DEFINEFLAGS		+=	-D_ENABLE_WIRING_PI_
-piswitch4	:		ATIK_LIB_DIR	=	$(ATIK_LIB_MASTER_DIR)/ARM/x86/NoFlyCapture
 piswitch4	:									\
-					$(CPP_OBJECTS)				\
 					$(DRIVER_OBJECTS)			\
+					$(SWITCH_DRIVER_OBJECTS)	\
 					$(SOCKET_OBJECTS)			\
-
+					$(HELPER_OBJECTS)			\
 
 		$(LINK)  								\
-					$(SOCKET_OBJECTS)			\
-					$(CPP_OBJECTS)				\
 					$(DRIVER_OBJECTS)			\
+					$(SWITCH_DRIVER_OBJECTS)	\
+					$(SOCKET_OBJECTS)			\
+					$(HELPER_OBJECTS)			\
 					-lwiringPi					\
 					-lpthread					\
-					-o alpacapi
+					-o piswitch4
 
+######################################################################################
+#pragma mark Raspberry pi - switch
+#make piswitch8 using 8 relay board DIN board
+piswitch8	:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
+piswitch8	:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_
+#piswitch8	:		DEFINEFLAGS		+=	-D_ENABLE_4REALY_BOARD_
+piswitch8	:		DEFINEFLAGS		+=	-D_ENABLE_WIRING_PI_
+piswitch8	:									\
+					$(DRIVER_OBJECTS)			\
+					$(SWITCH_DRIVER_OBJECTS)	\
+					$(SOCKET_OBJECTS)			\
+					$(HELPER_OBJECTS)			\
+
+		$(LINK)  								\
+					$(DRIVER_OBJECTS)			\
+					$(SWITCH_DRIVER_OBJECTS)	\
+					$(SOCKET_OBJECTS)			\
+					$(HELPER_OBJECTS)			\
+					-lwiringPi					\
+					-lpthread					\
+					-o piswitch8
 
 
 ######################################################################################
@@ -2294,41 +2300,6 @@ attic		:										\
 					-lwiringPi						\
 					-lpthread						\
 					-o alpacapi
-
-######################################################################################
-#pragma mark Switch - C++ Raspberry pi64
-piswitch64		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
-#piswitch64		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_ZWO_
-piswitch64		:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_
-piswitch64		:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_RPI_
-piswitch64		:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
-piswitch64		:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
-piswitch64		:		DEFINEFLAGS		+=	-D_ENABLE_MULTICAM_
-piswitch64		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
-#piswitch64		:		DEFINEFLAGS		+=	-D_ENABLE_ATIK_
-piswitch64		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
-piswitch64		:		DEFINEFLAGS		+=	-D_ENABLE_WIRING_PI_
-#piswitch64		:		DEFINEFLAGS		+=	-D_ENABLE_PWM_SWITCH_
-piswitch64		:		DEFINEFLAGS		+=	-D_ENABLE_4REALY_BOARD
-piswitch64		:		CPLUSFLAGS		+=	-std=gnu++17
-piswitch64		:									\
-						$(CPP_OBJECTS)				\
-						$(DRIVER_OBJECTS)			\
-						$(SOCKET_OBJECTS)			\
-
-
-			$(LINK)  								\
-						$(SOCKET_OBJECTS)			\
-						$(CPP_OBJECTS)				\
-						$(DRIVER_OBJECTS)			\
-						$(OPENCV_LINK)				\
-						$(ASI_CAMERA_OBJECTS)		\
-						-lcfitsio					\
-						-lusb-1.0					\
-						-ludev						\
-						-lwiringPi					\
-						-lpthread					\
-						-o alpacapi
 
 
 ######################################################################################
