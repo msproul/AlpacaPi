@@ -27,6 +27,8 @@
 //*	Sep 24,	2023	<MLS> Started migrating to using background thread
 //*	Oct  2,	2023	<MLS> Updated background thread open/close logic
 //*	Nov 24,	2023	<MLS> Fixed bug in RunThread_Loop() as per pull request #28
+//*	Nov 26,	2023	<S_V> Fixed Closing status bug RunThread_Loop() as per pull request #32
+//*	Nov 26,	2023	<MLS> Support for topens ROR driver appears to be complete
 //*****************************************************************************
 //*****************************************************************************
 //	After doing some experimenting with AlpacaPi,
