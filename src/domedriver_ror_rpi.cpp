@@ -587,7 +587,7 @@ uint32_t	deltaMilliSecs;
 		else
 		{
 			CONSOLE_DEBUG_W_NUM("Turning on relay #", kRelay_OpenStopClose);
-			cDomeProp.ShutterStatus	=	kShutterStatus_Closing
+			cDomeProp.ShutterStatus	=	kShutterStatus_Closing;
 			cDomeProp.Slewing		=	true;
 			cRORisClosing			=	true;
 			currentStartMilliSecs	=	Millis();
