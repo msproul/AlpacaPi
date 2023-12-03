@@ -435,6 +435,7 @@ void	Controller::UpdateCommonProperties(void)
 		//*	needs to be overloaded
 		CONSOLE_DEBUG_W_STR(__FUNCTION__, "needs to be overloaded!!!!!!!!!!!!!!!!!!");
 	}
+	CONSOLE_DEBUG("exit");
 }
 
 //*****************************************************************************
@@ -943,7 +944,7 @@ int			dataStrLen;
 			SJP_DumpJsonData(jsonParser, __FUNCTION__);
 //			myReturnDataIsValid	=	false;
 		}
-		SJP_DumpJsonData(jsonParser, __FUNCTION__);
+//		SJP_DumpJsonData(jsonParser, __FUNCTION__);
 
 		ForceAlpacaUpdate();
 		gClientTransactionID++;

@@ -62,6 +62,7 @@
 #++	Oct 17,	2022	<MLS> Added _ENABLE_FOCUSER_MOONLITE_
 #++	Oct 17,	2022	<MLS> Added _ENABLE_FILTERWHEEL_USIS_
 #++	Mar  5,	2023	<MLS> Re-organizing object lists
+#++	Dec  2,	2023	<MLS> Added piswitch3
 ######################################################################################
 #	Cr_Core is for the Sony camera
 ######################################################################################
@@ -1949,6 +1950,30 @@ pizwo		:		$(CPP_OBJECTS)				\
 					-o alpacapi
 
 ######################################################################################
+#pragma mark Raspberry pi - WaveShare RPI RELAY BOARD (3 relays
+#make piswitch3 using 3 relay board
+piswitch3	:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
+piswitch3	:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_
+piswitch3	:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_RPI_
+piswitch3	:		DEFINEFLAGS		+=	-D_ENABLE_WIRING_PI_
+piswitch3	:		DEFINEFLAGS		+=	-D_ENABLE_WAVESHARE_3RELAY_
+piswitch3	:									\
+					$(DRIVER_OBJECTS)			\
+					$(SWITCH_DRIVER_OBJECTS)	\
+					$(SOCKET_OBJECTS)			\
+					$(HELPER_OBJECTS)			\
+
+		$(LINK)  								\
+					$(DRIVER_OBJECTS)			\
+					$(SWITCH_DRIVER_OBJECTS)	\
+					$(SOCKET_OBJECTS)			\
+					$(HELPER_OBJECTS)			\
+					-lwiringPi					\
+					-lpthread					\
+					-o piswitch3
+
+
+######################################################################################
 #pragma mark Raspberry pi - switch
 #make piswitch4 using 4 relay board
 piswitch4	:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
@@ -2646,6 +2671,7 @@ MANDELBROT_OBJECTS=												\
 ######################################################################################
 CONTROLLER_MAIN_OBJECTS=										\
 				$(OBJECT_DIR)controller_main.o					\
+				$(OBJECT_DIR)readconfigfile.o				\
 
 #				$(OBJECT_DIR)commoncolor.o						\
 #				$(OBJECT_DIR)controller.o						\
@@ -4020,6 +4046,7 @@ $(OBJECT_DIR)switchdriver.o :			$(SRC_DIR)switchdriver.cpp			\
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)switchdriver_rpi.o :		$(SRC_DIR)switchdriver_rpi.cpp		\
+										$(SRC_DIR)raspberrypi_relaylib.h	\
 										$(SRC_DIR)switchdriver_rpi.h		\
 										$(SRC_DIR)switchdriver.h		 	\
 										$(SRC_DIR)alpacadriver.h			\

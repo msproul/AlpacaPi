@@ -7,6 +7,8 @@
 //*	Jun 24,	2020	<MLS> Added CPUstats_GetFreeDiskSpace()
 //*	Jan 17,	2021	<MLS> Moved CPU info routines to this file, changed names
 //*	Mar  8,	2021	<MLS> Added ReadUSBfsMemorySetting()
+//*	Dec  2,	2023	<MLS> Using enums and lookup tables in CPUstats_ReadInfo()
+//*	Dec  2,	2023	<MLS> Added "Hardware" to /procs/cpuinfo processing
 //*****************************************************************************
 
 
@@ -25,6 +27,7 @@
 #include	"ConsoleDebug.h"
 
 #include	"helper_functions.h"
+#include	"readconfigfile.h"
 
 #include	"cpu_stats.h"
 
@@ -33,6 +36,7 @@
 char				gOsReleaseString[64]		=	"";
 char				gCpuInfoString[64]			=	"";
 char				gPlatformString[64]			=	"";
+char				gHardwareString[64]			=	"";
 double				gBogoMipsValue				=	0.0;
 //char				gFullVersionString[128];
 
@@ -126,15 +130,45 @@ bool	codeNameFound;
 }
 
 //**************************************************************************
+enum
+{
+	kCPUinfo_Bogomips	=	1,
+	kCPUinfo_CPU_Arch,
+	kCPUinfo_Hardware,
+	kCPUinfo_Model,
+	kCPUinfo_ModelName,
+	kCPUinfo_Revision,
+
+};
+
+//**************************************************************************
+TYPE_KEYWORDS	gCPUinfoDictenary[]	=
+{
+	{	"bogomips",				kCPUinfo_Bogomips},
+	{	"Model",				kCPUinfo_Model},
+	{	"model name",			kCPUinfo_ModelName},
+	{	"CPU architecture",		kCPUinfo_CPU_Arch},
+	{	"Hardware",				kCPUinfo_Hardware},
+	{	"Revision",				kCPUinfo_Revision},
+	{	"foo",					-1},
+	{	"foo",					-1},
+	{	"",						-1},
+};
+
+//**************************************************************************
 void	CPUstats_ReadInfo(void)
 {
 FILE	*filePointer;
 char	lineBuff[256];
+char	cmdBuff[256];
+char	*cmdBuffPtr;
 int		slen;
+int		ccc;
 char	argValueString[64];
 char	*stringPtr;
 bool	stillNeedModel;
 bool	stillNeedModelName;
+int		keyWordEnum;
 
 	//*	set the default value in case we fail to read /proc/cpuinfo
 	strcpy(gPlatformString,	"");
@@ -180,48 +214,118 @@ bool	stillNeedModelName;
 			slen	=	strlen(lineBuff);
 			if (slen > 1)
 			{
-				if (strncmp(lineBuff, "model name", 10) == 0)
+				//*	make a copy of the buffer so we can isolate the keyword
+				strcpy(cmdBuff, lineBuff);
+				cmdBuffPtr	=	strchr(cmdBuff, ':');
+				if (cmdBuffPtr != NULL)
 				{
-					ExtractArgValue(lineBuff, ':', gCpuInfoString);
-					stillNeedModelName	=	false;
-				}
-				else if (strncmp(lineBuff, "CPU architecture", 16) == 0)
-				{
-					if (stillNeedModelName)
+					*cmdBuffPtr	=	0;
+					slen		=	strlen(cmdBuff);
+					ccc			=	slen - 1;
+					while (((cmdBuff[ccc] == 0x20) || (cmdBuff[ccc] == 0x09)) && (ccc > 0))
 					{
-						ExtractArgValue(lineBuff, ':', argValueString);
-						strcat(gCpuInfoString, "-V");
-						strcat(gCpuInfoString, argValueString);
+						cmdBuff[ccc]	=	0;
+						ccc--;
+					}
+				}
 
-						stillNeedModelName	=	false;
-					}
-				}
-				else if (strncmp(lineBuff, "Model", 5) == 0)
+				keyWordEnum	=	FindKeywordFromTable(cmdBuff, gCPUinfoDictenary);
+				switch(keyWordEnum)
 				{
-					//*	so far I have only found this is only on Raspberry Pi
-					ExtractArgValue(lineBuff, ':', gPlatformString);
-					stillNeedModel	=	false;
-				}
-				else if (strncmp(lineBuff, "Revision", 8) == 0)
-				{
-					if (stillNeedModel)
-					{
+					case kCPUinfo_Bogomips:
 						ExtractArgValue(lineBuff, ':', argValueString);
-						if (strcmp(argValueString, "a020d3") == 0)
+						gBogoMipsValue	=	AsciiToDouble(argValueString);
+						break;
+
+					case kCPUinfo_CPU_Arch:
+						if (stillNeedModelName)
 						{
-							strcpy(gPlatformString,	"Raspberry Pi 3");
+							ExtractArgValue(lineBuff, ':', argValueString);
+							strcat(gCpuInfoString, "-V");
+							strcat(gCpuInfoString, argValueString);
+
+							stillNeedModelName	=	false;
 						}
-						else
+						break;
+
+					case kCPUinfo_Hardware:
+						//*	so far I have only found this is only on Raspberry Pi
+						ExtractArgValue(lineBuff, ':', gHardwareString);
+
+						break;
+
+					case kCPUinfo_Model:
+						//*	so far I have only found this is only on Raspberry Pi
+						ExtractArgValue(lineBuff, ':', gPlatformString);
+						stillNeedModel	=	false;
+						break;
+
+					case kCPUinfo_ModelName:
+						ExtractArgValue(lineBuff, ':', gCpuInfoString);
+						stillNeedModelName	=	false;
+						break;
+
+					case kCPUinfo_Revision:
+						if (stillNeedModel)
 						{
-							strcat(gPlatformString,	argValueString);
+							ExtractArgValue(lineBuff, ':', argValueString);
+							if (strcmp(argValueString, "a020d3") == 0)
+							{
+								strcpy(gPlatformString,	"Raspberry Pi 3");
+							}
+							else
+							{
+								strcat(gPlatformString,	argValueString);
+							}
 						}
-					}
+						break;
+
+					default:
+						break;
 				}
-				else if (strncasecmp(lineBuff, "bogomips", 8) == 0)
-				{
-					ExtractArgValue(lineBuff, ':', argValueString);
-					gBogoMipsValue	=	AsciiToDouble(argValueString);
-				}
+
+//				if (strncmp(lineBuff, "model name", 10) == 0)
+//				{
+//					ExtractArgValue(lineBuff, ':', gCpuInfoString);
+//					stillNeedModelName	=	false;
+//				}
+//				else if (strncmp(lineBuff, "CPU architecture", 16) == 0)
+//				{
+//					if (stillNeedModelName)
+//					{
+//						ExtractArgValue(lineBuff, ':', argValueString);
+//						strcat(gCpuInfoString, "-V");
+//						strcat(gCpuInfoString, argValueString);
+//
+//						stillNeedModelName	=	false;
+//					}
+//				}
+//				else if (strncmp(lineBuff, "Model", 5) == 0)
+//				{
+//					//*	so far I have only found this is only on Raspberry Pi
+//					ExtractArgValue(lineBuff, ':', gPlatformString);
+//					stillNeedModel	=	false;
+//				}
+//				else if (strncmp(lineBuff, "Revision", 8) == 0)
+//				{
+//					if (stillNeedModel)
+//					{
+//						ExtractArgValue(lineBuff, ':', argValueString);
+//						if (strcmp(argValueString, "a020d3") == 0)
+//						{
+//							strcpy(gPlatformString,	"Raspberry Pi 3");
+//						}
+//						else
+//						{
+//							strcat(gPlatformString,	argValueString);
+//						}
+//					}
+//				}
+//				else if (strncasecmp(lineBuff, "bogomips", 8) == 0)
+//				{
+//					ExtractArgValue(lineBuff, ':', argValueString);
+//					gBogoMipsValue	=	AsciiToDouble(argValueString);
+//				}
 			}
 		}
 		fclose(filePointer);
@@ -270,6 +374,8 @@ bool	stillNeedModelName;
 #elif (__SIZEOF_POINTER__ == 4)
 //	strcat(gPlatformString, " (32 bit)");
 #endif
+
+//	CONSOLE_ABORT(__FUNCTION__);
 }
 
 

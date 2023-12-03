@@ -188,7 +188,7 @@ int					mySocket;
 	CONSOLE_DEBUG("------------------------------------------");
 	CONSOLE_DEBUG(__FUNCTION__);
 //	CONSOLE_DEBUG_W_STR("htmlData\t=", reqData->htmlData);
-	DumpRequestStructure(__FUNCTION__, reqData);
+//	DumpRequestStructure(__FUNCTION__, reqData);
 
 	strcpy(alpacaErrMsg, "");
 

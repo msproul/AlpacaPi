@@ -1831,12 +1831,12 @@ bool				powerState;
 		if (alpacaErrCode == kASCOM_Err_PropertyNotImplemented)
 		{
 			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Property Not Implemented");
-			CONSOLE_DEBUG(alpacaErrMsg);
+//			CONSOLE_DEBUG(alpacaErrMsg);
 		}
 		else if (alpacaErrCode != kASCOM_Err_Success)
 		{
 			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Power state unknown");
-			CONSOLE_DEBUG(alpacaErrMsg);
+//			CONSOLE_DEBUG(alpacaErrMsg);
 		}
 	}
 	else
@@ -1887,12 +1887,12 @@ bool				auxiliaryState;
 		if (alpacaErrCode == kASCOM_Err_PropertyNotImplemented)
 		{
 			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Property Not Implemented");
-			CONSOLE_DEBUG(alpacaErrMsg);
+//			CONSOLE_DEBUG(alpacaErrMsg);
 		}
 		else if (alpacaErrCode != kASCOM_Err_Success)
 		{
 			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Auxiliary state unknown");
-			CONSOLE_DEBUG(alpacaErrMsg);
+//			CONSOLE_DEBUG(alpacaErrMsg);
 		}
 	}
 	else

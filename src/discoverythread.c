@@ -209,7 +209,7 @@ bool				validDiscoveryRequest;
 char				ipAddrSt[48];
 char				errnoString[128];
 
-//	CONSOLE_DEBUG("Starting discovery listen thread");
+	CONSOLE_DEBUG("Starting discovery listen thread");
 
 	mySocket	=	socket(AF_INET, SOCK_DGRAM, 0);
 	if (mySocket >= 0)
@@ -234,6 +234,7 @@ char				errnoString[128];
 			CONSOLE_DEBUG_W_STR("setsockopt() Failed; error=", errnoString);
 			perror("setsockopt(SO_REUSEPORT) failed");
 		}
+
 		if (bind(mySocket, (struct sockaddr *)&serverAddress, sizeof(struct sockaddr_in)) < 0)
 		{
 			GetLinuxErrorString(errno, errnoString);
@@ -282,6 +283,7 @@ char				errnoString[128];
 				if (validDiscoveryRequest)
 				{
 					sprintf(responseBuff, "{\"AlpacaPort\": %d}", gAlpacaListenPort);
+					CONSOLE_DEBUG_W_STR("responseBuff\t=", responseBuff);
 
 					bytesSent	=	sendto(mySocket, responseBuff, strlen(responseBuff), 0, (struct sockaddr *)&fromAddress, fromlen);
 					if (bytesSent < 0)
@@ -303,6 +305,7 @@ char				errnoString[128];
 	}
 	else
 	{
+		CONSOLE_DEBUG("Discovery listen port failed");
 		perror("Opening socket");
 	}
 //	CONSOLE_DEBUG("exit");
@@ -1447,9 +1450,10 @@ int StartDiscoveryListenThread(const int alpacaListenPort)
 {
 int			threadErr;
 
+	CONSOLE_DEBUG(__FUNCTION__);
+
 	//*	yes, we have a separate copy of it here
 	gAlpacaListenPort	=	alpacaListenPort;
-//	CONSOLE_DEBUG(__FUNCTION__);
 
 	GetMyAddress();
 
@@ -1458,7 +1462,7 @@ int			threadErr;
 	threadErr			=	pthread_create(&gDiscoveryListenThreadID, NULL, &DiscoveryListenThread, NULL);
 	if (threadErr == 0)
 	{
-//		CONSOLE_DEBUG("Listen thread created successfully");
+		CONSOLE_DEBUG("Listen thread created successfully");
 	}
 	else
 	{

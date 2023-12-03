@@ -181,6 +181,7 @@
 //*	Sep 20,	2023	<MLS> Adding optional thread to driver base class
 //*	Nov  1,	2023	<MLS> Fixed git hub issue #29 - issues with
 //*	Nov  1,	2023	<MLS>	/management/v1/description?ClientID=1&ClientTransactionID=2
+//*	Nov 26,	2023	<MLS> Removed links form HTML cmd table for cmds starting with "-"
 //*****************************************************************************
 //*	to install code blocks 20
 //*	Step 1: sudo add-apt-repository ppa:codeblocks-devs/release
@@ -2745,7 +2746,7 @@ char	lineBuffer[256];
 	iii	=	0;
 	while (gCommonCmdTable[iii].commandName[0] != 0)
 	{
-		if (gCommonCmdTable[iii].get_put == kCmdType_PUT)
+		if ((gCommonCmdTable[iii].get_put == kCmdType_PUT) || (gCommonCmdTable[iii].commandName[0] == '-'))
 		{
 			sprintf(lineBuffer,	"\t<LI>%s\r\n", gCommonCmdTable[iii].commandName);
 		}
@@ -2767,7 +2768,7 @@ char	lineBuffer[256];
 	iii	=	0;
 	while (cmdTable[iii].commandName[0] != 0)
 	{
-		if (cmdTable[iii].get_put == kCmdType_PUT)
+		if ((cmdTable[iii].get_put ==  kCmdType_PUT) || (cmdTable[iii].commandName[0] == '-'))
 		{
 			sprintf(lineBuffer,	"\t<LI>%s\r\n", cmdTable[iii].commandName);
 		}

@@ -122,7 +122,9 @@ At present, the wiringpi library only works on the 32-bit versions of Raspberry 
 		<TH><FONT COLOR=white>Description</TH>
 		<TH><FONT COLOR=white>Relay board</TH>
 		<TH><FONT COLOR=white>build / run commands</TH>
-
+		<TH width=175><FONT COLOR=white>Notes</TH>
+	</TR>
+	<?-------------------------------------------------------------->
 	<TR>
 		<TD><FONT COLOR=white>8 Relay DIN mount</TD>
 		<TD>
@@ -134,6 +136,7 @@ At present, the wiringpi library only works on the 32-bit versions of Raspberry 
 		</TD>
 		<TD><FONT COLOR=white><pre>make piswitch8<P>./piswitch8</pre></TD>
 	</TR>
+	<?-------------------------------------------------------------->
 	<TR>
 		<TD><FONT COLOR=white>4 Relay </TD>
 		<TD>
@@ -143,6 +146,28 @@ At present, the wiringpi library only works on the 32-bit versions of Raspberry 
 			Click here for amazon description</A>
 		</TD>
 		<TD><FONT COLOR=white><pre>make piswitch4<P>./piswitch4</pre></TD>
+	</TR>
+	<?-------------------------------------------------------------->
+	<TR>
+		<TD><FONT COLOR=white>WaveShare 3 Relay</TD>
+		<TD>
+			<CENTER>
+			<FONT COLOR=white>
+			<IMG SRC=images/waveshare-3portrelay.jpg><BR>
+			<A HREF=https://www.amazon.com/dp/B0CDH1L58X?psc=1&ref=ppx_yo2ov_dt_b_product_details target=amazon>
+			Click here for amazon description</A>
+			<BR>
+			<A HREF=https://www.waveshare.com/rpi-relay-board.htm target=waveshare>WaveShare product page</A>
+			<BR>
+			<A HREF=https://www.waveshare.com/wiki/RPi_Relay_Board target=waveshare>WaveShare manual</A>
+		</TD>
+		<TD><FONT COLOR=white><pre>make piswitch3<P>./piswitch3</pre></TD>
+		<TD>
+		<FONT COLOR=white>
+		This board has inverted logic to the relays.<BR>
+		A logic "0" turns the relay ON.<BR>
+		This may cause issues on start up.<BR>
+		</TD>
 	</TR>
 
 </TABLE>

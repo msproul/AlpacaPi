@@ -50,6 +50,7 @@
 #include	"alpacadriver.h"
 #include	"alpacadriver_helper.h"
 #include	"switchdriver.h"
+#include	"raspberrypi_relaylib.h"
 #include	"switchdriver_rpi.h"
 #include	"eventlogging.h"
 
@@ -159,7 +160,9 @@ SwitchDriverRPi::SwitchDriverRPi(void)
 	CONSOLE_DEBUG(__FUNCTION__);
 
 	strcpy(cCommonProp.Name, "Switch-Raspberry-Pi");
-#ifdef _ENABLE_4REALY_BOARD_
+#ifdef _ENABLE_WAVESHARE_3RELAY_
+	strcpy(cCommonProp.Description,	"Switch utilizing WaveShare RPi relay board 3-relays");
+#elif defined(_ENABLE_4REALY_BOARD_)
 	strcpy(cCommonProp.Description,	"Switch utilizing R-Pi 4 channel relay board");
 #else
 	strcpy(cCommonProp.Description,	"Switch utilizing R-Pi 8 channel relay board");
