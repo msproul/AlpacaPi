@@ -1570,7 +1570,7 @@ rortest		:								\
 rorpi		:	DEFINEFLAGS		+=	-D_ENABLE_DOME_
 rorpi		:	DEFINEFLAGS		+=	-D_ENABLE_DOME_ROR_
 rorpi		:	DEFINEFLAGS		+=	-D_ENABLE_WIRING_PI_
-rorpi		:	DEFINEFLAGS		+=	-D_ENABLE_4REALY_BOARD_
+rorpi		:	DEFINEFLAGS		+=	-D_ENABLE_4RELAY_BOARD_
 rorpi		:	DEFINEFLAGS		+=	-D_CHRIS_A_ROLL_OFF_ROOF_
 rorpi		:									\
 					$(DRIVER_OBJECTS)			\
@@ -1594,7 +1594,7 @@ rorpi		:									\
 topens		:	DEFINEFLAGS		+=	-D_ENABLE_DOME_
 topens		:	DEFINEFLAGS		+=	-D_ENABLE_DOME_ROR_
 topens		:	DEFINEFLAGS		+=	-D_ENABLE_WIRING_PI_
-topens		:	DEFINEFLAGS		+=	-D_ENABLE_4REALY_BOARD_
+topens		:	DEFINEFLAGS		+=	-D_ENABLE_4RELAY_BOARD_
 topens		:	DEFINEFLAGS		+=	-D_TOPENS_ROLL_OFF_ROOF_
 topens		:									\
 					$(DRIVER_OBJECTS)			\
@@ -1616,7 +1616,7 @@ topens		:									\
 #rorpi2		:	DEFINEFLAGS		+=	-D_ENABLE_DOME_
 rorpi2		:	DEFINEFLAGS		+=	-D_ENABLE_DOME_ROR_
 rorpi2		:	DEFINEFLAGS		+=	-D_ENABLE_WIRING_PI_
-rorpi2		:	DEFINEFLAGS		+=	-D_ENABLE_4REALY_BOARD_
+rorpi2		:	DEFINEFLAGS		+=	-D_ENABLE_4RELAY_BOARD_
 rorpi2		:	DEFINEFLAGS		+=	-D_TEST_DISCOVERQUERY_
 rorpi2		:									\
 						$(ROR_OBJECTS)			\
@@ -1979,7 +1979,7 @@ piswitch3	:									\
 piswitch4	:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
 piswitch4	:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_
 piswitch4	:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_RPI_
-piswitch4	:		DEFINEFLAGS		+=	-D_ENABLE_4REALY_BOARD_
+piswitch4	:		DEFINEFLAGS		+=	-D_ENABLE_4RELAY_BOARD_
 piswitch4	:		DEFINEFLAGS		+=	-D_ENABLE_WIRING_PI_
 piswitch4	:									\
 					$(DRIVER_OBJECTS)			\
@@ -1996,12 +1996,39 @@ piswitch4	:									\
 					-lpthread					\
 					-o piswitch4
 
+
+######################################################################################
+#pragma mark Raspberry pi - switch
+#make piswitch4ks using Keyestudio 4 relay board
+piswitch4ks	:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
+piswitch4ks	:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_
+piswitch4ks	:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_RPI_
+piswitch4ks	:		DEFINEFLAGS		+=	-D_ENABLE_4RELAY_KEYSTUDIO_
+piswitch4ks	:		DEFINEFLAGS		+=	-D_ENABLE_WIRING_PI_
+piswitch4ks	:									\
+					$(DRIVER_OBJECTS)			\
+					$(SWITCH_DRIVER_OBJECTS)	\
+					$(SOCKET_OBJECTS)			\
+					$(HELPER_OBJECTS)			\
+
+		$(LINK)  								\
+					$(DRIVER_OBJECTS)			\
+					$(SWITCH_DRIVER_OBJECTS)	\
+					$(SOCKET_OBJECTS)			\
+					$(HELPER_OBJECTS)			\
+					-lwiringPi					\
+					-lpthread					\
+					-lcrypt						\
+					-lrt						\
+					-o piswitch4
+
 ######################################################################################
 #pragma mark Raspberry pi - switch
 #make piswitch8 using 8 relay board DIN board
 piswitch8	:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
 piswitch8	:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_
-#piswitch8	:		DEFINEFLAGS		+=	-D_ENABLE_4REALY_BOARD_
+piswitch8	:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_RPI_
+piswitch8	:		DEFINEFLAGS		+=	-D_ENABLE_8RELAY_DIN_
 piswitch8	:		DEFINEFLAGS		+=	-D_ENABLE_WIRING_PI_
 piswitch8	:									\
 					$(DRIVER_OBJECTS)			\
@@ -2306,6 +2333,7 @@ attic		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
 #attic		:		DEFINEFLAGS		+=	-D_ENABLE_ROTATOR_NITECRAWLER_
 attic		:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_
 attic		:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_RPI_
+attic		:		DEFINEFLAGS		+=	-D_ENABLE_8RELAY_DIN_
 attic		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
 attic		:		DEFINEFLAGS		+=	-D_ENABLE_WIRING_PI_
 attic		:										\
@@ -2672,23 +2700,6 @@ MANDELBROT_OBJECTS=												\
 CONTROLLER_MAIN_OBJECTS=										\
 				$(OBJECT_DIR)controller_main.o					\
 				$(OBJECT_DIR)readconfigfile.o				\
-
-#				$(OBJECT_DIR)commoncolor.o						\
-#				$(OBJECT_DIR)controller.o						\
-#				$(OBJECT_DIR)controllerAlpaca.o					\
-#				$(OBJECT_DIR)discoverythread.o					\
-#				$(OBJECT_DIR)HostNames.o						\
-#				$(OBJECT_DIR)json_parse.o						\
-#				$(OBJECT_DIR)opencv_utils.o						\
-#				$(OBJECT_DIR)sendrequest_lib.o					\
-#				$(OBJECT_DIR)windowtab.o						\
-#				$(OBJECT_DIR)windowtab_about.o					\
-#				$(OBJECT_DIR)windowtab_image.o					\
-#				$(OBJECT_DIR)windowtab_imageinfo.o				\
-
-#				$(OBJECT_DIR)controller_image.o					\
-#				$(OBJECT_DIR)controllerClient.o					\
-
 
 
 ######################################################################################

@@ -2,6 +2,7 @@
 //#include	"raspberrypi_relaylib.h"
 //*****************************************************************************
 //*	Dec  2,	2023	<MLS> Added support for WaveShare RPI RELAY BOARD (3 relays)
+//*	Dec  3,	2023	<MLS> Added support for keyestudio relay board(4 relays)
 //*****************************************************************************
 
 #ifndef _RPI_RELAYLIB_H_
@@ -15,7 +16,7 @@
 	#define __arm__
 #endif
 
-#ifdef _ENABLE_WAVESHARE_3RELAY_
+#if defined(_ENABLE_WAVESHARE_3RELAY_)
 	//==============================================================
 	//*	https://www.waveshare.com/rpi-relay-board.htm
 	//*	https://www.amazon.com/dp/B0CDH1L58X?psc=1&ref=ppx_yo2ov_dt_b_product_details
@@ -38,7 +39,7 @@
 	#define		TURN_PIN_ON		0
 	#define		TURN_PIN_OFF	1
 
-#elif defined(_ENABLE_4REALY_BOARD_)
+#elif defined(_ENABLE_4RELAY_BOARD_)
 	//==============================================================
 	//	https://smile.amazon.com/gp/product/B077LV4F1B/ref=ppx_yo_dt_b_asin_title_o01_s00?ie=UTF8&psc=1
 	//	https://shop.sb-components.co.uk/products/pirelay-relay-board-shield-for-raspberry-pi
@@ -78,25 +79,27 @@
 	#define		TURN_PIN_ON		1
 	#define		TURN_PIN_OFF	0
 
-#elif defined(_ENABLE_4REALY_KEYSTUDIO_)
+#elif defined(_ENABLE_4RELAY_KEYSTUDIO_)
 //*	https://wiki.keyestudio.com/KS0212_keyestudio_RPI_4-channel_Relay_Shield#Specification	#define	kR_Pi_RelayCount	4
 
-	#define	kHWpin_Channel1	4		//*	wPi	=	7
-	#define	kHWpin_Channel2	22		//*	wPi	=	3
-	#define	kHWpin_Channel3	6		//*	wPi	=	22
-	#define	kHWpin_Channel4	26		//*	wPi	=	25
+	#define	kR_Pi_RelayCount	4
 
-	#define	kHWpin_Channel5	99
-	#define	kHWpin_Channel6	99
-	#define	kHWpin_Channel7	99
-	#define	kHWpin_Channel8	99
+	#define	kHWpin_Channel1		4		//*	wPi	=	7
+	#define	kHWpin_Channel2		22		//*	wPi	=	3
+	#define	kHWpin_Channel3		6		//*	wPi	=	22
+	#define	kHWpin_Channel4		26		//*	wPi	=	25
+
+	#define	kHWpin_Channel5		99
+	#define	kHWpin_Channel6		99
+	#define	kHWpin_Channel7		99
+	#define	kHWpin_Channel8		99
 
 
 	//*	some boards are reverse logic so we have to do it this way
 	#define		TURN_PIN_ON		1
 	#define		TURN_PIN_OFF	0
 
-#else	// _ENABLE_4REALY_BOARD_
+#elif defined(_ENABLE_8RELAY_DIN_)
 
 	//==============================================================
 	//	8 port relay on DIN rail 	5,	6,	13,	16,	19,	20,	21,	26
@@ -118,7 +121,8 @@
 	#define		TURN_PIN_ON		0
 	#define		TURN_PIN_OFF	1
 
-
+#else
+	#error "Relay board not specified"
 #endif
 
 

@@ -46,35 +46,43 @@ AlpacaPi drivers currently support the following devices.
 			<LI>TOUPTECH cameras
 			<LI>ZWO cameras
 		</UL>
+		<P>
 	<LI>Domes
 		<UL>
 			<LI>Raspberry Pi w/Motor control board for dome
 			<LI>Raspberry Pi w/Motor control board for Roll Off Roof
 		</UL>
+		<P>
 	<LI>Filter Wheels
 		<UL>
 			<LI>Atik filter-wheel
 			<LI>QHY filter-wheel
 			<LI>ZWO filter-wheel
 		</UL>
+		<P>
 	<LI>Focusers
 		<UL>
 			<LI>Moonlite NiteCrawler
 			<LI>Moonlite High Speed Stepper
 		</UL>
+		<P>
 	<LI>Observing Conditions
 		<UL>
 			<LI>Raspberry Pi with sensors
 		</UL>
+		<P>
 	<LI>Rotator
 		<UL>
 			<LI>Moonlite NiteCrawler
 		</UL>
+		<P>
 	<LI>Switches
 		<UL>
-			<LI>Raspberry Pi with a  4 Relay board
-			<LI>Raspberry Pi with a  8 Relay board
+			<LI>Raspberry Pi with a 8 Relay board
+			<LI>Raspberry Pi with a 4 Relay board
+			<LI>Raspberry Pi with a WaveShare 3 Relay board
 		</UL>
+		<P>
 	<LI>Telescope (Mounts)
 		<UL>
 			<LI>Talks LX200 via TCP/IP to tsc mount controller
@@ -82,7 +90,6 @@ AlpacaPi drivers currently support the following devices.
 			<LI>Raspberry Pi with Servo controller
 			<LI>Skywatch
 		</UL>
-
 </UL>
 <HR size=4 color=white>
 <H3>Client and server operation</H3>
@@ -101,7 +108,7 @@ For example, if you want to utilize the 4 port switch (described below), follows
 	</OL>
 	<LI>On the client machine (can be the same as the driver machine)
 	<OL>
-		<LI>make switch or makeswitchcv4
+		<LI>make switch or make switchcv4
 		<LI>./switch
 	</OL>
 </UL>
@@ -169,7 +176,15 @@ At present, the wiringpi library only works on the 32-bit versions of Raspberry 
 		This may cause issues on start up.<BR>
 		</TD>
 	</TR>
-
+	<?-------------------------------------------------------------->
+	<TR>
+		<TD><FONT COLOR=white>keyestudio 4 Relay</TD>
+		<TD>
+			<CENTER>
+			<FONT COLOR=white>
+			<A HREF=https://wiki.keyestudio.com/KS0212_keyestudio_RPI_4-channel_Relay_Shield target=keyestudio>Keyestudio 4 relay</A>
+		<TD><FONT COLOR=white><pre>make piswitch4ks<P>./piswitch4</pre></TD>
+	</TR>
 </TABLE>
 
 

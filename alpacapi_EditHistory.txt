@@ -1,4 +1,4 @@
-History Comments found =3040 in 459 files
+History Comments found =3042 in 459 files
 PDS_ReadNASAfiles.c:28   	//*	Jan 26,	1992	Reading of PDS files into Mac program from CD working
 PDS_ReadNASAfiles.c:29   	//*	Mar 14,	1992	Starting on more detailed interpretation of label (header)
 PDS_ReadNASAfiles.c:30   	//*	Mar 16,	1992	Changed number of displayed bytes from 836 to 800
@@ -3027,6 +3027,8 @@ cpu_stats.c:10           	//*	Dec  2,	2023	<MLS> Using enums and lookup tables i
 cpu_stats.c:11           	//*	Dec  2,	2023	<MLS> Added "Hardware" to /procs/cpuinfo processing
 Makefile:65              	#++	Dec  2,	2023	<MLS> Added piswitch3
 raspberrypi_relaylib.h:4 	//*	Dec  2,	2023	<MLS> Added support for WaveShare RPI RELAY BOARD (3 relays)
+raspberrypi_relaylib.h:5 	//*	Dec  3,	2023	<MLS> Added support for keyestudio relay board(4 relays)
+switchdriver_rpi.cpp:37  	//*	Dec  3,	2023	<MLS> WiringPi now working in 64 bit mode
 cameradriver.cpp:210     	//*	Jan  1,	2119	<TODO> ----------------------------------------
 cameradriver.cpp:211     	//*	Jun 26,	2119	<TODO> Add support for sub frames
 cameradriver_png.cpp:33  	//*	Jan 31,	2120	<TODO> Add support for libpng
@@ -3039,19 +3041,19 @@ controller_camera.cpp:80 	//*	Feb  6,	2121	<TODO> Move downloading of images to 
 cameradriver_QHY.cpp:52  	//*	Oct 10,	2122	<TODO> Add support for percentcompleted to QHY camera driver
 spectrodriver.cpp:33     	//*	May  7,	2123	<TODO> Add support for SlitID, SlitAngle, SlitWidth
 controller_dome.cpp:47   	//*	Jun 25,	2123	<ADD> Add slaved to DeviceState
-History Comments found   = 3040 in 459 files
-Total lines              = 212980
-Total comment Lines      = 34312 (16.1%)
-Total comments           = 38539 (18.1%)
-Total history comments   = 3040 (1.4%)
+History Comments found   = 3042 in 459 files
+Total lines              = 213005
+Total comment Lines      = 34316 (16.1%)
+Total comments           = 38542 (18.1%)
+Total history comments   = 3042 (1.4%)
 Total C files            = 62
 Total C++ files          = 173
 Total H files            = 222
-Preprocssor cnt          = 6758
-Total SLOC               = 135994
-Total SLOC-Logical       = 105060
+Preprocssor cnt          = 6746
+Total SLOC               = 136011
+Total SLOC-Logical       = 105073
 Programmer comment summary
-MLS             = 2648
+MLS             = 2650
 TODO            =   11
 DDB             =    1
 JMH             =    3
