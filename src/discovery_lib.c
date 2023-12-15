@@ -200,35 +200,35 @@ bool	newDevice;
 void	ExtractDevicesFromJSON(SJP_Parser_t *jsonParser, TYPE_ALPACA_UNIT *theUnit)
 {
 TYPE_REMOTE_DEV	myRemoteDevice;
-int				ii;
+int				iii;
 char			myVersionString[64];
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 	memset(&myRemoteDevice, 0, sizeof(TYPE_REMOTE_DEV));
 	memset(myVersionString, 0, sizeof(myVersionString));
 	strcpy(myVersionString, "??");
-	for (ii=0; ii<jsonParser->tokenCount_Data; ii++)
+	for (iii=0; iii<jsonParser->tokenCount_Data; iii++)
 	{
-		if (strcasecmp(jsonParser->dataList[ii].keyword, "VERSION") == 0)
+		if (strcasecmp(jsonParser->dataList[iii].keyword, "VERSION") == 0)
 		{
-			strcpy(myVersionString, jsonParser->dataList[ii].valueString);
+			strcpy(myVersionString, jsonParser->dataList[iii].valueString);
 		}
 
-		if (strcasecmp(jsonParser->dataList[ii].keyword, "DEVICETYPE") == 0)
+		if (strcasecmp(jsonParser->dataList[iii].keyword, "DEVICETYPE") == 0)
 		{
-			strcpy(myRemoteDevice.deviceTypeStr, jsonParser->dataList[ii].valueString);
+			strcpy(myRemoteDevice.deviceTypeStr, jsonParser->dataList[iii].valueString);
 		}
-		if (strcasecmp(jsonParser->dataList[ii].keyword, "DEVICENAME") == 0)
+		if (strcasecmp(jsonParser->dataList[iii].keyword, "DEVICENAME") == 0)
 		{
-			strcpy(myRemoteDevice.deviceNameStr, jsonParser->dataList[ii].valueString);
+			strcpy(myRemoteDevice.deviceNameStr, jsonParser->dataList[iii].valueString);
 		}
-		if (strcasecmp(jsonParser->dataList[ii].keyword, "DEVICENUMBER") == 0)
+		if (strcasecmp(jsonParser->dataList[iii].keyword, "DEVICENUMBER") == 0)
 		{
-			myRemoteDevice.alpacaDeviceNum	=	atoi(jsonParser->dataList[ii].valueString);
+			myRemoteDevice.alpacaDeviceNum	=	atoi(jsonParser->dataList[iii].valueString);
 		}
 
 		//------------------------------------
-		if (strcasecmp(jsonParser->dataList[ii].keyword, "ARRAY-NEXT") == 0)
+		if (strcasecmp(jsonParser->dataList[iii].keyword, "ARRAY-NEXT") == 0)
 		{
 			myRemoteDevice.deviceAddress	=	theUnit->deviceAddress;
 			myRemoteDevice.port				=	theUnit->port;
@@ -716,7 +716,7 @@ void	ReadExternalIPlist(void)
 FILE				*filePointer;
 char				lineBuff[256];
 char				outputIPaddr[256];
-int					ii;
+int					iii;
 int					slen;
 char				fileName[]	=	"external_ip_list.txt";
 SJP_Parser_t		jsonParser;
@@ -732,11 +732,11 @@ struct sockaddr_in	from;
 		{
 			//*	get rid of the trailing CR/LF
 			slen	=	strlen(lineBuff);
-			for (ii=0; ii<slen; ii++)
+			for (iii=0; iii<slen; iii++)
 			{
-				if ((lineBuff[ii] == 0x0d) || (lineBuff[ii] == 0x0a))
+				if ((lineBuff[iii] == 0x0d) || (lineBuff[iii] == 0x0a))
 				{
-					lineBuff[ii]	=	0;
+					lineBuff[iii]	=	0;
 					break;
 				}
 			}

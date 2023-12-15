@@ -117,6 +117,84 @@ You should then get a screen like this
 <IMG SRC=images/Switch-door-screenshot.jpg width=200>
 </CENTER>
 
+
+<?-------------------------------------------------------------->
+<HR size=4 color=white>
+<H3>Dome driver</H3>
+The AlpacaPi dome driver uses DC motors and a PWM controlled DC power board
+that handles reversing and power output.
+It also uses a terminal I/O board for connection to the DC controller and for sensor inputs.
+The sensor inputs are for door open and door close.
+Additional inputs can be used for positions in between.
+<P>
+The Raspberry Pi only has one PWM (Pulse Width Modulation) for speed control.
+I use one R-Pi for dome rotation and a second R-Pi to control the door.
+This allows the door controller to be mounted on dome
+and use wireless to talk to the dome rotation controller that is mounted on the wall.
+
+<P>
+<CENTER>
+<TABLE BORDER=1 >
+	<TR>
+		<TH><FONT COLOR=white>Description</TH>
+		<TH><FONT COLOR=white>Power board</TH>
+		<TH><FONT COLOR=white>build / run commands</TH>
+		<TH width=175><FONT COLOR=white>Notes</TH>
+	</TR>
+	<?-------------------------------------------------------------->
+	<TR>
+		<TD><FONT COLOR=white>DC motor control</TD>
+		<TD>
+			<CENTER>
+			<FONT COLOR=white>
+			<IMG SRC=images/Cytron_dc_power_control.jpg><BR>
+			<A HREF=https://www.amazon.com/gp/product/B07L6HGFWY/ target=amazon>
+			Click here for amazon description</A><BR>
+			<IMG SRC=images/DIN_Rail_Mount_Terminal_Block_RPi.jpg><BR>
+			<A HREF=https://www.amazon.com/Pinout-Breakout-Terminal-Module-Raspberry/dp/B08LL1LWLM/ target=amazon>
+			Click here for amazon description</A>
+		</TD>
+		<TD><FONT COLOR=white><pre>make dome<P>./domedriver</pre></TD>
+	</TR>
+</TABLE>
+
+<TABLE BORDER=1>
+<TR>
+<TH COLSPAN=3><FONT COLOR=white>Raspberry-Pi Dome Driver</TH>
+</TR>
+<TR>
+<TH COLSPAN=3><FONT COLOR=white>Hardware configuration</TH>
+</TR>
+<TR>
+<TD COLSPAN=3><FONT COLOR=white><CENTER>Using BCM Pin numbering</TH>
+</TR>
+<TR>
+	<TD><FONT COLOR=white>Clockwise button pin</TD><TD><FONT COLOR=white>23</TD><TD><FONT COLOR=white>Input</TD>
+</TR>
+<TR>
+	<TD><FONT COLOR=white>Counter Clockwise button pin</TD><TD><FONT COLOR=white>24</TD><TD><FONT COLOR=white>Input</TD>
+</TR>
+<TR>
+	<TD><FONT COLOR=white>Stop button pin</TD><TD><FONT COLOR=white>25</TD><TD><FONT COLOR=white>Input</TD>
+</TR>
+<TR>
+	<TD><FONT COLOR=white>Direction Control pin</TD><TD><FONT COLOR=white>27</TD><TD><FONT COLOR=white>Output</TD>
+</TR>
+<TR>
+	<TD><FONT COLOR=white>Power PWM pin</TD><TD><FONT COLOR=white>18</TD><TD><FONT COLOR=white>Output</TD>
+</TR>
+<TR>
+	<TD><FONT COLOR=white>Home Sensor pin</TD><TD><FONT COLOR=white>5</TD><TD><FONT COLOR=white>Input</TD>
+</TR>
+<TR>
+	<TD><FONT COLOR=white>Park Sensor pin</TD><TD><FONT COLOR=white>6</TD><TD><FONT COLOR=white>Input</TD>
+</TR>
+<TR>
+</TABLE>
+NOTE: These pin numbers can be changed, this is the default list.
+</CENTER>
+
+<?-------------------------------------------------------------->
 <HR size=4 color=white>
 <H3>Switch driver</H3>
 The switch driver on the Raspberry Pi requires the wiringpi library to be installed.

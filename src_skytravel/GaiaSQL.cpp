@@ -44,6 +44,9 @@
 //*	Sep 24,	2022	<MLS> Database list now defaults to "gaia" and "2mass"
 //*	Nov 11,	2022	<MLS> Added return error msg to GetSQLdataFromIDnumber()
 //*	Nov 24,	2022	<KAS> Worked on cleaning up SQL Intiliazation as per Mark's request
+//*	Dec 14,	2023	<MLS> OpenMysql() works for Keith but not from my house
+//*	Dec 14,	2023	<MLS> Keith turned off firewall at his house and it works fine.
+//*	Dec 14,	2023	<MLS> My IP address had changed back in June and we did not realize it
 //*****************************************************************************
 //*	sudo apt-get install libmysqlclient-dev		<<<< Use this one
 //*	sudo apt-get install libmariadb-dev			<<<< Use this for Raspberry-Pi
@@ -72,10 +75,11 @@
 #endif
 
 
-#define _ENABLE_CONSOLE_DEBUG_
+//#define _ENABLE_CONSOLE_DEBUG_
+#define _DEBUG_TIMING_
 #include	"ConsoleDebug.h"
 
-#define	_VERBOSE_SQL_DEBUG_
+//#define	_VERBOSE_SQL_DEBUG_
 
 #include	"controller_skytravel.h"
 #include	"helper_functions.h"
@@ -90,18 +94,18 @@
 
 #define	_XREF_AAVSO_
 
-char	gSQLsever_IPaddr[32]	=	"";
-int		gSQLsever_Port			=	4570;	//*	the standard QSL port is 3306
-char	gSQLsever_UserName[32]	=	"";
-char	gSQLsever_Password[32]	=	"";
-char	gSQLsever_Database[32]	=	"gaia";
-char	gSQLclientVersion[64]	=	"";
+char			gSQLsever_IPaddr[32]	=	"";
+unsigned int	gSQLsever_Port			=	4570;	//*	the standard QSL port is 3306
+char			gSQLsever_UserName[32]	=	"";
+char			gSQLsever_Password[32]	=	"";
+char			gSQLsever_Database[32]	=	"gaia";
+char			gSQLclientVersion[64]	=	"";
 
-int		gSQLerror_Count			=	0;
-char	gSQLsever_StatusMsg[128]=	"";
-bool	gSQLsever_MsgUpdated	=	false;
+int				gSQLerror_Count			=	0;
+char			gSQLsever_StatusMsg[128]=	"";
+bool			gSQLsever_MsgUpdated	=	false;
 
-bool	gEnableSQLlogging		=	true;
+bool			gEnableSQLlogging		=	true;
 
 
 static			pthread_t	gSQL_ThreadID			=	-1;
@@ -342,24 +346,47 @@ static void	BuildSQLlogString(int whichString, char *logCommentString)
 }
 
 //*****************************************************************************
-//*	Nov 24,	2022	<KAS> Worked on cleaning up SQL Intiliazation as per Mark's request
+//*	Nov 24,	2022	<KAS> Worked on cleaning up SQL Initialization as per Mark's request
 //*****************************************************************************
 static MYSQL	*OpenMysql(char *dataBaseName)
 {
-MYSQL	*mySQLConnection = NULL;
+MYSQL	*mySQLConnection	=	NULL;
+MYSQL	*retrunedSQLConn	=	NULL;
 char	sqlErrorString[256];
+
+	SETUP_TIMING();
 
 #ifdef _VERBOSE_SQL_DEBUG_
 	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_STR("gSQLsever_IPaddr  \t=",	gSQLsever_IPaddr);
+	CONSOLE_DEBUG_W_STR("gSQLsever_UserName\t=",	gSQLsever_UserName);
+	CONSOLE_DEBUG_W_STR("gSQLsever_Password\t=",	gSQLsever_Password);
+	CONSOLE_DEBUG_W_STR("dataBaseName      \t=",	dataBaseName);
+	CONSOLE_DEBUG_W_NUM("gSQLsever_Port    \t=",	gSQLsever_Port);
 #endif // _VERBOSE_SQL_DEBUG_
+	START_TIMING();
 	mySQLConnection	=	mysql_init(NULL);
+	DEBUG_TIMING("Time for mysql_init() to complete: (millissecs)");
 	if (mySQLConnection != NULL)
 	{
+//		idle_transaction_timeout();
 		//*	establish connection to the database
 		CONSOLE_DEBUG_W_STR("dataBaseName\t", dataBaseName);
 		CONSOLE_DEBUG_W_HEX("mySQLConnection\t", mySQLConnection);
 		//mySQLConnection	=
-		mysql_real_connect(	mySQLConnection,
+		CONSOLE_DEBUG_W_STR("gSQLsever_IPaddr  \t=",	gSQLsever_IPaddr);
+		CONSOLE_DEBUG("Calling mysql_real_connect()");
+		START_TIMING();
+//MYSQL *STDCALL mysql_real_connect(MYSQL			*mysql,
+//									const char		*host,
+//									const char		*user,
+//									const char		*passwd,
+//									const char		*db,
+//									unsigned int	port,
+//									const char		*unix_socket,
+//									unsigned long	clientflag);
+
+		retrunedSQLConn	=	mysql_real_connect(	mySQLConnection,
 												gSQLsever_IPaddr,
 												gSQLsever_UserName,
 												gSQLsever_Password,
@@ -367,17 +394,17 @@ char	sqlErrorString[256];
 												gSQLsever_Port,
 												NULL,
 												0);
+		DEBUG_TIMING("Time for mysql_real_connect() to complete: (millissecs)");
+
+		//----------------------------------------------------------
+		//*	Debugging only
 		CONSOLE_DEBUG_W_HEX("mySQLConnection\t", mySQLConnection);
+		CONSOLE_DEBUG_W_HEX("retrunedSQLConn\t", retrunedSQLConn);
 		if (mySQLConnection == NULL)
 		{
 
 			strcpy(sqlErrorString, mysql_error(mySQLConnection));
 			CONSOLE_DEBUG("mysql_real_connect() failed");
-			CONSOLE_DEBUG_W_STR("gSQLsever_IPaddr  \t=",	gSQLsever_IPaddr);
-			CONSOLE_DEBUG_W_STR("gSQLsever_UserName\t=",	gSQLsever_UserName);
-			CONSOLE_DEBUG_W_STR("gSQLsever_Password\t=",	gSQLsever_Password);
-			CONSOLE_DEBUG_W_STR("dataBaseName      \t=",	dataBaseName);
-			CONSOLE_DEBUG_W_NUM("gSQLsever_Port    \t=",	gSQLsever_Port);
 			CONSOLE_DEBUG_W_STR("mysql_error       \t=",	sqlErrorString);
 
 			LogSqlTransaction(	dataBaseName,
@@ -385,6 +412,7 @@ char	sqlErrorString[256];
 								__FUNCTION__,
 								sqlErrorString);
 		}
+		//----------------------------------------------------------
 	}
 	else
 	{
@@ -522,8 +550,8 @@ int		returnCode;
 	else
 	{
 		LogSqlTransaction(gSQLsever_Database, "mysql_select_db() failed", __FUNCTION__, mysql_error(myCon));
-		CONSOLE_DEBUG_W_NUM("mysql_select_db failed with returnCode  \t=", returnCode);
-		CONSOLE_DEBUG_W_STR("mysql_select_db failed with error string\t=", mysql_error(myCon));
+		CONSOLE_DEBUG_W_NUM("mysql_select_db failed w/ retCode\t=", returnCode);
+		CONSOLE_DEBUG_W_STR("mysql_select_db failed w/ errstr \t=", mysql_error(myCon));
 	}
 
 	return(num_fields);
@@ -825,20 +853,17 @@ bool			foundIt;
 
 	foundIt				=	false;
 	rtnErrorMessage[0]	=	0;
+#ifdef _VERBOSE_SQL_DEBUG_
+	CONSOLE_DEBUG("Trying to establish connection to the database");
+	CONSOLE_DEBUG_W_STR("gSQLsever_IPaddr\t=",		gSQLsever_IPaddr);
+	CONSOLE_DEBUG_W_STR("gSQLsever_UserName\t=",	gSQLsever_UserName);
+	CONSOLE_DEBUG_W_STR("gSQLsever_Password\t=",	gSQLsever_Password);
+	CONSOLE_DEBUG_W_STR("gSQLsever_Database\t=",	gSQLsever_Database);
+#endif
 
 	mySQLConnection	=	OpenMysql(gSQLsever_Database);
 	if (mySQLConnection != NULL)
 	{
-#ifdef _VERBOSE_SQL_DEBUG_
-		CONSOLE_DEBUG(__FUNCTION__);
-
-		CONSOLE_DEBUG("Trying to establish connection to the database");
-		CONSOLE_DEBUG_W_STR("gSQLsever_IPaddr\t=",		gSQLsever_IPaddr);
-		CONSOLE_DEBUG_W_STR("gSQLsever_UserName\t=",	gSQLsever_UserName);
-		CONSOLE_DEBUG_W_STR("gSQLsever_Password\t=",	gSQLsever_Password);
-		CONSOLE_DEBUG_W_STR("gSQLsever_Database\t=",	gSQLsever_Database);
-#endif
-
 		sprintf(mySQLCmd,"call GetStarFromID(%s);", gaiaIDnumberStr);
 #ifdef _VERBOSE_SQL_DEBUG_
 		CONSOLE_DEBUG(mySQLCmd);
@@ -849,23 +874,23 @@ bool			foundIt;
 											&mySQLresult,
 											gSQLsever_Database,
 											mySQLCmd);
-//			CONSOLE_DEBUG_W_NUM("num_fields", num_fields);
+//		CONSOLE_DEBUG_W_NUM("num_fields", num_fields);
 		if (num_fields > 0)
 		{
 			num_rows	=	mysql_num_rows(mySQLresult);
-//				CONSOLE_DEBUG_W_NUM("num_rows", num_rows);
+//			CONSOLE_DEBUG_W_NUM("num_rows", num_rows);
 
 			if ((num_rows > 0) && (num_fields >= 3))
 			{
-//					CONSOLE_DEBUG(__FUNCTION__);
+//				CONSOLE_DEBUG(__FUNCTION__);
 				row			=	mysql_fetch_row(mySQLresult);
 
 				foundIt		=	true;
 				recNum		=	1;
 				//*	Get the name
-//					CONSOLE_DEBUG_W_STR("row[0]\t=",	row[0]);
+//				CONSOLE_DEBUG_W_STR("row[0]\t=",	row[0]);
 				strcpy(localStarData.longName, row[0]);
-//					CONSOLE_DEBUG_W_STR("longName\t=",	localStarData.longName);
+//				CONSOLE_DEBUG_W_STR("longName\t=",	localStarData.longName);
 
 				//*	Get the RA
 				localStarData.ra		=	RADIANS(AsciiToDouble(row[1]));
@@ -911,7 +936,7 @@ bool			foundIt;
 				CONSOLE_DEBUG_W_NUM("num_rows", num_rows);
 				sprintf(rtnErrorMessage,	"ID=%s, was not found in %s database", gaiaIDnumberStr, gSQLsever_Database);
 			}
-//				CONSOLE_DEBUG("Calling mysql_free_result()");
+//			CONSOLE_DEBUG("Calling mysql_free_result()");
 		//	SQL-Error	2022-11-13	Mark had this here
 		//	mysql_free_result(mySQLresult);
 
@@ -933,7 +958,7 @@ bool			foundIt;
 		}
 	//	SQL-Error	2022-11-13	Keith says this goes here
 		mysql_free_result(mySQLresult);
-//			CONSOLE_DEBUG("Done");
+//		CONSOLE_DEBUG("Done");
 	}
 	else
 	{
@@ -985,20 +1010,18 @@ unsigned int	endMilliSecs;
 
 	dbaseCount		=	0;
 	errorString[0]	=	0;
-
+#ifdef _VERBOSE_SQL_DEBUG_
+	CONSOLE_DEBUG("Trying to establish connection to the database");
+	CONSOLE_DEBUG_W_STR("gSQLsever_IPaddr  \t=",	gSQLsever_IPaddr);
+	CONSOLE_DEBUG_W_NUM("gSQLsever_Port    \t=",	gSQLsever_Port);
+	CONSOLE_DEBUG_W_STR("gSQLsever_UserName\t=",	gSQLsever_UserName);
+	CONSOLE_DEBUG_W_STR("gSQLsever_Password\t=",	gSQLsever_Password);
+	CONSOLE_DEBUG_W_STR("gSQLsever_Database\t=",	starsDBname);
+	CONSOLE_DEBUG("Calling OpenMysql()");
+#endif
 	mySQLConnection	=	OpenMysql(starsDBname);
 	if (mySQLConnection != NULL)
 	{
-#ifdef _VERBOSE_SQL_DEBUG_
-		CONSOLE_DEBUG(__FUNCTION__);
-
-		CONSOLE_DEBUG("Trying to establish connection to the database");
-		CONSOLE_DEBUG_W_STR("gSQLsever_IPaddr  \t=",	gSQLsever_IPaddr);
-		CONSOLE_DEBUG_W_NUM("gSQLsever_Port    \t=",	gSQLsever_Port);
-		CONSOLE_DEBUG_W_STR("gSQLsever_UserName\t=",	gSQLsever_UserName);
-		CONSOLE_DEBUG_W_STR("gSQLsever_Password\t=",	gSQLsever_Password);
-		CONSOLE_DEBUG_W_STR("gSQLsever_Database\t=",	starsDBname);
-#endif
 		strcpy(mySQLCmd, "call GetStarCatalogs();");
 #ifdef _VERBOSE_SQL_DEBUG_
 		CONSOLE_DEBUG(mySQLCmd);
@@ -1376,6 +1399,86 @@ int		requestStarted;
 
 
 #ifndef _INCLUDE_GAIA_MAIN_
+//						(gGaiaDataList[iii].serverReqCount < 5))
+//*****************************************************************************
+static int	GetOneSQLdataBlock(TYPE_GAIA_REMOTE_DATA *gaiaRemoteData)
+{
+TYPE_CelestData	*gaiaData;
+long			gaiaDataCount;
+unsigned int	startMilliSecs;
+unsigned int	endMilliSecs;
+int				requestOccured;
+bool			successFlag;
+
+	requestOccured	=	0;
+	if (gaiaRemoteData->serverReqCount < 5)
+	{
+		requestOccured	=	1;
+		CONSOLE_DEBUG("GAIA_Thread, going to get data");
+		CONSOLE_DEBUG_W_DBL("centerRA_deg\t =", gaiaRemoteData->centerRA_deg);
+		CONSOLE_DEBUG_W_DBL("centerDEC_deg\t=", gaiaRemoteData->centerDEC_deg);
+
+		gettimeofday(&gaiaRemoteData->timeStamp, NULL);	//*	save the time we started the request
+
+		//*	increment the number of times we have requested this
+		gaiaRemoteData->serverReqCount	+=	1;
+		startMilliSecs	=	millis();
+		gaiaData		=	GetGAIAdataFromSQL(	gaiaRemoteData->centerRA_deg,
+												gaiaRemoteData->centerDEC_deg,
+												&gaiaDataCount,
+												&successFlag);
+
+		endMilliSecs	=	millis();
+		CONSOLE_DEBUG_W_LONG("gaiaDataCount\t=", gaiaDataCount);
+
+		//*	make sure we got some valid data
+	//						if ((gaiaData != NULL) && (gaiaDataCount > 0))
+		if (successFlag)
+		{
+			//*	sort the data to speed up drawing
+			if (gaiaDataCount > 1)
+			{
+				CONSOLE_DEBUG("Sorting");
+				qsort(gaiaData, gaiaDataCount, sizeof(TYPE_CelestData), CelestObjDeclinationQsortProc);
+			}
+
+			gaiaRemoteData->gaiaData			=	gaiaData;
+			gaiaRemoteData->gaiaDataCnt			=	gaiaDataCount;
+			gaiaRemoteData->elapsedMilliSecs	=	endMilliSecs - startMilliSecs;
+			gaiaRemoteData->sequenceNum			=	gGaiaSQLsequenceNum;
+			gGaiaSQLsequenceNum++;
+
+			sprintf(gSQLsever_StatusMsg, "SQL success, record count=%ld", gaiaDataCount);
+			gSQLsever_MsgUpdated	=	true;
+		}
+		else
+		{
+			CONSOLE_DEBUG("Failed to get GAIA data!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+			strcpy(gSQLsever_StatusMsg, "SQL failed!!!");
+			gSQLsever_MsgUpdated	=	true;
+
+			gaiaRemoteData->validData	=	false;
+			memset(gaiaRemoteData, 0, sizeof(TYPE_GAIA_REMOTE_DATA));
+
+			gSQLerror_Count++;
+			if (gSQLerror_Count > 10)
+			{
+				strcpy(gSQLsever_StatusMsg, "Too many SQL errors, sleeping for 1 minute");
+				gSQLsever_MsgUpdated	=	true;
+				CONSOLE_DEBUG(gSQLsever_StatusMsg);
+				sleep(1 * 60);
+			}
+		}
+	//	CONSOLE_DEBUG("Quick nap between requests");
+
+		//*	sleep for 100 millseconds
+		usleep(100 * 1000);
+	//	CONSOLE_DEBUG("Awake");
+
+	//	DumpGaiaRemoteTable(__FUNCTION__);
+	}
+	return(requestOccured);
+}
 
 //*****************************************************************************
 static void	*GaiaSQL_Thead(void *arg)
@@ -1385,7 +1488,7 @@ TYPE_CelestData	*gaiaData;
 long			gaiaDataCount;
 unsigned int	startMilliSecs;
 unsigned int	endMilliSecs;
-bool			requestOccured;
+bool			requestCount;
 bool			successFlag;
 
 	gSQL_ThreadIsRunning	=	true;
@@ -1395,77 +1498,17 @@ bool			successFlag;
 		if (gST_DispOptions.RemoteGAIAenabled && gSkyTravelUpdateOccured)
 		{
 			CONSOLE_DEBUG(__FUNCTION__);
-			requestOccured	=	true;
-			while (requestOccured)
+			requestCount	=	1;
+			while (requestCount > 0)
 			{
-				requestOccured	=	false;
+				requestCount	=	0;
 				//*	lets see if we have any work to do
 				for (iii=0; iii<kMaxGaiaDataSets; iii++)
 				{
-					if (gGaiaDataList[iii].validData && (gGaiaDataList[iii].gaiaData == NULL))
+					if (gGaiaDataList[iii].validData &&
+						(gGaiaDataList[iii].gaiaData == NULL))
 					{
-						CONSOLE_DEBUG("GAIA_Thread, going to get data");
-						CONSOLE_DEBUG_W_DBL("centerRA_deg\t=", gGaiaDataList[iii].centerRA_deg);
-						CONSOLE_DEBUG_W_DBL("centerDEC_deg\t=", gGaiaDataList[iii].centerDEC_deg);
-
-						gettimeofday(&gGaiaDataList[iii].timeStamp, NULL);	//*	save the time we started the request
-
-						startMilliSecs	=	millis();
-						gaiaData		=	GetGAIAdataFromSQL(	gGaiaDataList[iii].centerRA_deg,
-																gGaiaDataList[iii].centerDEC_deg,
-																&gaiaDataCount,
-																&successFlag);
-
-						endMilliSecs	=	millis();
-						requestOccured	=	true;
-						CONSOLE_DEBUG_W_LONG("gaiaDataCount\t=", gaiaDataCount);
-
-						//*	make sure we got some valid data
-//						if ((gaiaData != NULL) && (gaiaDataCount > 0))
-						if (successFlag)
-						{
-							//*	sort the data to speed up drawing
-							if (gaiaDataCount > 1)
-							{
-								CONSOLE_DEBUG("Sorting");
-								qsort(gaiaData, gaiaDataCount, sizeof(TYPE_CelestData), CelestObjDeclinationQsortProc);
-							}
-							CONSOLE_DEBUG_W_NUM("assigning gaia data, iii=", iii);
-
-							gGaiaDataList[iii].gaiaData			=	gaiaData;
-							gGaiaDataList[iii].gaiaDataCnt		=	gaiaDataCount;
-							gGaiaDataList[iii].elapsedMilliSecs	=	endMilliSecs - startMilliSecs;
-							gGaiaDataList[iii].sequenceNum		=	gGaiaSQLsequenceNum;
-							gGaiaSQLsequenceNum++;
-
-							sprintf(gSQLsever_StatusMsg, "SQL success, record count=%ld", gaiaDataCount);
-							gSQLsever_MsgUpdated	=	true;
-						}
-						else
-						{
-							CONSOLE_DEBUG("Failed to get GAIA data!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-							strcpy(gSQLsever_StatusMsg, "SQL failed!!!");
-							gSQLsever_MsgUpdated	=	true;
-
-							gGaiaDataList[iii].validData	=	false;
-							memset(&gGaiaDataList[iii], 0, sizeof(TYPE_GAIA_REMOTE_DATA));
-
-							gSQLerror_Count++;
-							if (gSQLerror_Count > 10)
-							{
-								strcpy(gSQLsever_StatusMsg, "Too many SQL errors, sleeping for 1 minute");
-								gSQLsever_MsgUpdated	=	true;
-								CONSOLE_DEBUG(gSQLsever_StatusMsg);
-								sleep(1 * 60);
-							}
-						}
-					//	CONSOLE_DEBUG("Quick nap between requests");
-
-						//*	sleep for 100 millseconds
-						usleep(100 * 1000);
-					//	CONSOLE_DEBUG("Awake");
-
-					//	DumpGaiaRemoteTable(__FUNCTION__);
+						requestCount	+=	GetOneSQLdataBlock(&gGaiaDataList[iii]);
 					}
 				}
 			}

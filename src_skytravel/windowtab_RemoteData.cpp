@@ -467,7 +467,7 @@ void	WindowTabRemoteData::ProcessButtonClick(const int buttonIdx, const int flag
 	bool				validGaiaData;
 	int					dbNumber;
 	int					databaseCnt;
-	char				errorMessage[256];
+	char				errorMessage[256]	=	"";
 	char				fullErrMsg[256];
 
 	SetWidgetText(kRemoteData_SQLerrorMsgBox, "");

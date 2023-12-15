@@ -46,6 +46,9 @@
 //*		echo "$DATE - Dome controller executable not found" >> $LOGFILE
 //*	fi
 //*****************************************************************************
+//*		https://www.amazon.com/gp/product/B07L6HGFWY/ref=ppx_yo_dt_b_search_asin_title?ie=UTF8&psc=1
+//*****************************************************************************
+
 
 #ifdef _ENABLE_DOME_RPI_
 

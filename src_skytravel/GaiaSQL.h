@@ -31,6 +31,7 @@ int		UpdateDataBaseListFromServer(char *errorString);
 typedef struct
 {
 	bool			validData;
+	int				serverReqCount;		//*	the number of times we have requested this block
 	double			centerRA_deg;
 	double			centerDEC_deg;
 	int				block_RA_deg;		//*	the degree value of the 1x1 degree block

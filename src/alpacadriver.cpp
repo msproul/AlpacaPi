@@ -1082,6 +1082,13 @@ int			percentCPU;
 	JsonResponse_Add_String(reqData->socket,
 							reqData->jsonTextBuffer,
 							kMaxJsonBuffLen,
+							"hardware",
+							gHardwareString,
+							INCLUDE_COMMA);
+
+	JsonResponse_Add_String(reqData->socket,
+							reqData->jsonTextBuffer,
+							kMaxJsonBuffLen,
 							"operatingsystem",
 							gOsReleaseString,
 							INCLUDE_COMMA);

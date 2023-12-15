@@ -16,6 +16,7 @@
 extern	char			gOsReleaseString[];
 extern	char			gCpuInfoString[];
 extern	char			gPlatformString[];
+extern	char			gHardwareString[];
 extern	double			gBogoMipsValue;
 
 

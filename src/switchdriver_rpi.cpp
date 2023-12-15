@@ -34,7 +34,7 @@
 //*	Jan  1,	2022	<MLS> Added _ENABLE_STATUS_SWITCH_, specified in Makefile
 //*	Jan  1,	2022	<MLS> Status Read Only switches now supported.
 //*	Jan  1,	2022	<MLS> Able to use Commutator power relay to read AC power status on dome
-//*	Dec  3,	2023	<MLS> WiringPi now working in 64 bit mode
+//*	Dec  3,	2023	<MLS> WiringPi now working in 64 bit mode (WiringPi version 2.6.0)
 //*****************************************************************************
 //*	WiringPi for raspberry pi 4
 //	wget https://project-downloads.drogon.net/wiringpi-latest.deb

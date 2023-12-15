@@ -101,8 +101,8 @@ bool	validEntry;
 //*	returns # of processed lines
 //*	-1 means failed to open config file
 //*****************************************************************************
-int	ReadGenericConfigFile(	const char	*configFilePath,
-							const char	separterChar,
+int	ReadGenericConfigFile(	const char			*configFilePath,
+							const char			separterChar,
 							ProcessConfigEntry *configCallBack,
 							void				*userDataPtr)
 {
