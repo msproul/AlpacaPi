@@ -26,12 +26,16 @@
 </TABLE>
 </CENTER>
 <!-------------------------------------------->
+AlpacaPi is the name I have given to my suite of Alpaca drivers and clients.
+<P>
 The drivers are probably the most important piece to the puzzle.
-Once the driver is running for a particular device, then any program that specs Alpaca can utilize that devices.
-This also includes a web browser.  However you can not send action commands to the driver from a web browser.
+Once the driver is running for a particular device,
+then any program that speaks Alpaca can utilize that devices.
+This also includes a web browser.
+However you can not send action commands to the driver from a web browser.
 You can read all of the status.
 <P>
-The alpaca drives run on Linux and were designed with the Raspberry-Pi in mind.
+The AlpacaPi drivers run on Linux and were designed with the Raspberry-Pi in mind.
 They will run on most any flavor of linux.
 <P>
 AlpacaPi drivers currently support the following devices.
@@ -112,15 +116,67 @@ For example, if you want to utilize the 4 port switch (described below), follows
 		<LI>./switch
 	</OL>
 </UL>
-You should then get a screen like this
+You should then get a screen like the screen samble below:
 <CENTER>
-<IMG SRC=images/Switch-door-screenshot.jpg width=200>
-</CENTER>
+<TABLE BORDER=1>
+	<TR>
+		<TH>Dome</TH>
+		<TH>Focuser</TH>
+		<TH>Switch</TH>
+	<TR>
+	<TR>
+		<TD><A HREF=images/Dome_controller.png target=controller>
+				<IMG SRC=images/Dome_controller.png width=200></A></TD>
 
+
+		<TD><A HREF=images/NiteCrawler_wo102_screenshot.jpg target=controller>
+				<IMG SRC=images/NiteCrawler_wo102_screenshot.jpg width=200></A></TD>
+
+		<TD><A HREF=images/Switch-door-screenshot.jpg target=controller>
+				<IMG SRC=images/Switch-door-screenshot.jpg width=200></A></TD>
+	<TR>
+</TABLE>
+</CENTER>
 
 <?-------------------------------------------------------------->
 <HR size=4 color=white>
-<H3>Dome driver</H3>
+<H2>Dome driver</H2>
+The AlpacaPi dome driver supports the following configurations:
+<UL>
+	<LI>Dome with rotation and single shutter<BR>
+		<UL>
+			<LI>This option uses DC motor controllers
+		</UL>
+	<P>
+	<LI>Roll Off Roof with roof acting as the shutter<BR>
+		<UL>
+			<LI>Version using relays for driving motors
+			<LI>Version using DC motor controllers
+		</UL>
+</UL>
+
+A watchdog timer is also supported to close the dome if communications is lost.
+<P>
+<UL>
+	<LI>The watchdog timeout occurs if no commands have been received for the specified time.
+	(default is 5 minutes). If SkyTravel is being used, it queries the dome driver every few seconds for status thus resetting the timeout.
+	The Dome watchdog timer controls the dome shutter.
+	If the timeout occurs, the shutter will close.
+<P>
+    <LI>The Dome movement timeout occurs if no MOVE command is received in the specified time
+    (default is 2 hours). The Dome movement timer controls the dome position.
+    If the timeout occurs, the dome will be sent back to the PARK position
+</UL>
+<P>
+
+<H4>Remote Shutter</H4>
+
+The AlpacaPi dome driver supports the option of a separate drive that controls the door.
+This allows one device driver to be used for the dome since most client applications can only deal with one.
+While in reality there are 2 drivers. The primary DOME driver talks to the second driver (SHUTTER).
+<P>
+The SHUTTER devices is a non-standard Alpaca device. It will not be recognized by other Alpaca clients. It responds to the same door/shutter commands as the DOME device.
+<P>
 The AlpacaPi dome driver uses DC motors and a PWM controlled DC power board
 that handles reversing and power output.
 It also uses a terminal I/O board for connection to the DC controller and for sensor inputs.

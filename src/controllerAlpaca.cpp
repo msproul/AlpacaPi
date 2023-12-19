@@ -867,8 +867,8 @@ bool	Controller::AlpacaProcessReadAll_Common(const char	*deviceTypeStr,
 bool	dataWasHandled;
 int		keywordEnum;
 
-	CONSOLE_DEBUG(cWindowName);
-	CONSOLE_DEBUG_W_STR("json=", valueString);
+//	CONSOLE_DEBUG(cWindowName);
+//	CONSOLE_DEBUG_W_STR("json=", valueString);
 
 	dataWasHandled	=	false;
 	keywordEnum		=	LookupCmdInCmdTable(keywordString, gCommonCmdTable, gExtrasCmdTable);

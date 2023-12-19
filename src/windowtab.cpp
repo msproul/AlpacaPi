@@ -97,6 +97,8 @@
 //*	Jun 23,	2023	<MLS> Improvements to DumpWidget()
 //*	Aug 24,	2023	<MLS> Added angle to ellipse functions
 //*	Sep 26,	2023	<MLS> Added SetAlpacaDeviceType()
+//*	Dec 17,	2023	<MLS> Added SetWidgetNumber() with unsigned int argument
+//*	Dec 17,	2023	<MLS> Cleaned up widget types in SetupWindowBottomBoxes()
 //*****************************************************************************
 
 
@@ -468,6 +470,15 @@ char	lineBuff[64];
 }
 
 //**************************************************************************************
+void	WindowTab::SetWidgetNumber(		const int widgetIdx, const unsigned int number)
+{
+char	lineBuff[64];
+
+	sprintf(lineBuff, "%d", number);
+	SetWidgetText(widgetIdx, lineBuff);
+}
+
+//**************************************************************************************
 void	WindowTab::SetWidgetNumber(const int widgetIdx, const long number)
 {
 char	lineBuff[64];
@@ -751,6 +762,7 @@ int		indicatorBoxHgt;
 	if (readAllBox >= 0)
 	{
 		SetWidget(				readAllBox,	xLoc,	(yLoc - cBtnHeight)+2,		indicatorBoxWid,	indicatorBoxHgt);
+		SetWidgetType(			readAllBox,	kWidgetType_TextBox);
 		SetWidgetBorderColor(	readAllBox,	CV_RGB(0,	0,	0));
 		SetWidgetText(			readAllBox,	"R");
 		SetWidgetFont(			readAllBox,	kFont_Medium);
@@ -767,6 +779,7 @@ int		indicatorBoxHgt;
 	if (deviceStateBox >= 0)
 	{
 		SetWidget(				deviceStateBox,	xLoc,	(yLoc - cBtnHeight)+2,		indicatorBoxWid,	indicatorBoxHgt);
+		SetWidgetType(			deviceStateBox,	kWidgetType_TextBox);
 		SetWidgetBorderColor(	deviceStateBox,	CV_RGB(0,	0,	0));
 		SetWidgetText(			deviceStateBox,	"DS");
 		SetWidgetFont(			deviceStateBox,	kFont_Medium);
@@ -811,6 +824,7 @@ int		indicatorBoxHgt;
 	{
 		cLastCmdTextBox	=	lastCmdWidgetIdx;
 		SetWidget(			lastCmdWidgetIdx,	0,			(yLoc - cBtnHeight),		cWidth,		cBtnHeight);
+		SetWidgetType(		lastCmdWidgetIdx,	kWidgetType_TextBox);
 		SetWidgetText(		lastCmdWidgetIdx,	"---");
 		SetWidgetFont(		lastCmdWidgetIdx,	kFont_Medium);
 		SetWidgetTextColor(	lastCmdWidgetIdx,	CV_RGB(0,	255,	0));
@@ -1634,7 +1648,7 @@ void	WindowTab::DumpWidget(TYPE_WIDGET *theWidget)
 
 	switch(theWidget->widgetType)
 	{
-		case kWidgetType_Default:
+		case kWidgetType_Default:		printf("Def\t");	break;
 
 		case kWidgetType_Button:		printf("BTN\t");	break;
 		case kWidgetType_CheckBox:		printf("CBX\t");	break;

@@ -919,7 +919,7 @@ void	DomeDriver::ProcessDiscovery(	struct sockaddr_in	*deviceAddress,
 										const char			*deviceType,
 										const int			deviceNumber)
 {
-//	CONSOLE_DEBUG_W_STR(__FUNCTION__, deviceType);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, deviceType);
 
 
 #ifdef _ENABLE_REMOTE_SHUTTER_
@@ -2480,6 +2480,52 @@ char				alpacaErrMsg[64];
 	}
 }
 
+
+//*****************************************************************************
+//*	documentation
+//*****************************************************************************
+const char	gDomeDriverDocs[]	=
+	"The AlpacaPi dome driver can support the following configurations:\r\n"
+	"<UL>\r\n"
+	"<LI>Dome with rotation and single shutter\r\n"
+	"<LI>Roll Off Roof with roof acting as the shutter\r\n"
+	"</UL>\r\n"
+	"<P>\r\n"
+	"A watchdog timer is also supported to close the dome if communications is losts\r\n"
+
+	;
+
+const char	gDomeDriverNotes[]	=
+	"<UL>\r\n"
+	"<LI><B>Note 1:</B>"
+	"The watchdog timeout occurs if no commands have been received for the specified time.\r\n"
+	"(default is 5 minutes).\r\n"
+	"If SkyTravel is being used, it queries the dome driver every few seconds for status\r\n"
+	"thus resetting the timeout.\r\n"
+	"The Dome watchdog timer controls the dome shutter. If the timeout occurs, the shutter will close.\r\n"
+	"<P><LI><B>Note 2:</B>"
+	"The Dome movement timeout occurs if no MOVE command is received in the specified time\r\n"
+	"(default is 2 hours).\r\n"
+	"The Dome movement timer controls the dome position.\r\n"
+	"If the timeout occurs, the dome will be sent back to the PARK position\r\n"
+	"</UL>\r\n";
+
+//*****************************************************************************
+//*	Remote shutter documentation
+//*****************************************************************************
+#ifdef _ENABLE_REMOTE_SHUTTER_
+const char	gRemoteShutterDocs[]	=
+	"The AlpacaPi dome driver supports the option of a separate drive that controls the door.\r\n"
+	"This allows one device driver to be used for the dome since most client applications can only deal with one.\r\n"
+	"While in reality there are 2 drivers. The primary DOME driver talks to the second driver (SHUTTER).\r\n"
+	"<P>\r\n"
+	"The SHUTTER devices is a non-standard Alpaca device. It will not be recognized by other Alpaca clients.\r\n"
+	"It responds to the same door/shutter commands as the DOME device.\r\n"
+	"\r\n"
+	"";
+
+#endif // _ENABLE_REMOTE_SHUTTER_
+
 //*****************************************************************************
 //*	https://www.w3schools.com/html/html_forms.asp
 //*****************************************************************************
@@ -2487,9 +2533,10 @@ bool	DomeDriver::Setup_OutputForm(TYPE_GetPutRequestData *reqData, const char *f
 {
 int			mySocketFD;
 char		lineBuff[256];
-//int			iii;
 const char	domeTitle[]	=	"AlpacaPi Dome Driver setup";
-//bool		checkedFlag;
+#ifdef _ENABLE_REMOTE_SHUTTER_
+	char	shutterIPaddrStr[INET_ADDRSTRLEN];
+#endif // _ENABLE_REMOTE_SHUTTER_
 
 	CONSOLE_DEBUG(__FUNCTION__);
 //	CONSOLE_DEBUG_W_STR("The Action that will be preformed when save is pressed:", formActionString);
@@ -2526,7 +2573,13 @@ const char	domeTitle[]	=	"AlpacaPi Dome Driver setup";
 #ifdef _ENABLE_DOME_SIMULATOR_
 	SocketWriteData(mySocketFD,	"<H2>Dome Simulator</H2>\r\n");
 #endif
+	SocketWriteData(mySocketFD,	"</CENTER>\r\n");
 
+	SocketWriteData(mySocketFD,	gDomeDriverDocs);
+
+	//----------------------------------------------------
+	//----------------------------------------------------
+	SocketWriteData(mySocketFD,	"<CENTER>\r\n");
 	SocketWriteData(mySocketFD,	"<TABLE BORDER=1>\r\n");
 	//----------------------------------------------------
 	//*	table header
@@ -2624,18 +2677,8 @@ const char	domeTitle[]	=	"AlpacaPi Dome Driver setup";
 
 	//---------------------------------------------------------------------------
 	//	Documentation
-	SocketWriteData(mySocketFD,	"<UL>\r\n");
-	SocketWriteData(mySocketFD,	"<LI><B>Note 1:</B>");
-	SocketWriteData(mySocketFD,	"\tThe watchdog timeout occurs if no commands have been received for the specified time.\r\n");
-	SocketWriteData(mySocketFD,	"\t(default is 5 minutes).\r\n");
-	SocketWriteData(mySocketFD,	"\tIf SkyTravel is being used, it queries the dome driver every few seconds for status\r\n");
-	SocketWriteData(mySocketFD,	"\tthus resetting the timeout.\r\n");
-	SocketWriteData(mySocketFD,	"\tThe Dome watchdog timer controls the dome shutter. If the timeout occurs, the shutter will close.\r\n");
-	SocketWriteData(mySocketFD,	"<P><LI><B>Note 2:</B>");
-	SocketWriteData(mySocketFD,	"\tThe Dome movement timeout occurs if no MOVE command is received in the specified time\r\n");
-	SocketWriteData(mySocketFD,	"\t(default is 2 hours).\r\n");
-	SocketWriteData(mySocketFD,	"\tThe Dome movement timer controls the dome position.\r\n");
-	SocketWriteData(mySocketFD,	"\tIf the timeout occurs, the dome will be sent back to the PARK position\r\n");
+	SocketWriteData(mySocketFD,	gDomeDriverNotes);
+
 #if defined(_ENABLE_DOME_ROR_) || defined(_ENABLE_DOME_SIMULATOR_)
 	SocketWriteData(mySocketFD,	"<P><LI><B>Note 3:</B>");
 	SocketWriteData(mySocketFD,	"\tThe ROR delay applies to the ROR controller only, this is the delay for the relay timing.\r\n");
@@ -2650,6 +2693,36 @@ const char	domeTitle[]	=	"AlpacaPi Dome Driver setup";
 
 	SocketWriteData(mySocketFD,	"<P>\r\n");
 
+	//----------------------------------------------------------------------
+	//----------------------------------------------------------------------
+	SocketWriteData(mySocketFD,	"<HR SIZE=3>\r\n");
+
+	SocketWriteData(mySocketFD,	"<CENTER>\r\n");
+	SocketWriteData(mySocketFD,	"<H2>Remote Shutter</H2>\r\n");
+	SocketWriteData(mySocketFD,	"<P>\r\n");
+	SocketWriteData(mySocketFD,	"</CENTER>\r\n");
+	SocketWriteData(mySocketFD,	gRemoteShutterDocs);
+
+	SocketWriteData(mySocketFD,	"<P>\r\n");
+
+#ifdef _ENABLE_REMOTE_SHUTTER_
+	SocketWriteData(mySocketFD,	"<CENTER>\r\n");
+	SocketWriteData(mySocketFD,	"<TABLE BORDER=1>\r\n");
+
+	inet_ntop(AF_INET, &(cShutterDeviceAddress.sin_addr), shutterIPaddrStr, INET_ADDRSTRLEN);
+	sprintf(lineBuff,	"<TR><TD>Shutter IP address is</TD><TD>%s</TD></TR>\r\n", shutterIPaddrStr);
+	SocketWriteData(mySocketFD,	lineBuff);
+
+	sprintf(lineBuff,	"<TR><TD>Port</TD><TD>%d</TD></TR>\r\n", cShutterPort);
+	SocketWriteData(mySocketFD,	lineBuff);
+
+	sprintf(lineBuff,	"<TR><TD>Alpaca dev num</TD><TD>%d</TD></TR>\r\n", cShutterAlpacaDevNum);
+	SocketWriteData(mySocketFD,	lineBuff);
+
+	SocketWriteData(mySocketFD,	"</TABLE>\r\n");
+	SocketWriteData(mySocketFD,	"</CENTER>\r\n");
+
+#endif // _ENABLE_REMOTE_SHUTTER_
 	return(true);
 }
 

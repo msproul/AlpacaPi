@@ -70,6 +70,7 @@ class WindowTabDriverInfo: public WindowTab
 
 		virtual	void	SetupWindowControls(void);
 		virtual	void	ProcessButtonClick(const int buttonIdx, const int flags);
+		virtual	void	ActivateWindow(void);
 
 };
 

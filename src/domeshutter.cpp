@@ -216,10 +216,10 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 		SJP_Init(&jsonParser);
 		sprintf(alpacaString,	"/api/v1/%s/%d/abortslew", "shutter", 0);
 		validData	=	SendPutCommand(	&cShutterDeviceAddress,
-											cShutterPort,
-											alpacaString,
-											NULL,
-											&jsonParser);
+										cShutterPort,
+										alpacaString,
+										NULL,
+										&jsonParser);
 		if (validData)
 		{
 			jjj	=	0;

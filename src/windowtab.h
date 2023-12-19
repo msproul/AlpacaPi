@@ -242,6 +242,7 @@ class WindowTab
 				void	GetWidgetText(			const int widgetIdx, char *getText);
 				void	SetWidgetTabStops(		const int widgetIdx, const short *tabStopList);
 				void	SetWidgetNumber(		const int widgetIdx, const int number);
+				void	SetWidgetNumber(		const int widgetIdx, const unsigned int number);
 				void	SetWidgetNumber(		const int widgetIdx, const long number);
 				void	SetWidgetNumber(		const int widgetIdx, const double number);
 				void	SetWidgetNumber(		const int widgetIdx, const double number, const int decimalPlaces);

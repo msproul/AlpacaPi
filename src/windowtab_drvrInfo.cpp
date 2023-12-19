@@ -22,6 +22,7 @@
 //*	Jun  1,	2022	<MLS> Added "Launch Web" button
 //*	Jun 18,	2023	<MLS> Added DeviceState to driver info
 //*	Sep 26,	2023	<MLS> Added Restart to info window
+//*	Dec 17,	2023	<MLS> Added ActivateWindow() to driver info window (for debugging)
 //*****************************************************************************
 
 
@@ -79,8 +80,11 @@ char	restartInfoText[]	=	"Restart will cause the device driver instance to be de
 
 
 	textBoxHt	=	cTitleHeight * 2;
-//	textBoxHt	+=	cTitleHeight / 2;
-	boxWidth	=	135;
+	//*	if the window is too short, make the boxes shorter as well
+	if (cHeight <= 600)
+	{
+		textBoxHt	-=	9;
+	}
 	boxWidth	=	cWidth - 6;
 	boxID		=	kFirstBoxID;
 	while (boxID <= kLastBoxID)
@@ -125,7 +129,12 @@ char	restartInfoText[]	=	"Restart will cause the device driver instance to be de
 	SetWidgetText(	kDriverInfo_InterfaceVersion_Lbl,	"InterfaceVersion");
 
 
-	SetWidget(				kDriverInfo_Restart_Info,	0,			yLoc,		boxWidth,		textBoxHt);
+	//*	on wider screens we dont need as much height
+	if (cWidth > 500)
+	{
+		textBoxHt	-=	10;
+	}
+	SetWidget(				kDriverInfo_Restart_Info,	0,	yLoc,	boxWidth,	textBoxHt);
 	SetWidgetType(			kDriverInfo_Restart_Info,	kWidgetType_MultiLineText);
 	SetWidgetJustification(	kDriverInfo_Restart_Info,	kJustification_Left);
 	SetWidgetFont(			kDriverInfo_Restart_Info,	kFont_TextList);
@@ -204,6 +213,7 @@ bool		validData;
 			break;
 
 		case kDriverInfo_LaunchWeb:
+			CONSOLE_DEBUG("kDriverInfo_LaunchWeb");
 			myControllerPtr	=   (Controller *)cParentObjPtr;
 			if (myControllerPtr != NULL)
 			{
@@ -222,3 +232,10 @@ bool		validData;
 			break;
 	}
 }
+
+//**************************************************************************************
+void	WindowTabDriverInfo::ActivateWindow(void)
+{
+//	DumpWidgetList(0, kDriverInfo_last, __FILE__);
+}
+
