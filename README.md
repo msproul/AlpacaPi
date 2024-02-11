@@ -161,28 +161,51 @@ For those familiar with ASCOM and ASCOM development, I use the CONFORM tool to
 verify the workings of my drivers.  Here my current results
 (as of Feb 11, 2024)
 
-//*	Apr  1,	2020	<MLS> CONFORM-filterwheel -> PASSED!!!!!!!!!!!!!!!!!!!!!
-//*	Apr  2,	2020	<MLS> CONFORM-focuser -> PASSED!!!!!!!!!!!!!!!!!!!!!
-//*	Apr  2,	2020	<MLS> CONFORM-rotator -> PASSED!!!!!!!!!!!!!!!!!!!!!
-//*	Apr  2,	2020	<MLS> CONFORM-switch -> PASSED!!!!!!!!!!!!!!!!!!!!!
-//*	Jan 12,	2021	<MLS> CONFORM-dome/ror -> PASSED!!!!!!!!!!!!!!!!!!!!!
-//*	Jan 20,	2021	<MLS> CONFORM-camera/zwo -> PASSED!!!!!!!!!!!!!!!!!!!!!
-//*	Mar  1,	2021	<MLS> CONFORM-observingconditions -> PASSED!!!!!!!!!!!!!!!!!!!!!
-//*	Apr  6,	2021	<MLS> CONFORM-covercalibrator -> PASSED!!!!!!!!!!!!!!!!!!!!!
-//*	Apr 30,	2021	<MLS> CONFORM-filterwheel/atik -> PASSED!!!!!!!!!!!!!!!!!!!!!
-//*	Jun 24,	2021	<MLS> CONFORM-switch -> PASSED!!!!!!!!!!!!!!!!!!!!!
-//*	Jan  2,	2022	<MLS> CONFORM-switch -> PASSED!!!!!!!!!!!!!!!!!!!!!
-//*	Nov 27,	2022	<MLS> CONFORMU-filterwheeldriver_usis -> PASSED!!!!!!!!!!!!!!
-//*	Nov 27,	2022	<MLS> CONFORMU-focuserdriver_USIS -> PASSED!!!!!!!!!!!!!!!!!!!!!
-//*	Nov 27,	2022	<MLS> CONFORMU-observingconditions -> PASSED!!!!!!!!!!!!!!!!!!!!!
-//*	Nov 28,	2022	<MLS> CONFORMU-focuserdriver-Moonlite-HiRes -> PASSED!!!!!!!!!!!!!!!!!!!!!
-//*	Nov 28,	2022	<MLS> CONFORMU-focuserdriver-Moonlite-NiteCrawler -> PASSED!!!!!!!!!!!!!!!!!!!!!
-//*	Mar  2,	2023	<MLS> CONFORMU-rotatordriver_sim -> PASSED!!!!!!!!!!!!!!!!!!!!!
-//*	Mar  3,	2023	<MLS> CONFORMU-filterwheel/simulator -> PASSED!!!!!!!!!!!!!!!!!!!!!
-//*	Mar  3,	2023	<MLS> CONFORMU-switch/simulator -> PASSED!!!!!!!!!!!!!!!!!!!!!
-//*	Mar  4,	2023	<MLS> CONFORMU-covercalibration/simulator -> PASSED!!!!!!!!!!!!!!!!!!!!!
-//*	Mar  4,	2023	<MLS> CONFORMU-camera/simulator -> PASSED!!!!!!!!!!!!!!!!!!!!!
-//*	Jun  9,	2023	<MLS> CONFORM-covercalibrarion-Alnitak -> PASSED!!!!!!!!!!!!!!!!!!!!!
+
+Apr  1,	2020	<MLS> CONFORM-filterwheel -> PASSED!!!!!!!!!!!!!!!!!!!!!
+
+Apr  2,	2020	<MLS> CONFORM-focuser -> PASSED!!!!!!!!!!!!!!!!!!!!!
+
+Apr  2,	2020	<MLS> CONFORM-rotator -> PASSED!!!!!!!!!!!!!!!!!!!!!
+
+Apr  2,	2020	<MLS> CONFORM-switch -> PASSED!!!!!!!!!!!!!!!!!!!!!
+
+Jan 12,	2021	<MLS> CONFORM-dome/ror -> PASSED!!!!!!!!!!!!!!!!!!!!!
+
+Jan 20,	2021	<MLS> CONFORM-camera/zwo -> PASSED!!!!!!!!!!!!!!!!!!!!!
+
+Mar  1,	2021	<MLS> CONFORM-observingconditions -> PASSED!!!!!!!!!!!!!!!!!!!!!
+
+Apr  6,	2021	<MLS> CONFORM-covercalibrator -> PASSED!!!!!!!!!!!!!!!!!!!!!
+
+Apr 30,	2021	<MLS> CONFORM-filterwheel/atik -> PASSED!!!!!!!!!!!!!!!!!!!!!
+
+Jun 24,	2021	<MLS> CONFORM-switch -> PASSED!!!!!!!!!!!!!!!!!!!!!
+
+Jan  2,	2022	<MLS> CONFORM-switch -> PASSED!!!!!!!!!!!!!!!!!!!!!
+
+Nov 27,	2022	<MLS> CONFORMU-filterwheeldriver_usis -> PASSED!!!!!!!!!!!!!!
+
+Nov 27,	2022	<MLS> CONFORMU-focuserdriver_USIS -> PASSED!!!!!!!!!!!!!!!!!!!!!
+
+Nov 27,	2022	<MLS> CONFORMU-observingconditions -> PASSED!!!!!!!!!!!!!!!!!!!!!
+
+Nov 28,	2022	<MLS> CONFORMU-focuserdriver-Moonlite-HiRes -> PASSED!!!!!!!!!!!!!!!!!!!!!
+
+Nov 28,	2022	<MLS> CONFORMU-focuserdriver-Moonlite-NiteCrawler -> PASSED!!!!!!!!!!!!!!!!!!!!!
+
+Mar  2,	2023	<MLS> CONFORMU-rotatordriver_sim -> PASSED!!!!!!!!!!!!!!!!!!!!!
+
+Mar  3,	2023	<MLS> CONFORMU-filterwheel/simulator -> PASSED!!!!!!!!!!!!!!!!!!!!!
+
+Mar  3,	2023	<MLS> CONFORMU-switch/simulator -> PASSED!!!!!!!!!!!!!!!!!!!!!
+
+Mar  4,	2023	<MLS> CONFORMU-covercalibration/simulator -> PASSED!!!!!!!!!!!!!!!!!!!!!
+
+Mar  4,	2023	<MLS> CONFORMU-camera/simulator -> PASSED!!!!!!!!!!!!!!!!!!!!!
+
+Jun  9,	2023	<MLS> CONFORM-covercalibrarion-Alnitak -> PASSED!!!!!!!!!!!!!!!!!!!!!
+
 
 
 ===================================================
