@@ -82,7 +82,7 @@ bool	PARENT_CLASS::AlpacaProcessReadAll_TelescopeIdx(const int	deviceNum,
 bool	dataWasHandled;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
-//	CONSOLE_DEBUG_W_2STR("json=",	keywordString, valueString);
+//	CONSOLE_DEBUG_W_STR("json=",	valueString);
 	dataWasHandled	=	true;
 	switch(keywordEnum)
 	{
@@ -311,6 +311,24 @@ bool	dataWasHandled;
 			CONSOLE_DEBUG("kCmd_Telescope_imu");
 			CONSOLE_DEBUG_W_STR("json=",	valueString);
 			break;
+
+		case kCmd_Telescope_IMU_Roll:
+			CONSOLE_DEBUG_W_STR("kCmd_Telescope_IMU_Roll=",	valueString);
+			cTelescopeProp.IMU_Roll		=	atof(valueString);
+			break;
+
+		case kCmd_Telescope_IMU_Pitch:
+			CONSOLE_DEBUG_W_STR("kCmd_Telescope_IMU_Pitch=",	valueString);
+			cTelescopeProp.IMU_Pitch	=	atof(valueString);
+			break;
+
+		case kCmd_Telescope_IMU_Yaw:
+			CONSOLE_DEBUG_W_STR("kCmd_Telescope_IMU_Yaw=",	valueString);
+			cTelescopeProp.IMU_Yaw		=	atof(valueString);
+			break;
+
+#else
+	#error "_ENABLE_IMU_ not defined"
 #endif
 
 

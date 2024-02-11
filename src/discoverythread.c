@@ -729,35 +729,41 @@ char			*valuePtr;
 					}
 				}
 			}
-		}
-	}
-	alpacaUnit->SoftwareVersionOK	=	true;
-}
-
-//*****************************************************************************
-static void	GetCPUstats(TYPE_ALPACA_UNIT *alpacaUnit)
-{
-int				jjj;
-bool			validData;
-SJP_Parser_t	jsonParser;
-
-	validData	=	GetJsonResponse(	&alpacaUnit->deviceAddress,
-										alpacaUnit->port,
-										"/api/v1/management/0/cpustats",
-										&jsonParser);
-	if (validData)
-	{
-		for (jjj=0; jjj<jsonParser.tokenCount_Data; jjj++)
-		{
-			//*	is this a hardware response
-			if (strcasecmp(jsonParser.dataList[jjj].keyword, "hardware") == 0)
+			else if (strcasecmp(jsonParser.dataList[jjj].keyword, "hardware") == 0)
 			{
+				//*	this is the hardware response
 				strcpy(	alpacaUnit->SoftwareVersion[kSoftwareVers_Hardware].SoftwareVerStr,
 						jsonParser.dataList[jjj].valueString);
 			}
 		}
 	}
+	alpacaUnit->SoftwareVersionOK	=	true;
 }
+
+////*****************************************************************************
+//static void	GetCPUstats(TYPE_ALPACA_UNIT *alpacaUnit)
+//{
+//int				jjj;
+//bool			validData;
+//SJP_Parser_t	jsonParser;
+//
+//	validData	=	GetJsonResponse(	&alpacaUnit->deviceAddress,
+//										alpacaUnit->port,
+//										"/api/v1/management/0/cpustats",
+//										&jsonParser);
+//	if (validData)
+//	{
+//		for (jjj=0; jjj<jsonParser.tokenCount_Data; jjj++)
+//		{
+//			//*	is this a hardware response
+//			if (strcasecmp(jsonParser.dataList[jjj].keyword, "hardware") == 0)
+//			{
+//				strcpy(	alpacaUnit->SoftwareVersion[kSoftwareVers_Hardware].SoftwareVerStr,
+//						jsonParser.dataList[jjj].valueString);
+//			}
+//		}
+//	}
+//}
 
 //*****************************************************************************
 static void	PollAllDevices(void)
@@ -777,7 +783,7 @@ int				iii;
 		if (gAlpacaUnitList[iii].SoftwareVersionOK == false)
 		{
 			GetLibraryInfo(&gAlpacaUnitList[iii]);
-			GetCPUstats(&gAlpacaUnitList[iii]);
+		//	GetCPUstats(&gAlpacaUnitList[iii]);
 		}
 	}
 //	CONSOLE_DEBUG_W_NUM("gRemoteCnt\t=", gRemoteCnt);

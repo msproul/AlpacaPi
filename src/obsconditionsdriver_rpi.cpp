@@ -77,7 +77,7 @@ ObsConditionsDriverRpi::ObsConditionsDriverRpi(const int argDevNum)
 	strcpy(cCommonProp.Description, "R-Pi dome conditions");
 //	strcat(cCommonProp.Name, "-RTIMULib");
 
-	cObsConditionProp.Dewpoint.IsSupported			=	true;
+	cObsConditionProp.DewPoint.IsSupported			=	true;
 	cObsConditionProp.Humidity.IsSupported			=	true;
 	cObsConditionProp.Pressure.IsSupported			=	true;
 	cObsConditionProp.Temperature.IsSupported		=	true;

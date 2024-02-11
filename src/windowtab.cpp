@@ -1372,8 +1372,6 @@ void	WindowTab::ProcessMouseEvent(	const int	widgetIdx,
 										const int	yyy,
 										const int	flags)
 {
-int		box_XXX;
-int		box_YYY;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 	switch(event)

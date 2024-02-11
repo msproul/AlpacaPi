@@ -1644,35 +1644,24 @@ rorpi2		:									\
 
 ######################################################################################
 #pragma mark Raspberry pi - calibration
+#	this is a stand alone R-Pi based calibration device that uses the PWM power board
+#	or any other PWM based control system
 #make calib
+######################################################################################
 calib		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
 calib		:		DEFINEFLAGS		+=	-D_ENABLE_CALIBRATION_
 calib		:		DEFINEFLAGS		+=	-D_ENABLE_CALIBRATION_RPI_
-calib		:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
-calib		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
-calib		:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
-calib		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
-#calib		:		DEFINEFLAGS		+=	-D_ENABLE_WIRING_PI_
-calib		:		DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
-calib		:		DEFINEFLAGS		+=	-D_ENABLE_LIVE_CONTROLLER_
 calib		:										\
 					$(DRIVER_OBJECTS)				\
 					$(CALIBRATION_DRIVER_OBJECTS)	\
-					$(CAMERA_DRIVER_OBJECTS)		\
 					$(HELPER_OBJECTS)				\
-					$(LIVE_WINDOW_OBJECTS)			\
 					$(SOCKET_OBJECTS)				\
 
 		$(LINK)  									\
 					$(DRIVER_OBJECTS)				\
 					$(CALIBRATION_DRIVER_OBJECTS)	\
-					$(CAMERA_DRIVER_OBJECTS)		\
 					$(HELPER_OBJECTS)				\
-					$(LIVE_WINDOW_OBJECTS)			\
 					$(SOCKET_OBJECTS)				\
-					$(OPENCV_LINK)					\
-					$(ASI_CAMERA_OBJECTS)			\
-					-lcfitsio						\
 					-lpthread						\
 					-lusb-1.0						\
 					-lwiringPi						\
@@ -2532,7 +2521,7 @@ jetson		:	DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
 #jetson		:	DEFINEFLAGS		+=	-D_ENABLE_ASI_
 #jetson		:	DEFINEFLAGS		+=	-D_ENABLE_TOUP_
 jetson		:	DEFINEFLAGS		+=	-D_ENABLE_FLIR_
-#jetson		:	DEFINEFLAGS		+=	-D_ENABLE_FITS_
+jetson		:	DEFINEFLAGS		+=	-D_ENABLE_FITS_
 jetson		:	DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_
 jetson		:	DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_MOONLITE_
 jetson		:	DEFINEFLAGS		+=	-D_USE_OPENCV_
@@ -2541,7 +2530,7 @@ jetson		:	DEFINEFLAGS		+=	-D_ENABLE_LIVE_CONTROLLER_
 jetson		:	DEFINEFLAGS		+=	-D_ENABLE_STAR_SEARCH_
 jetson		:	DEFINEFLAGS		+=	-D_PLATFORM_STRING_=\"Nvidia-jetson\"
 #jetson		:	DEFINEFLAGS		+=	-D_ENABLE_IMU_
-jetson		:	INCLUDES		+=	-I$(SRC_IMU)
+#jetson		:	INCLUDES		+=	-I$(SRC_IMU)
 jetson		:											\
 					$(DRIVER_OBJECTS)				\
 					$(CAMERA_DRIVER_OBJECTS)		\
@@ -3338,6 +3327,7 @@ sss			:	DEFINEFLAGS		+=	-D_ENABLE_REMOTE_GAIA_
 sss			:	DEFINEFLAGS		+=	-D_USE_OPENCV_
 sss			:	DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
 sss			:	DEFINEFLAGS		+=	-D_ENABLE_CPU_STATS_
+sss			:	DEFINEFLAGS		+=	-D_ENABLE_IMU_
 #sss			:	DEFINEFLAGS		+=	-D_ENABLE_ASTEROIDS_
 sss			:	DEFINEFLAGS		+=	-D_SQL_$(SQL_VERSION)
 sss			:	INCLUDES		+=	-I$(SRC_SKYTRAVEL)

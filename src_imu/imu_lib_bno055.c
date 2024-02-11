@@ -45,6 +45,10 @@
 //*
 //*****************************************************************************
 
+#ifdef _ENABLE_IMU_
+
+#error "IMU should be disabled"
+
 //*	for now, these are compile time flags, maybe changed to config flags later
 #define	_USE_BNO055_
 #define	_FLIP_ROLL_SIGN_
@@ -724,3 +728,6 @@ double			myPitch_rad;
 #endif
 }
 #endif // _INCLUDE_IMU_MAIN_
+
+
+#endif // _ENABLE_IMU_

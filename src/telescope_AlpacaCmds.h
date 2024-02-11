@@ -119,7 +119,9 @@ enum
 enum
 {
 	kCmd_Telescope_HourAngleDegrees	=	kCmd_Telescope_last + 1,
-
+	kCmd_Telescope_IMU_Roll,
+	kCmd_Telescope_IMU_Pitch,
+	kCmd_Telescope_IMU_Yaw,
 };
 
 

@@ -8,6 +8,7 @@
 //*****************************************************************************
 //*	Jul  1,	2023	<MLS> Created telescope_AlpacaCmds.cpp
 //*	Jan 15,	2024	<MLS> Added alternate command table to telescope
+//*	Feb 11,	2024	<MLS> Added Roll, Pitch & Yaw to telescope extras command table
 //*****************************************************************************
 
 
@@ -120,7 +121,11 @@ TYPE_CmdEntry	gTelescopeCmdTable[]	=
 //*****************************************************************************
 TYPE_CmdEntry	gTelescopeExtrasTable[]	=
 {
-	{	"HourAngle-degrees",	kCmd_Telescope_HourAngleDegrees,		kCmdType_GET	},
+	{	"HourAngle-degrees",	kCmd_Telescope_HourAngleDegrees,	kCmdType_GET	},
+	{	"IMU-Roll",				kCmd_Telescope_IMU_Roll,			kCmdType_GET	},
+	{	"IMU-Pitch",			kCmd_Telescope_IMU_Pitch,			kCmdType_GET	},
+	{	"IMU-Yaw",				kCmd_Telescope_IMU_Yaw,				kCmdType_GET	},
+
 	{	"",						-1,								0						}
 };
 

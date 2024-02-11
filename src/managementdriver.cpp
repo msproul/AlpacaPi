@@ -664,6 +664,12 @@ char				lineBuff2[128];
 									lineBuff2,
 									INCLUDE_COMMA);
 	}
+	JsonResponse_Add_String(reqData->socket,
+							reqData->jsonTextBuffer,
+							kMaxJsonBuffLen,
+							"hardware",
+							gHardwareString,
+							INCLUDE_COMMA);
 	return(alpacaErrCode);
 }
 

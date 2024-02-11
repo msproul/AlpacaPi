@@ -58,6 +58,13 @@ enum
 	kTelescope_PhysSideOfPier_label,
 	kTelescope_PhysSideOfPier_value,
 
+	kTelescope_IMU_Roll_label,
+	kTelescope_IMU_Roll_value,
+	kTelescope_IMU_Pitch_label,
+	kTelescope_IMU_Pitch_value,
+	kTelescope_IMU_Yaw_label,
+	kTelescope_IMU_Yaw_value,
+
 	kTelescope_Coord_Outline,
 
 

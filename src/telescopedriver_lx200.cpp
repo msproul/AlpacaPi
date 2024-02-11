@@ -72,8 +72,8 @@
 void	CreateTelescopeObjects_LX200(void)
 {
 	CONSOLE_DEBUG(__FUNCTION__);
-//	new TelescopeDriverLX200(kDevCon_Ethernet, "192.168.1.104:49152");
-	new TelescopeDriverLX200(kDevCon_Ethernet, "192.168.1.21:4030");
+	new TelescopeDriverLX200(kDevCon_Ethernet, "192.168.1.104:49152");
+//	new TelescopeDriverLX200(kDevCon_Ethernet, "192.168.1.21:4030");
 }
 
 //**************************************************************************************

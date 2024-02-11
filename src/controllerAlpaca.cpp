@@ -734,6 +734,17 @@ int				notHandledCnt;
 				}
 //				CONSOLE_DEBUG_W_BOOL("dataWasHandled\t=",	dataWasHandled);
 			}
+			else
+			{
+				//*	special debugging
+				if (cAlpacaDeviceType == kDeviceType_Telescope)
+				{
+					CONSOLE_DEBUG_W_2STR(	deviceTypeStr,
+											jsonParser.dataList[jjj].keyword,
+											jsonParser.dataList[jjj].valueString);
+				}
+
+			}
 		}
 	}
 	else

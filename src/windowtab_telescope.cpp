@@ -28,6 +28,7 @@
 //*	May 12,	2022	<MLS> Added Tracking rate button handling
 //*	Jun 13,	2022	<MLS> Added ProcessMovementButtons() to simplify code
 //*	Jun 19,	2023	<MLS> Added DeviceState to Telescope
+//*	Feb 11,	2024	<MLS> Added Roll, Pitch & Yaw to telescope control window
 //*****************************************************************************
 
 #ifdef _ENABLE_CTRL_TELESCOPE_
@@ -324,7 +325,8 @@ int			coordHeight;
 	//---------------------------------------------------------------------------------------
 	coordHeight	=	cBtnHeight - 11;
 	iii			=	kTelescope_HA_label;
-	while (iii < kTelescope_PhysSideOfPier_value)
+//	while (iii < kTelescope_PhysSideOfPier_value)
+	while (iii < kTelescope_Coord_Outline)
 	{
 		SetWidget(			iii,	label_xLoc,		yLoc,		labelWidth,		coordHeight);
 		SetWidgetType(		iii,	kWidgetType_TextBox);
@@ -334,6 +336,7 @@ int			coordHeight;
 		SetWidget(			iii,	value_xLoc,		yLoc,		valueWidth,		coordHeight);
 		SetWidgetType(		iii,	kWidgetType_TextBox);
 		SetWidgetFont(		iii,	kFont_Medium);
+		SetWidgetText(		iii,	"----");
 		iii++;
 
 		yLoc			+=	coordHeight;
@@ -344,12 +347,15 @@ int			coordHeight;
 	SetWidgetText(		kTelescope_DEC_label,				"DEC");
 	SetWidgetText(		kTelescope_SideOfPier_label,		"Side Of Pier");
 	SetWidgetText(		kTelescope_PhysSideOfPier_label,	"Phys Side");
+	SetWidgetText(		kTelescope_IMU_Roll_label,			"IMU Roll");
+	SetWidgetText(		kTelescope_IMU_Pitch_label,			"IMU Pitch");
+	SetWidgetText(		kTelescope_IMU_Yaw_label,			"IMU Yaw");
 
-	SetWidgetText(		kTelescope_HA_value,				"----");
-	SetWidgetText(		kTelescope_RA_value,				"----");
-	SetWidgetText(		kTelescope_DEC_value,				"----");
-	SetWidgetText(		kTelescope_SideOfPier_value,		"----");
-	SetWidgetText(		kTelescope_PhysSideOfPier_value,	"----");
+//	SetWidgetText(		kTelescope_HA_value,				"----");
+//	SetWidgetText(		kTelescope_RA_value,				"----");
+//	SetWidgetText(		kTelescope_DEC_value,				"----");
+//	SetWidgetText(		kTelescope_SideOfPier_value,		"----");
+//	SetWidgetText(		kTelescope_PhysSideOfPier_value,	"----");
 
 	SetWidgetOutlineBox(kTelescope_Coord_Outline, kTelescope_HA_label, (kTelescope_Coord_Outline -1));
 
@@ -802,6 +808,12 @@ char	dataString[64];
 		FormatHHMMSS(telescopeProp->HourAngle, dataString, false);
 		SetWidgetText(		kTelescope_HA_value,	dataString);
 	}
+
+	//--------------------------------------------------------------------------
+	//*	IMU data
+	SetWidgetNumber(	kTelescope_IMU_Roll_value,	telescopeProp->IMU_Roll);
+	SetWidgetNumber(	kTelescope_IMU_Pitch_value,	telescopeProp->IMU_Pitch);
+	SetWidgetNumber(	kTelescope_IMU_Yaw_value,	telescopeProp->IMU_Yaw);
 
 	//--------------------------------------------------------------------------
 	if (updateAll)

@@ -518,6 +518,8 @@ int		deviceIdx;
 				sprintf(extraString, "\t%s", gAlpacaUnitList[deviceIdx].SoftwareVersion[jjj].SoftwareVerStr);
 				strcat(textString, extraString);
 			}
+			strcat(textString, "\t");
+			strcat(textString, gAlpacaUnitList[deviceIdx].versionString);
 
 			//-----------------------------------------------------
 			//*	deal with selected state

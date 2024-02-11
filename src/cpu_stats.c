@@ -349,6 +349,10 @@ int		keyWordEnum;
 			if (strlen(lineBuff) > 5)
 			{
 				strcpy(gPlatformString, lineBuff);
+				if ((strlen(gHardwareString) == 0) && (strncasecmp(lineBuff, "NVIDIA", 6) == 0))
+				{
+					strcpy(gHardwareString, "jetson");
+				}
 			}
 		}
 		else

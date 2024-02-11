@@ -13,6 +13,9 @@
 //*	Jan 15,	2024	<MLS> The LIS2DH12 has roll off by 90 degrees, fixed in IMU_GetAverageRoll()
 //*****************************************************************************
 
+#ifdef _ENABLE_IMU_
+
+
 #include	<stdbool.h>
 #include	<stdlib.h>
 #include	<stdio.h>
@@ -277,5 +280,4 @@ bool		okToStartThread;
 	return(threadErr);
 }
 
-
-
+#endif // _ENABLE_IMU_

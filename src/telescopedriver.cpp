@@ -67,6 +67,7 @@
 //*	Jun 21,	2023	<MLS> Added UTCDate to DeviceState output
 //*	Jan 15,	2024	<MLS> Added Get_IMU()
 //*	Jan 16,	2024	<MLS> Added Telescope_CalculateSideOfPier()
+//*	Feb 11,	2024	<MLS> Added IMU-Roll, IMU-Pitch, & IMU-Yaw to telescope readall
 //*****************************************************************************
 
 
@@ -3486,6 +3487,26 @@ char					imuArrayText[256];
 								kMaxJsonBuffLen,
 								INCLUDE_COMMA);
 
+	JsonResponse_Add_Double(reqData->socket,
+							reqData->jsonTextBuffer,
+							kMaxJsonBuffLen,
+							"IMU-Roll",
+							cTelescopeProp.IMU_Roll,
+							INCLUDE_COMMA);
+
+	JsonResponse_Add_Double(reqData->socket,
+							reqData->jsonTextBuffer,
+							kMaxJsonBuffLen,
+							"IMU-Pitch",
+							cTelescopeProp.IMU_Pitch,
+							INCLUDE_COMMA);
+
+	JsonResponse_Add_Double(reqData->socket,
+							reqData->jsonTextBuffer,
+							kMaxJsonBuffLen,
+							"IMU-Yaw",
+							cTelescopeProp.IMU_Yaw,
+							INCLUDE_COMMA);
 	return(alpacaErrCode);
 }
 #endif // _ENABLE_IMU_
