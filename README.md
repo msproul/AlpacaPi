@@ -1,7 +1,7 @@
 # AlpacaPi
 Astronomy control software using Alpaca protocol on the Raspberry Pi
 
-(C) 2019-2022 by Mark Sproul msproul@skychariot.com
+(C) 2019-2024 by Mark Sproul msproul@skychariot.com
 
 AlpacaPi is an open-source project written in C/C++
 
@@ -120,9 +120,12 @@ The make file has many defines in to enable various features.
 
 Dependencies:
 	openCV 3.3.1 or earlier
+		OR
+	openCV 4.5.1 (mouse wheel not supported after 4.5.1
 	cfitsio
 
-As of build 131, AlpacaPI requires openCV 3.3.1 however, support for newer versions is almost complete.
+Note: these are NOT required for everything, 
+only those drivers that deal with cameras and any of the client applications
 
 On the Raspberry Pi, some of the drivers require the wiringPi library.
 wiringPi is pre-installed on Raspbian.
@@ -156,29 +159,31 @@ AlpacaPi has been tested on the following platforms
 
 For those familiar with ASCOM and ASCOM development, I use the CONFORM tool to
 verify the workings of my drivers.  Here my current results
-(as of Jun 19, 2021)
+(as of Feb 11, 2024)
 
-	Apr  1,	2020	<MLS> CONFORM-filterwheel -> PASSED!!!!!!!!!!!!!!!!!!!!!
+//*	Apr  1,	2020	<MLS> CONFORM-filterwheel -> PASSED!!!!!!!!!!!!!!!!!!!!!
+//*	Apr  2,	2020	<MLS> CONFORM-focuser -> PASSED!!!!!!!!!!!!!!!!!!!!!
+//*	Apr  2,	2020	<MLS> CONFORM-rotator -> PASSED!!!!!!!!!!!!!!!!!!!!!
+//*	Apr  2,	2020	<MLS> CONFORM-switch -> PASSED!!!!!!!!!!!!!!!!!!!!!
+//*	Jan 12,	2021	<MLS> CONFORM-dome/ror -> PASSED!!!!!!!!!!!!!!!!!!!!!
+//*	Jan 20,	2021	<MLS> CONFORM-camera/zwo -> PASSED!!!!!!!!!!!!!!!!!!!!!
+//*	Mar  1,	2021	<MLS> CONFORM-observingconditions -> PASSED!!!!!!!!!!!!!!!!!!!!!
+//*	Apr  6,	2021	<MLS> CONFORM-covercalibrator -> PASSED!!!!!!!!!!!!!!!!!!!!!
+//*	Apr 30,	2021	<MLS> CONFORM-filterwheel/atik -> PASSED!!!!!!!!!!!!!!!!!!!!!
+//*	Jun 24,	2021	<MLS> CONFORM-switch -> PASSED!!!!!!!!!!!!!!!!!!!!!
+//*	Jan  2,	2022	<MLS> CONFORM-switch -> PASSED!!!!!!!!!!!!!!!!!!!!!
+//*	Nov 27,	2022	<MLS> CONFORMU-filterwheeldriver_usis -> PASSED!!!!!!!!!!!!!!
+//*	Nov 27,	2022	<MLS> CONFORMU-focuserdriver_USIS -> PASSED!!!!!!!!!!!!!!!!!!!!!
+//*	Nov 27,	2022	<MLS> CONFORMU-observingconditions -> PASSED!!!!!!!!!!!!!!!!!!!!!
+//*	Nov 28,	2022	<MLS> CONFORMU-focuserdriver-Moonlite-HiRes -> PASSED!!!!!!!!!!!!!!!!!!!!!
+//*	Nov 28,	2022	<MLS> CONFORMU-focuserdriver-Moonlite-NiteCrawler -> PASSED!!!!!!!!!!!!!!!!!!!!!
+//*	Mar  2,	2023	<MLS> CONFORMU-rotatordriver_sim -> PASSED!!!!!!!!!!!!!!!!!!!!!
+//*	Mar  3,	2023	<MLS> CONFORMU-filterwheel/simulator -> PASSED!!!!!!!!!!!!!!!!!!!!!
+//*	Mar  3,	2023	<MLS> CONFORMU-switch/simulator -> PASSED!!!!!!!!!!!!!!!!!!!!!
+//*	Mar  4,	2023	<MLS> CONFORMU-covercalibration/simulator -> PASSED!!!!!!!!!!!!!!!!!!!!!
+//*	Mar  4,	2023	<MLS> CONFORMU-camera/simulator -> PASSED!!!!!!!!!!!!!!!!!!!!!
+//*	Jun  9,	2023	<MLS> CONFORM-covercalibrarion-Alnitak -> PASSED!!!!!!!!!!!!!!!!!!!!!
 
-	Apr  2,	2020	<MLS> CONFORM-focuser -> PASSED!!!!!!!!!!!!!!!!!!!!!
-
-	Apr  2,	2020	<MLS> CONFORM-rotator -> PASSED!!!!!!!!!!!!!!!!!!!!!
-
-	Apr  2,	2020	<MLS> CONFORM-switch -> PASSED!!!!!!!!!!!!!!!!!!!!!
-
-	Dec  7,	2020	<MLS> CONFORM-dome -> 4 errors, 0 warnings and 0 issues
-
-	Dec  7,	2020	<MLS> CONFORM-telescope -> 0 errors, 0 warnings and 6 issues
-
-	Jan 12,	2021	<MLS> CONFORM-dome/ror -> PASSED!!!!!!!!!!!!!!!!!!!!!
-
-	Jan 20,	2021	<MLS> CONFORM-camera/zwo -> PASSED!!!!!!!!!!!!!!!!!!!!!
-
-	Mar  1,	2021	<MLS> CONFORM-observingconditions -> PASSED!!!!!!!!!!!!!!!!!!!!!
-
-	Apr  6,	2021	<MLS> CONFORM-covercalibrator -> PASSED!!!!!!!!!!!!!!!!!!!!!
-
-	Apr 30,	2021	<MLS> CONFORM-filterwheel/atik -> PASSED!!!!!!!!!!!!!!!!!!!!!
 
 ===================================================
 
