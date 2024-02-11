@@ -539,7 +539,7 @@ alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_
 alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_MOONLITE_
 #alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_MULTICAM_
 #alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_OBSERVINGCONDITIONS_
-alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_QHY_
+#alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_QHY_
 alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_ROTATOR_
 alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_ROTATOR_NITECRAWLER_
 #alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_SAFETYMONITOR_
@@ -904,6 +904,17 @@ tele	:										\
 
 #					-ludev						\
 
+######################################################################################
+#pragma mark make imutest
+imutest		:		DEFINEFLAGS		+=	-D_INCLUDE_IMU_MAIN_DH12_
+imutest		:		INCLUDES		+=	-I$(SRC_IMU)
+imutest		:		$(IMU_OBJECTS)				\
+
+		$(LINK)  								\
+					$(IMU_OBJECTS)				\
+					-lpthread					\
+					-li2c						\
+					-o imutest
 
 ######################################################################################
 #pragma mark make telecv4  C++ linux-x86
@@ -3027,6 +3038,7 @@ SKYTRAVEL_OBJECTS=											\
 				$(OBJECT_DIR)AsteroidData.o					\
 				$(OBJECT_DIR)ConstellationData.o			\
 				$(OBJECT_DIR)controller_alpacaUnit.o		\
+				$(OBJECT_DIR)windowtab_libraries.o			\
 				$(OBJECT_DIR)controller_constList.o			\
 				$(OBJECT_DIR)controller_covercalib.o		\
 				$(OBJECT_DIR)controller_multicam.o			\
@@ -3074,6 +3086,7 @@ SKYTRAVEL_OBJECTS=											\
 				$(OBJECT_DIR)windowtab_startup.o			\
 				$(OBJECT_DIR)windowtab_starlist.o			\
 				$(OBJECT_DIR)windowtab_STsettings.o			\
+				$(OBJECT_DIR)windowtab_sw_versions.o		\
 				$(OBJECT_DIR)windowtab_telescope.o			\
 				$(OBJECT_DIR)windowtab_teleSettings.o		\
 				$(OBJECT_DIR)windowtab_time.o				\
@@ -4419,7 +4432,12 @@ $(OBJECT_DIR)windowtab_iplist.o : 		$(SRC_DIR)windowtab_iplist.cpp		\
 										$(SRC_DIR)discoverythread.h
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)windowtab_iplist.cpp -o$(OBJECT_DIR)windowtab_iplist.o
 
-
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)windowtab_sw_versions.o : 	$(SRC_DIR)windowtab_sw_versions.cpp		\
+										$(SRC_DIR)windowtab_sw_versions.h		\
+										$(SRC_DIR)windowtab.h				\
+										$(SRC_DIR)discoverythread.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)windowtab_sw_versions.cpp -o$(OBJECT_DIR)windowtab_sw_versions.o
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)windowtab_deviceselect.o : $(SRC_DIR)windowtab_deviceselect.cpp	\
@@ -5003,6 +5021,14 @@ $(OBJECT_DIR)controller_alpacaUnit.o : 		$(SRC_DIR)controller_alpacaUnit.cpp		\
 											$(SRC_DIR)controller_alpacaUnit.h		\
 											$(SRC_DIR)controller.h
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)controller_alpacaUnit.cpp -o$(OBJECT_DIR)controller_alpacaUnit.o
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)windowtab_libraries.o : 		$(SRC_DIR)windowtab_libraries.cpp		\
+											$(SRC_DIR)windowtab_libraries.h		\
+											$(SRC_DIR)controller.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)windowtab_libraries.cpp -o$(OBJECT_DIR)windowtab_libraries.o
+
+
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)windowtab_alpacaUnit.o : 		$(SRC_DIR)windowtab_alpacaUnit.cpp		\

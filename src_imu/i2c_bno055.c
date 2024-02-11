@@ -48,6 +48,8 @@ static	char	gSendAddr[256]	=	"0x28";
 static	char	gI2C_bus[256]	=	I2CBUS;
 
 //**************************************************************************************
+//*	returns 0 if all OK
+//**************************************************************************************
 int			BNO055_Init(void)
 {
 int				returnCode;
@@ -68,7 +70,7 @@ struct bnoaconf	bnoac;
 }
 
 //**************************************************************************************
-void		BNO055__SetDebug(const bool debugOnOff)
+void		BNO055_SetDebug(const bool debugOnOff)
 {
 	gBNO_verbose	=	debugOnOff;
 }

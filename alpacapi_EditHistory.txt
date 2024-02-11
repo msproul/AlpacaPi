@@ -1,4 +1,4 @@
-History Comments found =3049 in 459 files
+History Comments found =3088 in 465 files
 PDS_ReadNASAfiles.c:28   	//*	Jan 26,	1992	Reading of PDS files into Mac program from CD working
 PDS_ReadNASAfiles.c:29   	//*	Mar 14,	1992	Starting on more detailed interpretation of label (header)
 PDS_ReadNASAfiles.c:30   	//*	Mar 16,	1992	Changed number of displayed bytes from 836 to 800
@@ -357,7 +357,7 @@ alpacadriver.cpp:79      	//*	Dec 29,	2019	<MLS> Added -t cmd line option to spe
 cameradriver_fits.cpp:64 	//*	Dec 30,	2019	<MLS> Added WriteFITS_EnvironmentInfo()
 obsconditionsdriver.cpp:29	//*	Dec 30,	2019	<MLS> Observingconditions converted to c++
 obsconditionsdriver.cpp:30	//*	Dec 31,	2019	<MLS> Added averaging to temp/pres/humid readings
-obsconditionsdriver_rpi.cpp:20	//*	Dec 31,	2019	<MLS> Started on obsconditionsdriver_rpi.c
+obsconditionsdriver_rpi.cpp:20	//*	Dec 31,	2019	<MLS> Started on obsconditionsdriver_rpi.cpp
 obsconditionsdriver_rpi.cpp:21	//*	Dec 31,	2019	<MLS> Added ReadPressure(), ReadTemperature(), ReadHumidity()
 obsconditionsdriver_rpi.cpp:22	//*	Dec 31,	2019	<MLS> Working with RTIMULib on R-Pi
 obsconditionsdriver_rpi.cpp:23	//*	Dec 31,	2019	<MLS> The Temperature value on the R-Pi is not valid for use
@@ -1250,7 +1250,7 @@ windowtab_skytravel.cpp:52	//*	Mar 11,	2021	<MLS> Clif suggested a different way
 cameradriver.cpp:140     	//*	Mar 13,	2021	<MLS> Added "saveallimages" command, logic was already in place
 cameradriver.cpp:141     	//*	Mar 13,	2021	<MLS> Added Put_SaveAllImages()
 controller_skytravel.cpp:16	//*	Mar 13,	2021	<MLS> Added AlpacaGetStartupData_Camera()
-discoverythread.c:561    	//*	Mar 13,	2021	<MLS> Added timeout to GetJsonResponse()
+discoverythread.c:562    	//*	Mar 13,	2021	<MLS> Added timeout to GetJsonResponse()
 sendrequest_lib.c:35     	//*	Mar 13,	2021	<MLS> Added timeout to GetJsonResponse()
 sendrequest_lib.c:36     	//*	Mar 13,	2021	<MLS> Added SetSocketTimeouts()
 sendrequest_lib.c:37     	//*	Mar 13,	2021	<MLS> Added send timeout
@@ -2211,7 +2211,7 @@ alpaca_defs.h:56         	//*	Aug 15,	2022	<MLS> Build 148
 discoverythread.c:33     	//*	Aug 23,	2022	<MLS> Added keeping track of max CPU temp
 i2c_bno055.c:21          	//*	Aug 23,	2022	<MLS> Added BNO055_Print_info() (extracted from getbno055.c)
 imu_lib_bno055.c:19      	//*	Aug 23,	2022	<MLS> Added IMU_BNO055_Print_Calibration()
-i2c_bno055.c:549         	//*	Aug 26,	2022	<MLS> This was bit 3, the correct bit is 7
+i2c_bno055.c:551         	//*	Aug 26,	2022	<MLS> This was bit 3, the correct bit is 7
 alpacadriver.cpp:137     	//*	Aug 28,	2022	<MLS> Now recognize the "POST" command, ignore for now.
 domedriver.cpp:78        	//*	Aug 29,	2022	<MLS> Added logic to keep track of last time any movement was made
 alpaca_defs.h:57         	//*	Aug 30,	2022	<MLS> Build 149
@@ -2352,7 +2352,7 @@ windowtab.cpp:77         	//*	Oct 21,	2022	<MLS> Added SetupWindowBottomBoxes()
 windowtab.cpp:78         	//*	Oct 21,	2022	<MLS> Updated all windowtabs to use SetupWindowBottomBoxes()
 windowtab.cpp:79         	//*	Oct 21,	2022	<MLS> Removed SetIPaddressBoxes() use SetupWindowBottomBoxes() instead
 windowtab.cpp:80         	//*	Oct 21,	2022	<MLS> Removed SetAlpacaLogo()
-controller.cpp:1743      	//*	Oct 24,	2022	<MLS> Dont use openCV 4.5.4 (mousewheel bug), use 4.5.1 instead
+controller.cpp:1744      	//*	Oct 24,	2022	<MLS> Dont use openCV 4.5.4 (mousewheel bug), use 4.5.1 instead
 cameradriver_fits.cpp:91 	//*	Oct 25,	2022	<MLS> Now using cv::getVersionString().c_str() for openCV version string
 spectrodriver.cpp:27     	//*	Oct 25,	2022	<MLS> Added Get_PropertyInfo()
 controllerAlpaca.cpp:46  	//*	Oct 26,	2022	<MLS> Fixed return data valid bug in AlpacaGetStringValue()
@@ -2534,7 +2534,7 @@ rotatordriver_sim.cpp:26 	//*	Mar  2,	2023	<MLS> CONFORMU-rotatordriver_sim -> P
 switchdriver_sim.cpp:25  	//*	Mar  2,	2023	<MLS> Created switchdriver_sim.cpp
 switchdriver_sim.h:11    	//*	Mar  2,	2023	<MLS> Created switchdriver_sim.h
 alpacadriver.cpp:157     	//*	Mar  3,	2023	<MLS> Added ProcessAlpacaCommand()
-alpacadriver.cpp:3957    	//*	Mar  3,	2023	<MLS> Make CONFORMU happy, check for valid device number
+alpacadriver.cpp:3977    	//*	Mar  3,	2023	<MLS> Make CONFORMU happy, check for valid device number
 alpacadriver_helper.c:13 	//*	Mar  3,	2023	<MLS> Added FindDeviceTypeByStringLowerCase()
 calibration_sim.cpp:20   	//*	Mar  3,	2023	<MLS> Created calibration_sim.cpp
 cameradriver_SONY.cpp:1295	//*	Mar  3,	2023	<MLS> this line caused a compile err
@@ -2807,7 +2807,7 @@ controller_filterwheel.cpp:27	//*	Jun 25,	2023	<MLS> Added AlpacaProcessReadAll(
 controller_rotator.cpp:25	//*	Jun 25,	2023	<MLS> Added AlpacaGetCapabilities() to rotator controller
 controller_startup.cpp:25	//*	Jun 25,	2023	<MLS> Added RunBackgroundTasks() to startup for auto refresh and auto close
 controller_tscope_common.cpp:30	//*	Jun 25,	2023	<MLS> Added AlpacaGetCapabilities()
-discoverythread.c:562    	//*	Jun 25,	2023	<MLS> Increased GetJsonResponse() to 5 seconds (was 3)
+discoverythread.c:563    	//*	Jun 25,	2023	<MLS> Increased GetJsonResponse() to 5 seconds (was 3)
 common_AlpacaCmds.h:2    	//*	Jun 26,	2023	<MLS> Created common_AlpacaCmds.h
 controller.cpp:110       	//*	Jun 26,	2023	<MLS> Started on common command table lookup structure
 controllerAlpaca.cpp:57  	//*	Jun 26,	2023	<MLS> Added AlpacaProcessReadAllIdx()
@@ -2847,14 +2847,14 @@ controller_focus.cpp:34  	//*	Jul  1,	2023	<MLS> Added cFocuserProp to focus con
 controller_focus_ml_nc.cpp:44	//*	Jul  1,	2023	<MLS> Added DeviceState window to NiteCrawler controller
 covercalib_AlpacaCmds.cpp:5	//*	Jul  1,	2023	<MLS> Created covercalib_AlpacaCmds.cpp
 dome_AlpacaCmds.cpp:5    	//*	Jul  1,	2023	<MLS> Created dome_AlpacaCmds.cpp
-filterwheel_AlpacaCmds.cpp:5	//*	Jul  1,	2023	<MLS> Created filterwheel_AlpacaCmds.cpp
-focuser_AlpacaCmds.cpp:5 	//*	Jul  1,	2023	<MLS> Created focuser_AlpacaCmds.cpp
+filterwheel_AlpacaCmds.cpp:9	//*	Jul  1,	2023	<MLS> Created filterwheel_AlpacaCmds.cpp
+focuser_AlpacaCmds.cpp:9 	//*	Jul  1,	2023	<MLS> Created focuser_AlpacaCmds.cpp
 focuser_AlpacaCmds.h:2   	//*	Jul  1,	2023	<MLS> Created focuser_AlpacaCmds.h
-obscond_AlpacaCmds.cpp:5 	//*	Jul  1,	2023	<MLS> Created obscond_AlpacaCmds.cpp
-rotator_AlpacaCmds.cpp:5 	//*	Jul  1,	2023	<MLS> Created rotator_AlpacaCmds.cpp
+obscond_AlpacaCmds.cpp:9 	//*	Jul  1,	2023	<MLS> Created obscond_AlpacaCmds.cpp
+rotator_AlpacaCmds.cpp:9 	//*	Jul  1,	2023	<MLS> Created rotator_AlpacaCmds.cpp
 switch_AlpacaCmds.cpp:5  	//*	Jul  1,	2023	<MLS> Created switch_AlpacaCmds.cpp
 switch_AlpacaCmds.h:2    	//*	Jul  1,	2023	<MLS> Created switch_AlpacaCmds.h
-telescope_AlpacaCmds.cpp:5	//*	Jul  1,	2023	<MLS> Created telescope_AlpacaCmds.cpp
+telescope_AlpacaCmds.cpp:9	//*	Jul  1,	2023	<MLS> Created telescope_AlpacaCmds.cpp
 alpaca_defs.h:83         	//*	Jul  2,	2023	<MLS> Build 167
 controller_slit.cpp:29   	//*	Jul  3,	2023	<MLS> Added LogSlitDataToDisk()
 controller_slit.cpp:30   	//*	Jul  3,	2023	<MLS> Cleaned up to use parent methods
@@ -2902,7 +2902,7 @@ alpacadriver_helper.c:16 	//*	Jul 16,	2023	<MLS> Added DumpCoverCalibProp()
 alpaca_defs.h:84         	//*	Jul 16,	2023	<MLS> Build 168
 cameradriver_PhaseOne.cpp:36	//*	Jul 16,	2023	<MLS> Added OutputHTML_Part2() to PhaseOne camera driver
 controller_covercalib.cpp:31	//*	Jul 16,	2023	<MLS> More work on UpdateStatusData()
-controller_covercalib.cpp:32	//*	Jul 16,	2023	<MLS> AlpacaGetStatus_OneAAT() &&  UpdateStatusData() now working with simulator
+controller_covercalib.cpp:32	//*	Jul 16,	2023	<MLS> AlpacaGetStatus_OneAAT() & UpdateStatusData() now working with simulator
 controller_filterwheel.cpp:30	//*	Jul 16,	2023	<MLS> Added AlpacaGetStatus_OneAAT() to filterwheel controller
 controller_fw_common.cpp:22	//*	Jul 16,	2023	<MLS> Added name to AlpacaGetFilterWheelStartup()
 domedriver.cpp:82        	//*	Jul 16,	2023	<MLS> Added Setup web page for domedriver
@@ -3036,31 +3036,70 @@ GaiaSQL.cpp:49           	//*	Dec 14,	2023	<MLS> My IP address had changed back 
 windowtab.cpp:100        	//*	Dec 17,	2023	<MLS> Added SetWidgetNumber() with unsigned int argument
 windowtab.cpp:101        	//*	Dec 17,	2023	<MLS> Cleaned up widget types in SetupWindowBottomBoxes()
 windowtab_drvrInfo.cpp:25	//*	Dec 17,	2023	<MLS> Added ActivateWindow() to driver info window (for debugging)
+controller_alpacaUnit.cpp:21	//*	Dec 23,	2023	<MLS> Added Software libraries window tab
+controller_alpacaUnit.cpp:22	//*	Dec 23,	2023	<MLS> Added AlpacaGetSoftwareLibraries()
+windowtab_libraries.cpp:21	//*	Dec 23,	2023	<MLS> Created windowtab_libraries.cpp
+alpaca_defs.h:91         	//*	Jan  1,	2024	-----------------------------------------------------------
+windowtab_alpacalist.cpp:28	//*	Jan  6,	2024	<MLS> Added Help button to alpaca list
+socket_listen.c:28       	//*	Jan  8,	2024	<MLS> Added _SHOW_HTTP_DATA_
+ambient_weather_comm.cpp:7	//*	Jan 12,	2024	<MLS> Created ambient_weather_com.cpp
+ambient_weather_comm.cpp:8	//*	Jan 14,	2024	<MLS> Some of the commands are returning data, but no wx data
+controller_telescope.cpp:31	//*	Jan 15,	2024	<MLS> Added Update_TelescopeSideOfPier()
+controller_tscope_common.cpp:32	//*	Jan 15,	2024	<MLS> Added support for HourAngle_deg to AlpacaProcessReadAll_TelescopeIdx()
+imu_lib.c:11             	//*	Jan 15,	2024	<MLS> Added IMU_GetRoll_Pitch_Yaw()
+imu_lib.c:12             	//*	Jan 15,	2024	<MLS> Moved IMU averaging from imu_lib_bno055.c to imu_lib.c
+imu_lib.c:13             	//*	Jan 15,	2024	<MLS> The LIS2DH12 has roll off by 90 degrees, fixed in IMU_GetAverageRoll()
+imu_lib_LIS2DH12.c:14    	//*	Jan 15,	2024	<MLS> Added IMU_LIS2DH12_GetRoll_Pitch_Yaw()
+imu_lib_LIS2DH12.c:15    	//*	Jan 15,	2024	<MLS> LIS2DH12 support fully working
+telescopedriver.cpp:68   	//*	Jan 15,	2024	<MLS> Added Get_IMU()
+telescope_AlpacaCmds.cpp:10	//*	Jan 15,	2024	<MLS> Added alternate command table to telescope
+controller_telescope.cpp:32	//*	Jan 16,	2024	<MLS> Changed AlpacaGetStatus() to GetStatus_SubClass()
+telescopedriver.cpp:69   	//*	Jan 16,	2024	<MLS> Added Telescope_CalculateSideOfPier()
+controller.cpp:114       	//*	Jan 19,	2024	<MLS> Added debug to widget def for debugging single widget
+windowtab.cpp:102        	//*	Jan 19,	2024	<MLS> Added ClearWidgetSelect()
+windowtab_iplist.cpp:29  	//*	Jan 19,	2024	<MLS> Added ProcessLineSelect()
+windowtab_iplist.cpp:30  	//*	Jan 19,	2024	<MLS> Added lineSelection to the IP list
+windowtab_iplist.cpp:31  	//*	Jan 19,	2024	<MLS> Added the ability to delete an entry from the IP unit list
+windowtab.cpp:103        	//*	Jan 20,	2024	<MLS> Added SetWidgetLineSelect()
+windowtab.cpp:104        	//*	Jan 20,	2024	<MLS> Added SetWidgetBGColorSelected()
+windowtab.cpp:105        	//*	Jan 21,	2024	<MLS> Added ProcessLineSelect()
+windowtab_alpacalist.cpp:29	//*	Jan 21,	2024	<MLS> Added ProcessLineSelect() & SetNewSelectedDevice()
+windowtab_alpacalist.cpp:30	//*	Jan 21,	2024	<MLS> Added support for line selection to AlpacaList window
+windowtab_alpacalist.cpp:31	//*	Jan 21,	2024	<MLS> Added OpenControllerFromDevIdx()
+windowtab.cpp:106        	//*	Feb  1,	2024	<MLS> Added LaunchWebRemoteDevice()
+windowtab_slitdome.cpp:24	//*	Feb  1,	2024	<MLS> Added Edit Config button which launches a web browser to the setup page
+telescopedriver_lx200.cpp:40	//*	Feb  7,	2024	<MLS> Working on LX200 to PiFinder
+telescopedriver_lx200.cpp:41	//*	Feb  7,	2024	<MLS> Added _DEBUG_LX200_
+alpaca_defs.h:92         	//*	Feb 10,	2024	<MLS> Version V0.7.2
+alpaca_defs.h:93         	//*	Feb 10,	2024	<MLS> Build 174
+controller_skytravel.cpp:22	//*	Feb 10,	2024	<MLS> Added Software Versions WindowTab
+discoverythread.c:35     	//*	Feb 10,	2024	<MLS> Added GetLibraryInfo()
+windowtab_sw_versions.cpp:21	//*	Feb 10,	2024	<MLS> Created windowtab_sw_versions.cpp
 cameradriver.cpp:210     	//*	Jan  1,	2119	<TODO> ----------------------------------------
 cameradriver.cpp:211     	//*	Jun 26,	2119	<TODO> Add support for sub frames
 cameradriver_png.cpp:33  	//*	Jan 31,	2120	<TODO> Add support for libpng
 cameradriver_TOUP.cpp:48 	//*	Feb  4,	2120	<TODO> Add 16 bit readout to Toupcam
 cameradriver_TOUP.cpp:49 	//*	Feb 16,	2120	<TODO> Add gain setting to Toupcam
-cameradriver_ASI.cpp:1038	//*	Jun 29,	2120	<TODO> Change video timestamp to an option
+cameradriver_ASI.cpp:1041	//*	Jun 29,	2120	<TODO> Change video timestamp to an option
 controller_camera.cpp:78 	//*	Jan  1,	2121	<TODO> control key for different step size.
 controller_camera.cpp:79 	//*	Jan  1,	2121	<TODO> add error list window
 controller_camera.cpp:80 	//*	Feb  6,	2121	<TODO> Move downloading of images to a separate thread
 cameradriver_QHY.cpp:52  	//*	Oct 10,	2122	<TODO> Add support for percentcompleted to QHY camera driver
 spectrodriver.cpp:33     	//*	May  7,	2123	<TODO> Add support for SlitID, SlitAngle, SlitWidth
 controller_dome.cpp:47   	//*	Jun 25,	2123	<ADD> Add slaved to DeviceState
-History Comments found   = 3049 in 459 files
-Total lines              = 213169
-Total comment Lines      = 34355 (16.1%)
-Total comments           = 38585 (18.1%)
-Total history comments   = 3049 (1.4%)
+History Comments found   = 3088 in 465 files
+Total lines              = 215899
+Total comment Lines      = 35160 (16.3%)
+Total comments           = 39540 (18.3%)
+Total history comments   = 3088 (1.4%)
 Total C files            = 62
-Total C++ files          = 173
-Total H files            = 222
-Preprocssor cnt          = 6751
-Total SLOC               = 136112
-Total SLOC-Logical       = 105161
+Total C++ files          = 176
+Total H files            = 225
+Preprocssor cnt          = 6839
+Total SLOC               = 137424
+Total SLOC-Logical       = 106129
 Programmer comment summary
-MLS             = 2656
+MLS             = 2694
 TODO            =   11
 DDB             =    1
 JMH             =    3

@@ -32,6 +32,7 @@
 //*	Aug  6,	2022	<MLS> Added CPU temp logging
 //*	Aug 23,	2022	<MLS> Added keeping track of max CPU temp
 //*	Dec 22,	2022	<MLS> Added WakeUpDiscoveryThread()
+//*	Feb 10,	2024	<MLS> Added GetLibraryInfo()
 //*****************************************************************************
 
 
@@ -283,7 +284,7 @@ char				errnoString[128];
 				if (validDiscoveryRequest)
 				{
 					sprintf(responseBuff, "{\"AlpacaPort\": %d}", gAlpacaListenPort);
-					CONSOLE_DEBUG_W_STR("responseBuff\t=", responseBuff);
+//					CONSOLE_DEBUG_W_STR("responseBuff\t=", responseBuff);
 
 					bytesSent	=	sendto(mySocket, responseBuff, strlen(responseBuff), 0, (struct sockaddr *)&fromAddress, fromlen);
 					if (bytesSent < 0)
@@ -686,9 +687,82 @@ int		iii;
 #endif // 0
 
 //*****************************************************************************
+// 4=COMMAND             	libraries
+// 5=LIBRARY-1           	software-gcc-10.2.1 20210110
+// 6=LIBRARY-2           	software-libc-2.31
+// 7=LIBRARY-3           	software-cfitsio-4.0
+// 8=LIBRARY-4           	software-opencv-4.5.1
+//*****************************************************************************
+static void	GetLibraryInfo(TYPE_ALPACA_UNIT *alpacaUnit)
+{
+int				jjj;
+bool			validData;
+SJP_Parser_t	jsonParser;
+char			*valuePtr;
+
+	validData	=	GetJsonResponse(	&alpacaUnit->deviceAddress,
+										alpacaUnit->port,
+										"/api/v1/management/0/libraries",
+										&jsonParser);
+	if (validData)
+	{
+		for (jjj=0; jjj<jsonParser.tokenCount_Data; jjj++)
+		{
+			//*	is this a library response
+			if (strncasecmp(jsonParser.dataList[jjj].keyword, "LIBRARY", 7) == 0)
+			{
+				valuePtr	=	strchr(jsonParser.dataList[jjj].valueString, '-');
+				if (valuePtr != NULL)
+				{
+					valuePtr	+=	1;
+					if (strncasecmp(jsonParser.dataList[jjj].valueString, "software-opencv", 15) == 0)
+					{
+						strcpy(alpacaUnit->SoftwareVersion[kSoftwareVers_OpenCV].SoftwareVerStr, valuePtr);
+					}
+					else if (strncasecmp(jsonParser.dataList[jjj].valueString, "software-cfitsio", 16) == 0)
+					{
+						strcpy(alpacaUnit->SoftwareVersion[kSoftwareVers_Fits].SoftwareVerStr, valuePtr);
+					}
+					else if (strncasecmp(jsonParser.dataList[jjj].valueString, "software-wiringPi", 17) == 0)
+					{
+						strcpy(alpacaUnit->SoftwareVersion[kSoftwareVers_WiringPi].SoftwareVerStr, valuePtr);
+					}
+				}
+			}
+		}
+	}
+	alpacaUnit->SoftwareVersionOK	=	true;
+}
+
+//*****************************************************************************
+static void	GetCPUstats(TYPE_ALPACA_UNIT *alpacaUnit)
+{
+int				jjj;
+bool			validData;
+SJP_Parser_t	jsonParser;
+
+	validData	=	GetJsonResponse(	&alpacaUnit->deviceAddress,
+										alpacaUnit->port,
+										"/api/v1/management/0/cpustats",
+										&jsonParser);
+	if (validData)
+	{
+		for (jjj=0; jjj<jsonParser.tokenCount_Data; jjj++)
+		{
+			//*	is this a hardware response
+			if (strcasecmp(jsonParser.dataList[jjj].keyword, "hardware") == 0)
+			{
+				strcpy(	alpacaUnit->SoftwareVersion[kSoftwareVers_Hardware].SoftwareVerStr,
+						jsonParser.dataList[jjj].valueString);
+			}
+		}
+	}
+}
+
+//*****************************************************************************
 static void	PollAllDevices(void)
 {
-int		iii;
+int				iii;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 //	CONSOLE_DEBUG_W_NUM("gAlpacaUnitCnt\t=", gAlpacaUnitCnt);
@@ -697,6 +771,13 @@ int		iii;
 		if (gAlpacaUnitList[iii].noResponseCnt == 0)
 		{
 			SendGetRequest(&gAlpacaUnitList[iii], "/management/v1/configureddevices");
+		}
+		//-----------------------------------------------------------
+		//*	check for software versions
+		if (gAlpacaUnitList[iii].SoftwareVersionOK == false)
+		{
+			GetLibraryInfo(&gAlpacaUnitList[iii]);
+			GetCPUstats(&gAlpacaUnitList[iii]);
 		}
 	}
 //	CONSOLE_DEBUG_W_NUM("gRemoteCnt\t=", gRemoteCnt);

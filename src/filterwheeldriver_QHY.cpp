@@ -204,7 +204,7 @@ int		loopCnt;
 int		ccc;
 int		iii;
 
-	CONSOLE_DEBUG_W_STR("sending:", qhyCmd);
+//	CONSOLE_DEBUG_W_STR("sending:", qhyCmd);
 
 	Serial_Send_Data(fileDesc, qhyCmd, true);
 	usleep(100 * 1000);
@@ -218,9 +218,9 @@ int		iii;
 		bytesRead	=	Serial_Read_Data(fileDesc, readBuffer, 255);
 		if (bytesRead > 0)
 		{
-			CONSOLE_DEBUG_W_NUM("bytesRead\t=", bytesRead);
+//			CONSOLE_DEBUG_W_NUM("bytesRead\t=", bytesRead);
 			readBuffer[bytesRead]	=	0;
-			CONSOLE_DEBUG(readBuffer);
+//			CONSOLE_DEBUG(readBuffer);
 			for (iii=0; iii<bytesRead; iii++)
 			{
 				returnDataBuffer[ccc++]	=	readBuffer[iii];
@@ -329,9 +329,9 @@ char	readBuffer[256];
 		CONSOLE_DEBUG_W_NUM("Setting to new position:",	cNewPosition);
 		cmdString[0]	=	cNewPosition + 0x30;
 		cmdString[1]	=	0;
-		CONSOLE_DEBUG_W_STR("cmdString \t=",	cmdString);
+//		CONSOLE_DEBUG_W_STR("cmdString \t=",	cmdString);
 		SendQHYcmd(cQHYusbPort_fileDesc, cmdString, readBuffer, 1);
-		CONSOLE_DEBUG_W_STR("readBuffer\t=",	readBuffer);
+//		CONSOLE_DEBUG_W_STR("readBuffer\t=",	readBuffer);
 
 		cMoveNewPosition	=	false;
 	}
@@ -339,7 +339,7 @@ char	readBuffer[256];
 	if (cFilterWheelProp.IsMoving)
 	{
 		SendQHYcmd(cQHYusbPort_fileDesc, "NOW", readBuffer, 1);
-		CONSOLE_DEBUG_W_STR("NOW response\t=",	readBuffer);
+//		CONSOLE_DEBUG_W_STR("NOW response\t=",	readBuffer);
 		if (strlen(readBuffer) > 0)
 		{
 			cFilterWheelProp.Position	=	Hextoi(readBuffer[0]);
@@ -350,7 +350,7 @@ char	readBuffer[256];
 	if (cReadPosition)
 	{
 		SendQHYcmd(cQHYusbPort_fileDesc, "NOW", readBuffer, 1);
-		CONSOLE_DEBUG_W_STR("NOW response\t=",	readBuffer);
+//		CONSOLE_DEBUG_W_STR("NOW response\t=",	readBuffer);
 		if (strlen(readBuffer) > 0)
 		{
 			cFilterWheelProp.Position	=	Hextoi(readBuffer[0]);

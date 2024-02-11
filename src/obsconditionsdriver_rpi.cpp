@@ -1,5 +1,5 @@
 //**************************************************************************
-//*	Name:			obsconditionsdriver_rpi.c
+//*	Name:			obsconditionsdriver_rpi.cpp
 //*
 //*	Author:			Mark Sproul (C) 2019
 //*
@@ -17,7 +17,7 @@
 //*****************************************************************************
 //*	<MLS>	=	Mark L Sproul
 //*****************************************************************************
-//*	Dec 31,	2019	<MLS> Started on obsconditionsdriver_rpi.c
+//*	Dec 31,	2019	<MLS> Started on obsconditionsdriver_rpi.cpp
 //*	Dec 31,	2019	<MLS> Added ReadPressure(), ReadTemperature(), ReadHumidity()
 //*	Dec 31,	2019	<MLS> Working with RTIMULib on R-Pi
 //*	Dec 31,	2019	<MLS> The Temperature value on the R-Pi is not valid for use

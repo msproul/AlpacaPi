@@ -73,10 +73,11 @@ AlpacaDriver	*alpacaDriverPtr;
 	return(NULL);
 }
 
-
 //*****************************************************************************
 void	AlpacaDriver::RunThread(void)
 {
+
+	CONSOLE_DEBUG(__FUNCTION__);
 
 	cDriverThreadIsActive	=	true;
 	cDriverThreadLoopCnt	=	0;
@@ -122,5 +123,5 @@ void	AlpacaDriver::RunThread_Startup(void)
 //*****************************************************************************
 void	AlpacaDriver::RunThread_Loop(void)
 {
-//	CONSOLE_DEBUG("this should be over-ridden");
+	CONSOLE_DEBUG("this should be over-ridden");
 }

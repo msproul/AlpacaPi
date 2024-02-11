@@ -21,6 +21,7 @@
 //*	Mar  8,	2023	<MLS> Created windowtab_slitdome.cpp
 //*	Mar  8,	2023	<MLS> Added GetDomeData()
 //*	Jun 19,	2023	<MLS> Added DeviceState to slitdome
+//*	Feb  1,	2024	<MLS> Added Edit Config button which launches a web browser to the setup page
 //*****************************************************************************
 
 #if defined(_ENABLE_SLIT_TRACKER_)
@@ -34,7 +35,7 @@
 #include	"slittracker_data.h"
 #include	"controller_slit.h"
 
-
+static char	gSlitTrackerConfigFile[]	=	"slittracker-config.txt";
 
 //**************************************************************************************
 WindowTabSlitDome::WindowTabSlitDome(	const int	xSize,
@@ -70,6 +71,7 @@ int		infoBoxWidth;
 int		boxWidthHalf;
 int		boxWidthQrtr;
 int		iii;
+char	textString[64];
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -173,6 +175,27 @@ int		iii;
 	SetWidgetText(	kSlitDome_DomeEnableData,	"Enable Automatic Dome updates");
 	SetWidgetText(	kSlitDome_DomeEnableTracking,		"Enable Dome Tracking");
 
+
+	yLoc			+=	cSmallBtnHt;
+	//=======================================================
+	strcpy(textString, "Config file: ");
+	strcat(textString, gSlitTrackerConfigFile);
+	SetWidget(		kSlitDome_ConfigInfo,	xLoc,	yLoc,	infoBoxWidth,	cSmallBtnHt);
+	SetWidgetType(	kSlitDome_ConfigInfo,	kWidgetType_TextBox);
+	SetWidgetFont(	kSlitDome_ConfigInfo,	kFont_Medium);
+	SetWidgetText(	kSlitDome_ConfigInfo,	textString);
+	yLoc			+=	cSmallBtnHt;
+	yLoc			+=	2;
+
+	SetWidget(			kSlitDome_ConfigEdit,	xLoc,	yLoc,	infoBoxWidth,	cSmallBtnHt);
+	SetWidgetType(		kSlitDome_ConfigEdit,	kWidgetType_Button);
+	SetWidgetFont(		kSlitDome_ConfigEdit,	kFont_Medium);
+	SetWidgetBGColor(	kSlitDome_ConfigEdit,	CV_RGB(255,	255,	255));
+	SetWidgetTextColor(	kSlitDome_ConfigEdit,	CV_RGB(255,	0,	0));
+	SetWidgetText(		kSlitDome_ConfigEdit,	"Modify configuration via web");
+
+
+
 	//=======================================================
 	//*	set up all the bottom stuff so that it is the same on all windowtabs
 	SetupWindowBottomBoxes(	kSlitDome_IPaddr,
@@ -189,6 +212,7 @@ int		iii;
 void	WindowTabSlitDome::ProcessButtonClick(const int buttonIdx, const int flags)
 {
 ControllerSlit	*mySlitController;
+char			urlString[128];
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 //	CONSOLE_DEBUG_W_NUM("buttonIdx\t=", buttonIdx);
@@ -238,6 +262,13 @@ ControllerSlit	*mySlitController;
 			}
 			break;
 
+		case kSlitDome_ConfigEdit:
+			if (mySlitController != NULL)
+			{
+				sprintf(urlString,	"setup/v1/slittracker/%d/setup", mySlitController->cAlpacaDevNum);
+				LaunchWebRemoteDevice(urlString);
+			}
+			break;
 
 		default:
 			break;

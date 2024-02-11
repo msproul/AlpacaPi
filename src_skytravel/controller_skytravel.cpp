@@ -19,6 +19,7 @@
 //*	Jun  4,	2022	<MLS> Updated SetTelescopeIPaddress() to handle mount graph window
 //*	Jul 14,	2022	<MLS> Started on CPU stats, skytravel is using too much CPU time
 //*	Jun 30,	2023	<MLS> Added AlpacaProcessReadAllIdx() to skytravel controller
+//*	Feb 10,	2024	<MLS> Added Software Versions WindowTab
 //*****************************************************************************
 
 #ifndef _ENABLE_SKYTRAVEL_
@@ -55,6 +56,7 @@
 #include	"windowtab_moon.h"
 #include	"windowtab_RemoteData.h"
 #include	"windowtab_skytravel.h"
+#include	"windowtab_sw_versions.h"
 #include	"windowtab_time.h"
 
 
@@ -90,6 +92,7 @@ ControllerSkytravel::ControllerSkytravel(	const char *argWindowName)
 	cDeviceSelectObjPtr				=	NULL;
 	cAlpacaListObjPtr				=	NULL;
 	cIPaddrListObjPtr				=	NULL;
+	cSwVersionsListObjPtr			=	NULL;
 	cAboutBoxTabObjPtr				=	NULL;
 	cFOVTabObjPtr					=	NULL;
 #ifndef __ARM_ARCH
@@ -139,6 +142,7 @@ ControllerSkytravel::~ControllerSkytravel(void)
 	DELETE_OBJ_IF_VALID(cDeviceSelectObjPtr);
 	DELETE_OBJ_IF_VALID(cAlpacaListObjPtr);
 	DELETE_OBJ_IF_VALID(cIPaddrListObjPtr);
+	DELETE_OBJ_IF_VALID(cSwVersionsListObjPtr);
 	DELETE_OBJ_IF_VALID(cMoonTabObjPtr);
 	DELETE_OBJ_IF_VALID(cAboutBoxTabObjPtr);
 #ifdef _ENABLE_CPU_STATS_
@@ -156,7 +160,7 @@ void	ControllerSkytravel::SetupWindowControls(void)
 
 	//=============================================================
 	SetTabText(kTab_SkyTravel,	"SkyTravel");
-	cSkyTravelTabOjbPtr		=	new WindowTabSkyTravel(	cWidth, cHeight, cBackGrndColor, cWindowName);
+	cSkyTravelTabOjbPtr		=	new WindowTabSkyTravel(	cWidth, cHeight, cBackGrndColor, "SkyTravel");
 	if (cSkyTravelTabOjbPtr != NULL)
 	{
 		SetTabWindow(kTab_SkyTravel,	cSkyTravelTabOjbPtr);
@@ -165,7 +169,7 @@ void	ControllerSkytravel::SetupWindowControls(void)
 
 	//=============================================================
 	SetTabText(kTab_ST_Time,	"Time");
-	cTimeTabObjPtr		=	new WindowTabTime(	cWidth, cHeight, cBackGrndColor, cWindowName);
+	cTimeTabObjPtr		=	new WindowTabTime(	cWidth, cHeight, cBackGrndColor, "Time");
 	if (cTimeTabObjPtr != NULL)
 	{
 		SetTabWindow(kTab_ST_Time,	cTimeTabObjPtr);
@@ -174,7 +178,7 @@ void	ControllerSkytravel::SetupWindowControls(void)
 
 	//=============================================================
 	SetTabText(kTab_ST_Settings,	"Settings");
-	cSkySettingsTabObjPtr		=	new WindowTabSTsettings(	cWidth, cHeight, cBackGrndColor, cWindowName);
+	cSkySettingsTabObjPtr		=	new WindowTabSTsettings(	cWidth, cHeight, cBackGrndColor, "Settings");
 	if (cSkySettingsTabObjPtr != NULL)
 	{
 		SetTabWindow(kTab_ST_Settings,	cSkySettingsTabObjPtr);
@@ -183,7 +187,7 @@ void	ControllerSkytravel::SetupWindowControls(void)
 
 	//=============================================================
 	SetTabText(kTab_ST_FOV,	"F.O.V.");
-	cFOVTabObjPtr		=	new WindowTabFOV(	cWidth, cHeight, cBackGrndColor, cWindowName);
+	cFOVTabObjPtr		=	new WindowTabFOV(	cWidth, cHeight, cBackGrndColor, "F.O.V.");
 	if (cFOVTabObjPtr != NULL)
 	{
 	TYPE_CameraFOV	*myFOVptr;
@@ -203,7 +207,7 @@ void	ControllerSkytravel::SetupWindowControls(void)
 
 	//=============================================================
 	SetTabText(kTab_ST_RemoteData,	"Remote Data");
-	cRemoteDataObjPtr		=	new WindowTabRemoteData(	cWidth, cHeight, cBackGrndColor, cWindowName);
+	cRemoteDataObjPtr		=	new WindowTabRemoteData(	cWidth, cHeight, cBackGrndColor, "Remote Data");
 	if (cRemoteDataObjPtr != NULL)
 	{
 
@@ -213,7 +217,7 @@ void	ControllerSkytravel::SetupWindowControls(void)
 
 	//=============================================================
 	SetTabText(kTab_ST_Dome,		"Dome");
-	cDomeTabObjPtr	=	new WindowTabDome(cWidth, cHeight, cBackGrndColor, cWindowName, true);
+	cDomeTabObjPtr	=	new WindowTabDome(cWidth, cHeight, cBackGrndColor, "Dome", true);
 	if (cDomeTabObjPtr != NULL)
 	{
 		SetTabWindow(kTab_ST_Dome,	cDomeTabObjPtr);
@@ -225,7 +229,7 @@ void	ControllerSkytravel::SetupWindowControls(void)
 	DELETE_OBJ_IF_VALID(cMountTabObjPtr);
 	//=============================================================
 	SetTabText(kTab_ST_Mount,		"Mount RA/DEC");
-	cMountTabObjPtr	=	new WindowTabMount(cWidth, cHeight, cBackGrndColor, cWindowName);
+	cMountTabObjPtr	=	new WindowTabMount(cWidth, cHeight, cBackGrndColor, "Mount RA/DEC");
 	if (cMountTabObjPtr != NULL)
 	{
 		SetTabWindow(kTab_ST_Mount,	cMountTabObjPtr);
@@ -235,7 +239,7 @@ void	ControllerSkytravel::SetupWindowControls(void)
 
 	//=============================================================
 	SetTabText(kTab_DeviceList,		"Device Selection");
-	cDeviceSelectObjPtr	=	new WindowTabDeviceSelect(cWidth, cHeight, cBackGrndColor, cWindowName);
+	cDeviceSelectObjPtr	=	new WindowTabDeviceSelect(cWidth, cHeight, cBackGrndColor, "Device Selection");
 	if (cDeviceSelectObjPtr != NULL)
 	{
 		SetTabWindow(kTab_DeviceList,	cDeviceSelectObjPtr);
@@ -244,7 +248,7 @@ void	ControllerSkytravel::SetupWindowControls(void)
 
 	//=============================================================
 	SetTabText(kTab_AlpacaList,		"Alpaca List");
-	cAlpacaListObjPtr	=	new WindowTabAlpacaList(cWidth, cHeight, cBackGrndColor, cWindowName);
+	cAlpacaListObjPtr	=	new WindowTabAlpacaList(cWidth, cHeight, cBackGrndColor, "Alpaca List");
 	if (cAlpacaListObjPtr != NULL)
 	{
 		SetTabWindow(kTab_AlpacaList,	cAlpacaListObjPtr);
@@ -253,7 +257,7 @@ void	ControllerSkytravel::SetupWindowControls(void)
 
 	//=============================================================
 	SetTabText(kTab_IPList,		"IP List");
-	cIPaddrListObjPtr	=	new WindowTabIPList(cWidth, cHeight, cBackGrndColor, cWindowName);
+	cIPaddrListObjPtr	=	new WindowTabIPList(cWidth, cHeight, cBackGrndColor, "IP List");
 	if (cIPaddrListObjPtr != NULL)
 	{
 		SetTabWindow(kTab_IPList,	cIPaddrListObjPtr);
@@ -261,8 +265,17 @@ void	ControllerSkytravel::SetupWindowControls(void)
 	}
 
 	//=============================================================
+	SetTabText(kTab_SwVersList,		"Sw Vers");
+	cSwVersionsListObjPtr	=	new WindowTabSwVersions(cWidth, cHeight, cBackGrndColor, "Software Versions");
+	if (cIPaddrListObjPtr != NULL)
+	{
+		SetTabWindow(kTab_SwVersList,	cSwVersionsListObjPtr);
+		cSwVersionsListObjPtr->SetParentObjectPtr(this);
+	}
+
+	//=============================================================
 	SetTabText(kTab_Moon,	"Moon");
-	cMoonTabObjPtr		=	new WindowTabMoon(	cWidth, cHeight, cBackGrndColor, cWindowName);
+	cMoonTabObjPtr		=	new WindowTabMoon(	cWidth, cHeight, cBackGrndColor, "Moon");
 	if (cMoonTabObjPtr != NULL)
 	{
 		SetTabWindow(kTab_Moon,	cMoonTabObjPtr);
@@ -272,7 +285,7 @@ void	ControllerSkytravel::SetupWindowControls(void)
 #ifdef _ENABLE_CPU_STATS_
 	//=============================================================
 	SetTabText(kTab_CPU_STATS,		"CPU Stats");
-	cCpuStatsTabObjPtr		=	new WindowTabCpuStats(	cWidth, cHeight, cBackGrndColor, cWindowName);
+	cCpuStatsTabObjPtr		=	new WindowTabCpuStats(	cWidth, cHeight, cBackGrndColor, "CPU Stats");
 	if (cCpuStatsTabObjPtr != NULL)
 	{
 		SetTabWindow(kTab_CPU_STATS,	cCpuStatsTabObjPtr);
@@ -283,7 +296,7 @@ void	ControllerSkytravel::SetupWindowControls(void)
 
 	//=============================================================
 	SetTabText(kTab_ST_About,		"About");
-	cAboutBoxTabObjPtr		=	new WindowTabAbout(	cWidth, cHeight, cBackGrndColor, cWindowName);
+	cAboutBoxTabObjPtr		=	new WindowTabAbout(	cWidth, cHeight, cBackGrndColor, "About");
 	if (cAboutBoxTabObjPtr != NULL)
 	{
 		SetTabWindow(kTab_ST_About,	cAboutBoxTabObjPtr);
@@ -836,11 +849,13 @@ char	textBuff[64];
 	{
 //		CONSOLE_DEBUG("cTelescopeHas_readall");
 		SetCommandLookupTable(gTelescopeCmdTable);
+		SetAlternateLookupTable(gTelescopeExtrasTable);
 		validData	=	AlpacaGetStatus_ReadAll(&cTelescopeIpAddress,
 												cTelescopeIpPort,
 												"telescope",
 												cTelescopeAlpacaDeviceNum);
 		SetCommandLookupTable((TYPE_CmdEntry*)NULL);
+		SetAlternateLookupTable((TYPE_CmdEntry*)NULL);
 	}
 	else
 	{
@@ -973,6 +988,11 @@ void	ControllerSkytravel::Update_TelescopeDeclination(void)
 	gTelescopeDecl_Radians	=	RADIANS(cTelescopeProp.Declination);
 }
 
+//**************************************************************************************
+void	ControllerSkytravel::Update_TelescopeSideOfPier(void)
+{
+//	CONSOLE_DEBUG(__FUNCTION__);
+}
 
 
 #define	PARENT_CLASS	ControllerSkytravel

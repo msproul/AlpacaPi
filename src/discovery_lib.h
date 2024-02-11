@@ -26,14 +26,32 @@
 #define	kMaxCPUtempEntries	(((24 * 60) / 2) + 10)
 
 //*****************************************************************************
+enum
+{
+	kSoftwareVers_OpenCV	=	0,
+	kSoftwareVers_Fits,
+	kSoftwareVers_WiringPi,
+	kSoftwareVers_Hardware,
+
+	kSoftwareVers_last
+};
+
+//*****************************************************************************
+typedef struct
+{
+	char	SoftwareVerStr[48];
+}	TYPE_SoftwareVers;
+
+//*****************************************************************************
 //*	this is a list of IP addresses
 typedef struct
 {
 	struct sockaddr_in	deviceAddress;
 	int					port;
 	int					noResponseCnt;
-	char				hostName[48];		//*	device name from hosts file
+	char				hostName[48];		//*	device name from /etc/hosts file
 
+	bool				lineSelected;		//*	for use in displaying a line that has been clicked on
 
 	//*	for use by discovery thread for keeping track of responses
 	int					queryOKcnt;
@@ -52,9 +70,17 @@ typedef struct
 	double				cpuTemp_DegF;
 	double				cpuTemp_DegF_max;
 	double				cpuTempLog[kMaxCPUtempEntries];
+	//-------------------------------------------------------------------------------
+	bool				SoftwareVersionOK;
+	TYPE_SoftwareVers	SoftwareVersion[kSoftwareVers_last];
+
 
 } TYPE_ALPACA_UNIT;
 
+
+//*	this is a list of IP addresses
+#define		kMaxAlpacaIPaddrCnt	128
+extern TYPE_ALPACA_UNIT	gAlpacaUnitList[kMaxAlpacaIPaddrCnt];
 
 //*****************************************************************************
 //*	this is a list of alpaca devices, can be more than one per IP address
@@ -62,6 +88,7 @@ typedef struct
 {
 	bool				validEntry;
 	bool				onLine;
+	bool				lineSelected;
 	struct sockaddr_in	deviceAddress;
 	int					port;
 	char				hostName[64];
@@ -77,9 +104,6 @@ typedef struct
 
 
 } TYPE_REMOTE_DEV;
-
-//*	this is a list of IP addresses
-#define	kMaxAlpacaIPaddrCnt	32
 
 #ifdef kMaxAlpacaDeviceCnt
 //	#warning "kMaxAlpacaDeviceCnt is already defined"

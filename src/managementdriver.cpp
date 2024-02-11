@@ -185,8 +185,8 @@ char				alpacaErrMsg[256];
 int					mySocket;
 
 
-	CONSOLE_DEBUG("------------------------------------------");
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG("------------------------------------------");
+//	CONSOLE_DEBUG(__FUNCTION__);
 //	CONSOLE_DEBUG_W_STR("htmlData\t=", reqData->htmlData);
 //	DumpRequestStructure(__FUNCTION__, reqData);
 
@@ -220,14 +220,14 @@ int					mySocket;
 	//*	look up the command
 	cmdEnumValue	=	FindCmdFromTable(reqData->deviceCommand, gManagementCmdTable, &cmdType);
 
-	CONSOLE_DEBUG_W_NUM("cmdEnumValue\t\t=", cmdEnumValue);
-	if (cmdEnumValue == kCmd_Managment_configureddevices)
-	{
-		CONSOLE_DEBUG_W_STR("reqData->htmlData     \t=",	reqData->htmlData);
-		CONSOLE_DEBUG_W_STR("reqData->deviceCommand\t=",	reqData->deviceCommand);
-		CONSOLE_DEBUG_W_STR("reqData->cmdBuffer    \t=",	reqData->cmdBuffer);
-		CONSOLE_DEBUG_W_STR("reqData->contentData  \t=",	reqData->contentData);
-	}
+//	CONSOLE_DEBUG_W_NUM("cmdEnumValue\t\t=", cmdEnumValue);
+//	if (cmdEnumValue == kCmd_Managment_configureddevices)
+//	{
+//		CONSOLE_DEBUG_W_STR("reqData->htmlData     \t=",	reqData->htmlData);
+//		CONSOLE_DEBUG_W_STR("reqData->deviceCommand\t=",	reqData->deviceCommand);
+//		CONSOLE_DEBUG_W_STR("reqData->cmdBuffer    \t=",	reqData->cmdBuffer);
+//		CONSOLE_DEBUG_W_STR("reqData->contentData  \t=",	reqData->contentData);
+//	}
 
 	switch(cmdEnumValue)
 	{
@@ -275,6 +275,11 @@ int					mySocket;
 			break;
 	}
 	RecordCmdStats(cmdEnumValue, reqData->get_putIndicator, alpacaErrCode);
+
+	if (alpacaErrCode != kASCOM_Err_Success)
+	{
+		CONSOLE_DEBUG_W_NUM("alpacaErrCode\t=",	reqData->alpacaErrCode);
+	}
 
 	//*	send the response information
 	JsonResponse_Add_Int32(	mySocket,
@@ -404,7 +409,7 @@ void	ManagementDriver::ReportOneDevice(TYPE_GetPutRequestData *reqData, AlpacaDr
 char		deviceTypeString[32];
 char		uniqueIDstring[64];
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	GetDeviceTypeFromEnum(devicePtr->cDeviceType, deviceTypeString);
 
 	JsonResponse_Add_RawText(	reqData->socket,
@@ -485,7 +490,7 @@ int					displayedCnt;
 struct timeval		timeStamp;
 char				timeStampString[128];
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	if (reqData != NULL)
 	{

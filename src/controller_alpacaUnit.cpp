@@ -18,6 +18,8 @@
 //*	Feb 10,	2023	<MLS> Fixed initialization bug for focuser temp log
 //*	Jul  1,	2023	<MLS> Added GetStatus_SubClass() to AlpacaUnit
 //*	Jul  1,	2023	<MLS> Added GetStartUpData_SubClass() to AlpacaUnit
+//*	Dec 23,	2023	<MLS> Added Software libraries window tab
+//*	Dec 23,	2023	<MLS> Added AlpacaGetSoftwareLibraries()
 //*****************************************************************************
 
 #include	<stdio.h>
@@ -32,7 +34,9 @@
 #include	"alpaca_defs.h"
 #include	"helper_functions.h"
 #include	"windowtab_alpacaUnit.h"
+#include	"windowtab_alpacaUnit.h"
 #include	"controller_alpacaUnit.h"
+#include	"sendrequest_lib.h"
 
 #define	kWindowWidth	999
 #define	kWindowHeight	700
@@ -41,6 +45,7 @@
 enum
 {
 	kTab_AlpacaUnit	=	1,
+	kTab_Library,
 	kTab_About,
 	kTab_Unit_Count
 
@@ -77,6 +82,7 @@ ControllerAlpacaUnit::ControllerAlpacaUnit(	const char			*argWindowName,
 	CONSOLE_DEBUG_W_NUM("cAlpacaDeviceType    \t=", cAlpacaDeviceType);
 
 	cAlpacaUnitTabObjPtr	=	NULL;
+	cLibraryTabObjPtr		=	NULL;
 	cAboutBoxTabObjPtr		=	NULL;
 	cConfiguredDevIndex		=	0;
 	cHasCamera				=	false;
@@ -116,6 +122,8 @@ ControllerAlpacaUnit::~ControllerAlpacaUnit(void)
 {
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 	DELETE_OBJ_IF_VALID(cAlpacaUnitTabObjPtr);
+	DELETE_OBJ_IF_VALID(cLibraryTabObjPtr);
+
 	DELETE_OBJ_IF_VALID(cAboutBoxTabObjPtr);
 }
 
@@ -126,6 +134,7 @@ void	ControllerAlpacaUnit::SetupWindowControls(void)
 
 	SetTabCount(kTab_Unit_Count);
 	SetTabText(kTab_AlpacaUnit	,	"Alpaca-Unit");
+	SetTabText(kTab_Library	,		"Software Libraries");
 	SetTabText(kTab_About,			"About");
 
 	//--------------------------------------------
@@ -138,11 +147,32 @@ void	ControllerAlpacaUnit::SetupWindowControls(void)
 	}
 
 	//--------------------------------------------
+	cLibraryTabObjPtr	=	new WindowTabLibraries(cWidth, cHeight, cBackGrndColor, cWindowName);
+	if (cLibraryTabObjPtr != NULL)
+	{
+		SetTabWindow(kTab_Library,	cLibraryTabObjPtr);
+		cLibraryTabObjPtr->SetParentObjectPtr(this);
+
+	}
+
+	//--------------------------------------------
 	cAboutBoxTabObjPtr		=	new WindowTabAbout(	cWidth, cHeight, cBackGrndColor, cWindowName);
 	if (cAboutBoxTabObjPtr != NULL)
 	{
 		SetTabWindow(kTab_About,	cAboutBoxTabObjPtr);
 		cAboutBoxTabObjPtr->SetParentObjectPtr(this);
+	}
+
+	//*	display the IPaddres/port
+	if (cValidIPaddr)
+	{
+	char	ipString[32];
+	char	lineBuff[64];
+
+		PrintIPaddressToString(cDeviceAddress.sin_addr.s_addr, ipString);
+		sprintf(lineBuff, "%s:%d/%d", ipString, cPort, cAlpacaDevNum);
+
+		SetWindowIPaddrInfo(lineBuff, true);
 	}
 }
 
@@ -196,6 +226,7 @@ char	deviceListString[512];
 		}
 	}
 	GetTemperatureLogs();
+	AlpacaGetSoftwareLibraries();
 }
 
 //**************************************************************************************
@@ -291,3 +322,82 @@ int		iii;
 		}
 	}
 }
+
+//*****************************************************************************
+void	ControllerAlpacaUnit::AlpacaGetSoftwareLibraries(void)
+{
+SJP_Parser_t	jsonParser;
+bool			validData;
+char			alpacaString[128];
+int				jjj;
+char			librariesBuffer[1024];
+
+	CONSOLE_DEBUG(__FUNCTION__);
+	librariesBuffer[0]	=	0;
+
+	SJP_Init(&jsonParser);
+	sprintf(alpacaString,	"/api/v1/%s/%d/%s", "management", 0, "libraries");
+	CONSOLE_DEBUG(alpacaString);
+
+	validData	=	GetJsonResponse(	&cDeviceAddress,
+										cPort,
+										alpacaString,
+										NULL,
+										&jsonParser);
+	if (validData)
+	{
+		cLastAlpacaErrNum	=	kASCOM_Err_Success;
+		for (jjj=0; jjj<jsonParser.tokenCount_Data; jjj++)
+		{
+//			CONSOLE_DEBUG_W_STR(	jsonParser.dataList[jjj].keyword,
+//									jsonParser.dataList[jjj].valueString);
+
+			if (strncasecmp(jsonParser.dataList[jjj].keyword, "library-", 8) == 0)
+			{
+				strcat(librariesBuffer, jsonParser.dataList[jjj].valueString);
+				strcat(librariesBuffer, "\r");
+			}
+		}
+		SetWidgetText(kTab_Library, kLibraries_LibrariesBox, librariesBuffer);
+	}
+
+	//---------------------------------------------------------------
+	//*	now get the cpu info
+	SJP_Init(&jsonParser);
+	sprintf(alpacaString,	"/api/v1/%s/%d/%s", "management", 0, "cpustats");
+	CONSOLE_DEBUG(alpacaString);
+
+	validData	=	GetJsonResponse(	&cDeviceAddress,
+										cPort,
+										alpacaString,
+										NULL,
+										&jsonParser);
+	if (validData)
+	{
+		strcat(librariesBuffer, " \r");
+		strcat(librariesBuffer, " \r");
+		cLastAlpacaErrNum	=	kASCOM_Err_Success;
+		for (jjj=0; jjj<jsonParser.tokenCount_Data; jjj++)
+		{
+//			CONSOLE_DEBUG_W_STR(	jsonParser.dataList[jjj].keyword,
+//									jsonParser.dataList[jjj].valueString);
+
+			if (strcasecmp(jsonParser.dataList[jjj].keyword, "hardware") == 0)
+			{
+				strcat(librariesBuffer, "Hardware: ");
+				strcat(librariesBuffer, jsonParser.dataList[jjj].valueString);
+				strcat(librariesBuffer, "\r");
+			}
+		}
+	}
+
+	if (strlen(librariesBuffer) > 0)
+	{
+		SetWidgetText(kTab_Library, kLibraries_LibrariesBox, librariesBuffer);
+	}
+	else
+	{
+		SetWidgetText(kTab_Library, kLibraries_LibrariesBox, "Failed to read data from managment");
+	}
+}
+

@@ -106,6 +106,8 @@ typedef struct	//	TYPE_WIDGET
 	bool		crossedOut;
 	bool		highLighted;		//*	only valid for buttons
 	bool		needsUpdated;		//*	this is for selective updating
+	bool		lineSelected;
+	bool		debug;				//*	allows turning on debugging for a single widget
 	int			widgetType;
 	int			left;
 	int			top;
@@ -122,16 +124,22 @@ typedef struct	//	TYPE_WIDGET
 #if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 	cv::Mat		*openCVimagePtr;
 	cv::Rect	roiRect;
-	cv::Scalar	bgColor;
-	cv::Scalar	textColor;
-	cv::Scalar	borderColor;
+//	cv::Scalar	bgColor;
+//	cv::Scalar	bgColorSelected;
+//	cv::Scalar	textColor;
+//	cv::Scalar	borderColor;
 #else
 	IplImage	*openCVimagePtr;
 	CvRect		roiRect;
-	CvScalar	bgColor;
-	CvScalar	textColor;
-	CvScalar	borderColor;
+//	CvScalar	bgColor;
+//	CvScalar	bgColorSelected;
+//	CvScalar	textColor;
+//	CvScalar	borderColor;
 #endif // _USE_OPENCV_CPP_
+	cv::Scalar	bgColor;
+	cv::Scalar	bgColorSelected;
+	cv::Scalar	textColor;
+	cv::Scalar	borderColor;
 	bool		includeBorder;
 	int			fontNum;
 	bool		selected;			//*	radio buttons and check boxes

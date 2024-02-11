@@ -1,6 +1,10 @@
 //*****************************************************************************
-//*	command table for Alpaca FilterWheel
-//*		This file is used by both the driver and the controller
+//*	Name:			filterwheel_AlpacaCmds.cpp
+//*
+//*	Author:			Mark Sproul (C) 2023
+//*
+//*	Description:	Command table for FilterWheel
+//*					This file is used by both the driver and the controller
 //*****************************************************************************
 //*	Jul  1,	2023	<MLS> Created filterwheel_AlpacaCmds.cpp
 //*****************************************************************************

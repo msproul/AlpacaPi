@@ -202,6 +202,9 @@ CameraDriverASI::CameraDriverASI(const int deviceNum)
 	sprintf(cOpenCV_ImgWindowName, "%s-%d", cCommonProp.Name, cCameraID);
 #endif // _USE_OPENCV_
 
+//#ifdef _USE_CAMERA_READ_THREAD_
+//	StartDriverThread();
+//#endif
 }
 
 
@@ -981,7 +984,7 @@ int					imageSize;
 int					bytesPerPixel;
 int					bytesPerRow;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 
 	alpacaErrCode	=		kASCOM_Err_MethodNotImplemented;
 	strcpy(cLastCameraErrMsg, "Not Finished for OpenCV++");

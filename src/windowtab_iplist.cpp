@@ -26,6 +26,9 @@
 //*	Sep 29,	2022	<MLS> Added dynamic display CPU temp when mouse is moved over graph
 //*	Sep 30,	2022	<MLS> Added HandleMouseMovedInGraph()
 //*	Oct  4,	2022	<MLS> Added scrolling to IP list
+//*	Jan 19,	2024	<MLS> Added ProcessLineSelect()
+//*	Jan 19,	2024	<MLS> Added lineSelection to the IP list
+//*	Jan 19,	2024	<MLS> Added the ability to delete an entry from the IP unit list
 //*****************************************************************************
 
 #include	<stdlib.h>
@@ -291,12 +294,15 @@ int		myButtonWidth;
 	textBoxWd	=	cWidth - (xLoc + 3);
 	for (iii=kIPaddrList_AlpacaDev_01; iii <= kIPaddrList_AlpacaDev_Last; iii++)
 	{
+		SetWidgetType(			iii,	kWidgetType_TextBox);
 		SetWidget(				iii,	xLoc,			yLoc,		textBoxWd,		textBoxHt);
 		SetWidgetJustification(	iii,	kJustification_Left);
 		SetWidgetFont(			iii,	kFont_TextList);
 		SetWidgetTextColor(		iii,	CV_RGB(255,	255,	255));
 		SetWidgetBorder(		iii,	false);
 		SetWidgetTabStops(		iii,	tabArray);
+		SetWidgetBGColorSelected(iii,	CV_RGB(100,	100,	100));
+//		SetWidgetBGColorSelected(iii,	CV_RGB(255,	255,	0));
 
 		yLoc			+=	textBoxHt;
 		yLoc			+=	4;
@@ -317,6 +323,112 @@ int		myButtonWidth;
 }
 
 //*****************************************************************************
+void	WindowTabIPList::SetNewSelectedDevice(int deviceIndex)
+{
+int		iii;
+	if (deviceIndex >= 0)
+	{
+		//*	clear out previous selections
+		for (iii=0; iii<kMaxAlpacaIPaddrCnt; iii++)
+		{
+			gAlpacaUnitList[iii].lineSelected	=	false;
+		}
+		gAlpacaUnitList[deviceIndex].lineSelected	=	true;
+		UpdateOnScreenWidgetList();
+		ForceWindowUpdate();
+	}
+}
+
+//*****************************************************************************
+void	WindowTabIPList::HandleKeyDown(const int keyPressed)
+{
+int		deviceIndex;
+int		iii;
+int		theExtendedChar;
+
+//	CONSOLE_DEBUG_W_HEX("keyPressed=", keyPressed);
+
+	//*	find a selected device
+	deviceIndex	=	-1;
+	for (iii=0; iii<gAlpacaUnitCnt; iii++)
+	{
+		if (gAlpacaUnitList[iii].lineSelected)
+		{
+			deviceIndex	=	iii;
+			break;
+		}
+	}
+
+	theExtendedChar	=	keyPressed & 0x00ffff;
+	switch(theExtendedChar)
+	{
+		//*	return, open current selected entry
+		case 0x0d:
+		case 0xff8d:
+			if ((deviceIndex >= 0) && (deviceIndex < gAlpacaUnitCnt))
+			{
+				CreateAlpacaUnitWindow(&gAlpacaUnitList[deviceIndex]);
+			}
+			break;
+
+		//*	delete key, delete the current entry
+		case 0x0000ff:
+		case 0x00ffff:
+		case 0x0080ff:
+			CONSOLE_DEBUG_W_HEX("Ignored: theExtendedChar\t=", theExtendedChar);
+			if (deviceIndex >= 0)
+			{
+				//*	delete that device out of the list
+				iii	=	deviceIndex;
+				while (iii < gAlpacaUnitCnt)
+				{
+					//*	move the rest up one slot in the list
+					gAlpacaUnitList[iii]	=	gAlpacaUnitList[iii+1];
+					iii++;
+				}
+				//*	clear the rest of the list
+				while (iii < kMaxAlpacaIPaddrCnt)
+				{
+					memset(&gAlpacaUnitList[iii], 0, sizeof(TYPE_ALPACA_UNIT));
+					iii++;
+				}
+				gAlpacaUnitCnt--;
+				//*	make sure we dont run out of bounds
+				if (gAlpacaUnitCnt < 0)
+				{
+					gAlpacaUnitCnt	=	0;
+				}
+				UpdateOnScreenWidgetList();
+				ForceWindowUpdate();
+			}
+			break;
+
+		//*	up arrow key
+		case 0x00ff52:
+			deviceIndex	-=	1;
+			if (deviceIndex >= 0)
+			{
+				SetNewSelectedDevice(deviceIndex);
+			}
+			break;
+
+		//*	down arrow key
+		case 0x00ff54:
+			deviceIndex	+=	1;
+			if (deviceIndex >= 0)
+			{
+				SetNewSelectedDevice(deviceIndex);
+			}
+			break;
+
+		default:
+			CONSOLE_DEBUG_W_HEX("Ignored: keyPressed     \t=", keyPressed);
+			CONSOLE_DEBUG_W_HEX("Ignored: theExtendedChar\t=", theExtendedChar);
+			break;
+	}
+}
+
+//*****************************************************************************
 void	WindowTabIPList::ProcessButtonClick(const int buttonIdx, const int flags)
 {
 bool	updateFlag;
@@ -325,11 +437,13 @@ bool	updateFlag;
 	updateFlag	=	true;
 	switch(buttonIdx)
 	{
+		//*	stop the discovery threaad
 		case kIPaddrList_DiscoveryThrdStop:
 			gDiscoveryThreadKeepRunning	=	false;
 			SetWidgetText(	kIPaddrList_StatusMsg,	"Stop message sent");
 			break;
 
+		//*	restart the discover thread
 		case kIPaddrList_DiscoveryThrdReStart:
 //			CONSOLE_DEBUG("kIPaddrList_DiscoveryThrdReStart");
 			if (gDiscoveryThreadIsRunning == false)
@@ -344,24 +458,29 @@ bool	updateFlag;
 			WakeUpDiscoveryThread();
 			break;
 
+		//*	clear the listed of IP addresses
 		case kIPaddrList_DiscoveryClear:
 			Discovery_ClearIPAddrList();
 			ClearIPaddrList();
 			WakeUpDiscoveryThread();
 			break;
 
+		//*	force a rescan looking for new devices and updates
 		case kIPaddrList_DiscoveryReScan:
 			WakeUpDiscoveryThread();
 			break;
 
+		//*	graph mode raw
 		case kIPaddrList_TempModeRaw:
 			cGraphMode	=	kGraphMode_Raw;
 			break;
 
+		//*	graph mode average
 		case kIPaddrList_TempModeAvg:
 			cGraphMode	=	kGraphMode_Avg5;
 			break;
 
+		//*	export data to CSV file
 		case kIPaddrList_ExportCSV:
 			ExportCSV();
 			break;
@@ -495,7 +614,6 @@ void	WindowTabIPList::ProcessMouseEvent(	const int	widgetIdx,
 int		box_XXX;
 int		box_YYY;
 
-
 	switch(event)
 	{
 		case cv::EVENT_MOUSEMOVE:
@@ -509,11 +627,14 @@ int		box_YYY;
 			break;
 
 		case cv::EVENT_LBUTTONDOWN:
+//			CONSOLE_DEBUG_W_NUM("EVENT_LBUTTONDOWN", widgetIdx);
 			cLeftButtonDown	=	true;
 			break;
 
 		case cv::EVENT_LBUTTONUP:
+//			CONSOLE_DEBUG_W_NUM("EVENT_LBUTTONUP", widgetIdx);
 			cLeftButtonDown	=	false;
+			ProcessLineSelect(widgetIdx);
 			break;
 
 //
@@ -615,6 +736,43 @@ int		boxId;
 }
 
 //**************************************************************************************
+void	WindowTabIPList::ProcessLineSelect(int widgetIdx)
+{
+int		deviceIdx;
+int		adjustedIdx;
+//int		iii;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+	if ((widgetIdx >= kIPaddrList_AlpacaDev_01) && (widgetIdx < kIPaddrList_AlpacaDev_Last))
+	{
+		adjustedIdx	=	widgetIdx - kIPaddrList_AlpacaDev_01;
+		deviceIdx	=	adjustedIdx + cFirstLineIdx;
+
+		if ((deviceIdx >= 0) && (deviceIdx < kMaxAlpacaIPaddrCnt))
+		{
+			SetNewSelectedDevice(deviceIdx);
+//
+//			//*	clear out previous selections
+//			for (iii=0; iii<kMaxAlpacaIPaddrCnt; iii++)
+//			{
+//				gAlpacaUnitList[iii].lineSelected	=	false;
+//			}
+//			gAlpacaUnitList[deviceIdx].lineSelected	=	true;
+		}
+		else
+		{
+			CONSOLE_DEBUG_W_NUM("deviceIdx is out of bounds\t=", deviceIdx);
+		}
+//		UpdateOnScreenWidgetList();
+//		ForceWindowUpdate();
+	}
+	else
+	{
+		CONSOLE_DEBUG_W_NUM("widgetIdx is out of range\t=", widgetIdx);
+	}
+}
+
+//**************************************************************************************
 void	WindowTabIPList::UpdateOnScreenWidgetList(void)
 {
 int		boxId;
@@ -655,12 +813,11 @@ int		deviceIdx;
 	}
 
 	cLinesOnScreen	=	(kIPaddrList_AlpacaDev_Last - kIPaddrList_AlpacaDev_01) + 1;
-
-	iii			=	0;
+	iii				=	0;
 	while (iii < cLinesOnScreen)
 	{
 		boxId		=	iii + kIPaddrList_AlpacaDev_01;
-		deviceIdx	=	cFirstLineIdx + iii;
+		deviceIdx	=	iii + cFirstLineIdx;
 		if ((boxId < kIPaddrList_AlpacaDev_Last) && (deviceIdx < gAlpacaUnitCnt))
 		{
 			inet_ntop(AF_INET, &(gAlpacaUnitList[deviceIdx].deviceAddress.sin_addr), ipAddrStr, INET_ADDRSTRLEN);
@@ -731,11 +888,22 @@ int		deviceIdx;
 //				strcat(textString, "\tNo time");
 //			}
 
+			//-----------------------------------------------------
+			//*	deal with selected state
+			if (gAlpacaUnitList[deviceIdx].lineSelected == true)
+			{
+				SetWidgetLineSelect(boxId, true);
+			}
+			else
+			{
+				SetWidgetLineSelect(boxId, false);
+			}
 			SetWidgetText(boxId, textString);
 		}
 		else if (boxId <= kIPaddrList_AlpacaDev_Last)
 		{
 			SetWidgetTextColor(		boxId,	CV_RGB(255,	255,	255));
+			SetWidgetLineSelect(	boxId, false);
 			SetWidgetText(boxId, "---");
 		}
 		else

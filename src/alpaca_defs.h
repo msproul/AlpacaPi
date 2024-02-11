@@ -88,6 +88,9 @@
 //*	Sep 28,	2023	<MLS> Build 172
 //*	Nov  1,	2023	<MLS> Pushed Build 172
 //*	Nov  1,	2023	<MLS> Build 173
+//*	Jan  1,	2024	-----------------------------------------------------------
+//*	Feb 10,	2024	<MLS> Version V0.7.2
+//*	Feb 10,	2024	<MLS> Build 174
 //*****************************************************************************
 //#include	"alpaca_defs.h"
 
@@ -106,8 +109,8 @@
 
 
 #define	kApplicationName		"AlpacaPi"
-#define	kVersionString			"V0.7.1"
-#define	kBuildNumber			173
+#define	kVersionString			"V0.7.2"
+#define	kBuildNumber			174
 #define kAlpacaDiscoveryPORT	32227
 #define kAlpacaPiDefaultPORT	6800
 
@@ -552,8 +555,8 @@ typedef struct	//	TYPE_TelescopeProperties
 	TYPE_PierSide					SideOfPier;
 	double							SiderealTime;
 	double							SiteElevation;				//*	meters
-	double							SiteLatitude;
-	double							SiteLongitude;
+	double							SiteLatitude;				//*	degrees
+	double							SiteLongitude;				//*	degrees
 	bool							Slewing;
 	short							SlewSettleTime;
 	double							TargetDeclination;
@@ -568,9 +571,12 @@ typedef struct	//	TYPE_TelescopeProperties
 
 	//*	extras NOT defined by ASCOM
 	bool							hourAngleIsValid;
-	double							HourAngle;
+	double							HourAngle;			//*	Hour angle 0 -> 23.99999
 	double							HourAngle_deg;
 	TYPE_PierSide					PhysicalSideOfPier;
+	double							IMU_Roll;
+	double							IMU_Pitch;
+	double							IMU_Yaw;
 } TYPE_TelescopeProperties;
 
 

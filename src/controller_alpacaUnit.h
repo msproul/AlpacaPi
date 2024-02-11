@@ -20,6 +20,9 @@
 	#include	"windowtab_alpacaUnit.h"
 #endif
 
+#ifndef	_WINDOWTAB_LIBRARIES_H_
+	#include	"windowtab_libraries.h"
+#endif
 
 #ifndef	_WINDOWTAB_ABOUT_H_
 	#include	"windowtab_about.h"
@@ -69,6 +72,9 @@ class ControllerAlpacaUnit: public Controller
 //
 		virtual	void	ProcessConfiguredDevices(const char *keyword, const char *valueString);
 
+				void	AlpacaGetSoftwareLibraries(void);
+
+
 				TYPE_ALPACA_UNIT	cAlpacaUnit;
 
 //				void	AlpacaProcessSupportedActions_Dome(const int deviveNum, const char *valueString);
@@ -77,6 +83,7 @@ class ControllerAlpacaUnit: public Controller
 				//--------------------------------------------
 				//*	tab information
 				WindowAlpacaUnit		*cAlpacaUnitTabObjPtr;
+				WindowTabLibraries		*cLibraryTabObjPtr;
 				WindowTabAbout			*cAboutBoxTabObjPtr;
 
 				bool					cHasCamera;

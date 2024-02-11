@@ -64,6 +64,9 @@
 #include	"slittracker_AlpacaCmds.h"
 #include	"slittracker_AlpacaCmds.cpp"
 
+static const char	gSlitTrackerConfigFile[]	=	"slittracker-config.txt";
+
+
 //**************************************************************************************
 typedef struct
 {
@@ -774,9 +777,6 @@ SlitTrackerDriver	*slitTrackerObjPtr;
 	}
 }
 
-static const char	gSlitConfigFileName[]	=	"slittracker-config.txt";
-
-
 //**************************************************************************************
 void	SlitTrackerDriver::ReadSlittrackerConfig(void)
 {
@@ -784,7 +784,7 @@ int		linesRead;
 
 	//*	returns # of processed lines
 	//*	-1 means failed to open config file
-	linesRead	=	ReadGenericConfigFile(	gSlitConfigFileName,
+	linesRead	=	ReadGenericConfigFile(	gSlitTrackerConfigFile,
 											'=',
 											&ProcessSlittrackerConfigEntry,
 											this);
@@ -795,7 +795,7 @@ int		linesRead;
 	}
 	else
 	{
-		CONSOLE_DEBUG_W_STR("Failed to read config file", gSlitConfigFileName);
+		CONSOLE_DEBUG_W_STR("Failed to read config file", gSlitTrackerConfigFile);
 	}
 
 //	CONSOLE_ABORT(__FUNCTION__);
@@ -898,10 +898,10 @@ const char	webpageTitle[]	=	"AlpacaPi Slit-tracker setup";
 
 	//----------------------------------------------------------------------
 	//*	now display the current config file
-//	CONSOLE_DEBUG_W_STR(__FUNCTION__, gSlitConfigFileName);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, gSlitTrackerConfigFile);
 
 	//*	open the file specified
-	filePointer	=	fopen(gSlitConfigFileName, "r");
+	filePointer	=	fopen(gSlitTrackerConfigFile, "r");
 	if (filePointer != NULL)
 	{
 	char	fileBuffer[2000];
@@ -914,7 +914,7 @@ const char	webpageTitle[]	=	"AlpacaPi Slit-tracker setup";
 		SocketWriteData(mySocketFD,	"<CENTER>\r\n");
 		SocketWriteData(mySocketFD,	"<TABLE BORDER=1>\r\n");
 		SocketWriteData(mySocketFD,	"<TR><TH>Current config file<BR>(");
-		SocketWriteData(mySocketFD,	gSlitConfigFileName);
+		SocketWriteData(mySocketFD,	gSlitTrackerConfigFile);
 		SocketWriteData(mySocketFD,	")</TH></TR>\r\n");
 
 		SocketWriteData(mySocketFD,	"<TR>\r\n");
@@ -977,7 +977,7 @@ char				timeStampString[128];
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-	filePointer	=	fopen(gSlitConfigFileName, "w");
+	filePointer	=	fopen(gSlitTrackerConfigFile, "w");
 	if (filePointer != NULL)
 	{
 		gettimeofday(&timeStamp, NULL);

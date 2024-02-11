@@ -2067,10 +2067,10 @@ bool			reDrawSky;
 
 //*****************************************************************************
 void	WindowTabSkyTravel::ProcessDoubleClick_RtBtn(	const int	widgetIdx,
-												const int	event,
-												const int	xxx,
-												const int	yyy,
-												const int	flags)
+														const int	event,
+														const int	xxx,
+														const int	yyy,
+														const int	flags)
 {
 bool			reDrawSky;
 double			viewAngle_Deg;
@@ -8140,6 +8140,7 @@ TYPE_CelestData	foundObject;
 TYPE_CelestData	closestObject;
 long			closestDistance;
 long			pixDist;
+char			closestObjSrc[32];
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 //	CONSOLE_ABORT(__FUNCTION__);
@@ -8165,6 +8166,7 @@ long			pixDist;
 		{
 			closestDistance	=	pixDist;
 			closestObject	=	foundObject;
+			strcpy(closestObjSrc, "Messier");
 		}
 	}
 
@@ -8182,6 +8184,7 @@ long			pixDist;
 		{
 			closestDistance	=	pixDist;
 			closestObject	=	foundObject;
+			strcpy(closestObjSrc, "Default");
 		}
 	}
 	pixDist	=	FindXX_YYinObjectList(	cPlanets,
@@ -8193,6 +8196,7 @@ long			pixDist;
 	{
 		closestDistance	=	pixDist;
 		closestObject	=	foundObject;
+		strcpy(closestObjSrc, "Planets");
 	}
 
 	//--------------------------------------------------------------------------
@@ -8208,6 +8212,8 @@ long			pixDist;
 		{
 			closestDistance	=	pixDist;
 			closestObject	=	foundObject;
+			strcpy(closestObjSrc, "NGC");
+
 		}
 	}
 
@@ -8225,6 +8231,7 @@ long			pixDist;
 //			CONSOLE_DEBUG("Zodiac");
 			closestDistance	=	pixDist;
 			closestObject	=	foundObject;
+			strcpy(closestObjSrc, "Zodiac");
 		}
 	}
 
@@ -8242,6 +8249,7 @@ long			pixDist;
 		{
 			closestDistance	=	pixDist;
 			closestObject	=	foundObject;
+			strcpy(closestObjSrc, "Yale");
 		}
 	}
 
@@ -8260,6 +8268,7 @@ long			pixDist;
 		{
 			closestDistance	=	pixDist;
 			closestObject	=	foundObject;
+			strcpy(closestObjSrc, "Hipparcos");
 		}
 	}
 
@@ -8276,6 +8285,7 @@ long			pixDist;
 		{
 			closestDistance	=	pixDist;
 			closestObject	=	foundObject;
+			strcpy(closestObjSrc, "AAVSO");
 		}
 	}
 

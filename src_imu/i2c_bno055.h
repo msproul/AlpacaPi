@@ -13,6 +13,7 @@
 //*	May  2,	2022	<MLS> Updated prototypes, if no args, must have (void)
 //*	May  3,	2022	<MLS> Changed file name to i2c_bno055.h
 //*****************************************************************************
+//#include	"i2c_bno055.h"
 
 #ifndef _I2C_BNO055_H_
 #define	_I2C_BNO055_H_
@@ -345,7 +346,7 @@ typedef enum
 //*	 ------------------------------------------------------------
 //*	added routines to make the IMU layer independent
 int			BNO055_Init(void);
-void		BNO055__SetDebug(const bool debugOnOff);
+void		BNO055_SetDebug(const bool debugOnOff);
 void		BNO055_Print_info(void);
 void		BNO055_Print_calstat(void);
 

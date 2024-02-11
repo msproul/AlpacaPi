@@ -99,6 +99,11 @@
 //*	Sep 26,	2023	<MLS> Added SetAlpacaDeviceType()
 //*	Dec 17,	2023	<MLS> Added SetWidgetNumber() with unsigned int argument
 //*	Dec 17,	2023	<MLS> Cleaned up widget types in SetupWindowBottomBoxes()
+//*	Jan 19,	2024	<MLS> Added ClearWidgetSelect()
+//*	Jan 20,	2024	<MLS> Added SetWidgetLineSelect()
+//*	Jan 20,	2024	<MLS> Added SetWidgetBGColorSelected()
+//*	Jan 21,	2024	<MLS> Added ProcessLineSelect()
+//*	Feb  1,	2024	<MLS> Added LaunchWebRemoteDevice()
 //*****************************************************************************
 
 
@@ -179,12 +184,11 @@ int		iii;
 		cWidgetList[iii].fontNum		=	kFont_Large;
 		cWidgetList[iii].justification	=	kJustification_Center;
 
-	//	cWidgetList[iii].bgColor		=	CV_RGB(0, 0, 0);
-		cWidgetList[iii].bgColor		=	backGrndColor;
-		cWidgetList[iii].textColor		=	CV_RGB(255, 0, 0);
-		cWidgetList[iii].borderColor	=	CV_RGB(255, 255, 255);
-
-		cWidgetList[iii].includeBorder	=	true;
+		cWidgetList[iii].bgColor			=	backGrndColor;
+		cWidgetList[iii].textColor			=	CV_RGB(255,	0,		0);
+		cWidgetList[iii].borderColor		=	CV_RGB(255,	255,	255);
+		cWidgetList[iii].bgColorSelected	=	CV_RGB(100,	100,	100);
+		cWidgetList[iii].includeBorder		=	true;
 	}
 }
 
@@ -579,12 +583,22 @@ void	WindowTab::SetWidgetTextColor(const int widgetIdx, cv::Scalar newtextColor)
 }
 
 //**************************************************************************************
-void	WindowTab::SetWidgetBGColor(const int widgetIdx, cv::Scalar newtextColor)
+void	WindowTab::SetWidgetBGColor(const int widgetIdx, cv::Scalar newBackGroundColor)
 {
 	if ((widgetIdx >= 0) && (widgetIdx < kMaxWidgets))
 	{
-		cWidgetList[widgetIdx].bgColor		=	newtextColor;
+		cWidgetList[widgetIdx].bgColor		=	newBackGroundColor;
 		cWidgetList[widgetIdx].needsUpdated	=	true;
+	}
+}
+
+//**************************************************************************************
+void	WindowTab::SetWidgetBGColorSelected(const int widgetIdx, cv::Scalar newBackGroundColor)
+{
+	if ((widgetIdx >= 0) && (widgetIdx < kMaxWidgets))
+	{
+		cWidgetList[widgetIdx].bgColorSelected	=	newBackGroundColor;
+		cWidgetList[widgetIdx].needsUpdated		=	true;
 	}
 }
 
@@ -1159,7 +1173,7 @@ void	WindowTab::ForceWindowUpdate(void)
 {
 Controller	*myControllerObj;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 
 	myControllerObj	=	(Controller *)cParentObjPtr;
 	if (myControllerObj != NULL)
@@ -1168,7 +1182,7 @@ Controller	*myControllerObj;
 	}
 	else
 	{
-//		CONSOLE_DEBUG_W_STR("cParentObjPtr is NULL, windowname=", cWindowName);
+		CONSOLE_DEBUG_W_STR("cParentObjPtr is NULL, windowname=", cWindowName);
 	}
 }
 
@@ -1350,14 +1364,68 @@ void	WindowTab::ProcessDoubleClick_RtBtn(	const int	widgetIdx,
 }
 
 //*****************************************************************************
+//*	this routine can be overloaded
+//*****************************************************************************
 void	WindowTab::ProcessMouseEvent(	const int	widgetIdx,
 										const int	event,
 										const int	xxx,
 										const int	yyy,
 										const int	flags)
 {
+int		box_XXX;
+int		box_YYY;
+
 //	CONSOLE_DEBUG(__FUNCTION__);
-	//*	this routine can be overloaded
+	switch(event)
+	{
+		case cv::EVENT_MOUSEMOVE:
+			break;
+
+		case cv::EVENT_LBUTTONDOWN:
+//			CONSOLE_DEBUG_W_NUM("EVENT_LBUTTONDOWN", widgetIdx);
+			cLeftButtonDown	=	true;
+			break;
+
+		case cv::EVENT_LBUTTONUP:
+//			CONSOLE_DEBUG_W_NUM("EVENT_LBUTTONUP", widgetIdx);
+			cLeftButtonDown	=	false;
+			ProcessLineSelect(widgetIdx);
+			break;
+
+//
+//		case cv::EVENT_RBUTTONDOWN:
+//			cRightButtonDown		=	true;
+//			break;
+//
+//		case cv::EVENT_MBUTTONDOWN:
+//			break;
+//
+//		case cv::EVENT_RBUTTONUP:
+//			cRightButtonDown		=	false;
+//			break;
+//
+//		case cv::EVENT_MBUTTONUP:
+//			break;
+//
+//		case cv::EVENT_LBUTTONDBLCLK:
+//			break;
+//
+//		case cv::EVENT_RBUTTONDBLCLK:
+//			break;
+//
+//		case cv::EVENT_MBUTTONDBLCLK:
+//			break;
+//
+#if (CV_MAJOR_VERSION >= 3)
+		case cv::EVENT_MOUSEWHEEL:
+			break;
+		case cv::EVENT_MOUSEHWHEEL:
+			break;
+#endif
+		default:
+//			CONSOLE_DEBUG_W_NUM("UNKNOWN EVENT", event);
+			break;
+	}
 }
 
 //*****************************************************************************
@@ -1373,10 +1441,10 @@ void	WindowTab::ProcessMouseLeftButtonDown(const int	widgetIdx,
 
 //*****************************************************************************
 void	WindowTab::ProcessMouseLeftButtonUp(const int	widgetIdx,
-												const int	event,
-												const int	xxx,
-												const int	yyy,
-												const int	flags)
+											const int	event,
+											const int	xxx,
+											const int	yyy,
+											const int	flags)
 {
 //	CONSOLE_DEBUG_W_NUM(__FUNCTION__, xxx);
 	//*	this routine can be overloaded
@@ -1496,10 +1564,78 @@ void	WindowTab::ProcessMouseWheelMoved(	const int	widgetIdx,
 }
 
 //*****************************************************************************
+void	WindowTab::ProcessLineSelect(int widgetIdx)
+{
+	//*	this is a virtual function and should be overridden if you need to do anything with it.
+//	CONSOLE_ABORT(__FUNCTION__);
+}
+
+
+
+//*****************************************************************************
 void	WindowTab::UpdateOnScreenWidgetList(void)
 {
 	//*	only needs to be overloaded if the window tab has a list to update
 }
+
+
+////*****************************************************************************
+//void	WindowTab::LaunchWebURL(const char *urlString)
+//{
+//char	urlString[128];
+//
+//	strcpy(urlString, gWebBrowserCmdString);
+//	strcat(urlString, " ");
+//	strcat(urlString, "docs/");
+//	if (webpagestring != NULL)
+//	{
+//		strcat(urlString, webpagestring);
+//	}
+//	else if (strlen(cWebURLstring) > 0)
+//	{
+//		strcat(urlString, cWebURLstring);
+//	}
+//	else
+//	{
+//		strcat(urlString, "index.html");
+//	}
+////	CONSOLE_DEBUG(urlString);
+//	RunCommandLine(urlString);
+//}
+
+//*****************************************************************************
+void	WindowTab::LaunchWebRemoteDevice(const char *urlString)
+{
+char		httpString[128];
+char		ipAddrStr[64];
+Controller	*myControllerPtr;
+
+	myControllerPtr	=   (Controller *)cParentObjPtr;
+	if (myControllerPtr != NULL)
+	{
+		inet_ntop(AF_INET, &(myControllerPtr->cDeviceAddress.sin_addr), ipAddrStr, INET_ADDRSTRLEN);
+//		sprintf(httpString, "%s http://%s:%d/&s &",
+//								gWebBrowserCmdString,
+//								ipAddrStr,
+//								myControllerPtr->cPort,
+//								urlString);
+		sprintf(httpString, "%s http://%s:%d/%s &",
+								gWebBrowserCmdString,
+								ipAddrStr,
+								myControllerPtr->cPort,
+								urlString);
+		CONSOLE_DEBUG(httpString);
+//		CONSOLE_DEBUG_W_NUM("cAlpacaDevNum\t=", myControllerPtr->cAlpacaDevNum);
+//		CONSOLE_ABORT(__FUNCTION__);
+		RunCommandLine(httpString);
+	}
+	else
+	{
+		CONSOLE_DEBUG("myControllerPtr is NULL!!!!");
+	}
+}
+
+
 
 //*****************************************************************************
 void	WindowTab::LaunchWebHelp(const char *webpagestring)
@@ -1712,6 +1848,25 @@ int		iii;
 	}
 }
 
+//*****************************************************************************
+void	WindowTab::ClearWidgetSelect(void)
+{
+int		iii;
+
+	for (iii=0; iii<kMaxWidgets; iii++)
+	{
+		cWidgetList[iii].lineSelected	=	false;
+	}
+}
+
+//*****************************************************************************
+void	WindowTab::SetWidgetLineSelect(const int widgetIdx, const bool newState)
+{
+	if ((widgetIdx >= 0) && (widgetIdx < kMaxWidgets))
+	{
+		cWidgetList[widgetIdx].lineSelected	=	newState;
+	}
+}
 
 //*****************************************************************************
 void	WindowTab::SetWindowTabColorScheme(const int colorScheme)

@@ -25,6 +25,9 @@
 #include	"windowtab_drvrInfo.h"
 #include	"windowtab_DeviceState.h"
 
+void	GetSideOfPierString(TYPE_PierSide sideOfPier, char *sideOfPierString);
+
+
 //*****************************************************************************
 class ControllerTelescope: public Controller
 {
@@ -71,7 +74,7 @@ class ControllerTelescope: public Controller
 				bool	AlpacaProcessReadAll_Telescope(		const int	deviceNum,
 															const char	*keywordString,
 															const char *valueString);
-				bool	AlpacaGetStatus(void);
+		virtual	void	GetStatus_SubClass(void);
 				bool	AlpacaGetStatus_TelescopeOneAAT(void);	//*	One At A Time
 				void	ReadOneTelescopeCapability(const char *propertyStr, const char	*reportedStr, bool *booleanValue);
 				bool	AlpacaGetStartupData_TelescopeOneAAT(void);	//*	One At A Time
@@ -86,6 +89,7 @@ class ControllerTelescope: public Controller
 				//---------------------------------------------------
 				void			Update_TelescopeRtAscension(void);
 				void			Update_TelescopeDeclination(void);
+				void			Update_TelescopeSideOfPier(void);
 
 		virtual	void			UpdateSupportedActions(void);
 		virtual	void			UpdateCapabilityList(void);

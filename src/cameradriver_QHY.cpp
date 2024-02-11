@@ -1039,7 +1039,7 @@ TYPE_ASCOM_STATUS	CameraDriverQHY::Read_SensorTemp(void)
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 double				cameraTemp_DegC;
 
-//	if (gVerbose)
+	if (gVerbose)
 	{
 		CONSOLE_DEBUG(__FUNCTION__);
 	}
@@ -1050,7 +1050,7 @@ double				cameraTemp_DegC;
 		if (cQHYcamHandle != NULL)
 		{
 			cameraTemp_DegC	=	GetQHYCCDParam(cQHYcamHandle, CONTROL_CURTEMP);
-			CONSOLE_DEBUG_W_DBL("cameraTemp_DegC\t\t=", cameraTemp_DegC);
+//			CONSOLE_DEBUG_W_DBL("cameraTemp_DegC\t\t=", cameraTemp_DegC);
 
 			cCameraProp.CCDtemperature	=	cameraTemp_DegC;
 		}

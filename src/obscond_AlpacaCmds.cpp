@@ -1,6 +1,10 @@
 //*****************************************************************************
-//*	command table for Alpaca obscond
-//*		This file is used by both the driver and the controller
+//*	Name:			obscond_AlpacaCmds.cpp
+//*
+//*	Author:			Mark Sproul (C) 2023
+//*
+//*	Description:	Command table for obscond
+//*					This file is used by both the driver and the controller
 //*****************************************************************************
 //*	Jul  1,	2023	<MLS> Created obscond_AlpacaCmds.cpp
 //*****************************************************************************

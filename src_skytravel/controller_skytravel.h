@@ -67,6 +67,10 @@
 	#include	"windowtab_cpustats.h"
 #endif
 
+#ifndef	_WINDOWTAB_SW_VERSIONS_H_
+	#include	"windowtab_sw_versions.h"
+#endif
+
 #include	"windowtab_time.h"
 	#ifndef	_WINDOWTAB_TIME_H_
 #endif
@@ -140,6 +144,7 @@ enum
 	kTab_DeviceList,
 	kTab_AlpacaList,
 	kTab_IPList,
+	kTab_SwVersList,
 	kTab_Moon,
 #ifdef _ENABLE_CPU_STATS_
 	kTab_CPU_STATS,
@@ -216,6 +221,7 @@ class ControllerSkytravel: public Controller
 				WindowTabDeviceSelect	*cDeviceSelectObjPtr;
 				WindowTabAlpacaList		*cAlpacaListObjPtr;
 				WindowTabIPList			*cIPaddrListObjPtr;
+				WindowTabSwVersions		*cSwVersionsListObjPtr;
 				WindowTabMoon			*cMoonTabObjPtr;
 				WindowTabAbout			*cAboutBoxTabObjPtr;
 
@@ -263,6 +269,7 @@ class ControllerSkytravel: public Controller
 				//----------------------------------------------------------
 				void				Update_TelescopeRtAscension(void);
 				void				Update_TelescopeDeclination(void);
+				void				Update_TelescopeSideOfPier(void);
 
 				//-----------------------------------------------------
 				//*	ASCOM Dome properties

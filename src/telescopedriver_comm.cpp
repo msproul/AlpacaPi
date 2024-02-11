@@ -110,7 +110,6 @@ char	*colonPtr;
 
 			cIPaddrValid			=	true;
 		}
-
 	}
 
 	//*	setup the options for this driver
@@ -277,6 +276,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
 
 //*****************************************************************************
 //*	needs to be over-ridden
+//*****************************************************************************
 TYPE_ASCOM_STATUS	TelescopeDriverComm::Telescope_TrackingOnOff(const bool newTrackingState, char *alpacaErrMsg)
 {
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
@@ -409,9 +409,6 @@ bool	TelescopeDriverComm::SendCmdsPeriodic(void)
 //*****************************************************************************
 void	TelescopeDriverComm::RunThread_Startup(void)
 {
-int			shutDownRetCode;
-int			closeRetCode;
-bool		sendOK;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG_W_STR("cDeviceIPaddress\t=",	cDeviceIPaddress);

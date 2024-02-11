@@ -634,6 +634,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode;
 		else
 		{
 			alpacaErrCode	=	kASCOM_Err_PropertyNotImplemented;
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
 		}
 	}
 	else
@@ -648,7 +649,15 @@ TYPE_ASCOM_STATUS	CalibrationDriver::Put_Aperture(TYPE_GetPutRequestData *reqDat
 {
 TYPE_ASCOM_STATUS	alpacaErrCode;
 
-	alpacaErrCode	=	kASCOM_Err_PropertyNotImplemented;
+//	if (cCoverCalibrationProp.CanSetAperture)
+//	{
+//		alpacaErrCode	=	kASCOM_Err_Success;
+//	}
+//	else
+	{
+		alpacaErrCode	=	kASCOM_Err_PropertyNotImplemented;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
+	}
 	return(alpacaErrCode);
 }
 

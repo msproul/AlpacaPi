@@ -174,19 +174,22 @@ class WindowTab
 												const int	yyy,
 												const int	wheelMovement,
 												const int	flags);
+		virtual	void	ProcessLineSelect(int widgetIdx);
 		virtual	void	UpdateOnScreenWidgetList(void);
+		virtual	void	LaunchWebRemoteDevice(const char *urlString = NULL);
 		virtual	void	LaunchWebHelp(const char *webpagestring = NULL);
 				char	cWebURLstring[64];
 
 				void	CloseWindow(void);
 				void	ComputeWidgetColumns(const int windowWitdh);
-				void	SetWidget(				const int widgetIdx, int left, int top, int width, int height);
-				void	SetWidgetType(			const int widgetIdx, const int widetType);
-				void	SetWidgetFont(			const int widgetIdx, int fontNum);
-				void	SetWidgetJustification(	const int widgetIdx, int justification);
-				void	SetWidgetTextColor(		const int widgetIdx, cv::Scalar newtextColor);
-				void	SetWidgetBGColor(		const int widgetIdx, cv::Scalar newtextColor);
-				void	SetWidgetBorderColor(	const int widgetIdx, cv::Scalar newtextColor);
+				void	SetWidget(				const int widgetIdx,	int left, int top, int width, int height);
+				void	SetWidgetType(			const int widgetIdx,	const int widetType);
+				void	SetWidgetFont(			const int widgetIdx,	int fontNum);
+				void	SetWidgetJustification(	const int widgetIdx,	int justification);
+				void	SetWidgetTextColor(		const int widgetIdx,	cv::Scalar newtextColor);
+				void	SetWidgetBGColor(		const int widgetIdx,	cv::Scalar newBackGroundColor);
+				void	SetWidgetBGColorSelected(const int widgetIdx,	cv::Scalar newBackGroundColor);
+				void	SetWidgetBorderColor(	const int widgetIdx,	cv::Scalar newBackGroundColor);
 			#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 				void	SetWidgetImage(			const int widgetIdx, cv::Mat *argImagePtr);
 			#else
@@ -196,6 +199,8 @@ class WindowTab
 				void	SetWidgetOutlineBox(	const int widgetIdx, const int firstItem, const int lastItem);
 				void	SetWidgetProgress(		const int widgetIdx, const int currPosition, const int totalValue);
 				void	DumpWidgetList(			const int startIdx, const int stopIdx, const char *callingFunctionName=NULL);
+				void	ClearWidgetSelect(		void);
+				void	SetWidgetLineSelect(	const int widgetIdx, const bool newState);
 				void	DumpWidget(TYPE_WIDGET *theWidget);
 				int		SetTitleBox(const int	titleWidgetIdx,
 									const int	connectionWidgetIdx,

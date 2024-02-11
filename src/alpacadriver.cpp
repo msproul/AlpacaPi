@@ -233,6 +233,7 @@
 #include	"cpu_stats.h"
 
 //#define _DEBUG_CONFORM_
+//#define	_SHOW_HTTP_DATA_
 
 #ifdef _ENABLE_CAMERA_
 	#include	"cameradriver.h"
@@ -2224,8 +2225,11 @@ int		iii;
 				//*	cpu usage, this may get moved to a different page later
 				sprintf(lineBuffer, "<TD><CENTER>%llu</TD>\r\n", gAlpacaDeviceList[iii]->cTotalMilliSeconds);
 				SocketWriteData(mySocketFD,	lineBuffer);
-
+			#if (__LONG_LONG_WIDTH__ == 64)
 				sprintf(lineBuffer, "<TD><CENTER>%llu</TD>\r\n", gAlpacaDeviceList[iii]->cTotalNanoSeconds);
+			#else
+				sprintf(lineBuffer, "<TD><CENTER>%lu</TD>\r\n", gAlpacaDeviceList[iii]->cTotalNanoSeconds);
+			#endif
 				SocketWriteData(mySocketFD,	lineBuffer);
 
 				SocketWriteData(mySocketFD,	"\t</TR>\r\n");
@@ -3783,11 +3787,27 @@ char				*delimPtr;
 			reqData->deviceNumber	=	-1;
 		}
 	}
+//	else if ((slashCounter >= 3) && (strncasecmp(myDeviceCmdString, "/management", 11) == 0))
+	else if (slashCounter >= 3)
+	{
+		//	/management/v1/configureddevices
+//		CONSOLE_DEBUG("=====================================================");
+//		CONSOLE_DEBUG_W_NUM("Slash count >= 3", slashCounter);
+//		CONSOLE_DEBUG_W_STR("reqData->deviceCommand\t=",	reqData->deviceCommand);
+//		CONSOLE_DEBUG_W_STR("myDeviceCmdString     \t=",	myDeviceCmdString);
+//		CONSOLE_DEBUG_W_NUM("slashCounter          \t=",	slashCounter);
+//		CONSOLE_DEBUG_W_STR("myRequestTypeString   \t=",	myRequestTypeString);
+//		CONSOLE_DEBUG_W_STR("myAlpacaVersionString \t=",	myAlpacaVersionString);
+//		CONSOLE_DEBUG_W_STR("myDeviceString        \t=",	myDeviceString);
+//		CONSOLE_DEBUG_W_STR("myDeviceNumString     \t=",	myDeviceNumString);
+//		CONSOLE_DEBUG_W_STR("myDeviceCmdString     \t=",	myDeviceCmdString);
+//		CONSOLE_DEBUG_W_STR("reqData->deviceCommand\t=",	reqData->deviceCommand);
+	}
 	else
 	{
 		strcpy(reqData->deviceType,		"unknown");
 		reqData->deviceCommand[0]	=	0;
-		CONSOLE_DEBUG("Unknown device type");
+		CONSOLE_DEBUG_W_STR("Unknown device type:", reqData->cmdBuffer);
 //		CONSOLE_ABORT(__FUNCTION__);
 	}
 
@@ -4092,6 +4112,11 @@ int		bytesWritten;
 static int AlpacaCallback(const int socket, char *htmlData, long byteCount,  const char *ipAddressString)
 {
 int		returnCode	=	-1;
+
+#ifdef _SHOW_HTTP_DATA_
+CONSOLE_DEBUG_W_STR("\r\n", htmlData);
+
+#endif
 
 //	CONSOLE_DEBUG("Timing Start----------------------");
 //	SETUP_TIMING();

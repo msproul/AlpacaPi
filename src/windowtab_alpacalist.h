@@ -73,6 +73,7 @@ enum
 	kAlpacaList_ChkBx_IncManagment,
 	kAlpacaList_Btn_Refresh,
 	kAlpacaList_Btn_CloseAll,
+	kAlpacaList_Btn_Help,
 	kAlpacaList_ScrollBar,
 
 	kAlpacaList_AlpacaLogo,
@@ -96,6 +97,7 @@ class WindowTabAlpacaList: public WindowTab
 		virtual	void	RunWindowBackgroundTasks(void);
 
 		virtual	void	SetupWindowControls(void);
+		virtual void	HandleKeyDown(const int keyPressed);
 		virtual	void	ProcessButtonClick(const int buttonIdx, const int flags);
 		virtual	void	ProcessDoubleClick(	const int	widgetIdx,
 											const int	event,
@@ -109,9 +111,12 @@ class WindowTabAlpacaList: public WindowTab
 												const int	yyy,
 												const int	wheelMovement,
 												const int	flags);
+		virtual	void	ProcessLineSelect(int widgetIdx);
+				void	SetNewSelectedDevice(int deviceIndex);
 		virtual	void	UpdateSliderValue(	const int widgetIdx, double newSliderValue);
 		virtual	void	UpdateOnScreenWidgetList(void);
 
+				void	OpenControllerFromDevIdx(const int	deviceIdx);
 				void	ClearRemoteDeviceList(void);
 				void	UpdateRemoteDeviceList(void);
 				void	UpdateSortOrder(void);

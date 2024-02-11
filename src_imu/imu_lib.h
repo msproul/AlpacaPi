@@ -22,9 +22,11 @@ bool	IMU_IsAvailable(void);
 void	IMU_SetDebug(const bool debugOnOff);
 int		IMU_Print_Calibration(void);
 
-bool	IMU_StartBackgroundThread(void);
+bool	IMU_StartBackgroundThread(void *thisPointer);
 double	IMU_GetAverageRoll(void);
 double	IMU_GetAveragePitch(void);
+double	IMU_GetAverageYaw(void);
+//int		IMU_GetRoll_Pitch_Yaw(double *rollValue, double *pitchValue, double *yawValue);
 
 
 //*****************************************************************************

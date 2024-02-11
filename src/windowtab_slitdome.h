@@ -45,6 +45,8 @@ enum
 	kSlitDome_Readall,
 	kSlitDome_DeviceState,
 
+	kSlitDome_ConfigInfo,
+	kSlitDome_ConfigEdit,
 
 	kSlitDome_last
 };

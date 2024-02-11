@@ -65,6 +65,8 @@
 //*	Jun 18,	2022	<MLS> Cleaning up how Park is handled
 //*	Jun 18,	2023	<MLS> Added DeviceState_Add_Content() to telescope driver
 //*	Jun 21,	2023	<MLS> Added UTCDate to DeviceState output
+//*	Jan 15,	2024	<MLS> Added Get_IMU()
+//*	Jan 16,	2024	<MLS> Added Telescope_CalculateSideOfPier()
 //*****************************************************************************
 
 
@@ -114,7 +116,7 @@
 
 #ifdef _ENABLE_IMU_
 	#include "imu_lib.h"
-	#include "imu_lib_bno055.h"
+//	#include "imu_lib_bno055.h"
 #endif
 
 #include	"telescope_AlpacaCmds.h"
@@ -215,9 +217,6 @@ int		iii;
 		cTelescopeProp.AxisRates[iii].Maximum	=	4.0 + iii;	//*	the extra iii is for testing
 	}
 
-
-
-
 	//*	there are a bunch of static settings that conform needs to be happy
 	//*	these are temporary to get CONFORM to work
 	//*	set some defaults
@@ -260,7 +259,7 @@ int		iii;
 
 #ifdef _ENABLE_IMU_
 //	IMU_BNO055_StartBackgroundThread();
-	IMU_StartBackgroundThread();
+	IMU_StartBackgroundThread(NULL);
 #endif // _ENABLE_IMU_
 }
 
@@ -764,6 +763,12 @@ int					mySocket;
 		case kCmd_Telescope_physicalsideofpier:
 			alpacaErrCode	=	Get_PhysicalSideOfPier(reqData, alpacaErrMsg, gValueString);
 			break;
+
+#ifdef _ENABLE_IMU_
+		case kCmd_Telescope_imu:
+			alpacaErrCode	=	Get_IMU(reqData, alpacaErrMsg, gValueString);
+			break;
+#endif // _ENABLE_IMU_
 
 		case kCmd_Telescope_readall:
 			alpacaErrCode	=	Get_Readall(reqData, alpacaErrMsg);
@@ -1271,7 +1276,7 @@ char					declinationStr[48];
 							INCLUDE_COMMA);
 
 	//*	extra... add the string value
-	FormatHHMMSSdd(cTelescopeProp.Declination, declinationStr, false);
+	FormatHHMMSSdd(cTelescopeProp.Declination, declinationStr, true);
 	JsonResponse_Add_String(	reqData->socket,
 								reqData->jsonTextBuffer,
 								kMaxJsonBuffLen,
@@ -1279,7 +1284,7 @@ char					declinationStr[48];
 								declinationStr,
 								INCLUDE_COMMA);
 
-	FormatHHMMSS(cTelescopeProp.Declination, declinationStr, false);
+	FormatHHMMSS(cTelescopeProp.Declination, declinationStr, true);
 	JsonResponse_Add_String(	reqData->socket,
 								reqData->jsonTextBuffer,
 								kMaxJsonBuffLen,
@@ -1734,6 +1739,8 @@ TYPE_ASCOM_STATUS	TelescopeDriver::Get_SideOfPier(	TYPE_GetPutRequestData *reqDa
 {
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 char					extraString[128];
+
+	cTelescopeProp.SideOfPier	=	Telescope_CalculateSideOfPier();
 
 	JsonResponse_Add_Int32(	reqData->socket,
 							reqData->jsonTextBuffer,
@@ -2526,7 +2533,7 @@ int						axisNumber;
 	if (axisFound)
 	{
 		axisNumber		=	atoi(axisString);
-		CONSOLE_DEBUG_W_NUM("axisNumber\t=", axisNumber);
+//		CONSOLE_DEBUG_W_NUM("axisNumber\t=", axisNumber);
 		if ((axisNumber >= 0) && (axisNumber <= 2))
 		{
 			JsonResponse_Add_ArrayStart(reqData->socket,
@@ -3449,6 +3456,39 @@ char					extraString[64];
 	return(alpacaErrCode);
 }
 
+#ifdef _ENABLE_IMU_
+//*****************************************************************************
+TYPE_ASCOM_STATUS	TelescopeDriver::Get_IMU(	TYPE_GetPutRequestData *reqData,
+												char *alpacaErrMsg,
+												const char *responseString)
+{
+TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
+char					imuArrayText[256];
+
+	cTelescopeProp.IMU_Roll		=	IMU_GetAverageRoll();
+	cTelescopeProp.IMU_Pitch	=	IMU_GetAveragePitch();
+	cTelescopeProp.IMU_Yaw		=	IMU_GetAverageYaw();
+
+	JsonResponse_Add_ArrayStart(reqData->socket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								responseString);
+
+
+	sprintf(imuArrayText, "%1.4f,%1.4f,%1.4f", cTelescopeProp.IMU_Roll, cTelescopeProp.IMU_Pitch, cTelescopeProp.IMU_Yaw);
+	JsonResponse_Add_RawText(	reqData->socket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								imuArrayText);
+
+	JsonResponse_Add_ArrayEnd(	reqData->socket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								INCLUDE_COMMA);
+
+	return(alpacaErrCode);
+}
+#endif // _ENABLE_IMU_
 
 //*****************************************************************************
 //Altitude
@@ -3576,6 +3616,7 @@ int		mySocket;
 
 		alpacaErrCode	=	Get_HourAngle(			reqData, alpacaErrMsg, "HourAngle");
 		alpacaErrCode	=	Get_PhysicalSideOfPier(	reqData, alpacaErrMsg, "PhysicalSideOfPier");
+		alpacaErrCode	=	Get_IMU(				reqData, alpacaErrMsg, "IMU");
 
 
 		JsonResponse_Add_String(mySocket,
@@ -3809,7 +3850,6 @@ double		imuRollAngle_Degrees;
 	//*	When the telescope rotates to the left (counter-clockwise /west ), the ROLL angle must be POSITIVE
 	if (gIMUisOnLine)
 	{
-//		imuRollAngle_Degrees	=	IMU_BNO055_GetAverageRoll();
 		imuRollAngle_Degrees	=	IMU_GetAverageRoll();
 		if (imuRollAngle_Degrees < 0.0)
 		{
@@ -3825,11 +3865,46 @@ double		imuRollAngle_Degrees;
 		physicalSideOfPier	=	kPierSide_pierUnknown;
 	}
 //	CONSOLE_DEBUG_W_DBL("imuRollAngle_Degrees\t=",	imuRollAngle_Degrees);
-//	CONSOLE_DEBUG_W_NUM("physicalSideOfPier\t=", physicalSideOfPier);
+//	CONSOLE_DEBUG_W_NUM("physicalSideOfPier  \t=",	physicalSideOfPier);
 
 #endif
 	return(physicalSideOfPier);
 }
 
+//*****************************************************************************
+//	kPierSide_pierEast		=	0,	//*	Normal pointing state - Mount on the East side of pier (looking West)
+//	kPierSide_pierWest		=	1	//*	Through the pole pointing state - Mount on the West side of pier (looking East)
+//*****************************************************************************
+TYPE_PierSide	TelescopeDriver::Telescope_CalculateSideOfPier(void)
+{
+TYPE_PierSide	sideOfPier			=	kPierSide_NotAvailable;
+TYPE_PierSide	physicalSideOfPier	=	kPierSide_NotAvailable;
+double			myElevation;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+	physicalSideOfPier	=	Telescope_GetPhysicalSideOfPier();
+	myElevation			=	cTelescopeProp.Declination - cTelescopeProp.SiteLatitude;
+//	CONSOLE_DEBUG_W_DBL("cTelescopeProp.Declination \t=",	cTelescopeProp.Declination);
+//	CONSOLE_DEBUG_W_DBL("cTelescopeProp.SiteLatitude\t=",	cTelescopeProp.SiteLatitude);
+//	CONSOLE_DEBUG_W_DBL("myElevation                \t=",	myElevation);
+
+	//----------------------------------------------------------------------
+	//*	the logic here is not complete and might not be correct.
+	//*	it is a good start to a difficult problem
+	//----------------------------------------------------------------------
+	if ((physicalSideOfPier == kPierSide_pierWest) && (myElevation < 90.0))
+	{
+		sideOfPier	=	kPierSide_pierWest;
+	}
+	else if ((physicalSideOfPier == kPierSide_pierEast) && (myElevation < 90.0))
+	{
+		sideOfPier	=	kPierSide_pierEast;
+	}
+	else
+	{
+		sideOfPier	=	kPierSide_pierUnknown;
+	}
+	return(sideOfPier);
+}
 
 #endif	//	_ENABLE_TELESCOPE_

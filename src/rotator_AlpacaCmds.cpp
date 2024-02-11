@@ -1,6 +1,10 @@
 //*****************************************************************************
-//*	command table for Alpaca rotator
-//*		This file is used by both the driver and the controller
+//*	Name:			rotator_AlpacaCmds.cpp
+//*
+//*	Author:			Mark Sproul (C) 2023
+//*
+//*	Description:	Command table for rotator
+//*					This file is used by both the driver and the controller
 //*****************************************************************************
 //*	Jul  1,	2023	<MLS> Created rotator_AlpacaCmds.cpp
 //*****************************************************************************

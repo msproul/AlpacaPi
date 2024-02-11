@@ -111,6 +111,7 @@
 //*	Jun 27,	2023	<MLS> Added UpdateOnlineStatus()
 //*	Jul  1,	2023	<MLS> Added GetStatus_SubClass()
 //*	Nov 21,	2023	<MLS> Fixed HandleKeyDown() control functions, tolower is NOT working
+//*	Jan 19,	2024	<MLS> Added debug to widget def for debugging single widget
 //*****************************************************************************
 
 
@@ -1780,8 +1781,19 @@ int		wheelMovement;
 //**************************************************************************************
 void	Controller::EraseWidgetBackground(TYPE_WIDGET *theWidget)
 {
-//	CONSOLE_DEBUG_W_STR(__FUNCTION__, theWidget->textString);
-	cCurrentColor	=	theWidget->bgColor;
+	if (theWidget->debug)
+	{
+		DumpWidget(theWidget, __FUNCTION__);
+	}
+	//*	check if the line is selected
+	if (theWidget->lineSelected)
+	{
+		cCurrentColor	=	theWidget->bgColorSelected;
+	}
+	else
+	{
+		cCurrentColor	=	theWidget->bgColor;
+	}
 	LLG_FillRect(theWidget->left,	theWidget->top,	theWidget->width,	theWidget->height);
 
 
@@ -1848,8 +1860,7 @@ int			textLoc_X;
 int			textLoc_Y;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
-
-//	EraseWidgetBackground(theWidget);
+	EraseWidgetBackground(theWidget);
 	textBuffer[0]		=	0;
 
 	sLen	=	strlen(theWidget->textString);
@@ -3051,7 +3062,6 @@ int			singleChar;
 	}
 	if (stillNeedsHandled)
 	{
-		CONSOLE_DEBUG_W_HEX("stillNeedsHandled", keyPressed);
 		if (cCurTextInput_Widget >= 0)
 		{
 			HandleKeyDownInTextWidget(cCurrentTabNum, cCurTextInput_Widget, keyPressed);
@@ -3070,7 +3080,7 @@ int			singleChar;
 			CONSOLE_DEBUG_W_HEX("stillNeedsHandled", keyPressed);
 		}
 	}
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, "exit");
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, "exit");
 }
 
 //**************************************************************************************

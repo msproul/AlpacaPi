@@ -29,7 +29,7 @@
 //*	Jun 28,	2023	<MLS> Updated from AlpacaProcessReadAll() to AlpacaProcessReadAllIdx()
 //*	Jul 14,	2023	<MLS> Added UpdateOnlineStatus() to covercalibration controller
 //*	Jul 16,	2023	<MLS> More work on UpdateStatusData()
-//*	Jul 16,	2023	<MLS> AlpacaGetStatus_OneAAT() &&  UpdateStatusData() now working with simulator
+//*	Jul 16,	2023	<MLS> AlpacaGetStatus_OneAAT() & UpdateStatusData() now working with simulator
 //*****************************************************************************
 
 #define _ENABLE_COVER_CALIBRATION_
@@ -395,7 +395,8 @@ bool	ControllerCoverCalib::AlpacaProcessReadAllIdx(	const char	*deviceTypeStr,
 int		integerValue;
 bool	dataWasHandled;
 
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+//	CONSOLE_DEBUG_W_NUM(cWindowName, keywordEnum);
 
 	dataWasHandled	=	true;
 	integerValue	=	atoi(valueString);

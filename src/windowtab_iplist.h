@@ -123,6 +123,7 @@ class WindowTabIPList: public WindowTab
 		virtual	~WindowTabIPList(void);
 
 		virtual	void	SetupWindowControls(void);
+		virtual void	HandleKeyDown(const int keyPressed);
 		virtual	void	ProcessButtonClick(const int buttonIdx, const int flags);
 		virtual	void	ProcessDoubleClick(const int	widgetIdx,
 											const int	event,
@@ -139,6 +140,8 @@ class WindowTabIPList: public WindowTab
 												const int	yyy,
 												const int	wheelMovement,
 												const int	flags);
+		virtual	void	ProcessLineSelect(int widgetIdx);
+				void	SetNewSelectedDevice(int deviceIndex);
 #if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 		virtual	void	DrawWidgetCustomGraphic(cv::Mat *openCV_Image, const int widgetIdx);
 #else

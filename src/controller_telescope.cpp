@@ -28,6 +28,8 @@
 //*	Jun 21,	2023	<MLS> Added DeviceState window to telescope controller
 //*	Jun 18,	2023	<MLS> Added UpdateSupportedActions() to Telescope controller
 //*	Jul 14,	2023	<MLS> Added UpdateOnlineStatus() to Telescope controller
+//*	Jan 15,	2024	<MLS> Added Update_TelescopeSideOfPier()
+//*	Jan 16,	2024	<MLS> Changed AlpacaGetStatus() to GetStatus_SubClass()
 //*****************************************************************************
 
 #ifdef _ENABLE_CTRL_TELESCOPE_
@@ -85,6 +87,7 @@ ControllerTelescope::ControllerTelescope(	const char			*argWindowName,
 	strcpy(cAlpacaDeviceTypeStr,	"telescope");
 
 	SetCommandLookupTable(gTelescopeCmdTable);
+	SetAlternateLookupTable(gTelescopeExtrasTable);
 	cDriverInfoTabNum		=	kTab_DriverInfo;
 	cDriverInfoTabNum		=	kTab_DriverInfo;
 	cFirstDataRead			=	true;
@@ -366,7 +369,7 @@ bool	ControllerTelescope::AlpacaProcessReadAllIdx(		const char	*deviceTypeStr,
 {
 bool		dataWasHandled;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	dataWasHandled	=	AlpacaProcessReadAll_TelescopeIdx(deviceNum, keywordEnum, valueString);
 
 	return(dataWasHandled);
@@ -383,13 +386,12 @@ void	ControllerTelescope::AlpacaProcessSupportedActions(	const char	*deviceType,
 }
 
 //*****************************************************************************
-bool	ControllerTelescope::AlpacaGetStatus(void)
+void	ControllerTelescope::GetStatus_SubClass(void)
 {
 bool	validData;
 bool	previousOnLineState;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
-
+	CONSOLE_DEBUG(__FUNCTION__);
 
 	previousOnLineState	=	cOnLine;
 	if (cHas_readall)
@@ -441,7 +443,7 @@ bool	previousOnLineState;
 
 	cLastUpdate_milliSecs	=	millis();
 	cFirstDataRead			=	false;
-	return(validData);
+//	return(validData);
 }
 
 //**************************************************************************************
@@ -461,6 +463,21 @@ char	hhmmssString[64];
 	FormatHHMMSS(cTelescopeProp.Declination, hhmmssString, true);
 	SetWidgetText(kTab_TelescopCtl,	kTelescope_DEC_value,		hhmmssString);
 }
+
+//**************************************************************************************
+void	ControllerTelescope::Update_TelescopeSideOfPier(void)
+{
+char	dataString[64];
+
+	//*	side of pier - logical
+	GetSideOfPierString(cTelescopeProp.SideOfPier, dataString);
+	SetWidgetText(kTab_TelescopCtl,	kTelescope_SideOfPier_value,	dataString);
+
+	//*	side of pier - physical
+	GetSideOfPierString(cTelescopeProp.PhysicalSideOfPier, dataString);
+	SetWidgetText(kTab_TelescopCtl,	kTelescope_PhysSideOfPier_value,	dataString);
+}
+
 
 
 //*****************************************************************************
@@ -493,6 +510,35 @@ void	ControllerTelescope::UpdateSupportedActions(void)
 void	ControllerTelescope::UpdateCapabilityList(void)
 {
 	UpdateCapabilityListID(kTab_Capabilities, kCapabilities_TextBox1, kCapabilities_TextBoxN);
+}
+
+//*****************************************************************************
+void	GetSideOfPierString(TYPE_PierSide sideOfPier, char *sideOfPierString)
+{
+	switch(sideOfPier)
+	{
+		case kPierSide_NotAvailable:
+			strcpy(sideOfPierString, "Not available");
+			break;
+
+		//*	Normal pointing state - Mount on the East side of pier (looking West)
+		case kPierSide_pierEast:
+			strcpy(sideOfPierString, "East");
+			break;
+
+		//*	Through the pole pointing state - Mount on the West side of pier (looking East)
+		case kPierSide_pierWest:
+			strcpy(sideOfPierString, "West");
+			break;
+
+		case kPierSide_pierUnknown:
+			strcpy(sideOfPierString, "unkown");
+			break;
+
+		default:
+			strcpy(sideOfPierString, "error");
+			break;
+	}
 }
 
 //#define	_PARENT_IS_TELESCOPE_

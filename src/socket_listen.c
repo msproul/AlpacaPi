@@ -25,8 +25,10 @@
 //*	Feb 10,	2021	<MLS> Reduced timeout to 10000 (micro-secs)
 //*	Feb 10,	2021	<MLS> Reduced timeout to 2500 (micro-secs)
 //*	Dec  3,	2022	<MLS> Added ipAddressString to SendDataToSocket()
+//*	Jan  8,	2024	<MLS> Added _SHOW_HTTP_DATA_
 //*****************************************************************************
 
+#define	_SHOW_HTTP_DATA_
 
 #ifdef _ALPACA_PI_
 	#define	_FIX_ESCAPE_CHARS_
@@ -135,7 +137,9 @@ char				ipAddrString[64];
 	newsockfd	=	accept(gSocketFD, (struct sockaddr *) &client_addr, &clilen);
 
 	inet_ntop(AF_INET, &(client_addr.sin_addr), ipAddrString, INET_ADDRSTRLEN);
-//	CONSOLE_DEBUG_W_STR("Accepted from ", ipAddrString);
+#ifdef _SHOW_HTTP_DATA_
+	CONSOLE_DEBUG_W_STR("Accepted from ", ipAddrString);
+#endif // _SHOW_HTTP_DATA_
 	if (newsockfd >= 0)
 	{
 		SendDataToSocket(newsockfd, ipAddrString);

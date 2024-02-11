@@ -711,43 +711,16 @@ void	WindowTabTelescope::UpdateButtons(void)
 	ForceWindowUpdate();
 }
 
-//*****************************************************************************
-static void	GetSideOfPierString(TYPE_PierSide sideOfPier, char *sideOfPierString)
-{
-	switch(sideOfPier)
-	{
-		case kPierSide_NotAvailable:
-			strcpy(sideOfPierString, "Not available");
-			break;
-
-		//*	Normal pointing state - Mount on the East side of pier (looking West)
-		case kPierSide_pierEast:
-			strcpy(sideOfPierString, "East");
-			break;
-
-		//*	Through the pole pointing state - Mount on the West side of pier (looking East)
-		case kPierSide_pierWest:
-			strcpy(sideOfPierString, "West");
-			break;
-
-		case kPierSide_pierUnknown:
-			strcpy(sideOfPierString, "unkown");
-			break;
-
-		default:
-			strcpy(sideOfPierString, "error");
-			break;
-	}
-}
 
 //*****************************************************************************
 void	WindowTabTelescope::UpdateTelescopeInfo(TYPE_TelescopeProperties *telescopeProp, bool updateAll)
 {
 char	dataString[64];
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 
 	//*	update telescope tracking
+	CONSOLE_DEBUG_W_BOOL("telescopeProp->Tracking\t=", telescopeProp->Tracking);
 	if (telescopeProp->Tracking)
 	{
 		SetWidgetText(		kTelescope_TrackingStatus, "Tracking is On");
@@ -819,6 +792,8 @@ char	dataString[64];
 
 	//*	side of pier - physical
 	GetSideOfPierString(telescopeProp->PhysicalSideOfPier, dataString);
+	CONSOLE_DEBUG_W_NUM("PhysicalSideOfPier\t=", telescopeProp->PhysicalSideOfPier);
+	CONSOLE_DEBUG_W_STR("PhysicalSideOfPier\t=", dataString);
 	SetWidgetText(		kTelescope_PhysSideOfPier_value,	dataString);
 
 	//*	Hour angle (this is not part of Alpaca/ASCOM specs)

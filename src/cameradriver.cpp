@@ -6515,7 +6515,7 @@ bool				recTimeFound;
 						{
 						//	fprintf(cVideoTimeStampFilePtr, "#Time Stamp File:%s\r\n", filePath);
 						//	fprintf(cVideoTimeStampFilePtr, "#------------------------------------\r\n");
-							fprintf(cVideoTimeStampFilePtr, "#FrameNum,TimeStamp\r\n");
+							fprintf(cVideoTimeStampFilePtr, "#FrameNum,TimeStamp,ExposureTime\r\n");
 						}
 					}
 				}
@@ -7568,12 +7568,10 @@ TYPE_ASCOM_STATUS	alpacaErrCode;
 	return(exposureState);
 }
 
-
 //*****************************************************************************
 int32_t	CameraDriver::RunStateMachine(void)
 {
 int32_t		delayMicroSecs;
-
 
 //	if (cInternalCameraState != kCameraState_Idle)
 //	{
@@ -7594,11 +7592,12 @@ int32_t		delayMicroSecs;
 			break;
 
 		case kCameraState_StartVideo:
-//			CONSOLE_DEBUG("kCameraState_StartVideo");
+			CONSOLE_DEBUG("kCameraState_StartVideo");
 //			CameraThread_StartVideo(theCamera);
 			break;
 
 		case kCameraState_TakingVideo:
+			CONSOLE_DEBUG("kCameraState_TakingVideo");
 			Take_Video();
 			delayMicroSecs	=	100;
 			break;

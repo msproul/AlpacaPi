@@ -4,7 +4,7 @@
 //*	Author:			Mark Sproul (C) 2023
 //*
 //*	Description:	Command table for slittracker
-//*
+//*					This file is used by both the driver and the controller
 //*****************************************************************************
 //*****************************************************************************
 //*	Edit History

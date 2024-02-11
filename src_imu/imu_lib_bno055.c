@@ -71,42 +71,18 @@
 #define	PYTHAGOREAN(x,y,z)	sqrt((x*x)+(y*y)+(z*z))
 
 #define	_USE_GRAVITY_ONLY_
-
-#define	kSampleFreuency	5
+//
+//#define	kSampleFreuency	5
 #define	kAverageCount	10
-//*****************************************************************************
-typedef struct
-{
-	double			heading;
-	double			roll;
-	double			pitch;
-	double			yaw;
 
-} TYPE_IMU_DATA;
-
-
-static	bool			gIMU_IsAvailable			=	false;
+static	bool			gIMU_BNO055_needsInit		=	true;
 static	int				gIMUloopExceededErrCount	=	0;
 static	int				gIMUresetCount				=	0;
-static	bool			gIMU_needsInit				=	true;
-static	bool			gIMU_ThreadIsRunning		=	false;
-static	pthread_t		gIMUthreadID;
-static	pthread_mutex_t gMutex	=	PTHREAD_MUTEX_INITIALIZER;
-
-static TYPE_IMU_DATA	gIMUdata[kAverageCount];
-static TYPE_IMU_DATA	gIMUaverage;
-static	int				gIMUdataIdx;
-static long				gTotalDataErrors	=	0;
-static long				gTotalReadCount		=	0;
-
 #define		kMaxIMUreadCnt	20
 
-//*****************************************************************************
-bool	IMU_BNO055_IsAvailable(void)
-{
-	return(gIMU_IsAvailable);
-}
 
+//*****************************************************************************
+//*	returns 0 if all OK
 //*****************************************************************************
 int	IMU_BNO055_Init(void)
 {
@@ -118,8 +94,7 @@ int		calibrationRC;
 	returnCode	=	BNO055_Init();
 	if (returnCode == 0)
 	{
-		gIMU_needsInit		=	false;
-		gIMU_IsAvailable	=	true;
+		gIMU_BNO055_needsInit		=	false;
 
 		calibrationRC	=	IMU_BNO055_Load_Calibration();
 		if (calibrationRC == 0)
@@ -131,6 +106,10 @@ int		calibrationRC;
 			CONSOLE_DEBUG("Loading IMU calibration failed!!!");
 //			CONSOLE_ABORT(__FUNCTION__);
 		}
+	}
+	else
+	{
+		CONSOLE_DEBUG("Failed to initialize BNO055!!!");
 	}
 
 	return(returnCode);
@@ -187,7 +166,7 @@ int				returnCode;
 
 	CONSOLE_DEBUG("****************************************************************");
 
-	BNO055__SetDebug(true);
+	BNO055_SetDebug(true);
 //	CONSOLE_DEBUG("Calling bno_reset()");
 //	bno_reset();
 //	sleep(2);
@@ -204,7 +183,7 @@ int				returnCode;
 //	print_gyr_conf();			// print gyroscope config
 
 	CONSOLE_DEBUG("****************************************************************");
-	BNO055__SetDebug(false);
+	BNO055_SetDebug(false);
 	BNO055_Print_info();
 
 	for (iii=0; iii<10; iii++)
@@ -259,7 +238,7 @@ int		returnCode;
 void	IMU_BNO055_SetDebug(const bool debugOnOff)
 {
 	CONSOLE_DEBUG(__FUNCTION__);
-	BNO055__SetDebug(debugOnOff);
+	BNO055_SetDebug(debugOnOff);
 }
 
 //*****************************************************************************
@@ -269,12 +248,12 @@ int				returnCode;
 struct bnoeul	bnod;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
-	if (gIMU_needsInit)
+	if (gIMU_BNO055_needsInit)
 	{
 		returnCode	=	IMU_Init();
 		if (returnCode == 0)
 		{
-			gIMU_needsInit	=	false;
+			gIMU_BNO055_needsInit	=	false;
 		}
 	}
 
@@ -296,12 +275,12 @@ int				returnCode;
 struct bnoqua	bnoQuat;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
-	if (gIMU_needsInit)
+	if (gIMU_BNO055_needsInit)
 	{
 		returnCode	=	IMU_BNO055_Init();
 		if (returnCode == 0)
 		{
-			gIMU_needsInit	=	false;
+			gIMU_BNO055_needsInit	=	false;
 		}
 	}
 
@@ -331,12 +310,12 @@ int				loopCnt;
 bool			keepReading;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
-	if (gIMU_needsInit)
+	if (gIMU_BNO055_needsInit)
 	{
 		returnCode	=	IMU_BNO055_Init();
 		if (returnCode == 0)
 		{
-			gIMU_needsInit	=	false;
+			gIMU_BNO055_needsInit	=	false;
 		}
 	}
 
@@ -396,46 +375,6 @@ bool			keepReading;
 	return(returnCode);
 }
 
-
-//*****************************************************************************
-static void	IMU_BNO055_ComputeAverage(void)
-{
-int			iii;
-double		rollSum;
-double		pitchSum;
-
-	rollSum		=	0.0;
-	pitchSum	=	0.0;
-
-	//*	lock the data to avoid race conditions
-	pthread_mutex_lock(&gMutex);
-	for (iii=0; iii<kAverageCount; iii++)
-	{
-		rollSum		+=	gIMUdata[iii].roll;
-		pitchSum	+=	gIMUdata[iii].pitch;
-	}
-	//*	unlock
-	pthread_mutex_unlock(&gMutex);
-
-	gIMUaverage.roll	=	rollSum / kAverageCount;
-	gIMUaverage.pitch	=	pitchSum / kAverageCount;
-
-}
-
-//*****************************************************************************
-double	IMU_BNO055_GetAverageRoll(void)
-{
-	IMU_BNO055_ComputeAverage();
-	return(gIMUaverage.roll);
-}
-
-//*****************************************************************************
-double	IMU_BNO055_GetAveragePitch(void)
-{
-	IMU_BNO055_ComputeAverage();
-	return(gIMUaverage.pitch);
-}
-
 #ifdef _DUMP_IMU_ARRAY_
 int	gDumpCounter	=	0;
 //*****************************************************************************
@@ -458,284 +397,255 @@ int		iii;
 #endif // _DUMP_IMU_ARRAY_
 
 
+#ifdef _ENABLE_BNO055_THREAD_
+//
+//#ifdef	_USE_GRAVITY_ONLY_
+//
+////*****************************************************************************
+//static void	*IMU_BNO055_BackgroundThread(void *arg)
+//{
+//int				returnCode;
+//double			roll_deg;
+//double			pitch_deg;
+//bool			keepRunning;
+//int				delay_MicroSecs;
+//bool			validReading;
+//
+//	CONSOLE_DEBUG(__FUNCTION__);
+//	if (arg != NULL)
+//	{
+//		CONSOLE_DEBUG("Dont know what to do with arg");
+//	}
+//	gIMU_ThreadIsRunning	=	true;
+//	delay_MicroSecs			=	1000000 / kSampleFreuency;
+//	keepRunning				=	true;
+//	while (keepRunning)
+//	{
+//		returnCode	=	IMU_BNO055_Read_Gravity(&roll_deg, &pitch_deg);
+//		if (returnCode == 0)
+//		{
+////			printf("GRA R=%3.4f P=%3.4f %Y=3.4f\n", roll_deg, pitch_deg, yaw_deg);
+////			printf("GRA R=%3.4f P=%3.4f\n", roll_deg, pitch_deg);
+//
+//			gTotalReadCount++;
+//
+//			validReading	=	true;
+//			//*	occasionally there is a reading that is totally off, lets try to catch it
+//			if (fabs(roll_deg) > 360.0)
+//			{
+//				validReading	=	false;
+//				CONSOLE_DEBUG_W_DBL("roll_deg     \t=", roll_deg);
+//			}
+//			if (fabs(pitch_deg) > 360.0)
+//			{
+//				validReading	=	false;
+//				CONSOLE_DEBUG_W_DBL("pitch_deg        \t=", pitch_deg);
+//			}
+//
+//			if (validReading)
+//			{
+//				//*	lock the data to avoid race conditions
+//				pthread_mutex_lock(&gMutex);
+//
+//				//*	save the data in the array for averaging
+//				gIMUdata[gIMUdataIdx].roll		=	roll_deg;
+//				gIMUdata[gIMUdataIdx].pitch		=	pitch_deg;
+////				gIMUdata[gIMUdataIdx].yaw		=	yaw_deg;
+//
+//				//*	unlock
+//				pthread_mutex_unlock(&gMutex);
+//
+//				//*	update array index
+//				gIMUdataIdx++;
+//				if (gIMUdataIdx >= kAverageCount)
+//				{
+//				#ifdef _DUMP_IMU_ARRAY_
+//					DumpIMUarray();
+//				#endif // _DUMP_IMU_ARRAY_
+//					//*	reset array index
+//					gIMUdataIdx	=	0;
+//				}
+//			}
+//			else
+//			{
+//			double	errorPercent;
+//
+//				gTotalDataErrors++;
+//				errorPercent	=	(gTotalDataErrors * 100.0) / gTotalReadCount;
+//				CONSOLE_DEBUG_W_LONG("gTotalDataErrors\t=", gTotalDataErrors);
+//				CONSOLE_DEBUG_W_LONG("gTotalReadCount \t=", gTotalReadCount);
+//				CONSOLE_DEBUG_W_DBL("errorPercent     \t=", errorPercent);
+//			}
+//		}
+//		else
+//		{
+//			CONSOLE_DEBUG("Error reading IMU");
+//			if (gIMUloopExceededErrCount > 5)
+//			{
+//				gIMUresetCount++;
+//				gIMU_BNO055_needsInit	=	true;
+//			}
+//		}
+//		usleep(delay_MicroSecs);	//*	sleep in micro-seconds
+//	}
+//	gIMU_ThreadIsRunning	=	false;
+//	return(NULL);
+//}
+//
+//#else
+//
+//#define	kReadAvgCnt	3
+//
+////*****************************************************************************
+//static void	*IMU_BNO055_BackgroundThread(void *arg)
+//{
+//int				returnCode;
+//double			heading[kReadAvgCnt];
+//double			roll[kReadAvgCnt];
+//double			pitch[kReadAvgCnt];
+//bool			keepRunning;
+//int				delay_MicroSecs;
+//double			aggregateValue;
+//bool			validReading;
+//int				iii;
+//int				tryCounter;
+//double			headingSum;
+//double			rollSum;
+//double			pitchSum;
+//double			headingAvg;
+//double			rollAvg;
+//double			pitchAvg;
+//double			headingDif;
+//double			rollDif;
+//double			pitchDif;
+//double			totalDif;
+//
+//	CONSOLE_DEBUG(__FUNCTION__);
+//
+//	gIMU_ThreadIsRunning	=	true;
+//	delay_MicroSecs			=	1000000 / kSampleFreuency;
+//	keepRunning				=	true;
+//	while (keepRunning)
+//	{
+//		//*	we are going to take 3 readings, and compute the average,
+//		validReading	=	false;
+//		tryCounter		=	0;
+//		while ((validReading == false) && (tryCounter < 10))
+//		{
+//			headingSum	=	0.0;
+//			rollSum		=	0.0;
+//			pitchSum	=	0.0;
+//			for (iii=0; iii<kReadAvgCnt; iii++)
+//			{
+//				returnCode	=	IMU_BNO055_Read_Euler(&heading[iii], &roll[iii], &pitch[iii]);
+//				if (returnCode == 0)
+//				{
+//					headingSum	+=	heading[iii];
+//					rollSum		+=	roll[iii];
+//					pitchSum	+=	pitch[iii];
+//				}
+//				usleep(3000);
+//			}
+//			headingAvg	=	headingSum / kReadAvgCnt;
+//			rollAvg		=	rollSum / kReadAvgCnt;
+//			pitchAvg	=	pitchSum / kReadAvgCnt;
+//
+//			headingDif	=	0.0;
+//			rollDif		=	0.0;
+//			pitchDif	=	0.0;
+//			for (iii=0; iii<kReadAvgCnt; iii++)
+//			{
+//				headingDif	+=	fabs(headingAvg - heading[iii]);
+//				rollDif		+=	fabs(rollAvg - roll[iii]);
+//				pitchDif	+=	fabs(pitchAvg - pitch[iii]);
+//			}
+//			//*	now compute the total diff
+//			totalDif	=	headingDif + rollDif + pitchDif;
+//
+//			if (totalDif < 0.1)
+//			{
+//			//	printf("EUL %3.4f %3.4f %3.4f\n", headingAvg, rollAvg, pitchAvg);
+//				validReading	=	true;
+//				returnCode		=	0;
+//			}
+//			else
+//			{
+////				CONSOLE_DEBUG_W_NUM("tryCounter\t=", tryCounter);
+////				CONSOLE_DEBUG_W_DBL("totalDif\t=", totalDif);
+//			}
+//			tryCounter++;
+//		}
+////		returnCode	=	IMU_BNO055_Read_Euler(&heading, &roll, &pitch);
+//		if (returnCode == 0)
+//		{
+//			gTotalReadCount++;
+//
+//			validReading	=	true;
+//			//*	occasionally there is a reading that is totally off, lets try to catch it
+//			if (fabs(headingAvg) > 360.0)
+//			{
+//				validReading	=	false;
+//				CONSOLE_DEBUG_W_DBL("heading     \t=", headingAvg);
+//			}
+//			if (fabs(rollAvg) > 360.0)
+//			{
+//				validReading	=	false;
+//				CONSOLE_DEBUG_W_DBL("roll        \t=", rollAvg);
+//			}
+//			if (fabs(pitchAvg) > 360.0)
+//			{
+//				validReading	=	false;
+//				CONSOLE_DEBUG_W_DBL("pitch       \t=", pitchAvg);
+//			}
+//
+//			if (validReading)
+//			{
+//				//*	lock the data to avoid race conditions
+//				pthread_mutex_lock(&gMutex);
+//
+//				//*	save the data in the array for averaging
+//				gIMUdata[gIMUdataIdx].heading	=	headingAvg;
+//				gIMUdata[gIMUdataIdx].roll		=	rollAvg;
+//				gIMUdata[gIMUdataIdx].pitch		=	pitchAvg;
+//
+//				//*	unlock
+//				pthread_mutex_unlock(&gMutex);
+//
+//				//*	update array index
+//				gIMUdataIdx++;
+//				if (gIMUdataIdx >= kAverageCount)
+//				{
+//				#ifdef _DUMP_IMU_ARRAY_
+//					DumpIMUarray();
+//				#endif // _DUMP_IMU_ARRAY_
+//					//*	reset array index
+//					gIMUdataIdx	=	0;
+//				}
+//			}
+//			else
+//			{
+//			double	errorPercent;
+//
+//				gTotalDataErrors++;
+//				errorPercent	=	(gTotalDataErrors * 100.0) / gTotalReadCount;
+//				CONSOLE_DEBUG_W_LONG("gTotalDataErrors\t=", gTotalDataErrors);
+//				CONSOLE_DEBUG_W_LONG("gTotalReadCount \t=", gTotalReadCount);
+//				CONSOLE_DEBUG_W_DBL("errorPercent     \t=", errorPercent);
+//			}
+//		}
+//		else
+//		{
+//			CONSOLE_DEBUG("Error reading IMU");
+//		}
+//		usleep(delay_MicroSecs);	//*	sleep in micro-seconds
+//	}
+//	gIMU_ThreadIsRunning	=	false;
+//	return(NULL);
+//}
+//#endif // _USE_GRAVITY_ONLY_
 
-#ifdef	_USE_GRAVITY_ONLY_
-//*****************************************************************************
-static void	*IMU_BNO055_BackgroundThread(void *arg)
-{
-int				returnCode;
-double			roll_deg;
-double			pitch_deg;
-bool			keepRunning;
-int				delay_MicroSecs;
-bool			validReading;
 
-	CONSOLE_DEBUG(__FUNCTION__);
-	if (arg != NULL)
-	{
-		CONSOLE_DEBUG("Dont know what to do with arg");
-	}
-	gIMU_ThreadIsRunning	=	true;
-	delay_MicroSecs			=	1000000 / kSampleFreuency;
-	keepRunning				=	true;
-	while (keepRunning)
-	{
-		returnCode	=	IMU_BNO055_Read_Gravity(&roll_deg, &pitch_deg);
-		if (returnCode == 0)
-		{
-//			printf("GRA R=%3.4f P=%3.4f %Y=3.4f\n", roll_deg, pitch_deg, yaw_deg);
-//			printf("GRA R=%3.4f P=%3.4f\n", roll_deg, pitch_deg);
-
-			gTotalReadCount++;
-
-			validReading	=	true;
-			//*	occasionally there is a reading that is totally off, lets try to catch it
-			if (fabs(roll_deg) > 360.0)
-			{
-				validReading	=	false;
-				CONSOLE_DEBUG_W_DBL("roll_deg     \t=", roll_deg);
-			}
-			if (fabs(pitch_deg) > 360.0)
-			{
-				validReading	=	false;
-				CONSOLE_DEBUG_W_DBL("pitch_deg        \t=", pitch_deg);
-			}
-
-			if (validReading)
-			{
-				//*	lock the data to avoid race conditions
-				pthread_mutex_lock(&gMutex);
-
-				//*	save the data in the array for averaging
-				gIMUdata[gIMUdataIdx].roll		=	roll_deg;
-				gIMUdata[gIMUdataIdx].pitch		=	pitch_deg;
-//				gIMUdata[gIMUdataIdx].yaw		=	yaw_deg;
-
-				//*	unlock
-				pthread_mutex_unlock(&gMutex);
-
-				//*	update array index
-				gIMUdataIdx++;
-				if (gIMUdataIdx >= kAverageCount)
-				{
-				#ifdef _DUMP_IMU_ARRAY_
-					DumpIMUarray();
-				#endif // _DUMP_IMU_ARRAY_
-					//*	reset array index
-					gIMUdataIdx	=	0;
-				}
-			}
-			else
-			{
-			double	errorPercent;
-
-				gTotalDataErrors++;
-				errorPercent	=	(gTotalDataErrors * 100.0) / gTotalReadCount;
-				CONSOLE_DEBUG_W_LONG("gTotalDataErrors\t=", gTotalDataErrors);
-				CONSOLE_DEBUG_W_LONG("gTotalReadCount \t=", gTotalReadCount);
-				CONSOLE_DEBUG_W_DBL("errorPercent     \t=", errorPercent);
-			}
-		}
-		else
-		{
-			CONSOLE_DEBUG("Error reading IMU");
-			if (gIMUloopExceededErrCount > 5)
-			{
-				gIMUresetCount++;
-				gIMU_needsInit	=	true;
-			}
-		}
-		usleep(delay_MicroSecs);	//*	sleep in micro-seconds
-	}
-	gIMU_ThreadIsRunning	=	false;
-	return(NULL);
-}
-
-#else
-
-#define	kReadAvgCnt	3
-
-//*****************************************************************************
-static void	*IMU_BNO055_BackgroundThread(void *arg)
-{
-int				returnCode;
-double			heading[kReadAvgCnt];
-double			roll[kReadAvgCnt];
-double			pitch[kReadAvgCnt];
-bool			keepRunning;
-int				delay_MicroSecs;
-double			aggregateValue;
-bool			validReading;
-int				iii;
-int				tryCounter;
-double			headingSum;
-double			rollSum;
-double			pitchSum;
-double			headingAvg;
-double			rollAvg;
-double			pitchAvg;
-double			headingDif;
-double			rollDif;
-double			pitchDif;
-double			totalDif;
-
-	CONSOLE_DEBUG(__FUNCTION__);
-
-	gIMU_ThreadIsRunning	=	true;
-	delay_MicroSecs			=	1000000 / kSampleFreuency;
-	keepRunning				=	true;
-	while (keepRunning)
-	{
-		//*	we are going to take 3 readings, and compute the average,
-		validReading	=	false;
-		tryCounter		=	0;
-		while ((validReading == false) && (tryCounter < 10))
-		{
-			headingSum	=	0.0;
-			rollSum		=	0.0;
-			pitchSum	=	0.0;
-			for (iii=0; iii<kReadAvgCnt; iii++)
-			{
-				returnCode	=	IMU_BNO055_Read_Euler(&heading[iii], &roll[iii], &pitch[iii]);
-				if (returnCode == 0)
-				{
-					headingSum	+=	heading[iii];
-					rollSum		+=	roll[iii];
-					pitchSum	+=	pitch[iii];
-				}
-				usleep(3000);
-			}
-			headingAvg	=	headingSum / kReadAvgCnt;
-			rollAvg		=	rollSum / kReadAvgCnt;
-			pitchAvg	=	pitchSum / kReadAvgCnt;
-
-			headingDif	=	0.0;
-			rollDif		=	0.0;
-			pitchDif	=	0.0;
-			for (iii=0; iii<kReadAvgCnt; iii++)
-			{
-				headingDif	+=	fabs(headingAvg - heading[iii]);
-				rollDif		+=	fabs(rollAvg - roll[iii]);
-				pitchDif	+=	fabs(pitchAvg - pitch[iii]);
-			}
-			//*	now compute the total diff
-			totalDif	=	headingDif + rollDif + pitchDif;
-
-			if (totalDif < 0.1)
-			{
-			//	printf("EUL %3.4f %3.4f %3.4f\n", headingAvg, rollAvg, pitchAvg);
-				validReading	=	true;
-				returnCode		=	0;
-			}
-			else
-			{
-//				CONSOLE_DEBUG_W_NUM("tryCounter\t=", tryCounter);
-//				CONSOLE_DEBUG_W_DBL("totalDif\t=", totalDif);
-			}
-			tryCounter++;
-		}
-//		returnCode	=	IMU_BNO055_Read_Euler(&heading, &roll, &pitch);
-		if (returnCode == 0)
-		{
-			gTotalReadCount++;
-
-			validReading	=	true;
-			//*	occasionally there is a reading that is totally off, lets try to catch it
-			if (fabs(headingAvg) > 360.0)
-			{
-				validReading	=	false;
-				CONSOLE_DEBUG_W_DBL("heading     \t=", headingAvg);
-			}
-			if (fabs(rollAvg) > 360.0)
-			{
-				validReading	=	false;
-				CONSOLE_DEBUG_W_DBL("roll        \t=", rollAvg);
-			}
-			if (fabs(pitchAvg) > 360.0)
-			{
-				validReading	=	false;
-				CONSOLE_DEBUG_W_DBL("pitch       \t=", pitchAvg);
-			}
-
-			if (validReading)
-			{
-				//*	lock the data to avoid race conditions
-				pthread_mutex_lock(&gMutex);
-
-				//*	save the data in the array for averaging
-				gIMUdata[gIMUdataIdx].heading	=	headingAvg;
-				gIMUdata[gIMUdataIdx].roll		=	rollAvg;
-				gIMUdata[gIMUdataIdx].pitch		=	pitchAvg;
-
-				//*	unlock
-				pthread_mutex_unlock(&gMutex);
-
-				//*	update array index
-				gIMUdataIdx++;
-				if (gIMUdataIdx >= kAverageCount)
-				{
-				#ifdef _DUMP_IMU_ARRAY_
-					DumpIMUarray();
-				#endif // _DUMP_IMU_ARRAY_
-					//*	reset array index
-					gIMUdataIdx	=	0;
-				}
-			}
-			else
-			{
-			double	errorPercent;
-
-				gTotalDataErrors++;
-				errorPercent	=	(gTotalDataErrors * 100.0) / gTotalReadCount;
-				CONSOLE_DEBUG_W_LONG("gTotalDataErrors\t=", gTotalDataErrors);
-				CONSOLE_DEBUG_W_LONG("gTotalReadCount \t=", gTotalReadCount);
-				CONSOLE_DEBUG_W_DBL("errorPercent     \t=", errorPercent);
-			}
-		}
-		else
-		{
-			CONSOLE_DEBUG("Error reading IMU");
-		}
-		usleep(delay_MicroSecs);	//*	sleep in micro-seconds
-	}
-	gIMU_ThreadIsRunning	=	false;
-	return(NULL);
-}
-#endif // _USE_GRAVITY_ONLY_
-
-//*****************************************************************************
-bool	IMU_BNO055_StartBackgroundThread(void)
-{
-int			threadErr;
-int			returnCode;
-bool		okToStartThread;
-
-	CONSOLE_DEBUG("***************************************************************");
-	CONSOLE_DEBUG(__FUNCTION__);
-//	CONSOLE_ABORT(__FUNCTION__);
-
-	memset((void *)gIMUdata, 0, (kAverageCount * sizeof(TYPE_IMU_DATA)));
-	gIMUdataIdx		=	0;
-	okToStartThread	=	true;
-	//*	check to see if the IMU needs to be initialized
-	if (gIMU_needsInit)
-	{
-		returnCode	=	IMU_BNO055_Init();
-		if (returnCode != 0)
-		{
-			okToStartThread	=	false;
-		}
-	}
-
-	if (okToStartThread)
-	{
-
-		//*	only start the thread if init was successful
-		threadErr		=	pthread_create(&gIMUthreadID, NULL, &IMU_BNO055_BackgroundThread, NULL);
-	}
-	return(threadErr);
-}
-
+#endif // _ENABLE_BNO055_THREAD_
 
 #ifdef _INCLUDE_IMU_MAIN_
 

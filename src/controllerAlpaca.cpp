@@ -554,8 +554,28 @@ void	Controller::AlpacaProcessSupportedActions(const char *deviceTypeStr, const 
 //	CONSOLE_ABORT(__FUNCTION__);
 }
 
+////*****************************************************************************
+//void	DumpCmdTable(TYPE_CmdEntry	*commandTable)
+//{
+//int		iii;
+//
+//	CONSOLE_DEBUG("---------------------");
+//
+//	if (commandTable != NULL)
+//	{
+//		iii			=	0;
+//		while (commandTable[iii].commandName[0] != 0)
+//		{
+//			CONSOLE_DEBUG_W_STR("Table entry\t=", commandTable[iii].commandName);
+//			iii++;
+//		}
+//	}
+//}
+
 //*****************************************************************************
-int	Controller::LookupCmdInCmdTable(const char *commandString, TYPE_CmdEntry *commandTable, TYPE_CmdEntry *alternateTable)
+int	Controller::LookupCmdInCmdTable(	const char		*commandString,
+										TYPE_CmdEntry	*commandTable,
+										TYPE_CmdEntry	*alternateTable)
 {
 int		iii;
 int		enumValue;
@@ -571,7 +591,12 @@ int		enumValue;
 		}
 		iii++;
 	}
-
+//	if (strcasecmp(commandString, "HOURANGLE-DEGREES") == 0)
+//	{
+//		CONSOLE_DEBUG(commandString);
+//		DumpCmdTable(commandTable);
+//		DumpCmdTable(alternateTable);
+//	}
 	if ((enumValue < 0) && (alternateTable != NULL))
 	{
 		iii			=	0;

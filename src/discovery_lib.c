@@ -55,10 +55,9 @@
 #include	"sendrequest_lib.h"
 
 
-#define		kMaxUnitCount	64
 
 //*	this is IP addresses:ports
-TYPE_ALPACA_UNIT	gAlpacaUnitList[kMaxUnitCount];
+TYPE_ALPACA_UNIT	gAlpacaUnitList[kMaxAlpacaIPaddrCnt];
 int					gAlpacaUnitCnt	=	0;
 
 //*	this is alpaca devices
@@ -74,9 +73,9 @@ static void	InitArrays(void)
 {
 int		iii;
 
-	CONSOLE_DEBUG_W_NUM("kMaxUnitCount      \t=", kMaxUnitCount);
+	CONSOLE_DEBUG_W_NUM("kMaxAlpacaIPaddrCnt\t=", kMaxAlpacaIPaddrCnt);
 	CONSOLE_DEBUG_W_NUM("kMaxAlpacaDeviceCnt\t=", kMaxAlpacaDeviceCnt);
-	for (iii=0; iii<kMaxUnitCount; iii++)
+	for (iii=0; iii<kMaxAlpacaIPaddrCnt; iii++)
 	{
 		memset(&gAlpacaUnitList[iii], 0, sizeof(TYPE_ALPACA_UNIT));
 	}
@@ -403,7 +402,7 @@ int		alpacaListenPort;
 	{
 		//*	add the new devices to our list
 //		CONSOLE_DEBUG("We have a new devices")
-		if (gAlpacaUnitCnt < kMaxUnitCount)
+		if (gAlpacaUnitCnt < kMaxAlpacaIPaddrCnt)
 		{
 			gAlpacaUnitList[gAlpacaUnitCnt].deviceAddress	=	*deviceAddress;
 			//*	now find the alpaca port

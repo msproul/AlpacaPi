@@ -909,6 +909,7 @@ void	WindowTabImage::DrawFullScaleIamge(void)
 void	WindowTabImage::DrawFullScaleIamge(const int image_X, const int	image_Y)
 {
 cv::Rect	displayedImgRect;
+cv::Mat		image_roi;
 int			displayedWidth;
 int			displayedHeight;
 int			sourceImageWidth;
@@ -992,8 +993,7 @@ char		imageInfoText[80];
 //			CONSOLE_DEBUG_W_NUM("displayedImgRect.height\t=",	displayedImgRect.height);
 
 		#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
-cv::Mat		image_roi;
-			CONSOLE_DEBUG("OpenCV++ not finished!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+//			CONSOLE_DEBUG("OpenCV++ not finished!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 
 			image_roi	=	cv::Mat(*cOpenCVdownLoadedImage, displayedImgRect);
 

@@ -1,8 +1,13 @@
 //*****************************************************************************
-//*	command table for Alpaca focuser
-//*		This file is used by both the driver and the controller
+//*	Name:			telescope_AlpacaCmds.cpp
+//*
+//*	Author:			Mark Sproul (C) 2023
+//*
+//*	Description:	Command table for Telescope
+//*					This file is used by both the driver and the controller
 //*****************************************************************************
 //*	Jul  1,	2023	<MLS> Created telescope_AlpacaCmds.cpp
+//*	Jan 15,	2024	<MLS> Added alternate command table to telescope
 //*****************************************************************************
 
 
@@ -103,8 +108,19 @@ TYPE_CmdEntry	gTelescopeCmdTable[]	=
 	{	"--extras",					kCmd_Telescope_Extras,					kCmdType_GET	},
 	{	"hourangle",				kCmd_Telescope_hourangle,				kCmdType_GET	},
 	{	"physicalsideofpier",		kCmd_Telescope_physicalsideofpier,		kCmdType_GET	},
+#ifdef _ENABLE_IMU_
+	{	"imu",						kCmd_Telescope_imu,						kCmdType_GET	},
+#endif
 	{	"readall",					kCmd_Telescope_readall,					kCmdType_GET	},
 
 	{	"",						-1,	0x00	}
+};
+
+
+//*****************************************************************************
+TYPE_CmdEntry	gTelescopeExtrasTable[]	=
+{
+	{	"HourAngle-degrees",	kCmd_Telescope_HourAngleDegrees,		kCmdType_GET	},
+	{	"",						-1,								0						}
 };
 

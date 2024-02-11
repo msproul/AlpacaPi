@@ -29,6 +29,7 @@
 //*	Sep 28,	2022	<MLS> Deleted MountData_SaveRA, MountData_SaveHA, MountData_SaveDec
 //*	Jun 25,	2023	<MLS> Added AlpacaGetCapabilities()
 //*	Jun 29,	2023	<MLS> Added AlpacaProcessReadAll_TelescopeIdx()
+//*	Jan 15,	2024	<MLS> Added support for HourAngle_deg to AlpacaProcessReadAll_TelescopeIdx()
 //*****************************************************************************
 
 #ifndef _TELESCOPE_CMDS_H_
@@ -44,9 +45,15 @@
 
 
 //*****************************************************************************
+#include	"MountData.h"
 #if defined(_PARENT_IS_SKYTRAVEL_) && !defined( __ARM_ARCH )
-	#include	"MountData.h"
 	static void	MountData_SaveData(const int whichData, const double newEntryInDegrees);
+#else
+//*****************************************************************************
+static void	MountData_SaveData(const int whichData, const double newEntryInDegrees)
+{
+	//	Do nothing
+}
 #endif
 
 
@@ -173,9 +180,7 @@ bool	dataWasHandled;
 		case kCmd_Telescope_declination:			//*	Returns the telescope's declination.
 			cTelescopeProp.Declination	=	AsciiToDouble(valueString);
 			Update_TelescopeDeclination();
-		#if defined(_PARENT_IS_SKYTRAVEL_) && !defined( __ARM_ARCH )
 			MountData_SaveData(kMountData_DEC, cTelescopeProp.Declination);
-		#endif
 			break;
 
 		case kCmd_Telescope_declinationrate:		//*	Returns the telescope's declination tracking rate.
@@ -184,7 +189,6 @@ bool	dataWasHandled;
 
 		case kCmd_Telescope_doesrefraction:			//*	Indicates whether atmospheric refraction is applied to coordinates.
 			cTelescopeProp.DoesRefraction	=	IsTrueFalse(valueString);
-			Update_TelescopeDeclination();
 			break;
 
 		case kCmd_Telescope_equatorialsystem:		//*	Returns the current equatorial coordinate system used by this telescope.
@@ -209,9 +213,7 @@ bool	dataWasHandled;
 		case kCmd_Telescope_rightascension:			//*	Returns the telescope's right ascension coordinate.
 			cTelescopeProp.RightAscension	=	AsciiToDouble(valueString);
 			Update_TelescopeRtAscension();
-		#if defined(_PARENT_IS_SKYTRAVEL_) && !defined( __ARM_ARCH )
 			MountData_SaveData(kMountData_RA, cTelescopeProp.RightAscension * 15.0);
-		#endif
 			break;
 
 		case kCmd_Telescope_rightascensionrate:		//*	Returns the telescope's right ascension tracking rate.
@@ -220,6 +222,7 @@ bool	dataWasHandled;
 
 		case kCmd_Telescope_sideofpier:				//*	Returns the mount's pointing state.
 			cTelescopeProp.SideOfPier	=	(TYPE_PierSide)atoi(valueString);
+			Update_TelescopeSideOfPier();
 			break;
 
 		case kCmd_Telescope_siderealtime:			//*	Returns the local apparent sidereal time.
@@ -252,6 +255,7 @@ bool	dataWasHandled;
 
 		case kCmd_Telescope_tracking:				//*	Indicates whether the telescope is tracking.
 			cTelescopeProp.Tracking	=	IsTrueFalse(valueString);
+//			CONSOLE_DEBUG_W_BOOL("cTelescopeProp.Tracking\t=", cTelescopeProp.Tracking);
 			break;
 
 		case kCmd_Telescope_trackingrate:			//*	Returns the current tracking rate.
@@ -264,7 +268,7 @@ bool	dataWasHandled;
 		case kCmd_Telescope_utcdate:				//*	Returns the UTC date/time of the telescope's internal clock.
 			break;
 
-
+		//--------------------------------------------------------------------
 		//*	these are the methods
 		case kCmd_Telescope_axisrates:				//*	Returns the rates at which the telescope may be moved about the specified axis.
 			break;
@@ -278,6 +282,7 @@ bool	dataWasHandled;
 		//---------------------------------------------------------------
 		//*	added by MLS
 		case kCmd_Telescope_hourangle:
+//			CONSOLE_DEBUG("kCmd_Telescope_hourangle");
 			cTelescopeProp.hourAngleIsValid	=	true;
 			cTelescopeProp.HourAngle		=	AsciiToDouble(valueString);
 			if (cTelescopeProp.HourAngle < 0.0)
@@ -286,20 +291,34 @@ bool	dataWasHandled;
 			}
 			break;
 
-		case kCmd_Telescope_physicalsideofpier:
-			cTelescopeProp.PhysicalSideOfPier	=	(TYPE_PierSide)atoi(valueString);
+		case kCmd_Telescope_HourAngleDegrees:
+			cTelescopeProp.HourAngle_deg	=	AsciiToDouble(valueString);
+//			CONSOLE_DEBUG_W_STR("HourAngle_deg\y=",	valueString);
+//			CONSOLE_DEBUG_W_DBL("HourAngle_deg\y=",	cTelescopeProp.HourAngle_deg);
+			MountData_SaveData(kMountData_HA, cTelescopeProp.HourAngle_deg);
 			break;
+
+		case kCmd_Telescope_physicalsideofpier:
+//			CONSOLE_DEBUG("kCmd_Telescope_physicalsideofpier");
+//			CONSOLE_DEBUG_W_STR("json=",	valueString);
+			cTelescopeProp.PhysicalSideOfPier	=	(TYPE_PierSide)atoi(valueString);
+			Update_TelescopeSideOfPier();
+			break;
+
+#ifdef _ENABLE_IMU_
+		//*	returns array of 3 (roll, pitch, yaw) acceleration vectors
+		case kCmd_Telescope_imu:
+			CONSOLE_DEBUG("kCmd_Telescope_imu");
+			CONSOLE_DEBUG_W_STR("json=",	valueString);
+			break;
+#endif
+
 
 		default:
 			CONSOLE_DEBUG_W_NUM("keywordEnum\t=",	keywordEnum);
 			CONSOLE_DEBUG_W_STR("valueString\t=",	valueString);
 			dataWasHandled	=	false;
 			break;
-//	else if (strcasecmp(keywordString,		"HourAngle-degrees") == 0)
-//	{
-//		cTelescopeProp.HourAngle_deg	=	AsciiToDouble(valueString);
-//		MountData_SaveData(kMountData_HA, cTelescopeProp.HourAngle_deg);
-//	}
 	}
 	return(dataWasHandled);
 }
@@ -624,8 +643,8 @@ int		iii;
 
 	for (iii=0; iii<kMaxMountData; iii++)
 	{
-		gHourAngleData[iii]	=	0.0;
-		gRightAsceData[iii]	=	0.0;
+		gHourAngleData[iii]		=	0.0;
+		gRightAsceData[iii]		=	0.0;
 		gDeclinationData[iii]	=	0.0;
 	}
 }
@@ -659,6 +678,8 @@ double		*arrayPointer;
 //	CONSOLE_DEBUG_W_DBL("myDataDegrees\t\t=", myDataDegrees);
 	currentTime			=	time(NULL);
 
+	//*	compute the index into the 24 hour arrays
+	//*	One entry ever 4 seconds
 	secsPastMignight	=	currentTime % kSecondsPerDay;
 	tableIndex			=	secsPastMignight / 4;
 	if (tableIndex < kMaxMountData)
