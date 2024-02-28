@@ -305,31 +305,26 @@ bool	dataWasHandled;
 			Update_TelescopeSideOfPier();
 			break;
 
-#ifdef _ENABLE_IMU_
 		//*	returns array of 3 (roll, pitch, yaw) acceleration vectors
 		case kCmd_Telescope_imu:
-			CONSOLE_DEBUG("kCmd_Telescope_imu");
+//			CONSOLE_DEBUG("kCmd_Telescope_imu");
 			CONSOLE_DEBUG_W_STR("json=",	valueString);
 			break;
 
 		case kCmd_Telescope_IMU_Roll:
-			CONSOLE_DEBUG_W_STR("kCmd_Telescope_IMU_Roll=",	valueString);
+//			CONSOLE_DEBUG_W_STR("kCmd_Telescope_IMU_Roll=",	valueString);
 			cTelescopeProp.IMU_Roll		=	atof(valueString);
 			break;
 
 		case kCmd_Telescope_IMU_Pitch:
-			CONSOLE_DEBUG_W_STR("kCmd_Telescope_IMU_Pitch=",	valueString);
+//			CONSOLE_DEBUG_W_STR("kCmd_Telescope_IMU_Pitch=",	valueString);
 			cTelescopeProp.IMU_Pitch	=	atof(valueString);
 			break;
 
 		case kCmd_Telescope_IMU_Yaw:
-			CONSOLE_DEBUG_W_STR("kCmd_Telescope_IMU_Yaw=",	valueString);
+//			CONSOLE_DEBUG_W_STR("kCmd_Telescope_IMU_Yaw=",	valueString);
 			cTelescopeProp.IMU_Yaw		=	atof(valueString);
 			break;
-
-#else
-	#error "_ENABLE_IMU_ not defined"
-#endif
 
 
 		default:

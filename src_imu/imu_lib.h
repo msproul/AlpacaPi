@@ -21,6 +21,7 @@ int		IMU_Init(void);
 bool	IMU_IsAvailable(void);
 void	IMU_SetDebug(const bool debugOnOff);
 int		IMU_Print_Calibration(void);
+void	IMU_GetIMUtypeString(char *imuTypeString);
 
 bool	IMU_StartBackgroundThread(void *thisPointer);
 double	IMU_GetAverageRoll(void);

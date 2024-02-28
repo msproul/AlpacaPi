@@ -66,7 +66,7 @@
 #include	"telescopedriver.h"
 #include	"telescopedriver_lx200.h"
 
-#define	_DEBUG_LX200_
+//#define	_DEBUG_LX200_
 
 //**************************************************************************************
 void	CreateTelescopeObjects_LX200(void)

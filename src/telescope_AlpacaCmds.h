@@ -106,9 +106,7 @@ enum
 	kCmd_Telescope_Extras,
 	kCmd_Telescope_hourangle,
 	kCmd_Telescope_physicalsideofpier,
-#ifdef _ENABLE_IMU_
 	kCmd_Telescope_imu,						//*	returns array of 3 (roll, pitch, yaw) acceleration vectors
-#endif
 	kCmd_Telescope_readall,
 
 	kCmd_Telescope_last

@@ -444,9 +444,9 @@ int					startupWidgetIdx;
 		CONSOLE_DEBUG_W_STR("Failed to read:", filePath);
 		SetStartupTextStatus(startupWidgetIdx, "Not found");
 	}
-	CONSOLE_DEBUG_W_NUM("linesRead		\t=",	linesRead);
+//	CONSOLE_DEBUG_W_NUM("linesRead		\t=",	linesRead);
 //	CONSOLE_DEBUG_W_NUM("maxStarNameLen\t=",	maxStarNameLen);
-	CONSOLE_DEBUG_W_NUM("total alerts found\t=",alertIdx);
+//	CONSOLE_DEBUG_W_NUM("total alerts found\t=",alertIdx);
 
 //	CONSOLE_ABORT(__FUNCTION__);
 

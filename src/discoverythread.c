@@ -936,7 +936,11 @@ int		alpacaListenPort;
 			}
 			else
 			{
-				CONSOLE_DEBUG_W_HEX("Did not find host name for address", deviceAddress->sin_addr.s_addr);
+			char	ipAddrSt[32];
+
+				inet_ntop(AF_INET, &(deviceAddress->sin_addr), ipAddrSt, INET_ADDRSTRLEN);
+//				CONSOLE_DEBUG_W_HEX("Did not find host name for address:", deviceAddress->sin_addr.s_addr);
+				CONSOLE_DEBUG_W_STR("Did not find host name for address:", ipAddrSt);
 			}
 			gAlpacaUnitCnt++;
 

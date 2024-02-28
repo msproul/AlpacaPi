@@ -11,6 +11,7 @@
 //*	Jan 15,	2024	<MLS> Added IMU_GetRoll_Pitch_Yaw()
 //*	Jan 15,	2024	<MLS> Moved IMU averaging from imu_lib_bno055.c to imu_lib.c
 //*	Jan 15,	2024	<MLS> The LIS2DH12 has roll off by 90 degrees, fixed in IMU_GetAverageRoll()
+//*	Feb 25,	2024	<ML>S Added IMU_GetIMUtypeString()
 //*****************************************************************************
 
 #ifdef _ENABLE_IMU_
@@ -131,8 +132,21 @@ void	IMU_SetDebug(const bool debugOnOff)
 //*****************************************************************************
 bool	IMU_IsAvailable(void)
 {
-	return(gIMU_TypePresent != 0);
+	return(gIMU_TypePresent != kIMU_type_None);
 }
+
+//*****************************************************************************
+void	IMU_GetIMUtypeString(char *imuTypeString)
+{
+	switch(gIMU_TypePresent)
+	{
+		case kIMU_type_None:		strcpy(imuTypeString, "No IMU detected");	break;
+		case kIMU_type_BNO055:		strcpy(imuTypeString, "BNO055");			break;
+		case kIMU_type_LIS2DH12:	strcpy(imuTypeString, "LIS2DH12");			break;
+
+	}
+}
+
 
 //*****************************************************************************
 static int	IMU_GetRoll_Pitch_Yaw(double *rollValue, double *pitchValue, double *yawValue)
@@ -164,11 +178,13 @@ double	IMU_GetAverageRoll(void)
 double	adjustedRollValue;
 
 	adjustedRollValue	=	gIMUaverage.roll;
+	CONSOLE_DEBUG_W_DBL("adjustedRollValue\t=",	adjustedRollValue);
 	if (gIMU_TypePresent == kIMU_type_LIS2DH12)
 	{
 		adjustedRollValue	=	gIMUaverage.roll - 90;
 	}
-//	CONSOLE_DEBUG_W_DBL(__FUNCTION__, gIMUaverage.roll);
+	CONSOLE_DEBUG_W_DBL("adjustedRollValue\t=",	adjustedRollValue);
+	CONSOLE_DEBUG_W_DBL(__FUNCTION__, gIMUaverage.roll);
 	return(adjustedRollValue);
 }
 

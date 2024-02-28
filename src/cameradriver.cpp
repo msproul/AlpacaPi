@@ -4165,6 +4165,14 @@ int		pixelIndex;
 }
 
 //*****************************************************************************
+//! \brief BuildBinaryImage_Raw16
+//!
+//! \param foo
+//! \param bar
+//! \return byte count
+//!
+//!
+//*****************************************************************************
 //*	returns byte count
 //*****************************************************************************
 int	CameraDriver::BuildBinaryImage_Raw16(	unsigned char 	*binaryDataBuffer,

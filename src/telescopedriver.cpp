@@ -3560,6 +3560,7 @@ TYPE_ASCOM_STATUS	TelescopeDriver::Get_Readall(TYPE_GetPutRequestData *reqData, 
 {
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 int		mySocket;
+char	dataString[256];
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 #ifdef _DEBUG_CONFORM_
@@ -3637,7 +3638,16 @@ int		mySocket;
 
 		alpacaErrCode	=	Get_HourAngle(			reqData, alpacaErrMsg, "HourAngle");
 		alpacaErrCode	=	Get_PhysicalSideOfPier(	reqData, alpacaErrMsg, "PhysicalSideOfPier");
+#ifdef _ENABLE_IMU_
 		alpacaErrCode	=	Get_IMU(				reqData, alpacaErrMsg, "IMU");
+		IMU_GetIMUtypeString(dataString);
+		JsonResponse_Add_String(mySocket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								"IMU-Type",
+								dataString,
+								INCLUDE_COMMA);
+#endif // _ENABLE_IMU_
 
 
 		JsonResponse_Add_String(mySocket,

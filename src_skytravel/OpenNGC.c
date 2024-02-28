@@ -392,10 +392,10 @@ int				returnCode;
 		returnCode	=	stat(filePath, &fileStatus);		//*	fstat - check for existence of file
 	}
 
-	if (returnCode == 0)
-	{
-		CONSOLE_DEBUG_W_STR("NGC File found at", filePath);
-	}
+//	if (returnCode == 0)
+//	{
+//		CONSOLE_DEBUG_W_STR("NGC File found at", filePath);
+//	}
 
 	filePointer	=	fopen(filePath, "r");
 	if (filePointer != NULL)

@@ -47,7 +47,7 @@
 
 #ifdef _ENABLE_IMU_
 
-#error "IMU should be disabled"
+//#error "IMU should be disabled"
 
 //*	for now, these are compile time flags, maybe changed to config flags later
 #define	_USE_BNO055_

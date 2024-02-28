@@ -2701,11 +2701,12 @@ const char	domeTitle[]	=	"AlpacaPi Dome Driver setup";
 	SocketWriteData(mySocketFD,	"<H2>Remote Shutter</H2>\r\n");
 	SocketWriteData(mySocketFD,	"<P>\r\n");
 	SocketWriteData(mySocketFD,	"</CENTER>\r\n");
+
+#ifdef _ENABLE_REMOTE_SHUTTER_
 	SocketWriteData(mySocketFD,	gRemoteShutterDocs);
 
 	SocketWriteData(mySocketFD,	"<P>\r\n");
 
-#ifdef _ENABLE_REMOTE_SHUTTER_
 	SocketWriteData(mySocketFD,	"<CENTER>\r\n");
 	SocketWriteData(mySocketFD,	"<TABLE BORDER=1>\r\n");
 
