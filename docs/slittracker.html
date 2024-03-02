@@ -1,0 +1,98 @@
+<HTML>
+<TITLE>SlitTracker</TITLE>
+<CENTER>
+<H1>SlitTracker<SUP>&copy;</SUP></H1>
+A system for syncing dome rotation to telescope movement
+</CENTER>
+<P>
+SlitTracker<SUP>&copy;</SUP> is a system that uses acoustic sensors to keep the dome slit centered on the telescope.
+The system works by placing small ultra-sonic sensors around the perimeter of 
+the front end of the telescope that align with optical axis of the telescope.
+<P>
+These sensors are simple sonar devices that emit an ultra-sonic sound wave and watch for its return.
+The sensors used have a range of about 300 inches.
+If the telescope is properly centered in the dome slit, then all of the sensors should return infinity which means
+no response was heard.
+<P>
+When the telescope gets close to the edge of the slit, one or more sensors will return a distance 
+which should be the actual distance to the dome.  At this point, it is time to tell the dome to move.
+<P>
+An accelerometer is also included so that the system knows which way is down and therefore which way is left and right.
+Then the system tells the dome rotation controller to move a small amount in the appropriate direction.
+<P>
+The number of sensors used is configurable, however for telescopes 16 inch and larger, 12 sensors are recommended.
+Custom 3D printed mounts are used to hold the sensors and this ring is mounted to the front end of the telescope.
+<P>
+The system currently works with ASCOM and Alpaca compatible dome drivers. 
+The system can be modified to deal with other dome drive systems. 
+<P>
+<CENTER>
+<B>Sensor Ring</B><BR>
+<IMG SRC=images/slittracker01.jpg WIDTH=85%>
+</CENTER>
+<P>
+
+This sensor ring is for a 16 inch Newtonian with an outside tube diameter of 19 inches.
+This is the front view, the numbers are shown on the front side, 
+they attach to the back thus making the clock positions normal.
+<P>
+Since each ring is custom made, you can chose the colors.
+For closed tube telescopes like a Newtonian, color does not mater. 
+For open tube telescopes like a PlaneWave, flat black is recommended.
+
+<P>
+<H3>Advantages</H3>
+Most dome tracking systems rely on a very complex model of the telescope geometry and movement to
+determine the actual position of the telescope.  This is especially complex with German Equatorial mounts.
+<P>
+Once this position is calculated, the desired azimuth is sent to the dome controller 
+which is expected to put the dome in exactly the position.
+<P>
+Any mistake along the way can cause the dome to not be centered on the telescope.
+The more common problem is the dome controller's inability to exactly position the dome.
+<P>
+With SlitTracker<SUP>&copy;</SUP>, there is no calculation required, the dome controller is told
+to move a bit when needed.  
+The system will even work when manually moving the telescope as long as it is not moved to fast.
+It does require that the slit be open.  
+When connected to an ASCOM or Alpaca dome driver, the system will return an error of told to
+start tracking if the door is not open.
+<P>
+<H3>Hardware</H3>
+The hardware is mostly off the shelf items consisting of a Raspberry Pi and an Arduino Mega.
+<P>
+The wiring consists of 3 CAT-5 cables running from the front end of the telescope down to the electronics.
+The Raspberry Pi is normally powered by POE (Power Over Ethernet).
+The electronics are best placed on the telescope to reduce wiring. 
+The only thin needed is the ethernet connection.  
+Wireless is an option, but you then have to run power.
+The recommended connection is wired POE.
+<P>
+If you choose to have a custom ring designed, 
+the STL/STEP files to print the components will be supplied as part of the documentation package 
+which will allow you to print replacements if needed.
+<P>
+<H3>Software</H3>
+The software is all open source so you will have complete copy of the source code for the entire system.
+<P>
+The system also provides a web interface to view status.
+<P>
+Commands can be automated via Linux shell scripts, samples provided.
+<P>
+<H3>Support</H3>
+Since it is open source, there is never a fee for software updates.
+<P>
+Remote updates and diagnostics can be performed if a VPN connection into the observatory network is available.
+<H3>Cost</H3>
+Since this project is all open source, there is no charge for the actual software. 
+There will be costs for any custom work required for non-ASCOM/Alpaca control systems.
+<P>
+Costs are based on time and materials for a turn-key installation. 
+The cost of the custom sensor ring is based on the diameter of the outside diameter of the telescope front end.
+<HR>
+July 2023<BR>
+Contact:<BR>
+Mark Sproul<BR>
+msproul@skychariot.com<BR>
+732-816-9168
+
