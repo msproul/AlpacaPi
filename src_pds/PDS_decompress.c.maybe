@@ -1,0 +1,312 @@
+//********************************************************************
+//*	Voyager Image Decompression Program
+//*	Adapted by Mark Sproul
+//*	January 1992
+//*	for using in my graphics programs
+//*
+//*	This source code was obtained from the CD-ROMs
+//*		"NASA Voyagers to the Outer Planets"
+//*
+//********************************************************************
+//********************************************************************
+//*  Voyager Image Decompression Program - C Version for PC, VAX,
+//*  UNIX and Macintosh systems.
+//*
+//*  Decompresses images using Kris Becker's subroutine DECOMP.C
+//*  which is included in this program in a shortened version.
+//*
+//********************************************************************
+
+#include	<stdio.h>
+#include	<stdlib.h>
+
+
+//********************************************************************
+typedef struct leaf
+{
+		struct leafg	*right;
+		short int		dn;
+		struct leaf		*left;
+} NODE;
+
+//********************************************************************
+//	Declare the tree pointer. This pointer will hold the root of the tree
+//	once the tree is created by the accompanying routine huff_tree.
+//********************************************************************
+
+NODE	*tree;
+
+
+//********************************************************************
+//	_TITLE new_node - allocates a NODE structure and returns a pointer to it
+//	_ARGS  TYPE		NAME		I/O	 DESCRIPTION
+//		short int   value;		I	  Value to assign to DN field
+//********************************************************************
+NODE *new_node(short int value)
+{
+NODE *temp;			//* Pointer to the memory block
+//-char *malloc();		//* Memory allocation function
+
+	//********************************************************************
+	//	Allocate the memory and intialize the fields.
+	//********************************************************************
+
+	temp = (NODE *) malloc(sizeof(NODE));
+
+	if (temp != NULL)
+	{
+		temp->right = NULL;
+		temp->dn = value;
+		temp->left = NULL;
+	}
+	else
+	{
+		printf("\nOut of memory in new_node!\n");
+		exit(1);
+	}
+
+	return temp;
+}
+
+//********************************************************************
+//	_TITLE sort_freq - sorts frequency and node lists in increasing freq. order
+//				_ARGS  TYPE	NAME			I/O  DESCRIPTION
+//********************************************************************
+void sort_freq(	long int	*freq_list,		//* I   Pointer to frequency list
+				NODE		**node_list,	//* I   Pointer to array of node pointers
+				long int   num_freq)		//* I   Number of values in freq list
+{
+	/* Local Variables */
+	register long int *i;		//* primary pointer into freq_list */
+	register long int *j;		//* secondary pointer into freq_list */
+
+	register NODE **k;			//* primary pointer to node_list */
+	register NODE **l;			//* secondary pointer into node_list */
+
+	long int temp1;			 	//* temporary storage for freq_list */
+	NODE *temp2;				//* temporary storage for node_list */
+
+	register long int cnt;		//* count of list elements */
+
+
+/************************************************************************
+  Save the current element - starting with the second - in temporary
+  storage.  Compare with all elements in first part of list moving
+  each up one element until the element is larger.  Insert current
+  element at this point in list.
+*************************************************************************/
+
+   if (num_freq <= 0) return;		//* If no elements or invalid, return */
+
+   for (i=freq_list, k=node_list, cnt=num_freq ; --cnt ; *j=temp1, *l=temp2)
+	 {
+		temp1 = *(++i);
+		temp2 = *(++k);
+
+		for (j = i, l = k ;  *(j-1) > temp1 ; )
+		{
+			*j = *(j-1);
+			*l = *(l-1);
+			j--;
+			l--;
+			if ( j <= freq_list) break;
+		}
+
+	 }
+  return;
+  }
+
+
+NODE *huff_tree(hist)
+/****************************************************************************
+*_TITLE huff_tree - constructs the Huffman tree; returns pointer to root	*
+*_ARGS	TYPE		NAME			I/O		DESCRIPTION 					*/
+		long int	*hist;		/*	I		First difference histogram	*/
+{
+ 	//*  Local variables used */
+	long int freq_list[512];		/* Histogram frequency list */
+	NODE **node_list;				/* DN pointer array list */
+
+	register long int *fp;			/* Frequency list pointer */
+	register NODE **np;		 		/* Node list pointer */
+
+	register long int num_freq;		/* Number non-zero frequencies in histogram */
+	long int sum;					/* Sum of all frequencies */
+
+	register short int num_nodes;	/* Counter for DN initialization */
+	register short int cnt;			/* Miscellaneous counter */
+
+	short int znull = -1;			/* Null node value */
+
+	register NODE *temp;			/* Temporary node pointer */
+
+  /* Functions called */
+//-	char *malloc();
+
+/***************************************************************************
+  Allocate the array of nodes from memory and initialize these with numbers
+  corresponding with the frequency list.  There are only 511 possible
+  permutations of first difference histograms.  There are 512 allocated
+  here to adhere to the FORTRAN version.
+****************************************************************************/
+
+   fp = freq_list;
+   node_list = (NODE **) malloc(sizeof(temp)*512);
+   if (node_list == NULL)
+	{
+		printf("\nOut of memory in huff_tree!\n");
+		exit(1);
+	}
+   np = node_list;
+
+	for (num_nodes=1, cnt=512 ; cnt-- ; num_nodes++)
+	{
+/**************************************************************************
+	The following code has been added to standardize the VAX byte order
+	for the "long int" type.  This code is intended to make the routine
+	as machine independant as possible.
+***************************************************************************/
+		unsigned char *cp = (unsigned char *) hist++;
+		unsigned long int j;
+		short int i;
+		for (i=4 ; --i >= 0 ; j = (j << 8) | *(cp+i));
+
+/* Now make the assignment */
+		*fp++ = j;
+		temp = new_node(num_nodes);
+		*np++ = temp;
+	 }
+
+	 (*--fp) = 0;		 /* Ensure the last element is zeroed out.  */
+
+/***************************************************************************
+  Now, sort the frequency list and eliminate all frequencies of zero.
+****************************************************************************/
+
+  num_freq = 512;
+  sort_freq(freq_list,node_list,num_freq);
+
+  fp = freq_list;
+  np = node_list;
+
+  for (num_freq=512 ; (*fp) == 0 && (num_freq) ; fp++, np++, num_freq--);
+
+
+/***************************************************************************
+  Now create the tree.  Note that if there is only one difference value,
+  it is returned as the root.  On each interation, a new node is created
+  and the least frequently occurring difference is assigned to the right
+  pointer and the next least frequency to the left pointer.  The node
+  assigned to the left pointer now becomes the combination of the two
+  nodes and it's frequency is the sum of the two combining nodes.
+****************************************************************************/
+
+	for (temp=(*np) ; (num_freq--) > 1 ; )
+	{
+		temp = new_node(znull);
+		temp->right = (*np++);
+		temp->left = (*np);
+		*np = temp;
+		*(fp+1) = *(fp+1) + *fp;
+		*fp++ = 0;
+		sort_freq(fp,np,num_freq);
+	}
+
+  return temp;
+ }
+
+void decmpinit(hist)
+/***************************************************************************
+*_TITLE decmpinit - initializes the Huffman tree					 *
+*_ARGS  TYPE		NAME		I/O		DESCRIPTION						*/
+		long int   *hist;  /* I			First-difference histogram.		*/
+{
+/****************************************************************************
+  Simply call the huff_tree routine and return.
+*****************************************************************************/
+
+	tree = huff_tree(hist);
+
+	return;
+}
+
+
+void dcmprs(ibuf,obuf,nin,nout,root)
+/****************************************************************************
+*_TITLE dcmprs - decompresses Huffman coded compressed image lines	*
+*_ARGS  TYPE		NAME		I/O		DESCRIPTION						 */
+		char		*ibuf;  	//* I		Compressed data buffer		*/
+		char		*obuf;  	//* O		Decompressed image line			 */
+		long int	*nin;		//* I		Number of bytes on input buffer	 */
+		long int	*nout;  	//* I		Number of bytes in output buffer	*/
+		NODE		*root;  	//* I		Huffman coded tree				  */
+
+{
+	/* Local Variables */
+	register NODE *ptr = root;		//* pointer to position in tree */
+	register unsigned char test;	 	//* test byte for bit set */
+	register unsigned char idn;		/* input compressed byte */
+
+	register char odn;				/* last dn value decompressed */
+
+	char *ilim = ibuf + *nin;			//* end of compressed bytes */
+	char *olim = obuf + *nout;		/* end of output buffer */
+
+/**************************************************************************
+  Check for valid input values for nin, nout and make initial assignments.
+***************************************************************************/
+
+	if (ilim > ibuf && olim > obuf)
+	{
+		odn = *obuf++ = *ibuf++;
+	}
+	else
+	{
+		printf("\nInvalid byte count in dcmprs!\n");
+		exit(1);
+	}
+
+/**************************************************************************
+  Decompress the input buffer.  Assign the first byte to the working
+  variable, idn.  An arithmatic and (&) is performed using the variable
+  'test' that is bit shifted to the right.  If the result is 0, then
+  go to right else go to left.
+***************************************************************************/
+
+	for (idn=(*ibuf) ; ibuf < ilim  ; idn =(*++ibuf))
+	 {
+		for (test=0x80 ; test ; test >>= 1)
+		{
+			ptr = (test & idn) ? ptr->left : ptr->right;
+
+			if (ptr->dn != -1)
+			  {
+				if (obuf >= olim) return;
+				odn -= ptr->dn + 256;
+				*obuf++ = odn;
+				ptr = root;
+			  }
+		  }
+	 }
+   return;
+}
+
+void decompress(ibuf,obuf,nin,nout)
+/****************************************************************************
+*_TITLE decompress - decompresses image lines stored in compressed format   *
+*_ARGS	TYPE		NAME	  I/O		DESCRIPTION						 		*/
+		char		*ibuf; 	//* I		 Compressed data buffer					*/
+		char		*obuf; 	//* O		 Decompressed image line				*/
+		long int   *nin;  	//* I		 Number of bytes on input buffer	 	*/
+		long int   *nout; 	//* I		 Number of bytes in output buffer		*/
+
+{
+/*************************************************************************
+  This routine is fairly simple as it's only function is to call the
+  routine dcmprs.
+**************************************************************************/
+
+	dcmprs(ibuf,obuf,nin,nout,tree);
+
+	return;
+}
