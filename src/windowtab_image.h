@@ -15,8 +15,7 @@ enum
 {
 	kImageDisplay_Title	=	0,
 
-	kImageDisplay_Logo,
-
+	kImageDisplay_LiveOrDownLoad,
 
 
 	kImageDisplay_Btn_1,
@@ -28,7 +27,6 @@ enum
 
 	kImageDisplay_Btn_N,
 
-	kImageDisplay_LiveOrDownLoad,
 
 	kImageDisplay_FrameCnt_Lbl,
 	kImageDisplay_FrameCnt,
@@ -134,6 +132,7 @@ class WindowTabImage: public WindowTab
 		virtual	void	DrawWidgetCustomGraphic(IplImage *openCV_Image, const int widgetIdx);
 #endif // _USE_OPENCV_CPP_
 
+				void	SetImageFilePath(const char *imageFilePath);
 				void	UpdateButtons(void);
 
 				void	ResetImage(void);
@@ -158,6 +157,8 @@ class WindowTabImage: public WindowTab
 				IplImage	*cOpenCVdownLoadedImage;
 				IplImage	*cOpenCVdisplayedImage;
 			#endif // _USE_OPENCV_CPP_
+
+				char		cImageFilePath[512];
 
 				int			cImageCenterX;
 				int			cImageCenterY;

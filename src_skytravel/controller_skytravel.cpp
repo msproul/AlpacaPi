@@ -20,6 +20,7 @@
 //*	Jul 14,	2022	<MLS> Started on CPU stats, skytravel is using too much CPU time
 //*	Jun 30,	2023	<MLS> Added AlpacaProcessReadAllIdx() to skytravel controller
 //*	Feb 10,	2024	<MLS> Added Software Versions WindowTab
+//*	Mar  9,	2024	<MLS> Fixed bug where Software Version screen was not getting updated
 //*****************************************************************************
 
 #ifndef _ENABLE_SKYTRAVEL_
@@ -267,7 +268,7 @@ void	ControllerSkytravel::SetupWindowControls(void)
 	//=============================================================
 	SetTabText(kTab_SwVersList,		"Sw Vers");
 	cSwVersionsListObjPtr	=	new WindowTabSwVersions(cWidth, cHeight, cBackGrndColor, "Software Versions");
-	if (cIPaddrListObjPtr != NULL)
+	if (cSwVersionsListObjPtr != NULL)
 	{
 		SetTabWindow(kTab_SwVersList,	cSwVersionsListObjPtr);
 		cSwVersionsListObjPtr->SetParentObjectPtr(this);
@@ -492,6 +493,7 @@ bool		foundSomething;
 		cDeviceSelectObjPtr->UpdateRemoteDeviceList();
 		cFOVTabObjPtr->UpdateRemoteDeviceList();
 		cIPaddrListObjPtr->UpdateOnScreenWidgetList();
+		cSwVersionsListObjPtr->UpdateOnScreenWidgetList();
 	}
 
 	//-----------------------------------------------------------------------------

@@ -94,6 +94,11 @@
 //*	Sep  1,	2023	<MLS> Added WriteFitsDoubleValue()
 //*	Sep 10,	2023	<MLS> Added FLIP mode to FITS camera info
 //*	Sep 25,	2023	<MLS> Added FPGA version and Production date to FITS header
+//*	Mar 14,	2024	<MLS> Added Saturation pixel count to FITS header
+//*	Mar 16,	2024	<MLS> Added github link to FITS header
+//*	Mar 17,	2024	<MLS> Added FRATIO link to FITS header
+//*	Mar 18,	2024	<MLS> Added READOUTM link to FITS header
+//*	Mar 22,	2024	<MLS> Fixed bug in FITS camera offset reporting, was string, now int
 //*****************************************************************************
 
 #if defined(_ENABLE_CAMERA_) && defined(_ENABLE_FITS_)
@@ -498,14 +503,10 @@ int				iii;
 		fitsStatus	=	0;
 		fits_write_key(fitsFilePtr, TDOUBLE,	"BZERO",		&bzero,			NULL, &fitsStatus);
 
-//		WriteFITS_Seperator(fitsFilePtr, NULL);
-
 		fitsStatus	=	0;
 		fits_write_key(fitsFilePtr, TSTRING,	"TIMESYS",
 												(char *)"UTC approximate",
 												"Default time system", &fitsStatus);
-
-
 
 		//============================================================
 		//*	output info about the observation
@@ -537,6 +538,7 @@ int				iii;
 		}
 
 		//*	https://free-astro.org/index.php?title=Siril:FITS_orientation
+		//*	https://siril.readthedocs.io/en/latest/file-formats/FITS.html#orientation-of-fits-images
 		fitsStatus	=	0;
 		fits_write_key(fitsFilePtr, TSTRING,	"ROWORDER",
 												(char *)"BOTTOM-UP",
@@ -875,12 +877,16 @@ char	instrumentString[128];
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	WriteFITS_Seperator(fitsFilePtr, "Camera Info");
+	//-------------------------------------------------------------------------------
 	if (gSimulateCameraImage || cCameraIsSiumlated)
 	{
 		fitsStatus	=	0;
-		fits_write_key(fitsFilePtr, TSTRING, "COMMENT",	(void *)"Camera is in simulate mode",	NULL, &fitsStatus);
+		fits_write_key(fitsFilePtr, TSTRING,
+									"COMMENT",
+									(void *)"Camera is in simulate mode",
+									NULL, &fitsStatus);
 	}
-	//***************************************************
+	//-------------------------------------------------------------------------------
 	//*	output info about the camera and instrument
 	if (strlen(cTS_info.instrument) > 0)
 	{
@@ -894,12 +900,15 @@ char	instrumentString[128];
 	{
 		strcpy(instrumentString, "unknown");
 	}
+	//-------------------------------------------------------------------------------
 	fitsStatus	=	0;
 	fits_write_key(fitsFilePtr, TSTRING, "INSTRUME",	instrumentString, NULL, &fitsStatus);
 
+	//-------------------------------------------------------------------------------
 	fitsStatus	=	0;
 	fits_write_key(fitsFilePtr, TSTRING, "CAMERA",		cCommonProp.Name, NULL, &fitsStatus);
 
+	//-------------------------------------------------------------------------------
 	if (strlen(cDeviceVersion) > 0)
 	{
 		fitsStatus	=	0;
@@ -908,7 +917,8 @@ char	instrumentString[128];
 									cDeviceVersion,
 									"Camera Driver version", &fitsStatus);
 	}
-	//-----------------------------------------------
+
+	//-------------------------------------------------------------------------------
 	//*	Camera firmware version
 	if (strlen(cDeviceFirmwareVersStr) > 0)
 	{
@@ -918,7 +928,7 @@ char	instrumentString[128];
 									cDeviceFirmwareVersStr,
 									"Camera Firmware version", &fitsStatus);
 	}
-	//-----------------------------------------------
+	//-------------------------------------------------------------------------------
 	//*	Camera FPGA version (QHY, TOUPTEK)
 	if (strlen(cCameraProp.FPGAversion) > 0)
 	{
@@ -928,7 +938,7 @@ char	instrumentString[128];
 									cCameraProp.FPGAversion,
 									"Camera FPGA version", &fitsStatus);
 	}
-	//-----------------------------------------------
+	//-------------------------------------------------------------------------------
 	//*	Camera production date (TOUPTEK)
 	if (strlen(cCameraProp.ProductionDate) > 0)
 	{
@@ -939,7 +949,7 @@ char	instrumentString[128];
 									"Camera Production Date", &fitsStatus);
 	}
 
-	//-----------------------------------------------
+	//-------------------------------------------------------------------------------
 	//*	output info about the sensor
 	if (strlen(cCameraProp.SensorName) > 0)
 	{
@@ -951,11 +961,12 @@ char	instrumentString[128];
 	fitsStatus	=	0;
 	fits_write_key(fitsFilePtr, TSTRING, "DETSIZE",	stringBuf,		"Detector size", &fitsStatus);
 
-	//-----------------------------------------------------------
+	//-------------------------------------------------------------------------------
 	//*	astrometry.net solver error "Must specify positive "IMAGEW" and "IMAGEH"."
 	fitsStatus	=	0;
 	fits_write_key(fitsFilePtr, TSTRING, "COMMENT",	(void *)"astrometry.net solver needs IMAGEW & IMAGEH",	NULL, &fitsStatus);
 
+	//-------------------------------------------------------------------------------
 	fitsStatus	=	0;
 	fits_write_key(fitsFilePtr, TINT,		"IMAGEW",	&cCameraProp.CameraXsize,	NULL, &fitsStatus);
 
@@ -963,6 +974,7 @@ char	instrumentString[128];
 	fits_write_key(fitsFilePtr, TINT,		"IMAGEH",	&cCameraProp.CameraYsize,	NULL, &fitsStatus);
 
 
+	//-------------------------------------------------------------------------------
 	//*	image mode from camera
 	GetImageTypeString(cROIinfo.currentROIimageType, stringBuf);
 	fitsStatus	=	0;
@@ -970,6 +982,7 @@ char	instrumentString[128];
 											stringBuf,
 											"Image mode from camera", &fitsStatus);
 
+	//-------------------------------------------------------------------------------
 	ccdTempErrCode	=	Read_SensorTemp();
 	if (ccdTempErrCode == 0)
 	{
@@ -979,7 +992,7 @@ char	instrumentString[128];
 												"Degrees C", &fitsStatus);
 	}
 
-
+	//-------------------------------------------------------------------------------
 	fitsStatus	=	0;
 	fits_write_key(fitsFilePtr, TDOUBLE,	"XPIXSZ",
 											&cCameraProp.PixelSizeX,
@@ -997,6 +1010,7 @@ char	instrumentString[128];
 	fitsStatus	=	0;
 	fits_write_key(fitsFilePtr, TINT,		"YBINNING",	&cCameraProp.BinY,	NULL, &fitsStatus);
 
+	//-------------------------------------------------------------------------------
 	//*	record the Electrons per ADU, if present
 	if (cCameraProp.ElectronsPerADU > 0.0)
 	{
@@ -1007,6 +1021,7 @@ char	instrumentString[128];
 												&fitsStatus);
 	}
 
+	//-------------------------------------------------------------------------------
 	//*	record the camera gain, if present
 	if (cCameraProp.GainMax > 0)
 	{
@@ -1018,19 +1033,19 @@ char	instrumentString[128];
 													&fitsStatus);
 	}
 
+	//-------------------------------------------------------------------------------
 	//*	record the pixel offset, if present
 	if (cCameraProp.OffsetMax > 0)
 	{
 		sprintf(stringBuf, "Camera offset [%d:%d]", cCameraProp.OffsetMin, cCameraProp.OffsetMax);
 		fitsStatus	=	0;
-		fits_write_key(fitsFilePtr,		TSTRING,	"OFFSET",
+		fits_write_key(fitsFilePtr,		TINT,		"OFFSET",
 													&cCameraProp.Offset,
 													stringBuf,
 													&fitsStatus);
 	}
 
-
-
+	//-------------------------------------------------------------------------------
 	//*	ATIK dusk software uses this keyword
 	intValue	=	cIsColorCam;
 	if (cROIinfo.currentROIimageType == kImageType_RGB24)
@@ -1046,13 +1061,22 @@ char	instrumentString[128];
 											&intValue,
 											"True if image is a color image",
 											&fitsStatus);
+	//-------------------------------------------------------------------------------
 	//*	flip mode, used primarily with ZWO cameras, hope to add more later
 	fitsStatus	=	0;
 	fits_write_key(fitsFilePtr,		TINT,		"FLIP",
 												&cFlipMode,
 												"0=None, 1=Horz, 2=Vert, 3=Both",
 												&fitsStatus);
+	//-------------------------------------------------------------------------------
+	//*	readout mode is defined by SBIG
+	fitsStatus	=	0;
+	fits_write_key(fitsFilePtr,		TINT,		"READOUTM",
+												&cCameraProp.ReadOutMode,
+												"TBD",
+												&fitsStatus);
 
+	//-------------------------------------------------------------------------------
 	//*	camera manufacturer
 	if (strlen(cDeviceManufacturer) > 0)
 	{
@@ -1062,6 +1086,7 @@ char	instrumentString[128];
 		fits_write_key(fitsFilePtr, TSTRING, "COMMENT",	stringBuf,		NULL, &fitsStatus);
 	}
 
+	//-------------------------------------------------------------------------------
 	//*	camera name
 	if (strlen(cCommonProp.Name) > 0)
 	{
@@ -1071,6 +1096,7 @@ char	instrumentString[128];
 		fits_write_key(fitsFilePtr, TSTRING, "COMMENT",	stringBuf,		NULL, &fitsStatus);
 	}
 
+	//-------------------------------------------------------------------------------
 	//*	camera description
 	if (strlen(cCommonProp.Description) > 0)
 	{
@@ -1080,6 +1106,7 @@ char	instrumentString[128];
 		fits_write_key(fitsFilePtr, TSTRING, "COMMENT",	stringBuf,		NULL, &fitsStatus);
 	}
 
+	//-------------------------------------------------------------------------------
 	//*	sensor name
 	if (strlen(cCameraProp.SensorName) > 0)
 	{
@@ -1089,6 +1116,7 @@ char	instrumentString[128];
 		fits_write_key(fitsFilePtr, TSTRING, "COMMENT",	stringBuf,		NULL, &fitsStatus);
 	}
 
+	//-------------------------------------------------------------------------------
 	sprintf(stringBuf, "Camera image size: %d x %d", cCameraProp.CameraXsize, cCameraProp.CameraYsize);
 	fitsStatus	=	0;
 	fits_write_key(fitsFilePtr, TSTRING, "COMMENT",	stringBuf,		NULL, &fitsStatus);
@@ -1102,6 +1130,7 @@ char	instrumentString[128];
 	fitsStatus	=	0;
 	fits_write_key(fitsFilePtr, TSTRING, "COMMENT",	stringBuf,		NULL, &fitsStatus);
 
+	//-------------------------------------------------------------------------------
 	//*	Camera driver version
 	if (strlen(cDeviceVersion) > 0)
 	{
@@ -1111,6 +1140,7 @@ char	instrumentString[128];
 		fits_write_key(fitsFilePtr, TSTRING, "COMMENT",	stringBuf,		NULL, &fitsStatus);
 	}
 
+	//-------------------------------------------------------------------------------
 	//*	camera serial number
 	if (strlen(cDeviceSerialNum) > 1)
 	{
@@ -1120,16 +1150,18 @@ char	instrumentString[128];
 		fits_write_key(fitsFilePtr, TSTRING, "COMMENT",	stringBuf,		NULL, &fitsStatus);
 	}
 
+	//-------------------------------------------------------------------------------
 	sprintf(stringBuf, "Camera bit depth: %d", cBitDepth);
 	fitsStatus	=	0;
 	fits_write_key(fitsFilePtr, TSTRING, "COMMENT",	stringBuf,		NULL, &fitsStatus);
 
-	//---------------------------------------------------------------------
+	//-------------------------------------------------------------------------------
 	sprintf(stringBuf, "Image Shutter: %d microseconds ", cCameraProp.Lastexposure_duration_us);
 	fitsStatus	=	0;
 	fits_write_key(fitsFilePtr, TSTRING, "COMMENT",	stringBuf,		NULL, &fitsStatus);
 
 
+	//-------------------------------------------------------------------------------
 	//*	this was kept here so we dont have to read the CCD temperature twice
 	if (ccdTempErrCode == 0)
 	{
@@ -1519,6 +1551,12 @@ char	stringBuf[128];
 			fitsStatus	=	0;
 			fits_write_key(fitsFilePtr, TSTRING, "OBSERVAT",	gObseratorySettings.Name,		NULL, &fitsStatus);
 		}
+		//*	Location
+		if (strlen(gObseratorySettings.Location) > 0)
+		{
+			fitsStatus	=	0;
+			fits_write_key(fitsFilePtr, TSTRING, "LOCATION",	gObseratorySettings.Location,		NULL, &fitsStatus);
+		}
 		if (strlen(gObseratorySettings.Website) > 0)
 		{
 			fitsStatus	=	0;
@@ -1636,10 +1674,13 @@ struct tm		utcTime;
 struct tm		siderealTime;
 char			stringBuf[128];
 unsigned long	minmaxPixelValue;
-int				staurationValue;
+unsigned long	staurationValue;
+unsigned long	saturationPixCount;
 double			saturationPrcnt;
 double			modifiedJulianDate;
 struct tm		*localTime;
+time_t			epochTimeSecs;
+struct tm		myLocalTime;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -1685,23 +1726,24 @@ struct tm		*localTime;
 												&modifiedJulianDate,
 												"MJD at end of exposure", &fitsStatus);
 	}
-	//*	put the local time as a comment
+	//==============================================================
+	//*	include the local time as well
 	localTime		=	localtime(&cCameraProp.Lastexposure_StartTime.tv_sec);
 	FormatTimeString_TM(localTime, stringBuf);
 
-//	sprintf(stringBuf, "Local time=%d/%d/%d %02d:%02d:%02d\t",
-//							(1 + linuxTime->tm_mon),
-//							linuxTime->tm_mday,
-//							(1900 + linuxTime->tm_year),
-//							linuxTime->tm_hour,
-//							linuxTime->tm_min,
-//							linuxTime->tm_sec);
 	fitsStatus	=	0;
-	fits_write_key(fitsFilePtr, TSTRING,	"COMMENT",
+	fits_write_key(fitsFilePtr, TSTRING,	"LOCALTIM",
 											stringBuf,
 											"Local Time",
 											&fitsStatus);
-
+	//*	and the local time zone
+	epochTimeSecs	=	time(NULL);
+	localtime_r(&epochTimeSecs, &myLocalTime);
+	fitsStatus	=	0;
+	fits_write_key(fitsFilePtr, TSTRING,	"TIMEZONE",
+											(void *)myLocalTime.tm_zone,
+											"Time Zone",
+											&fitsStatus);
 
 	//==============================================================
 	fitsStatus	=	0;
@@ -1775,8 +1817,13 @@ struct tm		*localTime;
 											&staurationValue,
 											"Saturation Value", &fitsStatus);
 
+		saturationPixCount	=	CountSaturationPixels();
+		fitsStatus	=	0;
+		fits_write_key(fitsFilePtr, TINT,	"SATPIXEL",
+											&saturationPixCount,
+											"Saturation pixel count", &fitsStatus);
 
-		saturationPrcnt	=	CalculateSaturation();
+		saturationPrcnt		=	CalculateSaturation();
 //		CONSOLE_DEBUG_W_DBL("saturationPrcnt\t: ",		saturationPrcnt);
 		fitsStatus	=	0;
 		fits_write_key(fitsFilePtr, TDOUBLE,	"SATUPRCT",
@@ -1913,6 +1960,12 @@ char			stringBuf[128];
 	fits_write_key(fitsFilePtr, TSTRING,	"IMAGESWV",
 											gFullVersionString,
 											"Image creation software version", &fitsStatus);
+
+	//*	git hub link
+	fitsStatus	=	0;
+	fits_write_key(fitsFilePtr, TSTRING,	"COMMENT",
+											(void *)"https://github.com/msproul/AlpacaPi",
+											NULL, &fitsStatus);
 
 	//*	gcc version
 	sprintf(stringBuf, "Compiled %s at %s with gcc version: %s", __DATE__, __TIME__, __VERSION__);
@@ -2063,6 +2116,11 @@ double	f_ratio;
 
 			//--------------------------------------------------------------
 			f_ratio	=	cTS_info.focalLen_mm / cTS_info.aperature_mm;
+			fitsStatus	=	0;
+			fits_write_key(fitsFilePtr, TDOUBLE,	"FRATIO",
+													&f_ratio,
+													"F Ratio", &fitsStatus);
+
 			sprintf(stringBuf, "F-ratio: %1.2f",	f_ratio);
 			fitsStatus	=	0;
 			fits_write_key(fitsFilePtr, TSTRING,	"COMMENT",
@@ -2140,13 +2198,20 @@ int		fitsStatus;
 											(char *)"NOAO FITS Keyword Dictionary: Version 1.0 - Jan-2000",
 											NULL, &fitsStatus);
 
+//	fitsStatus	=	0;
+//	fits_write_key(fitsFilePtr, TSTRING,	"COMMENT",
+//											(char *)"http://iraf.noao.edu/projects/ccdmosaic/imagedef/fitsdic.html",
+//											NULL, &fitsStatus);
+
+//	fitsStatus	=	0;
+//	fits_write_key(fitsFilePtr, TSTRING,	"COMMENT",
+//											(char *)"http://iraf.nao.ac.jp/projects/ccdmosaic/imagedef/fitsdic.html",
+//											NULL, &fitsStatus);
+
+
 	fitsStatus	=	0;
 	fits_write_key(fitsFilePtr, TSTRING,	"COMMENT",
-											(char *)"http://iraf.noao.edu/projects/ccdmosaic/imagedef/fitsdic.html",
-											NULL, &fitsStatus);
-	fitsStatus	=	0;
-	fits_write_key(fitsFilePtr, TSTRING,	"COMMENT",
-											(char *)"http://iraf.nao.ac.jp/projects/ccdmosaic/imagedef/fitsdic.html",
+											(char *)"https://fits.gsfc.nasa.gov/fits_standard.html",
 											NULL, &fitsStatus);
 
 	fitsStatus	=	0;
@@ -2156,6 +2221,20 @@ int		fitsStatus;
 	fitsStatus	=	0;
 	fits_write_key(fitsFilePtr, TSTRING,	"COMMENT",
 											(char *)"https://fits.gsfc.nasa.gov/fits_dictionary.html",
+											NULL, &fitsStatus);
+
+	fitsStatus	=	0;
+	fits_write_key(fitsFilePtr, TSTRING,	"COMMENT",
+											(char *)"https://siril.readthedocs.io/en/stable/file-formats/FITS.html",
+											NULL, &fitsStatus);
+
+	fitsStatus	=	0;
+	fits_write_key(fitsFilePtr, TSTRING,	"COMMENT",
+											(char *)"FITS file format verified using:",
+											NULL, &fitsStatus);
+	fitsStatus	=	0;
+	fits_write_key(fitsFilePtr, TSTRING,	"COMMENT",
+											(char *)"https://fits.gsfc.nasa.gov/fits_verify.html",
 											NULL, &fitsStatus);
 
 

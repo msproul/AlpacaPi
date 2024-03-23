@@ -55,6 +55,11 @@ class ControllerSwitch: public Controller
 		virtual	void	AlpacaProcessSupportedActions(	const char	*deviceTypeStr,
 														const int	deviveNum,
 														const char	*valueString);
+//*	cannot use index readall due to switch numbers on the keyword strings
+//		virtual	bool	AlpacaProcessReadAllIdx(	const char	*deviceTypeStr,
+//													const int	deviceNum,
+//													const int	keywordEnum,
+//													const char	*valueString);
 		virtual	bool	AlpacaProcessReadAll(	const char	*deviceTypeStr,
 												const int	deviceNum,
 												const char	*keywordString,

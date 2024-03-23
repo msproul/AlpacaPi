@@ -171,6 +171,9 @@ int		tabOffset;
 void	WindowTabSwVersions::SetNewSelectedDevice(int deviceIndex)
 {
 int		iii;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+
 	if (deviceIndex >= 0)
 	{
 		//*	clear out previous selections
@@ -338,6 +341,7 @@ void	WindowTabSwVersions::ProcessDoubleClick(const int	widgetIdx,
 {
 int		deviceIdx;
 
+//	CONSOLE_DEBUG(__FUNCTION__);
 	deviceIdx	=	cFirstLineIdx + (widgetIdx - kSWversionsList_AlpacaDev_01);
 
 	if ((deviceIdx >= 0) && (deviceIdx < gAlpacaUnitCnt))
@@ -357,7 +361,6 @@ void	WindowTabSwVersions::ProcessMouseEvent(	const int	widgetIdx,
 												const int	yyy,
 												const int	flags)
 {
-
 //	CONSOLE_DEBUG_W_NUM("widgetIdx\t=", widgetIdx);
 	switch(event)
 	{
@@ -370,7 +373,7 @@ void	WindowTabSwVersions::ProcessMouseEvent(	const int	widgetIdx,
 			break;
 
 		case cv::EVENT_LBUTTONUP:
-			CONSOLE_DEBUG_W_NUM("EVENT_LBUTTONUP", widgetIdx);
+//			CONSOLE_DEBUG_W_NUM("EVENT_LBUTTONUP", widgetIdx);
 			cLeftButtonDown	=	false;
 			ProcessLineSelect(widgetIdx);
 			break;

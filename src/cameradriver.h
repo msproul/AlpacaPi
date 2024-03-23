@@ -587,7 +587,7 @@ class CameraDriver: public AlpacaDriver
 		uint32_t		CalculateMaxPixValue(void);
 		uint32_t		CalculateMinPixValue(void);
 		uint32_t		CountSaturationPixels(void);
-		float			CalculateSaturation(void);
+		double			CalculateSaturation(void);
 		float			CalculateHistogramMax(void);
 
 		//*****************************************************************************

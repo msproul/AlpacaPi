@@ -706,21 +706,14 @@ int				notHandledCnt;
 					{
 						dataWasHandled	=	true;
 					}
-					else
+
+					//*	one last try
+					if (dataWasHandled == false)
 					{
-//						CONSOLE_DEBUG_W_NUM("cAlpacaDeviceType    \t=", cAlpacaDeviceType);
-//						if (cAlpacaDeviceType == kDeviceType_Management)
-//						{
-//							CONSOLE_DEBUG_W_STR("deviceTypeStr\t=", deviceTypeStr);
-//							CONSOLE_DEBUG_W_2STR(	"Calling AlpacaProcessReadAll():",
-//													jsonParser.dataList[jjj].keyword,
-//													jsonParser.dataList[jjj].valueString);
-//						}
 						dataWasHandled	=	AlpacaProcessReadAll(	deviceTypeStr,
 																	deviceNum,
 																	jsonParser.dataList[jjj].keyword,
 																	jsonParser.dataList[jjj].valueString);
-//						CONSOLE_DEBUG_W_BOOL("dataWasHandled\t=", dataWasHandled);
 					}
 					if (dataWasHandled == false)
 					{
@@ -736,14 +729,13 @@ int				notHandledCnt;
 			}
 			else
 			{
-				//*	special debugging
-				if (cAlpacaDeviceType == kDeviceType_Telescope)
-				{
-					CONSOLE_DEBUG_W_2STR(	deviceTypeStr,
-											jsonParser.dataList[jjj].keyword,
-											jsonParser.dataList[jjj].valueString);
-				}
-
+//				//*	special debugging
+//				if (cAlpacaDeviceType == kDeviceType_Telescope)
+//				{
+//					CONSOLE_DEBUG_W_2STR(	deviceTypeStr,
+//											jsonParser.dataList[jjj].keyword,
+//											jsonParser.dataList[jjj].valueString);
+//				}
 			}
 		}
 	}

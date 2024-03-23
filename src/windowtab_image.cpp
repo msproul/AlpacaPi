@@ -34,6 +34,7 @@
 //*	Feb 28,	2023	<MLS> Added color schemes to cross hairs
 //*	Mar  4,	2023	<MLS> Added PGR (Purple, Gold, Red) cross hair color option
 //*	Sep  7,	2023	<MLS> Added Live vs Downloaded label to make it obvious
+//*	Mar 18,	2024	<MLS> Added SetImageFilePath()
 //*****************************************************************************
 
 #ifdef _ENABLE_CTRL_IMAGE_
@@ -48,6 +49,7 @@
 
 #include	"controller.h"
 #include	"controller_image.h"
+#include	"controller_skyimage.h"
 
 #include	"windowtab.h"
 #include	"windowtab_image.h"
@@ -75,6 +77,7 @@ int		iii;
 	cDisplayCrossHair		=	false;
 	cCurrCrossHairNum		=	0;
 	cCurrCrossHairColorSchm	=	0;
+	cImageFilePath[0]		=	0;
 	for (iii=0; iii<kCrossHairCnt; iii++)
 	{
 		cCrossHairPos[iii].XLocation	=	0;
@@ -85,7 +88,7 @@ int		iii;
 	SetupWindowControls();
 	ReadCrossHairList();
 	UpdateButtons();
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, "EXIT");
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, "EXIT");
 }
 
 //**************************************************************************************
@@ -135,32 +138,41 @@ int		btnCnt;
 	//------------------------------------------
 	yLoc	=	SetTitleBox(kImageDisplay_Title, -1, yLoc, "AlpacaPi project");
 
+	//*	Live or Downloaded indicator
+//	labelWidth	=	cWidth - (btnCnt * (cTitleHeight + 2));
+	labelWidth	=	cWidth - 10;
+	xLoc		=	5;
+	SetWidget(				kImageDisplay_LiveOrDownLoad,	xLoc,	yLoc,	labelWidth, cTitleHeight);
+	SetWidgetType(			kImageDisplay_LiveOrDownLoad, 	kWidgetType_TextBox);
+	SetWidgetText(			kImageDisplay_LiveOrDownLoad,	"---");
+	SetWidgetTextColor(		kImageDisplay_LiveOrDownLoad,	CV_RGB(0, 0, 0));
+	SetWidgetJustification(	kImageDisplay_LiveOrDownLoad, 	kJustification_Center);
+	SetWidgetFont(			kImageDisplay_LiveOrDownLoad, 	kFont_Medium);
+	yLoc			+=	cTitleHeight;
+	yLoc			+=	2;
+
 	//------------------------------------------
 	//*	do the buttons
 	xLoc			=	5;
 	buttonName[0]	=	'A';
 	buttonName[1]	=	0;
 	btnCnt			=	0;
+	boxWidth		=	3 * cTitleHeight;
 	for (iii=kImageDisplay_Btn_1; iii<=kImageDisplay_Btn_N; iii++)
 	{
-		SetWidget(				iii,	xLoc, yLoc, cTitleHeight, cTitleHeight);
+		SetWidget(				iii,	xLoc, yLoc, boxWidth, cTitleHeight);
 		SetWidgetType(			iii, 	kWidgetType_Button);
 		SetWidgetText(			iii,	buttonName);
 
-		xLoc	+=	cTitleHeight;
+		xLoc	+=	boxWidth;
 		xLoc	+=	2;
 
 		buttonName[0]++;
 		btnCnt++;
 	}
-	//*	Live or Downloaded indicator
-	labelWidth	=	cWidth - (btnCnt * (cTitleHeight + 2));
-	labelWidth	-=	10;
-	SetWidget(				kImageDisplay_LiveOrDownLoad,	xLoc,	yLoc,	labelWidth, cTitleHeight);
-	SetWidgetType(			kImageDisplay_LiveOrDownLoad, 	kWidgetType_TextBox);
-	SetWidgetText(			kImageDisplay_LiveOrDownLoad,	"---");
-	SetWidgetTextColor(		kImageDisplay_LiveOrDownLoad,	CV_RGB(0, 0, 0));
-	SetWidgetJustification(	kImageDisplay_LiveOrDownLoad, 	kJustification_Center);
+	SetWidgetText(			kImageDisplay_Btn_1,	"GIMP");
+	SetWidgetText(			kImageDisplay_Btn_2,	"Title");
+	SetWidgetText(			kImageDisplay_Btn_3,	"Save");
 
 	yLoc			+=	cTitleHeight;
 	yLoc			+=	2;
@@ -406,16 +418,23 @@ int		btnCnt;
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, "EXIT");
 }
 
+
+//*****************************************************************************
+void	WindowTabImage::SetImageFilePath(const char *imageFilePath)
+{
+	strcpy(cImageFilePath, imageFilePath);
+}
+
 //*****************************************************************************
 void	WindowTabImage::HandleKeyDown(const int keyPressed)
 {
 bool	updateFlag;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
-//	CONSOLE_DEBUG_W_HEX("keyPressed\t",	keyPressed);
+	CONSOLE_DEBUG_W_HEX("keyPressed\t",	keyPressed);
 
 	updateFlag	=	true;
-	switch(keyPressed & 0x7f)
+	switch(keyPressed & 0x0ffff)
 	{
 		case '.':
 			cHistogramPenSize++;
@@ -427,47 +446,85 @@ bool	updateFlag;
 			break;
 
 		case '0':
+		case 0x00FFB0:
 			ResetImage();
 			updateFlag	=	false;
 			break;
 
 		case '4':
+		case 0x00FFB4:
 			cImageCenterX	-=	100;
 			break;
 
 		case '6':
+		case 0x00FFB6:
 			cImageCenterX	+=	100;
 			break;
 
 		case '2':
+		case 0x00FFB2:
 			cImageCenterY	+=	100;
 			break;
 
 		case '8':
+		case 0x00FFB8:
 			cImageCenterY	-=	100;
 			break;
 
 		case '7':
+		case 0x00FFB7:
 			cImageCenterX	-=	100;
 			cImageCenterY	-=	100;
 			break;
 
 		case '9':
+		case 0x00FFB9:
 			cImageCenterX	+=	100;
 			cImageCenterY	-=	100;
 			break;
 
 		case '1':
+		case 0x00FFB1:
 			cImageCenterX	-=	100;
 			cImageCenterY	+=	100;
 			break;
 
 		case '3':
+		case 0x00FFB3:
 			cImageCenterX	+=	100;
 			cImageCenterY	+=	100;
 			break;
 
+#ifdef _ENABLE_SKYIMAGE_
+		case 0x00FF53:	//*	right arrow
+		case 0x00FF54:	//*	down arrow
+			CONSOLE_DEBUG_W_HEX("keyPressed\t",	keyPressed);
+			LoadNextImageFromList((ControllerImage *)cParentObjPtr);
+			//				 0x11FF53
+			CONSOLE_DEBUG_W_HEX("keyPressed\t",	keyPressed & 0x010000);
+			if (keyPressed & 0x010000)
+			{
+				CONSOLE_DEBUG("ResetImage");
+				ResetImage();
+				updateFlag	=	false;
+			}
+			break;
+
+		case 0x00FF51:	//*	left arrow
+		case 0x00FF52:	//*	up arrow
+			CONSOLE_DEBUG_W_HEX("keyPressed\t",	keyPressed);
+			LoadPreviousImageFromList((ControllerImage *)cParentObjPtr);
+			if (keyPressed & 0x010000)
+			{
+				CONSOLE_DEBUG("ResetImage");
+				ResetImage();
+				updateFlag	=	false;
+			}
+			break;
+#endif // _ENABLE_SKYIMAGE_
+
 		default:
+			CONSOLE_DEBUG_W_HEX("keyPressed\t",	keyPressed);
 			updateFlag	=	false;
 			break;
 	}
@@ -513,9 +570,37 @@ int		yWidgetIdx;
 //*****************************************************************************
 void	WindowTabImage::ProcessButtonClick(const int buttonIdx, const int flags)
 {
+char			commandString[512];
+int				systemRetCode;
+ControllerImage	*myParentContolerImage;
 
 	switch(buttonIdx)
 	{
+		case kImageDisplay_Btn_1:
+			strcpy(commandString, "gimp ");
+			strcat(commandString, cImageFilePath);
+			strcat(commandString, " &");
+			systemRetCode	=	system(commandString);
+
+			break;
+
+		case kImageDisplay_Btn_2:
+			myParentContolerImage	=	(ControllerImage *)cParentObjPtr;
+			myParentContolerImage->DrawTitleBlock();
+			ResetImage();
+			break;
+
+		case kImageDisplay_Btn_3:
+			myParentContolerImage	=	(ControllerImage *)cParentObjPtr;
+			myParentContolerImage->SaveImage();
+			break;
+
+		case kImageDisplay_Btn_4:
+		case kImageDisplay_Btn_5:
+		case kImageDisplay_Btn_6:
+			CONSOLE_DEBUG_W_NUM("kImageDisplay_\t=", buttonIdx);
+			break;
+
 		case kImageDisplay_SaveHistBtn:
 			SaveHistogram();
 			break;
@@ -569,6 +654,7 @@ void	WindowTabImage::ProcessButtonClick(const int buttonIdx, const int flags)
 			break;
 	}
 	UpdateButtons();
+	ForceWindowUpdate();
 }
 
 //*****************************************************************************
@@ -719,6 +805,7 @@ int		cursorYYoffset;
 	}
 }
 
+
 #if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 //**************************************************************************************
 void	WindowTabImage::DrawWidgetCustomGraphic(cv::Mat *openCV_Image, TYPE_WIDGET *theWidget, const int widgetIdx)
@@ -790,7 +877,7 @@ void	WindowTabImage::ResetImage(void)
 {
 //int	rowStepSize;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 	SetWidgetText(	kImageDisplay_ImageDisplayInfo,	"Full image");
 #if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 int	bytesPerPixel;

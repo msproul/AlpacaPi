@@ -112,6 +112,7 @@
 //*	Jul  1,	2023	<MLS> Added GetStatus_SubClass()
 //*	Nov 21,	2023	<MLS> Fixed HandleKeyDown() control functions, tolower is NOT working
 //*	Jan 19,	2024	<MLS> Added debug to widget def for debugging single widget
+//*	Mar 21,	2024	<MLS> Added DrawWidgetTextBox_MonoSpace()
 //*****************************************************************************
 
 
@@ -613,15 +614,15 @@ Controller::~Controller(void)
 int		iii;
 
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
-	CONSOLE_DEBUG_W_STR("Deleting window:\t", cWindowName);
-	CONSOLE_DEBUG_W_NUM("gControllerCnt\t=:", gControllerCnt);
+	CONSOLE_DEBUG_W_STR("Deleting window\t=", cWindowName);
+	CONSOLE_DEBUG_W_NUM("gControllerCnt \t=", gControllerCnt);
 
 	gControllerCnt--;
 	if (gControllerCnt < 0)
 	{
-		CONSOLE_DEBUG_W_NUM("Something is wrong, gControllerCnt is too low\t=:", gControllerCnt);
+		CONSOLE_DEBUG_W_NUM("Something is wrong, gControllerCnt is too low\t=", gControllerCnt);
 	}
-	CONSOLE_DEBUG_W_NUM("gControllerCnt\t=:", gControllerCnt);
+	CONSOLE_DEBUG_W_NUM("gControllerCnt\t=", gControllerCnt);
 #ifdef _USE_BACKGROUND_THREAD_
 	//*	we have to kill the background thread
 	int		threadCancelErr;
@@ -886,10 +887,10 @@ bool	enableReadAllDebug	=	false;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG_W_STR("Reading startup information for", cWindowName);
-	CONSOLE_DEBUG_W_NUM("cAlpacaDeviceType\t=", cAlpacaDeviceType);
-	CONSOLE_DEBUG_W_BOOL("cValidIPaddr    \t=", cValidIPaddr);
-	CONSOLE_DEBUG_W_BOOL("cHas_readall    \t=", cHas_readall);
-	CONSOLE_DEBUG_W_BOOL("cHas_DeviceState\t=", cHas_DeviceState);
+//	CONSOLE_DEBUG_W_NUM("cAlpacaDeviceType\t=", cAlpacaDeviceType);
+//	CONSOLE_DEBUG_W_BOOL("cValidIPaddr    \t=", cValidIPaddr);
+//	CONSOLE_DEBUG_W_BOOL("cHas_readall    \t=", cHas_readall);
+//	CONSOLE_DEBUG_W_BOOL("cHas_DeviceState\t=", cHas_DeviceState);
 
 //	if (cAlpacaDeviceType == kDeviceType_Management)
 //	{
@@ -936,6 +937,7 @@ bool	enableReadAllDebug	=	false;
 bool	Controller::AlpacaGetStatus_OneAAT(void)
 {
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+//	CONSOLE_ABORT(__FUNCTION__);
 	return(false);
 }
 
@@ -945,7 +947,7 @@ bool	Controller::AlpacaGetStatus(void)
 bool	validData;
 bool	previousOnLineState;
 
-//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 	previousOnLineState	=   cOnLine;
 	if (cHas_readall)
 	{
@@ -959,6 +961,11 @@ bool	previousOnLineState;
 	GetStatus_SubClass();
 	if (validData)
 	{
+		if (cOnLine == false)
+		{
+			//*	if we were previously off line, force reading startup again
+			cReadStartup	=	true;
+		}
 		cOnLine	=	true;
 	}
 	else
@@ -1026,6 +1033,7 @@ void	Controller::RunBackgroundTasks(const char *callingFunction, bool enableDebu
 		}
 	#endif
 		cReadStartup	=	false;
+		CONSOLE_DEBUG_W_BOOL("cReadStartup\t=", cReadStartup);
 	}
 
 
@@ -1772,6 +1780,10 @@ int		wheelMovement;
 	{
 		cCurrentTabObjPtr->ProcessMouseEvent(myWidgitIdx, event,  xxx,  yyy,  flags);
 	}
+	else
+	{
+		CONSOLE_DEBUG("cCurrentTabObjPtr is NULL");
+	}
 //	if (event == cv::EVENT_LBUTTONUP)
 //	{
 //		CONSOLE_DEBUG("exit");
@@ -1985,6 +1997,59 @@ void	Controller::DrawWidgetTextBox(TYPE_WIDGET *theWidget)
 	{
 		EraseWidgetBackground(theWidget);
 		DrawWidgetText(theWidget);
+	}
+}
+
+//**************************************************************************************
+void	Controller::DrawWidgetTextBox_MonoSpace(TYPE_WIDGET *theWidget)
+{
+char	shortLine[4];
+int		ccc;
+int		textLoc_X;
+int		textLoc_Y;
+int		textOffsetY;
+int		charSpacing;
+int		charOffset;
+
+	EraseWidgetBackground(theWidget);
+	cCurrentColor	=	theWidget->textColor;
+
+	textLoc_X		=	theWidget->left + 7;
+	textOffsetY	=	(theWidget->height / 2) - (cCurrentFontHeight / 2) + cCurrentFontBaseLine + 5;
+	textLoc_Y	=	theWidget->top + textOffsetY;
+
+	switch(theWidget->fontNum)
+	{
+		case kFont_Medium:
+			charSpacing	=	10;
+			break;
+
+		default:
+			charSpacing	=	8;
+			break;
+	}
+	ccc	=	0;
+	while (theWidget->textString[ccc] > 0)
+	{
+		shortLine[0]	=	theWidget->textString[ccc];
+		shortLine[1]	=	0;
+		switch(shortLine[0])
+		{
+			case 'I':
+			case 'i':
+			case 'J':
+			case 'j':
+			case 'l':	//*	lower case L
+				charOffset	=	2;
+				break;
+
+			default:
+				charOffset	=	0;
+				break;
+		}
+		LLG_DrawCString(textLoc_X + charOffset, textLoc_Y, shortLine, theWidget->fontNum);
+		textLoc_X	+=	charSpacing;
+		ccc++;
 	}
 }
 
@@ -2886,6 +2951,10 @@ cv::Rect		widgetRect;
 
 			case kWidgetType_ProessBar:
 				DrawWidgetProgressBar(theWidget);
+				break;
+
+			case kWidgetType_TextBox_MonoSpace:
+				DrawWidgetTextBox_MonoSpace(theWidget);
 				break;
 
 			case kWidgetType_TextBox:

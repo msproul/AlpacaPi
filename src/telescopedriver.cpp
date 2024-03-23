@@ -2647,6 +2647,7 @@ TYPE_ASCOM_STATUS	TelescopeDriver::Get_DestinationSideOfPier(	TYPE_GetPutRequest
 {
 TYPE_ASCOM_STATUS		alpacaErrCode;
 
+	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
 	alpacaErrCode	=	kASCOM_Err_NotImplemented;
 
 	return(alpacaErrCode);
@@ -3601,6 +3602,7 @@ char	dataString[256];
 		alpacaErrCode	=	Get_CanUnpark(				reqData, alpacaErrMsg, "CanUnpark");
 		alpacaErrCode	=	Get_Declination(			reqData, alpacaErrMsg, "Declination");
 		alpacaErrCode	=	Get_DeclinationRate(		reqData, alpacaErrMsg, "DeclinationRate");
+		alpacaErrCode	=	Get_DestinationSideOfPier(	reqData, alpacaErrMsg, "DestinationSideOfPier");
 		alpacaErrCode	=	Get_DoesRefraction(			reqData, alpacaErrMsg, "DoesRefraction");
 		alpacaErrCode	=	Get_EquatorialSystem(		reqData, alpacaErrMsg, "EquatorialSystem");
 		alpacaErrCode	=	Get_FocalLength(			reqData, alpacaErrMsg, "FocalLength");
@@ -3624,9 +3626,8 @@ char	dataString[256];
 		alpacaErrCode	=	Get_UTCdate(				reqData, alpacaErrMsg, "UTCdate");
 
 		//*	these are considered methods by ASCOM
-		alpacaErrCode	=	Get_AxisRates(				reqData, alpacaErrMsg, "AxisRates");
-		alpacaErrCode	=	Get_CanMoveAxis(			reqData, alpacaErrMsg, "CanMoveAxis");
-		alpacaErrCode	=	Get_DestinationSideOfPier(	reqData, alpacaErrMsg, "DestinationSideOfPier");
+//		alpacaErrCode	=	Get_AxisRates(				reqData, alpacaErrMsg, "AxisRates");
+//		alpacaErrCode	=	Get_CanMoveAxis(			reqData, alpacaErrMsg, "CanMoveAxis");
 
 		//===============================================================
 		JsonResponse_Add_String(mySocket,

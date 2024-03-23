@@ -101,6 +101,7 @@ SRC_DISCOVERY		=	./src_discovery/
 SRC_MOONRISE		=	./src_MoonRise/
 SRC_SERVO			=	./src_servo/
 SRC_PDS				=	./src_pds/
+SRC_SKYIMAGE		=	./src_skyimage/
 
 MLS_LIB_DIR			=	./src_mlsLib/
 OBJECT_DIR			=	./Objectfiles/
@@ -196,6 +197,7 @@ LINK			=	g++
 INCLUDES		=	-I/usr/include					\
 					-I/usr/local/include			\
 					-I$(SRC_DIR)					\
+					-I$(SRC_SKYIMAGE)				\
 					-I$(ASI_INCLUDE_DIR)			\
 					-I$(ATIK_INCLUDE_DIR)			\
 					-I$(ATIK_INCLUDE_DIR2)			\
@@ -270,6 +272,7 @@ LIVE_WINDOW_OBJECTS=										\
 				$(OBJECT_DIR)opencv_utils.o					\
 				$(OBJECT_DIR)windowtab.o					\
 				$(OBJECT_DIR)windowtab_about.o				\
+				$(OBJECT_DIR)windowtab_fitsheader.o			\
 				$(OBJECT_DIR)windowtab_image.o				\
 				$(OBJECT_DIR)windowtab_imageinfo.o			\
 				$(OBJECT_DIR)fits_opencv.o					\
@@ -1623,6 +1626,62 @@ topens		:									\
 					-o ror
 
 ######################################################################################
+#pragma mark topens_calib
+#	make topens_calib
+topens_calib		:	DEFINEFLAGS		+=	-D_ENABLE_DOME_
+topens_calib		:	DEFINEFLAGS		+=	-D_ENABLE_DOME_ROR_
+topens_calib		:	DEFINEFLAGS		+=	-D_ENABLE_WIRING_PI_
+topens_calib		:	DEFINEFLAGS		+=	-D_ENABLE_4RELAY_BOARD_
+topens_calib		:	DEFINEFLAGS		+=	-D_TOPENS_ROLL_OFF_ROOF_
+topens_calib		:	DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
+topens_calib		:	DEFINEFLAGS		+=	-D_ENABLE_CALIBRATION_
+topens_calib		:	DEFINEFLAGS		+=	-D_ENABLE_CALIBRATION_RPI_
+topens_calib		:								\
+					$(DRIVER_OBJECTS)				\
+					$(DOME_DRIVER_OBJECTS)			\
+					$(CALIBRATION_DRIVER_OBJECTS)	\
+					$(HELPER_OBJECTS)				\
+					$(SOCKET_OBJECTS)				\
+
+				$(LINK)								\
+					$(DRIVER_OBJECTS)				\
+					$(DOME_DRIVER_OBJECTS)			\
+					$(CALIBRATION_DRIVER_OBJECTS)	\
+					$(HELPER_OBJECTS)				\
+					$(SOCKET_OBJECTS)				\
+					-lpthread						\
+					-lwiringPi						\
+					-o ror
+
+######################################################################################
+steve : DEFINEFLAGS += -D_ENABLE_DOME_
+steve : DEFINEFLAGS += -D_ENABLE_DOME_ROR_
+steve : DEFINEFLAGS += -D_ENABLE_WIRING_PI_
+steve : DEFINEFLAGS += -D_ENABLE_4RELAY_BOARD_
+steve : DEFINEFLAGS += -D_TOPENS_ROLL_OFF_ROOF_
+steve : DEFINEFLAGS += -D_INCLUDE_MILLIS_
+steve : DEFINEFLAGS += -D_ENABLE_CALIBRATION_
+steve : DEFINEFLAGS += -D_ENABLE_CALIBRATION_RPI_
+steve : \
+	$(DRIVER_OBJECTS) \
+	$(DOME_DRIVER_OBJECTS) \
+	$(CALIBRATION_DRIVER_OBJECTS) \
+	$(HELPER_OBJECTS) \
+	$(SOCKET_OBJECTS) \
+
+	$(LINK)   \
+		$(DRIVER_OBJECTS) \
+		$(CALIBRATION_DRIVER_OBJECTS) \
+		$(DOME_DRIVER_OBJECTS) \
+		$(HELPER_OBJECTS) \
+		$(SOCKET_OBJECTS) \
+		-lpthread \
+		-lusb-1.0 \
+		-lwiringPi \
+		-o ror \
+
+
+######################################################################################
 #pragma mark rorpi2
 #rorpi2		:	DEFINEFLAGS		+=	-D_ENABLE_DOME_
 rorpi2		:	DEFINEFLAGS		+=	-D_ENABLE_DOME_ROR_
@@ -2749,6 +2808,7 @@ CONTROLLER_OBJECTS=												\
 				$(OBJECT_DIR)windowtab_dome.o					\
 				$(OBJECT_DIR)windowtab_drvrInfo.o				\
 				$(OBJECT_DIR)windowtab_filelist.o				\
+				$(OBJECT_DIR)windowtab_fitsheader.o				\
 				$(OBJECT_DIR)windowtab_graphs.o					\
 				$(OBJECT_DIR)windowtab_image.o					\
 				$(OBJECT_DIR)windowtab_imageinfo.o				\
@@ -3027,7 +3087,6 @@ SKYTRAVEL_OBJECTS=											\
 				$(OBJECT_DIR)AsteroidData.o					\
 				$(OBJECT_DIR)ConstellationData.o			\
 				$(OBJECT_DIR)controller_alpacaUnit.o		\
-				$(OBJECT_DIR)windowtab_libraries.o			\
 				$(OBJECT_DIR)controller_constList.o			\
 				$(OBJECT_DIR)controller_covercalib.o		\
 				$(OBJECT_DIR)controller_multicam.o			\
@@ -3063,8 +3122,10 @@ SKYTRAVEL_OBJECTS=											\
 				$(OBJECT_DIR)windowtab_covercalib.o			\
 				$(OBJECT_DIR)windowtab_deviceselect.o		\
 				$(OBJECT_DIR)windowtab_filterwheel.o		\
+				$(OBJECT_DIR)windowtab_fitsheader.o			\
 				$(OBJECT_DIR)windowtab_fov.o				\
 				$(OBJECT_DIR)windowtab_iplist.o				\
+				$(OBJECT_DIR)windowtab_libraries.o			\
 				$(OBJECT_DIR)windowtab_moon.o				\
 				$(OBJECT_DIR)windowtab_mount.o				\
 				$(OBJECT_DIR)windowtab_obscond.o			\
@@ -3579,6 +3640,44 @@ preview			:			$(PREVIEW_OBJECTS)
 							$(PREVIEW_OBJECTS)					\
 							$(OPENCV_LINK)						\
 							-o preview
+######################################################################################
+SKYIMAGE_OBJECTS=											\
+				$(OBJECT_DIR)alpacadriver_helper.o			\
+				$(OBJECT_DIR)controller.o					\
+				$(OBJECT_DIR)controller_image.o				\
+				$(OBJECT_DIR)controller_skyimage.o			\
+				$(OBJECT_DIR)cpu_stats.o					\
+				$(OBJECT_DIR)readconfigfile.o				\
+				$(OBJECT_DIR)commoncolor.o					\
+				$(OBJECT_DIR)fits_opencv.o					\
+				$(OBJECT_DIR)opencv_utils.o					\
+				$(OBJECT_DIR)windowtab.o					\
+				$(OBJECT_DIR)windowtab_about.o				\
+				$(OBJECT_DIR)windowtab_image.o				\
+				$(OBJECT_DIR)windowtab_imageinfo.o			\
+				$(OBJECT_DIR)windowtab_imageList.o			\
+				$(OBJECT_DIR)windowtab_fitsheader.o			\
+
+######################################################################################
+# make si skyimage
+si			:	DEFINEFLAGS		+=	-D_ENABLE_SKYIMAGE_
+si			:	DEFINEFLAGS		+=	-D_INCLUDE_CTRL_MAIN_
+si			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
+si	:			DEFINEFLAGS		+=	-D_ENABLE_NASA_PDS_
+
+si			:			$(SKYIMAGE_OBJECTS)					\
+						$(PDS_OBJECTS)						\
+						$(HELPER_OBJECTS)
+
+				$(LINK)  									\
+						$(SKYIMAGE_OBJECTS)					\
+						$(PDS_OBJECTS)						\
+						$(HELPER_OBJECTS)					\
+						$(OPENCV_LINK)						\
+						-L/usr/local/lib					\
+						-lpthread							\
+						-lcfitsio							\
+						-o skyimage
 
 
 ######################################################################################
@@ -4383,6 +4482,13 @@ $(OBJECT_DIR)windowtab_startup.o : 		$(SRC_DIR)windowtab_startup.cpp		\
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)windowtab_startup.cpp -o$(OBJECT_DIR)windowtab_startup.o
 
 #-------------------------------------------------------------------------------------
+$(OBJECT_DIR)windowtab_fitsheader.o : 	$(SRC_DIR)windowtab_fitsheader.cpp		\
+										$(SRC_DIR)windowtab_fitsheader.h		\
+										$(SRC_DIR)windowtab.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)windowtab_fitsheader.cpp -o$(OBJECT_DIR)windowtab_fitsheader.o
+
+
+#-------------------------------------------------------------------------------------
 $(OBJECT_DIR)controller_slit.o : 		$(SRC_DIR)controller_slit.cpp		\
 										$(SRC_DIR)controller_slit.h			\
 										$(SRC_DIR)windowtab_slit.h			\
@@ -5109,6 +5215,26 @@ $(OBJECT_DIR)servo_mc_core.o : 			$(SRC_SERVO)servo_mc_core.c	\
 										$(SRC_SERVO)servo_mc_core.h	\
 										$(SRC_SERVO)servo_std_defs.h
 	$(COMPILE) $(INCLUDES) $(SRC_SERVO)servo_mc_core.c -o$(OBJECT_DIR)servo_mc_core.o
+
+
+
+##################################################################################
+#		SkyImage stuff
+##################################################################################
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)controller_skyimage.o : 	$(SRC_SKYIMAGE)controller_skyimage.cpp	\
+										$(SRC_SKYIMAGE)controller_skyimage.h	\
+										$(SRC_DIR)controller.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYIMAGE)controller_skyimage.cpp -o$(OBJECT_DIR)controller_skyimage.o
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)windowtab_imageList.o : 	$(SRC_SKYIMAGE)windowtab_imageList.cpp	\
+										$(SRC_SKYIMAGE)windowtab_imageList.h	\
+										$(SRC_DIR)windowtab.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYIMAGE)windowtab_imageList.cpp -o$(OBJECT_DIR)windowtab_imageList.o
+
+
 
 ##################################################################################
 #		IMU source code

@@ -1,5 +1,5 @@
 //*****************************************************************************
-//*		skytravel_main.cpp		(c) 2021 by Mark Sproul
+//*		skytravel_main.cpp		(c) 2021-2024 by Mark Sproul
 //*
 //*		This is the main routine for creating controller windows
 //*
@@ -15,7 +15,7 @@
 //*	that you agree that the author(s) have no warranty, obligations or liability.  You
 //*	must determine the suitability of this source code for your use.
 //*
-//*	Redistributions of this source code must retain this copyright notice.
+//*	Re-distributions of this source code must retain this copyright notice.
 //*****************************************************************************
 //*	Edit History
 //*****************************************************************************

@@ -104,6 +104,8 @@
 //*	Jan 20,	2024	<MLS> Added SetWidgetBGColorSelected()
 //*	Jan 21,	2024	<MLS> Added ProcessLineSelect()
 //*	Feb  1,	2024	<MLS> Added LaunchWebRemoteDevice()
+//*	Mar 21,	2024	<MLS> Added kWidgetType_TextBox_MonoSpace
+//*	Mar 23,	2024	<MLS> Added LaunchWebURL()
 //*****************************************************************************
 
 
@@ -1252,6 +1254,7 @@ bool	widgetIsButton;
 			case kWidgetType_ScrollBar:
 			case kWidgetType_Slider:
 			case kWidgetType_TextBox:
+			case kWidgetType_TextBox_MonoSpace:
 			case kWidgetType_TextInput:
 			default:
 				widgetIsButton	=	false;
@@ -1416,8 +1419,10 @@ void	WindowTab::ProcessMouseEvent(	const int	widgetIdx,
 //
 #if (CV_MAJOR_VERSION >= 3)
 		case cv::EVENT_MOUSEWHEEL:
+//			CONSOLE_DEBUG("EVENT_MOUSEWHEEL");
 			break;
 		case cv::EVENT_MOUSEHWHEEL:
+//			CONSOLE_DEBUG("EVENT_MOUSEHWHEEL");
 			break;
 #endif
 		default:
@@ -1577,29 +1582,17 @@ void	WindowTab::UpdateOnScreenWidgetList(void)
 }
 
 
-////*****************************************************************************
-//void	WindowTab::LaunchWebURL(const char *urlString)
-//{
-//char	urlString[128];
-//
-//	strcpy(urlString, gWebBrowserCmdString);
-//	strcat(urlString, " ");
-//	strcat(urlString, "docs/");
-//	if (webpagestring != NULL)
-//	{
-//		strcat(urlString, webpagestring);
-//	}
-//	else if (strlen(cWebURLstring) > 0)
-//	{
-//		strcat(urlString, cWebURLstring);
-//	}
-//	else
-//	{
-//		strcat(urlString, "index.html");
-//	}
-////	CONSOLE_DEBUG(urlString);
-//	RunCommandLine(urlString);
-//}
+//*****************************************************************************
+void	WindowTab::LaunchWebURL(const char *urlString)
+{
+char	webCommandString[128];
+
+	strcpy(webCommandString, gWebBrowserCmdString);
+	strcat(webCommandString, " ");
+	strcat(webCommandString, urlString);
+//	CONSOLE_DEBUG(webCommandString);
+	RunCommandLine(webCommandString);
+}
 
 //*****************************************************************************
 void	WindowTab::LaunchWebRemoteDevice(const char *urlString)
@@ -2001,6 +1994,7 @@ int		iii;
 			case	kWidgetType_ScrollBar:
 			case	kWidgetType_Slider:
 			case	kWidgetType_TextBox:
+			case	kWidgetType_TextBox_MonoSpace:
 				SetWidgetBGColor(		iii,	gWT_ColorScheme.bgColor);
 				SetWidgetTextColor(		iii,	gWT_ColorScheme.fontColor);
 				SetWidgetBorderColor(	iii,	gWT_ColorScheme.borderColor);

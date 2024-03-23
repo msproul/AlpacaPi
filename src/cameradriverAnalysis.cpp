@@ -326,15 +326,15 @@ uint8_t			*imageDataPtr8bit;
 
 
 //**************************************************************************
-//*	Calculate the precentage of saturated pixels
+//*	Calculate the percentage of saturated pixels
 //*		for raw8, a saturated pixel is one that has a value of 255
 //*		for raw16, a saturated pixel is one that has a value of 65535
 //*		for RGB24, if any of the 3 RGB values is 255, then that pixel is at saturation
 //*	Return value is a percentage, (0.0 -> 100.0)
 //**************************************************************************
-float	CameraDriver::CalculateSaturation(void)
+double	CameraDriver::CalculateSaturation(void)
 {
-float			saturatedPrct;
+double			saturatedPrct;
 uint32_t		saturatedPixCnt;
 uint32_t		imageDataLen;
 

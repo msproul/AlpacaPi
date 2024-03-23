@@ -20,6 +20,18 @@
 //*	Feb 26,	2023	<MLS> Added histogram to image window
 //*	Feb 26,	2023	<MLS> Added CalculateHistogramArray()
 //*	Feb 28,	2023	<MLS> Added SaveHistogram()
+//*	Mar 15,	2024	<MLS> Changed handling of long file paths for name display
+//*	Mar 16,	2024	<MLS> Added ProcessFitsHeader()
+//*	Mar 17,	2024	<MLS> Added Title Block Info
+//*	Mar 18,	2024	<MLS> Added LoadImage()
+//*	Mar 18,	2024	<MLS> Added DrawTitleBlock()
+//*	Mar 19,	2024	<MLS> Added DrawTextString2()
+//*	Mar 19,	2024	<MLS> Added SaveImage()
+//*	Mar 21,	2024	<MLS> Added fits header window tab
+//*	Mar 23,	2024	<MLS> Added SetImageWindowTitles()
+//*	Mar 23,	2024	<MLS> Working on reading NASA PDS images (Planetary Data Systems)
+//*	Mar 23,	2024	<MLS> PDS Header data displaying properly
+//*	Mar 23,	2024	<MLS> Added IsFilePDS()
 //*****************************************************************************
 
 #ifdef _ENABLE_CTRL_IMAGE_
@@ -29,13 +41,18 @@
 #include	<unistd.h>
 #include	<string.h>
 
+#include	<fitsio.h>
+
 #include	"discovery_lib.h"
 #include	"sendrequest_lib.h"
 #include	"helper_functions.h"
 
 #include	"opencv_utils.h"
+#include	"file_utils.h"
+#include	"file_utils.c"
+#include	"fits_opencv.h"
 
-//#define _ENABLE_CONSOLE_DEBUG_
+#define _ENABLE_CONSOLE_DEBUG_
 //#define	_DEBUG_TIMING_
 #include	"ConsoleDebug.h"
 
@@ -48,23 +65,24 @@
 #include	"windowtab_about.h"
 
 #include	"fits_opencv.h"
+#include	"fits_helper.h"
+#include	"fits_helper.cpp"
 
 
 #include	"controller.h"
 #include	"controller_image.h"
 #include	"windowtab_imageinfo.h"
 
-
-
-
-extern char	gFullVersionString[];
-
+#ifdef _ENABLE_NASA_PDS_
+	#include	"PDS_ReadNASAfiles.h"
+#endif // _ENABLE_NASA_PDS_
 
 //**************************************************************************************
 enum
 {
 	kTab_Image	=	1,
 	kTab_ImageInfo,
+	kTab_FitsHeader,
 	kTab_About,
 
 	kTab_Count
@@ -107,17 +125,17 @@ ControllerImage::ControllerImage(	const char			*argWindowName,
 		GetBinaryElementTypeString(cBinaryImageHdr.ImageElementType,		elementTypeStr);
 		GetBinaryElementTypeString(cBinaryImageHdr.TransmissionElementType,	transmitTypeStr);
 
-		CONSOLE_DEBUG_W_NUM("MetadataVersion        \t=",	cBinaryImageHdr.MetadataVersion);
-		CONSOLE_DEBUG_W_NUM("ErrorNumber            \t=",	cBinaryImageHdr.ErrorNumber);
-		CONSOLE_DEBUG_W_NUM("ClientTransactionID    \t=",	cBinaryImageHdr.ClientTransactionID);
-		CONSOLE_DEBUG_W_NUM("ServerTransactionID    \t=",	cBinaryImageHdr.ServerTransactionID);
-		CONSOLE_DEBUG_W_NUM("DataStart              \t=",	cBinaryImageHdr.DataStart);
-		CONSOLE_DEBUG_W_STR("ImageElementType       \t=",	elementTypeStr);
-		CONSOLE_DEBUG_W_STR("TransmissionElementType\t=",	transmitTypeStr);
-		CONSOLE_DEBUG_W_NUM("Rank                   \t=",	cBinaryImageHdr.Rank);
-		CONSOLE_DEBUG_W_NUM("Dimension1             \t=",	cBinaryImageHdr.Dimension1);
-		CONSOLE_DEBUG_W_NUM("Dimension2             \t=",	cBinaryImageHdr.Dimension2);
-		CONSOLE_DEBUG_W_NUM("Dimension3             \t=",	cBinaryImageHdr.Dimension3);
+//		CONSOLE_DEBUG_W_NUM("MetadataVersion        \t=",	cBinaryImageHdr.MetadataVersion);
+//		CONSOLE_DEBUG_W_NUM("ErrorNumber            \t=",	cBinaryImageHdr.ErrorNumber);
+//		CONSOLE_DEBUG_W_NUM("ClientTransactionID    \t=",	cBinaryImageHdr.ClientTransactionID);
+//		CONSOLE_DEBUG_W_NUM("ServerTransactionID    \t=",	cBinaryImageHdr.ServerTransactionID);
+//		CONSOLE_DEBUG_W_NUM("DataStart              \t=",	cBinaryImageHdr.DataStart);
+//		CONSOLE_DEBUG_W_STR("ImageElementType       \t=",	elementTypeStr);
+//		CONSOLE_DEBUG_W_STR("TransmissionElementType\t=",	transmitTypeStr);
+//		CONSOLE_DEBUG_W_NUM("Rank                   \t=",	cBinaryImageHdr.Rank);
+//		CONSOLE_DEBUG_W_NUM("Dimension1             \t=",	cBinaryImageHdr.Dimension1);
+//		CONSOLE_DEBUG_W_NUM("Dimension2             \t=",	cBinaryImageHdr.Dimension2);
+//		CONSOLE_DEBUG_W_NUM("Dimension3             \t=",	cBinaryImageHdr.Dimension3);
 
 		SetWidgetNumber(kTab_ImageInfo, kImageInfo_MetadataVersionVal,			cBinaryImageHdr.MetadataVersion);
 		SetWidgetNumber(kTab_ImageInfo, kImageInfo_ErrorNumberVal,				cBinaryImageHdr.ErrorNumber);
@@ -164,37 +182,19 @@ ControllerImage::ControllerImage(	const char	*argWindowName,
 							kWindowWidth,
 							kWindowHeight)
 {
-#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
-	cv::Mat		*imageFromDisk;
-#else
-	IplImage	*imageFromDisk;
-#endif // _USE_OPENCV_CPP_
+//int		imagePathLen;
+//#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
+//	cv::Mat		*imageFromDisk;
+//#else
+//	IplImage	*imageFromDisk;
+//#endif // _USE_OPENCV_CPP_
 
-	CONSOLE_DEBUG(__FUNCTION__);
-	CONSOLE_DEBUG_W_STR("Setting image from disk", imageFilePath);;
+//	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG_W_STR("Setting image from disk", imageFilePath);
 	InitClassVariables();
 
-	if (imageFilePath != NULL)
-	{
-		imageFromDisk	=	ReadImageIntoOpenCVimage(imageFilePath);
-		if (imageFromDisk != NULL)
-		{
-			SetLiveWindowImage(imageFromDisk);
-			SetWidgetText(		kTab_Image, kImageDisplay_LiveOrDownLoad,	imageFilePath);
-			SetWidgetBGColor(	kTab_Image, kImageDisplay_LiveOrDownLoad,	CV_RGB(0,	200, 0));
-		}
-		else
-		{
-			CONSOLE_DEBUG_W_STR("Failed to read image from disk:", imageFilePath);
-		}
-	}
-	else
-	{
-		CONSOLE_DEBUG("Setting Live image");
-		SetWidgetText(		kTab_Image, kImageDisplay_LiveOrDownLoad,	"LIVE image!!!!!!!");
-		SetWidgetBGColor(	kTab_Image, kImageDisplay_LiveOrDownLoad,	CV_RGB(255,	255, 77));
-	}
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, "EXIT");
+	LoadImage(imageFilePath);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, "EXIT");
 }
 
 
@@ -207,7 +207,6 @@ ControllerImage::~ControllerImage(void)
 	SetWidgetImage(kTab_Image, kImageDisplay_ImageDisplay, NULL);
 #if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 //++	#warning "OpenCV++ not tested"
-	CONSOLE_DEBUG("OpenCV++ not finished!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 	//*	free up the image memory
 	if (cDownLoadedImage != NULL)
 	{
@@ -242,44 +241,56 @@ ControllerImage::~ControllerImage(void)
 	//*	delete the window tab objects
 	DELETE_OBJ_IF_VALID(cImageTabObjPtr);
 	DELETE_OBJ_IF_VALID(cImageInfoTabObjcPtr);
+	DELETE_OBJ_IF_VALID(cFitsHeaderTabObjPtr);
 	DELETE_OBJ_IF_VALID(cAboutBoxTabObjPtr);
 }
 
 //**************************************************************************************
 void	ControllerImage::InitClassVariables(void)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
-	cDownLoadedImage	=	NULL;
-	cDisplayedImage		=	NULL;
-	cColorImage			=	NULL;
+//	CONSOLE_DEBUG(__FUNCTION__);
+	memset((void *)&cBinaryImageHdr, 0, sizeof(TYPE_BinaryImageHdr));
+	memset((void *)&cFitsHeaderData, 0, sizeof(TYPE_FitsHeaderData));
+	strcpy(cFitsHeaderData.Location, "Shohola, PA");
+
+	memset((void *)&cFitsHeaderText, 0, (sizeof(TYPE_FitsHdrLine) * kMaxFitsHdrLines));
+	cFitsHdrCnt				=	0;
+
+
+	cDownLoadedImage		=	NULL;
+	cDisplayedImage			=	NULL;
+	cColorImage				=	NULL;
+	cImageFromDisk			=	false;
+	cImageIsFITS			=	false;
+	cImageIsPDS				=	false;
 
 	cImageTabObjPtr			=	NULL;
 	cImageInfoTabObjcPtr	=	NULL;
+	cFitsHeaderTabObjPtr	=	NULL;
 	cAboutBoxTabObjPtr		=	NULL;
 
-	strcpy(cImageFileName, "unkownimage");
+	strcpy(cImageFileName,		"unkownimage");
+	strcpy(cImageFileNameRoot,	"unkownimage");
 
-	CONSOLE_DEBUG_W_SIZE("sizeof(TYPE_BinaryImageHdr)", sizeof(TYPE_BinaryImageHdr));
-	memset((void *)&cBinaryImageHdr, 0, sizeof(TYPE_BinaryImageHdr));
+
+//	CONSOLE_DEBUG_W_SIZE("sizeof(TYPE_BinaryImageHdr)", sizeof(TYPE_BinaryImageHdr));
 
 	SetupWindowControls();
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, "EXIT");
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, "EXIT");
 }
 
 //**************************************************************************************
 void	ControllerImage::SetupWindowControls(void)
 {
 
-	CONSOLE_DEBUG(__FUNCTION__);
-	CONSOLE_DEBUG_W_NUM("cWidth        \t=",	cWidth);
+//	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG_W_NUM("cWidth        \t=",	cWidth);
 
 	SetTabCount(kTab_Count);
 
 	//---------------------------------------------------------------------
 	SetTabText(kTab_Image,		"Image");
-	CONSOLE_DEBUG(__FUNCTION__);
 	cImageTabObjPtr		=	new WindowTabImage(	cWidth, cHeight, cBackGrndColor, cWindowName);
-	CONSOLE_DEBUG(__FUNCTION__);
 	if (cImageTabObjPtr != NULL)
 	{
 		SetTabWindow(kTab_Image,	cImageTabObjPtr);
@@ -288,13 +299,19 @@ void	ControllerImage::SetupWindowControls(void)
 
 	//---------------------------------------------------------------------
 	SetTabText(kTab_ImageInfo,		"Image Info");
-	CONSOLE_DEBUG(__FUNCTION__);
 	cImageInfoTabObjcPtr		=	new WindowTabImageInfo(	cWidth, cHeight, cBackGrndColor, cWindowName, &cBinaryImageHdr);
-	CONSOLE_DEBUG(__FUNCTION__);
 	if (cImageInfoTabObjcPtr != NULL)
 	{
 		SetTabWindow(kTab_ImageInfo,	cImageInfoTabObjcPtr);
 		cImageInfoTabObjcPtr->SetParentObjectPtr(this);
+	}
+	//---------------------------------------------------------------------
+	SetTabText(kTab_FitsHeader,		"Fits/PDS Header");
+	cFitsHeaderTabObjPtr		=	new WindowTabFITSheader(	cWidth, cHeight, cBackGrndColor, cWindowName);
+	if (cFitsHeaderTabObjPtr != NULL)
+	{
+		SetTabWindow(kTab_FitsHeader,	cFitsHeaderTabObjPtr);
+		cFitsHeaderTabObjPtr->SetParentObjectPtr(this);
 	}
 
 	//---------------------------------------------------------------------
@@ -305,7 +322,206 @@ void	ControllerImage::SetupWindowControls(void)
 		SetTabWindow(kTab_About,	cAboutBoxTabObjPtr);
 		cAboutBoxTabObjPtr->SetParentObjectPtr(this);
 	}
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, "EXIT");
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, "EXIT");
+}
+
+//**************************************************************************************
+static bool	IsFilePDS(const char *extension)
+{
+bool	isPDS	=	false;
+
+	if ((strcasecmp(extension, ".img") == 0) ||
+		(strcasecmp(extension, ".imq") == 0) ||
+		(strcasecmp(extension, ".lbl") == 0) ||
+		(strcasecmp(extension, ".red") == 0) ||
+		(strcasecmp(extension, ".grn") == 0) ||
+		(strcasecmp(extension, ".sgr") == 0) ||
+		(strcasecmp(extension, ".vio") == 0))
+	{
+		isPDS	=	true;
+	}
+	return(isPDS);
+}
+
+//**************************************************************************************
+void	ControllerImage::SetImageWindowTitles(const char *imageFilePath)
+{
+int		imagePathLen;
+char	newFileName[1024];
+char	*slashPtr;
+int		sLen;
+int		ccc;
+
+	CONSOLE_DEBUG_W_STR("imageFilePath    \t=",	imageFilePath);
+	//*	isolate the file name from the path
+	//*	find the last "/" char and use that
+	strcpy(newFileName, "");
+	slashPtr	=	strchr((char *)imageFilePath, '/');
+	while (slashPtr != NULL)
+	{
+		slashPtr++;
+//			CONSOLE_DEBUG(slashPtr);
+		strcpy(newFileName, slashPtr);
+		slashPtr	=	strchr(slashPtr, '/');
+	}
+	strcpy(cImageFileName,		newFileName);
+	strcpy(cImageFileNameRoot,	newFileName);
+	//*	now remove the extension
+	sLen	=	strlen(cImageFileNameRoot);
+	ccc		=	sLen -1;
+	while ((cImageFileNameRoot[ccc] != '.') && (ccc > 0))
+	{
+		ccc--;
+	}
+	cImageFileNameRoot[ccc]	=	0;
+//	CONSOLE_DEBUG_W_STR("cImageFileName    \t=",	cImageFileName);
+//	CONSOLE_DEBUG_W_STR("cImageFileNameRoot\t=",	cImageFileNameRoot);
+
+	cImageTabObjPtr->SetImageFilePath(imageFilePath);
+
+	cImageFromDisk			=	true;
+	ExtractFileExtension(imageFilePath, cFileExtension);
+	//*	check for fits file
+	if ((strcasecmp(cFileExtension, ".fits") == 0) || (strcasecmp(cFileExtension, ".fit") == 0))
+	{
+		cImageIsFITS	=	true;
+	}
+	else
+	{
+		cImageIsPDS	=	IsFilePDS(cFileExtension);
+	}
+
+	CONSOLE_DEBUG_W_STR("cFileExtension\t=",	cFileExtension);
+	CONSOLE_DEBUG_W_BOOL("cImageIsFITS \t=",	cImageIsFITS);
+	CONSOLE_DEBUG_W_BOOL("cImageIsPDS  \t=",	cImageIsPDS);
+
+	imagePathLen	=	strlen(imageFilePath);
+	if (imagePathLen < 110)
+	{
+		SetWidgetText(	kTab_Image,			kImageDisplay_LiveOrDownLoad,	imageFilePath);
+		SetWidgetText(	kTab_FitsHeader,	kFitsHeader_FileName,			imageFilePath);
+	}
+	else
+	{
+	char	newFileName[1024];
+	char	*slashPtr;
+		//*	find the last "/" char and use that
+		slashPtr	=	strchr((char *)imageFilePath, '/');
+		while (slashPtr != NULL)
+		{
+			strcpy(newFileName, "...");
+			strcat(newFileName, slashPtr);
+			slashPtr++;
+			slashPtr	=	strchr(slashPtr, '/');
+		}
+		SetWidgetText(	kTab_Image,			kImageDisplay_LiveOrDownLoad,	newFileName);
+		SetWidgetText(	kTab_FitsHeader,	kFitsHeader_FileName,			newFileName);
+	}
+}
+
+//**************************************************************************************
+void	ControllerImage::LoadImage(const char *imageFilePath)
+{
+int		iii;
+
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
+	cv::Mat		*imageFromDisk;
+#else
+	IplImage	*imageFromDisk;
+#endif // _USE_OPENCV_CPP_
+
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
+	if (imageFilePath != NULL)
+	{
+		if (strlen(imageFilePath) > 5)
+		{
+			//*	free up the image memory
+			if (cDownLoadedImage != NULL)
+			{
+				CONSOLE_DEBUG("Deleting cDownLoadedImage!!!!!!!!!!!!!!!!!!!!!!!!");
+				delete cDownLoadedImage;
+				cDownLoadedImage	=	NULL;
+			}
+			if (cDisplayedImage != NULL)
+			{
+				CONSOLE_DEBUG("Deleting cDisplayedImage!!!!!!!!!!!!!!!!!!!!!!!!");
+				delete cDisplayedImage;
+				cDisplayedImage	=	NULL;
+			}
+			if (cColorImage != NULL)
+			{
+				CONSOLE_DEBUG("Deleting cColorImage!!!!!!!!!!!!!!!!!!!!!!!!");
+				delete cColorImage;
+				cColorImage	=	NULL;
+			}
+
+		#else
+			#error "No longer supported"
+		#endif	//
+			cImageFromDisk		=	false;
+			cImageIsFITS		=	false;
+			cImageIsPDS			=	false;
+
+			//--------------------------------------------------------
+			SetImageWindowTitles(imageFilePath);
+
+			if (cImageIsFITS)
+			{
+				imageFromDisk	=	ReadImageIntoOpenCVimage(imageFilePath);
+				if (imageFromDisk != NULL)
+				{
+					SetLiveWindowImage(imageFromDisk);
+
+					SetWidgetBGColor(	kTab_Image, kImageDisplay_LiveOrDownLoad,	CV_RGB(0,	200, 0));
+				}
+				else
+				{
+					CONSOLE_DEBUG_W_STR("Failed to read image from disk:", imageFilePath);
+				}
+				ProcessFitsHeader(imageFilePath);
+			}
+		#ifdef _ENABLE_NASA_PDS_
+			else if (cImageIsPDS)
+			{
+			bool			readOK;
+			PDS_header_data	pdsHeader;
+
+				imageFromDisk	=	ReadPDSimageIntoOpenCVimage(imageFilePath);
+				if (imageFromDisk != NULL)
+				{
+					SetLiveWindowImage(imageFromDisk);
+
+					SetWidgetBGColor(	kTab_Image, kImageDisplay_LiveOrDownLoad,	CV_RGB(0,	200, 0));
+				}
+				else
+				{
+					CONSOLE_DEBUG_W_STR("Failed to read image from disk:", imageFilePath);
+				}
+
+				readOK	=	PDS_ReadImage(imageFilePath, &pdsHeader);
+				for (iii=0; iii<pdsHeader.HeaderLineCnt; iii++)
+				{
+					CONSOLE_DEBUG(pdsHeader.HeaderData[iii].headerLine);
+					strcpy(cFitsHeaderText[iii].fitsLine, pdsHeader.HeaderData[iii].headerLine);
+				}
+				cFitsHdrCnt		=	pdsHeader.HeaderLineCnt;
+				cFitsHeaderTabObjPtr->SetFitsHeaderData(cFitsHeaderText, cFitsHdrCnt);
+				CONSOLE_DEBUG_W_NUM("cFitsHdrCnt  \t=",	cFitsHdrCnt);
+//				CONSOLE_ABORT(__FUNCTION__);
+			}
+		#endif // _ENABLE_NASA_PDS_
+		}
+		else
+		{
+			CONSOLE_DEBUG("Invalid file path");
+		}
+	}
+	else
+	{
+		CONSOLE_DEBUG("Setting Live image");
+		SetWidgetText(		kTab_Image, kImageDisplay_LiveOrDownLoad,	"LIVE image!!!!!!!");
+		SetWidgetBGColor(	kTab_Image, kImageDisplay_LiveOrDownLoad,	CV_RGB(255,	255, 77));
+	}
 }
 
 //**************************************************************************************
@@ -375,7 +591,7 @@ void	ControllerImage::DrawWidgetImage(TYPE_WIDGET *theWidget)
 	{
 		if (cImageTabObjPtr->cImageZoomState)
 		{
-			CONSOLE_DEBUG(__FUNCTION__);
+//			CONSOLE_DEBUG(__FUNCTION__);
 //			CONSOLE_DEBUG("Zoomed");
 			cImageTabObjPtr->DrawFullScaleIamge();
 			Controller::DrawWidgetImage(theWidget, cImageTabObjPtr->cOpenCVdisplayedImage);
@@ -402,10 +618,10 @@ int		reduceFactor;
 int		newImgWidth;
 int		newImgHeight;
 int		newImgBytesPerPixel;
-int		openCVerr;
+//int		openCVerr;
 bool	validImg;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	if (cDownLoadedImage != NULL)
 	{
@@ -430,7 +646,7 @@ bool	validImg;
 		newImgWidth			=	newOpenCVImage->cols;
 		newImgHeight		=	newOpenCVImage->rows;
 		newImgBytesPerPixel	=	newOpenCVImage->step[1];
-		CONSOLE_DEBUG_W_NUM("newImgBytesPerPixel\t=", newImgBytesPerPixel);
+//		CONSOLE_DEBUG_W_NUM("newImgBytesPerPixel\t=", newImgBytesPerPixel);
 		validImg			=	true;
 		if ((newImgWidth < 100) || (newImgWidth > 10000))
 		{
@@ -448,7 +664,7 @@ bool	validImg;
 		//--------------------------------------------------------------
 		if (validImg)
 		{
-			CONSOLE_DEBUG_W_NUM("newImgBytesPerPixel\t=", newImgBytesPerPixel);
+//			CONSOLE_DEBUG_W_NUM("newImgBytesPerPixel\t=", newImgBytesPerPixel);
 			cDownLoadedImage	=	ConvertImageToRGB(newOpenCVImage);
 
 			//*	the downloaded image needs to be copied and/or resized to the displayed image
@@ -920,7 +1136,6 @@ bool			imagesAreTheSame;
 //			CONSOLE_DEBUG("Updating image");
 			imagesAreTheSame	=	true;
 	#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
-		#warning "OpenCV++ not finished"
 			//*	check if width are the same
 			if (newOpenCVImage->cols != cDownLoadedImage->cols)
 			{
@@ -943,16 +1158,16 @@ bool			imagesAreTheSame;
 			{
 				imagesAreTheSame	=	false;
 				CONSOLE_DEBUG("Failed on rowStepSize");
-				CONSOLE_DEBUG_W_NUM("rowStepSize              \t=",	rowStepSize);
-				CONSOLE_DEBUG_W_NUM("cDownLoadedImage->step[0]\t=",	cDownLoadedImage->step[0]);
+				CONSOLE_DEBUG_W_NUM("rowStepSize              \t=",		rowStepSize);
+				CONSOLE_DEBUG_W_LONG("cDownLoadedImage->step[0]\t=",	cDownLoadedImage->step[0]);
 			}
 
 			if (bytesPerPixel != cDownLoadedImage->step[1])
 			{
 				imagesAreTheSame	=	false;
 				CONSOLE_DEBUG("Failed on bytesPerPixel");
-				CONSOLE_DEBUG_W_NUM("bytesPerPixel            \t=",	bytesPerPixel);
-				CONSOLE_DEBUG_W_NUM("cDownLoadedImage->step[1]\t=",	cDownLoadedImage->step[1]);
+				CONSOLE_DEBUG_W_NUM("bytesPerPixel            \t=",		bytesPerPixel);
+				CONSOLE_DEBUG_W_LONG("cDownLoadedImage->step[1]\t=",	cDownLoadedImage->step[1]);
 			}
 	#else
 			//*	check if width are the same
@@ -1338,7 +1553,405 @@ char			textString[32];
 void	ControllerImage::SaveHistogram(void)
 {
 	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG("Not finished!!!!!!!!!!!!!!!!!!!");
 
+}
+
+//*****************************************************************************
+//0123456789 123456789
+//OBJECT  = 'Moon    '           / Observation title
+//TELESCOP= 'Boller & Chivens-4-inch-Finder' / Telescope
+//*****************************************************************************
+static void	GetDataFromFitsLine(char *cardData, char *valueString)
+{
+int		jjj;
+int		ccc;
+
+//	CONSOLE_DEBUG_W_STR("cardData\t=",	cardData);
+	jjj		=	10;
+	ccc		=	0;
+	if (cardData[jjj] == '\'')
+	{
+		jjj++;
+		while ((cardData[jjj] != '\'') && (ccc < 64))
+		{
+			valueString[ccc]	=	cardData[jjj];
+			ccc++;
+			jjj++;
+		}
+		valueString[ccc]	=	0;
+	}
+	else
+	{
+		while (cardData[jjj] == 0x20)
+		{
+			jjj++;
+		}
+		while ((cardData[jjj] > 0x20) && (ccc < 64) && (cardData[jjj] != '\''))
+		{
+			valueString[ccc]	=	cardData[jjj];
+			ccc++;
+			jjj++;
+		}
+	}
+	valueString[ccc]	=	0;
+	StripTrailingSpaces(valueString);
+}
+
+//*****************************************************************************
+void	ControllerImage::ProcessFitsHeader(const char *imageFilePath)
+{
+fitsfile	*fptr;
+char		card[FLEN_CARD];
+char		valueString[FLEN_CARD];
+int			status;
+int			nkeys;
+int			iii;
+int			fitsKeyWordEnum;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+	cFitsHdrCnt	=	0;
+	status	=	0;	///* MUST initialize status
+	fits_open_file(&fptr, imageFilePath, READONLY, &status);
+	if (status == 0)
+	{
+		fits_get_hdrspace(fptr, &nkeys, NULL, &status);
+
+		for (iii = 1; iii <= nkeys; iii++)
+		{
+			status			=	0;
+			fits_read_record(fptr, iii, card, &status);	//* read fits record
+			card[80]		=	0;
+
+			//*	save the fits header text for display
+			if (cFitsHdrCnt < kMaxFitsHdrLines)
+			{
+				strcpy(cFitsHeaderText[cFitsHdrCnt].fitsLine, card);
+				cFitsHdrCnt++;
+			}
+
+			fitsKeyWordEnum	=	FITS_FindKeyWordEnum(card);
+			switch(fitsKeyWordEnum)
+			{
+				case kFitsKeyword_ApertureDiam:
+					GetDataFromFitsLine(card, valueString);
+					cFitsHeaderData.ApertureDiam	=	atof(valueString);
+//					CONSOLE_DEBUG_W_STR("kFitsKeyword_ApertureDiam   \t=", valueString);
+//					CONSOLE_DEBUG_W_DBL("cFitsHeaderData.ApertureDiam\t=", cFitsHeaderData.ApertureDiam);
+//					CONSOLE_DEBUG_W_DBL("cFitsHeaderData.FocalLength \t=", cFitsHeaderData.FocalLength);
+					if ((cFitsHeaderData.FocalRatio < 0.1) && (cFitsHeaderData.ApertureDiam > 0.0))
+					{
+						cFitsHeaderData.FocalRatio	=	cFitsHeaderData.FocalLength	 / cFitsHeaderData.ApertureDiam;
+						CONSOLE_DEBUG_W_DBL("cFitsHeaderData.FocalRatio\t=", cFitsHeaderData.FocalRatio);
+					}
+					break;
+
+				case kFitsKeyword_Camera:
+					GetDataFromFitsLine(card, valueString);
+					strcpy(cFitsHeaderData.Camera, valueString);
+					break;
+
+				case kFitsKeyword_CCDTEMP:
+					GetDataFromFitsLine(card, valueString);
+					strcat(valueString, " deg C");
+					SetWidgetText(	kTab_Image, kImageDisplay_CameraTemp, valueString);
+					break;
+
+				case kFitsKeyword_Date:
+					break;
+
+				case kFitsKeyword_EXPTIME:
+					GetDataFromFitsLine(card, valueString);
+					SetWidgetText(	kTab_Image, kImageDisplay_Exposure, valueString);
+					break;
+
+				case kFitsKeyword_Filter:
+					GetDataFromFitsLine(card, valueString);
+					SetWidgetText(	kTab_Image, kImageDisplay_Filter, valueString);
+					if (strcasecmp(valueString, "HA") == 0)
+					{
+						strcpy(cFitsHeaderData.Filter, "Hydrogen Alpha");
+					}
+					else if (strcasecmp(valueString, "Sii") == 0)
+					{
+						strcpy(cFitsHeaderData.Filter, "Sulphur 2");
+					}
+					else if (strcasecmp(valueString, "Oiii") == 0)
+					{
+						strcpy(cFitsHeaderData.Filter, "Oxygen 3");
+					}
+					else
+					{
+						strcpy(cFitsHeaderData.Filter, valueString);
+					}
+					break;
+
+				case kFitsKeyword_FRatio:
+					GetDataFromFitsLine(card, valueString);
+					cFitsHeaderData.FocalRatio	=	atof(valueString);
+					break;
+
+				case kFitsKeyword_FocalLength:
+					GetDataFromFitsLine(card, valueString);
+					cFitsHeaderData.FocalLength	=	atof(valueString);
+					break;
+
+				case kFitsKeyword_Gain:
+					GetDataFromFitsLine(card, valueString);
+					SetWidgetText(	kTab_Image, kImageDisplay_Gain, valueString);
+					break;
+
+				case kFitsKeyword_Location:
+					GetDataFromFitsLine(card, valueString);
+					strcpy(cFitsHeaderData.Location, valueString);
+					break;
+
+				case kFitsKeyword_MoonPhase:
+					GetDataFromFitsLine(card, valueString);
+					strcpy(cFitsHeaderData.MoonPhase, valueString);
+					break;
+
+				case kFitsKeyword_Object:
+					GetDataFromFitsLine(card, valueString);
+					SetWidgetText(	kTab_Image, kImageDisplay_Object, valueString);
+					strcpy(cFitsHeaderData.Object, valueString);
+					break;
+
+				case kFitsKeyword_Observer:
+					GetDataFromFitsLine(card, valueString);
+					strcpy(cFitsHeaderData.Observer, valueString);
+					break;
+
+				case kFitsKeyword_Observatory:
+					GetDataFromFitsLine(card, valueString);
+					strcpy(cFitsHeaderData.Observatory, valueString);
+					break;
+
+				case kFitsKeyword_Telescope:
+					GetDataFromFitsLine(card, valueString);
+					strcpy(cFitsHeaderData.Telescope, valueString);
+					if (strncasecmp(valueString, "Mt Wilson", 9) == 0)
+					{
+						strcpy(cFitsHeaderData.Location, "Mt Wilson, CA");
+					}
+					break;
+
+				case kFitsKeyword_TimeUTC:
+					GetDataFromFitsLine(card, valueString);
+					strcpy(cFitsHeaderData.Time_UTC, valueString);
+					break;
+
+				case kFitsKeyword_TimeLocal:
+					GetDataFromFitsLine(card, valueString);
+					strcpy(cFitsHeaderData.Time_Local, valueString);
+					break;
+
+				case kFitsKeyword_WebSite:
+					GetDataFromFitsLine(card, valueString);
+					strcpy(cFitsHeaderData.Website, valueString);
+					break;
+
+				case -1:
+					break;
+
+				default:
+					CONSOLE_DEBUG_W_NUM("fitsKeyWordEnum\t=", fitsKeyWordEnum);
+					break;
+
+			}
+		}
+		strcpy(cFitsHeaderText[cFitsHdrCnt].fitsLine, "END");
+		cFitsHdrCnt++;
+		cFitsHeaderTabObjPtr->SetFitsHeaderData(cFitsHeaderText, cFitsHdrCnt);
+	}
+	else
+	{
+		CONSOLE_DEBUG_W_STR("Failed to open", imageFilePath);
+	}
+	status	=	0;	///* MUST initialize status
+	fits_close_file(fptr, &status);
+
+	if (status)				//* print any error messages
+	{
+		fits_report_error(stderr, status);
+	}
+}
+
+//*****************************************************************************
+void	ControllerImage::DrawTextString2(	const int	xxLoc1,
+											const int	xxLoc2,
+											const int	yyLoc,
+											const char	*textString1,
+											const char	*textString2)
+{
+cv::Point	textLoc;
+cv::Scalar	fontColor	=	CV_RGB(255,255,255);
+double		fontScale	=	3.0;
+
+	textLoc.x	=	xxLoc1;
+	textLoc.y	=	yyLoc;
+	cv::putText(	*cDownLoadedImage,
+					textString1,
+					textLoc,
+					cv::FONT_HERSHEY_SIMPLEX,		//	gFontInfo[curFontNum].fontID,
+					fontScale,						//	gFontInfo[curFontNum].scale,
+					fontColor,
+					6								//	gFontInfo[curFontNum].thickness
+					);
+
+
+	textLoc.x	=	xxLoc2;
+	textLoc.y	=	yyLoc;
+	cv::putText(	*cDownLoadedImage,
+					textString2,
+					textLoc,
+					cv::FONT_HERSHEY_SIMPLEX,		//	gFontInfo[curFontNum].fontID,
+					fontScale,						//	gFontInfo[curFontNum].scale,
+					fontColor,
+					6								//	gFontInfo[curFontNum].thickness
+					);
+
+//	cv::putText(	*cDisplayedImage,
+//					textString,
+//					textLoc,
+//					cv::FONT_HERSHEY_PLAIN,		//	gFontInfo[curFontNum].fontID,
+//					fontScale,						//	gFontInfo[curFontNum].scale,
+//					fontColor,
+//					2							//	gFontInfo[curFontNum].thickness
+//					);
+}
+
+
+//*****************************************************************************
+void	ControllerImage::DrawTitleBlock(void)
+{
+int			xxLoc1;
+int			xxLoc2;
+int			yyLoc;
+char		theString[128];
+int			deltaY	=	100;
+//cv::Scalar	fontColor;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+
+	xxLoc1	=	75;
+	xxLoc2	=	700;
+	yyLoc	=	100;
+	if (strlen(cFitsHeaderData.Object) > 0)
+	{
+		DrawTextString2(xxLoc1,	xxLoc2, yyLoc,	"Object:",	cFitsHeaderData.Object);
+		yyLoc	+=	deltaY;
+
+		//*	check to see if the object is the Moon
+		if (strcasecmp(cFitsHeaderData.Object, "Moon") == 0)
+		{
+			if (strlen(cFitsHeaderData.MoonPhase) > 0)
+			{
+				DrawTextString2(xxLoc1,	xxLoc2, yyLoc,	"MoonPhase:",	cFitsHeaderData.MoonPhase);
+				yyLoc	+=	deltaY;
+			}
+		}
+	}
+	if (strlen(cFitsHeaderData.Time_UTC) > 0)
+	{
+		DrawTextString2(xxLoc1,	xxLoc2, yyLoc,	"Date/Time:",	cFitsHeaderData.Time_UTC);
+		yyLoc	+=	deltaY;
+	}
+	if (strlen(cFitsHeaderData.Camera) > 0)
+	{
+		DrawTextString2(xxLoc1,	xxLoc2, yyLoc,	"Camera:",	cFitsHeaderData.Camera);
+		yyLoc	+=	deltaY;
+	}
+	if (strlen(cFitsHeaderData.Filter) > 0)
+	{
+		DrawTextString2(xxLoc1,	xxLoc2, yyLoc,	"Filter:",	cFitsHeaderData.Filter);
+		yyLoc	+=	deltaY;
+	}
+	if (strlen(cFitsHeaderData.Telescope) > 0)
+	{
+		DrawTextString2(xxLoc1,	xxLoc2, yyLoc,	"Telescope:",	cFitsHeaderData.Telescope);
+		yyLoc	+=	deltaY;
+	}
+	if (cFitsHeaderData.FocalRatio > 1.0)
+	{
+		sprintf(theString, "%3.2f", cFitsHeaderData.FocalRatio);
+		DrawTextString2(xxLoc1,	xxLoc2, yyLoc,	"F-Ratio:",	theString);
+		yyLoc	+=	deltaY;
+	}
+	if (strlen(cFitsHeaderData.Observer) > 0)
+	{
+		DrawTextString2(xxLoc1,	xxLoc2, yyLoc,	"Observer:",	cFitsHeaderData.Observer);
+		yyLoc	+=	deltaY;
+	}
+	if (strlen(cFitsHeaderData.Observatory) > 0)
+	{
+		DrawTextString2(xxLoc1,	xxLoc2, yyLoc,	"Observatory:",	cFitsHeaderData.Observatory);
+		yyLoc	+=	deltaY;
+	}
+	if (strlen(cFitsHeaderData.Location) > 0)
+	{
+		DrawTextString2(xxLoc1,	xxLoc2, yyLoc,	"Location:",	cFitsHeaderData.Location);
+		yyLoc	+=	deltaY;
+	}
+	if (strlen(cFitsHeaderData.Website) > 0)
+	{
+		DrawTextString2(xxLoc1,	xxLoc2, yyLoc,	"Website:",	cFitsHeaderData.Website);
+		yyLoc	+=	deltaY;
+	}
+}
+
+//*****************************************************************************
+void	ControllerImage::SaveImage(void)
+{
+char		outputFileName[256];
+int			openCVerr;
+cv::Mat		*smallImage;
+int			smallDispalyWidth;
+int			smallDisplayHeight;
+int			reduceFactor;
+int			maxWindowWidth	=	1000;
+int			maxWindowHeight	=	800;
+
+	strcpy(outputFileName, cImageFileNameRoot);
+	strcat(outputFileName, "-si");
+	strcat(outputFileName, ".jpg");
+	openCVerr	=	cv::imwrite(outputFileName, *cDownLoadedImage);
+
+	//-----------------------------------------------------------------------
+	//*	create a small image
+
+	//*	calculate the size for the small image
+	reduceFactor		=	1;
+	smallDispalyWidth	=	cDownLoadedImage->cols;
+	smallDisplayHeight	=	cDownLoadedImage->rows;
+
+
+	while ((smallDispalyWidth > maxWindowWidth) || (smallDisplayHeight > (maxWindowHeight - 50)))
+	{
+		reduceFactor++;
+		smallDispalyWidth	=	cDownLoadedImage->cols / reduceFactor;
+		smallDisplayHeight	=	cDownLoadedImage->rows / reduceFactor;
+//		CONSOLE_DEBUG_W_NUM("smallDisplayHeight\t=", smallDisplayHeight);
+	}
+
+	smallImage	=	new cv::Mat(cv::Size(	smallDispalyWidth,
+											smallDisplayHeight),
+											CV_8UC3);
+	if (smallImage != NULL)
+	{
+		cv::resize(	*cDownLoadedImage,
+					*smallImage,
+					smallImage->size(),
+					0,
+					0,
+					cv::INTER_LINEAR);
+		strcpy(outputFileName, cImageFileNameRoot);
+		strcat(outputFileName, "-si-small");
+		strcat(outputFileName, ".jpg");
+		openCVerr	=	cv::imwrite(outputFileName, *smallImage);
+
+		delete smallImage;
+	}
 }
 
 #endif // _ENABLE_CTRL_IMAGE_

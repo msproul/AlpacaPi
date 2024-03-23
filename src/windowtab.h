@@ -178,6 +178,7 @@ class WindowTab
 		virtual	void	UpdateOnScreenWidgetList(void);
 		virtual	void	LaunchWebRemoteDevice(const char *urlString = NULL);
 		virtual	void	LaunchWebHelp(const char *webpagestring = NULL);
+				void	LaunchWebURL(const char *urlString);
 				char	cWebURLstring[64];
 
 				void	CloseWindow(void);

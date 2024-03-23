@@ -1,3 +1,4 @@
+//**************************************************************************************
 //#include	"opencv_utils.h"
 
 #ifndef _OPENCV_UTILS_H_
@@ -30,9 +31,6 @@ void	LLG_FillRect(	IplImage	*openCV_Image,
 						int			width,
 						int			height,
 						CvScalar	fillColor);
-
-
-
 #endif // _USE_OPENCV_CPP_
 
 #endif // _OPENCV_UTILS_H_

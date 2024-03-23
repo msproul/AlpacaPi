@@ -273,14 +273,15 @@ bool	ControllerFilterWheel::AlpacaProcessReadAllIdx(	const char	*deviceTypeStr,
 int		argValueInt;
 bool	dataWasHandled	=	true;
 
-	CONSOLE_DEBUG("New version of AlpacaProcessReadAllIdx(), with enum");
-	CONSOLE_DEBUG_W_NUM("keywordEnum\t=", keywordEnum);
-	CONSOLE_DEBUG_W_STR("valueString\t=", valueString);
+//	CONSOLE_DEBUG("New version of AlpacaProcessReadAllIdx(), with enum");
+//	CONSOLE_DEBUG_W_NUM("keywordEnum\t=", keywordEnum);
+//	CONSOLE_DEBUG_W_STR("valueString\t=", valueString);
 	argValueInt	=	atoi(valueString);
 	switch(keywordEnum)
 	{
 		case kCmd_Filterwheel_focusoffsets:	//*	Filter focus offsets
 		case kCmd_Filterwheel_names:		//*	Filter wheel filter names
+			dataWasHandled	=	true;
 			break;
 
 		case kCmd_Filterwheel_position:		//*	GET-Returns the current filter wheel position
@@ -300,6 +301,7 @@ bool	dataWasHandled	=	true;
 
 		case kCmd_Filterwheel_Extras:
 		case kCmd_Filterwheel_readall:
+			dataWasHandled	=	true;
 			break;
 
 		default:

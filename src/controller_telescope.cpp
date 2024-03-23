@@ -30,6 +30,9 @@
 //*	Jul 14,	2023	<MLS> Added UpdateOnlineStatus() to Telescope controller
 //*	Jan 15,	2024	<MLS> Added Update_TelescopeSideOfPier()
 //*	Jan 16,	2024	<MLS> Changed AlpacaGetStatus() to GetStatus_SubClass()
+//*	Mar 10,	2024	<MLS> Added AlpacaGetStartupData_OneAAT() to telescope controller
+//*	Mar 10,	2024	<MLS> Added GetStartUpData_SubClass() to telescope controller
+//*	Mar 17,	2024	<MLS> Cleaned up GetStatus_SubClass()
 //*****************************************************************************
 
 #ifdef _ENABLE_CTRL_TELESCOPE_
@@ -228,6 +231,7 @@ void	ControllerTelescope::UpdateCommonProperties(void)
 	SetWidgetNumber(kTab_DriverInfo,	kDriverInfo_InterfaceVersion,	cCommonProp.InterfaceVersion);
 }
 
+
 //**************************************************************************************
 void	ControllerTelescope::UpdateStartupData(void)
 {
@@ -244,14 +248,14 @@ void	ControllerTelescope::UpdateConnectedStatusIndicator(void)
 //**************************************************************************************
 void	ControllerTelescope::UpdateStatusData(void)
 {
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 	UpdateConnectedIndicator(kTab_TelescopCtl,	kTelescope_Connected);
 }
 
 //*****************************************************************************
 //*	this routine gets called one time to get the info on the telescope that does not change
 //*****************************************************************************
-bool	ControllerTelescope::AlpacaGetStartupData(void)
+void	ControllerTelescope::GetStartUpData_SubClass(void)
 {
 bool	validData;
 //char	returnString[256];
@@ -294,6 +298,26 @@ bool	validData;
 		CONSOLE_ABORT(__FUNCTION__);
 	}
 
+//	return(validData);
+}
+
+
+//*****************************************************************************
+bool	ControllerTelescope::AlpacaGetStartupData_OneAAT(void)
+{
+bool			validData;
+
+	validData	=	AlpacaGetStartupData_TelescopeOneAAT();
+	return(validData);
+}
+
+//*****************************************************************************
+bool	ControllerTelescope::AlpacaGetStatus_OneAAT(void)
+{
+bool			validData;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+	validData	=	AlpacaGetStatus_TelescopeOneAAT();
 	return(validData);
 }
 
@@ -391,48 +415,17 @@ void	ControllerTelescope::GetStatus_SubClass(void)
 bool	validData;
 bool	previousOnLineState;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
-	previousOnLineState	=	cOnLine;
-	if (cHas_readall)
+	//*	update the window tabs with everything
+	if (cTelescopeTabObjPtr != NULL)
 	{
-		validData	=	AlpacaGetStatus_ReadAll("telescope", cAlpacaDevNum);
+		cTelescopeTabObjPtr->UpdateTelescopeInfo(&cTelescopeProp, false);
 	}
-	else
+	if (cTeleSettingsTabObjPtr != NULL)
 	{
-		validData	=	AlpacaGetStatus_TelescopeOneAAT();
-		validData	=	AlpacaGetCommonConnectedState("telescope");
-	}
-
-
-	if (validData)
-	{
-		if (cOnLine == false)
-		{
-			//*	if we were previously off line, force reading startup again
-			cReadStartup	=	true;
-		}
-		cOnLine	=	true;
-
-		//*	update the window tabs with everything
-		if (cTelescopeTabObjPtr != NULL)
-		{
-			cTelescopeTabObjPtr->UpdateTelescopeInfo(&cTelescopeProp, false);
-		}
-		if (cTeleSettingsTabObjPtr != NULL)
-		{
-			//*	false means only update the dynamic properties
-			cTeleSettingsTabObjPtr->UpdateTelescopeInfo(&cTelescopeProp, false);
-		}
-	}
-	else
-	{
-		cOnLine	=	false;
-	}
-
-	if (cOnLine != previousOnLineState)
-	{
-		SetWindowIPaddrInfo(NULL, cOnLine);
+		//*	false means only update the dynamic properties
+		cTeleSettingsTabObjPtr->UpdateTelescopeInfo(&cTelescopeProp, false);
 	}
 
 	//*	does this device have "DeviceState"
@@ -440,10 +433,6 @@ bool	previousOnLineState;
 	{
 	//	AlpacaGetStatus_DeviceState();
 	}
-
-	cLastUpdate_milliSecs	=	millis();
-	cFirstDataRead			=	false;
-//	return(validData);
 }
 
 //**************************************************************************************

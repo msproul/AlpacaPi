@@ -225,6 +225,7 @@ class Controller
 				void	DrawWidgetText(TYPE_WIDGET *theWidget, int horzOffset=0, int vertOffset=0);
 				void	DrawWidgetTextBox(TYPE_WIDGET *theWidget);
 				void	DrawWidgetTextWithTabs(TYPE_WIDGET *theWidget);
+				void	DrawWidgetTextBox_MonoSpace(TYPE_WIDGET *theWidget);
 
 				void	DisplayButtonHelpText(const int buttonIdx);
 
@@ -449,11 +450,11 @@ class Controller
 
 				bool	AlpacaSetConnected(const char *deviceTypeStr, const bool newConnectedState=true);
 				bool	AlpacaGetCommonProperties_OneAAT(const char *deviceTypeStr);
-		virtual	bool	AlpacaGetStartupData_OneAAT(void);
 				bool	AlpacaGetCommonConnectedState(const char *deviceTypeStr);
 
 
 		virtual	bool	AlpacaGetStartupData(void);
+		virtual	bool	AlpacaGetStartupData_OneAAT(void);
 		virtual	void	AlpacaProcessSupportedActions(	const char	*deviceTypeStr,
 														const int	deviveNum,
 														const char	*valueString);

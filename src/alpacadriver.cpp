@@ -4727,7 +4727,7 @@ int	imu_ReturnCode;
 	DEBUG_TIMING(__FUNCTION__);
 
 	//========================================================================================
-	CONSOLE_DEBUG("Starting main loop --------------------------------------------------------");
+	CONSOLE_DEBUG("Starting main loop -----------------------------------------");
 	gKeepRunning	=	true;
 	mainLoopCntr	=	0;
 	while (gKeepRunning)

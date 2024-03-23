@@ -255,7 +255,6 @@ bool	dataWasHandled;
 
 		case kCmd_Telescope_tracking:				//*	Indicates whether the telescope is tracking.
 			cTelescopeProp.Tracking	=	IsTrueFalse(valueString);
-//			CONSOLE_DEBUG_W_BOOL("cTelescopeProp.Tracking\t=", cTelescopeProp.Tracking);
 			break;
 
 		case kCmd_Telescope_trackingrate:			//*	Returns the current tracking rate.
@@ -282,7 +281,6 @@ bool	dataWasHandled;
 		//---------------------------------------------------------------
 		//*	added by MLS
 		case kCmd_Telescope_hourangle:
-//			CONSOLE_DEBUG("kCmd_Telescope_hourangle");
 			cTelescopeProp.hourAngleIsValid	=	true;
 			cTelescopeProp.HourAngle		=	AsciiToDouble(valueString);
 			if (cTelescopeProp.HourAngle < 0.0)
@@ -293,14 +291,10 @@ bool	dataWasHandled;
 
 		case kCmd_Telescope_HourAngleDegrees:
 			cTelescopeProp.HourAngle_deg	=	AsciiToDouble(valueString);
-//			CONSOLE_DEBUG_W_STR("HourAngle_deg\y=",	valueString);
-//			CONSOLE_DEBUG_W_DBL("HourAngle_deg\y=",	cTelescopeProp.HourAngle_deg);
 			MountData_SaveData(kMountData_HA, cTelescopeProp.HourAngle_deg);
 			break;
 
 		case kCmd_Telescope_physicalsideofpier:
-//			CONSOLE_DEBUG("kCmd_Telescope_physicalsideofpier");
-//			CONSOLE_DEBUG_W_STR("json=",	valueString);
 			cTelescopeProp.PhysicalSideOfPier	=	(TYPE_PierSide)atoi(valueString);
 			Update_TelescopeSideOfPier();
 			break;
@@ -308,21 +302,18 @@ bool	dataWasHandled;
 		//*	returns array of 3 (roll, pitch, yaw) acceleration vectors
 		case kCmd_Telescope_imu:
 //			CONSOLE_DEBUG("kCmd_Telescope_imu");
-			CONSOLE_DEBUG_W_STR("json=",	valueString);
 			break;
 
 		case kCmd_Telescope_IMU_Roll:
-//			CONSOLE_DEBUG_W_STR("kCmd_Telescope_IMU_Roll=",	valueString);
+			CONSOLE_DEBUG("kCmd_Telescope_IMU_Roll");
 			cTelescopeProp.IMU_Roll		=	atof(valueString);
 			break;
 
 		case kCmd_Telescope_IMU_Pitch:
-//			CONSOLE_DEBUG_W_STR("kCmd_Telescope_IMU_Pitch=",	valueString);
 			cTelescopeProp.IMU_Pitch	=	atof(valueString);
 			break;
 
 		case kCmd_Telescope_IMU_Yaw:
-//			CONSOLE_DEBUG_W_STR("kCmd_Telescope_IMU_Yaw=",	valueString);
 			cTelescopeProp.IMU_Yaw		=	atof(valueString);
 			break;
 

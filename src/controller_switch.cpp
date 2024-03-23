@@ -95,6 +95,8 @@ ControllerSwitch::ControllerSwitch(	const char			*argWindowName,
 int		iii;
 
 	memset((void *)&cSwitchProp, 0, sizeof(TYPE_SwitchProperties));
+
+
 	cSwitchProp.MaxSwitch	=	8;
 	cFirstDataRead			=	true;
 	cLastUpdate_milliSecs	=	millis();
@@ -398,7 +400,7 @@ int				boxNumber;
 void	ControllerSwitch::GetStatus_SubClass(void)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
-	//*	if cHas_readall is false, AlpacaGetStatus_OneAAT gets called from the parrent class
+	//*	if cHas_readall is false, AlpacaGetStatus_OneAAT gets called from the parent class
 	if (cHas_readall)
 	{
 		AlpacaGetStatus_OneAAT();
@@ -552,6 +554,9 @@ cv::Scalar	txtColor;
 	SetWidgetTextColor(	kTab_DriverInfo,	kDriverInfo_IPaddr,		txtColor);
 }
 
+
+//*****************************************************************************
+//*	cannot use index readall due to switch numbers on the keyword strings
 //*****************************************************************************
 bool	ControllerSwitch::AlpacaProcessReadAll(	const char	*deviceTypeStr,
 												const int	deviceNum,
@@ -566,6 +571,7 @@ bool		dataWasHandled	=	true;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 //	CONSOLE_DEBUG_W_STR(keywordString, valueString);
+//	CONSOLE_ABORT(__FUNCTION__);
 	if (strcasecmp(keywordString, "connected") == 0)
 	{
 		cCommonProp.Connected	=  IsTrueFalse(valueString);

@@ -53,7 +53,10 @@ class ControllerTelescope: public Controller
 		virtual	void	UpdateConnectedStatusIndicator(void);
 		virtual	void	UpdateStatusData(void);
 		virtual	void	UpdateOnlineStatus(void);
-		virtual	bool	AlpacaGetStartupData(void);
+		virtual	void	GetStartUpData_SubClass(void);
+		virtual	void	GetStatus_SubClass(void);
+		virtual	bool	AlpacaGetStartupData_OneAAT(void);	//*	One At A Time
+		virtual	bool	AlpacaGetStatus_OneAAT(void);		//*	One At A Time
 		virtual	void	AlpacaGetCapabilities(void);
 		virtual	void	AlpacaProcessSupportedActions(	const char	*deviceType,
 														const int	deviveNum,
@@ -74,10 +77,9 @@ class ControllerTelescope: public Controller
 				bool	AlpacaProcessReadAll_Telescope(		const int	deviceNum,
 															const char	*keywordString,
 															const char *valueString);
-		virtual	void	GetStatus_SubClass(void);
+				bool	AlpacaGetStartupData_TelescopeOneAAT(void);	//*	One At A Time
 				bool	AlpacaGetStatus_TelescopeOneAAT(void);	//*	One At A Time
 				void	ReadOneTelescopeCapability(const char *propertyStr, const char	*reportedStr, bool *booleanValue);
-				bool	AlpacaGetStartupData_TelescopeOneAAT(void);	//*	One At A Time
 			//*	tab information
 				WindowTabTelescope		*cTelescopeTabObjPtr;
 				WindowTabTeleSettings	*cTeleSettingsTabObjPtr;

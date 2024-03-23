@@ -46,6 +46,7 @@ enum
 	kWidgetType_ScrollBar,
 	kWidgetType_Slider,
 	kWidgetType_TextBox,
+	kWidgetType_TextBox_MonoSpace,
 	kWidgetType_TextInput,
 
 	kWidgetType_Disabled,

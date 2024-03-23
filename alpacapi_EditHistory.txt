@@ -1,4 +1,4 @@
-History Comments found =3093 in 465 files
+History Comments found =3128 in 476 files
 PDS_ReadNASAfiles.c:28   	//*	Jan 26,	1992	Reading of PDS files into Mac program from CD working
 PDS_ReadNASAfiles.c:29   	//*	Mar 14,	1992	Starting on more detailed interpretation of label (header)
 PDS_ReadNASAfiles.c:30   	//*	Mar 16,	1992	Changed number of displayed bytes from 836 to 800
@@ -2352,7 +2352,7 @@ windowtab.cpp:77         	//*	Oct 21,	2022	<MLS> Added SetupWindowBottomBoxes()
 windowtab.cpp:78         	//*	Oct 21,	2022	<MLS> Updated all windowtabs to use SetupWindowBottomBoxes()
 windowtab.cpp:79         	//*	Oct 21,	2022	<MLS> Removed SetIPaddressBoxes() use SetupWindowBottomBoxes() instead
 windowtab.cpp:80         	//*	Oct 21,	2022	<MLS> Removed SetAlpacaLogo()
-controller.cpp:1744      	//*	Oct 24,	2022	<MLS> Dont use openCV 4.5.4 (mousewheel bug), use 4.5.1 instead
+controller.cpp:1752      	//*	Oct 24,	2022	<MLS> Dont use openCV 4.5.4 (mousewheel bug), use 4.5.1 instead
 cameradriver_fits.cpp:91 	//*	Oct 25,	2022	<MLS> Now using cv::getVersionString().c_str() for openCV version string
 spectrodriver.cpp:27     	//*	Oct 25,	2022	<MLS> Added Get_PropertyInfo()
 controllerAlpaca.cpp:46  	//*	Oct 26,	2022	<MLS> Fixed return data valid bug in AlpacaGetStringValue()
@@ -3080,6 +3080,41 @@ telescopedriver.cpp:70   	//*	Feb 11,	2024	<MLS> Added IMU-Roll, IMU-Pitch, & IM
 telescope_AlpacaCmds.cpp:11	//*	Feb 11,	2024	<MLS> Added Roll, Pitch & Yaw to telescope extras command table
 windowtab_telescope.cpp:31	//*	Feb 11,	2024	<MLS> Added Roll, Pitch & Yaw to telescope control window
 imu_lib.c:14             	//*	Feb 25,	2024	<ML>S Added IMU_GetIMUtypeString()
+controller_skyimage.cpp:9	//*	Mar  9,	2024	<MLS> Created controller_skyimage.cpp
+controller_skyimage.h:2  	//*	Mar  9,	2024	<MLS> Created controller_skyimage.h
+controller_skytravel.cpp:23	//*	Mar  9,	2024	<MLS> Fixed bug where Software Version screen was not getting updated
+controller_telescope.cpp:33	//*	Mar 10,	2024	<MLS> Added AlpacaGetStartupData_OneAAT() to telescope controller
+controller_telescope.cpp:34	//*	Mar 10,	2024	<MLS> Added GetStartUpData_SubClass() to telescope controller
+windowtab_imageList.cpp:20	//*	Mar 12,	2024	<MLS> Created windowtab_imageList.cpp
+controller_skyimage.cpp:10	//*	Mar 13,	2024	<MLS> Double click now opens image window
+cameradriver_fits.cpp:97 	//*	Mar 14,	2024	<MLS> Added Saturation pixel count to FITS header
+controller_image.cpp:23  	//*	Mar 15,	2024	<MLS> Changed handling of long file paths for name display
+cameradriver_fits.cpp:98 	//*	Mar 16,	2024	<MLS> Added github link to FITS header
+controller_image.cpp:24  	//*	Mar 16,	2024	<MLS> Added ProcessFitsHeader()
+file_utils.c:8           	//*	Mar 16,	2024	<MLS> Created file_utils.c
+cameradriver_fits.cpp:99 	//*	Mar 17,	2024	<MLS> Added FRATIO link to FITS header
+controller_image.cpp:25  	//*	Mar 17,	2024	<MLS> Added Title Block Info
+controller_telescope.cpp:35	//*	Mar 17,	2024	<MLS> Cleaned up GetStatus_SubClass()
+fits_helper.cpp:9        	//*	Mar 17,	2024	<MLS> Created fits_helper.cpp
+cameradriver_fits.cpp:100	//*	Mar 18,	2024	<MLS> Added READOUTM link to FITS header
+controller_image.cpp:26  	//*	Mar 18,	2024	<MLS> Added LoadImage()
+controller_image.cpp:27  	//*	Mar 18,	2024	<MLS> Added DrawTitleBlock()
+controller_skyimage.cpp:11	//*	Mar 18,	2024	<MLS> Added LoadNextImageFromList() & LoadPreviousImageFromList()
+windowtab_image.cpp:37   	//*	Mar 18,	2024	<MLS> Added SetImageFilePath()
+controller_image.cpp:28  	//*	Mar 19,	2024	<MLS> Added DrawTextString2()
+controller_image.cpp:29  	//*	Mar 19,	2024	<MLS> Added SaveImage()
+controller.cpp:115       	//*	Mar 21,	2024	<MLS> Added DrawWidgetTextBox_MonoSpace()
+controller_image.cpp:30  	//*	Mar 21,	2024	<MLS> Added fits header window tab
+windowtab.cpp:107        	//*	Mar 21,	2024	<MLS> Added kWidgetType_TextBox_MonoSpace
+windowtab_fitsheader.cpp:21	//*	Mar 21,	2024	<MLS> Created windowtab_fitsheader.cpp
+alpaca_defs.h:95         	//*	Mar 22,	2024	<MLS> Build 175
+cameradriver_fits.cpp:101	//*	Mar 22,	2024	<MLS> Fixed bug in FITS camera offset reporting, was string, now int
+controller_image.cpp:31  	//*	Mar 23,	2024	<MLS> Added SetImageWindowTitles()
+controller_image.cpp:32  	//*	Mar 23,	2024	<MLS> Working on reading NASA PDS images (Planetary Data Systems)
+controller_image.cpp:33  	//*	Mar 23,	2024	<MLS> PDS Header data displaying properly
+controller_image.cpp:34  	//*	Mar 23,	2024	<MLS> Added IsFilePDS()
+windowtab.cpp:108        	//*	Mar 23,	2024	<MLS> Added LaunchWebURL()
+windowtab_fitsheader.cpp:22	//*	Mar 23,	2024	<MLS> Added double click to open any web link specified
 cameradriver.cpp:210     	//*	Jan  1,	2119	<TODO> ----------------------------------------
 cameradriver.cpp:211     	//*	Jun 26,	2119	<TODO> Add support for sub frames
 cameradriver_png.cpp:33  	//*	Jan 31,	2120	<TODO> Add support for libpng
@@ -3092,19 +3127,19 @@ controller_camera.cpp:80 	//*	Feb  6,	2121	<TODO> Move downloading of images to 
 cameradriver_QHY.cpp:52  	//*	Oct 10,	2122	<TODO> Add support for percentcompleted to QHY camera driver
 spectrodriver.cpp:33     	//*	May  7,	2123	<TODO> Add support for SlitID, SlitAngle, SlitWidth
 controller_dome.cpp:47   	//*	Jun 25,	2123	<ADD> Add slaved to DeviceState
-History Comments found   = 3093 in 465 files
-Total lines              = 216024
-Total comment Lines      = 35220 (16.3%)
-Total comments           = 39603 (18.3%)
-Total history comments   = 3093 (1.4%)
-Total C files            = 62
-Total C++ files          = 176
-Total H files            = 225
-Preprocssor cnt          = 6844
-Total SLOC               = 137465
-Total SLOC-Logical       = 106165
+History Comments found   = 3128 in 476 files
+Total lines              = 219318
+Total comment Lines      = 35677 (16.3%)
+Total comments           = 40098 (18.3%)
+Total history comments   = 3128 (1.4%)
+Total C files            = 63
+Total C++ files          = 180
+Total H files            = 231
+Preprocssor cnt          = 6924
+Total SLOC               = 139509
+Total SLOC-Logical       = 107660
 Programmer comment summary
-MLS             = 2698
+MLS             = 2733
 TODO            =   11
 DDB             =    1
 JMH             =    3

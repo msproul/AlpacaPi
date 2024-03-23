@@ -91,8 +91,7 @@ double			dataScaleFactor;
 int				newDataMin;
 int				newDataMax;
 
-	CONSOLE_DEBUG(fitsFileName);
-
+//	CONSOLE_DEBUG(fitsFileName);
 
 	openCvImgPtr	=	NULL;
 	errorCnt		=	0;
@@ -146,7 +145,7 @@ int				newDataMax;
 		status		=	0;
 		bitpix		=	0;	//*	set a default
 		fitsRetCode	=	fits_read_key_lng(fptr, "BITPIX", &bitpix, NULL, &status);
-		CONSOLE_DEBUG_W_LONG("bitpix\t=",	bitpix);
+//		CONSOLE_DEBUG_W_LONG("bitpix\t=",	bitpix);
 
 		switch(bitpix)
 		{
@@ -348,7 +347,7 @@ int				newDataMax;
 //	CONSOLE_DEBUG_W_NUM("newDataMin\t=",	newDataMin);
 //	CONSOLE_DEBUG_W_NUM("newDataMax\t=",	newDataMax);
 
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, "Exit");
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, "Exit");
 
 	return(openCvImgPtr);
 }
@@ -473,7 +472,7 @@ char		extension[8];
 	{
 		fnameLen		=	strlen(imageFileName);
 		strcpy(extension, &imageFileName[fnameLen - 4]);
-		CONSOLE_DEBUG_W_STR("extension\t=", extension);
+//		CONSOLE_DEBUG_W_STR("extension\t=", extension);
 		if ((strcasecmp(extension, "fits") == 0) ||
 			(strcasecmp(extension, ".fit") == 0) ||
 			(strcasecmp(extension, ".fts") == 0))

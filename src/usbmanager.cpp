@@ -232,21 +232,21 @@ char		*eolPtr;
 char		*spcPtr;
 int			returnCode;
 struct stat	fileStatus;
-char		usbQuerryStr[]	=	"usbquerry.sh";
+char		usbQuerryName[]	=	"usbquerry.sh";
 char		usbIDfileName[]	=	"usb_id.txt";
 
 	CONSOLE_DEBUG(__FUNCTION__);
-	returnCode	=	stat(usbQuerryStr, &fileStatus);		//*	fstat - check for existence of file
+	returnCode	=	stat(usbQuerryName, &fileStatus);		//*	fstat - check for existence of file
 	if (returnCode == 0)
 	{
 		LogEvent(	__FUNCTION__,
-					usbQuerryStr,
+					usbQuerryName,
 					NULL,
 					kASCOM_Err_Success,
 					"Is present");
 
 		strcpy(commandString,	"bash ");
-		strcat(commandString,	usbQuerryStr);
+		strcat(commandString,	usbQuerryName);
 		strcat(commandString,	" > ");
 		strcat(commandString,	usbIDfileName);
 
@@ -260,42 +260,55 @@ char		usbIDfileName[]	=	"usb_id.txt";
 		}
 
 		//------------------------------------------------
-		//*	now read in the file
-		filePointer	=	fopen(usbIDfileName, "r");
-		if (filePointer != NULL)
+		//*	check to make sure the output file got created
+		returnCode	=	stat(usbIDfileName, &fileStatus);		//*	fstat - check for existence of file
+		if (returnCode == 0)
 		{
-			while (fgets(lineBuff, 80, filePointer))
+			CONSOLE_DEBUG_W_NUM("fileStatus.st_size\t=", fileStatus.st_size);
+			if (fileStatus.st_size > 10)
 			{
-				//*	get rid of CR or LF at the end of the line
-				eolPtr	=	strchr(lineBuff, 0x0d);
-				if (eolPtr != NULL)
+				//------------------------------------------------
+				//*	now read in the file
+				filePointer	=	fopen(usbIDfileName, "r");
+				if (filePointer != NULL)
 				{
-					*eolPtr	=	0;
-				}
-				eolPtr	=	strchr(lineBuff, 0x0a);
-				if (eolPtr != NULL)
-				{
-					*eolPtr	=	0;
-				}
-				CONSOLE_DEBUG(lineBuff);
-
-				//*	make sure its a valid tty device
-				if (strncasecmp(lineBuff, "/dev/tty", 8) == 0)
-				{
-					strcpy(deviceName, lineBuff);
-					spcPtr	=	strchr(deviceName, 0x20);
-					if (spcPtr != NULL)
+					memset(lineBuff, 0, sizeof(lineBuff));
+					while (fgets(lineBuff, 80, filePointer))
 					{
-						*spcPtr	=	0;
+						//*	get rid of CR or LF at the end of the line
+						eolPtr	=	strchr(lineBuff, 0x0d);
+						if (eolPtr != NULL)
+						{
+							*eolPtr	=	0;
+						}
+						eolPtr	=	strchr(lineBuff, 0x0a);
+						if (eolPtr != NULL)
+						{
+							*eolPtr	=	0;
+						}
+						CONSOLE_DEBUG(lineBuff);
+						if (strlen(lineBuff) > 10)
+						{
+							//*	make sure its a valid tty device
+							if (strncasecmp(lineBuff, "/dev/tty", 8) == 0)
+							{
+								strcpy(deviceName, lineBuff);
+								spcPtr	=	strchr(deviceName, 0x20);
+								if (spcPtr != NULL)
+								{
+									*spcPtr	=	0;
 
-						//*	copy the device ID
-						spcPtr	+=	3;
-						strcpy(deviceIDstring, spcPtr);
-						UpdateUSBidString(deviceName, deviceIDstring);
+									//*	copy the device ID
+									spcPtr	+=	3;
+									strcpy(deviceIDstring, spcPtr);
+									UpdateUSBidString(deviceName, deviceIDstring);
+								}
+							}
+						}
 					}
+					fclose(filePointer);
 				}
 			}
-			fclose(filePointer);
 		}
 		else
 		{
@@ -310,10 +323,11 @@ char		usbIDfileName[]	=	"usb_id.txt";
 	else
 	{
 		LogEvent(	__FUNCTION__,
-					usbQuerryStr,
+					usbQuerryName,
 					NULL,
 					kASCOM_Err_Success,
 					"Missing file");
 	}
+	CONSOLE_DEBUG(__FUNCTION__);
 }
 

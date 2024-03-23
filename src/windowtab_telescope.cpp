@@ -723,10 +723,10 @@ void	WindowTabTelescope::UpdateTelescopeInfo(TYPE_TelescopeProperties *telescope
 {
 char	dataString[64];
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	//*	update telescope tracking
-	CONSOLE_DEBUG_W_BOOL("telescopeProp->Tracking\t=", telescopeProp->Tracking);
+//	CONSOLE_DEBUG_W_BOOL("telescopeProp->Tracking\t=", telescopeProp->Tracking);
 	if (telescopeProp->Tracking)
 	{
 		SetWidgetText(		kTelescope_TrackingStatus, "Tracking is On");
@@ -798,8 +798,8 @@ char	dataString[64];
 
 	//*	side of pier - physical
 	GetSideOfPierString(telescopeProp->PhysicalSideOfPier, dataString);
-	CONSOLE_DEBUG_W_NUM("PhysicalSideOfPier\t=", telescopeProp->PhysicalSideOfPier);
-	CONSOLE_DEBUG_W_STR("PhysicalSideOfPier\t=", dataString);
+//	CONSOLE_DEBUG_W_NUM("PhysicalSideOfPier\t=", telescopeProp->PhysicalSideOfPier);
+//	CONSOLE_DEBUG_W_STR("PhysicalSideOfPier\t=", dataString);
 	SetWidgetText(		kTelescope_PhysSideOfPier_value,	dataString);
 
 	//*	Hour angle (this is not part of Alpaca/ASCOM specs)
@@ -811,6 +811,7 @@ char	dataString[64];
 
 	//--------------------------------------------------------------------------
 	//*	IMU data
+	CONSOLE_DEBUG("Updating IMU data for telescope window");
 	SetWidgetNumber(	kTelescope_IMU_Roll_value,	telescopeProp->IMU_Roll);
 	SetWidgetNumber(	kTelescope_IMU_Pitch_value,	telescopeProp->IMU_Pitch);
 	SetWidgetNumber(	kTelescope_IMU_Yaw_value,	telescopeProp->IMU_Yaw);
@@ -818,7 +819,7 @@ char	dataString[64];
 	//--------------------------------------------------------------------------
 	if (updateAll)
 	{
-		CONSOLE_DEBUG_W_STR(__FUNCTION__, "UPDATE ALLL!!!!!!");
+//		CONSOLE_DEBUG_W_STR(__FUNCTION__, "UPDATE ALLL!!!!!!");
 		//*	calculate the slew rates for both RA and DEC
 		if ((cSlewRates_RA_valid == false) || (cSlewRates_DEC_valid == false))
 		{
