@@ -51,7 +51,7 @@ WindowTabImageList::WindowTabImageList(	const int	xSize,
 	cSortColumn			=	-1;
 	cFirstLineIdx		=	0;
 
-//	strcpy(cWebURLstring, "clientapps.html");		//*	set the web help url string
+	SetWebHelpURLstring("skyimage.html");		//*	set the web help url string
 
 	SetupWindowControls();
 
@@ -94,7 +94,7 @@ char	titleText[256];
 
 	clmnHdr_xLoc	=	1;
 	iii				=	kImageList_ClmTitle1;
-	while (iii <= kImageList_ClmTitle5)
+	while (iii < kImageList_AlpacaDev_01)
 	{
 		clmnHdrWidth	=	tabArray[iii - kImageList_ClmTitle1] - clmnHdr_xLoc;
 
@@ -114,7 +114,8 @@ char	titleText[256];
 	SetWidgetText(		kImageList_ClmTitle2,	"DATAMIN");
 	SetWidgetText(		kImageList_ClmTitle3,	"DATAMAX");
 	SetWidgetText(		kImageList_ClmTitle4,	"Exposure");
-	SetWidgetText(		kImageList_ClmTitle5,	"%sat");
+	SetWidgetText(		kImageList_ClmTitle5,	"Gain");
+	SetWidgetText(		kImageList_ClmTitle6,	"%sat");
 	yLoc			+=	cRadioBtnHt;
 	yLoc			+=	2;
 
@@ -220,7 +221,7 @@ int		iii;
 //*****************************************************************************
 void	WindowTabImageList::HandleKeyDown(const int keyPressed)
 {
-int		deviceIndex;
+int		imageIndex;
 int		iii;
 int		theExtendedChar;
 int		retCode;
@@ -229,12 +230,12 @@ char	*extensionPtr;
 //	CONSOLE_DEBUG_W_HEX("keyPressed=", keyPressed);
 
 	//*	find a selected device
-	deviceIndex	=	-1;
+	imageIndex	=	-1;
 	for (iii=0; iii<gImageCount; iii++)
 	{
 		if (gImageList[iii].lineSelected)
 		{
-			deviceIndex	=	iii;
+			imageIndex	=	iii;
 			break;
 		}
 	}
@@ -245,25 +246,25 @@ char	*extensionPtr;
 		//*	return, open current selected entry
 		case 0x0d:
 		case 0xff8d:
-//			OpenControllerFromDevIdx(deviceIndex);
+//			OpenControllerFromDevIdx(imageIndex);
 			break;
 
 
 		//*	up arrow key
 		case 0x00ff52:
-			deviceIndex	-=	1;
-			if (deviceIndex >= 0)
+			imageIndex	-=	1;
+			if (imageIndex >= 0)
 			{
-				SetNewSelectedDevice(deviceIndex);
+				SetNewSelectedDevice(imageIndex);
 			}
 			break;
 
 		//*	down arrow key
 		case 0x00ff54:
-			deviceIndex	+=	1;
-			if (deviceIndex >= 0)
+			imageIndex	+=	1;
+			if (imageIndex >= 0)
 			{
-				SetNewSelectedDevice(deviceIndex);
+				SetNewSelectedDevice(imageIndex);
 			}
 			break;
 
@@ -276,18 +277,18 @@ char	*extensionPtr;
 		//*	Delete key
 		case 0x00FFFF:
 			CONSOLE_DEBUG_W_HEX("Delete key=", keyPressed);
-			if (deviceIndex >= 0)
+			if (imageIndex >= 0)
 			{
-				if (gImageList[deviceIndex].lineSelected)
+				if (gImageList[imageIndex].lineSelected)
 				{
-					CONSOLE_DEBUG_W_STR("Deleting:", gImageList[deviceIndex].FilePath);
-					retCode	=	remove(gImageList[deviceIndex].FilePath);
+					CONSOLE_DEBUG_W_STR("Deleting:", gImageList[imageIndex].FilePath);
+					retCode	=	remove(gImageList[imageIndex].FilePath);
 					if (retCode == 0)
 					{
-						strcat(gImageList[deviceIndex].FileName, "-DELETED");
+						strcat(gImageList[imageIndex].FileName, "-DELETED");
 					}
 					//*	now delete other files
-					strcpy(otherFilePath, gImageList[deviceIndex].FilePath);
+					strcpy(otherFilePath, gImageList[imageIndex].FilePath);
 					extensionPtr	=	strcasestr(otherFilePath, ".fits");
 					if (extensionPtr != NULL)
 					{
@@ -296,7 +297,7 @@ char	*extensionPtr;
 						retCode	=	remove(otherFilePath);
 						CONSOLE_DEBUG_W_NUM("Deleting jpg:", retCode);
 					}
-					strcpy(otherFilePath, gImageList[deviceIndex].FilePath);
+					strcpy(otherFilePath, gImageList[imageIndex].FilePath);
 					extensionPtr	=	strcasestr(otherFilePath, ".fits");
 					if (extensionPtr != NULL)
 					{
@@ -349,6 +350,7 @@ int	newSortColumn;
 		case kImageList_ClmTitle3:
 		case kImageList_ClmTitle4:
 		case kImageList_ClmTitle5:
+		case kImageList_ClmTitle6:
 			newSortColumn	=	buttonIdx - kImageList_ClmTitle1;
 			if (newSortColumn == cSortColumn)
 			{
@@ -384,6 +386,10 @@ ControllerImage		*imageWindowController;
 	gCurrentImageIndex		=	imgIndex;
 	imageWindowController	=	new ControllerImage(	gImageList[imgIndex].DirectoryPath,
 														gImageList[imgIndex].FilePath);
+	if (imageWindowController == NULL)
+	{
+		CONSOLE_DEBUG("Problem!!!!!");
+	}
 }
 
 //*****************************************************************************
@@ -454,26 +460,26 @@ int		adjustedIdx;
 }
 
 //*****************************************************************************
-void	WindowTabImageList::SetNewSelectedDevice(int deviceIndex)
+void	WindowTabImageList::SetNewSelectedDevice(int imageIndex)
 {
 int		iii;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
-//	CONSOLE_DEBUG_W_NUM("deviceIndex\t=", deviceIndex);
-	if (deviceIndex >= 0)
+//	CONSOLE_DEBUG_W_NUM("imageIndex\t=", imageIndex);
+	if (imageIndex >= 0)
 	{
 		//*	clear out previous selections
 		for (iii=0; iii<cImageListCount; iii++)
 		{
 			gImageList[iii].lineSelected	=	false;
 		}
-		gImageList[deviceIndex].lineSelected	=	true;
+		gImageList[imageIndex].lineSelected	=	true;
 		UpdateOnScreenWidgetList();
 		ForceWindowUpdate();
 	}
 	else
 	{
-		CONSOLE_DEBUG_W_NUM("deviceIndex is out of range\t=", deviceIndex);
+		CONSOLE_DEBUG_W_NUM("imageIndex is out of range\t=", imageIndex);
 	}
 }
 
@@ -524,11 +530,12 @@ int				imageIdx;
 		if ((boxId <= kImageList_AlpacaDev_Last) && (imageIdx < gImageCount) && (gImageList[imageIdx].validEntry))
 		{
 
-			sprintf(textString, "%s\t%d\t%d\t%3.6f\t%3.4f",
+			sprintf(textString, "%s\t%d\t%d\t%3.6f\t%d\t%3.4f",
 									gImageList[imageIdx].FileName,
 									gImageList[imageIdx].DATAMIN,
 									gImageList[imageIdx].DATAMAX,
 									gImageList[imageIdx].Exposure_secs,
+									gImageList[imageIdx].Gain,
 									gImageList[imageIdx].SaturationPercent);
 
 			//-----------------------------------------------------
@@ -570,9 +577,9 @@ int				imageIdx;
 	SetWidgetBGColor(kImageList_ClmTitle3,	((cSortColumn == 2) ? CV_RGB(255,	255,	255) : CV_RGB(128,	128,	128)));
 	SetWidgetBGColor(kImageList_ClmTitle4,	((cSortColumn == 3) ? CV_RGB(255,	255,	255) : CV_RGB(128,	128,	128)));
 	SetWidgetBGColor(kImageList_ClmTitle5,	((cSortColumn == 4) ? CV_RGB(255,	255,	255) : CV_RGB(128,	128,	128)));
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 }
-
 
 //**************************************************************************************
 static  int ImageListQsortProc(const void *e1, const void *e2)
@@ -615,6 +622,10 @@ int				returnValue;
 			break;
 
 		case 4:
+			returnValue	=	obj1->Gain - obj2->Gain;
+			break;
+
+		case 5:
 			if (obj1->SaturationPercent > obj2->SaturationPercent)
 			{
 				returnValue	=	1;

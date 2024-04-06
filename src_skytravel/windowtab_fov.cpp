@@ -157,7 +157,6 @@ char	textString[80];
 	yLoc			+=	cBtnHeight;
 	yLoc			+=	2;
 
-
 	//------------------------------------------
 	clmnHdr_xLoc	=	textBoxOffsetX;
 	iii				=	kFOVbox_ClmTitle1;
@@ -227,10 +226,11 @@ char	textString[80];
 		boxNum++;
 	}
 
-
 	buttonWidth	=	150;
 	iii			=	kFOVbox_SaveButton;
 	xLoc		=	1;
+	yLoc		=	cHeight - cBtnHeight;
+	yLoc		-=	2;
 	while (iii <= kFOVbox_RescanButton)
 	{
 		SetWidget(				iii,	xLoc,	yLoc,	buttonWidth,	cBtnHeight);
@@ -247,7 +247,6 @@ char	textString[80];
 	SetWidgetText(			kFOVbox_EditButton,		"Edit");
 	SetWidgetText(			kFOVbox_ReloadButton,	"Reload");
 	SetWidgetText(			kFOVbox_RescanButton,	"Rescan");
-
 
 	SetAlpacaLogoBottomCorner(kFOVbox_AlpacaLogo);
 }

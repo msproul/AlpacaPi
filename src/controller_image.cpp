@@ -32,6 +32,14 @@
 //*	Mar 23,	2024	<MLS> Working on reading NASA PDS images (Planetary Data Systems)
 //*	Mar 23,	2024	<MLS> PDS Header data displaying properly
 //*	Mar 23,	2024	<MLS> Added IsFilePDS()
+//*	Mar 24,	2024	<MLS> Added IsFileFITS()
+//*	Mar 24,	2024	<MLS> Added DrawTitleBlock_FITS() & DrawTitleBlock_PDS()
+//*	Mar 28,	2024	<MLS> Added more moon info to title block
+//*	Mar 30,	2024	<MLS> Finished LoadImage() to be able to handle normal image files
+//*	Mar 30,	2024	<MLS> Added FlipImage()
+//*	Mar 30,	2024	<MLS> Added SaveFitsHeaderLine()
+//*	Mar 30,	2024	<MLS> Added UpdateFitsHeader()
+//*	Mar 31,	2024	<MLS> Added DrawSignature()
 //*****************************************************************************
 
 #ifdef _ENABLE_CTRL_IMAGE_
@@ -182,12 +190,6 @@ ControllerImage::ControllerImage(	const char	*argWindowName,
 							kWindowWidth,
 							kWindowHeight)
 {
-//int		imagePathLen;
-//#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
-//	cv::Mat		*imageFromDisk;
-//#else
-//	IplImage	*imageFromDisk;
-//#endif // _USE_OPENCV_CPP_
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 //	CONSOLE_DEBUG_W_STR("Setting image from disk", imageFilePath);
@@ -203,20 +205,20 @@ ControllerImage::ControllerImage(	const char	*argWindowName,
 //**************************************************************************************
 ControllerImage::~ControllerImage(void)
 {
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 	SetWidgetImage(kTab_Image, kImageDisplay_ImageDisplay, NULL);
 #if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 //++	#warning "OpenCV++ not tested"
 	//*	free up the image memory
 	if (cDownLoadedImage != NULL)
 	{
-		CONSOLE_DEBUG("Deleting cDownLoadedImage!!!!!!!!!!!!!!!!!!!!!!!!");
+//		CONSOLE_DEBUG("Deleting cDownLoadedImage!!!!!!!!!!!!!!!!!!!!!!!!");
 		delete cDownLoadedImage;
 		cDownLoadedImage	=	NULL;
 	}
 	if (cDisplayedImage != NULL)
 	{
-		CONSOLE_DEBUG("Deleting cDisplayedImage!!!!!!!!!!!!!!!!!!!!!!!!");
+//		CONSOLE_DEBUG("Deleting cDisplayedImage!!!!!!!!!!!!!!!!!!!!!!!!");
 		delete cDisplayedImage;
 		cDisplayedImage	=	NULL;
 	}
@@ -251,11 +253,11 @@ void	ControllerImage::InitClassVariables(void)
 //	CONSOLE_DEBUG(__FUNCTION__);
 	memset((void *)&cBinaryImageHdr, 0, sizeof(TYPE_BinaryImageHdr));
 	memset((void *)&cFitsHeaderData, 0, sizeof(TYPE_FitsHeaderData));
+	memset((void *)&cFitsHeaderText, 0, (sizeof(TYPE_FitsHdrLine) * kMaxFitsHdrLines));
+
 	strcpy(cFitsHeaderData.Location, "Shohola, PA");
 
-	memset((void *)&cFitsHeaderText, 0, (sizeof(TYPE_FitsHdrLine) * kMaxFitsHdrLines));
 	cFitsHdrCnt				=	0;
-
 
 	cDownLoadedImage		=	NULL;
 	cDisplayedImage			=	NULL;
@@ -326,6 +328,18 @@ void	ControllerImage::SetupWindowControls(void)
 }
 
 //**************************************************************************************
+static bool	IsFileFITS(const char *extension)
+{
+bool	isFITS	=	false;
+
+	if ((strcasecmp(extension, ".fits") == 0) || (strcasecmp(extension, ".fit") == 0))
+	{
+		isFITS	=	true;
+	}
+	return(isFITS);
+}
+
+//**************************************************************************************
 static bool	IsFilePDS(const char *extension)
 {
 bool	isPDS	=	false;
@@ -343,6 +357,7 @@ bool	isPDS	=	false;
 	return(isPDS);
 }
 
+
 //**************************************************************************************
 void	ControllerImage::SetImageWindowTitles(const char *imageFilePath)
 {
@@ -352,7 +367,7 @@ char	*slashPtr;
 int		sLen;
 int		ccc;
 
-	CONSOLE_DEBUG_W_STR("imageFilePath    \t=",	imageFilePath);
+//	CONSOLE_DEBUG_W_STR("imageFilePath    \t=",	imageFilePath);
 	//*	isolate the file name from the path
 	//*	find the last "/" char and use that
 	strcpy(newFileName, "");
@@ -360,7 +375,7 @@ int		ccc;
 	while (slashPtr != NULL)
 	{
 		slashPtr++;
-//			CONSOLE_DEBUG(slashPtr);
+//		CONSOLE_DEBUG(slashPtr);
 		strcpy(newFileName, slashPtr);
 		slashPtr	=	strchr(slashPtr, '/');
 	}
@@ -381,19 +396,14 @@ int		ccc;
 
 	cImageFromDisk			=	true;
 	ExtractFileExtension(imageFilePath, cFileExtension);
-	//*	check for fits file
-	if ((strcasecmp(cFileExtension, ".fits") == 0) || (strcasecmp(cFileExtension, ".fit") == 0))
-	{
-		cImageIsFITS	=	true;
-	}
-	else
-	{
-		cImageIsPDS	=	IsFilePDS(cFileExtension);
-	}
 
-	CONSOLE_DEBUG_W_STR("cFileExtension\t=",	cFileExtension);
-	CONSOLE_DEBUG_W_BOOL("cImageIsFITS \t=",	cImageIsFITS);
-	CONSOLE_DEBUG_W_BOOL("cImageIsPDS  \t=",	cImageIsPDS);
+	//*	check for fits file
+	cImageIsFITS	=	IsFileFITS(cFileExtension);
+	cImageIsPDS		=	IsFilePDS(cFileExtension);
+
+//	CONSOLE_DEBUG_W_STR("cFileExtension\t=",	cFileExtension);
+//	CONSOLE_DEBUG_W_BOOL("cImageIsFITS \t=",	cImageIsFITS);
+//	CONSOLE_DEBUG_W_BOOL("cImageIsPDS  \t=",	cImageIsPDS);
 
 	imagePathLen	=	strlen(imageFilePath);
 	if (imagePathLen < 110)
@@ -420,15 +430,21 @@ int		ccc;
 }
 
 //**************************************************************************************
-void	ControllerImage::LoadImage(const char *imageFilePath)
+//*	returns true if valid image
+//**************************************************************************************
+bool	ControllerImage::LoadImage(const char *imageFilePath)
 {
-int		iii;
+bool	successFlag	=	false;
+
+//	CONSOLE_DEBUG_W_STR("imageFilePath    \t=",	imageFilePath);
 
 #if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 	cv::Mat		*imageFromDisk;
 #else
 	IplImage	*imageFromDisk;
 #endif // _USE_OPENCV_CPP_
+
+	cFitsHdrCnt				=	0;
 
 #if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 	if (imageFilePath != NULL)
@@ -438,19 +454,19 @@ int		iii;
 			//*	free up the image memory
 			if (cDownLoadedImage != NULL)
 			{
-				CONSOLE_DEBUG("Deleting cDownLoadedImage!!!!!!!!!!!!!!!!!!!!!!!!");
+//				CONSOLE_DEBUG("Deleting cDownLoadedImage!!!!!!!!!!!!!!!!!!!!!!!!");
 				delete cDownLoadedImage;
 				cDownLoadedImage	=	NULL;
 			}
 			if (cDisplayedImage != NULL)
 			{
-				CONSOLE_DEBUG("Deleting cDisplayedImage!!!!!!!!!!!!!!!!!!!!!!!!");
+//				CONSOLE_DEBUG("Deleting cDisplayedImage!!!!!!!!!!!!!!!!!!!!!!!!");
 				delete cDisplayedImage;
 				cDisplayedImage	=	NULL;
 			}
 			if (cColorImage != NULL)
 			{
-				CONSOLE_DEBUG("Deleting cColorImage!!!!!!!!!!!!!!!!!!!!!!!!");
+//				CONSOLE_DEBUG("Deleting cColorImage!!!!!!!!!!!!!!!!!!!!!!!!");
 				delete cColorImage;
 				cColorImage	=	NULL;
 			}
@@ -473,6 +489,7 @@ int		iii;
 					SetLiveWindowImage(imageFromDisk);
 
 					SetWidgetBGColor(	kTab_Image, kImageDisplay_LiveOrDownLoad,	CV_RGB(0,	200, 0));
+					successFlag	=	true;
 				}
 				else
 				{
@@ -486,30 +503,50 @@ int		iii;
 			bool			readOK;
 			PDS_header_data	pdsHeader;
 
+				//-----------------------------------------------------------
 				imageFromDisk	=	ReadPDSimageIntoOpenCVimage(imageFilePath);
 				if (imageFromDisk != NULL)
 				{
 					SetLiveWindowImage(imageFromDisk);
 
 					SetWidgetBGColor(	kTab_Image, kImageDisplay_LiveOrDownLoad,	CV_RGB(0,	200, 0));
+					successFlag	=	true;
 				}
 				else
 				{
 					CONSOLE_DEBUG_W_STR("Failed to read image from disk:", imageFilePath);
 				}
-
+				//-----------------------------------------------------------
 				readOK	=	PDS_ReadImage(imageFilePath, &pdsHeader);
-				for (iii=0; iii<pdsHeader.HeaderLineCnt; iii++)
+				if (readOK)
 				{
-					CONSOLE_DEBUG(pdsHeader.HeaderData[iii].headerLine);
-					strcpy(cFitsHeaderText[iii].fitsLine, pdsHeader.HeaderData[iii].headerLine);
+				int	iii;
+
+					ProcessPdsHeader(&pdsHeader);
+					for (iii=0; iii<pdsHeader.HeaderLineCnt; iii++)
+					{
+						SaveFitsHeaderLine(pdsHeader.HeaderData[iii].headerLine);
+					}
+					cFitsHeaderTabObjPtr->SetFitsHeaderData(cFitsHeaderText, cFitsHdrCnt);
 				}
-				cFitsHdrCnt		=	pdsHeader.HeaderLineCnt;
-				cFitsHeaderTabObjPtr->SetFitsHeaderData(cFitsHeaderText, cFitsHdrCnt);
-				CONSOLE_DEBUG_W_NUM("cFitsHdrCnt  \t=",	cFitsHdrCnt);
-//				CONSOLE_ABORT(__FUNCTION__);
+				else
+				{
+					CONSOLE_DEBUG("PDS_ReadImage error");
+				}
 			}
 		#endif // _ENABLE_NASA_PDS_
+			else
+			{
+//				CONSOLE_DEBUG_W_STR("Reading normal image\t=",	imageFilePath);
+				imageFromDisk	=	ReadImageIntoOpenCVimage(imageFilePath);
+				if (imageFromDisk != NULL)
+				{
+					SetLiveWindowImage(imageFromDisk);
+
+					SetWidgetBGColor(	kTab_Image, kImageDisplay_LiveOrDownLoad,	CV_RGB(0,	200, 0));
+					successFlag	=	true;
+				}
+			}
 		}
 		else
 		{
@@ -522,6 +559,8 @@ int		iii;
 		SetWidgetText(		kTab_Image, kImageDisplay_LiveOrDownLoad,	"LIVE image!!!!!!!");
 		SetWidgetBGColor(	kTab_Image, kImageDisplay_LiveOrDownLoad,	CV_RGB(255,	255, 77));
 	}
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, "EXIT");
+	return(successFlag);
 }
 
 //**************************************************************************************
@@ -614,7 +653,7 @@ void	ControllerImage::SetLiveWindowImage(cv::Mat *newOpenCVImage)
 {
 int		smallDispalyWidth;
 int		smallDisplayHeight;
-int		reduceFactor;
+double	reduceFactor;
 int		newImgWidth;
 int		newImgHeight;
 int		newImgBytesPerPixel;
@@ -670,30 +709,26 @@ bool	validImg;
 			//*	the downloaded image needs to be copied and/or resized to the displayed image
 			if (cDownLoadedImage != NULL)
 			{
+			int		maxWindowWidth	=	800;
+			int		maxWindowHeight	=	700;
+
 //				CONSOLE_DEBUG_W_LONG("cDownLoadedImage->step[0]\t=",	cDownLoadedImage->step[0]);
 //				CONSOLE_DEBUG_W_LONG("cDownLoadedImage->step[1]\t=",	cDownLoadedImage->step[1]);
-
+//				CONSOLE_DEBUG_W_NUM("cDownLoadedImage->cols\t=",	cDownLoadedImage->cols);
+//				CONSOLE_DEBUG_W_NUM("cDownLoadedImage->rows\t=",	cDownLoadedImage->rows);
 //				CONSOLE_DEBUG("Creating small image");
+
 				reduceFactor		=	1;
 				smallDispalyWidth	=	cDownLoadedImage->cols;
 				smallDisplayHeight	=	cDownLoadedImage->rows;
 
-//				CONSOLE_DEBUG_W_NUM("cDownLoadedImage->cols\t=",	cDownLoadedImage->cols);
-//				CONSOLE_DEBUG_W_NUM("cDownLoadedImage->rows\t=",	cDownLoadedImage->rows);
-
-
-				int		maxWindowWidth	=	800;
-				int		maxWindowHeight	=	700;
-
-//				CONSOLE_DEBUG_W_NUM("smallDisplayHeight\t=", smallDisplayHeight);
 				while ((smallDispalyWidth > maxWindowWidth) || (smallDisplayHeight > (maxWindowHeight - 50)))
 				{
-					reduceFactor++;
+					reduceFactor	+=	0.1;
 					smallDispalyWidth	=	cDownLoadedImage->cols / reduceFactor;
 					smallDisplayHeight	=	cDownLoadedImage->rows / reduceFactor;
-//					CONSOLE_DEBUG_W_NUM("smallDisplayHeight\t=", smallDisplayHeight);
 				}
-//				CONSOLE_DEBUG_W_NUM("reduceFactor\t=", reduceFactor);
+//				CONSOLE_DEBUG_W_DBL("reduceFactor\t=", reduceFactor);
 //				CONSOLE_DEBUG_W_NUM("smallDispalyWidth \t=",	smallDispalyWidth);
 //				CONSOLE_DEBUG_W_NUM("smallDisplayHeight\t=",	smallDisplayHeight);
 
@@ -1599,6 +1634,26 @@ int		ccc;
 }
 
 //*****************************************************************************
+void	ControllerImage::SaveFitsHeaderLine(const char *fitsLine)
+{
+	if (cFitsHdrCnt < kMaxFitsHdrLines)
+	{
+		strcpy(cFitsHeaderText[cFitsHdrCnt].fitsLine, fitsLine);
+		cFitsHdrCnt++;
+	}
+	else
+	{
+		CONSOLE_ABORT("Ran out of room in cFitsHeaderText array");
+	}
+}
+
+//*****************************************************************************
+void	ControllerImage::UpdateFitsHeader(void)
+{
+	cFitsHeaderTabObjPtr->SetFitsHeaderData(cFitsHeaderText, cFitsHdrCnt);
+}
+
+//*****************************************************************************
 void	ControllerImage::ProcessFitsHeader(const char *imageFilePath)
 {
 fitsfile	*fptr;
@@ -1609,9 +1664,11 @@ int			nkeys;
 int			iii;
 int			fitsKeyWordEnum;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, imageFilePath);
+//	CONSOLE_DEBUG(imageFilePath);
 	cFitsHdrCnt	=	0;
-	status	=	0;	///* MUST initialize status
+	status		=	0;	///* MUST initialize status
 	fits_open_file(&fptr, imageFilePath, READONLY, &status);
 	if (status == 0)
 	{
@@ -1624,11 +1681,7 @@ int			fitsKeyWordEnum;
 			card[80]		=	0;
 
 			//*	save the fits header text for display
-			if (cFitsHdrCnt < kMaxFitsHdrLines)
-			{
-				strcpy(cFitsHeaderText[cFitsHdrCnt].fitsLine, card);
-				cFitsHdrCnt++;
-			}
+			SaveFitsHeaderLine(card);
 
 			fitsKeyWordEnum	=	FITS_FindKeyWordEnum(card);
 			switch(fitsKeyWordEnum)
@@ -1642,7 +1695,7 @@ int			fitsKeyWordEnum;
 					if ((cFitsHeaderData.FocalRatio < 0.1) && (cFitsHeaderData.ApertureDiam > 0.0))
 					{
 						cFitsHeaderData.FocalRatio	=	cFitsHeaderData.FocalLength	 / cFitsHeaderData.ApertureDiam;
-						CONSOLE_DEBUG_W_DBL("cFitsHeaderData.FocalRatio\t=", cFitsHeaderData.FocalRatio);
+//						CONSOLE_DEBUG_W_DBL("cFitsHeaderData.FocalRatio\t=", cFitsHeaderData.FocalRatio);
 					}
 					break;
 
@@ -1706,6 +1759,16 @@ int			fitsKeyWordEnum;
 					strcpy(cFitsHeaderData.Location, valueString);
 					break;
 
+				case kFitsKeyword_MoonAge:
+					GetDataFromFitsLine(card, valueString);
+					cFitsHeaderData.MoonAge	=	atof(valueString);
+					break;
+
+				case kFitsKeyword_MoonIllumination:
+					GetDataFromFitsLine(card, valueString);
+					cFitsHeaderData.MoonIllumination	=	atof(valueString);
+					break;
+
 				case kFitsKeyword_MoonPhase:
 					GetDataFromFitsLine(card, valueString);
 					strcpy(cFitsHeaderData.MoonPhase, valueString);
@@ -1760,8 +1823,7 @@ int			fitsKeyWordEnum;
 
 			}
 		}
-		strcpy(cFitsHeaderText[cFitsHdrCnt].fitsLine, "END");
-		cFitsHdrCnt++;
+		SaveFitsHeaderLine("END");
 		cFitsHeaderTabObjPtr->SetFitsHeaderData(cFitsHeaderText, cFitsHdrCnt);
 	}
 	else
@@ -1777,6 +1839,14 @@ int			fitsKeyWordEnum;
 	}
 }
 
+#ifdef _ENABLE_NASA_PDS_
+//*****************************************************************************
+void	ControllerImage::ProcessPdsHeader(PDS_header_data *pdsHeaderPtr)
+{
+
+}
+#endif // _ENABLE_NASA_PDS_
+
 //*****************************************************************************
 void	ControllerImage::DrawTextString2(	const int	xxLoc1,
 											const int	xxLoc2,
@@ -1786,7 +1856,6 @@ void	ControllerImage::DrawTextString2(	const int	xxLoc1,
 {
 cv::Point	textLoc;
 cv::Scalar	fontColor	=	CV_RGB(255,255,255);
-double		fontScale	=	3.0;
 
 	textLoc.x	=	xxLoc1;
 	textLoc.y	=	yyLoc;
@@ -1794,9 +1863,9 @@ double		fontScale	=	3.0;
 					textString1,
 					textLoc,
 					cv::FONT_HERSHEY_SIMPLEX,		//	gFontInfo[curFontNum].fontID,
-					fontScale,						//	gFontInfo[curFontNum].scale,
+					cFontScale,						//	gFontInfo[curFontNum].scale,
 					fontColor,
-					6								//	gFontInfo[curFontNum].thickness
+					cFontThickness					//	gFontInfo[curFontNum].thickness
 					);
 
 
@@ -1806,21 +1875,117 @@ double		fontScale	=	3.0;
 					textString2,
 					textLoc,
 					cv::FONT_HERSHEY_SIMPLEX,		//	gFontInfo[curFontNum].fontID,
-					fontScale,						//	gFontInfo[curFontNum].scale,
+					cFontScale,						//	gFontInfo[curFontNum].scale,
 					fontColor,
-					6								//	gFontInfo[curFontNum].thickness
+					cFontThickness					//	gFontInfo[curFontNum].thickness
 					);
 
 //	cv::putText(	*cDisplayedImage,
 //					textString,
 //					textLoc,
 //					cv::FONT_HERSHEY_PLAIN,		//	gFontInfo[curFontNum].fontID,
-//					fontScale,						//	gFontInfo[curFontNum].scale,
+//					cFontScale,						//	gFontInfo[curFontNum].scale,
 //					fontColor,
 //					2							//	gFontInfo[curFontNum].thickness
 //					);
 }
 
+//*****************************************************************************
+void	ControllerImage::DrawTitleBlock_FITS(int xxLoc1, int xxLoc2, int yyLoc)
+{
+char		theString[128];
+
+	if (strlen(cFitsHeaderData.Object) > 0)
+	{
+		DrawTextString2(xxLoc1,	xxLoc2, yyLoc,	"Object:",	cFitsHeaderData.Object);
+		yyLoc	+=	cDeltaYloc;
+	}
+	if (strlen(cFitsHeaderData.Time_UTC) > 0)
+	{
+		DrawTextString2(xxLoc1,	xxLoc2, yyLoc,	"Date/Time:",	cFitsHeaderData.Time_UTC);
+		yyLoc	+=	cDeltaYloc;
+	}
+	//------------------------------------------------------------------------
+	//*	Camera info
+	if (strlen(cFitsHeaderData.Camera) > 0)
+	{
+		DrawTextString2(xxLoc1,	xxLoc2, yyLoc,	"Camera:",	cFitsHeaderData.Camera);
+		yyLoc	+=	cDeltaYloc;
+	}
+	if (strlen(cFitsHeaderData.Filter) > 0)
+	{
+		if (strcasecmp(cFitsHeaderData.Filter, "None") != 0)
+		{
+			DrawTextString2(xxLoc1,	xxLoc2, yyLoc,	"Filter:",	cFitsHeaderData.Filter);
+			yyLoc	+=	cDeltaYloc;
+		}
+	}
+	//------------------------------------------------------------------------
+	//*	Telescope info
+	if (strlen(cFitsHeaderData.Telescope) > 0)
+	{
+		DrawTextString2(xxLoc1,	xxLoc2, yyLoc,	"Telescope:",	cFitsHeaderData.Telescope);
+		yyLoc	+=	cDeltaYloc;
+	}
+	if (cFitsHeaderData.FocalRatio > 1.0)
+	{
+		sprintf(theString, "%3.2f", cFitsHeaderData.FocalRatio);
+		DrawTextString2(xxLoc1,	xxLoc2, yyLoc,	"F-Ratio:",	theString);
+		yyLoc	+=	cDeltaYloc;
+	}
+	//------------------------------------------------------------------------
+	//*	Moon info
+	if (strlen(cFitsHeaderData.MoonPhase) > 0)
+	{
+		DrawTextString2(xxLoc1,	xxLoc2, yyLoc,	"Moon Phase:",	cFitsHeaderData.MoonPhase);
+		yyLoc	+=	cDeltaYloc;
+	}
+	if (cFitsHeaderData.MoonAge > 0.0)
+	{
+		sprintf(theString, "%3.2f days", cFitsHeaderData.MoonAge);
+		DrawTextString2(xxLoc1,	xxLoc2, yyLoc,	"Moon Age:",	theString);
+		yyLoc	+=	cDeltaYloc;
+	}
+	if (cFitsHeaderData.MoonIllumination > 0.0)
+	{
+		sprintf(theString, "%3.2f %%", cFitsHeaderData.MoonIllumination);
+		DrawTextString2(xxLoc1,	xxLoc2, yyLoc,	"Moon Ilum:",	theString);
+		yyLoc	+=	cDeltaYloc;
+	}
+
+	if (strlen(cFitsHeaderData.Observer) > 0)
+	{
+		DrawTextString2(xxLoc1,	xxLoc2, yyLoc,	"Observer:",	cFitsHeaderData.Observer);
+		yyLoc	+=	cDeltaYloc;
+	}
+	if (strlen(cFitsHeaderData.Observatory) > 0)
+	{
+		DrawTextString2(xxLoc1,	xxLoc2, yyLoc,	"Observatory:",	cFitsHeaderData.Observatory);
+		yyLoc	+=	cDeltaYloc;
+	}
+	if (strlen(cFitsHeaderData.Location) > 0)
+	{
+		DrawTextString2(xxLoc1,	xxLoc2, yyLoc,	"Location:",	cFitsHeaderData.Location);
+		yyLoc	+=	cDeltaYloc;
+	}
+	if (strlen(cFitsHeaderData.Website) > 0)
+	{
+		DrawTextString2(xxLoc1,	xxLoc2, yyLoc,	"Website:",	cFitsHeaderData.Website);
+		yyLoc	+=	cDeltaYloc;
+	}
+}
+
+//*****************************************************************************
+void	ControllerImage::DrawTitleBlock_PDS(int xxLoc1, int xxLoc2, int yyLoc)
+{
+	CONSOLE_DEBUG(__FUNCTION__);
+
+	DrawTextString2(xxLoc1,	xxLoc2, yyLoc,	"PDS:",	"Testing");
+	yyLoc	+=	cDeltaYloc;
+
+	DrawTextString2(xxLoc1,	xxLoc2, yyLoc,	"PDS:",	"Testing");
+	yyLoc	+=	cDeltaYloc;
+}
 
 //*****************************************************************************
 void	ControllerImage::DrawTitleBlock(void)
@@ -1828,75 +1993,94 @@ void	ControllerImage::DrawTitleBlock(void)
 int			xxLoc1;
 int			xxLoc2;
 int			yyLoc;
-char		theString[128];
-int			deltaY	=	100;
 //cv::Scalar	fontColor;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
-	xxLoc1	=	75;
-	xxLoc2	=	700;
-	yyLoc	=	100;
-	if (strlen(cFitsHeaderData.Object) > 0)
+	//*	determine font scale
+	cFontScale	=	3.0;
+	cDeltaYloc	=	100;
+	xxLoc1		=	75;
+	xxLoc2		=	720;
+	yyLoc		=	100;
+	if (cDownLoadedImage->cols > 4000)
 	{
-		DrawTextString2(xxLoc1,	xxLoc2, yyLoc,	"Object:",	cFitsHeaderData.Object);
-		yyLoc	+=	deltaY;
+		cFontScale		=	3.0;
+		cFontThickness	=	6;
+		cDeltaYloc		=	100;
+	}
+	else if (cDownLoadedImage->cols > 3000)
+	{
+		cFontScale		=	2.5;
+		cFontThickness	=	5;
+	}
+	else if (cDownLoadedImage->cols > 2000)
+	{
+		cFontScale		=	2.0;
+		cFontThickness	=	4;
+	}
+	else if (cDownLoadedImage->cols > 1000)
+	{
+		cFontScale		=	1.5;
+		cFontThickness	=	3;
+	}
+	else if (cDownLoadedImage->cols > 750)
+	{
+		cFontScale		=	0.85;
+		cFontThickness	=	2;
+		xxLoc1			=	25;
+		xxLoc2			=	150;
+		yyLoc			=	50;
+		cDeltaYloc		=	30;
+	}
+	else
+	{
+		cFontScale		=	0.50;
+		cFontThickness	=	1;
+		xxLoc1			=	10;
+		xxLoc2			=	75;
+		yyLoc			=	25;
+		cDeltaYloc		=	15;
+	}
 
-		//*	check to see if the object is the Moon
-		if (strcasecmp(cFitsHeaderData.Object, "Moon") == 0)
-		{
-			if (strlen(cFitsHeaderData.MoonPhase) > 0)
-			{
-				DrawTextString2(xxLoc1,	xxLoc2, yyLoc,	"MoonPhase:",	cFitsHeaderData.MoonPhase);
-				yyLoc	+=	deltaY;
-			}
-		}
-	}
-	if (strlen(cFitsHeaderData.Time_UTC) > 0)
+	if (cImageIsFITS)
 	{
-		DrawTextString2(xxLoc1,	xxLoc2, yyLoc,	"Date/Time:",	cFitsHeaderData.Time_UTC);
-		yyLoc	+=	deltaY;
+		DrawTitleBlock_FITS(xxLoc1, xxLoc2, yyLoc);
 	}
-	if (strlen(cFitsHeaderData.Camera) > 0)
+	else if (cImageIsPDS)
 	{
-		DrawTextString2(xxLoc1,	xxLoc2, yyLoc,	"Camera:",	cFitsHeaderData.Camera);
-		yyLoc	+=	deltaY;
+		DrawTitleBlock_PDS(xxLoc1, xxLoc2, yyLoc);
 	}
-	if (strlen(cFitsHeaderData.Filter) > 0)
-	{
-		DrawTextString2(xxLoc1,	xxLoc2, yyLoc,	"Filter:",	cFitsHeaderData.Filter);
-		yyLoc	+=	deltaY;
-	}
-	if (strlen(cFitsHeaderData.Telescope) > 0)
-	{
-		DrawTextString2(xxLoc1,	xxLoc2, yyLoc,	"Telescope:",	cFitsHeaderData.Telescope);
-		yyLoc	+=	deltaY;
-	}
-	if (cFitsHeaderData.FocalRatio > 1.0)
-	{
-		sprintf(theString, "%3.2f", cFitsHeaderData.FocalRatio);
-		DrawTextString2(xxLoc1,	xxLoc2, yyLoc,	"F-Ratio:",	theString);
-		yyLoc	+=	deltaY;
-	}
+}
+
+//*****************************************************************************
+void	ControllerImage::DrawSignature(void)
+{
+cv::Point	textLoc;
+cv::Scalar	fontColor	=	CV_RGB(255,255,255);
+int			xxLoc1;
+int			yyLoc;
+char		signatureString[64];
+
 	if (strlen(cFitsHeaderData.Observer) > 0)
 	{
-		DrawTextString2(xxLoc1,	xxLoc2, yyLoc,	"Observer:",	cFitsHeaderData.Observer);
-		yyLoc	+=	deltaY;
-	}
-	if (strlen(cFitsHeaderData.Observatory) > 0)
-	{
-		DrawTextString2(xxLoc1,	xxLoc2, yyLoc,	"Observatory:",	cFitsHeaderData.Observatory);
-		yyLoc	+=	deltaY;
-	}
-	if (strlen(cFitsHeaderData.Location) > 0)
-	{
-		DrawTextString2(xxLoc1,	xxLoc2, yyLoc,	"Location:",	cFitsHeaderData.Location);
-		yyLoc	+=	deltaY;
-	}
-	if (strlen(cFitsHeaderData.Website) > 0)
-	{
-		DrawTextString2(xxLoc1,	xxLoc2, yyLoc,	"Website:",	cFitsHeaderData.Website);
-		yyLoc	+=	deltaY;
+		strcpy(signatureString, "(C) 2024 by ");
+		strcat(signatureString, cFitsHeaderData.Observer);
+		xxLoc1		=	75;
+		yyLoc		=	cDownLoadedImage->rows;
+
+		textLoc.x	=	xxLoc1;
+		textLoc.y	=	yyLoc;
+		textLoc.y	-=	cDeltaYloc;
+		textLoc.y	-=	2;
+		cv::putText(	*cDownLoadedImage,
+						signatureString,
+						textLoc,
+						cv::FONT_HERSHEY_SCRIPT_SIMPLEX,
+						cFontScale,
+						fontColor,
+						cFontThickness
+						);
 	}
 }
 
@@ -1916,7 +2100,10 @@ int			maxWindowHeight	=	800;
 	strcat(outputFileName, "-si");
 	strcat(outputFileName, ".jpg");
 	openCVerr	=	cv::imwrite(outputFileName, *cDownLoadedImage);
-
+	if (openCVerr != 0)
+	{
+		CONSOLE_DEBUG_W_NUM("cv::imwrite returned error\t=", openCVerr);
+	}
 	//-----------------------------------------------------------------------
 	//*	create a small image
 
@@ -1952,6 +2139,22 @@ int			maxWindowHeight	=	800;
 
 		delete smallImage;
 	}
+}
+
+
+//*****************************************************************************
+void	ControllerImage::FlipImage(int flipMode)
+{
+cv::Mat		dstOpenCVmat;               // dst must be a different Mat
+
+	CONSOLE_DEBUG(__FUNCTION__);
+	cv::flip(*cDownLoadedImage, dstOpenCVmat, flipMode);
+//	DumpCVMatStruct(__FUNCTION__, &dstOpenCVmat,	"dstOpenCVmat");
+
+	dstOpenCVmat.copyTo(*cDownLoadedImage);
+	CopyImageToLiveImage(cDownLoadedImage);
+
+	cUpdateWindow	=	true;
 }
 
 #endif // _ENABLE_CTRL_IMAGE_

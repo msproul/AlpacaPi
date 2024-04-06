@@ -371,7 +371,7 @@ int				opnCVPixIdx;
 int				opnCVlineNum;
 uint8_t			pixelValue;
 
-	CONSOLE_DEBUG("***************************************************************");
+//	CONSOLE_DEBUG("***************************************************************");
 
 	openCvImgPtr	=	NULL;
 	validPDSimage	=	PDS_ReadImage(imageFileName, &pdsHeader);
@@ -443,7 +443,7 @@ uint8_t			pixelValue;
 			CONSOLE_ABORT(__FUNCTION__);
 		}
 	}
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	return(openCvImgPtr);
 }
 #endif // _ENABLE_NASA_PDS_
@@ -505,7 +505,7 @@ char		extension[8];
 				(strcasecmp(extension, ".png") == 0) ||
 				(strcasecmp(extension, ".gif") == 0))
 		{
-			CONSOLE_DEBUG_W_STR("imageFileName\t=", imageFileName);
+//			CONSOLE_DEBUG_W_STR("imageFileName\t=", imageFileName);
 			#warning "OpenCV++ not finished"
 		#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 			gOpenCvImg		=	cv::imread(imageFileName);

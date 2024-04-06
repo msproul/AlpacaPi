@@ -83,7 +83,7 @@ WindowTabAlpacaList::WindowTabAlpacaList(	const int	xSize,
 	cSortColumn			=	-1;
 	cFirstLineIdx		=	0;
 
-	strcpy(cWebURLstring, "clientapps.html");		//*	set the web help url string
+	SetWebHelpURLstring("clientapps.html");		//*	set the web help url string
 
 	ClearRemoteDeviceList();
 

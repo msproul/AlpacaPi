@@ -99,6 +99,8 @@
 //*	Mar 17,	2024	<MLS> Added FRATIO link to FITS header
 //*	Mar 18,	2024	<MLS> Added READOUTM link to FITS header
 //*	Mar 22,	2024	<MLS> Fixed bug in FITS camera offset reporting, was string, now int
+//*	Mar 25,	2024	<MLS> Now using NASA Moon Phase info if available
+//*	Mar 27,	2024	<MLS> Added lunar polar axis to moon fits info
 //*****************************************************************************
 
 #if defined(_ENABLE_CAMERA_) && defined(_ENABLE_FITS_)
@@ -143,6 +145,7 @@
 #include	"MoonRise.h"
 #include	"julianTime.h"
 #include	"cpu_stats.h"
+#include	"NASA_moonphase.h"
 
 #ifdef _ENABLE_IMU_
 	#include "imu_lib.h"
@@ -2243,31 +2246,158 @@ int		fitsStatus;
 //*****************************************************************************
 void	CameraDriver::WriteFITS_MoonInfo(fitsfile *fitsFilePtr)
 {
-int			fitsStatus;
-double		moonAge;
-double		moonIllumination;
-char		moonPhaseStr[64];
+int				fitsStatus;
+struct tm		*linuxTime;
+int				currentYear;
+int				currentMonth;
+int				currentDay;
+int				currentHour;
+int				currentMinute;
+int				currentSecond;
+bool			validPhaseInfo;
+char			timeString[64];
+TYPE_MoonPhase	moonPhaseInfo;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	WriteFITS_Seperator(fitsFilePtr, "Moon Info");
-	GetCurrentMoonPhase(moonPhaseStr);
-	fitsStatus	=	0;
-	fits_write_key(fitsFilePtr, TSTRING,	"MOONPHAS",
-											moonPhaseStr,
-											"Current Moon Phase", &fitsStatus);
+	//-------------------------------------------------------------
+	//*	use the start of exposure time
+	linuxTime		=	gmtime(&cCameraProp.Lastexposure_StartTime.tv_sec);
+	FormatTimeStringISO8601(&cCameraProp.Lastexposure_StartTime, timeString);
 
-	moonAge		=	CalcDaysSinceNewMoon(0, 0, 0);	//*	zero -> current time
-	fitsStatus	=	0;
-	fits_write_key(fitsFilePtr, TDOUBLE,	"MOONAGE",
-											&moonAge,
-											"Number of days since new moon", &fitsStatus);
+	currentYear		=	(1900 + linuxTime->tm_year);
+	currentMonth	=	(1 + linuxTime->tm_mon);
+	currentDay		=	linuxTime->tm_mday;
+	currentHour		=	linuxTime->tm_hour;
+	currentMinute	=	linuxTime->tm_min;
+	currentSecond	=	linuxTime->tm_sec;
+//	CONSOLE_DEBUG_W_NUM("currentYear\t=",	currentYear);
+//	CONSOLE_DEBUG_W_NUM("currentMonth\t=",	currentMonth);
+//	CONSOLE_DEBUG_W_NUM("currentDay\t=",	currentDay);
+//	CONSOLE_DEBUG_W_NUM("currentHour\t=",	currentHour);
 
-	moonIllumination	=	CalcMoonIllumination(0, 0, 0);	//*	zero -> current time
-	fitsStatus			=	0;
-	fits_write_key(fitsFilePtr, TDOUBLE,	"MOONILUM",
-											&moonIllumination,
-											"Percent illumination", &fitsStatus);
+	validPhaseInfo	=	NASA_GetMoonPhaseInfo(	currentYear,
+												currentMonth,
+												currentDay,
+												currentHour,
+												currentMinute,
+												currentSecond,
+												&moonPhaseInfo);
+	if (validPhaseInfo)
+	{
+		fitsStatus	=	0;
+		fits_write_key(fitsFilePtr, TSTRING,	"COMMENT",
+												(char *)"Moon Phase info from NASA",
+												NULL, &fitsStatus);
+
+		fitsStatus	=	0;
+		fits_write_key(fitsFilePtr, TSTRING,	"COMMENT",
+												(char *)"https://svs.gsfc.nasa.gov/gallery/moonphase/",
+												NULL, &fitsStatus);
+
+		fitsStatus	=	0;
+		fits_write_key(fitsFilePtr, TSTRING,	"COMMENT",
+												(char *)"2024 Moon data: https://svs.gsfc.nasa.gov/5187",
+												NULL, &fitsStatus);
+
+		fitsStatus	=	0;
+		fits_write_key(fitsFilePtr, TSTRING,	"COMMENT",
+												(char *)"Calculated WRT UTC time and location (Greenwich, UK)",
+												NULL, &fitsStatus);
+		fitsStatus	=	0;
+		fits_write_key(fitsFilePtr, TSTRING,	"COMMENT",
+												timeString,
+												NULL, &fitsStatus);
+
+		fitsStatus	=	0;
+		fits_write_key(fitsFilePtr, TSTRING,	"MOONPHAS",
+												&moonPhaseInfo.PhaseName,
+												"Current Moon Phase", &fitsStatus);
+
+//		CONSOLE_DEBUG_W_DBL("moonPhaseInfo.Phase\t=",	moonPhaseInfo.Phase);
+//		CONSOLE_DEBUG_W_DBL("moonPhaseInfo.Age  \t=",	moonPhaseInfo.Age);
+
+		//   Date       Time    Phase    Age    Diam    Dist     RA        Dec      Slon      Slat     Elon     Elat   AxisA
+		fitsStatus			=	0;
+		fits_write_key(fitsFilePtr, TDOUBLE,	"MOONILUM",
+												&moonPhaseInfo.Phase,
+												"Percent illumination", &fitsStatus);
+
+		fitsStatus	=	0;
+		fits_write_key(fitsFilePtr, TDOUBLE,	"MOONAGE",
+												&moonPhaseInfo.Age,
+												"Number of days since new moon", &fitsStatus);
+
+		fitsStatus	=	0;
+		fits_write_key(fitsFilePtr, TDOUBLE,	"MOONDIAM",
+												&moonPhaseInfo.Diam,
+												"Diameter of the moon (arcseconds)", &fitsStatus);
+
+		fitsStatus	=	0;
+		fits_write_key(fitsFilePtr, TINT,		"MOONDIST",
+												&moonPhaseInfo.Dist,
+												"Distance to moon (km)", &fitsStatus);
+
+		fitsStatus	=	0;
+		fits_write_key(fitsFilePtr, TDOUBLE,	"MOON-RA",
+												&moonPhaseInfo.RA,
+												"Right Ascension of moon (J2000)", &fitsStatus);
+		fitsStatus	=	0;
+		fits_write_key(fitsFilePtr, TDOUBLE,	"MOON-DEC",
+												&moonPhaseInfo.Dec,
+												"Declination of moon (J2000)", &fitsStatus);
+
+		//*	Position angle of the north polar axis
+		fitsStatus	=	0;
+		fits_write_key(fitsFilePtr, TDOUBLE,	"MOONAXIS",
+												&moonPhaseInfo.AxisA,
+												"North Polar Axis Angle (degrees)", &fitsStatus);
+
+		//*	Libration angle
+		fitsStatus	=	0;
+		fits_write_key(fitsFilePtr, TDOUBLE,	"MOONELAT",
+												&moonPhaseInfo.ELat,
+												"Libration angle Latitude (degrees) ", &fitsStatus);
+		fitsStatus	=	0;
+		fits_write_key(fitsFilePtr, TDOUBLE,	"MOONELON",
+												&moonPhaseInfo.ELon,
+												"Libration angle Longitude (degrees) ", &fitsStatus);
+	}
+	else
+	{
+	double			moonAge;
+	double			moonIllumination;
+	char			moonPhaseStr[64];
+
+		//*	this phase information is not as accurate as the NASA data
+		fitsStatus	=	0;
+		fits_write_key(fitsFilePtr, TSTRING,	"COMMENT",
+												(char *)"This moon data is known to be slightly off",
+												NULL, &fitsStatus);
+
+		fitsStatus	=	0;
+		fits_write_key(fitsFilePtr, TSTRING,	"COMMENT",
+												(char *)"https://github.com/signetica/MoonRise",
+												NULL, &fitsStatus);
+
+		GetCurrentMoonPhase(moonPhaseStr);
+		fitsStatus	=	0;
+		fits_write_key(fitsFilePtr, TSTRING,	"MOONPHAS",
+												moonPhaseStr,
+												"Current Moon Phase", &fitsStatus);
+
+		moonIllumination	=	CalcMoonIllumination(0, 0, 0);	//*	zero -> current time
+		fitsStatus			=	0;
+		fits_write_key(fitsFilePtr, TDOUBLE,	"MOONILUM",
+												&moonIllumination,
+												"Percent illumination", &fitsStatus);
+		moonAge		=	CalcDaysSinceNewMoon(0, 0, 0);	//*	zero -> current time
+		fitsStatus	=	0;
+		fits_write_key(fitsFilePtr, TDOUBLE,	"MOONAGE",
+												&moonAge,
+												"Number of days since new moon", &fitsStatus);
+	}
 
 	if (gObseratorySettings.ValidLatLon)
 	{
@@ -2358,14 +2488,6 @@ char		moonPhaseStr[64];
 		fits_write_key(fitsFilePtr, TSTRING,	"MOONNEXT",
 												lineBuff,
 												NULL, &fitsStatus);
-//		if (mr.isVisible)
-//		{
-//			printf("Moon visible.\n");
-//		}
-//		else
-//		{
-//			printf("Moon not visible.\n");
-//		}
 	}
 }
 

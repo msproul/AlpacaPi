@@ -35,6 +35,7 @@
 //*	Mar  4,	2023	<MLS> Added PGR (Purple, Gold, Red) cross hair color option
 //*	Sep  7,	2023	<MLS> Added Live vs Downloaded label to make it obvious
 //*	Mar 18,	2024	<MLS> Added SetImageFilePath()
+//*	Mar 30,	2024	<MLS> Added FlipImage()
 //*****************************************************************************
 
 #ifdef _ENABLE_CTRL_IMAGE_
@@ -158,10 +159,14 @@ int		btnCnt;
 	buttonName[1]	=	0;
 	btnCnt			=	0;
 	boxWidth		=	3 * cTitleHeight;
-	for (iii=kImageDisplay_Btn_1; iii<=kImageDisplay_Btn_N; iii++)
+	for (iii=kImageDisplay_Gimp; iii<=kImageDisplay_Btn_N; iii++)
 	{
 		SetWidget(				iii,	xLoc, yLoc, boxWidth, cTitleHeight);
 		SetWidgetType(			iii, 	kWidgetType_Button);
+		SetWidgetFont(			iii, 	kFont_TextList);
+		SetWidgetBGColor(		iii,	CV_RGB(255,	255,	255));
+		SetWidgetTextColor(		iii,	CV_RGB(0,	0,	0));
+
 		SetWidgetText(			iii,	buttonName);
 
 		xLoc	+=	boxWidth;
@@ -170,9 +175,11 @@ int		btnCnt;
 		buttonName[0]++;
 		btnCnt++;
 	}
-	SetWidgetText(			kImageDisplay_Btn_1,	"GIMP");
-	SetWidgetText(			kImageDisplay_Btn_2,	"Title");
-	SetWidgetText(			kImageDisplay_Btn_3,	"Save");
+	SetWidgetText(			kImageDisplay_Gimp,			"GIMP");
+	SetWidgetText(			kImageDisplay_Btn_Title,	"Title");
+	SetWidgetText(			kImageDisplay_Btn_Save,		"Save");
+	SetWidgetText(			kImageDisplay_FlipH,		"Flip-H");
+	SetWidgetText(			kImageDisplay_FlipV,		"Flip-V");
 
 	yLoc			+=	cTitleHeight;
 	yLoc			+=	2;
@@ -429,9 +436,12 @@ void	WindowTabImage::SetImageFilePath(const char *imageFilePath)
 void	WindowTabImage::HandleKeyDown(const int keyPressed)
 {
 bool	updateFlag;
+#ifdef _ENABLE_SKYIMAGE_
+	bool	newImageOK;
+#endif // _ENABLE_SKYIMAGE_
 
 //	CONSOLE_DEBUG(__FUNCTION__);
-	CONSOLE_DEBUG_W_HEX("keyPressed\t",	keyPressed);
+//	CONSOLE_DEBUG_W_HEX("keyPressed\t",	keyPressed);
 
 	updateFlag	=	true;
 	switch(keyPressed & 0x0ffff)
@@ -498,13 +508,24 @@ bool	updateFlag;
 #ifdef _ENABLE_SKYIMAGE_
 		case 0x00FF53:	//*	right arrow
 		case 0x00FF54:	//*	down arrow
-			CONSOLE_DEBUG_W_HEX("keyPressed\t",	keyPressed);
-			LoadNextImageFromList((ControllerImage *)cParentObjPtr);
-			//				 0x11FF53
-			CONSOLE_DEBUG_W_HEX("keyPressed\t",	keyPressed & 0x010000);
-			if (keyPressed & 0x010000)
+			newImageOK	=	LoadNextImageFromList((ControllerImage *)cParentObjPtr);
+//			CONSOLE_DEBUG_W_BOOL("LoadNextImageFromList returned", newImageOK);
+			if (newImageOK)
 			{
-				CONSOLE_DEBUG("ResetImage");
+				SetWidgetBGColor(kImageDisplay_LiveOrDownLoad, CV_RGB(0, 200, 0));
+			}
+			else
+			{
+				SetWidgetBGColor(kImageDisplay_LiveOrDownLoad, CV_RGB(255, 0, 0));
+				cOpenCVdownLoadedImage	=	NULL;
+				cOpenCVdisplayedImage	=	NULL;
+			}
+			cv::waitKey(250);
+			//				 0x11FF53
+//			CONSOLE_DEBUG_W_HEX("keyPressed\t",	keyPressed & 0x010000);
+			if ((keyPressed & 0x010000) == 0)
+			{
+//				CONSOLE_DEBUG("ResetImage");
 				ResetImage();
 				updateFlag	=	false;
 			}
@@ -512,11 +533,23 @@ bool	updateFlag;
 
 		case 0x00FF51:	//*	left arrow
 		case 0x00FF52:	//*	up arrow
-			CONSOLE_DEBUG_W_HEX("keyPressed\t",	keyPressed);
-			LoadPreviousImageFromList((ControllerImage *)cParentObjPtr);
-			if (keyPressed & 0x010000)
+//			CONSOLE_DEBUG_W_HEX("keyPressed\t",	keyPressed);
+			newImageOK	=	LoadPreviousImageFromList((ControllerImage *)cParentObjPtr);
+//			CONSOLE_DEBUG_W_BOOL("LoadPreviousImageFromList returned", newImageOK);
+			if (newImageOK)
 			{
-				CONSOLE_DEBUG("ResetImage");
+				SetWidgetBGColor(kImageDisplay_LiveOrDownLoad, CV_RGB(0, 200, 0));
+			}
+			else
+			{
+				SetWidgetBGColor(kImageDisplay_LiveOrDownLoad, CV_RGB(255, 0, 0));
+				cOpenCVdownLoadedImage	=	NULL;
+				cOpenCVdisplayedImage	=	NULL;
+			}
+			cv::waitKey(250);
+			if ((keyPressed & 0x010000) == 0)
+			{
+//				CONSOLE_DEBUG("ResetImage");
 				ResetImage();
 				updateFlag	=	false;
 			}
@@ -576,27 +609,39 @@ ControllerImage	*myParentContolerImage;
 
 	switch(buttonIdx)
 	{
-		case kImageDisplay_Btn_1:
+		case kImageDisplay_Gimp:
 			strcpy(commandString, "gimp ");
 			strcat(commandString, cImageFilePath);
 			strcat(commandString, " &");
 			systemRetCode	=	system(commandString);
+			if (systemRetCode != 0)
+			{
+				CONSOLE_DEBUG_W_STR("system() returned error, cmd str=", commandString);
+			}
 
 			break;
 
-		case kImageDisplay_Btn_2:
+		case kImageDisplay_Btn_Title:
 			myParentContolerImage	=	(ControllerImage *)cParentObjPtr;
 			myParentContolerImage->DrawTitleBlock();
+			myParentContolerImage->DrawSignature();
+
 			ResetImage();
 			break;
 
-		case kImageDisplay_Btn_3:
+		case kImageDisplay_Btn_Save:
 			myParentContolerImage	=	(ControllerImage *)cParentObjPtr;
 			myParentContolerImage->SaveImage();
 			break;
 
-		case kImageDisplay_Btn_4:
-		case kImageDisplay_Btn_5:
+		case kImageDisplay_FlipH:
+			FlipImage(1);
+			break;
+
+		case kImageDisplay_FlipV:
+			FlipImage(0);
+			break;
+
 		case kImageDisplay_Btn_6:
 			CONSOLE_DEBUG_W_NUM("kImageDisplay_\t=", buttonIdx);
 			break;
@@ -877,31 +922,39 @@ void	WindowTabImage::ResetImage(void)
 {
 //int	rowStepSize;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	SetWidgetText(	kImageDisplay_ImageDisplayInfo,	"Full image");
 #if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
-int	bytesPerPixel;
-//	DumpCVMatStruct(__FUNCTION__, cOpenCVdownLoadedImage, __FUNCTION__);
+	if (cOpenCVdownLoadedImage != NULL)
+	{
+	int	bytesPerPixel;
+	//	DumpCVMatStruct(__FUNCTION__, cOpenCVdownLoadedImage, __FUNCTION__);
 
-	//*	Check to see if the original is color
-//	rowStepSize		=	cOpenCVdownLoadedImage->step[0];
-	bytesPerPixel	=	cOpenCVdownLoadedImage->step[1];
-//	if ((cOpenCVdownLoadedImage->nChannels == 3) && (cOpenCVdownLoadedImage->depth == 8))
-	if ((bytesPerPixel == 3))
-	{
-	//	cvResize(cOpenCVdownLoadedImage, cOpenCVdisplayedImage, CV_INTER_LINEAR);
-		cv::resize(	*cOpenCVdownLoadedImage,
-					*cOpenCVdisplayedImage,
-					cOpenCVdisplayedImage->size(),
-					0,
-					0,
-					cv::INTER_LINEAR);
+//		CONSOLE_DEBUG("cOpenCVdownLoadedImage is OK");
+		//*	Check to see if the original is color
+	//	rowStepSize		=	cOpenCVdownLoadedImage->step[0];
+		bytesPerPixel	=	cOpenCVdownLoadedImage->step[1];
+	//	if ((cOpenCVdownLoadedImage->nChannels == 3) && (cOpenCVdownLoadedImage->depth == 8))
+		if ((bytesPerPixel == 3))
+		{
+		//	cvResize(cOpenCVdownLoadedImage, cOpenCVdisplayedImage, CV_INTER_LINEAR);
+			cv::resize(	*cOpenCVdownLoadedImage,
+						*cOpenCVdisplayedImage,
+						cOpenCVdisplayedImage->size(),
+						0,
+						0,
+						cv::INTER_LINEAR);
+		}
+	//	else if ((cOpenCVdownLoadedImage->nChannels == 1) && (cOpenCVdownLoadedImage->depth == 8))
+		else if ((bytesPerPixel == 1))
+		{
+	//-		cvCvtColor(cOpenCVdownLoadedImage, cOpenCVdisplayedImage, CV_GRAY2RGB);
+			cv::cvtColor(*cOpenCVdownLoadedImage, *cOpenCVdisplayedImage, cv::COLOR_GRAY2BGR);
+		}
 	}
-//	else if ((cOpenCVdownLoadedImage->nChannels == 1) && (cOpenCVdownLoadedImage->depth == 8))
-	else if ((bytesPerPixel == 1))
+	else
 	{
-//-		cvCvtColor(cOpenCVdownLoadedImage, cOpenCVdisplayedImage, CV_GRAY2RGB);
-		cv::cvtColor(*cOpenCVdownLoadedImage, *cOpenCVdisplayedImage, cv::COLOR_GRAY2BGR);
+		CONSOLE_DEBUG("cOpenCVdownLoadedImage is NULL");
 	}
 #else
 	//*	Check to see if the original is color
@@ -1256,6 +1309,21 @@ ControllerImage	*myParentContolerImage;
 	{
 		CONSOLE_DEBUG("Parent object ptr is NULL");
 		CONSOLE_ABORT(__FUNCTION__);
+	}
+}
+
+
+//*****************************************************************************
+void	WindowTabImage::FlipImage(int flipMode)
+{
+ControllerImage	*myParentContolerImage;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	myParentContolerImage	=	(ControllerImage *)cParentObjPtr;
+	if (myParentContolerImage != NULL)
+	{
+		myParentContolerImage->FlipImage(flipMode);
 	}
 }
 

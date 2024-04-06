@@ -51,6 +51,10 @@
 	#include	"windowtab_moon.h"
 #endif
 
+#ifndef	_WINDOWTAB_MOONPHASE_H_
+	#include	"windowtab_MoonPhase.h"
+#endif
+
 #ifndef	_WINDOWTAB_FOV_H_
 	#include	"windowtab_fov.h"
 #endif
@@ -146,6 +150,7 @@ enum
 	kTab_IPList,
 	kTab_SwVersList,
 	kTab_Moon,
+	kTab_MoonPhase,
 #ifdef _ENABLE_CPU_STATS_
 	kTab_CPU_STATS,
 #endif
@@ -171,6 +176,7 @@ class ControllerSkytravel: public Controller
 		virtual	void	SetupWindowControls(void);
 //		virtual	void	ProcessButtonClick(const int buttonIdx);
 		virtual	void	RunBackgroundTasks(const char *callingFunction=NULL, bool enableDebug=false);
+		virtual	bool	RunFastBackgroundTasks(void);
 		virtual	void	AlpacaDisplayErrorMessage(const char *errorMsgString);
 				bool	AlpacaProcessReadAllIdx(		const char	*deviceTypeStr,
 														const int	deviceNum,
@@ -223,6 +229,7 @@ class ControllerSkytravel: public Controller
 				WindowTabIPList			*cIPaddrListObjPtr;
 				WindowTabSwVersions		*cSwVersionsListObjPtr;
 				WindowTabMoon			*cMoonTabObjPtr;
+				WindowTabMoonPhase		*cMoonPhaseTabObjPtr;
 				WindowTabAbout			*cAboutBoxTabObjPtr;
 
 				WindowTabTime			*cTimeTabObjPtr;

@@ -56,6 +56,7 @@
 #include	"controller_startup.h"
 #include	"OpenNGC.h"
 #include	"RemoteImage.h"
+#include	"NASA_moonphase.h"
 
 #ifdef _ENABLE_REMOTE_GAIA_
 	#include	"GaiaSQL.h"
@@ -205,6 +206,7 @@ unsigned long		endNanoSecs;
 unsigned long		deltaNanoSecs;
 ControllerSkytravel	*skyTravelCtrlObj;
 int 				startupWidgetIdx;
+int					moonPhaseCnt;
 
 
 	CONSOLE_DEBUG(__FUNCTION__);
@@ -269,6 +271,10 @@ char				versionBuff[64];
 #endif // _ENABLE_REMOTE_GAIA_
 //	CONSOLE_DEBUG_W_STR("RemoteGAIAenabled is", (gST_DispOptions.RemoteGAIAenabled ? "enabled" : "disabled"));
 
+	//-----------------------------------------------
+	startupWidgetIdx	=	SetStartupText("NASA Moon Phase data");
+	moonPhaseCnt		=	NASA_ReadMoonPhaseData();
+	SetStartupTextStatus(startupWidgetIdx, ((moonPhaseCnt > 0) ? "OK" : "Failed"));
 
 
 //	startupWidgetIdx	=	SetStartupText("Creating SkyTravel window:");
@@ -330,6 +336,8 @@ char				versionBuff[64];
 					Controller_HandleKeyDown(keyPressed);
 				}
 
+				//--------------------------------------------------------------------------
+				//*	check for windows that have been closed
 				if (gControllerList[iii]->cKeepRunning == false)
 				{
 				//	CONSOLE_DEBUG_W_NUM("Deleting controller #", iii);

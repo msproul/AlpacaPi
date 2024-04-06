@@ -147,6 +147,7 @@ class WindowTab
 
 				void	SetAlpacaDeviceType(const char *deviceTypeString);
 		virtual	void	RunWindowBackgroundTasks(void);
+				void	SetRunFastBackgroundMode(bool newRunFastMode);
 		virtual	void	SetupWindowControls(void);
 //		virtual	void	DrawWindow(void);
 		virtual void	HandleKeyDown(const int keyPressed);
@@ -178,6 +179,7 @@ class WindowTab
 		virtual	void	UpdateOnScreenWidgetList(void);
 		virtual	void	LaunchWebRemoteDevice(const char *urlString = NULL);
 		virtual	void	LaunchWebHelp(const char *webpagestring = NULL);
+				void	SetWebHelpURLstring(const char *webpagestring);
 				void	LaunchWebURL(const char *urlString);
 				char	cWebURLstring[64];
 
@@ -188,6 +190,7 @@ class WindowTab
 				void	SetWidgetFont(			const int widgetIdx,	int fontNum);
 				void	SetWidgetJustification(	const int widgetIdx,	int justification);
 				void	SetWidgetTextColor(		const int widgetIdx,	cv::Scalar newtextColor);
+				void	SetWidgetTextColor(		const int widgetIdx,	int colorIndex);
 				void	SetWidgetBGColor(		const int widgetIdx,	cv::Scalar newBackGroundColor);
 				void	SetWidgetBGColorSelected(const int widgetIdx,	cv::Scalar newBackGroundColor);
 				void	SetWidgetBorderColor(	const int widgetIdx,	cv::Scalar newBackGroundColor);

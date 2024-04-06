@@ -1,8 +1,14 @@
 //**************************************************************************
 //#include	"PDS_decompress.c"
 
+#ifndef _STDINT_H
+	#include	<stdint.h>
+#endif
+//	#include	<stdint-intn.h>
+
 //*	the LONG's defined here must be 32 bit
 #define	LONG	int
+//#define	LONG	int32_t
 
 //**************************************************************************
 typedef struct leaf

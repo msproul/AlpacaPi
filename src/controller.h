@@ -24,6 +24,7 @@
 	#include	<opencv2/opencv.hpp>
 	#include	<opencv2/core.hpp>
 //	#include	<opencv2/highgui.hpp>
+//	#include	<opencv4/opencv2/core.hpp>
 
 //EVENT_FLAG_CTRLKEY
 	#ifndef _USE_OPENCV_CPP_
@@ -66,7 +67,7 @@
 	#define	kMagicCookieValue	0x55AA7777
 #endif
 
-#ifdef _ENABLE_SKYTRAVEL_
+#if defined(_ENABLE_SKYTRAVEL_) || defined(_ENABLE_SKYIMAGE_)
 	#define	_USE_BACKGROUND_THREAD_
 #endif // _ENABLE_SKYTRAVEL_
 
@@ -74,8 +75,8 @@
 #define	kMaxControllers	16
 
 
-#define	kMaxTabs	15
-#define	kButtonCnt	30
+#define	kMaxTabs	20
+//#define	kButtonCnt	30
 
 #define	kDefaultUpdateDelta	5
 #define	kLineBufSize		512
@@ -273,6 +274,8 @@ class Controller
 
 
 		virtual	void	RunBackgroundTasks(const char *callingFunction=NULL, bool enableDebug=false);
+		virtual	bool	RunFastBackgroundTasks(void);
+		virtual	void	SetRunFastBackgroundMode(bool newRunFastMode);
 		virtual	void	SetupWindowControls(void);
 				void	SetWindowIPaddrInfo(const char	*textString, const bool	onLine);
 				void	DrawWindowTabs(void);
@@ -342,6 +345,7 @@ class Controller
 		bool		cKeepRunning;
 		bool		cUpdateProtect;
 
+		//----------------------------------------------------------------
 		//*	Window tabs
 		int			cCurrentTabNum;
 		WindowTab	*cCurrentTabObjPtr;
@@ -639,6 +643,7 @@ class Controller
 		bool		cBackGroundThreadCreated;
 		bool		cButtonClickInProgress;
 		bool		cBackgroundTaskActive;
+		bool		cEnableRunFastBackGround;
 
 //------------------------------------------------------------
 #ifdef _ENABLE_TASK_TIMING_

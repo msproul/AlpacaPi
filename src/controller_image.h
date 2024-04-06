@@ -29,6 +29,14 @@
 	#include	"fits_helper.h"
 #endif
 
+#ifdef _ENABLE_NASA_PDS_
+	#ifndef _PDS_TYPEDEFS_H_
+		#include	"PDS.typedefs.h"
+	#endif
+#endif
+
+
+
 //**************************************************************************************
 typedef struct
 {
@@ -40,6 +48,8 @@ typedef struct
 	double	FocalRatio;
 	char	Location[64];
 	char	MoonPhase[64];
+	double	MoonAge;
+	double	MoonIllumination;
 	char	Object[64];
 	char	Observer[64];
 	char	Observatory[64];
@@ -79,7 +89,7 @@ class ControllerImage: public Controller
 
 		virtual	void	DrawWidgetImage(TYPE_WIDGET *theWidget);
 				void	SetImageWindowTitles(const char *imageFilePath);
-				void	LoadImage(const char *imageFilePath);
+				bool	LoadImage(const char *imageFilePath);
 				void	LoadNextImage(void);
 
 
@@ -108,9 +118,16 @@ class ControllerImage: public Controller
 			#endif // _USE_OPENCV_CPP_
 				void	SetImageWindowInfo(void);
 				void	SetDownloadInfo(double download_MBytes, double download_seconds);
+				void	SaveFitsHeaderLine(const char *fitsLine);
+				void	UpdateFitsHeader(void);
 				void	ProcessFitsHeader(const char *imageFilePath);
 				void	DrawTextString2(const int xxLoc1, const int xxLoc2, const int yyLoc, const char *textString1, const char *textString2);
 				void	DrawTitleBlock(void);
+				void	DrawSignature(void);
+
+				void	DrawTitleBlock_FITS(int xxLoc1, int xxLoc2, int yyLoc);
+				void	DrawTitleBlock_PDS(int xxLoc1, int xxLoc2, int yyLoc);
+
 				void	SaveImage(void);
 
 				char					cImageFileName[128];
@@ -132,6 +149,10 @@ class ControllerImage: public Controller
 				char					cFileExtension[16];
 //				TYPE_IMAGE_ROI_Info		cROIinfo;
 				TYPE_FitsHeaderData		cFitsHeaderData;
+
+#ifdef _ENABLE_NASA_PDS_
+				void		ProcessPdsHeader(PDS_header_data *pdsHeaderPtr);
+#endif
 
 				//=======================================================
 				//*	image analysis data
@@ -156,6 +177,16 @@ class ControllerImage: public Controller
 				//=======================================================
 				TYPE_FitsHdrLine	cFitsHeaderText[kMaxFitsHdrLines];
 				int					cFitsHdrCnt;
+				//------------------------------------------------------
+				//*	title block information
+				double				cFontScale;
+				int					cFontThickness;
+				int					cDeltaYloc;
+
+
+				//---------------------------------------------------
+				//*	image processing stuff
+				void			FlipImage(int flipMode);
 
 };
 

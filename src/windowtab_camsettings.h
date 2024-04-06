@@ -38,6 +38,7 @@ enum
 	kCamSet_Preset15,
 	kCamSet_Preset16,
 	kCamSet_Preset17,
+	kCamSet_Preset18,
 
 	kCamSet_ObjOutline,
 
@@ -59,6 +60,7 @@ enum
 	kCamSet_Time15,
 	kCamSet_Time16,
 	kCamSet_Time17,
+	kCamSet_Time18,
 
 	kCamSet_TimeOutline,
 

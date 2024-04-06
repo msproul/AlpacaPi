@@ -328,6 +328,7 @@ CAMERA_DRIVER_OBJECTS=										\
 				$(OBJECT_DIR)cameradriver_save.o			\
 				$(OBJECT_DIR)cameradriver_sim.o				\
 				$(OBJECT_DIR)cameradriver_TOUP.o			\
+				$(OBJECT_DIR)NASA_moonphase.o				\
 				$(OBJECT_DIR)multicam.o						\
 				$(OBJECT_DIR)ParseNMEA.o					\
 				$(OBJECT_DIR)NMEA_helper.o					\
@@ -3102,6 +3103,7 @@ SKYTRAVEL_OBJECTS=											\
 				$(OBJECT_DIR)HipparcosCatalog.o				\
 				$(OBJECT_DIR)julianTime.o					\
 				$(OBJECT_DIR)moonphase.o					\
+				$(OBJECT_DIR)NASA_moonphase.o				\
 				$(OBJECT_DIR)NGCcatalog.o					\
 				$(OBJECT_DIR)observatory_settings.o			\
 				$(OBJECT_DIR)OpenNGC.o						\
@@ -3122,11 +3124,11 @@ SKYTRAVEL_OBJECTS=											\
 				$(OBJECT_DIR)windowtab_covercalib.o			\
 				$(OBJECT_DIR)windowtab_deviceselect.o		\
 				$(OBJECT_DIR)windowtab_filterwheel.o		\
-				$(OBJECT_DIR)windowtab_fitsheader.o			\
 				$(OBJECT_DIR)windowtab_fov.o				\
 				$(OBJECT_DIR)windowtab_iplist.o				\
 				$(OBJECT_DIR)windowtab_libraries.o			\
 				$(OBJECT_DIR)windowtab_moon.o				\
+				$(OBJECT_DIR)windowtab_MoonPhase.o			\
 				$(OBJECT_DIR)windowtab_mount.o				\
 				$(OBJECT_DIR)windowtab_obscond.o			\
 				$(OBJECT_DIR)windowtab_multicam.o			\
@@ -3643,27 +3645,30 @@ preview			:			$(PREVIEW_OBJECTS)
 ######################################################################################
 SKYIMAGE_OBJECTS=											\
 				$(OBJECT_DIR)alpacadriver_helper.o			\
+				$(OBJECT_DIR)commoncolor.o					\
 				$(OBJECT_DIR)controller.o					\
 				$(OBJECT_DIR)controller_image.o				\
 				$(OBJECT_DIR)controller_skyimage.o			\
 				$(OBJECT_DIR)cpu_stats.o					\
-				$(OBJECT_DIR)readconfigfile.o				\
-				$(OBJECT_DIR)commoncolor.o					\
 				$(OBJECT_DIR)fits_opencv.o					\
+				$(OBJECT_DIR)NASA_moonphase.o				\
 				$(OBJECT_DIR)opencv_utils.o					\
+				$(OBJECT_DIR)readconfigfile.o				\
 				$(OBJECT_DIR)windowtab.o					\
 				$(OBJECT_DIR)windowtab_about.o				\
 				$(OBJECT_DIR)windowtab_image.o				\
 				$(OBJECT_DIR)windowtab_imageinfo.o			\
 				$(OBJECT_DIR)windowtab_imageList.o			\
 				$(OBJECT_DIR)windowtab_fitsheader.o			\
+				$(OBJECT_DIR)windowtab_MoonPhase.o			\
 
 ######################################################################################
 # make si skyimage
 si			:	DEFINEFLAGS		+=	-D_ENABLE_SKYIMAGE_
 si			:	DEFINEFLAGS		+=	-D_INCLUDE_CTRL_MAIN_
 si			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
-si	:			DEFINEFLAGS		+=	-D_ENABLE_NASA_PDS_
+si			:	DEFINEFLAGS		+=	-D_ENABLE_NASA_PDS_
+si			:	DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
 
 si			:			$(SKYIMAGE_OBJECTS)					\
 						$(PDS_OBJECTS)						\
@@ -4588,6 +4593,14 @@ $(OBJECT_DIR)controller_preview.o : 	$(SRC_DIR)controller_preview.cpp	\
 
 
 #-------------------------------------------------------------------------------------
+$(OBJECT_DIR)NASA_moonphase.o : 	$(SRC_DIR)NASA_moonphase.cpp		\
+										$(SRC_DIR)NASA_moonphase.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)NASA_moonphase.cpp -o$(OBJECT_DIR)NASA_moonphase.o
+
+
+
+
+#-------------------------------------------------------------------------------------
 $(OBJECT_DIR)windowtab.o : 				$(SRC_DIR)windowtab.cpp				\
 										$(SRC_DIR)windowtab.h				\
 										$(SRC_DIR)controller.h
@@ -4685,6 +4698,12 @@ $(OBJECT_DIR)windowtab_moon.o : 		$(SRC_DIR)windowtab_moon.cpp		\
 										$(SRC_DIR)controller.h
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)windowtab_moon.cpp -o$(OBJECT_DIR)windowtab_moon.o
 
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)windowtab_MoonPhase.o : 	$(SRC_DIR)windowtab_MoonPhase.cpp	\
+										$(SRC_DIR)windowtab_MoonPhase.h		\
+										$(SRC_DIR)windowtab.h				\
+										$(SRC_DIR)controller.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)windowtab_MoonPhase.cpp -o$(OBJECT_DIR)windowtab_MoonPhase.o
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)windowtab_obscond.o : 		$(SRC_DIR)windowtab_obscond.cpp		\

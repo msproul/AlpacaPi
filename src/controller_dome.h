@@ -65,7 +65,6 @@ class ControllerDome: public Controller
 
 		virtual			~ControllerDome(void);
 
-
 		virtual	void	SetupWindowControls(void);
 		virtual	void	AlpacaDisplayErrorMessage(const char *errorMsgString);
 		virtual	void	UpdateConnectedStatusIndicator(void);
@@ -73,6 +72,7 @@ class ControllerDome: public Controller
 		virtual	void	GetStatus_SubClass(void);
 
 		virtual	bool	AlpacaGetStartupData_OneAAT(void);
+		virtual	bool	AlpacaGetStatus_OneAAT(void);
 		virtual	void	UpdateStartupData(void);
 		virtual	void	UpdateStatusData(void);
 		virtual	void	UpdateOnlineStatus(void);

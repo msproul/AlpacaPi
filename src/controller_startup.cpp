@@ -162,6 +162,7 @@ int		widgetIdx;
 	}
 	else
 	{
+		CONSOLE_DEBUG("Ran out of room in startup window");
 		CONSOLE_DEBUG_W_STR("startupMsg\t=",	startupMsg);
 		CONSOLE_ABORT(__FUNCTION__);
 	}

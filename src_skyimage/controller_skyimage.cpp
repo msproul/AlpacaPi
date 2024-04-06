@@ -9,6 +9,9 @@
 //*	Mar  9,	2024	<MLS> Created controller_skyimage.cpp
 //*	Mar 13,	2024	<MLS> Double click now opens image window
 //*	Mar 18,	2024	<MLS> Added LoadNextImageFromList() & LoadPreviousImageFromList()
+//*	Mar 24,	2024	<MLS> Added recursive directory reading
+//*	Mar 24,	2024	<MLS> Fixed crash bug when image failed to load
+//*	Mar 27,	2024	<MLS> Added NASA MoonPhase window ti SkyImage
 //*****************************************************************************
 
 
@@ -29,17 +32,18 @@
 #include	"ConsoleDebug.h"
 
 
-#define	kWindowWidth	1200
+#define	kWindowWidth	1300
 //#define	kWindowHeight	820
 #define	kWindowHeight	800
 
 #include	"helper_functions.h"
+#include	"NASA_moonphase.h"
+
 #include	"windowtab_about.h"
 #include	"windowtab_imageList.h"
-
-
 #include	"controller.h"
 #include	"controller_skyimage.h"
+#include	"windowtab_MoonPhase.h"
 #include	"controller_image.h"
 #include	"imagelist.h"
 
@@ -49,16 +53,20 @@ bool	gVerbose				=	false;
 char	gFullVersionString[128]	=	"V0.0.0";
 
 
-char			gDirectoryPath[256];
-TYPE_ImageFile	*gImageList			=	NULL;
+
+
+TYPE_ImageFile	gImageList[kMaxImageCnt];
+char			gDirectoryPath[256]	=	"";
 int				gImageCount			=	0;
 int				gCurrentImageIndex	=	0;
-int				gBackGroundImgIdx	=	0;
 
-void	ReadFitsInfoForImage(TYPE_ImageFile *imageFileData);
+static void	ReadFitsInfoForImage(TYPE_ImageFile *imageFileData);
+static void	ExtractFileExtension(const char *fileName, char *extension);
+static void	SetImageFileType(TYPE_ImageFile *imageFileInfo, const char *fileExtension);
+static int	FileNameQSort(const void *e1, const void* e2);
 
 //**************************************************************************************
-ControllerSkyImage::ControllerSkyImage(	const char *argWindowName)
+ControllerSkyImage::ControllerSkyImage(	const char *argWindowName, const char *argDirectoryPath)
 				:Controller(	argWindowName,
 								kWindowWidth,
 								kWindowHeight,
@@ -66,12 +74,17 @@ ControllerSkyImage::ControllerSkyImage(	const char *argWindowName)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-	cWindowType						=	'IMAG';
-	cImageListTabObjPtr				=	NULL;
-	cAboutBoxTabObjPtr				=	NULL;
-	cFitsProcessCntr				=	0;
+	cWindowType				=	'IMAG';
+	cImageListTabObjPtr		=	NULL;
+	cAboutBoxTabObjPtr		=	NULL;
+	cFitsProcessCntr		=	0;
+	cBackGroundImgIdx		=	0;
+
+	strcpy(cDirectoryPath, argDirectoryPath);
+	ReadFileDirectory(cDirectoryPath);
 
 	SetupWindowControls();
+
 #ifdef _USE_BACKGROUND_THREAD_
 	StartBackgroundThread();
 #endif // _USE_BACKGROUND_THREAD_
@@ -86,7 +99,26 @@ ControllerSkyImage::~ControllerSkyImage(void)
 
 
 	DELETE_OBJ_IF_VALID(cImageListTabObjPtr);
+	DELETE_OBJ_IF_VALID(cMoonPhaseTabObjPtr);
 	DELETE_OBJ_IF_VALID(cAboutBoxTabObjPtr);
+}
+
+//**************************************************************************************
+bool	ControllerSkyImage::RunFastBackgroundTasks(void)
+{
+//	CONSOLE_DEBUG(__FUNCTION__);
+	//---------------------------------------------
+	//*	Moon Phase window
+	if (cMoonPhaseTabObjPtr != NULL)
+	{
+		cMoonPhaseTabObjPtr->RunWindowBackgroundTasks();
+		cUpdateWindow	=	true;
+	}
+	else
+	{
+		CONSOLE_ABORT(__FUNCTION__);
+	}
+	return(true);
 }
 
 //**************************************************************************************
@@ -97,8 +129,6 @@ void	ControllerSkyImage::SetupWindowControls(void)
 
 	SetTabCount(kTab_SI_Count);
 
-
-
 	//=============================================================
 	SetTabText(kTab_SI_ImgList,		"Image List");
 	cImageListTabObjPtr		=	new WindowTabImageList(	cWidth, cHeight, cBackGrndColor, "Image List");
@@ -106,6 +136,15 @@ void	ControllerSkyImage::SetupWindowControls(void)
 	{
 		SetTabWindow(kTab_SI_ImgList,	cImageListTabObjPtr);
 		cImageListTabObjPtr->SetParentObjectPtr(this);
+	}
+
+	//=============================================================
+	SetTabText(kTab_MoonPhase,	"Moon Phase");
+	cMoonPhaseTabObjPtr		=	new WindowTabMoonPhase(	cWidth, cHeight, cBackGrndColor, "Moon Phase");
+	if (cMoonPhaseTabObjPtr != NULL)
+	{
+		SetTabWindow(kTab_MoonPhase,	cMoonPhaseTabObjPtr);
+		cMoonPhaseTabObjPtr->SetParentObjectPtr(this);
 	}
 
 	//=============================================================
@@ -121,31 +160,35 @@ void	ControllerSkyImage::SetupWindowControls(void)
 
 //**************************************************************************************
 void	ControllerSkyImage::RunBackgroundTasks(const char *callingFunction, bool enableDebug)
-
 {
-	if (gImageList != NULL)
+unsigned int	startMilliSecs;
+unsigned int	deltaMilliSecs;
+
+	if (cBackGroundImgIdx < gImageCount)
 	{
-		if (gBackGroundImgIdx < gImageCount)
+		startMilliSecs	=	millis();
+		deltaMilliSecs	=	0;
+		while ((deltaMilliSecs < 50) && (cBackGroundImgIdx < gImageCount))
 		{
-//			CONSOLE_DEBUG_W_NUM("gBackGroundImgIdx\t=", gBackGroundImgIdx);
-//			CONSOLE_DEBUG_W_NUM("gImageCount      \t=", gImageCount);
-			if (gImageList[gBackGroundImgIdx].FitsProcessed == false)
+	//		CONSOLE_DEBUG_W_NUM("cBackGroundImgIdx\t=", cBackGroundImgIdx);
+	//		CONSOLE_DEBUG_W_NUM("gImageCount      \t=", gImageCount);
+			if (gImageList[cBackGroundImgIdx].FitsProcessed == false)
 			{
-				if (gImageList[gBackGroundImgIdx].ImageFileType == kImageFileType_FITS)
+				if (gImageList[cBackGroundImgIdx].ImageFileType == kImageFileType_FITS)
 				{
-					ReadFitsInfoForImage(&gImageList[gBackGroundImgIdx]);
+					ReadFitsInfoForImage(&gImageList[cBackGroundImgIdx]);
 				}
 				else
 				{
-					CONSOLE_DEBUG_W_STR("File is PDS\t=", gImageList[gBackGroundImgIdx].FileName);
-					gImageList[gBackGroundImgIdx].FitsProcessed	=	true;
+	//				CONSOLE_DEBUG_W_STR("File is PDS\t=", gImageList[cBackGroundImgIdx].FileName);
+					gImageList[cBackGroundImgIdx].FitsProcessed	=	true;
 				}
 				cFitsProcessCntr++;
 			}
-			gBackGroundImgIdx++;
+			cBackGroundImgIdx++;
 
 			//*	update the window but not every time
-			if ((gBackGroundImgIdx % 10) == 0)
+			if ((cBackGroundImgIdx % 10) == 0)
 			{
 				if (cImageListTabObjPtr != NULL)
 				{
@@ -153,16 +196,111 @@ void	ControllerSkyImage::RunBackgroundTasks(const char *callingFunction, bool en
 					HandleWindowUpdate();
 				}
 			}
-		}
-		else if (cFitsProcessCntr > 0)
-		{
-			//*	if the sort order gets changed while we are reading the fits info,
-			//*	this will make sure everything gets read properly
-			gBackGroundImgIdx	=	0;
-			cFitsProcessCntr	=	0;
+			deltaMilliSecs	=	millis() - startMilliSecs;
 		}
 	}
+	else if (cFitsProcessCntr > 0)
+	{
+		//*	if the sort order gets changed while we are reading the fits info,
+		//*	this will make sure everything gets read properly
+		cBackGroundImgIdx	=	0;
+		cFitsProcessCntr	=	0;
+	}
+
+	//---------------------------------------------
+	//*	Moon Phase window
+	if (cMoonPhaseTabObjPtr != NULL)
+	{
+		cMoonPhaseTabObjPtr->RunWindowBackgroundTasks();
+		cUpdateWindow	=	true;
+	}
 }
+
+//*****************************************************************************
+int	ControllerSkyImage::BuildFileList(const char *directoryPath)
+{
+DIR				*directory;
+struct dirent	*dir;
+bool			keepGoing;
+char			curFileName[512];
+char			fileExtension[16];
+
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, directoryPath);
+	directory	=	opendir(directoryPath);
+	if (directory != NULL)
+	{
+		keepGoing	=	true;
+		while (keepGoing)
+		{
+//			CONSOLE_DEBUG("----------------------------------");
+			dir	=	readdir(directory);
+			if (dir != NULL)
+			{
+				strcpy(curFileName, dir->d_name);
+				ExtractFileExtension(curFileName, fileExtension);
+
+//				CONSOLE_DEBUG_W_STR("curFileName\t=", 	curFileName);
+//				CONSOLE_DEBUG_W_HEX("dir->d_type\t=", 	dir->d_type);
+				if (dir->d_type == DT_DIR)
+				{
+					if (dir->d_name[0] != '.')
+					{
+					char	subDirectoryName[256];
+						strcpy(subDirectoryName, directoryPath);
+						strcat(subDirectoryName, dir->d_name);
+						strcat(subDirectoryName, "/");
+						CONSOLE_DEBUG_W_STR(dir->d_name, "Is a directory");
+						BuildFileList(subDirectoryName);
+					}
+				}
+
+				if ((strcasecmp(fileExtension, ".fits") == 0) ||
+					(strcasecmp(fileExtension, ".fit") == 0) ||
+					(strcasecmp(fileExtension, ".img") == 0) ||
+					(strcasecmp(fileExtension, ".imq") == 0))
+				{
+					if (cFileIndex < kMaxImageCnt)
+					{
+						gImageList[cFileIndex].validEntry	=	true;
+						strcpy(gImageList[cFileIndex].DirectoryPath,	directoryPath);
+						strcpy(gImageList[cFileIndex].FileName,		curFileName);
+						strcpy(gImageList[cFileIndex].FilePath,		directoryPath);
+						strcat(gImageList[cFileIndex].FilePath,		curFileName);
+
+
+						//*	check file extension to determine file type
+						SetImageFileType(&gImageList[cFileIndex],fileExtension);
+
+						cFileIndex++;
+					}
+					else
+					{
+						CONSOLE_DEBUG_W_NUM("Ran out of room, cnt\t=",	cFileIndex);
+						return(cFileIndex);
+					}
+				}
+			}
+			else
+			{
+				keepGoing	=	false;
+			}
+		}
+		//*	if there are more than one, sort them so there is consistency.
+		//*	accessing the file path does not always guarantee the same order
+		if  (cFileIndex > 1)
+		{
+			qsort(gImageList, cFileIndex, sizeof(TYPE_ImageFile), FileNameQSort);
+		}
+		closedir(directory);
+	}
+	else
+	{
+		CONSOLE_DEBUG_W_STR("Failed to open directory\t=",	directoryPath);
+	}
+//	CONSOLE_ABORT(__FUNCTION__);
+	return(cFileIndex);
+}
+
 
 //**************************************************************************************
 static void	ExtractFileExtension(const char *fileName, char *extension)
@@ -180,7 +318,7 @@ int		ccc;
 }
 
 //*****************************************************************************
-static int	FileNameSort(const void *e1, const void* e2)
+static int	FileNameQSort(const void *e1, const void* e2)
 {
 int				retValue;
 TYPE_ImageFile	*entry1;
@@ -189,6 +327,11 @@ TYPE_ImageFile	*entry2;
 	entry1		=	(TYPE_ImageFile *)e1;
 	entry2		=	(TYPE_ImageFile *)e2;
 	retValue	=	strcmp(entry1->FileName, entry2->FileName);
+//	if (retValue == 0)
+//	{
+//		CONSOLE_DEBUG_W_2STR("duplicate:", entry1->FileName, entry2->FileName);
+//		CONSOLE_ABORT(__FUNCTION__);
+//	}
 	return(retValue);
 }
 
@@ -211,162 +354,66 @@ static void	SetImageFileType(TYPE_ImageFile *imageFileInfo, const char *fileExte
 
 }
 
+
 //*****************************************************************************
-static int	BuildFileList(const char *directoryPath, int maxFiles)
+void	ControllerSkyImage::ReadFileDirectory(const char *directoryPath)
 {
-DIR				*directory;
-struct dirent	*dir;
-bool			keepGoing;
-int				fileIndex;
-char			curFileName[512];
-char			fileExtension[16];
 
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, directoryPath);
-	directory	=	opendir(directoryPath);
-	fileIndex	=	0;
-	if (directory != NULL)
-	{
-		keepGoing	=	true;
-		while (keepGoing)
-		{
-//			CONSOLE_DEBUG("----------------------------------");
-			dir	=	readdir(directory);
-			if (dir != NULL)
-			{
-				strcpy(curFileName, dir->d_name);
-				ExtractFileExtension(curFileName, fileExtension);
 
-				if ((strcasecmp(fileExtension, ".fits") == 0) ||
-					(strcasecmp(fileExtension, ".fit") == 0) ||
-					(strcasecmp(fileExtension, ".img") == 0) ||
-					(strcasecmp(fileExtension, ".imq") == 0))
-				{
-					if (fileIndex < maxFiles)
-					{
-						gImageList[fileIndex].validEntry	=	true;
-						strcpy(gImageList[fileIndex].DirectoryPath,	directoryPath);
-						strcpy(gImageList[fileIndex].FileName,		curFileName);
-						strcpy(gImageList[fileIndex].FilePath,		directoryPath);
-						strcat(gImageList[fileIndex].FilePath,		curFileName);
-
-
-						//*	check file extension to determine file type
-						SetImageFileType(&gImageList[fileIndex],fileExtension);
-
-						fileIndex++;
-					}
-					else
-					{
-						CONSOLE_DEBUG_W_NUM("Ran out of room, cnt\t=",	fileIndex);
-					}
-				}
-			}
-			else
-			{
-				keepGoing	=	false;
-			}
-		}
-		//*	if there are more than one, sort them so there is consistency.
-		//*	accessing the file path does not always guarantee the same order
-		if  (fileIndex > 1)
-		{
-			qsort(gImageList, fileIndex, sizeof(TYPE_ImageFile), FileNameSort);
-		}
-	}
-	else
-	{
-		CONSOLE_DEBUG_W_STR("Failed to open directory\t=",	directoryPath);
-	}
+	cFileIndex	=	0;
+	gImageCount	=	BuildFileList(directoryPath);
+	CONSOLE_DEBUG_W_NUM("gImageCount\t=", gImageCount);
 //	CONSOLE_ABORT(__FUNCTION__);
-	return(fileIndex);
+}
+
+
+//*****************************************************************************
+bool	LoadNextImageFromList(ControllerImage *imageController)
+{
+bool	successFlag	=	false;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+	if (imageController != NULL)
+	{
+		gCurrentImageIndex++;
+		if ((gCurrentImageIndex >= 0) && (gCurrentImageIndex < gImageCount))
+		{
+			successFlag	=	imageController->LoadImage(gImageList[gCurrentImageIndex].FilePath);
+		}
+		else
+		{
+			CONSOLE_DEBUG_W_NUM("gCurrentImageIndex out of range", gCurrentImageIndex);
+			gCurrentImageIndex	=	gImageCount - 1;
+			successFlag	=	false;
+		}
+	}
+//	CONSOLE_DEBUG_W_BOOL(__FUNCTION__, successFlag);
+	return(successFlag);
 }
 
 //*****************************************************************************
-static int	ReadFileDirectory(const char *directoryPath)
+bool	LoadPreviousImageFromList(ControllerImage *imageController)
 {
-int				totalFileCount;
-int				fitsFileCount;
-int				jpegFileCount;
-int				pngFileCount;
-DIR				*directory;
-struct dirent	*dir;
-bool			keepGoing;
-int				errorCode;
-char			curFileName[512];
-char			fileExtension[16];
+bool	successFlag	=	false;
 
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, directoryPath);
-
-//	memset(gUSBtable, 0, sizeof(gUSBtable));
-	totalFileCount	=	0;
-	fitsFileCount	=	0;
-	jpegFileCount	=	0;
-	pngFileCount	=	0;
-
-	directory	=	opendir(directoryPath);
-	if (directory != NULL)
+	if (imageController != NULL)
 	{
-		keepGoing	=	true;
-		while (keepGoing)
+		gCurrentImageIndex--;
+		if (gCurrentImageIndex < 0)
 		{
-			dir	=	readdir(directory);
-			if (dir != NULL)
-			{
-				totalFileCount++;
-				strcpy(curFileName, dir->d_name);
-				ExtractFileExtension(curFileName, fileExtension);
-
-				if ((strcasecmp(fileExtension, ".fits") == 0) ||
-					(strcasecmp(fileExtension, ".fit") == 0) ||
-					(strcasecmp(fileExtension, ".img") == 0) ||
-					(strcasecmp(fileExtension, ".imq") == 0))
-				{
-					fitsFileCount++;
-				}
-				if ((strcasecmp(fileExtension, ".jpg") == 0) ||
-					(strcasecmp(fileExtension, ".jpeg") == 0))
-				{
-					jpegFileCount++;
-				}
-				if (strcasecmp(fileExtension, ".png") == 0)
-				{
-					pngFileCount++;
-				}
-			}
-			else
-			{
-				keepGoing	=	false;
-			}
+			gCurrentImageIndex	=	0;
+			successFlag			=	false;
 		}
-		errorCode	=	closedir(directory);
-		if (errorCode != 0)
+		if ((gCurrentImageIndex >= 0) && (gCurrentImageIndex < gImageCount))
 		{
-			CONSOLE_DEBUG_W_NUM("closedir errorCode\t=", errorCode);
-			CONSOLE_DEBUG_W_NUM("errno\t=", errno);
+			successFlag	=	imageController->LoadImage(gImageList[gCurrentImageIndex].FilePath);
 		}
 	}
-	else
-	{
-		CONSOLE_DEBUG_W_STR("Failed to open:", directoryPath);
-		CONSOLE_ABORT(__FUNCTION__);
-	}
-//	CONSOLE_DEBUG_W_NUM("fitsFileCount \t=",	fitsFileCount);
-//	CONSOLE_DEBUG_W_NUM("jpegFileCount \t=",	jpegFileCount);
-//	CONSOLE_DEBUG_W_NUM("pngFileCount  \t=",	pngFileCount);
-//	CONSOLE_DEBUG_W_NUM("totalFileCount\t=",	totalFileCount);
-
-	//==================================================================
-	//*	now create the list of file names and populate it
-	if (fitsFileCount > 0)
-	{
-		gImageList	=	(TYPE_ImageFile *)calloc(fitsFileCount + 5, sizeof(TYPE_ImageFile));
-		if (gImageList != NULL)
-		{
-			gImageCount	=	BuildFileList(directoryPath, fitsFileCount);
-		}
-	}
-	return(totalFileCount);
+//	CONSOLE_DEBUG_W_BOOL(__FUNCTION__, successFlag);
+	return(successFlag);
 }
+
 
 //*****************************************************************************
 static void	ProcessCmdLineArgs(int argc, char **argv)
@@ -400,6 +447,84 @@ char	theChar;
 	}
 }
 
+//*****************************************************************************
+static void	GetDataFromFitsLine(char *cardData, char *valueString)
+{
+char	*dataPtr;
+
+//DATAMAX =                  236 / Maximum pixel value
+	dataPtr	=	cardData;
+	dataPtr	+=	9;
+	while ((*dataPtr == 0x20) && (*dataPtr > 0x20))
+	{
+		dataPtr++;
+	}
+	strcpy(valueString, dataPtr);
+}
+
+//*****************************************************************************
+static void	ReadFitsInfoForImage(TYPE_ImageFile *imageFileData)
+{
+fitsfile	*fptr;
+char		card[FLEN_CARD];
+char		valueString[FLEN_CARD];
+int			status;
+int			nkeys;
+int			iii;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+	status	=	0;	///* MUST initialize status
+	fits_open_file(&fptr, imageFileData->FilePath, READONLY, &status);
+	if (status == 0)
+	{
+		fits_get_hdrspace(fptr, &nkeys, NULL, &status);
+
+		for (iii = 1; iii <= nkeys; iii++)
+		{
+			status		=	0;
+			fits_read_record(fptr, iii, card, &status);	//* read keyword
+			card[80]	=	0;
+			if (strncmp(card, "DATAMAX", 7) == 0)
+			{
+				GetDataFromFitsLine(card, valueString);
+				imageFileData->DATAMAX	=	atoi(valueString);
+			}
+			else if (strncmp(card, "DATAMIN", 7) == 0)
+			{
+				GetDataFromFitsLine(card, valueString);
+				imageFileData->DATAMIN	=	atoi(valueString);
+			}
+			else if (strncmp(card, "EXPTIME", 7) == 0)
+			{
+				GetDataFromFitsLine(card, valueString);
+				imageFileData->Exposure_secs	=	atof(valueString);
+			}
+			else if (strncmp(card, "SATUPRCT", 8) == 0)
+			{
+				GetDataFromFitsLine(card, valueString);
+				imageFileData->SaturationPercent	=	atof(valueString);
+			}
+			else if (strncmp(card, "GAIN", 4) == 0)
+			{
+				GetDataFromFitsLine(card, valueString);
+				imageFileData->Gain	=	atoi(valueString);
+			}
+		}
+	}
+	else
+	{
+		fits_report_error(stderr, status);
+		CONSOLE_DEBUG_W_STR("Failed to open", imageFileData->FileName);
+	}
+	status	=	0;	///* MUST initialize status
+	fits_close_file(fptr, &status);
+
+	imageFileData->FitsProcessed	=	true;
+	if (status)				//* print any error messages
+	{
+		fits_report_error(stderr, status);
+	}
+}
 
 //*****************************************************************************
 int main(int argc, char *argv[])
@@ -415,15 +540,17 @@ unsigned int		deltaSecs;
 //unsigned long		endNanoSecs;
 //unsigned long		deltaNanoSecs;
 ControllerSkyImage	*skyImageCtrlObj;
-
+char				myDirectoryPath[256];
 
 	CONSOLE_DEBUG(__FUNCTION__);
 	sprintf(gFullVersionString,		"%s - %s build #%d", kApplicationName, kVersionString, kBuildNumber);
-	strcpy(gDirectoryPath, "");
+	strcpy(myDirectoryPath, "");
 
 	objectsCreated		=	0;
 	lastDebugMillis		=	millis();
 
+	NASA_ReadMoonPhaseDirectory();
+	NASA_ReadMoonPhaseData();
 
 	//*	deal with any options from the command line
 	ProcessCmdLineArgs(argc, argv);
@@ -435,21 +562,22 @@ ControllerSkyImage	*skyImageCtrlObj;
 		if (argv[iii][0] != '-')
 		{
 			//*	this should be a directory
-			strcpy(gDirectoryPath, argv[iii]);
+			strcpy(myDirectoryPath, argv[iii]);
 		}
 		iii++;
 	}
-//	CONSOLE_DEBUG_W_STR(__FUNCTION__, gDirectoryPath);
-	if (strlen(gDirectoryPath) > 0)
+	strcpy(gDirectoryPath, myDirectoryPath);
+
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, myDirectoryPath);
+	if (strlen(myDirectoryPath) > 0)
 	{
-		ReadFileDirectory(gDirectoryPath);
+		skyImageCtrlObj	=	new ControllerSkyImage("SkyImage", myDirectoryPath);
+		objectsCreated++;
 	}
 	else
 	{
 		exit(0);
 	}
-	skyImageCtrlObj	=	new ControllerSkyImage("SkyImage");
-	objectsCreated++;
 
 	activeObjCnt	=	objectsCreated;
 
@@ -511,118 +639,4 @@ ControllerSkyImage	*skyImageCtrlObj;
 	}
 	CONSOLE_DEBUG("Clean exit");
 }
-
-
-
-//*****************************************************************************
-static void	GetDataFromFitsLine(char *cardData, char *valueString)
-{
-char	*dataPtr;
-
-//DATAMAX =                  236 / Maximum pixel value
-	dataPtr	=	cardData;
-	dataPtr	+=	9;
-	while ((*dataPtr == 0x20) && (*dataPtr > 0x20))
-	{
-		dataPtr++;
-	}
-	strcpy(valueString, dataPtr);
-}
-
-//*****************************************************************************
-void	ReadFitsInfoForImage(TYPE_ImageFile *imageFileData)
-{
-fitsfile	*fptr;
-char		card[FLEN_CARD];
-char		valueString[FLEN_CARD];
-int			status;
-int			nkeys;
-int			iii;
-
-//	CONSOLE_DEBUG(__FUNCTION__);
-	status	=	0;	///* MUST initialize status
-	fits_open_file(&fptr, imageFileData->FilePath, READONLY, &status);
-	if (status == 0)
-	{
-		fits_get_hdrspace(fptr, &nkeys, NULL, &status);
-
-		for (iii = 1; iii <= nkeys; iii++)
-		{
-			status		=	0;
-			fits_read_record(fptr, iii, card, &status);	//* read keyword
-			card[80]	=	0;
-			if (strncmp(card, "DATAMAX", 7) == 0)
-			{
-				GetDataFromFitsLine(card, valueString);
-				imageFileData->DATAMAX	=	atoi(valueString);
-			}
-			else if (strncmp(card, "DATAMIN", 7) == 0)
-			{
-				GetDataFromFitsLine(card, valueString);
-				imageFileData->DATAMIN	=	atoi(valueString);
-			}
-			else if (strncmp(card, "EXPTIME", 7) == 0)
-			{
-				GetDataFromFitsLine(card, valueString);
-				imageFileData->Exposure_secs	=	atof(valueString);
-			}
-			else if (strncmp(card, "SATUPRCT", 8) == 0)
-			{
-				GetDataFromFitsLine(card, valueString);
-				imageFileData->SaturationPercent	=	atof(valueString);
-			}
-		}
-	}
-	else
-	{
-		fits_report_error(stderr, status);
-		CONSOLE_DEBUG_W_STR("Failed to open", imageFileData->FileName);
-	}
-	status	=	0;	///* MUST initialize status
-	fits_close_file(fptr, &status);
-
-	imageFileData->FitsProcessed	=	true;
-	if (status)				//* print any error messages
-	{
-		fits_report_error(stderr, status);
-	}
-}
-
-
-//*****************************************************************************
-void	LoadNextImageFromList(ControllerImage *imageController)
-{
-	CONSOLE_DEBUG(__FUNCTION__);
-	if (imageController != NULL)
-	{
-		gCurrentImageIndex++;
-		if ((gCurrentImageIndex >= 0) && (gCurrentImageIndex < gImageCount))
-		{
-			imageController->LoadImage(gImageList[gCurrentImageIndex].FilePath);
-		}
-		else
-		{
-			CONSOLE_DEBUG_W_NUM("gCurrentImageIndex out of range", gCurrentImageIndex);
-			gCurrentImageIndex	=	gImageCount - 1;
-		}
-	}
-}
-
-//*****************************************************************************
-void	LoadPreviousImageFromList(ControllerImage *imageController)
-{
-	if (imageController != NULL)
-	{
-		gCurrentImageIndex--;
-		if (gCurrentImageIndex < 0)
-		{
-			gCurrentImageIndex	=	0;
-		}
-		if ((gCurrentImageIndex >= 0) && (gCurrentImageIndex < gImageCount))
-		{
-			imageController->LoadImage(gImageList[gCurrentImageIndex].FilePath);
-		}
-	}
-}
-
 

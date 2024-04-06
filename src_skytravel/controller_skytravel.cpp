@@ -21,6 +21,8 @@
 //*	Jun 30,	2023	<MLS> Added AlpacaProcessReadAllIdx() to skytravel controller
 //*	Feb 10,	2024	<MLS> Added Software Versions WindowTab
 //*	Mar  9,	2024	<MLS> Fixed bug where Software Version screen was not getting updated
+//*	Mar 25,	2024	<MLS> Added MoonPhase window to SkyTravel
+//*	Mar 26,	2024	<MLS> Added RunFastBackgroundTasks()
 //*****************************************************************************
 
 #ifndef _ENABLE_SKYTRAVEL_
@@ -41,7 +43,7 @@
 #include	"ConsoleDebug.h"
 
 
-#define	kWindowWidth	1200
+#define	kWindowWidth	1400
 //#define	kWindowHeight	820
 #define	kWindowHeight	800
 
@@ -55,6 +57,7 @@
 #include	"windowtab_mount.h"
 #include	"windowtab_iplist.h"
 #include	"windowtab_moon.h"
+#include	"windowtab_MoonPhase.h"
 #include	"windowtab_RemoteData.h"
 #include	"windowtab_skytravel.h"
 #include	"windowtab_sw_versions.h"
@@ -145,6 +148,7 @@ ControllerSkytravel::~ControllerSkytravel(void)
 	DELETE_OBJ_IF_VALID(cIPaddrListObjPtr);
 	DELETE_OBJ_IF_VALID(cSwVersionsListObjPtr);
 	DELETE_OBJ_IF_VALID(cMoonTabObjPtr);
+	DELETE_OBJ_IF_VALID(cMoonPhaseTabObjPtr);
 	DELETE_OBJ_IF_VALID(cAboutBoxTabObjPtr);
 #ifdef _ENABLE_CPU_STATS_
 	DELETE_OBJ_IF_VALID(cCpuStatsTabObjPtr);
@@ -281,6 +285,14 @@ void	ControllerSkytravel::SetupWindowControls(void)
 	{
 		SetTabWindow(kTab_Moon,	cMoonTabObjPtr);
 		cMoonTabObjPtr->SetParentObjectPtr(this);
+	}
+	//=============================================================
+	SetTabText(kTab_MoonPhase,	"Moon Phase");
+	cMoonPhaseTabObjPtr		=	new WindowTabMoonPhase(	cWidth, cHeight, cBackGrndColor, "Moon Phase");
+	if (cMoonPhaseTabObjPtr != NULL)
+	{
+		SetTabWindow(kTab_MoonPhase,	cMoonPhaseTabObjPtr);
+		cMoonPhaseTabObjPtr->SetParentObjectPtr(this);
 	}
 
 #ifdef _ENABLE_CPU_STATS_
@@ -592,6 +604,7 @@ bool		foundSomething;
 		{
 			cRemoteDataObjPtr->RunWindowBackgroundTasks();
 		}
+
 		//---------------------------------------------
 		//*	check the time
 		updateEndMillis		=	millis();
@@ -609,7 +622,22 @@ bool		foundSomething;
 			cTimeTabObjPtr->RunWindowBackgroundTasks();
 		}
 	}
+
 }
+
+//**************************************************************************************
+bool	ControllerSkytravel::RunFastBackgroundTasks(void)
+{
+	//---------------------------------------------
+	//*	Moon Phase window
+	if (cMoonPhaseTabObjPtr != NULL)
+	{
+		cMoonPhaseTabObjPtr->RunWindowBackgroundTasks();
+		cUpdateWindow	=	true;
+	}
+	return(true);
+}
+
 
 //*****************************************************************************
 bool	ControllerSkytravel::AlpacaGetStartupData_Camera(	TYPE_REMOTE_DEV			*remoteDevice,

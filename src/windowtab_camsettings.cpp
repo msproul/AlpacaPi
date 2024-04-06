@@ -27,6 +27,7 @@
 //*	May 29,	2023	<MLS> Working on exposure settings
 //*	Jun  4,	2023	<MLS> Added SetFileSaveOptions()
 //*	Jun 18,	2023	<MLS> Added DeviceState to camsettings
+//*	Apr  5,	2024	<MLS> Added Eclipse to object settings option list
 //*****************************************************************************
 
 
@@ -74,6 +75,9 @@ TYPE_PRESETS	gPresets[]		=
 	{	"Pluto",	"Plut",		0.001000,	9.100000,	0.001		},
 	{	"Star",		"Star",		0.000032,	2000.0,		0.001		},
 	{	"Deepsky",	"DSO",		0.000032,	2000.0,		0.01		},
+	{	"Eclipse",	"Eclipse",	0.000032,	0.005000,	0.000001	},
+	{	"Other",	"Other",	0.000032,	2000.0,		0.001		},
+	{	"Other",	"Other",	0.000032,	2000.0,		0.001		},
 	{	"Other",	"Other",	0.000032,	2000.0,		0.001		},
 
 
@@ -106,8 +110,6 @@ WindowTabCamSettings::~WindowTabCamSettings(void)
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 }
 
-#define	kFileListHeight	200
-#define	kLabelHeight	25
 //**************************************************************************************
 void	WindowTabCamSettings::SetupWindowControls(void)
 {
@@ -119,6 +121,7 @@ int			clm1Width;
 int			clm2Width;
 int			saveYloc;
 char		buttonText[64];
+int			presetIdx;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 	//==========================================
@@ -134,14 +137,16 @@ char		buttonText[64];
 	yLoc			+=	2;
 
 	//*	set up the preset buttons
+	presetIdx	=	0;
 	for (iii=kCamSet_Preset01; iii<kCamSet_ObjOutline; iii++)
 	{
-		SetWidget(			iii,	5,			yLoc,		cWidth/3,	cRadioBtnHt);
+		SetWidget(			iii,	5,	yLoc,	cWidth/3,	cRadioBtnHt);
 		SetWidgetType(		iii,	kWidgetType_RadioButton);
 		SetWidgetFont(		iii,	kFont_RadioBtn);
 		SetWidgetBGColor(	iii,	CV_RGB(0,	0,	0));
 		SetWidgetTextColor(	iii,	CV_RGB(255,	255,	255));
-		SetWidgetText(		iii,	gPresets[iii - kCamSet_Preset01].name);
+		SetWidgetText(		iii,	gPresets[presetIdx].name);
+		presetIdx++;
 		yLoc			+=	cRadioBtnHt;
 		yLoc			+=	2;
 	}
@@ -163,11 +168,12 @@ char		buttonText[64];
 	yLoc			+=	2;
 
 
+	presetIdx	=	0;
 	for (iii=kCamSet_Time01; iii<kCamSet_TimeOutline; iii++)
 	{
-		sprintf(buttonText, "%7.6f -> %10.4f : %7.6f",	gPresets[iii - kCamSet_Time01].exposureMin,
-														gPresets[iii - kCamSet_Time01].exposureMax,
-														gPresets[iii - kCamSet_Time01].exposureStep);
+		sprintf(buttonText, "%7.6f -> %10.4f : %7.6f",	gPresets[presetIdx].exposureMin,
+														gPresets[presetIdx].exposureMax,
+														gPresets[presetIdx].exposureStep);
 
 		SetWidget(			iii,	clm2Xoffset,	yLoc,	clm2Width,	cRadioBtnHt);
 		SetWidgetType(		iii,	kWidgetType_RadioButton);
@@ -175,6 +181,7 @@ char		buttonText[64];
 		SetWidgetBGColor(	iii,	CV_RGB(0,	0,	0));
 		SetWidgetTextColor(	iii,	CV_RGB(255,	255,	255));
 		SetWidgetText(		iii,	buttonText);
+		presetIdx++;
 		yLoc			+=	cRadioBtnHt;
 		yLoc			+=	2;
 	}
@@ -186,8 +193,8 @@ char		buttonText[64];
 
 	//==========================================
 	//*	set up filename options
-	yLoc		+=	cRadioBtnHt;
-	yLoc		+=	2;
+//	yLoc		+=	cRadioBtnHt;
+	yLoc		+=	4;
 	saveYloc	=	yLoc;
 	clm1Xoffset	=	2;
 	clm1Width	=	(cWidth / 2) -12 ;

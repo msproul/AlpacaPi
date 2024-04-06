@@ -786,7 +786,7 @@ protected:
 	char					cFileNamePrefix[kFileNamePrefixMaxLen + 1];
 	char					cFileNameSuffix[kFileNamePrefixMaxLen + 1];
 
-	char				cAuxTextTag[kAuxiliaryTextMaxLen];		//*	auxiliary text information
+	char					cAuxTextTag[kAuxiliaryTextMaxLen];		//*	auxiliary text information
 
 
 #ifdef _USE_OPENCV_

@@ -160,6 +160,7 @@ void	DumpCVMatStruct(const char *calledFrom, cv::Mat *theImageMat, const char *m
 //		oldImgRowStepSize	=	myOpenCVimage->step[0];
 //		oldImgChannels		=	myOpenCVimage->step[1];
 
+	CONSOLE_DEBUG("-------------------------------------------");
 	CONSOLE_DEBUG_W_STR("Called from", calledFrom);
 
 	if (message != NULL)
@@ -182,7 +183,6 @@ void	DumpCVMatStruct(const char *calledFrom, cv::Mat *theImageMat, const char *m
 	{
 		CONSOLE_DEBUG_W_SIZE("theImageMat->step[2]\t=",		theImageMat->step[2]);
 	}
-
 }
 
 #if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)

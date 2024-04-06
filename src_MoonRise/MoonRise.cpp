@@ -29,7 +29,8 @@
 //*	<MLS>	=	Mark L Sproul
 //*****************************************************************************
 //*	Nov 29,	2020	<MLS> Downloaded this code from github
-//*	Dec  1,	2020	<MLS> Changed formating to match my style, tabs = 4 spaces
+//*	Nov 29,	2020	<MLS> https://github.com/signetica/MoonRise
+//*	Dec  1,	2020	<MLS> Changed formatting to match my style, tabs = 4 spaces
 //*****************************************************************************
 
 #include <math.h>

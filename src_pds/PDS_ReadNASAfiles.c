@@ -148,8 +148,8 @@ char	*slashPtr;
 char	myVolName[512];
 char	tempString[512];
 
-	CONSOLE_DEBUG(__FUNCTION__);
-	CONSOLE_DEBUG_W_STR("filePath=", filePath);
+//	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG_W_STR("filePath=", filePath);
 
 	strcpy(volumeName, "");
 	strcpy(myVolName, filePath);
@@ -286,7 +286,7 @@ int		myCDROMtype;
 //*****************************************************************************
 static void	PDS_InitHeader(PDS_header_data *pdsHeaderPtr)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	memset(pdsHeaderPtr, 0, sizeof(PDS_header_data));
 	pdsHeaderPtr->record_Type		=	0;						//*	type of record	: Variable, Fixed
@@ -343,7 +343,7 @@ char		argString[80];
 int			ccc;
 char		keyWord[80];
 
-
+//	CONSOLE_DEBUG_W_STR("lineBuff:", lineBuff);
 	eofFlag	=	false;
 
 	//----------------------------------------------------------
@@ -489,7 +489,7 @@ char		keyWord[80];
 	else if ((strcmp(keyWord,	"LINE_SUFFIX_BYTES")) == 0)
 	{
 		pdsHeaderPtr->lineSuffixBytes	=	atoi(argString);
-		CONSOLE_DEBUG_W_NUM("imageOffset\t=", pdsHeaderPtr->imageOffset);
+//		CONSOLE_DEBUG_W_NUM("imageOffset\t=", pdsHeaderPtr->imageOffset);
 	}
 	else if ((strcmp(keyWord,	"TARGET_BODY")) == 0)
 	{
@@ -607,7 +607,7 @@ char	theChar;
 
 //		case -1:
 		case MAGELLAN_0:
-		case MAGELLAN_1:
+//		case MAGELLAN_1:
 		case MAGELLAN_2:
 		case MAGELLAN_3:
 		case GALILEO:
@@ -650,6 +650,7 @@ char	theChar;
 			}
 			break;
 
+		case MAGELLAN_1:
 		default:
 			if (fgets(lineBuff, 100, filePointer))
 			{
@@ -671,7 +672,7 @@ long			currentOffset;
 size_t			filePositionOffset;
 size_t			recordsRead;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	filePositionOffset	=	(pdsHeaderPtr->imageOffset -1) * pdsHeaderPtr->record_Bytes;
 	if (pdsHeaderPtr->labelSize > filePositionOffset)
@@ -684,14 +685,14 @@ size_t			recordsRead;
 	}
 	currentOffset		=	fseek(filePointer, filePositionOffset, SEEK_SET);
 	currentOffset		=	ftell(filePointer);
-	CONSOLE_DEBUG_W_LONG(	"currentOffset     \t=", currentOffset);
-	CONSOLE_DEBUG_W_LONG(	"filePositionOffset\t=", filePositionOffset);
-	CONSOLE_DEBUG_W_NUM(	"imageOffset       \t=", pdsHeaderPtr->imageOffset);
-	CONSOLE_DEBUG_W_NUM(	"record_Bytes      \t=", pdsHeaderPtr->record_Bytes);
-	CONSOLE_DEBUG_W_LONG(	"labelSize         \t=", pdsHeaderPtr->labelSize);
+//	CONSOLE_DEBUG_W_LONG(	"currentOffset     \t=", currentOffset);
+//	CONSOLE_DEBUG_W_LONG(	"filePositionOffset\t=", filePositionOffset);
+//	CONSOLE_DEBUG_W_NUM(	"imageOffset       \t=", pdsHeaderPtr->imageOffset);
+//	CONSOLE_DEBUG_W_NUM(	"record_Bytes      \t=", pdsHeaderPtr->record_Bytes);
+//	CONSOLE_DEBUG_W_LONG(	"labelSize         \t=", pdsHeaderPtr->labelSize);
 
-//				CONSOLE_DEBUG_W_NUM("lineSamples\t=", pdsHeaderPtr->lineSamples);
-//				CONSOLE_DEBUG_W_NUM("scanLines  \t=", pdsHeaderPtr->scanLines);
+//	CONSOLE_DEBUG_W_NUM("lineSamples\t=", pdsHeaderPtr->lineSamples);
+//	CONSOLE_DEBUG_W_NUM("scanLines  \t=", pdsHeaderPtr->scanLines);
 
 	if (pdsHeaderPtr->lineSuffixBytes > 0)
 	{
@@ -835,18 +836,18 @@ uint8_t		*encodingHistPtr;
 		if (pdsHeaderPtr->record_Bytes == 836)
 		{
 		//	CONSOLE_DEBUG("Reading compression histogram (836) 3 records");
-			encodingHistPtr	=	pdsHeaderPtr->encodingHistogram;
-			dataLength	=	PDS_ReadVariableRecord(filePointer, (encodingHistPtr),			false);
-			dataLength	=	PDS_ReadVariableRecord(filePointer, (encodingHistPtr + 836),	false);
-			dataLength	=	PDS_ReadVariableRecord(filePointer, (encodingHistPtr + 1672),	false);
+			encodingHistPtr	=	(uint8_t *)pdsHeaderPtr->encodingHistogram;
+			dataLength		=	PDS_ReadVariableRecord(filePointer, (encodingHistPtr),			false);
+			dataLength		=	PDS_ReadVariableRecord(filePointer, (encodingHistPtr + 836),	false);
+			dataLength		=	PDS_ReadVariableRecord(filePointer, (encodingHistPtr + 1672),	false);
 //			length	=	read_variableRecord(fRefNum, (char *)hist);
 //			length	=	read_variableRecord(fRefNum, (char *)hist+836);
 //			length	=	read_variableRecord(fRefNum, (char *)hist+1672);
 		}
 		else
 		{
-			dataLength	=	PDS_ReadVariableRecord(filePointer, (char *)pdsHeaderPtr->encodingHistogram,		false);
-			dataLength	=	PDS_ReadVariableRecord(filePointer, (char *)pdsHeaderPtr->encodingHistogram+1204,	false);
+			dataLength	=	PDS_ReadVariableRecord(filePointer, (uint8_t *)pdsHeaderPtr->encodingHistogram,		false);
+			dataLength	=	PDS_ReadVariableRecord(filePointer, (uint8_t *)pdsHeaderPtr->encodingHistogram+1204,	false);
 //			length	=	read_variableRecord(fRefNum, (char *)hist);
 //			length	=	read_variableRecord(fRefNum, (char *)hist+1204);
 		}
@@ -884,7 +885,7 @@ uint8_t		*encodingHistPtr;
 	DecompressFreeMemory();
 	returnFlag	=	true;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	return(returnFlag);
 }
 
@@ -904,7 +905,7 @@ int				histogramBytesRead;
 int				imageBytesRead;
 int				charsRead;
 
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, filePath);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, filePath);
 //	CONSOLE_DEBUG_W_NUM("cdROMtype\t=", pdsHeaderPtr->cdROMtype);
 	returnFlag	=	false;
 	filePointer	=	fopen(filePath, "r");
@@ -923,7 +924,6 @@ int				charsRead;
 			charsRead	=	PDS_ReadOneLineFromHeader(filePointer, pdsHeaderPtr->cdROMtype, lineBuff);
 			if (charsRead >= 0)
 			{
-
 				pdsHeaderPtr->headerBytesRead	+=	charsRead;
 
 				//*	get rid of any CR/LF at the end
@@ -934,7 +934,7 @@ int				charsRead;
 					lineBuff[slen - 1]	=	0;
 					slen				=	strlen(lineBuff);
 				}
-				CONSOLE_DEBUG(lineBuff);
+//				CONSOLE_DEBUG(lineBuff);
 
 				//*	save a copy of the header line
 				strcpy(pdsHeaderPtr->HeaderData[linesRead].headerLine, lineBuff);
@@ -964,8 +964,8 @@ int				charsRead;
 			}
 		}
 		pdsHeaderPtr->HeaderLineCnt	=	linesRead;
-		CONSOLE_DEBUG_W_NUM("header lines read\t=", linesRead);
-		CONSOLE_DEBUG_W_NUM("header bytes read\t=", headerBytesRead);
+//		CONSOLE_DEBUG_W_NUM("header lines read\t=", linesRead);
+//		CONSOLE_DEBUG_W_NUM("header bytes read\t=", headerBytesRead);
 //		//--------------------------------------------------------
 //		if (pdsHeaderPtr->histogramOffset > 0)
 //		{
@@ -984,7 +984,7 @@ int				charsRead;
 //		}
 
 
-		PDS_DumpHeader(pdsHeaderPtr);
+//		PDS_DumpHeader(pdsHeaderPtr);
 
 		//--------------------------------------------------------
 		//*	see if we have enough data to describe the image
@@ -1040,8 +1040,8 @@ char		volumeName[32];
 //	pdsHeaderPtr->dBaseType	=	PDS_GetDBASEtype(filePath, volumeName);
 	strcpy(pdsHeaderPtr->volumeName, volumeName);
 
-	CONSOLE_DEBUG_W_STR("volumeName\t=", volumeName);
-	CONSOLE_DEBUG_W_NUM("cdROMtype \t=", pdsHeaderPtr->cdROMtype);
+//	CONSOLE_DEBUG_W_STR("volumeName\t=", volumeName);
+//	CONSOLE_DEBUG_W_NUM("cdROMtype \t=", pdsHeaderPtr->cdROMtype);
 //	CONSOLE_DEBUG_W_NUM("dBaseType \t=", dBaseType);
 
 	returnFlag	=	PDS_ReadHeaderAndImage(filePath, pdsHeaderPtr);

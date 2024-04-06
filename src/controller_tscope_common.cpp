@@ -305,7 +305,7 @@ bool	dataWasHandled;
 			break;
 
 		case kCmd_Telescope_IMU_Roll:
-			CONSOLE_DEBUG("kCmd_Telescope_IMU_Roll");
+//			CONSOLE_DEBUG("kCmd_Telescope_IMU_Roll");
 			cTelescopeProp.IMU_Roll		=	atof(valueString);
 			break;
 

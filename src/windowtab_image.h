@@ -18,11 +18,11 @@ enum
 	kImageDisplay_LiveOrDownLoad,
 
 
-	kImageDisplay_Btn_1,
-	kImageDisplay_Btn_2,
-	kImageDisplay_Btn_3,
-	kImageDisplay_Btn_4,
-	kImageDisplay_Btn_5,
+	kImageDisplay_Gimp,
+	kImageDisplay_Btn_Title,
+	kImageDisplay_Btn_Save,
+	kImageDisplay_FlipH,
+	kImageDisplay_FlipV,
 	kImageDisplay_Btn_6,
 
 	kImageDisplay_Btn_N,
@@ -176,6 +176,10 @@ class WindowTabImage: public WindowTab
 				int				cCurrCrossHairNum;
 				int				cCurrCrossHairColorSchm;
 				TYPE_CROSSHAIR	cCrossHairPos[kCrossHairCnt];
+
+				//---------------------------------------------------
+				//*	image processing stuff
+				void			FlipImage(int flipMode);
 
 };
 

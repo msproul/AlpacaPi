@@ -106,6 +106,10 @@
 //*	Feb  1,	2024	<MLS> Added LaunchWebRemoteDevice()
 //*	Mar 21,	2024	<MLS> Added kWidgetType_TextBox_MonoSpace
 //*	Mar 23,	2024	<MLS> Added LaunchWebURL()
+//*	Mar 26,	2024	<MLS> Added LLG_FrameRect(cv::Rect *theRect) & LLG_FillRect(cv::Rect *theRect)
+//*	Mar 27,	2024	<MLS> Added SetRunFastBackgroundMode()
+//*	Mar 28,	2024	<MLS> Added SetWidgetTextColor() with color index arg
+//*	Apr  1,	2024	<MLS> Added SetWebHelpURLstring()
 //*****************************************************************************
 
 
@@ -127,6 +131,57 @@
 TYPE_WINDOWTAB_COLORSCHEME	gWT_ColorScheme;
 
 int	gCurrWindowTabColorScheme	=	0;
+
+//*****************************************************************************
+//*	W_WHITE
+//*	W_BLACK
+cv::Scalar	gColorTable[]	=
+{
+	//	https://www.htmlcolor-picker.com/
+	//*	these MUST be in the same order as the enums
+	CV_RGB(255,	255,	255),	//*	W_WHITE
+	CV_RGB(000,	000,	000),	//*	W_BLACK
+
+	CV_RGB(255,	000,	000),	//*	W_RED
+	CV_RGB(000,	255,	000),	//*	W_GREEN
+	CV_RGB(000,	000,	255),	//*	W_BLUE
+
+	CV_RGB(000,	255,	255),	//*	W_CYAN
+	CV_RGB(255,	000,	255),	//*	W_MAGENTA
+	CV_RGB(255,	255,	000),	//*	W_YELLOW
+
+	CV_RGB(96,	000,	000),	//*	W_DARKRED
+	CV_RGB(000,	 110,	000),	//*	W_DARKGREEN
+	CV_RGB(000,	000,	150),	//*	W_DARKBLUE
+
+	CV_RGB(192,	192,	192),	//*	W_LIGHTGRAY
+	CV_RGB(90,	 90,	 90),	//*	W_DARKGRAY
+	CV_RGB(45,	 45,	 45),	//*	W_VDARKGRAY
+
+	CV_RGB(255,	128,	255),	//*	W_LIGHTMAGENTA
+
+	CV_RGB(0x66, 0x3d,	0x14),	//*	W_BROWN
+	CV_RGB(231,		5,	254),	//*	W_PINK
+	CV_RGB(255,	100,	0),		//*	W_ORANGE,
+
+	//*	these are special case so that I can have cross hairs to match my scope colors
+	CV_RGB(255,	000,	255),	//*	W_PURPLE
+	CV_RGB(255,	255,	000),	//*	W_GOLD
+	CV_RGB(255,	000,	000),	//*	W_RED2
+
+	CV_RGB(0,	113,	193),	//*	W_STAR_O,
+	CV_RGB(152,	205,	255),	//*	W_STAR_B,
+	CV_RGB(255,	255,	255),	//*	W_STAR_A,
+	CV_RGB(254,	255,	153),	//*	W_STAR_F,
+	CV_RGB(255,	255,	0),		//*	W_STAR_G,
+	CV_RGB(255,	102,	00),	//*	W_STAR_K,
+	CV_RGB(254,	0,		0),		//*	W_STAR_M,
+	CV_RGB(127,	216,	250),	//*	W_FILTER_OIII,	//*	these are for filter colors
+	CV_RGB(151,	253,	151),	//*	W_FILTER_HA,
+	CV_RGB(255,	85,		85),	//*	W_FILTER_SII,
+};
+
+
 
 //**************************************************************************************
 WindowTab::WindowTab(	const int	xSize,
@@ -244,6 +299,24 @@ void WindowTab::ComputeWidgetColumns(const int windowWitdh)
 void WindowTab::RunWindowBackgroundTasks(void)
 {
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+}
+
+//**************************************************************************************
+void	WindowTab::SetRunFastBackgroundMode(bool newRunFastMode)
+{
+Controller	*myControllerObj;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	myControllerObj	=	(Controller *)cParentObjPtr;
+	if (myControllerObj != NULL)
+	{
+		myControllerObj->SetRunFastBackgroundMode(newRunFastMode);
+	}
+	else
+	{
+		CONSOLE_ABORT(__FUNCTION__);
+	}
 }
 
 //**************************************************************************************
@@ -413,7 +486,6 @@ void	WindowTab::GetWidgetText(const int widgetIdx, char *getText)
 	}
 }
 
-
 //**************************************************************************************
 void	WindowTab::SetWidgetHelpText(const int widgetIdx, const char *newText)
 {
@@ -581,6 +653,15 @@ void	WindowTab::SetWidgetTextColor(const int widgetIdx, cv::Scalar newtextColor)
 	{
 		cWidgetList[widgetIdx].textColor	=	newtextColor;
 		cWidgetList[widgetIdx].needsUpdated	=	true;
+	}
+}
+
+//**************************************************************************************
+void	WindowTab::SetWidgetTextColor(const int widgetIdx, int colorIndex)
+{
+	if ((colorIndex >= 0) && (colorIndex < W_COLOR_LAST))
+	{
+		SetWidgetTextColor(widgetIdx, gColorTable[colorIndex]);
 	}
 }
 
@@ -892,6 +973,7 @@ int	logoHeight;
 int	xLoc;
 int	yLoc;
 
+//	CONSOLE_DEBUG(__FUNCTION__);
 	logoHeight	=	0;
 	if (logoWidgetIdx >= 0)
 	{
@@ -907,12 +989,32 @@ int	yLoc;
 			logoHeight	=	gAlpacaLogoPtr->height;
 
 		#endif // _USE_OPENCV_CPP_
-			xLoc		=	cWidth - logoWidth;
-			yLoc		=	cHeight - logoHeight;
+//			CONSOLE_DEBUG_W_NUM("logoWidth \t=", logoWidth);
+//			CONSOLE_DEBUG_W_NUM("logoHeight\t=", logoHeight);
 
-			SetWidget(		logoWidgetIdx,	xLoc,	yLoc,	logoWidth,	logoHeight);
-			SetWidgetImage(	logoWidgetIdx, gAlpacaLogoPtr);
+			if ((logoWidth > 0) && (logoHeight > 0))
+			{
+				xLoc		=	cWidth - logoWidth;
+				yLoc		=	cHeight - logoHeight;
+				SetWidget(		logoWidgetIdx,	xLoc,	yLoc,	logoWidth,	logoHeight);
+				SetWidgetImage(	logoWidgetIdx, gAlpacaLogoPtr);
+			}
+			else
+			{
+				CONSOLE_DEBUG("Failed to load Alpaca Logo correctly");
+//				CONSOLE_ABORT(__FUNCTION__);
+			}
 		}
+		else
+		{
+			CONSOLE_DEBUG("Failed to load Alpaca Logo");
+//			CONSOLE_ABORT(__FUNCTION__);
+		}
+	}
+	else
+	{
+		CONSOLE_DEBUG_W_NUM("logoWidgetIdx is invalid", logoWidgetIdx);
+//		CONSOLE_ABORT(__FUNCTION__);
 	}
 	return(logoHeight);
 }
@@ -1626,7 +1728,11 @@ Controller	*myControllerPtr;
 	}
 }
 
-
+//*****************************************************************************
+void	WindowTab::SetWebHelpURLstring(const char *webpagestring)
+{
+	strcpy(cWebURLstring, webpagestring);		//*	set the web help url string
+}
 
 //*****************************************************************************
 void	WindowTab::LaunchWebHelp(const char *webpagestring)
@@ -2424,58 +2530,6 @@ void	WindowTab::LLG_PenSize(const int newLineWidth)
 	}
 }
 
-//*****************************************************************************
-//*	W_WHITE
-//*	W_BLACK
-cv::Scalar	gColorTable[]	=
-{
-	//	https://www.htmlcolor-picker.com/
-	//*	these MUST be in the same order as the enums
-	CV_RGB(255,	255,	255),	//*	W_WHITE
-	CV_RGB(000,	000,	000),	//*	W_BLACK
-
-	CV_RGB(255,	000,	000),	//*	W_RED
-	CV_RGB(000,	255,	000),	//*	W_GREEN
-	CV_RGB(000,	000,	255),	//*	W_BLUE
-
-	CV_RGB(000,	255,	255),	//*	W_CYAN
-	CV_RGB(255,	000,	255),	//*	W_MAGENTA
-	CV_RGB(255,	255,	000),	//*	W_YELLOW
-
-	CV_RGB(96,	000,	000),	//*	W_DARKRED
-	CV_RGB(000,	 110,	000),	//*	W_DARKGREEN
-	CV_RGB(000,	000,	150),	//*	W_DARKBLUE
-
-
-
-	CV_RGB(192,	192,	192),	//*	W_LIGHTGRAY
-	CV_RGB(90,	 90,	 90),	//*	W_DARKGRAY
-	CV_RGB(45,	 45,	 45),	//*	W_VDARKGRAY
-
-	CV_RGB(255,	128,	255),	//*	W_LIGHTMAGENTA
-
-	CV_RGB(0x66, 0x3d,	0x14),	//*	W_BROWN
-	CV_RGB(231,		5,	254),	//*	W_PINK
-	CV_RGB(255,	100,	0),		//*	W_ORANGE,
-
-	//*	these are special case so that I can have cross hairs to match my scope colors
-	CV_RGB(255,	000,	255),	//*	W_PURPLE
-	CV_RGB(255,	255,	000),	//*	W_GOLD
-	CV_RGB(255,	000,	000),	//*	W_RED2
-
-
-	CV_RGB(0,	113,	193),	//*	W_STAR_O,
-	CV_RGB(152,	205,	255),	//*	W_STAR_B,
-	CV_RGB(255,	255,	255),	//*	W_STAR_A,
-	CV_RGB(254,	255,	153),	//*	W_STAR_F,
-	CV_RGB(255,	255,	0),		//*	W_STAR_G,
-	CV_RGB(255,	102,	00),	//*	W_STAR_K,
-	CV_RGB(254,	0,		0),		//*	W_STAR_M,
-	CV_RGB(127,	216,	250),	//*	W_FILTER_OIII,	//*	these are for filter colors
-	CV_RGB(151,	253,	151),	//*	W_FILTER_HA,
-	CV_RGB(255,	85,		85),	//*	W_FILTER_SII,
-};
-
 
 //*****************************************************************************
 cv::Scalar	WindowTab::LLG_GetColor(const int theColor)
@@ -2648,6 +2702,18 @@ void	WindowTab::LLG_FrameRect(int left, int top, int width, int height, int line
 
 	}
 #endif // _USE_OPENCV_CPP_
+}
+
+//**************************************************************************************
+void	WindowTab::LLG_FrameRect(cv::Rect *theRect)
+{
+	LLG_FrameRect(theRect->x, theRect->y, theRect->width, theRect->height);
+}
+
+//**************************************************************************************
+void	WindowTab::LLG_FillRect(		cv::Rect *theRect)
+{
+	LLG_FillRect(theRect->x, theRect->y, theRect->width, theRect->height);
 }
 
 //**************************************************************************************

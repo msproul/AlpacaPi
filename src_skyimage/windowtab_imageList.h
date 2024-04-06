@@ -19,6 +19,7 @@ enum
 	kImageList_ClmTitle3,
 	kImageList_ClmTitle4,
 	kImageList_ClmTitle5,
+	kImageList_ClmTitle6,
 
 	kImageList_AlpacaDev_01,
 	kImageList_AlpacaDev_02,
@@ -107,7 +108,7 @@ class WindowTabImageList: public WindowTab
 												const int	wheelMovement,
 												const int	flags);
 		virtual	void	ProcessLineSelect(int widgetIdx);
-				void	SetNewSelectedDevice(int deviceIndex);
+				void	SetNewSelectedDevice(int imageIndex);
 		virtual	void	UpdateSliderValue(	const int widgetIdx, double newSliderValue);
 		virtual	void	UpdateOnScreenWidgetList(void);
 

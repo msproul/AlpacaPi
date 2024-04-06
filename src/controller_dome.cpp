@@ -401,6 +401,16 @@ bool	validData;
 }
 
 //*****************************************************************************
+bool	ControllerDome::AlpacaGetStatus_OneAAT(void)
+{
+bool	validData;
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+
+	validData	=	AlpacaGetStatus_DomeOneAAT();
+	return(validData);
+}
+
+//*****************************************************************************
 void	ControllerDome::GetStartUpData_SubClass(void)
 {
 	//*	this is ONLY to be implemented at the subclass level

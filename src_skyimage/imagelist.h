@@ -19,6 +19,7 @@ typedef struct
 	//*	info from FITS header
 	bool	FitsProcessed;
 	double	Exposure_secs;
+	int		Gain;
 	double	SaturationPercent;
 	int		DATAMIN;
 	int		DATAMAX;
@@ -28,6 +29,8 @@ typedef struct
 	int		ImageOffsetY;
 } TYPE_ImageFile;
 
-extern	TYPE_ImageFile	*gImageList;
+#define			kMaxImageCnt	9000
+
+extern	TYPE_ImageFile	gImageList[];
 extern	int				gImageCount;
 extern	char			gDirectoryPath[];

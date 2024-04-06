@@ -648,7 +648,7 @@ int					iii;
 char				lineBuff1[32];
 char				lineBuff2[128];
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	for (iii=0; iii<gLibraryIndex; iii++)
 	{

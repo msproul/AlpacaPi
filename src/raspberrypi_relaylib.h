@@ -39,7 +39,7 @@
 	#define		TURN_PIN_ON		0
 	#define		TURN_PIN_OFF	1
 
-#elif defined(_ENABLE_4RELAY_BOARD_)
+#elif defined(_ENABLE_4RELAY_BOARD_) || defined(_ENABLE_SWITCH_SIMULATOR_)
 	//==============================================================
 	//	https://smile.amazon.com/gp/product/B077LV4F1B/ref=ppx_yo_dt_b_asin_title_o01_s00?ie=UTF8&psc=1
 	//	https://shop.sb-components.co.uk/products/pirelay-relay-board-shield-for-raspberry-pi

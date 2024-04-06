@@ -320,7 +320,7 @@ static void	FreeNode(NODE	*nodePtr)
 //**************************************************************************
 void	DecompressFreeMemory(void)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	gFreeNodeCounter	=	0;
 	gFreeNodeDepth		=	0;
 	gFreeNodeMaxDepth	=	0;
@@ -331,6 +331,6 @@ void	DecompressFreeMemory(void)
 		free(gTree);
 		gTree	=	NULL;
 	}
-	CONSOLE_DEBUG_W_NUM("gFreeNodeCounter \t=", gFreeNodeCounter);
-	CONSOLE_DEBUG_W_NUM("gFreeNodeMaxDepth\t=", gFreeNodeMaxDepth);
+//	CONSOLE_DEBUG_W_NUM("gFreeNodeCounter \t=", gFreeNodeCounter);
+//	CONSOLE_DEBUG_W_NUM("gFreeNodeMaxDepth\t=", gFreeNodeMaxDepth);
 }

@@ -1,0 +1,98 @@
+<HTML>
+<TITLE>Moon Phase Info</TITLE>
+
+<!-------------------------------------------->
+
+<BODY bgcolor=#777777>
+<FONT COLOR=white>
+
+<CENTER>
+<TABLE BORDER=1 BGCOLOR=BLACK>
+	<TR>
+	<TH width=700>
+		<FONT COLOR=PURPLE>
+		<H1>AlpacaPi</H1>
+		<H1>Moon Phase Info</H1>
+	</TH>
+	</TR>
+</TABLE>
+</CENTER>
+<P>
+<!-------------------------------------------->
+<CENTER>
+<TABLE BORDER=1>
+	</TR>
+		<TH><A HREF=index.html>Home</A>					</TH>
+		<TH><A HREF=skytravel.html>SkyTravel</A>		</TH>
+		<TH><A HREF=drivers.html>Drivers</A>			</TH>
+		<TH><A HREF=clientapps.html>Client Apps</A>		</TH>
+		<TH><A HREF=moonphase.html>Moon Phase</A>		</TH>
+		<TH><A HREF=skyimage.html>SkyImage</A>			</TH>
+		<TH><A HREF=aavsoTargetTool.html>AAVSO</A>		</TH>
+	</TR>
+</TABLE>
+</CENTER>
+<!-------------------------------------------->
+<P>
+The AlpacaPi software suite uses the moon phase both in the camera driver and in the SkyTravel alplication.
+<P>
+In the camera driver it is used to save the current phase, age, illumination data in the image FITS file.
+This data is useful in understanding how dark the skies where at the time the picture was taken.
+<P>
+In the SkyTravel application, this information is displayed
+so that you know exactly what the phase of the moon is when you are observing.
+<P>
+Prior to March of 2024, I used some code I found on github to determine the phase,
+it was often off by a day so I looked for another solution.
+That solution can be found at
+<A HREF=https://svs.gsfc.nasa.gov/gallery/moonphase/ target=nasa>https://svs.gsfc.nasa.gov/gallery/moonphase/</A>
+<P>
+If the data from NASA has not been downloaded, then the camera driver will use the previous code
+to deterine the phase. The NASA moon phase files are included in the AlpacaPi distribution
+so they do not have to be downloaded until the next year.
+
+<CENTER>
+<H1>SkyTravel moon phase screen</H1>
+<IMG SRC=images/moonphase.png width=95%>
+</CENTER>
+<P>
+
+<CENTER>
+<TABLE BORDER=1>
+<TR>
+<TH><FONT COLOR=white>Moon information as it appears in the FITS header</TH>
+</TR>
+
+<TR>
+<TD><FONT COLOR=white>
+<PRE>
+COMMENT = '-------------------------------------Moon Info----------------------'
+COMMENT = 'Moon Phase info from NASA'
+COMMENT = 'https://svs.gsfc.nasa.gov/gallery/moonphase/'
+COMMENT = '2024 Moon data: https://svs.gsfc.nasa.gov/5187'
+COMMENT = 'Calculated WRT UTC time and location (Greenwich, UK)'
+COMMENT = '2024-04-06T15:25:42.498Z'
+MOONPHAS= 'Waning crescent'    / Current Moon Phase
+MOONILUM=     6.69863333333333 / Percent illumination
+MOONAGE =     27.2675616666667 / Number of days since new moon
+MOONDIAM=     1991.37133333333 / Diameter of the moon (arcseconds)
+MOONDIST=               359912 / Distance to moon (km)
+MOON-RA =               23.261 / Right Ascension of moon (J2000)
+MOON-DEC=              -7.5066 / Declination of moon (J2000)
+MOONAXIS=    -21.6758483333333 / North Polar Axis Angle (degrees)
+MOONELAT=              3.22073 / Libration angle Latitude (degrees)
+MOONELON=            -1.917875 / Libration angle Longitude (degrees)
+MOONVIS =                    T / Moon is visible
+COMMENT = 'Note: These times are local time zone NOT UTC'
+COMMENT = 'Previous moon event:'
+MOONPREV= 'Moon rise at Sat Apr  6 05:35:30 2024, Azimuth 101.72'
+COMMENT = 'Next moon event:'
+MOONNEXT= 'Moon set at Sat Apr  6 17:07:37 2024, Azimuth 262.62'
+</PRE>
+</TD>
+</TR>
+
+</TABLE>
+</CENTER>
+
+

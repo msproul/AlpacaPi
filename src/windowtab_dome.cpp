@@ -321,10 +321,11 @@ int		domeGraphic_yLoc;
 		SetWidgetOutlineBox(kDomeBox_Outline, kDomeBox_CurPosLabel, kDomeBox_StopShutter);
 
 		//------------------------------------------------------
-		xLoc		=	600;
-		yLoc		=	domeGraphic_yLoc;
-		domeBoxSize	=	cWidth - xLoc;
-		domeBoxSize	-=	20;
+		domeBoxSize	=	cHeight - 50;
+		domeBoxSize	-=	130;
+		xLoc		=	cWidth - domeBoxSize;
+		xLoc		-=	3;
+		yLoc		=	domeGraphic_yLoc + 2;
 
 		SetWidget(			kDomeBox_DomeGraphic,	xLoc,	yLoc,	domeBoxSize,	domeBoxSize);
 		SetWidgetType(		kDomeBox_DomeGraphic,	kWidgetType_CustomGraphic);

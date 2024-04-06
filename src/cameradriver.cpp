@@ -206,6 +206,7 @@
 //*	Jul 13,	2023	<MLS> Added error messages for invalid GET commands
 //*	Sep  1,	2023	<MLS> 16 bit binary transfer working AlpacaPi client
 //*	Sep  9,	2023	<MLS> Added _USE_CAMERA_READ_THREAD_
+//*	Mar 25,	2024	<MLS> Read NASA Moon Phase on creation of camera objects
 //*****************************************************************************
 //*	Jan  1,	2119	<TODO> ----------------------------------------
 //*	Jun 26,	2119	<TODO> Add support for sub frames
@@ -309,6 +310,7 @@
 
 #include	"camera_AlpacaCmds.h"
 #include	"camera_AlpacaCmds.cpp"
+#include	"NASA_moonphase.h"
 
 
 #define	kImageDataDir_Default		"imagedata"
@@ -322,6 +324,7 @@ int	CreateCameraObjects(void)
 {
 int	cameraCnt;
 
+	NASA_ReadMoonPhaseData();
 	cameraCnt	=	0;
 
 //-----------------------------------------------------------
@@ -4423,7 +4426,7 @@ char				httpHeader[1024];
 char				lineBuff[128];
 size_t				httpHeaderSize;
 int					returnedDataLen;
-char				dataTypeString[32];
+//char				dataTypeString[32];
 
 	CONSOLE_DEBUG(__FUNCTION__);
 

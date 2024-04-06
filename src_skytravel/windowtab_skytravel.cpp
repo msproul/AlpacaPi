@@ -439,7 +439,7 @@ int		startupWidgetIdx;
 	CalanendarTime(&gCurrentSkyTime);
 
 	memset(&cDispOptions,		0, sizeof(TYPE_SkyDispOptions));
-	strcpy(cWebURLstring, "skytravel.html");		//*	set the web help url string
+	SetWebHelpURLstring("skytravel.html");		//*	set the web help url string
 
 	gST_DispOptions.DisplayedMagnitudeLimit		=	15.0;
 	gST_DispOptions.EarthDispMode				=	0;
@@ -9688,7 +9688,7 @@ bool	ptInView;
 	}
 	else
 	{
-		CONSOLE_DEBUG("Nothing to draw");
+//		CONSOLE_DEBUG("Nothing to draw");
 	}
 //	CONSOLE_DEBUG_W_NUM("numDrawn\t=", numDrawn);
 	return(numDrawn);

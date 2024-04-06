@@ -113,6 +113,8 @@
 //*	Nov 21,	2023	<MLS> Fixed HandleKeyDown() control functions, tolower is NOT working
 //*	Jan 19,	2024	<MLS> Added debug to widget def for debugging single widget
 //*	Mar 21,	2024	<MLS> Added DrawWidgetTextBox_MonoSpace()
+//*	Mar 26,	2024	<MLS> Added RunFastBackgroundTasks()
+//*	Mar 27,	2024	<MLS> Added SetRunFastBackgroundMode()
 //*****************************************************************************
 
 
@@ -419,6 +421,7 @@ char		myWindowName[128];
 	cBackgroundTaskActive		=	false;
 	cBackGroundThreadCreated	=	false;
 	cBackgroundThreadID			=	-1;
+	cEnableRunFastBackGround	=	false;
 
 	//*	alpaca IP address etc
 	cValidIPaddr				=	false;
@@ -947,7 +950,7 @@ bool	Controller::AlpacaGetStatus(void)
 bool	validData;
 bool	previousOnLineState;
 
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 	previousOnLineState	=   cOnLine;
 	if (cHas_readall)
 	{
@@ -1033,7 +1036,7 @@ void	Controller::RunBackgroundTasks(const char *callingFunction, bool enableDebu
 		}
 	#endif
 		cReadStartup	=	false;
-		CONSOLE_DEBUG_W_BOOL("cReadStartup\t=", cReadStartup);
+//		CONSOLE_DEBUG_W_BOOL("cReadStartup\t=", cReadStartup);
 	}
 
 
@@ -1096,6 +1099,19 @@ uint32_t	currentMillis;
 		cLastUpdate_milliSecs	=	millis();
 	}
 #endif // _CONTROLLER_USES_ALPACA_
+}
+
+//**************************************************************************************
+//*	returns true if it did anything
+bool	Controller::RunFastBackgroundTasks(void)
+{
+	return(false);
+}
+
+//**************************************************************************************
+void	Controller::SetRunFastBackgroundMode(bool newRunFastMode)
+{
+	cEnableRunFastBackGround	=	newRunFastMode;
 }
 
 //**************************************************************************************
@@ -2704,7 +2720,7 @@ void	Controller::DrawWidgetImage(TYPE_WIDGET *theWidget, IplImage *theOpenCVimag
 int			delta;
 cv::Rect	widgetRect;
 
-//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 	if (cOpenCV_Image != NULL)
 	{
 		if (theOpenCVimage != NULL)
@@ -2904,7 +2920,6 @@ cv::Rect		widgetRect;
 			case kWidgetType_Custom:
 				if (cCurrentTabObjPtr != NULL)
 				{
-
 				#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 					cCurrentTabObjPtr->DrawWidgetCustomGraphic(cOpenCV_matImage, widgetIdx);
 				#else
@@ -2974,9 +2989,7 @@ cv::Rect		widgetRect;
 	{
 		DumpWidget(theWidget, __FUNCTION__);
 	}
-
 }
-
 
 //**************************************************************************************
 void	Controller::DrawWindowWidgets(void)
@@ -3688,6 +3701,7 @@ bool	inRect;
 void	DumpWidget(TYPE_WIDGET *theWidget, const char *callingFunction)
 {
 //	CONSOLE_DEBUG_W_HEX(	"theWidget               \t=",	theWidget);
+	CONSOLE_DEBUG_W_STR(	"callingFunction         \t=",	callingFunction);
 	CONSOLE_DEBUG_W_BOOL(	"theWidget->valid        \t=",	theWidget->valid);
 	CONSOLE_DEBUG_W_BOOL(	"theWidget->needsUpdated \t=",	theWidget->needsUpdated);
 	CONSOLE_DEBUG_W_NUM(	"theWidget->widgetType   \t=",	theWidget->widgetType);
@@ -3752,11 +3766,16 @@ cv::Scalar	rgbValue;
 //*****************************************************************************
 void	LoadAlpacaLogo(void)
 {
+//	CONSOLE_DEBUG(__FUNCTION__);
+
 #if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 //	gAlpacaLogoPtr	=	new cv::imread("logos/AlpacaLogo-vsmall.png", CV_LOAD_IMAGE_COLOR);
 //	gAlpacaLogoPtr	=	new cv::Mat("logos/AlpacaLogo-vsmall.png");
 	gAlpacaLogo		=	cv::imread("logos/AlpacaLogo-vsmall.png");
 	gAlpacaLogoPtr	=	&gAlpacaLogo;
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+//	DumpCVMatStruct(__FUNCTION__, gAlpacaLogoPtr,	"gAlpacaLogo");
 
 //*	debugging
 //	cv::namedWindow("Logo");			//Declaring an window to show ROI
@@ -3769,7 +3788,7 @@ void	LoadAlpacaLogo(void)
 	{
 		gAlpacaLogoPtr	=	cvLoadImage("logos/AlpacaLogo-vsmall.png");
 	}
-	#endif
+#endif
 }
 
 //*****************************************************************************
@@ -3933,9 +3952,11 @@ void	Controller::ForceAlpacaUpdate(void)
 static void	*ControllerBackgroundThread(void *arg)
 {
 Controller	*myControllerPtr;
+int			iii;
+bool		fastWorkDone;
 
-//	CONSOLE_DEBUG("*************************************************");
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG("*************************************************");
+	CONSOLE_DEBUG(__FUNCTION__);
 	myControllerPtr	=	(Controller *)arg;
 	if (myControllerPtr != NULL)
 	{
@@ -3953,8 +3974,23 @@ Controller	*myControllerPtr;
 			myControllerPtr->TaskTiming_Stop(kTask_BackgroundThread);
 
 			//*	sleep for a period of time (in micro seconds)
-		//	usleep(500 * 1000);
-			usleep(1000 * 1000);
+			if (myControllerPtr->cEnableRunFastBackGround)
+			{
+				for (iii=0; iii<100; iii++)
+				{
+					fastWorkDone	=	myControllerPtr->RunFastBackgroundTasks();
+//					if (fastWorkDone)
+//					{
+//
+//					}
+					usleep(100 * 1000);
+				}
+			}
+			else
+			{
+			//	usleep(500 * 1000);
+				usleep(1000 * 1000);
+			}
 		}
 		CONSOLE_ABORT("Magic cookie is stale")
 	}
