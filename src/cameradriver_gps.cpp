@@ -25,9 +25,11 @@
 //*	<MLS>	=	Mark L Sproul
 //*****************************************************************************
 //*	Aug 31,	2023	<MLS> Created cameradriver_gps.cpp
-//*	Aug 31,	2023	<MLS> Added WriteFITS_GPSinfo()
+//*	Aug 31,	2023	<MLS> Added WriteFITS_QHY_GPSinfo()
 //*	Sep  1,	2023	<MLS> Added lots of GPS data to FITS header
 //*	Sep  5,	2023	<MLS> Working on matching SharpCap FITS header
+//*	Apr 10,	2024	<MLS> Added WriteFITS_GPSinfo()
+//*	Apr 10,	2024	<MLS> Added WriteFITS_Global_GPSinfo()
 //*****************************************************************************
 //*	data from SharpCap FITS header
 //+GPS_W		1936			Width
@@ -68,9 +70,127 @@
 #endif
 
 #ifdef _ENABLE_FITS_
-static char	gGPScomment1[]	=	"Data from Camera GPS (QHY174-GPS)";
+#define	ISLOCKED(myBoolvalue)	(char *)(myBoolvalue ? "Locked" : "invalid")
+
 //*****************************************************************************
+//*	does not write anything if no GPS present
+//*	QHY GPS takes priority over global GPS
 void	CameraDriver::WriteFITS_GPSinfo(fitsfile *fitsFilePtr)
+{
+	if (cGPS.Present)
+	{
+		WriteFITS_QHY_GPSinfo(fitsFilePtr);
+	}
+	else if (gNMEAdata.validData)
+	{
+		WriteFITS_Global_GPSinfo(fitsFilePtr);
+	}
+}
+
+//*****************************************************************************
+void	CameraDriver::WriteFITS_Global_GPSinfo(fitsfile *fitsFilePtr)
+{
+int		fitsStatus;
+
+	WriteFITS_Seperator(fitsFilePtr, "GPS Info");
+	fitsStatus	=	0;
+	fits_write_key(fitsFilePtr, TSTRING,	"COMMENT",
+											(char *)"Data from GPS via Serial Port",
+											NULL, &fitsStatus);
+//	bool				validTime;
+//	bool				validDate;
+//	bool				validLatLon;
+//	bool				validAlt;
+	//-------------------------------------------------------------
+	//*	GPS status
+	fitsStatus	=	0;
+	fits_write_key(fitsFilePtr, TSTRING,	"GPS_STAT",
+											ISLOCKED(gNMEAdata.validData),
+											"GPS Status", &fitsStatus);
+
+	fitsStatus	=	0;
+	fits_write_key(fitsFilePtr, TSTRING,	"GPS_DATE",
+											ISLOCKED(gNMEAdata.validDate),
+											"Date Status", &fitsStatus);
+
+	fitsStatus	=	0;
+	fits_write_key(fitsFilePtr, TSTRING,	"GPS_TIME",
+											ISLOCKED(gNMEAdata.validTime),
+											"Time Status", &fitsStatus);
+	fitsStatus	=	0;
+	fits_write_key(fitsFilePtr, TSTRING,	"GPS_LALO",
+											ISLOCKED(gNMEAdata.validLatLon),
+											"Lat/Lon Status", &fitsStatus);
+	fitsStatus	=	0;
+	fits_write_key(fitsFilePtr, TSTRING,	"GPS_ALTS",
+											ISLOCKED(gNMEAdata.validAlt),
+											"Altitude Status", &fitsStatus);
+
+	//-------------------------------------------------------------
+	//*	satellites in view
+	fitsStatus	=	0;
+	fits_write_key(fitsFilePtr, TINT,		"GPS_SVEW",
+											&gNMEAdata.numSats,
+											"Satellites in view", &fitsStatus);
+	fitsStatus	=	0;
+	fits_write_key(fitsFilePtr, TDOUBLE,	"GPS_LAT",
+											&gNMEAdata.lat_double,
+											"Latitude from GPS", &fitsStatus);
+
+	fitsStatus	=	0;
+	fits_write_key(fitsFilePtr, TDOUBLE,	"GPS_LONG",
+											&gNMEAdata.lon_double,
+											"Longitude from GPS", &fitsStatus);
+	fitsStatus	=	0;
+	fits_write_key(fitsFilePtr, TDOUBLE,	"GPS_ALT",
+											&gNMEAdata.altitudeMeters,
+											"Altitude from GPS (meters)", &fitsStatus);
+
+}
+
+//$GPGGA,023420.000,4121.6625,N,07458.8289,W,1,08,0.95,437.3,M,-34.0,M,,*50
+//$GPGSA,A,3,29,10,05,18,23,13,24,15,,,,,1.25,0.95,0.80*07
+//$GPRMC,023420.000,A,4121.6625,N,07458.8289,W,0.53,2.19,110424,,,A*71
+//$GPVTG,2.19,T,,M,0.53,N,0.99,K,A*31
+//$GPGGA,023421.000,4121.6626,N,07458.8289,W,1,08,0.97,437.3,M,-34.0,M,,*50
+//$GPGSA,A,3,29,10,05,18,23,13,24,15,,,,,1.67,0.97,1.36*0F
+//$GPRMC,023421.000,A,4121.6626,N,07458.8289,W,0.61,358.75,110424,,,A*74
+//$GPVTG,358.75,T,,M,0.61,N,1.14,K,A*32
+//$GPGGA,023422.000,4121.6628,N,07458.8290,W,1,08,0.97,437.3,M,-34.0,M,,*55
+//$GPGSA,A,3,29,10,05,18,23,13,24,15,,,,,1.67,0.97,1.36*0F
+//$GPGSV,3,1,10,18,77,244,17,15,61,049,26,23,50,305,22,24,44,144,24*7E
+//$GPGSV,3,2,10,13,29,048,11,05,22,093,16,10,17,289,16,27,13,313,16*76
+//$GPGSV,3,3,10,29,09,200,14,32,02,233,*7C
+//$GPRMC,023422.000,A,4121.6628,N,07458.8290,W,0.36,33.21,110424,,,A*4C
+//$GPVTG,33.21,T,,M,0.36,N,0.66,K,A*0B
+//$GPGGA,023423.000,4121.6630,N,07458.8291,W,1,08,0.95,437.3,M,-34.0,M,,*5E
+//$GPGSA,A,3,29,10,05,18,23,13,24,15,,,,,1.25,0.95,0.80*07
+//$GPRMC,023423.000,A,4121.6630,N,07458.8291,W,0.24,42.09,110424,,,A*4A
+//$GPVTG,42.09,T,,M,0.24,N,0.45,K,A*05
+//$GPGGA,023424.000,4121.6631,N,07458.8293,W,1,08,0.95,437.3,M,-34.0,M,,*5A
+//$GPGSA,A,3,29,10,05,18,23,13,24,15,,,,,1.25,0.95,0.80*07
+//$GPRMC,023424.000,A,4121.6631,N,07458.8293,W,0.16,87.74,110424,,,A*4C
+//$GPVTG,87.74,T,,M,0.16,N,0.29,K,A*0D
+//$GPGGA,023425.000,4121.6634,N,07458.8295,W,1,09,0.87,437.3,M,-34.0,M,,*5A
+//$GPGSA,A,3,29,10,05,18,23,27,13,24,15,,,,1.17,0.87,0.78*07
+//$GPRMC,023425.000,A,4121.6634,N,07458.8295,W,0.30,67.18,110424,,,A*4E
+//$GPVTG,67.18,T,,M,0.30,N,0.56,K,A*05
+//$GPGGA,023426.000,4121.6634,N,07458.8294,W,1,09,0.87,437.3,M,-34.0,M,,*58
+//$GPGSA,A,3,29,10,05,18,23,27,13,24,15,,,,1.17,0.87,0.78*07
+//$GPRMC,023426.000,A,4121.6634,N,07458.8294,W,0.32,105.16,110424,,,A*75
+//$GPVTG,105.16,T,,M,0.32,N,0.59,K,A*33
+//$GPGGA,023427.000,4121.6634,N,07458.8293,W,1,09,0.87,437.3,M,-34.0,M,,*5E
+//$GPGSA,A,3,29,10,05,18,23,27,13,24,15,,,,1.17,0.87,0.78*07
+//$GPGSV,3,1,11,18,77,244,18,15,61,049,26,23,50,305,22,24,44,144,26*72
+//$GPGSV,3,2,11,13,29,048,14,05,22,093,16,10,17,289,16,27,13,313,16*72
+//$GPGSV,3,3,11,29,09,200,14,32,02,233,14,37,,,*7C
+//$GPRMC,023427.000,A,4121.6634,N,07458.8293,W,0.24,70.83,110424,,,A*4B
+
+
+
+static char	gGPS_QHYcomment1[]	=	"Data from Camera GPS (QHY174-GPS)";
+//*****************************************************************************
+void	CameraDriver::WriteFITS_QHY_GPSinfo(fitsfile *fitsFilePtr)
 {
 int		iii;
 int		nnn;
@@ -79,10 +199,10 @@ char	tempstring[100];
 char	latString[64];
 char	lonString[64];
 
-	WriteFITS_Seperator(fitsFilePtr, "GPS Info");
+	WriteFITS_Seperator(fitsFilePtr, "QHY GPS Info");
 	fitsStatus	=	0;
 	fits_write_key(fitsFilePtr, TSTRING,	"COMMENT",
-											gGPScomment1,
+											gGPS_QHYcomment1,
 											NULL, &fitsStatus);
 	sprintf(tempstring, "GPS Camera Model: %s", cGPS.CameraName);
 	fitsStatus	=	0;
@@ -137,7 +257,6 @@ char	lonString[64];
 	fits_write_key(fitsFilePtr, TSTRING,	"GPS_MODE",
 											tempstring,
 											"GPS mode", &fitsStatus);
-#define	ISLOCKED(myBoolvalue)	(char *)(myBoolvalue ? "Locked" : "invalid")
 	//-------------------------------------------------------------
 	//*	GPS status
 	fitsStatus	=	0;
@@ -170,19 +289,18 @@ char	lonString[64];
 											&cGPS.SequenceNumber,
 											"Sequence Number", &fitsStatus);
 
+	//-------------------------------------------------------------
 	//*	satellites in view
 	fitsStatus	=	0;
 	fits_write_key(fitsFilePtr, TUINT,		"GPS_SVEW",
 											&cGPS.SatsInView,
 											"Satellites in view", &fitsStatus);
 	//-------------------------------------------------------------
-	CONSOLE_DEBUG_W_DBL("cGPS.Lat\t=", cGPS.Lat);
 	fitsStatus	=	0;
 	fits_write_key(fitsFilePtr, TDOUBLE,	"GPS_LAT",
 											&cGPS.Lat,
 											"Latitude from GPS", &fitsStatus);
 
-	CONSOLE_DEBUG_W_DBL("cGPS.Long\t=", cGPS.Long);
 	fitsStatus	=	0;
 	fits_write_key(fitsFilePtr, TDOUBLE,	"GPS_LONG",
 											&cGPS.Long,

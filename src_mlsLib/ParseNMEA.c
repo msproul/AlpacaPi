@@ -55,6 +55,7 @@
 //*	Sep  5,	2023	<MLS> Removing global gNMEAdata, replacing with pointer
 //*	Sep  9,	2023	<MLS> Added GetLatLonDouble()
 //*	Sep  9,	2023	<MLS> Added ParseNMEA_FormatLatLonStrings()
+//*	Apr 10,	2024	<MLS> Added ComputeLatLonAverage()
 //**************************************************************************************
 
 #include	<stdio.h>
@@ -114,22 +115,23 @@ typedef	struct
 //**************************************************************************************
 void	ParseNMEA_init(TYPE_NMEAInfoStruct *nmeaData)
 {
-	nmeaData->theNN.Lat[0]		=	0;
-	nmeaData->theNN.LatC[0]		=	0;		//*	latitude
-	nmeaData->theNN.Lon[0]		=	0;
-	nmeaData->theNN.LonC[0]		=	0;		//*	longitude
-	nmeaData->theNN.Alt[0]		=	0;		//*	Altitude (in meters)
-	nmeaData->theNN.AltC[0]		=	0;		//*	Unit Character M or F
-	nmeaData->theNN.Sat[0]		=	0;		//*	Satilite Flag
-	nmeaData->theNN.NumSats[0]	=	0;		//*	Number of Satalites
-	nmeaData->theNN.Date[0]		=	0;		//*	date
-	nmeaData->theNN.Time[0]		=	0;		//*	time
-
-	nmeaData->theNN.HDOP[0]		=	0;
-	nmeaData->theNN.VDOP[0]		=	0;
-	nmeaData->theNN.PDOP[0]		=	0;
-	nmeaData->theNN.TDOP[0]		=	0;
-	nmeaData->theNN.GDOP[0]		=	0;
+	memset(nmeaData, 0, sizeof(TYPE_NMEAInfoStruct));
+//	nmeaData->theNN.Lat[0]		=	0;
+//	nmeaData->theNN.LatC[0]		=	0;		//*	latitude
+//	nmeaData->theNN.Lon[0]		=	0;
+//	nmeaData->theNN.LonC[0]		=	0;		//*	longitude
+//	nmeaData->theNN.Alt[0]		=	0;		//*	Altitude (in meters)
+//	nmeaData->theNN.AltC[0]		=	0;		//*	Unit Character M or F
+//	nmeaData->theNN.Sat[0]		=	0;		//*	Satilite Flag
+//	nmeaData->theNN.NumSats[0]	=	0;		//*	Number of Satalites
+//	nmeaData->theNN.Date[0]		=	0;		//*	date
+//	nmeaData->theNN.Time[0]		=	0;		//*	time
+//
+//	nmeaData->theNN.HDOP[0]		=	0;
+//	nmeaData->theNN.VDOP[0]		=	0;
+//	nmeaData->theNN.PDOP[0]		=	0;
+//	nmeaData->theNN.TDOP[0]		=	0;
+//	nmeaData->theNN.GDOP[0]		=	0;
 
 }
 
@@ -229,7 +231,8 @@ void	DumpGPSdata(TYPE_NMEAInfoStruct	*theNmeaInfo)
 																	theNmeaInfo->longitude.Sec,
 																	theNmeaInfo->longitude.Ten,
 																	theNmeaInfo->longitude.Ch);
-
+		printf("Lat              = %f\n",		theNmeaInfo->lat_double);
+		printf("Lon              = %f\n",		theNmeaInfo->lon_double);
 
 		printf("Sat              = %s\n",		theNmeaInfo->theNN.Sat);
 		printf("NumSats          = %s\n",		theNmeaInfo->theNN.NumSats);
@@ -586,11 +589,10 @@ bool	validALtFlag;
 	return(validALtFlag);
 }
 
+#ifdef _ENABLE_LAT_LON_TRACKING_
 //**************************************************************************************
 static void	TrackLatLonValues(TYPE_NMEAInfoStruct *theNmeaInfo)
 {
-#ifdef _ENABLE_LAT_LON_TRACKING_
-
 int	latlonIndex;
 double	myLatitude;
 double	mylongitude;
@@ -615,8 +617,8 @@ double	mylongitude;
 			theNmeaInfo->longitudeHistory[latlonIndex]	=	mylongitude;
 		}
 	}
-#endif
 }
+#endif
 
 #ifdef _ENABLE_ALTITUDE_TRACKING_
 //**************************************************************************************
@@ -632,6 +634,68 @@ int	altIndex;
 	}
 }
 #endif	//	_ENABLE_ALTITUDE_TRACKING_
+
+
+#ifdef _ENABLE_GPS_AVERAGE_
+//**************************************************************************************
+static void	ComputeLatLonAverage(	TYPE_NMEAInfoStruct	*theNmeaInfo,
+									double				newLat_double,
+									double				newLon_double)
+{
+int		iii;
+double	lat_total;
+double	lon_total;
+int		myIndex;
+
+	theNmeaInfo->latLonAvgCount++;
+	myIndex	=	theNmeaInfo->latLonAvgIndex;
+	if ((myIndex < 0) || (myIndex >= kLatLonAvgCnt))
+	{
+		myIndex	=	0;
+	}
+	//*	save the new values
+	theNmeaInfo->lat_AverageArray[myIndex]	=	newLat_double;
+	theNmeaInfo->lon_AverageArray[myIndex]	=	newLon_double;
+	myIndex++;
+	theNmeaInfo->latLonAvgIndex	=		myIndex;
+
+	//*	compute the average
+	if (theNmeaInfo->latLonAvgCount >= kLatLonAvgCnt)
+	{
+//		CONSOLE_DEBUG("Averaging Lat/Lon");
+		lat_total	=	0.0;
+		lon_total	=	0.0;
+		for (iii=0; iii<kLatLonAvgCnt; iii++)
+		{
+			lat_total	+=	theNmeaInfo->lat_AverageArray[iii];
+			lon_total	+=	theNmeaInfo->lon_AverageArray[iii];
+		}
+		theNmeaInfo->lat_double	=	lat_total / kLatLonAvgCnt;
+		theNmeaInfo->lon_double	=	lon_total / kLatLonAvgCnt;
+//		CONSOLE_DEBUG_W_DBL("newLat_double ",	newLat_double);
+//		CONSOLE_DEBUG_W_DBL("newLon_double ",	newLon_double);
+
+		CONSOLE_DEBUG_W_DBL("lat_double avg",	theNmeaInfo->lat_double);
+//		CONSOLE_DEBUG_W_DBL("lon_double avg",	theNmeaInfo->lon_double);
+	}
+	else
+	{
+		CONSOLE_DEBUG_W_NUM("not avg, count=", theNmeaInfo->latLonAvgCount);
+		theNmeaInfo->lat_double	=	newLat_double;
+		theNmeaInfo->lon_double	=	newLon_double;
+	}
+//	if (theNmeaInfo->latLonAvgCount == 300)
+//	{
+//		for (iii=0; iii<kLatLonAvgCnt; iii++)
+//		{
+//			printf("%d\t%f\t%f\r\n", iii,
+//									theNmeaInfo->lat_AverageArray[iii],
+//									theNmeaInfo->lon_AverageArray[iii]);
+//		}
+//		CONSOLE_ABORT(__FUNCTION__);
+//	}
+}
+#endif // _ENABLE_GPS_AVERAGE_
 
 
 
@@ -695,7 +759,11 @@ bool			processedOK;
 																&theNmeaInfo->yyLat,
 																&theNmeaInfo->latitude,
 																&theNmeaInfo->longitude);
-		}	break;
+			theNmeaInfo->lat_double	=	GetLatLonDouble(&theNmeaInfo->latitude);
+			theNmeaInfo->lon_double	=	GetLatLonDouble(&theNmeaInfo->longitude);
+			CONSOLE_ABORT(__FUNCTION__);
+		}
+		break;
 
 
 
@@ -729,7 +797,8 @@ bool			processedOK;
 			theNmeaInfo->validCseSpd	=	ReturnNMEASpeed(theNNptr->SpdOvrGrnd, "N", &theNmeaInfo->spd);	//	Knots, Convert to MPH
 			theNmeaInfo->cse			=	atoi(nmeaArgs[12].argString);
 
-		}	break;
+		}
+		break;
 
 
 		//---------------------------------------------------------------------
@@ -752,7 +821,7 @@ bool			processedOK;
 			strcpy(theNNptr->AltC,			nmeaArgs[10].argString);	//	Unit Character M or F
 
 			theNmeaInfo->validTime		=	ReturnNMEATime(theNNptr->Time, &theNmeaInfo->gpsTime, &theNmeaInfo->gpsTimeHHMMSS);
-
+			theNmeaInfo->numSats		=	atoi(theNNptr->NumSats);
 			theNmeaInfo->validAlt		=	ReturnNMEAAltitude(theNNptr->Alt, theNNptr->AltC, &theNmeaInfo->zzAlt);	//	Turn this off for MAGELLEN Ballon Flights
 			theNmeaInfo->validLatLon	=	ReturnNMEALatLon(theNNptr->Lat,
 															theNNptr->LatC,
@@ -762,7 +831,20 @@ bool			processedOK;
 															&theNmeaInfo->yyLat,
 															&theNmeaInfo->latitude,
 															&theNmeaInfo->longitude);
+#ifdef _ENABLE_GPS_AVERAGE_
+		double	myLat_double;
+		double	myLon_double;
+			myLat_double	=	GetLatLonDouble(&theNmeaInfo->latitude);
+			myLon_double	=	GetLatLonDouble(&theNmeaInfo->longitude);
+			ComputeLatLonAverage(theNmeaInfo, myLat_double, myLon_double);
+#else
+			theNmeaInfo->lat_double	=	GetLatLonDouble(&theNmeaInfo->latitude);
+			theNmeaInfo->lon_double	=	GetLatLonDouble(&theNmeaInfo->longitude);
+			CONSOLE_ABORT(__FUNCTION__);
+#endif
+		#ifdef _ENABLE_LAT_LON_TRACKING_
 			TrackLatLonValues(theNmeaInfo);
+		#endif
 		#ifdef _ENABLE_SATELLITE_ALMANAC_
 			if (theNmeaInfo->gpsTime > 0)
 			{
@@ -827,7 +909,9 @@ bool			processedOK;
 					theNmeaInfo->dgps			=	0;
 					break;
 			}
-		}	break;
+		}
+		break;
+
 
 		//---------------------------------------------------------------------
 		//	$GPGLL,4027.001,N,07428.738,W,005605,A*3B
@@ -851,6 +935,9 @@ bool			processedOK;
 																&theNmeaInfo->yyLat,
 																&theNmeaInfo->latitude,
 																&theNmeaInfo->longitude);
+			theNmeaInfo->lat_double	=	GetLatLonDouble(&theNmeaInfo->latitude);
+			theNmeaInfo->lon_double	=	GetLatLonDouble(&theNmeaInfo->longitude);
+			CONSOLE_ABORT(__FUNCTION__);
 //--			gTotalPositCount++;
 			if ((nmeaArgs[6].argString[0] == 'A') || (nmeaArgs[6].argString[0] == 0))
 			{
@@ -861,7 +948,9 @@ bool			processedOK;
 			{
 //--				theNmeaInfo->whichIcon	=	kGpsIconGLLBad;
 			}
-		}	break;
+		}
+		break;
+
 
 		//---------------------------------------------------------------------
 		//*	$GPRMA
@@ -891,7 +980,9 @@ bool			processedOK;
 			{
 				theNmeaInfo->validCseSpd	=	true;
 			}
-		}	break;
+		}
+		break;
+
 
 		//---------------------------------------------------------------------
 		//	$GPRMB,A,,,,,,,,,,,,V*71
@@ -912,7 +1003,9 @@ bool			processedOK;
 			strcpy(theNNptr->WayPtDist,		nmeaArgs[10].argString);
 			strcpy(theNNptr->WayPtBerT,		nmeaArgs[11].argString);
 		#endif
-		}	break;
+		}
+		break;
+
 
 		//---------------------------------------------------------------------
 		//			1     2 3       4 5        6 7     8     9
@@ -1011,7 +1104,9 @@ bool			processedOK;
 		#ifdef _ENABLE_GPS_DEBUGGING_
 //			DumpNMEAargs(nmeaArgs);
 		#endif
-		}	break;
+		}
+		break;
+
 
 		//---------------------------------------------------------------------
 	//	case	'PAAM':		//	Waypoint Arrival Alarm				AAM,A,A,XXX.,N,CCCC
@@ -1057,7 +1152,9 @@ bool			processedOK;
 			strcpy(theNNptr->DestWP,		nmeaArgs[12].argString);
 			theNmeaInfo->validTime	=		ReturnNMEATime(theNNptr->Time, &theNmeaInfo->gpsTime, &theNmeaInfo->gpsTimeHHMMSS);
 		#endif
-		}	break;
+		}
+		break;
+
 
 		//---------------------------------------------------------------------
 	//	case	'PBWW':		//	Bearing, Waypoint to Waypoint
@@ -1243,7 +1340,9 @@ bool			processedOK;
 		{
 			theNmeaInfo->cse			=	atoi(nmeaArgs[1].argString);
 			theNmeaInfo->validCseSpd	=	true;
-		}	break;
+		}
+		break;
+
 
 		//---------------------------------------------------------------------
 	//	case	'PHDT':		//*	Heading, True					HDT,XXX.,T						Heading, True, Present
@@ -1329,7 +1428,9 @@ bool			processedOK;
 		//	ssSpd			=	atoi(nmeaArgs[5].argString);
 			theNmeaInfo->validCseSpd	=	ReturnNMEASpeed(theNNptr->SpdOvrGrnd, theNNptr->SpdOvrGrndC, &theNmeaInfo->spd);
 			theNmeaInfo->cse			=	atoi(nmeaArgs[1].argString);
-		}	break;
+		}
+		break;
+
 
 		//---------------------------------------------------------------------
 	//	case	'PVTI':
@@ -1484,7 +1585,7 @@ int			ii;
 			break;
 
 		//*	 $PGRMZ,4998,f,3*27
-		//*	Alutitude Information
+		//*	Altitude Information
 		case 'GRMZ':
 			altitudeSource	=	atoi(nmeaArgs[3].argString);
 			if (altitudeSource == 3)
@@ -1666,7 +1767,7 @@ bool			processedOK;
 
 		if (checkSumOK)
 		{
-			//*	now we have a known good NMEA string, lets tear it appart
+			//*	now we have a known good NMEA string, lets tear it apart
 			SeparateNMEAline(theNMEAstring, nmeaArgs);
 		//	for (ii=0; ii<kMaxNumNmeaArgs; ii++)
 		//	{
@@ -1727,10 +1828,10 @@ bool			processedOK;
 	return(validString);
 }
 
+#if defined(__unix__)
 //**************************************************************************************
 static void	Check_And_Set_System_Time(const char *theDateString, const char *theTimeString)
 {
-#if defined(__unix__)
 struct timeval	tv;
 struct timeval	gps_tv;
 struct timezone	tz;
@@ -1810,7 +1911,7 @@ char			newDateTimeString[64];
 		}
 		else
 		{
-			CONSOLE_DEBUG("CPU time is correct");
+//			CONSOLE_DEBUG("CPU time is correct");
 		}
 	//	CONSOLE_DEBUG_W_NUM("tv.tv_sec     =", tv.tv_sec);
 	//	CONSOLE_DEBUG_W_NUM("gpsSecsValue  =", gpsSecsValue);
@@ -1821,8 +1922,9 @@ char			newDateTimeString[64];
 		CONSOLE_DEBUG_W_NUM("gettimeofday error",	timeRetVal);
 	}
 
-#endif
 }
+#endif	//	defined(__unix__)
+
 
 //**************************************************************************************
 //*	ParseNMEA_TimeString
@@ -1910,10 +2012,12 @@ int				slen;
 					{
 						//*	all data is valid, we can proceed
 						validTime		=	true;
+					#if defined(__unix__)
 						if (setSystemTime)
 						{
 							Check_And_Set_System_Time(theDateString, theTimeString);
 						}
+					#endif // defined(__unix__)
 
 						//*	update the global nmea data structures
 						nmeaData->validTime	=	true;
@@ -1931,8 +2035,6 @@ int				slen;
 	}
 	return(validTime);
 }
-
-
 
 //**************************************************************************************
 //*	this prints the internal format data as human readable values

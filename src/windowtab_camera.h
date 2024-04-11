@@ -105,6 +105,10 @@ enum
 
 	kCameraBox_FilterWheelOutline,
 
+	kCameraBox_DiskSpaceLbl,
+	kCameraBox_DiskSpaceValue,
+
+
 //	kCameraBox_CoolerChkBox,
 //	kCameraBox_Temp_Label,
 //	kCameraBox_Temperature,

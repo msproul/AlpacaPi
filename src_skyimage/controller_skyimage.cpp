@@ -472,8 +472,11 @@ int			status;
 int			nkeys;
 int			iii;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
-	status	=	0;	///* MUST initialize status
+	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(imageFileData->DirectoryPath);
+	CONSOLE_DEBUG(imageFileData->FileName);
+	CONSOLE_DEBUG(imageFileData->FilePath);
+	status	=	0;			//* MUST initialize status
 	fits_open_file(&fptr, imageFileData->FilePath, READONLY, &status);
 	if (status == 0)
 	{
@@ -533,6 +536,7 @@ int					iii;
 int					objectsCreated;
 int					activeObjCnt;
 int					keyPressed;
+int					sLen;
 unsigned int		currentMillis;
 unsigned int		lastDebugMillis;
 unsigned int		deltaSecs;
@@ -566,11 +570,18 @@ char				myDirectoryPath[256];
 		}
 		iii++;
 	}
+
 	strcpy(gDirectoryPath, myDirectoryPath);
 
+
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, myDirectoryPath);
-	if (strlen(myDirectoryPath) > 0)
+	sLen	=	strlen(myDirectoryPath);
+	if (sLen > 0)
 	{
+		if (myDirectoryPath[sLen -1] != '/')
+		{
+			strcat(myDirectoryPath, "/");
+		}
 		skyImageCtrlObj	=	new ControllerSkyImage("SkyImage", myDirectoryPath);
 		objectsCreated++;
 	}

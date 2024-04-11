@@ -22,6 +22,7 @@
 //*	Jun 24,	2020	<MLS> Created controller_cam_normal.cpp
 //*	Jun 25,	2020	<MLS> Cam_normal subclass now back to same functionality as before
 //*	Dec 27,	2020	<MLS> Added UpdateDownloadProgress()
+//*	Jun  4,	2023	<MLS> Added SetFileSaveOptions()
 //*	Jun 30,	2022	<MLS> Added capability list to camera controller
 //*	Sep 18,	2022	<MLS> Added DisableFilterWheel()
 //*	Sep 21,	2022	<MLS> Added ProcessReadAll_IMU()
@@ -331,6 +332,18 @@ void	ControllerCamNormal::UpdateCommonProperties(void)
 	SetWidgetNumber(kTab_DriverInfo,	kDriverInfo_InterfaceVersion,	cCommonProp.InterfaceVersion);
 
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, "Exit");
+}
+
+//*****************************************************************************
+void	ControllerCamNormal::UpdateFreeDiskSpace(const double gigabytesFree)
+{
+//	CONSOLE_DEBUG_W_DBL(__FUNCTION__, gigabytesFree);
+//	CONSOLE_DEBUG_W_NUM("kCameraBox_DiskSpaceValue", kCameraBox_DiskSpaceValue);
+	SetWidgetNumber(kTab_Camera, kCameraBox_DiskSpaceValue, gigabytesFree);
+	if (gigabytesFree < 10.0)
+	{
+		SetWidgetTextColor(kTab_Camera, kCameraBox_DiskSpaceValue, CV_RGB(255,	0,	0));
+	}
 }
 
 //*****************************************************************************
@@ -1087,8 +1100,8 @@ bool	validData;
 			break;
 
 	}
-//	CONSOLE_DEBUG_W_STR("commandString\t=",	commandString);
-//	CONSOLE_DEBUG_W_STR("dataString\t=",	dataString);
+	CONSOLE_DEBUG_W_STR("commandString\t=",	commandString);
+	CONSOLE_DEBUG_W_STR("dataString\t=",	dataString);
 	validData	=	AlpacaSendPutCmd(	"camera", commandString,	dataString);
 	if (validData == false)
 	{

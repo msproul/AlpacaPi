@@ -19,6 +19,7 @@
 //*	Edit History
 //*****************************************************************************
 //*	Feb 10,	2024	<MLS> Created windowtab_sw_versions.cpp
+//*	Apr  9,	2024	<MLS> Added platform to software window
 //*****************************************************************************
 
 #include	<stdlib.h>
@@ -78,7 +79,7 @@ int		yLoc;
 int		textBoxHt;
 int		textBoxWd;
 int		iii;
-short	widthArray[kMaxTabStops]	=	{150, 100, 100, 125, 125, 125, 125, 125, 125, 125, 0, 0, 0};
+short	widthArray[kMaxTabStops]	=	{145, 55, 100, 125, 125, 125, 310, 125, 225, 125, 125, 0, 0, 0};
 short	tabArray[kMaxTabStops];
 int		clmnHdr_xLoc;
 int		clmnHdrWidth;
@@ -131,10 +132,10 @@ int		tabOffset;
 	SetWidgetText(		kSWversionsList_ClmTitle4,	"openCV");
 	SetWidgetText(		kSWversionsList_ClmTitle5,	"cFitsIo");
 	SetWidgetText(		kSWversionsList_ClmTitle6,	"WiringPi");
-	SetWidgetText(		kSWversionsList_ClmTitle7,	"Hardware");
-	SetWidgetText(		kSWversionsList_ClmTitle8,	"tbd");
-	SetWidgetText(		kSWversionsList_ClmTitle9,	"tbd");
-	SetWidgetText(		kSWversionsList_ClmTitle10,	"tbd");
+	SetWidgetText(		kSWversionsList_ClmTitle7,	"Platform");
+	SetWidgetText(		kSWversionsList_ClmTitle8,	"Hardware");
+	SetWidgetText(		kSWversionsList_ClmTitle9,	"Driver Version");
+//	SetWidgetText(		kSWversionsList_ClmTitle10,	"tbd");
 
 	yLoc			+=	cRadioBtnHt;
 	yLoc			+=	2;
@@ -295,7 +296,7 @@ int		newSortColumn;
 		case kSWversionsList_ClmTitle7:
 		case kSWversionsList_ClmTitle8:
 		case kSWversionsList_ClmTitle9:
-		case kSWversionsList_ClmTitle10:
+//		case kSWversionsList_ClmTitle10:
 			newSortColumn	=	buttonIdx - kSWversionsList_ClmTitle1;
 			if (newSortColumn == cSortColumn)
 			{
@@ -484,13 +485,12 @@ void	WindowTabSwVersions::UpdateOnScreenWidgetList(void)
 int		boxId;
 int		iii;
 int		jjj;
-char	textString[128];
+char	textString[256];
 char	extraString[32];
 char	ipAddrStr[32];
 int		deviceIdx;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
-//	CONSOLE_ABORT(__FUNCTION__);
 
 	//*	limit how far we can scroll
 	if (cFirstLineIdx >= gAlpacaUnitCnt)
@@ -521,6 +521,7 @@ int		deviceIdx;
 				sprintf(extraString, "\t%s", gAlpacaUnitList[deviceIdx].SoftwareVersion[jjj].SoftwareVerStr);
 				strcat(textString, extraString);
 			}
+
 			strcat(textString, "\t");
 			strcat(textString, gAlpacaUnitList[deviceIdx].versionString);
 

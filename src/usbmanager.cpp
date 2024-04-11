@@ -78,6 +78,7 @@ int	USB_InitTable(void)
 			RunUSBprofile();
 		}
 	}
+	CONSOLE_DEBUG_W_NUM("gUSBcount\t=", gUSBcount);
 
 	return(gUSBcount);
 }
@@ -107,7 +108,7 @@ struct dirent	*dir;
 bool			keepGoing;
 int				errorCode;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 
 	memset(gUSBtable, 0, sizeof(gUSBtable));
 	usbDeviceCnt	=	0;

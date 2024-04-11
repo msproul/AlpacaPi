@@ -96,6 +96,10 @@
 	#include	"alpaca_defs.h"
 #endif
 
+#ifndef _GPS_DATA_H_
+	#include	"gps_data.h"
+#endif
+
 
 
 #ifdef _USE_OPENCV_
@@ -383,6 +387,8 @@ class AlpacaDriver
 				bool				cDriverThreadKeepRunning;
 				long				cDriverThreadLoopCnt;
 				pthread_t			cDriverThreadID;
+
+
 };
 
 //**************************************************************************************

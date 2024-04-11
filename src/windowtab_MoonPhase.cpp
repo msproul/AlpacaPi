@@ -1185,7 +1185,7 @@ bool			validPhaseInfo;
 			while ((graphIdx < gMoonPhaseCnt) && (pt1_X < myCVrect.width))
 			{
 				graphValueDbl	=   gMoonPhaseInfo[graphIdx].ELat;
-				graphValue		=	100 - (graphValueDbl * kELatELonMag);
+				graphValue		=	100 + (graphValueDbl * kELatELonMag);
 				//*	compute the x,y points for the line
 				pt1_X			=	previousX;
 				pt1_Y			=	TranslateYvalue((&myCVrect), previousGraphValue);
@@ -1211,7 +1211,7 @@ bool			validPhaseInfo;
 			while ((graphIdx < gMoonPhaseCnt) && (pt1_X < myCVrect.width))
 			{
 				graphValueDbl	=   gMoonPhaseInfo[graphIdx].ELon;
-				graphValue		=	100 - (graphValueDbl * kELatELonMag);
+				graphValue		=	100 + (graphValueDbl * kELatELonMag);
 				//*	compute the x,y points for the line
 				pt1_X			=	previousX;
 				pt1_Y			=	TranslateYvalue((&myCVrect), previousGraphValue);

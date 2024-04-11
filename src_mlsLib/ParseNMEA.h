@@ -20,6 +20,8 @@
 //*	Apr 24,	2017	<MLS> Added _ENABLE_NMEA_SENTANCE_TRACKING_
 //*	May  9,	2017	<MLS> Added gPGRME_exists to indicate that a PGRME sentance had been received
 //*	Sep  5,	2023	<MLS> Added	currSatsInUse & currSatMode
+//*	Apr  9,	2024	<MLS> Added double values for Lat/Lon to TYPE_NMEAInfoStruct
+//*	Apr 10,	2024	<MLS> Added _ENABLE_GPS_AVERAGE_
 //**************************************************************************************
 //*	memory used with _ENABLE_SATELLITE_ALMANAC_ enabled
 //*		sizeof(TYPE_NMEAInfoStruct)     =1677
@@ -36,13 +38,14 @@
 
 //**************************************************************************************
 //*	configuration options, comment out to save memory
+//#define	_ENABLE_ALTITUDE_TRACKING_
+#define	_ENABLE_GPS_AVERAGE_
+//#define	_ENABLE_LAT_LON_TRACKING_
+//#define	_ENABLE_NMEA_SENTANCE_TRACKING_
+//#define	_ENABLE_NMEA_POSITION_ERROR_TRACKING_
 //#define	_ENABLE_PROPRIETARY_PARSING_
 #define	_ENABLE_SATELLITE_ALMANAC_
 //#define	_ENABLE_WAYPOINT_PARSING_
-//#define	_ENABLE_ALTITUDE_TRACKING_
-//#define	_ENABLE_NMEA_SENTANCE_TRACKING_
-//#define	_ENABLE_NMEA_POSITION_ERROR_TRACKING_
-//#define	_ENABLE_LAT_LON_TRACKING_
 //**************************************************************************************
 
 
@@ -215,6 +218,7 @@ typedef	struct
 	#define	kMagVariationTracking_ArraySize	((24 * 60 * 60)	/ kMagVariationTracking_deltaTime)
 #endif
 
+#define	kLatLonAvgCnt	500
 
 //**************************************************************************
 typedef	struct
@@ -232,11 +236,17 @@ typedef	struct
 	unsigned long		deltaGPSTime;
 	LatLonType			latitude;
 	LatLonType			longitude;
-	long				xxLon;				//	Internal Units (100'ts of an arc second)
-	long				yyLat;				//	Internal Units (100'ts of an arc second)
-	long				zzAlt;				//	Feet
+	double				lat_double;
+	double				lon_double;
 	double				altitudeFeet;
 	double				altitudeMeters;
+#ifdef _ENABLE_GPS_AVERAGE_
+	double				lat_AverageArray[kLatLonAvgCnt];
+	double				lon_AverageArray[kLatLonAvgCnt];
+	int					latLonAvgIndex;
+	int					latLonAvgCount;
+#endif
+
 	short				cse;				//	Degrees
 	short				spd;				//	MPH
 //?	short				hdg;				//*	Heading
@@ -249,7 +259,8 @@ typedef	struct
 
 	char				currSatMode1;
 	char				currSatMode2;
-	short				currSatsInUse;
+	int					currSatsInUse;
+	int					numSats;
 
 #ifdef _ENABLE_SATELLITE_ALMANAC_
 	long				nmeaGPGSVcount;
@@ -291,23 +302,32 @@ typedef	struct
 #endif
 
 
+	//*	for MacAPRS
+	long				xxLon;				//	Internal Units (100'ts of an arc second)
+	long				yyLat;				//	Internal Units (100'ts of an arc second)
+	long				zzAlt;				//	Feet
 //-	short				whichIcon;
 
 }	TYPE_NMEAInfoStruct;
 
+extern TYPE_NMEAInfoStruct	gNMEAdata;
+
 
 #ifdef _ENABLE_SATELLITE_ALMANAC_
-	int	GetSatSignalStrength(int satNumber);
+//	int	GetSatSignalStrength(int satNumber);
+	int	GetSatSignalStrength(TYPE_NMEAInfoStruct *nmeaData, int satNumber);
 #endif
 
-extern TYPE_NMEAInfoStruct	gNMEAdata;
 
 void	ParseNMEA_init(TYPE_NMEAInfoStruct *nmeaData);
 bool	ParseNMEAstring(TYPE_NMEAInfoStruct *nmeaData, char *theNMEAstring);
-bool	ParseNMEA_TimeString(char *theNMEAstring, bool setSystemTime);
+//bool	ParseNMEA_TimeString(char *theNMEAstring, bool setSystemTime);
+bool	ParseNMEA_TimeString(TYPE_NMEAInfoStruct *nmeaData, char *theNMEAstring, bool setSystemTime);
+
 void	Get_Actual_LatLon_Strings(long theLon, long theLat, char *theLonStr,char *theLatStr, bool includeLabel);
 int		Ascii2charsToInt(const char *charPtr);
-void	GetCurrentLatLon_Strings(char *theLonStr,char *theLatStr, bool includeLabel);
+//void	GetCurrentLatLon_Strings(char *theLonStr,char *theLatStr, bool includeLabel);
+void	GetCurrentLatLon_Strings(TYPE_NMEAInfoStruct *nmeaData, char *theLonStr,char *theLatStr, bool includeLabel);
 int		GetMaxSatSignalStrength(void);
 void	DumpGPSdata(TYPE_NMEAInfoStruct	*theNmeaInfo);
 double	GetLatLonDouble(LatLonType *latLonPtr);

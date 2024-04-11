@@ -101,6 +101,7 @@
 //*	Mar 22,	2024	<MLS> Fixed bug in FITS camera offset reporting, was string, now int
 //*	Mar 25,	2024	<MLS> Now using NASA Moon Phase info if available
 //*	Mar 27,	2024	<MLS> Added lunar polar axis to moon fits info
+//*	Apr 10,	2024	<MLS> FITS data now supports GPS from serial port
 //*****************************************************************************
 
 #if defined(_ENABLE_CAMERA_) && defined(_ENABLE_FITS_)
@@ -602,15 +603,12 @@ int				iii;
 
 		//============================================================
 		//*	GPS information
-		if (cGPS.Present)
-		{
-			WriteFITS_GPSinfo(fitsFilePtr);
-		}
+		//*	does not write anything if no GPS present
+		WriteFITS_GPSinfo(fitsFilePtr);
 
 		//============================================================
 		//*	Software info
 		WriteFITS_SoftwareInfo(fitsFilePtr);
-
 
 		//============================================================
 		//*	FITS version info

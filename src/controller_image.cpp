@@ -1793,9 +1793,14 @@ int			fitsKeyWordEnum;
 				case kFitsKeyword_Telescope:
 					GetDataFromFitsLine(card, valueString);
 					strcpy(cFitsHeaderData.Telescope, valueString);
+					//*	correct some screw ups in fits headers
 					if (strncasecmp(valueString, "Mt Wilson", 9) == 0)
 					{
 						strcpy(cFitsHeaderData.Location, "Mt Wilson, CA");
+					}
+					else if (strncasecmp(valueString, "B&C-None", 8) == 0)
+					{
+						strcpy(cFitsHeaderData.Telescope, "B&C 4 Inch Refactor");
 					}
 					break;
 

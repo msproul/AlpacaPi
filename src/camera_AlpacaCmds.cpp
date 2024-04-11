@@ -152,15 +152,15 @@ TYPE_CmdEntry	gCameraCmdTable[]	=
 TYPE_CmdEntry	gCameraExtrasTable[]	=
 {
 
-	{	"BackGroundColor",				kCmd_Camera_BackGroundColor,			kCmdType_GET	},
-	{	"FileNamePrefix",				kCmd_Camera_FileNamePrefix,				kCmdType_GET	},
-	{	"FileNameSuffix",				kCmd_Camera_FileNameSuffix,				kCmdType_GET	},
-	{	"FilenameRoot",					kCmd_Camera_FilenameRoot,				kCmdType_GET	},
-	{	"Filename_IncludeFILTER",		kCmd_Camera_FilenameIncludeFilter,		kCmdType_GET	},
-	{	"Filename_IncludeCAMERA",		kCmd_Camera_FilenameIncludeCamera,		kCmdType_GET	},
-	{	"Filename_IncludeSERIALNUM",	kCmd_Camera_FilenameIncludeSerialnum,	kCmdType_GET	},
-	{	"Filename_IncludeREFID",		kCmd_Camera_FilenameIncludeRefid,		kCmdType_GET	},
-	{	"FreeDisk_Gigabytes",			kCmd_Camera_FreeDisk_Gigabytes,			kCmdType_GET	},
+	{	"backGroundColor",				kCmd_Camera_BackGroundColor,			kCmdType_GET	},
+	{	"fileNamePrefix",				kCmd_Camera_FileNamePrefix,				kCmdType_GET	},
+	{	"fileNameSuffix",				kCmd_Camera_FileNameSuffix,				kCmdType_GET	},
+	{	"filenameRoot",					kCmd_Camera_FilenameRoot,				kCmdType_GET	},
+	{	"filename_IncludeFILTER",		kCmd_Camera_FilenameIncludeFilter,		kCmdType_GET	},
+	{	"filename_IncludeCAMERA",		kCmd_Camera_FilenameIncludeCamera,		kCmdType_GET	},
+	{	"filename_IncludeSERIALNUM",	kCmd_Camera_FilenameIncludeSerialnum,	kCmdType_GET	},
+	{	"filename_IncludeREFID",		kCmd_Camera_FilenameIncludeRefid,		kCmdType_GET	},
+	{	"freeDisk_Gigabytes",			kCmd_Camera_FreeDisk_Gigabytes,			kCmdType_GET	},
 	{	"REFID",						kCmd_Camera_REFID,						kCmdType_GET	},
 //	{	"foo",				foo,			kCmdType_GET	},
 

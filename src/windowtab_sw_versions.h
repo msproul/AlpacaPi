@@ -29,7 +29,7 @@ enum
 	kSWversionsList_ClmTitle7,
 	kSWversionsList_ClmTitle8,
 	kSWversionsList_ClmTitle9,
-	kSWversionsList_ClmTitle10,
+//	kSWversionsList_ClmTitle10,
 	kSWversionsList_ClmOutline,
 
 	kSWversionsList_AlpacaDev_01,

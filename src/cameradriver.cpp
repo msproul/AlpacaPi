@@ -6048,7 +6048,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
 bool				saveAsJPEGFound;
 char				saveAsJPEGString[32];
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 
 	if (reqData != NULL)
 	{
@@ -6056,6 +6056,7 @@ char				saveAsJPEGString[32];
 													"saveasJPEG",
 													saveAsJPEGString,
 													(sizeof(saveAsJPEGString) -1));
+		CONSOLE_DEBUG_W_BOOL("saveAsJPEGFound\t=", saveAsJPEGFound);
 		if (saveAsJPEGFound)
 		{
 			cSaveAsJPEG		=	IsTrueFalse(saveAsJPEGString);
@@ -6068,6 +6069,7 @@ char				saveAsJPEGString[32];
 			CONSOLE_DEBUG(alpacaErrMsg);
 			CONSOLE_DEBUG(reqData->contentData);
 		}
+		CONSOLE_DEBUG_W_BOOL("cSaveAsJPEG\t=", cSaveAsJPEG);
 	}
 	else
 	{

@@ -123,7 +123,7 @@ char				usbPath[64];
 TYPE_MOONLITECOM	myMoonliteDesc;
 int					iii;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 	USB_InitTable();
 
 	moonliteCnt		=	0;
@@ -131,6 +131,7 @@ int					iii;
 	while (validUSBpath)
 	{
 		validUSBpath	=	USB_GetPathFromID("FTDI", usbPath);
+		CONSOLE_DEBUG_W_BOOL("validUSBpath\t=", validUSBpath);
 		if (validUSBpath)
 		{
 			CONSOLE_DEBUG_W_STR("usbPath\t=", usbPath);

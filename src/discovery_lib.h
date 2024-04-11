@@ -31,6 +31,7 @@ enum
 	kSoftwareVers_OpenCV	=	0,
 	kSoftwareVers_Fits,
 	kSoftwareVers_WiringPi,
+	kSoftwareVers_Platform,
 	kSoftwareVers_Hardware,
 
 	kSoftwareVers_last

@@ -546,6 +546,22 @@ int	imuHeight;
 	SetRemoteIMUdisplay(false);
 #endif	//	_SUPPORT_REMOTE_IMU_
 
+	//--------------------------------------------------------------------
+	//*	Disk space info
+int boxWidth;
+	boxWidth	=	cClmWidth + (cClmWidth / 2);
+	xLoc		=	cClm4_offset + 6;
+	SetWidget(		kCameraBox_DiskSpaceLbl,	xLoc,	yLocClm4,	boxWidth,	cBoxHeight	);
+	SetWidgetFont(	kCameraBox_DiskSpaceLbl,	kFont_Medium);
+	SetWidgetText(	kCameraBox_DiskSpaceLbl,	"DiskSpace");
+	xLoc	+=	boxWidth;
+	xLoc	+=	2;
+
+	SetWidget(		kCameraBox_DiskSpaceValue,	xLoc,	yLocClm4,	boxWidth,	cBoxHeight	);
+	SetWidgetFont(	kCameraBox_DiskSpaceValue,	kFont_Medium);
+	SetWidgetText(	kCameraBox_DiskSpaceValue,	"???");
+
+
 #ifdef _INCLUDE_COOLER_ON_CAM_WINDOW_
 	//=======================================================
 	//*	Cooler check box
@@ -599,6 +615,8 @@ int	imuHeight;
 							kCameraBox_LastCmdString,
 							kCameraBox_AlpacaLogo,
 							-1);
+	SetWidgetText(	kCameraBox_AlpacaErrorMsg,	"Error msgs go here");
+
 }
 
 //**************************************************************************************

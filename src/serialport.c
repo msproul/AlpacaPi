@@ -18,7 +18,7 @@
 #include	<stdbool.h>
 #include	<string.h>
 #include	<unistd.h>
-#include	<sys/ioctl.h> //ioctl() call defenitions
+#include	<sys/ioctl.h> //ioctl() call definitions
 
 
 #define _ENABLE_CONSOLE_DEBUG_

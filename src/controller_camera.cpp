@@ -66,7 +66,6 @@
 //*	May 30,	2023	<MLS> Added UpdateCameraExposureStartup()
 //*	May 30,	2023	<MLS> Exposure step options finally finished
 //*	Jun  4,	2023	<MLS> Added ProcessReadAll_SaveAs()
-//*	Jun  4,	2023	<MLS> Added SetFileSaveOptions()
 //*	Jun 25,	2023	<ADD> Add binx and biny to DeviceState
 //*	Jun 25,	2023	<ADD> Add gain to DeviceState
 //*	Jun 25,	2023	<ADD> Add cooleron to DeviceState

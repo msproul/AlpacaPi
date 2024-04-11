@@ -53,7 +53,6 @@
 	#include	"alpaca_defs.h"
 #endif
 
-
 #ifdef _ENABLE_FITS_
 	#ifndef _FITSIO_H
 		#include <fitsio.h>
@@ -85,6 +84,11 @@
 #ifdef _ENABLE_ROTATOR_
 	#include	"rotatordriver.h"
 #endif
+
+#ifndef _GPS_DATA_H_
+	#include	"gps_data.h"
+#endif
+
 
 #include	"observatory_settings.h"
 
@@ -214,51 +218,7 @@ enum
 	kFlip_Both
 };
 
-#define	kMaxNMEAlen	80
 
-
-//*****************************************************************************
-typedef struct	//	TYPE_GPSnmea
-{
-	char	nmeaString[kMaxNMEAlen];
-
-}	TYPE_GPSnmea;
-#define	kMaxNMEAstrings	20
-
-//*****************************************************************************
-typedef struct	//	TYPE_GPSdata
-{
-	bool			Present;
-	char			CameraName[48];
-	char			LibraryVersion[48];
-	char			FPGAversion[48];
-	struct timeval	SystemTime;			//*	Used for calculating GPS/SYS time offset
-	TYPE_GPSnmea	NMEAdata[kMaxNMEAstrings];
-	int				NMEAdataIdx;
-	int				NMEAerrCnt;			//*	number of bad NMEA packets (invalid checksum)
-	bool			Status;				//	0 = not valid, 1 = locked
-	bool			DateValid;
-	bool			TimeValid;
-	bool			LaLoValid;
-	bool			AltValid;
-
-	uint32_t		SequenceNumber;
-	double			Lat;
-	double			Long;
-	double			Altitude;			//*	in meters
-	uint32_t		PPSC;
-	char			ShutterStartTimeStr[48];
-	uint32_t		SU;					//*	start time micro seconds
-	char			ShutterEndTimeStr[48];
-	uint32_t		EU;					//*	End time micro seconds
-	char			NowTimeStr[48];
-	uint32_t		NU;					//*	Now time micro seconds
-	double			Exposure_us;		//*	exposure time in micro seconds
-	double			ClockDeltaSecs;
-	uint32_t		SatsInView;			//*	Number of satellites in view
-	char			SatMode1;
-	char			SatMode2;
-} TYPE_GPSdata;
 
 //**************************************************************************************
 class CameraDriver: public AlpacaDriver
@@ -514,6 +474,8 @@ class CameraDriver: public AlpacaDriver
 				void	WriteFITS_VersionInfo(		fitsfile *fitsFilePtr);
 				void	WriteFITS_MoonInfo(			fitsfile *fitsFilePtr);
 				void	WriteFITS_GPSinfo(			fitsfile *fitsFilePtr);
+				void	WriteFITS_QHY_GPSinfo(		fitsfile *fitsFilePtr);
+				void	WriteFITS_Global_GPSinfo(	fitsfile *fitsFilePtr);
 
 			#ifdef _ENABLE_IMU_
 				void	WriteFITS_IMUinfo(			fitsfile *fitsFilePtr);
@@ -916,7 +878,6 @@ public:
 	void			GPS_ResetNMEAbuffer(void);
 	void			GPS_AddNMEAstring(const char *nmeaString);
 	TYPE_GPSdata	cGPS;
-
 };
 
 

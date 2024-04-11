@@ -32,6 +32,7 @@
 //*	Jun  9,	2023	<MLS> CONFORM-1 issue, halt not supported
 //*	Sep 21,	2023	<MLS> Switching to base class threads
 //*	Sep 21,	2023	<MLS> Added RunThread_Startup() & RunThread_Loop()
+//*	Apr  6,	2024	<MLS> Fixed infinite loop bug in CreateCalibrationObjects_Alnitak()
 //*****************************************************************************
 //*	Vendor documenation
 //*		https://optecinc.com/astronomy/catalog/alnitak/flipflat.htm
@@ -111,10 +112,13 @@ void	CreateCalibrationObjects_Alnitak(void)
 bool	validUSBpath;
 char	usbPath[64];
 bool	keepGoing;
+int		loopCnt;
 
+	CONSOLE_DEBUG(__FUNCTION__);
 	USB_InitTable();
 	keepGoing	=	true;
-	while (keepGoing)
+	loopCnt		=	0;
+	while (keepGoing && (loopCnt < 10))
 	{
 		validUSBpath	=	USB_GetPathFromID("Optec", usbPath);
 		if (validUSBpath)
@@ -123,6 +127,7 @@ bool	keepGoing;
 			new CalibrationDriverAlnitak(usbPath);
 			keepGoing	=	false;
 		}
+		loopCnt++;
 	}
 }
 

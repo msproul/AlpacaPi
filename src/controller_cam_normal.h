@@ -71,6 +71,7 @@ class ControllerCamNormal: public ControllerCamera
 		virtual	void	UpdateCameraSize(void);
 		virtual	void	UpdateCameraState(void);
 		virtual	void	UpdateCameraTemperature(void);
+		virtual	void	UpdateFreeDiskSpace(const double gigabytesFree);
 		virtual	void	UpdatePercentCompleted(void);
 
 

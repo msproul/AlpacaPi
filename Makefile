@@ -82,7 +82,7 @@ SQL_VERSION			=	$(shell ./make_checksql.sh)
 # default settings for Desktop Linux build
 USR_HOME			=	$(HOME)/
 GCC_DIR				=	/usr/bin/
-INCLUDE_BASE		=	/usr/include/
+#INCLUDE_BASE		=	/usr/include/
 #LIB_BASE			=	/usr/lib/
 
 #	/usr/local/lib/pkgconfig/opencv.pc
@@ -416,10 +416,12 @@ IMAGEPROC_OBJECTS=											\
 				$(OBJECT_DIR)imageprocess_orb.o				\
 
 
+######################################################################################
 CLIENT_OBJECTS=												\
 				$(OBJECT_DIR)json_parse.o					\
 				$(OBJECT_DIR)discoveryclient.o				\
 
+######################################################################################
 HELPER_OBJECTS=												\
 				$(OBJECT_DIR)helper_functions.o				\
 
@@ -447,12 +449,19 @@ ROR_OBJECTS=												\
 				$(OBJECT_DIR)raspberrypi_relaylib.o			\
 
 ######################################################################################
-# CPP objects
+# IMU objects
 IMU_OBJECTS=												\
 				$(OBJECT_DIR)imu_lib.o						\
 				$(OBJECT_DIR)imu_lib_bno055.o				\
 				$(OBJECT_DIR)imu_lib_LIS2DH12.o				\
 				$(OBJECT_DIR)i2c_bno055.o					\
+
+
+######################################################################################
+# GPS objects
+GPS_OBJECTS=												\
+				$(OBJECT_DIR)gps_data.o						\
+				$(OBJECT_DIR)serialport.o					\
 
 ######################################################################################
 #pragma mark make help
@@ -589,6 +598,43 @@ alpacapi		:									\
 #					-L$(ATIK_LIB_DIR)/			\
 #					-latikcameras				\
 #					-lqhyccd					\
+
+
+######################################################################################
+#pragma mark make gpscam
+gpscam		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
+gpscam		:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
+gpscam		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
+gpscam		:		DEFINEFLAGS		+=	-D_ENABLE_DISCOVERY_QUERRY_
+gpscam		:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
+gpscam		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
+gpscam		:		DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
+gpscam		:		DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
+gpscam		:		DEFINEFLAGS		+=	-D_ENABLE_LIVE_CONTROLLER_
+gpscam		:		DEFINEFLAGS		+=	-D_ENABLE_GLOBAL_GPS_
+gpscam		:										\
+					$(DRIVER_OBJECTS)				\
+					$(CAMERA_DRIVER_OBJECTS)		\
+					$(SOCKET_OBJECTS)				\
+					$(LIVE_WINDOW_OBJECTS)			\
+					$(HELPER_OBJECTS)				\
+					$(GPS_OBJECTS)					\
+
+		$(LINK)  									\
+					$(DRIVER_OBJECTS)				\
+					$(CAMERA_DRIVER_OBJECTS)		\
+					$(SOCKET_OBJECTS)				\
+					$(LIVE_WINDOW_OBJECTS)			\
+					$(HELPER_OBJECTS)				\
+					$(GPS_OBJECTS)					\
+					$(ASI_CAMERA_OBJECTS)			\
+					$(OPENCV_LINK)					\
+					-ludev							\
+					-lusb-1.0						\
+					-lpthread						\
+					-lcfitsio						\
+					-o alpacapi
+
 
 ######################################################################################
 #pragma mark make alpacapicv4  C++ linux-x86
@@ -3872,6 +3918,12 @@ $(OBJECT_DIR)cameradriver_QHY.o :		$(SRC_DIR)cameradriver_QHY.cpp		\
 $(OBJECT_DIR)ParseNMEA.o :				$(MLS_LIB_DIR)ParseNMEA.c 	\
 										$(MLS_LIB_DIR)ParseNMEA.h
 	$(COMPILEPLUS) $(INCLUDES)			$(MLS_LIB_DIR)ParseNMEA.c -o$(OBJECT_DIR)ParseNMEA.o
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)gps_data.o :				$(SRC_DIR)gps_data.cpp 		\
+										$(SRC_DIR)gps_data.h
+	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)gps_data.cpp -o$(OBJECT_DIR)gps_data.o
+
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)NMEA_helper.o :			$(MLS_LIB_DIR)NMEA_helper.c 	\

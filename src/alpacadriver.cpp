@@ -182,6 +182,7 @@
 //*	Nov  1,	2023	<MLS> Fixed git hub issue #29 - issues with
 //*	Nov  1,	2023	<MLS>	/management/v1/description?ClientID=1&ClientTransactionID=2
 //*	Nov 26,	2023	<MLS> Removed links form HTML cmd table for cmds starting with "-"
+//*	Apr 10,	2024	<MLS> Started on global GPS support
 //*****************************************************************************
 //*	to install code blocks 20
 //*	Step 1: sudo add-apt-repository ppa:codeblocks-devs/release
@@ -285,6 +286,11 @@
 #endif
 #ifdef _ENABLE_SPECTROGRAPH_
 	#include	"spectrodriver.h"
+#endif
+
+#ifdef _ENABLE_GLOBAL_GPS_
+	#include	"gps_data.h"
+	bool		gEnableGlobalGPS	=	true;
 #endif
 
 #if defined(__arm__) && defined(_ENABLE_WIRING_PI_)
@@ -4725,6 +4731,14 @@ int	imu_ReturnCode;
 	}
 
 	DEBUG_TIMING(__FUNCTION__);
+
+#ifdef _ENABLE_GLOBAL_GPS_
+	if (gEnableGlobalGPS)
+	{
+		CONSOLE_DEBUG("Starting GPS thread");
+		GPS_StartThread();
+	}
+#endif
 
 	//========================================================================================
 	CONSOLE_DEBUG("Starting main loop -----------------------------------------");
