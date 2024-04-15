@@ -200,27 +200,27 @@ setupCfitsio()
 	echo	"------------------------------------------------------------------"
 }
 
-###############################################################################
-setupOPENCV()
-{
-	echo	"*******************************************************"
-	echo	"Checking to see if openCV is installed"
-	echo -n "Hit return to continue"
+################################################################################
+#setupOPENCV()
+#{
+#	echo	"*******************************************************"
+#	echo	"Checking to see if openCV is installed"
+#	echo -n "Hit return to continue"
 #	read WAITINPUT
-
-	cd
-
-	#check to see if opencv is installed
-	if [ -d /usr/include/opencv ]
-	then
-		echo "OpenCV appears to be installed"
-	else
-		echo "CANT FIND OpenCV"
-		echo "Installing opencv"
-		sudo apt-get -y install libopencv-dev
-	fi
-	echo	"------------------------------------------------------------------"
-}
+#
+#	cd
+#
+#	#check to see if opencv is installed
+#	if [ -d /usr/include/opencv ]
+#	then
+#		echo "OpenCV appears to be installed"
+#	else
+#		echo "CANT FIND OpenCV"
+#		echo "Installing opencv"
+#		sudo apt-get -y install libopencv-dev
+#	fi
+#	echo	"------------------------------------------------------------------"
+#}
 
 ###############################################################################
 setupASI()
@@ -453,7 +453,7 @@ setupLibUSB()
 
 	checkfiles
 	setupDirectories
-	setupOPENCV
+#	setupOPENCV
 	setupCfitsio
 	setupASI
 	setupEFW
