@@ -316,19 +316,20 @@ void	ControllerSkytravel::SetupWindowControls(void)
 		cAboutBoxTabObjPtr->SetParentObjectPtr(this);
 		cAboutBoxTabObjPtr->SetLocalDeviceInfo();
 	}
-
 }
 
+int	gDebugLFIP	=	1;
 
 //**************************************************************************************
 //*	returns true if found something new
+//**************************************************************************************
 bool	ControllerSkytravel::LookForIPaddress(void)
 {
 int		iii;
 bool	foundSomething;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
-//	CONSOLE_DEBUG_W_NUM("gRemoteCnt\t=", gRemoteCnt);
+	CONSOLE_DEBUG_W_NUM(__FUNCTION__, gDebugLFIP++);
+	CONSOLE_DEBUG_W_NUM("gRemoteCnt\t=", gRemoteCnt);
 	foundSomething	=	false;
 	for (iii=0; iii<gRemoteCnt; iii++)
 	{
@@ -352,51 +353,58 @@ bool	foundSomething;
 			}
 		}
 	}
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, "Exit");
 	return(foundSomething);
 }
 
 //**************************************************************************************
 void	ControllerSkytravel::SetDomeIPaddress(TYPE_REMOTE_DEV *remoteDomeDevice)
 {
-char	ipAddrStr[32];
+char	ipAddrStr[64];
 char	lineBuff[64];
 
+	CONSOLE_DEBUG(__FUNCTION__);
 
 	//============================================
 	//*	disable all of the extra commands until we know if they exist
 	if (cDomeTabObjPtr != NULL)
 	{
 		cDomeTabObjPtr->ResetKnownCommands();
+CONSOLE_DEBUG_W_STR(__FUNCTION__, "step-1");
 	}
+CONSOLE_DEBUG_W_STR(__FUNCTION__, "step-2");
 
 	cDomeIpAddress			=	remoteDomeDevice->deviceAddress;
 	cDomeIpPort				=	remoteDomeDevice->port;
 	cDomeAlpacaDeviceNum	=	remoteDomeDevice->alpacaDeviceNum;
 	cDomeAddressValid		=	true;
+CONSOLE_DEBUG_W_STR(__FUNCTION__, "step-3");
 
 	cReadStartup_Dome		=	true;
 	cDomeHas_Readall		=	false;
 
+CONSOLE_DEBUG_W_STR(__FUNCTION__, "step-4");
 	PrintIPaddressToString(cDomeIpAddress.sin_addr.s_addr, ipAddrStr);
 	sprintf(lineBuff, "%s:%d/%d", ipAddrStr, cDomeIpPort, cDomeAlpacaDeviceNum);
 
+CONSOLE_DEBUG_W_STR(__FUNCTION__, "step-5");
 //-	SetWindowIPaddrInfo(lineBuff, true);
 
 	if (cWindowTabs[kTab_ST_Dome] != NULL)
 	{
 		cWindowTabs[kTab_ST_Dome]->SetWindowIPaddrInfo(lineBuff, true);
 	}
+CONSOLE_DEBUG_W_STR(__FUNCTION__, "step-6");
 
 	SetWidgetBGColor(kTab_SkyTravel,	kSkyTravel_DomeIndicator,		CV_RGB(64,	255,	64));
 
-//	CONSOLE_DEBUG_W_STR("IP address=", ipAddrStr);
+	CONSOLE_DEBUG_W_STR("IP address=", ipAddrStr);
 }
 
 //**************************************************************************************
 void	ControllerSkytravel::SetTelescopeIPaddress(TYPE_REMOTE_DEV *remoteDomeDevice)
 {
-char	ipAddrStr[32];
+char	ipAddrStr[64];
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -412,6 +420,7 @@ char	ipAddrStr[32];
 
 	SetWidgetText(kTab_SkyTravel,	kSkyTravel_Telescope_RA_DEC,	"-----------");
 #ifndef __ARM_ARCH
+	CONSOLE_DEBUG("NON arm system");
 	if (cWindowTabs[kTab_ST_Mount] != NULL)
 	{
 	char	lineBuff[64];
@@ -421,7 +430,7 @@ char	ipAddrStr[32];
 		cWindowTabs[kTab_ST_Mount]->SetWindowIPaddrInfo(lineBuff, true);
 	}
 #endif
-	inet_ntop(AF_INET, &(cTelescopeIpAddress.sin_addr), ipAddrStr, INET_ADDRSTRLEN);
+//	inet_ntop(AF_INET, &(cTelescopeIpAddress.sin_addr), ipAddrStr, INET_ADDRSTRLEN);
 //	CONSOLE_DEBUG_W_STR("IP address=", ipAddrStr);
 }
 

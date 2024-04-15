@@ -751,6 +751,7 @@ int		iii;
 		}
 	}
 
+	CONSOLE_DEBUG("Checking for memory leaks");
 	//--------------------------------------------------
 	//*	check for memory leaks
 	if (cTabsDeleted < (cTabCount -1))
@@ -762,7 +763,7 @@ int		iii;
 //		CONSOLE_ABORT(__FUNCTION__);
 	}
 
-//	CONSOLE_DEBUG("Done");
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, "Exit");
 }
 
 
@@ -1112,6 +1113,7 @@ bool	Controller::RunFastBackgroundTasks(void)
 void	Controller::SetRunFastBackgroundMode(bool newRunFastMode)
 {
 	cEnableRunFastBackGround	=	newRunFastMode;
+	CONSOLE_DEBUG_W_BOOL("cEnableRunFastBackGround\t=", cEnableRunFastBackGround);
 }
 
 //**************************************************************************************
@@ -3979,10 +3981,10 @@ bool		fastWorkDone;
 				for (iii=0; iii<100; iii++)
 				{
 					fastWorkDone	=	myControllerPtr->RunFastBackgroundTasks();
-//					if (fastWorkDone)
-//					{
-//
-//					}
+					if (fastWorkDone)
+					{
+
+					}
 					usleep(100 * 1000);
 				}
 			}

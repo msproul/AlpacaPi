@@ -48,14 +48,15 @@
 //*	Sep  7,	1992	Started implemented"Open PDS Database" menu,	auto dim working
 //*	Nov  6,	1992	Minor bugs fixed in voyager browse stuff
 //*	Apr 15,	1993	Received 47 CD-ROMs from NASA
-//*						Vol	49-67     of MaMagellan Mission to Venus
-//*						Vol	2001-2013 of MaMagellan Mission to Venus
+//*						Vol	49-67     of Magellan Mission to Venus
+//*						Vol	2001-2013 of Magellan Mission to Venus
 //*						Vol 2001-2013 of Viking Orbiter of Mars
-//*	Nov 17,	2022	<MLS> Resurrected  PDS file code
+//*	Nov 17,	2022	<MLS> Resurrected  PDS file code to run on Linux
 //*	Nov 17,	2022	<MLS> Added PDS_ReadImage()
 //*	Nov 18,	2022	<MLS> Magellan MG_0xxx (.img) images working
-//*	Nov 18,	2022	<MLS> Magellan VO_2xxx (.img) images working
+//*	Nov 18,	2022	<MLS> Viking VO_2xxx (.img) images working
 //*	Nov 19,	2022	<MLS> Voyager VG_00xx (.img) images working
+//*	Nov 20,	2022	<MLS> Galileo GO_00xx (.img) images working
 //*****************************************************************************
 
 

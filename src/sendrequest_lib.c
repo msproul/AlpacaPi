@@ -678,6 +678,9 @@ int					setOptRetCode;
 void	PrintIPaddressToString(const long ipAddress, char *ipString)
 {
 	inet_ntop(AF_INET, &ipAddress, ipString, INET_ADDRSTRLEN);
-
+	if (strlen(ipString) >= 32)
+	{
+		CONSOLE_ABORT(__FUNCTION__);
+	}
 }
 

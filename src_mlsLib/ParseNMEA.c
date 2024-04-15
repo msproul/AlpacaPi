@@ -7,34 +7,33 @@
 //**************************************************************************************
 //*	Edit History
 //**************************************************************************************
-//*	Apr 14,	1996	<KAS> Put the boxes for the Heads-Up-Display into a Dialog Box template
 //*	Apr 19,	1996	<KAS> Separated NMEA and APRS Parse Routines
 //*	Dec 11,	1996	<KAS> Removed UpdateHUDdisplay to a different file
 //*	Dec 26,	1996	<KAS> Dave VanHorn dvanhron@cedar.net
 //*	Dec 26,	1996	<KAS> PNI Compass, same as Jameco
 //*	Dec 26,	1996	<KAS> Talked them into RAW data output
 //*	Feb  6,	2001	<MLS> ReturnNMEAAltitude - Modified to use ATOF instead of ATOL
-//*	Jan 12,	2002	<KAS> Started adding Magellan Proprietary Sentenses
+//*	Jan 12,	2002	<KAS> Started adding Magellan Proprietary Sentences
 //*	May 20,	2002	<KAS> Started working on adaptive beaconing and corner pegging
 //*	Sep 16,	2004	<MLS> Added support for $GPNVP for special Korean GPS, requested by customer
 //*	Nov 17,	2004	<MLS> Started separating out NMEA parsing into smaller more manageable routines
 //*	Apr 30,	2012	<MLS> Started on GPS support.
 //*	Apr 30,	2012	<MLS> GPS parsing code implemented
-//*	Sep 11,	2012	<MLS> Added Get_Actual_LatLon_Strings() for GPS display formating
+//*	Sep 11,	2012	<MLS> Added Get_Actual_LatLon_Strings() for GPS display formatting
 //*	Nov 21,	2012	<MLS> Added GetCurrentLatLon_Strings() for metadata saving
-//*	Dec  5,	2012	<MLS> Check for max snr value from satellite GSV string
+//*	Dec  5,	2012	<MLS> Check for max SNR value from satellite GSV string
 //*	Dec  5,	2012	<MLS> Added GetMaxSatSignalStrength()
 //*	Jan  2,	2013	<MLS> Added LatLonType argument to ReturnNMEALatLon()
-//*	Mar 12,	2013	<MLS> Added support for seperate test program,
+//*	Mar 12,	2013	<MLS> Added support for separate test program,
 //*	Mar 12,	2013	<MLS> Fixed lat/lon bug in ReturnNMEALatLon (bug was introduced 1/2/13)
 //*	Oct  3,	2016	<MLS> Updating to be a general purpose GPS parser
 //*	Oct  4,	2016	<MLS> Moved checksum routines to helper file
 //*	Oct  6,	2016	<MLS> Updated ReturnNMEAAltitude() to check for valid altitude
 //*	Oct  6,	2016	<MLS> Updated ReturnNMEASpeed() to check for valid speed
 //*	Oct 10,	2016	<MLS> Added ParseNMEA_init()
-//*	Apr 17,	2017	<MLS> Moved GPS code to seperate libery directroy. I need this for many projects
-//*	Apr 18,	2017	<MLS> Removing MacAPRS specfic code
-//*	Apr 20,	2017	<MLS> Changing sat snr data from char strings to shorts (int)
+//*	Apr 17,	2017	<MLS> Moved GPS code to separate library directory. I need this for many projects
+//*	Apr 18,	2017	<MLS> Removing MacAPRS specific code
+//*	Apr 20,	2017	<MLS> Changing sat SNR data from char strings to shorts (int)
 //*	Apr 20,	2017	<MLS> Cleaned up $GPGSV paring code
 //*	Apr 23,	2017	<MLS> Added $PRWIZCH, Rockwell channel data
 //*	Apr 24,	2017	<MLS> Added checksum error count
@@ -48,7 +47,7 @@
 //*	May 11,	2017	<MLS> Added ParseNMEA_TimeString()
 //*	May 12,	2017	<MLS> Setting system time working on Linux
 //*	May 12,	2017	<MLS> Added Check_And_Set_System_Time()
-//*	May 15,	2017	<MLS> Added Sats in use tracking
+//*	May 15,	2017	<MLS> Added satellites in use tracking
 //*	May 15,	2017	<MLS> Added Mode tracking (1=no fix,2=2D,3=3D)
 //*	May 15,	2017	<MLS> Added Magnetic variation tracking
 //*	May 25,	2017	<MLS> Added parsing of $PRWIZCH sat signal data
@@ -56,6 +55,8 @@
 //*	Sep  9,	2023	<MLS> Added GetLatLonDouble()
 //*	Sep  9,	2023	<MLS> Added ParseNMEA_FormatLatLonStrings()
 //*	Apr 10,	2024	<MLS> Added ComputeLatLonAverage()
+//*	Apr 12,	2024	<MLS> Added timing tests to ComputeLatLonAverage()
+//*	Apr 13,	2024	<MLS> Added altitude to averaging logic
 //**************************************************************************************
 
 #include	<stdio.h>
@@ -71,22 +72,26 @@
 #endif
 
 
+
 //#define	_ENABLE_GPS_DEBUGGING_
 //#define	_ENABLE_TIME_DEGBUG_
-
-
-#include	"ParseNMEA.h"
-#include	"NMEA_helper.h"
-
 #ifdef _ENABLE_GPS_DEBUGGING_
 	#define	_ENABLE_CONSOLE_DEBUG_
 #endif
 
-#define	_SHOW_CHECKSUM_ERRORS_
-
 //*	MLS Libraries
+//#define	_DEBUG_TIMING_
 #define	_ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
+
+
+#include	"ParseNMEA.h"
+#include	"NMEA_helper.h"
+#include	"helper_functions.h"
+
+
+#define	_SHOW_CHECKSUM_ERRORS_
+
 
 //TYPE_NMEAInfoStruct	gNMEAdata;
 
@@ -640,13 +645,28 @@ int	altIndex;
 //**************************************************************************************
 static void	ComputeLatLonAverage(	TYPE_NMEAInfoStruct	*theNmeaInfo,
 									double				newLat_double,
-									double				newLon_double)
+									double				newLon_double,
+									double				newAlt_double)
 {
-int		iii;
-double	lat_total;
-double	lon_total;
-int		myIndex;
+int			iii;
+double		lat_total;
+double		lon_total;
+double		alt_total;
+int			myIndex;
+int			averageCntLimit;
+#ifdef _ENABLE_TIME_DEGBUG_
+	uint64_t	startNanoSecs;
+	uint64_t	endNanoSecs;
+	uint64_t	deltaNanoSecs;
+#endif // _ENABLE_TIME_DEGBUG_
 
+//	CONSOLE_DEBUG_W_NUM(  "reading count  \t=", theNmeaInfo->latLonAvgCount);
+
+	SETUP_TIMING();
+
+#ifdef _ENABLE_TIME_DEGBUG_
+	startNanoSecs			=	MSecTimer_getNanoSecs();
+#endif
 	theNmeaInfo->latLonAvgCount++;
 	myIndex	=	theNmeaInfo->latLonAvgIndex;
 	if ((myIndex < 0) || (myIndex >= kLatLonAvgCnt))
@@ -656,34 +676,90 @@ int		myIndex;
 	//*	save the new values
 	theNmeaInfo->lat_AverageArray[myIndex]	=	newLat_double;
 	theNmeaInfo->lon_AverageArray[myIndex]	=	newLon_double;
+	theNmeaInfo->alt_AverageArray[myIndex]	=	newAlt_double;
 	myIndex++;
 	theNmeaInfo->latLonAvgIndex	=		myIndex;
 
 	//*	compute the average
 	if (theNmeaInfo->latLonAvgCount >= kLatLonAvgCnt)
 	{
-//		CONSOLE_DEBUG("Averaging Lat/Lon");
-		lat_total	=	0.0;
-		lon_total	=	0.0;
-		for (iii=0; iii<kLatLonAvgCnt; iii++)
-		{
-			lat_total	+=	theNmeaInfo->lat_AverageArray[iii];
-			lon_total	+=	theNmeaInfo->lon_AverageArray[iii];
-		}
-		theNmeaInfo->lat_double	=	lat_total / kLatLonAvgCnt;
-		theNmeaInfo->lon_double	=	lon_total / kLatLonAvgCnt;
-//		CONSOLE_DEBUG_W_DBL("newLat_double ",	newLat_double);
-//		CONSOLE_DEBUG_W_DBL("newLon_double ",	newLon_double);
-
-		CONSOLE_DEBUG_W_DBL("lat_double avg",	theNmeaInfo->lat_double);
-//		CONSOLE_DEBUG_W_DBL("lon_double avg",	theNmeaInfo->lon_double);
+		averageCntLimit	=	kLatLonAvgCnt;
 	}
 	else
 	{
-		CONSOLE_DEBUG_W_NUM("not avg, count=", theNmeaInfo->latLonAvgCount);
-		theNmeaInfo->lat_double	=	newLat_double;
-		theNmeaInfo->lon_double	=	newLon_double;
+		averageCntLimit	=	theNmeaInfo->latLonAvgCount;
 	}
+	if ((theNmeaInfo->latLonAvgCount < 100) || ((theNmeaInfo->latLonAvgCount % 60) == 0))
+	{
+		lat_total	=	0.0;
+		lon_total	=	0.0;
+		alt_total	=	0.0;
+		for (iii=0; iii<averageCntLimit; iii++)
+		{
+			lat_total	+=	theNmeaInfo->lat_AverageArray[iii];
+			lon_total	+=	theNmeaInfo->lon_AverageArray[iii];
+			alt_total	+=	theNmeaInfo->alt_AverageArray[iii];
+		}
+		theNmeaInfo->lat_double		=	lat_total / averageCntLimit;
+		theNmeaInfo->lon_double		=	lon_total / averageCntLimit;
+
+		theNmeaInfo->lat_average	=	lat_total / averageCntLimit;
+		theNmeaInfo->lon_average	=	lon_total / averageCntLimit;
+		theNmeaInfo->alt_average	=	alt_total / averageCntLimit;
+
+
+#ifdef _ENABLE_TIME_DEGBUG_
+		endNanoSecs		=	MSecTimer_getNanoSecs();
+		deltaNanoSecs	=	endNanoSecs - startNanoSecs;
+		CONSOLE_DEBUG_W_NUM(  "reading count  \t=", theNmeaInfo->latLonAvgCount);
+		CONSOLE_DEBUG_W_NUM(  "Sample count   \t=", kLatLonAvgCnt);
+//		CONSOLE_DEBUG_W_INT64("startNanoSecs  \t=",	startNanoSecs);
+//		CONSOLE_DEBUG_W_INT64("endNanoSecs    \t=",	endNanoSecs);
+		CONSOLE_DEBUG_W_INT64("deltaNanoSecs  \t=",	deltaNanoSecs);
+		DEBUG_TIMING(         "Delta millisecs\t=");
+#endif
+
+	}
+
+	//*********************************************************************
+	//*	running on 			Raspberry Pi 3 Model B Plus Rev 1.3
+	//*					 	ARMv7 Processor rev 4 (v7l)
+	//*									nano 		mico
+	//*									seconds		seconds
+	//----------------------------------------------------------
+	//*	WITHOUT averaging				  1302		  1.302
+	//*	with average size set to 1000	 76145		 76.145
+	//*	with average size set to 2000	147082		147.082
+	//*********************************************************************
+	//656 [ComputeLatLonAverage] reading count  	= 21
+	//700 [ComputeLatLonAverage] Sample count   	= 1000
+	//701 [ComputeLatLonAverage] startNanoSecs  	= 21498886118
+	//702 [ComputeLatLonAverage] endNanoSecs    	= 21498887420
+	//703 [ComputeLatLonAverage] deltaNanoSecs  	= 1302
+	//704 [ComputeLatLonAverage] Delta millisecs	= 0
+	//----------------------------------------------------------
+	//656 [ComputeLatLonAverage] reading count  	= 2960
+	//700 [ComputeLatLonAverage] Sample count   	= 1000
+	//701 [ComputeLatLonAverage] startNanoSecs  	= 2960465531771
+	//702 [ComputeLatLonAverage] endNanoSecs    	= 2960465607916
+	//703 [ComputeLatLonAverage] deltaNanoSecs  	= 76145
+	//704 [ComputeLatLonAverage] Delta millisecs	= 0
+	//----------------------------------------------------------
+	//656 [ComputeLatLonAverage] reading count  	= 2745
+	//700 [ComputeLatLonAverage] Sample count   	= 2000
+	//701 [ComputeLatLonAverage] startNanoSecs  	= 2745380715202
+	//702 [ComputeLatLonAverage] endNanoSecs    	= 2745380862284
+	//703 [ComputeLatLonAverage] deltaNanoSecs  	= 147082
+	//704 [ComputeLatLonAverage] Delta millisecs	= 0
+	//----------------------------------------------------------
+
+
+//		CONSOLE_DEBUG_W_DBL("newLat_double ",	newLat_double);
+//		CONSOLE_DEBUG_W_DBL("newLon_double ",	newLon_double);
+
+//		CONSOLE_DEBUG_W_DBL("lat_double avg",	theNmeaInfo->lat_double);
+//		CONSOLE_DEBUG_W_DBL("lon_double avg",	theNmeaInfo->lon_double);
+
 //	if (theNmeaInfo->latLonAvgCount == 300)
 //	{
 //		for (iii=0; iii<kLatLonAvgCnt; iii++)
@@ -709,6 +785,8 @@ static bool	ParseNMEAstringsNormal(	const char			*theLine,
 {
 unsigned long	messageType;
 bool			processedOK;
+double			myLat_double;
+double			myLon_double;
 
 //	CONSOLE_DEBUG(theLine);
 
@@ -759,9 +837,17 @@ bool			processedOK;
 																&theNmeaInfo->yyLat,
 																&theNmeaInfo->latitude,
 																&theNmeaInfo->longitude);
+#ifdef _ENABLE_GPS_AVERAGE_
+			myLat_double	=	GetLatLonDouble(&theNmeaInfo->latitude);
+			myLon_double	=	GetLatLonDouble(&theNmeaInfo->longitude);
+			ComputeLatLonAverage(	theNmeaInfo,
+									myLat_double,
+									myLon_double,
+									theNmeaInfo->altitudeMeters);
+#else
 			theNmeaInfo->lat_double	=	GetLatLonDouble(&theNmeaInfo->latitude);
 			theNmeaInfo->lon_double	=	GetLatLonDouble(&theNmeaInfo->longitude);
-			CONSOLE_ABORT(__FUNCTION__);
+#endif
 		}
 		break;
 
@@ -832,15 +918,15 @@ bool			processedOK;
 															&theNmeaInfo->latitude,
 															&theNmeaInfo->longitude);
 #ifdef _ENABLE_GPS_AVERAGE_
-		double	myLat_double;
-		double	myLon_double;
 			myLat_double	=	GetLatLonDouble(&theNmeaInfo->latitude);
 			myLon_double	=	GetLatLonDouble(&theNmeaInfo->longitude);
-			ComputeLatLonAverage(theNmeaInfo, myLat_double, myLon_double);
+			ComputeLatLonAverage(	theNmeaInfo,
+									myLat_double,
+									myLon_double,
+									theNmeaInfo->altitudeMeters);
 #else
 			theNmeaInfo->lat_double	=	GetLatLonDouble(&theNmeaInfo->latitude);
 			theNmeaInfo->lon_double	=	GetLatLonDouble(&theNmeaInfo->longitude);
-			CONSOLE_ABORT(__FUNCTION__);
 #endif
 		#ifdef _ENABLE_LAT_LON_TRACKING_
 			TrackLatLonValues(theNmeaInfo);
@@ -935,19 +1021,17 @@ bool			processedOK;
 																&theNmeaInfo->yyLat,
 																&theNmeaInfo->latitude,
 																&theNmeaInfo->longitude);
+#ifdef _ENABLE_GPS_AVERAGE_
+			myLat_double	=	GetLatLonDouble(&theNmeaInfo->latitude);
+			myLon_double	=	GetLatLonDouble(&theNmeaInfo->longitude);
+			ComputeLatLonAverage(	theNmeaInfo,
+									myLat_double,
+									myLon_double,
+									theNmeaInfo->altitudeMeters);
+#else
 			theNmeaInfo->lat_double	=	GetLatLonDouble(&theNmeaInfo->latitude);
 			theNmeaInfo->lon_double	=	GetLatLonDouble(&theNmeaInfo->longitude);
-			CONSOLE_ABORT(__FUNCTION__);
-//--			gTotalPositCount++;
-			if ((nmeaArgs[6].argString[0] == 'A') || (nmeaArgs[6].argString[0] == 0))
-			{
-//--				theNmeaInfo->whichIcon	=	kGpsIconGLLGood;
-//--				gTotalGoodPosit++;
-			}
-			else
-			{
-//--				theNmeaInfo->whichIcon	=	kGpsIconGLLBad;
-			}
+#endif
 		}
 		break;
 
@@ -1088,19 +1172,19 @@ bool			processedOK;
 				 isdigit(theNNptr->Date[4])		&&
 				 isdigit(theNNptr->Date[5]))
 			{
-			//	CONSOLE_DEBUG("Date OK");
+				//CONSOLE_DEBUG("Date OK");
 				theNmeaInfo->validDate	=	true;
 			}
-//--			gTotalPositCount++;
-			if (nmeaArgs[2].argString[0] == 'A')
-			{
-//--				theNmeaInfo->whichIcon	=	kGpsIconRMCGood;
-//--				gTotalGoodPosit++;
-			}
-			else
-			{
-//--				theNmeaInfo->whichIcon	=	kGpsIconRMCBad;
-			}
+
+//			if (nmeaArgs[2].argString[0] == 'A')
+//			{
+////--				theNmeaInfo->whichIcon	=	kGpsIconRMCGood;
+////--				gTotalGoodPosit++;
+//			}
+//			else
+//			{
+////--				theNmeaInfo->whichIcon	=	kGpsIconRMCBad;
+//			}
 		#ifdef _ENABLE_GPS_DEBUGGING_
 //			DumpNMEAargs(nmeaArgs);
 		#endif
@@ -1767,6 +1851,7 @@ bool			processedOK;
 
 		if (checkSumOK)
 		{
+			nmeaData->SequenceNumber++;
 			//*	now we have a known good NMEA string, lets tear it apart
 			SeparateNMEAline(theNMEAstring, nmeaArgs);
 		//	for (ii=0; ii<kMaxNumNmeaArgs; ii++)
@@ -1927,6 +2012,17 @@ char			newDateTimeString[64];
 
 
 //**************************************************************************************
+static int	Get2DigitValue(char *string, int offset)
+{
+int	twoDigitValue;
+
+	twoDigitValue	=	10 * ((string[offset] & 0x0f));
+	twoDigitValue	+=	((string[offset + 1] & 0x0f));
+	return(twoDigitValue);
+}
+
+
+//**************************************************************************************
 //*	ParseNMEA_TimeString
 //*		this routine parses ONLY time. This is meant to make time setting much faster
 //*		Returns true if valid time
@@ -2024,6 +2120,25 @@ int				slen;
 						nmeaData->validDate	=	true;
 						strcpy(nmeaData->theNN.Date, theDateString);
 						strcpy(nmeaData->theNN.Time, theTimeString);
+
+						//------------------------------------------
+						//*	set the Linux time structure
+//$GPRMC,023420.000,A,4121.6625,N,07458.8289,W,0.53,2.19,110424,,,A*71
+					int	nemaYear;
+					int	nemaMonth;
+					int	nemaDay;
+
+						nemaDay		=	Get2DigitValue(theDateString, 0);
+						nemaMonth	=	Get2DigitValue(theDateString, 2);
+						nemaYear	=	Get2DigitValue(theDateString, 4);
+
+						nmeaData->linuxTime.tm_year	=	100 + nemaYear;
+						nmeaData->linuxTime.tm_mon	=	nemaMonth -1;
+						nmeaData->linuxTime.tm_mday	=	nemaDay;
+
+						nmeaData->linuxTime.tm_hour	=	Get2DigitValue(theTimeString, 0);
+						nmeaData->linuxTime.tm_min	=	Get2DigitValue(theTimeString, 2);
+						nmeaData->linuxTime.tm_sec	=	Get2DigitValue(theTimeString, 4);
 					}
 					else
 					{
@@ -2170,3 +2285,43 @@ bool	keepLooking;
 }
 
 #endif	//	_ENABLE_NMEA_SENTANCE_TRACKING_
+
+
+//*****************************************************************************
+//*	GPS data from Raspberry Pi GPS
+
+//$GPGGA,143836.000,4121.6599,N,07458.8202,W,1,07,1.52,439.4,M,-34.0,M,,*57
+//$GPGSA,A,3,14,30,22,07,02,08,21,,,,,,1.78,1.52,0.92*09
+//$GPRMC,143836.000,A,4121.6599,N,07458.8202,W,0.92,141.02,130424,,,A*79
+//$GPVTG,141.02,T,,M,0.92,N,1.70,K,A*36
+//$GPGGA,143837.000,4121.6598,N,07458.8202,W,1,07,1.52,439.4,M,-34.0,M,,*57
+//$GPGSA,A,3,14,30,22,07,02,08,21,,,,,,1.78,1.52,0.92*09
+//$GPGSV,4,1,13,07,72,217,24,30,55,295,27,21,53,113,21,02,49,141,22*78
+//$GPGSV,4,2,13,08,49,050,23,14,34,294,17,17,17,233,16,22,15,286,16*7D
+//$GPGSV,4,3,13,13,14,317,,27,14,053,,09,05,207,,16,01,095,*7B
+//$GPGSV,4,4,13,50,,,*7E
+//$GPRMC,143837.000,A,4121.6598,N,07458.8202,W,0.45,157.66,130424,,,A*76
+//$GPVTG,157.66,T,,M,0.45,N,0.84,K,A*33
+//$GPGGA,143838.000,4121.6597,N,07458.8204,W,1,07,1.52,439.3,M,-34.0,M,,*56
+//$GPGSA,A,3,14,30,22,07,02,08,21,,,,,,1.78,1.52,0.92*09
+//$GPRMC,143838.000,A,4121.6597,N,07458.8204,W,0.31,184.31,130424,,,A*7F
+//$GPVTG,184.31,T,,M,0.31,N,0.57,K,A*32
+//$GPGGA,143839.000,4121.6594,N,07458.8206,W,1,07,1.52,439.3,M,-34.0,M,,*56
+//$GPGSA,A,3,14,30,22,07,02,08,21,,,,,,1.78,1.52,0.92*09
+//$GPRMC,143839.000,A,4121.6594,N,07458.8206,W,0.52,199.23,130424,,,A*75
+//$GPVTG,199.23,T,,M,0.52,N,0.96,K,A*35
+//$GPGGA,143840.000,4121.6592,N,07458.8208,W,1,07,1.52,439.2,M,-34.0,M,,*51
+//$GPGSA,A,3,14,30,22,07,02,08,21,,,,,,1.78,1.52,0.92*09
+//$GPRMC,143840.000,A,4121.6592,N,07458.8208,W,0.44,196.72,130424,,,A*7F
+//$GPVTG,196.72,T,,M,0.44,N,0.82,K,A*3C
+//$GPGGA,143841.000,4121.6590,N,07458.8208,W,1,07,1.52,439.2,M,-34.0,M,,*52
+//$GPGSA,A,3,14,30,22,07,02,08,21,,,,,,1.78,1.52,0.92*09
+//$GPRMC,143841.000,A,4121.6590,N,07458.8208,W,0.67,209.33,130424,,,A*7D
+//$GPVTG,209.33,T,,M,0.67,N,1.23,K,A*37
+//$GPGGA,143842.000,4121.6589,N,07458.8211,W,1,07,1.52,439.2,M,-34.0,M,,*51
+//$GPGSA,A,3,14,30,22,07,02,08,21,,,,,,1.78,1.52,0.92*09
+//$GPGSV,4,1,13,07,72,217,25,30,55,295,27,21,53,113,18,02,49,141,23*72
+//$GPGSV,4,2,13,08,49,050,23,14,34,294,18,17,17,233,16,22,15,286,18*7C
+//$GPGSV,4,3,13,13,14,317,,27,14,053,,09,05,207,,16,01,095,*7B
+//$GPGSV,4,4,13,44,,,*7B
+//$GPRMC,143842.000,A,4121.6589,N,07458.8211,W,0.82,212.13,130424,,,A*7D

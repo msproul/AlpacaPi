@@ -16,6 +16,7 @@
 //*	Apr 18,	2022	<MLS> Added CONSOLE_DEBUG_W_BOOL()
 //*	Mar  7,	2023	<MLS> Added CONSOLE_DEBUG_W_SIZE()
 //*	Sep  5,	2023	<MLS> Added CONSOLE_DEBUG_W_SIZE() to quite mode
+//*	Apr 12,	2024	<MLS> Added CONSOLE_DEBUG_W_INT64()
 //***************************************************************************************
 //#include	"ConsoleDebug.h"
 
@@ -71,8 +72,10 @@
 
 	#if (__SIZEOF_LONG__ == 8)
 		#define	CONSOLE_DEBUG_W_INT32(msg, num)				printf("%-40s:%4d [%-20s] %s %d\n", 		__FILE__, __LINE__, __FUNCTION__, msg, num);	fflush(stdout);
+		#define	CONSOLE_DEBUG_W_INT64(msg, num)				printf("%-40s:%4d [%-20s] %s %ld\n", 		__FILE__, __LINE__, __FUNCTION__, msg, num);	fflush(stdout);
 	#else
 		#define	CONSOLE_DEBUG_W_INT32(msg, num)				printf("%-40s:%4d [%-20s] %s %d\n", 		__FILE__, __LINE__, __FUNCTION__, msg, num);	fflush(stdout);
+		#define	CONSOLE_DEBUG_W_INT64(msg, num)				printf("%-40s:%4d [%-20s] %s %lld\n", 		__FILE__, __LINE__, __FUNCTION__, msg, num);	fflush(stdout);
 	#endif
 
 #else

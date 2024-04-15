@@ -23,8 +23,9 @@ enum
 	kImageDisplay_Btn_Save,
 	kImageDisplay_FlipH,
 	kImageDisplay_FlipV,
-	kImageDisplay_Btn_6,
-
+#ifdef _ENABLE_SKYIMAGE_
+	kImageDisplay_Btn_Run,
+#endif
 	kImageDisplay_Btn_N,
 
 
@@ -107,12 +108,13 @@ class WindowTabImage: public WindowTab
 		//
 		// Construction
 		//
-				WindowTabImage(	const int	xSize,
-								const int	ySize,
-								cv::Scalar	backGrndColor,
-								const char	*windowName);
-		virtual	~WindowTabImage(void);
+						WindowTabImage(	const int	xSize,
+										const int	ySize,
+										cv::Scalar	backGrndColor,
+										const char	*windowName);
+		virtual			~WindowTabImage(void);
 
+		virtual	void	RunWindowBackgroundTasks(void);
 		virtual	void	SetupWindowControls(void);
 //		virtual	void	DrawWindow(void);
 		virtual void	HandleKeyDown(const int keyPressed);
@@ -180,6 +182,9 @@ class WindowTabImage: public WindowTab
 				//---------------------------------------------------
 				//*	image processing stuff
 				void			FlipImage(int flipMode);
+
+				bool			cRunMode;
+				uint32_t		cLastImageChange_ms;
 
 };
 

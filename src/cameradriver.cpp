@@ -647,32 +647,7 @@ int	iii;
 
 	//========================================
 	//*	GPS data QHY174-GPS
-	memset(&cGPS, 0, sizeof(TYPE_GPSdata));
-//	cGPSpresent					=	false;
-//	cGPS_DateValid				=	false;
-//	cGPS_TimeValid				=	false;
-//	cGPS_LaLoValid				=	false;
-//	cGPScameraName[0]			=	0;
-////	cGPS_SystemTime				=	0;		//*	Used for calculating GPS/SYS time offset
-//	cGPSdataIdx					=	0;
-//	cGPS_SequenceNumber			=	0;
-//	cGPS_Lat					=	0;
-//	cGPS_Long					=	0;
-//	cGPS_Altitude				=	0;		//*	in meters
-//	cGPS_Status					=	0;		//	0 = not valid, 1 = locked
-//	cGPS_PPSC					=	0;
-//	cGPS_ShutterStartTimeStr[0]	=	0;
-//	cGPS_SU						=	0;		//*	start time micro seconds
-//	cGPS_ShutterEndTimeStr[0]	=	0;
-//	cGPS_EU						=	0;		//*	End time micro seconds
-//	cGPS_NowTimeStr[0]			=	0;
-//	cGPS_NU						=	0;		//*	Now time micro seconds
-//	cGPS_Exposure_us			=	0;		//*	exposure time in micro seconds
-//	cGPS_ClockDeltaSecs			=	0;
-//	cGPS_SatsInView				=	0;		//*	Number of satellites in view
-//	cGPS_SatMode1				=	0;
-//	cGPS_SatMode2				=	0;
-
+	memset(&cGPS, 0, sizeof(TYPE_QHY_GPSdata));
 }
 
 //**************************************************************************************
@@ -6397,10 +6372,10 @@ TYPE_ASCOM_STATUS	CameraDriver::Put_StartVideo(TYPE_GetPutRequestData *reqData, 
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
 char				recordTimeStr[32];
 bool				recTimeFound;
+int					videoIsColor;
+char				filePath[128];
 #ifdef _USE_OPENCV_
-	int		videoIsColor;
 	int		fourCC;
-	char	filePath[128];
 #endif // _USE_OPENCV_
 
 	CONSOLE_DEBUG(__FUNCTION__);
@@ -6462,24 +6437,29 @@ bool				recTimeFound;
 						//	fourCC	=	CV_FOURCC('M', 'P', '4', '2');		//*	MP42 -> MPEG-4  WORKS!!
 						//
 						//	-1,									//*	user selectable dialog box
+				#ifdef _USE_OPENCV_
 						#if (CV_MAJOR_VERSION >= 3)
 							fourCC	=	cv::VideoWriter::fourcc('R', 'G', 'B', 'T');
 						#else
 							fourCC	=	CV_FOURCC('R', 'G', 'B', 'T');
 						#endif
+				#endif // _USE_OPENCV_
 							videoIsColor		=	1;
 							break;
 
 						default:
+				#ifdef _USE_OPENCV_
 						//	fourCC	=	CV_FOURCC('Y', '8', '0', '0');		//*	writes, but cant be read
 						#if (CV_MAJOR_VERSION >= 3)
 							fourCC	=	cv::VideoWriter::fourcc('Y', '8', ' ', ' ');		//*	writes, but cant be read
 						#else
 							fourCC	=	CV_FOURCC('Y', '8', ' ', ' ');		//*	writes, but cant be read
 						#endif
+				#endif // _USE_OPENCV_
 							videoIsColor		=	0;
 							break;
 					}
+			#ifdef _USE_OPENCV_
 					cOpenCV_videoWriter	=	NULL;
 				#if (CV_MAJOR_VERSION >= 3)
 					fourCC				=	cv::VideoWriter::fourcc('M', 'J', 'P', 'G'),
@@ -6514,6 +6494,7 @@ bool				recTimeFound;
 					//	CONSOLE_ABORT("");
 
 					}
+			#endif // _USE_OPENCV_
 					//=============================================
 					if (cVideoCreateTimeStampFile)
 					{

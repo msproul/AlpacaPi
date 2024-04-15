@@ -17,7 +17,8 @@
 //*	Mar 25,	2023	<MLS> Added DumpLinuxTimeStruct()
 //*	Apr 30,	2023	<MLS> Added StripLeadingSpaces()
 //*	Aug  6,	2023	<MLS> Added StripCRLF()
-//*	Oct  3,	2023	<MLS> Added Millis() because millis() on R-Pi was behaving strangly
+//*	Oct  3,	2023	<MLS> Added Millis() because millis() on R-Pi was behaving strangely
+//*	Apr 12,	2024	<MLS> Added FormatTimeStringISO8601_tm()
 //*****************************************************************************
 
 #include	<math.h>
@@ -354,6 +355,22 @@ int		linesRead;
 	}
 	fseek(filePointer, 0, SEEK_SET);
 	return(linesRead);
+}
+
+//*****************************************************************************
+void	FormatTimeStringISO8601_tm(struct tm *linuxTime, char *timeString)
+{
+int	milliSecs	=	0;
+
+	sprintf(timeString, "%d-%02d-%02dT%02d:%02d:%02d.%03ldZ",
+							(1900 + linuxTime->tm_year),
+							(1 + linuxTime->tm_mon),
+							linuxTime->tm_mday,
+							linuxTime->tm_hour,
+							linuxTime->tm_min,
+							linuxTime->tm_sec,
+							milliSecs);
+
 }
 
 //*****************************************************************************

@@ -82,7 +82,7 @@ else
 	echo "cmake is missing!!!!!!!!!!!!!!!!"
 	echo -n "Do you want to install cmake? [y/n]"
 	read WAITINPUT
-	if [ $WAITINPUT = "y" ]
+	if [ $WAITINPUT == "y" ]
 	then
 		echo "Installing cmake with apt-get"
 		echo "Installing cmake with apt-get" >> $LOGFILENAME

@@ -183,6 +183,7 @@ int	iii;
 	for (iii=0; iii<kMaxAlpacaIPaddrCnt; iii++)
 	{
 		memset((void *)&gAlpacaUnitList[iii], 0, sizeof(TYPE_ALPACA_UNIT));
+		gAlpacaUnitList[iii].displayGraph	=	true;
 	}
 
 	for (iii=0; iii<kMaxAlpacaDeviceCnt; iii++)
@@ -747,7 +748,7 @@ int				jjj;
 bool			validData;
 SJP_Parser_t	jsonParser;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	validData	=	GetJsonResponse(	&alpacaUnit->deviceAddress,
 										alpacaUnit->port,
 										"/api/v1/management/0/cpustats",
@@ -933,6 +934,7 @@ int		alpacaListenPort;
 			gAlpacaUnitList[gAlpacaUnitCnt].deviceAddress	=	*deviceAddress;
 			gAlpacaUnitList[gAlpacaUnitCnt].port			=	alpacaListenPort;
 			gAlpacaUnitList[gAlpacaUnitCnt].currentlyActive	=	false;
+			gAlpacaUnitList[gAlpacaUnitCnt].displayGraph	=	true;
 
 			//*	and lookup the host name
 			foundHostName	=	LookupNameFromIPaddr(deviceAddress->sin_addr.s_addr, myHostNameStr);

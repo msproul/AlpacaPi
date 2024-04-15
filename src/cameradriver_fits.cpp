@@ -2397,6 +2397,9 @@ TYPE_MoonPhase	moonPhaseInfo;
 												"Number of days since new moon", &fitsStatus);
 	}
 
+	//============================================================================================
+	//*	we have to have lat/lon of the observatory in order for the moon set/rise functions to work
+	//============================================================================================
 	if (gObseratorySettings.ValidLatLon)
 	{
 	// Find the last and next lunar set and rise. The utcOffset is only for Arduino.

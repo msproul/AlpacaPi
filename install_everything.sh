@@ -20,9 +20,9 @@ echo "**************************************************************************
 echo "Getting ready to install libudev-dev"
 sudo apt-get install libudev-dev
 
-echo "****************************************************************************"
-echo "Getting ready to install libopencv-dev"
-sudo apt-get install libopencv-dev
+#echo "****************************************************************************"
+#echo "Getting ready to install libopencv-dev"
+#sudo apt-get install libopencv-dev
 
 echo "****************************************************************************"
 echo "Getting ready to install libi2c-dev"

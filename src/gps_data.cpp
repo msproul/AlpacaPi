@@ -23,6 +23,8 @@
 #include	<string.h>
 #include	<pthread.h>
 #include	<unistd.h>
+#include	<sys/stat.h>
+
 
 #include	<fcntl.h>
 #include	<termios.h>
@@ -42,29 +44,45 @@
 //===========================================================================
 //*	GPS info
 TYPE_NMEAInfoStruct		gNMEAdata;		//*	from ParseNMEA.h
-TYPE_GPSdata			gGPS;
-static pthread_t		gGPSdataThreadID;
-static char				gSerialPortPath[32];
 
+static pthread_t		gGPSdataThreadID;
+static char				gSerialPortPath[64];
+static char				gSerialPortSpeed	=	'9';	//*	9 for 9600, 4 for 4800
 #define	kBuffSize	100
 
 //**************************************************************************************
 static void	*GPS_Thread(void *arg)
 {
-char				buf[kBuffSize + 1];
-int					readCnt;
-int					ccc;
-int					iii;
-int					serialFD;
-int					nmeaSentenceCnt;
-char				theChar;
-char				nmeaLineBuff[256];
+char		buf[kBuffSize + 1];
+int			readCnt;
+int			ccc;
+int			iii;
+int			serialFD;
+int			nmeaSentenceCnt;
+char		theChar;
+char		nmeaLineBuff[256];
+struct stat	fileStatus;
+int			returnCode;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG(gSerialPortPath);
 	CONSOLE_DEBUG(__FUNCTION__);
 
 	ParseNMEA_init(&gNMEAdata);
+	//---------------------------------------------------
+	//*	check to make sure the devices is present
+	returnCode	=	stat(gSerialPortPath, &fileStatus);		//*	fstat - check for existence of file
+	if (returnCode == 0)
+	{
+		CONSOLE_DEBUG_W_STR("Device is present", gSerialPortPath);
+	}
+	else
+	{
+		CONSOLE_DEBUG_W_STR("Device NOT FOUND!!!!!", gSerialPortPath);
+		CONSOLE_DEBUG(gSerialPortPath);
+		CONSOLE_DEBUG("Thread exit!!!!!!!");
+		return(NULL);
+	}
 
 //	serialFD	=	open(gSerialPortPath, O_RDWR | O_NOCTTY | O_SYNC);
 	serialFD	=	open(gSerialPortPath, O_RDONLY | O_NOCTTY | O_SYNC);
@@ -73,12 +91,23 @@ char				nmeaLineBuff[256];
 		CONSOLE_DEBUG_W_STR("ERROR on open()", gSerialPortPath);
 		CONSOLE_DEBUG_W_NUM("ERROR number\t=", errno);
 		CONSOLE_DEBUG_W_STR("ERROR string\t=", strerror(errno));
+		CONSOLE_DEBUG_W_NUM("serialFD    \t=", serialFD);
 //		fprintf(stderr, "error %d opening %s: %s", errno, (char *)arg, strerror(errno));
 		CONSOLE_DEBUG("Thread exit!!!!!!!");
-		return NULL;
+		return(NULL);
 	}
 
-	Serial_Set_Attribs(serialFD, B9600, 0);  // set speed to 4800 bps, 8n1 (no parity)
+	if (gSerialPortSpeed == '4')
+	{
+		CONSOLE_DEBUG("Setting baud rate for GPS to B4800");
+		Serial_Set_Attribs(serialFD, B4800, 0);  // set speed to 4800 bps, 8n1 (no parity)
+	}
+	else
+	{
+		//*	default is 9600 because Raspberry Pi GPS board is 9600
+		CONSOLE_DEBUG("Setting baud rate for GPS to B9600");
+		Serial_Set_Attribs(serialFD, B9600, 0);  // set speed to 4800 bps, 8n1 (no parity)
+	}
 	Serial_Set_Blocking(serialFD, true);
 	nmeaSentenceCnt	=	0;
 	ccc				=	0;
@@ -98,13 +127,15 @@ char				nmeaLineBuff[256];
 					nmeaLineBuff[ccc]	=	0;
 					if (ccc > 5)
 					{
-//					#ifdef _INCLUDE_GPSTEST_MAIN_
+					#ifdef _INCLUDE_GPSTEST_MAIN_
 						printf("%s\r\n", nmeaLineBuff);
-//					#endif
-
+					#endif
 						//	true means set system time
-						ParseNMEA_TimeString(&gNMEAdata, nmeaLineBuff, false);
-						ParseNMEAstring(&gNMEAdata, nmeaLineBuff);
+						if (nmeaLineBuff[0] == '$')
+						{
+							ParseNMEA_TimeString(&gNMEAdata, nmeaLineBuff, false);
+							ParseNMEAstring(&gNMEAdata, nmeaLineBuff);
+						}
 					}
 					ccc	=	0;
 					//-------------------------------------------
@@ -126,7 +157,7 @@ char				nmeaLineBuff[256];
 
 
 //*****************************************************************************
-void	GPS_StartThread(const char *serialPortPathArg)
+void	GPS_StartThread(const char *serialPortPathArg, const char baudRate)
 {
 int		threadErr;
 
@@ -138,6 +169,8 @@ int		threadErr;
 	{
 		strcpy(gSerialPortPath, "/dev/ttyS0");
 	}
+	//*	save the baud rate indicator
+	gSerialPortSpeed	=	baudRate;
 	threadErr	=	pthread_create(&gGPSdataThreadID, NULL, &GPS_Thread, NULL);
 	if (threadErr != 0)
 	{

@@ -38,11 +38,12 @@ void		FormatHHMMSS(		const double argDegreeValue, char *timeString, bool include
 void		FormatHHMMSSdd(		const double argDegreeValue, char *timeString, bool includeSign);
 
 void		FormatTimeString_time_t(	time_t *time, char *timeString);
-void		FormatTimeString(			struct timeval *tv, char *timeString);
-void		FormatTimeString_Local(		struct timeval *tv, char *timeString);
-void		FormatDateTimeString_Local(	struct timeval *tv, char *timeString);
-void		FormatTimeStringISO8601(	struct timeval *tv, char *timeString);
-void		FormatTimeStringISO8601_UTC(struct timeval *tv, char *timeString);
+void		FormatTimeString(			struct timeval *tv,		char *timeString);
+void		FormatTimeString_Local(		struct timeval *tv,		char *timeString);
+void		FormatDateTimeString_Local(	struct timeval *tv,		char *timeString);
+void		FormatTimeStringISO8601(	struct timeval *tv,		char *timeString);
+void		FormatTimeStringISO8601_UTC(struct timeval *tv,		char *timeString);
+void		FormatTimeStringISO8601_tm(	struct tm *linuxTime,	char *timeString);
 
 void		FormatTimeString_TM(struct tm *timeStruct, char *timeString);
 int			GetMinutesSinceMidnight(void);

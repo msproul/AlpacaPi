@@ -38,7 +38,6 @@
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
 
-
 #include	"alpaca_defs.h"
 #include	"linuxerrors.h"
 #include	"helper_functions.h"
@@ -49,8 +48,6 @@
 #include	"windowtab_MoonPhase.h"
 #include	"controller.h"
 #include	"controller_image.h"
-
-
 
 //**************************************************************************************
 WindowTabMoonPhase::WindowTabMoonPhase(	const int	xSize,

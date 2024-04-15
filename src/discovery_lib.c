@@ -25,6 +25,7 @@
 //*	Jun 24,	2020	<MLS> Removed _INCLUDE_WIRELESS_SUBNET_
 //*	Jun 29,	2023	<MLS> Fixed bug AddUnitToList(): 2 ports on same IP not recognized
 //*	Jul  8,	2023	<MLS> Added DumpRemoteDevice()
+//*	Apr 14,	2024	<MLS> Added DumpAlpacaUnit()
 //*****************************************************************************
 
 
@@ -78,6 +79,7 @@ int		iii;
 	for (iii=0; iii<kMaxAlpacaIPaddrCnt; iii++)
 	{
 		memset(&gAlpacaUnitList[iii], 0, sizeof(TYPE_ALPACA_UNIT));
+		gAlpacaUnitList[iii].displayGraph	=	true;
 	}
 	for (iii=0; iii<kMaxAlpacaDeviceCnt; iii++)
 	{
@@ -363,6 +365,7 @@ int		iii;
 	}
 }
 
+
 //*****************************************************************************
 //*	a unit is a single IP address that speaks alpaca
 //*****************************************************************************
@@ -405,6 +408,7 @@ int		alpacaListenPort;
 		if (gAlpacaUnitCnt < kMaxAlpacaIPaddrCnt)
 		{
 			gAlpacaUnitList[gAlpacaUnitCnt].deviceAddress	=	*deviceAddress;
+			gAlpacaUnitList[gAlpacaUnitCnt].displayGraph	=	true;
 			//*	now find the alpaca port
 			for (iii=0; iii<jsonParser->tokenCount_Data; iii++)
 			{
@@ -413,6 +417,8 @@ int		alpacaListenPort;
 					gAlpacaUnitList[gAlpacaUnitCnt].port	=	atoi(jsonParser->dataList[iii].valueString);
 				}
 			}
+			DumpAlpacaUnit(&gAlpacaUnitList[gAlpacaUnitCnt], __FUNCTION__);
+
 			gAlpacaUnitCnt++;
 		}
 	}
@@ -498,6 +504,7 @@ char	ipAddrSt[32];
 
 //*****************************************************************************
 //*	read the /etc/hosts file and see if there are names for the address in the list
+//*****************************************************************************
 static void	LookupNames(void)
 {
 
@@ -779,4 +786,11 @@ void	DumpRemoteDevice(TYPE_REMOTE_DEV *alpacaDevice, const char *callingFunction
 	CONSOLE_DEBUG_W_NUM("notSeenCounter  \t=",	alpacaDevice->notSeenCounter);
 }
 
+//*****************************************************************************
+void	DumpAlpacaUnit(TYPE_ALPACA_UNIT *alpacaUnit, const char *callingFunction)
+{
+	CONSOLE_DEBUG_W_STR(	"hostName    \t=",	alpacaUnit->hostName);
+	CONSOLE_DEBUG_W_NUM(	"Port        \t=",	alpacaUnit->displayGraph);
+	CONSOLE_DEBUG_W_BOOL(	"displayGraph\t=",	alpacaUnit->displayGraph);
+}
 

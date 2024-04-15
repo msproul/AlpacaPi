@@ -29,6 +29,7 @@
 //*	Jan 19,	2024	<MLS> Added ProcessLineSelect()
 //*	Jan 19,	2024	<MLS> Added lineSelection to the IP list
 //*	Jan 19,	2024	<MLS> Added the ability to delete an entry from the IP unit list
+//*	Apr 14,	2024	<MLS> Added +/- to enable/disable graph display of selected device
 //*****************************************************************************
 
 #include	<stdlib.h>
@@ -419,6 +420,16 @@ int		theExtendedChar;
 			{
 				SetNewSelectedDevice(deviceIndex);
 			}
+			break;
+
+		case 0xFFAB:
+		case '+':
+			gAlpacaUnitList[deviceIndex].displayGraph	=	true;
+			break;
+
+		case 0xFFAD:
+		case '-':
+			gAlpacaUnitList[deviceIndex].displayGraph	=	false;
 			break;
 
 		default:
@@ -863,8 +874,15 @@ int		deviceIdx;
 			{
 				strcat(textString, "\t");
 				strcat(textString, gAlpacaUnitList[deviceIdx].versionString);
-
-				SetWidgetTextColor(		boxId,	CV_RGB(0,	255,	0));
+				if (gAlpacaUnitList[deviceIdx].displayGraph)
+				{
+					SetWidgetTextColor(		boxId,	CV_RGB(0,	255,	0));
+				}
+				else
+				{
+					//*	these are not displayed in the graph
+					SetWidgetTextColor(		boxId,	CV_RGB(70,	255,	255));
+				}
 			}
 			else if (gAlpacaUnitList[deviceIdx].queryERRcnt > 0)
 			{
@@ -1015,7 +1033,7 @@ int				validCPUtempCount;
 		colorIdx		=	iii % kCpuColorCnt;
 		cCurrentColor	=	cCPUcolors[colorIdx];
 
-		if (gAlpacaUnitList[iii].cpuTempValid)
+		if (gAlpacaUnitList[iii].cpuTempValid && gAlpacaUnitList[iii].displayGraph)
 		{
 			if (strlen(gAlpacaUnitList[iii].hostName) > 0)
 			{

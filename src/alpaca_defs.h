@@ -93,6 +93,7 @@
 //*	Feb 10,	2024	<MLS> Build 174
 //*	Feb 10,	2024	<MLS> Pushed Build 174
 //*	Mar 22,	2024	<MLS> Build 175
+//*	Apr 15,	2024	<MLS> Build 176
 //*****************************************************************************
 //#include	"alpaca_defs.h"
 
@@ -112,7 +113,7 @@
 
 #define	kApplicationName		"AlpacaPi"
 #define	kVersionString			"V0.7.2"
-#define	kBuildNumber			175
+#define	kBuildNumber			176
 #define kAlpacaDiscoveryPORT	32227
 #define kAlpacaPiDefaultPORT	6800
 

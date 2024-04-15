@@ -14,7 +14,7 @@
 //*	that you agree that the author(s) have no warranty, obligations or liability.  You
 //*	must determine the suitability of this source code for your use.
 //*
-//*	Redistributions of this source code must retain this copyright notice.
+//*	Re-distributions of this source code must retain this copyright notice.
 //*****************************************************************************
 //*	Edit History
 //*****************************************************************************
@@ -36,6 +36,7 @@
 //*	Sep  7,	2023	<MLS> Added Live vs Downloaded label to make it obvious
 //*	Mar 18,	2024	<MLS> Added SetImageFilePath()
 //*	Mar 30,	2024	<MLS> Added FlipImage()
+//*	Apr 14,	2024	<MLS> Added RUN button to step through images
 //*****************************************************************************
 
 #ifdef _ENABLE_CTRL_IMAGE_
@@ -51,6 +52,7 @@
 #include	"controller.h"
 #include	"controller_image.h"
 #include	"controller_skyimage.h"
+#include	"helper_functions.h"
 
 #include	"windowtab.h"
 #include	"windowtab_image.h"
@@ -72,6 +74,8 @@ int		iii;
 	cImageZoomState			=	0;			//*	more state to be defined later
 
 	cMouseDragInProgress	=	false;
+	cRunMode				=	false;
+	cLastImageChange_ms		=	0;
 
 	cImageCenterX			=	500;
 	cImageCenterY			=	500;
@@ -180,6 +184,9 @@ int		btnCnt;
 	SetWidgetText(			kImageDisplay_Btn_Save,		"Save");
 	SetWidgetText(			kImageDisplay_FlipH,		"Flip-H");
 	SetWidgetText(			kImageDisplay_FlipV,		"Flip-V");
+#ifdef _ENABLE_SKYIMAGE_
+	SetWidgetText(			kImageDisplay_Btn_Run,		"Run");
+#endif
 
 	yLoc			+=	cTitleHeight;
 	yLoc			+=	2;
@@ -425,6 +432,39 @@ int		btnCnt;
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, "EXIT");
 }
 
+//*****************************************************************************
+void	WindowTabImage::RunWindowBackgroundTasks(void)
+{
+//	CONSOLE_DEBUG(__FUNCTION__);
+#ifdef _ENABLE_SKYIMAGE_
+	if (cRunMode)
+	{
+	uint32_t		deltaMs;
+	bool			newImageOK;
+
+
+		deltaMs	=	millis() - cLastImageChange_ms;
+		if (deltaMs > 150)
+		{
+			newImageOK	=	LoadNextImageFromList((ControllerImage *)cParentObjPtr);
+			if (newImageOK)
+			{
+				SetWidgetBGColor(kImageDisplay_LiveOrDownLoad, CV_RGB(0, 200, 0));
+			}
+			else
+			{
+				SetWidgetBGColor(kImageDisplay_LiveOrDownLoad, CV_RGB(255, 0, 0));
+				cRunMode				=	false;
+				cOpenCVdownLoadedImage	=	NULL;
+				cOpenCVdisplayedImage	=	NULL;
+			}
+			cLastImageChange_ms	=	millis();
+			cv::waitKey(200);
+		}
+	}
+#endif // _ENABLE_SKYIMAGE_
+}
+
 
 //*****************************************************************************
 void	WindowTabImage::SetImageFilePath(const char *imageFilePath)
@@ -642,7 +682,14 @@ ControllerImage	*myParentContolerImage;
 			FlipImage(0);
 			break;
 
-		case kImageDisplay_Btn_6:
+#ifdef _ENABLE_SKYIMAGE_
+		case kImageDisplay_Btn_Run:
+			cRunMode	=	!cRunMode;
+			SetRunFastBackgroundMode(cRunMode);
+			break;
+#endif // _ENABLE_SKYIMAGE_
+
+		case kImageDisplay_Btn_N:
 			CONSOLE_DEBUG_W_NUM("kImageDisplay_\t=", buttonIdx);
 			break;
 

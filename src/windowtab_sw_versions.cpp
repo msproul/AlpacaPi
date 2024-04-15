@@ -20,6 +20,7 @@
 //*****************************************************************************
 //*	Feb 10,	2024	<MLS> Created windowtab_sw_versions.cpp
 //*	Apr  9,	2024	<MLS> Added platform to software window
+//*	Apr 15,	2024	<MLS> Fixed buffer overflow bug in UpdateOnScreenWidgetList()
 //*****************************************************************************
 
 #include	<stdlib.h>
@@ -485,9 +486,9 @@ void	WindowTabSwVersions::UpdateOnScreenWidgetList(void)
 int		boxId;
 int		iii;
 int		jjj;
-char	textString[256];
-char	extraString[32];
-char	ipAddrStr[32];
+char	textString[512];
+char	extraString[128];
+char	ipAddrStr[64];
 int		deviceIdx;
 
 //	CONSOLE_DEBUG(__FUNCTION__);

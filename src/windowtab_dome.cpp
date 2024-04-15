@@ -387,6 +387,8 @@ void	WindowTabDome::SetDomePropertiesPtr(TYPE_DomeProperties *domePropPtr)
 void	WindowTabDome::ResetKnownCommands(void)
 {
 int		iii;
+
+	CONSOLE_DEBUG(__FUNCTION__);
 	//============================================
 	//*	disable all of the extra commands until we know if they exist
 	for (iii=kDomeBox_GoLeft; iii<=kDomeBox_BumpRight; iii++)

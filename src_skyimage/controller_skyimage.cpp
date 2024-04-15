@@ -421,11 +421,12 @@ static void	ProcessCmdLineArgs(int argc, char **argv)
 int		iii;
 char	theChar;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 
 	iii	=	1;
 	while (iii<argc)
 	{
+		CONSOLE_DEBUG(argv[iii]);
 		if (argv[iii][0] == '-')
 		{
 			theChar	=	argv[iii][1];
@@ -472,10 +473,10 @@ int			status;
 int			nkeys;
 int			iii;
 
-	CONSOLE_DEBUG(__FUNCTION__);
-	CONSOLE_DEBUG(imageFileData->DirectoryPath);
-	CONSOLE_DEBUG(imageFileData->FileName);
-	CONSOLE_DEBUG(imageFileData->FilePath);
+//	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(imageFileData->DirectoryPath);
+//	CONSOLE_DEBUG(imageFileData->FileName);
+//	CONSOLE_DEBUG(imageFileData->FilePath);
 	status	=	0;			//* MUST initialize status
 	fits_open_file(&fptr, imageFileData->FilePath, READONLY, &status);
 	if (status == 0)
@@ -603,6 +604,7 @@ char				myDirectoryPath[256];
 			{
 				activeObjCnt++;
 				gControllerList[iii]->HandleWindow();
+				gControllerList[iii]->RunBackgroundTasks(__FUNCTION__, false);
 
 			#if (CV_MAJOR_VERSION >= 3)
 				keyPressed	=	cv::waitKeyEx(5);
@@ -614,6 +616,8 @@ char				myDirectoryPath[256];
 					Controller_HandleKeyDown(keyPressed);
 				}
 
+				//--------------------------------------------------------------------
+				//*	check for closed window (controller)
 				if (gControllerList[iii]->cKeepRunning == false)
 				{
 				//	CONSOLE_DEBUG_W_NUM("Deleting controller #", iii);

@@ -152,7 +152,7 @@
 //*	Dec  7,	2022	<MLS> Added LogRequest()
 //*	Dec 13,	2022	<MLS> Updated ascom/alpaca URL links in SendHtml_MainPage()
 //*	Dec 24,	2022	<MLS> Added User-Agent counts to stats web page
-//*	Feb 25,	2023	<MLS> Added SendHtmlCompiledInfo()
+//*	Feb 25,	2023	<MLS> Added SendHtml_CompiledInfo()
 //*	Mar  2,	2023	<MLS> Re-arranged creation of driver objects
 //*	Mar  3,	2023	<MLS> Added ProcessAlpacaCommand()
 //*	Mar 11,	2023	<MLS> Added kRequestType_HTML()
@@ -290,7 +290,7 @@
 
 #ifdef _ENABLE_GLOBAL_GPS_
 	#include	"gps_data.h"
-	bool		gEnableGlobalGPS	=	true;
+	#include	"alpacadriver_gps.h"
 #endif
 
 #if defined(__arm__) && defined(_ENABLE_WIRING_PI_)
@@ -340,7 +340,7 @@ int				gUserAgentCounters[kHTTPclient_last];
 
 static void	OutputHTML_Form(TYPE_GetPutRequestData *reqData);
 static void	OutputHTML_html(TYPE_GetPutRequestData *reqData);
-static void	SendHtmlCompiledInfo(const int socketFD);
+static void	SendHtml_CompiledInfo(const int socketFD);
 
 
 //*****************************************************************************
@@ -2481,7 +2481,7 @@ int		iii;
 
 		//**********************************************************
 		SendSeparateLine(mySocketFD);
-		SendHtmlCompiledInfo(mySocketFD);
+		SendHtml_CompiledInfo(mySocketFD);
 
 		SocketWriteData(mySocketFD,	"</BODY></HTML>\r\n");
 	}
@@ -2505,7 +2505,7 @@ const char	*gUserAgentNames[]	=
 };
 
 //*****************************************************************************
-static void	SendHtmlCompiledInfo(const int socketFD)
+static void	SendHtml_CompiledInfo(const int socketFD)
 {
 	SocketWriteData(socketFD,	"Compiled on ");
 	SocketWriteData(socketFD,	__DATE__);
@@ -2515,7 +2515,7 @@ static void	SendHtmlCompiledInfo(const int socketFD)
 }
 
 //*****************************************************************************
-static void	SendHtmlStats(TYPE_GetPutRequestData *reqData)
+static void	SendHtml_Stats(TYPE_GetPutRequestData *reqData)
 {
 char	lineBuffer[256];
 int		mySocketFD;
@@ -2563,7 +2563,7 @@ int		iii;
 
 
 		SendSeparateLine(mySocketFD);
-		SendHtmlCompiledInfo(mySocketFD);
+		SendHtml_CompiledInfo(mySocketFD);
 
 		SocketWriteData(mySocketFD,	"</BODY></HTML>\r\n");
 	}
@@ -2572,7 +2572,6 @@ int		iii;
 	//	CONSOLE_DEBUG("reqData is NULL");
 	}
 }
-
 //*****************************************************************************
 static char	gDocsIntro[]	=
 {
@@ -2620,7 +2619,7 @@ int		iii;
 		}
 
 		SendSeparateLine(mySocketFD);
-		SendHtmlCompiledInfo(mySocketFD);
+		SendHtml_CompiledInfo(mySocketFD);
 
 		SocketWriteData(mySocketFD,	"</BODY></HTML>\r\n");
 	}
@@ -2729,7 +2728,7 @@ int		mySocketFD;
 		OutputHTML_ClassSize(mySocketFD, "TYPE_TelescopeProperties",		sizeof(TYPE_TelescopeProperties));
 
 #ifdef _ENABLE_CAMERA_
-		OutputHTML_ClassSize(mySocketFD, "TYPE_GPSdata",					sizeof(TYPE_GPSdata));
+		OutputHTML_ClassSize(mySocketFD, "TYPE_QHY_GPSdata",				sizeof(TYPE_QHY_GPSdata));
 #endif
 		OutputHTML_ClassSize(mySocketFD, "TYPE_BinaryImageHdr",				sizeof(TYPE_BinaryImageHdr));
 
@@ -2737,7 +2736,7 @@ int		mySocketFD;
 		SocketWriteData(mySocketFD,	"</CENTER>\r\n");
 
 		SendSeparateLine(mySocketFD);
-		SendHtmlCompiledInfo(mySocketFD);
+		SendHtml_CompiledInfo(mySocketFD);
 
 		SocketWriteData(mySocketFD,	"</BODY></HTML>\r\n");
 	}
@@ -3589,6 +3588,7 @@ typedef enum
 	kRequestType_Setup,
 	kRequestType_Stats,
 	kRequestType_Web,
+	kRequestType_GPS,
 	kRequestType_TopLevel,
 	kRequestType_HTML,
 
@@ -3617,6 +3617,7 @@ static TYPE_Request	gRequestType[]	=
 	{	"setup",		kRequestType_Setup		},
 	{	"stats",		kRequestType_Stats		},
 	{	"web",			kRequestType_Web		},
+	{	"gps",			kRequestType_GPS		},
 
 	{	"form",			kRequestType_Form		},
 	{	"html",			kRequestType_HTML		},
@@ -4020,11 +4021,15 @@ int	iii;
 
 		//*	extra - stats
 		case kRequestType_Stats:
-			SendHtmlStats(&reqData);
+			SendHtml_Stats(&reqData);
 			break;
 
 		case kRequestType_Web:
 			SendHtml_MainPage(&reqData);
+			break;
+
+		case kRequestType_GPS:
+			SendHtml_GPS(&reqData);
 			break;
 
 		case kRequestType_TopLevel:
@@ -4187,18 +4192,44 @@ static void	*ListenThread(void *arg)
 static void	PrintHelp(const char *appName)
 {
 	printf("usage: %s [-<option>]\r\n", appName);
-	printf("\t%-12s\t%s\r\n",	"-a",			"Auto exposure");
-	printf("\t%-12s\t%s\r\n",	"-c",			"Conform logging, log ALL commands to disk");
-	printf("\t%-12s\t%s\r\n",	"-d",			"Display images as they are taken");
-	printf("\t%-12s\t%s\r\n",	"-e",			"Error logging, log errors commands to disk");
-	printf("\t%-12s\t%s\r\n",	"-h",			"This help message");
-	printf("\t%-12s\t%s\r\n",	"-l",			"Live mode");
-	printf("\t%-12s\t%s\r\n",	"-p <port>",	"what port to use (default 6800)");
-	printf("\t%-12s\t%s\r\n",	"-q",			"quiet (less console messages)");
-	printf("\t%-12s\t%s\r\n",	"-s",			"Simulate camera image (ATIK, QHY and QSI only at present)");
-	printf("\t%-12s\t%s\r\n",	"-t <profile>",	"Which telescope profile to use");
-	printf("\t%-12s\t%s\r\n",	"-v",			"verbose (more console messages default)");
+	printf("\t%-20s\t%s\r\n",	"-a",				"Auto exposure");
+	printf("\t%-20s\t%s\r\n",	"-c",				"Conform logging, log ALL commands to disk");
+	printf("\t%-20s\t%s\r\n",	"-d",				"Display images as they are taken");
+	printf("\t%-20s\t%s\r\n",	"-e",				"Error logging, log errors commands to disk");
+#ifdef _ENABLE_GLOBAL_GPS_
+	printf("\t%-20s\t%s\r\n",	"-g",				"Enable GPS via serial port (/dev/ttyS0)");
+	printf("\t%-20s\t%s\r\n",	"-g9",				"Sets baud rate to 9600 (default)");
+	printf("\t%-20s\t%s\r\n",	"-g4",				"Sets baud rate to 4800");
+	printf("\t%-20s\t%s\r\n",	"-g4/dev/ttyUSB0",	"Sets baud rate to 4800 and port to /dev/ttyUSB0");
+#endif
+	printf("\t%-20s\t%s\r\n",	"-h",				"This help message");
+	printf("\t%-20s\t%s\r\n",	"-l",				"Live mode");
+	printf("\t%-20s\t%s\r\n",	"-p <port>",		"what port to use (default 6800)");
+	printf("\t%-20s\t%s\r\n",	"-q",				"quiet (less console messages)");
+	printf("\t%-20s\t%s\r\n",	"-s",				"Simulate camera image");
+	printf("\t%-20s\t%s\r\n",	"-t <profile>",		"Which telescope profile to use");
+	printf("\t%-20s\t%s\r\n",	"-v",				"verbose (more console messages default)");
 }
+
+#ifdef _ENABLE_GLOBAL_GPS_
+//*****************************************************************************
+static void	ProcessGPScmdArgs(char *gpsCmdLineOptions)
+{
+char	*slashPtr;
+
+	gEnableGlobalGPS	=	true;
+	if (isdigit(gpsCmdLineOptions[2]))
+	{
+		gGlobalGPSbaudrate	=	gpsCmdLineOptions[2];
+	}
+	slashPtr	=	strchr(gpsCmdLineOptions, '/');
+	if (slashPtr != NULL)
+	{
+		strcpy(gGlobalGPSpath, slashPtr);
+	}
+
+}
+#endif // _ENABLE_GLOBAL_GPS_
 
 //*****************************************************************************
 static void	ProcessCmdLineArgs(int argc, char **argv)
@@ -4233,6 +4264,13 @@ int		newListenPort;
 				case 'd':
 					gDisplayImage	=	true;
 					break;
+
+		#ifdef _ENABLE_GLOBAL_GPS_
+				//	-g	means enable local GPS
+				case 'g':
+					ProcessGPScmdArgs(argv[iii]);
+					break;
+		#endif // _ENABLE_GLOBAL_GPS_
 
 				//	"-h" means print help
 				case 'h':
@@ -4736,7 +4774,7 @@ int	imu_ReturnCode;
 	if (gEnableGlobalGPS)
 	{
 		CONSOLE_DEBUG("Starting GPS thread");
-		GPS_StartThread();
+		GPS_StartThread(gGlobalGPSpath, gGlobalGPSbaudrate);
 	}
 #endif
 

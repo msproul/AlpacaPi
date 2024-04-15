@@ -40,19 +40,21 @@ enum
 //*****************************************************************************
 typedef struct
 {
-	char	SoftwareVerStr[48];
+	char	SoftwareVerStr[64];
 }	TYPE_SoftwareVers;
 
 //*****************************************************************************
 //*	this is a list of IP addresses
 typedef struct
 {
+	bool				displayGraph;
+	bool				lineSelected;		//*	for use in displaying a line that has been clicked on
+
 	struct sockaddr_in	deviceAddress;
 	int					port;
 	int					noResponseCnt;
 	char				hostName[48];		//*	device name from /etc/hosts file
 
-	bool				lineSelected;		//*	for use in displaying a line that has been clicked on
 
 	//*	for use by discovery thread for keeping track of responses
 	int					queryOKcnt;
@@ -131,6 +133,7 @@ void	ExtractDevicesFromJSON(SJP_Parser_t *jsonParser, TYPE_ALPACA_UNIT *theDevic
 void	ReadExternalIPlist(void);
 
 void	DumpRemoteDevice(TYPE_REMOTE_DEV *alpacaDevice, const char *callingFunction);
+void	DumpAlpacaUnit(TYPE_ALPACA_UNIT *alpacaUnit, const char *callingFunction);
 
 #ifdef __cplusplus
 }

@@ -875,9 +875,9 @@ public:
 	//===========================================================================
 	//*	GPS info
 	//*	currently the only camera that has a GPS is the QHY174-GPS
-	void			GPS_ResetNMEAbuffer(void);
-	void			GPS_AddNMEAstring(const char *nmeaString);
-	TYPE_GPSdata	cGPS;
+	void				GPS_ResetNMEAbuffer(void);
+	void				GPS_AddNMEAstring(const char *nmeaString);
+	TYPE_QHY_GPSdata	cGPS;
 };
 
 

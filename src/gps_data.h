@@ -39,7 +39,7 @@ enum
 };
 
 //*****************************************************************************
-typedef struct	//	TYPE_GPSdata
+typedef struct	//	TYPE_QHY_GPSdata
 {
 //	int				GPSmode;			//*	0 = no GPS
 	bool			Present;
@@ -77,12 +77,10 @@ typedef struct	//	TYPE_GPSdata
 	double			ClockDeltaSecs;
 	char			SatMode1;
 	char			SatMode2;
-} TYPE_GPSdata;
+} TYPE_QHY_GPSdata;
 
 
-extern TYPE_GPSdata	gGPS;
-
-void	GPS_StartThread(const char *serialPortPathArg = NULL);
+void	GPS_StartThread(const char *serialPortPathArg = NULL, const char baudRate='9');
 
 
 #endif // _GPS_DATA_H_

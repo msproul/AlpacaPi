@@ -4,6 +4,7 @@
 #	(C) 2019 by Mark Sproul
 #
 #		sudo apt-get install build-essential
+#		sudo apt-get install pkg-config
 #		sudo apt-get install libusb-1.0-0-dev
 #		sudo apt-get install libudev-dev
 #		sudo apt-get install libopencv-dev
@@ -88,8 +89,8 @@ GCC_DIR				=	/usr/bin/
 #	/usr/local/lib/pkgconfig/opencv.pc
 OPENCV_COMPILE		=	$(shell pkg-config --cflags $(OPENCV_VERSION))
 OPENCV_LINK			=	$(shell pkg-config --libs $(OPENCV_VERSION))
-OPENCV_LIB			=	/usr/local/lib
-
+OPENCV_LIB			=	/usr/local/lib/
+OPENCV_LINK			+=	-L$(OPENCV_LIB)
 
 PHASEONE_INC		=	/usr/local/include/phaseone/include/
 PHASEONE_LIB		=	/usr/local/lib/
@@ -284,6 +285,7 @@ LIVE_WINDOW_OBJECTS=										\
 #	Driver Objects
 DRIVER_OBJECTS=												\
 				$(OBJECT_DIR)alpacadriver.o					\
+				$(OBJECT_DIR)alpacadriver_gps.o				\
 				$(OBJECT_DIR)alpacadriverConnect.o			\
 				$(OBJECT_DIR)alpacadriverSetup.o			\
 				$(OBJECT_DIR)alpacadriverThread.o			\
@@ -461,7 +463,8 @@ IMU_OBJECTS=												\
 # GPS objects
 GPS_OBJECTS=												\
 				$(OBJECT_DIR)gps_data.o						\
-				$(OBJECT_DIR)serialport.o					\
+
+#				$(OBJECT_DIR)serialport.o					\
 
 ######################################################################################
 #pragma mark make help
@@ -613,20 +616,22 @@ gpscam		:		DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
 gpscam		:		DEFINEFLAGS		+=	-D_ENABLE_LIVE_CONTROLLER_
 gpscam		:		DEFINEFLAGS		+=	-D_ENABLE_GLOBAL_GPS_
 gpscam		:										\
-					$(DRIVER_OBJECTS)				\
 					$(CAMERA_DRIVER_OBJECTS)		\
-					$(SOCKET_OBJECTS)				\
-					$(LIVE_WINDOW_OBJECTS)			\
+					$(DRIVER_OBJECTS)				\
 					$(HELPER_OBJECTS)				\
 					$(GPS_OBJECTS)					\
+					$(LIVE_WINDOW_OBJECTS)			\
+					$(SERIAL_OBJECTS)				\
+					$(SOCKET_OBJECTS)				\
 
 		$(LINK)  									\
-					$(DRIVER_OBJECTS)				\
 					$(CAMERA_DRIVER_OBJECTS)		\
-					$(SOCKET_OBJECTS)				\
-					$(LIVE_WINDOW_OBJECTS)			\
+					$(DRIVER_OBJECTS)				\
 					$(HELPER_OBJECTS)				\
 					$(GPS_OBJECTS)					\
+					$(LIVE_WINDOW_OBJECTS)			\
+					$(SERIAL_OBJECTS)				\
+					$(SOCKET_OBJECTS)				\
 					$(ASI_CAMERA_OBJECTS)			\
 					$(OPENCV_LINK)					\
 					-ludev							\
@@ -788,20 +793,22 @@ simulator	:	DEFINEFLAGS		+=	-D_ENABLE_SWITCH_
 simulator	:	DEFINEFLAGS		+=	-D_ENABLE_SWITCH_SIMULATOR_
 simulator	:	DEFINEFLAGS		+=	-D_USE_OPENCV_
 simulator	:	DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
+simulator	:	DEFINEFLAGS		+=	-D_ENABLE_GLOBAL_GPS_
 simulator	:										\
-					$(DRIVER_OBJECTS)				\
-					$(HELPER_OBJECTS)				\
-					$(CAMERA_DRIVER_OBJECTS)		\
 					$(CALIBRATION_DRIVER_OBJECTS)	\
+					$(CAMERA_DRIVER_OBJECTS)		\
 					$(DOME_DRIVER_OBJECTS)			\
+					$(DRIVER_OBJECTS)				\
 					$(FITLERWHEEL_DRIVER_OBJECTS)	\
 					$(FOCUSER_DRIVER_OBJECTS)		\
+					$(GPS_OBJECTS)					\
+					$(HELPER_OBJECTS)				\
+					$(LIVE_WINDOW_OBJECTS)			\
 					$(OBSCOND_DRIVER_OBJECTS)		\
 					$(SWITCH_DRIVER_OBJECTS)		\
 					$(SERIAL_OBJECTS)				\
 					$(TELESCOPE_DRIVER_OBJECTS)		\
 					$(SOCKET_OBJECTS)				\
-					$(LIVE_WINDOW_OBJECTS)			\
 
 
 		$(LINK)  									\
@@ -818,6 +825,7 @@ simulator	:										\
 					$(TELESCOPE_DRIVER_OBJECTS)		\
 					$(LIVE_WINDOW_OBJECTS)			\
 					$(SOCKET_OBJECTS)				\
+					$(GPS_OBJECTS)					\
 					$(OPENCV_LINK)					\
 					-lcfitsio						\
 					-lpthread						\
@@ -2558,24 +2566,26 @@ noopencv		:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
 noopencv		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
 noopencv		:		DEFINEFLAGS		+=	-D_ENABLE_JPEGLIB_
 noopencv		:									\
-						$(DRIVER_OBJECTS)			\
-						$(CPP_OBJECTS)				\
-						$(SOCKET_OBJECTS)			\
-						$(ASI_CAMERA_OBJECTS)		\
-						$(ZWO_EFW_OBJECTS)			\
+					$(DRIVER_OBJECTS)				\
+					$(CAMERA_DRIVER_OBJECTS)		\
+					$(HELPER_OBJECTS)				\
+					$(SERIAL_OBJECTS)				\
+					$(SOCKET_OBJECTS)				\
+					$(LIVE_WINDOW_OBJECTS)			\
 
 		$(LINK)  									\
-						$(DRIVER_OBJECTS)			\
-						$(CPP_OBJECTS)				\
-						$(SOCKET_OBJECTS)			\
-						$(ASI_CAMERA_OBJECTS)		\
-						$(ZWO_EFW_OBJECTS)			\
-						-lcfitsio					\
-						-ludev						\
-						-lpthread					\
-						-lusb-1.0					\
-						-ljpeg						\
-						-o alpacapi
+					$(DRIVER_OBJECTS)				\
+					$(CAMERA_DRIVER_OBJECTS)		\
+					$(HELPER_OBJECTS)				\
+					$(SERIAL_OBJECTS)				\
+					$(SOCKET_OBJECTS)				\
+					$(LIVE_WINDOW_OBJECTS)			\
+					$(ASI_CAMERA_OBJECTS)			\
+					-ludev							\
+					-lusb-1.0						\
+					-lpthread						\
+					-lcfitsio						\
+					-o alpacapi
 
 
 ######################################################################################
@@ -3290,42 +3300,6 @@ sky		:												\
 						-o skytravel
 
 ######################################################################################
-#make skycv4
-#pragma mark skytravel
-skycv4			:	DEFINEFLAGS		+=	-D_INCLUDE_CTRL_MAIN_
-skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_SKYTRAVEL_
-skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_CAMERA_
-skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_DOME_
-skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_FOCUSERS_
-skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
-skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_OBS_CONDITIONS_
-skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_ROTATOR_
-skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_SWITCHES_
-skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_TELESCOPE_
-skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_FITS_
-skycv4			:	DEFINEFLAGS		+=	-D_CONTROLLER_USES_ALPACA_
-skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_CONTROLLER_
-skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_SLIT_TRACKER_
-skycv4			:	DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
-#skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_ASTEROIDS_
-skycv4			:	DEFINEFLAGS		+=	-D_USE_OPENCV_
-skycv4			:	DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
-skycv4			:	INCLUDES		+=	-I$(SRC_SKYTRAVEL)
-skycv4			:										\
-						$(CONTROLLER_OBJECTS)			\
-						$(SKYTRAVEL_OBJECTS)			\
-						$(HELPER_OBJECTS)				\
-
-				$(LINK)  								\
-						$(CONTROLLER_OBJECTS)			\
-						$(SKYTRAVEL_OBJECTS)			\
-						$(HELPER_OBJECTS)				\
-						$(OPENCV_LINK)					\
-						-lpthread						\
-						-lcfitsio						\
-						-o skytravel
-
-######################################################################################
 #make skycv4sql
 #pragma mark skytravel
 skycv4sql			:	DEFINEFLAGS		+=	-D_INCLUDE_CTRL_MAIN_
@@ -3411,12 +3385,49 @@ skysql		:												\
 
 
 
+######################################################################################
+#make skycv4
+#pragma mark skytravel
+skycv4			:	DEFINEFLAGS		+=	-D_INCLUDE_CTRL_MAIN_
+skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_SKYTRAVEL_
+skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_CAMERA_
+skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_DOME_
+skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_FOCUSERS_
+skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
+skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_OBS_CONDITIONS_
+skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_ROTATOR_
+skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_SPECTROGRAPH_
+skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_SWITCHES_
+skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_TELESCOPE_
+skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_FITS_
+skycv4			:	DEFINEFLAGS		+=	-D_CONTROLLER_USES_ALPACA_
+skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_CONTROLLER_
+skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_SLIT_TRACKER_
+skycv4			:	DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
+#skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_ASTEROIDS_
+skycv4			:	DEFINEFLAGS		+=	-D_USE_OPENCV_
+skycv4			:	DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
+skycv4			:	INCLUDES		+=	-I$(SRC_SKYTRAVEL)
+skycv4			:										\
+						$(CONTROLLER_OBJECTS)			\
+						$(SKYTRAVEL_OBJECTS)			\
+						$(HELPER_OBJECTS)				\
+
+				$(LINK)  								\
+						$(CONTROLLER_OBJECTS)			\
+						$(SKYTRAVEL_OBJECTS)			\
+						$(HELPER_OBJECTS)				\
+						$(OPENCV_LINK)					\
+						-lpthread						\
+						-lcfitsio						\
+						-o skytravel
+
 
 ######################################################################################
 #make sss
 #pragma mark skytravel
-sss			:	DEFINEFLAGS		+=	-D_INCLUDE_CTRL_MAIN_
-sss			:	DEFINEFLAGS		+=	-D_ENABLE_SKYTRAVEL_
+sss			:	DEFINEFLAGS		+=	-D_CONTROLLER_USES_ALPACA_
+sss			:	DEFINEFLAGS		+=	-D_ENABLE_CPU_STATS_
 sss			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_CAMERA_
 sss			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_DOME_
 sss			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_FOCUSERS_
@@ -3427,16 +3438,16 @@ sss			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_SWITCHES_
 sss			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_SPECTROGRAPH_
 sss			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_TELESCOPE_
 sss			:	DEFINEFLAGS		+=	-D_ENABLE_FITS_
-sss			:	DEFINEFLAGS		+=	-D_CONTROLLER_USES_ALPACA_
 sss			:	DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_CONTROLLER_
-sss			:	DEFINEFLAGS		+=	-D_ENABLE_SLIT_TRACKER_
-sss			:	DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
 sss			:	DEFINEFLAGS		+=	-D_ENABLE_REMOTE_SQL_
 sss			:	DEFINEFLAGS		+=	-D_ENABLE_REMOTE_GAIA_
+sss			:	DEFINEFLAGS		+=	-D_ENABLE_SLIT_TRACKER_
+sss			:	DEFINEFLAGS		+=	-D_ENABLE_SKYTRAVEL_
+sss			:	DEFINEFLAGS		+=	-D_ENABLE_IMU_
+sss			:	DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
+sss			:	DEFINEFLAGS		+=	-D_INCLUDE_CTRL_MAIN_
 sss			:	DEFINEFLAGS		+=	-D_USE_OPENCV_
 sss			:	DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
-sss			:	DEFINEFLAGS		+=	-D_ENABLE_CPU_STATS_
-sss			:	DEFINEFLAGS		+=	-D_ENABLE_IMU_
 #sss			:	DEFINEFLAGS		+=	-D_ENABLE_ASTEROIDS_
 sss			:	DEFINEFLAGS		+=	-D_SQL_$(SQL_VERSION)
 sss			:	INCLUDES		+=	-I$(SRC_SKYTRAVEL)
@@ -3770,6 +3781,14 @@ $(OBJECT_DIR)alpacadriver.o :			$(SRC_DIR)alpacadriver.cpp				\
 										$(SRC_DIR)alpaca_defs.h					\
 										Makefile
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)alpacadriver.cpp -o$(OBJECT_DIR)alpacadriver.o
+
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)alpacadriver_gps.o :		$(SRC_DIR)alpacadriver_gps.cpp			\
+										$(SRC_DIR)alpacadriver_gps.h			\
+										$(MLS_LIB_DIR)ParseNMEA.h
+	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)alpacadriver_gps.cpp -o$(OBJECT_DIR)alpacadriver_gps.o
+
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)alpacadriverConnect.o :	$(SRC_DIR)alpacadriverConnect.cpp		\

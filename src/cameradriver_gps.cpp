@@ -81,26 +81,61 @@ void	CameraDriver::WriteFITS_GPSinfo(fitsfile *fitsFilePtr)
 	{
 		WriteFITS_QHY_GPSinfo(fitsFilePtr);
 	}
-	else if (gNMEAdata.validData)
+	else if (gNMEAdata.SequenceNumber > 0)
 	{
 		WriteFITS_Global_GPSinfo(fitsFilePtr);
 	}
 }
 
 //*****************************************************************************
+static void	GetGPSmodeString(char gpsMode1, char gpsMode2, char *modeString)
+{
+	modeString[0]	=	0;
+	switch (gpsMode1)
+	{
+		case 'A':	strcpy(modeString, "Automatic: ");	break;
+		case 'M':	strcpy(modeString, "Manual: ");	 	break;
+		default:	strcpy(modeString, "Unknown: ");	break;
+	}
+
+	switch (gpsMode2)
+	{
+		case '1':	strcat(modeString, "Fix not available");	break;
+		case '2':	strcat(modeString, "2D Fix");	 			break;
+		case '3':	strcat(modeString, "3D Fix");	 			break;
+		default:	strcat(modeString, "Unknown: ");			break;
+	}
+}
+
+
+//*****************************************************************************
 void	CameraDriver::WriteFITS_Global_GPSinfo(fitsfile *fitsFilePtr)
 {
 int		fitsStatus;
+char	latString[64];
+char	lonString[64];
+char	tempstring[100];
 
 	WriteFITS_Seperator(fitsFilePtr, "GPS Info");
 	fitsStatus	=	0;
 	fits_write_key(fitsFilePtr, TSTRING,	"COMMENT",
 											(char *)"Data from GPS via Serial Port",
 											NULL, &fitsStatus);
-//	bool				validTime;
-//	bool				validDate;
-//	bool				validLatLon;
-//	bool				validAlt;
+#ifdef _ENABLE_GPS_AVERAGE_
+	fitsStatus	=	0;
+	sprintf(tempstring, "GPS lat/lon/alt values are averaged over %d minutes", (kLatLonAvgCnt / 60));
+	fits_write_key(fitsFilePtr, TSTRING,	"COMMENT",
+											tempstring,
+											NULL, &fitsStatus);
+#endif // _ENABLE_GPS_AVERAGE_
+
+	//-------------------------------------------------------------
+	GetGPSmodeString(gNMEAdata.currSatMode1, gNMEAdata.currSatMode2, tempstring);
+	fitsStatus	=	0;
+	fits_write_key(fitsFilePtr, TSTRING,	"GPS_MODE",
+											tempstring,
+											"GPS mode", &fitsStatus);
+
 	//-------------------------------------------------------------
 	//*	GPS status
 	fitsStatus	=	0;
@@ -126,6 +161,19 @@ int		fitsStatus;
 											ISLOCKED(gNMEAdata.validAlt),
 											"Altitude Status", &fitsStatus);
 
+	//--------------------------------------------------------------
+	//*	Sequence number
+	fitsStatus	=	0;
+#ifdef _ENABLE_GPS_AVERAGE_
+	fits_write_key(fitsFilePtr, TINT,		"GPS_SEQ",
+											&gNMEAdata.latLonAvgCount,
+											"Sequence Number", &fitsStatus);
+#else
+	fits_write_key(fitsFilePtr, TINT,		"GPS_SEQ",
+											&gNMEAdata.SequenceNumber,
+											"Sequence Number", &fitsStatus);
+#endif // _ENABLE_GPS_AVERAGE_
+
 	//-------------------------------------------------------------
 	//*	satellites in view
 	fitsStatus	=	0;
@@ -143,9 +191,36 @@ int		fitsStatus;
 											"Longitude from GPS", &fitsStatus);
 	fitsStatus	=	0;
 	fits_write_key(fitsFilePtr, TDOUBLE,	"GPS_ALT",
+							#ifdef _ENABLE_GPS_AVERAGE_
+											&gNMEAdata.alt_average,
+							#else
 											&gNMEAdata.altitudeMeters,
+							#endif
 											"Altitude from GPS (meters)", &fitsStatus);
+	fitsStatus	=	0;
+	fits_write_key(fitsFilePtr, TDOUBLE,	"GPS_ALTF",
+											&gNMEAdata.altitudeFeet,
+											"Altitude from GPS (feet)", &fitsStatus);
 
+	//-------------------------------------------------------------
+	ParseNMEA_FormatLatLonStrings(	gNMEAdata.lat_average,
+									latString,
+									gNMEAdata.lon_average,
+									lonString);
+	strcpy(tempstring, latString);
+	strcat(tempstring, " / ");
+	strcat(tempstring, lonString);
+	fitsStatus	=	0;
+	fits_write_key(fitsFilePtr, TSTRING,	"GPS_TEXT",
+											tempstring,
+											NULL, &fitsStatus);
+
+	//-------------------------------------------------------------
+	FormatTimeStringISO8601_tm(&gNMEAdata.linuxTime, tempstring);
+	fitsStatus	=	0;
+	fits_write_key(fitsFilePtr, TSTRING,	"GPS_DTTM",
+											tempstring,
+											"Date/Time", &fitsStatus);
 }
 
 //$GPGGA,023420.000,4121.6625,N,07458.8289,W,1,08,0.95,437.3,M,-34.0,M,,*50
@@ -239,20 +314,21 @@ char	lonString[64];
 #endif
 
 
-	switch (cGPS.SatMode1)
-	{
-		case 'A':	strcpy(tempstring, "Automatic: ");	break;
-		case 'M':	strcpy(tempstring, "Manual: ");	 	break;
-		default:	strcpy(tempstring, "Unknown: ");	break;
-	}
-
-	switch (cGPS.SatMode2)
-	{
-		case '1':	strcat(tempstring, "Fix not available");	break;
-		case '2':	strcat(tempstring, "2D Fix");	 			break;
-		case '3':	strcat(tempstring, "3D Fix");	 			break;
-		default:	strcat(tempstring, "Unknown: ");			break;
-	}
+//	switch (cGPS.SatMode1)
+//	{
+//		case 'A':	strcpy(tempstring, "Automatic: ");	break;
+//		case 'M':	strcpy(tempstring, "Manual: ");	 	break;
+//		default:	strcpy(tempstring, "Unknown: ");	break;
+//	}
+//
+//	switch (cGPS.SatMode2)
+//	{
+//		case '1':	strcat(tempstring, "Fix not available");	break;
+//		case '2':	strcat(tempstring, "2D Fix");	 			break;
+//		case '3':	strcat(tempstring, "3D Fix");	 			break;
+//		default:	strcat(tempstring, "Unknown: ");			break;
+//	}
+	GetGPSmodeString(cGPS.SatMode1, cGPS.SatMode2, tempstring);
 	fitsStatus	=	0;
 	fits_write_key(fitsFilePtr, TSTRING,	"GPS_MODE",
 											tempstring,

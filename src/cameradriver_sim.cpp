@@ -97,8 +97,8 @@ bool		isConnected;
 	cCameraProp.CameraYsize	=	2000;
 #endif
 	//*	faking an ASI2600
-	cCameraProp.CameraXsize	=	6248;
-	cCameraProp.CameraYsize	=	4176;
+//	cCameraProp.CameraXsize	=	6248;
+//	cCameraProp.CameraYsize	=	4176;
 
 
 	cCameraProp.SensorType			=   kSensorType_RGGB;

@@ -35,6 +35,9 @@
 #ifndef _PARSE_NMEA_H_
 #define	_PARSE_NMEA_H_
 
+#include	<time.h>
+#include	<sys/time.h>
+
 
 //**************************************************************************************
 //*	configuration options, comment out to save memory
@@ -218,7 +221,7 @@ typedef	struct
 	#define	kMagVariationTracking_ArraySize	((24 * 60 * 60)	/ kMagVariationTracking_deltaTime)
 #endif
 
-#define	kLatLonAvgCnt	500
+#define	kLatLonAvgCnt	3600
 
 //**************************************************************************
 typedef	struct
@@ -230,7 +233,7 @@ typedef	struct
 	bool				validAlt;
 	bool				validCseSpd;
 	bool				validWayPointLatLon;
-//	short				validCourse;		//	Deleted May 20, 2002. Do the checking in ParseRDF
+	int					SequenceNumber;
 	unsigned long		gpsTime;			//	Time in seconds since midnight (GMT)
 	TYPE_timeHHMMSS		gpsTimeHHMMSS;		//*	Time in HH:MM:SS - added Oct 3, 2016
 	unsigned long		deltaGPSTime;
@@ -243,9 +246,16 @@ typedef	struct
 #ifdef _ENABLE_GPS_AVERAGE_
 	double				lat_AverageArray[kLatLonAvgCnt];
 	double				lon_AverageArray[kLatLonAvgCnt];
+	double				alt_AverageArray[kLatLonAvgCnt];
 	int					latLonAvgIndex;
 	int					latLonAvgCount;
+	int					altLonAvgCount;
+
+	double				lat_average;
+	double				lon_average;
+	double				alt_average;
 #endif
+	struct tm 			linuxTime;
 
 	short				cse;				//	Degrees
 	short				spd;				//	MPH
@@ -311,7 +321,6 @@ typedef	struct
 }	TYPE_NMEAInfoStruct;
 
 extern TYPE_NMEAInfoStruct	gNMEAdata;
-
 
 #ifdef _ENABLE_SATELLITE_ALMANAC_
 //	int	GetSatSignalStrength(int satNumber);
